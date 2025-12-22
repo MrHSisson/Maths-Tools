@@ -39,7 +39,12 @@ export default function IntegersTool() {
   const getFinalAnswerBg = () => getStepBg()
 
   const generateQuestion = (level: string, opType: string = operationType): any => {
-    let a: number, b: number, operation: string, display: string, answer: number
+    let a = 0
+    let b = 0
+    let operation = '+'
+    let display = ''
+    let answer = 0
+    
     const generate = () => {
       if (level === 'level1') {
         a = Math.floor(Math.random() * 21) - 10
