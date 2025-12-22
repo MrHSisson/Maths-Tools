@@ -15,14 +15,14 @@ const categories = [
     tools: [
       { id: 'like-terms', path: '/like-terms', name: 'Like Terms', icon: 'xy', description: 'Simplify algebraic expressions by collecting like terms', ready: false },
       { id: 'single-brackets', path: '/single-brackets', name: 'Single Brackets', icon: '(x)', description: 'Expand single brackets by multiplying each term', ready: false },
-      { id: 'double-brackets', path: '/double-brackets', name: 'Double Brackets', icon: '(x)²', description: 'Expand pairs of brackets using grid or FOIL methods', ready: true },
+      { id: 'double-brackets', path: '/double-brackets', name: 'Double Brackets', icon: '(x)²', description: 'Expand pairs of brackets using grid or FOIL methods', ready: false },
       { id: 'completing-square', path: '/completing-square', name: 'Completing the Square', icon: '▢', description: 'Rewrite quadratic expressions in completed square form', ready: false },
     ]
   },
   {
     name: 'Ratio & Proportion',
     tools: [
-      { id: 'ratio', path: '/ratio', name: 'Ratio', icon: '⚖️', description: 'Simplify ratios and share amounts in a given ratio', ready: true },
+      { id: 'ratio', path: '/ratio', name: 'Ratio', icon: '⚖️', description: 'Simplify ratios and share amounts in a given ratio', ready: false },
     ]
   },
   {
