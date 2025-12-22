@@ -39,11 +39,7 @@ export default function IntegersTool() {
   const getFinalAnswerBg = () => getStepBg()
 
   const generateQuestion = (level: string, opType: string = operationType): any => {
-    let a = 0
-    let b = 0
-    let operation = '+'
-    let display = ''
-    let answer = 0
+    let a = 0, b = 0, operation = '+', display = '', answer = 0
     
     const generate = () => {
       if (level === 'level1') {
@@ -72,9 +68,67 @@ export default function IntegersTool() {
     }
     generate()
     if (answer === 0 && Math.random() < 0.9) generate()
+
     const direction = answer > a ? 'right' : answer < a ? 'left' : 'none'
     const steps = Math.abs(answer - a)
+
     return { display, answer, a, b: level === 'level1' ? b : -b, operation, direction, steps, difficulty: level }
+  }
+
+  const BlankNumberLine = () => {
+    const width = 750, height = 100, padding = 50, lineY = 50, numSlots = 14
+    const spacing = (width - 2 * padding) / (numSlots - 1)
+    return (
+      <svg width={width} height={height} className="mx-auto block">
+        <polygon points={`${padding - 22},${lineY} ${padding - 10},${lineY - 6} ${padding - 10},${lineY + 6}`} fill="#6b7280" />
+        <line x1={padding - 15} y1={lineY} x2={width - padding + 15} y2={lineY} stroke="#6b7280" strokeWidth="3" strokeLinecap="round" />
+        <polygon points={`${width - padding + 22},${lineY} ${width - padding + 10},${lineY - 6} ${width - padding + 10},${lineY + 6}`} fill="#6b7280" />
+        {Array.from({ length: numSlots }, (_, i) => (
+          <line key={i} x1={padding + i * spacing} y1={lineY - 12} x2={padding + i * spacing} y2={lineY + 12} stroke="#6b7280" strokeWidth="2" />
+        ))}
+      </svg>
+    )
+  }
+
+  const NumberLine = ({ q }: { q: any }) => {
+    const minVal = Math.min(q.a, q.answer) - 3
+    const maxVal = Math.max(q.a, q.answer) + 3
+    const range = maxVal - minVal
+    const width = 750, height = 180, padding = 50, lineY = height * 0.65
+    const getX = (val: number) => padding + ((val - minVal) / range) * (width - 2 * padding)
+    const ticks: number[] = []
+    for (let i = minVal; i <= maxVal; i++) ticks.push(i)
+    const arrowColor = q.direction === 'right' ? '#059669' : q.direction === 'left' ? '#dc2626' : '#6b7280'
+    const arrowLabel = q.direction === 'right' ? `+${q.steps}` : q.direction === 'left' ? `−${q.steps}` : '0'
+    const startX = getX(q.a), endX = getX(q.answer), midX = (startX + endX) / 2
+
+    return (
+      <svg width={width} height={height} className="mx-auto block">
+        <defs>
+          <marker id={`arrowhead-${q.a}-${q.answer}`} markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill={arrowColor} />
+          </marker>
+        </defs>
+        <line x1={padding - 15} y1={lineY} x2={width - padding + 15} y2={lineY} stroke="#4b5563" strokeWidth="3" strokeLinecap="round" />
+        <polygon points={`${width - padding + 22},${lineY} ${width - padding + 10},${lineY - 6} ${width - padding + 10},${lineY + 6}`} fill="#4b5563" />
+        {ticks.map(tick => (
+          <g key={tick}>
+            <line x1={getX(tick)} y1={lineY - (tick === 0 ? 12 : 8)} x2={getX(tick)} y2={lineY + (tick === 0 ? 12 : 8)} stroke={tick === 0 ? '#1e40af' : '#4b5563'} strokeWidth={tick === 0 ? 3 : 2} />
+            <text x={getX(tick)} y={lineY + 28} textAnchor="middle" fontSize={15} fill={tick === 0 ? '#1e40af' : '#374151'} fontWeight={tick === 0 ? 'bold' : '500'}>{tick}</text>
+          </g>
+        ))}
+        <circle cx={startX} cy={lineY} r={10} fill="#7c3aed" stroke="#5b21b6" strokeWidth="2" />
+        <text x={startX} y={lineY - 18} textAnchor="middle" fontSize={14} fill="#7c3aed" fontWeight="bold">Start</text>
+        {q.direction !== 'none' && (
+          <>
+            <path d={`M ${startX} ${lineY - 14} Q ${midX} ${lineY - 59} ${endX} ${lineY - 14}`} fill="none" stroke={arrowColor} strokeWidth="3" strokeLinecap="round" markerEnd={`url(#arrowhead-${q.a}-${q.answer})`} />
+            <rect x={midX - 22} y={lineY - 83} width={44} height={24} rx="4" fill="white" stroke={arrowColor} strokeWidth="2" />
+            <text x={midX} y={lineY - 66} textAnchor="middle" fontSize={16} fill={arrowColor} fontWeight="bold">{arrowLabel}</text>
+          </>
+        )}
+        <circle cx={endX} cy={lineY} r={10} fill="#059669" stroke="#047857" strokeWidth="2" />
+      </svg>
+    )
   }
 
   const handleNewWhiteboardQuestion = (): void => { setWhiteboardQuestion(generateQuestion(difficulty)); setShowWhiteboardAnswer(false) }
@@ -155,7 +209,7 @@ export default function IntegersTool() {
           </div>
 
           {(mode === 'whiteboard' || mode === 'single') && (
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4" style={mode === 'single' ? { minHeight: '120vh' } : {}}>
               <div className="bg-white rounded-xl shadow-lg p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -194,7 +248,9 @@ export default function IntegersTool() {
                   <div className="text-6xl font-bold text-center mb-6" style={{ color: '#000000' }}>
                     {showWhiteboardAnswer ? whiteboardQuestion.answer : whiteboardQuestion.display}
                   </div>
-                  <div className="rounded-xl pt-8 px-4" style={{ height: '500px', backgroundColor: getWhiteboardWorkingBg() }}></div>
+                  <div className="rounded-xl pt-8 px-4" style={{ height: '500px', backgroundColor: getWhiteboardWorkingBg() }}>
+                    <BlankNumberLine />
+                  </div>
                 </div>
               )}
 
@@ -203,8 +259,18 @@ export default function IntegersTool() {
                   <div className="text-6xl font-bold text-center mb-8" style={{ color: '#000000' }}>{question.display}</div>
                   {showAnswer && (
                     <div className="mt-8 space-y-6">
+                      <div className="rounded-xl p-6" style={{ backgroundColor: getStepBg() }}>
+                        <h3 className="text-xl font-bold mb-4" style={{ color: '#000000' }}>Number Line:</h3>
+                        <NumberLine q={question} />
+                        <div className="mt-6 text-center space-y-2">
+                          <p className="text-2xl" style={{ color: '#000000' }}>Start at <span className="font-bold" style={{ color: '#7c3aed' }}>{question.a}</span></p>
+                          <p className="text-2xl" style={{ color: '#000000' }}>
+                            {question.direction === 'right' ? <span>Move <span className="font-bold" style={{ color: '#059669' }}>{question.steps} to the right</span></span> : question.direction === 'left' ? <span>Move <span className="font-bold" style={{ color: '#dc2626' }}>{question.steps} to the left</span></span> : <span className="font-bold">Stay at the same position</span>}
+                          </p>
+                        </div>
+                      </div>
                       <div className="rounded-xl p-6 text-center" style={{ backgroundColor: getFinalAnswerBg() }}>
-                        <span className="text-5xl font-bold" style={{ color: '#000000' }}>{question.display} = {question.answer}</span>
+                        <span className="text-3xl font-bold" style={{ color: '#000000' }}>{question.display} = {question.answer}</span>
                       </div>
                     </div>
                   )}
@@ -238,6 +304,16 @@ export default function IntegersTool() {
                             ))}
                           </div>
                         </div>
+                        {difficulty === 'level1' && (
+                          <div className="flex items-center gap-2">
+                            <label className="text-base font-semibold">Type:</label>
+                            <select value={operationType} onChange={(e) => setOperationType(e.target.value)} className="px-3 py-2 border-2 border-gray-300 rounded-lg text-base font-semibold">
+                              <option value="mixed">Mixed</option>
+                              <option value="addition">Addition</option>
+                              <option value="subtraction">Subtraction</option>
+                            </select>
+                          </div>
+                        )}
                         <div className="flex items-center gap-3">
                           <label className="text-lg font-semibold">Columns:</label>
                           <input type="number" min="1" max="4" value={numColumns} onChange={(e) => setNumColumns(Math.max(1, Math.min(4, parseInt(e.target.value) || 2)))} className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-lg" />
