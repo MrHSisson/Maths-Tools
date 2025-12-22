@@ -245,7 +245,7 @@ export default function IntegersTool() {
 
               {mode === 'whiteboard' && whiteboardQuestion && (
                 <div className="rounded-xl shadow-2xl p-8" style={{ backgroundColor: getQuestionBg() }}>
-                  <div className="text-6xl font-bold text-center mb-6" style={{ color: '#000000' }}>
+                  <div className="text-6xl font-bold text-center mb-6" style={{ color: showWhiteboardAnswer ? '#166534' : '#000000' }}>
                     {showWhiteboardAnswer ? whiteboardQuestion.answer : whiteboardQuestion.display}
                   </div>
                   <div className="rounded-xl pt-8 px-4" style={{ height: '500px', backgroundColor: getWhiteboardWorkingBg() }}>
@@ -270,7 +270,7 @@ export default function IntegersTool() {
                         </div>
                       </div>
                       <div className="rounded-xl p-6 text-center" style={{ backgroundColor: getFinalAnswerBg() }}>
-                        <span className="text-3xl font-bold" style={{ color: '#000000' }}>{question.display} = {question.answer}</span>
+                        <span className="text-5xl font-bold" style={{ color: '#166534' }}>{question.display} = {question.answer}</span>
                       </div>
                     </div>
                   )}
