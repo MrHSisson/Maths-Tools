@@ -2,11 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RefreshCw, Eye, Home, Menu, X, ChevronUp, ChevronDown } from 'lucide-react';
 
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { RefreshCw, Eye, Home, Menu, X, ChevronUp, ChevronDown } from 'lucide-react';
-
-// Add these type definitions
+// Type definitions
 type QuestionType = {
   display: string;
   answer: string;
@@ -105,27 +101,27 @@ const RatioSharingTool = () => {
     return '#f3f4f6';
   };
 
-  const randomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-  const randomChoice = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const randomInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
+  const randomChoice = (arr: any[]) => arr[Math.floor(Math.random() * arr.length)];
 
   const namesList = ['Alice', 'Ben', 'Charlie', 'Diana', 'Emma', 'Finn', 'Grace', 'Harry', 'Isla', 'Jack', 'Kate', 'Liam', 'Mia', 'Noah', 'Olivia', 'Peter'];
   
-  const getRandomNames = (count) => {
+  const getRandomNames = (count: number) => {
     const shuffled = [...namesList].sort(() => Math.random() - 0.5);
     return shuffled.slice(0, count);
   };
 
-  const formatCurrency = (amount) => {
+  const formatCurrency = (amount: number) => {
     if (amount % 1 === 0) return `£${amount}`;
     return `£${amount.toFixed(2)}`;
   };
 
-  const findHCF = (numbers) => {
-    const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
+  const findHCF = (numbers: number[]) => {
+    const gcd = (a: number, b: number): number => b === 0 ? a : gcd(b, a % b);
     return numbers.reduce((acc, num) => gcd(acc, num));
   };
 
-  const generateSharingWorking = (ratioParts, total, ratioSum, partValue, shares, questionType, names, algebraic = false) => {
+  const generateSharingWorking = (ratioParts: number[], total: number, ratioSum: number, partValue: number, shares: number[], questionType: string, names: string[], algebraic = false) => {
     if (algebraic) {
       return [
         { type: 'showRatio', parts: ratioParts, names: names },
@@ -147,7 +143,7 @@ const RatioSharingTool = () => {
     }
   };
 
-  const generateSharingQuestion = (diff) => {
+  const generateSharingQuestion = (diff: string): QuestionType => {
     let attempts = 0;
     const maxAttempts = 100;
 
@@ -155,24 +151,24 @@ const RatioSharingTool = () => {
       attempts++;
 
       const names = getRandomNames(2);
-      let ratioParts = [];
+      let ratioParts: number[] = [];
       let total = 0, ratioSum = 0, partValue = 0;
 
       if (diff === 'level1') {
         const options = [[1,2], [1,3], [1,4], [2,3], [3,4]];
         ratioParts = randomChoice(options);
-        ratioSum = ratioParts.reduce((a, b) => a + b, 0);
+        ratioSum = ratioParts.reduce((a: number, b: number) => a + b, 0);
         const multiplier = randomInt(10, 20);
         total = ratioSum * multiplier;
       } else if (diff === 'level2') {
         ratioParts = [randomInt(1, 6), randomInt(1, 6)];
-        ratioSum = ratioParts.reduce((a, b) => a + b, 0);
+        ratioSum = ratioParts.reduce((a: number, b: number) => a + b, 0);
         if (ratioSum < 5 || ratioSum > 15) continue;
         const multiplier = randomInt(8, 15);
         total = ratioSum * multiplier;
       } else {
         ratioParts = [randomInt(3, 9), randomInt(3, 9)];
-        ratioSum = ratioParts.reduce((a, b) => a + b, 0);
+        ratioSum = ratioParts.reduce((a: number, b: number) => a + b, 0);
         if (ratioSum < 8 || ratioSum > 25) continue;
         
         if (Math.random() < 0.8) {
@@ -248,7 +244,7 @@ const RatioSharingTool = () => {
     };
   };
 
-  const generateKnownAmountsWorking = (ratioParts, knownAmount, knownPerson, partValue, shares, total, questionType, names, useBarModel = true) => {
+  const generateKnownAmountsWorking = (ratioParts: number[], knownAmount: number, knownPerson: number, partValue: number, shares: number[], total: number, questionType: string, names: string[], useBarModel = true) => {
     if (useBarModel) {
       const steps = [];
       const otherPerson = knownPerson === 0 ? 1 : 0;
@@ -364,7 +360,7 @@ const RatioSharingTool = () => {
     }
   };
 
-  const generateKnownAmountsQuestion = (diff) => {
+  const generateKnownAmountsQuestion = (diff: string): QuestionType => {
     let attempts = 0;
     const maxAttempts = 100;
 
@@ -372,7 +368,7 @@ const RatioSharingTool = () => {
       attempts++;
 
       const names = getRandomNames(2);
-      let ratioParts = [];
+      let ratioParts: number[] = [];
       let partValue = 0;
       let knownPerson = 0;
 
@@ -409,7 +405,7 @@ const RatioSharingTool = () => {
       const knownAmount = ratioParts[knownPerson] * partValue;
       
       const shares = ratioParts.map(p => p * partValue);
-      const total = shares.reduce((a, b) => a + b, 0);
+      const total = shares.reduce((a: number, b: number) => a + b, 0);
 
       if (diff === 'level1') {
         if (knownAmount >= 50 || total >= 50) continue;
@@ -479,7 +475,7 @@ const RatioSharingTool = () => {
     };
   };
 
-  const generateDifferenceWorking = (ratioParts, difference, largerPerson, partValue, shares, total, questionType, names, useBarModel = true) => {
+  const generateDifferenceWorking = (ratioParts: number[], difference: number, largerPerson: number, partValue: number, shares: number[], total: number, questionType: string, names: string[], useBarModel = true) => {
     if (useBarModel) {
       const steps = [];
       
@@ -607,7 +603,7 @@ const RatioSharingTool = () => {
     }
   };
 
-  const generateDifferenceQuestion = (diff) => {
+  const generateDifferenceQuestion = (diff: string): QuestionType => {
     let attempts = 0;
     const maxAttempts = 100;
 
@@ -615,7 +611,7 @@ const RatioSharingTool = () => {
       attempts++;
 
       const names = getRandomNames(2);
-      let ratioParts = [];
+      let ratioParts: number[] = [];
       let partValue = 0;
 
       if (diff === 'level1') {
@@ -639,7 +635,7 @@ const RatioSharingTool = () => {
 
       const shares = ratioParts.map(p => p * partValue);
       const difference = Math.abs(shares[1] - shares[0]);
-      const total = shares.reduce((a, b) => a + b, 0);
+      const total = shares.reduce((a: number, b: number) => a + b, 0);
       const largerPerson = shares[0] > shares[1] ? 0 : 1;
 
       if (diff === 'level1') {
@@ -725,11 +721,11 @@ const RatioSharingTool = () => {
     };
   };
 
-  const generateMixedSharingQuestion = (level) => {
+  const generateMixedSharingQuestion = (level: string): QuestionType => {
     const questionTypes = ['sharing', 'known', 'difference'];
     const selectedType = randomChoice(questionTypes);
     
-    let question;
+    let question: QuestionType;
     
     if (selectedType === 'sharing') {
       question = generateSharingQuestion(level);
@@ -745,7 +741,7 @@ const RatioSharingTool = () => {
     return question;
   };
 
-  const generateQuestion = (level) => {
+  const generateQuestion = (level: string): QuestionType => {
     if (topic === 'sharing') {
       return generateSharingQuestion(level);
     } else if (topic === 'known') {
@@ -764,10 +760,10 @@ const RatioSharingTool = () => {
   };
 
   const handleGenerateWorksheet = () => {
-    const questions = [];
+    const questions: QuestionType[] = [];
     const usedKeys = new Set();
     
-    const generateUniqueQuestion = (level) => {
+    const generateUniqueQuestion = (level: string): QuestionType => {
       let attempts = 0;
       const maxAttempts = 100;
       
@@ -820,14 +816,14 @@ const RatioSharingTool = () => {
     }
   }, [shareQuestionType, useAlgebraicMethod, knownAmountsQuestionType, useNumericalMethod, differenceQuestionType, useDifferenceNumericalMethod]);
 
-  const renderStep = (step, idx) => {
+  const renderStep = (step: any, idx: number) => {
     return (
       <div key={idx} className="rounded-lg p-6 border border-gray-200" style={{ backgroundColor: getStepBg() }}>
         {step.type === 'showRatio' && step.names && (
           <div className="text-center">
             <h4 className="text-xl font-semibold mb-3" style={{ color: '#000000' }}>Ratio:</h4>
             <div className="text-3xl font-medium" style={{ color: '#000000' }}>
-              {step.names.map((name, i) => (
+              {step.names.map((name: string, i: number) => (
                 <span key={i}>{i > 0 && ' : '}{name} = {step.parts[i]}</span>
               ))}
             </div>
@@ -838,7 +834,7 @@ const RatioSharingTool = () => {
           <div className="text-center">
             <h4 className="text-xl font-semibold mb-3" style={{ color: '#000000' }}>Understanding the parts:</h4>
             <div className="space-y-2">
-              {step.names.map((name, i) => (
+              {step.names.map((name: string, i: number) => (
                 <div key={i} className="text-2xl font-medium" style={{ color: '#000000' }}>
                   {name} gets {step.parts[i]} part{step.parts[i] !== 1 ? 's' : ''}
                 </div>
@@ -851,7 +847,7 @@ const RatioSharingTool = () => {
           <div className="text-center">
             <h4 className="text-xl font-semibold mb-3" style={{ color: '#000000' }}>Total number of parts:</h4>
             <div className="text-3xl font-medium" style={{ color: '#000000' }}>
-              {step.parts.map((p, i) => (
+              {step.parts.map((p: number, i: number) => (
                 <span key={i}>{i > 0 && ' + '}{p}</span>
               ))} = {step.sum} parts
             </div>
@@ -871,7 +867,7 @@ const RatioSharingTool = () => {
           <div className="text-center">
             <h4 className="text-xl font-semibold mb-4" style={{ color: '#000000' }}>Calculate each share:</h4>
             <div className="space-y-3">
-              {step.names.map((name, i) => (
+              {step.names.map((name: string, i: number) => (
                 <div key={i} className="text-2xl font-medium" style={{ color: '#000000' }}>
                   {name}: {step.parts[i]} × {formatCurrency(step.partValue)} = {formatCurrency(step.shares[i])}
                 </div>
@@ -884,7 +880,7 @@ const RatioSharingTool = () => {
           <div className="text-center">
             <h4 className="text-xl font-semibold mb-3" style={{ color: '#000000' }}>Check (optional):</h4>
             <div className="text-2xl font-medium" style={{ color: '#000000' }}>
-              {step.shares.map((s) => formatCurrency(s)).join(' + ')} = {formatCurrency(step.total)} ✓
+              {step.shares.map((s: number) => formatCurrency(s)).join(' + ')} = {formatCurrency(step.total)} ✓
             </div>
           </div>
         )}
@@ -893,11 +889,11 @@ const RatioSharingTool = () => {
           <div>
             <h4 className="text-xl font-semibold mb-4 text-center" style={{ color: '#000000' }}>Bar Model:</h4>
             <div className="flex flex-col gap-3 items-start" style={{ marginLeft: '25%' }}>
-              {step.bars.map((bar, i) => (
+              {step.bars.map((bar: any, i: number) => (
                 <div key={i} className="flex items-center">
                   <div className="w-32 text-2xl font-bold text-left flex-shrink-0" style={{ color: '#000000' }}>{bar.person}</div>
                   <div className="flex gap-1">
-                    {Array(bar.boxes).fill(0).map((_, boxIdx) => (
+                    {Array(bar.boxes).fill(0).map((_: any, boxIdx: number) => (
                       <div key={boxIdx} className="w-20 h-20 border-4 border-blue-900 rounded flex-shrink-0" style={{ backgroundColor: getBarEmptyBg() }}></div>
                     ))}
                   </div>
@@ -918,11 +914,11 @@ const RatioSharingTool = () => {
           <div>
             <h4 className="text-xl font-semibold mb-4 text-center" style={{ color: '#000000' }}>Calculate shares:</h4>
             <div className="flex flex-col gap-3 items-start" style={{ marginLeft: '25%' }}>
-              {step.bars.map((bar, i) => (
+              {step.bars.map((bar: any, i: number) => (
                 <div key={i} className="flex items-center">
                   <div className="w-32 text-2xl font-bold text-left flex-shrink-0" style={{ color: '#000000' }}>{bar.person}</div>
                   <div className="flex gap-1">
-                    {Array(bar.boxes).fill(0).map((_, boxIdx) => (
+                    {Array(bar.boxes).fill(0).map((_: any, boxIdx: number) => (
                       <div key={boxIdx} className="w-20 h-20 border-4 border-blue-900 rounded flex items-center justify-center text-xs font-bold flex-shrink-0" style={{ color: '#000000', backgroundColor: getBarFilledBg() }}>
                         {formatCurrency(bar.value)}
                       </div>
@@ -943,7 +939,7 @@ const RatioSharingTool = () => {
               {step.questionType === 'personB' && `${step.names[1]}: ${formatCurrency(step.shares[1])}`}
               {step.questionType === 'both' && (
                 <div className="flex flex-col gap-2">
-                  {step.shares.map((share, i) => (
+                  {step.shares.map((share: number, i: number) => (
                     <div key={i}>{step.names[i]}: {formatCurrency(share)}</div>
                   ))}
                 </div>
@@ -991,10 +987,10 @@ const RatioSharingTool = () => {
             <h4 className="text-2xl font-semibold mb-4" style={{ color: '#000000' }}>Calculate total amount:</h4>
             <div className="space-y-4">
               <div className="text-2xl font-medium" style={{ color: '#000000' }}>
-                Total parts: {step.parts.join(' + ')} = {step.parts.reduce((a, b) => a + b, 0)}
+                Total parts: {step.parts.join(' + ')} = {step.parts.reduce((a: number, b: number) => a + b, 0)}
               </div>
               <div className="text-4xl font-bold" style={{ color: '#000000' }}>
-                Total: {step.parts.reduce((a, b) => a + b, 0)} × {formatCurrency(step.partValue)} = {formatCurrency(step.total)}
+                Total: {step.parts.reduce((a: number, b: number) => a + b, 0)} × {formatCurrency(step.partValue)} = {formatCurrency(step.total)}
               </div>
             </div>
           </div>
@@ -1013,11 +1009,11 @@ const RatioSharingTool = () => {
           <div>
             <h4 className="text-2xl font-semibold mb-4 text-center" style={{ color: '#000000' }}>Bar Model - Given information:</h4>
             <div className="flex flex-col gap-3 items-start" style={{ marginLeft: '25%' }}>
-              {step.bars.map((bar, i) => (
+              {step.bars.map((bar: any, i: number) => (
                 <div key={i} className="flex items-center">
                   <div className="w-32 text-2xl font-bold text-left flex-shrink-0" style={{ color: '#000000' }}>{bar.person}</div>
                   <div className="flex gap-1">
-                    {Array(bar.boxes).fill(0).map((_, boxIdx) => (
+                    {Array(bar.boxes).fill(0).map((_: any, boxIdx: number) => (
                       <div key={boxIdx} className="w-20 h-20 border-4 rounded flex-shrink-0" style={{
                         borderColor: bar.isKnown ? '#1e3a8a' : '#9ca3af',
                         backgroundColor: bar.isKnown ? getBarKnownBg() : getBarEmptyBg()
@@ -1037,7 +1033,7 @@ const RatioSharingTool = () => {
           <div className="text-center">
             <h4 className="text-2xl font-semibold mb-4" style={{ color: '#000000' }}>Add all parts to find total:</h4>
             <div className="text-4xl font-bold" style={{ color: '#000000' }}>
-              {step.shares.map((s) => formatCurrency(s)).join(' + ')} = {formatCurrency(step.total)}
+              {step.shares.map((s: number) => formatCurrency(s)).join(' + ')} = {formatCurrency(step.total)}
             </div>
           </div>
         )}
@@ -1063,7 +1059,7 @@ const RatioSharingTool = () => {
                   <div key={i} className="flex items-center">
                     <div className="w-32 text-2xl font-bold text-left flex-shrink-0" style={{ color: '#000000' }}>{bar.person}</div>
                     <div className="flex gap-1">
-                      {Array(bar.boxes).fill(0).map((_, boxIdx) => {
+                      {Array(bar.boxes).fill(0).map((_: any, boxIdx: number) => {
                         const isDifferenceBox = isLargerPerson && boxIdx >= smallerBoxCount;
                         return (
                           <div 
