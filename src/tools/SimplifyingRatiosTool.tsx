@@ -2,17 +2,29 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RefreshCw, Eye, Home, Menu, X, ChevronUp, ChevronDown } from 'lucide-react';
 
+type WorkingStep = {
+  type: string;
+  ratio?: any;
+  dividedBy?: any;
+  answer?: string;
+};
+
+type AlgebraicTerm = {
+  coeff: number;
+  vars: { [key: string]: number };
+};
+
 type QuestionType = {
   display: string;
   answer: string;
   originalParts?: number[];
   simplifiedParts?: number[];
   hcf?: number;
-  working?: any[];
+  working?: WorkingStep[];
   difficulty: string;
   isAlgebraic?: boolean;
-  original?: any[];
-  simplified?: any[];
+  original?: AlgebraicTerm[];
+  simplified?: AlgebraicTerm[];
 };
 
 const SimplifyingRatiosTool = () => {
@@ -62,10 +74,10 @@ const SimplifyingRatiosTool = () => {
   const randomChoice = (arr: any[]): any => arr[Math.floor(Math.random() * arr.length)];
 
   // Helper to format algebraic terms
-  const formatTerm = (coeff: number, vars: any): string => {
+  const formatTerm = (coeff: number, vars: { [key: string]: number }): string => {
     let result = coeff === 1 && Object.keys(vars).length > 0 ? '' : coeff.toString();
     
-    Object.entries(vars).sort().forEach(([variable, power]: [string, any]) => {
+    Object.entries(vars).sort().forEach(([variable, power]: [string, number]) => {
       if (power > 0) {
         result += variable;
         if (power > 1) {
@@ -83,8 +95,8 @@ const SimplifyingRatiosTool = () => {
   // Generate algebraic ratio question
   const generateAlgebraicQuestion = (diff: string): QuestionType => {
     const variables = ['x', 'y', 'z'];
-    let term1 = { coeff: 1, vars: {} };
-    let term2 = { coeff: 1, vars: {} };
+    let term1: AlgebraicTerm = { coeff: 1, vars: {} };
+    let term2: AlgebraicTerm = { coeff: 1, vars: {} };
     
     if (diff === 'level1') {
       // One common factor ONLY (could be numeric OR algebraic OR power, but not multiple)
@@ -185,12 +197,12 @@ const SimplifyingRatiosTool = () => {
     
     // Calculate simplified form
     const coeffGcd = gcd(term1.coeff, term2.coeff);
-    const simplified1 = { coeff: term1.coeff / coeffGcd, vars: {} };
-    const simplified2 = { coeff: term2.coeff / coeffGcd, vars: {} };
+    const simplified1: AlgebraicTerm = { coeff: term1.coeff / coeffGcd, vars: {} };
+    const simplified2: AlgebraicTerm = { coeff: term2.coeff / coeffGcd, vars: {} };
     
     // Find common variable powers
     const allVars = new Set([...Object.keys(term1.vars), ...Object.keys(term2.vars)]);
-    allVars.forEach(v => {
+    allVars.forEach((v: string) => {
       const power1 = term1.vars[v] || 0;
       const power2 = term2.vars[v] || 0;
       const minPower = Math.min(power1, power2);
@@ -210,14 +222,14 @@ const SimplifyingRatiosTool = () => {
     };
   };
 
-  const generateAlgebraicWorking = (term1: any, term2: any, simp1: any, simp2: any, coeffGcd: number): any[] => {
-    const steps = [{ 
+  const generateAlgebraicWorking = (term1: AlgebraicTerm, term2: AlgebraicTerm, simp1: AlgebraicTerm, simp2: AlgebraicTerm, coeffGcd: number): WorkingStep[] => {
+    const steps: WorkingStep[] = [{ 
       type: 'original', 
       ratio: [formatTerm(term1.coeff, term1.vars), formatTerm(term2.coeff, term2.vars)] 
     }];
     
-    let currentTerm1 = { coeff: term1.coeff, vars: {...term1.vars} };
-    let currentTerm2 = { coeff: term2.coeff, vars: {...term2.vars} };
+    let currentTerm1: AlgebraicTerm = { coeff: term1.coeff, vars: {...term1.vars} };
+    let currentTerm2: AlgebraicTerm = { coeff: term2.coeff, vars: {...term2.vars} };
     
     // Step 1: Divide by numeric factor if > 1
     if (coeffGcd > 1) {
@@ -285,8 +297,8 @@ const SimplifyingRatiosTool = () => {
     return 1;
   };
 
-  const generateWorking = (original: number[], simplified: number[]): any[] => {
-    const steps = [{ type: 'original', ratio: [...original] }];
+  const generateWorking = (original: number[], simplified: number[]): WorkingStep[] => {
+    const steps: WorkingStep[] = [{ type: 'original', ratio: [...original] }];
     let current = [...original];
     
     while (findHCF(current) > 1) {
@@ -431,7 +443,7 @@ const SimplifyingRatiosTool = () => {
     }
   }, [difficulty, ratioType]);
 
-  const renderStep = (step: any, idx: number) => {
+  const renderStep = (step: WorkingStep, idx: number) => {
     const displayRatio = Array.isArray(step.ratio) ? step.ratio.join(':') : step.ratio;
     
     return (
@@ -637,7 +649,7 @@ const SimplifyingRatiosTool = () => {
                       {showAnswer && question.working && (
                         <div className="mt-8 space-y-6">
                           <h3 className="text-3xl font-bold mb-6 text-center" style={{ color: '#000000' }}>Solution:</h3>
-                          {question.working.map((step: any, idx: number) => renderStep(step, idx))}
+                          {question.working.map((step: WorkingStep, idx: number) => renderStep(step, idx))}
                         </div>
                       )}
                     </>
