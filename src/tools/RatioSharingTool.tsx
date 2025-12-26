@@ -1292,6 +1292,46 @@ const RatioSharingTool = () => {
                       ))}
                     </div>
                   </div>
+                  {mode === 'single' && (
+              
+                    <div className="flex flex-col gap-1">
+                      {topic === 'sharing' && (
+                        <label className="flex items-center gap-2 text-sm font-semibold text-gray-600">
+                          <input type="checkbox" checked={useAlgebraicMethod}
+                            onChange={(e) => setUseAlgebraicMethod(e.target.checked)}
+                            className="w-3 h-3" />
+                          Numerical
+                        </label>
+                      )}
+                      {topic === 'known' && difficulty !== 'level3' && (
+                        <label className="flex items-center gap-2 text-sm font-semibold text-gray-600">
+                          <input type="checkbox" checked={useNumericalMethod}
+                            onChange={(e) => setUseNumericalMethod(e.target.checked)}
+                            className="w-3 h-3" />
+                          Numerical
+                        </label>
+                      )}
+                      {topic === 'difference' && difficulty !== 'level3' && (
+                        <label className="flex items-center gap-2 text-sm font-semibold text-gray-600">
+                          <input type="checkbox" checked={useDifferenceNumericalMethod}
+                            onChange={(e) => setUseDifferenceNumericalMethod(e.target.checked)}
+                            className="w-3 h-3" />
+                          Numerical
+                        </label>
+                      )}
+                      {topic === 'mixed' && difficulty !== 'level3' && (
+                        <label className="flex items-center gap-2 text-sm font-semibold text-gray-600">
+                          <input type="checkbox" checked={useNumericalMethod || useDifferenceNumericalMethod}
+                            onChange={(e) => {
+                              setUseNumericalMethod(e.target.checked);
+                              setUseDifferenceNumericalMethod(e.target.checked);
+                            }}
+                            className="w-3 h-3" />
+                          Numerical
+                        </label>
+                      )}
+                    </div>
+                  )}
                   
                   <div className="flex flex-col gap-1">
                     {topic === 'sharing' && (
