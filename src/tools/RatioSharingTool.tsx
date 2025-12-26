@@ -2,6 +2,31 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RefreshCw, Eye, Home, Menu, X, ChevronUp, ChevronDown } from 'lucide-react';
 
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { RefreshCw, Eye, Home, Menu, X, ChevronUp, ChevronDown } from 'lucide-react';
+
+// Add these type definitions
+type QuestionType = {
+  display: string;
+  answer: string;
+  ratio: string;
+  ratioParts: number[];
+  total: number;
+  ratioSum?: number;
+  partValue: number;
+  shares: number[];
+  questionType: string;
+  working: any[];
+  names: string[];
+  difficulty: string;
+  knownAmount?: number;
+  knownPerson?: number;
+  difference?: number;
+  largerPerson?: number;
+  mixedType?: string;
+};
+
 const RatioSharingTool = () => {
   const navigate = useNavigate();
   
@@ -17,12 +42,12 @@ const RatioSharingTool = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [colorScheme, setColorScheme] = useState('default');
   
-  const [question, setQuestion] = useState(null);
+  const [question, setQuestion] = useState<QuestionType | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
   const [showWhiteboardAnswer, setShowWhiteboardAnswer] = useState(false);
   
   const [numQuestions, setNumQuestions] = useState(5);
-  const [worksheet, setWorksheet] = useState([]);
+  const [worksheet, setWorksheet] = useState<QuestionType[]>([]);
   const [showWorksheetAnswers, setShowWorksheetAnswers] = useState(false);
   const [isDifferentiated, setIsDifferentiated] = useState(false);
   const [numColumns, setNumColumns] = useState(2);
@@ -1030,7 +1055,7 @@ const RatioSharingTool = () => {
           <div>
             <h4 className="text-2xl font-semibold mb-4 text-center" style={{ color: '#000000' }}>Bar Model - showing the difference:</h4>
             <div className="flex flex-col gap-3 items-start" style={{ marginLeft: '25%' }}>
-              {step.bars.map((bar, i) => {
+              {step.bars.map((bar: any, i: number) => {
                 const isLargerPerson = i === step.largerPerson;
                 const smallerBoxCount = Math.min(step.bars[0].boxes, step.bars[1].boxes);
                 
@@ -1395,7 +1420,7 @@ const RatioSharingTool = () => {
                       {showAnswer && question.working && (
                         <div className="mt-8 space-y-6">
                           <h3 className="text-3xl font-bold mb-6 text-center" style={{ color: '#000000' }}>Solution:</h3>
-                          {question.working.map((step, idx) => renderStep(step, idx))}
+                          {question.working.map((step: any, idx: number) => renderStep(step, idx))}
                         </div>
                       )}
                     </>
