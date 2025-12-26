@@ -22,7 +22,7 @@ const categories = [
   {
     name: 'Ratio & Proportion',
     tools: [
-      { id: 'ratio', path: '/ratio', name: 'Ratio', icon: '⚖️', description: 'Simplify ratios and share amounts in a given ratio', ready: false },
+      { id: 'ratio', path: '/ratio-sharing', name: 'Dividing Ratios', icon: '➗', description: 'Sharing amounts using the total, a known amount or known difference', ready: true },
     ]
   },
   {
