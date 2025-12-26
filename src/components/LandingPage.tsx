@@ -22,7 +22,8 @@ const categories = [
   {
     name: 'Ratio & Proportion',
     tools: [
-      { id: 'ratio', path: '/ratio-sharing', name: 'Dividing Ratios', icon: '➗', description: 'Sharing amounts using the total, a known amount or known difference', ready: true },
+      { id: 'ratio', path: '/ratio-sharing', name: 'Dividing Ratios', icon: '💰', description: 'Sharing amounts using the total, a known amount or known difference', ready: true },
+      { id: 'simplifying-ratios', path: '/simplifying-ratios', name: 'Simplifying Ratios', icon: '➗', description: 'Simplifying ratios in numerical and algebraic forms', ready: true },
     ]
   },
   {
