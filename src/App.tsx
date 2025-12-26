@@ -3,7 +3,7 @@ import LandingPage from './components/LandingPage'
 import IntegersTool from './tools/IntegersTool'
 import RatioSharingTool from './tools/RatioSharingTool'
 import SimplifyingRatiosTool from './tools/SimplifyingRatiosTool'
-// import DoubleBracketsTool from './tools/DoubleBracketsTool'
+import DoubleBracketsTool from './tools/DoubleBracketsTool'
 
 function App() {
   return (
@@ -12,7 +12,7 @@ function App() {
       <Route path="/integers" element={<IntegersTool />} />
       <Route path="/ratio-sharing" element={<RatioSharingTool />} />
       <Route path="/simplifying-ratios" element={<SimplifyingRatiosTool />} />
-      {/* <Route path="/double-brackets" element={<DoubleBracketsTool />} /> */}
+      <Route path="/double-brackets" element={<DoubleBracketsTool />} />
     </Routes>
   )
 }
