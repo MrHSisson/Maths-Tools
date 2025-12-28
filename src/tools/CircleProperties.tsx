@@ -127,7 +127,6 @@ export default function CirclePropertiesTool() {
       return renderSectorDiagram(q, size, isWorksheet, fontSizeScale, levelOverride);
     }
     
-    const centerX = size / 2;
     const centerY = size / 2;
     const circleRadius = size * 0.35;
     const angleRad = (q.angle * Math.PI) / 180;
