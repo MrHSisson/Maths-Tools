@@ -132,16 +132,7 @@ export default function CirclePropertiesTool() {
     const circleRadius = size * 0.35;
     const angleRad = (q.angle * Math.PI) / 180;
     
-    const diamEndX = centerX + Math.cos(angleRad) * circleRadius;
-    const diamEndY = centerY + Math.sin(angleRad) * circleRadius;
-    const diamStartX = centerX - Math.cos(angleRad) * circleRadius;
-    const diamStartY = centerY - Math.sin(angleRad) * circleRadius;
-    const radEndX = centerX + Math.cos(angleRad) * circleRadius;
-    const radEndY = centerY + Math.sin(angleRad) * circleRadius;
-    
-    const diamLabelX = centerX + Math.cos(angleRad) * circleRadius * 0.3;
     const diamLabelY = centerY + Math.sin(angleRad) * circleRadius * 0.3;
-    const radLabelX = centerX + Math.cos(angleRad) * circleRadius * 0.5;
     const radLabelY = centerY + Math.sin(angleRad) * circleRadius * 0.5;
     
     const fontSize = isWorksheet ? Math.max(16, 18 * fontSizeScale) : 24;
@@ -298,24 +289,14 @@ export default function CirclePropertiesTool() {
     
     const largeArcFlag = (q.theta || 0) > 180 ? 1 : 0;
     
-    let labelX = 0;
-    let labelY = 0;
     let labelText = '';
     let labelAngle = 0;
     
     if (q.level === 1) {
-      const midX = (startX + endX) / 2;
-      const midY = (startY + endY) / 2;
       labelAngle = Math.atan2(endY - startY, endX - startX) * (180 / Math.PI);
-      labelX = midX;
-      labelY = midY;
       labelText = `d = ${formatNumber(q.diameter)} cm`;
     } else {
-      const midX = (centerX + startX) / 2;
-      const midY = (centerY + startY) / 2;
       labelAngle = Math.atan2(startY - centerY, startX - centerX) * (180 / Math.PI);
-      labelX = midX;
-      labelY = midY;
       labelText = `r = ${formatNumber(q.radius)} cm`;
     }
     
