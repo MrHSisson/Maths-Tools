@@ -469,6 +469,9 @@ export default function CirclePropertiesTool() {
     );
   };
 
+// ===== CONTINUE TO PART 2 =====
+  
+//  ===== SECTION 2 ======
   const generateCircumferenceQuestion = (level: string, angle: number): QuestionType => {
     if (level === 'level1') {
       const diameter = allowDecimals 
