@@ -6,6 +6,8 @@ import SimplifyingRatiosTool from './tools/SimplifyingRatiosTool'
 import DoubleBracketsTool from './tools/DoubleBracketsTool'
 import CircleProperties from './tools/CircleProperties'
 import CompletingTheSquare from './tools/CompletingTheSquare'
+import EstimationTool from './tools/EstimationTool'
+
 
 function App() {
   return (
@@ -17,6 +19,7 @@ function App() {
       <Route path="/double-brackets" element={<DoubleBracketsTool />} />
       <Route path="/circle-properties" element={<CircleProperties />} />
       <Route path="/completing-the-square" element={<CompletingTheSquare />} />
+      <Route path="/estimation" element={<EstimationTool />} />
     </Routes>
   )
 }
