@@ -5,6 +5,7 @@ import RatioSharingTool from './tools/RatioSharingTool'
 import SimplifyingRatiosTool from './tools/SimplifyingRatiosTool'
 import DoubleBracketsTool from './tools/DoubleBracketsTool'
 import CircleProperties from './tools/CircleProperties'
+import CompletingTheSquare from './tools/CompletingTheSquare'
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
       <Route path="/simplifying-ratios" element={<SimplifyingRatiosTool />} />
       <Route path="/double-brackets" element={<DoubleBracketsTool />} />
       <Route path="/circle-properties" element={<CircleProperties />} />
+      <Route path="/completing-the-square" element={<CompletingTheSquare />} />
     </Routes>
   )
 }
