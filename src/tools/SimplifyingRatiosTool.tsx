@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X } from 'lucide-react';
 
-// Type Definitions
+// Type definitions (bottom-up hierarchy)
 type AlgebraicTerm = {
   coeff: number;
-  vars: { [key: string]: number };
+  vars: { [key: string]: number };  // Index signature for dynamic variable access
 };
 
 type WorkingStep = {
@@ -15,30 +15,17 @@ type WorkingStep = {
   answer?: string;
 };
 
-type NumericQuestionValues = {
-  original: number[];
-  simplified: number[];
-  hcf: number;
-};
-
-type AlgebraicQuestionValues = {
-  term1: AlgebraicTerm;
-  term2: AlgebraicTerm;
-  simplified1: AlgebraicTerm;
-  simplified2: AlgebraicTerm;
-};
-
 type QuestionType = {
   display: string;
   answer: string;
   working: WorkingStep[];
-  values: NumericQuestionValues | AlgebraicQuestionValues;
+  values: any;  // Can be numeric or algebraic values - too complex to type strictly
   difficulty: string;
 };
 
 const SimplifyingRatiosTool = () => {
   const navigate = useNavigate();
-
+  
   // UI State
   const [colorScheme, setColorScheme] = useState<string>('default');
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
@@ -69,6 +56,7 @@ const SimplifyingRatiosTool = () => {
   const fontSizes: string[] = ['text-xl', 'text-2xl', 'text-3xl', 'text-4xl'];
   const getFontSize = (): string => fontSizes[worksheetFontSize];
 
+  // Color Scheme Functions
   const getQuestionBg = (): string => {
     if (colorScheme === 'blue') return '#D1E7F8';
     if (colorScheme === 'pink') return '#F8D1E7';
@@ -86,7 +74,7 @@ const SimplifyingRatiosTool = () => {
   const getWhiteboardWorkingBg = (): string => getStepBg();
   const getFinalAnswerBg = (): string => getStepBg();
 
-  const getDifficultyButtonClass = (level: string, idx: number, isActive: boolean): string => {
+  const getDifficultyButtonClass = (lvl: string, idx: number, isActive: boolean): string => {
     if (isActive) {
       return idx === 0 ? 'bg-green-600 text-white' 
            : idx === 1 ? 'bg-yellow-600 text-white' 
@@ -101,13 +89,13 @@ const SimplifyingRatiosTool = () => {
   const gcd = (a: number, b: number): number => b === 0 ? a : gcd(b, a % b);
 
   const findHCF = (numbers: number[]): number => {
-    return numbers.reduce((acc, num) => gcd(acc, num));
+    return numbers.reduce((acc: number, num: number) => gcd(acc, num));
   };
 
   const findSmallestCommonFactor = (numbers: number[]): number => {
     const primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47];
-    for (const prime of primes) {
-      if (numbers.every((n) => n % prime === 0)) return prime;
+    for (let prime of primes) {
+      if (numbers.every((n: number) => n % prime === 0)) return prime;
     }
     return 1;
   };
@@ -116,7 +104,7 @@ const SimplifyingRatiosTool = () => {
     const absCoeff = Math.abs(coeff);
     let result = absCoeff === 1 && Object.keys(vars).length > 0 ? '' : absCoeff.toString();
     
-    Object.entries(vars).sort().forEach(([variable, power]) => {
+    Object.entries(vars).sort().forEach(([variable, power]: [string, number]) => {
       if (power > 0) {
         result += variable;
         if (power > 1) {
@@ -139,7 +127,7 @@ const SimplifyingRatiosTool = () => {
       const isThreePart = level === 'level3';
       const numParts = isThreePart ? 3 : 2;
 
-      const simplified: number[] = [];
+      let simplified: number[] = [];
       let hcf = 0;
       let minPart = 0;
       let maxPart = 0;
@@ -171,9 +159,9 @@ const SimplifyingRatiosTool = () => {
       if (findHCF(simplified) !== 1) continue;
 
       hcf = hcfChoices[Math.floor(Math.random() * hcfChoices.length)];
-      const original = simplified.map((x) => x * hcf);
+      const original = simplified.map((x: number) => x * hcf);
 
-      if (original.some((x) => x < minPart || x > maxPart)) continue;
+      if (original.some((x: number) => x < minPart || x > maxPart)) continue;
 
       const working: WorkingStep[] = [{ 
         type: 'original', 
@@ -184,7 +172,7 @@ const SimplifyingRatiosTool = () => {
       
       while (findHCF(current) > 1) {
         const commonFactor = findSmallestCommonFactor(current);
-        const next = current.map((x) => x / commonFactor);
+        const next = current.map((x: number) => x / commonFactor);
         working.push({ 
           type: 'step',
           title: `Divide by ${commonFactor}`,
@@ -220,8 +208,8 @@ const SimplifyingRatiosTool = () => {
   // Algebraic Question Generation
   const generateAlgebraicQuestion = (level: string): QuestionType => {
     const variables = ['x', 'y', 'z'];
-    const term1: AlgebraicTerm = { coeff: 1, vars: {} };
-    const term2: AlgebraicTerm = { coeff: 1, vars: {} };
+    let term1: AlgebraicTerm = { coeff: 1, vars: {} };
+    let term2: AlgebraicTerm = { coeff: 1, vars: {} };
     
     if (level === 'level1') {
       const factorType = ['numeric', 'algebraic', 'power'][Math.floor(Math.random() * 3)];
@@ -236,7 +224,7 @@ const SimplifyingRatiosTool = () => {
         term1.coeff = commonFactor * coeff1;
         term2.coeff = commonFactor * coeff2;
         const var1 = variables[Math.floor(Math.random() * variables.length)];
-        const var2 = variables.filter((v) => v !== var1)[Math.floor(Math.random() * 2)];
+        const var2 = variables.filter((v: string) => v !== var1)[Math.floor(Math.random() * 2)];
         term1.vars[var1] = 1;
         term2.vars[var2] = 1;
       } else if (factorType === 'algebraic') {
@@ -248,8 +236,8 @@ const SimplifyingRatiosTool = () => {
         term1.coeff = coeff1;
         term2.coeff = coeff2;
         const commonVar = variables[Math.floor(Math.random() * variables.length)];
-        const var1 = variables.filter((v) => v !== commonVar)[Math.floor(Math.random() * 2)];
-        const var2 = variables.filter((v) => v !== commonVar && v !== var1)[0];
+        const var1 = variables.filter((v: string) => v !== commonVar)[Math.floor(Math.random() * 2)];
+        const var2 = variables.filter((v: string) => v !== commonVar && v !== var1)[0];
         term1.vars[commonVar] = 1;
         term1.vars[var1] = 1;
         term2.vars[commonVar] = 1;
@@ -284,8 +272,8 @@ const SimplifyingRatiosTool = () => {
         term2.vars[var1] = 2;
       } else {
         const commonVar = variables[Math.floor(Math.random() * variables.length)];
-        const var1 = variables.filter((v) => v !== commonVar)[Math.floor(Math.random() * 2)];
-        const var2 = variables.filter((v) => v !== commonVar && v !== var1)[0];
+        const var1 = variables.filter((v: string) => v !== commonVar)[Math.floor(Math.random() * 2)];
+        const var2 = variables.filter((v: string) => v !== commonVar && v !== var1)[0];
         term1.vars[commonVar] = 1;
         term1.vars[var1] = 1;
         term2.vars[commonVar] = 1;
@@ -302,7 +290,7 @@ const SimplifyingRatiosTool = () => {
       term2.coeff = commonNumFactor * mult2;
       
       const var1 = variables[Math.floor(Math.random() * variables.length)];
-      const var2 = variables.filter((v) => v !== var1)[Math.floor(Math.random() * 2)];
+      const var2 = variables.filter((v: string) => v !== var1)[Math.floor(Math.random() * 2)];
       
       term1.vars[var1] = 2;
       term1.vars[var2] = 3;
@@ -316,7 +304,7 @@ const SimplifyingRatiosTool = () => {
     const simplified2: AlgebraicTerm = { coeff: term2.coeff / coeffGcd, vars: {} };
     
     const allVars = new Set([...Object.keys(term1.vars), ...Object.keys(term2.vars)]);
-    allVars.forEach((v) => {
+    allVars.forEach((v: string) => {
       const power1 = term1.vars[v] || 0;
       const power2 = term2.vars[v] || 0;
       const minPower = Math.min(power1, power2);
@@ -331,8 +319,8 @@ const SimplifyingRatiosTool = () => {
       content: `${formatTerm(term1.coeff, term1.vars)} : ${formatTerm(term2.coeff, term2.vars)}` 
     }];
     
-    const currentTerm1: AlgebraicTerm = { coeff: term1.coeff, vars: {...term1.vars} };
-    const currentTerm2: AlgebraicTerm = { coeff: term2.coeff, vars: {...term2.vars} };
+    let currentTerm1: AlgebraicTerm = { coeff: term1.coeff, vars: {...term1.vars} };
+    let currentTerm2: AlgebraicTerm = { coeff: term2.coeff, vars: {...term2.vars} };
     
     if (coeffGcd > 1) {
       currentTerm1.coeff = currentTerm1.coeff / coeffGcd;
@@ -344,7 +332,7 @@ const SimplifyingRatiosTool = () => {
     }
     
     const sortedVars = Array.from(allVars).sort();
-    sortedVars.forEach((v) => {
+    sortedVars.forEach((v: string) => {
       const power1 = currentTerm1.vars[v] || 0;
       const power2 = currentTerm2.vars[v] || 0;
       const minPower = Math.min(power1, power2);
@@ -389,36 +377,34 @@ const SimplifyingRatiosTool = () => {
     const questions: QuestionType[] = [];
     const usedKeys = new Set<string>();
     
-    if (isDifferentiated) {
-      const levels = ['level1', 'level2', 'level3'];
-      for (const diffLevel of levels) {
-        for (let i = 0; i < numQuestions; i++) {
-          let attempts = 0;
-          const maxAttempts = 100;
-          let q: QuestionType;
-          
-          do {
-            q = currentTool === 'numeric' ? generateNumericQuestion(diffLevel) : generateAlgebraicQuestion(diffLevel);
-            attempts++;
-          } while (usedKeys.has(q.display) && attempts < maxAttempts);
-          
-          usedKeys.add(q.display);
-          questions.push({ ...q, difficulty: diffLevel });
+    const generateUniqueQuestion = (lvl: string): QuestionType => {
+      let attempts = 0;
+      const maxAttempts = 100;
+      
+      while (attempts < maxAttempts) {
+        const q = currentTool === 'numeric' ? generateNumericQuestion(lvl) : generateAlgebraicQuestion(lvl);
+        const uniqueKey = q.display;
+        
+        if (!usedKeys.has(uniqueKey)) {
+          usedKeys.add(uniqueKey);
+          return q;
         }
+        
+        attempts++;
       }
+      
+      return currentTool === 'numeric' ? generateNumericQuestion(lvl) : generateAlgebraicQuestion(lvl);
+    };
+    
+    if (isDifferentiated) {
+      ['level1', 'level2', 'level3'].forEach((lvl: string) => {
+        for (let i = 0; i < numQuestions; i++) {
+          questions.push({ ...generateUniqueQuestion(lvl), difficulty: lvl });
+        }
+      });
     } else {
       for (let i = 0; i < numQuestions; i++) {
-        let attempts = 0;
-        const maxAttempts = 100;
-        let q: QuestionType;
-        
-        do {
-          q = currentTool === 'numeric' ? generateNumericQuestion(difficulty) : generateAlgebraicQuestion(difficulty);
-          attempts++;
-        } while (usedKeys.has(q.display) && attempts < maxAttempts);
-        
-        usedKeys.add(q.display);
-        questions.push({ ...q, difficulty });
+        questions.push({ ...generateUniqueQuestion(difficulty), difficulty });
       }
     }
     
@@ -469,7 +455,7 @@ const SimplifyingRatiosTool = () => {
                   <div className="px-6 py-2 font-bold text-gray-700 text-sm uppercase tracking-wide">
                     Color Schemes
                   </div>
-                  {['default', 'blue', 'pink', 'yellow'].map((scheme) => (
+                  {['default', 'blue', 'pink', 'yellow'].map((scheme: string) => (
                     <button 
                       key={scheme}
                       onClick={() => setColorScheme(scheme)}
@@ -500,7 +486,7 @@ const SimplifyingRatiosTool = () => {
 
           {/* Tool Selectors */}
           <div className="flex justify-center gap-4 mb-6">
-            {['numeric', 'algebraic'].map((tool) => (
+            {['numeric', 'algebraic'].map((tool: string) => (
               <button 
                 key={tool}
                 onClick={() => setCurrentTool(tool)}
@@ -520,7 +506,7 @@ const SimplifyingRatiosTool = () => {
 
           {/* Mode Selectors */}
           <div className="flex justify-center gap-4 mb-8">
-            {['whiteboard', 'single', 'worksheet'].map((m) => (
+            {['whiteboard', 'single', 'worksheet'].map((m: string) => (
               <button 
                 key={m}
                 onClick={() => setMode(m)}
@@ -536,24 +522,22 @@ const SimplifyingRatiosTool = () => {
           {/* WHITEBOARD MODE */}
           {mode === 'whiteboard' && currentQuestion && (
             <div className="flex flex-col gap-4">
+              {/* Control Bar */}
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-6">
                     <div className="flex items-center gap-3">
                       <span className="text-sm font-semibold" style={{ color: '#000000' }}>Difficulty:</span>
                       <div className="flex gap-2">
-                        {[0, 1, 2].map((idx) => {
-                          const levelValue = `level${idx + 1}` as 'level1' | 'level2' | 'level3';
-                          return (
-                            <button 
-                              key={levelValue}
-                              onClick={() => setDifficulty(levelValue)}
-                              className={'px-4 py-2 rounded-lg font-bold text-sm w-24 ' + 
-                                getDifficultyButtonClass(levelValue, idx, difficulty === levelValue)}>
-                              Level {idx + 1}
-                            </button>
-                          );
-                        })}
+                        {['level1', 'level2', 'level3'].map((lvl: string, idx: number) => (
+                          <button 
+                            key={lvl}
+                            onClick={() => setDifficulty(lvl)}
+                            className={'px-4 py-2 rounded-lg font-bold text-sm w-24 ' + 
+                              getDifficultyButtonClass(lvl, idx, difficulty === lvl)}>
+                            Level {idx + 1}
+                          </button>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -575,6 +559,7 @@ const SimplifyingRatiosTool = () => {
                 </div>
               </div>
 
+              {/* Question Display */}
               <div className="rounded-xl shadow-2xl p-8" style={{ backgroundColor: getQuestionBg() }}>
                 <div className="text-center">
                   <span className="text-6xl font-bold" style={{ color: '#000000' }}>
@@ -594,24 +579,22 @@ const SimplifyingRatiosTool = () => {
           {/* WORKED EXAMPLE MODE */}
           {mode === 'single' && currentQuestion && (
             <div className="flex flex-col gap-4">
+              {/* Control Bar */}
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-6">
                     <div className="flex items-center gap-3">
                       <span className="text-sm font-semibold" style={{ color: '#000000' }}>Difficulty:</span>
                       <div className="flex gap-2">
-                        {[0, 1, 2].map((idx) => {
-                          const levelValue = `level${idx + 1}` as 'level1' | 'level2' | 'level3';
-                          return (
-                            <button 
-                              key={levelValue}
-                              onClick={() => setDifficulty(levelValue)}
-                              className={'px-4 py-2 rounded-lg font-bold text-sm w-24 ' + 
-                                getDifficultyButtonClass(levelValue, idx, difficulty === levelValue)}>
-                              Level {idx + 1}
-                            </button>
-                          );
-                        })}
+                        {['level1', 'level2', 'level3'].map((lvl: string, idx: number) => (
+                          <button 
+                            key={lvl}
+                            onClick={() => setDifficulty(lvl)}
+                            className={'px-4 py-2 rounded-lg font-bold text-sm w-24 ' + 
+                              getDifficultyButtonClass(lvl, idx, difficulty === lvl)}>
+                            Level {idx + 1}
+                          </button>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -633,6 +616,7 @@ const SimplifyingRatiosTool = () => {
                 </div>
               </div>
 
+              {/* Question Display */}
               <div className="overflow-y-auto" style={{ height: '120vh' }}>
                 <div className="rounded-xl shadow-lg p-8 w-full" style={{ backgroundColor: getQuestionBg() }}>
                   <div className="text-center">
@@ -644,7 +628,7 @@ const SimplifyingRatiosTool = () => {
                   {showAnswer && (
                     <>
                       <div className="space-y-4 mt-8">
-                        {currentQuestion.working.filter((s) => s.type === 'step' || s.type === 'original').map((step: WorkingStep, i: number) => (
+                        {currentQuestion.working.filter((s: WorkingStep) => s.type === 'step' || s.type === 'original').map((step: WorkingStep, i: number) => (
                           <div key={i} className="rounded-xl p-6" style={{ backgroundColor: getStepBg() }}>
                             <h4 className="text-xl font-bold mb-2" style={{ color: '#000000' }}>
                               {step.title || (step.type === 'original' ? 'Original Ratio' : `Step ${i}`)}
@@ -673,6 +657,7 @@ const SimplifyingRatiosTool = () => {
             <>
               <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
                 <div className="space-y-4">
+                  {/* Line 1: Questions + Differentiated */}
                   <div className="flex justify-center items-center gap-6">
                     <div className="flex items-center gap-3">
                       <label className="text-lg font-semibold" style={{ color: '#000000' }}>
@@ -701,6 +686,7 @@ const SimplifyingRatiosTool = () => {
                     </div>
                   </div>
 
+                  {/* Line 2: Difficulty + Columns (hidden if differentiated) */}
                   {!isDifferentiated && (
                     <div className="flex justify-center items-center gap-6">
                       <div className="flex items-center gap-3">
@@ -708,18 +694,15 @@ const SimplifyingRatiosTool = () => {
                           Difficulty:
                         </label>
                         <div className="flex gap-2">
-                          {[0, 1, 2].map((idx) => {
-                            const levelValue = `level${idx + 1}` as 'level1' | 'level2' | 'level3';
-                            return (
-                              <button 
-                                key={levelValue}
-                                onClick={() => setDifficulty(levelValue)}
-                                className={'px-6 py-2 rounded-lg font-semibold w-28 ' + 
-                                  getDifficultyButtonClass(levelValue, idx, difficulty === levelValue)}>
-                                Level {idx + 1}
-                              </button>
-                            );
-                          })}
+                          {['level1', 'level2', 'level3'].map((lvl: string, idx: number) => (
+                            <button 
+                              key={lvl}
+                              onClick={() => setDifficulty(lvl)}
+                              className={'px-6 py-2 rounded-lg font-semibold w-28 ' + 
+                                getDifficultyButtonClass(lvl, idx, difficulty === lvl)}>
+                              Level {idx + 1}
+                            </button>
+                          ))}
                         </div>
                       </div>
                       
@@ -739,6 +722,7 @@ const SimplifyingRatiosTool = () => {
                     </div>
                   )}
 
+                  {/* Action Buttons */}
                   <div className="flex justify-center gap-4">
                     <button 
                       onClick={handleGenerateWorksheet}
@@ -759,6 +743,7 @@ const SimplifyingRatiosTool = () => {
 
               {worksheet.length > 0 && (
                 <div className="rounded-xl shadow-2xl p-8 relative" style={{ backgroundColor: getQuestionBg() }}>
+                  {/* Font Size Controls */}
                   <div className="absolute top-4 right-4 flex items-center gap-1">
                     <button 
                       onClick={() => setWorksheetFontSize(Math.max(0, worksheetFontSize - 1))} 
@@ -782,31 +767,28 @@ const SimplifyingRatiosTool = () => {
                   
                   {isDifferentiated ? (
                     <div className="grid grid-cols-3 gap-6">
-                      {[0, 1, 2].map((idx) => {
-                        const levelValue = `level${idx + 1}` as 'level1' | 'level2' | 'level3';
-                        return (
-                          <div 
-                            key={levelValue} 
-                            className={`${colorConfig[levelValue].bg} ${colorConfig[levelValue].border} rounded-xl p-6 border-4`}>
-                            <h3 className="text-2xl font-bold text-center mb-6" style={{ color: '#000000' }}>
-                              Level {idx + 1}
-                            </h3>
-                            <div className="space-y-3">
-                              {worksheet.filter((q) => q.difficulty === levelValue).map((q: QuestionType, i: number) => (
-                                <div key={i} className={getFontSize()} style={{ color: '#000000' }}>
-                                  <span className="font-semibold">{i + 1}.</span>
-                                  <span className="ml-3 font-bold">{q.display}</span>
-                                  {showWorksheetAnswers && (
-                                    <div className="ml-8 font-semibold mt-1" style={{ color: '#059669' }}>
-                                      = {q.answer}
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
+                      {['level1', 'level2', 'level3'].map((lvl: string, idx: number) => (
+                        <div 
+                          key={lvl} 
+                          className={`${colorConfig[lvl].bg} ${colorConfig[lvl].border} rounded-xl p-6 border-4`}>
+                          <h3 className="text-2xl font-bold text-center mb-6" style={{ color: '#000000' }}>
+                            Level {idx + 1}
+                          </h3>
+                          <div className="space-y-3">
+                            {worksheet.filter((q: QuestionType) => q.difficulty === lvl).map((q: QuestionType, i: number) => (
+                              <div key={i} className={getFontSize()} style={{ color: '#000000' }}>
+                                <span className="font-semibold">{i + 1}.</span>
+                                <span className="ml-3 font-bold">{q.display}</span>
+                                {showWorksheetAnswers && (
+                                  <div className="ml-8 font-semibold mt-1" style={{ color: '#059669' }}>
+                                    = {q.answer}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
                           </div>
-                        );
-                      })}
+                        </div>
+                      ))}
                     </div>
                   ) : (
                     <div className={`grid gap-x-6 gap-y-3 ${
