@@ -40,7 +40,7 @@ const categories: Category[] = [
       { id: 'like-terms', path: '/like-terms', name: 'Like Terms', icon: 'xy', description: 'Simplify algebraic expressions by collecting like terms', ready: false },
       { id: 'single-brackets', path: '/single-brackets', name: 'Expanding Single Brackets', icon: 'x', description: 'Expand single brackets by multiplying each term', ready: false },
       { id: 'double-brackets', path: '/double-brackets', name: 'Expanding Double Brackets', icon: 'x²', description: 'Expand pairs of brackets using grid or FOIL methods', ready: true },
-      { id: 'completing-square', path: '/completing-square', name: 'Completing the Square', icon: '▢', description: 'Rewrite and solve quadratic expressions in completed square form', ready: true },
+      { id: 'completing-square', path: '/completing-the-square', name: 'Completing the Square', icon: '▢', description: 'Rewrite and solve quadratic expressions in completed square form', ready: true },
     ]
   },
   {
