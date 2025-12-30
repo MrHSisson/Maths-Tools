@@ -408,11 +408,12 @@ const SimplifyingRatiosTool = () => {
     };
     
     if (isDifferentiated) {
-      (['level1', 'level2', 'level3'] as const).forEach((lvl) => {
+      const levels = ['level1', 'level2', 'level3'];
+      for (const lvl of levels) {
         for (let i = 0; i < numQuestions; i++) {
           questions.push({ ...generateUniqueQuestion(lvl), difficulty: lvl });
         }
-      });
+      }
     } else {
       for (let i = 0; i < numQuestions; i++) {
         questions.push({ ...generateUniqueQuestion(difficulty), difficulty });
