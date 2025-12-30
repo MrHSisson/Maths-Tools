@@ -389,35 +389,36 @@ const SimplifyingRatiosTool = () => {
     const questions: QuestionType[] = [];
     const usedKeys = new Set<string>();
     
-    const generateUniqueQuestion = (difficultyLevel: string): QuestionType => {
-      let attempts = 0;
-      const maxAttempts = 100;
-      
-      while (attempts < maxAttempts) {
-        const q = currentTool === 'numeric' ? generateNumericQuestion(difficultyLevel) : generateAlgebraicQuestion(difficultyLevel);
-        const uniqueKey = q.display;
-        
-        if (!usedKeys.has(uniqueKey)) {
-          usedKeys.add(uniqueKey);
-          return q;
-        }
-        
-        attempts++;
-      }
-      
-      return currentTool === 'numeric' ? generateNumericQuestion(difficultyLevel) : generateAlgebraicQuestion(difficultyLevel);
-    };
-    
     if (isDifferentiated) {
       const levels = ['level1', 'level2', 'level3'];
       for (const diffLevel of levels) {
         for (let i = 0; i < numQuestions; i++) {
-          questions.push({ ...generateUniqueQuestion(diffLevel), difficulty: diffLevel });
+          let attempts = 0;
+          const maxAttempts = 100;
+          let q: QuestionType;
+          
+          do {
+            q = currentTool === 'numeric' ? generateNumericQuestion(diffLevel) : generateAlgebraicQuestion(diffLevel);
+            attempts++;
+          } while (usedKeys.has(q.display) && attempts < maxAttempts);
+          
+          usedKeys.add(q.display);
+          questions.push({ ...q, difficulty: diffLevel });
         }
       }
     } else {
       for (let i = 0; i < numQuestions; i++) {
-        questions.push({ ...generateUniqueQuestion(difficulty), difficulty });
+        let attempts = 0;
+        const maxAttempts = 100;
+        let q: QuestionType;
+        
+        do {
+          q = currentTool === 'numeric' ? generateNumericQuestion(difficulty) : generateAlgebraicQuestion(difficulty);
+          attempts++;
+        } while (usedKeys.has(q.display) && attempts < maxAttempts);
+        
+        usedKeys.add(q.display);
+        questions.push({ ...q, difficulty });
       }
     }
     
@@ -535,7 +536,6 @@ const SimplifyingRatiosTool = () => {
           {/* WHITEBOARD MODE */}
           {mode === 'whiteboard' && currentQuestion && (
             <div className="flex flex-col gap-4">
-              {/* Control Bar */}
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-6">
@@ -572,7 +572,6 @@ const SimplifyingRatiosTool = () => {
                 </div>
               </div>
 
-              {/* Question Display */}
               <div className="rounded-xl shadow-2xl p-8" style={{ backgroundColor: getQuestionBg() }}>
                 <div className="text-center">
                   <span className="text-6xl font-bold" style={{ color: '#000000' }}>
@@ -592,7 +591,6 @@ const SimplifyingRatiosTool = () => {
           {/* WORKED EXAMPLE MODE */}
           {mode === 'single' && currentQuestion && (
             <div className="flex flex-col gap-4">
-              {/* Control Bar */}
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-6">
@@ -629,7 +627,6 @@ const SimplifyingRatiosTool = () => {
                 </div>
               </div>
 
-              {/* Question Display */}
               <div className="overflow-y-auto" style={{ height: '120vh' }}>
                 <div className="rounded-xl shadow-lg p-8 w-full" style={{ backgroundColor: getQuestionBg() }}>
                   <div className="text-center">
@@ -670,7 +667,6 @@ const SimplifyingRatiosTool = () => {
             <>
               <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
                 <div className="space-y-4">
-                  {/* Line 1: Questions + Differentiated */}
                   <div className="flex justify-center items-center gap-6">
                     <div className="flex items-center gap-3">
                       <label className="text-lg font-semibold" style={{ color: '#000000' }}>
@@ -699,7 +695,6 @@ const SimplifyingRatiosTool = () => {
                     </div>
                   </div>
 
-                  {/* Line 2: Difficulty + Columns (hidden if differentiated) */}
                   {!isDifferentiated && (
                     <div className="flex justify-center items-center gap-6">
                       <div className="flex items-center gap-3">
@@ -735,7 +730,6 @@ const SimplifyingRatiosTool = () => {
                     </div>
                   )}
 
-                  {/* Line 3: Action Buttons */}
                   <div className="flex justify-center gap-4">
                     <button 
                       onClick={handleGenerateWorksheet}
@@ -756,7 +750,6 @@ const SimplifyingRatiosTool = () => {
 
               {worksheet.length > 0 && (
                 <div className="rounded-xl shadow-2xl p-8 relative" style={{ backgroundColor: getQuestionBg() }}>
-                  {/* Font Size Controls */}
                   <div className="absolute top-4 right-4 flex items-center gap-1">
                     <button 
                       onClick={() => setWorksheetFontSize(Math.max(0, worksheetFontSize - 1))} 
