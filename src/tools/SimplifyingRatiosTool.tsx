@@ -542,15 +542,18 @@ const SimplifyingRatiosTool = () => {
                     <div className="flex items-center gap-3">
                       <span className="text-sm font-semibold" style={{ color: '#000000' }}>Difficulty:</span>
                       <div className="flex gap-2">
-                        {['level1', 'level2', 'level3'].map((level, idx) => (
-                          <button 
-                            key={level}
-                            onClick={() => setDifficulty(level)}
-                            className={'px-4 py-2 rounded-lg font-bold text-sm w-24 ' + 
-                              getDifficultyButtonClass(level, idx, difficulty === level)}>
-                            Level {idx + 1}
-                          </button>
-                        ))}
+                        {[0, 1, 2].map((idx) => {
+                          const levelValue = `level${idx + 1}` as 'level1' | 'level2' | 'level3';
+                          return (
+                            <button 
+                              key={levelValue}
+                              onClick={() => setDifficulty(levelValue)}
+                              className={'px-4 py-2 rounded-lg font-bold text-sm w-24 ' + 
+                                getDifficultyButtonClass(levelValue, idx, difficulty === levelValue)}>
+                              Level {idx + 1}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   </div>
@@ -597,15 +600,18 @@ const SimplifyingRatiosTool = () => {
                     <div className="flex items-center gap-3">
                       <span className="text-sm font-semibold" style={{ color: '#000000' }}>Difficulty:</span>
                       <div className="flex gap-2">
-                        {['level1', 'level2', 'level3'].map((level, idx) => (
-                          <button 
-                            key={level}
-                            onClick={() => setDifficulty(level)}
-                            className={'px-4 py-2 rounded-lg font-bold text-sm w-24 ' + 
-                              getDifficultyButtonClass(level, idx, difficulty === level)}>
-                            Level {idx + 1}
-                          </button>
-                        ))}
+                        {[0, 1, 2].map((idx) => {
+                          const levelValue = `level${idx + 1}` as 'level1' | 'level2' | 'level3';
+                          return (
+                            <button 
+                              key={levelValue}
+                              onClick={() => setDifficulty(levelValue)}
+                              className={'px-4 py-2 rounded-lg font-bold text-sm w-24 ' + 
+                                getDifficultyButtonClass(levelValue, idx, difficulty === levelValue)}>
+                              Level {idx + 1}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   </div>
@@ -702,15 +708,18 @@ const SimplifyingRatiosTool = () => {
                           Difficulty:
                         </label>
                         <div className="flex gap-2">
-                          {['level1', 'level2', 'level3'].map((level, idx) => (
-                            <button 
-                              key={level}
-                              onClick={() => setDifficulty(level)}
-                              className={'px-6 py-2 rounded-lg font-semibold w-28 ' + 
-                                getDifficultyButtonClass(level, idx, difficulty === level)}>
-                              Level {idx + 1}
-                            </button>
-                          ))}
+                          {[0, 1, 2].map((idx) => {
+                            const levelValue = `level${idx + 1}` as 'level1' | 'level2' | 'level3';
+                            return (
+                              <button 
+                                key={levelValue}
+                                onClick={() => setDifficulty(levelValue)}
+                                className={'px-6 py-2 rounded-lg font-semibold w-28 ' + 
+                                  getDifficultyButtonClass(levelValue, idx, difficulty === levelValue)}>
+                                Level {idx + 1}
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                       
@@ -773,28 +782,31 @@ const SimplifyingRatiosTool = () => {
                   
                   {isDifferentiated ? (
                     <div className="grid grid-cols-3 gap-6">
-                      {['level1', 'level2', 'level3'].map((level, idx) => (
-                        <div 
-                          key={level} 
-                          className={`${colorConfig[level].bg} ${colorConfig[level].border} rounded-xl p-6 border-4`}>
-                          <h3 className="text-2xl font-bold text-center mb-6" style={{ color: '#000000' }}>
-                            Level {idx + 1}
-                          </h3>
-                          <div className="space-y-3">
-                            {worksheet.filter((q) => q.difficulty === level).map((q: QuestionType, i: number) => (
-                              <div key={i} className={getFontSize()} style={{ color: '#000000' }}>
-                                <span className="font-semibold">{i + 1}.</span>
-                                <span className="ml-3 font-bold">{q.display}</span>
-                                {showWorksheetAnswers && (
-                                  <div className="ml-8 font-semibold mt-1" style={{ color: '#059669' }}>
-                                    = {q.answer}
-                                  </div>
-                                )}
-                              </div>
-                            ))}
+                      {[0, 1, 2].map((idx) => {
+                        const levelValue = `level${idx + 1}` as 'level1' | 'level2' | 'level3';
+                        return (
+                          <div 
+                            key={levelValue} 
+                            className={`${colorConfig[levelValue].bg} ${colorConfig[levelValue].border} rounded-xl p-6 border-4`}>
+                            <h3 className="text-2xl font-bold text-center mb-6" style={{ color: '#000000' }}>
+                              Level {idx + 1}
+                            </h3>
+                            <div className="space-y-3">
+                              {worksheet.filter((q) => q.difficulty === levelValue).map((q: QuestionType, i: number) => (
+                                <div key={i} className={getFontSize()} style={{ color: '#000000' }}>
+                                  <span className="font-semibold">{i + 1}.</span>
+                                  <span className="ml-3 font-bold">{q.display}</span>
+                                  {showWorksheetAnswers && (
+                                    <div className="ml-8 font-semibold mt-1" style={{ color: '#059669' }}>
+                                      = {q.answer}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className={`grid gap-x-6 gap-y-3 ${
