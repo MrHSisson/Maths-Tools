@@ -388,12 +388,12 @@ const SimplifyingRatiosTool = () => {
     const questions: QuestionType[] = [];
     const usedKeys = new Set<string>();
     
-    const generateUniqueQuestion = (lvl: string): QuestionType => {
+    const generateUniqueQuestion = (level: string): QuestionType => {
       let attempts = 0;
       const maxAttempts = 100;
       
       while (attempts < maxAttempts) {
-        const q = currentTool === 'numeric' ? generateNumericQuestion(lvl) : generateAlgebraicQuestion(lvl);
+        const q = currentTool === 'numeric' ? generateNumericQuestion(level) : generateAlgebraicQuestion(level);
         const uniqueKey = q.display;
         
         if (!usedKeys.has(uniqueKey)) {
@@ -404,7 +404,7 @@ const SimplifyingRatiosTool = () => {
         attempts++;
       }
       
-      return currentTool === 'numeric' ? generateNumericQuestion(lvl) : generateAlgebraicQuestion(lvl);
+      return currentTool === 'numeric' ? generateNumericQuestion(level) : generateAlgebraicQuestion(level);
     };
     
     if (isDifferentiated) {
