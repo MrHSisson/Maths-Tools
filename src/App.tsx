@@ -7,6 +7,7 @@ import DoubleBracketsTool from './tools/DoubleBracketsTool'
 import CircleProperties from './tools/CircleProperties'
 import CompletingTheSquare from './tools/CompletingTheSquare'
 import EstimationTool from './tools/EstimationTool'
+import ExpandingDoubleBracketsFOIL from './tools/ExpandingDoubleBracketsFOIL'
 
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
       <Route path="/circle-properties" element={<CircleProperties />} />
       <Route path="/completing-the-square" element={<CompletingTheSquare />} />
       <Route path="/estimation" element={<EstimationTool />} />
+      <Route path="/expanding-double-brackets-foil" element={<ExpandingDoubleBracketsFOIL />} />
     </Routes>
   )
 }
