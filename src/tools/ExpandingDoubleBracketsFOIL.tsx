@@ -511,11 +511,11 @@ export default function ExpandingDoubleBracketsFOIL() {
           </div>
 
           <div className="flex justify-center gap-4 mb-8">
-            {[
+            {([
               { key: 'whiteboard', label: 'Whiteboard' },
               { key: 'workedExample', label: 'Worked Example' },
               { key: 'worksheet', label: 'Worksheet' }
-            ].map((m: { key: string; label: string }) => (
+            ] as const).map((m: { key: string; label: string }) => (
               <button key={m.key} onClick={() => setMode(m.key)}
                 className={'px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ' +
                   (mode === m.key ? 'bg-blue-900 text-white' : 'bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900')}>
