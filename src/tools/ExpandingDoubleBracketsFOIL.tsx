@@ -485,7 +485,7 @@ export default function ExpandingDoubleBracketsFOIL() {
               <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border-2 border-gray-200 overflow-hidden z-50">
                 <div className="py-2">
                   <div className="px-6 py-2 font-bold text-gray-700 text-sm uppercase tracking-wide">Color Schemes</div>
-                  {['default', 'blue', 'pink', 'yellow'].map((scheme: string) => (
+                  {(['default', 'blue', 'pink', 'yellow'] as const).map((scheme: string) => (
                     <button key={scheme} onClick={() => setColorScheme(scheme)}
                       className={'w-full text-left px-6 py-3 font-semibold transition-colors ' +
                         (colorScheme === scheme ? 'bg-blue-100 text-blue-900' : 'text-gray-800 hover:bg-gray-100')}>
@@ -635,7 +635,7 @@ export default function ExpandingDoubleBracketsFOIL() {
                       <div className="flex items-center gap-3">
                         <span className="text-lg font-semibold" style={{ color: '#000000' }}>Difficulty:</span>
                         <div className="flex gap-2">
-                          {['level1', 'level2', 'level3'].map((lvl: string, idx: number) => (
+                          {(['level1', 'level2', 'level3'] as const).map((lvl: string, idx: number) => (
                             <button key={lvl} onClick={() => setDifficulty(lvl)}
                               className={'px-6 py-2 rounded-lg font-semibold ' +
                                 (difficulty === lvl
@@ -698,7 +698,7 @@ export default function ExpandingDoubleBracketsFOIL() {
 
                   {isDifferentiated ? (
                     <div className="grid grid-cols-3 gap-6">
-                      {['level1', 'level2', 'level3'].map((lvl: string, idx: number) => (
+                      {(['level1', 'level2', 'level3'] as const).map((lvl: string, idx: number) => (
                         <div key={lvl} className={'rounded-xl p-6 border-4 ' +
                           (lvl === 'level1' ? 'bg-green-50 border-green-500' :
                            lvl === 'level2' ? 'bg-yellow-50 border-yellow-500' :
