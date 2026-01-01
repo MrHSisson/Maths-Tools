@@ -3,7 +3,7 @@ import LandingPage from './components/LandingPage'
 import IntegersTool from './tools/IntegersTool'
 import RatioSharingTool from './tools/RatioSharingTool'
 import SimplifyingRatiosTool from './tools/SimplifyingRatiosTool'
-import DoubleBracketsTool from './tools/DoubleBracketsTool'
+import ExpandingDOubleBracketsGRID from './tools/ExpandingDoubleBracketsGRID'
 import CircleProperties from './tools/CircleProperties'
 import CompletingTheSquare from './tools/CompletingTheSquare'
 import EstimationTool from './tools/EstimationTool'
@@ -19,7 +19,7 @@ function App() {
       <Route path="/integers" element={<IntegersTool />} />
       <Route path="/ratio-sharing" element={<RatioSharingTool />} />
       <Route path="/simplifying-ratios" element={<SimplifyingRatiosTool />} />
-      <Route path="/double-brackets" element={<DoubleBracketsTool />} />
+      <Route path="/expanding-double-brackets-grid" element={<ExpandingDoubleBracketsGRID />} />
       <Route path="/circle-properties" element={<CircleProperties />} />
       <Route path="/completing-the-square" element={<CompletingTheSquare />} />
       <Route path="/estimation" element={<EstimationTool />} />
