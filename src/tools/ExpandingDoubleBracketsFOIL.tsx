@@ -12,7 +12,7 @@ type QuestionValues = {
 
 type WorkingStep = {
   type: string;
-  content: string;
+  content?: string;
 };
 
 type QuestionType = {
@@ -23,26 +23,15 @@ type QuestionType = {
   difficulty: string;
 };
 
-type Position = {
-  x: number;
-  y: number;
-};
+type ColorScheme = 'default' | 'blue' | 'pink' | 'yellow';
+type DifficultyLevel = 'level1' | 'level2' | 'level3';
+type Mode = 'whiteboard' | 'workedExample' | 'worksheet';
 
-type Positions = {
-  b1t1Top: Position;
-  b1t2Bottom: Position;
-  b2t1Top: Position;
-  b2t1Bottom: Position;
-  b2t2Top: Position;
-  b2t2Bottom: Position;
-};
-
-export default function ExpandingDoubleBracketsFOIL() {
+export default function ExpandingDoubleBracketsGenerator() {
   const navigate = useNavigate();
   
-  // State
-  const [mode, setMode] = useState<string>('whiteboard');
-  const [difficulty, setDifficulty] = useState<string>('level1');
+  const [mode, setMode] = useState<Mode>('whiteboard');
+  const [difficulty, setDifficulty] = useState<DifficultyLevel>('level1');
   
   const [currentQuestion, setCurrentQuestion] = useState<QuestionType | null>(null);
   const [showWhiteboardAnswer, setShowWhiteboardAnswer] = useState<boolean>(false);
@@ -56,13 +45,11 @@ export default function ExpandingDoubleBracketsFOIL() {
   const [worksheetFontSize, setWorksheetFontSize] = useState<number>(1);
   
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
-  const [colorScheme, setColorScheme] = useState<string>('default');
+  const [colorScheme, setColorScheme] = useState<ColorScheme>('default');
 
-  // Font sizes
-  const fontSizes = ['text-xl', 'text-2xl', 'text-3xl', 'text-4xl'];
+  const fontSizes: string[] = ['text-xl', 'text-2xl', 'text-3xl', 'text-4xl'];
   const getFontSize = (): string => fontSizes[worksheetFontSize];
 
-  // Color helpers
   const getQuestionBg = (): string => {
     if (colorScheme === 'blue') return '#D1E7F8';
     if (colorScheme === 'pink') return '#F8D1E7';
@@ -80,7 +67,7 @@ export default function ExpandingDoubleBracketsFOIL() {
   const getWhiteboardWorkingBg = (): string => getStepBg();
   const getFinalAnswerBg = (): string => getStepBg();
 
-  const getDifficultyButtonClass = (idx: number, isActive: boolean): string => {
+  const getDifficultyButtonClass = (level: DifficultyLevel, idx: number, isActive: boolean): string => {
     if (isActive) {
       return idx === 0 ? 'bg-green-600 text-white' 
            : idx === 1 ? 'bg-yellow-600 text-white' 
@@ -91,13 +78,27 @@ export default function ExpandingDoubleBracketsFOIL() {
          : 'bg-white text-red-600 border-2 border-red-600';
   };
 
-  // FOIL Display Component
-  const FoilDisplay = ({ q }: { q: QuestionType }): JSX.Element => {
+  const FoilDisplay = ({ q }: { q: QuestionType }) => {
     const containerRef = useRef<HTMLDivElement>(null);
-    const b1t1Ref = useRef<HTMLDivElement>(null); // Bracket 1 Term 1
-    const b1t2Ref = useRef<HTMLDivElement>(null); // Bracket 1 Term 2
-    const b2t1Ref = useRef<HTMLDivElement>(null); // Bracket 2 Term 1
-    const b2t2Ref = useRef<HTMLDivElement>(null); // Bracket 2 Term 2
+    const b1t1Ref = useRef<HTMLDivElement>(null);
+    const b1t2Ref = useRef<HTMLDivElement>(null);
+    const b2t1Ref = useRef<HTMLDivElement>(null);
+    const b2t2Ref = useRef<HTMLDivElement>(null);
+    
+    type Position = {
+      x: number;
+      y: number;
+    };
+    
+    type Positions = {
+      b1t1Top: Position;
+      b1t2Bottom: Position;
+      b2t1Top: Position;
+      b2t1Bottom: Position;
+      b2t2Top: Position;
+      b2t2Bottom: Position;
+    };
+    
     const [positions, setPositions] = useState<Positions | null>(null);
 
     useEffect(() => {
@@ -133,7 +134,6 @@ export default function ExpandingDoubleBracketsFOIL() {
 
     const { a, b, c, d } = q.values;
 
-    // Format bracket terms
     const formatFirstTerm = (coeff: number): string => {
       if (coeff === 1) return 'x';
       if (coeff === -1) return '−x';
@@ -150,24 +150,14 @@ export default function ExpandingDoubleBracketsFOIL() {
     const b2term1 = formatFirstTerm(c);
     const b2term2 = formatSecondTerm(d);
 
-    // Calculate FOIL results
-    const first = a * c; // First terms
-    const outer = a * d; // Outer terms
-    const inner = b * c; // Inner terms
-    const last = b * d;  // Last terms
+    const first = a * c;
+    const outer = a * d;
+    const inner = b * c;
+    const last = b * d;
 
-    // Format results
-    const formatResult = (value: number, withVar: boolean = false): string => {
-      const absVal = Math.abs(value);
-      if (withVar) {
-        if (value === 0) return '';
-        const sign = value > 0 ? '+' : '−';
-        const coeff = absVal === 1 ? '' : absVal;
-        return sign + coeff + 'x²';
-      } else {
-        if (value === 0) return '';
-        return (value > 0 ? '+' : '−') + absVal + 'x';
-      }
+    const formatResult = (value: number): string => {
+      if (value === 0) return '';
+      return (value > 0 ? '+' : '−') + Math.abs(value) + 'x';
     };
 
     const firstResult = first === 1 ? 'x²' : first === -1 ? '−x²' : first + 'x²';
@@ -175,13 +165,12 @@ export default function ExpandingDoubleBracketsFOIL() {
     const innerResult = formatResult(inner);
     const lastResult = last >= 0 ? '+' + last : String(last);
 
-    // Curved Arrow component
     const CurvedArrow = ({ from, to, curveUp = true, color = '#ef4444' }: { 
-      from: Position; 
-      to: Position; 
+      from: Position | undefined; 
+      to: Position | undefined; 
       curveUp?: boolean; 
-      color?: string; 
-    }): JSX.Element | null => {
+      color?: string;
+    }) => {
       if (!from || !to) return null;
       
       const midX = (from.x + to.x) / 2;
@@ -209,74 +198,28 @@ export default function ExpandingDoubleBracketsFOIL() {
     return (
       <div ref={containerRef} className="relative w-full mx-auto" style={{ minHeight: '280px', paddingTop: '60px', paddingBottom: '20px' }}>
         <div className="flex items-center justify-center gap-2">
-          {/* First Bracket */}
           <span className="font-bold text-4xl">(</span>
-          
-          <div ref={b1t1Ref} className="inline-flex items-center justify-center font-bold text-4xl px-4 py-2" 
-               style={{ minWidth: '70px' }}>
-            {b1term1}
-          </div>
-          
-          <div ref={b1t2Ref} className="inline-flex items-center justify-center font-bold text-4xl px-4 py-2" 
-               style={{ minWidth: '70px' }}>
-            {b1term2}
-          </div>
-          
+          <div ref={b1t1Ref} className="inline-flex items-center justify-center font-bold text-4xl px-4 py-2" style={{ minWidth: '70px' }}>{b1term1}</div>
+          <div ref={b1t2Ref} className="inline-flex items-center justify-center font-bold text-4xl px-4 py-2" style={{ minWidth: '70px' }}>{b1term2}</div>
           <span className="font-bold text-4xl">)</span>
-
-          {/* Second Bracket */}
           <span className="font-bold text-4xl">(</span>
-          
-          <div ref={b2t1Ref} className="inline-flex items-center justify-center font-bold text-4xl px-4 py-2" 
-               style={{ minWidth: '70px' }}>
-            {b2term1}
-          </div>
-          
-          <div ref={b2t2Ref} className="inline-flex items-center justify-center font-bold text-4xl px-4 py-2" 
-               style={{ minWidth: '70px' }}>
-            {b2term2}
-          </div>
-          
+          <div ref={b2t1Ref} className="inline-flex items-center justify-center font-bold text-4xl px-4 py-2" style={{ minWidth: '70px' }}>{b2term1}</div>
+          <div ref={b2t2Ref} className="inline-flex items-center justify-center font-bold text-4xl px-4 py-2" style={{ minWidth: '70px' }}>{b2term2}</div>
           <span className="font-bold text-4xl">)</span>
         </div>
 
-        {/* Results row */}
         <div className="flex items-center justify-center gap-4 mt-8">
-          {/* First result */}
-          <div className="inline-flex items-center justify-center font-bold text-4xl px-4 py-2" 
-               style={{ minWidth: '70px', color: '#000000' }}>
-            {firstResult}
-          </div>
-          
-          {/* Outer result */}
-          <div className="inline-flex items-center justify-center font-bold text-4xl px-4 py-2" 
-               style={{ minWidth: '70px', color: '#000000' }}>
-            {outerResult}
-          </div>
-          
-          {/* Inner result */}
-          <div className="inline-flex items-center justify-center font-bold text-4xl px-4 py-2" 
-               style={{ minWidth: '70px', color: '#000000' }}>
-            {innerResult}
-          </div>
-          
-          {/* Last result */}
-          <div className="inline-flex items-center justify-center font-bold text-4xl px-4 py-2" 
-               style={{ minWidth: '70px', color: '#000000' }}>
-            {lastResult}
-          </div>
+          <div className="inline-flex items-center justify-center font-bold text-4xl px-4 py-2" style={{ minWidth: '70px', color: '#000000' }}>{firstResult}</div>
+          <div className="inline-flex items-center justify-center font-bold text-4xl px-4 py-2" style={{ minWidth: '70px', color: '#000000' }}>{outerResult}</div>
+          <div className="inline-flex items-center justify-center font-bold text-4xl px-4 py-2" style={{ minWidth: '70px', color: '#000000' }}>{innerResult}</div>
+          <div className="inline-flex items-center justify-center font-bold text-4xl px-4 py-2" style={{ minWidth: '70px', color: '#000000' }}>{lastResult}</div>
         </div>
 
-        {/* SVG overlay for arrows */}
         {positions && (
           <svg className="absolute top-0 left-0 w-full h-full pointer-events-none" style={{ zIndex: 10 }}>
-            {/* First (red) - from b1t1 top to b2t1 top */}
             <CurvedArrow from={positions.b1t1Top} to={positions.b2t1Top} curveUp={true} color="#ef4444" />
-            {/* Outer (blue) - from b1t1 top to b2t2 top */}
             <CurvedArrow from={positions.b1t1Top} to={positions.b2t2Top} curveUp={true} color="#3b82f6" />
-            {/* Inner (brown) - from b1t2 bottom to b2t1 bottom */}
             <CurvedArrow from={positions.b1t2Bottom} to={positions.b2t1Bottom} curveUp={false} color="#92400e" />
-            {/* Last (green) - from b1t2 bottom to b2t2 bottom */}
             <CurvedArrow from={positions.b1t2Bottom} to={positions.b2t2Bottom} curveUp={false} color="#22c55e" />
           </svg>
         )}
@@ -284,9 +227,11 @@ export default function ExpandingDoubleBracketsFOIL() {
     );
   };
 
-  // Question generation
-  const generateQuestion = (level: string): QuestionType => {
-    let a = 0, b = 0, c = 0, d = 0;
+  const generateQuestion = (level: DifficultyLevel): QuestionType => {
+    let a = 0;
+    let b = 0;
+    let c = 0;
+    let d = 0;
     
     if (level === 'level1') {
       a = 1;
@@ -398,7 +343,7 @@ export default function ExpandingDoubleBracketsFOIL() {
       answer += Math.abs(constant);
     }
     
-    const working = [{
+    const working: WorkingStep[] = [{
       type: 'foil',
       content: 'Use FOIL method to expand the brackets'
     }];
@@ -419,13 +364,13 @@ export default function ExpandingDoubleBracketsFOIL() {
   };
 
   const handleGenerateWorksheet = (): void => {
-    const questions = [];
-    const usedKeys = new Set();
+    const questions: QuestionType[] = [];
+    const usedKeys = new Set<string>();
     
-    const generateUniqueQuestion = (lvl) => {
+    const generateUniqueQuestion = (lvl: DifficultyLevel): QuestionType => {
       let attempts = 0;
-      let q;
-      let uniqueKey;
+      let q: QuestionType = generateQuestion(lvl);
+      let uniqueKey = '';
       
       do {
         q = generateQuestion(lvl);
@@ -439,7 +384,7 @@ export default function ExpandingDoubleBracketsFOIL() {
     };
     
     if (isDifferentiated) {
-      ['level1', 'level2', 'level3'].forEach(lvl => {
+      (['level1', 'level2', 'level3'] as const).forEach((lvl: DifficultyLevel) => {
         for (let i = 0; i < numQuestions; i++) {
           questions.push({ ...generateUniqueQuestion(lvl), difficulty: lvl });
         }
@@ -468,7 +413,6 @@ export default function ExpandingDoubleBracketsFOIL() {
 
   return (
     <>
-      {/* Header Bar */}
       <div className="bg-blue-900 shadow-lg">
         <div className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
           <button onClick={() => navigate('/')}
@@ -485,7 +429,7 @@ export default function ExpandingDoubleBracketsFOIL() {
               <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border-2 border-gray-200 overflow-hidden z-50">
                 <div className="py-2">
                   <div className="px-6 py-2 font-bold text-gray-700 text-sm uppercase tracking-wide">Color Schemes</div>
-                  {(['default', 'blue', 'pink', 'yellow'] as const).map((scheme: string) => (
+                  {(['default', 'blue', 'pink', 'yellow'] as const).map((scheme: ColorScheme) => (
                     <button key={scheme} onClick={() => setColorScheme(scheme)}
                       className={'w-full text-left px-6 py-3 font-semibold transition-colors ' +
                         (colorScheme === scheme ? 'bg-blue-100 text-blue-900' : 'text-gray-800 hover:bg-gray-100')}>
@@ -499,7 +443,6 @@ export default function ExpandingDoubleBracketsFOIL() {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="min-h-screen p-8" style={{ backgroundColor: '#f5f3f0' }}>
         <div className="max-w-6xl mx-auto">
           <h1 className="text-5xl font-bold text-center mb-8" style={{ color: '#000000' }}>
@@ -511,11 +454,11 @@ export default function ExpandingDoubleBracketsFOIL() {
           </div>
 
           <div className="flex justify-center gap-4 mb-8">
-            {([
-              { key: 'whiteboard', label: 'Whiteboard' },
-              { key: 'workedExample', label: 'Worked Example' },
-              { key: 'worksheet', label: 'Worksheet' }
-            ] as const).map((m: { key: string; label: string }) => (
+            {[
+              { key: 'whiteboard' as Mode, label: 'Whiteboard' },
+              { key: 'workedExample' as Mode, label: 'Worked Example' },
+              { key: 'worksheet' as Mode, label: 'Worksheet' }
+            ].map((m: { key: Mode; label: string }) => (
               <button key={m.key} onClick={() => setMode(m.key)}
                 className={'px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ' +
                   (mode === m.key ? 'bg-blue-900 text-white' : 'bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900')}>
@@ -531,10 +474,10 @@ export default function ExpandingDoubleBracketsFOIL() {
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-semibold" style={{ color: '#000000' }}>Difficulty:</span>
                     <div className="flex gap-2">
-                      {['level1', 'level2', 'level3'].map((lvl: string, idx: number) => (
+                      {(['level1', 'level2', 'level3'] as const).map((lvl: DifficultyLevel, idx: number) => (
                         <button key={lvl} onClick={() => setDifficulty(lvl)}
                           className={'px-4 py-2 rounded-lg font-bold text-sm w-24 ' + 
-                            getDifficultyButtonClass(idx, difficulty === lvl)}>
+                            getDifficultyButtonClass(lvl, idx, difficulty === lvl)}>
                           Level {idx + 1}
                         </button>
                       ))}
@@ -620,12 +563,12 @@ export default function ExpandingDoubleBracketsFOIL() {
                     <div className="flex items-center gap-3">
                       <label className="text-lg font-semibold" style={{ color: '#000000' }}>Questions per level:</label>
                       <input type="number" min="1" max="20" value={numQuestions}
-                        onChange={(e) => setNumQuestions(Math.max(1, Math.min(20, parseInt(e.target.value) || 5)))}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNumQuestions(Math.max(1, Math.min(20, parseInt(e.target.value) || 5)))}
                         className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-lg" />
                     </div>
                     <div className="flex items-center gap-3">
                       <input type="checkbox" id="diff" checked={isDifferentiated}
-                        onChange={(e) => setIsDifferentiated(e.target.checked)} className="w-5 h-5" />
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setIsDifferentiated(e.target.checked)} className="w-5 h-5" />
                       <label htmlFor="diff" className="text-lg font-semibold" style={{ color: '#000000' }}>Differentiated</label>
                     </div>
                   </div>
@@ -635,7 +578,7 @@ export default function ExpandingDoubleBracketsFOIL() {
                       <div className="flex items-center gap-3">
                         <span className="text-lg font-semibold" style={{ color: '#000000' }}>Difficulty:</span>
                         <div className="flex gap-2">
-                          {(['level1', 'level2', 'level3'] as const).map((lvl: string, idx: number) => (
+                          {(['level1', 'level2', 'level3'] as const).map((lvl: DifficultyLevel, idx: number) => (
                             <button key={lvl} onClick={() => setDifficulty(lvl)}
                               className={'px-6 py-2 rounded-lg font-semibold ' +
                                 (difficulty === lvl
@@ -652,7 +595,7 @@ export default function ExpandingDoubleBracketsFOIL() {
                       <div className="flex items-center gap-3">
                         <label className="text-lg font-semibold" style={{ color: '#000000' }}>Columns:</label>
                         <input type="number" min="1" max="4" value={numColumns}
-                          onChange={(e) => setNumColumns(Math.max(1, Math.min(4, parseInt(e.target.value) || 2)))}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNumColumns(Math.max(1, Math.min(4, parseInt(e.target.value) || 2)))}
                           className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-lg" />
                       </div>
                     </div>
@@ -698,7 +641,7 @@ export default function ExpandingDoubleBracketsFOIL() {
 
                   {isDifferentiated ? (
                     <div className="grid grid-cols-3 gap-6">
-                      {(['level1', 'level2', 'level3'] as const).map((lvl: string, idx: number) => (
+                      {(['level1', 'level2', 'level3'] as const).map((lvl: DifficultyLevel, idx: number) => (
                         <div key={lvl} className={'rounded-xl p-6 border-4 ' +
                           (lvl === 'level1' ? 'bg-green-50 border-green-500' :
                            lvl === 'level2' ? 'bg-yellow-50 border-yellow-500' :
