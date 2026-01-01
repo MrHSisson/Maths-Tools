@@ -125,7 +125,7 @@ export default function ExpandingSingleBracketsGridMethod() {
   };
 
   // Table Display Component for grid method
-  const TableDisplay = ({ q }: { q: Question }): JSX.Element => {
+  const TableDisplay = ({ q }: { q: Question | GridData }): JSX.Element => {
     const v: string = q.varName || 'x';
     
     if (q.withVariable) {
