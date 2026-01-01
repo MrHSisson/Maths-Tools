@@ -67,7 +67,7 @@ export default function ExpandingDoubleBracketsGenerator() {
   const getWhiteboardWorkingBg = (): string => getStepBg();
   const getFinalAnswerBg = (): string => getStepBg();
 
-  const getDifficultyButtonClass = (level: DifficultyLevel, idx: number, isActive: boolean): string => {
+  const getDifficultyButtonClass = (idx: number, isActive: boolean): string => {
     if (isActive) {
       return idx === 0 ? 'bg-green-600 text-white' 
            : idx === 1 ? 'bg-yellow-600 text-white' 
@@ -477,7 +477,7 @@ export default function ExpandingDoubleBracketsGenerator() {
                       {(['level1', 'level2', 'level3'] as const).map((lvl: DifficultyLevel, idx: number) => (
                         <button key={lvl} onClick={() => setDifficulty(lvl)}
                           className={'px-4 py-2 rounded-lg font-bold text-sm w-24 ' + 
-                            getDifficultyButtonClass(lvl, idx, difficulty === lvl)}>
+                            getDifficultyButtonClass(idx, difficulty === lvl)}>
                           Level {idx + 1}
                         </button>
                       ))}
