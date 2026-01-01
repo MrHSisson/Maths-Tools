@@ -39,6 +39,7 @@ const categories: Category[] = [
     tools: [
       { id: 'like-terms', path: '/like-terms', name: 'Like Terms', icon: 'xy', description: 'Simplify algebraic expressions by collecting like terms', ready: false },
       { id: 'single-brackets', path: '/expanding-single-brackets-FOIL', name: 'Expanding Single Brackets (FOIL)', icon: 'x', description: 'Expand single brackets by using arrows for each term', ready: true },
+      { id: 'single-brackets', path: '/expanding-single-brackets-GRID', name: 'Expanding Single Brackets (GRID)', icon: 'x', description: 'Expand single brackets by using the grid method', ready: true },
       { id: 'double-brackets', path: '/double-brackets', name: 'Expanding Double Brackets (GRID)', icon: 'x²', description: 'Expand pairs of brackets using the grid method', ready: true },
       { id: 'expanding-double-brackets-FOIL', path: '/expanding-double-brackets-foil', name: 'Expanding Double Brackets (FOIL)', icon: 'x²', description: 'Expand pairs of brackets using the FOIL method', ready: true },
       { id: 'completing-square', path: '/completing-the-square', name: 'Completing the Square', icon: '▢', description: 'Rewrite and solve quadratic expressions in completed square form', ready: true },
