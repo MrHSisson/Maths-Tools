@@ -264,10 +264,12 @@ export default function CirclePropertiesTool() {
     const centerY = size / 2;
     const circleRadius = size * 0.35;
     
+    const theta = q.theta ?? 90;
+    
     let startAngle = 0;
     let endAngle = 0;
     let isTopHalf = false;
-    if (q.theta === 180) {
+    if (theta === 180) {
       isTopHalf = Math.random() > 0.5;
       if (isTopHalf) {
         startAngle = 180;
@@ -276,12 +278,12 @@ export default function CirclePropertiesTool() {
         startAngle = 0;
         endAngle = 180;
       }
-    } else if (q.theta === 90) {
+    } else if (theta === 90) {
       startAngle = -90;
       endAngle = 0;
     } else {
       startAngle = -90;
-      endAngle = startAngle + q.theta;
+      endAngle = startAngle + theta;
     }
     
     const startRad = (startAngle * Math.PI) / 180;
@@ -292,11 +294,8 @@ export default function CirclePropertiesTool() {
     const endX = centerX + Math.cos(endRad) * circleRadius;
     const endY = centerY + Math.sin(endRad) * circleRadius;
     
-    const largeArcFlag = q.theta > 180 ? 1 : 0;
+    const largeArcFlag = theta > 180 ? 1 : 0;
     
-    let dimensionLine: any = null;
-    let labelX = 0;
-    let labelY = 0;
     let labelText = '';
     let labelAngle = 0;
     
@@ -304,22 +303,22 @@ export default function CirclePropertiesTool() {
       const midX = (startX + endX) / 2;
       const midY = (startY + endY) / 2;
       labelAngle = Math.atan2(endY - startY, endX - startX) * (180 / Math.PI);
-      dimensionLine = { x1: startX, y1: startY, x2: endX, y2: endY };
-      labelX = midX;
-      labelY = midY;
+      const dimensionLine = { x1: startX, y1: startY, x2: endX, y2: endY };
+      const labelX = midX;
+      const labelY = midY;
       labelText = `d = ${formatNumber(q.diameter)} cm`;
     } else {
       const midX = (centerX + startX) / 2;
       const midY = (centerY + startY) / 2;
       labelAngle = Math.atan2(startY - centerY, startX - centerX) * (180 / Math.PI);
-      dimensionLine = { x1: centerX, y1: centerY, x2: startX, y2: startY };
-      labelX = midX;
-      labelY = midY;
+      const dimensionLine = { x1: centerX, y1: centerY, x2: startX, y2: startY };
+      const labelX = midX;
+      const labelY = midY;
       labelText = `r = ${formatNumber(q.radius)} cm`;
     }
     
     const belowLabelFontSize = isWorksheet ? Math.max(18, 22 * fontSizeScale) : 26;
-    const showTheta = q.level !== 1 && ![90, 180, 270].includes(q.theta);
+    const showTheta = q.level !== 1 && ![90, 180, 270].includes(theta);
     
     const boxHeight = isWorksheet ? belowLabelFontSize * 1.8 : 0;
     const boxPadding = isWorksheet ? belowLabelFontSize * 0.8 : 0;
@@ -445,7 +444,7 @@ export default function CirclePropertiesTool() {
         
         {q.level === 3 && (
           <>
-            <path d={`M ${sectorCenterX + Math.cos(startRad) * 25} ${sectorCenterY + Math.sin(startRad) * 25} A 25 25 0 ${q.theta > 180 ? 1 : 0} 1 ${sectorCenterX + Math.cos(endRad) * 25} ${sectorCenterY + Math.sin(endRad) * 25}`}
+            <path d={`M ${sectorCenterX + Math.cos(startRad) * 25} ${sectorCenterY + Math.sin(startRad) * 25} A 25 25 0 ${theta > 180 ? 1 : 0} 1 ${sectorCenterX + Math.cos(endRad) * 25} ${sectorCenterY + Math.sin(endRad) * 25}`}
               fill="none" stroke="#000000" strokeWidth="2" />
             {(() => {
               const midAngleRad = (startRad + endRad) / 2;
@@ -907,7 +906,7 @@ export default function CirclePropertiesTool() {
     const questions: any[] = [];
     const usedKeys = new Set<string>();
     
-    const generateUniqueQuestion = (lvl: string): any => {
+    const generateUniqueQuestion = (lvl: DifficultyLevel): any => {
       let attempts = 0, q: any, uniqueKey: string;
       do {
         q = generateQuestion(lvl);
@@ -1187,7 +1186,7 @@ export default function CirclePropertiesTool() {
                     {renderCircleDiagram(question, 400)}
                   </div>
 
-                  {showAnswer && (
+                  {showAnswer && question.working && (
                     <>
                       <div className="space-y-6 mb-8">
                         {question.working.filter((step: any) => step.type !== 'final').map((step: any, idx: number) => (
@@ -1332,8 +1331,7 @@ export default function CirclePropertiesTool() {
                       <label className="text-sm font-semibold" style={{ color: '#000000' }}>Type:</label>
                       <select value={sectorQuestionStyle}
                         onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-                          const value = e.target.value as SectorStyle;
-                          setSectorQuestionStyle(value);
+                          setSectorQuestionStyle(e.target.value as SectorStyle);
                         }}
                         className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-semibold bg-white">
                         <option value="mixed">Mixed</option>
