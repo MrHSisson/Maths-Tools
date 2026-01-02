@@ -133,21 +133,11 @@ export default function CirclePropertiesTool() {
       return renderSectorDiagram(q, size, isWorksheet, fontSizeScale, levelOverride);
     }
     
-    const centerX = size / 2;
     const centerY = size / 2;
     const circleRadius = size * 0.35;
     const angleRad = (q.angle * Math.PI) / 180;
     
-    const diamEndX = centerX + Math.cos(angleRad) * circleRadius;
-    const diamEndY = centerY + Math.sin(angleRad) * circleRadius;
-    const diamStartX = centerX - Math.cos(angleRad) * circleRadius;
-    const diamStartY = centerY - Math.sin(angleRad) * circleRadius;
-    const radEndX = centerX + Math.cos(angleRad) * circleRadius;
-    const radEndY = centerY + Math.sin(angleRad) * circleRadius;
-    
-    const diamLabelX = centerX + Math.cos(angleRad) * circleRadius * 0.3;
     const diamLabelY = centerY + Math.sin(angleRad) * circleRadius * 0.3;
-    const radLabelX = centerX + Math.cos(angleRad) * circleRadius * 0.5;
     const radLabelY = centerY + Math.sin(angleRad) * circleRadius * 0.5;
     
     const fontSize = isWorksheet ? Math.max(16, 18 * fontSizeScale) : 24;
@@ -472,7 +462,7 @@ export default function CirclePropertiesTool() {
         
         {!isWorksheet && showTheta && (
           <text x={sectorCenterX} y={sectorCenterY + circleRadius + 50} fill="#000000"
-            fontSize={belowLabelFontSize} fontWeight="bold" textAnchor="middle">θ = {q.theta}°</text>
+            fontSize={belowLabelFontSize} fontWeight="bold" textAnchor="middle">θ = {theta}°</text>
         )}
       </svg>
     );
@@ -680,7 +670,7 @@ export default function CirclePropertiesTool() {
     let theta = 0;
     let radius = 0;
     let diameter = 0;
-    let questionStyle = sectorQuestionStyle;
+    let questionStyle: SectorStyle = sectorQuestionStyle;
     
     if (questionStyle === 'mixed') {
       const styles = ['area', 'perimeter', 'arcLength'];
@@ -753,7 +743,7 @@ export default function CirclePropertiesTool() {
       }
       
       return { level: 1, theta, radius, diameter, displayQuestion, answer, answerNumeric, answerPi,
-        questionStyle, angle, type: 'sector', working };
+        questionStyle, angle, type: 'sector', working, given: '', find: '' };
     } else if (level === 'level2') {
       theta = 90;
       diameter = allowDecimals ? Math.round((Math.random() * 24 + 2) * 10) / 10 : Math.floor(Math.random() * 24) + 2;
@@ -820,7 +810,7 @@ export default function CirclePropertiesTool() {
       }
       
       return { level: 2, theta, radius, diameter, displayQuestion, answer, answerNumeric, answerPi,
-        questionStyle, angle, type: 'sector', working };
+        questionStyle, angle, type: 'sector', working, given: '', find: '' };
     } else {
       theta = Math.floor(Math.random() * 359) + 1;
       diameter = allowDecimals ? Math.round((Math.random() * 24 + 2) * 10) / 10 : Math.floor(Math.random() * 24) + 2;
@@ -887,7 +877,7 @@ export default function CirclePropertiesTool() {
       }
       
       return { level: 3, theta, radius, diameter, displayQuestion, answer, answerNumeric, answerPi,
-        questionStyle, angle, type: 'sector', working };
+        questionStyle, angle, type: 'sector', working, given: '', find: '' };
     }
   };
 
@@ -1041,7 +1031,7 @@ export default function CirclePropertiesTool() {
                   <span className="text-sm font-semibold text-gray-600">Difficulty:</span>
                   <div className="flex gap-2">
                     {(['level1', 'level2', 'level3'] as const).map((lvl: DifficultyLevel, idx: number) => (
-                      <button key={lvl} onClick={() => setDifficulty(lvl)}
+                      <button key={lvl} onClick={() => setDifficulty(lvl as DifficultyLevel)}
                         className={'px-4 py-2 rounded-lg font-bold text-sm w-24 ' +
                           (difficulty === lvl
                             ? (idx === 0 ? 'bg-green-600 text-white' : idx === 1 ? 'bg-yellow-600 text-white' : 'bg-red-600 text-white')
@@ -1300,7 +1290,7 @@ export default function CirclePropertiesTool() {
                       <label className="text-lg font-semibold" style={{ color: '#000000' }}>Difficulty:</label>
                       <div className="flex gap-2">
                         {(['level1', 'level2', 'level3'] as const).map((lvl: DifficultyLevel, idx: number) => (
-                          <button key={lvl} onClick={() => setDifficulty(lvl)}
+                          <button key={lvl} onClick={() => setDifficulty(lvl as DifficultyLevel)}
                             className={'px-6 py-2 rounded-lg font-semibold ' +
                               (difficulty === lvl
                                 ? (idx === 0 ? 'bg-green-600 text-white' : idx === 1 ? 'bg-yellow-600 text-white' : 'bg-red-600 text-white')
