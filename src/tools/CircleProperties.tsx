@@ -329,7 +329,7 @@ export default function CirclePropertiesTool() {
     let infoBoxes: string[] = [];
     infoBoxes.push(labelText);
     if (showTheta) {
-      infoBoxes.push(`θ = ${q.theta}°`);
+      infoBoxes.push(`θ = ${theta}°`);
     }
     
     const maxTextLength = Math.max(...infoBoxes.map(info => info.length));
@@ -673,7 +673,7 @@ export default function CirclePropertiesTool() {
     let questionStyle: SectorStyle = sectorQuestionStyle;
     
     if (questionStyle === 'mixed') {
-      const styles = ['area', 'perimeter', 'arcLength'];
+      const styles: SectorStyle[] = ['area', 'perimeter', 'arcLength'];
       questionStyle = styles[Math.floor(Math.random() * styles.length)];
     }
     
@@ -1031,7 +1031,7 @@ export default function CirclePropertiesTool() {
                   <span className="text-sm font-semibold text-gray-600">Difficulty:</span>
                   <div className="flex gap-2">
                     {(['level1', 'level2', 'level3'] as const).map((lvl: DifficultyLevel, idx: number) => (
-                      <button key={lvl} onClick={() => setDifficulty(lvl as DifficultyLevel)}
+                      <button key={lvl} onClick={() => setDifficulty(lvl)}
                         className={'px-4 py-2 rounded-lg font-bold text-sm w-24 ' +
                           (difficulty === lvl
                             ? (idx === 0 ? 'bg-green-600 text-white' : idx === 1 ? 'bg-yellow-600 text-white' : 'bg-red-600 text-white')
@@ -1059,7 +1059,10 @@ export default function CirclePropertiesTool() {
                   <div className="flex items-center gap-2">
                     <label className="text-xs font-semibold text-gray-600">Type:</label>
                     <select value={sectorQuestionStyle}
-                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSectorQuestionStyle(e.target.value as SectorStyle)}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                        const value = e.target.value as SectorStyle;
+                        setSectorQuestionStyle(value);
+                      }}
                       className="px-2 py-1 border-2 border-gray-300 rounded-lg text-xs font-semibold">
                       <option value="mixed">Mixed</option>
                       <option value="area">Area</option>
@@ -1290,7 +1293,7 @@ export default function CirclePropertiesTool() {
                       <label className="text-lg font-semibold" style={{ color: '#000000' }}>Difficulty:</label>
                       <div className="flex gap-2">
                         {(['level1', 'level2', 'level3'] as const).map((lvl: DifficultyLevel, idx: number) => (
-                          <button key={lvl} onClick={() => setDifficulty(lvl as DifficultyLevel)}
+                          <button key={lvl} onClick={() => setDifficulty(lvl)}
                             className={'px-6 py-2 rounded-lg font-semibold ' +
                               (difficulty === lvl
                                 ? (idx === 0 ? 'bg-green-600 text-white' : idx === 1 ? 'bg-yellow-600 text-white' : 'bg-red-600 text-white')
@@ -1328,7 +1331,10 @@ export default function CirclePropertiesTool() {
                     <div className="flex items-center gap-2">
                       <label className="text-sm font-semibold" style={{ color: '#000000' }}>Type:</label>
                       <select value={sectorQuestionStyle}
-                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSectorQuestionStyle(e.target.value as SectorStyle)}
+                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                          const value = e.target.value as SectorStyle;
+                          setSectorQuestionStyle(value);
+                        }}
                         className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-semibold bg-white">
                         <option value="mixed">Mixed</option>
                         <option value="area">Area</option>
