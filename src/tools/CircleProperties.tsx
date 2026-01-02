@@ -877,7 +877,7 @@ export default function CirclePropertiesTool(): JSX.Element {
           { type: 'substitution', text: `Arc length = (${theta}/360) × 2 × π × ${formatNumber(radius)}` },
           { type: 'simplify', text: `Arc length = (${theta}/360) × ${formatNumber(2 * radius)} ×
           
-          {mode === 'whiteboard' && (
+         {mode === 'whiteboard' && (
           <>
             <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
               <div className="flex items-center justify-between">
@@ -1244,9 +1244,9 @@ export default function CirclePropertiesTool(): JSX.Element {
                               {showWorksheetAnswers && (
                                 <div className={'mt-1 font-semibold ' + getFontSize()} style={{ color: '#059669' }}>
                                   = {q.type === 'circumference'
-                                    ? (q.level === 3 ? q.answer + ' cm' : q.circumference + ' cm')
+                                    ? (q.level === 3 ? `${q.answer} cm` : `${q.circumference} cm`)
                                     : q.type === 'area'
-                                    ? (q.level === 3 ? q.answer + ' cm' : q.area + ' cm²')
+                                    ? (q.level === 3 ? `${q.answer} cm` : `${q.area} cm²`)
                                     : q.answer}
                                 </div>
                               )}
@@ -1271,9 +1271,9 @@ export default function CirclePropertiesTool(): JSX.Element {
                         {showWorksheetAnswers && (
                           <div className={'font-semibold text-center ' + getFontSize()} style={{ color: '#059669' }}>
                             = {q.type === 'circumference'
-                              ? (q.level === 3 ? q.answer + ' cm' : q.circumference + ' cm')
+                              ? (q.level === 3 ? `${q.answer} cm` : `${q.circumference} cm`)
                               : q.type === 'area'
-                              ? (q.level === 3 ? q.answer + ' cm' : q.area + ' cm²')
+                              ? (q.level === 3 ? `${q.answer} cm` : `${q.area} cm²`)
                               : q.answer}
                           </div>
                         )}
