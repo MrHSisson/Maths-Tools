@@ -300,20 +300,10 @@ export default function CirclePropertiesTool() {
     let labelAngle = 0;
     
     if (q.level === 1) {
-      const midX = (startX + endX) / 2;
-      const midY = (startY + endY) / 2;
       labelAngle = Math.atan2(endY - startY, endX - startX) * (180 / Math.PI);
-      const dimensionLine = { x1: startX, y1: startY, x2: endX, y2: endY };
-      const labelX = midX;
-      const labelY = midY;
       labelText = `d = ${formatNumber(q.diameter)} cm`;
     } else {
-      const midX = (centerX + startX) / 2;
-      const midY = (centerY + startY) / 2;
       labelAngle = Math.atan2(startY - centerY, startX - centerX) * (180 / Math.PI);
-      const dimensionLine = { x1: centerX, y1: centerY, x2: startX, y2: startY };
-      const labelX = midX;
-      const labelY = midY;
       labelText = `r = ${formatNumber(q.radius)} cm`;
     }
     
@@ -936,7 +926,7 @@ export default function CirclePropertiesTool() {
     };
     
     if (isDifferentiated) {
-      ['level1', 'level2', 'level3'].forEach(lvl => {
+      (['level1', 'level2', 'level3'] as const).forEach((lvl: DifficultyLevel) => {
         for (let i = 0; i < numQuestions; i++) {
           questions.push({ ...generateUniqueQuestion(lvl), difficulty: lvl });
         }
@@ -1058,10 +1048,7 @@ export default function CirclePropertiesTool() {
                   <div className="flex items-center gap-2">
                     <label className="text-xs font-semibold text-gray-600">Type:</label>
                     <select value={sectorQuestionStyle}
-                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-                        const value = e.target.value as SectorStyle;
-                        setSectorQuestionStyle(value);
-                      }}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSectorQuestionStyle(e.target.value as SectorStyle)}
                       className="px-2 py-1 border-2 border-gray-300 rounded-lg text-xs font-semibold">
                       <option value="mixed">Mixed</option>
                       <option value="area">Area</option>
@@ -1150,7 +1137,7 @@ export default function CirclePropertiesTool() {
                   <div className="flex items-center gap-2">
                     <label className="text-xs font-semibold text-gray-600">Type:</label>
                     <select value={sectorQuestionStyle}
-                      onChange={(e) => setSectorQuestionStyle(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSectorQuestionStyle(e.target.value as SectorStyle)}
                       className="px-2 py-1 border-2 border-gray-300 rounded-lg text-xs font-semibold">
                       <option value="mixed">Mixed</option>
                       <option value="area">Area</option>
