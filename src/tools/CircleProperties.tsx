@@ -876,6 +876,7 @@ export default function CirclePropertiesTool(): JSX.Element {
           { type: 'formula', text: 'Arc length = (θ/360) × 2πr' },
           { type: 'substitution', text: `Arc length = (${theta}/360) × 2 × π × ${formatNumber(radius)}` },
           { type: 'simplify', text: `Arc length = (${theta}/360) × ${formatNumber(2 * radius)} ×
+          
           {mode === 'whiteboard' && (
           <>
             <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
@@ -1236,16 +1237,16 @@ export default function CirclePropertiesTool(): JSX.Element {
                             <div key={i} className="rounded-lg p-3 border-2 border-gray-200" style={{
                               backgroundColor: lvl === 'level1' ? '#DCFCE7' : lvl === 'level2' ? '#FEF9C3' : '#FEE2E2'
                             }}>
-                              <div className={`font-bold ${getFontSize()}`} style={{ color: '#000000' }}>
+                              <div className={'font-bold ' + getFontSize()} style={{ color: '#000000' }}>
                                 {i + 1}. {q.displayQuestion}
                               </div>
                               <div className="flex justify-center my-1">{renderCircleDiagram(q, 200, true, 1 + worksheetFontSize * 0.3, lvl)}</div>
                               {showWorksheetAnswers && (
-                                <div className={`mt-1 font-semibold ${getFontSize()}`} style={{ color: '#059669' }}>
+                                <div className={'mt-1 font-semibold ' + getFontSize()} style={{ color: '#059669' }}>
                                   = {q.type === 'circumference'
-                                    ? (q.level === 3 ? `${q.answer} cm` : `${q.circumference} cm`)
+                                    ? (q.level === 3 ? q.answer + ' cm' : q.circumference + ' cm')
                                     : q.type === 'area'
-                                    ? (q.level === 3 ? `${q.answer} cm` : `${q.area} cm²`)
+                                    ? (q.level === 3 ? q.answer + ' cm' : q.area + ' cm²')
                                     : q.answer}
                                 </div>
                               )}
@@ -1256,23 +1257,23 @@ export default function CirclePropertiesTool(): JSX.Element {
                     ))}
                   </div>
                 ) : (
-                  <div className={`grid gap-x-6 gap-y-3 ${
+                  <div className={'grid gap-x-6 gap-y-3 ' + (
                     numColumns === 1 ? 'grid-cols-1' :
                     numColumns === 2 ? 'grid-cols-2' :
                     numColumns === 3 ? 'grid-cols-3' : 'grid-cols-4'
-                  }`}>
+                  )}>
                     {worksheet.map((q: QuestionData, i: number) => (
                       <div key={i} className="rounded-lg p-3 border-2 border-gray-200" style={{ backgroundColor: getStepBg() }}>
-                        <div className={`font-bold ${getFontSize()} mb-1`} style={{ color: '#000000' }}>
+                        <div className={'font-bold mb-1 ' + getFontSize()} style={{ color: '#000000' }}>
                           {i + 1}. {q.displayQuestion}
                         </div>
                         <div className="flex justify-center mb-1">{renderCircleDiagram(q, 180, true, 1 + worksheetFontSize * 0.3)}</div>
                         {showWorksheetAnswers && (
-                          <div className={`font-semibold ${getFontSize()} text-center`} style={{ color: '#059669' }}>
+                          <div className={'font-semibold text-center ' + getFontSize()} style={{ color: '#059669' }}>
                             = {q.type === 'circumference'
-                              ? (q.level === 3 ? `${q.answer} cm` : `${q.circumference} cm`)
+                              ? (q.level === 3 ? q.answer + ' cm' : q.circumference + ' cm')
                               : q.type === 'area'
-                              ? (q.level === 3 ? `${q.answer} cm` : `${q.area} cm²`)
+                              ? (q.level === 3 ? q.answer + ' cm' : q.area + ' cm²')
                               : q.answer}
                           </div>
                         )}
