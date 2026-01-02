@@ -3,25 +3,29 @@ import { useNavigate } from 'react-router-dom';
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X } from 'lucide-react';
 
 // ===== TYPE DEFINITIONS =====
+type ColorScheme = 'default' | 'blue' | 'pink' | 'yellow';
+type DifficultyLevel = 'level1' | 'level2' | 'level3';
+type Mode = 'whiteboard' | 'single' | 'worksheet';
+type QuestionType = 'circumference' | 'area' | 'sectors';
+type SectorQuestionStyle = 'mixed' | 'area' | 'arcLength' | 'perimeter';
+
 type WorkingStep = {
   type: string;
   text?: string;
   textPi?: string;
   textNumeric?: string;
+  answer?: string;
   answerPi?: string;
   answerNumeric?: string;
-  answer?: string;
 };
 
-type QuestionType = {
+type QuestionData = {
   level: number;
   diameter: number;
   radius: number;
   given: string;
   find: string;
   displayQuestion: string;
-  angle: number;
-  type: string;
   circumference?: string;
   circumferenceNumeric?: number;
   circumferencePi?: string;
@@ -29,32 +33,34 @@ type QuestionType = {
   areaNumeric?: number;
   areaPi?: string;
   answer?: string;
-  working?: WorkingStep[];
-  theta?: number;
-  questionStyle?: string;
-  difficulty?: string;
   answerNumeric?: string;
   answerPi?: string;
+  angle: number;
+  type: string;
+  working: WorkingStep[];
+  theta?: number;
+  questionStyle?: string;
+  difficulty?: DifficultyLevel;
 };
 
-export default function CirclePropertiesTool() {
+export default function CirclePropertiesTool(): JSX.Element {
   const navigate = useNavigate();
   const PI = 3.142592;
   
   // ===== STATE =====
-  const [mode, setMode] = useState<string>('whiteboard');
-  const [difficulty, setDifficulty] = useState<string>('level1');
-  const [questionType, setQuestionType] = useState<string>('circumference');
-  const [sectorQuestionStyle, setSectorQuestionStyle] = useState<string>('mixed');
+  const [mode, setMode] = useState<Mode>('whiteboard');
+  const [difficulty, setDifficulty] = useState<DifficultyLevel>('level1');
+  const [questionType, setQuestionType] = useState<QuestionType>('circumference');
+  const [sectorQuestionStyle, setSectorQuestionStyle] = useState<SectorQuestionStyle>('mixed');
   
-  const [whiteboardQuestion, setWhiteboardQuestion] = useState<QuestionType | null>(null);
+  const [whiteboardQuestion, setWhiteboardQuestion] = useState<QuestionData | null>(null);
   const [showWhiteboardAnswer, setShowWhiteboardAnswer] = useState<boolean>(false);
   
-  const [question, setQuestion] = useState<QuestionType | null>(null);
+  const [question, setQuestion] = useState<QuestionData | null>(null);
   const [showAnswer, setShowAnswer] = useState<boolean>(false);
   
   const [numQuestions, setNumQuestions] = useState<number>(5);
-  const [worksheet, setWorksheet] = useState<QuestionType[]>([]);
+  const [worksheet, setWorksheet] = useState<QuestionData[]>([]);
   const [showWorksheetAnswers, setShowWorksheetAnswers] = useState<boolean>(false);
   const [isDifferentiated, setIsDifferentiated] = useState<boolean>(false);
   const [numColumns, setNumColumns] = useState<number>(2);
@@ -63,7 +69,7 @@ export default function CirclePropertiesTool() {
   const [allowDecimals, setAllowDecimals] = useState<boolean>(false);
   const [answerInPi, setAnswerInPi] = useState<boolean>(false);
   
-  const [colorScheme, setColorScheme] = useState<string>('default');
+  const [colorScheme, setColorScheme] = useState<ColorScheme>('default');
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
 
   // ===== COLOR SCHEME HELPERS =====
@@ -112,6 +118,17 @@ export default function CirclePropertiesTool() {
     return '#FFFFFF';
   };
 
+  const getDifficultyButtonClass = (idx: number, isActive: boolean): string => {
+    if (isActive) {
+      return idx === 0 ? 'bg-green-600 text-white' 
+           : idx === 1 ? 'bg-yellow-600 text-white' 
+           : 'bg-red-600 text-white';
+    }
+    return idx === 0 ? 'bg-white text-green-600 border-2 border-green-600' 
+         : idx === 1 ? 'bg-white text-yellow-600 border-2 border-yellow-600' 
+         : 'bg-white text-red-600 border-2 border-red-600';
+  };
+
   // ===== FONT SIZE =====
   const fontSizes = ['text-xl', 'text-2xl', 'text-3xl', 'text-4xl'];
   const getFontSize = (): string => fontSizes[worksheetFontSize];
@@ -122,11 +139,12 @@ export default function CirclePropertiesTool() {
     return Number.isInteger(num) ? num.toString() : num.toFixed(1);
   };
 
-  const renderCircleDiagram = (q: QuestionType, size: number = 400, isWorksheet: boolean = false, fontSizeScale: number = 1, levelOverride?: string): JSX.Element => {
+  const renderCircleDiagram = (q: QuestionData, size: number = 400, isWorksheet: boolean = false, fontSizeScale: number = 1, levelOverride?: string): JSX.Element => {
     if (q.type === 'sector') {
       return renderSectorDiagram(q, size, isWorksheet, fontSizeScale, levelOverride);
     }
     
+    const centerX = size / 2;
     const centerY = size / 2;
     const circleRadius = size * 0.35;
     const angleRad = (q.angle * Math.PI) / 180;
@@ -142,17 +160,17 @@ export default function CirclePropertiesTool() {
     const boxSpacing = isWorksheet ? boxHeight * 0.15 : 0;
     const firstBoxY = centerY + circleRadius + (isWorksheet ? size * 0.12 : 35);
     
-    let infoBoxes: string[] = [];
+    const infoBoxes: string[] = [];
     if (q.given === 'diameter' || q.find === 'diameter') {
       infoBoxes.push(q.given === 'diameter' ? `d = ${formatNumber(q.diameter)} cm` : 'd = ?');
     }
     if (q.given === 'radius' || q.find === 'radius') {
       infoBoxes.push(q.given === 'radius' ? `r = ${formatNumber(q.radius)} cm` : 'r = ?');
     }
-    if (q.given === 'circumference') {
+    if (q.given === 'circumference' && q.circumference) {
       infoBoxes.push(`C = ${q.circumference} cm`);
     }
-    if (q.given === 'area') {
+    if (q.given === 'area' && q.area) {
       infoBoxes.push(`A = ${q.area} cm²`);
     }
     
@@ -236,14 +254,14 @@ export default function CirclePropertiesTool() {
           );
         })}
         
-        {!isWorksheet && q.given === 'circumference' && (
+        {!isWorksheet && q.given === 'circumference' && q.circumference && (
           <text x={circleCenterX} y={circleCenterY + circleRadiusAdjusted + 45} fill="#000000"
             fontSize={belowLabelFontSize} fontWeight="bold" textAnchor="middle">
             C = {q.circumference} cm
           </text>
         )}
         
-        {!isWorksheet && q.given === 'area' && (
+        {!isWorksheet && q.given === 'area' && q.area && (
           <text x={circleCenterX} y={circleCenterY + circleRadiusAdjusted + 45} fill="#000000"
             fontSize={belowLabelFontSize} fontWeight="bold" textAnchor="middle">
             A = {q.area} cm²
@@ -253,15 +271,16 @@ export default function CirclePropertiesTool() {
     );
   };
 
-  const renderSectorDiagram = (q: QuestionType, size: number = 400, isWorksheet: boolean = false, fontSizeScale: number = 1, levelOverride?: string): JSX.Element => {
+  const renderSectorDiagram = (q: QuestionData, size: number, isWorksheet: boolean, fontSizeScale: number, levelOverride?: string): JSX.Element => {
     const centerX = size / 2;
     const centerY = size / 2;
     const circleRadius = size * 0.35;
+    const theta = q.theta || 90;
     
     let startAngle = 0;
     let endAngle = 0;
     
-    if (q.theta === 180) {
+    if (theta === 180) {
       const isTopHalf = Math.random() > 0.5;
       if (isTopHalf) {
         startAngle = 180;
@@ -270,12 +289,12 @@ export default function CirclePropertiesTool() {
         startAngle = 0;
         endAngle = 180;
       }
-    } else if (q.theta === 90) {
+    } else if (theta === 90) {
       startAngle = -90;
       endAngle = 0;
     } else {
       startAngle = -90;
-      endAngle = startAngle + (q.theta || 0);
+      endAngle = startAngle + theta;
     }
     
     const startRad = (startAngle * Math.PI) / 180;
@@ -286,31 +305,43 @@ export default function CirclePropertiesTool() {
     const endX = centerX + Math.cos(endRad) * circleRadius;
     const endY = centerY + Math.sin(endRad) * circleRadius;
     
-    const largeArcFlag = (q.theta || 0) > 180 ? 1 : 0;
+    const largeArcFlag = theta > 180 ? 1 : 0;
     
+    let dimensionLine: { x1: number; y1: number; x2: number; y2: number };
+    let labelX = 0;
+    let labelY = 0;
     let labelText = '';
     let labelAngle = 0;
     
     if (q.level === 1) {
+      const midX = (startX + endX) / 2;
+      const midY = (startY + endY) / 2;
       labelAngle = Math.atan2(endY - startY, endX - startX) * (180 / Math.PI);
+      dimensionLine = { x1: startX, y1: startY, x2: endX, y2: endY };
+      labelX = midX;
+      labelY = midY;
       labelText = `d = ${formatNumber(q.diameter)} cm`;
     } else {
+      const midX = (centerX + startX) / 2;
+      const midY = (centerY + startY) / 2;
       labelAngle = Math.atan2(startY - centerY, startX - centerX) * (180 / Math.PI);
+      dimensionLine = { x1: centerX, y1: centerY, x2: startX, y2: startY };
+      labelX = midX;
+      labelY = midY;
       labelText = `r = ${formatNumber(q.radius)} cm`;
     }
     
     const belowLabelFontSize = isWorksheet ? Math.max(18, 22 * fontSizeScale) : 26;
-    const showTheta = q.level !== 1 && ![90, 180, 270].includes(q.theta || 0);
+    const showTheta = q.level !== 1 && ![90, 180, 270].includes(theta);
     
     const boxHeight = isWorksheet ? belowLabelFontSize * 1.8 : 0;
     const boxPadding = isWorksheet ? belowLabelFontSize * 0.8 : 0;
     const boxSpacing = isWorksheet ? boxHeight * 0.15 : 0;
     const firstBoxY = centerY + circleRadius + (isWorksheet ? size * 0.12 : 35);
     
-    let infoBoxes: string[] = [];
-    infoBoxes.push(labelText);
+    const infoBoxes: string[] = [labelText];
     if (showTheta) {
-      infoBoxes.push(`θ = ${q.theta}°`);
+      infoBoxes.push(`θ = ${theta}°`);
     }
     
     const maxTextLength = Math.max(...infoBoxes.map((info: string) => info.length));
@@ -333,7 +364,7 @@ export default function CirclePropertiesTool() {
       `Z`
     ].join(' ');
     
-    let dimensionLineAdjusted: any;
+    let dimensionLineAdjusted: { x1: number; y1: number; x2: number; y2: number };
     let labelXAdjusted = 0;
     let labelYAdjusted = 0;
     
@@ -426,7 +457,7 @@ export default function CirclePropertiesTool() {
         
         {q.level === 3 && (
           <>
-            <path d={`M ${sectorCenterX + Math.cos(startRad) * 25} ${sectorCenterY + Math.sin(startRad) * 25} A 25 25 0 ${(q.theta || 0) > 180 ? 1 : 0} 1 ${sectorCenterX + Math.cos(endRad) * 25} ${sectorCenterY + Math.sin(endRad) * 25}`}
+            <path d={`M ${sectorCenterX + Math.cos(startRad) * 25} ${sectorCenterY + Math.sin(startRad) * 25} A 25 25 0 ${theta > 180 ? 1 : 0} 1 ${sectorCenterX + Math.cos(endRad) * 25} ${sectorCenterY + Math.sin(endRad) * 25}`}
               fill="none" stroke="#000000" strokeWidth="2" />
             {(() => {
               const midAngleRad = (startRad + endRad) / 2;
@@ -443,16 +474,17 @@ export default function CirclePropertiesTool() {
         
         {!isWorksheet && showTheta && (
           <text x={sectorCenterX} y={sectorCenterY + circleRadius + 50} fill="#000000"
-            fontSize={belowLabelFontSize} fontWeight="bold" textAnchor="middle">θ = {q.theta}°</text>
+            fontSize={belowLabelFontSize} fontWeight="bold" textAnchor="middle">θ = {theta}°</text>
         )}
       </svg>
     );
   };
 
-// ===== CONTINUE TO PART 2 =====
-  
-//  ===== SECTION 2 ======
-  const generateCircumferenceQuestion = (level: string, angle: number): QuestionType => {
+  // ===== COPY ABOVE THIS LINE FOR PART 1 =====
+  // ===== CONTINUE IN PART 2 =====
+  // ===== QUESTION GENERATION FUNCTIONS =====
+
+  const generateCircumferenceQuestion = (level: DifficultyLevel, angle: number): QuestionData => {
     if (level === 'level1') {
       const diameter = allowDecimals 
         ? Math.round((Math.random() * 24 + 1) * 10) / 10 
@@ -522,7 +554,7 @@ export default function CirclePropertiesTool() {
         circumferencePi = diameter;
       }
       
-      const working: WorkingStep[] = findWhat === 'radius' ? [
+      const working = findWhat === 'radius' ? [
         { type: 'given', text: `Circumference (C) = ${answerInPi ? `${formatNumber(circumferencePi)}π` : formatNumber(Math.round(circumference * 10) / 10)} cm` },
         { type: 'formula', text: 'Circumference = 2πr' },
         { type: 'rearrange', text: 'r = C ÷ (2π)' },
@@ -554,7 +586,7 @@ export default function CirclePropertiesTool() {
     }
   };
 
-  const generateAreaQuestion = (level: string, angle: number): QuestionType => {
+  const generateAreaQuestion = (level: DifficultyLevel, angle: number): QuestionData => {
     if (level === 'level1') {
       const radius = allowDecimals ? Math.round((Math.random() * 24 + 1) * 10) / 10 : Math.floor(Math.random() * 25) + 1;
       const diameter = radius * 2;
@@ -621,7 +653,7 @@ export default function CirclePropertiesTool() {
         areaPi = radius * radius;
       }
       
-      const working: WorkingStep[] = findWhat === 'radius' ? [
+      const working = findWhat === 'radius' ? [
         { type: 'given', text: `Area (A) = ${answerInPi ? `${formatNumber(areaPi)}π` : formatNumber(Math.round(area * 10) / 10)} cm²` },
         { type: 'formula', text: 'Area = πr²' },
         { type: 'rearrange', text: 'r² = A ÷ π' },
@@ -655,14 +687,14 @@ export default function CirclePropertiesTool() {
     }
   };
 
-  const generateSectorQuestion = (level: string, angle: number): QuestionType => {
+  const generateSectorQuestion = (level: DifficultyLevel, angle: number): QuestionData => {
     let theta = 0;
     let radius = 0;
     let diameter = 0;
     let questionStyle = sectorQuestionStyle;
     
     if (questionStyle === 'mixed') {
-      const styles = ['area', 'perimeter', 'arcLength'];
+      const styles: SectorQuestionStyle[] = ['area', 'perimeter', 'arcLength'];
       questionStyle = styles[Math.floor(Math.random() * styles.length)];
     }
     
@@ -676,6 +708,7 @@ export default function CirclePropertiesTool() {
       const arcLength = PI * radius;
       const arcLengthPi = radius;
       const perimeter = PI * radius + diameter;
+      const perimeterPi = radius;
       
       let displayQuestion = '';
       let answer = '';
@@ -716,7 +749,7 @@ export default function CirclePropertiesTool() {
       } else {
         displayQuestion = 'Find the perimeter of the semi-circle';
         answerNumeric = formatNumber(Math.round(perimeter * 10) / 10);
-        answerPi = `${formatNumber(radius)}π + ${formatNumber(diameter)}`;
+        answerPi = `${formatNumber(perimeterPi)}π + ${formatNumber(diameter)}`;
         answer = answerInPi ? answerPi : answerNumeric;
         working = [
           { type: 'given', text: `Diameter (d) = ${formatNumber(diameter)} cm, θ = 180°` },
@@ -742,6 +775,7 @@ export default function CirclePropertiesTool() {
       const arcLength = (PI * radius) / 2;
       const arcLengthPi = radius / 2;
       const perimeter = (PI * radius) / 2 + 2 * radius;
+      const perimeterPi = radius / 2;
       
       let displayQuestion = '';
       let answer = '';
@@ -782,7 +816,7 @@ export default function CirclePropertiesTool() {
       } else {
         displayQuestion = 'Find the perimeter of the quarter-circle';
         answerNumeric = formatNumber(Math.round(perimeter * 10) / 10);
-        answerPi = `${formatNumber(arcLengthPi)}π + ${formatNumber(2 * radius)}`;
+        answerPi = `${formatNumber(perimeterPi)}π + ${formatNumber(2 * radius)}`;
         answer = answerInPi ? answerPi : answerNumeric;
         working = [
           { type: 'given', text: `Diameter (d) = ${formatNumber(diameter)} cm, θ = 90°` },
@@ -841,191 +875,18 @@ export default function CirclePropertiesTool() {
           { type: 'findRadius', text: `Radius (r) = d ÷ 2 = ${formatNumber(diameter)} ÷ 2 = ${formatNumber(radius)} cm` },
           { type: 'formula', text: 'Arc length = (θ/360) × 2πr' },
           { type: 'substitution', text: `Arc length = (${theta}/360) × 2 × π × ${formatNumber(radius)}` },
-          { type: 'simplify', text: `Arc length = (${theta}/360) × ${formatNumber(2 * radius)} × π` },
-          { type: 'calculation', textPi: `Arc length = ${answerPi} cm`,
-            textNumeric: `Arc length = ${formatNumber(theta/360)} × 2 × 3.142592 × ${formatNumber(radius)} = ${answerNumeric} cm` },
-          { type: 'final', answerPi: `${answerPi} cm`, answerNumeric: `${answerNumeric} cm` }
-        ];
-      } else {
-        displayQuestion = 'Find the perimeter of the sector';
-        answerNumeric = formatNumber(Math.round(perimeter * 10) / 10);
-        answerPi = `${formatNumber(Math.round(perimeterPi * 100) / 100)}π + ${formatNumber(2 * radius)}`;
-        answer = answerInPi ? answerPi : answerNumeric;
-        working = [
-          { type: 'given', text: `Diameter (d) = ${formatNumber(diameter)} cm, θ = ${theta}°` },
-          { type: 'findRadius', text: `Radius (r) = d ÷ 2 = ${formatNumber(diameter)} ÷ 2 = ${formatNumber(radius)} cm` },
-          { type: 'formula', text: 'Perimeter = arc length + 2r = (θ/360) × 2πr + 2r' },
-          { type: 'substitution', text: `Perimeter = (${theta}/360) × 2 × π × ${formatNumber(radius)} + 2 × ${formatNumber(radius)}` },
-          { type: 'simplify', text: `Perimeter = (${theta}/360) × ${formatNumber(2 * radius)} × π + ${formatNumber(2 * radius)}` },
-          { type: 'calculation', textPi: `Perimeter = ${answerPi} cm`,
-            textNumeric: `Perimeter = ${formatNumber(Math.round(arcLength * 10) / 10)} + ${formatNumber(2 * radius)} = ${answerNumeric} cm` },
-          { type: 'final', answerPi: `${answerPi} cm`, answerNumeric: `${answerNumeric} cm` }
-        ];
-      }
-      
-      return { level: 3, theta, radius, diameter, displayQuestion, answer, answerNumeric, answerPi,
-        questionStyle, angle, type: 'sector', working, given: '', find: '' };
-    }
-  };
-
-  const generateQuestion = (level: string): QuestionType => {
-    const angle = Math.floor(Math.random() * 24) * 15;
-    if (questionType === 'circumference') {
-      return generateCircumferenceQuestion(level, angle);
-    } else if (questionType === 'area') {
-      return generateAreaQuestion(level, angle);
-    } else {
-      return generateSectorQuestion(level, angle);
-    }
-  };
-
-  // ===== EVENT HANDLERS =====
-  const handleNewWhiteboardQuestion = (): void => {
-    setWhiteboardQuestion(generateQuestion(difficulty));
-    setShowWhiteboardAnswer(false);
-  };
-
-  const handleNewQuestion = (): void => {
-    setQuestion(generateQuestion(difficulty));
-    setShowAnswer(false);
-  };
-
-  const handleGenerateWorksheet = (): void => {
-    const questions: QuestionType[] = [];
-    const usedKeys = new Set<string>();
-    
-    const generateUniqueQuestion = (lvl: string): QuestionType => {
-      let attempts = 0;
-      let q: QuestionType = generateQuestion(lvl);
-      let uniqueKey = '';
-      
-      do {
-        q = generateQuestion(lvl);
-        if (questionType === 'sectors') {
-          uniqueKey = `${q.theta}-${q.diameter}-${q.questionStyle}`;
-        } else if (questionType === 'circumference') {
-          if (q.given === 'radius') {
-            uniqueKey = `circ-r${q.radius}-${q.level}`;
-          } else if (q.given === 'diameter') {
-            uniqueKey = `circ-d${q.diameter}-${q.level}`;
-          } else {
-            uniqueKey = `circ-c${q.circumferenceNumeric}-find${q.find}`;
-          }
-        } else {
-          if (q.given === 'radius') {
-            uniqueKey = `area-r${q.radius}-${q.level}`;
-          } else if (q.given === 'diameter') {
-            uniqueKey = `area-d${q.diameter}-${q.level}`;
-          } else {
-            uniqueKey = `area-a${q.areaNumeric}-find${q.find}`;
-          }
-        }
-        if (++attempts > 100) break;
-      } while (usedKeys.has(uniqueKey));
-      usedKeys.add(uniqueKey);
-      return q;
-    };
-    
-    if (isDifferentiated) {
-      ['level1', 'level2', 'level3'].forEach((lvl: string) => {
-        for (let i = 0; i < numQuestions; i++) {
-          questions.push({ ...generateUniqueQuestion(lvl), difficulty: lvl });
-        }
-      });
-    } else {
-      for (let i = 0; i < numQuestions; i++) {
-        questions.push({ ...generateUniqueQuestion(difficulty), difficulty });
-      }
-    }
-    setWorksheet(questions);
-    setShowWorksheetAnswers(false);
-  };
-
-  // ===== EFFECTS =====
-  useEffect(() => {
-    if (mode === 'whiteboard' && !whiteboardQuestion) handleNewWhiteboardQuestion();
-    if (mode === 'single' && !question) handleNewQuestion();
-  }, [mode]);
-
-  useEffect(() => {
-    if (mode === 'whiteboard' && whiteboardQuestion) handleNewWhiteboardQuestion();
-    if (mode === 'single' && question) handleNewQuestion();
-  }, [difficulty, allowDecimals, answerInPi, questionType]);
-
-  // ===== RENDER =====
-  return (
-    <>
-      <div className="bg-blue-900 shadow-lg">
-        <div className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
-          <button onClick={() => navigate('/')}
-            className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors">
-            <Home size={24} /><span className="font-semibold text-lg">Home</span>
-          </button>
-          <div className="relative">
-            <button onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-white hover:bg-blue-800 p-2 rounded-lg transition-colors">
-              {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
-            </button>
-            {isMenuOpen && (
-              <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border-2 border-gray-200 overflow-hidden z-50">
-                <div className="py-2">
-                  <div className="px-6 py-2 font-bold text-gray-700 text-sm uppercase tracking-wide">Color Schemes</div>
-                  {['default', 'blue', 'pink', 'yellow'].map((scheme: string) => (
-                    <button key={scheme} onClick={() => setColorScheme(scheme)}
-                      className={'w-full text-left px-6 py-3 font-semibold transition-colors ' +
-                        (colorScheme === scheme ? 'bg-blue-100 text-blue-900' : 'text-gray-800 hover:bg-gray-100')}>
-                      {scheme.charAt(0).toUpperCase() + scheme.slice(1)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-5xl font-bold text-center mb-8" style={{ color: '#000000' }}>
-          Circle Properties
-        </h1>
-
-        <div className="flex justify-center gap-3 flex-wrap mb-6">
-          {['circumference', 'area', 'sectors'].map((topic: string) => (
-            <button key={topic} onClick={() => setQuestionType(topic)}
-              className={'px-8 py-4 rounded-xl font-bold text-xl transition-all border-2 border-gray-200 ' +
-                (questionType === topic ? 'bg-blue-900 text-white shadow-lg' : 'bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900 shadow')}>
-              {topic === 'circumference' ? 'Circumference' : topic === 'area' ? 'Area' : 'Sectors'}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex justify-center mb-8">
-          <div style={{ width: '90%', height: '1px', backgroundColor: '#d1d5db' }}></div>
-        </div>
-
-        <div className="flex justify-center gap-4 mb-8">
-          {['whiteboard', 'single', 'worksheet'].map((m: string) => (
-            <button key={m} onClick={() => setMode(m)}
-              className={'px-8 py-4 rounded-xl font-bold text-xl transition-all border-2 border-gray-200 ' +
-                (mode === m ? 'bg-blue-900 text-white shadow-lg' : 'bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900 shadow')}>
-              {m === 'whiteboard' ? 'Whiteboard' : m === 'single' ? 'Single Q' : 'Worksheet'}
-            </button>
-          ))}
-        </div>
-
-        {mode === 'whiteboard' && (
+          { type: 'simplify', text: `Arc length = (${theta}/360) × ${formatNumber(2 * radius)} ×
+          {mode === 'whiteboard' && (
           <>
             <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-semibold text-gray-600">Difficulty:</span>
                   <div className="flex gap-2">
-                    {['level1', 'level2', 'level3'].map((lvl: string, idx: number) => (
+                    {(['level1', 'level2', 'level3'] as const).map((lvl: DifficultyLevel, idx: number) => (
                       <button key={lvl} onClick={() => setDifficulty(lvl)}
                         className={'px-4 py-2 rounded-lg font-bold text-sm w-24 ' +
-                          (difficulty === lvl
-                            ? (idx === 0 ? 'bg-green-600 text-white' : idx === 1 ? 'bg-yellow-600 text-white' : 'bg-red-600 text-white')
-                            : (idx === 0 ? 'bg-white text-green-600 border-2 border-green-600' : idx === 1 ? 'bg-white text-yellow-600 border-2 border-yellow-600' : 'bg-white text-red-600 border-2 border-red-600'))}>
+                          getDifficultyButtonClass(idx, difficulty === lvl)}>
                         Level {idx + 1}
                       </button>
                     ))}
@@ -1035,12 +896,12 @@ export default function CirclePropertiesTool() {
                 <div className="flex flex-col gap-1">
                   <label className="flex items-center gap-2 text-sm font-semibold text-gray-600">
                     <input type="checkbox" checked={allowDecimals}
-                      onChange={(e) => setAllowDecimals(e.target.checked)} className="w-3 h-3" />
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAllowDecimals(e.target.checked)} className="w-3 h-3" />
                     Decimals
                   </label>
                   <label className="flex items-center gap-2 text-sm font-semibold text-gray-600">
                     <input type="checkbox" checked={answerInPi}
-                      onChange={(e) => setAnswerInPi(e.target.checked)} className="w-3 h-3" />
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAnswerInPi(e.target.checked)} className="w-3 h-3" />
                     In π
                   </label>
                 </div>
@@ -1049,7 +910,7 @@ export default function CirclePropertiesTool() {
                   <div className="flex items-center gap-2">
                     <label className="text-xs font-semibold text-gray-600">Type:</label>
                     <select value={sectorQuestionStyle}
-                      onChange={(e) => setSectorQuestionStyle(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSectorQuestionStyle(e.target.value as SectorQuestionStyle)}
                       className="px-2 py-1 border-2 border-gray-300 rounded-lg text-xs font-semibold">
                       <option value="mixed">Mixed</option>
                       <option value="area">Area</option>
@@ -1109,12 +970,10 @@ export default function CirclePropertiesTool() {
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-semibold text-gray-600">Difficulty:</span>
                   <div className="flex gap-2">
-                    {['level1', 'level2', 'level3'].map((lvl: string, idx: number) => (
+                    {(['level1', 'level2', 'level3'] as const).map((lvl: DifficultyLevel, idx: number) => (
                       <button key={lvl} onClick={() => setDifficulty(lvl)}
                         className={'px-4 py-2 rounded-lg font-bold text-sm w-24 ' +
-                          (difficulty === lvl
-                            ? (idx === 0 ? 'bg-green-600 text-white' : idx === 1 ? 'bg-yellow-600 text-white' : 'bg-red-600 text-white')
-                            : (idx === 0 ? 'bg-white text-green-600 border-2 border-green-600' : idx === 1 ? 'bg-white text-yellow-600 border-2 border-yellow-600' : 'bg-white text-red-600 border-2 border-red-600'))}>
+                          getDifficultyButtonClass(idx, difficulty === lvl)}>
                         Level {idx + 1}
                       </button>
                     ))}
@@ -1124,12 +983,12 @@ export default function CirclePropertiesTool() {
                 <div className="flex flex-col gap-1">
                   <label className="flex items-center gap-2 text-sm font-semibold text-gray-600">
                     <input type="checkbox" checked={allowDecimals}
-                      onChange={(e) => setAllowDecimals(e.target.checked)} className="w-3 h-3" />
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAllowDecimals(e.target.checked)} className="w-3 h-3" />
                     Decimals
                   </label>
                   <label className="flex items-center gap-2 text-sm font-semibold text-gray-600">
                     <input type="checkbox" checked={answerInPi}
-                      onChange={(e) => setAnswerInPi(e.target.checked)} className="w-3 h-3" />
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAnswerInPi(e.target.checked)} className="w-3 h-3" />
                     In π
                   </label>
                 </div>
@@ -1138,7 +997,7 @@ export default function CirclePropertiesTool() {
                   <div className="flex items-center gap-2">
                     <label className="text-xs font-semibold text-gray-600">Type:</label>
                     <select value={sectorQuestionStyle}
-                      onChange={(e) => setSectorQuestionStyle(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSectorQuestionStyle(e.target.value as SectorQuestionStyle)}
                       className="px-2 py-1 border-2 border-gray-300 rounded-lg text-xs font-semibold">
                       <option value="mixed">Mixed</option>
                       <option value="area">Area</option>
@@ -1164,89 +1023,91 @@ export default function CirclePropertiesTool() {
             </div>
 
             {question && (
-              <div className="rounded-xl shadow-2xl p-12" style={{ backgroundColor: getQuestionBg(), minHeight: '120vh' }}>
-                <div className="text-6xl font-bold text-center mb-8" style={{ color: '#000000' }}>
-                  {question.displayQuestion}
+              <div className="overflow-y-auto" style={{ height: '120vh' }}>
+                <div className="rounded-xl shadow-lg p-12 w-full" style={{ backgroundColor: getQuestionBg() }}>
+                  <div className="text-6xl font-bold text-center mb-8" style={{ color: '#000000' }}>
+                    {question.displayQuestion}
+                  </div>
+
+                  <div className="flex justify-center mb-8">
+                    {renderCircleDiagram(question, 400)}
+                  </div>
+
+                  {showAnswer && (
+                    <>
+                      <div className="space-y-6 mb-8">
+                        {question.working.filter((step: WorkingStep) => step.type !== 'final').map((step: WorkingStep, idx: number) => (
+                          <div key={idx} className="rounded-xl p-6" style={{ backgroundColor: getStepBg() }}>
+                            {step.type === 'given' && (
+                              <div>
+                                <h4 className="text-xl font-bold mb-3" style={{ color: '#000000' }}>Given</h4>
+                                <div className="text-3xl font-medium" style={{ color: '#000000' }}>{step.text}</div>
+                              </div>
+                            )}
+                            {step.type === 'formula' && (
+                              <div>
+                                <h4 className="text-xl font-bold mb-3" style={{ color: '#000000' }}>Formula</h4>
+                                <div className="text-3xl font-medium" style={{ color: '#000000' }}>{step.text}</div>
+                              </div>
+                            )}
+                            {step.type === 'rearrange' && (
+                              <div>
+                                <h4 className="text-xl font-bold mb-3" style={{ color: '#000000' }}>Rearrange</h4>
+                                <div className="text-3xl font-medium" style={{ color: '#000000' }}>{step.text}</div>
+                              </div>
+                            )}
+                            {step.type === 'substitution' && (
+                              <div>
+                                <h4 className="text-xl font-bold mb-3" style={{ color: '#000000' }}>Substitute</h4>
+                                <div className="text-3xl font-medium" style={{ color: '#000000' }}>
+                                  {answerInPi ? (step.textPi || step.text) : (step.textNumeric || step.text)}
+                                </div>
+                              </div>
+                            )}
+                            {step.type === 'calculation' && (
+                              <div>
+                                <h4 className="text-xl font-bold mb-3" style={{ color: '#000000' }}>Calculate</h4>
+                                <div className="text-3xl font-medium" style={{ color: '#000000' }}>
+                                  {answerInPi ? (step.textPi || step.text) : (step.textNumeric || step.text)}
+                                </div>
+                              </div>
+                            )}
+                            {step.type === 'findRadius' && (
+                              <div>
+                                <h4 className="text-xl font-bold mb-3" style={{ color: '#000000' }}>Find Radius</h4>
+                                <div className="text-3xl font-medium" style={{ color: '#000000' }}>{step.text}</div>
+                              </div>
+                            )}
+                            {step.type === 'simplify' && (
+                              <div>
+                                <h4 className="text-xl font-bold mb-3" style={{ color: '#000000' }}>Simplify</h4>
+                                <div className="text-3xl font-medium" style={{ color: '#000000' }}>
+                                  {answerInPi ? (step.textPi || step.text) : (step.textNumeric || step.text)}
+                                </div>
+                              </div>
+                            )}
+                            {step.type === 'findDiameter' && (
+                              <div>
+                                <h4 className="text-xl font-bold mb-3" style={{ color: '#000000' }}>Find Diameter</h4>
+                                <div className="text-3xl font-medium" style={{ color: '#000000' }}>{step.text}</div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="rounded-xl p-6 text-center" style={{ backgroundColor: getFinalAnswerBg() }}>
+                        <span className="text-5xl font-bold" style={{ color: '#166534' }}>
+                          = {question.type === 'circumference'
+                            ? (question.level === 3 ? `${question.answer} cm` : `${question.circumference} cm`)
+                            : question.type === 'area'
+                            ? (question.level === 3 ? `${question.answer} cm` : `${question.area} cm²`)
+                            : question.answer}
+                        </span>
+                      </div>
+                    </>
+                  )}
                 </div>
-
-                <div className="flex justify-center mb-8">
-                  {renderCircleDiagram(question, 400)}
-                </div>
-
-                {showAnswer && (
-                  <>
-                    <div className="space-y-6 mb-8">
-                      {question.working?.filter((step: WorkingStep) => step.type !== 'final').map((step: WorkingStep, idx: number) => (
-                        <div key={idx} className="rounded-xl p-6" style={{ backgroundColor: getStepBg() }}>
-                          {step.type === 'given' && (
-                            <div>
-                              <h4 className="text-xl font-semibold mb-3" style={{ color: '#000000' }}>Given:</h4>
-                              <div className="text-3xl font-medium" style={{ color: '#000000' }}>{step.text}</div>
-                            </div>
-                          )}
-                          {step.type === 'formula' && (
-                            <div>
-                              <h4 className="text-xl font-semibold mb-3" style={{ color: '#000000' }}>Formula:</h4>
-                              <div className="text-3xl font-medium" style={{ color: '#000000' }}>{step.text}</div>
-                            </div>
-                          )}
-                          {step.type === 'rearrange' && (
-                            <div>
-                              <h4 className="text-xl font-semibold mb-3" style={{ color: '#000000' }}>Rearrange:</h4>
-                              <div className="text-3xl font-medium" style={{ color: '#000000' }}>{step.text}</div>
-                            </div>
-                          )}
-                          {step.type === 'substitution' && (
-                            <div>
-                              <h4 className="text-xl font-semibold mb-3" style={{ color: '#000000' }}>Substitute:</h4>
-                              <div className="text-3xl font-medium" style={{ color: '#000000' }}>
-                                {answerInPi ? (step.textPi || step.text) : (step.textNumeric || step.text)}
-                              </div>
-                            </div>
-                          )}
-                          {step.type === 'calculation' && (
-                            <div>
-                              <h4 className="text-xl font-semibold mb-3" style={{ color: '#000000' }}>Calculate:</h4>
-                              <div className="text-3xl font-medium" style={{ color: '#000000' }}>
-                                {answerInPi ? (step.textPi || step.text) : (step.textNumeric || step.text)}
-                              </div>
-                            </div>
-                          )}
-                          {step.type === 'findRadius' && (
-                            <div>
-                              <h4 className="text-xl font-semibold mb-3" style={{ color: '#000000' }}>Find Radius:</h4>
-                              <div className="text-3xl font-medium" style={{ color: '#000000' }}>{step.text}</div>
-                            </div>
-                          )}
-                          {step.type === 'simplify' && (
-                            <div>
-                              <h4 className="text-xl font-semibold mb-3" style={{ color: '#000000' }}>Simplify:</h4>
-                              <div className="text-3xl font-medium" style={{ color: '#000000' }}>
-                                {answerInPi ? (step.textPi || step.text) : (step.textNumeric || step.text)}
-                              </div>
-                            </div>
-                          )}
-                          {step.type === 'findDiameter' && (
-                            <div>
-                              <h4 className="text-xl font-semibold mb-3" style={{ color: '#000000' }}>Find Diameter:</h4>
-                              <div className="text-3xl font-medium" style={{ color: '#000000' }}>{step.text}</div>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="rounded-xl p-6 text-center" style={{ backgroundColor: getFinalAnswerBg() }}>
-                      <span className="text-5xl font-bold" style={{ color: '#166534' }}>
-                        = {question.type === 'circumference'
-                          ? (question.level === 3 ? `${question.answer} cm` : `${question.circumference} cm`)
-                          : question.type === 'area'
-                          ? (question.level === 3 ? `${question.answer} cm` : `${question.area} cm²`)
-                          : question.answer}
-                      </span>
-                    </div>
-                  </>
-                )}
               </div>
             )}
           </>
@@ -1258,69 +1119,66 @@ export default function CirclePropertiesTool() {
               <div className="space-y-4">
                 <div className="flex justify-center items-center gap-6">
                   <div className="flex items-center gap-3">
-                    <label className="text-lg font-semibold">Questions per level:</label>
+                    <label className="text-lg font-semibold" style={{ color: '#000000' }}>Questions per level:</label>
                     <input type="number" min="1" max="20" value={numQuestions}
-                      onChange={(e) => setNumQuestions(Math.max(1, Math.min(20, parseInt(e.target.value) || 5)))}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNumQuestions(Math.max(1, Math.min(20, parseInt(e.target.value) || 5)))}
                       className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-lg" />
                   </div>
                   <div className="flex items-center gap-3">
                     <input type="checkbox" id="diff" checked={isDifferentiated}
-                      onChange={(e) => setIsDifferentiated(e.target.checked)} className="w-5 h-5" />
-                    <label htmlFor="diff" className="text-lg font-semibold">Differentiated</label>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setIsDifferentiated(e.target.checked)} className="w-5 h-5" />
+                    <label htmlFor="diff" className="text-lg font-semibold" style={{ color: '#000000' }}>Differentiated</label>
                   </div>
                 </div>
 
-                <div className="flex justify-center items-center gap-6">
-                  {!isDifferentiated && (
-                    <>
-                      <label className="text-lg font-semibold">Difficulty:</label>
+                {!isDifferentiated && (
+                  <div className="flex justify-center items-center gap-6">
+                    <div className="flex items-center gap-3">
+                      <label className="text-lg font-semibold" style={{ color: '#000000' }}>Difficulty:</label>
                       <div className="flex gap-2">
-                        {['level1', 'level2', 'level3'].map((lvl: string, idx: number) => (
+                        {(['level1', 'level2', 'level3'] as const).map((lvl: DifficultyLevel, idx: number) => (
                           <button key={lvl} onClick={() => setDifficulty(lvl)}
                             className={'px-6 py-2 rounded-lg font-semibold ' +
-                              (difficulty === lvl
-                                ? (idx === 0 ? 'bg-green-600 text-white' : idx === 1 ? 'bg-yellow-600 text-white' : 'bg-red-600 text-white')
-                                : 'bg-gray-200')}>
+                              getDifficultyButtonClass(idx, difficulty === lvl)}>
                             Level {idx + 1}
                           </button>
                         ))}
                       </div>
-                    </>
-                  )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <label className="text-base font-semibold" style={{ color: '#000000' }}>Columns:</label>
+                      <input type="number" min="1" max="4" value={numColumns}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNumColumns(Math.max(1, Math.min(4, parseInt(e.target.value) || 2)))}
+                        className="w-16 px-3 py-2 border-2 border-gray-300 rounded-lg text-base font-semibold" />
+                    </div>
+                  </div>
+                )}
 
+                <div className="flex justify-center items-center gap-6">
                   <div className="flex flex-col gap-1">
-                    <label className="flex items-center gap-2 text-base font-semibold">
+                    <label className="flex items-center gap-2 cursor-pointer">
                       <input type="checkbox" checked={allowDecimals}
-                        onChange={(e) => setAllowDecimals(e.target.checked)} className="w-4 h-4" />
-                      Decimals
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAllowDecimals(e.target.checked)} className="w-4 h-4" />
+                      <span className="text-sm font-semibold" style={{ color: '#000000' }}>Decimals</span>
                     </label>
-                    <label className="flex items-center gap-2 text-base font-semibold">
+                    <label className="flex items-center gap-2 cursor-pointer">
                       <input type="checkbox" checked={answerInPi}
-                        onChange={(e) => setAnswerInPi(e.target.checked)} className="w-4 h-4" />
-                      In π
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAnswerInPi(e.target.checked)} className="w-4 h-4" />
+                      <span className="text-sm font-semibold" style={{ color: '#000000' }}>In π</span>
                     </label>
                   </div>
 
                   {questionType === 'sectors' && (
                     <div className="flex items-center gap-2">
-                      <label className="text-base font-semibold">Type:</label>
+                      <label className="text-sm font-semibold" style={{ color: '#000000' }}>Type:</label>
                       <select value={sectorQuestionStyle}
-                        onChange={(e) => setSectorQuestionStyle(e.target.value)}
-                        className="px-3 py-2 border-2 border-gray-300 rounded-lg text-base font-semibold">
+                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSectorQuestionStyle(e.target.value as SectorQuestionStyle)}
+                        className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-semibold bg-white">
                         <option value="mixed">Mixed</option>
                         <option value="area">Area</option>
                         <option value="arcLength">Arc Length</option>
                         <option value="perimeter">Perimeter</option>
                       </select>
-                    </div>
-                  )}
-
-                  {!isDifferentiated && (
-                    <div className="flex items-center gap-2">
-                      <label className="text-base font-semibold">Columns:</label>
-                      <input type="number" min="1" max="4" value={numColumns}
-                        onChange={(e) => setNumColumns(Math.max(1, Math.min(4, parseInt(e.target.value) || 2)))}
-                        className="w-16 px-3 py-2 border-2 border-gray-300 rounded-lg text-base font-semibold" />
                     </div>
                   )}
                 </div>
@@ -1359,11 +1217,13 @@ export default function CirclePropertiesTool() {
                   </button>
                 </div>
 
-                <h2 className="text-3xl font-bold text-center mb-8" style={{ color: '#000000' }}>Worksheet</h2>
+                <h2 className="text-3xl font-bold text-center mb-8" style={{ color: '#000000' }}>
+                  {questionType === 'circumference' ? 'Circumference' : questionType === 'area' ? 'Area' : 'Sectors'} - Worksheet
+                </h2>
 
                 {isDifferentiated ? (
                   <div className="grid grid-cols-3 gap-4">
-                    {['level1', 'level2', 'level3'].map((lvl: string, idx: number) => (
+                    {(['level1', 'level2', 'level3'] as const).map((lvl: DifficultyLevel, idx: number) => (
                       <div key={lvl} className={'rounded-xl p-4 border-4 ' +
                         (lvl === 'level1' ? 'bg-green-50 border-green-500' :
                          lvl === 'level2' ? 'bg-yellow-50 border-yellow-500' : 'bg-red-50 border-red-500')}>
@@ -1372,7 +1232,7 @@ export default function CirclePropertiesTool() {
                           Level {idx + 1}
                         </h3>
                         <div className="space-y-3">
-                          {worksheet.filter((q: QuestionType) => q.difficulty === lvl).map((q: QuestionType, i: number) => (
+                          {worksheet.filter((q: QuestionData) => q.difficulty === lvl).map((q: QuestionData, i: number) => (
                             <div key={i} className="rounded-lg p-3 border-2 border-gray-200" style={{
                               backgroundColor: lvl === 'level1' ? '#DCFCE7' : lvl === 'level2' ? '#FEF9C3' : '#FEE2E2'
                             }}>
@@ -1401,7 +1261,7 @@ export default function CirclePropertiesTool() {
                     numColumns === 2 ? 'grid-cols-2' :
                     numColumns === 3 ? 'grid-cols-3' : 'grid-cols-4'
                   }`}>
-                    {worksheet.map((q: QuestionType, i: number) => (
+                    {worksheet.map((q: QuestionData, i: number) => (
                       <div key={i} className="rounded-lg p-3 border-2 border-gray-200" style={{ backgroundColor: getStepBg() }}>
                         <div className={`font-bold ${getFontSize()} mb-1`} style={{ color: '#000000' }}>
                           {i + 1}. {q.displayQuestion}
