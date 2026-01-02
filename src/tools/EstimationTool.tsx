@@ -553,7 +553,7 @@ export default function EstimationTool() {
                   <div className="px-6 py-2 font-bold text-gray-700 text-sm uppercase tracking-wide">
                     Color Schemes
                   </div>
-                  {['default', 'blue', 'pink', 'yellow'].map((scheme: ColorScheme) => (
+                  {(['default', 'blue', 'pink', 'yellow'] as const).map((scheme: ColorScheme) => (
                     <button
                       key={scheme}
                       onClick={() => setColorScheme(scheme)}
@@ -630,7 +630,10 @@ export default function EstimationTool() {
                     {difficulty !== 'level3' && (
                       <select
                         value={selectedOperation}
-                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedOperation(e.target.value as Operation)}
+                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                          const value = e.target.value as Operation;
+                          setSelectedOperation(value);
+                        }}
                         className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-semibold bg-white"
                       >
                         <option value="mixed">Mixed</option>
