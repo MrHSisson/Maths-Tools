@@ -1235,11 +1235,13 @@ export default function CirclePropertiesTool(): JSX.Element {
                 {isDifferentiated ? (
                   <div className="grid grid-cols-3 gap-4">
                     {(['level1', 'level2', 'level3'] as const).map((lvl: DifficultyLevel, idx: number) => (
-                      <div key={lvl} className={'rounded-xl p-4 border-4 ' +
-                        (lvl === 'level1' ? 'bg-green-50 border-green-500' :
-                         lvl === 'level2' ? 'bg-yellow-50 border-yellow-500' : 'bg-red-50 border-red-500')}>
-                        <h3 className={'text-2xl font-bold text-center mb-4 ' +
-                          (lvl === 'level1' ? 'text-green-700' : lvl === 'level2' ? 'text-yellow-700' : 'text-red-700')}>
+                      <div key={lvl} className={`rounded-xl p-4 border-4 ${
+                        lvl === 'level1' ? 'bg-green-50 border-green-500' :
+                        lvl === 'level2' ? 'bg-yellow-50 border-yellow-500' : 'bg-red-50 border-red-500'
+                      }`}>
+                        <h3 className={`text-2xl font-bold text-center mb-4 ${
+                          lvl === 'level1' ? 'text-green-700' : lvl === 'level2' ? 'text-yellow-700' : 'text-red-700'
+                        }`}>
                           Level {idx + 1}
                         </h3>
                         <div className="space-y-3">
@@ -1263,11 +1265,11 @@ export default function CirclePropertiesTool(): JSX.Element {
                     ))}
                   </div>
                 ) : (
-                  <div className={'grid gap-x-6 gap-y-3 ' + (
+                  <div className={`grid gap-x-6 gap-y-3 ${
                     numColumns === 1 ? 'grid-cols-1' :
                     numColumns === 2 ? 'grid-cols-2' :
                     numColumns === 3 ? 'grid-cols-3' : 'grid-cols-4'
-                  )}>
+                  }`}>
                     {worksheet.map((q: QuestionData, i: number) => (
                       <div key={i} className="rounded-lg p-3 border-2 border-gray-200" style={{ backgroundColor: getStepBg() }}>
                         <div className={`font-bold mb-1 ${getFontSize()}`} style={{ color: '#000000' }}>
@@ -1292,5 +1294,5 @@ export default function CirclePropertiesTool(): JSX.Element {
     </>
   );
 }
-          
+
          
