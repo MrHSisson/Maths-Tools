@@ -2,46 +2,53 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RefreshCw, Eye, Home, Menu, X, ChevronUp, ChevronDown } from 'lucide-react';
 
-// Type definitions (bottom-up)
+// ===== TYPE DEFINITIONS =====
 type WorkingStep = {
   type: string;
   content: string;
 };
 
+type QuestionValues = {
+  num1: number;
+  num2: number;
+  num3?: number;
+};
+
 type QuestionType = {
   display: string;
   answer: string;
-  numbers?: number[];
-  rounded?: number[];
-  operation?: string;
-  working?: WorkingStep[];
-  values?: { [key: string]: number };
+  working: WorkingStep[];
+  values: QuestionValues;
   difficulty: string;
 };
 
-type WorksheetLevel = {
-  level: string;
+type DifferentiatedLevel = {
+  level: DifficultyLevel;
   questions: QuestionType[];
 };
+
+type ColorScheme = 'default' | 'blue' | 'pink' | 'yellow';
+type DifficultyLevel = 'level1' | 'level2' | 'level3';
+type Mode = 'whiteboard' | 'worked' | 'worksheet';
+type Operation = 'add' | 'subtract' | 'multiply' | 'divide' | 'mixed';
 
 export default function EstimationTool() {
   const navigate = useNavigate();
   
   // ===== STATE =====
-  const [mode, setMode] = useState<string>('whiteboard');
-  const [difficulty, setDifficulty] = useState<string>('level1');
-  const [whiteboardQuestion, setWhiteboardQuestion] = useState<QuestionType | null>(null);
+  const [mode, setMode] = useState<Mode>('whiteboard');
+  const [difficulty, setDifficulty] = useState<DifficultyLevel>('level1');
+  const [currentQuestion, setCurrentQuestion] = useState<QuestionType | null>(null);
   const [showWhiteboardAnswer, setShowWhiteboardAnswer] = useState<boolean>(false);
-  const [question, setQuestion] = useState<QuestionType | null>(null);
   const [showAnswer, setShowAnswer] = useState<boolean>(false);
   const [numQuestions, setNumQuestions] = useState<number>(5);
-  const [worksheet, setWorksheet] = useState<QuestionType[] | WorksheetLevel[]>([]);
+  const [worksheet, setWorksheet] = useState<QuestionType[] | DifferentiatedLevel[]>([]);
   const [showWorksheetAnswers, setShowWorksheetAnswers] = useState<boolean>(false);
   const [isDifferentiated, setIsDifferentiated] = useState<boolean>(false);
   const [numColumns, setNumColumns] = useState<number>(2);
   const [worksheetFontSize, setWorksheetFontSize] = useState<number>(1);
-  const [selectedOperation, setSelectedOperation] = useState<string>('mixed');
-  const [colorScheme, setColorScheme] = useState<string>('default');
+  const [selectedOperation, setSelectedOperation] = useState<Operation>('mixed');
+  const [colorScheme, setColorScheme] = useState<ColorScheme>('default');
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
 
   // ===== COLOR HELPERS =====
@@ -66,9 +73,28 @@ export default function EstimationTool() {
     return '#f3f4f6';
   };
 
+  const getFinalAnswerBg = (): string => {
+    if (colorScheme === 'blue') return '#B3D9F2';
+    if (colorScheme === 'pink') return '#F2B3D9';
+    if (colorScheme === 'yellow') return '#F2EBB3';
+    return '#f3f4f6';
+  };
+
   // ===== FONT SIZE =====
-  const fontSizes = ['text-xl', 'text-2xl', 'text-3xl', 'text-4xl'];
-  const getFontSize = (): string => fontSizes[worksheetFontSize];
+  const fontSizes: string[] = ['text-xl', 'text-2xl', 'text-3xl', 'text-4xl'];
+  const getFontSize = () => fontSizes[worksheetFontSize];
+
+  // ===== DIFFICULTY BUTTON HELPER =====
+  const getDifficultyButtonClass = (idx: number, isActive: boolean): string => {
+    if (isActive) {
+      return idx === 0 ? 'bg-green-600 text-white' 
+           : idx === 1 ? 'bg-yellow-600 text-white' 
+           : 'bg-red-600 text-white';
+    }
+    return idx === 0 ? 'bg-white text-green-600 border-2 border-green-600' 
+         : idx === 1 ? 'bg-white text-yellow-600 border-2 border-yellow-600' 
+         : 'bg-white text-red-600 border-2 border-red-600';
+  };
 
   // ===== UTILITY FUNCTIONS =====
   const formatNumber = (num: number | string): string => {
@@ -102,13 +128,14 @@ export default function EstimationTool() {
 
   // ===== QUESTION GENERATION =====
   const generateLevel1 = (forcedOperation: string | null = null): QuestionType => {
-    const operations = forcedOperation ? [forcedOperation] : ['add', 'subtract', 'multiply', 'divide'];
+    const operations: string[] = forcedOperation ? [forcedOperation] : ['add', 'subtract', 'multiply', 'divide'];
     let attempts = 0;
     
     while (attempts < 50) {
       attempts++;
       const operation = operations[Math.floor(Math.random() * operations.length)];
-      let num1 = 0, num2 = 0;
+      let num1 = 0;
+      let num2 = 0;
       
       if (operation === 'multiply') {
         if (Math.random() > 0.3) {
@@ -161,9 +188,6 @@ export default function EstimationTool() {
         return {
           display: `${formatNumber(num1)} ${getOperationSymbol(operation)} ${formatNumber(num2)}`,
           answer: formatNumber(answer),
-          numbers: [num1, num2],
-          rounded: [rounded1, rounded2],
-          operation,
           working: [
             { type: 'step', content: `Original: ${formatNumber(num1)} ${getOperationSymbol(operation)} ${formatNumber(num2)}` },
             { type: 'step', content: `Round to 1 s.f.: ${formatNumber(num1)} → ${formatNumber(rounded1)}, ${formatNumber(num2)} → ${formatNumber(rounded2)}` },
@@ -189,13 +213,14 @@ export default function EstimationTool() {
   };
 
   const generateLevel2 = (forcedOperation: string | null = null): QuestionType => {
-    const operations = forcedOperation ? [forcedOperation] : ['add', 'subtract', 'multiply', 'divide'];
+    const operations: string[] = forcedOperation ? [forcedOperation] : ['add', 'subtract', 'multiply', 'divide'];
     let attempts = 0;
     
     while (attempts < 50) {
       attempts++;
       const useDecimals = Math.random() > 0.3;
-      let num1 = 0, num2 = 0;
+      let num1 = 0;
+      let num2 = 0;
       const operation = operations[Math.floor(Math.random() * operations.length)];
       
       if (useDecimals) {
@@ -272,7 +297,7 @@ export default function EstimationTool() {
   };
 
   const generateLevel3 = (): QuestionType => {
-    const operations = ['add', 'subtract', 'multiply', 'divide'];
+    const operations: string[] = ['add', 'subtract', 'multiply', 'divide'];
     let attempts = 0;
     
     while (attempts < 50) {
@@ -304,7 +329,8 @@ export default function EstimationTool() {
       if (isAlreadyRounded(num1) || isAlreadyRounded(num2) || isAlreadyRounded(num3)) continue;
       if (rounded2 === 0 || rounded3 === 0) continue;
       
-      let intermediate = 0, answer = 0;
+      let intermediate = 0;
+      let answer = 0;
       const doOp1First = useParentheses || op1IsHighPrecedence;
       
       if (doOp1First) {
@@ -406,30 +432,25 @@ export default function EstimationTool() {
     };
   };
 
-  const generateQuestion = (level: string, forcedOperation: string | null = null): QuestionType => {
+  const generateQuestion = (level: DifficultyLevel, forcedOperation: string | null = null): QuestionType => {
     if (level === 'level1') return generateLevel1(forcedOperation);
     if (level === 'level2') return generateLevel2(forcedOperation);
     return generateLevel3();
   };
 
   // ===== EVENT HANDLERS =====
-  const handleNewWhiteboardQuestion = (): void => {
-    const operation = selectedOperation === 'mixed' ? null : selectedOperation;
-    setWhiteboardQuestion(generateQuestion(difficulty, operation));
-    setShowWhiteboardAnswer(false);
-  };
-
   const handleNewQuestion = (): void => {
     const operation = selectedOperation === 'mixed' ? null : selectedOperation;
-    setQuestion(generateQuestion(difficulty, operation));
+    setCurrentQuestion(generateQuestion(difficulty, operation));
+    setShowWhiteboardAnswer(false);
     setShowAnswer(false);
   };
 
   const handleGenerateWorksheet = (): void => {
     if (isDifferentiated) {
-      const allQuestions: WorksheetLevel[] = [];
+      const allQuestions: DifferentiatedLevel[] = [];
       
-      (['level1', 'level2', 'level3'] as const).forEach((level: string) => {
+      (['level1', 'level2', 'level3'] as const).forEach((level: DifficultyLevel) => {
         const levelQuestions: QuestionType[] = [];
         
         if (level === 'level3') {
@@ -437,7 +458,7 @@ export default function EstimationTool() {
             levelQuestions.push(generateQuestion(level));
           }
         } else {
-          const operations = ['add', 'subtract', 'multiply', 'divide'];
+          const operations: string[] = ['add', 'subtract', 'multiply', 'divide'];
           const operationList: string[] = [];
           
           for (let i = 0; i < numQuestions; i++) {
@@ -466,7 +487,7 @@ export default function EstimationTool() {
           questions.push(generateQuestion(difficulty));
         }
       } else {
-        const operations = ['add', 'subtract', 'multiply', 'divide'];
+        const operations: string[] = ['add', 'subtract', 'multiply', 'divide'];
         const operationList: string[] = [];
         
         for (let i = 0; i < numQuestions; i++) {
@@ -491,11 +512,11 @@ export default function EstimationTool() {
 
   // ===== EFFECTS =====
   useEffect(() => {
-    if (mode === 'whiteboard' && !whiteboardQuestion) {
+    if (mode === 'whiteboard' && !currentQuestion) {
       if (difficulty === 'level3') setSelectedOperation('mixed');
-      handleNewWhiteboardQuestion();
+      handleNewQuestion();
     }
-    if (mode === 'single' && !question) {
+    if (mode === 'worked' && !currentQuestion) {
       if (difficulty === 'level3') setSelectedOperation('mixed');
       handleNewQuestion();
     }
@@ -503,8 +524,7 @@ export default function EstimationTool() {
 
   useEffect(() => {
     if (difficulty === 'level3') setSelectedOperation('mixed');
-    if (mode === 'whiteboard' && whiteboardQuestion) handleNewWhiteboardQuestion();
-    if (mode === 'single' && question) handleNewQuestion();
+    if (currentQuestion) handleNewQuestion();
   }, [difficulty, selectedOperation]);
 
   // ===== RENDER =====
@@ -533,50 +553,20 @@ export default function EstimationTool() {
                   <div className="px-6 py-2 font-bold text-gray-700 text-sm uppercase tracking-wide">
                     Color Schemes
                   </div>
-                  <button
-                    onClick={() => setColorScheme('default')}
-                    className={
-                      'w-full text-left px-6 py-3 font-semibold transition-colors ' +
-                      (colorScheme === 'default'
-                        ? 'bg-blue-100 text-blue-900'
-                        : 'text-gray-800 hover:bg-gray-100')
-                    }
-                  >
-                    Default
-                  </button>
-                  <button
-                    onClick={() => setColorScheme('blue')}
-                    className={
-                      'w-full text-left px-6 py-3 font-semibold transition-colors ' +
-                      (colorScheme === 'blue'
-                        ? 'bg-blue-100 text-blue-900'
-                        : 'text-gray-800 hover:bg-gray-100')
-                    }
-                  >
-                    Blue
-                  </button>
-                  <button
-                    onClick={() => setColorScheme('pink')}
-                    className={
-                      'w-full text-left px-6 py-3 font-semibold transition-colors ' +
-                      (colorScheme === 'pink'
-                        ? 'bg-blue-100 text-blue-900'
-                        : 'text-gray-800 hover:bg-gray-100')
-                    }
-                  >
-                    Pink
-                  </button>
-                  <button
-                    onClick={() => setColorScheme('yellow')}
-                    className={
-                      'w-full text-left px-6 py-3 font-semibold transition-colors ' +
-                      (colorScheme === 'yellow'
-                        ? 'bg-blue-100 text-blue-900'
-                        : 'text-gray-800 hover:bg-gray-100')
-                    }
-                  >
-                    Yellow
-                  </button>
+                  {['default', 'blue', 'pink', 'yellow'].map((scheme: ColorScheme) => (
+                    <button
+                      key={scheme}
+                      onClick={() => setColorScheme(scheme)}
+                      className={
+                        'w-full text-left px-6 py-3 font-semibold transition-colors ' +
+                        (colorScheme === scheme
+                          ? 'bg-blue-100 text-blue-900'
+                          : 'text-gray-800 hover:bg-gray-100')
+                      }
+                    >
+                      {scheme.charAt(0).toUpperCase() + scheme.slice(1)}
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
@@ -585,30 +575,30 @@ export default function EstimationTool() {
       </div>
 
       {/* Main Content */}
-      <div className="min-h-screen bg-gray-50 p-8">
+      <div className="min-h-screen p-8" style={{ backgroundColor: '#f5f3f0' }}>
         <div className="max-w-6xl mx-auto">
           <h1 className="text-5xl font-bold text-center mb-8" style={{ color: '#000000' }}>
             Estimation
           </h1>
 
           <div className="flex justify-center mb-8">
-            <div style={{ width: '90%', height: '1px', backgroundColor: '#d1d5db' }}></div>
+            <div style={{ width: '90%', height: '2px', backgroundColor: '#d1d5db' }}></div>
           </div>
 
           {/* Mode Toggle */}
           <div className="flex justify-center gap-4 mb-8">
-            {(['whiteboard', 'single', 'worksheet'] as const).map((m: string) => (
+            {(['whiteboard', 'worked', 'worksheet'] as const).map((m: Mode) => (
               <button
                 key={m}
                 onClick={() => setMode(m)}
                 className={
-                  'px-8 py-4 rounded-xl font-bold text-xl transition-all border-2 border-gray-200 ' +
+                  'px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ' +
                   (mode === m
-                    ? 'bg-blue-900 text-white shadow-lg'
-                    : 'bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900 shadow')
+                    ? 'bg-blue-900 text-white'
+                    : 'bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900')
                 }
               >
-                {m === 'whiteboard' ? 'Whiteboard' : m === 'single' ? 'Single Q' : 'Worksheet'}
+                {m === 'whiteboard' ? 'Whiteboard' : m === 'worked' ? 'Worked Example' : 'Worksheet'}
               </button>
             ))}
           </div>
@@ -618,35 +608,30 @@ export default function EstimationTool() {
             <>
               <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-semibold text-gray-600">Difficulty:</span>
-                    <div className="flex gap-2">
-                      {(['level1', 'level2', 'level3'] as const).map((lvl: string, idx: number) => (
-                        <button
-                          key={lvl}
-                          onClick={() => setDifficulty(lvl)}
-                          className={
-                            'px-4 py-2 rounded-lg font-bold text-sm w-24 ' +
-                            (difficulty === lvl
-                              ? `bg-${['green', 'yellow', 'red'][idx]}-600 text-white`
-                              : `bg-white text-${['green', 'yellow', 'red'][idx]}-600 border-2 border-${
-                                  ['green', 'yellow', 'red'][idx]
-                                }-600`)
-                          }
-                        >
-                          Level {idx + 1}
-                        </button>
-                      ))}
+                  <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-semibold" style={{ color: '#000000' }}>Difficulty:</span>
+                      <div className="flex gap-2">
+                        {(['level1', 'level2', 'level3'] as const).map((lvl: DifficultyLevel, idx: number) => (
+                          <button
+                            key={lvl}
+                            onClick={() => setDifficulty(lvl)}
+                            className={
+                              'px-4 py-2 rounded-lg font-bold text-sm w-24 ' +
+                              getDifficultyButtonClass(idx, difficulty === lvl)
+                            }
+                          >
+                            Level {idx + 1}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
 
-                  {difficulty !== 'level3' && (
-                    <div className="flex items-center gap-2">
-                      <label className="text-xs font-semibold text-gray-600">Operation:</label>
+                    {difficulty !== 'level3' && (
                       <select
                         value={selectedOperation}
-                        onChange={(e) => setSelectedOperation(e.target.value)}
-                        className="px-2 py-1 border-2 border-gray-300 rounded-lg text-xs font-semibold bg-white"
+                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedOperation(e.target.value as Operation)}
+                        className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-semibold bg-white"
                       >
                         <option value="mixed">Mixed</option>
                         <option value="add">Addition (+)</option>
@@ -654,12 +639,12 @@ export default function EstimationTool() {
                         <option value="multiply">Multiplication (×)</option>
                         <option value="divide">Division (÷)</option>
                       </select>
-                    </div>
-                  )}
+                    )}
+                  </div>
 
                   <div className="flex gap-3">
                     <button
-                      onClick={handleNewWhiteboardQuestion}
+                      onClick={handleNewQuestion}
                       className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-lg hover:bg-blue-800 transition-colors flex items-center justify-center gap-2 w-52"
                     >
                       <RefreshCw size={18} />
@@ -667,7 +652,7 @@ export default function EstimationTool() {
                     </button>
                     <button
                       onClick={() => setShowWhiteboardAnswer(!showWhiteboardAnswer)}
-                      className="px-6 py-2 bg-emerald-600 text-white rounded-xl font-bold text-base shadow-lg hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 w-52"
+                      className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-lg hover:bg-blue-800 transition-colors flex items-center justify-center gap-2 w-52"
                     >
                       <Eye size={18} />
                       {showWhiteboardAnswer ? 'Hide Answer' : 'Show Answer'}
@@ -676,59 +661,54 @@ export default function EstimationTool() {
                 </div>
               </div>
 
-              {whiteboardQuestion && (
+              {currentQuestion && (
                 <div className="rounded-xl shadow-2xl p-8" style={{ backgroundColor: getQuestionBg() }}>
-                  <div className="text-center mb-8">
+                  <div className="text-center">
                     <span className="text-6xl font-bold" style={{ color: '#000000' }}>
-                      {whiteboardQuestion.display}
+                      {currentQuestion.display}
                     </span>
                     {showWhiteboardAnswer && (
                       <span className="text-6xl font-bold ml-4" style={{ color: '#166534' }}>
-                        = {whiteboardQuestion.answer}
+                        = {currentQuestion.answer}
                       </span>
                     )}
                   </div>
 
-                  <div className="rounded-xl" style={{ height: '500px', backgroundColor: getWhiteboardWorkingBg() }}></div>
+                  <div className="rounded-xl mt-8" style={{ height: '500px', backgroundColor: getWhiteboardWorkingBg() }}></div>
                 </div>
               )}
             </>
           )}
 
-          {/* SINGLE Q MODE */}
-          {mode === 'single' && (
+          {/* WORKED EXAMPLE MODE */}
+          {mode === 'worked' && (
             <>
               <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-semibold text-gray-600">Difficulty:</span>
-                    <div className="flex gap-2">
-                      {(['level1', 'level2', 'level3'] as const).map((lvl: string, idx: number) => (
-                        <button
-                          key={lvl}
-                          onClick={() => setDifficulty(lvl)}
-                          className={
-                            'px-4 py-2 rounded-lg font-bold text-sm w-24 ' +
-                            (difficulty === lvl
-                              ? `bg-${['green', 'yellow', 'red'][idx]}-600 text-white`
-                              : `bg-white text-${['green', 'yellow', 'red'][idx]}-600 border-2 border-${
-                                  ['green', 'yellow', 'red'][idx]
-                                }-600`)
-                          }
-                        >
-                          Level {idx + 1}
-                        </button>
-                      ))}
+                  <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-semibold" style={{ color: '#000000' }}>Difficulty:</span>
+                      <div className="flex gap-2">
+                        {['level1', 'level2', 'level3'].map((lvl, idx) => (
+                          <button
+                            key={lvl}
+                            onClick={() => setDifficulty(lvl)}
+                            className={
+                              'px-4 py-2 rounded-lg font-bold text-sm w-24 ' +
+                              getDifficultyButtonClass(lvl, idx, difficulty === lvl)
+                            }
+                          >
+                            Level {idx + 1}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
 
-                  {difficulty !== 'level3' && (
-                    <div className="flex items-center gap-2">
-                      <label className="text-xs font-semibold text-gray-600">Operation:</label>
+                    {difficulty !== 'level3' && (
                       <select
                         value={selectedOperation}
                         onChange={(e) => setSelectedOperation(e.target.value)}
-                        className="px-2 py-1 border-2 border-gray-300 rounded-lg text-xs font-semibold bg-white"
+                        className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-semibold bg-white"
                       >
                         <option value="mixed">Mixed</option>
                         <option value="add">Addition (+)</option>
@@ -736,8 +716,8 @@ export default function EstimationTool() {
                         <option value="multiply">Multiplication (×)</option>
                         <option value="divide">Division (÷)</option>
                       </select>
-                    </div>
-                  )}
+                    )}
+                  </div>
 
                   <div className="flex gap-3">
                     <button
@@ -749,7 +729,7 @@ export default function EstimationTool() {
                     </button>
                     <button
                       onClick={() => setShowAnswer(!showAnswer)}
-                      className="px-6 py-2 bg-emerald-600 text-white rounded-xl font-bold text-base shadow-lg hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 w-52"
+                      className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-lg hover:bg-blue-800 transition-colors flex items-center justify-center gap-2 w-52"
                     >
                       <Eye size={18} />
                       {showAnswer ? 'Hide Answer' : 'Show Answer'}
@@ -758,38 +738,38 @@ export default function EstimationTool() {
                 </div>
               </div>
 
-              {question && (
+              {currentQuestion && (
                 <div className="overflow-y-auto" style={{ height: '120vh' }}>
-                  <div className="rounded-xl shadow-lg p-8 mb-8 inline-block w-full" style={{ backgroundColor: getQuestionBg() }}>
+                  <div className="rounded-xl shadow-lg p-8 w-full" style={{ backgroundColor: getQuestionBg() }}>
                     <div className="text-center">
                       <span className="text-6xl font-bold" style={{ color: '#000000' }}>
-                        {question.display}
+                        {currentQuestion.display}
                       </span>
                     </div>
+
+                    {showAnswer && (
+                      <>
+                        <div className="space-y-4 mt-8">
+                          {currentQuestion.working.map((step: WorkingStep, i: number) => (
+                            <div key={i} className="rounded-xl p-6" style={{ backgroundColor: getStepBg() }}>
+                              <h4 className="text-xl font-bold mb-2" style={{ color: '#000000' }}>
+                                Step {i + 1}
+                              </h4>
+                              <p className="text-3xl" style={{ color: '#000000' }}>
+                                {step.content}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="rounded-xl p-6 text-center mt-4" style={{ backgroundColor: getFinalAnswerBg() }}>
+                          <span className="text-5xl font-bold" style={{ color: '#166534' }}>
+                            = {currentQuestion.answer}
+                          </span>
+                        </div>
+                      </>
+                    )}
                   </div>
-
-                  {showAnswer && question.working && (
-                    <>
-                      <div className="space-y-4 mb-8">
-                        {question.working.map((step: WorkingStep, i: number) => (
-                          <div key={i} className="rounded-xl p-6" style={{ backgroundColor: getStepBg() }}>
-                            <h4 className="text-xl font-bold mb-2" style={{ color: '#000000' }}>
-                              Step {i + 1}
-                            </h4>
-                            <p className="text-3xl" style={{ color: '#000000' }}>
-                              {step.content}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="rounded-xl p-6 text-center" style={{ backgroundColor: getStepBg() }}>
-                        <span className="text-5xl font-bold" style={{ color: '#166534' }}>
-                          = {question.answer}
-                        </span>
-                      </div>
-                    </>
-                  )}
                 </div>
               )}
             </>
@@ -802,13 +782,15 @@ export default function EstimationTool() {
                 <div className="space-y-4">
                   <div className="flex justify-center items-center gap-6 flex-wrap">
                     <div className="flex items-center gap-3">
-                      <label className="text-lg font-semibold">Questions per level:</label>
+                      <label className="text-lg font-semibold" style={{ color: '#000000' }}>
+                        Questions per level:
+                      </label>
                       <input
                         type="number"
                         min="1"
                         max="20"
                         value={numQuestions}
-                        onChange={(e) =>
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           setNumQuestions(Math.max(1, Math.min(20, parseInt(e.target.value) || 5)))
                         }
                         className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-lg"
@@ -820,10 +802,10 @@ export default function EstimationTool() {
                         type="checkbox"
                         id="diff"
                         checked={isDifferentiated}
-                        onChange={(e) => setIsDifferentiated(e.target.checked)}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setIsDifferentiated(e.target.checked)}
                         className="w-5 h-5"
                       />
-                      <label htmlFor="diff" className="text-lg font-semibold">
+                      <label htmlFor="diff" className="text-lg font-semibold" style={{ color: '#000000' }}>
                         Differentiated
                       </label>
                     </div>
@@ -831,17 +813,15 @@ export default function EstimationTool() {
 
                   {!isDifferentiated && (
                     <div className="flex justify-center items-center gap-4">
-                      <label className="text-lg font-semibold">Difficulty:</label>
+                      <label className="text-lg font-semibold" style={{ color: '#000000' }}>Difficulty:</label>
                       <div className="flex gap-2">
-                        {(['level1', 'level2', 'level3'] as const).map((lvl: string, idx: number) => (
+                        {(['level1', 'level2', 'level3'] as const).map((lvl: DifficultyLevel, idx: number) => (
                           <button
                             key={lvl}
                             onClick={() => setDifficulty(lvl)}
                             className={
-                              'px-6 py-2 rounded-lg font-semibold ' +
-                              (difficulty === lvl
-                                ? `bg-${['green', 'yellow', 'red'][idx]}-600 text-white`
-                                : 'bg-gray-200')
+                              'px-4 py-2 rounded-lg font-bold text-sm w-24 ' +
+                              getDifficultyButtonClass(idx, difficulty === lvl)
                             }
                           >
                             Level {idx + 1}
@@ -849,13 +829,13 @@ export default function EstimationTool() {
                         ))}
                       </div>
 
-                      <label className="text-lg font-semibold ml-4">Columns:</label>
+                      <label className="text-lg font-semibold ml-4" style={{ color: '#000000' }}>Columns:</label>
                       <input
                         type="number"
                         min="1"
                         max="4"
                         value={numColumns}
-                        onChange={(e) =>
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           setNumColumns(Math.max(1, Math.min(4, parseInt(e.target.value) || 2)))
                         }
                         className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-lg"
@@ -874,7 +854,7 @@ export default function EstimationTool() {
                     {worksheet.length > 0 && (
                       <button
                         onClick={() => setShowWorksheetAnswers(!showWorksheetAnswers)}
-                        className="px-6 py-3 bg-emerald-600 text-white rounded-lg font-semibold flex items-center gap-2 hover:bg-emerald-700"
+                        className="px-6 py-3 bg-blue-900 text-white rounded-lg font-semibold flex items-center gap-2 hover:bg-blue-800"
                       >
                         <Eye size={20} />
                         {showWorksheetAnswers ? 'Hide' : 'Show'} Answers
@@ -914,15 +894,15 @@ export default function EstimationTool() {
                   </div>
 
                   <h2 className="text-3xl font-bold text-center mb-8" style={{ color: '#000000' }}>
-                    Worksheet
+                    Estimation - Worksheet
                   </h2>
 
-                  {(worksheet as WorksheetLevel[])[0]?.level ? (
+                  {Array.isArray(worksheet) && worksheet.length > 0 && 'level' in worksheet[0] ? (
                     <div className="grid grid-cols-3 gap-6">
-                      {(worksheet as WorksheetLevel[]).map((levelData: WorksheetLevel, idx: number) => {
-                        const levelNames: { [key: string]: string } = { level1: 'Level 1', level2: 'Level 2', level3: 'Level 3' };
-                        const levelIdx = ['level1', 'level2', 'level3'].indexOf(levelData.level);
-                        const colors = ['green', 'yellow', 'red'];
+                      {(worksheet as DifferentiatedLevel[]).map((levelData: DifferentiatedLevel, idx: number) => {
+                        const levelNames: { [key in DifficultyLevel]: string } = { level1: 'Level 1', level2: 'Level 2', level3: 'Level 3' };
+                        const levelIdx = (['level1', 'level2', 'level3'] as const).indexOf(levelData.level);
+                        const colors: string[] = ['green', 'yellow', 'red'];
                         const color = colors[levelIdx];
 
                         return (
