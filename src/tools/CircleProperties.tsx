@@ -1108,7 +1108,7 @@ export default function CirclePropertiesTool() {
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-semibold text-gray-600">Difficulty:</span>
                   <div className="flex gap-2">
-                    {['level1', 'level2', 'level3'].map((lvl, idx) => (
+                    {(['level1', 'level2', 'level3'] as const).map((lvl: DifficultyLevel, idx: number) => (
                       <button key={lvl} onClick={() => setDifficulty(lvl)}
                         className={'px-4 py-2 rounded-lg font-bold text-sm w-24 ' +
                           (difficulty === lvl
