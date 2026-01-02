@@ -3,29 +3,25 @@ import { useNavigate } from 'react-router-dom';
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X } from 'lucide-react';
 
 // ===== TYPE DEFINITIONS =====
-type ColorScheme = 'default' | 'blue' | 'pink' | 'yellow';
-type DifficultyLevel = 'level1' | 'level2' | 'level3';
-type Mode = 'whiteboard' | 'single' | 'worksheet';
-type QuestionType = 'circumference' | 'area' | 'sectors';
-type SectorQuestionStyle = 'mixed' | 'area' | 'arcLength' | 'perimeter';
-
 type WorkingStep = {
   type: string;
   text?: string;
   textPi?: string;
   textNumeric?: string;
-  answer?: string;
   answerPi?: string;
   answerNumeric?: string;
+  answer?: string;
 };
 
-type QuestionData = {
+type QuestionType = {
   level: number;
   diameter: number;
   radius: number;
   given: string;
   find: string;
   displayQuestion: string;
+  angle: number;
+  type: string;
   circumference?: string;
   circumferenceNumeric?: number;
   circumferencePi?: string;
@@ -33,34 +29,38 @@ type QuestionData = {
   areaNumeric?: number;
   areaPi?: string;
   answer?: string;
-  answerNumeric?: string;
-  answerPi?: string;
-  angle: number;
-  type: string;
-  working: WorkingStep[];
+  working?: WorkingStep[];
   theta?: number;
   questionStyle?: string;
-  difficulty?: DifficultyLevel;
+  difficulty?: string;
+  answerNumeric?: string;
+  answerPi?: string;
 };
 
-export default function CirclePropertiesTool(): JSX.Element {
+type ColorScheme = 'default' | 'blue' | 'pink' | 'yellow';
+type DifficultyLevel = 'level1' | 'level2' | 'level3';
+type Mode = 'whiteboard' | 'single' | 'worksheet';
+type QuestionTypeString = 'circumference' | 'area' | 'sectors';
+type SectorStyle = 'mixed' | 'area' | 'arcLength' | 'perimeter';
+
+export default function CirclePropertiesTool() {
   const navigate = useNavigate();
   const PI = 3.142592;
   
   // ===== STATE =====
   const [mode, setMode] = useState<Mode>('whiteboard');
   const [difficulty, setDifficulty] = useState<DifficultyLevel>('level1');
-  const [questionType, setQuestionType] = useState<QuestionType>('circumference');
-  const [sectorQuestionStyle, setSectorQuestionStyle] = useState<SectorQuestionStyle>('mixed');
+  const [questionType, setQuestionType] = useState<QuestionTypeString>('circumference');
+  const [sectorQuestionStyle, setSectorQuestionStyle] = useState<SectorStyle>('mixed');
   
-  const [whiteboardQuestion, setWhiteboardQuestion] = useState<QuestionData | null>(null);
+  const [whiteboardQuestion, setWhiteboardQuestion] = useState<QuestionType | null>(null);
   const [showWhiteboardAnswer, setShowWhiteboardAnswer] = useState<boolean>(false);
   
-  const [question, setQuestion] = useState<QuestionData | null>(null);
+  const [question, setQuestion] = useState<QuestionType | null>(null);
   const [showAnswer, setShowAnswer] = useState<boolean>(false);
   
   const [numQuestions, setNumQuestions] = useState<number>(5);
-  const [worksheet, setWorksheet] = useState<QuestionData[]>([]);
+  const [worksheet, setWorksheet] = useState<QuestionType[]>([]);
   const [showWorksheetAnswers, setShowWorksheetAnswers] = useState<boolean>(false);
   const [isDifferentiated, setIsDifferentiated] = useState<boolean>(false);
   const [numColumns, setNumColumns] = useState<number>(2);
@@ -71,6 +71,12 @@ export default function CirclePropertiesTool(): JSX.Element {
   
   const [colorScheme, setColorScheme] = useState<ColorScheme>('default');
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
+
+  // ===== HELPER FUNCTIONS =====
+  const formatNumber = (num: number | string): string => {
+    if (typeof num === 'string') return num;
+    return Number.isInteger(num) ? num.toString() : num.toFixed(1);
+  };
 
   // ===== COLOR SCHEME HELPERS =====
   const getQuestionBg = (): string => {
@@ -108,7 +114,7 @@ export default function CirclePropertiesTool(): JSX.Element {
     return '#ffffff';
   };
   
-  const getInfoBoxBg = (levelOverride?: string): string => {
+  const getInfoBoxBg = (levelOverride?: DifficultyLevel): string => {
     if (levelOverride === 'level1') return '#DCFCE7';
     if (levelOverride === 'level2') return '#FEF9C3';
     if (levelOverride === 'level3') return '#FEE2E2';
@@ -118,28 +124,11 @@ export default function CirclePropertiesTool(): JSX.Element {
     return '#FFFFFF';
   };
 
-  const getDifficultyButtonClass = (idx: number, isActive: boolean): string => {
-    if (isActive) {
-      return idx === 0 ? 'bg-green-600 text-white' 
-           : idx === 1 ? 'bg-yellow-600 text-white' 
-           : 'bg-red-600 text-white';
-    }
-    return idx === 0 ? 'bg-white text-green-600 border-2 border-green-600' 
-         : idx === 1 ? 'bg-white text-yellow-600 border-2 border-yellow-600' 
-         : 'bg-white text-red-600 border-2 border-red-600';
-  };
-
   // ===== FONT SIZE =====
   const fontSizes = ['text-xl', 'text-2xl', 'text-3xl', 'text-4xl'];
   const getFontSize = (): string => fontSizes[worksheetFontSize];
 
-  // ===== HELPER FUNCTIONS =====
-  const formatNumber = (num: number | string): string => {
-    if (typeof num === 'string') return num;
-    return Number.isInteger(num) ? num.toString() : num.toFixed(1);
-  };
-
-  const renderCircleDiagram = (q: QuestionData, size: number = 400, isWorksheet: boolean = false, fontSizeScale: number = 1, levelOverride?: string): JSX.Element => {
+  const renderCircleDiagram = (q: QuestionType, size: number = 400, isWorksheet: boolean = false, fontSizeScale: number = 1, levelOverride?: DifficultyLevel): JSX.Element => {
     if (q.type === 'sector') {
       return renderSectorDiagram(q, size, isWorksheet, fontSizeScale, levelOverride);
     }
@@ -149,7 +138,16 @@ export default function CirclePropertiesTool(): JSX.Element {
     const circleRadius = size * 0.35;
     const angleRad = (q.angle * Math.PI) / 180;
     
+    const diamEndX = centerX + Math.cos(angleRad) * circleRadius;
+    const diamEndY = centerY + Math.sin(angleRad) * circleRadius;
+    const diamStartX = centerX - Math.cos(angleRad) * circleRadius;
+    const diamStartY = centerY - Math.sin(angleRad) * circleRadius;
+    const radEndX = centerX + Math.cos(angleRad) * circleRadius;
+    const radEndY = centerY + Math.sin(angleRad) * circleRadius;
+    
+    const diamLabelX = centerX + Math.cos(angleRad) * circleRadius * 0.3;
     const diamLabelY = centerY + Math.sin(angleRad) * circleRadius * 0.3;
+    const radLabelX = centerX + Math.cos(angleRad) * circleRadius * 0.5;
     const radLabelY = centerY + Math.sin(angleRad) * circleRadius * 0.5;
     
     const fontSize = isWorksheet ? Math.max(16, 18 * fontSizeScale) : 24;
@@ -160,21 +158,21 @@ export default function CirclePropertiesTool(): JSX.Element {
     const boxSpacing = isWorksheet ? boxHeight * 0.15 : 0;
     const firstBoxY = centerY + circleRadius + (isWorksheet ? size * 0.12 : 35);
     
-    const infoBoxes: string[] = [];
+    let infoBoxes: string[] = [];
     if (q.given === 'diameter' || q.find === 'diameter') {
       infoBoxes.push(q.given === 'diameter' ? `d = ${formatNumber(q.diameter)} cm` : 'd = ?');
     }
     if (q.given === 'radius' || q.find === 'radius') {
       infoBoxes.push(q.given === 'radius' ? `r = ${formatNumber(q.radius)} cm` : 'r = ?');
     }
-    if (q.given === 'circumference' && q.circumference) {
+    if (q.given === 'circumference') {
       infoBoxes.push(`C = ${q.circumference} cm`);
     }
-    if (q.given === 'area' && q.area) {
+    if (q.given === 'area') {
       infoBoxes.push(`A = ${q.area} cm²`);
     }
     
-    const maxTextLength = Math.max(...infoBoxes.map((info: string) => info.length));
+    const maxTextLength = Math.max(...infoBoxes.map(info => info.length));
     const maxBoxWidth = (maxTextLength * belowLabelFontSize * 0.6) + (boxPadding * 2);
     const svgWidth = isWorksheet ? Math.max(size, maxBoxWidth + 20) : size;
     const adjustedCenterX = svgWidth / 2;
@@ -234,7 +232,7 @@ export default function CirclePropertiesTool(): JSX.Element {
           </>
         )}
         
-        {isWorksheet && infoBoxes.map((info: string, idx: number) => {
+        {isWorksheet && infoBoxes.map((info, idx) => {
           const boxY = firstBoxY + (idx * (boxHeight + boxSpacing));
           const estimatedTextWidth = info.length * belowLabelFontSize * 0.6;
           const boxWidth = estimatedTextWidth + (boxPadding * 2);
@@ -254,14 +252,14 @@ export default function CirclePropertiesTool(): JSX.Element {
           );
         })}
         
-        {!isWorksheet && q.given === 'circumference' && q.circumference && (
+        {!isWorksheet && q.given === 'circumference' && (
           <text x={circleCenterX} y={circleCenterY + circleRadiusAdjusted + 45} fill="#000000"
             fontSize={belowLabelFontSize} fontWeight="bold" textAnchor="middle">
             C = {q.circumference} cm
           </text>
         )}
         
-        {!isWorksheet && q.given === 'area' && q.area && (
+        {!isWorksheet && q.given === 'area' && (
           <text x={circleCenterX} y={circleCenterY + circleRadiusAdjusted + 45} fill="#000000"
             fontSize={belowLabelFontSize} fontWeight="bold" textAnchor="middle">
             A = {q.area} cm²
@@ -271,17 +269,16 @@ export default function CirclePropertiesTool(): JSX.Element {
     );
   };
 
-  const renderSectorDiagram = (q: QuestionData, size: number, isWorksheet: boolean, fontSizeScale: number, levelOverride?: string): JSX.Element => {
+  const renderSectorDiagram = (q: QuestionType, size: number = 400, isWorksheet: boolean = false, fontSizeScale: number = 1, levelOverride?: DifficultyLevel): JSX.Element => {
     const centerX = size / 2;
     const centerY = size / 2;
     const circleRadius = size * 0.35;
-    const theta = q.theta || 90;
     
     let startAngle = 0;
     let endAngle = 0;
-    
-    if (theta === 180) {
-      const isTopHalf = Math.random() > 0.5;
+    let isTopHalf = false;
+    if (q.theta === 180) {
+      isTopHalf = Math.random() > 0.5;
       if (isTopHalf) {
         startAngle = 180;
         endAngle = 0;
@@ -289,12 +286,12 @@ export default function CirclePropertiesTool(): JSX.Element {
         startAngle = 0;
         endAngle = 180;
       }
-    } else if (theta === 90) {
+    } else if (q.theta === 90) {
       startAngle = -90;
       endAngle = 0;
     } else {
       startAngle = -90;
-      endAngle = startAngle + theta;
+      endAngle = startAngle + q.theta;
     }
     
     const startRad = (startAngle * Math.PI) / 180;
@@ -305,9 +302,9 @@ export default function CirclePropertiesTool(): JSX.Element {
     const endX = centerX + Math.cos(endRad) * circleRadius;
     const endY = centerY + Math.sin(endRad) * circleRadius;
     
-    const largeArcFlag = theta > 180 ? 1 : 0;
+    const largeArcFlag = q.theta > 180 ? 1 : 0;
     
-    let dimensionLine: { x1: number; y1: number; x2: number; y2: number };
+    let dimensionLine: any = null;
     let labelX = 0;
     let labelY = 0;
     let labelText = '';
@@ -332,19 +329,20 @@ export default function CirclePropertiesTool(): JSX.Element {
     }
     
     const belowLabelFontSize = isWorksheet ? Math.max(18, 22 * fontSizeScale) : 26;
-    const showTheta = q.level !== 1 && ![90, 180, 270].includes(theta);
+    const showTheta = q.level !== 1 && ![90, 180, 270].includes(q.theta);
     
     const boxHeight = isWorksheet ? belowLabelFontSize * 1.8 : 0;
     const boxPadding = isWorksheet ? belowLabelFontSize * 0.8 : 0;
     const boxSpacing = isWorksheet ? boxHeight * 0.15 : 0;
     const firstBoxY = centerY + circleRadius + (isWorksheet ? size * 0.12 : 35);
     
-    const infoBoxes: string[] = [labelText];
+    let infoBoxes: string[] = [];
+    infoBoxes.push(labelText);
     if (showTheta) {
-      infoBoxes.push(`θ = ${theta}°`);
+      infoBoxes.push(`θ = ${q.theta}°`);
     }
     
-    const maxTextLength = Math.max(...infoBoxes.map((info: string) => info.length));
+    const maxTextLength = Math.max(...infoBoxes.map(info => info.length));
     const maxBoxWidth = (maxTextLength * belowLabelFontSize * 0.6) + (boxPadding * 2);
     const svgWidth = isWorksheet ? Math.max(size, maxBoxWidth + 20) : size;
     const adjustedCenterX = svgWidth / 2;
@@ -364,7 +362,7 @@ export default function CirclePropertiesTool(): JSX.Element {
       `Z`
     ].join(' ');
     
-    let dimensionLineAdjusted: { x1: number; y1: number; x2: number; y2: number };
+    let dimensionLineAdjusted: any = null;
     let labelXAdjusted = 0;
     let labelYAdjusted = 0;
     
@@ -435,7 +433,7 @@ export default function CirclePropertiesTool(): JSX.Element {
           </g>
         )}
         
-        {isWorksheet && infoBoxes.map((info: string, idx: number) => {
+        {isWorksheet && infoBoxes.map((info, idx) => {
           const boxY = firstBoxY + (idx * (boxHeight + boxSpacing));
           const estimatedTextWidth = info.length * belowLabelFontSize * 0.6;
           const boxWidth = estimatedTextWidth + (boxPadding * 2);
@@ -457,7 +455,7 @@ export default function CirclePropertiesTool(): JSX.Element {
         
         {q.level === 3 && (
           <>
-            <path d={`M ${sectorCenterX + Math.cos(startRad) * 25} ${sectorCenterY + Math.sin(startRad) * 25} A 25 25 0 ${theta > 180 ? 1 : 0} 1 ${sectorCenterX + Math.cos(endRad) * 25} ${sectorCenterY + Math.sin(endRad) * 25}`}
+            <path d={`M ${sectorCenterX + Math.cos(startRad) * 25} ${sectorCenterY + Math.sin(startRad) * 25} A 25 25 0 ${q.theta > 180 ? 1 : 0} 1 ${sectorCenterX + Math.cos(endRad) * 25} ${sectorCenterY + Math.sin(endRad) * 25}`}
               fill="none" stroke="#000000" strokeWidth="2" />
             {(() => {
               const midAngleRad = (startRad + endRad) / 2;
@@ -474,34 +472,14 @@ export default function CirclePropertiesTool(): JSX.Element {
         
         {!isWorksheet && showTheta && (
           <text x={sectorCenterX} y={sectorCenterY + circleRadius + 50} fill="#000000"
-            fontSize={belowLabelFontSize} fontWeight="bold" textAnchor="middle">θ = {theta}°</text>
+            fontSize={belowLabelFontSize} fontWeight="bold" textAnchor="middle">θ = {q.theta}°</text>
         )}
       </svg>
     );
   };
 
-// ===== ANSWER DISPLAY HELPER =====
-  const getAnswerDisplay = (q: QuestionData): string => {
-    if (q.type === 'circumference') {
-      if (q.level === 3) {
-        return (q.answer || '') + ' cm';
-      }
-      return (q.circumference || '') + ' cm';
-    } else if (q.type === 'area') {
-      if (q.level === 3) {
-        return (q.answer || '') + ' cm';
-      }
-      return (q.area || '') + ' cm²';
-    }
-    return q.answer || '';
-  };
-
-  // ===== COPY ABOVE THIS LINE FOR PART 1 =====
-  // ===== CONTINUE IN PART 2 ===== 
-  
-  // ===== QUESTION GENERATION FUNCTIONS =====
-
-  const generateCircumferenceQuestion = (level: DifficultyLevel, angle: number): QuestionData => {
+  // ===== QUESTION GENERATION =====
+  const generateCircumferenceQuestion = (level: DifficultyLevel, angle: number): QuestionType => {
     if (level === 'level1') {
       const diameter = allowDecimals 
         ? Math.round((Math.random() * 24 + 1) * 10) / 10 
@@ -554,10 +532,7 @@ export default function CirclePropertiesTool(): JSX.Element {
       };
     } else {
       const findWhat = Math.random() > 0.5 ? 'radius' : 'diameter';
-      let radius = 0;
-      let diameter = 0;
-      let circumference = 0;
-      let circumferencePi = 0;
+      let radius: number, diameter: number, circumference: number, circumferencePi: number;
       
       if (findWhat === 'radius') {
         radius = allowDecimals ? Math.round((Math.random() * 24 + 1) * 10) / 10 : Math.floor(Math.random() * 25) + 1;
@@ -603,7 +578,7 @@ export default function CirclePropertiesTool(): JSX.Element {
     }
   };
 
-  const generateAreaQuestion = (level: DifficultyLevel, angle: number): QuestionData => {
+  const generateAreaQuestion = (level: DifficultyLevel, angle: number): QuestionType => {
     if (level === 'level1') {
       const radius = allowDecimals ? Math.round((Math.random() * 24 + 1) * 10) / 10 : Math.floor(Math.random() * 25) + 1;
       const diameter = radius * 2;
@@ -653,10 +628,7 @@ export default function CirclePropertiesTool(): JSX.Element {
       };
     } else {
       const findWhat = Math.random() > 0.5 ? 'radius' : 'diameter';
-      let radius = 0;
-      let diameter = 0;
-      let area = 0;
-      let areaPi = 0;
+      let radius: number, diameter: number, area: number, areaPi: number;
       
       if (findWhat === 'radius') {
         radius = allowDecimals ? Math.round((Math.random() * 24 + 1) * 10) / 10 : Math.floor(Math.random() * 25) + 1;
@@ -671,48 +643,47 @@ export default function CirclePropertiesTool(): JSX.Element {
       }
       
       const working = findWhat === 'radius' ? [
-        { type: 'given', text: 'Area (A) = ' + (answerInPi ? formatNumber(areaPi) + 'π' : formatNumber(Math.round(area * 10) / 10)) + ' cm²' },
+        { type: 'given', text: `Area (A) = ${answerInPi ? `${formatNumber(areaPi)}π` : formatNumber(Math.round(area * 10) / 10)} cm²` },
         { type: 'formula', text: 'Area = πr²' },
         { type: 'rearrange', text: 'r² = A ÷ π' },
-        { type: 'substitution', textPi: 'r² = ' + formatNumber(areaPi) + 'π ÷ π',
-          textNumeric: 'r² = ' + formatNumber(Math.round(area * 10) / 10) + ' ÷ π' },
-        { type: 'simplify', textPi: 'r² = ' + formatNumber(radius * radius),
-          textNumeric: 'r² = ' + formatNumber(Math.round(area * 10) / 10) + ' ÷ 3.142592 = ' + formatNumber(radius * radius) },
-        { type: 'calculation', text: 'r = √' + formatNumber(radius * radius) + ' = ' + formatNumber(radius) + ' cm' },
-        { type: 'final', answer: formatNumber(radius) + ' cm' }
+        { type: 'substitution', textPi: `r² = ${formatNumber(areaPi)}π ÷ π`,
+          textNumeric: `r² = ${formatNumber(Math.round(area * 10) / 10)} ÷ π` },
+        { type: 'simplify', textPi: `r² = ${formatNumber(radius * radius)}`,
+          textNumeric: `r² = ${formatNumber(Math.round(area * 10) / 10)} ÷ 3.142592 = ${formatNumber(radius * radius)}` },
+        { type: 'calculation', text: `r = √${formatNumber(radius * radius)} = ${formatNumber(radius)} cm` },
+        { type: 'final', answer: `${formatNumber(radius)} cm` }
       ] : [
-        { type: 'given', text: 'Area (A) = ' + (answerInPi ? formatNumber(areaPi) + 'π' : formatNumber(Math.round(area * 10) / 10)) + ' cm²' },
+        { type: 'given', text: `Area (A) = ${answerInPi ? `${formatNumber(areaPi)}π` : formatNumber(Math.round(area * 10) / 10)} cm²` },
         { type: 'formula', text: 'Area = πr²' },
         { type: 'rearrange', text: 'r² = A ÷ π' },
-        { type: 'substitution', textPi: 'r² = ' + formatNumber(areaPi) + 'π ÷ π',
-          textNumeric: 'r² = ' + formatNumber(Math.round(area * 10) / 10) + ' ÷ π' },
-        { type: 'simplify', textPi: 'r² = ' + formatNumber(radius * radius),
-          textNumeric: 'r² = ' + formatNumber(Math.round(area * 10) / 10) + ' ÷ 3.142592 = ' + formatNumber(radius * radius) },
-        { type: 'calculation', text: 'r = √' + formatNumber(radius * radius) + ' = ' + formatNumber(radius) + ' cm' },
-        { type: 'findDiameter', text: 'Diameter (d) = 2r = 2 × ' + formatNumber(radius) + ' = ' + formatNumber(diameter) + ' cm' },
-        { type: 'final', answer: formatNumber(diameter) + ' cm' }
+        { type: 'substitution', textPi: `r² = ${formatNumber(areaPi)}π ÷ π`,
+          textNumeric: `r² = ${formatNumber(Math.round(area * 10) / 10)} ÷ π` },
+        { type: 'simplify', textPi: `r² = ${formatNumber(radius * radius)}`,
+          textNumeric: `r² = ${formatNumber(Math.round(area * 10) / 10)} ÷ 3.142592 = ${formatNumber(radius * radius)}` },
+        { type: 'calculation', text: `r = √${formatNumber(radius * radius)} = ${formatNumber(radius)} cm` },
+        { type: 'findDiameter', text: `Diameter (d) = 2r = 2 × ${formatNumber(radius)} = ${formatNumber(diameter)} cm` },
+        { type: 'final', answer: `${formatNumber(diameter)} cm` }
       ];
       
       return {
         level: 3, diameter, radius, given: 'area', find: findWhat,
-        displayQuestion: 'Find the ' + findWhat,
-        area: answerInPi ? formatNumber(areaPi) + 'π' : formatNumber(Math.round(area * 10) / 10),
-        areaNumeric: Math.round(area * 10) / 10, 
-        areaPi: formatNumber(areaPi) + 'π',
+        displayQuestion: `Find the ${findWhat}`,
+        area: answerInPi ? `${formatNumber(areaPi)}π` : formatNumber(Math.round(area * 10) / 10),
+        areaNumeric: Math.round(area * 10) / 10, areaPi: `${formatNumber(areaPi)}π`,
         answer: formatNumber(findWhat === 'radius' ? radius : diameter),
         angle, type: 'area', working
       };
     }
   };
 
-  const generateSectorQuestion = (level: DifficultyLevel, angle: number): QuestionData => {
+  const generateSectorQuestion = (level: DifficultyLevel, angle: number): QuestionType => {
     let theta = 0;
     let radius = 0;
     let diameter = 0;
     let questionStyle = sectorQuestionStyle;
     
     if (questionStyle === 'mixed') {
-      const styles: SectorQuestionStyle[] = ['area', 'perimeter', 'arcLength'];
+      const styles = ['area', 'perimeter', 'arcLength'];
       questionStyle = styles[Math.floor(Math.random() * styles.length)];
     }
     
@@ -782,7 +753,7 @@ export default function CirclePropertiesTool(): JSX.Element {
       }
       
       return { level: 1, theta, radius, diameter, displayQuestion, answer, answerNumeric, answerPi,
-        questionStyle, angle, type: 'sector', working, given: '', find: '' };
+        questionStyle, angle, type: 'sector', working };
     } else if (level === 'level2') {
       theta = 90;
       diameter = allowDecimals ? Math.round((Math.random() * 24 + 2) * 10) / 10 : Math.floor(Math.random() * 24) + 2;
@@ -849,7 +820,7 @@ export default function CirclePropertiesTool(): JSX.Element {
       }
       
       return { level: 2, theta, radius, diameter, displayQuestion, answer, answerNumeric, answerPi,
-        questionStyle, angle, type: 'sector', working, given: '', find: '' };
+        questionStyle, angle, type: 'sector', working };
     } else {
       theta = Math.floor(Math.random() * 359) + 1;
       diameter = allowDecimals ? Math.round((Math.random() * 24 + 2) * 10) / 10 : Math.floor(Math.random() * 24) + 2;
@@ -893,9 +864,176 @@ export default function CirclePropertiesTool(): JSX.Element {
           { type: 'findRadius', text: `Radius (r) = d ÷ 2 = ${formatNumber(diameter)} ÷ 2 = ${formatNumber(radius)} cm` },
           { type: 'formula', text: 'Arc length = (θ/360) × 2πr' },
           { type: 'substitution', text: `Arc length = (${theta}/360) × 2 × π × ${formatNumber(radius)}` },
-          { type: 'simplify', text: `Arc length = (${theta}/360) × ${formatNumber(2 * radius)} ×
+          { type: 'simplify', text: `Arc length = (${theta}/360) × ${formatNumber(2 * radius)} × π` },
+          { type: 'calculation', textPi: `Arc length = ${answerPi} cm`,
+            textNumeric: `Arc length = ${formatNumber(theta/360)} × 2 × 3.142592 × ${formatNumber(radius)} = ${answerNumeric} cm` },
+          { type: 'final', answerPi: `${answerPi} cm`, answerNumeric: `${answerNumeric} cm` }
+        ];
+      } else {
+        displayQuestion = 'Find the perimeter of the sector';
+        answerNumeric = formatNumber(Math.round(perimeter * 10) / 10);
+        answerPi = `${formatNumber(Math.round(perimeterPi * 100) / 100)}π + ${formatNumber(2 * radius)}`;
+        answer = answerInPi ? answerPi : answerNumeric;
+        working = [
+          { type: 'given', text: `Diameter (d) = ${formatNumber(diameter)} cm, θ = ${theta}°` },
+          { type: 'findRadius', text: `Radius (r) = d ÷ 2 = ${formatNumber(diameter)} ÷ 2 = ${formatNumber(radius)} cm` },
+          { type: 'formula', text: 'Perimeter = arc length + 2r = (θ/360) × 2πr + 2r' },
+          { type: 'substitution', text: `Perimeter = (${theta}/360) × 2 × π × ${formatNumber(radius)} + 2 × ${formatNumber(radius)}` },
+          { type: 'simplify', text: `Perimeter = (${theta}/360) × ${formatNumber(2 * radius)} × π + ${formatNumber(2 * radius)}` },
+          { type: 'calculation', textPi: `Perimeter = ${answerPi} cm`,
+            textNumeric: `Perimeter = ${formatNumber(Math.round(arcLength * 10) / 10)} + ${formatNumber(2 * radius)} = ${answerNumeric} cm` },
+          { type: 'final', answerPi: `${answerPi} cm`, answerNumeric: `${answerNumeric} cm` }
+        ];
+      }
+      
+      return { level: 3, theta, radius, diameter, displayQuestion, answer, answerNumeric, answerPi,
+        questionStyle, angle, type: 'sector', working };
+    }
+  };
 
-          {mode === 'whiteboard' && (
+  const generateQuestion = (level: DifficultyLevel): QuestionType => {
+    const angle = Math.floor(Math.random() * 24) * 15;
+    if (questionType === 'circumference') {
+      return generateCircumferenceQuestion(level, angle);
+    } else if (questionType === 'area') {
+      return generateAreaQuestion(level, angle);
+    } else {
+      return generateSectorQuestion(level, angle);
+    }
+  };
+
+  // ===== EVENT HANDLERS =====
+  const handleNewWhiteboardQuestion = (): void => {
+    setWhiteboardQuestion(generateQuestion(difficulty));
+    setShowWhiteboardAnswer(false);
+  };
+
+  const handleNewQuestion = (): void => {
+    setQuestion(generateQuestion(difficulty));
+    setShowAnswer(false);
+  };
+
+  const handleGenerateWorksheet = (): void => {
+    const questions: any[] = [];
+    const usedKeys = new Set<string>();
+    
+    const generateUniqueQuestion = (lvl: string): any => {
+      let attempts = 0, q: any, uniqueKey: string;
+      do {
+        q = generateQuestion(lvl);
+        if (questionType === 'sectors') {
+          uniqueKey = `${q.theta}-${q.diameter}-${q.questionStyle}`;
+        } else if (questionType === 'circumference') {
+          if (q.given === 'radius') {
+            uniqueKey = `circ-r${q.radius}-${q.level}`;
+          } else if (q.given === 'diameter') {
+            uniqueKey = `circ-d${q.diameter}-${q.level}`;
+          } else {
+            uniqueKey = `circ-c${q.circumferenceNumeric}-find${q.find}`;
+          }
+        } else {
+          if (q.given === 'radius') {
+            uniqueKey = `area-r${q.radius}-${q.level}`;
+          } else if (q.given === 'diameter') {
+            uniqueKey = `area-d${q.diameter}-${q.level}`;
+          } else {
+            uniqueKey = `area-a${q.areaNumeric}-find${q.find}`;
+          }
+        }
+        if (++attempts > 100) break;
+      } while (usedKeys.has(uniqueKey));
+      usedKeys.add(uniqueKey);
+      return q;
+    };
+    
+    if (isDifferentiated) {
+      ['level1', 'level2', 'level3'].forEach(lvl => {
+        for (let i = 0; i < numQuestions; i++) {
+          questions.push({ ...generateUniqueQuestion(lvl), difficulty: lvl });
+        }
+      });
+    } else {
+      for (let i = 0; i < numQuestions; i++) {
+        questions.push({ ...generateUniqueQuestion(difficulty), difficulty });
+      }
+    }
+    setWorksheet(questions);
+    setShowWorksheetAnswers(false);
+  };
+
+  // ===== EFFECTS =====
+  useEffect(() => {
+    if (mode === 'whiteboard' && !whiteboardQuestion) handleNewWhiteboardQuestion();
+    if (mode === 'single' && !question) handleNewQuestion();
+  }, [mode]);
+
+  useEffect(() => {
+    if (mode === 'whiteboard' && whiteboardQuestion) handleNewWhiteboardQuestion();
+    if (mode === 'single' && question) handleNewQuestion();
+  }, [difficulty, allowDecimals, answerInPi, questionType]);
+
+  // ===== RENDER =====
+  return (
+    <>
+      <div className="bg-blue-900 shadow-lg">
+        <div className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
+          <button onClick={() => navigate('/')}
+            className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors">
+            <Home size={24} /><span className="font-semibold text-lg">Home</span>
+          </button>
+          <div className="relative">
+            <button onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="text-white hover:bg-blue-800 p-2 rounded-lg transition-colors">
+              {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
+            </button>
+            {isMenuOpen && (
+              <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border-2 border-gray-200 overflow-hidden z-50">
+                <div className="py-2">
+                  <div className="px-6 py-2 font-bold text-gray-700 text-sm uppercase tracking-wide">Color Schemes</div>
+                  {(['default', 'blue', 'pink', 'yellow'] as const).map((scheme: ColorScheme) => (
+                    <button key={scheme} onClick={() => setColorScheme(scheme)}
+                      className={'w-full text-left px-6 py-3 font-semibold transition-colors ' +
+                        (colorScheme === scheme ? 'bg-blue-100 text-blue-900' : 'text-gray-800 hover:bg-gray-100')}>
+                      {scheme.charAt(0).toUpperCase() + scheme.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    <div className="min-h-screen bg-gray-50 p-8">
+      <div className="max-w-6xl mx-auto">
+        <h1 className="text-5xl font-bold text-center mb-8" style={{ color: '#000000' }}>
+          Circle Properties
+        </h1>
+
+        <div className="flex justify-center gap-3 flex-wrap mb-6">
+          {(['circumference', 'area', 'sectors'] as const).map((topic: QuestionTypeString) => (
+            <button key={topic} onClick={() => setQuestionType(topic)}
+              className={'px-8 py-4 rounded-xl font-bold text-xl transition-all border-2 border-gray-200 ' +
+                (questionType === topic ? 'bg-blue-900 text-white shadow-lg' : 'bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900 shadow')}>
+              {topic === 'circumference' ? 'Circumference' : topic === 'area' ? 'Area' : 'Sectors'}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex justify-center mb-8">
+          <div style={{ width: '90%', height: '1px', backgroundColor: '#d1d5db' }}></div>
+        </div>
+
+        <div className="flex justify-center gap-4 mb-8">
+          {(['whiteboard', 'single', 'worksheet'] as const).map((m: Mode) => (
+            <button key={m} onClick={() => setMode(m)}
+              className={'px-8 py-4 rounded-xl font-bold text-xl transition-all border-2 border-gray-200 ' +
+                (mode === m ? 'bg-blue-900 text-white shadow-lg' : 'bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900 shadow')}>
+              {m === 'whiteboard' ? 'Whiteboard' : m === 'single' ? 'Single Q' : 'Worksheet'}
+            </button>
+          ))}
+        </div>
+
+        {mode === 'whiteboard' && (
           <>
             <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
               <div className="flex items-center justify-between">
@@ -905,7 +1043,9 @@ export default function CirclePropertiesTool(): JSX.Element {
                     {(['level1', 'level2', 'level3'] as const).map((lvl: DifficultyLevel, idx: number) => (
                       <button key={lvl} onClick={() => setDifficulty(lvl)}
                         className={'px-4 py-2 rounded-lg font-bold text-sm w-24 ' +
-                          getDifficultyButtonClass(idx, difficulty === lvl)}>
+                          (difficulty === lvl
+                            ? (idx === 0 ? 'bg-green-600 text-white' : idx === 1 ? 'bg-yellow-600 text-white' : 'bg-red-600 text-white')
+                            : (idx === 0 ? 'bg-white text-green-600 border-2 border-green-600' : idx === 1 ? 'bg-white text-yellow-600 border-2 border-yellow-600' : 'bg-white text-red-600 border-2 border-red-600'))}>
                         Level {idx + 1}
                       </button>
                     ))}
@@ -929,7 +1069,7 @@ export default function CirclePropertiesTool(): JSX.Element {
                   <div className="flex items-center gap-2">
                     <label className="text-xs font-semibold text-gray-600">Type:</label>
                     <select value={sectorQuestionStyle}
-                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSectorQuestionStyle(e.target.value as SectorQuestionStyle)}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSectorQuestionStyle(e.target.value as SectorStyle)}
                       className="px-2 py-1 border-2 border-gray-300 rounded-lg text-xs font-semibold">
                       <option value="mixed">Mixed</option>
                       <option value="area">Area</option>
@@ -962,7 +1102,11 @@ export default function CirclePropertiesTool(): JSX.Element {
                   </span>
                   {showWhiteboardAnswer && (
                     <span className="text-6xl font-bold ml-4" style={{ color: '#166534' }}>
-                      = {getAnswerDisplay(whiteboardQuestion)}
+                      = {whiteboardQuestion.type === 'circumference'
+                        ? (whiteboardQuestion.level === 3 ? `${whiteboardQuestion.answer} cm` : `${whiteboardQuestion.circumference} cm`)
+                        : whiteboardQuestion.type === 'area'
+                        ? (whiteboardQuestion.level === 3 ? `${whiteboardQuestion.answer} cm` : `${whiteboardQuestion.area} cm²`)
+                        : whiteboardQuestion.answer}
                     </span>
                   )}
                 </div>
@@ -985,10 +1129,12 @@ export default function CirclePropertiesTool(): JSX.Element {
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-semibold text-gray-600">Difficulty:</span>
                   <div className="flex gap-2">
-                    {(['level1', 'level2', 'level3'] as const).map((lvl: DifficultyLevel, idx: number) => (
+                    {['level1', 'level2', 'level3'].map((lvl, idx) => (
                       <button key={lvl} onClick={() => setDifficulty(lvl)}
                         className={'px-4 py-2 rounded-lg font-bold text-sm w-24 ' +
-                          getDifficultyButtonClass(idx, difficulty === lvl)}>
+                          (difficulty === lvl
+                            ? (idx === 0 ? 'bg-green-600 text-white' : idx === 1 ? 'bg-yellow-600 text-white' : 'bg-red-600 text-white')
+                            : (idx === 0 ? 'bg-white text-green-600 border-2 border-green-600' : idx === 1 ? 'bg-white text-yellow-600 border-2 border-yellow-600' : 'bg-white text-red-600 border-2 border-red-600'))}>
                         Level {idx + 1}
                       </button>
                     ))}
@@ -998,12 +1144,12 @@ export default function CirclePropertiesTool(): JSX.Element {
                 <div className="flex flex-col gap-1">
                   <label className="flex items-center gap-2 text-sm font-semibold text-gray-600">
                     <input type="checkbox" checked={allowDecimals}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAllowDecimals(e.target.checked)} className="w-3 h-3" />
+                      onChange={(e) => setAllowDecimals(e.target.checked)} className="w-3 h-3" />
                     Decimals
                   </label>
                   <label className="flex items-center gap-2 text-sm font-semibold text-gray-600">
                     <input type="checkbox" checked={answerInPi}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAnswerInPi(e.target.checked)} className="w-3 h-3" />
+                      onChange={(e) => setAnswerInPi(e.target.checked)} className="w-3 h-3" />
                     In π
                   </label>
                 </div>
@@ -1012,7 +1158,7 @@ export default function CirclePropertiesTool(): JSX.Element {
                   <div className="flex items-center gap-2">
                     <label className="text-xs font-semibold text-gray-600">Type:</label>
                     <select value={sectorQuestionStyle}
-                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSectorQuestionStyle(e.target.value as SectorQuestionStyle)}
+                      onChange={(e) => setSectorQuestionStyle(e.target.value)}
                       className="px-2 py-1 border-2 border-gray-300 rounded-lg text-xs font-semibold">
                       <option value="mixed">Mixed</option>
                       <option value="area">Area</option>
@@ -1051,7 +1197,7 @@ export default function CirclePropertiesTool(): JSX.Element {
                   {showAnswer && (
                     <>
                       <div className="space-y-6 mb-8">
-                        {question.working.filter((step: WorkingStep) => step.type !== 'final').map((step: WorkingStep, idx: number) => (
+                        {question.working.filter((step: any) => step.type !== 'final').map((step: any, idx: number) => (
                           <div key={idx} className="rounded-xl p-6" style={{ backgroundColor: getStepBg() }}>
                             {step.type === 'given' && (
                               <div>
@@ -1113,7 +1259,11 @@ export default function CirclePropertiesTool(): JSX.Element {
 
                       <div className="rounded-xl p-6 text-center" style={{ backgroundColor: getFinalAnswerBg() }}>
                         <span className="text-5xl font-bold" style={{ color: '#166534' }}>
-                          = {getAnswerDisplay(question)}
+                          = {question.type === 'circumference'
+                            ? (question.level === 3 ? `${question.answer} cm` : `${question.circumference} cm`)
+                            : question.type === 'area'
+                            ? (question.level === 3 ? `${question.answer} cm` : `${question.area} cm²`)
+                            : question.answer}
                         </span>
                       </div>
                     </>
@@ -1128,6 +1278,7 @@ export default function CirclePropertiesTool(): JSX.Element {
           <>
             <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
               <div className="space-y-4">
+                {/* Line 1: Questions + Differentiated */}
                 <div className="flex justify-center items-center gap-6">
                   <div className="flex items-center gap-3">
                     <label className="text-lg font-semibold" style={{ color: '#000000' }}>Questions per level:</label>
@@ -1142,6 +1293,7 @@ export default function CirclePropertiesTool(): JSX.Element {
                   </div>
                 </div>
 
+                {/* Line 2: Difficulty + Columns (hidden if differentiated) */}
                 {!isDifferentiated && (
                   <div className="flex justify-center items-center gap-6">
                     <div className="flex items-center gap-3">
@@ -1150,7 +1302,9 @@ export default function CirclePropertiesTool(): JSX.Element {
                         {(['level1', 'level2', 'level3'] as const).map((lvl: DifficultyLevel, idx: number) => (
                           <button key={lvl} onClick={() => setDifficulty(lvl)}
                             className={'px-6 py-2 rounded-lg font-semibold ' +
-                              getDifficultyButtonClass(idx, difficulty === lvl)}>
+                              (difficulty === lvl
+                                ? (idx === 0 ? 'bg-green-600 text-white' : idx === 1 ? 'bg-yellow-600 text-white' : 'bg-red-600 text-white')
+                                : 'bg-gray-200')}>
                             Level {idx + 1}
                           </button>
                         ))}
@@ -1165,6 +1319,7 @@ export default function CirclePropertiesTool(): JSX.Element {
                   </div>
                 )}
 
+                {/* Line 3: Variables + Dropdown */}
                 <div className="flex justify-center items-center gap-6">
                   <div className="flex flex-col gap-1">
                     <label className="flex items-center gap-2 cursor-pointer">
@@ -1183,7 +1338,7 @@ export default function CirclePropertiesTool(): JSX.Element {
                     <div className="flex items-center gap-2">
                       <label className="text-sm font-semibold" style={{ color: '#000000' }}>Type:</label>
                       <select value={sectorQuestionStyle}
-                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSectorQuestionStyle(e.target.value as SectorQuestionStyle)}
+                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSectorQuestionStyle(e.target.value as SectorStyle)}
                         className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-semibold bg-white">
                         <option value="mixed">Mixed</option>
                         <option value="area">Area</option>
@@ -1194,6 +1349,7 @@ export default function CirclePropertiesTool(): JSX.Element {
                   )}
                 </div>
 
+                {/* Line 4: Action Buttons */}
                 <div className="flex justify-center items-center gap-4">
                   <button onClick={handleGenerateWorksheet}
                     className="px-6 py-3 bg-blue-900 text-white rounded-lg font-semibold flex items-center gap-2 hover:bg-blue-800">
@@ -1235,17 +1391,15 @@ export default function CirclePropertiesTool(): JSX.Element {
                 {isDifferentiated ? (
                   <div className="grid grid-cols-3 gap-4">
                     {(['level1', 'level2', 'level3'] as const).map((lvl: DifficultyLevel, idx: number) => (
-                      <div key={lvl} className={`rounded-xl p-4 border-4 ${
-                        lvl === 'level1' ? 'bg-green-50 border-green-500' :
-                        lvl === 'level2' ? 'bg-yellow-50 border-yellow-500' : 'bg-red-50 border-red-500'
-                      }`}>
-                        <h3 className={`text-2xl font-bold text-center mb-4 ${
-                          lvl === 'level1' ? 'text-green-700' : lvl === 'level2' ? 'text-yellow-700' : 'text-red-700'
-                        }`}>
+                      <div key={lvl} className={'rounded-xl p-4 border-4 ' +
+                        (lvl === 'level1' ? 'bg-green-50 border-green-500' :
+                         lvl === 'level2' ? 'bg-yellow-50 border-yellow-500' : 'bg-red-50 border-red-500')}>
+                        <h3 className={'text-2xl font-bold text-center mb-4 ' +
+                          (lvl === 'level1' ? 'text-green-700' : lvl === 'level2' ? 'text-yellow-700' : 'text-red-700')}>
                           Level {idx + 1}
                         </h3>
                         <div className="space-y-3">
-                          {worksheet.filter((q: QuestionData) => q.difficulty === lvl).map((q: QuestionData, i: number) => (
+                          {worksheet.filter((q: QuestionType) => q.difficulty === lvl).map((q: QuestionType, i: number) => (
                             <div key={i} className="rounded-lg p-3 border-2 border-gray-200" style={{
                               backgroundColor: lvl === 'level1' ? '#DCFCE7' : lvl === 'level2' ? '#FEF9C3' : '#FEE2E2'
                             }}>
@@ -1255,7 +1409,11 @@ export default function CirclePropertiesTool(): JSX.Element {
                               <div className="flex justify-center my-1">{renderCircleDiagram(q, 200, true, 1 + worksheetFontSize * 0.3, lvl)}</div>
                               {showWorksheetAnswers && (
                                 <div className={`mt-1 font-semibold ${getFontSize()}`} style={{ color: '#059669' }}>
-                                  = {getAnswerDisplay(q)}
+                                  = {q.type === 'circumference'
+                                    ? (q.level === 3 ? `${q.answer} cm` : `${q.circumference} cm`)
+                                    : q.type === 'area'
+                                    ? (q.level === 3 ? `${q.answer} cm` : `${q.area} cm²`)
+                                    : q.answer}
                                 </div>
                               )}
                             </div>
@@ -1270,15 +1428,19 @@ export default function CirclePropertiesTool(): JSX.Element {
                     numColumns === 2 ? 'grid-cols-2' :
                     numColumns === 3 ? 'grid-cols-3' : 'grid-cols-4'
                   }`}>
-                    {worksheet.map((q: QuestionData, i: number) => (
+                    {worksheet.map((q: QuestionType, i: number) => (
                       <div key={i} className="rounded-lg p-3 border-2 border-gray-200" style={{ backgroundColor: getStepBg() }}>
-                        <div className={`font-bold mb-1 ${getFontSize()}`} style={{ color: '#000000' }}>
+                        <div className={`font-bold ${getFontSize()} mb-1`} style={{ color: '#000000' }}>
                           {i + 1}. {q.displayQuestion}
                         </div>
                         <div className="flex justify-center mb-1">{renderCircleDiagram(q, 180, true, 1 + worksheetFontSize * 0.3)}</div>
                         {showWorksheetAnswers && (
-                          <div className={`font-semibold text-center ${getFontSize()}`} style={{ color: '#059669' }}>
-                            = {getAnswerDisplay(q)}
+                          <div className={`font-semibold ${getFontSize()} text-center`} style={{ color: '#059669' }}>
+                            = {q.type === 'circumference'
+                              ? (q.level === 3 ? `${q.answer} cm` : `${q.circumference} cm`)
+                              : q.type === 'area'
+                              ? (q.level === 3 ? `${q.answer} cm` : `${q.area} cm²`)
+                              : q.answer}
                           </div>
                         )}
                       </div>
@@ -1294,5 +1456,3 @@ export default function CirclePropertiesTool(): JSX.Element {
     </>
   );
 }
-
-         
