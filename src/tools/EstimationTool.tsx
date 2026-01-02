@@ -845,6 +845,76 @@ export default function EstimationTool() {
                       />
                     </div>
                   )}
+            </>
+          )}
+
+          {/* WORKSHEET MODE */}
+          {mode === 'worksheet' && (
+            <>
+              <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+                <div className="space-y-4">
+                  <div className="flex justify-center items-center gap-6 flex-wrap">
+                    <div className="flex items-center gap-3">
+                      <label className="text-lg font-semibold" style={{ color: '#000000' }}>
+                        Questions per level:
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="20"
+                        value={numQuestions}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setNumQuestions(Math.max(1, Math.min(20, parseInt(e.target.value) || 5)))
+                        }
+                        className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-lg"
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        id="diff"
+                        checked={isDifferentiated}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setIsDifferentiated(e.target.checked)}
+                        className="w-5 h-5"
+                      />
+                      <label htmlFor="diff" className="text-lg font-semibold" style={{ color: '#000000' }}>
+                        Differentiated
+                      </label>
+                    </div>
+                  </div>
+
+                  {!isDifferentiated && (
+                    <div className="flex justify-center items-center gap-4">
+                      <label className="text-lg font-semibold" style={{ color: '#000000' }}>Difficulty:</label>
+                      <div className="flex gap-2">
+                        {(['level1', 'level2', 'level3'] as const).map((lvl: DifficultyLevel, idx: number) => (
+                          <button
+                            key={lvl}
+                            onClick={() => setDifficulty(lvl)}
+                            className={
+                              'px-4 py-2 rounded-lg font-bold text-sm w-24 ' +
+                              getDifficultyButtonClass(idx, difficulty === lvl)
+                            }
+                          >
+                            Level {idx + 1}
+                          </button>
+                        ))}
+                      </div>
+
+                      <label className="text-lg font-semibold ml-4" style={{ color: '#000000' }}>Columns:</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="4"
+                        value={numColumns}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setNumColumns(Math.max(1, Math.min(4, parseInt(e.target.value) || 2)))
+                        }
+                        className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-lg"
+                      />
+                    </div>
+                  )}
 
                   <div className="flex justify-center gap-4">
                     <button
