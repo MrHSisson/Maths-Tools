@@ -692,13 +692,13 @@ export default function EstimationTool() {
                     <div className="flex items-center gap-3">
                       <span className="text-sm font-semibold" style={{ color: '#000000' }}>Difficulty:</span>
                       <div className="flex gap-2">
-                        {['level1', 'level2', 'level3'].map((lvl, idx) => (
+                        {(['level1', 'level2', 'level3'] as const).map((lvl: DifficultyLevel, idx: number) => (
                           <button
                             key={lvl}
                             onClick={() => setDifficulty(lvl)}
                             className={
                               'px-4 py-2 rounded-lg font-bold text-sm w-24 ' +
-                              getDifficultyButtonClass(lvl, idx, difficulty === lvl)
+                              getDifficultyButtonClass(idx, difficulty === lvl)
                             }
                           >
                             Level {idx + 1}
@@ -710,7 +710,10 @@ export default function EstimationTool() {
                     {difficulty !== 'level3' && (
                       <select
                         value={selectedOperation}
-                        onChange={(e) => setSelectedOperation(e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                          const value = e.target.value as Operation;
+                          setSelectedOperation(value);
+                        }}
                         className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-semibold bg-white"
                       >
                         <option value="mixed">Mixed</option>
