@@ -1247,12 +1247,12 @@ export default function CirclePropertiesTool(): JSX.Element {
                             <div key={i} className="rounded-lg p-3 border-2 border-gray-200" style={{
                               backgroundColor: lvl === 'level1' ? '#DCFCE7' : lvl === 'level2' ? '#FEF9C3' : '#FEE2E2'
                             }}>
-                              <div className={'font-bold ' + getFontSize()} style={{ color: '#000000' }}>
+                              <div className={`font-bold ${getFontSize()}`} style={{ color: '#000000' }}>
                                 {i + 1}. {q.displayQuestion}
                               </div>
                               <div className="flex justify-center my-1">{renderCircleDiagram(q, 200, true, 1 + worksheetFontSize * 0.3, lvl)}</div>
                               {showWorksheetAnswers && (
-                                <div className={'mt-1 font-semibold ' + getFontSize()} style={{ color: '#059669' }}>
+                                <div className={`mt-1 font-semibold ${getFontSize()}`} style={{ color: '#059669' }}>
                                   = {getAnswerDisplay(q)}
                                 </div>
                               )}
@@ -1270,12 +1270,12 @@ export default function CirclePropertiesTool(): JSX.Element {
                   )}>
                     {worksheet.map((q: QuestionData, i: number) => (
                       <div key={i} className="rounded-lg p-3 border-2 border-gray-200" style={{ backgroundColor: getStepBg() }}>
-                        <div className={'font-bold mb-1 ' + getFontSize()} style={{ color: '#000000' }}>
+                        <div className={`font-bold mb-1 ${getFontSize()}`} style={{ color: '#000000' }}>
                           {i + 1}. {q.displayQuestion}
                         </div>
                         <div className="flex justify-center mb-1">{renderCircleDiagram(q, 180, true, 1 + worksheetFontSize * 0.3)}</div>
                         {showWorksheetAnswers && (
-                          <div className={'font-semibold text-center ' + getFontSize()} style={{ color: '#059669' }}>
+                          <div className={`font-semibold text-center ${getFontSize()}`} style={{ color: '#059669' }}>
                             = {getAnswerDisplay(q)}
                           </div>
                         )}
