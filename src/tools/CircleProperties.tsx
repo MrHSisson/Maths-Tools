@@ -480,8 +480,25 @@ export default function CirclePropertiesTool(): JSX.Element {
     );
   };
 
+// ===== ANSWER DISPLAY HELPER =====
+  const getAnswerDisplay = (q: QuestionData): string => {
+    if (q.type === 'circumference') {
+      if (q.level === 3) {
+        return (q.answer || '') + ' cm';
+      }
+      return (q.circumference || '') + ' cm';
+    } else if (q.type === 'area') {
+      if (q.level === 3) {
+        return (q.answer || '') + ' cm';
+      }
+      return (q.area || '') + ' cm²';
+    }
+    return q.answer || '';
+  };
+
   // ===== COPY ABOVE THIS LINE FOR PART 1 =====
-  // ===== CONTINUE IN PART 2 =====
+  // ===== CONTINUE IN PART 2 ===== 
+  
   // ===== QUESTION GENERATION FUNCTIONS =====
 
   const generateCircumferenceQuestion = (level: DifficultyLevel, angle: number): QuestionData => {
@@ -654,33 +671,34 @@ export default function CirclePropertiesTool(): JSX.Element {
       }
       
       const working = findWhat === 'radius' ? [
-        { type: 'given', text: `Area (A) = ${answerInPi ? `${formatNumber(areaPi)}π` : formatNumber(Math.round(area * 10) / 10)} cm²` },
+        { type: 'given', text: 'Area (A) = ' + (answerInPi ? formatNumber(areaPi) + 'π' : formatNumber(Math.round(area * 10) / 10)) + ' cm²' },
         { type: 'formula', text: 'Area = πr²' },
         { type: 'rearrange', text: 'r² = A ÷ π' },
-        { type: 'substitution', textPi: `r² = ${formatNumber(areaPi)}π ÷ π`,
-          textNumeric: `r² = ${formatNumber(Math.round(area * 10) / 10)} ÷ π` },
-        { type: 'simplify', textPi: `r² = ${formatNumber(radius * radius)}`,
-          textNumeric: `r² = ${formatNumber(Math.round(area * 10) / 10)} ÷ 3.142592 = ${formatNumber(radius * radius)}` },
-        { type: 'calculation', text: `r = √${formatNumber(radius * radius)} = ${formatNumber(radius)} cm` },
-        { type: 'final', answer: `${formatNumber(radius)} cm` }
+        { type: 'substitution', textPi: 'r² = ' + formatNumber(areaPi) + 'π ÷ π',
+          textNumeric: 'r² = ' + formatNumber(Math.round(area * 10) / 10) + ' ÷ π' },
+        { type: 'simplify', textPi: 'r² = ' + formatNumber(radius * radius),
+          textNumeric: 'r² = ' + formatNumber(Math.round(area * 10) / 10) + ' ÷ 3.142592 = ' + formatNumber(radius * radius) },
+        { type: 'calculation', text: 'r = √' + formatNumber(radius * radius) + ' = ' + formatNumber(radius) + ' cm' },
+        { type: 'final', answer: formatNumber(radius) + ' cm' }
       ] : [
-        { type: 'given', text: `Area (A) = ${answerInPi ? `${formatNumber(areaPi)}π` : formatNumber(Math.round(area * 10) / 10)} cm²` },
+        { type: 'given', text: 'Area (A) = ' + (answerInPi ? formatNumber(areaPi) + 'π' : formatNumber(Math.round(area * 10) / 10)) + ' cm²' },
         { type: 'formula', text: 'Area = πr²' },
         { type: 'rearrange', text: 'r² = A ÷ π' },
-        { type: 'substitution', textPi: `r² = ${formatNumber(areaPi)}π ÷ π`,
-          textNumeric: `r² = ${formatNumber(Math.round(area * 10) / 10)} ÷ π` },
-        { type: 'simplify', textPi: `r² = ${formatNumber(radius * radius)}`,
-          textNumeric: `r² = ${formatNumber(Math.round(area * 10) / 10)} ÷ 3.142592 = ${formatNumber(radius * radius)}` },
-        { type: 'calculation', text: `r = √${formatNumber(radius * radius)} = ${formatNumber(radius)} cm` },
-        { type: 'findDiameter', text: `Diameter (d) = 2r = 2 × ${formatNumber(radius)} = ${formatNumber(diameter)} cm` },
-        { type: 'final', answer: `${formatNumber(diameter)} cm` }
+        { type: 'substitution', textPi: 'r² = ' + formatNumber(areaPi) + 'π ÷ π',
+          textNumeric: 'r² = ' + formatNumber(Math.round(area * 10) / 10) + ' ÷ π' },
+        { type: 'simplify', textPi: 'r² = ' + formatNumber(radius * radius),
+          textNumeric: 'r² = ' + formatNumber(Math.round(area * 10) / 10) + ' ÷ 3.142592 = ' + formatNumber(radius * radius) },
+        { type: 'calculation', text: 'r = √' + formatNumber(radius * radius) + ' = ' + formatNumber(radius) + ' cm' },
+        { type: 'findDiameter', text: 'Diameter (d) = 2r = 2 × ' + formatNumber(radius) + ' = ' + formatNumber(diameter) + ' cm' },
+        { type: 'final', answer: formatNumber(diameter) + ' cm' }
       ];
       
       return {
         level: 3, diameter, radius, given: 'area', find: findWhat,
-        displayQuestion: `Find the ${findWhat}`,
-        area: answerInPi ? `${formatNumber(areaPi)}π` : formatNumber(Math.round(area * 10) / 10),
-        areaNumeric: Math.round(area * 10) / 10, areaPi: `${formatNumber(areaPi)}π`,
+        displayQuestion: 'Find the ' + findWhat,
+        area: answerInPi ? formatNumber(areaPi) + 'π' : formatNumber(Math.round(area * 10) / 10),
+        areaNumeric: Math.round(area * 10) / 10, 
+        areaPi: formatNumber(areaPi) + 'π',
         answer: formatNumber(findWhat === 'radius' ? radius : diameter),
         angle, type: 'area', working
       };
@@ -876,8 +894,8 @@ export default function CirclePropertiesTool(): JSX.Element {
           { type: 'formula', text: 'Arc length = (θ/360) × 2πr' },
           { type: 'substitution', text: `Arc length = (${theta}/360) × 2 × π × ${formatNumber(radius)}` },
           { type: 'simplify', text: `Arc length = (${theta}/360) × ${formatNumber(2 * radius)} ×
-          
-         {mode === 'whiteboard' && (
+
+          {mode === 'whiteboard' && (
           <>
             <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
               <div className="flex items-center justify-between">
@@ -944,11 +962,7 @@ export default function CirclePropertiesTool(): JSX.Element {
                   </span>
                   {showWhiteboardAnswer && (
                     <span className="text-6xl font-bold ml-4" style={{ color: '#166534' }}>
-                      = {whiteboardQuestion.type === 'circumference'
-                        ? (whiteboardQuestion.level === 3 ? `${whiteboardQuestion.answer} cm` : `${whiteboardQuestion.circumference} cm`)
-                        : whiteboardQuestion.type === 'area'
-                        ? (whiteboardQuestion.level === 3 ? `${whiteboardQuestion.answer} cm` : `${whiteboardQuestion.area} cm²`)
-                        : whiteboardQuestion.answer}
+                      = {getAnswerDisplay(whiteboardQuestion)}
                     </span>
                   )}
                 </div>
@@ -1099,11 +1113,7 @@ export default function CirclePropertiesTool(): JSX.Element {
 
                       <div className="rounded-xl p-6 text-center" style={{ backgroundColor: getFinalAnswerBg() }}>
                         <span className="text-5xl font-bold" style={{ color: '#166534' }}>
-                          = {question.type === 'circumference'
-                            ? (question.level === 3 ? `${question.answer} cm` : `${question.circumference} cm`)
-                            : question.type === 'area'
-                            ? (question.level === 3 ? `${question.answer} cm` : `${question.area} cm²`)
-                            : question.answer}
+                          = {getAnswerDisplay(question)}
                         </span>
                       </div>
                     </>
@@ -1243,11 +1253,7 @@ export default function CirclePropertiesTool(): JSX.Element {
                               <div className="flex justify-center my-1">{renderCircleDiagram(q, 200, true, 1 + worksheetFontSize * 0.3, lvl)}</div>
                               {showWorksheetAnswers && (
                                 <div className={'mt-1 font-semibold ' + getFontSize()} style={{ color: '#059669' }}>
-                                  = {q.type === 'circumference'
-                                    ? (q.level === 3 ? `${q.answer} cm` : `${q.circumference} cm`)
-                                    : q.type === 'area'
-                                    ? (q.level === 3 ? `${q.answer} cm` : `${q.area} cm²`)
-                                    : q.answer}
+                                  = {getAnswerDisplay(q)}
                                 </div>
                               )}
                             </div>
@@ -1270,11 +1276,7 @@ export default function CirclePropertiesTool(): JSX.Element {
                         <div className="flex justify-center mb-1">{renderCircleDiagram(q, 180, true, 1 + worksheetFontSize * 0.3)}</div>
                         {showWorksheetAnswers && (
                           <div className={'font-semibold text-center ' + getFontSize()} style={{ color: '#059669' }}>
-                            = {q.type === 'circumference'
-                              ? (q.level === 3 ? `${q.answer} cm` : `${q.circumference} cm`)
-                              : q.type === 'area'
-                              ? (q.level === 3 ? `${q.answer} cm` : `${q.area} cm²`)
-                              : q.answer}
+                            = {getAnswerDisplay(q)}
                           </div>
                         )}
                       </div>
@@ -1290,3 +1292,5 @@ export default function CirclePropertiesTool(): JSX.Element {
     </>
   );
 }
+          
+         
