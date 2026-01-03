@@ -209,7 +209,7 @@ const RatioSharingTool = () => {
             ' Find both shares.'
           }`;
 
-      let answerText;
+      let answerText = '';
       if (actualQuestionType === 'personA') {
         answerText = `${names[0]}: ${formatCurrency(shares[0])}`;
       } else if (actualQuestionType === 'personB') {
@@ -437,7 +437,7 @@ const RatioSharingTool = () => {
         displayText += `How much does ${names[otherPerson]} receive?`;
       }
 
-      let answerText;
+      let answerText = '';
       if (actualQuestionType === 'total') {
         answerText = `Total: ${formatCurrency(total)}`;
       } else if (actualQuestionType === 'other') {
@@ -681,7 +681,7 @@ const RatioSharingTool = () => {
         displayText += `How much does ${names[1]} receive?`;
       }
 
-      let answerText;
+      let answerText = '';
       if (actualQuestionType === 'total') {
         answerText = `Total: ${formatCurrency(total)}`;
       } else if (actualQuestionType === 'personA') {
