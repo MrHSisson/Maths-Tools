@@ -50,78 +50,85 @@ const RatioSharingTool = () => {
   const [worksheetFontSize, setWorksheetFontSize] = useState(1);
 
   const fontSizes = ['text-xl', 'text-2xl', 'text-3xl', 'text-4xl'];
-  const getFontSize = () => fontSizes[worksheetFontSize];
+  const getFontSize = (): string => fontSizes[worksheetFontSize];
   
-  const getStepBg = () => {
+  const getStepBg = (): string => {
     if (colorScheme === 'blue') return '#B3D9F2';
     if (colorScheme === 'pink') return '#F2B3D9';
     if (colorScheme === 'yellow') return '#F2EBB3';
     return '#f3f4f6';
   };
   
-  const getQuestionBg = () => {
+  const getQuestionBg = (): string => {
     if (colorScheme === 'blue') return '#D1E7F8';
     if (colorScheme === 'pink') return '#F8D1E7';
     if (colorScheme === 'yellow') return '#F8F4D1';
     return '#ffffff';
   };
   
-  const getBarEmptyBg = () => {
+  const getBarEmptyBg = (): string => {
     if (colorScheme === 'blue') return '#D1E7F8';
     if (colorScheme === 'pink') return '#F8D1E7';
     if (colorScheme === 'yellow') return '#F8F4D1';
     return '#ffffff';
   };
   
-  const getBarFilledBg = () => {
+  const getBarFilledBg = (): string => {
     if (colorScheme === 'blue') return '#9ec9e3';
     if (colorScheme === 'pink') return '#e39ec9';
     if (colorScheme === 'yellow') return '#e3e39e';
     return '#d1d5db';
   };
   
-  const getBarKnownBg = () => {
+  const getBarKnownBg = (): string => {
     if (colorScheme === 'blue') return '#7eb8e0';
     if (colorScheme === 'pink') return '#e07eb8';
     if (colorScheme === 'yellow') return '#e0e07e';
     return '#93c5fd';
   };
   
-  const getBarDiffBg = () => {
+  const getBarDiffBg = (): string => {
     if (colorScheme === 'blue') return '#d8b4fe';
     if (colorScheme === 'pink') return '#fed8b4';
     if (colorScheme === 'yellow') return '#b4fed8';
     return '#e9d5ff';
   };
   
-  const getWhiteboardWorkingBg = () => {
+  const getWhiteboardWorkingBg = (): string => {
     if (colorScheme === 'blue') return '#B3D9F2';
     if (colorScheme === 'pink') return '#F2B3D9';
     if (colorScheme === 'yellow') return '#F2EBB3';
     return '#f3f4f6';
   };
 
-  const randomInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
-  const randomChoice = (arr: any[]) => arr[Math.floor(Math.random() * arr.length)];
+  const getFinalAnswerBg = (): string => {
+    if (colorScheme === 'blue') return '#B3D9F2';
+    if (colorScheme === 'pink') return '#F2B3D9';
+    if (colorScheme === 'yellow') return '#F2EBB3';
+    return '#f3f4f6';
+  };
+
+  const randomInt = (min: number, max: number): number => Math.floor(Math.random() * (max - min + 1)) + min;
+  const randomChoice = (arr: any[]): any => arr[Math.floor(Math.random() * arr.length)];
 
   const namesList = ['Alice', 'Ben', 'Charlie', 'Diana', 'Emma', 'Finn', 'Grace', 'Harry', 'Isla', 'Jack', 'Kate', 'Liam', 'Mia', 'Noah', 'Olivia', 'Peter'];
   
-  const getRandomNames = (count: number) => {
+  const getRandomNames = (count: number): string[] => {
     const shuffled = [...namesList].sort(() => Math.random() - 0.5);
     return shuffled.slice(0, count);
   };
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: number): string => {
     if (amount % 1 === 0) return `£${amount}`;
     return `£${amount.toFixed(2)}`;
   };
 
-  const findHCF = (numbers: number[]) => {
+  const findHCF = (numbers: number[]): number => {
     const gcd = (a: number, b: number): number => b === 0 ? a : gcd(b, a % b);
-    return numbers.reduce((acc, num) => gcd(acc, num));
+    return numbers.reduce((acc: number, num: number) => gcd(acc, num));
   };
 
-  const generateSharingWorking = (ratioParts: number[], total: number, ratioSum: number, partValue: number, shares: number[], questionType: string, names: string[], algebraic = false) => {
+  const generateSharingWorking = (ratioParts: number[], total: number, ratioSum: number, partValue: number, shares: number[], questionType: string, names: string[], algebraic = false): any[] => {
     if (algebraic) {
       return [
         { type: 'showRatio', parts: ratioParts, names: names },
@@ -134,10 +141,10 @@ const RatioSharingTool = () => {
       ];
     } else {
       return [
-        { type: 'barModelEmpty', bars: ratioParts.map((parts, idx) => ({ person: names[idx], boxes: parts })) },
+        { type: 'barModelEmpty', bars: ratioParts.map((parts: number, idx: number) => ({ person: names[idx], boxes: parts })) },
         { type: 'totalParts', sum: ratioSum },
         { type: 'partValue', total: total, sum: ratioSum, value: partValue },
-        { type: 'barModelFilled', bars: ratioParts.map((parts, idx) => ({ person: names[idx], boxes: parts, value: partValue, total: shares[idx] })) },
+        { type: 'barModelFilled', bars: ratioParts.map((parts: number, idx: number) => ({ person: names[idx], boxes: parts, value: partValue, total: shares[idx] })) },
         { type: 'answer', questionType: questionType, shares: shares, names: names }
       ];
     }
@@ -180,14 +187,14 @@ const RatioSharingTool = () => {
         }
       }
 
-      const allEqual = ratioParts.every(p => p === ratioParts[0]);
+      const allEqual = ratioParts.every((p: number) => p === ratioParts[0]);
       if (allEqual) continue;
 
       const ratioHCF = findHCF(ratioParts);
       if (ratioHCF > 1) continue;
 
       partValue = total / ratioSum;
-      const shares = ratioParts.map(p => p * partValue);
+      const shares = ratioParts.map((p: number) => p * partValue);
 
       if (total < 20 || total > 500) continue;
 
@@ -202,13 +209,13 @@ const RatioSharingTool = () => {
             ' Find both shares.'
           }`;
 
-      let answerText = '';
+      let answerText;
       if (actualQuestionType === 'personA') {
         answerText = `${names[0]}: ${formatCurrency(shares[0])}`;
       } else if (actualQuestionType === 'personB') {
         answerText = `${names[1]}: ${formatCurrency(shares[1])}`;
       } else {
-        answerText = shares.map((s, i) => `${names[i]}: ${formatCurrency(s)}`).join(', ');
+        answerText = shares.map((s: number, i: number) => `${names[i]}: ${formatCurrency(s)}`).join(', ');
       }
 
       return {
@@ -244,7 +251,7 @@ const RatioSharingTool = () => {
     };
   };
 
-  const generateKnownAmountsWorking = (ratioParts: number[], knownAmount: number, knownPerson: number, partValue: number, shares: number[], total: number, questionType: string, names: string[], useBarModel = true) => {
+  const generateKnownAmountsWorking = (ratioParts: number[], knownAmount: number, knownPerson: number, partValue: number, shares: number[], total: number, questionType: string, names: string[], useBarModel = true): any[] => {
     if (useBarModel) {
       const steps = [];
       const otherPerson = knownPerson === 0 ? 1 : 0;
@@ -399,12 +406,12 @@ const RatioSharingTool = () => {
         partValue = randomInt(3, 20);
       }
 
-      const allEqual = ratioParts.every(p => p === ratioParts[0]);
+      const allEqual = ratioParts.every((p: number) => p === ratioParts[0]);
       if (allEqual) continue;
 
       const knownAmount = ratioParts[knownPerson] * partValue;
       
-      const shares = ratioParts.map(p => p * partValue);
+      const shares = ratioParts.map((p: number) => p * partValue);
       const total = shares.reduce((a: number, b: number) => a + b, 0);
 
       if (diff === 'level1') {
@@ -430,7 +437,7 @@ const RatioSharingTool = () => {
         displayText += `How much does ${names[otherPerson]} receive?`;
       }
 
-      let answerText = '';
+      let answerText;
       if (actualQuestionType === 'total') {
         answerText = `Total: ${formatCurrency(total)}`;
       } else if (actualQuestionType === 'other') {
@@ -475,7 +482,7 @@ const RatioSharingTool = () => {
     };
   };
 
-  const generateDifferenceWorking = (ratioParts: number[], difference: number, largerPerson: number, partValue: number, shares: number[], total: number, questionType: string, names: string[], useBarModel = true) => {
+  const generateDifferenceWorking = (ratioParts: number[], difference: number, largerPerson: number, partValue: number, shares: number[], total: number, questionType: string, names: string[], useBarModel = true): any[] => {
     if (useBarModel) {
       const steps = [];
       
@@ -630,10 +637,10 @@ const RatioSharingTool = () => {
         partValue = randomInt(4, 25);
       }
 
-      const allEqual = ratioParts.every(p => p === ratioParts[0]);
+      const allEqual = ratioParts.every((p: number) => p === ratioParts[0]);
       if (allEqual) continue;
 
-      const shares = ratioParts.map(p => p * partValue);
+      const shares = ratioParts.map((p: number) => p * partValue);
       const difference = Math.abs(shares[1] - shares[0]);
       const total = shares.reduce((a: number, b: number) => a + b, 0);
       const largerPerson = shares[0] > shares[1] ? 0 : 1;
@@ -653,7 +660,7 @@ const RatioSharingTool = () => {
       const smallerPerson = largerPerson === 0 ? 1 : 0;
       
       const wordingStyle = randomInt(1, 3);
-      let comparisonText = '';
+      let comparisonText;
       
       if (wordingStyle === 1) {
         comparisonText = `${names[largerPerson]} receives ${formatCurrency(difference)} more than ${names[smallerPerson]}`;
@@ -674,7 +681,7 @@ const RatioSharingTool = () => {
         displayText += `How much does ${names[1]} receive?`;
       }
 
-      let answerText = '';
+      let answerText;
       if (actualQuestionType === 'total') {
         answerText = `Total: ${formatCurrency(total)}`;
       } else if (actualQuestionType === 'personA') {
@@ -753,13 +760,13 @@ const RatioSharingTool = () => {
     }
   };
 
-  const handleNewQuestion = () => {
+  const handleNewQuestion = (): void => {
     setQuestion(generateQuestion(difficulty));
     setShowAnswer(false);
     setShowWhiteboardAnswer(false);
   };
 
-  const handleGenerateWorksheet = () => {
+  const handleGenerateWorksheet = (): void => {
     const questions: QuestionType[] = [];
     const usedKeys = new Set();
     
@@ -816,7 +823,7 @@ const RatioSharingTool = () => {
     }
   }, [shareQuestionType, useAlgebraicMethod, knownAmountsQuestionType, useNumericalMethod, differenceQuestionType, useDifferenceNumericalMethod]);
 
-  const renderStep = (step: any, idx: number) => {
+  const renderStep = (step: any, idx: number): JSX.Element => {
     return (
       <div key={idx} className="rounded-lg p-6 border border-gray-200" style={{ backgroundColor: getStepBg() }}>
         {step.type === 'showRatio' && step.names && (
@@ -1223,20 +1230,20 @@ const RatioSharingTool = () => {
         </div>
       </div>
 
-      <div className="min-h-screen bg-gray-50 p-8">
+      <div className="min-h-screen p-8" style={{ backgroundColor: '#f9fafb' }}>
         <div className="max-w-6xl mx-auto">
           <h1 className="text-5xl font-bold text-center mb-8" style={{ color: '#000000' }}>Dividing Into Ratios</h1>
 
           {/* Topic Selector */}
           <div className="flex justify-center gap-3 flex-wrap mb-6">
-            {['sharing', 'known', 'difference', 'mixed'].map((t) => (
+            {(['sharing', 'known', 'difference', 'mixed'] as const).map((t: string) => (
               <button
                 key={t}
                 onClick={() => setTopic(t)}
-                className={'px-8 py-4 rounded-xl font-bold text-xl transition-all ' + 
+                className={'px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ' + 
                   (topic === t 
-                    ? 'bg-blue-900 text-white shadow-lg' 
-                    : 'bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900 border-2 border-gray-200 shadow')}>
+                    ? 'bg-blue-900 text-white' 
+                    : 'bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900')}>
                 {t === 'sharing' ? 'Sharing in a Ratio' :
                  t === 'known' ? 'Known Amounts' :
                  t === 'difference' ? 'Given Difference' :
@@ -1246,21 +1253,21 @@ const RatioSharingTool = () => {
           </div>
 
           <div className="flex justify-center mb-8">
-            <div style={{ width: '90%', height: '1px', backgroundColor: '#d1d5db' }}></div>
+            <div style={{ width: '90%', height: '2px', backgroundColor: '#d1d5db' }}></div>
           </div>
 
           {/* Mode Toggle */}
           <div className="flex justify-center gap-4 mb-8">
-            {['whiteboard', 'single', 'worksheet'].map((m) => (
+            {(['whiteboard', 'single', 'worksheet'] as const).map((m: string) => (
               <button 
                 key={m}
                 onClick={() => setMode(m)}
-                className={'px-8 py-4 rounded-xl font-bold text-xl transition-all border-2 border-gray-200 ' + 
+                className={'px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ' + 
                   (mode === m 
-                    ? 'bg-blue-900 text-white shadow-lg' 
-                    : 'bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900 shadow')}>
+                    ? 'bg-blue-900 text-white' 
+                    : 'bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900')}>
                 {m === 'whiteboard' ? 'Whiteboard' :
-                 m === 'single' ? 'Single Q' :
+                 m === 'single' ? 'Worked Example' :
                  'Worksheet'}
               </button>
             ))}
@@ -1268,14 +1275,14 @@ const RatioSharingTool = () => {
 
           {/* WHITEBOARD & SINGLE Q MODES */}
           {(mode === 'whiteboard' || mode === 'single') && (
-            <div className="flex flex-col gap-4" style={mode === 'single' ? { minHeight: '120vh' } : {}}>
+            <div className="flex flex-col gap-4">
               {/* Compact Control Bar */}
               <div className="bg-white rounded-xl shadow-lg p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <span className="text-sm font-semibold text-gray-600">Difficulty:</span>
+                    <span className="text-sm font-semibold" style={{ color: '#000000' }}>Difficulty:</span>
                     <div className="flex gap-2">
-                      {['level1', 'level2', 'level3'].map((lvl, idx) => (
+                      {(['level1', 'level2', 'level3'] as const).map((lvl: string, idx: number) => (
                         <button 
                           key={lvl}
                           onClick={() => setDifficulty(lvl)}
@@ -1292,11 +1299,11 @@ const RatioSharingTool = () => {
                       ))}
                     </div>
                   </div>
-                  {mode === 'single' && (
-              
+                  
+                  {mode !== 'whiteboard' && (
                     <div className="flex flex-col gap-1">
                       {topic === 'sharing' && (
-                        <label className="flex items-center gap-2 text-sm font-semibold text-gray-600">
+                        <label className="flex items-center gap-2 text-sm font-semibold" style={{ color: '#000000' }}>
                           <input type="checkbox" checked={useAlgebraicMethod}
                             onChange={(e) => setUseAlgebraicMethod(e.target.checked)}
                             className="w-3 h-3" />
@@ -1304,7 +1311,7 @@ const RatioSharingTool = () => {
                         </label>
                       )}
                       {topic === 'known' && difficulty !== 'level3' && (
-                        <label className="flex items-center gap-2 text-sm font-semibold text-gray-600">
+                        <label className="flex items-center gap-2 text-sm font-semibold" style={{ color: '#000000' }}>
                           <input type="checkbox" checked={useNumericalMethod}
                             onChange={(e) => setUseNumericalMethod(e.target.checked)}
                             className="w-3 h-3" />
@@ -1312,7 +1319,7 @@ const RatioSharingTool = () => {
                         </label>
                       )}
                       {topic === 'difference' && difficulty !== 'level3' && (
-                        <label className="flex items-center gap-2 text-sm font-semibold text-gray-600">
+                        <label className="flex items-center gap-2 text-sm font-semibold" style={{ color: '#000000' }}>
                           <input type="checkbox" checked={useDifferenceNumericalMethod}
                             onChange={(e) => setUseDifferenceNumericalMethod(e.target.checked)}
                             className="w-3 h-3" />
@@ -1320,7 +1327,7 @@ const RatioSharingTool = () => {
                         </label>
                       )}
                       {topic === 'mixed' && difficulty !== 'level3' && (
-                        <label className="flex items-center gap-2 text-sm font-semibold text-gray-600">
+                        <label className="flex items-center gap-2 text-sm font-semibold" style={{ color: '#000000' }}>
                           <input type="checkbox" checked={useNumericalMethod || useDifferenceNumericalMethod}
                             onChange={(e) => {
                               setUseNumericalMethod(e.target.checked);
@@ -1336,9 +1343,9 @@ const RatioSharingTool = () => {
                   <div className="flex flex-col gap-1">
                     {topic === 'sharing' && (
                       <div className="flex items-center gap-2">
-                        <label className="text-xs font-semibold text-gray-600">Type:</label>
+                        <label className="text-xs font-semibold" style={{ color: '#000000' }}>Type:</label>
                         <select value={shareQuestionType}
-                          onChange={(e) => setShareQuestionType(e.target.value)}
+                          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setShareQuestionType(e.target.value)}
                           className="px-2 py-1 border-2 border-gray-300 rounded-lg text-xs font-semibold">
                           <option value="mixed">Mixed</option>
                           <option value="personA">Person A</option>
@@ -1349,9 +1356,9 @@ const RatioSharingTool = () => {
                     )}
                     {topic === 'known' && (
                       <div className="flex items-center gap-2">
-                        <label className="text-xs font-semibold text-gray-600">Type:</label>
+                        <label className="text-xs font-semibold" style={{ color: '#000000' }}>Type:</label>
                         <select value={knownAmountsQuestionType}
-                          onChange={(e) => setKnownAmountsQuestionType(e.target.value)}
+                          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setKnownAmountsQuestionType(e.target.value)}
                           className="px-2 py-1 border-2 border-gray-300 rounded-lg text-xs font-semibold">
                           <option value="mixed">Mixed</option>
                           <option value="total">Total</option>
@@ -1361,9 +1368,9 @@ const RatioSharingTool = () => {
                     )}
                     {topic === 'difference' && (
                       <div className="flex items-center gap-2">
-                        <label className="text-xs font-semibold text-gray-600">Type:</label>
+                        <label className="text-xs font-semibold" style={{ color: '#000000' }}>Type:</label>
                         <select value={differenceQuestionType}
-                          onChange={(e) => setDifferenceQuestionType(e.target.value)}
+                          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setDifferenceQuestionType(e.target.value)}
                           className="px-2 py-1 border-2 border-gray-300 rounded-lg text-xs font-semibold">
                           <option value="mixed">Mixed</option>
                           <option value="total">Total</option>
@@ -1393,37 +1400,44 @@ const RatioSharingTool = () => {
               
               {/* Question Display */}
               {question && (
-                <div className="rounded-xl shadow-2xl p-8" style={{ backgroundColor: getQuestionBg() }}>
+                <>
                   {mode === 'whiteboard' ? (
-                    <>
-                      {!showWhiteboardAnswer ? (
-                        <div className="text-6xl font-bold text-center mb-6" style={{ color: '#000000' }}>
+                    <div className="rounded-xl shadow-2xl p-8" style={{ backgroundColor: getQuestionBg() }}>
+                      <div className="text-center">
+                        <span className="text-6xl font-bold" style={{ color: '#000000' }}>
                           {question.display}
-                        </div>
-                      ) : (
-                        <div className="text-6xl font-bold text-center mb-6">
-                          <span style={{ color: '#000000' }}>{question.display}</span>
-                          <div className="mt-4" style={{ color: '#166534' }}>= {question.answer}</div>
-                        </div>
-                      )}
-                      
-                      <div className="rounded-xl" style={{ height: '500px', backgroundColor: getWhiteboardWorkingBg() }}></div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="text-6xl font-bold text-center mb-8" style={{ color: '#000000' }}>
-                        {question.display}
+                        </span>
+                        {showWhiteboardAnswer && (
+                          <span className="text-6xl font-bold ml-4" style={{ color: '#166534' }}>
+                            = {question.answer}
+                          </span>
+                        )}
                       </div>
                       
-                      {showAnswer && question.working && (
-                        <div className="mt-8 space-y-6">
-                          <h3 className="text-3xl font-bold mb-6 text-center" style={{ color: '#000000' }}>Solution:</h3>
-                          {question.working.map((step: any, idx: number) => renderStep(step, idx))}
+                      <div className="rounded-xl mt-8" style={{ height: '500px', backgroundColor: getWhiteboardWorkingBg() }}></div>
+                    </div>
+                  ) : (
+                    <div className="overflow-y-auto" style={{ height: '120vh' }}>
+                      <div className="rounded-xl shadow-lg p-8" style={{ backgroundColor: getQuestionBg() }}>
+                        <div className="text-center">
+                          <span className="text-6xl font-bold" style={{ color: '#000000' }}>{question.display}</span>
                         </div>
-                      )}
-                    </>
+                        
+                        {showAnswer && question.working && (
+                          <>
+                            <div className="space-y-4 mt-8">
+                              {question.working.map((step, idx) => renderStep(step, idx))}
+                            </div>
+                            
+                            <div className="rounded-xl p-6 text-center mt-4" style={{ backgroundColor: getFinalAnswerBg() }}>
+                              <span className="text-5xl font-bold" style={{ color: '#166534' }}>= {question.answer}</span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
                   )}
-                </div>
+                </>
               )}
             </div>
           )}
@@ -1433,16 +1447,16 @@ const RatioSharingTool = () => {
             <>
               <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
                 <div className="space-y-4">
-                  {/* Line 1 */}
-                  <div className="flex justify-center items-center gap-8">
+                  {/* Line 1: Questions + Differentiated */}
+                  <div className="flex justify-center items-center gap-6">
                     <div className="flex items-center gap-3">
-                      <label className="text-lg font-semibold">Questions per level:</label>
+                      <label className="text-lg font-semibold" style={{ color: '#000000' }}>Questions per level:</label>
                       <input 
                         type="number" 
                         min="1" 
                         max="20" 
                         value={numQuestions} 
-                        onChange={(e) => setNumQuestions(Math.max(1, Math.min(20, parseInt(e.target.value) || 5)))} 
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNumQuestions(Math.max(1, Math.min(20, parseInt(e.target.value) || 5)))} 
                         className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-lg"
                       />
                     </div>
@@ -1452,59 +1466,59 @@ const RatioSharingTool = () => {
                         type="checkbox" 
                         id="diff" 
                         checked={isDifferentiated} 
-                        onChange={(e) => setIsDifferentiated(e.target.checked)} 
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setIsDifferentiated(e.target.checked)} 
                         className="w-5 h-5" 
                       />
-                      <label htmlFor="diff" className="text-lg font-semibold">Differentiated</label>
+                      <label htmlFor="diff" className="text-lg font-semibold" style={{ color: '#000000' }}>Differentiated</label>
                     </div>
                   </div>
 
-                  {/* Line 2 */}
-                  <div className="flex justify-center items-center gap-8">
-                    {!isDifferentiated && (
-                      <>
-                        <div className="flex items-center gap-3">
-                          <label className="text-lg font-semibold">Difficulty:</label>
-                          <div className="flex gap-2">
-                            {['level1', 'level2', 'level3'].map((lvl, idx) => (
-                              <button 
-                                key={lvl}
-                                onClick={() => setDifficulty(lvl)}
-                                className={'px-6 py-2 rounded-lg font-semibold w-24 ' + 
-                                  (difficulty === lvl 
-                                    ? (lvl === 'level1' ? 'bg-green-600 text-white' :
-                                       lvl === 'level2' ? 'bg-yellow-600 text-white' :
-                                       'bg-red-600 text-white')
-                                    : (lvl === 'level1' ? 'bg-white text-green-600 border-2 border-green-600' :
-                                       lvl === 'level2' ? 'bg-white text-yellow-600 border-2 border-yellow-600' :
-                                       'bg-white text-red-600 border-2 border-red-600'))}>
-                                Level {idx + 1}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-center gap-3">
-                          <label className="text-lg font-semibold">Columns:</label>
-                          <input 
-                            type="number" 
-                            min="1" 
-                            max="4" 
-                            value={numColumns} 
-                            onChange={(e) => setNumColumns(Math.max(1, Math.min(4, parseInt(e.target.value) || 2)))} 
-                            className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-lg" 
-                          />
-                        </div>
-                      </>
-                    )}
+                  {/* Line 2: Difficulty + Columns (only when not differentiated) */}
+                  {!isDifferentiated && (
+                    <div className="flex justify-center items-center gap-6">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg font-semibold whitespace-nowrap" style={{ color: '#000000' }}>Difficulty:</span>
+                        {['level1', 'level2', 'level3'].map((lvl, idx) => (
+                          <button 
+                            key={lvl}
+                            onClick={() => setDifficulty(lvl)}
+                            className={'px-6 py-2 rounded-lg font-semibold whitespace-nowrap ' + 
+                              (difficulty === lvl 
+                                ? (lvl === 'level1' ? 'bg-green-600 text-white' :
+                                   lvl === 'level2' ? 'bg-yellow-600 text-white' :
+                                   'bg-red-600 text-white')
+                                : (lvl === 'level1' ? 'bg-white text-green-600 border-2 border-green-600' :
+                                   lvl === 'level2' ? 'bg-white text-yellow-600 border-2 border-yellow-600' :
+                                   'bg-white text-red-600 border-2 border-red-600'))}>
+                            Level {idx + 1}
+                          </button>
+                        ))}
+                      </div>
+                      
+                      <div className="flex items-center gap-3">
+                        <label className="text-lg font-semibold whitespace-nowrap" style={{ color: '#000000' }}>Columns:</label>
+                        <input 
+                          type="number" 
+                          min="1" 
+                          max="4" 
+                          value={numColumns} 
+                          onChange={(e) => setNumColumns(Math.max(1, Math.min(4, parseInt(e.target.value) || 2)))} 
+                          className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-lg" 
+                        />
+                      </div>
+                    </div>
+                  )}
 
+                  {/* Line 3: Generate Button + Show Answers */}
+                  <div className="flex justify-center gap-4">
                     <button onClick={handleGenerateWorksheet}
-                      className="px-8 py-3 bg-blue-900 text-white rounded-lg font-semibold text-lg hover:bg-blue-800 shadow-lg">
+                      className="px-6 py-3 bg-blue-900 text-white rounded-lg font-semibold flex items-center gap-2 hover:bg-blue-800 shadow-lg">
+                      <RefreshCw size={20} />
                       Generate Worksheet
                     </button>
                     {worksheet.length > 0 && (
                       <button onClick={() => setShowWorksheetAnswers(!showWorksheetAnswers)}
-                        className="px-8 py-3 bg-blue-900 text-white rounded-lg font-semibold text-lg flex items-center gap-2 hover:bg-blue-800 shadow-lg">
+                        className="px-6 py-3 bg-blue-900 text-white rounded-lg font-semibold flex items-center gap-2 hover:bg-blue-800 shadow-lg">
                         <Eye size={20} />
                         {showWorksheetAnswers ? 'Hide' : 'Show'} Answers
                       </button>
@@ -1534,12 +1548,12 @@ const RatioSharingTool = () => {
                   </div>
 
                   <h2 className="text-3xl font-bold text-center mb-8" style={{ color: '#000000' }}>
-                    Dividing Into Ratios Worksheet
+                    Dividing Into Ratios - Worksheet
                   </h2>
                   
                   {isDifferentiated ? (
                     <div className="grid grid-cols-3 gap-6">
-                      {['level1', 'level2', 'level3'].map((lvl, idx) => (
+                      {(['level1', 'level2', 'level3'] as const).map((lvl: string, idx: number) => (
                         <div key={lvl} className={'rounded-xl p-6 border-4 ' +
                           (lvl === 'level1' ? 'bg-green-50 border-green-500' :
                            lvl === 'level2' ? 'bg-yellow-50 border-yellow-500' :
@@ -1548,7 +1562,7 @@ const RatioSharingTool = () => {
                             Level {idx + 1}
                           </h3>
                           <div className="space-y-3">
-                            {worksheet.filter(q => q.difficulty === lvl).map((q, i) => (
+                            {worksheet.filter((q: QuestionType) => q.difficulty === lvl).map((q: QuestionType, i: number) => (
                               <div key={i} className={getFontSize()} style={{ color: '#000000' }}>
                                 <span className="font-semibold" style={{ color: '#000000' }}>{i + 1}.</span>
                                 <span className="ml-3 font-bold" style={{ color: '#000000' }}>
@@ -1572,7 +1586,7 @@ const RatioSharingTool = () => {
                       numColumns === 3 ? 'grid-cols-3' :
                       'grid-cols-4'
                     }`}>
-                      {worksheet.map((q, i) => (
+                      {worksheet.map((q: QuestionType, i: number) => (
                         <div key={i} className={getFontSize()} style={{ color: '#000000' }}>
                           <span className="font-semibold" style={{ color: '#000000' }}>{i + 1}.</span>
                           <span className="ml-2 font-bold" style={{ color: '#000000' }}>
