@@ -128,7 +128,7 @@ const RatioSharingTool = () => {
     return numbers.reduce((acc: number, num: number) => gcd(acc, num));
   };
 
-  const generateSharingWorking = (ratioParts: number[], total: number, ratioSum: number, partValue: number, shares: number[], questionType: string, names: string[], algebraic = false): any[] => {
+  const generateSharingWorking = (ratioParts: number[], total: number, ratioSum: number, partValue: number, shares: number[], names: string[], algebraic = false): any[] => {
     // Level 3 always uses algebraic method
     if (algebraic) {
       return [
@@ -227,7 +227,7 @@ const RatioSharingTool = () => {
         partValue: partValue,
         shares: shares,
         questionType: actualQuestionType,
-        working: generateSharingWorking(ratioParts, total, ratioSum, partValue, shares, actualQuestionType, names, diff === 'level3' ? true : useAlgebraicMethod),
+        working: generateSharingWorking(ratioParts, total, ratioSum, partValue, shares, names, diff === 'level3' ? true : useAlgebraicMethod),
         names: names,
         difficulty: diff
       };
@@ -244,7 +244,7 @@ const RatioSharingTool = () => {
       partValue: 30,
       shares: [30, 60],
       questionType: 'personA',
-      working: generateSharingWorking([1, 2], 90, 3, 30, [30, 60], 'personA', fallbackNames, diff === 'level3' ? true : useAlgebraicMethod),
+      working: generateSharingWorking([1, 2], 90, 3, 30, [30, 60], fallbackNames, diff === 'level3' ? true : useAlgebraicMethod),
       names: fallbackNames,
       difficulty: diff
     };
