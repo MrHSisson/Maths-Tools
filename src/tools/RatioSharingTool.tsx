@@ -129,6 +129,7 @@ const RatioSharingTool = () => {
   };
 
   const generateSharingWorking = (ratioParts: number[], total: number, ratioSum: number, partValue: number, shares: number[], questionType: string, names: string[], algebraic = false): any[] => {
+    // Level 3 always uses algebraic method
     if (algebraic) {
       return [
         { type: 'showRatio', parts: ratioParts, names: names },
@@ -228,7 +229,7 @@ const RatioSharingTool = () => {
         partValue: partValue,
         shares: shares,
         questionType: actualQuestionType,
-        working: generateSharingWorking(ratioParts, total, ratioSum, partValue, shares, actualQuestionType, names, useAlgebraicMethod),
+        working: generateSharingWorking(ratioParts, total, ratioSum, partValue, shares, actualQuestionType, names, diff === 'level3' ? true : useAlgebraicMethod),
         names: names,
         difficulty: diff
       };
@@ -245,7 +246,7 @@ const RatioSharingTool = () => {
       partValue: 30,
       shares: [30, 60],
       questionType: 'personA',
-      working: generateSharingWorking([1, 2], 90, 3, 30, [30, 60], 'personA', fallbackNames, useAlgebraicMethod),
+      working: generateSharingWorking([1, 2], 90, 3, 30, [30, 60], 'personA', fallbackNames, diff === 'level3' ? true : useAlgebraicMethod),
       names: fallbackNames,
       difficulty: diff
     };
@@ -1230,7 +1231,7 @@ const RatioSharingTool = () => {
         </div>
       </div>
 
-      <div className="min-h-screen p-8" style={{ backgroundColor: '#f9fafb' }}>
+      <div className="min-h-screen p-8" style={{ backgroundColor: '#f5f3f0' }}>
         <div className="max-w-6xl mx-auto">
           <h1 className="text-5xl font-bold text-center mb-8" style={{ color: '#000000' }}>Dividing Into Ratios</h1>
 
@@ -1329,7 +1330,7 @@ const RatioSharingTool = () => {
                       {topic === 'mixed' && difficulty !== 'level3' && (
                         <label className="flex items-center gap-2 text-sm font-semibold" style={{ color: '#000000' }}>
                           <input type="checkbox" checked={useNumericalMethod || useDifferenceNumericalMethod}
-                            onChange={(e) => {
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                               setUseNumericalMethod(e.target.checked);
                               setUseDifferenceNumericalMethod(e.target.checked);
                             }}
