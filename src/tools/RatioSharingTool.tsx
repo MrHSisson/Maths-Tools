@@ -137,16 +137,14 @@ const RatioSharingTool = () => {
         { type: 'ratioSum', parts: ratioParts, names: names, sum: ratioSum },
         { type: 'partValue', total: total, sum: ratioSum, value: partValue },
         { type: 'calculateShares', parts: ratioParts, names: names, partValue: partValue, shares: shares },
-        { type: 'verifyTotal', shares: shares, total: total, names: names },
-        { type: 'answer', questionType: questionType, shares: shares, names: names }
+        { type: 'verifyTotal', shares: shares, total: total, names: names }
       ];
     } else {
       return [
         { type: 'barModelEmpty', bars: ratioParts.map((parts: number, idx: number) => ({ person: names[idx], boxes: parts })) },
         { type: 'totalParts', sum: ratioSum },
         { type: 'partValue', total: total, sum: ratioSum, value: partValue },
-        { type: 'barModelFilled', bars: ratioParts.map((parts: number, idx: number) => ({ person: names[idx], boxes: parts, value: partValue, total: shares[idx] })) },
-        { type: 'answer', questionType: questionType, shares: shares, names: names }
+        { type: 'barModelFilled', bars: ratioParts.map((parts: number, idx: number) => ({ person: names[idx], boxes: parts, value: partValue, total: shares[idx] })) }
       ];
     }
   };
@@ -1303,7 +1301,7 @@ const RatioSharingTool = () => {
                   
                   {mode !== 'whiteboard' && (
                     <div className="flex flex-col gap-1">
-                      {topic === 'sharing' && (
+                      {topic === 'sharing' && difficulty !== 'level3' && (
                         <label className="flex items-center gap-2 text-sm font-semibold" style={{ color: '#000000' }}>
                           <input type="checkbox" checked={useAlgebraicMethod}
                             onChange={(e) => setUseAlgebraicMethod(e.target.checked)}
