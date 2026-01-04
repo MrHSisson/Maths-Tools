@@ -299,15 +299,6 @@ const RatioSharingTool = () => {
         });
       }
 
-      steps.push({
-        type: 'answer',
-        questionType: questionType,
-        shares: shares,
-        total: total,
-        names: names,
-        knownPerson: knownPerson
-      });
-
       return steps;
     } else {
       const steps = [];
@@ -352,15 +343,6 @@ const RatioSharingTool = () => {
           share: shares[otherPerson]
         });
       }
-
-      steps.push({
-        type: 'answer',
-        questionType: questionType,
-        shares: shares,
-        total: total,
-        names: names,
-        knownPerson: knownPerson
-      });
 
       return steps;
     }
@@ -537,14 +519,6 @@ const RatioSharingTool = () => {
         });
       }
 
-      steps.push({
-        type: 'answerDifference',
-        questionType: questionType,
-        shares: shares,
-        total: total,
-        names: names
-      });
-
       return steps;
     } else {
       const steps = [];
@@ -596,14 +570,6 @@ const RatioSharingTool = () => {
           share: shares[1]
         });
       }
-
-      steps.push({
-        type: 'answerDifference',
-        questionType: questionType,
-        shares: shares,
-        total: total,
-        names: names
-      });
 
       return steps;
     }
