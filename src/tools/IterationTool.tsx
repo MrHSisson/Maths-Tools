@@ -85,11 +85,6 @@ const toolNames: Record<string, string> = {
 // HELPER FUNCTIONS
 // ============================================================================
 
-// Format minus sign properly (use − not -)
-const formatMinus = (value: number): string => {
-  return value < 0 ? '−' + Math.abs(value) : String(value);
-};
-
 // Format decimal to specified places
 const formatDecimal = (value: number, dp: number): string => {
   return value.toFixed(dp);
@@ -405,7 +400,6 @@ const generateRearrangingQuestion = (
 
   // Determine iteration function and equation based on level
   let iterFunc: (x: number) => number;
-  let rootSymbol: string;
   
   if (level === 'level1') {
     // Quadratic: x² − ax − b = 0 → x = √(ax + b)
@@ -416,7 +410,6 @@ const generateRearrangingQuestion = (
     originalEquation = `x² − ${a}x − ${b} = 0`;
     targetFormula = `√(${a}x + ${b})`;
     iterFunc = (x) => Math.sqrt(a * x + b);
-    rootSymbol = '√';
     
     // Build algebraic proof
     working.push({ type: 'setup', content: `Start with ${originalEquation}` });
@@ -432,7 +425,6 @@ const generateRearrangingQuestion = (
     originalEquation = `x³ − ${a}x − ${b} = 0`;
     targetFormula = `∛(${a}x + ${b})`;
     iterFunc = (x) => Math.cbrt(a * x + b);
-    rootSymbol = '∛';
     
     // Build algebraic proof
     working.push({ type: 'setup', content: `Start with ${originalEquation}` });
@@ -448,7 +440,6 @@ const generateRearrangingQuestion = (
     originalEquation = `x² − ${b}x − ${a} = 0`;
     targetFormula = `${a}/x + ${b}`;
     iterFunc = (x) => a / x + b;
-    rootSymbol = '';
     
     // Build algebraic proof
     working.push({ type: 'setup', content: `Start with ${originalEquation}` });
