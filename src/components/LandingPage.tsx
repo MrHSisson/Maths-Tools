@@ -38,6 +38,7 @@ const categories: Category[] = [
     iconBg: 'from-purple-50 to-fuchsia-50',
     tools: [
       { id: 'like-terms', path: '/like-terms', name: 'Like Terms', icon: 'xy', description: 'Simplify algebraic expressions by collecting like terms', ready: false },
+      { id: 'iteration', path: '/iteration', name: 'Iteration', icon: '🔄', description: 'Find roots to eqautions using iterative methods', ready: true },
       { id: 'single-brackets', path: '/expanding-single-brackets-FOIL', name: 'Expanding Single Brackets (FOIL)', icon: 'x', description: 'Expand single brackets by using arrows for each term', ready: true },
       { id: 'single-brackets', path: '/expanding-single-brackets-GRID', name: 'Expanding Single Brackets (GRID)', icon: 'x', description: 'Expand single brackets by using the grid method', ready: true },
       { id: 'expanding-double-brackets-FOIL', path: '/expanding-double-brackets-foil', name: 'Expanding Double Brackets (FOIL)', icon: 'x²', description: 'Expand pairs of brackets using the FOIL method', ready: true },
