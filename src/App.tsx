@@ -11,6 +11,7 @@ import ExpandingDoubleBracketsGRID from './tools/ExpandingDoubleBracketsGRID'
 import ExpandingSingleBracketsFOIL from './tools/ExpandingSingleBracketsFOIL'
 import ExpandingSingleBracketsGRID from './tools/ExpandingSingleBracketsGRID'
 import IterationTool from './tools/IterationTool'
+import RecipesTool from './tools/RecipesTool'
 
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
       <Route path="/expanding-single-brackets-foil" element={<ExpandingSingleBracketsFOIL />} />
       <Route path="/expanding-single-brackets-grid" element={<ExpandingSingleBracketsGRID />} />
       <Route path="/iteration" element={<IterationTool />} />
+      <Route path="/recipes" element={<RecipesTool />} />
     </Routes>
   )
 }
