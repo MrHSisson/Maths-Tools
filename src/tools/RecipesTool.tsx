@@ -893,6 +893,14 @@ const generateUniqueQuestion = (
 // ============================================================================
 
 const renderConstraintsTable = (question: Question, colorScheme: ColorScheme): JSX.Element => {
+  // Use lightest version of each color scheme for all table cells
+  const getTableCellBg = (): string => {
+    if (colorScheme === 'blue') return '#D1E7F8';
+    if (colorScheme === 'pink') return '#F8D1E7';
+    if (colorScheme === 'yellow') return '#F8F4D1';
+    return '#ffffff';
+  };
+  
   const getStepBg = (): string => {
     if (colorScheme === 'blue') return '#B3D9F2';
     if (colorScheme === 'pink') return '#F2B3D9';
@@ -950,7 +958,7 @@ const renderConstraintsTable = (question: Question, colorScheme: ColorScheme): J
         </thead>
         <tbody>
           {ingredients.map((ing: any, idx: number) => (
-            <tr key={idx} style={{ backgroundColor: idx % 2 === 0 ? '#ffffff' : getStepBg() }}>
+            <tr key={idx} style={{ backgroundColor: getTableCellBg() }}>
               <td className="border-2 border-gray-600 px-6 py-3">{ing.name}</td>
               <td className="border-2 border-gray-600 px-6 py-3 text-center">{ing.needed}</td>
               <td className="border-2 border-gray-600 px-6 py-3 text-center">{ing.have}</td>
@@ -967,7 +975,7 @@ const renderConstraintsTable = (question: Question, colorScheme: ColorScheme): J
 };
 
 // Worksheet version with responsive font sizes
-const renderConstraintsTableWorksheet = (question: Question, fontSizeIndex: number): JSX.Element => {
+const renderConstraintsTableWorksheet = (question: Question, fontSizeIndex: number, isDifferentiated: boolean = false, level?: DifficultyLevel): JSX.Element => {
   const baseServings = question.values.baseServings;
   const ingredients: Array<{name: string, needed: string, have: string}> = [];
   
@@ -1013,6 +1021,21 @@ const renderConstraintsTableWorksheet = (question: Question, fontSizeIndex: numb
   // Extract question text from display
   const questionText = question.display.split('\n').pop() || '';
   
+  // Determine table cell background based on mode
+  const getTableCellBg = (): string => {
+    if (isDifferentiated && level) {
+      // Use level-specific colors for differentiated worksheet
+      const levelColors: Record<string, string> = {
+        level1: '#dcfce7', // green-100
+        level2: '#fef9c3', // yellow-100
+        level3: '#fee2e2', // red-100
+      };
+      return levelColors[level] || '#f3f4f6';
+    }
+    // Use light gray for non-differentiated worksheet
+    return '#f9fafb';
+  };
+  
   return (
     <div className="flex flex-col">
       <div className={`${fontSize} font-semibold mb-2`} style={{ color: '#000000' }}>
@@ -1029,7 +1052,7 @@ const renderConstraintsTableWorksheet = (question: Question, fontSizeIndex: numb
         </thead>
         <tbody>
           {ingredients.map((ing: any, idx: number) => (
-            <tr key={idx} style={{ backgroundColor: idx % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
+            <tr key={idx} style={{ backgroundColor: getTableCellBg() }}>
               <td className="border-2 border-gray-600 px-2 py-1 text-base">{ing.name}</td>
               <td className="border-2 border-gray-600 px-2 py-1 text-center text-base">{ing.needed}</td>
               <td className="border-2 border-gray-600 px-2 py-1 text-center text-base">{ing.have}</td>
@@ -1127,7 +1150,7 @@ const renderDiagram = (question: Question | null, _size: number, colorScheme: Co
           </thead>
           <tbody>
             {ingredients.map((ing, idx) => (
-              <tr key={idx} style={{ backgroundColor: idx % 2 === 0 ? '#ffffff' : getStepBg() }}>
+              <tr key={idx} style={{ backgroundColor: getTableCellBg() }}>
                 <td className="border-2 border-gray-600 px-6 py-3">{ing.name}</td>
                 <td className="border-2 border-gray-600 px-6 py-3 text-center">{ing.needed}</td>
                 <td className="border-2 border-gray-600 px-6 py-3 text-center">{ing.have}</td>
@@ -1801,7 +1824,7 @@ export default function GenericToolShell() {
                               <div className={`${fontSizes[worksheetFontSize]} font-bold mb-2`} style={{ color: '#000000' }}>
                                 {idx + 1}.
                               </div>
-                              {renderConstraintsTableWorksheet(q, worksheetFontSize)}
+                              {renderConstraintsTableWorksheet(q, worksheetFontSize, true, level)}
                             </div>
                           ) : (
                             <div className={`${fontSizes[worksheetFontSize]} font-semibold mb-2 whitespace-pre-line leading-snug`} style={{ color: '#000000' }}>
