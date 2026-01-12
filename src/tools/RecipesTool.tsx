@@ -276,12 +276,13 @@ const RECIPE_CONTEXTS = [
   }
 ];
 
-const roundToRecipeAmount = (value: number): number => {
-  if (value < 50) return Math.round(value / 10) * 10; // Round to nearest 10
-  if (value < 100) return Math.round(value / 25) * 25; // Round to nearest 25
-  if (value < 500) return Math.round(value / 50) * 50; // Round to nearest 50
-  return Math.round(value / 100) * 100; // Round to nearest 100
-};
+// Utility function for future use - rounds values to realistic recipe amounts
+// const roundToRecipeAmount = (value: number): number => {
+//   if (value < 50) return Math.round(value / 10) * 10;
+//   if (value < 100) return Math.round(value / 25) * 25;
+//   if (value < 500) return Math.round(value / 50) * 50;
+//   return Math.round(value / 100) * 100;
+// };
 
 // ============================================================================
 // QUESTION GENERATION - LINEAR SCALING
@@ -1794,7 +1795,7 @@ export default function GenericToolShell() {
                   <h3 className={`text-xl font-bold mb-4 text-center ${config.text}`}>{levelNames[levelIdx]}</h3>
                   <div className="space-y-4">
                     {levelQuestions.map((q: Question, idx: number) => {
-                      const isConstraints = q.values.FlourStock !== undefined || q.values.SugarStock !== undefined;
+                      const isConstraints = q.values.ingredient0Name !== undefined;
                       
                       return (
                         <div key={idx} className="rounded-lg p-4" style={{ backgroundColor: getLevelQuestionBoxBg(level) }}>
@@ -1995,7 +1996,6 @@ export default function GenericToolShell() {
                 {m === 'whiteboard' ? 'Whiteboard' : m === 'single' ? 'Worked Example' : 'Worksheet'}
               </button>
             ))}
-          </div>
           
           {/* Control Bar */}
           {renderControlBar()}
