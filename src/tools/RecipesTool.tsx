@@ -1074,7 +1074,6 @@ const renderDiagram = (question: Question | null, _size: number, colorScheme: Co
   if (isConstraints) {
     // Extract recipe info
     const baseServings = question.values.baseServings;
-    const questionType = question.values.questionType || 'servings';
     const ingredients: Array<{name: string, needed: string, have: string}> = [];
     
     // Extract ingredients from question values
@@ -1437,7 +1436,7 @@ export default function GenericToolShell() {
             </div>
           </div>
           
-          {/* Line 2: Difficulty + Columns (hidden if differentiated) */}
+                      {/* Difficulty + Columns (hidden if differentiated) */}
           {!isDifferentiated && (
             <div className="flex justify-center items-center gap-6 mb-4">
               <div className="flex items-center gap-3">
@@ -1447,7 +1446,7 @@ export default function GenericToolShell() {
                     <button 
                       key={lvl} 
                       onClick={() => setDifficulty(lvl)}
-                      className={'px-4 py-2 rounded-lg font-bold text-sm w-24 ' + getDifficultyButtonClass(lvl, idx, difficulty === lvl)}
+                      className={'px-4 py-2 rounded-lg font-bold text-sm w-24 ' + getDifficultyButtonClass(idx, difficulty === lvl)}
                     >
                       Level {idx + 1}
                     </button>
