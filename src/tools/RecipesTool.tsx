@@ -1996,6 +1996,7 @@ export default function GenericToolShell() {
                 {m === 'whiteboard' ? 'Whiteboard' : m === 'single' ? 'Worked Example' : 'Worksheet'}
               </button>
             ))}
+          </div>
           
           {/* Control Bar */}
           {renderControlBar()}
