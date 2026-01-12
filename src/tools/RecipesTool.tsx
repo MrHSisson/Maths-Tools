@@ -846,13 +846,39 @@ const generateMaxServingsQuestion = (
     display += `\nWhich ingredient limits the production?`;
   }
   
-  const unit = recipeContext.unit.replace(/s$/, '');
+  // Build working steps
+  const working: { type: string; content: string }[] = [];
+  
+  stockAmounts.forEach((ing: any) => {
+    if (ing.isPlenty) {
+      working.push({
+        type: 'step',
+        content: `${ing.name}: Plenty available`
+      });
+    } else {
+      const unitaryValue = ing.u % 1 === 0 ? ing.u : parseFloat(ing.u.toFixed(2));
+      const stockValue = ing.stock! % 1 === 0 ? ing.stock! : parseFloat(ing.stock!.toFixed(2));
+      const targetValue = ing.targetServings!.toFixed(1);
+      const flooredTarget = Math.floor(ing.targetServings!);
+      
+      working.push({
+        type: 'step',
+        content: `${ing.name}: ${stockValue}${ing.unit} ÷ ${unitaryValue}${ing.unit} = ${targetValue} → ${flooredTarget} ${recipeContext.unit}`
+      });
+    }
+  });
+  
+  // Identify limiting ingredient (the one with the minimum target servings)
+  const limitingIngredient = stockAmounts.find((ing: any) => !ing.isPlenty && Math.floor(ing.targetServings!) === finalAnswer);
+  if (limitingIngredient) {
+    working.push({
+      type: 'step',
+      content: `The limiting ingredient is ${limitingIngredient.name} at ${finalAnswer} ${recipeContext.unit}`
+    });
+  }
   
   // Build answer based on question type
-  let answerText: string;
   if (actualQuestionType === 'servings') {
-    answerText = `${finalAnswer} ${recipeContext.unit}`;
-  } else {
     // Find the limiting ingredient
     const limitingIng = stockAmounts.find((ing: any) => !ing.isPlenty && Math.floor(ing.targetServings!) === finalAnswer);
     answerText = limitingIng ? limitingIng.name : 'Unknown';
@@ -1059,7 +1085,6 @@ const renderConstraintsTable = (question: Question, colorScheme: ColorScheme): J
 // Worksheet version with responsive font sizes
 const renderConstraintsTableWorksheet = (question: Question, fontSizeIndex: number): JSX.Element => {
   const baseServings = question.values.baseServings;
-  const questionType = question.values.questionType || 'servings';
   const ingredients: Array<{name: string, needed: string, have: string}> = [];
   
   // Extract ingredients from question values
@@ -1140,7 +1165,7 @@ const renderConstraintsTableWorksheet = (question: Question, fontSizeIndex: numb
 // DIAGRAM RENDERER - FOR GRAPHICAL LAYOUT (QUESTION DISPLAY) - PHASE 6 TYPED
 // ============================================================================
 
-const renderDiagram = (question: Question | null, size: number, colorScheme: ColorScheme): JSX.Element => {
+const renderDiagram = (question: Question | null, _size: number, colorScheme: ColorScheme): JSX.Element => {
   // Helper function for step background color
   const getStepBg = (): string => {
     if (colorScheme === 'blue') return '#B3D9F2';
@@ -1831,7 +1856,6 @@ export default function GenericToolShell() {
       // Differentiated layout - 3 columns, one per level
       const levels: readonly DifficultyLevel[] = ['level1', 'level2', 'level3'] as const;
       const levelNames = ['Level 1', 'Level 2', 'Level 3'];
-      const toolSettings = getCurrentToolSettings();
       
       // Get level-specific background colors for question boxes
       const getLevelQuestionBoxBg = (level: string): string => {
@@ -1920,7 +1944,6 @@ export default function GenericToolShell() {
     }
     
     // Non-differentiated layout
-    const toolSettings = getCurrentToolSettings();
     
     return (
       <div className="rounded-xl shadow-2xl p-8 relative" style={{ backgroundColor: getQuestionBg() }}>
