@@ -671,7 +671,6 @@ const generateMaxServingsQuestion = (
   
   // Sort to find the minimum (the answer)
   const minTarget = Math.min(...targetValues);
-  const answer = Math.floor(minTarget);
   
   // STEP 4: Calculate available amounts (I = T × u) and round to realistic values
   const showPlenty = variables.showPlenty ?? true;
