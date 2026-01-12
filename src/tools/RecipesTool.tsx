@@ -11,38 +11,6 @@ type ColorScheme = 'default' | 'blue' | 'pink' | 'yellow';
 type DifficultyLevel = 'level1' | 'level2' | 'level3';
 type Mode = 'whiteboard' | 'single' | 'worksheet';
 
-// Config Types
-type VariableConfig = {
-  key: string;
-  label: string;
-  defaultValue: boolean;
-};
-
-type DropdownOption = {
-  value: string;
-  label: string;
-};
-
-type DropdownConfig = {
-  key: string;
-  label: string;
-  options: DropdownOption[];
-  defaultValue: string;
-};
-
-type DifficultySettings = {
-  dropdown?: DropdownConfig;
-  variables?: VariableConfig[];
-};
-
-type ToolSettings = {
-  name: string;
-  useSubstantialBoxes: boolean;
-  variables: VariableConfig[];
-  dropdown: DropdownConfig | null;
-  difficultySettings: Record<string, DifficultySettings> | null;
-};
-
 // Question Types
 type WorkingStep = {
   type: string;
@@ -57,48 +25,7 @@ type Question = {
   difficulty: string;
 };
 
-// ============================================================================
-// GENERIC TOOL SHELL - v4.0 TYPESCRIPT WEB-READY
-// ============================================================================
-// 
-// CONVERSION STATUS: ✅ COMPLETE
-// - Phase 1-3: Routing, React imports, Type definitions ✅
-// - Phase 4-7: Function type annotations ✅
-// - Phase 8-11: Callback types, unused variable fixes ✅
-// - Phase 12-14: Array literals, routing update, initialization ✅
-//
-// TYPE SAFETY CHECKLIST:
-// ✅ All useState declarations have generic types
-// ✅ All function signatures have parameter and return types
-// ✅ All .map(), .filter(), .forEach() callbacks typed
-// ✅ All Object.entries/fromEntries callbacks typed
-// ✅ All event handlers typed (React.ChangeEvent<HTMLInputElement/HTMLSelectElement>)
-// ✅ All array literals with strict types use 'as const'
-// ✅ Unused 'lvl' parameter removed from getDifficultyButtonClass
-// ✅ All variables initialized before use
-// ✅ React Router navigate() used instead of window.location.href
-// ✅ Index signature added to Question.values for dynamic access
-//
-// CUSTOMIZATION POINTS:
-// 1. TOOL_CONFIG - Define your tools, their names, and settings
-// 2. generateQuestion() - Implement your question generation logic
-// 3. Add/remove variable checkboxes and dropdowns as needed
-// 4. Modify difficulty ranges in your question generation
-//
-// ============================================================================
-
-// ============================================================================
-// TYPE DEFINITIONS
-// ============================================================================
-
-interface Question {
-  display: string;
-  answer: string;
-  working: { type: string; content: string }[];
-  values: Record<string, any>;
-  difficulty: string;
-}
-
+// Config Types
 interface VariableConfig {
   key: string;
   label: string;
@@ -129,6 +56,36 @@ interface ToolSettings {
   dropdown: DropdownConfig | null;
   difficultySettings: Record<string, DifficultySettings> | null;
 }
+
+// ============================================================================
+// GENERIC TOOL SHELL - v4.0 TYPESCRIPT WEB-READY
+// ============================================================================
+// 
+// CONVERSION STATUS: ✅ COMPLETE
+// - Phase 1-3: Routing, React imports, Type definitions ✅
+// - Phase 4-7: Function type annotations ✅
+// - Phase 8-11: Callback types, unused variable fixes ✅
+// - Phase 12-14: Array literals, routing update, initialization ✅
+//
+// TYPE SAFETY CHECKLIST:
+// ✅ All useState declarations have generic types
+// ✅ All function signatures have parameter and return types
+// ✅ All .map(), .filter(), .forEach() callbacks typed
+// ✅ All Object.entries/fromEntries callbacks typed
+// ✅ All event handlers typed (React.ChangeEvent<HTMLInputElement/HTMLSelectElement>)
+// ✅ All array literals with strict types use 'as const'
+// ✅ Unused 'lvl' parameter removed from getDifficultyButtonClass
+// ✅ All variables initialized before use
+// ✅ React Router navigate() used instead of window.location.href
+// ✅ Index signature added to Question.values for dynamic access
+//
+// CUSTOMIZATION POINTS:
+// 1. TOOL_CONFIG - Define your tools, their names, and settings
+// 2. generateQuestion() - Implement your question generation logic
+// 3. Add/remove variable checkboxes and dropdowns as needed
+// 4. Modify difficulty ranges in your question generation
+//
+// ============================================================================
 
 // ============================================================================
 // CONFIGURATION - RECIPE & PROPORTIONAL REASONING TOOL
@@ -167,49 +124,6 @@ const TOOL_CONFIG = {
   
   useGraphicalLayout: true,
 };
-
-// ============================================================================
-// TYPE DEFINITIONS
-// ============================================================================
-
-interface Question {
-  display: string;
-  answer: string;
-  working: { type: string; content: string }[];
-  values: Record<string, any>;
-  difficulty: string;
-}
-
-interface VariableConfig {
-  key: string;
-  label: string;
-  defaultValue: boolean;
-}
-
-interface DropdownOption {
-  value: string;
-  label: string;
-}
-
-interface DropdownConfig {
-  key: string;
-  label: string;
-  options: DropdownOption[];
-  defaultValue: string;
-}
-
-interface DifficultySettings {
-  dropdown?: DropdownConfig;
-  variables?: VariableConfig[];
-}
-
-interface ToolSettings {
-  name: string;
-  useSubstantialBoxes: boolean;
-  variables: VariableConfig[];
-  dropdown: DropdownConfig | null;
-  difficultySettings: Record<string, DifficultySettings> | null;
-}
 
 // ============================================================================
 // HELPER FUNCTIONS - PHASE 4 TYPED
@@ -362,7 +276,6 @@ const RECIPE_CONTEXTS = [
   }
 ];
 
-// Round to realistic recipe amounts (25g, 50g, 75g, 100g, etc.)
 const roundToRecipeAmount = (value: number): number => {
   if (value < 50) return Math.round(value / 10) * 10; // Round to nearest 10
   if (value < 100) return Math.round(value / 25) * 25; // Round to nearest 25
@@ -846,39 +759,11 @@ const generateMaxServingsQuestion = (
     display += `\nWhich ingredient limits the production?`;
   }
   
-  // Build working steps
-  const working: { type: string; content: string }[] = [];
-  
-  stockAmounts.forEach((ing: any) => {
-    if (ing.isPlenty) {
-      working.push({
-        type: 'step',
-        content: `${ing.name}: Plenty available`
-      });
-    } else {
-      const unitaryValue = ing.u % 1 === 0 ? ing.u : parseFloat(ing.u.toFixed(2));
-      const stockValue = ing.stock! % 1 === 0 ? ing.stock! : parseFloat(ing.stock!.toFixed(2));
-      const targetValue = ing.targetServings!.toFixed(1);
-      const flooredTarget = Math.floor(ing.targetServings!);
-      
-      working.push({
-        type: 'step',
-        content: `${ing.name}: ${stockValue}${ing.unit} ÷ ${unitaryValue}${ing.unit} = ${targetValue} → ${flooredTarget} ${recipeContext.unit}`
-      });
-    }
-  });
-  
-  // Identify limiting ingredient (the one with the minimum target servings)
-  const limitingIngredient = stockAmounts.find((ing: any) => !ing.isPlenty && Math.floor(ing.targetServings!) === finalAnswer);
-  if (limitingIngredient) {
-    working.push({
-      type: 'step',
-      content: `The limiting ingredient is ${limitingIngredient.name} at ${finalAnswer} ${recipeContext.unit}`
-    });
-  }
-  
   // Build answer based on question type
+  let answerText: string;
   if (actualQuestionType === 'servings') {
+    answerText = finalAnswer.toString();
+  } else {
     // Find the limiting ingredient
     const limitingIng = stockAmounts.find((ing: any) => !ing.isPlenty && Math.floor(ing.targetServings!) === finalAnswer);
     answerText = limitingIng ? limitingIng.name : 'Unknown';
@@ -923,7 +808,7 @@ const generateMaxServingsQuestion = (
         baseServings,
         recipe: recipeContext.name,
         showPlenty,
-        questionType: actualQuestionType,
+        actualQuestionType,
         ...Object.fromEntries(stockAmounts.map((ing: any, idx: number) => [`ingredient${idx}Name`, ing.name])),
         ...Object.fromEntries(stockAmounts.map((ing: any, idx: number) => [`ingredient${idx}Needed`, ing.needed])),
         ...Object.fromEntries(stockAmounts.map((ing: any, idx: number) => [`ingredient${idx}Stock`, ing.stock])),
@@ -1520,7 +1405,6 @@ export default function GenericToolShell() {
   // ============================================================================
   
   const renderControlBar = (): JSX.Element => {
-    const toolSettings = getCurrentToolSettings();
     const currentVariables = getCurrentVariablesConfig();
     const currentDropdown = getCurrentDropdownConfig();
     
