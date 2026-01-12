@@ -1081,6 +1081,14 @@ const renderDiagram = (question: Question | null, _size: number, colorScheme: Co
     return '#f3f4f6';
   };
   
+  // Helper function for table cell background color (lightest version)
+  const getTableCellBg = (): string => {
+    if (colorScheme === 'blue') return '#D1E7F8';
+    if (colorScheme === 'pink') return '#F8D1E7';
+    if (colorScheme === 'yellow') return '#F8F4D1';
+    return '#ffffff';
+  };
+  
   if (!question) {
     return (
       <div className="flex items-center justify-center h-full text-gray-400 text-2xl">
