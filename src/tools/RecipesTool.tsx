@@ -950,7 +950,7 @@ const renderConstraintsTable = (question: Question, colorScheme: ColorScheme): J
       
       <table className="border-collapse text-2xl mb-6" style={{ color: '#000000' }}>
         <thead>
-          <tr style={{ backgroundColor: getStepBg() }}>
+          <tr style={{ backgroundColor: getTableCellBg() }}>
             <th className="border-2 border-gray-600 px-6 py-3 font-bold text-left">Ingredient</th>
             <th className="border-2 border-gray-600 px-6 py-3 font-bold text-center">Needed</th>
             <th className="border-2 border-gray-600 px-6 py-3 font-bold text-center">You Have</th>
@@ -1044,7 +1044,7 @@ const renderConstraintsTableWorksheet = (question: Question, fontSizeIndex: numb
       
       <table className={`border-collapse text-lg mb-2 w-full`} style={{ color: '#000000' }}>
         <thead>
-          <tr style={{ backgroundColor: '#f3f4f6' }}>
+          <tr style={{ backgroundColor: getTableCellBg() }}>
             <th className="border-2 border-gray-600 px-2 py-1 font-bold text-left text-base">Ingredient</th>
             <th className="border-2 border-gray-600 px-2 py-1 font-bold text-center text-base">Needed</th>
             <th className="border-2 border-gray-600 px-2 py-1 font-bold text-center text-base">You Have</th>
@@ -1150,7 +1150,7 @@ const renderDiagram = (question: Question | null, _size: number, colorScheme: Co
         
         <table className="border-collapse text-2xl" style={{ color: '#000000' }}>
           <thead>
-            <tr style={{ backgroundColor: getStepBg() }}>
+            <tr style={{ backgroundColor: getTableCellBg() }}>
               <th className="border-2 border-gray-600 px-6 py-3 font-bold text-left">Ingredient</th>
               <th className="border-2 border-gray-600 px-6 py-3 font-bold text-center">Needed</th>
               <th className="border-2 border-gray-600 px-6 py-3 font-bold text-center">You Have</th>
