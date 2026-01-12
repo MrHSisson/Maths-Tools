@@ -901,13 +901,6 @@ const renderConstraintsTable = (question: Question, colorScheme: ColorScheme): J
     return '#ffffff';
   };
   
-  const getStepBg = (): string => {
-    if (colorScheme === 'blue') return '#B3D9F2';
-    if (colorScheme === 'pink') return '#F2B3D9';
-    if (colorScheme === 'yellow') return '#F2EBB3';
-    return '#f3f4f6';
-  };
-  
   const baseServings = question.values.baseServings;
   const ingredients: Array<{name: string, needed: string, have: string}> = [];
   
@@ -1073,14 +1066,6 @@ const renderConstraintsTableWorksheet = (question: Question, fontSizeIndex: numb
 // ============================================================================
 
 const renderDiagram = (question: Question | null, _size: number, colorScheme: ColorScheme): JSX.Element => {
-  // Helper function for step background color
-  const getStepBg = (): string => {
-    if (colorScheme === 'blue') return '#B3D9F2';
-    if (colorScheme === 'pink') return '#F2B3D9';
-    if (colorScheme === 'yellow') return '#F2EBB3';
-    return '#f3f4f6';
-  };
-  
   // Helper function for table cell background color (lightest version)
   const getTableCellBg = (): string => {
     if (colorScheme === 'blue') return '#D1E7F8';
