@@ -296,7 +296,6 @@ const generateLinearScalingQuestion = (
   let targetServings: number = 0;
   let scaleFactor: number = 0;
   
-  // Select random recipe context
   const recipeContext = RECIPE_CONTEXTS[random(0, RECIPE_CONTEXTS.length - 1)];
   
   if (level === 'level1') {
