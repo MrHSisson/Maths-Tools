@@ -27,6 +27,7 @@ const categories: Category[] = [
     tools: [
       { id: 'integers', path: '/integers', name: 'Adding & Subtracting Integers', icon: '±', description: 'Practice adding and subtracting positive and negative numbers using number lines', ready: true },
       { id: 'estimation', path: '/estimation', name: 'Estimation', icon: '≈', description: 'Develop estimation skills by rounding numbers to make calculations easier', ready: true },
+      { id: 'Times Tables', path: '/timestables', name: 'Times Tables', icon: 'x', description: 'Develop estimation skills by rounding numbers to make calculations easier', ready: true },
       { id: 'hcf-lcm', path: '/hcf-lcm', name: 'HCF & LCM', icon: '∩', description: 'Find highest common factors and lowest common multiples using Venn diagrams', ready: false },
       { id: 'significant-figures', path: '/significant-figures', name: 'Significant Figures', icon: 'SF', description: 'Round numbers to a given number of significant figures', ready: false },
     ]
