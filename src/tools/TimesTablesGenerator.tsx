@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Download, Home, Menu, X } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 
@@ -90,8 +91,7 @@ const generateQuestions = (
 };
 
 const generatePDF = (
-  questions: Question[],
-  selectedTables: number[]
+  questions: Question[]
 ): void => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.width;
@@ -172,6 +172,7 @@ const generatePDF = (
 };
 
 export default function TimesTablesQuizGenerator() {
+  const navigate = useNavigate();
   const [selectedTables, setSelectedTables] = useState<number[]>([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
   const [numQuestions, setNumQuestions] = useState<number>(40);
   const [operationType, setOperationType] = useState<OperationType>('multiply');
@@ -204,7 +205,7 @@ export default function TimesTablesQuizGenerator() {
     }
 
     const questions = generateQuestions(selectedTables, numQuestions, operationType, tableFirst);
-    generatePDF(questions, selectedTables);
+    generatePDF(questions);
   };
 
   const getBackgroundColor = (): string => {
@@ -224,7 +225,7 @@ export default function TimesTablesQuizGenerator() {
         <div className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
           {/* Home Button */}
           <button 
-            onClick={() => window.location.href = '/'}
+            onClick={() => navigate('/')}
             className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors"
           >
             <Home size={24} />
@@ -443,3 +444,8 @@ export default function TimesTablesQuizGenerator() {
     </>
   );
 }
+
+// WEB INTEGRATION: Add routing (3 lines at end)
+// 1. Top: import routing library hook
+// 2. After state: initialize navigation
+// 3. Home button: use navigation function
