@@ -20,6 +20,15 @@ interface Category {
 
 const categories: Category[] = [
   {
+    name: 'Generators',
+    icon: '📄',
+    gradient: 'from-blue-500 to-indigo-600',
+    iconBg: 'from-blue-50 to-indigo-50',
+    tools: [
+      { id: 'Times Tables', path: '/timestables', name: 'Times Tables', icon: 'x', description: 'Develop estimation skills by rounding numbers to make calculations easier', ready: true }
+    ]
+  },
+  {
     name: 'Number',
     icon: '🔢',
     gradient: 'from-blue-500 to-indigo-600',
@@ -27,7 +36,6 @@ const categories: Category[] = [
     tools: [
       { id: 'integers', path: '/integers', name: 'Adding & Subtracting Integers', icon: '±', description: 'Practice adding and subtracting positive and negative numbers using number lines', ready: true },
       { id: 'estimation', path: '/estimation', name: 'Estimation', icon: '≈', description: 'Develop estimation skills by rounding numbers to make calculations easier', ready: true },
-      { id: 'Times Tables', path: '/timestables', name: 'Times Tables', icon: 'x', description: 'Develop estimation skills by rounding numbers to make calculations easier', ready: true },
       { id: 'hcf-lcm', path: '/hcf-lcm', name: 'HCF & LCM', icon: '∩', description: 'Find highest common factors and lowest common multiples using Venn diagrams', ready: false },
       { id: 'significant-figures', path: '/significant-figures', name: 'Significant Figures', icon: 'SF', description: 'Round numbers to a given number of significant figures', ready: false },
     ]
@@ -38,13 +46,13 @@ const categories: Category[] = [
     gradient: 'from-purple-500 to-fuchsia-600',
     iconBg: 'from-purple-50 to-fuchsia-50',
     tools: [
-      { id: 'like-terms', path: '/like-terms', name: 'Like Terms', icon: 'xy', description: 'Simplify algebraic expressions by collecting like terms', ready: false },
       { id: 'iteration', path: '/iteration', name: 'Iteration', icon: '🔄', description: 'Find roots to eqautions using iterative methods', ready: true },
       { id: 'single-brackets', path: '/expanding-single-brackets-FOIL', name: 'Expanding Single Brackets (FOIL)', icon: 'x', description: 'Expand single brackets by using arrows for each term', ready: true },
       { id: 'single-brackets', path: '/expanding-single-brackets-GRID', name: 'Expanding Single Brackets (GRID)', icon: 'x', description: 'Expand single brackets by using the grid method', ready: true },
       { id: 'expanding-double-brackets-FOIL', path: '/expanding-double-brackets-foil', name: 'Expanding Double Brackets (FOIL)', icon: 'x²', description: 'Expand pairs of brackets using the FOIL method', ready: true },
       { id: 'expanding-double-brackets-GRID', path: '/expanding-double-brackets-grid', name: 'Expanding Double Brackets (GRID)', icon: 'x²', description: 'Expand pairs of brackets using the grid method', ready: true },
       { id: 'completing-square', path: '/completing-the-square', name: 'Completing the Square', icon: '▢', description: 'Rewrite and solve quadratic expressions in completed square form', ready: true },
+      { id: 'like-terms', path: '/like-terms', name: 'Like Terms', icon: '2x²', description: 'Simplify algebraic expressions by collecting like terms', ready: false },
     ]
   },
   {
