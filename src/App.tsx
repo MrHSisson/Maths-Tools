@@ -12,6 +12,7 @@ import ExpandingSingleBracketsFOIL from './tools/ExpandingSingleBracketsFOIL'
 import ExpandingSingleBracketsGRID from './tools/ExpandingSingleBracketsGRID'
 import IterationTool from './tools/IterationTool'
 import RecipesTool from './tools/RecipesTool'
+import TimesTablesGenerator from './tools/TimesTablesGenerator';
 
 
 function App() {
@@ -30,6 +31,7 @@ function App() {
       <Route path="/expanding-single-brackets-grid" element={<ExpandingSingleBracketsGRID />} />
       <Route path="/iteration" element={<IterationTool />} />
       <Route path="/recipes" element={<RecipesTool />} />
+      <Route path="/timestables" element={<TimesTablesGenerator />} />
     </Routes>
   )
 }
