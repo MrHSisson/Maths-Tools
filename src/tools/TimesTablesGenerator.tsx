@@ -1,18 +1,17 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Download, Home, Menu, X } from 'lucide-react';
+import { Download, Home, Menu, X, Eye } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 
-// TIMES TABLES QUIZ GENERATOR
-// A tool for generating customizable times tables practice quizzes with PDF export
+// TIMES TABLES GENERATOR
+// A tool for generating customizable times tables practice with PDF export
 
 const TOOL_CONFIG = {
-  pageTitle: 'Times Tables Quiz Generator',
+  pageTitle: 'Times Tables Generator',
 };
 
 // TYPE DEFINITIONS
 type ColorScheme = 'default' | 'blue' | 'pink' | 'yellow';
-type OperationType = 'multiply' | 'divide' | 'mixed';
 
 type Question = {
   question: string;
@@ -23,7 +22,8 @@ type Question = {
 const generateQuestions = (
   selectedTables: number[],
   numQuestions: number,
-  operationType: OperationType,
+  includeMultiply: boolean,
+  includeDivide: boolean,
   tableFirst: boolean
 ): Question[] => {
   const allPossible: Array<{ type: string; a?: number; b?: number; dividend?: number; divisor?: number; answer: number }> = [];
@@ -33,7 +33,7 @@ const generateQuestions = (
       const product = selectedTable * otherFactor;
       
       // Add multiplication questions
-      if (operationType === 'multiply' || operationType === 'mixed') {
+      if (includeMultiply) {
         allPossible.push({ 
           type: 'multiply',
           a: selectedTable, 
@@ -43,7 +43,7 @@ const generateQuestions = (
       }
       
       // Add division questions
-      if (operationType === 'divide' || operationType === 'mixed') {
+      if (includeDivide) {
         allPossible.push({
           type: 'divide',
           dividend: product,
@@ -90,96 +90,17 @@ const generateQuestions = (
   });
 };
 
-const generatePDF = (
-  questions: Question[]
-): void => {
-  const doc = new jsPDF();
-  const pageWidth = doc.internal.pageSize.width;
-  const pageHeight = doc.internal.pageSize.height;
-
-  // Set PDF metadata
-  doc.setProperties({
-    title: 'Times Tables Quiz',
-    subject: 'Mathematics Practice',
-    author: 'Times Tables Quiz Generator',
-    keywords: 'times tables, multiplication, quiz',
-    creator: 'Times Tables Quiz Generator'
-  });
-
-  // Page 1: Questions
-  doc.setFontSize(20);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Times Tables Quiz', pageWidth / 2, 20, { align: 'center' });
-
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'normal');
-  doc.text('Name: ________________________________', 20, 35);
-
-  // Draw questions in 3 columns (fill rows first, left to right)
-  const startY = 48;
-  const columnWidth = (pageWidth - 40) / 3;
-  const lineHeight = 11.5;
-  const numColumns = 3;
-
-  doc.setFontSize(13);
-  questions.forEach((q, index) => {
-    const row = Math.floor(index / numColumns);
-    const column = index % numColumns;
-    const x = 20 + (column * columnWidth);
-    const y = startY + (row * lineHeight);
-
-    if (y < pageHeight - 20) {
-      doc.text(`${q.question} = _____`, x, y);
-    }
-  });
-
-  // Footer
-  doc.setFontSize(7);
-  doc.setTextColor(100);
-  doc.text('Times Tables Quiz Generator', pageWidth / 2, pageHeight - 10, { align: 'center' });
-
-  // Page 2: Answers
-  doc.addPage();
-  doc.setFontSize(20);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(0);
-  doc.text('Answer Key', pageWidth / 2, 20, { align: 'center' });
-
-  // Draw answers in 3 columns (fill rows first, left to right)
-  const answerStartY = 35;
-  doc.setFontSize(13);
-  doc.setFont('helvetica', 'normal');
-  questions.forEach((q, index) => {
-    const row = Math.floor(index / numColumns);
-    const column = index % numColumns;
-    const x = 20 + (column * columnWidth);
-    const y = answerStartY + (row * lineHeight);
-
-    if (y < pageHeight - 20) {
-      doc.text(`${q.question} = ${q.answer}`, x, y);
-    }
-  });
-
-  // Footer
-  doc.setFontSize(7);
-  doc.setTextColor(100);
-  doc.text('Times Tables Quiz Generator', pageWidth / 2, pageHeight - 10, { align: 'center' });
-
-  // Open in browser
-  const pdfBlob = doc.output('blob');
-  const pdfUrl = URL.createObjectURL(pdfBlob);
-  window.open(pdfUrl, '_blank');
-};
-
 export default function TimesTablesQuizGenerator() {
   const navigate = useNavigate();
   const [selectedTables, setSelectedTables] = useState<number[]>([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
   const [numQuestions, setNumQuestions] = useState<number>(40);
-  const [operationType, setOperationType] = useState<OperationType>('multiply');
+  const [includeMultiply, setIncludeMultiply] = useState<boolean>(true);
+  const [includeDivide, setIncludeDivide] = useState<boolean>(false);
   const [tableFirst, setTableFirst] = useState<boolean>(false);
   const [colorScheme, setColorScheme] = useState<ColorScheme>('default');
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
+  const [previewQuestions, setPreviewQuestions] = useState<Question[]>([]);
 
   const toggleTable = (table: number): void => {
     setSelectedTables(prev => 
@@ -191,11 +112,27 @@ export default function TimesTablesQuizGenerator() {
   };
 
   const selectAll = (): void => {
-    setSelectedTables(Array.from({length: 19}, (_, i) => i + 2));
+    setSelectedTables(Array.from({length: 20}, (_, i) => i + 1));
   };
 
   const selectNone = (): void => {
     setSelectedTables([]);
+  };
+
+  const handleGeneratePreview = (): void => {
+    if (selectedTables.length === 0) {
+      setError('Please select at least one times table');
+      return;
+    }
+
+    if (!includeMultiply && !includeDivide) {
+      setError('Please select at least one question type (Multiply or Divide)');
+      return;
+    }
+
+    const questions = generateQuestions(selectedTables, numQuestions, includeMultiply, includeDivide, tableFirst);
+    setPreviewQuestions(questions);
+    setError('');
   };
 
   const handleGeneratePDF = (): void => {
@@ -204,18 +141,99 @@ export default function TimesTablesQuizGenerator() {
       return;
     }
 
-    const questions = generateQuestions(selectedTables, numQuestions, operationType, tableFirst);
-    generatePDF(questions);
-  };
+    if (!includeMultiply && !includeDivide) {
+      setError('Please select at least one question type (Multiply or Divide)');
+      return;
+    }
 
-  const getBackgroundColor = (): string => {
-    const colors: Record<ColorScheme, string> = {
-      default: '#f5f3f0',
-      blue: '#dbeafe',
-      pink: '#fce7f3',
-      yellow: '#fef9c3',
-    };
-    return colors[colorScheme];
+    const questions = generateQuestions(selectedTables, numQuestions, includeMultiply, includeDivide, tableFirst);
+    
+    // Generate PDF
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
+    const pageHeight = doc.internal.pageSize.height;
+
+    // Get current date for title
+    const today = new Date();
+    const day = String(today.getDate()).padStart(2, '0');
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const year = String(today.getFullYear()).slice(-2);
+    const dateStr = `${day}/${month}/${year}`;
+
+    // Set PDF metadata
+    doc.setProperties({
+      title: `Times Tables ${dateStr}`,
+      subject: 'Mathematics Practice',
+      author: 'Times Tables Generator',
+      keywords: 'times tables, multiplication, quiz',
+      creator: 'Times Tables Generator'
+    });
+
+    // Page 1: Questions
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Times Tables Quiz', pageWidth / 2, 20, { align: 'center' });
+
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Name: ________________________________', 20, 35);
+
+    // Draw questions in 3 columns (fill rows first, left to right)
+    const startY = 48;
+    const columnWidth = (pageWidth - 40) / 3;
+    const lineHeight = 11.5;
+    const numColumns = 3;
+
+    doc.setFontSize(13);
+    questions.forEach((q, index) => {
+      const row = Math.floor(index / numColumns);
+      const column = index % numColumns;
+      const x = 20 + (column * columnWidth);
+      const y = startY + (row * lineHeight);
+
+      if (y < pageHeight - 20) {
+        doc.text(`${q.question} = _____`, x, y);
+      }
+    });
+
+    // Footer
+    doc.setFontSize(7);
+    doc.setTextColor(100);
+    doc.text('Times Tables Generator', pageWidth / 2, pageHeight - 10, { align: 'center' });
+
+    // Page 2: Answers
+    doc.addPage();
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0);
+    doc.text('Answer Key', pageWidth / 2, 20, { align: 'center' });
+
+    // Draw answers in 3 columns (fill rows first, left to right)
+    const answerStartY = 35;
+    doc.setFontSize(13);
+    doc.setFont('helvetica', 'normal');
+    questions.forEach((q, index) => {
+      const row = Math.floor(index / numColumns);
+      const column = index % numColumns;
+      const x = 20 + (column * columnWidth);
+      const y = answerStartY + (row * lineHeight);
+
+      if (y < pageHeight - 20) {
+        doc.text(`${q.question} = ${q.answer}`, x, y);
+      }
+    });
+
+    // Footer
+    doc.setFontSize(7);
+    doc.setTextColor(100);
+    doc.text('Times Tables Generator', pageWidth / 2, pageHeight - 10, { align: 'center' });
+
+    // Open in browser
+    const pdfBlob = doc.output('blob');
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+    window.open(pdfUrl, '_blank');
+    
+    setError('');
   };
 
   return (
@@ -263,7 +281,7 @@ export default function TimesTablesQuizGenerator() {
       </div>
       
       {/* Main Content */}
-      <div className="min-h-screen p-8" style={{ backgroundColor: getBackgroundColor() }}>
+      <div className="min-h-screen p-8" style={{ backgroundColor: '#f5f3f0' }}>
         <div className="max-w-6xl mx-auto">
           {/* Title */}
           <h1 className="text-5xl font-bold text-center mb-8" style={{ color: '#000000' }}>
@@ -277,49 +295,56 @@ export default function TimesTablesQuizGenerator() {
           
           {/* Control Panel */}
           <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-            {/* Question Types */}
-            <div className="flex justify-center items-center gap-4 mb-6">
-              <span className="text-lg font-semibold" style={{ color: '#000000' }}>Question Type:</span>
-              <div className="flex gap-3">
-                {(['multiply', 'divide', 'mixed'] as const).map((type: OperationType) => (
-                  <button 
-                    key={type} 
-                    onClick={() => setOperationType(type)}
-                    className={`px-6 py-2 rounded-lg font-bold text-sm transition-all ${
-                      operationType === type 
-                        ? 'bg-blue-900 text-white' 
-                        : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                    }`}
-                  >
-                    {type === 'multiply' ? 'Multiplication' : type === 'divide' ? 'Division' : 'Mixed'}
-                  </button>
-                ))}
+            {/* Question Types - Checkboxes */}
+            <div className="flex justify-center items-center gap-6 mb-6">
+              <span className="text-lg font-semibold" style={{ color: '#000000' }}>Question Types:</span>
+              <div className="flex gap-6">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={includeMultiply}
+                    onChange={(e) => setIncludeMultiply(e.target.checked)}
+                    className="w-5 h-5 cursor-pointer accent-color"
+                    style={{ accentColor: '#1e3a8a' }}
+                  />
+                  <span className="text-lg font-semibold" style={{ color: '#000000' }}>Multiply</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={includeDivide}
+                    onChange={(e) => setIncludeDivide(e.target.checked)}
+                    className="w-5 h-5 cursor-pointer"
+                    style={{ accentColor: '#1e3a8a' }}
+                  />
+                  <span className="text-lg font-semibold" style={{ color: '#000000' }}>Divide</span>
+                </label>
               </div>
             </div>
 
-            {/* Format Toggle */}
+            {/* Format Toggle Switch */}
             <div className="flex justify-center items-center gap-4 mb-6">
               <span className="text-sm font-semibold" style={{ color: '#000000' }}>Format:</span>
-              <button
-                onClick={() => setTableFirst(!tableFirst)}
-                className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
-                  !tableFirst 
-                    ? 'bg-blue-900 text-white' 
-                    : 'bg-gray-100 text-gray-800'
-                }`}
-              >
-                1×4, 2×4, 3×4...
-              </button>
-              <button
-                onClick={() => setTableFirst(!tableFirst)}
-                className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
-                  tableFirst 
-                    ? 'bg-blue-900 text-white' 
-                    : 'bg-gray-100 text-gray-800'
-                }`}
-              >
-                4×1, 4×2, 4×3...
-              </button>
+              <div className="flex items-center gap-3">
+                <span className={`text-sm font-semibold ${!tableFirst ? 'text-blue-900' : 'text-gray-500'}`}>
+                  TT First (e.g. <span style={{ textDecoration: 'underline' }}>2</span> × 3)
+                </span>
+                <button
+                  onClick={() => setTableFirst(!tableFirst)}
+                  className="relative w-14 h-7 rounded-full transition-colors bg-blue-900"
+                >
+                  <div
+                    className="absolute top-1 w-5 h-5 bg-white rounded-full transition-transform"
+                    style={{ 
+                      left: tableFirst ? '32px' : '4px',
+                      transform: 'translateX(0)'
+                    }}
+                  />
+                </button>
+                <span className={`text-sm font-semibold ${tableFirst ? 'text-blue-900' : 'text-gray-500'}`}>
+                  TT Last (e.g. 3 × <span style={{ textDecoration: 'underline' }}>2</span>)
+                </span>
+              </div>
             </div>
 
             {/* Divider */}
@@ -347,19 +372,23 @@ export default function TimesTablesQuizGenerator() {
                 </div>
               </div>
               
-              <div className="grid grid-cols-10 gap-2 max-w-2xl mx-auto">
-                {Array.from({length: 19}, (_, i) => i + 2).map(table => (
-                  <button
-                    key={table}
-                    onClick={() => toggleTable(table)}
-                    className={`px-3 py-2 rounded-lg font-bold text-sm transition-all ${
-                      selectedTables.includes(table)
-                        ? 'bg-blue-900 text-white'
-                        : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                    }`}
-                  >
-                    {table}
-                  </button>
+              <div className="grid grid-cols-10 gap-3 max-w-4xl mx-auto">
+                {Array.from({length: 20}, (_, i) => i + 1).map(table => (
+                  <div key={table} className="flex flex-col items-center gap-2">
+                    <span 
+                      onClick={() => toggleTable(table)}
+                      className="text-xl font-bold text-gray-800 cursor-pointer hover:text-blue-900 transition-colors"
+                    >
+                      {table}
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={selectedTables.includes(table)}
+                      onChange={() => toggleTable(table)}
+                      className="w-4 h-4 cursor-pointer"
+                      style={{ accentColor: '#1e3a8a' }}
+                    />
+                  </div>
                 ))}
               </div>
             </div>
@@ -396,22 +425,57 @@ export default function TimesTablesQuizGenerator() {
               </div>
             )}
 
-            {/* Generate Button */}
-            <div className="flex justify-center">
+            {/* Generate Buttons */}
+            <div className="flex justify-center gap-4">
+              <button 
+                onClick={handleGeneratePreview}
+                disabled={selectedTables.length === 0 || (!includeMultiply && !includeDivide)}
+                className={`px-8 py-3 rounded-lg font-bold text-lg flex items-center gap-2 transition-all ${
+                  selectedTables.length === 0 || (!includeMultiply && !includeDivide)
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-blue-900 text-white hover:bg-blue-800 shadow-xl'
+                }`}
+              >
+                <Eye size={24} />
+                Generate Preview
+              </button>
               <button 
                 onClick={handleGeneratePDF}
-                disabled={selectedTables.length === 0}
+                disabled={selectedTables.length === 0 || (!includeMultiply && !includeDivide)}
                 className={`px-8 py-3 rounded-lg font-bold text-lg flex items-center gap-2 transition-all ${
-                  selectedTables.length === 0
+                  selectedTables.length === 0 || (!includeMultiply && !includeDivide)
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     : 'bg-blue-900 text-white hover:bg-blue-800 shadow-xl'
                 }`}
               >
                 <Download size={24} />
-                Generate PDF Quiz
+                Generate PDF
               </button>
             </div>
           </div>
+
+          {/* Preview Questions */}
+          {previewQuestions.length > 0 && (
+            <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
+              <h2 className="text-3xl font-bold text-center mb-6" style={{ color: '#000000' }}>
+                Question Preview
+              </h2>
+              <div className="grid grid-cols-3 gap-6">
+                {previewQuestions.slice(0, 12).map((q, idx) => (
+                  <div key={idx}>
+                    <span className="text-xl font-semibold" style={{ color: '#000000' }}>
+                      {idx + 1}. {q.question} = _____
+                    </span>
+                  </div>
+                ))}
+              </div>
+              {previewQuestions.length > 12 && (
+                <p className="text-center mt-6 text-gray-700 font-semibold text-lg">
+                  ...plus {previewQuestions.length - 12} more questions
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Info Box */}
           <div className="bg-white rounded-xl shadow-lg p-6">
@@ -419,15 +483,15 @@ export default function TimesTablesQuizGenerator() {
             <ul className="space-y-2 text-gray-700">
               <li className="flex items-start gap-2">
                 <span className="text-blue-900 font-bold">•</span>
-                <span>Select which times tables you want to practice (2-20)</span>
+                <span>Select which times tables you want to practice (1-20)</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-blue-900 font-bold">•</span>
-                <span>Choose multiplication, division, or mixed questions</span>
+                <span>Choose multiplication, division, or both (mixed questions)</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-blue-900 font-bold">•</span>
-                <span>Toggle between format styles (e.g., 1×4 vs 4×1)</span>
+                <span>Toggle between format styles (TT First vs TT Last)</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-blue-900 font-bold">•</span>
@@ -435,7 +499,11 @@ export default function TimesTablesQuizGenerator() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-blue-900 font-bold">•</span>
-                <span>Click "Generate PDF Quiz" to create a 2-page PDF with questions and answers</span>
+                <span>Click "Generate Preview" to see a sample of your questions</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-blue-900 font-bold">•</span>
+                <span>Click "Generate PDF" to create a 2-page worksheet with questions and answers</span>
               </li>
             </ul>
           </div>
@@ -444,8 +512,3 @@ export default function TimesTablesQuizGenerator() {
     </>
   );
 }
-
-// WEB INTEGRATION: Add routing (3 lines at end)
-// 1. Top: import routing library hook
-// 2. After state: initialize navigation
-// 3. Home button: use navigation function
