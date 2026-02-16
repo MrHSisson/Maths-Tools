@@ -528,7 +528,7 @@ export default function NegativeNumbersOperations() {
                       style={{ accentColor: '#1e3a8a' }}
                     />
                     <span className="text-xl font-bold" style={{ color: '#000000' }}>
-                      Subtraction (−)
+                      Subtraction (-)
                     </span>
                   </label>
                   <div className="flex flex-col gap-2 items-center">
@@ -541,7 +541,7 @@ export default function NegativeNumbersOperations() {
                         className="w-4 h-4 cursor-pointer disabled:opacity-50"
                         style={{ accentColor: '#1e3a8a' }}
                       />
-                      <span>Positive − Positive</span>
+                      <span>Positive - Positive</span>
                     </label>
                     <label className="flex items-center gap-2 cursor-pointer text-gray-700">
                       <input 
@@ -552,7 +552,7 @@ export default function NegativeNumbersOperations() {
                         className="w-4 h-4 cursor-pointer disabled:opacity-50"
                         style={{ accentColor: '#1e3a8a' }}
                       />
-                      <span>Positive − Negative</span>
+                      <span>Positive - Negative</span>
                     </label>
                     <label className="flex items-center gap-2 cursor-pointer text-gray-700">
                       <input 
@@ -563,7 +563,7 @@ export default function NegativeNumbersOperations() {
                         className="w-4 h-4 cursor-pointer disabled:opacity-50"
                         style={{ accentColor: '#1e3a8a' }}
                       />
-                      <span>Negative − Positive</span>
+                      <span>Negative - Positive</span>
                     </label>
                     <label className="flex items-center gap-2 cursor-pointer text-gray-700">
                       <input 
@@ -574,7 +574,7 @@ export default function NegativeNumbersOperations() {
                         className="w-4 h-4 cursor-pointer disabled:opacity-50"
                         style={{ accentColor: '#1e3a8a' }}
                       />
-                      <span>Negative − Negative</span>
+                      <span>Negative - Negative</span>
                     </label>
                   </div>
                 </div>
