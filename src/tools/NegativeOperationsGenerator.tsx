@@ -454,10 +454,10 @@ export default function NegativeNumbersOperations() {
             {/* Operation Selection with nested Sign Combinations */}
             <div className="mb-8">
               {/* 2x2 Grid for Operations */}
-              <div className="grid grid-cols-2 gap-8 max-w-3xl mx-auto">
+              <div className="grid grid-cols-2 gap-8 max-w-2xl mx-auto">
                 {/* Addition */}
-                <div>
-                  <label className="flex items-center gap-3 cursor-pointer mb-3">
+                <div className="text-center">
+                  <label className="flex items-center justify-center gap-3 cursor-pointer mb-3">
                     <input 
                       type="checkbox" 
                       checked={selectedOperations.includes('addition')}
@@ -469,7 +469,7 @@ export default function NegativeNumbersOperations() {
                       Addition (+)
                     </span>
                   </label>
-                  <div className="ml-8 flex flex-col gap-2">
+                  <div className="flex flex-col gap-2 items-center">
                     <label className="flex items-center gap-2 cursor-pointer text-gray-700">
                       <input 
                         type="checkbox" 
@@ -518,8 +518,8 @@ export default function NegativeNumbersOperations() {
                 </div>
 
                 {/* Subtraction */}
-                <div>
-                  <label className="flex items-center gap-3 cursor-pointer mb-3">
+                <div className="text-center">
+                  <label className="flex items-center justify-center gap-3 cursor-pointer mb-3">
                     <input 
                       type="checkbox" 
                       checked={selectedOperations.includes('subtraction')}
@@ -531,7 +531,7 @@ export default function NegativeNumbersOperations() {
                       Subtraction (−)
                     </span>
                   </label>
-                  <div className="ml-8 flex flex-col gap-2">
+                  <div className="flex flex-col gap-2 items-center">
                     <label className="flex items-center gap-2 cursor-pointer text-gray-700">
                       <input 
                         type="checkbox" 
@@ -580,8 +580,8 @@ export default function NegativeNumbersOperations() {
                 </div>
 
                 {/* Multiplication */}
-                <div>
-                  <label className="flex items-center gap-3 cursor-pointer mb-3">
+                <div className="text-center">
+                  <label className="flex items-center justify-center gap-3 cursor-pointer mb-3">
                     <input 
                       type="checkbox" 
                       checked={selectedOperations.includes('multiplication')}
@@ -593,7 +593,7 @@ export default function NegativeNumbersOperations() {
                       Multiplication (×)
                     </span>
                   </label>
-                  <div className="ml-8 flex flex-col gap-2">
+                  <div className="flex flex-col gap-2 items-center">
                     <label className="flex items-center gap-2 cursor-pointer text-gray-700">
                       <input 
                         type="checkbox" 
@@ -642,8 +642,8 @@ export default function NegativeNumbersOperations() {
                 </div>
 
                 {/* Division */}
-                <div>
-                  <label className="flex items-center gap-3 cursor-pointer mb-3">
+                <div className="text-center">
+                  <label className="flex items-center justify-center gap-3 cursor-pointer mb-3">
                     <input 
                       type="checkbox" 
                       checked={selectedOperations.includes('division')}
@@ -655,7 +655,7 @@ export default function NegativeNumbersOperations() {
                       Division (÷)
                     </span>
                   </label>
-                  <div className="ml-8 flex flex-col gap-2">
+                  <div className="flex flex-col gap-2 items-center">
                     <label className="flex items-center gap-2 cursor-pointer text-gray-700">
                       <input 
                         type="checkbox" 
