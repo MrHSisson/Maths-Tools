@@ -77,7 +77,7 @@ const generateAdditionSubtractionQuestions = (
             questions.push({ question: `${num1} + ${num2}`, answer });
           } else {
             answer = num1 - num2;
-            questions.push({ question: `${num1} − ${num2}`, answer });
+            questions.push({ question: `${num1} - ${num2}`, answer });
           }
           break;
         case 'pos_neg':
@@ -89,7 +89,7 @@ const generateAdditionSubtractionQuestions = (
             questions.push({ question: formatted, answer });
           } else {
             answer = num1 - num2;
-            const formatted = useBrackets ? `${num1} − (${num2})` : `${num1} − ${num2}`;
+            const formatted = useBrackets ? `${num1} - (${num2})` : `${num1} - ${num2}`;
             questions.push({ question: formatted, answer });
           }
           break;
@@ -102,7 +102,7 @@ const generateAdditionSubtractionQuestions = (
             questions.push({ question: formatted, answer });
           } else {
             answer = num1 - num2;
-            const formatted = useBrackets ? `(${num1}) − ${num2}` : `${num1} − ${num2}`;
+            const formatted = useBrackets ? `(${num1}) - ${num2}` : `${num1} - ${num2}`;
             questions.push({ question: formatted, answer });
           }
           break;
@@ -115,7 +115,7 @@ const generateAdditionSubtractionQuestions = (
             questions.push({ question: formatted, answer });
           } else {
             answer = num1 - num2;
-            const formatted = useBrackets ? `(${num1}) − (${num2})` : `${num1} − ${num2}`;
+            const formatted = useBrackets ? `(${num1}) - (${num2})` : `${num1} - ${num2}`;
             questions.push({ question: formatted, answer });
           }
           break;
