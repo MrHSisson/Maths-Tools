@@ -24,7 +24,8 @@ type SignCombination = 'pos_pos' | 'pos_neg' | 'neg_pos' | 'neg_neg';
 const generateQuestions = (
   operations: OperationType[],
   signCombinations: SignCombination[],
-  numQuestions: number
+  numQuestions: number,
+  useBrackets: boolean
 ): Question[] => {
   const allPossible: Question[] = [];
   
@@ -34,13 +35,13 @@ const generateQuestions = (
       // Use different ranges based on operation
       if (operation === 'addition' || operation === 'subtraction') {
         // For addition and subtraction: -25 to 25
-        generateAdditionSubtractionQuestions(operation, signCombo, 25, allPossible);
+        generateAdditionSubtractionQuestions(operation, signCombo, 25, allPossible, useBrackets);
       } else {
         // For multiplication and division: 1 to 12
         if (operation === 'multiplication') {
-          generateMultiplicationQuestions(signCombo, 12, allPossible);
+          generateMultiplicationQuestions(signCombo, 12, allPossible, useBrackets);
         } else if (operation === 'division') {
-          generateDivisionQuestions(signCombo, 12, allPossible);
+          generateDivisionQuestions(signCombo, 12, allPossible, useBrackets);
         }
       }
     });
@@ -60,7 +61,8 @@ const generateAdditionSubtractionQuestions = (
   operation: OperationType,
   signCombo: SignCombination,
   range: number,
-  questions: Question[]
+  questions: Question[],
+  useBrackets: boolean
 ): void => {
   for (let a = 1; a <= range; a++) {
     for (let b = 1; b <= range; b++) {
@@ -83,10 +85,12 @@ const generateAdditionSubtractionQuestions = (
           num2 = -b;
           if (operation === 'addition') {
             answer = num1 + num2;
-            questions.push({ question: `${num1} + (${num2})`, answer });
+            const formatted = useBrackets ? `${num1} + (${num2})` : `${num1} + ${num2}`;
+            questions.push({ question: formatted, answer });
           } else {
             answer = num1 - num2;
-            questions.push({ question: `${num1} − (${num2})`, answer });
+            const formatted = useBrackets ? `${num1} − (${num2})` : `${num1} − ${num2}`;
+            questions.push({ question: formatted, answer });
           }
           break;
         case 'neg_pos':
@@ -94,10 +98,12 @@ const generateAdditionSubtractionQuestions = (
           num2 = b;
           if (operation === 'addition') {
             answer = num1 + num2;
-            questions.push({ question: `${num1} + ${num2}`, answer });
+            const formatted = useBrackets ? `(${num1}) + ${num2}` : `${num1} + ${num2}`;
+            questions.push({ question: formatted, answer });
           } else {
             answer = num1 - num2;
-            questions.push({ question: `${num1} − ${num2}`, answer });
+            const formatted = useBrackets ? `(${num1}) − ${num2}` : `${num1} − ${num2}`;
+            questions.push({ question: formatted, answer });
           }
           break;
         case 'neg_neg':
@@ -105,10 +111,12 @@ const generateAdditionSubtractionQuestions = (
           num2 = -b;
           if (operation === 'addition') {
             answer = num1 + num2;
-            questions.push({ question: `${num1} + (${num2})`, answer });
+            const formatted = useBrackets ? `(${num1}) + (${num2})` : `${num1} + ${num2}`;
+            questions.push({ question: formatted, answer });
           } else {
             answer = num1 - num2;
-            questions.push({ question: `${num1} − (${num2})`, answer });
+            const formatted = useBrackets ? `(${num1}) − (${num2})` : `${num1} − ${num2}`;
+            questions.push({ question: formatted, answer });
           }
           break;
       }
@@ -119,7 +127,8 @@ const generateAdditionSubtractionQuestions = (
 const generateMultiplicationQuestions = (
   signCombo: SignCombination, 
   range: number, 
-  questions: Question[]
+  questions: Question[],
+  useBrackets: boolean
 ): void => {
   for (let a = 1; a <= range; a++) {
     for (let b = 1; b <= range; b++) {
@@ -130,37 +139,28 @@ const generateMultiplicationQuestions = (
           num1 = a;
           num2 = b;
           answer = num1 * num2;
-          questions.push({
-            question: `${num1} × ${num2}`,
-            answer
-          });
+          questions.push({ question: `${num1} × ${num2}`, answer });
           break;
         case 'pos_neg':
           num1 = a;
           num2 = -b;
           answer = num1 * num2;
-          questions.push({
-            question: `${num1} × (${num2})`,
-            answer
-          });
+          const formatted1 = useBrackets ? `${num1} × (${num2})` : `${num1} × ${num2}`;
+          questions.push({ question: formatted1, answer });
           break;
         case 'neg_pos':
           num1 = -a;
           num2 = b;
           answer = num1 * num2;
-          questions.push({
-            question: `${num1} × ${num2}`,
-            answer
-          });
+          const formatted2 = useBrackets ? `(${num1}) × ${num2}` : `${num1} × ${num2}`;
+          questions.push({ question: formatted2, answer });
           break;
         case 'neg_neg':
           num1 = -a;
           num2 = -b;
           answer = num1 * num2;
-          questions.push({
-            question: `(${num1}) × (${num2})`,
-            answer
-          });
+          const formatted3 = useBrackets ? `(${num1}) × (${num2})` : `${num1} × ${num2}`;
+          questions.push({ question: formatted3, answer });
           break;
       }
     }
@@ -170,7 +170,8 @@ const generateMultiplicationQuestions = (
 const generateDivisionQuestions = (
   signCombo: SignCombination, 
   range: number, 
-  questions: Question[]
+  questions: Question[],
+  useBrackets: boolean
 ): void => {
   // For division, we generate from multiplication facts to ensure integer answers
   for (let divisor = 1; divisor <= range; divisor++) {
@@ -183,37 +184,28 @@ const generateDivisionQuestions = (
           dividend = product;
           div = divisor;
           answer = quotient;
-          questions.push({
-            question: `${dividend} ÷ ${div}`,
-            answer
-          });
+          questions.push({ question: `${dividend} ÷ ${div}`, answer });
           break;
         case 'pos_neg':
           dividend = product;
           div = -divisor;
           answer = -quotient;
-          questions.push({
-            question: `${dividend} ÷ (${div})`,
-            answer
-          });
+          const formatted1 = useBrackets ? `${dividend} ÷ (${div})` : `${dividend} ÷ ${div}`;
+          questions.push({ question: formatted1, answer });
           break;
         case 'neg_pos':
           dividend = -product;
           div = divisor;
           answer = -quotient;
-          questions.push({
-            question: `${dividend} ÷ ${div}`,
-            answer
-          });
+          const formatted2 = useBrackets ? `(${dividend}) ÷ ${div}` : `${dividend} ÷ ${div}`;
+          questions.push({ question: formatted2, answer });
           break;
         case 'neg_neg':
           dividend = -product;
           div = -divisor;
           answer = quotient;
-          questions.push({
-            question: `(${dividend}) ÷ (${div})`,
-            answer
-          });
+          const formatted3 = useBrackets ? `(${dividend}) ÷ (${div})` : `${dividend} ÷ ${div}`;
+          questions.push({ question: formatted3, answer });
           break;
       }
     }
@@ -224,6 +216,7 @@ export default function NegativeNumbersOperations() {
   const [selectedOperations, setSelectedOperations] = useState<OperationType[]>([]);
   const [selectedCombinations, setSelectedCombinations] = useState<SignCombination[]>([]);
   const [numQuestions, setNumQuestions] = useState<number>(40);
+  const [useBrackets, setUseBrackets] = useState<boolean>(true);
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   const [colorScheme, setColorScheme] = useState<ColorScheme>('default');
   const [error, setError] = useState<string>('');
@@ -274,7 +267,7 @@ export default function NegativeNumbersOperations() {
       return;
     }
 
-    const questions = generateQuestions(selectedOperations, selectedCombinations, numQuestions);
+    const questions = generateQuestions(selectedOperations, selectedCombinations, numQuestions, useBrackets);
     
     if (questions.length === 0) {
       setError('No questions could be generated with the current settings');
@@ -296,7 +289,7 @@ export default function NegativeNumbersOperations() {
       return;
     }
 
-    const questions = generateQuestions(selectedOperations, selectedCombinations, numQuestions);
+    const questions = generateQuestions(selectedOperations, selectedCombinations, numQuestions, useBrackets);
     
     if (questions.length === 0) {
       setError('No questions could be generated with the current settings');
@@ -459,7 +452,7 @@ export default function NegativeNumbersOperations() {
             </div>
 
             {/* Operation Selection with nested Sign Combinations */}
-            <div className="mb-8">
+            <div className="mb-8 px-12">
               {/* 2x2 Grid for Operations */}
               <div className="grid grid-cols-2 gap-6">
                 {/* Addition */}
@@ -715,6 +708,22 @@ export default function NegativeNumbersOperations() {
             {/* Divider */}
             <div className="flex justify-center my-6">
               <div style={{ width: '80%', height: '1px', backgroundColor: '#e5e7eb' }}></div>
+            </div>
+
+            {/* Bracket Option */}
+            <div className="flex justify-center items-center gap-3 mb-6">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={useBrackets}
+                  onChange={(e) => setUseBrackets(e.target.checked)}
+                  className="w-5 h-5 cursor-pointer"
+                  style={{ accentColor: '#1e3a8a' }}
+                />
+                <span className="text-lg font-semibold" style={{ color: '#000000' }}>
+                  Use brackets for negative numbers
+                </span>
+              </label>
             </div>
 
             {/* Number of Questions */}
