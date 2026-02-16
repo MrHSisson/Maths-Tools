@@ -454,7 +454,7 @@ export default function NegativeNumbersOperations() {
             {/* Operation Selection with nested Sign Combinations */}
             <div className="mb-8">
               {/* 2x2 Grid for Operations */}
-              <div className="grid grid-cols-2 gap-6 max-w-4xl mx-auto">
+              <div className="grid grid-cols-2 gap-8 max-w-3xl mx-auto">
                 {/* Addition */}
                 <div>
                   <label className="flex items-center gap-3 cursor-pointer mb-3">
