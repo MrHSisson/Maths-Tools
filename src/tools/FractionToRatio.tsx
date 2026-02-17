@@ -1974,7 +1974,7 @@ export default function GenericToolShell() {
                   <h3 className={`text-xl font-bold mb-4 text-center ${config.text}`}>{levelNames[levelIdx]}</h3>
                   <div className="space-y-3">
                     {levelQuestions.map((q: Question, idx: number) => (
-                      toolSettings.useSubstantialBoxes ? (
+                      TOOL_CONFIG.tools[currentTool].useSubstantialBoxes ? (
                         <div key={idx} className="rounded-lg p-3" style={{ backgroundColor: getLevelQuestionBoxBg(level) }}>
                           <span className={`${fontSizes[worksheetFontSize]} font-semibold`} style={{ color: '#000000' }} dangerouslySetInnerHTML={{ __html: `${idx + 1}. ${q.display}` }}></span>
                           {showWorksheetAnswers && (
