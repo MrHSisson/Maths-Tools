@@ -295,6 +295,12 @@ export default function TimesTablesQuizGenerator() {
           
           {/* Control Panel */}
           <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+
+            {/* Customisation Options Header */}
+            <h2 className="text-2xl font-bold text-center mb-4" style={{ color: '#000000' }}>Customisation Options</h2>
+            <div className="flex justify-center mb-6">
+              <div style={{ width: '80%', height: '1px', backgroundColor: '#d1d5db' }}></div>
+            </div>
             {/* Question Types - Checkboxes */}
             <div className="flex justify-center items-center gap-6 mb-6">
               <span className="text-lg font-semibold" style={{ color: '#000000' }}>Question Types:</span>
@@ -437,7 +443,7 @@ export default function TimesTablesQuizGenerator() {
                 }`}
               >
                 <Eye size={24} />
-                Generate Preview
+                Generate Example
               </button>
               <button 
                 onClick={handleGeneratePDF}
@@ -454,11 +460,11 @@ export default function TimesTablesQuizGenerator() {
             </div>
           </div>
 
-          {/* Preview Questions */}
+          {/* Example Questions */}
           {previewQuestions.length > 0 && (
             <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
               <h2 className="text-3xl font-bold text-center mb-6" style={{ color: '#000000' }}>
-                Question Preview
+                Question Example
               </h2>
               <div className="grid grid-cols-3 gap-6">
                 {previewQuestions.slice(0, 12).map((q, idx) => (
@@ -499,7 +505,7 @@ export default function TimesTablesQuizGenerator() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-blue-900 font-bold">•</span>
-                <span>Click "Generate Preview" to see a sample of your questions</span>
+                <span>Click "Generate Example" to see a sample of your questions</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-blue-900 font-bold">•</span>
