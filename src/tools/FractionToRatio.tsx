@@ -209,7 +209,7 @@ const convertToCommonDenominator = (
   return { newNum1, newNum2, lcd, steps };
 };
 
-const formatFraction = (num: number, den: number): string => {
+const _formatFraction = (num: number, den: number): string => {
   return `<sup>${num}</sup>/<sub>${den}</sub>`;
 };
 
@@ -480,8 +480,6 @@ const generateQuestion = (
       
       const item1Cap = context.item1.charAt(0).toUpperCase() + context.item1.slice(1);
       const item2Cap = context.item2.charAt(0).toUpperCase() + context.item2.slice(1);
-      const numCap = numeratorName.charAt(0).toUpperCase() + numeratorName.slice(1);
-      const denCap = denominatorName.charAt(0).toUpperCase() + denominatorName.slice(1);
       
       working = [
         { type: 'step', content: `Identify parts — ${item1Cap} = ${a}, ${item2Cap} = ${b}` },
@@ -718,7 +716,6 @@ const generateQuestion = (
       const colorA = context.colors[0];
       const colorB = context.colors[1];
       
-      let givenValue = 0;
       if (actualGivenType === 'partA') givenValue = partA;
       else if (actualGivenType === 'partB') givenValue = partB;
       else givenValue = total;
