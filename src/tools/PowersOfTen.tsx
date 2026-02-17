@@ -125,7 +125,7 @@ const formatNumber = (num: number): string => {
   if (str.includes('e')) {
     // For very small numbers, expand the scientific notation manually
     const parts = str.split('e');
-    const base = parseFloat(parts[0]);
+    parseFloat(parts[0]);
     const exp = parseInt(parts[1]);
     
     if (exp < 0) {
@@ -156,7 +156,7 @@ const formatNumber = (num: number): string => {
   return parts.join('.');
 };
 
-const getPlaceValueColumns = (level: DifficultyLevel): string[] => {
+const getPlaceValueColumns = (level?: DifficultyLevel): string[] => {
   if (level === 'level1') {
     // Only whole numbers for Level 1
     return ['M', 'HTt', 'TTt', 'Tt', 'H', 'T', 'O'];
@@ -176,20 +176,16 @@ const findDecimalPosition = (num: number): number => {
   return decimalIndex;
 };
 
-const getRelevantColumns = (vin: number, vout: number): string[] => {
+const getRelevantColumns = (_vin: number, _vout: number): string[] => {
   const allColumns = getPlaceValueColumns();
-  const onesIndex = 6; // 'O' is at index 6
+  const onesIndex = 6;
   
-  // Determine range needed
-  const vinStr = vin.toString().replace('.', '');
-  const voutStr = vout.toString().replace('.', '');
-  const vinDecPos = findDecimalPosition(vin);
-  const voutDecPos = findDecimalPosition(vout);
+  const vinDecPos = findDecimalPosition(_vin);
+  const voutDecPos = findDecimalPosition(_vout);
   
-  // Calculate how many places to the left and right of ones we need
   const maxLeft = Math.max(vinDecPos - 1, voutDecPos - 1);
-  const vinRight = vin.toString().includes('.') ? vin.toString().split('.')[1]?.length || 0 : 0;
-  const voutRight = vout.toString().includes('.') ? vout.toString().split('.')[1]?.length || 0 : 0;
+  const vinRight = _vin.toString().includes('.') ? _vin.toString().split('.')[1]?.length || 0 : 0;
+  const voutRight = _vout.toString().includes('.') ? _vout.toString().split('.')[1]?.length || 0 : 0;
   const maxRight = Math.max(vinRight, voutRight);
   
   const leftNeeded = Math.min(maxLeft + 1, 6);
@@ -246,8 +242,8 @@ const getDigitAtPosition = (num: number, position: number, onesIndex: number): s
 };
 
 // QUESTION GENERATION
-const generateQuestion = (
-  tool: ToolType,
+  const generateQuestion = (
+  _tool: ToolType,
   level: DifficultyLevel,
   variables: Record<string, boolean>,
   dropdownValue: string
@@ -584,7 +580,7 @@ const renderPlaceValueGrid = (question: Question | null, showAnswerInGrid: boole
           </thead>
           <tbody>
             <tr>
-              {allColumns.map((col: string, idx: number) => {
+              {allColumns.map((_col: string, idx: number) => {
                 const digit = showNumbers ? getDigitAtPosition(vin, idx, onesIndex) : '';
                 return (
                   <td 
@@ -605,7 +601,7 @@ const renderPlaceValueGrid = (question: Question | null, showAnswerInGrid: boole
                   </td>
                 </tr>
                 <tr>
-                  {allColumns.map((col: string, idx: number) => {
+                  {allColumns.map((_col: string, idx: number) => {
                     const digit = showNumbers ? getDigitAtPosition(vout, idx, onesIndex) : '';
                     return (
                       <td 
