@@ -15,6 +15,7 @@ import RecipesTool from './tools/RecipesTool'
 import TimesTablesGenerator from './tools/TimesTablesGenerator';
 import NegativeOperationsGenerator from './tools/NegativeOperationsGenerator';
 import FractionToRatio from './tools/FractionToRatio';
+import PowersOfTen from './tools/PowersOfTen';
 
 
 function App() {
@@ -36,6 +37,7 @@ function App() {
       <Route path="/timestables" element={<TimesTablesGenerator />} />
       <Route path="/negative-operations" element={<NegativeOperationsGenerator />} />
       <Route path="/fraction-to-ratio" element={<FractionToRatio />} />
+      <Route path="/powers-of-ten" element={<PowersOfTen />} />
     </Routes>
   )
 }
