@@ -14,6 +14,7 @@ import IterationTool from './tools/IterationTool'
 import RecipesTool from './tools/RecipesTool'
 import TimesTablesGenerator from './tools/TimesTablesGenerator';
 import NegativeOperationsGenerator from './tools/NegativeOperationsGenerator';
+import FractionToRatio from './tools/FractionToRatio';
 
 
 function App() {
@@ -34,6 +35,7 @@ function App() {
       <Route path="/recipes" element={<RecipesTool />} />
       <Route path="/timestables" element={<TimesTablesGenerator />} />
       <Route path="/negative-operations" element={<NegativeOperationsGenerator />} />
+      <Route path="/fraction-to-ratio" element={<FractionToRatio />} />
     </Routes>
   )
 }
