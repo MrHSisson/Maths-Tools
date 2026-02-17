@@ -714,9 +714,9 @@ const generateQuestion = (
       const colorA = context.colors[0];
       const colorB = context.colors[1];
       
-      if (actualGivenType === 'partA') givenValue = partA;
-      else if (actualGivenType === 'partB') givenValue = partB;
-      else givenValue = total;
+      const givenValue = actualGivenType === 'partA' ? partA
+                       : actualGivenType === 'partB' ? partB
+                       : total;
       
       // Build question
       if (actualGivenType === 'total') {
@@ -1919,7 +1919,6 @@ export default function GenericToolShell() {
       // Differentiated layout - 3 columns, one per level
       const levels = ['level1', 'level2', 'level3'];
       const levelNames = ['Level 1', 'Level 2', 'Level 3'];
-      const toolSettings = getCurrentToolSettings();
       
       // Get level-specific background colors for question boxes
       const getLevelQuestionBoxBg = (level: string): string => {
@@ -2000,6 +1999,7 @@ export default function GenericToolShell() {
     }
     
     // Non-differentiated layout
+    const toolSettings = getCurrentToolSettings();
     return (
       <div className="rounded-xl shadow-2xl p-8 relative" style={{ backgroundColor: getQuestionBg() }}>
         {/* Font Size Controls */}
