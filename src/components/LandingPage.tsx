@@ -47,11 +47,11 @@ const categories: Category[] = [
     gradient: 'from-purple-500 to-fuchsia-600',
     iconBg: 'from-purple-50 to-fuchsia-50',
     tools: [
-      { id: 'completing-square', path: '/completing-the-square', name: 'Completing the Square', icon: '▢', description: 'Rewrite and solve quadratic expressions in completed square form', ready: true },
-      { id: 'single-brackets', path: '/expanding-single-brackets-FOIL', name: 'Expanding Single Brackets (FOIL)', icon: '3(x+2)', description: 'Expand single brackets by using arrows for each term', ready: true },
-      { id: 'expanding-double-brackets-FOIL', path: '/expanding-double-brackets-foil', name: 'Expanding Double Brackets (FOIL)', icon: '(x+2)²', description: 'Expand pairs of brackets using the FOIL method', ready: true },
-      { id: 'single-brackets', path: '/expanding-single-brackets-GRID', name: 'Expanding Single Brackets (GRID)', icon: '3(x+2)', description: 'Expand single brackets by using the grid method', ready: true },
-      { id: 'expanding-double-brackets-GRID', path: '/expanding-double-brackets-grid', name: 'Expanding Double Brackets (GRID)', icon: '(x+2)²', description: 'Expand pairs of brackets using the grid method', ready: true },
+      { id: 'completing-square', path: '/completing-the-square', name: 'Completing the Square', icon: '🔲', description: 'Rewrite and solve quadratic expressions in completed square form', ready: true },
+      { id: 'single-brackets', path: '/expanding-single-brackets-FOIL', name: 'Expanding Single Brackets (FOIL)', icon: 'x', description: 'Expand single brackets by using arrows for each term', ready: true },
+      { id: 'expanding-double-brackets-FOIL', path: '/expanding-double-brackets-foil', name: 'Expanding Double Brackets (FOIL)', icon: 'x²', description: 'Expand pairs of brackets using the FOIL method', ready: true },
+      { id: 'single-brackets', path: '/expanding-single-brackets-GRID', name: 'Expanding Single Brackets (GRID)', icon: 'x', description: 'Expand single brackets by using the grid method', ready: true },
+      { id: 'expanding-double-brackets-GRID', path: '/expanding-double-brackets-grid', name: 'Expanding Double Brackets (GRID)', icon: 'x²', description: 'Expand pairs of brackets using the grid method', ready: true },
       { id: 'iteration', path: '/iteration', name: 'Iteration', icon: '🔄', description: 'Find roots to eqautions using iterative methods', ready: true },
       { id: 'like-terms', path: '/like-terms', name: 'Like Terms', icon: '2x²', description: 'Simplify algebraic expressions by collecting like terms', ready: false },
     ]
