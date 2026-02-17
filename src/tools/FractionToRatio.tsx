@@ -209,9 +209,7 @@ const convertToCommonDenominator = (
   return { newNum1, newNum2, lcd, steps };
 };
 
-const _formatFraction = (num: number, den: number): string => {
-  return `<sup>${num}</sup>/<sub>${den}</sub>`;
-};
+
 
 const getSimplificationSteps = (parts: number[]): string[] => {
   const steps: string[] = [];
@@ -2002,8 +2000,6 @@ export default function GenericToolShell() {
     }
     
     // Non-differentiated layout
-    const toolSettings = getCurrentToolSettings();
-    
     return (
       <div className="rounded-xl shadow-2xl p-8 relative" style={{ backgroundColor: getQuestionBg() }}>
         {/* Font Size Controls */}
