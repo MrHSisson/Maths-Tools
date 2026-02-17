@@ -176,26 +176,7 @@ const findDecimalPosition = (num: number): number => {
   return decimalIndex;
 };
 
-const getRelevantColumns = (_vin: number, _vout: number): string[] => {
-  const allColumns = getPlaceValueColumns();
-  const onesIndex = 6;
-  
-  const vinDecPos = findDecimalPosition(_vin);
-  const voutDecPos = findDecimalPosition(_vout);
-  
-  const maxLeft = Math.max(vinDecPos - 1, voutDecPos - 1);
-  const vinRight = _vin.toString().includes('.') ? _vin.toString().split('.')[1]?.length || 0 : 0;
-  const voutRight = _vout.toString().includes('.') ? _vout.toString().split('.')[1]?.length || 0 : 0;
-  const maxRight = Math.max(vinRight, voutRight);
-  
-  const leftNeeded = Math.min(maxLeft + 1, 6);
-  const rightNeeded = Math.min(maxRight + 1, 6);
-  
-  const startIndex = onesIndex - leftNeeded;
-  const endIndex = onesIndex + rightNeeded;
-  
-  return allColumns.slice(Math.max(0, startIndex), Math.min(allColumns.length, endIndex + 1));
-};
+
 
 const getDigitAtPosition = (num: number, position: number, onesIndex: number): string => {
   // Remove commas and convert to string
@@ -242,7 +223,7 @@ const getDigitAtPosition = (num: number, position: number, onesIndex: number): s
 };
 
 // QUESTION GENERATION
-  const generateQuestion = (
+const generateQuestion = (
   _tool: ToolType,
   level: DifficultyLevel,
   variables: Record<string, boolean>,
@@ -250,31 +231,24 @@ const getDigitAtPosition = (num: number, position: number, onesIndex: number): s
 ): Question => {
   // For Level 2, skip validation loop
   if (level === 'level2') {
-    return generateQuestionAttempt(tool, level, variables, dropdownValue);
+    return generateQuestionAttempt(_tool, level, variables, dropdownValue);
   }
-  
+
   let attempts = 0;
   const maxAttempts = 100;
-  
+
   while (attempts < maxAttempts) {
     attempts++;
-    
-    const result = generateQuestionAttempt(tool, level, variables, dropdownValue);
-    
-    // Validate the result doesn't have too many decimal places
+    const result = generateQuestionAttempt(_tool, level, variables, dropdownValue);
     const answerStr = result.answer.replace(/,/g, '');
     if (answerStr.includes('.')) {
       const decimalPart = answerStr.split('.')[1];
-      if (decimalPart && decimalPart.length > 7) {
-        continue; // Try again
-      }
+      if (decimalPart && decimalPart.length > 7) continue;
     }
-    
     return result;
   }
-  
-  // Fallback - shouldn't reach here but just in case
-  return generateQuestionAttempt(tool, level, variables, dropdownValue);
+
+  return generateQuestionAttempt(_tool, level, variables, dropdownValue);
 };
 
 const generateQuestionAttempt = (
