@@ -984,7 +984,7 @@ export default function PowersOfTenTool() {
           className="rounded-xl p-6" 
           style={{ minHeight: '500px', backgroundColor: getWhiteboardWorkingBg() }}
         >
-          {currentQuestion && renderPlaceValueGrid(currentQuestion, false, false, getWhiteboardWorkingBg())}
+          {currentQuestion && (currentQuestion.difficulty !== 'level3' || showWhiteboardAnswer) && renderPlaceValueGrid(currentQuestion, false, false, getWhiteboardWorkingBg())}
         </div>
       </div>
     );
