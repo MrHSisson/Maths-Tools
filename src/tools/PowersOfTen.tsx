@@ -166,15 +166,7 @@ const getPlaceValueColumns = (level?: DifficultyLevel): string[] => {
   }
 };
 
-const findDecimalPosition = (num: number): number => {
-  const str = num.toString();
-  const decimalIndex = str.indexOf('.');
-  if (decimalIndex === -1) {
-    // No decimal, position is after the last digit
-    return str.length;
-  }
-  return decimalIndex;
-};
+
 
 
 
@@ -252,7 +244,7 @@ const generateQuestion = (
 };
 
 const generateQuestionAttempt = (
-  tool: ToolType,
+  _tool: ToolType,
   level: DifficultyLevel,
   variables: Record<string, boolean>,
   dropdownValue: string
