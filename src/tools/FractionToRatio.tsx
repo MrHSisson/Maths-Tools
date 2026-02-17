@@ -1555,7 +1555,6 @@ export default function GenericToolShell() {
 
   
   const renderControlBar = (): JSX.Element => {
-    const toolSettings = getCurrentToolSettings();
     const currentVariables = getCurrentVariablesConfig();
     const currentDropdown = getCurrentDropdownConfig();
     
@@ -1914,11 +1913,9 @@ export default function GenericToolShell() {
     }
     
     if (isDifferentiated) {
-      // Differentiated layout - 3 columns, one per level
       const levels = ['level1', 'level2', 'level3'];
       const levelNames = ['Level 1', 'Level 2', 'Level 3'];
 
-      // Get level-specific background colors for question boxes
       const getLevelQuestionBoxBg = (level: string): string => {
         const levelColors: Record<string, string> = {
           level1: '#dcfce7', // green-100
