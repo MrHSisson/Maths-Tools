@@ -65,7 +65,7 @@ const categories: Category[] = [
       { id: 'ratio', path: '/ratio-sharing', name: 'Dividing Ratios', icon: '💰', description: 'Sharing amounts using the total, a known amount or known difference', ready: true },
       { id: 'simplifying-ratios', path: '/simplifying-ratios', name: 'Simplifying Ratios', icon: '➗', description: 'Simplifying ratios in numerical and algebraic forms', ready: true },
       { id: 'Recipes', path: '/recipes', name: 'Recipes', icon: '🧁', description: 'Find amounts of ingredients by scaling recipes and understanding limiting factors', ready: true },
-      { id: 'Fraction-to-ratio', path: '/fractions-to-ratio', name: 'Converting Fractions and Ratios', icon: '↔️', description: 'To convert fractions and ratios interchangably', ready: true },
+      { id: 'fraction-to-ratio', path: '/fraction-to-ratio', name: 'Converting Fractions and Ratios', icon: '🔁', description: 'To convert fractions and ratios interchangably', ready: true },
     ]
   },
   {
