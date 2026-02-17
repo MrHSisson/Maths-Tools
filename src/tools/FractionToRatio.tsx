@@ -1233,7 +1233,7 @@ const generateQuestion = (
           ];
         }
         
-        if (part1 > 0 && part2 > 0) {
+        if (part1 > 0 && part2 > 0 && part1 !== part2) {
           validQuestion = true;
           display = `There are ${total} ${context.item} in a ${context.container}. ${constraintText}. Write this as a ratio.`;
           
@@ -2165,8 +2165,3 @@ export default function GenericToolShell() {
     </>
   );
 }
-
-// WEB INTEGRATION: Add routing (3 lines at end)
-// 1. Top: import routing library hook
-// 2. After state: initialize navigation
-// 3. Home button: use navigation function
