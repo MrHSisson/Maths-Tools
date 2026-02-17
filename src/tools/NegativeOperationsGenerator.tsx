@@ -22,27 +22,20 @@ type SignCombination = 'pos_pos' | 'pos_neg' | 'neg_pos' | 'neg_neg';
 
 // QUESTION GENERATION
 const generateQuestions = (
-  operations: OperationType[],
-  signCombinations: SignCombination[],
+  operationCombinations: Record<OperationType, SignCombination[]>,
   numQuestions: number,
   useBrackets: boolean
 ): Question[] => {
   const allPossible: Question[] = [];
   
-  // Generate all possible questions for each operation type
-  operations.forEach(operation => {
-    signCombinations.forEach(signCombo => {
-      // Use different ranges based on operation
+  (Object.keys(operationCombinations) as OperationType[]).forEach(operation => {
+    operationCombinations[operation].forEach(signCombo => {
       if (operation === 'addition' || operation === 'subtraction') {
-        // For addition and subtraction: -25 to 25
         generateAdditionSubtractionQuestions(operation, signCombo, 25, allPossible, useBrackets);
-      } else {
-        // For multiplication and division: 1 to 12
-        if (operation === 'multiplication') {
-          generateMultiplicationQuestions(signCombo, 12, allPossible, useBrackets);
-        } else if (operation === 'division') {
-          generateDivisionQuestions(signCombo, 12, allPossible, useBrackets);
-        }
+      } else if (operation === 'multiplication') {
+        generateMultiplicationQuestions(signCombo, 12, allPossible, useBrackets);
+      } else if (operation === 'division') {
+        generateDivisionQuestions(signCombo, 12, allPossible, useBrackets);
       }
     });
   });
@@ -53,7 +46,6 @@ const generateQuestions = (
     [allPossible[i], allPossible[j]] = [allPossible[j], allPossible[i]];
   }
 
-  // Select required number
   return allPossible.slice(0, Math.min(numQuestions, allPossible.length));
 };
 
@@ -213,8 +205,13 @@ const generateDivisionQuestions = (
 };
 
 export default function NegativeNumbersOperations() {
-  const [selectedOperations, setSelectedOperations] = useState<OperationType[]>([]);
-  const [selectedCombinations, setSelectedCombinations] = useState<SignCombination[]>([]);
+  // Per-operation combination state: each operation tracks its own enabled combinations
+  const [operationCombinations, setOperationCombinations] = useState<Record<OperationType, SignCombination[]>>({
+    addition: [],
+    subtraction: [],
+    multiplication: [],
+    division: [],
+  });
   const [numQuestions, setNumQuestions] = useState<number>(40);
   const [useBrackets, setUseBrackets] = useState<boolean>(true);
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
@@ -222,53 +219,47 @@ export default function NegativeNumbersOperations() {
   const [error, setError] = useState<string>('');
   const [previewQuestions, setPreviewQuestions] = useState<Question[]>([]);
 
+  const allCombos: SignCombination[] = ['pos_pos', 'pos_neg', 'neg_pos', 'neg_neg'];
+
+  // Check if an operation has all 4 combinations selected
+  const isOperationFullySelected = (op: OperationType): boolean =>
+    allCombos.every(c => operationCombinations[op].includes(c));
+
+  // Toggle entire operation - selects all 4 combos or clears them
   const toggleOperation = (operation: OperationType): void => {
-    setSelectedOperations(prev => {
-      const isCurrentlySelected = prev.includes(operation);
-      if (isCurrentlySelected) {
-        // Unchecking operation - remove it
-        return prev.filter(op => op !== operation);
-      } else {
-        // Checking operation - add it and select all combinations
-        setSelectedCombinations(prevCombos => {
-          // Add all combinations if they're not already there
-          const allCombos: SignCombination[] = ['pos_pos', 'pos_neg', 'neg_pos', 'neg_neg'];
-          const newCombos = [...prevCombos];
-          allCombos.forEach(combo => {
-            if (!newCombos.includes(combo)) {
-              newCombos.push(combo);
-            }
-          });
-          return newCombos;
-        });
-        return [...prev, operation];
-      }
+    setOperationCombinations(prev => ({
+      ...prev,
+      [operation]: isOperationFullySelected(operation) ? [] : [...allCombos],
+    }));
+    setError('');
+  };
+
+  // Toggle a single combination for a specific operation
+  const toggleCombination = (operation: OperationType, combo: SignCombination): void => {
+    setOperationCombinations(prev => {
+      const current = prev[operation];
+      return {
+        ...prev,
+        [operation]: current.includes(combo)
+          ? current.filter(c => c !== combo)
+          : [...current, combo],
+      };
     });
     setError('');
   };
 
-  const toggleCombination = (combo: SignCombination): void => {
-    setSelectedCombinations(prev => 
-      prev.includes(combo) 
-        ? prev.filter(c => c !== combo)
-        : [...prev, combo]
-    );
-    setError('');
-  };
-
   const handleGeneratePreview = (): void => {
-    if (selectedOperations.length === 0) {
-      setError('Please select at least one operation type');
+    const activeOperations = (Object.keys(operationCombinations) as OperationType[])
+      .filter(op => operationCombinations[op].length > 0);
+
+    if (activeOperations.length === 0) {
+      setError('Please select at least one operation and sign combination');
       return;
     }
 
-    if (selectedCombinations.length === 0) {
-      setError('Please select at least one sign combination');
-      return;
-    }
+    // Build flat list of (operation, combo) pairs for generation
+    const questions = generateQuestions(operationCombinations, numQuestions, useBrackets);
 
-    const questions = generateQuestions(selectedOperations, selectedCombinations, numQuestions, useBrackets);
-    
     if (questions.length === 0) {
       setError('No questions could be generated with the current settings');
       return;
@@ -279,17 +270,15 @@ export default function NegativeNumbersOperations() {
   };
 
   const handleGeneratePDF = (): void => {
-    if (selectedOperations.length === 0) {
-      setError('Please select at least one operation type');
+    const activeOperations = (Object.keys(operationCombinations) as OperationType[])
+      .filter(op => operationCombinations[op].length > 0);
+
+    if (activeOperations.length === 0) {
+      setError('Please select at least one operation and sign combination');
       return;
     }
 
-    if (selectedCombinations.length === 0) {
-      setError('Please select at least one sign combination');
-      return;
-    }
-
-    const questions = generateQuestions(selectedOperations, selectedCombinations, numQuestions, useBrackets);
+    const questions = generateQuestions(operationCombinations, numQuestions, useBrackets);
     
     if (questions.length === 0) {
       setError('No questions could be generated with the current settings');
@@ -455,65 +444,32 @@ export default function NegativeNumbersOperations() {
             <div className="mb-8">
               {/* 2x2 Grid for Operations */}
               <div className="grid grid-cols-2 gap-8 max-w-2xl mx-auto">
+
                 {/* Addition */}
                 <div className="text-center">
                   <label className="flex items-center justify-center gap-3 cursor-pointer mb-3">
                     <input 
                       type="checkbox" 
-                      checked={selectedOperations.includes('addition')}
+                      checked={isOperationFullySelected('addition')}
                       onChange={() => toggleOperation('addition')}
                       className="w-5 h-5 cursor-pointer"
                       style={{ accentColor: '#1e3a8a' }}
                     />
-                    <span className="text-xl font-bold" style={{ color: '#000000' }}>
-                      Addition (+)
-                    </span>
+                    <span className="text-xl font-bold" style={{ color: '#000000' }}>Addition (+)</span>
                   </label>
                   <div className="flex flex-col gap-2 items-center">
-                    <label className="flex items-center gap-2 cursor-pointer text-gray-700">
-                      <input 
-                        type="checkbox" 
-                        checked={selectedOperations.includes('addition') && selectedCombinations.includes('pos_pos')}
-                        onChange={() => toggleCombination('pos_pos')}
-                        disabled={!selectedOperations.includes('addition')}
-                        className="w-4 h-4 cursor-pointer disabled:opacity-50"
-                        style={{ accentColor: '#1e3a8a' }}
-                      />
-                      <span>Positive + Positive</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer text-gray-700">
-                      <input 
-                        type="checkbox" 
-                        checked={selectedOperations.includes('addition') && selectedCombinations.includes('pos_neg')}
-                        onChange={() => toggleCombination('pos_neg')}
-                        disabled={!selectedOperations.includes('addition')}
-                        className="w-4 h-4 cursor-pointer disabled:opacity-50"
-                        style={{ accentColor: '#1e3a8a' }}
-                      />
-                      <span>Positive + Negative</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer text-gray-700">
-                      <input 
-                        type="checkbox" 
-                        checked={selectedOperations.includes('addition') && selectedCombinations.includes('neg_pos')}
-                        onChange={() => toggleCombination('neg_pos')}
-                        disabled={!selectedOperations.includes('addition')}
-                        className="w-4 h-4 cursor-pointer disabled:opacity-50"
-                        style={{ accentColor: '#1e3a8a' }}
-                      />
-                      <span>Negative + Positive</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer text-gray-700">
-                      <input 
-                        type="checkbox" 
-                        checked={selectedOperations.includes('addition') && selectedCombinations.includes('neg_neg')}
-                        onChange={() => toggleCombination('neg_neg')}
-                        disabled={!selectedOperations.includes('addition')}
-                        className="w-4 h-4 cursor-pointer disabled:opacity-50"
-                        style={{ accentColor: '#1e3a8a' }}
-                      />
-                      <span>Negative + Negative</span>
-                    </label>
+                    {(['pos_pos', 'pos_neg', 'neg_pos', 'neg_neg'] as SignCombination[]).map(combo => (
+                      <label key={combo} className="flex items-center gap-2 cursor-pointer text-gray-700">
+                        <input 
+                          type="checkbox"
+                          checked={operationCombinations.addition.includes(combo)}
+                          onChange={() => toggleCombination('addition', combo)}
+                          className="w-4 h-4 cursor-pointer"
+                          style={{ accentColor: '#1e3a8a' }}
+                        />
+                        <span>{combo === 'pos_pos' ? 'Positive + Positive' : combo === 'pos_neg' ? 'Positive + Negative' : combo === 'neg_pos' ? 'Negative + Positive' : 'Negative + Negative'}</span>
+                      </label>
+                    ))}
                   </div>
                 </div>
 
@@ -522,60 +478,26 @@ export default function NegativeNumbersOperations() {
                   <label className="flex items-center justify-center gap-3 cursor-pointer mb-3">
                     <input 
                       type="checkbox" 
-                      checked={selectedOperations.includes('subtraction')}
+                      checked={isOperationFullySelected('subtraction')}
                       onChange={() => toggleOperation('subtraction')}
                       className="w-5 h-5 cursor-pointer"
                       style={{ accentColor: '#1e3a8a' }}
                     />
-                    <span className="text-xl font-bold" style={{ color: '#000000' }}>
-                      Subtraction (-)
-                    </span>
+                    <span className="text-xl font-bold" style={{ color: '#000000' }}>Subtraction (-)</span>
                   </label>
                   <div className="flex flex-col gap-2 items-center">
-                    <label className="flex items-center gap-2 cursor-pointer text-gray-700">
-                      <input 
-                        type="checkbox" 
-                        checked={selectedOperations.includes('subtraction') && selectedCombinations.includes('pos_pos')}
-                        onChange={() => toggleCombination('pos_pos')}
-                        disabled={!selectedOperations.includes('subtraction')}
-                        className="w-4 h-4 cursor-pointer disabled:opacity-50"
-                        style={{ accentColor: '#1e3a8a' }}
-                      />
-                      <span>Positive - Positive</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer text-gray-700">
-                      <input 
-                        type="checkbox" 
-                        checked={selectedOperations.includes('subtraction') && selectedCombinations.includes('pos_neg')}
-                        onChange={() => toggleCombination('pos_neg')}
-                        disabled={!selectedOperations.includes('subtraction')}
-                        className="w-4 h-4 cursor-pointer disabled:opacity-50"
-                        style={{ accentColor: '#1e3a8a' }}
-                      />
-                      <span>Positive - Negative</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer text-gray-700">
-                      <input 
-                        type="checkbox" 
-                        checked={selectedOperations.includes('subtraction') && selectedCombinations.includes('neg_pos')}
-                        onChange={() => toggleCombination('neg_pos')}
-                        disabled={!selectedOperations.includes('subtraction')}
-                        className="w-4 h-4 cursor-pointer disabled:opacity-50"
-                        style={{ accentColor: '#1e3a8a' }}
-                      />
-                      <span>Negative - Positive</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer text-gray-700">
-                      <input 
-                        type="checkbox" 
-                        checked={selectedOperations.includes('subtraction') && selectedCombinations.includes('neg_neg')}
-                        onChange={() => toggleCombination('neg_neg')}
-                        disabled={!selectedOperations.includes('subtraction')}
-                        className="w-4 h-4 cursor-pointer disabled:opacity-50"
-                        style={{ accentColor: '#1e3a8a' }}
-                      />
-                      <span>Negative - Negative</span>
-                    </label>
+                    {(['pos_pos', 'pos_neg', 'neg_pos', 'neg_neg'] as SignCombination[]).map(combo => (
+                      <label key={combo} className="flex items-center gap-2 cursor-pointer text-gray-700">
+                        <input 
+                          type="checkbox"
+                          checked={operationCombinations.subtraction.includes(combo)}
+                          onChange={() => toggleCombination('subtraction', combo)}
+                          className="w-4 h-4 cursor-pointer"
+                          style={{ accentColor: '#1e3a8a' }}
+                        />
+                        <span>{combo === 'pos_pos' ? 'Positive - Positive' : combo === 'pos_neg' ? 'Positive - Negative' : combo === 'neg_pos' ? 'Negative - Positive' : 'Negative - Negative'}</span>
+                      </label>
+                    ))}
                   </div>
                 </div>
 
@@ -584,60 +506,26 @@ export default function NegativeNumbersOperations() {
                   <label className="flex items-center justify-center gap-3 cursor-pointer mb-3">
                     <input 
                       type="checkbox" 
-                      checked={selectedOperations.includes('multiplication')}
+                      checked={isOperationFullySelected('multiplication')}
                       onChange={() => toggleOperation('multiplication')}
                       className="w-5 h-5 cursor-pointer"
                       style={{ accentColor: '#1e3a8a' }}
                     />
-                    <span className="text-xl font-bold" style={{ color: '#000000' }}>
-                      Multiplication (×)
-                    </span>
+                    <span className="text-xl font-bold" style={{ color: '#000000' }}>Multiplication (×)</span>
                   </label>
                   <div className="flex flex-col gap-2 items-center">
-                    <label className="flex items-center gap-2 cursor-pointer text-gray-700">
-                      <input 
-                        type="checkbox" 
-                        checked={selectedOperations.includes('multiplication') && selectedCombinations.includes('pos_pos')}
-                        onChange={() => toggleCombination('pos_pos')}
-                        disabled={!selectedOperations.includes('multiplication')}
-                        className="w-4 h-4 cursor-pointer disabled:opacity-50"
-                        style={{ accentColor: '#1e3a8a' }}
-                      />
-                      <span>Positive × Positive</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer text-gray-700">
-                      <input 
-                        type="checkbox" 
-                        checked={selectedOperations.includes('multiplication') && selectedCombinations.includes('pos_neg')}
-                        onChange={() => toggleCombination('pos_neg')}
-                        disabled={!selectedOperations.includes('multiplication')}
-                        className="w-4 h-4 cursor-pointer disabled:opacity-50"
-                        style={{ accentColor: '#1e3a8a' }}
-                      />
-                      <span>Positive × Negative</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer text-gray-700">
-                      <input 
-                        type="checkbox" 
-                        checked={selectedOperations.includes('multiplication') && selectedCombinations.includes('neg_pos')}
-                        onChange={() => toggleCombination('neg_pos')}
-                        disabled={!selectedOperations.includes('multiplication')}
-                        className="w-4 h-4 cursor-pointer disabled:opacity-50"
-                        style={{ accentColor: '#1e3a8a' }}
-                      />
-                      <span>Negative × Positive</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer text-gray-700">
-                      <input 
-                        type="checkbox" 
-                        checked={selectedOperations.includes('multiplication') && selectedCombinations.includes('neg_neg')}
-                        onChange={() => toggleCombination('neg_neg')}
-                        disabled={!selectedOperations.includes('multiplication')}
-                        className="w-4 h-4 cursor-pointer disabled:opacity-50"
-                        style={{ accentColor: '#1e3a8a' }}
-                      />
-                      <span>Negative × Negative</span>
-                    </label>
+                    {(['pos_pos', 'pos_neg', 'neg_pos', 'neg_neg'] as SignCombination[]).map(combo => (
+                      <label key={combo} className="flex items-center gap-2 cursor-pointer text-gray-700">
+                        <input 
+                          type="checkbox"
+                          checked={operationCombinations.multiplication.includes(combo)}
+                          onChange={() => toggleCombination('multiplication', combo)}
+                          className="w-4 h-4 cursor-pointer"
+                          style={{ accentColor: '#1e3a8a' }}
+                        />
+                        <span>{combo === 'pos_pos' ? 'Positive × Positive' : combo === 'pos_neg' ? 'Positive × Negative' : combo === 'neg_pos' ? 'Negative × Positive' : 'Negative × Negative'}</span>
+                      </label>
+                    ))}
                   </div>
                 </div>
 
@@ -646,62 +534,29 @@ export default function NegativeNumbersOperations() {
                   <label className="flex items-center justify-center gap-3 cursor-pointer mb-3">
                     <input 
                       type="checkbox" 
-                      checked={selectedOperations.includes('division')}
+                      checked={isOperationFullySelected('division')}
                       onChange={() => toggleOperation('division')}
                       className="w-5 h-5 cursor-pointer"
                       style={{ accentColor: '#1e3a8a' }}
                     />
-                    <span className="text-xl font-bold" style={{ color: '#000000' }}>
-                      Division (÷)
-                    </span>
+                    <span className="text-xl font-bold" style={{ color: '#000000' }}>Division (÷)</span>
                   </label>
                   <div className="flex flex-col gap-2 items-center">
-                    <label className="flex items-center gap-2 cursor-pointer text-gray-700">
-                      <input 
-                        type="checkbox" 
-                        checked={selectedOperations.includes('division') && selectedCombinations.includes('pos_pos')}
-                        onChange={() => toggleCombination('pos_pos')}
-                        disabled={!selectedOperations.includes('division')}
-                        className="w-4 h-4 cursor-pointer disabled:opacity-50"
-                        style={{ accentColor: '#1e3a8a' }}
-                      />
-                      <span>Positive ÷ Positive</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer text-gray-700">
-                      <input 
-                        type="checkbox" 
-                        checked={selectedOperations.includes('division') && selectedCombinations.includes('pos_neg')}
-                        onChange={() => toggleCombination('pos_neg')}
-                        disabled={!selectedOperations.includes('division')}
-                        className="w-4 h-4 cursor-pointer disabled:opacity-50"
-                        style={{ accentColor: '#1e3a8a' }}
-                      />
-                      <span>Positive ÷ Negative</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer text-gray-700">
-                      <input 
-                        type="checkbox" 
-                        checked={selectedOperations.includes('division') && selectedCombinations.includes('neg_pos')}
-                        onChange={() => toggleCombination('neg_pos')}
-                        disabled={!selectedOperations.includes('division')}
-                        className="w-4 h-4 cursor-pointer disabled:opacity-50"
-                        style={{ accentColor: '#1e3a8a' }}
-                      />
-                      <span>Negative ÷ Positive</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer text-gray-700">
-                      <input 
-                        type="checkbox" 
-                        checked={selectedOperations.includes('division') && selectedCombinations.includes('neg_neg')}
-                        onChange={() => toggleCombination('neg_neg')}
-                        disabled={!selectedOperations.includes('division')}
-                        className="w-4 h-4 cursor-pointer disabled:opacity-50"
-                        style={{ accentColor: '#1e3a8a' }}
-                      />
-                      <span>Negative ÷ Negative</span>
-                    </label>
+                    {(['pos_pos', 'pos_neg', 'neg_pos', 'neg_neg'] as SignCombination[]).map(combo => (
+                      <label key={combo} className="flex items-center gap-2 cursor-pointer text-gray-700">
+                        <input 
+                          type="checkbox"
+                          checked={operationCombinations.division.includes(combo)}
+                          onChange={() => toggleCombination('division', combo)}
+                          className="w-4 h-4 cursor-pointer"
+                          style={{ accentColor: '#1e3a8a' }}
+                        />
+                        <span>{combo === 'pos_pos' ? 'Positive ÷ Positive' : combo === 'pos_neg' ? 'Positive ÷ Negative' : combo === 'neg_pos' ? 'Negative ÷ Positive' : 'Negative ÷ Negative'}</span>
+                      </label>
+                    ))}
                   </div>
                 </div>
+
               </div>
             </div>
 
@@ -762,9 +617,9 @@ export default function NegativeNumbersOperations() {
             <div className="flex justify-center gap-4">
               <button 
                 onClick={handleGeneratePreview}
-                disabled={selectedOperations.length === 0 || selectedCombinations.length === 0}
+                disabled={(Object.keys(operationCombinations) as OperationType[]).every(op => operationCombinations[op].length === 0)}
                 className={`px-8 py-3 rounded-lg font-bold text-lg flex items-center gap-2 transition-all ${
-                  selectedOperations.length === 0 || selectedCombinations.length === 0
+                  (Object.keys(operationCombinations) as OperationType[]).every(op => operationCombinations[op].length === 0)
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     : 'bg-blue-900 text-white hover:bg-blue-800 shadow-xl'
                 }`}
@@ -774,9 +629,9 @@ export default function NegativeNumbersOperations() {
               </button>
               <button 
                 onClick={handleGeneratePDF}
-                disabled={selectedOperations.length === 0 || selectedCombinations.length === 0}
+                disabled={(Object.keys(operationCombinations) as OperationType[]).every(op => operationCombinations[op].length === 0)}
                 className={`px-8 py-3 rounded-lg font-bold text-lg flex items-center gap-2 transition-all ${
-                  selectedOperations.length === 0 || selectedCombinations.length === 0
+                  (Object.keys(operationCombinations) as OperationType[]).every(op => operationCombinations[op].length === 0)
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     : 'bg-blue-900 text-white hover:bg-blue-800 shadow-xl'
                 }`}
