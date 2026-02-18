@@ -16,6 +16,7 @@ import TimesTablesGenerator from './tools/TimesTablesGenerator';
 import NegativeOperationsGenerator from './tools/NegativeOperationsGenerator';
 import FractionToRatio from './tools/FractionToRatio';
 import PowersOfTen from './tools/PowersOfTen';
+import PerimeterTool from './tools/PerimeterTool';
 
 
 function App() {
@@ -38,6 +39,7 @@ function App() {
       <Route path="/negative-operations" element={<NegativeOperationsGenerator />} />
       <Route path="/fraction-to-ratio" element={<FractionToRatio />} />
       <Route path="/powers-of-ten" element={<PowersOfTen />} />
+      <Route path="/perimeter" element={<PerimeterTool />} />
     </Routes>
   )
 }
