@@ -75,7 +75,7 @@ const categories: Category[] = [
     gradient: 'from-orange-500 to-amber-600',
     iconBg: 'from-orange-50 to-amber-50',
     tools: [
-      { id: 'perimeter', path: '/perimeter', name: 'Perimeter', icon: '⬡', description: 'Calculate the perimeter of various 2D shapes', ready: false },
+      { id: 'perimeter', path: '/perimeter', name: 'Perimeter', icon: '⬡', description: 'Calculate the perimeter of various 2D shapes', ready: true },
       { id: 'circles', path: '/circle-properties', name: 'Properties of Circles', icon: '⭕', description: 'Find the circumference, area and arc lengths of circles and sectors', ready: true },
     ]
   },
