@@ -619,17 +619,17 @@ function drawPillsPDF(doc: JsPDFInstance, meta: PillMeta[], pos: Pt[]): void {
   });
 }
 
-function drawGridPDF(doc: JsPDFInstance, diffMode: boolean): void {
+function drawGridPDF(doc: JsPDFInstance, diffMode: boolean, cols: number, rows: number, cW: number, cH: number): void {
   doc.setDrawColor(160, 160, 160); doc.setLineWidth(0.25); doc.setLineDashPattern([], 0);
-  for (let r = 0; r < PDF_ROWS; r++)
-    for (let c = 0; c < PDF_COLS; c++)
-      doc.rect(PDF_M + c * CELL_W, PDF_M + r * CELL_H, CELL_W, CELL_H, "S");
+  for (let r = 0; r < rows; r++)
+    for (let c = 0; c < cols; c++)
+      doc.rect(PDF_M + c * cW, PDF_M + r * cH, cW, cH, "S");
   if (diffMode) {
     doc.setDrawColor(100, 100, 100); doc.setLineWidth(0.6);
-    for (let r = 1; r < PDF_ROWS; r++) { const y = PDF_M + r * CELL_H; doc.line(PDF_M, y, PDF_W - PDF_M, y); }
+    for (let r = 1; r < rows; r++) { const y = PDF_M + r * cH; doc.line(PDF_M, y, PDF_W - PDF_M, y); }
     doc.setFontSize(5.5); doc.setTextColor(100, 100, 100);
     ["Level 1", "Level 2", "Level 3"].forEach((lbl, r) => {
-      doc.text(lbl, 1.5, PDF_M + r * CELL_H + CELL_H / 2, { angle: 90, align: "center" });
+      doc.text(lbl, 1.5, PDF_M + r * cH + cH / 2, { angle: 90, align: "center" });
     });
   }
 }
