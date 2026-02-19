@@ -694,13 +694,13 @@ function drawRectCellPDF(doc: JsPDFInstance, q: RectQuestion, cellX: number, cel
   if (showAnswer) { doc.setFontSize(8); doc.setTextColor(185, 28, 28); doc.setLineDashPattern([], 0); doc.text(`= ${q.perimeter} cm`, cellX + CELL_W / 2, cellY + CELL_H - CPAD, { align: "center" }); }
 }
 
-function renderPagePDF(doc: JsPDFInstance, questions: (PolyQuestion | RectQuestion)[], showAnswer: boolean, diffMode: boolean, type: string): void {
+function renderPagePDF(doc: JsPDFInstance, questions: (PolyQuestion | RectQuestion)[], showAnswer: boolean, diffMode: boolean, type: string, cols: number, rows: number, cW: number, cH: number): void {
   questions.forEach((q, i) => {
-    const row = Math.floor(i / PDF_COLS), col = i % PDF_COLS;
-    if (type === "polygon") drawPolyCellPDF(doc, q as PolyQuestion, PDF_M + col * CELL_W, PDF_M + row * CELL_H, showAnswer);
-    else                    drawRectCellPDF(doc, q as RectQuestion, PDF_M + col * CELL_W, PDF_M + row * CELL_H, showAnswer);
+    const row = Math.floor(i / cols), col = i % cols;
+    if (type === "polygon") drawPolyCellPDF(doc, q as PolyQuestion, PDF_M + col * cW, PDF_M + row * cH, showAnswer, cW, cH);
+    else                    drawRectCellPDF(doc, q as RectQuestion, PDF_M + col * cW, PDF_M + row * cH, showAnswer, cW, cH);
   });
-  drawGridPDF(doc, diffMode);
+  drawGridPDF(doc, diffMode, cols, rows, cW, cH);
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
