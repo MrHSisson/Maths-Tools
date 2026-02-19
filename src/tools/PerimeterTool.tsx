@@ -762,10 +762,9 @@ interface WorksheetPanelProps {
   buildQuestions: (diff: string, diff2: boolean) => (PolyQuestion | RectQuestion)[];
   DiagramComponent: React.ComponentType<DiagramProps>;
   pdfType: string;
-  filename: string;
 }
 
-function WorksheetPanel({ col, buildQuestions, DiagramComponent, pdfType, filename }: WorksheetPanelProps) {
+function WorksheetPanel({ col, buildQuestions, DiagramComponent, pdfType }: WorksheetPanelProps) {
   const [diff, setDiff] = useState("level1");
   const [pages, setPages] = useState(1);
   const [diff2, setDiff2] = useState(false);
