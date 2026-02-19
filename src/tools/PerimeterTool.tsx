@@ -762,6 +762,7 @@ interface WorksheetPanelProps {
   buildQuestions: (diff: string, diff2: boolean) => (PolyQuestion | RectQuestion)[];
   DiagramComponent: React.ComponentType<DiagramProps>;
   pdfType: string;
+  filename: string;
 }
 
 function WorksheetPanel({ col, buildQuestions, DiagramComponent, pdfType }: WorksheetPanelProps) {
