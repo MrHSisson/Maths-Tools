@@ -635,11 +635,11 @@ function drawGridPDF(doc: JsPDFInstance, diffMode: boolean): void {
 }
 
 function drawPolyCellPDF(doc: JsPDFInstance, q: PolyQuestion, cellX: number, cellY: number, showAnswer: boolean, cellW: number, cellH: number): void {
-  const availW = CELL_W - CPAD * 2, availH = CELL_H - CPAD * 2 - LABEL_H_MM - (showAnswer ? ANSWER_H_MM : 0);
+  const availW = cellW - CPAD * 2, availH = cellH - CPAD * 2 - LABEL_H_MM - (showAnswer ? ANSWER_H_MM : 0);
   const cx = cellX + CPAD + availW / 2, cy = cellY + CPAD + LABEL_H_MM + availH / 2;
   const pts = scaledPts(q.rawPts, cx, cy, availW, availH);
   doc.setFontSize(5.5); doc.setTextColor(30, 58, 138); doc.setLineDashPattern([], 0);
-  doc.text("Find the perimeter in cm", cellX + CELL_W / 2, cellY + CPAD + LABEL_H_MM * 0.6, { align: "center" });
+  doc.text("Find the perimeter in cm", cellX + cellW / 2, cellY + CPAD + LABEL_H_MM * 0.6, { align: "center" });
   doc.setFillColor(209, 250, 229); doc.setDrawColor(6, 95, 70); doc.setLineWidth(0.5); doc.setLineDashPattern([], 0);
   const lines: number[][] = [];
   for (let i = 1; i < pts.length; i++) lines.push([pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]]);
@@ -648,16 +648,15 @@ function drawPolyCellPDF(doc: JsPDFInstance, q: PolyQuestion, cellX: number, cel
   drawTicksPDF(doc, pts, q.def.groups);
   const meta = buildPillMetaMM(q.groupVals, q.def, pts, cx, cy, 8.5);
   drawPillsPDF(doc, meta, choosePillPositions(meta));
-  if (showAnswer) { doc.setFontSize(8); doc.setTextColor(185, 28, 28); doc.setLineDashPattern([], 0); doc.text(`= ${q.perimeter} cm`, cellX + CELL_W / 2, cellY + CELL_H - CPAD, { align: "center" }); }
+  if (showAnswer) { doc.setFontSize(8); doc.setTextColor(185, 28, 28); doc.setLineDashPattern([], 0); doc.text(`= ${q.perimeter} cm`, cellX + cellW / 2, cellY + cellH - CPAD, { align: "center" }); }
 }
 
 function drawRectCellPDF(doc: JsPDFInstance, q: RectQuestion, cellX: number, cellY: number, showAnswer: boolean, cellW: number, cellH: number): void {
   const maxX = Math.max(...q.pts.map(p => p[0])), maxY = Math.max(...q.pts.map(p => p[1]));
   const answerReserve = showAnswer ? ANSWER_H_MM : 0;
-  // Reserve pill clearance on all sides so labels never escape the cell
-  const pillClear = 7; // mm clearance for pills + leader lines
-  const availW = CELL_W - CPAD * 2 - pillClear * 2;
-  const availH = CELL_H - CPAD * 2 - LABEL_H_MM - answerReserve - pillClear * 2;
+  const pillClear = 7;
+  const availW = cellW - CPAD * 2 - pillClear * 2;
+  const availH = cellH - CPAD * 2 - LABEL_H_MM - answerReserve - pillClear * 2;
   const sc = Math.min(availW / maxX, availH / maxY) * 0.80;
   // Centre the scaled shape in the available area
   const shapeW = maxX * sc, shapeH = maxY * sc;
