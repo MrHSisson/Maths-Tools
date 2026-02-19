@@ -634,7 +634,7 @@ function drawGridPDF(doc: JsPDFInstance, diffMode: boolean): void {
   }
 }
 
-function drawPolyCellPDF(doc: JsPDFInstance, q: PolyQuestion, cellX: number, cellY: number, showAnswer: boolean): void {
+function drawPolyCellPDF(doc: JsPDFInstance, q: PolyQuestion, cellX: number, cellY: number, showAnswer: boolean, cellW: number, cellH: number): void {
   const availW = CELL_W - CPAD * 2, availH = CELL_H - CPAD * 2 - LABEL_H_MM - (showAnswer ? ANSWER_H_MM : 0);
   const cx = cellX + CPAD + availW / 2, cy = cellY + CPAD + LABEL_H_MM + availH / 2;
   const pts = scaledPts(q.rawPts, cx, cy, availW, availH);
@@ -651,7 +651,7 @@ function drawPolyCellPDF(doc: JsPDFInstance, q: PolyQuestion, cellX: number, cel
   if (showAnswer) { doc.setFontSize(8); doc.setTextColor(185, 28, 28); doc.setLineDashPattern([], 0); doc.text(`= ${q.perimeter} cm`, cellX + CELL_W / 2, cellY + CELL_H - CPAD, { align: "center" }); }
 }
 
-function drawRectCellPDF(doc: JsPDFInstance, q: RectQuestion, cellX: number, cellY: number, showAnswer: boolean): void {
+function drawRectCellPDF(doc: JsPDFInstance, q: RectQuestion, cellX: number, cellY: number, showAnswer: boolean, cellW: number, cellH: number): void {
   const maxX = Math.max(...q.pts.map(p => p[0])), maxY = Math.max(...q.pts.map(p => p[1]));
   const answerReserve = showAnswer ? ANSWER_H_MM : 0;
   // Reserve pill clearance on all sides so labels never escape the cell
@@ -714,25 +714,29 @@ interface WorksheetPreviewProps {
   diffMode: boolean;
   pageIndex: number;
   DiagramComponent: React.ComponentType<DiagramProps>;
+  isRect?: boolean;
 }
 
-function WorksheetPreview({ questions, diffMode, pageIndex, DiagramComponent }: WorksheetPreviewProps) {
-  const pageQs = questions.slice(pageIndex * 9, (pageIndex + 1) * 9);
+function WorksheetPreview({ questions, diffMode, pageIndex, DiagramComponent, isRect }: WorksheetPreviewProps) {
+  const cols = isRect ? 2 : 3;
+  const perPage = isRect ? 6 : 9;
+  const pageQs = questions.slice(pageIndex * perPage, (pageIndex + 1) * perPage);
   const cellClass = "border-r border-b border-gray-200 last:border-r-0 p-2 flex flex-col items-center bg-white";
+  const gridClass = `grid grid-cols-${cols} border border-gray-300 rounded-lg overflow-hidden`;
   return (
     <div className="w-full">
       {diffMode ? (
         <div className="flex flex-col gap-0 border border-gray-300 rounded-lg overflow-hidden">
           {[0, 1, 2].map(row => {
-            const rowQs = pageQs.slice(row * 3, (row + 1) * 3);
+            const rowQs = pageQs.slice(row * cols, (row + 1) * cols);
             return (
               <div key={row} className={`border-b-2 last:border-b-0 ${DIFF_BORDER[row]}`}>
                 <div className={`px-3 py-1 text-xs font-bold uppercase tracking-wide ${DIFF_LABEL_COL[row]} bg-white border-b border-gray-100`}>{DIFF_LABEL[row]}</div>
-                <div className="grid grid-cols-3">
+                <div className={`grid grid-cols-${cols}`}>
                   {rowQs.map((q, i) => (
                     <div key={i} className={cellClass}>
                       <p className="text-xs font-bold text-blue-900 mb-1 text-center">Find the perimeter in cm</p>
-                      <DiagramComponent q={q} showAnswer={false} isWs wsScale={0.75} />
+                      <DiagramComponent q={q} showAnswer={false} isWs wsScale={isRect ? 1.0 : 0.75} />
                     </div>
                   ))}
                 </div>
@@ -741,11 +745,11 @@ function WorksheetPreview({ questions, diffMode, pageIndex, DiagramComponent }: 
           })}
         </div>
       ) : (
-        <div className="grid grid-cols-3 border border-gray-300 rounded-lg overflow-hidden">
+        <div className={gridClass}>
           {pageQs.map((q, i) => (
             <div key={i} className={cellClass}>
               <p className="text-xs font-bold text-blue-900 mb-1 text-center">Find the perimeter in cm</p>
-              <DiagramComponent q={q} showAnswer={false} isWs wsScale={0.75} />
+              <DiagramComponent q={q} showAnswer={false} isWs wsScale={isRect ? 1.0 : 0.75} />
             </div>
           ))}
         </div>
@@ -763,9 +767,13 @@ interface WorksheetPanelProps {
   DiagramComponent: React.ComponentType<DiagramProps>;
   pdfType: string;
   filename: string;
+  isRect?: boolean;
 }
 
-function WorksheetPanel({ col, buildQuestions, DiagramComponent, pdfType }: WorksheetPanelProps) {
+function WorksheetPanel({ col, buildQuestions, DiagramComponent, pdfType, isRect }: WorksheetPanelProps) {
+  const perPage = isRect ? 6 : 9;
+  const pdfCols = isRect ? 2 : 3;
+  const pdfRows = 3;
   const [diff, setDiff] = useState("level1");
   const [pages, setPages] = useState(1);
   const [diff2, setDiff2] = useState(false);
@@ -779,20 +787,22 @@ function WorksheetPanel({ col, buildQuestions, DiagramComponent, pdfType }: Work
     setQuestions(qs); setPreviewPage(0); setPdfStatus("");
   }
 
-  const totalPages = questions.length > 0 ? Math.ceil(questions.length / 9) : 0;
+  const totalPages = questions.length > 0 ? Math.ceil(questions.length / perPage) : 0;
 
   async function downloadPDF() {
     setPdfStatus("Generating…");
     try {
       const JsPDF = await loadJsPDF();
+      const cellW = (PDF_W - PDF_M * 2) / pdfCols;
+      const cellH = (PDF_H - PDF_M * 2) / pdfRows;
       const doc = new JsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
       for (let p = 0; p < totalPages; p++) {
         if (p > 0) doc.addPage();
-        renderPagePDF(doc, questions.slice(p * 9, (p + 1) * 9), false, diff2, pdfType);
+        renderPagePDF(doc, questions.slice(p * perPage, (p + 1) * perPage), false, diff2, pdfType, pdfCols, pdfRows, cellW, cellH);
       }
       for (let p = 0; p < totalPages; p++) {
         doc.addPage();
-        renderPagePDF(doc, questions.slice(p * 9, (p + 1) * 9), true, diff2, pdfType);
+        renderPagePDF(doc, questions.slice(p * perPage, (p + 1) * perPage), true, diff2, pdfType, pdfCols, pdfRows, cellW, cellH);
       }
       const url = doc.output("bloburl") as string;
       window.open(url, "_blank");
@@ -812,7 +822,7 @@ function WorksheetPanel({ col, buildQuestions, DiagramComponent, pdfType }: Work
               <button key={p} onClick={() => setPages(p)}
                 className={"px-4 py-2 rounded-lg font-bold text-sm border-2 transition-all " +
                   (pages === p ? "bg-blue-900 text-white border-blue-900" : "bg-white text-blue-900 border-blue-900 hover:bg-blue-50")}>
-                {p * 9}
+                {p * perPage}
               </button>
             ))}
           </div>
@@ -853,7 +863,7 @@ function WorksheetPanel({ col, buildQuestions, DiagramComponent, pdfType }: Work
           )}
         </div>
         <div className="flex justify-center">
-          <WorksheetPreview questions={questions} diffMode={diff2} pageIndex={previewPage} DiagramComponent={DiagramComponent} />
+          <WorksheetPreview questions={questions} diffMode={diff2} pageIndex={previewPage} DiagramComponent={DiagramComponent} isRect={isRect} />
         </div>
       </div>
     )}
@@ -1096,7 +1106,7 @@ export default function PerimeterTool() {
         </div>
         {subtool === "rectilinear" && mode === "whiteboard" && <RectWhiteboard col={col} />}
         {subtool === "rectilinear" && mode === "single"     && <RectWorked col={col} />}
-        {subtool === "rectilinear" && mode === "worksheet"  && <WorksheetPanel col={col} buildQuestions={buildRectQuestions} DiagramComponent={RectDiagram as React.ComponentType<DiagramProps>} pdfType="rect" filename="perimeter-rectilinear.pdf" />}
+        {subtool === "rectilinear" && mode === "worksheet"  && <WorksheetPanel col={col} buildQuestions={buildRectQuestions} DiagramComponent={RectDiagram as React.ComponentType<DiagramProps>} pdfType="rect" filename="perimeter-rectilinear.pdf" isRect />}
         {subtool === "polygons"    && mode === "whiteboard" && <PolyWhiteboard col={col} />}
         {subtool === "polygons"    && mode === "single"     && <PolyWorked col={col} />}
         {subtool === "polygons"    && mode === "worksheet"  && <WorksheetPanel col={col} buildQuestions={buildPolyQuestions} DiagramComponent={PolyDiagram as React.ComponentType<DiagramProps>} pdfType="polygon" filename="perimeter-polygons.pdf" />}
