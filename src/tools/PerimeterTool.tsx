@@ -1065,9 +1065,9 @@ export default function PerimeterTool() {
   const [menuOpen, setMenuOpen] = useState(false);
   const col = SCHEMES[scheme];
   return (<>
-    <div className="bg-blue-900 shadow-lg">
+          <div className="bg-blue-900 shadow-lg">
       <div className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
-        <button className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg"><Home size={24} /><span className="font-semibold text-lg">Home</span></button>
+        <button onClick={() => navigate('/')} className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg"><Home size={24} /><span className="font-semibold text-lg">Home</span></button>
         <div className="relative">
           <button onClick={() => setMenuOpen(!menuOpen)} className="text-white hover:bg-blue-800 p-2 rounded-lg">{menuOpen ? <X size={28} /> : <Menu size={28} />}</button>
           {menuOpen && (
