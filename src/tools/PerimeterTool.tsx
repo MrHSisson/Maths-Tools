@@ -24,6 +24,7 @@ interface JsPDFInstance {
   line(x1: number, y1: number, x2: number, y2: number): void;
   lines(lines: number[][], x: number, y: number, scale: number[], style: string, closed: boolean): void;
   text(text: string, x: number, y: number, opts?: Record<string, unknown>): void;
+  output(type: "bloburl"): unknown;
 }
 
 function loadJsPDF(): Promise<new (opts: Record<string, unknown>) => JsPDFInstance> {
@@ -513,13 +514,19 @@ function edgeOutDir(sPts: Pt[], i: number): number {
 interface RectDiagramProps { q: RectQuestion; showAnswer: boolean; isWs?: boolean; wsScale?: number; }
 function RectDiagram({ q, showAnswer, isWs = false, wsScale = 1 }: RectDiagramProps) {
   const maxX = Math.max(...q.pts.map(p => p[0])), maxY = Math.max(...q.pts.map(p => p[1]));
-  const MAX_H = isWs ? 340 * wsScale : 520;
-  const sc = Math.min(isWs ? 8 * wsScale : 26, isWs ? MAX_H / maxY : Math.min(26, MAX_H / maxY));
-  const pad = isWs ? 60 * wsScale : 110, fs = isWs ? Math.max(10, 13 * wsScale) : 19, standoff = isWs ? 20 * wsScale : 44;
+  // pill standoff and font size — calculated first so padding accounts for pill space
+  const fs = isWs ? Math.max(9, 11 * wsScale) : 18;
+  const standoff = isWs ? 18 * wsScale : 40;
+  // pad must be large enough to contain pills on every side
+  const pad = isWs ? Math.max(52 * wsScale, standoff + 14 * wsScale) : Math.max(90, standoff + 50);
+  // max drawable area for the shape itself (inside padding)
+  const maxDrawW = isWs ? 220 * wsScale : 560;
+  const maxDrawH = isWs ? 220 * wsScale : 480;
+  const sc = Math.min(maxDrawW / maxX, maxDrawH / maxY);
   const W = maxX * sc + pad * 2, H = maxY * sc + pad * 2;
   const sPts: Pt[] = q.pts.map(p => [p[0] * sc + pad, p[1] * sc + pad]);
   const pathD = sPts.map((p, i) => `${i === 0 ? "M" : "L"} ${p[0]} ${p[1]}`).join(" ") + " Z";
-  const charW = fs * 0.62, pillPad = fs * 0.9;
+  const charW = fs * 0.60, pillPad = fs * 0.85;
   const labelMeta: (PillMeta & { hilit: string })[] = sPts.map((p, i) => {
     const nb = sPts[(i + 1) % sPts.length];
     const mx = (p[0] + nb[0]) / 2, my = (p[1] + nb[1]) / 2;
@@ -646,9 +653,16 @@ function drawPolyCellPDF(doc: JsPDFInstance, q: PolyQuestion, cellX: number, cel
 
 function drawRectCellPDF(doc: JsPDFInstance, q: RectQuestion, cellX: number, cellY: number, showAnswer: boolean): void {
   const maxX = Math.max(...q.pts.map(p => p[0])), maxY = Math.max(...q.pts.map(p => p[1]));
-  const availW = CELL_W - CPAD * 2, availH = CELL_H - CPAD * 2 - LABEL_H_MM - (showAnswer ? ANSWER_H_MM : 0);
-  const sc = Math.min(availW / maxX, availH / maxY) * 0.82;
-  const offX = cellX + CPAD + (availW - maxX * sc) / 2, offY = cellY + CPAD + LABEL_H_MM + (availH - maxY * sc) / 2;
+  const answerReserve = showAnswer ? ANSWER_H_MM : 0;
+  // Reserve pill clearance on all sides so labels never escape the cell
+  const pillClear = 7; // mm clearance for pills + leader lines
+  const availW = CELL_W - CPAD * 2 - pillClear * 2;
+  const availH = CELL_H - CPAD * 2 - LABEL_H_MM - answerReserve - pillClear * 2;
+  const sc = Math.min(availW / maxX, availH / maxY) * 0.80;
+  // Centre the scaled shape in the available area
+  const shapeW = maxX * sc, shapeH = maxY * sc;
+  const offX = cellX + CPAD + pillClear + (availW - shapeW) / 2;
+  const offY = cellY + CPAD + LABEL_H_MM + pillClear + (availH - shapeH) / 2;
   const sPts: Pt[] = q.pts.map(p => [offX + p[0] * sc, offY + p[1] * sc]);
   doc.setFontSize(5.5); doc.setTextColor(30, 58, 138); doc.setLineDashPattern([], 0);
   doc.text("Find the perimeter in cm", cellX + CELL_W / 2, cellY + CPAD + LABEL_H_MM * 0.6, { align: "center" });
@@ -780,8 +794,9 @@ function WorksheetPanel({ col, buildQuestions, DiagramComponent, pdfType, filena
         doc.addPage();
         renderPagePDF(doc, questions.slice(p * 9, (p + 1) * 9), true, diff2, pdfType);
       }
-      doc.save(filename);
-      setPdfStatus(`✅ Downloaded — ${totalPages * 2} pages`);
+      const url = doc.output("bloburl") as string;
+      window.open(url, "_blank");
+      setPdfStatus(`✅ Opened in browser — ${totalPages * 2} pages`);
     } catch (e) {
       setPdfStatus("❌ " + (e instanceof Error ? e.message : String(e)));
     }
