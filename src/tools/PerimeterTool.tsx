@@ -1058,6 +1058,7 @@ function PolyWorked({ col }: { col: ColourScheme }) {
 // ROOT
 // ══════════════════════════════════════════════════════════════════════════════
 export default function PerimeterTool() {
+  const navigate = useNavigate();
   const [subtool, setSubtool] = useState("polygons");
   const [mode, setMode] = useState("whiteboard");
   const [scheme, setScheme] = useState<SchemeKey>("default");
