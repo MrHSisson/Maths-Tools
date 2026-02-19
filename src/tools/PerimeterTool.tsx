@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { RefreshCw, Eye, Home, Menu, X, Download } from "lucide-react";
 
 // ─── jsPDF loader ─────────────────────────────────────────────────────────────
