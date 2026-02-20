@@ -896,11 +896,9 @@ function buildPolyQuestions(diff: string, diff2: boolean, pages: number): PolyQu
     const perLevel = pages * 3;
     const l1keys = pickShapeKeys("level1", perLevel, 2);
     const l2keys = pickShapeKeys("level2", perLevel, 2);
-    const l3keys = pickShapeKeys(["level1","level2","level3"].join(",") as string, perLevel, 2);
-    // build grouped: all L1, all L2, all L3
+    const l3keys2 = pickShapeKeys("level3", perLevel, 2);
     const l1 = l1keys.map(k => buildPolyQ("level1", k));
     const l2 = l2keys.map(k => buildPolyQ("level2", k));
-    const l3keys2 = pickShapeKeys("level3", perLevel, 2);
     const l3 = l3keys2.map(k => buildPolyQ("level3", k));
     return [...l1, ...l2, ...l3];
   }
