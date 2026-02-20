@@ -790,18 +790,16 @@ function WorksheetPanel({ col, buildQuestions, DiagramComponent, pdfType, isRect
   const [diff2, setDiff2] = useState(false);
   const [questions, setQuestions] = useState<(PolyQuestion | RectQuestion)[]>([]);
   const [previewPage, setPreviewPage] = useState(0);
-  const [pdfStatus, setPdfStatus] = useState("");
 
   function generate() {
     const qs: (PolyQuestion | RectQuestion)[] = [];
     for (let p = 0; p < pages; p++) qs.push(...buildQuestions(diff, diff2));
-    setQuestions(qs); setPreviewPage(0); setPdfStatus("");
+    setQuestions(qs); setPreviewPage(0);
   }
 
   const totalPages = questions.length > 0 ? Math.ceil(questions.length / perPage) : 0;
 
   async function downloadPDF() {
-    setPdfStatus("Generating…");
     try {
       const JsPDF = await loadJsPDF();
       const cellW = (PDF_W - PDF_M * 2) / pdfCols;
@@ -817,9 +815,8 @@ function WorksheetPanel({ col, buildQuestions, DiagramComponent, pdfType, isRect
       }
       const url = doc.output("bloburl") as string;
       window.open(url, "_blank");
-      setPdfStatus(`✅ Opened in browser — ${totalPages * 2} pages`);
     } catch (e) {
-      setPdfStatus("❌ " + (e instanceof Error ? e.message : String(e)));
+      console.error(e);
     }
   }
 
