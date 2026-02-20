@@ -621,29 +621,11 @@ function drawPillsPDF(doc: JsPDFInstance, meta: PillMeta[], pos: Pt[]): void {
   });
 }
 
-function drawGridPDF(doc: JsPDFInstance, diffMode: boolean, cols: number, rows: number, cW: number, cH: number): void {
-  // Cell borders
+function drawGridPDF(doc: JsPDFInstance, cols: number, rows: number, cW: number, cH: number): void {
   doc.setDrawColor(160, 160, 160); doc.setLineWidth(0.25); doc.setLineDashPattern([], 0);
   for (let r = 0; r < rows; r++)
     for (let c = 0; c < cols; c++)
       doc.rect(PDF_M + c * cW, PDF_M + r * cH, cW, cH, "S");
-  if (diffMode) {
-    // Bold row dividers
-    doc.setDrawColor(80, 80, 80); doc.setLineWidth(0.8); doc.setLineDashPattern([], 0);
-    for (let r = 1; r < rows; r++) { const y = PDF_M + r * cH; doc.line(PDF_M, y, PDF_M + cols * cW, y); }
-    // Level label strip at top of each row
-    const stripH = 4;
-    const stripColours: [number, number, number][] = [[22, 163, 74], [202, 138, 4], [220, 38, 38]];
-    const levelLabels = ["Level 1", "Level 2", "Level 3"];
-    for (let r = 0; r < rows; r++) {
-      const y = PDF_M + r * cH;
-      const [sr, sg, sb] = stripColours[r];
-      doc.setFillColor(sr, sg, sb);
-      doc.rect(PDF_M, y, cols * cW, stripH, "F");
-      doc.setFontSize(6); doc.setTextColor(255, 255, 255);
-      doc.text(levelLabels[r], PDF_M + (cols * cW) / 2, y + stripH * 0.72, { align: "center" });
-    }
-  }
 }
 
 function drawPolyCellPDF(doc: JsPDFInstance, q: PolyQuestion, cellX: number, cellY: number, showAnswer: boolean, cellW: number, cellH: number): void {
@@ -706,13 +688,39 @@ function drawRectCellPDF(doc: JsPDFInstance, q: RectQuestion, cellX: number, cel
   if (showAnswer) { doc.setFontSize(8); doc.setTextColor(185, 28, 28); doc.setLineDashPattern([], 0); doc.text(`= ${q.perimeter} cm`, cellX + CELL_W / 2, cellY + CELL_H - CPAD, { align: "center" }); }
 }
 
-function renderPagePDF(doc: JsPDFInstance, questions: (PolyQuestion | RectQuestion)[], showAnswer: boolean, diffMode: boolean, type: string, cols: number, rows: number, cW: number, cH: number): void {
+function renderPagePDF(doc: JsPDFInstance, questions: (PolyQuestion | RectQuestion)[], showAnswer: boolean, diffMode: boolean, type: string, cols: number, rows: number, cW: number, cH: number, pageIndex: number, perPage: number, totalQ: number): void {
+  const levelColours: [number, number, number][] = [[22, 163, 74], [202, 138, 4], [220, 38, 38]];
+  const levelLabels = ["Level 1", "Level 2", "Level 3"];
+  const stripH = 5;
+
   questions.forEach((q, i) => {
     const row = Math.floor(i / cols), col = i % cols;
-    if (type === "polygon") drawPolyCellPDF(doc, q as PolyQuestion, PDF_M + col * cW, PDF_M + row * cH, showAnswer, cW, cH);
-    else                    drawRectCellPDF(doc, q as RectQuestion, PDF_M + col * cW, PDF_M + row * cH, showAnswer, cW, cH);
+    const cellX = PDF_M + col * cW, cellY = PDF_M + row * cH;
+    if (type === "polygon") drawPolyCellPDF(doc, q as PolyQuestion, cellX, cellY, showAnswer, cW, cH);
+    else                    drawRectCellPDF(doc, q as RectQuestion, cellX, cellY, showAnswer, cW, cH);
   });
-  drawGridPDF(doc, diffMode, cols, rows, cW, cH);
+
+  // Draw level header strips in diff mode — only at the top of a level group
+  if (diffMode) {
+    const perLevel = Math.round(totalQ / 3);
+    const globalStart = pageIndex * perPage;
+    [0, 1, 2].forEach(lvl => {
+      const lvlStart = lvl * perLevel;    // global index where this level starts
+      const localIdx = lvlStart - globalStart; // position on this page
+      if (localIdx >= 0 && localIdx < perPage) {
+        // This level starts on this page — draw strip at that row
+        const row = Math.floor(localIdx / cols);
+        const y = PDF_M + row * cH;
+        const [sr, sg, sb] = levelColours[lvl];
+        doc.setFillColor(sr, sg, sb);
+        doc.rect(PDF_M, y, cols * cW, stripH, "F");
+        doc.setFontSize(7); doc.setTextColor(255, 255, 255);
+        doc.text(levelLabels[lvl], PDF_M + (cols * cW) / 2, y + stripH * 0.75, { align: "center" });
+      }
+    });
+  }
+
+  drawGridPDF(doc, cols, rows, cW, cH);
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -732,39 +740,45 @@ function WorksheetPreview({ questions, diffMode, pageIndex, DiagramComponent, is
   const cols = isRect ? 2 : 3;
   const perPage = isRect ? 6 : 9;
   const pageQs = questions.slice(pageIndex * perPage, (pageIndex + 1) * perPage);
+  const globalStart = pageIndex * perPage;
+  const perLevel = diffMode ? Math.round(questions.length / 3) : 0;
   const cellClass = "border-r border-b border-gray-200 last:border-r-0 p-2 flex flex-col items-center bg-white";
   const gridClass = `grid grid-cols-${cols} border border-gray-300 rounded-lg overflow-hidden`;
+  const levelColours = ["bg-green-500", "bg-yellow-500", "bg-red-500"];
+  const levelLabels = ["Level 1", "Level 2", "Level 3"];
+
+  // Build rows with optional level header injected
+  const rowElements: React.ReactNode[] = [];
+  for (let i = 0; i < pageQs.length; i += cols) {
+    const rowQs = pageQs.slice(i, i + cols);
+    const globalIdx = globalStart + i;
+    if (diffMode) {
+      // Check if a level boundary starts at this row
+      [0, 1, 2].forEach(lvl => {
+        if (globalIdx === lvl * perLevel) {
+          rowElements.push(
+            <div key={`hdr-${lvl}`} className={`col-span-${cols} ${levelColours[lvl]} text-white text-xs font-bold uppercase tracking-wide px-3 py-1`}>
+              {levelLabels[lvl]}
+            </div>
+          );
+        }
+      });
+    }
+    rowQs.forEach((q, j) => {
+      rowElements.push(
+        <div key={`q-${i}-${j}`} className={cellClass}>
+          <p className="text-xs font-bold text-blue-900 mb-1 text-center">Find the perimeter in cm</p>
+          <DiagramComponent q={q} showAnswer={false} isWs wsScale={isRect ? 1.0 : 0.75} />
+        </div>
+      );
+    });
+  }
+
   return (
     <div className="w-full">
-      {diffMode ? (
-        <div className="flex flex-col gap-0 border border-gray-300 rounded-lg overflow-hidden">
-          {[0, 1, 2].map(row => {
-            const rowQs = pageQs.slice(row * cols, (row + 1) * cols);
-            return (
-              <div key={row} className={`border-b-2 last:border-b-0 ${DIFF_BORDER[row]}`}>
-                <div className={`px-3 py-1 text-xs font-bold uppercase tracking-wide ${DIFF_LABEL_COL[row]} bg-white border-b border-gray-100`}>{DIFF_LABEL[row]}</div>
-                <div className={`grid grid-cols-${cols}`}>
-                  {rowQs.map((q, i) => (
-                    <div key={i} className={cellClass}>
-                      <p className="text-xs font-bold text-blue-900 mb-1 text-center">Find the perimeter in cm</p>
-                      <DiagramComponent q={q} showAnswer={false} isWs wsScale={isRect ? 1.0 : 0.75} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div className={gridClass}>
-          {pageQs.map((q, i) => (
-            <div key={i} className={cellClass}>
-              <p className="text-xs font-bold text-blue-900 mb-1 text-center">Find the perimeter in cm</p>
-              <DiagramComponent q={q} showAnswer={false} isWs wsScale={isRect ? 1.0 : 0.75} />
-            </div>
-          ))}
-        </div>
-      )}
+      <div className={gridClass}>
+        {rowElements}
+      </div>
     </div>
   );
 }
@@ -774,7 +788,7 @@ function WorksheetPreview({ questions, diffMode, pageIndex, DiagramComponent, is
 // ══════════════════════════════════════════════════════════════════════════════
 interface WorksheetPanelProps {
   col: ColourScheme;
-  buildQuestions: (diff: string, diff2: boolean) => (PolyQuestion | RectQuestion)[];
+  buildQuestions: (diff: string, diff2: boolean, pages: number) => (PolyQuestion | RectQuestion)[];
   DiagramComponent: React.ComponentType<DiagramProps>;
   pdfType: string;
   filename: string;
@@ -792,9 +806,7 @@ function WorksheetPanel({ col, buildQuestions, DiagramComponent, pdfType, isRect
   const [previewPage, setPreviewPage] = useState(0);
 
   function generate() {
-    const qs: (PolyQuestion | RectQuestion)[] = [];
-    for (let p = 0; p < pages; p++) qs.push(...buildQuestions(diff, diff2));
-    setQuestions(qs); setPreviewPage(0);
+    setQuestions(buildQuestions(diff, diff2, pages)); setPreviewPage(0);
   }
 
   const totalPages = questions.length > 0 ? Math.ceil(questions.length / perPage) : 0;
@@ -807,11 +819,11 @@ function WorksheetPanel({ col, buildQuestions, DiagramComponent, pdfType, isRect
       const doc = new JsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
       for (let p = 0; p < totalPages; p++) {
         if (p > 0) doc.addPage();
-        renderPagePDF(doc, questions.slice(p * perPage, (p + 1) * perPage), false, diff2, pdfType, pdfCols, pdfRows, cellW, cellH);
+        renderPagePDF(doc, questions.slice(p * perPage, (p + 1) * perPage), false, diff2, pdfType, pdfCols, pdfRows, cellW, cellH, p, perPage, questions.length);
       }
       for (let p = 0; p < totalPages; p++) {
         doc.addPage();
-        renderPagePDF(doc, questions.slice(p * perPage, (p + 1) * perPage), true, diff2, pdfType, pdfCols, pdfRows, cellW, cellH);
+        renderPagePDF(doc, questions.slice(p * perPage, (p + 1) * perPage), true, diff2, pdfType, pdfCols, pdfRows, cellW, cellH, p, perPage, questions.length);
       }
       const url = doc.output("bloburl") as string;
       window.open(url, "_blank");
@@ -878,22 +890,34 @@ function WorksheetPanel({ col, buildQuestions, DiagramComponent, pdfType, isRect
 }
 
 // ── Question builders ─────────────────────────────────────────────────────────
-function buildPolyQuestions(diff: string, diff2: boolean): PolyQuestion[] {
+function buildPolyQuestions(diff: string, diff2: boolean, pages: number): PolyQuestion[] {
+  const total = pages * 9;
   if (diff2) {
-    const levelSeq = ["level1", "level1", "level1", "level2", "level2", "level2", "level3", "level3", "level3"];
-    const keys = pickShapeKeys(levelSeq, 9, 2);
-    return levelSeq.map((lvl, i) => buildPolyQ(lvl, keys[i]));
+    const perLevel = pages * 3;
+    const l1keys = pickShapeKeys("level1", perLevel, 2);
+    const l2keys = pickShapeKeys("level2", perLevel, 2);
+    const l3keys = pickShapeKeys(["level1","level2","level3"].join(",") as string, perLevel, 2);
+    // build grouped: all L1, all L2, all L3
+    const l1 = l1keys.map(k => buildPolyQ("level1", k));
+    const l2 = l2keys.map(k => buildPolyQ("level2", k));
+    const l3keys2 = pickShapeKeys("level3", perLevel, 2);
+    const l3 = l3keys2.map(k => buildPolyQ("level3", k));
+    return [...l1, ...l2, ...l3];
   }
-  const keys = pickShapeKeys(diff, 9, 2);
+  const keys = pickShapeKeys(diff, total, 2);
   return keys.map(k => buildPolyQ(diff, k));
 }
 
-function buildRectQuestions(diff: string, diff2: boolean): RectQuestion[] {
-  const indices = pickTemplateIndices(6);
+function buildRectQuestions(diff: string, diff2: boolean, pages: number): RectQuestion[] {
   if (diff2) {
-    const levels = ["level1", "level1", "level2", "level2", "level3", "level3"];
-    return levels.map((lvl, i) => buildRectQ(lvl, indices[i]));
+    // Generate 2*pages of each level, grouped: all L1 then L2 then L3
+    const perLevel = pages * 2;
+    const l1 = pickTemplateIndices(perLevel).map(idx => buildRectQ("level1", idx));
+    const l2 = pickTemplateIndices(perLevel).map(idx => buildRectQ("level2", idx));
+    const l3 = pickTemplateIndices(perLevel).map(idx => buildRectQ("level3", idx));
+    return [...l1, ...l2, ...l3];
   }
+  const indices = pickTemplateIndices(pages * 6);
   return indices.map(idx => buildRectQ(diff, idx));
 }
 
