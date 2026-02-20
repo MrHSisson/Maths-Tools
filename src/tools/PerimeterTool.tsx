@@ -566,7 +566,8 @@ const CELL_W = (PDF_W - PDF_M * 2) / PDF_COLS;
 const CELL_H = (PDF_H - PDF_M * 2) / PDF_ROWS;
 const CPAD = 4;
 const PILL_H_MM = 3.8, PILL_PAD_MM = 1.4, FONT_PT = 6.5;
-const LABEL_H_MM = 5, ANSWER_H_MM = 5;
+const LABEL_H_MM = 7;
+const ANSWER_H_MM = 7;
 
 function pillWidthMM(text: string): number { return text.length * 1.45 + PILL_PAD_MM * 2; }
 
@@ -621,39 +622,28 @@ function drawPillsPDF(doc: JsPDFInstance, meta: PillMeta[], pos: Pt[]): void {
 }
 
 function drawGridPDF(doc: JsPDFInstance, diffMode: boolean, cols: number, rows: number, cW: number, cH: number): void {
-  if (diffMode) {
-    // Coloured row bands matching the preview: green / yellow / red
-    const bandColours: [number, number, number][] = [
-      [220, 252, 231], // green-100
-      [254, 249, 195], // yellow-100
-      [254, 226, 226], // red-100
-    ];
-    const labelColours: [number, number, number][] = [
-      [22, 101, 52],   // green-800
-      [133, 77, 14],   // yellow-800
-      [153, 27, 27],   // red-800
-    ];
-    const levelLabels = ["Level 1", "Level 2", "Level 3"];
-    for (let r = 0; r < rows; r++) {
-      const [br, bg, bb] = bandColours[r];
-      doc.setFillColor(br, bg, bb);
-      doc.rect(PDF_M, PDF_M + r * cH, cols * cW, cH, "F");
-      // Side label tab
-      doc.setFillColor(br, bg, bb);
-      const [lr, lg, lb] = labelColours[r];
-      doc.setTextColor(lr, lg, lb);
-      doc.setFontSize(5.5);
-      doc.text(levelLabels[r], PDF_M - 1, PDF_M + r * cH + cH / 2, { angle: 90, align: "center" });
-    }
-    // Bold row dividers
-    doc.setDrawColor(150, 150, 150); doc.setLineWidth(0.7); doc.setLineDashPattern([], 0);
-    for (let r = 1; r < rows; r++) { const y = PDF_M + r * cH; doc.line(PDF_M, y, PDF_M + cols * cW, y); }
-  }
-  // Cell borders on top
+  // Cell borders
   doc.setDrawColor(160, 160, 160); doc.setLineWidth(0.25); doc.setLineDashPattern([], 0);
   for (let r = 0; r < rows; r++)
     for (let c = 0; c < cols; c++)
       doc.rect(PDF_M + c * cW, PDF_M + r * cH, cW, cH, "S");
+  if (diffMode) {
+    // Bold row dividers
+    doc.setDrawColor(80, 80, 80); doc.setLineWidth(0.8); doc.setLineDashPattern([], 0);
+    for (let r = 1; r < rows; r++) { const y = PDF_M + r * cH; doc.line(PDF_M, y, PDF_M + cols * cW, y); }
+    // Level label strip at top of each row
+    const stripH = 4;
+    const stripColours: [number, number, number][] = [[22, 163, 74], [202, 138, 4], [220, 38, 38]];
+    const levelLabels = ["Level 1", "Level 2", "Level 3"];
+    for (let r = 0; r < rows; r++) {
+      const y = PDF_M + r * cH;
+      const [sr, sg, sb] = stripColours[r];
+      doc.setFillColor(sr, sg, sb);
+      doc.rect(PDF_M, y, cols * cW, stripH, "F");
+      doc.setFontSize(6); doc.setTextColor(255, 255, 255);
+      doc.text(levelLabels[r], PDF_M + (cols * cW) / 2, y + stripH * 0.72, { align: "center" });
+    }
+  }
 }
 
 function drawPolyCellPDF(doc: JsPDFInstance, q: PolyQuestion, cellX: number, cellY: number, showAnswer: boolean, cellW: number, cellH: number): void {
@@ -865,9 +855,8 @@ function WorksheetPanel({ col, buildQuestions, DiagramComponent, pdfType, isRect
       </div>
       <div className="flex justify-center gap-4">
         <button onClick={generate} className="px-6 py-3 bg-blue-900 text-white rounded-lg font-semibold flex items-center gap-2 hover:bg-blue-800"><RefreshCw size={20} />Generate</button>
-        {questions.length > 0 && <button onClick={downloadPDF} className="px-6 py-3 bg-blue-900 text-white rounded-lg font-semibold flex items-center gap-2 hover:bg-blue-800"><Download size={20} />Download PDF</button>}
+        {questions.length > 0 && <button onClick={downloadPDF} className="px-6 py-3 bg-blue-900 text-white rounded-lg font-semibold flex items-center gap-2 hover:bg-blue-800"><Download size={20} />Generate PDF</button>}
       </div>
-      {pdfStatus && <p className="text-center mt-3 text-sm font-semibold text-gray-600">{pdfStatus}</p>}
     </div>
     {questions.length > 0 && (
       <div className="rounded-xl shadow-2xl p-8" style={{ backgroundColor: col.qBg }}>
