@@ -53,10 +53,6 @@ const SCHEMES: Record<SchemeKey, ColourScheme> = {
   yellow:  { qBg: "#F8F4D1", stepBg: "#F2EBB3", finalBg: "#F2EBB3" },
 };
 
-const DIFF_BORDER   = ["border-green-500", "border-yellow-500", "border-red-500"];
-const DIFF_LABEL_COL = ["text-green-700",  "text-yellow-700",   "text-red-700"];
-const DIFF_LABEL    = ["Level 1", "Level 2", "Level 3"];
-
 function diffBtnClass(idx: number, active: boolean): string {
   if (active)
     return idx === 0 ? "bg-green-600 text-white"
