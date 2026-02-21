@@ -257,7 +257,10 @@ const QuestionOptionsPopover = ({
   }, [open]);
 
   const showAnswerFormat = difficulty === 'level3' || isDifferentiated;
-  const rangeOpts = [{ value: 'standard', label: 'Standard (2–10)' }, { value: 'extended', label: 'Extended (2–20)' }];
+  const rangeOpts = [
+    { value: 'standard', line1: 'Standard', line2: '(2–10)' },
+    { value: 'extended', line1: 'Extended', line2: '(2–20)' },
+  ];
 
   return (
     <div className="relative" ref={ref}>
@@ -283,8 +286,9 @@ const QuestionOptionsPopover = ({
                     <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden">
                       {rangeOpts.map(opt => (
                         <button key={opt.value} onClick={() => onDenomRangeByLevelChange(lv, opt.value)}
-                          className={`flex-1 px-4 py-2 text-sm font-bold transition-colors ${denomRangeByLevel[lv] === opt.value ? 'bg-blue-900 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
-                          {opt.label}
+                          className={`flex-1 px-4 py-2 text-sm font-bold transition-colors flex flex-col items-center leading-tight ${denomRangeByLevel[lv] === opt.value ? 'bg-blue-900 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
+                          <span>{opt.line1}</span>
+                          <span className="font-normal text-xs">{opt.line2}</span>
                         </button>
                       ))}
                     </div>
@@ -313,8 +317,9 @@ const QuestionOptionsPopover = ({
                 <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden">
                   {rangeOpts.map(opt => (
                     <button key={opt.value} onClick={() => onDenomRangeChange(opt.value)}
-                      className={`flex-1 px-4 py-2.5 text-sm font-bold transition-colors ${denomRange === opt.value ? 'bg-blue-900 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
-                      {opt.label}
+                      className={`flex-1 px-4 py-2.5 text-sm font-bold transition-colors flex flex-col items-center leading-tight ${denomRange === opt.value ? 'bg-blue-900 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
+                      <span>{opt.line1}</span>
+                      <span className="font-normal text-xs">{opt.line2}</span>
                     </button>
                   ))}
                 </div>
