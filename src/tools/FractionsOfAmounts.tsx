@@ -3,19 +3,6 @@ import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X } from 'lucide-re
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
-const TOOL_CONFIG = {
-  pageTitle: 'Fractions of Amounts',
-  tools: {
-    tool1: {
-      name: 'Find the Fraction',
-      useSubstantialBoxes: false,
-      variables: [],
-      dropdown: null, // handled separately below
-      difficultySettings: null,
-    },
-  },
-  useGraphicalLayout: false,
-};
 
 const INFO_SECTIONS = [
   {
@@ -271,7 +258,6 @@ const QuestionOptionsPopover = ({
 
   const showAnswerFormat = difficulty === 'level3' || isDifferentiated;
   const rangeOpts = [{ value: 'standard', label: 'Standard (2–10)' }, { value: 'extended', label: 'Extended (2–20)' }];
-  const lvLabels: Record<string, string> = { level1: 'Level 1', level2: 'Level 2', level3: 'Level 3' };
 
   return (
     <div className="relative" ref={ref}>
