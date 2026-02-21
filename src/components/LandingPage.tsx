@@ -67,6 +67,7 @@ const categories: Category[] = [
       { id: 'simplifying-ratios', path: '/simplifying-ratios', name: 'Simplifying Ratios', icon: '➗', description: 'Simplifying ratios in numerical and algebraic forms', ready: true },
       { id: 'Recipes', path: '/recipes', name: 'Recipes', icon: '🧁', description: 'Find amounts of ingredients by scaling recipes and understanding limiting factors', ready: true },
       { id: 'fraction-to-ratio', path: '/fraction-to-ratio', name: 'Converting Fractions and Ratios', icon: '🔁', description: 'To convert fractions and ratios interchangably', ready: true },
+      { id: 'fractions-of-amounts', path: '/fractions-of-amounts', name: 'Fractions of Amounts', icon: '⅔', description: 'To find a fraction of an amount', ready: true },
     ]
   },
   {
