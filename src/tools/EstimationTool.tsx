@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X } from 'lucide-react';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -487,57 +488,83 @@ const generateFracBar = (allowBothSides: boolean): Question | null => {
 
 // ── Level 3: FRACTION + TERM ─────────────────────────────────────────────────
 //
-// A simple fraction a/b displayed inline, combined with a separate whole number
-// using +, − or ×.
+// A simple fraction a/b displayed inline, combined with a separate whole number.
 //
-//   a/b + c    e.g. 32/12 + 48
-//   a/b − c    e.g. 73/21 − 14
-//   a/b × c    e.g. 32/12 × 5
+//   a/b + c    numerator & denominator 2-digit, outer term 3-digit (clearly different scale)
+//   a/b − c    outer term 3-digit, guaranteed larger than the fraction value
+//   a/b × c    outer term small (2–9 single-figure-ish) so the multiply is sensible
+//
+// Number ranges are deliberately kept distinct so the three parts look different.
 
 const generateFracTerm = (): Question | null => {
-  // pick outer operation: 50% add/sub, 50% multiply
   const outerOps = ['add', 'subtract', 'multiply'];
   const op = outerOps[Math.floor(Math.random() * outerOps.length)];
   const sym = getOperationSymbol(op);
 
   let attempts = 0;
-  while (attempts < 50) {
+  while (attempts < 60) {
     attempts++;
+
+    // Numerator and denominator: 2-digit unrounded, clearly different from each other
     const fNum = randUnrounded2Digit(), fDen = randUnrounded2Digit();
     if (fNum === fDen) continue;
     const rFNum = roundTo1SF(fNum), rFDen = roundTo1SF(fDen);
     if (rFNum === rFDen) continue;
     if (rFDen === 0) continue;
 
-    // fraction value after rounding
+    // Fraction value after rounding — must be a whole number or clean 1dp
     const fracVal = rFNum / rFDen;
     const fracR = Math.round(fracVal * 10) / 10;
     if (Math.abs(fracVal - fracR) > 0.0001) continue;
-    if (fracVal <= 0 || fracVal === 1 || fracVal > 50) continue;
+    if (fracR <= 0 || fracR === 1) continue;
 
-    // outer whole number
-    const outer = randUnrounded2Digit();
-    const rOuter = roundTo1SF(outer);
-    if (rOuter === 0) continue;
+    let outer: number;
+    let rOuter: number;
 
-    let answer: number;
-    if (op === 'add') {
-      answer = fracR + rOuter;
-    } else if (op === 'subtract') {
-      answer = rOuter - fracR;
-      if (answer <= 0) continue;
+    if (op === 'multiply') {
+      // Keep outer small (12–49) so the multiply stays pedagogically sensible
+      // and is visually distinct (single/low double digit vs fraction parts)
+      outer = Math.floor(Math.random() * 38) + 12;
+      if (isAlreadyRounded(outer)) continue;
+      rOuter = roundTo1SF(outer);
+      if (rOuter === 0 || rOuter === rFNum || rOuter === rFDen) continue;
     } else {
-      // multiply
-      answer = fracR * rOuter;
+      // Add/subtract: use a small whole number in the 12–28 range (rounds to 10 or 20)
+      // so it is visually distinct from the 2-digit numerator/denominator
+      // and students still have to round it to 1 s.f.
+      let attempts2 = 0;
+      outer = 0;
+      while (attempts2 < 20) {
+        attempts2++;
+        // 12–19 → rounds to 10 or 20; 21–28 → rounds to 20
+        const candidate = Math.floor(Math.random() * 17) + 12; // 12–28
+        if (!isAlreadyRounded(candidate)) { outer = candidate; break; }
+      }
+      if (outer === 0) continue;
+      rOuter = roundTo1SF(outer);
+      if (rOuter === 0) continue;
+
+      if (op === 'subtract') {
+        // For subtract: a/b − c, so the fraction must be larger than the outer term
+        if (fracR <= rOuter) continue;
+      }
     }
 
+    // Compute answer from rounded values
+    let answer: number;
+    if (op === 'add')      answer = fracR + rOuter;
+    else if (op === 'subtract') answer = fracR - rOuter;  // a/b − c
+    else                   answer = fracR * rOuter;
+
+    // Must be a clean value (integer or 1dp)
     const ansR = Math.round(answer * 10) / 10;
     if (Math.abs(answer - ansR) > 0.0001) continue;
-    if (ansR <= 0 || ansR > 5000) continue;
+    if (ansR <= 0 || ansR > 10000) continue;
 
     const formattedAnswer = formatAnswer(ansR);
     const fracValStr = formatAnswer(fracR);
-    const outerStr = formatNumber(outer), rOuterStr = formatNumber(rOuter);
+    const outerStr = formatNumber(outer);
+    const rOuterStr = formatNumber(rOuter);
 
     return {
       display: `${fNum}/${fDen} ${sym} ${outerStr}`,
@@ -549,7 +576,7 @@ const generateFracTerm = (): Question | null => {
         { type: 'step', content: `Original: ${fNum}/${fDen} ${sym} ${outerStr}` },
         { type: 'step', content: `Round to 1 s.f.: ${fNum} → ${rFNum},  ${fDen} → ${rFDen},  ${outerStr} → ${rOuterStr}` },
         { type: 'step', content: `Fraction: ${rFNum} ÷ ${rFDen} = ${fracValStr}` },
-        { type: 'step', content: `Calculate: ${fracValStr} ${sym} ${rOuterStr} = ${formattedAnswer}` },
+        { type: 'step', content: op === 'subtract' ? `Calculate: ${fracValStr} − ${rOuterStr} = ${formattedAnswer}` : `Calculate: ${fracValStr} ${sym} ${rOuterStr} = ${formattedAnswer}` },
       ],
       values: { fNum, fDen, outer, fracOp: op, fracOuterNum: outerStr, fracOuterSym: sym, id: Math.random() },
       difficulty: 'level3',
@@ -886,6 +913,7 @@ const MenuDropdown: React.FC<MenuDropdownProps> = ({ colorScheme, setColorScheme
 // ─────────────────────────────────────────────────────────────────────────────
 
 const EstimationTool: React.FC = () => {
+  const navigate = useNavigate();
   const [currentTool] = useState<ToolType>('estimation');
   const [mode, setMode] = useState<Mode>('whiteboard');
   const [difficulty, setDifficulty] = useState<DifficultyLevel>('level1');
@@ -1072,7 +1100,7 @@ const EstimationTool: React.FC = () => {
     }
     return (
       <div className="rounded-xl shadow-2xl p-8" style={{ backgroundColor: getQuestionBg() }}>
-        <div className="flex flex-col items-center justify-center gap-6 py-4">
+        <div className="flex flex-row flex-wrap items-center justify-center gap-6 py-4">
           {currentQuestion ? (
             <>
               {renderQuestionDisplay(currentQuestion, 'text-6xl')}
@@ -1233,7 +1261,7 @@ const EstimationTool: React.FC = () => {
     <>
       <div className="bg-blue-900 shadow-lg">
         <div className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
-          <button className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors">
+          <button onClick={() => navigate('/')} className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors">
             <Home size={24} /><span className="font-semibold text-lg">Home</span>
           </button>
           <div className="relative">
