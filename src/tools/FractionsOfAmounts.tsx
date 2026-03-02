@@ -395,51 +395,6 @@ const generateWordedL3 = (asFracOfOriginal: boolean, l3Mode: string): WordedQues
 
   // Helper: build wording and working for one fraction step
   // keepFrac=true  → "they keep X/Y of it"  → finalLeft = fracPart
-  // keepFrac=false → "they give away X/Y"   → finalLeft = start - fracPart
-  const fracStep = (
-    start: number, rn: number, rd: number, keepFrac: boolean, isSecond: boolean,
-    useMoney: boolean, c: typeof L3_CONTEXTS_ITEMS[0] | null, fmt: (n: number) => string
-  ) => {
-    const part = start / rd;
-    const fracPart = rn * part;
-    const afterStep = keepFrac ? fracPart : start - fracPart;
-    const fracStr = frac(rn, rd);
-    const ofWhat = isSecond ? 'of what remains' : 'of it';
-
-    let sentence: string;
-    let workLines: { type: string; content: string }[];
-
-    if (useMoney) {
-      sentence = keepFrac
-        ? `They keep ${fracStr} ${ofWhat}.`
-        : `They give ${fracStr} ${ofWhat} away.`;
-      workLines = [
-        { type: 'step', content: `Find 1 part: ${start} ÷ ${rd} = ${part}` },
-        keepFrac
-          ? { type: 'step', content: `${fracStr} kept: ${part} × ${rn} = ${fmt(fracPart)}` }
-          : { type: 'step', content: `${fracStr} given away: ${part} × ${rn} = ${fmt(fracPart)}` },
-        keepFrac
-          ? { type: 'step', content: `Amount kept: ${fmt(fracPart)}` }
-          : { type: 'step', content: `After giving away: ${fmt(start)} − ${fmt(fracPart)} = ${fmt(afterStep)}` },
-      ];
-    } else {
-      const itemLabel = c!.item;
-      sentence = keepFrac
-        ? `They keep ${fracStr} ${ofWhat}.`
-        : `They ${c!.verb2} ${fracStr} ${ofWhat}.`;
-      workLines = [
-        { type: 'step', content: `Find 1 part: ${start} ÷ ${rd} = ${part}` },
-        keepFrac
-          ? { type: 'step', content: `${fracStr} kept: ${part} × ${rn} = ${fracPart} ${itemLabel}` }
-          : { type: 'step', content: `${fracStr} ${c!.verb2}n: ${part} × ${rn} = ${fracPart} ${itemLabel}` },
-        keepFrac
-          ? { type: 'step', content: `Amount kept: ${fracPart} ${itemLabel}` }
-          : { type: 'step', content: `After: ${start} − ${fracPart} = ${afterStep} ${itemLabel}` },
-      ];
-    }
-    return { afterStep, sentence, workLines, fracPart };
-  };
-
   // ── Frac-Frac ─────────────────────────────────────────────────────────────
   if (subtype === 'fracFrac') {
     const FRIENDLY_TOTALS = [60, 80, 90, 100, 120, 150, 160, 180, 200, 240];
@@ -1347,7 +1302,7 @@ const InfoModal = ({ onClose }: { onClose: () => void }) => (
 );
 
 const MenuDropdown = ({ colorScheme, setColorScheme, onClose, onOpenInfo }: {
-  colorScheme: string; setColorScheme: (s: string) => void; onClose: () => void; onOpenInfo: () => void;
+  colorScheme: ColorScheme; setColorScheme: (s: ColorScheme) => void; onClose: () => void; onOpenInfo: () => void;
 }) => {
   const [colorOpen, setColorOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
