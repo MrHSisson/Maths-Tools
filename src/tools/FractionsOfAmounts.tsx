@@ -792,7 +792,6 @@ const generateAsFracL2 = (questionType: string): AsFracQuestion => {
 
 const generateAsFracL3 = (steps: string): AsFracQuestion => {
   const fmtMoney = (n: number) => Number.isInteger(n) ? `£${n}` : `£${n.toFixed(2)}`;
-  const allInt = (...vals: number[]) => vals.every(v => Number.isInteger(v));
   const useMoney = Math.random() < 0.5;
   const name = pick(NAMES);
 
