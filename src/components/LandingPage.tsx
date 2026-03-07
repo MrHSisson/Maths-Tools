@@ -26,7 +26,7 @@ const categories: Category[] = [
     iconBg: 'from-blue-50 to-indigo-50',
     tools: [
       { id: 'Times Tables', path: '/timestables', name: 'Times Tables', icon: 'x', description: 'Generate PDFs designed to test and improve TimesTable fluency', ready: true },
-      { id: 'Negative Operations', path: '/negative-operations', name: 'Negative Number Operations', icon: '-1', description: 'Generate PDFs designed to test and improve operations with negative numbers', ready: true },
+      { id: 'Negative Operations', path: '/negative-operations', name: 'Negative Operations', icon: '-1', description: 'Generate PDFs designed to test and improve operations with negative numbers', ready: true },
     ]
   },
   {
