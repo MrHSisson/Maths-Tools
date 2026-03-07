@@ -18,7 +18,7 @@ import FractionToRatio from './tools/FractionToRatio';
 import PowersOfTen from './tools/PowersOfTen';
 import PerimeterTool from './tools/PerimeterTool';
 import FractionsOfAmounts from './tools/FractionsOfAmounts';
-import MultiplicationMethods from './tools/MultiplcationGenerator';
+import MultiplicationMethods from './tools/MultiplicationGenerator';
 
 
 function App() {
