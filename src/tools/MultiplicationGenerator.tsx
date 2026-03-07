@@ -75,7 +75,7 @@ const drawPdfGrid = (
   const { cols, rows } = getDims(q);
   const cellH = 9; // mm
   const colW = gridColWidths(cols);
-  const colX: number[] = colW.reduce<number[]>((acc, w, i) => {
+  const colX: number[] = colW.reduce<number[]>((acc, _w, i) => {
     acc.push(i === 0 ? originX : acc[i - 1] + colW[i - 1]);
     return acc;
   }, []);
@@ -244,7 +244,7 @@ const BlankGrid: React.FC<{ q: Question }> = ({ q }) => {
   const totalH = rows * CELL_H;
 
   // x offsets for each column
-  const colX = colWidths.reduce<number[]>((acc, w, i) => {
+  const colX = colWidths.reduce<number[]>((acc, _w, i) => {
     acc.push(i === 0 ? 0 : acc[i - 1] + colWidths[i - 1]);
     return acc;
   }, []);
@@ -413,12 +413,6 @@ export default function MultiplicationGenerator() {
   const has3x3 = selectedTypes.includes('3x3');
   const maxQ = has3x3 ? 12 : 15;
   const minQ = 9;
-  const allSelected = allTypes.every(t => selectedTypes.includes(t));
-
-  const toggleAll = () => {
-    setSelectedTypes(allSelected ? [] : [...allTypes]);
-    setError('');
-  };
 
   const toggleType = (type: MultType) => {
     setSelectedTypes(prev => {
