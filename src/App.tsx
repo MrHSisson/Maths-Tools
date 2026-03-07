@@ -43,7 +43,7 @@ function App() {
       <Route path="/powers-of-ten" element={<PowersOfTen />} />
       <Route path="/perimeter" element={<PerimeterTool />} />
       <Route path="/fractions-of-amounts" element={<FractionsOfAmounts />} />
-      <Route path="/multiplication-metohds" element={<MultiplicationGenerator />} />
+      <Route path="/multiplication-methods" element={<MultiplicationGenerator />} />
     </Routes>
   )
 }
