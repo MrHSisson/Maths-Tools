@@ -18,6 +18,7 @@ import FractionToRatio from './tools/FractionToRatio';
 import PowersOfTen from './tools/PowersOfTen';
 import PerimeterTool from './tools/PerimeterTool';
 import FractionsOfAmounts from './tools/FractionsOfAmounts';
+import MultiplicationMethods from './tools/MultiplcationGenerator';
 
 
 function App() {
@@ -42,6 +43,7 @@ function App() {
       <Route path="/powers-of-ten" element={<PowersOfTen />} />
       <Route path="/perimeter" element={<PerimeterTool />} />
       <Route path="/fractions-of-amounts" element={<FractionsOfAmounts />} />
+      <Route path="/multiplication-metohds" element={<MultiplicationMethods />} />
     </Routes>
   )
 }
