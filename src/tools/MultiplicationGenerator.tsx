@@ -384,7 +384,7 @@ const PreviewQuestion: React.FC<{ q: Question; idx: number; method: Method }> = 
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function MultiplicationGenerator() {
-  const allTypes: MultType[] = ['2x1', '2x2', '3x1', '3x2', '3x3'];
+
 
   const typeLabels: Record<MultType, string> = {
     '2x1': '2-digit × 1-digit',
