@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X } from 'lucide-react';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -233,7 +234,7 @@ const generateWordedL1 = (questionType: string): WordedQuestion => {
   const questionText = [
     `${name} has ${total} ${ctx.item}.`,
     `${fracStr} of the ${ctx.item} are ${ctx.colour1}.`,
-    isDirect ? `How many ${ctx.item} are ${ctx.colour1}?` : `How many ${ctx.item} are ${ctx.colour2}?`,
+    isDirect ? `How many ${ctx.item} are ${ctx.colour1}?` : `The rest are ${ctx.colour2}.\nHow many ${ctx.item} are ${ctx.colour2}?`,
   ].join('\n');
 
   const working = isDirect
@@ -761,7 +762,7 @@ const generateAsFracL2 = (questionType: string): AsFracQuestion => {
     let working: { type: string; content: string }[];
 
     if (isDirect) {
-      questionText = `There are ${whole} ${ctx.total} in total.\n${part1} of them are ${ctx.part1}.\nWrite the number of ${ctx.part1} ${ctx.total} as a fraction of the total.\nGive your answer in its simplest form.`;
+      questionText = `There are ${whole} ${ctx.total} in total.\n${part1} of them are ${ctx.part1}.\nWrite the number of ${ctx.part1} as a fraction of the total.\nGive your answer in its simplest form.`;
       working = [
         { type: 'step', content: `Write as a fraction: ${part1}/${whole}` },
         { type: 'step', content: `HCF of ${part1} and ${whole} = ${g1}` },
@@ -771,7 +772,7 @@ const generateAsFracL2 = (questionType: string): AsFracQuestion => {
       answer = frac(sn1, sd1);
     } else {
       // Indirect: given part2, ask for part1 as fraction
-      questionText = `There are ${whole} ${ctx.total} in total.\n${part2} of them are ${ctx.part2}.\nWrite the number of ${ctx.part1} ${ctx.total} as a fraction of the total.\nGive your answer in its simplest form.`;
+      questionText = `There are ${whole} ${ctx.total} in total.\n${part2} of them are ${ctx.part2}.\nThe rest are ${ctx.part1}.\nWrite the number of ${ctx.part1} as a fraction of the total.\nGive your answer in its simplest form.`;
       working = [
         { type: 'step', content: `Find the number of ${ctx.part1}: ${whole} − ${part2} = ${part1}` },
         { type: 'step', content: `Write as a fraction: ${part1}/${whole}` },
@@ -799,95 +800,37 @@ const generateAsFracL3 = (steps: string): AsFracQuestion => {
   if (steps === '1step') {
     let attempts = 0;
     while (attempts++ < 500) {
-      // 3 operation types: spend fixed, give away fraction, keep fraction
-      const opType = randInt(0, 2);
+      // 1-step always gives away a fixed amount
+      const wholes = [20,24,30,36,40,45,48,50,60,72,80,90,100,120];
+      const total = pick(wholes);
+      const spend = pick([...Array(total-2)].map((_,i)=>i+1).filter(x => gcd(total-x, total) > 1 && x < total && total-x > 0));
+      if (!spend) continue;
+      const remaining = total - spend;
+      const g = gcd(remaining, total);
+      const sn = remaining/g, sd = total/g;
+      if (sn === sd) continue;
 
-      if (opType === 0) {
-        // Spend a fixed amount
-        const wholes = [20,24,30,36,40,45,48,50,60,72,80,90,100,120];
-        const total = pick(wholes);
-        const spend = pick([...Array(total-2)].map((_,i)=>i+1).filter(x => gcd(total-x, total) > 1 && x < total && total-x > 0));
-        if (!spend) continue;
-        const remaining = total - spend;
-        const g = gcd(remaining, total);
-        const sn = remaining/g, sd = total/g;
-        if (sn === sd) continue;
-
-        let questionText: string, working: { type: string; content: string }[];
-        if (useMoney) {
-          const fmt = fmtMoney;
-          questionText = `${name} has ${fmt(total)}.\nThey spend ${fmt(spend)}.\nWrite the amount they have left as a fraction of the original amount.\nGive your answer in its simplest form.`;
-          working = [
-            { type: 'step', content: `Amount left: ${fmt(total)} − ${fmt(spend)} = ${fmt(remaining)}` },
-            { type: 'step', content: `Write as a fraction: ${remaining}/${total}` },
-            { type: 'step', content: `HCF of ${remaining} and ${total} = ${g}` },
-            { type: 'step', content: `Simplify: ${frac(sn, sd)}` },
-          ];
-        } else {
-          const c = pick(AF_L3_ITEMS);
-          questionText = `${name} has ${total} ${c.item}.\nThey ${c.verb1} ${spend}.\nWrite the number they have left as a fraction of the original amount.\nGive your answer in its simplest form.`;
-          working = [
-            { type: 'step', content: `${c.item} left: ${total} − ${spend} = ${remaining}` },
-            { type: 'step', content: `Write as a fraction: ${remaining}/${total}` },
-            { type: 'step', content: `HCF of ${remaining} and ${total} = ${g}` },
-            { type: 'step', content: `Simplify: ${frac(sn, sd)}` },
-          ];
-        }
-        return { kind: 'asFrac', questionText, answer: frac(sn, sd), working, key: `af3-1s-${total}-${spend}`, difficulty: 'level3' };
-
+      let questionText: string, working: { type: string; content: string }[];
+      if (useMoney) {
+        const fmt = fmtMoney;
+        questionText = `${name} has ${fmt(total)}.\nThey spend ${fmt(spend)}.\nWrite the amount they have left as a fraction of the original amount.\nGive your answer in its simplest form.`;
+        working = [
+          { type: 'step', content: `Amount left: ${fmt(total)} − ${fmt(spend)} = ${fmt(remaining)}` },
+          { type: 'step', content: `Write as a fraction: ${remaining}/${total}` },
+          { type: 'step', content: `HCF of ${remaining} and ${total} = ${g}` },
+          { type: 'step', content: `Simplify: ${frac(sn, sd)}` },
+        ];
       } else {
-        // Give away or keep a fraction
-        const keepFrac = opType === 2;
-        const { rn, rd } = pick(NONUNIT_FRAC_POOL);
-        const multiplier = randInt(3, 9);
-        const total = rd * multiplier;
-        const part = total / rd;
-        const fracPart = rn * part;
-        const remaining = keepFrac ? fracPart : total - fracPart;
-        if (!allInt(part, fracPart, remaining) || remaining <= 0 || remaining === total) continue;
-        const g = gcd(remaining, total);
-        const sn = remaining/g, sd = total/g;
-        if (sn === sd) continue;
-
-        let questionText: string, working: { type: string; content: string }[];
-        const fracStr = frac(rn, rd);
-        if (useMoney) {
-          const fmt = fmtMoney;
-          questionText = keepFrac
-            ? `${name} has ${fmt(total)}.\nThey keep ${fracStr} of it.\nWrite the amount they have left as a fraction of the original amount.\nGive your answer in its simplest form.`
-            : `${name} has ${fmt(total)}.\nThey give away ${fracStr} of it.\nWrite the amount they have left as a fraction of the original amount.\nGive your answer in its simplest form.`;
-          working = [
-            { type: 'step', content: `Find 1 part: ${total} ÷ ${rd} = ${part}` },
-            keepFrac
-              ? { type: 'step', content: `Amount kept: ${part} × ${rn} = ${fmt(fracPart)}` }
-              : { type: 'step', content: `Amount given away: ${part} × ${rn} = ${fmt(fracPart)}` },
-            keepFrac
-              ? { type: 'step', content: `They have: ${fmt(fracPart)}` }
-              : { type: 'step', content: `Amount left: ${fmt(total)} − ${fmt(fracPart)} = ${fmt(remaining)}` },
-            { type: 'step', content: `Write as a fraction: ${remaining}/${total}` },
-            { type: 'step', content: `HCF of ${remaining} and ${total} = ${g}` },
-            { type: 'step', content: `Simplify: ${frac(sn, sd)}` },
-          ];
-        } else {
-          const c = pick(AF_L3_ITEMS);
-          questionText = keepFrac
-            ? `${name} has ${total} ${c.item}.\nThey keep ${fracStr} of them.\nWrite the number they have left as a fraction of the original.\nGive your answer in its simplest form.`
-            : `${name} has ${total} ${c.item}.\nThey ${c.verb2} ${fracStr} of them.\nWrite the number they have left as a fraction of the original.\nGive your answer in its simplest form.`;
-          working = [
-            { type: 'step', content: `Find 1 part: ${total} ÷ ${rd} = ${part}` },
-            keepFrac
-              ? { type: 'step', content: `Amount kept: ${part} × ${rn} = ${fracPart} ${c.item}` }
-              : { type: 'step', content: `Amount ${c.verb2}n: ${part} × ${rn} = ${fracPart} ${c.item}` },
-            keepFrac
-              ? { type: 'step', content: `They have: ${fracPart} ${c.item}` }
-              : { type: 'step', content: `${c.item} left: ${total} − ${fracPart} = ${remaining}` },
-            { type: 'step', content: `Write as a fraction: ${remaining}/${total}` },
-            { type: 'step', content: `HCF of ${remaining} and ${total} = ${g}` },
-            { type: 'step', content: `Simplify: ${frac(sn, sd)}` },
-          ];
-        }
-        return { kind: 'asFrac', questionText, answer: frac(sn, sd), working, key: `af3-1s-${total}-${rn}-${rd}-${keepFrac}`, difficulty: 'level3' };
+        const c = pick(AF_L3_ITEMS);
+        questionText = `${name} has ${total} ${c.item}.\nThey ${c.verb1} ${spend}.\nWrite the number they have left as a fraction of the original amount.\nGive your answer in its simplest form.`;
+        working = [
+          { type: 'step', content: `${c.item} left: ${total} − ${spend} = ${remaining}` },
+          { type: 'step', content: `Write as a fraction: ${remaining}/${total}` },
+          { type: 'step', content: `HCF of ${remaining} and ${total} = ${g}` },
+          { type: 'step', content: `Simplify: ${frac(sn, sd)}` },
+        ];
       }
+      return { kind: 'asFrac', questionText, answer: frac(sn, sd), working, key: `af3-1s-${total}-${spend}`, difficulty: 'level3' };
     }
   }
 
@@ -1239,7 +1182,7 @@ const INFO_SECTIONS = [
     ],
   },
   {
-    title: 'Worded Questions', icon: '📝',
+    title: 'Finding Amounts (Worded)', icon: '📝',
     content: [
       { label: 'Overview', detail: 'Apply fractions of amounts to real-world contexts with progressively complex reasoning.' },
       { label: 'Level 1 — Green', detail: 'One-step questions in everyday contexts. Direct asks for the fraction amount; Indirect asks for the remainder.' },
@@ -1328,7 +1271,7 @@ const MenuDropdown = ({ colorScheme, setColorScheme, onClose, onOpenInfo }: {
         {colorOpen && (
           <div className="border-t border-gray-100">
             {['default', 'blue', 'pink', 'yellow'].map(s => (
-              <button key={s} onClick={() => { setColorScheme(s); onClose(); }}
+              <button key={s} onClick={() => { setColorScheme(s as ColorScheme); onClose(); }}
                 className={`w-full flex items-center justify-between pl-10 pr-4 py-2.5 text-sm font-semibold transition-colors ${colorScheme === s ? 'bg-blue-900 text-white' : 'text-gray-600 hover:bg-gray-50'}`}>
                 {s.charAt(0).toUpperCase() + s.slice(1)}
                 {colorScheme === s && (
@@ -1490,6 +1433,7 @@ const AsFracQOPopover = ({
 // ── Main component ─────────────────────────────────────────────────────────────
 
 export default function FractionsOfAmounts() {
+  const navigate = useNavigate();
   const [currentTool, setCurrentTool] = useState<ToolType>('findFraction');
   const [mode, setMode] = useState<Mode>('whiteboard');
   const [difficulty, setDifficulty] = useState<DifficultyLevel>('level1');
@@ -1784,60 +1728,44 @@ export default function FractionsOfAmounts() {
 
   const renderWorkedExampleMode = () => {
     const kind = currentQuestion?.kind;
-    const isPanelStyle = kind === 'worded' || kind === 'asFrac';
     return (
       <div className="rounded-xl shadow-lg p-8 w-full" style={{ backgroundColor: getQBg() }}>
         {currentQuestion ? (
-          isPanelStyle ? (
-            <div className="flex gap-6 items-start">
-              {kind === 'asFrac'
-                ? renderAsFracPanel(currentQuestion as AsFracQuestion)
-                : renderWordedPanel(currentQuestion as WordedQuestion)}
-              <div className="flex-1">
-                {showAnswer ? (
-                  <>
-                    <div className="space-y-4">
-                      {currentQuestion.working.map((step, i) => (
-                        <div key={i} className="rounded-xl p-5" style={{ backgroundColor: getStepBg() }}>
-                          <h4 className="text-lg font-bold mb-1" style={{ color: '#000000' }}>Step {i + 1}</h4>
-                          <p className="text-xl" style={{ color: '#000000' }}>{step.content}</p>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="rounded-xl p-6 text-center mt-4" style={{ backgroundColor: getStepBg() }}>
-                      <span className="text-4xl font-bold" style={{ color: '#166534' }}>= {renderAnswer(currentQuestion)}</span>
-                    </div>
-                  </>
-                ) : (
-                  <div className="rounded-xl flex items-center justify-center" style={{ minHeight: '500px', backgroundColor: getStepBg() }}>
-                    <span className="text-xl text-gray-400">Press Show Answer to reveal working</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="text-center mb-8">
+          <>
+            <div className="text-center py-4">
+              {kind === 'worded' ? (
+                <div className="space-y-3">
+                  {(currentQuestion as WordedQuestion).questionText.split('\n').map((line, i) => (
+                    <div key={i} className="text-4xl font-bold" style={{ color: '#000000' }}>{line}</div>
+                  ))}
+                </div>
+              ) : kind === 'asFrac' ? (
+                <div className="space-y-3">
+                  {(currentQuestion as AsFracQuestion).questionText.split('\n').map((line, i) => (
+                    <div key={i} className="text-4xl font-bold" style={{ color: '#000000' }}>{line}</div>
+                  ))}
+                </div>
+              ) : (
                 <span className="text-6xl font-bold" style={{ color: '#000000' }}>Find {(currentQuestion as FracQuestion).display}</span>
-              </div>
-              {showAnswer && (
-                <>
-                  <div className="space-y-4">
-                    {currentQuestion.working.map((step, i) => (
-                      <div key={i} className="rounded-xl p-6" style={{ backgroundColor: getStepBg() }}>
-                        <h4 className="text-xl font-bold mb-2" style={{ color: '#000000' }}>Step {i + 1}</h4>
-                        <p className="text-2xl" style={{ color: '#000000' }}>{step.content}</p>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="rounded-xl p-6 text-center mt-4" style={{ backgroundColor: getStepBg() }}>
-                    <span className="text-5xl font-bold" style={{ color: '#166534' }}>= {renderAnswer(currentQuestion)}</span>
-                  </div>
-                </>
               )}
-            </>
-          )
-        ) : <div className="text-center text-gray-400 text-4xl py-16">Generate question</div>}
+            </div>
+            {showAnswer && (
+              <>
+                <div className="space-y-4">
+                  {currentQuestion.working.map((step, i) => (
+                    <div key={i} className="rounded-xl p-6" style={{ backgroundColor: getStepBg() }}>
+                      <h4 className="text-xl font-bold mb-2" style={{ color: '#000000' }}>Step {i + 1}</h4>
+                      <p className="text-2xl" style={{ color: '#000000' }}>{step.content}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="rounded-xl p-6 text-center mt-4" style={{ backgroundColor: getStepBg() }}>
+                  <span className="text-5xl font-bold" style={{ color: '#166534' }}>= {renderAnswer(currentQuestion)}</span>
+                </div>
+              </>
+            )}
+          </>
+        ) : <div className="text-center text-gray-400 text-4xl py-4">Generate question</div>}
       </div>
     );
   };
@@ -1890,7 +1818,7 @@ export default function FractionsOfAmounts() {
       );
     };
 
-    const toolTitle = currentTool === 'findFraction' ? 'Finding Amounts' : currentTool === 'asFraction' ? 'As a Fraction' : 'Worded Questions';
+    const toolTitle = currentTool === 'findFraction' ? 'Finding Amounts' : currentTool === 'asFraction' ? 'Expressing as a Fraction' : 'Finding Amounts (Worded)';
 
     if (isDifferentiated) return (
       <div className="rounded-xl shadow-2xl p-8 relative" style={{ backgroundColor: getQBg() }}>
@@ -1928,7 +1856,7 @@ export default function FractionsOfAmounts() {
     <>
       <div className="bg-blue-900 shadow-lg">
         <div className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
-          <button className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors">
+          <button onClick={() => navigate('/')} className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors">
             <Home size={24} /><span className="font-semibold text-lg">Home</span>
           </button>
           <div className="relative">
@@ -1952,7 +1880,7 @@ export default function FractionsOfAmounts() {
 
           {/* Sub-tool selector */}
           <div className="flex justify-center gap-4 mb-6">
-            {([['findFraction', 'Finding Amounts'], ['worded', 'Worded Questions'], ['asFraction', 'As a Fraction']] as [ToolType, string][]).map(([tool, label]) => (
+            {([['findFraction', 'Finding Amounts'], ['worded', 'Finding Amounts (Worded)'], ['asFraction', 'Expressing as a Fraction']] as [ToolType, string][]).map(([tool, label]) => (
               <button key={tool} onClick={() => setCurrentTool(tool)}
                 className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${currentTool === tool ? 'bg-blue-900 text-white' : 'bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900'}`}>
                 {label}
