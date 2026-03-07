@@ -38,8 +38,6 @@ const categories: Category[] = [
       { id: 'integers', path: '/integers', name: 'Adding & Subtracting Integers', icon: '±', description: 'Practice adding and subtracting positive and negative numbers using number lines', ready: true },
       { id: 'estimation', path: '/estimation', name: 'Estimation', icon: '≈', description: 'Develop estimation skills by rounding numbers to make calculations easier', ready: true },
       { id: 'powers-of-ten', path: '/powers-of-ten', name: 'Multiplying & Dividing by 10ⁿ', icon: '10ⁿ', description: 'Use a place value table to scale by powers of 10', ready: true },
-      { id: 'hcf-lcm', path: '/hcf-lcm', name: 'HCF & LCM', icon: '∩', description: 'Find highest common factors and lowest common multiples using Venn diagrams', ready: false },
-      { id: 'significant-figures', path: '/significant-figures', name: 'Significant Figures', icon: 'SF', description: 'Round numbers to a given number of significant figures', ready: false },
     ]
   },
   {
@@ -54,7 +52,6 @@ const categories: Category[] = [
       { id: 'single-brackets', path: '/expanding-single-brackets-GRID', name: 'Expanding Single Brackets (GRID)', icon: 'x', description: 'Expand single brackets by using the grid method', ready: true },
       { id: 'expanding-double-brackets-GRID', path: '/expanding-double-brackets-grid', name: 'Expanding Double Brackets (GRID)', icon: 'x²', description: 'Expand pairs of brackets using the grid method', ready: true },
       { id: 'iteration', path: '/iteration', name: 'Iteration', icon: '🔄', description: 'Find roots to eqautions using iterative methods', ready: true },
-      { id: 'like-terms', path: '/like-terms', name: 'Like Terms', icon: '2x²', description: 'Simplify algebraic expressions by collecting like terms', ready: false },
     ]
   },
   {
