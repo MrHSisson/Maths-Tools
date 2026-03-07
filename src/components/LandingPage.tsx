@@ -27,6 +27,7 @@ const categories: Category[] = [
     tools: [
       { id: 'Times Tables', path: '/timestables', name: 'Times Tables', icon: 'x', description: 'Generate PDFs designed to test and improve TimesTable fluency', ready: true },
       { id: 'Negative Operations', path: '/negative-operations', name: 'Negative Operations', icon: '-1', description: 'Generate PDFs designed to test and improve operations with negative numbers', ready: true },
+      { id: 'Multiplication Methods', path: '/multiplication-methods', name: 'Multiplication Methods', icon: '3x2', description: 'Generate PDFs designed to test and improve use of multiplication methods', ready: true },
     ]
   },
   {
