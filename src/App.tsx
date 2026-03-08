@@ -20,6 +20,7 @@ import PerimeterTool from './tools/PerimeterTool';
 import FractionsOfAmounts from './tools/FractionsOfAmounts';
 import MultiplicationGenerator from './tools/MultiplicationGenerator';
 import BasicAngleFacts from './tools/BasicAngleFacts';
+import CallSelector from './tools/CallSelector';
 
 function App() {
   return (
@@ -45,6 +46,7 @@ function App() {
       <Route path="/fractions-of-amounts" element={<FractionsOfAmounts />} />
       <Route path="/multiplication-methods" element={<MultiplicationGenerator />} />
       <Route path="/basic-angle-facts" element={<BasicAngleFacts />} />
+      <Route path="/call-selector" element={<CallSelector />} />
     </Routes>
   )
 }
