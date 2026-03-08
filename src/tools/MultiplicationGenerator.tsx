@@ -60,14 +60,13 @@ const getDims = (q: Question): { cols: number; rows: number } => {
 // To adjust spacing/sizing, change values here — both PDF and preview update.
 const L = {
   // PDF page
-  pageW: 210, pageH: 297, margin: 8, cols: 3,
+  pageW: 210, pageH: 297, marginSide: 10, marginTop: 15, cols: 3,
 
   // Per-question block height
   blockH: 48,     // mm — standard questions
   blockH3x3: 60,  // mm — 3×3 questions
 
   // Text position within block
-  textOffsetX: 2,  // mm from block left
   textOffsetY: 6,  // mm from block top (baseline)
 
   // Structure (grid/lattice) positioning within block
@@ -86,7 +85,7 @@ const L = {
 // px per mm — used to convert mm constants into preview pixel sizes
 const MM2PX = 3.78;
 
-const COL_W = (L.pageW - 2 * L.margin) / L.cols; // 60mm per PDF column
+const COL_W = (L.pageW - 2 * L.marginSide) / L.cols;
 
 // ─── Shared geometry helpers ──────────────────────────────────────────────────
 // All return mm values. Preview multiplies by MM2PX.
@@ -155,37 +154,42 @@ const buildPDF = (questions: Question[], method: Method) => {
     doc.setFontSize(18);
     doc.setTextColor(0);
     doc.text(isAnswerKey ? 'Answer Key' : 'Multiplication Worksheet',
-      L.pageW / 2, L.margin, { align: 'center' });
+      L.pageW / 2, L.marginTop, { align: 'center' });
 
     if (!isAnswerKey) {
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(11);
-      doc.text(`Name: ________________________________`, L.margin, L.margin + 8);
+      doc.text(`Name: ________________________________`, L.marginSide, L.marginTop + 8);
     }
 
-    const startY = L.margin + (isAnswerKey ? 12 : 18);
+    const startY = L.marginTop + (isAnswerKey ? 12 : 18);
 
     pageQuestions.forEach((q, idx) => {
       const col = idx % L.cols;
       const row = Math.floor(idx / L.cols);
-      const bx = L.margin + col * COL_W;
+      const bx = L.marginSide + col * COL_W;
       const by = startY + row * BLOCK_H;
 
+      // Light block border
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.2);
+      doc.rect(bx, by, COL_W, BLOCK_H);
+
+      // Question number + expression — centre-aligned in column
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(12);
       doc.setTextColor(0);
-      doc.text(`${idx + 1}.  ${q.a} × ${q.b}`, bx + L.textOffsetX, by + L.textOffsetY);
+      doc.text(`${idx + 1}.  ${q.a} × ${q.b}`, bx + COL_W / 2, by + L.textOffsetY, { align: 'center' });
 
       if (isAnswerKey) {
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(11);
         doc.setTextColor(30, 58, 138);
-        doc.text(`= ${q.answer}`, bx + L.textOffsetX + 8, by + L.textOffsetY + 8);
+        doc.text(`= ${q.answer}`, bx + COL_W / 2, by + L.textOffsetY + 8, { align: 'center' });
         doc.setTextColor(0);
       } else {
         const { cols: qc, rows: qr } = getDims(q);
         if (method === 'grid') {
-          // Centre horizontally in column, centre vertically in remaining space below structOffsetY
           const gWmm = gridW(qc);
           const gHmm = gridH(qr);
           const cx = bx + (COL_W - gWmm) / 2;
@@ -290,10 +294,9 @@ const PreviewQuestion: React.FC<{ q: Question; idx: number; method: Method; has3
       border: '1px solid #000',
       boxSizing: 'border-box',
       paddingTop: `${L.textOffsetY * MM2PX * 0.6}px`,
-      paddingLeft: `${L.textOffsetX * MM2PX}px`,
-      paddingRight: `${L.textOffsetX * MM2PX}px`,
       display: 'flex',
       flexDirection: 'column',
+      alignItems: 'center',
     }}>
       <span className="font-semibold" style={{ fontSize: '14px', color: '#000', lineHeight: 1.2 }}>
         {idx + 1}. {q.a} × {q.b}
