@@ -60,7 +60,7 @@ const getDims = (q: Question): { cols: number; rows: number } => {
 // To adjust spacing/sizing, change values here — both PDF and preview update.
 const L = {
   // PDF page
-  pageW: 210, pageH: 297, margin: 15, cols: 3,
+  pageW: 210, pageH: 297, margin: 8, cols: 3,
 
   // Per-question block height
   blockH: 48,     // mm — standard questions
@@ -145,8 +145,6 @@ const drawPdfLattice = (doc: jsPDF, q: Question, ox: number, oy: number) => {
 // ─── Full PDF generation ──────────────────────────────────────────────────────
 const buildPDF = (questions: Question[], method: Method) => {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-  const today = new Date();
-  const dateStr = `${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}/${String(today.getFullYear()).slice(-2)}`;
   const has3x3 = questions.some(q => q.type === '3x3');
   const BLOCK_H = blockHmm(has3x3);
 
@@ -162,7 +160,7 @@ const buildPDF = (questions: Question[], method: Method) => {
     if (!isAnswerKey) {
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(11);
-      doc.text(`Name: ________________________________   Date: ${dateStr}`, L.margin, L.margin + 8);
+      doc.text(`Name: ________________________________`, L.margin, L.margin + 8);
     }
 
     const startY = L.margin + (isAnswerKey ? 12 : 18);
@@ -331,7 +329,7 @@ export default function MultiplicationGenerator() {
 
   const [selectedTypes, setSelectedTypes] = useState<MultType[]>([]);
   const [method, setMethod] = useState<Method>('blank');
-  const [numQuestions, setNumQuestions] = useState<number>(20);
+  const [numQuestions, setNumQuestions] = useState<number>(12);
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   const [colorScheme, setColorScheme] = useState<ColorScheme>('default');
   const [error, setError] = useState<string>('');
