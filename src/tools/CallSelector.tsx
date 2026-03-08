@@ -1,26 +1,26 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { BrowserRouter as Router, useNavigate } from 'react-router-dom';
-import { 
-  Shuffle, 
-  UserPlus, 
-  Trash2, 
-  Copy, 
-  RotateCcw, 
-  UserMinus, 
-  Home, 
-  Menu, 
+import {
+  Shuffle,
+  UserPlus,
+  Trash2,
+  Copy,
+  RotateCcw,
+  UserMinus,
+  Home,
+  Menu,
   X,
   CheckCircle2,
   ArrowRight
 } from 'lucide-react';
 
-// ── Info Modal Component ─────────────────────────────────────────────────────
-const InfoModal = ({ onClose }) => (
+// ── Info Modal ───────────────────────────────────────────────────────────────
+const InfoModal = ({ onClose }: { onClose: () => void }) => (
   <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
       <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
         <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-          <svg width="20" height="20" viewBox="0 0 16 16" fill="none" className="text-blue-900" style={{ color: '#1e3a8a' }}>
+          <svg width="20" height="20" viewBox="0 0 16 16" fill="none" style={{ color: '#1e3a8a' }}>
             <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5" />
             <path d="M8 7v5M8 5v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
@@ -50,11 +50,18 @@ const InfoModal = ({ onClose }) => (
 );
 
 // ── Menu Dropdown (v1.5.1 standard) ─────────────────────────────────────────
-const MenuDropdown = ({ onOpenInfo, onClose }) => {
-  const ref = useRef(null);
+interface MenuDropdownProps {
+  onOpenInfo: () => void;
+  onClose: () => void;
+}
+
+const MenuDropdown = ({ onOpenInfo, onClose }: MenuDropdownProps) => {
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const h = e => { if (ref.current && !ref.current.contains(e.target)) onClose(); };
+    const h = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    };
     document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
   }, [onClose]);
@@ -72,30 +79,29 @@ const MenuDropdown = ({ onOpenInfo, onClose }) => {
           </svg>
           <span>Tool Information</span>
         </button>
-
       </div>
     </div>
   );
 };
 
-// ── Main Content Component ───────────────────────────────────────────────────
+// ── Main Content ─────────────────────────────────────────────────────────────
 const RandomizerContent = () => {
   const navigate = useNavigate();
-  const [nameInput, setNameInput] = useState('');
-  const [pool, setPool] = useState([]);
-  const [count, setCount] = useState(4);
-  const [selectedNames, setSelectedNames] = useState([]);
-  const [copied, setCopied] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isInfoOpen, setIsInfoOpen] = useState(false);
+  const [nameInput, setNameInput] = useState<string>('');
+  const [pool, setPool] = useState<string[]>([]);
+  const [count, setCount] = useState<number>(4);
+  const [selectedNames, setSelectedNames] = useState<string[]>([]);
+  const [copied, setCopied] = useState<boolean>(false);
+  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
+  const [isInfoOpen, setIsInfoOpen] = useState<boolean>(false);
 
   const addNames = () => {
     if (!nameInput.trim()) return;
     const newNames = nameInput
       .split(/[\n,]+/)
-      .map(n => n.trim())
-      .filter(n => n !== '');
-    setPool(prev => [...new Set([...prev, ...newNames])]);
+      .map((n: string) => n.trim())
+      .filter((n: string) => n !== '');
+    setPool((prev: string[]) => [...new Set([...prev, ...newNames])]);
     setNameInput('');
   };
 
@@ -105,8 +111,8 @@ const RandomizerContent = () => {
     setSelectedNames(shuffled.slice(0, Math.min(count, pool.length)));
   };
 
-  const rerollName = (indexToReplace) => {
-    const availablePool = pool.filter(name => !selectedNames.includes(name));
+  const rerollName = (indexToReplace: number) => {
+    const availablePool = pool.filter((name: string) => !selectedNames.includes(name));
     if (availablePool.length === 0) return;
     const newRandomName = availablePool[Math.floor(Math.random() * availablePool.length)];
     const newSelection = [...selectedNames];
@@ -114,9 +120,9 @@ const RandomizerContent = () => {
     setSelectedNames(newSelection);
   };
 
-  const removeFromPool = (nameToRemove) => {
-    setPool(prev => prev.filter(n => n !== nameToRemove));
-    setSelectedNames(prev => prev.filter(n => n !== nameToRemove));
+  const removeFromPool = (nameToRemove: string) => {
+    setPool((prev: string[]) => prev.filter((n: string) => n !== nameToRemove));
+    setSelectedNames((prev: string[]) => prev.filter((n: string) => n !== nameToRemove));
   };
 
   const copyToClipboard = () => {
@@ -143,15 +149,12 @@ const RandomizerContent = () => {
       {/* Navigation Bar — v1.5.1 standard */}
       <div className="bg-blue-900 shadow-lg flex-shrink-0">
         <div className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
-          {/* Home — icon only, no label */}
           <button
             onClick={() => navigate('/')}
             className="text-white hover:bg-blue-800 p-2 rounded-lg transition-colors"
           >
             <Home size={24} />
           </button>
-
-          {/* Burger menu */}
           <div className="relative">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -210,7 +213,7 @@ const RandomizerContent = () => {
                     <div className="h-full flex items-center justify-center text-gray-400 italic text-sm">Pool is empty</div>
                   ) : (
                     <div className="flex flex-wrap gap-2">
-                      {pool.map((name, i) => (
+                      {pool.map((name: string, i: number) => (
                         <span key={i} className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm font-bold text-gray-700 shadow-sm">
                           {name}
                           <button onClick={() => removeFromPool(name)} className="text-gray-300 hover:text-red-500 transition-colors">
@@ -278,7 +281,7 @@ const RandomizerContent = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {selectedNames.map((name, idx) => (
+                  {selectedNames.map((name: string, idx: number) => (
                     <div key={idx} className="bg-white rounded-2xl p-6 border-2 border-gray-100 shadow-sm flex items-center justify-between hover:border-blue-300 transition-colors group">
                       <div>
                         <span className="text-xs font-bold text-gray-400 uppercase tracking-widest block mb-1">Pick #{idx + 1}</span>
@@ -320,7 +323,7 @@ const RandomizerContent = () => {
   );
 };
 
-// ── Root App Component ───────────────────────────────────────────────────────
+// ── Root App ─────────────────────────────────────────────────────────────────
 export default function App() {
   return (
     <Router>
