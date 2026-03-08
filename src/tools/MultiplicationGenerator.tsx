@@ -369,12 +369,12 @@ const PreviewQuestion: React.FC<{ q: Question; idx: number; method: Method }> = 
         {idx + 1}. {q.a} × {q.b}
       </span>
       {method === 'grid' && (
-        <div style={{ marginTop: '28px', marginLeft: '20px' }}>
+        <div style={{ marginTop: '28px', display: 'flex', justifyContent: 'center' }}>
           <BlankGrid q={q} />
         </div>
       )}
       {method === 'lattice' && (
-        <div style={{ marginTop: '28px', marginLeft: '20px' }}>
+        <div style={{ marginTop: '28px', display: 'flex', justifyContent: 'center' }}>
           <BlankLattice q={q} />
         </div>
       )}
