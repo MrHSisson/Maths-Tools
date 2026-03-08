@@ -56,326 +56,253 @@ const getDims = (q: Question): { cols: number; rows: number } => {
   return { cols, rows };
 };
 
-// ─── PDF drawing helpers ──────────────────────────────────────────────────────
-// All measurements in mm.
+// ─── Shared layout — single source of truth (all values in mm) ───────────────
+// To adjust spacing/sizing, change values here — both PDF and preview update.
+const L = {
+  // PDF page
+  pageW: 210, pageH: 297, margin: 15, cols: 3,
 
-// Grid col widths in mm: rightmost=12mm, +3mm each step left (matches px ratio)
-const gridColWidths = (cols: number): number[] =>
-  Array.from({ length: cols }, (_, ci) => {
-    const fromRight = cols - 1 - ci;
-    return 12 + fromRight * 3; // 12, 15, 18 mm
-  });
+  // Per-question block height
+  blockH: 48,     // mm — standard questions
+  blockH3x3: 60,  // mm — 3×3 questions
 
-const drawPdfGrid = (
-  doc: jsPDF,
-  q: Question,
-  originX: number, // left edge of grid
-  originY: number, // top edge of grid
-) => {
-  const { cols, rows } = getDims(q);
-  const cellH = 9; // mm
-  const colW = gridColWidths(cols);
-  const colX: number[] = colW.reduce<number[]>((acc, _w, i) => {
-    acc.push(i === 0 ? originX : acc[i - 1] + colW[i - 1]);
-    return acc;
-  }, []);
+  // Text position within block
+  textOffsetX: 2,  // mm from block left
+  textOffsetY: 6,  // mm from block top (baseline)
 
-  doc.setDrawColor(55, 65, 81);
-  doc.setLineWidth(0.3);
+  // Structure (grid/lattice) positioning within block
+  structOffsetY: 12, // mm from block top to top of structure
 
-  for (let ri = 0; ri < rows; ri++) {
-    for (let ci = 0; ci < cols; ci++) {
-      doc.rect(colX[ci], originY + ri * cellH, colW[ci], cellH);
-    }
-  }
+  // Grid cell dimensions
+  gridCellH: 9,          // mm tall
+  gridColBase: 12,       // mm — rightmost column width
+  gridColStep: 3,        // mm — added per step left
+
+  // Lattice cell
+  latticeCell: 9,        // mm — square cell side
+  latticeExt: 9,         // mm — SW diagonal extension
 };
 
-const drawPdfLattice = (
-  doc: jsPDF,
-  q: Question,
-  originX: number,
-  originY: number,
-) => {
+// px per mm — used to convert mm constants into preview pixel sizes
+const MM2PX = 3.78;
+
+const COL_W = (L.pageW - 2 * L.margin) / L.cols; // 60mm per PDF column
+
+// ─── Shared geometry helpers ──────────────────────────────────────────────────
+// All return mm values. Preview multiplies by MM2PX.
+
+const gridColWidths = (cols: number): number[] =>
+  Array.from({ length: cols }, (_, ci) => L.gridColBase + (cols - 1 - ci) * L.gridColStep);
+
+const gridW = (cols: number): number => gridColWidths(cols).reduce((a, b) => a + b, 0);
+const gridH = (rows: number): number => rows * L.gridCellH;
+const latticeW = (cols: number): number => cols * L.latticeCell + L.latticeExt * 2;
+const latticeH = (rows: number): number => rows * L.latticeCell + L.latticeExt * 2;
+const blockHmm = (has3x3: boolean): number => has3x3 ? L.blockH3x3 : L.blockH;
+
+// ─── PDF drawing ──────────────────────────────────────────────────────────────
+const drawPdfGrid = (doc: jsPDF, q: Question, ox: number, oy: number) => {
   const { cols, rows } = getDims(q);
-  const CELL = 9; // mm square cells
-  const EXT = CELL; // SW extension length along diagonal
-  const gridW = cols * CELL;
-  const gridH = rows * CELL;
-
+  const colW = gridColWidths(cols);
+  const colX = colW.reduce<number[]>((acc, _w, i) =>
+    [...acc, i === 0 ? ox : acc[i - 1] + colW[i - 1]], []);
   doc.setDrawColor(55, 65, 81);
+  doc.setLineWidth(0.3);
+  for (let ri = 0; ri < rows; ri++)
+    for (let ci = 0; ci < cols; ci++)
+      doc.rect(colX[ci], oy + ri * L.gridCellH, colW[ci], L.gridCellH);
+};
 
-  // Diagonals first (lighter)
+const drawPdfLattice = (doc: jsPDF, q: Question, ox: number, oy: number) => {
+  // ox/oy = top-left of the full lattice area (including EXT padding)
+  const { cols, rows } = getDims(q);
+  const C = L.latticeCell;
+  const EXT = L.latticeExt;
+  const gx = ox + EXT;
+  const gy = oy + EXT;
+
   doc.setLineWidth(0.2);
   doc.setDrawColor(107, 114, 128);
   for (let ri = 0; ri < rows; ri++) {
     for (let ci = 0; ci < cols; ci++) {
-      const x = originX + ci * CELL;
-      const y = originY + ri * CELL;
-      const isLastRow = ri === rows - 1;
-      const isFirstCol = ci === 0;
-      const extend = isLastRow || isFirstCol;
-      const x1 = x + CELL;
-      const y1 = y;
-      const x2 = extend ? x - EXT / Math.SQRT2 : x;
-      const y2 = extend ? y + CELL + EXT / Math.SQRT2 : y + CELL;
-      doc.line(x1, y1, x2, y2);
+      const x = gx + ci * C;
+      const y = gy + ri * C;
+      const extend = ri === rows - 1 || ci === 0;
+      doc.line(x + C, y,
+        extend ? x - EXT / Math.SQRT2 : x,
+        extend ? y + C + EXT / Math.SQRT2 : y + C);
     }
   }
-
-  // Cell borders
   doc.setDrawColor(55, 65, 81);
   doc.setLineWidth(0.3);
-  for (let ri = 0; ri < rows; ri++) {
-    for (let ci = 0; ci < cols; ci++) {
-      doc.rect(originX + ci * CELL, originY + ri * CELL, CELL, CELL);
-    }
-  }
-
-  // Outer border (heavier)
+  for (let ri = 0; ri < rows; ri++)
+    for (let ci = 0; ci < cols; ci++)
+      doc.rect(gx + ci * C, gy + ri * C, C, C);
   doc.setLineWidth(0.5);
-  doc.rect(originX, originY, gridW, gridH);
+  doc.rect(gx, gy, cols * C, rows * C);
 };
-
-// Returns the height (mm) that a question block occupies on the PDF
-const getBlockHeight = (has3x3: boolean): number => has3x3 ? 58 : 48;
 
 // ─── Full PDF generation ──────────────────────────────────────────────────────
 const buildPDF = (questions: Question[], method: Method) => {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-  const PAGE_W = 210;
-  const PAGE_H = 297;
-  const MARGIN = 15;
-  const COLS = 3;
-  const colW = (PAGE_W - 2 * MARGIN) / COLS; // 60mm per column
-
   const today = new Date();
   const dateStr = `${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}/${String(today.getFullYear()).slice(-2)}`;
-
   const has3x3 = questions.some(q => q.type === '3x3');
-  const BLOCK_H = getBlockHeight(has3x3);
-  // spacing between question number line and structure
-  const STRUCT_OFFSET_Y = 8; // mm below question text to start grid/lattice
-  const STRUCT_OFFSET_X = 4; // mm indent from column left
+  const BLOCK_H = blockHmm(has3x3);
 
   const drawPage = (pageQuestions: Question[], pageNum: number, isAnswerKey: boolean) => {
     if (pageNum > 1) doc.addPage();
 
-    // Title
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(18);
     doc.setTextColor(0);
-    doc.text(
-      isAnswerKey ? 'Answer Key' : 'Multiplication Worksheet',
-      PAGE_W / 2, MARGIN, { align: 'center' }
-    );
+    doc.text(isAnswerKey ? 'Answer Key' : 'Multiplication Worksheet',
+      L.pageW / 2, L.margin, { align: 'center' });
 
     if (!isAnswerKey) {
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(11);
-      doc.text(`Name: ________________________________   Date: ${dateStr}`, MARGIN, MARGIN + 8);
+      doc.text(`Name: ________________________________   Date: ${dateStr}`, L.margin, L.margin + 8);
     }
 
-    const startY = MARGIN + (isAnswerKey ? 12 : 18);
+    const startY = L.margin + (isAnswerKey ? 12 : 18);
 
     pageQuestions.forEach((q, idx) => {
-      const col = idx % COLS;
-      const row = Math.floor(idx / COLS);
-      const x = MARGIN + col * colW;
-      const y = startY + row * BLOCK_H;
+      const col = idx % L.cols;
+      const row = Math.floor(idx / L.cols);
+      const bx = L.margin + col * COL_W;
+      const by = startY + row * BLOCK_H;
 
-      // Question number + expression
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(12);
       doc.setTextColor(0);
-      doc.text(`${idx + 1}.  ${q.a} × ${q.b}`, x + 2, y + 5);
+      doc.text(`${idx + 1}.  ${q.a} × ${q.b}`, bx + L.textOffsetX, by + L.textOffsetY);
 
       if (isAnswerKey) {
-        // Answer key: just show the answer below the expression
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(11);
         doc.setTextColor(30, 58, 138);
-        doc.text(`= ${q.answer}`, x + 10, y + 12);
+        doc.text(`= ${q.answer}`, bx + L.textOffsetX + 8, by + L.textOffsetY + 8);
         doc.setTextColor(0);
       } else {
-        // Worksheet: draw structure in working space
-        const structX = x + STRUCT_OFFSET_X;
-        const structY = y + STRUCT_OFFSET_Y + 3;
-
+        const { cols: qc, rows: qr } = getDims(q);
         if (method === 'grid') {
-          drawPdfGrid(doc, q, structX, structY);
+          // Centre horizontally in column, centre vertically in remaining space below structOffsetY
+          const gWmm = gridW(qc);
+          const gHmm = gridH(qr);
+          const cx = bx + (COL_W - gWmm) / 2;
+          const cy = by + L.structOffsetY + (BLOCK_H - L.structOffsetY - gHmm) / 2;
+          drawPdfGrid(doc, q, cx, cy);
         } else if (method === 'lattice') {
-          drawPdfLattice(doc, q, structX, structY);
+          const lWmm = latticeW(qc);
+          const lHmm = latticeH(qr);
+          const cx = bx + (COL_W - lWmm) / 2;
+          const cy = by + L.structOffsetY + (BLOCK_H - L.structOffsetY - lHmm) / 2;
+          drawPdfLattice(doc, q, cx, cy);
         }
-        // blank: nothing drawn
       }
     });
 
-    // Footer
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
     doc.setTextColor(120);
-    doc.text('Multiplication Worksheet Generator', PAGE_W / 2, PAGE_H - 8, { align: 'center' });
+    doc.text('Multiplication Worksheet Generator', L.pageW / 2, L.pageH - 8, { align: 'center' });
     doc.setTextColor(0);
   };
 
-  // Page 1: questions
   drawPage(questions, 1, false);
-  // Page 2: answer key
   drawPage(questions, 2, true);
-
-  const blob = doc.output('blob');
-  const url = URL.createObjectURL(blob);
-  window.open(url, '_blank');
+  window.open(URL.createObjectURL(doc.output('blob')), '_blank');
 };
 
-// ─── Blank Grid ───────────────────────────────────────────────────────────────
+// ─── SVG preview components (mm → px via MM2PX) ───────────────────────────────
 const BlankGrid: React.FC<{ q: Question }> = ({ q }) => {
   const { cols, rows } = getDims(q);
-  const CELL_H = 36;
-
-  // Tiered column widths: rightmost = 45px, then 55px, then 65px, etc.
-  // cols counted from the right (units, tens, hundreds...)
-  const colWidths = Array.from({ length: cols }, (_, ci) => {
-    const fromRight = cols - 1 - ci; // 0 = rightmost
-    return 45 + fromRight * 10;
-  });
-
-  const totalW = colWidths.reduce((a, b) => a + b, 0);
-  const totalH = rows * CELL_H;
-
-  // x offsets for each column
-  const colX = colWidths.reduce<number[]>((acc, _w, i) => {
-    acc.push(i === 0 ? 0 : acc[i - 1] + colWidths[i - 1]);
-    return acc;
-  }, []);
-
+  const colWpx = gridColWidths(cols).map(w => w * MM2PX);
+  const cellHpx = L.gridCellH * MM2PX;
+  const totalW = colWpx.reduce((a, b) => a + b, 0);
+  const colX = colWpx.reduce<number[]>((acc, _w, i) =>
+    [...acc, i === 0 ? 0 : acc[i - 1] + colWpx[i - 1]], []);
   return (
-    <svg
-      width={totalW}
-      height={totalH}
-      style={{ display: 'block' }}
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg width={totalW} height={rows * cellHpx} style={{ display: 'block' }}>
       {Array.from({ length: rows }).map((_, ri) =>
         Array.from({ length: cols }).map((_, ci) => (
-          <rect
-            key={`cell-${ri}-${ci}`}
-            x={colX[ci]}
-            y={ri * CELL_H}
-            width={colWidths[ci]}
-            height={CELL_H}
-            fill="white"
-            stroke="#374151"
-            strokeWidth="1.2"
-          />
+          <rect key={`${ri}-${ci}`}
+            x={colX[ci]} y={ri * cellHpx}
+            width={colWpx[ci]} height={cellHpx}
+            fill="white" stroke="#374151" strokeWidth="1.2" />
         ))
       )}
     </svg>
   );
 };
 
-// ─── Blank Lattice ────────────────────────────────────────────────────────────
 const BlankLattice: React.FC<{ q: Question }> = ({ q }) => {
   const { cols, rows } = getDims(q);
-  const CELL = 36;
-  // Extra space around the grid so extended diagonals have room
-  const EXT = CELL; // one full cell of extension on each side
-
-  const gridX = EXT;
-  const gridY = EXT;
-  const gridW = cols * CELL;
-  const gridH = rows * CELL;
-
-  const totalW = gridW + EXT * 2;
-  const totalH = gridH + EXT * 2;
-
-  const clipId = `lattice-clip-${cols}-${rows}`;
-
+  const C = L.latticeCell * MM2PX;
+  const EXT = L.latticeExt * MM2PX;
+  const gx = EXT;
+  const gy = EXT;
+  const totalW = cols * C + EXT * 2;
+  const totalH = rows * C + EXT * 2;
+  const clipId = `lc-${cols}-${rows}`;
   return (
-    <svg
-      width={totalW}
-      height={totalH}
-      style={{ display: 'block' }}
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg width={totalW} height={totalH} style={{ display: 'block' }}>
       <defs>
-        {/* Clip to the SVG canvas so extended lines don't bleed outside */}
-        <clipPath id={clipId}>
-          <rect x={0} y={0} width={totalW} height={totalH} />
-        </clipPath>
+        <clipPath id={clipId}><rect x={0} y={0} width={totalW} height={totalH} /></clipPath>
       </defs>
-
-      {/* Diagonals — extended SW only on last row and/or first column */}
       <g clipPath={`url(#${clipId})`}>
         {Array.from({ length: rows }).map((_, ri) =>
           Array.from({ length: cols }).map((_, ci) => {
-            const x = gridX + ci * CELL;
-            const y = gridY + ri * CELL;
-            const isLastRow = ri === rows - 1;
-            const isFirstCol = ci === 0;
-            const extend = isLastRow || isFirstCol;
-            // Diagonal runs from top-right corner to bottom-left corner of cell
-            // SW extension: continue past bottom-left by one full cell diagonal (at 45°)
-            const x1 = x + CELL;
-            const y1 = y;
-            const x2 = extend ? x - EXT / Math.SQRT2 : x;
-            const y2 = extend ? y + CELL + EXT / Math.SQRT2 : y + CELL;
+            const x = gx + ci * C;
+            const y = gy + ri * C;
+            const extend = ri === rows - 1 || ci === 0;
             return (
-              <line
-                key={`diag-${ri}-${ci}`}
-                x1={x1} y1={y1}
-                x2={x2} y2={y2}
-                stroke="#6b7280"
-                strokeWidth="0.9"
-              />
+              <line key={`d-${ri}-${ci}`}
+                x1={x + C} y1={y}
+                x2={extend ? x - EXT / Math.SQRT2 : x}
+                y2={extend ? y + C + EXT / Math.SQRT2 : y + C}
+                stroke="#6b7280" strokeWidth="0.9" />
             );
           })
         )}
       </g>
-
-      {/* Cell borders */}
       {Array.from({ length: rows }).map((_, ri) =>
         Array.from({ length: cols }).map((_, ci) => (
-          <rect
-            key={`cell-${ri}-${ci}`}
-            x={gridX + ci * CELL}
-            y={gridY + ri * CELL}
-            width={CELL}
-            height={CELL}
-            fill="none"
-            stroke="#374151"
-            strokeWidth="1.2"
-          />
+          <rect key={`c-${ri}-${ci}`}
+            x={gx + ci * C} y={gy + ri * C} width={C} height={C}
+            fill="none" stroke="#374151" strokeWidth="1.2" />
         ))
       )}
-
-      {/* Outer border on top */}
-      <rect
-        x={gridX} y={gridY}
-        width={gridW} height={gridH}
-        fill="none"
-        stroke="#374151"
-        strokeWidth="2"
-      />
+      <rect x={gx} y={gy} width={cols * C} height={rows * C}
+        fill="none" stroke="#374151" strokeWidth="2" />
     </svg>
   );
 };
 
 // ─── Preview question block ───────────────────────────────────────────────────
-const PreviewQuestion: React.FC<{ q: Question; idx: number; method: Method }> = ({ q, idx, method }) => {
+// Block dimensions mirror the PDF exactly via MM2PX.
+const PreviewQuestion: React.FC<{ q: Question; idx: number; method: Method; has3x3: boolean }> = ({ q, idx, method, has3x3 }) => {
+  const BLOCK_H_PX = blockHmm(has3x3) * MM2PX;
+  const STRUCT_OFFSET_Y_PX = L.structOffsetY * MM2PX;
+  const remainingH = BLOCK_H_PX - STRUCT_OFFSET_Y_PX;
   return (
-    <div className="p-3">
-      <span className="text-xl font-semibold" style={{ color: '#000000' }}>
+    <div style={{
+      height: `${BLOCK_H_PX}px`,
+      border: '1px solid #000',
+      boxSizing: 'border-box',
+      paddingTop: `${L.textOffsetY * MM2PX * 0.6}px`,
+      paddingLeft: `${L.textOffsetX * MM2PX}px`,
+      paddingRight: `${L.textOffsetX * MM2PX}px`,
+      display: 'flex',
+      flexDirection: 'column',
+    }}>
+      <span className="font-semibold" style={{ fontSize: '14px', color: '#000', lineHeight: 1.2 }}>
         {idx + 1}. {q.a} × {q.b}
       </span>
-      {method === 'grid' && (
-        <div style={{ marginTop: '28px', display: 'flex', justifyContent: 'center' }}>
-          <BlankGrid q={q} />
-        </div>
-      )}
-      {method === 'lattice' && (
-        <div style={{ marginTop: '28px', display: 'flex', justifyContent: 'center' }}>
-          <BlankLattice q={q} />
+      {(method === 'grid' || method === 'lattice') && (
+        <div style={{ height: `${remainingH}px`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {method === 'grid' ? <BlankGrid q={q} /> : <BlankLattice q={q} />}
         </div>
       )}
     </div>
@@ -662,11 +589,11 @@ export default function MultiplicationGenerator() {
                 Question Preview
               </h2>
               <div
-                className="grid gap-6"
+                className="grid"
                 style={{ gridTemplateColumns: `repeat(${previewCols}, minmax(0, 1fr))` }}
               >
                 {previewQuestions.slice(0, previewCount).map((q, idx) => (
-                  <PreviewQuestion key={idx} q={q} idx={idx} method={method} />
+                  <PreviewQuestion key={idx} q={q} idx={idx} method={method} has3x3={selectedTypes.includes('3x3')} />
                 ))}
               </div>
               {previewQuestions.length > previewCount && (
