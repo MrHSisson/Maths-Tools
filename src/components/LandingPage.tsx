@@ -86,6 +86,15 @@ const categories: Category[] = [
     iconBg: 'from-pink-50 to-rose-50',
     tools: []
   },
+  {
+    name: 'Teacher Tools',
+    icon: '👨‍🏫',
+    gradient: 'from-orange-500 to-amber-600',
+    iconBg: 'from-orange-50 to-amber-50',
+    tools: [
+      { id: 'call-selector', path: '/call-selector', name: 'Friday Phonecalls', icon: '☎️', description: 'A tool to randomly select students for phonecalls', ready: true },
+    ]
+  },
 ];
 
 export default function LandingPage(): JSX.Element {
