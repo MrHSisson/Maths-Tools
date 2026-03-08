@@ -19,7 +19,7 @@ import PowersOfTen from './tools/PowersOfTen';
 import PerimeterTool from './tools/PerimeterTool';
 import FractionsOfAmounts from './tools/FractionsOfAmounts';
 import MultiplicationGenerator from './tools/MultiplicationGenerator';
-
+import BasicAngleFacts from './tools/BasicAngleFacts';
 
 function App() {
   return (
@@ -44,6 +44,7 @@ function App() {
       <Route path="/perimeter" element={<PerimeterTool />} />
       <Route path="/fractions-of-amounts" element={<FractionsOfAmounts />} />
       <Route path="/multiplication-methods" element={<MultiplicationGenerator />} />
+      <Route path="/basic-angle-facts" element={<BasicAngleFacts />} />
     </Routes>
   )
 }
