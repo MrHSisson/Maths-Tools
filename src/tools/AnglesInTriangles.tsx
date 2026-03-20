@@ -1225,14 +1225,14 @@ export default function AnglesInTriangleTool() {
       const cameraContent = (isFS: boolean) => (
         <>
           <video ref={videoRef} autoPlay playsInline muted
-            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", backgroundColor: "#000" }} />
           {camError && (
             <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", padding: "2rem", textAlign: "center", zIndex: 1 }}>
               {camError}
             </div>
           )}
           {/* Question callout — left side */}
-          <div style={{ position: "absolute", top: isFS ? 116 : 32, left: 32, bottom: 32, width: "min(500px, 45%)", display: "flex", flexDirection: "column", zIndex: 10 }}>
+          <div style={{ position: "absolute", top: isFS ? 128 : 32, left: 32, bottom: 32, width: "min(500px, 45%)", display: "flex", flexDirection: "column", zIndex: 10 }}>
             <div style={{ background: stepBg, borderRadius: 12, padding: 32, boxShadow: "0 4px 24px rgba(0,0,0,0.3)", flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
               <div style={{ textAlign: "center", flexShrink: 0 }}>
                 <span style={{ fontSize: "2.25rem", fontWeight: 700, color: "#111827" }}>Find the missing angle</span>
@@ -1246,7 +1246,7 @@ export default function AnglesInTriangleTool() {
             </div>
           </div>
           {/* ··· menu — top-right */}
-          <div ref={camMenuRef} style={{ position: "absolute", top: isFS ? 116 : 32, right: 32, zIndex: 20 }}>
+          <div ref={camMenuRef} style={{ position: "absolute", top: isFS ? 128 : 32, right: 32, zIndex: 20 }}>
             <button onClick={() => setCamMenuOpen(o => !o)}
               style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.75)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.3rem", letterSpacing: 3, lineHeight: 1, padding: "4px 6px", borderRadius: 6 }}
               onMouseEnter={e => (e.currentTarget.style.color = "#fff")}
@@ -1310,7 +1310,7 @@ export default function AnglesInTriangleTool() {
         );
       }
       return (
-        <div className="rounded-xl shadow-2xl overflow-hidden" style={{ position: "relative", height: "500px", backgroundColor: "#000" }}>
+        <div className="rounded-xl shadow-2xl overflow-hidden" style={{ position: "relative", height: "calc(100vh - 320px)", minHeight: "400px", backgroundColor: "#000" }}>
           {cameraContent(false)}
         </div>
       );
@@ -1439,7 +1439,7 @@ export default function AnglesInTriangleTool() {
         </div>
       </div>
       {infoOpen && <InfoModal onClose={() => setInfoOpen(false)} />}
-      <div className="min-h-screen p-8" style={{ backgroundColor: "#f5f3f0" }}>
+      <div className="min-h-screen p-8" style={{ backgroundColor: "#f5f3f0", overflowX: "hidden" }}>
         <div className="max-w-6xl mx-auto">
           <h1 className="text-5xl font-bold text-center mb-8 text-black">{TOOL_CONFIG.pageTitle}</h1>
           <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
