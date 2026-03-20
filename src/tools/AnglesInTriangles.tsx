@@ -1231,9 +1231,25 @@ export default function AnglesInTriangleTool() {
               {camError}
             </div>
           )}
-          {/* Question callout — left side */}
-          <div style={{ position: "absolute", top: isFS ? 116 : 32, left: 32, bottom: 32, width: "min(500px, 45%)", display: "flex", flexDirection: "column", zIndex: 10 }}>
-            <div style={{ background: stepBg, borderRadius: 12, padding: 32, boxShadow: "0 4px 24px rgba(0,0,0,0.3)", flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
+          {/* Unified callout — toolbar + question, left side */}
+          <div style={{ position: isFS ? "fixed" : "absolute", top: isFS ? 0 : 32, left: isFS ? 0 : 32, bottom: isFS ? 0 : 32, width: isFS ? "min(500px, 45%)" : "min(500px, 45%)", display: "flex", flexDirection: "column", zIndex: 210 }}>
+            {/* Toolbar section — always visible, matches regular control bar style */}
+            <div style={{ background: "#ffffff", borderBottom: `1px solid ${stepBg}`, padding: "20px 24px", flexShrink: 0, display: "flex", flexDirection: "column", gap: 12, boxShadow: isFS ? "0 2px 8px rgba(0,0,0,0.1)" : "0 4px 24px rgba(0,0,0,0.3)", borderRadius: isFS ? 0 : "12px 12px 0 0" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                <DifficultyToggle value={difficulty} onChange={setDifficulty} />
+                <StandardQOPopover {...stdQOProps} />
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button onClick={newQuestion} className="px-4 py-2 bg-blue-900 text-white rounded-xl font-bold text-sm shadow-sm hover:bg-blue-800 flex items-center gap-2 flex-1 justify-center">
+                  <RefreshCw size={15} /> New Question
+                </button>
+                <button onClick={() => setShowWBAnswer(a => !a)} className="px-4 py-2 bg-blue-900 text-white rounded-xl font-bold text-sm shadow-sm hover:bg-blue-800 flex items-center gap-2 flex-1 justify-center">
+                  <Eye size={15} /> {showWBAnswer ? "Hide Answer" : "Show Answer"}
+                </button>
+              </div>
+            </div>
+            {/* Question section */}
+            <div style={{ background: stepBg, borderRadius: isFS ? 0 : "0 0 12px 12px", padding: 32, boxShadow: isFS ? "none" : "0 4px 24px rgba(0,0,0,0.3)", flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 16, minHeight: 0 }}>
               <div style={{ textAlign: "center", flexShrink: 0 }}>
                 <span style={{ fontSize: "2.25rem", fontWeight: 700, color: "#111827" }}>Find the missing angle</span>
                 {showWBAnswer && question && (
@@ -1246,7 +1262,7 @@ export default function AnglesInTriangleTool() {
             </div>
           </div>
           {/* ··· menu — top-right */}
-          <div ref={camMenuRef} style={{ position: "absolute", top: isFS ? 116 : 32, right: 32, zIndex: 20 }}>
+          <div ref={camMenuRef} style={{ position: isFS ? "fixed" : "absolute", top: 32, right: 32, zIndex: 220 }}>
             <button onClick={() => setCamMenuOpen(o => !o)}
               style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.75)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.3rem", letterSpacing: 3, lineHeight: 1, padding: "4px 6px", borderRadius: 6 }}
               onMouseEnter={e => (e.currentTarget.style.color = "#fff")}
@@ -1285,21 +1301,6 @@ export default function AnglesInTriangleTool() {
               </div>
             )}
           </div>
-          {/* Fullscreen toolbar */}
-          {isFS && (
-            <div style={{ position: "absolute", top: 32, left: 32, right: 32, background: "rgba(255,255,255,0.93)", backdropFilter: "blur(16px)", borderRadius: 12, padding: "20px", boxShadow: "0 4px 24px rgba(0,0,0,0.3)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, zIndex: 19 }}>
-              <DifficultyToggle value={difficulty} onChange={setDifficulty} />
-              <StandardQOPopover {...stdQOProps} />
-              <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                <button onClick={newQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
-                  <RefreshCw size={18} /> New Question
-                </button>
-                <button onClick={() => setShowWBAnswer(a => !a)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
-                  <Eye size={18} /> {showWBAnswer ? "Hide Answer" : "Show Answer"}
-                </button>
-              </div>
-            </div>
-          )}
         </>
       );
       if (presenterFullscreen) {
@@ -1439,7 +1440,7 @@ export default function AnglesInTriangleTool() {
         </div>
       </div>
       {infoOpen && <InfoModal onClose={() => setInfoOpen(false)} />}
-      <div className="min-h-screen p-8" style={{ backgroundColor: "#f5f3f0" }}>
+      <div className="min-h-screen p-8" style={{ backgroundColor: "#f5f3f0",  }}>
         <div className="max-w-6xl mx-auto">
           <h1 className="text-5xl font-bold text-center mb-8 text-black">{TOOL_CONFIG.pageTitle}</h1>
           <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
