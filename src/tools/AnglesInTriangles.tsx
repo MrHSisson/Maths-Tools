@@ -409,6 +409,8 @@ function buildSplitTriangle(vars: Record<string, unknown>): TriQuestion {
       id: Math.floor(Math.random() * 1_000_000),
     };
   }
+  // fallback (should never reach here)
+  return buildSplitTriangle(vars);
 }
 
 function buildExteriorAngle(vars: Record<string, unknown>): TriQuestion {
@@ -433,7 +435,7 @@ function buildExteriorAngle(vars: Record<string, unknown>): TriQuestion {
     const extPt: Pt  = { x: v1.x + (dx / len) * 80, y: v1.y + (dy / len) * 80 };
     const leftPt: Pt = { x: v0.x - (dx / len) * 25, y: v0.y - (dy / len) * 25 };
     const extAngle = 180 - a1;
-    const givenAngle = a0;
+    // givenAngle = a0 (used implicitly via a0 references below)
 
     if (askExterior) {
       // Give the two non-adjacent interior angles (a0 at v0, a2 at v2); x = exterior angle at v1
@@ -484,7 +486,7 @@ function buildExteriorAngle(vars: Record<string, unknown>): TriQuestion {
     const extPt: Pt  = { x: v0.x - (dx / len) * 80, y: v0.y - (dy / len) * 80 };
     const leftPt: Pt = { x: v1.x + (dx / len) * 25, y: v1.y + (dy / len) * 25 };
     const extAngle = 180 - a0;
-    const givenAngle = a1;
+    // givenAngle = a1 (used implicitly via a1 references below)
 
     if (askExterior) {
       // Give a1 at v1 and a2 at v2; x = exterior angle at v0
@@ -741,7 +743,6 @@ function TriangleDiagram({ q, showAnswer, small = false }: { q: TriQuestion; sho
         if (ang.showRightAngleSquare && !ang.isUnknown) return null;
         if (ang.hideLabel) return null;
 
-        const r = ang.isUnknown ? unknownArcR : arcR;
         const layout = labelLayouts[i];
         if (!layout) return null;
 
