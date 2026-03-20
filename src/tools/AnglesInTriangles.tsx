@@ -1253,7 +1253,7 @@ export default function AnglesInTriangleTool() {
             position: "absolute",
             top: isFS ? 124 : 32,
             left: 32, bottom: 32,
-            width: 500,
+            width: "min(500px, 45%)",
             display: "flex", flexDirection: "column",
             zIndex: 10,
           }}>
@@ -1373,7 +1373,7 @@ export default function AnglesInTriangleTool() {
       <div className="rounded-xl shadow-2xl p-8" style={{ backgroundColor: qBg, height: "80vh", display: "flex", flexDirection: "column", justifyContent: "center" }}>
         <div className="flex gap-8" style={{ flex: 1, minHeight: 0 }}>
           <div className="rounded-xl flex items-center justify-center flex-shrink-0 flex-col gap-4 p-8"
-            style={{ width: "500px", backgroundColor: stepBg }}>
+            style={{ width: "min(500px, 45%)", backgroundColor: stepBg }}>
             <span className="text-4xl font-bold text-black text-center">Find the missing angle</span>
             {showWBAnswer && question && (
               <span className="text-3xl font-bold" style={{ color: "#166534" }}>{question.answer}</span>
