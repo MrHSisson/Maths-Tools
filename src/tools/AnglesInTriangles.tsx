@@ -1056,7 +1056,6 @@ export default function AnglesInTriangleTool() {
 
   // ── Presenter / Visualiser mode ─────────────────────────────────────────────
   const [presenterMode, setPresenterMode] = useState(false);
-  const [presenterFullscreen, setPresenterFullscreen] = useState(false);
   const [camDevices, setCamDevices] = useState<MediaDeviceInfo[]>([]);
   const [currentCamId, setCurrentCamId] = useState<string | null>(null);
   const [camError, setCamError] = useState<string | null>(null);
@@ -1103,7 +1102,7 @@ export default function AnglesInTriangleTool() {
 
   useEffect(() => {
     if (presenterMode) { startCam(); }
-    else { setPresenterFullscreen(false); stopStream(); }
+    else { stopStream(); }
   }, [presenterMode]);
 
   useEffect(() => {
@@ -1116,7 +1115,6 @@ export default function AnglesInTriangleTool() {
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        setPresenterFullscreen(false);
         setPresenterMode(false);
         setWbFullscreen(false);
       }
