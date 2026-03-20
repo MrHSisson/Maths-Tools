@@ -1064,12 +1064,14 @@ export default function AnglesInTriangleTool() {
   const didLongPress = useRef(false);
   const camDropdownRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   const stopStream = useCallback(() => {
-    if (videoRef.current?.srcObject) {
-      (videoRef.current.srcObject as MediaStream).getTracks().forEach(t => t.stop());
-      videoRef.current.srcObject = null;
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(t => t.stop());
+      streamRef.current = null;
     }
+    if (videoRef.current) videoRef.current.srcObject = null;
   }, []);
 
   const startCam = useCallback(async (deviceId?: string) => {
@@ -1090,6 +1092,7 @@ export default function AnglesInTriangleTool() {
         video: targetDeviceId ? { deviceId: { exact: targetDeviceId } } : true,
         audio: false,
       });
+      streamRef.current = stream;
       if (videoRef.current) videoRef.current.srcObject = stream;
       const track = stream.getVideoTracks()[0];
       setCurrentCamId(track.getSettings().deviceId ?? null);
@@ -1104,6 +1107,13 @@ export default function AnglesInTriangleTool() {
     if (presenterMode) { startCam(); }
     else { stopStream(); }
   }, [presenterMode]);
+
+  // Reattach stream to video element when fullscreen toggles (video element remounts)
+  useEffect(() => {
+    if (presenterMode && streamRef.current && videoRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+    }
+  }, [wbFullscreen]);
 
   useEffect(() => {
     if (!camDropdownOpen) return;
