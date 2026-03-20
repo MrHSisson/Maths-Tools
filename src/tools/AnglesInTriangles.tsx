@@ -1052,15 +1052,19 @@ export default function AnglesInTriangleTool() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
 
+  const [wbFullscreen, setWbFullscreen] = useState(false);
+
   // ── Presenter / Visualiser mode ─────────────────────────────────────────────
   const [presenterMode, setPresenterMode] = useState(false);
   const [presenterFullscreen, setPresenterFullscreen] = useState(false);
   const [camDevices, setCamDevices] = useState<MediaDeviceInfo[]>([]);
   const [currentCamId, setCurrentCamId] = useState<string | null>(null);
   const [camError, setCamError] = useState<string | null>(null);
-  const [camMenuOpen, setCamMenuOpen] = useState(false);
+  const [camDropdownOpen, setCamDropdownOpen] = useState(false);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const didLongPress = useRef(false);
+  const camDropdownRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const camMenuRef = useRef<HTMLDivElement>(null);
 
   const stopStream = useCallback(() => {
     if (videoRef.current?.srcObject) {
@@ -1099,18 +1103,24 @@ export default function AnglesInTriangleTool() {
 
   useEffect(() => {
     if (presenterMode) { startCam(); }
-    else { stopStream(); setPresenterFullscreen(false); setCamMenuOpen(false); }
+    else { setPresenterFullscreen(false); stopStream(); }
   }, [presenterMode]);
 
   useEffect(() => {
-    if (!camMenuOpen) return;
-    const h = (e: MouseEvent) => { if (camMenuRef.current && !camMenuRef.current.contains(e.target as Node)) setCamMenuOpen(false); };
+    if (!camDropdownOpen) return;
+    const h = (e: MouseEvent) => { if (camDropdownRef.current && !camDropdownRef.current.contains(e.target as Node)) setCamDropdownOpen(false); };
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
-  }, [camMenuOpen]);
+  }, [camDropdownOpen]);
 
   useEffect(() => {
-    const h = (e: KeyboardEvent) => { if (e.key === "Escape") setPresenterFullscreen(false); };
+    const h = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setPresenterFullscreen(false);
+        setPresenterMode(false);
+        setWbFullscreen(false);
+      }
+    };
     document.addEventListener("keydown", h);
     return () => document.removeEventListener("keydown", h);
   }, []);
@@ -1201,7 +1211,7 @@ export default function AnglesInTriangleTool() {
       </div>
     );
     return (
-      <div className="bg-white rounded-xl shadow-lg p-5 mb-8">
+      <div className="bg-white border-b border-gray-200 px-5 py-4 rounded-t-xl">
         <div className="flex items-center justify-between gap-4">
           <DifficultyToggle value={difficulty} onChange={setDifficulty} />
           <StandardQOPopover {...stdQOProps} />
@@ -1220,131 +1230,156 @@ export default function AnglesInTriangleTool() {
   };
 
   const renderWhiteboard = () => {
-    // ── Visualiser mode ───────────────────────────────────────────────────────
-    if (presenterMode) {
-      const cameraContent = (isFS: boolean) => (
-        <>
-          <video ref={videoRef} autoPlay playsInline muted
-            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-          {camError && (
-            <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", padding: "2rem", textAlign: "center", zIndex: 1 }}>
-              {camError}
-            </div>
-          )}
-          {/* Question callout — left side */}
-          <div style={{ position: "absolute", top: isFS ? 100 : 32, left: 32, bottom: 32, width: "min(500px, 45%)", display: "flex", flexDirection: "column", zIndex: 10 }}>
-            <div style={{ background: stepBg, borderRadius: 12, padding: 32, boxShadow: "0 4px 24px rgba(0,0,0,0.3)", flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
-              <div style={{ textAlign: "center", flexShrink: 0 }}>
-                <span style={{ fontSize: "2.25rem", fontWeight: 700, color: "#111827" }}>Find the missing angle</span>
-                {showWBAnswer && question && (
-                  <span style={{ fontSize: "1.875rem", fontWeight: 700, color: "#166534", marginLeft: 16 }}>{question.answer}</span>
+    // ── Shared fullscreen toolbar ─────────────────────────────────────────────
+    const fsToolbar = (
+      <div style={{ background: "rgba(255,255,255,0.97)", backdropFilter: "blur(16px)", borderBottom: "1px solid rgba(0,0,0,0.08)", padding: "16px 32px", boxShadow: "0 2px 16px rgba(0,0,0,0.15)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexShrink: 0, zIndex: 210 }}>
+        <DifficultyToggle value={difficulty} onChange={setDifficulty} />
+        <StandardQOPopover {...stdQOProps} />
+        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          <button onClick={newQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
+            <RefreshCw size={18} /> New Question
+          </button>
+          <button onClick={() => setShowWBAnswer(a => !a)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
+            <Eye size={18} /> {showWBAnswer ? "Hide Answer" : "Show Answer"}
+          </button>
+        </div>
+      </div>
+    );
+
+    // ── Question box — standard (padded, rounded, fixed width) ───────────────
+    const questionBox = (
+      <div className="rounded-xl flex items-center justify-center flex-shrink-0 flex-col gap-4 p-6"
+        style={{ width: "500px", backgroundColor: stepBg, height: "100%" }}>
+        <span className="text-4xl font-bold text-black text-center">Find the missing angle</span>
+        {showWBAnswer && question && (
+          <span className="text-3xl font-bold" style={{ color: "#166534" }}>{question.answer}</span>
+        )}
+        <div className="flex items-center justify-center" style={{ width: "100%", flex: 1, minHeight: 0 }}>
+          {question ? <TriangleDiagram q={question} showAnswer={showWBAnswer} /> : <span className="text-gray-400 text-xl">Generate a question</span>}
+        </div>
+      </div>
+    );
+
+    // ── Question box — fullscreen (fills 40%, no rounding/padding) ────────────
+    const questionBoxFS = (
+      <div style={{ width: "40%", height: "100%", backgroundColor: "#ffffff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, padding: 32, boxSizing: "border-box", flexShrink: 0 }}>
+        <span className="text-4xl font-bold text-black text-center">Find the missing angle</span>
+        {showWBAnswer && question && (
+          <span className="text-3xl font-bold" style={{ color: "#166534" }}>{question.answer}</span>
+        )}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", flex: 1, minHeight: 0 }}>
+          {question ? <TriangleDiagram q={question} showAnswer={showWBAnswer} /> : <span className="text-gray-400 text-xl">Generate a question</span>}
+        </div>
+      </div>
+    );
+
+    // ── Right panel — shared (camera or working space) ────────────────────────
+    const makeRightPanel = (isFS: boolean) => (
+      <div style={{ flex: isFS ? "none" : 1, width: isFS ? "60%" : undefined, height: "100%", position: "relative", overflow: "hidden", backgroundColor: presenterMode ? "#000" : (isFS ? "#f5f3f0" : stepBg), borderRadius: isFS ? 0 : undefined }} className={isFS ? "" : "flex-1 rounded-xl"}>
+        {presenterMode && (
+          <>
+            <video ref={videoRef} autoPlay playsInline muted
+              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+            {camError && (
+              <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", padding: "2rem", textAlign: "center", zIndex: 1 }}>
+                {camError}
+              </div>
+            )}
+          </>
+        )}
+        {/* Buttons — top-right corner */}
+        <div style={{ position: "absolute", top: 10, right: 10, display: "flex", gap: 6, zIndex: 20 }}>
+          {presenterMode ? (
+            <>
+              {/* Camera button: short press = exit visualiser, long press = camera dropdown */}
+              <div style={{ position: "relative" }} ref={camDropdownRef}>
+                <button
+                  title="Exit Visualiser (hold for camera options)"
+                  onMouseDown={() => {
+                    didLongPress.current = false;
+                    longPressTimer.current = setTimeout(() => {
+                      didLongPress.current = true;
+                      setCamDropdownOpen(o => !o);
+                    }, 500);
+                  }}
+                  onMouseUp={() => {
+                    if (longPressTimer.current) clearTimeout(longPressTimer.current);
+                    if (!didLongPress.current) setPresenterMode(false);
+                  }}
+                  onMouseLeave={() => { if (longPressTimer.current) clearTimeout(longPressTimer.current); }}
+                  style={{ background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(6px)", transition: "background 0.2s" }}
+                  onMouseEnter={e => (e.currentTarget.style.background = "rgba(0,0,0,0.75)")}
+                >
+                  <Video size={16} color="rgba(255,255,255,0.85)" />
+                </button>
+                {camDropdownOpen && (
+                  <div style={{ position: "absolute", top: 40, right: 0, background: "rgba(12,12,12,0.96)", backdropFilter: "blur(14px)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, minWidth: 200, overflow: "hidden", zIndex: 30 }}>
+                    <div style={{ padding: "6px 14px", fontSize: "0.55rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(255,255,255,0.25)" }}>Camera</div>
+                    {camDevices.map((d, i) => (
+                      <div key={d.deviceId}
+                        onClick={() => { setCamDropdownOpen(false); if (d.deviceId !== currentCamId) startCam(d.deviceId); }}
+                        style={{ padding: "10px 14px", fontSize: "0.75rem", color: d.deviceId === currentCamId ? "#60a5fa" : "rgba(255,255,255,0.65)", cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}
+                        onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.07)")}
+                        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                      >
+                        <div style={{ width: 5, height: 5, borderRadius: "50%", background: d.deviceId === currentCamId ? "#60a5fa" : "transparent", flexShrink: 0 }} />
+                        {d.label || `Camera ${i + 1}`}
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", flex: 1, minHeight: 0 }}>
-                {question ? <TriangleDiagram q={question} showAnswer={showWBAnswer} /> : <span style={{ color: "#9ca3af", fontSize: "0.95rem" }}>Generate a question</span>}
-              </div>
-            </div>
-          </div>
-          {/* ··· menu — top-right */}
-          <div ref={camMenuRef} style={{ position: "absolute", top: isFS ? 100 : 32, right: 32, zIndex: 20 }}>
-            <button onClick={() => setCamMenuOpen(o => !o)}
-              style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.75)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.3rem", letterSpacing: 3, lineHeight: 1, padding: "4px 6px", borderRadius: 6 }}
-              onMouseEnter={e => (e.currentTarget.style.color = "#fff")}
-              onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.75)")}
-            >···</button>
-            {camMenuOpen && (
-              <div style={{ position: "absolute", top: 32, right: 0, background: "rgba(12,12,12,0.96)", backdropFilter: "blur(14px)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, minWidth: 220, overflow: "hidden", zIndex: 30 }}>
-                <div onClick={() => { setCamMenuOpen(false); setPresenterFullscreen(f => !f); }}
-                  style={{ padding: "10px 14px", fontSize: "0.75rem", color: "rgba(255,255,255,0.7)", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, borderBottom: "1px solid rgba(255,255,255,0.07)" }}
-                  onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.07)")}
-                  onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
-                >
-                  {isFS ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
-                  {isFS ? "Exit Fullscreen" : "Fullscreen"}
-                </div>
-                <div style={{ padding: "6px 14px", fontSize: "0.55rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(255,255,255,0.25)" }}>Camera</div>
-                {camDevices.map((d, i) => (
-                  <div key={d.deviceId}
-                    onClick={() => { setCamMenuOpen(false); if (d.deviceId !== currentCamId) startCam(d.deviceId); }}
-                    style={{ padding: "10px 14px", fontSize: "0.75rem", color: d.deviceId === currentCamId ? "#60a5fa" : "rgba(255,255,255,0.65)", cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}
-                    onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.07)")}
-                    onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
-                  >
-                    <div style={{ width: 5, height: 5, borderRadius: "50%", background: d.deviceId === currentCamId ? "#60a5fa" : "transparent", flexShrink: 0 }} />
-                    {d.label || `Camera ${i + 1}`}
-                  </div>
-                ))}
-                <div style={{ height: 1, background: "rgba(255,255,255,0.07)" }} />
-                <div onClick={() => { setCamMenuOpen(false); setPresenterFullscreen(false); setPresenterMode(false); }}
-                  style={{ padding: "10px 14px", fontSize: "0.75rem", color: "rgba(255,255,255,0.7)", cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}
-                  onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.07)")}
-                  onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
-                >
-                  <X size={13} /> Exit Visualiser
-                </div>
-              </div>
-            )}
-          </div>
-          {/* Fullscreen toolbar — fixed to top of screen, full width */}
-          {isFS && (
-            <div style={{ position: "fixed", top: 0, left: 0, right: 0, background: "rgba(255,255,255,0.97)", backdropFilter: "blur(16px)", borderBottom: "1px solid rgba(0,0,0,0.08)", padding: "20px 32px", boxShadow: "0 2px 16px rgba(0,0,0,0.15)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, zIndex: 210 }}>
-              <DifficultyToggle value={difficulty} onChange={setDifficulty} />
-              <StandardQOPopover {...stdQOProps} />
-              <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                <button onClick={newQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
-                  <RefreshCw size={18} /> New Question
-                </button>
-                <button onClick={() => setShowWBAnswer(a => !a)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
-                  <Eye size={18} /> {showWBAnswer ? "Hide Answer" : "Show Answer"}
-                </button>
-              </div>
-            </div>
-          )}
-        </>
-      );
-      if (presenterFullscreen) {
-        return (
-          <div style={{ position: "fixed", inset: 0, zIndex: 200, backgroundColor: "#000", overflow: "hidden" }}>
-            {cameraContent(true)}
-          </div>
-        );
-      }
-      return (
-        <div className="rounded-xl shadow-2xl overflow-hidden" style={{ position: "relative", height: "500px", backgroundColor: "#000" }}>
-          {cameraContent(false)}
-        </div>
-      );
-    }
-    // ── Standard whiteboard ───────────────────────────────────────────────────
-    return (
-      <div className="rounded-xl shadow-2xl p-8" style={{ backgroundColor: qBg }}>
-        <div className="flex gap-6">
-          <div className="rounded-xl flex items-center justify-center flex-shrink-0 flex-col gap-4 p-6"
-            style={{ width: "500px", backgroundColor: stepBg, position: "relative" }}>
-            <span className="text-4xl font-bold text-black text-center">Find the missing angle</span>
-            {showWBAnswer && question && (
-              <span className="text-3xl font-bold" style={{ color: "#166534" }}>{question.answer}</span>
-            )}
-            <div className="flex items-center justify-center" style={{ width: "100%", height: "400px" }}>
-              {question ? <TriangleDiagram q={question} showAnswer={showWBAnswer} /> : <span className="text-gray-400 text-xl">Generate a question</span>}
-            </div>
-          </div>
-          <div className="flex-1 rounded-xl" style={{ minHeight: "500px", backgroundColor: stepBg, position: "relative" }}>
-            <button onClick={() => setPresenterMode(p => !p)} title="Visualiser mode"
-              style={{ position: "absolute", top: 10, right: 10, background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.2s" }}
+            </>
+          ) : (
+            <button onClick={() => setPresenterMode(true)} title="Visualiser mode"
+              style={{ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.2s" }}
               onMouseEnter={e => (e.currentTarget.style.background = "rgba(0,0,0,0.15)")}
               onMouseLeave={e => (e.currentTarget.style.background = "rgba(0,0,0,0.08)")}
             >
               <Video size={16} color="#6b7280" />
             </button>
-          </div>
+          )}
+          {/* Fullscreen toggle — always shown */}
+          <button
+            onClick={() => setWbFullscreen(f => !f)}
+            title={wbFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+            style={{ background: wbFullscreen ? "#374151" : (presenterMode ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.08)"), border: presenterMode ? "1px solid rgba(255,255,255,0.15)" : "none", borderRadius: 8, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: presenterMode ? "blur(6px)" : "none", transition: "background 0.2s" }}
+            onMouseEnter={e => (e.currentTarget.style.background = wbFullscreen ? "#1f2937" : (presenterMode ? "rgba(0,0,0,0.75)" : "rgba(0,0,0,0.15)"))}
+            onMouseLeave={e => (e.currentTarget.style.background = wbFullscreen ? "#374151" : (presenterMode ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.08)"))}
+          >
+            {wbFullscreen
+              ? <Minimize2 size={16} color="#ffffff" />
+              : <Maximize2 size={16} color={presenterMode ? "rgba(255,255,255,0.85)" : "#6b7280"} />}
+          </button>
+        </div>
+      </div>
+    );
+
+    // ── Fullscreen ────────────────────────────────────────────────────────────
+    if (wbFullscreen) return (
+      <div style={{ position: "fixed", inset: 0, zIndex: 200, backgroundColor: stepBg, display: "flex", flexDirection: "column" }}>
+        {fsToolbar}
+        <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
+          {questionBoxFS}
+          <div style={{ width: 2, backgroundColor: "#000", flexShrink: 0 }} />
+          {makeRightPanel(true)}
+        </div>
+      </div>
+    );
+
+    // ── Standard (non-fullscreen) ─────────────────────────────────────────────
+    return (
+      <div className="p-8" style={{ backgroundColor: qBg, height: "600px", boxSizing: "border-box" }}>
+        <div className="flex gap-6" style={{ height: "100%" }}>
+          {questionBox}
+          {makeRightPanel(false)}
         </div>
       </div>
     );
   };
 
   const renderWorkedExample = () => (
-    <div className="rounded-xl shadow-lg p-8" style={{ backgroundColor: qBg }}>
+    <div className="p-8" style={{ backgroundColor: qBg }}>
       {question ? (
         <>
           <div className="text-center mb-6">
@@ -1451,10 +1486,18 @@ export default function AnglesInTriangleTool() {
               </button>
             ))}
           </div>
-          {renderControlBar()}
-          {mode === "whiteboard" && renderWhiteboard()}
-          {mode === "single" && renderWorkedExample()}
-          {mode === "worksheet" && renderWorksheet()}
+          {mode === "worksheet" ? (
+            <>
+              {renderControlBar()}
+              {renderWorksheet()}
+            </>
+          ) : (
+            <div className="rounded-xl shadow-lg overflow-hidden">
+              {renderControlBar()}
+              {mode === "whiteboard" && renderWhiteboard()}
+              {mode === "single" && renderWorkedExample()}
+            </div>
+          )}
         </div>
       </div>
     </>
