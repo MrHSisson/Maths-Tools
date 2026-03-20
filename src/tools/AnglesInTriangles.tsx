@@ -1209,7 +1209,7 @@ export default function AnglesInTriangleTool() {
       </div>
     );
     return (
-      <div className="bg-white rounded-xl shadow-lg p-5 mb-8">
+      <div className="bg-white rounded-xl shadow-lg p-5 mb-4">
         <div className="flex items-center justify-between gap-4">
           <DifficultyToggle value={difficulty} onChange={setDifficulty} />
           <StandardQOPopover {...stdQOProps} />
@@ -1362,7 +1362,7 @@ export default function AnglesInTriangleTool() {
 
       // Windowed — inline within whiteboard
       return (
-        <div className="rounded-xl shadow-2xl overflow-hidden" style={{ position: "relative", height: "80vh", backgroundColor: "#000" }}>
+        <div className="rounded-xl shadow-2xl overflow-hidden" style={{ position: "relative", height: "calc(100vh - 310px)", minHeight: 400, backgroundColor: "#000" }}>
           {cameraContent(false)}
         </div>
       );
@@ -1370,7 +1370,7 @@ export default function AnglesInTriangleTool() {
 
     // ── Standard whiteboard layout ────────────────────────────────────────────
     return (
-      <div className="rounded-xl shadow-2xl p-8" style={{ backgroundColor: qBg, height: "80vh", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+      <div className="rounded-xl shadow-2xl p-8" style={{ backgroundColor: qBg, height: "calc(100vh - 310px)", minHeight: 400, display: "flex", flexDirection: "column", justifyContent: "center" }}>
         <div className="flex gap-8" style={{ flex: 1, minHeight: 0 }}>
           <div className="rounded-xl flex items-center justify-center flex-shrink-0 flex-col gap-4 p-8"
             style={{ width: "min(500px, 45%)", backgroundColor: stepBg }}>
@@ -1501,11 +1501,11 @@ export default function AnglesInTriangleTool() {
         </div>
       </div>
       {infoOpen && <InfoModal onClose={() => setInfoOpen(false)} />}
-      <div className="min-h-screen p-8" style={{ backgroundColor: "#f5f3f0" }}>
+      <div style={{ backgroundColor: "#f5f3f0", minHeight: "calc(100vh - 60px)", padding: "24px 32px", overflowX: "hidden" }}>
         <div className="max-w-6xl mx-auto">
-          <h1 className="text-5xl font-bold text-center mb-8 text-black">{TOOL_CONFIG.pageTitle}</h1>
-          <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
-          <div className="flex justify-center gap-4 mb-8">
+          <h1 className="text-4xl font-bold text-center mb-4 text-black">{TOOL_CONFIG.pageTitle}</h1>
+          <div className="flex justify-center mb-4"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
+          <div className="flex justify-center gap-4 mb-4">
             {[["whiteboard", "Whiteboard"], ["single", "Worked Example"], ["worksheet", "Worksheet"]].map(([m, label]) => (
               <button key={m} onClick={() => { setMode(m); setPresenterMode(false); }}
                 className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${mode === m ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
