@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
-import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Maximize2, Minimize2, Video } from "lucide-react";
+import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2 } from "lucide-react";
 
 // ─── TOOL CONFIG ──────────────────────────────────────────────────────────────
 const TOOL_CONFIG = {
@@ -409,7 +409,6 @@ function buildSplitTriangle(vars: Record<string, unknown>): TriQuestion {
       id: Math.floor(Math.random() * 1_000_000),
     };
   }
-  // fallback (should never reach here)
   return buildSplitTriangle(vars);
 }
 
@@ -435,7 +434,6 @@ function buildExteriorAngle(vars: Record<string, unknown>): TriQuestion {
     const extPt: Pt  = { x: v1.x + (dx / len) * 80, y: v1.y + (dy / len) * 80 };
     const leftPt: Pt = { x: v0.x - (dx / len) * 25, y: v0.y - (dy / len) * 25 };
     const extAngle = 180 - a1;
-    // givenAngle = a0 (used implicitly via a0 references below)
 
     if (askExterior) {
       // Give the two non-adjacent interior angles (a0 at v0, a2 at v2); x = exterior angle at v1
@@ -486,7 +484,6 @@ function buildExteriorAngle(vars: Record<string, unknown>): TriQuestion {
     const extPt: Pt  = { x: v0.x - (dx / len) * 80, y: v0.y - (dy / len) * 80 };
     const leftPt: Pt = { x: v1.x + (dx / len) * 25, y: v1.y + (dy / len) * 25 };
     const extAngle = 180 - a0;
-    // givenAngle = a1 (used implicitly via a1 references below)
 
     if (askExterior) {
       // Give a1 at v1 and a2 at v2; x = exterior angle at v0
@@ -1055,7 +1052,7 @@ export default function AnglesInTriangleTool() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
 
-  // ── Presenter mode ──────────────────────────────────────────────────────────
+  // ── Presenter / Visualiser mode ─────────────────────────────────────────────
   const [presenterMode, setPresenterMode] = useState(false);
   const [presenterFullscreen, setPresenterFullscreen] = useState(false);
   const [camDevices, setCamDevices] = useState<MediaDeviceInfo[]>([]);
@@ -1076,11 +1073,8 @@ export default function AnglesInTriangleTool() {
     stopStream();
     setCamError(null);
     try {
-      // On initial launch (no deviceId specified), enumerate first and prefer
-      // any external/USB camera over the built-in one
       let targetDeviceId = deviceId;
       if (!targetDeviceId) {
-        // Request permission with default camera first so labels are populated
         const tempStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
         tempStream.getTracks().forEach(t => t.stop());
         const all = await navigator.mediaDevices.enumerateDevices();
@@ -1095,8 +1089,7 @@ export default function AnglesInTriangleTool() {
       });
       if (videoRef.current) videoRef.current.srcObject = stream;
       const track = stream.getVideoTracks()[0];
-      const id = track.getSettings().deviceId ?? null;
-      setCurrentCamId(id);
+      setCurrentCamId(track.getSettings().deviceId ?? null);
       const all = await navigator.mediaDevices.enumerateDevices();
       setCamDevices(all.filter(d => d.kind === "videoinput"));
     } catch (e: any) {
@@ -1111,9 +1104,7 @@ export default function AnglesInTriangleTool() {
 
   useEffect(() => {
     if (!camMenuOpen) return;
-    const h = (e: MouseEvent) => {
-      if (camMenuRef.current && !camMenuRef.current.contains(e.target as Node)) setCamMenuOpen(false);
-    };
+    const h = (e: MouseEvent) => { if (camMenuRef.current && !camMenuRef.current.contains(e.target as Node)) setCamMenuOpen(false); };
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
   }, [camMenuOpen]);
@@ -1159,10 +1150,11 @@ export default function AnglesInTriangleTool() {
     onLevelVariableChange: setLevelVar, levelDropdowns: levelDDs, onLevelDropdownChange: setLevelDD,
   };
 
+  const diagramCellStyle = `.ws-cell > svg { max-width: 150px !important; max-height: 150px !important; width: auto !important; height: auto !important; }`;
   const renderQCell = (q: TriQuestion, idx: number, bgOverride?: string) => (
     <div className="rounded-lg p-3 shadow flex flex-col items-center gap-2" style={{ backgroundColor: bgOverride ?? stepBg }}>
       <span className="text-base font-bold text-gray-700 self-start">{idx + 1}.</span>
-      <div className="ws-diagram-cell" style={{ width: 150, height: 150, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+      <div className="ws-cell" style={{ width: 150, height: 150, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
         <TriangleDiagram q={q} showAnswer={showWSAnswers} small />
       </div>
       {showWSAnswers && <span className="text-sm font-bold text-center" style={{ color: "#059669" }}>{q.answer}</span>}
@@ -1209,11 +1201,11 @@ export default function AnglesInTriangleTool() {
       </div>
     );
     return (
-      <div className="bg-white rounded-xl shadow-lg p-5 mb-4">
+      <div className="bg-white rounded-xl shadow-lg p-5 mb-8">
         <div className="flex items-center justify-between gap-4">
           <DifficultyToggle value={difficulty} onChange={setDifficulty} />
           <StandardQOPopover {...stdQOProps} />
-          <div className="flex gap-3 items-center">
+          <div className="flex gap-3">
             <button onClick={newQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
               <RefreshCw size={18} /> New Question
             </button>
@@ -1227,43 +1219,21 @@ export default function AnglesInTriangleTool() {
     );
   };
 
-
   const renderWhiteboard = () => {
     // ── Visualiser mode ───────────────────────────────────────────────────────
     if (presenterMode) {
-
-      // Shared camera + question overlay content (used in both windowed & fullscreen)
       const cameraContent = (isFS: boolean) => (
         <>
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
-          />
+          <video ref={videoRef} autoPlay playsInline muted
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
           {camError && (
             <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", padding: "2rem", textAlign: "center", zIndex: 1 }}>
               {camError}
             </div>
           )}
-
-          {/* Floating question block — left side, matches standard 500px whiteboard box */}
-          <div style={{
-            position: "absolute",
-            top: isFS ? 124 : 32,
-            left: 32, bottom: 32,
-            width: "min(500px, 45%)",
-            display: "flex", flexDirection: "column",
-            zIndex: 10,
-          }}>
-            <div style={{
-              background: stepBg,
-              borderRadius: 12, padding: 32,
-              boxShadow: "0 4px 24px rgba(0,0,0,0.3)",
-              flex: 1,
-              display: "flex", flexDirection: "column", alignItems: "center", gap: 16,
-            }}>
+          {/* Question callout — left side */}
+          <div style={{ position: "absolute", top: isFS ? 116 : 32, left: 32, bottom: 32, width: "min(500px, 45%)", display: "flex", flexDirection: "column", zIndex: 10 }}>
+            <div style={{ background: stepBg, borderRadius: 12, padding: 32, boxShadow: "0 4px 24px rgba(0,0,0,0.3)", flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
               <div style={{ textAlign: "center", flexShrink: 0 }}>
                 <span style={{ fontSize: "2.25rem", fontWeight: 700, color: "#111827" }}>Find the missing angle</span>
                 {showWBAnswer && question && (
@@ -1271,27 +1241,20 @@ export default function AnglesInTriangleTool() {
                 )}
               </div>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", flex: 1, minHeight: 0 }}>
-                {question
-                  ? <TriangleDiagram q={question} showAnswer={showWBAnswer} />
-                  : <span style={{ color: "#9ca3af", fontSize: "0.95rem" }}>Generate a question</span>
-                }
+                {question ? <TriangleDiagram q={question} showAnswer={showWBAnswer} /> : <span style={{ color: "#9ca3af", fontSize: "0.95rem" }}>Generate a question</span>}
               </div>
             </div>
           </div>
-
-          {/* ··· menu — top-right of the visualiser, transparent background */}
-          <div ref={camMenuRef} style={{ position: "absolute", top: isFS ? 124 : 32, right: 32, zIndex: 20 }}>
-            <button
-              onClick={() => setCamMenuOpen(o => !o)}
+          {/* ··· menu — top-right */}
+          <div ref={camMenuRef} style={{ position: "absolute", top: isFS ? 116 : 32, right: 32, zIndex: 20 }}>
+            <button onClick={() => setCamMenuOpen(o => !o)}
               style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.75)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.3rem", letterSpacing: 3, lineHeight: 1, padding: "4px 6px", borderRadius: 6 }}
               onMouseEnter={e => (e.currentTarget.style.color = "#fff")}
               onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.75)")}
             >···</button>
             {camMenuOpen && (
               <div style={{ position: "absolute", top: 32, right: 0, background: "rgba(12,12,12,0.96)", backdropFilter: "blur(14px)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, minWidth: 220, overflow: "hidden", zIndex: 30 }}>
-                {/* Fullscreen / Exit Fullscreen */}
-                <div
-                  onClick={() => { setCamMenuOpen(false); setPresenterFullscreen(f => !f); }}
+                <div onClick={() => { setCamMenuOpen(false); setPresenterFullscreen(f => !f); }}
                   style={{ padding: "10px 14px", fontSize: "0.75rem", color: "rgba(255,255,255,0.7)", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, borderBottom: "1px solid rgba(255,255,255,0.07)" }}
                   onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.07)")}
                   onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
@@ -1299,7 +1262,6 @@ export default function AnglesInTriangleTool() {
                   {isFS ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
                   {isFS ? "Exit Fullscreen" : "Fullscreen"}
                 </div>
-                {/* Camera devices */}
                 <div style={{ padding: "6px 14px", fontSize: "0.55rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(255,255,255,0.25)" }}>Camera</div>
                 {camDevices.map((d, i) => (
                   <div key={d.deviceId}
@@ -1312,10 +1274,8 @@ export default function AnglesInTriangleTool() {
                     {d.label || `Camera ${i + 1}`}
                   </div>
                 ))}
-                {/* Exit visualiser */}
                 <div style={{ height: 1, background: "rgba(255,255,255,0.07)" }} />
-                <div
-                  onClick={() => { setCamMenuOpen(false); setPresenterFullscreen(false); setPresenterMode(false); }}
+                <div onClick={() => { setCamMenuOpen(false); setPresenterFullscreen(false); setPresenterMode(false); }}
                   style={{ padding: "10px 14px", fontSize: "0.75rem", color: "rgba(255,255,255,0.7)", cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}
                   onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.07)")}
                   onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
@@ -1325,17 +1285,9 @@ export default function AnglesInTriangleTool() {
               </div>
             )}
           </div>
-
-          {/* Fullscreen toolbar — full width across the top, floats over camera */}
+          {/* Fullscreen toolbar */}
           {isFS && (
-            <div style={{
-              position: "absolute", top: 32, left: 32, right: 32,
-              background: "rgba(255,255,255,0.93)", backdropFilter: "blur(16px)",
-              borderRadius: 12, padding: "20px",
-              boxShadow: "0 4px 24px rgba(0,0,0,0.3)",
-              display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16,
-              zIndex: 19,
-            }}>
+            <div style={{ position: "absolute", top: 32, left: 32, right: 32, background: "rgba(255,255,255,0.93)", backdropFilter: "blur(16px)", borderRadius: 12, padding: "20px", boxShadow: "0 4px 24px rgba(0,0,0,0.3)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, zIndex: 19 }}>
               <DifficultyToggle value={difficulty} onChange={setDifficulty} />
               <StandardQOPopover {...stdQOProps} />
               <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
@@ -1350,8 +1302,6 @@ export default function AnglesInTriangleTool() {
           )}
         </>
       );
-
-      // Fullscreen — fixed overlay
       if (presenterFullscreen) {
         return (
           <div style={{ position: "fixed", inset: 0, zIndex: 200, backgroundColor: "#000", overflow: "hidden" }}>
@@ -1359,44 +1309,33 @@ export default function AnglesInTriangleTool() {
           </div>
         );
       }
-
-      // Windowed — inline within whiteboard
       return (
-        <div className="rounded-xl shadow-2xl overflow-hidden" style={{ position: "relative", height: "calc(100vh - 310px)", minHeight: 400, backgroundColor: "#000" }}>
+        <div className="rounded-xl shadow-2xl overflow-hidden" style={{ position: "relative", height: "500px", backgroundColor: "#000" }}>
           {cameraContent(false)}
         </div>
       );
     }
-
-    // ── Standard whiteboard layout ────────────────────────────────────────────
+    // ── Standard whiteboard ───────────────────────────────────────────────────
     return (
-      <div className="rounded-xl shadow-2xl p-8" style={{ backgroundColor: qBg, height: "calc(100vh - 310px)", minHeight: 400, display: "flex", flexDirection: "column", justifyContent: "center" }}>
-        <div className="flex gap-8" style={{ flex: 1, minHeight: 0 }}>
-          <div className="rounded-xl flex items-center justify-center flex-shrink-0 flex-col gap-4 p-8"
-            style={{ width: "min(500px, 45%)", backgroundColor: stepBg }}>
+      <div className="rounded-xl shadow-2xl p-8" style={{ backgroundColor: qBg }}>
+        <div className="flex gap-6">
+          <div className="rounded-xl flex items-center justify-center flex-shrink-0 flex-col gap-4 p-6"
+            style={{ width: "500px", backgroundColor: stepBg, position: "relative" }}>
             <span className="text-4xl font-bold text-black text-center">Find the missing angle</span>
             {showWBAnswer && question && (
               <span className="text-3xl font-bold" style={{ color: "#166534" }}>{question.answer}</span>
             )}
-            <div className="flex items-center justify-center" style={{ width: "100%", flex: 1, minHeight: 0 }}>
-              {question ? <TriangleDiagram q={question} showAnswer={showWBAnswer} />
-                : <span className="text-gray-400 text-xl">Generate a question</span>}
+            <div className="flex items-center justify-center" style={{ width: "100%", height: "400px" }}>
+              {question ? <TriangleDiagram q={question} showAnswer={showWBAnswer} /> : <span className="text-gray-400 text-xl">Generate a question</span>}
             </div>
           </div>
-          <div className="flex-1 rounded-xl" style={{ backgroundColor: stepBg, position: "relative" }}>
-            {/* Visualiser toggle — top-right of working space */}
-            <button
-              onClick={() => setPresenterMode(p => !p)}
-              title={presenterMode ? "Exit Visualiser" : "Visualiser mode"}
-              style={{
-                position: "absolute", top: 10, right: 10,
-                background: presenterMode ? "#1e3a5f" : "rgba(0,0,0,0.08)",
-                border: "none", borderRadius: 8, cursor: "pointer",
-                width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center",
-                transition: "background 0.2s",
-              }}
+          <div className="flex-1 rounded-xl" style={{ minHeight: "500px", backgroundColor: stepBg, position: "relative" }}>
+            <button onClick={() => setPresenterMode(p => !p)} title="Visualiser mode"
+              style={{ position: "absolute", top: 10, right: 10, background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.2s" }}
+              onMouseEnter={e => (e.currentTarget.style.background = "rgba(0,0,0,0.15)")}
+              onMouseLeave={e => (e.currentTarget.style.background = "rgba(0,0,0,0.08)")}
             >
-              <Video size={16} color={presenterMode ? "#fff" : "#6b7280"} />
+              <Video size={16} color="#6b7280" />
             </button>
           </div>
         </div>
@@ -1435,7 +1374,6 @@ export default function AnglesInTriangleTool() {
   );
 
   const renderWorksheet = () => {
-    const diagramCellStyle = `.ws-diagram-cell > svg { max-width: 150px !important; max-height: 150px !important; width: auto !important; height: auto !important; }`;
     if (worksheet.length === 0) return (
       <div className="rounded-xl shadow-2xl p-8 text-center" style={{ backgroundColor: qBg }}>
         <style>{diagramCellStyle}</style>
@@ -1501,11 +1439,11 @@ export default function AnglesInTriangleTool() {
         </div>
       </div>
       {infoOpen && <InfoModal onClose={() => setInfoOpen(false)} />}
-      <div style={{ backgroundColor: "#f5f3f0", minHeight: "calc(100vh - 60px)", padding: "24px 32px", overflowX: "hidden" }}>
+      <div className="min-h-screen p-8" style={{ backgroundColor: "#f5f3f0" }}>
         <div className="max-w-6xl mx-auto">
-          <h1 className="text-4xl font-bold text-center mb-4 text-black">{TOOL_CONFIG.pageTitle}</h1>
-          <div className="flex justify-center mb-4"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
-          <div className="flex justify-center gap-4 mb-4">
+          <h1 className="text-5xl font-bold text-center mb-8 text-black">{TOOL_CONFIG.pageTitle}</h1>
+          <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
+          <div className="flex justify-center gap-4 mb-8">
             {[["whiteboard", "Whiteboard"], ["single", "Worked Example"], ["worksheet", "Worksheet"]].map(([m, label]) => (
               <button key={m} onClick={() => { setMode(m); setPresenterMode(false); }}
                 className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${mode === m ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
