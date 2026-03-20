@@ -690,7 +690,7 @@ function TriangleDiagram({ q, showAnswer, small = false }: { q: TriQuestion; sho
   }
 
   return (
-    <svg width={svgW} height={svgH} viewBox={`0 0 ${svgW} ${svgH}`} style={{ overflow: "visible", maxWidth: "100%", maxHeight: "100%", width: "auto", height: "auto" }}>
+    <svg width={svgW} height={svgH} viewBox={`0 0 ${svgW} ${svgH}`} style={{ overflow: "visible" }}>
 
       {/* Straight line extension */}
       {q.straightLineExt && (
@@ -1201,7 +1201,7 @@ export default function AnglesInTriangleTool() {
       </div>
     );
     return (
-      <div className="bg-white shadow-lg p-5" style={{ borderRadius: (mode === "whiteboard" || mode === "single") ? "12px 12px 0 0" : "12px", marginBottom: (mode === "whiteboard" || mode === "single") ? 0 : 32 }}>
+      <div className="bg-white rounded-xl shadow-lg p-5 mb-8">
         <div className="flex items-center justify-between gap-4">
           <DifficultyToggle value={difficulty} onChange={setDifficulty} />
           <StandardQOPopover {...stdQOProps} />
@@ -1231,9 +1231,25 @@ export default function AnglesInTriangleTool() {
               {camError}
             </div>
           )}
-          {/* Question callout — left side */}
-          <div style={{ position: isFS ? "fixed" : "absolute", top: isFS ? 0 : 32, left: isFS ? 0 : 32, bottom: isFS ? 0 : 32, width: "min(500px, 45%)", display: "flex", flexDirection: "column", zIndex: 210 }}>
-            <div style={{ background: stepBg, borderRadius: 12, padding: 32, boxShadow: "0 4px 24px rgba(0,0,0,0.3)", flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 16, minHeight: 0 }}>
+          {/* Unified callout — toolbar + question, left side */}
+          <div style={{ position: isFS ? "fixed" : "absolute", top: isFS ? 0 : 32, left: isFS ? 0 : 32, bottom: isFS ? 0 : 32, width: isFS ? "min(500px, 45%)" : "min(500px, 45%)", display: "flex", flexDirection: "column", zIndex: 210 }}>
+            {/* Toolbar section — always visible, matches regular control bar style */}
+            <div style={{ background: "#ffffff", borderBottom: `1px solid ${stepBg}`, padding: "20px 24px", flexShrink: 0, display: "flex", flexDirection: "column", gap: 12, boxShadow: isFS ? "0 2px 8px rgba(0,0,0,0.1)" : "0 4px 24px rgba(0,0,0,0.3)", borderRadius: isFS ? 0 : "12px 12px 0 0" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                <DifficultyToggle value={difficulty} onChange={setDifficulty} />
+                <StandardQOPopover {...stdQOProps} />
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button onClick={newQuestion} className="px-4 py-2 bg-blue-900 text-white rounded-xl font-bold text-sm shadow-sm hover:bg-blue-800 flex items-center gap-2 flex-1 justify-center">
+                  <RefreshCw size={15} /> New Question
+                </button>
+                <button onClick={() => setShowWBAnswer(a => !a)} className="px-4 py-2 bg-blue-900 text-white rounded-xl font-bold text-sm shadow-sm hover:bg-blue-800 flex items-center gap-2 flex-1 justify-center">
+                  <Eye size={15} /> {showWBAnswer ? "Hide Answer" : "Show Answer"}
+                </button>
+              </div>
+            </div>
+            {/* Question section */}
+            <div style={{ background: stepBg, borderRadius: isFS ? 0 : "0 0 12px 12px", padding: 32, boxShadow: isFS ? "none" : "0 4px 24px rgba(0,0,0,0.3)", flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 16, minHeight: 0 }}>
               <div style={{ textAlign: "center", flexShrink: 0 }}>
                 <span style={{ fontSize: "2.25rem", fontWeight: 700, color: "#111827" }}>Find the missing angle</span>
                 {showWBAnswer && question && (
@@ -1295,26 +1311,26 @@ export default function AnglesInTriangleTool() {
         );
       }
       return (
-        <div className="overflow-hidden" style={{ position: "relative", height: "calc(100% - 64px)", backgroundColor: "#000", borderRadius: "0 0 12px 12px" }}>
+        <div className="rounded-xl shadow-2xl overflow-hidden" style={{ position: "relative", height: "500px", backgroundColor: "#000" }}>
           {cameraContent(false)}
         </div>
       );
     }
     // ── Standard whiteboard ───────────────────────────────────────────────────
     return (
-      <div className="shadow-2xl" style={{ backgroundColor: qBg, borderRadius: "0 0 12px 12px", padding: "0 32px 32px 32px", height: "calc(100% - 64px)", display: "flex", flexDirection: "column" }}>
-        <div className="flex gap-6" style={{ flex: 1, minHeight: 0 }}>
+      <div className="rounded-xl shadow-2xl p-8" style={{ backgroundColor: qBg }}>
+        <div className="flex gap-6">
           <div className="rounded-xl flex items-center justify-center flex-shrink-0 flex-col gap-4 p-6"
-            style={{ width: "500px", backgroundColor: stepBg, position: "relative", flex: 1 }}>
+            style={{ width: "500px", backgroundColor: stepBg, position: "relative" }}>
             <span className="text-4xl font-bold text-black text-center">Find the missing angle</span>
             {showWBAnswer && question && (
               <span className="text-3xl font-bold" style={{ color: "#166534" }}>{question.answer}</span>
             )}
-            <div className="flex items-center justify-center" style={{ width: "100%", flex: 1, minHeight: 0 }}>
+            <div className="flex items-center justify-center" style={{ width: "100%", height: "400px" }}>
               {question ? <TriangleDiagram q={question} showAnswer={showWBAnswer} /> : <span className="text-gray-400 text-xl">Generate a question</span>}
             </div>
           </div>
-          <div className="flex-1 rounded-xl" style={{ backgroundColor: stepBg, position: "relative" }}>
+          <div className="flex-1 rounded-xl" style={{ minHeight: "500px", backgroundColor: stepBg, position: "relative" }}>
             <button onClick={() => setPresenterMode(p => !p)} title="Visualiser mode"
               style={{ position: "absolute", top: 10, right: 10, background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.2s" }}
               onMouseEnter={e => (e.currentTarget.style.background = "rgba(0,0,0,0.15)")}
@@ -1329,7 +1345,7 @@ export default function AnglesInTriangleTool() {
   };
 
   const renderWorkedExample = () => (
-    <div className="shadow-lg" style={{ backgroundColor: qBg, borderRadius: "0 0 12px 12px", padding: "0 32px 32px 32px", height: "calc(100% - 64px)", overflowY: "auto" }}>
+    <div className="rounded-xl shadow-lg p-8" style={{ backgroundColor: qBg }}>
       {question ? (
         <>
           <div className="text-center mb-6">
@@ -1424,7 +1440,7 @@ export default function AnglesInTriangleTool() {
         </div>
       </div>
       {infoOpen && <InfoModal onClose={() => setInfoOpen(false)} />}
-      <div className="min-h-screen p-8" style={{ backgroundColor: "#f5f3f0" }}>
+      <div className="min-h-screen p-8" style={{ backgroundColor: "#f5f3f0",  }}>
         <div className="max-w-6xl mx-auto">
           <h1 className="text-5xl font-bold text-center mb-8 text-black">{TOOL_CONFIG.pageTitle}</h1>
           <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
