@@ -1232,7 +1232,7 @@ export default function AnglesInTriangleTool() {
             </div>
           )}
           {/* Question callout — left side */}
-          <div style={{ position: "absolute", top: isFS ? 116 : 32, left: 32, bottom: 32, width: "min(500px, 45%)", display: "flex", flexDirection: "column", zIndex: 10 }}>
+          <div style={{ position: "absolute", top: isFS ? 100 : 32, left: 32, bottom: 32, width: "min(500px, 45%)", display: "flex", flexDirection: "column", zIndex: 10 }}>
             <div style={{ background: stepBg, borderRadius: 12, padding: 32, boxShadow: "0 4px 24px rgba(0,0,0,0.3)", flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
               <div style={{ textAlign: "center", flexShrink: 0 }}>
                 <span style={{ fontSize: "2.25rem", fontWeight: 700, color: "#111827" }}>Find the missing angle</span>
@@ -1246,7 +1246,7 @@ export default function AnglesInTriangleTool() {
             </div>
           </div>
           {/* ··· menu — top-right */}
-          <div ref={camMenuRef} style={{ position: "absolute", top: isFS ? 116 : 32, right: 32, zIndex: 20 }}>
+          <div ref={camMenuRef} style={{ position: "absolute", top: isFS ? 100 : 32, right: 32, zIndex: 20 }}>
             <button onClick={() => setCamMenuOpen(o => !o)}
               style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.75)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.3rem", letterSpacing: 3, lineHeight: 1, padding: "4px 6px", borderRadius: 6 }}
               onMouseEnter={e => (e.currentTarget.style.color = "#fff")}
@@ -1285,9 +1285,9 @@ export default function AnglesInTriangleTool() {
               </div>
             )}
           </div>
-          {/* Fullscreen toolbar */}
+          {/* Fullscreen toolbar — fixed to top of screen, full width */}
           {isFS && (
-            <div style={{ position: "absolute", top: 32, left: 32, right: 32, background: "rgba(255,255,255,0.93)", backdropFilter: "blur(16px)", borderRadius: 12, padding: "20px", boxShadow: "0 4px 24px rgba(0,0,0,0.3)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, zIndex: 19 }}>
+            <div style={{ position: "fixed", top: 0, left: 0, right: 0, background: "rgba(255,255,255,0.97)", backdropFilter: "blur(16px)", borderBottom: "1px solid rgba(0,0,0,0.08)", padding: "20px 32px", boxShadow: "0 2px 16px rgba(0,0,0,0.15)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, zIndex: 210 }}>
               <DifficultyToggle value={difficulty} onChange={setDifficulty} />
               <StandardQOPopover {...stdQOProps} />
               <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
