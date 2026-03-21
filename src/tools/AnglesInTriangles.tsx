@@ -1155,7 +1155,10 @@ export default function AnglesInTriangleTool() {
 
   const qBg = getQuestionBg(colorScheme);
   const stepBg = getStepBg(colorScheme);
-  const fsPanelBg = colorScheme === "default" ? "#f5f3f0" : qBg;
+  const isDefaultScheme = colorScheme === "default";
+  const fsToolbarBg = isDefaultScheme ? "#ffffff" : stepBg;
+  const fsQuestionBg = isDefaultScheme ? "#ffffff" : qBg;
+  const fsWorkingBg  = isDefaultScheme ? "#f5f3f0" : qBg;
   const canIncrease = wsFontSize < 3, canDecrease = wsFontSize > 0;
 
   const stdQOProps = {
@@ -1241,7 +1244,7 @@ export default function AnglesInTriangleTool() {
   const renderWhiteboard = () => {
     // ── Shared fullscreen toolbar ─────────────────────────────────────────────
     const fsToolbar = (
-      <div style={{ background: stepBg, borderBottom: "2px solid #000", padding: "16px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexShrink: 0, zIndex: 210 }}>
+      <div style={{ background: fsToolbarBg, borderBottom: "2px solid #000", padding: "16px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexShrink: 0, zIndex: 210 }}>
         <DifficultyToggle value={difficulty} onChange={setDifficulty} />
         <StandardQOPopover {...stdQOProps} />
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
@@ -1271,20 +1274,20 @@ export default function AnglesInTriangleTool() {
 
     // ── Question box — fullscreen (fills 40%, no rounding/padding) ────────────
     const questionBoxFS = (
-      <div style={{ width: "40%", height: "100%", backgroundColor: fsPanelBg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, padding: 32, boxSizing: "border-box", flexShrink: 0 }}>
+      <div style={{ width: "40%", height: "100%", backgroundColor: fsQuestionBg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, padding: 32, boxSizing: "border-box", flexShrink: 0 }}>
         <span className="text-4xl font-bold text-black text-center">Find the missing angle</span>
         {showWBAnswer && question && (
           <span className="text-3xl font-bold" style={{ color: "#166534" }}>{question.answer}</span>
         )}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", flex: 1, minHeight: 0 }}>
-          {question ? <TriangleDiagram q={question} showAnswer={showWBAnswer} labelBg={fsPanelBg} /> : <span className="text-gray-400 text-xl">Generate a question</span>}
+          {question ? <TriangleDiagram q={question} showAnswer={showWBAnswer} labelBg={fsQuestionBg} /> : <span className="text-gray-400 text-xl">Generate a question</span>}
         </div>
       </div>
     );
 
     // ── Right panel — shared (camera or working space) ────────────────────────
     const makeRightPanel = (isFS: boolean) => (
-      <div style={{ flex: isFS ? "none" : 1, width: isFS ? "60%" : undefined, height: "100%", position: "relative", overflow: "hidden", backgroundColor: presenterMode ? "#000" : (isFS ? fsPanelBg : stepBg), borderRadius: isFS ? 0 : undefined }} className={isFS ? "" : "flex-1 rounded-xl"}>
+      <div style={{ flex: isFS ? "none" : 1, width: isFS ? "60%" : undefined, height: "100%", position: "relative", overflow: "hidden", backgroundColor: presenterMode ? "#000" : (isFS ? fsWorkingBg : stepBg), borderRadius: isFS ? 0 : undefined }} className={isFS ? "" : "flex-1 rounded-xl"}>
         {presenterMode && (
           <>
             <video ref={videoRef} autoPlay playsInline muted
@@ -1366,7 +1369,7 @@ export default function AnglesInTriangleTool() {
 
     // ── Fullscreen ────────────────────────────────────────────────────────────
     if (wbFullscreen) return (
-      <div style={{ position: "fixed", inset: 0, zIndex: 200, backgroundColor: stepBg, display: "flex", flexDirection: "column" }}>
+      <div style={{ position: "fixed", inset: 0, zIndex: 200, backgroundColor: fsToolbarBg, display: "flex", flexDirection: "column" }}>
         {fsToolbar}
         <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
           {questionBoxFS}
