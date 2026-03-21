@@ -1155,6 +1155,7 @@ export default function AnglesInTriangleTool() {
 
   const qBg = getQuestionBg(colorScheme);
   const stepBg = getStepBg(colorScheme);
+  const fsPanelBg = colorScheme === "default" ? "#f5f3f0" : qBg;
   const canIncrease = wsFontSize < 3, canDecrease = wsFontSize > 0;
 
   const stdQOProps = {
@@ -1270,20 +1271,20 @@ export default function AnglesInTriangleTool() {
 
     // ── Question box — fullscreen (fills 40%, no rounding/padding) ────────────
     const questionBoxFS = (
-      <div style={{ width: "40%", height: "100%", backgroundColor: qBg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, padding: 32, boxSizing: "border-box", flexShrink: 0 }}>
+      <div style={{ width: "40%", height: "100%", backgroundColor: fsPanelBg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, padding: 32, boxSizing: "border-box", flexShrink: 0 }}>
         <span className="text-4xl font-bold text-black text-center">Find the missing angle</span>
         {showWBAnswer && question && (
           <span className="text-3xl font-bold" style={{ color: "#166534" }}>{question.answer}</span>
         )}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", flex: 1, minHeight: 0 }}>
-          {question ? <TriangleDiagram q={question} showAnswer={showWBAnswer} labelBg={qBg} /> : <span className="text-gray-400 text-xl">Generate a question</span>}
+          {question ? <TriangleDiagram q={question} showAnswer={showWBAnswer} labelBg={fsPanelBg} /> : <span className="text-gray-400 text-xl">Generate a question</span>}
         </div>
       </div>
     );
 
     // ── Right panel — shared (camera or working space) ────────────────────────
     const makeRightPanel = (isFS: boolean) => (
-      <div style={{ flex: isFS ? "none" : 1, width: isFS ? "60%" : undefined, height: "100%", position: "relative", overflow: "hidden", backgroundColor: presenterMode ? "#000" : (isFS ? qBg : stepBg), borderRadius: isFS ? 0 : undefined }} className={isFS ? "" : "flex-1 rounded-xl"}>
+      <div style={{ flex: isFS ? "none" : 1, width: isFS ? "60%" : undefined, height: "100%", position: "relative", overflow: "hidden", backgroundColor: presenterMode ? "#000" : (isFS ? fsPanelBg : stepBg), borderRadius: isFS ? 0 : undefined }} className={isFS ? "" : "flex-1 rounded-xl"}>
         {presenterMode && (
           <>
             <video ref={videoRef} autoPlay playsInline muted
