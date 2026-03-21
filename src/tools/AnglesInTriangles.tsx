@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-
+import { useNavigate } from "react-router-dom";
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2 } from "lucide-react";
 
 // ─── TOOL CONFIG ──────────────────────────────────────────────────────────────
@@ -993,7 +993,7 @@ function getStepBg(cs: string) { return ({ blue: "#B3D9F2", pink: "#F2B3D9", yel
 
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 export default function AnglesInTriangleTool() {
-  
+  const navigate = useNavigate();
   const toolKeys = Object.keys(TOOL_CONFIG.tools) as ToolKey[];
   const currentTool: ToolKey = "anglesInTriangle";
   const [mode, setMode] = useState("whiteboard");
@@ -1470,7 +1470,7 @@ export default function AnglesInTriangleTool() {
     <>
       <div className="bg-blue-900 shadow-lg">
         <div className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
-          <button onClick={() => {}} className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors">
+          <button onClick={() => navigate('/')} className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors">
             <Home size={24} /><span className="font-semibold text-lg">Home</span>
           </button>
           <div className="relative">
