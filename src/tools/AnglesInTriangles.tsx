@@ -556,7 +556,7 @@ function getUniqueQuestion(tool: string, level: string, vars: Record<string, unk
 }
 
 // ─── DIAGRAM ─────────────────────────────────────────────────────────────────
-function TriangleDiagram({ q, showAnswer, small = false }: { q: TriQuestion; showAnswer: boolean; small?: boolean }) {
+function TriangleDiagram({ q, showAnswer, small = false, labelBg = "#ffffff" }: { q: TriQuestion; showAnswer: boolean; small?: boolean; labelBg?: string }) {
   const BASE_SIZE = small ? 150 : 380;
   const fontSize = small ? 11 : 22;
   const strokeW = small ? 2 : 2.5;
@@ -791,9 +791,9 @@ function TriangleDiagram({ q, showAnswer, small = false }: { q: TriQuestion; sho
             />
             {/* Label box */}
             <rect x={lp.x - tw / 2 - 4} y={lp.y - th / 2 - 2} width={tw + 8} height={th + 4} rx={4}
-              fill="white" fillOpacity="0.97"
-              stroke={ang.isUnknown ? "#93c5fd" : "#d1d5db"}
-              strokeWidth={ang.isUnknown ? 1.5 : 1}
+              fill={labelBg} fillOpacity="0.97"
+              stroke="#000000"
+              strokeWidth={ang.isUnknown ? 0.5 : 0.5}
             />
             <text x={lp.x} y={lp.y} textAnchor="middle" dominantBaseline="middle"
               fontSize={fontSize} fontWeight={ang.isUnknown ? "bold" : "600"}
@@ -1173,7 +1173,7 @@ export default function AnglesInTriangleTool() {
     <div className="rounded-lg p-3 shadow flex flex-col items-center gap-2" style={{ backgroundColor: bgOverride ?? stepBg }}>
       <span className="text-base font-bold text-gray-700 self-start">{idx + 1}.</span>
       <div className="ws-cell" style={{ width: 150, height: 150, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-        <TriangleDiagram q={q} showAnswer={showWSAnswers} small />
+        <TriangleDiagram q={q} showAnswer={showWSAnswers} small labelBg={bgOverride ?? stepBg} />
       </div>
       {showWSAnswers && <span className="text-sm font-bold text-center" style={{ color: "#059669" }}>{q.answer}</span>}
     </div>
@@ -1219,7 +1219,7 @@ export default function AnglesInTriangleTool() {
       </div>
     );
     return (
-      <div className="bg-white border-b border-gray-200 px-5 py-4 rounded-t-xl">
+      <div className="px-5 py-4 rounded-t-xl" style={{ backgroundColor: qBg, borderBottom: "0.5px solid #000" }}>
         <div className="flex items-center justify-between gap-4">
           <DifficultyToggle value={difficulty} onChange={setDifficulty} />
           <StandardQOPopover {...stdQOProps} />
@@ -1240,7 +1240,7 @@ export default function AnglesInTriangleTool() {
   const renderWhiteboard = () => {
     // ── Shared fullscreen toolbar ─────────────────────────────────────────────
     const fsToolbar = (
-      <div style={{ background: "rgba(255,255,255,0.97)", backdropFilter: "blur(16px)", borderBottom: "1px solid rgba(0,0,0,0.08)", padding: "16px 32px", boxShadow: "0 2px 16px rgba(0,0,0,0.15)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexShrink: 0, zIndex: 210 }}>
+      <div style={{ background: stepBg, borderBottom: "2px solid #000", padding: "16px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexShrink: 0, zIndex: 210 }}>
         <DifficultyToggle value={difficulty} onChange={setDifficulty} />
         <StandardQOPopover {...stdQOProps} />
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
@@ -1263,27 +1263,27 @@ export default function AnglesInTriangleTool() {
           <span className="text-3xl font-bold" style={{ color: "#166534" }}>{question.answer}</span>
         )}
         <div className="flex items-center justify-center" style={{ width: "100%", flex: 1, minHeight: 0 }}>
-          {question ? <TriangleDiagram q={question} showAnswer={showWBAnswer} /> : <span className="text-gray-400 text-xl">Generate a question</span>}
+          {question ? <TriangleDiagram q={question} showAnswer={showWBAnswer} labelBg={stepBg} /> : <span className="text-gray-400 text-xl">Generate a question</span>}
         </div>
       </div>
     );
 
     // ── Question box — fullscreen (fills 40%, no rounding/padding) ────────────
     const questionBoxFS = (
-      <div style={{ width: "40%", height: "100%", backgroundColor: "#ffffff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, padding: 32, boxSizing: "border-box", flexShrink: 0 }}>
+      <div style={{ width: "40%", height: "100%", backgroundColor: qBg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, padding: 32, boxSizing: "border-box", flexShrink: 0 }}>
         <span className="text-4xl font-bold text-black text-center">Find the missing angle</span>
         {showWBAnswer && question && (
           <span className="text-3xl font-bold" style={{ color: "#166534" }}>{question.answer}</span>
         )}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", flex: 1, minHeight: 0 }}>
-          {question ? <TriangleDiagram q={question} showAnswer={showWBAnswer} /> : <span className="text-gray-400 text-xl">Generate a question</span>}
+          {question ? <TriangleDiagram q={question} showAnswer={showWBAnswer} labelBg={qBg} /> : <span className="text-gray-400 text-xl">Generate a question</span>}
         </div>
       </div>
     );
 
     // ── Right panel — shared (camera or working space) ────────────────────────
     const makeRightPanel = (isFS: boolean) => (
-      <div style={{ flex: isFS ? "none" : 1, width: isFS ? "60%" : undefined, height: "100%", position: "relative", overflow: "hidden", backgroundColor: presenterMode ? "#000" : (isFS ? "#f5f3f0" : stepBg), borderRadius: isFS ? 0 : undefined }} className={isFS ? "" : "flex-1 rounded-xl"}>
+      <div style={{ flex: isFS ? "none" : 1, width: isFS ? "60%" : undefined, height: "100%", position: "relative", overflow: "hidden", backgroundColor: presenterMode ? "#000" : (isFS ? qBg : stepBg), borderRadius: isFS ? 0 : undefined }} className={isFS ? "" : "flex-1 rounded-xl"}>
         {presenterMode && (
           <>
             <video ref={videoRef} autoPlay playsInline muted
@@ -1394,7 +1394,7 @@ export default function AnglesInTriangleTool() {
             <span className="text-5xl font-bold text-black">Find the missing angle</span>
           </div>
           <div className="flex justify-center mb-6">
-            <TriangleDiagram q={question} showAnswer={showAnswer} />
+            <TriangleDiagram q={question} showAnswer={showAnswer} labelBg={stepBg} />
           </div>
           {showAnswer && (
             <>
