@@ -1032,9 +1032,7 @@ const handlePrint = (
   const diffHdrMM    = 7;
   const diffCellH_MM = (usableH_MM - diffHdrMM - GAP_MM - GAP_MM * (diffPerCol - 1)) / diffPerCol;
 
-  // Font sizing: scale to fill roughly 40% of cell height, capped sensibly
-  // This is applied via JS after KaTeX renders, starting large and stepping down
-  const startFontPx  = Math.round(cellH_MM * 3.78 * 0.35); // mm→px * fill ratio
+  // Font sizing handled adaptively in JS after KaTeX renders
 
   const difficultyLabel = isDifferentiated ? "Differentiated" :
     difficulty === "level1" ? "Level 1" : difficulty === "level2" ? "Level 2" : "Level 3";
@@ -1213,19 +1211,24 @@ const handlePrint = (
       } catch(e) { el.textContent = el.getAttribute("data-latex"); }
     });
 
-    // Adaptive font: cell height in mm → px (1mm = 3.7795px at 96dpi)
+    // Adaptive font: start from a size proportional to cell width, step down until content fits
     var pxPerMm = 3.7795;
+    var cellW_px = ${cellW_MM} * pxPerMm;
     var cellH_px = ${cellH_MM} * pxPerMm;
-    var padV_px  = 2 * pxPerMm * 2; // 2mm top + 2mm bottom
-    var availH   = cellH_px - padV_px;
+    var padH_px  = 2 * pxPerMm * 2;
+    var padW_px  = 3 * pxPerMm * 2;
+    var availH   = cellH_px - padH_px;
+    var availW   = cellW_px - padW_px;
 
-    var fs = ${startFontPx};
-    for (var i = 0; i < 25; i++) {
+    // Start at a sensible size — roughly 1/3 of cell height, max 18px
+    var fs = Math.min(18, Math.floor(availH / 2.5));
+    for (var i = 0; i < 30; i++) {
       document.documentElement.style.setProperty('--qfont', fs + 'px');
       document.documentElement.style.setProperty('--numfont', Math.round(fs * 0.6) + 'px');
       var fits = true;
       document.querySelector('.page').querySelectorAll('.q-inner').forEach(function(el) {
         if (el.scrollHeight > availH + 1) fits = false;
+        if (el.scrollWidth  > availW + 1) fits = false;
       });
       if (fits) break;
       fs = Math.max(6, fs - 1);
