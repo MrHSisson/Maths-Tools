@@ -1015,20 +1015,26 @@ const handlePrint = (
   // Build a self-contained HTML page, inject KaTeX, render all questions,
   // then open in a new window and trigger print
 
-  // A4 at 20mm margins: usable = 170mm wide × 257mm tall
-  // In pt (1pt = 1/72 inch, 1mm = 2.8346pt):
-  //   170mm = 481pt wide,  257mm = 728pt tall
-  const HEADER_PT = 42;
-  const GAP_PT    = 5;
-  const numRows   = Math.ceil(questions.length / 3);
-  const usableH   = 728 - HEADER_PT;
-  const cellH_pt  = (usableH - GAP_PT * (numRows - 1)) / numRows;
-  const cellW_pt  = (481 - GAP_PT * 2) / 3;
+  // A4 with 12mm margins: usable = 186mm wide × 273mm tall
+  // Work entirely in mm — unambiguous across browser/print contexts
+  const MARGIN_MM  = 12;
+  const HEADER_MM  = 14;   // page header height + gap
+  const GAP_MM     = 2;    // gap between cells
+  const PAGE_H_MM  = 297 - MARGIN_MM * 2;  // 273mm
+  const PAGE_W_MM  = 210 - MARGIN_MM * 2;  // 186mm
+  const numRows    = Math.ceil(questions.length / 3);
+  const usableH_MM = PAGE_H_MM - HEADER_MM;
+  const cellH_MM   = (usableH_MM - GAP_MM * (numRows - 1)) / numRows;
+  const cellW_MM   = (PAGE_W_MM - GAP_MM * 2) / 3;
 
-  // For differentiated, cells per column = numQuestions / 3
-  const diffPerCol  = Math.floor(numQuestions / 3);
-  const diffHeaderH = 22; // pt
-  const diffCellH   = (usableH - diffHeaderH - GAP_PT - GAP_PT * (diffPerCol - 1)) / diffPerCol;
+  // Differentiated
+  const diffPerCol   = Math.floor(numQuestions / 3);
+  const diffHdrMM    = 7;
+  const diffCellH_MM = (usableH_MM - diffHdrMM - GAP_MM - GAP_MM * (diffPerCol - 1)) / diffPerCol;
+
+  // Font sizing: scale to fill roughly 40% of cell height, capped sensibly
+  // This is applied via JS after KaTeX renders, starting large and stepping down
+  const startFontPx  = Math.round(cellH_MM * 3.78 * 0.35); // mm→px * fill ratio
 
   const difficultyLabel = isDifferentiated ? "Differentiated" :
     difficulty === "level1" ? "Level 1" : difficulty === "level2" ? "Level 2" : "Level 3";
@@ -1091,12 +1097,23 @@ const handlePrint = (
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"><\/script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  @page { size: A4; margin: 20mm; }
+  @page { size: A4; margin: ${MARGIN_MM}mm; }
   body { font-family: "Segoe UI", Arial, sans-serif; background: #fff; }
 
+  #print-notice {
+    background: #1e3a8a; color: #fff;
+    padding: 10px 16px; font-size: 13px;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  }
+  #print-notice button {
+    background: #fff; color: #1e3a8a; border: none; border-radius: 6px;
+    padding: 6px 14px; font-size: 13px; font-weight: 700; cursor: pointer;
+  }
+  @media print { #print-notice { display: none !important; } }
+
   .page {
-    width: 481pt;
-    height: 728pt;
+    width: ${PAGE_W_MM}mm;
+    height: ${PAGE_H_MM}mm;
     overflow: hidden;
     page-break-after: always;
   }
@@ -1104,72 +1121,59 @@ const handlePrint = (
 
   .page-header {
     display: flex; justify-content: space-between; align-items: baseline;
-    border-bottom: 2pt solid #1e3a8a; padding-bottom: 6pt; margin-bottom: 8pt;
-    height: ${HEADER_PT - 8}pt;
+    border-bottom: 0.4mm solid #1e3a8a;
+    padding-bottom: 1.5mm; margin-bottom: 2mm;
   }
-  .page-header h1 { font-size: 15pt; font-weight: 700; color: #1e3a8a; }
-  .page-header .meta { font-size: 9pt; color: #6b7280; }
+  .page-header h1 { font-size: 5mm; font-weight: 700; color: #1e3a8a; }
+  .page-header .meta { font-size: 3mm; color: #6b7280; }
 
-  /* Standard grid */
   .grid {
     display: grid;
-    grid-template-columns: repeat(3, ${cellW_pt}pt);
-    grid-template-rows: repeat(${numRows}, ${cellH_pt}pt);
-    gap: ${GAP_PT}pt;
+    grid-template-columns: repeat(3, ${cellW_MM}mm);
+    grid-template-rows: repeat(${numRows}, ${cellH_MM}mm);
+    gap: ${GAP_MM}mm;
   }
   .cell {
-    width: ${cellW_pt}pt;
-    height: ${cellH_pt}pt;
-    border: 0.5pt solid #d1d5db;
-    border-radius: 3pt;
-    padding: 6pt 8pt;
+    width: ${cellW_MM}mm;
+    height: ${cellH_MM}mm;
+    border: 0.3mm solid #d1d5db;
+    border-radius: 1mm;
+    padding: 2mm 3mm;
     overflow: hidden;
     display: flex;
     align-items: center;
   }
 
-  /* Differentiated grid */
   .diff-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: ${GAP_PT}pt;
+    gap: ${GAP_MM}mm;
   }
-  .diff-col { display: flex; flex-direction: column; gap: ${GAP_PT}pt; }
+  .diff-col { display: flex; flex-direction: column; gap: ${GAP_MM}mm; }
   .diff-header {
-    height: ${diffHeaderH}pt;
+    height: ${diffHdrMM}mm;
     display: flex; align-items: center; justify-content: center;
-    font-size: 9pt; font-weight: 700; border-radius: 3pt;
+    font-size: 3mm; font-weight: 700; border-radius: 1mm;
   }
   .diff-header.level1 { background: #dcfce7; color: #166534; }
   .diff-header.level2 { background: #fef9c3; color: #854d0e; }
   .diff-header.level3 { background: #fee2e2; color: #991b1b; }
   .diff-cell {
-    height: ${diffCellH}pt;
-    border: 0.5pt solid #d1d5db;
-    border-radius: 3pt;
-    padding: 4pt 6pt;
+    height: ${diffCellH_MM}mm;
+    border: 0.3mm solid #d1d5db;
+    border-radius: 1mm;
+    padding: 2mm 3mm;
     overflow: hidden;
     display: flex;
     align-items: center;
   }
 
-  /* Question content */
   .q-inner { width: 100%; }
-  .q-num {
-    font-size: var(--numfont, 9px);
-    font-weight: 700; color: #9ca3af;
-    display: inline; margin-right: 3pt;
-  }
-  .q-math { font-size: var(--qfont, 13px); display: inline; }
-  .q-lines { font-size: var(--qfont, 13px); line-height: 1.4; display: inline; }
+  .q-num { font-size: var(--numfont); font-weight: 700; color: #9ca3af; display: inline; margin-right: 1mm; }
+  .q-math { font-size: var(--qfont); display: inline; }
+  .q-lines { font-size: var(--qfont); line-height: 1.4; }
   .q-line { display: block; }
-  .q-answer {
-    font-size: var(--qfont, 13px);
-    color: #059669;
-    display: block;
-    margin-top: 3pt;
-  }
-
+  .q-answer { font-size: var(--qfont); color: #059669; display: block; margin-top: 1mm; }
   .katex { font-size: 1em !important; }
 
   @media print {
@@ -1178,6 +1182,10 @@ const handlePrint = (
 </style>
 </head>
 <body>
+<div id="print-notice">
+  <span>In the print dialog: uncheck <strong>Headers and footers</strong> and set margins to <strong>None</strong>.</span>
+  <button onclick="window.print()">Print / Save as PDF</button>
+</div>
 
 <!-- PAGE 1: Questions -->
 <div class="page">
@@ -1199,38 +1207,29 @@ const handlePrint = (
 
 <script>
   document.addEventListener("DOMContentLoaded", function() {
-    // Render all KaTeX elements across both pages
     document.querySelectorAll(".katex-render").forEach(function(el) {
       try {
         katex.render(el.getAttribute("data-latex"), el, { throwOnError: false, output: "html" });
-      } catch(e) {
-        el.textContent = el.getAttribute("data-latex");
-      }
+      } catch(e) { el.textContent = el.getAttribute("data-latex"); }
     });
 
-    // Adaptive font — measure against fixed cell height after KaTeX renders
-    // Cell height in pt → px at 96dpi (1pt = 96/72 px)
-    var pxPerPt = 96 / 72;
-    var cellH_px = ${cellH_pt} * pxPerPt;
-    var padding_px = 6 * pxPerPt * 2;
-    var availH = cellH_px - padding_px;
+    // Adaptive font: cell height in mm → px (1mm = 3.7795px at 96dpi)
+    var pxPerMm = 3.7795;
+    var cellH_px = ${cellH_MM} * pxPerMm;
+    var padV_px  = 2 * pxPerMm * 2; // 2mm top + 2mm bottom
+    var availH   = cellH_px - padV_px;
 
-    // Use a representative set of cells from page 1 (no answers) to size font
-    var fs = 22;
-    for (var attempt = 0; attempt < 20; attempt++) {
+    var fs = ${startFontPx};
+    for (var i = 0; i < 25; i++) {
       document.documentElement.style.setProperty('--qfont', fs + 'px');
-      document.documentElement.style.setProperty('--numfont', Math.round(fs * 0.65) + 'px');
+      document.documentElement.style.setProperty('--numfont', Math.round(fs * 0.6) + 'px');
       var fits = true;
-      // Check all q-inner elements on page 1 only
-      var page1Cells = document.querySelector('.page').querySelectorAll('.q-inner');
-      page1Cells.forEach(function(el) {
+      document.querySelector('.page').querySelectorAll('.q-inner').forEach(function(el) {
         if (el.scrollHeight > availH + 1) fits = false;
       });
       if (fits) break;
-      fs = Math.max(7, fs - 1);
+      fs = Math.max(6, fs - 1);
     }
-
-    setTimeout(function() { window.print(); }, 400);
   });
 <\/script>
 </body>
