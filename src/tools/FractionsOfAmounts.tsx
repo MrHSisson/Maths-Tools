@@ -82,26 +82,6 @@ const toRational = (n: number, d: number) => {
   return { n: n / g, d: d / g };
 };
 
-// Format answer as LaTeX based on desired mode
-const formatRationalLatex = (n: number, d: number, mode: string): string => {
-  const r = toRational(n, d);
-  if (r.d === 1) return `${r.n}`;
-  if (mode === "fraction") return tex.frac(r.n, r.d);
-  if (mode === "mixed") {
-    const whole = Math.floor(r.n / r.d);
-    const rem = r.n % r.d;
-    if (whole === 0) return tex.frac(rem, r.d);
-    return `${whole}\\,${tex.frac(rem, r.d)}`;
-  }
-  // decimal
-  const dec = r.n / r.d;
-  const rounded = Math.round(dec * 100) / 100;
-  if (rounded % 1 === 0) return `${rounded}`;
-  return Math.round(dec * 10) / 10 === rounded
-    ? rounded.toFixed(1)
-    : rounded.toFixed(2);
-};
-
 const formatPartLatex = (n: number, d: number): string => {
   const r = toRational(n, d);
   return r.d === 1 ? `${r.n}` : tex.frac(r.n, r.d);
@@ -256,7 +236,7 @@ const generateFracQuestion = (level: string, denomRange: string, _answerFormat: 
     };
   }
   // Safe fallback — guaranteed valid level2 question
-  const d = 5, k = 4, rn = 3, rd = 5, amount = rd * k, answerN = rn * k;
+  const k = 4, rn = 3, rd = 5, amount = rd * k, answerN = rn * k;
   return {
     kind: "frac", latex: `${tex.frac(rn,rd)} \\text{ of } ${amount}`,
     display: `${rn}/${rd} of ${amount}`, answerLatex: `${answerN}`,
@@ -771,9 +751,9 @@ const InlineMath = ({ text }: { text: string }) => {
   );
 };
 
-const AnswerDisplay = ({ q, answerFormat }: { q: AnyQuestion; answerFormat: string }) => {
+const AnswerDisplay = ({ q, answerFormat: _answerFormat }: { q: AnyQuestion; answerFormat: string }) => {
   let latex = "";
-  if (q.kind === "frac") latex = formatRationalLatex(q.answerN, q.answerD, answerFormat);
+  if (q.kind === "frac") latex = q.answerLatex;
   else if (q.kind === "asFrac") latex = q.answerLatex;
   else latex = q.answerLatex ?? `\\text{${q.answer}}`;
   return <MathRenderer latex={`= ${latex}`} />;
@@ -1030,7 +1010,7 @@ const handlePrint = (
   toolName: string,
   difficulty: string,
   isDifferentiated: boolean,
-  answerFormat: string,
+  _answerFormat: string,
 ) => {
   // Build a self-contained HTML page, inject KaTeX, render all questions,
   // then open in a new window and trigger print
@@ -1344,7 +1324,7 @@ export default function App() {
             {idx+1}.&nbsp;<MathRenderer latex={`\\text{Find } ${q.latex}`}/>
           </span>
           {showWorksheetAnswers&&<div className={`${fsz} font-semibold mt-1`} style={{color:"#059669"}}>
-            <MathRenderer latex={`= ${formatRationalLatex(q.answerN,q.answerD,answerFormat)}`}/>
+            <MathRenderer latex={`= ${q.answerLatex}`}/>
           </div>}
         </div>
       );
