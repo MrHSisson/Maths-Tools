@@ -1040,7 +1040,6 @@ const handlePrint = (
   const now = new Date();
   const dateStr = now.toLocaleDateString("en-GB", {day:"numeric",month:"long",year:"numeric"});
 
-  // Build a cell's inner HTML — with or without answer
   const questionToHtml = (q: AnyQuestion, idx: number, showAnswer: boolean): string => {
     let answerHtml = "";
     if (showAnswer) {
@@ -1049,22 +1048,27 @@ const handlePrint = (
         : (q.answerLatex ?? `\\text{${q.answer}}`);
       answerHtml = `<div class="q-answer katex-render" data-latex="= ${ansLatex.replace(/"/g,"&quot;")}"></div>`;
     }
+    const numHtml = `<span class="q-num">${idx + 1})</span> `;
     if (q.kind === "frac") {
-      return `<div class="q-num">${idx + 1}</div>`
-        + `<div class="q-math katex-render" data-latex="\\text{Find } ${q.latex.replace(/"/g,"&quot;")}"></div>`
-        + answerHtml;
+      return `<div style="text-align:center">${numHtml}`
+        + `<span class="q-math katex-render" data-latex="\\text{Find } ${q.latex.replace(/"/g,"&quot;")}"></span>`
+        + `</div>` + answerHtml;
     }
-    const lines = q.lines.map(line => {
-      const parts = line.split(/(\$[^$]+\$)/g).map(part => {
+    // Worded — number inline before first line, remaining lines centred below
+    const firstLine = q.lines[0];
+    const restLines = q.lines.slice(1);
+    const renderLine = (line: string) => {
+      return line.split(/(\$[^$]+\$)/g).map(part => {
         if (part.startsWith("$") && part.endsWith("$")) {
           const latex = part.slice(1, -1);
           return `<span class="katex-render" data-latex="${latex.replace(/"/g,"&quot;")}"></span>`;
         }
         return `<span>${part}</span>`;
       }).join("");
-      return `<div class="q-line">${parts}</div>`;
-    }).join("");
-    return `<div class="q-num">${idx + 1}</div><div class="q-lines">${lines}</div>` + answerHtml;
+    };
+    const firstHtml = `<div style="text-align:center">${numHtml}<span class="q-math">${renderLine(firstLine)}</span></div>`;
+    const restHtml = restLines.map(l => `<div class="q-line">${renderLine(l)}</div>`).join("");
+    return firstHtml + `<div class="q-lines">${restHtml}</div>` + answerHtml;
   };
 
   // Build a standard grid (non-differentiated) for one page
@@ -1140,6 +1144,7 @@ const handlePrint = (
     overflow: hidden;
     display: flex;
     align-items: center;
+    justify-content: center;
   }
 
   .diff-grid {
@@ -1164,14 +1169,15 @@ const handlePrint = (
     overflow: hidden;
     display: flex;
     align-items: center;
+    justify-content: center;
   }
 
-  .q-inner { width: 100%; }
-  .q-num { font-size: var(--numfont); font-weight: 700; color: #9ca3af; display: inline; margin-right: 1mm; }
+  .q-inner { width: 100%; text-align: center; }
+  .q-num { font-size: var(--numfont); font-weight: 700; color: #1e3a8a; display: inline; margin-right: 1mm; }
   .q-math { font-size: var(--qfont); display: inline; }
-  .q-lines { font-size: var(--qfont); line-height: 1.4; }
-  .q-line { display: block; }
-  .q-answer { font-size: var(--qfont); color: #059669; display: block; margin-top: 1mm; }
+  .q-lines { font-size: var(--qfont); line-height: 1.4; text-align: center; }
+  .q-line { display: block; text-align: center; }
+  .q-answer { font-size: var(--qfont); color: #059669; display: block; margin-top: 1mm; text-align: center; }
   .katex { font-size: 1em !important; }
 
   @media print {
@@ -1211,7 +1217,8 @@ const handlePrint = (
       } catch(e) { el.textContent = el.getAttribute("data-latex"); }
     });
 
-    // Adaptive font: start from a size proportional to cell width, step down until content fits
+    // Adaptive font: measure page 2 (answers included) so font fits the fuller content.
+    // Page 1 then has natural space left over for working.
     var pxPerMm = 3.7795;
     var cellW_px = ${cellW_MM} * pxPerMm;
     var cellH_px = ${cellH_MM} * pxPerMm;
@@ -1220,13 +1227,14 @@ const handlePrint = (
     var availH   = cellH_px - padH_px;
     var availW   = cellW_px - padW_px;
 
-    // Start at a sensible size — roughly 1/3 of cell height, max 18px
     var fs = Math.min(18, Math.floor(availH / 2.5));
+    var pages = document.querySelectorAll('.page');
+    var answerPage = pages[pages.length - 1]; // page 2 has answers — most content
     for (var i = 0; i < 30; i++) {
       document.documentElement.style.setProperty('--qfont', fs + 'px');
       document.documentElement.style.setProperty('--numfont', Math.round(fs * 0.6) + 'px');
       var fits = true;
-      document.querySelector('.page').querySelectorAll('.q-inner').forEach(function(el) {
+      answerPage.querySelectorAll('.q-inner').forEach(function(el) {
         if (el.scrollHeight > availH + 1) fits = false;
         if (el.scrollWidth  > availW + 1) fits = false;
       });
