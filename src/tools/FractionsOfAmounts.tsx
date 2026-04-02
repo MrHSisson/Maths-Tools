@@ -1010,36 +1010,77 @@ const handlePrint = (
   toolName: string,
   difficulty: string,
   isDifferentiated: boolean,
-  _answerFormat: string,
+  numQuestions: number,
 ) => {
   // Build a self-contained HTML page, inject KaTeX, render all questions,
   // then open in a new window and trigger print
-  const numRows = Math.ceil(questions.length / 3);
 
-  // Convert question to printable HTML string (KaTeX will render after load)
-  const questionToHtml = (q: AnyQuestion, idx: number): string => {
-    if (q.kind === "frac") {
-      return `<div class="q-num">${idx + 1}</div><div class="q-math katex-render" data-latex="\\text{Find } ${q.latex}"></div>`;
-    }
-    const lines = q.lines.map(line => {
-      // Replace $...$ with katex spans
-      const parts = line.split(/(\$[^$]+\$)/g).map(part => {
-        if (part.startsWith("$") && part.endsWith("$")) {
-          const latex = part.slice(1,-1);
-          return `<span class="katex-render" data-latex="${latex.replace(/"/g,"&quot;")}"></span>`;
-        }
-        return `<span>${part}</span>`;
-      }).join("");
-      return `<div class="q-line">${parts}</div>`;
-    }).join("");
-    return `<div class="q-num">${idx + 1}</div>${lines}`;
-  };
+  // A4 at 20mm margins: usable = 170mm wide × 257mm tall
+  // In pt (1pt = 1/72 inch, 1mm = 2.8346pt):
+  //   170mm = 481pt wide,  257mm = 728pt tall
+  const HEADER_PT = 42;
+  const GAP_PT    = 5;
+  const numRows   = Math.ceil(questions.length / 3);
+  const usableH   = 728 - HEADER_PT;
+  const cellH_pt  = (usableH - GAP_PT * (numRows - 1)) / numRows;
+  const cellW_pt  = (481 - GAP_PT * 2) / 3;
+
+  // For differentiated, cells per column = numQuestions / 3
+  const diffPerCol  = Math.floor(numQuestions / 3);
+  const diffHeaderH = 22; // pt
+  const diffCellH   = (usableH - diffHeaderH - GAP_PT - GAP_PT * (diffPerCol - 1)) / diffPerCol;
 
   const difficultyLabel = isDifferentiated ? "Differentiated" :
     difficulty === "level1" ? "Level 1" : difficulty === "level2" ? "Level 2" : "Level 3";
 
   const now = new Date();
   const dateStr = now.toLocaleDateString("en-GB", {day:"numeric",month:"long",year:"numeric"});
+
+  // Build a cell's inner HTML — with or without answer
+  const questionToHtml = (q: AnyQuestion, idx: number, showAnswer: boolean): string => {
+    let answerHtml = "";
+    if (showAnswer) {
+      const ansLatex = q.kind === "frac" ? q.answerLatex
+        : q.kind === "asFrac" ? q.answerLatex
+        : (q.answerLatex ?? `\\text{${q.answer}}`);
+      answerHtml = `<div class="q-answer katex-render" data-latex="= ${ansLatex.replace(/"/g,"&quot;")}"></div>`;
+    }
+    if (q.kind === "frac") {
+      return `<div class="q-num">${idx + 1}</div>`
+        + `<div class="q-math katex-render" data-latex="\\text{Find } ${q.latex.replace(/"/g,"&quot;")}"></div>`
+        + answerHtml;
+    }
+    const lines = q.lines.map(line => {
+      const parts = line.split(/(\$[^$]+\$)/g).map(part => {
+        if (part.startsWith("$") && part.endsWith("$")) {
+          const latex = part.slice(1, -1);
+          return `<span class="katex-render" data-latex="${latex.replace(/"/g,"&quot;")}"></span>`;
+        }
+        return `<span>${part}</span>`;
+      }).join("");
+      return `<div class="q-line">${parts}</div>`;
+    }).join("");
+    return `<div class="q-num">${idx + 1}</div><div class="q-lines">${lines}</div>` + answerHtml;
+  };
+
+  // Build a standard grid (non-differentiated) for one page
+  const buildGrid = (showAnswer: boolean) =>
+    `<div class="grid">\n${questions.map((q, i) =>
+      `<div class="cell"><div class="q-inner">${questionToHtml(q, i, showAnswer)}</div></div>`
+    ).join("\n")}\n</div>`;
+
+  // Build differentiated grid for one page
+  const buildDiffGrid = (showAnswer: boolean) =>
+    `<div class="diff-grid">${
+      (["level1","level2","level3"]).map(lv => {
+        const lqs = questions.filter(q => q.difficulty === lv);
+        const label = lv === "level1" ? "Level 1" : lv === "level2" ? "Level 2" : "Level 3";
+        const cells = lqs.map((q, i) =>
+          `<div class="diff-cell"><div class="q-inner">${questionToHtml(q, i, showAnswer)}</div></div>`
+        ).join("");
+        return `<div class="diff-col"><div class="diff-header ${lv}">${label}</div>${cells}</div>`;
+      }).join("")
+    }</div>`;
 
   const html = `<!DOCTYPE html>
 <html>
@@ -1053,48 +1094,82 @@ const handlePrint = (
   @page { size: A4; margin: 20mm; }
   body { font-family: "Segoe UI", Arial, sans-serif; background: #fff; }
 
+  .page {
+    width: 481pt;
+    height: 728pt;
+    overflow: hidden;
+    page-break-after: always;
+  }
+  .page:last-child { page-break-after: auto; }
+
   .page-header {
     display: flex; justify-content: space-between; align-items: baseline;
-    border-bottom: 2px solid #1e3a8a; padding-bottom: 8pt; margin-bottom: 14pt;
+    border-bottom: 2pt solid #1e3a8a; padding-bottom: 6pt; margin-bottom: 8pt;
+    height: ${HEADER_PT - 8}pt;
   }
-  .page-header h1 { font-size: 16pt; font-weight: 700; color: #1e3a8a; }
-  .page-header .meta { font-size: 10pt; color: #6b7280; }
+  .page-header h1 { font-size: 15pt; font-weight: 700; color: #1e3a8a; }
+  .page-header .meta { font-size: 9pt; color: #6b7280; }
 
+  /* Standard grid */
   .grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8pt;
+    grid-template-columns: repeat(3, ${cellW_pt}pt);
+    grid-template-rows: repeat(${numRows}, ${cellH_pt}pt);
+    gap: ${GAP_PT}pt;
   }
-
   .cell {
-    border: 1pt solid #d1d5db;
-    border-radius: 4pt;
-    padding: 8pt;
-    min-height: 0;
+    width: ${cellW_pt}pt;
+    height: ${cellH_pt}pt;
+    border: 0.5pt solid #d1d5db;
+    border-radius: 3pt;
+    padding: 6pt 8pt;
+    overflow: hidden;
     display: flex;
-    flex-direction: column;
-    gap: 4pt;
+    align-items: center;
   }
 
-  /* Differentiated column headers */
+  /* Differentiated grid */
+  .diff-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: ${GAP_PT}pt;
+  }
+  .diff-col { display: flex; flex-direction: column; gap: ${GAP_PT}pt; }
   .diff-header {
-    text-align: center; font-size: 11pt; font-weight: 700;
-    padding: 6pt; border-radius: 4pt; margin-bottom: 4pt;
+    height: ${diffHeaderH}pt;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9pt; font-weight: 700; border-radius: 3pt;
   }
   .diff-header.level1 { background: #dcfce7; color: #166534; }
   .diff-header.level2 { background: #fef9c3; color: #854d0e; }
   .diff-header.level3 { background: #fee2e2; color: #991b1b; }
-
-  .diff-col { display: flex; flex-direction: column; gap: 6pt; }
-
-  .q-num {
-    font-size: var(--qfont); font-weight: 700; color: #1e3a8a;
-    line-height: 1.2;
+  .diff-cell {
+    height: ${diffCellH}pt;
+    border: 0.5pt solid #d1d5db;
+    border-radius: 3pt;
+    padding: 4pt 6pt;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
   }
-  .q-math { font-size: var(--qfont); }
-  .q-line { font-size: var(--qfont); line-height: 1.5; }
 
-  /* KaTeX size inherits from parent font-size */
+  /* Question content */
+  .q-inner { width: 100%; }
+  .q-num {
+    font-size: var(--numfont, 9px);
+    font-weight: 700; color: #9ca3af;
+    display: inline; margin-right: 3pt;
+  }
+  .q-math { font-size: var(--qfont, 13px); display: inline; }
+  .q-lines { font-size: var(--qfont, 13px); line-height: 1.4; display: inline; }
+  .q-line { display: block; }
+  .q-answer {
+    font-size: var(--qfont, 13px);
+    color: #059669;
+    display: block;
+    margin-top: 3pt;
+  }
+
   .katex { font-size: 1em !important; }
 
   @media print {
@@ -1103,51 +1178,59 @@ const handlePrint = (
 </style>
 </head>
 <body>
-<div class="page-header">
-  <h1>${toolName}</h1>
-  <div class="meta">${difficultyLabel} &nbsp;·&nbsp; ${dateStr} &nbsp;·&nbsp; ${questions.length} questions</div>
+
+<!-- PAGE 1: Questions -->
+<div class="page">
+  <div class="page-header">
+    <h1>${toolName}</h1>
+    <div class="meta">${difficultyLabel} &nbsp;·&nbsp; ${dateStr} &nbsp;·&nbsp; ${questions.length} questions</div>
+  </div>
+  ${isDifferentiated ? buildDiffGrid(false) : buildGrid(false)}
 </div>
+
+<!-- PAGE 2: Answers -->
+<div class="page">
+  <div class="page-header">
+    <h1>${toolName} — Answers</h1>
+    <div class="meta">${difficultyLabel} &nbsp;·&nbsp; ${dateStr} &nbsp;·&nbsp; ${questions.length} questions</div>
+  </div>
+  ${isDifferentiated ? buildDiffGrid(true) : buildGrid(true)}
+</div>
+
 <script>
-  // Adaptive font size: start at 14pt, step down until all cells fit
-  (function(){
-    var rows = ${numRows};
-    // A4 usable height in pt ≈ 257mm × 2.835 ≈ 728pt, minus header ~50pt
-    var usableH = 728 - 50;
-    var cellH = usableH / rows;
-    // Font size steps down from 14
-    var fs = Math.min(14, Math.max(7, Math.floor(cellH / 5)));
-    document.documentElement.style.setProperty('--qfont', fs + 'pt');
-  })();
-<\/script>
-${isDifferentiated ? `
-<div class="grid">
-  ${(["level1","level2","level3"]).map(lv => {
-    const lqs = questions.filter(q => q.difficulty === lv);
-    const label = lv === "level1" ? "Level 1" : lv === "level2" ? "Level 2" : "Level 3";
-    const cells = lqs.map((q, i) => `<div class="cell">${questionToHtml(q, i)}</div>`).join("");
-    return `<div class="diff-col"><div class="diff-header ${lv}">${label}</div>${cells}</div>`;
-  }).join("")}
-</div>
-` : `
-<div class="grid">
-${questions.map((q, i) => `<div class="cell">${questionToHtml(q, i)}</div>`).join("\n")}
-</div>
-`}
-<script>
-  // Render all KaTeX elements
   document.addEventListener("DOMContentLoaded", function() {
+    // Render all KaTeX elements across both pages
     document.querySelectorAll(".katex-render").forEach(function(el) {
       try {
-        katex.render(el.getAttribute("data-latex"), el, {
-          throwOnError: false,
-          output: "html"
-        });
+        katex.render(el.getAttribute("data-latex"), el, { throwOnError: false, output: "html" });
       } catch(e) {
         el.textContent = el.getAttribute("data-latex");
       }
     });
-    // Auto-print after render settles
-    setTimeout(function() { window.print(); }, 600);
+
+    // Adaptive font — measure against fixed cell height after KaTeX renders
+    // Cell height in pt → px at 96dpi (1pt = 96/72 px)
+    var pxPerPt = 96 / 72;
+    var cellH_px = ${cellH_pt} * pxPerPt;
+    var padding_px = 6 * pxPerPt * 2;
+    var availH = cellH_px - padding_px;
+
+    // Use a representative set of cells from page 1 (no answers) to size font
+    var fs = 22;
+    for (var attempt = 0; attempt < 20; attempt++) {
+      document.documentElement.style.setProperty('--qfont', fs + 'px');
+      document.documentElement.style.setProperty('--numfont', Math.round(fs * 0.65) + 'px');
+      var fits = true;
+      // Check all q-inner elements on page 1 only
+      var page1Cells = document.querySelector('.page').querySelectorAll('.q-inner');
+      page1Cells.forEach(function(el) {
+        if (el.scrollHeight > availH + 1) fits = false;
+      });
+      if (fits) break;
+      fs = Math.max(7, fs - 1);
+    }
+
+    setTimeout(function() { window.print(); }, 400);
   });
 <\/script>
 </body>
@@ -1285,8 +1368,10 @@ export default function App() {
     const usedKeys = new Set<string>();
     const questions: AnyQuestion[] = [];
     if(isDifferentiated){
+      // numQuestions is total — split equally across 3 levels
+      const perLevel = Math.floor(numQuestions / 3);
       (["level1","level2","level3"] as DifficultyLevel[]).forEach(lv=>{
-        for(let i=0;i<numQuestions;i++){
+        for(let i=0;i<perLevel;i++){
           questions.push(generateUniqueQ(currentTool,lv,denomRangeByLevel[lv]??"standard",answerFormat,levelQuestionTypes[lv]??"mixed",levelShowHints[lv]??false,levelAsFrac[lv]??false,levelL3Mode[lv]??"mixed",levelAfPool[lv]??"standard",levelAfQuestionType[lv]??"mixed",levelAfSteps[lv]??"mixed",levelAfAllowUnsimplified[lv]??false,usedKeys));
         }
       });
@@ -1348,10 +1433,15 @@ export default function App() {
       <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
         <div className="flex justify-center items-center gap-6 mb-4">
           <div className="flex items-center gap-3">
-            <label className="text-base font-semibold text-gray-700">Questions per level:</label>
-            <input type="number" min="3" max="15" value={numQuestions}
-              onChange={e=>setNumQuestions(Math.max(3,Math.min(15,parseInt(e.target.value)||9)))}
-              className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-base"/>
+            <label className="text-base font-semibold text-gray-700">Questions:</label>
+            <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm">
+              {([9,12,15] as const).map(n=>(
+                <button key={n} onClick={()=>setNumQuestions(n)}
+                  className={`px-5 py-2 font-bold text-base transition-colors ${numQuestions===n?"bg-blue-900 text-white":"bg-white text-gray-500 hover:bg-gray-50"}`}>
+                  {n}
+                </button>
+              ))}
+            </div>
           </div>
           {qoEl(isDifferentiated)}
           <button onClick={()=>setIsDifferentiated(!isDifferentiated)}
@@ -1372,7 +1462,7 @@ export default function App() {
             <button onClick={()=>setShowWorksheetAnswers(!showWorksheetAnswers)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
               <Eye size={18}/> {showWorksheetAnswers?"Hide Answers":"Show Answers"}
             </button>
-            <button onClick={()=>handlePrint(worksheet,TOOL_CONFIG.tools[currentTool].name,difficulty,isDifferentiated,answerFormat)}
+            <button onClick={()=>handlePrint(worksheet,TOOL_CONFIG.tools[currentTool].name,difficulty,isDifferentiated,numQuestions)}
               className="px-6 py-2 bg-green-700 text-white rounded-xl font-bold text-base shadow-sm hover:bg-green-800 flex items-center gap-2">
               <Printer size={18}/> Print / PDF
             </button>
