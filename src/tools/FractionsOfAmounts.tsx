@@ -1337,6 +1337,8 @@ export default function App() {
   const [numQuestions, setNumQuestions] = useState(15);
   const [numColumns, setNumColumns] = useState(3);
   const [worksheet, setWorksheet] = useState<AnyQuestion[]>([]);
+  const [worksheetCellHeight, setWorksheetCellHeight] = useState<number|null>(null);
+  const worksheetRef = useRef<HTMLDivElement>(null);
   const [showWorksheetAnswers, setShowWorksheetAnswers] = useState(false);
   const [isDifferentiated, setIsDifferentiated] = useState(false);
   const [worksheetFontSize, setWorksheetFontSize] = useState(1);
@@ -1434,10 +1436,25 @@ export default function App() {
     }
     setWorksheet(questions);
     setShowWorksheetAnswers(false);
+    setWorksheetCellHeight(null);
   };
 
   useEffect(()=>{ if(mode!=="worksheet") handleNewQuestion(); },[difficulty,currentTool]);
   useEffect(()=>{ handleNewQuestion(); },[]);
+
+  // After worksheet renders, measure tallest cell and apply uniform height
+  useEffect(()=>{
+    if(!worksheetRef.current || worksheet.length===0){ setWorksheetCellHeight(null); return; }
+    // Small delay to allow MathRenderer to finish
+    const timer = setTimeout(()=>{
+      if(!worksheetRef.current) return;
+      const cells = worksheetRef.current.querySelectorAll<HTMLElement>(".ws-cell-inner");
+      let max = 0;
+      cells.forEach(el=>{ if(el.scrollHeight > max) max = el.scrollHeight; });
+      setWorksheetCellHeight(max > 0 ? max : null);
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [worksheet, showWorksheetAnswers, numColumns, worksheetFontSize]);
 
   const fontSizes = ["text-xl","text-2xl","text-3xl","text-4xl"];
   const canIncrease = worksheetFontSize < fontSizes.length-1;
@@ -1454,9 +1471,10 @@ export default function App() {
   const renderQCell = (q: AnyQuestion, idx: number, bgOverride?: string) => {
     const bg = bgOverride ?? stepBg;
     const fsz = fontSizes[worksheetFontSize];
+    const heightStyle = worksheetCellHeight ? {height: worksheetCellHeight, overflow:"hidden" as const} : {};
     if(q.kind==="frac"){
       return (
-        <div className="rounded-lg p-4 shadow" style={{backgroundColor:bg}}>
+        <div className="rounded-lg p-4 shadow ws-cell-inner" style={{backgroundColor:bg,...heightStyle}}>
           <span className={`${fsz} font-semibold`} style={{color:"#000"}}>
             {idx+1}.&nbsp;<MathRenderer latex={`\\text{Find } ${q.latex}`}/>
           </span>
@@ -1467,7 +1485,7 @@ export default function App() {
       );
     }
     return (
-      <div className="rounded-lg p-4 shadow" style={{backgroundColor:bg}}>
+      <div className="rounded-lg p-4 shadow ws-cell-inner" style={{backgroundColor:bg,...heightStyle}}>
         <div className={`${fsz} font-semibold`} style={{color:"#000",lineHeight:1.6}}>
           <span className="font-bold">{idx+1}.&nbsp;</span>
           {q.lines.map((line,i)=><div key={i}><InlineMath text={line}/></div>)}
@@ -1704,7 +1722,7 @@ export default function App() {
     );
     const toolTitle = TOOL_CONFIG.tools[currentTool].name;
     if(isDifferentiated) return (
-      <div className="rounded-xl shadow-2xl p-8 relative" style={{backgroundColor:qBg}}>
+      <div ref={worksheetRef} className="rounded-xl shadow-2xl p-8 relative" style={{backgroundColor:qBg}}>
         {fontSizeControls}
         <h2 className="text-3xl font-bold text-center mb-8" style={{color:"#000"}}>{toolTitle} — Worksheet</h2>
         <div className="grid grid-cols-3 gap-4">
@@ -1722,7 +1740,7 @@ export default function App() {
       </div>
     );
     return (
-      <div className="rounded-xl shadow-2xl p-8 relative" style={{backgroundColor:qBg}}>
+      <div ref={worksheetRef} className="rounded-xl shadow-2xl p-8 relative" style={{backgroundColor:qBg}}>
         {fontSizeControls}
         <h2 className="text-3xl font-bold text-center mb-8" style={{color:"#000"}}>{toolTitle} — Worksheet</h2>
         <div className={`grid gap-4`} style={{gridTemplateColumns:`repeat(${numColumns},1fr)`}}>
