@@ -1120,11 +1120,11 @@ const handlePrint = (
     overflow: hidden; display: flex; align-items: center; justify-content: center;
   }
 
-  /* Probe: off-screen, correct width, fixed font for measurement */
+  /* Probe: off-screen, correct CONTENT width (cell minus padding), fixed font for measurement */
   #probe {
     position: fixed; left: -9999px; top: 0; visibility: hidden;
     font-family: "Segoe UI", Arial, sans-serif; font-size: ${FONT_PX}px; line-height: 1.4;
-    width: ${cellW_MM}mm;
+    width: ${cellW_MM - PAD_MM * 2}mm;
   }
 
   .q-inner  { width: 100%; text-align: center; }
@@ -1181,7 +1181,7 @@ document.addEventListener("DOMContentLoaded", function() {
     if (el.scrollHeight > maxH_px) maxH_px = el.scrollHeight;
   });
   var maxH_mm = maxH_px / pxPerMm;
-  var needed_mm = maxH_mm + PAD_MM * 2;
+  var needed_mm = maxH_mm + PAD_MM * 2 + 6; // +6mm buffer for line-wrap variation and KaTeX height
 
   // Step 3: find smallest pre-calculated row height that fits
   var chosenH_mm = rowHeights[0];
