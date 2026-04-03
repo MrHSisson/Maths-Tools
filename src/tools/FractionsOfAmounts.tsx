@@ -1159,9 +1159,9 @@ document.addEventListener("DOMContentLoaded", function() {
   var dateStr   = "${dateStr}";
   var toolName  = "${toolName}";
 
-  // Pre-determined row heights for 1–6 rows
+  // Pre-determined row heights for 1–10 rows
   var rowHeights = [];
-  for (var r = 1; r <= 6; r++) {
+  for (var r = 1; r <= 10; r++) {
     rowHeights.push((usableH - GAP_MM * (r - 1)) / r);
   }
 
