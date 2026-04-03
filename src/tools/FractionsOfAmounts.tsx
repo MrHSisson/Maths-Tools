@@ -1013,7 +1013,10 @@ const handlePrint = (
   numColumns: number,
 ) => {
   const MIN_FONT_PX  = 14;   // calibrated floor — 15 worded L3 at 3 cols
-  const MIN_CELL_H_MM = 50.2; // cell height at the floor (ref: 3 cols, 5 rows)
+  // Minimum cell height: at 14px font, a 6-line worded question + answer needs ~32mm.
+  // Single-line numeric questions need far less. Use 30mm as the true floor —
+  // this allows 24 questions at 4 cols (6 rows × ~40mm) to fit on one page.
+  const MIN_CELL_H_MM = 30;
   const MARGIN_MM    = 12;
   const HEADER_MM    = 14;
   const GAP_MM       = 2;
@@ -1151,7 +1154,7 @@ ${(["level1","level2","level3"]).map(lv => {
   .page-header .meta { font-size: 3mm; color: #6b7280; }
 
   .grid { display: grid; gap: ${GAP_MM}mm; }
-  .cell { border: 0.3mm solid #d1d5db; border-radius: 1mm; padding: 2mm 3mm; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+  .cell { border: 0.3mm solid #d1d5db; border-radius: 1mm; padding: 1.5mm 2mm; overflow: hidden; display: flex; align-items: center; justify-content: center; }
 
   .diff-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: ${GAP_MM}mm; }
   .diff-col  { display: flex; flex-direction: column; gap: ${GAP_MM}mm; }
@@ -1159,7 +1162,7 @@ ${(["level1","level2","level3"]).map(lv => {
   .diff-header.level1 { background: #dcfce7; color: #166534; }
   .diff-header.level2 { background: #fef9c3; color: #854d0e; }
   .diff-header.level3 { background: #fee2e2; color: #991b1b; }
-  .diff-cell { border: 0.3mm solid #d1d5db; border-radius: 1mm; padding: 2mm 3mm; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+  .diff-cell { border: 0.3mm solid #d1d5db; border-radius: 1mm; padding: 1.5mm 2mm; overflow: hidden; display: flex; align-items: center; justify-content: center; }
 
   .q-inner  { width: 100%; text-align: center; }
   .q-num    { font-size: var(--numfont, 8px); font-weight: 700; color: #1e3a8a; display: inline; margin-right: 1mm; }
@@ -1203,8 +1206,8 @@ ${allPages}
       // Get cell dimensions from first cell's data attributes
       var cW = parseFloat(cells[0].getAttribute('data-cellw') || '${cellW_MM}');
       var cH = parseFloat(cells[0].getAttribute('data-cellh') || '${MIN_CELL_H_MM}');
-      var availH = cH * pxPerMm - 2 * pxPerMm * 2;
-      var availW = cW * pxPerMm - 3 * pxPerMm * 2;
+      var availH = cH * pxPerMm - 1.5 * pxPerMm * 2;
+      var availW = cW * pxPerMm - 2 * pxPerMm * 2;
 
       var fs = Math.min(18, Math.floor(availH / 2.5));
       for (var i = 0; i < 30; i++) {
