@@ -1026,7 +1026,6 @@ const handlePrint = (
 
   // Differentiated constants
   const diffHdrMM    = 7;
-  const diffPerCol   = Math.floor(questions.length / 3);
 
   // Page capacity for standard layout: max rows where cellH >= MIN_CELL_H_MM
   let maxRows = 1;
