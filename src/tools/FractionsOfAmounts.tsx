@@ -1012,49 +1012,26 @@ const handlePrint = (
   isDifferentiated: boolean,
   numColumns: number,
 ) => {
-  const MIN_FONT_PX  = 14;   // calibrated floor — 15 worded L3 at 3 cols
-  // Minimum cell height: at 14px font, a 6-line worded question + answer needs ~32mm.
-  // Single-line numeric questions need far less. Use 30mm as the true floor —
-  // this allows 24 questions at 4 cols (6 rows × ~40mm) to fit on one page.
-  const MIN_CELL_H_MM = 30;
-  const MARGIN_MM    = 12;
-  const HEADER_MM    = 14;
-  const GAP_MM       = 2;
-  const PAGE_H_MM    = 297 - MARGIN_MM * 2; // 273mm
-  const PAGE_W_MM    = 210 - MARGIN_MM * 2; // 186mm
-  const usableH_MM   = PAGE_H_MM - HEADER_MM;
+  const FONT_PX   = 14;
+  const PAD_MM    = 3;
+  const MARGIN_MM = 12;
+  const HEADER_MM = 14;
+  const GAP_MM    = 2;
+  const PAGE_H_MM = 297 - MARGIN_MM * 2;
+  const PAGE_W_MM = 210 - MARGIN_MM * 2;
+  const usableH_MM = PAGE_H_MM - HEADER_MM;
+  const diffHdrMM  = 7;
 
-  // Cell width for standard layout
-  const cellW_MM = (PAGE_W_MM - GAP_MM * (numColumns - 1)) / numColumns;
-
-  // Differentiated constants
-  const diffHdrMM    = 7;
-
-  // Page capacity for standard layout: max rows where cellH >= MIN_CELL_H_MM
-  let maxRows = 1;
-  for (let r = 1; r <= 24; r++) {
-    const h = (usableH_MM - GAP_MM * (r - 1)) / r;
-    if (h >= MIN_CELL_H_MM) maxRows = r;
-    else break;
-  }
-  const pageCapacity = maxRows * numColumns;
-
-  // Split into pages
-  const questionPages: AnyQuestion[][] = isDifferentiated
-    ? [questions]
-    : (() => {
-        const pages: AnyQuestion[][] = [];
-        for (let i = 0; i < questions.length; i += pageCapacity) pages.push(questions.slice(i, i + pageCapacity));
-        return pages;
-      })();
+  const cols    = isDifferentiated ? 3 : numColumns;
+  const cellW_MM = isDifferentiated
+    ? (PAGE_W_MM - GAP_MM * 2) / 3
+    : (PAGE_W_MM - GAP_MM * (numColumns - 1)) / numColumns;
 
   const difficultyLabel = isDifferentiated ? "Differentiated" :
     difficulty === "level1" ? "Level 1" : difficulty === "level2" ? "Level 2" : "Level 3";
   const now     = new Date();
   const dateStr = now.toLocaleDateString("en-GB", {day:"numeric",month:"long",year:"numeric"});
   const totalQ  = questions.length;
-
-  // ── HTML builders ───────────────────────────────────────────────────────────
 
   const renderLine = (line: string): string =>
     line.split(/(\$[^$]+\$)/g).map(part => {
@@ -1079,47 +1056,17 @@ const handlePrint = (
          + ansHtml;
   };
 
-  const buildStdGrid = (qs: AnyQuestion[], showAnswer: boolean, cols: number): string => {
-    const rows = Math.ceil(qs.length / cols);
-    const cW   = (PAGE_W_MM - GAP_MM * (cols - 1)) / cols;
-    const cH   = (usableH_MM - GAP_MM * (rows - 1)) / rows;
-    return `<div class="grid" style="grid-template-columns:repeat(${cols},${cW}mm);grid-template-rows:repeat(${rows},${cH}mm);">
-${qs.map((q,i) => `<div class="cell" style="width:${cW}mm;height:${cH}mm;" data-cellw="${cW}" data-cellh="${cH}"><div class="q-inner">${questionToHtml(q,i,showAnswer)}</div></div>`).join("\n")}
-</div>`;
-  };
+  // Build probe HTML — all questions with answers, at correct cell width
+  const probeHtml = questions.map((q, i) =>
+    `<div class="q-inner" id="probe-${i}">${questionToHtml(q, i, true)}</div>`
+  ).join("");
 
-  const buildDiffGrid = (qs: AnyQuestion[], showAnswer: boolean): string => {
-    const perCol = Math.floor(qs.length / 3);
-    const cH     = (usableH_MM - diffHdrMM - GAP_MM - GAP_MM * (perCol - 1)) / perCol;
-    const cW     = (PAGE_W_MM - GAP_MM * 2) / 3;
-    return `<div class="diff-grid">
-${(["level1","level2","level3"]).map(lv => {
-  const lqs = qs.filter(q => q.difficulty === lv);
-  const lbl = lv === "level1" ? "Level 1" : lv === "level2" ? "Level 2" : "Level 3";
-  const cells = lqs.map((q,i) => `<div class="diff-cell" style="height:${cH}mm;" data-cellw="${cW}" data-cellh="${cH}"><div class="q-inner">${questionToHtml(q,i,showAnswer)}</div></div>`).join("");
-  return `<div class="diff-col"><div class="diff-header ${lv}">${lbl}</div>${cells}</div>`;
-}).join("")}
-</div>`;
-  };
-
-  const buildPage = (qs: AnyQuestion[], showAnswer: boolean, pgIdx: number): string => {
-    const totalPages = questionPages.length;
-    const pgLabel    = totalPages > 1 ? `${totalQ} questions (${pgIdx+1}/${totalPages})` : `${totalQ} questions`;
-    const grid       = isDifferentiated ? buildDiffGrid(qs, showAnswer) : buildStdGrid(qs, showAnswer, numColumns);
-    return `<div class="page">
-  <div class="page-header">
-    <h1>${toolName}${showAnswer ? " — Answers" : ""}</h1>
-    <div class="meta">${difficultyLabel} &nbsp;·&nbsp; ${dateStr} &nbsp;·&nbsp; ${pgLabel}</div>
-  </div>
-  ${grid}
-</div>`;
-  };
-
-  // All question pages then all answer pages
-  const allPages = [
-    ...questionPages.map((qs, i) => buildPage(qs, false, i)),
-    ...questionPages.map((qs, i) => buildPage(qs, true,  i)),
-  ].join("\n\n");
+  // Pre-build question/answer HTML strings for JS to use
+  const qHtmlData = questions.map((q, i) => ({
+    q: questionToHtml(q, i, false),
+    a: questionToHtml(q, i, true),
+    difficulty: q.difficulty,
+  }));
 
   const html = `<!DOCTYPE html>
 <html>
@@ -1145,7 +1092,6 @@ ${(["level1","level2","level3"]).map(lv => {
 
   .page { width: ${PAGE_W_MM}mm; height: ${PAGE_H_MM}mm; overflow: hidden; page-break-after: always; }
   .page:last-child { page-break-after: auto; }
-
   .page-header {
     display: flex; justify-content: space-between; align-items: baseline;
     border-bottom: 0.4mm solid #1e3a8a; padding-bottom: 1.5mm; margin-bottom: 2mm;
@@ -1154,24 +1100,40 @@ ${(["level1","level2","level3"]).map(lv => {
   .page-header .meta { font-size: 3mm; color: #6b7280; }
 
   .grid { display: grid; gap: ${GAP_MM}mm; }
-  .cell { border: 0.3mm solid #d1d5db; border-radius: 1mm; padding: 1.5mm 2mm; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-
+  .cell {
+    border: 0.3mm solid #d1d5db; border-radius: 1mm;
+    padding: ${PAD_MM}mm;
+    overflow: hidden; display: flex; align-items: center; justify-content: center;
+  }
   .diff-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: ${GAP_MM}mm; }
   .diff-col  { display: flex; flex-direction: column; gap: ${GAP_MM}mm; }
-  .diff-header { height: ${diffHdrMM}mm; display: flex; align-items: center; justify-content: center; font-size: 3mm; font-weight: 700; border-radius: 1mm; }
+  .diff-header {
+    height: ${diffHdrMM}mm; display: flex; align-items: center; justify-content: center;
+    font-size: 3mm; font-weight: 700; border-radius: 1mm;
+  }
   .diff-header.level1 { background: #dcfce7; color: #166534; }
   .diff-header.level2 { background: #fef9c3; color: #854d0e; }
   .diff-header.level3 { background: #fee2e2; color: #991b1b; }
-  .diff-cell { border: 0.3mm solid #d1d5db; border-radius: 1mm; padding: 1.5mm 2mm; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+  .diff-cell {
+    border: 0.3mm solid #d1d5db; border-radius: 1mm;
+    padding: ${PAD_MM}mm;
+    overflow: hidden; display: flex; align-items: center; justify-content: center;
+  }
+
+  /* Probe: off-screen, correct width, fixed font for measurement */
+  #probe {
+    position: fixed; left: -9999px; top: 0; visibility: hidden;
+    font-family: "Segoe UI", Arial, sans-serif; font-size: ${FONT_PX}px; line-height: 1.4;
+    width: ${cellW_MM}mm;
+  }
 
   .q-inner  { width: 100%; text-align: center; }
-  .q-num    { font-size: var(--numfont, 8px); font-weight: 700; color: #1e3a8a; display: inline; margin-right: 1mm; }
-  .q-math   { font-size: var(--qfont, 14px); display: inline; }
-  .q-lines  { font-size: var(--qfont, 14px); line-height: 1.4; text-align: center; }
+  .q-num    { font-size: ${Math.round(FONT_PX * 0.6)}px; font-weight: 700; color: #1e3a8a; display: inline; margin-right: 1mm; }
+  .q-math   { font-size: ${FONT_PX}px; display: inline; }
+  .q-lines  { font-size: ${FONT_PX}px; line-height: 1.4; text-align: center; }
   .q-line   { display: block; text-align: center; }
-  .q-answer { font-size: var(--qfont, 14px); color: #059669; display: block; margin-top: 1mm; text-align: center; }
+  .q-answer { font-size: ${FONT_PX}px; color: #059669; display: block; margin-top: 1mm; text-align: center; }
   .katex    { font-size: 1em !important; }
-
   @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
 </style>
 </head>
@@ -1180,53 +1142,130 @@ ${(["level1","level2","level3"]).map(lv => {
   <span>In the print dialog: uncheck <strong>Headers and footers</strong> and set margins to <strong>None</strong>.</span>
   <button onclick="window.print()">Print / Save as PDF</button>
 </div>
-
-${allPages}
-
+<div id="probe">${probeHtml}</div>
+<div id="pages"></div>
 <script>
-  document.addEventListener("DOMContentLoaded", function() {
-    var MIN_FONT = ${MIN_FONT_PX};
-    var pxPerMm  = 3.7795;
+document.addEventListener("DOMContentLoaded", function() {
+  var pxPerMm   = 3.7795;
+  var PAD_MM    = ${PAD_MM};
+  var GAP_MM    = ${GAP_MM};
+  var usableH   = ${usableH_MM};
+  var diffHdrMM = ${diffHdrMM};
+  var PAGE_W_MM = ${PAGE_W_MM};
+  var cols      = ${cols};
+  var isDiff    = ${isDifferentiated ? "true" : "false"};
+  var totalQ    = ${totalQ};
+  var diffLabel = "${difficultyLabel}";
+  var dateStr   = "${dateStr}";
+  var toolName  = "${toolName}";
 
-    document.querySelectorAll(".katex-render").forEach(function(el) {
-      try { katex.render(el.getAttribute("data-latex"), el, { throwOnError: false, output: "html" }); }
-      catch(e) { el.textContent = el.getAttribute("data-latex"); }
-    });
+  // Pre-determined row heights for 1–6 rows
+  var rowHeights = [];
+  for (var r = 1; r <= 6; r++) {
+    rowHeights.push((usableH - GAP_MM * (r - 1)) / r);
+  }
 
-    // Collect all pages; second half are answer pages
-    var allPages = Array.from(document.querySelectorAll('.page'));
-    var half = Math.floor(allPages.length / 2);
+  // Question data pre-built in TS
+  var qData = ${JSON.stringify(qHtmlData)};
 
-    // Size each answer page independently, then mirror to its question page
-    for (var p = 0; p < half; p++) {
-      var ansPage = allPages[p + half];
-      var cells   = ansPage.querySelectorAll('.cell, .diff-cell');
-      if (!cells.length) continue;
-
-      // Get cell dimensions from first cell's data attributes
-      var cW = parseFloat(cells[0].getAttribute('data-cellw') || '${cellW_MM}');
-      var cH = parseFloat(cells[0].getAttribute('data-cellh') || '${MIN_CELL_H_MM}');
-      var availH = cH * pxPerMm - 1.5 * pxPerMm * 2;
-      var availW = cW * pxPerMm - 2 * pxPerMm * 2;
-
-      var fs = Math.min(18, Math.floor(availH / 2.5));
-      for (var i = 0; i < 30; i++) {
-        ansPage.style.setProperty('--qfont',  fs + 'px');
-        ansPage.style.setProperty('--numfont', Math.round(fs * 0.6) + 'px');
-        var fits = true;
-        ansPage.querySelectorAll('.q-inner').forEach(function(el) {
-          if (el.scrollHeight > availH + 1) fits = false;
-          if (el.scrollWidth  > availW + 1) fits = false;
-        });
-        if (fits) break;
-        if (fs <= MIN_FONT) break;
-        fs = Math.max(MIN_FONT, fs - 1);
-      }
-      // Mirror exact font to matching question page
-      allPages[p].style.setProperty('--qfont',  ansPage.style.getPropertyValue('--qfont'));
-      allPages[p].style.setProperty('--numfont', ansPage.style.getPropertyValue('--numfont'));
-    }
+  // Step 1: render KaTeX in probe
+  var probe = document.getElementById('probe');
+  probe.querySelectorAll('.katex-render').forEach(function(el) {
+    try { katex.render(el.getAttribute('data-latex'), el, { throwOnError: false, output: 'html' }); }
+    catch(e) { el.textContent = el.getAttribute('data-latex'); }
   });
+
+  // Step 2: measure tallest question+answer content
+  var maxH_px = 0;
+  probe.querySelectorAll('.q-inner').forEach(function(el) {
+    if (el.scrollHeight > maxH_px) maxH_px = el.scrollHeight;
+  });
+  var maxH_mm = maxH_px / pxPerMm;
+  var needed_mm = maxH_mm + PAD_MM * 2;
+
+  // Step 3: find smallest pre-calculated row height that fits
+  var chosenH_mm = rowHeights[0];
+  var rowsPerPage = 1;
+  for (var r = rowHeights.length - 1; r >= 0; r--) {
+    if (rowHeights[r] >= needed_mm) {
+      chosenH_mm = rowHeights[r];
+      rowsPerPage = r + 1;
+      break;
+    }
+  }
+
+  // For differentiated: work out rows per level from question count
+  var diffPerCol   = Math.floor(totalQ / 3);
+  var diffCellH_mm = chosenH_mm; // use same chosen height
+
+  // Step 4: split into pages
+  var pageCapacity = isDiff ? totalQ : rowsPerPage * cols;
+  var pages = [];
+  for (var s = 0; s < qData.length; s += pageCapacity) {
+    pages.push(qData.slice(s, s + pageCapacity));
+  }
+  var totalPages = pages.length;
+
+  function makeCellW(c) {
+    return (PAGE_W_MM - GAP_MM * (c - 1)) / c;
+  }
+
+  function buildCell(inner, cW, cH, isDiffCell) {
+    var cls = isDiffCell ? 'diff-cell' : 'cell';
+    return '<div class="' + cls + '" style="width:' + cW + 'mm;height:' + cH + 'mm;">'
+         + '<div class="q-inner">' + inner + '</div></div>';
+  }
+
+  function buildGrid(pageData, showAnswer, cH) {
+    if (isDiff) {
+      var cW = makeCellW(3);
+      var lvls = ['level1','level2','level3'];
+      var lbls = ['Level 1','Level 2','Level 3'];
+      var cols3 = lvls.map(function(lv, li) {
+        var lqs = qData.filter(function(q) { return q.difficulty === lv; });
+        var cells = lqs.map(function(q) {
+          return buildCell(showAnswer ? q.a : q.q, cW, cH, true);
+        }).join('');
+        return '<div class="diff-col"><div class="diff-header ' + lv + '">' + lbls[li] + '</div>' + cells + '</div>';
+      }).join('');
+      return '<div class="diff-grid">' + cols3 + '</div>';
+    }
+    var cW = makeCellW(cols);
+    var gridRows = Math.ceil(pageData.length / cols);
+    var cells = pageData.map(function(item) {
+      return buildCell(showAnswer ? item.a : item.q, cW, cH, false);
+    }).join('');
+    return '<div class="grid" style="grid-template-columns:repeat(' + cols + ',' + cW + 'mm);grid-template-rows:repeat(' + gridRows + ',' + cH + 'mm);">' + cells + '</div>';
+  }
+
+  function buildPage(pageData, showAnswer, pgIdx) {
+    var cH  = isDiff ? diffCellH_mm : chosenH_mm;
+    var lbl = totalPages > 1
+      ? totalQ + ' questions (' + (pgIdx+1) + '/' + totalPages + ')'
+      : totalQ + ' questions';
+    var title = toolName + (showAnswer ? ' — Answers' : '');
+    return '<div class="page">'
+      + '<div class="page-header"><h1>' + title + '</h1>'
+      + '<div class="meta">' + diffLabel + ' &nbsp;&middot;&nbsp; ' + dateStr + ' &nbsp;&middot;&nbsp; ' + lbl + '</div></div>'
+      + buildGrid(pageData, showAnswer, cH)
+      + '</div>';
+  }
+
+  // Render all question pages then all answer pages
+  var html = pages.map(function(pg, i) { return buildPage(pg, false, i); }).join('')
+           + pages.map(function(pg, i) { return buildPage(pg, true,  i); }).join('');
+
+  document.getElementById('pages').innerHTML = html;
+
+  // Step 5: render KaTeX in actual pages
+  document.getElementById('pages').querySelectorAll('.katex-render').forEach(function(el) {
+    try { katex.render(el.getAttribute('data-latex'), el, { throwOnError: false, output: 'html' }); }
+    catch(e) { el.textContent = el.getAttribute('data-latex'); }
+  });
+
+  // Remove probe
+  probe.remove();
+});
 <\/script>
 </body>
 </html>`;
