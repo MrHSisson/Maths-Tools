@@ -1025,10 +1025,8 @@ const handlePrint = (
   const cellW_MM = (PAGE_W_MM - GAP_MM * (numColumns - 1)) / numColumns;
 
   // Differentiated constants
-  const diffCols     = 3;
   const diffHdrMM    = 7;
   const diffPerCol   = Math.floor(questions.length / 3);
-  const diffCellH_MM = (usableH_MM - diffHdrMM - GAP_MM - GAP_MM * (diffPerCol - 1)) / diffPerCol;
 
   // Page capacity for standard layout: max rows where cellH >= MIN_CELL_H_MM
   let maxRows = 1;
