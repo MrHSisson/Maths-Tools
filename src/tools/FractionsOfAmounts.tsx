@@ -1183,13 +1183,32 @@ document.addEventListener("DOMContentLoaded", function() {
   var maxH_mm = maxH_px / pxPerMm;
   var needed_mm = maxH_mm + PAD_MM * 2 + 6; // +6mm buffer for line-wrap variation and KaTeX height
 
-  // Step 3: find the MOST rows where content still fits (largest r where rowHeight >= needed)
+  // Step 3: find the optimal row count
+  // Target: fewest rows where (rows × cols >= totalQ) AND (rowHeight >= needed_mm)
+  // This fills the page while keeping all questions on one page if possible.
+  // If no such row count exists, use the most rows where content fits (and overspill to page 2).
   var chosenH_mm = rowHeights[0];
   var rowsPerPage = 1;
+
+  // First try: find smallest rows where capacity >= totalQ AND content fits
+  var found = false;
   for (var r = 0; r < rowHeights.length; r++) {
-    if (rowHeights[r] >= needed_mm) {
+    var capacity = (r + 1) * cols;
+    if (capacity >= totalQ && rowHeights[r] >= needed_mm) {
       chosenH_mm = rowHeights[r];
       rowsPerPage = r + 1;
+      found = true;
+      break;
+    }
+  }
+
+  // Fallback: can't fit all on one page — use most rows where content fits
+  if (!found) {
+    for (var r2 = 0; r2 < rowHeights.length; r2++) {
+      if (rowHeights[r2] >= needed_mm) {
+        chosenH_mm = rowHeights[r2];
+        rowsPerPage = r2 + 1;
+      }
     }
   }
 
