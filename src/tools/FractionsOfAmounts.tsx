@@ -1183,14 +1183,13 @@ document.addEventListener("DOMContentLoaded", function() {
   var maxH_mm = maxH_px / pxPerMm;
   var needed_mm = maxH_mm + PAD_MM * 2 + 6; // +6mm buffer for line-wrap variation and KaTeX height
 
-  // Step 3: find smallest pre-calculated row height that fits
+  // Step 3: find the MOST rows where content still fits (largest r where rowHeight >= needed)
   var chosenH_mm = rowHeights[0];
   var rowsPerPage = 1;
-  for (var r = rowHeights.length - 1; r >= 0; r--) {
+  for (var r = 0; r < rowHeights.length; r++) {
     if (rowHeights[r] >= needed_mm) {
       chosenH_mm = rowHeights[r];
       rowsPerPage = r + 1;
-      break;
     }
   }
 
