@@ -712,22 +712,23 @@ const getStepBg    = (cs:string) => ({blue:"#B3D9F2",pink:"#F2B3D9",yellow:"#F2E
 
 // ── QuestionDisplay — renders any question's main display ─────────────────────
 
-const QuestionDisplay = ({ q, size = "large" }: { q: AnyQuestion; size?: "large"|"medium"|"small" }) => {
-  const sizeMap = { large:"text-5xl", medium:"text-3xl", small:"text-xl" };
-  const cls = sizeMap[size];
-
+const QuestionDisplay = ({ q, cls }: { q: AnyQuestion; cls: string }) => {
   if (q.kind === "frac") {
+    // q.latex is e.g. "\frac{1}{3} \text{ of } 27"
+    // Split at \text{ of } so only the fraction goes through KaTeX
+    const parts = q.latex.split(/\\text\{ of \}/);
+    const fracLatex = parts[0].trim();
+    const number = parts[1]?.trim() ?? "";
     return (
-      <div className={`${cls} font-bold text-center`} style={{color:"#000"}}>
-        <MathRenderer latex={`\\text{Find } ${q.latex}`} />
+      <div className={`${cls} font-semibold text-center`} style={{color:"#000",lineHeight:1.5}}>
+        <span>Find </span><MathRenderer latex={fracLatex} /><span> of {number}</span>
       </div>
     );
   }
-  // worded / asFrac — multi-line
   return (
     <div className="flex flex-col gap-2 text-center">
       {q.lines.map((line, i) => (
-        <div key={i} className={`${cls === "text-5xl" ? "text-3xl" : cls === "text-3xl" ? "text-2xl" : "text-lg"} font-semibold`} style={{color:"#000",lineHeight:1.5}}>
+        <div key={i} className={`${cls} font-semibold`} style={{color:"#000",lineHeight:1.5}}>
           <InlineMath text={line} />
         </div>
       ))}
@@ -1337,11 +1338,10 @@ export default function App() {
   const [numQuestions, setNumQuestions] = useState(15);
   const [numColumns, setNumColumns] = useState(3);
   const [worksheet, setWorksheet] = useState<AnyQuestion[]>([]);
-  const [worksheetCellHeight, setWorksheetCellHeight] = useState<number|null>(null);
-  const worksheetRef = useRef<HTMLDivElement>(null);
   const [showWorksheetAnswers, setShowWorksheetAnswers] = useState(false);
   const [isDifferentiated, setIsDifferentiated] = useState(false);
-  const [worksheetFontSize, setWorksheetFontSize] = useState(1);
+  const [displayFontSize, setDisplayFontSize] = useState(2);  // whiteboard + worked example
+  const [worksheetFontSize, setWorksheetFontSize] = useState(2); // worksheet only
   const [colorScheme, setColorScheme] = useState("default");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
@@ -1436,27 +1436,18 @@ export default function App() {
     }
     setWorksheet(questions);
     setShowWorksheetAnswers(false);
-    setWorksheetCellHeight(null);
   };
 
   useEffect(()=>{ if(mode!=="worksheet") handleNewQuestion(); },[difficulty,currentTool]);
   useEffect(()=>{ handleNewQuestion(); },[]);
 
-  // After worksheet renders, measure tallest cell and apply uniform height
-  useEffect(()=>{
-    if(!worksheetRef.current || worksheet.length===0){ setWorksheetCellHeight(null); return; }
-    // Small delay to allow MathRenderer to finish
-    const timer = setTimeout(()=>{
-      if(!worksheetRef.current) return;
-      const cells = worksheetRef.current.querySelectorAll<HTMLElement>(".ws-cell-inner");
-      let max = 0;
-      cells.forEach(el=>{ if(el.scrollHeight > max) max = el.scrollHeight; });
-      setWorksheetCellHeight(max > 0 ? max : null);
-    }, 150);
-    return () => clearTimeout(timer);
-  }, [worksheet, showWorksheetAnswers, numColumns, worksheetFontSize]);
+  // Whiteboard / worked example — larger sizes for single question display
+  const displayFontSizes = ["text-2xl","text-3xl","text-4xl","text-5xl","text-6xl","text-7xl"];
+  const canDisplayIncrease = displayFontSize < displayFontSizes.length - 1;
+  const canDisplayDecrease = displayFontSize > 0;
 
-  const fontSizes = ["text-xl","text-2xl","text-3xl","text-4xl"];
+  // Worksheet — smaller sizes for grid of questions
+  const fontSizes = ["text-lg","text-xl","text-2xl","text-3xl","text-4xl","text-5xl"];
   const canIncrease = worksheetFontSize < fontSizes.length-1;
   const canDecrease = worksheetFontSize > 0;
 
@@ -1471,10 +1462,10 @@ export default function App() {
   const renderQCell = (q: AnyQuestion, idx: number, bgOverride?: string) => {
     const bg = bgOverride ?? stepBg;
     const fsz = fontSizes[worksheetFontSize];
-    const heightStyle = worksheetCellHeight ? {height: worksheetCellHeight, overflow:"hidden" as const} : {};
+    const cellStyle = {backgroundColor:bg, height:"100%", boxSizing:"border-box" as const};
     if(q.kind==="frac"){
       return (
-        <div className="rounded-lg p-4 shadow ws-cell-inner" style={{backgroundColor:bg,...heightStyle}}>
+        <div className="rounded-lg p-4 shadow" style={cellStyle}>
           <span className={`${fsz} font-semibold`} style={{color:"#000"}}>
             {idx+1}.&nbsp;<MathRenderer latex={`\\text{Find } ${q.latex}`}/>
           </span>
@@ -1485,7 +1476,7 @@ export default function App() {
       );
     }
     return (
-      <div className="rounded-lg p-4 shadow ws-cell-inner" style={{backgroundColor:bg,...heightStyle}}>
+      <div className="rounded-lg p-4 shadow" style={cellStyle}>
         <div className={`${fsz} font-semibold`} style={{color:"#000",lineHeight:1.6}}>
           <span className="font-bold">{idx+1}.&nbsp;</span>
           {q.lines.map((line,i)=><div key={i}><InlineMath text={line}/></div>)}
@@ -1501,7 +1492,24 @@ export default function App() {
   const renderControlBar = () => {
     if(mode==="worksheet") return (
       <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+        {/* Row 1: Level selector + Differentiated */}
         <div className="flex justify-center items-center gap-6 mb-4">
+          <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm">
+            {([["level1","Level 1","bg-green-600"],["level2","Level 2","bg-yellow-500"],["level3","Level 3","bg-red-600"]] as const).map(([val,label,col])=>(
+              <button key={val} onClick={()=>{setDifficulty(val as DifficultyLevel);setIsDifferentiated(false);}}
+                className={`px-5 py-2 font-bold text-base transition-colors ${!isDifferentiated&&difficulty===val?`${col} text-white`:"bg-white text-gray-500 hover:bg-gray-50"}`}>
+                {label}
+              </button>
+            ))}
+          </div>
+          <button onClick={()=>setIsDifferentiated(!isDifferentiated)}
+            className={`px-6 py-2 rounded-xl font-bold text-base shadow-sm border-2 transition-colors ${isDifferentiated?"bg-blue-900 text-white border-blue-900":"bg-white text-gray-600 border-gray-300 hover:border-blue-900 hover:text-blue-900"}`}>
+            Differentiated
+          </button>
+        </div>
+        {/* Row 2: Questions + Columns + Question Options */}
+        <div className="flex justify-center items-center gap-6 mb-4">
+          {qoEl(isDifferentiated)}
           <div className="flex items-center gap-3">
             <label className="text-base font-semibold text-gray-700">Questions:</label>
             <input type="number" min="1" max="24" value={numQuestions}
@@ -1515,22 +1523,8 @@ export default function App() {
               disabled={isDifferentiated}
               className={`w-20 px-4 py-2 border-2 rounded-lg text-base font-semibold text-center transition-colors ${isDifferentiated?"border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed":"border-gray-300 bg-white"}`}/>
           </div>
-          {qoEl(isDifferentiated)}
         </div>
-        <div className="flex justify-center items-center gap-6 mb-4">
-          <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm">
-            {([["level1","Level 1","bg-green-600"],["level2","Level 2","bg-yellow-500"],["level3","Level 3","bg-red-600"]] as const).map(([val,label,col])=>(
-              <button key={val} onClick={()=>{setDifficulty(val as DifficultyLevel);setIsDifferentiated(false);}}
-                className={`px-5 py-2 font-bold text-base transition-colors ${isDifferentiated||difficulty===val?`${col} text-white`:"bg-white text-gray-500 hover:bg-gray-50"}`}>
-                {label}
-              </button>
-            ))}
-          </div>
-          <button onClick={()=>setIsDifferentiated(!isDifferentiated)}
-            className={`px-6 py-2 rounded-xl font-bold text-base shadow-sm border-2 transition-colors ${isDifferentiated?"bg-blue-900 text-white border-blue-900":"bg-white text-gray-600 border-gray-300 hover:border-blue-900 hover:text-blue-900"}`}>
-            Differentiated
-          </button>
-        </div>
+        {/* Row 3: Actions */}
         <div className="flex justify-center items-center gap-4">
           <button onClick={handleGenerateWorksheet} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
             <RefreshCw size={18}/> Generate
@@ -1549,11 +1543,11 @@ export default function App() {
     );
 
     return (
-      <div className="px-5 py-4 rounded-t-xl" style={{backgroundColor:qBg,borderBottom:"0.5px solid #000"}}>
+      <div className="px-5 py-4 rounded-xl" style={{backgroundColor:qBg}}>
         <div className="flex items-center justify-between gap-4">
           <DifficultyToggle value={difficulty} onChange={v=>setDifficulty(v as DifficultyLevel)}/>
           {qoEl()}
-          <div className="flex gap-3">
+          <div className="flex gap-3 items-center">
             <button onClick={handleNewQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
               <RefreshCw size={18}/> New Question
             </button>
@@ -1569,8 +1563,6 @@ export default function App() {
 
   // ── Whiteboard ────────────────────────────────────────────────────────────
   const renderWhiteboard = () => {
-    const kind = currentQuestion?.kind;
-    const isPanelStyle = kind==="worded"||kind==="asFrac";
 
     const fsToolbar = (
       <div style={{background:fsToolbarBg,borderBottom:"2px solid #000",padding:"16px 32px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:16,flexShrink:0,zIndex:210}}>
@@ -1583,28 +1575,50 @@ export default function App() {
       </div>
     );
 
+    // Font size buttons — sit in top-right of question box
+    const fontBtnStyle = (enabled: boolean) => ({
+      background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8,
+      cursor: enabled ? "pointer" : "not-allowed", width: 32, height: 32,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      opacity: enabled ? 1 : 0.35,
+    });
+
     const questionBox = () => {
-      if(!currentQuestion) return <div className="rounded-xl flex items-center justify-center flex-shrink-0" style={{width:"500px",backgroundColor:stepBg,height:"100%"}}><span className="text-4xl text-gray-400">Generate question</span></div>;
-      if(isPanelStyle) return (
-        <div className="rounded-xl flex items-center justify-center p-8 flex-shrink-0" style={{width:"480px",minHeight:"500px",backgroundColor:stepBg}}>
-          <div className="w-full text-center"><QuestionDisplay q={currentQuestion} size="medium"/></div>
-          {showWhiteboardAnswer&&<div className="text-3xl font-bold mt-4" style={{color:"#166534"}}><AnswerDisplay q={currentQuestion} answerFormat={answerFormat}/></div>}
+      const fontControls = (
+        <div style={{position:"absolute",top:10,right:10,display:"flex",gap:6,zIndex:20}}>
+          <button style={fontBtnStyle(canDisplayDecrease)} onClick={()=>canDisplayDecrease&&setDisplayFontSize(f=>f-1)} title="Decrease font size"><ChevronDown size={16} color="#6b7280"/></button>
+          <button style={fontBtnStyle(canDisplayIncrease)} onClick={()=>canDisplayIncrease&&setDisplayFontSize(f=>f+1)} title="Increase font size"><ChevronUp size={16} color="#6b7280"/></button>
         </div>
       );
       return (
-        <div className="rounded-xl flex items-center justify-center flex-shrink-0 flex-col gap-4 p-6" style={{width:"500px",backgroundColor:stepBg,height:"100%"}}>
-          <QuestionDisplay q={currentQuestion} size="large"/>
-          {showWhiteboardAnswer&&<div className="text-5xl font-bold" style={{color:"#166534"}}><AnswerDisplay q={currentQuestion} answerFormat={answerFormat}/></div>}
+        <div className="rounded-xl flex items-center justify-center flex-shrink-0 p-8" style={{position:"relative",width:"500px",height:"100%",backgroundColor:stepBg}}>
+          {fontControls}
+          {currentQuestion
+            ? <div className="w-full text-center flex flex-col gap-4 items-center">
+                <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]}/>
+                {showWhiteboardAnswer&&<div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{color:"#166534"}}><AnswerDisplay q={currentQuestion} answerFormat={answerFormat}/></div>}
+              </div>
+            : <span className="text-4xl text-gray-400">Generate question</span>}
         </div>
       );
     };
 
     const questionBoxFS = () => {
-      if(!currentQuestion) return <div style={{width:"40%",height:"100%",backgroundColor:fsQuestionBg,display:"flex",alignItems:"center",justifyContent:"center"}}><span className="text-4xl text-gray-400">Generate question</span></div>;
+      const fontControls = (
+        <div style={{position:"absolute",top:10,right:10,display:"flex",gap:6,zIndex:20}}>
+          <button style={fontBtnStyle(canDisplayDecrease)} onClick={()=>canDisplayDecrease&&setDisplayFontSize(f=>f-1)} title="Decrease font size"><ChevronDown size={16} color="#6b7280"/></button>
+          <button style={fontBtnStyle(canDisplayIncrease)} onClick={()=>canDisplayIncrease&&setDisplayFontSize(f=>f+1)} title="Increase font size"><ChevronUp size={16} color="#6b7280"/></button>
+        </div>
+      );
       return (
-        <div style={{width:"40%",height:"100%",backgroundColor:fsQuestionBg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:48,boxSizing:"border-box",flexShrink:0,overflowY:"auto",gap:16}}>
-          <QuestionDisplay q={currentQuestion} size={isPanelStyle?"medium":"large"}/>
-          {showWhiteboardAnswer&&<div className="text-4xl font-bold" style={{color:"#166534"}}><AnswerDisplay q={currentQuestion} answerFormat={answerFormat}/></div>}
+        <div style={{position:"relative",width:"40%",height:"100%",backgroundColor:fsQuestionBg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:48,boxSizing:"border-box",flexShrink:0,overflowY:"auto",gap:16}}>
+          {fontControls}
+          {currentQuestion
+            ? <>
+                <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]}/>
+                {showWhiteboardAnswer&&<div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{color:"#166534"}}><AnswerDisplay q={currentQuestion} answerFormat={answerFormat}/></div>}
+              </>
+            : <span className="text-4xl text-gray-400">Generate question</span>}
         </div>
       );
     };
@@ -1681,7 +1695,13 @@ export default function App() {
       <div className="p-8 w-full" style={{backgroundColor:qBg}}>
         {currentQuestion?(
           <>
-            <div className="text-center py-4"><QuestionDisplay q={currentQuestion} size="large"/></div>
+            <div className="text-center py-4 relative">
+              <div style={{position:"absolute",top:0,right:0,display:"flex",gap:6}}>
+                <button style={{background:"rgba(0,0,0,0.08)",border:"none",borderRadius:8,cursor:canDisplayDecrease?"pointer":"not-allowed",width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center",opacity:canDisplayDecrease?1:0.35}} onClick={()=>canDisplayDecrease&&setDisplayFontSize(f=>f-1)}><ChevronDown size={16} color="#6b7280"/></button>
+                <button style={{background:"rgba(0,0,0,0.08)",border:"none",borderRadius:8,cursor:canDisplayIncrease?"pointer":"not-allowed",width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center",opacity:canDisplayIncrease?1:0.35}} onClick={()=>canDisplayIncrease&&setDisplayFontSize(f=>f+1)}><ChevronUp size={16} color="#6b7280"/></button>
+              </div>
+              <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]}/>
+            </div>
             {showAnswer&&(
               <>
                 <div className="space-y-4 mt-8">
@@ -1693,7 +1713,7 @@ export default function App() {
                   ))}
                 </div>
                 <div className="rounded-xl p-6 text-center mt-4" style={{backgroundColor:stepBg}}>
-                  <span className="text-5xl font-bold" style={{color:"#166534"}}>
+                  <span className={`${displayFontSizes[displayFontSize]} font-bold`} style={{color:"#166534"}}>
                     <AnswerDisplay q={currentQuestion} answerFormat={answerFormat}/>
                   </span>
                 </div>
@@ -1722,17 +1742,20 @@ export default function App() {
     );
     const toolTitle = TOOL_CONFIG.tools[currentTool].name;
     if(isDifferentiated) return (
-      <div ref={worksheetRef} className="rounded-xl shadow-2xl p-8 relative" style={{backgroundColor:qBg}}>
+      <div className="rounded-xl shadow-2xl p-8 relative" style={{backgroundColor:qBg}}>
         {fontSizeControls}
         <h2 className="text-3xl font-bold text-center mb-8" style={{color:"#000"}}>{toolTitle} — Worksheet</h2>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-4" style={{alignItems:"start"}}>
           {(["level1","level2","level3"] as DifficultyLevel[]).map((lv,li)=>{
             const lqs=worksheet.filter(q=>q.difficulty===lv);
             const c=LV_COLORS[lv];
             return (
               <div key={lv} className={`${c.bg} border-2 ${c.border} rounded-xl p-4`}>
                 <h3 className={`text-xl font-bold mb-4 text-center ${c.text}`}>Level {li+1}</h3>
-                <div className="space-y-3">{lqs.map((q,idx)=><div key={idx}>{renderQCell(q,idx,c.fill)}</div>)}</div>
+                {/* Each column is its own grid — grid-auto-rows:1fr equalises cells within the column */}
+                <div style={{display:"grid",gridTemplateColumns:"1fr",gridAutoRows:"1fr",gap:"0.75rem"}}>
+                  {lqs.map((q,idx)=><div key={idx} style={{minHeight:0}}>{renderQCell(q,idx,c.fill)}</div>)}
+                </div>
               </div>
             );
           })}
@@ -1740,11 +1763,12 @@ export default function App() {
       </div>
     );
     return (
-      <div ref={worksheetRef} className="rounded-xl shadow-2xl p-8 relative" style={{backgroundColor:qBg}}>
+      <div className="rounded-xl shadow-2xl p-8 relative" style={{backgroundColor:qBg}}>
         {fontSizeControls}
         <h2 className="text-3xl font-bold text-center mb-8" style={{color:"#000"}}>{toolTitle} — Worksheet</h2>
-        <div className={`grid gap-4`} style={{gridTemplateColumns:`repeat(${numColumns},1fr)`}}>
-          {worksheet.map((q,idx)=><div key={idx}>{renderQCell(q,idx)}</div>)}
+        {/* grid-auto-rows:1fr makes all rows equal height — tallest cell in each row sets the row height */}
+        <div style={{display:"grid",gridTemplateColumns:`repeat(${numColumns},1fr)`,gridAutoRows:"1fr",gap:"1rem"}}>
+          {worksheet.map((q,idx)=><div key={idx} style={{minHeight:0}}>{renderQCell(q,idx)}</div>)}
         </div>
       </div>
     );
@@ -1791,10 +1815,14 @@ export default function App() {
 
           {mode==="worksheet"&&<>{renderControlBar()}{renderWorksheet()}</>}
           {mode!=="worksheet"&&(
-            <div className="rounded-xl shadow-lg overflow-hidden">
-              {renderControlBar()}
-              {mode==="whiteboard"&&renderWhiteboard()}
-              {mode==="single"&&renderWorkedExample()}
+            <div className="flex flex-col gap-6">
+              <div className="rounded-xl shadow-lg overflow-hidden">
+                {renderControlBar()}
+              </div>
+              <div className="rounded-xl shadow-lg overflow-hidden">
+                {mode==="whiteboard"&&renderWhiteboard()}
+                {mode==="single"&&renderWorkedExample()}
+              </div>
             </div>
           )}
         </div>
