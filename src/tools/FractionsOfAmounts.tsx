@@ -1184,10 +1184,24 @@ document.addEventListener("DOMContentLoaded", function() {
   var maxH_mm = maxH_px / pxPerMm;
   var needed_mm = maxH_mm + PAD_MM * 2 + 6; // +6mm buffer for line-wrap variation and KaTeX height
 
-  // Step 3: find the optimal row count
-  // Target: fewest rows where (rows × cols >= totalQ) AND (rowHeight >= needed_mm)
-  // This fills the page while keeping all questions on one page if possible.
-  // If no such row count exists, use the most rows where content fits (and overspill to page 2).
+  // For differentiated: rows = diffPerCol, cell height derived from that
+  var diffPerCol   = Math.floor(totalQ / 3);
+  // Calculate the cell height that fits diffPerCol rows (with diff header)
+  var diffUsableH  = usableH - diffHdrMM - GAP_MM - GAP_MM * (diffPerCol - 1);
+  var diffCellH_mm = diffUsableH / diffPerCol;
+  // If that cell is too small for content, use most rows where content fits and paginate
+  if (diffCellH_mm < needed_mm) {
+    // Find most rows where content fits, use that as rows per diff column
+    for (var rd = rowHeights.length - 1; rd >= 0; rd--) {
+      if (rowHeights[rd] >= needed_mm) {
+        diffCellH_mm = rowHeights[rd];
+        diffPerCol   = rd + 1;
+        break;
+      }
+    }
+  }
+
+  // Step 3: find the optimal row count for STANDARD layout
   var chosenH_mm = rowHeights[0];
   var rowsPerPage = 1;
 
@@ -1212,10 +1226,6 @@ document.addEventListener("DOMContentLoaded", function() {
       }
     }
   }
-
-  // For differentiated: work out rows per level from question count
-  var diffPerCol   = Math.floor(totalQ / 3);
-  var diffCellH_mm = chosenH_mm; // use same chosen height
 
   // Step 4: split into pages
   var pageCapacity = isDiff ? totalQ : rowsPerPage * cols;
@@ -1247,7 +1257,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }).join('');
         return '<div class="diff-col"><div class="diff-header ' + lv + '">' + lbls[li] + '</div>' + cells + '</div>';
       }).join('');
-      return '<div class="diff-grid">' + cols3 + '</div>';
+      return '<div class="diff-grid" style="grid-template-columns:repeat(3,' + cW + 'mm);">' + cols3 + '</div>';
     }
     var cW = makeCellW(cols);
     var gridRows = Math.ceil(pageData.length / cols);
