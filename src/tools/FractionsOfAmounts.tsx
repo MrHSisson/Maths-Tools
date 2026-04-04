@@ -1184,20 +1184,19 @@ document.addEventListener("DOMContentLoaded", function() {
   var maxH_mm = maxH_px / pxPerMm;
   var needed_mm = maxH_mm + PAD_MM * 2 + 6; // +6mm buffer for line-wrap variation and KaTeX height
 
-  // For differentiated: rows = diffPerCol, cell height derived from that
-  var diffPerCol   = Math.floor(totalQ / 3);
-  // Calculate the cell height that fits diffPerCol rows (with diff header)
-  var diffUsableH  = usableH - diffHdrMM - GAP_MM - GAP_MM * (diffPerCol - 1);
-  var diffCellH_mm = diffUsableH / diffPerCol;
-  // If that cell is too small for content, use most rows where content fits and paginate
-  if (diffCellH_mm < needed_mm) {
-    // Find most rows where content fits, use that as rows per diff column
-    for (var rd = rowHeights.length - 1; rd >= 0; rd--) {
-      if (rowHeights[rd] >= needed_mm) {
-        diffCellH_mm = rowHeights[rd];
-        diffPerCol   = rd + 1;
-        break;
-      }
+  // For differentiated: calculate how many rows fit per page
+  var diffPerCol   = Math.floor(totalQ / 3); // questions per level
+  var diffUsableH  = usableH - diffHdrMM - GAP_MM; // usable after header
+  // Find max rows where cellH >= needed_mm
+  var diffRowsPerPage = 1;
+  var diffCellH_mm = diffUsableH; // fallback: 1 row
+  for (var rd = 0; rd < 10; rd++) {
+    var h = (diffUsableH - GAP_MM * rd) / (rd + 1);
+    if (h >= needed_mm) {
+      diffRowsPerPage = rd + 1;
+      diffCellH_mm = h;
+    } else {
+      break;
     }
   }
 
@@ -1228,10 +1227,18 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 
   // Step 4: split into pages
-  var pageCapacity = isDiff ? totalQ : rowsPerPage * cols;
+  var pageCapacity = isDiff ? diffRowsPerPage : rowsPerPage * cols;
+  // For diff, pages is indexed by page number; each page shows diffRowsPerPage per level
   var pages = [];
-  for (var s = 0; s < qData.length; s += pageCapacity) {
-    pages.push(qData.slice(s, s + pageCapacity));
+  if (isDiff) {
+    var numDiffPages = Math.ceil(diffPerCol / diffRowsPerPage);
+    for (var p = 0; p < numDiffPages; p++) {
+      pages.push(p); // store page index, not slice of flat array
+    }
+  } else {
+    for (var s = 0; s < qData.length; s += pageCapacity) {
+      pages.push(qData.slice(s, s + pageCapacity));
+    }
   }
   var totalPages = pages.length;
 
@@ -1247,11 +1254,14 @@ document.addEventListener("DOMContentLoaded", function() {
 
   function buildGrid(pageData, showAnswer, cH) {
     if (isDiff) {
+      var pgIdx = pageData; // for diff, pageData is the page index
+      var start = pgIdx * diffRowsPerPage;
+      var end   = start + diffRowsPerPage;
       var cW = makeCellW(3);
       var lvls = ['level1','level2','level3'];
       var lbls = ['Level 1','Level 2','Level 3'];
       var cols3 = lvls.map(function(lv, li) {
-        var lqs = qData.filter(function(q) { return q.difficulty === lv; });
+        var lqs = qData.filter(function(q) { return q.difficulty === lv; }).slice(start, end);
         var cells = lqs.map(function(q) {
           return buildCell(showAnswer ? q.a : q.q, cW, cH, true);
         }).join('');
@@ -1270,8 +1280,8 @@ document.addEventListener("DOMContentLoaded", function() {
   function buildPage(pageData, showAnswer, pgIdx) {
     var cH  = isDiff ? diffCellH_mm : chosenH_mm;
     var lbl = totalPages > 1
-      ? totalQ + ' questions (' + (pgIdx+1) + '/' + totalPages + ')'
-      : totalQ + ' questions';
+      ? (isDiff ? diffPerCol + ' per level' : totalQ + ' questions') + ' (' + (pgIdx+1) + '/' + totalPages + ')'
+      : isDiff ? diffPerCol + ' per level' : totalQ + ' questions';
     var title = toolName + (showAnswer ? ' — Answers' : '');
     return '<div class="page">'
       + '<div class="page-header"><h1>' + title + '</h1>'
@@ -1433,9 +1443,8 @@ export default function App() {
     const usedKeys = new Set<string>();
     const questions: AnyQuestion[] = [];
     if(isDifferentiated){
-      const perLevel = Math.floor(numQuestions / 3);
       (["level1","level2","level3"] as DifficultyLevel[]).forEach(lv=>{
-        for(let i=0;i<perLevel;i++){
+        for(let i=0;i<numQuestions;i++){
           questions.push(generateUniqueQ(currentTool,lv,denomRangeByLevel[lv]??"standard",answerFormat,levelQuestionTypes[lv]??"mixed",levelShowHints[lv]??false,levelAsFrac[lv]??false,levelL3Mode[lv]??"mixed",levelAfPool[lv]??"standard",levelAfQuestionType[lv]??"mixed",levelAfSteps[lv]??"mixed",levelAfAllowUnsimplified[lv]??false,usedKeys));
         }
       });
