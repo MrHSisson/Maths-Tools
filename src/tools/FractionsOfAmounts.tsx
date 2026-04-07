@@ -1048,11 +1048,11 @@ const handlePrint = (
       const al = q.kind === "frac" ? q.answerLatex : q.kind === "asFrac" ? q.answerLatex : (q.answerLatex ?? `\\text{${q.answer}}`);
       ansHtml = `<div class="q-answer katex-render" data-latex="= ${al.replace(/"/g,"&quot;")}"></div>`;
     }
-    const num = `<span class="q-num">${idx + 1})</span> `;
+    const num = `<div class="q-num">${idx + 1})</div>`;
     if (q.kind === "frac") {
-      return `<div style="text-align:center">${num}<span class="q-math katex-render" data-latex="\\text{Find } ${q.latex.replace(/"/g,"&quot;")}"></span></div>${ansHtml}`;
+      return `${num}<div style="text-align:center"><span class="q-math katex-render" data-latex="\\text{Find } ${q.latex.replace(/"/g,"&quot;")}"></span></div>${ansHtml}`;
     }
-    return `<div style="text-align:center">${num}<span class="q-math">${renderLine(q.lines[0])}</span></div>`
+    return `${num}<div style="text-align:center"><span class="q-math">${renderLine(q.lines[0])}</span></div>`
          + `<div class="q-lines">${q.lines.slice(1).map(l => `<div class="q-line">${renderLine(l)}</div>`).join("")}</div>`
          + ansHtml;
   };
@@ -1096,6 +1096,7 @@ const handlePrint = (
     border: 0.3mm solid #d1d5db; border-radius: 1mm;
     padding: ${PAD_MM}mm;
     overflow: hidden; display: flex; align-items: center; justify-content: center;
+    position: relative;
   }
   .diff-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: ${GAP_MM}mm; }
   .diff-col  { display: flex; flex-direction: column; gap: ${GAP_MM}mm; }
@@ -1110,6 +1111,7 @@ const handlePrint = (
     border: 0.3mm solid #d1d5db; border-radius: 1mm;
     padding: ${PAD_MM}mm;
     overflow: hidden; display: flex; align-items: center; justify-content: center;
+    position: relative;
   }
 
   /* Probe: off-screen, correct CONTENT width (cell minus padding), fixed font for measurement */
@@ -1120,7 +1122,7 @@ const handlePrint = (
   }
 
   .q-inner  { width: 100%; text-align: center; }
-  .q-num    { font-size: ${Math.round(FONT_PX * 0.6)}px; font-weight: 700; color: #1e3a8a; display: inline; margin-right: 1mm; }
+  .q-num    { position: absolute; top: 0; left: 0; font-size: ${Math.round(FONT_PX * 0.6)}px; font-weight: 700; color: #000; line-height: 1; padding: 1.2mm 1.2mm 1.8mm 1.2mm; border-right: 0.3mm solid #000; border-bottom: 0.3mm solid #000; }
   .q-math   { font-size: ${FONT_PX}px; display: inline; }
   .q-lines  { font-size: ${FONT_PX}px; line-height: 1.4; text-align: center; }
   .q-line   { display: block; text-align: center; }
@@ -1471,14 +1473,16 @@ export default function App() {
   const renderQCell = (q: AnyQuestion, idx: number, bgOverride?: string) => {
     const bg = bgOverride ?? stepBg;
     const fsz = fontSizes[worksheetFontSize];
-    const cellStyle = {backgroundColor:bg, height:"100%", boxSizing:"border-box" as const};
+    const cellStyle = {backgroundColor:bg, height:"100%", boxSizing:"border-box" as const, position:"relative" as const};
+    const numEl = <span style={{position:"absolute",top:0,left:0,fontSize:"0.65em",fontWeight:700,color:"#000",lineHeight:1,padding:"5px 5px 7px 5px",borderRight:"1px solid #000",borderBottom:"1px solid #000"}}>{idx+1})</span>;
     if(q.kind==="frac"){
       return (
         <div className="rounded-lg p-4 shadow" style={cellStyle}>
-          <span className={`${fsz} font-semibold`} style={{color:"#000"}}>
-            {idx+1}.&nbsp;<MathRenderer latex={`\\text{Find } ${q.latex}`}/>
-          </span>
-          {showWorksheetAnswers&&<div className={`${fsz} font-semibold mt-1`} style={{color:"#059669"}}>
+          {numEl}
+          <div className={`${fsz} font-semibold text-center w-full`} style={{color:"#000"}}>
+            <span>Find </span><MathRenderer latex={q.latex.replace(/\\text\{ of \}.*/, '')} /><span> of {q.latex.replace(/.*\\text\{ of \}/, '').trim()}</span>
+          </div>
+          {showWorksheetAnswers&&<div className={`${fsz} font-semibold mt-1 text-center`} style={{color:"#059669"}}>
             <MathRenderer latex={`= ${q.answerLatex}`}/>
           </div>}
         </div>
@@ -1486,11 +1490,11 @@ export default function App() {
     }
     return (
       <div className="rounded-lg p-4 shadow" style={cellStyle}>
-        <div className={`${fsz} font-semibold`} style={{color:"#000",lineHeight:1.6}}>
-          <span className="font-bold">{idx+1}.&nbsp;</span>
+        {numEl}
+        <div className={`${fsz} font-semibold w-full text-center`} style={{color:"#000",lineHeight:1.6}}>
           {q.lines.map((line,i)=><div key={i}><InlineMath text={line}/></div>)}
         </div>
-        {showWorksheetAnswers&&<div className={`${fsz} font-semibold mt-1`} style={{color:"#059669"}}>
+        {showWorksheetAnswers&&<div className={`${fsz} font-semibold mt-1 text-center`} style={{color:"#059669"}}>
           {q.kind==="asFrac"?<MathRenderer latex={`= ${q.answerLatex}`}/>:<span>= {q.answer}</span>}
         </div>}
       </div>
