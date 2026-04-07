@@ -61,7 +61,7 @@ const MathRenderer = ({ latex, display = false, style, className }: MathProps) =
     }
   }, [latex, display, ready]);
 
-  return <span ref={ref} className={className} style={style} />;
+  return <span ref={ref} className={className} style={{fontSize:"1.25em", ...style}} />;
 };
 
 // ── LaTeX helpers (replace all unicode helpers) ───────────────────────────────
@@ -1081,16 +1081,7 @@ const handlePrint = (
   @page { size: A4; margin: ${MARGIN_MM}mm; }
   body { font-family: "Segoe UI", Arial, sans-serif; background: #fff; }
 
-  #print-notice {
-    background: #1e3a8a; color: #fff; padding: 10px 16px; font-size: 13px;
-    display: flex; align-items: center; justify-content: space-between; gap: 16px;
-  }
-  #print-notice button {
-    background: #fff; color: #1e3a8a; border: none; border-radius: 6px;
-    padding: 6px 14px; font-size: 13px; font-weight: 700; cursor: pointer;
-  }
-  @media print { #print-notice { display: none !important; } }
-
+  @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
   .page { width: ${PAGE_W_MM}mm; height: ${PAGE_H_MM}mm; overflow: hidden; page-break-after: always; }
   .page:last-child { page-break-after: auto; }
   .page-header {
@@ -1134,15 +1125,11 @@ const handlePrint = (
   .q-lines  { font-size: ${FONT_PX}px; line-height: 1.4; text-align: center; }
   .q-line   { display: block; text-align: center; }
   .q-answer { font-size: ${FONT_PX}px; color: #059669; display: block; margin-top: 1mm; text-align: center; }
-  .katex    { font-size: 1em !important; }
+  .katex-render { font-size: 1.25em; display: inline-block; vertical-align: middle; }
   @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
 </style>
 </head>
 <body>
-<div id="print-notice">
-  <span>In the print dialog: uncheck <strong>Headers and footers</strong> and set margins to <strong>None</strong>.</span>
-  <button onclick="window.print()">Print / Save as PDF</button>
-</div>
 <div id="probe">${probeHtml}</div>
 <div id="pages"></div>
 <script>
@@ -1304,6 +1291,9 @@ document.addEventListener("DOMContentLoaded", function() {
 
   // Remove probe
   probe.remove();
+
+  // Auto-open print dialog after a short delay for KaTeX layout to settle
+  setTimeout(function() { window.print(); }, 300);
 });
 <\/script>
 </body>
