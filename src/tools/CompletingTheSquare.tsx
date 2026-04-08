@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useCallback, CSSProperties, ReactNode } from "react";
+import { useState, useEffect, useRef, useCallback, CSSProperties } from "react";
+import { useNavigate } from "react-router-dom";
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, Printer } from "lucide-react";
 
 // ── ROUTING NOTE ─────────────────────────────────────────────────────────────
@@ -87,10 +88,6 @@ const toRational = (n: number, d: number) => {
   return { n: n / g, d: d / g };
 };
 
-const formatPartLatex = (n: number, d: number): string => {
-  const r = toRational(n, d);
-  return r.d === 1 ? `${r.n}` : tex.frac(r.n, r.d);
-};
 
 // ── Popover hook & button ─────────────────────────────────────────────────────
 
@@ -115,25 +112,6 @@ const PopoverButton = ({ open, onClick }: { open: boolean; onClick: () => void }
 const LV_LABELS:Record<string,string> = {level1:"Level 1",level2:"Level 2",level3:"Level 3"};
 const LV_HEADER_COLORS:Record<string,string> = {level1:"text-green-600",level2:"text-yellow-500",level3:"text-red-600"};
 
-const TogglePill = ({checked,onChange,label}:{checked:boolean;onChange:(v:boolean)=>void;label:string}) => (
-  <label className="flex items-center gap-3 cursor-pointer py-1">
-    <div onClick={()=>onChange(!checked)} className={`w-12 h-6 rounded-full transition-colors relative flex-shrink-0 cursor-pointer ${checked?"bg-blue-900":"bg-gray-300"}`}>
-      <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${checked?"translate-x-7":"translate-x-1"}`}/>
-    </div>
-    <span className="text-sm font-semibold text-gray-700">{label}</span>
-  </label>
-);
-
-const SegButtons = ({value,onChange,opts}:{value:string;onChange:(v:string)=>void;opts:{value:string;label:string}[]}) => (
-  <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden">
-    {opts.map(opt=>(
-      <button key={opt.value} onClick={()=>onChange(opt.value)}
-        className={`flex-1 px-3 py-2 text-sm font-bold transition-colors ${value===opt.value?"bg-blue-900 text-white":"bg-white text-gray-600 hover:bg-gray-50"}`}>
-        {opt.label}
-      </button>
-    ))}
-  </div>
-);
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ██████████████████████████████████████████████████████████████████████████████
@@ -160,12 +138,15 @@ const TOOL_CONFIG = {
       dropdown: null,
       difficultySettings: {
         level1: { variables: [], dropdown: null },
-        level2: { variables: [], dropdown: null },
+        level2: {
+          variables: [],
+          dropdown: { key: "display", label: "Display", options: [{ value: "decimal", label: "Decimal" }, { value: "fraction", label: "Fraction" }], defaultValue: "decimal" },
+        },
         level3: {
           variables: [
             { key: "negativeCoefficients", label: "Negative Coefficients", defaultValue: false },
           ],
-          dropdown: null,
+          dropdown: { key: "display", label: "Display", options: [{ value: "decimal", label: "Decimal" }, { value: "fraction", label: "Fraction" }], defaultValue: "decimal" },
         },
       },
     },
@@ -177,12 +158,15 @@ const TOOL_CONFIG = {
       dropdown: null,
       difficultySettings: {
         level1: { variables: [], dropdown: null },
-        level2: { variables: [], dropdown: null },
+        level2: {
+          variables: [],
+          dropdown: { key: "display", label: "Display", options: [{ value: "decimal", label: "Decimal" }, { value: "fraction", label: "Fraction" }], defaultValue: "decimal" },
+        },
         level3: {
           variables: [
             { key: "negativeCoefficients", label: "Negative Coefficients", defaultValue: false },
           ],
-          dropdown: null,
+          dropdown: { key: "display", label: "Display", options: [{ value: "decimal", label: "Decimal" }, { value: "fraction", label: "Fraction" }], defaultValue: "decimal" },
         },
       },
     },
@@ -194,12 +178,15 @@ const TOOL_CONFIG = {
       dropdown: null,
       difficultySettings: {
         level1: { variables: [], dropdown: null },
-        level2: { variables: [], dropdown: null },
+        level2: {
+          variables: [],
+          dropdown: { key: "display", label: "Display", options: [{ value: "decimal", label: "Decimal" }, { value: "fraction", label: "Fraction" }], defaultValue: "decimal" },
+        },
         level3: {
           variables: [
             { key: "negativeCoefficients", label: "Negative Coefficients", defaultValue: false },
           ],
-          dropdown: null,
+          dropdown: { key: "display", label: "Display", options: [{ value: "decimal", label: "Decimal" }, { value: "fraction", label: "Fraction" }], defaultValue: "decimal" },
         },
       },
     },
@@ -248,6 +235,7 @@ const INFO_SECTIONS = [
   ]},
   { title: "Question Options", icon: "⚙️", content: [
     { label: "Negative Coefficients", detail: "Level 3 only. When enabled, the leading coefficient may be negative." },
+    { label: "Display: Decimal / Fraction", detail: "Levels 2 & 3 only. Controls whether half-integer values are shown as decimals (e.g. 2.5) or fractions (e.g. 5/2)." },
     { label: "Differentiated",        detail: "Worksheet mode produces three columns — one per level — simultaneously." },
   ]},
 ];
@@ -257,8 +245,11 @@ const INFO_SECTIONS = [
 interface CTSQuestion {
   kind: "simple";
   display: string;
+  displayLatex: string;
   answer: string;
+  answerLatex: string;
   working: { type: string; latex: string; plain: string; title?: string }[];
+  rawValues: RawValues;
   key: string;
   difficulty: string;
 }
@@ -269,54 +260,137 @@ type AnyQuestion = CTSQuestion;
 
 const randInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
 
-const mkStep = (plain: string, title?: string) => ({
-  type: "step",
-  plain,
-  latex: `\\text{${plain}}`,
-  title: title ?? "",
-});
+// Format a number: integers shown whole, decimals to 2dp
+const fmt = (n: number) => n % 1 === 0 ? String(n) : parseFloat(n.toFixed(2)).toString();
 
-// Format a number: integers shown whole, decimals to given dp
-const fmt = (n: number, dp = 1) => n % 1 === 0 ? String(n) : n.toFixed(dp);
+// Format as fraction for half- or quarter-integers, otherwise fmt
+const fmtF = (n: number): string => {
+  if (n % 1 === 0) return String(n);
+  if ((n * 2) % 1 === 0) { const num = Math.round(n * 2); return num < 0 ? `-${Math.abs(num)}/2` : `${num}/2`; }
+  if ((n * 4) % 1 === 0) { const num = Math.round(n * 4); return num < 0 ? `-${Math.abs(num)}/4` : `${num}/4`; }
+  return fmt(n);
+};
+
+// Convert "n/d" string to \frac{n}{d}, pass through otherwise
+const toLatex = (s: string): string => {
+  const m = s.match(/^(-?)(\d+)\/(\d+)$/);
+  if (m) return `${m[1]}\\frac{${m[2]}}{${m[3]}}`;
+  return s;
+};
+
+// ── buildDisplay — pure function, called at render time with current display mode ─
+
+interface RawValues { tool: ToolType; a: number; b: number; c: number; p: number; q: number; }
+
+const buildDisplay = (rv: RawValues, useFractions: boolean) => {
+  const { tool, a, b, c, p, q } = rv;
+  const fmtP = (n: number) => useFractions ? fmtF(n) : fmt(n);
+  const L = toLatex;
+
+  // display latex
+  const aStr   = a === 1 ? "" : a === -1 ? "-" : a > 0 ? String(a) : `-${Math.abs(a)}`;
+  const bAbs   = Math.abs(b);
+  const bLatex = b === 0 ? "" : bAbs === 1 ? (b > 0 ? " + x" : " - x") : b > 0 ? ` + ${L(fmtP(b))}x` : ` - ${L(fmtP(bAbs))}x`;
+  const cLatex = c === 0 ? "" : c > 0 ? ` + ${L(fmtP(c))}` : ` - ${L(fmtP(Math.abs(c)))}`;
+  const displayLatex = `y = ${aStr}x^2${bLatex}${cLatex}`;
+
+  // working steps
+  const working: { type: string; latex: string; plain: string; title?: string }[] = [];
+  const mkStep = (plain: string, latex: string, title: string) => ({ type: "step", plain, latex, title });
+
+  const pL    = p > 0 ? `+ ${L(fmtP(p))}` : p < 0 ? `- ${L(fmtP(Math.abs(p)))}` : "";
+  const pSq   = p * p;
+  const pSqL  = L(fmtP(pSq));
+  const aPSqL = L(fmtP(a * pSq));
+  const cPart = c > 0 ? `+ ${L(fmtP(c))}` : c < 0 ? `- ${L(fmtP(Math.abs(c)))}` : "";
+
+  if (a !== 1) {
+    const bOverA = b / a;
+    const bOAL   = bOverA > 0 ? `+ ${L(fmtP(bOverA))}x` : bOverA < 0 ? `- ${L(fmtP(Math.abs(bOverA)))}x` : "";
+    const cPartF = c > 0 ? ` + ${L(fmtP(c))}` : c < 0 ? ` - ${L(fmtP(Math.abs(c)))}` : "";
+    working.push(mkStep(`y = ${a}(x² ...)${cPartF}`, `y = ${a}(x^2 ${bOAL})${cPartF}`, `Factor out ${a}`));
+  }
+
+  working.push(mkStep(
+    `${a !== 1 ? fmtP(b/a) : b} ÷ 2 = ${fmtP(b/(2*a))}`,
+    `${a !== 1 ? L(fmtP(b/a)) : b} \\div 2 = ${L(fmtP(b/(2*a)))}`,
+    "Half the coefficient of x",
+  ));
+
+  if (a !== 1) {
+    working.push(mkStep(`y = ${a}[(x ...)² - ...] ${cPart}`, `y = ${a}\\left[(x ${pL})^2 - ${pSqL}\\right] ${cPart}`, "Complete the square"));
+    working.push(mkStep(`y = ${a}(x ...)² - ... ${cPart}`, `y = ${a}(x ${pL})^2 - ${aPSqL} ${cPart}`, "Expand the square brackets"));
+  } else {
+    working.push(mkStep(`y = [(x ...)² - ...] ${cPart}`, `y = \\left[(x ${pL})^2 - ${pSqL}\\right] ${cPart}`, "Complete the square"));
+    working.push(mkStep(`y = (x ...)² - ... ${cPart}`, `y = (x ${pL})^2 - ${pSqL} ${cPart}`, "Expand the square brackets"));
+  }
+
+  const aFinal = a === 1 ? "" : a === -1 ? "-" : String(a);
+  const qFinalL = q > 0 ? `+ ${L(fmtP(q))}` : q < 0 ? `- ${L(fmtP(Math.abs(q)))}` : "";
+  const negP   = -p;
+  const negPL  = negP > 0 ? L(fmtP(negP)) : negP < 0 ? `-${L(fmtP(Math.abs(negP)))}` : "0";
+  const negPPlain = negP > 0 ? fmtP(negP) : negP < 0 ? `-${fmtP(Math.abs(negP))}` : "0";
+
+  let answer = "";
+  let answerLatex = "";
+
+  if (tool === "roots") {
+    working.push(mkStep(`0 = ${aFinal}(x ...)² ...`, `0 = ${aFinal}(x ${pL})^2 ${qFinalL}`, "Set equal to zero"));
+    working.push(mkStep(`${aFinal}(x ...)² = ${fmtP(-q)}`, `${aFinal}(x ${pL})^2 = ${L(fmtP(-q))}`, "Rearrange"));
+    if (q > 0) {
+      answer = "No real roots";
+      answerLatex = "\\text{No real roots}";
+    } else {
+      if (a !== 1) working.push(mkStep(`(x ...)² = ${fmtP(-q/a)}`, `(x ${pL})^2 = ${L(fmtP(-q/a))}`, `Divide by ${a}`));
+      const sqrtVal = a !== 1 ? -q / a : -q;
+      const sqrtL   = sqrtVal % 1 === 0 && Math.sqrt(sqrtVal) % 1 === 0 ? String(Math.sqrt(sqrtVal)) : `\\sqrt{${L(fmtP(sqrtVal))}}`;
+      const sqrtPl  = sqrtVal % 1 === 0 && Math.sqrt(sqrtVal) % 1 === 0 ? String(Math.sqrt(sqrtVal)) : `√${fmtP(sqrtVal)}`;
+      working.push(mkStep(`x ... = ±${sqrtPl}`, `x ${pL} = \\pm ${sqrtL}`, "Square root both sides"));
+      answer      = `x = ${negPPlain} ± ${sqrtPl}`;
+      answerLatex = `x = ${negPL} \\pm ${sqrtL}`;
+    }
+  } else if (tool === "turning") {
+    working.push(mkStep(`(x ...)² ≥ 0 for all x`, `(x ${pL})^2 \\geq 0 \\text{ for all } x`, "Minimum value of squared term"));
+    working.push(mkStep(`(x ...)² = 0 when x = ${negPPlain}`, `(x ${pL})^2 = 0 \\text{ when } x = ${negPL}`, "Find when the bracket equals zero"));
+    working.push(mkStep(`When x = ${negPPlain}, y = ${fmtP(q)}`, `\\text{When } x = ${negPL},\\quad y = ${L(fmtP(q))}`, "Find the y-coordinate"));
+    answer      = `(${negPPlain}, ${fmtP(q)})`;
+    answerLatex = `\\left(${negPL},\\ ${L(fmtP(q))}\\right)`;
+  } else {
+    answer      = `y = ${aFinal}(x ...)² ...`;
+    answerLatex = `y = ${aFinal}(x ${pL})^2 ${qFinalL}`;
+  }
+
+  return { displayLatex, working, answer, answerLatex };
+};
 
 // ── 6. Question generator ─────────────────────────────────────────────────────
-
 const generateQuestion = (
   tool: ToolType,
   level: DifficultyLevel,
   variables: Record<string, boolean>,
-  _dropdownValue: string,
+  dropdownValue: string,
 ): AnyQuestion => {
-  const useNegative = variables["negativeCoefficients"] ?? false;
+  const useNegative  = variables["negativeCoefficients"] ?? false;
+  const useFractions = dropdownValue === "fraction";
 
   let a = 0, b = 0, c = 0, p = 0, q = 0;
 
   if (level === "level1") {
-    a = 1;
-    p = randInt(-9, 9);
-    if (p === 0) p = 1;
+    a = 1; p = randInt(-9, 9); if (p === 0) p = 1;
   } else if (level === "level2") {
-    a = 1;
-    p = randInt(-9, 9) + 0.5;
+    a = 1; p = randInt(-9, 9) + 0.5;
   } else {
     a = randInt(2, 5);
     if (useNegative && Math.random() > 0.5) a = -a;
-    p = Math.random() > 0.5
-      ? (() => { let v = randInt(-9, 9); if (v === 0) v = 1; return v; })()
-      : randInt(-9, 9) + 0.5;
+    p = Math.random() > 0.5 ? (() => { let v = randInt(-9,9); if (v===0) v=1; return v; })() : randInt(-9,9) + 0.5;
   }
 
   if (tool === "roots") {
     q = Math.random() < 0.1 ? randInt(1, 15) : -(randInt(1, 15));
   } else {
     if (p % 1 !== 0) {
-      if (Math.random() > 0.5) {
-        c = randInt(-8, 8);
-        q = c - a * p * p;
-      } else {
-        q = randInt(-8, 8);
-        c = a * p * p + q;
-      }
+      if (Math.random() > 0.5) { c = randInt(-8, 8); q = c - a * p * p; }
+      else                      { q = randInt(-8, 8); c = a * p * p + q; }
     } else {
       q = randInt(-8, 8);
     }
@@ -325,78 +399,11 @@ const generateQuestion = (
   b = 2 * a * p;
   c = a * p * p + q;
 
-  // ── Display string ────────────────────────────────────────────────────────
-  const aStr = a === 1 ? "" : a === -1 ? "-" : a > 0 ? String(a) : `-${Math.abs(a)}`;
-  const bAbs = Math.abs(b);
-  const bStr = b === 0 ? "" : bAbs === 1 ? (b > 0 ? " + x" : " - x") : b > 0 ? ` + ${b}x` : ` - ${bAbs}x`;
-  const cStr = c === 0 ? "" : c > 0 ? ` + ${c}` : ` - ${Math.abs(c)}`;
-  const display = `y = ${aStr}x²${bStr}${cStr}`;
-
-  // ── Working steps ─────────────────────────────────────────────────────────
-  const working: { type: string; latex: string; plain: string; title?: string }[] = [];
-
-  const pStr   = p > 0 ? `+ ${fmt(p)}` : p < 0 ? `- ${fmt(Math.abs(p))}` : "";
-  const pSq    = p * p;
-  const pSqStr = fmt(pSq, 2);
-  const aPSq   = a * pSq;
-  const aPSqStr = fmt(aPSq, 2);
-  const cPart  = c > 0 ? `+ ${c}` : c < 0 ? `- ${Math.abs(c)}` : "";
-
-  if (a !== 1) {
-    const bOverA    = b / a;
-    const bOverAStr = bOverA > 0 ? `+ ${fmt(bOverA)}x` : bOverA < 0 ? `- ${fmt(Math.abs(bOverA))}x` : "";
-    const cPartFactor = c > 0 ? ` + ${c}` : c < 0 ? ` - ${Math.abs(c)}` : "";
-    working.push(mkStep(`y = ${a}(x² ${bOverAStr})${cPartFactor}`, `Factor out ${a}`));
-  }
-
-  const coeffStr = a !== 1 ? fmt(b / a) : String(b);
-  working.push(mkStep(`${coeffStr} ÷ 2 = ${fmt(b / (2 * a))}`, "Half the coefficient of x"));
-
-  if (a !== 1) {
-    working.push(mkStep(`y = ${a}[(x ${pStr})² - ${pSqStr}] ${cPart}`, "Complete the square"));
-    working.push(mkStep(`y = ${a}(x ${pStr})² - ${aPSqStr} ${cPart}`, "Expand the square brackets"));
-  } else {
-    working.push(mkStep(`y = [(x ${pStr})² - ${pSqStr}] ${cPart}`, "Complete the square"));
-    working.push(mkStep(`y = (x ${pStr})² - ${pSqStr} ${cPart}`, "Expand the square brackets"));
-  }
-
-  // ── Answer & tool-specific extra steps ───────────────────────────────────
-  const aFinal  = a === 1 ? "" : a === -1 ? "-" : String(a);
-  const pFinal  = p > 0 ? `+ ${fmt(p)}` : p < 0 ? `- ${fmt(Math.abs(p))}` : "";
-  const qFinal  = q > 0 ? `+ ${fmt(q, 2)}` : q < 0 ? `- ${fmt(Math.abs(q), 2)}` : "";
-  const negP    = -p;
-  const negPStr = negP > 0 ? fmt(negP) : negP < 0 ? `-${fmt(Math.abs(negP))}` : "0";
-
-  let answer = "";
-
-  if (tool === "roots") {
-    working.push(mkStep(`0 = ${aFinal}(x ${pFinal})² ${qFinal}`, "Set equal to zero"));
-    working.push(mkStep(`${aFinal}(x ${pFinal})² = ${fmt(-q, 2)}`, "Rearrange"));
-    if (q > 0) {
-      answer = "No real roots";
-    } else {
-      if (a !== 1) {
-        working.push(mkStep(`(x ${pFinal})² = ${fmt(-q / a, 2)}`, `Divide by ${a}`));
-      }
-      const sqrtVal = a !== 1 ? -q / a : -q;
-      const sqrtStr = sqrtVal % 1 === 0 && Math.sqrt(sqrtVal) % 1 === 0
-        ? String(Math.sqrt(sqrtVal))
-        : `√${fmt(sqrtVal, 2)}`;
-      working.push(mkStep(`x ${pFinal} = ±${sqrtStr}`, "Square root both sides"));
-      answer = `x = ${negPStr} ± ${sqrtStr}`;
-    }
-  } else if (tool === "turning") {
-    working.push(mkStep(`(x ${pFinal})² ≥ 0 for all values of x`, "Minimum value of squared term"));
-    working.push(mkStep(`(x ${pFinal})² = 0  when  x = ${negPStr}`, "Find when the bracket equals zero"));
-    working.push(mkStep(`When x = ${negPStr},  y = ${fmt(q, 2)}`, "Find the y-coordinate"));
-    answer = `(${negPStr}, ${fmt(q, 2)})`;
-  } else {
-    answer = `y = ${aFinal}(x ${pFinal})² ${qFinal}`;
-  }
-
+  const rv: RawValues = { tool, a, b, c, p, q };
+  const { displayLatex, working, answer, answerLatex } = buildDisplay(rv, useFractions);
   const key = `${tool}-${level}-${a}-${b}-${c}`;
 
-  return { kind: "simple", display, answer, working, key, difficulty: level };
+  return { kind: "simple", display: "", displayLatex, answer, answerLatex, working, rawValues: rv, key, difficulty: level };
 };
 
 // ── 7. generateUniqueQ ────────────────────────────────────────────────────────
@@ -434,29 +441,20 @@ const getStepBg    = (cs:string) => ({blue:"#B3D9F2",pink:"#F2B3D9",yellow:"#F2E
 
 // ── QuestionDisplay ───────────────────────────────────────────────────────────
 
-const QuestionDisplay = ({ q, cls }: { q: AnyQuestion; cls: string }) => (
-  <div className={`${cls} font-semibold text-center`} style={{color:"#000",lineHeight:1.5}}>
-    {(q as any).display}
-  </div>
-);
-
-const InlineMath = ({ text }: { text: string }) => {
-  const parts = text.split(/(\$[^$]+\$)/g);
+const QuestionDisplay = ({ q, cls, useFractions }: { q: AnyQuestion; cls: string; useFractions: boolean }) => {
+  const { displayLatex } = buildDisplay((q as any).rawValues, useFractions);
   return (
-    <>
-      {parts.map((part, i) => {
-        if (part.startsWith("$") && part.endsWith("$")) {
-          return <MathRenderer key={i} latex={part.slice(1, -1)} />;
-        }
-        return <span key={i}>{part}</span>;
-      })}
-    </>
+    <div className={`${cls} font-semibold text-center`} style={{color:"#000",lineHeight:1.5}}>
+      <MathRenderer latex={displayLatex} />
+    </div>
   );
 };
 
-const AnswerDisplay = ({ q }: { q: AnyQuestion }) => (
-  <span>= {(q as any).answer ?? ""}</span>
-);
+
+const AnswerDisplay = ({ q, useFractions }: { q: AnyQuestion; useFractions: boolean }) => {
+  const { answerLatex } = buildDisplay((q as any).rawValues, useFractions);
+  return <MathRenderer latex={answerLatex} />;
+};
 
 // ── DifficultyToggle ──────────────────────────────────────────────────────────
 
@@ -768,6 +766,7 @@ document.addEventListener("DOMContentLoaded",function(){
 
 export default function App() {
   const toolKeys = Object.keys(TOOL_CONFIG.tools) as ToolType[];
+  const navigate = useNavigate();
 
   const [currentTool, setCurrentTool] = useState<ToolType>("completing");
   const [mode, setMode] = useState<"whiteboard"|"single"|"worksheet">("whiteboard");
@@ -785,7 +784,16 @@ export default function App() {
   const [toolDropdowns, setToolDropdowns] = useState<Record<string,string>>(() => {
     const init: Record<string,string> = {};
     Object.keys(TOOL_CONFIG.tools).forEach(k => {
-      if (TOOL_CONFIG.tools[k].dropdown) init[k] = TOOL_CONFIG.tools[k].dropdown!.defaultValue;
+      const t = TOOL_CONFIG.tools[k];
+      // Top-level dropdown
+      if (t.dropdown) init[k] = t.dropdown.defaultValue;
+      // Per-level dropdowns from difficultySettings
+      if (t.difficultySettings) {
+        Object.keys(t.difficultySettings).forEach(lv => {
+          const dd = t.difficultySettings![lv]?.dropdown;
+          if (dd) init[`${k}__${lv}`] = dd.defaultValue;
+        });
+      }
     });
     return init;
   });
@@ -883,8 +891,17 @@ export default function App() {
   const getToolSettings    = () => TOOL_CONFIG.tools[currentTool];
   const getDropdownConfig  = () => getToolSettings().difficultySettings?.[difficulty]?.dropdown ?? getToolSettings().dropdown;
   const getVariablesConfig = () => getToolSettings().difficultySettings?.[difficulty]?.variables ?? getToolSettings().variables;
-  const getDropdownValue   = () => toolDropdowns[currentTool] ?? "";
-  const setDropdownValue   = (v: string) => setToolDropdowns(p => ({...p, [currentTool]: v}));
+  const getDropdownValue   = () => {
+    const t = TOOL_CONFIG.tools[currentTool];
+    const hasLevelDD = t.difficultySettings?.[difficulty]?.dropdown;
+    return toolDropdowns[hasLevelDD ? `${currentTool}__${difficulty}` : currentTool] ?? "";
+  };
+  const setDropdownValue   = (v: string) => {
+    const t = TOOL_CONFIG.tools[currentTool];
+    const hasLevelDD = t.difficultySettings?.[difficulty]?.dropdown;
+    const key = hasLevelDD ? `${currentTool}__${difficulty}` : currentTool;
+    setToolDropdowns(p => ({...p, [key]: v}));
+  };
   const setVariableValue   = (k: string, v: boolean) => setToolVariables(p => ({...p, [currentTool]: {...p[currentTool], [k]: v}}));
   const handleLevelVarChange = (lv: string, k: string, v: boolean) => setLevelVariables(p => ({...p, [lv]: {...p[lv], [k]: v}}));
   const handleLevelDDChange  = (lv: string, v: string) => setLevelDropdowns(p => ({...p, [lv]: v}));
@@ -949,17 +966,20 @@ export default function App() {
   const canIncrease = worksheetFontSize < fontSizes.length-1;
   const canDecrease = worksheetFontSize > 0;
 
+  const useFractions = getDropdownValue() === "fraction";
+
   // ── Worksheet cell ────────────────────────────────────────────────────────
   const renderQCell = (q: AnyQuestion, idx: number, bgOverride?: string) => {
     const bg  = bgOverride ?? stepBg;
     const fsz = fontSizes[worksheetFontSize];
     const cellStyle = {backgroundColor:bg, height:"100%", boxSizing:"border-box" as const, position:"relative" as const};
     const numEl = <span style={{position:"absolute",top:0,left:0,fontSize:"0.65em",fontWeight:700,color:"#000",lineHeight:1,padding:"5px 5px 7px 5px",borderRight:"1px solid #000",borderBottom:"1px solid #000"}}>{idx+1})</span>;
+    const built = buildDisplay((q as any).rawValues, useFractions);
     return (
       <div className="p-3" style={cellStyle}>
         {numEl}
-        <div className={`${fsz} font-semibold text-center w-full`} style={{color:"#000"}}>{(q as any).display}</div>
-        {showWorksheetAnswers && <div className={`${fsz} font-semibold mt-1 text-center`} style={{color:"#059669"}}>= {(q as any).answer}</div>}
+        <div className={`${fsz} font-semibold text-center w-full`} style={{color:"#000"}}><MathRenderer latex={built.displayLatex}/></div>
+        {showWorksheetAnswers && <div className={`${fsz} font-semibold mt-1 text-center`} style={{color:"#059669"}}><MathRenderer latex={`= ${built.answerLatex}`}/></div>}
       </div>
     );
   };
@@ -1061,8 +1081,8 @@ export default function App() {
         </div>
         {currentQuestion
           ? <div className="w-full text-center flex flex-col gap-4 items-center">
-              <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]}/>
-              {showWhiteboardAnswer&&<div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{color:"#166534"}}><AnswerDisplay q={currentQuestion}/></div>}
+              <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} useFractions={useFractions}/>
+              {showWhiteboardAnswer&&<div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{color:"#166534"}}><AnswerDisplay q={currentQuestion} useFractions={useFractions}/></div>}
             </div>
           : <span className="text-4xl text-gray-400">Generate question</span>}
       </div>
@@ -1076,8 +1096,8 @@ export default function App() {
         </div>
         {currentQuestion
           ? <>
-              <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]}/>
-              {showWhiteboardAnswer&&<div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{color:"#166534"}}><AnswerDisplay q={currentQuestion}/></div>}
+              <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} useFractions={useFractions}/>
+              {showWhiteboardAnswer&&<div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{color:"#166534"}}><AnswerDisplay q={currentQuestion} useFractions={useFractions}/></div>}
             </>
           : <span className="text-4xl text-gray-400">Generate question</span>}
       </div>
@@ -1142,34 +1162,35 @@ export default function App() {
     );
   };
 
-  // ── Worked example ────────────────────────────────────────────────────────
-  const renderWorkedExample = () => (
+  const renderWorkedExample = () => {
+    const builtWorked = currentQuestion ? buildDisplay((currentQuestion as any).rawValues, useFractions) : null;
+    return (
     <div className="overflow-y-auto" style={{maxHeight:"120vh"}}>
       <div className="p-8 w-full" style={{backgroundColor:qBg}}>
-        {currentQuestion?(
+        {currentQuestion&&builtWorked?(
           <>
             <div className="text-center py-4 relative">
               <div style={{position:"absolute",top:0,right:0,display:"flex",gap:6}}>
                 <button style={{background:"rgba(0,0,0,0.08)",border:"none",borderRadius:8,cursor:canDisplayDecrease?"pointer":"not-allowed",width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center",opacity:canDisplayDecrease?1:0.35}} onClick={()=>canDisplayDecrease&&setDisplayFontSize(f=>f-1)}><ChevronDown size={16} color="#6b7280"/></button>
                 <button style={{background:"rgba(0,0,0,0.08)",border:"none",borderRadius:8,cursor:canDisplayIncrease?"pointer":"not-allowed",width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center",opacity:canDisplayIncrease?1:0.35}} onClick={()=>canDisplayIncrease&&setDisplayFontSize(f=>f+1)}><ChevronUp size={16} color="#6b7280"/></button>
               </div>
-              <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]}/>
+              <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} useFractions={useFractions}/>
             </div>
             {showAnswer&&(
               <>
                 <div className="space-y-4 mt-8">
-                  {currentQuestion.working.map((s,i)=>(
+                  {builtWorked.working.map((s,i)=>(
                     <div key={i} className="rounded-xl p-6" style={{backgroundColor:stepBg}}>
                       <h4 className="text-xl font-bold mb-2" style={{color:"#000"}}>
                         Step {i+1}{(s as any).title ? `: ${(s as any).title}` : ""}
                       </h4>
-                      <div className="text-2xl" style={{color:"#000"}}>{s.plain}</div>
+                      <div className="text-2xl" style={{color:"#000"}}><MathRenderer latex={s.latex}/></div>
                     </div>
                   ))}
                 </div>
                 <div className="rounded-xl p-6 text-center mt-4" style={{backgroundColor:stepBg}}>
                   <span className={`${displayFontSizes[displayFontSize]} font-bold`} style={{color:"#166534"}}>
-                    <AnswerDisplay q={currentQuestion}/>
+                    <AnswerDisplay q={currentQuestion} useFractions={useFractions}/>
                   </span>
                 </div>
               </>
@@ -1178,7 +1199,8 @@ export default function App() {
         ):<div className="text-center text-gray-400 text-4xl py-16">Generate question</div>}
       </div>
     </div>
-  );
+    );
+  };
 
   // ── Worksheet ─────────────────────────────────────────────────────────────
   const renderWorksheet = () => {
@@ -1233,7 +1255,7 @@ export default function App() {
       <div className="bg-blue-900 shadow-lg">
         <div className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
           {/* NOTE: In production replace onClick with your routing navigate call */}
-          <button onClick={()=>{ window.location.href="/"; }} className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors">
+          <button onClick={()=>navigate("/")} className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors">
             <Home size={24}/><span className="font-semibold text-lg">Home</span>
           </button>
           <div className="relative">
