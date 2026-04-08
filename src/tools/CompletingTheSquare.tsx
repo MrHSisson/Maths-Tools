@@ -70,25 +70,6 @@ const MathRenderer = ({ latex, display = false, style, className }: MathProps) =
   return <span ref={ref} className={className} style={{fontSize:"1.25em", ...style}} />;
 };
 
-// ── LaTeX helpers ─────────────────────────────────────────────────────────────
-
-const tex = {
-  frac: (n: number | string, d: number | string) => `\\frac{${n}}{${d}}`,
-  sqrt: (x: number | string) => `\\sqrt{${x}}`,
-  div:  () => `\\div`,
-  times: () => `\\times`,
-  text: (s: string) => `\\text{${s}}`,
-  num:  (n: number | string) => `${n}`,
-};
-
-const gcd = (a: number, b: number): number => b === 0 ? a : gcd(b, a % b);
-
-const toRational = (n: number, d: number) => {
-  const g = gcd(Math.abs(n), Math.abs(d));
-  return { n: n / g, d: d / g };
-};
-
-
 // ── Popover hook & button ─────────────────────────────────────────────────────
 
 const usePopover = () => {
