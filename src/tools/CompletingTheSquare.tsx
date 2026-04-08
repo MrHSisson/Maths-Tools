@@ -633,6 +633,7 @@ const handlePrint = (
   difficulty: string,
   isDifferentiated: boolean,
   numColumns: number,
+  useFractions: boolean,
 ) => {
   const FONT_PX   = 14;
   const PAD_MM    = 3;
@@ -655,9 +656,13 @@ const handlePrint = (
   const totalQ  = questions.length;
 
   const questionToHtml = (q: AnyQuestion, idx: number, showAnswer: boolean): string => {
-    const anyQ = q as any;
-    const ansHtml = showAnswer ? `<div class="q-answer">= ${anyQ.answer ?? ""}</div>` : "";
-    return `<div class="q-num">${idx + 1})</div><div style="text-align:center"><span class="q-math">${anyQ.display ?? ""}</span></div>${ansHtml}`;
+    const { displayLatex, answerLatex } = buildDisplay((q as any).rawValues, useFractions);
+    const ansHtml = showAnswer
+      ? `<span class="katex-render q-answer" data-latex="${answerLatex.replace(/"/g,"&quot;")}"></span>`
+      : "";
+    return `<div class="q-num">${idx + 1})</div>`
+         + `<div style="text-align:center"><span class="katex-render q-math" data-latex="${displayLatex.replace(/"/g,"&quot;")}"></span></div>`
+         + ansHtml;
   };
 
   const probeHtml  = questions.map((q, i) => `<div class="q-inner" id="probe-${i}">${questionToHtml(q, i, true)}</div>`).join("");
@@ -665,6 +670,8 @@ const handlePrint = (
 
   const html = `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><title>${toolName} — Worksheet</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"><\/script>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   @page{size:A4;margin:${MARGIN_MM}mm}
@@ -686,8 +693,9 @@ const handlePrint = (
   #probe{position:fixed;left:-9999px;top:0;visibility:hidden;font-family:"Segoe UI",Arial,sans-serif;font-size:${FONT_PX}px;line-height:1.4;width:${cellW_MM - PAD_MM * 2}mm}
   .q-inner{width:100%;text-align:center}
   .q-num{position:absolute;top:0;left:0;font-size:${Math.round(FONT_PX*0.6)}px;font-weight:700;color:#000;line-height:1;padding:1.2mm 1.2mm 1.8mm 1.2mm;border-right:0.3mm solid #000;border-bottom:0.3mm solid #000}
-  .q-math{font-size:${FONT_PX}px;display:inline}
+  .q-math{font-size:${FONT_PX}px;display:inline-block;vertical-align:middle}
   .q-answer{font-size:${FONT_PX}px;color:#059669;display:block;margin-top:1mm;text-align:center}
+  .katex-render{display:inline-block;vertical-align:middle}
 </style></head><body>
 <div id="probe">${probeHtml}</div>
 <div id="pages"></div>
@@ -698,10 +706,18 @@ document.addEventListener("DOMContentLoaded",function(){
   var totalQ=${totalQ},diffLabel="${difficultyLabel}",dateStr="${dateStr}",toolName="${toolName}";
   var rowHeights=[];for(var r=1;r<=10;r++)rowHeights.push((usableH-GAP_MM*(r-1))/r);
   var qData=${JSON.stringify(qHtmlData)};
+
+  // Step 1: render KaTeX in probe so measurements are accurate
   var probe=document.getElementById('probe');
+  function renderKatex(root){root.querySelectorAll('.katex-render').forEach(function(el){try{katex.render(el.getAttribute('data-latex'),el,{throwOnError:false,output:'html'});}catch(e){el.textContent=el.getAttribute('data-latex');}});}
+  renderKatex(probe);
+
+  // Step 2: measure tallest question
   var maxH_px=0;
   probe.querySelectorAll('.q-inner').forEach(function(el){if(el.scrollHeight>maxH_px)maxH_px=el.scrollHeight;});
   var needed_mm=maxH_px/pxPerMm+PAD_MM*2+6;
+
+  // Step 3: calculate layout
   var diffPerCol=Math.floor(totalQ/3),diffUsableH=usableH-diffHdrMM-GAP_MM;
   var diffRowsPerPage=1,diffCellH_mm=diffUsableH;
   for(var rd=0;rd<10;rd++){var h=(diffUsableH-GAP_MM*rd)/(rd+1);if(h>=needed_mm){diffRowsPerPage=rd+1;diffCellH_mm=h;}else break;}
@@ -712,6 +728,8 @@ document.addEventListener("DOMContentLoaded",function(){
   if(isDiff){var np=Math.ceil(diffPerCol/diffRowsPerPage);for(var p=0;p<np;p++)pages.push(p);}
   else{var cap=rowsPerPage*cols;for(var s=0;s<qData.length;s+=cap)pages.push(qData.slice(s,s+cap));}
   var totalPages=pages.length;
+
+  // Step 4: build pages
   function makeCellW(c){return(PAGE_W_MM-GAP_MM*(c-1))/c;}
   function buildCell(inner,cW,cH,isDiffCell){return'<div class="'+(isDiffCell?'diff-cell':'cell')+'" style="width:'+cW+'mm;height:'+cH+'mm;"><div class="q-inner">'+inner+'</div></div>';}
   function buildGrid(pageData,showAnswer,cH){
@@ -730,8 +748,11 @@ document.addEventListener("DOMContentLoaded",function(){
     return'<div class="page"><div class="page-header"><h1>'+toolName+(showAnswer?' — Answers':'')+'</h1><div class="meta">'+diffLabel+' &middot; '+dateStr+' &middot; '+lbl+'</div></div>'+buildGrid(pageData,showAnswer,cH)+'</div>';
   }
   document.getElementById('pages').innerHTML=pages.map(function(pg,i){return buildPage(pg,false,i);}).join('')+pages.map(function(pg,i){return buildPage(pg,true,i);}).join('');
+
+  // Step 5: render KaTeX in pages, then print
+  renderKatex(document.getElementById('pages'));
   probe.remove();
-  setTimeout(function(){window.print();},300);
+  setTimeout(function(){window.print();},600);
 });
 <\/script></body></html>`;
 
@@ -1007,7 +1028,7 @@ export default function App() {
             <button onClick={()=>setShowWorksheetAnswers(!showWorksheetAnswers)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
               <Eye size={18}/> {showWorksheetAnswers?"Hide Answers":"Show Answers"}
             </button>
-            <button onClick={()=>handlePrint(worksheet,TOOL_CONFIG.tools[currentTool].name,difficulty,isDifferentiated,numColumns)}
+            <button onClick={()=>handlePrint(worksheet,TOOL_CONFIG.tools[currentTool].name,difficulty,isDifferentiated,numColumns,useFractions)}
               className="px-6 py-2 bg-green-700 text-white rounded-xl font-bold text-base shadow-sm hover:bg-green-800 flex items-center gap-2">
               <Printer size={18}/> Print / PDF
             </button>
