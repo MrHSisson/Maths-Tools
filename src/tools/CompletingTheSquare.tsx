@@ -433,7 +433,7 @@ const QuestionDisplay = ({ q, cls, useFractions }: { q: AnyQuestion; cls: string
   const instruction = INSTRUCTION_TEXT[(q as any).rawValues.tool as ToolType];
   return (
     <div className="flex flex-col items-center gap-2 text-center">
-      <div className="text-base font-semibold text-gray-500">{instruction}</div>
+      <div className="text-base font-semibold" style={{color:"#000"}}>{instruction}</div>
       <div className={`${cls} font-semibold`} style={{color:"#000",lineHeight:1.5}}>
         <MathRenderer latex={displayLatex} />
       </div>
@@ -706,7 +706,7 @@ const handlePrint = (
   .q-inner{width:100%;text-align:center}
   .q-num{position:absolute;top:0;left:0;font-size:${Math.round(FONT_PX*0.6)}px;font-weight:700;color:#000;line-height:1;padding:1.2mm 1.2mm 1.8mm 1.2mm;border-right:0.3mm solid #000;border-bottom:0.3mm solid #000}
   .q-math{font-size:${FONT_PX}px;display:inline-block;vertical-align:middle}
-  .q-instruction{font-size:${Math.round(FONT_PX*0.75)}px;color:#6b7280;text-align:center;margin-bottom:1mm}
+  .q-instruction{font-size:${Math.round(FONT_PX*0.75)}px;color:#000;text-align:center;margin-bottom:1mm}
   .q-answer{font-size:${FONT_PX}px;color:#059669;display:block;margin-top:1mm;text-align:center}
   .katex-render{display:inline-block;vertical-align:middle}
 </style></head><body>
@@ -995,7 +995,7 @@ export default function App() {
       <div className="p-3" style={cellStyle}>
         {numEl}
         <div className="flex flex-col items-center gap-1 w-full text-center">
-          <div className="text-xs font-semibold text-gray-500">{instruction}</div>
+          <div className="text-xs font-semibold" style={{color:"#000"}}>{instruction}</div>
           <div className={`${fsz} font-semibold`} style={{color:"#000"}}><MathRenderer latex={built.displayLatex}/></div>
         </div>
         {showWorksheetAnswers && <div className={`${fsz} font-semibold mt-1 text-center`} style={{color:"#059669"}}><MathRenderer latex={`= ${built.answerLatex}`}/></div>}
