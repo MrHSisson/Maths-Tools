@@ -420,13 +420,23 @@ const LV_COLORS:Record<DifficultyLevel,{bg:string;border:string;text:string;fill
 const getQuestionBg = (cs:string) => ({blue:"#D1E7F8",pink:"#F8D1E7",yellow:"#F8F4D1"}[cs]??"#ffffff");
 const getStepBg    = (cs:string) => ({blue:"#B3D9F2",pink:"#F2B3D9",yellow:"#F2EBB3"}[cs]??"#f3f4f6");
 
+const INSTRUCTION_TEXT: Record<ToolType, string> = {
+  completing: "Write the following in completed the square form:",
+  roots:      "By completing the square, find the roots of:",
+  turning:    "By completing the square, find the turning point of:",
+};
+
 // ── QuestionDisplay ───────────────────────────────────────────────────────────
 
 const QuestionDisplay = ({ q, cls, useFractions }: { q: AnyQuestion; cls: string; useFractions: boolean }) => {
   const { displayLatex } = buildDisplay((q as any).rawValues, useFractions);
+  const instruction = INSTRUCTION_TEXT[(q as any).rawValues.tool as ToolType];
   return (
-    <div className={`${cls} font-semibold text-center`} style={{color:"#000",lineHeight:1.5}}>
-      <MathRenderer latex={displayLatex} />
+    <div className="flex flex-col items-center gap-2 text-center">
+      <div className="text-base font-semibold text-gray-500">{instruction}</div>
+      <div className={`${cls} font-semibold`} style={{color:"#000",lineHeight:1.5}}>
+        <MathRenderer latex={displayLatex} />
+      </div>
     </div>
   );
 };
@@ -657,10 +667,12 @@ const handlePrint = (
 
   const questionToHtml = (q: AnyQuestion, idx: number, showAnswer: boolean): string => {
     const { displayLatex, answerLatex } = buildDisplay((q as any).rawValues, useFractions);
+    const instruction = INSTRUCTION_TEXT[(q as any).rawValues.tool as ToolType];
     const ansHtml = showAnswer
       ? `<span class="katex-render q-answer" data-latex="${answerLatex.replace(/"/g,"&quot;")}"></span>`
       : "";
     return `<div class="q-num">${idx + 1})</div>`
+         + `<div class="q-instruction">${instruction}</div>`
          + `<div style="text-align:center"><span class="katex-render q-math" data-latex="${displayLatex.replace(/"/g,"&quot;")}"></span></div>`
          + ansHtml;
   };
@@ -694,6 +706,7 @@ const handlePrint = (
   .q-inner{width:100%;text-align:center}
   .q-num{position:absolute;top:0;left:0;font-size:${Math.round(FONT_PX*0.6)}px;font-weight:700;color:#000;line-height:1;padding:1.2mm 1.2mm 1.8mm 1.2mm;border-right:0.3mm solid #000;border-bottom:0.3mm solid #000}
   .q-math{font-size:${FONT_PX}px;display:inline-block;vertical-align:middle}
+  .q-instruction{font-size:${Math.round(FONT_PX*0.75)}px;color:#6b7280;text-align:center;margin-bottom:1mm}
   .q-answer{font-size:${FONT_PX}px;color:#059669;display:block;margin-top:1mm;text-align:center}
   .katex-render{display:inline-block;vertical-align:middle}
 </style></head><body>
@@ -977,10 +990,14 @@ export default function App() {
     const cellStyle = {backgroundColor:bg, height:"100%", boxSizing:"border-box" as const, position:"relative" as const};
     const numEl = <span style={{position:"absolute",top:0,left:0,fontSize:"0.65em",fontWeight:700,color:"#000",lineHeight:1,padding:"5px 5px 7px 5px",borderRight:"1px solid #000",borderBottom:"1px solid #000"}}>{idx+1})</span>;
     const built = buildDisplay((q as any).rawValues, useFractions);
+    const instruction = INSTRUCTION_TEXT[(q as any).rawValues.tool as ToolType];
     return (
       <div className="p-3" style={cellStyle}>
         {numEl}
-        <div className={`${fsz} font-semibold text-center w-full`} style={{color:"#000"}}><MathRenderer latex={built.displayLatex}/></div>
+        <div className="flex flex-col items-center gap-1 w-full text-center">
+          <div className="text-xs font-semibold text-gray-500">{instruction}</div>
+          <div className={`${fsz} font-semibold`} style={{color:"#000"}}><MathRenderer latex={built.displayLatex}/></div>
+        </div>
         {showWorksheetAnswers && <div className={`${fsz} font-semibold mt-1 text-center`} style={{color:"#059669"}}><MathRenderer latex={`= ${built.answerLatex}`}/></div>}
       </div>
     );
