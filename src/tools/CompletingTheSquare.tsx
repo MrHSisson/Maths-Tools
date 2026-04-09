@@ -695,7 +695,7 @@ const handlePrint = (
   .page-header h1{font-size:5mm;font-weight:700;color:#1e3a8a}
   .page-header .meta{font-size:3mm;color:#6b7280}
   .grid{display:grid;gap:${GAP_MM}mm}
-  .cell,.diff-cell{border:0.3mm solid #d1d5db;border-radius:1mm;padding:${PAD_MM}mm;padding-top:${PAD_MM + 4}mm;overflow:hidden;display:flex;align-items:flex-start;justify-content:center;position:relative}
+  .cell,.diff-cell{border:0.3mm solid #d1d5db;border-radius:1mm;padding:${PAD_MM}mm;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative}
   .diff-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:${GAP_MM}mm}
   .diff-col{display:flex;flex-direction:column;gap:${GAP_MM}mm}
   .diff-header{height:${diffHdrMM}mm;display:flex;align-items:center;justify-content:center;font-size:3mm;font-weight:700;border-radius:1mm}
