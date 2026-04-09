@@ -1,2165 +1,1503 @@
-import { useState, useEffect } from 'react';
-import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback, CSSProperties } from "react";
+import { useNavigate } from "react-router-dom";
+import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, Printer } from "lucide-react";
 
-// v4.0 TYPESCRIPT-STRICT SHELL
-// CUSTOMIZE: TOOL_CONFIG, ToolType, generateQuestion(), getQuestionUniqueKey(), renderDiagram()
+const w = () => window as any;
+const loadKaTeX = (() => {
+  let promise: Promise<void> | null = null;
+  return () => {
+    if (promise) return promise;
+    promise = new Promise((resolve, reject) => {
+      if (typeof window === "undefined" || w().katex) { resolve(); return; }
+      const link = document.createElement("link"); link.rel = "stylesheet";
+      link.href = "https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css";
+      document.head.appendChild(link);
+      const script = document.createElement("script");
+      script.src = "https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js";
+      script.onload = () => resolve(); script.onerror = reject;
+      document.head.appendChild(script);
+    });
+    return promise;
+  };
+})();
+
+interface MathProps { latex: string; display?: boolean; style?: CSSProperties; className?: string; }
+const MathRenderer = ({ latex, display = false, style, className }: MathProps) => {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [ready, setReady] = useState(() => typeof window !== "undefined" && !!w().katex);
+  useEffect(() => { loadKaTeX().then(() => setReady(true)); }, []);
+  useEffect(() => {
+    if (!ready || !ref.current) return;
+    try { w().katex.render(latex, ref.current, { displayMode: display, throwOnError: false, output: "html" }); }
+    catch { if (ref.current) ref.current.textContent = latex; }
+  }, [latex, display, ready]);
+  const hasFrac = latex.includes("\\frac");
+  return <span ref={ref} className={className} style={{ fontSize: hasFrac ? "1.25em" : "1em", ...style }} />;
+};
+
+const usePopover = () => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("mousedown", h); return () => document.removeEventListener("mousedown", h);
+  }, [open]);
+  return { open, setOpen, ref };
+};
+
+const PopoverButton = ({ open, onClick }: { open: boolean; onClick: () => void }) => (
+  <button onClick={onClick}
+    className={`px-4 py-2 rounded-xl border-2 font-bold text-base transition-colors shadow-sm flex items-center gap-2 ${open ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-gray-300 text-gray-600 hover:border-blue-900 hover:text-blue-900"}`}>
+    Question Options <ChevronDown size={18} style={{ transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "rotate(0)" }} />
+  </button>
+);
+
+const LV_LABELS: Record<string, string> = { level1: "Level 1", level2: "Level 2", level3: "Level 3" };
+const LV_HEADER_COLORS: Record<string, string> = { level1: "text-green-600", level2: "text-yellow-500", level3: "text-red-600" };
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TOOL-SPECIFIC SECTION — FRACTIONS ⇔ RATIOS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+type ToolType = "formingRatios" | "fractionToRatio" | "ratioToFraction";
+type DifficultyLevel = "level1" | "level2" | "level3";
 
 const TOOL_CONFIG = {
-  pageTitle: 'Fractions ⇔ Ratios',
+  pageTitle: "Fractions & Ratios",
   tools: {
-    formingRatios: { 
-      name: 'Forming Ratios', 
+    formingRatios: {
+      name: "Forming Ratios",
       useSubstantialBoxes: true,
       variables: [
-        { key: 'threeWay', label: '3-Way Ratio', defaultValue: false },
-        { key: 'simplestForm', label: 'Simplest Form', defaultValue: false },
+        { key: "threeWay", label: "3-Way Ratio", defaultValue: false },
+        { key: "simplestForm", label: "Simplest Form", defaultValue: false },
       ],
       dropdown: null,
       difficultySettings: null,
     },
     fractionToRatio: {
-      name: 'Fraction to Ratio',
+      name: "Fraction to Ratio",
       useSubstantialBoxes: true,
       variables: [],
       dropdown: null,
       difficultySettings: {
-        level1: {
-          variables: [],
-          dropdown: undefined,
-        },
+        level1: { variables: [], dropdown: null },
         level2: {
-          variables: [
-            { key: 'findCommonDenominators', label: 'Different Denominators', defaultValue: false },
-          ],
-          dropdown: undefined,
+          variables: [{ key: "findCommonDenominators", label: "Different Denominators", defaultValue: false }],
+          dropdown: null,
         },
         level3: {
           variables: [],
           dropdown: {
-            key: 'given',
-            label: 'Given',
+            key: "given", label: "Given", useTwoLineButtons: false,
             options: [
-              { value: 'partA', label: 'Part A' },
-              { value: 'partB', label: 'Part B' },
-              { value: 'total', label: 'Total' },
-              { value: 'mixed', label: 'Mixed' },
+              { value: "partA", label: "Part A" }, { value: "partB", label: "Part B" },
+              { value: "total", label: "Total" }, { value: "mixed", label: "Mixed" },
             ],
-            defaultValue: 'mixed',
+            defaultValue: "mixed",
           },
         },
       },
     },
     ratioToFraction: {
-      name: 'Ratio to Fraction',
+      name: "Ratio to Fraction",
       useSubstantialBoxes: true,
       variables: [],
       dropdown: null,
       difficultySettings: {
-        level1: {
-          variables: [],
-          dropdown: undefined,
-        },
+        level1: { variables: [], dropdown: null },
         level2: {
-          variables: [
-            { key: 'simplestForm', label: 'Simplest Form', defaultValue: true },
-          ],
+          variables: [{ key: "simplestForm", label: "Simplest Form", defaultValue: true }],
           dropdown: {
-            key: 'target',
-            label: 'Target',
+            key: "target", label: "Target", useTwoLineButtons: false,
             options: [
-              { value: 'singlePart', label: 'Single' },
-              { value: 'composite', label: 'Composite' },
-              { value: 'mixed', label: 'Mixed' },
+              { value: "singlePart", label: "Single" }, { value: "composite", label: "Composite" },
+              { value: "mixed", label: "Mixed" },
             ],
-            defaultValue: 'mixed',
+            defaultValue: "mixed",
           },
         },
-        level3: {
-          variables: [],
-          dropdown: undefined,
-        },
+        level3: { variables: [], dropdown: null },
       },
     },
-  },
-  useGraphicalLayout: false,
+  } as Record<string, {
+    name: string; instruction?: string; useSubstantialBoxes: boolean;
+    variables: { key: string; label: string; defaultValue: boolean }[];
+    dropdown: { key: string; label: string; useTwoLineButtons?: boolean; options: { value: string; label: string; sub?: string }[]; defaultValue: string } | null;
+    difficultySettings: Record<string, {
+      dropdown?: { key: string; label: string; useTwoLineButtons?: boolean; options: { value: string; label: string; sub?: string }[]; defaultValue: string } | null;
+      variables?: { key: string; label: string; defaultValue: boolean }[];
+    }> | null;
+  }>,
 };
 
-// TYPE DEFINITIONS
-type ColorScheme = 'default' | 'blue' | 'pink' | 'yellow';
-type DifficultyLevel = 'level1' | 'level2' | 'level3';
-type Mode = 'whiteboard' | 'single' | 'worksheet';
-type ToolType = 'formingRatios' | 'fractionToRatio' | 'ratioToFraction';
+const INFO_SECTIONS = [
+  { title: "Forming Ratios", icon: "🔢", content: [
+    { label: "Overview", detail: "Form ratios from counts, totals with remainders, or constraint-based descriptions." },
+    { label: "Level 1 — Green", detail: "Direct count: given the number of each item, write the ratio in the requested order." },
+    { label: "Level 2 — Yellow", detail: "Total with remainder: given the total and some counts, find the rest then form the ratio." },
+    { label: "Level 3 — Red", detail: "Constraint-based: a percentage or fraction of the total is given for one part; calculate all parts then form the ratio." },
+    { label: "Options", detail: "3-Way Ratio: introduces a third part. Simplest Form: requires cancelling common factors in the answer." },
+  ]},
+  { title: "Fraction to Ratio", icon: "➗", content: [
+    { label: "Overview", detail: "Convert a fraction (part-of-whole) into a part:part or multi-part ratio." },
+    { label: "Level 1 — Green", detail: "One fraction given; find the complementary part and write the two-part ratio." },
+    { label: "Level 2 — Yellow", detail: "Two fractions given; find the third part (the remainder) and write the three-part ratio in any order. Toggle 'Different Denominators' to require finding a common denominator first." },
+    { label: "Level 3 — Red", detail: "An actual quantity is also given (total, Part A, or Part B). Work out all quantities then write the ratio as actual amounts." },
+  ]},
+  { title: "Ratio to Fraction", icon: "½", content: [
+    { label: "Overview", detail: "Convert a ratio into a fraction of the total or a fraction of one part relative to another." },
+    { label: "Level 1 — Green", detail: "Two-part ratio; write one part as a fraction of the total (part-to-whole)." },
+    { label: "Level 2 — Yellow", detail: "Three-part ratio; write one part (or a composite of two parts) as a fraction of the total. Use the Target dropdown to control question type. Toggle 'Simplest Form'." },
+    { label: "Level 3 — Red", detail: "Part-to-part comparison: write one quantity as a fraction of the other (not of the total). Highlights the conceptual difference between part:whole and part:part." },
+  ]},
+  { title: "Modes", icon: "🖥️", content: [
+    { label: "Whiteboard", detail: "Single question on the left, working space on the right. Visualiser available." },
+    { label: "Worked Example", detail: "Full step-by-step solution revealed on demand." },
+    { label: "Worksheet", detail: "Grid of questions with PDF export." },
+  ]},
+];
 
-type WorkingStep = {
-  type: string;
-  content: string;
-};
+// ── Question interface ────────────────────────────────────────────────────────
 
-type Question = {
-  display: string;
-  answer: string;
+interface WorkingStep { type: string; latex: string; plain: string; }
+
+interface WordedQuestion {
+  kind: "worded";
+  lines: string[];        // prose with $LaTeX$ for maths spans
+  answer: string;         // plain text (shown for ratio answers and as fallback)
+  answerLatex?: string;   // only set for fraction answers; absent for ratio answers
   working: WorkingStep[];
-  values: Record<string, any>;
+  key: string;
   difficulty: string;
+}
+type AnyQuestion = WordedQuestion;
+
+// ── Maths helpers ─────────────────────────────────────────────────────────────
+
+const gcd = (a: number, b: number): number => b === 0 ? Math.abs(a) : gcd(b, a % b);
+const gcdThree = (a: number, b: number, c: number) => gcd(gcd(a, b), c);
+const lcm = (a: number, b: number) => Math.abs(a * b) / gcd(a, b);
+const simplifyRatioParts = (parts: number[]): number[] => {
+  const d = parts.length === 3 ? gcdThree(parts[0], parts[1], parts[2]) : gcd(parts[0], parts[1]);
+  return parts.map(p => p / d);
 };
+const frac = (n: number, d: number) => `\\frac{${n}}{${d}}`;
+const ratioStr = (...parts: number[]) => parts.join(" : ");
 
-type VariableConfig = {
-  key: string;
-  label: string;
-  defaultValue: boolean;
-};
+// step       → KaTeX only (pure maths expressions: fractions, equations)
+// tStep      → plain text only (prose, ratio strings, descriptions)
+// mStep(label, latex) → plain text label + KaTeX maths inline, e.g. "Red = [3/8]"
+const step = (latex: string, plain?: string): WorkingStep => ({ type: "step", latex, plain: plain ?? latex });
+const tStep = (text: string): WorkingStep => ({ type: "text", latex: text, plain: text });
+const mStep = (label: string, latex: string): WorkingStep => ({ type: "mixed", latex, plain: label });
 
-type DropdownOption = {
-  value: string;
-  label: string;
-};
+const answerFrac = (n: number, d: number): string => { const g = gcd(n, d); return frac(n / g, d / g); };
 
-type DropdownConfig = {
-  key: string;
-  label: string;
-  options: DropdownOption[];
-  defaultValue: string;
-};
-
-type DifficultySettings = {
-  dropdown?: DropdownConfig;
-  variables?: VariableConfig[];
-};
-
-type ToolSettings = {
-  name: string;
-  useSubstantialBoxes: boolean;
-  variables: VariableConfig[];
-  dropdown: DropdownConfig | null;
-  difficultySettings: Record<string, DifficultySettings> | null;
-};
-
-// HELPER FUNCTIONS
-const gcd = (a: number, b: number): number => {
-  return b === 0 ? Math.abs(a) : gcd(b, a % b);
-};
-
-const gcdThree = (a: number, b: number, c: number): number => {
-  return gcd(gcd(a, b), c);
-};
-
-const simplifyRatio = (parts: number[]): number[] => {
-  if (parts.length === 2) {
-    const d = gcd(parts[0], parts[1]);
-    return [parts[0] / d, parts[1] / d];
-  } else {
-    const d = gcdThree(parts[0], parts[1], parts[2]);
-    return [parts[0] / d, parts[1] / d, parts[2] / d];
-  }
-};
-
-const formatRatio = (parts: number[]): string => {
-  return parts.join(' : ');
-};
-
-const generateSimplestFraction = (): { num: number; den: number } => {
-  let num = 0, den = 0;
-  let isValid = false;
-  
-  while (!isValid) {
-    den = Math.floor(Math.random() * 10) + 3; // 3-12
-    num = Math.floor(Math.random() * (den - 1)) + 1; // 1 to den-1
-    
-    const g = gcd(num, den);
-    const simplifiedNum = num / g;
-    const simplifiedDen = den / g;
-    
-    // Avoid fractions equal to 1/2
-    if (simplifiedNum === 1 && simplifiedDen === 2) continue;
-    
-    // Use the simplified form
-    num = simplifiedNum;
-    den = simplifiedDen;
-    isValid = true;
-  }
-  
-  return { num, den };
-};
-
-const lcm = (a: number, b: number): number => {
-  return Math.abs(a * b) / gcd(a, b);
-};
-
-const convertToCommonDenominator = (
-  frac1: { num: number; den: number },
-  frac2: { num: number; den: number }
-): { 
-  newNum1: number; 
-  newNum2: number; 
-  lcd: number; 
-  steps: string[] 
-} => {
-  const lcd = lcm(frac1.den, frac2.den);
-  const mult1 = lcd / frac1.den;
-  const mult2 = lcd / frac2.den;
-  const newNum1 = frac1.num * mult1;
-  const newNum2 = frac2.num * mult2;
-  
-  const steps: string[] = [
-    `LCD of ${frac1.den} and ${frac2.den} = ${lcd}`,
-    `<sup>${frac1.num}</sup>/<sub>${frac1.den}</sub> = <sup>(${frac1.num} × ${mult1})</sup>/<sub>(${frac1.den} × ${mult1})</sub> = <sup>${newNum1}</sup>/<sub>${lcd}</sub>`,
-    `<sup>${frac2.num}</sup>/<sub>${frac2.den}</sub> = <sup>(${frac2.num} × ${mult2})</sup>/<sub>(${frac2.den} × ${mult2})</sub> = <sup>${newNum2}</sup>/<sub>${lcd}</sub>`,
-  ];
-  
-  return { newNum1, newNum2, lcd, steps };
-};
-
-
-
-const getSimplificationSteps = (parts: number[]): string[] => {
-  const steps: string[] = [];
-  let current = [...parts];
-  
+const getSimplificationSteps = (parts: number[]): WorkingStep[] => {
+  const steps: WorkingStep[] = [];
+  let cur = [...parts];
+  const primes = [2, 3, 5, 7, 11, 13];
   while (true) {
-    const primes = [2, 3, 5, 7, 11, 13];
-    let foundFactor = false;
-    
-    for (const prime of primes) {
-      const allDivisible = current.every((n: number) => n % prime === 0);
-      if (allDivisible) {
-        const next = current.map((n: number) => n / prime);
-        steps.push(`Divide by ${prime}: ${formatRatio(current)} → ${formatRatio(next)}`);
-        current = next;
-        foundFactor = true;
-        break;
+    let found = false;
+    for (const p of primes) {
+      if (cur.every(n => n % p === 0)) {
+        const next = cur.map(n => n / p);
+        steps.push(tStep(`÷${p}: ${ratioStr(...cur)} → ${ratioStr(...next)}`));
+        cur = next; found = true; break;
       }
     }
-    
-    if (!foundFactor) break;
+    if (!found) break;
   }
-  
   return steps;
 };
 
-// QUESTION GENERATION
-const generateQuestion = (
-  tool: ToolType,
-  level: DifficultyLevel,
-  variables: Record<string, boolean>,
-  dropdownValue: string
-): Question => {
-  let display = '';
-  let answer = '';
-  let working: WorkingStep[] = [];
-  let values: Record<string, any> = {};
-  
-  // RATIO TO FRACTION TOOL
-  if (tool === 'ratioToFraction') {
-    // LEVEL 1: BASIC PART-TO-WHOLE
-    if (level === 'level1') {
-      const contextsL1 = [
-        { scenario: 'beads', parts: ['red', 'blue'] },
-        { scenario: 'students', parts: ['boys', 'girls'] },
-        { scenario: 'games', parts: ['wins', 'losses'] },
-        { scenario: 'marbles', parts: ['red', 'blue'] },
-        { scenario: 'counters', parts: ['green', 'yellow'] },
-      ];
-      
-      const context = contextsL1[Math.floor(Math.random() * contextsL1.length)];
-      const a = Math.floor(Math.random() * 11) + 2; // 2-12
-      const b = Math.floor(Math.random() * 11) + 2; // 2-12
-      const total = a + b;
-      const whichPart = Math.random() < 0.5 ? 0 : 1; // 0 = part A, 1 = part B
-      
-      const numerator = whichPart === 0 ? a : b;
-      const gcdValue = gcd(numerator, total);
-      const simplifiedNum = numerator / gcdValue;
-      const simplifiedDen = total / gcdValue;
-      
-      const partName = context.parts[whichPart];
-      const questionStyle = Math.floor(Math.random() * 3);
-      
-      if (questionStyle === 0) {
-        display = `The ratio of ${context.parts[0]} to ${context.parts[1]} ${context.scenario} is ${a}:${b}. What fraction of the ${context.scenario} are ${partName}?`;
-      } else if (questionStyle === 1) {
-        display = `The ratio of ${context.parts[0]} to ${context.parts[1]} is ${a}:${b}. Find the fraction of ${context.scenario} that are ${partName}.`;
-      } else {
-        display = `${context.parts[0]} to ${context.parts[1]} is ${a}:${b}. Write ${partName} as a fraction of the total.`;
-      }
-      
-      answer = `<sup>${simplifiedNum}</sup>/<sub>${simplifiedDen}</sub>`;
-      
-      working = [
-        { type: 'step', content: `Total parts = ${a} + ${b} = ${total}` },
-        { type: 'step', content: `${partName.charAt(0).toUpperCase() + partName.slice(1)} = <sup>${numerator}</sup>/<sub>${total}</sub> of the total` },
-        { type: 'step', content: simplifiedNum === numerator ? `Answer: <sup>${simplifiedNum}</sup>/<sub>${simplifiedDen}</sub> (already in simplest form)` : `Simplified: <sup>${numerator}</sup>/<sub>${total}</sub> = <sup>${simplifiedNum}</sup>/<sub>${simplifiedDen}</sub>` },
-      ];
-      
-      values = { a, b, whichPart };
-    }
-    
-    // LEVEL 2: 3-WAY RATIOS & COMPOSITE PARTS
-    else if (level === 'level2') {
-      const contextsL2 = [
-        { 
-          scenario: 'people playing sports', 
-          parts: ['Football', 'Squash', 'Tennis'],
-          compositeLabel: 'racket sports',
-          compositeIndices: [1, 2],
-        },
-        { 
-          scenario: 'people playing sports', 
-          parts: ['Football', 'Rugby', 'Tennis'],
-          compositeLabel: 'team sports',
-          compositeIndices: [0, 1],
-        },
-        { 
-          scenario: 'ingredients', 
-          parts: ['Flour', 'Milk', 'Eggs'],
-          compositeLabel: 'wet ingredients',
-          compositeIndices: [1, 2],
-        },
-        { 
-          scenario: 'transport methods', 
-          parts: ['Car', 'Bus', 'Bicycle'],
-          compositeLabel: 'public transport or cycling',
-          compositeIndices: [1, 2],
-        },
-        { 
-          scenario: 'people playing sports', 
-          parts: ['Swimming', 'Football', 'Tennis'],
-          compositeLabel: 'ball sports',
-          compositeIndices: [1, 2],
-        },
-      ];
-      
-      const context = contextsL2[Math.floor(Math.random() * contextsL2.length)];
-      const a = Math.floor(Math.random() * 10) + 1; // 1-10
-      const b = Math.floor(Math.random() * 10) + 1;
-      const c = Math.floor(Math.random() * 10) + 1;
-      const total = a + b + c;
-      
-      const simplestFormEnabled = variables.simplestForm !== false; // default true
-      
-      let actualTarget = dropdownValue;
-      if (dropdownValue === 'mixed') {
-        actualTarget = Math.random() < 0.5 ? 'singlePart' : 'composite';
-      }
-      
-      let numerator = 0;
-      let targetDescription = '';
-      const isComposite = actualTarget === 'composite';
-      
-      if (actualTarget === 'singlePart') {
-        const whichPart = Math.floor(Math.random() * 3); // 0, 1, or 2
-        numerator = [a, b, c][whichPart];
-        const partName = context.parts[whichPart];
-        
-        const questionStyle = Math.floor(Math.random() * 3);
-        if (questionStyle === 0) {
-          display = `The ratio of ${context.parts[0]}:${context.parts[1]}:${context.parts[2]} is ${a}:${b}:${c}. What fraction of ${context.scenario} are ${partName}?`;
-        } else if (questionStyle === 1) {
-          display = `The ratio of ${context.parts[0]}:${context.parts[1]}:${context.parts[2]} is ${a}:${b}:${c}. Find the fraction that are ${partName}.`;
-        } else {
-          display = `${context.parts[0]}:${context.parts[1]}:${context.parts[2]} is ${a}:${b}:${c}. Write ${partName} as a fraction of the total.`;
-        }
-        
-        targetDescription = partName;
-        values = { a, b, c, targetType: actualTarget, isComposite, whichPart };
-      } else {
-        // Composite
-        const indices = context.compositeIndices;
-        const val1 = [a, b, c][indices[0]];
-        const val2 = [a, b, c][indices[1]];
-        numerator = val1 + val2;
-        
-        const useNatural = Math.random() < 0.5;
-        
-        if (useNatural) {
-          const questionStyle = Math.floor(Math.random() * 2);
-          if (questionStyle === 0) {
-            display = `The ratio of ${context.parts[0]}:${context.parts[1]}:${context.parts[2]} is ${a}:${b}:${c}. What fraction of ${context.scenario} are ${context.compositeLabel}?`;
-          } else {
-            display = `The ratio of ${context.parts[0]}:${context.parts[1]}:${context.parts[2]} is ${a}:${b}:${c}. Find the fraction that are ${context.compositeLabel}.`;
-          }
-          targetDescription = context.compositeLabel;
-        } else {
-          const questionStyle = Math.floor(Math.random() * 2);
-          if (questionStyle === 0) {
-            display = `The ratio of ${context.parts[0]}:${context.parts[1]}:${context.parts[2]} is ${a}:${b}:${c}. What fraction are ${context.parts[indices[0]]} or ${context.parts[indices[1]]}?`;
-          } else {
-            display = `The ratio of ${context.parts[0]}:${context.parts[1]}:${context.parts[2]} is ${a}:${b}:${c}. Find the fraction that are ${context.parts[indices[0]]} or ${context.parts[indices[1]]}.`;
-          }
-          targetDescription = `${context.parts[indices[0]]} or ${context.parts[indices[1]]}`;
-        }
-        
-        values = { a, b, c, targetType: actualTarget, isComposite, useNatural, compositeIndices: indices };
-      }
-      
-      let simplifiedNum = numerator;
-      let simplifiedDen = total;
-      
-      if (simplestFormEnabled) {
-        const gcdValue = gcd(numerator, total);
-        simplifiedNum = numerator / gcdValue;
-        simplifiedDen = total / gcdValue;
-      }
-      
-      answer = `<sup>${simplifiedNum}</sup>/<sub>${simplifiedDen}</sub>`;
-      
-      if (isComposite) {
-        const indices = context.compositeIndices;
-        const val1 = [a, b, c][indices[0]];
-        const val2 = [a, b, c][indices[1]];
-        
-        working = [
-          { type: 'step', content: `Total parts = ${a} + ${b} + ${c} = ${total}` },
-          { type: 'step', content: `${targetDescription.charAt(0).toUpperCase() + targetDescription.slice(1)} = ${context.parts[indices[0]]} + ${context.parts[indices[1]]} = ${val1} + ${val2} = ${numerator}` },
-          { type: 'step', content: `Fraction = <sup>${numerator}</sup>/<sub>${total}</sub>` },
-        ];
-        
-        if (simplestFormEnabled && simplifiedNum !== numerator) {
-          working.push({ type: 'step', content: `Simplified: <sup>${simplifiedNum}</sup>/<sub>${simplifiedDen}</sub>` });
-        } else if (simplestFormEnabled) {
-          working.push({ type: 'step', content: `<sup>${simplifiedNum}</sup>/<sub>${simplifiedDen}</sub> (already in simplest form)` });
-        }
-      } else {
-        working = [
-          { type: 'step', content: `Total parts = ${a} + ${b} + ${c} = ${total}` },
-          { type: 'step', content: `${targetDescription.charAt(0).toUpperCase() + targetDescription.slice(1)} = <sup>${numerator}</sup>/<sub>${total}</sub> of the total` },
-        ];
-        
-        if (simplestFormEnabled && simplifiedNum !== numerator) {
-          working.push({ type: 'step', content: `Simplified: <sup>${simplifiedNum}</sup>/<sub>${simplifiedDen}</sub>` });
-        } else if (simplestFormEnabled) {
-          working.push({ type: 'step', content: `<sup>${simplifiedNum}</sup>/<sub>${simplifiedDen}</sub> (already in simplest form)` });
-        }
-      }
-    }
-    
-    // LEVEL 3: PART-TO-PART COMPARISON
-    else {
-      const contextsL3 = [
-        { item1: 'apples', item2: 'oranges' },
-        { item1: 'bananas', item2: 'grapes' },
-        { item1: 'pound coins', item2: 'fifty pence coins' },
-        { item1: 'ten pound notes', item2: 'five pound notes' },
-        { item1: 'Year 7s', item2: 'Year 8s' },
-        { item1: 'adults', item2: 'children' },
-      ];
-      
-      const context = contextsL3[Math.floor(Math.random() * contextsL3.length)];
-      const a = Math.floor(Math.random() * 11) + 2; // 2-12
-      const b = Math.floor(Math.random() * 11) + 2;
-      const orderReversed = Math.random() < 0.5;
-      
-      let numerator = 0, denominator = 0;
-      let numeratorName = '', denominatorName = '';
-      
-      if (orderReversed) {
-        numerator = b;
-        denominator = a;
-        numeratorName = context.item2;
-        denominatorName = context.item1;
-      } else {
-        numerator = a;
-        denominator = b;
-        numeratorName = context.item1;
-        denominatorName = context.item2;
-      }
-      
-      const gcdValue = gcd(numerator, denominator);
-      const simplifiedNum = numerator / gcdValue;
-      const simplifiedDen = denominator / gcdValue;
-      
-      const questionStyle = Math.floor(Math.random() * 2);
-      if (questionStyle === 0) {
-        display = `The ratio of ${context.item1} to ${context.item2} is ${a}:${b}. Write the amount of ${numeratorName} as a fraction of the amount of ${denominatorName}.`;
-      } else {
-        display = `${context.item1} to ${context.item2} is ${a}:${b}. Find ${numeratorName} as a fraction of ${denominatorName}.`;
-      }
-      
-      answer = `<sup>${simplifiedNum}</sup>/<sub>${simplifiedDen}</sub>`;
-      
-      const item1Cap = context.item1.charAt(0).toUpperCase() + context.item1.slice(1);
-      const item2Cap = context.item2.charAt(0).toUpperCase() + context.item2.slice(1);
-      
-      working = [
-        { type: 'step', content: `Identify parts — ${item1Cap} = ${a}, ${item2Cap} = ${b}` },
-        { type: 'step', content: `Method — The question asks for ${numeratorName} "as a fraction of" ${denominatorName}, so ${denominatorName} is our denominator` },
-        { type: 'step', content: `Calculation — Fraction = <sup>${numerator}</sup>/<sub>${denominator}</sub>` },
-        { type: 'step', content: `Watch Out — We don't add ${a} + ${b} = ${a + b} because we're comparing ${context.item1} TO ${context.item2} directly, not finding a fraction of the total` },
-      ];
-      
-      if (simplifiedNum !== numerator) {
-        working.push({ type: 'step', content: `Simplified: <sup>${simplifiedNum}</sup>/<sub>${simplifiedDen}</sub>` });
-        working.push({ type: 'step', content: `Answer — The number of ${numeratorName} is <sup>${simplifiedNum}</sup>/<sub>${simplifiedDen}</sub> of the number of ${denominatorName}` });
-      } else {
-        working.push({ type: 'step', content: `Answer — The number of ${numeratorName} is <sup>${simplifiedNum}</sup>/<sub>${simplifiedDen}</sub> of the number of ${denominatorName}` });
-      }
-      
-      values = { a, b, orderReversed };
-    }
-    
-    return {
-      display,
-      answer,
-      working,
-      values: { ...values, tool },
-      difficulty: level,
-    };
+const generateSimplestFraction = (): { num: number; den: number } => {
+  while (true) {
+    const den = Math.floor(Math.random() * 10) + 3;
+    const num = Math.floor(Math.random() * (den - 1)) + 1;
+    const g = gcd(num, den); const sn = num / g, sd = den / g;
+    if (sn === 1 && sd === 2) continue;
+    return { num: sn, den: sd };
   }
-  
-  // FRACTION TO RATIO TOOL
-  if (tool === 'fractionToRatio') {
-    // LEVEL 1: PART-WHOLE TO PART-PART
-    if (level === 'level1') {
-      const contextsL1 = [
-        { item: 'beads', colors: ['Red', 'Blue'] },
-        { item: 'beads', colors: ['Green', 'Yellow'] },
-        { item: 'sweets', colors: ['Purple', 'Orange'] },
-        { item: 'marbles', colors: ['Pink', 'White'] },
-        { item: 'counters', colors: ['Black', 'Silver'] },
-        { item: 'balls', colors: ['Red', 'Blue'] },
-        { item: 'buttons', colors: ['Green', 'Yellow'] },
-      ];
-      
-      const context = contextsL1[Math.floor(Math.random() * contextsL1.length)];
-      const { num, den } = generateSimplestFraction();
-      const partA = num;
-      const partB = den - num;
-      const orderReversed = Math.random() < 0.5;
-      
-      const colorA = context.colors[0];
-      const colorB = context.colors[1];
-      
-      const questionStyle = Math.random() < 0.5 ? 'written' : 'colon';
-      
-      if (orderReversed) {
-        if (questionStyle === 'written') {
-          display = `In a bag of ${context.item}, <sup>${num}</sup>/<sub>${den}</sub> are ${colorA} and the rest are ${colorB}. Write the ratio of ${colorB} to ${colorA}.`;
-        } else {
-          display = `In a bag of ${context.item}, <sup>${num}</sup>/<sub>${den}</sub> are ${colorA} and the rest are ${colorB}. Find ${colorB}:${colorA}.`;
-        }
-        answer = formatRatio([partB, partA]);
-        working = [
-          { type: 'step', content: `${colorA} = <sup>${num}</sup>/<sub>${den}</sub>` },
-          { type: 'step', content: `${colorB} = ${den} − ${num} = ${partB} (as ${den} parts in total)` },
-          { type: 'step', content: `${colorB} = <sup>${partB}</sup>/<sub>${den}</sub>` },
-          { type: 'step', content: `Ratio ${colorB}:${colorA} = ${partB}:${partA}` },
-        ];
-      } else {
-        if (questionStyle === 'written') {
-          display = `In a bag of ${context.item}, <sup>${num}</sup>/<sub>${den}</sub> are ${colorA} and the rest are ${colorB}. Write the ratio of ${colorA} to ${colorB}.`;
-        } else {
-          display = `In a bag of ${context.item}, <sup>${num}</sup>/<sub>${den}</sub> are ${colorA} and the rest are ${colorB}. Find ${colorA}:${colorB}.`;
-        }
-        answer = formatRatio([partA, partB]);
-        working = [
-          { type: 'step', content: `${colorA} = <sup>${num}</sup>/<sub>${den}</sub>` },
-          { type: 'step', content: `${colorB} = ${den} − ${num} = ${partB} (as ${den} parts in total)` },
-          { type: 'step', content: `${colorB} = <sup>${partB}</sup>/<sub>${den}</sub>` },
-          { type: 'step', content: `Ratio ${colorA}:${colorB} = ${partA}:${partB}` },
-        ];
-      }
-      
-      values = { num, den, orderReversed };
-    }
-    
-    // LEVEL 2: MULTIPLE PARTS
-    else if (level === 'level2') {
-      const contextsL2 = [
-        { item: 'beads', parts: ['Red', 'Blue', 'Green'] },
-        { item: 'sweets', parts: ['Strawberry', 'Lemon', 'Orange'] },
-        { item: 'marbles', parts: ['Clear', 'Spotted', 'Striped'] },
-        { item: 'flowers', parts: ['Roses', 'Tulips', 'Daisies'] },
-      ];
-      
-      const context = contextsL2[Math.floor(Math.random() * contextsL2.length)];
-      const findCommonDenominators = variables.findCommonDenominators || false;
-      
-      let frac1Num = 0, frac2Num = 0, den = 0, frac3Num = 0;
-      let isValid = false;
-      let originalFrac1: { num: number; den: number } | null = null;
-      let originalFrac2: { num: number; den: number } | null = null;
-      
-      while (!isValid) {
-        if (findCommonDenominators) {
-          // Different denominators
-          const frac1 = generateSimplestFraction();
-          const frac2 = generateSimplestFraction();
-          
-          if (frac1.den === frac2.den) continue; // Ensure different
-          
-          const { newNum1, newNum2, lcd } = convertToCommonDenominator(frac1, frac2);
-          
-          if (newNum1 + newNum2 >= lcd) continue; // Must have remainder
-          
-          frac1Num = newNum1;
-          frac2Num = newNum2;
-          den = lcd;
-          frac3Num = lcd - newNum1 - newNum2;
-          originalFrac1 = frac1;
-          originalFrac2 = frac2;
-          isValid = true;
-        } else {
-          // Same denominators
-          den = Math.floor(Math.random() * 8) + 5; // 5-12
-          frac1Num = Math.floor(Math.random() * (den - 2)) + 1;
-          frac2Num = Math.floor(Math.random() * (den - frac1Num - 1)) + 1;
-          
-          if (frac1Num + frac2Num >= den) continue;
-          
-          frac3Num = den - frac1Num - frac2Num;
-          isValid = true;
-        }
-      }
-      
-      const orderChoice = Math.floor(Math.random() * 6);
-      const parts = [context.parts[0], context.parts[1], context.parts[2]];
-      let requestedOrder = '';
-      let answerParts: number[] = [];
-      let displayParts = [parts[0], parts[1], parts[2]]; // For display in question
-      
-      // Store the actual ratio values (always in ABC order)
-      const actualA = frac1Num;
-      const actualB = frac2Num;
-      const actualC = frac3Num;
-      
-      if (orderChoice === 0) {
-        requestedOrder = `${parts[0]}:${parts[1]}:${parts[2]}`;
-        answerParts = [actualA, actualB, actualC];
-        displayParts = [parts[0], parts[1], parts[2]];
-      } else if (orderChoice === 1) {
-        requestedOrder = `${parts[0]}:${parts[2]}:${parts[1]}`;
-        answerParts = [actualA, actualC, actualB];
-        displayParts = [parts[0], parts[2], parts[1]];
-      } else if (orderChoice === 2) {
-        requestedOrder = `${parts[1]}:${parts[0]}:${parts[2]}`;
-        answerParts = [actualB, actualA, actualC];
-        displayParts = [parts[1], parts[0], parts[2]];
-      } else if (orderChoice === 3) {
-        requestedOrder = `${parts[1]}:${parts[2]}:${parts[0]}`;
-        answerParts = [actualB, actualC, actualA];
-        displayParts = [parts[1], parts[2], parts[0]];
-      } else if (orderChoice === 4) {
-        requestedOrder = `${parts[2]}:${parts[0]}:${parts[1]}`;
-        answerParts = [actualC, actualA, actualB];
-        displayParts = [parts[2], parts[0], parts[1]];
-      } else {
-        requestedOrder = `${parts[2]}:${parts[1]}:${parts[0]}`;
-        answerParts = [actualC, actualB, actualA];
-        displayParts = [parts[2], parts[1], parts[0]];
-      }
-      
-      const questionStyle = Math.random() < 0.5 ? 'written' : 'colon';
-      
-      if (findCommonDenominators && originalFrac1 && originalFrac2) {
-        if (questionStyle === 'written') {
-          display = `In a bag of ${context.item}, <sup>${originalFrac1.num}</sup>/<sub>${originalFrac1.den}</sub> are ${parts[0]} and <sup>${originalFrac2.num}</sup>/<sub>${originalFrac2.den}</sub> are ${parts[1]}. The rest are ${parts[2]}. Write the ratio of ${displayParts[0]} to ${displayParts[1]} to ${displayParts[2]}.`;
-        } else {
-          display = `In a bag of ${context.item}, <sup>${originalFrac1.num}</sup>/<sub>${originalFrac1.den}</sub> are ${parts[0]} and <sup>${originalFrac2.num}</sup>/<sub>${originalFrac2.den}</sub> are ${parts[1]}. The rest are ${parts[2]}. Find ${requestedOrder}.`;
-        }
-      } else {
-        if (questionStyle === 'written') {
-          display = `In a bag of ${context.item}, <sup>${frac1Num}</sup>/<sub>${den}</sub> are ${parts[0]} and <sup>${frac2Num}</sup>/<sub>${den}</sub> are ${parts[1]}. The rest are ${parts[2]}. Write the ratio of ${displayParts[0]} to ${displayParts[1]} to ${displayParts[2]}.`;
-        } else {
-          display = `In a bag of ${context.item}, <sup>${frac1Num}</sup>/<sub>${den}</sub> are ${parts[0]} and <sup>${frac2Num}</sup>/<sub>${den}</sub> are ${parts[1]}. The rest are ${parts[2]}. Find ${requestedOrder}.`;
-        }
-      }
-      
-      answer = formatRatio(answerParts);
-      
-      if (findCommonDenominators && originalFrac1 && originalFrac2) {
-        const { steps } = convertToCommonDenominator(originalFrac1, originalFrac2);
-        working = [
-          ...steps.map((step: string) => ({ type: 'step', content: step })),
-          { type: 'step', content: `${parts[2]} = ${den} − ${actualA} − ${actualB} = ${actualC} parts` },
-          { type: 'step', content: `${parts[2]} = <sup>${actualC}</sup>/<sub>${den}</sub>` },
-          { type: 'step', content: `Ratio ${parts[0]}:${parts[1]}:${parts[2]} = ${actualA}:${actualB}:${actualC}` },
-        ];
-      } else {
-        working = [
-          { type: 'step', content: `${parts[0]} = <sup>${actualA}</sup>/<sub>${den}</sub>` },
-          { type: 'step', content: `${parts[1]} = <sup>${actualB}</sup>/<sub>${den}</sub>` },
-          { type: 'step', content: `${parts[2]} = ${den} − ${actualA} − ${actualB} = ${actualC} parts` },
-          { type: 'step', content: `${parts[2]} = <sup>${actualC}</sup>/<sub>${den}</sub>` },
-          { type: 'step', content: `Ratio ${parts[0]}:${parts[1]}:${parts[2]} = ${actualA}:${actualB}:${actualC}` },
-        ];
-      }
-      
-      values = { frac1Num, frac2Num, den, frac3Num, orderChoice, originalFrac1, originalFrac2 };
-    }
-    
-    // LEVEL 3: QUANTITY-BASED
-    else {
-      const contextsL3 = [
-        { item: 'beads', colors: ['Red', 'Blue'] },
-        { item: 'sweets', colors: ['Strawberry', 'Lemon'] },
-        { item: 'marbles', colors: ['Glass', 'Plastic'] },
-        { item: 'counters', colors: ['Yellow', 'Green'] },
-      ];
-      
-      const context = contextsL3[Math.floor(Math.random() * contextsL3.length)];
-      const { num, den } = generateSimplestFraction();
-      
-      let actualGivenType = dropdownValue;
-      if (dropdownValue === 'mixed') {
-        const options = ['partA', 'partB', 'total'];
-        actualGivenType = options[Math.floor(Math.random() * options.length)];
-      }
-      
-      // Work backward to ensure integers
-      const multiplier = Math.floor(Math.random() * 5) + 2; // 2-6
-      const total = den * multiplier;
-      const partA = num * multiplier;
-      const partB = total - partA;
-      
-      const orderReversed = Math.random() < 0.5;
-      const colorA = context.colors[0];
-      const colorB = context.colors[1];
-      
+};
 
-      
-      // Build question
-      if (actualGivenType === 'total') {
-        if (orderReversed) {
-          display = `In a bag of ${context.item}, <sup>${num}</sup>/<sub>${den}</sub> are ${colorA} and the rest are ${colorB}. There are ${total} ${context.item} in total. Write the amount of ${context.item} in the ratio ${colorB}:${colorA}.`;
-          answer = formatRatio([partB, partA]);
-          working = [
-            { type: 'step', content: `Total = ${total} ${context.item} = ${den} parts` },
-            { type: 'step', content: `1 part = ${total} ÷ ${den} = ${multiplier} ${context.item}` },
-            { type: 'step', content: `${colorA} = ${num} parts = ${num} × ${multiplier} = ${partA} ${context.item}` },
-            { type: 'step', content: `${colorB} = ${den - num} parts = ${den - num} × ${multiplier} = ${partB} ${context.item}` },
-            { type: 'step', content: `Ratio ${colorB}:${colorA} = ${partB}:${partA}` },
-          ];
-        } else {
-          display = `In a bag of ${context.item}, <sup>${num}</sup>/<sub>${den}</sub> are ${colorA} and the rest are ${colorB}. There are ${total} ${context.item} in total. Write the amount of ${context.item} in the ratio ${colorA}:${colorB}.`;
-          answer = formatRatio([partA, partB]);
-          working = [
-            { type: 'step', content: `Total = ${total} ${context.item} = ${den} parts` },
-            { type: 'step', content: `1 part = ${total} ÷ ${den} = ${multiplier} ${context.item}` },
-            { type: 'step', content: `${colorA} = ${num} parts = ${num} × ${multiplier} = ${partA} ${context.item}` },
-            { type: 'step', content: `${colorB} = ${den - num} parts = ${den - num} × ${multiplier} = ${partB} ${context.item}` },
-            { type: 'step', content: `Ratio ${colorA}:${colorB} = ${partA}:${partB}` },
-          ];
-        }
-      } else if (actualGivenType === 'partB') {
-        if (orderReversed) {
-          display = `In a bag of ${context.item}, <sup>${num}</sup>/<sub>${den}</sub> are ${colorA} and the rest are ${colorB}. There are ${partB} ${colorB} ${context.item}. Write the amount of ${context.item} in the ratio ${colorB}:${colorA}.`;
-          answer = formatRatio([partB, partA]);
-          working = [
-            { type: 'step', content: `${colorA} = <sup>${num}</sup>/<sub>${den}</sub>, so ${colorB} = <sup>${den - num}</sup>/<sub>${den}</sub>` },
-            { type: 'step', content: `${den - num} parts = ${partB} ${context.item}` },
-            { type: 'step', content: `1 part = ${partB} ÷ ${den - num} = ${multiplier} ${context.item}` },
-            { type: 'step', content: `${colorA} = ${num} parts = ${num} × ${multiplier} = ${partA} ${context.item}` },
-            { type: 'step', content: `Ratio ${colorB}:${colorA} = ${partB}:${partA}` },
-          ];
-        } else {
-          display = `In a bag of ${context.item}, <sup>${num}</sup>/<sub>${den}</sub> are ${colorA} and the rest are ${colorB}. There are ${partB} ${colorB} ${context.item}. Write the amount of ${context.item} in the ratio ${colorA}:${colorB}.`;
-          answer = formatRatio([partA, partB]);
-          working = [
-            { type: 'step', content: `${colorA} = <sup>${num}</sup>/<sub>${den}</sub>, so ${colorB} = <sup>${den - num}</sup>/<sub>${den}</sub>` },
-            { type: 'step', content: `${den - num} parts = ${partB} ${context.item}` },
-            { type: 'step', content: `1 part = ${partB} ÷ ${den - num} = ${multiplier} ${context.item}` },
-            { type: 'step', content: `${colorA} = ${num} parts = ${num} × ${multiplier} = ${partA} ${context.item}` },
-            { type: 'step', content: `Ratio ${colorA}:${colorB} = ${partA}:${partB}` },
-          ];
-        }
-      } else { // partA
-        if (orderReversed) {
-          display = `In a bag of ${context.item}, <sup>${num}</sup>/<sub>${den}</sub> are ${colorA} and the rest are ${colorB}. There are ${partA} ${colorA} ${context.item}. Write the amount of ${context.item} in the ratio ${colorB}:${colorA}.`;
-          answer = formatRatio([partB, partA]);
-          working = [
-            { type: 'step', content: `${colorA} = <sup>${num}</sup>/<sub>${den}</sub> of total` },
-            { type: 'step', content: `${num} parts = ${partA} ${context.item}` },
-            { type: 'step', content: `1 part = ${partA} ÷ ${num} = ${multiplier} ${context.item}` },
-            { type: 'step', content: `Total = ${den} parts = ${den} × ${multiplier} = ${total} ${context.item}` },
-            { type: 'step', content: `${colorB} = ${total} − ${partA} = ${partB} ${context.item}` },
-            { type: 'step', content: `Ratio ${colorB}:${colorA} = ${partB}:${partA}` },
-          ];
-        } else {
-          display = `In a bag of ${context.item}, <sup>${num}</sup>/<sub>${den}</sub> are ${colorA} and the rest are ${colorB}. There are ${partA} ${colorA} ${context.item}. Write the amount of ${context.item} in the ratio ${colorA}:${colorB}.`;
-          answer = formatRatio([partA, partB]);
-          working = [
-            { type: 'step', content: `${colorA} = <sup>${num}</sup>/<sub>${den}</sub> of total` },
-            { type: 'step', content: `${num} parts = ${partA} ${context.item}` },
-            { type: 'step', content: `1 part = ${partA} ÷ ${num} = ${multiplier} ${context.item}` },
-            { type: 'step', content: `Total = ${den} parts = ${den} × ${multiplier} = ${total} ${context.item}` },
-            { type: 'step', content: `${colorB} = ${total} − ${partA} = ${partB} ${context.item}` },
-            { type: 'step', content: `Ratio ${colorA}:${colorB} = ${partA}:${partB}` },
-          ];
-        }
-      }
-      
-      values = { num, den, total, partA, partB, givenType: actualGivenType, orderReversed };
-    }
-    
-    return {
-      display,
-      answer,
-      working,
-      values,
-      difficulty: level,
-    };
-  }
-  
-  // FORMING RATIOS TOOL (existing code)
-  const threeWay = variables.threeWay || false;
-  const simplestForm = variables.simplestForm || false;
-  
-  // LEVEL 1: DIRECT COUNT
-  if (level === 'level1') {
-    const contexts2Way = [
-      { items: ['apples', 'oranges'], container: 'basket' },
-      { items: ['cats', 'dogs'], container: 'pet shelter' },
-      { items: ['red cars', 'blue cars'], container: 'car park' },
-      { items: ['boys', 'girls'], container: 'classroom' },
-      { items: ['pencils', 'pens'], container: 'pencil case' },
-    ];
-    
-    const contexts3Way = [
-      { items: ['cows', 'sheep', 'pigs'], container: 'farm' },
-      { items: ['red sweets', 'blue sweets', 'green sweets'], container: 'jar' },
-      { items: ['footballs', 'basketballs', 'tennis balls'], container: 'sports hall' },
-      { items: ['roses', 'tulips', 'daisies'], container: 'garden' },
-      { items: ['Y7s', 'Y8s', 'Y9s'], container: 'school trip' },
-    ];
-    
-    if (threeWay) {
-      const context = contexts3Way[Math.floor(Math.random() * contexts3Way.length)];
-      const gcds = [1, 1, 1, 2, 2, 3, 3, 4, 5, 6];
-      const gcdChoice = gcds[Math.floor(Math.random() * gcds.length)];
-      
-      const a = (Math.floor(Math.random() * 15) + 2) * gcdChoice;
-      const b = (Math.floor(Math.random() * 15) + 2) * gcdChoice;
-      const c = (Math.floor(Math.random() * 15) + 2) * gcdChoice;
-      
-      const order = Math.floor(Math.random() * 6);
-      let requestedOrder: string;
-      let answerParts: number[];
-      
-      if (order === 0) {
-        requestedOrder = `${context.items[0]} to ${context.items[1]} to ${context.items[2]}`;
-        answerParts = [a, b, c];
-      } else if (order === 1) {
-        requestedOrder = `${context.items[0]} to ${context.items[2]} to ${context.items[1]}`;
-        answerParts = [a, c, b];
-      } else if (order === 2) {
-        requestedOrder = `${context.items[1]} to ${context.items[0]} to ${context.items[2]}`;
-        answerParts = [b, a, c];
-      } else if (order === 3) {
-        requestedOrder = `${context.items[1]} to ${context.items[2]} to ${context.items[0]}`;
-        answerParts = [b, c, a];
-      } else if (order === 4) {
-        requestedOrder = `${context.items[2]} to ${context.items[0]} to ${context.items[1]}`;
-        answerParts = [c, a, b];
-      } else {
-        requestedOrder = `${context.items[2]} to ${context.items[1]} to ${context.items[0]}`;
-        answerParts = [c, b, a];
-      }
-      
-      const simplestFormText = simplestForm ? ' in its simplest form' : '';
-      const phrasings = [
-        `A ${context.container} has ${a} ${context.items[0]}, ${b} ${context.items[1]}, and ${c} ${context.items[2]}. Write the ratio of ${requestedOrder}${simplestFormText}.`,
-        `There are ${a} ${context.items[0]}, ${b} ${context.items[1]}, and ${c} ${context.items[2]} in a ${context.container}. Find the ratio ${requestedOrder.split(' to ').join(':')}${simplestFormText}.`,
-      ];
-      
-      display = phrasings[Math.floor(Math.random() * phrasings.length)];
-      
-      if (simplestForm) {
-        const simplified = simplifyRatio(answerParts);
-        answer = formatRatio(simplified);
-        const steps = getSimplificationSteps(answerParts);
-        working = [
-          { type: 'step', content: `Original ratio: ${formatRatio(answerParts)}` },
-          ...steps.map((step: string) => ({ type: 'step', content: step })),
-        ];
-      } else {
-        answer = formatRatio(answerParts);
-        working = [
-          { type: 'step', content: `Ratio: ${answer}` },
-        ];
-      }
-      
-      values = { a, b, c, gcdChoice, order };
-    } else {
-      const context = contexts2Way[Math.floor(Math.random() * contexts2Way.length)];
-      const gcds = [1, 1, 1, 2, 2, 3, 3, 4, 5, 6];
-      const gcdChoice = gcds[Math.floor(Math.random() * gcds.length)];
-      
-      const a = (Math.floor(Math.random() * 20) + 2) * gcdChoice;
-      const b = (Math.floor(Math.random() * 20) + 2) * gcdChoice;
-      
-      const reversed = Math.random() < 0.5;
-      const requestedOrder = reversed 
-        ? `${context.items[1]} to ${context.items[0]}`
-        : `${context.items[0]} to ${context.items[1]}`;
-      const answerParts = reversed ? [b, a] : [a, b];
-      
-      const simplestFormText = simplestForm ? ' in its simplest form' : '';
-      const phrasings = [
-        `A ${context.container} has ${a} ${context.items[0]} and ${b} ${context.items[1]}. Write the ratio of ${requestedOrder}${simplestFormText}.`,
-        `There are ${a} ${context.items[0]} and ${b} ${context.items[1]} in a ${context.container}. Find ${requestedOrder.split(' to ').join(':')}${simplestFormText}.`,
-      ];
-      
-      display = phrasings[Math.floor(Math.random() * phrasings.length)];
-      
-      if (simplestForm) {
-        const simplified = simplifyRatio(answerParts);
-        answer = formatRatio(simplified);
-        const steps = getSimplificationSteps(answerParts);
-        working = [
-          { type: 'step', content: `Original ratio: ${formatRatio(answerParts)}` },
-          ...steps.map((step: string) => ({ type: 'step', content: step })),
-        ];
-      } else {
-        answer = formatRatio(answerParts);
-        working = [
-          { type: 'step', content: `Ratio: ${answer}` },
-        ];
-      }
-      
-      values = { a, b, gcdChoice, reversed };
-    }
-  }
-  
-  // LEVEL 2: PART-WHOLE-REMAINDER
-  else if (level === 'level2') {
-    const contexts2Way = [
-      { item: 'sweets', container: 'bag', parts: ['red', 'blue'] },
-      { item: 'students', container: 'class', parts: ['boys', 'girls'] },
-      { item: 'cars', container: 'car park', parts: ['red', 'blue'] },
-      { item: 'books', container: 'library', parts: ['fiction', 'non-fiction'] },
-    ];
-    
-    const contexts3Way = [
-      { item: 'sweets', container: 'bag', parts: ['red', 'blue', 'green'] },
-      { item: 'marbles', container: 'jar', parts: ['red', 'yellow', 'blue'] },
-      { item: 'counters', container: 'box', parts: ['red', 'blue', 'green'] },
-      { item: 'flowers', container: 'vase', parts: ['roses', 'tulips', 'daisies'] },
-    ];
-    
-    if (threeWay) {
-      const context = contexts3Way[Math.floor(Math.random() * contexts3Way.length)];
-      const total = Math.floor(Math.random() * 71) + 10;
-      
-      // Encourage common factors by sometimes building from simplified ratios
-      const useCommonFactor = Math.random() < 0.6; // 60% chance of common factor
-      let first = 0, second = 0, third = 0;
-      
-      if (useCommonFactor) {
-        const gcds = [2, 2, 2, 3, 3, 4, 5, 6];
-        const commonFactor = gcds[Math.floor(Math.random() * gcds.length)];
-        const maxPart = Math.floor(total / (3 * commonFactor));
-        
-        if (maxPart >= 2) {
-          const baseFirst = Math.floor(Math.random() * (maxPart - 1)) + 1;
-          const baseSecond = Math.floor(Math.random() * (maxPart - 1)) + 1;
-          const baseThird = Math.floor(total / commonFactor) - baseFirst - baseSecond;
-          
-          if (baseThird > 0 && (baseFirst * commonFactor + baseSecond * commonFactor + baseThird * commonFactor === total)) {
-            first = baseFirst * commonFactor;
-            second = baseSecond * commonFactor;
-            third = baseThird * commonFactor;
-          }
-        }
-      }
-      
-      // Fallback or non-common-factor generation with realistic constraints
-      if (first === 0 || second === 0 || third === 0 || first + second + third !== total) {
-        // Ensure each part is at least 10% and at most 70% of total
-        const minPart = Math.max(1, Math.floor(total * 0.1));
-        const maxPart = Math.floor(total * 0.7);
-        
-        first = Math.floor(Math.random() * (maxPart - minPart + 1)) + minPart;
-        const remaining = total - first;
-        const minSecond = Math.max(1, Math.floor(remaining * 0.2));
-        const maxSecond = Math.floor(remaining * 0.8);
-        second = Math.floor(Math.random() * (maxSecond - minSecond + 1)) + minSecond;
-        third = total - first - second;
-      }
-      
-      const order = Math.floor(Math.random() * 3);
-      let displayPattern: string;
-      let answerParts: number[];
-      
-      if (order === 0) {
-        // A, B, rest C
-        displayPattern = `${first} are ${context.parts[0]}, ${second} are ${context.parts[1]}, and the rest are ${context.parts[2]}`;
-        answerParts = [first, second, third];
-      } else if (order === 1) {
-        // A, C, rest B
-        displayPattern = `${first} are ${context.parts[0]}, ${third} are ${context.parts[2]}, and the rest are ${context.parts[1]}`;
-        answerParts = [first, second, third];
-      } else {
-        // B, C, rest A
-        displayPattern = `${second} are ${context.parts[1]}, ${third} are ${context.parts[2]}, and the rest are ${context.parts[0]}`;
-        answerParts = [first, second, third];
-      }
-      
-      const simplestFormText = simplestForm ? ' in its simplest form' : '';
-      display = `A ${context.container} contains ${total} ${context.item}. ${displayPattern}. Write the ratio of ${context.parts[0]}:${context.parts[1]}:${context.parts[2]}${simplestFormText}.`;
-      
-      if (simplestForm) {
-        const simplified = simplifyRatio(answerParts);
-        answer = formatRatio(simplified);
-        const steps = getSimplificationSteps(answerParts);
-        working = [
-          { type: 'step', content: `Calculate remainder: ${total} − ${first} − ${second} = ${third}` },
-          { type: 'step', content: `Original ratio: ${formatRatio(answerParts)}` },
-          ...steps.map((step: string) => ({ type: 'step', content: step })),
-        ];
-      } else {
-        answer = formatRatio(answerParts);
-        working = [
-          { type: 'step', content: `Calculate remainder: ${total} − ${first} − ${second} = ${third}` },
-          { type: 'step', content: `Ratio: ${answer}` },
-        ];
-      }
-      
-      values = { total, first, second, third, order };
-    } else {
-      const context = contexts2Way[Math.floor(Math.random() * contexts2Way.length)];
-      const total = Math.floor(Math.random() * 71) + 10;
-      
-      // Encourage common factors by sometimes building from simplified ratios
-      const useCommonFactor = Math.random() < 0.6; // 60% chance of common factor
-      let first = 0, second = 0;
-      
-      if (useCommonFactor) {
-        const gcds = [2, 2, 2, 3, 3, 4, 5, 6];
-        const commonFactor = gcds[Math.floor(Math.random() * gcds.length)];
-        const maxBase = Math.floor(total / (2 * commonFactor));
-        
-        if (maxBase >= 2) {
-          const baseFirst = Math.floor(Math.random() * (maxBase - 1)) + 1;
-          const baseSecond = Math.floor(total / commonFactor) - baseFirst;
-          
-          if (baseSecond > 0 && (baseFirst * commonFactor + baseSecond * commonFactor === total)) {
-            first = baseFirst * commonFactor;
-            second = baseSecond * commonFactor;
-          }
-        }
-      }
-      
-      // Fallback or non-common-factor generation with realistic constraints
-      if (first === 0 || second === 0 || first + second !== total) {
-        // Ensure each part is at least 15% and at most 85% of total
-        const minPart = Math.max(1, Math.floor(total * 0.15));
-        const maxPart = Math.floor(total * 0.85);
-        first = Math.floor(Math.random() * (maxPart - minPart + 1)) + minPart;
-        second = total - first;
-      }
-      
-      const displayPattern = `${first} are ${context.parts[0]} and the rest are ${context.parts[1]}`;
-      
-      const simplestFormText = simplestForm ? ' in its simplest form' : '';
-      display = `A ${context.container} contains ${total} ${context.item}. ${displayPattern}. Write the ratio of ${context.parts[0]}:${context.parts[1]}${simplestFormText}.`;
-      
-      const answerParts = [first, second];
-      
-      if (simplestForm) {
-        const simplified = simplifyRatio(answerParts);
-        answer = formatRatio(simplified);
-        const steps = getSimplificationSteps(answerParts);
-        working = [
-          { type: 'step', content: `Calculate remainder: ${total} − ${first} = ${second}` },
-          { type: 'step', content: `Original ratio: ${formatRatio(answerParts)}` },
-          ...steps.map((step: string) => ({ type: 'step', content: step })),
-        ];
-      } else {
-        answer = formatRatio(answerParts);
-        working = [
-          { type: 'step', content: `Calculate remainder: ${total} − ${first} = ${second}` },
-          { type: 'step', content: `Ratio: ${answer}` },
-        ];
-      }
-      
-      values = { total, first, second };
-    }
-  }
-  
-  // LEVEL 3: CONSTRAINT-BASED
-  else {
-    const contexts2Way = [
-      { item: 'people', parts: ['adults', 'children'], container: 'room' },
-      { item: 'animals', parts: ['dogs', 'cats'], container: 'shelter' },
-      { item: 'students', parts: ['boys', 'girls'], container: 'school' },
-      { item: 'cars', parts: ['electric', 'petrol'], container: 'car park' },
-    ];
-    
-    const contexts3Way = [
-      { item: 'people', parts: ['men', 'women', 'children'], container: 'room' },
-      { item: 'students', parts: ['Y7', 'Y8', 'Y9'], container: 'trip' },
-      { item: 'sweets', parts: ['red', 'blue', 'green'], container: 'bag' },
-      { item: 'books', parts: ['fiction', 'non-fiction', 'reference'], container: 'library' },
-    ];
-    
-    const percentages = [10, 20, 25, 30, 40, 50, 60, 70, 75];
-    const fractions = [
-      { num: 1, den: 2 }, { num: 1, den: 3 }, { num: 2, den: 3 },
-      { num: 1, den: 4 }, { num: 3, den: 4 },
-      { num: 1, den: 5 }, { num: 2, den: 5 }, { num: 3, den: 5 }, { num: 4, den: 5 },
-    ];
-    
-    let validQuestion = false;
-    let total = 0, part1 = 0, part2 = 0, part3 = 0;
-    let constraintText = '';
-    let calculationSteps: string[] = [];
-    
-    while (!validQuestion) {
-      total = Math.floor(Math.random() * 61) + 40;
-      
-      const usePercentage = Math.random() < 0.5;
-      
-      if (threeWay) {
-        const context = contexts3Way[Math.floor(Math.random() * contexts3Way.length)];
-        const pattern = Math.floor(Math.random() * 2);
-        
-        if (pattern === 0) {
-          // Constraint → Fixed → Remainder
-          if (usePercentage) {
-            const pct = percentages[Math.floor(Math.random() * percentages.length)];
-            part1 = Math.round(total * pct / 100);
-            if (part1 !== total * pct / 100) continue;
-            
-            part2 = Math.floor(Math.random() * (total - part1 - 1)) + 1;
-            part3 = total - part1 - part2;
-            
-            constraintText = `${pct}% are ${context.parts[0]}. ${part2} are ${context.parts[1]}. The rest are ${context.parts[2]}.`;
-            calculationSteps = [
-              `${context.parts[0]}: ${pct}% of ${total} = ${part1}`,
-              `${context.parts[1]}: ${part2}`,
-              `${context.parts[2]}: ${total} − ${part1} − ${part2} = ${part3}`,
-            ];
-          } else {
-            const frac = fractions[Math.floor(Math.random() * fractions.length)];
-            part1 = Math.round(total * frac.num / frac.den);
-            if (part1 !== total * frac.num / frac.den) continue;
-            
-            part2 = Math.floor(Math.random() * (total - part1 - 1)) + 1;
-            part3 = total - part1 - part2;
-            
-            constraintText = `${frac.num}/${frac.den} are ${context.parts[0]}. ${part2} are ${context.parts[1]}. The rest are ${context.parts[2]}.`;
-            calculationSteps = [
-              `${context.parts[0]}: ${frac.num}/${frac.den} of ${total} = ${part1}`,
-              `${context.parts[1]}: ${part2}`,
-              `${context.parts[2]}: ${total} − ${part1} − ${part2} = ${part3}`,
-            ];
-          }
-        } else {
-          // Fixed → Constraint → Remainder
-          part1 = Math.floor(Math.random() * (total / 3)) + 1;
-          const remaining = total - part1;
-          
-          if (usePercentage) {
-            const pct = percentages[Math.floor(Math.random() * percentages.length)];
-            part2 = Math.round(remaining * pct / 100);
-            if (part2 !== remaining * pct / 100) continue;
-            
-            part3 = total - part1 - part2;
-            
-            constraintText = `${part1} are ${context.parts[0]}. ${pct}% of the remainder are ${context.parts[1]}. The rest are ${context.parts[2]}.`;
-            calculationSteps = [
-              `${context.parts[0]}: ${part1}`,
-              `Remainder: ${total} − ${part1} = ${remaining}`,
-              `${context.parts[1]}: ${pct}% of ${remaining} = ${part2}`,
-              `${context.parts[2]}: ${total} − ${part1} − ${part2} = ${part3}`,
-            ];
-          } else {
-            const frac = fractions[Math.floor(Math.random() * fractions.length)];
-            part2 = Math.round(remaining * frac.num / frac.den);
-            if (part2 !== remaining * frac.num / frac.den) continue;
-            
-            part3 = total - part1 - part2;
-            
-            constraintText = `${part1} are ${context.parts[0]}. ${frac.num}/${frac.den} of the remainder are ${context.parts[1]}. The rest are ${context.parts[2]}.`;
-            calculationSteps = [
-              `${context.parts[0]}: ${part1}`,
-              `Remainder: ${total} − ${part1} = ${remaining}`,
-              `${context.parts[1]}: ${frac.num}/${frac.den} of ${remaining} = ${part2}`,
-              `${context.parts[2]}: ${total} − ${part1} − ${part2} = ${part3}`,
-            ];
-          }
-        }
-        
-        if (part1 > 0 && part2 > 0 && part3 > 0) {
-          validQuestion = true;
-          display = `There are ${total} ${context.item} in a ${context.container}. ${constraintText} Find the ratio of ${context.parts[0]}:${context.parts[1]}:${context.parts[2]}.`;
-          
-          const answerParts = [part1, part2, part3];
-          
-          if (simplestForm) {
-            const simplified = simplifyRatio(answerParts);
-            answer = formatRatio(simplified);
-            const steps = getSimplificationSteps(answerParts);
-            working = [
-              ...calculationSteps.map((step: string) => ({ type: 'step', content: step })),
-              { type: 'step', content: `Original ratio: ${formatRatio(answerParts)}` },
-              ...steps.map((step: string) => ({ type: 'step', content: step })),
-            ];
-          } else {
-            answer = formatRatio(answerParts);
-            working = [
-              ...calculationSteps.map((step: string) => ({ type: 'step', content: step })),
-              { type: 'step', content: `Ratio: ${answer}` },
-            ];
-          }
-          
-          values = { total, part1, part2, part3, usePercentage };
-        }
-      } else {
-        const context = contexts2Way[Math.floor(Math.random() * contexts2Way.length)];
-        
-        if (usePercentage) {
-          const pct = percentages[Math.floor(Math.random() * percentages.length)];
-          part1 = Math.round(total * pct / 100);
-          if (part1 !== total * pct / 100) continue;
-          
-          part2 = total - part1;
-          
-          constraintText = `${pct}% are ${context.parts[0]} and the rest are ${context.parts[1]}`;
-          calculationSteps = [
-            `${context.parts[0]}: ${pct}% of ${total} = ${part1}`,
-            `${context.parts[1]}: ${total} − ${part1} = ${part2}`,
-          ];
-        } else {
-          const frac = fractions[Math.floor(Math.random() * fractions.length)];
-          part1 = Math.round(total * frac.num / frac.den);
-          if (part1 !== total * frac.num / frac.den) continue;
-          
-          part2 = total - part1;
-          
-          constraintText = `${frac.num}/${frac.den} are ${context.parts[0]} and the rest are ${context.parts[1]}`;
-          calculationSteps = [
-            `${context.parts[0]}: ${frac.num}/${frac.den} of ${total} = ${part1}`,
-            `${context.parts[1]}: ${total} − ${part1} = ${part2}`,
-          ];
-        }
-        
-        if (part1 > 0 && part2 > 0 && part1 !== part2) {
-          validQuestion = true;
-          display = `There are ${total} ${context.item} in a ${context.container}. ${constraintText}. Write this as a ratio.`;
-          
-          const answerParts = [part1, part2];
-          
-          if (simplestForm) {
-            const simplified = simplifyRatio(answerParts);
-            answer = formatRatio(simplified);
-            const steps = getSimplificationSteps(answerParts);
-            working = [
-              ...calculationSteps.map((step: string) => ({ type: 'step', content: step })),
-              { type: 'step', content: `Original ratio: ${formatRatio(answerParts)}` },
-              ...steps.map((step: string) => ({ type: 'step', content: step })),
-            ];
-          } else {
-            answer = formatRatio(answerParts);
-            working = [
-              ...calculationSteps.map((step: string) => ({ type: 'step', content: step })),
-              { type: 'step', content: `Ratio: ${answer}` },
-            ];
-          }
-          
-          values = { total, part1, part2, usePercentage };
-        }
-      }
-    }
-  }
-  
+const convertToCommonDenominator = (f1: { num: number; den: number }, f2: { num: number; den: number }) => {
+  const lcd = lcm(f1.den, f2.den);
+  const m1 = lcd / f1.den, m2 = lcd / f2.den;
   return {
-    display,
-    answer,
-    working,
-    values: { ...values, tool },
-    difficulty: level,
+    newNum1: f1.num * m1, newNum2: f2.num * m2, lcd,
+    steps: [
+      tStep(`LCD of ${f1.den} and ${f2.den} = ${lcd}`),
+      step(`${frac(f1.num, f1.den)} = ${frac(f1.num * m1, lcd)}`),
+      step(`${frac(f2.num, f2.den)} = ${frac(f2.num * m2, lcd)}`),
+    ],
   };
 };
 
-const getQuestionUniqueKey = (q: Question): string => {
-  const tool = q.values.tool || 'formingRatios';
-  
-  if (tool === 'ratioToFraction') {
-    if (q.difficulty === 'level1') {
-      return `rtf-l1-${q.values.a}-${q.values.b}-${q.values.whichPart}`;
-    } else if (q.difficulty === 'level2') {
-      return `rtf-l2-${q.values.a}-${q.values.b}-${q.values.c}-${q.values.targetType}-${q.values.isComposite}`;
-    } else {
-      return `rtf-l3-${q.values.a}-${q.values.b}-${q.values.orderReversed}`;
-    }
+const randInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
+const pick = <T,>(arr: T[]): T => arr[randInt(0, arr.length - 1)];
+
+// ── ratioToFraction ───────────────────────────────────────────────────────────
+
+const genRatioToFraction = (level: DifficultyLevel, variables: Record<string, boolean>, dropdownValue: string): WordedQuestion => {
+  const id = randInt(0, 999999);
+
+  if (level === "level1") {
+    const ctx = pick([
+      { scenario: "beads", parts: ["red", "blue"] }, { scenario: "students", parts: ["boys", "girls"] },
+      { scenario: "games", parts: ["wins", "losses"] }, { scenario: "marbles", parts: ["red", "blue"] },
+      { scenario: "counters", parts: ["green", "yellow"] },
+    ]);
+    const a = randInt(2, 12), b = randInt(2, 12), total = a + b;
+    const whichPart = Math.random() < 0.5 ? 0 : 1;
+    const numerator = whichPart === 0 ? a : b;
+    const partName = ctx.parts[whichPart];
+    const af = answerFrac(numerator, total);
+    const g = gcd(numerator, total); const sn = numerator / g, sd = total / g;
+    const style = randInt(0, 2);
+    const line = style === 0
+      ? `The ratio of ${ctx.parts[0]} to ${ctx.parts[1]} ${ctx.scenario} is $${a}:${b}$. What fraction of the ${ctx.scenario} are ${partName}?`
+      : style === 1
+        ? `The ratio of ${ctx.parts[0]} to ${ctx.parts[1]} is $${a}:${b}$. Find the fraction of ${ctx.scenario} that are ${partName}.`
+        : `${ctx.parts[0]} to ${ctx.parts[1]} is $${a}:${b}$. Write ${partName} as a fraction of the total.`;
+    return {
+      kind: "worded", lines: [line], answer: `${sn}/${sd}`, answerLatex: af,
+      working: [
+        tStep(`Total parts = ${a} + ${b} = ${total}`),
+        mStep(partName.charAt(0).toUpperCase() + partName.slice(1), frac(numerator, total)),
+        sn === numerator ? tStep(`Already in simplest form`) : step(`${frac(numerator, total)} = ${frac(sn, sd)}`),
+      ],
+      key: `rtf-l1-${a}-${b}-${whichPart}-${id}`, difficulty: level,
+    };
   }
-  
-  if (tool === 'fractionToRatio') {
-    if (q.difficulty === 'level1') {
-      return `ftr-l1-${q.values.num}-${q.values.den}-${q.values.orderReversed}`;
-    } else if (q.difficulty === 'level2') {
-      return `ftr-l2-${q.values.frac1Num}-${q.values.frac2Num}-${q.values.den}-${q.values.orderChoice}`;
+
+  if (level === "level2") {
+    const ctx = pick([
+      { scenario: "people playing sports", parts: ["Football", "Squash", "Tennis"], compositeLabel: "racket sports", compositeIndices: [1, 2] },
+      { scenario: "people playing sports", parts: ["Football", "Rugby", "Tennis"], compositeLabel: "team sports", compositeIndices: [0, 1] },
+      { scenario: "ingredients", parts: ["Flour", "Milk", "Eggs"], compositeLabel: "wet ingredients", compositeIndices: [1, 2] },
+      { scenario: "transport methods", parts: ["Car", "Bus", "Bicycle"], compositeLabel: "public transport or cycling", compositeIndices: [1, 2] },
+      { scenario: "people playing sports", parts: ["Swimming", "Football", "Tennis"], compositeLabel: "ball sports", compositeIndices: [1, 2] },
+    ]);
+    const a = randInt(1, 10), b = randInt(1, 10), c = randInt(1, 10), total = a + b + c;
+    const simplestFormEnabled = variables.simplestForm !== false;
+    let actualTarget = dropdownValue === "mixed" ? (Math.random() < 0.5 ? "singlePart" : "composite") : dropdownValue;
+    const isComposite = actualTarget === "composite";
+    let numerator = 0, targetDescription = "", line = "";
+
+    if (!isComposite) {
+      const wp = randInt(0, 2); numerator = [a, b, c][wp]; const pn = ctx.parts[wp];
+      const style = randInt(0, 2);
+      line = style === 0
+        ? `The ratio of $${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]}$ is $${a}:${b}:${c}$. What fraction of ${ctx.scenario} are ${pn}?`
+        : style === 1
+          ? `The ratio of $${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]}$ is $${a}:${b}:${c}$. Find the fraction that are ${pn}.`
+          : `$${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]}$ is $${a}:${b}:${c}$. Write ${pn} as a fraction of the total.`;
+      targetDescription = pn;
     } else {
-      return `ftr-l3-${q.values.num}-${q.values.den}-${q.values.total}-${q.values.givenType}-${q.values.orderReversed}`;
+      const idx = ctx.compositeIndices;
+      const v1 = [a, b, c][idx[0]], v2 = [a, b, c][idx[1]]; numerator = v1 + v2;
+      const useNatural = Math.random() < 0.5;
+      if (useNatural) {
+        line = randInt(0, 1) === 0
+          ? `The ratio of $${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]}$ is $${a}:${b}:${c}$. What fraction of ${ctx.scenario} are ${ctx.compositeLabel}?`
+          : `The ratio of $${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]}$ is $${a}:${b}:${c}$. Find the fraction that are ${ctx.compositeLabel}.`;
+        targetDescription = ctx.compositeLabel;
+      } else {
+        line = randInt(0, 1) === 0
+          ? `The ratio of $${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]}$ is $${a}:${b}:${c}$. What fraction are ${ctx.parts[idx[0]]} or ${ctx.parts[idx[1]]}?`
+          : `The ratio of $${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]}$ is $${a}:${b}:${c}$. Find the fraction that are ${ctx.parts[idx[0]]} or ${ctx.parts[idx[1]]}.`;
+        targetDescription = `${ctx.parts[idx[0]]} or ${ctx.parts[idx[1]]}`;
+      }
     }
+
+    let sn = numerator, sd = total;
+    if (simplestFormEnabled) { const g = gcd(numerator, total); sn = numerator / g; sd = total / g; }
+    const af = frac(sn, sd);
+    const tdCap = targetDescription.charAt(0).toUpperCase() + targetDescription.slice(1);
+
+    let workingSteps: WorkingStep[];
+    if (isComposite) {
+      const idx = ctx.compositeIndices;
+      const v1 = [a, b, c][idx[0]], v2 = [a, b, c][idx[1]];
+      workingSteps = [
+        tStep(`Total parts = ${a} + ${b} + ${c} = ${total}`),
+        tStep(`${tdCap} = ${ctx.parts[idx[0]]} + ${ctx.parts[idx[1]]} = ${v1} + ${v2} = ${numerator}`),
+        mStep(`Fraction`, frac(numerator, total)),
+        simplestFormEnabled && sn !== numerator ? step(`${frac(numerator, total)} = ${frac(sn, sd)}`) : tStep(`Already in simplest form`),
+      ];
+    } else {
+      workingSteps = [
+        tStep(`Total parts = ${a} + ${b} + ${c} = ${total}`),
+        mStep(tdCap, frac(numerator, total)),
+        simplestFormEnabled && sn !== numerator ? step(`${frac(numerator, total)} = ${frac(sn, sd)}`) : tStep(`Already in simplest form`),
+      ];
+    }
+    return {
+      kind: "worded", lines: [line], answer: `${sn}/${sd}`, answerLatex: af,
+      working: workingSteps,
+      key: `rtf-l2-${a}-${b}-${c}-${actualTarget}-${isComposite}-${id}`, difficulty: level,
+    };
   }
-  
-  if (q.difficulty === 'level1') {
-    return `${q.values.a}-${q.values.b}-${q.values.c || 0}-${q.values.order || 0}`;
-  } else if (q.difficulty === 'level2') {
-    return `${q.values.total}-${q.values.first}-${q.values.second}-${q.values.third || 0}`;
+
+  // Level 3: part-to-part
+  const ctx = pick([
+    { item1: "apples", item2: "oranges" }, { item1: "bananas", item2: "grapes" },
+    { item1: "pound coins", item2: "fifty pence coins" }, { item1: "ten pound notes", item2: "five pound notes" },
+    { item1: "Year 7s", item2: "Year 8s" }, { item1: "adults", item2: "children" },
+  ]);
+  const a = randInt(2, 12), b = randInt(2, 12);
+  const orderReversed = Math.random() < 0.5;
+  const numerator = orderReversed ? b : a, denominator = orderReversed ? a : b;
+  const numeratorName = orderReversed ? ctx.item2 : ctx.item1;
+  const denominatorName = orderReversed ? ctx.item1 : ctx.item2;
+  const g = gcd(numerator, denominator); const sn = numerator / g, sd = denominator / g;
+  const af = frac(sn, sd);
+  const line = Math.random() < 0.5
+    ? `The ratio of ${ctx.item1} to ${ctx.item2} is $${a}:${b}$. Write the amount of ${numeratorName} as a fraction of the amount of ${denominatorName}.`
+    : `${ctx.item1} to ${ctx.item2} is $${a}:${b}$. Find ${numeratorName} as a fraction of ${denominatorName}.`;
+  return {
+    kind: "worded", lines: [line], answer: `${sn}/${sd}`, answerLatex: af,
+    working: [
+      tStep(`${ctx.item1.charAt(0).toUpperCase() + ctx.item1.slice(1)} = ${a},  ${ctx.item2.charAt(0).toUpperCase() + ctx.item2.slice(1)} = ${b}`),
+      tStep(`${denominatorName.charAt(0).toUpperCase() + denominatorName.slice(1)} is the denominator — this is part:part, not part:whole`),
+      step(`${frac(numerator, denominator)}`),
+      tStep(`Don't add ${a} + ${b} = ${a + b} — we're not finding a fraction of the total`),
+      ...(sn !== numerator ? [step(`${frac(numerator, denominator)} = ${frac(sn, sd)}`)] : [tStep(`Already in simplest form`)]),
+      tStep(`Answer: ${numeratorName} is ${sn}/${sd} of ${denominatorName}`),
+    ],
+    key: `rtf-l3-${a}-${b}-${orderReversed}-${id}`, difficulty: level,
+  };
+};
+
+// ── fractionToRatio ───────────────────────────────────────────────────────────
+
+const genFractionToRatio = (level: DifficultyLevel, variables: Record<string, boolean>, dropdownValue: string): WordedQuestion => {
+  const id = randInt(0, 999999);
+
+  if (level === "level1") {
+    const ctx = pick([
+      { item: "beads", colors: ["Red", "Blue"] }, { item: "sweets", colors: ["Purple", "Orange"] },
+      { item: "marbles", colors: ["Pink", "White"] }, { item: "counters", colors: ["Black", "Silver"] },
+      { item: "balls", colors: ["Red", "Blue"] },
+    ]);
+    const { num, den } = generateSimplestFraction();
+    const pA = num, pB = den - num;
+    const rev = Math.random() < 0.5; const [cA, cB] = ctx.colors;
+    const prose = Math.random() < 0.5;
+    const line = rev
+      ? (prose
+        ? `In a bag of ${ctx.item}, $${frac(num, den)}$ are ${cA} and the rest are ${cB}. Write the ratio of ${cB} to ${cA}.`
+        : `In a bag of ${ctx.item}, $${frac(num, den)}$ are ${cA} and the rest are ${cB}. Find ${cB} : ${cA}.`)
+      : (prose
+        ? `In a bag of ${ctx.item}, $${frac(num, den)}$ are ${cA} and the rest are ${cB}. Write the ratio of ${cA} to ${cB}.`
+        : `In a bag of ${ctx.item}, $${frac(num, den)}$ are ${cA} and the rest are ${cB}. Find ${cA} : ${cB}.`);
+    const answer = rev ? ratioStr(pB, pA) : ratioStr(pA, pB);
+    return {
+      kind: "worded", lines: [line], answer,
+      working: [
+        mStep(cA, frac(num, den)),
+        tStep(`${cB} = ${den} − ${num} = ${pB}  (${den} parts in total)`),
+        mStep(cB, frac(pB, den)),
+        tStep(rev ? `Ratio ${cB} : ${cA} = ${ratioStr(pB, pA)}` : `Ratio ${cA} : ${cB} = ${ratioStr(pA, pB)}`),
+      ],
+      key: `ftr-l1-${num}-${den}-${rev}-${id}`, difficulty: level,
+    };
+  }
+
+  if (level === "level2") {
+    const ctx = pick([
+      { item: "beads", parts: ["Red", "Blue", "Green"] }, { item: "sweets", parts: ["Strawberry", "Lemon", "Orange"] },
+      { item: "marbles", parts: ["Clear", "Spotted", "Striped"] }, { item: "flowers", parts: ["Roses", "Tulips", "Daisies"] },
+    ]);
+    const findCD = variables.findCommonDenominators || false;
+    let f1 = 0, f2 = 0, den = 0, f3 = 0;
+    let oF1: { num: number; den: number } | null = null, oF2: { num: number; den: number } | null = null;
+    let cdSteps: WorkingStep[] = [];
+
+    let tries = 0;
+    while (tries++ < 200) {
+      if (findCD) {
+        const fa = generateSimplestFraction(), fb = generateSimplestFraction();
+        if (fa.den === fb.den) continue;
+        const r = convertToCommonDenominator(fa, fb);
+        if (r.newNum1 + r.newNum2 >= r.lcd) continue;
+        f1 = r.newNum1; f2 = r.newNum2; den = r.lcd; f3 = den - f1 - f2;
+        oF1 = fa; oF2 = fb; cdSteps = r.steps; break;
+      } else {
+        den = randInt(5, 12); f1 = randInt(1, den - 2); f2 = randInt(1, den - f1 - 1);
+        if (f1 + f2 >= den) continue; f3 = den - f1 - f2; break;
+      }
+    }
+
+    const oc = randInt(0, 5);
+    const P = ctx.parts;
+    const ords = [
+      { label: `${P[0]} : ${P[1]} : ${P[2]}`, parts: [f1, f2, f3] }, { label: `${P[0]} : ${P[2]} : ${P[1]}`, parts: [f1, f3, f2] },
+      { label: `${P[1]} : ${P[0]} : ${P[2]}`, parts: [f2, f1, f3] }, { label: `${P[1]} : ${P[2]} : ${P[0]}`, parts: [f2, f3, f1] },
+      { label: `${P[2]} : ${P[0]} : ${P[1]}`, parts: [f3, f1, f2] }, { label: `${P[2]} : ${P[1]} : ${P[0]}`, parts: [f3, f2, f1] },
+    ];
+    const { label: reqOrder, parts: ansParts } = ords[oc];
+    const prose = Math.random() < 0.5;
+    const answer = ratioStr(...ansParts);
+    const line = findCD && oF1 && oF2
+      ? (prose
+        ? `In a bag of ${ctx.item}, $${frac(oF1.num, oF1.den)}$ are ${P[0]} and $${frac(oF2.num, oF2.den)}$ are ${P[1]}. The rest are ${P[2]}. Write the ratio ${reqOrder}.`
+        : `In a bag of ${ctx.item}, $${frac(oF1.num, oF1.den)}$ are ${P[0]} and $${frac(oF2.num, oF2.den)}$ are ${P[1]}. The rest are ${P[2]}. Find ${reqOrder}.`)
+      : (prose
+        ? `In a bag of ${ctx.item}, $${frac(f1, den)}$ are ${P[0]} and $${frac(f2, den)}$ are ${P[1]}. The rest are ${P[2]}. Write the ratio ${reqOrder}.`
+        : `In a bag of ${ctx.item}, $${frac(f1, den)}$ are ${P[0]} and $${frac(f2, den)}$ are ${P[1]}. The rest are ${P[2]}. Find ${reqOrder}.`);
+
+    const baseSteps: WorkingStep[] = findCD ? cdSteps : [mStep(P[0], frac(f1, den)), mStep(P[1], frac(f2, den))];
+    return {
+      kind: "worded", lines: [line], answer,
+      working: [
+        ...baseSteps,
+        tStep(`${P[2]} = ${den} − ${f1} − ${f2} = ${f3} parts`),
+        mStep(P[2], frac(f3, den)),
+        tStep(`Ratio ${P[0]} : ${P[1]} : ${P[2]} = ${ratioStr(f1, f2, f3)}`),
+      ],
+      key: `ftr-l2-${f1}-${f2}-${den}-${oc}-${id}`, difficulty: level,
+    };
+  }
+
+  // Level 3: quantity-based
+  const ctx = pick([
+    { item: "beads", colors: ["Red", "Blue"] }, { item: "sweets", colors: ["Strawberry", "Lemon"] },
+    { item: "marbles", colors: ["Glass", "Plastic"] }, { item: "counters", colors: ["Yellow", "Green"] },
+  ]);
+  const { num, den } = generateSimplestFraction();
+  const actualGiven = dropdownValue === "mixed" ? pick(["partA", "partB", "total"]) : dropdownValue;
+  const mult = randInt(2, 6), total = den * mult, pA = num * mult, pB = total - pA;
+  const rev = Math.random() < 0.5; const [cA, cB] = ctx.colors;
+  const answer = rev ? ratioStr(pB, pA) : ratioStr(pA, pB);
+  let line: string; let wSteps: WorkingStep[];
+
+  if (actualGiven === "total") {
+    line = rev
+      ? `In a bag of ${ctx.item}, ${frac(num, den)}$ are ${cA} and the rest are ${cB}. There are ${total}$ ${ctx.item} in total. Write the ratio ${cB} : ${cA}$.`
+      : `In a bag of ${ctx.item}, ${frac(num, den)}$ are ${cA} and the rest are ${cB}. There are ${total}$ ${ctx.item} in total. Write the ratio ${cA} : ${cB}$.`;
+    wSteps = [
+      tStep(`Total = ${total} ${ctx.item} = ${den} parts`),
+      tStep(`1 part = ${total} ÷ ${den} = ${mult}`),
+      tStep(`${cA} = ${num} × ${mult} = ${pA}`),
+      tStep(`${cB} = ${den - num} × ${mult} = ${pB}`),
+      tStep(rev ? `Ratio ${cB} : ${cA} = ${ratioStr(pB, pA)}` : `Ratio ${cA} : ${cB} = ${ratioStr(pA, pB)}`),
+    ];
+  } else if (actualGiven === "partB") {
+    line = rev
+      ? `In a bag of ${ctx.item}, ${frac(num, den)}$ are ${cA} and the rest are ${cB}. There are ${pB}$ ${cB} ${ctx.item}. Write the ratio ${cB} : ${cA}$.`
+      : `In a bag of ${ctx.item}, ${frac(num, den)}$ are ${cA} and the rest are ${cB}. There are ${pB}$ ${cB} ${ctx.item}. Write the ratio ${cA} : ${cB}$.`;
+    wSteps = [
+      mStep(`${cA}`, frac(num, den)),
+      mStep(`so ${cB}`, frac(den - num, den)),
+      tStep(`${den - num} parts = ${pB}`),
+      tStep(`1 part = ${pB} ÷ ${den - num} = ${mult}`),
+      tStep(`${cA} = ${num} × ${mult} = ${pA}`),
+      tStep(rev ? `Ratio ${cB} : ${cA} = ${ratioStr(pB, pA)}` : `Ratio ${cA} : ${cB} = ${ratioStr(pA, pB)}`),
+    ];
   } else {
-    return `${q.values.total}-${q.values.part1}-${q.values.part2}-${q.values.part3 || 0}`;
+    line = rev
+      ? `In a bag of ${ctx.item}, ${frac(num, den)}$ are ${cA} and the rest are ${cB}. There are ${pA}$ ${cA} ${ctx.item}. Write the ratio ${cB} : ${cA}$.`
+      : `In a bag of ${ctx.item}, ${frac(num, den)}$ are ${cA} and the rest are ${cB}. There are ${pA}$ ${cA} ${ctx.item}. Write the ratio ${cA} : ${cB}$.`;
+    wSteps = [
+      tStep(`${cA} = fraction of total:`),
+      mStep(`${cA}`, frac(num, den)),
+      tStep(`${num} parts = ${pA}`),
+      tStep(`1 part = ${pA} ÷ ${num} = ${mult}`),
+      tStep(`Total = ${den} × ${mult} = ${total}`),
+      tStep(`${cB} = ${total} − ${pA} = ${pB}`),
+      tStep(rev ? `Ratio ${cB} : ${cA} = ${ratioStr(pB, pA)}` : `Ratio ${cA} : ${cB} = ${ratioStr(pA, pB)}`),
+    ];
   }
+  return { kind: "worded", lines: [line], answer, working: wSteps, key: `ftr-l3-${num}-${den}-${total}-${actualGiven}-${rev}-${id}`, difficulty: level };
 };
 
-const generateUniqueQuestion = (
-  tool: ToolType,
-  level: DifficultyLevel,
-  variables: Record<string, boolean>,
-  dropdownValue: string,
-  usedKeys: Set<string>
-): Question => {
-  let attempts = 0;
-  let q: Question;
-  let uniqueKey = '';
-  
-  do {
-    q = generateQuestion(tool, level, variables, dropdownValue);
-    uniqueKey = getQuestionUniqueKey(q);
-    if (++attempts > 100) break;
-  } while (usedKeys.has(uniqueKey));
-  
-  usedKeys.add(uniqueKey);
-  return q;
+// ── formingRatios ─────────────────────────────────────────────────────────────
+
+const genFormingRatios = (level: DifficultyLevel, variables: Record<string, boolean>): WordedQuestion => {
+  const id = randInt(0, 999999);
+  const threeWay = variables.threeWay || false;
+  const simplestForm = variables.simplestForm || false;
+  const sfText = simplestForm ? " in its simplest form" : "";
+
+  const buildAnswer = (parts: number[]) => {
+    const final = simplestForm ? simplifyRatioParts(parts) : parts;
+    return ratioStr(...final);
+  };
+  const buildSimplificationWorking = (parts: number[]): WorkingStep[] =>
+    simplestForm ? [tStep(`Original: ${ratioStr(...parts)}`), ...getSimplificationSteps(parts)] : [];
+
+  if (level === "level1") {
+    const ctxs2 = [
+      { items: ["apples", "oranges"], container: "basket" }, { items: ["cats", "dogs"], container: "pet shelter" },
+      { items: ["red cars", "blue cars"], container: "car park" }, { items: ["boys", "girls"], container: "classroom" },
+      { items: ["pencils", "pens"], container: "pencil case" },
+    ];
+    const ctxs3 = [
+      { items: ["cows", "sheep", "pigs"], container: "farm" }, { items: ["red sweets", "blue sweets", "green sweets"], container: "jar" },
+      { items: ["footballs", "basketballs", "tennis balls"], container: "sports hall" },
+      { items: ["roses", "tulips", "daisies"], container: "garden" }, { items: ["Y7s", "Y8s", "Y9s"], container: "school trip" },
+    ];
+    const gcds = [1, 1, 1, 2, 2, 3, 3, 4, 5, 6];
+    if (threeWay) {
+      const ctx = pick(ctxs3); const g = pick(gcds);
+      const a = randInt(2, 15) * g, b = randInt(2, 15) * g, c = randInt(2, 15) * g;
+      const order = randInt(0, 5);
+      const ords = [
+        { label: `${ctx.items[0]} : ${ctx.items[1]} : ${ctx.items[2]}`, parts: [a, b, c] },
+        { label: `${ctx.items[0]} : ${ctx.items[2]} : ${ctx.items[1]}`, parts: [a, c, b] },
+        { label: `${ctx.items[1]} : ${ctx.items[0]} : ${ctx.items[2]}`, parts: [b, a, c] },
+        { label: `${ctx.items[1]} : ${ctx.items[2]} : ${ctx.items[0]}`, parts: [b, c, a] },
+        { label: `${ctx.items[2]} : ${ctx.items[0]} : ${ctx.items[1]}`, parts: [c, a, b] },
+        { label: `${ctx.items[2]} : ${ctx.items[1]} : ${ctx.items[0]}`, parts: [c, b, a] },
+      ];
+      const { label, parts } = ords[order];
+      const answer = buildAnswer(parts);
+      const line = Math.random() < 0.5
+        ? `A ${ctx.container} has $${a}$ ${ctx.items[0]}, $${b}$ ${ctx.items[1]}, and $${c}$ ${ctx.items[2]}. Write the ratio of ${label}${sfText}.`
+        : `There are $${a}$ ${ctx.items[0]}, $${b}$ ${ctx.items[1]}, and $${c}$ ${ctx.items[2]} in a ${ctx.container}. Find ${label}${sfText}.`;
+      return {
+        kind: "worded", lines: [line], answer,
+        working: [tStep(`Ratio: ${ratioStr(a, b, c)}`), ...buildSimplificationWorking(parts)],
+        key: `fr-l1-3w-${a}-${b}-${c}-${order}-${id}`, difficulty: level,
+      };
+    } else {
+      const ctx = pick(ctxs2); const g = pick(gcds);
+      const a = randInt(2, 20) * g, b = randInt(2, 20) * g;
+      const rev = Math.random() < 0.5;
+      const parts = rev ? [b, a] : [a, b];
+      const label = rev ? `${ctx.items[1]} : ${ctx.items[0]}` : `${ctx.items[0]} : ${ctx.items[1]}`;
+      const answer = buildAnswer(parts);
+      const line = Math.random() < 0.5
+        ? `A ${ctx.container} has $${a}$ ${ctx.items[0]} and $${b}$ ${ctx.items[1]}. Write the ratio ${label}${sfText}.`
+        : `There are $${a}$ ${ctx.items[0]} and $${b}$ ${ctx.items[1]} in a ${ctx.container}. Find ${label}${sfText}.`;
+      return {
+        kind: "worded", lines: [line], answer,
+        working: [tStep(`Ratio: ${ratioStr(a, b)}`), ...buildSimplificationWorking(parts)],
+        key: `fr-l1-2w-${a}-${b}-${rev}-${id}`, difficulty: level,
+      };
+    }
+  }
+
+  if (level === "level2") {
+    const ctxs2 = [
+      { item: "sweets", container: "bag", parts: ["red", "blue"] }, { item: "students", container: "class", parts: ["boys", "girls"] },
+      { item: "cars", container: "car park", parts: ["red", "blue"] }, { item: "books", container: "library", parts: ["fiction", "non-fiction"] },
+    ];
+    const ctxs3 = [
+      { item: "sweets", container: "bag", parts: ["red", "blue", "green"] }, { item: "marbles", container: "jar", parts: ["red", "yellow", "blue"] },
+      { item: "counters", container: "box", parts: ["red", "blue", "green"] }, { item: "flowers", container: "vase", parts: ["roses", "tulips", "daisies"] },
+    ];
+    const gcds2 = [2, 2, 2, 3, 3, 4, 5, 6];
+    if (threeWay) {
+      const ctx = pick(ctxs3); const total = randInt(10, 80);
+      let first = 0, second = 0, third = 0;
+      if (Math.random() < 0.6) {
+        const cf = pick(gcds2); const mx = Math.floor(total / (3 * cf));
+        if (mx >= 2) {
+          const bf = randInt(1, mx - 1), bs = randInt(1, mx - 1), bt = Math.floor(total / cf) - bf - bs;
+          if (bt > 0 && (bf + bs + bt) * cf === total) { first = bf * cf; second = bs * cf; third = bt * cf; }
+        }
+      }
+      if (!first || !second || !third || first + second + third !== total) {
+        const mn = Math.max(1, Math.floor(total * 0.1)), mx = Math.floor(total * 0.7);
+        first = randInt(mn, mx); const rem = total - first;
+        second = randInt(Math.max(1, Math.floor(rem * 0.2)), Math.floor(rem * 0.8));
+        third = total - first - second;
+      }
+      const answer = buildAnswer([first, second, third]);
+      const op = randInt(0, 2);
+      const dp = op === 0
+        ? `$${first}$ are ${ctx.parts[0]}, $${second}$ are ${ctx.parts[1]}, and the rest are ${ctx.parts[2]}`
+        : op === 1
+          ? `$${first}$ are ${ctx.parts[0]}, $${third}$ are ${ctx.parts[2]}, and the rest are ${ctx.parts[1]}`
+          : `$${second}$ are ${ctx.parts[1]}, $${third}$ are ${ctx.parts[2]}, and the rest are ${ctx.parts[0]}`;
+      const line = `A ${ctx.container} contains $${total}$ ${ctx.item}. ${dp}. Write the ratio ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]}${sfText}.`;
+      return {
+        kind: "worded", lines: [line], answer,
+        working: [tStep(`Remainder = ${total} − ${first} − ${second} = ${third}`), tStep(`Ratio: ${ratioStr(first, second, third)}`), ...buildSimplificationWorking([first, second, third])],
+        key: `fr-l2-3w-${total}-${first}-${second}-${third}-${id}`, difficulty: level,
+      };
+    } else {
+      const ctx = pick(ctxs2); const total = randInt(10, 80);
+      let first = 0, second = 0;
+      if (Math.random() < 0.6) {
+        const cf = pick(gcds2); const mx = Math.floor(total / (2 * cf));
+        if (mx >= 2) { const bf = randInt(1, mx - 1), bs = Math.floor(total / cf) - bf; if (bs > 0 && (bf + bs) * cf === total) { first = bf * cf; second = bs * cf; } }
+      }
+      if (!first || !second || first + second !== total) {
+        first = randInt(Math.max(1, Math.floor(total * 0.15)), Math.floor(total * 0.85)); second = total - first;
+      }
+      const answer = buildAnswer([first, second]);
+      const line = `A ${ctx.container} contains $${total}$ ${ctx.item}. $${first}$ are ${ctx.parts[0]} and the rest are ${ctx.parts[1]}. Write the ratio ${ctx.parts[0]} : ${ctx.parts[1]}${sfText}.`;
+      return {
+        kind: "worded", lines: [line], answer,
+        working: [tStep(`Remainder = ${total} − ${first} = ${second}`), tStep(`Ratio: ${ratioStr(first, second)}`), ...buildSimplificationWorking([first, second])],
+        key: `fr-l2-2w-${total}-${first}-${second}-${id}`, difficulty: level,
+      };
+    }
+  }
+
+  // Level 3: constraint-based
+  const ctxs2L3 = [
+    { item: "people", parts: ["adults", "children"], container: "room" }, { item: "animals", parts: ["dogs", "cats"], container: "shelter" },
+    { item: "students", parts: ["boys", "girls"], container: "school" }, { item: "cars", parts: ["electric", "petrol"], container: "car park" },
+  ];
+  const ctxs3L3 = [
+    { item: "people", parts: ["men", "women", "children"], container: "room" }, { item: "students", parts: ["Y7", "Y8", "Y9"], container: "trip" },
+    { item: "sweets", parts: ["red", "blue", "green"], container: "bag" }, { item: "books", parts: ["fiction", "non-fiction", "reference"], container: "library" },
+  ];
+  const percentages = [10, 20, 25, 30, 40, 50, 60, 70, 75];
+  const fracs2 = [
+    { num: 1, den: 2 }, { num: 1, den: 3 }, { num: 2, den: 3 }, { num: 1, den: 4 }, { num: 3, den: 4 },
+    { num: 1, den: 5 }, { num: 2, den: 5 }, { num: 3, den: 5 }, { num: 4, den: 5 },
+  ];
+
+  let valid = false, tries2 = 0;
+  let total2 = 0, p1 = 0, p2 = 0, p3 = 0;
+  let constraintText2 = "", calcSteps: WorkingStep[] = [];
+  let answer2 = "", finalLine = "";
+
+  while (!valid && tries2++ < 300) {
+    total2 = randInt(40, 100);
+    const usePct = Math.random() < 0.5;
+    if (threeWay) {
+      const ctx = pick(ctxs3L3); const pattern = randInt(0, 1);
+      if (pattern === 0) {
+        if (usePct) {
+          const pct = pick(percentages); p1 = Math.round(total2 * pct / 100);
+          if (p1 !== total2 * pct / 100) continue;
+          p2 = randInt(1, total2 - p1 - 1); p3 = total2 - p1 - p2;
+          constraintText2 = `$${pct}$% are ${ctx.parts[0]}. $${p2}$ are ${ctx.parts[1]}. The rest are ${ctx.parts[2]}.`;
+          calcSteps = [tStep(`${ctx.parts[0]}: ${pct}% of ${total2} = ${p1}`), tStep(`${ctx.parts[1]}: ${p2}`), tStep(`${ctx.parts[2]}: ${total2} − ${p1} − ${p2} = ${p3}`)];
+        } else {
+          const fr = pick(fracs2); p1 = Math.round(total2 * fr.num / fr.den);
+          if (p1 !== total2 * fr.num / fr.den) continue;
+          p2 = randInt(1, total2 - p1 - 1); p3 = total2 - p1 - p2;
+          constraintText2 = `$${frac(fr.num, fr.den)}$ are ${ctx.parts[0]}. $${p2}$ are ${ctx.parts[1]}. The rest are ${ctx.parts[2]}.`;
+          calcSteps = [tStep(`${ctx.parts[0]}: ${fr.num}/${fr.den} of ${total2} = ${p1}`), tStep(`${ctx.parts[1]}: ${p2}`), tStep(`${ctx.parts[2]}: ${total2} − ${p1} − ${p2} = ${p3}`)];
+        }
+      } else {
+        p1 = randInt(1, Math.floor(total2 / 3)); const rem = total2 - p1;
+        if (usePct) {
+          const pct = pick(percentages); p2 = Math.round(rem * pct / 100);
+          if (p2 !== rem * pct / 100) continue; p3 = total2 - p1 - p2;
+          constraintText2 = `$${p1}$ are ${ctx.parts[0]}. $${pct}$% of the remainder are ${ctx.parts[1]}. The rest are ${ctx.parts[2]}.`;
+          calcSteps = [tStep(`${ctx.parts[0]}: ${p1}`), tStep(`Remainder = ${total2} − ${p1} = ${rem}`), tStep(`${ctx.parts[1]}: ${pct}% of ${rem} = ${p2}`), tStep(`${ctx.parts[2]}: ${total2} − ${p1} − ${p2} = ${p3}`)];
+        } else {
+          const fr = pick(fracs2); p2 = Math.round(rem * fr.num / fr.den);
+          if (p2 !== rem * fr.num / fr.den) continue; p3 = total2 - p1 - p2;
+          constraintText2 = `$${p1}$ are ${ctx.parts[0]}. $${frac(fr.num, fr.den)}$ of the remainder are ${ctx.parts[1]}. The rest are ${ctx.parts[2]}.`;
+          calcSteps = [tStep(`${ctx.parts[0]}: ${p1}`), tStep(`Remainder = ${total2} − ${p1} = ${rem}`), tStep(`${ctx.parts[1]}: ${fr.num}/${fr.den} of ${rem} = ${p2}`), tStep(`${ctx.parts[2]}: ${total2} − ${p1} − ${p2} = ${p3}`)];
+        }
+      }
+      if (p1 > 0 && p2 > 0 && p3 > 0) {
+        valid = true;
+        answer2 = buildAnswer([p1, p2, p3]);
+        finalLine = `There are $${total2}$ ${ctx.item} in a ${ctx.container}. ${constraintText2} Find the ratio ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]}${sfText}.`;
+      }
+    } else {
+      const ctx = pick(ctxs2L3);
+      if (usePct) {
+        const pct = pick(percentages); p1 = Math.round(total2 * pct / 100);
+        if (p1 !== total2 * pct / 100) continue; p2 = total2 - p1;
+        constraintText2 = `$${pct}$% are ${ctx.parts[0]} and the rest are ${ctx.parts[1]}.`;
+        calcSteps = [tStep(`${ctx.parts[0]}: ${pct}% of ${total2} = ${p1}`), tStep(`${ctx.parts[1]}: ${total2} − ${p1} = ${p2}`)];
+      } else {
+        const fr = pick(fracs2); p1 = Math.round(total2 * fr.num / fr.den);
+        if (p1 !== total2 * fr.num / fr.den) continue; p2 = total2 - p1;
+        constraintText2 = `$${frac(fr.num, fr.den)}$ are ${ctx.parts[0]} and the rest are ${ctx.parts[1]}.`;
+        calcSteps = [tStep(`${ctx.parts[0]}: ${fr.num}/${fr.den} of ${total2} = ${p1}`), tStep(`${ctx.parts[1]}: ${total2} − ${p1} = ${p2}`)];
+      }
+      if (p1 > 0 && p2 > 0 && p1 !== p2) {
+        valid = true;
+        answer2 = buildAnswer([p1, p2]);
+        finalLine = `There are $${total2}$ ${ctxs2L3[0].item} in a ${ctxs2L3[0].container}. ${constraintText2} Write this as a ratio${sfText}.`;
+      }
+    }
+  }
+
+  const rawParts = threeWay ? [p1, p2, p3] : [p1, p2];
+  return {
+    kind: "worded", lines: [finalLine], answer: answer2,
+    working: [...calcSteps, tStep(`Ratio: ${ratioStr(...rawParts)}`), ...buildSimplificationWorking(rawParts)],
+    key: `fr-l3-${total2}-${p1}-${p2}-${p3}-${id}`, difficulty: level,
+  };
 };
 
-// DIAGRAM RENDERER (for useGraphicalLayout: true)
-const renderDiagram = (question: Question | null, size: number): JSX.Element => {
-  if (!question) {
-    return (
-      <div className="flex items-center justify-center h-full text-gray-400 text-xl">
-        Generate question
-      </div>
-    );
-  }
-  
+// ── Master dispatcher ─────────────────────────────────────────────────────────
+
+const generateQuestion = (tool: ToolType, level: DifficultyLevel, variables: Record<string, boolean>, dropdownValue: string): AnyQuestion => {
+  if (tool === "ratioToFraction") return genRatioToFraction(level, variables, dropdownValue);
+  if (tool === "fractionToRatio") return genFractionToRatio(level, variables, dropdownValue);
+  return genFormingRatios(level, variables);
+};
+
+const generateUniqueQ = (tool: ToolType, level: DifficultyLevel, variables: Record<string, boolean>, dropdownValue: string, usedKeys: Set<string>): AnyQuestion => {
+  let q: AnyQuestion, attempts = 0;
+  do { q = generateQuestion(tool, level, variables, dropdownValue); attempts++; }
+  while (usedKeys.has(q.key) && attempts < 100);
+  usedKeys.add(q.key); return q;
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// END OF TOOL-SPECIFIC SECTION
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const LV_COLORS: Record<DifficultyLevel, { bg: string; border: string; text: string; fill: string }> = {
+  level1: { bg: "bg-green-50", border: "border-green-500", text: "text-green-700", fill: "#dcfce7" },
+  level2: { bg: "bg-yellow-50", border: "border-yellow-500", text: "text-yellow-700", fill: "#fef9c3" },
+  level3: { bg: "bg-red-50", border: "border-red-500", text: "text-red-700", fill: "#fee2e2" },
+};
+const getQuestionBg = (cs: string) => ({ blue: "#D1E7F8", pink: "#F8D1E7", yellow: "#F8F4D1" }[cs] ?? "#ffffff");
+const getStepBg = (cs: string) => ({ blue: "#B3D9F2", pink: "#F2B3D9", yellow: "#F2EBB3" }[cs] ?? "#f3f4f6");
+
+const InlineMath = ({ text }: { text: string }) => {
+  const parts = text.split(/(\$[^$]+\$)/g);
   return (
-    <div className="flex items-center justify-center h-full">
-      <div className="text-center">
-        <p className="text-gray-500 text-lg mb-2">Diagram</p>
-        <p className="text-gray-400 text-sm">{size}px</p>
+    <>
+      {parts.map((part, i) => part.startsWith("$") && part.endsWith("$")
+        ? <MathRenderer key={i} latex={part.slice(1, -1)} />
+        : <span key={i}>{part}</span>
+      )}
+    </>
+  );
+};
+
+const QuestionDisplay = ({ q, cls }: { q: AnyQuestion; cls: string }) => (
+  <div className="flex flex-col gap-2 text-center">
+    {q.lines.map((line, i) => (
+      <div key={i} className={`${cls} font-semibold`} style={{ color: "#000", lineHeight: 1.6 }}>
+        <InlineMath text={line} />
+      </div>
+    ))}
+  </div>
+);
+
+const AnswerDisplay = ({ q }: { q: AnyQuestion }) => {
+  if (q.answerLatex) return <MathRenderer latex={`= ${q.answerLatex}`} />;
+  return <span>= {q.answer}</span>;
+};
+
+const DifficultyToggle = ({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
+  <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm">
+    {([["level1", "Level 1", "bg-green-600"], ["level2", "Level 2", "bg-yellow-500"], ["level3", "Level 3", "bg-red-600"]] as const).map(([val, label, col]) => (
+      <button key={val} onClick={() => onChange(val)}
+        className={`px-5 py-2 font-bold text-base transition-colors ${value === val ? `${col} text-white` : "bg-white text-gray-500 hover:bg-gray-50"}`}>
+        {label}
+      </button>
+    ))}
+  </div>
+);
+
+const DropdownSection = ({ dropdown, value, onChange }: {
+  dropdown: { key: string; label: string; options: { value: string; label: string }[] };
+  value: string; onChange: (v: string) => void;
+}) => (
+  <div className="flex flex-col gap-2">
+    <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">{dropdown.label}</span>
+    <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden">
+      {dropdown.options.map(opt => (
+        <button key={opt.value} onClick={() => onChange(opt.value)}
+          className={`flex-1 px-4 py-2.5 text-base font-bold transition-colors ${value === opt.value ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}>
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  </div>
+);
+
+const VariablesSection = ({ variables, values, onChange }: {
+  variables: { key: string; label: string }[]; values: Record<string, boolean>; onChange: (k: string, v: boolean) => void;
+}) => (
+  <div className="flex flex-col gap-3">
+    <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Options</span>
+    {variables.map(v => (
+      <label key={v.key} className="flex items-center gap-3 cursor-pointer py-1">
+        <div onClick={() => onChange(v.key, !values[v.key])}
+          className={`w-12 h-6 rounded-full transition-colors relative flex-shrink-0 ${values[v.key] ? "bg-blue-900" : "bg-gray-300"}`}>
+          <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${values[v.key] ? "translate-x-7" : "translate-x-1"}`} />
+        </div>
+        <span className="text-base font-semibold text-gray-700">{v.label}</span>
+      </label>
+    ))}
+  </div>
+);
+
+const StandardQOPopover = ({ variables, variableValues, onVariableChange, dropdown, dropdownValue, onDropdownChange }: {
+  variables: { key: string; label: string }[]; variableValues: Record<string, boolean>;
+  onVariableChange: (k: string, v: boolean) => void;
+  dropdown: { key: string; label: string; options: { value: string; label: string }[] } | null;
+  dropdownValue: string; onDropdownChange: (v: string) => void;
+}) => {
+  const { open, setOpen, ref } = usePopover();
+  const hasContent = variables.length > 0 || dropdown !== null;
+  return (
+    <div className="relative" ref={ref}>
+      <PopoverButton open={open} onClick={() => setOpen(!open)} />
+      {open && (
+        <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-72 p-5 flex flex-col gap-5">
+          {dropdown && <DropdownSection dropdown={dropdown} value={dropdownValue} onChange={onDropdownChange} />}
+          {variables.length > 0 && <VariablesSection variables={variables} values={variableValues} onChange={onVariableChange} />}
+          {!hasContent && <p className="text-sm text-gray-400">No additional options for this tool and level.</p>}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const DiffQOPopover = ({ toolSettings, levelVariables, onLevelVariableChange, levelDropdowns, onLevelDropdownChange }: {
+  toolSettings: typeof TOOL_CONFIG.tools[string];
+  levelVariables: Record<string, Record<string, boolean>>;
+  onLevelVariableChange: (lv: string, k: string, v: boolean) => void;
+  levelDropdowns: Record<string, string>; onLevelDropdownChange: (lv: string, v: string) => void;
+}) => {
+  const { open, setOpen, ref } = usePopover();
+  const levels = ["level1", "level2", "level3"] as DifficultyLevel[];
+  const getDDForLevel = (lv: string) => toolSettings.difficultySettings?.[lv]?.dropdown ?? toolSettings.dropdown;
+  const getVarsForLevel = (lv: string) => toolSettings.difficultySettings?.[lv]?.variables ?? toolSettings.variables;
+  return (
+    <div className="relative" ref={ref}>
+      <PopoverButton open={open} onClick={() => setOpen(!open)} />
+      {open && (
+        <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-80 p-5 flex flex-col gap-5">
+          {levels.map(lv => {
+            const dd = getDDForLevel(lv); const vars = getVarsForLevel(lv) ?? [];
+            return (
+              <div key={lv} className="flex flex-col gap-2">
+                <span className={`text-sm font-extrabold uppercase tracking-wider ${LV_HEADER_COLORS[lv]}`}>{LV_LABELS[lv]}</span>
+                <div className="flex flex-col gap-3 pl-1">
+                  {dd && <DropdownSection dropdown={dd} value={levelDropdowns[lv] ?? dd.defaultValue} onChange={v => onLevelDropdownChange(lv, v)} />}
+                  {vars.length > 0 && <VariablesSection variables={vars} values={levelVariables[lv] ?? {}} onChange={(k, v) => onLevelVariableChange(lv, k, v)} />}
+                  {!dd && vars.length === 0 && <p className="text-xs text-gray-400">No options at this level.</p>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const InfoModal = ({ onClose }: { onClose: () => void }) => (
+  <div className="fixed inset-0 z-[100] flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.5)" }} onClick={onClose}>
+    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 flex flex-col" style={{ height: "80vh" }} onClick={e => e.stopPropagation()}>
+      <div className="flex items-center justify-between px-7 py-5 border-b border-gray-100 flex-shrink-0">
+        <div><h2 className="text-2xl font-bold text-gray-900">Tool Information</h2><p className="text-sm text-gray-400 mt-0.5">A guide to all features and options</p></div>
+        <button onClick={onClose} className="w-9 h-9 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100"><X size={20} /></button>
+      </div>
+      <div className="overflow-y-auto px-7 py-6 flex flex-col gap-6 flex-1">
+        {INFO_SECTIONS.map(s => (
+          <div key={s.title}>
+            <div className="flex items-center gap-2 mb-3"><span className="text-xl">{s.icon}</span><h3 className="text-lg font-bold text-blue-900">{s.title}</h3></div>
+            <div className="flex flex-col gap-2">
+              {s.content.map(item => (
+                <div key={item.label} className="bg-gray-50 rounded-xl px-4 py-3">
+                  <span className="font-bold text-gray-800 text-sm">{item.label}</span>
+                  <p className="text-sm text-gray-500 mt-0.5 leading-relaxed">{item.detail}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="px-7 py-4 border-t border-gray-100 flex justify-end flex-shrink-0">
+        <button onClick={onClose} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-sm hover:bg-blue-800">Close</button>
+      </div>
+    </div>
+  </div>
+);
+
+const MenuDropdown = ({ colorScheme, setColorScheme, onClose, onOpenInfo }: { colorScheme: string; setColorScheme: (s: string) => void; onClose: () => void; onOpenInfo: () => void }) => {
+  const [colorOpen, setColorOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) onClose(); };
+    document.addEventListener("mousedown", h); return () => document.removeEventListener("mousedown", h);
+  }, [onClose]);
+  return (
+    <div ref={ref} className="absolute right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden" style={{ minWidth: "200px" }}>
+      <div className="py-1">
+        <button onClick={() => setColorOpen(!colorOpen)} className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+          <div className="flex items-center gap-2">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={`text-gray-400 transition-transform duration-200 ${colorOpen ? "rotate-90" : ""}`}><path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            <span>Colour Scheme</span>
+          </div>
+          <span className="text-xs text-gray-400 font-normal capitalize">{colorScheme}</span>
+        </button>
+        {colorOpen && (
+          <div className="border-t border-gray-100">
+            {["default", "blue", "pink", "yellow"].map(s => (
+              <button key={s} onClick={() => { setColorScheme(s); onClose(); }}
+                className={`w-full flex items-center justify-between pl-10 pr-4 py-2.5 text-sm font-semibold capitalize ${colorScheme === s ? "bg-blue-900 text-white" : "text-gray-600 hover:bg-gray-50"}`}>
+                {s}{colorScheme === s && <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7l3.5 3.5L12 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+              </button>
+            ))}
+          </div>
+        )}
+        <div className="border-t border-gray-100 my-1" />
+        <button onClick={() => { onOpenInfo(); onClose(); }} className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400 flex-shrink-0"><circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5" /><path d="M8 7v5M8 5v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+          Tool Information
+        </button>
       </div>
     </div>
   );
 };
 
-export default function GenericToolShell() {
-  const [currentTool, setCurrentTool] = useState<ToolType>('ratioToFraction');
-  const [mode, setMode] = useState<Mode>('whiteboard');
-  const [difficulty, setDifficulty] = useState<DifficultyLevel>('level1');
-  
-  // Per-tool variable and dropdown states (keyed by tool)
+// ── Print / PDF ───────────────────────────────────────────────────────────────
+
+const handlePrint = (questions: AnyQuestion[], toolName: string, difficulty: string, isDifferentiated: boolean, numColumns: number) => {
+  const FONT_PX = 13, PAD_MM = 3, MARGIN_MM = 12, HEADER_MM = 14, GAP_MM = 2;
+  const PAGE_H_MM = 297 - MARGIN_MM * 2, PAGE_W_MM = 210 - MARGIN_MM * 2;
+  const usableH_MM = PAGE_H_MM - HEADER_MM, diffHdrMM = 7;
+  const cols = isDifferentiated ? 3 : numColumns;
+  const cellW_MM = isDifferentiated ? (PAGE_W_MM - GAP_MM * 2) / 3 : (PAGE_W_MM - GAP_MM * (numColumns - 1)) / numColumns;
+  const difficultyLabel = isDifferentiated ? "Differentiated" : difficulty === "level1" ? "Level 1" : difficulty === "level2" ? "Level 2" : "Level 3";
+  const dateStr = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+  const totalQ = questions.length;
+
+  const renderLine = (line: string): string =>
+    line.split(/(\$[^$]+\$)/g).map(part => {
+      if (part.startsWith("$") && part.endsWith("$")) {
+        const latex = part.slice(1, -1);
+        return `<span class="katex-render${latex.includes("\\frac") ? " frac" : ""}" data-latex="${latex.replace(/"/g, "&quot;")}"></span>`;
+      }
+      return `<span>${part}</span>`;
+    }).join("");
+
+  const katexSpan = (latex: string) =>
+    `<span class="katex-render${latex.includes("\\frac") ? " frac" : ""}" data-latex="${latex.replace(/"/g, "&quot;")}"></span>`;
+
+  const questionToHtml = (q: AnyQuestion, idx: number, showAnswer: boolean): string => {
+    const linesHtml = q.lines.map(l => `<div class="q-line">${renderLine(l)}</div>`).join("");
+    const ansHtml = showAnswer
+      ? `<div class="q-answer">${q.answerLatex ? katexSpan(`= ${q.answerLatex}`) : `= ${q.answer}`}</div>`
+      : "";
+    return `<div class="q-num">${idx + 1})</div><div class="q-lines">${linesHtml}</div>${ansHtml}`;
+  };
+
+  const qHtmlData = questions.map((q, i) => ({ q: questionToHtml(q, i, false), a: questionToHtml(q, i, true), difficulty: q.difficulty }));
+
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+<title>${toolName} — Worksheet</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"><\/script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+@page{size:A4;margin:${MARGIN_MM}mm;}
+body{font-family:"Segoe UI",Arial,sans-serif;background:#fff;}
+@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
+.page{width:${PAGE_W_MM}mm;height:${PAGE_H_MM}mm;overflow:hidden;page-break-after:always;}
+.page:last-child{page-break-after:auto;}
+.page-header{display:flex;justify-content:space-between;align-items:baseline;border-bottom:0.4mm solid #1e3a8a;padding-bottom:1.5mm;margin-bottom:2mm;}
+.page-header h1{font-size:5mm;font-weight:700;color:#1e3a8a;}
+.page-header .meta{font-size:3mm;color:#6b7280;}
+.grid{display:grid;gap:${GAP_MM}mm;}
+.cell,.diff-cell{border:0.3mm solid #d1d5db;border-radius:1mm;padding:${PAD_MM}mm;overflow:hidden;position:relative;}
+.diff-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:${GAP_MM}mm;}
+.diff-col{display:flex;flex-direction:column;gap:${GAP_MM}mm;}
+.diff-header{height:${diffHdrMM}mm;display:flex;align-items:center;justify-content:center;font-size:3mm;font-weight:700;border-radius:1mm;}
+.diff-header.level1{background:#dcfce7;color:#166534;}.diff-header.level2{background:#fef9c3;color:#854d0e;}.diff-header.level3{background:#fee2e2;color:#991b1b;}
+#probe{position:fixed;left:-9999px;top:0;visibility:hidden;font-family:"Segoe UI",Arial,sans-serif;font-size:${FONT_PX}px;line-height:1.5;width:${cellW_MM - PAD_MM * 2}mm;}
+.q-num{position:absolute;top:0;left:0;font-size:${Math.round(FONT_PX * 0.6)}px;font-weight:700;color:#000;padding:1.2mm 1.2mm 1.8mm 1.2mm;border-right:0.3mm solid #000;border-bottom:0.3mm solid #000;}
+.q-lines{font-size:${FONT_PX}px;line-height:1.5;padding-left:6mm;}
+.q-line{display:block;}.q-answer{font-size:${FONT_PX}px;color:#059669;margin-top:1mm;padding-left:6mm;}
+.q-inner{width:100%;}
+.katex-render{font-size:1em;display:inline-block;vertical-align:middle;}
+.katex-render.frac{font-size:1.2em;}
+</style></head><body>
+<div id="probe">${questions.map((q, i) => `<div class="q-inner" id="probe-${i}">${questionToHtml(q, i, true)}</div>`).join("")}</div>
+<div id="pages"></div>
+<script>
+document.addEventListener("DOMContentLoaded",function(){
+  var pxMm=3.7795,PAD=${PAD_MM},GAP=${GAP_MM},usableH=${usableH_MM},diffHdr=${diffHdrMM};
+  var PW=${PAGE_W_MM},cols=${cols},isDiff=${isDifferentiated?"true":"false"};
+  var totalQ=${totalQ},diffLabel="${difficultyLabel}",dateStr="${dateStr}",toolName="${toolName}";
+  var qData=${JSON.stringify(qHtmlData)};
+  var rowH=[];for(var r=1;r<=10;r++)rowH.push((usableH-GAP*(r-1))/r);
+  var probe=document.getElementById("probe");
+  probe.querySelectorAll(".katex-render").forEach(function(el){
+    try{katex.render(el.getAttribute("data-latex"),el,{throwOnError:false,output:"html"});}catch(e){el.textContent=el.getAttribute("data-latex");}
+  });
+  var maxH=0;probe.querySelectorAll(".q-inner").forEach(function(el){if(el.scrollHeight>maxH)maxH=el.scrollHeight;});
+  var needed=maxH/pxMm+PAD*2+8;
+  var diffPC=Math.floor(totalQ/3),diffUH=usableH-diffHdr-GAP,diffRPP=1,diffCH=diffUH;
+  for(var rd=0;rd<10;rd++){var h=(diffUH-GAP*rd)/(rd+1);if(h>=needed){diffRPP=rd+1;diffCH=h;}else break;}
+  var chosenH=rowH[0],rpp=1;
+  for(var r=0;r<rowH.length;r++){if((r+1)*cols>=totalQ&&rowH[r]>=needed){chosenH=rowH[r];rpp=r+1;break;}}
+  var pages=[];
+  if(isDiff){var np=Math.ceil(diffPC/diffRPP);for(var p=0;p<np;p++)pages.push(p);}
+  else{for(var s=0;s<qData.length;s+=rpp*cols)pages.push(qData.slice(s,s+rpp*cols));}
+  var tp=pages.length;
+  function cw(c){return(PW-GAP*(c-1))/c;}
+  function cell(inner,w,h,dc){return'<div class="'+(dc?"diff-cell":"cell")+'" style="width:'+w+'mm;height:'+h+'mm;"><div class="q-inner">'+inner+'</div></div>';}
+  function grid(pd,sa,ch){
+    if(isDiff){var pi=pd,s=pi*diffRPP,e=s+diffRPP,cW=cw(3);
+      var lvls=["level1","level2","level3"],lbls=["Level 1","Level 2","Level 3"];
+      var c3=lvls.map(function(lv,li){var lqs=qData.filter(function(q){return q.difficulty===lv;}).slice(s,e);
+        return'<div class="diff-col"><div class="diff-header '+lv+'">'+lbls[li]+'</div>'+lqs.map(function(q){return cell(sa?q.a:q.q,cW,ch,true);}).join("")+'</div>';
+      }).join("");return'<div class="diff-grid" style="grid-template-columns:repeat(3,'+cW+'mm);">'+c3+'</div>';
+    }
+    var cW=cw(cols),gr=Math.ceil(pd.length/cols);
+    return'<div class="grid" style="grid-template-columns:repeat('+cols+','+cW+'mm);grid-template-rows:repeat('+gr+','+ch+'mm);">'+pd.map(function(it){return cell(sa?it.a:it.q,cW,ch,false);}).join("")+'</div>';
+  }
+  function page(pd,sa,pi){
+    var ch=isDiff?diffCH:chosenH;
+    var lbl=tp>1?(isDiff?diffPC+" per level":totalQ+" questions")+" ("+(pi+1)+"/"+tp+")":(isDiff?diffPC+" per level":totalQ+" questions");
+    return'<div class="page"><div class="page-header"><h1>'+toolName+(sa?" — Answers":"")+'</h1><div class="meta">'+diffLabel+' · '+dateStr+' · '+lbl+'</div></div>'+grid(pd,sa,ch)+'</div>';
+  }
+  var html=pages.map(function(pg,i){return page(pg,false,i);}).join("")+pages.map(function(pg,i){return page(pg,true,i);}).join("");
+  document.getElementById("pages").innerHTML=html;
+  document.getElementById("pages").querySelectorAll(".katex-render").forEach(function(el){
+    try{katex.render(el.getAttribute("data-latex"),el,{throwOnError:false,output:"html"});}catch(e){el.textContent=el.getAttribute("data-latex");}
+  });
+  probe.remove();setTimeout(function(){window.print();},300);
+});
+<\/script></body></html>`;
+
+  const win = window.open("", "_blank");
+  if (!win) { alert("Please allow popups to use PDF export."); return; }
+  win.document.write(html); win.document.close();
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MAIN APP
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export default function App() {
+  const navigate = useNavigate();
+  const toolKeys = Object.keys(TOOL_CONFIG.tools) as ToolType[];
+  const [currentTool, setCurrentTool] = useState<ToolType>("ratioToFraction");
+  const [mode, setMode] = useState<"whiteboard" | "single" | "worksheet">("whiteboard");
+  const [difficulty, setDifficulty] = useState<DifficultyLevel>("level1");
+
   const [toolVariables, setToolVariables] = useState<Record<string, Record<string, boolean>>>(() => {
-    const initial: Record<string, Record<string, boolean>> = {};
-    Object.entries(TOOL_CONFIG.tools).forEach(([toolKey, tool]: [string, ToolSettings]) => {
-      initial[toolKey] = {};
-      tool.variables.forEach((v: VariableConfig) => {
-        initial[toolKey][v.key] = v.defaultValue;
-      });
+    const init: Record<string, Record<string, boolean>> = {};
+    Object.keys(TOOL_CONFIG.tools).forEach(k => {
+      init[k] = {};
+      TOOL_CONFIG.tools[k].variables.forEach(v => { init[k][v.key] = v.defaultValue; });
     });
-    return initial;
+    return init;
   });
-  
+
   const [toolDropdowns, setToolDropdowns] = useState<Record<string, string>>(() => {
-    const initial: Record<string, string> = {};
-    Object.entries(TOOL_CONFIG.tools).forEach(([toolKey, tool]: [string, ToolSettings]) => {
-      if (tool.dropdown) {
-        initial[toolKey] = tool.dropdown.defaultValue;
-      }
+    const init: Record<string, string> = {};
+    Object.keys(TOOL_CONFIG.tools).forEach(k => {
+      const t = TOOL_CONFIG.tools[k];
+      (["level1", "level2", "level3"] as DifficultyLevel[]).forEach(lv => {
+        const dd = t.difficultySettings?.[lv]?.dropdown ?? t.dropdown;
+        if (dd) init[`${k}__${lv}`] = dd.defaultValue;
+      });
     });
-    return initial;
+    return init;
   });
-  
 
-  const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
-  const [showWhiteboardAnswer, setShowWhiteboardAnswer] = useState<boolean>(false);
-  const [showAnswer, setShowAnswer] = useState<boolean>(false);
-  
+  const [levelVariables, setLevelVariables] = useState<Record<string, Record<string, boolean>>>({ level1: {}, level2: {}, level3: {} });
+  const [levelDropdowns, setLevelDropdowns] = useState<Record<string, string>>(() => {
+    const init: Record<string, string> = {};
+    const firstTool = Object.keys(TOOL_CONFIG.tools)[0];
+    const t = TOOL_CONFIG.tools[firstTool];
+    (["level1", "level2", "level3"] as DifficultyLevel[]).forEach(lv => {
+      const dd = t.difficultySettings?.[lv]?.dropdown ?? t.dropdown;
+      if (dd) init[lv] = dd.defaultValue;
+    });
+    return init;
+  });
 
-  const [numQuestions, setNumQuestions] = useState<number>(5);
-  const [worksheet, setWorksheet] = useState<Question[]>([]);
-  const [showWorksheetAnswers, setShowWorksheetAnswers] = useState<boolean>(false);
-  const [isDifferentiated, setIsDifferentiated] = useState<boolean>(false);
-  const [numColumns, setNumColumns] = useState<number>(2);
-  const [worksheetFontSize, setWorksheetFontSize] = useState<number>(1);
-  
-  const [colorScheme, setColorScheme] = useState<ColorScheme>('default');
-  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
-  
-  const getQuestionBg = (): string => {
-    if (colorScheme === 'blue') return '#D1E7F8';
-    if (colorScheme === 'pink') return '#F8D1E7';
-    if (colorScheme === 'yellow') return '#F8F4D1';
-    return '#ffffff';
-  };
-  
-  const getStepBg = (): string => {
-    if (colorScheme === 'blue') return '#B3D9F2';
-    if (colorScheme === 'pink') return '#F2B3D9';
-    if (colorScheme === 'yellow') return '#F2EBB3';
-    return '#f3f4f6';
-  };
-  
-  const getWhiteboardWorkingBg = (): string => getStepBg();
-  const getFinalAnswerBg = (): string => getStepBg();
-  
-  // Get background for substantial question boxes (uses darker shade from color scheme)
-  const getQuestionBoxBg = (): string => getStepBg();
-  
+  const [currentQuestion, setCurrentQuestion] = useState<AnyQuestion>(() => generateQuestion("ratioToFraction", "level1", {}, ""));
+  const [showWhiteboardAnswer, setShowWhiteboardAnswer] = useState(false);
+  const [showAnswer, setShowAnswer] = useState(false);
+  const [numQuestions, setNumQuestions] = useState(5);
+  const [numColumns, setNumColumns] = useState(2);
+  const [worksheet, setWorksheet] = useState<AnyQuestion[]>([]);
+  const [showWorksheetAnswers, setShowWorksheetAnswers] = useState(false);
+  const [isDifferentiated, setIsDifferentiated] = useState(false);
+  const [displayFontSize, setDisplayFontSize] = useState(2);
+  const [worksheetFontSize, setWorksheetFontSize] = useState(1);
+  const [colorScheme, setColorScheme] = useState("default");
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isInfoOpen, setIsInfoOpen] = useState(false);
 
-  
-  const getDifficultyButtonClass = (idx: number, isActive: boolean): string => {
-    if (isActive) {
-      return idx === 0 ? 'bg-green-600 text-white' 
-           : idx === 1 ? 'bg-yellow-600 text-white' 
-           : 'bg-red-600 text-white';
-    }
-    return idx === 0 ? 'bg-white text-green-600 border-2 border-green-600' 
-         : idx === 1 ? 'bg-white text-yellow-600 border-2 border-yellow-600' 
-         : 'bg-white text-red-600 border-2 border-red-600';
-  };
-  
+  const [presenterMode, setPresenterMode] = useState(false);
+  const [wbFullscreen, setWbFullscreen] = useState(false);
+  const [camDevices, setCamDevices] = useState<MediaDeviceInfo[]>([]);
+  const [currentCamId, setCurrentCamId] = useState<string | null>(null);
+  const [camError, setCamError] = useState<string | null>(null);
+  const [camDropdownOpen, setCamDropdownOpen] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const camDropdownRef = useRef<HTMLDivElement>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const didLongPress = useRef(false);
 
-  
-  const handleNewQuestion = (): void => {
-    const variables = toolVariables[currentTool] || {};
-    const dropdownValue = toolDropdowns[currentTool] || '';
-    const q = generateQuestion(currentTool, difficulty, variables, dropdownValue);
-    setCurrentQuestion(q);
-    setShowWhiteboardAnswer(false);
-    setShowAnswer(false);
-  };
-  
-  const handleShowAnswer = (): void => {
-    if (mode === 'whiteboard') {
-      setShowWhiteboardAnswer(!showWhiteboardAnswer);
-    } else {
-      setShowAnswer(!showAnswer);
-    }
-  };
-  
+  useEffect(() => { loadKaTeX(); }, []);
 
-  
-  const handleGenerateWorksheet = (): void => {
-    const usedKeys = new Set<string>();
-    const questions: Question[] = [];
-    const variables = toolVariables[currentTool] || {};
-    const dropdownValue = toolDropdowns[currentTool] || '';
-    
+  const stopStream = useCallback(() => {
+    if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null; }
+    if (videoRef.current) videoRef.current.srcObject = null;
+  }, []);
+
+  const startCam = useCallback(async (deviceId?: string) => {
+    stopStream(); setCamError(null);
+    try {
+      let tid = deviceId;
+      if (!tid) {
+        const tmp = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        tmp.getTracks().forEach(t => t.stop());
+        const all = await navigator.mediaDevices.enumerateDevices();
+        const ext = all.filter(d => d.kind === "videoinput").find(d => d.label && !/facetime|built.?in|integrated|internal|front|rear/i.test(d.label));
+        if (ext) tid = ext.deviceId;
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({ video: tid ? { deviceId: { exact: tid } } : true, audio: false });
+      streamRef.current = stream;
+      if (videoRef.current) videoRef.current.srcObject = stream;
+      setCurrentCamId(stream.getVideoTracks()[0].getSettings().deviceId ?? null);
+      setCamDevices((await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === "videoinput"));
+    } catch (e: unknown) { setCamError((e instanceof Error ? e.message : null) ?? "Camera unavailable"); }
+  }, [stopStream]);
+
+  useEffect(() => { if (presenterMode) startCam(); else stopStream(); }, [presenterMode]);
+  useEffect(() => { if (presenterMode && streamRef.current && videoRef.current) videoRef.current.srcObject = streamRef.current; }, [wbFullscreen]);
+  useEffect(() => {
+    if (!camDropdownOpen) return;
+    const h = (e: MouseEvent) => { if (camDropdownRef.current && !camDropdownRef.current.contains(e.target as Node)) setCamDropdownOpen(false); };
+    document.addEventListener("mousedown", h); return () => document.removeEventListener("mousedown", h);
+  }, [camDropdownOpen]);
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => { if (e.key === "Escape") { setPresenterMode(false); setWbFullscreen(false); } };
+    document.addEventListener("keydown", h); return () => document.removeEventListener("keydown", h);
+  }, []);
+
+  const qBg = getQuestionBg(colorScheme), stepBg = getStepBg(colorScheme);
+  const isDefaultScheme = colorScheme === "default";
+  const fsToolbarBg = isDefaultScheme ? "#ffffff" : stepBg;
+  const fsQuestionBg = isDefaultScheme ? "#ffffff" : qBg;
+  const fsWorkingBg = isDefaultScheme ? "#f5f3f0" : qBg;
+
+  const getToolSettings = () => TOOL_CONFIG.tools[currentTool];
+  const getDropdownConfig = () => getToolSettings().difficultySettings?.[difficulty]?.dropdown ?? getToolSettings().dropdown;
+  const getVariablesConfig = () => getToolSettings().difficultySettings?.[difficulty]?.variables ?? getToolSettings().variables;
+  const getDropdownValue = () => toolDropdowns[`${currentTool}__${difficulty}`] ?? getDropdownConfig()?.defaultValue ?? "";
+  const setDropdownValue = (v: string) => setToolDropdowns(p => ({ ...p, [`${currentTool}__${difficulty}`]: v }));
+  const setVariableValue = (k: string, v: boolean) => setToolVariables(p => ({ ...p, [currentTool]: { ...p[currentTool], [k]: v } }));
+  const handleLevelVarChange = (lv: string, k: string, v: boolean) => setLevelVariables(p => ({ ...p, [lv]: { ...p[lv], [k]: v } }));
+  const handleLevelDDChange = (lv: string, v: string) => setLevelDropdowns(p => ({ ...p, [lv]: v }));
+
+  const handleNewQuestion = () => {
+    setCurrentQuestion(generateQuestion(currentTool, difficulty, toolVariables[currentTool] || {}, getDropdownValue()));
+    setShowWhiteboardAnswer(false); setShowAnswer(false);
+  };
+
+  const handleGenerateWorksheet = () => {
+    const usedKeys = new Set<string>(); const questions: AnyQuestion[] = [];
     if (isDifferentiated) {
-      // Generate questions for each level
-      const levels: DifficultyLevel[] = ['level1', 'level2', 'level3'];
-      levels.forEach((level: DifficultyLevel) => {
-        for (let i = 0; i < numQuestions; i++) {
-          const q = generateUniqueQuestion(currentTool, level, variables, dropdownValue, usedKeys);
-          questions.push(q);
-        }
+      (["level1", "level2", "level3"] as DifficultyLevel[]).forEach(lv => {
+        const t = getToolSettings();
+        const dd = t.difficultySettings?.[lv]?.dropdown ?? t.dropdown;
+        const vars = levelVariables[lv] ?? {};
+        const ddVal = levelDropdowns[lv] ?? (dd?.defaultValue ?? "");
+        for (let i = 0; i < numQuestions; i++) questions.push(generateUniqueQ(currentTool, lv, vars, ddVal, usedKeys));
       });
     } else {
-      // Generate questions for current difficulty only
-      for (let i = 0; i < numQuestions; i++) {
-        const q = generateUniqueQuestion(currentTool, difficulty, variables, dropdownValue, usedKeys);
-        questions.push(q);
-      }
+      for (let i = 0; i < numQuestions; i++) questions.push(generateUniqueQ(currentTool, difficulty, toolVariables[currentTool] || {}, getDropdownValue(), usedKeys));
     }
-    
-    setWorksheet(questions);
-    setShowWorksheetAnswers(false);
+    setWorksheet(questions); setShowWorksheetAnswers(false);
   };
-  
 
-  
-  const fontSizes: string[] = ['text-xl', 'text-2xl', 'text-3xl', 'text-4xl'];
-  
-  const canIncreaseFontSize = (): boolean => worksheetFontSize < fontSizes.length - 1;
-  const canDecreaseFontSize = (): boolean => worksheetFontSize > 0;
-  
-  const increaseFontSize = (): void => {
-    if (canIncreaseFontSize()) {
-      setWorksheetFontSize(worksheetFontSize + 1);
-    }
+  const stdQOProps = {
+    variables: getVariablesConfig() ?? [], variableValues: toolVariables[currentTool] || {},
+    onVariableChange: setVariableValue, dropdown: getDropdownConfig() ?? null,
+    dropdownValue: getDropdownValue(), onDropdownChange: setDropdownValue,
   };
-  
-  const decreaseFontSize = (): void => {
-    if (canDecreaseFontSize()) {
-      setWorksheetFontSize(worksheetFontSize - 1);
-    }
-  };
-  
+  const diffQOProps = { toolSettings: getToolSettings(), levelVariables, onLevelVariableChange: handleLevelVarChange, levelDropdowns, onLevelDropdownChange: handleLevelDDChange };
+  const qoEl = (isDiff = false) => isDiff ? <DiffQOPopover {...diffQOProps} /> : <StandardQOPopover {...stdQOProps} />;
 
-  
-  const getCurrentToolSettings = (): ToolSettings => {
-    return TOOL_CONFIG.tools[currentTool];
-  };
-  
-  const toolNames: Record<string, string> = Object.fromEntries(
-    Object.entries(TOOL_CONFIG.tools).map(([key, value]: [string, ToolSettings]) => [key, value.name])
-  );
-  
-  // Get the current dropdown config (accounting for difficulty-specific settings)
-  const getCurrentDropdownConfig = (): DropdownConfig | null => {
-    const toolSettings = getCurrentToolSettings();
-    if (toolSettings.difficultySettings?.[difficulty]?.dropdown) {
-      return toolSettings.difficultySettings[difficulty].dropdown!;
-    }
-    return toolSettings.dropdown;
-  };
-  
-  // Get the current variables config (accounting for difficulty-specific settings)
-  const getCurrentVariablesConfig = (): VariableConfig[] => {
-    const toolSettings = getCurrentToolSettings();
-    if (toolSettings.difficultySettings?.[difficulty]?.variables) {
-      return toolSettings.difficultySettings[difficulty].variables!;
-    }
-    return toolSettings.variables;
-  };
-  
-  // Get current variable value
-  const getVariableValue = (key: string): boolean => {
-    return toolVariables[currentTool]?.[key] ?? false;
-  };
-  
-  // Set variable value
-  const setVariableValue = (key: string, value: boolean): void => {
-    setToolVariables((prev: Record<string, Record<string, boolean>>) => ({
-      ...prev,
-      [currentTool]: {
-        ...prev[currentTool],
-        [key]: value,
-      },
-    }));
-  };
-  
-  // Get current dropdown value
-  const getDropdownValue = (): string => {
-    return toolDropdowns[currentTool] ?? '';
-  };
-  
-  // Set dropdown value
-  const setDropdownValue = (value: string): void => {
-    setToolDropdowns((prev: Record<string, string>) => ({
-      ...prev,
-      [currentTool]: value,
-    }));
-  };
-  
+  useEffect(() => { if (mode !== "worksheet") handleNewQuestion(); }, [difficulty, currentTool]);
 
-  
-  const colorConfig: Record<string, { bg: string; border: string; text: string }> = {
-    level1: { bg: 'bg-green-50', border: 'border-green-500', text: 'text-green-700' },
-    level2: { bg: 'bg-yellow-50', border: 'border-yellow-500', text: 'text-yellow-700' },
-    level3: { bg: 'bg-red-50', border: 'border-red-500', text: 'text-red-700' },
-  };
-  
+  const displayFontSizes = ["text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl", "text-6xl"];
+  const canDisplayIncrease = displayFontSize < displayFontSizes.length - 1, canDisplayDecrease = displayFontSize > 0;
+  const fontSizes = ["text-base", "text-lg", "text-xl", "text-2xl", "text-3xl"];
+  const canIncrease = worksheetFontSize < fontSizes.length - 1, canDecrease = worksheetFontSize > 0;
 
-  
-  const renderControlBar = (): JSX.Element => {
-    const currentVariables = getCurrentVariablesConfig();
-    const currentDropdown = getCurrentDropdownConfig();
-    
-    if (mode === 'worksheet') {
-      return (
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-          {/* Line 1: Questions + Differentiated */}
-          <div className="flex justify-center items-center gap-6 mb-4">
-            <div className="flex items-center gap-3">
-              <label className="text-lg font-semibold" style={{ color: '#000000' }}>Questions:</label>
-              <input 
-                type="number" 
-                min="1" 
-                max="20" 
-                value={numQuestions}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNumQuestions(Math.max(1, Math.min(20, parseInt(e.target.value) || 5)))}
-                className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-lg"
-              />
-            </div>
-            <div className="flex items-center gap-3">
-              <input 
-                type="checkbox" 
-                id="diff" 
-                checked={isDifferentiated}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setIsDifferentiated(e.target.checked)} 
-                className="w-5 h-5"
-              />
-              <label htmlFor="diff" className="text-lg font-semibold" style={{ color: '#000000' }}>Differentiated</label>
-            </div>
-          </div>
-          
-          {/* Line 2: Difficulty + Columns (hidden if differentiated) */}
-          {!isDifferentiated && (
-            <div className="flex justify-center items-center gap-6 mb-4">
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-semibold" style={{ color: '#000000' }}>Difficulty:</span>
-                <div className="flex gap-2">
-                  {(['level1', 'level2', 'level3'] as const).map((lvl: DifficultyLevel, idx: number) => (
-                    <button 
-                      key={lvl} 
-                      onClick={() => setDifficulty(lvl)}
-                      className={'px-4 py-2 rounded-lg font-bold text-sm w-24 ' + getDifficultyButtonClass(idx, difficulty === lvl)}
-                    >
-                      Level {idx + 1}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <label className="text-lg font-semibold" style={{ color: '#000000' }}>Columns:</label>
-                <input 
-                  type="number" 
-                  min="1" 
-                  max="4" 
-                  value={numColumns}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNumColumns(Math.max(1, Math.min(4, parseInt(e.target.value) || 2)))}
-                  className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-lg"
-                />
-              </div>
-            </div>
-          )}
-          
-          {/* Line 3: Variables + Dropdown (conditional per tool and difficulty) */}
-          {(currentVariables.length > 0 || currentDropdown) && (
-            <div className="flex justify-center items-center gap-6 mb-4">
-              {currentVariables.length > 0 && (
-                <div className="flex flex-col gap-1">
-                  {currentVariables.map((variable: VariableConfig) => (
-                    <label key={variable.key} className="flex items-center gap-2 cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        checked={getVariableValue(variable.key)} 
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setVariableValue(variable.key, e.target.checked)} 
-                        className="w-4 h-4"
-                      />
-                      <span className="text-sm font-semibold" style={{ color: '#000000' }}>{variable.label}</span>
-                    </label>
-                  ))}
-                </div>
-              )}
-              {currentDropdown && (
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-semibold" style={{ color: '#000000' }}>{currentDropdown.label}:</span>
-                  <select 
-                    value={getDropdownValue()} 
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setDropdownValue(e.target.value)}
-                    className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-semibold bg-white"
-                  >
-                    {currentDropdown.options.map((opt: DropdownOption) => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-            </div>
-          )}
-          
-          {/* Line 4: Action Buttons */}
-          <div className="flex justify-center gap-4">
-            <button 
-              onClick={handleGenerateWorksheet}
-              className="px-6 py-3 bg-blue-900 text-white rounded-lg font-semibold flex items-center gap-2 hover:bg-blue-800"
-            >
-              <RefreshCw size={20} /> Generate Worksheet
-            </button>
-            {worksheet.length > 0 && (
-              <button 
-                onClick={() => setShowWorksheetAnswers(!showWorksheetAnswers)}
-                className="px-6 py-3 bg-blue-900 text-white rounded-lg font-semibold flex items-center gap-2 hover:bg-blue-800"
-              >
-                <Eye size={20} /> {showWorksheetAnswers ? 'Hide Answers' : 'Show Answers'}
-              </button>
-            )}
-          </div>
-        </div>
-      );
-    }
-    
-    // Whiteboard / Worked Example Control Bar
+  const renderQCell = (q: AnyQuestion, idx: number, bgOverride?: string) => {
+    const bg = bgOverride ?? stepBg, fsz = fontSizes[worksheetFontSize];
+    const numEl = <span style={{ position: "absolute", top: 0, left: 0, fontSize: "0.65em", fontWeight: 700, color: "#000", lineHeight: 1, padding: "5px 5px 7px 5px", borderRight: "1px solid #000", borderBottom: "1px solid #000" }}>{idx + 1})</span>;
     return (
+      <div className="rounded-lg p-3 shadow" style={{ backgroundColor: bg, height: "100%", boxSizing: "border-box", position: "relative" }}>
+        {numEl}
+        <div className={`${fsz} font-semibold w-full`} style={{ color: "#000", lineHeight: 1.6, paddingLeft: "1.5rem" }}>
+          {q.lines.map((line, i) => <div key={i}><InlineMath text={line} /></div>)}
+        </div>
+        {showWorksheetAnswers && (
+          <div className={`${fsz} font-semibold mt-1`} style={{ color: "#059669", paddingLeft: "1.5rem" }}>
+            {q.answerLatex ? <MathRenderer latex={`= ${q.answerLatex}`} /> : <span>= {q.answer}</span>}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderControlBar = () => {
+    if (mode === "worksheet") return (
       <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            {/* Difficulty */}
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-semibold" style={{ color: '#000000' }}>Difficulty:</span>
-              <div className="flex gap-2">
-                {(['level1', 'level2', 'level3'] as const).map((lvl: DifficultyLevel, idx: number) => (
-                  <button 
-                    key={lvl} 
-                    onClick={() => setDifficulty(lvl)}
-                    className={'px-4 py-2 rounded-lg font-bold text-sm w-24 ' + getDifficultyButtonClass(idx, difficulty === lvl)}
-                  >
-                    Level {idx + 1}
-                  </button>
-                ))}
-              </div>
-            </div>
-            
-            {/* Variables (per tool and difficulty) */}
-            {currentVariables.length > 0 && (
-              <div className="flex flex-col gap-1">
-                {currentVariables.map((variable: VariableConfig) => (
-                  <label key={variable.key} className="flex items-center gap-2 cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      checked={getVariableValue(variable.key)} 
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setVariableValue(variable.key, e.target.checked)} 
-                      className="w-4 h-4"
-                    />
-                    <span className="text-sm font-semibold" style={{ color: '#000000' }}>{variable.label}</span>
-                  </label>
-                ))}
-              </div>
-            )}
-            
-            {/* Dropdown (per tool and difficulty) */}
-            {currentDropdown && (
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-semibold" style={{ color: '#000000' }}>{currentDropdown.label}:</span>
-                <select 
-                  value={getDropdownValue()} 
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setDropdownValue(e.target.value)}
-                  className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-semibold bg-white"
-                >
-                  {currentDropdown.options.map((opt: DropdownOption) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-            )}
+        <div className="flex justify-center items-center gap-6 mb-4">
+          <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm">
+            {([["level1", "Level 1", "bg-green-600"], ["level2", "Level 2", "bg-yellow-500"], ["level3", "Level 3", "bg-red-600"]] as const).map(([val, label, col]) => (
+              <button key={val} onClick={() => { setDifficulty(val as DifficultyLevel); setIsDifferentiated(false); }}
+                className={`px-5 py-2 font-bold text-base transition-colors ${!isDifferentiated && difficulty === val ? `${col} text-white` : "bg-white text-gray-500 hover:bg-gray-50"}`}>{label}</button>
+            ))}
           </div>
-          
-          {/* Action Buttons */}
-          <div className="flex gap-3">
-            <button 
-              onClick={handleNewQuestion}
-              className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-lg hover:bg-blue-800 transition-colors flex items-center justify-center gap-2 w-52"
-            >
-              <RefreshCw size={18} /> New Question
-            </button>
-            <button 
-              onClick={handleShowAnswer}
-              className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-lg hover:bg-blue-800 transition-colors flex items-center justify-center gap-2 w-52"
-            >
-              <Eye size={18} /> {(mode === 'whiteboard' ? showWhiteboardAnswer : showAnswer) ? 'Hide Answer' : 'Show Answer'}
-            </button>
+          <button onClick={() => setIsDifferentiated(!isDifferentiated)}
+            className={`px-6 py-2 rounded-xl font-bold text-base shadow-sm border-2 transition-colors ${isDifferentiated ? "bg-blue-900 text-white border-blue-900" : "bg-white text-gray-600 border-gray-300 hover:border-blue-900 hover:text-blue-900"}`}>
+            Differentiated
+          </button>
+        </div>
+        <div className="flex justify-center items-center gap-6 mb-4">
+          {qoEl(isDifferentiated)}
+          <div className="flex items-center gap-3">
+            <label className="text-base font-semibold text-gray-700">Questions:</label>
+            <input type="number" min="1" max="20" value={numQuestions}
+              onChange={e => setNumQuestions(Math.max(1, Math.min(20, parseInt(e.target.value) || 5)))}
+              className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-base font-semibold text-center" />
           </div>
+          <div className="flex items-center gap-3">
+            <label className="text-base font-semibold text-gray-700">Columns:</label>
+            <input type="number" min="1" max="4" value={isDifferentiated ? 3 : numColumns}
+              onChange={e => { if (!isDifferentiated) setNumColumns(Math.max(1, Math.min(4, parseInt(e.target.value) || 2))); }}
+              disabled={isDifferentiated}
+              className={`w-20 px-4 py-2 border-2 rounded-lg text-base font-semibold text-center ${isDifferentiated ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed" : "border-gray-300 bg-white"}`} />
+          </div>
+        </div>
+        <div className="flex justify-center items-center gap-4">
+          <button onClick={handleGenerateWorksheet} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18} /> Generate</button>
+          {worksheet.length > 0 && <>
+            <button onClick={() => setShowWorksheetAnswers(!showWorksheetAnswers)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><Eye size={18} /> {showWorksheetAnswers ? "Hide Answers" : "Show Answers"}</button>
+            <button onClick={() => handlePrint(worksheet, TOOL_CONFIG.tools[currentTool].name, difficulty, isDifferentiated, numColumns)}
+              className="px-6 py-2 bg-green-700 text-white rounded-xl font-bold text-base shadow-sm hover:bg-green-800 flex items-center gap-2"><Printer size={18} /> Print / PDF</button>
+          </>}
         </div>
       </div>
     );
-  };
-  
-
-  
-  const renderWhiteboardMode = (): JSX.Element => {
-    if (TOOL_CONFIG.useGraphicalLayout) {
-      return (
-        <div className="rounded-xl shadow-2xl p-8" style={{ backgroundColor: getQuestionBg() }}>
-          <div className="flex gap-6">
-            {/* Diagram Area */}
-            <div 
-              className="rounded-xl flex items-center justify-center"
-              style={{ width: '450px', height: '500px', backgroundColor: getStepBg() }}
-            >
-              {renderDiagram(currentQuestion, 400)}
-            </div>
-            {/* Working Area */}
-            <div 
-              className="flex-1 rounded-xl p-6" 
-              style={{ minHeight: '500px', backgroundColor: getStepBg() }}
-            >
-              {currentQuestion && (
-                <div className="text-center mb-4">
-                  <span className="text-4xl font-bold" style={{ color: '#000000' }}>
-                    {currentQuestion.display}
-                  </span>
-                  {showWhiteboardAnswer && (
-                    <span className="text-4xl font-bold ml-4" style={{ color: '#166534' }}>
-                      = {currentQuestion.answer}
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      );
-    }
-    
     return (
-      <div className="rounded-xl shadow-2xl p-8" style={{ backgroundColor: getQuestionBg() }}>
-        <div className="text-center">
-          {currentQuestion ? (
-            <>
-              <span className="text-6xl font-bold" style={{ color: '#000000' }} dangerouslySetInnerHTML={{ __html: currentQuestion.display }}></span>
-              {showWhiteboardAnswer && (
-                <span className="text-6xl font-bold ml-4" style={{ color: '#166534' }} dangerouslySetInnerHTML={{ __html: `= ${currentQuestion.answer}` }}></span>
-              )}
-            </>
-          ) : (
-            <span className="text-4xl text-gray-400">Generate question</span>
-          )}
+      <div className="px-5 py-4 rounded-xl" style={{ backgroundColor: qBg }}>
+        <div className="flex items-center justify-between gap-4">
+          <DifficultyToggle value={difficulty} onChange={v => setDifficulty(v as DifficultyLevel)} />
+          {qoEl()}
+          <div className="flex gap-3 items-center">
+            <button onClick={handleNewQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18} /> New Question</button>
+            <button onClick={() => mode === "whiteboard" ? setShowWhiteboardAnswer(!showWhiteboardAnswer) : setShowAnswer(!showAnswer)}
+              className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
+              <Eye size={18} /> {(mode === "whiteboard" ? showWhiteboardAnswer : showAnswer) ? "Hide Answer" : "Show Answer"}
+            </button>
+          </div>
         </div>
-        <div 
-          className="rounded-xl mt-8" 
-          style={{ height: '500px', backgroundColor: getWhiteboardWorkingBg() }}
-        ></div>
       </div>
     );
   };
-  
 
-  
-  const renderWorkedExampleMode = (): JSX.Element => {
-    if (TOOL_CONFIG.useGraphicalLayout) {
-      return (
-        <div className="overflow-y-auto" style={{ height: '120vh' }}>
-          <div className="rounded-xl shadow-lg p-8 w-full" style={{ backgroundColor: getQuestionBg() }}>
-            <div className="flex gap-6">
-              {/* Diagram Area */}
-              <div 
-                className="rounded-xl flex items-center justify-center"
-                style={{ width: '450px', height: '500px', backgroundColor: getStepBg() }}
-              >
-                {renderDiagram(currentQuestion, 400)}
-              </div>
-              {/* Working Area */}
-              <div className="flex-1">
-                {currentQuestion ? (
-                  <>
-                    {/* Question */}
-                    <div className="text-center mb-6">
-                      <span className="text-4xl font-bold" style={{ color: '#000000' }} dangerouslySetInnerHTML={{ __html: currentQuestion.display }}></span>
+  const renderWhiteboard = () => {
+    const fbtn = (en: boolean) => ({ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: en ? "pointer" : "not-allowed", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", opacity: en ? 1 : 0.35 });
+    const fsToolbar = (
+      <div style={{ background: fsToolbarBg, borderBottom: "2px solid #000", padding: "16px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexShrink: 0, zIndex: 210 }}>
+        <DifficultyToggle value={difficulty} onChange={v => setDifficulty(v as DifficultyLevel)} />
+        {qoEl()}
+        <div style={{ display: "flex", gap: 12 }}>
+          <button onClick={handleNewQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18} /> New Question</button>
+          <button onClick={() => setShowWhiteboardAnswer(a => !a)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><Eye size={18} /> {showWhiteboardAnswer ? "Hide Answer" : "Show Answer"}</button>
+        </div>
+      </div>
+    );
+    const qBox = (isFS: boolean) => (
+      <div style={{ position: "relative", width: isFS ? "45%" : "520px", height: "100%", backgroundColor: isFS ? fsQuestionBg : stepBg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 40, boxSizing: "border-box", flexShrink: 0, gap: 16, overflowY: "auto" }}>
+        <div style={{ position: "absolute", top: 10, right: 10, display: "flex", gap: 6 }}>
+          <button style={fbtn(canDisplayDecrease)} onClick={() => canDisplayDecrease && setDisplayFontSize(f => f - 1)}><ChevronDown size={16} color="#6b7280" /></button>
+          <button style={fbtn(canDisplayIncrease)} onClick={() => canDisplayIncrease && setDisplayFontSize(f => f + 1)}><ChevronUp size={16} color="#6b7280" /></button>
+        </div>
+        <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
+        {showWhiteboardAnswer && <div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}><AnswerDisplay q={currentQuestion} /></div>}
+      </div>
+    );
+    const rPanel = (isFS: boolean) => (
+      <div style={{ flex: isFS ? "none" : 1, width: isFS ? "55%" : undefined, height: "100%", position: "relative", overflow: "hidden", backgroundColor: presenterMode ? "#000" : (isFS ? fsWorkingBg : stepBg) }} className={isFS ? "" : "flex-1 rounded-xl"}>
+        {presenterMode && (<><video ref={videoRef} autoPlay playsInline muted style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />{camError && <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", padding: "2rem", textAlign: "center", zIndex: 1 }}>{camError}</div>}</>)}
+        <div style={{ position: "absolute", top: 10, right: 10, display: "flex", gap: 6, zIndex: 20 }}>
+          {presenterMode ? (
+            <div style={{ position: "relative" }} ref={camDropdownRef}>
+              <button title="Exit Visualiser (hold for cameras)"
+                onMouseDown={() => { didLongPress.current = false; longPressTimer.current = setTimeout(() => { didLongPress.current = true; setCamDropdownOpen(o => !o); }, 500); }}
+                onMouseUp={() => { if (longPressTimer.current) clearTimeout(longPressTimer.current); if (!didLongPress.current) setPresenterMode(false); }}
+                onMouseLeave={() => { if (longPressTimer.current) clearTimeout(longPressTimer.current); }}
+                style={{ background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Video size={16} color="rgba(255,255,255,0.85)" />
+              </button>
+              {camDropdownOpen && (
+                <div style={{ position: "absolute", top: 40, right: 0, background: "rgba(12,12,12,0.96)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, minWidth: 200, overflow: "hidden", zIndex: 30 }}>
+                  <div style={{ padding: "6px 14px", fontSize: "0.55rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(255,255,255,0.25)" }}>Camera</div>
+                  {camDevices.map((d, i) => (
+                    <div key={d.deviceId} onClick={() => { setCamDropdownOpen(false); if (d.deviceId !== currentCamId) startCam(d.deviceId); }}
+                      style={{ padding: "10px 14px", fontSize: "0.75rem", color: d.deviceId === currentCamId ? "#60a5fa" : "rgba(255,255,255,0.65)", cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
+                      <div style={{ width: 5, height: 5, borderRadius: "50%", background: d.deviceId === currentCamId ? "#60a5fa" : "transparent", flexShrink: 0 }} />{d.label || `Camera ${i + 1}`}
                     </div>
-                    
-                    {showAnswer && (
-                      <>
-                        {/* Working Steps */}
-                        <div className="space-y-4">
-                          {currentQuestion.working.map((step: WorkingStep, i: number) => (
-                            <div key={i} className="rounded-xl p-6" style={{ backgroundColor: getStepBg() }}>
-                              <h4 className="text-xl font-bold mb-2" style={{ color: '#000000' }}>Step {i + 1}</h4>
-                              <p className="text-3xl" style={{ color: '#000000' }}>{step.content}</p>
-                            </div>
-                          ))}
-                        </div>
-                        
-                        {/* Final Answer */}
-                        <div className="rounded-xl p-6 text-center mt-4" style={{ backgroundColor: getFinalAnswerBg() }}>
-                          <span className="text-5xl font-bold" style={{ color: '#166534' }} dangerouslySetInnerHTML={{ __html: `= ${currentQuestion.answer}` }}></span>
-                        </div>
-                      </>
-                    )}
-                  </>
-                ) : (
-                  <div className="text-center text-gray-400 text-2xl">
-                    Generate question
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-    }
-    
-    return (
-      <div className="overflow-y-auto" style={{ height: '120vh' }}>
-        <div className="rounded-xl shadow-lg p-8 w-full" style={{ backgroundColor: getQuestionBg() }}>
-          {currentQuestion ? (
-            <>
-              {/* Question */}
-              <div className="text-center">
-                <span className="text-6xl font-bold" style={{ color: '#000000' }} dangerouslySetInnerHTML={{ __html: currentQuestion.display }}></span>
-              </div>
-              
-              {showAnswer && (
-                <>
-                  {/* Working Steps */}
-                  <div className="space-y-4 mt-8">
-                    {currentQuestion.working.map((step: WorkingStep, i: number) => (
-                      <div key={i} className="rounded-xl p-6" style={{ backgroundColor: getStepBg() }}>
-                        <h4 className="text-xl font-bold mb-2" style={{ color: '#000000' }}>Step {i + 1}</h4>
-                        <p className="text-3xl" style={{ color: '#000000' }} dangerouslySetInnerHTML={{ __html: step.content }}></p>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {/* Final Answer */}
-                  <div className="rounded-xl p-6 text-center mt-4" style={{ backgroundColor: getFinalAnswerBg() }}>
-                    <span className="text-5xl font-bold" style={{ color: '#166534' }} dangerouslySetInnerHTML={{ __html: `= ${currentQuestion.answer}` }}></span>
-                  </div>
-                </>
+                  ))}
+                </div>
               )}
-            </>
-          ) : (
-            <div className="text-center text-gray-400 text-4xl py-16">
-              Generate question
             </div>
+          ) : (
+            <button onClick={() => setPresenterMode(true)} style={{ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center" }}><Video size={16} color="#6b7280" /></button>
           )}
+          <button onClick={() => setWbFullscreen(f => !f)} style={{ background: wbFullscreen ? "#374151" : (presenterMode ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.08)"), border: "none", borderRadius: 8, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            {wbFullscreen ? <Minimize2 size={16} color="#ffffff" /> : <Maximize2 size={16} color={presenterMode ? "rgba(255,255,255,0.85)" : "#6b7280"} />}
+          </button>
         </div>
       </div>
     );
-  };
-  
-
-  
-  const renderWorksheetMode = (): JSX.Element => {
-    if (worksheet.length === 0) {
-      return (
-        <div className="rounded-xl shadow-2xl p-8 text-center" style={{ backgroundColor: getQuestionBg() }}>
-          <span className="text-2xl text-gray-400">Generate worksheet</span>
+    if (wbFullscreen) return (
+      <div style={{ position: "fixed", inset: 0, zIndex: 200, backgroundColor: fsToolbarBg, display: "flex", flexDirection: "column" }}>
+        {fsToolbar}
+        <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
+          {qBox(true)}<div style={{ width: 2, backgroundColor: "#000", flexShrink: 0 }} />{rPanel(true)}
         </div>
-      );
-    }
-    
-    if (isDifferentiated) {
-      const levels = ['level1', 'level2', 'level3'];
-      const levelNames = ['Level 1', 'Level 2', 'Level 3'];
+      </div>
+    );
+    return (
+      <div className="p-8" style={{ backgroundColor: qBg, height: "600px", boxSizing: "border-box" }}>
+        <div className="flex gap-6" style={{ height: "100%" }}>{qBox(false)}{rPanel(false)}</div>
+      </div>
+    );
+  };
 
-      const getLevelQuestionBoxBg = (level: string): string => {
-        const levelColors: Record<string, string> = {
-          level1: '#dcfce7', // green-100
-          level2: '#fef9c3', // yellow-100
-          level3: '#fee2e2', // red-100
-        };
-        return levelColors[level] || '#f3f4f6';
-      };
-      
-      return (
-        <div className="rounded-xl shadow-2xl p-8 relative" style={{ backgroundColor: getQuestionBg() }}>
-          {/* Font Size Controls */}
-          <div className="absolute top-4 right-4 flex items-center gap-1">
-            <button 
-              onClick={decreaseFontSize}
-              disabled={!canDecreaseFontSize()}
-              className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${
-                canDecreaseFontSize() 
-                  ? 'bg-blue-900 text-white hover:bg-blue-800' 
-                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-              }`}
-            >
-              <ChevronDown size={20} />
-            </button>
-            <button 
-              onClick={increaseFontSize}
-              disabled={!canIncreaseFontSize()}
-              className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${
-                canIncreaseFontSize() 
-                  ? 'bg-blue-900 text-white hover:bg-blue-800' 
-                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-              }`}
-            >
-              <ChevronUp size={20} />
-            </button>
+  const renderWorkedExample = () => (
+    <div className="overflow-y-auto" style={{ maxHeight: "120vh" }}>
+      <div className="p-8 w-full" style={{ backgroundColor: qBg }}>
+        <div className="text-center py-4 relative">
+          <div style={{ position: "absolute", top: 0, right: 0, display: "flex", gap: 6 }}>
+            <button style={{ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: canDisplayDecrease ? "pointer" : "not-allowed", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", opacity: canDisplayDecrease ? 1 : 0.35 }} onClick={() => canDisplayDecrease && setDisplayFontSize(f => f - 1)}><ChevronDown size={16} color="#6b7280" /></button>
+            <button style={{ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: canDisplayIncrease ? "pointer" : "not-allowed", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", opacity: canDisplayIncrease ? 1 : 0.35 }} onClick={() => canDisplayIncrease && setDisplayFontSize(f => f + 1)}><ChevronUp size={16} color="#6b7280" /></button>
           </div>
-          
-          <h2 className="text-3xl font-bold text-center mb-8" style={{ color: '#000000' }}>
-            {toolNames[currentTool]} - Worksheet
-          </h2>
-          
-          {/* 3 columns - one per level */}
-          <div className="grid grid-cols-3 gap-4">
-            {levels.map((level: string, levelIdx: number) => {
-              const levelQuestions = worksheet.filter((q: Question) => q.difficulty === level);
-              const config = colorConfig[level];
-              
-              return (
-                <div key={level} className={`${config.bg} border-2 ${config.border} rounded-xl p-4`}>
-                  <h3 className={`text-xl font-bold mb-4 text-center ${config.text}`}>{levelNames[levelIdx]}</h3>
-                  <div className="space-y-3">
-                    {levelQuestions.map((q: Question, idx: number) => (
-                      TOOL_CONFIG.tools[currentTool].useSubstantialBoxes ? (
-                        <div key={idx} className="rounded-lg p-3" style={{ backgroundColor: getLevelQuestionBoxBg(level) }}>
-                          <span className={`${fontSizes[worksheetFontSize]} font-semibold`} style={{ color: '#000000' }} dangerouslySetInnerHTML={{ __html: `${idx + 1}. ${q.display}` }}></span>
-                          {showWorksheetAnswers && (
-                            <span className={`${fontSizes[worksheetFontSize]} font-semibold ml-2`} style={{ color: '#059669' }} dangerouslySetInnerHTML={{ __html: `= ${q.answer}` }}></span>
-                          )}
-                        </div>
-                      ) : (
-                        <div key={idx} className="p-2">
-                          <span className={`${fontSizes[worksheetFontSize]} font-semibold`} style={{ color: '#000000' }} dangerouslySetInnerHTML={{ __html: `${idx + 1}. ${q.display}` }}></span>
-                          {showWorksheetAnswers && (
-                            <span className={`${fontSizes[worksheetFontSize]} font-semibold ml-2`} style={{ color: '#059669' }} dangerouslySetInnerHTML={{ __html: `= ${q.answer}` }}></span>
-                          )}
-                        </div>
-                      )
-                    ))}
+          <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
+        </div>
+        {showAnswer && (
+          <>
+            <div className="space-y-4 mt-8">
+              {currentQuestion.working.map((s, i) => (
+                <div key={i} className="rounded-xl p-6" style={{ backgroundColor: stepBg }}>
+                  <h4 className="text-xl font-bold mb-2" style={{ color: "#000" }}>Step {i + 1}</h4>
+                  <div className="text-2xl" style={{ color: "#000" }}>
+                    {s.type === "text"
+                      ? <span>{s.plain}</span>
+                      : s.type === "mixed"
+                        ? <span>{s.plain} = <MathRenderer latex={s.latex} /></span>
+                        : <MathRenderer latex={s.latex} />}
                   </div>
                 </div>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+            <div className="rounded-xl p-6 text-center mt-4" style={{ backgroundColor: stepBg }}>
+              <span className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>
+                <AnswerDisplay q={currentQuestion} />
+              </span>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderWorksheet = () => {
+    if (worksheet.length === 0) return (
+      <div className="rounded-xl shadow-2xl p-8 text-center" style={{ backgroundColor: qBg }}>
+        <span className="text-2xl text-gray-400">Generate worksheet</span>
+      </div>
+    );
+    const fsCtrls = (
+      <div className="absolute top-4 right-4 flex items-center gap-1">
+        <button disabled={!canDecrease} onClick={() => canDecrease && setWorksheetFontSize(f => f - 1)} className={`w-8 h-8 rounded flex items-center justify-center ${canDecrease ? "bg-blue-900 text-white hover:bg-blue-800" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}><ChevronDown size={20} /></button>
+        <button disabled={!canIncrease} onClick={() => canIncrease && setWorksheetFontSize(f => f + 1)} className={`w-8 h-8 rounded flex items-center justify-center ${canIncrease ? "bg-blue-900 text-white hover:bg-blue-800" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}><ChevronUp size={20} /></button>
+      </div>
+    );
+    const toolTitle = TOOL_CONFIG.tools[currentTool].name;
+    if (isDifferentiated) return (
+      <div className="rounded-xl shadow-2xl p-8 relative" style={{ backgroundColor: qBg }}>
+        {fsCtrls}
+        <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
+        <div className="grid grid-cols-3 gap-4" style={{ alignItems: "start" }}>
+          {(["level1", "level2", "level3"] as DifficultyLevel[]).map((lv, li) => {
+            const lqs = worksheet.filter(q => q.difficulty === lv); const c = LV_COLORS[lv];
+            return (
+              <div key={lv} className={`${c.bg} border-2 ${c.border} rounded-xl p-4`}>
+                <h3 className={`text-xl font-bold mb-4 text-center ${c.text}`}>Level {li + 1}</h3>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr", gridAutoRows: "1fr", gap: "0.75rem" }}>
+                  {lqs.map((q, idx) => <div key={idx} style={{ minHeight: 0 }}>{renderQCell(q, idx, c.fill)}</div>)}
+                </div>
+              </div>
+            );
+          })}
         </div>
-      );
-    }
-    
-    // Non-differentiated layout
-    const toolSettings = getCurrentToolSettings();
+      </div>
+    );
     return (
-      <div className="rounded-xl shadow-2xl p-8 relative" style={{ backgroundColor: getQuestionBg() }}>
-        {/* Font Size Controls */}
-        <div className="absolute top-4 right-4 flex items-center gap-1">
-          <button 
-            onClick={decreaseFontSize}
-            disabled={!canDecreaseFontSize()}
-            className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${
-              canDecreaseFontSize() 
-                ? 'bg-blue-900 text-white hover:bg-blue-800' 
-                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-            }`}
-          >
-            <ChevronDown size={20} />
-          </button>
-          <button 
-            onClick={increaseFontSize}
-            disabled={!canIncreaseFontSize()}
-            className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${
-              canIncreaseFontSize() 
-                ? 'bg-blue-900 text-white hover:bg-blue-800' 
-                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-            }`}
-          >
-            <ChevronUp size={20} />
-          </button>
-        </div>
-        
-        <h2 className="text-3xl font-bold text-center mb-8" style={{ color: '#000000' }}>
-          {toolNames[currentTool]} - Worksheet
-        </h2>
-        
-        <div className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${numColumns}, 1fr)` }}>
-          {worksheet.map((q: Question, idx: number) => (
-            toolSettings.useSubstantialBoxes ? (
-              <div key={idx} className="rounded-lg p-4 shadow" style={{ backgroundColor: getQuestionBoxBg() }}>
-                <span className={`${fontSizes[worksheetFontSize]} font-semibold`} style={{ color: '#000000' }} dangerouslySetInnerHTML={{ __html: `${idx + 1}. ${q.display}` }}></span>
-                {showWorksheetAnswers && (
-                  <span className={`${fontSizes[worksheetFontSize]} font-semibold ml-2`} style={{ color: '#059669' }} dangerouslySetInnerHTML={{ __html: `= ${q.answer}` }}></span>
-                )}
-              </div>
-            ) : (
-              <div key={idx} className="p-3">
-                <span className={`${fontSizes[worksheetFontSize]} font-semibold`} style={{ color: '#000000' }} dangerouslySetInnerHTML={{ __html: `${idx + 1}. ${q.display}` }}></span>
-                {showWorksheetAnswers && (
-                  <span className={`${fontSizes[worksheetFontSize]} font-semibold ml-2`} style={{ color: '#059669' }} dangerouslySetInnerHTML={{ __html: `= ${q.answer}` }}></span>
-                )}
-              </div>
-            )
-          ))}
+      <div className="rounded-xl shadow-2xl p-8 relative" style={{ backgroundColor: qBg }}>
+        {fsCtrls}
+        <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${numColumns},1fr)`, gridAutoRows: "1fr", gap: "1rem" }}>
+          {worksheet.map((q, idx) => <div key={idx} style={{ minHeight: 0 }}>{renderQCell(q, idx)}</div>)}
         </div>
       </div>
     );
   };
-  
 
-  
-  useEffect(() => {
-    if (mode !== 'worksheet') {
-      handleNewQuestion();
-    }
-  }, [difficulty, currentTool]);
-  
-
-  
   return (
     <>
-      {/* Header Bar */}
       <div className="bg-blue-900 shadow-lg">
         <div className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
-          {/* Home Button */}
-          <button 
-            onClick={() => window.location.href = '/'}
-            className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors"
-          >
-            <Home size={24} />
-            <span className="font-semibold text-lg">Home</span>
+          <button onClick={() => navigate("/")} className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors">
+            <Home size={24} /><span className="font-semibold text-lg">Home</span>
           </button>
-          
-          {/* Menu Dropdown */}
           <div className="relative">
-            <button 
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-white hover:bg-blue-800 p-2 rounded-lg transition-colors"
-            >
+            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-white hover:bg-blue-800 p-2 rounded-lg transition-colors">
               {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
             </button>
-            {isMenuOpen && (
-              <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border-2 border-gray-200 overflow-hidden z-50">
-                <div className="py-2">
-                  <div className="px-6 py-2 font-bold text-gray-700 text-sm uppercase tracking-wide">Color Schemes</div>
-                  {(['default', 'blue', 'pink', 'yellow'] as const).map((scheme: ColorScheme) => (
-                    <button 
-                      key={scheme} 
-                      onClick={() => { setColorScheme(scheme); setIsMenuOpen(false); }}
-                      className={'w-full text-left px-6 py-3 font-semibold transition-colors ' +
-                        (colorScheme === scheme ? 'bg-blue-100 text-blue-900' : 'text-gray-800 hover:bg-gray-100')}
-                    >
-                      {scheme.charAt(0).toUpperCase() + scheme.slice(1)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+            {isMenuOpen && <MenuDropdown colorScheme={colorScheme} setColorScheme={setColorScheme} onClose={() => setIsMenuOpen(false)} onOpenInfo={() => setIsInfoOpen(true)} />}
           </div>
         </div>
       </div>
-      
-      {/* Main Content */}
-      <div className="min-h-screen p-8" style={{ backgroundColor: '#f5f3f0' }}>
+      {isInfoOpen && <InfoModal onClose={() => setIsInfoOpen(false)} />}
+      <div className="min-h-screen p-8" style={{ backgroundColor: "#f5f3f0" }}>
         <div className="max-w-6xl mx-auto">
-          {/* Title */}
-          <h1 className="text-5xl font-bold text-center mb-8" style={{ color: '#000000' }}>
-            {TOOL_CONFIG.pageTitle}
-          </h1>
-          
-          {/* Divider */}
-          <div className="flex justify-center mb-8">
-            <div style={{ width: '90%', height: '2px', backgroundColor: '#d1d5db' }}></div>
-          </div>
-          
-          {/* Tool Selectors */}
+          <h1 className="text-5xl font-bold text-center mb-8" style={{ color: "#000" }}>{TOOL_CONFIG.pageTitle}</h1>
+          <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
           <div className="flex justify-center gap-4 mb-6">
-            {(Object.keys(TOOL_CONFIG.tools) as ToolType[]).map((tool: ToolType) => (
-              <button 
-                key={tool} 
-                onClick={() => setCurrentTool(tool)}
-                className={'px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ' +
-                  (currentTool === tool 
-                    ? 'bg-blue-900 text-white' 
-                    : 'bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900')}
-              >
-                {toolNames[tool]}
+            {toolKeys.map(k => (
+              <button key={k} onClick={() => setCurrentTool(k)}
+                className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${currentTool === k ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
+                {TOOL_CONFIG.tools[k].name}
               </button>
             ))}
           </div>
-          
-          {/* Divider */}
-          <div className="flex justify-center mb-8">
-            <div style={{ width: '90%', height: '2px', backgroundColor: '#d1d5db' }}></div>
-          </div>
-          
-          {/* Mode Selectors */}
+          <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
           <div className="flex justify-center gap-4 mb-8">
-            {(['whiteboard', 'single', 'worksheet'] as const).map((m: Mode) => (
-              <button 
-                key={m} 
-                onClick={() => setMode(m)}
-                className={'px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ' +
-                  (mode === m 
-                    ? 'bg-blue-900 text-white' 
-                    : 'bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900')}
-              >
-                {m === 'whiteboard' ? 'Whiteboard' : m === 'single' ? 'Worked Example' : 'Worksheet'}
+            {([["whiteboard", "Whiteboard"], ["single", "Worked Example"], ["worksheet", "Worksheet"]] as const).map(([m, label]) => (
+              <button key={m} onClick={() => { setMode(m); setPresenterMode(false); setWbFullscreen(false); }}
+                className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${mode === m ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
+                {label}
               </button>
             ))}
           </div>
-          
-          {/* Control Bar */}
-          {renderControlBar()}
-          
-          {/* Mode Content */}
-          {mode === 'whiteboard' && renderWhiteboardMode()}
-          {mode === 'single' && renderWorkedExampleMode()}
-          {mode === 'worksheet' && renderWorksheetMode()}
+          {mode === "worksheet" && <>{renderControlBar()}{renderWorksheet()}</>}
+          {mode !== "worksheet" && (
+            <div className="flex flex-col gap-6">
+              <div className="rounded-xl shadow-lg">{renderControlBar()}</div>
+              <div className="rounded-xl shadow-lg overflow-hidden">
+                {mode === "whiteboard" && renderWhiteboard()}
+                {mode === "single" && renderWorkedExample()}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </>
