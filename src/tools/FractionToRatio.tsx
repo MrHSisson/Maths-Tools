@@ -21,18 +21,32 @@ const loadKaTeX = (() => {
   };
 })();
 
-interface MathProps { latex: string; display?: boolean; style?: CSSProperties; className?: string; }
-const MathRenderer = ({ latex, display = false, style, className }: MathProps) => {
+// Renders a single KaTeX expression inline
+const MathRenderer = ({ latex, style, className }: { latex: string; style?: CSSProperties; className?: string }) => {
   const ref = useRef<HTMLSpanElement>(null);
   const [ready, setReady] = useState(() => typeof window !== "undefined" && !!w().katex);
   useEffect(() => { loadKaTeX().then(() => setReady(true)); }, []);
   useEffect(() => {
     if (!ready || !ref.current) return;
-    try { w().katex.render(latex, ref.current, { displayMode: display, throwOnError: false, output: "html" }); }
+    try { w().katex.render(latex, ref.current, { displayMode: false, throwOnError: false, output: "html" }); }
     catch { if (ref.current) ref.current.textContent = latex; }
-  }, [latex, display, ready]);
-  const hasFrac = latex.includes("\\frac");
-  return <span ref={ref} className={className} style={{ fontSize: hasFrac ? "1.25em" : "1em", ...style }} />;
+  }, [latex, ready]);
+  return <span ref={ref} className={className} style={{ display: "inline", verticalAlign: "middle", ...style }} />;
+};
+
+// Renders a line of text that may contain $LaTeX$ fragments inline with prose.
+// ONLY fractions (\frac) should be in $...$. Plain numbers and ratio text stay as prose.
+const InlineMath = ({ text, className, style }: { text: string; className?: string; style?: CSSProperties }) => {
+  const parts = text.split(/(\$[^$]+\$)/g);
+  return (
+    <span className={className} style={{ display: "inline", lineHeight: "2", ...style }}>
+      {parts.map((part, i) =>
+        part.startsWith("$") && part.endsWith("$")
+          ? <MathRenderer key={i} latex={part.slice(1, -1)} style={{ margin: "0 0.1em" }} />
+          : <span key={i}>{part}</span>
+      )}
+    </span>
+  );
 };
 
 const usePopover = () => {
@@ -57,7 +71,7 @@ const LV_LABELS: Record<string, string> = { level1: "Level 1", level2: "Level 2"
 const LV_HEADER_COLORS: Record<string, string> = { level1: "text-green-600", level2: "text-yellow-500", level3: "text-red-600" };
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// TOOL-SPECIFIC SECTION — FRACTIONS ⇔ RATIOS
+// TOOL-SPECIFIC SECTION
 // ═══════════════════════════════════════════════════════════════════════════════
 
 type ToolType = "formingRatios" | "fractionToRatio" | "ratioToFraction";
@@ -67,56 +81,33 @@ const TOOL_CONFIG = {
   pageTitle: "Fractions & Ratios",
   tools: {
     formingRatios: {
-      name: "Forming Ratios",
-      useSubstantialBoxes: true,
+      name: "Forming Ratios", useSubstantialBoxes: true,
       variables: [
         { key: "threeWay", label: "3-Way Ratio", defaultValue: false },
         { key: "simplestForm", label: "Simplest Form", defaultValue: false },
       ],
-      dropdown: null,
-      difficultySettings: null,
+      dropdown: null, difficultySettings: null,
     },
     fractionToRatio: {
-      name: "Fraction to Ratio",
-      useSubstantialBoxes: true,
-      variables: [],
-      dropdown: null,
+      name: "Fraction to Ratio", useSubstantialBoxes: true,
+      variables: [], dropdown: null,
       difficultySettings: {
         level1: { variables: [], dropdown: null },
-        level2: {
-          variables: [{ key: "findCommonDenominators", label: "Different Denominators", defaultValue: false }],
-          dropdown: null,
-        },
+        level2: { variables: [{ key: "findCommonDenominators", label: "Different Denominators", defaultValue: false }], dropdown: null },
         level3: {
           variables: [],
-          dropdown: {
-            key: "given", label: "Given", useTwoLineButtons: false,
-            options: [
-              { value: "partA", label: "Part A" }, { value: "partB", label: "Part B" },
-              { value: "total", label: "Total" }, { value: "mixed", label: "Mixed" },
-            ],
-            defaultValue: "mixed",
-          },
+          dropdown: { key: "given", label: "Given", useTwoLineButtons: false, options: [{ value: "partA", label: "Part A" }, { value: "partB", label: "Part B" }, { value: "total", label: "Total" }, { value: "mixed", label: "Mixed" }], defaultValue: "mixed" },
         },
       },
     },
     ratioToFraction: {
-      name: "Ratio to Fraction",
-      useSubstantialBoxes: true,
-      variables: [],
-      dropdown: null,
+      name: "Ratio to Fraction", useSubstantialBoxes: true,
+      variables: [], dropdown: null,
       difficultySettings: {
         level1: { variables: [], dropdown: null },
         level2: {
           variables: [{ key: "simplestForm", label: "Simplest Form", defaultValue: true }],
-          dropdown: {
-            key: "target", label: "Target", useTwoLineButtons: false,
-            options: [
-              { value: "singlePart", label: "Single" }, { value: "composite", label: "Composite" },
-              { value: "mixed", label: "Mixed" },
-            ],
-            defaultValue: "mixed",
-          },
+          dropdown: { key: "target", label: "Target", useTwoLineButtons: false, options: [{ value: "singlePart", label: "Single" }, { value: "composite", label: "Composite" }, { value: "mixed", label: "Mixed" }], defaultValue: "mixed" },
         },
         level3: { variables: [], dropdown: null },
       },
@@ -125,10 +116,7 @@ const TOOL_CONFIG = {
     name: string; instruction?: string; useSubstantialBoxes: boolean;
     variables: { key: string; label: string; defaultValue: boolean }[];
     dropdown: { key: string; label: string; useTwoLineButtons?: boolean; options: { value: string; label: string; sub?: string }[]; defaultValue: string } | null;
-    difficultySettings: Record<string, {
-      dropdown?: { key: string; label: string; useTwoLineButtons?: boolean; options: { value: string; label: string; sub?: string }[]; defaultValue: string } | null;
-      variables?: { key: string; label: string; defaultValue: boolean }[];
-    }> | null;
+    difficultySettings: Record<string, { dropdown?: any; variables?: { key: string; label: string; defaultValue: boolean }[] }> | null;
   }>,
 };
 
@@ -143,14 +131,14 @@ const INFO_SECTIONS = [
   { title: "Fraction to Ratio", icon: "➗", content: [
     { label: "Overview", detail: "Convert a fraction (part-of-whole) into a part:part or multi-part ratio." },
     { label: "Level 1 — Green", detail: "One fraction given; find the complementary part and write the two-part ratio." },
-    { label: "Level 2 — Yellow", detail: "Two fractions given; find the third part (the remainder) and write the three-part ratio in any order. Toggle 'Different Denominators' to require finding a common denominator first." },
+    { label: "Level 2 — Yellow", detail: "Two fractions given; find the third part (the remainder) and write the three-part ratio in any order." },
     { label: "Level 3 — Red", detail: "An actual quantity is also given (total, Part A, or Part B). Work out all quantities then write the ratio as actual amounts." },
   ]},
   { title: "Ratio to Fraction", icon: "½", content: [
     { label: "Overview", detail: "Convert a ratio into a fraction of the total or a fraction of one part relative to another." },
     { label: "Level 1 — Green", detail: "Two-part ratio; write one part as a fraction of the total (part-to-whole)." },
-    { label: "Level 2 — Yellow", detail: "Three-part ratio; write one part (or a composite of two parts) as a fraction of the total. Use the Target dropdown to control question type. Toggle 'Simplest Form'." },
-    { label: "Level 3 — Red", detail: "Part-to-part comparison: write one quantity as a fraction of the other (not of the total). Highlights the conceptual difference between part:whole and part:part." },
+    { label: "Level 2 — Yellow", detail: "Three-part ratio; write one part (or a composite of two parts) as a fraction of the total." },
+    { label: "Level 3 — Red", detail: "Part-to-part comparison: write one quantity as a fraction of the other (not of the total)." },
   ]},
   { title: "Modes", icon: "🖥️", content: [
     { label: "Whiteboard", detail: "Single question on the left, working space on the right. Visualiser available." },
@@ -159,15 +147,17 @@ const INFO_SECTIONS = [
   ]},
 ];
 
-// ── Question interface ────────────────────────────────────────────────────────
+// ── Question interfaces ───────────────────────────────────────────────────────
+// lines[] rule: ONLY \frac{}{} expressions go inside $...$. 
+// ALL other content (numbers, ratios, names, percentages) stays as plain text.
 
-interface WorkingStep { type: string; latex: string; plain: string; }
+interface WorkingStep { type: "step" | "text" | "mixed"; latex: string; plain: string; }
 
 interface WordedQuestion {
   kind: "worded";
-  lines: string[];        // prose with $LaTeX$ for maths spans
-  answer: string;         // plain text (shown for ratio answers and as fallback)
-  answerLatex?: string;   // only set for fraction answers; absent for ratio answers
+  lines: string[];       // prose. Only $\frac{n}{d}$ allowed inside $...$
+  answer: string;        // plain text for ratio answers
+  answerLatex?: string;  // KaTeX only for fraction answers
   working: WorkingStep[];
   key: string;
   difficulty: string;
@@ -183,12 +173,15 @@ const simplifyRatioParts = (parts: number[]): number[] => {
   const d = parts.length === 3 ? gcdThree(parts[0], parts[1], parts[2]) : gcd(parts[0], parts[1]);
   return parts.map(p => p / d);
 };
+
+// frac(n,d) → LaTeX string for use inside $...$
 const frac = (n: number, d: number) => `\\frac{${n}}{${d}}`;
+// fracStr(n,d) → inline fragment for question lines: "$\frac{n}{d}$"
+const fracStr = (n: number, d: number) => `$${frac(n, d)}$`;
+// ratioStr → plain text ratio, never in $...$
 const ratioStr = (...parts: number[]) => parts.join(" : ");
 
-// step       → KaTeX only (pure maths expressions: fractions, equations)
-// tStep      → plain text only (prose, ratio strings, descriptions)
-// mStep(label, latex) → plain text label + KaTeX maths inline, e.g. "Red = [3/8]"
+// Working step helpers
 const step = (latex: string, plain?: string): WorkingStep => ({ type: "step", latex, plain: plain ?? latex });
 const tStep = (text: string): WorkingStep => ({ type: "text", latex: text, plain: text });
 const mStep = (label: string, latex: string): WorkingStep => ({ type: "mixed", latex, plain: label });
@@ -196,8 +189,7 @@ const mStep = (label: string, latex: string): WorkingStep => ({ type: "mixed", l
 const answerFrac = (n: number, d: number): string => { const g = gcd(n, d); return frac(n / g, d / g); };
 
 const getSimplificationSteps = (parts: number[]): WorkingStep[] => {
-  const steps: WorkingStep[] = [];
-  let cur = [...parts];
+  const steps: WorkingStep[] = []; let cur = [...parts];
   const primes = [2, 3, 5, 7, 11, 13];
   while (true) {
     let found = false;
@@ -224,8 +216,7 @@ const generateSimplestFraction = (): { num: number; den: number } => {
 };
 
 const convertToCommonDenominator = (f1: { num: number; den: number }, f2: { num: number; den: number }) => {
-  const lcd = lcm(f1.den, f2.den);
-  const m1 = lcd / f1.den, m2 = lcd / f2.den;
+  const lcd = lcm(f1.den, f2.den); const m1 = lcd / f1.den, m2 = lcd / f2.den;
   return {
     newNum1: f1.num * m1, newNum2: f2.num * m2, lcd,
     steps: [
@@ -257,8 +248,9 @@ const genRatioToFraction = (level: DifficultyLevel, variables: Record<string, bo
     const af = answerFrac(numerator, total);
     const g = gcd(numerator, total); const sn = numerator / g, sd = total / g;
     const style = randInt(0, 2);
+    // Ratios stay as plain text — no $...$
     const line = style === 0
-      ? `The ratio of ${ctx.parts[0]} to ${ctx.parts[1]} ${ctx.scenario} is ${a} : ${b}. What fraction of the ${ctx.scenario} are ${partName}?`
+      ? `The ratio of ${ctx.parts[0]} to ${ctx.parts[1]} is ${a} : ${b}. What fraction of the ${ctx.scenario} are ${partName}?`
       : style === 1
         ? `The ratio of ${ctx.parts[0]} to ${ctx.parts[1]} is ${a} : ${b}. Find the fraction of ${ctx.scenario} that are ${partName}.`
         : `${ctx.parts[0]} to ${ctx.parts[1]} is ${a} : ${b}. Write ${partName} as a fraction of the total.`;
@@ -283,13 +275,14 @@ const genRatioToFraction = (level: DifficultyLevel, variables: Record<string, bo
     ]);
     const a = randInt(1, 10), b = randInt(1, 10), c = randInt(1, 10), total = a + b + c;
     const simplestFormEnabled = variables.simplestForm !== false;
-    let actualTarget = dropdownValue === "mixed" ? (Math.random() < 0.5 ? "singlePart" : "composite") : dropdownValue;
+    const actualTarget = dropdownValue === "mixed" ? (Math.random() < 0.5 ? "singlePart" : "composite") : dropdownValue;
     const isComposite = actualTarget === "composite";
     let numerator = 0, targetDescription = "", line = "";
 
     if (!isComposite) {
       const wp = randInt(0, 2); numerator = [a, b, c][wp]; const pn = ctx.parts[wp];
       const style = randInt(0, 2);
+      // All ratios as plain text
       line = style === 0
         ? `The ratio of ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]} is ${a} : ${b} : ${c}. What fraction of ${ctx.scenario} are ${pn}?`
         : style === 1
@@ -320,8 +313,7 @@ const genRatioToFraction = (level: DifficultyLevel, variables: Record<string, bo
 
     let workingSteps: WorkingStep[];
     if (isComposite) {
-      const idx = ctx.compositeIndices;
-      const v1 = [a, b, c][idx[0]], v2 = [a, b, c][idx[1]];
+      const idx = ctx.compositeIndices; const v1 = [a, b, c][idx[0]], v2 = [a, b, c][idx[1]];
       workingSteps = [
         tStep(`Total parts = ${a} + ${b} + ${c} = ${total}`),
         tStep(`${tdCap} = ${ctx.parts[idx[0]]} + ${ctx.parts[idx[1]]} = ${v1} + ${v2} = ${numerator}`),
@@ -335,11 +327,7 @@ const genRatioToFraction = (level: DifficultyLevel, variables: Record<string, bo
         simplestFormEnabled && sn !== numerator ? step(`${frac(numerator, total)} = ${frac(sn, sd)}`) : tStep(`Already in simplest form`),
       ];
     }
-    return {
-      kind: "worded", lines: [line], answer: `${sn}/${sd}`, answerLatex: af,
-      working: workingSteps,
-      key: `rtf-l2-${a}-${b}-${c}-${actualTarget}-${isComposite}-${id}`, difficulty: level,
-    };
+    return { kind: "worded", lines: [line], answer: `${sn}/${sd}`, answerLatex: af, working: workingSteps, key: `rtf-l2-${a}-${b}-${c}-${actualTarget}-${isComposite}-${id}`, difficulty: level };
   }
 
   // Level 3: part-to-part
@@ -355,6 +343,7 @@ const genRatioToFraction = (level: DifficultyLevel, variables: Record<string, bo
   const denominatorName = orderReversed ? ctx.item1 : ctx.item2;
   const g = gcd(numerator, denominator); const sn = numerator / g, sd = denominator / g;
   const af = frac(sn, sd);
+  // Plain text ratios
   const line = Math.random() < 0.5
     ? `The ratio of ${ctx.item1} to ${ctx.item2} is ${a} : ${b}. Write the amount of ${numeratorName} as a fraction of the amount of ${denominatorName}.`
     : `${ctx.item1} to ${ctx.item2} is ${a} : ${b}. Find ${numeratorName} as a fraction of ${denominatorName}.`;
@@ -387,13 +376,14 @@ const genFractionToRatio = (level: DifficultyLevel, variables: Record<string, bo
     const pA = num, pB = den - num;
     const rev = Math.random() < 0.5; const [cA, cB] = ctx.colors;
     const prose = Math.random() < 0.5;
+    // fracStr() gives "$\frac{n}{d}$" — the ONLY $...$ allowed in these lines
     const line = rev
-      ? (prose
-        ? `In a bag of ${ctx.item}, ${frac(num, den)}$ are ${cA} and the rest are ${cB}. Write the ratio of ${cB} to ${cA}.`
-        : `In a bag of ${ctx.item}, ${frac(num, den)}$ are ${cA} and the rest are ${cB}. Find ${cB} : ${cA}.`)
-      : (prose
-        ? `In a bag of ${ctx.item}, ${frac(num, den)}$ are ${cA} and the rest are ${cB}. Write the ratio of ${cA} to ${cB}.`
-        : `In a bag of ${ctx.item}, ${frac(num, den)}$ are ${cA} and the rest are ${cB}. Find ${cA} : ${cB}.`);
+      ? prose
+        ? `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. Write the ratio of ${cB} to ${cA}.`
+        : `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. Find ${cB} : ${cA}.`
+      : prose
+        ? `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. Write the ratio of ${cA} to ${cB}.`
+        : `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. Find ${cA} : ${cB}.`;
     const answer = rev ? ratioStr(pB, pA) : ratioStr(pA, pB);
     return {
       kind: "worded", lines: [line], answer,
@@ -416,7 +406,6 @@ const genFractionToRatio = (level: DifficultyLevel, variables: Record<string, bo
     let f1 = 0, f2 = 0, den = 0, f3 = 0;
     let oF1: { num: number; den: number } | null = null, oF2: { num: number; den: number } | null = null;
     let cdSteps: WorkingStep[] = [];
-
     let tries = 0;
     while (tries++ < 200) {
       if (findCD) {
@@ -431,9 +420,7 @@ const genFractionToRatio = (level: DifficultyLevel, variables: Record<string, bo
         if (f1 + f2 >= den) continue; f3 = den - f1 - f2; break;
       }
     }
-
-    const oc = randInt(0, 5);
-    const P = ctx.parts;
+    const oc = randInt(0, 5); const P = ctx.parts;
     const ords = [
       { label: `${P[0]} : ${P[1]} : ${P[2]}`, parts: [f1, f2, f3] }, { label: `${P[0]} : ${P[2]} : ${P[1]}`, parts: [f1, f3, f2] },
       { label: `${P[1]} : ${P[0]} : ${P[2]}`, parts: [f2, f1, f3] }, { label: `${P[1]} : ${P[2]} : ${P[0]}`, parts: [f2, f3, f1] },
@@ -442,23 +429,18 @@ const genFractionToRatio = (level: DifficultyLevel, variables: Record<string, bo
     const { label: reqOrder, parts: ansParts } = ords[oc];
     const prose = Math.random() < 0.5;
     const answer = ratioStr(...ansParts);
+    // Only fracStr() inside $...$, ratio labels are plain
     const line = findCD && oF1 && oF2
-      ? (prose
-        ? `In a bag of ${ctx.item}, $${frac(oF1.num, oF1.den)}$ are ${P[0]} and $${frac(oF2.num, oF2.den)}$ are ${P[1]}. The rest are ${P[2]}. Write the ratio ${reqOrder}.`
-        : `In a bag of ${ctx.item}, $${frac(oF1.num, oF1.den)}$ are ${P[0]} and $${frac(oF2.num, oF2.den)}$ are ${P[1]}. The rest are ${P[2]}. Find ${reqOrder}.`)
-      : (prose
-        ? `In a bag of ${ctx.item}, $${frac(f1, den)}$ are ${P[0]} and $${frac(f2, den)}$ are ${P[1]}. The rest are ${P[2]}. Write the ratio ${reqOrder}.`
-        : `In a bag of ${ctx.item}, $${frac(f1, den)}$ are ${P[0]} and $${frac(f2, den)}$ are ${P[1]}. The rest are ${P[2]}. Find ${reqOrder}.`);
-
+      ? prose
+        ? `In a bag of ${ctx.item}, ${fracStr(oF1.num, oF1.den)} are ${P[0]} and ${fracStr(oF2.num, oF2.den)} are ${P[1]}. The rest are ${P[2]}. Write the ratio ${reqOrder}.`
+        : `In a bag of ${ctx.item}, ${fracStr(oF1.num, oF1.den)} are ${P[0]} and ${fracStr(oF2.num, oF2.den)} are ${P[1]}. The rest are ${P[2]}. Find ${reqOrder}.`
+      : prose
+        ? `In a bag of ${ctx.item}, ${fracStr(f1, den)} are ${P[0]} and ${fracStr(f2, den)} are ${P[1]}. The rest are ${P[2]}. Write the ratio ${reqOrder}.`
+        : `In a bag of ${ctx.item}, ${fracStr(f1, den)} are ${P[0]} and ${fracStr(f2, den)} are ${P[1]}. The rest are ${P[2]}. Find ${reqOrder}.`;
     const baseSteps: WorkingStep[] = findCD ? cdSteps : [mStep(P[0], frac(f1, den)), mStep(P[1], frac(f2, den))];
     return {
       kind: "worded", lines: [line], answer,
-      working: [
-        ...baseSteps,
-        tStep(`${P[2]} = ${den} − ${f1} − ${f2} = ${f3} parts`),
-        mStep(P[2], frac(f3, den)),
-        tStep(`Ratio ${P[0]} : ${P[1]} : ${P[2]} = ${ratioStr(f1, f2, f3)}`),
-      ],
+      working: [...baseSteps, tStep(`${P[2]} = ${den} − ${f1} − ${f2} = ${f3} parts`), mStep(P[2], frac(f3, den)), tStep(`Ratio ${P[0]} : ${P[1]} : ${P[2]} = ${ratioStr(f1, f2, f3)}`)],
       key: `ftr-l2-${f1}-${f2}-${den}-${oc}-${id}`, difficulty: level,
     };
   }
@@ -477,8 +459,8 @@ const genFractionToRatio = (level: DifficultyLevel, variables: Record<string, bo
 
   if (actualGiven === "total") {
     line = rev
-      ? `In a bag of ${ctx.item}, ${frac(num, den)}$ are ${cA} and the rest are ${cB}. There are ${total}$ ${ctx.item} in total. Write the ratio ${cB} : ${cA}$.`
-      : `In a bag of ${ctx.item}, ${frac(num, den)}$ are ${cA} and the rest are ${cB}. There are ${total}$ ${ctx.item} in total. Write the ratio ${cA} : ${cB}$.`;
+      ? `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. There are ${total} ${ctx.item} in total. Write the ratio ${cB} : ${cA}.`
+      : `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. There are ${total} ${ctx.item} in total. Write the ratio ${cA} : ${cB}.`;
     wSteps = [
       tStep(`Total = ${total} ${ctx.item} = ${den} parts`),
       tStep(`1 part = ${total} ÷ ${den} = ${mult}`),
@@ -488,10 +470,10 @@ const genFractionToRatio = (level: DifficultyLevel, variables: Record<string, bo
     ];
   } else if (actualGiven === "partB") {
     line = rev
-      ? `In a bag of ${ctx.item}, ${frac(num, den)}$ are ${cA} and the rest are ${cB}. There are ${pB}$ ${cB} ${ctx.item}. Write the ratio ${cB} : ${cA}$.`
-      : `In a bag of ${ctx.item}, ${frac(num, den)}$ are ${cA} and the rest are ${cB}. There are ${pB}$ ${cB} ${ctx.item}. Write the ratio ${cA} : ${cB}$.`;
+      ? `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. There are ${pB} ${cB} ${ctx.item}. Write the ratio ${cB} : ${cA}.`
+      : `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. There are ${pB} ${cB} ${ctx.item}. Write the ratio ${cA} : ${cB}.`;
     wSteps = [
-      mStep(`${cA}`, frac(num, den)),
+      mStep(cA, frac(num, den)),
       mStep(`so ${cB}`, frac(den - num, den)),
       tStep(`${den - num} parts = ${pB}`),
       tStep(`1 part = ${pB} ÷ ${den - num} = ${mult}`),
@@ -500,11 +482,10 @@ const genFractionToRatio = (level: DifficultyLevel, variables: Record<string, bo
     ];
   } else {
     line = rev
-      ? `In a bag of ${ctx.item}, ${frac(num, den)}$ are ${cA} and the rest are ${cB}. There are ${pA}$ ${cA} ${ctx.item}. Write the ratio ${cB} : ${cA}$.`
-      : `In a bag of ${ctx.item}, ${frac(num, den)}$ are ${cA} and the rest are ${cB}. There are ${pA}$ ${cA} ${ctx.item}. Write the ratio ${cA} : ${cB}$.`;
+      ? `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. There are ${pA} ${cA} ${ctx.item}. Write the ratio ${cB} : ${cA}.`
+      : `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. There are ${pA} ${cA} ${ctx.item}. Write the ratio ${cA} : ${cB}.`;
     wSteps = [
-      tStep(`${cA} = fraction of total:`),
-      mStep(`${cA}`, frac(num, den)),
+      mStep(cA, frac(num, den)),
       tStep(`${num} parts = ${pA}`),
       tStep(`1 part = ${pA} ÷ ${num} = ${mult}`),
       tStep(`Total = ${den} × ${mult} = ${total}`),
@@ -522,11 +503,7 @@ const genFormingRatios = (level: DifficultyLevel, variables: Record<string, bool
   const threeWay = variables.threeWay || false;
   const simplestForm = variables.simplestForm || false;
   const sfText = simplestForm ? " in its simplest form" : "";
-
-  const buildAnswer = (parts: number[]) => {
-    const final = simplestForm ? simplifyRatioParts(parts) : parts;
-    return ratioStr(...final);
-  };
+  const buildAnswer = (parts: number[]) => ratioStr(...(simplestForm ? simplifyRatioParts(parts) : parts));
   const buildSimplificationWorking = (parts: number[]): WorkingStep[] =>
     simplestForm ? [tStep(`Original: ${ratioStr(...parts)}`), ...getSimplificationSteps(parts)] : [];
 
@@ -557,13 +534,9 @@ const genFormingRatios = (level: DifficultyLevel, variables: Record<string, bool
       const { label, parts } = ords[order];
       const answer = buildAnswer(parts);
       const line = Math.random() < 0.5
-        ? `A ${ctx.container} has ${a} ${ctx.items[0]}, ${b} ${ctx.items[1]}, and ${c} ${ctx.items[2]}. Write the ratio of ${label}${sfText}.`
+        ? `A ${ctx.container} has ${a} ${ctx.items[0]}, ${b} ${ctx.items[1]}, and ${c} ${ctx.items[2]}. Write the ratio ${label}${sfText}.`
         : `There are ${a} ${ctx.items[0]}, ${b} ${ctx.items[1]}, and ${c} ${ctx.items[2]} in a ${ctx.container}. Find ${label}${sfText}.`;
-      return {
-        kind: "worded", lines: [line], answer,
-        working: [tStep(`Ratio: ${ratioStr(a, b, c)}`), ...buildSimplificationWorking(parts)],
-        key: `fr-l1-3w-${a}-${b}-${c}-${order}-${id}`, difficulty: level,
-      };
+      return { kind: "worded", lines: [line], answer, working: [tStep(`Ratio: ${ratioStr(a, b, c)}`), ...buildSimplificationWorking(parts)], key: `fr-l1-3w-${a}-${b}-${c}-${order}-${id}`, difficulty: level };
     } else {
       const ctx = pick(ctxs2); const g = pick(gcds);
       const a = randInt(2, 20) * g, b = randInt(2, 20) * g;
@@ -574,11 +547,7 @@ const genFormingRatios = (level: DifficultyLevel, variables: Record<string, bool
       const line = Math.random() < 0.5
         ? `A ${ctx.container} has ${a} ${ctx.items[0]} and ${b} ${ctx.items[1]}. Write the ratio ${label}${sfText}.`
         : `There are ${a} ${ctx.items[0]} and ${b} ${ctx.items[1]} in a ${ctx.container}. Find ${label}${sfText}.`;
-      return {
-        kind: "worded", lines: [line], answer,
-        working: [tStep(`Ratio: ${ratioStr(a, b)}`), ...buildSimplificationWorking(parts)],
-        key: `fr-l1-2w-${a}-${b}-${rev}-${id}`, difficulty: level,
-      };
+      return { kind: "worded", lines: [line], answer, working: [tStep(`Ratio: ${ratioStr(a, b)}`), ...buildSimplificationWorking(parts)], key: `fr-l1-2w-${a}-${b}-${rev}-${id}`, difficulty: level };
     }
   }
 
@@ -597,30 +566,20 @@ const genFormingRatios = (level: DifficultyLevel, variables: Record<string, bool
       let first = 0, second = 0, third = 0;
       if (Math.random() < 0.6) {
         const cf = pick(gcds2); const mx = Math.floor(total / (3 * cf));
-        if (mx >= 2) {
-          const bf = randInt(1, mx - 1), bs = randInt(1, mx - 1), bt = Math.floor(total / cf) - bf - bs;
-          if (bt > 0 && (bf + bs + bt) * cf === total) { first = bf * cf; second = bs * cf; third = bt * cf; }
-        }
+        if (mx >= 2) { const bf = randInt(1, mx - 1), bs = randInt(1, mx - 1), bt = Math.floor(total / cf) - bf - bs; if (bt > 0 && (bf + bs + bt) * cf === total) { first = bf * cf; second = bs * cf; third = bt * cf; } }
       }
       if (!first || !second || !third || first + second + third !== total) {
         const mn = Math.max(1, Math.floor(total * 0.1)), mx = Math.floor(total * 0.7);
         first = randInt(mn, mx); const rem = total - first;
-        second = randInt(Math.max(1, Math.floor(rem * 0.2)), Math.floor(rem * 0.8));
-        third = total - first - second;
+        second = randInt(Math.max(1, Math.floor(rem * 0.2)), Math.floor(rem * 0.8)); third = total - first - second;
       }
       const answer = buildAnswer([first, second, third]);
       const op = randInt(0, 2);
-      const dp = op === 0
-        ? `$${first}$ are ${ctx.parts[0]}, $${second}$ are ${ctx.parts[1]}, and the rest are ${ctx.parts[2]}`
-        : op === 1
-          ? `$${first}$ are ${ctx.parts[0]}, $${third}$ are ${ctx.parts[2]}, and the rest are ${ctx.parts[1]}`
-          : `$${second}$ are ${ctx.parts[1]}, $${third}$ are ${ctx.parts[2]}, and the rest are ${ctx.parts[0]}`;
-      const line = `A ${ctx.container} contains $${total}$ ${ctx.item}. ${dp}. Write the ratio ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]}${sfText}.`;
-      return {
-        kind: "worded", lines: [line], answer,
-        working: [tStep(`Remainder = ${total} − ${first} − ${second} = ${third}`), tStep(`Ratio: ${ratioStr(first, second, third)}`), ...buildSimplificationWorking([first, second, third])],
-        key: `fr-l2-3w-${total}-${first}-${second}-${third}-${id}`, difficulty: level,
-      };
+      const dp = op === 0 ? `${first} are ${ctx.parts[0]}, ${second} are ${ctx.parts[1]}, and the rest are ${ctx.parts[2]}`
+        : op === 1 ? `${first} are ${ctx.parts[0]}, ${third} are ${ctx.parts[2]}, and the rest are ${ctx.parts[1]}`
+          : `${second} are ${ctx.parts[1]}, ${third} are ${ctx.parts[2]}, and the rest are ${ctx.parts[0]}`;
+      const line = `A ${ctx.container} contains ${total} ${ctx.item}. ${dp}. Write the ratio ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]}${sfText}.`;
+      return { kind: "worded", lines: [line], answer, working: [tStep(`Remainder = ${total} − ${first} − ${second} = ${third}`), tStep(`Ratio: ${ratioStr(first, second, third)}`), ...buildSimplificationWorking([first, second, third])], key: `fr-l2-3w-${total}-${first}-${second}-${third}-${id}`, difficulty: level };
     } else {
       const ctx = pick(ctxs2); const total = randInt(10, 80);
       let first = 0, second = 0;
@@ -628,16 +587,10 @@ const genFormingRatios = (level: DifficultyLevel, variables: Record<string, bool
         const cf = pick(gcds2); const mx = Math.floor(total / (2 * cf));
         if (mx >= 2) { const bf = randInt(1, mx - 1), bs = Math.floor(total / cf) - bf; if (bs > 0 && (bf + bs) * cf === total) { first = bf * cf; second = bs * cf; } }
       }
-      if (!first || !second || first + second !== total) {
-        first = randInt(Math.max(1, Math.floor(total * 0.15)), Math.floor(total * 0.85)); second = total - first;
-      }
+      if (!first || !second || first + second !== total) { first = randInt(Math.max(1, Math.floor(total * 0.15)), Math.floor(total * 0.85)); second = total - first; }
       const answer = buildAnswer([first, second]);
       const line = `A ${ctx.container} contains ${total} ${ctx.item}. ${first} are ${ctx.parts[0]} and the rest are ${ctx.parts[1]}. Write the ratio ${ctx.parts[0]} : ${ctx.parts[1]}${sfText}.`;
-      return {
-        kind: "worded", lines: [line], answer,
-        working: [tStep(`Remainder = ${total} − ${first} = ${second}`), tStep(`Ratio: ${ratioStr(first, second)}`), ...buildSimplificationWorking([first, second])],
-        key: `fr-l2-2w-${total}-${first}-${second}-${id}`, difficulty: level,
-      };
+      return { kind: "worded", lines: [line], answer, working: [tStep(`Remainder = ${total} − ${first} = ${second}`), tStep(`Ratio: ${ratioStr(first, second)}`), ...buildSimplificationWorking([first, second])], key: `fr-l2-2w-${total}-${first}-${second}-${id}`, difficulty: level };
     }
   }
 
@@ -658,14 +611,14 @@ const genFormingRatios = (level: DifficultyLevel, variables: Record<string, bool
 
   let valid = false, tries2 = 0;
   let total2 = 0, p1 = 0, p2 = 0, p3 = 0;
-  let constraintText2 = "", calcSteps: WorkingStep[] = [];
-  let answer2 = "", finalLine = "";
+  let constraintText2 = "", calcSteps: WorkingStep[] = [], answer2 = "", finalLine = "";
+  // pick ctx outside loop so it's accessible for finalLine
+  const ctx2 = pick(ctxs2L3); const ctx3 = pick(ctxs3L3);
 
   while (!valid && tries2++ < 300) {
-    total2 = randInt(40, 100);
-    const usePct = Math.random() < 0.5;
+    total2 = randInt(40, 100); const usePct = Math.random() < 0.5;
     if (threeWay) {
-      const ctx = pick(ctxs3L3); const pattern = randInt(0, 1);
+      const ctx = ctx3; const pattern = randInt(0, 1);
       if (pattern === 0) {
         if (usePct) {
           const pct = pick(percentages); p1 = Math.round(total2 * pct / 100);
@@ -677,7 +630,8 @@ const genFormingRatios = (level: DifficultyLevel, variables: Record<string, bool
           const fr = pick(fracs2); p1 = Math.round(total2 * fr.num / fr.den);
           if (p1 !== total2 * fr.num / fr.den) continue;
           p2 = randInt(1, total2 - p1 - 1); p3 = total2 - p1 - p2;
-          constraintText2 = `${frac(fr.num, fr.den)}$ are ${ctx.parts[0]}. ${p2} are ${ctx.parts[1]}. The rest are ${ctx.parts[2]}.`;
+          // fracStr() for the fraction in the constraint text
+          constraintText2 = `${fracStr(fr.num, fr.den)} are ${ctx.parts[0]}. ${p2} are ${ctx.parts[1]}. The rest are ${ctx.parts[2]}.`;
           calcSteps = [tStep(`${ctx.parts[0]}: ${fr.num}/${fr.den} of ${total2} = ${p1}`), tStep(`${ctx.parts[1]}: ${p2}`), tStep(`${ctx.parts[2]}: ${total2} − ${p1} − ${p2} = ${p3}`)];
         }
       } else {
@@ -690,17 +644,16 @@ const genFormingRatios = (level: DifficultyLevel, variables: Record<string, bool
         } else {
           const fr = pick(fracs2); p2 = Math.round(rem * fr.num / fr.den);
           if (p2 !== rem * fr.num / fr.den) continue; p3 = total2 - p1 - p2;
-          constraintText2 = `${p1} are ${ctx.parts[0]}. ${frac(fr.num, fr.den)}$ of the remainder are ${ctx.parts[1]}. The rest are ${ctx.parts[2]}.`;
+          constraintText2 = `${p1} are ${ctx.parts[0]}. ${fracStr(fr.num, fr.den)} of the remainder are ${ctx.parts[1]}. The rest are ${ctx.parts[2]}.`;
           calcSteps = [tStep(`${ctx.parts[0]}: ${p1}`), tStep(`Remainder = ${total2} − ${p1} = ${rem}`), tStep(`${ctx.parts[1]}: ${fr.num}/${fr.den} of ${rem} = ${p2}`), tStep(`${ctx.parts[2]}: ${total2} − ${p1} − ${p2} = ${p3}`)];
         }
       }
       if (p1 > 0 && p2 > 0 && p3 > 0) {
-        valid = true;
-        answer2 = buildAnswer([p1, p2, p3]);
+        valid = true; answer2 = buildAnswer([p1, p2, p3]);
         finalLine = `There are ${total2} ${ctx.item} in a ${ctx.container}. ${constraintText2} Find the ratio ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]}${sfText}.`;
       }
     } else {
-      const ctx = pick(ctxs2L3);
+      const ctx = ctx2;
       if (usePct) {
         const pct = pick(percentages); p1 = Math.round(total2 * pct / 100);
         if (p1 !== total2 * pct / 100) continue; p2 = total2 - p1;
@@ -709,26 +662,19 @@ const genFormingRatios = (level: DifficultyLevel, variables: Record<string, bool
       } else {
         const fr = pick(fracs2); p1 = Math.round(total2 * fr.num / fr.den);
         if (p1 !== total2 * fr.num / fr.den) continue; p2 = total2 - p1;
-        constraintText2 = `${frac(fr.num, fr.den)}$ are ${ctx.parts[0]} and the rest are ${ctx.parts[1]}.`;
+        constraintText2 = `${fracStr(fr.num, fr.den)} are ${ctx.parts[0]} and the rest are ${ctx.parts[1]}.`;
         calcSteps = [tStep(`${ctx.parts[0]}: ${fr.num}/${fr.den} of ${total2} = ${p1}`), tStep(`${ctx.parts[1]}: ${total2} − ${p1} = ${p2}`)];
       }
       if (p1 > 0 && p2 > 0 && p1 !== p2) {
-        valid = true;
-        answer2 = buildAnswer([p1, p2]);
-        finalLine = `There are ${total2} ${ctxs2L3[0].item} in a ${ctxs2L3[0].container}. ${constraintText2} Write this as a ratio${sfText}.`;
+        valid = true; answer2 = buildAnswer([p1, p2]);
+        finalLine = `There are ${total2} ${ctx.item} in a ${ctx.container}. ${constraintText2} Write this as a ratio${sfText}.`;
       }
     }
   }
 
   const rawParts = threeWay ? [p1, p2, p3] : [p1, p2];
-  return {
-    kind: "worded", lines: [finalLine], answer: answer2,
-    working: [...calcSteps, tStep(`Ratio: ${ratioStr(...rawParts)}`), ...buildSimplificationWorking(rawParts)],
-    key: `fr-l3-${total2}-${p1}-${p2}-${p3}-${id}`, difficulty: level,
-  };
+  return { kind: "worded", lines: [finalLine], answer: answer2, working: [...calcSteps, tStep(`Ratio: ${ratioStr(...rawParts)}`), ...buildSimplificationWorking(rawParts)], key: `fr-l3-${total2}-${p1}-${p2}-${p3}-${id}`, difficulty: level };
 };
-
-// ── Master dispatcher ─────────────────────────────────────────────────────────
 
 const generateQuestion = (tool: ToolType, level: DifficultyLevel, variables: Record<string, boolean>, dropdownValue: string): AnyQuestion => {
   if (tool === "ratioToFraction") return genRatioToFraction(level, variables, dropdownValue);
@@ -755,22 +701,11 @@ const LV_COLORS: Record<DifficultyLevel, { bg: string; border: string; text: str
 const getQuestionBg = (cs: string) => ({ blue: "#D1E7F8", pink: "#F8D1E7", yellow: "#F8F4D1" }[cs] ?? "#ffffff");
 const getStepBg = (cs: string) => ({ blue: "#B3D9F2", pink: "#F2B3D9", yellow: "#F2EBB3" }[cs] ?? "#f3f4f6");
 
-const InlineMath = ({ text }: { text: string }) => {
-  const parts = text.split(/(\$[^$]+\$)/g);
-  return (
-    <>
-      {parts.map((part, i) => part.startsWith("$") && part.endsWith("$")
-        ? <MathRenderer key={i} latex={part.slice(1, -1)} />
-        : <span key={i}>{part}</span>
-      )}
-    </>
-  );
-};
-
+// QuestionDisplay: renders lines[] for whiteboard/worked example
 const QuestionDisplay = ({ q, cls }: { q: AnyQuestion; cls: string }) => (
-  <div className="flex flex-col gap-2 text-center">
+  <div style={{ textAlign: "center" }}>
     {q.lines.map((line, i) => (
-      <div key={i} className={`${cls} font-semibold`} style={{ color: "#000", lineHeight: 1.6 }}>
+      <div key={i} className={`${cls} font-semibold`} style={{ color: "#000", lineHeight: 1.8 }}>
         <InlineMath text={line} />
       </div>
     ))}
@@ -778,7 +713,7 @@ const QuestionDisplay = ({ q, cls }: { q: AnyQuestion; cls: string }) => (
 );
 
 const AnswerDisplay = ({ q }: { q: AnyQuestion }) => {
-  if (q.answerLatex) return <MathRenderer latex={`= ${q.answerLatex}`} />;
+  if (q.answerLatex) return <><span>= </span><MathRenderer latex={q.answerLatex} /></>;
   return <span>= {q.answer}</span>;
 };
 
@@ -793,10 +728,7 @@ const DifficultyToggle = ({ value, onChange }: { value: string; onChange: (v: st
   </div>
 );
 
-const DropdownSection = ({ dropdown, value, onChange }: {
-  dropdown: { key: string; label: string; options: { value: string; label: string }[] };
-  value: string; onChange: (v: string) => void;
-}) => (
+const DropdownSection = ({ dropdown, value, onChange }: { dropdown: { key: string; label: string; options: { value: string; label: string }[] }; value: string; onChange: (v: string) => void }) => (
   <div className="flex flex-col gap-2">
     <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">{dropdown.label}</span>
     <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden">
@@ -810,15 +742,12 @@ const DropdownSection = ({ dropdown, value, onChange }: {
   </div>
 );
 
-const VariablesSection = ({ variables, values, onChange }: {
-  variables: { key: string; label: string }[]; values: Record<string, boolean>; onChange: (k: string, v: boolean) => void;
-}) => (
+const VariablesSection = ({ variables, values, onChange }: { variables: { key: string; label: string }[]; values: Record<string, boolean>; onChange: (k: string, v: boolean) => void }) => (
   <div className="flex flex-col gap-3">
     <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Options</span>
     {variables.map(v => (
       <label key={v.key} className="flex items-center gap-3 cursor-pointer py-1">
-        <div onClick={() => onChange(v.key, !values[v.key])}
-          className={`w-12 h-6 rounded-full transition-colors relative flex-shrink-0 ${values[v.key] ? "bg-blue-900" : "bg-gray-300"}`}>
+        <div onClick={() => onChange(v.key, !values[v.key])} className={`w-12 h-6 rounded-full transition-colors relative flex-shrink-0 ${values[v.key] ? "bg-blue-900" : "bg-gray-300"}`}>
           <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${values[v.key] ? "translate-x-7" : "translate-x-1"}`} />
         </div>
         <span className="text-base font-semibold text-gray-700">{v.label}</span>
@@ -827,14 +756,8 @@ const VariablesSection = ({ variables, values, onChange }: {
   </div>
 );
 
-const StandardQOPopover = ({ variables, variableValues, onVariableChange, dropdown, dropdownValue, onDropdownChange }: {
-  variables: { key: string; label: string }[]; variableValues: Record<string, boolean>;
-  onVariableChange: (k: string, v: boolean) => void;
-  dropdown: { key: string; label: string; options: { value: string; label: string }[] } | null;
-  dropdownValue: string; onDropdownChange: (v: string) => void;
-}) => {
+const StandardQOPopover = ({ variables, variableValues, onVariableChange, dropdown, dropdownValue, onDropdownChange }: { variables: { key: string; label: string }[]; variableValues: Record<string, boolean>; onVariableChange: (k: string, v: boolean) => void; dropdown: any; dropdownValue: string; onDropdownChange: (v: string) => void }) => {
   const { open, setOpen, ref } = usePopover();
-  const hasContent = variables.length > 0 || dropdown !== null;
   return (
     <div className="relative" ref={ref}>
       <PopoverButton open={open} onClick={() => setOpen(!open)} />
@@ -842,19 +765,13 @@ const StandardQOPopover = ({ variables, variableValues, onVariableChange, dropdo
         <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-72 p-5 flex flex-col gap-5">
           {dropdown && <DropdownSection dropdown={dropdown} value={dropdownValue} onChange={onDropdownChange} />}
           {variables.length > 0 && <VariablesSection variables={variables} values={variableValues} onChange={onVariableChange} />}
-          {!hasContent && <p className="text-sm text-gray-400">No additional options for this tool and level.</p>}
         </div>
       )}
     </div>
   );
 };
 
-const DiffQOPopover = ({ toolSettings, levelVariables, onLevelVariableChange, levelDropdowns, onLevelDropdownChange }: {
-  toolSettings: typeof TOOL_CONFIG.tools[string];
-  levelVariables: Record<string, Record<string, boolean>>;
-  onLevelVariableChange: (lv: string, k: string, v: boolean) => void;
-  levelDropdowns: Record<string, string>; onLevelDropdownChange: (lv: string, v: string) => void;
-}) => {
+const DiffQOPopover = ({ toolSettings, levelVariables, onLevelVariableChange, levelDropdowns, onLevelDropdownChange }: { toolSettings: any; levelVariables: Record<string, Record<string, boolean>>; onLevelVariableChange: (lv: string, k: string, v: boolean) => void; levelDropdowns: Record<string, string>; onLevelDropdownChange: (lv: string, v: string) => void }) => {
   const { open, setOpen, ref } = usePopover();
   const levels = ["level1", "level2", "level3"] as DifficultyLevel[];
   const getDDForLevel = (lv: string) => toolSettings.difficultySettings?.[lv]?.dropdown ?? toolSettings.dropdown;
@@ -915,10 +832,7 @@ const InfoModal = ({ onClose }: { onClose: () => void }) => (
 const MenuDropdown = ({ colorScheme, setColorScheme, onClose, onOpenInfo }: { colorScheme: string; setColorScheme: (s: string) => void; onClose: () => void; onOpenInfo: () => void }) => {
   const [colorOpen, setColorOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) onClose(); };
-    document.addEventListener("mousedown", h); return () => document.removeEventListener("mousedown", h);
-  }, [onClose]);
+  useEffect(() => { const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) onClose(); }; document.addEventListener("mousedown", h); return () => document.removeEventListener("mousedown", h); }, [onClose]);
   return (
     <div ref={ref} className="absolute right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden" style={{ minWidth: "200px" }}>
       <div className="py-1">
@@ -929,16 +843,7 @@ const MenuDropdown = ({ colorScheme, setColorScheme, onClose, onOpenInfo }: { co
           </div>
           <span className="text-xs text-gray-400 font-normal capitalize">{colorScheme}</span>
         </button>
-        {colorOpen && (
-          <div className="border-t border-gray-100">
-            {["default", "blue", "pink", "yellow"].map(s => (
-              <button key={s} onClick={() => { setColorScheme(s); onClose(); }}
-                className={`w-full flex items-center justify-between pl-10 pr-4 py-2.5 text-sm font-semibold capitalize ${colorScheme === s ? "bg-blue-900 text-white" : "text-gray-600 hover:bg-gray-50"}`}>
-                {s}{colorScheme === s && <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7l3.5 3.5L12 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
-              </button>
-            ))}
-          </div>
-        )}
+        {colorOpen && <div className="border-t border-gray-100">{["default", "blue", "pink", "yellow"].map(s => (<button key={s} onClick={() => { setColorScheme(s); onClose(); }} className={`w-full flex items-center justify-between pl-10 pr-4 py-2.5 text-sm font-semibold capitalize ${colorScheme === s ? "bg-blue-900 text-white" : "text-gray-600 hover:bg-gray-50"}`}>{s}{colorScheme === s && <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7l3.5 3.5L12 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>}</button>))}</div>}
         <div className="border-t border-gray-100 my-1" />
         <button onClick={() => { onOpenInfo(); onClose(); }} className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400 flex-shrink-0"><circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5" /><path d="M8 7v5M8 5v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
@@ -950,7 +855,6 @@ const MenuDropdown = ({ colorScheme, setColorScheme, onClose, onOpenInfo }: { co
 };
 
 // ── Print / PDF ───────────────────────────────────────────────────────────────
-
 const handlePrint = (questions: AnyQuestion[], toolName: string, difficulty: string, isDifferentiated: boolean, numColumns: number) => {
   const FONT_PX = 13, PAD_MM = 3, MARGIN_MM = 12, HEADER_MM = 14, GAP_MM = 2;
   const PAGE_H_MM = 297 - MARGIN_MM * 2, PAGE_W_MM = 210 - MARGIN_MM * 2;
@@ -965,104 +869,84 @@ const handlePrint = (questions: AnyQuestion[], toolName: string, difficulty: str
     line.split(/(\$[^$]+\$)/g).map(part => {
       if (part.startsWith("$") && part.endsWith("$")) {
         const latex = part.slice(1, -1);
-        return `<span class="katex-render${latex.includes("\\frac") ? " frac" : ""}" data-latex="${latex.replace(/"/g, "&quot;")}"></span>`;
+        return `<span class="kr frac" data-latex="${latex.replace(/"/g, "&quot;")}"></span>`;
       }
       return `<span>${part}</span>`;
     }).join("");
 
-  const katexSpan = (latex: string) =>
-    `<span class="katex-render${latex.includes("\\frac") ? " frac" : ""}" data-latex="${latex.replace(/"/g, "&quot;")}"></span>`;
+  const katexSpan = (latex: string) => `<span class="kr${latex.includes("\\frac") ? " frac" : ""}" data-latex="${latex.replace(/"/g, "&quot;")}"></span>`;
 
   const questionToHtml = (q: AnyQuestion, idx: number, showAnswer: boolean): string => {
-    const linesHtml = q.lines.map(l => `<div class="q-line">${renderLine(l)}</div>`).join("");
-    const ansHtml = showAnswer
-      ? `<div class="q-answer">${q.answerLatex ? katexSpan(`= ${q.answerLatex}`) : `= ${q.answer}`}</div>`
-      : "";
-    return `<div class="q-num">${idx + 1})</div><div class="q-lines">${linesHtml}</div>${ansHtml}`;
+    const linesHtml = q.lines.map(l => `<div class="ql">${renderLine(l)}</div>`).join("");
+    const ansHtml = showAnswer ? `<div class="qa">${q.answerLatex ? `= ${katexSpan(q.answerLatex)}` : `= ${q.answer}`}</div>` : "";
+    return `<div class="qn">${idx + 1})</div><div class="qls">${linesHtml}</div>${ansHtml}`;
   };
 
   const qHtmlData = questions.map((q, i) => ({ q: questionToHtml(q, i, false), a: questionToHtml(q, i, true), difficulty: q.difficulty }));
 
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
-<title>${toolName} — Worksheet</title>
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${toolName}</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"><\/script>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;}
-@page{size:A4;margin:${MARGIN_MM}mm;}
+*{margin:0;padding:0;box-sizing:border-box;}@page{size:A4;margin:${MARGIN_MM}mm;}
 body{font-family:"Segoe UI",Arial,sans-serif;background:#fff;}
 @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
 .page{width:${PAGE_W_MM}mm;height:${PAGE_H_MM}mm;overflow:hidden;page-break-after:always;}
 .page:last-child{page-break-after:auto;}
-.page-header{display:flex;justify-content:space-between;align-items:baseline;border-bottom:0.4mm solid #1e3a8a;padding-bottom:1.5mm;margin-bottom:2mm;}
-.page-header h1{font-size:5mm;font-weight:700;color:#1e3a8a;}
-.page-header .meta{font-size:3mm;color:#6b7280;}
+.ph{display:flex;justify-content:space-between;align-items:baseline;border-bottom:0.4mm solid #1e3a8a;padding-bottom:1.5mm;margin-bottom:2mm;}
+.ph h1{font-size:5mm;font-weight:700;color:#1e3a8a;}.ph .meta{font-size:3mm;color:#6b7280;}
 .grid{display:grid;gap:${GAP_MM}mm;}
-.cell,.diff-cell{border:0.3mm solid #d1d5db;border-radius:1mm;padding:${PAD_MM}mm;overflow:hidden;position:relative;}
-.diff-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:${GAP_MM}mm;}
-.diff-col{display:flex;flex-direction:column;gap:${GAP_MM}mm;}
-.diff-header{height:${diffHdrMM}mm;display:flex;align-items:center;justify-content:center;font-size:3mm;font-weight:700;border-radius:1mm;}
-.diff-header.level1{background:#dcfce7;color:#166534;}.diff-header.level2{background:#fef9c3;color:#854d0e;}.diff-header.level3{background:#fee2e2;color:#991b1b;}
-#probe{position:fixed;left:-9999px;top:0;visibility:hidden;font-family:"Segoe UI",Arial,sans-serif;font-size:${FONT_PX}px;line-height:1.5;width:${cellW_MM - PAD_MM * 2}mm;}
-.q-num{position:absolute;top:0;left:0;font-size:${Math.round(FONT_PX * 0.6)}px;font-weight:700;color:#000;padding:1.2mm 1.2mm 1.8mm 1.2mm;border-right:0.3mm solid #000;border-bottom:0.3mm solid #000;}
-.q-lines{font-size:${FONT_PX}px;line-height:1.5;padding-left:6mm;}
-.q-line{display:block;}.q-answer{font-size:${FONT_PX}px;color:#059669;margin-top:1mm;padding-left:6mm;}
-.q-inner{width:100%;}
-.katex-render{font-size:1em;display:inline-block;vertical-align:middle;}
-.katex-render.frac{font-size:1.2em;}
+.cell,.dc{border:0.3mm solid #d1d5db;border-radius:1mm;padding:${PAD_MM}mm;overflow:hidden;position:relative;}
+.dg{display:grid;grid-template-columns:repeat(3,1fr);gap:${GAP_MM}mm;}
+.dcol{display:flex;flex-direction:column;gap:${GAP_MM}mm;}
+.dh{height:${diffHdrMM}mm;display:flex;align-items:center;justify-content:center;font-size:3mm;font-weight:700;border-radius:1mm;}
+.dh.level1{background:#dcfce7;color:#166534;}.dh.level2{background:#fef9c3;color:#854d0e;}.dh.level3{background:#fee2e2;color:#991b1b;}
+#probe{position:fixed;left:-9999px;top:0;visibility:hidden;font-family:"Segoe UI",Arial,sans-serif;font-size:${FONT_PX}px;line-height:1.6;width:${cellW_MM - PAD_MM * 2}mm;}
+.qn{position:absolute;top:0;left:0;font-size:${Math.round(FONT_PX * 0.6)}px;font-weight:700;color:#000;padding:1.2mm 1.2mm 1.8mm 1.2mm;border-right:0.3mm solid #000;border-bottom:0.3mm solid #000;}
+.qls{font-size:${FONT_PX}px;line-height:1.6;padding-left:6mm;}.ql{display:block;}.qa{font-size:${FONT_PX}px;color:#059669;margin-top:1mm;padding-left:6mm;}
+.qi{width:100%;}.kr{display:inline;vertical-align:middle;}.kr.frac{font-size:1.15em;}
 </style></head><body>
-<div id="probe">${questions.map((q, i) => `<div class="q-inner" id="probe-${i}">${questionToHtml(q, i, true)}</div>`).join("")}</div>
+<div id="probe">${questions.map((q, i) => `<div class="qi" id="p${i}">${questionToHtml(q, i, true)}</div>`).join("")}</div>
 <div id="pages"></div>
 <script>
 document.addEventListener("DOMContentLoaded",function(){
-  var pxMm=3.7795,PAD=${PAD_MM},GAP=${GAP_MM},usableH=${usableH_MM},diffHdr=${diffHdrMM};
+  var pxMm=3.7795,PAD=${PAD_MM},GAP=${GAP_MM},uH=${usableH_MM},dH=${diffHdrMM};
   var PW=${PAGE_W_MM},cols=${cols},isDiff=${isDifferentiated?"true":"false"};
   var totalQ=${totalQ},diffLabel="${difficultyLabel}",dateStr="${dateStr}",toolName="${toolName}";
   var qData=${JSON.stringify(qHtmlData)};
-  var rowH=[];for(var r=1;r<=10;r++)rowH.push((usableH-GAP*(r-1))/r);
   var probe=document.getElementById("probe");
-  probe.querySelectorAll(".katex-render").forEach(function(el){
-    try{katex.render(el.getAttribute("data-latex"),el,{throwOnError:false,output:"html"});}catch(e){el.textContent=el.getAttribute("data-latex");}
-  });
-  var maxH=0;probe.querySelectorAll(".q-inner").forEach(function(el){if(el.scrollHeight>maxH)maxH=el.scrollHeight;});
+  probe.querySelectorAll(".kr").forEach(function(el){try{katex.render(el.getAttribute("data-latex"),el,{throwOnError:false,output:"html"});}catch(e){el.textContent=el.getAttribute("data-latex");}});
+  var maxH=0;probe.querySelectorAll(".qi").forEach(function(el){if(el.scrollHeight>maxH)maxH=el.scrollHeight;});
   var needed=maxH/pxMm+PAD*2+8;
-  var diffPC=Math.floor(totalQ/3),diffUH=usableH-diffHdr-GAP,diffRPP=1,diffCH=diffUH;
-  for(var rd=0;rd<10;rd++){var h=(diffUH-GAP*rd)/(rd+1);if(h>=needed){diffRPP=rd+1;diffCH=h;}else break;}
-  var chosenH=rowH[0],rpp=1;
-  for(var r=0;r<rowH.length;r++){if((r+1)*cols>=totalQ&&rowH[r]>=needed){chosenH=rowH[r];rpp=r+1;break;}}
+  var rH=[];for(var r=1;r<=10;r++)rH.push((uH-GAP*(r-1))/r);
+  var diffPC=Math.floor(totalQ/3),diffUH=uH-dH-GAP,diffRPP=1,diffCH=diffUH;
+  for(var rd=0;rd<10;rd++){var hd=(diffUH-GAP*rd)/(rd+1);if(hd>=needed){diffRPP=rd+1;diffCH=hd;}else break;}
+  var chosenH=rH[0],rpp=1;
+  for(var r=0;r<rH.length;r++){if((r+1)*cols>=totalQ&&rH[r]>=needed){chosenH=rH[r];rpp=r+1;break;}}
   var pages=[];
   if(isDiff){var np=Math.ceil(diffPC/diffRPP);for(var p=0;p<np;p++)pages.push(p);}
   else{for(var s=0;s<qData.length;s+=rpp*cols)pages.push(qData.slice(s,s+rpp*cols));}
   var tp=pages.length;
   function cw(c){return(PW-GAP*(c-1))/c;}
-  function cell(inner,w,h,dc){return'<div class="'+(dc?"diff-cell":"cell")+'" style="width:'+w+'mm;height:'+h+'mm;"><div class="q-inner">'+inner+'</div></div>';}
+  function cell(inner,w,h,dc){return'<div class="'+(dc?"dc":"cell")+'" style="width:'+w+'mm;height:'+h+'mm;"><div class="qi">'+inner+'</div></div>';}
   function grid(pd,sa,ch){
     if(isDiff){var pi=pd,s=pi*diffRPP,e=s+diffRPP,cW=cw(3);
       var lvls=["level1","level2","level3"],lbls=["Level 1","Level 2","Level 3"];
       var c3=lvls.map(function(lv,li){var lqs=qData.filter(function(q){return q.difficulty===lv;}).slice(s,e);
-        return'<div class="diff-col"><div class="diff-header '+lv+'">'+lbls[li]+'</div>'+lqs.map(function(q){return cell(sa?q.a:q.q,cW,ch,true);}).join("")+'</div>';
-      }).join("");return'<div class="diff-grid" style="grid-template-columns:repeat(3,'+cW+'mm);">'+c3+'</div>';
-    }
+        return'<div class="dcol"><div class="dh '+lv+'">'+lbls[li]+'</div>'+lqs.map(function(q){return cell(sa?q.a:q.q,cW,ch,true);}).join("")+'</div>';}).join("");
+      return'<div class="dg" style="grid-template-columns:repeat(3,'+cW+'mm);">'+c3+'</div>';}
     var cW=cw(cols),gr=Math.ceil(pd.length/cols);
-    return'<div class="grid" style="grid-template-columns:repeat('+cols+','+cW+'mm);grid-template-rows:repeat('+gr+','+ch+'mm);">'+pd.map(function(it){return cell(sa?it.a:it.q,cW,ch,false);}).join("")+'</div>';
-  }
-  function page(pd,sa,pi){
-    var ch=isDiff?diffCH:chosenH;
+    return'<div class="grid" style="grid-template-columns:repeat('+cols+','+cW+'mm);grid-template-rows:repeat('+gr+','+ch+'mm);">'+pd.map(function(it){return cell(sa?it.a:it.q,cW,ch,false);}).join("")+'</div>';}
+  function page(pd,sa,pi){var ch=isDiff?diffCH:chosenH;
     var lbl=tp>1?(isDiff?diffPC+" per level":totalQ+" questions")+" ("+(pi+1)+"/"+tp+")":(isDiff?diffPC+" per level":totalQ+" questions");
-    return'<div class="page"><div class="page-header"><h1>'+toolName+(sa?" — Answers":"")+'</h1><div class="meta">'+diffLabel+' · '+dateStr+' · '+lbl+'</div></div>'+grid(pd,sa,ch)+'</div>';
-  }
+    return'<div class="page"><div class="ph"><h1>'+toolName+(sa?" — Answers":"")+'</h1><div class="meta">'+diffLabel+' · '+dateStr+' · '+lbl+'</div></div>'+grid(pd,sa,ch)+'</div>';}
   var html=pages.map(function(pg,i){return page(pg,false,i);}).join("")+pages.map(function(pg,i){return page(pg,true,i);}).join("");
   document.getElementById("pages").innerHTML=html;
-  document.getElementById("pages").querySelectorAll(".katex-render").forEach(function(el){
-    try{katex.render(el.getAttribute("data-latex"),el,{throwOnError:false,output:"html"});}catch(e){el.textContent=el.getAttribute("data-latex");}
-  });
+  document.getElementById("pages").querySelectorAll(".kr").forEach(function(el){try{katex.render(el.getAttribute("data-latex"),el,{throwOnError:false,output:"html"});}catch(e){el.textContent=el.getAttribute("data-latex");}});
   probe.remove();setTimeout(function(){window.print();},300);
 });
 <\/script></body></html>`;
-
-  const win = window.open("", "_blank");
-  if (!win) { alert("Please allow popups to use PDF export."); return; }
-  win.document.write(html); win.document.close();
+  const win=window.open("","_blank");if(!win){alert("Allow popups for PDF export.");return;}win.document.write(html);win.document.close();
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1078,34 +962,21 @@ export default function App() {
 
   const [toolVariables, setToolVariables] = useState<Record<string, Record<string, boolean>>>(() => {
     const init: Record<string, Record<string, boolean>> = {};
-    Object.keys(TOOL_CONFIG.tools).forEach(k => {
-      init[k] = {};
-      TOOL_CONFIG.tools[k].variables.forEach(v => { init[k][v.key] = v.defaultValue; });
-    });
+    Object.keys(TOOL_CONFIG.tools).forEach(k => { init[k] = {}; TOOL_CONFIG.tools[k].variables.forEach(v => { init[k][v.key] = v.defaultValue; }); });
     return init;
   });
-
   const [toolDropdowns, setToolDropdowns] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {};
     Object.keys(TOOL_CONFIG.tools).forEach(k => {
       const t = TOOL_CONFIG.tools[k];
-      (["level1", "level2", "level3"] as DifficultyLevel[]).forEach(lv => {
-        const dd = t.difficultySettings?.[lv]?.dropdown ?? t.dropdown;
-        if (dd) init[`${k}__${lv}`] = dd.defaultValue;
-      });
-    });
-    return init;
+      (["level1", "level2", "level3"] as DifficultyLevel[]).forEach(lv => { const dd = t.difficultySettings?.[lv]?.dropdown ?? t.dropdown; if (dd) init[`${k}__${lv}`] = dd.defaultValue; });
+    }); return init;
   });
-
   const [levelVariables, setLevelVariables] = useState<Record<string, Record<string, boolean>>>({ level1: {}, level2: {}, level3: {} });
   const [levelDropdowns, setLevelDropdowns] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {};
-    const firstTool = Object.keys(TOOL_CONFIG.tools)[0];
-    const t = TOOL_CONFIG.tools[firstTool];
-    (["level1", "level2", "level3"] as DifficultyLevel[]).forEach(lv => {
-      const dd = t.difficultySettings?.[lv]?.dropdown ?? t.dropdown;
-      if (dd) init[lv] = dd.defaultValue;
-    });
+    const t = TOOL_CONFIG.tools[Object.keys(TOOL_CONFIG.tools)[0]];
+    (["level1", "level2", "level3"] as DifficultyLevel[]).forEach(lv => { const dd = t.difficultySettings?.[lv]?.dropdown ?? t.dropdown; if (dd) init[lv] = dd.defaultValue; });
     return init;
   });
 
@@ -1122,7 +993,6 @@ export default function App() {
   const [colorScheme, setColorScheme] = useState("default");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
-
   const [presenterMode, setPresenterMode] = useState(false);
   const [wbFullscreen, setWbFullscreen] = useState(false);
   const [camDevices, setCamDevices] = useState<MediaDeviceInfo[]>([]);
@@ -1141,21 +1011,13 @@ export default function App() {
     if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null; }
     if (videoRef.current) videoRef.current.srcObject = null;
   }, []);
-
   const startCam = useCallback(async (deviceId?: string) => {
     stopStream(); setCamError(null);
     try {
       let tid = deviceId;
-      if (!tid) {
-        const tmp = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-        tmp.getTracks().forEach(t => t.stop());
-        const all = await navigator.mediaDevices.enumerateDevices();
-        const ext = all.filter(d => d.kind === "videoinput").find(d => d.label && !/facetime|built.?in|integrated|internal|front|rear/i.test(d.label));
-        if (ext) tid = ext.deviceId;
-      }
+      if (!tid) { const tmp = await navigator.mediaDevices.getUserMedia({ video: true, audio: false }); tmp.getTracks().forEach(t => t.stop()); const all = await navigator.mediaDevices.enumerateDevices(); const ext = all.filter(d => d.kind === "videoinput").find(d => d.label && !/facetime|built.?in|integrated|internal|front|rear/i.test(d.label)); if (ext) tid = ext.deviceId; }
       const stream = await navigator.mediaDevices.getUserMedia({ video: tid ? { deviceId: { exact: tid } } : true, audio: false });
-      streamRef.current = stream;
-      if (videoRef.current) videoRef.current.srcObject = stream;
+      streamRef.current = stream; if (videoRef.current) videoRef.current.srcObject = stream;
       setCurrentCamId(stream.getVideoTracks()[0].getSettings().deviceId ?? null);
       setCamDevices((await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === "videoinput"));
     } catch (e: unknown) { setCamError((e instanceof Error ? e.message : null) ?? "Camera unavailable"); }
@@ -1163,21 +1025,12 @@ export default function App() {
 
   useEffect(() => { if (presenterMode) startCam(); else stopStream(); }, [presenterMode]);
   useEffect(() => { if (presenterMode && streamRef.current && videoRef.current) videoRef.current.srcObject = streamRef.current; }, [wbFullscreen]);
-  useEffect(() => {
-    if (!camDropdownOpen) return;
-    const h = (e: MouseEvent) => { if (camDropdownRef.current && !camDropdownRef.current.contains(e.target as Node)) setCamDropdownOpen(false); };
-    document.addEventListener("mousedown", h); return () => document.removeEventListener("mousedown", h);
-  }, [camDropdownOpen]);
-  useEffect(() => {
-    const h = (e: KeyboardEvent) => { if (e.key === "Escape") { setPresenterMode(false); setWbFullscreen(false); } };
-    document.addEventListener("keydown", h); return () => document.removeEventListener("keydown", h);
-  }, []);
+  useEffect(() => { if (!camDropdownOpen) return; const h = (e: MouseEvent) => { if (camDropdownRef.current && !camDropdownRef.current.contains(e.target as Node)) setCamDropdownOpen(false); }; document.addEventListener("mousedown", h); return () => document.removeEventListener("mousedown", h); }, [camDropdownOpen]);
+  useEffect(() => { const h = (e: KeyboardEvent) => { if (e.key === "Escape") { setPresenterMode(false); setWbFullscreen(false); } }; document.addEventListener("keydown", h); return () => document.removeEventListener("keydown", h); }, []);
 
   const qBg = getQuestionBg(colorScheme), stepBg = getStepBg(colorScheme);
-  const isDefaultScheme = colorScheme === "default";
-  const fsToolbarBg = isDefaultScheme ? "#ffffff" : stepBg;
-  const fsQuestionBg = isDefaultScheme ? "#ffffff" : qBg;
-  const fsWorkingBg = isDefaultScheme ? "#f5f3f0" : qBg;
+  const isDefault = colorScheme === "default";
+  const fsToolbarBg = isDefault ? "#ffffff" : stepBg, fsQuestionBg = isDefault ? "#ffffff" : qBg, fsWorkingBg = isDefault ? "#f5f3f0" : qBg;
 
   const getToolSettings = () => TOOL_CONFIG.tools[currentTool];
   const getDropdownConfig = () => getToolSettings().difficultySettings?.[difficulty]?.dropdown ?? getToolSettings().dropdown;
@@ -1188,71 +1041,46 @@ export default function App() {
   const handleLevelVarChange = (lv: string, k: string, v: boolean) => setLevelVariables(p => ({ ...p, [lv]: { ...p[lv], [k]: v } }));
   const handleLevelDDChange = (lv: string, v: string) => setLevelDropdowns(p => ({ ...p, [lv]: v }));
 
-  const handleNewQuestion = () => {
-    setCurrentQuestion(generateQuestion(currentTool, difficulty, toolVariables[currentTool] || {}, getDropdownValue()));
-    setShowWhiteboardAnswer(false); setShowAnswer(false);
-  };
-
+  const handleNewQuestion = () => { setCurrentQuestion(generateQuestion(currentTool, difficulty, toolVariables[currentTool] || {}, getDropdownValue())); setShowWhiteboardAnswer(false); setShowAnswer(false); };
   const handleGenerateWorksheet = () => {
     const usedKeys = new Set<string>(); const questions: AnyQuestion[] = [];
     if (isDifferentiated) {
       (["level1", "level2", "level3"] as DifficultyLevel[]).forEach(lv => {
-        const t = getToolSettings();
-        const dd = t.difficultySettings?.[lv]?.dropdown ?? t.dropdown;
-        const vars = levelVariables[lv] ?? {};
-        const ddVal = levelDropdowns[lv] ?? (dd?.defaultValue ?? "");
+        const t = getToolSettings(); const dd = t.difficultySettings?.[lv]?.dropdown ?? t.dropdown;
+        const vars = levelVariables[lv] ?? {}; const ddVal = levelDropdowns[lv] ?? (dd?.defaultValue ?? "");
         for (let i = 0; i < numQuestions; i++) questions.push(generateUniqueQ(currentTool, lv, vars, ddVal, usedKeys));
       });
-    } else {
-      for (let i = 0; i < numQuestions; i++) questions.push(generateUniqueQ(currentTool, difficulty, toolVariables[currentTool] || {}, getDropdownValue(), usedKeys));
-    }
+    } else { for (let i = 0; i < numQuestions; i++) questions.push(generateUniqueQ(currentTool, difficulty, toolVariables[currentTool] || {}, getDropdownValue(), usedKeys)); }
     setWorksheet(questions); setShowWorksheetAnswers(false);
   };
 
-  const stdQOProps = {
-    variables: getVariablesConfig() ?? [], variableValues: toolVariables[currentTool] || {},
-    onVariableChange: setVariableValue, dropdown: getDropdownConfig() ?? null,
-    dropdownValue: getDropdownValue(), onDropdownChange: setDropdownValue,
-  };
+  const stdQOProps = { variables: getVariablesConfig() ?? [], variableValues: toolVariables[currentTool] || {}, onVariableChange: setVariableValue, dropdown: getDropdownConfig() ?? null, dropdownValue: getDropdownValue(), onDropdownChange: setDropdownValue };
   const diffQOProps = { toolSettings: getToolSettings(), levelVariables, onLevelVariableChange: handleLevelVarChange, levelDropdowns, onLevelDropdownChange: handleLevelDDChange };
-
-  // Only show QO button if there is at least one option available
   const hasStdOptions = (getVariablesConfig()?.length ?? 0) > 0 || getDropdownConfig() !== null;
-  const hasDiffOptions = (["level1","level2","level3"] as DifficultyLevel[]).some(lv => {
-    const t = getToolSettings();
-    const dd = t.difficultySettings?.[lv]?.dropdown ?? t.dropdown;
-    const vars = t.difficultySettings?.[lv]?.variables ?? t.variables;
-    return dd !== null || (vars?.length ?? 0) > 0;
-  });
-  const qoEl = (isDiff = false) => {
-    if (isDiff && !hasDiffOptions) return null;
-    if (!isDiff && !hasStdOptions) return null;
-    return isDiff ? <DiffQOPopover {...diffQOProps} /> : <StandardQOPopover {...stdQOProps} />;
-  };
+  const hasDiffOptions = (["level1", "level2", "level3"] as DifficultyLevel[]).some(lv => { const t = getToolSettings(); const dd = t.difficultySettings?.[lv]?.dropdown ?? t.dropdown; const vars = t.difficultySettings?.[lv]?.variables ?? t.variables; return dd !== null || (vars?.length ?? 0) > 0; });
+  const qoEl = (isDiff = false) => { if (isDiff && !hasDiffOptions) return null; if (!isDiff && !hasStdOptions) return null; return isDiff ? <DiffQOPopover {...diffQOProps} /> : <StandardQOPopover {...stdQOProps} />; };
 
   useEffect(() => { if (mode !== "worksheet") handleNewQuestion(); }, [difficulty, currentTool]);
 
   const displayFontSizes = ["text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl", "text-6xl"];
-  const canDisplayIncrease = displayFontSize < displayFontSizes.length - 1, canDisplayDecrease = displayFontSize > 0;
+  const canDI = displayFontSize < displayFontSizes.length - 1, canDD = displayFontSize > 0;
   const fontSizes = ["text-base", "text-lg", "text-xl", "text-2xl", "text-3xl"];
-  const canIncrease = worksheetFontSize < fontSizes.length - 1, canDecrease = worksheetFontSize > 0;
+  const canI = worksheetFontSize < fontSizes.length - 1, canD = worksheetFontSize > 0;
 
+  // Worksheet cell — uses InlineMath for proper inline rendering
   const renderQCell = (q: AnyQuestion, idx: number, bgOverride?: string) => {
     const bg = bgOverride ?? stepBg, fsz = fontSizes[worksheetFontSize];
-    const numEl = <span style={{ position: "absolute", top: 0, left: 0, fontSize: "0.65em", fontWeight: 700, color: "#000", lineHeight: 1, padding: "5px 5px 7px 5px", borderRight: "1px solid #000", borderBottom: "1px solid #000" }}>{idx + 1})</span>;
     return (
       <div className="rounded-lg p-3 shadow" style={{ backgroundColor: bg, height: "100%", boxSizing: "border-box", position: "relative" }}>
-        {numEl}
-        <div className={`${fsz} font-semibold w-full`} style={{ color: "#000", lineHeight: 1.6, paddingLeft: "1.5rem" }}>
+        <span style={{ position: "absolute", top: 0, left: 0, fontSize: "0.65em", fontWeight: 700, color: "#000", lineHeight: 1, padding: "5px 5px 7px 5px", borderRight: "1px solid #000", borderBottom: "1px solid #000" }}>{idx + 1})</span>
+        <div className={`${fsz} font-semibold`} style={{ color: "#000", lineHeight: 1.8, paddingLeft: "1.5rem" }}>
           {q.lines.map((line, i) => (
-            <div key={i} style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: "0.2em" }}>
-              <InlineMath text={line} />
-            </div>
+            <div key={i}><InlineMath text={line} /></div>
           ))}
         </div>
         {showWorksheetAnswers && (
           <div className={`${fsz} font-semibold mt-1`} style={{ color: "#059669", paddingLeft: "1.5rem" }}>
-            {q.answerLatex ? <MathRenderer latex={`= ${q.answerLatex}`} /> : <span>= {q.answer}</span>}
+            {q.answerLatex ? <><span>= </span><MathRenderer latex={q.answerLatex} /></> : <span>= {q.answer}</span>}
           </div>
         )}
       </div>
@@ -1269,33 +1097,18 @@ export default function App() {
                 className={`px-5 py-2 font-bold text-base transition-colors ${!isDifferentiated && difficulty === val ? `${col} text-white` : "bg-white text-gray-500 hover:bg-gray-50"}`}>{label}</button>
             ))}
           </div>
-          <button onClick={() => setIsDifferentiated(!isDifferentiated)}
-            className={`px-6 py-2 rounded-xl font-bold text-base shadow-sm border-2 transition-colors ${isDifferentiated ? "bg-blue-900 text-white border-blue-900" : "bg-white text-gray-600 border-gray-300 hover:border-blue-900 hover:text-blue-900"}`}>
-            Differentiated
-          </button>
+          <button onClick={() => setIsDifferentiated(!isDifferentiated)} className={`px-6 py-2 rounded-xl font-bold text-base shadow-sm border-2 transition-colors ${isDifferentiated ? "bg-blue-900 text-white border-blue-900" : "bg-white text-gray-600 border-gray-300 hover:border-blue-900 hover:text-blue-900"}`}>Differentiated</button>
         </div>
         <div className="flex justify-center items-center gap-6 mb-4">
           {qoEl(isDifferentiated)}
-          <div className="flex items-center gap-3">
-            <label className="text-base font-semibold text-gray-700">Questions:</label>
-            <input type="number" min="1" max="20" value={numQuestions}
-              onChange={e => setNumQuestions(Math.max(1, Math.min(20, parseInt(e.target.value) || 5)))}
-              className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-base font-semibold text-center" />
-          </div>
-          <div className="flex items-center gap-3">
-            <label className="text-base font-semibold text-gray-700">Columns:</label>
-            <input type="number" min="1" max="4" value={isDifferentiated ? 3 : numColumns}
-              onChange={e => { if (!isDifferentiated) setNumColumns(Math.max(1, Math.min(4, parseInt(e.target.value) || 2))); }}
-              disabled={isDifferentiated}
-              className={`w-20 px-4 py-2 border-2 rounded-lg text-base font-semibold text-center ${isDifferentiated ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed" : "border-gray-300 bg-white"}`} />
-          </div>
+          <div className="flex items-center gap-3"><label className="text-base font-semibold text-gray-700">Questions:</label><input type="number" min="1" max="20" value={numQuestions} onChange={e => setNumQuestions(Math.max(1, Math.min(20, parseInt(e.target.value) || 5)))} className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-base font-semibold text-center" /></div>
+          <div className="flex items-center gap-3"><label className="text-base font-semibold text-gray-700">Columns:</label><input type="number" min="1" max="4" value={isDifferentiated ? 3 : numColumns} onChange={e => { if (!isDifferentiated) setNumColumns(Math.max(1, Math.min(4, parseInt(e.target.value) || 2))); }} disabled={isDifferentiated} className={`w-20 px-4 py-2 border-2 rounded-lg text-base font-semibold text-center ${isDifferentiated ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed" : "border-gray-300 bg-white"}`} /></div>
         </div>
         <div className="flex justify-center items-center gap-4">
           <button onClick={handleGenerateWorksheet} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18} /> Generate</button>
           {worksheet.length > 0 && <>
             <button onClick={() => setShowWorksheetAnswers(!showWorksheetAnswers)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><Eye size={18} /> {showWorksheetAnswers ? "Hide Answers" : "Show Answers"}</button>
-            <button onClick={() => handlePrint(worksheet, TOOL_CONFIG.tools[currentTool].name, difficulty, isDifferentiated, numColumns)}
-              className="px-6 py-2 bg-green-700 text-white rounded-xl font-bold text-base shadow-sm hover:bg-green-800 flex items-center gap-2"><Printer size={18} /> Print / PDF</button>
+            <button onClick={() => handlePrint(worksheet, TOOL_CONFIG.tools[currentTool].name, difficulty, isDifferentiated, numColumns)} className="px-6 py-2 bg-green-700 text-white rounded-xl font-bold text-base shadow-sm hover:bg-green-800 flex items-center gap-2"><Printer size={18} /> Print / PDF</button>
           </>}
         </div>
       </div>
@@ -1307,10 +1120,7 @@ export default function App() {
           {qoEl()}
           <div className="flex gap-3 items-center">
             <button onClick={handleNewQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18} /> New Question</button>
-            <button onClick={() => mode === "whiteboard" ? setShowWhiteboardAnswer(!showWhiteboardAnswer) : setShowAnswer(!showAnswer)}
-              className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
-              <Eye size={18} /> {(mode === "whiteboard" ? showWhiteboardAnswer : showAnswer) ? "Hide Answer" : "Show Answer"}
-            </button>
+            <button onClick={() => mode === "whiteboard" ? setShowWhiteboardAnswer(!showWhiteboardAnswer) : setShowAnswer(!showAnswer)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><Eye size={18} /> {(mode === "whiteboard" ? showWhiteboardAnswer : showAnswer) ? "Hide Answer" : "Show Answer"}</button>
           </div>
         </div>
       </div>
@@ -1318,11 +1128,10 @@ export default function App() {
   };
 
   const renderWhiteboard = () => {
-    const fbtn = (en: boolean) => ({ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: en ? "pointer" : "not-allowed", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", opacity: en ? 1 : 0.35 });
+    const fb = (en: boolean) => ({ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: en ? "pointer" : "not-allowed", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", opacity: en ? 1 : 0.35 });
     const fsToolbar = (
       <div style={{ background: fsToolbarBg, borderBottom: "2px solid #000", padding: "16px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexShrink: 0, zIndex: 210 }}>
-        <DifficultyToggle value={difficulty} onChange={v => setDifficulty(v as DifficultyLevel)} />
-        {qoEl()}
+        <DifficultyToggle value={difficulty} onChange={v => setDifficulty(v as DifficultyLevel)} />{qoEl()}
         <div style={{ display: "flex", gap: 12 }}>
           <button onClick={handleNewQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18} /> New Question</button>
           <button onClick={() => setShowWhiteboardAnswer(a => !a)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><Eye size={18} /> {showWhiteboardAnswer ? "Hide Answer" : "Show Answer"}</button>
@@ -1332,8 +1141,8 @@ export default function App() {
     const qBox = (isFS: boolean) => (
       <div style={{ position: "relative", width: isFS ? "45%" : "520px", height: "100%", backgroundColor: isFS ? fsQuestionBg : stepBg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 40, boxSizing: "border-box", flexShrink: 0, gap: 16, overflowY: "auto" }}>
         <div style={{ position: "absolute", top: 10, right: 10, display: "flex", gap: 6 }}>
-          <button style={fbtn(canDisplayDecrease)} onClick={() => canDisplayDecrease && setDisplayFontSize(f => f - 1)}><ChevronDown size={16} color="#6b7280" /></button>
-          <button style={fbtn(canDisplayIncrease)} onClick={() => canDisplayIncrease && setDisplayFontSize(f => f + 1)}><ChevronUp size={16} color="#6b7280" /></button>
+          <button style={fb(canDD)} onClick={() => canDD && setDisplayFontSize(f => f - 1)}><ChevronDown size={16} color="#6b7280" /></button>
+          <button style={fb(canDI)} onClick={() => canDI && setDisplayFontSize(f => f + 1)}><ChevronUp size={16} color="#6b7280" /></button>
         </div>
         <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
         {showWhiteboardAnswer && <div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}><AnswerDisplay q={currentQuestion} /></div>}
@@ -1345,47 +1154,21 @@ export default function App() {
         <div style={{ position: "absolute", top: 10, right: 10, display: "flex", gap: 6, zIndex: 20 }}>
           {presenterMode ? (
             <div style={{ position: "relative" }} ref={camDropdownRef}>
-              <button title="Exit Visualiser (hold for cameras)"
-                onMouseDown={() => { didLongPress.current = false; longPressTimer.current = setTimeout(() => { didLongPress.current = true; setCamDropdownOpen(o => !o); }, 500); }}
-                onMouseUp={() => { if (longPressTimer.current) clearTimeout(longPressTimer.current); if (!didLongPress.current) setPresenterMode(false); }}
-                onMouseLeave={() => { if (longPressTimer.current) clearTimeout(longPressTimer.current); }}
-                style={{ background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Video size={16} color="rgba(255,255,255,0.85)" />
-              </button>
-              {camDropdownOpen && (
-                <div style={{ position: "absolute", top: 40, right: 0, background: "rgba(12,12,12,0.96)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, minWidth: 200, overflow: "hidden", zIndex: 30 }}>
-                  <div style={{ padding: "6px 14px", fontSize: "0.55rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(255,255,255,0.25)" }}>Camera</div>
-                  {camDevices.map((d, i) => (
-                    <div key={d.deviceId} onClick={() => { setCamDropdownOpen(false); if (d.deviceId !== currentCamId) startCam(d.deviceId); }}
-                      style={{ padding: "10px 14px", fontSize: "0.75rem", color: d.deviceId === currentCamId ? "#60a5fa" : "rgba(255,255,255,0.65)", cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
-                      <div style={{ width: 5, height: 5, borderRadius: "50%", background: d.deviceId === currentCamId ? "#60a5fa" : "transparent", flexShrink: 0 }} />{d.label || `Camera ${i + 1}`}
-                    </div>
-                  ))}
-                </div>
-              )}
+              <button onMouseDown={() => { didLongPress.current = false; longPressTimer.current = setTimeout(() => { didLongPress.current = true; setCamDropdownOpen(o => !o); }, 500); }} onMouseUp={() => { if (longPressTimer.current) clearTimeout(longPressTimer.current); if (!didLongPress.current) setPresenterMode(false); }} onMouseLeave={() => { if (longPressTimer.current) clearTimeout(longPressTimer.current); }} style={{ background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center" }}><Video size={16} color="rgba(255,255,255,0.85)" /></button>
+              {camDropdownOpen && (<div style={{ position: "absolute", top: 40, right: 0, background: "rgba(12,12,12,0.96)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, minWidth: 200, overflow: "hidden", zIndex: 30 }}>
+                <div style={{ padding: "6px 14px", fontSize: "0.55rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(255,255,255,0.25)" }}>Camera</div>
+                {camDevices.map((d, i) => (<div key={d.deviceId} onClick={() => { setCamDropdownOpen(false); if (d.deviceId !== currentCamId) startCam(d.deviceId); }} style={{ padding: "10px 14px", fontSize: "0.75rem", color: d.deviceId === currentCamId ? "#60a5fa" : "rgba(255,255,255,0.65)", cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}><div style={{ width: 5, height: 5, borderRadius: "50%", background: d.deviceId === currentCamId ? "#60a5fa" : "transparent", flexShrink: 0 }} />{d.label || `Camera ${i + 1}`}</div>))}
+              </div>)}
             </div>
-          ) : (
-            <button onClick={() => setPresenterMode(true)} style={{ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center" }}><Video size={16} color="#6b7280" /></button>
-          )}
+          ) : (<button onClick={() => setPresenterMode(true)} style={{ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center" }}><Video size={16} color="#6b7280" /></button>)}
           <button onClick={() => setWbFullscreen(f => !f)} style={{ background: wbFullscreen ? "#374151" : (presenterMode ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.08)"), border: "none", borderRadius: 8, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center" }}>
             {wbFullscreen ? <Minimize2 size={16} color="#ffffff" /> : <Maximize2 size={16} color={presenterMode ? "rgba(255,255,255,0.85)" : "#6b7280"} />}
           </button>
         </div>
       </div>
     );
-    if (wbFullscreen) return (
-      <div style={{ position: "fixed", inset: 0, zIndex: 200, backgroundColor: fsToolbarBg, display: "flex", flexDirection: "column" }}>
-        {fsToolbar}
-        <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
-          {qBox(true)}<div style={{ width: 2, backgroundColor: "#000", flexShrink: 0 }} />{rPanel(true)}
-        </div>
-      </div>
-    );
-    return (
-      <div className="p-8" style={{ backgroundColor: qBg, height: "600px", boxSizing: "border-box" }}>
-        <div className="flex gap-6" style={{ height: "100%" }}>{qBox(false)}{rPanel(false)}</div>
-      </div>
-    );
+    if (wbFullscreen) return (<div style={{ position: "fixed", inset: 0, zIndex: 200, backgroundColor: fsToolbarBg, display: "flex", flexDirection: "column" }}>{fsToolbar}<div style={{ flex: 1, display: "flex", minHeight: 0 }}>{qBox(true)}<div style={{ width: 2, backgroundColor: "#000", flexShrink: 0 }} />{rPanel(true)}</div></div>);
+    return (<div className="p-8" style={{ backgroundColor: qBg, height: "600px", boxSizing: "border-box" }}><div className="flex gap-6" style={{ height: "100%" }}>{qBox(false)}{rPanel(false)}</div></div>);
   };
 
   const renderWorkedExample = () => (
@@ -1393,8 +1176,8 @@ export default function App() {
       <div className="p-8 w-full" style={{ backgroundColor: qBg }}>
         <div className="text-center py-4 relative">
           <div style={{ position: "absolute", top: 0, right: 0, display: "flex", gap: 6 }}>
-            <button style={{ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: canDisplayDecrease ? "pointer" : "not-allowed", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", opacity: canDisplayDecrease ? 1 : 0.35 }} onClick={() => canDisplayDecrease && setDisplayFontSize(f => f - 1)}><ChevronDown size={16} color="#6b7280" /></button>
-            <button style={{ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: canDisplayIncrease ? "pointer" : "not-allowed", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", opacity: canDisplayIncrease ? 1 : 0.35 }} onClick={() => canDisplayIncrease && setDisplayFontSize(f => f + 1)}><ChevronUp size={16} color="#6b7280" /></button>
+            <button style={{ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: canDD ? "pointer" : "not-allowed", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", opacity: canDD ? 1 : 0.35 }} onClick={() => canDD && setDisplayFontSize(f => f - 1)}><ChevronDown size={16} color="#6b7280" /></button>
+            <button style={{ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: canDI ? "pointer" : "not-allowed", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", opacity: canDI ? 1 : 0.35 }} onClick={() => canDI && setDisplayFontSize(f => f + 1)}><ChevronUp size={16} color="#6b7280" /></button>
           </div>
           <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
         </div>
@@ -1415,9 +1198,7 @@ export default function App() {
               ))}
             </div>
             <div className="rounded-xl p-6 text-center mt-4" style={{ backgroundColor: stepBg }}>
-              <span className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>
-                <AnswerDisplay q={currentQuestion} />
-              </span>
+              <span className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}><AnswerDisplay q={currentQuestion} /></span>
             </div>
           </>
         )}
@@ -1426,15 +1207,11 @@ export default function App() {
   );
 
   const renderWorksheet = () => {
-    if (worksheet.length === 0) return (
-      <div className="rounded-xl shadow-2xl p-8 text-center" style={{ backgroundColor: qBg }}>
-        <span className="text-2xl text-gray-400">Generate worksheet</span>
-      </div>
-    );
+    if (worksheet.length === 0) return (<div className="rounded-xl shadow-2xl p-8 text-center" style={{ backgroundColor: qBg }}><span className="text-2xl text-gray-400">Generate worksheet</span></div>);
     const fsCtrls = (
       <div className="absolute top-4 right-4 flex items-center gap-1">
-        <button disabled={!canDecrease} onClick={() => canDecrease && setWorksheetFontSize(f => f - 1)} className={`w-8 h-8 rounded flex items-center justify-center ${canDecrease ? "bg-blue-900 text-white hover:bg-blue-800" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}><ChevronDown size={20} /></button>
-        <button disabled={!canIncrease} onClick={() => canIncrease && setWorksheetFontSize(f => f + 1)} className={`w-8 h-8 rounded flex items-center justify-center ${canIncrease ? "bg-blue-900 text-white hover:bg-blue-800" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}><ChevronUp size={20} /></button>
+        <button disabled={!canD} onClick={() => canD && setWorksheetFontSize(f => f - 1)} className={`w-8 h-8 rounded flex items-center justify-center ${canD ? "bg-blue-900 text-white hover:bg-blue-800" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}><ChevronDown size={20} /></button>
+        <button disabled={!canI} onClick={() => canI && setWorksheetFontSize(f => f + 1)} className={`w-8 h-8 rounded flex items-center justify-center ${canI ? "bg-blue-900 text-white hover:bg-blue-800" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}><ChevronUp size={20} /></button>
       </div>
     );
     const toolTitle = TOOL_CONFIG.tools[currentTool].name;
@@ -1472,13 +1249,9 @@ export default function App() {
     <>
       <div className="bg-blue-900 shadow-lg">
         <div className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
-          <button onClick={() => navigate("/")} className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors">
-            <Home size={24} /><span className="font-semibold text-lg">Home</span>
-          </button>
+          <button onClick={() => navigate("/")} className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors"><Home size={24} /><span className="font-semibold text-lg">Home</span></button>
           <div className="relative">
-            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-white hover:bg-blue-800 p-2 rounded-lg transition-colors">
-              {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
-            </button>
+            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-white hover:bg-blue-800 p-2 rounded-lg transition-colors">{isMenuOpen ? <X size={28} /> : <Menu size={28} />}</button>
             {isMenuOpen && <MenuDropdown colorScheme={colorScheme} setColorScheme={setColorScheme} onClose={() => setIsMenuOpen(false)} onOpenInfo={() => setIsInfoOpen(true)} />}
           </div>
         </div>
@@ -1489,32 +1262,14 @@ export default function App() {
           <h1 className="text-5xl font-bold text-center mb-8" style={{ color: "#000" }}>{TOOL_CONFIG.pageTitle}</h1>
           <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
           <div className="flex justify-center gap-4 mb-6">
-            {toolKeys.map(k => (
-              <button key={k} onClick={() => setCurrentTool(k)}
-                className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${currentTool === k ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
-                {TOOL_CONFIG.tools[k].name}
-              </button>
-            ))}
+            {toolKeys.map(k => (<button key={k} onClick={() => setCurrentTool(k)} className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${currentTool === k ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>{TOOL_CONFIG.tools[k].name}</button>))}
           </div>
           <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
           <div className="flex justify-center gap-4 mb-8">
-            {([["whiteboard", "Whiteboard"], ["single", "Worked Example"], ["worksheet", "Worksheet"]] as const).map(([m, label]) => (
-              <button key={m} onClick={() => { setMode(m); setPresenterMode(false); setWbFullscreen(false); }}
-                className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${mode === m ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
-                {label}
-              </button>
-            ))}
+            {([["whiteboard", "Whiteboard"], ["single", "Worked Example"], ["worksheet", "Worksheet"]] as const).map(([m, label]) => (<button key={m} onClick={() => { setMode(m); setPresenterMode(false); setWbFullscreen(false); }} className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${mode === m ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>{label}</button>))}
           </div>
           {mode === "worksheet" && <>{renderControlBar()}{renderWorksheet()}</>}
-          {mode !== "worksheet" && (
-            <div className="flex flex-col gap-6">
-              <div className="rounded-xl shadow-lg">{renderControlBar()}</div>
-              <div className="rounded-xl shadow-lg overflow-hidden">
-                {mode === "whiteboard" && renderWhiteboard()}
-                {mode === "single" && renderWorkedExample()}
-              </div>
-            </div>
-          )}
+          {mode !== "worksheet" && (<div className="flex flex-col gap-6"><div className="rounded-xl shadow-lg">{renderControlBar()}</div><div className="rounded-xl shadow-lg overflow-hidden">{mode === "whiteboard" && renderWhiteboard()}{mode === "single" && renderWorkedExample()}</div></div>)}
         </div>
       </div>
     </>
