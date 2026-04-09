@@ -336,7 +336,8 @@ const genRatioToFraction = (level: DifficultyLevel, variables: Record<string, bo
     { item1: "pound coins", item2: "fifty pence coins" }, { item1: "ten pound notes", item2: "five pound notes" },
     { item1: "Year 7s", item2: "Year 8s" }, { item1: "adults", item2: "children" },
   ]);
-  const a = randInt(2, 12), b = randInt(2, 12);
+      const a = randInt(2, 12), b = randInt(2, 12);
+    if (a === b) return genRatioToFraction(level, variables, dropdownValue);
   const orderReversed = Math.random() < 0.5;
   const numerator = orderReversed ? b : a, denominator = orderReversed ? a : b;
   const numeratorName = orderReversed ? ctx.item2 : ctx.item1;
@@ -374,6 +375,7 @@ const genFractionToRatio = (level: DifficultyLevel, variables: Record<string, bo
     ]);
     const { num, den } = generateSimplestFraction();
     const pA = num, pB = den - num;
+    if (pA === pB) return genFractionToRatio(level, variables, dropdownValue);
     const rev = Math.random() < 0.5; const [cA, cB] = ctx.colors;
     const prose = Math.random() < 0.5;
     // fracStr() gives "$\frac{n}{d}$" — the ONLY $...$ allowed in these lines
@@ -540,6 +542,7 @@ const genFormingRatios = (level: DifficultyLevel, variables: Record<string, bool
     } else {
       const ctx = pick(ctxs2); const g = pick(gcds);
       const a = randInt(2, 20) * g, b = randInt(2, 20) * g;
+      if (a === b) return genFormingRatios(level, variables);
       const rev = Math.random() < 0.5;
       const parts = rev ? [b, a] : [a, b];
       const label = rev ? `${ctx.items[1]}:${ctx.items[0]}` : `${ctx.items[0]}:${ctx.items[1]}`;
