@@ -896,14 +896,14 @@ body{font-family:"Segoe UI",Arial,sans-serif;background:#fff;}
 .ph{display:flex;justify-content:space-between;align-items:baseline;border-bottom:0.4mm solid #1e3a8a;padding-bottom:1.5mm;margin-bottom:2mm;}
 .ph h1{font-size:5mm;font-weight:700;color:#1e3a8a;}.ph .meta{font-size:3mm;color:#6b7280;}
 .grid{display:grid;gap:${GAP_MM}mm;}
-.cell,.dc{border:0.3mm solid #d1d5db;border-radius:1mm;padding:${PAD_MM}mm;overflow:hidden;position:relative;}
+.cell,.dc{border:0.3mm solid #d1d5db;border-radius:1mm;padding:4mm ${PAD_MM}mm ${PAD_MM}mm;overflow:hidden;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;}
 .dg{display:grid;grid-template-columns:repeat(3,1fr);gap:${GAP_MM}mm;}
 .dcol{display:flex;flex-direction:column;gap:${GAP_MM}mm;}
 .dh{height:${diffHdrMM}mm;display:flex;align-items:center;justify-content:center;font-size:3mm;font-weight:700;border-radius:1mm;}
 .dh.level1{background:#dcfce7;color:#166534;}.dh.level2{background:#fef9c3;color:#854d0e;}.dh.level3{background:#fee2e2;color:#991b1b;}
 #probe{position:fixed;left:-9999px;top:0;visibility:hidden;font-family:"Segoe UI",Arial,sans-serif;font-size:${FONT_PX}px;line-height:1.6;width:${cellW_MM - PAD_MM * 2}mm;}
 .qn{position:absolute;top:0;left:0;font-size:${Math.round(FONT_PX * 0.6)}px;font-weight:700;color:#000;padding:1.2mm 1.2mm 1.8mm 1.2mm;border-right:0.3mm solid #000;border-bottom:0.3mm solid #000;}
-.qls{font-size:${FONT_PX}px;line-height:1.6;padding-left:6mm;}.ql{display:block;}.qa{font-size:${FONT_PX}px;color:#059669;margin-top:1mm;padding-left:6mm;}
+.qls{font-size:${FONT_PX}px;line-height:1.6;text-align:center;width:100%;}.ql{display:block;}.qa{font-size:${FONT_PX}px;color:#059669;margin-top:1mm;text-align:center;width:100%;}
 .qi{width:100%;}.kr{display:inline;vertical-align:middle;}.kr.frac{font-size:1.15em;}
 </style></head><body>
 <div id="probe">${questions.map((q, i) => `<div class="qi" id="p${i}">${questionToHtml(q, i, true)}</div>`).join("")}</div>
@@ -1071,7 +1071,7 @@ export default function App() {
   const renderQCell = (q: AnyQuestion, idx: number, bgOverride?: string) => {
     const bg = bgOverride ?? stepBg, fsz = fontSizes[worksheetFontSize];
     return (
-      <div className="rounded-lg shadow" style={{ backgroundColor: bg, height: "100%", boxSizing: "border-box", position: "relative", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "4mm 0.75rem 0.75rem" }}>
+      <div className="rounded-lg shadow" style={{ backgroundColor: bg, height: "100%", boxSizing: "border-box", position: "relative", display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "center", padding: "1.75rem 0.75rem 0.75rem" }}>
         <span style={{ position: "absolute", top: 0, left: 0, fontSize: "0.65em", fontWeight: 700, color: "#000", lineHeight: 1, padding: "5px 5px 7px 5px", borderRight: "1px solid #000", borderBottom: "1px solid #000" }}>{idx + 1})</span>
         <div className={`${fsz} font-semibold`} style={{ color: "#000", lineHeight: 1.8, textAlign: "center", width: "100%" }}>
           {q.lines.map((line, i) => (
