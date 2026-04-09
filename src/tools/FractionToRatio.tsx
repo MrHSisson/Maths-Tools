@@ -179,7 +179,7 @@ const frac = (n: number, d: number) => `\\frac{${n}}{${d}}`;
 // fracStr(n,d) → inline fragment for question lines: "$\frac{n}{d}$"
 const fracStr = (n: number, d: number) => `$${frac(n, d)}$`;
 // ratioStr → plain text ratio, never in $...$
-const ratioStr = (...parts: number[]) => parts.join(" : ");
+const ratioStr = (...parts: number[]) => parts.join(":");
 
 // Working step helpers
 const step = (latex: string, plain?: string): WorkingStep => ({ type: "step", latex, plain: plain ?? latex });
@@ -250,10 +250,10 @@ const genRatioToFraction = (level: DifficultyLevel, variables: Record<string, bo
     const style = randInt(0, 2);
     // Ratios stay as plain text — no $...$
     const line = style === 0
-      ? `The ratio of ${ctx.parts[0]} to ${ctx.parts[1]} is ${a} : ${b}. What fraction of the ${ctx.scenario} are ${partName}?`
+      ? `The ratio of ${ctx.parts[0]} to ${ctx.parts[1]} is ${a}:${b}. What fraction of the ${ctx.scenario} are ${partName}?`
       : style === 1
-        ? `The ratio of ${ctx.parts[0]} to ${ctx.parts[1]} is ${a} : ${b}. Find the fraction of ${ctx.scenario} that are ${partName}.`
-        : `${ctx.parts[0]} to ${ctx.parts[1]} is ${a} : ${b}. Write ${partName} as a fraction of the total.`;
+        ? `The ratio of ${ctx.parts[0]} to ${ctx.parts[1]} is ${a}:${b}. Find the fraction of ${ctx.scenario} that are ${partName}.`
+        : `${ctx.parts[0]} to ${ctx.parts[1]} is ${a}:${b}. Write ${partName} as a fraction of the total.`;
     return {
       kind: "worded", lines: [line], answer: `${sn}/${sd}`, answerLatex: af,
       working: [
@@ -284,10 +284,10 @@ const genRatioToFraction = (level: DifficultyLevel, variables: Record<string, bo
       const style = randInt(0, 2);
       // All ratios as plain text
       line = style === 0
-        ? `The ratio of ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]} is ${a} : ${b} : ${c}. What fraction of ${ctx.scenario} are ${pn}?`
+        ? `The ratio of ${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]} is ${a}:${b}:${c}. What fraction of ${ctx.scenario} are ${pn}?`
         : style === 1
-          ? `The ratio of ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]} is ${a} : ${b} : ${c}. Find the fraction that are ${pn}.`
-          : `${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]} is ${a} : ${b} : ${c}. Write ${pn} as a fraction of the total.`;
+          ? `The ratio of ${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]} is ${a}:${b}:${c}. Find the fraction that are ${pn}.`
+          : `${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]} is ${a}:${b}:${c}. Write ${pn} as a fraction of the total.`;
       targetDescription = pn;
     } else {
       const idx = ctx.compositeIndices;
@@ -295,13 +295,13 @@ const genRatioToFraction = (level: DifficultyLevel, variables: Record<string, bo
       const useNatural = Math.random() < 0.5;
       if (useNatural) {
         line = randInt(0, 1) === 0
-          ? `The ratio of ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]} is ${a} : ${b} : ${c}. What fraction of ${ctx.scenario} are ${ctx.compositeLabel}?`
-          : `The ratio of ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]} is ${a} : ${b} : ${c}. Find the fraction that are ${ctx.compositeLabel}.`;
+          ? `The ratio of ${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]} is ${a}:${b}:${c}. What fraction of ${ctx.scenario} are ${ctx.compositeLabel}?`
+          : `The ratio of ${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]} is ${a}:${b}:${c}. Find the fraction that are ${ctx.compositeLabel}.`;
         targetDescription = ctx.compositeLabel;
       } else {
         line = randInt(0, 1) === 0
-          ? `The ratio of ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]} is ${a} : ${b} : ${c}. What fraction are ${ctx.parts[idx[0]]} or ${ctx.parts[idx[1]]}?`
-          : `The ratio of ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]} is ${a} : ${b} : ${c}. Find the fraction that are ${ctx.parts[idx[0]]} or ${ctx.parts[idx[1]]}.`;
+          ? `The ratio of ${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]} is ${a}:${b}:${c}. What fraction are ${ctx.parts[idx[0]]} or ${ctx.parts[idx[1]]}?`
+          : `The ratio of ${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]} is ${a}:${b}:${c}. Find the fraction that are ${ctx.parts[idx[0]]} or ${ctx.parts[idx[1]]}.`;
         targetDescription = `${ctx.parts[idx[0]]} or ${ctx.parts[idx[1]]}`;
       }
     }
@@ -345,8 +345,8 @@ const genRatioToFraction = (level: DifficultyLevel, variables: Record<string, bo
   const af = frac(sn, sd);
   // Plain text ratios
   const line = Math.random() < 0.5
-    ? `The ratio of ${ctx.item1} to ${ctx.item2} is ${a} : ${b}. Write the amount of ${numeratorName} as a fraction of the amount of ${denominatorName}.`
-    : `${ctx.item1} to ${ctx.item2} is ${a} : ${b}. Find ${numeratorName} as a fraction of ${denominatorName}.`;
+    ? `The ratio of ${ctx.item1} to ${ctx.item2} is ${a}:${b}. Write the amount of ${numeratorName} as a fraction of the amount of ${denominatorName}.`
+    : `${ctx.item1} to ${ctx.item2} is ${a}:${b}. Find ${numeratorName} as a fraction of ${denominatorName}.`;
   return {
     kind: "worded", lines: [line], answer: `${sn}/${sd}`, answerLatex: af,
     working: [
@@ -422,9 +422,9 @@ const genFractionToRatio = (level: DifficultyLevel, variables: Record<string, bo
     }
     const oc = randInt(0, 5); const P = ctx.parts;
     const ords = [
-      { label: `${P[0]} : ${P[1]} : ${P[2]}`, parts: [f1, f2, f3] }, { label: `${P[0]} : ${P[2]} : ${P[1]}`, parts: [f1, f3, f2] },
-      { label: `${P[1]} : ${P[0]} : ${P[2]}`, parts: [f2, f1, f3] }, { label: `${P[1]} : ${P[2]} : ${P[0]}`, parts: [f2, f3, f1] },
-      { label: `${P[2]} : ${P[0]} : ${P[1]}`, parts: [f3, f1, f2] }, { label: `${P[2]} : ${P[1]} : ${P[0]}`, parts: [f3, f2, f1] },
+      { label: `${P[0]}:${P[1]}:${P[2]}`, parts: [f1, f2, f3] }, { label: `${P[0]}:${P[2]}:${P[1]}`, parts: [f1, f3, f2] },
+      { label: `${P[1]}:${P[0]}:${P[2]}`, parts: [f2, f1, f3] }, { label: `${P[1]}:${P[2]}:${P[0]}`, parts: [f2, f3, f1] },
+      { label: `${P[2]}:${P[0]}:${P[1]}`, parts: [f3, f1, f2] }, { label: `${P[2]}:${P[1]}:${P[0]}`, parts: [f3, f2, f1] },
     ];
     const { label: reqOrder, parts: ansParts } = ords[oc];
     const prose = Math.random() < 0.5;
@@ -459,8 +459,8 @@ const genFractionToRatio = (level: DifficultyLevel, variables: Record<string, bo
 
   if (actualGiven === "total") {
     line = rev
-      ? `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. There are ${total} ${ctx.item} in total. Write the ratio ${cB} : ${cA}.`
-      : `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. There are ${total} ${ctx.item} in total. Write the ratio ${cA} : ${cB}.`;
+      ? `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. There are ${total} ${ctx.item} in total. Write the ratio ${cB}:${cA}.`
+      : `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. There are ${total} ${ctx.item} in total. Write the ratio ${cA}:${cB}.`;
     wSteps = [
       tStep(`Total = ${total} ${ctx.item} = ${den} parts`),
       tStep(`1 part = ${total} ÷ ${den} = ${mult}`),
@@ -470,8 +470,8 @@ const genFractionToRatio = (level: DifficultyLevel, variables: Record<string, bo
     ];
   } else if (actualGiven === "partB") {
     line = rev
-      ? `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. There are ${pB} ${cB} ${ctx.item}. Write the ratio ${cB} : ${cA}.`
-      : `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. There are ${pB} ${cB} ${ctx.item}. Write the ratio ${cA} : ${cB}.`;
+      ? `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. There are ${pB} ${cB} ${ctx.item}. Write the ratio ${cB}:${cA}.`
+      : `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. There are ${pB} ${cB} ${ctx.item}. Write the ratio ${cA}:${cB}.`;
     wSteps = [
       mStep(cA, frac(num, den)),
       mStep(`so ${cB}`, frac(den - num, den)),
@@ -482,8 +482,8 @@ const genFractionToRatio = (level: DifficultyLevel, variables: Record<string, bo
     ];
   } else {
     line = rev
-      ? `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. There are ${pA} ${cA} ${ctx.item}. Write the ratio ${cB} : ${cA}.`
-      : `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. There are ${pA} ${cA} ${ctx.item}. Write the ratio ${cA} : ${cB}.`;
+      ? `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. There are ${pA} ${cA} ${ctx.item}. Write the ratio ${cB}:${cA}.`
+      : `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. There are ${pA} ${cA} ${ctx.item}. Write the ratio ${cA}:${cB}.`;
     wSteps = [
       mStep(cA, frac(num, den)),
       tStep(`${num} parts = ${pA}`),
@@ -524,12 +524,12 @@ const genFormingRatios = (level: DifficultyLevel, variables: Record<string, bool
       const a = randInt(2, 15) * g, b = randInt(2, 15) * g, c = randInt(2, 15) * g;
       const order = randInt(0, 5);
       const ords = [
-        { label: `${ctx.items[0]} : ${ctx.items[1]} : ${ctx.items[2]}`, parts: [a, b, c] },
-        { label: `${ctx.items[0]} : ${ctx.items[2]} : ${ctx.items[1]}`, parts: [a, c, b] },
-        { label: `${ctx.items[1]} : ${ctx.items[0]} : ${ctx.items[2]}`, parts: [b, a, c] },
-        { label: `${ctx.items[1]} : ${ctx.items[2]} : ${ctx.items[0]}`, parts: [b, c, a] },
-        { label: `${ctx.items[2]} : ${ctx.items[0]} : ${ctx.items[1]}`, parts: [c, a, b] },
-        { label: `${ctx.items[2]} : ${ctx.items[1]} : ${ctx.items[0]}`, parts: [c, b, a] },
+        { label: `${ctx.items[0]}:${ctx.items[1]}:${ctx.items[2]}`, parts: [a, b, c] },
+        { label: `${ctx.items[0]}:${ctx.items[2]}:${ctx.items[1]}`, parts: [a, c, b] },
+        { label: `${ctx.items[1]}:${ctx.items[0]}:${ctx.items[2]}`, parts: [b, a, c] },
+        { label: `${ctx.items[1]}:${ctx.items[2]}:${ctx.items[0]}`, parts: [b, c, a] },
+        { label: `${ctx.items[2]}:${ctx.items[0]}:${ctx.items[1]}`, parts: [c, a, b] },
+        { label: `${ctx.items[2]}:${ctx.items[1]}:${ctx.items[0]}`, parts: [c, b, a] },
       ];
       const { label, parts } = ords[order];
       const answer = buildAnswer(parts);
@@ -542,7 +542,7 @@ const genFormingRatios = (level: DifficultyLevel, variables: Record<string, bool
       const a = randInt(2, 20) * g, b = randInt(2, 20) * g;
       const rev = Math.random() < 0.5;
       const parts = rev ? [b, a] : [a, b];
-      const label = rev ? `${ctx.items[1]} : ${ctx.items[0]}` : `${ctx.items[0]} : ${ctx.items[1]}`;
+      const label = rev ? `${ctx.items[1]}:${ctx.items[0]}` : `${ctx.items[0]}:${ctx.items[1]}`;
       const answer = buildAnswer(parts);
       const line = Math.random() < 0.5
         ? `A ${ctx.container} has ${a} ${ctx.items[0]} and ${b} ${ctx.items[1]}. Write the ratio ${label}${sfText}.`
@@ -578,7 +578,7 @@ const genFormingRatios = (level: DifficultyLevel, variables: Record<string, bool
       const dp = op === 0 ? `${first} are ${ctx.parts[0]}, ${second} are ${ctx.parts[1]}, and the rest are ${ctx.parts[2]}`
         : op === 1 ? `${first} are ${ctx.parts[0]}, ${third} are ${ctx.parts[2]}, and the rest are ${ctx.parts[1]}`
           : `${second} are ${ctx.parts[1]}, ${third} are ${ctx.parts[2]}, and the rest are ${ctx.parts[0]}`;
-      const line = `A ${ctx.container} contains ${total} ${ctx.item}. ${dp}. Write the ratio ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]}${sfText}.`;
+      const line = `A ${ctx.container} contains ${total} ${ctx.item}. ${dp}. Write the ratio ${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]}${sfText}.`;
       return { kind: "worded", lines: [line], answer, working: [tStep(`Remainder = ${total} − ${first} − ${second} = ${third}`), tStep(`Ratio: ${ratioStr(first, second, third)}`), ...buildSimplificationWorking([first, second, third])], key: `fr-l2-3w-${total}-${first}-${second}-${third}-${id}`, difficulty: level };
     } else {
       const ctx = pick(ctxs2); const total = randInt(10, 80);
@@ -589,7 +589,7 @@ const genFormingRatios = (level: DifficultyLevel, variables: Record<string, bool
       }
       if (!first || !second || first + second !== total) { first = randInt(Math.max(1, Math.floor(total * 0.15)), Math.floor(total * 0.85)); second = total - first; }
       const answer = buildAnswer([first, second]);
-      const line = `A ${ctx.container} contains ${total} ${ctx.item}. ${first} are ${ctx.parts[0]} and the rest are ${ctx.parts[1]}. Write the ratio ${ctx.parts[0]} : ${ctx.parts[1]}${sfText}.`;
+      const line = `A ${ctx.container} contains ${total} ${ctx.item}. ${first} are ${ctx.parts[0]} and the rest are ${ctx.parts[1]}. Write the ratio ${ctx.parts[0]}:${ctx.parts[1]}${sfText}.`;
       return { kind: "worded", lines: [line], answer, working: [tStep(`Remainder = ${total} − ${first} = ${second}`), tStep(`Ratio: ${ratioStr(first, second)}`), ...buildSimplificationWorking([first, second])], key: `fr-l2-2w-${total}-${first}-${second}-${id}`, difficulty: level };
     }
   }
@@ -650,7 +650,7 @@ const genFormingRatios = (level: DifficultyLevel, variables: Record<string, bool
       }
       if (p1 > 0 && p2 > 0 && p3 > 0) {
         valid = true; answer2 = buildAnswer([p1, p2, p3]);
-        finalLine = `There are ${total2} ${ctx.item} in a ${ctx.container}. ${constraintText2} Find the ratio ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]}${sfText}.`;
+        finalLine = `There are ${total2} ${ctx.item} in a ${ctx.container}. ${constraintText2} Find the ratio ${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]}${sfText}.`;
       }
     } else {
       const ctx = ctx2;
