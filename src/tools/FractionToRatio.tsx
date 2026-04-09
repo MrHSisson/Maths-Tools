@@ -258,10 +258,10 @@ const genRatioToFraction = (level: DifficultyLevel, variables: Record<string, bo
     const g = gcd(numerator, total); const sn = numerator / g, sd = total / g;
     const style = randInt(0, 2);
     const line = style === 0
-      ? `The ratio of ${ctx.parts[0]} to ${ctx.parts[1]} ${ctx.scenario} is $${a}:${b}$. What fraction of the ${ctx.scenario} are ${partName}?`
+      ? `The ratio of ${ctx.parts[0]} to ${ctx.parts[1]} ${ctx.scenario} is ${a} : ${b}. What fraction of the ${ctx.scenario} are ${partName}?`
       : style === 1
-        ? `The ratio of ${ctx.parts[0]} to ${ctx.parts[1]} is $${a}:${b}$. Find the fraction of ${ctx.scenario} that are ${partName}.`
-        : `${ctx.parts[0]} to ${ctx.parts[1]} is $${a}:${b}$. Write ${partName} as a fraction of the total.`;
+        ? `The ratio of ${ctx.parts[0]} to ${ctx.parts[1]} is ${a} : ${b}. Find the fraction of ${ctx.scenario} that are ${partName}.`
+        : `${ctx.parts[0]} to ${ctx.parts[1]} is ${a} : ${b}. Write ${partName} as a fraction of the total.`;
     return {
       kind: "worded", lines: [line], answer: `${sn}/${sd}`, answerLatex: af,
       working: [
@@ -291,10 +291,10 @@ const genRatioToFraction = (level: DifficultyLevel, variables: Record<string, bo
       const wp = randInt(0, 2); numerator = [a, b, c][wp]; const pn = ctx.parts[wp];
       const style = randInt(0, 2);
       line = style === 0
-        ? `The ratio of $${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]}$ is $${a}:${b}:${c}$. What fraction of ${ctx.scenario} are ${pn}?`
+        ? `The ratio of ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]} is ${a} : ${b} : ${c}. What fraction of ${ctx.scenario} are ${pn}?`
         : style === 1
-          ? `The ratio of $${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]}$ is $${a}:${b}:${c}$. Find the fraction that are ${pn}.`
-          : `$${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]}$ is $${a}:${b}:${c}$. Write ${pn} as a fraction of the total.`;
+          ? `The ratio of ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]} is ${a} : ${b} : ${c}. Find the fraction that are ${pn}.`
+          : `${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]} is ${a} : ${b} : ${c}. Write ${pn} as a fraction of the total.`;
       targetDescription = pn;
     } else {
       const idx = ctx.compositeIndices;
@@ -302,13 +302,13 @@ const genRatioToFraction = (level: DifficultyLevel, variables: Record<string, bo
       const useNatural = Math.random() < 0.5;
       if (useNatural) {
         line = randInt(0, 1) === 0
-          ? `The ratio of $${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]}$ is $${a}:${b}:${c}$. What fraction of ${ctx.scenario} are ${ctx.compositeLabel}?`
-          : `The ratio of $${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]}$ is $${a}:${b}:${c}$. Find the fraction that are ${ctx.compositeLabel}.`;
+          ? `The ratio of ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]} is ${a} : ${b} : ${c}. What fraction of ${ctx.scenario} are ${ctx.compositeLabel}?`
+          : `The ratio of ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]} is ${a} : ${b} : ${c}. Find the fraction that are ${ctx.compositeLabel}.`;
         targetDescription = ctx.compositeLabel;
       } else {
         line = randInt(0, 1) === 0
-          ? `The ratio of $${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]}$ is $${a}:${b}:${c}$. What fraction are ${ctx.parts[idx[0]]} or ${ctx.parts[idx[1]]}?`
-          : `The ratio of $${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]}$ is $${a}:${b}:${c}$. Find the fraction that are ${ctx.parts[idx[0]]} or ${ctx.parts[idx[1]]}.`;
+          ? `The ratio of ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]} is ${a} : ${b} : ${c}. What fraction are ${ctx.parts[idx[0]]} or ${ctx.parts[idx[1]]}?`
+          : `The ratio of ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]} is ${a} : ${b} : ${c}. Find the fraction that are ${ctx.parts[idx[0]]} or ${ctx.parts[idx[1]]}.`;
         targetDescription = `${ctx.parts[idx[0]]} or ${ctx.parts[idx[1]]}`;
       }
     }
@@ -356,8 +356,8 @@ const genRatioToFraction = (level: DifficultyLevel, variables: Record<string, bo
   const g = gcd(numerator, denominator); const sn = numerator / g, sd = denominator / g;
   const af = frac(sn, sd);
   const line = Math.random() < 0.5
-    ? `The ratio of ${ctx.item1} to ${ctx.item2} is $${a}:${b}$. Write the amount of ${numeratorName} as a fraction of the amount of ${denominatorName}.`
-    : `${ctx.item1} to ${ctx.item2} is $${a}:${b}$. Find ${numeratorName} as a fraction of ${denominatorName}.`;
+    ? `The ratio of ${ctx.item1} to ${ctx.item2} is ${a} : ${b}. Write the amount of ${numeratorName} as a fraction of the amount of ${denominatorName}.`
+    : `${ctx.item1} to ${ctx.item2} is ${a} : ${b}. Find ${numeratorName} as a fraction of ${denominatorName}.`;
   return {
     kind: "worded", lines: [line], answer: `${sn}/${sd}`, answerLatex: af,
     working: [
@@ -557,8 +557,8 @@ const genFormingRatios = (level: DifficultyLevel, variables: Record<string, bool
       const { label, parts } = ords[order];
       const answer = buildAnswer(parts);
       const line = Math.random() < 0.5
-        ? `A ${ctx.container} has $${a}$ ${ctx.items[0]}, $${b}$ ${ctx.items[1]}, and $${c}$ ${ctx.items[2]}. Write the ratio of ${label}${sfText}.`
-        : `There are $${a}$ ${ctx.items[0]}, $${b}$ ${ctx.items[1]}, and $${c}$ ${ctx.items[2]} in a ${ctx.container}. Find ${label}${sfText}.`;
+        ? `A ${ctx.container} has ${a} ${ctx.items[0]}, ${b} ${ctx.items[1]}, and ${c} ${ctx.items[2]}. Write the ratio of ${label}${sfText}.`
+        : `There are ${a} ${ctx.items[0]}, ${b} ${ctx.items[1]}, and ${c} ${ctx.items[2]} in a ${ctx.container}. Find ${label}${sfText}.`;
       return {
         kind: "worded", lines: [line], answer,
         working: [tStep(`Ratio: ${ratioStr(a, b, c)}`), ...buildSimplificationWorking(parts)],
@@ -572,8 +572,8 @@ const genFormingRatios = (level: DifficultyLevel, variables: Record<string, bool
       const label = rev ? `${ctx.items[1]} : ${ctx.items[0]}` : `${ctx.items[0]} : ${ctx.items[1]}`;
       const answer = buildAnswer(parts);
       const line = Math.random() < 0.5
-        ? `A ${ctx.container} has $${a}$ ${ctx.items[0]} and $${b}$ ${ctx.items[1]}. Write the ratio ${label}${sfText}.`
-        : `There are $${a}$ ${ctx.items[0]} and $${b}$ ${ctx.items[1]} in a ${ctx.container}. Find ${label}${sfText}.`;
+        ? `A ${ctx.container} has ${a} ${ctx.items[0]} and ${b} ${ctx.items[1]}. Write the ratio ${label}${sfText}.`
+        : `There are ${a} ${ctx.items[0]} and ${b} ${ctx.items[1]} in a ${ctx.container}. Find ${label}${sfText}.`;
       return {
         kind: "worded", lines: [line], answer,
         working: [tStep(`Ratio: ${ratioStr(a, b)}`), ...buildSimplificationWorking(parts)],
@@ -632,7 +632,7 @@ const genFormingRatios = (level: DifficultyLevel, variables: Record<string, bool
         first = randInt(Math.max(1, Math.floor(total * 0.15)), Math.floor(total * 0.85)); second = total - first;
       }
       const answer = buildAnswer([first, second]);
-      const line = `A ${ctx.container} contains $${total}$ ${ctx.item}. $${first}$ are ${ctx.parts[0]} and the rest are ${ctx.parts[1]}. Write the ratio ${ctx.parts[0]} : ${ctx.parts[1]}${sfText}.`;
+      const line = `A ${ctx.container} contains ${total} ${ctx.item}. ${first} are ${ctx.parts[0]} and the rest are ${ctx.parts[1]}. Write the ratio ${ctx.parts[0]} : ${ctx.parts[1]}${sfText}.`;
       return {
         kind: "worded", lines: [line], answer,
         working: [tStep(`Remainder = ${total} − ${first} = ${second}`), tStep(`Ratio: ${ratioStr(first, second)}`), ...buildSimplificationWorking([first, second])],
@@ -671,13 +671,13 @@ const genFormingRatios = (level: DifficultyLevel, variables: Record<string, bool
           const pct = pick(percentages); p1 = Math.round(total2 * pct / 100);
           if (p1 !== total2 * pct / 100) continue;
           p2 = randInt(1, total2 - p1 - 1); p3 = total2 - p1 - p2;
-          constraintText2 = `$${pct}$% are ${ctx.parts[0]}. $${p2}$ are ${ctx.parts[1]}. The rest are ${ctx.parts[2]}.`;
+          constraintText2 = `${pct}% are ${ctx.parts[0]}. ${p2} are ${ctx.parts[1]}. The rest are ${ctx.parts[2]}.`;
           calcSteps = [tStep(`${ctx.parts[0]}: ${pct}% of ${total2} = ${p1}`), tStep(`${ctx.parts[1]}: ${p2}`), tStep(`${ctx.parts[2]}: ${total2} − ${p1} − ${p2} = ${p3}`)];
         } else {
           const fr = pick(fracs2); p1 = Math.round(total2 * fr.num / fr.den);
           if (p1 !== total2 * fr.num / fr.den) continue;
           p2 = randInt(1, total2 - p1 - 1); p3 = total2 - p1 - p2;
-          constraintText2 = `$${frac(fr.num, fr.den)}$ are ${ctx.parts[0]}. $${p2}$ are ${ctx.parts[1]}. The rest are ${ctx.parts[2]}.`;
+          constraintText2 = `${frac(fr.num, fr.den)}$ are ${ctx.parts[0]}. ${p2} are ${ctx.parts[1]}. The rest are ${ctx.parts[2]}.`;
           calcSteps = [tStep(`${ctx.parts[0]}: ${fr.num}/${fr.den} of ${total2} = ${p1}`), tStep(`${ctx.parts[1]}: ${p2}`), tStep(`${ctx.parts[2]}: ${total2} − ${p1} − ${p2} = ${p3}`)];
         }
       } else {
@@ -685,37 +685,37 @@ const genFormingRatios = (level: DifficultyLevel, variables: Record<string, bool
         if (usePct) {
           const pct = pick(percentages); p2 = Math.round(rem * pct / 100);
           if (p2 !== rem * pct / 100) continue; p3 = total2 - p1 - p2;
-          constraintText2 = `$${p1}$ are ${ctx.parts[0]}. $${pct}$% of the remainder are ${ctx.parts[1]}. The rest are ${ctx.parts[2]}.`;
+          constraintText2 = `${p1} are ${ctx.parts[0]}. ${pct}% of the remainder are ${ctx.parts[1]}. The rest are ${ctx.parts[2]}.`;
           calcSteps = [tStep(`${ctx.parts[0]}: ${p1}`), tStep(`Remainder = ${total2} − ${p1} = ${rem}`), tStep(`${ctx.parts[1]}: ${pct}% of ${rem} = ${p2}`), tStep(`${ctx.parts[2]}: ${total2} − ${p1} − ${p2} = ${p3}`)];
         } else {
           const fr = pick(fracs2); p2 = Math.round(rem * fr.num / fr.den);
           if (p2 !== rem * fr.num / fr.den) continue; p3 = total2 - p1 - p2;
-          constraintText2 = `$${p1}$ are ${ctx.parts[0]}. $${frac(fr.num, fr.den)}$ of the remainder are ${ctx.parts[1]}. The rest are ${ctx.parts[2]}.`;
+          constraintText2 = `${p1} are ${ctx.parts[0]}. ${frac(fr.num, fr.den)}$ of the remainder are ${ctx.parts[1]}. The rest are ${ctx.parts[2]}.`;
           calcSteps = [tStep(`${ctx.parts[0]}: ${p1}`), tStep(`Remainder = ${total2} − ${p1} = ${rem}`), tStep(`${ctx.parts[1]}: ${fr.num}/${fr.den} of ${rem} = ${p2}`), tStep(`${ctx.parts[2]}: ${total2} − ${p1} − ${p2} = ${p3}`)];
         }
       }
       if (p1 > 0 && p2 > 0 && p3 > 0) {
         valid = true;
         answer2 = buildAnswer([p1, p2, p3]);
-        finalLine = `There are $${total2}$ ${ctx.item} in a ${ctx.container}. ${constraintText2} Find the ratio ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]}${sfText}.`;
+        finalLine = `There are ${total2} ${ctx.item} in a ${ctx.container}. ${constraintText2} Find the ratio ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]}${sfText}.`;
       }
     } else {
       const ctx = pick(ctxs2L3);
       if (usePct) {
         const pct = pick(percentages); p1 = Math.round(total2 * pct / 100);
         if (p1 !== total2 * pct / 100) continue; p2 = total2 - p1;
-        constraintText2 = `$${pct}$% are ${ctx.parts[0]} and the rest are ${ctx.parts[1]}.`;
+        constraintText2 = `${pct}% are ${ctx.parts[0]} and the rest are ${ctx.parts[1]}.`;
         calcSteps = [tStep(`${ctx.parts[0]}: ${pct}% of ${total2} = ${p1}`), tStep(`${ctx.parts[1]}: ${total2} − ${p1} = ${p2}`)];
       } else {
         const fr = pick(fracs2); p1 = Math.round(total2 * fr.num / fr.den);
         if (p1 !== total2 * fr.num / fr.den) continue; p2 = total2 - p1;
-        constraintText2 = `$${frac(fr.num, fr.den)}$ are ${ctx.parts[0]} and the rest are ${ctx.parts[1]}.`;
+        constraintText2 = `${frac(fr.num, fr.den)}$ are ${ctx.parts[0]} and the rest are ${ctx.parts[1]}.`;
         calcSteps = [tStep(`${ctx.parts[0]}: ${fr.num}/${fr.den} of ${total2} = ${p1}`), tStep(`${ctx.parts[1]}: ${total2} − ${p1} = ${p2}`)];
       }
       if (p1 > 0 && p2 > 0 && p1 !== p2) {
         valid = true;
         answer2 = buildAnswer([p1, p2]);
-        finalLine = `There are $${total2}$ ${ctxs2L3[0].item} in a ${ctxs2L3[0].container}. ${constraintText2} Write this as a ratio${sfText}.`;
+        finalLine = `There are ${total2} ${ctxs2L3[0].item} in a ${ctxs2L3[0].container}. ${constraintText2} Write this as a ratio${sfText}.`;
       }
     }
   }
