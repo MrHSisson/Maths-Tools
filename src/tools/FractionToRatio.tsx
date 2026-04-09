@@ -895,7 +895,7 @@ body{font-family:"Segoe UI",Arial,sans-serif;background:#fff;}
 .page:last-child{page-break-after:auto;}
 .ph{display:flex;justify-content:space-between;align-items:baseline;border-bottom:0.4mm solid #1e3a8a;padding-bottom:1.5mm;margin-bottom:2mm;}
 .ph h1{font-size:5mm;font-weight:700;color:#1e3a8a;}.ph .meta{font-size:3mm;color:#6b7280;}
-.grid{display:grid;gap:${GAP_MM}mm;align-items:start;}
+.grid{display:grid;gap:${GAP_MM}mm;}
 .cell,.dc{border:0.3mm solid #d1d5db;border-radius:1mm;padding:4mm ${PAD_MM}mm ${PAD_MM}mm;overflow:hidden;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;}
 .dg{display:grid;grid-template-columns:repeat(3,1fr);gap:${GAP_MM}mm;}
 .dcol{display:flex;flex-direction:column;gap:${GAP_MM}mm;}
