@@ -389,11 +389,11 @@ const genFractionToRatio = (level: DifficultyLevel, variables: Record<string, bo
     const prose = Math.random() < 0.5;
     const line = rev
       ? (prose
-        ? `In a bag of ${ctx.item}, $${frac(num, den)}$ are ${cA} and the rest are ${cB}. Write the ratio of ${cB} to ${cA}.`
-        : `In a bag of ${ctx.item}, $${frac(num, den)}$ are ${cA} and the rest are ${cB}. Find ${cB} : ${cA}.`)
+        ? `In a bag of ${ctx.item}, ${frac(num, den)}$ are ${cA} and the rest are ${cB}. Write the ratio of ${cB} to ${cA}.`
+        : `In a bag of ${ctx.item}, ${frac(num, den)}$ are ${cA} and the rest are ${cB}. Find ${cB} : ${cA}.`)
       : (prose
-        ? `In a bag of ${ctx.item}, $${frac(num, den)}$ are ${cA} and the rest are ${cB}. Write the ratio of ${cA} to ${cB}.`
-        : `In a bag of ${ctx.item}, $${frac(num, den)}$ are ${cA} and the rest are ${cB}. Find ${cA} : ${cB}.`);
+        ? `In a bag of ${ctx.item}, ${frac(num, den)}$ are ${cA} and the rest are ${cB}. Write the ratio of ${cA} to ${cB}.`
+        : `In a bag of ${ctx.item}, ${frac(num, den)}$ are ${cA} and the rest are ${cB}. Find ${cA} : ${cB}.`);
     const answer = rev ? ratioStr(pB, pA) : ratioStr(pA, pB);
     return {
       kind: "worded", lines: [line], answer,
@@ -1215,7 +1215,20 @@ export default function App() {
     dropdownValue: getDropdownValue(), onDropdownChange: setDropdownValue,
   };
   const diffQOProps = { toolSettings: getToolSettings(), levelVariables, onLevelVariableChange: handleLevelVarChange, levelDropdowns, onLevelDropdownChange: handleLevelDDChange };
-  const qoEl = (isDiff = false) => isDiff ? <DiffQOPopover {...diffQOProps} /> : <StandardQOPopover {...stdQOProps} />;
+
+  // Only show QO button if there is at least one option available
+  const hasStdOptions = (getVariablesConfig()?.length ?? 0) > 0 || getDropdownConfig() !== null;
+  const hasDiffOptions = (["level1","level2","level3"] as DifficultyLevel[]).some(lv => {
+    const t = getToolSettings();
+    const dd = t.difficultySettings?.[lv]?.dropdown ?? t.dropdown;
+    const vars = t.difficultySettings?.[lv]?.variables ?? t.variables;
+    return dd !== null || (vars?.length ?? 0) > 0;
+  });
+  const qoEl = (isDiff = false) => {
+    if (isDiff && !hasDiffOptions) return null;
+    if (!isDiff && !hasStdOptions) return null;
+    return isDiff ? <DiffQOPopover {...diffQOProps} /> : <StandardQOPopover {...stdQOProps} />;
+  };
 
   useEffect(() => { if (mode !== "worksheet") handleNewQuestion(); }, [difficulty, currentTool]);
 
@@ -1231,7 +1244,11 @@ export default function App() {
       <div className="rounded-lg p-3 shadow" style={{ backgroundColor: bg, height: "100%", boxSizing: "border-box", position: "relative" }}>
         {numEl}
         <div className={`${fsz} font-semibold w-full`} style={{ color: "#000", lineHeight: 1.6, paddingLeft: "1.5rem" }}>
-          {q.lines.map((line, i) => <div key={i}><InlineMath text={line} /></div>)}
+          {q.lines.map((line, i) => (
+            <div key={i} style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: "0.2em" }}>
+              <InlineMath text={line} />
+            </div>
+          ))}
         </div>
         {showWorksheetAnswers && (
           <div className={`${fsz} font-semibold mt-1`} style={{ color: "#059669", paddingLeft: "1.5rem" }}>
