@@ -1071,7 +1071,7 @@ export default function App() {
   const renderQCell = (q: AnyQuestion, idx: number, bgOverride?: string) => {
     const bg = bgOverride ?? stepBg, fsz = fontSizes[worksheetFontSize];
     return (
-      <div className="rounded-lg shadow" style={{ backgroundColor: bg, height: "100%", boxSizing: "border-box", position: "relative", display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "center", padding: "1.75rem 0.75rem 0.75rem" }}>
+      <div className="rounded-lg shadow" style={{ backgroundColor: bg, height: "100%", boxSizing: "border-box", position: "relative", display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "flex-start", padding: "1.75rem 0.75rem 0.75rem" }}>
         <span style={{ position: "absolute", top: 0, left: 0, fontSize: "0.65em", fontWeight: 700, color: "#000", lineHeight: 1, padding: "5px 5px 7px 5px", borderRight: "1px solid #000", borderBottom: "1px solid #000" }}>{idx + 1})</span>
         <div className={`${fsz} font-semibold`} style={{ color: "#000", lineHeight: 1.8, textAlign: "center", width: "100%" }}>
           {q.lines.map((line, i) => (
