@@ -928,7 +928,7 @@ document.addEventListener("DOMContentLoaded",function(){
   else{for(var s=0;s<qData.length;s+=rpp*cols)pages.push(qData.slice(s,s+rpp*cols));}
   var tp=pages.length;
   function cw(c){return(PW-GAP*(c-1))/c;}
-  function cell(inner,w,h,dc){return'<div class="'+(dc?"dc":"cell")+'" style="width:'+w+'mm;height:'+h+'mm;"><div class="qi">'+inner+'</div></div>';}
+  function cell(inner,w,h,dc){return'<div class="'+(dc?"dc":"cell")+'" style="width:'+w+'mm;height:'+h+'mm;">'+inner+'</div>';}
   function grid(pd,sa,ch){
     if(isDiff){var pi=pd,s=pi*diffRPP,e=s+diffRPP,cW=cw(3);
       var lvls=["level1","level2","level3"],lbls=["Level 1","Level 2","Level 3"];
@@ -1275,3 +1275,4 @@ export default function App() {
     </>
   );
 }
+      
