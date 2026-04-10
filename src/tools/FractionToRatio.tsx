@@ -21,7 +21,6 @@ const loadKaTeX = (() => {
   };
 })();
 
-// Renders a single KaTeX expression inline
 const MathRenderer = ({ latex, style, className }: { latex: string; style?: CSSProperties; className?: string }) => {
   const ref = useRef<HTMLSpanElement>(null);
   const [ready, setReady] = useState(() => typeof window !== "undefined" && !!w().katex);
@@ -35,7 +34,6 @@ const MathRenderer = ({ latex, style, className }: { latex: string; style?: CSSP
 };
 
 // Renders a line of text that may contain $LaTeX$ fragments inline with prose.
-// ONLY fractions (\frac) should be in $...$. Plain numbers and ratio text stay as prose.
 const InlineMath = ({ text, className, style }: { text: string; className?: string; style?: CSSProperties }) => {
   const parts = text.split(/(\$[^$]+\$)/g);
   return (
@@ -148,16 +146,14 @@ const INFO_SECTIONS = [
 ];
 
 // ── Question interfaces ───────────────────────────────────────────────────────
-// lines[] rule: ONLY \frac{}{} expressions go inside $...$. 
-// ALL other content (numbers, ratios, names, percentages) stays as plain text.
 
 interface WorkingStep { type: string; latex: string; plain: string; label?: string; unit?: string; }
 
 interface WordedQuestion {
   kind: "worded";
-  lines: string[];       // prose. Only $\frac{n}{d}$ allowed inside $...$
-  answer: string;        // plain text for ratio answers
-  answerLatex?: string;  // KaTeX only for fraction answers
+  lines: string[];
+  answer: string;
+  answerLatex: string;
   working: WorkingStep[];
   key: string;
   difficulty: string;
@@ -174,19 +170,17 @@ const simplifyRatioParts = (parts: number[]): number[] => {
   return parts.map(p => p / d);
 };
 
-// frac(n,d) → LaTeX string for use inside $...$
+// fracStr(n,d) → "$\frac{n}{d}$" for use in InlineMath lines
+const fracStr = (n: number, d: number) => `$\\frac{${n}}{${d}}$`;
+// frac(n,d) → LaTeX string for use directly in step()/mStep()
 const frac = (n: number, d: number) => `\\frac{${n}}{${d}}`;
-// fracStr(n,d) → inline fragment for question lines: "$\frac{n}{d}$"
-// Uses string concatenation to avoid nested backtick issues in template literals
-const fracStr = (n: number, d: number) => "$" + frac(n, d) + "$";
-// ratioStr → plain text ratio, never in $...$
-const ratioStr = (...parts: number[]) => parts.join(":");
-
-// Working step helpers
-const step  = (latex: string, plain?: string): WorkingStep => ({ type: "step",  latex, plain: plain ?? latex });
-const tStep = (text: string): WorkingStep => ({ type: "tStep", latex: `\\text{${text}}`, plain: text });
-const mStep = (label: string, latex: string, unit?: string): WorkingStep => ({ type: "mStep", latex, plain: `${label} ${latex}${unit ? " " + unit : ""}`, label, unit });
-
+// mStr → wraps a number or expression for KaTeX in InlineMath lines
+const mStr = (x: number | string) => `$${x}$`;
+// rLatex → ratio as a KaTeX string e.g. "3 : 4" for use in step()/mStep()/answerLatex
+const rLatex = (...parts: number[]) => parts.join(" : ");
+// rStr → InlineMath-ready ratio: "$3 : 4$"
+const rStr = (...parts: number[]) => `$${rLatex(...parts)}$`;
+// answerFrac → simplified fraction as LaTeX string
 const answerFrac = (n: number, d: number): string => { const g = gcd(n, d); return frac(n / g, d / g); };
 
 const getSimplificationSteps = (parts: number[]): WorkingStep[] => {
@@ -197,7 +191,7 @@ const getSimplificationSteps = (parts: number[]): WorkingStep[] => {
     for (const p of primes) {
       if (cur.every(n => n % p === 0)) {
         const next = cur.map(n => n / p);
-        steps.push(tStep(`÷${p}: ${ratioStr(...cur)} → ${ratioStr(...next)}`));
+        steps.push(step(`${rLatex(...cur)} \\div ${p} = ${rLatex(...next)}`));
         cur = next; found = true; break;
       }
     }
@@ -221,7 +215,7 @@ const convertToCommonDenominator = (f1: { num: number; den: number }, f2: { num:
   return {
     newNum1: f1.num * m1, newNum2: f2.num * m2, lcd,
     steps: [
-      tStep(`LCD of ${f1.den} and ${f2.den} = ${lcd}`),
+      mStep("LCD:", `${f1.den} \\text{ and } ${f2.den} \\Rightarrow ${lcd}`),
       step(`${frac(f1.num, f1.den)} = ${frac(f1.num * m1, lcd)}`),
       step(`${frac(f2.num, f2.den)} = ${frac(f2.num * m2, lcd)}`),
     ],
@@ -231,6 +225,11 @@ const convertToCommonDenominator = (f1: { num: number; den: number }, f2: { num:
 const randInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
 const pick = <T,>(arr: T[]): T => arr[randInt(0, arr.length - 1)];
 
+// Working step helpers
+const step  = (latex: string, plain?: string): WorkingStep => ({ type: "step",  latex, plain: plain ?? latex });
+const tStep = (text: string): WorkingStep => ({ type: "tStep", latex: `\\text{${text}}`, plain: text });
+const mStep = (label: string, latex: string, unit?: string): WorkingStep => ({ type: "mStep", latex, plain: `${label} ${latex}${unit ? " " + unit : ""}`, label, unit });
+
 // ── ratioToFraction ───────────────────────────────────────────────────────────
 
 const genRatioToFraction = (level: DifficultyLevel, variables: Record<string, boolean>, dropdownValue: string): WordedQuestion => {
@@ -238,29 +237,34 @@ const genRatioToFraction = (level: DifficultyLevel, variables: Record<string, bo
 
   if (level === "level1") {
     const ctx = pick([
-      { scenario: "beads", parts: ["red", "blue"] }, { scenario: "students", parts: ["boys", "girls"] },
-      { scenario: "games", parts: ["wins", "losses"] }, { scenario: "marbles", parts: ["red", "blue"] },
+      { scenario: "beads", parts: ["red", "blue"] },
+      { scenario: "students", parts: ["boys", "girls"] },
+      { scenario: "games", parts: ["wins", "losses"] },
+      { scenario: "marbles", parts: ["red", "blue"] },
       { scenario: "counters", parts: ["green", "yellow"] },
     ]);
     const a = randInt(2, 12), b = randInt(2, 12), total = a + b;
     const whichPart = Math.random() < 0.5 ? 0 : 1;
     const numerator = whichPart === 0 ? a : b;
     const partName = ctx.parts[whichPart];
-    const af = answerFrac(numerator, total);
     const g = gcd(numerator, total); const sn = numerator / g, sd = total / g;
+    const af = frac(sn, sd);
+
+    // ratio stays as plain prose label since parts are word-based (red:blue etc.)
+    // but the numeric ratio values go in KaTeX via rStr
     const style = randInt(0, 2);
-    // Ratios stay as plain text — no $...$
     const line = style === 0
-      ? `The ratio of ${ctx.parts[0]} to ${ctx.parts[1]} is ${a}:${b}. What fraction of the ${ctx.scenario} are ${partName}?`
+      ? `The ratio of ${ctx.parts[0]} to ${ctx.parts[1]} is ${rStr(a, b)}. What fraction of the ${ctx.scenario} are ${partName}?`
       : style === 1
-        ? `The ratio of ${ctx.parts[0]} to ${ctx.parts[1]} is ${a}:${b}. Find the fraction of ${ctx.scenario} that are ${partName}.`
-        : `${ctx.parts[0]} to ${ctx.parts[1]} is ${a}:${b}. Write ${partName} as a fraction of the total.`;
+        ? `The ratio of ${ctx.parts[0]} to ${ctx.parts[1]} is ${rStr(a, b)}. Find the fraction of ${ctx.scenario} that are ${partName}.`
+        : `The ratio of ${ctx.parts[0]} to ${ctx.parts[1]} is ${rStr(a, b)}. Write ${partName} as a fraction of the total.`;
+
     return {
       kind: "worded", lines: [line], answer: `${sn}/${sd}`, answerLatex: af,
       working: [
-        tStep(`Total parts = ${a} + ${b} = ${total}`),
-        mStep(partName.charAt(0).toUpperCase() + partName.slice(1), frac(numerator, total)),
-        sn === numerator ? tStep(`Already in simplest form`) : step(`${frac(numerator, total)} = ${frac(sn, sd)}`),
+        step(`${a} + ${b} = ${total}`, `Total parts = ${total}`),
+        mStep(partName.charAt(0).toUpperCase() + partName.slice(1) + " =", frac(numerator, total)),
+        sn === numerator ? tStep("Already in simplest form") : step(`${frac(numerator, total)} = ${frac(sn, sd)}`),
       ],
       key: `rtf-l1-${a}-${b}-${whichPart}-${id}`, difficulty: level,
     };
@@ -283,12 +287,11 @@ const genRatioToFraction = (level: DifficultyLevel, variables: Record<string, bo
     if (!isComposite) {
       const wp = randInt(0, 2); numerator = [a, b, c][wp]; const pn = ctx.parts[wp];
       const style = randInt(0, 2);
-      // All ratios as plain text
       line = style === 0
-        ? `The ratio of ${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]} is ${a}:${b}:${c}. What fraction of ${ctx.scenario} are ${pn}?`
+        ? `The ratio of ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]} is ${rStr(a, b, c)}. What fraction of ${ctx.scenario} are ${pn}?`
         : style === 1
-          ? `The ratio of ${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]} is ${a}:${b}:${c}. Find the fraction that are ${pn}.`
-          : `${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]} is ${a}:${b}:${c}. Write ${pn} as a fraction of the total.`;
+          ? `The ratio of ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]} is ${rStr(a, b, c)}. Find the fraction that are ${pn}.`
+          : `The ratio of ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]} is ${rStr(a, b, c)}. Write ${pn} as a fraction of the total.`;
       targetDescription = pn;
     } else {
       const idx = ctx.compositeIndices;
@@ -296,13 +299,13 @@ const genRatioToFraction = (level: DifficultyLevel, variables: Record<string, bo
       const useNatural = Math.random() < 0.5;
       if (useNatural) {
         line = randInt(0, 1) === 0
-          ? `The ratio of ${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]} is ${a}:${b}:${c}. What fraction of ${ctx.scenario} are ${ctx.compositeLabel}?`
-          : `The ratio of ${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]} is ${a}:${b}:${c}. Find the fraction that are ${ctx.compositeLabel}.`;
+          ? `The ratio of ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]} is ${rStr(a, b, c)}. What fraction of ${ctx.scenario} are ${ctx.compositeLabel}?`
+          : `The ratio of ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]} is ${rStr(a, b, c)}. Find the fraction that are ${ctx.compositeLabel}.`;
         targetDescription = ctx.compositeLabel;
       } else {
         line = randInt(0, 1) === 0
-          ? `The ratio of ${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]} is ${a}:${b}:${c}. What fraction are ${ctx.parts[idx[0]]} or ${ctx.parts[idx[1]]}?`
-          : `The ratio of ${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]} is ${a}:${b}:${c}. Find the fraction that are ${ctx.parts[idx[0]]} or ${ctx.parts[idx[1]]}.`;
+          ? `The ratio of ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]} is ${rStr(a, b, c)}. What fraction are ${ctx.parts[idx[0]]} or ${ctx.parts[idx[1]]}?`
+          : `The ratio of ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]} is ${rStr(a, b, c)}. Find the fraction that are ${ctx.parts[idx[0]]} or ${ctx.parts[idx[1]]}.`;
         targetDescription = `${ctx.parts[idx[0]]} or ${ctx.parts[idx[1]]}`;
       }
     }
@@ -316,16 +319,16 @@ const genRatioToFraction = (level: DifficultyLevel, variables: Record<string, bo
     if (isComposite) {
       const idx = ctx.compositeIndices; const v1 = [a, b, c][idx[0]], v2 = [a, b, c][idx[1]];
       workingSteps = [
-        tStep(`Total parts = ${a} + ${b} + ${c} = ${total}`),
-        tStep(`${tdCap} = ${ctx.parts[idx[0]]} + ${ctx.parts[idx[1]]} = ${v1} + ${v2} = ${numerator}`),
-        mStep(`Fraction`, frac(numerator, total)),
-        simplestFormEnabled && sn !== numerator ? step(`${frac(numerator, total)} = ${frac(sn, sd)}`) : tStep(`Already in simplest form`),
+        step(`${a} + ${b} + ${c} = ${total}`, `Total parts = ${total}`),
+        step(`${v1} + ${v2} = ${numerator}`, `${tdCap} = ${numerator}`),
+        mStep("Fraction =", frac(numerator, total)),
+        simplestFormEnabled && sn !== numerator ? step(`${frac(numerator, total)} = ${frac(sn, sd)}`) : tStep("Already in simplest form"),
       ];
     } else {
       workingSteps = [
-        tStep(`Total parts = ${a} + ${b} + ${c} = ${total}`),
-        mStep(tdCap, frac(numerator, total)),
-        simplestFormEnabled && sn !== numerator ? step(`${frac(numerator, total)} = ${frac(sn, sd)}`) : tStep(`Already in simplest form`),
+        step(`${a} + ${b} + ${c} = ${total}`, `Total parts = ${total}`),
+        mStep(tdCap + " =", frac(numerator, total)),
+        simplestFormEnabled && sn !== numerator ? step(`${frac(numerator, total)} = ${frac(sn, sd)}`) : tStep("Already in simplest form"),
       ];
     }
     return { kind: "worded", lines: [line], answer: `${sn}/${sd}`, answerLatex: af, working: workingSteps, key: `rtf-l2-${a}-${b}-${c}-${actualTarget}-${isComposite}-${id}`, difficulty: level };
@@ -337,26 +340,25 @@ const genRatioToFraction = (level: DifficultyLevel, variables: Record<string, bo
     { item1: "pound coins", item2: "fifty pence coins" }, { item1: "ten pound notes", item2: "five pound notes" },
     { item1: "Year 7s", item2: "Year 8s" }, { item1: "adults", item2: "children" },
   ]);
-      const a = randInt(2, 12), b = randInt(2, 12);
-    if (a === b) return genRatioToFraction(level, variables, dropdownValue);
+  const a = randInt(2, 12), b = randInt(2, 12);
+  if (a === b) return genRatioToFraction(level, variables, dropdownValue);
   const orderReversed = Math.random() < 0.5;
   const numerator = orderReversed ? b : a, denominator = orderReversed ? a : b;
   const numeratorName = orderReversed ? ctx.item2 : ctx.item1;
   const denominatorName = orderReversed ? ctx.item1 : ctx.item2;
   const g = gcd(numerator, denominator); const sn = numerator / g, sd = denominator / g;
   const af = frac(sn, sd);
-  // Plain text ratios
   const line = Math.random() < 0.5
-    ? `The ratio of ${ctx.item1} to ${ctx.item2} is ${a}:${b}. Write the amount of ${numeratorName} as a fraction of the amount of ${denominatorName}.`
-    : `${ctx.item1} to ${ctx.item2} is ${a}:${b}. Find ${numeratorName} as a fraction of ${denominatorName}.`;
+    ? `The ratio of ${ctx.item1} to ${ctx.item2} is ${rStr(a, b)}. Write the amount of ${numeratorName} as a fraction of the amount of ${denominatorName}.`
+    : `The ratio of ${ctx.item1} to ${ctx.item2} is ${rStr(a, b)}. Find ${numeratorName} as a fraction of ${denominatorName}.`;
   return {
     kind: "worded", lines: [line], answer: `${sn}/${sd}`, answerLatex: af,
     working: [
-      tStep(`${ctx.item1.charAt(0).toUpperCase() + ctx.item1.slice(1)} = ${a},  ${ctx.item2.charAt(0).toUpperCase() + ctx.item2.slice(1)} = ${b}`),
-      tStep(`${denominatorName.charAt(0).toUpperCase() + denominatorName.slice(1)} is the denominator — this is part:part, not part:whole`),
-      step(`${frac(numerator, denominator)}`),
-      tStep(`Don't add ${a} + ${b} = ${a + b} — we're not finding a fraction of the total`),
-      ...(sn !== numerator ? [step(`${frac(numerator, denominator)} = ${frac(sn, sd)}`)] : [tStep(`Already in simplest form`)]),
+      mStep(`${ctx.item1.charAt(0).toUpperCase() + ctx.item1.slice(1)} =`, `${a},\\quad ${ctx.item2.charAt(0).toUpperCase() + ctx.item2.slice(1)} = ${b}`),
+      tStep(`${denominatorName.charAt(0).toUpperCase() + denominatorName.slice(1)} is the denominator — part : part, not part : whole`),
+      step(frac(numerator, denominator)),
+      tStep(`Do not add the parts — we are not finding a fraction of the total`),
+      ...(sn !== numerator ? [step(`${frac(numerator, denominator)} = ${frac(sn, sd)}`)] : [tStep("Already in simplest form")]),
       tStep(`Answer: ${numeratorName} is ${sn}/${sd} of ${denominatorName}`),
     ],
     key: `rtf-l3-${a}-${b}-${orderReversed}-${id}`, difficulty: level,
@@ -379,7 +381,7 @@ const genFractionToRatio = (level: DifficultyLevel, variables: Record<string, bo
     if (pA === pB) return genFractionToRatio(level, variables, dropdownValue);
     const rev = Math.random() < 0.5; const [cA, cB] = ctx.colors;
     const prose = Math.random() < 0.5;
-    // fracStr() gives "$\frac{n}{d}$" — the ONLY $...$ allowed in these lines
+    // word labels (Red, Blue) stay as prose; numeric ratio → rStr
     const line = rev
       ? prose
         ? `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. Write the ratio of ${cB} to ${cA}.`
@@ -387,14 +389,14 @@ const genFractionToRatio = (level: DifficultyLevel, variables: Record<string, bo
       : prose
         ? `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. Write the ratio of ${cA} to ${cB}.`
         : `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. Find ${cA} : ${cB}.`;
-    const answer = rev ? ratioStr(pB, pA) : ratioStr(pA, pB);
+    const ansLatex = rev ? rLatex(pB, pA) : rLatex(pA, pB);
     return {
-      kind: "worded", lines: [line], answer,
+      kind: "worded", lines: [line], answer: ansLatex, answerLatex: ansLatex,
       working: [
-        mStep(cA, frac(num, den)),
-        tStep(`${cB} = ${den} − ${num} = ${pB}  (${den} parts in total)`),
-        mStep(cB, frac(pB, den)),
-        tStep(rev ? `Ratio ${cB} : ${cA} = ${ratioStr(pB, pA)}` : `Ratio ${cA} : ${cB} = ${ratioStr(pA, pB)}`),
+        mStep(cA + " =", frac(num, den)),
+        step(`${den} - ${num} = ${pB}`, `${cB} = ${pB} (${den} parts total)`),
+        mStep(cB + " =", frac(pB, den)),
+        mStep("Ratio =", rev ? rLatex(pB, pA) : rLatex(pA, pB)),
       ],
       key: `ftr-l1-${num}-${den}-${rev}-${id}`, difficulty: level,
     };
@@ -425,25 +427,36 @@ const genFractionToRatio = (level: DifficultyLevel, variables: Record<string, bo
     }
     const oc = randInt(0, 5); const P = ctx.parts;
     const ords = [
-      { label: `${P[0]}:${P[1]}:${P[2]}`, parts: [f1, f2, f3] }, { label: `${P[0]}:${P[2]}:${P[1]}`, parts: [f1, f3, f2] },
-      { label: `${P[1]}:${P[0]}:${P[2]}`, parts: [f2, f1, f3] }, { label: `${P[1]}:${P[2]}:${P[0]}`, parts: [f2, f3, f1] },
-      { label: `${P[2]}:${P[0]}:${P[1]}`, parts: [f3, f1, f2] }, { label: `${P[2]}:${P[1]}:${P[0]}`, parts: [f3, f2, f1] },
+      { parts: [f1, f2, f3] }, { parts: [f1, f3, f2] },
+      { parts: [f2, f1, f3] }, { parts: [f2, f3, f1] },
+      { parts: [f3, f1, f2] }, { parts: [f3, f2, f1] },
     ];
-    const { label: reqOrder, parts: ansParts } = ords[oc];
+    const ordLabels = [
+      `${P[0]} : ${P[1]} : ${P[2]}`, `${P[0]} : ${P[2]} : ${P[1]}`,
+      `${P[1]} : ${P[0]} : ${P[2]}`, `${P[1]} : ${P[2]} : ${P[0]}`,
+      `${P[2]} : ${P[0]} : ${P[1]}`, `${P[2]} : ${P[1]} : ${P[0]}`,
+    ];
+    const { parts: ansParts } = ords[oc];
+    const reqOrder = ordLabels[oc];
     const prose = Math.random() < 0.5;
-    const answer = ratioStr(...ansParts);
-    // Only fracStr() inside $...$, ratio labels are plain
+    const ansLatex = rLatex(...ansParts);
+    // word labels stay as prose; ratio order label stays as prose; numeric ratio → rStr in working
     const line = findCD && oF1 && oF2
       ? prose
-        ? `In a bag of ${ctx.item}, ` + fracStr(oF1.num, oF1.den) + ` are ${P[0]} and ` + fracStr(oF2.num, oF2.den) + ` are ${P[1]}. The rest are ${P[2]}. Write the ratio ${reqOrder}.`
-        : `In a bag of ${ctx.item}, ` + fracStr(oF1.num, oF1.den) + ` are ${P[0]} and ` + fracStr(oF2.num, oF2.den) + ` are ${P[1]}. The rest are ${P[2]}. Find ${reqOrder}.`
+        ? `In a bag of ${ctx.item}, ${fracStr(oF1.num, oF1.den)} are ${P[0]} and ${fracStr(oF2.num, oF2.den)} are ${P[1]}. The rest are ${P[2]}. Write the ratio ${reqOrder}.`
+        : `In a bag of ${ctx.item}, ${fracStr(oF1.num, oF1.den)} are ${P[0]} and ${fracStr(oF2.num, oF2.den)} are ${P[1]}. The rest are ${P[2]}. Find ${reqOrder}.`
       : prose
-        ? `In a bag of ${ctx.item}, ` + fracStr(f1, den) + ` are ${P[0]} and ` + fracStr(f2, den) + ` are ${P[1]}. The rest are ${P[2]}. Write the ratio ${reqOrder}.`
-        : `In a bag of ${ctx.item}, ` + fracStr(f1, den) + ` are ${P[0]} and ` + fracStr(f2, den) + ` are ${P[1]}. The rest are ${P[2]}. Find ${reqOrder}.`;
-    const baseSteps: WorkingStep[] = findCD ? cdSteps : [mStep(P[0], frac(f1, den)), mStep(P[1], frac(f2, den))];
+        ? `In a bag of ${ctx.item}, ${fracStr(f1, den)} are ${P[0]} and ${fracStr(f2, den)} are ${P[1]}. The rest are ${P[2]}. Write the ratio ${reqOrder}.`
+        : `In a bag of ${ctx.item}, ${fracStr(f1, den)} are ${P[0]} and ${fracStr(f2, den)} are ${P[1]}. The rest are ${P[2]}. Find ${reqOrder}.`;
+    const baseSteps: WorkingStep[] = findCD ? cdSteps : [mStep(P[0] + " =", frac(f1, den)), mStep(P[1] + " =", frac(f2, den))];
     return {
-      kind: "worded", lines: [line], answer,
-      working: [...baseSteps, tStep(`${P[2]} = ${den} − ${f1} − ${f2} = ${f3} parts`), mStep(P[2], frac(f3, den)), tStep(`Ratio ${P[0]} : ${P[1]} : ${P[2]} = ${ratioStr(f1, f2, f3)}`)],
+      kind: "worded", lines: [line], answer: ansLatex, answerLatex: ansLatex,
+      working: [
+        ...baseSteps,
+        step(`${den} - ${f1} - ${f2} = ${f3}`, `${P[2]} = ${f3} parts`),
+        mStep(P[2] + " =", frac(f3, den)),
+        mStep("Ratio =", rLatex(f1, f2, f3)),
+      ],
       key: `ftr-l2-${f1}-${f2}-${den}-${oc}-${id}`, difficulty: level,
     };
   }
@@ -457,46 +470,43 @@ const genFractionToRatio = (level: DifficultyLevel, variables: Record<string, bo
   const actualGiven = dropdownValue === "mixed" ? pick(["partA", "partB", "total"]) : dropdownValue;
   const mult = randInt(2, 6), total = den * mult, pA = num * mult, pB = total - pA;
   const rev = Math.random() < 0.5; const [cA, cB] = ctx.colors;
-  const answer = rev ? ratioStr(pB, pA) : ratioStr(pA, pB);
+  const ansLatex = rev ? rLatex(pB, pA) : rLatex(pA, pB);
   let line: string; let wSteps: WorkingStep[];
 
   if (actualGiven === "total") {
-          line = rev
-      ? `In a bag of ${ctx.item}, ` + fracStr(num, den) + ` are ${cA} and the rest are ${cB}. There are ${total} ${ctx.item} in total. Write the ratio ${cB}:${cA}.`
-      : `In a bag of ${ctx.item}, ` + fracStr(num, den) + ` are ${cA} and the rest are ${cB}. There are ${total} ${ctx.item} in total. Write the ratio ${cA}:${cB}.`;
+    line = rev
+      ? `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. There are ${mStr(total)} ${ctx.item} in total. Write the ratio ${cB} : ${cA}.`
+      : `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. There are ${mStr(total)} ${ctx.item} in total. Write the ratio ${cA} : ${cB}.`;
     wSteps = [
-      tStep(`Total = ${total} ${ctx.item} = ${den} parts`),
-      tStep(`1 part = ${total} ÷ ${den} = ${mult}`),
-      tStep(`${cA} = ${num} × ${mult} = ${pA}`),
-      tStep(`${cB} = ${den - num} × ${mult} = ${pB}`),
-      tStep(rev ? `Ratio ${cB} : ${cA} = ${ratioStr(pB, pA)}` : `Ratio ${cA} : ${cB} = ${ratioStr(pA, pB)}`),
+      step(`${total} \\div ${den} = ${mult}`, `Total = ${total}, so 1 part = ${mult}`),
+      step(`${num} \\times ${mult} = ${pA}`, `${cA} = ${pA}`),
+      step(`${den - num} \\times ${mult} = ${pB}`, `${cB} = ${pB}`),
+      mStep("Ratio =", rev ? rLatex(pB, pA) : rLatex(pA, pB)),
     ];
   } else if (actualGiven === "partB") {
-          line = rev
-      ? `In a bag of ${ctx.item}, ` + fracStr(num, den) + ` are ${cA} and the rest are ${cB}. There are ${pB} ${cB} ${ctx.item}. Write the ratio ${cB}:${cA}.`
-      : `In a bag of ${ctx.item}, ` + fracStr(num, den) + ` are ${cA} and the rest are ${cB}. There are ${pB} ${cB} ${ctx.item}. Write the ratio ${cA}:${cB}.`;
+    line = rev
+      ? `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. There are ${mStr(pB)} ${cB} ${ctx.item}. Write the ratio ${cB} : ${cA}.`
+      : `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. There are ${mStr(pB)} ${cB} ${ctx.item}. Write the ratio ${cA} : ${cB}.`;
     wSteps = [
-      mStep(cA, frac(num, den)),
-      mStep(`so ${cB}`, frac(den - num, den)),
-      tStep(`${den - num} parts = ${pB}`),
-      tStep(`1 part = ${pB} ÷ ${den - num} = ${mult}`),
-      tStep(`${cA} = ${num} × ${mult} = ${pA}`),
-      tStep(rev ? `Ratio ${cB} : ${cA} = ${ratioStr(pB, pA)}` : `Ratio ${cA} : ${cB} = ${ratioStr(pA, pB)}`),
+      mStep(cA + " =", frac(num, den)),
+      mStep(`so ${cB} =`, frac(den - num, den)),
+      step(`${pB} \\div ${den - num} = ${mult}`, `${den - num} parts = ${pB}, so 1 part = ${mult}`),
+      step(`${num} \\times ${mult} = ${pA}`, `${cA} = ${pA}`),
+      mStep("Ratio =", rev ? rLatex(pB, pA) : rLatex(pA, pB)),
     ];
   } else {
-          line = rev
-      ? `In a bag of ${ctx.item}, ` + fracStr(num, den) + ` are ${cA} and the rest are ${cB}. There are ${pA} ${cA} ${ctx.item}. Write the ratio ${cB}:${cA}.`
-      : `In a bag of ${ctx.item}, ` + fracStr(num, den) + ` are ${cA} and the rest are ${cB}. There are ${pA} ${cA} ${ctx.item}. Write the ratio ${cA}:${cB}.`;
+    line = rev
+      ? `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. There are ${mStr(pA)} ${cA} ${ctx.item}. Write the ratio ${cB} : ${cA}.`
+      : `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. There are ${mStr(pA)} ${cA} ${ctx.item}. Write the ratio ${cA} : ${cB}.`;
     wSteps = [
-      mStep(cA, frac(num, den)),
-      tStep(`${num} parts = ${pA}`),
-      tStep(`1 part = ${pA} ÷ ${num} = ${mult}`),
-      tStep(`Total = ${den} × ${mult} = ${total}`),
-      tStep(`${cB} = ${total} − ${pA} = ${pB}`),
-      tStep(rev ? `Ratio ${cB} : ${cA} = ${ratioStr(pB, pA)}` : `Ratio ${cA} : ${cB} = ${ratioStr(pA, pB)}`),
+      mStep(cA + " =", frac(num, den)),
+      step(`${pA} \\div ${num} = ${mult}`, `${num} parts = ${pA}, so 1 part = ${mult}`),
+      step(`${den} \\times ${mult} = ${total}`, `Total = ${total}`),
+      step(`${total} - ${pA} = ${pB}`, `${cB} = ${pB}`),
+      mStep("Ratio =", rev ? rLatex(pB, pA) : rLatex(pA, pB)),
     ];
   }
-  return { kind: "worded", lines: [line], answer, working: wSteps, key: `ftr-l3-${num}-${den}-${total}-${actualGiven}-${rev}-${id}`, difficulty: level };
+  return { kind: "worded", lines: [line], answer: ansLatex, answerLatex: ansLatex, working: wSteps, key: `ftr-l3-${num}-${den}-${total}-${actualGiven}-${rev}-${id}`, difficulty: level };
 };
 
 // ── formingRatios ─────────────────────────────────────────────────────────────
@@ -506,9 +516,12 @@ const genFormingRatios = (level: DifficultyLevel, variables: Record<string, bool
   const threeWay = variables.threeWay || false;
   const simplestForm = variables.simplestForm || false;
   const sfText = simplestForm ? " in its simplest form" : "";
-  const buildAnswer = (parts: number[]) => ratioStr(...(simplestForm ? simplifyRatioParts(parts) : parts));
+
+  const buildAnswerLatex = (parts: number[]) =>
+    simplestForm ? rLatex(...simplifyRatioParts(parts)) : rLatex(...parts);
+
   const buildSimplificationWorking = (parts: number[]): WorkingStep[] =>
-    simplestForm ? [tStep(`Original: ${ratioStr(...parts)}`), ...getSimplificationSteps(parts)] : [];
+    simplestForm ? [mStep("Original:", rLatex(...parts)), ...getSimplificationSteps(parts)] : [];
 
   if (level === "level1") {
     const ctxs2 = [
@@ -527,31 +540,31 @@ const genFormingRatios = (level: DifficultyLevel, variables: Record<string, bool
       const a = randInt(2, 15) * g, b = randInt(2, 15) * g, c = randInt(2, 15) * g;
       const order = randInt(0, 5);
       const ords = [
-        { label: `${ctx.items[0]}:${ctx.items[1]}:${ctx.items[2]}`, parts: [a, b, c] },
-        { label: `${ctx.items[0]}:${ctx.items[2]}:${ctx.items[1]}`, parts: [a, c, b] },
-        { label: `${ctx.items[1]}:${ctx.items[0]}:${ctx.items[2]}`, parts: [b, a, c] },
-        { label: `${ctx.items[1]}:${ctx.items[2]}:${ctx.items[0]}`, parts: [b, c, a] },
-        { label: `${ctx.items[2]}:${ctx.items[0]}:${ctx.items[1]}`, parts: [c, a, b] },
-        { label: `${ctx.items[2]}:${ctx.items[1]}:${ctx.items[0]}`, parts: [c, b, a] },
+        { label: `${ctx.items[0]} : ${ctx.items[1]} : ${ctx.items[2]}`, parts: [a, b, c] },
+        { label: `${ctx.items[0]} : ${ctx.items[2]} : ${ctx.items[1]}`, parts: [a, c, b] },
+        { label: `${ctx.items[1]} : ${ctx.items[0]} : ${ctx.items[2]}`, parts: [b, a, c] },
+        { label: `${ctx.items[1]} : ${ctx.items[2]} : ${ctx.items[0]}`, parts: [b, c, a] },
+        { label: `${ctx.items[2]} : ${ctx.items[0]} : ${ctx.items[1]}`, parts: [c, a, b] },
+        { label: `${ctx.items[2]} : ${ctx.items[1]} : ${ctx.items[0]}`, parts: [c, b, a] },
       ];
       const { label, parts } = ords[order];
-      const answer = buildAnswer(parts);
+      const ansLatex = buildAnswerLatex(parts);
       const line = Math.random() < 0.5
-        ? `A ${ctx.container} has ${a} ${ctx.items[0]}, ${b} ${ctx.items[1]}, and ${c} ${ctx.items[2]}. Write the ratio ${label}${sfText}.`
-        : `There are ${a} ${ctx.items[0]}, ${b} ${ctx.items[1]}, and ${c} ${ctx.items[2]} in a ${ctx.container}. Find ${label}${sfText}.`;
-      return { kind: "worded", lines: [line], answer, working: [tStep(`Ratio: ${ratioStr(a, b, c)}`), ...buildSimplificationWorking(parts)], key: `fr-l1-3w-${a}-${b}-${c}-${order}-${id}`, difficulty: level };
+        ? `A ${ctx.container} has ${mStr(a)} ${ctx.items[0]}, ${mStr(b)} ${ctx.items[1]}, and ${mStr(c)} ${ctx.items[2]}. Write the ratio ${label}${sfText}.`
+        : `There are ${mStr(a)} ${ctx.items[0]}, ${mStr(b)} ${ctx.items[1]}, and ${mStr(c)} ${ctx.items[2]} in a ${ctx.container}. Find ${label}${sfText}.`;
+      return { kind: "worded", lines: [line], answer: ansLatex, answerLatex: ansLatex, working: [mStep("Ratio =", rLatex(a, b, c)), ...buildSimplificationWorking(parts)], key: `fr-l1-3w-${a}-${b}-${c}-${order}-${id}`, difficulty: level };
     } else {
       const ctx = pick(ctxs2); const g = pick(gcds);
       const a = randInt(2, 20) * g, b = randInt(2, 20) * g;
       if (a === b) return genFormingRatios(level, variables);
       const rev = Math.random() < 0.5;
       const parts = rev ? [b, a] : [a, b];
-      const label = rev ? `${ctx.items[1]}:${ctx.items[0]}` : `${ctx.items[0]}:${ctx.items[1]}`;
-      const answer = buildAnswer(parts);
+      const label = rev ? `${ctx.items[1]} : ${ctx.items[0]}` : `${ctx.items[0]} : ${ctx.items[1]}`;
+      const ansLatex = buildAnswerLatex(parts);
       const line = Math.random() < 0.5
-        ? `A ${ctx.container} has ${a} ${ctx.items[0]} and ${b} ${ctx.items[1]}. Write the ratio ${label}${sfText}.`
-        : `There are ${a} ${ctx.items[0]} and ${b} ${ctx.items[1]} in a ${ctx.container}. Find ${label}${sfText}.`;
-      return { kind: "worded", lines: [line], answer, working: [tStep(`Ratio: ${ratioStr(a, b)}`), ...buildSimplificationWorking(parts)], key: `fr-l1-2w-${a}-${b}-${rev}-${id}`, difficulty: level };
+        ? `A ${ctx.container} has ${mStr(a)} ${ctx.items[0]} and ${mStr(b)} ${ctx.items[1]}. Write the ratio ${label}${sfText}.`
+        : `There are ${mStr(a)} ${ctx.items[0]} and ${mStr(b)} ${ctx.items[1]} in a ${ctx.container}. Find ${label}${sfText}.`;
+      return { kind: "worded", lines: [line], answer: ansLatex, answerLatex: ansLatex, working: [mStep("Ratio =", rLatex(a, b)), ...buildSimplificationWorking(parts)], key: `fr-l1-2w-${a}-${b}-${rev}-${id}`, difficulty: level };
     }
   }
 
@@ -577,13 +590,21 @@ const genFormingRatios = (level: DifficultyLevel, variables: Record<string, bool
         first = randInt(mn, mx); const rem = total - first;
         second = randInt(Math.max(1, Math.floor(rem * 0.2)), Math.floor(rem * 0.8)); third = total - first - second;
       }
-      const answer = buildAnswer([first, second, third]);
+      const ansLatex = buildAnswerLatex([first, second, third]);
       const op = randInt(0, 2);
-      const dp = op === 0 ? `${first} are ${ctx.parts[0]}, ${second} are ${ctx.parts[1]}, and the rest are ${ctx.parts[2]}`
-        : op === 1 ? `${first} are ${ctx.parts[0]}, ${third} are ${ctx.parts[2]}, and the rest are ${ctx.parts[1]}`
-          : `${second} are ${ctx.parts[1]}, ${third} are ${ctx.parts[2]}, and the rest are ${ctx.parts[0]}`;
-      const line = `A ${ctx.container} contains ${total} ${ctx.item}. ${dp}. Write the ratio ${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]}${sfText}.`;
-      return { kind: "worded", lines: [line], answer, working: [tStep(`Remainder = ${total} − ${first} − ${second} = ${third}`), tStep(`Ratio: ${ratioStr(first, second, third)}`), ...buildSimplificationWorking([first, second, third])], key: `fr-l2-3w-${total}-${first}-${second}-${third}-${id}`, difficulty: level };
+      const dp = op === 0 ? `${mStr(first)} are ${ctx.parts[0]}, ${mStr(second)} are ${ctx.parts[1]}, and the rest are ${ctx.parts[2]}`
+        : op === 1 ? `${mStr(first)} are ${ctx.parts[0]}, ${mStr(third)} are ${ctx.parts[2]}, and the rest are ${ctx.parts[1]}`
+          : `${mStr(second)} are ${ctx.parts[1]}, ${mStr(third)} are ${ctx.parts[2]}, and the rest are ${ctx.parts[0]}`;
+      const line = `A ${ctx.container} contains ${mStr(total)} ${ctx.item}. ${dp}. Write the ratio ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]}${sfText}.`;
+      return {
+        kind: "worded", lines: [line], answer: ansLatex, answerLatex: ansLatex,
+        working: [
+          step(`${total} - ${first} - ${second} = ${third}`, `Remainder = ${third}`),
+          mStep("Ratio =", rLatex(first, second, third)),
+          ...buildSimplificationWorking([first, second, third]),
+        ],
+        key: `fr-l2-3w-${total}-${first}-${second}-${third}-${id}`, difficulty: level,
+      };
     } else {
       const ctx = pick(ctxs2); const total = randInt(10, 80);
       let first = 0, second = 0;
@@ -592,9 +613,17 @@ const genFormingRatios = (level: DifficultyLevel, variables: Record<string, bool
         if (mx >= 2) { const bf = randInt(1, mx - 1), bs = Math.floor(total / cf) - bf; if (bs > 0 && (bf + bs) * cf === total) { first = bf * cf; second = bs * cf; } }
       }
       if (!first || !second || first + second !== total) { first = randInt(Math.max(1, Math.floor(total * 0.15)), Math.floor(total * 0.85)); second = total - first; }
-      const answer = buildAnswer([first, second]);
-      const line = `A ${ctx.container} contains ${total} ${ctx.item}. ${first} are ${ctx.parts[0]} and the rest are ${ctx.parts[1]}. Write the ratio ${ctx.parts[0]}:${ctx.parts[1]}${sfText}.`;
-      return { kind: "worded", lines: [line], answer, working: [tStep(`Remainder = ${total} − ${first} = ${second}`), tStep(`Ratio: ${ratioStr(first, second)}`), ...buildSimplificationWorking([first, second])], key: `fr-l2-2w-${total}-${first}-${second}-${id}`, difficulty: level };
+      const ansLatex = buildAnswerLatex([first, second]);
+      const line = `A ${ctx.container} contains ${mStr(total)} ${ctx.item}. ${mStr(first)} are ${ctx.parts[0]} and the rest are ${ctx.parts[1]}. Write the ratio ${ctx.parts[0]} : ${ctx.parts[1]}${sfText}.`;
+      return {
+        kind: "worded", lines: [line], answer: ansLatex, answerLatex: ansLatex,
+        working: [
+          step(`${total} - ${first} = ${second}`, `Remainder = ${second}`),
+          mStep("Ratio =", rLatex(first, second)),
+          ...buildSimplificationWorking([first, second]),
+        ],
+        key: `fr-l2-2w-${total}-${first}-${second}-${id}`, difficulty: level,
+      };
     }
   }
 
@@ -615,8 +644,7 @@ const genFormingRatios = (level: DifficultyLevel, variables: Record<string, bool
 
   let valid = false, tries2 = 0;
   let total2 = 0, p1 = 0, p2 = 0, p3 = 0;
-  let constraintText2 = "", calcSteps: WorkingStep[] = [], answer2 = "", finalLine = "";
-  // pick ctx outside loop so it's accessible for finalLine
+  let constraintLine = "", calcSteps: WorkingStep[] = [], ansLatex2 = "", finalLine = "";
   const ctx2 = pick(ctxs2L3); const ctx3 = pick(ctxs3L3);
 
   while (!valid && tries2++ < 300) {
@@ -628,56 +656,79 @@ const genFormingRatios = (level: DifficultyLevel, variables: Record<string, bool
           const pct = pick(percentages); p1 = Math.round(total2 * pct / 100);
           if (p1 !== total2 * pct / 100) continue;
           p2 = randInt(1, total2 - p1 - 1); p3 = total2 - p1 - p2;
-          constraintText2 = `${pct}% are ${ctx.parts[0]}. ${p2} are ${ctx.parts[1]}. The rest are ${ctx.parts[2]}.`;
-          calcSteps = [tStep(`${ctx.parts[0]}: ${pct}% of ${total2} = ${p1}`), tStep(`${ctx.parts[1]}: ${p2}`), tStep(`${ctx.parts[2]}: ${total2} − ${p1} − ${p2} = ${p3}`)];
+          constraintLine = `${mStr(pct + "\\%")} are ${ctx.parts[0]}. ${mStr(p2)} are ${ctx.parts[1]}. The rest are ${ctx.parts[2]}.`;
+          calcSteps = [
+            step(`${pct}\\% \\times ${total2} = ${p1}`, `${ctx.parts[0]}: ${pct}% of ${total2} = ${p1}`),
+            step(`${total2} - ${p1} - ${p2} = ${p3}`, `${ctx.parts[2]}: ${p3}`),
+          ];
         } else {
           const fr = pick(fracs2); p1 = Math.round(total2 * fr.num / fr.den);
           if (p1 !== total2 * fr.num / fr.den) continue;
           p2 = randInt(1, total2 - p1 - 1); p3 = total2 - p1 - p2;
-          // fracStr() for the fraction in the constraint text
-          constraintText2 = fracStr(fr.num, fr.den) + " are " + ctx.parts[0] + ". " + p2 + " are " + ctx.parts[1] + ". The rest are " + ctx.parts[2] + ".";
-          calcSteps = [tStep(`${ctx.parts[0]}: ${fr.num}/${fr.den} of ${total2} = ${p1}`), tStep(`${ctx.parts[1]}: ${p2}`), tStep(`${ctx.parts[2]}: ${total2} − ${p1} − ${p2} = ${p3}`)];
+          constraintLine = `${fracStr(fr.num, fr.den)} are ${ctx.parts[0]}. ${mStr(p2)} are ${ctx.parts[1]}. The rest are ${ctx.parts[2]}.`;
+          calcSteps = [
+            step(`${frac(fr.num, fr.den)} \\times ${total2} = ${p1}`, `${ctx.parts[0]}: ${p1}`),
+            step(`${total2} - ${p1} - ${p2} = ${p3}`, `${ctx.parts[2]}: ${p3}`),
+          ];
         }
       } else {
         p1 = randInt(1, Math.floor(total2 / 3)); const rem = total2 - p1;
         if (usePct) {
           const pct = pick(percentages); p2 = Math.round(rem * pct / 100);
           if (p2 !== rem * pct / 100) continue; p3 = total2 - p1 - p2;
-          constraintText2 = `${p1} are ${ctx.parts[0]}. ${pct}% of the remainder are ${ctx.parts[1]}. The rest are ${ctx.parts[2]}.`;
-          calcSteps = [tStep(`${ctx.parts[0]}: ${p1}`), tStep(`Remainder = ${total2} − ${p1} = ${rem}`), tStep(`${ctx.parts[1]}: ${pct}% of ${rem} = ${p2}`), tStep(`${ctx.parts[2]}: ${total2} − ${p1} − ${p2} = ${p3}`)];
+          constraintLine = `${mStr(p1)} are ${ctx.parts[0]}. ${mStr(pct + "\\%")} of the remainder are ${ctx.parts[1]}. The rest are ${ctx.parts[2]}.`;
+          calcSteps = [
+            step(`${total2} - ${p1} = ${rem}`, `Remainder = ${rem}`),
+            step(`${pct}\\% \\times ${rem} = ${p2}`, `${ctx.parts[1]}: ${p2}`),
+            step(`${total2} - ${p1} - ${p2} = ${p3}`, `${ctx.parts[2]}: ${p3}`),
+          ];
         } else {
           const fr = pick(fracs2); p2 = Math.round(rem * fr.num / fr.den);
           if (p2 !== rem * fr.num / fr.den) continue; p3 = total2 - p1 - p2;
-          constraintText2 = p1 + " are " + ctx.parts[0] + ". " + fracStr(fr.num, fr.den) + " of the remainder are " + ctx.parts[1] + ". The rest are " + ctx.parts[2] + ".";
-          calcSteps = [tStep(`${ctx.parts[0]}: ${p1}`), tStep(`Remainder = ${total2} − ${p1} = ${rem}`), tStep(`${ctx.parts[1]}: ${fr.num}/${fr.den} of ${rem} = ${p2}`), tStep(`${ctx.parts[2]}: ${total2} − ${p1} − ${p2} = ${p3}`)];
+          constraintLine = `${mStr(p1)} are ${ctx.parts[0]}. ${fracStr(fr.num, fr.den)} of the remainder are ${ctx.parts[1]}. The rest are ${ctx.parts[2]}.`;
+          calcSteps = [
+            step(`${total2} - ${p1} = ${rem}`, `Remainder = ${rem}`),
+            step(`${frac(fr.num, fr.den)} \\times ${rem} = ${p2}`, `${ctx.parts[1]}: ${p2}`),
+            step(`${total2} - ${p1} - ${p2} = ${p3}`, `${ctx.parts[2]}: ${p3}`),
+          ];
         }
       }
       if (p1 > 0 && p2 > 0 && p3 > 0) {
-        valid = true; answer2 = buildAnswer([p1, p2, p3]);
-        finalLine = `There are ${total2} ${ctx.item} in a ${ctx.container}. ${constraintText2} Find the ratio ${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]}${sfText}.`;
+        valid = true; ansLatex2 = buildAnswerLatex([p1, p2, p3]);
+        finalLine = `There are ${mStr(total2)} ${ctx.item} in a ${ctx.container}. ${constraintLine} Find the ratio ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]}${sfText}.`;
       }
     } else {
       const ctx = ctx2;
       if (usePct) {
         const pct = pick(percentages); p1 = Math.round(total2 * pct / 100);
         if (p1 !== total2 * pct / 100) continue; p2 = total2 - p1;
-        constraintText2 = `${pct}% are ${ctx.parts[0]} and the rest are ${ctx.parts[1]}.`;
-        calcSteps = [tStep(`${ctx.parts[0]}: ${pct}% of ${total2} = ${p1}`), tStep(`${ctx.parts[1]}: ${total2} − ${p1} = ${p2}`)];
+        constraintLine = `${mStr(pct + "\\%")} are ${ctx.parts[0]} and the rest are ${ctx.parts[1]}.`;
+        calcSteps = [
+          step(`${pct}\\% \\times ${total2} = ${p1}`, `${ctx.parts[0]}: ${p1}`),
+          step(`${total2} - ${p1} = ${p2}`, `${ctx.parts[1]}: ${p2}`),
+        ];
       } else {
         const fr = pick(fracs2); p1 = Math.round(total2 * fr.num / fr.den);
         if (p1 !== total2 * fr.num / fr.den) continue; p2 = total2 - p1;
-        constraintText2 = fracStr(fr.num, fr.den) + " are " + ctx.parts[0] + " and the rest are " + ctx.parts[1] + ".";
-        calcSteps = [tStep(`${ctx.parts[0]}: ${fr.num}/${fr.den} of ${total2} = ${p1}`), tStep(`${ctx.parts[1]}: ${total2} − ${p1} = ${p2}`)];
+        constraintLine = `${fracStr(fr.num, fr.den)} are ${ctx.parts[0]} and the rest are ${ctx.parts[1]}.`;
+        calcSteps = [
+          step(`${frac(fr.num, fr.den)} \\times ${total2} = ${p1}`, `${ctx.parts[0]}: ${p1}`),
+          step(`${total2} - ${p1} = ${p2}`, `${ctx.parts[1]}: ${p2}`),
+        ];
       }
       if (p1 > 0 && p2 > 0 && p1 !== p2) {
-        valid = true; answer2 = buildAnswer([p1, p2]);
-        finalLine = `There are ${total2} ${ctx.item} in a ${ctx.container}. ${constraintText2} Write this as a ratio${sfText}.`;
+        valid = true; ansLatex2 = buildAnswerLatex([p1, p2]);
+        finalLine = `There are ${mStr(total2)} ${ctx.item} in a ${ctx.container}. ${constraintLine} Write this as a ratio${sfText}.`;
       }
     }
   }
 
   const rawParts = threeWay ? [p1, p2, p3] : [p1, p2];
-  return { kind: "worded", lines: [finalLine], answer: answer2, working: [...calcSteps, tStep(`Ratio: ${ratioStr(...rawParts)}`), ...buildSimplificationWorking(rawParts)], key: `fr-l3-${total2}-${p1}-${p2}-${p3}-${id}`, difficulty: level };
+  return {
+    kind: "worded", lines: [finalLine], answer: ansLatex2, answerLatex: ansLatex2,
+    working: [...calcSteps, mStep("Ratio =", rLatex(...rawParts)), ...buildSimplificationWorking(rawParts)],
+    key: `fr-l3-${total2}-${p1}-${p2}-${p3}-${id}`, difficulty: level,
+  };
 };
 
 const generateQuestion = (tool: ToolType, level: DifficultyLevel, variables: Record<string, boolean>, dropdownValue: string): AnyQuestion => {
@@ -705,7 +756,6 @@ const LV_COLORS: Record<DifficultyLevel, { bg: string; border: string; text: str
 const getQuestionBg = (cs: string) => ({ blue: "#D1E7F8", pink: "#F8D1E7", yellow: "#F8F4D1" }[cs] ?? "#ffffff");
 const getStepBg = (cs: string) => ({ blue: "#B3D9F2", pink: "#F2B3D9", yellow: "#F2EBB3" }[cs] ?? "#f3f4f6");
 
-// QuestionDisplay: renders lines[] for whiteboard/worked example
 const QuestionDisplay = ({ q, cls }: { q: AnyQuestion; cls: string }) => (
   <div className="flex flex-col gap-2 text-center">
     {q.lines.map((line, i) => (
@@ -858,7 +908,6 @@ const MenuDropdown = ({ colorScheme, setColorScheme, onClose, onOpenInfo }: { co
   );
 };
 
-// ── Print / PDF ───────────────────────────────────────────────────────────────
 const handlePrint = (questions: AnyQuestion[], toolName: string, difficulty: string, isDifferentiated: boolean, numColumns: number) => {
   const FONT_PX = 13, PAD_MM = 3, MARGIN_MM = 12, HEADER_MM = 14, GAP_MM = 2;
   const PAGE_H_MM = 297 - MARGIN_MM * 2, PAGE_W_MM = 210 - MARGIN_MM * 2;
@@ -882,7 +931,9 @@ const handlePrint = (questions: AnyQuestion[], toolName: string, difficulty: str
 
   const questionToHtml = (q: AnyQuestion, idx: number, showAnswer: boolean): string => {
     const linesHtml = q.lines.map(l => `<div class="ql">${renderLine(l)}</div>`).join("");
-    const ansHtml = showAnswer ? `<div class="qa">${q.answerLatex ? `= ${katexSpan(q.answerLatex)}` : `= ${q.answer}`}</div>` : "";
+    const ansHtml = showAnswer
+      ? `<div class="qa">${q.answerLatex ? `= ${katexSpan(q.answerLatex)}` : `= ${q.answer}`}</div>`
+      : "";
     return `<div class="qn">${idx + 1})</div><div class="qls">${linesHtml}</div>${ansHtml}`;
   };
 
@@ -950,7 +1001,8 @@ document.addEventListener("DOMContentLoaded",function(){
   probe.remove();setTimeout(function(){window.print();},300);
 });
 <\/script></body></html>`;
-  const win=window.open("","_blank");if(!win){alert("Allow popups for PDF export.");return;}win.document.write(html);win.document.close();
+  const win = window.open("", "_blank"); if (!win) { alert("Allow popups for PDF export."); return; }
+  win.document.write(html); win.document.close();
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1071,16 +1123,13 @@ export default function App() {
   const fontSizes = ["text-base", "text-lg", "text-xl", "text-2xl", "text-3xl"];
   const canI = worksheetFontSize < fontSizes.length - 1, canD = worksheetFontSize > 0;
 
-  // Worksheet cell — uses InlineMath for proper inline rendering
   const renderQCell = (q: AnyQuestion, idx: number, bgOverride?: string) => {
     const bg = bgOverride ?? stepBg, fsz = fontSizes[worksheetFontSize];
     return (
       <div className="rounded-lg shadow" style={{ backgroundColor: bg, height: "100%", boxSizing: "border-box", position: "relative", padding: "1.75rem 0.75rem 0.75rem" }}>
         <span style={{ position: "absolute", top: 0, left: 0, fontSize: "0.65em", fontWeight: 700, color: "#000", lineHeight: 1, padding: "5px 5px 7px 5px", borderRight: "1px solid #000", borderBottom: "1px solid #000" }}>{idx + 1})</span>
         <div className={`${fsz} font-semibold`} style={{ color: "#000", lineHeight: 1.8, textAlign: "center", width: "100%" }}>
-          {q.lines.map((line, i) => (
-            <div key={i}><InlineMath text={line} /></div>
-          ))}
+          {q.lines.map((line, i) => <div key={i}><InlineMath text={line} /></div>)}
         </div>
         {showWorksheetAnswers && (
           <div className={`${fsz} font-semibold mt-1`} style={{ color: "#059669", textAlign: "center", width: "100%" }}>
