@@ -151,7 +151,7 @@ const INFO_SECTIONS = [
 // lines[] rule: ONLY \frac{}{} expressions go inside $...$. 
 // ALL other content (numbers, ratios, names, percentages) stays as plain text.
 
-interface WorkingStep { type: "step" | "text" | "mixed"; latex: string; plain: string; }
+interface WorkingStep { type: string; latex: string; plain: string; label?: string; unit?: string; }
 
 interface WordedQuestion {
   kind: "worded";
@@ -182,9 +182,9 @@ const fracStr = (n: number, d: number) => `$${frac(n, d)}$`;
 const ratioStr = (...parts: number[]) => parts.join(":");
 
 // Working step helpers
-const step = (latex: string, plain?: string): WorkingStep => ({ type: "step", latex, plain: plain ?? latex });
-const tStep = (text: string): WorkingStep => ({ type: "text", latex: text, plain: text });
-const mStep = (label: string, latex: string): WorkingStep => ({ type: "mixed", latex, plain: label });
+const step  = (latex: string, plain?: string): WorkingStep => ({ type: "step",  latex, plain: plain ?? latex });
+const tStep = (text: string): WorkingStep => ({ type: "tStep", latex: `\\text{${text}}`, plain: text });
+const mStep = (label: string, latex: string, unit?: string): WorkingStep => ({ type: "mStep", latex, plain: `${label} ${latex}${unit ? " " + unit : ""}`, label, unit });
 
 const answerFrac = (n: number, d: number): string => { const g = gcd(n, d); return frac(n / g, d / g); };
 
@@ -706,9 +706,9 @@ const getStepBg = (cs: string) => ({ blue: "#B3D9F2", pink: "#F2B3D9", yellow: "
 
 // QuestionDisplay: renders lines[] for whiteboard/worked example
 const QuestionDisplay = ({ q, cls }: { q: AnyQuestion; cls: string }) => (
-  <div style={{ textAlign: "center" }}>
+  <div className="flex flex-col gap-2 text-center">
     {q.lines.map((line, i) => (
-      <div key={i} className={`${cls} font-semibold`} style={{ color: "#000", lineHeight: 1.8 }}>
+      <div key={i} className={`${cls} font-semibold`} style={{ color: "#000", lineHeight: 2.2 }}>
         <InlineMath text={line} />
       </div>
     ))}
@@ -716,8 +716,15 @@ const QuestionDisplay = ({ q, cls }: { q: AnyQuestion; cls: string }) => (
 );
 
 const AnswerDisplay = ({ q }: { q: AnyQuestion }) => {
+  const anyQ = q as any;
+  if (anyQ.answerLatex) {
+    const suffix = anyQ.answer?.replace(String(anyQ.answerLatex).replace(/[.*+?^${}()|[\]\\]/g, "\\const AnswerDisplay = ({ q }: { q: AnyQuestion }) => {
   if (q.answerLatex) return <><span>= </span><MathRenderer latex={q.answerLatex} /></>;
   return <span>= {q.answer}</span>;
+};"), "").trim() ?? "";
+    return <><MathRenderer latex={`= ${anyQ.answerLatex}`} />{suffix && <span> {suffix}</span>}</>;
+  }
+  return <span>= {anyQ.answer}</span>;
 };
 
 const DifficultyToggle = ({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
@@ -1191,10 +1198,10 @@ export default function App() {
                 <div key={i} className="rounded-xl p-6" style={{ backgroundColor: stepBg }}>
                   <h4 className="text-xl font-bold mb-2" style={{ color: "#000" }}>Step {i + 1}</h4>
                   <div className="text-2xl" style={{ color: "#000" }}>
-                    {s.type === "text"
+                    {s.type === "tStep"
                       ? <span>{s.plain}</span>
-                      : s.type === "mixed"
-                        ? <span>{s.plain} = <MathRenderer latex={s.latex} /></span>
+                      : s.type === "mStep"
+                        ? <><span>{(s as any).label} </span><MathRenderer latex={s.latex} />{(s as any).unit && <span> {(s as any).unit}</span>}</>
                         : <MathRenderer latex={s.latex} />}
                   </div>
                 </div>
