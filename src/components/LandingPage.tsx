@@ -25,9 +25,9 @@ const categories: Category[] = [
     gradient: 'from-blue-500 to-indigo-600',
     iconBg: 'from-blue-50 to-indigo-50',
     tools: [
-      { id: 'Times Tables', path: '/timestables', name: 'Times Tables', icon: 'x', description: 'Generate PDFs designed to test and improve TimesTable fluency', ready: true },
-      { id: 'Negative Operations', path: '/negative-operations', name: 'Negative Operations', icon: '-1', description: 'Generate PDFs designed to test and improve operations with negative numbers', ready: true },
-      { id: 'Multiplication Methods', path: '/multiplication-methods', name: 'Multiplication Methods', icon: '3x2', description: 'Generate PDFs designed to test and improve use of multiplication methods', ready: true },
+      { id: 'Times Tables', path: '/timestables', name: 'Times Tables', icon: 'x', description: 'Generate PDFs designed to test and improve TimesTable fluency', ready: 'true' },
+      { id: 'Negative Operations', path: '/negative-operations', name: 'Negative Operations', icon: '-1', description: 'Generate PDFs designed to test and improve operations with negative numbers', ready: 'true' },
+      { id: 'Multiplication Methods', path: '/multiplication-methods', name: 'Multiplication Methods', icon: '3x2', description: 'Generate PDFs designed to test and improve use of multiplication methods', ready: 'true' },
     ]
   },
   {
@@ -36,9 +36,9 @@ const categories: Category[] = [
     gradient: 'from-blue-500 to-indigo-600',
     iconBg: 'from-blue-50 to-indigo-50',
     tools: [
-      { id: 'integers', path: '/integers', name: 'Adding & Subtracting Integers', icon: '±', description: 'Practice adding and subtracting positive and negative numbers using number lines', ready: true },
-      { id: 'estimation', path: '/estimation', name: 'Estimation', icon: '≈', description: 'Develop estimation skills by rounding numbers to make calculations easier', ready: true },
-      { id: 'powers-of-ten', path: '/powers-of-ten', name: 'Multiplying & Dividing by 10ⁿ', icon: '10ⁿ', description: 'Use a place value table to scale by powers of 10', ready: true },
+      { id: 'integers', path: '/integers', name: 'Adding & Subtracting Integers', icon: '±', description: 'Practice adding and subtracting positive and negative numbers using number lines', ready: 'true' },
+      { id: 'estimation', path: '/estimation', name: 'Estimation', icon: '≈', description: 'Develop estimation skills by rounding numbers to make calculations easier', ready: 'true' },
+      { id: 'powers-of-ten', path: '/powers-of-ten', name: 'Multiplying & Dividing by 10ⁿ', icon: '10ⁿ', description: 'Use a place value table to scale by powers of 10', ready: 'true' },
     ]
   },
   {
@@ -47,12 +47,12 @@ const categories: Category[] = [
     gradient: 'from-purple-500 to-fuchsia-600',
     iconBg: 'from-purple-50 to-fuchsia-50',
     tools: [
-      { id: 'completing-square', path: '/completing-the-square', name: 'Completing the Square', icon: '🔲', description: 'Rewrite and solve quadratic expressions in completed square form', ready: true },
-      { id: 'single-brackets', path: '/expanding-single-brackets-FOIL', name: 'Expanding Single Brackets (FOIL)', icon: 'x', description: 'Expand single brackets by using arrows for each term', ready: true },
-      { id: 'expanding-double-brackets-FOIL', path: '/expanding-double-brackets-foil', name: 'Expanding Double Brackets (FOIL)', icon: 'x²', description: 'Expand pairs of brackets using the FOIL method', ready: true },
-      { id: 'single-brackets', path: '/expanding-single-brackets-GRID', name: 'Expanding Single Brackets (GRID)', icon: 'x', description: 'Expand single brackets by using the grid method', ready: true },
-      { id: 'expanding-double-brackets-GRID', path: '/expanding-double-brackets-grid', name: 'Expanding Double Brackets (GRID)', icon: 'x²', description: 'Expand pairs of brackets using the grid method', ready: true },
-      { id: 'iteration', path: '/iteration', name: 'Iteration', icon: '🔄', description: 'Find roots to eqautions using iterative methods', ready: true },
+      { id: 'completing-square', path: '/completing-the-square', name: 'Completing the Square', icon: '🔲', description: 'Rewrite and solve quadratic expressions in completed square form', ready: 'true' },
+      { id: 'single-brackets', path: '/expanding-single-brackets-FOIL', name: 'Expanding Single Brackets (FOIL)', icon: 'x', description: 'Expand single brackets by using arrows for each term', ready: 'true' },
+      { id: 'expanding-double-brackets-FOIL', path: '/expanding-double-brackets-foil', name: 'Expanding Double Brackets (FOIL)', icon: 'x²', description: 'Expand pairs of brackets using the FOIL method', ready: 'true' },
+      { id: 'single-brackets', path: '/expanding-single-brackets-GRID', name: 'Expanding Single Brackets (GRID)', icon: 'x', description: 'Expand single brackets by using the grid method', ready: 'true' },
+      { id: 'expanding-double-brackets-GRID', path: '/expanding-double-brackets-grid', name: 'Expanding Double Brackets (GRID)', icon: 'x²', description: 'Expand pairs of brackets using the grid method', ready: 'true' },
+      { id: 'iteration', path: '/iteration', name: 'Iteration', icon: '🔄', description: 'Find roots to eqautions using iterative methods', ready: 'true' },
     ]
   },
   {
@@ -61,11 +61,11 @@ const categories: Category[] = [
     gradient: 'from-emerald-500 to-teal-600',
     iconBg: 'from-emerald-50 to-teal-50',
     tools: [
-      { id: 'ratio', path: '/ratio-sharing', name: 'Dividing Ratios', icon: '💰', description: 'Sharing amounts using the total, a known amount or known difference', ready: true },
-      { id: 'simplifying-ratios', path: '/simplifying-ratios', name: 'Simplifying Ratios', icon: '➗', description: 'Simplifying ratios in numerical and algebraic forms', ready: true },
-      { id: 'Recipes', path: '/recipes', name: 'Recipes', icon: '🧁', description: 'Find amounts of ingredients by scaling recipes and understanding limiting factors', ready: true },
+      { id: 'ratio', path: '/ratio-sharing', name: 'Dividing Ratios', icon: '💰', description: 'Sharing amounts using the total, a known amount or known difference', ready: 'true' },
+      { id: 'simplifying-ratios', path: '/simplifying-ratios', name: 'Simplifying Ratios', icon: '➗', description: 'Simplifying ratios in numerical and algebraic forms', ready: 'true' },
+      { id: 'Recipes', path: '/recipes', name: 'Recipes', icon: '🧁', description: 'Find amounts of ingredients by scaling recipes and understanding limiting factors', ready: 'true' },
       { id: 'fraction-to-ratio', path: '/fraction-to-ratio', name: 'Converting Fractions and Ratios', icon: '🔁', description: 'To convert fractions and ratios interchangably', ready: 'v2.0' },
-      { id: 'fractions-of-amounts', path: '/fractions-of-amounts', name: 'Fractions of Amounts', icon: '⅔', description: 'To find a fraction of an amount', ready: true },
+      { id: 'fractions-of-amounts', path: '/fractions-of-amounts', name: 'Fractions of Amounts', icon: '⅔', description: 'To find a fraction of an amount', ready: 'true' },
     ]
   },
   {
@@ -74,10 +74,10 @@ const categories: Category[] = [
     gradient: 'from-orange-500 to-amber-600',
     iconBg: 'from-orange-50 to-amber-50',
     tools: [
-      { id: 'perimeter', path: '/perimeter', name: 'Perimeter (BETA)', icon: '⬡', description: 'Calculate the perimeter of various 2D shapes', ready: true },
-      { id: 'circles', path: '/circle-properties', name: 'Properties of Circles', icon: '⭕', description: 'Find the circumference, area and arc lengths of circles and sectors', ready: true },
-      { id: 'basic-angle-facts', path: '/basic-angle-facts', name: 'Basic Angle Facts', icon: '90°', description: 'Find missing angles from right angles, on striaght lines and around a point', ready: true },
-      { id: 'angles-in-triangles', path: '/angles-in-triangles', name: 'Angles In Triangles', icon: '🛆', description: 'Find missing angles using triangle properties - including split trangles and exterior angles', ready: true },
+      { id: 'perimeter', path: '/perimeter', name: 'Perimeter (BETA)', icon: '⬡', description: 'Calculate the perimeter of various 2D shapes', ready: 'true' },
+      { id: 'circles', path: '/circle-properties', name: 'Properties of Circles', icon: '⭕', description: 'Find the circumference, area and arc lengths of circles and sectors', ready: 'true' },
+      { id: 'basic-angle-facts', path: '/basic-angle-facts', name: 'Basic Angle Facts', icon: '90°', description: 'Find missing angles from right angles, on striaght lines and around a point', ready: 'true' },
+      { id: 'angles-in-triangles', path: '/angles-in-triangles', name: 'Angles In Triangles', icon: '🛆', description: 'Find missing angles using triangle properties - including split trangles and exterior angles', ready: 'true' },
     ]
   },
   {
@@ -93,7 +93,7 @@ const categories: Category[] = [
     gradient: 'from-orange-500 to-amber-600',
     iconBg: 'from-orange-50 to-amber-50',
     tools: [
-      { id: 'call-selector', path: '/call-selector', name: 'Friday Phonecalls', icon: '☎️', description: 'A tool to randomly select students for phonecalls', ready: true },
+      { id: 'call-selector', path: '/call-selector', name: 'Friday Phonecalls', icon: '☎️', description: 'A tool to randomly select students for phonecalls', ready: 'true' },
     ]
   },
 ];
