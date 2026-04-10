@@ -177,7 +177,8 @@ const simplifyRatioParts = (parts: number[]): number[] => {
 // frac(n,d) → LaTeX string for use inside $...$
 const frac = (n: number, d: number) => `\\frac{${n}}{${d}}`;
 // fracStr(n,d) → inline fragment for question lines: "$\frac{n}{d}$"
-const fracStr = (n: number, d: number) => `$${frac(n, d)}$`;
+// Uses string concatenation to avoid nested backtick issues in template literals
+const fracStr = (n: number, d: number) => "$" + frac(n, d) + "$";
 // ratioStr → plain text ratio, never in $...$
 const ratioStr = (...parts: number[]) => parts.join(":");
 
