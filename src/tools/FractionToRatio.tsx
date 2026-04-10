@@ -180,8 +180,6 @@ const mStr = (x: number | string) => `$${x}$`;
 const rLatex = (...parts: number[]) => parts.join(" : ");
 // rStr → InlineMath-ready ratio: "$3 : 4$"
 const rStr = (...parts: number[]) => `$${rLatex(...parts)}$`;
-// answerFrac → simplified fraction as LaTeX string
-const answerFrac = (n: number, d: number): string => { const g = gcd(n, d); return frac(n / g, d / g); };
 
 const getSimplificationSteps = (parts: number[]): WorkingStep[] => {
   const steps: WorkingStep[] = []; let cur = [...parts];
