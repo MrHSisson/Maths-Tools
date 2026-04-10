@@ -7,7 +7,7 @@ interface Tool {
   name: string;
   icon: string;
   description: string;
-  ready: boolean;
+  ready: string;
 }
 
 interface Category {
@@ -64,7 +64,7 @@ const categories: Category[] = [
       { id: 'ratio', path: '/ratio-sharing', name: 'Dividing Ratios', icon: '💰', description: 'Sharing amounts using the total, a known amount or known difference', ready: true },
       { id: 'simplifying-ratios', path: '/simplifying-ratios', name: 'Simplifying Ratios', icon: '➗', description: 'Simplifying ratios in numerical and algebraic forms', ready: true },
       { id: 'Recipes', path: '/recipes', name: 'Recipes', icon: '🧁', description: 'Find amounts of ingredients by scaling recipes and understanding limiting factors', ready: true },
-      { id: 'fraction-to-ratio', path: '/fraction-to-ratio', name: 'Converting Fractions and Ratios', icon: '🔁', description: 'To convert fractions and ratios interchangably', ready: true },
+      { id: 'fraction-to-ratio', path: '/fraction-to-ratio', name: 'Converting Fractions and Ratios', icon: '🔁', description: 'To convert fractions and ratios interchangably', ready: 'v2.0' },
       { id: 'fractions-of-amounts', path: '/fractions-of-amounts', name: 'Fractions of Amounts', icon: '⅔', description: 'To find a fraction of an amount', ready: true },
     ]
   },
