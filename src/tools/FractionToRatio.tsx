@@ -958,7 +958,7 @@ body{font-family:"Segoe UI",Arial,sans-serif;background:#fff;}
 #probe{position:fixed;left:-9999px;top:0;visibility:hidden;font-family:"Segoe UI",Arial,sans-serif;font-size:${FONT_PX}px;line-height:1.6;width:${cellW_MM - PAD_MM * 2}mm;}
 .qn{position:absolute;top:0;left:0;font-size:${Math.round(FONT_PX * 0.6)}px;font-weight:700;color:#000;padding:1.2mm 1.2mm 1.8mm 1.2mm;border-right:0.3mm solid #000;border-bottom:0.3mm solid #000;}
 .qls{font-size:${FONT_PX}px;line-height:1.6;text-align:center;width:100%;}.ql{display:block;}.qa{font-size:${FONT_PX}px;color:#059669;margin-top:1mm;text-align:center;width:100%;}
-.qi{width:100%;}.kr{display:inline;vertical-align:middle;}.kr.frac{font-size:1.15em;}
+.qi{width:100%;}.kr{display:inline;vertical-align:baseline;font-size:0.826em;}.kr.frac{font-size:1em;}
 </style></head><body>
 <div id="probe">${questions.map((q, i) => `<div class="qi" id="p${i}">${questionToHtml(q, i, true)}</div>`).join("")}</div>
 <div id="pages"></div>
