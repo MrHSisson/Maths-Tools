@@ -435,11 +435,11 @@ const genFractionToRatio = (level: DifficultyLevel, variables: Record<string, bo
     // Only fracStr() inside $...$, ratio labels are plain
     const line = findCD && oF1 && oF2
       ? prose
-        ? `In a bag of ${ctx.item}, ${fracStr(oF1.num, oF1.den)} are ${P[0]} and ${fracStr(oF2.num, oF2.den)} are ${P[1]}. The rest are ${P[2]}. Write the ratio ${reqOrder}.`
-        : `In a bag of ${ctx.item}, ${fracStr(oF1.num, oF1.den)} are ${P[0]} and ${fracStr(oF2.num, oF2.den)} are ${P[1]}. The rest are ${P[2]}. Find ${reqOrder}.`
+        ? `In a bag of ${ctx.item}, ` + fracStr(oF1.num, oF1.den) + ` are ${P[0]} and ` + fracStr(oF2.num, oF2.den) + ` are ${P[1]}. The rest are ${P[2]}. Write the ratio ${reqOrder}.`
+        : `In a bag of ${ctx.item}, ` + fracStr(oF1.num, oF1.den) + ` are ${P[0]} and ` + fracStr(oF2.num, oF2.den) + ` are ${P[1]}. The rest are ${P[2]}. Find ${reqOrder}.`
       : prose
-        ? `In a bag of ${ctx.item}, ${fracStr(f1, den)} are ${P[0]} and ${fracStr(f2, den)} are ${P[1]}. The rest are ${P[2]}. Write the ratio ${reqOrder}.`
-        : `In a bag of ${ctx.item}, ${fracStr(f1, den)} are ${P[0]} and ${fracStr(f2, den)} are ${P[1]}. The rest are ${P[2]}. Find ${reqOrder}.`;
+        ? `In a bag of ${ctx.item}, ` + fracStr(f1, den) + ` are ${P[0]} and ` + fracStr(f2, den) + ` are ${P[1]}. The rest are ${P[2]}. Write the ratio ${reqOrder}.`
+        : `In a bag of ${ctx.item}, ` + fracStr(f1, den) + ` are ${P[0]} and ` + fracStr(f2, den) + ` are ${P[1]}. The rest are ${P[2]}. Find ${reqOrder}.`;
     const baseSteps: WorkingStep[] = findCD ? cdSteps : [mStep(P[0], frac(f1, den)), mStep(P[1], frac(f2, den))];
     return {
       kind: "worded", lines: [line], answer,
@@ -461,9 +461,9 @@ const genFractionToRatio = (level: DifficultyLevel, variables: Record<string, bo
   let line: string; let wSteps: WorkingStep[];
 
   if (actualGiven === "total") {
-    line = rev
-      ? `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. There are ${total} ${ctx.item} in total. Write the ratio ${cB}:${cA}.`
-      : `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. There are ${total} ${ctx.item} in total. Write the ratio ${cA}:${cB}.`;
+          line = rev
+      ? `In a bag of ${ctx.item}, ` + fracStr(num, den) + ` are ${cA} and the rest are ${cB}. There are ${total} ${ctx.item} in total. Write the ratio ${cB}:${cA}.`
+      : `In a bag of ${ctx.item}, ` + fracStr(num, den) + ` are ${cA} and the rest are ${cB}. There are ${total} ${ctx.item} in total. Write the ratio ${cA}:${cB}.`;
     wSteps = [
       tStep(`Total = ${total} ${ctx.item} = ${den} parts`),
       tStep(`1 part = ${total} ÷ ${den} = ${mult}`),
@@ -472,9 +472,9 @@ const genFractionToRatio = (level: DifficultyLevel, variables: Record<string, bo
       tStep(rev ? `Ratio ${cB} : ${cA} = ${ratioStr(pB, pA)}` : `Ratio ${cA} : ${cB} = ${ratioStr(pA, pB)}`),
     ];
   } else if (actualGiven === "partB") {
-    line = rev
-      ? `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. There are ${pB} ${cB} ${ctx.item}. Write the ratio ${cB}:${cA}.`
-      : `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. There are ${pB} ${cB} ${ctx.item}. Write the ratio ${cA}:${cB}.`;
+          line = rev
+      ? `In a bag of ${ctx.item}, ` + fracStr(num, den) + ` are ${cA} and the rest are ${cB}. There are ${pB} ${cB} ${ctx.item}. Write the ratio ${cB}:${cA}.`
+      : `In a bag of ${ctx.item}, ` + fracStr(num, den) + ` are ${cA} and the rest are ${cB}. There are ${pB} ${cB} ${ctx.item}. Write the ratio ${cA}:${cB}.`;
     wSteps = [
       mStep(cA, frac(num, den)),
       mStep(`so ${cB}`, frac(den - num, den)),
@@ -484,9 +484,9 @@ const genFractionToRatio = (level: DifficultyLevel, variables: Record<string, bo
       tStep(rev ? `Ratio ${cB} : ${cA} = ${ratioStr(pB, pA)}` : `Ratio ${cA} : ${cB} = ${ratioStr(pA, pB)}`),
     ];
   } else {
-    line = rev
-      ? `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. There are ${pA} ${cA} ${ctx.item}. Write the ratio ${cB}:${cA}.`
-      : `In a bag of ${ctx.item}, ${fracStr(num, den)} are ${cA} and the rest are ${cB}. There are ${pA} ${cA} ${ctx.item}. Write the ratio ${cA}:${cB}.`;
+          line = rev
+      ? `In a bag of ${ctx.item}, ` + fracStr(num, den) + ` are ${cA} and the rest are ${cB}. There are ${pA} ${cA} ${ctx.item}. Write the ratio ${cB}:${cA}.`
+      : `In a bag of ${ctx.item}, ` + fracStr(num, den) + ` are ${cA} and the rest are ${cB}. There are ${pA} ${cA} ${ctx.item}. Write the ratio ${cA}:${cB}.`;
     wSteps = [
       mStep(cA, frac(num, den)),
       tStep(`${num} parts = ${pA}`),
