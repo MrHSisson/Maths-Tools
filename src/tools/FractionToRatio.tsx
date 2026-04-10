@@ -717,15 +717,8 @@ const QuestionDisplay = ({ q, cls }: { q: AnyQuestion; cls: string }) => (
 );
 
 const AnswerDisplay = ({ q }: { q: AnyQuestion }) => {
-  const anyQ = q as any;
-  if (anyQ.answerLatex) {
-    const suffix = anyQ.answer?.replace(String(anyQ.answerLatex).replace(/[.*+?^${}()|[\]\\]/g, "\\const AnswerDisplay = ({ q }: { q: AnyQuestion }) => {
   if (q.answerLatex) return <><span>= </span><MathRenderer latex={q.answerLatex} /></>;
   return <span>= {q.answer}</span>;
-};"), "").trim() ?? "";
-    return <><MathRenderer latex={`= ${anyQ.answerLatex}`} />{suffix && <span> {suffix}</span>}</>;
-  }
-  return <span>= {anyQ.answer}</span>;
 };
 
 const DifficultyToggle = ({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
