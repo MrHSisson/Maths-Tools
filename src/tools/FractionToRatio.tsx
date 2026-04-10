@@ -634,7 +634,7 @@ const genFormingRatios = (level: DifficultyLevel, variables: Record<string, bool
           if (p1 !== total2 * fr.num / fr.den) continue;
           p2 = randInt(1, total2 - p1 - 1); p3 = total2 - p1 - p2;
           // fracStr() for the fraction in the constraint text
-          constraintText2 = `${fracStr(fr.num, fr.den)} are ${ctx.parts[0]}. ${p2} are ${ctx.parts[1]}. The rest are ${ctx.parts[2]}.`;
+          constraintText2 = fracStr(fr.num, fr.den) + " are " + ctx.parts[0] + ". " + p2 + " are " + ctx.parts[1] + ". The rest are " + ctx.parts[2] + ".";
           calcSteps = [tStep(`${ctx.parts[0]}: ${fr.num}/${fr.den} of ${total2} = ${p1}`), tStep(`${ctx.parts[1]}: ${p2}`), tStep(`${ctx.parts[2]}: ${total2} − ${p1} − ${p2} = ${p3}`)];
         }
       } else {
@@ -647,7 +647,7 @@ const genFormingRatios = (level: DifficultyLevel, variables: Record<string, bool
         } else {
           const fr = pick(fracs2); p2 = Math.round(rem * fr.num / fr.den);
           if (p2 !== rem * fr.num / fr.den) continue; p3 = total2 - p1 - p2;
-          constraintText2 = `${p1} are ${ctx.parts[0]}. ${fracStr(fr.num, fr.den)} of the remainder are ${ctx.parts[1]}. The rest are ${ctx.parts[2]}.`;
+          constraintText2 = p1 + " are " + ctx.parts[0] + ". " + fracStr(fr.num, fr.den) + " of the remainder are " + ctx.parts[1] + ". The rest are " + ctx.parts[2] + ".";
           calcSteps = [tStep(`${ctx.parts[0]}: ${p1}`), tStep(`Remainder = ${total2} − ${p1} = ${rem}`), tStep(`${ctx.parts[1]}: ${fr.num}/${fr.den} of ${rem} = ${p2}`), tStep(`${ctx.parts[2]}: ${total2} − ${p1} − ${p2} = ${p3}`)];
         }
       }
@@ -665,7 +665,7 @@ const genFormingRatios = (level: DifficultyLevel, variables: Record<string, bool
       } else {
         const fr = pick(fracs2); p1 = Math.round(total2 * fr.num / fr.den);
         if (p1 !== total2 * fr.num / fr.den) continue; p2 = total2 - p1;
-        constraintText2 = `${fracStr(fr.num, fr.den)} are ${ctx.parts[0]} and the rest are ${ctx.parts[1]}.`;
+        constraintText2 = fracStr(fr.num, fr.den) + " are " + ctx.parts[0] + " and the rest are " + ctx.parts[1] + ".";
         calcSteps = [tStep(`${ctx.parts[0]}: ${fr.num}/${fr.den} of ${total2} = ${p1}`), tStep(`${ctx.parts[1]}: ${total2} − ${p1} = ${p2}`)];
       }
       if (p1 > 0 && p2 > 0 && p1 !== p2) {
