@@ -287,10 +287,10 @@ const genRatioToFraction = (level: DifficultyLevel, variables: Record<string, bo
       const wp = randInt(0, 2); numerator = [a, b, c][wp]; const pn = ctx.parts[wp];
       const style = randInt(0, 2);
       line = style === 0
-        ? `The ratio of ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]} is ${rStr(a, b, c)}. What fraction of ${ctx.scenario} are ${pn}?`
+        ? `The ratio of ${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]} is ${rStr(a, b, c)}. What fraction of ${ctx.scenario} are ${pn}?`
         : style === 1
-          ? `The ratio of ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]} is ${rStr(a, b, c)}. Find the fraction that are ${pn}.`
-          : `The ratio of ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]} is ${rStr(a, b, c)}. Write ${pn} as a fraction of the total.`;
+          ? `The ratio of ${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]} is ${rStr(a, b, c)}. Find the fraction that are ${pn}.`
+          : `The ratio of ${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]} is ${rStr(a, b, c)}. Write ${pn} as a fraction of the total.`;
       targetDescription = pn;
     } else {
       const idx = ctx.compositeIndices;
@@ -298,13 +298,13 @@ const genRatioToFraction = (level: DifficultyLevel, variables: Record<string, bo
       const useNatural = Math.random() < 0.5;
       if (useNatural) {
         line = randInt(0, 1) === 0
-          ? `The ratio of ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]} is ${rStr(a, b, c)}. What fraction of ${ctx.scenario} are ${ctx.compositeLabel}?`
-          : `The ratio of ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]} is ${rStr(a, b, c)}. Find the fraction that are ${ctx.compositeLabel}.`;
+          ? `The ratio of ${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]} is ${rStr(a, b, c)}. What fraction of ${ctx.scenario} are ${ctx.compositeLabel}?`
+          : `The ratio of ${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]} is ${rStr(a, b, c)}. Find the fraction that are ${ctx.compositeLabel}.`;
         targetDescription = ctx.compositeLabel;
       } else {
         line = randInt(0, 1) === 0
-          ? `The ratio of ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]} is ${rStr(a, b, c)}. What fraction are ${ctx.parts[idx[0]]} or ${ctx.parts[idx[1]]}?`
-          : `The ratio of ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]} is ${rStr(a, b, c)}. Find the fraction that are ${ctx.parts[idx[0]]} or ${ctx.parts[idx[1]]}.`;
+          ? `The ratio of ${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]} is ${rStr(a, b, c)}. What fraction are ${ctx.parts[idx[0]]} or ${ctx.parts[idx[1]]}?`
+          : `The ratio of ${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]} is ${rStr(a, b, c)}. Find the fraction that are ${ctx.parts[idx[0]]} or ${ctx.parts[idx[1]]}.`;
         targetDescription = `${ctx.parts[idx[0]]} or ${ctx.parts[idx[1]]}`;
       }
     }
@@ -431,9 +431,9 @@ const genFractionToRatio = (level: DifficultyLevel, variables: Record<string, bo
       { parts: [f3, f1, f2] }, { parts: [f3, f2, f1] },
     ];
     const ordLabels = [
-      `${P[0]} : ${P[1]} : ${P[2]}`, `${P[0]} : ${P[2]} : ${P[1]}`,
-      `${P[1]} : ${P[0]} : ${P[2]}`, `${P[1]} : ${P[2]} : ${P[0]}`,
-      `${P[2]} : ${P[0]} : ${P[1]}`, `${P[2]} : ${P[1]} : ${P[0]}`,
+      `${P[0]}:${P[1]}:${P[2]}`, `${P[0]}:${P[2]}:${P[1]}`,
+      `${P[1]}:${P[0]}:${P[2]}`, `${P[1]}:${P[2]}:${P[0]}`,
+      `${P[2]}:${P[0]}:${P[1]}`, `${P[2]}:${P[1]}:${P[0]}`,
     ];
     const { parts: ansParts } = ords[oc];
     const reqOrder = ordLabels[oc];
@@ -539,12 +539,12 @@ const genFormingRatios = (level: DifficultyLevel, variables: Record<string, bool
       const a = randInt(2, 15) * g, b = randInt(2, 15) * g, c = randInt(2, 15) * g;
       const order = randInt(0, 5);
       const ords = [
-        { label: `${ctx.items[0]} : ${ctx.items[1]} : ${ctx.items[2]}`, parts: [a, b, c] },
-        { label: `${ctx.items[0]} : ${ctx.items[2]} : ${ctx.items[1]}`, parts: [a, c, b] },
-        { label: `${ctx.items[1]} : ${ctx.items[0]} : ${ctx.items[2]}`, parts: [b, a, c] },
-        { label: `${ctx.items[1]} : ${ctx.items[2]} : ${ctx.items[0]}`, parts: [b, c, a] },
-        { label: `${ctx.items[2]} : ${ctx.items[0]} : ${ctx.items[1]}`, parts: [c, a, b] },
-        { label: `${ctx.items[2]} : ${ctx.items[1]} : ${ctx.items[0]}`, parts: [c, b, a] },
+        { label: `${ctx.items[0]}:${ctx.items[1]}:${ctx.items[2]}`, parts: [a, b, c] },
+        { label: `${ctx.items[0]}:${ctx.items[2]}:${ctx.items[1]}`, parts: [a, c, b] },
+        { label: `${ctx.items[1]}:${ctx.items[0]}:${ctx.items[2]}`, parts: [b, a, c] },
+        { label: `${ctx.items[1]}:${ctx.items[2]}:${ctx.items[0]}`, parts: [b, c, a] },
+        { label: `${ctx.items[2]}:${ctx.items[0]}:${ctx.items[1]}`, parts: [c, a, b] },
+        { label: `${ctx.items[2]}:${ctx.items[1]}:${ctx.items[0]}`, parts: [c, b, a] },
       ];
       const { label, parts } = ords[order];
       const ansLatex = buildAnswerLatex(parts);
@@ -558,7 +558,7 @@ const genFormingRatios = (level: DifficultyLevel, variables: Record<string, bool
       if (a === b) return genFormingRatios(level, variables);
       const rev = Math.random() < 0.5;
       const parts = rev ? [b, a] : [a, b];
-      const label = rev ? `${ctx.items[1]} : ${ctx.items[0]}` : `${ctx.items[0]} : ${ctx.items[1]}`;
+      const label = rev ? `${ctx.items[1]}:${ctx.items[0]}` : `${ctx.items[0]}:${ctx.items[1]}`;
       const ansLatex = buildAnswerLatex(parts);
       const line = Math.random() < 0.5
         ? `A ${ctx.container} has ${mStr(a)} ${ctx.items[0]} and ${mStr(b)} ${ctx.items[1]}. Write the ratio ${label}${sfText}.`
@@ -594,7 +594,7 @@ const genFormingRatios = (level: DifficultyLevel, variables: Record<string, bool
       const dp = op === 0 ? `${mStr(first)} are ${ctx.parts[0]}, ${mStr(second)} are ${ctx.parts[1]}, and the rest are ${ctx.parts[2]}`
         : op === 1 ? `${mStr(first)} are ${ctx.parts[0]}, ${mStr(third)} are ${ctx.parts[2]}, and the rest are ${ctx.parts[1]}`
           : `${mStr(second)} are ${ctx.parts[1]}, ${mStr(third)} are ${ctx.parts[2]}, and the rest are ${ctx.parts[0]}`;
-      const line = `A ${ctx.container} contains ${mStr(total)} ${ctx.item}. ${dp}. Write the ratio ${ctx.parts[0]} : ${ctx.parts[1]} : ${ctx.parts[2]}${sfText}.`;
+      const line = `A ${ctx.container} contains ${mStr(total)} ${ctx.item}. ${dp}. Write the ratio ${ctx.parts[0]}:${ctx.parts[1]}:${ctx.parts[2]}${sfText}.`;
       return {
         kind: "worded", lines: [line], answer: ansLatex, answerLatex: ansLatex,
         working: [
@@ -613,7 +613,7 @@ const genFormingRatios = (level: DifficultyLevel, variables: Record<string, bool
       }
       if (!first || !second || first + second !== total) { first = randInt(Math.max(1, Math.floor(total * 0.15)), Math.floor(total * 0.85)); second = total - first; }
       const ansLatex = buildAnswerLatex([first, second]);
-      const line = `A ${ctx.container} contains ${mStr(total)} ${ctx.item}. ${mStr(first)} are ${ctx.parts[0]} and the rest are ${ctx.parts[1]}. Write the ratio ${ctx.parts[0]} : ${ctx.parts[1]}${sfText}.`;
+      const line = `A ${ctx.container} contains ${mStr(total)} ${ctx.item}. ${mStr(first)} are ${ctx.parts[0]} and the rest are ${ctx.parts[1]}. Write the ratio ${ctx.parts[0]}:${ctx.parts[1]}${sfText}.`;
       return {
         kind: "worded", lines: [line], answer: ansLatex, answerLatex: ansLatex,
         working: [
