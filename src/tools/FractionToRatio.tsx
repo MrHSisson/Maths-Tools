@@ -30,7 +30,8 @@ const MathRenderer = ({ latex, style, className }: { latex: string; style?: CSSP
     try { w().katex.render(latex, ref.current, { displayMode: false, throwOnError: false, output: "html" }); }
     catch { if (ref.current) ref.current.textContent = latex; }
   }, [latex, ready]);
-  return <span ref={ref} className={className} style={{ display: "inline", verticalAlign: "middle", ...style }} />;
+  const hasFrac = latex.includes("\\frac");
+  return <span ref={ref} className={className} style={{ display: "inline", verticalAlign: "baseline", fontSize: hasFrac ? "1em" : "0.826em", ...style }} />;
 };
 
 // Renders a line of text that may contain $LaTeX$ fragments inline with prose.
