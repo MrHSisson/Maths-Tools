@@ -717,7 +717,8 @@ const handlePrint = (questions: AnyQuestion[], toolName: string, difficulty: str
   // For print we pass latex strings; the print window runs KaTeX itself
   const segsToLatex = (segs: Seg[]): string =>
     segs.map(seg => seg.k==="m" ? seg.s : `\\text{${seg.s.replace(/[{}]/g,"\\  const segsToLatex = (segs: Seg[]): string =>
-    segs.map(seg => seg.k==="m" ? seg.s : `\\text{${seg.s.replace(/[{}]/g,"\\$&")}}`).join("");
+    segs.map(seg => seg.k==="m" ? seg.s : `\\text{${seg.s.replace(/[{}]/g,"\\  const segsToLatex = (segs: Seg[]): string =>
+    segs.map(seg => seg.k==="m" ? seg.s : `\\text{${seg.s.replace(/[{}]/g,"\\$&")}}`).join("");")}}`).join("");
 
   const qHtmlData = questions.map((q,i) => ({
     displayLatex: segsToLatex(q.display),
