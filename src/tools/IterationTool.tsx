@@ -654,29 +654,40 @@ const QOPopover = ({variables,variableValues,onVariableChange,dropdown,dropdownV
 // ── Print ─────────────────────────────────────────────────────────────────────
 
 const handlePrint = (questions: AnyQuestion[], toolName: string, difficulty: string, isDifferentiated: boolean, numColumns: number) => {
-  const FONT_PX=13, PAD_MM=3, MARGIN_MM=12, HEADER_MM=14, GAP_MM=2;
+  const FONT_PX=14, PAD_MM=3, MARGIN_MM=12, HEADER_MM=14, GAP_MM=2;
   const PAGE_H_MM=297-MARGIN_MM*2, PAGE_W_MM=210-MARGIN_MM*2;
   const usableH_MM=PAGE_H_MM-HEADER_MM, diffHdrMM=7;
   const diffLabel=isDifferentiated?"Differentiated":difficulty==="level1"?"Level 1":difficulty==="level2"?"Level 2":"Level 3";
   const dateStr=new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
   const totalQ=questions.length;
+  const cols=isDifferentiated?3:numColumns;
+  const cellW_MM=isDifferentiated?(PAGE_W_MM-GAP_MM*2)/3:(PAGE_W_MM-GAP_MM*(numColumns-1))/numColumns;
 
-  const segsToLatex = (segs: Seg[]): string =>
-    segs.map(seg => {
-      if (seg.k === "m") return seg.s;
-      const escaped = seg.s.replace(/\\/g,"\\\\").replace(/[{}]/g,"\\$&");
-      return `\\text{${escaped}}`;
-    }).join("");
+  // Render Seg[] as HTML — prose as plain spans, maths as katex-render spans
+  const segsToHtml = (segs: Seg[]): string =>
+    segs.map(seg =>
+      seg.k === "t"
+        ? `<span>${seg.s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}</span>`
+        : `<span class="kr" data-latex="${seg.s.replace(/"/g,"&quot;")}"></span>`
+    ).join("");
+
+  // Build question HTML: number badge + display segs + optional answer segs
+  const questionToHtml = (q: AnyQuestion, idx: number, showAnswer: boolean): string => {
+    const num = `<div class="q-num">${idx+1})</div>`;
+    const body = `<div class="q-body">${segsToHtml(q.display)}</div>`;
+    const ans  = showAnswer ? `<div class="q-answer">${segsToHtml(q.answerSegs)}</div>` : "";
+    return `${num}${body}${ans}`;
+  };
+
+  const probeHtml = questions.map((q,i) =>
+    `<div class="q-inner" id="probe-${i}">${questionToHtml(q,i,true)}</div>`
+  ).join("");
 
   const qHtmlData = questions.map((q,i) => ({
-    displayLatex: segsToLatex(q.display),
-    answerLatex:  segsToLatex(q.answerSegs),
+    q: questionToHtml(q,i,false),
+    a: questionToHtml(q,i,true),
     difficulty: q.difficulty,
-    idx: i,
   }));
-
-  const katexSpan = (latex: string) =>
-    `<span class="kr" data-latex="${latex.replace(/"/g,"&quot;")}"></span>`;
 
   const html=`<!DOCTYPE html><html><head><meta charset="utf-8">
 <title>${toolName} — Worksheet</title>
@@ -685,100 +696,134 @@ const handlePrint = (questions: AnyQuestion[], toolName: string, difficulty: str
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 @page{size:A4;margin:${MARGIN_MM}mm;}
-body{font-family:"Segoe UI",Arial,sans-serif;font-size:${FONT_PX}px;}
+body{font-family:"Segoe UI",Arial,sans-serif;background:#fff;}
 @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
-.page{width:${PAGE_W_MM}mm;min-height:${PAGE_H_MM}mm;page-break-after:always;}
+.page{width:${PAGE_W_MM}mm;height:${PAGE_H_MM}mm;overflow:hidden;page-break-after:always;}
 .page:last-child{page-break-after:auto;}
 .ph{display:flex;justify-content:space-between;align-items:baseline;border-bottom:.4mm solid #1e3a8a;padding-bottom:1.5mm;margin-bottom:2mm;}
 .ph h1{font-size:5mm;font-weight:700;color:#1e3a8a;}.ph .meta{font-size:3mm;color:#6b7280;}
 .grid{display:grid;gap:${GAP_MM}mm;}
-.cell{border:.3mm solid #d1d5db;border-radius:1mm;padding:${PAD_MM}mm;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden;}
+.cell,.dc{border:.3mm solid #d1d5db;border-radius:1mm;padding:${PAD_MM}mm;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;}
 .dg{display:grid;grid-template-columns:repeat(3,1fr);gap:${GAP_MM}mm;}
 .dcol{display:flex;flex-direction:column;gap:${GAP_MM}mm;}
 .dh{height:${diffHdrMM}mm;display:flex;align-items:center;justify-content:center;font-size:3mm;font-weight:700;border-radius:1mm;}
 .dh.level1{background:#dcfce7;color:#166534;}.dh.level2{background:#fef9c3;color:#854d0e;}.dh.level3{background:#fee2e2;color:#991b1b;}
-.qn{position:absolute;top:0;left:0;font-size:${Math.round(FONT_PX*.6)}px;font-weight:700;color:#000;padding:1.2mm 1.2mm 1.8mm;border-right:.3mm solid #000;border-bottom:.3mm solid #000;}
-.qt{padding-top:3mm;line-height:1.6;text-align:center;}
-.qa{color:#059669;margin-top:1mm;text-align:center;}
-.kr{display:inline-block;vertical-align:baseline;}
+#probe{position:fixed;left:-9999px;top:0;visibility:hidden;font-family:"Segoe UI",Arial,sans-serif;font-size:${FONT_PX}px;line-height:1.5;width:${cellW_MM-PAD_MM*2}mm;}
+.q-inner{width:100%;text-align:center;}
+.q-num{position:absolute;top:0;left:0;font-size:${Math.round(FONT_PX*.6)}px;font-weight:700;color:#000;line-height:1;padding:1.2mm 1.2mm 1.8mm 1.2mm;border-right:.3mm solid #000;border-bottom:.3mm solid #000;}
+.q-body{font-size:${FONT_PX}px;line-height:1.5;text-align:center;word-break:break-word;white-space:normal;}
+.q-answer{font-size:${FONT_PX}px;color:#059669;margin-top:1mm;text-align:center;}
+.kr{display:inline;vertical-align:baseline;}
 </style>
 </head><body>
+<div id="probe">${probeHtml}</div>
 <div id="pages"></div>
 <script>
 document.addEventListener("DOMContentLoaded",function(){
-  var pxMm=3.7795,PAD=${PAD_MM},GAP=${GAP_MM},uH=${usableH_MM},dH=${diffHdrMM};
-  var PW=${PAGE_W_MM},cols=${isDifferentiated?3:numColumns},isDiff=${isDifferentiated?"true":"false"};
+  var pxPerMm=3.7795;
+  var PAD_MM=${PAD_MM},GAP_MM=${GAP_MM},usableH=${usableH_MM},diffHdrMM=${diffHdrMM};
+  var PAGE_W_MM=${PAGE_W_MM},cols=${cols},isDiff=${isDifferentiated?"true":"false"};
   var totalQ=${totalQ},diffLabel="${diffLabel}",dateStr="${dateStr}",toolName="${toolName}";
   var qData=${JSON.stringify(qHtmlData)};
 
-  function rk(el){
-    el.querySelectorAll('.kr').forEach(function(s){
-      try{katex.render(s.getAttribute('data-latex'),s,{throwOnError:false,output:'html'});}
-      catch(e){s.textContent=s.getAttribute('data-latex');}
+  // Step 1: render KaTeX in probe
+  var probe=document.getElementById('probe');
+  probe.querySelectorAll('.kr').forEach(function(el){
+    try{katex.render(el.getAttribute('data-latex'),el,{throwOnError:false,output:'html'});}
+    catch(e){el.textContent=el.getAttribute('data-latex');}
+  });
+
+  // Step 2: measure tallest question+answer content
+  var maxH_px=0;
+  probe.querySelectorAll('.q-inner').forEach(function(el){
+    if(el.scrollHeight>maxH_px)maxH_px=el.scrollHeight;
+  });
+  var needed_mm=maxH_px/pxPerMm+PAD_MM*2+6;
+
+  // Step 3: pre-compute row heights for 1–10 rows
+  var rowHeights=[];
+  for(var r=1;r<=10;r++) rowHeights.push((usableH-GAP_MM*(r-1))/r);
+
+  // Step 4: find optimal row count — smallest rows where all fit AND content fits
+  var chosenH_mm=rowHeights[0],rowsPerPage=1,found=false;
+  for(var r=0;r<rowHeights.length;r++){
+    var cap=(r+1)*cols;
+    if(cap>=totalQ&&rowHeights[r]>=needed_mm){chosenH_mm=rowHeights[r];rowsPerPage=r+1;found=true;break;}
+  }
+  if(!found){
+    for(var r2=0;r2<rowHeights.length;r2++){
+      if(rowHeights[r2]>=needed_mm){chosenH_mm=rowHeights[r2];rowsPerPage=r2+1;}
+    }
+  }
+
+  // Differentiated sizing
+  var diffPerCol=Math.floor(totalQ/3),diffUsableH=usableH-diffHdrMM-GAP_MM;
+  var diffRowsPerPage=1,diffCellH_mm=diffUsableH;
+  for(var rd=0;rd<10;rd++){
+    var hd=(diffUsableH-GAP_MM*rd)/(rd+1);
+    if(hd>=needed_mm){diffRowsPerPage=rd+1;diffCellH_mm=hd;}else break;
+  }
+
+  // Step 5: split into pages
+  var pages=[];
+  if(isDiff){
+    var numDiffPages=Math.ceil(diffPerCol/diffRowsPerPage);
+    for(var p=0;p<numDiffPages;p++) pages.push(p);
+  } else {
+    var cap2=rowsPerPage*cols;
+    for(var s=0;s<qData.length;s+=cap2) pages.push(qData.slice(s,s+cap2));
+  }
+  var totalPages=pages.length;
+
+  function makeCellW(c){return(PAGE_W_MM-GAP_MM*(c-1))/c;}
+
+  function buildCell(inner,cW,cH,isDiffCell){
+    var cls=isDiffCell?'dc':'cell';
+    return'<div class="'+cls+'" style="width:'+cW+'mm;height:'+cH+'mm;"><div class="q-inner">'+inner+'</div></div>';
+  }
+
+  function renderKatex(container){
+    container.querySelectorAll('.kr').forEach(function(el){
+      try{katex.render(el.getAttribute('data-latex'),el,{throwOnError:false,output:'html'});}
+      catch(e){el.textContent=el.getAttribute('data-latex');}
     });
   }
 
-  function qs(item,showAnswer){
-    return '<div class="qn">'+(item.idx+1)+')</div>'
-      +'<div class="qt">${katexSpan("__DL__")}'.replace('__DL__',item.displayLatex.replace(/"/g,'&quot;'))+'</div>'
-      +(showAnswer?'<div class="qa">${katexSpan("__AL__")}'.replace('__AL__',item.answerLatex.replace(/"/g,'&quot;'))+'</div>':'');
-  }
-
-  function makeCellW(c){return(PW-GAP*(c-1))/c;}
-
-  // Probe for height measurement
-  var cW=makeCellW(cols);
-  var probe=document.createElement('div');
-  probe.style.cssText='position:fixed;left:-9999px;top:0;visibility:hidden;font-size:${FONT_PX}px;width:'+(cW-PAD*2)+'mm;';
-  document.body.appendChild(probe);
-  var maxH=0;
-  qData.forEach(function(item){
-    probe.innerHTML='<div style="padding:${PAD_MM}mm">'+qs(item,true)+'</div>';
-    rk(probe);
-    if(probe.scrollHeight>maxH)maxH=probe.scrollHeight;
-  });
-  probe.remove();
-  var needed=maxH/pxMm+8;
-
-  var rH=[];for(var r=1;r<=10;r++)rH.push((uH-GAP*(r-1))/r);
-  var chosenH=rH[0],rpp=1;
-  for(var r=0;r<rH.length;r++){if(rH[r]>=needed){chosenH=rH[r];rpp=r+1;}}
-
-  var diffPC=Math.floor(totalQ/3),diffUH=uH-dH-GAP,diffRPP=1,diffCH=diffUH;
-  for(var rd=0;rd<10;rd++){var hd=(diffUH-GAP*rd)/(rd+1);if(hd>=needed){diffRPP=rd+1;diffCH=hd;}else break;}
-
-  function cell(inner,w,h){return'<div class="cell" style="width:'+w+'mm;height:'+h+'mm;">'+inner+'</div>';}
-
-  function buildGrid(pd,sa,ch){
+  function buildGrid(pageData,showAnswer,cH){
     if(isDiff){
-      var cw3=makeCellW(3);
-      var cols3=['level1','level2','level3'].map(function(lv,li){
-        var s=pd*diffRPP,e=s+diffRPP;
-        var lqs=qData.filter(function(q){return q.difficulty===lv;}).slice(s,e);
-        return'<div class="dcol"><div class="dh '+lv+'">'+['Level 1','Level 2','Level 3'][li]+'</div>'+lqs.map(function(q){return cell(qs(q,sa),cw3,ch);}).join('')+'</div>';
+      var pgIdx=pageData,start=pgIdx*diffRowsPerPage,end=start+diffRowsPerPage;
+      var cW=makeCellW(3);
+      var lvls=['level1','level2','level3'],lbls=['Level 1','Level 2','Level 3'];
+      var cols3=lvls.map(function(lv,li){
+        var lqs=qData.filter(function(q){return q.difficulty===lv;}).slice(start,end);
+        var cells=lqs.map(function(q){return buildCell(showAnswer?q.a:q.q,cW,cH,true);}).join('');
+        return'<div class="dcol"><div class="dh '+lv+'">'+lbls[li]+'</div>'+cells+'</div>';
       }).join('');
-      return'<div class="dg">'+cols3+'</div>';
+      return'<div class="dg" style="grid-template-columns:repeat(3,'+cW+'mm);">'+cols3+'</div>';
     }
-    var cw2=makeCellW(cols),gr=Math.ceil(pd.length/cols);
-    return'<div class="grid" style="grid-template-columns:repeat('+cols+','+cw2+'mm);grid-template-rows:repeat('+gr+','+ch+'mm);">'+pd.map(function(it){return cell(qs(it,sa),cw2,ch);}).join('')+'</div>';
+    var cW=makeCellW(cols);
+    var gridRows=Math.ceil(pageData.length/cols);
+    var cells=pageData.map(function(item){return buildCell(showAnswer?item.a:item.q,cW,cH,false);}).join('');
+    return'<div class="grid" style="grid-template-columns:repeat('+cols+','+cW+'mm);grid-template-rows:repeat('+gridRows+','+cH+'mm);">'+cells+'</div>';
   }
 
-  function buildPage(pd,sa,pi,tp){
-    var ch=isDiff?diffCH:chosenH;
-    var lbl=tp>1?(pi+1)+'/'+tp:'';
-    return'<div class="page"><div class="ph"><h1>'+toolName+(sa?' — Answers':'')+'</h1><div class="meta">'+diffLabel+(lbl?' · '+lbl:'')+' · '+dateStr+'</div></div>'+buildGrid(pd,sa,ch)+'</div>';
+  function buildPage(pageData,showAnswer,pgIdx){
+    var cH=isDiff?diffCellH_mm:chosenH_mm;
+    var lbl=totalPages>1
+      ?(isDiff?diffPerCol+' per level':totalQ+' questions')+' ('+(pgIdx+1)+'/'+totalPages+')'
+      :(isDiff?diffPerCol+' per level':totalQ+' questions');
+    var title=toolName+(showAnswer?' — Answers':'');
+    return'<div class="page"><div class="ph"><h1>'+title+'</h1><div class="meta">'+diffLabel+' &middot; '+dateStr+' &middot; '+lbl+'</div></div>'+buildGrid(pageData,showAnswer,cH)+'</div>';
   }
 
-  var pages=[];
-  if(isDiff){var np=Math.ceil(diffPC/diffRPP);for(var p=0;p<np;p++)pages.push(p);}
-  else{var cap=rpp*cols;for(var s=0;s<qData.length;s+=cap)pages.push(qData.slice(s,s+cap));}
-  var tp=pages.length;
-
-  var html=pages.map(function(pg,i){return buildPage(pg,false,i,tp);}).join('')
-           +pages.map(function(pg,i){return buildPage(pg,true,i,tp);}).join('');
+  var html=pages.map(function(pg,i){return buildPage(pg,false,i);}).join('')
+           +pages.map(function(pg,i){return buildPage(pg,true,i);}).join('');
   document.getElementById('pages').innerHTML=html;
-  rk(document.getElementById('pages'));
-  setTimeout(function(){window.print();},400);
+
+  // Step 6: render KaTeX in actual pages then remove probe
+  renderKatex(document.getElementById('pages'));
+  probe.remove();
+  setTimeout(function(){window.print();},300);
 });
 <\/script></body></html>`;
 
