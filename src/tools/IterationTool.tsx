@@ -333,7 +333,7 @@ const genNumerical = (level: DifficultyLevel, calcSteps: boolean, formulaType: F
 
   return {
     kind: "iter", display, displayPlain, answerSegs, answerPlain, working,
-    key: `num-${selected}-${a!}-${b!}-${x0}-${Math.random()}`,
+    key: `num-${selected}-${a!}-${b!}-${x0}`,
     difficulty: level,
   };
 };
@@ -425,7 +425,7 @@ const genRearranging = (level: DifficultyLevel, showTarget: boolean, answerType:
 
   return {
     kind: "iter", display, displayPlain, answerSegs, answerPlain, working,
-    key: `rear-${a!}-${b!}-${x0}-${Math.random()}`,
+    key: `rear-${level}-${a!}-${b!}-${x0}`,
     difficulty: level,
   };
 };
@@ -492,7 +492,7 @@ const genVerification = (level: DifficultyLevel): IterQuestion => {
 
   return {
     kind: "iter", display, displayPlain, answerSegs, answerPlain, working,
-    key: `ver-${useCubic?"c":"q"}-${a}-${b}-${Math.random()}`,
+    key: `ver-${useCubic?"c":"q"}-${a}-${b}`,
     difficulty: level,
   };
 };
