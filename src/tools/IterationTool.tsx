@@ -1,1509 +1,1216 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback, CSSProperties } from "react";
+import { useNavigate } from "react-router-dom";
+import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, Printer } from "lucide-react";
 
-// ============================================================================
-// TYPES
-// ============================================================================
+// ═══════════════════════════════════════════════════════════════════════════════
+// KATEX
+// ═══════════════════════════════════════════════════════════════════════════════
 
-type ColorScheme = 'default' | 'blue' | 'pink' | 'yellow';
-type DifficultyLevel = 'level1' | 'level2' | 'level3';
-type Mode = 'whiteboard' | 'single' | 'worksheet';
-type ToolType = 'numerical' | 'rearranging' | 'verification';
-type FormulaType = 'quadratic' | 'cubic' | 'fractional' | 'mixed';
-type AnswerType = 'first3' | 'root';
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const w = () => window as any;
 
-type WorkingStep = {
-  type: 'setup' | 'substitution' | 'calculation' | 'observation' | 'conclusion' | 'tip';
-  content: string;
-};
-
-type IterationQuestion = {
-  display: string;
-  answer: string;
-  working: WorkingStep[];
-  values: {
-    formula: string;
-    formulaDisplay: string;
-    x0: number;
-    iterations: number[];
-    accuracyTarget?: number;
-    convergedValue?: number;
-  };
-  difficulty: string;
-};
-
-type RearrangingQuestion = {
-  display: string;
-  answer: string;
-  working: WorkingStep[];
-  values: {
-    originalEquation: string;
-    targetFormula: string;
-    x0: number;
-    iterations: number[];
-    root: number;
-    a: number;
-    b: number;
-    c?: number;
-  };
-  difficulty: string;
-};
-
-type VerificationQuestion = {
-  display: string;
-  answer: string;
-  working: WorkingStep[];
-  values: {
-    equation: string;
-    equationFunc: string;
-    equationType: string;
-    root: number;
-    lowerBound: number;
-    upperBound: number;
-    fLower: number;
-    fUpper: number;
-    a: number;
-    b: number;
-  };
-  difficulty: string;
-};
-
-type QuestionType = IterationQuestion | RearrangingQuestion | VerificationQuestion;
-
-// ============================================================================
-// CONSTANTS
-// ============================================================================
-
-const toolNames: Record<string, string> = {
-  numerical: 'Numerical Processing',
-  rearranging: 'Rearranging & Solving',
-  verification: 'Root Verification'
-};
-
-// ============================================================================
-// HELPER FUNCTIONS
-// ============================================================================
-
-// Format decimal to specified places
-const formatDecimal = (value: number, dp: number): string => {
-  return value.toFixed(dp);
-};
-
-// Format subscript numbers
-const formatSubscript = (n: number): string => {
-  const subscripts = ['₀', '₁', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉'];
-  if (n < 10) return subscripts[n];
-  return String(n).split('').map(d => subscripts[parseInt(d)]).join('');
-};
-
-// Round to specified decimal places
-const roundTo = (value: number, dp: number): number => {
-  const factor = Math.pow(10, dp);
-  return Math.round(value * factor) / factor;
-};
-
-// ============================================================================
-// QUESTION GENERATORS
-// ============================================================================
-
-const generateNumericalQuestion = (
-  level: DifficultyLevel,
-  showCalculatorSteps: boolean,
-  formulaType: FormulaType
-): IterationQuestion => {
-  let x0: number;
-  let a: number;
-  let b: number;
-  let iterations: number[] = [];
-  let formula: string;
-  let formulaDisplay: string;
-  let numIterations: number;
-  let targetDP: number = 2; // Always 2 d.p.
-  let convergedValue: number | undefined;
-  
-  // Determine which formula type to use
-  let selectedType: string;
-  if (formulaType === 'mixed') {
-    const types = ['quadratic', 'cubic', 'fractional'];
-    selectedType = types[Math.floor(Math.random() * types.length)];
-  } else {
-    selectedType = formulaType;
-  }
-
-  // Helper function to generate iterations
-  const generateIterations = (
-    startValue: number, 
-    iterFunc: (x: number) => number, 
-    count: number
-  ): number[] => {
-    const iters: number[] = [];
-    let current = startValue;
-    for (let i = 0; i < count; i++) {
-      current = iterFunc(current);
-      iters.push(current);
-    }
-    return iters;
-  };
-
-  // Helper for convergence iterations
-  const generateConvergenceIterations = (
-    startValue: number,
-    iterFunc: (x: number) => number,
-    dp: number
-  ): { iterations: number[]; converged: number } => {
-    const iters: number[] = [];
-    let current = startValue;
-    let prev = startValue;
-    const maxIter = 20;
-    let converged: number | undefined;
-    
-    for (let i = 0; i < maxIter; i++) {
-      current = iterFunc(current);
-      iters.push(current);
-      
-      if (i > 0 && roundTo(current, dp) === roundTo(prev, dp)) {
-        converged = roundTo(current, dp);
-        break;
-      }
-      prev = current;
-    }
-    
-    return { 
-      iterations: iters, 
-      converged: converged ?? roundTo(iters[iters.length - 1], dp) 
-    };
-  };
-
-  if (level === 'level1') {
-    x0 = Math.floor(Math.random() * 5) + 1; // 1-5
-    numIterations = 3;
-    
-    if (selectedType === 'quadratic') {
-      a = Math.floor(Math.random() * 5) + 2;  // 2-6
-      b = Math.floor(Math.random() * 5) + 1;  // 1-5
-      formula = `sqrt(${a}*x + ${b})`;
-      formulaDisplay = `√(${a}xₙ + ${b})`;
-      iterations = generateIterations(x0, (x) => Math.sqrt(a * x + b), numIterations);
-    } else if (selectedType === 'cubic') {
-      a = Math.floor(Math.random() * 8) + 5;  // 5-12
-      b = Math.floor(Math.random() * 10) + 1; // 1-10
-      formula = `cbrt(${a}*x + ${b})`;
-      formulaDisplay = `∛(${a}xₙ + ${b})`;
-      iterations = generateIterations(x0, (x) => Math.cbrt(a * x + b), numIterations);
-    } else {
-      // Fractional: x = a/x + b (Level 1: simpler values)
-      a = Math.floor(Math.random() * 6) + 2;  // 2-7
-      b = Math.floor(Math.random() * 4) + 1;  // 1-4
-      x0 = Math.floor(Math.random() * 3) + 2; // 2-4 (avoid division issues)
-      formula = `${a}/x + ${b}`;
-      formulaDisplay = `${a}/xₙ + ${b}`;
-      iterations = generateIterations(x0, (x) => a / x + b, numIterations);
-    }
-  } else if (level === 'level2') {
-    x0 = Math.floor(Math.random() * 30 + 10) / 10; // 1.0-3.9
-    numIterations = 5;
-    
-    if (selectedType === 'quadratic') {
-      a = Math.floor(Math.random() * 4) + 2;  // 2-5
-      b = Math.floor(Math.random() * 6) + 1;  // 1-6
-      formula = `sqrt(${a}*x + ${b})`;
-      formulaDisplay = `√(${a}xₙ + ${b})`;
-      iterations = generateIterations(x0, (x) => Math.sqrt(a * x + b), numIterations);
-    } else if (selectedType === 'cubic') {
-      a = Math.floor(Math.random() * 8) + 5;  // 5-12
-      b = Math.floor(Math.random() * 10) + 1; // 1-10
-      formula = `cbrt(${a}*x + ${b})`;
-      formulaDisplay = `∛(${a}xₙ + ${b})`;
-      iterations = generateIterations(x0, (x) => Math.cbrt(a * x + b), numIterations);
-    } else {
-      // Fractional: x = a/x + b (Level 2: wider range)
-      a = Math.floor(Math.random() * 8) + 3;  // 3-10
-      b = Math.floor(Math.random() * 5) + 1;  // 1-5
-      x0 = Math.floor(Math.random() * 20 + 15) / 10; // 1.5-3.4
-      formula = `${a}/x + ${b}`;
-      formulaDisplay = `${a}/xₙ + ${b}`;
-      iterations = generateIterations(x0, (x) => a / x + b, numIterations);
-    }
-  } else {
-    // Level 3: Iterate until convergence (always 2 d.p.)
-    
-    if (selectedType === 'quadratic') {
-      a = Math.floor(Math.random() * 4) + 2;
-      b = Math.floor(Math.random() * 6) + 1;
-      x0 = Math.floor(Math.random() * 30 + 10) / 10;
-      formula = `sqrt(${a}*x + ${b})`;
-      formulaDisplay = `√(${a}xₙ + ${b})`;
-      const result = generateConvergenceIterations(x0, (x) => Math.sqrt(a * x + b), targetDP);
-      iterations = result.iterations;
-      convergedValue = result.converged;
-    } else if (selectedType === 'cubic') {
-      a = Math.floor(Math.random() * 8) + 5;
-      b = Math.floor(Math.random() * 10) + 1;
-      x0 = Math.floor(Math.random() * 30 + 10) / 10;
-      formula = `cbrt(${a}*x + ${b})`;
-      formulaDisplay = `∛(${a}xₙ + ${b})`;
-      const result = generateConvergenceIterations(x0, (x) => Math.cbrt(a * x + b), targetDP);
-      iterations = result.iterations;
-      convergedValue = result.converged;
-    } else {
-      // Fractional: x = a/x + b (Level 3: full range)
-      a = Math.floor(Math.random() * 10) + 2;  // 2-11
-      b = Math.floor(Math.random() * 6) + 1;   // 1-6
-      x0 = Math.floor(Math.random() * 20 + 15) / 10;
-      formula = `${a}/x + ${b}`;
-      formulaDisplay = `${a}/xₙ + ${b}`;
-      const result = generateConvergenceIterations(x0, (x) => a / x + b, targetDP);
-      iterations = result.iterations;
-      convergedValue = result.converged;
-    }
-  }
-
-  // Build display string
-  let display: string;
-  if (level === 'level1') {
-    display = `Using x${formatSubscript(0)} = ${x0} and the formula xₙ₊₁ = ${formulaDisplay}, find x${formatSubscript(1)}, x${formatSubscript(2)}, x${formatSubscript(3)}`;
-  } else if (level === 'level2') {
-    display = `Using x${formatSubscript(0)} = ${x0} and the formula xₙ₊₁ = ${formulaDisplay}, find x${formatSubscript(1)}, x${formatSubscript(2)}, x${formatSubscript(3)}, x${formatSubscript(4)}, x${formatSubscript(5)}`;
-  } else {
-    display = `Using x${formatSubscript(0)} = ${x0} and the formula xₙ₊₁ = ${formulaDisplay}, find the root to ${targetDP} decimal places`;
-  }
-
-  // Build answer string
-  let answer: string;
-  if (level === 'level1') {
-    answer = `x${formatSubscript(1)} = ${formatDecimal(iterations[0], 3)}, x${formatSubscript(2)} = ${formatDecimal(iterations[1], 3)}, x${formatSubscript(3)} = ${formatDecimal(iterations[2], 3)}`;
-  } else if (level === 'level2') {
-    answer = `x${formatSubscript(5)} = ${formatDecimal(iterations[4], 4)}`;
-  } else {
-    answer = `x = ${formatDecimal(convergedValue!, targetDP)}`;
-  }
-
-  // Build working steps
-  const working: WorkingStep[] = [];
-  
-  working.push({
-    type: 'setup',
-    content: `Start with x${formatSubscript(0)} = ${x0}`
-  });
-
-  const displayIterations = level === 'level1' ? 3 : level === 'level2' ? 5 : iterations.length;
-  
-  for (let i = 0; i < displayIterations; i++) {
-    const prevValue = i === 0 ? x0 : iterations[i - 1];
-    let stepContent: string;
-    
-    if (selectedType === 'quadratic') {
-      const calcValue = a * prevValue + b;
-      stepContent = `x${formatSubscript(i + 1)} = √(${a} × ${formatDecimal(prevValue, 4)} + ${b}) = √${formatDecimal(calcValue, 4)} = ${formatDecimal(iterations[i], 4)}`;
-    } else if (selectedType === 'cubic') {
-      const calcValue = a * prevValue + b;
-      stepContent = `x${formatSubscript(i + 1)} = ∛(${a} × ${formatDecimal(prevValue, 4)} + ${b}) = ∛${formatDecimal(calcValue, 4)} = ${formatDecimal(iterations[i], 4)}`;
-    } else {
-      // Fractional
-      stepContent = `x${formatSubscript(i + 1)} = ${a} ÷ ${formatDecimal(prevValue, 4)} + ${b} = ${formatDecimal(a / prevValue, 4)} + ${b} = ${formatDecimal(iterations[i], 4)}`;
-    }
-    
-    working.push({
-      type: 'substitution',
-      content: stepContent
+const loadKaTeX = (() => {
+  let promise: Promise<void> | null = null;
+  return () => {
+    if (promise) return promise;
+    promise = new Promise((resolve, reject) => {
+      if (typeof window === "undefined" || w().katex) { resolve(); return; }
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = "https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css";
+      document.head.appendChild(link);
+      const script = document.createElement("script");
+      script.src = "https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js";
+      script.onload = () => resolve();
+      script.onerror = reject;
+      document.head.appendChild(script);
     });
-  }
-
-  if (level === 'level3' && convergedValue !== undefined) {
-    const lastTwo = iterations.slice(-2);
-    working.push({
-      type: 'observation',
-      content: `x${formatSubscript(iterations.length - 1)} = ${formatDecimal(lastTwo[0], 4)} rounds to ${formatDecimal(roundTo(lastTwo[0], targetDP), targetDP)}`
-    });
-    working.push({
-      type: 'observation',
-      content: `x${formatSubscript(iterations.length)} = ${formatDecimal(lastTwo[1], 4)} rounds to ${formatDecimal(roundTo(lastTwo[1], targetDP), targetDP)}`
-    });
-    working.push({
-      type: 'conclusion',
-      content: `Both values round to ${formatDecimal(convergedValue, targetDP)}, so the root is ${formatDecimal(convergedValue, targetDP)} to ${targetDP} d.p.`
-    });
-  }
-
-  if (showCalculatorSteps) {
-    let calcTip: string;
-    if (selectedType === 'quadratic') {
-      calcTip = `Calculator: Enter ${x0}, press =. Then enter √(${a} × ANS + ${b}), press = repeatedly.`;
-    } else if (selectedType === 'cubic') {
-      calcTip = `Calculator: Enter ${x0}, press =. Then enter ∛(${a} × ANS + ${b}), press = repeatedly.`;
-    } else {
-      calcTip = `Calculator: Enter ${x0}, press =. Then enter ${a} ÷ ANS + ${b}, press = repeatedly.`;
-    }
-    working.push({
-      type: 'tip',
-      content: calcTip
-    });
-  }
-
-  return {
-    display,
-    answer,
-    working,
-    values: {
-      formula,
-      formulaDisplay,
-      x0,
-      iterations,
-      accuracyTarget: targetDP,
-      convergedValue
-    },
-    difficulty: level
+    return promise;
   };
-};
+})();
 
-// ============================================================================
-// SUB-TOOL 2: REARRANGING & SOLVING
-// ============================================================================
-
-const generateRearrangingQuestion = (
-  level: DifficultyLevel,
-  targetFormulaVisible: boolean,
-  answerType: AnswerType
-): RearrangingQuestion => {
-  let a: number;
-  let b: number;
-  let c: number = 0;
-  let x0: number;
-  let originalEquation: string;
-  let targetFormula: string;
-  let iterations: number[] = [];
-  let root: number;
-  const working: WorkingStep[] = [];
-  
-  // Helper to generate iterations until convergence to 2dp
-  const iterateUntilConvergence = (
-    startValue: number,
-    iterFunc: (x: number) => number
-  ): number[] => {
-    const iters: number[] = [];
-    let current = startValue;
-    let prev = startValue;
-    const maxIter = 20;
-    
-    for (let i = 0; i < maxIter; i++) {
-      current = iterFunc(current);
-      iters.push(current);
-      
-      if (i > 0 && roundTo(current, 2) === roundTo(prev, 2)) {
-        break;
-      }
-      prev = current;
-    }
-    return iters;
-  };
-
-  // Determine iteration function and equation based on level
-  let iterFunc: (x: number) => number;
-  
-  if (level === 'level1') {
-    // Quadratic: x² − ax − b = 0 → x = √(ax + b)
-    a = Math.floor(Math.random() * 4) + 2;  // 2-5
-    b = Math.floor(Math.random() * 5) + 1;  // 1-5
-    x0 = Math.floor(Math.random() * 3) + 1; // 1-3
-    
-    originalEquation = `x² − ${a}x − ${b} = 0`;
-    targetFormula = `√(${a}x + ${b})`;
-    iterFunc = (x) => Math.sqrt(a * x + b);
-    
-    // Build algebraic proof
-    working.push({ type: 'setup', content: `Start with ${originalEquation}` });
-    working.push({ type: 'calculation', content: `Add ${a}x + ${b} to both sides: x² = ${a}x + ${b}` });
-    working.push({ type: 'calculation', content: `Take the square root: x = √(${a}x + ${b}) ✓` });
-
-  } else if (level === 'level2') {
-    // Cubic: x³ − ax − b = 0 → x = ∛(ax + b)
-    a = Math.floor(Math.random() * 4) + 2;  // 2-5
-    b = Math.floor(Math.random() * 6) + 1;  // 1-6
-    x0 = Math.floor(Math.random() * 2) + 1; // 1-2
-    
-    originalEquation = `x³ − ${a}x − ${b} = 0`;
-    targetFormula = `∛(${a}x + ${b})`;
-    iterFunc = (x) => Math.cbrt(a * x + b);
-    
-    // Build algebraic proof
-    working.push({ type: 'setup', content: `Start with ${originalEquation}` });
-    working.push({ type: 'calculation', content: `Add ${a}x + ${b} to both sides: x³ = ${a}x + ${b}` });
-    working.push({ type: 'calculation', content: `Take the cube root: x = ∛(${a}x + ${b}) ✓` });
-
-  } else {
-    // Level 3: Fractional - x² − bx − a = 0 → x = a/x + b
-    a = Math.floor(Math.random() * 6) + 2;  // 2-7
-    b = Math.floor(Math.random() * 3) + 1;  // 1-3
-    x0 = Math.floor(Math.random() * 2) + 2; // 2-3
-    
-    originalEquation = `x² − ${b}x − ${a} = 0`;
-    targetFormula = `${a}/x + ${b}`;
-    iterFunc = (x) => a / x + b;
-    
-    // Build algebraic proof
-    working.push({ type: 'setup', content: `Start with ${originalEquation}` });
-    working.push({ type: 'calculation', content: `Add ${b}x + ${a} to both sides: x² = ${b}x + ${a}` });
-    working.push({ type: 'calculation', content: `Divide both sides by x: x = ${b} + ${a}/x` });
-    working.push({ type: 'calculation', content: `Rearrange: x = ${a}/x + ${b} ✓` });
-  }
-  
-  // Calculate iterations based on answer type
-  if (answerType === 'first3') {
-    // Just need 3 iterations
-    let current = x0;
-    for (let i = 0; i < 3; i++) {
-      current = iterFunc(current);
-      iterations.push(current);
-    }
-  } else {
-    // Iterate until convergence to 2dp
-    iterations = iterateUntilConvergence(x0, iterFunc);
-  }
-  
-  root = roundTo(iterations[iterations.length - 1], 2);
-  
-  // Build numerical working steps
-  working.push({ type: 'setup', content: `Using x${formatSubscript(0)} = ${x0}` });
-  
-  // Number of iterations to show in working
-  const numToShow = answerType === 'first3' ? 3 : iterations.length;
-  
-  for (let i = 0; i < numToShow; i++) {
-    const prevValue = i === 0 ? x0 : iterations[i - 1];
-    let stepContent: string;
-    
-    if (level === 'level1') {
-      const calcValue = a * prevValue + b;
-      if (i === 0) {
-        stepContent = `x${formatSubscript(i + 1)} = √(${a} × ${prevValue} + ${b}) = √${formatDecimal(calcValue, 4)} = ${formatDecimal(iterations[i], 4)}`;
-      } else {
-        stepContent = `x${formatSubscript(i + 1)} = √(${a} × ${formatDecimal(prevValue, 4)} + ${b}) = ${formatDecimal(iterations[i], 4)}`;
-      }
-    } else if (level === 'level2') {
-      const calcValue = a * prevValue + b;
-      if (i === 0) {
-        stepContent = `x${formatSubscript(i + 1)} = ∛(${a} × ${prevValue} + ${b}) = ∛${formatDecimal(calcValue, 4)} = ${formatDecimal(iterations[i], 4)}`;
-      } else {
-        stepContent = `x${formatSubscript(i + 1)} = ∛(${a} × ${formatDecimal(prevValue, 4)} + ${b}) = ${formatDecimal(iterations[i], 4)}`;
-      }
-    } else {
-      // Fractional
-      if (i === 0) {
-        stepContent = `x${formatSubscript(i + 1)} = ${a}/${prevValue} + ${b} = ${formatDecimal(a/prevValue, 4)} + ${b} = ${formatDecimal(iterations[i], 4)}`;
-      } else {
-        stepContent = `x${formatSubscript(i + 1)} = ${a}/${formatDecimal(prevValue, 4)} + ${b} = ${formatDecimal(iterations[i], 4)}`;
-      }
-    }
-    
-    working.push({ type: 'substitution', content: stepContent });
-  }
-  
-  // Add convergence observation for root type
-  if (answerType === 'root' && iterations.length >= 2) {
-    const lastTwo = iterations.slice(-2);
-    working.push({
-      type: 'observation',
-      content: `x${formatSubscript(iterations.length - 1)} = ${formatDecimal(lastTwo[0], 4)} rounds to ${formatDecimal(roundTo(lastTwo[0], 2), 2)}`
-    });
-    working.push({
-      type: 'observation',
-      content: `x${formatSubscript(iterations.length)} = ${formatDecimal(lastTwo[1], 4)} rounds to ${formatDecimal(roundTo(lastTwo[1], 2), 2)}`
-    });
-    working.push({
-      type: 'conclusion',
-      content: `Both values round to ${formatDecimal(root, 2)}, so the root is ${formatDecimal(root, 2)} to 2 d.p.`
-    });
-  }
-
-  // Build display string
-  let display: string;
-  let answer: string;
-  
-  const taskDescription = answerType === 'first3' 
-    ? `find x${formatSubscript(1)}, x${formatSubscript(2)}, x${formatSubscript(3)}`
-    : `find the root to 2 decimal places`;
-  
-  if (targetFormulaVisible) {
-    display = `Show that ${originalEquation} can be rearranged to give x = ${targetFormula}. Using x${formatSubscript(0)} = ${x0}, ${taskDescription}.`;
-  } else {
-    display = `Rearrange ${originalEquation} into an iterative formula. Using x${formatSubscript(0)} = ${x0}, ${taskDescription}.`;
-  }
-  
-  if (answerType === 'first3') {
-    answer = `x${formatSubscript(1)} = ${formatDecimal(iterations[0], 4)}, x${formatSubscript(2)} = ${formatDecimal(iterations[1], 4)}, x${formatSubscript(3)} = ${formatDecimal(iterations[2], 4)}`;
-  } else {
-    answer = `x = ${formatDecimal(root, 2)}`;
-  }
-
-  return {
-    display,
-    answer,
-    working,
-    values: {
-      originalEquation,
-      targetFormula,
-      x0,
-      iterations,
-      root,
-      a,
-      b,
-      c
-    },
-    difficulty: level
-  };
-};
-
-// Duplicate prevention for worksheets - Numerical
-const generateUniqueNumericalQuestion = (
-  level: DifficultyLevel,
-  usedKeys: Set<string>,
-  showCalculatorSteps: boolean,
-  formulaType: FormulaType
-): IterationQuestion => {
-  let attempts = 0;
-  let q: IterationQuestion;
-  let uniqueKey: string;
-  
-  do {
-    q = generateNumericalQuestion(level, showCalculatorSteps, formulaType);
-    uniqueKey = `num-${q.values.formula}-${q.values.x0}`;
-    if (++attempts > 100) break;
-  } while (usedKeys.has(uniqueKey));
-  
-  usedKeys.add(uniqueKey);
-  return q;
-};
-
-// Duplicate prevention for worksheets - Rearranging
-const generateUniqueRearrangingQuestion = (
-  level: DifficultyLevel,
-  usedKeys: Set<string>,
-  targetFormulaVisible: boolean,
-  answerType: AnswerType
-): RearrangingQuestion => {
-  let attempts = 0;
-  let q: RearrangingQuestion;
-  let uniqueKey: string;
-  
-  do {
-    q = generateRearrangingQuestion(level, targetFormulaVisible, answerType);
-    uniqueKey = `rear-${q.values.a}-${q.values.b}-${q.values.x0}`;
-    if (++attempts > 100) break;
-  } while (usedKeys.has(uniqueKey));
-  
-  usedKeys.add(uniqueKey);
-  return q;
-};
-
-// ============================================================================
-// SUB-TOOL 3: ROOT VERIFICATION (CHANGE OF SIGN)
-// ============================================================================
-
-const generateVerificationQuestion = (
-  level: DifficultyLevel
-): VerificationQuestion => {
-  let a: number;
-  let b: number;
-  let root: number;
-  let lowerBound: number;
-  let upperBound: number;
-  let equation: string;
-  let equationFunc: string;
-  let fLower: number;
-  let fUpper: number;
-  const working: WorkingStep[] = [];
-  
-  // Randomly choose between quadratic and cubic
-  const useCubic = Math.random() < 0.5;
-  const equationType = useCubic ? 'cubic' : 'quadratic';
-  
-  if (useCubic) {
-    // Cubic: x³ - ax - b = 0
-    // Real root can be found numerically
-    a = Math.floor(Math.random() * 4) + 2;  // 2-5
-    b = Math.floor(Math.random() * 8) + 2;  // 2-9
-    
-    // Find the real root using Newton-Raphson or bisection approximation
-    // For x³ - ax - b = 0, there's always one real root
-    // Approximate: start with x = 2 and iterate
-    let x = 2;
-    for (let i = 0; i < 20; i++) {
-      const fx = x * x * x - a * x - b;
-      const fpx = 3 * x * x - a;
-      if (Math.abs(fpx) > 0.0001) {
-        x = x - fx / fpx;
-      }
-    }
-    const exactRoot = x;
-    
-    if (level === 'level1') {
-      root = exactRoot;
-      lowerBound = Math.floor(root);
-      upperBound = Math.ceil(root);
-      if (lowerBound === upperBound) upperBound = lowerBound + 1;
-    } else if (level === 'level2') {
-      root = roundTo(exactRoot, 1);
-      lowerBound = roundTo(root - 0.05, 2);
-      upperBound = roundTo(root + 0.05, 2);
-    } else {
-      root = roundTo(exactRoot, 2);
-      lowerBound = roundTo(root - 0.005, 3);
-      upperBound = roundTo(root + 0.005, 3);
-    }
-    
-    equation = `x³ − ${a}x − ${b} = 0`;
-    equationFunc = `x³ − ${a}x − ${b}`;
-    
-    // Calculate f(L) and f(U) for cubic
-    fLower = lowerBound * lowerBound * lowerBound - a * lowerBound - b;
-    fUpper = upperBound * upperBound * upperBound - a * upperBound - b;
-    
-  } else {
-    // Quadratic: x² - ax - b = 0
-    a = Math.floor(Math.random() * 4) + 2;  // 2-5
-    b = Math.floor(Math.random() * 8) + 2;  // 2-9
-    
-    // Positive root = (a + √(a² + 4b)) / 2
-    const discriminant = a * a + 4 * b;
-    const exactRoot = (a + Math.sqrt(discriminant)) / 2;
-    
-    if (level === 'level1') {
-      root = exactRoot;
-      lowerBound = Math.floor(root);
-      upperBound = Math.ceil(root);
-      if (lowerBound === upperBound) upperBound = lowerBound + 1;
-    } else if (level === 'level2') {
-      root = roundTo(exactRoot, 1);
-      lowerBound = roundTo(root - 0.05, 2);
-      upperBound = roundTo(root + 0.05, 2);
-    } else {
-      root = roundTo(exactRoot, 2);
-      lowerBound = roundTo(root - 0.005, 3);
-      upperBound = roundTo(root + 0.005, 3);
-    }
-    
-    equation = `x² − ${a}x − ${b} = 0`;
-    equationFunc = `x² − ${a}x − ${b}`;
-    
-    // Calculate f(L) and f(U) for quadratic
-    fLower = lowerBound * lowerBound - a * lowerBound - b;
-    fUpper = upperBound * upperBound - a * upperBound - b;
-  }
-  
-  // Determine decimal places for display
-  const boundDP = level === 'level3' ? 3 : level === 'level2' ? 2 : 0;
-  
-  // Build display string
-  let display: string;
-  let dpText: string;
-  
-  if (level === 'level1') {
-    dpText = 'between two consecutive integers';
-    display = `The equation ${equation} has a root between ${lowerBound} and ${upperBound}. Use the change of sign method to verify this.`;
-  } else if (level === 'level2') {
-    dpText = 'correct to 1 decimal place';
-    display = `Show that ${equation} has a root equal to ${formatDecimal(root, 1)} correct to 1 decimal place.`;
-  } else {
-    dpText = 'correct to 2 decimal places';
-    display = `Show that ${equation} has a root equal to ${formatDecimal(root, 2)} correct to 2 decimal places.`;
-  }
-  
-  // Build working steps
-  working.push({
-    type: 'setup',
-    content: `Let f(x) = ${equationFunc}`
-  });
-  
-  working.push({
-    type: 'setup',
-    content: level === 'level1' 
-      ? `Test the bounds x = ${lowerBound} and x = ${upperBound}`
-      : `For a root of ${level === 'level2' ? formatDecimal(root, 1) : formatDecimal(root, 2)}, test bounds ${formatDecimal(lowerBound, boundDP)} and ${formatDecimal(upperBound, boundDP)}`
-  });
-  
-  // Calculate f(lower) - show working
-  let lowerCalc: string;
-  if (useCubic) {
-    lowerCalc = `${formatDecimal(lowerBound, boundDP)}³ − ${a} × ${formatDecimal(lowerBound, boundDP)} − ${b}`;
-  } else {
-    lowerCalc = `${formatDecimal(lowerBound, boundDP)}² − ${a} × ${formatDecimal(lowerBound, boundDP)} − ${b}`;
-  }
-  working.push({
-    type: 'substitution',
-    content: `f(${formatDecimal(lowerBound, boundDP)}) = ${lowerCalc} = ${formatDecimal(fLower, 4)}`
-  });
-  
-  // Calculate f(upper) - show working
-  let upperCalc: string;
-  if (useCubic) {
-    upperCalc = `${formatDecimal(upperBound, boundDP)}³ − ${a} × ${formatDecimal(upperBound, boundDP)} − ${b}`;
-  } else {
-    upperCalc = `${formatDecimal(upperBound, boundDP)}² − ${a} × ${formatDecimal(upperBound, boundDP)} − ${b}`;
-  }
-  working.push({
-    type: 'substitution',
-    content: `f(${formatDecimal(upperBound, boundDP)}) = ${upperCalc} = ${formatDecimal(fUpper, 4)}`
-  });
-  
-  // Sign change observation
-  const lowerSign = fLower < 0 ? 'negative' : 'positive';
-  const upperSign = fUpper < 0 ? 'negative' : 'positive';
-  
-  working.push({
-    type: 'observation',
-    content: `f(${formatDecimal(lowerBound, boundDP)}) is ${lowerSign} and f(${formatDecimal(upperBound, boundDP)}) is ${upperSign}`
-  });
-  
-  working.push({
-    type: 'conclusion',
-    content: `There is a change of sign, so a root exists in the interval [${formatDecimal(lowerBound, boundDP)}, ${formatDecimal(upperBound, boundDP)}]`
-  });
-  
-  if (level !== 'level1') {
-    working.push({
-      type: 'conclusion',
-      content: `Therefore, the root is ${level === 'level2' ? formatDecimal(root, 1) : formatDecimal(root, 2)} ${dpText} ✓`
-    });
-  }
-  
-  // Build answer
-  let answer: string;
-  if (level === 'level1') {
-    answer = `f(${lowerBound}) = ${formatDecimal(fLower, 2)} (${lowerSign}), f(${upperBound}) = ${formatDecimal(fUpper, 2)} (${upperSign}). Change of sign ∴ root exists between ${lowerBound} and ${upperBound}.`;
-  } else {
-    answer = `Change of sign between ${formatDecimal(lowerBound, boundDP)} and ${formatDecimal(upperBound, boundDP)} ∴ root = ${level === 'level2' ? formatDecimal(root, 1) : formatDecimal(root, 2)} (${dpText})`;
-  }
-
-  return {
-    display,
-    answer,
-    working,
-    values: {
-      equation,
-      equationFunc,
-      equationType,
-      root,
-      lowerBound,
-      upperBound,
-      fLower,
-      fUpper,
-      a,
-      b
-    },
-    difficulty: level
-  };
-};
-
-// Duplicate prevention for worksheets - Verification
-const generateUniqueVerificationQuestion = (
-  level: DifficultyLevel,
-  usedKeys: Set<string>
-): VerificationQuestion => {
-  let attempts = 0;
-  let q: VerificationQuestion;
-  let uniqueKey: string;
-  
-  do {
-    q = generateVerificationQuestion(level);
-    uniqueKey = `ver-${q.values.equationType}-${q.values.a}-${q.values.b}`;
-    if (++attempts > 100) break;
-  } while (usedKeys.has(uniqueKey));
-  
-  usedKeys.add(uniqueKey);
-  return q;
-};
-
-// ============================================================================
-// MAIN COMPONENT
-// ============================================================================
-
-export default function IterationTool() {
-  const navigate = useNavigate();
-  
-  // Tool & Mode State
-  const [currentTool, setCurrentTool] = useState<ToolType>('numerical');
-  const [mode, setMode] = useState<Mode>('whiteboard');
-  const [difficulty, setDifficulty] = useState<DifficultyLevel>('level1');
-
-  // Tool-specific options - Numerical
-  const [showCalculatorSteps, setShowCalculatorSteps] = useState<boolean>(false);
-  const [formulaType, setFormulaType] = useState<FormulaType>('mixed');
-  
-  // Tool-specific options - Rearranging
-  const [targetFormulaVisible, setTargetFormulaVisible] = useState<boolean>(true);
-  const [rearrangingAnswerType, setRearrangingAnswerType] = useState<AnswerType>('root');
-
-  // Questions (shared between Whiteboard & Worked Example)
-  const [currentQuestion, setCurrentQuestion] = useState<QuestionType | null>(null);
-  const [showWhiteboardAnswer, setShowWhiteboardAnswer] = useState<boolean>(false);
-  const [showAnswer, setShowAnswer] = useState<boolean>(false);
-
-  // Worksheet State
-  const [numQuestions, setNumQuestions] = useState<number>(5);
-  const [worksheet, setWorksheet] = useState<QuestionType[]>([]);
-  const [showWorksheetAnswers, setShowWorksheetAnswers] = useState<boolean>(false);
-  const [isDifferentiated, setIsDifferentiated] = useState<boolean>(false);
-  const [numColumns, setNumColumns] = useState<number>(2);
-  const [worksheetFontSize, setWorksheetFontSize] = useState<number>(1);
-
-  // UI State
-  const [colorScheme, setColorScheme] = useState<ColorScheme>('default');
-  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
-
-  // Font sizes for worksheet
-  const fontSizes: string[] = ['text-xl', 'text-2xl', 'text-3xl', 'text-4xl'];
-
-  // ============================================================================
-  // COLOR SCHEME HELPERS
-  // ============================================================================
-
-  const getQuestionBg = (): string => {
-    if (colorScheme === 'blue') return '#D1E7F8';
-    if (colorScheme === 'pink') return '#F8D1E7';
-    if (colorScheme === 'yellow') return '#F8F4D1';
-    return '#ffffff';
-  };
-
-  const getStepBg = (): string => {
-    if (colorScheme === 'blue') return '#B3D9F2';
-    if (colorScheme === 'pink') return '#F2B3D9';
-    if (colorScheme === 'yellow') return '#F2EBB3';
-    return '#f3f4f6';
-  };
-
-  const getWhiteboardWorkingBg = (): string => getStepBg();
-  const getFinalAnswerBg = (): string => getStepBg();
-
-  // ============================================================================
-  // DIFFICULTY BUTTON STYLING
-  // ============================================================================
-
-  const getDifficultyButtonClass = (idx: number, isActive: boolean): string => {
-    if (isActive) {
-      return idx === 0 ? 'bg-green-600 text-white' 
-           : idx === 1 ? 'bg-yellow-600 text-white' 
-           : 'bg-red-600 text-white';
-    }
-    return idx === 0 ? 'bg-white text-green-600 border-2 border-green-600' 
-         : idx === 1 ? 'bg-white text-yellow-600 border-2 border-yellow-600' 
-         : 'bg-white text-red-600 border-2 border-red-600';
-  };
-
-  // ============================================================================
-  // HANDLERS
-  // ============================================================================
-
-  const handleNewQuestion = (): void => {
-    if (currentTool === 'numerical') {
-      const q = generateNumericalQuestion(difficulty, showCalculatorSteps, formulaType);
-      setCurrentQuestion(q);
-    } else if (currentTool === 'rearranging') {
-      const q = generateRearrangingQuestion(difficulty, targetFormulaVisible, rearrangingAnswerType);
-      setCurrentQuestion(q);
-    } else if (currentTool === 'verification') {
-      const q = generateVerificationQuestion(difficulty);
-      setCurrentQuestion(q);
-    }
-    setShowWhiteboardAnswer(false);
-    setShowAnswer(false);
-  };
-
-  const handleGenerateWorksheet = (): void => {
-    const usedKeys = new Set<string>();
-    const questions: QuestionType[] = [];
-
-    if (currentTool === 'numerical') {
-      if (isDifferentiated) {
-        const levels: DifficultyLevel[] = ['level1', 'level2', 'level3'];
-        levels.forEach((lvl: DifficultyLevel) => {
-          for (let i = 0; i < numQuestions; i++) {
-            questions.push(generateUniqueNumericalQuestion(lvl, usedKeys, showCalculatorSteps, formulaType));
-          }
-        });
-      } else {
-        for (let i = 0; i < numQuestions; i++) {
-          questions.push(generateUniqueNumericalQuestion(difficulty, usedKeys, showCalculatorSteps, formulaType));
-        }
-      }
-    } else if (currentTool === 'rearranging') {
-      if (isDifferentiated) {
-        const levels: DifficultyLevel[] = ['level1', 'level2', 'level3'];
-        levels.forEach((lvl: DifficultyLevel) => {
-          for (let i = 0; i < numQuestions; i++) {
-            questions.push(generateUniqueRearrangingQuestion(lvl, usedKeys, targetFormulaVisible, rearrangingAnswerType));
-          }
-        });
-      } else {
-        for (let i = 0; i < numQuestions; i++) {
-          questions.push(generateUniqueRearrangingQuestion(difficulty, usedKeys, targetFormulaVisible, rearrangingAnswerType));
-        }
-      }
-    } else if (currentTool === 'verification') {
-      if (isDifferentiated) {
-        const levels: DifficultyLevel[] = ['level1', 'level2', 'level3'];
-        levels.forEach((lvl: DifficultyLevel) => {
-          for (let i = 0; i < numQuestions; i++) {
-            questions.push(generateUniqueVerificationQuestion(lvl, usedKeys));
-          }
-        });
-      } else {
-        for (let i = 0; i < numQuestions; i++) {
-          questions.push(generateUniqueVerificationQuestion(difficulty, usedKeys));
-        }
-      }
-    }
-
-    setWorksheet(questions);
-    setShowWorksheetAnswers(false);
-  };
-
-  // Generate initial question on mount and when difficulty/tool changes
+// KaTeX inline renderer — fontSize defaults to "inherit" so it scales with
+// whatever text-* class the parent uses.
+const KaTeX = ({ latex, style }: { latex: string; style?: CSSProperties }) => {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [ready, setReady] = useState(() => typeof window !== "undefined" && !!w().katex);
+  useEffect(() => { loadKaTeX().then(() => setReady(true)); }, []);
   useEffect(() => {
-    if (mode !== 'worksheet') {
-      handleNewQuestion();
-    }
-    // Clear worksheet when switching tools
-    setWorksheet([]);
-  }, [difficulty, currentTool]);
+    if (!ready || !ref.current) return;
+    try { w().katex.render(latex, ref.current, { displayMode: false, throwOnError: false, output: "html" }); }
+    catch { if (ref.current) ref.current.textContent = latex; }
+  }, [latex, ready]);
+  return <span ref={ref} style={{ display: "inline", verticalAlign: "baseline", ...style }} />;
+};
 
-  // ============================================================================
-  // RENDER HELPERS
-  // ============================================================================
+// A segment is either plain prose or a KaTeX expression.
+// Generators build display strings as Segment[]; SegLine renders them inline.
+type Seg = { k: "t"; s: string } | { k: "m"; s: string };
+const tx = (s: string): Seg => ({ k: "t", s });
+const mx = (s: string): Seg => ({ k: "m", s });
 
-  const renderControlBar = (): JSX.Element => {
-    if (mode === 'worksheet') {
-      return renderWorksheetControlBar();
+const SegLine = ({ segs, cls, style }: { segs: Seg[]; cls?: string; style?: CSSProperties }) => (
+  <span className={cls} style={{ lineHeight: 1.7, ...style }}>
+    {segs.map((seg, i) =>
+      seg.k === "t" ? <span key={i}>{seg.s}</span> : <KaTeX key={i} latex={seg.s} />
+    )}
+  </span>
+);
+
+// ── Popover helpers ──────────────────────────────────────────────────────────
+const usePopover = () => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("mousedown", h); return () => document.removeEventListener("mousedown", h);
+  }, [open]);
+  return { open, setOpen, ref };
+};
+
+const PopoverButton = ({ open, onClick }: { open: boolean; onClick: () => void }) => (
+  <button onClick={onClick}
+    className={`px-4 py-2 rounded-xl border-2 font-bold text-base transition-colors shadow-sm flex items-center gap-2 ${open ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-gray-300 text-gray-600 hover:border-blue-900 hover:text-blue-900"}`}>
+    Question Options <ChevronDown size={18} style={{ transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "rotate(0)" }} />
+  </button>
+);
+
+const LV_HEADER_COLORS: Record<string, string> = { level1: "text-green-600", level2: "text-yellow-500", level3: "text-red-600" };
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TOOL-SPECIFIC SECTION
+// ═══════════════════════════════════════════════════════════════════════════════
+
+type ToolType = "numerical" | "rearranging" | "verification";
+type DifficultyLevel = "level1" | "level2" | "level3";
+type FormulaType = "quadratic" | "cubic" | "fractional" | "mixed";
+type AnswerType = "first3" | "root";
+
+// ── TOOL_CONFIG ───────────────────────────────────────────────────────────────
+
+const TOOL_CONFIG = {
+  pageTitle: "Iteration",
+  tools: {
+    numerical: {
+      name: "Numerical Processing",
+      useSubstantialBoxes: true,
+      variables: [{ key: "calcSteps", label: "Calculator Steps", defaultValue: false }],
+      dropdown: {
+        key: "formulaType", label: "Formula Type", useTwoLineButtons: false,
+        options: [
+          { value: "mixed",      label: "Mixed"       },
+          { value: "quadratic",  label: "√ Quadratic" },
+          { value: "cubic",      label: "∛ Cubic"     },
+          { value: "fractional", label: "Fractional"  },
+        ],
+        defaultValue: "mixed",
+      },
+      difficultySettings: null,
+    },
+    rearranging: {
+      name: "Rearranging & Solving",
+      useSubstantialBoxes: true,
+      variables: [{ key: "targetFormula", label: "Show Target Formula", defaultValue: true }],
+      dropdown: {
+        key: "answerType", label: "Answer Type", useTwoLineButtons: true,
+        options: [
+          { value: "first3", label: "First 3",   sub: "x₁, x₂, x₃" },
+          { value: "root",   label: "Find Root",  sub: "to 2 d.p."   },
+        ],
+        defaultValue: "root",
+      },
+      difficultySettings: null,
+    },
+    verification: {
+      name: "Root Verification",
+      useSubstantialBoxes: true,
+      variables: [],
+      dropdown: null,
+      difficultySettings: null,
+    },
+  } as Record<string, {
+    name: string;
+    useSubstantialBoxes: boolean;
+    variables: { key: string; label: string; defaultValue: boolean }[];
+    dropdown: { key: string; label: string; useTwoLineButtons?: boolean; options: { value: string; label: string; sub?: string }[]; defaultValue: string } | null;
+    difficultySettings: null;
+  }>,
+};
+
+// ── INFO_SECTIONS ─────────────────────────────────────────────────────────────
+
+const INFO_SECTIONS = [
+  { title: "Numerical Processing", icon: "🔢", content: [
+    { label: "Overview",          detail: "Apply an iterative formula xₙ₊₁ = f(xₙ) repeatedly from a given starting value." },
+    { label: "Level 1 — Green",   detail: "Integer x₀, produce x₁, x₂, x₃. Covers √, ∛, and fractional forms." },
+    { label: "Level 2 — Yellow",  detail: "Decimal x₀, produce x₁ through x₅." },
+    { label: "Level 3 — Red",     detail: "Iterate to convergence and state the root to 2 decimal places." },
+    { label: "Calculator Steps",  detail: "Toggle on to show a tip for using ANS on a calculator (Worked Example only)." },
+  ]},
+  { title: "Rearranging & Solving", icon: "✏️", content: [
+    { label: "Overview",          detail: "Rearrange an equation algebraically to produce an iterative formula, then apply it." },
+    { label: "Level 1 — Green",   detail: "Quadratic: x² − ax − b = 0 → x = √(ax + b)" },
+    { label: "Level 2 — Yellow",  detail: "Cubic: x³ − ax − b = 0 → x = ∛(ax + b)" },
+    { label: "Level 3 — Red",     detail: "Fractional: x² − bx − a = 0 → x = a/x + b" },
+    { label: "Show Target Formula", detail: "'Show that…' style when on; open rearrangement when off." },
+    { label: "Answer Type",       detail: "First 3: find x₁, x₂, x₃. Find Root: iterate to convergence at 2 d.p." },
+  ]},
+  { title: "Root Verification", icon: "✅", content: [
+    { label: "Overview",          detail: "Use the change of sign method to verify that a root lies in a given interval." },
+    { label: "Level 1 — Green",   detail: "Verify a root between two consecutive integers." },
+    { label: "Level 2 — Yellow",  detail: "Verify a root correct to 1 decimal place (bounds to 2 d.p.)." },
+    { label: "Level 3 — Red",     detail: "Verify a root correct to 2 decimal places (bounds to 3 d.p.)." },
+  ]},
+  { title: "Modes", icon: "🖥️", content: [
+    { label: "Whiteboard",        detail: "Single question with working space. Visualiser available for document cameras." },
+    { label: "Worked Example",    detail: "Full step-by-step solution revealed on demand." },
+    { label: "Worksheet",         detail: "Grid of questions. Supports differentiated layout and PDF export." },
+  ]},
+];
+
+// ── Maths helpers ─────────────────────────────────────────────────────────────
+
+const fmtD = (v: number, dp: number) => v.toFixed(dp);
+const roundTo = (v: number, dp: number) => Math.round(v * 10 ** dp) / 10 ** dp;
+const randInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+// KaTeX subscript helpers
+// x_0, x_1 … x_9 rendered as x₀ … x₉ in KaTeX
+const xSub  = (n: number) => `x_{${n}}`;            // e.g. x_{0}
+const xNext = "x_{n+1}";                             // xₙ₊₁
+const xn    = "x_n";                                 // xₙ (inside formula)
+
+// Formula display in KaTeX
+const sqrtFormula  = (a: number, b: number) => `\\sqrt{${a}${xn} + ${b}}`;
+const cbrtFormula  = (a: number, b: number) => `\\sqrt[3]{${a}${xn} + ${b}}`;
+const fracFormula  = (a: number, b: number) => `\\dfrac{${a}}{${xn}} + ${b}`;
+
+// Iteration step in KaTeX — shows substitution and result
+const sqrtStep = (i: number, prev: number, a: number, b: number, result: number) => {
+  const inner = fmtD(a * prev + b, 4);
+  return `${xSub(i)} = \\sqrt{${a} \\times ${fmtD(prev, 4)} + ${b}} = \\sqrt{${inner}} = ${fmtD(result, 4)}`;
+};
+const cbrtStep = (i: number, prev: number, a: number, b: number, result: number) => {
+  const inner = fmtD(a * prev + b, 4);
+  return `${xSub(i)} = \\sqrt[3]{${a} \\times ${fmtD(prev, 4)} + ${b}} = \\sqrt[3]{${inner}} = ${fmtD(result, 4)}`;
+};
+const fracStep = (i: number, prev: number, a: number, b: number, result: number) => {
+  return `${xSub(i)} = \\dfrac{${a}}{${fmtD(prev, 4)}} + ${b} = ${fmtD(result, 4)}`;
+};
+
+// ── Question interface ────────────────────────────────────────────────────────
+
+interface WorkingStep {
+  latex: string;   // KaTeX string for worked example display
+  plain: string;   // fallback plain text for print (print window also runs KaTeX)
+  isTip?: boolean; // marks calculator tip steps
+}
+
+interface IterQuestion {
+  kind: "iter";
+  // Display: array of segments — prose + KaTeX mixed inline
+  display: Seg[];
+  // Answer displayed in green
+  answerSegs: Seg[];
+  // Worksheet / print plain fallback
+  displayPlain: string;
+  answerPlain: string;
+  working: WorkingStep[];
+  key: string;
+  difficulty: string;
+}
+
+type AnyQuestion = IterQuestion;
+
+// ── NUMERICAL ─────────────────────────────────────────────────────────────────
+
+const genNumerical = (
+  level: DifficultyLevel,
+  calcSteps: boolean,
+  formulaType: FormulaType,
+): IterQuestion => {
+  const selected = formulaType === "mixed"
+    ? (["quadratic", "cubic", "fractional"] as const)[randInt(0, 2)]
+    : formulaType;
+
+  let a: number, b: number, x0: number;
+  let fDisplay: string;       // KaTeX formula for display
+  let fPlain: string;         // plain text formula for print prose
+  let iterations: number[];
+  let convergedValue: number | undefined;
+  const targetDP = 2;
+
+  const iter = (start: number, fn: (x: number) => number, n: number) => {
+    const r: number[] = []; let c = start;
+    for (let i = 0; i < n; i++) { c = fn(c); r.push(c); }
+    return r;
+  };
+  const iterConverge = (start: number, fn: (x: number) => number, dp: number) => {
+    const r: number[] = []; let c = start, prev = start;
+    for (let i = 0; i < 30; i++) {
+      c = fn(c); r.push(c);
+      if (i > 0 && roundTo(c, dp) === roundTo(prev, dp)) break;
+      prev = c;
     }
-    return renderStandardControlBar();
+    return { iters: r, converged: roundTo(r[r.length - 1], dp) };
   };
 
-  const renderStandardControlBar = (): JSX.Element => (
-    <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          {/* Difficulty Buttons */}
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-semibold" style={{ color: '#000000' }}>Difficulty:</span>
-            <div className="flex gap-2">
-              {(['level1', 'level2', 'level3'] as const).map((lvl: DifficultyLevel, idx: number) => (
-                <button
-                  key={lvl}
-                  onClick={() => setDifficulty(lvl)}
-                  className={'px-4 py-2 rounded-lg font-bold text-sm w-24 ' + 
-                    getDifficultyButtonClass(idx, difficulty === lvl)}
-                >
-                  Level {idx + 1}
-                </button>
+  if (level === "level1") {
+    x0 = randInt(1, 5);
+    if (selected === "quadratic") {
+      a = randInt(2, 6); b = randInt(1, 5);
+      fDisplay = sqrtFormula(a, b); fPlain = `√(${a}x + ${b})`;
+      iterations = iter(x0, x => Math.sqrt(a * x + b), 3);
+    } else if (selected === "cubic") {
+      a = randInt(5, 12); b = randInt(1, 10);
+      fDisplay = cbrtFormula(a, b); fPlain = `∛(${a}x + ${b})`;
+      iterations = iter(x0, x => Math.cbrt(a * x + b), 3);
+    } else {
+      a = randInt(2, 7); b = randInt(1, 4); x0 = randInt(2, 4);
+      fDisplay = fracFormula(a, b); fPlain = `${a}/x + ${b}`;
+      iterations = iter(x0, x => a / x + b, 3);
+    }
+  } else if (level === "level2") {
+    x0 = randInt(10, 39) / 10;
+    if (selected === "quadratic") {
+      a = randInt(2, 5); b = randInt(1, 6);
+      fDisplay = sqrtFormula(a, b); fPlain = `√(${a}x + ${b})`;
+      iterations = iter(x0, x => Math.sqrt(a * x + b), 5);
+    } else if (selected === "cubic") {
+      a = randInt(5, 12); b = randInt(1, 10);
+      fDisplay = cbrtFormula(a, b); fPlain = `∛(${a}x + ${b})`;
+      iterations = iter(x0, x => Math.cbrt(a * x + b), 5);
+    } else {
+      a = randInt(3, 10); b = randInt(1, 5); x0 = randInt(15, 34) / 10;
+      fDisplay = fracFormula(a, b); fPlain = `${a}/x + ${b}`;
+      iterations = iter(x0, x => a / x + b, 5);
+    }
+  } else {
+    x0 = randInt(10, 39) / 10;
+    if (selected === "quadratic") {
+      a = randInt(2, 5); b = randInt(1, 6);
+      fDisplay = sqrtFormula(a, b); fPlain = `√(${a}x + ${b})`;
+      const r = iterConverge(x0, x => Math.sqrt(a * x + b), targetDP);
+      iterations = r.iters; convergedValue = r.converged;
+    } else if (selected === "cubic") {
+      a = randInt(5, 12); b = randInt(1, 10);
+      fDisplay = cbrtFormula(a, b); fPlain = `∛(${a}x + ${b})`;
+      const r = iterConverge(x0, x => Math.cbrt(a * x + b), targetDP);
+      iterations = r.iters; convergedValue = r.converged;
+    } else {
+      a = randInt(2, 11); b = randInt(1, 6); x0 = randInt(15, 34) / 10;
+      fDisplay = fracFormula(a, b); fPlain = `${a}/x + ${b}`;
+      const r = iterConverge(x0, x => a / x + b, targetDP);
+      iterations = r.iters; convergedValue = r.converged;
+    }
+  }
+
+  const numShow = level === "level1" ? 3 : level === "level2" ? 5 : iterations!.length;
+
+  // ── Display segments ──
+  // "Using x₀ = 2 and xₙ₊₁ = √(3xₙ + 5), find x₁, x₂, x₃"
+  const findSegs: Seg[] = level === "level1"
+    ? [tx(", find "), mx(`${xSub(1)}, ${xSub(2)}, ${xSub(3)}`)]
+    : level === "level2"
+    ? [tx(", find "), mx(`${xSub(1)}`), tx(" to "), mx(`${xSub(5)}`)]
+    : [tx(", find the root to "), tx(`${targetDP} d.p.`)];
+
+  const display: Seg[] = [
+    tx("Using "), mx(`${xSub(0)} = ${x0}`), tx(" and "), mx(`${xNext} = ${fDisplay}`),
+    ...findSegs,
+  ];
+  const displayPlain = `Using x0 = ${x0} and x(n+1) = ${fPlain}, find ${level === "level1" ? "x1, x2, x3" : level === "level2" ? "x1 to x5" : "the root to 2 d.p."}`;
+
+  // ── Answer segments ──
+  const answerSegs: Seg[] = level === "level1"
+    ? [mx(`${xSub(1)} = ${fmtD(iterations![0], 3)},\\quad ${xSub(2)} = ${fmtD(iterations![1], 3)},\\quad ${xSub(3)} = ${fmtD(iterations![2], 3)}`)]
+    : level === "level2"
+    ? [mx(`${xSub(5)} = ${fmtD(iterations![4], 4)}`)]
+    : [mx(`x = ${fmtD(convergedValue!, targetDP)}`)];
+  const answerPlain = level === "level1"
+    ? `x1=${fmtD(iterations![0],3)}, x2=${fmtD(iterations![1],3)}, x3=${fmtD(iterations![2],3)}`
+    : level === "level2" ? `x5 = ${fmtD(iterations![4],4)}`
+    : `x = ${fmtD(convergedValue!,targetDP)}`;
+
+  // ── Working steps ──
+  const working: WorkingStep[] = [];
+  working.push({ latex: `${xSub(0)} = ${x0}`, plain: `x0 = ${x0}` });
+
+  for (let i = 0; i < numShow!; i++) {
+    const prev = i === 0 ? x0! : iterations![i - 1];
+    let latex: string;
+    if (selected === "quadratic") latex = sqrtStep(i + 1, prev, a!, b!, iterations![i]);
+    else if (selected === "cubic") latex = cbrtStep(i + 1, prev, a!, b!, iterations![i]);
+    else latex = fracStep(i + 1, prev, a!, b!, iterations![i]);
+    working.push({ latex, plain: latex });
+  }
+
+  if (level === "level3" && convergedValue !== undefined) {
+    const last = iterations!.slice(-2);
+    const n = iterations!.length;
+    working.push({ latex: `${xSub(n-1)} = ${fmtD(last[0],4)} \\rightarrow ${fmtD(roundTo(last[0],targetDP),targetDP)}\\text{ (${targetDP} d.p.)}`, plain: `x${n-1} = ${fmtD(last[0],4)} → ${fmtD(roundTo(last[0],targetDP),targetDP)}` });
+    working.push({ latex: `${xSub(n)} = ${fmtD(last[1],4)} \\rightarrow ${fmtD(roundTo(last[1],targetDP),targetDP)}\\text{ (${targetDP} d.p.)}`, plain: `x${n} = ${fmtD(last[1],4)} → ${fmtD(roundTo(last[1],targetDP),targetDP)}` });
+    working.push({ latex: `\\text{Both round to } ${fmtD(convergedValue,targetDP)} \\Rightarrow x = ${fmtD(convergedValue,targetDP)}`, plain: `Both round to ${fmtD(convergedValue,targetDP)}, so root = ${fmtD(convergedValue,targetDP)}` });
+  }
+
+  if (calcSteps) {
+    let tip: string;
+    if (selected === "quadratic") tip = `\\text{Calculator: Enter } ${x0}\\text{, press =. Then } \\sqrt{${a} \\times \\text{ANS} + ${b}}\\text{, press = repeatedly.}`;
+    else if (selected === "cubic") tip = `\\text{Calculator: Enter } ${x0}\\text{, press =. Then } \\sqrt[3]{${a} \\times \\text{ANS} + ${b}}\\text{, press = repeatedly.}`;
+    else tip = `\\text{Calculator: Enter } ${x0}\\text{, press =. Then } \\frac{${a}}{\\text{ANS}} + ${b}\\text{, press = repeatedly.}`;
+    working.push({ latex: tip, plain: `Calculator: Enter ${x0}, press =. Then ${fPlain!} with ANS, press = repeatedly.`, isTip: true });
+  }
+
+  return {
+    kind: "iter", display, displayPlain, answerSegs, answerPlain, working,
+    key: `num-${selected}-${a!}-${b!}-${x0}-${Math.random()}`,
+    difficulty: level,
+  };
+};
+
+// ── REARRANGING ───────────────────────────────────────────────────────────────
+
+const genRearranging = (
+  level: DifficultyLevel,
+  showTarget: boolean,
+  answerType: AnswerType,
+): IterQuestion => {
+  let a: number, b: number, x0: number;
+  let eqLatex: string;      // e.g. x^2 - 3x - 5 = 0
+  let targetLatex: string;  // e.g. \sqrt{3x+5}
+  let eqPlain: string;
+  let iterFn: (x: number) => number;
+  const working: WorkingStep[] = [];
+
+  if (level === "level1") {
+    a = randInt(2, 5); b = randInt(1, 5); x0 = randInt(1, 3);
+    eqLatex = `x^2 - ${a}x - ${b} = 0`;
+    eqPlain = `x² − ${a}x − ${b} = 0`;
+    targetLatex = sqrtFormula(a, b);
+    iterFn = x => Math.sqrt(a * x + b);
+    working.push({ latex: `\\text{Start: } ${eqLatex}`, plain: `Start: ${eqPlain}` });
+    working.push({ latex: `x^2 = ${a}x + ${b}`, plain: `x² = ${a}x + ${b}` });
+    working.push({ latex: `${xNext} = \\sqrt{${a}${xn} + ${b}} \\checkmark`, plain: `x_(n+1) = √(${a}x_n + ${b}) ✓` });
+  } else if (level === "level2") {
+    a = randInt(2, 5); b = randInt(1, 6); x0 = randInt(1, 2);
+    eqLatex = `x^3 - ${a}x - ${b} = 0`;
+    eqPlain = `x³ − ${a}x − ${b} = 0`;
+    targetLatex = cbrtFormula(a, b);
+    iterFn = x => Math.cbrt(a * x + b);
+    working.push({ latex: `\\text{Start: } ${eqLatex}`, plain: `Start: ${eqPlain}` });
+    working.push({ latex: `x^3 = ${a}x + ${b}`, plain: `x³ = ${a}x + ${b}` });
+    working.push({ latex: `${xNext} = \\sqrt[3]{${a}${xn} + ${b}} \\checkmark`, plain: `x_(n+1) = ∛(${a}x_n + ${b}) ✓` });
+  } else {
+    a = randInt(2, 7); b = randInt(1, 3); x0 = randInt(2, 3);
+    eqLatex = `x^2 - ${b}x - ${a} = 0`;
+    eqPlain = `x² − ${b}x − ${a} = 0`;
+    targetLatex = fracFormula(a, b);
+    iterFn = x => a / x + b;
+    working.push({ latex: `\\text{Start: } ${eqLatex}`, plain: `Start: ${eqPlain}` });
+    working.push({ latex: `x^2 = ${b}x + ${a}`, plain: `x² = ${b}x + ${a}` });
+    working.push({ latex: `x = ${b} + \\dfrac{${a}}{x}`, plain: `x = ${b} + ${a}/x` });
+    working.push({ latex: `${xNext} = \\dfrac{${a}}{${xn}} + ${b} \\checkmark`, plain: `x_(n+1) = ${a}/x_n + ${b} ✓` });
+  }
+
+  // Iterations
+  let iterations: number[] = [];
+  if (answerType === "first3") {
+    let c = x0;
+    for (let i = 0; i < 3; i++) { c = iterFn(c); iterations.push(c); }
+  } else {
+    let c = x0, prev = x0;
+    for (let i = 0; i < 30; i++) {
+      c = iterFn(c); iterations.push(c);
+      if (i > 0 && roundTo(c, 2) === roundTo(prev, 2)) break;
+      prev = c;
+    }
+  }
+  const root = roundTo(iterations[iterations.length - 1], 2);
+  const numShow = answerType === "first3" ? 3 : iterations.length;
+
+  working.push({ latex: `${xSub(0)} = ${x0}`, plain: `x0 = ${x0}` });
+  for (let i = 0; i < numShow; i++) {
+    const prev = i === 0 ? x0 : iterations[i - 1];
+    let latex: string;
+    if (level === "level1") latex = sqrtStep(i + 1, prev, a!, b!, iterations[i]);
+    else if (level === "level2") latex = cbrtStep(i + 1, prev, a!, b!, iterations[i]);
+    else latex = fracStep(i + 1, prev, a!, b!, iterations[i]);
+    working.push({ latex, plain: latex });
+  }
+
+  if (answerType === "root" && iterations.length >= 2) {
+    const last = iterations.slice(-2);
+    const n = iterations.length;
+    working.push({ latex: `${xSub(n-1)} = ${fmtD(last[0],4)} \\rightarrow ${fmtD(roundTo(last[0],2),2)}`, plain: `x${n-1} = ${fmtD(last[0],4)} → ${fmtD(roundTo(last[0],2),2)}` });
+    working.push({ latex: `${xSub(n)} = ${fmtD(last[1],4)} \\rightarrow ${fmtD(roundTo(last[1],2),2)}`, plain: `x${n} = ${fmtD(last[1],4)} → ${fmtD(roundTo(last[1],2),2)}` });
+    working.push({ latex: `\\text{Both round to } ${fmtD(root,2)} \\Rightarrow x = ${fmtD(root,2)}`, plain: `Both round to ${fmtD(root,2)}, root = ${fmtD(root,2)}` });
+  }
+
+  // ── Display segments ──
+  const taskSegs: Seg[] = answerType === "first3"
+    ? [tx(". Using "), mx(`${xSub(0)} = ${x0}`), tx(", find "), mx(`${xSub(1)}, ${xSub(2)}, ${xSub(3)}.`)]
+    : [tx(". Using "), mx(`${xSub(0)} = ${x0}`), tx(", find the root to 2 d.p.")];
+
+  let display: Seg[];
+  if (showTarget) {
+    display = [tx("Show that "), mx(eqLatex), tx(" can be written as "), mx(`${xNext} = ${targetLatex}`), ...taskSegs];
+  } else {
+    display = [tx("Rearrange "), mx(eqLatex), tx(" into an iterative formula"), ...taskSegs];
+  }
+  const displayPlain = (showTarget ? `Show that ${eqPlain} can be written as x = ${level==="level1"?`√(${a}x+${b})`:level==="level2"?`∛(${a}x+${b})`:`${a}/x+${b}`}` : `Rearrange ${eqPlain}`) + `. Using x0=${x0}, find ${answerType==="first3"?"x1,x2,x3":"root to 2 d.p."}`;
+
+  const answerSegs: Seg[] = answerType === "first3"
+    ? [mx(`${xSub(1)} = ${fmtD(iterations[0],4)},\\quad ${xSub(2)} = ${fmtD(iterations[1],4)},\\quad ${xSub(3)} = ${fmtD(iterations[2],4)}`)]
+    : [mx(`x = ${fmtD(root,2)}`)];
+  const answerPlain = answerType === "first3"
+    ? `x1=${fmtD(iterations[0],4)}, x2=${fmtD(iterations[1],4)}, x3=${fmtD(iterations[2],4)}`
+    : `x = ${fmtD(root,2)}`;
+
+  return {
+    kind: "iter", display, displayPlain, answerSegs, answerPlain, working,
+    key: `rear-${a!}-${b!}-${x0}-${Math.random()}`,
+    difficulty: level,
+  };
+};
+
+// ── VERIFICATION ──────────────────────────────────────────────────────────────
+
+const genVerification = (level: DifficultyLevel): IterQuestion => {
+  const useCubic = Math.random() < 0.5;
+  const a = randInt(2, 5), b = randInt(2, 9);
+  const working: WorkingStep[] = [];
+
+  let root: number, lBound: number, uBound: number;
+  let eqLatex: string, fxLatex: string, eqPlain: string;
+  let fL: number, fU: number;
+
+  if (useCubic) {
+    let x = 2;
+    for (let i = 0; i < 20; i++) { const fx = x**3-a*x-b, fpx=3*x**2-a; if(Math.abs(fpx)>1e-9) x-=fx/fpx; }
+    if (level==="level1") { lBound=Math.floor(x); uBound=Math.ceil(x); if(lBound===uBound) uBound++; root=x; }
+    else if (level==="level2") { root=roundTo(x,1); lBound=roundTo(root-0.05,2); uBound=roundTo(root+0.05,2); }
+    else { root=roundTo(x,2); lBound=roundTo(root-0.005,3); uBound=roundTo(root+0.005,3); }
+    eqLatex=`x^3 - ${a}x - ${b} = 0`; fxLatex=`x^3 - ${a}x - ${b}`; eqPlain=`x³ − ${a}x − ${b} = 0`;
+    fL=lBound**3-a*lBound-b; fU=uBound**3-a*uBound-b;
+  } else {
+    const disc=a*a+4*b, x=(a+Math.sqrt(disc))/2;
+    if (level==="level1") { lBound=Math.floor(x); uBound=Math.ceil(x); if(lBound===uBound) uBound++; root=x; }
+    else if (level==="level2") { root=roundTo(x,1); lBound=roundTo(root-0.05,2); uBound=roundTo(root+0.05,2); }
+    else { root=roundTo(x,2); lBound=roundTo(root-0.005,3); uBound=roundTo(root+0.005,3); }
+    eqLatex=`x^2 - ${a}x - ${b} = 0`; fxLatex=`x^2 - ${a}x - ${b}`; eqPlain=`x² − ${a}x − ${b} = 0`;
+    fL=lBound**2-a*lBound-b; fU=uBound**2-a*uBound-b;
+  }
+
+  const bDP = level==="level3"?3:level==="level2"?2:0;
+  const lS = fmtD(lBound,bDP), uS = fmtD(uBound,bDP);
+  const lSign = fL<0?"negative":"positive", uSign = fU<0?"negative":"positive";
+
+  // f(x) calc latex helper
+  const fCalc = (xStr: string) => useCubic
+    ? `${xStr}^3 - ${a}(${xStr}) - ${b}`
+    : `${xStr}^2 - ${a}(${xStr}) - ${b}`;
+
+  working.push({ latex: `f(x) = ${fxLatex}`, plain: `f(x) = ${eqPlain.replace(" = 0","")}` });
+  working.push({ latex: `\\text{Test bounds: } x = ${lS} \\text{ and } x = ${uS}`, plain: `Test bounds: x = ${lS} and x = ${uS}` });
+  working.push({ latex: `f(${lS}) = ${fCalc(lS)} = ${fmtD(fL,4)}`, plain: `f(${lS}) = ${fmtD(fL,4)}` });
+  working.push({ latex: `f(${uS}) = ${fCalc(uS)} = ${fmtD(fU,4)}`, plain: `f(${uS}) = ${fmtD(fU,4)}` });
+  working.push({ latex: `f(${lS}) \\text{ is ${lSign}},\\quad f(${uS}) \\text{ is ${uSign}}`, plain: `f(${lS}) is ${lSign}, f(${uS}) is ${uSign}` });
+  working.push({ latex: `\\text{Change of sign} \\Rightarrow \\text{root} \\in [${lS},\\, ${uS}]`, plain: `Change of sign → root in [${lS}, ${uS}]` });
+  if (level!=="level1") {
+    working.push({ latex: `\\therefore\\, x = ${level==="level2"?fmtD(root,1):fmtD(root,2)} \\text{ to ${level==="level2"?"1":"2"} d.p.} \\checkmark`, plain: `Root = ${level==="level2"?fmtD(root,1):fmtD(root,2)} to ${level==="level2"?"1":"2"} d.p.` });
+  }
+
+  // Display segments
+  let display: Seg[];
+  if (level==="level1") {
+    display = [tx("The equation "), mx(eqLatex), tx(` has a root between ${lBound} and ${uBound}. Use the change of sign method to verify this.`)];
+  } else if (level==="level2") {
+    display = [tx("Show that "), mx(eqLatex), tx(" has a root equal to "), mx(fmtD(root,1)), tx(" correct to 1 decimal place.")];
+  } else {
+    display = [tx("Show that "), mx(eqLatex), tx(" has a root equal to "), mx(fmtD(root,2)), tx(" correct to 2 decimal places.")];
+  }
+  const displayPlain = level==="level1"
+    ? `${eqPlain} has a root between ${lBound} and ${uBound}. Verify by change of sign.`
+    : `Show ${eqPlain} has a root = ${level==="level2"?fmtD(root,1):fmtD(root,2)} to ${level==="level2"?"1":"2"} d.p.`;
+
+  const answerSegs: Seg[] = level==="level1"
+    ? [tx(`f(${lBound}) = ${fmtD(fL,2)} (${lSign}), f(${uBound}) = ${fmtD(fU,2)} (${uSign}). Change of sign ✓`)]
+    : [mx(`\\text{Change of sign on } [${lS},\\,${uS}] \\Rightarrow x = ${level==="level2"?fmtD(root,1):fmtD(root,2)}`)];
+  const answerPlain = level==="level1"
+    ? `f(${lBound})=${fmtD(fL,2)} (${lSign}), f(${uBound})=${fmtD(fU,2)} (${uSign}). Change of sign ✓`
+    : `Change of sign on [${lS}, ${uS}] → x = ${level==="level2"?fmtD(root,1):fmtD(root,2)}`;
+
+  return {
+    kind: "iter", display, displayPlain, answerSegs, answerPlain, working,
+    key: `ver-${useCubic?"c":"q"}-${a}-${b}-${Math.random()}`,
+    difficulty: level,
+  };
+};
+
+// ── generateQuestion / generateUniqueQ ───────────────────────────────────────
+
+const generateQuestion = (tool: ToolType, level: DifficultyLevel, variables: Record<string,boolean>, dropdownValue: string): AnyQuestion => {
+  if (tool==="numerical") return genNumerical(level, variables["calcSteps"]??false, (dropdownValue||"mixed") as FormulaType);
+  if (tool==="rearranging") return genRearranging(level, variables["targetFormula"]??true, (dropdownValue||"root") as AnswerType);
+  return genVerification(level);
+};
+
+const generateUniqueQ = (tool: ToolType, level: DifficultyLevel, variables: Record<string,boolean>, dropdownValue: string, usedKeys: Set<string>): AnyQuestion => {
+  let q: AnyQuestion, attempts=0;
+  do { q=generateQuestion(tool,level,variables,dropdownValue); attempts++; }
+  while (usedKeys.has(q.key) && attempts<100);
+  usedKeys.add(q.key); return q;
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SHELL COMPONENTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const LV_COLORS: Record<DifficultyLevel,{bg:string;border:string;text:string;fill:string}> = {
+  level1:{bg:"bg-green-50",border:"border-green-500",text:"text-green-700",fill:"#dcfce7"},
+  level2:{bg:"bg-yellow-50",border:"border-yellow-500",text:"text-yellow-700",fill:"#fef9c3"},
+  level3:{bg:"bg-red-50",border:"border-red-500",text:"text-red-700",fill:"#fee2e2"},
+};
+const getQuestionBg = (cs:string) => ({blue:"#D1E7F8",pink:"#F8D1E7",yellow:"#F8F4D1"}[cs]??"#ffffff");
+const getStepBg    = (cs:string) => ({blue:"#B3D9F2",pink:"#F2B3D9",yellow:"#F2EBB3"}[cs]??"#f3f4f6");
+
+// ── InfoModal ─────────────────────────────────────────────────────────────────
+const InfoModal = ({onClose}:{onClose:()=>void}) => (
+  <div className="fixed inset-0 z-[100] flex items-center justify-center" style={{backgroundColor:"rgba(0,0,0,0.5)"}} onClick={onClose}>
+    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 flex flex-col" style={{height:"80vh"}} onClick={e=>e.stopPropagation()}>
+      <div className="flex items-center justify-between px-7 py-5 border-b border-gray-100 flex-shrink-0">
+        <div><h2 className="text-2xl font-bold text-gray-900">Tool Information</h2><p className="text-sm text-gray-400 mt-0.5">A guide to all features</p></div>
+        <button onClick={onClose} className="w-9 h-9 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100"><X size={20}/></button>
+      </div>
+      <div className="overflow-y-auto px-7 py-6 flex flex-col gap-6 flex-1">
+        {INFO_SECTIONS.map(s=>(
+          <div key={s.title}>
+            <div className="flex items-center gap-2 mb-3"><span className="text-xl">{s.icon}</span><h3 className="text-lg font-bold text-blue-900">{s.title}</h3></div>
+            <div className="flex flex-col gap-2">
+              {s.content.map(item=>(
+                <div key={item.label} className="bg-gray-50 rounded-xl px-4 py-3">
+                  <span className="font-bold text-gray-800 text-sm">{item.label}</span>
+                  <p className="text-sm text-gray-500 mt-0.5 leading-relaxed">{item.detail}</p>
+                </div>
               ))}
             </div>
           </div>
+        ))}
+      </div>
+      <div className="px-7 py-4 border-t border-gray-100 flex justify-end flex-shrink-0">
+        <button onClick={onClose} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-sm hover:bg-blue-800">Close</button>
+      </div>
+    </div>
+  </div>
+);
 
-          {/* NUMERICAL TOOL OPTIONS */}
-          {currentTool === 'numerical' && (
-            <>
-              {/* Formula Type Dropdown */}
-              <select
-                value={formulaType}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormulaType(e.target.value as FormulaType)}
-                className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-semibold bg-white"
-              >
-                <option value="mixed">Mixed</option>
-                <option value="quadratic">Quadratic (√)</option>
-                <option value="cubic">Cubic (∛)</option>
-                <option value="fractional">Fractional</option>
-              </select>
-
-              {/* Calculator Steps Checkbox - Only show in Worked Example mode */}
-              {mode === 'single' && (
-                <div className="flex flex-col gap-1">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={showCalculatorSteps}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setShowCalculatorSteps(e.target.checked)}
-                      className="w-4 h-4"
-                    />
-                    <span className="text-sm font-semibold" style={{ color: '#000000' }}>Show Calculator Steps</span>
-                  </label>
-                </div>
-              )}
-            </>
-          )}
-
-          {/* REARRANGING TOOL OPTIONS */}
-          {currentTool === 'rearranging' && (
-            <>
-              <div className="flex flex-col gap-0">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={targetFormulaVisible}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTargetFormulaVisible(e.target.checked)}
-                    className="w-4 h-4"
-                  />
-                  <span className="text-sm font-semibold leading-tight text-center" style={{ color: '#000000' }}>
-                    Target<br/>Formula
-                  </span>
-                </label>
-              </div>
-              <select
-                value={rearrangingAnswerType}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setRearrangingAnswerType(e.target.value as AnswerType)}
-                className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-semibold bg-white"
-              >
-                <option value="first3">First 3 terms</option>
-                <option value="root">Root to 2 d.p.</option>
-              </select>
-            </>
-          )}
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex gap-3">
-          <button
-            onClick={handleNewQuestion}
-            className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-lg hover:bg-blue-800 transition-colors flex items-center justify-center gap-2 w-52"
-          >
-            <RefreshCw size={18} /> New Question
-          </button>
-          <button
-            onClick={() => mode === 'whiteboard' ? setShowWhiteboardAnswer(true) : setShowAnswer(true)}
-            className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-lg hover:bg-blue-800 transition-colors flex items-center justify-center gap-2 w-52"
-          >
-            <Eye size={18} /> Show Answer
-          </button>
-        </div>
+// ── MenuDropdown ──────────────────────────────────────────────────────────────
+const MenuDropdown = ({colorScheme,setColorScheme,onClose,onOpenInfo}:{colorScheme:string;setColorScheme:(s:string)=>void;onClose:()=>void;onOpenInfo:()=>void}) => {
+  const [colorOpen,setColorOpen]=useState(false);
+  const ref=useRef<HTMLDivElement>(null);
+  useEffect(()=>{
+    const h=(e:MouseEvent)=>{if(ref.current&&!ref.current.contains(e.target as Node))onClose();};
+    document.addEventListener("mousedown",h);return()=>document.removeEventListener("mousedown",h);
+  },[onClose]);
+  return (
+    <div ref={ref} className="absolute right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden" style={{minWidth:"200px"}}>
+      <div className="py-1">
+        <button onClick={()=>setColorOpen(!colorOpen)} className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+          <div className="flex items-center gap-2">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={`text-gray-400 transition-transform ${colorOpen?"rotate-90":""}`}><path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            <span>Colour Scheme</span>
+          </div>
+          <span className="text-xs text-gray-400 capitalize">{colorScheme}</span>
+        </button>
+        {colorOpen&&(
+          <div className="border-t border-gray-100">
+            {["default","blue","pink","yellow"].map(s=>(
+              <button key={s} onClick={()=>{setColorScheme(s);onClose();}}
+                className={`w-full flex items-center justify-between pl-10 pr-4 py-2.5 text-sm font-semibold capitalize ${colorScheme===s?"bg-blue-900 text-white":"text-gray-600 hover:bg-gray-50"}`}>
+                {s}{colorScheme===s&&<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7l3.5 3.5L12 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+              </button>
+            ))}
+          </div>
+        )}
+        <div className="border-t border-gray-100 my-1"/>
+        <button onClick={()=>{onOpenInfo();onClose();}} className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400"><circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5"/><path d="M8 7v5M8 5v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+          Tool Information
+        </button>
       </div>
     </div>
   );
+};
 
-  const renderWorksheetControlBar = (): JSX.Element => (
-    <div className="bg-white rounded-xl shadow-lg p-6 mb-8 space-y-4">
-      {/* Line 1: Questions + Differentiated */}
-      <div className="flex justify-center items-center gap-6">
-        <div className="flex items-center gap-3">
-          <label className="text-lg font-semibold" style={{ color: '#000000' }}>Questions per level:</label>
-          <input
-            type="number"
-            min="1"
-            max="20"
-            value={numQuestions}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNumQuestions(Math.max(1, Math.min(20, parseInt(e.target.value) || 5)))}
-            className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-lg"
-          />
-        </div>
-        <div className="flex items-center gap-3">
-          <input
-            type="checkbox"
-            id="diff"
-            checked={isDifferentiated}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setIsDifferentiated(e.target.checked)}
-            className="w-5 h-5"
-          />
-          <label htmlFor="diff" className="text-lg font-semibold" style={{ color: '#000000' }}>Differentiated</label>
-        </div>
-      </div>
+// ── DifficultyToggle ──────────────────────────────────────────────────────────
+const DifficultyToggle = ({value,onChange}:{value:string;onChange:(v:string)=>void}) => (
+  <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm">
+    {([["level1","Level 1","bg-green-600"],["level2","Level 2","bg-yellow-500"],["level3","Level 3","bg-red-600"]] as const).map(([val,label,col])=>(
+      <button key={val} onClick={()=>onChange(val)}
+        className={`px-5 py-2 font-bold text-base transition-colors ${value===val?`${col} text-white`:"bg-white text-gray-500 hover:bg-gray-50"}`}>
+        {label}
+      </button>
+    ))}
+  </div>
+);
 
-      {/* Line 2: Difficulty + Columns (hidden if differentiated) */}
-      {!isDifferentiated && (
-        <div className="flex justify-center items-center gap-6">
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-semibold" style={{ color: '#000000' }}>Difficulty:</span>
-            <div className="flex gap-2">
-              {(['level1', 'level2', 'level3'] as const).map((lvl: DifficultyLevel, idx: number) => (
-                <button
-                  key={lvl}
-                  onClick={() => setDifficulty(lvl)}
-                  className={'px-4 py-2 rounded-lg font-bold text-sm w-24 ' + 
-                    getDifficultyButtonClass(idx, difficulty === lvl)}
-                >
-                  Level {idx + 1}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <label className="text-sm font-semibold" style={{ color: '#000000' }}>Columns:</label>
-            <input
-              type="number"
-              min="1"
-              max="4"
-              value={numColumns}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNumColumns(Math.max(1, Math.min(4, parseInt(e.target.value) || 2)))}
-              className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-semibold"
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Line 3: Tool-specific options */}
-      {currentTool === 'numerical' && (
-        <div className="flex justify-center items-center gap-6">
-          <select
-            value={formulaType}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormulaType(e.target.value as FormulaType)}
-            className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-semibold bg-white"
-          >
-            <option value="mixed">Mixed</option>
-            <option value="quadratic">Quadratic (√)</option>
-            <option value="cubic">Cubic (∛)</option>
-            <option value="fractional">Fractional</option>
-          </select>
-        </div>
-      )}
-
-      {currentTool === 'rearranging' && (
-        <div className="flex justify-center items-center gap-6">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={targetFormulaVisible}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTargetFormulaVisible(e.target.checked)}
-              className="w-4 h-4"
-            />
-            <span className="text-sm font-semibold leading-tight text-center" style={{ color: '#000000' }}>
-              Target<br/>Formula
-            </span>
-          </label>
-          <select
-            value={rearrangingAnswerType}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setRearrangingAnswerType(e.target.value as AnswerType)}
-            className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-semibold bg-white"
-          >
-            <option value="first3">First 3 terms</option>
-            <option value="root">Root to 2 d.p.</option>
-          </select>
-        </div>
-      )}
-
-      {/* Line 4: Action Buttons */}
-      <div className="flex justify-center gap-4">
-        <button
-          onClick={handleGenerateWorksheet}
-          className="px-6 py-3 bg-blue-900 text-white rounded-lg font-semibold flex items-center gap-2 hover:bg-blue-800"
-        >
-          <RefreshCw size={20} /> Generate Worksheet
+// ── QO Popover ────────────────────────────────────────────────────────────────
+const DropdownSection = ({dropdown,value,onChange}:{dropdown:{key:string;label:string;useTwoLineButtons?:boolean;options:{value:string;label:string;sub?:string}[]};value:string;onChange:(v:string)=>void}) => (
+  <div className="flex flex-col gap-2">
+    <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">{dropdown.label}</span>
+    <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden">
+      {dropdown.options.map(opt=>dropdown.useTwoLineButtons?(
+        <button key={opt.value} onClick={()=>onChange(opt.value)}
+          className={`flex-1 px-4 py-2.5 flex flex-col items-center transition-colors ${value===opt.value?"bg-blue-900 text-white":"bg-white text-gray-600 hover:bg-gray-50"}`}>
+          <span className="text-base font-bold leading-tight">{opt.label}</span>
+          {opt.sub&&<span className={`text-xs mt-0.5 ${value===opt.value?"text-blue-200":"text-gray-400"}`}>{opt.sub}</span>}
         </button>
-        {worksheet.length > 0 && (
-          <button
-            onClick={() => setShowWorksheetAnswers(!showWorksheetAnswers)}
-            className="px-6 py-3 bg-blue-900 text-white rounded-lg font-semibold flex items-center gap-2 hover:bg-blue-800"
-          >
-            <Eye size={20} /> {showWorksheetAnswers ? 'Hide Answers' : 'Show Answers'}
-          </button>
+      ):(
+        <button key={opt.value} onClick={()=>onChange(opt.value)}
+          className={`flex-1 px-4 py-2.5 text-base font-bold transition-colors ${value===opt.value?"bg-blue-900 text-white":"bg-white text-gray-600 hover:bg-gray-50"}`}>
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  </div>
+);
+
+const VariablesSection = ({variables,values,onChange}:{variables:{key:string;label:string}[];values:Record<string,boolean>;onChange:(k:string,v:boolean)=>void}) => (
+  <div className="flex flex-col gap-3">
+    <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Options</span>
+    {variables.map(v=>(
+      <label key={v.key} className="flex items-center gap-3 cursor-pointer py-1">
+        <div onClick={()=>onChange(v.key,!values[v.key])} className={`w-12 h-6 rounded-full transition-colors relative flex-shrink-0 ${values[v.key]?"bg-blue-900":"bg-gray-300"}`}>
+          <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${values[v.key]?"translate-x-7":"translate-x-1"}`}/>
+        </div>
+        <span className="text-base font-semibold text-gray-700">{v.label}</span>
+      </label>
+    ))}
+  </div>
+);
+
+const QOPopover = ({variables,variableValues,onVariableChange,dropdown,dropdownValue,onDropdownChange}:{variables:{key:string;label:string}[];variableValues:Record<string,boolean>;onVariableChange:(k:string,v:boolean)=>void;dropdown:{key:string;label:string;useTwoLineButtons?:boolean;options:{value:string;label:string;sub?:string}[]}|null;dropdownValue:string;onDropdownChange:(v:string)=>void}) => {
+  const {open,setOpen,ref}=usePopover();
+  if(!dropdown && variables.length===0) return null;
+  return (
+    <div className="relative" ref={ref}>
+      <PopoverButton open={open} onClick={()=>setOpen(!open)}/>
+      {open&&(
+        <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-72 p-5 flex flex-col gap-5">
+          {dropdown&&<DropdownSection dropdown={dropdown} value={dropdownValue} onChange={onDropdownChange}/>}
+          {variables.length>0&&<VariablesSection variables={variables} values={variableValues} onChange={onVariableChange}/>}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ── Print ─────────────────────────────────────────────────────────────────────
+const handlePrint = (questions: AnyQuestion[], toolName: string, difficulty: string, isDifferentiated: boolean, numColumns: number) => {
+  const FONT_PX=13, PAD_MM=3, MARGIN_MM=12, HEADER_MM=14, GAP_MM=2;
+  const PAGE_H_MM=297-MARGIN_MM*2, PAGE_W_MM=210-MARGIN_MM*2;
+  const usableH_MM=PAGE_H_MM-HEADER_MM, diffHdrMM=7;
+  const diffLabel=isDifferentiated?"Differentiated":difficulty==="level1"?"Level 1":difficulty==="level2"?"Level 2":"Level 3";
+  const dateStr=new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
+  const totalQ=questions.length;
+
+  // For print we pass latex strings; the print window runs KaTeX itself
+  const segsToLatex = (segs: Seg[]): string =>
+    segs.map(seg => seg.k==="m" ? seg.s : `\\text{${seg.s.replace(/[{}]/g,"\\$&")}}`).join("");
+
+  const qHtmlData = questions.map((q,i) => ({
+    displayLatex: segsToLatex(q.display),
+    answerLatex:  segsToLatex(q.answerSegs),
+    difficulty: q.difficulty,
+    idx: i,
+  }));
+
+  const katexSpan = (latex: string) =>
+    `<span class="kr" data-latex="${latex.replace(/"/g,"&quot;")}"></span>`;
+
+  const questionToHtml = (item: typeof qHtmlData[0], showAnswer: boolean) =>
+    `<div class="q-num">${item.idx+1})</div>`+
+    `<div class="q-text">${katexSpan(item.displayLatex)}</div>`+
+    (showAnswer?`<div class="q-answer">${katexSpan(item.answerLatex)}</div>`:"");
+
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8">
+<title>${toolName} — Worksheet</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"><\/script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+@page{size:A4;margin:${MARGIN_MM}mm;}
+body{font-family:"Segoe UI",Arial,sans-serif;font-size:${FONT_PX}px;}
+@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
+.page{width:${PAGE_W_MM}mm;min-height:${PAGE_H_MM}mm;page-break-after:always;}
+.page:last-child{page-break-after:auto;}
+.page-header{display:flex;justify-content:space-between;align-items:baseline;border-bottom:.4mm solid #1e3a8a;padding-bottom:1.5mm;margin-bottom:2mm;}
+.page-header h1{font-size:5mm;font-weight:700;color:#1e3a8a;}
+.page-header .meta{font-size:3mm;color:#6b7280;}
+.grid{display:grid;gap:${GAP_MM}mm;}
+.cell{border:.3mm solid #d1d5db;border-radius:1mm;padding:${PAD_MM}mm;position:relative;}
+.diff-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:${GAP_MM}mm;}
+.diff-col{display:flex;flex-direction:column;gap:${GAP_MM}mm;}
+.diff-header{height:${diffHdrMM}mm;display:flex;align-items:center;justify-content:center;font-size:3mm;font-weight:700;border-radius:1mm;}
+.diff-header.level1{background:#dcfce7;color:#166534;}
+.diff-header.level2{background:#fef9c3;color:#854d0e;}
+.diff-header.level3{background:#fee2e2;color:#991b1b;}
+.q-num{position:absolute;top:0;left:0;font-size:${Math.round(FONT_PX*.6)}px;font-weight:700;color:#000;padding:1.2mm 1.2mm 1.8mm;border-right:.3mm solid #000;border-bottom:.3mm solid #000;}
+.q-text{padding-top:3mm;line-height:1.6;}
+.q-answer{color:#059669;margin-top:1mm;}
+.kr{display:inline-block;vertical-align:baseline;}
+</style>
+</head><body>
+<div id="pages"></div>
+<script>
+document.addEventListener("DOMContentLoaded",function(){
+  var pxPerMm=3.7795,PAD_MM=${PAD_MM},GAP_MM=${GAP_MM},usableH=${usableH_MM},diffHdrMM=${diffHdrMM};
+  var PAGE_W_MM=${PAGE_W_MM},cols=${isDifferentiated?3:numColumns},isDiff=${isDifferentiated},totalQ=${totalQ};
+  var diffLabel="${diffLabel}",dateStr="${dateStr}",toolName="${toolName}";
+  var qData=${JSON.stringify(qHtmlData)};
+  function makeCellW(c){return(PAGE_W_MM-GAP_MM*(c-1))/c;}
+  function renderKatex(el){
+    el.querySelectorAll('.kr').forEach(function(span){
+      try{katex.render(span.getAttribute('data-latex'),span,{throwOnError:false,output:'html'});}
+      catch(e){span.textContent=span.getAttribute('data-latex');}
+    });
+  }
+  // Probe for height
+  var probe=document.createElement('div');
+  probe.style.cssText='position:fixed;left:-9999px;top:0;visibility:hidden;font-family:Segoe UI,Arial,sans-serif;font-size:${FONT_PX}px;width:'+(makeCellW(cols)-PAD_MM*2)+'mm';
+  document.body.appendChild(probe);
+  var maxH_px=0;
+  qData.forEach(function(item){
+    probe.innerHTML='<div style="padding:${PAD_MM}mm">${katexSpan("PROBE")}'.replace('PROBE','')+item.displayLatex+'<br>'+item.answerLatex+'</div>';
+    renderKatex(probe);
+    if(probe.scrollHeight>maxH_px)maxH_px=probe.scrollHeight;
+  });
+  probe.remove();
+  var needed_mm=maxH_px/pxPerMm+8;
+  var rowH=[];for(var r=1;r<=10;r++)rowH.push((usableH-GAP_MM*(r-1))/r);
+  var chosenH=rowH[0],rowsPerPage=1;
+  for(var r2=0;r2<rowH.length;r2++){if(rowH[r2]>=needed_mm){chosenH=rowH[r2];rowsPerPage=r2+1;}}
+  var diffPerCol=Math.floor(totalQ/3),diffUsableH=usableH-diffHdrMM-GAP_MM;
+  var diffRows=1,diffCellH=diffUsableH;
+  for(var rd=0;rd<10;rd++){var h=(diffUsableH-GAP_MM*rd)/(rd+1);if(h>=needed_mm){diffRows=rd+1;diffCellH=h;}else break;}
+  function buildCell(inner,cW,cH){return'<div class="cell" style="width:'+cW+'mm;height:'+cH+'mm;">'+inner+'</div>';}
+  function qHtml(item,showAnswer){
+    return'<div class="q-num">'+(item.idx+1)+')</div><div class="q-text"><span class="kr" data-latex="'+item.displayLatex.replace(/"/g,'&quot;')+'"></span></div>'+(showAnswer?'<div class="q-answer"><span class="kr" data-latex="'+item.answerLatex.replace(/"/g,'&quot;')+'"></span></div>':'');
+  }
+  function buildGrid(pageData,showAnswer,cH){
+    if(isDiff){
+      var cW=makeCellW(3);
+      return'<div class="diff-grid">'+['level1','level2','level3'].map(function(lv,li){
+        var start=pageData*diffRows,end=start+diffRows;
+        var lqs=qData.filter(function(q){return q.difficulty===lv;}).slice(start,end);
+        return'<div class="diff-col"><div class="diff-header '+lv+'">'+['Level 1','Level 2','Level 3'][li]+'</div>'+lqs.map(function(q){return buildCell(qHtml(q,showAnswer),cW,cH);}).join('')+'</div>';
+      }).join('')+'</div>';
+    }
+    var cW=makeCellW(cols),gridRows=Math.ceil(pageData.length/cols);
+    return'<div class="grid" style="grid-template-columns:repeat('+cols+','+cW+'mm);grid-template-rows:repeat('+gridRows+','+cH+'mm);">'+pageData.map(function(item){return buildCell(qHtml(item,showAnswer),cW,cH);}).join('')+'</div>';
+  }
+  function buildPage(pageData,showAnswer,pgIdx,total){
+    var cH=isDiff?diffCellH:chosenH;
+    var lbl=total>1?(pgIdx+1)+'/'+total:'';
+    return'<div class="page"><div class="page-header"><h1>'+toolName+(showAnswer?' — Answers':'')+'</h1><div class="meta">'+diffLabel+(lbl?' · '+lbl:'')+' · '+dateStr+'</div></div>'+buildGrid(pageData,showAnswer,cH)+'</div>';
+  }
+  var pages=[];
+  if(isDiff){var numPgs=Math.ceil(diffPerCol/diffRows);for(var p=0;p<numPgs;p++)pages.push(p);}
+  else{var cap=rowsPerPage*cols;for(var s=0;s<qData.length;s+=cap)pages.push(qData.slice(s,s+cap));}
+  var html=pages.map(function(pg,i){return buildPage(pg,false,i,pages.length);}).join('')
+           +pages.map(function(pg,i){return buildPage(pg,true,i,pages.length);}).join('');
+  document.getElementById('pages').innerHTML=html;
+  renderKatex(document.getElementById('pages'));
+  setTimeout(function(){window.print();},400);
+});
+<\/script></body></html>`;
+
+  const win=window.open("","_blank");
+  if(!win){alert("Please allow popups to use PDF export.");return;}
+  win.document.write(html); win.document.close();
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MAIN APP
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export default function App() {
+  const toolKeys=Object.keys(TOOL_CONFIG.tools) as ToolType[];
+  const [currentTool,setCurrentTool]=useState<ToolType>("numerical");
+  const [mode,setMode]=useState<"whiteboard"|"single"|"worksheet">("whiteboard");
+  const [difficulty,setDifficulty]=useState<DifficultyLevel>("level1");
+
+  // QO state
+  const [toolVariables,setToolVariables]=useState<Record<string,Record<string,boolean>>>(()=>{
+    const init:Record<string,Record<string,boolean>>={};
+    Object.keys(TOOL_CONFIG.tools).forEach(k=>{init[k]={};TOOL_CONFIG.tools[k].variables.forEach(v=>{init[k][v.key]=v.defaultValue;});});
+    return init;
+  });
+  const [toolDropdowns,setToolDropdowns]=useState<Record<string,string>>(()=>{
+    const init:Record<string,string>={};
+    Object.keys(TOOL_CONFIG.tools).forEach(k=>{const t=TOOL_CONFIG.tools[k];(["level1","level2","level3"] as DifficultyLevel[]).forEach(lv=>{if(t.dropdown)init[`${k}__${lv}`]=t.dropdown.defaultValue;});});
+    return init;
+  });
+
+  const [currentQuestion,setCurrentQuestion]=useState<AnyQuestion|null>(null);
+  const [showWhiteboardAnswer,setShowWhiteboardAnswer]=useState(false);
+  const [showAnswer,setShowAnswer]=useState(false);
+  const [numQuestions,setNumQuestions]=useState(5);
+  const [numColumns,setNumColumns]=useState(2);
+  const [worksheet,setWorksheet]=useState<AnyQuestion[]>([]);
+  const [showWorksheetAnswers,setShowWorksheetAnswers]=useState(false);
+  const [isDifferentiated,setIsDifferentiated]=useState(false);
+  const [displayFontSize,setDisplayFontSize]=useState(2);
+  const [worksheetFontSize,setWorksheetFontSize]=useState(1);
+  const [colorScheme,setColorScheme]=useState("default");
+  const [isMenuOpen,setIsMenuOpen]=useState(false);
+  const [isInfoOpen,setIsInfoOpen]=useState(false);
+
+  // Visualiser
+  const [presenterMode,setPresenterMode]=useState(false);
+  const [wbFullscreen,setWbFullscreen]=useState(false);
+  const [camDevices,setCamDevices]=useState<MediaDeviceInfo[]>([]);
+  const [currentCamId,setCurrentCamId]=useState<string|null>(null);
+  const [camError,setCamError]=useState<string|null>(null);
+  const [camDropdownOpen,setCamDropdownOpen]=useState(false);
+  const videoRef=useRef<HTMLVideoElement>(null);
+  const streamRef=useRef<MediaStream|null>(null);
+  const camDropdownRef=useRef<HTMLDivElement>(null);
+  const longPressTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
+  const didLongPress=useRef(false);
+
+  useEffect(()=>{loadKaTeX();},[]);
+
+  const stopStream=useCallback(()=>{
+    if(streamRef.current){streamRef.current.getTracks().forEach(t=>t.stop());streamRef.current=null;}
+    if(videoRef.current)videoRef.current.srcObject=null;
+  },[]);
+
+  const startCam=useCallback(async(deviceId?:string)=>{
+    stopStream();setCamError(null);
+    try{
+      let targetId=deviceId;
+      if(!targetId){const tmp=await navigator.mediaDevices.getUserMedia({video:true,audio:false});tmp.getTracks().forEach(t=>t.stop());const all=await navigator.mediaDevices.enumerateDevices();const ext=all.filter(d=>d.kind==="videoinput").find(d=>d.label&&!/facetime|built.?in|integrated|internal|front|rear/i.test(d.label));if(ext)targetId=ext.deviceId;}
+      const stream=await navigator.mediaDevices.getUserMedia({video:targetId?{deviceId:{exact:targetId}}:true,audio:false});
+      streamRef.current=stream;if(videoRef.current)videoRef.current.srcObject=stream;
+      setCurrentCamId(stream.getVideoTracks()[0].getSettings().deviceId??null);
+      setCamDevices((await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==="videoinput"));
+    }catch(e:unknown){setCamError((e instanceof Error?e.message:null)??"Camera unavailable");}
+  },[stopStream]);
+
+  useEffect(()=>{if(presenterMode)startCam();else stopStream();},[presenterMode]);
+  useEffect(()=>{if(presenterMode&&streamRef.current&&videoRef.current)videoRef.current.srcObject=streamRef.current;},[wbFullscreen]);
+  useEffect(()=>{if(!camDropdownOpen)return;const h=(e:MouseEvent)=>{if(camDropdownRef.current&&!camDropdownRef.current.contains(e.target as Node))setCamDropdownOpen(false);};document.addEventListener("mousedown",h);return()=>document.removeEventListener("mousedown",h);},[camDropdownOpen]);
+  useEffect(()=>{const h=(e:KeyboardEvent)=>{if(e.key==="Escape"){setPresenterMode(false);setWbFullscreen(false);}};document.addEventListener("keydown",h);return()=>document.removeEventListener("keydown",h);},[]);
+
+  const qBg=getQuestionBg(colorScheme), stepBg=getStepBg(colorScheme);
+  const isDefault=colorScheme==="default";
+  const fsToolbarBg=isDefault?"#ffffff":stepBg;
+  const fsWorkingBg=isDefault?"#f5f3f0":qBg;
+
+  // QO helpers
+  const getTS=()=>TOOL_CONFIG.tools[currentTool];
+  const getDDCfg=()=>getTS().dropdown;
+  const getVarsCfg=()=>getTS().variables;
+  const getDDValue=()=>toolDropdowns[`${currentTool}__${difficulty}`]??getDDCfg()?.defaultValue??"";
+  const setDDValue=(v:string)=>setToolDropdowns(p=>({...p,[`${currentTool}__${difficulty}`]:v}));
+  const setVarValue=(k:string,v:boolean)=>setToolVariables(p=>({...p,[currentTool]:{...p[currentTool],[k]:v}}));
+
+  const qoProps={variables:getVarsCfg()??[],variableValues:toolVariables[currentTool]||{},onVariableChange:setVarValue,dropdown:getDDCfg()??null,dropdownValue:getDDValue(),onDropdownChange:setDDValue};
+
+  const makeQuestion=():AnyQuestion=>generateQuestion(currentTool,difficulty,toolVariables[currentTool]||{},getDDValue());
+
+  const handleNewQuestion=()=>{setCurrentQuestion(makeQuestion());setShowWhiteboardAnswer(false);setShowAnswer(false);};
+
+  const handleGenerateWorksheet=()=>{
+    const usedKeys=new Set<string>(), questions:AnyQuestion[]=[];
+    if(isDifferentiated){(["level1","level2","level3"] as DifficultyLevel[]).forEach(lv=>{for(let i=0;i<numQuestions;i++)questions.push(generateUniqueQ(currentTool,lv,toolVariables[currentTool]||{},getDDValue(),usedKeys));});}
+    else{for(let i=0;i<numQuestions;i++)questions.push(generateUniqueQ(currentTool,difficulty,toolVariables[currentTool]||{},getDDValue(),usedKeys));}
+    setWorksheet(questions);setShowWorksheetAnswers(false);
+  };
+
+  useEffect(()=>{if(mode!=="worksheet")handleNewQuestion();},[difficulty,currentTool]);
+
+  const displayFontSizes=["text-2xl","text-3xl","text-4xl","text-5xl","text-6xl","text-7xl"];
+  const fontSizes=["text-lg","text-xl","text-2xl","text-3xl","text-4xl"];
+  const canDI=displayFontSize<displayFontSizes.length-1, canDD=displayFontSize>0;
+  const canWI=worksheetFontSize<fontSizes.length-1,     canWD=worksheetFontSize>0;
+
+  const fontBtnStyle=(en:boolean):CSSProperties=>({background:"rgba(0,0,0,0.08)",border:"none",borderRadius:8,cursor:en?"pointer":"not-allowed",width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center",opacity:en?1:0.35});
+
+  // ── Worksheet cell ─────────────────────────────────────────────────────────
+  const renderQCell=(q:AnyQuestion,idx:number,bgOverride?:string)=>{
+    const bg=bgOverride??stepBg, fsz=fontSizes[worksheetFontSize];
+    return (
+      <div className="rounded-lg p-4 shadow" style={{backgroundColor:bg,height:"100%",boxSizing:"border-box",position:"relative"}}>
+        <span style={{position:"absolute",top:0,left:0,fontSize:"0.65em",fontWeight:700,color:"#000",lineHeight:1,padding:"5px 5px 7px 5px",borderRight:"1px solid #000",borderBottom:"1px solid #000"}}>{idx+1})</span>
+        <div className={`${fsz} font-semibold`} style={{color:"#000",paddingTop:"0.5em",lineHeight:1.8}}>
+          <SegLine segs={q.display}/>
+        </div>
+        {showWorksheetAnswers&&(
+          <div className={`${fsz} mt-1`} style={{color:"#059669"}}>
+            <SegLine segs={q.answerSegs}/>
+          </div>
         )}
       </div>
-    </div>
-  );
-
-  const renderWhiteboardMode = (): JSX.Element | null => {
-    if (!currentQuestion) return null;
-
-    return (
-      <div className="rounded-xl shadow-2xl p-8" style={{ backgroundColor: getQuestionBg() }}>
-        <div className="text-center">
-          <span className="text-4xl font-bold" style={{ color: '#000000' }}>
-            {currentQuestion.display}
-          </span>
-          {showWhiteboardAnswer && (
-            <div className="mt-4">
-              <span className="text-4xl font-bold" style={{ color: '#166534' }}>
-                {currentQuestion.answer}
-              </span>
-            </div>
-          )}
-        </div>
-        <div 
-          className="rounded-xl mt-8" 
-          style={{ height: '500px', backgroundColor: getWhiteboardWorkingBg() }}
-        />
-      </div>
     );
   };
 
-  const renderWorkedExampleMode = (): JSX.Element | null => {
-    if (!currentQuestion) return null;
-
-    return (
-      <div className="overflow-y-auto" style={{ height: '120vh' }}>
-        <div className="rounded-xl shadow-lg p-8 w-full" style={{ backgroundColor: getQuestionBg() }}>
-          {/* Question */}
-          <div className="text-center">
-            <span className="text-4xl font-bold" style={{ color: '#000000' }}>
-              {currentQuestion.display}
-            </span>
+  // ── Control bar ────────────────────────────────────────────────────────────
+  const renderControlBar=()=>{
+    if(mode==="worksheet") return (
+      <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <div className="flex justify-center items-center gap-6 mb-4">
+          <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm">
+            {(["level1","level2","level3"] as const).map((val,i)=>{const cols2=["bg-green-600","bg-yellow-500","bg-red-600"];return(
+              <button key={val} onClick={()=>{setDifficulty(val);setIsDifferentiated(false);}}
+                className={`px-5 py-2 font-bold text-base transition-colors ${!isDifferentiated&&difficulty===val?`${cols2[i]} text-white`:"bg-white text-gray-500 hover:bg-gray-50"}`}>Level {i+1}</button>
+            );})}
           </div>
-
-          {showAnswer && (
-            <>
-              {/* Working Steps */}
-              <div className="space-y-4 mt-8">
-                {currentQuestion.working.map((step: WorkingStep, i: number) => (
-                  <div key={i} className="rounded-xl p-6" style={{ backgroundColor: getStepBg() }}>
-                    <h4 className="text-xl font-bold mb-2" style={{ color: '#000000' }}>
-                      {step.type === 'tip' ? 'Calculator Tip' : `Step ${i + 1}`}
-                    </h4>
-                    <p className="text-3xl" style={{ color: '#000000' }}>{step.content}</p>
-                  </div>
-                ))}
-              </div>
-
-              {/* Final Answer */}
-              <div className="rounded-xl p-6 text-center mt-4" style={{ backgroundColor: getFinalAnswerBg() }}>
-                <span className="text-5xl font-bold" style={{ color: '#166534' }}>
-                  {currentQuestion.answer}
-                </span>
-              </div>
-            </>
-          )}
+          <button onClick={()=>setIsDifferentiated(!isDifferentiated)}
+            className={`px-6 py-2 rounded-xl font-bold text-base shadow-sm border-2 transition-colors ${isDifferentiated?"bg-blue-900 text-white border-blue-900":"bg-white text-gray-600 border-gray-300 hover:border-blue-900 hover:text-blue-900"}`}>
+            Differentiated
+          </button>
+        </div>
+        <div className="flex justify-center items-center gap-6 mb-4">
+          <QOPopover {...qoProps}/>
+          <div className="flex items-center gap-3">
+            <label className="text-base font-semibold text-gray-700">Questions:</label>
+            <input type="number" min="1" max="20" value={numQuestions} onChange={e=>setNumQuestions(Math.max(1,Math.min(20,parseInt(e.target.value)||5)))} className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-base font-semibold text-center"/>
+          </div>
+          <div className="flex items-center gap-3">
+            <label className="text-base font-semibold text-gray-700">Columns:</label>
+            <input type="number" min="1" max="4" value={isDifferentiated?3:numColumns} onChange={e=>{if(!isDifferentiated)setNumColumns(Math.max(1,Math.min(4,parseInt(e.target.value)||2)));}} disabled={isDifferentiated}
+              className={`w-20 px-4 py-2 border-2 rounded-lg text-base font-semibold text-center ${isDifferentiated?"border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed":"border-gray-300 bg-white"}`}/>
+          </div>
+        </div>
+        <div className="flex justify-center items-center gap-4">
+          <button onClick={handleGenerateWorksheet} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18}/> Generate</button>
+          {worksheet.length>0&&<>
+            <button onClick={()=>setShowWorksheetAnswers(!showWorksheetAnswers)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><Eye size={18}/> {showWorksheetAnswers?"Hide Answers":"Show Answers"}</button>
+            <button onClick={()=>handlePrint(worksheet,TOOL_CONFIG.tools[currentTool].name,difficulty,isDifferentiated,numColumns)} className="px-6 py-2 bg-green-700 text-white rounded-xl font-bold text-base shadow-sm hover:bg-green-800 flex items-center gap-2"><Printer size={18}/> Print / PDF</button>
+          </>}
+        </div>
+      </div>
+    );
+    return (
+      <div className="px-5 py-4 rounded-xl" style={{backgroundColor:qBg}}>
+        <div className="flex items-center justify-between gap-4">
+          <DifficultyToggle value={difficulty} onChange={v=>setDifficulty(v as DifficultyLevel)}/>
+          <QOPopover {...qoProps}/>
+          <div className="flex gap-3">
+            <button onClick={handleNewQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18}/> New Question</button>
+            <button onClick={()=>mode==="whiteboard"?setShowWhiteboardAnswer(!showWhiteboardAnswer):setShowAnswer(!showAnswer)}
+              className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
+              <Eye size={18}/> {(mode==="whiteboard"?showWhiteboardAnswer:showAnswer)?"Hide Answer":"Show Answer"}
+            </button>
+          </div>
         </div>
       </div>
     );
   };
 
-  const renderWorksheetMode = (): JSX.Element => {
-    if (worksheet.length === 0) {
-      return (
-        <div className="rounded-xl shadow-2xl p-8 text-center" style={{ backgroundColor: getQuestionBg() }}>
-          <p className="text-2xl" style={{ color: '#000000' }}>
-            Click "Generate Worksheet" to create questions
-          </p>
-        </div>
-      );
-    }
-
-    const colorConfig: Record<string, { bg: string; border: string; text: string; questionBg: string }> = {
-      level1: { bg: 'bg-green-50', border: 'border-green-500', text: 'text-green-700', questionBg: 'bg-green-100' },
-      level2: { bg: 'bg-yellow-50', border: 'border-yellow-500', text: 'text-yellow-700', questionBg: 'bg-yellow-100' },
-      level3: { bg: 'bg-red-50', border: 'border-red-500', text: 'text-red-700', questionBg: 'bg-red-100' }
-    };
-
-    const currentFontSize = fontSizes[worksheetFontSize];
-
-    if (isDifferentiated) {
-      // Differentiated layout - 3 columns, one for each level
-      const levels = ['level1', 'level2', 'level3'];
-      const levelNames = ['Level 1', 'Level 2', 'Level 3'];
-
-      return (
-        <div className="rounded-xl shadow-2xl p-8 relative" style={{ backgroundColor: getQuestionBg() }}>
-          {/* Font Size Controls */}
-          <div className="absolute top-4 right-4 flex items-center gap-1">
-            <button
-              onClick={() => setWorksheetFontSize(Math.max(0, worksheetFontSize - 1))}
-              className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${
-                worksheetFontSize > 0 
-                  ? 'bg-blue-900 text-white hover:bg-blue-800' 
-                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-              }`}
-              disabled={worksheetFontSize === 0}
-            >
-              <ChevronDown size={20} />
-            </button>
-            <button
-              onClick={() => setWorksheetFontSize(Math.min(fontSizes.length - 1, worksheetFontSize + 1))}
-              className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${
-                worksheetFontSize < fontSizes.length - 1 
-                  ? 'bg-blue-900 text-white hover:bg-blue-800' 
-                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-              }`}
-              disabled={worksheetFontSize === fontSizes.length - 1}
-            >
-              <ChevronUp size={20} />
-            </button>
-          </div>
-
-          <h2 className="text-3xl font-bold text-center mb-8" style={{ color: '#000000' }}>
-            {toolNames[currentTool]} - Worksheet
-          </h2>
-
-          {/* 3 Column Grid - One column per level */}
-          <div className="grid grid-cols-3 gap-4">
-            {levels.map((level: string, levelIdx: number) => {
-              const levelQuestions = worksheet.filter((q: QuestionType) => q.difficulty === level);
-              const config = colorConfig[level];
-
-              return (
-                <div key={level} className={`p-4 rounded-xl border-2 ${config.bg} ${config.border}`}>
-                  <h3 className={`text-xl font-bold mb-4 text-center ${config.text}`}>{levelNames[levelIdx]}</h3>
-                  <div className="space-y-3">
-                    {levelQuestions.map((q: QuestionType, idx: number) => (
-                      <div key={idx} className={`${config.questionBg} rounded-lg p-3`}>
-                        <p className={`${currentFontSize} font-semibold`} style={{ color: '#000000' }}>
-                          {idx + 1}. {q.display}
-                        </p>
-                        {showWorksheetAnswers && (
-                          <p className={`${currentFontSize} mt-2`} style={{ color: '#059669' }}>
-                            {q.answer}
-                          </p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      );
-    }
-
-    // Standard layout with columns
-    return (
-      <div className="rounded-xl shadow-2xl p-8 relative" style={{ backgroundColor: getQuestionBg() }}>
-        {/* Font Size Controls */}
-        <div className="absolute top-4 right-4 flex items-center gap-1">
-          <button
-            onClick={() => setWorksheetFontSize(Math.max(0, worksheetFontSize - 1))}
-            className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${
-              worksheetFontSize > 0 
-                ? 'bg-blue-900 text-white hover:bg-blue-800' 
-                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-            }`}
-            disabled={worksheetFontSize === 0}
-          >
-            <ChevronDown size={20} />
-          </button>
-          <button
-            onClick={() => setWorksheetFontSize(Math.min(fontSizes.length - 1, worksheetFontSize + 1))}
-            className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${
-              worksheetFontSize < fontSizes.length - 1 
-                ? 'bg-blue-900 text-white hover:bg-blue-800' 
-                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-            }`}
-            disabled={worksheetFontSize === fontSizes.length - 1}
-          >
-            <ChevronUp size={20} />
-          </button>
-        </div>
-
-        <h2 className="text-3xl font-bold text-center mb-8" style={{ color: '#000000' }}>
-          {toolNames[currentTool]} - Worksheet
-        </h2>
-
-        <div className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${numColumns}, 1fr)` }}>
-          {worksheet.map((q: QuestionType, idx: number) => (
-            <div key={idx} className="bg-white rounded-lg p-4" style={{ backgroundColor: getStepBg() }}>
-              <p className={`${currentFontSize} font-semibold`} style={{ color: '#000000' }}>
-                {idx + 1}. {q.display}
-              </p>
-              {showWorksheetAnswers && (
-                <p className={`${currentFontSize} mt-2`} style={{ color: '#059669' }}>
-                  {q.answer}
-                </p>
-              )}
-            </div>
-          ))}
+  // ── Whiteboard ─────────────────────────────────────────────────────────────
+  const renderWhiteboard=()=>{
+    const fsToolbar=(
+      <div style={{background:fsToolbarBg,borderBottom:"2px solid #000",padding:"16px 32px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:16,flexShrink:0,zIndex:210}}>
+        <DifficultyToggle value={difficulty} onChange={v=>setDifficulty(v as DifficultyLevel)}/>
+        <QOPopover {...qoProps}/>
+        <div style={{display:"flex",gap:12}}>
+          <button onClick={handleNewQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18}/> New Question</button>
+          <button onClick={()=>setShowWhiteboardAnswer(a=>!a)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><Eye size={18}/> {showWhiteboardAnswer?"Hide Answer":"Show Answer"}</button>
         </div>
       </div>
     );
-  };
 
-  // ============================================================================
-  // MAIN RENDER
-  // ============================================================================
+    const questionBox=(fs=false)=>(
+      <div style={{position:"relative",width:fs?"45%":"500px",height:"100%",backgroundColor:stepBg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:fs?48:32,boxSizing:"border-box",flexShrink:0,gap:16,...(fs?{}:{borderRadius:"12px"})}}>
+        <div style={{position:"absolute",top:10,right:10,display:"flex",gap:6}}>
+          <button style={fontBtnStyle(canDD)} onClick={()=>canDD&&setDisplayFontSize(f=>f-1)}><ChevronDown size={16} color="#6b7280"/></button>
+          <button style={fontBtnStyle(canDI)} onClick={()=>canDI&&setDisplayFontSize(f=>f+1)}><ChevronUp size={16} color="#6b7280"/></button>
+        </div>
+        {currentQuestion&&<>
+          <SegLine segs={currentQuestion.display} cls={`${displayFontSizes[displayFontSize]} font-semibold text-center`} style={{color:"#000"}}/>
+          {showWhiteboardAnswer&&<SegLine segs={currentQuestion.answerSegs} cls={`${displayFontSizes[displayFontSize]} font-bold text-center`} style={{color:"#166534"}}/>}
+        </>}
+      </div>
+    );
 
-  return (
-    <>
-      {/* Header Bar */}
-      <div className="bg-blue-900 shadow-lg">
-        <div className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
-          {/* Home Button */}
-          <button
-            onClick={() => navigate('/')}
-            className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors"
-          >
-            <Home size={24} />
-            <span className="font-semibold text-lg">Home</span>
-          </button>
-
-          {/* Menu Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-white hover:bg-blue-800 p-2 rounded-lg transition-colors"
-            >
-              {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
-            </button>
-            {isMenuOpen && (
-              <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border-2 border-gray-200 overflow-hidden z-50">
-                <div className="py-2">
-                  <div className="px-6 py-2 font-bold text-gray-700 text-sm uppercase tracking-wide">Color Schemes</div>
-                  {(['default', 'blue', 'pink', 'yellow'] as const).map((scheme: ColorScheme) => (
-                    <button
-                      key={scheme}
-                      onClick={() => { setColorScheme(scheme); setIsMenuOpen(false); }}
-                      className={'w-full text-left px-6 py-3 font-semibold transition-colors ' +
-                        (colorScheme === scheme ? 'bg-blue-100 text-blue-900' : 'text-gray-800 hover:bg-gray-100')}
-                    >
-                      {scheme.charAt(0).toUpperCase() + scheme.slice(1)}
-                    </button>
+    const rightPanel=(isFS:boolean)=>(
+      <div style={{flex:isFS?"none":1,width:isFS?"55%":undefined,height:"100%",position:"relative",overflow:"hidden",backgroundColor:presenterMode?"#000":(isFS?fsWorkingBg:stepBg),borderRadius:isFS?0:undefined}} className={isFS?"":"flex-1 rounded-xl"}>
+        {presenterMode&&<><video ref={videoRef} autoPlay playsInline muted style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}}/>{camError&&<div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",color:"rgba(255,255,255,0.4)",fontSize:"0.85rem",padding:"2rem",textAlign:"center",zIndex:1}}>{camError}</div>}</>}
+        <div style={{position:"absolute",top:10,right:10,display:"flex",gap:6,zIndex:20}}>
+          {presenterMode?(
+            <div style={{position:"relative"}} ref={camDropdownRef}>
+              <button onMouseDown={()=>{didLongPress.current=false;longPressTimer.current=setTimeout(()=>{didLongPress.current=true;setCamDropdownOpen(o=>!o);},500);}} onMouseUp={()=>{if(longPressTimer.current)clearTimeout(longPressTimer.current);if(!didLongPress.current)setPresenterMode(false);}} onMouseLeave={()=>{if(longPressTimer.current)clearTimeout(longPressTimer.current);}}
+                style={{background:"rgba(0,0,0,0.55)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:8,cursor:"pointer",width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                <Video size={16} color="rgba(255,255,255,0.85)"/>
+              </button>
+              {camDropdownOpen&&(
+                <div style={{position:"absolute",top:40,right:0,background:"rgba(12,12,12,0.96)",backdropFilter:"blur(14px)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,minWidth:200,overflow:"hidden",zIndex:30}}>
+                  <div style={{padding:"6px 14px",fontSize:"0.55rem",letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(255,255,255,0.25)"}}>Camera</div>
+                  {camDevices.map((d,i)=>(
+                    <div key={d.deviceId} onClick={()=>{setCamDropdownOpen(false);if(d.deviceId!==currentCamId)startCam(d.deviceId);}} style={{padding:"10px 14px",fontSize:"0.75rem",color:d.deviceId===currentCamId?"#60a5fa":"rgba(255,255,255,0.65)",cursor:"pointer",display:"flex",alignItems:"center",gap:8}}>
+                      <div style={{width:5,height:5,borderRadius:"50%",background:d.deviceId===currentCamId?"#60a5fa":"transparent",flexShrink:0}}/>
+                      {d.label||`Camera ${i+1}`}
+                    </div>
                   ))}
                 </div>
+              )}
+            </div>
+          ):(
+            <button onClick={()=>setPresenterMode(true)} style={{background:"rgba(0,0,0,0.08)",border:"none",borderRadius:8,cursor:"pointer",width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center"}}><Video size={16} color="#6b7280"/></button>
+          )}
+          <button onClick={()=>setWbFullscreen(f=>!f)} style={{background:wbFullscreen?"#374151":(presenterMode?"rgba(0,0,0,0.55)":"rgba(0,0,0,0.08)"),border:presenterMode?"1px solid rgba(255,255,255,0.15)":"none",borderRadius:8,cursor:"pointer",width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center"}}>
+            {wbFullscreen?<Minimize2 size={16} color="#fff"/>:<Maximize2 size={16} color={presenterMode?"rgba(255,255,255,0.85)":"#6b7280"}/>}
+          </button>
+        </div>
+      </div>
+    );
+
+    if(wbFullscreen) return (
+      <div style={{position:"fixed",inset:0,zIndex:200,backgroundColor:fsToolbarBg,display:"flex",flexDirection:"column"}}>
+        {fsToolbar}
+        <div style={{flex:1,display:"flex",minHeight:0}}>
+          {questionBox(true)}<div style={{width:2,backgroundColor:"#000",flexShrink:0}}/>{rightPanel(true)}
+        </div>
+      </div>
+    );
+    return (
+      <div className="p-8" style={{backgroundColor:qBg,height:"600px",boxSizing:"border-box"}}>
+        <div className="flex gap-6" style={{height:"100%"}}>{questionBox(false)}{rightPanel(false)}</div>
+      </div>
+    );
+  };
+
+  // ── Worked example ─────────────────────────────────────────────────────────
+  const renderWorkedExample=()=>{
+    if(!currentQuestion) return null;
+    return (
+      <div className="overflow-y-auto" style={{maxHeight:"120vh"}}>
+        <div className="p-8 w-full" style={{backgroundColor:qBg}}>
+          <div className="text-center py-4 relative">
+            <div style={{position:"absolute",top:0,right:0,display:"flex",gap:6}}>
+              <button style={fontBtnStyle(canDD)} onClick={()=>canDD&&setDisplayFontSize(f=>f-1)}><ChevronDown size={16} color="#6b7280"/></button>
+              <button style={fontBtnStyle(canDI)} onClick={()=>canDI&&setDisplayFontSize(f=>f+1)}><ChevronUp size={16} color="#6b7280"/></button>
+            </div>
+            <SegLine segs={currentQuestion.display} cls={`${displayFontSizes[displayFontSize]} font-semibold`} style={{color:"#000"}}/>
+          </div>
+          {showAnswer&&<>
+            <div className="space-y-4 mt-8">
+              {currentQuestion.working.map((s,i)=>(
+                <div key={i} className="rounded-xl p-6" style={{backgroundColor:stepBg}}>
+                  <h4 className="text-xl font-bold mb-3" style={{color:s.isTip?"#1d4ed8":"#000"}}>
+                    {s.isTip?"💡 Calculator Tip":`Step ${i+1}`}
+                  </h4>
+                  <div className="text-2xl" style={{color:"#000"}}>
+                    <KaTeX latex={s.latex}/>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="rounded-xl p-6 text-center mt-4" style={{backgroundColor:stepBg}}>
+              <SegLine segs={currentQuestion.answerSegs} cls={`${displayFontSizes[displayFontSize]} font-bold`} style={{color:"#166534"}}/>
+            </div>
+          </>}
+        </div>
+      </div>
+    );
+  };
+
+  // ── Worksheet ──────────────────────────────────────────────────────────────
+  const renderWorksheet=()=>{
+    if(worksheet.length===0) return (
+      <div className="rounded-xl shadow-2xl p-8 text-center" style={{backgroundColor:qBg}}>
+        <span className="text-2xl text-gray-400">Generate a worksheet to get started</span>
+      </div>
+    );
+    const fontSizeControls=(
+      <div className="absolute top-4 right-4 flex items-center gap-1">
+        <button disabled={!canWD} onClick={()=>canWD&&setWorksheetFontSize(f=>f-1)} className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${canWD?"bg-blue-900 text-white hover:bg-blue-800":"bg-gray-200 text-gray-400 cursor-not-allowed"}`}><ChevronDown size={20}/></button>
+        <button disabled={!canWI} onClick={()=>canWI&&setWorksheetFontSize(f=>f+1)} className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${canWI?"bg-blue-900 text-white hover:bg-blue-800":"bg-gray-200 text-gray-400 cursor-not-allowed"}`}><ChevronUp size={20}/></button>
+      </div>
+    );
+    const toolTitle=TOOL_CONFIG.tools[currentTool].name;
+    if(isDifferentiated) return (
+      <div className="rounded-xl shadow-2xl p-8 relative" style={{backgroundColor:qBg}}>
+        {fontSizeControls}
+        <h2 className="text-3xl font-bold text-center mb-8" style={{color:"#000"}}>{toolTitle} — Worksheet</h2>
+        <div className="grid grid-cols-3 gap-4" style={{alignItems:"start"}}>
+          {(["level1","level2","level3"] as DifficultyLevel[]).map((lv,li)=>{
+            const lqs=worksheet.filter(q=>q.difficulty===lv), c=LV_COLORS[lv];
+            return (
+              <div key={lv} className={`${c.bg} border-2 ${c.border} rounded-xl p-4`}>
+                <h3 className={`text-xl font-bold mb-4 text-center ${c.text}`}>Level {li+1}</h3>
+                <div style={{display:"grid",gridTemplateColumns:"1fr",gridAutoRows:"1fr",gap:"0.75rem"}}>
+                  {lqs.map((q,idx)=><div key={idx} style={{minHeight:0}}>{renderQCell(q,idx,c.fill)}</div>)}
+                </div>
               </div>
-            )}
+            );
+          })}
+        </div>
+      </div>
+    );
+    return (
+      <div className="rounded-xl shadow-2xl p-8 relative" style={{backgroundColor:qBg}}>
+        {fontSizeControls}
+        <h2 className="text-3xl font-bold text-center mb-8" style={{color:"#000"}}>{toolTitle} — Worksheet</h2>
+        <div style={{display:"grid",gridTemplateColumns:`repeat(${numColumns},1fr)`,gridAutoRows:"1fr",gap:"1rem"}}>
+          {worksheet.map((q,idx)=><div key={idx} style={{minHeight:0}}>{renderQCell(q,idx)}</div>)}
+        </div>
+      </div>
+    );
+  };
+
+  // ── Root render ────────────────────────────────────────────────────────────
+  return (
+    <>
+      <div className="bg-blue-900 shadow-lg">
+        <div className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
+          <button onClick={()=>{window.location.href="/";}} className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors">
+            <Home size={24}/><span className="font-semibold text-lg">Home</span>
+          </button>
+          <div className="relative">
+            <button onClick={()=>setIsMenuOpen(!isMenuOpen)} className="text-white hover:bg-blue-800 p-2 rounded-lg transition-colors">
+              {isMenuOpen?<X size={28}/>:<Menu size={28}/>}
+            </button>
+            {isMenuOpen&&<MenuDropdown colorScheme={colorScheme} setColorScheme={setColorScheme} onClose={()=>setIsMenuOpen(false)} onOpenInfo={()=>setIsInfoOpen(true)}/>}
           </div>
         </div>
       </div>
-
-      {/* Main Content */}
-      <div className="min-h-screen p-8" style={{ backgroundColor: '#f5f3f0' }}>
+      {isInfoOpen&&<InfoModal onClose={()=>setIsInfoOpen(false)}/>}
+      <div className="min-h-screen p-8" style={{backgroundColor:"#f5f3f0"}}>
         <div className="max-w-6xl mx-auto">
-          {/* Title */}
-          <h1 className="text-5xl font-bold text-center mb-8" style={{ color: '#000000' }}>
-            Iteration
-          </h1>
-
-          {/* Divider */}
-          <div className="flex justify-center mb-8">
-            <div style={{ width: '90%', height: '2px', backgroundColor: '#d1d5db' }}></div>
-          </div>
-
-          {/* Tool Selectors */}
+          <h1 className="text-5xl font-bold text-center mb-8" style={{color:"#000"}}>{TOOL_CONFIG.pageTitle}</h1>
+          <div className="flex justify-center mb-8"><div style={{width:"90%",height:"2px",backgroundColor:"#d1d5db"}}/></div>
           <div className="flex justify-center gap-4 mb-6">
-            {(['numerical', 'rearranging', 'verification'] as const).map((tool: ToolType) => (
-              <button
-                key={tool}
-                onClick={() => setCurrentTool(tool)}
-                className={'px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ' +
-                  (currentTool === tool
-                    ? 'bg-blue-900 text-white'
-                    : 'bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900')}
-              >
-                {toolNames[tool]}
+            {toolKeys.map(k=>(
+              <button key={k} onClick={()=>setCurrentTool(k as ToolType)}
+                className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${currentTool===k?"bg-blue-900 text-white":"bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
+                {TOOL_CONFIG.tools[k].name}
               </button>
             ))}
           </div>
-
-          {/* Divider */}
-          <div className="flex justify-center mb-8">
-            <div style={{ width: '90%', height: '2px', backgroundColor: '#d1d5db' }}></div>
-          </div>
-
-          {/* Mode Selectors */}
+          <div className="flex justify-center mb-8"><div style={{width:"90%",height:"2px",backgroundColor:"#d1d5db"}}/></div>
           <div className="flex justify-center gap-4 mb-8">
-            {(['whiteboard', 'single', 'worksheet'] as const).map((m: Mode) => (
-              <button
-                key={m}
-                onClick={() => setMode(m)}
-                className={'px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ' +
-                  (mode === m
-                    ? 'bg-blue-900 text-white'
-                    : 'bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900')}
-              >
-                {m === 'whiteboard' ? 'Whiteboard' : m === 'single' ? 'Worked Example' : 'Worksheet'}
+            {(["whiteboard","single","worksheet"] as const).map(m=>(
+              <button key={m} onClick={()=>{setMode(m);setPresenterMode(false);setWbFullscreen(false);}}
+                className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${mode===m?"bg-blue-900 text-white":"bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
+                {m==="whiteboard"?"Whiteboard":m==="single"?"Worked Example":"Worksheet"}
               </button>
             ))}
           </div>
-
-          {/* Control Bar */}
-          {renderControlBar()}
-
-          {/* Mode Content */}
-          {mode === 'whiteboard' && renderWhiteboardMode()}
-          {mode === 'single' && renderWorkedExampleMode()}
-          {mode === 'worksheet' && renderWorksheetMode()}
+          {mode==="worksheet"&&<>{renderControlBar()}{renderWorksheet()}</>}
+          {mode!=="worksheet"&&(
+            <div className="flex flex-col gap-6">
+              <div className="rounded-xl shadow-lg">{renderControlBar()}</div>
+              <div className="rounded-xl shadow-lg overflow-hidden">
+                {mode==="whiteboard"&&renderWhiteboard()}
+                {mode==="single"&&renderWorkedExample()}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </>
