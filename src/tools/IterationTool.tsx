@@ -76,7 +76,6 @@ const PopoverButton = ({ open, onClick }: { open: boolean; onClick: () => void }
   </button>
 );
 
-const LV_HEADER_COLORS: Record<string, string> = { level1: "text-green-600", level2: "text-yellow-500", level3: "text-red-600" };
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TOOL-SPECIFIC SECTION
@@ -717,6 +716,7 @@ const handlePrint = (questions: AnyQuestion[], toolName: string, difficulty: str
 
   // For print we pass latex strings; the print window runs KaTeX itself
   const segsToLatex = (segs: Seg[]): string =>
+    segs.map(seg => seg.k==="m" ? seg.s : `\\text{${seg.s.replace(/[{}]/g,"\\  const segsToLatex = (segs: Seg[]): string =>
     segs.map(seg => seg.k==="m" ? seg.s : `\\text{${seg.s.replace(/[{}]/g,"\\$&")}}`).join("");
 
   const qHtmlData = questions.map((q,i) => ({
@@ -732,7 +732,17 @@ const handlePrint = (questions: AnyQuestion[], toolName: string, difficulty: str
   const questionToHtml = (item: typeof qHtmlData[0], showAnswer: boolean) =>
     `<div class="q-num">${item.idx+1})</div>`+
     `<div class="q-text">${katexSpan(item.displayLatex)}</div>`+
-    (showAnswer?`<div class="q-answer">${katexSpan(item.answerLatex)}</div>`:"");
+    (showAnswer?`<div class="q-answer">${katexSpan(item.answerLatex)}</div>`:"");")}}`).join("");
+
+  const qHtmlData = questions.map((q,i) => ({
+    displayLatex: segsToLatex(q.display),
+    answerLatex:  segsToLatex(q.answerSegs),
+    difficulty: q.difficulty,
+    idx: i,
+  }));
+
+  const katexSpan = (latex: string) =>
+    `<span class="kr" data-latex="${latex.replace(/"/g,"&quot;")}"></span>`;
 
   const html=`<!DOCTYPE html><html><head><meta charset="utf-8">
 <title>${toolName} — Worksheet</title>
