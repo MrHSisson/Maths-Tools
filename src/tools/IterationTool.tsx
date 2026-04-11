@@ -939,12 +939,12 @@ export default function App() {
   const renderQCell=(q:AnyQuestion,idx:number,bgOverride?:string)=>{
     const bg=bgOverride??stepBg,fsz=fontSizes[worksheetFontSize];
     return(
-      <div className="rounded-lg p-4 shadow" style={{backgroundColor:bg,height:"100%",boxSizing:"border-box",position:"relative"}}>
+      <div className="rounded-lg p-4 shadow" style={{backgroundColor:bg,height:"100%",boxSizing:"border-box",position:"relative",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
         <span style={{position:"absolute",top:0,left:0,fontSize:"0.65em",fontWeight:700,color:"#000",lineHeight:1,padding:"5px 5px 7px 5px",borderRight:"1px solid #000",borderBottom:"1px solid #000"}}>{idx+1})</span>
-        <div className={`${fsz} font-semibold`} style={{color:"#000",paddingTop:"0.5em",lineHeight:1.8}}>
+        <div className={`${fsz} font-semibold text-center`} style={{color:"#000",lineHeight:1.8}}>
           <SegLine segs={q.display}/>
         </div>
-        {showWorksheetAnswers&&<div className={`${fsz} mt-1`} style={{color:"#059669"}}><SegLine segs={q.answerSegs}/></div>}
+        {showWorksheetAnswers&&<div className={`${fsz} mt-1 text-center`} style={{color:"#059669"}}><SegLine segs={q.answerSegs}/></div>}
       </div>
     );
   };
