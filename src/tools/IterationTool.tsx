@@ -447,14 +447,14 @@ const genVerification = (level: DifficultyLevel): IterQuestion => {
     if (level==="level1") { lBound=Math.floor(x); uBound=Math.ceil(x); if(lBound===uBound) uBound++; root=x; }
     else if (level==="level2") { root=roundTo(x,1); lBound=roundTo(root-0.05,2); uBound=roundTo(root+0.05,2); }
     else { root=roundTo(x,2); lBound=roundTo(root-0.005,3); uBound=roundTo(root+0.005,3); }
-    eqLatex=`x^3 - ${a}x - ${b} = 0`; fxLatex=`x^3 - ${a}x - ${b}`; eqPlain=`x³−${a}x−${b}=0`;
+    eqLatex=`x^3 - ${a}x - ${b}`; fxLatex=`x^3 - ${a}x - ${b}`; eqPlain=`x³−${a}x−${b}=0`;
     fL=lBound**3-a*lBound-b; fU=uBound**3-a*uBound-b;
   } else {
     const disc=a*a+4*b, x=(a+Math.sqrt(disc))/2;
     if (level==="level1") { lBound=Math.floor(x); uBound=Math.ceil(x); if(lBound===uBound) uBound++; root=x; }
     else if (level==="level2") { root=roundTo(x,1); lBound=roundTo(root-0.05,2); uBound=roundTo(root+0.05,2); }
     else { root=roundTo(x,2); lBound=roundTo(root-0.005,3); uBound=roundTo(root+0.005,3); }
-    eqLatex=`x^2 - ${a}x - ${b} = 0`; fxLatex=`x^2 - ${a}x - ${b}`; eqPlain=`x²−${a}x−${b}=0`;
+    eqLatex=`x^2 - ${a}x - ${b}`; fxLatex=`x^2 - ${a}x - ${b}`; eqPlain=`x²−${a}x−${b}=0`;
     fL=lBound**2-a*lBound-b; fU=uBound**2-a*uBound-b;
   }
 
@@ -475,11 +475,11 @@ const genVerification = (level: DifficultyLevel): IterQuestion => {
 
   let display: Seg[];
   if (level==="level1") {
-    display = [tx("The equation "), mx(eqLatex), tx(` has a root between ${lBound} and ${uBound}. Use the change of sign method to verify this.`)];
+    display = [tx("The equation "), mx(eqLatex), tx(" = 0 has a root between "), tx(`${lBound}`), tx(" and "), tx(`${uBound}`), tx(". Use the change of sign method to verify this.")];
   } else if (level==="level2") {
-    display = [tx("Show that "), mx(eqLatex), tx(" has a root equal to "), mx(fmtD(root,1)), tx(" correct to 1 decimal place.")];
+    display = [tx("Show that "), mx(eqLatex), tx(" = 0 has a root equal to "), mx(fmtD(root,1)), tx(" correct to 1 decimal place.")];
   } else {
-    display = [tx("Show that "), mx(eqLatex), tx(" has a root equal to "), mx(fmtD(root,2)), tx(" correct to 2 decimal places.")];
+    display = [tx("Show that "), mx(eqLatex), tx(" = 0 has a root equal to "), mx(fmtD(root,2)), tx(" correct to 2 decimal places.")];
   }
   const displayPlain = level==="level1" ? `${eqPlain} root between ${lBound} and ${uBound}` : `Show ${eqPlain} root=${level==="level2"?fmtD(root,1):fmtD(root,2)}`;
 
@@ -692,7 +692,7 @@ body{font-family:"Segoe UI",Arial,sans-serif;font-size:${FONT_PX}px;}
 .ph{display:flex;justify-content:space-between;align-items:baseline;border-bottom:.4mm solid #1e3a8a;padding-bottom:1.5mm;margin-bottom:2mm;}
 .ph h1{font-size:5mm;font-weight:700;color:#1e3a8a;}.ph .meta{font-size:3mm;color:#6b7280;}
 .grid{display:grid;gap:${GAP_MM}mm;}
-.cell{border:.3mm solid #d1d5db;border-radius:1mm;padding:${PAD_MM}mm;position:relative;}
+.cell{border:.3mm solid #d1d5db;border-radius:1mm;padding:${PAD_MM}mm;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden;}
 .dg{display:grid;grid-template-columns:repeat(3,1fr);gap:${GAP_MM}mm;}
 .dcol{display:flex;flex-direction:column;gap:${GAP_MM}mm;}
 .dh{height:${diffHdrMM}mm;display:flex;align-items:center;justify-content:center;font-size:3mm;font-weight:700;border-radius:1mm;}
