@@ -102,28 +102,16 @@ export default function LandingPage(): JSX.Element {
   const navigate = useNavigate();
 
   const totalTools: number = categories.reduce((acc, cat) => acc + cat.tools.length, 0);
-  const readyTools: number = categories.reduce((acc, cat) => acc + cat.tools.filter(t => t.ready).length, 0);
-
-  const handleToolClick = (tool: Tool): void => {
-    if (tool.ready) {
-      navigate(tool.path);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Background with depth */}
       <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
-        {/* Base gradient */}
         <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-slate-100" />
-        
-        {/* Soft colour blobs */}
         <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-200/30 rounded-full blur-3xl" />
         <div className="absolute top-1/3 -left-24 w-80 h-80 bg-purple-200/25 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 right-1/4 w-72 h-72 bg-emerald-200/20 rounded-full blur-3xl" />
         <div className="absolute -bottom-12 left-1/3 w-64 h-64 bg-orange-200/20 rounded-full blur-3xl" />
-        
-        {/* Subtle grid */}
         <div className="absolute inset-0 opacity-[0.015]" style={{
           backgroundImage: `radial-gradient(circle at 1px 1px, rgba(0,0,0,0.3) 1px, transparent 0)`,
           backgroundSize: '32px 32px'
@@ -155,15 +143,11 @@ export default function LandingPage(): JSX.Element {
             Interactive tools for classroom teaching and independent practice.
             Supporting the "I Do, We Do, You Do" pedagogy.
           </p>
-          
+
           {/* Tool Counter */}
-          <div className="inline-flex items-center gap-3 bg-white/80 backdrop-blur-sm px-6 py-3 rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/80">
-            <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full" />
-              <span className="text-slate-700 font-semibold">{readyTools} tools available</span>
-            </div>
-            <div className="w-px h-5 bg-slate-200" />
-            <span className="text-slate-400">{totalTools - readyTools} coming soon</span>
+          <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm px-6 py-3 rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-200/80">
+            <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full" />
+            <span className="text-slate-700 font-semibold">{totalTools} tools available</span>
           </div>
         </div>
       </div>
@@ -180,59 +164,40 @@ export default function LandingPage(): JSX.Element {
               <h2 className="text-2xl font-bold text-slate-900">{category.name}</h2>
               <div className="hidden sm:block h-px flex-1 max-w-xs bg-gradient-to-r from-slate-300 to-transparent" />
             </div>
-            
+
             {category.tools.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {category.tools.map((tool) => (
                   <button
                     key={tool.id}
-                    onClick={() => handleToolClick(tool)}
-                    disabled={!tool.ready}
-                    className={`group relative bg-white/90 backdrop-blur-sm rounded-2xl p-6 text-left transition-all duration-300 border ${
-                      tool.ready 
-                        ? 'border-slate-200 hover:border-slate-300 hover:shadow-2xl hover:shadow-slate-300/50 hover:-translate-y-1 hover:bg-white cursor-pointer' 
-                        : 'border-slate-200/50 opacity-50 cursor-not-allowed'
-                    } shadow-xl shadow-slate-200/50`}
+                    onClick={() => navigate(tool.path)}
+                    className="group relative bg-white/90 backdrop-blur-sm rounded-2xl p-6 text-left transition-all duration-300 border border-slate-200 hover:border-slate-300 hover:shadow-2xl hover:shadow-slate-300/50 hover:-translate-y-1 hover:bg-white cursor-pointer shadow-xl shadow-slate-200/50"
                   >
                     {/* Badge */}
                     <div className="absolute top-5 right-5">
-                      {tool.ready ? (
-                        <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 text-xs font-semibold px-2.5 py-1 rounded-full border border-emerald-200">
-                          <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
-                          Ready
-                        </span>
-                      ) : (
-                        <span className="bg-slate-100 text-slate-500 text-xs font-semibold px-2.5 py-1 rounded-full">
-                          Coming Soon
-                        </span>
-                      )}
+                      <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 text-xs font-semibold px-2.5 py-1 rounded-full border border-emerald-200">
+                        <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
+                        {tool.ready}
+                      </span>
                     </div>
 
                     {/* Icon */}
-                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold mb-5 transition-all duration-300 ${
-                      tool.ready 
-                        ? `bg-gradient-to-br ${category.iconBg} text-slate-700 group-hover:scale-110 group-hover:shadow-lg` 
-                        : 'bg-slate-100 text-slate-400'
-                    }`}>
+                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold mb-5 transition-all duration-300 bg-gradient-to-br ${category.iconBg} text-slate-700 group-hover:scale-110 group-hover:shadow-lg`}>
                       {tool.icon}
                     </div>
 
                     {/* Content */}
-                    <h3 className={`font-bold text-lg leading-tight mb-2 transition-colors duration-300 pr-16 ${
-                      tool.ready ? 'text-slate-900 group-hover:text-blue-900' : 'text-slate-400'
-                    }`}>
+                    <h3 className="font-bold text-lg leading-tight mb-2 transition-colors duration-300 pr-16 text-slate-900 group-hover:text-blue-900">
                       {tool.name}
                     </h3>
-                    <p className={`text-sm leading-relaxed ${tool.ready ? 'text-slate-600' : 'text-slate-400'}`}>
+                    <p className="text-sm leading-relaxed text-slate-600">
                       {tool.description}
                     </p>
 
                     {/* Hover Arrow */}
-                    {tool.ready && (
-                      <div className="absolute bottom-6 right-6 w-9 h-9 rounded-full bg-blue-900 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-lg">
-                        <ChevronRight className="text-white" size={20} />
-                      </div>
-                    )}
+                    <div className="absolute bottom-6 right-6 w-9 h-9 rounded-full bg-blue-900 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-lg">
+                      <ChevronRight className="text-white" size={20} />
+                    </div>
                   </button>
                 ))}
               </div>
