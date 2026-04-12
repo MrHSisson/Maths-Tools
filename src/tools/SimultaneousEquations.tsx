@@ -840,7 +840,8 @@ body{font-family:"Segoe UI",Arial,sans-serif;}
 .dcol{display:flex;flex-direction:column;gap:${GAP_MM}mm;}
 .dh{height:${diffHdrMM}mm;display:flex;align-items:center;justify-content:center;font-size:3mm;font-weight:700;border-radius:1mm;}
 .dh.level1{background:#dcfce7;color:#166534;}.dh.level2{background:#fef9c3;color:#854d0e;}.dh.level3{background:#fee2e2;color:#991b1b;}
-.qn{position:absolute;top:0;left:0;font-size:${Math.round(FONT_PX*0.6)}px;font-weight:700;color:#000;padding:1.2mm;border-right:0.3mm solid #000;border-bottom:0.3mm solid #000;}
+.qbanner{width:100%;padding:1.2mm 3mm;font-size:${Math.round(FONT_PX*0.72)}px;font-weight:700;color:#000;border-bottom:0.3mm solid #000;text-align:left;flex-shrink:0;box-sizing:border-box;}
+.qbody{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:${PAD_MM}mm;box-sizing:border-box;}
 .instr{font-size:${Math.round(FONT_PX*0.8)}px;font-weight:600;color:#000;text-align:center;}
 .er{display:flex;align-items:baseline;gap:3px;justify-content:center;}
 .em .katex{font-size:${FONT_PX}px;}
@@ -860,7 +861,7 @@ document.addEventListener("DOMContentLoaded",function(){
   function kEl(latex){var s=document.createElement("span");s.className="kr";kr(s,latex);return s;}
   function cellInner(item,showAns){
     var div=document.createElement("div");div.style.width="100%";div.style.textAlign="center";
-    var instr=document.createElement("div");instr.className="instr";instr.textContent="Solve:";div.appendChild(instr);
+    var instr=document.createElement("div");instr.className="instr";instr.style.marginTop="1mm";instr.textContent="Solve:";div.appendChild(instr);
     [item.eq1,item.eq2].forEach(function(eq){
       var row=document.createElement("div");row.className="er";
       var math=document.createElement("span");math.className="em";math.appendChild(kEl(eq));
@@ -872,8 +873,10 @@ document.addEventListener("DOMContentLoaded",function(){
   function makeCell(item,showAns,cW,cH,diff){
     var cell=document.createElement("div");cell.className=diff?"dc":"cell";
     cell.style.width=cW+"mm";cell.style.height=cH+"mm";
-    var num=document.createElement("div");num.className="qn";num.textContent=(item.idx+1)+")";
-    cell.appendChild(num);cell.appendChild(cellInner(item,showAns));return cell;
+    cell.style.flexDirection="column";cell.style.justifyContent="flex-start";cell.style.alignItems="stretch";cell.style.padding="0";
+    var banner=document.createElement("div");banner.className="qbanner";banner.textContent="Question "+(item.idx+1);
+    var body=document.createElement("div");body.className="qbody";body.appendChild(cellInner(item,showAns));
+    cell.appendChild(banner);cell.appendChild(body);return cell;
   }
   var probe=document.getElementById("probe"),maxH=0;
   qData.forEach(function(item){var el=cellInner(item,true);probe.appendChild(el);if(el.scrollHeight>maxH)maxH=el.scrollHeight;probe.removeChild(el);});
