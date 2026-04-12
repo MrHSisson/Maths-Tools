@@ -95,6 +95,7 @@ const categories: Category[] = [
     iconBg: 'from-orange-50 to-amber-50',
     tools: [
       { id: 'call-selector', path: '/call-selector', name: 'Friday Phonecalls', icon: '☎️', description: 'A tool to randomly select students for phonecalls', ready: 'true' },
+      { id: 'tool-shell', path: '/tool-shell', name: 'Tool Shell', icon: '🐢', description: 'A tool shell for developing new tools', ready: 'v2.1' },
     ]
   },
 ];
