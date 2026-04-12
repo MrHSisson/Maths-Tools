@@ -22,6 +22,7 @@ import MultiplicationGenerator from './tools/MultiplicationGenerator';
 import BasicAngleFacts from './tools/BasicAngleFacts';
 import CallSelector from './tools/CallSelector';
 import AnglesInTriangles from './tools/AnglesInTriangles';
+import SimultaneousEquations from './tools/SimultaneousEquations';
 
 function App() {
   return (
@@ -49,6 +50,7 @@ function App() {
       <Route path="/basic-angle-facts" element={<BasicAngleFacts />} />
       <Route path="/call-selector" element={<CallSelector />} />
       <Route path="/angles-in-triangles" element={<AnglesInTriangles />} />
+      <Route path="/simultaneous-equations" element={<SimultaneousEquations />} />
     </Routes>
   )
 }
