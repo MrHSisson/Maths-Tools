@@ -116,7 +116,6 @@ const LV_HEADER_COLORS:Record<string,string> = {level1:"text-green-600",level2:"
 
 // TogglePill and SegButtons are available for use in tool-specific QO popovers.
 // They are defined here so they are in scope for the tool section above.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const TogglePill = ({checked,onChange,label}:{checked:boolean;onChange:(v:boolean)=>void;label:string}) => (
   <label className="flex items-center gap-3 cursor-pointer py-1">
     <div onClick={()=>onChange(!checked)} className={`w-12 h-6 rounded-full transition-colors relative flex-shrink-0 cursor-pointer ${checked?"bg-blue-900":"bg-gray-300"}`}>
@@ -126,7 +125,6 @@ const TogglePill = ({checked,onChange,label}:{checked:boolean;onChange:(v:boolea
   </label>
 );
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const SegButtons = ({value,onChange,opts}:{value:string;onChange:(v:string)=>void;opts:{value:string;label:string}[]}) => (
   <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden">
     {opts.map(opt=>(
@@ -428,7 +426,6 @@ const mStr = (x: number | string) => `$${x}$`;
 
 const step  = (latex: string, plain?: string) =>
   ({ type: "step",  latex, plain: plain ?? latex });
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const tStep = (text: string) =>
   ({ type: "tStep", latex: `\\text{${text}}`, plain: text });
 const mStep = (label: string, latex: string, unit?: string) =>
@@ -436,7 +433,6 @@ const mStep = (label: string, latex: string, unit?: string) =>
 
 // fmt: format a number to dp decimal places, stripping trailing zeros.
 // Default is 2dp. e.g. fmt(3.5) → "3.5", fmt(3.0) → "3"
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const fmt = (n: number, dp = 2): string => n.toFixed(dp).replace(/\.?0+$/, "");
 
 // ── 6. Question generators ────────────────────────────────────────────────────
@@ -547,8 +543,12 @@ const generateUniqueQ = (
 // ██████████████████████████████████████████████████████████████████████████████
 // ═══════════════════════════════════════════════════════════════════════════════
 
-
-
+// These helpers are documented for tool authors but not used in the stub generator.
+// The void references below satisfy the TypeScript compiler without affecting runtime.
+void (TogglePill as unknown);
+void (SegButtons as unknown);
+void (tStep as unknown);
+void (fmt as unknown);
 
 const LV_COLORS:Record<DifficultyLevel,{bg:string;border:string;text:string;fill:string}> = {
   level1:{bg:"bg-green-50",border:"border-green-500",text:"text-green-700",fill:"#dcfce7"},
