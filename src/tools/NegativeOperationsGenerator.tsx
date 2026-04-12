@@ -376,12 +376,12 @@ export default function NegativeNumbersOperations() {
     questions.forEach((q, index) => {
       const row = Math.floor(index / numColumns);
       const column = index % numColumns;
-      const x = 20 + (column * columnWidth);
+      const columnCenterX = 20 + (column * columnWidth) + (columnWidth / 2);
       const y = startY + (row * lineHeight);
 
       if (y < pageHeight - 20) {
         // For missing number format, question already includes = answer, don't add = _____
-        doc.text(useMissingNumber ? q.question : `${q.question} = _____`, x, y);
+        doc.text(useMissingNumber ? q.question : `${q.question} = _____`, columnCenterX, y, { align: 'center' });
       }
     });
 
@@ -404,13 +404,13 @@ export default function NegativeNumbersOperations() {
     questions.forEach((q, index) => {
       const row = Math.floor(index / numColumns);
       const column = index % numColumns;
-      const x = 20 + (column * columnWidth);
+      const columnCenterX = 20 + (column * columnWidth) + (columnWidth / 2);
       const y = answerStartY + (row * lineHeight);
 
       if (y < pageHeight - 20) {
         // For missing number, replace __ with the answer. For standard, show question = answer
         const answerText = useMissingNumber ? q.question.replace('__', `${q.answer}`) : `${q.question} = ${q.answer}`;
-        doc.text(answerText, x, y);
+        doc.text(answerText, columnCenterX, y, { align: 'center' });
       }
     });
 
