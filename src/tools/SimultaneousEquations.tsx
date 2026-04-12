@@ -841,7 +841,7 @@ body{font-family:"Segoe UI",Arial,sans-serif;}
 .dh{height:${diffHdrMM}mm;display:flex;align-items:center;justify-content:center;font-size:3mm;font-weight:700;border-radius:1mm;}
 .dh.level1{background:#dcfce7;color:#166534;}.dh.level2{background:#fef9c3;color:#854d0e;}.dh.level3{background:#fee2e2;color:#991b1b;}
 .qbanner{width:100%;padding:1.2mm 3mm;font-size:${Math.round(FONT_PX*0.72)}px;font-weight:700;color:#000;border-bottom:0.3mm solid #000;text-align:center;flex-shrink:0;box-sizing:border-box;}
-.qbody{width:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:${PAD_MM}mm;box-sizing:border-box;}
+.qbody{width:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:${PAD_MM*0.4}mm ${PAD_MM}mm ${PAD_MM}mm ${PAD_MM}mm;box-sizing:border-box;}
 .instr{font-size:${Math.round(FONT_PX*0.8)}px;font-weight:600;color:#000;text-align:center;}
 .er{display:flex;align-items:baseline;gap:3px;justify-content:center;}
 .em .katex{font-size:${FONT_PX}px;}
