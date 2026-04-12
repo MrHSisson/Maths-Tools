@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, CSSProperties } from "react";
+import { useNavigate } from "react-router-dom";
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, Printer } from "lucide-react";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -941,6 +942,7 @@ document.addEventListener("DOMContentLoaded",function(){
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export default function App() {
+  const navigate = useNavigate();
   const [subTool, setSubTool] = useState<SubTool>("elimination");
   const [mode, setMode] = useState<"whiteboard"|"single"|"worksheet">("whiteboard");
   const [difficulty, setDifficulty] = useState<DifficultyLevel>("level1");
@@ -1352,7 +1354,7 @@ export default function App() {
     <>
       <div className="bg-blue-900 shadow-lg">
         <div className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
-          <button onClick={() => { window.location.href="/"; }} className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors">
+          <button onClick={() => navigate("/")} className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors">
             <Home size={24}/><span className="font-semibold text-lg">Home</span>
           </button>
           <div className="relative">
