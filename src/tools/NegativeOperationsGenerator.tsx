@@ -373,7 +373,7 @@ export default function NegativeNumbersOperations() {
     const numColumns = 3;
 
     doc.setFontSize(13);
-    doc.setFont('courier', 'normal'); // Use Courier for monospaced alignment
+    doc.setFont('helvetica', 'normal');
     questions.forEach((q, index) => {
       const row = Math.floor(index / numColumns);
       const column = index % numColumns;
@@ -391,10 +391,10 @@ export default function NegativeNumbersOperations() {
         // Split by spaces to get components
         const parts = questionText.split(' ');
         if (parts.length >= 3) {
-          // Pad first number/blank to 5 characters (right-aligned for numbers)
-          const first = parts[0].padStart(6, ' ');
+          // Pad first number/blank to 4 characters (right-aligned for numbers)
+          const first = parts[0].padStart(4, ' ');
           const operator = parts[1]; // Keep operator as-is (single char)
-          const second = parts[2].padStart(6, ' ');
+          const second = parts[2].padStart(4, ' ');
           const rest = parts.slice(3).join(' '); // = and answer/blank
           
           formattedQuestion = `${first} ${operator} ${second} ${rest}`;
@@ -419,7 +419,7 @@ export default function NegativeNumbersOperations() {
     // Draw answers in 3 columns
     const answerStartY = 35;
     doc.setFontSize(13);
-    doc.setFont('courier', 'normal'); // Use Courier for monospaced alignment
+    doc.setFont('helvetica', 'normal');
     questions.forEach((q, index) => {
       const row = Math.floor(index / numColumns);
       const column = index % numColumns;
@@ -434,9 +434,9 @@ export default function NegativeNumbersOperations() {
         let formattedAnswer = answerText;
         const parts = answerText.split(' ');
         if (parts.length >= 3) {
-          const first = parts[0].padStart(6, ' ');
+          const first = parts[0].padStart(4, ' ');
           const operator = parts[1];
-          const second = parts[2].padStart(6, ' ');
+          const second = parts[2].padStart(4, ' ');
           const rest = parts.slice(3).join(' ');
           
           formattedAnswer = `${first} ${operator} ${second} ${rest}`;
