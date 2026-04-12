@@ -24,7 +24,8 @@ type SignCombination = 'pos_pos' | 'pos_neg' | 'neg_pos' | 'neg_neg';
 const generateQuestions = (
   operationCombinations: Record<OperationType, SignCombination[]>,
   numQuestions: number,
-  useBrackets: boolean
+  useBrackets: boolean,
+  useMissingNumber: boolean
 ): Question[] => {
   const allPossible: Question[] = [];
   
@@ -40,6 +41,13 @@ const generateQuestions = (
     });
   });
 
+  // Convert to missing number format if enabled
+  if (useMissingNumber) {
+    allPossible.forEach(q => {
+      convertToMissingNumber(q);
+    });
+  }
+
   // Shuffle using Fisher-Yates algorithm
   for (let i = allPossible.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -47,6 +55,48 @@ const generateQuestions = (
   }
 
   return allPossible.slice(0, Math.min(numQuestions, allPossible.length));
+};
+
+// Convert a standard question to missing number format
+const convertToMissingNumber = (q: Question): void => {
+  // Parse the question to extract parts
+  const parts = q.question.split(' ');
+  const firstNum = parts[0];
+  const operator = parts[1];
+  const secondNum = parts.slice(2).join(' '); // May include parentheses
+  
+  // Randomly choose to make first or second number missing (50/50)
+  const makeFirstMissing = Math.random() < 0.5;
+  
+  if (makeFirstMissing) {
+    // [] + 5 = 10  (answer is the missing first number)
+    q.question = `[] ${operator} ${secondNum} = ${q.answer}`;
+    // Calculate what the first number should be based on the operation
+    if (operator === '+') {
+      q.answer = q.answer - parseFloat(secondNum.replace(/[()]/g, ''));
+    } else if (operator === '-') {
+      q.answer = q.answer + parseFloat(secondNum.replace(/[()]/g, ''));
+    } else if (operator === '×' || operator === 'x') {
+      q.answer = q.answer / parseFloat(secondNum.replace(/[()]/g, ''));
+    } else if (operator === '÷' || operator === '/') {
+      q.answer = q.answer * parseFloat(secondNum.replace(/[()]/g, ''));
+    }
+  } else {
+    // 5 + [] = 10  (answer is the missing second number)
+    const originalAnswer = q.answer;
+    q.question = `${firstNum} ${operator} [] = ${originalAnswer}`;
+    // Calculate what the second number should be
+    const first = parseFloat(firstNum.replace(/[()]/g, ''));
+    if (operator === '+') {
+      q.answer = originalAnswer - first;
+    } else if (operator === '-') {
+      q.answer = first - originalAnswer;
+    } else if (operator === '×' || operator === 'x') {
+      q.answer = originalAnswer / first;
+    } else if (operator === '÷' || operator === '/') {
+      q.answer = first / originalAnswer;
+    }
+  }
 };
 
 const generateAdditionSubtractionQuestions = (
@@ -214,6 +264,7 @@ export default function NegativeNumbersOperations() {
   });
   const [numQuestions, setNumQuestions] = useState<number>(40);
   const [useBrackets, setUseBrackets] = useState<boolean>(true);
+  const [useMissingNumber, setUseMissingNumber] = useState<boolean>(false);
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   const [colorScheme, setColorScheme] = useState<ColorScheme>('default');
   const [error, setError] = useState<string>('');
@@ -258,7 +309,7 @@ export default function NegativeNumbersOperations() {
     }
 
     // Build flat list of (operation, combo) pairs for generation
-    const questions = generateQuestions(operationCombinations, numQuestions, useBrackets);
+    const questions = generateQuestions(operationCombinations, numQuestions, useBrackets, useMissingNumber);
 
     if (questions.length === 0) {
       setError('No questions could be generated with the current settings');
@@ -278,7 +329,7 @@ export default function NegativeNumbersOperations() {
       return;
     }
 
-    const questions = generateQuestions(operationCombinations, numQuestions, useBrackets);
+    const questions = generateQuestions(operationCombinations, numQuestions, useBrackets, useMissingNumber);
     
     if (questions.length === 0) {
       setError('No questions could be generated with the current settings');
@@ -329,7 +380,8 @@ export default function NegativeNumbersOperations() {
       const y = startY + (row * lineHeight);
 
       if (y < pageHeight - 20) {
-        doc.text(`${q.question} = _____`, x, y);
+        // For missing number format, question already includes = answer, don't add = _____
+        doc.text(useMissingNumber ? q.question : `${q.question} = _____`, x, y);
       }
     });
 
@@ -356,7 +408,9 @@ export default function NegativeNumbersOperations() {
       const y = answerStartY + (row * lineHeight);
 
       if (y < pageHeight - 20) {
-        doc.text(`${q.question} = ${q.answer}`, x, y);
+        // For missing number, replace [] with the answer. For standard, show question = answer
+        const answerText = useMissingNumber ? q.question.replace('[]', `[${q.answer}]`) : `${q.question} = ${q.answer}`;
+        doc.text(answerText, x, y);
       }
     });
 
@@ -581,6 +635,22 @@ export default function NegativeNumbersOperations() {
               </label>
             </div>
 
+            {/* Missing Number Option */}
+            <div className="flex justify-center items-center gap-3 mb-6">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={useMissingNumber}
+                  onChange={(e) => setUseMissingNumber(e.target.checked)}
+                  className="w-5 h-5 cursor-pointer"
+                  style={{ accentColor: '#1e3a8a' }}
+                />
+                <span className="text-lg font-semibold" style={{ color: '#000000' }}>
+                  Missing number questions (e.g., 2 + [] = 5)
+                </span>
+              </label>
+            </div>
+
             {/* Number of Questions */}
             <div className="flex justify-center items-center gap-4 mb-6">
               <label className="text-lg font-semibold" style={{ color: '#000000' }}>
@@ -652,7 +722,7 @@ export default function NegativeNumbersOperations() {
                 {previewQuestions.slice(0, 12).map((q, idx) => (
                   <div key={idx} className="p-3">
                     <span className="text-xl font-semibold" style={{ color: '#000000' }}>
-                      {idx + 1}. {q.question} = _____
+                      {idx + 1}. {useMissingNumber ? q.question : `${q.question} = _____`}
                     </span>
                   </div>
                 ))}
