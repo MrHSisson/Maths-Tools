@@ -69,8 +69,8 @@ const convertToMissingNumber = (q: Question): void => {
   const makeFirstMissing = Math.random() < 0.5;
   
   if (makeFirstMissing) {
-    // ☐ + 5 = 10  (answer is the missing first number)
-    q.question = `☐ ${operator} ${secondNum} = ${q.answer}`;
+    // ____ + 5 = 10  (answer is the missing first number)
+    q.question = `____ ${operator} ${secondNum} = ${q.answer}`;
     // Calculate what the first number should be based on the operation
     if (operator === '+') {
       q.answer = q.answer - parseFloat(secondNum.replace(/[()]/g, ''));
@@ -82,9 +82,9 @@ const convertToMissingNumber = (q: Question): void => {
       q.answer = q.answer * parseFloat(secondNum.replace(/[()]/g, ''));
     }
   } else {
-    // 5 + ☐ = 10  (answer is the missing second number)
+    // 5 + ____ = 10  (answer is the missing second number)
     const originalAnswer = q.answer;
-    q.question = `${firstNum} ${operator} ☐ = ${originalAnswer}`;
+    q.question = `${firstNum} ${operator} ____ = ${originalAnswer}`;
     // Calculate what the second number should be
     const first = parseFloat(firstNum.replace(/[()]/g, ''));
     if (operator === '+') {
@@ -408,8 +408,8 @@ export default function NegativeNumbersOperations() {
       const y = answerStartY + (row * lineHeight);
 
       if (y < pageHeight - 20) {
-        // For missing number, replace ☐ with the answer. For standard, show question = answer
-        const answerText = useMissingNumber ? q.question.replace('☐', `[${q.answer}]`) : `${q.question} = ${q.answer}`;
+        // For missing number, replace ____ with the answer. For standard, show question = answer
+        const answerText = useMissingNumber ? q.question.replace('____', `${q.answer}`) : `${q.question} = ${q.answer}`;
         doc.text(answerText, x, y);
       }
     });
@@ -646,7 +646,7 @@ export default function NegativeNumbersOperations() {
                   style={{ accentColor: '#1e3a8a' }}
                 />
                 <span className="text-lg font-semibold" style={{ color: '#000000' }}>
-                  Missing number questions (e.g., 2 + ☐ = 5)
+                  Missing number questions (e.g., 2 + ____ = 5)
                 </span>
               </label>
             </div>
