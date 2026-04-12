@@ -835,7 +835,7 @@ body{font-family:"Segoe UI",Arial,sans-serif;}
 .ph{display:flex;justify-content:space-between;align-items:baseline;border-bottom:0.4mm solid #1e3a8a;padding-bottom:1.5mm;margin-bottom:2mm;}
 .ph h1{font-size:5mm;font-weight:700;color:#1e3a8a;}.ph .meta{font-size:3mm;color:#6b7280;}
 .grid{display:grid;gap:${GAP_MM}mm;}
-.cell,.dc{border:0.3mm solid #d1d5db;border-radius:1mm;padding:${PAD_MM}mm;overflow:hidden;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1mm;}
+.cell,.dc{border:0.3mm solid #d1d5db;border-radius:3mm;padding:${PAD_MM}mm;overflow:hidden;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1mm;}
 .dg{display:grid;grid-template-columns:repeat(3,1fr);gap:${GAP_MM}mm;}
 .dcol{display:flex;flex-direction:column;gap:${GAP_MM}mm;}
 .dh{height:${diffHdrMM}mm;display:flex;align-items:center;justify-content:center;font-size:3mm;font-weight:700;border-radius:1mm;}
@@ -883,7 +883,10 @@ document.addEventListener("DOMContentLoaded",function(){
   for(var r=0;r<rowH.length;r++){if((r+1)*cols>=totalQ&&rowH[r]>=needed){chosenH=rowH[r];rpp=r+1;break;}}
   if(chosenH<needed)for(var r=0;r<rowH.length;r++){if(rowH[r]>=needed){chosenH=rowH[r];rpp=r+1;}}
   var dpc=Math.floor(totalQ/3),dUsable=usableH-dHdr-GAP,dRows=1,dCellH=dUsable;
-  for(var rd=0;rd<10;rd++){var h=(dUsable-GAP*rd)/(rd+1);if(h>=needed){dRows=rd+1;dCellH=h;}else break;}
+  for(var rd=0;rd<dpc;rd++){var h=(dUsable-GAP*rd)/(rd+1);if(h>=needed){dRows=rd+1;dCellH=h;break;}}
+  // recalculate correctly: find max rows that still fit given needed cell height
+  dRows=1;dCellH=dUsable;
+  for(var rd2=1;rd2<=dpc;rd2++){var hd=(dUsable-GAP*(rd2-1))/rd2;if(hd>=needed){dRows=rd2;dCellH=hd;}}
   var cW=isDiff?(PWmm-GAP*2)/3:(PWmm-GAP*(cols-1))/cols;
   var lvls=["level1","level2","level3"],lbls=["Level 1","Level 2","Level 3"];
   function makePage(pageData,showAns,pgIdx,totalPages){
@@ -1080,7 +1083,7 @@ export default function App() {
     const fsz = fontSizes[worksheetFontSize];
     const instrFsz = fontSizes[Math.max(0, worksheetFontSize - 1)];
     return (
-      <div style={{ backgroundColor: bg, height: "100%", boxSizing: "border-box", position: "relative", padding: "8px 8px 8px 22px" }}>
+      <div style={{ backgroundColor: bg, height: "100%", boxSizing: "border-box", position: "relative", padding: "8px 8px 8px 22px", borderRadius: "12px" }}>
         <span style={{ position: "absolute", top: 0, left: 0, fontSize: "0.62em", fontWeight: 700, color: "#000", padding: "2px 3px 4px 3px", borderRight: "1px solid #000", borderBottom: "1px solid #000" }}>{idx + 1})</span>
         <div className="flex flex-col items-center gap-1 w-full">
           <span className={`${instrFsz} font-semibold`} style={{ color: "#000" }}>Solve:</span>
@@ -1200,7 +1203,7 @@ export default function App() {
     );
 
     const questionBox = (isFS: boolean) => (
-      <div style={{ position: "relative", width: isFS?"40%":"480px", height: "100%", backgroundColor: isFS?fsQuestionBg:stepBg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: isFS?48:32, boxSizing: "border-box", flexShrink: 0, borderRadius: isFS?0:undefined }}>
+      <div style={{ position: "relative", width: isFS?"40%":"480px", height: "100%", backgroundColor: isFS?fsQuestionBg:stepBg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: isFS?48:32, boxSizing: "border-box", flexShrink: 0, borderRadius: isFS?0:"12px" }}>
         <div style={{ position: "absolute", top: 10, right: 10, display: "flex", gap: 6, zIndex: 20 }}>
           <button style={fontBtnStyle(canDDec)} onClick={() => canDDec && setDisplayFontSize(f=>f-1)}><ChevronDown size={16} color="#6b7280"/></button>
           <button style={fontBtnStyle(canDInc)} onClick={() => canDInc && setDisplayFontSize(f=>f+1)}><ChevronUp size={16} color="#6b7280"/></button>
@@ -1210,7 +1213,7 @@ export default function App() {
     );
 
     const rightPanel = (isFS: boolean) => (
-      <div style={{ flex: isFS?"none":1, width: isFS?"60%":undefined, height: "100%", position: "relative", overflow: "hidden", backgroundColor: presenterMode?"#000":(isFS?fsWorkingBg:stepBg), borderRadius: isFS?0:undefined }} className={isFS?"":"flex-1 rounded-xl"}>
+      <div style={{ flex: isFS?"none":1, width: isFS?"60%":undefined, height: "100%", position: "relative", overflow: "hidden", backgroundColor: presenterMode?"#000":(isFS?fsWorkingBg:stepBg), borderRadius: isFS?0:"12px" }} className={isFS?"":"flex-1"}>
         {presenterMode && (
           <><video ref={videoRef} autoPlay playsInline muted style={{ position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover" }}/>
             {camError && <div style={{ position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",color:"rgba(255,255,255,0.4)",fontSize:"0.85rem",padding:"2rem",textAlign:"center",zIndex:1 }}>{camError}</div>}</>
@@ -1321,7 +1324,7 @@ export default function App() {
               <div key={lv} className={`${c.bg} border-2 ${c.border} rounded-xl p-4`}>
                 <h3 className={`text-xl font-bold mb-4 text-center ${c.text}`}>Level {li+1}</h3>
                 <div style={{ display:"grid",gridTemplateColumns:"1fr",gridAutoRows:"1fr",gap:"0.75rem" }}>
-                  {lqs.map((q,idx) => <div key={idx} style={{ minHeight:0 }}>{renderQCell(q,idx,c.fill)}</div>)}
+                  {lqs.map((q,idx) => <div key={idx} style={{ minHeight:0, borderRadius:"12px", overflow:"hidden" }}>{renderQCell(q,idx,c.fill)}</div>)}
                 </div>
               </div>
             );
@@ -1334,7 +1337,7 @@ export default function App() {
         {fontSizeControls}
         <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{subToolLabel} — Worksheet</h2>
         <div style={{ display:"grid",gridTemplateColumns:`repeat(${numColumns},1fr)`,gridAutoRows:"1fr",gap:"1rem" }}>
-          {worksheet.map((q,idx) => <div key={idx} style={{ minHeight:0 }}>{renderQCell(q,idx)}</div>)}
+          {worksheet.map((q,idx) => <div key={idx} style={{ minHeight:0, borderRadius:"12px", overflow:"hidden" }}>{renderQCell(q,idx)}</div>)}
         </div>
       </div>
     );
