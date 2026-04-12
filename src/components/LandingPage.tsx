@@ -53,6 +53,7 @@ const categories: Category[] = [
       { id: 'single-brackets', path: '/expanding-single-brackets-GRID', name: 'Expanding Single Brackets (GRID)', icon: 'x', description: 'Expand single brackets by using the grid method', ready: 'true' },
       { id: 'expanding-double-brackets-GRID', path: '/expanding-double-brackets-grid', name: 'Expanding Double Brackets (GRID)', icon: 'x²', description: 'Expand pairs of brackets using the grid method', ready: 'true' },
       { id: 'iteration', path: '/iteration', name: 'Iteration', icon: '🔄', description: 'Find roots to eqautions using iterative methods', ready: 'true' },
+      { id: 'simultaneous-equations', path: '/simultaneous-equations', name: 'Simultaneous Equations', icon: '❌', description: 'Solve simultaneous equations, including rearranging', ready: 'v2.0' },
     ]
   },
   {
