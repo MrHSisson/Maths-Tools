@@ -23,6 +23,7 @@ import BasicAngleFacts from './tools/BasicAngleFacts';
 import CallSelector from './tools/CallSelector';
 import AnglesInTriangles from './tools/AnglesInTriangles';
 import SimultaneousEquations from './tools/SimultaneousEquations';
+import ToolShell from './tools/ToolShell';
 
 function App() {
   return (
@@ -51,6 +52,7 @@ function App() {
       <Route path="/call-selector" element={<CallSelector />} />
       <Route path="/angles-in-triangles" element={<AnglesInTriangles />} />
       <Route path="/simultaneous-equations" element={<SimultaneousEquations />} />
+      <Route path="/tool-shell" element={<ToolShell />} />
     </Routes>
   )
 }
