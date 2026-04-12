@@ -373,15 +373,34 @@ export default function NegativeNumbersOperations() {
     const numColumns = 3;
 
     doc.setFontSize(13);
+    doc.setFont('courier', 'normal'); // Use Courier for monospaced alignment
     questions.forEach((q, index) => {
       const row = Math.floor(index / numColumns);
       const column = index % numColumns;
-      const columnCenterX = 20 + (column * columnWidth) + (columnWidth / 2);
+      const x = 20 + (column * columnWidth);
       const y = startY + (row * lineHeight);
 
       if (y < pageHeight - 20) {
-        // For missing number format, question already includes = answer, don't add = _____
-        doc.text(useMissingNumber ? q.question : `${q.question} = _____`, columnCenterX, y, { align: 'center' });
+        // Parse question to align components
+        const questionText = useMissingNumber ? q.question : `${q.question} = _____`;
+        
+        // For missing number or standard, pad components for alignment
+        // Extract parts and create fixed-width format
+        let formattedQuestion = questionText;
+        
+        // Split by spaces to get components
+        const parts = questionText.split(' ');
+        if (parts.length >= 3) {
+          // Pad first number/blank to 5 characters (right-aligned for numbers)
+          const first = parts[0].padStart(6, ' ');
+          const operator = parts[1]; // Keep operator as-is (single char)
+          const second = parts[2].padStart(6, ' ');
+          const rest = parts.slice(3).join(' '); // = and answer/blank
+          
+          formattedQuestion = `${first} ${operator} ${second} ${rest}`;
+        }
+        
+        doc.text(formattedQuestion, x, y);
       }
     });
 
@@ -400,17 +419,30 @@ export default function NegativeNumbersOperations() {
     // Draw answers in 3 columns
     const answerStartY = 35;
     doc.setFontSize(13);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('courier', 'normal'); // Use Courier for monospaced alignment
     questions.forEach((q, index) => {
       const row = Math.floor(index / numColumns);
       const column = index % numColumns;
-      const columnCenterX = 20 + (column * columnWidth) + (columnWidth / 2);
+      const x = 20 + (column * columnWidth);
       const y = answerStartY + (row * lineHeight);
 
       if (y < pageHeight - 20) {
         // For missing number, replace __ with the answer. For standard, show question = answer
         const answerText = useMissingNumber ? q.question.replace('__', `${q.answer}`) : `${q.question} = ${q.answer}`;
-        doc.text(answerText, columnCenterX, y, { align: 'center' });
+        
+        // Apply same fixed-width formatting as questions
+        let formattedAnswer = answerText;
+        const parts = answerText.split(' ');
+        if (parts.length >= 3) {
+          const first = parts[0].padStart(6, ' ');
+          const operator = parts[1];
+          const second = parts[2].padStart(6, ' ');
+          const rest = parts.slice(3).join(' ');
+          
+          formattedAnswer = `${first} ${operator} ${second} ${rest}`;
+        }
+        
+        doc.text(formattedAnswer, x, y);
       }
     });
 
