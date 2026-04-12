@@ -28,7 +28,7 @@ const generateQuestions = (
   useMissingNumber: boolean
 ): Question[] => {
   const allPossible: Question[] = [];
-  
+
   (Object.keys(operationCombinations) as OperationType[]).forEach(operation => {
     operationCombinations[operation].forEach(signCombo => {
       if (operation === 'addition' || operation === 'subtraction') {
@@ -64,11 +64,13 @@ const convertToMissingNumber = (q: Question): void => {
   const firstNum = parts[0];
   const operator = parts[1];
   const secondNum = parts.slice(2).join(' '); // May include parentheses
-  
+
   // Randomly choose to make first or second number missing (50/50)
   const makeFirstMissing = Math.random() < 0.5;
-  
+
   if (makeFirstMissing) {
+    // ____ + 5 = 10  (answer is the missing first number)
+    q.question = `____ ${operator} ${secondNum} = ${q.answer}`;
     // __ + 5 = 10  (answer is the missing first number)
     q.question = `__ ${operator} ${secondNum} = ${q.answer}`;
     // Calculate what the first number should be based on the operation
@@ -82,8 +84,10 @@ const convertToMissingNumber = (q: Question): void => {
       q.answer = q.answer * parseFloat(secondNum.replace(/[()]/g, ''));
     }
   } else {
+    // 5 + ____ = 10  (answer is the missing second number)
     // 5 + __ = 10  (answer is the missing second number)
     const originalAnswer = q.answer;
+    q.question = `${firstNum} ${operator} ____ = ${originalAnswer}`;
     q.question = `${firstNum} ${operator} __ = ${originalAnswer}`;
     // Calculate what the second number should be
     const first = parseFloat(firstNum.replace(/[()]/g, ''));
@@ -109,7 +113,7 @@ const generateAdditionSubtractionQuestions = (
   for (let a = 1; a <= range; a++) {
     for (let b = 1; b <= range; b++) {
       let num1: number, num2: number, answer: number;
-      
+
       switch (signCombo) {
         case 'pos_pos':
           num1 = a;
@@ -175,7 +179,7 @@ const generateMultiplicationQuestions = (
   for (let a = 1; a <= range; a++) {
     for (let b = 1; b <= range; b++) {
       let num1: number, num2: number, answer: number;
-      
+
       switch (signCombo) {
         case 'pos_pos':
           num1 = a;
@@ -220,7 +224,7 @@ const generateDivisionQuestions = (
     for (let quotient = 1; quotient <= range; quotient++) {
       const product = divisor * quotient;
       let dividend: number, div: number, answer: number;
-      
+
       switch (signCombo) {
         case 'pos_pos':
           dividend = product;
@@ -330,7 +334,7 @@ export default function NegativeNumbersOperations() {
     }
 
     const questions = generateQuestions(operationCombinations, numQuestions, useBrackets, useMissingNumber);
-    
+
     if (questions.length === 0) {
       setError('No questions could be generated with the current settings');
       return;
@@ -372,8 +376,7 @@ export default function NegativeNumbersOperations() {
     const lineHeight = 11.5;
     const numColumns = 3;
 
-    doc.setFontSize(12); // Reduced from 13 to fit better
-    doc.setFont('courier', 'normal'); // Courier for monospace - needed for alignment
+    doc.setFontSize(13);
     questions.forEach((q, index) => {
       const row = Math.floor(index / numColumns);
       const column = index % numColumns;
@@ -381,24 +384,8 @@ export default function NegativeNumbersOperations() {
       const y = startY + (row * lineHeight);
 
       if (y < pageHeight - 20) {
-        // Parse question to align components
-        const questionText = useMissingNumber ? q.question : `${q.question} = _____`;
-        
-        // Split by spaces to get components
-        const parts = questionText.split(' ');
-        if (parts.length >= 3) {
-          // 5 chars, space, operator, space, 5 chars, space, =, space, 5 chars
-          const first = parts[0].padStart(5, ' ');
-          const operator = parts[1];
-          const second = parts[2].padStart(5, ' ');
-          const equals = '=';
-          const answer = parts.slice(4).join(' ').padStart(5, ' '); // Everything after "="
-          
-          const formattedQuestion = `${first} ${operator} ${second} ${equals} ${answer}`;
-          doc.text(formattedQuestion, x, y);
-        } else {
-          doc.text(questionText, x, y);
-        }
+        // For missing number format, question already includes = answer, don't add = _____
+        doc.text(useMissingNumber ? q.question : `${q.question} = _____`, x, y);
       }
     });
 
@@ -416,8 +403,8 @@ export default function NegativeNumbersOperations() {
 
     // Draw answers in 3 columns
     const answerStartY = 35;
-    doc.setFontSize(12); // Reduced from 13 to fit better
-    doc.setFont('courier', 'normal'); // Courier for monospace - needed for alignment
+    doc.setFontSize(13);
+    doc.setFont('helvetica', 'normal');
     questions.forEach((q, index) => {
       const row = Math.floor(index / numColumns);
       const column = index % numColumns;
@@ -425,23 +412,11 @@ export default function NegativeNumbersOperations() {
       const y = answerStartY + (row * lineHeight);
 
       if (y < pageHeight - 20) {
+        // For missing number, replace ____ with the answer. For standard, show question = answer
+        const answerText = useMissingNumber ? q.question.replace('____', `${q.answer}`) : `${q.question} = ${q.answer}`;
         // For missing number, replace __ with the answer. For standard, show question = answer
         const answerText = useMissingNumber ? q.question.replace('__', `${q.answer}`) : `${q.question} = ${q.answer}`;
-        
-        // Apply same fixed-width formatting
-        const parts = answerText.split(' ');
-        if (parts.length >= 3) {
-          const first = parts[0].padStart(5, ' ');
-          const operator = parts[1];
-          const second = parts[2].padStart(5, ' ');
-          const equals = '=';
-          const answer = parts.slice(4).join(' ').padStart(5, ' ');
-          
-          const formattedAnswer = `${first} ${operator} ${second} ${equals} ${answer}`;
-          doc.text(formattedAnswer, x, y);
-        } else {
-          doc.text(answerText, x, y);
-        }
+        doc.text(answerText, x, y);
       }
     });
 
@@ -454,7 +429,7 @@ export default function NegativeNumbersOperations() {
     const pdfBlob = doc.output('blob');
     const pdfUrl = URL.createObjectURL(pdfBlob);
     window.open(pdfUrl, '_blank');
-    
+
     setError('');
   };
 
@@ -471,7 +446,7 @@ export default function NegativeNumbersOperations() {
             <Home size={24} />
             <span className="font-semibold text-lg">Home</span>
           </button>
-          
+
           {/* Menu Dropdown */}
           <div className="relative">
             <button 
@@ -500,7 +475,7 @@ export default function NegativeNumbersOperations() {
           </div>
         </div>
       </div>
-      
+
       {/* Main Content */}
       <div className="min-h-screen p-8" style={{ backgroundColor: '#f5f3f0' }}>
         <div className="max-w-6xl mx-auto">
@@ -508,12 +483,12 @@ export default function NegativeNumbersOperations() {
           <h1 className="text-5xl font-bold text-center mb-8" style={{ color: '#000000' }}>
             {TOOL_CONFIG.pageTitle}
           </h1>
-          
+
           {/* Divider */}
           <div className="flex justify-center mb-8">
             <div style={{ width: '90%', height: '2px', backgroundColor: '#d1d5db' }}></div>
           </div>
-          
+
           {/* Configuration Panel */}
           <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
             <h2 className="text-2xl font-bold text-center mb-4" style={{ color: '#000000' }}>
@@ -677,6 +652,7 @@ export default function NegativeNumbersOperations() {
                   style={{ accentColor: '#1e3a8a' }}
                 />
                 <span className="text-lg font-semibold" style={{ color: '#000000' }}>
+                  Missing number questions (e.g., 2 + ____ = 5)
                   Missing number questions (e.g., 2 + __ = 5)
                 </span>
               </label>
