@@ -114,6 +114,9 @@ const PopoverButton = ({ open, onClick }: { open: boolean; onClick: () => void }
 const LV_LABELS:Record<string,string> = {level1:"Level 1",level2:"Level 2",level3:"Level 3"};
 const LV_HEADER_COLORS:Record<string,string> = {level1:"text-green-600",level2:"text-yellow-500",level3:"text-red-600"};
 
+// TogglePill and SegButtons are available for use in tool-specific QO popovers.
+// They are defined here so they are in scope for the tool section above.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const TogglePill = ({checked,onChange,label}:{checked:boolean;onChange:(v:boolean)=>void;label:string}) => (
   <label className="flex items-center gap-3 cursor-pointer py-1">
     <div onClick={()=>onChange(!checked)} className={`w-12 h-6 rounded-full transition-colors relative flex-shrink-0 cursor-pointer ${checked?"bg-blue-900":"bg-gray-300"}`}>
@@ -123,6 +126,7 @@ const TogglePill = ({checked,onChange,label}:{checked:boolean;onChange:(v:boolea
   </label>
 );
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const SegButtons = ({value,onChange,opts}:{value:string;onChange:(v:string)=>void;opts:{value:string;label:string}[]}) => (
   <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden">
     {opts.map(opt=>(
@@ -424,6 +428,7 @@ const mStr = (x: number | string) => `$${x}$`;
 
 const step  = (latex: string, plain?: string) =>
   ({ type: "step",  latex, plain: plain ?? latex });
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const tStep = (text: string) =>
   ({ type: "tStep", latex: `\\text{${text}}`, plain: text });
 const mStep = (label: string, latex: string, unit?: string) =>
@@ -431,6 +436,7 @@ const mStep = (label: string, latex: string, unit?: string) =>
 
 // fmt: format a number to dp decimal places, stripping trailing zeros.
 // Default is 2dp. e.g. fmt(3.5) → "3.5", fmt(3.0) → "3"
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const fmt = (n: number, dp = 2): string => n.toFixed(dp).replace(/\.?0+$/, "");
 
 // ── 6. Question generators ────────────────────────────────────────────────────
@@ -451,8 +457,8 @@ const fmt = (n: number, dp = 2): string => n.toFixed(dp).replace(/\.?0+$/, "");
 const generateQuestion = (
   tool: ToolType,
   level: DifficultyLevel,
-  variables: Record<string, boolean>,
-  dropdownValue: string,
+  _variables: Record<string, boolean>,   // ← use variables[key] in your generator
+  _dropdownValue: string,                // ← use dropdownValue to branch on selected option
 ): AnyQuestion => {
   const id = Math.floor(Math.random() * 1_000_000);
 
@@ -556,8 +562,9 @@ const getStepBg    = (cs:string) => ({blue:"#B3D9F2",pink:"#F2B3D9",yellow:"#F2E
 // ── QuestionDisplay — renders any question's main display ─────────────────────
 
 const QuestionDisplay = ({ q, cls }: { q: AnyQuestion; cls: string }) => {
-  if (q.kind === "frac") {
-    const parts = (q as any).latex.split(/\\text\{ of \}/);
+  const anyQ = q as any;
+  if (anyQ.kind === "frac") {
+    const parts = anyQ.latex.split(/\\text\{ of \}/);
     const fracLatex = parts[0].trim();
     const number = parts[1]?.trim() ?? "";
     return (
@@ -566,7 +573,7 @@ const QuestionDisplay = ({ q, cls }: { q: AnyQuestion; cls: string }) => {
       </div>
     );
   }
-  if (q.kind === "simple") {
+  if (anyQ.kind === "simple") {
     const anyQ = q as any;
     return (
       <div className={`${cls} font-semibold text-center`} style={{color:"#000",lineHeight:1.5}}>
@@ -869,7 +876,7 @@ const handlePrint = (
     const banner = `<div class="q-banner">Question ${idx + 1}</div>`;
     const instrHtml = instruction ? `<div class="q-instruction">${instruction}</div>` : "";
     let body = "";
-    if (q.kind === "frac") {
+    if (anyQ.kind === "frac") {
       body = `${instrHtml}<div style="text-align:center">${katexSpan(`\\text{Find } ${anyQ.latex}`, "q-math")}</div>${ansHtml}`;
     } else if (q.kind === "simple") {
       const mathHtml = anyQ.displayLatex
