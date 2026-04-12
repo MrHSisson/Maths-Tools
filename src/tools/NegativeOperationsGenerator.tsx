@@ -372,8 +372,8 @@ export default function NegativeNumbersOperations() {
     const lineHeight = 11.5;
     const numColumns = 3;
 
-    doc.setFontSize(13);
-    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(12); // Reduced from 13 to fit better
+    doc.setFont('courier', 'normal'); // Courier for monospace - needed for alignment
     questions.forEach((q, index) => {
       const row = Math.floor(index / numColumns);
       const column = index % numColumns;
@@ -384,23 +384,21 @@ export default function NegativeNumbersOperations() {
         // Parse question to align components
         const questionText = useMissingNumber ? q.question : `${q.question} = _____`;
         
-        // For missing number or standard, pad components for alignment
-        // Extract parts and create fixed-width format
-        let formattedQuestion = questionText;
-        
         // Split by spaces to get components
         const parts = questionText.split(' ');
         if (parts.length >= 3) {
-          // Pad first number/blank to 4 characters (right-aligned for numbers)
-          const first = parts[0].padStart(4, ' ');
-          const operator = parts[1]; // Keep operator as-is (single char)
-          const second = parts[2].padStart(4, ' ');
-          const rest = parts.slice(3).join(' '); // = and answer/blank
+          // 5 chars, space, operator, space, 5 chars, space, =, space, 5 chars
+          const first = parts[0].padStart(5, ' ');
+          const operator = parts[1];
+          const second = parts[2].padStart(5, ' ');
+          const equals = '=';
+          const answer = parts.slice(4).join(' ').padStart(5, ' '); // Everything after "="
           
-          formattedQuestion = `${first} ${operator} ${second} ${rest}`;
+          const formattedQuestion = `${first} ${operator} ${second} ${equals} ${answer}`;
+          doc.text(formattedQuestion, x, y);
+        } else {
+          doc.text(questionText, x, y);
         }
-        
-        doc.text(formattedQuestion, x, y);
       }
     });
 
@@ -418,8 +416,8 @@ export default function NegativeNumbersOperations() {
 
     // Draw answers in 3 columns
     const answerStartY = 35;
-    doc.setFontSize(13);
-    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(12); // Reduced from 13 to fit better
+    doc.setFont('courier', 'normal'); // Courier for monospace - needed for alignment
     questions.forEach((q, index) => {
       const row = Math.floor(index / numColumns);
       const column = index % numColumns;
@@ -430,19 +428,20 @@ export default function NegativeNumbersOperations() {
         // For missing number, replace __ with the answer. For standard, show question = answer
         const answerText = useMissingNumber ? q.question.replace('__', `${q.answer}`) : `${q.question} = ${q.answer}`;
         
-        // Apply same fixed-width formatting as questions
-        let formattedAnswer = answerText;
+        // Apply same fixed-width formatting
         const parts = answerText.split(' ');
         if (parts.length >= 3) {
-          const first = parts[0].padStart(4, ' ');
+          const first = parts[0].padStart(5, ' ');
           const operator = parts[1];
-          const second = parts[2].padStart(4, ' ');
-          const rest = parts.slice(3).join(' ');
+          const second = parts[2].padStart(5, ' ');
+          const equals = '=';
+          const answer = parts.slice(4).join(' ').padStart(5, ' ');
           
-          formattedAnswer = `${first} ${operator} ${second} ${rest}`;
+          const formattedAnswer = `${first} ${operator} ${second} ${equals} ${answer}`;
+          doc.text(formattedAnswer, x, y);
+        } else {
+          doc.text(answerText, x, y);
         }
-        
-        doc.text(formattedAnswer, x, y);
       }
     });
 
