@@ -237,7 +237,7 @@ const elimDirection = (bTop: number, bBot: number, cTop: number, cBot: number, t
 };
 
 // Build substitution-back steps matching display form of eq1
-const buildSubBackSteps = (form1: SurfaceForm, a1: number, b1c: number, c1: number, v1: string, v2: string, v2Val: number): string[] => {
+const buildSubBackSteps = (form1: SurfaceForm, a1: number, b1c: number, c1: number, v1: string, _v2: string, v2Val: number): string[] => {
   const subTermVal = b1c * v2Val;
   const remaining  = c1 - subTermVal;
   const steps: string[] = [];
