@@ -1069,7 +1069,7 @@ export default function AnglesInTriangleTool() {
       </div>
     );
     return (
-      <div className="px-5 py-4 rounded-t-xl" style={{ backgroundColor: qBg, borderBottom: "0.5px solid #000" }}>
+      <div className="px-5 py-4 rounded-xl" style={{ backgroundColor: qBg }}>
         <div className="flex items-center justify-between gap-4">
           <DifficultyToggle value={difficulty} onChange={setDifficulty} />
           <StandardQOPopover {...stdQOProps} />
@@ -1113,7 +1113,7 @@ export default function AnglesInTriangleTool() {
           : { width: "500px", height: "100%", backgroundColor: stepBg, borderRadius: 12, padding: 24, flexShrink: 0 })
       }}>
         {fontControls}
-        <span className={`${displayFontSizes[displayFontSize]} font-bold text-black text-center`}>Find the missing angle</span>
+        <span className={`${displayFontSizes[displayFontSize]} font-bold text-black text-center`} style={{ paddingRight: 80 }}>Find the missing angle</span>
         {showWBAnswer && question && <span className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>{question.answer}</span>}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", flex: 1, minHeight: 0 }}>
           {question
@@ -1204,7 +1204,7 @@ export default function AnglesInTriangleTool() {
         </div>
         {question ? (
           <>
-            <div className="flex justify-center mb-6">
+            <div className="flex justify-center mb-6" style={{ maxWidth: 500, margin: "0 auto 1.5rem" }}>
               <TriangleDiagram q={question} showAnswer={showAnswer} labelBg={stepBg} />
             </div>
             {showAnswer && (
