@@ -24,7 +24,7 @@ import CallSelector from './tools/CallSelector';
 import AnglesInTriangles from './tools/AnglesInTriangles';
 import SimultaneousEquations from './tools/SimultaneousEquations';
 import ToolShell from './tools/ToolShell';
-import AnglesInTriangles from './tools/AnglesInTrianglesv2';
+import AnglesInTrianglesv2 from './tools/AnglesInTrianglesv2';
 
 function App() {
   return (
