@@ -1098,7 +1098,7 @@ export default function AnglesInTriangleTool() {
       </div>
     );
 
-    const fontControls = (isFS: boolean) => (
+    const fontControls = (
       <div style={{ position: "absolute", top: 10, right: 10, display: "flex", gap: 6, zIndex: 20 }}>
         <button style={fontBtn(canDisplayDecrease)} onClick={() => canDisplayDecrease && setDisplayFontSize(f => f - 1)} title="Decrease font size"><ChevronDown size={16} color="#6b7280" /></button>
         <button style={fontBtn(canDisplayIncrease)} onClick={() => canDisplayIncrease && setDisplayFontSize(f => f + 1)} title="Increase font size"><ChevronUp  size={16} color="#6b7280" /></button>
@@ -1112,7 +1112,7 @@ export default function AnglesInTriangleTool() {
           ? { width: "40%", height: "100%", backgroundColor: fsQuestionBg, padding: 32, boxSizing: "border-box", flexShrink: 0 }
           : { width: "500px", height: "100%", backgroundColor: stepBg, borderRadius: 12, padding: 24, flexShrink: 0 })
       }}>
-        {fontControls(isFS)}
+        {fontControls}
         <span className={`${displayFontSizes[displayFontSize]} font-bold text-black text-center`}>Find the missing angle</span>
         {showWBAnswer && question && <span className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>{question.answer}</span>}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", flex: 1, minHeight: 0 }}>
