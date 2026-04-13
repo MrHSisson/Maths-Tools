@@ -78,7 +78,7 @@ const categories: Category[] = [
       { id: 'perimeter', path: '/perimeter', name: 'Perimeter (BETA)', icon: '⬡', description: 'Calculate the perimeter of various 2D shapes', ready: 'true' },
       { id: 'circles', path: '/circle-properties', name: 'Properties of Circles', icon: '⭕', description: 'Find the circumference, area and arc lengths of circles and sectors', ready: 'true' },
       { id: 'basic-angle-facts', path: '/basic-angle-facts', name: 'Basic Angle Facts', icon: '90°', description: 'Find missing angles from right angles, on striaght lines and around a point', ready: 'true' },
-      { id: 'angles-in-triangles', path: '/angles-in-triangles', name: 'Angles In Triangles', icon: '🛆', description: 'Find missing angles using triangle properties - including split trangles and exterior angles', ready: 'true' },
+      { id: 'angles-in-triangles-v2', path: '/angles-in-triangles-v2', name: 'Angles In Triangles', icon: '🛆', description: 'Find missing angles using triangle properties - including split trangles and exterior angles', ready: 'true' },
     ]
   },
   {
