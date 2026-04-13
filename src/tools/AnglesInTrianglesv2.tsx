@@ -14,7 +14,7 @@ const TOOL_CONFIG = {
             key: "rightAngle", label: "Right Angle",
             options: [
               { value: "none",       label: "No 90°",     },
-              { value: "chance",     label: "1 in 6",     },
+              { value: "chance",     label: "Sometimes 90°", },
               { value: "guaranteed", label: "Always 90°", },
             ],
             defaultValue: "chance",
@@ -213,7 +213,10 @@ function buildLevel1(vars: Record<string, unknown>): TriQuestion {
   } while (a2 < minAngle || a2 > 140);
   const rot = rnd(0, 359);
   const [v0, v1, v2] = placeTriangle(a0, a1, a2, CX, CY, SCALE, rot);
-  const vals = [a0, a1, a2], verts = [v0, v1, v2], unknownIdx = rnd(0, 2);
+  const vals = [a0, a1, a2], verts = [v0, v1, v2];
+  // Never ask for the right angle — pick unknown from non-90 angles only
+  const eligible = [0, 1, 2].filter(i => vals[i] !== 90);
+  const unknownIdx = eligible[rnd(0, eligible.length - 1)];
   const angles: AngleLabel[] = [0, 1, 2].map(i => {
     const va = verts[(i + 2) % 3], vb = verts[i], vc = verts[(i + 1) % 3];
     return { label: i === unknownIdx ? "x" : `${vals[i]}°`, isUnknown: i === unknownIdx, value: vals[i], pos: labelPos(va, vb, vc, 40), arcVertex: vb, arcFrom: va, arcTo: vc, showRightAngleSquare: vals[i] === 90 };
