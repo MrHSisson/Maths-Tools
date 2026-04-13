@@ -10,9 +10,16 @@ const TOOL_CONFIG = {
       name: "Angles in a Triangle",
       difficultySettings: {
         level1: {
-          dropdown: null,
+          dropdown: {
+            key: "rightAngle", label: "Right Angle",
+            options: [
+              { value: "none",       label: "No 90°",     },
+              { value: "chance",     label: "1 in 6",     },
+              { value: "guaranteed", label: "Always 90°", },
+            ],
+            defaultValue: "chance",
+          },
           variables: [
-            { key: "includeRightAngle", label: "Include right-angled triangles", defaultValue: false },
             { key: "noMinAngle", label: "Allow angles below 20° ⚠ may reduce visibility", defaultValue: false },
           ],
         },
@@ -185,13 +192,24 @@ function tickMark(v1: Pt, v2: Pt): { x1: number; y1: number; x2: number; y2: num
 const CX = 200, CY = 195, SCALE = 230;
 
 function buildLevel1(vars: Record<string, unknown>): TriQuestion {
-  const includeRight = vars.includeRightAngle === true;
+  const rightAngle = (vars.rightAngle as string) ?? "chance";
   const minAngle = vars.noMinAngle === true ? 5 : 20;
   let a0: number, a1: number, a2: number;
   do {
-    a0 = (includeRight && rnd(0, 4) === 0) ? 90 : rnd(minAngle, 110);
-    a1 = rnd(minAngle, 170 - a0 - minAngle);
-    a2 = 180 - a0 - a1;
+    if (rightAngle === "guaranteed") {
+      // One angle is always 90 — pick which vertex randomly
+      const idx = rnd(0, 2);
+      const others = [rnd(minAngle, 89 - minAngle), 0];
+      others[1] = 90 - others[0];
+      if (others[1] < minAngle) { a0 = 0; a1 = 0; a2 = 0; continue; }
+      const trio = [90, others[0], others[1]];
+      a0 = trio[idx % 3]; a1 = trio[(idx + 1) % 3]; a2 = trio[(idx + 2) % 3];
+    } else {
+      const includeRight = rightAngle === "chance" && rnd(0, 5) === 0;
+      a0 = includeRight ? 90 : rnd(minAngle, 110);
+      a1 = rnd(minAngle, 170 - a0 - minAngle);
+      a2 = 180 - a0 - a1;
+    }
   } while (a2 < minAngle || a2 > 140);
   const rot = rnd(0, 359);
   const [v0, v1, v2] = placeTriangle(a0, a1, a2, CX, CY, SCALE, rot);
@@ -1113,7 +1131,9 @@ export default function AnglesInTriangleTool() {
           : { width: "500px", height: "100%", backgroundColor: stepBg, borderRadius: 12, padding: 24, flexShrink: 0 })
       }}>
         {fontControls}
-        <span className={`${displayFontSizes[displayFontSize]} font-bold text-black text-center`} style={{ paddingRight: 80 }}>Find the missing angle</span>
+        <div style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", paddingLeft: 44, paddingRight: 44 }}>
+          <span className={`${displayFontSizes[displayFontSize]} font-bold text-black text-center`}>Find the missing angle</span>
+        </div>
         {showWBAnswer && question && <span className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>{question.answer}</span>}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", flex: 1, minHeight: 0 }}>
           {question
