@@ -1,73 +1,127 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { RefreshCw, Eye, Home, Menu, X, Download } from "lucide-react";
+import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, Printer } from "lucide-react";
 
-// ─── jsPDF loader ─────────────────────────────────────────────────────────────
-declare global {
-  interface Window {
-    jspdf?: { jsPDF: new (opts: Record<string, unknown>) => JsPDFInstance };
-  }
-}
+// ─── TOOL CONFIG ──────────────────────────────────────────────────────────────
+const TOOL_CONFIG = {
+  pageTitle: "Perimeter",
+  tools: {
+    polygons: {
+      name: "Polygons",
+      difficultySettings: {
+        level1: {
+          dropdown: null,
+          variables: [],
+        },
+        level2: {
+          dropdown: null,
+          variables: [],
+        },
+        level3: {
+          dropdown: null,
+          variables: [
+            { key: "mixUnits", label: "Mixed units (cm, mm, m)", defaultValue: true },
+          ],
+        },
+      },
+    },
+    rectilinear: {
+      name: "Rectilinear Shapes",
+      difficultySettings: {
+        level1: {
+          dropdown: null,
+          variables: [],
+        },
+        level2: {
+          dropdown: null,
+          variables: [
+            { key: "missing1", label: "1 side missing", defaultValue: false },
+            { key: "missing2", label: "2 sides missing", defaultValue: false },
+          ],
+        },
+        level3: {
+          dropdown: null,
+          variables: [],
+        },
+      },
+    },
+  },
+} as const;
 
-interface JsPDFInstance {
-  addPage(): void;
-  save(filename: string): void;
-  setDrawColor(r: number, g: number, b: number): void;
-  setDrawColor(hex: number): void;
-  setFillColor(r: number, g: number, b: number): void;
-  setTextColor(r: number, g: number, b: number): void;
-  setTextColor(rgb: number[]): void;
-  setLineWidth(w: number): void;
-  setLineDashPattern(pattern: number[], phase: number): void;
-  setFontSize(size: number): void;
-  rect(x: number, y: number, w: number, h: number, style: string): void;
-  roundedRect(x: number, y: number, w: number, h: number, rx: number, ry: number, style: string): void;
-  line(x1: number, y1: number, x2: number, y2: number): void;
-  lines(lines: number[][], x: number, y: number, scale: number[], style: string, closed: boolean): void;
-  text(text: string, x: number, y: number, opts?: Record<string, unknown>): void;
-  output(type: "bloburl"): unknown;
-}
+type ToolKey = keyof typeof TOOL_CONFIG.tools;
 
-function loadJsPDF(): Promise<new (opts: Record<string, unknown>) => JsPDFInstance> {
-  return new Promise((res, rej) => {
-    if (window.jspdf) return res(window.jspdf.jsPDF);
-    const s = document.createElement("script");
-    s.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
-    s.onload = () => {
-      if (window.jspdf) res(window.jspdf.jsPDF);
-      else rej(new Error("jsPDF failed to load"));
-    };
-    s.onerror = () => rej(new Error("jsPDF script error"));
-    document.head.appendChild(s);
-  });
-}
+// ─── INFO SECTIONS ────────────────────────────────────────────────────────────
+const INFO_SECTIONS = [
+  {
+    title: "Polygons — Level 1", icon: "⬡",
+    content: [
+      { label: "Overview",        detail: "Regular polygons where all sides are equal. Find the perimeter by multiplying the side length by the number of sides." },
+      { label: "Shapes",          detail: "Equilateral triangle, square, regular pentagon, hexagon, and octagon." },
+    ],
+  },
+  {
+    title: "Polygons — Level 2", icon: "△",
+    content: [
+      { label: "Overview",        detail: "Irregular polygons with two groups of equal sides. Use tick marks to identify equal sides." },
+      { label: "Shapes",          detail: "Rectangle, isosceles triangle, parallelogram, and rhombus." },
+    ],
+  },
+  {
+    title: "Polygons — Level 3", icon: "🔀",
+    content: [
+      { label: "Overview",        detail: "Same shapes as Level 2 but with mixed units (cm, mm, and m). Convert all measurements to cm first, then find the perimeter." },
+    ],
+  },
+  {
+    title: "Rectilinear Shapes — Level 1", icon: "⬜",
+    content: [
+      { label: "Overview",        detail: "All side lengths are given. Add them all together to find the perimeter." },
+    ],
+  },
+  {
+    title: "Rectilinear Shapes — Level 2", icon: "🔲",
+    content: [
+      { label: "Overview",        detail: "One or two side lengths are missing. Use opposite sides of a rectilinear shape to derive the missing lengths before finding the perimeter." },
+      { label: "Options",         detail: "Toggle '1 side missing' or '2 sides missing' in Question Options to control how many sides are hidden." },
+    ],
+  },
+  {
+    title: "Rectilinear Shapes — Level 3", icon: "📐",
+    content: [
+      { label: "Overview",        detail: "All sides shown but measurements use mixed units (cm, mm, m). Convert everything to cm before summing." },
+    ],
+  },
+  {
+    title: "Modes", icon: "🖥️",
+    content: [
+      { label: "Whiteboard",      detail: "Single large question on the left with blank working space on the right. Visualiser and fullscreen available." },
+      { label: "Worked Example",  detail: "Full step-by-step solution revealed on demand." },
+      { label: "Worksheet",       detail: "Grid of questions with differentiated 3-column layout and PDF export." },
+    ],
+  },
+  {
+    title: "Question Options", icon: "⚙️",
+    content: [
+      { label: "Differentiated",  detail: "Shows all three levels side-by-side in the worksheet, each column independently configurable." },
+      { label: "Rectilinear L2",  detail: "Toggle whether 1 or 2 sides are hidden in Level 2 rectilinear questions." },
+    ],
+  },
+];
 
 // ─── COLOUR SCHEMES ───────────────────────────────────────────────────────────
-type SchemeKey = "default" | "blue" | "pink" | "yellow";
-interface ColourScheme { qBg: string; stepBg: string; finalBg: string; }
-
-const SCHEMES: Record<SchemeKey, ColourScheme> = {
-  default: { qBg: "#ffffff", stepBg: "#f3f4f6", finalBg: "#f3f4f6" },
-  blue:    { qBg: "#D1E7F8", stepBg: "#B3D9F2", finalBg: "#B3D9F2" },
-  pink:    { qBg: "#F8D1E7", stepBg: "#F2B3D9", finalBg: "#F2B3D9" },
-  yellow:  { qBg: "#F8F4D1", stepBg: "#F2EBB3", finalBg: "#F2EBB3" },
+const LV_LABELS:        Record<string, string> = { level1: "Level 1", level2: "Level 2", level3: "Level 3" };
+const LV_HEADER_COLORS: Record<string, string> = { level1: "text-green-600", level2: "text-yellow-500", level3: "text-red-600" };
+const LV_COLORS: Record<string, { bg: string; border: string; text: string; fill: string }> = {
+  level1: { bg: "bg-green-50",  border: "border-green-500",  text: "text-green-700",  fill: "#dcfce7" },
+  level2: { bg: "bg-yellow-50", border: "border-yellow-500", text: "text-yellow-700", fill: "#fef9c3" },
+  level3: { bg: "bg-red-50",    border: "border-red-500",    text: "text-red-700",    fill: "#fee2e2" },
 };
 
-function diffBtnClass(idx: number, active: boolean): string {
-  if (active)
-    return idx === 0 ? "bg-green-600 text-white"
-         : idx === 1 ? "bg-yellow-600 text-white"
-                     : "bg-red-600 text-white";
-  return idx === 0 ? "bg-white text-green-600 border-2 border-green-600"
-       : idx === 1 ? "bg-white text-yellow-600 border-2 border-yellow-600"
-                   : "bg-white text-red-600 border-2 border-red-600";
-}
+function getQuestionBg(cs: string) { return ({ blue: "#D1E7F8", pink: "#F8D1E7", yellow: "#F8F4D1" }[cs] ?? "#ffffff"); }
+function getStepBg(cs: string)     { return ({ blue: "#B3D9F2", pink: "#F2B3D9", yellow: "#F2EBB3" }[cs] ?? "#f3f4f6"); }
 
-function rnd(a: number, b: number): number {
-  return Math.floor(Math.random() * (b - a + 1)) + a;
-}
-
-// ─── GEOMETRY HELPERS ─────────────────────────────────────────────────────────
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+function rnd(a: number, b: number): number { return Math.floor(Math.random() * (b - a + 1)) + a; }
 type Pt = [number, number];
 
 function pointInPoly(px: number, py: number, pts: Pt[]): boolean {
@@ -134,7 +188,7 @@ function choosePillPositions(labels: PillMeta[]): Pt[] {
   return best.map((ci, i) => candidates[i][ci] as Pt);
 }
 
-// ─── LabelPill ───────────────────────────────────────────────────────────────
+// ─── LABEL PILL SVG ───────────────────────────────────────────────────────────
 interface LabelPillProps { x: number; y: number; text: string; fontSize: number; color: string; pw: number; ph: number; }
 function LabelPill({ x, y, text, fontSize, color, pw, ph }: LabelPillProps) {
   return (
@@ -148,7 +202,7 @@ function LabelPill({ x, y, text, fontSize, color, pw, ph }: LabelPillProps) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// POLYGON DATA
+// POLYGON DATA & QUESTION GENERATION
 // ══════════════════════════════════════════════════════════════════════════════
 type ShapeKey =
   | "equilateral_triangle" | "square" | "regular_pentagon"
@@ -179,24 +233,44 @@ const SHAPE_FAMILIES: Record<ShapeKey, FamilyKey> = {
   rectangle: "irregular", parallelogram: "irregular", rhombus: "irregular",
 };
 
-function pickShapeKeys(levelOrLevels: string | string[], count = 9, maxPerFamily = 2): ShapeKey[] {
-  const getLevelPool = (lvl: string): ShapeKey[] =>
-    lvl === "level1" ? L1_SHAPES : lvl === "level2" ? L2_SHAPES : [...L1_SHAPES, ...L2_SHAPES];
-  const result: ShapeKey[] = [], used = new Set<ShapeKey>();
-  const familyCount: Partial<Record<FamilyKey, number>> = {};
-  for (let i = 0; i < count; i++) {
-    const level = Array.isArray(levelOrLevels) ? levelOrLevels[i] : levelOrLevels;
-    const pool = getLevelPool(level);
-    let cands = pool.filter(k => !used.has(k) && (familyCount[SHAPE_FAMILIES[k]] ?? 0) < maxPerFamily);
-    if (!cands.length) cands = pool.filter(k => (familyCount[SHAPE_FAMILIES[k]] ?? 0) < maxPerFamily);
-    if (!cands.length) cands = pool;
-    const key = cands[Math.floor(Math.random() * cands.length)];
-    result.push(key); used.add(key);
-    familyCount[SHAPE_FAMILIES[key]] = (familyCount[SHAPE_FAMILIES[key]] ?? 0) + 1;
-  }
-  return result;
+interface DisplayEdge { display: string; baseCm: number; unit: "cm" | "mm" | "m"; }
+interface WorkStep { text: string; }
+
+interface PolyQuestion {
+  kind: "poly";
+  shapeKey: ShapeKey;
+  def: ShapeDef;
+  rawPts: Pt[];
+  edges: number[];
+  groupVals: number[];
+  perimeter: number;
+  answer: string;
+  working: WorkStep[];
+  labelledIdx: number[];
+  displayEdges: (DisplayEdge | null)[] | null;
+  level: string;
+  mixUnits: boolean;
+  id: number;
 }
 
+interface RectQuestion {
+  kind: "rect";
+  pts: Pt[];
+  edges: number[];
+  hiddenIdx: number[];
+  perimeter: number;
+  answer: string;
+  working: WorkStep[];
+  mixedEdges: DisplayEdge[] | null;
+  level: string;
+  derivs?: { hi: number; val: number; dir: string }[];
+  templateIdx: number;
+  id: number;
+}
+
+type AnyQuestion = PolyQuestion | RectQuestion;
+
+// ─── Polygon raw points ───────────────────────────────────────────────────────
 function polyRawPts(key: ShapeKey, n: number, groupVals: number[]): Pt[] {
   if (key === "rectangle") {
     const w = groupVals[0], h = groupVals[1];
@@ -223,25 +297,6 @@ function polyRawPts(key: ShapeKey, n: number, groupVals: number[]): Pt[] {
   return pts;
 }
 
-// ── PolyQuestion ──────────────────────────────────────────────────────────────
-interface DisplayEdge { display: string; baseCm: number; unit: "cm" | "mm" | "m"; }
-interface WorkStep { text: string; }
-
-interface PolyQuestion {
-  shapeKey: ShapeKey;
-  def: ShapeDef;
-  rawPts: Pt[];
-  edges: number[];
-  groupVals: number[];
-  perimeter: number;
-  displayAnswer: string;
-  working: WorkStep[];
-  labelledIdx: number[];
-  displayEdges: (DisplayEdge | null)[] | null;
-  level: number;
-  mixUnits: boolean;
-}
-
 function buildPolyQ(level: string, shapeKey: ShapeKey | null = null): PolyQuestion {
   const mixUnits = level === "level3";
   const pool = mixUnits ? [...L1_SHAPES, ...L2_SHAPES] : level === "level1" ? L1_SHAPES : L2_SHAPES;
@@ -257,7 +312,7 @@ function buildPolyQ(level: string, shapeKey: ShapeKey | null = null): PolyQuesti
       groupVals[1] = groupVals[0] >= 18 ? groupVals[0] - 5 : groupVals[0] + 5;
   }
   if (key === "isosceles_triangle") {
-    const isValid = (leg: number, base: number): boolean => {
+    const isValid = (leg: number, base: number) => {
       if (base >= 2 * leg) return false;
       const h = Math.sqrt(leg * leg - (base / 2) * (base / 2));
       return (h / base) >= 0.4;
@@ -313,81 +368,10 @@ function buildPolyQ(level: string, shapeKey: ShapeKey | null = null): PolyQuesti
     work.push({ text: `Perimeter = ${def.groups.map((g, gi) => g.length * groupVals[gi]).join(" + ")}` });
     work.push({ text: `Perimeter = ${perimeter} cm` });
   }
-  return { shapeKey: key, def, rawPts, edges, groupVals, perimeter, displayAnswer: `${perimeter} cm`, working: work, labelledIdx, displayEdges, level: level === "level1" ? 1 : level === "level2" ? 2 : 3, mixUnits };
+  return { kind: "poly", shapeKey: key, def, rawPts, edges, groupVals, perimeter, answer: `${perimeter} cm`, working: work, labelledIdx, displayEdges, level, mixUnits, id: Math.floor(Math.random() * 1_000_000) };
 }
 
-// ── TickMarks ─────────────────────────────────────────────────────────────────
-interface TickMarksProps { pts: Pt[]; groups: number[][]; scale?: number; }
-function TickMarks({ pts, groups, scale = 1 }: TickMarksProps) {
-  return groups.map((grp, gi) => grp.map(ei => {
-    const [ax, ay] = pts[ei], [bx, by] = pts[(ei + 1) % pts.length];
-    const mx = (ax + bx) / 2, my = (ay + by) / 2;
-    const dx = bx - ax, dy = by - ay, len = Math.sqrt(dx * dx + dy * dy) || 1;
-    const px = -dy / len, py = dx / len, tl = 8 * scale, ts = 5 * scale, count = gi + 1;
-    return Array.from({ length: count }, (_, ti) => {
-      const o = (ti - (count - 1) / 2) * ts;
-      return (
-        <line key={`${gi}-${ei}-${ti}`}
-          x1={mx + px * (-tl / 2) + py * o} y1={my + py * (-tl / 2) - px * o}
-          x2={mx + px * (tl / 2) + py * o}  y2={my + py * (tl / 2) - px * o}
-          stroke="#065f46" strokeWidth={1.5 * scale} />
-      );
-    });
-  }));
-}
-
-// ── PolyDiagram ───────────────────────────────────────────────────────────────
-interface PolyDiagramProps { q: PolyQuestion; showAnswer: boolean; isWs?: boolean; wsScale?: number; }
-function PolyDiagram({ q, showAnswer, isWs = false, wsScale = 1 }: PolyDiagramProps) {
-  const diag = isWs ? 150 * wsScale : 360, pad = isWs ? 48 * wsScale : 78;
-  const fs = isWs ? Math.max(9, 10 * wsScale) : 19, standoff = isWs ? 20 * wsScale : 44;
-  const raw = q.rawPts;
-  const xs = raw.map(p => p[0]), ys = raw.map(p => p[1]);
-  const x0 = Math.min(...xs), y0 = Math.min(...ys);
-  const spanX = Math.max(...xs) - x0 || 1, spanY = Math.max(...ys) - y0 || 1;
-  const sc = diag / Math.max(spanX, spanY);
-  const offX = (diag - spanX * sc) / 2, offY = (diag - spanY * sc) / 2;
-  const pts: Pt[] = raw.map(([x, y]) => [(x - x0) * sc + pad + offX, (y - y0) * sc + pad + offY]);
-  const W = diag + pad * 2, H = diag + pad * 2;
-  const pathD = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p[0]} ${p[1]}`).join(" ") + " Z";
-  const [cx, cy] = centroid(pts);
-  const charW = fs * 0.62, pillPad = fs * 0.8;
-  const labelledMeta: PillMeta[] = q.labelledIdx.map(i => {
-    const p = pts[i], nb = pts[(i + 1) % pts.length];
-    const mx = (p[0] + nb[0]) / 2, my = (p[1] + nb[1]) / 2;
-    const dx = mx - cx, dy = my - cy;
-    const isH = Math.abs(p[1] - nb[1]) < 5;
-    const outDir = isH ? Math.sign(dy) || 1 : Math.sign(dx) || 1;
-    const adaptive = standoff + Math.max(0, (diag * 0.22 - Math.sqrt(dx * dx + dy * dy)) * 0.45);
-    const txt = (q.mixUnits && q.displayEdges?.[i] && !showAnswer) ? q.displayEdges[i]!.display : `${q.edges[i]} cm`;
-    const pw = txt.length * charW + pillPad * 2, ph = fs * 1.5;
-    return { mx, my, isH, outDir, standoff: adaptive, pw, ph, txt, color: "#065f46" };
-  });
-  const positions = choosePillPositions(labelledMeta);
-  return (
-    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ display: "block" }}>
-      <path d={pathD} fill="#d1fae5" stroke="#065f46" strokeWidth={isWs ? 2 : 3} />
-      <TickMarks pts={pts} groups={q.def.groups} scale={isWs ? wsScale : 1} />
-      {q.labelledIdx.map(i => {
-        const p = pts[i], nb = pts[(i + 1) % pts.length];
-        return <line key={`e${i}`} x1={p[0]} y1={p[1]} x2={nb[0]} y2={nb[1]} stroke="#10b981" strokeWidth={isWs ? 3 : 4} opacity={0.4} />;
-      })}
-      {positions.map((pos, ri) => {
-        const l = labelledMeta[ri];
-        return (
-          <g key={`l${ri}`}>
-            <line x1={l.mx} y1={l.my} x2={pos[0]} y2={pos[1]} stroke="#4b5563" strokeWidth="1.5" strokeDasharray="4,3" />
-            <LabelPill x={pos[0]} y={pos[1]} text={l.txt} fontSize={fs} color={l.color} pw={l.pw} ph={l.ph} />
-          </g>
-        );
-      })}
-    </svg>
-  );
-}
-
-// ══════════════════════════════════════════════════════════════════════════════
-// RECTILINEAR DATA
-// ══════════════════════════════════════════════════════════════════════════════
+// ─── Rectilinear templates ────────────────────────────────────────────────────
 const RECT_TEMPLATES: Array<() => Pt[]> = [
   () => { const w = rnd(10, 17), h = rnd(12, 19), cw = rnd(4, 7), ch = rnd(5, 8); return [[0, 0], [w, 0], [w, ch], [cw, ch], [cw, h], [0, h]]; },
   () => { const tw = rnd(16, 22), th = rnd(4, 7), sw = rnd(5, 8), sh = rnd(7, 12), lm = Math.floor((tw - sw) / 2); return [[0, 0], [tw, 0], [tw, th], [lm + sw, th], [lm + sw, th + sh], [lm, th + sh], [lm, th], [0, th]]; },
@@ -398,24 +382,6 @@ const RECT_TEMPLATES: Array<() => Pt[]> = [
   () => { const ow = rnd(14, 20), oh = rnd(13, 19), lwt = rnd(3, 5), rwt = rnd(3, 5), lih = rnd(5, oh - 5), rih = rnd(5, oh - 5), innerFloor = Math.min(lih, rih); return [[0, 0], [ow, 0], [ow, oh], [ow - rwt, oh], [ow - rwt, innerFloor], [lwt, innerFloor], [lwt, oh], [0, oh]]; },
   () => { const cw = rnd(4, 6), ch = rnd(4, 6), aT = rnd(3, 5), aB = rnd(3, 5), aL = rnd(4, 7), aR = rnd(4, 7); return [[aL, 0], [aL + cw, 0], [aL + cw, aT], [aL + cw + aR, aT], [aL + cw + aR, aT + ch], [aL + cw, aT + ch], [aL + cw, aT + ch + aB], [aL, aT + ch + aB], [aL, aT + ch], [0, aT + ch], [0, aT], [aL, aT]]; },
 ];
-
-function pickTemplateIndices(count = 9): number[] {
-  const total = RECT_TEMPLATES.length, result: number[] = [], used = new Set<number>();
-  for (let i = 0; i < count; i++) {
-    let available = [...Array(total).keys()].filter(k => !used.has(k));
-    if (!available.length) { used.clear(); available = [...Array(total).keys()]; }
-    const idx = available[Math.floor(Math.random() * available.length)];
-    result.push(idx); used.add(idx);
-  }
-  return result;
-}
-
-function genRect(templateIdx: number | null = null): { pts: Pt[]; edges: number[]; templateIdx: number } {
-  const idx = templateIdx ?? Math.floor(Math.random() * RECT_TEMPLATES.length);
-  const pts = RECT_TEMPLATES[idx]();
-  const edges = pts.map((p, i) => { const nb = pts[(i + 1) % pts.length]; return Math.abs(nb[0] - p[0]) + Math.abs(nb[1] - p[1]); });
-  return { pts, edges, templateIdx: idx };
-}
 
 function pickHidden(pts: Pt[], _edges: number[], count: number): number[] {
   const h: number[] = [], v: number[] = [];
@@ -445,29 +411,19 @@ function makeMixed(edges: number[]): DisplayEdge[] {
   });
 }
 
-interface Deriv { hi: number; val: number; dir: string; }
-interface RectQuestion {
-  pts: Pt[];
-  edges: number[];
-  hiddenIdx: number[];
-  perimeter: number;
-  displayAnswer: string;
-  working: WorkStep[];
-  mixedEdges: DisplayEdge[] | null;
-  level: number;
-  derivs?: Deriv[];
-  templateIdx: number;
-}
-
-function buildRectQ(level: string, templateIdx: number | null = null): RectQuestion {
-  const { pts, edges, templateIdx: usedIdx } = genRect(templateIdx);
+function buildRectQ(level: string, templateIdx: number | null = null, vars: Record<string, unknown> = {}): RectQuestion {
+  const idx = templateIdx ?? Math.floor(Math.random() * RECT_TEMPLATES.length);
+  const pts = RECT_TEMPLATES[idx]();
+  const edges = pts.map((p, i) => { const nb = pts[(i + 1) % pts.length]; return Math.abs(nb[0] - p[0]) + Math.abs(nb[1] - p[1]); });
   const perimeter = edges.reduce((s, e) => s + e, 0);
+
   if (level === "level1") {
-    return { pts, edges, hiddenIdx: [], perimeter, displayAnswer: `${perimeter} cm`, working: [{ text: "Add all edge lengths:" }, { text: `Perimeter = ${edges.join(" + ")}` }, { text: `Perimeter = ${perimeter} cm` }], mixedEdges: null, level: 1, templateIdx: usedIdx };
+    return { kind: "rect", pts, edges, hiddenIdx: [], perimeter, answer: `${perimeter} cm`, working: [{ text: "Add all edge lengths:" }, { text: `Perimeter = ${edges.join(" + ")}` }, { text: `Perimeter = ${perimeter} cm` }], mixedEdges: null, level, templateIdx: idx, id: Math.floor(Math.random() * 1_000_000) };
   }
   if (level === "level2") {
-    const hc = Math.random() < 0.5 ? 1 : 2, hidden = pickHidden(pts, edges, hc);
-    const derivs: Deriv[] = hidden.map(hi => {
+    const hc = vars.missing2 ? 2 : vars.missing1 ? 1 : (Math.random() < 0.5 ? 1 : 2);
+    const hidden = pickHidden(pts, edges, hc);
+    const derivs = hidden.map(hi => {
       const val = deriveHidden(pts, edges, hi);
       const p1 = pts[hi], p2 = pts[(hi + 1) % pts.length];
       const dir = p1[1] === p2[1] ? "horizontal" : "vertical";
@@ -486,8 +442,9 @@ function buildRectQ(level: string, templateIdx: number | null = null): RectQuest
     const full = edges.map((e, i) => { const d = derivs.find(d => d.hi === i); return d ? d.val : e; });
     work.push({ text: `Perimeter = ${full.join(" + ")}` });
     work.push({ text: `Perimeter = ${perimeter} cm` });
-    return { pts, edges, hiddenIdx: hidden, perimeter, displayAnswer: `${perimeter} cm`, working: work, mixedEdges: null, level: 2, derivs, templateIdx: usedIdx };
+    return { kind: "rect", pts, edges, hiddenIdx: hidden, perimeter, answer: `${perimeter} cm`, working: work, mixedEdges: null, level, derivs, templateIdx: idx, id: Math.floor(Math.random() * 1_000_000) };
   }
+  // level3 — mixed units
   const mixed = makeMixed(edges);
   const work: WorkStep[] = [{ text: "Convert all measurements to centimetres:" }];
   mixed.forEach((m, i) => {
@@ -496,9 +453,99 @@ function buildRectQ(level: string, templateIdx: number | null = null): RectQuest
   });
   work.push({ text: `Perimeter = ${edges.join(" + ")}` });
   work.push({ text: `Perimeter = ${perimeter} cm` });
-  return { pts, edges, hiddenIdx: [], perimeter, displayAnswer: `${perimeter} cm`, working: work, mixedEdges: mixed, level: 3, templateIdx: usedIdx };
+  return { kind: "rect", pts, edges, hiddenIdx: [], perimeter, answer: `${perimeter} cm`, working: work, mixedEdges: mixed, level, templateIdx: idx, id: Math.floor(Math.random() * 1_000_000) };
 }
 
+// ─── Question generators ──────────────────────────────────────────────────────
+function generateQuestion(tool: ToolKey, level: string, vars: Record<string, unknown>): AnyQuestion {
+  if (tool === "polygons") return buildPolyQ(level);
+  return buildRectQ(level, null, vars);
+}
+
+function getUniqueQuestion(tool: ToolKey, level: string, vars: Record<string, unknown>, used: Set<string>): AnyQuestion {
+  let q: AnyQuestion, key: string, attempts = 0;
+  do { q = generateQuestion(tool, level, vars); key = `${q.id}`; } while (used.has(key) && ++attempts < 100);
+  used.add(key);
+  return q;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// POLYGON DIAGRAM
+// ══════════════════════════════════════════════════════════════════════════════
+interface PolyDiagramProps { q: PolyQuestion; showAnswer: boolean; small?: boolean; labelBg?: string; dataIndex?: number; }
+
+function PolyDiagram({ q, showAnswer, small = false, labelBg = "#ffffff", dataIndex }: PolyDiagramProps) {
+  const diag = small ? 150 : 360;
+  const pad  = small ? 48  : 78;
+  const fs   = small ? Math.max(9, 10) : 19;
+  const standoff = small ? 20 : 44;
+
+  const raw = q.rawPts;
+  const xs = raw.map(p => p[0]), ys = raw.map(p => p[1]);
+  const x0 = Math.min(...xs), y0 = Math.min(...ys);
+  const spanX = Math.max(...xs) - x0 || 1, spanY = Math.max(...ys) - y0 || 1;
+  const sc = diag / Math.max(spanX, spanY);
+  const offX = (diag - spanX * sc) / 2, offY = (diag - spanY * sc) / 2;
+  const pts: Pt[] = raw.map(([x, y]) => [(x - x0) * sc + pad + offX, (y - y0) * sc + pad + offY]);
+  const W = diag + pad * 2, H = diag + pad * 2;
+  const pathD = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p[0]} ${p[1]}`).join(" ") + " Z";
+  const [cx, cy] = centroid(pts);
+  const charW = fs * 0.62, pillPad = fs * 0.8;
+
+  const labelledMeta: PillMeta[] = q.labelledIdx.map(i => {
+    const p = pts[i], nb = pts[(i + 1) % pts.length];
+    const mx = (p[0] + nb[0]) / 2, my = (p[1] + nb[1]) / 2;
+    const dx = mx - cx, dy = my - cy;
+    const isH = Math.abs(p[1] - nb[1]) < 5;
+    const outDir = isH ? Math.sign(dy) || 1 : Math.sign(dx) || 1;
+    const adaptive = standoff + Math.max(0, (diag * 0.22 - Math.sqrt(dx * dx + dy * dy)) * 0.45);
+    const txt = (q.mixUnits && q.displayEdges?.[i] && !showAnswer) ? q.displayEdges[i]!.display : `${q.edges[i]} cm`;
+    const pw = txt.length * charW + pillPad * 2, ph = fs * 1.5;
+    return { mx, my, isH, outDir, standoff: adaptive, pw, ph, txt, color: "#065f46" };
+  });
+  const positions = choosePillPositions(labelledMeta);
+
+  // Tick marks
+  const renderTicks = () => q.def.groups.map((grp, gi) => grp.map(ei => {
+    const [ax, ay] = pts[ei], [bx, by] = pts[(ei + 1) % pts.length];
+    const mx2 = (ax + bx) / 2, my2 = (ay + by) / 2;
+    const dx = bx - ax, dy = by - ay, len = Math.sqrt(dx * dx + dy * dy) || 1;
+    const px = -dy / len, py = dx / len;
+    const tl = small ? 8 : 8, ts = small ? 5 : 5, count = gi + 1;
+    return Array.from({ length: count }, (_, ti) => {
+      const o = (ti - (count - 1) / 2) * ts;
+      return <line key={`${gi}-${ei}-${ti}`}
+        x1={mx2 + px * (-tl / 2) + py * o} y1={my2 + py * (-tl / 2) - px * o}
+        x2={mx2 + px * (tl / 2) + py * o}  y2={my2 + py * (tl / 2) - px * o}
+        stroke="#065f46" strokeWidth={1.5} />;
+    });
+  }));
+
+  const extraProps = dataIndex !== undefined ? { "data-q-index": dataIndex } : {};
+  return (
+    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ display: "block", width: "100%", height: "100%" }} {...extraProps}>
+      <path d={pathD} fill="#d1fae5" stroke="#065f46" strokeWidth={small ? 2 : 3} />
+      {renderTicks()}
+      {q.labelledIdx.map(i => {
+        const p = pts[i], nb = pts[(i + 1) % pts.length];
+        return <line key={`e${i}`} x1={p[0]} y1={p[1]} x2={nb[0]} y2={nb[1]} stroke="#10b981" strokeWidth={small ? 3 : 4} opacity={0.4} />;
+      })}
+      {positions.map((pos, ri) => {
+        const l = labelledMeta[ri];
+        return (
+          <g key={`l${ri}`}>
+            <line x1={l.mx} y1={l.my} x2={pos[0]} y2={pos[1]} stroke="#4b5563" strokeWidth="1.5" strokeDasharray="4,3" />
+            <LabelPill x={pos[0]} y={pos[1]} text={l.txt} fontSize={fs} color={l.color} pw={l.pw} ph={l.ph} />
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// RECTILINEAR DIAGRAM
+// ══════════════════════════════════════════════════════════════════════════════
 function edgeOutDir(sPts: Pt[], i: number): number {
   const p1 = sPts[i], p2 = sPts[(i + 1) % sPts.length];
   const mx = (p1[0] + p2[0]) / 2, my = (p1[1] + p2[1]) / 2;
@@ -507,26 +554,24 @@ function edgeOutDir(sPts: Pt[], i: number): number {
   else     return pointInPoly(mx + 4, my, sPts) ? -1 : 1;
 }
 
-// ── RectDiagram ───────────────────────────────────────────────────────────────
-interface RectDiagramProps { q: RectQuestion; showAnswer: boolean; isWs?: boolean; wsScale?: number; }
-function RectDiagram({ q, showAnswer, isWs = false, wsScale = 1 }: RectDiagramProps) {
+interface RectDiagramProps { q: RectQuestion; showAnswer: boolean; small?: boolean; labelBg?: string; dataIndex?: number; }
+
+function RectDiagram({ q, showAnswer, small = false, labelBg = "#ffffff", dataIndex }: RectDiagramProps) {
   const maxX = Math.max(...q.pts.map(p => p[0])), maxY = Math.max(...q.pts.map(p => p[1]));
-  // pill standoff and font size — calculated first so padding accounts for pill space
-  const fs = isWs ? Math.max(9, 11 * wsScale) : 18;
-  const standoff = isWs ? 18 * wsScale : 40;
-  // pad must be large enough to contain pills on every side
-  const pad = isWs ? Math.max(52 * wsScale, standoff + 14 * wsScale) : Math.max(90, standoff + 50);
-  // max drawable area for the shape itself (inside padding)
-  const maxDrawW = isWs ? 220 * wsScale : 560;
-  const maxDrawH = isWs ? 220 * wsScale : 480;
+  const fs       = small ? Math.max(9, 11) : 18;
+  const standoff = small ? 18 : 40;
+  const pad      = small ? Math.max(52, standoff + 14) : Math.max(90, standoff + 50);
+  const maxDrawW = small ? 220 : 560;
+  const maxDrawH = small ? 220 : 480;
   const sc = Math.min(maxDrawW / maxX, maxDrawH / maxY);
   const W = maxX * sc + pad * 2, H = maxY * sc + pad * 2;
   const sPts: Pt[] = q.pts.map(p => [p[0] * sc + pad, p[1] * sc + pad]);
   const pathD = sPts.map((p, i) => `${i === 0 ? "M" : "L"} ${p[0]} ${p[1]}`).join(" ") + " Z";
   const charW = fs * 0.60, pillPad = fs * 0.85;
+
   const labelMeta: (PillMeta & { hilit: string })[] = sPts.map((p, i) => {
     const nb = sPts[(i + 1) % sPts.length];
-    const mx = (p[0] + nb[0]) / 2, my = (p[1] + nb[1]) / 2;
+    const mx2 = (p[0] + nb[0]) / 2, my2 = (p[1] + nb[1]) / 2;
     const isH = Math.abs(p[1] - nb[1]) < 0.01;
     const outDir = edgeOutDir(sPts, i);
     const hidden = q.hiddenIdx.includes(i) && !showAnswer;
@@ -534,13 +579,15 @@ function RectDiagram({ q, showAnswer, isWs = false, wsScale = 1 }: RectDiagramPr
     const color = hidden ? "#d97706" : "#1e40af";
     const hilit = hidden ? "#fbbf24" : "#6366f1";
     const pw = txt.length * charW + pillPad * 2, ph = fs * 1.6;
-    return { mx, my, isH, outDir, standoff, pw, ph, txt, color, hilit };
+    return { mx: mx2, my: my2, isH, outDir, standoff, pw, ph, txt, color, hilit };
   });
   const positions = choosePillPositions(labelMeta);
+
+  const extraProps = dataIndex !== undefined ? { "data-q-index": dataIndex } : {};
   return (
-    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ display: "block" }}>
-      <path d={pathD} fill="#e0e7ff" stroke="#4f46e5" strokeWidth={isWs ? 2 : 3} />
-      {sPts.map((p, i) => { const nb = sPts[(i + 1) % sPts.length]; return <line key={`e${i}`} x1={p[0]} y1={p[1]} x2={nb[0]} y2={nb[1]} stroke={labelMeta[i].hilit} strokeWidth={isWs ? 3 : 4} opacity={0.35} />; })}
+    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ display: "block", width: "100%", height: "100%" }} {...extraProps}>
+      <path d={pathD} fill="#e0e7ff" stroke="#4f46e5" strokeWidth={small ? 2 : 3} />
+      {sPts.map((p, i) => { const nb = sPts[(i + 1) % sPts.length]; return <line key={`e${i}`} x1={p[0]} y1={p[1]} x2={nb[0]} y2={nb[1]} stroke={labelMeta[i].hilit} strokeWidth={small ? 3 : 4} opacity={0.35} />; })}
       {positions.map((pos, i) => {
         const l = labelMeta[i];
         return (
@@ -554,589 +601,776 @@ function RectDiagram({ q, showAnswer, isWs = false, wsScale = 1 }: RectDiagramPr
   );
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// PDF — SHARED CONSTANTS
-// ══════════════════════════════════════════════════════════════════════════════
-const PDF_W = 210, PDF_H = 297, PDF_M = 8, PDF_COLS = 3, PDF_ROWS = 3;
-const CELL_W = (PDF_W - PDF_M * 2) / PDF_COLS;
-const CELL_H = (PDF_H - PDF_M * 2) / PDF_ROWS;
-const CPAD = 4;
-const PILL_H_MM = 3.8, PILL_PAD_MM = 1.4, FONT_PT = 6.5;
-const LABEL_H_MM = 7;
-const ANSWER_H_MM = 7;
-
-function pillWidthMM(text: string): number { return text.length * 1.45 + PILL_PAD_MM * 2; }
-
-function scaledPts(rawPts: Pt[], cx: number, cy: number, availW: number, availH: number, frac = 0.82): Pt[] {
-  const xs = rawPts.map(p => p[0]), ys = rawPts.map(p => p[1]);
-  const x0 = Math.min(...xs), y0 = Math.min(...ys);
-  const spanX = Math.max(...xs) - x0 || 1, spanY = Math.max(...ys) - y0 || 1;
-  const sc = Math.min(availW / spanX, availH / spanY) * frac;
-  const offX = (availW - spanX * sc) / 2, offY = (availH - spanY * sc) / 2;
-  return rawPts.map(([x, y]) => [cx - availW / 2 + (x - x0) * sc + offX, cy - availH / 2 + (y - y0) * sc + offY]);
-}
-
-function buildPillMetaMM(groupVals: number[], def: ShapeDef, pts: Pt[], cx: number, cy: number, standoff: number): PillMeta[] {
-  return def.groups.map((grp, gi) => {
-    const ei = grp[0], a = pts[ei], b = pts[(ei + 1) % pts.length];
-    const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
-    const dx = mx - cx, dy = my - cy;
-    const isH = Math.abs(pts[ei][1] - pts[(ei + 1) % pts.length][1]) < standoff * 0.3;
-    const outDir = isH ? Math.sign(dy) || 1 : Math.sign(dx) || 1;
-    const txt = `${groupVals[gi]} cm`;
-    const pw = pillWidthMM(txt), ph = PILL_H_MM;
-    return { mx, my, isH, outDir, standoff, pw, ph, txt, color: "#065f46" };
-  });
-}
-
-function drawTicksPDF(doc: JsPDFInstance, pts: Pt[], groups: number[][]): void {
-  const TL = 1.4, TS = 0.85;
-  doc.setDrawColor(6, 95, 70); doc.setLineWidth(0.28); doc.setLineDashPattern([], 0);
-  groups.forEach((grp, gi) => grp.forEach(ei => {
-    const a = pts[ei], b = pts[(ei + 1) % pts.length];
-    const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
-    const dx = b[0] - a[0], dy = b[1] - a[1], len = Math.sqrt(dx * dx + dy * dy) || 1;
-    const px = -dy / len, py = dx / len, count = gi + 1;
-    for (let ti = 0; ti < count; ti++) {
-      const o = (ti - (count - 1) / 2) * TS;
-      doc.line(mx + px * (-TL / 2) + py * o, my + py * (-TL / 2) - px * o, mx + px * (TL / 2) + py * o, my + py * (TL / 2) - px * o);
-    }
-  }));
-}
-
-function drawPillsPDF(doc: JsPDFInstance, meta: PillMeta[], pos: Pt[]): void {
-  pos.forEach((p, i) => {
-    const l = meta[i];
-    doc.setDrawColor(120, 120, 120); doc.setLineWidth(0.18); doc.setLineDashPattern([0.7, 0.5], 0);
-    doc.line(l.mx, l.my, p[0], p[1]);
-    doc.setLineDashPattern([], 0);
-    doc.setFillColor(255, 255, 255); doc.setDrawColor(100, 100, 100); doc.setLineWidth(0.25);
-    doc.roundedRect(p[0] - l.pw / 2, p[1] - l.ph / 2, l.pw, l.ph, l.ph / 2, l.ph / 2, "FD");
-    doc.setFontSize(FONT_PT); doc.setTextColor(6, 95, 70);
-    doc.text(l.txt, p[0], p[1] + 0.15, { align: "center", baseline: "middle" });
-  });
-}
-
-function drawGridPDF(doc: JsPDFInstance, cols: number, rows: number, cW: number, cH: number): void {
-  doc.setDrawColor(160, 160, 160); doc.setLineWidth(0.25); doc.setLineDashPattern([], 0);
-  for (let r = 0; r < rows; r++)
-    for (let c = 0; c < cols; c++)
-      doc.rect(PDF_M + c * cW, PDF_M + r * cH, cW, cH, "S");
-}
-
-function drawPolyCellPDF(doc: JsPDFInstance, q: PolyQuestion, cellX: number, cellY: number, showAnswer: boolean, cellW: number, cellH: number): void {
-  const availW = cellW - CPAD * 2, availH = cellH - CPAD * 2 - LABEL_H_MM - (showAnswer ? ANSWER_H_MM : 0);
-  const cx = cellX + CPAD + availW / 2, cy = cellY + CPAD + LABEL_H_MM + availH / 2;
-  const pts = scaledPts(q.rawPts, cx, cy, availW, availH);
-  doc.setFontSize(5.5); doc.setTextColor(30, 58, 138); doc.setLineDashPattern([], 0);
-  doc.text("Find the perimeter in cm", cellX + cellW / 2, cellY + CPAD + LABEL_H_MM * 0.6, { align: "center" });
-  doc.setFillColor(209, 250, 229); doc.setDrawColor(6, 95, 70); doc.setLineWidth(0.5); doc.setLineDashPattern([], 0);
-  const lines: number[][] = [];
-  for (let i = 1; i < pts.length; i++) lines.push([pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]]);
-  lines.push([pts[0][0] - pts[pts.length - 1][0], pts[0][1] - pts[pts.length - 1][1]]);
-  doc.lines(lines, pts[0][0], pts[0][1], [1, 1], "FD", false);
-  drawTicksPDF(doc, pts, q.def.groups);
-  const meta = buildPillMetaMM(q.groupVals, q.def, pts, cx, cy, 8.5);
-  drawPillsPDF(doc, meta, choosePillPositions(meta));
-  if (showAnswer) { doc.setFontSize(8); doc.setTextColor(185, 28, 28); doc.setLineDashPattern([], 0); doc.text(`= ${q.perimeter} cm`, cellX + cellW / 2, cellY + cellH - CPAD, { align: "center" }); }
-}
-
-function drawRectCellPDF(doc: JsPDFInstance, q: RectQuestion, cellX: number, cellY: number, showAnswer: boolean, cellW: number, cellH: number): void {
-  const maxX = Math.max(...q.pts.map(p => p[0])), maxY = Math.max(...q.pts.map(p => p[1]));
-  const answerReserve = showAnswer ? ANSWER_H_MM : 0;
-  const pillClear = 7;
-  const availW = cellW - CPAD * 2 - pillClear * 2;
-  const availH = cellH - CPAD * 2 - LABEL_H_MM - answerReserve - pillClear * 2;
-  const sc = Math.min(availW / maxX, availH / maxY) * 0.80;
-  // Centre the scaled shape in the available area
-  const shapeW = maxX * sc, shapeH = maxY * sc;
-  const offX = cellX + CPAD + pillClear + (availW - shapeW) / 2;
-  const offY = cellY + CPAD + LABEL_H_MM + pillClear + (availH - shapeH) / 2;
-  const sPts: Pt[] = q.pts.map(p => [offX + p[0] * sc, offY + p[1] * sc]);
-  doc.setFontSize(5.5); doc.setTextColor(30, 58, 138); doc.setLineDashPattern([], 0);
-  doc.text("Find the perimeter in cm", cellX + CELL_W / 2, cellY + CPAD + LABEL_H_MM * 0.6, { align: "center" });
-  doc.setFillColor(224, 231, 255); doc.setDrawColor(79, 70, 229); doc.setLineWidth(0.5); doc.setLineDashPattern([], 0);
-  const lines: number[][] = [];
-  for (let i = 1; i < sPts.length; i++) lines.push([sPts[i][0] - sPts[i - 1][0], sPts[i][1] - sPts[i - 1][1]]);
-  lines.push([sPts[0][0] - sPts[sPts.length - 1][0], sPts[0][1] - sPts[sPts.length - 1][1]]);
-  doc.lines(lines, sPts[0][0], sPts[0][1], [1, 1], "FD", false);
-  const meta: PillMeta[] = sPts.map((p, i) => {
-    const nb = sPts[(i + 1) % sPts.length];
-    const mx = (p[0] + nb[0]) / 2, my = (p[1] + nb[1]) / 2;
-    const isH = Math.abs(p[1] - nb[1]) < 0.01;
-    const outDir = edgeOutDir(sPts, i);
-    const hidden = q.hiddenIdx.includes(i);
-    const txt = hidden ? "?" : (q.mixedEdges ? q.mixedEdges[i].display : `${q.edges[i]} cm`);
-    return { mx, my, isH, outDir, standoff: 8.5, pw: pillWidthMM(txt), ph: PILL_H_MM, txt, color: hidden ? "#d97706" : "#1e40af" };
-  });
-  const pos = choosePillPositions(meta);
-  pos.forEach((p, i) => {
-    const l = meta[i];
-    doc.setDrawColor(120, 120, 120); doc.setLineWidth(0.18); doc.setLineDashPattern([0.7, 0.5], 0);
-    doc.line(l.mx, l.my, p[0], p[1]);
-    doc.setLineDashPattern([], 0);
-    doc.setFillColor(255, 255, 255); doc.setDrawColor(100, 100, 100); doc.setLineWidth(0.25);
-    doc.roundedRect(p[0] - l.pw / 2, p[1] - l.ph / 2, l.pw, l.ph, l.ph / 2, l.ph / 2, "FD");
-    doc.setFontSize(FONT_PT);
-    doc.setTextColor(l.color === "#d97706" ? 217 : 30, l.color === "#d97706" ? 119 : 64, l.color === "#d97706" ? 6 : 175);
-    doc.text(l.txt, p[0], p[1] + 0.15, { align: "center", baseline: "middle" });
-  });
-  if (showAnswer) { doc.setFontSize(8); doc.setTextColor(185, 28, 28); doc.setLineDashPattern([], 0); doc.text(`= ${q.perimeter} cm`, cellX + CELL_W / 2, cellY + CELL_H - CPAD, { align: "center" }); }
-}
-
-function renderPagePDF(doc: JsPDFInstance, questions: (PolyQuestion | RectQuestion)[], showAnswer: boolean, diffMode: boolean, type: string, cols: number, rows: number, cW: number, cH: number, pageIndex: number, perPage: number, totalQ: number): void {
-  const levelColours: [number, number, number][] = [[22, 163, 74], [202, 138, 4], [220, 38, 38]];
-  const levelLabels = ["Level 1", "Level 2", "Level 3"];
-  const stripH = 5;
-
-  questions.forEach((q, i) => {
-    const row = Math.floor(i / cols), col = i % cols;
-    const cellX = PDF_M + col * cW, cellY = PDF_M + row * cH;
-    if (type === "polygon") drawPolyCellPDF(doc, q as PolyQuestion, cellX, cellY, showAnswer, cW, cH);
-    else                    drawRectCellPDF(doc, q as RectQuestion, cellX, cellY, showAnswer, cW, cH);
-  });
-
-  // Draw level header strips in diff mode — only at the top of a level group
-  if (diffMode) {
-    const perLevel = Math.round(totalQ / 3);
-    const globalStart = pageIndex * perPage;
-    [0, 1, 2].forEach(lvl => {
-      const lvlStart = lvl * perLevel;    // global index where this level starts
-      const localIdx = lvlStart - globalStart; // position on this page
-      if (localIdx >= 0 && localIdx < perPage) {
-        // This level starts on this page — draw strip at that row
-        const row = Math.floor(localIdx / cols);
-        const y = PDF_M + row * cH;
-        const [sr, sg, sb] = levelColours[lvl];
-        doc.setFillColor(sr, sg, sb);
-        doc.rect(PDF_M, y, cols * cW, stripH, "F");
-        doc.setFontSize(7); doc.setTextColor(255, 255, 255);
-        doc.text(levelLabels[lvl], PDF_M + (cols * cW) / 2, y + stripH * 0.75, { align: "center" });
-      }
-    });
-  }
-
-  drawGridPDF(doc, cols, rows, cW, cH);
+// ─── Unified diagram renderer ─────────────────────────────────────────────────
+interface DiagramProps { q: AnyQuestion; showAnswer: boolean; small?: boolean; labelBg?: string; dataIndex?: number; }
+function ShapeDiagram({ q, showAnswer, small, labelBg, dataIndex }: DiagramProps) {
+  if (q.kind === "poly") return <PolyDiagram q={q} showAnswer={showAnswer} small={small} labelBg={labelBg} dataIndex={dataIndex} />;
+  return <RectDiagram q={q} showAnswer={showAnswer} small={small} labelBg={labelBg} dataIndex={dataIndex} />;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// SHARED WORKSHEET PREVIEW
+// PRINT / PDF  (SVG-capture approach, matching AnglesInTrianglesv2)
 // ══════════════════════════════════════════════════════════════════════════════
-interface DiagramProps { q: PolyQuestion | RectQuestion; showAnswer: boolean; isWs?: boolean; wsScale?: number; }
+const PRINT_COLS     = 3;
+const PRINT_ROWS     = 3;
+const PRINT_PER_PAGE = PRINT_COLS * PRINT_ROWS;
 
-interface WorksheetPreviewProps {
-  questions: (PolyQuestion | RectQuestion)[];
-  diffMode: boolean;
-  pageIndex: number;
-  DiagramComponent: React.ComponentType<DiagramProps>;
-  isRect?: boolean;
-}
+function handlePrint(
+  worksheet: AnyQuestion[],
+  isDiff: boolean,
+  showAnswers: boolean,
+  toolName: string,
+  worksheetContainerRef: React.RefObject<HTMLDivElement>,
+) {
+  const container = worksheetContainerRef.current;
+  if (!container) return;
 
-function WorksheetPreview({ questions, diffMode, pageIndex, DiagramComponent, isRect }: WorksheetPreviewProps) {
-  const cols = isRect ? 2 : 3;
-  const perPage = isRect ? 6 : 9;
-  const pageQs = questions.slice(pageIndex * perPage, (pageIndex + 1) * perPage);
-  const globalStart = pageIndex * perPage;
-  const perLevel = diffMode ? Math.round(questions.length / 3) : 0;
-  const cellClass = "border-r border-b border-gray-200 last:border-r-0 p-2 flex flex-col items-center bg-white";
-  const gridClass = `grid grid-cols-${cols} border border-gray-300 rounded-lg overflow-hidden`;
-  const levelColours = ["bg-green-500", "bg-yellow-500", "bg-red-500"];
-  const levelLabels = ["Level 1", "Level 2", "Level 3"];
+  // Capture rendered SVGs by data-q-index
+  const svgEls = container.querySelectorAll<SVGSVGElement>("svg[data-q-index]");
+  const svgStrings: string[] = [];
+  svgEls.forEach(el => {
+    const idx = parseInt(el.getAttribute("data-q-index") ?? "0", 10);
+    const clone = el.cloneNode(true) as SVGSVGElement;
+    clone.setAttribute("width", "100%");
+    clone.setAttribute("height", "100%");
+    svgStrings[idx] = clone.outerHTML;
+  });
 
-  // Build rows with optional level header injected
-  const rowElements: React.ReactNode[] = [];
-  for (let i = 0; i < pageQs.length; i += cols) {
-    const rowQs = pageQs.slice(i, i + cols);
-    const globalIdx = globalStart + i;
-    if (diffMode) {
-      // Check if a level boundary starts at this row
-      [0, 1, 2].forEach(lvl => {
-        if (globalIdx === lvl * perLevel) {
-          rowElements.push(
-            <div key={`hdr-${lvl}`} className={`col-span-${cols} ${levelColours[lvl]} text-white text-xs font-bold uppercase tracking-wide px-3 py-1`}>
-              {levelLabels[lvl]}
-            </div>
-          );
-        }
-      });
-    }
-    rowQs.forEach((q, j) => {
-      rowElements.push(
-        <div key={`q-${i}-${j}`} className={cellClass}>
-          <p className="text-xs font-bold text-blue-900 mb-1 text-center">Find the perimeter in cm</p>
-          <DiagramComponent q={q} showAnswer={false} isWs wsScale={isRect ? 1.0 : 0.75} />
+  const now = new Date();
+  const dateStr = now.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+
+  const buildStandardPages = (withAnswers: boolean): string => {
+    const pages: string[] = [];
+    for (let p = 0; p < worksheet.length; p += PRINT_PER_PAGE) {
+      const slice = worksheet.slice(p, p + PRINT_PER_PAGE);
+      const pageNum = Math.floor(p / PRINT_PER_PAGE) + 1;
+      const totalPages = Math.ceil(worksheet.length / PRINT_PER_PAGE);
+      const cells = slice.map((q, localIdx) => {
+        const gi = p + localIdx;
+        const subtitle = q.kind === "poly" && (q as PolyQuestion).mixUnits ? "<div class=\"cell-sub\">Give your answer in cm</div>" : "";
+        return `<div class="cell">
+          <div class="cell-num">${gi + 1}</div>
+          <div class="cell-prompt">Find the perimeter${q.kind === "poly" ? ` of the ${(q as PolyQuestion).def.name.toLowerCase()}` : ""}</div>
+          ${subtitle}
+          <div class="cell-diagram">${svgStrings[gi] ?? ""}</div>
+          ${withAnswers ? `<div class="answer">${q.answer}</div>` : ""}
+        </div>`;
+      }).join("");
+      pages.push(`<div class="page">
+        <div class="page-header">
+          <span class="page-title">${toolName}${withAnswers ? " — Answers" : ""}</span>
+          <span class="page-meta">${dateStr}${totalPages > 1 ? ` · Page ${pageNum} of ${totalPages}` : ""}</span>
         </div>
-      );
-    });
-  }
+        <div class="standard-grid">${cells}</div>
+      </div>`);
+    }
+    return pages.join("");
+  };
 
+  const buildDiffPages = (withAnswers: boolean): string => {
+    const byLevel: Record<string, AnyQuestion[]> = {
+      level1: worksheet.filter(q => q.level === "level1"),
+      level2: worksheet.filter(q => q.level === "level2"),
+      level3: worksheet.filter(q => q.level === "level3"),
+    };
+    const offsetByLevel: Record<string, number> = {
+      level1: 0,
+      level2: byLevel.level1.length,
+      level3: byLevel.level1.length + byLevel.level2.length,
+    };
+    const lvNames:  Record<string, string> = { level1: "Level 1", level2: "Level 2", level3: "Level 3" };
+    const lvColors: Record<string, string> = { level1: "#166534", level2: "#854d0e", level3: "#991b1b" };
+    const lvBg:     Record<string, string> = { level1: "#dcfce7", level2: "#fef9c3", level3: "#fee2e2" };
+    const totalPages = Math.ceil(Math.max(...Object.values(byLevel).map(a => a.length)) / PRINT_ROWS);
+    return Array.from({ length: totalPages }, (_, p) => {
+      const cols = ["level1", "level2", "level3"].map(lv => {
+        const qs = byLevel[lv].slice(p * PRINT_ROWS, (p + 1) * PRINT_ROWS);
+        const offset = offsetByLevel[lv];
+        const cells = qs.map((q, li) => {
+          const gi = offset + p * PRINT_ROWS + li;
+          const subtitle = q.kind === "poly" && (q as PolyQuestion).mixUnits ? "<div class=\"cell-sub\">Give your answer in cm</div>" : "";
+          return `<div class="cell">
+            <div class="cell-num">${p * PRINT_ROWS + li + 1}</div>
+            <div class="cell-prompt">Find the perimeter</div>
+            ${subtitle}
+            <div class="cell-diagram">${svgStrings[gi] ?? ""}</div>
+            ${withAnswers ? `<div class="answer">${q.answer}</div>` : ""}
+          </div>`;
+        }).join("");
+        return `<div class="diff-col">
+          <div class="diff-col-header" style="color:${lvColors[lv]};background:${lvBg[lv]}">${lvNames[lv]}</div>
+          <div class="diff-cells">${cells}</div>
+        </div>`;
+      }).join("");
+      return `<div class="page">
+        <div class="page-header">
+          <span class="page-title">${toolName}${withAnswers ? " — Answers" : ""}</span>
+          <span class="page-meta">${dateStr}${totalPages > 1 ? ` · Page ${p + 1} of ${totalPages}` : ""}</span>
+        </div>
+        <div class="diff-grid">${cols}</div>
+      </div>`;
+    }).join("");
+  };
+
+  const questionsHtml = isDiff ? buildDiffPages(false) : buildStandardPages(false);
+  const answersHtml   = isDiff ? buildDiffPages(true)  : buildStandardPages(true);
+
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${toolName} — Worksheet</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  @page { size:A4 portrait; margin:12mm; }
+  body { font-family:"Segoe UI",Arial,sans-serif; background:#fff; }
+  .page { width:186mm; height:273mm; display:flex; flex-direction:column; page-break-after:always; overflow:hidden; }
+  .page:last-child { page-break-after:auto; }
+  .page-header { display:flex; justify-content:space-between; align-items:baseline; border-bottom:0.5mm solid #1e3a8a; padding-bottom:2mm; margin-bottom:3mm; flex-shrink:0; }
+  .page-title  { font-size:5mm; font-weight:700; color:#1e3a8a; }
+  .page-meta   { font-size:3mm; color:#6b7280; }
+  .standard-grid { display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); gap:2mm; flex:1; min-height:0; }
+  .diff-grid   { display:grid; grid-template-columns:repeat(3,1fr); gap:2mm; flex:1; min-height:0; }
+  .diff-col    { display:flex; flex-direction:column; gap:2mm; min-height:0; }
+  .diff-col-header { text-align:center; font-size:3.5mm; font-weight:700; padding:1.5mm 0; border-radius:1.5mm; flex-shrink:0; }
+  .diff-cells  { display:flex; flex-direction:column; gap:2mm; flex:1; min-height:0; }
+  .cell { border:0.3mm solid #d1d5db; border-radius:2mm; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; padding:2mm; overflow:hidden; flex:1; min-height:0; position:relative; }
+  .cell-num    { position:absolute; top:1.5mm; left:2mm; font-size:2.8mm; font-weight:700; color:#374151; }
+  .cell-prompt { font-size:3.2mm; font-weight:700; color:#1e3a8a; margin-bottom:1mm; margin-top:1mm; text-align:center; }
+  .cell-sub    { font-size:2.6mm; color:#7c3aed; font-weight:600; text-align:center; margin-bottom:1mm; }
+  .cell-diagram { width:100%; flex:1; min-height:0; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .cell-diagram svg { width:100%; height:100%; overflow:visible; }
+  .answer      { font-size:3mm; font-weight:700; color:#059669; text-align:center; flex-shrink:0; margin-top:1mm; }
+  @media print { body { -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
+</style></head><body>
+${questionsHtml}${answersHtml}
+</body></html>`;
+
+  const win = window.open("", "_blank");
+  if (!win) { alert("Please allow popups to use the print/PDF export."); return; }
+  win.document.write(html);
+  win.document.close();
+  setTimeout(() => win.print(), 400);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SHARED UI COMPONENTS
+// ══════════════════════════════════════════════════════════════════════════════
+const DifficultyToggle = ({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
+  <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm">
+    {(["level1", "level2", "level3"] as const).map((val, i) => {
+      const cols = ["bg-green-600", "bg-yellow-500", "bg-red-600"];
+      return <button key={val} onClick={() => onChange(val)} className={`px-5 py-2 font-bold text-base transition-colors ${value === val ? `${cols[i]} text-white` : "bg-white text-gray-500 hover:bg-gray-50"}`}>Level {i + 1}</button>;
+    })}
+  </div>
+);
+
+const VariablesSection = ({ variables, values, onChange }: { variables: any[]; values: Record<string, unknown>; onChange: (k: string, v: boolean) => void }) => (
+  <div className="flex flex-col gap-3">
+    <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Options</span>
+    {variables.map(v => (
+      <label key={v.key} className="flex items-center gap-3 cursor-pointer py-1">
+        <div onClick={() => onChange(v.key, !values[v.key])} className={`w-12 h-6 rounded-full transition-colors relative flex-shrink-0 ${values[v.key] ? "bg-blue-900" : "bg-gray-300"}`}>
+          <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${values[v.key] ? "translate-x-7" : "translate-x-1"}`} />
+        </div>
+        <span className="text-base font-semibold text-gray-700">{v.label}</span>
+      </label>
+    ))}
+  </div>
+);
+
+const StandardQOPopover = ({ variables, variableValues, onVariableChange, dropdown }: any) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("mousedown", h); return () => document.removeEventListener("mousedown", h);
+  }, [open]);
+  const hasContent = (variables?.length ?? 0) > 0 || dropdown !== null;
   return (
-    <div className="w-full">
-      <div className={gridClass}>
-        {rowElements}
-      </div>
+    <div className="relative" ref={ref}>
+      <button onClick={() => setOpen(!open)} className={`px-4 py-2 rounded-xl border-2 font-bold text-base transition-colors shadow-sm flex items-center gap-2 ${open ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-gray-300 text-gray-600 hover:border-blue-900 hover:text-blue-900"}`}>
+        Question Options <ChevronDown size={18} style={{ transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "none" }} />
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-72 p-5 flex flex-col gap-5">
+          {variables?.length > 0 && <VariablesSection variables={variables} values={variableValues} onChange={onVariableChange} />}
+          {!hasContent && <p className="text-sm text-gray-400">No options at this level.</p>}
+        </div>
+      )}
     </div>
   );
-}
+};
 
-// ══════════════════════════════════════════════════════════════════════════════
-// SHARED WORKSHEET CONTROLS + PDF LOGIC
-// ══════════════════════════════════════════════════════════════════════════════
-interface WorksheetPanelProps {
-  col: ColourScheme;
-  buildQuestions: (diff: string, diff2: boolean, pages: number) => (PolyQuestion | RectQuestion)[];
-  DiagramComponent: React.ComponentType<DiagramProps>;
-  pdfType: string;
-  filename: string;
-  isRect?: boolean;
-}
+const DiffQOPopover = ({ toolSettings, levelVariables, onLevelVariableChange }: any) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("mousedown", h); return () => document.removeEventListener("mousedown", h);
+  }, [open]);
+  return (
+    <div className="relative" ref={ref}>
+      <button onClick={() => setOpen(!open)} className={`px-4 py-2 rounded-xl border-2 font-bold text-base transition-colors shadow-sm flex items-center gap-2 ${open ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-gray-300 text-gray-600 hover:border-blue-900 hover:text-blue-900"}`}>
+        Question Options <ChevronDown size={18} style={{ transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "none" }} />
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-80 p-5 flex flex-col gap-5">
+          {["level1", "level2", "level3"].map(lv => {
+            const vars = toolSettings.difficultySettings?.[lv]?.variables ?? [];
+            return (
+              <div key={lv} className="flex flex-col gap-2">
+                <span className={`text-sm font-extrabold uppercase tracking-wider ${LV_HEADER_COLORS[lv]}`}>{LV_LABELS[lv]}</span>
+                <div className="flex flex-col gap-3 pl-1">
+                  {vars.length > 0 && <VariablesSection variables={vars} values={levelVariables[lv] ?? {}} onChange={(k: string, v: boolean) => onLevelVariableChange(lv, k, v)} />}
+                  {vars.length === 0 && <p className="text-xs text-gray-400">No options at this level.</p>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
 
-function WorksheetPanel({ col, buildQuestions, DiagramComponent, pdfType, isRect }: WorksheetPanelProps) {
-  const perPage = isRect ? 6 : 9;
-  const pdfCols = isRect ? 2 : 3;
-  const pdfRows = 3;
-  const [diff, setDiff] = useState("level1");
-  const [pages, setPages] = useState(1);
-  const [diff2, setDiff2] = useState(false);
-  const [questions, setQuestions] = useState<(PolyQuestion | RectQuestion)[]>([]);
-  const [previewPage, setPreviewPage] = useState(0);
+const InfoModal = ({ onClose }: { onClose: () => void }) => (
+  <div className="fixed inset-0 z-[100] flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.5)" }} onClick={onClose}>
+    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 flex flex-col" style={{ height: "80vh" }} onClick={e => e.stopPropagation()}>
+      <div className="flex items-center justify-between px-7 py-5 border-b border-gray-100 flex-shrink-0">
+        <div><h2 className="text-2xl font-bold text-gray-900">Tool Information</h2><p className="text-sm text-gray-400 mt-0.5">A guide to all features and options</p></div>
+        <button onClick={onClose} className="w-9 h-9 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100"><X size={20} /></button>
+      </div>
+      <div className="overflow-y-auto px-7 py-6 flex flex-col gap-6 flex-1">
+        {INFO_SECTIONS.map(s => (
+          <div key={s.title}>
+            <div className="flex items-center gap-2 mb-3"><span className="text-xl">{s.icon}</span><h3 className="text-lg font-bold text-blue-900">{s.title}</h3></div>
+            <div className="flex flex-col gap-2">
+              {s.content.map(item => <div key={item.label} className="bg-gray-50 rounded-xl px-4 py-3"><span className="font-bold text-gray-800 text-sm">{item.label}</span><p className="text-sm text-gray-500 mt-0.5 leading-relaxed">{item.detail}</p></div>)}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="px-7 py-4 border-t border-gray-100 flex justify-end flex-shrink-0">
+        <button onClick={onClose} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-sm hover:bg-blue-800">Close</button>
+      </div>
+    </div>
+  </div>
+);
 
-  function generate() {
-    setQuestions(buildQuestions(diff, diff2, pages)); setPreviewPage(0);
-  }
-
-  const totalPages = questions.length > 0 ? Math.ceil(questions.length / perPage) : 0;
-
-  async function downloadPDF() {
-    try {
-      const JsPDF = await loadJsPDF();
-      const cellW = (PDF_W - PDF_M * 2) / pdfCols;
-      const cellH = (PDF_H - PDF_M * 2) / pdfRows;
-      const doc = new JsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
-      for (let p = 0; p < totalPages; p++) {
-        if (p > 0) doc.addPage();
-        renderPagePDF(doc, questions.slice(p * perPage, (p + 1) * perPage), false, diff2, pdfType, pdfCols, pdfRows, cellW, cellH, p, perPage, questions.length);
-      }
-      for (let p = 0; p < totalPages; p++) {
-        doc.addPage();
-        renderPagePDF(doc, questions.slice(p * perPage, (p + 1) * perPage), true, diff2, pdfType, pdfCols, pdfRows, cellW, cellH, p, perPage, questions.length);
-      }
-      const url = doc.output("bloburl") as string;
-      window.open(url, "_blank");
-    } catch (e) {
-      console.error(e);
-    }
-  }
-
-  return (<>
-    <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-      <div className="flex justify-center items-center gap-6 flex-wrap mb-4">
-        <div className="flex items-center gap-3">
-          <span className="text-base font-semibold text-black">Questions:</span>
-          <div className="flex gap-2">
-            {[1, 2, 3].map(p => (
-              <button key={p} onClick={() => setPages(p)}
-                className={"px-4 py-2 rounded-lg font-bold text-sm border-2 transition-all " +
-                  (pages === p ? "bg-blue-900 text-white border-blue-900" : "bg-white text-blue-900 border-blue-900 hover:bg-blue-50")}>
-                {p * perPage}
+const MenuDropdown = ({ colorScheme, setColorScheme, onClose, onOpenInfo }: any) => {
+  const [colorOpen, setColorOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) onClose(); };
+    document.addEventListener("mousedown", h); return () => document.removeEventListener("mousedown", h);
+  }, [onClose]);
+  return (
+    <div ref={ref} className="absolute right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden" style={{ minWidth: "200px" }}>
+      <div className="py-1">
+        <button onClick={() => setColorOpen(!colorOpen)} className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+          <div className="flex items-center gap-2">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={`text-gray-400 transition-transform ${colorOpen ? "rotate-90" : ""}`}><path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            <span>Colour Scheme</span>
+          </div>
+          <span className="text-xs text-gray-400 font-normal capitalize">{colorScheme}</span>
+        </button>
+        {colorOpen && (
+          <div className="border-t border-gray-100">
+            {["default", "blue", "pink", "yellow"].map(s => (
+              <button key={s} onClick={() => { setColorScheme(s); onClose(); }} className={`w-full flex items-center justify-between pl-10 pr-4 py-2.5 text-sm font-semibold capitalize ${colorScheme === s ? "bg-blue-900 text-white" : "text-gray-600 hover:bg-gray-50"}`}>
+                {s}{colorScheme === s && <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7l3.5 3.5L12 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
               </button>
             ))}
           </div>
-        </div>
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input type="checkbox" checked={diff2} onChange={e => setDiff2(e.target.checked)} className="w-4 h-4" />
-          <span className="text-base font-semibold text-black">Differentiated</span>
-        </label>
-        {!diff2 && (
-          <div className="flex items-center gap-3">
-            <span className="text-base font-semibold text-black">Difficulty:</span>
-            <div className="flex gap-2">
-              {["level1", "level2", "level3"].map((l, i) => (
-                <button key={l} onClick={() => setDiff(l)} className={"px-4 py-2 rounded-lg font-bold text-sm " + diffBtnClass(i, diff === l)}>Level {i + 1}</button>
-              ))}
-            </div>
-          </div>
         )}
-      </div>
-      <div className="flex justify-center gap-4">
-        <button onClick={generate} className="px-6 py-3 bg-blue-900 text-white rounded-lg font-semibold flex items-center gap-2 hover:bg-blue-800"><RefreshCw size={20} />Generate</button>
-        {questions.length > 0 && <button onClick={downloadPDF} className="px-6 py-3 bg-blue-900 text-white rounded-lg font-semibold flex items-center gap-2 hover:bg-blue-800"><Download size={20} />Generate PDF</button>}
-      </div>
-    </div>
-    {questions.length > 0 && (
-      <div className="rounded-xl shadow-2xl p-8" style={{ backgroundColor: col.qBg }}>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-black">Preview</h2>
-          {totalPages > 1 && (
-            <div className="flex items-center gap-3">
-              <button onClick={() => setPreviewPage(p => Math.max(0, p - 1))} disabled={previewPage === 0}
-                className={"px-3 py-1 rounded-lg font-bold text-sm border-2 " + (previewPage === 0 ? "border-gray-300 text-gray-300 cursor-not-allowed" : "border-blue-900 text-blue-900 hover:bg-blue-50")}>‹ Prev</button>
-              <span className="text-sm font-semibold text-gray-600">Page {previewPage + 1} of {totalPages}</span>
-              <button onClick={() => setPreviewPage(p => Math.min(totalPages - 1, p + 1))} disabled={previewPage === totalPages - 1}
-                className={"px-3 py-1 rounded-lg font-bold text-sm border-2 " + (previewPage === totalPages - 1 ? "border-gray-300 text-gray-300 cursor-not-allowed" : "border-blue-900 text-blue-900 hover:bg-blue-50")}>Next ›</button>
-            </div>
-          )}
-        </div>
-        <div className="flex justify-center">
-          <WorksheetPreview questions={questions} diffMode={diff2} pageIndex={previewPage} DiagramComponent={DiagramComponent} isRect={isRect} />
-        </div>
-      </div>
-    )}
-  </>);
-}
-
-// ── Question builders ─────────────────────────────────────────────────────────
-function buildPolyQuestions(diff: string, diff2: boolean, pages: number): PolyQuestion[] {
-  const total = pages * 9;
-  if (diff2) {
-    const perLevel = pages * 3;
-    const l1keys = pickShapeKeys("level1", perLevel, 2);
-    const l2keys = pickShapeKeys("level2", perLevel, 2);
-    const l3keys2 = pickShapeKeys("level3", perLevel, 2);
-    const l1 = l1keys.map(k => buildPolyQ("level1", k));
-    const l2 = l2keys.map(k => buildPolyQ("level2", k));
-    const l3 = l3keys2.map(k => buildPolyQ("level3", k));
-    return [...l1, ...l2, ...l3];
-  }
-  const keys = pickShapeKeys(diff, total, 2);
-  return keys.map(k => buildPolyQ(diff, k));
-}
-
-function buildRectQuestions(diff: string, diff2: boolean, pages: number): RectQuestion[] {
-  if (diff2) {
-    // Generate 2*pages of each level, grouped: all L1 then L2 then L3
-    const perLevel = pages * 2;
-    const l1 = pickTemplateIndices(perLevel).map(idx => buildRectQ("level1", idx));
-    const l2 = pickTemplateIndices(perLevel).map(idx => buildRectQ("level2", idx));
-    const l3 = pickTemplateIndices(perLevel).map(idx => buildRectQ("level3", idx));
-    return [...l1, ...l2, ...l3];
-  }
-  const indices = pickTemplateIndices(pages * 6);
-  return indices.map(idx => buildRectQ(diff, idx));
-}
-
-// ── ControlsBar ───────────────────────────────────────────────────────────────
-interface ControlsBarProps {
-  difficulty: string;
-  setDifficulty: (l: string) => void;
-  onNew: () => void;
-  onToggleAnswer: () => void;
-  showAnswer: boolean;
-}
-function ControlsBar({ difficulty, setDifficulty, onNew, onToggleAnswer, showAnswer }: ControlsBarProps) {
-  return (
-    <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <span className="text-sm font-semibold text-black">Difficulty:</span>
-          <div className="flex gap-2">
-            {["level1", "level2", "level3"].map((lvl, idx) => (
-              <button key={lvl} onClick={() => setDifficulty(lvl)} className={"px-4 py-2 rounded-lg font-bold text-sm w-24 " + diffBtnClass(idx, difficulty === lvl)}>Level {idx + 1}</button>
-            ))}
-          </div>
-        </div>
-        <div className="flex gap-3">
-          <button onClick={onNew} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-lg hover:bg-blue-800 flex items-center gap-2 w-52"><RefreshCw size={18} />New Question</button>
-          <button onClick={onToggleAnswer} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-lg hover:bg-blue-800 flex items-center gap-2 w-52"><Eye size={18} />{showAnswer ? "Hide Answer" : "Show Answer"}</button>
-        </div>
+        <div className="border-t border-gray-100 my-1" />
+        <button onClick={() => { onOpenInfo(); onClose(); }} className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400 flex-shrink-0"><circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5" /><path d="M8 7v5M8 5v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+          Tool Information
+        </button>
       </div>
     </div>
   );
-}
+};
 
 // ══════════════════════════════════════════════════════════════════════════════
-// RECTILINEAR PANELS
-// ══════════════════════════════════════════════════════════════════════════════
-function RectWhiteboard({ col }: { col: ColourScheme }) {
-  const [diff, setDiff] = useState("level1");
-  const [missing1, setMissing1] = useState(false);
-  const [missing2, setMissing2] = useState(false);
-  const [q, setQ] = useState<RectQuestion>(() => buildRectQ("level1"));
-  const [show, setShow] = useState(false);
-  function newQ() {
-    const base = buildRectQ(diff);
-    const mc = missing2 ? 2 : missing1 ? 1 : 0;
-    setQ(mc > 0 ? { ...base, hiddenIdx: pickHidden(base.pts, base.edges, mc) } : { ...base, hiddenIdx: [] });
-    setShow(false);
-  }
-  useEffect(() => { newQ(); }, [diff, missing1, missing2]); // eslint-disable-line react-hooks/exhaustive-deps
-  return (<>
-    <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <span className="text-sm font-semibold text-black">Difficulty:</span>
-          <div className="flex gap-2">
-            {["level1", "level2", "level3"].map((lvl, idx) => (
-              <button key={lvl} onClick={() => setDiff(lvl)} className={"px-4 py-2 rounded-lg font-bold text-sm w-24 " + diffBtnClass(idx, diff === lvl)}>Level {idx + 1}</button>
-            ))}
-          </div>
-          {(diff === "level2" || diff === "level3") && (
-            <div className="flex flex-col gap-1 ml-4">
-              <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={missing1} onChange={e => { setMissing1(e.target.checked); if (e.target.checked) setMissing2(false); }} className="w-4 h-4" /><span className="text-sm font-semibold text-black">1 side missing</span></label>
-              <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={missing2} onChange={e => { setMissing2(e.target.checked); if (e.target.checked) setMissing1(false); }} className="w-4 h-4" /><span className="text-sm font-semibold text-black">2 sides missing</span></label>
-            </div>
-          )}
-        </div>
-        <div className="flex gap-3">
-          <button onClick={newQ} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-lg hover:bg-blue-800 flex items-center gap-2 w-52"><RefreshCw size={18} />New Question</button>
-          <button onClick={() => setShow(!show)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-lg hover:bg-blue-800 flex items-center gap-2 w-52"><Eye size={18} />{show ? "Hide Answer" : "Show Answer"}</button>
-        </div>
-      </div>
-    </div>
-    <div className="rounded-xl shadow-2xl p-8" style={{ backgroundColor: col.qBg }}>
-      <div className="text-center mb-6">
-        <span className="text-5xl font-bold text-black">Find the perimeter</span>
-        {show && <span className="text-5xl font-bold ml-4" style={{ color: "#166534" }}>= {q.displayAnswer}</span>}
-        {q.level === 3 && <p className="mt-2 text-xl font-semibold text-purple-700">Give your answer in centimetres (cm)</p>}
-      </div>
-      <div className="rounded-xl flex items-center justify-center p-6" style={{ width: "100%", minHeight: 480, backgroundColor: col.stepBg }}>
-        <RectDiagram q={q} showAnswer={show} />
-      </div>
-    </div>
-  </>);
-}
-
-function RectWorked({ col }: { col: ColourScheme }) {
-  const [diff, setDiff] = useState("level1");
-  const [q, setQ] = useState<RectQuestion>(() => buildRectQ("level1"));
-  const [show, setShow] = useState(false);
-  useEffect(() => { setQ(buildRectQ(diff)); setShow(false); }, [diff]);
-  return (<>
-    <ControlsBar difficulty={diff} setDifficulty={setDiff} onNew={() => { setQ(buildRectQ(diff)); setShow(false); }} onToggleAnswer={() => setShow(!show)} showAnswer={show} />
-    <div className="rounded-xl shadow-lg p-8" style={{ backgroundColor: col.qBg }}>
-      <div className="text-center mb-6">
-        <span className="text-5xl font-bold text-black">Find the perimeter</span>
-        {q.level === 3 && <p className="mt-2 text-xl font-semibold text-purple-700">Give your answer in centimetres (cm)</p>}
-      </div>
-      <div className="flex justify-center mb-8"><RectDiagram q={q} showAnswer={show} /></div>
-      {show && (<>
-        <div className="space-y-4 mt-4">
-          {q.working.slice(0, -1).map((s, i) => (
-            <div key={i} className="rounded-xl p-5" style={{ backgroundColor: col.stepBg }}>
-              <span className="text-sm font-bold uppercase tracking-wide text-gray-500 mr-3">Step {i + 1}</span>
-              <span className="text-2xl font-semibold text-black">{s.text}</span>
-            </div>
-          ))}
-        </div>
-        <div className="rounded-xl p-6 text-center mt-4" style={{ backgroundColor: col.finalBg }}>
-          <span className="text-4xl font-bold" style={{ color: "#166534" }}>= {q.working[q.working.length - 1].text.replace("Perimeter = ", "")}</span>
-        </div>
-      </>)}
-    </div>
-  </>);
-}
-
-// ══════════════════════════════════════════════════════════════════════════════
-// POLYGON PANELS
-// ══════════════════════════════════════════════════════════════════════════════
-function PolyWhiteboard({ col }: { col: ColourScheme }) {
-  const [diff, setDiff] = useState("level1");
-  const [q, setQ] = useState<PolyQuestion>(() => buildPolyQ("level1"));
-  const [show, setShow] = useState(false);
-  useEffect(() => { setQ(buildPolyQ(diff)); setShow(false); }, [diff]);
-  return (<>
-    <ControlsBar difficulty={diff} setDifficulty={setDiff} onNew={() => { setQ(buildPolyQ(diff)); setShow(false); }} onToggleAnswer={() => setShow(!show)} showAnswer={show} />
-    <div className="rounded-xl shadow-2xl p-8" style={{ backgroundColor: col.qBg }}>
-      <div className="text-center mb-6">
-        <span className="text-5xl font-bold text-black">Find the perimeter of the {q.def.name.toLowerCase()}</span>
-        {show && <span className="text-5xl font-bold ml-4" style={{ color: "#166534" }}>= {q.displayAnswer}</span>}
-        {q.mixUnits && <p className="mt-2 text-xl font-semibold text-purple-700">Give your answer in centimetres (cm)</p>}
-      </div>
-      <div className="rounded-xl flex items-center justify-center p-6" style={{ width: "100%", minHeight: 480, backgroundColor: col.stepBg }}>
-        <PolyDiagram q={q} showAnswer={show} />
-      </div>
-    </div>
-  </>);
-}
-
-function PolyWorked({ col }: { col: ColourScheme }) {
-  const [diff, setDiff] = useState("level1");
-  const [q, setQ] = useState<PolyQuestion>(() => buildPolyQ("level1"));
-  const [show, setShow] = useState(false);
-  useEffect(() => { setQ(buildPolyQ(diff)); setShow(false); }, [diff]);
-  return (<>
-    <ControlsBar difficulty={diff} setDifficulty={setDiff} onNew={() => { setQ(buildPolyQ(diff)); setShow(false); }} onToggleAnswer={() => setShow(!show)} showAnswer={show} />
-    <div className="rounded-xl shadow-lg p-8" style={{ backgroundColor: col.qBg }}>
-      <div className="text-center mb-6">
-        <span className="text-5xl font-bold text-black">Find the perimeter of the {q.def.name.toLowerCase()}</span>
-        {q.mixUnits && <p className="mt-2 text-xl font-semibold text-purple-700">Give your answer in centimetres (cm)</p>}
-      </div>
-      <div className="flex justify-center mb-8"><PolyDiagram q={q} showAnswer={show} /></div>
-      {show && (<>
-        <div className="space-y-4 mt-4">
-          {q.working.slice(0, -1).map((s, i) => (
-            <div key={i} className="rounded-xl p-5" style={{ backgroundColor: col.stepBg }}>
-              <span className="text-sm font-bold uppercase tracking-wide text-gray-500 mr-3">Step {i + 1}</span>
-              <span className="text-2xl font-semibold text-black">{s.text}</span>
-            </div>
-          ))}
-        </div>
-        <div className="rounded-xl p-6 text-center mt-4" style={{ backgroundColor: col.finalBg }}>
-          <span className="text-4xl font-bold" style={{ color: "#166534" }}>= {q.working[q.working.length - 1].text.replace("Perimeter = ", "")}</span>
-        </div>
-      </>)}
-    </div>
-  </>);
-}
-
-// ══════════════════════════════════════════════════════════════════════════════
-// ROOT
+// MAIN APP
 // ══════════════════════════════════════════════════════════════════════════════
 export default function PerimeterTool() {
   const navigate = useNavigate();
-  const [subtool, setSubtool] = useState("polygons");
-  const [mode, setMode] = useState("whiteboard");
-  const [scheme, setScheme] = useState<SchemeKey>("default");
-  const [menuOpen, setMenuOpen] = useState(false);
-  const col = SCHEMES[scheme];
-  return (<>
-          <div className="bg-blue-900 shadow-lg">
-      <div className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
-        <button onClick={() => navigate('/')} className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg"><Home size={24} /><span className="font-semibold text-lg">Home</span></button>
-        <div className="relative">
-          <button onClick={() => setMenuOpen(!menuOpen)} className="text-white hover:bg-blue-800 p-2 rounded-lg">{menuOpen ? <X size={28} /> : <Menu size={28} />}</button>
-          {menuOpen && (
-            <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border-2 border-gray-200 z-50">
-              <div className="py-2">
-                <div className="px-6 py-2 font-bold text-gray-700 text-sm uppercase tracking-wide">Colour Scheme</div>
-                {(["default", "blue", "pink", "yellow"] as SchemeKey[]).map(s => (
-                  <button key={s} onClick={() => { setScheme(s); setMenuOpen(false); }} className={"w-full text-left px-6 py-3 font-semibold " + (scheme === s ? "bg-blue-100 text-blue-900" : "text-gray-800 hover:bg-gray-100")}>
-                    {s.charAt(0).toUpperCase() + s.slice(1)}
-                  </button>
-                ))}
+  const worksheetContainerRef = useRef<HTMLDivElement>(null);
+
+  const [currentTool, setCurrentTool] = useState<ToolKey>("polygons");
+  const [mode,        setMode]        = useState("whiteboard");
+  const [difficulty,  setDifficulty]  = useState("level1");
+
+  // ── Per-level QO state ────────────────────────────────────────────────────
+  const makeDefaultLevelVars = (tool: ToolKey) => {
+    const ds = (TOOL_CONFIG.tools[tool] as any).difficultySettings;
+    const out: Record<string, Record<string, unknown>> = {};
+    ["level1", "level2", "level3"].forEach(lv => {
+      out[lv] = {};
+      (ds[lv]?.variables ?? []).forEach((v: any) => { out[lv][v.key] = v.defaultValue; });
+    });
+    return out;
+  };
+
+  const [levelVars, setLevelVars] = useState<Record<string, Record<string, unknown>>>(() => makeDefaultLevelVars("polygons"));
+
+  const setLevelVar = (lv: string, k: string, v: unknown) =>
+    setLevelVars(p => ({ ...p, [lv]: { ...p[lv], [k]: v } }));
+
+  const getVarsConfig = () => (TOOL_CONFIG.tools[currentTool] as any).difficultySettings?.[difficulty]?.variables ?? [];
+
+  const buildVars = (lv: string): Record<string, unknown> => levelVars[lv] ?? {};
+
+  // When switching tools, reset level vars to defaults for new tool
+  const handleToolChange = (tool: ToolKey) => {
+    setCurrentTool(tool);
+    setLevelVars(makeDefaultLevelVars(tool));
+  };
+
+  // ── Display / worksheet state ─────────────────────────────────────────────
+  const [question,      setQuestion]      = useState<AnyQuestion | null>(null);
+  const [showWBAnswer,  setShowWBAnswer]  = useState(false);
+  const [showAnswer,    setShowAnswer]    = useState(false);
+  const [numQuestions,  setNumQuestions]  = useState(9);
+  const [worksheet,     setWorksheet]     = useState<AnyQuestion[]>([]);
+  const [showWSAnswers, setShowWSAnswers] = useState(false);
+  const [isDiff,        setIsDiff]        = useState(false);
+  const [colorScheme,   setColorScheme]   = useState("default");
+  const [menuOpen,      setMenuOpen]      = useState(false);
+  const [infoOpen,      setInfoOpen]      = useState(false);
+
+  // Font sizes
+  const displayFontSizes = ["text-2xl", "text-3xl", "text-4xl", "text-5xl", "text-6xl", "text-7xl"];
+  const [displayFontSize, setDisplayFontSize] = useState(2);
+  const canDisplayIncrease = displayFontSize < displayFontSizes.length - 1;
+  const canDisplayDecrease = displayFontSize > 0;
+
+  // ── Visualiser / whiteboard state ─────────────────────────────────────────
+  const [wbFullscreen,    setWbFullscreen]    = useState(false);
+  const [presenterMode,   setPresenterMode]   = useState(false);
+  const [camDevices,      setCamDevices]      = useState<MediaDeviceInfo[]>([]);
+  const [currentCamId,    setCurrentCamId]    = useState<string | null>(null);
+  const [camError,        setCamError]        = useState<string | null>(null);
+  const [camDropdownOpen, setCamDropdownOpen] = useState(false);
+  const longPressTimer  = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const didLongPress    = useRef(false);
+  const camDropdownRef  = useRef<HTMLDivElement>(null);
+  const videoRef        = useRef<HTMLVideoElement>(null);
+  const streamRef       = useRef<MediaStream | null>(null);
+
+  const stopStream = useCallback(() => {
+    if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null; }
+    if (videoRef.current) videoRef.current.srcObject = null;
+  }, []);
+
+  const startCam = useCallback(async (deviceId?: string) => {
+    stopStream(); setCamError(null);
+    try {
+      let targetId = deviceId;
+      if (!targetId) {
+        const tmp = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        tmp.getTracks().forEach(t => t.stop());
+        const all = await navigator.mediaDevices.enumerateDevices();
+        const builtIn = /facetime|built.?in|integrated|internal|front|rear/i;
+        const ext = all.filter(d => d.kind === "videoinput").find(d => d.label && !builtIn.test(d.label));
+        if (ext) targetId = ext.deviceId;
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({ video: targetId ? { deviceId: { exact: targetId } } : true, audio: false });
+      streamRef.current = stream;
+      if (videoRef.current) videoRef.current.srcObject = stream;
+      setCurrentCamId(stream.getVideoTracks()[0].getSettings().deviceId ?? null);
+      setCamDevices((await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === "videoinput"));
+    } catch (e: any) { setCamError(e.message ?? "Camera unavailable"); }
+  }, [stopStream]);
+
+  useEffect(() => { if (presenterMode) startCam(); else stopStream(); }, [presenterMode]);
+  useEffect(() => { if (presenterMode && streamRef.current && videoRef.current) videoRef.current.srcObject = streamRef.current; }, [wbFullscreen]);
+  useEffect(() => {
+    if (!camDropdownOpen) return;
+    const h = (e: MouseEvent) => { if (camDropdownRef.current && !camDropdownRef.current.contains(e.target as Node)) setCamDropdownOpen(false); };
+    document.addEventListener("mousedown", h); return () => document.removeEventListener("mousedown", h);
+  }, [camDropdownOpen]);
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => { if (e.key === "Escape") { setPresenterMode(false); setWbFullscreen(false); } };
+    document.addEventListener("keydown", h); return () => document.removeEventListener("keydown", h);
+  }, []);
+
+  const qBg    = getQuestionBg(colorScheme);
+  const stepBg = getStepBg(colorScheme);
+  const isDefaultScheme = colorScheme === "default";
+  const fsToolbarBg  = isDefaultScheme ? "#ffffff" : stepBg;
+  const fsQuestionBg = isDefaultScheme ? "#ffffff" : qBg;
+  const fsWorkingBg  = isDefaultScheme ? "#f5f3f0" : qBg;
+
+  const stdQOProps = {
+    variables: getVarsConfig(),
+    variableValues: levelVars[difficulty] ?? {},
+    onVariableChange: (k: string, v: unknown) => setLevelVar(difficulty, k, v),
+    dropdown: null,
+  };
+  const diffQOProps = {
+    toolSettings: TOOL_CONFIG.tools[currentTool],
+    levelVariables: levelVars,
+    onLevelVariableChange: setLevelVar,
+  };
+
+  const newQuestion = () => {
+    setQuestion(generateQuestion(currentTool, difficulty, buildVars(difficulty)));
+    setShowWBAnswer(false); setShowAnswer(false);
+  };
+
+  const generateWorksheet = () => {
+    const used = new Set<string>();
+    const qs: AnyQuestion[] = [];
+    if (isDiff) {
+      ["level1", "level2", "level3"].forEach(lv => {
+        for (let i = 0; i < numQuestions; i++) qs.push(getUniqueQuestion(currentTool, lv, buildVars(lv), used));
+      });
+    } else {
+      for (let i = 0; i < numQuestions; i++) qs.push(getUniqueQuestion(currentTool, difficulty, buildVars(difficulty), used));
+    }
+    setWorksheet(qs); setShowWSAnswers(false);
+  };
+
+  useEffect(() => { if (mode !== "worksheet") newQuestion(); }, [difficulty, currentTool]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Font size button style
+  const fontBtn = (enabled: boolean) => ({
+    background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8,
+    cursor: enabled ? "pointer" : "not-allowed", width: 32, height: 32,
+    display: "flex", alignItems: "center", justifyContent: "center", opacity: enabled ? 1 : 0.35,
+  });
+
+  // ── Question title helper ─────────────────────────────────────────────────
+  const questionTitle = (q: AnyQuestion | null): string => {
+    if (!q) return "Find the perimeter";
+    if (q.kind === "poly") return `Find the perimeter of the ${(q as PolyQuestion).def.name.toLowerCase()}`;
+    return "Find the perimeter";
+  };
+
+  // ── Worksheet cell ────────────────────────────────────────────────────────
+  const renderQCell = (q: AnyQuestion, globalIdx: number, bgOverride?: string) => {
+    const bg = bgOverride ?? stepBg;
+    const mixUnits = q.kind === "poly" && (q as PolyQuestion).mixUnits;
+    return (
+      <div key={globalIdx} className="rounded-lg shadow flex flex-col items-center gap-1 p-3" style={{ backgroundColor: bg, minHeight: 220 }}>
+        <span className="text-sm font-bold text-gray-700 self-start">{globalIdx + 1}.</span>
+        <p className="text-xs font-bold text-blue-900 text-center">{questionTitle(q)}</p>
+        {mixUnits && <p className="text-xs font-semibold text-purple-700 text-center">Give your answer in cm</p>}
+        <div style={{ width: "100%", flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <ShapeDiagram q={q} showAnswer={showWSAnswers} small labelBg={bg} dataIndex={globalIdx} />
+        </div>
+        {showWSAnswers && <span className="text-sm font-bold text-center" style={{ color: "#059669" }}>{q.answer}</span>}
+      </div>
+    );
+  };
+
+  // ── Control bar ───────────────────────────────────────────────────────────
+  const renderControlBar = () => {
+    if (mode === "worksheet") return (
+      <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+        {/* Row 1: Level + Differentiated */}
+        <div className="flex justify-center items-center gap-6 mb-4">
+          <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm">
+            {(["level1", "level2", "level3"] as const).map((val, i) => {
+              const cols = ["bg-green-600", "bg-yellow-500", "bg-red-600"];
+              return <button key={val} onClick={() => { setDifficulty(val); setIsDiff(false); }} className={`px-5 py-2 font-bold text-base transition-colors ${!isDiff && difficulty === val ? `${cols[i]} text-white` : "bg-white text-gray-500 hover:bg-gray-50"}`}>Level {i + 1}</button>;
+            })}
+          </div>
+          <button onClick={() => setIsDiff(!isDiff)} className={`px-6 py-2 rounded-xl font-bold text-base shadow-sm border-2 transition-colors ${isDiff ? "bg-blue-900 text-white border-blue-900" : "bg-white text-gray-600 border-gray-300 hover:border-blue-900 hover:text-blue-900"}`}>Differentiated</button>
+        </div>
+        {/* Row 2: QO + Questions */}
+        <div className="flex justify-center items-center gap-6 mb-4">
+          {isDiff ? <DiffQOPopover {...diffQOProps} /> : <StandardQOPopover {...stdQOProps} />}
+          <div className="flex items-center gap-3">
+            <label className="text-base font-semibold text-gray-700">Questions{isDiff ? " per level" : ""}:</label>
+            <input type="number" min="1" max="18" value={numQuestions}
+              onChange={e => setNumQuestions(Math.max(1, Math.min(18, parseInt(e.target.value) || 9)))}
+              className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-base text-center" />
+          </div>
+        </div>
+        {/* Row 3: Actions */}
+        <div className="flex justify-center items-center gap-4">
+          <button onClick={generateWorksheet} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
+            <RefreshCw size={18} /> Generate Worksheet
+          </button>
+          {worksheet.length > 0 && <>
+            <button onClick={() => setShowWSAnswers(!showWSAnswers)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
+              <Eye size={18} /> {showWSAnswers ? "Hide Answers" : "Show Answers"}
+            </button>
+            <button onClick={() => handlePrint(worksheet, isDiff, showWSAnswers, TOOL_CONFIG.pageTitle, worksheetContainerRef)}
+              className="px-6 py-2 bg-green-700 text-white rounded-xl font-bold text-base shadow-sm hover:bg-green-800 flex items-center gap-2">
+              <Printer size={18} /> Print / PDF
+            </button>
+          </>}
+        </div>
+      </div>
+    );
+
+    return (
+      <div className="px-5 py-4 rounded-xl" style={{ backgroundColor: qBg }}>
+        <div className="flex items-center justify-between gap-4">
+          <DifficultyToggle value={difficulty} onChange={setDifficulty} />
+          <StandardQOPopover {...stdQOProps} />
+          <div className="flex gap-3">
+            <button onClick={newQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18} /> New Question</button>
+            <button onClick={() => mode === "whiteboard" ? setShowWBAnswer(!showWBAnswer) : setShowAnswer(!showAnswer)}
+              className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
+              <Eye size={18} /> {(mode === "whiteboard" ? showWBAnswer : showAnswer) ? "Hide Answer" : "Show Answer"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // ── Whiteboard ────────────────────────────────────────────────────────────
+  const renderWhiteboard = () => {
+    const fsToolbar = (
+      <div style={{ background: fsToolbarBg, borderBottom: "2px solid #000", padding: "16px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexShrink: 0, zIndex: 210 }}>
+        <DifficultyToggle value={difficulty} onChange={setDifficulty} />
+        <StandardQOPopover {...stdQOProps} />
+        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          <button onClick={newQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18} /> New Question</button>
+          <button onClick={() => setShowWBAnswer(a => !a)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><Eye size={18} /> {showWBAnswer ? "Hide Answer" : "Show Answer"}</button>
+        </div>
+      </div>
+    );
+
+    const fontControls = (
+      <div style={{ position: "absolute", top: 10, right: 10, display: "flex", gap: 6, zIndex: 20 }}>
+        <button style={fontBtn(canDisplayDecrease)} onClick={() => canDisplayDecrease && setDisplayFontSize(f => f - 1)} title="Decrease font size"><ChevronDown size={16} color="#6b7280" /></button>
+        <button style={fontBtn(canDisplayIncrease)} onClick={() => canDisplayIncrease && setDisplayFontSize(f => f + 1)} title="Increase font size"><ChevronUp   size={16} color="#6b7280" /></button>
+      </div>
+    );
+
+    const questionBox = (isFS: boolean) => (
+      <div style={{
+        position: "relative", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16,
+        ...(isFS
+          ? { width: "40%", height: "100%", backgroundColor: fsQuestionBg, padding: 32, boxSizing: "border-box" as const, flexShrink: 0, overflowY: "auto" as const }
+          : { width: "500px", height: "100%", backgroundColor: stepBg, borderRadius: 12, padding: 24, flexShrink: 0 })
+      }}>
+        {fontControls}
+        <div style={{ width: "100%", textAlign: "center", paddingLeft: 44, paddingRight: 44 }}>
+          <span className={`${displayFontSizes[displayFontSize]} font-bold text-black`}>{questionTitle(question)}</span>
+        </div>
+        {question?.kind === "poly" && (question as PolyQuestion).mixUnits && (
+          <p className="text-xl font-semibold text-purple-700">Give your answer in cm</p>
+        )}
+        {showWBAnswer && question && (
+          <span className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>{question.answer}</span>
+        )}
+        <div style={{ width: "100%", flex: 1, minHeight: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          {question
+            ? <ShapeDiagram q={question} showAnswer={showWBAnswer} labelBg={isFS ? fsQuestionBg : stepBg} />
+            : <span className="text-gray-400 text-xl">Generate a question</span>}
+        </div>
+      </div>
+    );
+
+    const makeRightPanel = (isFS: boolean) => (
+      <div style={{ flex: isFS ? "none" : 1, width: isFS ? "60%" : undefined, height: "100%", position: "relative", overflow: "hidden", backgroundColor: presenterMode ? "#000" : (isFS ? fsWorkingBg : stepBg), borderRadius: isFS ? 0 : undefined }} className={isFS ? "" : "flex-1 rounded-xl"}>
+        {presenterMode && (
+          <>
+            <video ref={videoRef} autoPlay playsInline muted style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+            {camError && <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", padding: "2rem", textAlign: "center", zIndex: 1 }}>{camError}</div>}
+          </>
+        )}
+        <div style={{ position: "absolute", top: 10, right: 10, display: "flex", gap: 6, zIndex: 20 }}>
+          {presenterMode ? (
+            <div style={{ position: "relative" }} ref={camDropdownRef}>
+              <button
+                onMouseDown={() => { didLongPress.current = false; longPressTimer.current = setTimeout(() => { didLongPress.current = true; setCamDropdownOpen(o => !o); }, 500); }}
+                onMouseUp={() => { if (longPressTimer.current) clearTimeout(longPressTimer.current); if (!didLongPress.current) setPresenterMode(false); }}
+                onMouseLeave={() => { if (longPressTimer.current) clearTimeout(longPressTimer.current); }}
+                style={{ background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(6px)" }}
+                onMouseEnter={e => (e.currentTarget.style.background = "rgba(0,0,0,0.75)")}
+              ><Video size={16} color="rgba(255,255,255,0.85)" /></button>
+              {camDropdownOpen && (
+                <div style={{ position: "absolute", top: 40, right: 0, background: "rgba(12,12,12,0.96)", backdropFilter: "blur(14px)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, minWidth: 200, overflow: "hidden", zIndex: 30 }}>
+                  <div style={{ padding: "6px 14px", fontSize: "0.55rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(255,255,255,0.25)" }}>Camera</div>
+                  {camDevices.map((d, i) => (
+                    <div key={d.deviceId} onClick={() => { setCamDropdownOpen(false); if (d.deviceId !== currentCamId) startCam(d.deviceId); }}
+                      style={{ padding: "10px 14px", fontSize: "0.75rem", color: d.deviceId === currentCamId ? "#60a5fa" : "rgba(255,255,255,0.65)", cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}
+                      onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.07)")}
+                      onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                    >
+                      <div style={{ width: 5, height: 5, borderRadius: "50%", background: d.deviceId === currentCamId ? "#60a5fa" : "transparent", flexShrink: 0 }} />
+                      {d.label || `Camera ${i + 1}`}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <button onClick={() => setPresenterMode(true)} style={{ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center" }}
+              onMouseEnter={e => (e.currentTarget.style.background = "rgba(0,0,0,0.15)")}
+              onMouseLeave={e => (e.currentTarget.style.background = "rgba(0,0,0,0.08)")}
+            ><Video size={16} color="#6b7280" /></button>
+          )}
+          <button onClick={() => setWbFullscreen(f => !f)}
+            style={{ background: wbFullscreen ? "#374151" : (presenterMode ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.08)"), border: presenterMode ? "1px solid rgba(255,255,255,0.15)" : "none", borderRadius: 8, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: presenterMode ? "blur(6px)" : "none" }}
+            onMouseEnter={e => (e.currentTarget.style.background = wbFullscreen ? "#1f2937" : (presenterMode ? "rgba(0,0,0,0.75)" : "rgba(0,0,0,0.15)"))}
+            onMouseLeave={e => (e.currentTarget.style.background = wbFullscreen ? "#374151" : (presenterMode ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.08)"))}
+          >{wbFullscreen ? <Minimize2 size={16} color="#ffffff" /> : <Maximize2 size={16} color={presenterMode ? "rgba(255,255,255,0.85)" : "#6b7280"} />}</button>
+        </div>
+      </div>
+    );
+
+    if (wbFullscreen) return (
+      <div style={{ position: "fixed", inset: 0, zIndex: 200, backgroundColor: fsToolbarBg, display: "flex", flexDirection: "column" }}>
+        {fsToolbar}
+        <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
+          {questionBox(true)}
+          <div style={{ width: 2, backgroundColor: "#000", flexShrink: 0 }} />
+          {makeRightPanel(true)}
+        </div>
+      </div>
+    );
+    return (
+      <div className="p-8" style={{ backgroundColor: qBg, height: "600px", boxSizing: "border-box" }}>
+        <div className="flex gap-6" style={{ height: "100%" }}>
+          {questionBox(false)}
+          {makeRightPanel(false)}
+        </div>
+      </div>
+    );
+  };
+
+  // ── Worked example ────────────────────────────────────────────────────────
+  const renderWorkedExample = () => (
+    <div className="overflow-y-auto" style={{ maxHeight: "120vh" }}>
+      <div className="p-8" style={{ backgroundColor: qBg }}>
+        <div className="text-center mb-6 relative">
+          <div style={{ position: "absolute", top: 0, right: 0, display: "flex", gap: 6 }}>
+            <button style={fontBtn(canDisplayDecrease)} onClick={() => canDisplayDecrease && setDisplayFontSize(f => f - 1)}><ChevronDown size={16} color="#6b7280" /></button>
+            <button style={fontBtn(canDisplayIncrease)} onClick={() => canDisplayIncrease && setDisplayFontSize(f => f + 1)}><ChevronUp   size={16} color="#6b7280" /></button>
+          </div>
+          <span className={`${displayFontSizes[displayFontSize]} font-bold text-black`}>{questionTitle(question)}</span>
+          {question?.kind === "poly" && (question as PolyQuestion).mixUnits && (
+            <p className="mt-2 text-xl font-semibold text-purple-700">Give your answer in centimetres (cm)</p>
+          )}
+        </div>
+        {question ? (
+          <>
+            <div className="flex justify-center mb-6" style={{ maxWidth: 500, margin: "0 auto 1.5rem" }}>
+              <ShapeDiagram q={question} showAnswer={showAnswer} labelBg={stepBg} />
+            </div>
+            {showAnswer && (
+              <>
+                <div className="space-y-4 mt-4">
+                  {question.working.slice(0, -1).map((step, i) => (
+                    <div key={i} className="rounded-xl p-6" style={{ backgroundColor: stepBg }}>
+                      <h4 className="text-base font-bold mb-1 text-gray-500 uppercase tracking-wide">Step {i + 1}</h4>
+                      <p className="text-2xl font-semibold text-black">{step.text}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="rounded-xl p-6 text-center mt-4" style={{ backgroundColor: stepBg }}>
+                  <span className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>{question.answer}</span>
+                </div>
+              </>
+            )}
+          </>
+        ) : <div className="text-center text-gray-400 text-4xl py-16">Generate a question</div>}
+      </div>
+    </div>
+  );
+
+  // ── Worksheet ─────────────────────────────────────────────────────────────
+  const renderWorksheet = () => {
+    if (worksheet.length === 0) return (
+      <div className="rounded-xl shadow-2xl p-8 text-center" style={{ backgroundColor: qBg }}>
+        <span className="text-2xl text-gray-400">Generate worksheet above</span>
+      </div>
+    );
+    if (isDiff) return (
+      <div ref={worksheetContainerRef} className="rounded-xl shadow-2xl p-8" style={{ backgroundColor: qBg }}>
+        <h2 className="text-3xl font-bold text-center mb-8 text-black">Perimeter — Worksheet</h2>
+        <div className="grid grid-cols-3 gap-4">
+          {["level1", "level2", "level3"].map((lv, li) => {
+            const lqs = worksheet.filter(q => q.level === lv);
+            const offset = li * numQuestions;
+            const c = LV_COLORS[lv];
+            return (
+              <div key={lv} className={`${c.bg} border-2 ${c.border} rounded-xl p-4`}>
+                <h3 className={`text-xl font-bold mb-4 text-center ${c.text}`}>Level {li + 1}</h3>
+                <div className="space-y-3">{lqs.map((q, idx) => renderQCell(q, offset + idx, c.fill))}</div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+    return (
+      <div ref={worksheetContainerRef} className="rounded-xl shadow-2xl p-8" style={{ backgroundColor: qBg }}>
+        <h2 className="text-3xl font-bold text-center mb-8 text-black">Perimeter — Worksheet</h2>
+        <div className="grid grid-cols-3 gap-4">
+          {worksheet.map((q, idx) => renderQCell(q, idx))}
+        </div>
+      </div>
+    );
+  };
+
+  // ── Root ──────────────────────────────────────────────────────────────────
+  return (
+    <>
+      <div className="bg-blue-900 shadow-lg">
+        <div className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
+          <button onClick={() => navigate("/")} className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors">
+            <Home size={24} /><span className="font-semibold text-lg">Home</span>
+          </button>
+          <div className="relative">
+            <button onClick={() => setMenuOpen(!menuOpen)} className="text-white hover:bg-blue-800 p-2 rounded-lg transition-colors">
+              {menuOpen ? <X size={28} /> : <Menu size={28} />}
+            </button>
+            {menuOpen && <MenuDropdown colorScheme={colorScheme} setColorScheme={setColorScheme} onClose={() => setMenuOpen(false)} onOpenInfo={() => setInfoOpen(true)} />}
+          </div>
+        </div>
+      </div>
+      {infoOpen && <InfoModal onClose={() => setInfoOpen(false)} />}
+      <div className="min-h-screen p-8" style={{ backgroundColor: "#f5f3f0" }}>
+        <div className="max-w-6xl mx-auto">
+          <h1 className="text-5xl font-bold text-center mb-8 text-black">{TOOL_CONFIG.pageTitle}</h1>
+
+          {/* Sub-tool tabs: Polygons / Rectilinear Shapes */}
+          <div className="flex justify-center gap-4 mb-6">
+            {(Object.keys(TOOL_CONFIG.tools) as ToolKey[]).map(k => (
+              <button key={k} onClick={() => { handleToolChange(k); setMode("whiteboard"); setPresenterMode(false); setWbFullscreen(false); }}
+                className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${currentTool === k ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
+                {TOOL_CONFIG.tools[k].name}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
+
+          {/* Mode tabs */}
+          <div className="flex justify-center gap-4 mb-8">
+            {([["whiteboard", "Whiteboard"], ["single", "Worked Example"], ["worksheet", "Worksheet"]] as const).map(([m, label]) => (
+              <button key={m} onClick={() => { setMode(m); setPresenterMode(false); setWbFullscreen(false); }}
+                className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${mode === m ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {mode === "worksheet" ? (
+            <>{renderControlBar()}{renderWorksheet()}</>
+          ) : (
+            <div className="flex flex-col gap-6">
+              <div className="rounded-xl shadow-lg">{renderControlBar()}</div>
+              <div className="rounded-xl shadow-lg overflow-hidden">
+                {mode === "whiteboard" && renderWhiteboard()}
+                {mode === "single"     && renderWorkedExample()}
               </div>
             </div>
           )}
         </div>
       </div>
-    </div>
-    <div className="min-h-screen p-8" style={{ backgroundColor: "#f5f3f0" }}>
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-5xl font-bold text-center mb-8 text-black">Perimeter</h1>
-        <div className="flex justify-center gap-4 mb-6">
-          {[["polygons", "Polygons"], ["rectilinear", "Rectilinear Shapes"]].map(([k, label]) => (
-            <button key={k} onClick={() => setSubtool(k)}
-              className={"px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl " + (subtool === k ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900")}>
-              {label}
-            </button>
-          ))}
-        </div>
-        <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
-        <div className="flex justify-center gap-4 mb-8">
-          {[["whiteboard", "Whiteboard"], ["single", "Worked Example"], ["worksheet", "Worksheet"]].map(([k, label]) => (
-            <button key={k} onClick={() => setMode(k)}
-              className={"px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl " + (mode === k ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900")}>
-              {label}
-            </button>
-          ))}
-        </div>
-        {subtool === "rectilinear" && mode === "whiteboard" && <RectWhiteboard col={col} />}
-        {subtool === "rectilinear" && mode === "single"     && <RectWorked col={col} />}
-        {subtool === "rectilinear" && mode === "worksheet"  && <WorksheetPanel col={col} buildQuestions={buildRectQuestions} DiagramComponent={RectDiagram as React.ComponentType<DiagramProps>} pdfType="rect" filename="perimeter-rectilinear.pdf" isRect />}
-        {subtool === "polygons"    && mode === "whiteboard" && <PolyWhiteboard col={col} />}
-        {subtool === "polygons"    && mode === "single"     && <PolyWorked col={col} />}
-        {subtool === "polygons"    && mode === "worksheet"  && <WorksheetPanel col={col} buildQuestions={buildPolyQuestions} DiagramComponent={PolyDiagram as React.ComponentType<DiagramProps>} pdfType="polygon" filename="perimeter-polygons.pdf" />}
-      </div>
-    </div>
-  </>);
+    </>
+  );
 }
