@@ -8,6 +8,7 @@ interface Tool {
   icon: string;
   description: string;
   ready: string;
+  enabled?: boolean; // optional - defaults to true if absent
 }
 
 interface Category {
@@ -75,7 +76,7 @@ const categories: Category[] = [
     gradient: 'from-orange-500 to-amber-600',
     iconBg: 'from-orange-50 to-amber-50',
     tools: [
-      { id: 'perimeter', path: '/perimeter', name: 'Perimeter (BETA)', icon: '⬡', description: 'Calculate the perimeter of various 2D shapes', ready: 'true' },
+      { id: 'perimeter', path: '/perimeter', name: 'Perimeter (BETA)', icon: '⬡', description: 'Calculate the perimeter of various 2D shapes', ready: 'v2.1' enabled: false},
       { id: 'circles', path: '/circle-properties', name: 'Properties of Circles', icon: '⭕', description: 'Find the circumference, area and arc lengths of circles and sectors', ready: 'true' },
       { id: 'basic-angle-facts', path: '/basic-angle-facts', name: 'Basic Angle Facts', icon: '90°', description: 'Find missing angles from right angles, on striaght lines and around a point', ready: 'true' },
       { id: 'angles-in-triangles-v2', path: '/angles-in-triangles-v2', name: 'Angles In Triangles', icon: '🛆', description: 'Find missing angles using triangle properties - including split trangles and exterior angles', ready: 'true' },
@@ -171,9 +172,14 @@ export default function LandingPage(): JSX.Element {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {category.tools.map((tool) => (
                   <button
-                    key={tool.id}
-                    onClick={() => navigate(tool.path)}
-                    className="group relative bg-white/90 backdrop-blur-sm rounded-2xl p-6 text-left transition-all duration-300 border border-slate-200 hover:border-slate-300 hover:shadow-2xl hover:shadow-slate-300/50 hover:-translate-y-1 hover:bg-white cursor-pointer shadow-xl shadow-slate-200/50"
+                      key={tool.id}
+                      onClick={() => tool.enabled !== false && navigate(tool.path)}
+                      disabled={tool.enabled === false}
+                      className={`group relative bg-white/90 backdrop-blur-sm rounded-2xl p-6 text-left transition-all duration-300 border shadow-xl shadow-slate-200/50
+                      ${tool.enabled === false
+                      ? 'opacity-40 cursor-not-allowed border-slate-200'
+                      : 'border-slate-200 hover:border-slate-300 hover:shadow-2xl hover:shadow-slate-300/50 hover:-translate-y-1 hover:bg-white cursor-pointer'
+                      }`}
                   >
                     {/* Badge */}
                     <div className="absolute top-5 right-5">
