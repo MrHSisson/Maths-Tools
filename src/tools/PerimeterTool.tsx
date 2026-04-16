@@ -226,12 +226,7 @@ const POLY_SHAPES: Record<ShapeKey, ShapeDef> = {
 const L1_SHAPES: ShapeKey[] = ["equilateral_triangle", "square", "regular_pentagon", "regular_hexagon", "regular_octagon"];
 const L2_SHAPES: ShapeKey[] = ["rectangle", "isosceles_triangle", "parallelogram", "rhombus"];
 
-type FamilyKey = "triangle" | "regular" | "irregular";
-const SHAPE_FAMILIES: Record<ShapeKey, FamilyKey> = {
-  equilateral_triangle: "triangle", isosceles_triangle: "triangle",
-  square: "regular", regular_pentagon: "regular", regular_hexagon: "regular", regular_octagon: "regular",
-  rectangle: "irregular", parallelogram: "irregular", rhombus: "irregular",
-};
+
 
 interface DisplayEdge { display: string; baseCm: number; unit: "cm" | "mm" | "m"; }
 interface WorkStep { text: string; }
@@ -474,7 +469,7 @@ function getUniqueQuestion(tool: ToolKey, level: string, vars: Record<string, un
 // ══════════════════════════════════════════════════════════════════════════════
 interface PolyDiagramProps { q: PolyQuestion; showAnswer: boolean; small?: boolean; labelBg?: string; dataIndex?: number; }
 
-function PolyDiagram({ q, showAnswer, small = false, labelBg = "#ffffff", dataIndex }: PolyDiagramProps) {
+function PolyDiagram({ q, showAnswer, small = false, labelBg: _labelBg = "#ffffff", dataIndex }: PolyDiagramProps) {
   const diag = small ? 150 : 360;
   const pad  = small ? 48  : 78;
   const fs   = small ? Math.max(9, 10) : 19;
@@ -556,7 +551,7 @@ function edgeOutDir(sPts: Pt[], i: number): number {
 
 interface RectDiagramProps { q: RectQuestion; showAnswer: boolean; small?: boolean; labelBg?: string; dataIndex?: number; }
 
-function RectDiagram({ q, showAnswer, small = false, labelBg = "#ffffff", dataIndex }: RectDiagramProps) {
+function RectDiagram({ q, showAnswer, small = false, labelBg: _labelBg = "#ffffff", dataIndex }: RectDiagramProps) {
   const maxX = Math.max(...q.pts.map(p => p[0])), maxY = Math.max(...q.pts.map(p => p[1]));
   const fs       = small ? Math.max(9, 11) : 18;
   const standoff = small ? 18 : 40;
@@ -618,7 +613,7 @@ const PRINT_PER_PAGE = PRINT_COLS * PRINT_ROWS;
 function handlePrint(
   worksheet: AnyQuestion[],
   isDiff: boolean,
-  showAnswers: boolean,
+  _showAnswers: boolean,
   toolName: string,
   worksheetContainerRef: React.RefObject<HTMLDivElement>,
 ) {
