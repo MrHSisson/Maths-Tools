@@ -671,12 +671,12 @@ const handlePrint = (questions: AnyQuestion[], toolName: string, difficulty: str
         : `<span class="kr" data-latex="${seg.s.replace(/"/g,"&quot;")}"></span>`
     ).join("");
 
-  // Build question HTML: number badge + display segs + optional answer segs
+  // Build question HTML: number banner + display segs + optional answer segs
   const questionToHtml = (q: AnyQuestion, idx: number, showAnswer: boolean): string => {
-    const num = `<div class="q-num">${idx+1})</div>`;
-    const body = `<div class="q-body">${segsToHtml(q.display)}</div>`;
+    const banner = `<div class="q-banner">Question ${idx + 1}</div>`;
+    const body = `<div class="qbody">${segsToHtml(q.display)}</div>`;
     const ans  = showAnswer ? `<div class="q-answer">${segsToHtml(q.answerSegs)}</div>` : "";
-    return `${num}${body}${ans}`;
+    return `${banner}<div class="qbody-wrap">${body}${ans}</div>`;
   };
 
   const probeHtml = questions.map((q,i) =>
@@ -703,14 +703,15 @@ body{font-family:"Segoe UI",Arial,sans-serif;background:#fff;}
 .ph{display:flex;justify-content:space-between;align-items:baseline;border-bottom:.4mm solid #1e3a8a;padding-bottom:1.5mm;margin-bottom:2mm;}
 .ph h1{font-size:5mm;font-weight:700;color:#1e3a8a;}.ph .meta{font-size:3mm;color:#6b7280;}
 .grid{display:grid;gap:${GAP_MM}mm;}
-.cell,.dc{border:.3mm solid #d1d5db;border-radius:1mm;padding:${PAD_MM}mm;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;}
+.cell,.dc{border:.3mm solid #d1d5db;border-radius:3mm;overflow:hidden;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;}
 .dg{display:grid;grid-template-columns:repeat(3,1fr);gap:${GAP_MM}mm;}
 .dcol{display:flex;flex-direction:column;gap:${GAP_MM}mm;}
 .dh{height:${diffHdrMM}mm;display:flex;align-items:center;justify-content:center;font-size:3mm;font-weight:700;border-radius:1mm;}
 .dh.level1{background:#dcfce7;color:#166534;}.dh.level2{background:#fef9c3;color:#854d0e;}.dh.level3{background:#fee2e2;color:#991b1b;}
-#probe{position:fixed;left:-9999px;top:0;visibility:hidden;font-family:"Segoe UI",Arial,sans-serif;font-size:${FONT_PX}px;line-height:1.5;width:${cellW_MM-PAD_MM*2}mm;}
-.q-inner{width:100%;text-align:center;}
-.q-num{position:absolute;top:0;left:0;font-size:${Math.round(FONT_PX*.6)}px;font-weight:700;color:#000;line-height:1;padding:1.2mm 1.2mm 1.8mm 1.2mm;border-right:.3mm solid #000;border-bottom:.3mm solid #000;}
+#probe{position:fixed;left:-9999px;top:0;visibility:hidden;font-family:"Segoe UI",Arial,sans-serif;font-size:${FONT_PX}px;line-height:1.5;width:${cellW_MM}mm;}
+.q-inner{width:100%;display:flex;flex-direction:column;flex:1;}
+.q-banner{width:100%;text-align:center;font-size:${Math.round(FONT_PX*0.65)}px;font-weight:700;color:#000;padding:1mm 0;border-bottom:.3mm solid #000;}
+.qbody-wrap{padding:${PAD_MM*0.4}mm ${PAD_MM}mm ${PAD_MM}mm;text-align:center;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;}
 .q-body{font-size:${FONT_PX}px;line-height:1.5;text-align:center;word-break:break-word;white-space:normal;}
 .q-answer{font-size:${FONT_PX}px;color:#059669;margin-top:1mm;text-align:center;}
 .kr{display:inline;vertical-align:baseline;}
