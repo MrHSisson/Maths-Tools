@@ -36,8 +36,7 @@ const MathRenderer = ({ latex, style, className }: MathProps) => {
     try { w().katex.render(latex, ref.current, { displayMode: false, throwOnError: false, output: "html" }); }
     catch { if (ref.current) ref.current.textContent = latex; }
   }, [latex, ready]);
-  const hasFrac = latex.includes("\\frac");
-  return <span ref={ref} className={className} style={{ display: "inline", verticalAlign: "baseline", fontSize: hasFrac ? "1em" : "0.826em", ...style }} />;
+  return <span ref={ref} className={className} style={{ display: "inline", verticalAlign: "baseline", fontSize: "0.826em", ...style }} />;
 };
 
 const usePopover = () => {
@@ -993,7 +992,12 @@ export default function App() {
   const longPressTimer = useRef<ReturnType<typeof setTimeout>|null>(null);
   const didLongPress = useRef(false);
 
-  useEffect(() => { loadKaTeX(); }, []);
+  useEffect(() => { 
+    loadKaTeX(); 
+    const style = document.createElement("style");
+    style.textContent = ".katex { font-size: 1em !important; }";
+    document.head.appendChild(style);
+  }, []);
 
   const stopStream = useCallback(() => {
     if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null; }
