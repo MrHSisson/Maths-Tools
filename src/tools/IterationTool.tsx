@@ -654,7 +654,7 @@ const QOPopover = ({variables,variableValues,onVariableChange,dropdown,dropdownV
 // ── Print ─────────────────────────────────────────────────────────────────────
 
 const handlePrint = (questions: AnyQuestion[], toolName: string, difficulty: string, isDifferentiated: boolean, numColumns: number) => {
-  const FONT_PX=14, PAD_MM=3, MARGIN_MM=12, HEADER_MM=14, GAP_MM=2;
+  const FONT_PX=13, PAD_MM=3.5, MARGIN_MM=12, HEADER_MM=14, GAP_MM=2;
   const PAGE_H_MM=297-MARGIN_MM*2, PAGE_W_MM=210-MARGIN_MM*2;
   const usableH_MM=PAGE_H_MM-HEADER_MM, diffHdrMM=7;
   const diffLabel=isDifferentiated?"Differentiated":difficulty==="level1"?"Level 1":difficulty==="level2"?"Level 2":"Level 3";
@@ -674,7 +674,7 @@ const handlePrint = (questions: AnyQuestion[], toolName: string, difficulty: str
   // Build question HTML: number banner + display segs + optional answer segs
   const questionToHtml = (q: AnyQuestion, idx: number, showAnswer: boolean): string => {
     const banner = `<div class="q-banner">Question ${idx + 1}</div>`;
-    const body = `<div class="qbody">${segsToHtml(q.display)}</div>`;
+    const body = `<div class="q-body" style="margin-top:1mm">${segsToHtml(q.display)}</div>`;
     const ans  = showAnswer ? `<div class="q-answer">${segsToHtml(q.answerSegs)}</div>` : "";
     return `${banner}<div class="qbody-wrap">${body}${ans}</div>`;
   };
@@ -1008,7 +1008,7 @@ export default function App() {
     );
 
     const questionBox=(fs=false)=>(
-      <div style={{position:"relative",width:fs?"45%":"500px",height:"100%",backgroundColor:stepBg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:fs?48:32,boxSizing:"border-box",flexShrink:0,gap:16,...(fs?{}:{borderRadius:"12px"})}}>
+      <div style={{position:"relative",width:fs?"45%":"480px",height:"100%",backgroundColor:stepBg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:fs?48:32,boxSizing:"border-box",flexShrink:0,gap:16,...(fs?{}:{borderRadius:"12px"})}}>
         <div style={{position:"absolute",top:10,right:10,display:"flex",gap:6}}>
           <button style={fontBtnStyle(canDD)} onClick={()=>canDD&&setDisplayFontSize(f=>f-1)}><ChevronDown size={16} color="#6b7280"/></button>
           <button style={fontBtnStyle(canDI)} onClick={()=>canDI&&setDisplayFontSize(f=>f+1)}><ChevronUp size={16} color="#6b7280"/></button>
@@ -1061,7 +1061,7 @@ export default function App() {
       </div>
     );
     return(
-      <div className="p-8" style={{backgroundColor:qBg,height:"600px",boxSizing:"border-box"}}>
+      <div className="p-8" style={{backgroundColor:qBg,height:"480px",boxSizing:"border-box"}}>
         <div className="flex gap-6" style={{height:"100%"}}>{questionBox(false)}{rightPanel(false)}</div>
       </div>
     );
