@@ -992,12 +992,7 @@ export default function App() {
   const longPressTimer = useRef<ReturnType<typeof setTimeout>|null>(null);
   const didLongPress = useRef(false);
 
-  useEffect(() => { 
-    loadKaTeX(); 
-    const style = document.createElement("style");
-    style.textContent = ".katex { font-size: 1em !important; }";
-    document.head.appendChild(style);
-  }, []);
+  useEffect(() => { loadKaTeX(); }, []);
 
   const stopStream = useCallback(() => {
     if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null; }
