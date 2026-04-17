@@ -38,7 +38,7 @@ const KaTeX = ({ latex, style }: { latex: string; style?: CSSProperties }) => {
     try { w().katex.render(latex, ref.current, { displayMode: false, throwOnError: false, output: "html" }); }
     catch { if (ref.current) ref.current.textContent = latex; }
   }, [latex, ready]);
-  return <span ref={ref} style={{ display: "inline", verticalAlign: "baseline", ...style }} />;
+  return <span ref={ref} style={{ display: "inline", verticalAlign: "baseline", fontSize: latex.includes("\\frac") || latex.includes("\\dfrac") ? "1em" : "0.826em", ...style }} />;
 };
 
 type Seg = { k: "t"; s: string } | { k: "m"; s: string };
