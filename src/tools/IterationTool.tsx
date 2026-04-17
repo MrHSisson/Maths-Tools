@@ -933,7 +933,7 @@ export default function App() {
   useEffect(()=>{if(mode!=="worksheet")handleNewQuestion();},[difficulty,currentTool]);
 
   const displayFontSizes=["text-xl","text-2xl","text-3xl","text-4xl","text-5xl","text-6xl"];
-  const fontSizes=["text-base","text-lg","text-xl","text-2xl","text-3xl"];
+  const fontSizes=["text-lg","text-xl","text-2xl","text-3xl","text-4xl"];
   const canDI=displayFontSize<displayFontSizes.length-1,canDD=displayFontSize>0;
   const canWI=worksheetFontSize<fontSizes.length-1,canWD=worksheetFontSize>0;
 
@@ -969,7 +969,7 @@ export default function App() {
         </div>
         <div className="flex justify-center items-center gap-6 mb-4">
           <QOPopover {...qoProps}/>
-          <div className="flex items-center gap-3"><label className="text-base font-semibold text-gray-700">Questions:</label><input type="number" min="1" max="20" value={numQuestions} onChange={e=>setNumQuestions(Math.max(1,Math.min(20,parseInt(e.target.value)||5)))} className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-base font-semibold text-center"/></div>
+          <div className="flex items-center gap-3"><label className="text-base font-semibold text-gray-700">Questions:</label>            <input type="number" min="1" max="24" value={numQuestions} onChange={e=>setNumQuestions(Math.max(1,Math.min(24,parseInt(e.target.value)||5)))} className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-base font-semibold text-center"/></div>
           <div className="flex items-center gap-3"><label className="text-base font-semibold text-gray-700">Columns:</label><input type="number" min="1" max="4" value={isDifferentiated?3:numColumns} onChange={e=>{if(!isDifferentiated)setNumColumns(Math.max(1,Math.min(4,parseInt(e.target.value)||2)));}} disabled={isDifferentiated} className={`w-20 px-4 py-2 border-2 rounded-lg text-base font-semibold text-center ${isDifferentiated?"border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed":"border-gray-300 bg-white"}`}/></div>
         </div>
         <div className="flex justify-center items-center gap-4">
