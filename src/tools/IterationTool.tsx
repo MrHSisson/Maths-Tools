@@ -863,7 +863,7 @@ export default function App() {
   const [worksheet,setWorksheet]=useState<AnyQuestion[]>([]);
   const [showWorksheetAnswers,setShowWorksheetAnswers]=useState(false);
   const [isDifferentiated,setIsDifferentiated]=useState(false);
-  const [displayFontSize,setDisplayFontSize]=useState(2);
+  const [displayFontSize,setDisplayFontSize]=useState(1);
   const [worksheetFontSize,setWorksheetFontSize]=useState(1);
   const [colorScheme,setColorScheme]=useState("default");
   const [isMenuOpen,setIsMenuOpen]=useState(false);
