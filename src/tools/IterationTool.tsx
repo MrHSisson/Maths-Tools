@@ -930,8 +930,8 @@ export default function App() {
 
   useEffect(()=>{if(mode!=="worksheet")handleNewQuestion();},[difficulty,currentTool]);
 
-  const displayFontSizes=["text-2xl","text-3xl","text-4xl","text-5xl","text-6xl","text-7xl"];
-  const fontSizes=["text-lg","text-xl","text-2xl","text-3xl","text-4xl"];
+  const displayFontSizes=["text-xl","text-2xl","text-3xl","text-4xl","text-5xl","text-6xl"];
+  const fontSizes=["text-base","text-lg","text-xl","text-2xl","text-3xl"];
   const canDI=displayFontSize<displayFontSizes.length-1,canDD=displayFontSize>0;
   const canWI=worksheetFontSize<fontSizes.length-1,canWD=worksheetFontSize>0;
 
