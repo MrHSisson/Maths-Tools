@@ -713,7 +713,9 @@ body{font-family:"Segoe UI",Arial,sans-serif;background:#fff;}
 .q-banner{width:100%;text-align:center;font-size:${Math.round(FONT_PX*0.65)}px;font-weight:700;color:#000;padding:1mm 0;border-bottom:.3mm solid #000;}
 .qbody-wrap{padding:${PAD_MM*0.4}mm ${PAD_MM}mm ${PAD_MM}mm;text-align:center;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;}
 .q-body{font-size:${FONT_PX}px;line-height:1.5;text-align:center;word-break:break-word;white-space:normal;}
+.q-body .katex{font-size:${FONT_PX}px;}
 .q-answer{font-size:${FONT_PX}px;color:#059669;margin-top:1mm;text-align:center;}
+.q-answer .katex{font-size:${FONT_PX}px;}
 .kr{display:inline;vertical-align:baseline;}
 </style>
 </head><body>
@@ -863,7 +865,7 @@ export default function App() {
   const [worksheet,setWorksheet]=useState<AnyQuestion[]>([]);
   const [showWorksheetAnswers,setShowWorksheetAnswers]=useState(false);
   const [isDifferentiated,setIsDifferentiated]=useState(false);
-  const [displayFontSize,setDisplayFontSize]=useState(1);
+  const [displayFontSize,setDisplayFontSize]=useState(2);
   const [worksheetFontSize,setWorksheetFontSize]=useState(1);
   const [colorScheme,setColorScheme]=useState("default");
   const [isMenuOpen,setIsMenuOpen]=useState(false);
