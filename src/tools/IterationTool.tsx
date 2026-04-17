@@ -711,7 +711,7 @@ body{font-family:"Segoe UI",Arial,sans-serif;background:#fff;}
 #probe{position:fixed;left:-9999px;top:0;visibility:hidden;font-family:"Segoe UI",Arial,sans-serif;font-size:${FONT_PX}px;line-height:1.5;width:${cellW_MM}mm;}
 .q-inner{width:100%;display:flex;flex-direction:column;flex:1;}
 .q-banner{width:100%;text-align:center;font-size:${Math.round(FONT_PX*0.65)}px;font-weight:700;color:#000;padding:1mm 0;border-bottom:.3mm solid #000;}
-.qbody-wrap{padding:${PAD_MM*0.4}mm ${PAD_MM}mm ${PAD_MM}mm;text-align:center;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.qbody-wrap{padding:${PAD_MM*0.4}mm ${PAD_MM}mm ${PAD_MM}mm;text-align:center;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;}
 .q-body{font-size:${FONT_PX}px;line-height:1.5;text-align:center;word-break:break-word;white-space:normal;}
 .q-answer{font-size:${FONT_PX}px;color:#059669;margin-top:1mm;text-align:center;}
 .kr{display:inline;vertical-align:baseline;}
