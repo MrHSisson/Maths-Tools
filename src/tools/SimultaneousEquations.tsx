@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback, CSSProperties } from "react";
-import { useNavigate } from "react-router-dom";
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, Printer } from "lucide-react";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -38,14 +37,34 @@ const MathRenderer = ({ latex, style, className }: MathProps) => {
   return <span ref={ref} className={className} style={{ display: "inline", verticalAlign: "baseline", fontSize: "0.826em", ...style }} />;
 };
 
+// Parse "Some text $latex$ more text $latex2$." into alternating plain/math spans.
+// Uses character-by-character scanning so multiple $...$ blocks on one line never bleed into each other.
 const InlineMath = ({ text }: { text: string }) => {
-  const parts = text.split(/(\$[^$]+\$)/g);
+  const parts: { math: boolean; content: string }[] = [];
+  let i = 0;
+  while (i < text.length) {
+    if (text[i] === "$") {
+      const close = text.indexOf("$", i + 1);
+      if (close !== -1) {
+        parts.push({ math: true, content: text.slice(i + 1, close) });
+        i = close + 1;
+      } else {
+        parts.push({ math: false, content: text[i] });
+        i++;
+      }
+    } else {
+      const next = text.indexOf("$", i);
+      const end = next === -1 ? text.length : next;
+      parts.push({ math: false, content: text.slice(i, end) });
+      i = end;
+    }
+  }
   return (
     <span style={{ display: "inline" }}>
-      {parts.map((part, i) =>
-        part.startsWith("$") && part.endsWith("$")
-          ? <MathRenderer key={i} latex={part.slice(1, -1)} />
-          : <span key={i}>{part}</span>
+      {parts.map((p, idx) =>
+        p.math
+          ? <MathRenderer key={idx} latex={p.content} />
+          : <span key={idx}>{p.content}</span>
       )}
     </span>
   );
@@ -78,18 +97,15 @@ const TogglePill = ({ checked, onChange, label }: { checked: boolean; onChange: 
   </label>
 );
 
-// Multi-select segmented buttons — each button toggles independently, at least one always active
 const MultiSegButtons = ({ values, onChange, opts }: {
-  values: string[];
-  onChange: (v: string[]) => void;
-  opts: { value: string; label: string }[];
+  values: string[]; onChange: (v: string[]) => void; opts: { value: string; label: string }[];
 }) => (
   <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden">
     {opts.map(opt => {
       const active = values.includes(opt.value);
       return (
         <button key={opt.value} onClick={() => {
-          if (active && values.length === 1) return; // keep at least one
+          if (active && values.length === 1) return;
           onChange(active ? values.filter(v => v !== opt.value) : [...values, opt.value]);
         }}
           className={`flex-1 px-3 py-2 text-sm font-bold transition-colors ${active ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}>
@@ -114,7 +130,6 @@ const getStepBg    = (cs: string) => ({ blue: "#B3D9F2", pink: "#F2B3D9", yellow
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
-
 type DifficultyLevel = "level1" | "level2" | "level3";
 type CaseType    = "pos-pos" | "pos-neg" | "neg-neg";
 type OpMode      = "add" | "subtract" | "mixed";
@@ -124,9 +139,7 @@ type L2Type      = "sumDiff" | "moreThan" | "ratio";
 type L3Type      = "purchase" | "equilateral" | "isosceles" | "scalene";
 type WordedMethod = "direct" | "scaling" | "lcm";
 
-const VAR_PAIRS: [string, string][] = [
-  ["x","y"],["s","t"],["n","m"],["a","b"],["u","v"],
-];
+const VAR_PAIRS: [string, string][] = [["x","y"],["s","t"],["n","m"],["a","b"],["u","v"]];
 
 interface SimEqQuestion {
   kind: "simeq";
@@ -148,6 +161,8 @@ interface SimEqQuestion {
 
 interface WordedQuestion {
   kind: "worded-simeq";
+  // lines uses $...$ for any number or currency that should render in KaTeX italic.
+  // Plain prose words are never inside $...$. Example: "$3$ hats cost $£12$ in total."
   lines: string[];
   equation1: string; equation2: string;
   v1: string; v2: string; v1Val: number; v2Val: number;
@@ -160,19 +175,15 @@ interface WordedQuestion {
 type AnyQuestion = SimEqQuestion | WordedQuestion;
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// LATEX HELPERS (SimEq)
+// SIMEQ LATEX HELPERS
 // ═══════════════════════════════════════════════════════════════════════════════
-
 const term = (coeff: number, v: string) =>
   coeff === 1 ? v : coeff === -1 ? `-${v}` : `${coeff}${v}`;
 const secondTerm = (coeff: number, v: string) =>
   coeff >= 0 ? `+ ${term(coeff,v)}` : `- ${term(-coeff,v)}`;
-
 const buildNaturalLatex = (a: number, b: number, c: number, v1: string, v2: string) => {
   const v1First = a >= 0 && b < 0 ? true : a < 0 && b >= 0 ? false : Math.random() < 0.5;
-  return v1First
-    ? `${term(a,v1)} ${secondTerm(b,v2)} = ${c}`
-    : `${term(b,v2)} ${secondTerm(a,v1)} = ${c}`;
+  return v1First ? `${term(a,v1)} ${secondTerm(b,v2)} = ${c}` : `${term(b,v2)} ${secondTerm(a,v1)} = ${c}`;
 };
 const canonicalLatex = (a: number, b: number, c: number, v1: string, v2: string) =>
   `${term(a,v1)} ${secondTerm(b,v2)} = ${c}`;
@@ -200,7 +211,6 @@ const applyForm = (form: SurfaceForm, a: number, b: number, c: number, v1: strin
 // ═══════════════════════════════════════════════════════════════════════════════
 // SIMEQ GENERATION HELPERS
 // ═══════════════════════════════════════════════════════════════════════════════
-
 const gcd  = (a: number, b: number): number => b === 0 ? a : gcd(b, a % b);
 const lcmOf = (a: number, b: number) => (a*b)/gcd(a,b);
 const randInt = (min: number, max: number) => Math.floor(Math.random()*(max-min+1))+min;
@@ -255,7 +265,6 @@ const buildSubBackSteps = (form1: SurfaceForm, a1: number, b1c: number, c1: numb
 // ═══════════════════════════════════════════════════════════════════════════════
 // SIMEQ GENERATORS
 // ═══════════════════════════════════════════════════════════════════════════════
-
 const generateElimination = (level: DifficultyLevel, variables: Record<string,boolean>, opMode: OpMode): SimEqQuestion => {
   const allowNeg=variables["allowNegSolutions"]??false, allowRearrange=variables["allowRearrange"]??false;
   const id=Math.floor(Math.random()*1_000_000);
@@ -363,12 +372,20 @@ const generateLCM = (level: DifficultyLevel, variables: Record<string,boolean>, 
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // WORDED GENERATORS
+// All `lines` entries follow this rule:
+//   - Numbers and currency are wrapped in $...$ e.g. "$3$" or "$\pounds 12$"
+//   - Plain prose words are NEVER inside $...$
+//   - Example: "$3$ hats and $5$ coats cost $\pounds 47$ in total."
 // ═══════════════════════════════════════════════════════════════════════════════
-
+const cStr  = (coeff: number, v: string) => coeff===1?v:coeff===-1?`-${v}`:`${coeff}${v}`;
 const wri   = (min: number, max: number) => Math.floor(Math.random()*(max-min+1))+min;
 const wpick = <T,>(arr: T[]): T => arr[wri(0,arr.length-1)];
 const wgcd  = (a: number, b: number): number => b===0?a:wgcd(b,a%b);
-const cStr  = (coeff: number, v: string) => coeff===1?v:coeff===-1?`-${v}`:`${coeff}${v}`;
+const wCStr = (coeff: number, v: string) => coeff===1?v:coeff===-1?`-${v}`:`${coeff}${v}`;
+// n(v) — wraps a number in $...$ for inline display
+const nv = (n: number) => `$${n}$`;
+// cv(n) — wraps a currency value in $\pounds n$ for inline display
+const cv = (n: number) => `$\\pounds ${n}$`;
 
 const ITEM_CONTEXTS = [
   { singular:["hat","coat"],    plural:["hats","coats"],       vars:["h","c"], priceRange:[3,12] },
@@ -402,37 +419,48 @@ const genLevel1Worded = (method: WordedMethod): WordedQuestion => {
   const c1=a1*v1Val+b1*v2Val,c2=a2*v1Val+b2*v2Val;
   const eq1=`${cStr(a1,v1)} + ${cStr(b1,v2)} = ${c1}`;
   const eq2=`${cStr(a2,v1)} + ${cStr(b2,v2)} = ${c2}`;
-  // Randomise item order independently per sentence
   const flip1=Math.random()<0.5, flip2=Math.random()<0.5;
+  // Each number/currency wrapped with nv()/cv(). Prose words are plain.
   const line1=flip1
-    ? `${names[0]} buys ${b1}$ ${pl2} and ${a1}$ ${pl1} and spends $£${c1}$.`
-    : `${names[0]} buys ${a1}$ ${pl1} and ${b1}$ ${pl2} and spends $£${c1}$.`;
+    ? `${names[0]} buys ${nv(b1)} ${pl2} and ${nv(a1)} ${pl1} and spends ${cv(c1)}.`
+    : `${names[0]} buys ${nv(a1)} ${pl1} and ${nv(b1)} ${pl2} and spends ${cv(c1)}.`;
   const line2=flip2
-    ? `${names[1]} buys ${b2}$ ${pl2} and ${a2}$ ${pl1} and spends $£${c2}$.`
-    : `${names[1]} buys ${a2}$ ${pl1} and ${b2}$ ${pl2} and spends $£${c2}$.`;
-  return { kind:"worded-simeq",
+    ? `${names[1]} buys ${nv(b2)} ${pl2} and ${nv(a2)} ${pl1} and spends ${cv(c2)}.`
+    : `${names[1]} buys ${nv(a2)} ${pl1} and ${nv(b2)} ${pl2} and spends ${cv(c2)}.`;
+  return {
+    kind:"worded-simeq",
     lines:[line1, line2, `Find the cost of one ${sing1} and one ${sing2}.`],
-    equation1:eq1,equation2:eq2,v1,v2,v1Val,v2Val,
-    answerLines:[`One ${sing1} costs $£${v1Val}$ and one ${sing2} costs $£${v2Val}$.`],
+    equation1:eq1, equation2:eq2, v1, v2, v1Val, v2Val,
+    answerLines:[`One ${sing1} costs ${cv(v1Val)} and one ${sing2} costs ${cv(v2Val)}.`],
     working:[
-      {type:"tStep",latex:`\\text{Let } ${v1} = \\text{cost of one ${sing1}}, \\quad ${v2} = \\text{cost of one ${sing2}}`,plain:""},
-      {type:"step",latex:eq1,plain:eq1},{type:"step",latex:eq2,plain:eq2},
+      {type:"tStep",latex:`\\text{Let } ${v1} = \\text{cost of one ${sing1}},\\ ${v2} = \\text{cost of one ${sing2}}`,plain:""},
+      {type:"step",latex:eq1,plain:eq1},
+      {type:"step",latex:eq2,plain:eq2},
     ],
     key:`w1-${method}-${v1}${v2}-${a1}-${b1}-${a2}-${b2}-${v1Val}-${v2Val}`,
-    difficulty:"level1",subType:"level1" };
+    difficulty:"level1", subType:"level1",
+  };
 };
 
 const genSumDiff = (): WordedQuestion => {
   const v1Val=wri(8,30),v2Val=wri(2,v1Val-2);
   const sum=v1Val+v2Val,diff=v1Val-v2Val,intro=wpick(NUMBER_INTROS);
   const eq1=`x + y = ${sum}`,eq2=`x - y = ${diff}`;
-  return { kind:"worded-simeq",
-    lines:[`${intro} have a sum of $${sum}$ and a difference of $${diff}$.`,"Find the two numbers."],
-    equation1:eq1,equation2:eq2,v1:"x",v2:"y",v1Val,v2Val,
-    answerLines:[`The two numbers are $${v1Val}$ and $${v2Val}$.`],
-    working:[{type:"tStep",latex:"\\text{Let } x = \\text{larger number}, \\quad y = \\text{smaller number}",plain:""},
-             {type:"step",latex:eq1,plain:eq1},{type:"step",latex:eq2,plain:eq2}],
-    key:`w2-sumDiff-${sum}-${diff}`,difficulty:"level2",subType:"sumDiff" };
+  return {
+    kind:"worded-simeq",
+    lines:[
+      `${intro} have a sum of ${nv(sum)} and a difference of ${nv(diff)}.`,
+      `Find the two numbers.`,
+    ],
+    equation1:eq1, equation2:eq2, v1:"x", v2:"y", v1Val, v2Val,
+    answerLines:[`The two numbers are ${nv(v1Val)} and ${nv(v2Val)}.`],
+    working:[
+      {type:"tStep",latex:"\\text{Let } x = \\text{larger number}, \\quad y = \\text{smaller number}",plain:""},
+      {type:"step",latex:eq1,plain:eq1},
+      {type:"step",latex:eq2,plain:eq2},
+    ],
+    key:`w2-sumDiff-${sum}-${diff}`, difficulty:"level2", subType:"sumDiff",
+  };
 };
 
 const genMoreThan = (): WordedQuestion => {
@@ -443,23 +471,26 @@ const genMoreThan = (): WordedQuestion => {
     const ka=wri(2,5),kb=wri(2,5),v1Val=wri(pMin,pMax),v2Val=wri(pMin,pMax);
     const d=ka*v1Val-kb*v2Val; if(d<=0) continue;
     const b1=wri(2,6),b2=wri(2,6),c2=b1*v1Val+b2*v2Val;
-    // eq1: ka*v1 - kb*v2 = d, eq2: b1*v1 + b2*v2 = c2
-    // independent if ka*b2 !== -kb*b1 (cross-multiply with sign)
     if(ka*b2 === -kb*b1) continue;
-    const eq1=`${cStr(ka,v1)} - ${cStr(kb,v2)} = ${d}`;
-    const eq2=`${cStr(b1,v1)} + ${cStr(b2,v2)} = ${c2}`;
-    return { kind:"worded-simeq",
-      lines:[`$${ka}$ ${pl1} cost $£${d}$ more than $${kb}$ ${pl2}.`,
-             `$${b1}$ ${pl1} and $${b2}$ ${pl2} cost $£${c2}$ in total.`,
-             `Find the cost of one ${sing1} and one ${sing2}.`],
-      equation1:eq1,equation2:eq2,v1,v2,v1Val,v2Val,
-      answerLines:[`One ${sing1} costs $£${v1Val}$ and one ${sing2} costs $£${v2Val}$.`],
+    const eq1=`${wCStr(ka,v1)} - ${wCStr(kb,v2)} = ${d}`;
+    const eq2=`${wCStr(b1,v1)} + ${wCStr(b2,v2)} = ${c2}`;
+    return {
+      kind:"worded-simeq",
+      lines:[
+        `${nv(ka)} ${pl1} cost ${cv(d)} more than ${nv(kb)} ${pl2}.`,
+        `${nv(b1)} ${pl1} and ${nv(b2)} ${pl2} cost ${cv(c2)} in total.`,
+        `Find the cost of one ${sing1} and one ${sing2}.`,
+      ],
+      equation1:eq1, equation2:eq2, v1, v2, v1Val, v2Val,
+      answerLines:[`One ${sing1} costs ${cv(v1Val)} and one ${sing2} costs ${cv(v2Val)}.`],
       working:[
         {type:"tStep",latex:`\\text{Let } ${v1} = \\text{cost of one ${sing1}}, \\quad ${v2} = \\text{cost of one ${sing2}}`,plain:""},
-        {type:"tStep",latex:`\\text{"${ka} ${pl1} cost £${d} more than ${kb} ${pl2}"} \\Rightarrow ${cStr(ka,v1)} = ${cStr(kb,v2)} + ${d}`,plain:""},
-        {type:"step",latex:eq1,plain:eq1},{type:"step",latex:eq2,plain:eq2},
+        {type:"tStep",latex:`\\text{"${ka} ${pl1} cost £${d} more than ${kb} ${pl2}"} \\Rightarrow ${wCStr(ka,v1)} = ${wCStr(kb,v2)} + ${d}`,plain:""},
+        {type:"step",latex:eq1,plain:eq1},
+        {type:"step",latex:eq2,plain:eq2},
       ],
-      key:`w2-moreThan-${v1}${v2}-${ka}-${kb}-${d}-${b1}-${b2}`,difficulty:"level2",subType:"moreThan" };
+      key:`w2-moreThan-${v1}${v2}-${ka}-${kb}-${d}-${b1}-${b2}`, difficulty:"level2", subType:"moreThan",
+    };
   }
   return genMoreThan();
 };
@@ -470,19 +501,24 @@ const genRatio = (): WordedQuestion => {
   const pairs:[number,number][]=[[2,3],[3,4],[3,5],[2,5],[4,5],[3,7],[4,7]];
   const [ka,kb]=wpick(pairs),s=wri(1,4);
   const v1Val=kb*s,v2Val=ka*s,b1=wri(2,5),b2=wri(2,5),c2=b1*v1Val+b2*v2Val;
-  const eq1=`${cStr(ka,v1)} - ${cStr(kb,v2)} = 0`,eq2=`${cStr(b1,v1)} + ${cStr(b2,v2)} = ${c2}`;
-  return { kind:"worded-simeq",
-    lines:[`$${ka}$ ${pl1} cost the same as $${kb}$ ${pl2}.`,
-           `$${b1}$ ${pl1} and $${b2}$ ${pl2} cost $£${c2}$ altogether.`,
-           `Find the cost of one ${sing1} and one ${sing2}.`],
-    equation1:eq1,equation2:eq2,v1,v2,v1Val,v2Val,
-    answerLines:[`One ${sing1} costs $£${v1Val}$ and one ${sing2} costs $£${v2Val}$.`],
+  const eq1=`${wCStr(ka,v1)} - ${wCStr(kb,v2)} = 0`,eq2=`${wCStr(b1,v1)} + ${wCStr(b2,v2)} = ${c2}`;
+  return {
+    kind:"worded-simeq",
+    lines:[
+      `${nv(ka)} ${pl1} cost the same as ${nv(kb)} ${pl2}.`,
+      `${nv(b1)} ${pl1} and ${nv(b2)} ${pl2} cost ${cv(c2)} altogether.`,
+      `Find the cost of one ${sing1} and one ${sing2}.`,
+    ],
+    equation1:eq1, equation2:eq2, v1, v2, v1Val, v2Val,
+    answerLines:[`One ${sing1} costs ${cv(v1Val)} and one ${sing2} costs ${cv(v2Val)}.`],
     working:[
       {type:"tStep",latex:`\\text{Let } ${v1} = \\text{cost of one ${sing1}}, \\quad ${v2} = \\text{cost of one ${sing2}}`,plain:""},
-      {type:"tStep",latex:`\\text{"${ka} ${pl1} = ${kb} ${pl2}"} \\Rightarrow ${cStr(ka,v1)} = ${cStr(kb,v2)}`,plain:""},
-      {type:"step",latex:eq1,plain:eq1},{type:"step",latex:eq2,plain:eq2},
+      {type:"tStep",latex:`\\text{"${ka} ${pl1} = ${kb} ${pl2}"} \\Rightarrow ${wCStr(ka,v1)} = ${wCStr(kb,v2)}`,plain:""},
+      {type:"step",latex:eq1,plain:eq1},
+      {type:"step",latex:eq2,plain:eq2},
     ],
-    key:`w2-ratio-${v1}${v2}-${ka}-${kb}-${b1}-${b2}-${s}`,difficulty:"level2",subType:"ratio" };
+    key:`w2-ratio-${v1}${v2}-${ka}-${kb}-${b1}-${b2}-${s}`, difficulty:"level2", subType:"ratio",
+  };
 };
 
 const genPurchase = (): WordedQuestion => {
@@ -490,21 +526,24 @@ const genPurchase = (): WordedQuestion => {
   const aCount=wri(3,total-3),bCount=total-aCount;
   const revenue=ctx.priceA*aCount+ctx.priceB*bCount;
   const eq1=`a + b = ${total}`,eq2=`${ctx.priceA}a + ${ctx.priceB}b = ${revenue}`;
-  return { kind:"worded-simeq",
-    lines:[`A stall sells $${total}$ ${ctx.items} in a day.`,
-           `${ctx.typeA[0].toUpperCase()+ctx.typeA.slice(1)} ${ctx.items} cost $£${ctx.priceA}$ each and ${ctx.typeB} ${ctx.items} cost $£${ctx.priceB}$ each.`,
-           `The stall makes $£${revenue}$ in total.`,
-           `Find how many of each type of ${ctx.item} were sold.`],
-    equation1:eq1,equation2:eq2,v1:"a",v2:"b",v1Val:aCount,v2Val:bCount,
-    answerLines:[`$${aCount}$ ${ctx.typeA} ${ctx.items} and $${bCount}$ ${ctx.typeB} ${ctx.items} were sold.`],
-    working:[
-      {type:"tStep",latex:`\\text{Let } a = \\text{number of ${ctx.typeA} ${ctx.items}}, \\quad b = \\text{number of ${ctx.typeB} ${ctx.items}}`,plain:""},
-      {type:"tStep",latex:`\\text{Total ${ctx.items}:}`,plain:""},
-      {type:"step",latex:eq1,plain:eq1},
-      {type:"tStep",latex:`\\text{Total revenue:}`,plain:""},
-      {type:"step",latex:eq2,plain:eq2},
+  return {
+    kind:"worded-simeq",
+    lines:[
+      `A stall sells ${nv(total)} ${ctx.items} in a day.`,
+      `${ctx.typeA[0].toUpperCase()+ctx.typeA.slice(1)} ${ctx.items} cost ${cv(ctx.priceA)} each and ${ctx.typeB} ${ctx.items} cost ${cv(ctx.priceB)} each.`,
+      `The stall makes ${cv(revenue)} in total.`,
+      `Find how many of each type of ${ctx.item} were sold.`,
     ],
-    key:`w3-purchase-${ctx.item}-${total}-${aCount}-${revenue}`,difficulty:"level3",subType:"purchase" };
+    equation1:eq1, equation2:eq2, v1:"a", v2:"b", v1Val:aCount, v2Val:bCount,
+    answerLines:[`${nv(aCount)} ${ctx.typeA} ${ctx.items} and ${nv(bCount)} ${ctx.typeB} ${ctx.items} were sold.`],
+    working:[
+      {type:"tStep",latex:`\\text{Let } a = \\text{number of ${ctx.typeA} ${ctx.items}}`,plain:""},
+      {type:"tStep",latex:`b = \\text{number of ${ctx.typeB} ${ctx.items}}`,plain:""},
+      {type:"tStep",latex:`\\text{Total: } a + b = ${total}`,plain:""},
+      {type:"tStep",latex:`\\text{Revenue: } ${ctx.priceA}a + ${ctx.priceB}b = ${revenue}`,plain:""},
+    ],
+    key:`w3-purchase-${ctx.item}-${total}-${aCount}-${revenue}`, difficulty:"level3", subType:"purchase",
+  };
 };
 
 const genEquilateral = (): WordedQuestion => {
@@ -516,16 +555,19 @@ const genEquilateral = (): WordedQuestion => {
     const a=wri(1,3),b=wri(1,3),sideLen=a*xVal+b*yVal;
     if(sideLen<=0) continue;
     const perim=3*sideLen,A=3*a,B=3*b;
-    const eq1=`${cStr(A,"x")} + ${cStr(B,"y")} = ${perim}`;
-    const eq2=`${cStr(c,"x")} + ${cStr(d,"y")} = 60`;
+    const eq1=`${wCStr(A,"x")} + ${wCStr(B,"y")} = ${perim}`;
+    const eq2=`${wCStr(c,"x")} + ${wCStr(d,"y")} = 60`;
     if(A*d===B*c) continue;
     const sideStr=`${a===1?"":a}x + ${b}y`,angleStr=`${c===1?"":c}x + ${d}y`;
-    return { kind:"worded-simeq",
-      lines:[`An equilateral triangle has a side length of $(${sideStr})$ cm.`,
-             `The perimeter of the triangle is $${perim}$ cm.`,
-             `One of its angles is $(${angleStr})°$.`,
-             `Find the values of $x$ and $y$.`],
-      equation1:eq1,equation2:eq2,v1:"x",v2:"y",v1Val:xVal,v2Val:yVal,
+    return {
+      kind:"worded-simeq",
+      lines:[
+        `An equilateral triangle has a side length of $(${sideStr})$ cm.`,
+        `The perimeter of the triangle is ${nv(perim)} cm.`,
+        `One of its angles is $(${angleStr})°$.`,
+        `Find the values of $x$ and $y$.`,
+      ],
+      equation1:eq1, equation2:eq2, v1:"x", v2:"y", v1Val:xVal, v2Val:yVal,
       answerLines:[`$x = ${xVal}$ and $y = ${yVal}$`],
       working:[
         {type:"tStep",latex:`\\text{Equilateral: all sides equal} \\Rightarrow \\text{perimeter} = 3(${sideStr})`,plain:""},
@@ -533,7 +575,8 @@ const genEquilateral = (): WordedQuestion => {
         {type:"tStep",latex:"\\text{All angles in an equilateral triangle} = 60°",plain:""},
         {type:"step",latex:eq2,plain:eq2},
       ],
-      key:`w3-equil-${a}-${b}-${c}-${d}-${xVal}-${yVal}`,difficulty:"level3",subType:"equilateral" };
+      key:`w3-equil-${a}-${b}-${c}-${d}-${xVal}-${yVal}`, difficulty:"level3", subType:"equilateral",
+    };
   }
   return genEquilateral();
 };
@@ -550,15 +593,18 @@ const genIsosceles = (): WordedQuestion => {
     const perim=side1+side2+side3;
     const A2=p+r,B2=q+t,C2=perim-s;
     if(A1*B2===B1*A2) continue;
-    const eq1=`${cStr(A1,"x")} + ${cStr(B1,"y")} = ${C1}`;
-    const eq2=`${cStr(A2,"x")} + ${cStr(B2,"y")} = ${C2}`;
+    const eq1=`${wCStr(A1,"x")} + ${wCStr(B1,"y")} = ${C1}`;
+    const eq2=`${wCStr(A2,"x")} + ${wCStr(B2,"y")} = ${C2}`;
     const s1=`${p}x + ${q}y`,s2=`${r===1?"":r}x + ${s}`,s3=`${t===1?"":t}y`;
-    return { kind:"worded-simeq",
-      lines:[`An isosceles triangle has sides of length $(${s1})$ cm, $(${s2})$ cm and $(${s3})$ cm.`,
-             `The sides $(${s1})$ and $(${s2})$ are equal to each other.`,
-             `The perimeter of the triangle is $${perim}$ cm.`,
-             `Find the values of $x$ and $y$.`],
-      equation1:eq1,equation2:eq2,v1:"x",v2:"y",v1Val:xVal,v2Val:yVal,
+    return {
+      kind:"worded-simeq",
+      lines:[
+        `An isosceles triangle has sides of length $(${s1})$ cm, $(${s2})$ cm and $(${s3})$ cm.`,
+        `The sides $(${s1})$ and $(${s2})$ are equal to each other.`,
+        `The perimeter of the triangle is ${nv(perim)} cm.`,
+        `Find the values of $x$ and $y$.`,
+      ],
+      equation1:eq1, equation2:eq2, v1:"x", v2:"y", v1Val:xVal, v2Val:yVal,
       answerLines:[`$x = ${xVal}$ and $y = ${yVal}$`],
       working:[
         {type:"tStep",latex:"\\text{Isosceles: the two stated sides are equal}",plain:""},
@@ -568,7 +614,8 @@ const genIsosceles = (): WordedQuestion => {
         {type:"step",latex:`(${s1}) + (${s2}) + (${s3}) = ${perim}`,plain:""},
         {type:"step",latex:eq2,plain:eq2},
       ],
-      key:`w3-isos-${p}-${q}-${r}-${s}-${t}-${xVal}-${yVal}`,difficulty:"level3",subType:"isosceles" };
+      key:`w3-isos-${p}-${q}-${r}-${s}-${t}-${xVal}-${yVal}`, difficulty:"level3", subType:"isosceles",
+    };
   }
   return genIsosceles();
 };
@@ -585,20 +632,23 @@ const genScalene = (): WordedQuestion => {
     const numerical=180-anglesXY;
     if(numerical<15||numerical>150||anglesXY>=180) continue;
     const A1=a+c,B1=b+d;
-    const eq1=`${cStr(A1,"x")} + ${cStr(B1,"y")} = ${perim}`;
+    const eq1=`${wCStr(A1,"x")} + ${wCStr(B1,"y")} = ${perim}`;
     const A2=e,B2=f,C2=180-numerical;
-    const eq2=`${cStr(A2,"x")} + ${cStr(B2,"y")} = ${C2}`;
+    const eq2=`${wCStr(A2,"x")} + ${wCStr(B2,"y")} = ${C2}`;
     if(A1*B2===B1*A2) continue;
     if(A1*xVal+B1*yVal!==perim||A2*xVal+B2*yVal!==C2) continue;
     const st1=`${a===1?"":a}x`,st2=`${b===1?"":b}y`,st3=`${c===1?"":c}x + ${d}y`;
     const ang1=`${e===1?"":e}x`,ang2=`${f===1?"":f}y`;
-    return { kind:"worded-simeq",
-      lines:[`A scalene triangle has sides of length $${st1}$ cm, $${st2}$ cm and $(${st3})$ cm.`,
-             `The perimeter of the triangle is $${perim}$ cm.`,
-             `Two of the angles are $${ang1}°$ and $${ang2}°$.`,
-             `The third angle is $${numerical}°$.`,
-             `Find the values of $x$ and $y$.`],
-      equation1:eq1,equation2:eq2,v1:"x",v2:"y",v1Val:xVal,v2Val:yVal,
+    return {
+      kind:"worded-simeq",
+      lines:[
+        `A scalene triangle has sides of length $${st1}$ cm, $${st2}$ cm and $(${st3})$ cm.`,
+        `The perimeter of the triangle is ${nv(perim)} cm.`,
+        `Two of the angles are $${ang1}°$ and $${ang2}°$.`,
+        `The third angle is ${nv(numerical)}°.`,
+        `Find the values of $x$ and $y$.`,
+      ],
+      equation1:eq1, equation2:eq2, v1:"x", v2:"y", v1Val:xVal, v2Val:yVal,
       answerLines:[`$x = ${xVal}$ and $y = ${yVal}$`],
       working:[
         {type:"tStep",latex:"\\text{Perimeter = sum of all three sides}",plain:""},
@@ -608,7 +658,8 @@ const genScalene = (): WordedQuestion => {
         {type:"step",latex:`${ang1} + ${ang2} + ${numerical} = 180`,plain:""},
         {type:"step",latex:eq2,plain:eq2},
       ],
-      key:`w3-scal-${a}-${b}-${c}-${d}-${e}-${f}-${xVal}-${yVal}`,difficulty:"level3",subType:"scalene" };
+      key:`w3-scal-${a}-${b}-${c}-${d}-${e}-${f}-${xVal}-${yVal}`, difficulty:"level3", subType:"scalene",
+    };
   }
   return genScalene();
 };
@@ -616,26 +667,25 @@ const genScalene = (): WordedQuestion => {
 const generateWordedQuestion = (level: DifficultyLevel, variables: Record<string,boolean>, dropdownValue: string): WordedQuestion => {
   if(level==="level1") return genLevel1Worded((dropdownValue as WordedMethod)||"direct");
   if(level==="level2"){
-    const active=(["sumDiff","moreThan","ratio"] as L2Type[]).filter(t=>variables[t]===true);
-    const type=wpick(active.length>0?active:["sumDiff","moreThan","ratio"] as L2Type[]);
+    const all: L2Type[] = ["sumDiff","moreThan","ratio"];
+    const active = all.filter(t => variables[t] === true);
+    const type = wpick(active.length > 0 ? active : all);
     if(type==="sumDiff") return genSumDiff();
     if(type==="moreThan") return genMoreThan();
     return genRatio();
   }
-  const active=(["purchase","equilateral","isosceles","scalene"] as L3Type[]).filter(t=>variables[t]===true);
-  const type=wpick(active.length>0?active:["purchase","equilateral","isosceles","scalene"] as L3Type[]);
+  const all: L3Type[] = ["purchase","equilateral","isosceles","scalene"];
+  const active = all.filter(t => variables[t] === true);
+  const type = wpick(active.length > 0 ? active : all);
   if(type==="purchase") return genPurchase();
   if(type==="equilateral") return genEquilateral();
   if(type==="isosceles") return genIsosceles();
   return genScalene();
 };
 
-
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // DISPLAY COMPONENTS
 // ═══════════════════════════════════════════════════════════════════════════════
-
 const DifficultyToggle = ({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
   <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm">
     {([["level1","Level 1","bg-green-600"],["level2","Level 2","bg-yellow-500"],["level3","Level 3","bg-red-600"]] as const).map(([val,label,col]) => (
@@ -645,10 +695,6 @@ const DifficultyToggle = ({ value, onChange }: { value: string; onChange: (v: st
       </button>
     ))}
   </div>
-);
-
-const Instruction = ({ cls }: { cls: string }) => (
-  <div className={`${cls} font-semibold text-center w-full`} style={{ color: "#000" }}>Solve:</div>
 );
 
 const EqPair = ({ q, cls }: { q: SimEqQuestion; cls: string }) => (
@@ -747,12 +793,8 @@ const WordedWorkedSteps = ({ q, stepBg, fsz }: { q: WordedQuestion; stepBg: stri
       <MathRenderer latex={latex} />
     </div>
   );
-
   const { v1, v2, v1Val, v2Val, equation1, equation2, working } = q;
-
-  // Parse ax + by = c from a canonical equation string
   const parseEq = (eq: string): { a: number; b: number; c: number } | null => {
-    // matches: [coeff]v1 [+-] [coeff]v2 = c
     const re = /^(-?\d*)([a-z])\s*([+-])\s*(\d*)([a-z])\s*=\s*(-?\d+)$/;
     const m = eq.replace(/\s+/g,"").match(re);
     if (!m) return null;
@@ -761,57 +803,58 @@ const WordedWorkedSteps = ({ q, stepBg, fsz }: { q: WordedQuestion; stepBg: stri
     const c = parseInt(m[6]);
     return { a, b, c };
   };
-
-  // Build elimination steps from the two equations
   const buildElimSteps = (): React.ReactNode[] => {
     const p1 = parseEq(equation1), p2 = parseEq(equation2);
     if (!p1 || !p2) return [ml(`${v1} = ${v1Val},\\quad ${v2} = ${v2Val}`)];
     const { a: a1, b: b1, c: c1 } = p1;
     const { a: a2, b: b2, c: c2 } = p2;
     const steps: React.ReactNode[] = [];
-
-    // Find multipliers to eliminate v1: multiply eq1 by |a2|, eq2 by |a1|
     const g = gcd(Math.abs(a1), Math.abs(a2));
     const m1 = Math.abs(a2) / g, m2 = Math.abs(a1) / g;
     const sa1=a1*m1, sb1=b1*m1, sc1=c1*m1;
     const sa2=a2*m2, sb2=b2*m2, sc2=c2*m2;
-
     if (m1 === 1 && m2 === 1) {
-      steps.push(ml(`(1)\\quad ${equation1}`,"(1)"));
-      steps.push(ml(`(2)\\quad ${equation2}`,"(2)"));
-    } else {
+      // No scaling needed — equations used directly
+    } else if (m1 > 1 && m2 > 1) {
       steps.push(ml(`(1) \\times ${m1}: \\quad ${cStr(sa1,v1)} ${sa1>=0&&sb1>=0?"+":""} ${cStr(sb1,v2)} = ${sc1}`,"(3)"));
       steps.push(ml(`(2) \\times ${m2}: \\quad ${cStr(sa2,v1)} ${sa2>=0&&sb2>=0?"+":""} ${cStr(sb2,v2)} = ${sc2}`,"(4)"));
+    } else if (m1 > 1) {
+      steps.push(ml(`(1) \\times ${m1}: \\quad ${cStr(sa1,v1)} ${sa1>=0&&sb1>=0?"+":""} ${cStr(sb1,v2)} = ${sc1}`,"(3)"));
+    } else {
+      steps.push(ml(`(2) \\times ${m2}: \\quad ${cStr(sa2,v1)} ${sa2>=0&&sb2>=0?"+":""} ${cStr(sb2,v2)} = ${sc2}`,"(3)"));
     }
-
-    // Eliminate v1: signs determine add or subtract
     const sameSign = (sa1 > 0 && sa2 > 0) || (sa1 < 0 && sa2 < 0);
     const remB = sameSign ? sb1 - sb2 : sb1 + sb2;
     const remC = sameSign ? sc1 - sc2 : sc1 + sc2;
-    const op = sameSign ? "(3) - (4)" : "(3) + (4)";
-    const opSimple = m1===1&&m2===1 ? (sameSign?"(1) - (2)":"(1) + (2)") : op;
-
+    const op = sameSign ? "-" : "+";
+    let lhsLabel: string, rhsLabel: string;
+    if (m1 === 1 && m2 === 1) { lhsLabel = "(1)"; rhsLabel = "(2)"; }
+    else if (m1 > 1 && m2 > 1) { lhsLabel = "(3)"; rhsLabel = "(4)"; }
+    else if (m1 > 1) { lhsLabel = "(3)"; rhsLabel = "(2)"; }
+    else { lhsLabel = "(1)"; rhsLabel = "(3)"; }
+    const opSimple = `${lhsLabel} ${op} ${rhsLabel}`;
     steps.push(ml(`${opSimple}: \\quad ${cStr(remB,v2)} = ${remC}`));
     if (Math.abs(remB) !== 1) steps.push(ml(`${v2} = ${remC} \\div ${remB}`));
     steps.push(ml(`${v2} = ${v2Val}`));
-
-    // Sub back into eq1
-    const sub = b1 * v2Val;
     steps.push(ml(`\\text{Substitute } ${v2} = ${v2Val} \\text{ into (1):}`));
+    const sub = b1 * v2Val;
     steps.push(ml(`${cStr(a1,v1)} ${b1>=0?"+":"-"} ${Math.abs(b1)}(${v2Val}) = ${c1}`));
-    steps.push(ml(`${cStr(a1,v1)} = ${c1 - sub}`));
-    if (Math.abs(a1) !== 1) steps.push(ml(`${v1} = ${(c1-sub)/a1}`));
-    steps.push(ml(`${v1} = ${v1Val}`));
-
+    const rem1 = c1 - sub;
+    if (Math.abs(a1) === 1) {
+      steps.push(ml(`${v1} = ${rem1}`));
+    } else {
+      steps.push(ml(`${cStr(a1,v1)} = ${rem1}`));
+      steps.push(ml(`${v1} = ${Math.round(rem1/a1)}`));
+    }
     return steps;
   };
-
-  const noteSteps = working.slice(1).filter(s => s.type === "tStep");
+  const noteSteps = working.slice(1).filter(s => s.type === "tStep").slice(q.subType === "purchase" ? 1 : 0);
   let stepNum = 1;
-
   return (
     <div className="space-y-4 mt-6">
-      {card(`Step ${stepNum++} — Define variables`, ml(working[0]?.latex ?? ""))}
+      {card(`Step ${stepNum++} — Define variables`, <>
+        {working.filter(s => s.type === "tStep").slice(0, q.subType === "purchase" ? 2 : 1).map((s,i) => <div key={i}>{ml(s.latex)}</div>)}
+      </>)}
       {noteSteps.length > 0 && card(`Step ${stepNum++} — Interpret the information`,
         <>{noteSteps.map((s,i) => <div key={i}><MathRenderer latex={s.latex}/></div>)}</>
       )}
@@ -830,7 +873,6 @@ const WordedWorkedSteps = ({ q, stepBg, fsz }: { q: WordedQuestion; stepBg: stri
 // ═══════════════════════════════════════════════════════════════════════════════
 // QO POPOVERS
 // ═══════════════════════════════════════════════════════════════════════════════
-
 const SimEqQOPopover = ({ level, opMode, setOpMode, allowNeg, setAllowNeg, allowRearrange, setAllowRearrange }: {
   level: DifficultyLevel; opMode: OpMode; setOpMode: (v: OpMode) => void;
   allowNeg: boolean; setAllowNeg: (v: boolean) => void;
@@ -890,21 +932,15 @@ const WordedQOPopover = ({ level, wordedMethod, setWordedMethod, l2Types, setL2T
           {level === "level2" && (
             <div className="flex flex-col gap-2">
               <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Question Types</span>
-              <MultiSegButtons
-                values={l2Types}
-                onChange={v => setL2Types(v as L2Type[])}
-                opts={[{value:"sumDiff",label:"Sum & Diff"},{value:"moreThan",label:"More Than"},{value:"ratio",label:"Ratio"}]}
-              />
+              <MultiSegButtons values={l2Types} onChange={v => setL2Types(v as L2Type[])}
+                opts={[{value:"sumDiff",label:"Sum & Diff"},{value:"moreThan",label:"More Than"},{value:"ratio",label:"Ratio"}]} />
             </div>
           )}
           {level === "level3" && (
             <div className="flex flex-col gap-2">
               <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Question Types</span>
-              <MultiSegButtons
-                values={l3Types}
-                onChange={v => setL3Types(v as L3Type[])}
-                opts={[{value:"purchase",label:"Purchase"},{value:"equilateral",label:"Equilateral"},{value:"isosceles",label:"Isosceles"},{value:"scalene",label:"Scalene"}]}
-              />
+              <MultiSegButtons values={l3Types} onChange={v => setL3Types(v as L3Type[])}
+                opts={[{value:"purchase",label:"Purchase"},{value:"equilateral",label:"Equilateral"},{value:"isosceles",label:"Isosceles"},{value:"scalene",label:"Scalene"}]} />
             </div>
           )}
         </div>
@@ -913,7 +949,6 @@ const WordedQOPopover = ({ level, wordedMethod, setWordedMethod, l2Types, setL2T
   );
 };
 
-// Differentiated versions
 const SimEqDiffQOPopover = ({ levelOps, setLevelOps, levelNeg, setLevelNeg, levelRearrange, setLevelRearrange }: {
   levelOps: Record<string,OpMode>; setLevelOps: (v: Record<string,OpMode>) => void;
   levelNeg: Record<string,boolean>; setLevelNeg: (v: Record<string,boolean>) => void;
@@ -996,7 +1031,6 @@ const WordedDiffQOPopover = ({ levelMethods, setLevelMethods, levelL2Types, setL
 // ═══════════════════════════════════════════════════════════════════════════════
 // INFO & MENU
 // ═══════════════════════════════════════════════════════════════════════════════
-
 const INFO_SECTIONS = [
   { title:"Elimination",icon:"➕",content:[
     {label:"Overview",detail:"One variable already has matching coefficient magnitudes. Add or subtract to eliminate it directly."},
@@ -1101,8 +1135,9 @@ const MenuDropdown = ({ colorScheme, setColorScheme, onClose, onOpenInfo }: {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PRINT
+// The PDF's inlineEl function uses the same character-by-character approach as
+// InlineMath in React, so multiple $...$ blocks on one line never bleed together.
 // ═══════════════════════════════════════════════════════════════════════════════
-
 const handlePrint = (questions: AnyQuestion[], difficulty: string, isDifferentiated: boolean, numColumns: number, subTool: SubTool) => {
   const FONT_PX=14,PAD_MM=3.5,MARGIN_MM=12,HEADER_MM=14,GAP_MM=2;
   const PAGE_H_MM=297-MARGIN_MM*2,PAGE_W_MM=210-MARGIN_MM*2;
@@ -1114,28 +1149,13 @@ const handlePrint = (questions: AnyQuestion[], difficulty: string, isDifferentia
   const totalQ=questions.length;
   const toolName=subTool==="scaling"?"Factor Scaling":subTool==="lcm"?"LCM Scaling":subTool==="worded"?"Forming & Solving":"Elimination";
 
-  // Build print data — handle both SimEq and Worded question types
   const qData = questions.map((q: any, i: number) => {
     if (q.kind === "worded-simeq") {
-      return {
-        type: "worded",
-        lines: q.lines as string[],
-        answerLines: q.answerLines as string[],
-        difficulty: q.difficulty,
-        idx: i,
-      };
+      return { type:"worded", lines:q.lines as string[], answerLines:q.answerLines as string[], difficulty:q.difficulty, idx:i };
     }
-    return {
-      type: "simeq",
-      eq1: q.eq1Display as string,
-      eq2: q.eq2Display as string,
-      v1: q.varPair[0] as string,
-      v2: q.varPair[1] as string,
-      v1Val: q.v1Val as number,
-      v2Val: q.v2Val as number,
-      difficulty: q.difficulty,
-      idx: i,
-    };
+    return { type:"simeq", eq1:q.eq1Display as string, eq2:q.eq2Display as string,
+      v1:q.varPair[0] as string, v2:q.varPair[1] as string,
+      v1Val:q.v1Val as number, v2Val:q.v2Val as number, difficulty:q.difficulty, idx:i };
   });
 
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
@@ -1179,14 +1199,29 @@ document.addEventListener("DOMContentLoaded",function(){
   function kr(el,latex){try{katex.render(latex,el,{throwOnError:false,output:"html"});}catch(e){el.textContent=latex;}}
   function kEl(latex){var s=document.createElement("span");s.className="kr";kr(s,latex);return s;}
 
-  // Parse $...$ inline math in a string and return a span with mixed content
+  // Character-by-character inline math parser — identical logic to React InlineMath.
+  // Finds each opening $, then immediately seeks the very next $ as closing delimiter.
+  // This means multiple $...$ blocks on one line never bleed into each other.
   function inlineEl(text){
     var span=document.createElement("span");
-    var parts=text.split(/(\$[^$]+\$)/g);
-    parts.forEach(function(p){
-      if(p.startsWith("$")&&p.endsWith("$")){span.appendChild(kEl(p.slice(1,-1)));}
-      else{span.appendChild(document.createTextNode(p));}
-    });
+    var i=0;
+    while(i<text.length){
+      if(text[i]==="$"){
+        var close=text.indexOf("$",i+1);
+        if(close!==-1){
+          span.appendChild(kEl(text.slice(i+1,close)));
+          i=close+1;
+        } else {
+          span.appendChild(document.createTextNode(text[i]));
+          i++;
+        }
+      } else {
+        var next=text.indexOf("$",i);
+        var end=next===-1?text.length:next;
+        span.appendChild(document.createTextNode(text.slice(i,end)));
+        i=end;
+      }
+    }
     return span;
   }
 
@@ -1215,7 +1250,6 @@ document.addEventListener("DOMContentLoaded",function(){
     cell.appendChild(banner);cell.appendChild(cellInner(item,showAns));return cell;
   }
 
-  // Probe: measure tallest cell content
   var probe=document.getElementById("probe"),maxH=0;
   qData.forEach(function(item){var el=cellInner(item,true);probe.appendChild(el);if(el.scrollHeight>maxH)maxH=el.scrollHeight;probe.removeChild(el);});
   var needed=maxH/pxMm+PAD*2+5;
@@ -1279,14 +1313,11 @@ document.addEventListener("DOMContentLoaded",function(){
 // ═══════════════════════════════════════════════════════════════════════════════
 // MAIN APP
 // ═══════════════════════════════════════════════════════════════════════════════
-
 export default function App() {
-  const navigate = useNavigate();
   const [subTool, setSubTool] = useState<SubTool>("elimination");
   const [mode, setMode] = useState<"whiteboard"|"single"|"worksheet">("whiteboard");
   const [difficulty, setDifficulty] = useState<DifficultyLevel>("level1");
 
-  // SimEq state
   const [opMode, setOpMode] = useState<OpMode>("mixed");
   const [allowNeg, setAllowNeg] = useState(false);
   const [allowRearrange, setAllowRearrange] = useState(false);
@@ -1294,7 +1325,6 @@ export default function App() {
   const [levelNeg, setLevelNeg] = useState<Record<string,boolean>>({level1:false,level2:false,level3:false});
   const [levelRearrange, setLevelRearrange] = useState<Record<string,boolean>>({level1:false,level2:false,level3:false});
 
-  // Worded state
   const [wordedMethod, setWordedMethod] = useState<WordedMethod>("direct");
   const [l2Types, setL2Types] = useState<L2Type[]>(["sumDiff","moreThan","ratio"]);
   const [l3Types, setL3Types] = useState<L3Type[]>(["purchase","equilateral","isosceles","scalene"]);
@@ -1359,7 +1389,7 @@ export default function App() {
   const fsWorkingBg=isDefault?"#f5f3f0":qBg;
 
   const makeVars = (neg:boolean,rear:boolean)=>({allowNegSolutions:neg,allowRearrange:rear});
-  const makeWordedVars = (lv?: DifficultyLevel) => {
+  const makeWordedVars = useCallback((lv?: DifficultyLevel) => {
     if (!lv) {
       if (difficulty==="level2") return Object.fromEntries(l2Types.map(t=>[t,true]));
       if (difficulty==="level3") return Object.fromEntries(l3Types.map(t=>[t,true]));
@@ -1368,7 +1398,7 @@ export default function App() {
     if (lv==="level2") return Object.fromEntries((levelL2Types[lv]??["sumDiff","moreThan","ratio"]).map(t=>[t,true]));
     if (lv==="level3") return Object.fromEntries((levelL3Types[lv]??["purchase","equilateral","isosceles","scalene"]).map(t=>[t,true]));
     return {};
-  };
+  }, [difficulty, l2Types, l3Types, levelL2Types, levelL3Types]);
 
   const genQ = (st:SubTool,lv:DifficultyLevel,vars:Record<string,boolean>,om:OpMode,wm:WordedMethod):AnyQuestion =>
     st==="scaling" ? generateScaling(lv,vars,om)
@@ -1383,10 +1413,10 @@ export default function App() {
     do{q=gen();a++;}while(used.has(q.key)&&a<100);used.add(q.key);return q;
   };
 
-  const handleNewQuestion = () => {
-    const q = genQ(subTool,difficulty,makeVars(allowNeg,allowRearrange),opMode,wordedMethod);
+  const handleNewQuestion = useCallback(() => {
+    const q = genQ(subTool,difficulty,makeWordedVars(),opMode,wordedMethod);
     setCurrentQuestion(q); setShowWhiteboardAnswer(false); setShowAnswer(false);
-  };
+  }, [subTool, difficulty, makeWordedVars, opMode, wordedMethod]);
 
   const handleGenerateWorksheet = () => {
     const usedKeys=new Set<string>(),questions:AnyQuestion[]=[];
@@ -1404,7 +1434,7 @@ export default function App() {
     setWorksheet(questions); setShowWorksheetAnswers(false);
   };
 
-  useEffect(()=>{ if(mode!=="worksheet") handleNewQuestion(); },[difficulty,subTool]);
+  useEffect(()=>{ if(mode!=="worksheet") handleNewQuestion(); setDisplayFontSize(subTool==="worded"?1:2); },[difficulty,subTool]);
 
   const displayFontSizes=["text-xl","text-2xl","text-3xl","text-4xl","text-5xl","text-6xl"];
   const instrFontSizes  =["text-base","text-lg","text-xl","text-2xl","text-3xl","text-4xl"];
@@ -1534,7 +1564,7 @@ export default function App() {
     const simQ=currentQuestion as SimEqQuestion,[v1,v2]=simQ.varPair;
     return (
       <>
-        <Instruction cls={instrFontSizes[displayFontSize]}/>
+        <div className={`${instrFontSizes[displayFontSize]} font-semibold text-center w-full`} style={{color:"#000"}}>Solve:</div>
         <EqPair q={simQ} cls={displayFontSizes[displayFontSize]}/>
         {showAns&&<div className={`${displayFontSizes[displayFontSize]} font-bold text-center`} style={{color:"#166534"}}>
           <MathRenderer latex={`${v1} = ${simQ.v1Val}, \\quad ${v2} = ${simQ.v2Val}`}/>
@@ -1554,7 +1584,6 @@ export default function App() {
         </div>
       </div>
     );
-
     const questionBox=(isFS:boolean)=>(
       <div style={{position:"relative",width:isFS?"40%":"480px",height:"100%",backgroundColor:isFS?fsQuestionBg:stepBg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:isFS?48:32,boxSizing:"border-box",flexShrink:0,gap:12,borderRadius:isFS?0:"12px"}}>
         <div style={{position:"absolute",top:10,right:10,display:"flex",gap:6,zIndex:20}}>
@@ -1564,7 +1593,6 @@ export default function App() {
         {renderQuestionContent(showWhiteboardAnswer)}
       </div>
     );
-
     const rightPanel=(isFS:boolean)=>(
       <div style={{flex:isFS?"none":1,width:isFS?"60%":undefined,height:"100%",position:"relative",overflow:"hidden",backgroundColor:presenterMode?"#000":(isFS?fsWorkingBg:stepBg),borderRadius:isFS?0:"12px"}} className={isFS?"":"flex-1"}>
         {presenterMode&&<><video ref={videoRef} autoPlay playsInline muted style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}}/>{camError&&<div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",color:"rgba(255,255,255,0.4)",fontSize:"0.85rem",padding:"2rem",textAlign:"center",zIndex:1}}>{camError}</div>}</>}
@@ -1595,7 +1623,6 @@ export default function App() {
         </div>
       </div>
     );
-
     if(wbFullscreen) return(
       <div style={{position:"fixed",inset:0,zIndex:200,backgroundColor:fsToolbarBg,display:"flex",flexDirection:"column"}}>
         {fsToolbar}
@@ -1682,7 +1709,7 @@ export default function App() {
     <>
       <div className="bg-blue-900 shadow-lg">
         <div className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
-          <button onClick={()=>navigate("/")} className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors">
+          <button className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors">
             <Home size={24}/><span className="font-semibold text-lg">Home</span>
           </button>
           <div className="relative">
