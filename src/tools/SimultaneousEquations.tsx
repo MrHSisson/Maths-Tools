@@ -618,7 +618,8 @@ const generateWordedQuestion = (level: DifficultyLevel, variables: Record<string
   return genScalene();
 };
 
-const _generateUniqueWordedQ = (level: DifficultyLevel, variables: Record<string,boolean>, dropdownValue: string, usedKeys: Set<string>): WordedQuestion => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const generateUniqueWordedQ = (level: DifficultyLevel, variables: Record<string,boolean>, dropdownValue: string, usedKeys: Set<string>): WordedQuestion => {
   let q:WordedQuestion,attempts=0;
   do{q=generateWordedQuestion(level,variables,dropdownValue);attempts++;}
   while(usedKeys.has(q.key)&&attempts<100);
@@ -1391,7 +1392,6 @@ export default function App() {
   };
 
   const renderControlBar = () => {
-    const subToolLabel=subTool==="scaling"?"Factor Scaling":subTool==="lcm"?"LCM Scaling":subTool==="worded"?"Forming & Solving":"Elimination";
     if(mode==="worksheet") return (
       <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
         <div className="flex justify-center items-center gap-6 mb-4">
@@ -1578,6 +1578,7 @@ export default function App() {
         <button disabled={!canInc} onClick={()=>canInc&&setWorksheetFontSize(f=>f+1)} className={`w-8 h-8 rounded flex items-center justify-center ${canInc?"bg-blue-900 text-white hover:bg-blue-800":"bg-gray-200 text-gray-400 cursor-not-allowed"}`}><ChevronUp size={20}/></button>
       </div>
     );
+    const subToolLabel=subTool==="scaling"?"Factor Scaling":subTool==="lcm"?"LCM Scaling":subTool==="worded"?"Forming & Solving":"Elimination";
     if(isDifferentiated) return(
       <div className="rounded-xl shadow-2xl p-8 relative" style={{backgroundColor:qBg}}>
         {fsCtrls}
@@ -1660,3 +1661,4 @@ export default function App() {
     </>
   );
 }
+    
