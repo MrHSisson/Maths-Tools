@@ -618,13 +618,7 @@ const generateWordedQuestion = (level: DifficultyLevel, variables: Record<string
   return genScalene();
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const generateUniqueWordedQ = (level: DifficultyLevel, variables: Record<string,boolean>, dropdownValue: string, usedKeys: Set<string>): WordedQuestion => {
-  let q:WordedQuestion,attempts=0;
-  do{q=generateWordedQuestion(level,variables,dropdownValue);attempts++;}
-  while(usedKeys.has(q.key)&&attempts<100);
-  usedKeys.add(q.key); return q;
-};
+
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // DISPLAY COMPONENTS
