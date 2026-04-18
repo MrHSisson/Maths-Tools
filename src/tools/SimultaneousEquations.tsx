@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, CSSProperties } from "react";
+import { useNavigate } from "react-router-dom";
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, Printer } from "lucide-react";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -637,7 +638,7 @@ const genScalene = (): WordedQuestion => {
     const eq2=`${wCStr(A2,"x")} + ${wCStr(B2,"y")} = ${C2}`;
     if(A1*B2===B1*A2) continue;
     if(A1*xVal+B1*yVal!==perim||A2*xVal+B2*yVal!==C2) continue;
-    const st1=`${a===1?"":a}x`,st2=`${b===1?"":b}y`,st3=`${c===1?"":c}x + ${d}y`;
+    const st1=`${a===1?"":a}x`,st2=`${b===1?"":b}y`,st3=`${c===1?"":c}x + ${d===1?"":d}y`;
     const ang1=`${e===1?"":e}x`,ang2=`${f===1?"":f}y`;
     return {
       kind:"worded-simeq",
@@ -1314,6 +1315,7 @@ document.addEventListener("DOMContentLoaded",function(){
 // MAIN APP
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function App() {
+  const navigate = useNavigate();
   const [subTool, setSubTool] = useState<SubTool>("elimination");
   const [mode, setMode] = useState<"whiteboard"|"single"|"worksheet">("whiteboard");
   const [difficulty, setDifficulty] = useState<DifficultyLevel>("level1");
@@ -1460,7 +1462,7 @@ export default function App() {
     if(q.kind==="worded-simeq") {
       const wq=q as WordedQuestion;
       return (
-        <div style={{backgroundColor:bg,height:"100%",boxSizing:"border-box",position:"relative",padding:"8px 10px",borderRadius:"12px",display:"flex",flexDirection:"column",justifyContent:"center",alignItems:"center"}}>
+                  <div style={{backgroundColor:bg,height:"100%",boxSizing:"border-box",position:"relative",padding:"24px 10px 8px",borderRadius:"12px",display:"flex",flexDirection:"column",justifyContent:"center",alignItems:"center"}}>
           <span style={{position:"absolute",top:0,left:0,fontSize:"0.62em",fontWeight:700,color:"#000",padding:"2px 3px 4px 3px",borderRight:"1px solid #000",borderBottom:"1px solid #000"}}>{idx+1})</span>
           <div className={`${fsz} font-semibold text-center`} style={{color:"#000",lineHeight:1.6}}>
             {wq.lines.map((line,i)=><div key={i}><InlineMath text={line}/></div>)}
@@ -1709,7 +1711,7 @@ export default function App() {
     <>
       <div className="bg-blue-900 shadow-lg">
         <div className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
-          <button className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors">
+          <button onClick={() => navigate("/")} className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors">
             <Home size={24}/><span className="font-semibold text-lg">Home</span>
           </button>
           <div className="relative">
