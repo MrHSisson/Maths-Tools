@@ -741,41 +741,87 @@ const WordedWorkedSteps = ({ q, stepBg, fsz }: { q: WordedQuestion; stepBg: stri
       <div className={`${fsz} font-semibold flex flex-col gap-2 items-center`} style={{ color: "#000" }}>{children}</div>
     </div>
   );
-  const mathLine = (latex: string, label?: string) => (
+  const ml = (latex: string, label?: string) => (
     <div className="flex items-baseline gap-3 justify-center">
       {label && <span className="text-xs font-bold text-gray-400 w-16 text-right flex-shrink-0">{label}</span>}
       <MathRenderer latex={latex} />
     </div>
   );
-  const inlineLine = (text: string) => (
-    <div className="text-center"><InlineMath text={text} /></div>
-  );
 
-  // Parse equations into coefficients for elimination steps
-  // equations are in form like "3h + 5c = 94" or "2x - 3y = 10"
-  // We use the stored v1, v2, v1Val, v2Val to generate clean solve steps
-  const { v1, v2, v1Val, v2Val, equation1, equation2 } = q;
+  const { v1, v2, v1Val, v2Val, equation1, equation2, working } = q;
 
+  // Parse ax + by = c from a canonical equation string
+  const parseEq = (eq: string): { a: number; b: number; c: number } | null => {
+    // matches: [coeff]v1 [+-] [coeff]v2 = c
+    const re = /^(-?\d*)([a-z])\s*([+-])\s*(\d*)([a-z])\s*=\s*(-?\d+)$/;
+    const m = eq.replace(/\s+/g,"").match(re);
+    if (!m) return null;
+    const a = m[1]===""||m[1]==="-"?parseInt(m[1]+"1"):parseInt(m[1]);
+    const b = m[3]==="-"?-(m[4]===""?1:parseInt(m[4])):(m[4]===""?1:parseInt(m[4]));
+    const c = parseInt(m[6]);
+    return { a, b, c };
+  };
+
+  // Build elimination steps from the two equations
+  const buildElimSteps = (): React.ReactNode[] => {
+    const p1 = parseEq(equation1), p2 = parseEq(equation2);
+    if (!p1 || !p2) return [ml(`${v1} = ${v1Val},\\quad ${v2} = ${v2Val}`)];
+    const { a: a1, b: b1, c: c1 } = p1;
+    const { a: a2, b: b2, c: c2 } = p2;
+    const steps: React.ReactNode[] = [];
+
+    // Find multipliers to eliminate v1: multiply eq1 by |a2|, eq2 by |a1|
+    const g = gcd(Math.abs(a1), Math.abs(a2));
+    const m1 = Math.abs(a2) / g, m2 = Math.abs(a1) / g;
+    const sa1=a1*m1, sb1=b1*m1, sc1=c1*m1;
+    const sa2=a2*m2, sb2=b2*m2, sc2=c2*m2;
+
+    if (m1 === 1 && m2 === 1) {
+      steps.push(ml(`(1)\\quad ${equation1}`,"(1)"));
+      steps.push(ml(`(2)\\quad ${equation2}`,"(2)"));
+    } else {
+      steps.push(ml(`(1) \\times ${m1}: \\quad ${cStr(sa1,v1)} ${sa1>=0&&sb1>=0?"+":""} ${cStr(sb1,v2)} = ${sc1}`,"(3)"));
+      steps.push(ml(`(2) \\times ${m2}: \\quad ${cStr(sa2,v1)} ${sa2>=0&&sb2>=0?"+":""} ${cStr(sb2,v2)} = ${sc2}`,"(4)"));
+    }
+
+    // Eliminate v1: signs determine add or subtract
+    const sameSign = (sa1 > 0 && sa2 > 0) || (sa1 < 0 && sa2 < 0);
+    const remB = sameSign ? sb1 - sb2 : sb1 + sb2;
+    const remC = sameSign ? sc1 - sc2 : sc1 + sc2;
+    const op = sameSign ? "(3) - (4)" : "(3) + (4)";
+    const opSimple = m1===1&&m2===1 ? (sameSign?"(1) - (2)":"(1) + (2)") : op;
+
+    steps.push(ml(`${opSimple}: \\quad ${cStr(remB,v2)} = ${remC}`));
+    if (Math.abs(remB) !== 1) steps.push(ml(`${v2} = ${remC} \\div ${remB}`));
+    steps.push(ml(`${v2} = ${v2Val}`));
+
+    // Sub back into eq1
+    const sub = b1 * v2Val;
+    steps.push(ml(`\\text{Substitute } ${v2} = ${v2Val} \\text{ into (1):}`));
+    steps.push(ml(`${cStr(a1,v1)} ${b1>=0?"+":"-"} ${Math.abs(b1)}(${v2Val}) = ${c1}`));
+    steps.push(ml(`${cStr(a1,v1)} = ${c1 - sub}`));
+    if (Math.abs(a1) !== 1) steps.push(ml(`${v1} = ${(c1-sub)/a1}`));
+    steps.push(ml(`${v1} = ${v1Val}`));
+
+    return steps;
+  };
+
+  const noteSteps = working.slice(1).filter(s => s.type === "tStep");
   let stepNum = 1;
+
   return (
     <div className="space-y-4 mt-6">
-      {card(`Step ${stepNum++} — Define variables`,
-        mathLine(q.working[0]?.latex ?? "")
+      {card(`Step ${stepNum++} — Define variables`, ml(working[0]?.latex ?? ""))}
+      {noteSteps.length > 0 && card(`Step ${stepNum++} — Interpret the information`,
+        <>{noteSteps.map((s,i) => <div key={i}><MathRenderer latex={s.latex}/></div>)}</>
       )}
       {card(`Step ${stepNum++} — Form the equations`, <>
-        {mathLine(`(1) \\quad ${equation1}`)}
-        {mathLine(`(2) \\quad ${equation2}`)}
+        {ml(`(1) \\quad ${equation1}`)}
+        {ml(`(2) \\quad ${equation2}`)}
       </>)}
-      {q.working.slice(1).filter(s => s.type === "tStep").map((s, i) => (
-        card(`Step ${stepNum++} — Note`, <MathRenderer key={i} latex={s.latex} />)
-      ))}
-      {card(`Step ${stepNum++} — Solve the equations`, <>
-        {mathLine(`\\text{Solve simultaneously using equations (1) and (2)}`)}
-        {mathLine(`${v1} = ${v1Val}`)}
-        {mathLine(`${v2} = ${v2Val}`)}
-      </>)}
+      {card(`Step ${stepNum++} — Solve by elimination`, <>{buildElimSteps()}</>)}
       {card("Answer", <>
-        {q.answerLines.map((line, i) => <div key={i}>{inlineLine(line)}</div>)}
+        {q.answerLines.map((line,i) => <div key={i} className="text-center"><InlineMath text={line}/></div>)}
       </>)}
     </div>
   );
