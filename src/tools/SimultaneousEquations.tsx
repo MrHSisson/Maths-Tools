@@ -295,7 +295,8 @@ const generateScaling = (level: DifficultyLevel, variables: Record<string,boolea
   if(k*baseMag>15){k=2;baseMag=2;}
   const scaledMag=k*baseMag, scaleEq:(1|2)=Math.random()<0.5?1:2;
   const a1=scaleEq===1?sign1*baseMag:sign1*scaledMag, a2=scaleEq===1?sign2*scaledMag:sign2*baseMag;
-  let b1=randInt(2,8),b2=randInt(2,8); while(b2===b1) b2=randInt(2,8);
+  let b1=randInt(2,8),b2=randInt(2,8);
+  while(b2===b1 || a1*b2===a2*b1) b2=randInt(2,8);
   const b1c=b1,b2c=b2,v2Val=makeVal(allowNeg),v1Val=makeVal(allowNeg);
   const c1=a1*v1Val+b1c*v2Val,c2=a2*v1Val+b2c*v2Val;
   const scaledA=scaleEq===1?a1*k:a2*k,scaledB=scaleEq===1?b1c*k:b2c*k,scaledC=scaleEq===1?c1*k:c2*k;
@@ -333,7 +334,8 @@ const generateLCM = (level: DifficultyLevel, variables: Record<string,boolean>, 
   const [mag1,mag2]=pick(coprimePairs);
   const elimLCM=lcmOf(mag1,mag2),kFor1=elimLCM/mag1,kFor2=elimLCM/mag2;
   const a1=sign1*mag1,a2=sign2*mag2;
-  let b1=randInt(2,8),b2=randInt(2,8); while(b2===b1) b2=randInt(2,8);
+  let b1=randInt(2,8),b2=randInt(2,8);
+  while(b2===b1 || a1*b2===a2*b1) b2=randInt(2,8);
   const b1c=b1,b2c=b2,v2Val=makeVal(allowNeg),v1Val=makeVal(allowNeg);
   const c1=a1*v1Val+b1c*v2Val,c2=a2*v1Val+b2c*v2Val;
   const sA1=a1*kFor1,sB1=b1c*kFor1,sC1=c1*kFor1,sA2=a2*kFor2,sB2=b2c*kFor2,sC2=c2*kFor2;
@@ -395,14 +397,21 @@ const genLevel1Worded = (method: WordedMethod): WordedQuestion => {
   if(method==="direct"){const mag=wri(2,8);a1=mag;a2=mag;}
   else if(method==="scaling"){const base=wri(2,5),k=wri(2,4);a1=base;a2=base*k;}
   else{const pairs:[number,number][]=[[2,3],[2,5],[3,4],[3,5],[4,5],[2,7],[3,7]];[a1,a2]=wpick(pairs);}
-  let b1=wri(2,8),b2=wri(2,8); while(b2===b1) b2=wri(2,8);
+  let b1=wri(2,8),b2=wri(2,8);
+  while(b2===b1 || a1*b2===a2*b1) b2=wri(2,8);
   const c1=a1*v1Val+b1*v2Val,c2=a2*v1Val+b2*v2Val;
   const eq1=`${cStr(a1,v1)} + ${cStr(b1,v2)} = ${c1}`;
   const eq2=`${cStr(a2,v1)} + ${cStr(b2,v2)} = ${c2}`;
+  // Randomise item order independently per sentence
+  const flip1=Math.random()<0.5, flip2=Math.random()<0.5;
+  const line1=flip1
+    ? `${names[0]} buys ${b1}$ ${pl2} and ${a1}$ ${pl1} and spends $£${c1}$.`
+    : `${names[0]} buys ${a1}$ ${pl1} and ${b1}$ ${pl2} and spends $£${c1}$.`;
+  const line2=flip2
+    ? `${names[1]} buys ${b2}$ ${pl2} and ${a2}$ ${pl1} and spends $£${c2}$.`
+    : `${names[1]} buys ${a2}$ ${pl1} and ${b2}$ ${pl2} and spends $£${c2}$.`;
   return { kind:"worded-simeq",
-    lines:[`${names[0]} buys $${a1}$ ${pl1} and $${b1}$ ${pl2} and spends $£${c1}$.`,
-           `${names[1]} buys $${a2}$ ${pl1} and $${b2}$ ${pl2} and spends $£${c2}$.`,
-           `Find the cost of one ${sing1} and one ${sing2}.`],
+    lines:[line1, line2, `Find the cost of one ${sing1} and one ${sing2}.`],
     equation1:eq1,equation2:eq2,v1,v2,v1Val,v2Val,
     answerLines:[`One ${sing1} costs $£${v1Val}$ and one ${sing2} costs $£${v2Val}$.`],
     working:[
@@ -434,6 +443,9 @@ const genMoreThan = (): WordedQuestion => {
     const ka=wri(2,5),kb=wri(2,5),v1Val=wri(pMin,pMax),v2Val=wri(pMin,pMax);
     const d=ka*v1Val-kb*v2Val; if(d<=0) continue;
     const b1=wri(2,6),b2=wri(2,6),c2=b1*v1Val+b2*v2Val;
+    // eq1: ka*v1 - kb*v2 = d, eq2: b1*v1 + b2*v2 = c2
+    // independent if ka*b2 !== -kb*b1 (cross-multiply with sign)
+    if(ka*b2 === -kb*b1) continue;
     const eq1=`${cStr(ka,v1)} - ${cStr(kb,v2)} = ${d}`;
     const eq2=`${cStr(b1,v1)} + ${cStr(b2,v2)} = ${c2}`;
     return { kind:"worded-simeq",
@@ -604,13 +616,13 @@ const genScalene = (): WordedQuestion => {
 const generateWordedQuestion = (level: DifficultyLevel, variables: Record<string,boolean>, dropdownValue: string): WordedQuestion => {
   if(level==="level1") return genLevel1Worded((dropdownValue as WordedMethod)||"direct");
   if(level==="level2"){
-    const active=(["sumDiff","moreThan","ratio"] as L2Type[]).filter(t=>variables[t]!==false);
+    const active=(["sumDiff","moreThan","ratio"] as L2Type[]).filter(t=>variables[t]===true);
     const type=wpick(active.length>0?active:["sumDiff","moreThan","ratio"] as L2Type[]);
     if(type==="sumDiff") return genSumDiff();
     if(type==="moreThan") return genMoreThan();
     return genRatio();
   }
-  const active=(["purchase","equilateral","isosceles","scalene"] as L3Type[]).filter(t=>variables[t]!==false);
+  const active=(["purchase","equilateral","isosceles","scalene"] as L3Type[]).filter(t=>variables[t]===true);
   const type=wpick(active.length>0?active:["purchase","equilateral","isosceles","scalene"] as L3Type[]);
   if(type==="purchase") return genPurchase();
   if(type==="equilateral") return genEquilateral();
@@ -729,25 +741,42 @@ const WordedWorkedSteps = ({ q, stepBg, fsz }: { q: WordedQuestion; stepBg: stri
       <div className={`${fsz} font-semibold flex flex-col gap-2 items-center`} style={{ color: "#000" }}>{children}</div>
     </div>
   );
-  const mathLine = (latex: string) => <div className="flex justify-center"><MathRenderer latex={latex} /></div>;
+  const mathLine = (latex: string, label?: string) => (
+    <div className="flex items-baseline gap-3 justify-center">
+      {label && <span className="text-xs font-bold text-gray-400 w-16 text-right flex-shrink-0">{label}</span>}
+      <MathRenderer latex={latex} />
+    </div>
+  );
+  const inlineLine = (text: string) => (
+    <div className="text-center"><InlineMath text={text} /></div>
+  );
+
+  // Parse equations into coefficients for elimination steps
+  // equations are in form like "3h + 5c = 94" or "2x - 3y = 10"
+  // We use the stored v1, v2, v1Val, v2Val to generate clean solve steps
+  const { v1, v2, v1Val, v2Val, equation1, equation2 } = q;
+
   let stepNum = 1;
   return (
     <div className="space-y-4 mt-6">
-      {card(`Step ${stepNum++} — Define variables`, mathLine(q.working[0]?.latex ?? ""))}
-      {card(`Step ${stepNum++} — Form the equations`, (
-        <>
-          {mathLine(`(1) \\quad ${q.equation1}`)}
-          {mathLine(`(2) \\quad ${q.equation2}`)}
-        </>
+      {card(`Step ${stepNum++} — Define variables`,
+        mathLine(q.working[0]?.latex ?? "")
+      )}
+      {card(`Step ${stepNum++} — Form the equations`, <>
+        {mathLine(`(1) \\quad ${equation1}`)}
+        {mathLine(`(2) \\quad ${equation2}`)}
+      </>)}
+      {q.working.slice(1).filter(s => s.type === "tStep").map((s, i) => (
+        card(`Step ${stepNum++} — Note`, <MathRenderer key={i} latex={s.latex} />)
       ))}
-      {q.working.slice(1).filter(s => s.type === "tStep").length > 0 && card(`Step ${stepNum++} — Notes`, (
-        <>{q.working.slice(1).filter(s=>s.type==="tStep").map((s,i)=><div key={i}><MathRenderer latex={s.latex}/></div>)}</>
-      ))}
-      {card("Answer", (
-        <div className="text-center flex flex-col gap-1">
-          {q.answerLines.map((line,i)=><div key={i}><InlineMath text={line}/></div>)}
-        </div>
-      ))}
+      {card(`Step ${stepNum++} — Solve the equations`, <>
+        {mathLine(`\\text{Solve simultaneously using equations (1) and (2)}`)}
+        {mathLine(`${v1} = ${v1Val}`)}
+        {mathLine(`${v2} = ${v2Val}`)}
+      </>)}
+      {card("Answer", <>
+        {q.answerLines.map((line, i) => <div key={i}>{inlineLine(line)}</div>)}
+      </>)}
     </div>
   );
 };
@@ -1290,8 +1319,8 @@ export default function App() {
       if (difficulty==="level3") return Object.fromEntries(l3Types.map(t=>[t,true]));
       return {};
     }
-    if (lv==="level2") return Object.fromEntries((levelL2Types["level2"]??["sumDiff","moreThan","ratio"]).map(t=>[t,true]));
-    if (lv==="level3") return Object.fromEntries((levelL3Types["level3"]??["purchase","equilateral","isosceles","scalene"]).map(t=>[t,true]));
+    if (lv==="level2") return Object.fromEntries((levelL2Types[lv]??["sumDiff","moreThan","ratio"]).map(t=>[t,true]));
+    if (lv==="level3") return Object.fromEntries((levelL3Types[lv]??["purchase","equilateral","isosceles","scalene"]).map(t=>[t,true]));
     return {};
   };
 
