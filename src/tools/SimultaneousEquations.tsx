@@ -444,7 +444,7 @@ const genLevel1Worded = (method: WordedMethod): WordedQuestion => {
 };
 
 const genSumDiff = (): WordedQuestion => {
-  const v1Val=wri(8,30),v2Val=wri(2,v1Val-2);
+  const v1Val=wri(5,50),v2Val=wri(1,v1Val-1);
   const sum=v1Val+v2Val,diff=v1Val-v2Val,intro=wpick(NUMBER_INTROS);
   const eq1=`x + y = ${sum}`,eq2=`x - y = ${diff}`;
   return {
@@ -469,7 +469,7 @@ const genMoreThan = (): WordedQuestion => {
   const [v1,v2]=ctx.vars,[sing1,sing2]=ctx.singular,[pl1,pl2]=ctx.plural;
   const [pMin,pMax]=ctx.priceRange as [number,number];
   for(let attempt=0;attempt<200;attempt++){
-    const ka=wri(2,5),kb=wri(2,5),v1Val=wri(pMin,pMax),v2Val=wri(pMin,pMax);
+    const ka=wri(2,8),kb=wri(2,8),v1Val=wri(pMin,pMax*3),v2Val=wri(pMin,pMax*3);
     const d=ka*v1Val-kb*v2Val; if(d<=0) continue;
     const b1=wri(2,6),b2=wri(2,6),c2=b1*v1Val+b2*v2Val;
     if(ka*b2 === -kb*b1) continue;
@@ -499,7 +499,7 @@ const genMoreThan = (): WordedQuestion => {
 const genRatio = (): WordedQuestion => {
   const ctx=wpick(ITEM_CONTEXTS);
   const [v1,v2]=ctx.vars,[sing1,sing2]=ctx.singular,[pl1,pl2]=ctx.plural;
-  const pairs:[number,number][]=[[2,3],[3,4],[3,5],[2,5],[4,5],[3,7],[4,7]];
+  const pairs:[number,number][]=[[2,3],[3,4],[3,5],[2,5],[4,5],[3,7],[4,7],[5,6],[5,7],[5,8],[6,7],[7,8]];
   const [ka,kb]=wpick(pairs),s=wri(1,4);
   const v1Val=kb*s,v2Val=ka*s,b1=wri(2,5),b2=wri(2,5),c2=b1*v1Val+b2*v2Val;
   const eq1=`${wCStr(ka,v1)} - ${wCStr(kb,v2)} = 0`,eq2=`${wCStr(b1,v1)} + ${wCStr(b2,v2)} = ${c2}`;
@@ -523,7 +523,8 @@ const genRatio = (): WordedQuestion => {
 };
 
 const genPurchase = (): WordedQuestion => {
-  const ctx=wpick(PURCHASE_CONTEXTS),total=wpick([20,30,40,50,60]);
+  const ctx=wpick(PURCHASE_CONTEXTS);
+  const total=wri(15,80);
   const aCount=wri(3,total-3),bCount=total-aCount;
   const revenue=ctx.priceA*aCount+ctx.priceB*bCount;
   const eq1=`a + b = ${total}`,eq2=`${ctx.priceA}a + ${ctx.priceB}b = ${revenue}`;
@@ -549,7 +550,7 @@ const genPurchase = (): WordedQuestion => {
 
 const genEquilateral = (): WordedQuestion => {
   for(let attempt=0;attempt<200;attempt++){
-    const xVal=wri(5,25),yVal=wri(5,25);
+    const xVal=wri(3,30),yVal=wri(3,30);
     const c=wri(1,3),rem=60-c*xVal;
     if(rem<=0||rem%yVal!==0) continue;
     const d=rem/yVal; if(d<=0||d>4) continue;
@@ -629,7 +630,7 @@ const genScalene = (): WordedQuestion => {
     if(side1<=0||side2<=0||side3<=0) continue;
     if(side1===side2||side1===side3||side2===side3) continue;
     const perim=side1+side2+side3;
-    const e=wri(1,3),f=wri(1,3),anglesXY=e*xVal+f*yVal;
+    const e=wri(1,5),f=wri(1,5),anglesXY=e*xVal+f*yVal;
     const numerical=180-anglesXY;
     if(numerical<15||numerical>150||anglesXY>=180) continue;
     const A1=a+c,B1=b+d;
