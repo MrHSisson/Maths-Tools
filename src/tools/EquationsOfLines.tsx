@@ -729,7 +729,7 @@ const handlePrint = (
       : tool === "equation"
         ? equationLatex((q as GradQuestion).gradN, (q as GradQuestion).gradD, (q as GradQuestion).c ?? 0)
         : `m = ${fracLatex((q as GradQuestion).gradN, (q as GradQuestion).gradD)}`;
-    return { q: `<div class="q-banner">Q${i+1}</div><div class="qbody">${body}</div>`, a: `<div class="q-banner">Q${i+1}</div><div class="qbody">${body}<div class="q-answer">${katexSpan(ansLatex)}</div></div>`, difficulty: q.difficulty };
+    return { q: `<div class="q-banner">Question ${i+1}</div><div class="qbody">${body}</div>`, a: `<div class="q-banner">Question ${i+1}</div><div class="qbody">${body}<div class="q-answer">${katexSpan(ansLatex)}</div></div>`, difficulty: q.difficulty };
   });
 
   const probeHtml = qHtmlData.map((d,i) => `<div class="q-inner" id="probe-${i}">${d.a}</div>`).join("");
