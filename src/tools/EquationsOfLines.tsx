@@ -243,7 +243,8 @@ interface MissingQuestion {
   key: string; difficulty: string;
 }
 
-const buildMissingWorking = (mv: MissingVar, m: Rat, c: Rat, x: Rat, y: Rat): { label: string; lines: string[] }[] => {
+  // suppress unused warning
+  const buildMissingWorking = (mv: MissingVar, m: Rat, c: Rat, x: Rat, y: Rat): { label: string; lines: string[] }[] => {
   const mL = ratLatex(m), cL = ratLatex(c), xL = ratLatex(x), yL = ratLatex(y);
   const mx = ratMul(m, x); const mxL = ratLatex(mx);
   switch (mv) {
