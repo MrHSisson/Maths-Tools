@@ -712,22 +712,24 @@ const handlePrint = (
   const katexSpan = (latex: string) => `<span class="katex-render" data-latex="${latex.replace(/"/g,"&quot;")}"></span>`;
 
   const qHtmlData = questions.map((q, i) => {
-    let body: string, ansBody: string;
+    let body: string;
     if (tool === "missing") {
       const mq = q as MissingQuestion;
-      const qBody = `<div class="q-prose">The line ${katexSpan(mq.eqLatex)} passes through ${katexSpan(mq.coordLatex)}. Find ${katexSpan(mq.missingVar)}</div>`;
-      body = qBody; ansBody = `${qBody}<div class="q-answer">${katexSpan(mq.answerLatex)}</div>`;
+      body = `<div class="q-prose">The line ${katexSpan(mq.eqLatex)} passes through ${katexSpan(mq.coordLatex)}. Find ${katexSpan(mq.missingVar)}</div>`;
     } else {
       const gq = q as GradQuestion;
       const ax = gq.dA?.[0] ?? gq.x1, ay = gq.dA?.[1] ?? gq.y1;
       const bx = gq.dB?.[0] ?? gq.x2, by = gq.dB?.[1] ?? gq.y2;
       const aL = coordLatex(ax, ay), bL = coordLatex(bx, by);
-      const ansLatex = tool === "equation" ? equationLatex(gq.gradN, gq.gradD, gq.c ?? 0) : `m = ${fracLatex(gq.gradN, gq.gradD)}`;
       const instrHtml = instruction ? `<div class="q-instruction">${instruction}</div>` : "";
       body = `${instrHtml}<div class="q-coords">${katexSpan(aL)}<span class="q-and">and</span>${katexSpan(bL)}</div>`;
-      ansBody = `${instrHtml}<div class="q-coords">${katexSpan(aL)}<span class="q-and">and</span>${katexSpan(bL)}</div><div class="q-answer">${katexSpan(ansLatex)}</div>`;
     }
-    return { q: `<div class="q-banner">Q${i+1}</div><div class="qbody">${body}</div>`, a: `<div class="q-banner">Q${i+1}</div><div class="qbody">${body}<div class="q-answer">${tool === "missing" ? katexSpan((q as MissingQuestion).answerLatex) : katexSpan(tool === "equation" ? equationLatex((q as GradQuestion).gradN, (q as GradQuestion).gradD, (q as GradQuestion).c ?? 0) : `m = ${fracLatex((q as GradQuestion).gradN, (q as GradQuestion).gradD)}`)}</div></div>`, difficulty: q.difficulty };
+    const ansLatex = tool === "missing"
+      ? (q as MissingQuestion).answerLatex
+      : tool === "equation"
+        ? equationLatex((q as GradQuestion).gradN, (q as GradQuestion).gradD, (q as GradQuestion).c ?? 0)
+        : `m = ${fracLatex((q as GradQuestion).gradN, (q as GradQuestion).gradD)}`;
+    return { q: `<div class="q-banner">Q${i+1}</div><div class="qbody">${body}</div>`, a: `<div class="q-banner">Q${i+1}</div><div class="qbody">${body}<div class="q-answer">${katexSpan(ansLatex)}</div></div>`, difficulty: q.difficulty };
   });
 
   const probeHtml = qHtmlData.map((d,i) => `<div class="q-inner" id="probe-${i}">${d.a}</div>`).join("");
