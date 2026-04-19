@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback, CSSProperties } from "react";
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, Printer } from "lucide-react";
 
@@ -765,8 +764,16 @@ document.addEventListener("DOMContentLoaded",function(){
   var diffPerCol=Math.floor(totalQ/3),diffUsableH=usableH-diffHdrMM-GAP_MM;
   var diffRowsPerPage=1,diffCellH_mm=diffUsableH;
   for(var rd=0;rd<diffPerCol;rd++){var h=(diffUsableH-GAP_MM*rd)/(rd+1);if(h>=needed_mm){diffRowsPerPage=rd+1;diffCellH_mm=h;}}
-  var chosenH_mm=rowHeights[0],rowsPerPage=1;
-  for(var r2=0;r2<rowHeights.length;r2++){if(rowHeights[r2]>=needed_mm){chosenH_mm=rowHeights[r2];rowsPerPage=r2+1;}}
+  var chosenH_mm=rowHeights[0],rowsPerPage=1,found=false;
+  for(var r=0;r<rowHeights.length;r++){
+    if((r+1)*cols>=totalQ&&rowHeights[r]>=needed_mm){chosenH_mm=rowHeights[r];rowsPerPage=r+1;found=true;break;}
+  }
+  if(!found){
+    for(var r2=0;r2<rowHeights.length;r2++){
+      if(rowHeights[r2]>=needed_mm){chosenH_mm=rowHeights[r2];rowsPerPage=r2+1;}
+      else{break;}
+    }
+  }
   var pages=[];
   if(isDiff){var np=Math.ceil(diffPerCol/diffRowsPerPage);for(var p=0;p<np;p++)pages.push(p);}
   else{for(var s=0;s<qData.length;s+=rowsPerPage*cols)pages.push(qData.slice(s,s+rowsPerPage*cols));}
