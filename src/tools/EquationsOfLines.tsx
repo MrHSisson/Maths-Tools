@@ -715,18 +715,19 @@ const handlePrint = (
     let body: string, ansBody: string;
     if (tool === "missing") {
       const mq = q as MissingQuestion;
-      const qBody = `<div class="q-instruction">The line ${katexSpan(mq.eqLatex)} passes through ${katexSpan(mq.coordLatex)}</div><div class="q-sub">Find ${mq.missingVar}</div>`;
+      const qBody = `<div class="q-prose">The line ${katexSpan(mq.eqLatex)} passes through ${katexSpan(mq.coordLatex)}. Find ${katexSpan(mq.missingVar)}</div>`;
       body = qBody; ansBody = `${qBody}<div class="q-answer">${katexSpan(mq.answerLatex)}</div>`;
     } else {
       const gq = q as GradQuestion;
-      const aL = coordLatex(gq.dA?.[0] ?? gq.x1, gq.dA?.[1] ?? gq.y1);
-      const bL = coordLatex(gq.dB?.[0] ?? gq.x2, gq.dB?.[1] ?? gq.y2);
+      const ax = gq.dA?.[0] ?? gq.x1, ay = gq.dA?.[1] ?? gq.y1;
+      const bx = gq.dB?.[0] ?? gq.x2, by = gq.dB?.[1] ?? gq.y2;
+      const aL = coordLatex(ax, ay), bL = coordLatex(bx, by);
       const ansLatex = tool === "equation" ? equationLatex(gq.gradN, gq.gradD, gq.c ?? 0) : `m = ${fracLatex(gq.gradN, gq.gradD)}`;
       const instrHtml = instruction ? `<div class="q-instruction">${instruction}</div>` : "";
-      body = `${instrHtml}<div class="q-coords">${katexSpan(aL)} <span class="q-and">and</span> ${katexSpan(bL)}</div>`;
-      ansBody = `${instrHtml}<div class="q-coords">${katexSpan(aL)} <span class="q-and">and</span> ${katexSpan(bL)}</div><div class="q-answer">${katexSpan(ansLatex)}</div>`;
+      body = `${instrHtml}<div class="q-coords">${katexSpan(aL)}<span class="q-and">and</span>${katexSpan(bL)}</div>`;
+      ansBody = `${instrHtml}<div class="q-coords">${katexSpan(aL)}<span class="q-and">and</span>${katexSpan(bL)}</div><div class="q-answer">${katexSpan(ansLatex)}</div>`;
     }
-    return { q: `<div class="q-banner">Q${i+1}</div><div class="qbody">${body}</div>`, a: `<div class="q-banner">Q${i+1}</div><div class="qbody">${ansBody}</div>`, difficulty: q.difficulty };
+    return { q: `<div class="q-banner">Q${i+1}</div><div class="qbody">${body}</div>`, a: `<div class="q-banner">Q${i+1}</div><div class="qbody">${body}<div class="q-answer">${tool === "missing" ? katexSpan((q as MissingQuestion).answerLatex) : katexSpan(tool === "equation" ? equationLatex((q as GradQuestion).gradN, (q as GradQuestion).gradD, (q as GradQuestion).c ?? 0) : `m = ${fracLatex((q as GradQuestion).gradN, (q as GradQuestion).gradD)}`)}</div></div>`, difficulty: q.difficulty };
   });
 
   const probeHtml = qHtmlData.map((d,i) => `<div class="q-inner" id="probe-${i}">${d.a}</div>`).join("");
@@ -735,7 +736,15 @@ const handlePrint = (
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${toolName}</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"><\/script>
-<style>*{margin:0;padding:0;box-sizing:border-box}@page{size:A4;margin:${MARGIN_MM}mm}body{font-family:"Segoe UI",Arial,sans-serif;background:#fff}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}.page{width:${PAGE_W_MM}mm;height:${PAGE_H_MM}mm;overflow:hidden;page-break-after:always}.page:last-child{page-break-after:auto}.page-header{display:flex;justify-content:space-between;align-items:baseline;border-bottom:0.4mm solid #1e3a8a;padding-bottom:1.5mm;margin-bottom:2mm}.page-header h1{font-size:5mm;font-weight:700;color:#1e3a8a}.page-header .meta{font-size:3mm;color:#6b7280}.grid{display:grid;gap:${GAP_MM}mm}.cell,.diff-cell{border:0.3mm solid #d1d5db;border-radius:3mm;overflow:hidden;display:flex;flex-direction:column}.diff-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:${GAP_MM}mm}.diff-col{display:flex;flex-direction:column;gap:${GAP_MM}mm}.diff-header{height:${diffHdrMM}mm;display:flex;align-items:center;justify-content:center;font-size:3mm;font-weight:700;border-radius:1mm}.diff-header.level1{background:#dcfce7;color:#166534}.diff-header.level2{background:#fef9c3;color:#854d0e}.diff-header.level3{background:#fee2e2;color:#991b1b}#probe{position:fixed;left:-9999px;top:0;visibility:hidden;font-family:"Segoe UI",Arial,sans-serif;font-size:${FONT_PX}px;line-height:1.4;width:${cellW_MM}mm}.q-inner{width:100%;display:flex;flex-direction:column;flex:1}.q-banner{width:100%;text-align:center;font-size:${Math.round(FONT_PX*0.65)}px;font-weight:700;color:#000;padding:1mm 0;border-bottom:0.3mm solid #000}.qbody{padding:${PAD_MM*0.4}mm ${PAD_MM}mm ${PAD_MM}mm;text-align:center;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2mm}.q-instruction{font-size:${Math.round(FONT_PX*0.8)}px;color:#000;font-weight:600}.q-sub{font-size:${Math.round(FONT_PX*0.75)}px;color:#374151;font-style:italic}.q-coords{font-size:${FONT_PX}px;display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap}.q-and{font-size:${FONT_PX}px;color:#555}.q-answer{font-size:${FONT_PX}px;color:#059669}.katex-render{display:inline-block;vertical-align:baseline}</style></head><body>
+<style>*{margin:0;padding:0;box-sizing:border-box}@page{size:A4;margin:${MARGIN_MM}mm}body{font-family:"Segoe UI",Arial,sans-serif;background:#fff}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}.page{width:${PAGE_W_MM}mm;height:${PAGE_H_MM}mm;overflow:hidden;page-break-after:always}.page:last-child{page-break-after:auto}.page-header{display:flex;justify-content:space-between;align-items:baseline;border-bottom:0.4mm solid #1e3a8a;padding-bottom:1.5mm;margin-bottom:2mm}.page-header h1{font-size:5mm;font-weight:700;color:#1e3a8a}.page-header .meta{font-size:3mm;color:#6b7280}.grid{display:grid;gap:${GAP_MM}mm}.cell,.diff-cell{border:0.3mm solid #d1d5db;border-radius:3mm;overflow:hidden;display:flex;flex-direction:column}.diff-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:${GAP_MM}mm}.diff-col{display:flex;flex-direction:column;gap:${GAP_MM}mm}.diff-header{height:${diffHdrMM}mm;display:flex;align-items:center;justify-content:center;font-size:3mm;font-weight:700;border-radius:1mm}.diff-header.level1{background:#dcfce7;color:#166534}.diff-header.level2{background:#fef9c3;color:#854d0e}.diff-header.level3{background:#fee2e2;color:#991b1b}#probe{position:fixed;left:-9999px;top:0;visibility:hidden;font-family:"Segoe UI",Arial,sans-serif;font-size:${FONT_PX}px;line-height:1.4;width:${cellW_MM}mm}.q-inner{width:100%;display:flex;flex-direction:column}
+.q-banner{width:100%;text-align:center;font-size:${Math.round(FONT_PX*0.65)}px;font-weight:700;color:#000;padding:1mm 0;border-bottom:0.3mm solid #000;flex-shrink:0}
+.qbody{padding:${PAD_MM*0.4}mm ${PAD_MM}mm ${PAD_MM}mm;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:1.5mm}
+.q-instruction{font-size:${Math.round(FONT_PX*0.8)}px;color:#000;font-weight:600;text-align:center}
+.q-prose{font-size:${FONT_PX}px;color:#000;font-weight:600;text-align:center;line-height:1.6}
+.q-coords{font-size:${FONT_PX}px;display:flex;align-items:center;justify-content:center;gap:3px;flex-wrap:wrap;font-weight:600}
+.q-and{font-size:${FONT_PX}px;color:#555;font-weight:600;margin:0 2px}
+.q-answer{font-size:${FONT_PX}px;color:#059669;font-weight:700;text-align:center}
+.katex-render{display:inline-block;vertical-align:baseline}</style></head><body>
 <div id="probe">${probeHtml}</div><div id="pages"></div>
 <script>
 document.addEventListener("DOMContentLoaded",function(){
