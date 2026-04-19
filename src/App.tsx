@@ -25,6 +25,7 @@ import AnglesInTriangles from './tools/AnglesInTriangles';
 import SimultaneousEquations from './tools/SimultaneousEquations';
 import ToolShell from './tools/ToolShell';
 import AnglesInTrianglesv2 from './tools/AnglesInTrianglesv2';
+import EquationsOfLines from './tools/EquationsOfLines';
 
 function App() {
   return (
@@ -55,6 +56,7 @@ function App() {
       <Route path="/simultaneous-equations" element={<SimultaneousEquations />} />
       <Route path="/tool-shell" element={<ToolShell />} />
       <Route path="/angles-in-triangles-v2" element={<AnglesInTrianglesv2 />} />
+      <Route path="/equations-of-lines" element={<EquationsOfLines />} />
     </Routes>
   )
 }
