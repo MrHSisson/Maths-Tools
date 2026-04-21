@@ -1188,7 +1188,7 @@ body{font-family:"Segoe UI",Arial,sans-serif;}
 .qa{font-size:${FONT_PX}px;color:#059669;text-align:center;margin-top:1.5mm;}
 .qa .katex{font-size:${FONT_PX}px;}
 .kr{display:inline;vertical-align:baseline;font-size:0.826em;}.kr .katex{font-size:1.21em;}
-#probe{position:fixed;left:-9999px;top:0;visibility:hidden;font-size:${FONT_PX}px;}
+#probe{display:none;}
 </style></head><body>
 <div id="probe"></div><div id="pages"></div>
 <script>
@@ -1197,9 +1197,6 @@ document.addEventListener("DOMContentLoaded",function(){
   var PWmm=${PAGE_W_MM},cols=${cols},isDiff=${isDifferentiated?"true":"false"};
   var totalQ=${totalQ},diffLabel="${difficultyLabel}",dateStr="${dateStr}",toolName="${toolName}";
   var qData=${JSON.stringify(qData)};
-  // Set probe width in px so line-wrapping matches the actual printed column width
-  var probeContentW=Math.round((${cellW_MM}-PAD*2)*pxMm);
-  document.getElementById("probe").style.width=probeContentW+"px";
 
   function kr(el,latex){try{katex.render(latex,el,{throwOnError:false,output:"html"});}catch(e){el.textContent=latex;}}
   function kEl(latex){var s=document.createElement("span");s.className="kr";kr(s,latex);return s;}
