@@ -1188,15 +1188,19 @@ body{font-family:"Segoe UI",Arial,sans-serif;}
 .qa{font-size:${FONT_PX}px;color:#059669;text-align:center;margin-top:1.5mm;}
 .qa .katex{font-size:${FONT_PX}px;}
 .kr{display:inline;vertical-align:baseline;font-size:0.826em;}.kr .katex{font-size:1.21em;}
-#probe{position:fixed;left:-9999px;top:0;visibility:hidden;font-size:${FONT_PX}px;width:${cellW_MM-PAD_MM*2}mm;}
+#probe{position:fixed;left:-9999px;top:0;visibility:hidden;font-size:${FONT_PX}px;}
 </style></head><body>
 <div id="probe"></div><div id="pages"></div>
 <script>
 document.addEventListener("DOMContentLoaded",function(){
-  var pxMm=3.7795,PAD=${PAD_MM},GAP=${GAP_MM},usableH=${usableH_MM},dHdr=${diffHdrMM};
+  var pxMm=96/25.4,PAD=${PAD_MM},GAP=${GAP_MM},usableH=${usableH_MM},dHdr=${diffHdrMM};
   var PWmm=${PAGE_W_MM},cols=${cols},isDiff=${isDifferentiated?"true":"false"};
   var totalQ=${totalQ},diffLabel="${difficultyLabel}",dateStr="${dateStr}",toolName="${toolName}";
   var qData=${JSON.stringify(qData)};
+  // Probe width in px: convert the actual printed cell content width (mm) to screen px.
+  // Subtract banner (~8px) and body padding from probe height later.
+  var probeContentW=Math.round((${cellW_MM} - PAD*2) * pxMm);
+  document.getElementById("probe").style.width=probeContentW+"px";
 
   function kr(el,latex){try{katex.render(latex,el,{throwOnError:false,output:"html"});}catch(e){el.textContent=latex;}}
   function kEl(latex){var s=document.createElement("span");s.className="kr";kr(s,latex);return s;}
@@ -1252,17 +1256,41 @@ document.addEventListener("DOMContentLoaded",function(){
     cell.appendChild(banner);cell.appendChild(cellInner(item,showAns));return cell;
   }
 
-  var probe=document.getElementById("probe"),maxH=0;
-  qData.forEach(function(item){var el=cellInner(item,true);probe.appendChild(el);if(el.scrollHeight>maxH)maxH=el.scrollHeight;probe.removeChild(el);});
-  var needed=maxH/pxMm+PAD*2+5;
+  // Measure per-level max heights for differentiated, global max for standard
+  var maxH=0;
+  var lvlMaxH={level1:0,level2:0,level3:0};
+  qData.forEach(function(item){
+    var el=cellInner(item,true);
+    probe.appendChild(el);
+    var h=el.scrollHeight;
+    if(h>maxH)maxH=h;
+    if(isDiff&&lvlMaxH[item.difficulty]!==undefined&&h>lvlMaxH[item.difficulty])lvlMaxH[item.difficulty]=h;
+    probe.removeChild(el);
+  });
+  // Convert px to mm, add banner (~5mm) + padding + small buffer
+  var bannerMm=5,bufMm=2;
+  var needed=maxH/pxMm+PAD*2+bannerMm+bufMm;
+  var lvlNeeded={
+    level1:lvlMaxH.level1/pxMm+PAD*2+bannerMm+bufMm,
+    level2:lvlMaxH.level2/pxMm+PAD*2+bannerMm+bufMm,
+    level3:lvlMaxH.level3/pxMm+PAD*2+bannerMm+bufMm,
+  };
 
   var rowH=[];for(var r=0;r<10;r++)rowH.push((usableH-GAP*r)/(r+1));
   var chosenH=rowH[0],rpp=1,found=false;
   for(var r=0;r<rowH.length;r++){if((r+1)*cols>=totalQ&&rowH[r]>=needed){chosenH=rowH[r];rpp=r+1;found=true;break;}}
   if(!found)for(var r2=0;r2<rowH.length;r2++){if(rowH[r2]>=needed){chosenH=rowH[r2];rpp=r2+1;}}
 
-  var dpc=Math.floor(totalQ/3),dUsable=usableH-dHdr-GAP,dRows=1,dCellH=dUsable;
-  for(var rd2=1;rd2<=dpc;rd2++){var hd=(dUsable-GAP*(rd2-1))/rd2;if(hd>=needed){dRows=rd2;dCellH=hd;}}
+  // For differentiated: each column sizes independently to its own tallest question
+  var dpc=Math.floor(totalQ/3),dUsable=usableH-dHdr-GAP;
+  var lvls=["level1","level2","level3"],lbls=["Level 1","Level 2","Level 3"];
+  var lvlRows={},lvlCellH={};
+  lvls.forEach(function(lv){
+    var n=lvlNeeded[lv],rows=1,cellH=dUsable;
+    for(var rd=1;rd<=dpc;rd++){var h=(dUsable-GAP*(rd-1))/rd;if(h>=n){rows=rd;cellH=h;}}
+    lvlRows[lv]=rows;lvlCellH[lv]=cellH;
+  });
+  var dRows=lvlRows.level3; // pages determined by the level that fits fewest rows
 
   var cW=isDiff?(PWmm-GAP*2)/3:(PWmm-GAP*(cols-1))/cols;
   var lvls=["level1","level2","level3"],lbls=["Level 1","Level 2","Level 3"];
@@ -1275,14 +1303,15 @@ document.addEventListener("DOMContentLoaded",function(){
     var lbl=totalPages>1?(isDiff?dpc+" per level":totalQ+" questions")+" ("+(pgIdx+1)+"/"+totalPages+")":(isDiff?dpc+" per level":totalQ+" questions");
     meta.textContent=diffLabel+"  ·  "+dateStr+"  ·  "+lbl;
     hdr.appendChild(h1);hdr.appendChild(meta);page.appendChild(hdr);
-    var cH=isDiff?dCellH:chosenH;
+    var cH=isDiff?null:chosenH;
     if(isDiff){
       var grid=document.createElement("div");grid.className="dg";grid.style.gridTemplateColumns="repeat(3,"+cW+"mm)";
       lvls.forEach(function(lv,li){
         var col=document.createElement("div");col.className="dcol";
         var dh=document.createElement("div");dh.className="dh "+lv;dh.textContent=lbls[li];col.appendChild(dh);
         var start=pageData*dRows;
-        qData.filter(function(q){return q.difficulty===lv;}).slice(start,start+dRows).forEach(function(item){col.appendChild(makeCell(item,showAns,cW,cH,true));});
+        var colCellH=lvlCellH[lv];
+        qData.filter(function(q){return q.difficulty===lv;}).slice(start,start+dRows).forEach(function(item){col.appendChild(makeCell(item,showAns,cW,colCellH,true));});
         grid.appendChild(col);
       });
       page.appendChild(grid);
