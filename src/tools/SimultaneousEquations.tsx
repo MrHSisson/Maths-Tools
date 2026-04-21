@@ -1197,10 +1197,114 @@ document.addEventListener("DOMContentLoaded",function(){
   var PWmm=${PAGE_W_MM},cols=${cols},isDiff=${isDifferentiated?"true":"false"};
   var totalQ=${totalQ},diffLabel="${difficultyLabel}",dateStr="${dateStr}",toolName="${toolName}";
   var qData=${JSON.stringify(qData)};
-  // Probe width in px: convert the actual printed cell content width (mm) to screen px.
-  // Subtract banner (~8px) and body padding from probe height later.
   var probeContentW=Math.round((${cellW_MM} - PAD*2) * pxMm);
   document.getElementById("probe").style.width=probeContentW+"px";
+
+  function kr(el,latex){try{katex.render(latex,el,{throwOnError:false,output:"html"});}catch(e){el.textContent=latex;}}
+  function kEl(latex){var s=document.createElement("span");s.className="kr";kr(s,latex);return s;}
+
+  function inlineEl(text){
+    var span=document.createElement("span");
+    var i=0;
+    while(i<text.length){
+      if(text[i]==="$"){
+        var close=text.indexOf("$",i+1);
+        if(close!==-1){span.appendChild(kEl(text.slice(i+1,close)));i=close+1;}
+        else{span.appendChild(document.createTextNode(text[i]));i++;}
+      } else {
+        var next=text.indexOf("$",i);
+        var end=next===-1?text.length:next;
+        span.appendChild(document.createTextNode(text.slice(i,end)));
+        i=end;
+      }
+    }
+    return span;
+  }
+
+  function cellInner(item,showAns){
+    var body=document.createElement("div");body.className="qbody";
+    if(item.type==="simeq"){
+      var instr=document.createElement("div");instr.className="instr";instr.textContent="Solve:";body.appendChild(instr);
+      [item.eq1,item.eq2].forEach(function(eq){
+        var row=document.createElement("div");row.className="eq";
+        var m=document.createElement("span");m.className="em";m.appendChild(kEl(eq));row.appendChild(m);body.appendChild(row);
+      });
+      if(showAns){var a=document.createElement("div");a.className="qa";a.appendChild(kEl(item.v1+"="+item.v1Val+",\\\\quad "+item.v2+"="+item.v2Val));body.appendChild(a);}
+    } else {
+      item.lines.forEach(function(line){
+        var d=document.createElement("div");d.className="wline";d.appendChild(inlineEl(line));body.appendChild(d);
+      });
+      if(showAns){item.answerLines.forEach(function(line){var d=document.createElement("div");d.className="qa";d.appendChild(inlineEl(line));body.appendChild(d);});}
+    }
+    return body;
+  }
+
+  function makeCell(item,showAns,cW,cH,diff){
+    var cell=document.createElement("div");cell.className=diff?"dc":"cell";
+    cell.style.width=cW+"mm";cell.style.height=cH+"mm";
+    var banner=document.createElement("div");banner.className="qbanner";banner.textContent="Question "+(item.idx+1);
+    cell.appendChild(banner);cell.appendChild(cellInner(item,showAns));return cell;
+  }
+
+  var probe=document.getElementById("probe"),maxH=0;
+  qData.forEach(function(item){
+    var el=cellInner(item,true);
+    probe.appendChild(el);
+    if(el.scrollHeight>maxH)maxH=el.scrollHeight;
+    probe.removeChild(el);
+  });
+  // needed: content height in mm + body padding (top+bottom) + banner height + small buffer
+  var bannerMm=6,bufMm=2;
+  var needed=maxH/pxMm+PAD*2+bannerMm+bufMm;
+
+  var rowH=[];for(var r=0;r<10;r++)rowH.push((usableH-GAP*r)/(r+1));
+  var chosenH=rowH[0],rpp=1,found=false;
+  for(var r=0;r<rowH.length;r++){if((r+1)*cols>=totalQ&&rowH[r]>=needed){chosenH=rowH[r];rpp=r+1;found=true;break;}}
+  if(!found)for(var r2=0;r2<rowH.length;r2++){if(rowH[r2]>=needed){chosenH=rowH[r2];rpp=r2+1;}}
+
+  var dpc=Math.floor(totalQ/3),dUsable=usableH-dHdr-GAP,dRows=1,dCellH=dUsable;
+  for(var rd2=1;rd2<=dpc;rd2++){var hd=(dUsable-GAP*(rd2-1))/rd2;if(hd>=needed){dRows=rd2;dCellH=hd;}}
+
+  var cW=isDiff?(PWmm-GAP*2)/3:(PWmm-GAP*(cols-1))/cols;
+  var lvls=["level1","level2","level3"],lbls=["Level 1","Level 2","Level 3"];
+
+  function makePage(pageData,showAns,pgIdx,totalPages){
+    var page=document.createElement("div");page.className="page";
+    var hdr=document.createElement("div");hdr.className="ph";
+    var h1=document.createElement("h1");h1.textContent="Simultaneous Equations — "+toolName+(showAns?" — Answers":"");
+    var meta=document.createElement("div");meta.className="meta";
+    var lbl=totalPages>1?(isDiff?dpc+" per level":totalQ+" questions")+" ("+(pgIdx+1)+"/"+totalPages+")":(isDiff?dpc+" per level":totalQ+" questions");
+    meta.textContent=diffLabel+"  ·  "+dateStr+"  ·  "+lbl;
+    hdr.appendChild(h1);hdr.appendChild(meta);page.appendChild(hdr);
+    var cH=isDiff?dCellH:chosenH;
+    if(isDiff){
+      var grid=document.createElement("div");grid.className="dg";grid.style.gridTemplateColumns="repeat(3,"+cW+"mm)";
+      lvls.forEach(function(lv,li){
+        var col=document.createElement("div");col.className="dcol";
+        var dh=document.createElement("div");dh.className="dh "+lv;dh.textContent=lbls[li];col.appendChild(dh);
+        var start=pageData*dRows;
+        qData.filter(function(q){return q.difficulty===lv;}).slice(start,start+dRows).forEach(function(item){col.appendChild(makeCell(item,showAns,cW,cH,true));});
+        grid.appendChild(col);
+      });
+      page.appendChild(grid);
+    }else{
+      var grid2=document.createElement("div");grid2.className="grid";
+      grid2.style.gridTemplateColumns="repeat("+cols+","+cW+"mm)";
+      grid2.style.gridTemplateRows="repeat("+Math.ceil(pageData.length/cols)+","+chosenH+"mm)";
+      pageData.forEach(function(item){grid2.appendChild(makeCell(item,showAns,cW,cH,false));});
+      page.appendChild(grid2);
+    }
+    return page;
+  }
+
+  var pageCapacity=isDiff?dRows:rpp*cols,pages=[];
+  if(isDiff){var np=Math.ceil(dpc/dRows);for(var p=0;p<np;p++)pages.push(p);}
+  else{for(var s=0;s<qData.length;s+=pageCapacity)pages.push(qData.slice(s,s+pageCapacity));}
+  var container=document.getElementById("pages"),tp=pages.length;
+  pages.forEach(function(pg,i){container.appendChild(makePage(pg,false,i,tp));});
+  pages.forEach(function(pg,i){container.appendChild(makePage(pg,true,i,tp));});
+  probe.remove();
+  setTimeout(function(){window.print();},300);
 
   function kr(el,latex){try{katex.render(latex,el,{throwOnError:false,output:"html"});}catch(e){el.textContent=latex;}}
   function kEl(latex){var s=document.createElement("span");s.className="kr";kr(s,latex);return s;}
