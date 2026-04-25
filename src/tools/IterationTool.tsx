@@ -1163,7 +1163,7 @@ export default function App() {
       <div className="min-h-screen p-8" style={{backgroundColor:"#f5f3f0"}}>
         <div className="max-w-6xl mx-auto">
           <h1 className="text-5xl font-bold text-center mb-8" style={{color:"#000"}}>{TOOL_CONFIG.pageTitle}</h1>
-          <div className="flex justify-center mb-8"><div style={{width:"90%",height:"2px",backgroundColor:"#d1d5db"}}/></div>
+          <div className="flex justify-center mb-6"><div style={{width:"90%",height:"2px",backgroundColor:"#d1d5db"}}/></div>
           <div className="flex justify-center gap-4 mb-6">
             {toolKeys.map(k=>(
               <button key={k} onClick={()=>setCurrentTool(k as ToolType)}
