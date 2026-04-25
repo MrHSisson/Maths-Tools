@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback, CSSProperties } from "react";
-import { useNavigate } from "react-router-dom";
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, Printer } from "lucide-react";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -139,6 +138,7 @@ type SubTool     = "elimination" | "scaling" | "lcm" | "worded";
 type L2Type      = "sumDiff" | "moreThan" | "ratio";
 type L3Type      = "purchase" | "equilateral" | "isosceles" | "scalene";
 type WordedMethod = "direct" | "scaling" | "lcm";
+type RearrangeMode = "none" | "one" | "both";
 
 const VAR_PAIRS: [string, string][] = [["x","y"],["s","t"],["n","m"],["a","b"],["u","v"]];
 
@@ -162,8 +162,6 @@ interface SimEqQuestion {
 
 interface WordedQuestion {
   kind: "worded-simeq";
-  // lines uses $...$ for any number or currency that should render in KaTeX italic.
-  // Plain prose words are never inside $...$. Example: "$3$ hats cost $£12$ in total."
   lines: string[];
   equation1: string; equation2: string;
   v1: string; v2: string; v1Val: number; v2Val: number;
@@ -181,7 +179,7 @@ type AnyQuestion = SimEqQuestion | WordedQuestion;
 const term = (coeff: number, v: string) =>
   coeff === 1 ? v : coeff === -1 ? `-${v}` : `${coeff}${v}`;
 const secondTerm = (coeff: number, v: string) =>
-  coeff >= 0 ? `+ ${term(coeff,v)}` : `- ${term(-coeff,v)}`;
+  coeff === 0 ? "" : coeff > 0 ? `+ ${term(coeff,v)}` : `- ${term(-coeff,v)}`;
 const buildNaturalLatex = (a: number, b: number, c: number, v1: string, v2: string) => {
   const v1First = a >= 0 && b < 0 ? true : a < 0 && b >= 0 ? false : Math.random() < 0.5;
   return v1First ? `${term(a,v1)} ${secondTerm(b,v2)} = ${c}` : `${term(b,v2)} ${secondTerm(a,v1)} = ${c}`;
@@ -193,14 +191,25 @@ const buildScaledLatex = (a: number, b: number, c: number, src: string, v1: stri
   const v2Leads = i2 !== -1 && (i1 === -1 || i2 < i1);
   return v2Leads ? `${term(b,v2)} ${secondTerm(a,v1)} = ${c}` : `${term(a,v1)} ${secondTerm(b,v2)} = ${c}`;
 };
-const surfaceRhsV2 = (a: number, b: number, c: number, v1: string, v2: string) =>
-  Math.random() < 0.5
-    ? `${term(a,v1)} = ${b >= 0 ? `${c} - ${term(b,v2)}` : `${c} + ${term(-b,v2)}`}`
-    : `${term(a,v1)} = ${term(b,v2)} ${b >= 0 ? `- ${c}` : `+ ${-c}`}`;
-const surfaceRhsV1 = (a: number, b: number, c: number, v1: string, v2: string) =>
-  Math.random() < 0.5
-    ? `${term(b,v2)} = ${a >= 0 ? `${c} - ${term(a,v1)}` : `${c} + ${term(-a,v1)}`}`
-    : `${term(b,v2)} = ${term(a,v1)} ${a >= 0 ? `- ${c}` : `+ ${-c}`}`;
+// RHS surface forms: move terms to produce a rearranged display.
+// The canonical form is always computed from the same a,b,c values,
+// so these only affect display — they must be algebraically equivalent.
+const surfaceRhsV2 = (a: number, b: number, c: number, v1: string, v2: string) => {
+  // Display: a*v1 = c - b*v2  (move b*v2 to RHS)
+  // Equivalent to canonical: a*v1 + b*v2 = c
+  const rhs = b >= 0
+    ? `${c} - ${term(b,v2)}`      // e.g. 5u = 12 - 3v
+    : `${c} + ${term(-b,v2)}`;    // e.g. 5u = 12 + 3v  (b was negative)
+  return `${term(a,v1)} = ${rhs}`;
+};
+const surfaceRhsV1 = (a: number, b: number, c: number, v1: string, v2: string) => {
+  // Display: b*v2 = c - a*v1  (move a*v1 to RHS)
+  // Equivalent to canonical: a*v1 + b*v2 = c
+  const rhs = a >= 0
+    ? `${c} - ${term(a,v1)}`      // e.g. 3v = 12 - 5u
+    : `${c} + ${term(-a,v1)}`;    // e.g. 3v = 12 + 5u  (a was negative)
+  return `${term(b,v2)} = ${rhs}`;
+};
 const applyForm = (form: SurfaceForm, a: number, b: number, c: number, v1: string, v2: string) => {
   switch (form) {
     case "std": case "swap": return buildNaturalLatex(a,b,c,v1,v2);
@@ -222,13 +231,15 @@ const pickCaseType = (level: DifficultyLevel, opMode: OpMode): CaseType => {
   if (level==="level2") return "neg-neg";
   return (["pos-pos","pos-neg","neg-neg"] as CaseType[])[Math.floor(Math.random()*3)];
 };
-const pickForms = (allowRearrange: boolean): [SurfaceForm,SurfaceForm] => {
-  const nat: SurfaceForm[] = ["std","swap"], rhs: SurfaceForm[] = ["rhs-v2","rhs-v1"];
-  if (!allowRearrange) return [nat[Math.floor(Math.random()*2)], nat[Math.floor(Math.random()*2)]];
-  const r = Math.random();
-  if (r<0.33) return [rhs[Math.floor(Math.random()*2)], rhs[Math.floor(Math.random()*2)]];
-  if (r<0.66) return [rhs[Math.floor(Math.random()*2)], nat[Math.floor(Math.random()*2)]];
-  return [nat[Math.floor(Math.random()*2)], rhs[Math.floor(Math.random()*2)]];
+const pickForms = (rearrangeMode: RearrangeMode): [SurfaceForm, SurfaceForm] => {
+  const nat: SurfaceForm[] = ["std", "swap"];
+  const rhs: SurfaceForm[] = ["rhs-v2", "rhs-v1"];
+  if (rearrangeMode === "none") return [nat[Math.floor(Math.random()*2)], nat[Math.floor(Math.random()*2)]];
+  if (rearrangeMode === "both") return [rhs[Math.floor(Math.random()*2)], rhs[Math.floor(Math.random()*2)]];
+  // "one" — exactly one equation is rearranged
+  return Math.random() < 0.5
+    ? [rhs[Math.floor(Math.random()*2)], nat[Math.floor(Math.random()*2)]]
+    : [nat[Math.floor(Math.random()*2)], rhs[Math.floor(Math.random()*2)]];
 };
 const caseTypeSigns = (ct: CaseType): [number,number] =>
   ct==="pos-pos"?[1,1]:ct==="pos-neg"?[1,-1]:[-1,-1];
@@ -267,7 +278,8 @@ const buildSubBackSteps = (form1: SurfaceForm, a1: number, b1c: number, c1: numb
 // SIMEQ GENERATORS
 // ═══════════════════════════════════════════════════════════════════════════════
 const generateElimination = (level: DifficultyLevel, variables: Record<string,boolean>, opMode: OpMode): SimEqQuestion => {
-  const allowNeg=variables["allowNegSolutions"]??false, allowRearrange=variables["allowRearrange"]??false;
+  const allowNeg=variables["allowNegSolutions"]??false;
+  const rearrangeMode=(variables["rearrangeMode"] as unknown as RearrangeMode) ?? "none";
   const id=Math.floor(Math.random()*1_000_000);
   const varPair=pick(VAR_PAIRS); const [v1,v2]=varPair;
   const caseType=pickCaseType(level,opMode); const [sign1,sign2]=caseTypeSigns(caseType);
@@ -285,7 +297,7 @@ const generateElimination = (level: DifficultyLevel, variables: Record<string,bo
   if(Math.abs(remainCoeff)!==1)solveVarSteps.push(`${v2} = ${remainRHS} \\div ${remainCoeff}`);
   else if(remainCoeff===-1)solveVarSteps.push(`${v2} = ${remainRHS} \\div -1`);
   solveVarSteps.push(`${v2} = ${v2Val}`);
-  const [form1,form2]=pickForms(allowRearrange);
+  const [form1,form2]=pickForms(rearrangeMode);
   const eq1Display=applyForm(form1,a1,b1c,c1,v1,v2),eq2Display=applyForm(form2,a2,b2c,c2,v1,v2);
   const eq1Canonical=canonicalLatex(a1,b1c,c1,v1,v2),eq2Canonical=canonicalLatex(a2,b2c,c2,v1,v2);
   const subBackSteps=buildSubBackSteps(form1,a1,b1c,c1,v1,v2,v2Val);
@@ -296,7 +308,8 @@ const generateElimination = (level: DifficultyLevel, variables: Record<string,bo
 };
 
 const generateScaling = (level: DifficultyLevel, variables: Record<string,boolean>, opMode: OpMode): SimEqQuestion => {
-  const allowNeg=variables["allowNegSolutions"]??false, allowRearrange=variables["allowRearrange"]??false;
+  const allowNeg=variables["allowNegSolutions"]??false;
+  const rearrangeMode=(variables["rearrangeMode"] as unknown as RearrangeMode) ?? "none";
   const id=Math.floor(Math.random()*1_000_000);
   const varPair=pick(VAR_PAIRS); const [v1,v2]=varPair;
   const caseType=pickCaseType(level,opMode); const [sign1,sign2]=caseTypeSigns(caseType);
@@ -322,7 +335,7 @@ const generateScaling = (level: DifficultyLevel, variables: Record<string,boolea
   if(Math.abs(remainCoeff)!==1)solveVarSteps.push(`${v2} = ${remainRHS} \\div ${remainCoeff}`);
   else if(remainCoeff===-1)solveVarSteps.push(`${v2} = ${remainRHS} \\div -1`);
   solveVarSteps.push(`${v2} = ${v2Val}`);
-  const [form1,form2]=pickForms(allowRearrange);
+  const [form1,form2]=pickForms(rearrangeMode);
   const eq1Display=applyForm(form1,a1,b1c,c1,v1,v2),eq2Display=applyForm(form2,a2,b2c,c2,v1,v2);
   const eq1Canonical=canonicalLatex(a1,b1c,c1,v1,v2),eq2Canonical=canonicalLatex(a2,b2c,c2,v1,v2);
   const scaledEqLatex=buildScaledLatex(scaledA,scaledB,scaledC,scaleEq===1?eq1Display:eq2Display,v1,v2);
@@ -335,7 +348,8 @@ const generateScaling = (level: DifficultyLevel, variables: Record<string,boolea
 };
 
 const generateLCM = (level: DifficultyLevel, variables: Record<string,boolean>, opMode: OpMode): SimEqQuestion => {
-  const allowNeg=variables["allowNegSolutions"]??false, allowRearrange=variables["allowRearrange"]??false;
+  const allowNeg=variables["allowNegSolutions"]??false;
+  const rearrangeMode=(variables["rearrangeMode"] as unknown as RearrangeMode) ?? "none";
   const id=Math.floor(Math.random()*1_000_000);
   const varPair=pick(VAR_PAIRS); const [v1,v2]=varPair;
   const caseType=pickCaseType(level,opMode); const [sign1,sign2]=caseTypeSigns(caseType);
@@ -358,7 +372,7 @@ const generateLCM = (level: DifficultyLevel, variables: Record<string,boolean>, 
   if(Math.abs(remainCoeff)!==1)solveVarSteps.push(`${v2} = ${remainRHS} \\div ${remainCoeff}`);
   else if(remainCoeff===-1)solveVarSteps.push(`${v2} = ${remainRHS} \\div -1`);
   solveVarSteps.push(`${v2} = ${v2Val}`);
-  const [form1,form2]=pickForms(allowRearrange);
+  const [form1,form2]=pickForms(rearrangeMode);
   const eq1Display=applyForm(form1,a1,b1c,c1,v1,v2),eq2Display=applyForm(form2,a2,b2c,c2,v1,v2);
   const eq1Canonical=canonicalLatex(a1,b1c,c1,v1,v2),eq2Canonical=canonicalLatex(a2,b2c,c2,v1,v2);
   const scaledEq3Latex=buildScaledLatex(sA1,sB1,sC1,eq1Display,v1,v2);
@@ -373,19 +387,13 @@ const generateLCM = (level: DifficultyLevel, variables: Record<string,boolean>, 
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // WORDED GENERATORS
-// All `lines` entries follow this rule:
-//   - Numbers and currency are wrapped in $...$ e.g. "$3$" or "$\pounds 12$"
-//   - Plain prose words are NEVER inside $...$
-//   - Example: "$3$ hats and $5$ coats cost $\pounds 47$ in total."
+// All `lines` entries: numbers/currency in $...$, prose words plain.
 // ═══════════════════════════════════════════════════════════════════════════════
 const cStr  = (coeff: number, v: string) => coeff===1?v:coeff===-1?`-${v}`:`${coeff}${v}`;
 const wri   = (min: number, max: number) => Math.floor(Math.random()*(max-min+1))+min;
 const wpick = <T,>(arr: T[]): T => arr[wri(0,arr.length-1)];
-const wgcd  = (a: number, b: number): number => b===0?a:wgcd(b,a%b);
 const wCStr = (coeff: number, v: string) => coeff===1?v:coeff===-1?`-${v}`:`${coeff}${v}`;
-// n(v) — wraps a number in $...$ for inline display
 const nv = (n: number) => `$${n}$`;
-// cv(n) — wraps a currency value in $\pounds n$ for inline display
 const cv = (n: number) => `$\\pounds ${n}$`;
 
 const ITEM_CONTEXTS = [
@@ -421,7 +429,6 @@ const genLevel1Worded = (method: WordedMethod): WordedQuestion => {
   const eq1=`${cStr(a1,v1)} + ${cStr(b1,v2)} = ${c1}`;
   const eq2=`${cStr(a2,v1)} + ${cStr(b2,v2)} = ${c2}`;
   const flip1=Math.random()<0.5, flip2=Math.random()<0.5;
-  // Each number/currency wrapped with nv()/cv(). Prose words are plain.
   const line1=flip1
     ? `${names[0]} buys ${nv(b1)} ${pl2} and ${nv(a1)} ${pl1} and spends ${cv(c1)}.`
     : `${names[0]} buys ${nv(a1)} ${pl1} and ${nv(b1)} ${pl2} and spends ${cv(c1)}.`;
@@ -435,8 +442,7 @@ const genLevel1Worded = (method: WordedMethod): WordedQuestion => {
     answerLines:[`One ${sing1} costs ${cv(v1Val)} and one ${sing2} costs ${cv(v2Val)}.`],
     working:[
       {type:"tStep",latex:`\\text{Let } ${v1} = \\text{cost of one ${sing1}},\\ ${v2} = \\text{cost of one ${sing2}}`,plain:""},
-      {type:"step",latex:eq1,plain:eq1},
-      {type:"step",latex:eq2,plain:eq2},
+      {type:"step",latex:eq1,plain:eq1},{type:"step",latex:eq2,plain:eq2},
     ],
     key:`w1-${method}-${v1}${v2}-${a1}-${b1}-${a2}-${b2}-${v1Val}-${v2Val}`,
     difficulty:"level1", subType:"level1",
@@ -457,8 +463,7 @@ const genSumDiff = (): WordedQuestion => {
     answerLines:[`The two numbers are ${nv(v1Val)} and ${nv(v2Val)}.`],
     working:[
       {type:"tStep",latex:"\\text{Let } x = \\text{larger number}, \\quad y = \\text{smaller number}",plain:""},
-      {type:"step",latex:eq1,plain:eq1},
-      {type:"step",latex:eq2,plain:eq2},
+      {type:"step",latex:eq1,plain:eq1},{type:"step",latex:eq2,plain:eq2},
     ],
     key:`w2-sumDiff-${sum}-${diff}`, difficulty:"level2", subType:"sumDiff",
   };
@@ -487,8 +492,7 @@ const genMoreThan = (): WordedQuestion => {
       working:[
         {type:"tStep",latex:`\\text{Let } ${v1} = \\text{cost of one ${sing1}}, \\quad ${v2} = \\text{cost of one ${sing2}}`,plain:""},
         {type:"tStep",latex:`\\text{"${ka} ${pl1} cost £${d} more than ${kb} ${pl2}"} \\Rightarrow ${wCStr(ka,v1)} = ${wCStr(kb,v2)} + ${d}`,plain:""},
-        {type:"step",latex:eq1,plain:eq1},
-        {type:"step",latex:eq2,plain:eq2},
+        {type:"step",latex:eq1,plain:eq1},{type:"step",latex:eq2,plain:eq2},
       ],
       key:`w2-moreThan-${v1}${v2}-${ka}-${kb}-${d}-${b1}-${b2}`, difficulty:"level2", subType:"moreThan",
     };
@@ -515,8 +519,7 @@ const genRatio = (): WordedQuestion => {
     working:[
       {type:"tStep",latex:`\\text{Let } ${v1} = \\text{cost of one ${sing1}}, \\quad ${v2} = \\text{cost of one ${sing2}}`,plain:""},
       {type:"tStep",latex:`\\text{"${ka} ${pl1} = ${kb} ${pl2}"} \\Rightarrow ${wCStr(ka,v1)} = ${wCStr(kb,v2)}`,plain:""},
-      {type:"step",latex:eq1,plain:eq1},
-      {type:"step",latex:eq2,plain:eq2},
+      {type:"step",latex:eq1,plain:eq1},{type:"step",latex:eq2,plain:eq2},
     ],
     key:`w2-ratio-${v1}${v2}-${ka}-${kb}-${b1}-${b2}-${s}`, difficulty:"level2", subType:"ratio",
   };
@@ -816,7 +819,7 @@ const WordedWorkedSteps = ({ q, stepBg, fsz }: { q: WordedQuestion; stepBg: stri
     const sa1=a1*m1, sb1=b1*m1, sc1=c1*m1;
     const sa2=a2*m2, sb2=b2*m2, sc2=c2*m2;
     if (m1 === 1 && m2 === 1) {
-      // No scaling needed — equations used directly
+      // no scaling needed
     } else if (m1 > 1 && m2 > 1) {
       steps.push(ml(`(1) \\times ${m1}: \\quad ${cStr(sa1,v1)} ${sa1>=0&&sb1>=0?"+":""} ${cStr(sb1,v2)} = ${sc1}`,"(3)"));
       steps.push(ml(`(2) \\times ${m2}: \\quad ${cStr(sa2,v1)} ${sa2>=0&&sb2>=0?"+":""} ${cStr(sb2,v2)} = ${sc2}`,"(4)"));
@@ -875,10 +878,10 @@ const WordedWorkedSteps = ({ q, stepBg, fsz }: { q: WordedQuestion; stepBg: stri
 // ═══════════════════════════════════════════════════════════════════════════════
 // QO POPOVERS
 // ═══════════════════════════════════════════════════════════════════════════════
-const SimEqQOPopover = ({ level, opMode, setOpMode, allowNeg, setAllowNeg, allowRearrange, setAllowRearrange }: {
+const SimEqQOPopover = ({ level, opMode, setOpMode, allowNeg, setAllowNeg, rearrangeMode, setRearrangeMode }: {
   level: DifficultyLevel; opMode: OpMode; setOpMode: (v: OpMode) => void;
   allowNeg: boolean; setAllowNeg: (v: boolean) => void;
-  allowRearrange: boolean; setAllowRearrange: (v: boolean) => void;
+  rearrangeMode: RearrangeMode; setRearrangeMode: (v: RearrangeMode) => void;
 }) => {
   const { open, setOpen, ref } = usePopover();
   return (
@@ -897,10 +900,18 @@ const SimEqQOPopover = ({ level, opMode, setOpMode, allowNeg, setAllowNeg, allow
               </div>
             </div>
           )}
+          <div className="flex flex-col gap-2">
+            <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Rearranging</span>
+            <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden">
+              {([["none","None"],["one","One"],["both","Both"]] as const).map(([v,l]) => (
+                <button key={v} onClick={() => setRearrangeMode(v)}
+                  className={`flex-1 px-3 py-2 text-sm font-bold transition-colors ${rearrangeMode===v?"bg-blue-900 text-white":"bg-white text-gray-600 hover:bg-gray-50"}`}>{l}</button>
+              ))}
+            </div>
+          </div>
           <div className="flex flex-col gap-1">
             <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Options</span>
             <TogglePill checked={allowNeg} onChange={setAllowNeg} label="Allow negative solutions" />
-            <TogglePill checked={allowRearrange} onChange={setAllowRearrange} label="Require rearranging" />
           </div>
         </div>
       )}
@@ -954,7 +965,7 @@ const WordedQOPopover = ({ level, wordedMethod, setWordedMethod, l2Types, setL2T
 const SimEqDiffQOPopover = ({ levelOps, setLevelOps, levelNeg, setLevelNeg, levelRearrange, setLevelRearrange }: {
   levelOps: Record<string,OpMode>; setLevelOps: (v: Record<string,OpMode>) => void;
   levelNeg: Record<string,boolean>; setLevelNeg: (v: Record<string,boolean>) => void;
-  levelRearrange: Record<string,boolean>; setLevelRearrange: (v: Record<string,boolean>) => void;
+  levelRearrange: Record<string,RearrangeMode>; setLevelRearrange: (v: Record<string,RearrangeMode>) => void;
 }) => {
   const { open, setOpen, ref } = usePopover();
   return (
@@ -975,7 +986,15 @@ const SimEqDiffQOPopover = ({ levelOps, setLevelOps, levelNeg, setLevelNeg, leve
                   </div>
                 )}
                 <TogglePill checked={levelNeg[lv]??false} onChange={v=>setLevelNeg({...levelNeg,[lv]:v})} label="Negative solutions" />
-                <TogglePill checked={levelRearrange[lv]??false} onChange={v=>setLevelRearrange({...levelRearrange,[lv]:v})} label="Rearranging" />
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Rearranging</span>
+                  <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden">
+                    {([["none","None"],["one","One"],["both","Both"]] as const).map(([v,l]) => (
+                      <button key={v} onClick={() => setLevelRearrange({...levelRearrange,[lv]:v})}
+                        className={`flex-1 px-2 py-2 text-xs font-bold transition-colors ${(levelRearrange[lv]??"none")===v?"bg-blue-900 text-white":"bg-white text-gray-600 hover:bg-gray-50"}`}>{l}</button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           ))}
@@ -1137,8 +1156,6 @@ const MenuDropdown = ({ colorScheme, setColorScheme, onClose, onOpenInfo }: {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PRINT
-// The PDF's inlineEl function uses the same character-by-character approach as
-// InlineMath in React, so multiple $...$ blocks on one line never bleed together.
 // ═══════════════════════════════════════════════════════════════════════════════
 const handlePrint = (questions: AnyQuestion[], difficulty: string, isDifferentiated: boolean, numColumns: number, subTool: SubTool) => {
   const FONT_PX=14,PAD_MM=3.5,MARGIN_MM=12,HEADER_MM=14,GAP_MM=2;
@@ -1201,22 +1218,14 @@ document.addEventListener("DOMContentLoaded",function(){
   function kr(el,latex){try{katex.render(latex,el,{throwOnError:false,output:"html"});}catch(e){el.textContent=latex;}}
   function kEl(latex){var s=document.createElement("span");s.className="kr";kr(s,latex);return s;}
 
-  // Character-by-character inline math parser — identical logic to React InlineMath.
-  // Finds each opening $, then immediately seeks the very next $ as closing delimiter.
-  // This means multiple $...$ blocks on one line never bleed into each other.
   function inlineEl(text){
     var span=document.createElement("span");
     var i=0;
     while(i<text.length){
       if(text[i]==="$"){
         var close=text.indexOf("$",i+1);
-        if(close!==-1){
-          span.appendChild(kEl(text.slice(i+1,close)));
-          i=close+1;
-        } else {
-          span.appendChild(document.createTextNode(text[i]));
-          i++;
-        }
+        if(close!==-1){span.appendChild(kEl(text.slice(i+1,close)));i=close+1;}
+        else{span.appendChild(document.createTextNode(text[i]));i++;}
       } else {
         var next=text.indexOf("$",i);
         var end=next===-1?text.length:next;
@@ -1316,17 +1325,16 @@ document.addEventListener("DOMContentLoaded",function(){
 // MAIN APP
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function App() {
-  const navigate = useNavigate();
   const [subTool, setSubTool] = useState<SubTool>("elimination");
   const [mode, setMode] = useState<"whiteboard"|"single"|"worksheet">("whiteboard");
   const [difficulty, setDifficulty] = useState<DifficultyLevel>("level1");
 
   const [opMode, setOpMode] = useState<OpMode>("mixed");
   const [allowNeg, setAllowNeg] = useState(false);
-  const [allowRearrange, setAllowRearrange] = useState(false);
+  const [rearrangeMode, setRearrangeMode] = useState<RearrangeMode>("none");
   const [levelOps, setLevelOps] = useState<Record<string,OpMode>>({level1:"mixed",level2:"mixed",level3:"mixed"});
   const [levelNeg, setLevelNeg] = useState<Record<string,boolean>>({level1:false,level2:false,level3:false});
-  const [levelRearrange, setLevelRearrange] = useState<Record<string,boolean>>({level1:false,level2:false,level3:false});
+  const [levelRearrange, setLevelRearrange] = useState<Record<string,RearrangeMode>>({level1:"none",level2:"none",level3:"none"});
 
   const [wordedMethod, setWordedMethod] = useState<WordedMethod>("direct");
   const [l2Types, setL2Types] = useState<L2Type[]>(["sumDiff","moreThan","ratio"]);
@@ -1391,7 +1399,7 @@ export default function App() {
   const fsQuestionBg=isDefault?"#ffffff":qBg;
   const fsWorkingBg=isDefault?"#f5f3f0":qBg;
 
-  const makeVars = (neg:boolean,rear:boolean)=>({allowNegSolutions:neg,allowRearrange:rear});
+  const makeVars = (neg: boolean, rm: RearrangeMode) => ({ allowNegSolutions: neg, rearrangeMode: rm as unknown as boolean });
   const makeWordedVars = useCallback((lv?: DifficultyLevel) => {
     if (!lv) {
       if (difficulty==="level2") return Object.fromEntries(l2Types.map(t=>[t,true]));
@@ -1402,6 +1410,10 @@ export default function App() {
     if (lv==="level3") return Object.fromEntries((levelL3Types[lv]??["purchase","equilateral","isosceles","scalene"]).map(t=>[t,true]));
     return {};
   }, [difficulty, l2Types, l3Types, levelL2Types, levelL3Types]);
+
+  const getCurrentVars = useCallback(() =>
+    subTool === "worded" ? makeWordedVars() : makeVars(allowNeg, rearrangeMode)
+  , [subTool, makeWordedVars, allowNeg, rearrangeMode]);
 
   const genQ = (st:SubTool,lv:DifficultyLevel,vars:Record<string,boolean>,om:OpMode,wm:WordedMethod):AnyQuestion =>
     st==="scaling" ? generateScaling(lv,vars,om)
@@ -1417,21 +1429,21 @@ export default function App() {
   };
 
   const handleNewQuestion = useCallback(() => {
-    const q = genQ(subTool,difficulty,makeWordedVars(),opMode,wordedMethod);
+    const q = genQ(subTool, difficulty, getCurrentVars(), opMode, wordedMethod);
     setCurrentQuestion(q); setShowWhiteboardAnswer(false); setShowAnswer(false);
-  }, [subTool, difficulty, makeWordedVars, opMode, wordedMethod]);
+  }, [subTool, difficulty, getCurrentVars, opMode, wordedMethod]);
 
   const handleGenerateWorksheet = () => {
     const usedKeys=new Set<string>(),questions:AnyQuestion[]=[];
     if(isDifferentiated){
       (["level1","level2","level3"] as DifficultyLevel[]).forEach(lv=>{
-        const vars=subTool==="worded"?makeWordedVars(lv):makeVars(levelNeg[lv]??false,levelRearrange[lv]??false);
+        const vars=subTool==="worded"?makeWordedVars(lv):makeVars(levelNeg[lv]??false,(levelRearrange[lv]??"none") as RearrangeMode);
         const om=levelOps[lv]??"mixed" as OpMode;
         const wm=(levelMethods[lv]??"direct") as WordedMethod;
         for(let i=0;i<numQuestions;i++) questions.push(genUniqueQ(subTool,lv,vars,om,wm,usedKeys));
       });
     } else {
-      const vars=subTool==="worded"?makeWordedVars():makeVars(allowNeg,allowRearrange);
+      const vars=subTool==="worded"?makeWordedVars():makeVars(allowNeg,rearrangeMode);
       for(let i=0;i<numQuestions;i++) questions.push(genUniqueQ(subTool,difficulty,vars,opMode,wordedMethod,usedKeys));
     }
     setWorksheet(questions); setShowWorksheetAnswers(false);
@@ -1454,7 +1466,7 @@ export default function App() {
       return <WordedQOPopover level={difficulty} wordedMethod={wordedMethod} setWordedMethod={setWordedMethod} l2Types={l2Types} setL2Types={setL2Types} l3Types={l3Types} setL3Types={setL3Types}/>;
     }
     if(diff) return <SimEqDiffQOPopover levelOps={levelOps} setLevelOps={setLevelOps} levelNeg={levelNeg} setLevelNeg={setLevelNeg} levelRearrange={levelRearrange} setLevelRearrange={setLevelRearrange}/>;
-    return <SimEqQOPopover level={difficulty} opMode={opMode} setOpMode={setOpMode} allowNeg={allowNeg} setAllowNeg={setAllowNeg} allowRearrange={allowRearrange} setAllowRearrange={setAllowRearrange}/>;
+    return <SimEqQOPopover level={difficulty} opMode={opMode} setOpMode={setOpMode} allowNeg={allowNeg} setAllowNeg={setAllowNeg} rearrangeMode={rearrangeMode} setRearrangeMode={setRearrangeMode}/>;
   };
 
   const renderQCell = (q:AnyQuestion,idx:number,bgOverride?:string) => {
@@ -1463,7 +1475,7 @@ export default function App() {
     if(q.kind==="worded-simeq") {
       const wq=q as WordedQuestion;
       return (
-                  <div style={{backgroundColor:bg,height:"100%",boxSizing:"border-box",position:"relative",padding:"24px 10px 8px",borderRadius:"12px",display:"flex",flexDirection:"column",justifyContent:"center",alignItems:"center"}}>
+        <div style={{backgroundColor:bg,height:"100%",boxSizing:"border-box",position:"relative",padding:"24px 10px 8px",borderRadius:"12px",display:"flex",flexDirection:"column",justifyContent:"center",alignItems:"center"}}>
           <span style={{position:"absolute",top:0,left:0,fontSize:"0.62em",fontWeight:700,color:"#000",padding:"2px 3px 4px 3px",borderRight:"1px solid #000",borderBottom:"1px solid #000"}}>{idx+1})</span>
           <div className={`${fsz} font-semibold text-center`} style={{color:"#000",lineHeight:1.6}}>
             {wq.lines.map((line,i)=><div key={i}><InlineMath text={line}/></div>)}
@@ -1712,7 +1724,7 @@ export default function App() {
     <>
       <div className="bg-blue-900 shadow-lg">
         <div className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
-          <button onClick={() => navigate("/")} className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors">
+          <button onClick={() => { window.location.href = "/"; }} className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors">
             <Home size={24}/><span className="font-semibold text-lg">Home</span>
           </button>
           <div className="relative">
