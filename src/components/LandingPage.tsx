@@ -49,8 +49,8 @@ const categories: Category[] = [
     iconBg: 'from-purple-50 to-fuchsia-50',
     tools: [
       { id: 'completing-square', path: '/completing-the-square', name: 'Completing the Square', icon: '🔲', description: 'Rewrite and solve quadratic expressions in completed square form', ready: 'v2.0' },
-      { id: 'iteration', path: '/iteration', name: 'Iteration', icon: '🔄', description: 'Find roots to eqautions using iterative methods', ready: 'v2.1' },
-      { id: 'simultaneous-equations', path: '/simultaneous-equations', name: 'Simultaneous Equations', icon: '❌', description: 'Solve simultaneous equations, including rearranging', ready: 'v2.1' },
+      { id: 'iteration', path: '/iteration', name: 'Iteration', icon: '🔄', description: 'Find roots to eqautions using iterative methods', ready: 'v2.1.1' },
+      { id: 'simultaneous-equations', path: '/simultaneous-equations', name: 'Simultaneous Equations', icon: '❌', description: 'Solve simultaneous equations, including rearranging', ready: 'v2.1.1' },
       { id: 'single-brackets', path: '/expanding-single-brackets-FOIL', name: 'Expanding Single Brackets (FOIL)', icon: 'x', description: 'Expand single brackets by using arrows for each term', ready: 'v1.4', enabled: false },
       { id: 'expanding-double-brackets-FOIL', path: '/expanding-double-brackets-foil', name: 'Expanding Double Brackets (FOIL)', icon: 'x²', description: 'Expand pairs of brackets using the FOIL method', ready: 'v1.4', enabled: false },
       { id: 'single-brackets', path: '/expanding-single-brackets-GRID', name: 'Expanding Single Brackets (GRID)', icon: 'x', description: 'Expand single brackets by using the grid method', ready: 'v1.4', enabled: false },
@@ -97,7 +97,7 @@ const categories: Category[] = [
     iconBg: 'from-orange-50 to-amber-50',
     tools: [
       { id: 'call-selector', path: '/call-selector', name: 'Friday Phonecalls', icon: '☎️', description: 'A tool to randomly select students for phonecalls', ready: 'v1.0', enabled: false },
-      { id: 'tool-shell', path: '/tool-shell', name: 'Tool Shell', icon: '🐢', description: 'A tool shell for developing new tools', ready: 'v2.1', enabled: false },
+      { id: 'tool-shell', path: '/tool-shell', name: 'Tool Shell', icon: '🐢', description: 'A tool shell for developing new tools', ready: 'v2.1.1', enabled: false },
     ]
   },
 ];
