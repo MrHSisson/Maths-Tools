@@ -1158,7 +1158,7 @@ const MenuDropdown = ({ colorScheme, setColorScheme, onClose, onOpenInfo }: {
 // PRINT
 // ═══════════════════════════════════════════════════════════════════════════════
 const handlePrint = (questions: AnyQuestion[], difficulty: string, isDifferentiated: boolean, numColumns: number, subTool: SubTool) => {
-  const FONT_PX=14,PAD_MM=3.5,MARGIN_MM=12,HEADER_MM=14,GAP_MM=2;
+  const FONT_PX=14,PAD_MM=2,MARGIN_MM=12,HEADER_MM=14,GAP_MM=2;
   const PAGE_H_MM=297-MARGIN_MM*2,PAGE_W_MM=210-MARGIN_MM*2;
   const usableH_MM=PAGE_H_MM-HEADER_MM,diffHdrMM=7;
   const cols=isDifferentiated?3:numColumns;
@@ -1199,10 +1199,10 @@ body{font-family:"Segoe UI",Arial,sans-serif;}
 .qbanner{width:100%;padding:1.2mm 3mm;font-size:${Math.round(FONT_PX*0.72)}px;font-weight:700;color:#000;border-bottom:.3mm solid #000;text-align:center;flex-shrink:0;box-sizing:border-box;}
 .qbody{width:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:${PAD_MM*0.4}mm ${PAD_MM}mm ${PAD_MM}mm;box-sizing:border-box;}
 .instr{font-size:${Math.round(FONT_PX*0.8)}px;font-weight:600;color:#000;text-align:center;margin-bottom:1mm;}
-.eq{display:flex;align-items:baseline;justify-content:center;margin:0.5mm 0;}
+.eq{display:flex;align-items:baseline;justify-content:center;margin:0.2mm 0;}
 .em .katex{font-size:${FONT_PX}px;}
-.wline{font-size:${FONT_PX}px;line-height:1.5;text-align:center;margin:0.5mm 0;}
-.qa{font-size:${FONT_PX}px;color:#059669;text-align:center;margin-top:1.5mm;}
+.wline{font-size:${FONT_PX}px;line-height:1.4;text-align:center;margin:0.2mm 0;}
+.qa{font-size:${FONT_PX}px;color:#059669;text-align:center;margin-top:0.8mm;}
 .qa .katex{font-size:${FONT_PX}px;}
 .kr{display:inline;vertical-align:baseline;font-size:0.826em;}.kr .katex{font-size:1.21em;}
 #probe{position:fixed;left:-9999px;top:0;visibility:hidden;font-size:${FONT_PX}px;width:${cellW_MM-PAD_MM*2}mm;}
@@ -1271,7 +1271,13 @@ document.addEventListener("DOMContentLoaded",function(){
   if(!found)for(var r2=0;r2<rowH.length;r2++){if(rowH[r2]>=needed){chosenH=rowH[r2];rpp=r2+1;}}
 
   var dpc=Math.floor(totalQ/3),dUsable=usableH-dHdr-GAP,dRows=1,dCellH=dUsable;
-  for(var rd2=1;rd2<=dpc;rd2++){var hd=(dUsable-GAP*(rd2-1))/rd2;if(hd>=needed){dRows=rd2;dCellH=hd;}}
+  for(var rd2=1;rd2<=dpc;rd2++){
+    // For rd2 rows, the level header cost per cell is dHdr/rd2 — so the effective
+    // cell height needed is reduced by that amount compared to standard mode.
+    var dNeeded=needed-dHdr/rd2;
+    var hd=(dUsable-GAP*(rd2-1))/rd2;
+    if(hd>=dNeeded){dRows=rd2;dCellH=hd;}
+  }
 
   var cW=isDiff?(PWmm-GAP*2)/3:(PWmm-GAP*(cols-1))/cols;
   var lvls=["level1","level2","level3"],lbls=["Level 1","Level 2","Level 3"];
