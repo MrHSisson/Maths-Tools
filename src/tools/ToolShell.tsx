@@ -829,7 +829,7 @@ const handlePrint = (
   instruction: string,
 ) => {
   const FONT_PX   = 14;
-  const PAD_MM    = 3;
+  const PAD_MM    = 2;
   const MARGIN_MM = 12;
   const HEADER_MM = 14;
   const GAP_MM    = 2;
@@ -960,8 +960,8 @@ const handlePrint = (
   .q-instruction { font-size: ${Math.round(FONT_PX * 0.8)}px; color: #000; text-align: center; margin-bottom: 1mm; font-weight: 600; }
   .q-math   { font-size: ${FONT_PX}px; display: inline; }
   .q-lines  { font-size: ${FONT_PX}px; line-height: 1.4; text-align: center; }
-  .q-line   { display: block; text-align: center; }
-  .q-answer { font-size: ${FONT_PX}px; color: #059669; display: block; margin-top: 1mm; text-align: center; }
+  .q-line   { display: block; text-align: center; margin-bottom: 0.2mm; }
+  .q-answer { font-size: ${FONT_PX}px; color: #059669; display: block; margin-top: 0.8mm; text-align: center; }
   .katex-render { display: inline-block; vertical-align: baseline; }
   .katex-render .katex { font-size: ${FONT_PX}px; }
   .katex-render.frac .katex { font-size: ${FONT_PX}px; }
@@ -1012,14 +1012,17 @@ document.addEventListener("DOMContentLoaded", function() {
 
   // For differentiated: calculate how many rows fit per page
   var diffPerCol   = Math.floor(totalQ / 3); // questions per level
-  var diffUsableH  = usableH - diffHdrMM - GAP_MM; // usable after header
-  // Find max rows where cellH >= needed_mm (same logic as standard mode)
+  var diffUsableH  = usableH - diffHdrMM - GAP_MM; // usable height after level header
+  // For each row count tested, amortise the header cost across the rows so cells
+  // get credit for their share of that fixed overhead (dNeeded = needed - dHdr/rows).
   var diffRowsPerPage = 1;
   var diffCellH_mm = diffUsableH; // fallback: 1 row
   for (var rd = 0; rd < diffPerCol; rd++) {
-    var h = (diffUsableH - GAP_MM * rd) / (rd + 1);
-    if (h >= needed_mm) {
-      diffRowsPerPage = rd + 1;
+    var rows2 = rd + 1;
+    var h = (diffUsableH - GAP_MM * rd) / rows2;
+    var dNeeded = needed_mm - diffHdrMM / rows2;
+    if (h >= dNeeded) {
+      diffRowsPerPage = rows2;
       diffCellH_mm = h;
     }
   }
