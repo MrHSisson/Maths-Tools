@@ -21,11 +21,11 @@ import FractionsOfAmounts from './tools/FractionsOfAmounts';
 import MultiplicationGenerator from './tools/MultiplicationGenerator';
 import BasicAngleFacts from './tools/BasicAngleFacts';
 import CallSelector from './tools/CallSelector';
-import AnglesInTriangles from './tools/AnglesInTriangles';
 import SimultaneousEquations from './tools/SimultaneousEquations';
 import ToolShell from './tools/ToolShell';
 import AnglesInTrianglesv2 from './tools/AnglesInTrianglesv2';
 import EquationsOfLines from './tools/EquationsOfLines';
+import NonLinearSimEq from './tools/NonLinearSimEq';
 
 function App() {
   return (
@@ -53,10 +53,11 @@ function App() {
       <Route path="/basic-angle-facts" element={<BasicAngleFacts />} />
       <Route path="/call-selector" element={<CallSelector />} />
       <Route path="/angles-in-triangles" element={<AnglesInTriangles />} />
-      <Route path="/simultaneous-equations" element={<SimultaneousEquations />} />
+      <Route path="/simultaneous-equations-elimination" element={<SimultaneousEquations />} />
       <Route path="/tool-shell" element={<ToolShell />} />
       <Route path="/angles-in-triangles-v2" element={<AnglesInTrianglesv2 />} />
       <Route path="/equations-of-lines" element={<EquationsOfLines />} />
+      <Route path="/simultaneous-equations-substitution" element={<NonLinearSimEq />} />
     </Routes>
   )
 }
