@@ -52,7 +52,6 @@ function App() {
       <Route path="/multiplication-methods" element={<MultiplicationGenerator />} />
       <Route path="/basic-angle-facts" element={<BasicAngleFacts />} />
       <Route path="/call-selector" element={<CallSelector />} />
-      <Route path="/angles-in-triangles" element={<AnglesInTriangles />} />
       <Route path="/simultaneous-equations-elimination" element={<SimultaneousEquations />} />
       <Route path="/tool-shell" element={<ToolShell />} />
       <Route path="/angles-in-triangles-v2" element={<AnglesInTrianglesv2 />} />
