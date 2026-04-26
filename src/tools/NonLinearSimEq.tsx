@@ -269,17 +269,17 @@ const generateLevel2 = (allowNeg: boolean, requireNeg: boolean, allowZero: boole
   const v1Val = isolatedVar==="v1" ? isoVal : otherVal;
   const v2Val = isolatedVar==="v1" ? otherVal : isoVal;
 
-  if (v1Val===0 || v2Val===0)                          return generateLevel2(allowNeg,requireNeg,allowZero);
-  if (requireNeg  && v1Val>0  && v2Val>0)              return generateLevel2(allowNeg,requireNeg,allowZero);
-  if (!requireNeg && (v1Val<0 || v2Val<0))             return generateLevel2(allowNeg,requireNeg,allowZero);
-  if (Math.abs(v1Val)>25 || Math.abs(v2Val)>25)        return generateLevel2(allowNeg,requireNeg,allowZero);
+      if (v1Val===0 || v2Val===0)                          return generateLevel2(allowNeg,requireNeg,allowZero,allowNegEq1);
+  if (requireNeg  && v1Val>0  && v2Val>0)              return generateLevel2(allowNeg,requireNeg,allowZero,allowNegEq1);
+  if (!requireNeg && (v1Val<0 || v2Val<0))             return generateLevel2(allowNeg,requireNeg,allowZero,allowNegEq1);
+  if (Math.abs(v1Val)>25 || Math.abs(v2Val)>25)        return generateLevel2(allowNeg,requireNeg,allowZero,allowNegEq1);
 
   if (form==="lhs") {
     // n is the coefficient of otherV on the LHS of eq2
     const n = randInt(2,5);
     const m = n*otherVal + isoVal;  // so n*otherV + isoV = m is consistent
-    const coeffs = buildEq1Coeffs(isolatedVar, n);
-    if (!coeffs) return generateLevel2(allowNeg,requireNeg,allowZero);
+    const coeffs = buildEq1Coeffs(isolatedVar, n, allowNegEq1);
+    if (!coeffs) return generateLevel2(allowNeg,requireNeg,allowZero,allowNegEq1);
     const { a, b } = coeffs;
     const c = a*v1Val + b*v2Val;
     const [isoC, otherC] = isolatedVar==="v1" ? [a,b] : [b,a];
@@ -306,8 +306,8 @@ const generateLevel2 = (allowNeg: boolean, requireNeg: boolean, allowZero: boole
     // n*otherV = isoV ± p  →  isoV = n*otherV + d  (n=k, p=-d)
     const n = k;  // k ≥ 2
     const p = -d;
-    const coeffs = buildEq1Coeffs(isolatedVar, n);
-    if (!coeffs) return generateLevel2(allowNeg,requireNeg,allowZero);
+    const coeffs = buildEq1Coeffs(isolatedVar, n, allowNegEq1);
+    if (!coeffs) return generateLevel2(allowNeg,requireNeg,allowZero,allowNegEq1);
     const { a, b } = coeffs;
     const c = a*v1Val + b*v2Val;
     const [isoC, otherC] = isolatedVar==="v1" ? [a,b] : [b,a];
