@@ -605,7 +605,7 @@ const SolutionDisplay=({q,surdDisplay}:{q:NonLinearQuestion;surdDisplay:SurdDisp
     <div className="flex flex-col gap-1 items-center">
       {(surdDisplay==="surd"||surdDisplay==="both")&&q.surdLatex&&<div><MathRenderer latex={q.surdLatex}/></div>}
       {(surdDisplay==="surd"||surdDisplay==="both")&&q.surdYCombined&&<div><MathRenderer latex={q.surdYCombined}/></div>}
-      {(surdDisplay==="decimal"||surdDisplay==="both")&&q.decimalLatex&&<div><MathRenderer latex={q.decimalLatex}/></div>}
+
       {(surdDisplay==="decimal"||surdDisplay==="both")&&q.solutions.map((s,i)=>{
         const xStr=fmt2(q.isolateVar==="y"?s.x:s.y),yStr=fmt2(q.isolateVar==="y"?s.y:s.x);
         return <div key={i}><MathRenderer latex={`x=${xStr},\\quad y=${yStr}`}/></div>;
@@ -670,8 +670,7 @@ const NonLinearWorkedSteps=({q,stepBg,fsz,surdDisplay}:{q:NonLinearQuestion;step
         :<Card title={`Step ${n++} — Apply the quadratic formula`} stepBg={stepBg} fsz={fsz}>
             <ML latex={`${subVar} = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}`}/>
             <ML latex={`a=${q.A},\\; b=${q.B},\\; c=${q.C}`}/>
-            {(surdDisplay==="surd"||surdDisplay==="both")&&q.surdLatex&&<ML latex={q.surdLatex}/>}
-            {(surdDisplay==="decimal"||surdDisplay==="both")&&q.decimalLatex&&<ML latex={q.decimalLatex}/>}
+            <ML latex={q.surdLatex??""} />
           </Card>
       }
       <Card title={`Step ${n++} — Substitute back to find ${otherVar}`} stepBg={stepBg} fsz={fsz}>
@@ -1095,7 +1094,9 @@ export default function App(){
     return <>
       <div className={`${displayFontSizes[Math.max(0,displayFontSize-1)]} font-semibold`} style={{color:"#000"}}>Solve simultaneously:</div>
       <EqPairDisplay eqs={[nlq.eq1Display,nlq.eq2Display]} cls={displayFontSizes[displayFontSize]}/>
-      {showAns&&<div className={`${displayFontSizes[displayFontSize]} font-bold text-center`} style={{color:"#166534"}}><SolutionDisplay q={nlq} surdDisplay={surdDisplay}/></div>}
+      {showAns&&<div className={`${displayFontSizes[displayFontSize]} font-bold text-center`} style={{color:"#166534"}}>
+        <SolutionDisplay q={nlq} surdDisplay={surdDisplay}/>
+      </div>}
     </>;
   };
 
