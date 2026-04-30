@@ -77,11 +77,11 @@ const categories: Category[] = [
     gradient: 'from-orange-500 to-amber-600',
     iconBg: 'from-orange-50 to-amber-50',
     tools: [
-      { id: 'perimeter', path: '/perimeter', name: 'Perimeter (BETA)', icon: '⬡', description: 'Calculate the perimeter of various 2D shapes', ready: 'v2.1', enabled: false},
       { id: 'circles', path: '/circle-properties', name: 'Properties of Circles', icon: '⭕', description: 'Find the circumference, area and arc lengths of circles and sectors', ready: 'v1.4' },
       { id: 'basic-angle-facts', path: '/basic-angle-facts', name: 'Basic Angle Facts', icon: '90°', description: 'Find missing angles from right angles, on striaght lines and around a point', ready: 'v1.6' },
       { id: 'angles-in-triangles-v2', path: '/angles-in-triangles-v2', name: 'Angles In Triangles', icon: '🛆', description: 'Find missing angles using triangle properties - including split trangles and exterior angles', ready: 'v2.1' },
       { id: 'equations-of-lines', path: '/equations-of-lines', name: 'Properties of Line Equations', icon: '(x,y)', description: 'Use co-ordinates and line equations to find properties of lines', ready: 'v2.1' },
+      { id: 'perimeter', path: '/perimeter', name: 'Perimeter (BETA)', icon: '⬡', description: 'Calculate the perimeter of various 2D shapes', ready: 'v2.1', enabled: false},
     ]
   },
   {
@@ -97,9 +97,9 @@ const categories: Category[] = [
     gradient: 'from-orange-500 to-amber-600',
     iconBg: 'from-orange-50 to-amber-50',
     tools: [
-      { id: 'visualiser', path: '/visualiser', name: 'Visualiser', icon: '📷', description: 'A tool for displaying your visualiser', ready: 'v1' },
+      { id: 'visualiser', path: '/visualiser', name: 'Visualiser', icon: '📷', description: 'A tool for displaying your visualiser', ready: 'v1.0' },
+      { id: 'tool-shell', path: '/tool-shell', name: 'Tool Shell', icon: '🐢', description: 'A tool shell for developing new tools', ready: 'v2.1.1' },
       { id: 'call-selector', path: '/call-selector', name: 'Friday Phonecalls', icon: '☎️', description: 'A tool to randomly select students for phonecalls', ready: 'v1.0', enabled: false },
-      { id: 'tool-shell', path: '/tool-shell', name: 'Tool Shell', icon: '🐢', description: 'A tool shell for developing new tools', ready: 'v2.1.1', enabled: false },
     ]
   },
 ];
