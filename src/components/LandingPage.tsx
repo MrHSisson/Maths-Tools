@@ -97,6 +97,7 @@ const categories: Category[] = [
     gradient: 'from-orange-500 to-amber-600',
     iconBg: 'from-orange-50 to-amber-50',
     tools: [
+      { id: 'visualiser', path: '/visualiser', name: 'Visualiser', icon: '📷', description: 'A tool for displaying your visualiser', ready: 'v1' },
       { id: 'call-selector', path: '/call-selector', name: 'Friday Phonecalls', icon: '☎️', description: 'A tool to randomly select students for phonecalls', ready: 'v1.0', enabled: false },
       { id: 'tool-shell', path: '/tool-shell', name: 'Tool Shell', icon: '🐢', description: 'A tool shell for developing new tools', ready: 'v2.1.1', enabled: false },
     ]
