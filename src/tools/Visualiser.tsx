@@ -177,6 +177,7 @@ export default function Visualiser() {
 
   const [displayMode, setDisplayMode] = useState<DisplayMode>("fit");
   const [flipped,     setFlipped]     = useState(false);
+  const [flippedV,    setFlippedV]    = useState(false);
   const [fullscreen,  setFullscreen]  = useState(false);
 
   const qBg    = getQuestionBg(colorScheme);
@@ -251,11 +252,13 @@ export default function Visualiser() {
 
   const activeCamLabel = cameras.find((c) => c.deviceId === activeCamId)?.label ?? "Select camera";
 
+  const flipTransform = [flipped ? "scaleX(-1)" : "", flippedV ? "scaleY(-1)" : ""].filter(Boolean).join(" ") || "none";
+
   const videoStyle: React.CSSProperties = {
     width: "100%",
     height: "100%",
     objectFit: displayMode === "fit" ? "contain" : "cover",
-    transform: flipped ? "scaleX(-1)" : "none",
+    transform: flipTransform,
     background: "#000",
     display: "block",
   };
@@ -362,13 +365,22 @@ export default function Visualiser() {
                 ))}
               </div>
 
-              {/* Flip — standard action button style, toggled state uses bg-blue-900 */}
+              {/* Flip horizontal */}
               <button
                 onClick={() => setFlipped((f) => !f)}
                 className={`px-6 py-2 rounded-xl font-bold text-base shadow-sm flex items-center gap-2 transition-colors ${flipped ? "bg-blue-900 text-white hover:bg-blue-800" : "bg-white border-2 border-gray-300 text-gray-600 hover:border-blue-900 hover:text-blue-900"}`}
               >
                 <FlipHorizontal size={18} />
-                Flip
+                Flip H
+              </button>
+
+              {/* Flip vertical */}
+              <button
+                onClick={() => setFlippedV((f) => !f)}
+                className={`px-6 py-2 rounded-xl font-bold text-base shadow-sm flex items-center gap-2 transition-colors ${flippedV ? "bg-blue-900 text-white hover:bg-blue-800" : "bg-white border-2 border-gray-300 text-gray-600 hover:border-blue-900 hover:text-blue-900"}`}
+              >
+                <FlipHorizontal size={18} style={{ transform: "rotate(90deg)" }} />
+                Flip V
               </button>
 
               {/* Fullscreen */}
@@ -421,7 +433,7 @@ export default function Visualiser() {
               width: "100%",
               height: "100%",
               objectFit: displayMode === "fit" ? "contain" : "cover",
-              transform: flipped ? "scaleX(-1)" : "none",
+              transform: flipTransform,
               display: "block",
             }}
           />
@@ -448,7 +460,7 @@ export default function Visualiser() {
                 </button>
               ))}
             </div>
-            {/* Flip */}
+            {/* Flip H */}
             <button
               onClick={() => setFlipped((f) => !f)}
               title="Flip horizontally"
@@ -461,6 +473,20 @@ export default function Visualiser() {
               }}
             >
               <FlipHorizontal size={18} color="rgba(255,255,255,0.85)" />
+            </button>
+            {/* Flip V */}
+            <button
+              onClick={() => setFlippedV((f) => !f)}
+              title="Flip vertically"
+              style={{
+                background: flippedV ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.55)",
+                border: "1px solid rgba(255,255,255,0.15)",
+                borderRadius: 8, cursor: "pointer", width: 36, height: 36,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                backdropFilter: "blur(6px)",
+              }}
+            >
+              <FlipHorizontal size={18} color="rgba(255,255,255,0.85)" style={{ transform: "rotate(90deg)" }} />
             </button>
             {/* Exit */}
             <button
