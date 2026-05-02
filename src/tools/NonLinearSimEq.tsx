@@ -587,7 +587,7 @@ const SolutionDisplay=({q,surdDisplay}:{q:NonLinearQuestion;surdDisplay:SurdDisp
     <div className="flex flex-col gap-1 items-center">
       {(surdDisplay==="surd"||surdDisplay==="both")&&q.surdLatex&&<div><MathRenderer latex={q.surdLatex}/></div>}
       {(surdDisplay==="surd"||surdDisplay==="both")&&q.surdYCombined&&<div><MathRenderer latex={q.surdYCombined}/></div>}
-      {q.solutions.map((s,i)=>{
+      {(surdDisplay==="decimal"||surdDisplay==="both")&&q.solutions.map((s,i)=>{
         const xV=q.isolateVar==="y"?s.x:s.y, yV=q.isolateVar==="y"?s.y:s.x;
         return <div key={i}><MathRenderer latex={`x=${fmt2(xV)},\\quad y=${fmt2(yV)}`}/></div>;
       })}
@@ -831,7 +831,7 @@ const MenuDropdown=({colorScheme,setColorScheme,onClose,onOpenInfo}:{colorScheme
 // ═══════════════════════════════════════════════════════════════════════════════
 // PRINT
 // ═══════════════════════════════════════════════════════════════════════════════
-const handlePrint=(questions:AnyQuestion[],subTool:SubTool,difficulty:string,isDifferentiated:boolean,numColumns:number)=>{
+const handlePrint=(questions:AnyQuestion[],subTool:SubTool,difficulty:string,isDifferentiated:boolean,numColumns:number,surdDisplay:SurdDisplay)=>{
   const FONT_PX=14,PAD_MM=2,MARGIN_MM=12,HEADER_MM=14,GAP_MM=2;
   const PAGE_H_MM=297-MARGIN_MM*2,PAGE_W_MM=210-MARGIN_MM*2;
   const usableH_MM=PAGE_H_MM-HEADER_MM,diffHdrMM=7;
@@ -843,7 +843,21 @@ const handlePrint=(questions:AnyQuestion[],subTool:SubTool,difficulty:string,isD
   const toolName=subTool==="linear"?"Linear Substitution":subTool==="factorising"?"Non-Linear (Factorising)":"Non-Linear (Formula)";
   const qData=questions.map((q,i)=>({
     eq1:q.eq1Display,eq2:q.eq2Display,
-    answerLatex:q.kind==="linear"?`${q.varPair[0]}=${q.v1Val},\\quad ${q.varPair[1]}=${q.v2Val}`:(q as NonLinearQuestion).solutions.map(s=>`x=${fmtSoln(s.x)},\\quad y=${fmtSoln(s.y)}`).join("|SPLIT|"),
+    answerLatex:q.kind==="linear"
+      ?`${q.varPair[0]}=${q.v1Val},\\quad ${q.varPair[1]}=${q.v2Val}`
+      :(() => {
+        const nlq = q as NonLinearQuestion;
+        if (nlq.subTool==="formula") {
+          if (surdDisplay==="surd"||surdDisplay==="both") {
+            const parts: string[] = [];
+            if (nlq.surdLatex) parts.push(nlq.surdLatex);
+            if (nlq.surdYCombined) parts.push(nlq.surdYCombined);
+            if (surdDisplay==="both") nlq.solutions.forEach(s=>{ const xV=nlq.isolateVar==="y"?s.x:s.y, yV=nlq.isolateVar==="y"?s.y:s.x; parts.push(`x=${fmt2(xV)},\\quad y=${fmt2(yV)}`); });
+            return parts.join("|SPLIT|");
+          }
+        }
+        return nlq.solutions.map(s=>`x=${fmtSoln(s.x)},\\quad y=${fmtSoln(s.y)}`).join("|SPLIT|");
+      })(),
     difficulty:q.difficulty,idx:i,
   }));
   const html=`<!DOCTYPE html><html><head><meta charset="utf-8">
@@ -1133,7 +1147,7 @@ export default function App(){
           <button onClick={handleGenerateWorksheet} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18}/> Generate</button>
           {worksheet.length>0&&<>
             <button onClick={()=>setShowWorksheetAnswers(!showWorksheetAnswers)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><Eye size={18}/> {showWorksheetAnswers?"Hide Answers":"Show Answers"}</button>
-            <button onClick={()=>handlePrint(worksheet,subTool,difficulty,isDifferentiated,numColumns)} className="px-6 py-2 bg-green-700 text-white rounded-xl font-bold text-base shadow-sm hover:bg-green-800 flex items-center gap-2"><Printer size={18}/> Print / PDF</button>
+            <button onClick={()=>handlePrint(worksheet,subTool,difficulty,isDifferentiated,numColumns,surdDisplay)} className="px-6 py-2 bg-green-700 text-white rounded-xl font-bold text-base shadow-sm hover:bg-green-800 flex items-center gap-2"><Printer size={18}/> Print / PDF</button>
           </>}
         </div>
       </div>
