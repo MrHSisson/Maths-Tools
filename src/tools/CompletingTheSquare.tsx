@@ -109,6 +109,8 @@ const DISPLAY_DD = {
   defaultValue: "decimal",
 };
 
+const INTEGER_C_VAR = { key: "integerC", label: "Integer +c", defaultValue: false };
+
 const TOOL_CONFIG = {
   pageTitle: "Completing the Square",
   tools: {
@@ -121,9 +123,9 @@ const TOOL_CONFIG = {
       dropdown: null,
       difficultySettings: {
         level1: { variables: [], dropdown: null },
-        level2: { variables: [], dropdown: DISPLAY_DD },
+        level2: { variables: [INTEGER_C_VAR], dropdown: DISPLAY_DD },
         level3: {
-          variables: [{ key: "negativeCoefficients", label: "Negative Coefficients", defaultValue: false }],
+          variables: [INTEGER_C_VAR, { key: "negativeCoefficients", label: "Negative Coefficients", defaultValue: false }],
           dropdown: DISPLAY_DD,
         },
       },
@@ -137,9 +139,9 @@ const TOOL_CONFIG = {
       dropdown: null,
       difficultySettings: {
         level1: { variables: [], dropdown: null },
-        level2: { variables: [], dropdown: DISPLAY_DD },
+        level2: { variables: [INTEGER_C_VAR], dropdown: DISPLAY_DD },
         level3: {
-          variables: [{ key: "negativeCoefficients", label: "Negative Coefficients", defaultValue: false }],
+          variables: [INTEGER_C_VAR, { key: "negativeCoefficients", label: "Negative Coefficients", defaultValue: false }],
           dropdown: DISPLAY_DD,
         },
       },
@@ -153,9 +155,9 @@ const TOOL_CONFIG = {
       dropdown: null,
       difficultySettings: {
         level1: { variables: [], dropdown: null },
-        level2: { variables: [], dropdown: DISPLAY_DD },
+        level2: { variables: [INTEGER_C_VAR], dropdown: DISPLAY_DD },
         level3: {
-          variables: [{ key: "negativeCoefficients", label: "Negative Coefficients", defaultValue: false }],
+          variables: [INTEGER_C_VAR, { key: "negativeCoefficients", label: "Negative Coefficients", defaultValue: false }],
           dropdown: DISPLAY_DD,
         },
       },
@@ -202,6 +204,7 @@ const INFO_SECTIONS = [
   ]},
   { title: "Question Options", icon: "⚙️", content: [
     { label: "Display: Decimal / Fraction", detail: "Levels 2 & 3. Controls whether half-integer values show as decimals (e.g. 2.5) or fractions (e.g. 5/2). Switching is instant — the same question reformats without regenerating." },
+    { label: "Integer +c",                 detail: "Levels 2 & 3. When enabled, the constant term c is always an integer. The answer will contain a decimal or fraction but the question looks cleaner." },
     { label: "Negative Coefficients",       detail: "Level 3 only. When enabled, the leading coefficient may be negative." },
     { label: "Differentiated",              detail: "Worksheet mode produces three columns — one per level — simultaneously." },
   ]},
@@ -356,6 +359,7 @@ const generateQuestion = (
   _dropdownValue: string,   // dropdown is display-only; generation ignores it
 ): AnyQuestion => {
   const useNegative = variables["negativeCoefficients"] ?? false;
+  const integerC    = variables["integerC"] ?? false;
 
   let a = 0, b = 0, c = 0, p = 0, q = 0;
 
@@ -375,6 +379,10 @@ const generateQuestion = (
 
   if (tool === "roots") {
     q = Math.random() < 0.1 ? randInt(1, 15) : -(randInt(1, 15));
+  } else if (integerC && p % 1 !== 0) {
+    // Force c to be an integer: pick integer c, derive q = c - a*p²
+    c = randInt(-8, 8);
+    q = c - a * p * p;
   } else {
     if (p % 1 !== 0) {
       if (Math.random() > 0.5) { c = randInt(-8, 8); q = c - a * p * p; }
@@ -710,9 +718,12 @@ const handlePrint = (
   };
 
   const questionToHtml = (q: AnyQuestion, idx: number, showAnswer: boolean): string => {
-    const { displayLatex, answerLatex } = buildDisplay((q as any).rawValues, useFractions);
+    const rv = (q as any).rawValues;
+    const { displayLatex, answerLatex } = buildDisplay(rv, useFractions);
     const instrHtml = instruction ? `<div class="q-instruction">${instruction}</div>` : "";
-    const ansHtml   = showAnswer  ? `<div class="q-answer">${katexSpan(`= ${answerLatex}`)}</div>` : "";
+    // roots answer is "x = ..." — needs no extra prefix. completing/turning already self-contained.
+    const ansLatexFull = rv.tool === "roots" ? answerLatex : answerLatex;
+    const ansHtml   = showAnswer ? `<div class="q-answer">${katexSpan(ansLatexFull)}</div>` : "";
     const banner    = `<div class="q-banner">Question ${idx + 1}</div>`;
     const body      = `${instrHtml}<div style="text-align:center">${katexSpan(displayLatex,"q-math")}</div>${ansHtml}`;
     return `${banner}<div class="qbody">${body}</div>`;
