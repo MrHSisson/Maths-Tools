@@ -287,10 +287,10 @@ const handlePrint = (
   useMissingNumber: boolean
 ) => {
   const FONT_PX = 13;
-  const PAD_MM = 1.5;
+  const PAD_MM = 1.2;
   const MARGIN_MM = 12;
   const HEADER_MM = 14;
-  const GAP_MM = 2;
+  const GAP_MM = 1.5;
   const PAGE_H_MM = 297 - MARGIN_MM * 2;
   const PAGE_W_MM = 210 - MARGIN_MM * 2;
   const usableH_MM = PAGE_H_MM - HEADER_MM;
