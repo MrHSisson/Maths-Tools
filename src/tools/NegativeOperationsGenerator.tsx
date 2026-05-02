@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Home, Menu, X, Eye, Download } from 'lucide-react';
-import { jsPDF } from 'jspdf';
 
 // NEGATIVE NUMBERS OPERATIONS
 // A tool for practicing arithmetic operations with positive and negative numbers
@@ -24,7 +23,8 @@ type SignCombination = 'pos_pos' | 'pos_neg' | 'neg_pos' | 'neg_neg';
 const generateQuestions = (
   operationCombinations: Record<OperationType, SignCombination[]>,
   numQuestions: number,
-  useBrackets: boolean
+  useBrackets: boolean,
+  useMissingNumber: boolean
 ): Question[] => {
   const allPossible: Question[] = [];
   
@@ -40,6 +40,13 @@ const generateQuestions = (
     });
   });
 
+  // Convert to missing number format if enabled
+  if (useMissingNumber) {
+    allPossible.forEach(q => {
+      convertToMissingNumber(q);
+    });
+  }
+
   // Shuffle using Fisher-Yates algorithm
   for (let i = allPossible.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -47,6 +54,48 @@ const generateQuestions = (
   }
 
   return allPossible.slice(0, Math.min(numQuestions, allPossible.length));
+};
+
+// Convert a standard question to missing number format
+const convertToMissingNumber = (q: Question): void => {
+  // Parse the question to extract parts
+  const parts = q.question.split(' ');
+  const firstNum = parts[0];
+  const operator = parts[1];
+  const secondNum = parts.slice(2).join(' '); // May include parentheses
+  
+  // Randomly choose to make first or second number missing (50/50)
+  const makeFirstMissing = Math.random() < 0.5;
+  
+  if (makeFirstMissing) {
+    // __ + 5 = 10  (answer is the missing first number)
+    q.question = `__ ${operator} ${secondNum} = ${q.answer}`;
+    // Calculate what the first number should be based on the operation
+    if (operator === '+') {
+      q.answer = q.answer - parseFloat(secondNum.replace(/[()]/g, ''));
+    } else if (operator === '-' || operator === '−') {
+      q.answer = q.answer + parseFloat(secondNum.replace(/[()]/g, ''));
+    } else if (operator === '×' || operator === 'x') {
+      q.answer = q.answer / parseFloat(secondNum.replace(/[()]/g, ''));
+    } else if (operator === '÷' || operator === '/') {
+      q.answer = q.answer * parseFloat(secondNum.replace(/[()]/g, ''));
+    }
+  } else {
+    // 5 + __ = 10  (answer is the missing second number)
+    const originalAnswer = q.answer;
+    q.question = `${firstNum} ${operator} __ = ${originalAnswer}`;
+    // Calculate what the second number should be
+    const first = parseFloat(firstNum.replace(/[()]/g, ''));
+    if (operator === '+') {
+      q.answer = originalAnswer - first;
+    } else if (operator === '-' || operator === '−') {
+      q.answer = first - originalAnswer;
+    } else if (operator === '×' || operator === 'x') {
+      q.answer = originalAnswer / first;
+    } else if (operator === '÷' || operator === '/') {
+      q.answer = first / originalAnswer;
+    }
+  }
 };
 
 const generateAdditionSubtractionQuestions = (
@@ -69,7 +118,7 @@ const generateAdditionSubtractionQuestions = (
             questions.push({ question: `${num1} + ${num2}`, answer });
           } else {
             answer = num1 - num2;
-            questions.push({ question: `${num1} - ${num2}`, answer });
+            questions.push({ question: `${num1} − ${num2}`, answer });
           }
           break;
         case 'pos_neg':
@@ -81,7 +130,7 @@ const generateAdditionSubtractionQuestions = (
             questions.push({ question: formatted, answer });
           } else {
             answer = num1 - num2;
-            const formatted = useBrackets ? `${num1} - (${num2})` : `${num1} - ${num2}`;
+            const formatted = useBrackets ? `${num1} − (${num2})` : `${num1} − ${num2}`;
             questions.push({ question: formatted, answer });
           }
           break;
@@ -94,7 +143,7 @@ const generateAdditionSubtractionQuestions = (
             questions.push({ question: formatted, answer });
           } else {
             answer = num1 - num2;
-            const formatted = useBrackets ? `(${num1}) - ${num2}` : `${num1} - ${num2}`;
+            const formatted = useBrackets ? `(${num1}) − ${num2}` : `${num1} − ${num2}`;
             questions.push({ question: formatted, answer });
           }
           break;
@@ -107,7 +156,7 @@ const generateAdditionSubtractionQuestions = (
             questions.push({ question: formatted, answer });
           } else {
             answer = num1 - num2;
-            const formatted = useBrackets ? `(${num1}) - (${num2})` : `${num1} - ${num2}`;
+            const formatted = useBrackets ? `(${num1}) − (${num2})` : `${num1} − ${num2}`;
             questions.push({ question: formatted, answer });
           }
           break;
@@ -204,8 +253,160 @@ const generateDivisionQuestions = (
   }
 };
 
+// PDF PRINT FUNCTION
+const handlePrint = (
+  questions: Question[],
+  useMissingNumber: boolean
+) => {
+  const FONT_PX = 11;
+  const MARGIN_MM = 12;
+  const HEADER_MM = 14;
+  const GAP_MM = 2;
+  const PAGE_H_MM = 297 - MARGIN_MM * 2;
+  const PAGE_W_MM = 210 - MARGIN_MM * 2;
+  
+  // For this tool, use 3 columns fixed
+  const cols = 3;
+  const cellW_MM = (PAGE_W_MM - GAP_MM * 2) / 3;
+  
+  const now = new Date();
+  const dateStr = now.toLocaleDateString("en-GB", {day:"numeric",month:"long",year:"numeric"});
+  const totalQ = questions.length;
+
+  // Format a number to 5 characters: ( - TO )
+  const formatNumber = (num: string): string => {
+    // Handle blanks first
+    if (num === '__') {
+      return '_____';
+    }
+    if (num === '___') {
+      return '  ___';
+    }
+    
+    const cleaned = num.replace(/[()]/g, '');
+    const isNegative = cleaned.startsWith('-');
+    const absValue = isNegative ? cleaned.substring(1) : cleaned;
+    
+    let result = '';
+    const hasParens = num.includes('(');
+    
+    if (hasParens) {
+      result += '(';
+      result += isNegative ? '-' : ' ';
+      result += absValue.padStart(2, ' ');
+      result += ')';
+    } else {
+      result += ' ';
+      result += isNegative ? '-' : ' ';
+      result += absValue.padStart(2, ' ');
+      result += ' ';
+    }
+    
+    return result;
+  };
+
+  const formatQuestion = (q: Question, showAnswer: boolean): string => {
+    const questionText = useMissingNumber ? q.question : `${q.question} = ___`;
+    const parts = questionText.split(' ');
+    
+    if (parts.length >= 3) {
+      const first = formatNumber(parts[0]);
+      const operator = parts[1];
+      const second = formatNumber(parts[2]);
+      const equals = '=';
+      
+      if (showAnswer) {
+        if (useMissingNumber) {
+          // Replace __ with the answer
+          const answerPart = questionText.includes('__') 
+            ? questionText.replace('__', formatNumber(String(q.answer)).trim())
+            : questionText;
+          const answerParts = answerPart.split(' ');
+          const first = formatNumber(answerParts[0]);
+          const operator = answerParts[1];
+          const second = formatNumber(answerParts[2]);
+          const equals = '=';
+          const answer = formatNumber(answerParts.slice(4).join(' '));
+          return `${first}${operator}${second}${equals}${answer}`;
+        } else {
+          const answer = formatNumber(String(q.answer));
+          return `${first}${operator}${second}${equals}${answer}`;
+        }
+      } else {
+        const answer = formatNumber(parts.slice(4).join(' '));
+        return `${first}${operator}${second}${equals}${answer}`;
+      }
+    }
+    return questionText;
+  };
+
+  // Build HTML
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Negative Operations — Worksheet</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  @page { size: A4; margin: ${MARGIN_MM}mm; }
+  body { font-family: Courier, monospace; background: #fff; font-size: ${FONT_PX}px; }
+  
+  @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+  .page { width: ${PAGE_W_MM}mm; height: ${PAGE_H_MM}mm; overflow: hidden; page-break-after: always; }
+  .page:last-child { page-break-after: auto; }
+  
+  .page-header {
+    display: flex; justify-content: space-between; align-items: baseline;
+    border-bottom: 0.4mm solid #1e3a8a; padding-bottom: 1.5mm; margin-bottom: 2mm;
+    height: ${HEADER_MM}mm;
+  }
+  .page-header h1 { font-size: 5mm; font-weight: 700; color: #1e3a8a; }
+  .page-header .meta { font-size: 3mm; color: #6b7280; }
+  .page-header .name-line { font-size: 3mm; color: #000; }
+  
+  .grid { display: grid; grid-template-columns: repeat(3, ${cellW_MM}mm); gap: ${GAP_MM}mm; }
+  .question { text-align: left; line-height: 1.4; }
+</style>
+</head>
+<body>
+
+<!-- Questions Page -->
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1>Negative Operations</h1>
+      <div class="name-line">Name: __________________________</div>
+    </div>
+    <div class="meta">${dateStr} · ${totalQ} questions</div>
+  </div>
+  <div class="grid">
+    ${questions.map(q => `<div class="question">${formatQuestion(q, false)}</div>`).join('\n    ')}
+  </div>
+</div>
+
+<!-- Answer Page -->
+<div class="page">
+  <div class="page-header">
+    <h1>Negative Operations — Answers</h1>
+    <div class="meta">${dateStr} · ${totalQ} questions</div>
+  </div>
+  <div class="grid">
+    ${questions.map(q => `<div class="question">${formatQuestion(q, true)}</div>`).join('\n    ')}
+  </div>
+</div>
+
+</body>
+</html>`;
+
+  const win = window.open("", "_blank");
+  if (!win) { alert("Please allow popups to use the PDF export."); return; }
+  win.document.write(html);
+  win.document.close();
+  setTimeout(() => { win.print(); }, 300);
+};
+
 export default function NegativeNumbersOperations() {
-  // Per-operation combination state: each operation tracks its own enabled combinations
+  // Per-operation combination state
   const [operationCombinations, setOperationCombinations] = useState<Record<OperationType, SignCombination[]>>({
     addition: [],
     subtraction: [],
@@ -214,6 +415,7 @@ export default function NegativeNumbersOperations() {
   });
   const [numQuestions, setNumQuestions] = useState<number>(40);
   const [useBrackets, setUseBrackets] = useState<boolean>(true);
+  const [useMissingNumber, setUseMissingNumber] = useState<boolean>(false);
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   const [colorScheme, setColorScheme] = useState<ColorScheme>('default');
   const [error, setError] = useState<string>('');
@@ -221,11 +423,9 @@ export default function NegativeNumbersOperations() {
 
   const allCombos: SignCombination[] = ['pos_pos', 'pos_neg', 'neg_pos', 'neg_neg'];
 
-  // Check if an operation has all 4 combinations selected
   const isOperationFullySelected = (op: OperationType): boolean =>
     allCombos.every(c => operationCombinations[op].includes(c));
 
-  // Toggle entire operation - selects all 4 combos or clears them
   const toggleOperation = (operation: OperationType): void => {
     setOperationCombinations(prev => ({
       ...prev,
@@ -234,7 +434,6 @@ export default function NegativeNumbersOperations() {
     setError('');
   };
 
-  // Toggle a single combination for a specific operation
   const toggleCombination = (operation: OperationType, combo: SignCombination): void => {
     setOperationCombinations(prev => {
       const current = prev[operation];
@@ -257,8 +456,7 @@ export default function NegativeNumbersOperations() {
       return;
     }
 
-    // Build flat list of (operation, combo) pairs for generation
-    const questions = generateQuestions(operationCombinations, numQuestions, useBrackets);
+    const questions = generateQuestions(operationCombinations, numQuestions, useBrackets, useMissingNumber);
 
     if (questions.length === 0) {
       setError('No questions could be generated with the current settings');
@@ -278,107 +476,22 @@ export default function NegativeNumbersOperations() {
       return;
     }
 
-    const questions = generateQuestions(operationCombinations, numQuestions, useBrackets);
+    const questions = generateQuestions(operationCombinations, numQuestions, useBrackets, useMissingNumber);
     
     if (questions.length === 0) {
       setError('No questions could be generated with the current settings');
       return;
     }
 
-    // Generate PDF
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.width;
-    const pageHeight = doc.internal.pageSize.height;
-
-    // Get current date for title
-    const today = new Date();
-    const day = String(today.getDate()).padStart(2, '0');
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const year = String(today.getFullYear()).slice(-2);
-    const dateStr = `${day}/${month}/${year}`;
-
-    // Set PDF metadata
-    doc.setProperties({
-      title: `Negative Operations ${dateStr}`,
-      subject: 'Mathematics Practice',
-      author: 'Negative Operations Generator',
-      keywords: 'negative numbers, operations, integers',
-      creator: 'Negative Operations Generator'
-    });
-
-    // Page 1: Questions
-    doc.setFontSize(20);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Negative Operations', pageWidth / 2, 20, { align: 'center' });
-
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Name: ________________________________', 20, 35);
-
-    // Draw questions in 3 columns
-    const startY = 48;
-    const columnWidth = (pageWidth - 40) / 3;
-    const lineHeight = 11.5;
-    const numColumns = 3;
-
-    doc.setFontSize(13);
-    questions.forEach((q, index) => {
-      const row = Math.floor(index / numColumns);
-      const column = index % numColumns;
-      const x = 20 + (column * columnWidth);
-      const y = startY + (row * lineHeight);
-
-      if (y < pageHeight - 20) {
-        doc.text(`${q.question} = _____`, x, y);
-      }
-    });
-
-    // Footer
-    doc.setFontSize(7);
-    doc.setTextColor(100);
-    doc.text('Negative Operations Generator', pageWidth / 2, pageHeight - 10, { align: 'center' });
-
-    // Page 2: Answers
-    doc.addPage();
-    doc.setFontSize(20);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(0);
-    doc.text('Answer Key', pageWidth / 2, 20, { align: 'center' });
-
-    // Draw answers in 3 columns
-    const answerStartY = 35;
-    doc.setFontSize(13);
-    doc.setFont('helvetica', 'normal');
-    questions.forEach((q, index) => {
-      const row = Math.floor(index / numColumns);
-      const column = index % numColumns;
-      const x = 20 + (column * columnWidth);
-      const y = answerStartY + (row * lineHeight);
-
-      if (y < pageHeight - 20) {
-        doc.text(`${q.question} = ${q.answer}`, x, y);
-      }
-    });
-
-    // Footer
-    doc.setFontSize(7);
-    doc.setTextColor(100);
-    doc.text('Negative Operations Generator', pageWidth / 2, pageHeight - 10, { align: 'center' });
-
-    // Open in browser
-    const pdfBlob = doc.output('blob');
-    const pdfUrl = URL.createObjectURL(pdfBlob);
-    window.open(pdfUrl, '_blank');
-    
+    handlePrint(questions, useMissingNumber);
     setError('');
   };
 
   return (
     <>
       {/* Header Bar */}
-      <div className="bg-blue-900 shadow-lg">
+      <div className="bg-blue-900 shadow-lg" style={{backgroundColor:"#1e3a8a"}}>
         <div className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
-          {/* Home Button */}
           <button 
             onClick={() => window.location.href = '/'}
             className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors"
@@ -387,7 +500,6 @@ export default function NegativeNumbersOperations() {
             <span className="font-semibold text-lg">Home</span>
           </button>
           
-          {/* Menu Dropdown */}
           <div className="relative">
             <button 
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -419,12 +531,10 @@ export default function NegativeNumbersOperations() {
       {/* Main Content */}
       <div className="min-h-screen p-8" style={{ backgroundColor: '#f5f3f0' }}>
         <div className="max-w-6xl mx-auto">
-          {/* Title */}
           <h1 className="text-5xl font-bold text-center mb-8" style={{ color: '#000000' }}>
             {TOOL_CONFIG.pageTitle}
           </h1>
           
-          {/* Divider */}
           <div className="flex justify-center mb-8">
             <div style={{ width: '90%', height: '2px', backgroundColor: '#d1d5db' }}></div>
           </div>
@@ -435,14 +545,12 @@ export default function NegativeNumbersOperations() {
               Customisation Options
             </h2>
 
-            {/* Divider */}
             <div className="flex justify-center mb-6">
               <div style={{ width: '100%', height: '1px', backgroundColor: '#e5e7eb' }}></div>
             </div>
 
-            {/* Operation Selection with nested Sign Combinations */}
+            {/* Operation Selection Grid */}
             <div className="mb-8">
-              {/* 2x2 Grid for Operations */}
               <div className="grid grid-cols-2 gap-8 max-w-2xl mx-auto">
 
                 {/* Addition */}
@@ -483,7 +591,7 @@ export default function NegativeNumbersOperations() {
                       className="w-5 h-5 cursor-pointer"
                       style={{ accentColor: '#1e3a8a' }}
                     />
-                    <span className="text-xl font-bold" style={{ color: '#000000' }}>Subtraction (-)</span>
+                    <span className="text-xl font-bold" style={{ color: '#000000' }}>Subtraction (−)</span>
                   </label>
                   <div className="flex flex-col gap-2 items-center">
                     {(['pos_pos', 'pos_neg', 'neg_pos', 'neg_neg'] as SignCombination[]).map(combo => (
@@ -495,7 +603,7 @@ export default function NegativeNumbersOperations() {
                           className="w-4 h-4 cursor-pointer"
                           style={{ accentColor: '#1e3a8a' }}
                         />
-                        <span>{combo === 'pos_pos' ? 'Positive - Positive' : combo === 'pos_neg' ? 'Positive - Negative' : combo === 'neg_pos' ? 'Negative - Positive' : 'Negative - Negative'}</span>
+                        <span>{combo === 'pos_pos' ? 'Positive − Positive' : combo === 'pos_neg' ? 'Positive − Negative' : combo === 'neg_pos' ? 'Negative − Positive' : 'Negative − Negative'}</span>
                       </label>
                     ))}
                   </div>
@@ -560,7 +668,6 @@ export default function NegativeNumbersOperations() {
               </div>
             </div>
 
-            {/* Divider */}
             <div className="flex justify-center my-6">
               <div style={{ width: '80%', height: '1px', backgroundColor: '#e5e7eb' }}></div>
             </div>
@@ -581,23 +688,39 @@ export default function NegativeNumbersOperations() {
               </label>
             </div>
 
+            {/* Missing Number Option */}
+            <div className="flex justify-center items-center gap-3 mb-6">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={useMissingNumber}
+                  onChange={(e) => setUseMissingNumber(e.target.checked)}
+                  className="w-5 h-5 cursor-pointer"
+                  style={{ accentColor: '#1e3a8a' }}
+                />
+                <span className="text-lg font-semibold" style={{ color: '#000000' }}>
+                  Missing number questions (e.g., 2 + __ = 5)
+                </span>
+              </label>
+            </div>
+
             {/* Number of Questions */}
             <div className="flex justify-center items-center gap-4 mb-6">
               <label className="text-lg font-semibold" style={{ color: '#000000' }}>
-                Questions (21-60):
+                Questions (15-45):
               </label>
               <input 
                 type="number" 
-                min="21" 
-                max="60" 
+                min="15" 
+                max="45" 
                 value={numQuestions}
                 onChange={(e) => {
-                  const val = parseInt(e.target.value) || 21;
-                  if (val >= 21 && val <= 60) {
+                  const val = parseInt(e.target.value) || 15;
+                  if (val >= 15 && val <= 45) {
                     setNumQuestions(val);
                     setError('');
                   } else {
-                    setError('Please enter a number between 21 and 60');
+                    setError('Please enter a number between 15 and 45');
                   }
                 }}
                 className="w-24 px-4 py-2 border-2 border-gray-300 rounded-lg text-lg"
@@ -652,7 +775,7 @@ export default function NegativeNumbersOperations() {
                 {previewQuestions.slice(0, 12).map((q, idx) => (
                   <div key={idx} className="p-3">
                     <span className="text-xl font-semibold" style={{ color: '#000000' }}>
-                      {idx + 1}. {q.question} = _____
+                      {idx + 1}. {useMissingNumber ? q.question : `${q.question} = ___`}
                     </span>
                   </div>
                 ))}
@@ -679,7 +802,7 @@ export default function NegativeNumbersOperations() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-blue-900 font-bold">•</span>
-                <span>Addition and Subtraction use numbers from -25 to 25</span>
+                <span>Addition and Subtraction use numbers from −25 to 25</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-blue-900 font-bold">•</span>
@@ -691,7 +814,11 @@ export default function NegativeNumbersOperations() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-blue-900 font-bold">•</span>
-                <span>Set the number of questions (21-60)</span>
+                <span>Missing number questions put the unknown in different positions</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-blue-900 font-bold">•</span>
+                <span>Set the number of questions (15-45)</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-blue-900 font-bold">•</span>
