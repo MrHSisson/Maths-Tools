@@ -286,8 +286,8 @@ const handlePrint = (
   questions: Question[],
   useMissingNumber: boolean
 ) => {
-  const FONT_PX = 11;
-  const PAD_MM = 2;
+  const FONT_PX = 12;
+  const PAD_MM = 1.5;
   const MARGIN_MM = 12;
   const HEADER_MM = 14;
   const GAP_MM = 2;
