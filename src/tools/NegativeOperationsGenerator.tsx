@@ -419,7 +419,7 @@ const handlePrint = (
   
   .grid { display: grid; gap: ${GAP_MM}mm; }
   .cell {
-    border: 0.3mm solid #d1d5db; border-radius: 3mm;
+    border: 0.4mm solid #000000; border-radius: 3mm;
     overflow: hidden; display: flex; flex-direction: column;
     align-items: stretch; justify-content: flex-start;
   }
