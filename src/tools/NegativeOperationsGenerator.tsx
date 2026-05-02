@@ -349,7 +349,7 @@ const handlePrint = (
   };
 
   // Build probe HTML
-  const probeHtml = questions.map((q, i) =>
+  const probeHtml = questions.map((_, i) =>
     `<div class="q-inner" id="probe-${i}">${questionToHtml(i, true)}</div>`
   ).join("");
 
@@ -470,10 +470,9 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 
   function buildCell(idx, showAnswer, cW, cH) {
-    var qData = ${JSON.stringify(questions.map((q, i) => ({ i })))};
     var inner = showAnswer 
-      ? ${JSON.stringify(questions.map((q, i) => questionToHtml(i, true)))}[idx]
-      : ${JSON.stringify(questions.map((q, i) => questionToHtml(i, false)))}[idx];
+      ? ${JSON.stringify(questions.map((_, i) => questionToHtml(i, true)))}[idx]
+      : ${JSON.stringify(questions.map((_, i) => questionToHtml(i, false)))}[idx];
     return '<div class="cell" style="width:' + cW + 'mm;height:' + cH + 'mm;">' + inner + '</div>';
   }
 
