@@ -306,12 +306,18 @@ const handlePrint = (
       return '  ___';
     }
     
-    const cleaned = num.replace(/[()]/g, '');
-    const isNegative = cleaned.startsWith('-');
-    const absValue = isNegative ? cleaned.substring(1) : cleaned;
+    // Clean up: remove ALL spaces, then check structure
+    let cleaned = num.replace(/\s+/g, '');
+    
+    // Check if it has parentheses
+    const hasParens = cleaned.includes('(') && cleaned.includes(')');
+    
+    // Extract the actual number (remove parentheses for processing)
+    const numOnly = cleaned.replace(/[()]/g, '');
+    const isNegative = numOnly.startsWith('-');
+    const absValue = isNegative ? numOnly.substring(1) : numOnly;
     
     let result = '';
-    const hasParens = num.includes('(');
     
     if (hasParens) {
       result += '(';
@@ -820,8 +826,8 @@ export default function NegativeNumbersOperations() {
               <div style={{ width: '80%', height: '1px', backgroundColor: '#e5e7eb' }}></div>
             </div>
 
-            {/* Bracket Option */}
-            <div className="flex justify-center items-center gap-3 mb-4">
+            {/* All Question Options */}
+            <div className="flex flex-col justify-center items-center gap-2 mb-6">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input 
                   type="checkbox" 
@@ -834,10 +840,6 @@ export default function NegativeNumbersOperations() {
                   Use brackets for negative numbers
                 </span>
               </label>
-            </div>
-
-            {/* Question Type Options */}
-            <div className="flex flex-col justify-center items-center gap-2 mb-6">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input 
                   type="checkbox" 
