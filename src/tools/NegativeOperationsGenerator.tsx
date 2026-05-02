@@ -98,6 +98,8 @@ const convertToMissingNumber = (q: Question): void => {
   if (makeFirstMissing) {
     // __ + 5 = 10  (answer is the missing first number)
     q.question = `__ ${operator} ${secondNum} = ${q.answer}`;
+    // Clean up any spacing issues like "( - 9 )" -> "(-9)"
+    q.question = q.question.replace(/\(\s*-\s*(\d+)\s*\)/g, '(-$1)');
     // Calculate what the first number should be based on the operation
     if (operator === '+') {
       q.answer = q.answer - parseFloat(secondNum.replace(/[()]/g, ''));
@@ -112,6 +114,8 @@ const convertToMissingNumber = (q: Question): void => {
     // 5 + __ = 10  (answer is the missing second number)
     const originalAnswer = q.answer;
     q.question = `${firstNum} ${operator} __ = ${originalAnswer}`;
+    // Clean up any spacing issues like "( - 9 )" -> "(-9)"
+    q.question = q.question.replace(/\(\s*-\s*(\d+)\s*\)/g, '(-$1)');
     // Calculate what the second number should be
     const first = parseFloat(firstNum.replace(/[()]/g, ''));
     if (operator === '+') {
