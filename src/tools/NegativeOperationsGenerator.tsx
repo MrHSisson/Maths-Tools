@@ -290,7 +290,7 @@ const handlePrint = (
   const PAD_MM = 1.2;
   const MARGIN_MM = 12;
   const HEADER_MM = 14;
-  const GAP_MM = 1.5;
+  const GAP_MM = 1.2;
   const PAGE_H_MM = 297 - MARGIN_MM * 2;
   const PAGE_W_MM = 210 - MARGIN_MM * 2;
   const usableH_MM = PAGE_H_MM - HEADER_MM;
@@ -347,23 +347,34 @@ const handlePrint = (
     
     // Parse the question properly by identifying components
     // Question format: "num1 op num2 = answer" or "num1 op __ = answer" or "__ op num2 = answer"
+    // OR for standard questions: "num1 op num2" (equals added above)
     
-    // Use regex to match: (optional parens + number) operator (optional parens + number) = (answer or blank)
-    const regex = /^\s*(\(?-?\d+\)?)\s*([\+\-−×÷x\/])\s*(\(?-?\d+\)?|__)\s*=\s*(.+)$/;
-    const match = questionText.match(regex);
+    // Try to match with equals sign first
+    let regex = /^\s*(__|\(?-?\d+\)?)\s*([\+\-−×÷x\/])\s*(__|\(?-?\d+\)?)\s*=\s*(.+)$/;
+    let match = questionText.match(regex);
+    
+    // If no match, try without equals (shouldn't happen but safety check)
+    if (!match) {
+      regex = /^\s*(__|\(?-?\d+\)?)\s*([\+\-−×÷x\/])\s*(__|\(?-?\d+\)?)\s*$/;
+      match = questionText.match(regex);
+      if (match) {
+        // Add the missing result part
+        match.push('___');
+      }
+    }
     
     if (!match) {
-      // Fallback if regex doesn't match
+      // Fallback if regex doesn't match - just display as-is
       return `<div class="qbody">${questionText}</div>`;
     }
     
     let [, num1, operator, num2, result] = match;
     
     // Clean up any extra spaces in the captured groups
-    num1 = num1.trim();
-    operator = operator.trim();
-    num2 = num2.trim();
-    result = result.trim();
+    num1 = num1?.trim() || '';
+    operator = operator?.trim() || '';
+    num2 = num2?.trim() || '';
+    result = result?.trim() || '___';
     
     let formatted = '';
     
