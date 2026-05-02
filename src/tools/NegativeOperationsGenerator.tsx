@@ -14,6 +14,7 @@ type ColorScheme = 'default' | 'blue' | 'pink' | 'yellow';
 type Question = {
   question: string;
   answer: number;
+  key?: string; // Unique key for deduplication
 };
 
 type OperationType = 'addition' | 'subtraction' | 'multiplication' | 'division';
@@ -24,7 +25,7 @@ const generateQuestions = (
   operationCombinations: Record<OperationType, SignCombination[]>,
   numQuestions: number,
   useBrackets: boolean,
-  useMissingNumber: boolean
+  missingNumberPercent: number
 ): Question[] => {
   const allPossible: Question[] = [];
   
@@ -40,20 +41,40 @@ const generateQuestions = (
     });
   });
 
-  // Convert to missing number format if enabled
-  if (useMissingNumber) {
-    allPossible.forEach(q => {
-      convertToMissingNumber(q);
-    });
-  }
-
   // Shuffle using Fisher-Yates algorithm
   for (let i = allPossible.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [allPossible[i], allPossible[j]] = [allPossible[j], allPossible[i]];
   }
 
-  return allPossible.slice(0, Math.min(numQuestions, allPossible.length));
+  const selected = allPossible.slice(0, Math.min(numQuestions, allPossible.length));
+  
+  // Add unique keys before conversion
+  selected.forEach((q, i) => {
+    q.key = `${q.question}_${q.answer}_${i}`;
+  });
+  
+  // Convert to missing number format based on percentage
+  selected.forEach(q => {
+    if (Math.random() * 100 < missingNumberPercent) {
+      convertToMissingNumber(q);
+      // Update key after conversion to reflect the change
+      q.key = `${q.question}_${q.answer}_missing`;
+    }
+  });
+
+  // Deduplicate based on question text and answer
+  const seen = new Set<string>();
+  const deduplicated = selected.filter(q => {
+    const key = `${q.question}_${q.answer}`;
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+
+  return deduplicated;
 };
 
 // Convert a standard question to missing number format
@@ -331,14 +352,14 @@ const handlePrint = (
           const second = formatNumber(answerParts[2]);
           const equals = '=';
           const answer = formatNumber(answerParts.slice(4).join(' '));
-          formatted = `${first}${operator}${second}${equals}${answer}`;
+          formatted = `${first} ${operator} ${second} ${equals} ${answer}`;
         } else {
           const answer = formatNumber(String(q.answer));
-          formatted = `${first}${operator}${second}${equals}${answer}`;
+          formatted = `${first} ${operator} ${second} ${equals} ${answer}`;
         }
       } else {
         const answer = formatNumber(parts.slice(4).join(' '));
-        formatted = `${first}${operator}${second}${equals}${answer}`;
+        formatted = `${first} ${operator} ${second} ${equals} ${answer}`;
       }
     } else {
       formatted = questionText;
@@ -492,9 +513,8 @@ document.addEventListener("DOMContentLoaded", function() {
       ? totalQ + ' questions (' + (pgIdx+1) + '/' + totalPages + ')'
       : totalQ + ' questions';
     var title = showAnswer ? 'Negative Operations — Answers' : 'Negative Operations';
-    var nameField = showAnswer ? '' : '<div style="font-size:3mm;color:#000;margin-top:1mm;">Name: __________________________</div>';
     return '<div class="page">'
-      + '<div class="page-header"><div><h1>' + title + '</h1>' + nameField + '</div>'
+      + '<div class="page-header"><div><h1>' + title + '</h1></div>'
       + '<div class="meta">' + dateStr + ' · ' + lbl + '</div></div>'
       + buildGrid(startIdx, showAnswer, chosenH_mm)
       + '</div>';
@@ -529,7 +549,8 @@ export default function NegativeNumbersOperations() {
   });
   const [numQuestions, setNumQuestions] = useState<number>(40);
   const [useBrackets, setUseBrackets] = useState<boolean>(true);
-  const [useMissingNumber, setUseMissingNumber] = useState<boolean>(false);
+  const [standardQuestions, setStandardQuestions] = useState<boolean>(true);
+  const [missingNumberQuestions, setMissingNumberQuestions] = useState<boolean>(false);
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   const [colorScheme, setColorScheme] = useState<ColorScheme>('default');
   const [error, setError] = useState<string>('');
@@ -570,7 +591,14 @@ export default function NegativeNumbersOperations() {
       return;
     }
 
-    const questions = generateQuestions(operationCombinations, numQuestions, useBrackets, useMissingNumber);
+    if (!standardQuestions && !missingNumberQuestions) {
+      setError('Please select at least one question type (standard or missing number)');
+      return;
+    }
+
+    // Calculate percentage: both checked = 50%, only missing = 100%, only standard = 0%
+    const missingPercent = standardQuestions && missingNumberQuestions ? 50 : missingNumberQuestions ? 100 : 0;
+    const questions = generateQuestions(operationCombinations, numQuestions, useBrackets, missingPercent);
 
     if (questions.length === 0) {
       setError('No questions could be generated with the current settings');
@@ -590,14 +618,20 @@ export default function NegativeNumbersOperations() {
       return;
     }
 
-    const questions = generateQuestions(operationCombinations, numQuestions, useBrackets, useMissingNumber);
+    if (!standardQuestions && !missingNumberQuestions) {
+      setError('Please select at least one question type (standard or missing number)');
+      return;
+    }
+
+    const missingPercent = standardQuestions && missingNumberQuestions ? 50 : missingNumberQuestions ? 100 : 0;
+    const questions = generateQuestions(operationCombinations, numQuestions, useBrackets, missingPercent);
     
     if (questions.length === 0) {
       setError('No questions could be generated with the current settings');
       return;
     }
 
-    handlePrint(questions, useMissingNumber);
+    handlePrint(questions, missingPercent > 0);
     setError('');
   };
 
@@ -787,7 +821,7 @@ export default function NegativeNumbersOperations() {
             </div>
 
             {/* Bracket Option */}
-            <div className="flex justify-center items-center gap-3 mb-6">
+            <div className="flex justify-center items-center gap-3 mb-4">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input 
                   type="checkbox" 
@@ -802,13 +836,25 @@ export default function NegativeNumbersOperations() {
               </label>
             </div>
 
-            {/* Missing Number Option */}
-            <div className="flex justify-center items-center gap-3 mb-6">
+            {/* Question Type Options */}
+            <div className="flex flex-col justify-center items-center gap-2 mb-6">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input 
                   type="checkbox" 
-                  checked={useMissingNumber}
-                  onChange={(e) => setUseMissingNumber(e.target.checked)}
+                  checked={standardQuestions}
+                  onChange={(e) => setStandardQuestions(e.target.checked)}
+                  className="w-5 h-5 cursor-pointer"
+                  style={{ accentColor: '#1e3a8a' }}
+                />
+                <span className="text-lg font-semibold" style={{ color: '#000000' }}>
+                  Standard questions (e.g., 2 + 3 = ___)
+                </span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={missingNumberQuestions}
+                  onChange={(e) => setMissingNumberQuestions(e.target.checked)}
                   className="w-5 h-5 cursor-pointer"
                   style={{ accentColor: '#1e3a8a' }}
                 />
@@ -889,7 +935,7 @@ export default function NegativeNumbersOperations() {
                 {previewQuestions.slice(0, 12).map((q, idx) => (
                   <div key={idx} className="p-3">
                     <span className="text-xl font-semibold" style={{ color: '#000000' }}>
-                      {idx + 1}. {useMissingNumber ? q.question : `${q.question} = ___`}
+                      {idx + 1}. {q.question.includes('__') ? q.question : `${q.question} = ___`}
                     </span>
                   </div>
                 ))}
