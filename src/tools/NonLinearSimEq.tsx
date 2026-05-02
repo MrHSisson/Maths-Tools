@@ -843,7 +843,7 @@ const handlePrint=(questions:AnyQuestion[],subTool:SubTool,difficulty:string,isD
   const toolName=subTool==="linear"?"Linear Substitution":subTool==="factorising"?"Non-Linear (Factorising)":"Non-Linear (Formula)";
   const qData=questions.map((q,i)=>({
     eq1:q.eq1Display,eq2:q.eq2Display,
-    answerLatex:q.kind==="linear"?`${q.varPair[0]}=${q.v1Val},\\quad ${q.varPair[1]}=${q.v2Val}`:(q as NonLinearQuestion).solutions.map(s=>`x=${fmtSoln(s.x)},\\; y=${fmtSoln(s.y)}`).join(",\\; "),
+    answerLatex:q.kind==="linear"?`${q.varPair[0]}=${q.v1Val},\\quad ${q.varPair[1]}=${q.v2Val}`:(q as NonLinearQuestion).solutions.map(s=>`x=${fmtSoln(s.x)},\\quad y=${fmtSoln(s.y)}`).join("|SPLIT|"),
     difficulty:q.difficulty,idx:i,
   }));
   const html=`<!DOCTYPE html><html><head><meta charset="utf-8">
@@ -894,15 +894,10 @@ document.addEventListener("DOMContentLoaded",function(){
       row.appendChild(lbl);row.appendChild(m);body.appendChild(row);
     });
     if(showAns){
-      // Split multiple solution pairs onto separate lines
-      var pairs=item.answerLatex.split(",\\\\; ");
-      if(pairs.length>1){
-        pairs.forEach(function(pair){
-          var a=document.createElement("div");a.className="qa";kr(a,pair);body.appendChild(a);
-        });
-      } else {
-        var a=document.createElement("div");a.className="qa";kr(a,item.answerLatex);body.appendChild(a);
-      }
+      var pairs=item.answerLatex.split("|SPLIT|");
+      pairs.forEach(function(pair){
+        var a=document.createElement("div");a.className="qa";kr(a,pair);body.appendChild(a);
+      });
     }
     return body;
   }
@@ -1331,4 +1326,3 @@ export default function App(){
     </>
   );
 }
-    
