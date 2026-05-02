@@ -476,6 +476,8 @@ const AnswerDisplay = ({ q, useFractions }: { q: AnyQuestion; useFractions: bool
   return <MathRenderer latex={answerLatex} />;
 };
 
+void (InlineMath as unknown);
+
 // ── DifficultyToggle ──────────────────────────────────────────────────────────
 
 const DifficultyToggle = ({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
