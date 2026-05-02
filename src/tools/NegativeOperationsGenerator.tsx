@@ -266,7 +266,6 @@ const handlePrint = (
   const PAGE_W_MM = 210 - MARGIN_MM * 2;
   
   // For this tool, use 3 columns fixed
-  const cols = 3;
   const cellW_MM = (PAGE_W_MM - GAP_MM * 2) / 3;
   
   const now = new Date();
