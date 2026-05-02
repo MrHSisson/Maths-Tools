@@ -362,7 +362,7 @@ const handlePrint = (
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   @page { size: A4; margin: ${MARGIN_MM}mm; }
-  body { font-family: Courier, monospace; background: #fff; }
+  body { font-family: "Segoe UI", Arial, sans-serif; background: #fff; }
   
   @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
   .page { width: ${PAGE_W_MM}mm; height: ${PAGE_H_MM}mm; overflow: hidden; page-break-after: always; }
@@ -383,7 +383,7 @@ const handlePrint = (
   
   #probe {
     position: fixed; left: -9999px; top: 0; visibility: hidden;
-    font-family: Courier, monospace; font-size: ${FONT_PX}px; line-height: 1.4;
+    font-family: "Segoe UI", Arial, sans-serif; font-size: ${FONT_PX}px; line-height: 1.4;
     width: ${cellW_MM}mm;
   }
   
