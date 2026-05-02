@@ -146,7 +146,7 @@ const fmtSoln = (n: number): string => {
 };
 
 // Same-line check: are two equations a1*v1+b1*v2=c1 and a2*v1+b2*v2=c2 the same line?
-const sameLine = (a1: number, b1: number, c1: number, a2: number, b2: number, c2: number) =>
+const sameLine = (a1: number, b1: number, _c1: number, a2: number, b2: number, c2: number) =>
   a1 * b2 === b1 * a2 && a1 * c2 === b1 * c2;
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -306,7 +306,6 @@ const genLinL3 = (aN: boolean, rN: boolean, aNE: boolean): LinearQuestion => {
   if (!coeffs) return genLinL3(aN,rN,aNE);
   const a=coeffs.a, b=coeffs.b, c=a*v1V+b*v2V;
   const iC=iso==="v1"?a:b, oC=iso==="v1"?b:a;
-  // eq2 standard form: n*oV - iV = mVal  →  iso=v1: (-1,n,mVal); iso=v2: (n,-1,mVal)
   const eq2a=iso==="v1"?-1:n, eq2b=iso==="v1"?n:-1;
   if (sameLine(a,b,c,eq2a,eq2b,mVal)) return genLinL3(aN,rN,aNE);
   const nS=`${n}${oV}`;
@@ -1322,3 +1321,4 @@ export default function App(){
     </>
   );
 }
+            
