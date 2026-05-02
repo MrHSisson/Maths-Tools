@@ -259,13 +259,16 @@ const handlePrint = (
   useMissingNumber: boolean
 ) => {
   const FONT_PX = 11;
+  const PAD_MM = 2;
   const MARGIN_MM = 12;
   const HEADER_MM = 14;
   const GAP_MM = 2;
   const PAGE_H_MM = 297 - MARGIN_MM * 2;
   const PAGE_W_MM = 210 - MARGIN_MM * 2;
+  const usableH_MM = PAGE_H_MM - HEADER_MM;
   
   // For this tool, use 3 columns fixed
+  const cols = 3;
   const cellW_MM = (PAGE_W_MM - GAP_MM * 2) / 3;
   
   const now = new Date();
@@ -304,10 +307,12 @@ const handlePrint = (
     return result;
   };
 
-  const formatQuestion = (q: Question, showAnswer: boolean): string => {
+  const questionToHtml = (idx: number, showAnswer: boolean): string => {
+    const q = questions[idx];
     const questionText = useMissingNumber ? q.question : `${q.question} = ___`;
     const parts = questionText.split(' ');
     
+    let formatted = '';
     if (parts.length >= 3) {
       const first = formatNumber(parts[0]);
       const operator = parts[1];
@@ -326,18 +331,27 @@ const handlePrint = (
           const second = formatNumber(answerParts[2]);
           const equals = '=';
           const answer = formatNumber(answerParts.slice(4).join(' '));
-          return `${first}${operator}${second}${equals}${answer}`;
+          formatted = `${first}${operator}${second}${equals}${answer}`;
         } else {
           const answer = formatNumber(String(q.answer));
-          return `${first}${operator}${second}${equals}${answer}`;
+          formatted = `${first}${operator}${second}${equals}${answer}`;
         }
       } else {
         const answer = formatNumber(parts.slice(4).join(' '));
-        return `${first}${operator}${second}${equals}${answer}`;
+        formatted = `${first}${operator}${second}${equals}${answer}`;
       }
+    } else {
+      formatted = questionText;
     }
-    return questionText;
+    
+    // No banner - just the question body
+    return `<div class="qbody">${formatted}</div>`;
   };
+
+  // Build probe HTML
+  const probeHtml = questions.map((q, i) =>
+    `<div class="q-inner" id="probe-${i}">${questionToHtml(i, true)}</div>`
+  ).join("");
 
   // Build HTML
   const html = `<!DOCTYPE html>
@@ -348,52 +362,155 @@ const handlePrint = (
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   @page { size: A4; margin: ${MARGIN_MM}mm; }
-  body { font-family: Courier, monospace; background: #fff; font-size: ${FONT_PX}px; }
+  body { font-family: Courier, monospace; background: #fff; }
   
   @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
   .page { width: ${PAGE_W_MM}mm; height: ${PAGE_H_MM}mm; overflow: hidden; page-break-after: always; }
   .page:last-child { page-break-after: auto; }
-  
   .page-header {
     display: flex; justify-content: space-between; align-items: baseline;
     border-bottom: 0.4mm solid #1e3a8a; padding-bottom: 1.5mm; margin-bottom: 2mm;
-    height: ${HEADER_MM}mm;
   }
   .page-header h1 { font-size: 5mm; font-weight: 700; color: #1e3a8a; }
   .page-header .meta { font-size: 3mm; color: #6b7280; }
-  .page-header .name-line { font-size: 3mm; color: #000; }
   
-  .grid { display: grid; grid-template-columns: repeat(3, ${cellW_MM}mm); gap: ${GAP_MM}mm; }
-  .question { text-align: left; line-height: 1.4; }
+  .grid { display: grid; gap: ${GAP_MM}mm; }
+  .cell {
+    border: 0.3mm solid #d1d5db; border-radius: 3mm;
+    overflow: hidden; display: flex; flex-direction: column;
+    align-items: stretch; justify-content: flex-start;
+  }
+  
+  #probe {
+    position: fixed; left: -9999px; top: 0; visibility: hidden;
+    font-family: Courier, monospace; font-size: ${FONT_PX}px; line-height: 1.4;
+    width: ${cellW_MM}mm;
+  }
+  
+  .q-inner { width: 100%; display: flex; flex-direction: column; flex: 1; }
+  .qbody { 
+    padding: ${PAD_MM}mm; 
+    text-align: center; 
+    flex: 1;
+    font-size: ${FONT_PX}px;
+    line-height: 1.4;
+  }
+  .q-answer { 
+    font-size: ${FONT_PX}px; 
+    color: #059669; 
+    display: block; 
+    margin-top: 0.8mm; 
+    text-align: center; 
+  }
 </style>
 </head>
 <body>
+<div id="probe">${probeHtml}</div>
+<div id="pages"></div>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  var pxPerMm   = 3.7795;
+  var PAD_MM    = ${PAD_MM};
+  var GAP_MM    = ${GAP_MM};
+  var usableH   = ${usableH_MM};
+  var PAGE_W_MM = ${PAGE_W_MM};
+  var cols      = ${cols};
+  var totalQ    = ${totalQ};
+  var dateStr   = "${dateStr}";
 
-<!-- Questions Page -->
-<div class="page">
-  <div class="page-header">
-    <div>
-      <h1>Negative Operations</h1>
-      <div class="name-line">Name: __________________________</div>
-    </div>
-    <div class="meta">${dateStr} · ${totalQ} questions</div>
-  </div>
-  <div class="grid">
-    ${questions.map(q => `<div class="question">${formatQuestion(q, false)}</div>`).join('\n    ')}
-  </div>
-</div>
+  // Pre-determined row heights for 1–15 rows
+  var rowHeights = [];
+  for (var r = 1; r <= 15; r++) {
+    rowHeights.push((usableH - GAP_MM * (r - 1)) / r);
+  }
 
-<!-- Answer Page -->
-<div class="page">
-  <div class="page-header">
-    <h1>Negative Operations — Answers</h1>
-    <div class="meta">${dateStr} · ${totalQ} questions</div>
-  </div>
-  <div class="grid">
-    ${questions.map(q => `<div class="question">${formatQuestion(q, true)}</div>`).join('\n    ')}
-  </div>
-</div>
+  // Step 1: measure tallest question content
+  var probe = document.getElementById('probe');
+  var maxH_px = 0;
+  probe.querySelectorAll('.q-inner').forEach(function(el) {
+    if (el.scrollHeight > maxH_px) maxH_px = el.scrollHeight;
+  });
+  var maxH_mm = maxH_px / pxPerMm;
+  var needed_mm = maxH_mm + PAD_MM * 2 + 6;
 
+  // Step 2: find optimal row count
+  var chosenH_mm = rowHeights[0];
+  var rowsPerPage = 1;
+
+  var found = false;
+  for (var r = 0; r < rowHeights.length; r++) {
+    var capacity = (r + 1) * cols;
+    if (capacity >= totalQ && rowHeights[r] >= needed_mm) {
+      chosenH_mm = rowHeights[r];
+      rowsPerPage = r + 1;
+      found = true;
+      break;
+    }
+  }
+
+  if (!found) {
+    for (var r2 = 0; r2 < rowHeights.length; r2++) {
+      if (rowHeights[r2] >= needed_mm) {
+        chosenH_mm = rowHeights[r2];
+        rowsPerPage = r2 + 1;
+      }
+    }
+  }
+
+  // Step 3: split into pages
+  var pageCapacity = rowsPerPage * cols;
+  var pages = [];
+  for (var s = 0; s < totalQ; s += pageCapacity) {
+    pages.push(s);
+  }
+  var totalPages = pages.length;
+
+  function makeCellW(c) {
+    return (PAGE_W_MM - GAP_MM * (c - 1)) / c;
+  }
+
+  function buildCell(idx, showAnswer, cW, cH) {
+    var qData = ${JSON.stringify(questions.map((q, i) => ({ i })))};
+    var inner = showAnswer 
+      ? ${JSON.stringify(questions.map((q, i) => questionToHtml(i, true)))}[idx]
+      : ${JSON.stringify(questions.map((q, i) => questionToHtml(i, false)))}[idx];
+    return '<div class="cell" style="width:' + cW + 'mm;height:' + cH + 'mm;">' + inner + '</div>';
+  }
+
+  function buildGrid(startIdx, showAnswer, cH) {
+    var endIdx = Math.min(startIdx + pageCapacity, totalQ);
+    var cW = makeCellW(cols);
+    var gridRows = Math.ceil((endIdx - startIdx) / cols);
+    var cells = '';
+    for (var i = startIdx; i < endIdx; i++) {
+      cells += buildCell(i, showAnswer, cW, cH);
+    }
+    return '<div class="grid" style="grid-template-columns:repeat(' + cols + ',' + cW + 'mm);grid-template-rows:repeat(' + gridRows + ',' + cH + 'mm);">' + cells + '</div>';
+  }
+
+  function buildPage(startIdx, showAnswer, pgIdx) {
+    var lbl = totalPages > 1
+      ? totalQ + ' questions (' + (pgIdx+1) + '/' + totalPages + ')'
+      : totalQ + ' questions';
+    var title = showAnswer ? 'Negative Operations — Answers' : 'Negative Operations';
+    var nameField = showAnswer ? '' : '<div style="font-size:3mm;color:#000;margin-top:1mm;">Name: __________________________</div>';
+    return '<div class="page">'
+      + '<div class="page-header"><div><h1>' + title + '</h1>' + nameField + '</div>'
+      + '<div class="meta">' + dateStr + ' · ' + lbl + '</div></div>'
+      + buildGrid(startIdx, showAnswer, chosenH_mm)
+      + '</div>';
+  }
+
+  // Render all question pages then all answer pages
+  var html = pages.map(function(startIdx, i) { return buildPage(startIdx, false, i); }).join('')
+           + pages.map(function(startIdx, i) { return buildPage(startIdx, true,  i); }).join('');
+
+  document.getElementById('pages').innerHTML = html;
+  probe.remove();
+
+  setTimeout(function() { window.print(); }, 300);
+});
+</script>
 </body>
 </html>`;
 
@@ -401,7 +518,6 @@ const handlePrint = (
   if (!win) { alert("Please allow popups to use the PDF export."); return; }
   win.document.write(html);
   win.document.close();
-  setTimeout(() => { win.print(); }, 300);
 };
 
 export default function NegativeNumbersOperations() {
