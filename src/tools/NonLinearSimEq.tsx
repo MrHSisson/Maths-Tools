@@ -103,16 +103,12 @@ type SolnPair = { x: number; y: number };
 interface NonLinearQuestion {
   kind: "nonlinear";
   subTool: "factorising" | "formula";
-  eq1Display: string;
-  eq2Display: string;
+  eq1Display: string; eq2Display: string;
   isolateVar: "x" | "y";
   isolatedExpr: string;
-  linM: number;
-  linD: number;
-  needsRearrange: boolean;
-  rearrangedLatex: string;
-  quadLatex: string;
-  expandedLatex: string;
+  linM: number; linD: number;
+  needsRearrange: boolean; rearrangedLatex: string;
+  quadLatex: string; expandedLatex: string;
   factorisedLatex?: string;
   surdLatex?: string;
   surdX1?: string; surdX2?: string;
@@ -122,8 +118,7 @@ interface NonLinearQuestion {
   solutions: SolnPair[];
   isDoubleRoot: boolean;
   A: number; B: number; C: number;
-  isCircle: boolean;
-  r2?: number;
+  isCircle: boolean; r2?: number;
   level: DifficultyLevel;
   key: string; difficulty: string;
   working: { type: string; latex: string; plain: string }[];
@@ -132,24 +127,27 @@ interface NonLinearQuestion {
 type AnyQuestion = LinearQuestion | NonLinearQuestion;
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// SHARED MATH HELPERS
+// MATH HELPERS
 // ═══════════════════════════════════════════════════════════════════════════════
 const randInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
 const pick = <T,>(arr: T[]): T => arr[randInt(0, arr.length - 1)];
 const gcd2 = (a: number, b: number): number => b === 0 ? Math.abs(a) : gcd2(b, a % b);
 const fmt2 = (n: number): string => n.toFixed(2).replace(/\.?0+$/, "");
-
 const fmtSoln = (n: number): string => {
-  for (let denom = 1; denom <= 5; denom++) {
-    const numer = Math.round(n * denom);
-    if (Math.abs(numer / denom - n) < 0.0001) {
-      if (denom === 1) return `${numer}`;
-      const g = gcd2(Math.abs(numer), denom);
-      return `\\frac{${numer / g}}{${denom / g}}`;
+  for (let d = 1; d <= 5; d++) {
+    const num = Math.round(n * d);
+    if (Math.abs(num / d - n) < 0.0001) {
+      if (d === 1) return `${num}`;
+      const g = gcd2(Math.abs(num), d);
+      return `\\frac{${num / g}}{${d / g}}`;
     }
   }
   return fmt2(n);
 };
+
+// Same-line check: are two equations a1*v1+b1*v2=c1 and a2*v1+b2*v2=c2 the same line?
+const sameLine = (a1: number, b1: number, c1: number, a2: number, b2: number, c2: number) =>
+  a1 * b2 === b1 * a2 && a1 * c2 === b1 * c2;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // LINEAR GENERATOR
@@ -162,11 +160,11 @@ const buildEqLin = (a: number, b: number, c: number, v1: string, v2: string) =>
   a<0&&b>0 ? `${lead(b,v2)} ${nextT(a,v1)} = ${c}` : `${lead(a,v1)} ${nextT(b,v2)} = ${c}`;
 
 const aSubPos = (iC: number, oC: number, k: number, d: number, ov: string, c: number) => {
-  const inner = d===0?(k===1?ov:`${k}${ov}`):d>0?(k===1?`${ov} + ${d}`:`${k}${ov} + ${d}`):(k===1?`${ov} - ${Math.abs(d)}`:`${k}${ov} - ${Math.abs(d)}`);
+  const inner = d===0?(k===1?ov:`${k}${ov}`):d>0?(k===1?`${ov}+${d}`:`${k}${ov}+${d}`):(k===1?`${ov}-${Math.abs(d)}`:`${k}${ov}-${Math.abs(d)}`);
   return `${iC}(${inner}) ${nextT(oC,ov)} = ${c}`;
 };
 const aSubNeg = (iC: number, oC: number, k: number, d: number, ov: string, c: number) =>
-  `${iC}(${k===1?`${d} - ${ov}`:`${d} - ${k}${ov}`}) ${nextT(oC,ov)} = ${c}`;
+  `${iC}(${k===1?`${d}-${ov}`:`${d}-${k}${ov}`}) ${nextT(oC,ov)} = ${c}`;
 
 const solvePos = (iC: number, oC: number, k: number, d: number, ov: string, oVal: number, c: number): string[] => {
   const eI=iC*k, eC=iC*d, nC=eI+oC, nR=c-eC;
@@ -195,14 +193,14 @@ const sbNeg = (iV: string, ov: string, k: number, d: number, oVal: number, iVal:
   `${iV} = ${iVal}`,
 ];
 
-const buildEq1Coeffs = (iso: "v1"|"v2", rhsC: number, aNeg: boolean): {a:number;b:number}|null => {
-  for (let i=0;i<50;i++) {
+const buildEq1Coeffs = (iso: "v1"|"v2", rhsC: number, aNeg: boolean): { a: number; b: number } | null => {
+  for (let i=0; i<50; i++) {
     const aM=randInt(2,6), bM=randInt(2,6);
     if (aM===bM) continue;
     const a=(aNeg&&Math.random()<0.35)?-aM:aM;
     const b=(aNeg&&Math.random()<0.35)?-bM:bM;
     if (Math.abs(iso==="v1"?b:a)===rhsC) continue;
-    return {a,b};
+    return { a, b };
   }
   return null;
 };
@@ -215,7 +213,7 @@ const resolveNeg = (mode: NegMode) => ({
 const genLinL1 = (aN: boolean, rN: boolean, aNE: boolean): LinearQuestion => {
   const id=randInt(0,1e6), vp=pick(VAR_PAIRS), [v1,v2]=vp;
   const iso: "v1"|"v2"=Math.random()<0.5?"v1":"v2";
-  const [iV,oV]=iso==="v1"?[v1,v2]:[v2,v1];
+  const iV=iso==="v1"?v1:v2, oV=iso==="v1"?v2:v1;
   const r=aN?[-10,10]:[1,10];
   const v1V=randInt(r[0],r[1]), v2V=randInt(r[0],r[1]);
   if (!v1V||!v2V) return genLinL1(aN,rN,aNE);
@@ -223,17 +221,22 @@ const genLinL1 = (aN: boolean, rN: boolean, aNE: boolean): LinearQuestion => {
   if (!rN&&(v1V<0||v2V<0)) return genLinL1(aN,rN,aNE);
   const iVal=iso==="v1"?v1V:v2V, oVal=iso==="v1"?v2V:v1V;
   const k=pick([2,2,3,3,3,4,5]), d=iVal-k*oVal;
-  const coeffs=buildEq1Coeffs(iso,k,aNE); if (!coeffs) return genLinL1(aN,rN,aNE);
-  const {a,b}=coeffs, c=a*v1V+b*v2V, [iC,oC]=iso==="v1"?[a,b]:[b,a];
-  const kP=`${k}${oV}`, dS=d===0?"":(d>0?` + ${d}`:` - ${Math.abs(d)}`);
-  const eq2=`${iV} = ${kP}${dS}`;
-  return { kind:"linear",varPair:vp,a1:a,b1:b,c1:c,eq1Display:buildEqLin(a,b,c,v1,v2),eq2Display:eq2,isolatedVar:iso,isolatedExpr:`${kP}${dS}`,rearrangedLatex:eq2,needsRearrange:false,afterSubLatex:aSubPos(iC,oC,k,d,oV,c),solveSteps:solvePos(iC,oC,k,d,oV,oVal,c),subBackSteps:sbPos(iV,oV,k,d,oVal,iVal),v1Val:v1V,v2Val:v2V,key:`L1-${v1}${v2}-${a}-${b}-${k}-${d}-${v1V}-${v2V}-${id}`,difficulty:"level1",working:[] };
+  const coeffs=buildEq1Coeffs(iso,k,aNE);
+  if (!coeffs) return genLinL1(aN,rN,aNE);
+  const a=coeffs.a, b=coeffs.b, c=a*v1V+b*v2V;
+  const iC=iso==="v1"?a:b, oC=iso==="v1"?b:a;
+  // Guard: same line
+  const eq2a=iso==="v1"?1:-k, eq2b=iso==="v1"?-k:1;
+  if (sameLine(a,b,c,eq2a,eq2b,d)) return genLinL1(aN,rN,aNE);
+  const dS=d===0?"":(d>0?` + ${d}`:` - ${Math.abs(d)}`);
+  const eq2=`${iV} = ${k}${oV}${dS}`;
+  return { kind:"linear",varPair:vp,a1:a,b1:b,c1:c,eq1Display:buildEqLin(a,b,c,v1,v2),eq2Display:eq2,isolatedVar:iso,isolatedExpr:`${k}${oV}${dS}`,rearrangedLatex:eq2,needsRearrange:false,afterSubLatex:aSubPos(iC,oC,k,d,oV,c),solveSteps:solvePos(iC,oC,k,d,oV,oVal,c),subBackSteps:sbPos(iV,oV,k,d,oVal,iVal),v1Val:v1V,v2Val:v2V,key:`L1-${v1}${v2}-${a}-${b}-${k}-${d}-${v1V}-${v2V}-${id}`,difficulty:"level1",working:[] };
 };
 
 const genLinL2 = (aN: boolean, rN: boolean, aZ: boolean, aNE: boolean): LinearQuestion => {
   const id=randInt(0,1e6), vp=pick(VAR_PAIRS), [v1,v2]=vp;
   const iso: "v1"|"v2"=Math.random()<0.5?"v1":"v2";
-  const [iV,oV]=iso==="v1"?[v1,v2]:[v2,v1];
+  const iV=iso==="v1"?v1:v2, oV=iso==="v1"?v2:v1;
   const forms=["lhs","rhs",...(aZ?["zero"]:[])];
   const form=pick(forms);
   const k=randInt(2,5), d=randInt(-8,8), oVal=randInt(1,8), iVal=k*oVal+d;
@@ -242,24 +245,43 @@ const genLinL2 = (aN: boolean, rN: boolean, aZ: boolean, aNE: boolean): LinearQu
   if (rN&&v1V>0&&v2V>0) return genLinL2(aN,rN,aZ,aNE);
   if (!rN&&(v1V<0||v2V<0)) return genLinL2(aN,rN,aZ,aNE);
   if (Math.abs(v1V)>25||Math.abs(v2V)>25) return genLinL2(aN,rN,aZ,aNE);
+
   if (form==="lhs") {
     const n=randInt(2,5), m2=n*oVal+iVal;
-    const coeffs=buildEq1Coeffs(iso,n,aNE); if (!coeffs) return genLinL2(aN,rN,aZ,aNE);
-    const {a,b}=coeffs, c=a*v1V+b*v2V, [iC,oC]=iso==="v1"?[a,b]:[b,a];
+    const coeffs=buildEq1Coeffs(iso,n,aNE);
+    if (!coeffs) return genLinL2(aN,rN,aZ,aNE);
+    const a=coeffs.a, b=coeffs.b, c=a*v1V+b*v2V;
+    const iC=iso==="v1"?a:b, oC=iso==="v1"?b:a;
+    // eq2 standard form: n*oV + iV = m2  →  iso=v1: n*v2+v1=m2 i.e. (1,n,m2); iso=v2: (n,1,m2)
+    const eq2a=iso==="v1"?1:n, eq2b=iso==="v1"?n:1;
+    if (sameLine(a,b,c,eq2a,eq2b,m2)) return genLinL2(aN,rN,aZ,aNE);
     const isoE=`${m2} - ${n}${oV}`;
     return { kind:"linear",varPair:vp,a1:a,b1:b,c1:c,eq1Display:buildEqLin(a,b,c,v1,v2),eq2Display:`${n}${oV} + ${iV} = ${m2}`,isolatedVar:iso,isolatedExpr:isoE,rearrangedLatex:`${iV} = ${isoE}`,needsRearrange:true,afterSubLatex:aSubNeg(iC,oC,n,m2,oV,c),solveSteps:solveNeg(iC,oC,n,m2,oV,oVal,c),subBackSteps:sbNeg(iV,oV,n,m2,oVal,iVal),v1Val:v1V,v2Val:v2V,key:`L2lhs-${v1}${v2}-${n}-${m2}-${v1V}-${v2V}-${id}`,difficulty:"level2",working:[] };
   }
+
   if (form==="rhs") {
     const n=k, p=-d;
-    const coeffs=buildEq1Coeffs(iso,n,aNE); if (!coeffs) return genLinL2(aN,rN,aZ,aNE);
-    const {a,b}=coeffs, c=a*v1V+b*v2V, [iC,oC]=iso==="v1"?[a,b]:[b,a];
+    const coeffs=buildEq1Coeffs(iso,n,aNE);
+    if (!coeffs) return genLinL2(aN,rN,aZ,aNE);
+    const a=coeffs.a, b=coeffs.b, c=a*v1V+b*v2V;
+    const iC=iso==="v1"?a:b, oC=iso==="v1"?b:a;
+    // eq2: iV = k*oV + d  →  iV - k*oV = d
+    const eq2a=iso==="v1"?1:-k, eq2b=iso==="v1"?-k:1;
+    if (sameLine(a,b,c,eq2a,eq2b,d)) return genLinL2(aN,rN,aZ,aNE);
     const pS=p===0?iV:p>0?`${iV} + ${p}`:`${iV} - ${Math.abs(p)}`;
-    const dS=d===0?"":(d>0?` + ${d}`:` - ${Math.abs(d)}`), isoE=`${k}${oV}${dS}`;
+    const dS=d===0?"":(d>0?` + ${d}`:` - ${Math.abs(d)}`);
+    const isoE=`${k}${oV}${dS}`;
     return { kind:"linear",varPair:vp,a1:a,b1:b,c1:c,eq1Display:buildEqLin(a,b,c,v1,v2),eq2Display:`${n}${oV} = ${pS}`,isolatedVar:iso,isolatedExpr:isoE,rearrangedLatex:`${iV} = ${isoE}`,needsRearrange:true,afterSubLatex:aSubPos(iC,oC,k,d,oV,c),solveSteps:solvePos(iC,oC,k,d,oV,oVal,c),subBackSteps:sbPos(iV,oV,k,d,oVal,iVal),v1Val:v1V,v2Val:v2V,key:`L2rhs-${v1}${v2}-${k}-${d}-${v1V}-${v2V}-${id}`,difficulty:"level2",working:[] };
   }
+
+  // zero form
   const n=randInt(2,5), p=-(n*oVal+iVal);
-  const coeffs=buildEq1Coeffs(iso,n,aNE); if (!coeffs) return genLinL2(aN,rN,aZ,aNE);
-  const {a,b}=coeffs, c=a*v1V+b*v2V, [iC,oC]=iso==="v1"?[a,b]:[b,a];
+  const coeffs=buildEq1Coeffs(iso,n,aNE);
+  if (!coeffs) return genLinL2(aN,rN,aZ,aNE);
+  const a=coeffs.a, b=coeffs.b, c=a*v1V+b*v2V;
+  const iC=iso==="v1"?a:b, oC=iso==="v1"?b:a;
+  const eq2a=iso==="v1"?1:n, eq2b=iso==="v1"?n:1;
+  if (sameLine(a,b,c,eq2a,eq2b,0)) return genLinL2(aN,rN,aZ,aNE);
   const pS=p===0?"":(p>0?` + ${p}`:` - ${Math.abs(p)}`);
   const rpS=p===0?"":(p>0?` - ${p}`:` + ${Math.abs(p)}`);
   const isoE=`-${n}${oV}${rpS}`, kk=-n, dd=-p;
@@ -269,7 +291,7 @@ const genLinL2 = (aN: boolean, rN: boolean, aZ: boolean, aNE: boolean): LinearQu
 const genLinL3 = (aN: boolean, rN: boolean, aNE: boolean): LinearQuestion => {
   const id=randInt(0,1e6), vp=pick(VAR_PAIRS), [v1,v2]=vp;
   const iso: "v1"|"v2"=Math.random()<0.5?"v1":"v2";
-  const [iV,oV]=iso==="v1"?[v1,v2]:[v2,v1];
+  const iV=iso==="v1"?v1:v2, oV=iso==="v1"?v2:v1;
   const r=aN?[-10,10]:[1,10];
   const v1V=randInt(r[0],r[1]), v2V=randInt(r[0],r[1]);
   if (!v1V||!v2V) return genLinL3(aN,rN,aNE);
@@ -280,10 +302,15 @@ const genLinL3 = (aN: boolean, rN: boolean, aNE: boolean): LinearQuestion => {
   const form: "lhsNeg"|"negIso"=Math.random()<0.5?"lhsNeg":"negIso";
   const mVal=form==="lhsNeg"?n*oVal-iVal:iVal+n*oVal;
   if (mVal<=0||mVal>50) return genLinL3(aN,rN,aNE);
-  const coeffs=buildEq1Coeffs(iso,n,aNE); if (!coeffs) return genLinL3(aN,rN,aNE);
-  const {a,b}=coeffs, c=a*v1V+b*v2V, [iC,oC]=iso==="v1"?[a,b]:[b,a];
+  const coeffs=buildEq1Coeffs(iso,n,aNE);
+  if (!coeffs) return genLinL3(aN,rN,aNE);
+  const a=coeffs.a, b=coeffs.b, c=a*v1V+b*v2V;
+  const iC=iso==="v1"?a:b, oC=iso==="v1"?b:a;
+  // eq2 standard form: n*oV - iV = mVal  →  iso=v1: (-1,n,mVal); iso=v2: (n,-1,mVal)
+  const eq2a=iso==="v1"?-1:n, eq2b=iso==="v1"?n:-1;
+  if (sameLine(a,b,c,eq2a,eq2b,mVal)) return genLinL3(aN,rN,aNE);
   const nS=`${n}${oV}`;
-  let eq2="",isoE="",rear="",aSub="",sS: string[]=[],sB: string[]=[];
+  let eq2="", isoE="", rear="", aSub="", sS: string[]=[], sB: string[]=[];
   if (form==="lhsNeg") {
     eq2=Math.random()<0.5?`${nS} - ${iV} = ${mVal}`:`-${iV} + ${nS} = ${mVal}`;
     isoE=`${nS} - ${mVal}`; rear=`${iV} = ${isoE}`;
@@ -297,7 +324,7 @@ const genLinL3 = (aN: boolean, rN: boolean, aNE: boolean): LinearQuestion => {
 };
 
 const generateLinear = (level: DifficultyLevel, negMode: NegMode, allowZero: boolean, allowNegEq1: boolean): LinearQuestion => {
-  const {allowNeg,requireNeg}=resolveNeg(negMode);
+  const { allowNeg, requireNeg } = resolveNeg(negMode);
   if (level==="level1") return genLinL1(allowNeg,requireNeg,allowNegEq1);
   if (level==="level2") return genLinL2(allowNeg,requireNeg,allowZero,allowNegEq1);
   return genLinL3(allowNeg,requireNeg,allowNegEq1);
@@ -313,59 +340,46 @@ const buildParabolaRhs = (A: number, B: number, C: number): string => {
   return `${xSq}${bP}${cP}`;
 };
 const buildParabolaDisplay = (A: number, B: number, C: number) => `y = ${buildParabolaRhs(A,B,C)}`;
-
 const buildLinExpr = (m: number, v: string, d: number): string => {
   if (m===0) return `${d}`;
   const mP=m===1?v:m===-1?`-${v}`:`${m}${v}`;
   const dP=d===0?"":(d>0?` + ${d}`:` - ${Math.abs(d)}`);
   return `${mP}${dP}`;
 };
-
 const buildLinIsolated = (isolateVar: "x"|"y", m: number, d: number): string => {
-  const ov=isolateVar==="y"?"x":"y";
   if (m===0) return `${isolateVar} = ${d}`;
-  return `${isolateVar} = ${buildLinExpr(m,ov,d)}`;
+  return `${isolateVar} = ${buildLinExpr(m, isolateVar==="y"?"x":"y", d)}`;
 };
-
 const buildExpandedEq = (A: number, B: number, C: number, v="x"): string => {
   const vSq=A===1?`${v}^2`:`${A}${v}^2`;
   const bP=B===0?"":(B>0?` + ${B}${v}`:` - ${Math.abs(B)}${v}`);
   const cP=C===0?"":(C>0?` + ${C}`:` - ${Math.abs(C)}`);
   return `${vSq}${bP}${cP} = 0`;
 };
-
 const buildFactorisedDisplay = (p: number, q: number, r: number, s: number, isDouble: boolean, v="x"): string => {
-  const f=(pv: number,qv: number)=>pv===1?(qv<0?`(${v} + ${-qv})`:qv===0?v:`(${v} - ${qv})`):(qv<0?`(${pv}${v} + ${-qv})`:`(${pv}${v} - ${qv})`);
+  const f=(pv: number,qv: number)=>pv===1?(qv<0?`(${v}+${-qv})`:qv===0?v:`(${v}-${qv})`):(qv<0?`(${pv}${v}+${-qv})`:`(${pv}${v}-${qv})`);
   if (isDouble) return `${f(p,q)}^2 = 0`;
   return `${f(p,q)}${f(r,s)} = 0`;
 };
-
 const buildSurdDisplay = (A: number, B: number, disc: number): string =>
   `x = \\frac{${-B} \\pm \\sqrt{${disc}}}{${2*A}}`;
-
 const buildSurdPairs = (A: number, B: number, disc: number, m: number, d: number, isolateVar: "x"|"y") => {
   const denom=2*A, negB=-B;
   const otherVar=isolateVar==="y"?"y":"x";
-  // x1 = (negB + √disc)/denom,  x2 = (negB - √disc)/denom
   const sx1=`\\frac{${negB}+\\sqrt{${disc}}}{${denom}}`;
   const sx2=`\\frac{${negB}-\\sqrt{${disc}}}{${denom}}`;
-  // y = m*x + d = (m*negB + d*denom ± m*√disc) / denom
   const numConst=m*negB+d*denom;
   const mAbs=Math.abs(m);
   const sc=mAbs===1?"":String(mAbs);
-  // if m>0: same ± as x; if m<0: opposite (∓)
-  const pmSym =m>=0?"\\pm":"\\mp";
-  const pm1   =m>=0?"+":"-";
-  const pm2   =m>=0?"-":"+";
+  const pmSym=m>=0?"\\pm":"\\mp";
+  const pm1=m>=0?"+":"-";
+  const pm2=m>=0?"-":"+";
   const frac=(n: string)=>`\\frac{${n}}{${denom}}`;
-  const syCombined=numConst===0
-    ?`${otherVar} = ${frac(`${pmSym}${sc}\\sqrt{${disc}}`)}`
-    :`${otherVar} = ${frac(`${numConst} ${pmSym} ${sc}\\sqrt{${disc}}`)}`;
+  const syCombined=numConst===0?`${otherVar} = ${frac(`${pmSym}${sc}\\sqrt{${disc}}`)}` :`${otherVar} = ${frac(`${numConst} ${pmSym} ${sc}\\sqrt{${disc}}`)}`;
   const sy1=`${otherVar} = ${frac(`${numConst}${pm1}${sc}\\sqrt{${disc}}`)}`;
   const sy2=`${otherVar} = ${frac(`${numConst}${pm2}${sc}\\sqrt{${disc}}`)}`;
   return { sx1, sx2, sy1, sy2, syCombined };
 };
-
 const buildRearrangedL2 = (isolateVar: "x"|"y", m: number, d: number): { display: string; rearranged: string } => {
   const ov=isolateVar==="y"?"x":"y";
   const rearranged=`${isolateVar} = ${buildLinExpr(m,ov,d)}`;
@@ -383,23 +397,17 @@ const buildRearrangedL2 = (isolateVar: "x"|"y", m: number, d: number): { display
   const clean=opts.filter(s=>!s.includes("+ 0")&&!s.includes("- 0")&&s!==`${mP} = ${isolateVar}`);
   return { display: pick(clean.length>0?clean:opts), rearranged };
 };
-
 const buildCircleLinear = (isolateVar: "x"|"y", m: number, d: number, allowRearrange: boolean): { display: string; needsRearrange: boolean; rearranged: string } => {
   const ov=isolateVar==="y"?"x":"y";
   const rearranged=`${isolateVar} = ${buildLinExpr(m,ov,d)}`;
   if (!allowRearrange||Math.random()<0.5) return { display:rearranged, needsRearrange:false, rearranged };
   const mAbs=Math.abs(m), isoStr=mAbs===1?isolateVar:`${mAbs}${isolateVar}`;
-  const opts=[
-    `${ov} + ${isoStr} = ${d}`,
-    `${isoStr} = ${d} - ${ov}`,
-    `${d} = ${ov} + ${isoStr}`,
-    ...(d!==0?[`${d} - ${ov} = ${isoStr}`]:[]),
-  ];
+  const opts=[`${ov} + ${isoStr} = ${d}`,`${isoStr} = ${d} - ${ov}`,`${d} = ${ov} + ${isoStr}`,...(d!==0?[`${d} - ${ov} = ${isoStr}`]:[])];
   return { display: pick(opts), needsRearrange: true, rearranged };
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// CIRCLE POINT TABLE (work-backwards approach for factorising)
+// CIRCLE POINT TABLE
 // ═══════════════════════════════════════════════════════════════════════════════
 const CIRCLE_POINTS: Record<number,[number,number][]> = {
   5:  [[ 1, 2],[ 2, 1],[ 1,-2],[ 2,-1],[-1, 2],[-2, 1],[-1,-2],[-2,-1]],
@@ -448,24 +456,17 @@ const generateParabola = (subTool: "factorising"|"formula", level: DifficultyLev
     const linIso=buildLinIsolated("y",m,d);
     let eq2Display=linIso, needsRearrange=false, rearrangedLatex=linIso;
     if (level==="level2") { const f=buildRearrangedL2("y",m,d); eq2Display=f.display; needsRearrange=true; rearrangedLatex=f.rearranged; }
-    return {
-      kind:"nonlinear",subTool,eq1Display:quadDisplay,eq2Display,isolateVar:"y",
-      isolatedExpr:buildLinExpr(m,"x",d),linM:m,linD:d,needsRearrange,rearrangedLatex,
-      quadLatex:`${buildParabolaRhs(Ar,Bq,Cq)} = ${buildLinExpr(m,"x",d)}`,
-      expandedLatex:buildExpandedEq(Ar,Br,Cr),
-      factorisedLatex:buildFactorisedDisplay(p,q,r,s,isDoubleRoot),
-      solutions,isDoubleRoot,A:Ar,B:Br,C:Cr,isCircle:false,level,
-      key:`NL-fac-${level}-${Ar}-${Bq}-${Cq}-${p}-${q}-${r}-${s}-${id}`,difficulty:level,working:[],
-    };
+    return { kind:"nonlinear",subTool,eq1Display:quadDisplay,eq2Display,isolateVar:"y",isolatedExpr:buildLinExpr(m,"x",d),linM:m,linD:d,needsRearrange,rearrangedLatex,quadLatex:`${buildParabolaRhs(Ar,Bq,Cq)} = ${buildLinExpr(m,"x",d)}`,expandedLatex:buildExpandedEq(Ar,Br,Cr),factorisedLatex:buildFactorisedDisplay(p,q,r,s,isDoubleRoot),solutions,isDoubleRoot,A:Ar,B:Br,C:Cr,isCircle:false,level,key:`NL-fac-${level}-${Ar}-${Bq}-${Cq}-${p}-${q}-${r}-${s}-${id}`,difficulty:level,working:[] };
   }
 
   // formula
-  for (let attempt=0;attempt<200;attempt++) {
+  for (let attempt=0; attempt<200; attempt++) {
     const A=allowA?randInt(1,5):1;
     const Bq=randInt(-6,6), Cq=randInt(-12,12);
     const m=randInt(-5,5), d=randInt(-10,10);
     if (m===0) continue;
     const Ar=A, Br=Bq-m, Cr=Cq-d;
+    if (Ar===0) continue;
     const disc=Br*Br-4*Ar*Cr;
     if (disc<=0) continue;
     if (Number.isInteger(Math.sqrt(disc))) continue;
@@ -476,17 +477,8 @@ const generateParabola = (subTool: "factorising"|"formula", level: DifficultyLev
     const linIso=buildLinIsolated("y",m,d);
     let eq2Display=linIso, needsRearrange=false, rearrangedLatex=linIso;
     if (level==="level2") { const f=buildRearrangedL2("y",m,d); eq2Display=f.display; needsRearrange=true; rearrangedLatex=f.rearranged; }
-    const {sx1,sx2,sy1,sy2,syCombined}=buildSurdPairs(Ar,Br,disc,m,d,"y");
-    return {
-      kind:"nonlinear",subTool,eq1Display:quadDisplay,eq2Display,isolateVar:"y",
-      isolatedExpr:buildLinExpr(m,"x",d),linM:m,linD:d,needsRearrange,rearrangedLatex,
-      quadLatex:`${buildParabolaRhs(A,Bq,Cq)} = ${buildLinExpr(m,"x",d)}`,
-      expandedLatex:buildExpandedEq(Ar,Br,Cr),
-      surdLatex:buildSurdDisplay(Ar,Br,disc),surdX1:sx1,surdX2:sx2,surdY1:sy1,surdY2:sy2,surdYCombined:syCombined,
-      decimalLatex:`x = ${fmt2(x1)} \\text{ or } x = ${fmt2(x2)}`,
-      solutions:[{x:x1,y:y1},{x:x2,y:y2}],isDoubleRoot:false,A:Ar,B:Br,C:Cr,isCircle:false,level,
-      key:`NL-form-${level}-${A}-${Bq}-${Cq}-${m}-${d}-${id}`,difficulty:level,working:[],
-    };
+    const sp=buildSurdPairs(Ar,Br,disc,m,d,"y");
+    return { kind:"nonlinear",subTool,eq1Display:quadDisplay,eq2Display,isolateVar:"y",isolatedExpr:buildLinExpr(m,"x",d),linM:m,linD:d,needsRearrange,rearrangedLatex,quadLatex:`${buildParabolaRhs(A,Bq,Cq)} = ${buildLinExpr(m,"x",d)}`,expandedLatex:buildExpandedEq(Ar,Br,Cr),surdLatex:buildSurdDisplay(Ar,Br,disc),surdX1:sp.sx1,surdX2:sp.sx2,surdY1:sp.sy1,surdY2:sp.sy2,surdYCombined:sp.syCombined,decimalLatex:`x=${fmt2(x1)} \\text{ or } x=${fmt2(x2)}`,solutions:[{x:x1,y:y1},{x:x2,y:y2}],isDoubleRoot:false,A:Ar,B:Br,C:Cr,isCircle:false,level,key:`NL-form-${level}-${A}-${Bq}-${Cq}-${m}-${d}-${id}`,difficulty:level,working:[] };
   }
   return generateParabola(subTool,level,allowA,surdDisplay,allowRearrange);
 };
@@ -495,19 +487,18 @@ const generateCircle = (subTool: "factorising"|"formula", allowRearrange: boolea
   const id=randInt(0,1e6);
 
   if (subTool==="factorising") {
-    for (let attempt=0;attempt<300;attempt++) {
+    for (let attempt=0; attempt<300; attempt++) {
       const r2=pick(CIRCLE_R2_FAC_KEYS);
       const pts=CIRCLE_POINTS[r2];
       if (!pts||pts.length<2) continue;
       const i1=randInt(0,pts.length-1);
       let i2=randInt(0,pts.length-1);
       if (i2===i1) i2=(i1+1)%pts.length;
-      const [x1,y1]=pts[i1],[x2,y2]=pts[i2];
+      const x1=pts[i1][0], y1=pts[i1][1], x2=pts[i2][0], y2=pts[i2][1];
       const dy=y2-y1, dx=x2-x1;
-      if (dx===0) continue;
+      if (dx===0||dy===0) continue;
       let isolateVar: "x"|"y", m: number, d: number;
-      if (dy===0) continue; // skip horizontal — boring
-      else if (dy%dx===0) { isolateVar="y"; m=dy/dx; d=y1-m*x1; }
+      if (dy%dx===0) { isolateVar="y"; m=dy/dx; d=y1-m*x1; }
       else if (dx%dy===0) { isolateVar="x"; m=dx/dy; d=x1-m*y1; }
       else continue;
       if (m===0) continue;
@@ -522,21 +513,16 @@ const generateCircle = (subTool: "factorising"|"formula", allowRearrange: boolea
       const isDoubleRoot=t1===t2;
       if (isDoubleRoot&&Math.random()<0.9) continue;
       const s1=m*t1+d, s2=m*t2+d;
-      const solutions: SolnPair[]=isDoubleRoot
-        ?[isolateVar==="y"?{x:t1,y:s1}:{x:s1,y:t1}]
-        :[isolateVar==="y"?{x:t1,y:s1}:{x:s1,y:t1},isolateVar==="y"?{x:t2,y:s2}:{x:s2,y:t2}];
-      const {display:eq2Display,needsRearrange,rearranged:rearrangedLatex}=buildCircleLinear(isolateVar,m,d,allowRearrange);
-      const quadLatex=`${ov}^2 + (${buildLinExpr(m,ov,d)})^2 = ${r2}`;
-      const factorisedLatex=Ar===1
-        ?buildFactorisedDisplay(1,t1,1,t2,isDoubleRoot,ov)
-        :buildFactorisedDisplay(Ar,Ar*t1,1,t2,isDoubleRoot,ov);
-      return { kind:"nonlinear",subTool,eq1Display:`x^2 + y^2 = ${r2}`,eq2Display,isolateVar,isolatedExpr:buildLinExpr(m,ov,d),linM:m,linD:d,needsRearrange,rearrangedLatex,quadLatex,expandedLatex:buildExpandedEq(Ar,Br,Cr,ov),factorisedLatex,solutions,isDoubleRoot,A:Ar,B:Br,C:Cr,isCircle:true,r2,level:"level3",key:`NL-circ-fac-${r2}-${m}-${d}-${t1}-${t2}-${id}`,difficulty:"level3",working:[] };
+      const solutions: SolnPair[]=isDoubleRoot?[isolateVar==="y"?{x:t1,y:s1}:{x:s1,y:t1}]:[isolateVar==="y"?{x:t1,y:s1}:{x:s1,y:t1},isolateVar==="y"?{x:t2,y:s2}:{x:s2,y:t2}];
+      const cl=buildCircleLinear(isolateVar,m,d,allowRearrange);
+      const quadLatex=`${ov}^2+(${buildLinExpr(m,ov,d)})^2=${r2}`;
+      const factorisedLatex=Ar===1?buildFactorisedDisplay(1,t1,1,t2,isDoubleRoot,ov):buildFactorisedDisplay(Ar,Ar*t1,1,t2,isDoubleRoot,ov);
+      return { kind:"nonlinear",subTool,eq1Display:`x^2+y^2=${r2}`,eq2Display:cl.display,isolateVar,isolatedExpr:buildLinExpr(m,ov,d),linM:m,linD:d,needsRearrange:cl.needsRearrange,rearrangedLatex:cl.rearranged,quadLatex,expandedLatex:buildExpandedEq(Ar,Br,Cr,ov),factorisedLatex,solutions,isDoubleRoot,A:Ar,B:Br,C:Cr,isCircle:true,r2,level:"level3",key:`NL-circ-fac-${r2}-${m}-${d}-${t1}-${t2}-${id}`,difficulty:"level3",working:[] };
     }
     return generateCircle(subTool,allowRearrange);
   }
 
-  // formula
-  for (let attempt=0;attempt<300;attempt++) {
+  for (let attempt=0; attempt<300; attempt++) {
     const r2=pick(CIRCLE_R2_FORM);
     const isolateVar: "x"|"y"=Math.random()<0.5?"x":"y";
     const ov=isolateVar==="y"?"x":"y";
@@ -548,28 +534,25 @@ const generateCircle = (subTool: "factorising"|"formula", allowRearrange: boolea
     if (Number.isInteger(Math.sqrt(disc))) continue;
     const t1=(-Br+Math.sqrt(disc))/(2*Ar), t2=(-Br-Math.sqrt(disc))/(2*Ar);
     const s1=m*t1+d, s2=m*t2+d;
-    const solutions: SolnPair[]=[
-      isolateVar==="y"?{x:t1,y:s1}:{x:s1,y:t1},
-      isolateVar==="y"?{x:t2,y:s2}:{x:s2,y:t2},
-    ];
-    const {display:eq2Display,needsRearrange,rearranged:rearrangedLatex}=buildCircleLinear(isolateVar,m,d,allowRearrange);
-    const quadLatex=`${ov}^2 + (${buildLinExpr(m,ov,d)})^2 = ${r2}`;
-    const {sx1,sx2,sy1,sy2,syCombined}=buildSurdPairs(Ar,Br,disc,m,d,isolateVar);
-    return { kind:"nonlinear",subTool,eq1Display:`x^2 + y^2 = ${r2}`,eq2Display,isolateVar,isolatedExpr:buildLinExpr(m,ov,d),linM:m,linD:d,needsRearrange,rearrangedLatex,quadLatex,expandedLatex:buildExpandedEq(Ar,Br,Cr,ov),surdLatex:buildSurdDisplay(Ar,Br,disc),surdX1:sx1,surdX2:sx2,surdY1:sy1,surdY2:sy2,surdYCombined:syCombined,decimalLatex:`${ov} = ${fmt2(t1)} \\text{ or } ${ov} = ${fmt2(t2)}`,solutions,isDoubleRoot:false,A:Ar,B:Br,C:Cr,isCircle:true,r2,level:"level3",key:`NL-circ-form-${r2}-${m}-${d}-${id}`,difficulty:"level3",working:[] };
+    const solutions: SolnPair[]=[isolateVar==="y"?{x:t1,y:s1}:{x:s1,y:t1},isolateVar==="y"?{x:t2,y:s2}:{x:s2,y:t2}];
+    const cl=buildCircleLinear(isolateVar,m,d,allowRearrange);
+    const quadLatex=`${ov}^2+(${buildLinExpr(m,ov,d)})^2=${r2}`;
+    const sp=buildSurdPairs(Ar,Br,disc,m,d,isolateVar);
+    return { kind:"nonlinear",subTool,eq1Display:`x^2+y^2=${r2}`,eq2Display:cl.display,isolateVar,isolatedExpr:buildLinExpr(m,ov,d),linM:m,linD:d,needsRearrange:cl.needsRearrange,rearrangedLatex:cl.rearranged,quadLatex,expandedLatex:buildExpandedEq(Ar,Br,Cr,ov),surdLatex:buildSurdDisplay(Ar,Br,disc),surdX1:sp.sx1,surdX2:sp.sx2,surdY1:sp.sy1,surdY2:sp.sy2,surdYCombined:sp.syCombined,decimalLatex:`${ov}=${fmt2(t1)} \\text{ or } ${ov}=${fmt2(t2)}`,solutions,isDoubleRoot:false,A:Ar,B:Br,C:Cr,isCircle:true,r2,level:"level3",key:`NL-circ-form-${r2}-${m}-${d}-${id}`,difficulty:"level3",working:[] };
   }
   return generateCircle(subTool,allowRearrange);
 };
 
-const generateNonLinear=(subTool: "factorising"|"formula",level: DifficultyLevel,allowA: boolean,surdDisplay: SurdDisplay,allowRearrange: boolean): NonLinearQuestion=>
-  level==="level3"?generateCircle(subTool,allowRearrange):generateParabola(subTool,level,allowA,surdDisplay,allowRearrange);
+const generateNonLinear=(subTool: "factorising"|"formula",level: DifficultyLevel,allowA: boolean,sD: SurdDisplay,aR: boolean): NonLinearQuestion=>
+  level==="level3"?generateCircle(subTool,aR):generateParabola(subTool,level,allowA,sD,aR);
 
 const genUniqueLinear=(level: DifficultyLevel,negMode: NegMode,aZ: boolean,aNE: boolean,used: Set<string>): LinearQuestion=>{
-  let q: LinearQuestion,a=0; do{q=generateLinear(level,negMode,aZ,aNE);a++;}while(used.has(q.key)&&a<100);
-  used.add(q.key);return q;
+  let q: LinearQuestion, a=0; do{q=generateLinear(level,negMode,aZ,aNE);a++;}while(used.has(q.key)&&a<100);
+  used.add(q.key); return q;
 };
 const genUniqueNL=(subTool: "factorising"|"formula",level: DifficultyLevel,allowA: boolean,sD: SurdDisplay,aR: boolean,used: Set<string>): NonLinearQuestion=>{
-  let q: NonLinearQuestion,a=0; do{q=generateNonLinear(subTool,level,allowA,sD,aR);a++;}while(used.has(q.key)&&a<100);
-  used.add(q.key);return q;
+  let q: NonLinearQuestion, a=0; do{q=generateNonLinear(subTool,level,allowA,sD,aR);a++;}while(used.has(q.key)&&a<100);
+  used.add(q.key); return q;
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -597,7 +580,7 @@ const EqPairDisplay=({eqs,cls}:{eqs:[string,string];cls:string})=>(
 
 const SolutionDisplay=({q,surdDisplay}:{q:NonLinearQuestion;surdDisplay:SurdDisplay})=>{
   const sf=(n: number)=>q.subTool==="factorising"?fmtSoln(n):fmt2(n);
-  if (q.isDoubleRoot){
+  if (q.isDoubleRoot) {
     const s=q.solutions[0];
     return <div className="text-center"><MathRenderer latex={`x=${sf(s.x)},\\quad y=${sf(s.y)} \\;\\text{(repeated root)}`}/></div>;
   }
@@ -605,10 +588,9 @@ const SolutionDisplay=({q,surdDisplay}:{q:NonLinearQuestion;surdDisplay:SurdDisp
     <div className="flex flex-col gap-1 items-center">
       {(surdDisplay==="surd"||surdDisplay==="both")&&q.surdLatex&&<div><MathRenderer latex={q.surdLatex}/></div>}
       {(surdDisplay==="surd"||surdDisplay==="both")&&q.surdYCombined&&<div><MathRenderer latex={q.surdYCombined}/></div>}
-
-      {(surdDisplay==="decimal"||surdDisplay==="both")&&q.solutions.map((s,i)=>{
-        const xStr=fmt2(q.isolateVar==="y"?s.x:s.y),yStr=fmt2(q.isolateVar==="y"?s.y:s.x);
-        return <div key={i}><MathRenderer latex={`x=${xStr},\\quad y=${yStr}`}/></div>;
+      {q.solutions.map((s,i)=>{
+        const xV=q.isolateVar==="y"?s.x:s.y, yV=q.isolateVar==="y"?s.y:s.x;
+        return <div key={i}><MathRenderer latex={`x=${fmt2(xV)},\\quad y=${fmt2(yV)}`}/></div>;
       })}
     </div>
   );
@@ -637,7 +619,7 @@ const ML=({latex,label}:{latex:string;label?:string})=>(
 
 const LinearWorkedSteps=({q,stepBg,fsz}:{q:LinearQuestion;stepBg:string;fsz:string})=>{
   const [v1,v2]=q.varPair;
-  const [iV]=q.isolatedVar==="v1"?[v1,v2]:[v2,v1];
+  const iV=q.isolatedVar==="v1"?v1:v2;
   let n=1;
   return (
     <div className="space-y-4 mt-6">
@@ -646,7 +628,7 @@ const LinearWorkedSteps=({q,stepBg,fsz}:{q:LinearQuestion;stepBg:string;fsz:stri
       <Card title={`Step ${n++} — Substitute into equation (1)`} stepBg={stepBg} fsz={fsz}><ML latex={q.afterSubLatex}/></Card>
       <Card title={`Step ${n++} — Expand and solve`} stepBg={stepBg} fsz={fsz}>{q.solveSteps.map((s,i)=><ML key={i} latex={s}/>)}</Card>
       <Card title={`Step ${n++} — Substitute back`} stepBg={stepBg} fsz={fsz}>{q.subBackSteps.map((s,i)=><ML key={i} latex={s}/>)}</Card>
-      <Card title="Solution" stepBg={stepBg} fsz={fsz}><ML latex={`${v1} = ${q.v1Val},\\quad ${v2} = ${q.v2Val}`}/></Card>
+      <Card title="Solution" stepBg={stepBg} fsz={fsz}><ML latex={`${v1}=${q.v1Val},\\quad ${v2}=${q.v2Val}`}/></Card>
     </div>
   );
 };
@@ -663,25 +645,24 @@ const NonLinearWorkedSteps=({q,stepBg,fsz,surdDisplay}:{q:NonLinearQuestion;step
       <Card title={`Step ${n++} — Substitute ${otherVar} = ${q.isolatedExpr} into equation (1)`} stepBg={stepBg} fsz={fsz}><ML latex={q.quadLatex}/></Card>
       <Card title={`Step ${n++} — Expand and rearrange to = 0`} stepBg={stepBg} fsz={fsz}><ML latex={q.expandedLatex}/></Card>
       {q.subTool==="factorising"
-        ?<><Card title={`Step ${n++} — Factorise`} stepBg={stepBg} fsz={fsz}><ML latex={q.factorisedLatex??""}/></Card>
-            <Card title={`Step ${n++} — Solve for ${subVar}`} stepBg={stepBg} fsz={fsz}>
-              {q.solutions.map((s,i)=>{const v=q.isolateVar==="y"?s.x:s.y;return <ML key={i} latex={`${subVar} = ${sf(v)}`}/>;})}
-            </Card></>
-        :<Card title={`Step ${n++} — Apply the quadratic formula`} stepBg={stepBg} fsz={fsz}>
-            <ML latex={`${subVar} = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}`}/>
-            <ML latex={`a=${q.A},\\; b=${q.B},\\; c=${q.C}`}/>
-            <ML latex={q.surdLatex??""} />
+        ?<>
+          <Card title={`Step ${n++} — Factorise`} stepBg={stepBg} fsz={fsz}><ML latex={q.factorisedLatex??""}/></Card>
+          <Card title={`Step ${n++} — Solve for ${subVar}`} stepBg={stepBg} fsz={fsz}>
+            {q.solutions.map((s,i)=>{const v=q.isolateVar==="y"?s.x:s.y;return <ML key={i} latex={`${subVar}=${sf(v)}`}/>;})}
           </Card>
+        </>
+        :<Card title={`Step ${n++} — Apply the quadratic formula`} stepBg={stepBg} fsz={fsz}>
+          <ML latex={`${subVar}=\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}`}/>
+          <ML latex={`a=${q.A},\\;b=${q.B},\\;c=${q.C}`}/>
+          {q.surdLatex&&<ML latex={q.surdLatex}/>}
+        </Card>
       }
       <Card title={`Step ${n++} — Substitute back to find ${otherVar}`} stepBg={stepBg} fsz={fsz}>
         {q.solutions.map((s,i)=>{
           const subVal=q.isolateVar==="y"?s.x:s.y;
           const otherVal=q.isolateVar==="y"?s.y:s.x;
-          const isFormula=q.subTool==="formula";
-          if (isFormula&&q.surdX1&&q.surdY1&&q.surdX2&&q.surdY2) {
-            const surdX=i===0?q.surdX1:q.surdX2;
-            const surdY=i===0?q.surdY1:q.surdY2;
-            return <ML key={i} latex={`${subVar} = ${surdX} \\Rightarrow ${surdY}`}/>;
+          if (q.subTool==="formula"&&q.surdX1&&q.surdY1&&q.surdX2&&q.surdY2) {
+            return <ML key={i} latex={`${subVar}=${i===0?q.surdX1:q.surdX2}\\Rightarrow ${i===0?q.surdY1:q.surdY2}`}/>;
           }
           const subValStr=sf(subVal), otherValStr=sf(otherVal);
           const intermediate=q.linM*subVal+q.linD;
@@ -690,9 +671,7 @@ const NonLinearWorkedSteps=({q,stepBg,fsz,surdDisplay}:{q:NonLinearQuestion;step
           const showFinal=Math.round(intermediate*1000)!==Math.round(otherVal*1000);
           const mxPart=q.linM===1?subValStr:q.linM===-1?(subVal<0?`-(${Math.abs(subVal)})`:`-${subValStr}`):`${q.linM}(${subValStr})`;
           const dPart=q.linD===0?"":(q.linD>0?` + ${q.linD}`:` - ${Math.abs(q.linD)}`);
-          return <ML key={i} latex={showMid
-            ?`${subVar}=${subValStr} \\Rightarrow ${otherVar}=${mxPart}${dPart}=${showFinal?`${interStr}=${otherValStr}`:interStr}`
-            :`${subVar}=${subValStr} \\Rightarrow ${otherVar}=${mxPart}=${otherValStr}`}/>;
+          return <ML key={i} latex={showMid?`${subVar}=${subValStr}\\Rightarrow ${otherVar}=${mxPart}${dPart}=${showFinal?`${interStr}=${otherValStr}`:interStr}`:`${subVar}=${subValStr}\\Rightarrow ${otherVar}=${mxPart}=${otherValStr}`}/>;
         })}
       </Card>
       <Card title="Solution" stepBg={stepBg} fsz={fsz}><SolutionDisplay q={q} surdDisplay={surdDisplay}/></Card>
@@ -703,7 +682,7 @@ const NonLinearWorkedSteps=({q,stepBg,fsz,surdDisplay}:{q:NonLinearQuestion;step
 // ═══════════════════════════════════════════════════════════════════════════════
 // QO POPOVERS
 // ═══════════════════════════════════════════════════════════════════════════════
-const LinearQOPopover=({level,negMode,setNegMode,allowZero,setAllowZero,allowNegEq1,setAllowNegEq1}:{level:DifficultyLevel;negMode:NegMode;setNegMode:(v:NegMode)=>void;allowZero:boolean;setAllowZero:(v:boolean)=>void;allowNegEq1:boolean;setAllowNegEq1:(v:boolean)=>void;})=>{
+const LinearQOPopover=({level,negMode,setNegMode,allowZero,setAllowZero,allowNegEq1,setAllowNegEq1}:{level:DifficultyLevel;negMode:NegMode;setNegMode:(v:NegMode)=>void;allowZero:boolean;setAllowZero:(v:boolean)=>void;allowNegEq1:boolean;setAllowNegEq1:(v:boolean)=>void})=>{
   const {open,setOpen,ref}=usePopover();
   return (
     <div className="relative" ref={ref}>
@@ -729,7 +708,7 @@ const LinearQOPopover=({level,negMode,setNegMode,allowZero,setAllowZero,allowNeg
   );
 };
 
-const NonLinearQOPopover=({subTool,level,allowA,setAllowA,surdDisplay,setSurdDisplay,allowRearrange,setAllowRearrange}:{subTool:"factorising"|"formula";level:DifficultyLevel;allowA:boolean;setAllowA:(v:boolean)=>void;surdDisplay:SurdDisplay;setSurdDisplay:(v:SurdDisplay)=>void;allowRearrange:boolean;setAllowRearrange:(v:boolean)=>void;})=>{
+const NonLinearQOPopover=({subTool,level,allowA,setAllowA,surdDisplay,setSurdDisplay,allowRearrange,setAllowRearrange}:{subTool:"factorising"|"formula";level:DifficultyLevel;allowA:boolean;setAllowA:(v:boolean)=>void;surdDisplay:SurdDisplay;setSurdDisplay:(v:SurdDisplay)=>void;allowRearrange:boolean;setAllowRearrange:(v:boolean)=>void})=>{
   const {open,setOpen,ref}=usePopover();
   return (
     <div className="relative" ref={ref}>
@@ -764,7 +743,7 @@ const INFO_SECTIONS=[
   {title:"Linear Substitution",icon:"📐",content:[
     {label:"Overview",detail:"One variable is isolated (or can be isolated) in one equation. Substitute into the other to solve."},
     {label:"Level 1 — Green",detail:"Variable fully isolated. Direct substitution."},
-    {label:"Level 2 — Yellow",detail:"Variable has coefficient +1 but is not isolated. One rearrangement needed."},
+    {label:"Level 2 — Yellow",detail:"Variable has coefficient +1 but not isolated. One rearrangement needed."},
     {label:"Level 3 — Red",detail:"Variable has coefficient −1. Students must manage the sign change."},
   ]},
   {title:"Non-Linear: Factorising",icon:"🟦",content:[
@@ -772,7 +751,6 @@ const INFO_SECTIONS=[
     {label:"Level 1 — Green",detail:"Linear equation already isolated. Direct substitution."},
     {label:"Level 2 — Yellow",detail:"Linear equation needs rearranging first."},
     {label:"Level 3 — Red",detail:"Circle x² + y² = r². Linear may be in rearranged form."},
-    {label:"Rational roots",detail:"Questions may have one fractional root e.g. x = 1/3."},
   ]},
   {title:"Non-Linear: Formula",icon:"🔢",content:[
     {label:"Overview",detail:"Same structure as Factorising but the quadratic never factorises — formula required."},
@@ -814,7 +792,7 @@ const InfoModal=({onClose}:{onClose:()=>void})=>(
   </div>
 );
 
-const MenuDropdown=({colorScheme,setColorScheme,onClose,onOpenInfo}:{colorScheme:string;setColorScheme:(s:string)=>void;onClose:()=>void;onOpenInfo:()=>void;})=>{
+const MenuDropdown=({colorScheme,setColorScheme,onClose,onOpenInfo}:{colorScheme:string;setColorScheme:(s:string)=>void;onClose:()=>void;onOpenInfo:()=>void})=>{
   const [colorOpen,setColorOpen]=useState(false);
   const ref=useRef<HTMLDivElement>(null);
   useEffect(()=>{
@@ -866,9 +844,7 @@ const handlePrint=(questions:AnyQuestion[],subTool:SubTool,difficulty:string,isD
   const toolName=subTool==="linear"?"Linear Substitution":subTool==="factorising"?"Non-Linear (Factorising)":"Non-Linear (Formula)";
   const qData=questions.map((q,i)=>({
     eq1:q.eq1Display,eq2:q.eq2Display,
-    answerLatex:q.kind==="linear"
-      ?`${q.varPair[0]}=${q.v1Val},\\quad ${q.varPair[1]}=${q.v2Val}`
-      :(q as NonLinearQuestion).solutions.map(s=>`x=${fmtSoln(s.x)},\\;y=${fmtSoln(s.y)}`).join("\\quad"),
+    answerLatex:q.kind==="linear"?`${q.varPair[0]}=${q.v1Val},\\quad ${q.varPair[1]}=${q.v2Val}`:(q as NonLinearQuestion).solutions.map(s=>`x=${fmtSoln(s.x)},\\;y=${fmtSoln(s.y)}`).join("\\quad"),
     difficulty:q.difficulty,idx:i,
   }));
   const html=`<!DOCTYPE html><html><head><meta charset="utf-8">
@@ -1094,9 +1070,7 @@ export default function App(){
     return <>
       <div className={`${displayFontSizes[Math.max(0,displayFontSize-1)]} font-semibold`} style={{color:"#000"}}>Solve simultaneously:</div>
       <EqPairDisplay eqs={[nlq.eq1Display,nlq.eq2Display]} cls={displayFontSizes[displayFontSize]}/>
-      {showAns&&<div className={`${displayFontSizes[displayFontSize]} font-bold text-center`} style={{color:"#166534"}}>
-        <SolutionDisplay q={nlq} surdDisplay={surdDisplay}/>
-      </div>}
+      {showAns&&<div className={`${displayFontSizes[displayFontSize]} font-bold text-center`} style={{color:"#166534"}}><SolutionDisplay q={nlq} surdDisplay={surdDisplay}/></div>}
     </>;
   };
 
