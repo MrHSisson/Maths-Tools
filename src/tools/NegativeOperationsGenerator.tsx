@@ -51,6 +51,10 @@ const generateQuestions = (
   
   // Add unique keys before conversion
   selected.forEach((q, i) => {
+    // Clean up any spacing issues in the question text
+    q.question = q.question.replace(/\s+/g, ' ').trim();
+    // Also fix any "( - N )" patterns to "(-N)"
+    q.question = q.question.replace(/\(\s*-\s*(\d+)\s*\)/g, '(-$1)');
     q.key = `${q.question}_${q.answer}_${i}`;
   });
   
@@ -79,6 +83,9 @@ const generateQuestions = (
 
 // Convert a standard question to missing number format
 const convertToMissingNumber = (q: Question): void => {
+  // Clean the question first - collapse multiple spaces
+  q.question = q.question.replace(/\s+/g, ' ').trim();
+  
   // Parse the question to extract parts
   const parts = q.question.split(' ');
   const firstNum = parts[0];
@@ -337,41 +344,50 @@ const handlePrint = (
   const questionToHtml = (idx: number, showAnswer: boolean): string => {
     const q = questions[idx];
     const questionText = useMissingNumber ? q.question : `${q.question} = ___`;
-    const parts = questionText.split(' ');
     
-    let formatted = '';
-    if (parts.length >= 3) {
-      const first = formatNumber(parts[0]);
-      const operator = parts[1];
-      const second = formatNumber(parts[2]);
-      const equals = '=';
-      
-      if (showAnswer) {
-        if (useMissingNumber) {
-          // Replace __ with the answer
-          const answerPart = questionText.includes('__') 
-            ? questionText.replace('__', formatNumber(String(q.answer)).trim())
-            : questionText;
-          const answerParts = answerPart.split(' ');
-          const first = formatNumber(answerParts[0]);
-          const operator = answerParts[1];
-          const second = formatNumber(answerParts[2]);
-          const equals = '=';
-          const answer = formatNumber(answerParts.slice(4).join(' '));
-          formatted = `${first} ${operator} ${second} ${equals} ${answer}`;
-        } else {
-          const answer = formatNumber(String(q.answer));
-          formatted = `${first} ${operator} ${second} ${equals} ${answer}`;
-        }
-      } else {
-        const answer = formatNumber(parts.slice(4).join(' '));
-        formatted = `${first} ${operator} ${second} ${equals} ${answer}`;
-      }
-    } else {
-      formatted = questionText;
+    // Parse the question properly by identifying components
+    // Question format: "num1 op num2 = answer" or "num1 op __ = answer" or "__ op num2 = answer"
+    
+    // Use regex to match: (optional parens + number) operator (optional parens + number) = (answer or blank)
+    const regex = /^\s*(\(?-?\d+\)?)\s*([\+\-−×÷x\/])\s*(\(?-?\d+\)?|__)\s*=\s*(.+)$/;
+    const match = questionText.match(regex);
+    
+    if (!match) {
+      // Fallback if regex doesn't match
+      return `<div class="qbody">${questionText}</div>`;
     }
     
-    // No banner - just the question body
+    let [, num1, operator, num2, result] = match;
+    
+    // Clean up any extra spaces in the captured groups
+    num1 = num1.trim();
+    operator = operator.trim();
+    num2 = num2.trim();
+    result = result.trim();
+    
+    let formatted = '';
+    
+    if (showAnswer) {
+      if (useMissingNumber) {
+        // Replace __ with actual answer
+        if (num1 === '__') {
+          num1 = String(q.answer);
+        } else if (num2 === '__') {
+          num2 = String(q.answer);
+        }
+      } else {
+        // Standard question - replace ___ with answer
+        result = String(q.answer);
+      }
+    }
+    
+    // Format each component
+    const formattedNum1 = formatNumber(num1);
+    const formattedNum2 = formatNumber(num2);
+    const formattedResult = formatNumber(result);
+    
+    formatted = `${formattedNum1} ${operator} ${formattedNum2} = ${formattedResult}`;
+    
     return `<div class="qbody">${formatted}</div>`;
   };
 
