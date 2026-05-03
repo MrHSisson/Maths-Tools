@@ -69,7 +69,8 @@ const TogglePill = ({ checked, onChange, label }: { checked: boolean; onChange: 
 // ═══════════════════════════════════════════════════════════════════════════════
 type SubTool = "linear" | "factorising" | "formula";
 type DifficultyLevel = "level1" | "level2" | "level3";
-type NegMode = "never" | "sometimes" | "always";
+// negMode derived from two-button multi-select: allowPos + allowNeg
+type NegMode = "pos-only" | "neg-only" | "both";
 type SurdDisplay = "surd" | "decimal" | "both";
 
 const getQuestionBg = (cs: string) => ({ blue: "#D1E7F8", pink: "#F8D1E7", yellow: "#F8F4D1" }[cs] ?? "#ffffff");
@@ -152,7 +153,7 @@ const sameLine = (a1: number, b1: number, _c1: number, a2: number, b2: number, c
 // ═══════════════════════════════════════════════════════════════════════════════
 // LINEAR GENERATOR
 // ═══════════════════════════════════════════════════════════════════════════════
-const VAR_PAIRS: [string, string][] = [["x","y"],["s","t"],["n","m"],["a","b"],["u","v"]];
+const VAR_PAIRS: [string, string][] = [["x","y"],["s","t"],["n","m"],["a","b"]];
 
 const lead  = (c: number, v: string) => c===1?v:c===-1?`-${v}`:`${c}${v}`;
 const nextT = (c: number, v: string) => c===0?"":c===1?`+ ${v}`:c===-1?`- ${v}`:c>0?`+ ${c}${v}`:`- ${Math.abs(c)}${v}`;
@@ -206,8 +207,8 @@ const buildEq1Coeffs = (iso: "v1"|"v2", rhsC: number, aNeg: boolean): { a: numbe
 };
 
 const resolveNeg = (mode: NegMode) => ({
-  allowNeg: mode!=="never",
-  requireNeg: mode==="always" ? true : mode==="sometimes" ? Math.random()<0.4 : false,
+  allowNeg:  mode==="neg-only"||mode==="both",
+  requireNeg: mode==="neg-only",
 });
 
 const genLinL1 = (aN: boolean, rN: boolean, aNE: boolean): LinearQuestion => {
@@ -683,23 +684,35 @@ const NonLinearWorkedSteps=({q,stepBg,fsz,surdDisplay}:{q:NonLinearQuestion;step
 // ═══════════════════════════════════════════════════════════════════════════════
 const LinearQOPopover=({level,negMode,setNegMode,allowZero,setAllowZero,allowNegEq1,setAllowNegEq1}:{level:DifficultyLevel;negMode:NegMode;setNegMode:(v:NegMode)=>void;allowZero:boolean;setAllowZero:(v:boolean)=>void;allowNegEq1:boolean;setAllowNegEq1:(v:boolean)=>void})=>{
   const {open,setOpen,ref}=usePopover();
+  const allowPos = negMode==="pos-only"||negMode==="both";
+  const allowNeg = negMode==="neg-only"||negMode==="both";
+  const togglePos = () => {
+    if (allowPos && !allowNeg) return; // last active
+    setNegMode(allowPos ? "neg-only" : "both");
+  };
+  const toggleNeg = () => {
+    if (allowNeg && !allowPos) return; // last active
+    setNegMode(allowNeg ? "pos-only" : "both");
+  };
   return (
     <div className="relative" ref={ref}>
       <PopoverButton open={open} onClick={()=>setOpen(!open)}/>
       {open&&(
         <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-72 p-5 flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Negative solutions</span>
+            <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Solution Types</span>
             <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden">
-              {(["never","sometimes","always"]as NegMode[]).map(opt=>(
-                <button key={opt} onClick={()=>setNegMode(opt)}
-                  className={`flex-1 px-3 py-1.5 text-sm font-bold transition-colors ${negMode===opt?"bg-blue-900 text-white":"bg-white text-gray-600 hover:bg-gray-50"}`}>
-                  {opt.charAt(0).toUpperCase()+opt.slice(1)}
-                </button>
-              ))}
+              <button onClick={togglePos}
+                className={`flex-1 px-3 py-2 text-sm font-bold transition-colors ${allowPos?"bg-blue-900 text-white":"bg-white text-gray-600 hover:bg-gray-50"}`}>
+                Positive Solutions
+              </button>
+              <button onClick={toggleNeg}
+                className={`flex-1 px-3 py-2 text-sm font-bold transition-colors ${allowNeg?"bg-blue-900 text-white":"bg-white text-gray-600 hover:bg-gray-50"}`}>
+                Negative Solutions
+              </button>
             </div>
           </div>
-          <TogglePill checked={allowNegEq1} onChange={setAllowNegEq1} label="Allow negative coefficient in eq 1"/>
+          <TogglePill checked={allowNegEq1} onChange={setAllowNegEq1} label="Allow negative coefficients in Equation 1"/>
           {level==="level2"&&<TogglePill checked={allowZero} onChange={setAllowZero} label='Include "= 0" form'/>}
         </div>
       )}
@@ -709,26 +722,38 @@ const LinearQOPopover=({level,negMode,setNegMode,allowZero,setAllowZero,allowNeg
 
 const NonLinearQOPopover=({subTool,level,allowA,setAllowA,surdDisplay,setSurdDisplay,allowRearrange,setAllowRearrange}:{subTool:"factorising"|"formula";level:DifficultyLevel;allowA:boolean;setAllowA:(v:boolean)=>void;surdDisplay:SurdDisplay;setSurdDisplay:(v:SurdDisplay)=>void;allowRearrange:boolean;setAllowRearrange:(v:boolean)=>void})=>{
   const {open,setOpen,ref}=usePopover();
+  const showSurd = surdDisplay==="surd"||surdDisplay==="both";
+  const showDec  = surdDisplay==="decimal"||surdDisplay==="both";
+  const toggleSurd = () => {
+    if (showSurd && !showDec) return;
+    setSurdDisplay(showSurd ? "decimal" : "both");
+  };
+  const toggleDec = () => {
+    if (showDec && !showSurd) return;
+    setSurdDisplay(showDec ? "surd" : "both");
+  };
   return (
     <div className="relative" ref={ref}>
       <PopoverButton open={open} onClick={()=>setOpen(!open)}/>
       {open&&(
         <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-72 p-5 flex flex-col gap-4">
-          <TogglePill checked={allowA} onChange={setAllowA} label="Allow coefficient on x² (up to 5)"/>
-          {level==="level3"&&<TogglePill checked={allowRearrange} onChange={setAllowRearrange} label="Allow rearranging of linear equation"/>}
           {subTool==="formula"&&(
             <div className="flex flex-col gap-2">
-              <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Answer display</span>
+              <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Answer Display</span>
               <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden">
-                {(["surd","decimal","both"]as SurdDisplay[]).map(opt=>(
-                  <button key={opt} onClick={()=>setSurdDisplay(opt)}
-                    className={`flex-1 px-3 py-1.5 text-sm font-bold transition-colors ${surdDisplay===opt?"bg-blue-900 text-white":"bg-white text-gray-600 hover:bg-gray-50"}`}>
-                    {opt.charAt(0).toUpperCase()+opt.slice(1)}
-                  </button>
-                ))}
+                <button onClick={toggleSurd}
+                  className={`flex-1 px-3 py-2 text-sm font-bold transition-colors ${showSurd?"bg-blue-900 text-white":"bg-white text-gray-600 hover:bg-gray-50"}`}>
+                  Surd
+                </button>
+                <button onClick={toggleDec}
+                  className={`flex-1 px-3 py-2 text-sm font-bold transition-colors ${showDec?"bg-blue-900 text-white":"bg-white text-gray-600 hover:bg-gray-50"}`}>
+                  Decimal
+                </button>
               </div>
             </div>
           )}
+          <TogglePill checked={allowA} onChange={setAllowA} label="Allow coefficient on x² (up to 5)"/>
+          {level==="level3"&&<TogglePill checked={allowRearrange} onChange={setAllowRearrange} label="Allow rearranging of linear equation"/>}
         </div>
       )}
     </div>
@@ -982,7 +1007,7 @@ export default function App(){
   const [subTool,setSubTool]=useState<SubTool>("linear");
   const [mode,setMode]=useState<"whiteboard"|"single"|"worksheet">("whiteboard");
   const [difficulty,setDifficulty]=useState<DifficultyLevel>("level1");
-  const [negMode,setNegMode]=useState<NegMode>("never");
+  const [negMode,setNegMode]=useState<NegMode>("pos-only");
   const [allowZero,setAllowZero]=useState(false);
   const [allowNegEq1,setAllowNegEq1]=useState(false);
   const [allowA,setAllowA]=useState(false);
@@ -1012,6 +1037,9 @@ export default function App(){
   const camDropdownRef=useRef<HTMLDivElement>(null);
   const longPressTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
   const didLongPress=useRef(false);
+  const [splitPct,setSplitPct]=useState(40);
+  const isDraggingRef=useRef(false);
+  const splitContainerRef=useRef<HTMLDivElement>(null);
 
   useEffect(()=>{loadKaTeX();},[]);
   const stopStream=useCallback(()=>{
@@ -1180,7 +1208,7 @@ export default function App(){
       </div>
     );
     const questionBox=(isFS:boolean)=>(
-      <div style={{position:"relative",width:isFS?"40%":"500px",height:"100%",backgroundColor:isFS?fsQuestionBg:stepBg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:isFS?48:32,boxSizing:"border-box",flexShrink:0,gap:16,borderRadius:isFS?0:"12px"}}>
+      <div style={{position:"relative",width:isFS?`${splitPct}%`:"500px",height:"100%",backgroundColor:isFS?fsQuestionBg:stepBg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:isFS?48:32,boxSizing:"border-box",flexShrink:0,gap:16,borderRadius:isFS?0:"12px"}}>
         <div style={{position:"absolute",top:10,right:10,display:"flex",gap:6,zIndex:20}}>
           <button style={fbStyle(canDD)} onClick={()=>canDD&&setDisplayFontSize(f=>f-1)}><ChevronDown size={16} color="#6b7280"/></button>
           <button style={fbStyle(canDI)} onClick={()=>canDI&&setDisplayFontSize(f=>f+1)}><ChevronUp size={16} color="#6b7280"/></button>
@@ -1189,7 +1217,7 @@ export default function App(){
       </div>
     );
     const rightPanel=(isFS:boolean)=>(
-      <div style={{flex:isFS?"none":1,width:isFS?"60%":undefined,height:"100%",position:"relative",overflow:"hidden",backgroundColor:presenterMode?"#000":(isFS?fsWorkingBg:stepBg),borderRadius:isFS?0:"12px"}} className={isFS?"":"flex-1"}>
+      <div style={{flex:1,height:"100%",position:"relative",overflow:"hidden",backgroundColor:presenterMode?"#000":(isFS?fsWorkingBg:stepBg),borderRadius:isFS?0:"12px"}} className={isFS?"":"flex-1"}>
         {presenterMode&&<><video ref={videoRef} autoPlay playsInline muted style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}}/>{camError&&<div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",color:"rgba(255,255,255,0.4)",fontSize:"0.85rem",padding:"2rem",textAlign:"center"}}>{camError}</div>}</>}
         <div style={{position:"absolute",top:10,right:10,display:"flex",gap:6,zIndex:20}}>
           {presenterMode?(
@@ -1221,7 +1249,30 @@ export default function App(){
     if(wbFullscreen)return(
       <div style={{position:"fixed",inset:0,zIndex:200,backgroundColor:fsToolbarBg,display:"flex",flexDirection:"column"}}>
         {fsToolbar}
-        <div style={{flex:1,display:"flex",minHeight:0}}>{questionBox(true)}<div style={{width:2,backgroundColor:"#000",flexShrink:0}}/>{rightPanel(true)}</div>
+        <div ref={splitContainerRef} style={{flex:1,display:"flex",minHeight:0}}>
+          {questionBox(true)}
+          <div
+            style={{position:"relative",width:2,backgroundColor:"#000",flexShrink:0,cursor:"col-resize"}}
+            onMouseDown={e=>{
+              isDraggingRef.current=true;
+              const onMove=(ev: MouseEvent)=>{
+                if(!isDraggingRef.current||!splitContainerRef.current)return;
+                const rect=splitContainerRef.current.getBoundingClientRect();
+                let pct=((ev.clientX-rect.left)/rect.width)*100;
+                pct=Math.min(75,Math.max(25,pct));
+                if(pct>=38&&pct<=42)pct=40;
+                setSplitPct(pct);
+              };
+              const onUp=()=>{isDraggingRef.current=false;document.removeEventListener("mousemove",onMove);document.removeEventListener("mouseup",onUp);};
+              document.addEventListener("mousemove",onMove);
+              document.addEventListener("mouseup",onUp);
+              e.preventDefault();
+            }}
+          >
+            <div style={{position:"absolute",top:0,bottom:0,left:-5,width:12,cursor:"col-resize"}}/>
+          </div>
+          {rightPanel(true)}
+        </div>
       </div>
     );
     return(
