@@ -3,7 +3,6 @@ import LandingPage from './components/LandingPage'
 import IntegersTool from './tools/IntegersTool'
 import RatioSharingTool from './tools/RatioSharingTool'
 import SimplifyingRatiosTool from './tools/SimplifyingRatiosTool'
-import CircleProperties from './tools/CircleProperties'
 import CompletingTheSquare from './tools/CompletingTheSquare'
 import EstimationTool from './tools/EstimationTool'
 import ExpandingDoubleBracketsFOIL from './tools/ExpandingDoubleBracketsFOIL'
@@ -14,12 +13,8 @@ import IterationTool from './tools/IterationTool'
 import RecipesTool from './tools/RecipesTool'
 import FractionToRatio from './tools/FractionToRatio';
 import PowersOfTen from './tools/PowersOfTen';
-import PerimeterTool from './tools/PerimeterTool';
 import FractionsOfAmounts from './tools/FractionsOfAmounts';
-import BasicAngleFacts from './tools/BasicAngleFacts';
 import SimultaneousEquations from './tools/SimultaneousEquations';
-import AnglesInTriangles from './tools/Geometry/AnglesInTriangles';
-import EquationsOfLines from './tools/EquationsOfLines';
 import NonLinearSimEq from './tools/NonLinearSimEq';
 import SolvingLinearEquations from './tools/SolvingLinearEquations';
 
@@ -28,6 +23,14 @@ import SolvingLinearEquations from './tools/SolvingLinearEquations';
 import TimesTablesGenerator from './tools/Generators/TimesTablesGenerator';
 import NegativeOperationsGenerator from './tools/Generators/NegativeOperationsGenerator';
 import MultiplicationGenerator from './tools/Generators/MultiplicationGenerator';
+
+//Geometry
+
+import CircleProperties from './tools/Geometry/CircleProperties'
+import PerimeterTool from './tools/Geometry/PerimeterTool';
+import BasicAngleFacts from './tools/Geometry/BasicAngleFacts';
+import AnglesInTriangles from './tools/Geometry/AnglesInTriangles';
+import EquationsOfLines from './tools/Geometry/EquationsOfLines';
 
 //Teacher Tools
 
@@ -43,7 +46,6 @@ function App() {
       <Route path="/ratio-sharing" element={<RatioSharingTool />} />
       <Route path="/simplifying-ratios" element={<SimplifyingRatiosTool />} />
       <Route path="/expanding-double-brackets-grid" element={<ExpandingDoubleBracketsGRID />} />
-      <Route path="/circle-properties" element={<CircleProperties />} />
       <Route path="/completing-the-square" element={<CompletingTheSquare />} />
       <Route path="/estimation" element={<EstimationTool />} />
       <Route path="/expanding-double-brackets-foil" element={<ExpandingDoubleBracketsFOIL />} />
@@ -53,12 +55,8 @@ function App() {
       <Route path="/recipes" element={<RecipesTool />} />
       <Route path="/fraction-to-ratio" element={<FractionToRatio />} />
       <Route path="/powers-of-ten" element={<PowersOfTen />} />
-      <Route path="/perimeter" element={<PerimeterTool />} />
       <Route path="/fractions-of-amounts" element={<FractionsOfAmounts />} />
-      <Route path="/basic-angle-facts" element={<BasicAngleFacts />} />
       <Route path="/simultaneous-equations-elimination" element={<SimultaneousEquations />} />
-      <Route path="/angles-in-triangles" element={<AnglesInTriangles />} />
-      <Route path="/equations-of-lines" element={<EquationsOfLines />} />
       <Route path="/simultaneous-equations-substitution" element={<NonLinearSimEq />} />
       <Route path="/solving-linear-equations" element={<SolvingLinearEquations />} />
 
@@ -68,6 +66,14 @@ function App() {
       <Route path="/timestables" element={<TimesTablesGenerator />} />
       <Route path="/negative-operations" element={<NegativeOperationsGenerator />} />
       <Route path="/multiplication-methods" element={<MultiplicationGenerator />} />
+
+      //Geometry
+      
+      <Route path="/circle-properties" element={<CircleProperties />} />
+      <Route path="/perimeter" element={<PerimeterTool />} />
+      <Route path="/basic-angle-facts" element={<BasicAngleFacts />} />
+      <Route path="/angles-in-triangles" element={<AnglesInTriangles />} />
+      <Route path="/equations-of-lines" element={<EquationsOfLines />} />
       
       //Teacher Tools
       
