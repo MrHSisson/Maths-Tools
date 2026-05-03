@@ -273,7 +273,7 @@ const MultiSelectGroup = ({ label, options, values, onChange }: {
           return (
             <button key={opt.key}
               onClick={() => { if (!isLast) onChange(opt.key, !active); }}
-              className={`flex-1 px-3 py-2 text-sm font-bold transition-colors border-r border-gray-200 last:border-r-0
+              className={`flex-1 px-3 py-2 text-sm font-bold transition-colors
                 ${active ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}
                 ${isLast ? "cursor-not-allowed" : "cursor-pointer"}`}>
               {opt.label}
@@ -900,8 +900,8 @@ const InlineMath = ({ text }: { text: string }) => {
 
 const AnswerDisplay = ({ q, answerFormat: _answerFormat }: { q: AnyQuestion; answerFormat: string }) => {
   const anyQ = q as any;
-  if (anyQ.answerLatex) return <><MathRenderer latex={`= ${anyQ.answerLatex}`} />{anyQ.answerSuffix && <span> {anyQ.answerSuffix}</span>}</>;
-  return <span>= {anyQ.answer ?? ""}</span>;
+  if (anyQ.answerLatex) return <><MathRenderer latex={anyQ.answerLatex} />{anyQ.answerSuffix && <span> {anyQ.answerSuffix}</span>}</>;
+  return <span>{anyQ.answer ?? ""}</span>;
 };
 
 // ── DifficultyToggle ──────────────────────────────────────────────────────────
@@ -1158,7 +1158,7 @@ const handlePrint = (
     if (showAnswer) {
       const al = anyQ.answerLatex ? anyQ.answerLatex : `\\text{${anyQ.answer ?? ""}}`;
       const suffix = anyQ.answerSuffix ? ` ${anyQ.answerSuffix}` : "";
-      ansHtml = `<div class="q-answer">${katexSpan(`= ${al}`)}${suffix}</div>`;
+      ansHtml = `<div class="q-answer">${katexSpan(al)}${suffix}</div>`;
     }
     const banner = `<div class="q-banner">Question ${idx + 1}</div>`;
     const instrHtml = instruction ? `<div class="q-instruction">${instruction}</div>` : "";
@@ -1612,7 +1612,7 @@ export default function App() {
             {anyQ.displayLatex ? <MathRenderer latex={anyQ.displayLatex}/> : anyQ.display}
           </div>
           {showWorksheetAnswers && <div className={`${fsz} font-semibold mt-1 text-center`} style={{color:"#059669"}}>
-            {anyQ.answerLatex ? <MathRenderer latex={`= ${anyQ.answerLatex}`}/> : <span>= {anyQ.answer}</span>}
+            {anyQ.answerLatex ? <MathRenderer latex={anyQ.answerLatex}/> : <span>{anyQ.answer}</span>}
           </div>}
         </div>
       );
@@ -1628,7 +1628,7 @@ export default function App() {
             {(q as any).lines.map((line: string, i: number) => <div key={i}><InlineMath text={line}/></div>)}
           </div>
           {showWorksheetAnswers && <div className={`${fsz} font-semibold mt-1 text-center`} style={{color:"#059669"}}>
-            {(q as any).answerLatex ? <MathRenderer latex={`= ${(q as any).answerLatex}`}/> : <span>= {(q as any).answer}</span>}
+            {(q as any).answerLatex ? <MathRenderer latex={(q as any).answerLatex}/> : <span>{(q as any).answer}</span>}
           </div>}
         </div>
       );
@@ -1643,7 +1643,7 @@ export default function App() {
           <span>Find </span><MathRenderer latex={(q as any).latex?.replace(/\\text\{ of \}.*/, '') ?? ''} /><span> of {(q as any).latex?.replace(/.*\\text\{ of \}/, '').trim()}</span>
         </div>
         {showWorksheetAnswers && <div className={`${fsz} font-semibold mt-1 text-center`} style={{color:"#059669"}}>
-          <MathRenderer latex={`= ${(q as any).answerLatex}`}/>
+          <MathRenderer latex={(q as any).answerLatex}/>
         </div>}
       </div>
     );
