@@ -27,6 +27,7 @@ import AnglesInTrianglesv2 from './tools/AnglesInTrianglesv2';
 import EquationsOfLines from './tools/EquationsOfLines';
 import NonLinearSimEq from './tools/NonLinearSimEq';
 import Visualiser from './tools/Visualiser';
+import SolvingLinearEquations from './tools/SolvingLinearEquations';
 
 function App() {
   return (
@@ -59,6 +60,7 @@ function App() {
       <Route path="/equations-of-lines" element={<EquationsOfLines />} />
       <Route path="/simultaneous-equations-substitution" element={<NonLinearSimEq />} />
       <Route path="/visualiser" element={<Visualiser />} />
+      <Route path="/solving-linear-equations" element={<SolvingLinearEquations />} />
     </Routes>
   )
 }
