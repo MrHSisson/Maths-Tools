@@ -50,6 +50,7 @@ const categories: Category[] = [
     gradient: 'from-purple-500 to-fuchsia-600',
     iconBg: 'from-purple-50 to-fuchsia-50',
     tools: [
+      { id: 'solving-linear-equations', path: '/solving-linear-equations', name: 'Unknowns on Both Sides', icon: '=', description: 'Solve equations where the unknown occurs more than once', ready: 'v2.1.2' },
       { id: 'completing-square', path: '/completing-the-square', name: 'Completing the Square', icon: '🔲', description: 'Rewrite and solve quadratic expressions in completed square form', ready: 'v2.0' },
       { id: 'iteration', path: '/iteration', name: 'Iteration', icon: '🔄', description: 'Find roots to eqautions using iterative methods', ready: 'v2.1.1' },
       { id: 'simultaneous-equations-elimination', path: '/simultaneous-equations-elimination', name: 'Simultaneous Equations (Elimination)', icon: '❌', description: 'Solve simultaneous equations, including rearranging', ready: 'v2.1.1' },
