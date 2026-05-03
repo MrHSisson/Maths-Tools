@@ -309,17 +309,8 @@ const handlePrint = (
 
   // Format a number to 5 characters: ( - TO )
   const formatNumber = (num: string): string => {
-    if (num === '__' || num === '___') return '_____';
-    // Strip all whitespace first
-    const cleaned = num.replace(/\s+/g, '');
-    const hasParens = cleaned.startsWith('(') && cleaned.endsWith(')');
-    const inner = cleaned.replace(/[()]/g, '');
-    const isNeg = inner.startsWith('-');
-    const absVal = isNeg ? inner.slice(1) : inner;
-    const sign = isNeg ? '-' : ' ';
-    return hasParens
-      ? `(${sign}${absVal.padStart(2, ' ')})`
-      : ` ${sign}${absVal.padStart(2, ' ')} `;
+    if (num === '__' || num === '___') return '___';
+    return num.replace(/\s+/g, '');
   };
 
   const questionToHtml = (idx: number, showAnswer: boolean): string => {
@@ -351,11 +342,11 @@ const handlePrint = (
     
     let [, num1, operator, num2, result] = match;
     
-    // Clean up any extra spaces in the captured groups
-    num1 = num1?.trim() || '';
-    operator = operator?.trim() || '';
-    num2 = num2?.trim() || '';
-    result = result?.trim() || '___';
+    // Strip ALL internal whitespace from number tokens (e.g. "( -9 )" → "(-9)")
+    num1 = (num1 || '').replace(/\s+/g, '');
+    operator = (operator || '').trim();
+    num2 = (num2 || '').replace(/\s+/g, '');
+    result = (result || '___').replace(/\s+/g, '');
     
     let formatted = '';
     
