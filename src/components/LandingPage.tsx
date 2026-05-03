@@ -31,6 +31,7 @@ const categories: Category[] = [
       { id: 'Multiplication Methods', path: '/multiplication-methods', name: 'Multiplication Methods', icon: '3x2', description: 'Generate PDFs designed to test and improve use of multiplication methods', ready: 'v1.0' },
     ]
   },
+  
   {
     name: 'Number',
     icon: '🔢',
@@ -42,6 +43,7 @@ const categories: Category[] = [
       { id: 'powers-of-ten', path: '/powers-of-ten', name: 'Multiplying & Dividing by 10ⁿ', icon: '10ⁿ', description: 'Use a place value table to scale by powers of 10', ready: 'v1.4' },
     ]
   },
+  
   {
     name: 'Algebra',
     icon: '📐',
@@ -58,6 +60,7 @@ const categories: Category[] = [
       { id: 'expanding-double-brackets-GRID', path: '/expanding-double-brackets-grid', name: 'Expanding Double Brackets (GRID)', icon: 'x²', description: 'Expand pairs of brackets using the grid method', ready: 'v1.4', enabled: false },
     ]
   },
+  
   {
     name: 'Ratio & Proportion',
     icon: '⚖️',
@@ -71,6 +74,7 @@ const categories: Category[] = [
       { id: 'fractions-of-amounts', path: '/fractions-of-amounts', name: 'Fractions of Amounts', icon: '⅔', description: 'To find a fraction of an amount', ready: 'v2.0' },
     ]
   },
+  
   {
     name: 'Geometry',
     icon: '📏',
@@ -84,6 +88,7 @@ const categories: Category[] = [
       { id: 'perimeter', path: '/perimeter', name: 'Perimeter (BETA)', icon: '⬡', description: 'Calculate the perimeter of various 2D shapes', ready: 'v2.1', enabled: false},
     ]
   },
+  
   {
     name: 'Probability & Statistics',
     icon: '📊',
@@ -91,6 +96,7 @@ const categories: Category[] = [
     iconBg: 'from-pink-50 to-rose-50',
     tools: []
   },
+  
   {
     name: 'Teacher Tools',
     icon: '👨‍🏫',
@@ -101,6 +107,14 @@ const categories: Category[] = [
       { id: 'tool-shell', path: '/tool-shell', name: 'Tool Shell', icon: '🐢', description: 'A tool shell for developing new tools', ready: 'v2.1.1' },
       { id: 'call-selector', path: '/call-selector', name: 'Friday Phonecalls', icon: '☎️', description: 'A tool to randomly select students for phonecalls', ready: 'v1.0', enabled: false },
     ]
+  },
+  
+  {
+    name: 'Computer Science',
+    icon: '🖥️',
+    gradient: 'from-orange-500 to-amber-600',
+    iconBg: 'from-orange-50 to-amber-50',
+    tools: []
   },
 ];
 
