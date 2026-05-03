@@ -1014,7 +1014,7 @@ export default function App(){
   const [surdDisplay,setSurdDisplay]=useState<SurdDisplay>("surd");
   const [allowRearrange,setAllowRearrange]=useState(false);
   const [isDifferentiated,setIsDifferentiated]=useState(false);
-  const [currentQuestion,setCurrentQuestion]=useState<AnyQuestion>(()=>generateLinear("level1","never",false,false));
+  const [currentQuestion,setCurrentQuestion]=useState<AnyQuestion>(()=>generateLinear("level1","pos-only",false,false));
   const [showWhiteboardAnswer,setShowWhiteboardAnswer]=useState(false);
   const [showAnswer,setShowAnswer]=useState(false);
   const [numQuestions,setNumQuestions]=useState(12);
