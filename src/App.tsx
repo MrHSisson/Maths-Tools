@@ -21,14 +21,15 @@ import FractionsOfAmounts from './tools/FractionsOfAmounts';
 import MultiplicationGenerator from './tools/MultiplicationGenerator';
 import BasicAngleFacts from './tools/BasicAngleFacts';
 import SimultaneousEquations from './tools/SimultaneousEquations';
-import ToolShell from './tools/ToolShell';
 import AnglesInTrianglesv2 from './tools/AnglesInTrianglesv2';
 import EquationsOfLines from './tools/EquationsOfLines';
 import NonLinearSimEq from './tools/NonLinearSimEq';
-import Visualiser from './tools/Visualiser';
 import SolvingLinearEquations from './tools/SolvingLinearEquations';
 
 //Teacher Tools
+
+import Visualiser from './tools/TeacherTools/Visualiser';
+import ToolShell from './tools/TeacherTools/ToolShell';
 import CallSelector from './tools/TeacherTools/CallSelector';
 
 function App() {
@@ -55,14 +56,18 @@ function App() {
       <Route path="/fractions-of-amounts" element={<FractionsOfAmounts />} />
       <Route path="/multiplication-methods" element={<MultiplicationGenerator />} />
       <Route path="/basic-angle-facts" element={<BasicAngleFacts />} />
-      <Route path="/call-selector" element={<CallSelector />} />
       <Route path="/simultaneous-equations-elimination" element={<SimultaneousEquations />} />
-      <Route path="/tool-shell" element={<ToolShell />} />
       <Route path="/angles-in-triangles-v2" element={<AnglesInTrianglesv2 />} />
       <Route path="/equations-of-lines" element={<EquationsOfLines />} />
       <Route path="/simultaneous-equations-substitution" element={<NonLinearSimEq />} />
-      <Route path="/visualiser" element={<Visualiser />} />
       <Route path="/solving-linear-equations" element={<SolvingLinearEquations />} />
+
+      //Teacher Tools
+      
+      <Route path="/visualiser" element={<Visualiser />} />
+      <Route path="/tool-shell" element={<ToolShell />} />
+      <Route path="/call-selector" element={<CallSelector />} />
+      
     </Routes>
   )
 }
