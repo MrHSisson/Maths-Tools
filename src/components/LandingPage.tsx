@@ -8,7 +8,7 @@ interface Tool {
   icon: string;
   description: string;
   ready: string;
-  enabled?: boolean; // optional - defaults to true if absent
+  enabled?: boolean;
 }
 
 interface Category {
@@ -31,19 +31,17 @@ const categories: Category[] = [
       { id: 'Multiplication Methods', path: '/multiplication-methods', name: 'Multiplication Methods', icon: '3x2', description: 'Generate PDFs designed to test and improve use of multiplication methods', ready: 'v1.0' },
     ]
   },
-  
   {
     name: 'Number',
     icon: '🔢',
-    gradient: 'from-blue-500 to-indigo-600',
-    iconBg: 'from-blue-50 to-indigo-50',
+    gradient: 'from-cyan-500 to-sky-600',
+    iconBg: 'from-cyan-50 to-sky-50',
     tools: [
       { id: 'integers', path: '/integers', name: 'Adding & Subtracting Integers', icon: '±', description: 'Practice adding and subtracting positive and negative numbers using number lines', ready: 'v1.4' },
       { id: 'estimation', path: '/estimation', name: 'Estimation', icon: '≈', description: 'Develop estimation skills by rounding numbers to make calculations easier', ready: 'v1.7.1' },
       { id: 'powers-of-ten', path: '/powers-of-ten', name: 'Multiplying & Dividing by 10ⁿ', icon: '10ⁿ', description: 'Use a place value table to scale by powers of 10', ready: 'v1.4' },
     ]
   },
-  
   {
     name: 'Algebra',
     icon: '📐',
@@ -57,11 +55,10 @@ const categories: Category[] = [
       { id: 'simultaneous-equations-substitution', path: '/simultaneous-equations-substitution', name: 'Simultaneous Equations (Substitution)', icon: '❌', description: 'Solve Simultaneous Equations (including Non-Linear) by Substitution', ready: 'v2.1.1' },
       { id: 'single-brackets', path: '/expanding-single-brackets-FOIL', name: 'Expanding Single Brackets (FOIL)', icon: 'x', description: 'Expand single brackets by using arrows for each term', ready: 'v1.4', enabled: false },
       { id: 'expanding-double-brackets-FOIL', path: '/expanding-double-brackets-foil', name: 'Expanding Double Brackets (FOIL)', icon: 'x²', description: 'Expand pairs of brackets using the FOIL method', ready: 'v1.4', enabled: false },
-      { id: 'single-brackets', path: '/expanding-single-brackets-GRID', name: 'Expanding Single Brackets (GRID)', icon: 'x', description: 'Expand single brackets by using the grid method', ready: 'v1.4', enabled: false },
+      { id: 'single-brackets-grid', path: '/expanding-single-brackets-GRID', name: 'Expanding Single Brackets (GRID)', icon: 'x', description: 'Expand single brackets by using the grid method', ready: 'v1.4', enabled: false },
       { id: 'expanding-double-brackets-GRID', path: '/expanding-double-brackets-grid', name: 'Expanding Double Brackets (GRID)', icon: 'x²', description: 'Expand pairs of brackets using the grid method', ready: 'v1.4', enabled: false },
     ]
   },
-  
   {
     name: 'Ratio & Proportion',
     icon: '⚖️',
@@ -75,12 +72,11 @@ const categories: Category[] = [
       { id: 'fractions-of-amounts', path: '/fractions-of-amounts', name: 'Fractions of Amounts', icon: '⅔', description: 'To find a fraction of an amount', ready: 'v2.0' },
     ]
   },
-  
   {
     name: 'Geometry',
     icon: '📏',
-    gradient: 'from-orange-500 to-amber-600',
-    iconBg: 'from-orange-50 to-amber-50',
+    gradient: 'from-amber-500 to-orange-600',
+    iconBg: 'from-amber-50 to-orange-50',
     tools: [
       { id: 'circles', path: '/circle-properties', name: 'Properties of Circles', icon: '⭕', description: 'Find the circumference, area and arc lengths of circles and sectors', ready: 'v1.4' },
       { id: 'basic-angle-facts', path: '/basic-angle-facts', name: 'Basic Angle Facts', icon: '90°', description: 'Find missing angles from right angles, on striaght lines and around a point', ready: 'v1.6' },
@@ -89,7 +85,6 @@ const categories: Category[] = [
       { id: 'perimeter', path: '/perimeter', name: 'Perimeter (BETA)', icon: '⬡', description: 'Calculate the perimeter of various 2D shapes', ready: 'v2.1', enabled: false},
     ]
   },
-  
   {
     name: 'Probability & Statistics',
     icon: '📊',
@@ -97,24 +92,22 @@ const categories: Category[] = [
     iconBg: 'from-pink-50 to-rose-50',
     tools: []
   },
-  
   {
     name: 'Teacher Tools',
     icon: '👨‍🏫',
-    gradient: 'from-orange-500 to-amber-600',
-    iconBg: 'from-orange-50 to-amber-50',
+    gradient: 'from-violet-500 to-purple-600',
+    iconBg: 'from-violet-50 to-purple-50',
     tools: [
       { id: 'visualiser', path: '/visualiser', name: 'Visualiser', icon: '📷', description: 'A tool for displaying your visualiser', ready: 'v1.0' },
       { id: 'tool-shell', path: '/tool-shell', name: 'Tool Shell', icon: '🐢', description: 'A tool shell for developing new tools', ready: 'v2.1.1' },
       { id: 'call-selector', path: '/call-selector', name: 'Friday Phonecalls', icon: '☎️', description: 'A tool to randomly select students for phonecalls', ready: 'v1.0', enabled: false },
     ]
   },
-  
   {
     name: 'Computer Science',
     icon: '🖥️',
-    gradient: 'from-orange-500 to-amber-600',
-    iconBg: 'from-orange-50 to-amber-50',
+    gradient: 'from-slate-600 to-slate-800',
+    iconBg: 'from-slate-100 to-slate-200',
     tools: []
   },
 ];
@@ -178,62 +171,64 @@ export default function LandingPage(): JSX.Element {
         {categories.map((category) => (
           <section key={category.name} className="mb-14">
             {/* Category Header */}
-            <div className="flex items-center gap-4 mb-7">
-              <div className={`w-14 h-14 bg-gradient-to-br ${category.gradient} rounded-2xl flex items-center justify-center text-2xl shadow-lg`}>
+            <div className="flex items-center gap-4 mb-7 group">
+              <div className={`w-14 h-14 bg-gradient-to-br ${category.gradient} rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-${category.gradient.split('-')[1]}-500/20`}>
                 {category.icon}
               </div>
-              <h2 className="text-2xl font-bold text-slate-900">{category.name}</h2>
-              <div className="hidden sm:block h-px flex-1 max-w-xs bg-gradient-to-r from-slate-300 to-transparent" />
+              <h2 className={`text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r ${category.gradient}`}>
+                {category.name}
+              </h2>
+              <div className="hidden sm:block h-px flex-1 max-w-xs bg-gradient-to-r from-slate-200 to-transparent ml-2" />
             </div>
 
             {category.tools.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {category.tools.map((tool) => (
                   <button
-                      key={tool.id}
-                      onClick={() => tool.enabled !== false && navigate(tool.path)}
-                      disabled={tool.enabled === false}
-                      className={`group relative bg-white/90 backdrop-blur-sm rounded-2xl p-6 text-left transition-all duration-300 border shadow-xl shadow-slate-200/50
+                    key={tool.id}
+                    onClick={() => tool.enabled !== false && navigate(tool.path)}
+                    disabled={tool.enabled === false}
+                    className={`group relative bg-white/90 backdrop-blur-sm rounded-2xl p-6 text-left transition-all duration-300 border shadow-xl shadow-slate-200/40
                       ${tool.enabled === false
-                      ? 'opacity-40 cursor-not-allowed border-slate-200'
-                      : 'border-slate-200 hover:border-slate-300 hover:shadow-2xl hover:shadow-slate-300/50 hover:-translate-y-1 hover:bg-white cursor-pointer'
+                        ? 'opacity-50 cursor-not-allowed border-slate-100 grayscale-[30%]'
+                        : 'border-slate-100 hover:border-transparent hover:ring-2 hover:ring-offset-2 hover:ring-slate-300 hover:shadow-2xl hover:shadow-slate-300/60 hover:-translate-y-1 hover:bg-white cursor-pointer'
                       }`}
                   >
                     {/* Badge */}
                     <div className="absolute top-5 right-5">
-                      <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 text-xs font-semibold px-2.5 py-1 rounded-full border border-emerald-200">
-                        <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
+                      <span className="inline-flex items-center gap-1.5 bg-slate-50 text-slate-600 text-[11px] font-bold px-2.5 py-1 rounded-full border border-slate-200/60 shadow-sm">
+                        <span className={`w-1.5 h-1.5 rounded-full ${tool.enabled === false ? 'bg-slate-400' : 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]'}`} />
                         {tool.ready}
                       </span>
                     </div>
 
                     {/* Icon */}
-                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold mb-5 transition-all duration-300 bg-gradient-to-br ${category.iconBg} text-slate-700 group-hover:scale-110 group-hover:shadow-lg`}>
+                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold mb-5 transition-transform duration-300 bg-gradient-to-br ${category.iconBg} text-slate-700 group-hover:scale-105 group-hover:shadow-md`}>
                       {tool.icon}
                     </div>
 
                     {/* Content */}
-                    <h3 className="font-bold text-lg leading-tight mb-2 transition-colors duration-300 pr-16 text-slate-900 group-hover:text-blue-900">
+                    <h3 className="font-bold text-lg leading-tight mb-2 transition-colors duration-300 pr-16 text-slate-800 group-hover:text-slate-900">
                       {tool.name}
                     </h3>
-                    <p className="text-sm leading-relaxed text-slate-600">
+                    <p className="text-sm leading-relaxed text-slate-500 group-hover:text-slate-600 line-clamp-3">
                       {tool.description}
                     </p>
 
                     {/* Hover Arrow */}
-                    <div className="absolute bottom-6 right-6 w-9 h-9 rounded-full bg-blue-900 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-lg">
-                      <ChevronRight className="text-white" size={20} />
+                    <div className={`absolute bottom-6 right-6 w-9 h-9 rounded-full bg-gradient-to-br ${category.gradient} flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-lg translate-y-2 group-hover:translate-y-0`}>
+                      <ChevronRight className="text-white" size={18} strokeWidth={3} />
                     </div>
                   </button>
                 ))}
               </div>
             ) : (
-              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-10 text-center border border-dashed border-slate-300 shadow-lg shadow-slate-200/50">
-                <div className={`w-20 h-20 bg-gradient-to-br ${category.gradient} rounded-2xl flex items-center justify-center text-4xl mx-auto mb-5 opacity-30`}>
-                  {category.icon}
+              <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-10 text-center border border-dashed border-slate-200 shadow-sm transition-all hover:bg-white/80">
+                <div className={`w-16 h-16 bg-gradient-to-br ${category.iconBg} rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4`}>
+                  <span className="opacity-50 grayscale">{category.icon}</span>
                 </div>
-                <p className="text-slate-500 font-medium text-lg">Tools coming soon</p>
-                <p className="text-slate-400 text-sm mt-1">We're working on new content for this category</p>
+                <p className="text-slate-600 font-semibold text-lg">Tools coming soon</p>
+                <p className="text-slate-400 text-sm mt-1 max-w-sm mx-auto">We're working on expanding the {category.name.toLowerCase()} library. Check back soon!</p>
               </div>
             )}
           </section>
