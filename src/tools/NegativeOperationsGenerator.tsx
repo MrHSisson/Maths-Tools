@@ -309,40 +309,17 @@ const handlePrint = (
 
   // Format a number to 5 characters: ( - TO )
   const formatNumber = (num: string): string => {
-    // Handle blanks first
-    if (num === '__') {
-      return '_____';
-    }
-    if (num === '___') {
-      return '  ___';
-    }
-    
-    // Clean up: remove ALL spaces, then check structure
-    let cleaned = num.replace(/\s+/g, '');
-    
-    // Check if it has parentheses
-    const hasParens = cleaned.includes('(') && cleaned.includes(')');
-    
-    // Extract the actual number (remove parentheses for processing)
-    const numOnly = cleaned.replace(/[()]/g, '');
-    const isNegative = numOnly.startsWith('-');
-    const absValue = isNegative ? numOnly.substring(1) : numOnly;
-    
-    let result = '';
-    
-    if (hasParens) {
-      result += '(';
-      result += isNegative ? '-' : ' ';
-      result += absValue.padStart(2, ' ');
-      result += ')';
-    } else {
-      result += ' ';
-      result += isNegative ? '-' : ' ';
-      result += absValue.padStart(2, ' ');
-      result += ' ';
-    }
-    
-    return result;
+    if (num === '__' || num === '___') return '_____';
+    // Strip all whitespace first
+    const cleaned = num.replace(/\s+/g, '');
+    const hasParens = cleaned.startsWith('(') && cleaned.endsWith(')');
+    const inner = cleaned.replace(/[()]/g, '');
+    const isNeg = inner.startsWith('-');
+    const absVal = isNeg ? inner.slice(1) : inner;
+    const sign = isNeg ? '-' : ' ';
+    return hasParens
+      ? `(${sign}${absVal.padStart(2, ' ')})`
+      : ` ${sign}${absVal.padStart(2, ' ')} `;
   };
 
   const questionToHtml = (idx: number, showAnswer: boolean): string => {
