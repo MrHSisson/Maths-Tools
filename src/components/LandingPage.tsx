@@ -13,11 +13,6 @@ interface Tool {
 interface CategoryTheme {
   border: string;
   hoverBorder: string;
-  shadow: string;
-  text: string;
-  badgeBg: string;
-  badgeText: string;
-  badgeBorder: string;
 }
 
 interface Category {
@@ -32,13 +27,8 @@ const categories: Category[] = [
     name: 'Generators',
     gradient: 'from-blue-500 to-indigo-600',
     theme: {
-      border: 'border-blue-500',
-      hoverBorder: 'hover:border-blue-400',
-      shadow: 'hover:shadow-blue-300/40',
-      text: 'group-hover:text-blue-700',
-      badgeBg: 'bg-blue-50',
-      badgeText: 'text-blue-700',
-      badgeBorder: 'border-blue-200/60'
+      border: 'border-l-blue-500',
+      hoverBorder: 'hover:border-l-blue-400',
     },
     tools: [
       { id: 'Times Tables', path: '/timestables', name: 'Times Tables', description: 'Generate PDFs designed to test and improve TimesTable fluency', ready: 'v1.0' },
@@ -50,13 +40,8 @@ const categories: Category[] = [
     name: 'Number',
     gradient: 'from-cyan-500 to-sky-600',
     theme: {
-      border: 'border-cyan-500',
-      hoverBorder: 'hover:border-cyan-400',
-      shadow: 'hover:shadow-cyan-300/40',
-      text: 'group-hover:text-cyan-700',
-      badgeBg: 'bg-cyan-50',
-      badgeText: 'text-cyan-700',
-      badgeBorder: 'border-cyan-200/60'
+      border: 'border-l-cyan-500',
+      hoverBorder: 'hover:border-l-cyan-400',
     },
     tools: [
       { id: 'integers', path: '/integers', name: 'Adding & Subtracting Integers', description: 'Practice adding and subtracting positive and negative numbers using number lines', ready: 'v1.4' },
@@ -68,13 +53,8 @@ const categories: Category[] = [
     name: 'Algebra',
     gradient: 'from-purple-500 to-fuchsia-600',
     theme: {
-      border: 'border-purple-500',
-      hoverBorder: 'hover:border-purple-400',
-      shadow: 'hover:shadow-purple-300/40',
-      text: 'group-hover:text-purple-700',
-      badgeBg: 'bg-purple-50',
-      badgeText: 'text-purple-700',
-      badgeBorder: 'border-purple-200/60'
+      border: 'border-l-purple-500',
+      hoverBorder: 'hover:border-l-purple-400',
     },
     tools: [
       { id: 'solving-linear-equations', path: '/solving-linear-equations', name: 'Unknowns on Both Sides', description: 'Solve equations where the unknown occurs more than once', ready: 'v2.1.2' },
@@ -92,13 +72,8 @@ const categories: Category[] = [
     name: 'Ratio & Proportion',
     gradient: 'from-emerald-500 to-teal-600',
     theme: {
-      border: 'border-emerald-500',
-      hoverBorder: 'hover:border-emerald-400',
-      shadow: 'hover:shadow-emerald-300/40',
-      text: 'group-hover:text-emerald-700',
-      badgeBg: 'bg-emerald-50',
-      badgeText: 'text-emerald-700',
-      badgeBorder: 'border-emerald-200/60'
+      border: 'border-l-emerald-500',
+      hoverBorder: 'hover:border-l-emerald-400',
     },
     tools: [
       { id: 'ratio', path: '/ratio-sharing', name: 'Dividing Ratios', description: 'Sharing amounts using the total, a known amount or known difference', ready: 'v1.4' },
@@ -112,13 +87,8 @@ const categories: Category[] = [
     name: 'Geometry',
     gradient: 'from-amber-500 to-orange-600',
     theme: {
-      border: 'border-amber-500',
-      hoverBorder: 'hover:border-amber-400',
-      shadow: 'hover:shadow-amber-300/40',
-      text: 'group-hover:text-amber-700',
-      badgeBg: 'bg-amber-50',
-      badgeText: 'text-amber-700',
-      badgeBorder: 'border-amber-200/60'
+      border: 'border-l-amber-500',
+      hoverBorder: 'hover:border-l-amber-400',
     },
     tools: [
       { id: 'circles', path: '/circle-properties', name: 'Properties of Circles', description: 'Find the circumference, area and arc lengths of circles and sectors', ready: 'v1.4' },
@@ -132,13 +102,8 @@ const categories: Category[] = [
     name: 'Probability & Statistics',
     gradient: 'from-pink-500 to-rose-600',
     theme: {
-      border: 'border-pink-500',
-      hoverBorder: 'hover:border-pink-400',
-      shadow: 'hover:shadow-pink-300/40',
-      text: 'group-hover:text-pink-700',
-      badgeBg: 'bg-pink-50',
-      badgeText: 'text-pink-700',
-      badgeBorder: 'border-pink-200/60'
+      border: 'border-l-pink-500',
+      hoverBorder: 'hover:border-l-pink-400',
     },
     tools: []
   },
@@ -146,13 +111,8 @@ const categories: Category[] = [
     name: 'Teacher Tools',
     gradient: 'from-violet-500 to-purple-600',
     theme: {
-      border: 'border-violet-500',
-      hoverBorder: 'hover:border-violet-400',
-      shadow: 'hover:shadow-violet-300/40',
-      text: 'group-hover:text-violet-700',
-      badgeBg: 'bg-violet-50',
-      badgeText: 'text-violet-700',
-      badgeBorder: 'border-violet-200/60'
+      border: 'border-l-violet-500',
+      hoverBorder: 'hover:border-l-violet-400',
     },
     tools: [
       { id: 'visualiser', path: '/visualiser', name: 'Visualiser', description: 'A tool for displaying your visualiser', ready: 'v1.0' },
@@ -164,13 +124,8 @@ const categories: Category[] = [
     name: 'Computer Science',
     gradient: 'from-slate-600 to-slate-800',
     theme: {
-      border: 'border-slate-600',
-      hoverBorder: 'hover:border-slate-500',
-      shadow: 'hover:shadow-slate-400/40',
-      text: 'group-hover:text-slate-800',
-      badgeBg: 'bg-slate-100',
-      badgeText: 'text-slate-700',
-      badgeBorder: 'border-slate-300/60'
+      border: 'border-l-slate-600',
+      hoverBorder: 'hover:border-l-slate-500',
     },
     tools: []
   },
@@ -196,7 +151,7 @@ export default function LandingPage(): JSX.Element {
         }} />
       </div>
 
-      {/* Header Bar - Restored Original Colors & Icon */}
+      {/* Header Bar */}
       <header className="sticky top-0 z-50 bg-blue-900 shadow-xl shadow-blue-900/10">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center gap-3">
@@ -247,31 +202,36 @@ export default function LandingPage(): JSX.Element {
               </div>
 
               {category.tools.length > 0 ? (
-                // Reverted back to 4 tools per row on xl screens
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {category.tools.map((tool) => (
                     <button
                       key={tool.id}
                       onClick={() => tool.enabled !== false && navigate(tool.path)}
                       disabled={tool.enabled === false}
-                      className={`group relative bg-white p-7 text-left transition-all duration-300 border-l-4 shadow-sm shadow-slate-200/50 rounded-r-xl rounded-l-sm
+                      className={`group relative bg-white p-6 text-left transition-all duration-300 rounded-xl
+                        border border-slate-200 border-l-4
                         ${tool.enabled === false
-                          ? 'opacity-50 cursor-not-allowed border-slate-300 grayscale-[20%]'
-                          : `${category.theme.border} ${category.theme.hoverBorder} hover:shadow-xl ${category.theme.shadow} hover:-translate-y-1 cursor-pointer`
+                          ? 'opacity-60 cursor-not-allowed border-l-slate-300 grayscale-[20%]'
+                          : `${category.theme.border} ${category.theme.hoverBorder} hover:shadow-lg hover:shadow-slate-200/60 hover:-translate-y-1 cursor-pointer`
                         }`}
                     >
-                      {/* Top Header Row within Card */}
-                      <div className="flex justify-between items-start mb-4">
-                        <h3 className={`font-bold text-xl leading-tight pr-4 text-slate-800 transition-colors duration-300 ${tool.enabled !== false ? category.theme.text : ''}`}>
-                          {tool.name}
-                        </h3>
-                        
-                        {/* Badge */}
-                        <span className={`shrink-0 inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full border shadow-sm tracking-wider uppercase ${tool.enabled === false ? 'bg-slate-50 text-slate-500 border-slate-200' : `${category.theme.badgeBg} ${category.theme.badgeText} ${category.theme.badgeBorder}`}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${tool.enabled === false ? 'bg-slate-300' : 'bg-current'}`} />
+                      {/* Badge - Absolutely positioned so it never moves */}
+                      <div className="absolute top-6 right-6">
+                        <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-md border tracking-wider uppercase
+                          ${tool.enabled === false 
+                            ? 'bg-slate-50 text-slate-400 border-slate-200' 
+                            : 'bg-white text-slate-500 border-slate-200 shadow-sm'
+                          }`}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full ${tool.enabled === false ? 'bg-slate-300' : 'bg-slate-400'}`} />
                           {tool.ready}
                         </span>
                       </div>
+
+                      {/* Title - padding right prevents text from touching the badge */}
+                      <h3 className="font-bold text-lg leading-tight text-slate-800 mb-3 pr-16 group-hover:text-slate-900 transition-colors">
+                        {tool.name}
+                      </h3>
 
                       {/* Content */}
                       <p className="text-sm leading-relaxed text-slate-500 group-hover:text-slate-600 line-clamp-3">
@@ -291,7 +251,7 @@ export default function LandingPage(): JSX.Element {
         })}
       </main>
 
-      {/* Footer - Restored Original Colors & Icon */}
+      {/* Footer */}
       <footer className="relative z-10 border-t border-slate-200 bg-white/80 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
