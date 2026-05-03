@@ -1,11 +1,10 @@
 import { useState, useEffect, useRef, useCallback, CSSProperties } from "react";
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, Printer } from "lucide-react";
 
-// ── ROUTING NOTE ─────────────────────────────────────────────────────────────
-// To add navigation in production (Vercel deployment):
-//   1. Import the navigate hook from your routing library
-//   2. Call it inside App() to get a navigate function
-//   3. Change the Home button onClick to call navigate("/")
+// ── NAVIGATION ───────────────────────────────────────────────────────────────
+// Tools use window.location.href = "/" for the Home button.
+// No React Router / useNavigate — the parent app handles routing.
+// Individual tool components never wrap themselves in a router.
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -207,6 +206,8 @@ const TOOL_CONFIG = {
   tools: {
 
     // Tool 1: two toggle switches, no dropdown, compact cells
+    // Also demonstrates multiSelect — multiple options active simultaneously,
+    // used when options describe what's in the question pool rather than a single setting.
     tool1: {
       name: "Sub-Tool 1",
       useSubstantialBoxes: false,
@@ -215,6 +216,15 @@ const TOOL_CONFIG = {
         { key: "option2", label: "Option B", defaultValue: false },
       ],
       dropdown: null,
+      multiSelect: {
+        key: "questionPool",
+        label: "Question Types",
+        options: [
+          { value: "typeX", label: "Type X", defaultActive: true  },
+          { value: "typeY", label: "Type Y", defaultActive: true  },
+          { value: "typeZ", label: "Type Z", defaultActive: false },
+        ],
+      },
       difficultySettings: null,
     },
 
@@ -312,9 +322,14 @@ const TOOL_CONFIG = {
       options: { value: string; label: string; sub?: string }[];
       defaultValue: string;
     } | null;
+    multiSelect?: {
+      key: string; label: string;
+      options: { value: string; label: string; defaultActive: boolean }[];
+    };
     difficultySettings: Record<string, {
       dropdown?: { key: string; label: string; useTwoLineButtons?: boolean; options: { value: string; label: string; sub?: string }[]; defaultValue: string } | null;
       variables?: { key: string; label: string; defaultValue: boolean }[];
+      multiSelect?: { key: string; label: string; options: { value: string; label: string; defaultActive: boolean }[] };
     }> | null;
   }>,
 };
@@ -406,6 +421,13 @@ const fracStr = (n: number | string, d: number | string) => `$\\frac{${n}}{${d}}
 // e.g. "Split into " + mStr("3 + 5") + " parts."
 const mStr = (x: number | string) => `$${x}$`;
 
+// pickActive: for use with multiSelect — picks a random active option value.
+// e.g. const type = pickActive(multiSelectValues, multiSelectConfig.options);
+const pickActive = (values: Record<string, boolean>, options: { value: string }[]): string => {
+  const active = options.filter(o => values[o.value] !== false);
+  return active.length > 0 ? active[Math.floor(Math.random() * active.length)].value : options[0].value;
+};
+
 // Three working step types — choose based on content:
 //
 //   step(latex)          — pure KaTeX. Use for any line containing maths.
@@ -455,6 +477,7 @@ const generateQuestion = (
   level: DifficultyLevel,
   _variables: Record<string, boolean>,   // ← use variables[key] in your generator
   _dropdownValue: string,                // ← use dropdownValue to branch on selected option
+  _multiSelectValues: Record<string, boolean> = {}, // ← use pickActive(multiSelectValues, options)
 ): AnyQuestion => {
   const id = Math.floor(Math.random() * 1_000_000);
 
@@ -528,10 +551,11 @@ const generateUniqueQ = (
   variables: Record<string, boolean>,
   dropdownValue: string,
   usedKeys: Set<string>,
+  multiSelectValues: Record<string, boolean> = {},
 ): AnyQuestion => {
   let q: AnyQuestion;
   let attempts = 0;
-  do { q = generateQuestion(tool, level, variables, dropdownValue); attempts++; }
+  do { q = generateQuestion(tool, level, variables, dropdownValue, multiSelectValues); attempts++; }
   while (usedKeys.has(q.key) && attempts < 100);
   usedKeys.add(q.key);
   return q;
@@ -549,6 +573,7 @@ void (TogglePill as unknown);
 void (SegButtons as unknown);
 void (tStep as unknown);
 void (fmt as unknown);
+void (pickActive as unknown);
 
 const LV_COLORS:Record<DifficultyLevel,{bg:string;border:string;text:string;fill:string}> = {
   level1:{bg:"bg-green-50",border:"border-green-500",text:"text-green-700",fill:"#dcfce7"},
@@ -651,13 +676,43 @@ const DropdownSection = ({ dropdown, value, onChange }: {
         </button>
       ) : (
         <button key={opt.value} onClick={() => onChange(opt.value)}
-          className={`flex-1 px-4 py-2.5 text-base font-bold transition-colors ${value === opt.value ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}>
+          className={`flex-1 px-3 py-2 text-sm font-bold transition-colors ${value === opt.value ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}>
           {opt.label}
         </button>
       ))}
     </div>
   </div>
 );
+
+// MultiSelectSection — renders independent toggle buttons for non-mutually-exclusive options.
+// Use when options describe what's in the question pool rather than a single configuration choice.
+// At least one option must remain active — clicking the last active button does nothing.
+// Use pickActive(values, options) in generateQuestion to randomly pick from active options.
+const MultiSelectSection = ({ multiSelect, values, onChange }: {
+  multiSelect: { key: string; label: string; options: { value: string; label: string }[] };
+  values: Record<string, boolean>;
+  onChange: (k: string, v: boolean) => void;
+}) => {
+  const activeCount = multiSelect.options.filter(o => values[o.value]).length;
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">{multiSelect.label}</span>
+      <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden">
+        {multiSelect.options.map(opt => {
+          const isActive = values[opt.value] ?? false;
+          const isLast = isActive && activeCount === 1;
+          return (
+            <button key={opt.value}
+              onClick={() => { if (!isLast) onChange(opt.value, !isActive); }}
+              className={`flex-1 px-3 py-2 text-sm font-bold transition-colors ${isActive ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}>
+              {opt.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
 
 // VariablesSection — renders toggle switches inside a QO popover
 const VariablesSection = ({ variables, values, onChange }: {
@@ -680,22 +735,26 @@ const VariablesSection = ({ variables, values, onChange }: {
 );
 
 // StandardQOPopover — shown in whiteboard/worked example and non-differentiated worksheet
-const StandardQOPopover = ({ variables, variableValues, onVariableChange, dropdown, dropdownValue, onDropdownChange }: {
+const StandardQOPopover = ({ variables, variableValues, onVariableChange, dropdown, dropdownValue, onDropdownChange, multiSelect, multiSelectValues, onMultiSelectChange }: {
   variables: { key: string; label: string }[];
   variableValues: Record<string, boolean>;
   onVariableChange: (k: string, v: boolean) => void;
   dropdown: { key: string; label: string; useTwoLineButtons?: boolean; options: { value: string; label: string; sub?: string }[] } | null;
   dropdownValue: string;
   onDropdownChange: (v: string) => void;
+  multiSelect: { key: string; label: string; options: { value: string; label: string }[] } | null;
+  multiSelectValues: Record<string, boolean>;
+  onMultiSelectChange: (k: string, v: boolean) => void;
 }) => {
   const { open, setOpen, ref } = usePopover();
-  const hasContent = variables.length > 0 || dropdown !== null;
+  const hasContent = variables.length > 0 || dropdown !== null || multiSelect !== null;
   return (
     <div className="relative" ref={ref}>
       <PopoverButton open={open} onClick={() => setOpen(!open)} />
       {open && (
         <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-72 p-5 flex flex-col gap-5">
           {dropdown && <DropdownSection dropdown={dropdown} value={dropdownValue} onChange={onDropdownChange} />}
+          {multiSelect && <MultiSelectSection multiSelect={multiSelect} values={multiSelectValues} onChange={onMultiSelectChange} />}
           {variables.length > 0 && <VariablesSection variables={variables} values={variableValues} onChange={onVariableChange} />}
           {!hasContent && <p className="text-sm text-gray-400">No additional options for this tool.</p>}
         </div>
@@ -705,18 +764,21 @@ const StandardQOPopover = ({ variables, variableValues, onVariableChange, dropdo
 };
 
 // DiffQOPopover — shown in differentiated worksheet mode; shows per-level options
-const DiffQOPopover = ({ toolSettings, levelVariables, onLevelVariableChange, levelDropdowns, onLevelDropdownChange }: {
+const DiffQOPopover = ({ toolSettings, levelVariables, onLevelVariableChange, levelDropdowns, onLevelDropdownChange, levelMultiSelect, onLevelMultiSelectChange }: {
   toolSettings: typeof TOOL_CONFIG.tools[string];
   levelVariables: Record<string, Record<string, boolean>>;
   onLevelVariableChange: (lv: string, k: string, v: boolean) => void;
   levelDropdowns: Record<string, string>;
   onLevelDropdownChange: (lv: string, v: string) => void;
+  levelMultiSelect: Record<string, Record<string, boolean>>;
+  onLevelMultiSelectChange: (lv: string, k: string, v: boolean) => void;
 }) => {
   const { open, setOpen, ref } = usePopover();
   const levels = ["level1","level2","level3"] as DifficultyLevel[];
   const getDDForLevel = (lv: string) => toolSettings.difficultySettings?.[lv]?.dropdown ?? toolSettings.dropdown;
   const getVarsForLevel = (lv: string) => toolSettings.difficultySettings?.[lv]?.variables ?? toolSettings.variables;
-  const anyContent = levels.some(lv => getDDForLevel(lv) !== null || (getVarsForLevel(lv)?.length ?? 0) > 0);
+  const getMSForLevel = (lv: string) => toolSettings.difficultySettings?.[lv]?.multiSelect ?? toolSettings.multiSelect ?? null;
+  const anyContent = levels.some(lv => getDDForLevel(lv) !== null || (getVarsForLevel(lv)?.length ?? 0) > 0 || getMSForLevel(lv) !== null);
   return (
     <div className="relative" ref={ref}>
       <PopoverButton open={open} onClick={() => setOpen(!open)} />
@@ -727,13 +789,15 @@ const DiffQOPopover = ({ toolSettings, levelVariables, onLevelVariableChange, le
             : levels.map(lv => {
                 const dd = getDDForLevel(lv);
                 const vars = getVarsForLevel(lv) ?? [];
+                const ms = getMSForLevel(lv);
                 return (
                   <div key={lv} className="flex flex-col gap-2">
                     <span className={`text-sm font-extrabold uppercase tracking-wider ${LV_HEADER_COLORS[lv]}`}>{LV_LABELS[lv]}</span>
                     <div className="flex flex-col gap-3 pl-1">
                       {dd && <DropdownSection dropdown={dd} value={levelDropdowns[lv] ?? dd.defaultValue} onChange={v => onLevelDropdownChange(lv, v)} />}
+                      {ms && <MultiSelectSection multiSelect={ms} values={levelMultiSelect[lv] ?? {}} onChange={(k,v) => onLevelMultiSelectChange(lv, k, v)} />}
                       {vars.length > 0 && <VariablesSection variables={vars} values={levelVariables[lv] ?? {}} onChange={(k,v) => onLevelVariableChange(lv, k, v)} />}
-                      {!dd && vars.length === 0 && <p className="text-xs text-gray-400">No options at this level.</p>}
+                      {!dd && !ms && vars.length === 0 && <p className="text-xs text-gray-400">No options at this level.</p>}
                     </div>
                   </div>
                 );
@@ -1151,7 +1215,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
 export default function App() {
   const toolKeys = Object.keys(TOOL_CONFIG.tools) as ToolType[];
-  // NOTE: In production add your routing hook here
 
   const [currentTool, setCurrentTool] = useState<ToolType>("tool1");
   const [mode, setMode] = useState<"whiteboard"|"single"|"worksheet">("whiteboard");
@@ -1179,6 +1242,14 @@ export default function App() {
     });
     return init;
   });
+  const [toolMultiSelect, setToolMultiSelect] = useState<Record<string,Record<string,boolean>>>(() => {
+    const init: Record<string,Record<string,boolean>> = {};
+    Object.keys(TOOL_CONFIG.tools).forEach(k => {
+      const ms = TOOL_CONFIG.tools[k].multiSelect;
+      if (ms) { init[k] = {}; ms.options.forEach(o => { init[k][o.value] = o.defaultActive; }); }
+    });
+    return init;
+  });
   const [levelVariables, setLevelVariables] = useState<Record<string,Record<string,boolean>>>({level1:{},level2:{},level3:{}});
   const [levelDropdowns, setLevelDropdowns] = useState<Record<string,string>>(() => {
     const init: Record<string,string> = {};
@@ -1190,6 +1261,7 @@ export default function App() {
     });
     return init;
   });
+  const [levelMultiSelect, setLevelMultiSelect] = useState<Record<string,Record<string,boolean>>>({level1:{},level2:{},level3:{}});
   // ─────────────────────────────────────────────────────────────────────────
 
   // ── SHARED STATE (do not remove) ─────────────────────────────────────────
@@ -1204,7 +1276,7 @@ export default function App() {
   const [showWorksheetAnswers, setShowWorksheetAnswers] = useState(false);
   const [isDifferentiated, setIsDifferentiated] = useState(false);
   const [displayFontSize, setDisplayFontSize] = useState(2);  // whiteboard + worked example
-  const [worksheetFontSize, setWorksheetFontSize] = useState(2); // worksheet only
+  const [worksheetFontSize, setWorksheetFontSize] = useState(1); // worksheet only — default text-xl
   const [colorScheme, setColorScheme] = useState("default");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
@@ -1212,6 +1284,7 @@ export default function App() {
   // Visualiser
   const [presenterMode, setPresenterMode] = useState(false);
   const [wbFullscreen, setWbFullscreen] = useState(false);
+  const [splitPct, setSplitPct] = useState(40); // fullscreen question/working split %
   const [camDevices, setCamDevices] = useState<MediaDeviceInfo[]>([]);
   const [currentCamId, setCurrentCamId] = useState<string|null>(null);
   const [camError, setCamError] = useState<string|null>(null);
@@ -1222,6 +1295,8 @@ export default function App() {
   const camDropdownRef = useRef<HTMLDivElement>(null);
   const longPressTimer = useRef<ReturnType<typeof setTimeout>|null>(null);
   const didLongPress = useRef(false);
+  const isDraggingRef = useRef(false);      // must be at top level — not inside renderWhiteboard
+  const splitContainerRef = useRef<HTMLDivElement>(null); // same reason
 
   // Load KaTeX on mount
   useEffect(() => { loadKaTeX(); }, []);
@@ -1274,17 +1349,20 @@ export default function App() {
   const getToolSettings = () => TOOL_CONFIG.tools[currentTool];
   const getDropdownConfig = () => getToolSettings().difficultySettings?.[difficulty]?.dropdown ?? getToolSettings().dropdown;
   const getVariablesConfig = () => getToolSettings().difficultySettings?.[difficulty]?.variables ?? getToolSettings().variables;
+  const getMultiSelectConfig = () => getToolSettings().difficultySettings?.[difficulty]?.multiSelect ?? getToolSettings().multiSelect ?? null;
   const getDropdownValue = () => toolDropdowns[`${currentTool}__${difficulty}`] ?? getDropdownConfig()?.defaultValue ?? "";
   const setDropdownValue = (v: string) => setToolDropdowns(p => ({...p, [`${currentTool}__${difficulty}`]: v}));
   const setVariableValue = (k: string, v: boolean) => setToolVariables(p => ({...p, [currentTool]: {...p[currentTool], [k]: v}}));
+  const setMultiSelectValue = (k: string, v: boolean) => setToolMultiSelect(p => ({...p, [currentTool]: {...(p[currentTool]??{}), [k]: v}}));
   const handleLevelVarChange = (lv: string, k: string, v: boolean) => setLevelVariables(p => ({...p, [lv]: {...p[lv], [k]: v}}));
   const handleLevelDDChange = (lv: string, v: string) => setLevelDropdowns(p => ({...p, [lv]: v}));
+  const handleLevelMSChange = (lv: string, k: string, v: boolean) => setLevelMultiSelect(p => ({...p, [lv]: {...(p[lv]??{}), [k]: v}}));
   const getInstruction = (tool = currentTool) => TOOL_CONFIG.tools[tool]?.instruction ?? "";
   // ─────────────────────────────────────────────────────────────────────────
 
   // ── WIRING ────────────────────────────────────────────────────────────────
   const makeQuestion = (): AnyQuestion =>
-    generateQuestion(currentTool, difficulty, toolVariables[currentTool] || {}, getDropdownValue());
+    generateQuestion(currentTool, difficulty, toolVariables[currentTool] || {}, getDropdownValue(), toolMultiSelect[currentTool] ?? {});
 
   const handleNewQuestion = () => {
     setCurrentQuestion(makeQuestion());
@@ -1301,12 +1379,13 @@ export default function App() {
         const dd = t.difficultySettings?.[lv]?.dropdown ?? t.dropdown;
         const vars = levelVariables[lv] ?? {};
         const ddVal = levelDropdowns[lv] ?? (dd?.defaultValue ?? "");
+        const msVals = levelMultiSelect[lv] ?? {};
         for (let i = 0; i < numQuestions; i++)
-          questions.push(generateUniqueQ(currentTool, lv, vars, ddVal, usedKeys));
+          questions.push(generateUniqueQ(currentTool, lv, vars, ddVal, usedKeys, msVals));
       });
     } else {
       for (let i = 0; i < numQuestions; i++)
-        questions.push(generateUniqueQ(currentTool, difficulty, toolVariables[currentTool] || {}, getDropdownValue(), usedKeys));
+        questions.push(generateUniqueQ(currentTool, difficulty, toolVariables[currentTool] || {}, getDropdownValue(), usedKeys, toolMultiSelect[currentTool] ?? {}));
     }
     setWorksheet(questions);
     setShowWorksheetAnswers(false);
@@ -1320,6 +1399,9 @@ export default function App() {
     dropdown: getDropdownConfig() ?? null,
     dropdownValue: getDropdownValue(),
     onDropdownChange: setDropdownValue,
+    multiSelect: getMultiSelectConfig(),
+    multiSelectValues: toolMultiSelect[currentTool] ?? {},
+    onMultiSelectChange: setMultiSelectValue,
   };
   const diffQOProps = {
     toolSettings: getToolSettings(),
@@ -1327,6 +1409,8 @@ export default function App() {
     onLevelVariableChange: handleLevelVarChange,
     levelDropdowns,
     onLevelDropdownChange: handleLevelDDChange,
+    levelMultiSelect,
+    onLevelMultiSelectChange: handleLevelMSChange,
   };
   const qoEl = (isDiff = false) => isDiff
     ? <DiffQOPopover {...diffQOProps} />
@@ -1506,7 +1590,7 @@ export default function App() {
         </div>
       );
       return (
-        <div className="rounded-xl flex items-center justify-center flex-shrink-0 p-8" style={{position:"relative",width:"500px",height:"100%",backgroundColor:stepBg}}>
+        <div className="rounded-xl flex items-center justify-center flex-shrink-0 p-8" style={{position:"relative",width:"480px",height:"100%",backgroundColor:stepBg}}>
           {fontControls}
           <div className="w-full text-center flex flex-col gap-4 items-center">
             {getInstruction() && <div className={`${["text-lg","text-xl","text-2xl","text-3xl","text-4xl","text-5xl"][displayFontSize]} font-semibold`} style={{color:"#000"}}>{getInstruction()}</div>}
@@ -1525,7 +1609,7 @@ export default function App() {
         </div>
       );
       return (
-        <div style={{position:"relative",width:"40%",height:"100%",backgroundColor:fsQuestionBg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:48,boxSizing:"border-box",flexShrink:0,overflowY:"auto",gap:16}}>
+        <div style={{position:"relative",width:`${splitPct}%`,height:"100%",backgroundColor:fsQuestionBg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:48,boxSizing:"border-box",flexShrink:0,overflowY:"auto",gap:16}}>
           {fontControls}
           <>
             {getInstruction() && <div className={`${["text-lg","text-xl","text-2xl","text-3xl","text-4xl","text-5xl"][displayFontSize]} font-semibold`} style={{color:"#000"}}>{getInstruction()}</div>}
@@ -1537,7 +1621,7 @@ export default function App() {
     };
 
     const makeRightPanel = (isFS: boolean) => (
-      <div style={{flex:isFS?"none":1,width:isFS?"60%":undefined,height:"100%",position:"relative",overflow:"hidden",backgroundColor:presenterMode?"#000":(isFS?fsWorkingBg:stepBg),borderRadius:isFS?0:undefined}} className={isFS?"":"flex-1 rounded-xl"}>
+      <div style={{flex:isFS?1:1,width:isFS?undefined:undefined,height:"100%",position:"relative",overflow:"hidden",backgroundColor:presenterMode?"#000":(isFS?fsWorkingBg:stepBg),borderRadius:isFS?0:undefined}} className={isFS?"":"flex-1 rounded-xl"}>
         {presenterMode&&(
           <><video ref={videoRef} autoPlay playsInline muted style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}}/>
           {camError&&<div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",color:"rgba(255,255,255,0.4)",fontSize:"0.85rem",padding:"2rem",textAlign:"center",zIndex:1}}>{camError}</div>}</>
@@ -1584,16 +1668,37 @@ export default function App() {
     if(wbFullscreen) return (
       <div style={{position:"fixed",inset:0,zIndex:200,backgroundColor:fsToolbarBg,display:"flex",flexDirection:"column"}}>
         {fsToolbar}
-        <div style={{flex:1,display:"flex",minHeight:0}}>
+        <div ref={splitContainerRef} style={{flex:1,display:"flex",minHeight:0}}>
           {questionBoxFS()}
-          <div style={{width:2,backgroundColor:"#000",flexShrink:0}}/>
+          {/* Draggable divider — visible 2px line with wider transparent hit target */}
+          <div
+            style={{position:"relative",width:2,backgroundColor:"#000",flexShrink:0,cursor:"col-resize"}}
+            onMouseDown={e => {
+              isDraggingRef.current = true;
+              const onMove = (ev: MouseEvent) => {
+                if (!isDraggingRef.current || !splitContainerRef.current) return;
+                const rect = splitContainerRef.current.getBoundingClientRect();
+                let pct = ((ev.clientX - rect.left) / rect.width) * 100;
+                pct = Math.min(75, Math.max(25, pct));
+                if (pct >= 38 && pct <= 42) pct = 40; // snap to default
+                setSplitPct(pct);
+              };
+              const onUp = () => { isDraggingRef.current = false; document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); };
+              document.addEventListener("mousemove", onMove);
+              document.addEventListener("mouseup", onUp);
+              e.preventDefault();
+            }}
+          >
+            {/* Wider transparent overlay is the actual hit target */}
+            <div style={{position:"absolute",top:0,bottom:0,left:-5,width:12,cursor:"col-resize"}}/>
+          </div>
           {makeRightPanel(true)}
         </div>
       </div>
     );
 
     return (
-      <div className="p-8" style={{backgroundColor:qBg,height:"600px",boxSizing:"border-box"}}>
+      <div className="p-8" style={{backgroundColor:qBg,height:"480px",boxSizing:"border-box"}}>
         <div className="flex gap-6" style={{height:"100%"}}>
           {questionBox()}
           {makeRightPanel(false)}
@@ -1696,7 +1801,6 @@ export default function App() {
     <>
       <div className="bg-blue-900 shadow-lg">
         <div className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
-          {/* NOTE: In production replace onClick with your routing navigate call */}
           <button onClick={()=>{ window.location.href="/"; }} className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors">
             <Home size={24}/><span className="font-semibold text-lg">Home</span>
           </button>
