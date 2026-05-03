@@ -359,17 +359,21 @@ const handlePrint = (
     
     let formatted = '';
     
+    let answerIsNum1 = false;
+    let answerIsNum2 = false;
+    let answerIsResult = false;
+
     if (showAnswer) {
-      if (useMissingNumber) {
-        // Replace __ with actual answer
-        if (num1 === '__') {
-          num1 = String(q.answer);
-        } else if (num2 === '__') {
-          num2 = String(q.answer);
-        }
+      if (num1 === '__') {
+        num1 = String(q.answer);
+        answerIsNum1 = true;
+      } else if (num2 === '__') {
+        num2 = String(q.answer);
+        answerIsNum2 = true;
       } else {
-        // Standard question - replace ___ with answer
+        // Standard question - result blank
         result = String(q.answer);
+        answerIsResult = true;
       }
     }
     
@@ -377,8 +381,10 @@ const handlePrint = (
     const formattedNum1 = formatNumber(num1);
     const formattedNum2 = formatNumber(num2);
     const formattedResult = formatNumber(result);
+
+    const boldIf = (cond: boolean, s: string) => cond ? `<strong>${s}</strong>` : s;
     
-    formatted = `${formattedNum1} ${operator} ${formattedNum2} = ${formattedResult}`;
+    formatted = `${boldIf(answerIsNum1, formattedNum1)} ${operator} ${boldIf(answerIsNum2, formattedNum2)} = ${boldIf(answerIsResult, formattedResult)}`;
     
     return `<div class="qbody">${formatted}</div>`;
   };
