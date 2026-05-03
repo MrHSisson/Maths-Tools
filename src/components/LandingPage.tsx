@@ -1,6 +1,14 @@
 import { useNavigate } from 'react-router-dom';
 import { Calculator } from 'lucide-react';
 
+// ==========================================
+// DEVELOPER SETTINGS
+// ==========================================
+// Set to 'true' to completely hide tools where enabled: false
+// Set to 'false' to show them as grayed-out "Coming Soon" cards
+const CONFIG_HIDE_DISABLED = true; 
+// ==========================================
+
 interface Tool {
   id: string;
   path: string;
@@ -13,6 +21,11 @@ interface Tool {
 interface CategoryTheme {
   border: string;
   hoverBorder: string;
+  shadow: string;
+  text: string;
+  badgeBg: string;
+  badgeText: string;
+  badgeBorder: string;
 }
 
 interface Category {
@@ -29,6 +42,11 @@ const categories: Category[] = [
     theme: {
       border: 'border-l-blue-500',
       hoverBorder: 'hover:border-l-blue-400',
+      shadow: 'hover:shadow-blue-300/40',
+      text: 'group-hover:text-blue-700',
+      badgeBg: 'bg-blue-50',
+      badgeText: 'text-blue-700',
+      badgeBorder: 'border-blue-200/60'
     },
     tools: [
       { id: 'Times Tables', path: '/timestables', name: 'Times Tables', description: 'Generate PDFs designed to test and improve TimesTable fluency', ready: 'v1.0' },
@@ -42,6 +60,11 @@ const categories: Category[] = [
     theme: {
       border: 'border-l-cyan-500',
       hoverBorder: 'hover:border-l-cyan-400',
+      shadow: 'hover:shadow-cyan-300/40',
+      text: 'group-hover:text-cyan-700',
+      badgeBg: 'bg-cyan-50',
+      badgeText: 'text-cyan-700',
+      badgeBorder: 'border-cyan-200/60'
     },
     tools: [
       { id: 'integers', path: '/integers', name: 'Adding & Subtracting Integers', description: 'Practice adding and subtracting positive and negative numbers using number lines', ready: 'v1.4' },
@@ -55,6 +78,11 @@ const categories: Category[] = [
     theme: {
       border: 'border-l-purple-500',
       hoverBorder: 'hover:border-l-purple-400',
+      shadow: 'hover:shadow-purple-300/40',
+      text: 'group-hover:text-purple-700',
+      badgeBg: 'bg-purple-50',
+      badgeText: 'text-purple-700',
+      badgeBorder: 'border-purple-200/60'
     },
     tools: [
       { id: 'solving-linear-equations', path: '/solving-linear-equations', name: 'Unknowns on Both Sides', description: 'Solve equations where the unknown occurs more than once', ready: 'v2.1.2' },
@@ -62,10 +90,10 @@ const categories: Category[] = [
       { id: 'iteration', path: '/iteration', name: 'Iteration', description: 'Find roots to eqautions using iterative methods', ready: 'v2.1.1' },
       { id: 'simultaneous-equations-elimination', path: '/simultaneous-equations-elimination', name: 'Simultaneous Equations (Elimination)', description: 'Solve simultaneous equations, including rearranging', ready: 'v2.1.1' },
       { id: 'simultaneous-equations-substitution', path: '/simultaneous-equations-substitution', name: 'Simultaneous Equations (Substitution)', description: 'Solve Simultaneous Equations (including Non-Linear) by Substitution', ready: 'v2.1.1' },
-      { id: 'single-brackets-foil', path: '/expanding-single-brackets-FOIL', name: 'Expanding Single Brackets (FOIL)', description: 'Expand single brackets by using arrows for each term', ready: 'v1.4', enabled: false },
-      { id: 'expanding-double-brackets-foil', path: '/expanding-double-brackets-foil', name: 'Expanding Double Brackets (FOIL)', description: 'Expand pairs of brackets using the FOIL method', ready: 'v1.4', enabled: false },
-      { id: 'single-brackets-grid', path: '/expanding-single-brackets-GRID', name: 'Expanding Single Brackets (GRID)', description: 'Expand single brackets by using the grid method', ready: 'v1.4', enabled: false },
-      { id: 'expanding-double-brackets-grid', path: '/expanding-double-brackets-grid', name: 'Expanding Double Brackets (GRID)', description: 'Expand pairs of brackets using the grid method', ready: 'v1.4', enabled: false },
+      { id: 'single-brackets-foil', path: '/expanding-single-brackets-FOIL', name: 'Expanding Single Brackets (FOIL)', description: 'Expand single brackets by using arrows for each term', ready: 'v1.4', enabled: true },
+      { id: 'expanding-double-brackets-foil', path: '/expanding-double-brackets-foil', name: 'Expanding Double Brackets (FOIL)', description: 'Expand pairs of brackets using the FOIL method', ready: 'v1.4', enabled: true },
+      { id: 'single-brackets-grid', path: '/expanding-single-brackets-GRID', name: 'Expanding Single Brackets (GRID)', description: 'Expand single brackets by using the grid method', ready: 'v1.4', enabled: true },
+      { id: 'expanding-double-brackets-grid', path: '/expanding-double-brackets-grid', name: 'Expanding Double Brackets (GRID)', description: 'Expand pairs of brackets using the grid method', ready: 'v1.4', enabled: true },
     ]
   },
   {
@@ -74,6 +102,11 @@ const categories: Category[] = [
     theme: {
       border: 'border-l-emerald-500',
       hoverBorder: 'hover:border-l-emerald-400',
+      shadow: 'hover:shadow-emerald-300/40',
+      text: 'group-hover:text-emerald-700',
+      badgeBg: 'bg-emerald-50',
+      badgeText: 'text-emerald-700',
+      badgeBorder: 'border-emerald-200/60'
     },
     tools: [
       { id: 'ratio', path: '/ratio-sharing', name: 'Dividing Ratios', description: 'Sharing amounts using the total, a known amount or known difference', ready: 'v1.4' },
@@ -89,6 +122,11 @@ const categories: Category[] = [
     theme: {
       border: 'border-l-amber-500',
       hoverBorder: 'hover:border-l-amber-400',
+      shadow: 'hover:shadow-amber-300/40',
+      text: 'group-hover:text-amber-700',
+      badgeBg: 'bg-amber-50',
+      badgeText: 'text-amber-700',
+      badgeBorder: 'border-amber-200/60'
     },
     tools: [
       { id: 'circles', path: '/circle-properties', name: 'Properties of Circles', description: 'Find the circumference, area and arc lengths of circles and sectors', ready: 'v1.4' },
@@ -104,6 +142,11 @@ const categories: Category[] = [
     theme: {
       border: 'border-l-pink-500',
       hoverBorder: 'hover:border-l-pink-400',
+      shadow: 'hover:shadow-pink-300/40',
+      text: 'group-hover:text-pink-700',
+      badgeBg: 'bg-pink-50',
+      badgeText: 'text-pink-700',
+      badgeBorder: 'border-pink-200/60'
     },
     tools: []
   },
@@ -113,6 +156,11 @@ const categories: Category[] = [
     theme: {
       border: 'border-l-violet-500',
       hoverBorder: 'hover:border-l-violet-400',
+      shadow: 'hover:shadow-violet-300/40',
+      text: 'group-hover:text-violet-700',
+      badgeBg: 'bg-violet-50',
+      badgeText: 'text-violet-700',
+      badgeBorder: 'border-violet-200/60'
     },
     tools: [
       { id: 'visualiser', path: '/visualiser', name: 'Visualiser', description: 'A tool for displaying your visualiser', ready: 'v1.0' },
@@ -126,6 +174,11 @@ const categories: Category[] = [
     theme: {
       border: 'border-l-slate-600',
       hoverBorder: 'hover:border-l-slate-500',
+      shadow: 'hover:shadow-slate-400/40',
+      text: 'group-hover:text-slate-800',
+      badgeBg: 'bg-slate-100',
+      badgeText: 'text-slate-700',
+      badgeBorder: 'border-slate-300/60'
     },
     tools: []
   },
@@ -134,7 +187,13 @@ const categories: Category[] = [
 export default function LandingPage(): JSX.Element {
   const navigate = useNavigate();
 
-  const totalTools: number = categories.reduce((acc, cat) => acc + cat.tools.length, 0);
+  // Calculate total tools, respecting the CONFIG_HIDE_DISABLED setting
+  const totalTools: number = categories.reduce((acc, cat) => {
+    const visibleTools = CONFIG_HIDE_DISABLED 
+      ? cat.tools.filter(t => t.enabled !== false) 
+      : cat.tools;
+    return acc + visibleTools.length;
+  }, 0);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -191,6 +250,11 @@ export default function LandingPage(): JSX.Element {
       {/* Main Content */}
       <main className="relative z-10 max-w-7xl mx-auto px-6 pb-24">
         {categories.map((category) => {
+          // Filter tools based on our developer config
+          const visibleTools = CONFIG_HIDE_DISABLED 
+            ? category.tools.filter(t => t.enabled !== false) 
+            : category.tools;
+
           return (
             <section key={category.name} className="mb-16">
               {/* Category Header */}
@@ -201,9 +265,9 @@ export default function LandingPage(): JSX.Element {
                 <div className="flex-1 h-px bg-gradient-to-r from-slate-200 to-transparent" />
               </div>
 
-              {category.tools.length > 0 ? (
+              {visibleTools.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {category.tools.map((tool) => (
+                  {visibleTools.map((tool) => (
                     <button
                       key={tool.id}
                       onClick={() => tool.enabled !== false && navigate(tool.path)}
@@ -228,7 +292,7 @@ export default function LandingPage(): JSX.Element {
                         </span>
                       </div>
 
-                      {/* Title - padding right prevents text from touching the badge */}
+                      {/* Title */}
                       <h3 className="font-bold text-lg leading-tight text-slate-800 mb-3 pr-16 group-hover:text-slate-900 transition-colors">
                         {tool.name}
                       </h3>
