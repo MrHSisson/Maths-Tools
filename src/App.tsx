@@ -21,7 +21,7 @@ import FractionsOfAmounts from './tools/FractionsOfAmounts';
 import MultiplicationGenerator from './tools/MultiplicationGenerator';
 import BasicAngleFacts from './tools/BasicAngleFacts';
 import SimultaneousEquations from './tools/SimultaneousEquations';
-import AnglesInTrianglesv2 from './tools/AnglesInTrianglesv2';
+import AnglesInTriangles from './tools/Geometry/AnglesInTriangles';
 import EquationsOfLines from './tools/EquationsOfLines';
 import NonLinearSimEq from './tools/NonLinearSimEq';
 import SolvingLinearEquations from './tools/SolvingLinearEquations';
@@ -57,7 +57,7 @@ function App() {
       <Route path="/multiplication-methods" element={<MultiplicationGenerator />} />
       <Route path="/basic-angle-facts" element={<BasicAngleFacts />} />
       <Route path="/simultaneous-equations-elimination" element={<SimultaneousEquations />} />
-      <Route path="/angles-in-triangles-v2" element={<AnglesInTrianglesv2 />} />
+      <Route path="/angles-in-triangles" element={<AnglesInTriangles />} />
       <Route path="/equations-of-lines" element={<EquationsOfLines />} />
       <Route path="/simultaneous-equations-substitution" element={<NonLinearSimEq />} />
       <Route path="/solving-linear-equations" element={<SolvingLinearEquations />} />
