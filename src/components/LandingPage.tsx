@@ -6,7 +6,7 @@ import { Calculator } from 'lucide-react';
 // ==========================================
 // Set to 'true' to completely hide tools where enabled: false
 // Set to 'false' to show them as grayed-out "Coming Soon" cards
-const CONFIG_HIDE_DISABLED = true; 
+const CONFIG_HIDE_DISABLED = false; 
 // ==========================================
 
 interface Tool {
@@ -90,10 +90,10 @@ const categories: Category[] = [
       { id: 'iteration', path: '/iteration', name: 'Iteration', description: 'Find roots to eqautions using iterative methods', ready: 'v2.1.1' },
       { id: 'simultaneous-equations-elimination', path: '/simultaneous-equations-elimination', name: 'Simultaneous Equations (Elimination)', description: 'Solve simultaneous equations, including rearranging', ready: 'v2.1.1' },
       { id: 'simultaneous-equations-substitution', path: '/simultaneous-equations-substitution', name: 'Simultaneous Equations (Substitution)', description: 'Solve Simultaneous Equations (including Non-Linear) by Substitution', ready: 'v2.1.1' },
-      { id: 'single-brackets-foil', path: '/expanding-single-brackets-FOIL', name: 'Expanding Single Brackets (FOIL)', description: 'Expand single brackets by using arrows for each term', ready: 'v1.4', enabled: true },
-      { id: 'expanding-double-brackets-foil', path: '/expanding-double-brackets-foil', name: 'Expanding Double Brackets (FOIL)', description: 'Expand pairs of brackets using the FOIL method', ready: 'v1.4', enabled: true },
-      { id: 'single-brackets-grid', path: '/expanding-single-brackets-GRID', name: 'Expanding Single Brackets (GRID)', description: 'Expand single brackets by using the grid method', ready: 'v1.4', enabled: true },
-      { id: 'expanding-double-brackets-grid', path: '/expanding-double-brackets-grid', name: 'Expanding Double Brackets (GRID)', description: 'Expand pairs of brackets using the grid method', ready: 'v1.4', enabled: true },
+      { id: 'single-brackets-foil', path: '/expanding-single-brackets-FOIL', name: 'Expanding Single Brackets (FOIL)', description: 'Expand single brackets by using arrows for each term', ready: 'v1.4', enabled: false },
+      { id: 'expanding-double-brackets-foil', path: '/expanding-double-brackets-foil', name: 'Expanding Double Brackets (FOIL)', description: 'Expand pairs of brackets using the FOIL method', ready: 'v1.4', enabled: false },
+      { id: 'single-brackets-grid', path: '/expanding-single-brackets-GRID', name: 'Expanding Single Brackets (GRID)', description: 'Expand single brackets by using the grid method', ready: 'v1.4', enabled: false },
+      { id: 'expanding-double-brackets-grid', path: '/expanding-double-brackets-grid', name: 'Expanding Double Brackets (GRID)', description: 'Expand pairs of brackets using the grid method', ready: 'v1.4', enabled: false },
     ]
   },
   {
