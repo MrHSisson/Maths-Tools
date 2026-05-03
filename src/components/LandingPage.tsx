@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { Calculator } from 'lucide-react';
 
 interface Tool {
   id: string;
@@ -9,10 +10,20 @@ interface Tool {
   enabled?: boolean;
 }
 
+interface CategoryTheme {
+  border: string;
+  hoverBorder: string;
+  shadow: string;
+  text: string;
+  badgeBg: string;
+  badgeText: string;
+  badgeBorder: string;
+}
+
 interface Category {
   name: string;
   gradient: string;
-  accentClass: string;
+  theme: CategoryTheme;
   tools: Tool[];
 }
 
@@ -20,7 +31,15 @@ const categories: Category[] = [
   {
     name: 'Generators',
     gradient: 'from-blue-500 to-indigo-600',
-    accentClass: 'blue',
+    theme: {
+      border: 'border-blue-500',
+      hoverBorder: 'hover:border-blue-400',
+      shadow: 'hover:shadow-blue-300/40',
+      text: 'group-hover:text-blue-700',
+      badgeBg: 'bg-blue-50',
+      badgeText: 'text-blue-700',
+      badgeBorder: 'border-blue-200/60'
+    },
     tools: [
       { id: 'Times Tables', path: '/timestables', name: 'Times Tables', description: 'Generate PDFs designed to test and improve TimesTable fluency', ready: 'v1.0' },
       { id: 'Negative Operations', path: '/negative-operations', name: 'Negative Operations', description: 'Generate PDFs designed to test and improve operations with negative numbers', ready: 'v1.0' },
@@ -30,7 +49,15 @@ const categories: Category[] = [
   {
     name: 'Number',
     gradient: 'from-cyan-500 to-sky-600',
-    accentClass: 'cyan',
+    theme: {
+      border: 'border-cyan-500',
+      hoverBorder: 'hover:border-cyan-400',
+      shadow: 'hover:shadow-cyan-300/40',
+      text: 'group-hover:text-cyan-700',
+      badgeBg: 'bg-cyan-50',
+      badgeText: 'text-cyan-700',
+      badgeBorder: 'border-cyan-200/60'
+    },
     tools: [
       { id: 'integers', path: '/integers', name: 'Adding & Subtracting Integers', description: 'Practice adding and subtracting positive and negative numbers using number lines', ready: 'v1.4' },
       { id: 'estimation', path: '/estimation', name: 'Estimation', description: 'Develop estimation skills by rounding numbers to make calculations easier', ready: 'v1.7.1' },
@@ -40,7 +67,15 @@ const categories: Category[] = [
   {
     name: 'Algebra',
     gradient: 'from-purple-500 to-fuchsia-600',
-    accentClass: 'purple',
+    theme: {
+      border: 'border-purple-500',
+      hoverBorder: 'hover:border-purple-400',
+      shadow: 'hover:shadow-purple-300/40',
+      text: 'group-hover:text-purple-700',
+      badgeBg: 'bg-purple-50',
+      badgeText: 'text-purple-700',
+      badgeBorder: 'border-purple-200/60'
+    },
     tools: [
       { id: 'solving-linear-equations', path: '/solving-linear-equations', name: 'Unknowns on Both Sides', description: 'Solve equations where the unknown occurs more than once', ready: 'v2.1.2' },
       { id: 'completing-square', path: '/completing-the-square', name: 'Completing the Square', description: 'Rewrite and solve quadratic expressions in completed square form', ready: 'v2.0' },
@@ -56,7 +91,15 @@ const categories: Category[] = [
   {
     name: 'Ratio & Proportion',
     gradient: 'from-emerald-500 to-teal-600',
-    accentClass: 'emerald',
+    theme: {
+      border: 'border-emerald-500',
+      hoverBorder: 'hover:border-emerald-400',
+      shadow: 'hover:shadow-emerald-300/40',
+      text: 'group-hover:text-emerald-700',
+      badgeBg: 'bg-emerald-50',
+      badgeText: 'text-emerald-700',
+      badgeBorder: 'border-emerald-200/60'
+    },
     tools: [
       { id: 'ratio', path: '/ratio-sharing', name: 'Dividing Ratios', description: 'Sharing amounts using the total, a known amount or known difference', ready: 'v1.4' },
       { id: 'simplifying-ratios', path: '/simplifying-ratios', name: 'Simplifying Ratios', description: 'Simplifying ratios in numerical and algebraic forms', ready: 'v1.4' },
@@ -68,7 +111,15 @@ const categories: Category[] = [
   {
     name: 'Geometry',
     gradient: 'from-amber-500 to-orange-600',
-    accentClass: 'amber',
+    theme: {
+      border: 'border-amber-500',
+      hoverBorder: 'hover:border-amber-400',
+      shadow: 'hover:shadow-amber-300/40',
+      text: 'group-hover:text-amber-700',
+      badgeBg: 'bg-amber-50',
+      badgeText: 'text-amber-700',
+      badgeBorder: 'border-amber-200/60'
+    },
     tools: [
       { id: 'circles', path: '/circle-properties', name: 'Properties of Circles', description: 'Find the circumference, area and arc lengths of circles and sectors', ready: 'v1.4' },
       { id: 'basic-angle-facts', path: '/basic-angle-facts', name: 'Basic Angle Facts', description: 'Find missing angles from right angles, on striaght lines and around a point', ready: 'v1.6' },
@@ -80,13 +131,29 @@ const categories: Category[] = [
   {
     name: 'Probability & Statistics',
     gradient: 'from-pink-500 to-rose-600',
-    accentClass: 'pink',
+    theme: {
+      border: 'border-pink-500',
+      hoverBorder: 'hover:border-pink-400',
+      shadow: 'hover:shadow-pink-300/40',
+      text: 'group-hover:text-pink-700',
+      badgeBg: 'bg-pink-50',
+      badgeText: 'text-pink-700',
+      badgeBorder: 'border-pink-200/60'
+    },
     tools: []
   },
   {
     name: 'Teacher Tools',
     gradient: 'from-violet-500 to-purple-600',
-    accentClass: 'violet',
+    theme: {
+      border: 'border-violet-500',
+      hoverBorder: 'hover:border-violet-400',
+      shadow: 'hover:shadow-violet-300/40',
+      text: 'group-hover:text-violet-700',
+      badgeBg: 'bg-violet-50',
+      badgeText: 'text-violet-700',
+      badgeBorder: 'border-violet-200/60'
+    },
     tools: [
       { id: 'visualiser', path: '/visualiser', name: 'Visualiser', description: 'A tool for displaying your visualiser', ready: 'v1.0' },
       { id: 'tool-shell', path: '/tool-shell', name: 'Tool Shell', description: 'A tool shell for developing new tools', ready: 'v2.1.1' },
@@ -96,7 +163,15 @@ const categories: Category[] = [
   {
     name: 'Computer Science',
     gradient: 'from-slate-600 to-slate-800',
-    accentClass: 'slate',
+    theme: {
+      border: 'border-slate-600',
+      hoverBorder: 'hover:border-slate-500',
+      shadow: 'hover:shadow-slate-400/40',
+      text: 'group-hover:text-slate-800',
+      badgeBg: 'bg-slate-100',
+      badgeText: 'text-slate-700',
+      badgeBorder: 'border-slate-300/60'
+    },
     tools: []
   },
 ];
@@ -121,16 +196,16 @@ export default function LandingPage(): JSX.Element {
         }} />
       </div>
 
-      {/* Header Bar */}
-      <header className="sticky top-0 z-50 bg-slate-900 shadow-xl shadow-slate-900/10 border-b border-slate-800">
+      {/* Header Bar - Restored Original Colors & Icon */}
+      <header className="sticky top-0 z-50 bg-blue-900 shadow-xl shadow-blue-900/10">
         <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-md">
-              <span className="text-white font-serif italic font-bold text-xl leading-none">fx</span>
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 bg-white rounded-xl flex items-center justify-center shadow-md">
+              <Calculator className="text-blue-900" size={24} />
             </div>
             <div>
               <h1 className="text-white font-bold text-xl tracking-tight">Maths Tools</h1>
-              <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Interactive Learning</p>
+              <p className="text-blue-200 text-xs">Interactive Learning</p>
             </div>
           </div>
         </div>
@@ -161,12 +236,6 @@ export default function LandingPage(): JSX.Element {
       {/* Main Content */}
       <main className="relative z-10 max-w-7xl mx-auto px-6 pb-24">
         {categories.map((category) => {
-          const borderColorClass = `border-${category.accentClass}-500`;
-          const hoverBorderClass = `hover:border-${category.accentClass}-400`;
-          const shadowColorClass = `hover:shadow-${category.accentClass}-300/40`;
-          const textColorClass = `group-hover:text-${category.accentClass}-700`;
-          const badgeAccentClass = `border-${category.accentClass}-200/60 bg-${category.accentClass}-50 text-${category.accentClass}-700`;
-
           return (
             <section key={category.name} className="mb-16">
               {/* Category Header */}
@@ -178,7 +247,8 @@ export default function LandingPage(): JSX.Element {
               </div>
 
               {category.tools.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                // Reverted back to 4 tools per row on xl screens
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {category.tools.map((tool) => (
                     <button
                       key={tool.id}
@@ -187,17 +257,17 @@ export default function LandingPage(): JSX.Element {
                       className={`group relative bg-white p-7 text-left transition-all duration-300 border-l-4 shadow-sm shadow-slate-200/50 rounded-r-xl rounded-l-sm
                         ${tool.enabled === false
                           ? 'opacity-50 cursor-not-allowed border-slate-300 grayscale-[20%]'
-                          : `${borderColorClass} ${hoverBorderClass} hover:shadow-xl ${shadowColorClass} hover:-translate-y-1 cursor-pointer`
+                          : `${category.theme.border} ${category.theme.hoverBorder} hover:shadow-xl ${category.theme.shadow} hover:-translate-y-1 cursor-pointer`
                         }`}
                     >
                       {/* Top Header Row within Card */}
                       <div className="flex justify-between items-start mb-4">
-                        <h3 className={`font-bold text-xl leading-tight pr-4 text-slate-800 transition-colors duration-300 ${tool.enabled !== false && textColorClass}`}>
+                        <h3 className={`font-bold text-xl leading-tight pr-4 text-slate-800 transition-colors duration-300 ${tool.enabled !== false ? category.theme.text : ''}`}>
                           {tool.name}
                         </h3>
                         
                         {/* Badge */}
-                        <span className={`shrink-0 inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full border shadow-sm tracking-wider uppercase ${tool.enabled === false ? 'bg-slate-50 text-slate-500 border-slate-200' : badgeAccentClass}`}>
+                        <span className={`shrink-0 inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full border shadow-sm tracking-wider uppercase ${tool.enabled === false ? 'bg-slate-50 text-slate-500 border-slate-200' : `${category.theme.badgeBg} ${category.theme.badgeText} ${category.theme.badgeBorder}`}`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${tool.enabled === false ? 'bg-slate-300' : 'bg-current'}`} />
                           {tool.ready}
                         </span>
@@ -221,13 +291,13 @@ export default function LandingPage(): JSX.Element {
         })}
       </main>
 
-      {/* Footer */}
+      {/* Footer - Restored Original Colors & Icon */}
       <footer className="relative z-10 border-t border-slate-200 bg-white/80 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-slate-900 rounded-md flex items-center justify-center">
-                <span className="text-white font-serif italic font-bold text-sm leading-none">fx</span>
+              <div className="w-10 h-10 bg-blue-900 rounded-xl flex items-center justify-center shadow-md">
+                <Calculator className="text-white" size={20} />
               </div>
               <span className="font-bold text-slate-800 text-lg">Maths Tools</span>
             </div>
