@@ -272,7 +272,8 @@ export default function LandingPage(): JSX.Element {
                       key={tool.id}
                       onClick={() => tool.enabled !== false && navigate(tool.path)}
                       disabled={tool.enabled === false}
-                      className={`group relative bg-white p-6 text-left transition-all duration-300 rounded-xl
+                      // Added: flex flex-col, h-full, and min-h-[170px] to enforce uniform sizing
+                      className={`group relative flex flex-col justify-start h-full min-h-[170px] bg-white p-6 text-left transition-all duration-300 rounded-xl
                         border border-slate-200 border-l-4
                         ${tool.enabled === false
                           ? 'opacity-60 cursor-not-allowed border-l-slate-300 grayscale-[20%]'
