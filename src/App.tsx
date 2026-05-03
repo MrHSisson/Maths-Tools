@@ -20,7 +20,6 @@ import PerimeterTool from './tools/PerimeterTool';
 import FractionsOfAmounts from './tools/FractionsOfAmounts';
 import MultiplicationGenerator from './tools/MultiplicationGenerator';
 import BasicAngleFacts from './tools/BasicAngleFacts';
-import CallSelector from './tools/CallSelector';
 import SimultaneousEquations from './tools/SimultaneousEquations';
 import ToolShell from './tools/ToolShell';
 import AnglesInTrianglesv2 from './tools/AnglesInTrianglesv2';
@@ -28,6 +27,9 @@ import EquationsOfLines from './tools/EquationsOfLines';
 import NonLinearSimEq from './tools/NonLinearSimEq';
 import Visualiser from './tools/Visualiser';
 import SolvingLinearEquations from './tools/SolvingLinearEquations';
+
+//Teacher Tools
+import CallSelector from './tools/TeacherTools/CallSelector';
 
 function App() {
   return (
