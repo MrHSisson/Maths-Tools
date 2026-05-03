@@ -1031,6 +1031,8 @@ const DiffQOPopover = ({ toolSettings, levelVariables, onLevelVariableChange, le
 };
 
 // ── InfoModal ─────────────────────────────────────────────────────────────────
+void (StandardQOPopover as unknown);
+void (DiffQOPopover as unknown);
 
 const InfoModal = ({ onClose }: { onClose: () => void }) => (
   <div className="fixed inset-0 z-[100] flex items-center justify-center" style={{backgroundColor:"rgba(0,0,0,0.5)"}} onClick={onClose}>
