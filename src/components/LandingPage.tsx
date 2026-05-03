@@ -6,7 +6,7 @@ import { Calculator } from 'lucide-react';
 // ==========================================
 // Set to 'true' to completely hide tools where enabled: false
 // Set to 'false' to show them as grayed-out "Coming Soon" cards
-const CONFIG_HIDE_DISABLED = false; 
+const CONFIG_HIDE_DISABLED = true; 
 // ==========================================
 
 interface Tool {
