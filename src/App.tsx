@@ -14,7 +14,7 @@ import MultiplicationGenerator from './tools/Generators/MultiplicationGenerator'
 
 //Number
 
-import IntegerAdd&Sub from './tools/Number/IntegerAdd&Sub';
+import IntegerAddSub from './tools/Number/IntegerAddSub';
 import Estimation from './tools/Number/Estimation';
 import PowersOfTen from './tools/Number/PowersOfTen';
 
