@@ -1007,12 +1007,28 @@ export default function App(){
   const [subTool,setSubTool]=useState<SubTool>("linear");
   const [mode,setMode]=useState<"whiteboard"|"single"|"worksheet">("whiteboard");
   const [difficulty,setDifficulty]=useState<DifficultyLevel>("level1");
-  const [negMode,setNegMode]=useState<NegMode>("pos-only");
-  const [allowZero,setAllowZero]=useState(false);
-  const [allowNegEq1,setAllowNegEq1]=useState(false);
-  const [allowA,setAllowA]=useState(false);
-  const [surdDisplay,setSurdDisplay]=useState<SurdDisplay>("surd");
-  const [allowRearrange,setAllowRearrange]=useState(false);
+  // QO state keyed by subTool__level so each combination is independent
+  const [negModeMap,setNegModeMap]=useState<Record<string,NegMode>>({});
+  const [allowZeroMap,setAllowZeroMap]=useState<Record<string,boolean>>({});
+  const [allowNegEq1Map,setAllowNegEq1Map]=useState<Record<string,boolean>>({});
+  const [allowAMap,setAllowAMap]=useState<Record<string,boolean>>({});
+  const [surdDisplayMap,setSurdDisplayMap]=useState<Record<string,SurdDisplay>>({});
+  const [allowRearrangeMap,setAllowRearrangeMap]=useState<Record<string,boolean>>({});
+
+  const qoKey = `${subTool}__${difficulty}`;
+  const negMode       = negModeMap[qoKey]        ?? "pos-only";
+  const allowZero     = allowZeroMap[qoKey]       ?? false;
+  const allowNegEq1   = allowNegEq1Map[qoKey]     ?? false;
+  const allowA        = allowAMap[qoKey]           ?? false;
+  const surdDisplay   = surdDisplayMap[qoKey]      ?? "surd" as SurdDisplay;
+  const allowRearrange= allowRearrangeMap[qoKey]   ?? false;
+
+  const setNegMode       = (v: NegMode)     => setNegModeMap(p=>({...p,[qoKey]:v}));
+  const setAllowZero     = (v: boolean)     => setAllowZeroMap(p=>({...p,[qoKey]:v}));
+  const setAllowNegEq1   = (v: boolean)     => setAllowNegEq1Map(p=>({...p,[qoKey]:v}));
+  const setAllowA        = (v: boolean)     => setAllowAMap(p=>({...p,[qoKey]:v}));
+  const setSurdDisplay   = (v: SurdDisplay) => setSurdDisplayMap(p=>({...p,[qoKey]:v}));
+  const setAllowRearrange= (v: boolean)     => setAllowRearrangeMap(p=>({...p,[qoKey]:v}));
   const [isDifferentiated,setIsDifferentiated]=useState(false);
   const [currentQuestion,setCurrentQuestion]=useState<AnyQuestion>(()=>generateLinear("level1","pos-only",false,false));
   const [showWhiteboardAnswer,setShowWhiteboardAnswer]=useState(false);
