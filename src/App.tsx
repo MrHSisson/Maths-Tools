@@ -63,7 +63,7 @@ function App() {
 
       //Number
 
-      <Route path="/integer-add-and-subtract" element={<IntegerAdd&Sub />} />
+      <Route path="/integer-add-and-subtract" element={<IntegerAddSub />} />
       <Route path="/estimation" element={<Estimation />} />
       <Route path="/powers-of-ten" element={<PowersOfTen />} />
 
