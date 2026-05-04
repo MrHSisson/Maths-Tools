@@ -141,18 +141,15 @@ const TOOL_CONFIG = {
       variables: [
         { key: "showPlenty", label: "Show 'Plenty'", defaultValue: true }
       ],
-      dropdown: {
+      dropdown: null,
+      multiSelect: {
         key: "questionType",
         label: "Question Type",
-        useTwoLineButtons: false,
         options: [
-          { value: "servings", label: "Max Servings" },
-          { value: "limit",    label: "Limiting Item" },
-          { value: "mixed",    label: "Mixed" },
+          { value: "servings", label: "Max Servings",   defaultActive: true },
+          { value: "limit",    label: "Limiting Item",  defaultActive: true },
         ],
-        defaultValue: "mixed",
       },
-      multiSelect: undefined,
       difficultySettings: null,
     },
 
@@ -397,7 +394,7 @@ const generateQuestion = (
       const value = ing.base % 1 === 0 ? ing.base : parseFloat(ing.base.toFixed(2));
       // Discrete: singularise the ingredient name when count is 1 (e.g. "1 egg" not "1 eggs")
       const displayName = ing.category === "discrete" ? singular(value, ing.name) : ing.name;
-      lines.push(`\u2022 ${value}${ing.unit ? ing.unit + " " : " "}${displayName}`);
+      lines.push(`${value}${ing.unit ? ing.unit + " " : " "}${displayName}`);
     });
     lines.push(`Scale this recipe for ${targetServings} ${singular(targetServings, recipeContext.unit)}.`);
 
@@ -474,12 +471,12 @@ const generateQuestion = (
 
   // ── Constraints ───────────────────────────────────────────────────────────
 
-  let actualQuestionType: "servings" | "limit";
-  if (dropdownValue === "mixed") {
-    actualQuestionType = Math.random() < 0.5 ? "servings" : "limit";
-  } else {
-    actualQuestionType = dropdownValue as "servings" | "limit";
-  }
+  const allowServings = _multiSelectValues.servings !== false;
+  const allowLimit    = _multiSelectValues.limit    !== false;
+  const actualQuestionType: "servings" | "limit" =
+    (allowServings && allowLimit) ? (Math.random() < 0.5 ? "servings" : "limit")
+    : allowLimit ? "limit"
+    : "servings";
 
   const recipeContext = pick(RECIPE_CONTEXTS);
   let baseServings: number, numIngredients: number, numLimiting: number;
@@ -1054,12 +1051,12 @@ const handlePrint = (
   #probe { position: fixed; left: -9999px; top: 0; visibility: hidden; font-family: "Segoe UI", Arial, sans-serif; font-size: ${FONT_PX}px; line-height: 1.4; width: ${cellW_MM}mm; }
   .q-inner  { width: 100%; display: flex; flex-direction: column; flex: 1; }
   .q-banner { width: 100%; text-align: center; font-size: ${Math.round(FONT_PX * 0.65)}px; font-weight: 700; color: #000; padding: 1mm 0; border-bottom: 0.3mm solid #000; }
-  .qbody    { padding: ${PAD_MM * 0.4}mm ${PAD_MM}mm ${PAD_MM}mm; flex: 1; }
-  .q-line-block { font-size: ${FONT_PX}px; font-weight: 600; margin-bottom: 1mm; }
-  .q-question   { margin-top: 1mm; }
-  .q-lines  { font-size: ${FONT_PX}px; line-height: 1.5; }
-  .q-line   { display: block; margin-bottom: 0.5mm; }
-  .q-answer { font-size: ${FONT_PX}px; color: #059669; font-weight: 600; margin-top: 1mm; }
+  .qbody    { padding: ${PAD_MM * 0.4}mm ${PAD_MM}mm ${PAD_MM}mm; flex: 1; text-align: center; }
+  .q-line-block { font-size: ${FONT_PX}px; font-weight: 600; margin-bottom: 1mm; text-align: center; }
+  .q-question   { margin-top: 1mm; text-align: center; }
+  .q-lines  { font-size: ${FONT_PX}px; line-height: 1.5; text-align: center; }
+  .q-line   { display: block; margin-bottom: 0.5mm; text-align: center; }
+  .q-answer { font-size: ${FONT_PX}px; color: #059669; font-weight: 600; margin-top: 1mm; text-align: center; }
   .ing-table { border-collapse: collapse; width: 100%; font-size: ${Math.round(FONT_PX * 0.85)}px; margin: 1mm 0; }
   .tbl-hdr  { border: 0.3mm solid #374151; padding: 0.5mm 1.5mm; font-weight: 700; }
   .tbl-cell { border: 0.3mm solid #374151; padding: 0.5mm 1.5mm; }
@@ -1407,12 +1404,12 @@ export default function App() {
 
     if (q.kind === "table") {
       return (
-        <div className="rounded-lg p-3 shadow" style={cellStyle}>
+        <div className="rounded-lg p-3 pt-8 shadow" style={cellStyle}>
           {numEl}
-          <div className={`${fsz} font-semibold mb-1 mt-1`} style={{color:"#000"}}>
+          <div className={`${fsz} font-semibold mb-1`} style={{color:"#000"}}>
             Recipe for {q.baseServings} {q.unitName}:
           </div>
-          <table className="border-collapse w-full mb-1" style={{color:"#000",fontSize:"0.75em"}}>
+          <table className={`border-collapse w-full mb-1 ${fontSizes[Math.max(0, worksheetFontSize - 1)]}`} style={{color:"#000"}}>
             <thead>
               <tr style={{backgroundColor: bg}}>
                 <th className="border-2 border-gray-600 px-2 py-1 font-bold text-left">Ingredient</th>
@@ -1443,9 +1440,9 @@ export default function App() {
 
     // worded (linearScaling)
     return (
-      <div className="rounded-lg p-3 shadow" style={cellStyle}>
+      <div className="rounded-lg p-3 pt-8 shadow" style={cellStyle}>
         {numEl}
-        <div className={`${fsz} font-semibold w-full`} style={{color:"#000",lineHeight:1.6,marginTop:"0.15em"}}>
+        <div className={`${fsz} font-semibold w-full`} style={{color:"#000",lineHeight:1.6}}>
           {q.lines.map((line: string, i: number) => <div key={i}>{line}</div>)}
         </div>
         {showWorksheetAnswers && <div className={`${fsz} font-semibold mt-1`} style={{color:"#059669"}}>{q.answer}</div>}
@@ -1481,8 +1478,8 @@ export default function App() {
           </div>
           <div className="flex items-center gap-3">
             <label className="text-base font-semibold text-gray-700">Columns:</label>
-            <input type="number" min="1" max="4" value={isDifferentiated ? 3 : numColumns}
-              onChange={e=>{ if(!isDifferentiated) setNumColumns(Math.max(1,Math.min(4,parseInt(e.target.value)||3))); }}
+            <input type="number" min="1" max="3" value={isDifferentiated ? 3 : numColumns}
+              onChange={e=>{ if(!isDifferentiated) setNumColumns(Math.max(1,Math.min(3,parseInt(e.target.value)||3))); }}
               disabled={isDifferentiated}
               className={`w-20 px-4 py-2 border-2 rounded-lg text-base font-semibold text-center transition-colors ${isDifferentiated?"border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed":"border-gray-300 bg-white"}`}/>
           </div>
@@ -1794,3 +1791,4 @@ export default function App() {
     </>
   );
 }
+      
