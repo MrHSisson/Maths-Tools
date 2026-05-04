@@ -1,12 +1,9 @@
 import { Routes, Route } from 'react-router-dom'
 import LandingPage from './components/LandingPage'
-import IntegersTool from './tools/IntegersTool'
 import RatioSharingTool from './tools/RatioSharingTool'
 import SimplifyingRatiosTool from './tools/SimplifyingRatiosTool'
-import EstimationTool from './tools/EstimationTool'
 import RecipesTool from './tools/RecipesTool'
 import FractionToRatio from './tools/FractionToRatio';
-import PowersOfTen from './tools/PowersOfTen';
 import FractionsOfAmounts from './tools/FractionsOfAmounts';
 
 //Generators
@@ -15,6 +12,12 @@ import TimesTablesGenerator from './tools/Generators/TimesTablesGenerator';
 import NegativeOperationsGenerator from './tools/Generators/NegativeOperationsGenerator';
 import MultiplicationGenerator from './tools/Generators/MultiplicationGenerator';
 
+//Number
+
+import IntegerAdd&Sub from './tools/Number/IntegerAdd&Sub'
+import Estimation from './tools/Number/Estimation'
+import PowersOfTen from './tools/Number/PowersOfTen';
+
 //Algebra
 
 import CompletingTheSquare from './tools/Algebra/CompletingTheSquare'
@@ -22,7 +25,7 @@ import ExpandingDoubleBracketsFOIL from './tools/Algebra/ExpandingDoubleBrackets
 import ExpandingDoubleBracketsGRID from './tools/Algebra/ExpandingDoubleBracketsGRID'
 import ExpandingSingleBracketsFOIL from './tools/Algebra/ExpandingSingleBracketsFOIL'
 import ExpandingSingleBracketsGRID from './tools/Algebra/ExpandingSingleBracketsGRID'
-import IterationTool from './tools/Algebra/IterationTool'
+import Iterations from './tools/Algebra/Iterations'
 import SimultaneousEquations from './tools/Algebra/SimultaneousEquations';
 import NonLinearSimEq from './tools/Algebra/NonLinearSimEq';
 import SolvingLinearEquations from './tools/Algebra/SolvingLinearEquations';
@@ -46,21 +49,23 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
-      <Route path="/integers" element={<IntegersTool />} />
       <Route path="/ratio-sharing" element={<RatioSharingTool />} />
       <Route path="/simplifying-ratios" element={<SimplifyingRatiosTool />} />
-      <Route path="/estimation" element={<EstimationTool />} />
       <Route path="/recipes" element={<RecipesTool />} />
       <Route path="/fraction-to-ratio" element={<FractionToRatio />} />
-      <Route path="/powers-of-ten" element={<PowersOfTen />} />
       <Route path="/fractions-of-amounts" element={<FractionsOfAmounts />} />
-      
 
       //Generators
 
       <Route path="/timestables" element={<TimesTablesGenerator />} />
       <Route path="/negative-operations" element={<NegativeOperationsGenerator />} />
       <Route path="/multiplication-methods" element={<MultiplicationGenerator />} />
+
+      //Number
+
+      <Route path="/integer-add-and-subtract" element={<IntegerAdd&Sub />} />
+      <Route path="/estimation" element={<Estimation />} />
+      <Route path="/powers-of-ten" element={<PowersOfTen />} />
 
       //Algebra 
 
@@ -69,11 +74,10 @@ function App() {
       <Route path="/expanding-double-brackets-foil" element={<ExpandingDoubleBracketsFOIL />} />
       <Route path="/expanding-single-brackets-foil" element={<ExpandingSingleBracketsFOIL />} />
       <Route path="/expanding-single-brackets-grid" element={<ExpandingSingleBracketsGRID />} />
-      <Route path="/iteration" element={<IterationTool />} />
+      <Route path="/iterations" element={<Iterations />} />
       <Route path="/simultaneous-equations-elimination" element={<SimultaneousEquations />} />
       <Route path="/simultaneous-equations-substitution" element={<NonLinearSimEq />} />
       <Route path="/solving-linear-equations" element={<SolvingLinearEquations />} />
-
 
       //Geometry
       
