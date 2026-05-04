@@ -647,7 +647,6 @@ const generateQuestion = (
     return `${ing.name}: ${sv}${ing.unit} \\div ${uv}${ing.unit} = ${tv} \\to ${fv}`;
   });
 
-  const limitingIng2 = stockAmounts.find((ing: any) => !ing.isPlenty && Math.floor(ing.targetServings!) === finalAnswer);
   const answerLine = actualQuestionType === "servings"
     ? `\\text{Maximum: } ${finalAnswer} \\text{ ${singular(finalAnswer, recipeContext.unit)}}`
     : `\\text{Limiting: ${answerText}}`;
@@ -706,6 +705,7 @@ const generateUniqueQ = (
 void (TogglePill as unknown);
 void (SegButtons as unknown);
 void (fmt as unknown);
+void (mStep as unknown);
 
 const LV_COLORS:Record<DifficultyLevel,{bg:string;border:string;text:string;fill:string}> = {
   level1:{bg:"bg-green-50",border:"border-green-500",text:"text-green-700",fill:"#dcfce7"},
