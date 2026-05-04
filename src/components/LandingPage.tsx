@@ -67,7 +67,7 @@ const categories: Category[] = [
       badgeBorder: 'border-cyan-200/60'
     },
     tools: [
-      { id: 'integers', path: '/integers', name: 'Adding & Subtracting Integers', description: 'Practice adding and subtracting positive and negative numbers using number lines', ready: 'v1.4' },
+      { id: 'integers', path: '/integer-add-and-subtract', name: 'Adding & Subtracting Integers', description: 'Practice adding and subtracting positive and negative numbers using number lines', ready: 'v1.4' },
       { id: 'estimation', path: '/estimation', name: 'Estimation', description: 'Develop estimation skills by rounding numbers to make calculations easier', ready: 'v1.7.1' },
       { id: 'powers-of-ten', path: '/powers-of-ten', name: 'Multiplying & Dividing by 10ⁿ', description: 'Use a place value table to scale by powers of 10', ready: 'v1.4' },
     ]
@@ -87,7 +87,7 @@ const categories: Category[] = [
     tools: [
       { id: 'solving-linear-equations', path: '/solving-linear-equations', name: 'Unknowns on Both Sides', description: 'Solve equations where the unknown occurs more than once', ready: 'v2.1.2' },
       { id: 'completing-square', path: '/completing-the-square', name: 'Completing the Square', description: 'Rewrite and solve quadratic expressions in completed square form', ready: 'v2.0' },
-      { id: 'iteration', path: '/iteration', name: 'Iteration', description: 'Find roots to eqautions using iterative methods', ready: 'v2.1.1' },
+      { id: 'iterations', path: '/iterations', name: 'Iteration', description: 'Find roots to eqautions using iterative methods', ready: 'v2.1.1' },
       { id: 'simultaneous-equations-elimination', path: '/simultaneous-equations-elimination', name: 'Simultaneous Equations (Elimination)', description: 'Solve simultaneous equations, including rearranging', ready: 'v2.1.1' },
       { id: 'simultaneous-equations-substitution', path: '/simultaneous-equations-substitution', name: 'Simultaneous Equations (Substitution)', description: 'Solve Simultaneous Equations (including Non-Linear) by Substitution', ready: 'v2.1.1' },
       { id: 'single-brackets-foil', path: '/expanding-single-brackets-FOIL', name: 'Expanding Single Brackets (FOIL)', description: 'Expand single brackets by using arrows for each term', ready: 'v1.4', enabled: false },
