@@ -114,7 +114,7 @@ type DifficultyLevel = "level1" | "level2" | "level3";
 // ── 2. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
 const TOOL_CONFIG = {
-  pageTitle: "Recipes & Proportions",
+  pageTitle: "Recipes in Proportion",
 
   tools: {
     linearScaling: {
@@ -297,7 +297,7 @@ const generateQuestion = (
   tool: ToolType,
   level: DifficultyLevel,
   variables: Record<string, boolean>,
-  dropdownValue: string,
+  _dropdownValue: string,
   _multiSelectValues: Record<string, boolean> = {},
 ): AnyQuestion => {
   const id = Math.floor(Math.random() * 1_000_000);
@@ -1791,4 +1791,3 @@ export default function App() {
     </>
   );
 }
-      
