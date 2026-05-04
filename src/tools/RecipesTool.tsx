@@ -150,7 +150,38 @@ const TOOL_CONFIG = {
           { value: "limit",    label: "Limiting Item",  defaultActive: true },
         ],
       },
-      difficultySettings: null,
+      difficultySettings: {
+        level1: {
+          variables: [{ key: "showPlenty", label: "Show 'Plenty'", defaultValue: true }],
+          multiSelect: {
+            key: "questionType", label: "Question Type",
+            options: [
+              { value: "servings", label: "Max Servings",  defaultActive: true },
+              { value: "limit",    label: "Limiting Item", defaultActive: true },
+            ],
+          },
+        },
+        level2: {
+          variables: [{ key: "showPlenty", label: "Show 'Plenty'", defaultValue: true }],
+          multiSelect: {
+            key: "questionType", label: "Question Type",
+            options: [
+              { value: "servings", label: "Max Servings",  defaultActive: true },
+              { value: "limit",    label: "Limiting Item", defaultActive: true },
+            ],
+          },
+        },
+        level3: {
+          variables: [],
+          multiSelect: {
+            key: "questionType", label: "Question Type",
+            options: [
+              { value: "servings", label: "Max Servings",  defaultActive: true },
+              { value: "limit",    label: "Limiting Item", defaultActive: true },
+            ],
+          },
+        },
+      },
     },
 
   } as Record<string, {
@@ -212,7 +243,7 @@ interface TableQuestion {
   questionText: string;
   answer: string;
   answerLatex?: string;
-  working: { type: string; latex: string; plain: string; label?: string; unit?: string }[];
+  working: { type: string; latex: string; plain: string; label?: string; unit?: string; lines?: string[] }[];
   key: string;
   difficulty: string;
 }
@@ -223,7 +254,7 @@ interface WordedQuestion {
   answer: string;
   answerLatex?: string;
   answerSuffix?: string;
-  working: { type: string; latex: string; plain: string; label?: string; unit?: string }[];
+  working: { type: string; latex: string; plain: string; label?: string; unit?: string; lines?: string[] }[];
   key: string;
   difficulty: string;
 }
@@ -595,27 +626,37 @@ const generateQuestion = (
     answerText = limitingIng ? limitingIng.name : "Unknown";
   }
 
-  const working: { type: string; latex: string; plain: string; label?: string; unit?: string }[] = [];
-  stockAmounts.forEach((ing: any) => {
-    if (ing.isPlenty) {
-      working.push(step(`\\text{${ing.name}: Plenty available}`));
-    } else {
-      const uv = ing.u % 1 === 0 ? ing.u : parseFloat(ing.u.toFixed(2));
-      const sv = ing.stock! % 1 === 0 ? ing.stock! : parseFloat(ing.stock!.toFixed(2));
-      const tv = ing.targetServings!.toFixed(1);
-      const fv = Math.floor(ing.targetServings!);
-      working.push(step(`${ing.name}: ${sv}${ing.unit} \\div ${uv}${ing.unit} = ${tv} \\to ${fv}`));
-    }
+  // Step 1 (only when baseServings > 1): find the amount per 1 serving
+  const perOneLines: string[] = baseServings > 1
+    ? stockAmounts.map((ing: any) => {
+        if (ing.isPlenty) return `\\text{${ing.name}: Plenty}`;
+        const bv = ing.needed % 1 === 0 ? ing.needed : parseFloat(ing.needed.toFixed(2));
+        const uv = ing.u % 1 === 0 ? ing.u : parseFloat(ing.u.toFixed(4)).toString().replace(/\.?0+$/, "");
+        const singUnit = singular(1, recipeContext.unit.replace(/s$/, ""));
+        return `${ing.name}: ${bv}${ing.unit} \\div ${baseServings} = ${uv}${ing.unit} \\text{ per ${singUnit}}`;
+      })
+    : [];
+
+  // Step 2 (or Step 1 if baseServings = 1): divide stock by amount per serving
+  const ingLines: string[] = stockAmounts.map((ing: any) => {
+    if (ing.isPlenty) return `\\text{${ing.name}: Plenty}`;
+    const uv = ing.u % 1 === 0 ? ing.u : parseFloat(ing.u.toFixed(4)).toString().replace(/\.?0+$/, "");
+    const sv = ing.stock! % 1 === 0 ? ing.stock! : parseFloat(ing.stock!.toFixed(2));
+    const tv = ing.targetServings!.toFixed(1);
+    const fv = Math.floor(ing.targetServings!);
+    return `${ing.name}: ${sv}${ing.unit} \\div ${uv}${ing.unit} = ${tv} \\to ${fv}`;
   });
+
   const limitingIng2 = stockAmounts.find((ing: any) => !ing.isPlenty && Math.floor(ing.targetServings!) === finalAnswer);
-  if (limitingIng2) {
-    working.push(step(`\\text{Limiting: ${limitingIng2.name} at ${finalAnswer} ${singular(finalAnswer, recipeContext.unit)}}`));
-  }
-  if (actualQuestionType === "servings") {
-    working.push(mStep("Maximum servings:", `${finalAnswer}`));
-  } else {
-    working.push(mStep("Limiting ingredient:", `\\text{${answerText}}`));
-  }
+  const answerLine = actualQuestionType === "servings"
+    ? `\\text{Maximum: } ${finalAnswer} \\text{ ${singular(finalAnswer, recipeContext.unit)}}`
+    : `\\text{Limiting: ${answerText}}`;
+
+  const working: { type: string; latex: string; plain: string; lines?: string[] }[] = [
+    ...(perOneLines.length > 0 ? [{ type: "multiStep", latex: "", plain: "", lines: perOneLines }] : []),
+    { type: "multiStep", latex: "", plain: "", lines: ingLines },
+    step(answerLine),
+  ];
 
   const tableIngredients = stockAmounts.map((ing: any) => ({
     name: ing.name,
@@ -843,18 +884,21 @@ const StandardQOPopover = ({ variables, variableValues, onVariableChange, dropdo
   );
 };
 
-const DiffQOPopover = ({ toolSettings, levelVariables, onLevelVariableChange, levelDropdowns, onLevelDropdownChange }: {
+const DiffQOPopover = ({ toolSettings, levelVariables, onLevelVariableChange, levelDropdowns, onLevelDropdownChange, levelMultiSelect, onLevelMultiSelectChange }: {
   toolSettings: typeof TOOL_CONFIG.tools[string];
   levelVariables: Record<string, Record<string, boolean>>;
   onLevelVariableChange: (lv: string, k: string, v: boolean) => void;
   levelDropdowns: Record<string, string>;
   onLevelDropdownChange: (lv: string, v: string) => void;
+  levelMultiSelect: Record<string, Record<string, boolean>>;
+  onLevelMultiSelectChange: (lv: string, k: string, v: boolean) => void;
 }) => {
   const { open, setOpen, ref } = usePopover();
   const levels = ["level1","level2","level3"] as DifficultyLevel[];
-  const getDDForLevel = (lv: string) => toolSettings.difficultySettings?.[lv]?.dropdown ?? toolSettings.dropdown;
+  const getDDForLevel  = (lv: string) => toolSettings.difficultySettings?.[lv]?.dropdown   ?? toolSettings.dropdown;
   const getVarsForLevel = (lv: string) => toolSettings.difficultySettings?.[lv]?.variables ?? toolSettings.variables;
-  const anyContent = levels.some(lv => getDDForLevel(lv) !== null || (getVarsForLevel(lv)?.length ?? 0) > 0);
+  const getMSForLevel  = (lv: string) => toolSettings.difficultySettings?.[lv]?.multiSelect ?? toolSettings.multiSelect ?? null;
+  const anyContent = levels.some(lv => getDDForLevel(lv) !== null || (getVarsForLevel(lv)?.length ?? 0) > 0 || getMSForLevel(lv) !== null);
   return (
     <div className="relative" ref={ref}>
       <PopoverButton open={open} onClick={() => setOpen(!open)} />
@@ -863,15 +907,17 @@ const DiffQOPopover = ({ toolSettings, levelVariables, onLevelVariableChange, le
           {!anyContent
             ? <p className="text-sm text-gray-400">No additional options for this tool.</p>
             : levels.map(lv => {
-                const dd = getDDForLevel(lv);
+                const dd   = getDDForLevel(lv);
                 const vars = getVarsForLevel(lv) ?? [];
+                const ms   = getMSForLevel(lv);
                 return (
                   <div key={lv} className="flex flex-col gap-2">
                     <span className={`text-sm font-extrabold uppercase tracking-wider ${LV_HEADER_COLORS[lv]}`}>{LV_LABELS[lv]}</span>
                     <div className="flex flex-col gap-3 pl-1">
                       {dd && <DropdownSection dropdown={dd} value={levelDropdowns[lv] ?? dd.defaultValue} onChange={v => onLevelDropdownChange(lv, v)} />}
+                      {ms && <MultiSelectSection multiSelect={ms} values={levelMultiSelect[lv] ?? {}} onChange={(k,v) => onLevelMultiSelectChange(lv, k, v)} />}
                       {vars.length > 0 && <VariablesSection variables={vars} values={levelVariables[lv] ?? {}} onChange={(k,v) => onLevelVariableChange(lv, k, v)} />}
-                      {!dd && vars.length === 0 && <p className="text-xs text-gray-400">No options at this level.</p>}
+                      {!dd && !ms && vars.length === 0 && <p className="text-xs text-gray-400">No options at this level.</p>}
                     </div>
                   </div>
                 );
@@ -1204,8 +1250,11 @@ export default function App() {
   const [toolVariables, setToolVariables] = useState<Record<string,Record<string,boolean>>>(() => {
     const init: Record<string,Record<string,boolean>> = {};
     Object.keys(TOOL_CONFIG.tools).forEach(k => {
-      init[k] = {};
-      TOOL_CONFIG.tools[k].variables.forEach(v => { init[k][v.key] = v.defaultValue; });
+      (["level1","level2","level3"] as DifficultyLevel[]).forEach(lv => {
+        const vars = TOOL_CONFIG.tools[k].difficultySettings?.[lv]?.variables ?? TOOL_CONFIG.tools[k].variables;
+        init[`${k}__${lv}`] = {};
+        vars.forEach(v => { init[`${k}__${lv}`][v.key] = v.defaultValue; });
+      });
     });
     return init;
   });
@@ -1223,12 +1272,38 @@ export default function App() {
   const [toolMultiSelect, setToolMultiSelect] = useState<Record<string,Record<string,boolean>>>(() => {
     const init: Record<string,Record<string,boolean>> = {};
     Object.keys(TOOL_CONFIG.tools).forEach(k => {
-      const ms = TOOL_CONFIG.tools[k].multiSelect;
-      if (ms) { init[k] = {}; ms.options.forEach(o => { init[k][o.value] = o.defaultActive; }); }
+      (["level1","level2","level3"] as DifficultyLevel[]).forEach(lv => {
+        const ms = TOOL_CONFIG.tools[k].difficultySettings?.[lv]?.multiSelect ?? TOOL_CONFIG.tools[k].multiSelect;
+        if (ms) { init[`${k}__${lv}`] = {}; ms.options.forEach((o: any) => { init[`${k}__${lv}`][o.value] = o.defaultActive; }); }
+      });
     });
     return init;
   });
-  const [levelVariables, setLevelVariables] = useState<Record<string,Record<string,boolean>>>({level1:{},level2:{},level3:{}});
+  const initLevelVariables = (tool: string) => {
+    const t = TOOL_CONFIG.tools[tool];
+    return (["level1","level2","level3"] as DifficultyLevel[]).reduce((acc, lv) => {
+      const vars = t.difficultySettings?.[lv]?.variables ?? t.variables ?? [];
+      const defaults: Record<string,boolean> = {};
+      vars.forEach(v => { defaults[v.key] = v.defaultValue; });
+      acc[lv] = defaults;
+      return acc;
+    }, {} as Record<string,Record<string,boolean>>);
+  };
+  const initLevelMultiSelect = (tool: string) => {
+    const t = TOOL_CONFIG.tools[tool];
+    return (["level1","level2","level3"] as DifficultyLevel[]).reduce((acc, lv) => {
+      const ms = t.difficultySettings?.[lv]?.multiSelect ?? t.multiSelect ?? null;
+      if (ms) {
+        acc[lv] = {};
+        ms.options.forEach((o: any) => { acc[lv][o.value] = o.defaultActive; });
+      } else {
+        acc[lv] = {};
+      }
+      return acc;
+    }, {} as Record<string,Record<string,boolean>>);
+  };
+  const [levelVariables, setLevelVariables] = useState<Record<string,Record<string,boolean>>>(() => initLevelVariables("linearScaling"));
+  const [levelMultiSelect, setLevelMultiSelect] = useState<Record<string,Record<string,boolean>>>(() => initLevelMultiSelect("linearScaling"));
   const [levelDropdowns, setLevelDropdowns] = useState<Record<string,string>>(() => {
     const init: Record<string,string> = {};
     const firstTool = Object.keys(TOOL_CONFIG.tools)[0];
@@ -1327,15 +1402,16 @@ export default function App() {
   const getVariablesConfig = () => getToolSettings().difficultySettings?.[difficulty]?.variables ?? getToolSettings().variables;
   const getDropdownValue = () => toolDropdowns[`${currentTool}__${difficulty}`] ?? getDropdownConfig()?.defaultValue ?? "";
   const setDropdownValue = (v: string) => setToolDropdowns(p => ({...p, [`${currentTool}__${difficulty}`]: v}));
-  const setVariableValue = (k: string, v: boolean) => setToolVariables(p => ({...p, [currentTool]: {...p[currentTool], [k]: v}}));
-  const setMultiSelectValue = (k: string, v: boolean) => setToolMultiSelect(p => ({...p, [currentTool]: {...(p[currentTool]??{}), [k]: v}}));
+  const setVariableValue = (k: string, v: boolean) => setToolVariables(p => ({...p, [`${currentTool}__${difficulty}`]: {...p[`${currentTool}__${difficulty}`], [k]: v}}));
+  const setMultiSelectValue = (k: string, v: boolean) => setToolMultiSelect(p => ({...p, [`${currentTool}__${difficulty}`]: {...(p[`${currentTool}__${difficulty}`]??{}), [k]: v}}));
   const getMultiSelectConfig = () => getToolSettings().multiSelect ?? null;
   const handleLevelVarChange = (lv: string, k: string, v: boolean) => setLevelVariables(p => ({...p, [lv]: {...p[lv], [k]: v}}));
-  const handleLevelDDChange = (lv: string, v: string) => setLevelDropdowns(p => ({...p, [lv]: v}));
+  const handleLevelDDChange  = (lv: string, v: string) => setLevelDropdowns(p => ({...p, [lv]: v}));
+  const handleLevelMSChange  = (lv: string, k: string, v: boolean) => setLevelMultiSelect(p => ({...p, [lv]: {...(p[lv]??{}), [k]: v}}));
   // ─────────────────────────────────────────────────────────────────────────
 
   const makeQuestion = (): AnyQuestion =>
-    generateQuestion(currentTool, difficulty, toolVariables[currentTool] || {}, getDropdownValue(), toolMultiSelect[currentTool] ?? {});
+    generateQuestion(currentTool, difficulty, toolVariables[`${currentTool}__${difficulty}`] || {}, getDropdownValue(), toolMultiSelect[`${currentTool}__${difficulty}`] ?? {});
 
   const handleNewQuestion = () => {
     setCurrentQuestion(makeQuestion());
@@ -1350,14 +1426,15 @@ export default function App() {
       (["level1","level2","level3"] as DifficultyLevel[]).forEach(lv => {
         const t = getToolSettings();
         const dd = t.difficultySettings?.[lv]?.dropdown ?? t.dropdown;
-        const vars = levelVariables[lv] ?? {};
+        const vars  = levelVariables[lv] ?? {};
         const ddVal = levelDropdowns[lv] ?? (dd?.defaultValue ?? "");
+        const msVals = levelMultiSelect[lv] ?? {};
         for (let i = 0; i < numQuestions; i++)
-          questions.push(generateUniqueQ(currentTool, lv, vars, ddVal, usedKeys));
+          questions.push(generateUniqueQ(currentTool, lv, vars, ddVal, usedKeys, msVals));
       });
     } else {
       for (let i = 0; i < numQuestions; i++)
-        questions.push(generateUniqueQ(currentTool, difficulty, toolVariables[currentTool] || {}, getDropdownValue(), usedKeys, toolMultiSelect[currentTool] ?? {}));
+        questions.push(generateUniqueQ(currentTool, difficulty, toolVariables[`${currentTool}__${difficulty}`] || {}, getDropdownValue(), usedKeys, toolMultiSelect[`${currentTool}__${difficulty}`] ?? {}));
     }
     setWorksheet(questions);
     setShowWorksheetAnswers(false);
@@ -1365,13 +1442,13 @@ export default function App() {
 
   const stdQOProps = {
     variables: getVariablesConfig() ?? [],
-    variableValues: toolVariables[currentTool] || {},
+    variableValues: toolVariables[`${currentTool}__${difficulty}`] || {},
     onVariableChange: setVariableValue,
     dropdown: getDropdownConfig() ?? null,
     dropdownValue: getDropdownValue(),
     onDropdownChange: setDropdownValue,
     multiSelect: getMultiSelectConfig(),
-    multiSelectValues: toolMultiSelect[currentTool] ?? {},
+    multiSelectValues: toolMultiSelect[`${currentTool}__${difficulty}`] ?? {},
     onMultiSelectChange: setMultiSelectValue,
   };
   const diffQOProps = {
@@ -1380,6 +1457,8 @@ export default function App() {
     onLevelVariableChange: handleLevelVarChange,
     levelDropdowns,
     onLevelDropdownChange: handleLevelDDChange,
+    levelMultiSelect,
+    onLevelMultiSelectChange: handleLevelMSChange,
   };
   const qoEl = (isDiff = false) => isDiff
     ? <DiffQOPopover {...diffQOProps} />
@@ -1664,14 +1743,18 @@ export default function App() {
           <>
             <div className="space-y-4 mt-8">
               {currentQuestion.working.map((s,i)=>(
-                <div key={i} className="rounded-xl p-6" style={{backgroundColor:stepBg}}>
-                  <h4 className="text-xl font-bold mb-2" style={{color:"#000"}}>Step {i+1}</h4>
-                  <div className="text-2xl" style={{color:"#000"}}>
-                    {s.type === "tStep"
-                      ? <span>{s.plain}</span>
-                      : s.type === "mStep"
-                        ? <><span>{s.label} </span><MathRenderer latex={s.latex}/>{s.unit && <span> {s.unit}</span>}</>
-                        : <MathRenderer latex={s.latex}/>
+                <div key={i} className="rounded-xl p-6 text-center" style={{backgroundColor:stepBg}}>
+                  <h4 className="text-xl font-bold mb-3" style={{color:"#000"}}>Step {i+1}</h4>
+                  <div className="text-2xl flex flex-col gap-2 items-center" style={{color:"#000"}}>
+                    {(s as any).type === "multiStep"
+                      ? (s as any).lines.map((line: string, j: number) => (
+                          <div key={j}><MathRenderer latex={line}/></div>
+                        ))
+                      : s.type === "tStep"
+                        ? <span>{s.plain}</span>
+                        : s.type === "mStep"
+                          ? <><span>{s.label} </span><MathRenderer latex={s.latex}/>{s.unit && <span> {s.unit}</span>}</>
+                          : <MathRenderer latex={s.latex}/>
                     }
                   </div>
                 </div>
@@ -1758,7 +1841,7 @@ export default function App() {
           <div className="flex justify-center mb-8"><div style={{width:"90%",height:"2px",backgroundColor:"#d1d5db"}}/></div>
           <div className="flex justify-center gap-4 mb-6">
             {toolKeys.map(k=>(
-              <button key={k} onClick={()=>setCurrentTool(k)}
+              <button key={k} onClick={()=>{ setCurrentTool(k); setLevelVariables(initLevelVariables(k)); setLevelMultiSelect(initLevelMultiSelect(k)); }}
                 className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${currentTool===k?"bg-blue-900 text-white":"bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
                 {TOOL_CONFIG.tools[k].name}
               </button>
