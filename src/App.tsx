@@ -99,7 +99,7 @@ function App() {
 
       //Computer Science
 
-      <Route path="/system-architecure" element={<SystemArchitecture />} />
+      <Route path="/system-architecture" element={<SystemArchitecture />} />
       
     </Routes>
   )
