@@ -180,7 +180,9 @@ const categories: Category[] = [
       badgeText: 'text-slate-700',
       badgeBorder: 'border-slate-300/60'
     },
-    tools: []
+    tools: [
+      { id: 'system architecture', path: '/system-architecture', name: '1.1 - System Architectures', description: 'A tool for learning the 1.1 content for system architectures', ready: 'v1.0' },
+    ]
   },
 ];
 
