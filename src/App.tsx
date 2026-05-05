@@ -45,6 +45,10 @@ import Visualiser from './tools/TeacherTools/Visualiser';
 import ToolShell from './tools/TeacherTools/ToolShell';
 import CallSelector from './tools/TeacherTools/CallSelector';
 
+//Computer Science
+
+import SystemArchitecture from './tools/SystemArchitecture';
+
 function App() {
   return (
     <Routes>
@@ -92,6 +96,10 @@ function App() {
       <Route path="/visualiser" element={<Visualiser />} />
       <Route path="/tool-shell" element={<ToolShell />} />
       <Route path="/call-selector" element={<CallSelector />} />
+
+      //Computer Science
+
+      <Route path="/system-architecure" element={<SystemArchitecture />} />
       
     </Routes>
   )
