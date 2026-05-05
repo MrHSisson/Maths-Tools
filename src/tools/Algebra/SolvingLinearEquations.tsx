@@ -239,6 +239,7 @@ interface LevelQO {
   constants: { bothPos: boolean; oneNeg: boolean; bothNeg: boolean };
   // Level 2
   bracketSide: { left: boolean; right: boolean; both: boolean };
+  constantSign: { positive: boolean; negative: boolean };
   // Level 3
   negCount: { one: boolean; both: boolean };
   // Shared
@@ -249,6 +250,7 @@ interface LevelQO {
 const defaultLevelQO = (): LevelQO => ({
   constants:    { bothPos: true,  oneNeg: false, bothNeg: false },
   bracketSide:  { left: false, right: false, both: true  },
+  constantSign: { positive: true, negative: false },
   negCount:     { one: true,  both: false },
   solutionType: { integer: true,  decimal: false },
   solutionSign: { positive: true, negative: false },
@@ -315,6 +317,12 @@ const EquationsQOPopover = ({ level, qo, onChange }: {
               { key: "both",  label: "Both"  },
             ]} values={qo.bracketSide} onChange={(k,v) => update("bracketSide", k, v)} />
           )}
+          {level === "level2" && (
+            <MultiSelectGroup label="Constants" options={[
+              { key: "positive", label: "Addition"    },
+              { key: "negative", label: "Subtraction" },
+            ]} values={qo.constantSign} onChange={(k,v) => update("constantSign", k, v)} />
+          )}
           {level === "level3" && (
             <MultiSelectGroup label="Negative x terms" options={[
               { key: "one",  label: "One −x"  },
@@ -371,6 +379,10 @@ const EquationsDiffQOPopover = ({ qoByLevel, onChange }: {
                     { key: "right", label: "Right" },
                     { key: "both",  label: "Both"  },
                   ]} values={qo.bracketSide} onChange={(k,v) => update(lv, "bracketSide", k, v)} />}
+                  {lv === "level2" && <MultiSelectGroup label="Constants" options={[
+                    { key: "positive", label: "Addition"    },
+                    { key: "negative", label: "Subtraction" },
+                  ]} values={qo.constantSign} onChange={(k,v) => update(lv, "constantSign", k, v)} />}
                   {lv === "level3" && <MultiSelectGroup label="Negative x terms" options={[
                     { key: "one",  label: "One −x"  },
                     { key: "both", label: "Both −x" },
@@ -551,10 +563,19 @@ const tryLevel2 = (
   allowDecimal: boolean,
   allowPositive: boolean,
   allowNegative: boolean,
+  allowPosConst: boolean,
+  allowNegConst: boolean,
 ): AnyQuestion | null => {
+  // Helper: pick a constant with the correct sign
+  const pickConst = (lo: number, hi: number): number => {
+    const usePos = allowPosConst && (!allowNegConst || Math.random() < 0.5);
+    const val = randInt(lo, hi);
+    return usePos ? val : -val;
+  };
+
   for (let attempt = 0; attempt < 200; attempt++) {
     const m = randInt(2, 6);
-    const p = randInt(-8, 8);
+    const p = pickConst(1, 8);
     if (p === 0) continue;
 
     let c: number, d: number;
@@ -562,19 +583,16 @@ const tryLevel2 = (
 
     if (bracketSide === "both") {
       rightBracketM = randInt(2, 6);
-      rightBracketP = randInt(-8, 8);
+      rightBracketP = pickConst(1, 8);
       if (rightBracketP === 0) continue;
       c = rightBracketM;
       d = rightBracketM * rightBracketP;
     } else if (bracketSide === "right") {
-      // right side has bracket: cx + d = n(x + q)
-      // swap: generate bracket on right, plain on left
       rightBracketM = randInt(2, 6);
-      rightBracketP = randInt(-8, 8);
+      rightBracketP = pickConst(1, 8);
       if (rightBracketP === 0) continue;
       c = rightBracketM;
       d = rightBracketM * rightBracketP;
-      // left side is plain: a different coefficient
       const leftC = randInt(1, 9);
       const leftD = randInt(-10, 10);
       if (leftD === 0) continue;
@@ -614,8 +632,8 @@ const tryLevel2 = (
     } else {
       c = randInt(1, m + 3);
       if (c === m) continue;
-      d = randInt(-10, 10);
-      if (d === 0) d = randInt(1, 10);
+      d = pickConst(1, 10);
+      if (d === 0) d = pickConst(1, 10);
     }
 
     const expandedB = m * p;
@@ -787,7 +805,9 @@ const generateQuestion = (
 
   if (level === "level2") {
     const bracketSide = pickActive(qo.bracketSide);
-    return tryLevel2(bracketSide, allowInteger, allowDecimal, allowPositive, allowNegative) ?? {
+    const allowPosConst = qo.constantSign.positive;
+    const allowNegConst = qo.constantSign.negative;
+    return tryLevel2(bracketSide, allowInteger, allowDecimal, allowPositive, allowNegative, allowPosConst, allowNegConst) ?? {
       kind: "simple", display: "2(x + 3) = 3x + 1", displayLatex: "2(x + 3) = 3x + 1",
       answer: "x = 5", answerLatex: "x = 5",
       working: [mStep("Expand brackets:", "2(x + 3) = 3x + 1 \\rightarrow 2x + 6 = 3x + 1"), mStep("Reduce x's:", "2x + 6 = 3x + 1 \\rightarrow 6 - 1 = 3x - 2x"), mStep("Isolate constant:", "5 = x"), mStep("Divide:", "x = 5")],
