@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback, useRef, CSSProperties } from "react";
-import { Home, Menu, X, ChevronLeft, ChevronRight, Shuffle, RotateCcw, ChevronDown, ChevronUp, RefreshCw, Eye } from "lucide-react";
+import { Home, Menu, X, ChevronLeft, ChevronRight, Shuffle, RotateCcw, ChevronDown, ChevronUp, RefreshCw } from "lucide-react";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-type BankKey      = "1.1.1" | "1.1.2" | "1.1.3" | "mixed";
-type ActivityKey  = "recall" | "fillin" | "exam";
-type RecallMode   = "flashcard" | "browse" | "quiz";
-type ExamTypeKey  = "all" | "explain" | "compare" | "apply" | "evaluate";
+type _BankKey      = "1.1.1" | "1.1.2" | "1.1.3" | "mixed";
+type _ActivityKey  = "recall" | "fillin" | "exam";
+type _RecallMode   = "flashcard" | "browse" | "quiz";
+type _ExamTypeKey  = "all" | "explain" | "compare" | "apply" | "evaluate";
 type QuestionType = "explain" | "compare" | "apply" | "evaluate";
 
 interface FlashCard {
@@ -994,16 +994,17 @@ const QuizMode = ({ cards, allCards }: { cards: FlashCard[]; allCards: FlashCard
   }
 
   // — Active quiz —
+  if (!st) return null;
   const { deck, index, score, selected, complete, choices } = st;
 
-  const handleSelect = (choice) => {
+  const handleSelect = (choice: string) => {
     if (selected !== null) return;
-    setSt(s => ({ ...s, selected: choice, score: choice === deck[index].a ? s.score + 1 : s.score }));
+    setSt(s => s ? { ...s, selected: choice, score: choice === s.deck[s.index].a ? s.score + 1 : s.score } : s);
   };
   const handleNext = () => {
     const next = index + 1;
-    if (next >= deck.length) { setSt(s => ({ ...s, complete: true })); return; }
-    setSt(s => ({ ...s, index: next, selected: null, choices: buildChoices(deck[next], allCards) }));
+    if (next >= deck.length) { setSt(s => s ? { ...s, complete: true } : s); return; }
+    setSt(s => s ? { ...s, index: next, selected: null, choices: buildChoices(deck[next], allCards) } : s);
   };
 
   if (complete) {
@@ -1045,7 +1046,7 @@ const QuizMode = ({ cards, allCards }: { cards: FlashCard[]; allCards: FlashCard
         <p style={{ fontSize: "1.05rem", fontWeight: 600, color: "#111827", lineHeight: 1.6, margin: 0 }}>{current.q}</p>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {choices.map((choice, i) => {
+        {choices.map((choice: string, i: number) => {
           let bg = "#fff", border = "#e5e7eb", color = "#111827", lc = "#9ca3af";
           if (selected !== null) {
             if (choice === current.a)    { bg = "#ecfdf5"; border = "#10b981"; color = "#065f46"; lc = "#065f46"; }
@@ -1469,7 +1470,7 @@ const INFO = [
   ]},
 ];
 
-const InfoModal = ({ onClose }) => (
+const InfoModal = ({ onClose }: { onClose: () => void }) => (
   <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center" }}>
     <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 20, width: "100%", maxWidth: 600, maxHeight: "80vh", margin: "0 1rem", display: "flex", flexDirection: "column" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 28px", borderBottom: "1px solid #f3f4f6" }}>
@@ -1508,10 +1509,10 @@ const InfoModal = ({ onClose }) => (
 // MENU DROPDOWN
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const MenuDropdown = ({ onClose, onInfo }) => {
-  const ref = useRef(null);
+const MenuDropdown = ({ onClose, onInfo }: { onClose: () => void; onInfo: () => void }) => {
+  const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const h = (e) => { if (ref.current && !ref.current.contains(e.target)) onClose(); };
+    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) onClose(); };
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
   }, [onClose]);
