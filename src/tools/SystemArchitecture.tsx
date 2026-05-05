@@ -5,10 +5,6 @@ import { Home, Menu, X, ChevronLeft, ChevronRight, Shuffle, RotateCcw, ChevronDo
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-type _BankKey      = "1.1.1" | "1.1.2" | "1.1.3" | "mixed";
-type _ActivityKey  = "recall" | "fillin" | "exam";
-type _RecallMode   = "flashcard" | "browse" | "quiz";
-type _ExamTypeKey  = "all" | "explain" | "compare" | "apply" | "evaluate";
 type QuestionType = "explain" | "compare" | "apply" | "evaluate";
 
 interface FlashCard {
