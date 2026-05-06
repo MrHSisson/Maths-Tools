@@ -566,42 +566,53 @@ const tryLevel2 = (
   allowPosConst: boolean,
   allowNegConst: boolean,
 ): AnyQuestion | null => {
-  // Helper: pick a constant with the correct sign
   const pickConst = (lo: number, hi: number): number => {
     const usePos = allowPosConst && (!allowNegConst || Math.random() < 0.5);
-    const val = randInt(lo, hi);
-    return usePos ? val : -val;
+    return usePos ? randInt(lo, hi) : -randInt(lo, hi);
+  };
+
+  // Build bracket latex: m(ax + p) or m(ax - p)
+  const bracketLatex = (m: number, a: number, p: number): string => {
+    const inner = a === 1 ? "x" : `${a}x`;
+    const pSign = p >= 0 ? `+ ${p}` : `- ${Math.abs(p)}`;
+    return `${m}(${inner} ${pSign})`;
   };
 
   for (let attempt = 0; attempt < 200; attempt++) {
-    const m = randInt(2, 6);
-    const p = pickConst(1, 8);
+    const m  = randInt(2, 5);
+    const a  = randInt(1, 6);           // x coefficient inside bracket
+    const p  = pickConst(1, 8);
     if (p === 0) continue;
 
+    // After expansion: left = (m*a)x + (m*p)
+    const expandedXL = m * a;
+    const expandedBL = m * p;
+
     let c: number, d: number;
-    let rightBracketM = 0, rightBracketP = 0;
+    let rightM = 0, rightA = 0, rightP = 0;  // right bracket params
 
     if (bracketSide === "both") {
-      rightBracketM = randInt(2, 6);
-      rightBracketP = pickConst(1, 8);
-      if (rightBracketP === 0) continue;
-      c = rightBracketM;
-      d = rightBracketM * rightBracketP;
+      rightM = randInt(2, 5);
+      rightA = randInt(1, 6);
+      rightP = pickConst(1, 8);
+      if (rightP === 0) continue;
+      c = rightM * rightA;
+      d = rightM * rightP;
+      if (c === expandedXL) continue;
     } else if (bracketSide === "right") {
-      rightBracketM = randInt(2, 6);
-      rightBracketP = pickConst(1, 8);
-      if (rightBracketP === 0) continue;
-      c = rightBracketM;
-      d = rightBracketM * rightBracketP;
+      // plain left, bracket right
+      rightM = randInt(2, 5);
+      rightA = randInt(1, 6);
+      rightP = pickConst(1, 8);
+      if (rightP === 0) continue;
+      const expandedXR = rightM * rightA;
+      const expandedBR = rightM * rightP;
       const leftC = randInt(1, 9);
-      const leftD = randInt(-10, 10);
+      const leftD = pickConst(1, 10);
       if (leftD === 0) continue;
-      // equation: leftC*x + leftD = rightBracketM*(x + rightBracketP)
-      // after expand: leftC*x + leftD = c*x + d
-      // xCoef = leftC - c, rhs = d - leftD
-      const xCoef2 = leftC - c;
+      const xCoef2 = leftC - expandedXR;
       if (xCoef2 === 0) continue;
-      const rhs2 = d - leftD;
+      const rhs2 = expandedBR - leftD;
       const xVal2 = rhs2 / xCoef2;
       const isInt2 = Number.isInteger(xVal2);
       if (!allowInteger && isInt2) continue;
@@ -612,10 +623,9 @@ const tryLevel2 = (
       if (xVal2 === 0) continue;
       const xStr2 = fmt(xVal2);
       const id2 = Math.floor(Math.random() * 1_000_000);
-      const rpSign = rightBracketP >= 0 ? `+ ${rightBracketP}` : `- ${Math.abs(rightBracketP)}`;
-      const rightLatex2 = `${rightBracketM}(x ${rpSign})`;
       const leftLatex2 = sideLatex(leftC, leftD);
-      const expandedRight2 = sideLatex(c, d);
+      const rightLatex2 = bracketLatex(rightM, rightA, rightP);
+      const expandedRight2 = sideLatex(expandedXR, expandedBR);
       return {
         kind: "simple",
         display: `${leftLatex2} = ${rightLatex2}`,
@@ -627,19 +637,19 @@ const tryLevel2 = (
           mStep("Isolate constant:", `${coefStr(xCoef2)}x = ${rhs2}`),
           mStep("Divide:", `x = \\frac{${rhs2}}{${xCoef2}} = ${xStr2}`),
         ],
-        key: `l2r-${leftC}-${leftD}-${rightBracketM}-${rightBracketP}-${id2}`, difficulty: "level2",
+        key: `l2r-${leftC}-${leftD}-${rightM}-${rightA}-${rightP}-${id2}`, difficulty: "level2",
       };
     } else {
-      c = randInt(1, m + 3);
-      if (c === m) continue;
+      // left bracket only, plain right
+      c = randInt(1, expandedXL + 3);
+      if (c === expandedXL) continue;
       d = pickConst(1, 10);
-      if (d === 0) d = pickConst(1, 10);
+      if (d === 0) continue;
     }
 
-    const expandedB = m * p;
-    const xCoef = m - c;
+    const xCoef = expandedXL - c;
     if (xCoef === 0) continue;
-    const rhs = d - expandedB;
+    const rhs = d - expandedBL;
 
     const xVal = rhs / xCoef;
     const isInteger = Number.isInteger(xVal);
@@ -653,19 +663,16 @@ const tryLevel2 = (
     const xStr = fmt(xVal);
     const id = Math.floor(Math.random() * 1_000_000);
 
-    const pSign = p >= 0 ? `+ ${p}` : `- ${Math.abs(p)}`;
-    const leftLatex = `${m}(x ${pSign})`;
-
+    const leftLatex = bracketLatex(m, a, p);
     let rightLatex: string;
     if (bracketSide === "both") {
-      const rpSign = rightBracketP >= 0 ? `+ ${rightBracketP}` : `- ${Math.abs(rightBracketP)}`;
-      rightLatex = `${rightBracketM}(x ${rpSign})`;
+      rightLatex = bracketLatex(rightM, rightA, rightP);
     } else {
       rightLatex = sideLatex(c, d);
     }
 
-    const expandedLeft = sideLatex(m, expandedB);
-    const expandedRight = bracketSide === "both" ? sideLatex(rightBracketM, d) : sideLatex(c, d);
+    const expandedLeft = sideLatex(expandedXL, expandedBL);
+    const expandedRight = bracketSide === "both" ? sideLatex(c, d) : sideLatex(c, d);
 
     const working = [
       mStep("Expand brackets:", `${leftLatex} = ${rightLatex} \\rightarrow ${expandedLeft} = ${expandedRight}`),
@@ -680,7 +687,7 @@ const tryLevel2 = (
       displayLatex: `${leftLatex} = ${rightLatex}`,
       answer: `x = ${xStr}`, answerLatex: `x = ${xStr}`,
       working,
-      key: `l2-${m}-${p}-${c}-${d}-${id}`,
+      key: `l2-${m}-${a}-${p}-${c}-${d}-${id}`,
       difficulty: "level2",
     };
   }
