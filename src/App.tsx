@@ -11,6 +11,7 @@ import FractionsOfAmounts from './tools/FractionsOfAmounts';
 import TimesTablesGenerator from './tools/Generators/TimesTablesGenerator';
 import NegativeOperationsGenerator from './tools/Generators/NegativeOperationsGenerator';
 import MultiplicationGenerator from './tools/Generators/MultiplicationGenerator';
+import FunctionalSkillsGenerator from './tools/Generators/FunctionalSkillsGenerator';
 
 //Number
 
@@ -64,6 +65,7 @@ function App() {
       <Route path="/timestables" element={<TimesTablesGenerator />} />
       <Route path="/negative-operations" element={<NegativeOperationsGenerator />} />
       <Route path="/multiplication-methods" element={<MultiplicationGenerator />} />
+      <Route path="/functional-skills" element={<FunctionalSkillsGenerator />} />
 
       //Number
 
