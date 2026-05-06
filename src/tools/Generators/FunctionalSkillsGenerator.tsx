@@ -17,10 +17,11 @@ type Question = {
 type SkillId =
   | 'numberBonds'
   | 'timesTables'
+  | 'reverseTT'
   | 'addition'
   | 'subtraction'
+  | 'multiplication'
   | 'negatives'
-  | 'division'
   | 'busStop'
   | 'indices';
 
@@ -29,19 +30,21 @@ type SkillId =
 type NumberBondsConfig = { targets: number[] };
 type TimesTablesConfig = { range: 10 | 12 | 20; specificTables: number[]; suppressDuplicates: boolean };
 type AdditionConfig = { digitBands: (1 | 2 | 3)[]; allowCarrying: boolean };
-type SubtractionConfig = { digitBands: (1 | 2 | 3)[]; requireBorrowing: boolean; noNegativeResults: boolean };
+type SubtractionConfig = { digitBands: (1 | 2 | 3)[]; requireExchange: boolean };
 type NegativesConfig = { operations: ('addition' | 'subtraction' | 'multiplication' | 'division')[]; range: 10 | 25 };
-type DivisionConfig = { range: 10 | 12 | 20; allowRemainders: boolean };
-type BusStopConfig = { type: ('2d1d' | '3d1d')[]; allowRemainders: boolean };
+type ReverseTTConfig = { range: 10 | 12 | 20 };
+type MultiplicationConfig = { types: ('2dx1d' | '2dx2d' | '3dx1d' | '3dx2d')[] };
+type BusStopConfig = { types: ('2d1d' | '3d1d' | '3d2d')[] };
 type IndicesConfig = { baseRange: 10 | 15; exponentRange: (2 | 3 | 4)[] };
 
 type SkillConfigs = {
   numberBonds: NumberBondsConfig;
   timesTables: TimesTablesConfig;
+  reverseTT: ReverseTTConfig;
   addition: AdditionConfig;
   subtraction: SubtractionConfig;
+  multiplication: MultiplicationConfig;
   negatives: NegativesConfig;
-  division: DivisionConfig;
   busStop: BusStopConfig;
   indices: IndicesConfig;
 };
@@ -126,18 +129,18 @@ function genSubtraction(config: SubtractionConfig): Question[] {
     for (let i = 0; i < 200; i++) {
       let a = randInt(min, max);
       let b = randInt(min, max);
-      if (config.noNegativeResults && b > a) [a, b] = [b, a];
+      if (b > a) [a, b] = [b, a]; // always prevent negative results
       if (a === b) continue;
       const ans = a - b;
 
-      // detect borrowing
+      // detect exchange (borrowing)
       const aStr = a.toString().padStart(3, '0');
       const bStr = b.toString().padStart(3, '0');
-      let needsBorrow = false;
+      let needsExchange = false;
       for (let d = 2; d >= 0; d--) {
-        if (parseInt(aStr[d]) < parseInt(bStr[d])) { needsBorrow = true; break; }
+        if (parseInt(aStr[d]) < parseInt(bStr[d])) { needsExchange = true; break; }
       }
-      if (config.requireBorrowing && !needsBorrow) continue;
+      if (config.requireExchange && !needsExchange) continue;
 
       pool.push({ question: `${a} − ${b} = ___`, answer: ans });
     }
@@ -186,7 +189,7 @@ function genNegatives(config: NegativesConfig): Question[] {
   return shuffle(pool);
 }
 
-function genDivision(config: DivisionConfig): Question[] {
+function genReverseTT(config: ReverseTTConfig): Question[] {
   const pool: Question[] = [];
   for (let divisor = 1; divisor <= config.range; divisor++) {
     for (let quotient = 1; quotient <= config.range; quotient++) {
@@ -194,14 +197,22 @@ function genDivision(config: DivisionConfig): Question[] {
       pool.push({ question: `${dividend} ÷ ${divisor} = ___`, answer: quotient });
     }
   }
-  if (config.allowRemainders) {
-    for (let i = 0; i < 200; i++) {
-      const divisor = randInt(2, config.range);
-      const dividend = randInt(divisor + 1, config.range * config.range);
-      if (dividend % divisor === 0) continue;
-      const q = Math.floor(dividend / divisor);
-      const r = dividend % divisor;
-      pool.push({ question: `${dividend} ÷ ${divisor} = ___`, answer: `${q} r${r}` });
+  return shuffle(pool);
+}
+
+function genMultiplication(config: MultiplicationConfig): Question[] {
+  const pool: Question[] = [];
+  for (const type of config.types) {
+    for (let i = 0; i < 300; i++) {
+      let a: number, b: number;
+      switch (type) {
+        case '2dx1d': a = randInt(10, 99);  b = randInt(2, 9);  break;
+        case '2dx2d': a = randInt(10, 99);  b = randInt(10, 99); break;
+        case '3dx1d': a = randInt(100, 999); b = randInt(2, 9);  break;
+        case '3dx2d': a = randInt(100, 999); b = randInt(10, 99); break;
+        default: continue;
+      }
+      pool.push({ question: `${a} × ${b} = ___`, answer: a * b });
     }
   }
   return shuffle(pool);
@@ -209,25 +220,26 @@ function genDivision(config: DivisionConfig): Question[] {
 
 function genBusStop(config: BusStopConfig): Question[] {
   const pool: Question[] = [];
-  for (const type of config.type) {
-    const [minD, maxD] = type === '2d1d' ? [10, 99] : [100, 999];
-    for (let i = 0; i < 300; i++) {
-      const divisor = randInt(2, 9);
-      if (!config.allowRemainders) {
-        const quotient = randInt(type === '2d1d' ? 2 : 10, type === '2d1d' ? 9 : 99);
-        const dividend = divisor * quotient;
-        if (dividend < minD || dividend > maxD) continue;
-        pool.push({ question: `${dividend} ÷ ${divisor} = ___`, answer: quotient });
-      } else {
-        const dividend = randInt(minD, maxD);
-        const q = Math.floor(dividend / divisor);
-        const r = dividend % divisor;
-        if (r === 0) {
-          pool.push({ question: `${dividend} ÷ ${divisor} = ___`, answer: q });
-        } else {
-          pool.push({ question: `${dividend} ÷ ${divisor} = ___`, answer: `${q} r${r}` });
-        }
+  for (const type of config.types) {
+    for (let i = 0; i < 400; i++) {
+      let dividend: number, divisor: number;
+      if (type === '2d1d') {
+        divisor = randInt(2, 9);
+        const quotient = randInt(2, 9);
+        dividend = divisor * quotient;
+        if (dividend < 10 || dividend > 99) continue;
+      } else if (type === '3d1d') {
+        divisor = randInt(2, 9);
+        const quotient = randInt(10, 99);
+        dividend = divisor * quotient;
+        if (dividend < 100 || dividend > 999) continue;
+      } else { // 3d2d
+        divisor = randInt(10, 99);
+        const quotient = randInt(2, 9);
+        dividend = divisor * quotient;
+        if (dividend < 100 || dividend > 999) continue;
       }
+      pool.push({ question: `${dividend} ÷ ${divisor} = ___`, answer: dividend / divisor });
     }
   }
   return shuffle(pool);
@@ -413,29 +425,31 @@ document.addEventListener("DOMContentLoaded", function() {
 // ─── SKILL METADATA ───────────────────────────────────────────────────────────
 
 const SKILL_META: Record<SkillId, { label: string; description: string }> = {
-  numberBonds:  { label: 'Number Bonds',    description: 'Pairs that sum to a target' },
-  timesTables:  { label: 'Times Tables',    description: 'Multiplication facts' },
-  addition:     { label: 'Addition',        description: 'Column/mental addition' },
-  subtraction:  { label: 'Subtraction',     description: 'Column/mental subtraction' },
-  negatives:    { label: 'Negatives',       description: 'Operations with negative numbers' },
-  division:     { label: 'Division',        description: 'Reverse times tables / division facts' },
-  busStop:      { label: 'Bus Stop',        description: 'Long division (2 or 3 digit ÷ 1 digit)' },
-  indices:      { label: 'Indices',         description: 'Powers and exponents' },
+  numberBonds:    { label: 'Number Bonds',        description: 'Pairs that sum to a target' },
+  timesTables:    { label: 'Times Tables',         description: 'Multiplication facts' },
+  reverseTT:      { label: 'Reverse Times Tables', description: 'Division from times table facts' },
+  addition:       { label: 'Addition',             description: 'Column/mental addition' },
+  subtraction:    { label: 'Subtraction',          description: 'Column/mental subtraction' },
+  multiplication: { label: 'Multiplication',       description: 'Multi-digit multiplication' },
+  negatives:      { label: 'Negatives',            description: 'Operations with negative numbers' },
+  busStop:        { label: 'Division',             description: 'Long division, integer answers' },
+  indices:        { label: 'Indices',              description: 'Powers and exponents' },
 };
 
-const ALL_SKILLS: SkillId[] = ['numberBonds', 'timesTables', 'addition', 'subtraction', 'negatives', 'division', 'busStop', 'indices'];
+const ALL_SKILLS: SkillId[] = ['numberBonds', 'timesTables', 'reverseTT', 'addition', 'subtraction', 'multiplication', 'busStop', 'negatives', 'indices'];
 
 // ─── DEFAULT CONFIGS ──────────────────────────────────────────────────────────
 
 const defaultConfigs: SkillConfigs = {
-  numberBonds:  { targets: [10] },
-  timesTables:  { range: 12, specificTables: [], suppressDuplicates: false },
-  addition:     { digitBands: [2], allowCarrying: true },
-  subtraction:  { digitBands: [2], requireBorrowing: false, noNegativeResults: true },
-  negatives:    { operations: ['addition', 'subtraction'], range: 10 },
-  division:     { range: 12, allowRemainders: false },
-  busStop:      { type: ['2d1d'], allowRemainders: false },
-  indices:      { baseRange: 10, exponentRange: [2, 3] },
+  numberBonds:    { targets: [10] },
+  timesTables:    { range: 12, specificTables: [], suppressDuplicates: false },
+  reverseTT:      { range: 12 },
+  addition:       { digitBands: [2], allowCarrying: true },
+  subtraction:    { digitBands: [2], requireExchange: false },
+  multiplication: { types: ['2dx1d'] },
+  negatives:      { operations: ['addition', 'subtraction'], range: 10 },
+  busStop:        { types: ['2d1d'] },
+  indices:        { baseRange: 10, exponentRange: [2, 3] },
 };
 
 const MAX_QUESTIONS = 30;
@@ -445,8 +459,8 @@ const MAX_QUESTIONS = 30;
 export default function MathsSkillsGenerator() {
   const [enabledSkills, setEnabledSkills] = useState<SkillId[]>([]);
   const [skillCounts, setSkillCounts] = useState<Record<SkillId, number>>({
-    numberBonds: 5, timesTables: 5, addition: 5, subtraction: 5,
-    negatives: 5, division: 5, busStop: 5, indices: 5,
+    numberBonds: 5, timesTables: 5, reverseTT: 5, addition: 5, subtraction: 5,
+    multiplication: 5, negatives: 5, busStop: 5, indices: 5,
   });
   const [configs, setConfigs] = useState<SkillConfigs>(defaultConfigs);
   const [previewQuestions, setPreviewQuestions] = useState<Question[]>([]);
@@ -485,14 +499,15 @@ export default function MathsSkillsGenerator() {
   const getPool = (skill: SkillId): Question[] => {
     let pool: Question[] = [];
     switch (skill) {
-      case 'numberBonds':  pool = genNumberBonds(configs.numberBonds); break;
-      case 'timesTables':  pool = genTimesTables(configs.timesTables); break;
-      case 'addition':     pool = genAddition(configs.addition); break;
-      case 'subtraction':  pool = genSubtraction(configs.subtraction); break;
-      case 'negatives':    pool = genNegatives(configs.negatives); break;
-      case 'division':     pool = genDivision(configs.division); break;
-      case 'busStop':      pool = genBusStop(configs.busStop); break;
-      case 'indices':      pool = genIndices(configs.indices); break;
+      case 'numberBonds':    pool = genNumberBonds(configs.numberBonds); break;
+      case 'timesTables':    pool = genTimesTables(configs.timesTables); break;
+      case 'reverseTT':      pool = genReverseTT(configs.reverseTT); break;
+      case 'addition':       pool = genAddition(configs.addition); break;
+      case 'subtraction':    pool = genSubtraction(configs.subtraction); break;
+      case 'multiplication': pool = genMultiplication(configs.multiplication); break;
+      case 'negatives':      pool = genNegatives(configs.negatives); break;
+      case 'busStop':        pool = genBusStop(configs.busStop); break;
+      case 'indices':        pool = genIndices(configs.indices); break;
     }
     return pool.map(q => ({ ...q, skill }));
   };
@@ -546,29 +561,32 @@ export default function MathsSkillsGenerator() {
     selected: T[];
     onToggle: (v: T) => void;
     format?: (v: T) => string;
-  }) => (
-    <div className="mb-4">
-      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">{label}</p>
-      <div className="flex flex-wrap gap-2">
-        {options.map(opt => {
-          const active = selected.includes(opt);
-          return (
-            <button
-              key={String(opt)}
-              onClick={() => onToggle(opt)}
-              className={`px-3 py-1.5 rounded-full text-sm font-semibold border-2 transition-all ${
-                active
-                  ? 'bg-blue-900 border-blue-900 text-white'
-                  : 'bg-white border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-900'
-              }`}
-            >
-              {format ? format(opt) : String(opt)}
-            </button>
-          );
-        })}
+  }) => {
+    const cols = options.length > 4 ? Math.ceil(options.length / 2) : options.length;
+    return (
+      <div className="mb-4">
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">{label}</p>
+        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, auto)`, gap: '6px', justifyContent: 'center' }}>
+          {options.map(opt => {
+            const active = selected.includes(opt);
+            return (
+              <button
+                key={String(opt)}
+                onClick={() => onToggle(opt)}
+                className={`px-3 py-1.5 rounded-full text-sm font-semibold border-2 transition-all ${
+                  active
+                    ? 'bg-blue-900 border-blue-900 text-white'
+                    : 'bg-white border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-900'
+                }`}
+              >
+                {format ? format(opt) : String(opt)}
+              </button>
+            );
+          })}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Single-select pill group (radio behaviour)
   const PillSingle = <T extends string | number>({
@@ -579,29 +597,32 @@ export default function MathsSkillsGenerator() {
     selected: T;
     onSelect: (v: T) => void;
     format?: (v: T) => string;
-  }) => (
-    <div className="mb-4">
-      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">{label}</p>
-      <div className="flex flex-wrap gap-2">
-        {options.map(opt => {
-          const active = selected === opt;
-          return (
-            <button
-              key={String(opt)}
-              onClick={() => onSelect(opt)}
-              className={`px-3 py-1.5 rounded-full text-sm font-semibold border-2 transition-all ${
-                active
-                  ? 'bg-blue-900 border-blue-900 text-white'
-                  : 'bg-white border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-900'
-              }`}
-            >
-              {format ? format(opt) : String(opt)}
-            </button>
-          );
-        })}
+  }) => {
+    const cols = options.length > 4 ? Math.ceil(options.length / 2) : options.length;
+    return (
+      <div className="mb-4">
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">{label}</p>
+        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, auto)`, gap: '6px', justifyContent: 'center' }}>
+          {options.map(opt => {
+            const active = selected === opt;
+            return (
+              <button
+                key={String(opt)}
+                onClick={() => onSelect(opt)}
+                className={`px-3 py-1.5 rounded-full text-sm font-semibold border-2 transition-all ${
+                  active
+                    ? 'bg-blue-900 border-blue-900 text-white'
+                    : 'bg-white border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-900'
+                }`}
+              >
+                {format ? format(opt) : String(opt)}
+              </button>
+            );
+          })}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Toggle pill (single boolean option)
   const PillToggle = ({ label, active, onToggle }: { label: string; active: boolean; onToggle: () => void }) => (
@@ -647,7 +668,7 @@ export default function MathsSkillsGenerator() {
             <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
               Specific tables <span className="normal-case font-normal">(leave blank for all)</span>
             </p>
-            <div className="flex flex-wrap gap-2">
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${c.timesTables.range / 2}, 36px)`, gap: '6px', justifyContent: 'center' }}>
               {Array.from({ length: c.timesTables.range }, (_, i) => i + 1).map(t => (
                 <button
                   key={t}
@@ -663,7 +684,7 @@ export default function MathsSkillsGenerator() {
               ))}
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex justify-center gap-2">
             <PillToggle
               label="Suppress duplicates"
               active={c.timesTables.suppressDuplicates}
@@ -682,7 +703,7 @@ export default function MathsSkillsGenerator() {
             onToggle={v => updateConfig('addition', { digitBands: toggleArr(c.addition.digitBands, v as 1|2|3) })}
             format={v => `${v}-digit`}
           />
-          <div className="flex gap-2">
+          <div className="flex justify-center gap-2">
             <PillToggle
               label="Carrying"
               active={c.addition.allowCarrying}
@@ -701,19 +722,34 @@ export default function MathsSkillsGenerator() {
             onToggle={v => updateConfig('subtraction', { digitBands: toggleArr(c.subtraction.digitBands, v as 1|2|3) })}
             format={v => `${v}-digit`}
           />
-          <div className="flex flex-wrap gap-2">
+          <div className="flex justify-center gap-2">
             <PillToggle
-              label="Require borrowing"
-              active={c.subtraction.requireBorrowing}
-              onToggle={() => updateConfig('subtraction', { requireBorrowing: !c.subtraction.requireBorrowing })}
-            />
-            <PillToggle
-              label="No negative results"
-              active={c.subtraction.noNegativeResults}
-              onToggle={() => updateConfig('subtraction', { noNegativeResults: !c.subtraction.noNegativeResults })}
+              label="Require exchange"
+              active={c.subtraction.requireExchange}
+              onToggle={() => updateConfig('subtraction', { requireExchange: !c.subtraction.requireExchange })}
             />
           </div>
         </>
+      ),
+
+      reverseTT: (
+        <PillSingle
+          label="Range"
+          options={[10, 12, 20] as const}
+          selected={c.reverseTT.range}
+          onSelect={v => updateConfig('reverseTT', { range: v as 10 | 12 | 20 })}
+          format={v => `Up to ${v}×${v}`}
+        />
+      ),
+
+      multiplication: (
+        <PillMulti
+          label="Question type"
+          options={['2dx1d', '2dx2d', '3dx1d', '3dx2d'] as const}
+          selected={c.multiplication.types}
+          onToggle={v => updateConfig('multiplication', { types: toggleArr(c.multiplication.types, v as any) })}
+          format={v => v.replace('dx', '-digit × ').replace('d', '-digit')}
+        />
       ),
 
       negatives: (
@@ -735,42 +771,18 @@ export default function MathsSkillsGenerator() {
         </>
       ),
 
-      division: (
-        <>
-          <PillSingle
-            label="Range"
-            options={[10, 12, 20] as const}
-            selected={c.division.range}
-            onSelect={v => updateConfig('division', { range: v as 10 | 12 | 20 })}
-            format={v => `Up to ${v}×${v}`}
-          />
-          <div className="flex gap-2">
-            <PillToggle
-              label="Allow remainders"
-              active={c.division.allowRemainders}
-              onToggle={() => updateConfig('division', { allowRemainders: !c.division.allowRemainders })}
-            />
-          </div>
-        </>
-      ),
-
       busStop: (
-        <>
-          <PillMulti
-            label="Question type"
-            options={['2d1d', '3d1d'] as const}
-            selected={c.busStop.type}
-            onToggle={v => updateConfig('busStop', { type: toggleArr(c.busStop.type, v as '2d1d'|'3d1d') })}
-            format={v => v === '2d1d' ? '2-digit ÷ 1-digit' : '3-digit ÷ 1-digit'}
-          />
-          <div className="flex gap-2">
-            <PillToggle
-              label="Allow remainders"
-              active={c.busStop.allowRemainders}
-              onToggle={() => updateConfig('busStop', { allowRemainders: !c.busStop.allowRemainders })}
-            />
-          </div>
-        </>
+        <PillMulti
+          label="Question type"
+          options={['2d1d', '3d1d', '3d2d'] as const}
+          selected={c.busStop.types}
+          onToggle={v => updateConfig('busStop', { types: toggleArr(c.busStop.types, v as any) })}
+          format={v => {
+            if (v === '2d1d') return '2-digit ÷ 1-digit';
+            if (v === '3d1d') return '3-digit ÷ 1-digit';
+            return '3-digit ÷ 2-digit';
+          }}
+        />
       ),
 
       indices: (
@@ -859,10 +871,31 @@ export default function MathsSkillsGenerator() {
                       {/* Toggle switch */}
                       <button
                         onClick={() => toggleSkill(skill)}
-                        className={`relative flex-shrink-0 w-10 h-5.5 rounded-full transition-colors focus:outline-none ${enabled ? 'bg-blue-900' : 'bg-gray-300'}`}
-                        style={{ height: '22px', width: '40px' }}
+                        style={{
+                          position: 'relative',
+                          flexShrink: 0,
+                          width: '44px',
+                          height: '24px',
+                          borderRadius: '12px',
+                          backgroundColor: enabled ? '#1e3a8a' : '#d1d5db',
+                          border: 'none',
+                          cursor: 'pointer',
+                          transition: 'background-color 0.2s',
+                          padding: 0,
+                        }}
                       >
-                        <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${enabled ? 'left-5' : 'left-0.5'}`} />
+                        <span style={{
+                          position: 'absolute',
+                          top: '3px',
+                          left: enabled ? '23px' : '3px',
+                          width: '18px',
+                          height: '18px',
+                          borderRadius: '50%',
+                          backgroundColor: 'white',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                          transition: 'left 0.2s',
+                          display: 'block',
+                        }} />
                       </button>
 
                       {/* Label */}
