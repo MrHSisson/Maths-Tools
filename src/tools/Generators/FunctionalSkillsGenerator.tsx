@@ -249,41 +249,6 @@ function genIndices(config: IndicesConfig): Question[] {
   return shuffle(pool);
 }
 
-// ─── MAIN GENERATOR ───────────────────────────────────────────────────────────
-
-function generateQuestions(
-  enabledSkills: SkillId[],
-  configs: SkillConfigs,
-  total: number
-): Question[] {
-  if (enabledSkills.length === 0) return [];
-
-  const pools: Record<string, Question[]> = {};
-  for (const skill of enabledSkills) {
-    switch (skill) {
-      case 'numberBonds': pools[skill] = genNumberBonds(configs.numberBonds); break;
-      case 'timesTables': pools[skill] = genTimesTables(configs.timesTables); break;
-      case 'addition':    pools[skill] = genAddition(configs.addition); break;
-      case 'subtraction': pools[skill] = genSubtraction(configs.subtraction); break;
-      case 'negatives':   pools[skill] = genNegatives(configs.negatives); break;
-      case 'division':    pools[skill] = genDivision(configs.division); break;
-      case 'busStop':     pools[skill] = genBusStop(configs.busStop); break;
-      case 'indices':     pools[skill] = genIndices(configs.indices); break;
-    }
-  }
-
-  // Equal split, round-robin fill
-  const perSkill = Math.floor(total / enabledSkills.length);
-  const remainder = total % enabledSkills.length;
-  const selected: Question[] = [];
-
-  enabledSkills.forEach((skill, i) => {
-    const count = perSkill + (i < remainder ? 1 : 0);
-    selected.push(...(pools[skill] || []).slice(0, count));
-  });
-
-  return shuffle(selected).slice(0, total);
-}
 
 // ─── PDF PRINT ────────────────────────────────────────────────────────────────
 
@@ -489,7 +454,6 @@ export default function MathsSkillsGenerator() {
   const [expandedSkill, setExpandedSkill] = useState<SkillId | null>(null);
 
   const total = enabledSkills.reduce((sum, s) => sum + skillCounts[s], 0);
-  const remaining = MAX_QUESTIONS - total;
 
   const toggleSkill = (skill: SkillId) => {
     setEnabledSkills(prev => {
