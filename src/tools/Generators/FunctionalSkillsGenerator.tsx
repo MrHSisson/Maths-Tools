@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Home, Eye, Download, RefreshCw } from 'lucide-react';
+import { Home, Eye, Download, RefreshCw, Menu, X } from 'lucide-react';
 
 const TOOL_CONFIG = {
   pageTitle: 'Maths Skills Generator',
@@ -917,18 +917,45 @@ export default function MathsSkillsGenerator() {
 
   // ── RENDER ───────────────────────────────────────────────────────────────
 
+  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   const canGenerate = enabledSkills.length > 0 && total > 0;
 
   return (
     <>
       {/* Header */}
       <div style={{ backgroundColor: '#1e3a8a' }}>
-        <div className="max-w-6xl mx-auto px-8 py-4 flex items-center">
+        <div className="max-w-6xl mx-auto px-8 py-4 flex items-center justify-between">
           <button onClick={() => window.location.href = '/'}
             className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors">
             <Home size={24} />
             <span className="font-semibold text-lg">Home</span>
           </button>
+
+          {/* Burger menu */}
+          <div className="relative">
+            <button
+              onClick={() => setIsMenuOpen(o => !o)}
+              className="text-white hover:bg-blue-800 p-2 rounded-lg transition-colors"
+            >
+              {isMenuOpen ? <X size={26} /> : <Menu size={26} />}
+            </button>
+            {isMenuOpen && (
+              <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-50">
+                <div className="px-4 py-2.5 border-b border-gray-100">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Presets</p>
+                </div>
+                {PRESETS.map(p => (
+                  <button
+                    key={p.label}
+                    onClick={() => { applyPreset(p); setIsMenuOpen(false); }}
+                    className="w-full text-left px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-900 transition-colors"
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -944,36 +971,15 @@ export default function MathsSkillsGenerator() {
           {/* Toolbar */}
           <div className="bg-white rounded-2xl shadow-lg mb-6 px-6 py-4 flex items-center gap-4 flex-wrap justify-center">
 
-            {/* Preset */}
-            <div className="flex items-center gap-2">
-              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">Preset</label>
-              <select
-                onChange={e => {
-                  const p = PRESETS.find(p => p.label === e.target.value);
-                  if (p) applyPreset(p);
-                  e.target.value = '';
-                }}
-                defaultValue=""
-                className="px-3 py-1.5 border-2 border-gray-200 rounded-lg text-sm font-semibold text-gray-700 bg-white focus:outline-none focus:border-blue-900 cursor-pointer"
-              >
-                <option value="" disabled>Load…</option>
-                {PRESETS.map(p => (
-                  <option key={p.label} value={p.label}>{p.label}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="w-px self-stretch bg-gray-200 flex-shrink-0" />
-
             {/* Max questions */}
             <div className="flex items-center gap-2">
               <label className="text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">Questions</label>
               <input
                 type="number"
-                min={5} max={30} step={5}
+                min={3} max={30} step={3}
                 value={maxQuestions}
                 onChange={e => {
-                  const v = Math.min(30, Math.max(5, parseInt(e.target.value) || 5));
+                  const v = Math.min(30, Math.max(3, parseInt(e.target.value) || 3));
                   setMaxQuestions(v);
                 }}
                 className="w-16 px-2 py-1.5 border-2 border-gray-200 rounded-lg text-sm font-bold text-gray-800 text-center focus:outline-none focus:border-blue-900"
