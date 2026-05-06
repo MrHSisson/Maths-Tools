@@ -69,11 +69,7 @@ function genNumberBonds(config: NumberBondsConfig): Question[] {
   for (const target of config.targets) {
     for (let a = 0; a <= target; a++) {
       const b = target - a;
-      // standard: a + b = ___
-      pool.push({ question: `${a} + ${b} = ___`, answer: target });
-      // missing first: __ + b = target
       pool.push({ question: `___ + ${b} = ${target}`, answer: a });
-      // missing second: a + __ = target
       pool.push({ question: `${a} + ___ = ${target}`, answer: b });
     }
   }
@@ -264,7 +260,7 @@ function genIndices(config: IndicesConfig): Question[] {
 
 // ─── PDF PRINT ────────────────────────────────────────────────────────────────
 
-function handlePrint(questions: Question[]) {
+function handlePrint(allPages: Question[][]) {
   const FONT_PX   = 13;
   const PAD_MM    = 1.2;
   const MARGIN_MM = 12;
@@ -275,28 +271,35 @@ function handlePrint(questions: Question[]) {
   const usableH   = PAGE_H_MM - HEADER_MM;
   const cols      = 3;
   const cellW_MM  = (PAGE_W_MM - GAP_MM * 2) / 3;
+  const totalSheets = allPages.length;
 
   const now = new Date();
   const dateStr = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-  const totalQ = questions.length;
 
-  const qHtml = (idx: number, showAnswer: boolean): string => {
-    const q = questions[idx];
-    const ans = String(q.answer);
-    // Replace ___ with answer if showing, otherwise leave
-    const display = q.displayQuestion || q.question;
-    if (showAnswer) {
-      return `<div class="qbody">${display.replace('___', `<strong style="color:#059669">${ans}</strong>`)}</div>`;
-    }
-    return `<div class="qbody">${display}</div>`;
-  };
+  // Build per-sheet data
+  const sheetsData = allPages.map((questions, sheetIdx) => {
+    const totalQ = questions.length;
 
-  const probeHtml = questions.map((_, i) =>
-    `<div class="q-inner" id="probe-${i}">${qHtml(i, true)}</div>`
-  ).join('');
+    const qHtml = (idx: number, showAnswer: boolean): string => {
+      const q = questions[idx];
+      const ans = String(q.answer);
+      const display = q.displayQuestion || q.question;
+      if (showAnswer) {
+        return `<div class="qbody">${display.replace('___', `<strong style="color:#059669">${ans}</strong>`)}</div>`;
+      }
+      return `<div class="qbody">${display}</div>`;
+    };
 
-  const allQ     = questions.map((_, i) => qHtml(i, false));
-  const allQAns  = questions.map((_, i) => qHtml(i, true));
+    return {
+      totalQ,
+      sheetIdx,
+      probeHtml: questions.map((_, i) => `<div class="q-inner" id="probe-${sheetIdx}-${i}">${qHtml(i, true)}</div>`).join(''),
+      allQ:    questions.map((_, i) => qHtml(i, false)),
+      allQAns: questions.map((_, i) => qHtml(i, true)),
+    };
+  });
+
+  const allProbeHtml = sheetsData.map(s => s.probeHtml).join('');
 
   const html = `<!DOCTYPE html>
 <html>
@@ -334,7 +337,7 @@ function handlePrint(questions: Question[]) {
 </style>
 </head>
 <body>
-<div id="probe">${probeHtml}</div>
+<div id="probe">${allProbeHtml}</div>
 <div id="pages"></div>
 <script>
 document.addEventListener("DOMContentLoaded", function() {
@@ -344,16 +347,16 @@ document.addEventListener("DOMContentLoaded", function() {
   var usableH   = ${usableH};
   var PAGE_W_MM = ${PAGE_W_MM};
   var cols      = ${cols};
-  var totalQ    = ${totalQ};
   var dateStr   = "${dateStr}";
-  var allQ      = ${JSON.stringify(allQ)};
-  var allQAns   = ${JSON.stringify(allQAns)};
+  var totalSheets = ${totalSheets};
+  var sheetsData  = ${JSON.stringify(sheetsData.map(s => ({ totalQ: s.totalQ, sheetIdx: s.sheetIdx, allQ: s.allQ, allQAns: s.allQAns })))};
 
   var rowHeights = [];
   for (var r = 1; r <= 15; r++) {
     rowHeights.push((usableH - GAP_MM * (r - 1)) / r);
   }
 
+  // Measure tallest question across ALL sheets
   var probe = document.getElementById("probe");
   var maxH_px = 0;
   probe.querySelectorAll(".q-inner").forEach(function(el) {
@@ -362,12 +365,16 @@ document.addEventListener("DOMContentLoaded", function() {
   var maxH_mm = maxH_px / pxPerMm;
   var needed_mm = maxH_mm + PAD_MM * 2 + 6;
 
+  // Find optimal cell height (same for all sheets)
   var chosenH_mm = rowHeights[0];
   var rowsPerPage = 1;
+  var maxQ = 0;
+  sheetsData.forEach(function(s) { if (s.totalQ > maxQ) maxQ = s.totalQ; });
+
   var found = false;
   for (var r = 0; r < rowHeights.length; r++) {
     var capacity = (r + 1) * cols;
-    if (capacity >= totalQ && rowHeights[r] >= needed_mm) {
+    if (capacity >= maxQ && rowHeights[r] >= needed_mm) {
       chosenH_mm = rowHeights[r]; rowsPerPage = r + 1; found = true; break;
     }
   }
@@ -377,37 +384,38 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   }
 
-  var pageCapacity = rowsPerPage * cols;
-  var pages = [];
-  for (var s = 0; s < totalQ; s += pageCapacity) pages.push(s);
-  var totalPages = pages.length;
-
   function cW() { return (PAGE_W_MM - GAP_MM * (cols - 1)) / cols; }
 
-  function buildCell(idx, showAnswer, h) {
+  function buildCell(allQ, allQAns, idx, showAnswer, h) {
     var inner = showAnswer ? allQAns[idx] : allQ[idx];
     return '<div class="cell" style="width:' + cW() + 'mm;height:' + h + 'mm;">' + inner + '</div>';
   }
 
-  function buildGrid(start, showAnswer, h) {
-    var end = Math.min(start + pageCapacity, totalQ);
-    var rows = Math.ceil((end - start) / cols);
+  function buildGrid(allQ, allQAns, totalQ, showAnswer, h) {
+    var pageCapacity = rowsPerPage * cols;
+    var rows = Math.ceil(Math.min(totalQ, pageCapacity) / cols);
     var cells = '';
-    for (var i = start; i < end; i++) cells += buildCell(i, showAnswer, h);
+    for (var i = 0; i < Math.min(totalQ, pageCapacity); i++) {
+      cells += buildCell(allQ, allQAns, i, showAnswer, h);
+    }
     return '<div class="grid" style="grid-template-columns:repeat(' + cols + ',' + cW() + 'mm);grid-template-rows:repeat(' + rows + ',' + h + 'mm);">' + cells + '</div>';
   }
 
-  function buildPage(start, showAnswer, pgIdx) {
-    var lbl = totalPages > 1 ? totalQ + ' questions (' + (pgIdx+1) + '/' + totalPages + ')' : totalQ + ' questions';
+  function buildSheetPage(sheet, showAnswer) {
+    var weekLabel = totalSheets > 1 ? ' · Week ' + (sheet.sheetIdx + 1) + ' of ' + totalSheets : '';
+    var lbl = sheet.totalQ + ' questions' + weekLabel;
     var title = showAnswer ? 'Maths Skills — Answers' : 'Maths Skills Worksheet';
     return '<div class="page">'
-      + '<div class="page-header"><h1>' + title + '</h1><div class="meta">' + dateStr + ' · ' + lbl + '</div></div>'
-      + buildGrid(start, showAnswer, chosenH_mm)
+      + '<div class="page-header"><h1>' + title + '</h1><div class="meta">' + dateStr + lbl + '</div></div>'
+      + buildGrid(sheet.allQ, sheet.allQAns, sheet.totalQ, showAnswer, chosenH_mm)
       + '</div>';
   }
 
-  var html = pages.map(function(s, i) { return buildPage(s, false, i); }).join('')
-           + pages.map(function(s, i) { return buildPage(s, true,  i); }).join('');
+  // All question pages first, then all answer pages
+  var html = '';
+  sheetsData.forEach(function(s) { html += buildSheetPage(s, false); });
+  sheetsData.forEach(function(s) { html += buildSheetPage(s, true); });
+
   document.getElementById("pages").innerHTML = html;
   probe.remove();
   setTimeout(function() { window.print(); }, 300);
@@ -421,6 +429,7 @@ document.addEventListener("DOMContentLoaded", function() {
   win.document.write(html);
   win.document.close();
 }
+
 
 // ─── SKILL METADATA ───────────────────────────────────────────────────────────
 
@@ -452,9 +461,80 @@ const defaultConfigs: SkillConfigs = {
   indices:        { baseRange: 10, exponentRange: [2, 3] },
 };
 
-const MAX_QUESTIONS = 30;
 
-// ─── COMPONENT ────────────────────────────────────────────────────────────────
+
+// ─── PRESETS ─────────────────────────────────────────────────────────────────
+
+type Preset = {
+  label: string;
+  enabledSkills: SkillId[];
+  skillCounts: Partial<Record<SkillId, number>>;
+  configs: Partial<SkillConfigs>;
+};
+
+const PRESETS: Preset[] = [
+  { label: 'Preset 1',
+    enabledSkills: ['numberBonds', 'timesTables', 'addition'],
+    skillCounts: { numberBonds: 10, timesTables: 10, addition: 10 },
+    configs: {
+      numberBonds: { targets: [10, 20] },
+      timesTables: { range: 10, specificTables: [2, 5, 10], suppressDuplicates: false },
+      addition: { digitBands: [2], allowCarrying: false },
+    },
+  },
+  {
+    label: 'Preset 2',
+    enabledSkills: ['timesTables', 'reverseTT', 'addition', 'subtraction'],
+    skillCounts: { timesTables: 8, reverseTT: 8, addition: 7, subtraction: 7 },
+    configs: {
+      timesTables: { range: 12, specificTables: [], suppressDuplicates: false },
+      reverseTT: { range: 12 },
+      addition: { digitBands: [2, 3], allowCarrying: true },
+      subtraction: { digitBands: [2, 3], requireExchange: false },
+    },
+  },
+  {
+    label: 'Preset 3',
+    enabledSkills: ['timesTables', 'reverseTT', 'multiplication', 'busStop'],
+    skillCounts: { timesTables: 8, reverseTT: 7, multiplication: 8, busStop: 7 },
+    configs: {
+      timesTables: { range: 12, specificTables: [], suppressDuplicates: true },
+      reverseTT: { range: 12 },
+      multiplication: { types: ['2dx1d', '3dx1d'] },
+      busStop: { types: ['2d1d', '3d1d'] },
+    },
+  },
+  {
+    label: 'Preset 4',
+    enabledSkills: ['multiplication', 'busStop', 'negatives', 'indices'],
+    skillCounts: { multiplication: 8, busStop: 8, negatives: 7, indices: 7 },
+    configs: {
+      multiplication: { types: ['2dx2d', '3dx1d', '3dx2d'] },
+      busStop: { types: ['3d1d', '3d2d'] },
+      negatives: { operations: ['addition', 'subtraction', 'multiplication'], range: 10 },
+      indices: { baseRange: 10, exponentRange: [2, 3] },
+    },
+  },
+  {
+    label: 'Preset 5',
+    enabledSkills: ['timesTables', 'reverseTT'],
+    skillCounts: { timesTables: 15, reverseTT: 15 },
+    configs: {
+      timesTables: { range: 12, specificTables: [], suppressDuplicates: false },
+      reverseTT: { range: 12 },
+    },
+  },
+  {
+    label: 'Preset 6',
+    enabledSkills: ['numberBonds'],
+    skillCounts: { numberBonds: 30 },
+    configs: {
+      numberBonds: { targets: [10, 20, 50, 100] },
+    },
+  },
+];
+
+
 
 export default function MathsSkillsGenerator() {
   const [enabledSkills, setEnabledSkills] = useState<SkillId[]>([]);
@@ -463,11 +543,30 @@ export default function MathsSkillsGenerator() {
     multiplication: 5, negatives: 5, busStop: 5, indices: 5,
   });
   const [configs, setConfigs] = useState<SkillConfigs>(defaultConfigs);
+  const [maxQuestions, setMaxQuestions] = useState<number>(30);
+  const [numPages, setNumPages] = useState<number>(1);
+  const [grouped, setGrouped] = useState<boolean>(false);
   const [previewQuestions, setPreviewQuestions] = useState<Question[]>([]);
   const [error, setError] = useState<string>('');
   const [expandedSkill, setExpandedSkill] = useState<SkillId | null>(null);
 
   const total = enabledSkills.reduce((sum, s) => sum + skillCounts[s], 0);
+  const overBudget = total > maxQuestions;
+
+  const applyPreset = (preset: Preset) => {
+    setEnabledSkills(preset.enabledSkills);
+    setSkillCounts(prev => ({ ...prev, ...preset.skillCounts }));
+    setConfigs(prev => {
+      const next = { ...prev };
+      for (const [k, v] of Object.entries(preset.configs)) {
+        (next as any)[k] = { ...(prev as any)[k], ...(v as any) };
+      }
+      return next;
+    });
+    setExpandedSkill(null);
+    setError('');
+    setPreviewQuestions([]);
+  };
 
   const toggleSkill = (skill: SkillId) => {
     setEnabledSkills(prev => {
@@ -476,7 +575,7 @@ export default function MathsSkillsGenerator() {
         return prev.filter(s => s !== skill);
       }
       // When enabling, auto-assign remaining budget (min 1, max 5 or remaining)
-      const budget = Math.max(1, Math.min(5, MAX_QUESTIONS - prev.reduce((s, sk) => s + skillCounts[sk], 0)));
+      const budget = Math.max(1, Math.min(5, maxQuestions - prev.reduce((s, sk) => s + skillCounts[sk], 0)));
       setSkillCounts(c => ({ ...c, [skill]: budget }));
       return [...prev, skill];
     });
@@ -487,7 +586,7 @@ export default function MathsSkillsGenerator() {
     setSkillCounts(prev => {
       const next = prev[skill] + delta;
       if (next < 1) return prev;
-      if (delta > 0 && total >= MAX_QUESTIONS) return prev;
+      if (delta > 0 && total >= maxQuestions) return prev;
       return { ...prev, [skill]: next };
     });
   };
@@ -517,7 +616,7 @@ export default function MathsSkillsGenerator() {
     for (const skill of enabledSkills) {
       allQs.push(...getPool(skill).slice(0, skillCounts[skill]));
     }
-    return shuffle(allQs);
+    return grouped ? allQs : shuffle(allQs);
   };
 
   const regenQuestion = (idx: number) => {
@@ -541,9 +640,13 @@ export default function MathsSkillsGenerator() {
 
   const handleGeneratePDF = () => {
     if (enabledSkills.length === 0) { setError('Please enable at least one skill.'); return; }
-    const qs = buildQuestions();
-    if (qs.length === 0) { setError('No questions could be generated with the current settings.'); return; }
-    handlePrint(qs);
+    const allPageQs: Question[][] = [];
+    for (let p = 0; p < numPages; p++) {
+      const qs = buildQuestions();
+      if (qs.length === 0) { setError('No questions could be generated with the current settings.'); return; }
+      allPageQs.push(qs);
+    }
+    handlePrint(allPageQs);
     setError('');
   };
 
@@ -815,7 +918,6 @@ export default function MathsSkillsGenerator() {
   // ── RENDER ───────────────────────────────────────────────────────────────
 
   const canGenerate = enabledSkills.length > 0 && total > 0;
-  const overBudget = total > MAX_QUESTIONS;
 
   return (
     <>
@@ -837,7 +939,82 @@ export default function MathsSkillsGenerator() {
           <h1 className="text-5xl font-bold text-center mb-2" style={{ color: '#000000' }}>
             {TOOL_CONFIG.pageTitle}
           </h1>
-          <p className="text-center text-gray-500 mb-8">Build a custom worksheet by selecting skills and question counts</p>
+          <p className="text-center text-gray-500 mb-6">Build a custom worksheet by selecting skills and question counts</p>
+
+          {/* Toolbar */}
+          <div className="bg-white rounded-2xl shadow-lg mb-6 px-6 py-4 flex items-center gap-4 flex-wrap justify-center">
+
+            {/* Preset */}
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">Preset</label>
+              <select
+                onChange={e => {
+                  const p = PRESETS.find(p => p.label === e.target.value);
+                  if (p) applyPreset(p);
+                  e.target.value = '';
+                }}
+                defaultValue=""
+                className="px-3 py-1.5 border-2 border-gray-200 rounded-lg text-sm font-semibold text-gray-700 bg-white focus:outline-none focus:border-blue-900 cursor-pointer"
+              >
+                <option value="" disabled>Load…</option>
+                {PRESETS.map(p => (
+                  <option key={p.label} value={p.label}>{p.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="w-px self-stretch bg-gray-200 flex-shrink-0" />
+
+            {/* Max questions */}
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">Questions</label>
+              <input
+                type="number"
+                min={5} max={30} step={5}
+                value={maxQuestions}
+                onChange={e => {
+                  const v = Math.min(30, Math.max(5, parseInt(e.target.value) || 5));
+                  setMaxQuestions(v);
+                }}
+                className="w-16 px-2 py-1.5 border-2 border-gray-200 rounded-lg text-sm font-bold text-gray-800 text-center focus:outline-none focus:border-blue-900"
+              />
+            </div>
+
+            <div className="w-px self-stretch bg-gray-200 flex-shrink-0" />
+
+            {/* Pages */}
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">Pages</label>
+              <input
+                type="number"
+                min={1} max={12} step={1}
+                value={numPages}
+                onChange={e => {
+                  const v = Math.min(12, Math.max(1, parseInt(e.target.value) || 1));
+                  setNumPages(v);
+                }}
+                className="w-16 px-2 py-1.5 border-2 border-gray-200 rounded-lg text-sm font-bold text-gray-800 text-center focus:outline-none focus:border-blue-900"
+              />
+            </div>
+
+            <div className="w-px self-stretch bg-gray-200 flex-shrink-0" />
+
+            {/* Order */}
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">Order</label>
+              <div className="flex rounded-lg overflow-hidden border-2 border-gray-200">
+                <button
+                  onClick={() => setGrouped(false)}
+                  className={`px-3 py-1.5 text-sm font-bold transition-all ${!grouped ? 'bg-blue-900 text-white' : 'bg-white text-gray-500 hover:text-blue-900'}`}
+                >Mixed</button>
+                <button
+                  onClick={() => setGrouped(true)}
+                  className={`px-3 py-1.5 text-sm font-bold transition-all border-l-2 border-gray-200 ${grouped ? 'bg-blue-900 text-white' : 'bg-white text-gray-500 hover:text-blue-900'}`}
+                >Grouped</button>
+              </div>
+            </div>
+
+          </div>
 
           {/* Skill list */}
           <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-6">
@@ -849,11 +1026,11 @@ export default function MathsSkillsGenerator() {
                 <div className="w-40 h-2.5 bg-gray-100 rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all ${overBudget ? 'bg-red-500' : 'bg-blue-900'}`}
-                    style={{ width: `${Math.min(100, (total / MAX_QUESTIONS) * 100)}%` }}
+                    style={{ width: `${Math.min(100, (total / maxQuestions) * 100)}%` }}
                   />
                 </div>
                 <span className={`text-sm font-bold tabular-nums w-16 text-right ${overBudget ? 'text-red-600' : 'text-gray-700'}`}>
-                  {total} / {MAX_QUESTIONS}
+                  {total} / {maxQuestions}
                 </span>
               </div>
             </div>
@@ -923,7 +1100,7 @@ export default function MathsSkillsGenerator() {
                             </span>
                             <button
                               onClick={() => adjustCount(skill, 1)}
-                              disabled={total >= MAX_QUESTIONS}
+                              disabled={total >= maxQuestions}
                               className="w-7 h-7 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-lg leading-none"
                             >+</button>
                           </div>
