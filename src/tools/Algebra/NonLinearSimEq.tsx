@@ -69,9 +69,9 @@ const TogglePill = ({ checked, onChange, label }: { checked: boolean; onChange: 
 // ═══════════════════════════════════════════════════════════════════════════════
 type SubTool = "linear" | "factorising" | "formula";
 type DifficultyLevel = "level1" | "level2" | "level3";
-// negMode derived from two-button multi-select: allowPos + allowNeg
 type NegMode = "pos-only" | "neg-only" | "both";
 type SurdDisplay = "surd" | "decimal" | "both";
+type AllowAMode = number;
 
 const getQuestionBg = (cs: string) => ({ blue: "#D1E7F8", pink: "#F8D1E7", yellow: "#F8F4D1" }[cs] ?? "#ffffff");
 const getStepBg    = (cs: string) => ({ blue: "#B3D9F2", pink: "#F2B3D9", yellow: "#F2EBB3" }[cs] ?? "#f3f4f6");
@@ -135,7 +135,7 @@ const pick = <T,>(arr: T[]): T => arr[randInt(0, arr.length - 1)];
 const gcd2 = (a: number, b: number): number => b === 0 ? Math.abs(a) : gcd2(b, a % b);
 const fmt2 = (n: number): string => n.toFixed(2).replace(/\.?0+$/, "");
 const fmtSoln = (n: number): string => {
-  for (let d = 1; d <= 5; d++) {
+  for (let d = 1; d <= 10; d++) {
     const num = Math.round(n * d);
     if (Math.abs(num / d - n) < 0.0001) {
       if (d === 1) return `${num}`;
@@ -146,7 +146,6 @@ const fmtSoln = (n: number): string => {
   return fmt2(n);
 };
 
-// Same-line check: are two equations a1*v1+b1*v2=c1 and a2*v1+b2*v2=c2 the same line?
 const sameLine = (a1: number, b1: number, _c1: number, a2: number, b2: number, c2: number) =>
   a1 * b2 === b1 * a2 && a1 * c2 === b1 * c2;
 
@@ -226,7 +225,6 @@ const genLinL1 = (aN: boolean, rN: boolean, aNE: boolean): LinearQuestion => {
   if (!coeffs) return genLinL1(aN,rN,aNE);
   const a=coeffs.a, b=coeffs.b, c=a*v1V+b*v2V;
   const iC=iso==="v1"?a:b, oC=iso==="v1"?b:a;
-  // Guard: same line
   const eq2a=iso==="v1"?1:-k, eq2b=iso==="v1"?-k:1;
   if (sameLine(a,b,c,eq2a,eq2b,d)) return genLinL1(aN,rN,aNE);
   const dS=d===0?"":(d>0?` + ${d}`:` - ${Math.abs(d)}`);
@@ -253,7 +251,6 @@ const genLinL2 = (aN: boolean, rN: boolean, aZ: boolean, aNE: boolean): LinearQu
     if (!coeffs) return genLinL2(aN,rN,aZ,aNE);
     const a=coeffs.a, b=coeffs.b, c=a*v1V+b*v2V;
     const iC=iso==="v1"?a:b, oC=iso==="v1"?b:a;
-    // eq2 standard form: n*oV + iV = m2  →  iso=v1: n*v2+v1=m2 i.e. (1,n,m2); iso=v2: (n,1,m2)
     const eq2a=iso==="v1"?1:n, eq2b=iso==="v1"?n:1;
     if (sameLine(a,b,c,eq2a,eq2b,m2)) return genLinL2(aN,rN,aZ,aNE);
     const isoE=`${m2} - ${n}${oV}`;
@@ -266,7 +263,6 @@ const genLinL2 = (aN: boolean, rN: boolean, aZ: boolean, aNE: boolean): LinearQu
     if (!coeffs) return genLinL2(aN,rN,aZ,aNE);
     const a=coeffs.a, b=coeffs.b, c=a*v1V+b*v2V;
     const iC=iso==="v1"?a:b, oC=iso==="v1"?b:a;
-    // eq2: iV = k*oV + d  →  iV - k*oV = d
     const eq2a=iso==="v1"?1:-k, eq2b=iso==="v1"?-k:1;
     if (sameLine(a,b,c,eq2a,eq2b,d)) return genLinL2(aN,rN,aZ,aNE);
     const pS=p===0?iV:p>0?`${iV} + ${p}`:`${iV} - ${Math.abs(p)}`;
@@ -275,7 +271,6 @@ const genLinL2 = (aN: boolean, rN: boolean, aZ: boolean, aNE: boolean): LinearQu
     return { kind:"linear",varPair:vp,a1:a,b1:b,c1:c,eq1Display:buildEqLin(a,b,c,v1,v2),eq2Display:`${n}${oV} = ${pS}`,isolatedVar:iso,isolatedExpr:isoE,rearrangedLatex:`${iV} = ${isoE}`,needsRearrange:true,afterSubLatex:aSubPos(iC,oC,k,d,oV,c),solveSteps:solvePos(iC,oC,k,d,oV,oVal,c),subBackSteps:sbPos(iV,oV,k,d,oVal,iVal),v1Val:v1V,v2Val:v2V,key:`L2rhs-${v1}${v2}-${k}-${d}-${v1V}-${v2V}-${id}`,difficulty:"level2",working:[] };
   }
 
-  // zero form
   const n=randInt(2,5), p=-(n*oVal+iVal);
   const coeffs=buildEq1Coeffs(iso,n,aNE);
   if (!coeffs) return genLinL2(aN,rN,aZ,aNE);
@@ -397,53 +392,26 @@ const buildRearrangedL2 = (isolateVar: "x"|"y", m: number, d: number): { display
   const clean=opts.filter(s=>!s.includes("+ 0")&&!s.includes("- 0")&&s!==`${mP} = ${isolateVar}`);
   return { display: pick(clean.length>0?clean:opts), rearranged };
 };
-const buildCircleLinear = (isolateVar: "x"|"y", m: number, d: number, allowRearrange: boolean): { display: string; needsRearrange: boolean; rearranged: string } => {
-  const ov=isolateVar==="y"?"x":"y";
-  const rearranged=`${isolateVar} = ${buildLinExpr(m,ov,d)}`;
-  if (!allowRearrange||Math.random()<0.5) return { display:rearranged, needsRearrange:false, rearranged };
-  const mAbs=Math.abs(m), isoStr=mAbs===1?isolateVar:`${mAbs}${isolateVar}`;
-  const opts=[`${ov} + ${isoStr} = ${d}`,`${isoStr} = ${d} - ${ov}`,`${d} = ${ov} + ${isoStr}`,...(d!==0?[`${d} - ${ov} = ${isoStr}`]:[])];
-  return { display: pick(opts), needsRearrange: true, rearranged };
-};
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// CIRCLE POINT TABLE
+// PARABOLA GENERATORS
 // ═══════════════════════════════════════════════════════════════════════════════
-const CIRCLE_POINTS: Record<number,[number,number][]> = {
-  5:  [[ 1, 2],[ 2, 1],[ 1,-2],[ 2,-1],[-1, 2],[-2, 1],[-1,-2],[-2,-1]],
-  10: [[ 1, 3],[ 3, 1],[ 1,-3],[ 3,-1],[-1, 3],[-3, 1],[-1,-3],[-3,-1]],
-  13: [[ 2, 3],[ 3, 2],[ 2,-3],[ 3,-2],[-2, 3],[-3, 2],[-2,-3],[-3,-2]],
-  17: [[ 1, 4],[ 4, 1],[ 1,-4],[ 4,-1],[-1, 4],[-4, 1],[-1,-4],[-4,-1]],
-  25: [[ 3, 4],[ 4, 3],[ 3,-4],[ 4,-3],[-3, 4],[-4, 3],[-3,-4],[-4,-3],[0,5],[5,0],[0,-5],[-5,0]],
-  29: [[ 2, 5],[ 5, 2],[ 2,-5],[ 5,-2],[-2, 5],[-5, 2],[-2,-5],[-5,-2]],
-  34: [[ 3, 5],[ 5, 3],[ 3,-5],[ 5,-3],[-3, 5],[-5, 3],[-3,-5],[-5,-3]],
-  41: [[ 4, 5],[ 5, 4],[ 4,-5],[ 5,-4],[-4, 5],[-5, 4],[-4,-5],[-5,-4]],
-  50: [[ 1, 7],[ 7, 1],[ 1,-7],[ 7,-1],[-1, 7],[-7, 1],[-1,-7],[-7,-1],[ 5, 5],[ 5,-5],[-5, 5],[-5,-5]],
-  53: [[ 2, 7],[ 7, 2],[ 2,-7],[ 7,-2],[-2, 7],[-7, 2],[-2,-7],[-7,-2]],
-  58: [[ 3, 7],[ 7, 3],[ 3,-7],[ 7,-3],[-3, 7],[-7, 3],[-3,-7],[-7,-3]],
-  65: [[ 1, 8],[ 8, 1],[ 1,-8],[ 8,-1],[-1, 8],[-8, 1],[-1,-8],[-8,-1],[ 4, 7],[ 7, 4],[ 4,-7],[ 7,-4],[-4, 7],[-7, 4],[-4,-7],[-7,-4]],
-};
-const CIRCLE_R2_FAC_KEYS=Object.keys(CIRCLE_POINTS).map(Number);
-const CIRCLE_R2_FORM=[5,10,13,17,25,26,29,34,37,41,45,50,53,58,65];
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// NON-LINEAR GENERATORS
-// ═══════════════════════════════════════════════════════════════════════════════
-const generateParabola = (subTool: "factorising"|"formula", level: DifficultyLevel, allowA: boolean, surdDisplay: SurdDisplay, allowRearrange: boolean): NonLinearQuestion => {
+const generateParabola = (subTool: "factorising"|"formula", level: DifficultyLevel, allowA: AllowAMode, surdDisplay: SurdDisplay, allowRearrange: boolean): NonLinearQuestion => {
   const id=randInt(0,1e6);
+  const useCoef = !!(allowA & 6);
   void surdDisplay; void allowRearrange;
 
   if (subTool==="factorising") {
-    const bothTwo=allowA&&Math.random()<0.15;
+    const bothTwo=useCoef&&Math.random()<0.15;
     let p: number, r: number;
     if (bothTwo) { p=2; r=2; }
-    else if (!allowA) { p=1; r=1; }
+    else if (!useCoef) { p=1; r=1; }
     else { const fF=Math.random()<0.5; p=fF?pick([2,3,4,5]):1; r=fF?1:pick([2,3,4,5]); }
     const q=randInt(-6,6), s=randInt(-6,6);
     if (!q||!s) return generateParabola(subTool,level,allowA,surdDisplay,allowRearrange);
     if (Math.abs(q*r-s*p)<0.001) return generateParabola(subTool,level,allowA,surdDisplay,allowRearrange);
     const Ar=p*r, Br=-(p*s+q*r), Cr=q*s;
-    if (!allowA&&Ar>1) return generateParabola(subTool,level,allowA,surdDisplay,allowRearrange);
+    if (!useCoef&&Ar>1) return generateParabola(subTool,level,allowA,surdDisplay,allowRearrange);
     const Bq=randInt(-5,5), Cq=randInt(-8,8);
     const m=Bq-Br, d=Cq-Cr;
     if (Math.abs(m)>10||Math.abs(d)>30||m===0) return generateParabola(subTool,level,allowA,surdDisplay,allowRearrange);
@@ -459,9 +427,8 @@ const generateParabola = (subTool: "factorising"|"formula", level: DifficultyLev
     return { kind:"nonlinear",subTool,eq1Display:quadDisplay,eq2Display,isolateVar:"y",isolatedExpr:buildLinExpr(m,"x",d),linM:m,linD:d,needsRearrange,rearrangedLatex,quadLatex:`${buildParabolaRhs(Ar,Bq,Cq)} = ${buildLinExpr(m,"x",d)}`,expandedLatex:buildExpandedEq(Ar,Br,Cr),factorisedLatex:buildFactorisedDisplay(p,q,r,s,isDoubleRoot),solutions,isDoubleRoot,A:Ar,B:Br,C:Cr,isCircle:false,level,key:`NL-fac-${level}-${Ar}-${Bq}-${Cq}-${p}-${q}-${r}-${s}-${id}`,difficulty:level,working:[] };
   }
 
-  // formula
   for (let attempt=0; attempt<200; attempt++) {
-    const A=allowA?randInt(1,5):1;
+    const A=useCoef?randInt(1,5):1;
     const Bq=randInt(-6,6), Cq=randInt(-12,12);
     const m=randInt(-5,5), d=randInt(-10,10);
     if (m===0) continue;
@@ -483,76 +450,280 @@ const generateParabola = (subTool: "factorising"|"formula", level: DifficultyLev
   return generateParabola(subTool,level,allowA,surdDisplay,allowRearrange);
 };
 
-const generateCircle = (subTool: "factorising"|"formula", allowRearrange: boolean): NonLinearQuestion => {
-  const id=randInt(0,1e6);
+// ═══════════════════════════════════════════════════════════════════════════════
+// BANK TYPES
+// ═══════════════════════════════════════════════════════════════════════════════
+interface BankEntry {
+  eq1: string; eq2: string;
+  expanded: string; factorised: string;
+  soln1: string; soln2: string;
+  A: number; B: number; C: number; r2: number;
+  isolateVar: "x"|"y"; linM: number; linD: number;
+  quadSub: string;
+  x1: number; y1: number; x2: number; y2: number;
+  coefType: "none"|"one"|"both";
+}
 
-  if (subTool==="factorising") {
-    for (let attempt=0; attempt<300; attempt++) {
-      const r2=pick(CIRCLE_R2_FAC_KEYS);
-      const pts=CIRCLE_POINTS[r2];
-      if (!pts||pts.length<2) continue;
-      const i1=randInt(0,pts.length-1);
-      let i2=randInt(0,pts.length-1);
-      if (i2===i1) i2=(i1+1)%pts.length;
-      const x1=pts[i1][0], y1=pts[i1][1], x2=pts[i2][0], y2=pts[i2][1];
-      const dy=y2-y1, dx=x2-x1;
-      if (dx===0||dy===0) continue;
-      let isolateVar: "x"|"y", m: number, d: number;
-      if (dy%dx===0) { isolateVar="y"; m=dy/dx; d=y1-m*x1; }
-      else if (dx%dy===0) { isolateVar="x"; m=dx/dy; d=x1-m*y1; }
-      else continue;
-      if (m===0) continue;
-      if (Math.abs(m)>6||Math.abs(d)>15) continue;
-      const ov=isolateVar==="y"?"x":"y";
-      const Ar=1+m*m, Br=2*m*d, Cr=d*d-r2;
-      const disc=Br*Br-4*Ar*Cr;
-      if (disc<0) continue;
-      const sqrtD=Math.sqrt(disc);
-      if (Math.abs(sqrtD-Math.round(sqrtD))>0.001) continue;
-      const t1=Math.round((-Br+sqrtD)/(2*Ar)), t2=Math.round((-Br-sqrtD)/(2*Ar));
-      const isDoubleRoot=t1===t2;
-      if (isDoubleRoot&&Math.random()<0.9) continue;
-      const s1=m*t1+d, s2=m*t2+d;
-      const solutions: SolnPair[]=isDoubleRoot?[isolateVar==="y"?{x:t1,y:s1}:{x:s1,y:t1}]:[isolateVar==="y"?{x:t1,y:s1}:{x:s1,y:t1},isolateVar==="y"?{x:t2,y:s2}:{x:s2,y:t2}];
-      const cl=buildCircleLinear(isolateVar,m,d,allowRearrange);
-      const quadLatex=`${ov}^2+(${buildLinExpr(m,ov,d)})^2=${r2}`;
-      const factorisedLatex=Ar===1?buildFactorisedDisplay(1,t1,1,t2,isDoubleRoot,ov):buildFactorisedDisplay(Ar,Ar*t1,1,t2,isDoubleRoot,ov);
-      return { kind:"nonlinear",subTool,eq1Display:`x^2+y^2=${r2}`,eq2Display:cl.display,isolateVar,isolatedExpr:buildLinExpr(m,ov,d),linM:m,linD:d,needsRearrange:cl.needsRearrange,rearrangedLatex:cl.rearranged,quadLatex,expandedLatex:buildExpandedEq(Ar,Br,Cr,ov),factorisedLatex,solutions,isDoubleRoot,A:Ar,B:Br,C:Cr,isCircle:true,r2,level:"level3",key:`NL-circ-fac-${r2}-${m}-${d}-${t1}-${t2}-${id}`,difficulty:"level3",working:[] };
-    }
-    return generateCircle(subTool,allowRearrange);
-  }
+interface FormBankEntry {
+  eq1: string; eq2: string;
+  expanded: string;
+  surdX: string;
+  surdYcombined: string;
+  soln1dec: string; soln2dec: string;
+  A: number; B: number; C: number; r2: number;
+  isolateVar: "x"|"y"; linM: number; linD: number;
+  quadSub: string;
+  x1: number; y1: number; x2: number; y2: number;
+  disc: number;
+  coefType: "none"|"one"|"both";
+}
 
-  for (let attempt=0; attempt<300; attempt++) {
-    const r2=pick(CIRCLE_R2_FORM);
-    const isolateVar: "x"|"y"=Math.random()<0.5?"x":"y";
-    const ov=isolateVar==="y"?"x":"y";
-    const m=randInt(-4,4), d=randInt(-8,8);
-    if (m===0) continue;
-    const Ar=1+m*m, Br=2*m*d, Cr=d*d-r2;
-    const disc=Br*Br-4*Ar*Cr;
-    if (disc<=0) continue;
-    if (Number.isInteger(Math.sqrt(disc))) continue;
-    const t1=(-Br+Math.sqrt(disc))/(2*Ar), t2=(-Br-Math.sqrt(disc))/(2*Ar);
-    const s1=m*t1+d, s2=m*t2+d;
-    const solutions: SolnPair[]=[isolateVar==="y"?{x:t1,y:s1}:{x:s1,y:t1},isolateVar==="y"?{x:t2,y:s2}:{x:s2,y:t2}];
-    const cl=buildCircleLinear(isolateVar,m,d,allowRearrange);
-    const quadLatex=`${ov}^2+(${buildLinExpr(m,ov,d)})^2=${r2}`;
-    const sp=buildSurdPairs(Ar,Br,disc,m,d,isolateVar);
-    return { kind:"nonlinear",subTool,eq1Display:`x^2+y^2=${r2}`,eq2Display:cl.display,isolateVar,isolatedExpr:buildLinExpr(m,ov,d),linM:m,linD:d,needsRearrange:cl.needsRearrange,rearrangedLatex:cl.rearranged,quadLatex,expandedLatex:buildExpandedEq(Ar,Br,Cr,ov),surdLatex:buildSurdDisplay(Ar,Br,disc),surdX1:sp.sx1,surdX2:sp.sx2,surdY1:sp.sy1,surdY2:sp.sy2,surdYCombined:sp.syCombined,decimalLatex:`${ov}=${fmt2(t1)} \\text{ or } ${ov}=${fmt2(t2)}`,solutions,isDoubleRoot:false,A:Ar,B:Br,C:Cr,isCircle:true,r2,level:"level3",key:`NL-circ-form-${r2}-${m}-${d}-${id}`,difficulty:"level3",working:[] };
-  }
-  return generateCircle(subTool,allowRearrange);
+// ═══════════════════════════════════════════════════════════════════════════════
+// FAC BANK — 20 none, 20 one, 20 both
+// ═══════════════════════════════════════════════════════════════════════════════
+const FAC_BANK: BankEntry[] = [
+  // ── none (circle x²+y²=r²) ─────────────────────────────────────────
+  { eq1:"x^2+y^2=25",  eq2:"y=2x-5",   expanded:"5x^2-20x=0",       factorised:"5x(x-4)=0",         soln1:"x=0,\\;y=-5",                          soln2:"x=4,\\;y=3",                          A:5,  B:-20,C:0,   r2:25,  isolateVar:"y",linM:2,  linD:-5, quadSub:"x^2+(2x-5)^2=25",           x1:0,    y1:-5,   x2:4,    y2:3,    coefType:"none" },
+  { eq1:"x^2+y^2=25",  eq2:"y=x+1",    expanded:"2x^2+2x-24=0",     factorised:"2(x+4)(x-3)=0",     soln1:"x=-4,\\;y=-3",                         soln2:"x=3,\\;y=4",                          A:2,  B:2,   C:-24,  r2:25,  isolateVar:"y",linM:1,  linD:1,  quadSub:"x^2+(x+1)^2=25",            x1:-4,   y1:-3,   x2:3,    y2:4,    coefType:"none" },
+  { eq1:"x^2+y^2=10",  eq2:"y=x+2",    expanded:"2x^2+4x-6=0",      factorised:"2(x+3)(x-1)=0",     soln1:"x=-3,\\;y=-1",                         soln2:"x=1,\\;y=3",                          A:2,  B:4,   C:-6,   r2:10,  isolateVar:"y",linM:1,  linD:2,  quadSub:"x^2+(x+2)^2=10",            x1:-3,   y1:-1,   x2:1,    y2:3,    coefType:"none" },
+  { eq1:"x^2+y^2=13",  eq2:"y=x-1",    expanded:"2x^2-2x-12=0",     factorised:"2(x-3)(x+2)=0",     soln1:"x=-2,\\;y=-3",                         soln2:"x=3,\\;y=2",                          A:2,  B:-2,  C:-12,  r2:13,  isolateVar:"y",linM:1,  linD:-1, quadSub:"x^2+(x-1)^2=13",            x1:-2,   y1:-3,   x2:3,    y2:2,    coefType:"none" },
+  { eq1:"x^2+y^2=20",  eq2:"y=2x",     expanded:"5x^2-20=0",        factorised:"5(x-2)(x+2)=0",     soln1:"x=-2,\\;y=-4",                         soln2:"x=2,\\;y=4",                          A:5,  B:0,   C:-20,  r2:20,  isolateVar:"y",linM:2,  linD:0,  quadSub:"x^2+(2x)^2=20",             x1:-2,   y1:-4,   x2:2,    y2:4,    coefType:"none" },
+  { eq1:"x^2+y^2=50",  eq2:"y=x",      expanded:"2x^2-50=0",        factorised:"2(x-5)(x+5)=0",     soln1:"x=-5,\\;y=-5",                         soln2:"x=5,\\;y=5",                          A:2,  B:0,   C:-50,  r2:50,  isolateVar:"y",linM:1,  linD:0,  quadSub:"x^2+x^2=50",                x1:-5,   y1:-5,   x2:5,    y2:5,    coefType:"none" },
+  { eq1:"x^2+y^2=25",  eq2:"y=3x+5",   expanded:"10x^2+30x=0",      factorised:"10x(x+3)=0",        soln1:"x=-3,\\;y=-4",                         soln2:"x=0,\\;y=5",                          A:10, B:30,  C:0,    r2:25,  isolateVar:"y",linM:3,  linD:5,  quadSub:"x^2+(3x+5)^2=25",           x1:-3,   y1:-4,   x2:0,    y2:5,    coefType:"none" },
+  { eq1:"x^2+y^2=34",  eq2:"y=x+2",    expanded:"2x^2+4x-30=0",     factorised:"2(x+5)(x-3)=0",     soln1:"x=-5,\\;y=-3",                         soln2:"x=3,\\;y=5",                          A:2,  B:4,   C:-30,  r2:34,  isolateVar:"y",linM:1,  linD:2,  quadSub:"x^2+(x+2)^2=34",            x1:-5,   y1:-3,   x2:3,    y2:5,    coefType:"none" },
+  { eq1:"x^2+y^2=45",  eq2:"y=2x",     expanded:"5x^2-45=0",        factorised:"5(x-3)(x+3)=0",     soln1:"x=-3,\\;y=-6",                         soln2:"x=3,\\;y=6",                          A:5,  B:0,   C:-45,  r2:45,  isolateVar:"y",linM:2,  linD:0,  quadSub:"x^2+(2x)^2=45",             x1:-3,   y1:-6,   x2:3,    y2:6,    coefType:"none" },
+  { eq1:"x^2+y^2=5",   eq2:"y=x+3",    expanded:"2x^2+6x+4=0",      factorised:"2(x+1)(x+2)=0",     soln1:"x=-2,\\;y=1",                          soln2:"x=-1,\\;y=2",                         A:2,  B:6,   C:4,    r2:5,   isolateVar:"y",linM:1,  linD:3,  quadSub:"x^2+(x+3)^2=5",             x1:-2,   y1:1,    x2:-1,   y2:2,    coefType:"none" },
+  { eq1:"x^2+y^2=13",  eq2:"y=2x+1",   expanded:"5x^2+4x-12=0",     factorised:"(5x-6)(x+2)=0",     soln1:"x=-2,\\;y=-3",                         soln2:"x=\\frac{6}{5},\\;y=\\frac{17}{5}",  A:5,  B:4,   C:-12,  r2:13,  isolateVar:"y",linM:2,  linD:1,  quadSub:"x^2+(2x+1)^2=13",           x1:-2,   y1:-3,   x2:1.2,  y2:3.4,  coefType:"none" },
+  { eq1:"x^2+y^2=17",  eq2:"y=x+3",    expanded:"2x^2+6x-8=0",      factorised:"2(x+4)(x-1)=0",     soln1:"x=-4,\\;y=-1",                         soln2:"x=1,\\;y=4",                          A:2,  B:6,   C:-8,   r2:17,  isolateVar:"y",linM:1,  linD:3,  quadSub:"x^2+(x+3)^2=17",            x1:-4,   y1:-1,   x2:1,    y2:4,    coefType:"none" },
+  { eq1:"x^2+y^2=29",  eq2:"y=x+3",    expanded:"2x^2+6x-20=0",     factorised:"2(x+5)(x-2)=0",     soln1:"x=-5,\\;y=-2",                         soln2:"x=2,\\;y=5",                          A:2,  B:6,   C:-20,  r2:29,  isolateVar:"y",linM:1,  linD:3,  quadSub:"x^2+(x+3)^2=29",            x1:-5,   y1:-2,   x2:2,    y2:5,    coefType:"none" },
+  { eq1:"x^2+y^2=26",  eq2:"y=x+2",    expanded:"2x^2+4x-22=0",     factorised:"2(x+5)(x-3)=0",     soln1:"x=-5,\\;y=-3",                         soln2:"x=3,\\;y=5",                          A:2,  B:4,   C:-22,  r2:26,  isolateVar:"y",linM:1,  linD:2,  quadSub:"x^2+(x+2)^2=26",            x1:-5,   y1:-3,   x2:3,    y2:5,    coefType:"none" },
+  { eq1:"x^2+y^2=41",  eq2:"y=x+1",    expanded:"2x^2+2x-40=0",     factorised:"2(x+5)(x-4)=0",     soln1:"x=-5,\\;y=-4",                         soln2:"x=4,\\;y=5",                          A:2,  B:2,   C:-40,  r2:41,  isolateVar:"y",linM:1,  linD:1,  quadSub:"x^2+(x+1)^2=41",            x1:-5,   y1:-4,   x2:4,    y2:5,    coefType:"none" },
+  { eq1:"x^2+y^2=52",  eq2:"y=x+2",    expanded:"2x^2+4x-48=0",     factorised:"2(x+6)(x-4)=0",     soln1:"x=-6,\\;y=-4",                         soln2:"x=4,\\;y=6",                          A:2,  B:4,   C:-48,  r2:52,  isolateVar:"y",linM:1,  linD:2,  quadSub:"x^2+(x+2)^2=52",            x1:-6,   y1:-4,   x2:4,    y2:6,    coefType:"none" },
+  { eq1:"x^2+y^2=65",  eq2:"y=x+1",    expanded:"2x^2+2x-64=0",     factorised:"2(x+6)(x-5)=0",     soln1:"x=-6,\\;y=-5",                         soln2:"x=5,\\;y=6",                          A:2,  B:2,   C:-64,  r2:65,  isolateVar:"y",linM:1,  linD:1,  quadSub:"x^2+(x+1)^2=65",            x1:-6,   y1:-5,   x2:5,    y2:6,    coefType:"none" },
+  { eq1:"x^2+y^2=5",   eq2:"y=2x-5",   expanded:"5x^2-20x+20=0",    factorised:"5(x-2)^2=0",        soln1:"x=2,\\;y=-1",                          soln2:"x=2,\\;y=-1",                         A:5,  B:-20, C:20,   r2:5,   isolateVar:"y",linM:2,  linD:-5, quadSub:"x^2+(2x-5)^2=5",            x1:2,    y1:-1,   x2:2,    y2:-1,   coefType:"none" },
+  { eq1:"x^2+y^2=10",  eq2:"y=3x-10",  expanded:"10x^2-60x+90=0",   factorised:"10(x-3)^2=0",       soln1:"x=3,\\;y=-1",                          soln2:"x=3,\\;y=-1",                         A:10, B:-60, C:90,   r2:10,  isolateVar:"y",linM:3,  linD:-10,quadSub:"x^2+(3x-10)^2=10",          x1:3,    y1:-1,   x2:3,    y2:-1,   coefType:"none" },
+  { eq1:"x^2+y^2=5",   eq2:"y=2x+3",   expanded:"5x^2+12x+4=0",     factorised:"(5x+2)(x+2)=0",     soln1:"x=-2,\\;y=-1",                         soln2:"x=-\\frac{2}{5},\\;y=\\frac{11}{5}", A:5,  B:12,  C:4,    r2:5,   isolateVar:"y",linM:2,  linD:3,  quadSub:"x^2+(2x+3)^2=5",            x1:-2,   y1:-1,   x2:-0.4, y2:2.2,  coefType:"none" },
+  // ── one (ellipse, one coef > 1) ────────────────────────────────────
+  { eq1:"4x^2+y^2=4",  eq2:"y=2x+2",   expanded:"8x^2+8x=0",        factorised:"8x(x+1)=0",         soln1:"x=-1,\\;y=0",                          soln2:"x=0,\\;y=2",                          A:8,  B:8,   C:0,    r2:4,   isolateVar:"y",linM:2,  linD:2,  quadSub:"4x^2+(2x+2)^2=4",           x1:-1,   y1:0,    x2:0,    y2:2,    coefType:"one" },
+  { eq1:"4x^2+y^2=8",  eq2:"y=2x+2",   expanded:"8x^2+8x-4=0",      factorised:"4(2x+1)(x-1)=0",    soln1:"x=-2,\\;y=-2",                         soln2:"x=\\frac{1}{4},\\;y=\\frac{5}{2}",   A:8,  B:8,   C:-4,   r2:8,   isolateVar:"y",linM:2,  linD:2,  quadSub:"4x^2+(2x+2)^2=8",           x1:-2,   y1:-2,   x2:0.25, y2:2.5,  coefType:"one" },
+  { eq1:"x^2+4y^2=4",  eq2:"x=2y+2",   expanded:"8y^2+8y=0",        factorised:"8y(y+1)=0",         soln1:"x=0,\\;y=-1",                          soln2:"x=2,\\;y=0",                          A:8,  B:8,   C:0,    r2:4,   isolateVar:"x",linM:2,  linD:2,  quadSub:"(2y+2)^2+4y^2=4",           x1:0,    y1:-1,   x2:2,    y2:0,    coefType:"one" },
+  { eq1:"x^2+2y^2=9",  eq2:"y=x-3",    expanded:"3x^2-12x+9=0",     factorised:"3(x-1)(x-3)=0",     soln1:"x=1,\\;y=-2",                          soln2:"x=3,\\;y=0",                          A:3,  B:-12, C:9,    r2:9,   isolateVar:"y",linM:1,  linD:-3, quadSub:"x^2+2(x-3)^2=9",            x1:1,    y1:-2,   x2:3,    y2:0,    coefType:"one" },
+  { eq1:"2x^2+y^2=18", eq2:"y=x+3",    expanded:"3x^2+6x-9=0",      factorised:"3(x+3)(x-1)=0",     soln1:"x=-3,\\;y=0",                          soln2:"x=1,\\;y=4",                          A:3,  B:6,   C:-9,   r2:18,  isolateVar:"y",linM:1,  linD:3,  quadSub:"2x^2+(x+3)^2=18",           x1:-3,   y1:0,    x2:1,    y2:4,    coefType:"one" },
+  { eq1:"x^2+3y^2=12", eq2:"x=3y",     expanded:"12y^2-12=0",       factorised:"12(y-1)(y+1)=0",    soln1:"x=-3,\\;y=-1",                         soln2:"x=3,\\;y=1",                          A:12, B:0,   C:-12,  r2:12,  isolateVar:"x",linM:3,  linD:0,  quadSub:"(3y)^2+3y^2=12",            x1:-3,   y1:-1,   x2:3,    y2:1,    coefType:"one" },
+  { eq1:"2x^2+y^2=9",  eq2:"y=2x-3",   expanded:"6x^2-12x=0",       factorised:"6x(x-2)=0",         soln1:"x=0,\\;y=-3",                          soln2:"x=2,\\;y=1",                          A:6,  B:-12, C:0,    r2:9,   isolateVar:"y",linM:2,  linD:-3, quadSub:"2x^2+(2x-3)^2=9",           x1:0,    y1:-3,   x2:2,    y2:1,    coefType:"one" },
+  { eq1:"x^2+2y^2=11", eq2:"y=x-2",    expanded:"3x^2-8x-3=0",      factorised:"(3x+1)(x-3)=0",     soln1:"x=-\\frac{1}{3},\\;y=-\\frac{7}{3}",   soln2:"x=3,\\;y=1",                          A:3,  B:-8,  C:-3,   r2:11,  isolateVar:"y",linM:1,  linD:-2, quadSub:"x^2+2(x-2)^2=11",           x1:-1/3, y1:-7/3, x2:3,    y2:1,    coefType:"one" },
+  { eq1:"3x^2+y^2=12", eq2:"y=x+2",    expanded:"4x^2+4x-8=0",      factorised:"4(x+2)(x-1)=0",     soln1:"x=-2,\\;y=0",                          soln2:"x=1,\\;y=3",                          A:4,  B:4,   C:-8,   r2:12,  isolateVar:"y",linM:1,  linD:2,  quadSub:"3x^2+(x+2)^2=12",           x1:-2,   y1:0,    x2:1,    y2:3,    coefType:"one" },
+  { eq1:"x^2+3y^2=7",  eq2:"x=y+2",    expanded:"4y^2+4y-3=0",      factorised:"(2y+3)(2y-1)=0",    soln1:"x=\\frac{1}{2},\\;y=-\\frac{3}{2}",    soln2:"x=\\frac{5}{2},\\;y=\\frac{1}{2}",   A:4,  B:4,   C:-3,   r2:7,   isolateVar:"x",linM:1,  linD:2,  quadSub:"(y+2)^2+3y^2=7",            x1:0.5,  y1:-1.5, x2:2.5,  y2:0.5,  coefType:"one" },
+  { eq1:"4x^2+y^2=25", eq2:"y=2x+1",   expanded:"8x^2+4x-24=0",     factorised:"4(2x+3)(x-2)=0",    soln1:"x=-\\frac{3}{2},\\;y=-2",              soln2:"x=2,\\;y=5",                          A:8,  B:4,   C:-24,  r2:25,  isolateVar:"y",linM:2,  linD:1,  quadSub:"4x^2+(2x+1)^2=25",          x1:-1.5, y1:-2,   x2:2,    y2:5,    coefType:"one" },
+  { eq1:"x^2+4y^2=25", eq2:"x=2y+1",   expanded:"8y^2+4y-24=0",     factorised:"4(2y+3)(y-2)=0",    soln1:"x=-2,\\;y=-\\frac{3}{2}",              soln2:"x=5,\\;y=2",                          A:8,  B:4,   C:-24,  r2:25,  isolateVar:"x",linM:2,  linD:1,  quadSub:"(2y+1)^2+4y^2=25",          x1:-2,   y1:-1.5, x2:5,    y2:2,    coefType:"one" },
+  { eq1:"9x^2+y^2=9",  eq2:"y=3x+3",   expanded:"18x^2+18x=0",      factorised:"18x(x+1)=0",        soln1:"x=-1,\\;y=0",                          soln2:"x=0,\\;y=3",                          A:18, B:18,  C:0,    r2:9,   isolateVar:"y",linM:3,  linD:3,  quadSub:"9x^2+(3x+3)^2=9",           x1:-1,   y1:0,    x2:0,    y2:3,    coefType:"one" },
+  { eq1:"x^2+9y^2=9",  eq2:"x=3y+3",   expanded:"18y^2+18y=0",      factorised:"18y(y+1)=0",        soln1:"x=0,\\;y=-1",                          soln2:"x=3,\\;y=0",                          A:18, B:18,  C:0,    r2:9,   isolateVar:"x",linM:3,  linD:3,  quadSub:"(3y+3)^2+9y^2=9",           x1:0,    y1:-1,   x2:3,    y2:0,    coefType:"one" },
+  { eq1:"2x^2+y^2=6",  eq2:"y=x+1",    expanded:"3x^2+2x-5=0",      factorised:"(3x+5)(x-1)=0",     soln1:"x=-\\frac{5}{3},\\;y=-\\frac{2}{3}",   soln2:"x=1,\\;y=2",                          A:3,  B:2,   C:-5,   r2:6,   isolateVar:"y",linM:1,  linD:1,  quadSub:"2x^2+(x+1)^2=6",            x1:-5/3, y1:-2/3, x2:1,    y2:2,    coefType:"one" },
+  { eq1:"x^2+2y^2=6",  eq2:"x=y+1",    expanded:"3y^2+2y-5=0",      factorised:"(3y+5)(y-1)=0",     soln1:"x=-\\frac{2}{3},\\;y=-\\frac{5}{3}",   soln2:"x=2,\\;y=1",                          A:3,  B:2,   C:-5,   r2:6,   isolateVar:"x",linM:1,  linD:1,  quadSub:"(y+1)^2+2y^2=6",            x1:-2/3, y1:-5/3, x2:2,    y2:1,    coefType:"one" },
+  { eq1:"3x^2+y^2=7",  eq2:"y=x+1",    expanded:"4x^2+2x-6=0",      factorised:"2(2x+3)(x-1)=0",    soln1:"x=-\\frac{3}{2},\\;y=-\\frac{1}{2}",   soln2:"x=1,\\;y=2",                          A:4,  B:2,   C:-6,   r2:7,   isolateVar:"y",linM:1,  linD:1,  quadSub:"3x^2+(x+1)^2=7",            x1:-1.5, y1:-0.5, x2:1,    y2:2,    coefType:"one" },
+  { eq1:"x^2+3y^2=4",  eq2:"x=y+2",    expanded:"4y^2+4y=0",        factorised:"4y(y+1)=0",         soln1:"x=1,\\;y=-1",                          soln2:"x=2,\\;y=0",                          A:4,  B:4,   C:0,    r2:4,   isolateVar:"x",linM:1,  linD:2,  quadSub:"(y+2)^2+3y^2=4",            x1:1,    y1:-1,   x2:2,    y2:0,    coefType:"one" },
+  { eq1:"5x^2+y^2=5",  eq2:"y=2x+1",   expanded:"9x^2+4x-4=0",      factorised:"(9x-4)(x+1)=0",     soln1:"x=-1,\\;y=-1",                         soln2:"x=\\frac{4}{9},\\;y=\\frac{17}{9}",  A:9,  B:4,   C:-4,   r2:5,   isolateVar:"y",linM:2,  linD:1,  quadSub:"5x^2+(2x+1)^2=5",           x1:-1,   y1:-1,   x2:4/9,  y2:17/9, coefType:"one" },
+  { eq1:"x^2+5y^2=5",  eq2:"x=2y+1",   expanded:"9y^2+4y-4=0",      factorised:"(9y-4)(y+1)=0",     soln1:"x=-1,\\;y=-1",                         soln2:"x=\\frac{17}{9},\\;y=\\frac{4}{9}",  A:9,  B:4,   C:-4,   r2:5,   isolateVar:"x",linM:2,  linD:1,  quadSub:"(2y+1)^2+5y^2=5",           x1:-1,   y1:-1,   x2:17/9, y2:4/9,  coefType:"one" },
+  { eq1:"4x^2+y^2=16", eq2:"y=x+2",    expanded:"5x^2+4x-12=0",     factorised:"(5x-6)(x+2)=0",     soln1:"x=-2,\\;y=0",                          soln2:"x=\\frac{6}{5},\\;y=\\frac{16}{5}",  A:5,  B:4,   C:-12,  r2:16,  isolateVar:"y",linM:1,  linD:2,  quadSub:"4x^2+(x+2)^2=16",           x1:-2,   y1:0,    x2:1.2,  y2:3.2,  coefType:"one" },
+  // ── both (ellipse, both coefs > 1) ─────────────────────────────────
+  { eq1:"4x^2+9y^2=36",  eq2:"y=x+3",   expanded:"13x^2+24x=0",      factorised:"x(13x+24)=0",       soln1:"x=-\\frac{24}{13},\\;y=\\frac{15}{13}",soln2:"x=0,\\;y=3",                          A:13, B:24,  C:0,    r2:36,  isolateVar:"y",linM:1,  linD:3,  quadSub:"4x^2+9(x+3)^2=36",          x1:-24/13,y1:15/13,x2:0,   y2:3,    coefType:"both" },
+  { eq1:"4x^2+9y^2=25",  eq2:"y=x-1",   expanded:"13x^2-18x-8=0",    factorised:"(13x+4)(x-2)=0",    soln1:"x=-\\frac{4}{13},\\;y=-\\frac{17}{13}",soln2:"x=2,\\;y=1",                          A:13, B:-18, C:-8,   r2:25,  isolateVar:"y",linM:1,  linD:-1, quadSub:"4x^2+9(x-1)^2=25",          x1:-4/13,y1:-17/13,x2:2,  y2:1,    coefType:"both" },
+  { eq1:"2x^2+3y^2=5",   eq2:"y=x-1",   expanded:"5x^2-6x-2=0",      factorised:"(5x+2)(x-\\frac{2}{5})=0", soln1:"x=-\\frac{2}{5},\\;y=-\\frac{7}{5}", soln2:"x=\\frac{8}{5},\\;y=\\frac{3}{5}", A:5,B:-6,C:-2,r2:5,isolateVar:"y",linM:1,linD:-1,quadSub:"2x^2+3(x-1)^2=5",x1:-2/5,y1:-7/5,x2:8/5,y2:3/5,coefType:"both" },
+  { eq1:"3x^2+2y^2=5",   eq2:"y=x+1",   expanded:"5x^2+4x-2=0",      factorised:"(5x-2)(x+1)=0",     soln1:"x=-1,\\;y=0",                          soln2:"x=\\frac{2}{5},\\;y=\\frac{7}{5}",   A:5,  B:4,   C:-2,   r2:5,   isolateVar:"y",linM:1,  linD:1,  quadSub:"3x^2+2(x+1)^2=5",           x1:-1,   y1:0,    x2:2/5,  y2:7/5,  coefType:"both" },
+  { eq1:"4x^2+9y^2=36",  eq2:"y=x-2",   expanded:"13x^2-36x=0",      factorised:"x(13x-36)=0",       soln1:"x=0,\\;y=-2",                          soln2:"x=\\frac{36}{13},\\;y=\\frac{10}{13}",A:13,B:-36,C:0,r2:36,isolateVar:"y",linM:1,linD:-2,quadSub:"4x^2+9(x-2)^2=36",x1:0,y1:-2,x2:36/13,y2:10/13,coefType:"both" },
+  { eq1:"9x^2+4y^2=36",  eq2:"y=x+3",   expanded:"13x^2+24x=0",      factorised:"x(13x+24)=0",       soln1:"x=-\\frac{24}{13},\\;y=\\frac{15}{13}",soln2:"x=0,\\;y=3",                          A:13, B:24,  C:0,    r2:36,  isolateVar:"y",linM:1,  linD:3,  quadSub:"9x^2+4(x+3)^2=36",          x1:-24/13,y1:15/13,x2:0,  y2:3,    coefType:"both" },
+  { eq1:"9x^2+4y^2=36",  eq2:"y=x-3",   expanded:"13x^2-24x=0",      factorised:"x(13x-24)=0",       soln1:"x=0,\\;y=-3",                          soln2:"x=\\frac{24}{13},\\;y=\\frac{-15}{13}",A:13,B:-24,C:0,r2:36,isolateVar:"y",linM:1,linD:-3,quadSub:"9x^2+4(x-3)^2=36",x1:0,y1:-3,x2:24/13,y2:-15/13,coefType:"both" },
+  { eq1:"4x^2+9y^2=13",  eq2:"y=x-1",   expanded:"13x^2-18x-4=0",    factorised:"(13x+2)(x-2)=0",    soln1:"x=-\\frac{2}{13},\\;y=-\\frac{15}{13}",soln2:"x=2,\\;y=1",                          A:13, B:-18, C:-4,   r2:13,  isolateVar:"y",linM:1,  linD:-1, quadSub:"4x^2+9(x-1)^2=13",          x1:-2/13,y1:-15/13,x2:2,  y2:1,    coefType:"both" },
+  { eq1:"4x^2+9y^2=13",  eq2:"y=x+1",   expanded:"13x^2+18x-4=0",    factorised:"(13x-2)(x+2)=0",    soln1:"x=-2,\\;y=-1",                         soln2:"x=\\frac{2}{13},\\;y=\\frac{15}{13}", A:13, B:18,  C:-4,   r2:13,  isolateVar:"y",linM:1,  linD:1,  quadSub:"4x^2+9(x+1)^2=13",          x1:-2,   y1:-1,   x2:2/13, y2:15/13,coefType:"both" },
+  { eq1:"9x^2+16y^2=25", eq2:"y=x-1",   expanded:"25x^2-32x-9=0",    factorised:"(25x+5)(x-\\frac{9}{5})=0",soln1:"x=-\\frac{1}{5},\\;y=-\\frac{6}{5}",soln2:"x=\\frac{9}{5},\\;y=\\frac{4}{5}",A:25,B:-32,C:-9,r2:25,isolateVar:"y",linM:1,linD:-1,quadSub:"9x^2+16(x-1)^2=25",x1:-1/5,y1:-6/5,x2:9/5,y2:4/5,coefType:"both" },
+  { eq1:"4x^2+y^2=4",    eq2:"x=y+1",   expanded:"5y^2+8y=0",        factorised:"y(5y+8)=0",         soln1:"x=1,\\;y=0",                           soln2:"x=-\\frac{3}{5},\\;y=-\\frac{8}{5}", A:5,  B:8,   C:0,    r2:4,   isolateVar:"x",linM:1,  linD:1,  quadSub:"4(y+1)^2+y^2=4",            x1:1,    y1:0,    x2:-3/5, y2:-8/5, coefType:"both" },
+  { eq1:"9x^2+4y^2=13",  eq2:"y=x+1",   expanded:"13x^2+8x-4=0",     factorised:"(13x-4)(x+1)=0",    soln1:"x=-1,\\;y=0",                          soln2:"x=\\frac{4}{13},\\;y=\\frac{17}{13}", A:13, B:8,   C:-4,   r2:13,  isolateVar:"y",linM:1,  linD:1,  quadSub:"9x^2+4(x+1)^2=13",          x1:-1,   y1:0,    x2:4/13, y2:17/13,coefType:"both" },
+  { eq1:"9x^2+4y^2=13",  eq2:"y=x-1",   expanded:"13x^2-8x-4=0",     factorised:"(13x+4)(x-1)=0",    soln1:"x=-\\frac{4}{13},\\;y=-\\frac{17}{13}",soln2:"x=1,\\;y=0",                          A:13, B:-8,  C:-4,   r2:13,  isolateVar:"y",linM:1,  linD:-1, quadSub:"9x^2+4(x-1)^2=13",          x1:-4/13,y1:-17/13,x2:1,  y2:0,    coefType:"both" },
+  { eq1:"4x^2+25y^2=29", eq2:"y=x-1",   expanded:"29x^2-50x-4=0",    factorised:"(29x+2)(x-2)=0",    soln1:"x=-\\frac{2}{29},\\;y=-\\frac{31}{29}",soln2:"x=2,\\;y=1",                          A:29, B:-50, C:-4,   r2:29,  isolateVar:"y",linM:1,  linD:-1, quadSub:"4x^2+25(x-1)^2=29",         x1:-2/29,y1:-31/29,x2:2,  y2:1,    coefType:"both" },
+  { eq1:"25x^2+4y^2=29", eq2:"y=x-1",   expanded:"29x^2-8x-4=0",     factorised:"(29x+4)(x-1)=0",    soln1:"x=-\\frac{4}{29},\\;y=-\\frac{33}{29}",soln2:"x=1,\\;y=0",                          A:29, B:-8,  C:-4,   r2:29,  isolateVar:"y",linM:1,  linD:-1, quadSub:"25x^2+4(x-1)^2=29",         x1:-4/29,y1:-33/29,x2:1,  y2:0,    coefType:"both" },
+  { eq1:"4x^2+9y^2=45",  eq2:"y=x",     expanded:"13x^2-45=0",        factorised:"(\\sqrt{13}x-\\sqrt{45})(\\sqrt{13}x+\\sqrt{45})=0",soln1:"x=-\\frac{3\\sqrt{5}}{\\sqrt{13}},\\;y=-\\frac{3\\sqrt{5}}{\\sqrt{13}}",soln2:"x=\\frac{3\\sqrt{5}}{\\sqrt{13}},\\;y=\\frac{3\\sqrt{5}}{\\sqrt{13}}",A:13,B:0,C:-45,r2:45,isolateVar:"y",linM:1,linD:0,quadSub:"4x^2+9x^2=45",x1:-Math.sqrt(45/13),y1:-Math.sqrt(45/13),x2:Math.sqrt(45/13),y2:Math.sqrt(45/13),coefType:"both" },
+  { eq1:"16x^2+9y^2=25", eq2:"y=x+1",   expanded:"25x^2+18x-16=0",   factorised:"(25x-10)(x+\\frac{8}{5})=0",soln1:"x=-\\frac{8}{5},\\;y=-\\frac{3}{5}",soln2:"x=\\frac{2}{5},\\;y=\\frac{7}{5}",A:25,B:18,C:-16,r2:25,isolateVar:"y",linM:1,linD:1,quadSub:"16x^2+9(x+1)^2=25",x1:-8/5,y1:-3/5,x2:2/5,y2:7/5,coefType:"both" },
+  { eq1:"16x^2+9y^2=25", eq2:"y=x-1",   expanded:"25x^2-18x-16=0",   factorised:"(25x+10)(x-\\frac{8}{5})=0",soln1:"x=-\\frac{2}{5},\\;y=-\\frac{7}{5}",soln2:"x=\\frac{8}{5},\\;y=\\frac{3}{5}",A:25,B:-18,C:-16,r2:25,isolateVar:"y",linM:1,linD:-1,quadSub:"16x^2+9(x-1)^2=25",x1:-2/5,y1:-7/5,x2:8/5,y2:3/5,coefType:"both" },
+  { eq1:"4x^2+9y^2=72",  eq2:"y=x+2",   expanded:"13x^2+36x-36=0",   factorised:"(13x-6)(x+6)=0",    soln1:"x=-6,\\;y=-4",                         soln2:"x=\\frac{6}{13},\\;y=\\frac{32}{13}", A:13, B:36,  C:-36,  r2:72,  isolateVar:"y",linM:1,  linD:2,  quadSub:"4x^2+9(x+2)^2=72",          x1:-6,   y1:-4,   x2:6/13, y2:32/13,coefType:"both" },
+  { eq1:"9x^2+4y^2=72",  eq2:"y=x+2",   expanded:"13x^2+16x-36=0",   factorised:"(13x-6)(x+\\frac{6}{1})=0",soln1:"x=-6,\\;y=-4",soln2:"x=\\frac{6}{13},\\;y=\\frac{32}{13}",A:13,B:16,C:-36,r2:72,isolateVar:"y",linM:1,linD:2,quadSub:"9x^2+4(x+2)^2=72",x1:-6,y1:-4,x2:6/13,y2:32/13,coefType:"both" },
+  { eq1:"4x^2+9y^2=52",  eq2:"y=x+2",   expanded:"13x^2+36x-16=0",   factorised:"(13x-4)(x+4)=0",    soln1:"x=-4,\\;y=-2",                         soln2:"x=\\frac{4}{13},\\;y=\\frac{30}{13}", A:13, B:36,  C:-16,  r2:52,  isolateVar:"y",linM:1,  linD:2,  quadSub:"4x^2+9(x+2)^2=52",          x1:-4,   y1:-2,   x2:4/13, y2:30/13,coefType:"both" },
+];
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// FORM BANK — 20 none, 20 one, 20 both
+// ═══════════════════════════════════════════════════════════════════════════════
+const FORM_BANK: FormBankEntry[] = [
+  // ── none (circle) ──────────────────────────────────────────────────
+  { eq1:"x^2+y^2=5",  eq2:"y=x+2",  expanded:"2x^2+4x-1=0",   surdX:"x=\\frac{-4\\pm\\sqrt{24}}{4}",    surdYcombined:"y=\\frac{-2\\pm\\sqrt{24}}{4}",   soln1dec:"x\\approx-2.22,\\;y\\approx-0.22",soln2dec:"x\\approx0.22,\\;y\\approx2.22",  A:2,  B:4,   C:-1,  r2:5,  isolateVar:"y",linM:1, linD:2,  quadSub:"x^2+(x+2)^2=5",   x1:(-4-Math.sqrt(24))/4,  y1:(-2-Math.sqrt(24))/4,   x2:(-4+Math.sqrt(24))/4,  y2:(-2+Math.sqrt(24))/4,   disc:24,  coefType:"none" },
+  { eq1:"x^2+y^2=7",  eq2:"y=x+1",  expanded:"2x^2+2x-6=0",   surdX:"x=\\frac{-2\\pm\\sqrt{52}}{4}",    surdYcombined:"y=\\frac{0\\pm\\sqrt{52}}{4}",    soln1dec:"x\\approx-2.30,\\;y\\approx-1.30",soln2dec:"x\\approx1.80,\\;y\\approx2.80",  A:2,  B:2,   C:-6,  r2:7,  isolateVar:"y",linM:1, linD:1,  quadSub:"x^2+(x+1)^2=7",   x1:(-2-Math.sqrt(52))/4,  y1:(0-Math.sqrt(52))/4,    x2:(-2+Math.sqrt(52))/4,  y2:(0+Math.sqrt(52))/4,    disc:52,  coefType:"none" },
+  { eq1:"x^2+y^2=6",  eq2:"y=2x+1", expanded:"5x^2+4x-5=0",   surdX:"x=\\frac{-4\\pm\\sqrt{116}}{10}",  surdYcombined:"y=\\frac{-6\\pm 2\\sqrt{116}}{10}",soln1dec:"x\\approx-1.48,\\;y\\approx-1.95",soln2dec:"x\\approx0.68,\\;y\\approx2.35",  A:5,  B:4,   C:-5,  r2:6,  isolateVar:"y",linM:2, linD:1,  quadSub:"x^2+(2x+1)^2=6",  x1:(-4-Math.sqrt(116))/10,y1:(-6-2*Math.sqrt(116))/10,x2:(-4+Math.sqrt(116))/10,y2:(-6+2*Math.sqrt(116))/10,disc:116, coefType:"none" },
+  { eq1:"x^2+y^2=11", eq2:"y=x+2",  expanded:"2x^2+4x-7=0",   surdX:"x=\\frac{-4\\pm\\sqrt{72}}{4}",    surdYcombined:"y=\\frac{-2\\pm\\sqrt{72}}{4}",   soln1dec:"x\\approx-3.12,\\;y\\approx-1.12",soln2dec:"x\\approx1.12,\\;y\\approx3.12",  A:2,  B:4,   C:-7,  r2:11, isolateVar:"y",linM:1, linD:2,  quadSub:"x^2+(x+2)^2=11",  x1:(-4-Math.sqrt(72))/4,  y1:(-2-Math.sqrt(72))/4,   x2:(-4+Math.sqrt(72))/4,  y2:(-2+Math.sqrt(72))/4,   disc:72,  coefType:"none" },
+  { eq1:"x^2+y^2=14", eq2:"y=x+1",  expanded:"2x^2+2x-13=0",  surdX:"x=\\frac{-2\\pm\\sqrt{108}}{4}",   surdYcombined:"y=\\frac{0\\pm\\sqrt{108}}{4}",   soln1dec:"x\\approx-3.10,\\;y\\approx-2.10",soln2dec:"x\\approx2.60,\\;y\\approx3.60",  A:2,  B:2,   C:-13, r2:14, isolateVar:"y",linM:1, linD:1,  quadSub:"x^2+(x+1)^2=14",  x1:(-2-Math.sqrt(108))/4, y1:(0-Math.sqrt(108))/4,   x2:(-2+Math.sqrt(108))/4, y2:(0+Math.sqrt(108))/4,   disc:108, coefType:"none" },
+  { eq1:"x^2+y^2=3",  eq2:"y=x+1",  expanded:"2x^2+2x-2=0",   surdX:"x=\\frac{-2\\pm\\sqrt{20}}{4}",    surdYcombined:"y=\\frac{0\\pm\\sqrt{20}}{4}",    soln1dec:"x\\approx-1.62,\\;y\\approx-0.62",soln2dec:"x\\approx0.62,\\;y\\approx1.62",  A:2,  B:2,   C:-2,  r2:3,  isolateVar:"y",linM:1, linD:1,  quadSub:"x^2+(x+1)^2=3",   x1:(-2-Math.sqrt(20))/4,  y1:(0-Math.sqrt(20))/4,    x2:(-2+Math.sqrt(20))/4,  y2:(0+Math.sqrt(20))/4,    disc:20,  coefType:"none" },
+  { eq1:"x^2+y^2=15", eq2:"y=2x+3", expanded:"5x^2+12x-6=0",  surdX:"x=\\frac{-12\\pm\\sqrt{264}}{10}", surdYcombined:"y=\\frac{-6\\pm 2\\sqrt{264}}{10}",soln1dec:"x\\approx-3.23,\\;y\\approx-3.47",soln2dec:"x\\approx0.37,\\;y\\approx3.74",  A:5,  B:12,  C:-6,  r2:15, isolateVar:"y",linM:2, linD:3,  quadSub:"x^2+(2x+3)^2=15", x1:(-12-Math.sqrt(264))/10,y1:(-6-2*Math.sqrt(264))/10,x2:(-12+Math.sqrt(264))/10,y2:(-6+2*Math.sqrt(264))/10,disc:264, coefType:"none" },
+  { eq1:"x^2+y^2=20", eq2:"y=x+3",  expanded:"2x^2+6x-11=0",  surdX:"x=\\frac{-6\\pm\\sqrt{124}}{4}",   surdYcombined:"y=\\frac{0\\pm\\sqrt{124}}{4}",   soln1dec:"x\\approx-4.28,\\;y\\approx-1.28",soln2dec:"x\\approx1.28,\\;y\\approx4.28",  A:2,  B:6,   C:-11, r2:20, isolateVar:"y",linM:1, linD:3,  quadSub:"x^2+(x+3)^2=20",  x1:(-6-Math.sqrt(124))/4, y1:(0-Math.sqrt(124))/4,   x2:(-6+Math.sqrt(124))/4, y2:(0+Math.sqrt(124))/4,   disc:124, coefType:"none" },
+  { eq1:"x^2+y^2=8",  eq2:"y=x+1",  expanded:"2x^2+2x-7=0",   surdX:"x=\\frac{-2\\pm\\sqrt{60}}{4}",    surdYcombined:"y=\\frac{0\\pm\\sqrt{60}}{4}",    soln1dec:"x\\approx-2.44,\\;y\\approx-1.44",soln2dec:"x\\approx1.44,\\;y\\approx2.44",  A:2,  B:2,   C:-7,  r2:8,  isolateVar:"y",linM:1, linD:1,  quadSub:"x^2+(x+1)^2=8",   x1:(-2-Math.sqrt(60))/4,  y1:(0-Math.sqrt(60))/4,    x2:(-2+Math.sqrt(60))/4,  y2:(0+Math.sqrt(60))/4,    disc:60,  coefType:"none" },
+  { eq1:"x^2+y^2=12", eq2:"y=x+2",  expanded:"2x^2+4x-8=0",   surdX:"x=\\frac{-4\\pm\\sqrt{80}}{4}",    surdYcombined:"y=\\frac{-2\\pm\\sqrt{80}}{4}",   soln1dec:"x\\approx-3.24,\\;y\\approx-1.24",soln2dec:"x\\approx1.24,\\;y\\approx3.24",  A:2,  B:4,   C:-8,  r2:12, isolateVar:"y",linM:1, linD:2,  quadSub:"x^2+(x+2)^2=12",  x1:(-4-Math.sqrt(80))/4,  y1:(-2-Math.sqrt(80))/4,   x2:(-4+Math.sqrt(80))/4,  y2:(-2+Math.sqrt(80))/4,   disc:80,  coefType:"none" },
+  { eq1:"x^2+y^2=9",  eq2:"y=2x+1", expanded:"5x^2+4x-8=0",   surdX:"x=\\frac{-4\\pm\\sqrt{176}}{10}",  surdYcombined:"y=\\frac{-6\\pm 2\\sqrt{176}}{10}",soln1dec:"x\\approx-1.73,\\;y\\approx-2.45",soln2dec:"x\\approx0.93,\\;y\\approx2.85",  A:5,  B:4,   C:-8,  r2:9,  isolateVar:"y",linM:2, linD:1,  quadSub:"x^2+(2x+1)^2=9",  x1:(-4-Math.sqrt(176))/10,y1:(-6-2*Math.sqrt(176))/10,x2:(-4+Math.sqrt(176))/10,y2:(-6+2*Math.sqrt(176))/10,disc:176, coefType:"none" },
+  { eq1:"x^2+y^2=21", eq2:"y=x+1",  expanded:"2x^2+2x-20=0",  surdX:"x=\\frac{-2\\pm\\sqrt{164}}{4}",   surdYcombined:"y=\\frac{0\\pm\\sqrt{164}}{4}",   soln1dec:"x\\approx-3.70,\\;y\\approx-2.70",soln2dec:"x\\approx2.70,\\;y\\approx3.70",  A:2,  B:2,   C:-20, r2:21, isolateVar:"y",linM:1, linD:1,  quadSub:"x^2+(x+1)^2=21",  x1:(-2-Math.sqrt(164))/4, y1:(0-Math.sqrt(164))/4,   x2:(-2+Math.sqrt(164))/4, y2:(0+Math.sqrt(164))/4,   disc:164, coefType:"none" },
+  { eq1:"x^2+y^2=19", eq2:"y=2x-1", expanded:"5x^2-4x-18=0",  surdX:"x=\\frac{4\\pm\\sqrt{376}}{10}",   surdYcombined:"y=\\frac{-6\\pm 2\\sqrt{376}}{10}",soln1dec:"x\\approx-1.74,\\;y\\approx-4.49",soln2dec:"x\\approx2.14,\\;y\\approx3.29",  A:5,  B:-4,  C:-18, r2:19, isolateVar:"y",linM:2, linD:-1, quadSub:"x^2+(2x-1)^2=19", x1:(4-Math.sqrt(376))/10, y1:(-6-2*Math.sqrt(376))/10,x2:(4+Math.sqrt(376))/10, y2:(-6+2*Math.sqrt(376))/10,disc:376, coefType:"none" },
+  { eq1:"x^2+y^2=23", eq2:"y=x+3",  expanded:"2x^2+6x-14=0",  surdX:"x=\\frac{-6\\pm\\sqrt{148}}{4}",   surdYcombined:"y=\\frac{0\\pm\\sqrt{148}}{4}",   soln1dec:"x\\approx-4.54,\\;y\\approx-1.54",soln2dec:"x\\approx1.54,\\;y\\approx4.54",  A:2,  B:6,   C:-14, r2:23, isolateVar:"y",linM:1, linD:3,  quadSub:"x^2+(x+3)^2=23",  x1:(-6-Math.sqrt(148))/4, y1:(0-Math.sqrt(148))/4,   x2:(-6+Math.sqrt(148))/4, y2:(0+Math.sqrt(148))/4,   disc:148, coefType:"none" },
+  { eq1:"x^2+y^2=16", eq2:"y=x+1",  expanded:"2x^2+2x-15=0",  surdX:"x=\\frac{-2\\pm\\sqrt{124}}{4}",   surdYcombined:"y=\\frac{0\\pm\\sqrt{124}}{4}",   soln1dec:"x\\approx-3.27,\\;y\\approx-2.27",soln2dec:"x\\approx2.27,\\;y\\approx3.27",  A:2,  B:2,   C:-15, r2:16, isolateVar:"y",linM:1, linD:1,  quadSub:"x^2+(x+1)^2=16",  x1:(-2-Math.sqrt(124))/4, y1:(0-Math.sqrt(124))/4,   x2:(-2+Math.sqrt(124))/4, y2:(0+Math.sqrt(124))/4,   disc:124, coefType:"none" },
+  { eq1:"x^2+y^2=18", eq2:"y=x+2",  expanded:"2x^2+4x-14=0",  surdX:"x=\\frac{-4\\pm\\sqrt{128}}{4}",   surdYcombined:"y=\\frac{-2\\pm\\sqrt{128}}{4}",  soln1dec:"x\\approx-3.83,\\;y\\approx-1.83",soln2dec:"x\\approx1.83,\\;y\\approx3.83",  A:2,  B:4,   C:-14, r2:18, isolateVar:"y",linM:1, linD:2,  quadSub:"x^2+(x+2)^2=18",  x1:(-4-Math.sqrt(128))/4, y1:(-2-Math.sqrt(128))/4,  x2:(-4+Math.sqrt(128))/4, y2:(-2+Math.sqrt(128))/4,  disc:128, coefType:"none" },
+  { eq1:"x^2+y^2=22", eq2:"y=x+2",  expanded:"2x^2+4x-18=0",  surdX:"x=\\frac{-4\\pm\\sqrt{160}}{4}",   surdYcombined:"y=\\frac{-2\\pm\\sqrt{160}}{4}",  soln1dec:"x\\approx-4.16,\\;y\\approx-2.16",soln2dec:"x\\approx2.16,\\;y\\approx4.16",  A:2,  B:4,   C:-18, r2:22, isolateVar:"y",linM:1, linD:2,  quadSub:"x^2+(x+2)^2=22",  x1:(-4-Math.sqrt(160))/4, y1:(-2-Math.sqrt(160))/4,  x2:(-4+Math.sqrt(160))/4, y2:(-2+Math.sqrt(160))/4,  disc:160, coefType:"none" },
+  { eq1:"x^2+y^2=24", eq2:"y=x+1",  expanded:"2x^2+2x-23=0",  surdX:"x=\\frac{-2\\pm\\sqrt{188}}{4}",   surdYcombined:"y=\\frac{0\\pm\\sqrt{188}}{4}",   soln1dec:"x\\approx-3.92,\\;y\\approx-2.92",soln2dec:"x\\approx2.92,\\;y\\approx3.92",  A:2,  B:2,   C:-23, r2:24, isolateVar:"y",linM:1, linD:1,  quadSub:"x^2+(x+1)^2=24",  x1:(-2-Math.sqrt(188))/4, y1:(0-Math.sqrt(188))/4,   x2:(-2+Math.sqrt(188))/4, y2:(0+Math.sqrt(188))/4,   disc:188, coefType:"none" },
+  { eq1:"x^2+y^2=27", eq2:"y=x+1",  expanded:"2x^2+2x-26=0",  surdX:"x=\\frac{-2\\pm\\sqrt{212}}{4}",   surdYcombined:"y=\\frac{0\\pm\\sqrt{212}}{4}",   soln1dec:"x\\approx-4.14,\\;y\\approx-3.14",soln2dec:"x\\approx3.14,\\;y\\approx4.14",  A:2,  B:2,   C:-26, r2:27, isolateVar:"y",linM:1, linD:1,  quadSub:"x^2+(x+1)^2=27",  x1:(-2-Math.sqrt(212))/4, y1:(0-Math.sqrt(212))/4,   x2:(-2+Math.sqrt(212))/4, y2:(0+Math.sqrt(212))/4,   disc:212, coefType:"none" },
+  { eq1:"x^2+y^2=31", eq2:"y=x+2",  expanded:"2x^2+4x-27=0",  surdX:"x=\\frac{-4\\pm\\sqrt{232}}{4}",   surdYcombined:"y=\\frac{-2\\pm\\sqrt{232}}{4}",  soln1dec:"x\\approx-4.81,\\;y\\approx-2.81",soln2dec:"x\\approx2.81,\\;y\\approx4.81",  A:2,  B:4,   C:-27, r2:31, isolateVar:"y",linM:1, linD:2,  quadSub:"x^2+(x+2)^2=31",  x1:(-4-Math.sqrt(232))/4, y1:(-2-Math.sqrt(232))/4,  x2:(-4+Math.sqrt(232))/4, y2:(-2+Math.sqrt(232))/4,  disc:232, coefType:"none" },
+  // ── one (ellipse, one coef) ─────────────────────────────────────────
+  { eq1:"2x^2+y^2=10", eq2:"y=x+1",  expanded:"3x^2+2x-9=0",  surdX:"x=\\frac{-2\\pm\\sqrt{112}}{6}",   surdYcombined:"y=\\frac{-1\\pm\\sqrt{112}}{6}",  soln1dec:"x\\approx-2.10,\\;y\\approx-1.10",soln2dec:"x\\approx1.43,\\;y\\approx2.43",  A:3,  B:2,   C:-9,  r2:10, isolateVar:"y",linM:1, linD:1,  quadSub:"2x^2+(x+1)^2=10", x1:(-2-Math.sqrt(112))/6, y1:(-1-Math.sqrt(112))/6,  x2:(-2+Math.sqrt(112))/6, y2:(-1+Math.sqrt(112))/6,  disc:112, coefType:"one" },
+  { eq1:"x^2+2y^2=10", eq2:"x=y+1",  expanded:"3y^2+2y-9=0",  surdX:"y=\\frac{-2\\pm\\sqrt{112}}{6}",   surdYcombined:"x=\\frac{-1\\pm\\sqrt{112}}{6}",  soln1dec:"x\\approx-1.10,\\;y\\approx-2.10",soln2dec:"x\\approx2.43,\\;y\\approx1.43",  A:3,  B:2,   C:-9,  r2:10, isolateVar:"x",linM:1, linD:1,  quadSub:"(y+1)^2+2y^2=10", x1:(-1-Math.sqrt(112))/6, y1:(-2-Math.sqrt(112))/6,  x2:(-1+Math.sqrt(112))/6, y2:(-2+Math.sqrt(112))/6,  disc:112, coefType:"one" },
+  { eq1:"3x^2+y^2=11", eq2:"y=x+2",  expanded:"4x^2+4x-7=0",  surdX:"x=\\frac{-4\\pm\\sqrt{128}}{8}",   surdYcombined:"y=\\frac{-2\\pm\\sqrt{128}}{8}",  soln1dec:"x\\approx-2.41,\\;y\\approx-0.41",soln2dec:"x\\approx0.91,\\;y\\approx2.91",  A:4,  B:4,   C:-7,  r2:11, isolateVar:"y",linM:1, linD:2,  quadSub:"3x^2+(x+2)^2=11", x1:(-4-Math.sqrt(128))/8, y1:(-2-Math.sqrt(128))/8,  x2:(-4+Math.sqrt(128))/8, y2:(-2+Math.sqrt(128))/8,  disc:128, coefType:"one" },
+  { eq1:"x^2+3y^2=11", eq2:"x=y+2",  expanded:"4y^2+4y-7=0",  surdX:"y=\\frac{-4\\pm\\sqrt{128}}{8}",   surdYcombined:"x=\\frac{-2\\pm\\sqrt{128}}{8}",  soln1dec:"x\\approx-0.41,\\;y\\approx-2.41",soln2dec:"x\\approx2.91,\\;y\\approx0.91",  A:4,  B:4,   C:-7,  r2:11, isolateVar:"x",linM:1, linD:2,  quadSub:"(y+2)^2+3y^2=11", x1:(-2-Math.sqrt(128))/8, y1:(-4-Math.sqrt(128))/8,  x2:(-2+Math.sqrt(128))/8, y2:(-4+Math.sqrt(128))/8,  disc:128, coefType:"one" },
+  { eq1:"2x^2+y^2=14", eq2:"y=x+2",  expanded:"3x^2+4x-10=0", surdX:"x=\\frac{-4\\pm\\sqrt{136}}{6}",   surdYcombined:"y=\\frac{-2\\pm\\sqrt{136}}{6}",  soln1dec:"x\\approx-2.62,\\;y\\approx-0.62",soln2dec:"x\\approx1.28,\\;y\\approx3.28",  A:3,  B:4,   C:-10, r2:14, isolateVar:"y",linM:1, linD:2,  quadSub:"2x^2+(x+2)^2=14", x1:(-4-Math.sqrt(136))/6, y1:(-2-Math.sqrt(136))/6,  x2:(-4+Math.sqrt(136))/6, y2:(-2+Math.sqrt(136))/6,  disc:136, coefType:"one" },
+  { eq1:"x^2+2y^2=14", eq2:"x=y+2",  expanded:"3y^2+4y-10=0", surdX:"y=\\frac{-4\\pm\\sqrt{136}}{6}",   surdYcombined:"x=\\frac{-2\\pm\\sqrt{136}}{6}",  soln1dec:"x\\approx-0.62,\\;y\\approx-2.62",soln2dec:"x\\approx3.28,\\;y\\approx1.28",  A:3,  B:4,   C:-10, r2:14, isolateVar:"x",linM:1, linD:2,  quadSub:"(y+2)^2+2y^2=14", x1:(-2-Math.sqrt(136))/6, y1:(-4-Math.sqrt(136))/6,  x2:(-2+Math.sqrt(136))/6, y2:(-4+Math.sqrt(136))/6,  disc:136, coefType:"one" },
+  { eq1:"4x^2+y^2=20", eq2:"y=x+1",  expanded:"5x^2+2x-19=0", surdX:"x=\\frac{-2\\pm\\sqrt{384}}{10}",  surdYcombined:"y=\\frac{-1\\pm\\sqrt{384}}{10}",  soln1dec:"x\\approx-2.16,\\;y\\approx-1.16",soln2dec:"x\\approx1.76,\\;y\\approx2.76",  A:5,  B:2,   C:-19, r2:20, isolateVar:"y",linM:1, linD:1,  quadSub:"4x^2+(x+1)^2=20", x1:(-2-Math.sqrt(384))/10,y1:(-1-Math.sqrt(384))/10,  x2:(-2+Math.sqrt(384))/10,y2:(-1+Math.sqrt(384))/10,  disc:384, coefType:"one" },
+  { eq1:"x^2+4y^2=20", eq2:"x=y+1",  expanded:"5y^2+2y-19=0", surdX:"y=\\frac{-2\\pm\\sqrt{384}}{10}",  surdYcombined:"x=\\frac{-1\\pm\\sqrt{384}}{10}",  soln1dec:"x\\approx-1.16,\\;y\\approx-2.16",soln2dec:"x\\approx2.76,\\;y\\approx1.76",  A:5,  B:2,   C:-19, r2:20, isolateVar:"x",linM:1, linD:1,  quadSub:"(y+1)^2+4y^2=20", x1:(-1-Math.sqrt(384))/10,y1:(-2-Math.sqrt(384))/10,  x2:(-1+Math.sqrt(384))/10,y2:(-2+Math.sqrt(384))/10,  disc:384, coefType:"one" },
+  { eq1:"2x^2+y^2=7",  eq2:"y=x+1",  expanded:"3x^2+2x-6=0",  surdX:"x=\\frac{-2\\pm\\sqrt{76}}{6}",    surdYcombined:"y=\\frac{-1\\pm\\sqrt{76}}{6}",   soln1dec:"x\\approx-1.79,\\;y\\approx-0.79",soln2dec:"x\\approx1.12,\\;y\\approx2.12",  A:3,  B:2,   C:-6,  r2:7,  isolateVar:"y",linM:1, linD:1,  quadSub:"2x^2+(x+1)^2=7",  x1:(-2-Math.sqrt(76))/6,  y1:(-1-Math.sqrt(76))/6,   x2:(-2+Math.sqrt(76))/6,  y2:(-1+Math.sqrt(76))/6,   disc:76,  coefType:"one" },
+  { eq1:"x^2+2y^2=7",  eq2:"x=y+1",  expanded:"3y^2+2y-6=0",  surdX:"y=\\frac{-2\\pm\\sqrt{76}}{6}",    surdYcombined:"x=\\frac{-1\\pm\\sqrt{76}}{6}",   soln1dec:"x\\approx-0.79,\\;y\\approx-1.79",soln2dec:"x\\approx2.12,\\;y\\approx1.12",  A:3,  B:2,   C:-6,  r2:7,  isolateVar:"x",linM:1, linD:1,  quadSub:"(y+1)^2+2y^2=7",  x1:(-1-Math.sqrt(76))/6,  y1:(-2-Math.sqrt(76))/6,   x2:(-1+Math.sqrt(76))/6,  y2:(-2+Math.sqrt(76))/6,   disc:76,  coefType:"one" },
+  { eq1:"3x^2+y^2=13", eq2:"y=x+1",  expanded:"4x^2+2x-12=0", surdX:"x=\\frac{-2\\pm\\sqrt{196}}{8}",   surdYcombined:"y=\\frac{-1\\pm\\sqrt{196}}{8}",  soln1dec:"x\\approx-1.88,\\;y\\approx-0.88",soln2dec:"x\\approx1.63,\\;y\\approx2.63",  A:4,  B:2,   C:-12, r2:13, isolateVar:"y",linM:1, linD:1,  quadSub:"3x^2+(x+1)^2=13", x1:(-2-Math.sqrt(196))/8, y1:(-1-Math.sqrt(196))/8,  x2:(-2+Math.sqrt(196))/8, y2:(-1+Math.sqrt(196))/8,  disc:196, coefType:"one" },
+  { eq1:"x^2+3y^2=13", eq2:"x=y+1",  expanded:"4y^2+2y-12=0", surdX:"y=\\frac{-2\\pm\\sqrt{196}}{8}",   surdYcombined:"x=\\frac{-1\\pm\\sqrt{196}}{8}",  soln1dec:"x\\approx-0.88,\\;y\\approx-1.88",soln2dec:"x\\approx2.63,\\;y\\approx1.63",  A:4,  B:2,   C:-12, r2:13, isolateVar:"x",linM:1, linD:1,  quadSub:"(y+1)^2+3y^2=13", x1:(-1-Math.sqrt(196))/8, y1:(-2-Math.sqrt(196))/8,  x2:(-1+Math.sqrt(196))/8, y2:(-2+Math.sqrt(196))/8,  disc:196, coefType:"one" },
+  { eq1:"5x^2+y^2=11", eq2:"y=x+1",  expanded:"6x^2+2x-10=0", surdX:"x=\\frac{-2\\pm\\sqrt{244}}{12}",  surdYcombined:"y=\\frac{-1\\pm\\sqrt{244}}{12}",  soln1dec:"x\\approx-1.47,\\;y\\approx-0.47",soln2dec:"x\\approx1.13,\\;y\\approx2.13",  A:6,  B:2,   C:-10, r2:11, isolateVar:"y",linM:1, linD:1,  quadSub:"5x^2+(x+1)^2=11", x1:(-2-Math.sqrt(244))/12,y1:(-1-Math.sqrt(244))/12,  x2:(-2+Math.sqrt(244))/12,y2:(-1+Math.sqrt(244))/12,  disc:244, coefType:"one" },
+  { eq1:"x^2+5y^2=11", eq2:"x=y+1",  expanded:"6y^2+2y-10=0", surdX:"y=\\frac{-2\\pm\\sqrt{244}}{12}",  surdYcombined:"x=\\frac{-1\\pm\\sqrt{244}}{12}",  soln1dec:"x\\approx-0.47,\\;y\\approx-1.47",soln2dec:"x\\approx2.13,\\;y\\approx1.13",  A:6,  B:2,   C:-10, r2:11, isolateVar:"x",linM:1, linD:1,  quadSub:"(y+1)^2+5y^2=11", x1:(-1-Math.sqrt(244))/12,y1:(-2-Math.sqrt(244))/12,  x2:(-1+Math.sqrt(244))/12,y2:(-2+Math.sqrt(244))/12,  disc:244, coefType:"one" },
+  { eq1:"2x^2+y^2=17", eq2:"y=x+2",  expanded:"3x^2+4x-13=0", surdX:"x=\\frac{-4\\pm\\sqrt{172}}{6}",   surdYcombined:"y=\\frac{-2\\pm\\sqrt{172}}{6}",  soln1dec:"x\\approx-2.86,\\;y\\approx-0.86",soln2dec:"x\\approx1.52,\\;y\\approx3.52",  A:3,  B:4,   C:-13, r2:17, isolateVar:"y",linM:1, linD:2,  quadSub:"2x^2+(x+2)^2=17", x1:(-4-Math.sqrt(172))/6, y1:(-2-Math.sqrt(172))/6,  x2:(-4+Math.sqrt(172))/6, y2:(-2+Math.sqrt(172))/6,  disc:172, coefType:"one" },
+  { eq1:"x^2+2y^2=17", eq2:"x=y+2",  expanded:"3y^2+4y-13=0", surdX:"y=\\frac{-4\\pm\\sqrt{172}}{6}",   surdYcombined:"x=\\frac{-2\\pm\\sqrt{172}}{6}",  soln1dec:"x\\approx-0.86,\\;y\\approx-2.86",soln2dec:"x\\approx3.52,\\;y\\approx1.52",  A:3,  B:4,   C:-13, r2:17, isolateVar:"x",linM:1, linD:2,  quadSub:"(y+2)^2+2y^2=17", x1:(-2-Math.sqrt(172))/6, y1:(-4-Math.sqrt(172))/6,  x2:(-2+Math.sqrt(172))/6, y2:(-4+Math.sqrt(172))/6,  disc:172, coefType:"one" },
+  { eq1:"4x^2+y^2=9",  eq2:"y=x+1",  expanded:"5x^2+2x-8=0",  surdX:"x=\\frac{-2\\pm\\sqrt{164}}{10}",  surdYcombined:"y=\\frac{-1\\pm\\sqrt{164}}{10}",  soln1dec:"x\\approx-1.48,\\;y\\approx-0.48",soln2dec:"x\\approx1.08,\\;y\\approx2.08",  A:5,  B:2,   C:-8,  r2:9,  isolateVar:"y",linM:1, linD:1,  quadSub:"4x^2+(x+1)^2=9",  x1:(-2-Math.sqrt(164))/10,y1:(-1-Math.sqrt(164))/10,  x2:(-2+Math.sqrt(164))/10,y2:(-1+Math.sqrt(164))/10,  disc:164, coefType:"one" },
+  { eq1:"x^2+4y^2=9",  eq2:"x=y+1",  expanded:"5y^2+2y-8=0",  surdX:"y=\\frac{-2\\pm\\sqrt{164}}{10}",  surdYcombined:"x=\\frac{-1\\pm\\sqrt{164}}{10}",  soln1dec:"x\\approx-0.48,\\;y\\approx-1.48",soln2dec:"x\\approx2.08,\\;y\\approx1.08",  A:5,  B:2,   C:-8,  r2:9,  isolateVar:"x",linM:1, linD:1,  quadSub:"(y+1)^2+4y^2=9",  x1:(-1-Math.sqrt(164))/10,y1:(-2-Math.sqrt(164))/10,  x2:(-1+Math.sqrt(164))/10,y2:(-2+Math.sqrt(164))/10,  disc:164, coefType:"one" },
+  { eq1:"3x^2+y^2=16", eq2:"y=x+2",  expanded:"4x^2+4x-12=0", surdX:"x=\\frac{-4\\pm\\sqrt{208}}{8}",   surdYcombined:"y=\\frac{-2\\pm\\sqrt{208}}{8}",  soln1dec:"x\\approx-2.30,\\;y\\approx-0.30",soln2dec:"x\\approx1.30,\\;y\\approx3.30",  A:4,  B:4,   C:-12, r2:16, isolateVar:"y",linM:1, linD:2,  quadSub:"3x^2+(x+2)^2=16", x1:(-4-Math.sqrt(208))/8, y1:(-2-Math.sqrt(208))/8,  x2:(-4+Math.sqrt(208))/8, y2:(-2+Math.sqrt(208))/8,  disc:208, coefType:"one" },
+  // ── both (ellipse, both coefs > 1) ─────────────────────────────────
+  { eq1:"2x^2+3y^2=13", eq2:"y=x+1",  expanded:"5x^2+6x-10=0", surdX:"x=\\frac{-6\\pm\\sqrt{236}}{10}",  surdYcombined:"y=\\frac{-4\\pm\\sqrt{236}}{10}", soln1dec:"x\\approx-2.14,\\;y\\approx-1.14",soln2dec:"x\\approx0.94,\\;y\\approx1.94",  A:5,  B:6,   C:-10, r2:13, isolateVar:"y",linM:1, linD:1,  quadSub:"2x^2+3(x+1)^2=13", x1:(-6-Math.sqrt(236))/10,y1:(-4-Math.sqrt(236))/10,  x2:(-6+Math.sqrt(236))/10,y2:(-4+Math.sqrt(236))/10,  disc:236, coefType:"both" },
+  { eq1:"3x^2+2y^2=13", eq2:"y=x+1",  expanded:"5x^2+4x-11=0", surdX:"x=\\frac{-4\\pm\\sqrt{236}}{10}",  surdYcombined:"y=\\frac{-3\\pm\\sqrt{236}}{10}", soln1dec:"x\\approx-1.94,\\;y\\approx-0.94",soln2dec:"x\\approx1.14,\\;y\\approx2.14",  A:5,  B:4,   C:-11, r2:13, isolateVar:"y",linM:1, linD:1,  quadSub:"3x^2+2(x+1)^2=13", x1:(-4-Math.sqrt(236))/10,y1:(-3-Math.sqrt(236))/10,  x2:(-4+Math.sqrt(236))/10,y2:(-3+Math.sqrt(236))/10,  disc:236, coefType:"both" },
+  { eq1:"4x^2+3y^2=7",  eq2:"y=x+1",  expanded:"7x^2+6x-4=0",  surdX:"x=\\frac{-6\\pm\\sqrt{148}}{14}",  surdYcombined:"y=\\frac{-2\\pm\\sqrt{148}}{14}", soln1dec:"x\\approx-1.29,\\;y\\approx-0.29",soln2dec:"x\\approx0.44,\\;y\\approx1.44",  A:7,  B:6,   C:-4,  r2:7,  isolateVar:"y",linM:1, linD:1,  quadSub:"4x^2+3(x+1)^2=7",  x1:(-6-Math.sqrt(148))/14,y1:(-2-Math.sqrt(148))/14,  x2:(-6+Math.sqrt(148))/14,y2:(-2+Math.sqrt(148))/14,  disc:148, coefType:"both" },
+  { eq1:"3x^2+4y^2=7",  eq2:"y=x+1",  expanded:"7x^2+8x-3=0",  surdX:"x=\\frac{-8\\pm\\sqrt{148}}{14}",  surdYcombined:"y=\\frac{-4\\pm\\sqrt{148}}{14}", soln1dec:"x\\approx-1.44,\\;y\\approx-0.44",soln2dec:"x\\approx0.29,\\;y\\approx1.29",  A:7,  B:8,   C:-3,  r2:7,  isolateVar:"y",linM:1, linD:1,  quadSub:"3x^2+4(x+1)^2=7",  x1:(-8-Math.sqrt(148))/14,y1:(-4-Math.sqrt(148))/14,  x2:(-8+Math.sqrt(148))/14,y2:(-4+Math.sqrt(148))/14,  disc:148, coefType:"both" },
+  { eq1:"2x^2+3y^2=5",  eq2:"y=x+1",  expanded:"5x^2+6x-2=0",  surdX:"x=\\frac{-6\\pm\\sqrt{76}}{10}",   surdYcombined:"y=\\frac{-4\\pm\\sqrt{76}}{10}",  soln1dec:"x\\approx-1.47,\\;y\\approx-0.47",soln2dec:"x\\approx0.27,\\;y\\approx1.27",  A:5,  B:6,   C:-2,  r2:5,  isolateVar:"y",linM:1, linD:1,  quadSub:"2x^2+3(x+1)^2=5",  x1:(-6-Math.sqrt(76))/10, y1:(-4-Math.sqrt(76))/10,  x2:(-6+Math.sqrt(76))/10, y2:(-4+Math.sqrt(76))/10,  disc:76,  coefType:"both" },
+  { eq1:"3x^2+2y^2=5",  eq2:"y=x+1",  expanded:"5x^2+4x-3=0",  surdX:"x=\\frac{-4\\pm\\sqrt{76}}{10}",   surdYcombined:"y=\\frac{-3\\pm\\sqrt{76}}{10}",  soln1dec:"x\\approx-1.27,\\;y\\approx-0.27",soln2dec:"x\\approx0.47,\\;y\\approx1.47",  A:5,  B:4,   C:-3,  r2:5,  isolateVar:"y",linM:1, linD:1,  quadSub:"3x^2+2(x+1)^2=5",  x1:(-4-Math.sqrt(76))/10, y1:(-3-Math.sqrt(76))/10,  x2:(-4+Math.sqrt(76))/10, y2:(-3+Math.sqrt(76))/10,  disc:76,  coefType:"both" },
+  { eq1:"4x^2+9y^2=13", eq2:"y=x+1",  expanded:"13x^2+18x-4=0",surdX:"x=\\frac{-18\\pm\\sqrt{532}}{26}", surdYcombined:"y=\\frac{-4\\pm\\sqrt{532}}{26}",  soln1dec:"x\\approx-1.53,\\;y\\approx-0.53",soln2dec:"x\\approx0.15,\\;y\\approx1.15",  A:13, B:18,  C:-4,  r2:13, isolateVar:"y",linM:1, linD:1,  quadSub:"4x^2+9(x+1)^2=13", x1:(-18-Math.sqrt(532))/26,y1:(-4-Math.sqrt(532))/26, x2:(-18+Math.sqrt(532))/26,y2:(-4+Math.sqrt(532))/26, disc:532, coefType:"both" },
+  { eq1:"9x^2+4y^2=13", eq2:"y=x+1",  expanded:"13x^2+8x-9=0", surdX:"x=\\frac{-8\\pm\\sqrt{532}}{26}",  surdYcombined:"y=\\frac{-4\\pm\\sqrt{532}}{26}",  soln1dec:"x\\approx-1.15,\\;y\\approx-0.15",soln2dec:"x\\approx0.53,\\;y\\approx1.53",  A:13, B:8,   C:-9,  r2:13, isolateVar:"y",linM:1, linD:1,  quadSub:"9x^2+4(x+1)^2=13", x1:(-8-Math.sqrt(532))/26, y1:(-4-Math.sqrt(532))/26, x2:(-8+Math.sqrt(532))/26, y2:(-4+Math.sqrt(532))/26, disc:532, coefType:"both" },
+  { eq1:"4x^2+9y^2=25", eq2:"y=x+1",  expanded:"13x^2+18x-16=0",surdX:"x=\\frac{-18\\pm\\sqrt{1156}}{26}",surdYcombined:"y=\\frac{-4\\pm\\sqrt{1156}}{26}",soln1dec:"x\\approx-2.00,\\;y\\approx-1.00",soln2dec:"x\\approx0.62,\\;y\\approx1.62",  A:13, B:18,  C:-16, r2:25, isolateVar:"y",linM:1, linD:1,  quadSub:"4x^2+9(x+1)^2=25", x1:(-18-Math.sqrt(1156))/26,y1:(-4-Math.sqrt(1156))/26,x2:(-18+Math.sqrt(1156))/26,y2:(-4+Math.sqrt(1156))/26,disc:1156,coefType:"both" },
+  { eq1:"9x^2+4y^2=25", eq2:"y=x+1",  expanded:"13x^2+8x-21=0",surdX:"x=\\frac{-8\\pm\\sqrt{1156}}{26}", surdYcombined:"y=\\frac{-4\\pm\\sqrt{1156}}{26}", soln1dec:"x\\approx-1.62,\\;y\\approx-0.62",soln2dec:"x\\approx1.00,\\;y\\approx2.00",  A:13, B:8,   C:-21, r2:25, isolateVar:"y",linM:1, linD:1,  quadSub:"9x^2+4(x+1)^2=25", x1:(-8-Math.sqrt(1156))/26, y1:(-4-Math.sqrt(1156))/26,x2:(-8+Math.sqrt(1156))/26, y2:(-4+Math.sqrt(1156))/26,disc:1156,coefType:"both" },
+  { eq1:"2x^2+5y^2=7",  eq2:"y=x+1",  expanded:"7x^2+10x-2=0", surdX:"x=\\frac{-10\\pm\\sqrt{156}}{14}",  surdYcombined:"y=\\frac{-4\\pm\\sqrt{156}}{14}", soln1dec:"x\\approx-1.57,\\;y\\approx-0.57",soln2dec:"x\\approx0.14,\\;y\\approx1.14",  A:7,  B:10,  C:-2,  r2:7,  isolateVar:"y",linM:1, linD:1,  quadSub:"2x^2+5(x+1)^2=7",  x1:(-10-Math.sqrt(156))/14,y1:(-4-Math.sqrt(156))/14,  x2:(-10+Math.sqrt(156))/14,y2:(-4+Math.sqrt(156))/14,  disc:156, coefType:"both" },
+  { eq1:"5x^2+2y^2=7",  eq2:"y=x+1",  expanded:"7x^2+4x-5=0",  surdX:"x=\\frac{-4\\pm\\sqrt{156}}{14}",  surdYcombined:"y=\\frac{-3\\pm\\sqrt{156}}{14}", soln1dec:"x\\approx-1.14,\\;y\\approx-0.14",soln2dec:"x\\approx0.57,\\;y\\approx1.57",  A:7,  B:4,   C:-5,  r2:7,  isolateVar:"y",linM:1, linD:1,  quadSub:"5x^2+2(x+1)^2=7",  x1:(-4-Math.sqrt(156))/14, y1:(-3-Math.sqrt(156))/14,  x2:(-4+Math.sqrt(156))/14, y2:(-3+Math.sqrt(156))/14,  disc:156, coefType:"both" },
+  { eq1:"2x^2+3y^2=11", eq2:"y=x+1",  expanded:"5x^2+6x-8=0",  surdX:"x=\\frac{-6\\pm\\sqrt{196}}{10}",  surdYcombined:"y=\\frac{-4\\pm\\sqrt{196}}{10}", soln1dec:"x\\approx-2.00,\\;y\\approx-1.00",soln2dec:"x\\approx0.80,\\;y\\approx1.80",  A:5,  B:6,   C:-8,  r2:11, isolateVar:"y",linM:1, linD:1,  quadSub:"2x^2+3(x+1)^2=11", x1:(-6-Math.sqrt(196))/10,y1:(-4-Math.sqrt(196))/10,  x2:(-6+Math.sqrt(196))/10,y2:(-4+Math.sqrt(196))/10,  disc:196, coefType:"both" },
+  { eq1:"3x^2+2y^2=11", eq2:"y=x+1",  expanded:"5x^2+4x-9=0",  surdX:"x=\\frac{-4\\pm\\sqrt{196}}{10}",  surdYcombined:"y=\\frac{-3\\pm\\sqrt{196}}{10}", soln1dec:"x\\approx-1.80,\\;y\\approx-0.80",soln2dec:"x\\approx1.00,\\;y\\approx2.00",  A:5,  B:4,   C:-9,  r2:11, isolateVar:"y",linM:1, linD:1,  quadSub:"3x^2+2(x+1)^2=11", x1:(-4-Math.sqrt(196))/10,y1:(-3-Math.sqrt(196))/10,  x2:(-4+Math.sqrt(196))/10,y2:(-3+Math.sqrt(196))/10,  disc:196, coefType:"both" },
+  { eq1:"4x^2+3y^2=19", eq2:"y=x+1",  expanded:"7x^2+6x-16=0", surdX:"x=\\frac{-6\\pm\\sqrt{484}}{14}",  surdYcombined:"y=\\frac{-2\\pm\\sqrt{484}}{14}", soln1dec:"x\\approx-2.14,\\;y\\approx-1.14",soln2dec:"x\\approx1.00,\\;y\\approx2.00",  A:7,  B:6,   C:-16, r2:19, isolateVar:"y",linM:1, linD:1,  quadSub:"4x^2+3(x+1)^2=19", x1:(-6-Math.sqrt(484))/14,y1:(-2-Math.sqrt(484))/14,  x2:(-6+Math.sqrt(484))/14,y2:(-2+Math.sqrt(484))/14,  disc:484, coefType:"both" },
+  { eq1:"3x^2+4y^2=19", eq2:"y=x+1",  expanded:"7x^2+8x-15=0", surdX:"x=\\frac{-8\\pm\\sqrt{484}}{14}",  surdYcombined:"y=\\frac{-4\\pm\\sqrt{484}}{14}", soln1dec:"x\\approx-2.14,\\;y\\approx-1.14",soln2dec:"x\\approx1.00,\\;y\\approx2.00",  A:7,  B:8,   C:-15, r2:19, isolateVar:"y",linM:1, linD:1,  quadSub:"3x^2+4(x+1)^2=19", x1:(-8-Math.sqrt(484))/14,y1:(-4-Math.sqrt(484))/14,  x2:(-8+Math.sqrt(484))/14,y2:(-4+Math.sqrt(484))/14,  disc:484, coefType:"both" },
+  { eq1:"2x^2+5y^2=14", eq2:"y=x+1",  expanded:"7x^2+10x-9=0", surdX:"x=\\frac{-10\\pm\\sqrt{352}}{14}",  surdYcombined:"y=\\frac{-4\\pm\\sqrt{352}}{14}", soln1dec:"x\\approx-2.13,\\;y\\approx-1.13",soln2dec:"x\\approx0.71,\\;y\\approx1.71",  A:7,  B:10,  C:-9,  r2:14, isolateVar:"y",linM:1, linD:1,  quadSub:"2x^2+5(x+1)^2=14", x1:(-10-Math.sqrt(352))/14,y1:(-4-Math.sqrt(352))/14,  x2:(-10+Math.sqrt(352))/14,y2:(-4+Math.sqrt(352))/14,  disc:352, coefType:"both" },
+  { eq1:"5x^2+2y^2=14", eq2:"y=x+1",  expanded:"7x^2+4x-12=0", surdX:"x=\\frac{-4\\pm\\sqrt{352}}{14}",  surdYcombined:"y=\\frac{-3\\pm\\sqrt{352}}{14}", soln1dec:"x\\approx-1.56,\\;y\\approx-0.56",soln2dec:"x\\approx1.13,\\;y\\approx2.13",  A:7,  B:4,   C:-12, r2:14, isolateVar:"y",linM:1, linD:1,  quadSub:"5x^2+2(x+1)^2=14", x1:(-4-Math.sqrt(352))/14, y1:(-3-Math.sqrt(352))/14,  x2:(-4+Math.sqrt(352))/14, y2:(-3+Math.sqrt(352))/14,  disc:352, coefType:"both" },
+  { eq1:"2x^2+3y^2=19", eq2:"y=x+1",  expanded:"5x^2+6x-16=0", surdX:"x=\\frac{-6\\pm\\sqrt{356}}{10}",  surdYcombined:"y=\\frac{-4\\pm\\sqrt{356}}{10}", soln1dec:"x\\approx-2.49,\\;y\\approx-1.49",soln2dec:"x\\approx1.29,\\;y\\approx2.29",  A:5,  B:6,   C:-16, r2:19, isolateVar:"y",linM:1, linD:1,  quadSub:"2x^2+3(x+1)^2=19", x1:(-6-Math.sqrt(356))/10,y1:(-4-Math.sqrt(356))/10,  x2:(-6+Math.sqrt(356))/10,y2:(-4+Math.sqrt(356))/10,  disc:356, coefType:"both" },
+  { eq1:"3x^2+2y^2=19", eq2:"y=x+1",  expanded:"5x^2+4x-17=0", surdX:"x=\\frac{-4\\pm\\sqrt{356}}{10}",  surdYcombined:"y=\\frac{-3\\pm\\sqrt{356}}{10}", soln1dec:"x\\approx-2.29,\\;y\\approx-1.29",soln2dec:"x\\approx1.49,\\;y\\approx2.49",  A:5,  B:4,   C:-17, r2:19, isolateVar:"y",linM:1, linD:1,  quadSub:"3x^2+2(x+1)^2=19", x1:(-4-Math.sqrt(356))/10,y1:(-3-Math.sqrt(356))/10,  x2:(-4+Math.sqrt(356))/10,y2:(-3+Math.sqrt(356))/10,  disc:356, coefType:"both" },
+];
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// BANK FILTER HELPERS
+// ═══════════════════════════════════════════════════════════════════════════════
+const coefTypesFromAllowA = (allowA: number): ("none"|"one"|"both")[] => {
+  const types: ("none"|"one"|"both")[] = [];
+  if (allowA & 1) types.push("none");
+  if (allowA & 2) types.push("one");
+  if (allowA & 4) types.push("both");
+  return types.length > 0 ? types : ["none"];
 };
 
-const generateNonLinear=(subTool: "factorising"|"formula",level: DifficultyLevel,allowA: boolean,sD: SurdDisplay,aR: boolean): NonLinearQuestion=>
-  level==="level3"?generateCircle(subTool,aR):generateParabola(subTool,level,allowA,sD,aR);
+const filteredFacPool = (allowA: number) => {
+  const allowed = coefTypesFromAllowA(allowA);
+  const pool = FAC_BANK.map((entry, idx) => ({ entry, idx })).filter(({ entry }) => allowed.includes(entry.coefType));
+  return pool.length > 0 ? pool : FAC_BANK.map((entry, idx) => ({ entry, idx }));
+};
 
-const genUniqueLinear=(level: DifficultyLevel,negMode: NegMode,aZ: boolean,aNE: boolean,used: Set<string>): LinearQuestion=>{
-  let q: LinearQuestion, a=0; do{q=generateLinear(level,negMode,aZ,aNE);a++;}while(used.has(q.key)&&a<100);
+const filteredFormPool = (allowA: number) => {
+  const allowed = coefTypesFromAllowA(allowA);
+  const pool = FORM_BANK.map((entry, idx) => ({ entry, idx })).filter(({ entry }) => allowed.includes(entry.coefType));
+  return pool.length > 0 ? pool : FORM_BANK.map((entry, idx) => ({ entry, idx }));
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// BANK → QUESTION CONVERTERS
+// ═══════════════════════════════════════════════════════════════════════════════
+const bankToFacQuestion = (e: BankEntry, idx: number): NonLinearQuestion => ({
+  kind:"nonlinear", subTool:"factorising",
+  eq1Display:e.eq1, eq2Display:e.eq2,
+  isolateVar:e.isolateVar, isolatedExpr:"",
+  linM:e.linM, linD:e.linD,
+  needsRearrange:false, rearrangedLatex:e.eq2,
+  quadLatex:e.quadSub, expandedLatex:e.expanded,
+  factorisedLatex:e.factorised,
+  surdX1:e.soln1, surdX2:e.soln2,
+  solutions:[{x:e.x1,y:e.y1},{x:e.x2,y:e.y2}],
+  isDoubleRoot:Math.abs(e.x1-e.x2)<0.001&&Math.abs(e.y1-e.y2)<0.001,
+  A:e.A, B:e.B, C:e.C, isCircle:true, r2:e.r2,
+  level:"level3", key:`bank-fac-${idx}`, difficulty:"level3", working:[]
+});
+
+const bankToFormQuestion = (e: FormBankEntry, idx: number): NonLinearQuestion => ({
+  kind:"nonlinear", subTool:"formula",
+  eq1Display:e.eq1, eq2Display:e.eq2,
+  isolateVar:e.isolateVar, isolatedExpr:"",
+  linM:e.linM, linD:e.linD,
+  needsRearrange:false, rearrangedLatex:e.eq2,
+  quadLatex:e.quadSub, expandedLatex:e.expanded,
+  surdLatex:e.surdX,
+  surdX1:e.surdX, surdX2:e.surdX,
+  surdYCombined:e.surdYcombined,
+  decimalLatex:`${e.soln1dec}\\text{ or }${e.soln2dec}`,
+  solutions:[{x:e.x1,y:e.y1},{x:e.x2,y:e.y2}],
+  isDoubleRoot:false,
+  A:e.A, B:e.B, C:e.C, isCircle:true, r2:e.r2,
+  level:"level3", key:`bank-form-${idx}`, difficulty:"level3", working:[]
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// UNIQUE GENERATORS — share a used set, draw from filtered bank
+// ═══════════════════════════════════════════════════════════════════════════════
+const pickUniqueBankFac = (allowA: number, used: Set<string>): NonLinearQuestion => {
+  const pool = filteredFacPool(allowA);
+  let avail = pool.filter(({idx}) => !used.has(`bank-fac-${idx}`));
+  if (avail.length === 0) {
+    pool.forEach(({idx}) => used.delete(`bank-fac-${idx}`));
+    avail = pool;
+  }
+  const {entry, idx} = pick(avail);
+  used.add(`bank-fac-${idx}`);
+  return bankToFacQuestion(entry, idx);
+};
+
+const pickUniqueBankForm = (allowA: number, used: Set<string>): NonLinearQuestion => {
+  const pool = filteredFormPool(allowA);
+  let avail = pool.filter(({idx}) => !used.has(`bank-form-${idx}`));
+  if (avail.length === 0) {
+    pool.forEach(({idx}) => used.delete(`bank-form-${idx}`));
+    avail = pool;
+  }
+  const {entry, idx} = pick(avail);
+  used.add(`bank-form-${idx}`);
+  return bankToFormQuestion(entry, idx);
+};
+
+const generateParabolaUnique = (subTool: "factorising"|"formula", level: DifficultyLevel, allowA: AllowAMode, sD: SurdDisplay, aR: boolean, used: Set<string>): NonLinearQuestion => {
+  let q: NonLinearQuestion, a=0;
+  do { q=generateParabola(subTool,level,allowA,sD,aR); a++; } while(used.has(q.key) && a<100);
   used.add(q.key); return q;
 };
-const genUniqueNL=(subTool: "factorising"|"formula",level: DifficultyLevel,allowA: boolean,sD: SurdDisplay,aR: boolean,used: Set<string>): NonLinearQuestion=>{
-  let q: NonLinearQuestion, a=0; do{q=generateNonLinear(subTool,level,allowA,sD,aR);a++;}while(used.has(q.key)&&a<100);
+
+const genUniqueLinear = (level: DifficultyLevel, negMode: NegMode, aZ: boolean, aNE: boolean, used: Set<string>): LinearQuestion => {
+  let q: LinearQuestion, a=0;
+  do { q=generateLinear(level,negMode,aZ,aNE); a++; } while(used.has(q.key) && a<100);
   used.add(q.key); return q;
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// QUESTION GENERATION (single question) — uses a per-session used ref
+// ═══════════════════════════════════════════════════════════════════════════════
+const generateNonLinear = (subTool: "factorising"|"formula", level: DifficultyLevel, allowA: AllowAMode, sD: SurdDisplay, aR: boolean): NonLinearQuestion => {
+  if (level==="level3") {
+    const pool = subTool==="factorising" ? filteredFacPool(allowA) : filteredFormPool(allowA);
+    const {entry, idx} = pick(pool);
+    return subTool==="factorising" ? bankToFacQuestion(entry as BankEntry, idx) : bankToFormQuestion(entry as FormBankEntry, idx);
+  }
+  return generateParabola(subTool, level, allowA, sD, aR);
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -583,6 +754,26 @@ const SolutionDisplay=({q,surdDisplay}:{q:NonLinearQuestion;surdDisplay:SurdDisp
   if (q.isDoubleRoot) {
     const s=q.solutions[0];
     return <div className="text-center"><MathRenderer latex={`x=${sf(s.x)},\\quad y=${sf(s.y)} \\;\\text{(repeated root)}`}/></div>;
+  }
+  if (q.isCircle && q.surdX1 && q.surdX2) {
+    if (q.subTool==="factorising") return (
+      <div className="flex flex-col gap-1 items-center">
+        <div><MathRenderer latex={q.surdX1}/></div>
+        {q.surdX1!==q.surdX2&&<div><MathRenderer latex={q.surdX2}/></div>}
+      </div>
+    );
+    // formula: surdX1 holds the x surd, surdYCombined holds the y surd
+    return (
+      <div className="flex flex-col gap-1 items-center">
+        {(surdDisplay==="surd"||surdDisplay==="both")&&(
+          <><div><MathRenderer latex={q.surdX1}/></div>
+          {q.surdYCombined&&<div><MathRenderer latex={q.surdYCombined}/></div>}</>
+        )}
+        {(surdDisplay==="decimal"||surdDisplay==="both")&&q.decimalLatex&&(
+          <div><MathRenderer latex={q.decimalLatex}/></div>
+        )}
+      </div>
+    );
   }
   if (q.subTool==="formula") return (
     <div className="flex flex-col gap-1 items-center">
@@ -635,45 +826,28 @@ const LinearWorkedSteps=({q,stepBg,fsz}:{q:LinearQuestion;stepBg:string;fsz:stri
 
 const NonLinearWorkedSteps=({q,stepBg,fsz,surdDisplay}:{q:NonLinearQuestion;stepBg:string;fsz:string;surdDisplay:SurdDisplay})=>{
   const subVar=q.isolateVar==="y"?"x":"y";
-  const otherVar=q.isolateVar;
-  const sf=(n: number)=>q.subTool==="factorising"?fmtSoln(n):fmt2(n);
   let n=1;
   return (
     <div className="space-y-4 mt-6">
       <Card title={`Step ${n++} — Label the equations`} stepBg={stepBg} fsz={fsz}><EqPairDisplay eqs={[q.eq1Display,q.eq2Display]} cls={fsz}/></Card>
       {q.needsRearrange&&<Card title={`Step ${n++} — Rearrange equation (2)`} stepBg={stepBg} fsz={fsz}><ML latex={q.eq2Display} label="(2)"/><ML latex={q.rearrangedLatex} label="⟹"/></Card>}
-      <Card title={`Step ${n++} — Substitute ${otherVar} = ${q.isolatedExpr} into equation (1)`} stepBg={stepBg} fsz={fsz}><ML latex={q.quadLatex}/></Card>
+      <Card title={`Step ${n++} — Substitute into equation (1)`} stepBg={stepBg} fsz={fsz}><ML latex={q.quadLatex}/></Card>
       <Card title={`Step ${n++} — Expand and rearrange to = 0`} stepBg={stepBg} fsz={fsz}><ML latex={q.expandedLatex}/></Card>
       {q.subTool==="factorising"
         ?<>
           <Card title={`Step ${n++} — Factorise`} stepBg={stepBg} fsz={fsz}><ML latex={q.factorisedLatex??""}/></Card>
-          <Card title={`Step ${n++} — Solve for ${subVar}`} stepBg={stepBg} fsz={fsz}>
-            {q.solutions.map((s,i)=>{const v=q.isolateVar==="y"?s.x:s.y;return <ML key={i} latex={`${subVar}=${sf(v)}`}/>;})}
+          <Card title={`Step ${n++} — Solve for ${subVar} and substitute back`} stepBg={stepBg} fsz={fsz}>
+            {q.surdX1&&<ML latex={q.surdX1}/>}
+            {q.surdX2&&q.surdX2!==q.surdX1&&<ML latex={q.surdX2}/>}
           </Card>
         </>
         :<Card title={`Step ${n++} — Apply the quadratic formula`} stepBg={stepBg} fsz={fsz}>
           <ML latex={`${subVar}=\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}`}/>
           <ML latex={`a=${q.A},\\;b=${q.B},\\;c=${q.C}`}/>
           {q.surdLatex&&<ML latex={q.surdLatex}/>}
+          {q.surdYCombined&&<ML latex={q.surdYCombined}/>}
         </Card>
       }
-      <Card title={`Step ${n++} — Substitute back to find ${otherVar}`} stepBg={stepBg} fsz={fsz}>
-        {q.solutions.map((s,i)=>{
-          const subVal=q.isolateVar==="y"?s.x:s.y;
-          const otherVal=q.isolateVar==="y"?s.y:s.x;
-          if (q.subTool==="formula"&&q.surdX1&&q.surdY1&&q.surdX2&&q.surdY2) {
-            return <ML key={i} latex={`${subVar}=${i===0?q.surdX1:q.surdX2}\\Rightarrow ${i===0?q.surdY1:q.surdY2}`}/>;
-          }
-          const subValStr=sf(subVal), otherValStr=sf(otherVal);
-          const intermediate=q.linM*subVal+q.linD;
-          const interStr=sf(intermediate);
-          const showMid=q.linD!==0||Math.abs(q.linM)!==1;
-          const showFinal=Math.round(intermediate*1000)!==Math.round(otherVal*1000);
-          const mxPart=q.linM===1?subValStr:q.linM===-1?(subVal<0?`-(${Math.abs(subVal)})`:`-${subValStr}`):`${q.linM}(${subValStr})`;
-          const dPart=q.linD===0?"":(q.linD>0?` + ${q.linD}`:` - ${Math.abs(q.linD)}`);
-          return <ML key={i} latex={showMid?`${subVar}=${subValStr}\\Rightarrow ${otherVar}=${mxPart}${dPart}=${showFinal?`${interStr}=${otherValStr}`:interStr}`:`${subVar}=${subValStr}\\Rightarrow ${otherVar}=${mxPart}=${otherValStr}`}/>;
-        })}
-      </Card>
       <Card title="Solution" stepBg={stepBg} fsz={fsz}><SolutionDisplay q={q} surdDisplay={surdDisplay}/></Card>
     </div>
   );
@@ -686,14 +860,8 @@ const LinearQOPopover=({level,negMode,setNegMode,allowZero,setAllowZero,allowNeg
   const {open,setOpen,ref}=usePopover();
   const allowPos = negMode==="pos-only"||negMode==="both";
   const allowNeg = negMode==="neg-only"||negMode==="both";
-  const togglePos = () => {
-    if (allowPos && !allowNeg) return; // last active
-    setNegMode(allowPos ? "neg-only" : "both");
-  };
-  const toggleNeg = () => {
-    if (allowNeg && !allowPos) return; // last active
-    setNegMode(allowNeg ? "pos-only" : "both");
-  };
+  const togglePos = () => { if (allowPos && !allowNeg) return; setNegMode(allowPos ? "neg-only" : "both"); };
+  const toggleNeg = () => { if (allowNeg && !allowPos) return; setNegMode(allowNeg ? "pos-only" : "both"); };
   return (
     <div className="relative" ref={ref}>
       <PopoverButton open={open} onClick={()=>setOpen(!open)}/>
@@ -702,14 +870,8 @@ const LinearQOPopover=({level,negMode,setNegMode,allowZero,setAllowZero,allowNeg
           <div className="flex flex-col gap-2">
             <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Solution Types</span>
             <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden">
-              <button onClick={togglePos}
-                className={`flex-1 px-3 py-2 text-sm font-bold transition-colors ${allowPos?"bg-blue-900 text-white":"bg-white text-gray-600 hover:bg-gray-50"}`}>
-                Positive Solutions
-              </button>
-              <button onClick={toggleNeg}
-                className={`flex-1 px-3 py-2 text-sm font-bold transition-colors ${allowNeg?"bg-blue-900 text-white":"bg-white text-gray-600 hover:bg-gray-50"}`}>
-                Negative Solutions
-              </button>
+              <button onClick={togglePos} className={`flex-1 px-3 py-2 text-sm font-bold transition-colors ${allowPos?"bg-blue-900 text-white":"bg-white text-gray-600 hover:bg-gray-50"}`}>Positive Solutions</button>
+              <button onClick={toggleNeg} className={`flex-1 px-3 py-2 text-sm font-bold transition-colors ${allowNeg?"bg-blue-900 text-white":"bg-white text-gray-600 hover:bg-gray-50"}`}>Negative Solutions</button>
             </div>
           </div>
           <TogglePill checked={allowNegEq1} onChange={setAllowNegEq1} label="Allow negative coefficients in Equation 1"/>
@@ -720,18 +882,12 @@ const LinearQOPopover=({level,negMode,setNegMode,allowZero,setAllowZero,allowNeg
   );
 };
 
-const NonLinearQOPopover=({subTool,level,allowA,setAllowA,surdDisplay,setSurdDisplay,allowRearrange,setAllowRearrange}:{subTool:"factorising"|"formula";level:DifficultyLevel;allowA:boolean;setAllowA:(v:boolean)=>void;surdDisplay:SurdDisplay;setSurdDisplay:(v:SurdDisplay)=>void;allowRearrange:boolean;setAllowRearrange:(v:boolean)=>void})=>{
+const NonLinearQOPopover=({subTool,level,allowA,setAllowA,surdDisplay,setSurdDisplay,allowRearrange,setAllowRearrange}:{subTool:"factorising"|"formula";level:DifficultyLevel;allowA:AllowAMode;setAllowA:(v:AllowAMode)=>void;surdDisplay:SurdDisplay;setSurdDisplay:(v:SurdDisplay)=>void;allowRearrange:boolean;setAllowRearrange:(v:boolean)=>void})=>{
   const {open,setOpen,ref}=usePopover();
   const showSurd = surdDisplay==="surd"||surdDisplay==="both";
   const showDec  = surdDisplay==="decimal"||surdDisplay==="both";
-  const toggleSurd = () => {
-    if (showSurd && !showDec) return;
-    setSurdDisplay(showSurd ? "decimal" : "both");
-  };
-  const toggleDec = () => {
-    if (showDec && !showSurd) return;
-    setSurdDisplay(showDec ? "surd" : "both");
-  };
+  const toggleSurd = () => { if (showSurd&&!showDec) return; setSurdDisplay(showSurd?"decimal":"both"); };
+  const toggleDec  = () => { if (showDec&&!showSurd) return; setSurdDisplay(showDec?"surd":"both"); };
   return (
     <div className="relative" ref={ref}>
       <PopoverButton open={open} onClick={()=>setOpen(!open)}/>
@@ -741,19 +897,29 @@ const NonLinearQOPopover=({subTool,level,allowA,setAllowA,surdDisplay,setSurdDis
             <div className="flex flex-col gap-2">
               <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Answer Display</span>
               <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden">
-                <button onClick={toggleSurd}
-                  className={`flex-1 px-3 py-2 text-sm font-bold transition-colors ${showSurd?"bg-blue-900 text-white":"bg-white text-gray-600 hover:bg-gray-50"}`}>
-                  Surd
-                </button>
-                <button onClick={toggleDec}
-                  className={`flex-1 px-3 py-2 text-sm font-bold transition-colors ${showDec?"bg-blue-900 text-white":"bg-white text-gray-600 hover:bg-gray-50"}`}>
-                  Decimal
-                </button>
+                <button onClick={toggleSurd} className={`flex-1 px-3 py-2 text-sm font-bold transition-colors ${showSurd?"bg-blue-900 text-white":"bg-white text-gray-600 hover:bg-gray-50"}`}>Surd</button>
+                <button onClick={toggleDec}  className={`flex-1 px-3 py-2 text-sm font-bold transition-colors ${showDec?"bg-blue-900 text-white":"bg-white text-gray-600 hover:bg-gray-50"}`}>Decimal</button>
               </div>
             </div>
           )}
-          <TogglePill checked={allowA} onChange={setAllowA} label="Allow coefficient on x² (up to 5)"/>
-          {level==="level3"&&<TogglePill checked={allowRearrange} onChange={setAllowRearrange} label="Allow rearranging of linear equation"/>}
+          <div className="flex flex-col gap-2">
+            <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">
+              {level==="level3" ? "Circle / Ellipse Type" : "Equation 1 Coefficients"}
+            </span>
+            <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden">
+              {([{bit:1,label:"None"},{bit:2,label:"One"},{bit:4,label:"Both"}]).map(({bit,label})=>{
+                const active=!!(allowA & bit);
+                const isLast=active && (allowA & ~bit)===0;
+                return (
+                  <button key={bit} onClick={()=>{ if(!isLast) setAllowA(((Number(allowA)^bit)||1) as AllowAMode); }}
+                    className={`flex-1 px-3 py-2 text-sm font-bold transition-colors ${active?"bg-blue-900 text-white":"bg-white text-gray-600 hover:bg-gray-50"}`}>
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+            {level==="level3"&&<p className="text-xs text-gray-400 italic">None = circle (x²+y²=r²). One/Both = ellipse.</p>}
+          </div>
         </div>
       )}
     </div>
@@ -771,13 +937,14 @@ const INFO_SECTIONS=[
     {label:"Level 3 — Red",detail:"Variable has coefficient −1. Students must manage the sign change."},
   ]},
   {title:"Non-Linear: Factorising",icon:"🟦",content:[
-    {label:"Overview",detail:"One equation is quadratic (or circle at Level 3), the other linear. Solved by factorising."},
+    {label:"Overview",detail:"One equation is quadratic (or circle/ellipse at Level 3), the other linear. Solved by factorising."},
     {label:"Level 1 — Green",detail:"Linear equation already isolated. Direct substitution."},
     {label:"Level 2 — Yellow",detail:"Linear equation needs rearranging first."},
-    {label:"Level 3 — Red",detail:"Circle x² + y² = r². Linear may be in rearranged form."},
+    {label:"Level 3 — Red",detail:"Circle or ellipse equation. Roots are rational, sometimes fractional."},
   ]},
   {title:"Non-Linear: Formula",icon:"🔢",content:[
     {label:"Overview",detail:"Same structure as Factorising but the quadratic never factorises — formula required."},
+    {label:"Level 3",detail:"Circle or ellipse with irrational roots. Answers given as surds and/or decimals."},
     {label:"Answer display",detail:"Choose surd (exact), decimal (2dp), or both."},
   ]},
   {title:"Modes",icon:"🖥️",content:[
@@ -872,14 +1039,16 @@ const handlePrint=(questions:AnyQuestion[],subTool:SubTool,difficulty:string,isD
       ?`${q.varPair[0]}=${q.v1Val},\\quad ${q.varPair[1]}=${q.v2Val}`
       :(() => {
         const nlq = q as NonLinearQuestion;
+        if (nlq.isCircle && nlq.surdX1 && nlq.surdX2) {
+          return nlq.subTool==="factorising"
+            ? `${nlq.surdX1}|SPLIT|${nlq.surdX2}`
+            : (surdDisplay==="decimal"&&nlq.decimalLatex ? nlq.decimalLatex : `${nlq.surdX1}|SPLIT|${nlq.surdYCombined??""}`);
+        }
         if (nlq.subTool==="formula") {
-          if (surdDisplay==="surd"||surdDisplay==="both") {
-            const parts: string[] = [];
-            if (nlq.surdLatex) parts.push(nlq.surdLatex);
-            if (nlq.surdYCombined) parts.push(nlq.surdYCombined);
-            if (surdDisplay==="both") nlq.solutions.forEach(s=>{ const xV=nlq.isolateVar==="y"?s.x:s.y, yV=nlq.isolateVar==="y"?s.y:s.x; parts.push(`x=${fmt2(xV)},\\quad y=${fmt2(yV)}`); });
-            return parts.join("|SPLIT|");
-          }
+          const parts: string[] = [];
+          if (surdDisplay==="surd"||surdDisplay==="both") { if (nlq.surdLatex) parts.push(nlq.surdLatex); if (nlq.surdYCombined) parts.push(nlq.surdYCombined); }
+          if (surdDisplay==="decimal"||surdDisplay==="both") nlq.solutions.forEach(s=>{ const xV=nlq.isolateVar==="y"?s.x:s.y, yV=nlq.isolateVar==="y"?s.y:s.x; parts.push(`x=${fmt2(xV)},\\quad y=${fmt2(yV)}`); });
+          return parts.join("|SPLIT|");
         }
         return nlq.solutions.map(s=>`x=${fmtSoln(s.x)},\\quad y=${fmtSoln(s.y)}`).join("|SPLIT|");
       })(),
@@ -934,9 +1103,7 @@ document.addEventListener("DOMContentLoaded",function(){
     });
     if(showAns){
       var pairs=item.answerLatex.split("|SPLIT|");
-      pairs.forEach(function(pair){
-        var a=document.createElement("div");a.className="qa";kr(a,pair);body.appendChild(a);
-      });
+      pairs.forEach(function(pair){if(pair){var a=document.createElement("div");a.className="qa";kr(a,pair);body.appendChild(a);}});
     }
     return body;
   }
@@ -1007,11 +1174,10 @@ export default function App(){
   const [subTool,setSubTool]=useState<SubTool>("linear");
   const [mode,setMode]=useState<"whiteboard"|"single"|"worksheet">("whiteboard");
   const [difficulty,setDifficulty]=useState<DifficultyLevel>("level1");
-  // QO state keyed by subTool__level so each combination is independent
   const [negModeMap,setNegModeMap]=useState<Record<string,NegMode>>({});
   const [allowZeroMap,setAllowZeroMap]=useState<Record<string,boolean>>({});
   const [allowNegEq1Map,setAllowNegEq1Map]=useState<Record<string,boolean>>({});
-  const [allowAMap,setAllowAMap]=useState<Record<string,boolean>>({});
+  const [allowAMap,setAllowAMap]=useState<Record<string,AllowAMode>>({});
   const [surdDisplayMap,setSurdDisplayMap]=useState<Record<string,SurdDisplay>>({});
   const [allowRearrangeMap,setAllowRearrangeMap]=useState<Record<string,boolean>>({});
 
@@ -1019,16 +1185,37 @@ export default function App(){
   const negMode       = negModeMap[qoKey]        ?? "pos-only";
   const allowZero     = allowZeroMap[qoKey]       ?? false;
   const allowNegEq1   = allowNegEq1Map[qoKey]     ?? false;
-  const allowA        = allowAMap[qoKey]           ?? false;
+  const allowA        = (allowAMap[qoKey] ?? 1) as AllowAMode;
   const surdDisplay   = surdDisplayMap[qoKey]      ?? "surd" as SurdDisplay;
   const allowRearrange= allowRearrangeMap[qoKey]   ?? false;
 
   const setNegMode       = (v: NegMode)     => setNegModeMap(p=>({...p,[qoKey]:v}));
   const setAllowZero     = (v: boolean)     => setAllowZeroMap(p=>({...p,[qoKey]:v}));
   const setAllowNegEq1   = (v: boolean)     => setAllowNegEq1Map(p=>({...p,[qoKey]:v}));
-  const setAllowA        = (v: boolean)     => setAllowAMap(p=>({...p,[qoKey]:v}));
   const setSurdDisplay   = (v: SurdDisplay) => setSurdDisplayMap(p=>({...p,[qoKey]:v}));
   const setAllowRearrange= (v: boolean)     => setAllowRearrangeMap(p=>({...p,[qoKey]:v}));
+
+  // Persistent used-key sets — one per subTool, reset when allowA changes
+  const usedKeysRef = useRef<Record<string, Set<string>>>({
+    factorising: new Set(), formula: new Set(), linear: new Set()
+  });
+
+  const setAllowA = (v: AllowAMode) => {
+    const n = (Number(v) || 1) as AllowAMode;
+    setAllowAMap(p=>({...p,[qoKey]: n}));
+    // Reset the used set for this subTool so new questions respect the new filter
+    if (subTool !== "linear") {
+      usedKeysRef.current[subTool] = new Set();
+      // Immediately pick a new question with the new allowA
+      if (mode !== "worksheet") {
+        const q = subTool==="factorising"
+          ? pickUniqueBankFac(n, usedKeysRef.current.factorising)
+          : pickUniqueBankForm(n, usedKeysRef.current.formula);
+        setCurrentQuestion(q); setShowWhiteboardAnswer(false); setShowAnswer(false);
+      }
+    }
+  };
+
   const [isDifferentiated,setIsDifferentiated]=useState(false);
   const [currentQuestion,setCurrentQuestion]=useState<AnyQuestion>(()=>generateLinear("level1","pos-only",false,false));
   const [showWhiteboardAnswer,setShowWhiteboardAnswer]=useState(false);
@@ -1082,30 +1269,65 @@ export default function App(){
   const isDefault=colorScheme==="default";
   const fsToolbarBg=isDefault?"#ffffff":stepBg,fsQuestionBg=isDefault?"#ffffff":qBg,fsWorkingBg=isDefault?"#f5f3f0":qBg;
 
-  const makeQ=useCallback(():AnyQuestion=>{
-    if(subTool==="linear")return generateLinear(difficulty,negMode,allowZero,allowNegEq1);
-    return generateNonLinear(subTool,difficulty,allowA,surdDisplay,allowRearrange);
-  },[subTool,difficulty,negMode,allowZero,allowNegEq1,allowA,surdDisplay,allowRearrange]);
-
-  const handleNewQuestion=useCallback(()=>{
-    setCurrentQuestion(makeQ());setShowWhiteboardAnswer(false);setShowAnswer(false);
-  },[makeQ]);
-
-  const handleGenerateWorksheet=()=>{
-    const used=new Set<string>(),qs:AnyQuestion[]=[];
-    if(isDifferentiated){
-      (["level1","level2","level3"]as DifficultyLevel[]).forEach(lv=>{
-        for(let i=0;i<numQuestions;i++)
-          qs.push(subTool==="linear"?genUniqueLinear(lv,negMode,allowZero,allowNegEq1,used):genUniqueNL(subTool,lv,allowA,surdDisplay,allowRearrange,used));
-      });
-    }else{
-      for(let i=0;i<numQuestions;i++)
-        qs.push(subTool==="linear"?genUniqueLinear(difficulty,negMode,allowZero,allowNegEq1,used):genUniqueNL(subTool,difficulty,allowA,surdDisplay,allowRearrange,used));
+  const makeNewQuestion = useCallback((overrideAllowA?: AllowAMode): AnyQuestion => {
+    const effAllowA = overrideAllowA ?? allowA;
+    if (subTool==="linear") {
+      return genUniqueLinear(difficulty, negMode, allowZero, allowNegEq1, usedKeysRef.current.linear);
     }
-    setWorksheet(qs);setShowWorksheetAnswers(false);
+    if (difficulty==="level3") {
+      return subTool==="factorising"
+        ? pickUniqueBankFac(effAllowA, usedKeysRef.current.factorising)
+        : pickUniqueBankForm(effAllowA, usedKeysRef.current.formula);
+    }
+    return generateParabolaUnique(subTool, difficulty, effAllowA, surdDisplay, allowRearrange, usedKeysRef.current[subTool]);
+  }, [subTool, difficulty, negMode, allowZero, allowNegEq1, allowA, surdDisplay, allowRearrange]);
+
+  const handleNewQuestion = useCallback((overrideAllowA?: AllowAMode) => {
+    setCurrentQuestion(makeNewQuestion(overrideAllowA));
+    setShowWhiteboardAnswer(false);
+    setShowAnswer(false);
+  }, [makeNewQuestion]);
+
+  const handleGenerateWorksheet = () => {
+    const used = new Set<string>();
+    const qs: AnyQuestion[] = [];
+    if (isDifferentiated) {
+      (["level1","level2","level3"] as DifficultyLevel[]).forEach(lv => {
+        for (let i=0; i<numQuestions; i++) {
+          if (subTool==="linear") {
+            qs.push(genUniqueLinear(lv, negMode, allowZero, allowNegEq1, used));
+          } else if (lv==="level3") {
+            qs.push(subTool==="factorising"
+              ? pickUniqueBankFac(allowA, used)
+              : pickUniqueBankForm(allowA, used));
+          } else {
+            qs.push(generateParabolaUnique(subTool, lv, allowA, surdDisplay, allowRearrange, used));
+          }
+        }
+      });
+    } else {
+      for (let i=0; i<numQuestions; i++) {
+        if (subTool==="linear") {
+          qs.push(genUniqueLinear(difficulty, negMode, allowZero, allowNegEq1, used));
+        } else if (difficulty==="level3") {
+          qs.push(subTool==="factorising"
+            ? pickUniqueBankFac(allowA, used)
+            : pickUniqueBankForm(allowA, used));
+        } else {
+          qs.push(generateParabolaUnique(subTool, difficulty, allowA, surdDisplay, allowRearrange, used));
+        }
+      }
+    }
+    setWorksheet(qs);
+    setShowWorksheetAnswers(false);
   };
 
-  useEffect(()=>{if(mode!=="worksheet")handleNewQuestion();},[difficulty,subTool]);
+  useEffect(()=>{
+    if(mode!=="worksheet"){
+      usedKeysRef.current = { factorising: new Set(), formula: new Set(), linear: new Set() };
+      handleNewQuestion();
+    }
+  },[difficulty,subTool]);
 
   const displayFontSizes=["text-xl","text-2xl","text-3xl","text-4xl","text-5xl","text-6xl"];
   const fontSizes=["text-base","text-lg","text-xl","text-2xl","text-3xl"];
@@ -1152,7 +1374,19 @@ export default function App(){
           {showWorksheetAnswers&&<div className={`${fsz} font-semibold mt-1 text-center`} style={{color:"#059669"}}>
             {q.kind==="linear"
               ?<MathRenderer latex={`${q.varPair[0]}=${q.v1Val},\\quad ${q.varPair[1]}=${q.v2Val}`}/>
-              :(q as NonLinearQuestion).solutions.map((s,i)=><div key={i}><MathRenderer latex={`x=${fmtSoln(s.x)},\\;y=${fmtSoln(s.y)}`}/></div>)
+              :(()=>{
+                const nlq=q as NonLinearQuestion;
+                if(nlq.isCircle&&nlq.subTool==="formula"&&nlq.surdX1) return (
+                  <><MathRenderer latex={nlq.surdX1}/>{nlq.surdYCombined&&<><br/><MathRenderer latex={nlq.surdYCombined}/></>}</>
+                );
+                if(nlq.isCircle&&nlq.surdX1) return (
+                  <><MathRenderer latex={nlq.surdX1}/>{nlq.surdX2&&nlq.surdX2!==nlq.surdX1&&<><br/><MathRenderer latex={nlq.surdX2}/></>}</>
+                );
+                if(nlq.subTool==="formula") return (
+                  <>{nlq.surdLatex&&<div><MathRenderer latex={nlq.surdLatex}/></div>}{nlq.surdYCombined&&<div><MathRenderer latex={nlq.surdYCombined}/></div>}</>
+                );
+                return <>{nlq.solutions.map((s,i)=><div key={i}><MathRenderer latex={`x=${fmtSoln(s.x)},\\;y=${fmtSoln(s.y)}`}/></div>)}</>;
+              })()
             }
           </div>}
         </div>
@@ -1179,7 +1413,7 @@ export default function App(){
           {renderQOPopover()}
           <div className="flex items-center gap-3">
             <label className="text-base font-semibold text-gray-700">Questions:</label>
-            <input type="number" min="1" max="24" value={numQuestions} onChange={e=>setNumQuestions(Math.max(1,Math.min(24,parseInt(e.target.value)||12)))} className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-base font-semibold text-center"/>
+            <input type="number" min="1" max="20" value={numQuestions} onChange={e=>setNumQuestions(Math.max(1,Math.min(20,parseInt(e.target.value)||12)))} className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-base font-semibold text-center"/>
           </div>
           <div className="flex items-center gap-3">
             <label className="text-base font-semibold text-gray-700">Columns:</label>
@@ -1202,7 +1436,7 @@ export default function App(){
           <DifficultyToggle value={difficulty} onChange={v=>setDifficulty(v as DifficultyLevel)}/>
           {renderQOPopover()}
           <div className="flex gap-3">
-            <button onClick={handleNewQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18}/> New Question</button>
+            <button onClick={()=>handleNewQuestion()} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18}/> New Question</button>
             <button onClick={()=>mode==="whiteboard"?setShowWhiteboardAnswer(a=>!a):setShowAnswer(a=>!a)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
               <Eye size={18}/> {(mode==="whiteboard"?showWhiteboardAnswer:showAnswer)?"Hide Answer":"Show Answer"}
             </button>
@@ -1218,7 +1452,7 @@ export default function App(){
         <DifficultyToggle value={difficulty} onChange={v=>setDifficulty(v as DifficultyLevel)}/>
         {renderQOPopover()}
         <div style={{display:"flex",gap:12}}>
-          <button onClick={handleNewQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18}/> New Question</button>
+          <button onClick={()=>handleNewQuestion()} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18}/> New Question</button>
           <button onClick={()=>setShowWhiteboardAnswer(a=>!a)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><Eye size={18}/> {showWhiteboardAnswer?"Hide Answer":"Show Answer"}</button>
         </div>
       </div>
@@ -1267,8 +1501,7 @@ export default function App(){
         {fsToolbar}
         <div ref={splitContainerRef} style={{flex:1,display:"flex",minHeight:0}}>
           {questionBox(true)}
-          <div
-            style={{position:"relative",width:2,backgroundColor:"#000",flexShrink:0,cursor:"col-resize"}}
+          <div style={{position:"relative",width:2,backgroundColor:"#000",flexShrink:0,cursor:"col-resize"}}
             onMouseDown={e=>{
               isDraggingRef.current=true;
               const onMove=(ev: MouseEvent)=>{
@@ -1283,8 +1516,7 @@ export default function App(){
               document.addEventListener("mousemove",onMove);
               document.addEventListener("mouseup",onUp);
               e.preventDefault();
-            }}
-          >
+            }}>
             <div style={{position:"absolute",top:0,bottom:0,left:-5,width:12,cursor:"col-resize"}}/>
           </div>
           {rightPanel(true)}
