@@ -702,9 +702,9 @@ const pickUniqueBankForm = (allowA: number, used: Set<string>): NonLinearQuestio
   return bankToFormQuestion(entry, idx);
 };
 
-const generateParabolaUnique = (subTool: "factorising"|"formula", level: DifficultyLevel, allowA: AllowAMode, sD: SurdDisplay, aR: boolean, used: Set<string>): NonLinearQuestion => {
+const generateParabolaUnique = (subTool: "factorising"|"formula", level: DifficultyLevel, allowA: AllowAMode, sD: SurdDisplay, used: Set<string>): NonLinearQuestion => {
   let q: NonLinearQuestion, a=0;
-  do { q=generateParabola(subTool,level,allowA,sD,aR); a++; } while(used.has(q.key) && a<100);
+  do { q=generateParabola(subTool,level,allowA,sD,false); a++; } while(used.has(q.key) && a<100);
   used.add(q.key); return q;
 };
 
@@ -714,17 +714,7 @@ const genUniqueLinear = (level: DifficultyLevel, negMode: NegMode, aZ: boolean, 
   used.add(q.key); return q;
 };
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// QUESTION GENERATION (single question) — uses a per-session used ref
-// ═══════════════════════════════════════════════════════════════════════════════
-const generateNonLinear = (subTool: "factorising"|"formula", level: DifficultyLevel, allowA: AllowAMode, sD: SurdDisplay, aR: boolean): NonLinearQuestion => {
-  if (level==="level3") {
-    const pool = subTool==="factorising" ? filteredFacPool(allowA) : filteredFormPool(allowA);
-    const {entry, idx} = pick(pool);
-    return subTool==="factorising" ? bankToFacQuestion(entry as BankEntry, idx) : bankToFormQuestion(entry as FormBankEntry, idx);
-  }
-  return generateParabola(subTool, level, allowA, sD, aR);
-};
+
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // UI COMPONENTS
@@ -882,7 +872,7 @@ const LinearQOPopover=({level,negMode,setNegMode,allowZero,setAllowZero,allowNeg
   );
 };
 
-const NonLinearQOPopover=({subTool,level,allowA,setAllowA,surdDisplay,setSurdDisplay,allowRearrange,setAllowRearrange}:{subTool:"factorising"|"formula";level:DifficultyLevel;allowA:AllowAMode;setAllowA:(v:AllowAMode)=>void;surdDisplay:SurdDisplay;setSurdDisplay:(v:SurdDisplay)=>void;allowRearrange:boolean;setAllowRearrange:(v:boolean)=>void})=>{
+const NonLinearQOPopover=({subTool,level,allowA,setAllowA,surdDisplay,setSurdDisplay}:{subTool:"factorising"|"formula";level:DifficultyLevel;allowA:AllowAMode;setAllowA:(v:AllowAMode)=>void;surdDisplay:SurdDisplay;setSurdDisplay:(v:SurdDisplay)=>void})=>{
   const {open,setOpen,ref}=usePopover();
   const showSurd = surdDisplay==="surd"||surdDisplay==="both";
   const showDec  = surdDisplay==="decimal"||surdDisplay==="both";
@@ -1279,7 +1269,7 @@ export default function App(){
         ? pickUniqueBankFac(effAllowA, usedKeysRef.current.factorising)
         : pickUniqueBankForm(effAllowA, usedKeysRef.current.formula);
     }
-    return generateParabolaUnique(subTool, difficulty, effAllowA, surdDisplay, allowRearrange, usedKeysRef.current[subTool]);
+    return generateParabolaUnique(subTool, difficulty, effAllowA, surdDisplay, usedKeysRef.current[subTool]);
   }, [subTool, difficulty, negMode, allowZero, allowNegEq1, allowA, surdDisplay, allowRearrange]);
 
   const handleNewQuestion = useCallback((overrideAllowA?: AllowAMode) => {
@@ -1301,7 +1291,7 @@ export default function App(){
               ? pickUniqueBankFac(allowA, used)
               : pickUniqueBankForm(allowA, used));
           } else {
-            qs.push(generateParabolaUnique(subTool, lv, allowA, surdDisplay, allowRearrange, used));
+            qs.push(generateParabolaUnique(subTool, lv, allowA, surdDisplay, used));
           }
         }
       });
@@ -1314,7 +1304,7 @@ export default function App(){
             ? pickUniqueBankFac(allowA, used)
             : pickUniqueBankForm(allowA, used));
         } else {
-          qs.push(generateParabolaUnique(subTool, difficulty, allowA, surdDisplay, allowRearrange, used));
+          qs.push(generateParabolaUnique(subTool, difficulty, allowA, surdDisplay, used));
         }
       }
     }
@@ -1337,7 +1327,7 @@ export default function App(){
 
   const renderQOPopover=()=>subTool==="linear"
     ?<LinearQOPopover level={difficulty} negMode={negMode} setNegMode={setNegMode} allowZero={allowZero} setAllowZero={setAllowZero} allowNegEq1={allowNegEq1} setAllowNegEq1={setAllowNegEq1}/>
-    :<NonLinearQOPopover subTool={subTool} level={difficulty} allowA={allowA} setAllowA={setAllowA} surdDisplay={surdDisplay} setSurdDisplay={setSurdDisplay} allowRearrange={allowRearrange} setAllowRearrange={setAllowRearrange}/>;
+    :<NonLinearQOPopover subTool={subTool} level={difficulty} allowA={allowA} setAllowA={setAllowA} surdDisplay={surdDisplay} setSurdDisplay={setSurdDisplay}/>;
 
   const renderQuestionContent=(showAns:boolean)=>{
     if(currentQuestion.kind==="linear"){
