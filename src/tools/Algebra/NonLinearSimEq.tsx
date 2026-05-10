@@ -1169,7 +1169,7 @@ export default function App(){
   const [allowNegEq1Map,setAllowNegEq1Map]=useState<Record<string,boolean>>({});
   const [allowAMap,setAllowAMap]=useState<Record<string,AllowAMode>>({});
   const [surdDisplayMap,setSurdDisplayMap]=useState<Record<string,SurdDisplay>>({});
-  const [allowRearrangeMap,setAllowRearrangeMap]=useState<Record<string,boolean>>({});
+
 
   const qoKey = `${subTool}__${difficulty}`;
   const negMode       = negModeMap[qoKey]        ?? "pos-only";
@@ -1177,13 +1177,13 @@ export default function App(){
   const allowNegEq1   = allowNegEq1Map[qoKey]     ?? false;
   const allowA        = (allowAMap[qoKey] ?? 1) as AllowAMode;
   const surdDisplay   = surdDisplayMap[qoKey]      ?? "surd" as SurdDisplay;
-  const allowRearrange= allowRearrangeMap[qoKey]   ?? false;
+
 
   const setNegMode       = (v: NegMode)     => setNegModeMap(p=>({...p,[qoKey]:v}));
   const setAllowZero     = (v: boolean)     => setAllowZeroMap(p=>({...p,[qoKey]:v}));
   const setAllowNegEq1   = (v: boolean)     => setAllowNegEq1Map(p=>({...p,[qoKey]:v}));
   const setSurdDisplay   = (v: SurdDisplay) => setSurdDisplayMap(p=>({...p,[qoKey]:v}));
-  const setAllowRearrange= (v: boolean)     => setAllowRearrangeMap(p=>({...p,[qoKey]:v}));
+
 
   // Persistent used-key sets — one per subTool, reset when allowA changes
   const usedKeysRef = useRef<Record<string, Set<string>>>({
@@ -1269,8 +1269,8 @@ export default function App(){
         ? pickUniqueBankFac(effAllowA, usedKeysRef.current.factorising)
         : pickUniqueBankForm(effAllowA, usedKeysRef.current.formula);
     }
-    return generateParabolaUnique(subTool, difficulty, effAllowA, surdDisplay, usedKeysRef.current[subTool]);
-  }, [subTool, difficulty, negMode, allowZero, allowNegEq1, allowA, surdDisplay, allowRearrange]);
+    return generateParabolaUnique(subTool, difficulty, effAllowA, surdDisplay, usedKeysRef.current[subTool] ?? new Set());
+  }, [subTool, difficulty, negMode, allowZero, allowNegEq1, allowA, surdDisplay]);
 
   const handleNewQuestion = useCallback((overrideAllowA?: AllowAMode) => {
     setCurrentQuestion(makeNewQuestion(overrideAllowA));
@@ -1292,6 +1292,7 @@ export default function App(){
               : pickUniqueBankForm(allowA, used));
           } else {
             qs.push(generateParabolaUnique(subTool, lv, allowA, surdDisplay, used));
+
           }
         }
       });
