@@ -5,6 +5,7 @@ import SimplifyingRatiosTool from './tools/SimplifyingRatiosTool'
 import RecipesTool from './tools/RecipesTool'
 import FractionToRatio from './tools/FractionToRatio';
 import FractionsOfAmounts from './tools/FractionsOfAmounts';
+import BestBuys from './tools/BestBuys';
 
 //Generators
 
@@ -59,6 +60,7 @@ function App() {
       <Route path="/recipes" element={<RecipesTool />} />
       <Route path="/fraction-to-ratio" element={<FractionToRatio />} />
       <Route path="/fractions-of-amounts" element={<FractionsOfAmounts />} />
+      <Route path="/best-buys" element={<BestBuys />} />
 
       //Generators
 
