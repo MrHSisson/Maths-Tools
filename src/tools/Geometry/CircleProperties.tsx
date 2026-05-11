@@ -572,7 +572,6 @@ const generateCircumference = (
   allowDecimals: boolean,
   answerPi: boolean,
 ): CircleQuestion => {
-  const id = Math.floor(Math.random() * 1_000_000);
   const angle = randInt(0, 11) * 15;
 
   if (level === "level1") {
@@ -655,7 +654,6 @@ const generateArea = (
   allowDecimals: boolean,
   answerPi: boolean,
 ): CircleQuestion => {
-  const id = Math.floor(Math.random() * 1_000_000);
   const angle = randInt(0, 11) * 15;
 
   if (level === "level1") {
@@ -744,8 +742,6 @@ const generateSector = (
   allowDecimals: boolean,
   answerPi: boolean,
 ): CircleQuestion => {
-  const id = Math.floor(Math.random() * 1_000_000);
-
   // Resolve style if mixed
   const resolved: "area" | "arcLength" | "perimeter" = style === "mixed"
     ? (["area", "arcLength", "perimeter"] as const)[randInt(0, 2)]
@@ -843,7 +839,7 @@ const generateSector = (
     displayLatex,
     answer: `${answerDisp} cm${resolved === "area" ? "²" : ""}`,
     answerLatex,
-    answerSuffix: resolved === "area" ? "cm²" : "cm",
+    answerSuffix,
     diagramProps: { type: "sector", theta, radius: r, diameter: d, level: lvlNum },
     working,
     key: `sector-${level}-${resolved}-d${d}-θ${theta}`,
