@@ -494,37 +494,54 @@ const generateSpecialOffersQuestion = (level: DifficultyLevel): WordedQuestion =
   const working: ReturnType<typeof tStep>[] = [];
 
   if (level === "level1") {
-    // Buy N get 1 free vs. pack of N+1 at slightly different price
-    const N = randInt(1, 3);
-    const Qtotal = N + 1;
-    const Psingle = randInt(5, 25) * 10; // 50p–£2.50 in 10p steps
+    // Shop A: multi-buy deal — pay for `pay`, receive `pay + free`
+    // Shop B: a pack of QB items (QB ≠ Qtotal) at a close but different unit price
+    const DEALS = [
+      { pay: 1, free: 1 }, // buy 1 get 1 free
+      { pay: 2, free: 1 }, // buy 2 get 1 free
+      { pay: 3, free: 1 }, // buy 3 get 1 free
+      { pay: 3, free: 2 }, // buy 3 get 2 free
+      { pay: 5, free: 2 }, // buy 5 get 2 free
+      { pay: 5, free: 3 }, // buy 5 get 3 free
+    ];
+    const deal = pick(DEALS);
+    const N = deal.pay;
+    const Qtotal = deal.pay + deal.free; // total items received
+    const Psingle = randInt(5, 25) * 10; // 50p-£2.50 in 10p steps
 
     const totalCostA = Psingle * N;
-    const upA = totalCostA / Qtotal;
+    const upA = totalCostA / Qtotal; // pence per item from Shop A
 
-    const variation = (Math.random() > 0.5 ? 1 : -1) * randInt(1, 15);
-    let totalCostB = Math.max(20, totalCostA + variation);
-    if (Math.abs(upA - totalCostB / Qtotal) >= 20) totalCostB = totalCostA + (Math.random() > 0.5 ? 5 : -5);
-    const upB = totalCostB / Qtotal;
+    // Shop B quantity: pick from sensible sizes, must differ from Qtotal
+    const QB_OPTIONS = [2, 3, 4, 5, 6, 8, 10].filter(q => q !== Qtotal);
+    const QB = pick(QB_OPTIONS);
 
+    // Shop B unit price: close to Shop A's (within ±15p) but not equal
+    const upBVariation = (Math.random() > 0.5 ? 1 : -1) * randInt(3, 15);
+    const upB = Math.max(10, upA + upBVariation);
+    // Round Shop B total to nearest 5p for clean numbers
+    const totalCostB = Math.round((QB * upB) / 5) * 5;
+    const upBActual = totalCostB / QB;
+
+    const freeLabel = deal.free === 1 ? "1 free" : `${deal.free} free`;
     lines = [
       `Shop A: 1 ${singular} costs ${formatPrice(Psingle)}.`,
-      `Offer: Buy ${N} get 1 free.`,
-      `Shop B: A pack of ${Qtotal} ${product} costs ${formatPrice(totalCostB)}.`,
+      `Offer: Buy ${N} get ${freeLabel}.`,
+      `Shop B: A pack of ${QB} ${product} costs ${formatPrice(totalCostB)}.`,
       "Which is better value?",
     ];
 
-    working.push(tStep(`Shop A — items: Buy ${N}, get 1 free = ${Qtotal} ${product}`));
+    working.push(tStep(`Shop A — items: Buy ${N}, get ${freeLabel} = ${Qtotal} ${product}`));
     working.push(tStep(`Shop A — total price: ${N} × ${formatPrice(Psingle)} = ${formatPrice(totalCostA)}`));
     working.push(tStep(`Shop A — unit price: ${formatPrice(totalCostA)} ÷ ${Qtotal} = ${formatPriceDecimal(upA, 2)} per ${singular}`));
-    working.push(tStep(`Shop B — items: ${Qtotal} ${product}`));
+    working.push(tStep(`Shop B — items: ${QB} ${product}`));
     working.push(tStep(`Shop B — total price: ${formatPrice(totalCostB)}`));
-    working.push(tStep(`Shop B — unit price: ${formatPrice(totalCostB)} ÷ ${Qtotal} = ${formatPriceDecimal(upB, 2)} per ${singular}`));
-    working.push(tStep(`Compare: ${formatPriceDecimal(upA, 2)} ${upA < upB ? "<" : ">"} ${formatPriceDecimal(upB, 2)}`));
+    working.push(tStep(`Shop B — unit price: ${formatPrice(totalCostB)} ÷ ${QB} = ${formatPriceDecimal(upBActual, 2)} per ${singular}`));
+    working.push(tStep(`Compare: ${formatPriceDecimal(upA, 2)} ${upA < upBActual ? "<" : ">"} ${formatPriceDecimal(upBActual, 2)}`));
 
-    answer = upA < upB
-      ? `${formatPriceDecimal(upA, 2)} < ${formatPriceDecimal(upB, 2)}, so Shop A is better value`
-      : `${formatPriceDecimal(upB, 2)} < ${formatPriceDecimal(upA, 2)}, so Shop B is better value`;
+    answer = upA < upBActual
+      ? `${formatPriceDecimal(upA, 2)} < ${formatPriceDecimal(upBActual, 2)}, so Shop A is better value`
+      : `${formatPriceDecimal(upBActual, 2)} < ${formatPriceDecimal(upA, 2)}, so Shop B is better value`;
 
     return {
       kind: "worded", lines, answer, working,
@@ -575,37 +592,52 @@ const generateSpecialOffersQuestion = (level: DifficultyLevel): WordedQuestion =
     };
   }
 
-  // level3: buy 1 get 1 free vs. percentage off
-  const Qbase = pick([1, 2, 5]);
-  const DISC_OPTS = [20, 25, 30, 40, 50];
+  // level3: price of 1 item + multi-buy deal (Shop A) vs. bulk quantity + % discount (Shop B)
+  // Shop A: always gives price of 1 item, then one of the same deal pool as level 1
+  const L3_DEALS = [
+    { pay: 1, free: 1 },
+    { pay: 2, free: 1 },
+    { pay: 3, free: 1 },
+    { pay: 3, free: 2 },
+    { pay: 5, free: 2 },
+    { pay: 5, free: 3 },
+  ];
+  const l3Deal = pick(L3_DEALS);
+  const l3Qtotal = l3Deal.pay + l3Deal.free; // total items received from Shop A's deal
+  const Psingle = randInt(4, 20) * 25; // £1–£5 in 25p steps (clean single-item price)
+  const totalCostA = Psingle * l3Deal.pay;
+  const upA = totalCostA / l3Qtotal; // pence per item
+
+  // Shop B: a quantity > 1 with a percentage discount
+  // QB must differ from l3Qtotal to avoid trivial comparison
+  const QB_OPTIONS = [2, 3, 4, 5, 6, 8, 10].filter(q => q !== l3Qtotal && q > 1);
+  const QB = pick(QB_OPTIONS);
+  const DISC_OPTS = [10, 20, 25, 30, 50];
   const discPct = pick(DISC_OPTS);
 
-  const P1 = randInt(4, 12) * 50; // £2–£6
-  const totalItemsA = Qbase * 2;
-  const upA = P1 / totalItemsA;
-
-  const targetUpB = upA + (Math.random() > 0.5 ? 1 : -1) * randInt(2, 18);
-  const P2disc = Math.round(targetUpB * Qbase);
-  const P2full = Math.round(P2disc / (1 - discPct / 100));
+  // Work backwards from a target unit price close to Shop A's
+  const upBVariation = (Math.random() > 0.5 ? 1 : -1) * randInt(3, 20);
+  const targetUpBDisc = Math.max(10, upA + upBVariation); // discounted unit price
+  const P2full = Math.round((targetUpBDisc * QB) / (1 - discPct / 100) / 5) * 5; // round to 5p
   const actualDisc = Math.round(P2full * (1 - discPct / 100));
-  const upB = actualDisc / Qbase;
+  const upB = actualDisc / QB;
 
-  const qLabel = Qbase === 1 ? "1 litre" : `${Qbase} litres`;
+  const freeLabel = l3Deal.free === 1 ? "1 free" : `${l3Deal.free} free`;
 
   lines = [
-    `Shop A: ${qLabel} costs ${formatPrice(P1)}.`,
-    `Offer: Buy 1 get 1 free.`,
-    `Shop B: ${qLabel} costs ${formatPrice(P2full)}.`,
+    `Shop A: 1 ${singular} costs ${formatPrice(Psingle)}.`,
+    `Offer: Buy ${l3Deal.pay} get ${freeLabel}.`,
+    `Shop B: ${QB} ${product} cost ${formatPrice(P2full)}.`,
     `Offer: ${discPct}% off.`,
-    "Which is better value for 1 litre?",
+    `Which is better value for 1 ${singular}?`,
   ];
 
-  working.push(tStep(`Shop A — items: Buy ${Qbase}L, get ${Qbase}L free = ${totalItemsA} litres`));
-  working.push(tStep(`Shop A — total price: ${formatPrice(P1)}`));
-  working.push(tStep(`Shop A — unit price: ${formatPrice(P1)} ÷ ${totalItemsA} = ${formatPriceDecimal(upA, 2)} per litre`));
-  working.push(tStep(`Shop B — items: ${Qbase} litres`));
+  working.push(tStep(`Shop A — items: Buy ${l3Deal.pay}, get ${freeLabel} = ${l3Qtotal} ${product}`));
+  working.push(tStep(`Shop A — total price: ${l3Deal.pay} × ${formatPrice(Psingle)} = ${formatPrice(totalCostA)}`));
+  working.push(tStep(`Shop A — unit price: ${formatPrice(totalCostA)} ÷ ${l3Qtotal} = ${formatPriceDecimal(upA, 2)} per ${singular}`));
+  working.push(tStep(`Shop B — items: ${QB} ${product}`));
   working.push(tStep(`Shop B — total price: ${formatPrice(P2full)} − ${discPct}% = ${formatPriceDecimal(P2full - actualDisc, 0)} off → ${formatPrice(actualDisc)}`));
-  working.push(tStep(`Shop B — unit price: ${formatPrice(actualDisc)} ÷ ${Qbase} = ${formatPriceDecimal(upB, 2)} per litre`));
+  working.push(tStep(`Shop B — unit price: ${formatPrice(actualDisc)} ÷ ${QB} = ${formatPriceDecimal(upB, 2)} per ${singular}`));
   working.push(tStep(`Compare: ${formatPriceDecimal(upA, 2)} ${upA < upB ? "<" : ">"} ${formatPriceDecimal(upB, 2)}`));
 
   answer = upA < upB
@@ -614,7 +646,7 @@ const generateSpecialOffersQuestion = (level: DifficultyLevel): WordedQuestion =
 
   return {
     kind: "worded", lines, answer, working,
-    key: `so-${level}-${product}-${Qbase}-${discPct}-${P1}-${P2full}-${id}`,
+    key: `so-${level}-${product}-${l3Deal.pay}-${l3Deal.free}-${Psingle}-${QB}-${discPct}-${P2full}-${id}`,
     difficulty: level,
   };
 };
