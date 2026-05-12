@@ -135,16 +135,30 @@ const TOOL_CONFIG = {
         level2: {
           dropdown: null,
           variables: [
-            { key: "conversions", label: "Include unit conversions", defaultValue: false },
-            { key: "unitary",     label: "Force unitary method",     defaultValue: false },
+            { key: "unitary", label: "Force unitary method", defaultValue: false },
           ],
+          multiSelect: {
+            key: "conversions",
+            label: "Conversions",
+            options: [
+              { value: "same",       label: "Same Units", defaultActive: true },
+              { value: "conversion", label: "Conversion", defaultActive: false },
+            ],
+          },
         },
         level3: {
           dropdown: null,
           variables: [
-            { key: "conversions", label: "Include unit conversions", defaultValue: false },
-            { key: "unitary",     label: "Force unitary method",     defaultValue: false },
+            { key: "unitary", label: "Force unitary method", defaultValue: false },
           ],
+          multiSelect: {
+            key: "conversions",
+            label: "Conversions",
+            options: [
+              { value: "same",       label: "Same Units", defaultActive: true },
+              { value: "conversion", label: "Conversion", defaultActive: false },
+            ],
+          },
         },
       },
     },
@@ -297,9 +311,15 @@ const METRIC_PRODUCTS = [
 
 const generateUnitCostQuestion = (
   level: DifficultyLevel,
-  includeConversions: boolean,
+  conversionValues: Record<string, boolean>,
   forceUnitary: boolean,
 ): WordedQuestion => {
+  // same and/or conversion can be independently active
+  const sameActive       = conversionValues["same"]       ?? true;
+  const conversionActive = conversionValues["conversion"] ?? false;
+  // If conversion is active (and same may or may not be), we may need to convert.
+  // If both active: randomly pick per-question. If only conversion: always convert.
+  const anyConversions = conversionActive;
   const id = Math.floor(Math.random() * 1_000_000);
 
   let qA: number, qB: number, cA: number, cB: number;
@@ -380,16 +400,20 @@ const generateUnitCostQuestion = (
     qAInBase = qA;
     qBInBase = qB;
 
-    if (includeConversions) {
-      const convertA = Math.random() > 0.5;
-      if (convertA) {
-        if (unitLabel === "g") { qA = qA / 1000; unitA = "kg"; }
-        else { qA = qA / 1000; unitA = "L"; }
-        qAInBase = (unitA === "kg" || unitA === "L") ? qA * 1000 : qA;
-      } else {
-        if (unitLabel === "g") { qB = qB / 1000; unitB = "kg"; }
-        else { qB = qB / 1000; unitB = "L"; }
-        qBInBase = (unitB === "kg" || unitB === "L") ? qB * 1000 : qB;
+    if (anyConversions) {
+      // If both same and conversion active: randomly decide whether to convert this question
+      const doConvert = !sameActive || Math.random() > 0.5;
+      if (doConvert) {
+        const convertA = Math.random() > 0.5;
+        if (convertA) {
+          if (unitLabel === "g") { qA = qA / 1000; unitA = "kg"; }
+          else { qA = qA / 1000; unitA = "L"; }
+          qAInBase = (unitA === "kg" || unitA === "L") ? qA * 1000 : qA;
+        } else {
+          if (unitLabel === "g") { qB = qB / 1000; unitB = "kg"; }
+          else { qB = qB / 1000; unitB = "L"; }
+          qBInBase = (unitB === "kg" || unitB === "L") ? qB * 1000 : qB;
+        }
       }
     }
 
@@ -426,16 +450,20 @@ const generateUnitCostQuestion = (
     qAInBase = qA;
     qBInBase = qB;
 
-    if (includeConversions) {
-      const convertA = Math.random() > 0.5;
-      if (convertA) {
-        if (unitLabel === "g") { qA = qA / 1000; unitA = "kg"; }
-        else { qA = qA / 1000; unitA = "L"; }
-        qAInBase = (unitA === "kg" || unitA === "L") ? qA * 1000 : qA;
-      } else {
-        if (unitLabel === "g") { qB = qB / 1000; unitB = "kg"; }
-        else { qB = qB / 1000; unitB = "L"; }
-        qBInBase = (unitB === "kg" || unitB === "L") ? qB * 1000 : qB;
+    if (anyConversions) {
+      // If both same and conversion active: randomly decide whether to convert this question
+      const doConvert = !sameActive || Math.random() > 0.5;
+      if (doConvert) {
+        const convertA = Math.random() > 0.5;
+        if (convertA) {
+          if (unitLabel === "g") { qA = qA / 1000; unitA = "kg"; }
+          else { qA = qA / 1000; unitA = "L"; }
+          qAInBase = (unitA === "kg" || unitA === "L") ? qA * 1000 : qA;
+        } else {
+          if (unitLabel === "g") { qB = qB / 1000; unitB = "kg"; }
+          else { qB = qB / 1000; unitB = "L"; }
+          qBInBase = (unitB === "kg" || unitB === "L") ? qB * 1000 : qB;
+        }
       }
     }
   }
@@ -658,12 +686,12 @@ const generateQuestion = (
   level: DifficultyLevel,
   variables: Record<string, boolean>,
   _dropdownValue: string,
-  _multiSelectValues: Record<string, boolean> = {},
+  multiSelectValues: Record<string, boolean> = {},
 ): AnyQuestion => {
   if (tool === "unitCost") {
     return generateUnitCostQuestion(
       level,
-      variables["conversions"] ?? false,
+      multiSelectValues,  // { same?: boolean, conversion?: boolean }
       variables["unitary"] ?? false,
     );
   }
@@ -1253,8 +1281,16 @@ export default function App() {
   const [toolMultiSelect, setToolMultiSelect] = useState<Record<string,Record<string,boolean>>>(() => {
     const init: Record<string,Record<string,boolean>> = {};
     Object.keys(TOOL_CONFIG.tools).forEach(k => {
-      const ms = TOOL_CONFIG.tools[k].multiSelect;
-      if (ms) { init[k] = {}; ms.options.forEach(o => { init[k][o.value] = o.defaultActive; }); }
+      (["level1","level2","level3"] as DifficultyLevel[]).forEach(lv => {
+        const key = `${k}__${lv}`;
+        init[key] = {};
+        // Top-level multiSelect (same across all levels)
+        const ms = TOOL_CONFIG.tools[k].multiSelect;
+        if (ms) ms.options.forEach(o => { init[key][o.value] = o.defaultActive; });
+        // Per-level multiSelect from difficultySettings (overrides/adds)
+        const dsMs = TOOL_CONFIG.tools[k].difficultySettings?.[lv]?.multiSelect;
+        if (dsMs) dsMs.options.forEach(o => { init[key][o.value] = o.defaultActive; });
+      });
     });
     return init;
   });
@@ -1374,7 +1410,7 @@ export default function App() {
   const getDropdownValue = () => toolDropdowns[`${currentTool}__${difficulty}`] ?? getDropdownConfig()?.defaultValue ?? "";
   const setDropdownValue = (v: string) => setToolDropdowns(p => ({...p, [`${currentTool}__${difficulty}`]: v}));
   const setVariableValue = (k: string, v: boolean) => setToolVariables(p => ({...p, [`${currentTool}__${difficulty}`]: {...(p[`${currentTool}__${difficulty}`]??{}), [k]: v}}));
-  const setMultiSelectValue = (k: string, v: boolean) => setToolMultiSelect(p => ({...p, [currentTool]: {...(p[currentTool]??{}), [k]: v}}));
+  const setMultiSelectValue = (k: string, v: boolean) => setToolMultiSelect(p => ({...p, [`${currentTool}__${difficulty}`]: {...(p[`${currentTool}__${difficulty}`]??{}), [k]: v}}));
   const handleLevelVarChange = (lv: string, k: string, v: boolean) => setLevelVariables(p => ({...p, [lv]: {...p[lv], [k]: v}}));
   const handleLevelDDChange = (lv: string, v: string) => setLevelDropdowns(p => ({...p, [lv]: v}));
   const handleLevelMSChange = (lv: string, k: string, v: boolean) => setLevelMultiSelect(p => ({...p, [lv]: {...(p[lv]??{}), [k]: v}}));
@@ -1382,7 +1418,7 @@ export default function App() {
   // ─────────────────────────────────────────────────────────────────────────
 
   const makeQuestion = (): AnyQuestion =>
-    generateQuestion(currentTool, difficulty, toolVariables[`${currentTool}__${difficulty}`] || {}, getDropdownValue(), toolMultiSelect[currentTool] ?? {});
+    generateQuestion(currentTool, difficulty, toolVariables[`${currentTool}__${difficulty}`] || {}, getDropdownValue(), toolMultiSelect[`${currentTool}__${difficulty}`] ?? {});
 
   const handleNewQuestion = () => {
     setCurrentQuestion(makeQuestion());
@@ -1405,7 +1441,7 @@ export default function App() {
       });
     } else {
       for (let i = 0; i < numQuestions; i++)
-        questions.push(generateUniqueQ(currentTool, difficulty, toolVariables[`${currentTool}__${difficulty}`] || {}, getDropdownValue(), usedKeys, toolMultiSelect[currentTool] ?? {}));
+        questions.push(generateUniqueQ(currentTool, difficulty, toolVariables[`${currentTool}__${difficulty}`] || {}, getDropdownValue(), usedKeys, toolMultiSelect[`${currentTool}__${difficulty}`] ?? {}));
     }
     setWorksheet(questions);
     setShowWorksheetAnswers(false);
@@ -1419,7 +1455,7 @@ export default function App() {
     dropdownValue: getDropdownValue(),
     onDropdownChange: setDropdownValue,
     multiSelect: getMultiSelectConfig(),
-    multiSelectValues: toolMultiSelect[currentTool] ?? {},
+    multiSelectValues: toolMultiSelect[`${currentTool}__${difficulty}`] ?? {},
     onMultiSelectChange: setMultiSelectValue,
   };
   const diffQOProps = {
