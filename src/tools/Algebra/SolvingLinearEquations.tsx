@@ -237,6 +237,7 @@ const TOOL_CONFIG = {
 interface LevelQO {
   // Level 1
   constants: { bothPos: boolean; oneNeg: boolean; bothNeg: boolean };
+  xSide: { lhs: boolean; rhs: boolean };
   // Level 2
   bracketSide: { left: boolean; right: boolean; both: boolean };
   constantSign: { positive: boolean; negative: boolean };
@@ -249,6 +250,7 @@ interface LevelQO {
 
 const defaultLevelQO = (): LevelQO => ({
   constants:    { bothPos: true,  oneNeg: false, bothNeg: false },
+  xSide:        { lhs: true, rhs: false },
   bracketSide:  { left: false, right: false, both: true  },
   constantSign: { positive: true, negative: false },
   negCount:     { one: true,  both: false },
@@ -309,6 +311,12 @@ const EquationsQOPopover = ({ level, qo, onChange }: {
               { key: "oneNeg",  label: "One −"  },
               { key: "bothNeg", label: "Both −" },
             ]} values={qo.constants} onChange={(k,v) => update("constants", k, v)} />
+          )}
+          {level === "level1" && (
+            <MultiSelectGroup label="Larger x on" options={[
+              { key: "lhs", label: "LHS" },
+              { key: "rhs", label: "RHS" },
+            ]} values={qo.xSide} onChange={(k,v) => update("xSide", k, v)} />
           )}
           {level === "level2" && (
             <MultiSelectGroup label="Bracket side" options={[
@@ -374,6 +382,10 @@ const EquationsDiffQOPopover = ({ qoByLevel, onChange }: {
                     { key: "oneNeg",  label: "One −"  },
                     { key: "bothNeg", label: "Both −" },
                   ]} values={qo.constants} onChange={(k,v) => update(lv, "constants", k, v)} />}
+                  {lv === "level1" && <MultiSelectGroup label="Larger x on" options={[
+                    { key: "lhs", label: "LHS" },
+                    { key: "rhs", label: "RHS" },
+                  ]} values={qo.xSide} onChange={(k,v) => update(lv, "xSide", k, v)} />}
                   {lv === "level2" && <MultiSelectGroup label="Bracket side" options={[
                     { key: "left",  label: "Left"  },
                     { key: "right", label: "Right" },
@@ -443,6 +455,7 @@ interface SimpleQuestion {
   working: { type: string; latex: string; plain: string; label?: string; unit?: string }[];
   key: string;
   difficulty: string;
+  _qo?: LevelQO; // stored for per-cell regeneration
 }
 
 type AnyQuestion = SimpleQuestion;
@@ -506,22 +519,23 @@ const tryLevel1 = (
   allowDecimal: boolean,
   allowPositive: boolean,
   allowNegative: boolean,
+  xSide: string,
 ): AnyQuestion | null => {
   for (let attempt = 0; attempt < 200; attempt++) {
-    const a = randInt(2, 8);
-    const c = randInt(1, a - 1);
+    const xCoef = randInt(1, 5);
+    const c = randInt(1, 6);
+    const a = c + xCoef;
 
     let b: number, d: number;
     if (constants === "bothPos") {
-      b = randInt(1, 15); d = randInt(1, 15);
+      b = randInt(1, 30); d = randInt(1, 30);
     } else if (constants === "oneNeg") {
-      if (Math.random() < 0.5) { b = randInt(1, 15); d = -randInt(1, 15); }
-      else { b = -randInt(1, 15); d = randInt(1, 15); }
+      if (Math.random() < 0.5) { b = randInt(1, 30); d = -randInt(1, 30); }
+      else { b = -randInt(1, 30); d = randInt(1, 30); }
     } else {
-      b = -randInt(1, 15); d = -randInt(1, 15);
+      b = -randInt(1, 30); d = -randInt(1, 30);
     }
 
-    const xCoef = a - c;
     const rhs = d - b;
     if (xCoef === 0) continue;
 
@@ -537,20 +551,25 @@ const tryLevel1 = (
     const xStr = fmt(xVal);
     const id = Math.floor(Math.random() * 1_000_000);
 
+    // lhs = ax + b, rhs side = cx + d (a > c, larger x on left by default)
+    // swap display only if xSide === "rhs"
+    const swap = xSide === "rhs";
+    const lhsLatex = swap ? sideLatex(c, d) : sideLatex(a, b);
+    const rhsLatex = swap ? sideLatex(a, b) : sideLatex(c, d);
+
     const working = [
-      mStep("Reduce x's:", `${sideLatex(a, b)} = ${sideLatex(c, d)} \\rightarrow ${coefStr(xCoef)}x = ${rhs}`),
+      mStep("Reduce x's:", `${lhsLatex} = ${rhsLatex} \\rightarrow ${coefStr(xCoef)}x = ${rhs}`),
       mStep("Isolate constant:", `${coefStr(xCoef)}x = ${rhs}`),
       mStep("Divide:", `x = \\frac{${rhs}}{${xCoef}} = ${xStr}`),
     ];
 
     return {
       kind: "simple",
-      display: `${sideLatex(a, b)} = ${sideLatex(c, d)}`,
-      displayLatex: `${sideLatex(a, b)} = ${sideLatex(c, d)}`,
-      answer: `x = ${xStr}`,
-      answerLatex: `x = ${xStr}`,
+      display: `${lhsLatex} = ${rhsLatex}`,
+      displayLatex: `${lhsLatex} = ${rhsLatex}`,
+      answer: `x = ${xStr}`, answerLatex: `x = ${xStr}`,
       working,
-      key: `l1-${a}-${b}-${c}-${d}-${id}`,
+      key: `l1-${a}-${b}-${c}-${d}-${xSide}-${id}`,
       difficulty: "level1",
     };
   }
@@ -802,7 +821,8 @@ const generateQuestion = (
 
   if (level === "level1") {
     const constants = pickActive(qo.constants);
-    return tryLevel1(constants, allowInteger, allowDecimal, allowPositive, allowNegative) ?? {
+    const xSide = pickActive(qo.xSide); // "lhs" or "rhs"
+    return tryLevel1(constants, allowInteger, allowDecimal, allowPositive, allowNegative, xSide) ?? {
       kind: "simple", display: "3x + 4 = x + 10", displayLatex: "3x + 4 = x + 10",
       answer: "x = 3", answerLatex: "x = 3",
       working: [mStep("Reduce x's:", "3x + 4 = x + 10 \\rightarrow 2x + 4 = 10"), mStep("Isolate constant:", "2x = 6"), mStep("Divide:", "x = 3")],
@@ -1053,6 +1073,61 @@ const DiffQOPopover = ({ toolSettings, levelVariables, onLevelVariableChange, le
           }
         </div>
       )}
+    </div>
+  );
+};
+
+// Inline (non-popover) version of the QO — rendered flat inside expanded rows
+const EquationsQOPopoverInline = ({ level, qo, onChange }: {
+  level: DifficultyLevel;
+  qo: LevelQO;
+  onChange: (updated: LevelQO) => void;
+}) => {
+  const update = <K extends keyof LevelQO>(group: K, key: string, val: boolean) => {
+    onChange({ ...qo, [group]: { ...(qo[group] as Record<string,boolean>), [key]: val } });
+  };
+  return (
+    <div className="flex flex-col gap-4 pt-1">
+      {level === "level1" && (
+        <MultiSelectGroup label="Constants" options={[
+          { key: "bothPos", label: "Both +" },
+          { key: "oneNeg",  label: "One −"  },
+          { key: "bothNeg", label: "Both −" },
+        ]} values={qo.constants} onChange={(k,v) => update("constants", k, v)} />
+      )}
+      {level === "level1" && (
+        <MultiSelectGroup label="Larger x on" options={[
+          { key: "lhs", label: "LHS" },
+          { key: "rhs", label: "RHS" },
+        ]} values={qo.xSide} onChange={(k,v) => update("xSide", k, v)} />
+      )}
+      {level === "level2" && (
+        <MultiSelectGroup label="Bracket side" options={[
+          { key: "left",  label: "Left"  },
+          { key: "right", label: "Right" },
+          { key: "both",  label: "Both"  },
+        ]} values={qo.bracketSide} onChange={(k,v) => update("bracketSide", k, v)} />
+      )}
+      {level === "level2" && (
+        <MultiSelectGroup label="Constants" options={[
+          { key: "positive", label: "Addition"    },
+          { key: "negative", label: "Subtraction" },
+        ]} values={qo.constantSign} onChange={(k,v) => update("constantSign", k, v)} />
+      )}
+      {level === "level3" && (
+        <MultiSelectGroup label="Negative x terms" options={[
+          { key: "one",  label: "One −x"  },
+          { key: "both", label: "Both −x" },
+        ]} values={qo.negCount} onChange={(k,v) => update("negCount", k, v)} />
+      )}
+      <MultiSelectGroup label="Solution type" options={[
+        { key: "integer", label: "Integer" },
+        { key: "decimal", label: "Decimal" },
+      ]} values={qo.solutionType} onChange={(k,v) => update("solutionType", k, v)} />
+      <MultiSelectGroup label="Solution sign" options={[
+        { key: "positive", label: "Positive" },
+        { key: "negative", label: "Negative" },
+      ]} values={qo.solutionSign} onChange={(k,v) => update("solutionSign", k, v)} />
     </div>
   );
 };
@@ -1500,6 +1575,31 @@ export default function App() {
   const [worksheet, setWorksheet] = useState<AnyQuestion[]>([]);
   const [showWorksheetAnswers, setShowWorksheetAnswers] = useState(false);
   const [isDifferentiated, setIsDifferentiated] = useState(false);
+  const [worksheetMode, setWorksheetMode] = useState<"standard"|"advanced">("standard");
+
+  // ── Advanced worksheet state ──────────────────────────────────────────────
+  interface AdvGroup {
+    id: number;
+    level: DifficultyLevel;
+    qo: LevelQO;
+    count: number;
+  }
+  const [advGroups, setAdvGroups] = useState<AdvGroup[]>(() => [
+    { id: 1, level: "level1", qo: defaultLevelQO(), count: 5 }
+  ]);
+  const [advDraft, _setAdvDraft] = useState<AdvGroup>({ id: 0, level: "level1", qo: defaultLevelQO(), count: 5 });
+  void advDraft;
+  const [advDragIdx, _setAdvDragIdx] = useState<number|null>(null);
+  const [advDragOver, _setAdvDragOver] = useState<number|null>(null);
+  void advDragIdx; void advDragOver;
+  const advDragNodeIdx = useRef<number|null>(null);
+  const advListRef = useRef<HTMLDivElement>(null);
+  void advDragNodeIdx; void advListRef;
+  const [advExpandedId, setAdvExpandedId] = useState<number|null>(null);
+  const advNextId = useRef(2);
+  const totalAdvQuestions = advGroups.reduce((s,g) => s + g.count, 0);
+  const [advShuffle, setAdvShuffle] = useState(false);
+  // ─────────────────────────────────────────────────────────────────────────
   const [displayFontSize, setDisplayFontSize] = useState(2);  // whiteboard + worked example
   const [worksheetFontSize, setWorksheetFontSize] = useState(1); // worksheet only
   const [colorScheme, setColorScheme] = useState("default");
@@ -1589,15 +1689,54 @@ export default function App() {
     const questions: AnyQuestion[] = [];
     if (isDifferentiated) {
       (["level1","level2","level3"] as DifficultyLevel[]).forEach(lv => {
-        for (let i = 0; i < numQuestions; i++)
-          questions.push(generateUniqueQ(currentTool, lv, qoOptions[lv], usedKeys));
+        for (let i = 0; i < numQuestions; i++) {
+          const q = generateUniqueQ(currentTool, lv, qoOptions[lv], usedKeys);
+          questions.push({ ...q, _qo: qoOptions[lv] });
+        }
       });
     } else {
-      for (let i = 0; i < numQuestions; i++)
-        questions.push(generateUniqueQ(currentTool, difficulty, getQO(), usedKeys));
+      for (let i = 0; i < numQuestions; i++) {
+        const q = generateUniqueQ(currentTool, difficulty, getQO(), usedKeys);
+        questions.push({ ...q, _qo: getQO() });
+      }
     }
     setWorksheet(questions);
     setShowWorksheetAnswers(false);
+  };
+
+  const handleGenerateAdvanced = () => {
+    const usedKeys = new Set<string>();
+    const questions: AnyQuestion[] = [];
+    advGroups.forEach(g => {
+      for (let i = 0; i < g.count; i++) {
+        const q = generateUniqueQ(currentTool, g.level, g.qo, usedKeys);
+        questions.push({ ...q, _qo: g.qo });
+      }
+    });
+    if (advShuffle) {
+      for (let i = questions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [questions[i], questions[j]] = [questions[j], questions[i]];
+      }
+    }
+    setWorksheet(questions);
+    setShowWorksheetAnswers(false);
+  };
+
+  const regenQuestion = (idx: number) => {
+    const q = worksheet[idx];
+    const qo = (q as any)._qo as LevelQO | undefined;
+    if (!qo) return;
+    const lv = q.difficulty as DifficultyLevel;
+    const existing = new Set(worksheet.map(w => w.key));
+    existing.delete(q.key); // allow replacing this exact question
+    let replacement: AnyQuestion | null = null;
+    for (let attempt = 0; attempt < 100; attempt++) {
+      const candidate = generateQuestion(currentTool, lv, qo);
+      if (!existing.has(candidate.key)) { replacement = { ...candidate, _qo: qo }; break; }
+    }
+    if (!replacement) return;
+    setWorksheet(prev => prev.map((w, i) => i === idx ? replacement! : w));
   };
 
   // Custom QO popover — bypasses shell StandardQOPopover/DiffQOPopover
@@ -1624,16 +1763,28 @@ export default function App() {
     const bg = bgOverride ?? stepBg;
     const fsz = fontSizes[worksheetFontSize];
     const useCards = TOOL_CONFIG.tools[currentTool]?.useSubstantialBoxes ?? false;
-    const cellStyle = {backgroundColor:bg, height:"100%", boxSizing:"border-box" as const, position:"relative" as const};
+    const cellStyle = {backgroundColor:bg, height:"100%", boxSizing:"border-box" as const, position:"relative" as const, borderRadius:"12px", border:"1px solid #e5e7eb"};
     const numEl = <span style={{position:"absolute",top:0,left:0,fontSize:"0.65em",fontWeight:700,color:"#000",lineHeight:1,padding:"5px 5px 7px 5px",borderRight:"1px solid #000",borderBottom:"1px solid #000"}}>{idx+1})</span>;
-    const wrapperClass = useCards ? "rounded-lg p-4 shadow" : "p-3";
+    const wrapperClass = useCards ? "rounded-xl p-4 shadow" : "rounded-xl p-3";
+
+    // Hover regen button — top-right corner, only shown on hover
+    const regenBtn = (q as any)._qo ? (
+      <button
+        onClick={() => regenQuestion(idx)}
+        title="Regenerate this question"
+        className="absolute top-1 right-1 w-6 h-6 rounded flex items-center justify-center text-gray-300 hover:text-blue-600 hover:bg-blue-50 transition-all opacity-0 group-hover:opacity-100"
+        style={{zIndex:10}}>
+        <RefreshCw size={12}/>
+      </button>
+    ) : null;
 
     if (q.kind === "simple") {
       const anyQ = q as any;
       const instrFsz = fontSizes[Math.max(0, worksheetFontSize - 1)];
       return (
-        <div className={wrapperClass} style={cellStyle}>
+        <div className={`${wrapperClass} group`} style={cellStyle}>
           {numEl}
+          {regenBtn}
           {getInstruction() && <div className={`${instrFsz} font-semibold text-center w-full mb-1`} style={{color:"#000",paddingTop:"0.15em"}}>{getInstruction()}</div>}
           <div className={`${fsz} font-semibold text-center w-full`} style={{color:"#000"}}>
             {anyQ.displayLatex ? <MathRenderer latex={anyQ.displayLatex}/> : anyQ.display}
@@ -1648,8 +1799,9 @@ export default function App() {
     if ("lines" in q) {
       const instrFsz = fontSizes[Math.max(0, worksheetFontSize - 1)];
       return (
-        <div className={wrapperClass} style={cellStyle}>
+        <div className={`${wrapperClass} group`} style={cellStyle}>
           {numEl}
+          {regenBtn}
           {getInstruction() && <div className={`${instrFsz} font-semibold text-center w-full mb-1`} style={{color:"#000"}}>{getInstruction()}</div>}
           <div className={`${fsz} font-semibold w-full text-center`} style={{color:"#000",lineHeight:1.6}}>
             {(q as any).lines.map((line: string, i: number) => <div key={i}><InlineMath text={line}/></div>)}
@@ -1676,59 +1828,194 @@ export default function App() {
     );
   };
 
-  // ── Control bar ───────────────────────────────────────────────────────────
-  const renderControlBar = () => {
-    if(mode==="worksheet") return (
-      <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-        {/* Row 1: Level selector + Differentiated */}
-        <div className="flex justify-center items-center gap-6 mb-4">
-          <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm">
-            {([["level1","Level 1","bg-green-600"],["level2","Level 2","bg-yellow-500"],["level3","Level 3","bg-red-600"]] as const).map(([val,label,col])=>(
-              <button key={val} onClick={()=>{setDifficulty(val as DifficultyLevel);setIsDifferentiated(false);}}
-                className={`px-5 py-2 font-bold text-base transition-colors ${!isDifferentiated&&difficulty===val?`${col} text-white`:"bg-white text-gray-500 hover:bg-gray-50"}`}>
-                {label}
-              </button>
-            ))}
-          </div>
-          <button onClick={()=>setIsDifferentiated(!isDifferentiated)}
-            className={`px-6 py-2 rounded-xl font-bold text-base shadow-sm border-2 transition-colors ${isDifferentiated?"bg-blue-900 text-white border-blue-900":"bg-white text-gray-600 border-gray-300 hover:border-blue-900 hover:text-blue-900"}`}>
-            Differentiated
-          </button>
-        </div>
-        {/* Row 2: Questions + Columns + Question Options */}
-        <div className="flex justify-center items-center gap-6 mb-4">
-          {qoEl(isDifferentiated)}
-          <div className="flex items-center gap-3">
-            <label className="text-base font-semibold text-gray-700">Questions:</label>
-            <input type="number" min="1" max="24" value={numQuestions}
-              onChange={e=>setNumQuestions(Math.max(1,Math.min(24,parseInt(e.target.value)||15)))}
-              className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-base font-semibold text-center"/>
-          </div>
-          <div className="flex items-center gap-3">
-            <label className="text-base font-semibold text-gray-700">Columns:</label>
-            <input type="number" min="1" max="4" value={isDifferentiated ? 3 : numColumns}
-              onChange={e=>{ if(!isDifferentiated) setNumColumns(Math.max(1,Math.min(4,parseInt(e.target.value)||3))); }}
-              disabled={isDifferentiated}
-              className={`w-20 px-4 py-2 border-2 rounded-lg text-base font-semibold text-center transition-colors ${isDifferentiated?"border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed":"border-gray-300 bg-white"}`}/>
-          </div>
-        </div>
-        {/* Row 3: Actions */}
-        <div className="flex justify-center items-center gap-4">
-          <button onClick={handleGenerateWorksheet} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
-            <RefreshCw size={18}/> Generate
-          </button>
-          {worksheet.length>0&&<>
-            <button onClick={()=>setShowWorksheetAnswers(!showWorksheetAnswers)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
-              <Eye size={18}/> {showWorksheetAnswers?"Hide Answers":"Show Answers"}
+  // ── Advanced Worksheet Builder ────────────────────────────────────────────
+  const renderAdvancedWorksheet = () => {
+    const lvColor = (lv: DifficultyLevel) => lv === "level1" ? "bg-green-600" : lv === "level2" ? "bg-yellow-500" : "bg-red-600";
+    const canAdd = advGroups.length < 10;
+
+    const updateGroup = (id: number, patch: Partial<typeof advGroups[0]>) =>
+      setAdvGroups(gs => gs.map(g => g.id === id ? { ...g, ...patch } : g));
+
+    return (
+      <div className="divide-y divide-gray-100">
+        {advGroups.map((g, idx) => {
+          const expanded = advExpandedId === g.id;
+          return (
+            <div key={g.id} className="bg-white">
+              <div className="flex items-center gap-3 px-4 py-3">
+
+                {/* Row number */}
+                <span className="text-xs font-bold text-gray-300 w-4 flex-shrink-0 tabular-nums">{idx+1}</span>
+
+                {/* Level selector */}
+                <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden flex-shrink-0">
+                  {(["level1","level2","level3"] as DifficultyLevel[]).map((lv,li) => (
+                    <button key={lv}
+                      onClick={() => updateGroup(g.id, { level: lv, qo: defaultLevelQO() })}
+                      className={`px-4 py-1.5 font-bold text-sm transition-colors ${g.level === lv ? `${lvColor(lv)} text-white` : "bg-white text-gray-400 hover:bg-gray-50"}`}>
+                      Level {li+1}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Options */}
+                <button onClick={() => setAdvExpandedId(expanded ? null : g.id)}
+                  className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-all flex-shrink-0 ${
+                    expanded ? "bg-blue-900 border-blue-900 text-white" : "border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-900 bg-white"}`}>
+                  Options
+                </button>
+
+                <div className="flex-1"/>
+
+                {/* Count stepper */}
+                <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 flex-shrink-0">
+                  <button onClick={() => updateGroup(g.id, { count: Math.max(1, g.count - 1) })} disabled={g.count <= 1}
+                    className="w-7 h-7 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-lg leading-none">−</button>
+                  <span className="w-7 text-center text-sm font-bold text-gray-800 tabular-nums">{g.count}</span>
+                  <button onClick={() => updateGroup(g.id, { count: Math.min(24, g.count + 1) })} disabled={g.count >= 24}
+                    className="w-7 h-7 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-lg leading-none">+</button>
+                </div>
+
+                {/* Remove */}
+                {advGroups.length > 1 && (
+                  <button onClick={() => { setAdvGroups(gs => gs.filter((_,i) => i !== idx)); if (advExpandedId === g.id) setAdvExpandedId(null); }}
+                    className="w-7 h-7 rounded-full flex items-center justify-center text-gray-300 hover:bg-red-50 hover:text-red-400 transition-colors flex-shrink-0">
+                    <X size={14}/>
+                  </button>
+                )}
+              </div>
+
+              {/* Expanded QO */}
+              {expanded && (
+                <div className="px-6 pb-5 pt-3 bg-slate-50 border-t border-slate-100">
+                  <EquationsQOPopoverInline level={g.level} qo={g.qo} onChange={u => updateGroup(g.id, { qo: u })} />
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        {/* Add group */}
+        <div className="px-4 py-3">
+          {canAdd ? (
+            <button onClick={() => setAdvGroups(g => [...g, { id: advNextId.current++, level: "level1", qo: defaultLevelQO(), count: 5 }])}
+              className="w-full py-2 rounded-lg border-2 border-dashed border-gray-200 text-sm font-bold text-gray-400 hover:border-blue-300 hover:text-blue-600 transition-colors">
+              + Add group
             </button>
-            <button onClick={()=>handlePrint(worksheet,TOOL_CONFIG.tools[currentTool].name,difficulty,isDifferentiated,numColumns,getInstruction())}
-              className="px-6 py-2 bg-green-700 text-white rounded-xl font-bold text-base shadow-sm hover:bg-green-800 flex items-center gap-2">
-              <Printer size={18}/> Print / PDF
-            </button>
-          </>}
+          ) : (
+            <p className="text-center text-xs text-gray-400 font-semibold py-1">Maximum 10 groups reached</p>
+          )}
         </div>
       </div>
     );
+  };
+
+  // ── Control bar ───────────────────────────────────────────────────────────
+  const renderControlBar = () => {
+    if(mode==="worksheet") {
+      const isAdv = worksheetMode === "advanced";
+      return (
+        <div className="bg-white rounded-xl shadow-lg mb-8">
+          {/* Toggle switch — top left, always visible */}
+          <div className="flex items-center gap-2 px-6 pt-4 pb-0">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <div onClick={() => setWorksheetMode(isAdv ? "standard" : "advanced")}
+                className={`w-11 h-6 rounded-full transition-colors relative ${isAdv ? "bg-blue-900" : "bg-gray-300"}`}>
+                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${isAdv ? "translate-x-6" : "translate-x-1"}`}/>
+              </div>
+              <span className="text-sm font-bold text-gray-500">Advanced</span>
+            </label>
+            {isAdv && <span className="ml-auto text-sm font-bold text-gray-600">{totalAdvQuestions} questions total</span>}
+          </div>
+
+          {!isAdv ? (
+            <div className="p-6">
+              {/* Row 1: Level selector + Differentiated */}
+              <div className="flex justify-center items-center gap-6 mb-4">
+                <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm">
+                  {([["level1","Level 1","bg-green-600"],["level2","Level 2","bg-yellow-500"],["level3","Level 3","bg-red-600"]] as const).map(([val,label,col])=>(
+                    <button key={val} onClick={()=>{setDifficulty(val as DifficultyLevel);setIsDifferentiated(false);}}
+                      className={`px-5 py-2 font-bold text-base transition-colors ${!isDifferentiated&&difficulty===val?`${col} text-white`:"bg-white text-gray-500 hover:bg-gray-50"}`}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <button onClick={()=>setIsDifferentiated(!isDifferentiated)}
+                  className={`px-6 py-2 rounded-xl font-bold text-base shadow-sm border-2 transition-colors ${isDifferentiated?"bg-blue-900 text-white border-blue-900":"bg-white text-gray-600 border-gray-300 hover:border-blue-900 hover:text-blue-900"}`}>
+                  Differentiated
+                </button>
+              </div>
+              {/* Row 2: QO + Questions + Columns */}
+              <div className="flex justify-center items-center gap-6 mb-4">
+                {qoEl(isDifferentiated)}
+                <div className="flex items-center gap-3">
+                  <label className="text-base font-semibold text-gray-700">Questions:</label>
+                  <input type="number" min="1" max="24" value={numQuestions}
+                    onChange={e=>setNumQuestions(Math.max(1,Math.min(24,parseInt(e.target.value)||15)))}
+                    className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-base font-semibold text-center"/>
+                </div>
+                <div className="flex items-center gap-3">
+                  <label className="text-base font-semibold text-gray-700">Columns:</label>
+                  <input type="number" min="1" max="4" value={isDifferentiated ? 3 : numColumns}
+                    onChange={e=>{ if(!isDifferentiated) setNumColumns(Math.max(1,Math.min(4,parseInt(e.target.value)||3))); }}
+                    disabled={isDifferentiated}
+                    className={`w-20 px-4 py-2 border-2 rounded-lg text-base font-semibold text-center transition-colors ${isDifferentiated?"border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed":"border-gray-300 bg-white"}`}/>
+                </div>
+              </div>
+              {/* Row 3: Actions */}
+              <div className="flex justify-center items-center gap-4">
+                <button onClick={handleGenerateWorksheet} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
+                  <RefreshCw size={18}/> Generate
+                </button>
+                {worksheet.length>0&&<>
+                  <button onClick={()=>setShowWorksheetAnswers(!showWorksheetAnswers)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
+                    <Eye size={18}/> {showWorksheetAnswers?"Hide Answers":"Show Answers"}
+                  </button>
+                  <button onClick={()=>handlePrint(worksheet,TOOL_CONFIG.tools[currentTool].name,difficulty,isDifferentiated,numColumns,getInstruction())}
+                    className="px-6 py-2 bg-green-700 text-white rounded-xl font-bold text-base shadow-sm hover:bg-green-800 flex items-center gap-2">
+                    <Printer size={18}/> Print / PDF
+                  </button>
+                </>}
+              </div>
+            </div>
+          ) : (
+            <div className="p-6 pt-4">
+              {/* Advanced group list */}
+              {renderAdvancedWorksheet()}
+              {/* Actions */}
+              <div className="flex justify-center items-center gap-4 flex-wrap mt-4">
+                <label className="flex items-center gap-2 cursor-pointer flex-shrink-0">
+                  <div onClick={() => setAdvShuffle(s => !s)}
+                    className={`w-11 h-6 rounded-full transition-colors relative ${advShuffle ? "bg-blue-900" : "bg-gray-300"}`}>
+                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${advShuffle ? "translate-x-6" : "translate-x-1"}`}/>
+                  </div>
+                  <span className="text-sm font-bold text-gray-500">Shuffle</span>
+                </label>
+                <div className="flex items-center gap-2">
+                  <label className="text-base font-semibold text-gray-700">Columns:</label>
+                  <input type="number" min="1" max="4" value={numColumns}
+                    onChange={e=>setNumColumns(Math.max(1,Math.min(4,parseInt(e.target.value)||3)))}
+                    className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-base font-semibold text-center"/>
+                </div>
+                <button onClick={handleGenerateAdvanced}
+                  className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
+                  <RefreshCw size={18}/> Generate
+                </button>
+                {worksheet.length>0&&<>
+                  <button onClick={()=>setShowWorksheetAnswers(!showWorksheetAnswers)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
+                    <Eye size={18}/> {showWorksheetAnswers?"Hide Answers":"Show Answers"}
+                  </button>
+                  <button onClick={()=>handlePrint(worksheet,TOOL_CONFIG.tools[currentTool].name,difficulty,false,numColumns,getInstruction())}
+                    className="px-6 py-2 bg-green-700 text-white rounded-xl font-bold text-base shadow-sm hover:bg-green-800 flex items-center gap-2">
+                    <Printer size={18}/> Print / PDF
+                  </button>
+                </>}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
 
     return (
       <div className="px-5 py-4 rounded-xl" style={{backgroundColor:qBg}}>
