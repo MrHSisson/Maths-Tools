@@ -944,7 +944,8 @@ function AngleDiagram({ q, showAnswer, small = false, dataIndex }: { q: AngleQue
     // The SVG canvas is (size × size). We place the vertex at a corner with a small
     // inset so the square symbol isn't clipped. Arms extend to the far edges.
     const inset = small ? 28 : 48;   // vertex offset from corner
-    const armLen = size - inset;      // how far the arms reach
+    const margin = small ? 30 : 50;  // extra canvas space for labels
+    const armLen = size - inset - margin * 0.3; // arms don't reach the full edge
 
     // rot 0: vertex bottom-left  → corner = (inset, size-inset)  base=right(0°), top=up(270°)
     // rot 1: vertex bottom-right → corner = (size-inset, size-inset) base=up(270°), top=left(180°)
@@ -952,7 +953,7 @@ function AngleDiagram({ q, showAnswer, small = false, dataIndex }: { q: AngleQue
     // rot 3: vertex top-left     → corner = (inset, inset)       base=down(90°), top=right(0°)
     const rot = q.rotationDeg; // 0–3
     const corners = [
-      [inset, size - inset],       // rot 0: bottom-left
+      [inset, size - inset],        // rot 0: bottom-left
       [size - inset, size - inset], // rot 1: bottom-right
       [size - inset, inset],        // rot 2: top-right
       [inset, inset],               // rot 3: top-left
@@ -984,7 +985,7 @@ function AngleDiagram({ q, showAnswer, small = false, dataIndex }: { q: AngleQue
     const interiorSegs = q.segments.slice(1, -1);
 
     return (
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} {...(dataIndex !== undefined ? { "data-q-index": dataIndex } : {})}>
+      <svg width="100%" height="100%" viewBox={`${-margin} ${-margin} ${size + margin * 2} ${size + margin * 2}`} style={{ overflow: "visible" }} {...(dataIndex !== undefined ? { "data-q-index": dataIndex } : {})}>
         {/* Shaded unknown sectors */}
         {q.angles.map((ang, i) => ang.isUnknown ? (
           <path key={`sh${i}`} d={sectorPath(vx, vy, arcRUnknown, ang.arcFromDeg, ang.arcToDeg)} fill="#bfdbfe" fillOpacity="0.7" stroke="none" />
@@ -1046,7 +1047,7 @@ function AngleDiagram({ q, showAnswer, small = false, dataIndex }: { q: AngleQue
   const labelOffK = size * 0.085, labelOffU = size * 0.095;
 
   return (
-    <svg width={vbSize} height={vbSize} viewBox={`0 0 ${vbSize} ${vbSize}`} style={{ overflow: "visible" }} {...(dataIndex !== undefined ? { "data-q-index": dataIndex } : {})}>
+    <svg width="100%" height="100%" viewBox={`0 0 ${vbSize} ${vbSize}`} style={{ overflow: "visible" }} {...(dataIndex !== undefined ? { "data-q-index": dataIndex } : {})}>
       {/* Around-a-point: dashed circle guide */}
       {q.tool === "aroundPoint" && (
         <circle cx={cx} cy={cy} r={lineLen} fill="none" stroke="#e5e7eb" strokeWidth={small ? 1 : 1.5} strokeDasharray="4 4" />
@@ -1730,8 +1731,8 @@ export default function BasicAngleFacts() {
     const cellH = wsCellHeights[worksheetCellSize];
     const hasQo = !!(q as AngleQuestion & { _qo?: QOSnapshot })._qo;
     return (
-      <div className="rounded-xl shadow group" style={{ backgroundColor: bgOverride ?? stepBg, borderRadius: "12px", border: "1px solid #e5e7eb", position: "relative" }}>
-        <span style={{ position: "absolute", top: 0, left: 0, fontSize: "0.65em", fontWeight: 700, color: "#000", lineHeight: 1, padding: "5px 5px 7px 5px", borderRight: "1px solid #000", borderBottom: "1px solid #000" }}>{idx + 1})</span>
+      <div className="rounded-xl group" style={{ backgroundColor: bgOverride ?? stepBg, borderRadius: "12px", border: "1px solid #e5e7eb", overflow: "hidden", position: "relative" }}>
+        <span style={{ position: "absolute", top: 0, left: 0, fontSize: "0.65em", fontWeight: 700, color: "#000", lineHeight: 1, padding: "5px 5px 7px 5px", borderRight: "1px solid #000", borderBottom: "1px solid #000", zIndex: 5 }}>{idx + 1})</span>
         {hasQo && (
           <button onClick={() => regenQuestion(idx)} title="Regenerate this question"
             className="absolute top-1 right-1 w-6 h-6 rounded flex items-center justify-center text-gray-300 hover:text-blue-600 hover:bg-blue-50 transition-all opacity-0 group-hover:opacity-100"
@@ -1739,8 +1740,10 @@ export default function BasicAngleFacts() {
             <RefreshCw size={12} />
           </button>
         )}
-        <div style={{ height: cellH, display: "flex", alignItems: "center", justifyContent: "center", padding: "8px 8px 4px" }}>
-          <AngleDiagram q={q} showAnswer={showWorksheetAnswers} small dataIndex={idx} />
+        <div style={{ height: cellH, display: "flex", alignItems: "center", justifyContent: "center", padding: "4px", overflow: "hidden" }}>
+          <div style={{ width: "90%", height: "90%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <AngleDiagram q={q} showAnswer={showWorksheetAnswers} small dataIndex={idx} />
+          </div>
         </div>
         {showWorksheetAnswers && (
           <div className="text-base font-bold text-center pb-2" style={{ color: "#059669" }}>{q.answer}</div>
@@ -2097,7 +2100,7 @@ export default function BasicAngleFacts() {
             <button style={fontBtnStyle(canDisplayDecrease)} onClick={() => canDisplayDecrease && setDisplayFontSize(f => f - 1)}><ChevronDown size={16} color="#6b7280" /></button>
             <button style={fontBtnStyle(canDisplayIncrease)} onClick={() => canDisplayIncrease && setDisplayFontSize(f => f + 1)}><ChevronUp size={16} color="#6b7280" /></button>
           </div>
-          <div className="flex justify-center mb-4">
+          <div className="flex justify-center mb-4" style={{ width: 340, height: 340, margin: "0 auto" }}>
             <AngleDiagram q={currentQuestion} showAnswer={showAnswer} />
           </div>
           {showAnswer && (
