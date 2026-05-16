@@ -215,8 +215,8 @@ interface AngleDef {
 interface AngleQuestion {
   tool: string;
   level: string;
-  difficulty: string;       // mirrors level — used by shell diff filtering
-  key: string;              // unique key for regen deduplication
+  difficulty?: string;      // mirrors level — stamped by generateQuestion
+  key?: string;             // unique key — stamped by generateQuestion
   rotationDeg: number;
   segments: SegmentDef[];
   angles: AngleDef[];
@@ -913,8 +913,8 @@ function generateQuestion(tool: string, level: string, vars: Record<string, unkn
 
 function getUniqueQuestion(tool: string, level: string, vars: Record<string, unknown>, used: Set<string>): AngleQuestion {
   let q: AngleQuestion, attempts = 0;
-  do { q = generateQuestion(tool, level, vars); } while (used.has(q.key) && ++attempts < 100);
-  used.add(q.key);
+  do { q = generateQuestion(tool, level, vars); } while (used.has(q.key ?? `${q.id}`) && ++attempts < 100);
+  used.add(q.key ?? `${q.id}`);
   return q;
 }
 
@@ -1642,11 +1642,11 @@ export default function BasicAngleFacts() {
     const q = worksheet[idx];
     const snap = (q as AngleQuestion & { _qo?: QOSnapshot })._qo;
     if (!snap) return;
-    const existing = new Set(worksheet.map(w => w.key));
-    existing.delete(q.key);
+    const existing = new Set(worksheet.map(w => w.key ?? `${w.id}`));
+    existing.delete(q.key ?? `${q.id}`);
     for (let attempt = 0; attempt < 100; attempt++) {
       const candidate = generateQuestion(currentTool, snap.level, buildVars(currentTool, snap.level));
-      if (!existing.has(candidate.key)) {
+      if (!existing.has(candidate.key ?? `${candidate.id}`)) {
         setWorksheet(prev => prev.map((w, i) => i === idx ? stampQO(candidate, snap) : w));
         return;
       }
