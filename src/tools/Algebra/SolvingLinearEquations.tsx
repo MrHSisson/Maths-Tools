@@ -1132,6 +1132,89 @@ const EquationsQOPopoverInline = ({ level, qo, onChange }: {
   );
 };
 
+// Compact inline QO — smaller scale for the split-layout right panel
+const EquationsQOPopoverInlineCompact = ({ level, qo, onChange }: {
+  level: DifficultyLevel;
+  qo: LevelQO;
+  onChange: (updated: LevelQO) => void;
+}) => {
+  const update = <K extends keyof LevelQO>(group: K, key: string, val: boolean) => {
+    onChange({ ...qo, [group]: { ...(qo[group] as Record<string,boolean>), [key]: val } });
+  };
+
+  const CompactMultiSelect = ({ label, options, values, onChg }: {
+    label: string;
+    options: { key: string; label: string }[];
+    values: Record<string, boolean>;
+    onChg: (k: string, v: boolean) => void;
+  }) => {
+    const activeCount = options.filter(o => values[o.key]).length;
+    return (
+      <div className="flex flex-col gap-1.5 mb-4">
+        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{label}</span>
+        <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden">
+          {options.map(opt => {
+            const active = values[opt.key] ?? false;
+            const isLast = activeCount === 1 && active;
+            return (
+              <button key={opt.key}
+                onClick={() => { if (!isLast) onChg(opt.key, !active); }}
+                className={`flex-1 px-2 py-1.5 text-xs font-bold transition-colors ${active ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"} ${isLast ? "cursor-not-allowed" : "cursor-pointer"}`}>
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div>
+      {level === "level1" && (
+        <CompactMultiSelect label="Constants" options={[
+          { key: "bothPos", label: "Both +" },
+          { key: "oneNeg",  label: "One −"  },
+          { key: "bothNeg", label: "Both −" },
+        ]} values={qo.constants} onChg={(k,v) => update("constants", k, v)} />
+      )}
+      {level === "level1" && (
+        <CompactMultiSelect label="Larger x on" options={[
+          { key: "lhs", label: "LHS" },
+          { key: "rhs", label: "RHS" },
+        ]} values={qo.xSide} onChg={(k,v) => update("xSide", k, v)} />
+      )}
+      {level === "level2" && (
+        <CompactMultiSelect label="Bracket side" options={[
+          { key: "left",  label: "Left"  },
+          { key: "right", label: "Right" },
+          { key: "both",  label: "Both"  },
+        ]} values={qo.bracketSide} onChg={(k,v) => update("bracketSide", k, v)} />
+      )}
+      {level === "level2" && (
+        <CompactMultiSelect label="Constants" options={[
+          { key: "positive", label: "Addition"    },
+          { key: "negative", label: "Subtraction" },
+        ]} values={qo.constantSign} onChg={(k,v) => update("constantSign", k, v)} />
+      )}
+      {level === "level3" && (
+        <CompactMultiSelect label="Negative x terms" options={[
+          { key: "one",  label: "One −x"  },
+          { key: "both", label: "Both −x" },
+        ]} values={qo.negCount} onChg={(k,v) => update("negCount", k, v)} />
+      )}
+      <CompactMultiSelect label="Solution type" options={[
+        { key: "integer", label: "Integer" },
+        { key: "decimal", label: "Decimal" },
+      ]} values={qo.solutionType} onChg={(k,v) => update("solutionType", k, v)} />
+      <CompactMultiSelect label="Solution sign" options={[
+        { key: "positive", label: "Positive" },
+        { key: "negative", label: "Negative" },
+      ]} values={qo.solutionSign} onChg={(k,v) => update("solutionSign", k, v)} />
+    </div>
+  );
+};
+
 // ── InfoModal ─────────────────────────────────────────────────────────────────
 void (StandardQOPopover as unknown);
 void (DiffQOPopover as unknown);
@@ -1595,7 +1678,7 @@ export default function App() {
   const advDragNodeIdx = useRef<number|null>(null);
   const advListRef = useRef<HTMLDivElement>(null);
   void advDragNodeIdx; void advListRef;
-  const [advExpandedId, setAdvExpandedId] = useState<number|null>(null);
+  const [advSelectedId, setAdvSelectedId] = useState<number>(1);
   const advNextId = useRef(2);
   const totalAdvQuestions = advGroups.reduce((s,g) => s + g.count, 0);
   const [advShuffle, setAdvShuffle] = useState(false);
@@ -1747,6 +1830,23 @@ export default function App() {
 
   useEffect(()=>{ if(mode!=="worksheet") handleNewQuestion(); },[difficulty,currentTool]);
 
+  // Arrow key navigation between groups in advanced mode
+  useEffect(() => {
+    if (mode !== "worksheet" || worksheetMode !== "advanced") return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      const idx = advGroups.findIndex(g => g.id === advSelectedId);
+      if (idx === -1) return;
+      const next = e.key === "ArrowLeft" ? idx - 1 : idx + 1;
+      if (next >= 0 && next < advGroups.length) {
+        setAdvSelectedId(advGroups[next].id);
+        e.preventDefault();
+      }
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [mode, worksheetMode, advGroups, advSelectedId]);
+
   // Whiteboard / worked example — larger sizes for single question display
   const displayFontSizes = ["text-2xl","text-3xl","text-4xl","text-5xl","text-6xl","text-7xl"];
   const canDisplayIncrease = displayFontSize < displayFontSizes.length - 1;
@@ -1830,80 +1930,95 @@ export default function App() {
 
   // ── Advanced Worksheet Builder ────────────────────────────────────────────
   const renderAdvancedWorksheet = () => {
-    const lvColor = (lv: DifficultyLevel) => lv === "level1" ? "bg-green-600" : lv === "level2" ? "bg-yellow-500" : "bg-red-600";
+    const lvColor    = (lv: DifficultyLevel) => lv === "level1" ? "bg-green-600" : lv === "level2" ? "bg-yellow-500" : "bg-red-600";
+    const lvBorder   = (lv: DifficultyLevel) => lv === "level1" ? "#16a34a" : lv === "level2" ? "#eab308" : "#dc2626";
     const canAdd = advGroups.length < 10;
 
     const updateGroup = (id: number, patch: Partial<typeof advGroups[0]>) =>
       setAdvGroups(gs => gs.map(g => g.id === id ? { ...g, ...patch } : g));
 
+    const selectedGroup = advGroups.find(g => g.id === advSelectedId) ?? advGroups[0];
+
     return (
-      <div className="divide-y divide-gray-100">
-        {advGroups.map((g, idx) => {
-          const expanded = advExpandedId === g.id;
-          return (
-            <div key={g.id} className="bg-white">
-              <div className="flex items-center gap-3 px-4 py-3">
+      <div className="flex gap-3" style={{minHeight: 320}}>
 
-                {/* Row number */}
-                <span className="text-xs font-bold text-gray-300 w-4 flex-shrink-0 tabular-nums">{idx+1}</span>
+        {/* ── Left panel: group list ── */}
+        <div className="flex flex-col rounded-xl border-2 border-gray-300 overflow-hidden" style={{width: "50%", flexShrink: 0, backgroundColor:"#fff"}}>
+          <div className="flex-1 divide-y divide-gray-100 overflow-y-auto">
+            {advGroups.map((g, idx) => {
+              const isSelected = g.id === (selectedGroup?.id ?? -1);
+              return (
+                <div key={g.id}
+                  onClick={() => setAdvSelectedId(g.id)}
+                  className="flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-gray-50"
+                  style={{
+                    borderLeft: `3px solid ${isSelected ? lvBorder(g.level) : "transparent"}`,
+                    backgroundColor: isSelected ? "#f0f4ff" : undefined,
+                  }}>
 
-                {/* Level selector */}
-                <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden flex-shrink-0">
-                  {(["level1","level2","level3"] as DifficultyLevel[]).map((lv,li) => (
-                    <button key={lv}
-                      onClick={() => updateGroup(g.id, { level: lv, qo: defaultLevelQO() })}
-                      className={`px-4 py-1.5 font-bold text-sm transition-colors ${g.level === lv ? `${lvColor(lv)} text-white` : "bg-white text-gray-400 hover:bg-gray-50"}`}>
-                      Level {li+1}
+                  <span className="text-xs font-bold text-gray-300 w-4 flex-shrink-0 tabular-nums">{idx+1}</span>
+
+                  <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden flex-shrink-0" onClick={e => e.stopPropagation()}>
+                    {(["level1","level2","level3"] as DifficultyLevel[]).map((lv,li) => (
+                      <button key={lv}
+                        onClick={() => { updateGroup(g.id, { level: lv, qo: defaultLevelQO() }); setAdvSelectedId(g.id); }}
+                        className={`px-2.5 py-1 font-bold text-xs transition-colors ${g.level === lv ? `${lvColor(lv)} text-white` : "bg-white text-gray-400 hover:bg-gray-50"}`}>
+                        L{li+1}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="flex-1"/>
+
+                  <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5 flex-shrink-0" onClick={e => e.stopPropagation()}>
+                    <button onClick={() => updateGroup(g.id, { count: Math.max(1, g.count - 1) })} disabled={g.count <= 1}
+                      className="w-6 h-6 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-base leading-none">−</button>
+                    <span className="w-6 text-center text-xs font-bold text-gray-800 tabular-nums">{g.count}</span>
+                    <button onClick={() => updateGroup(g.id, { count: Math.min(24, g.count + 1) })} disabled={g.count >= 24}
+                      className="w-6 h-6 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-base leading-none">+</button>
+                  </div>
+
+                  {advGroups.length > 1 && (
+                    <button onClick={e => { e.stopPropagation(); const remaining = advGroups.filter((_,i) => i !== idx); setAdvGroups(remaining); if (g.id === advSelectedId) setAdvSelectedId(remaining[Math.max(0, idx-1)].id); }}
+                      className="w-6 h-6 rounded-full flex items-center justify-center text-gray-300 hover:bg-red-50 hover:text-red-400 transition-colors flex-shrink-0">
+                      <X size={12}/>
                     </button>
-                  ))}
+                  )}
                 </div>
+              );
+            })}
+          </div>
 
-                {/* Options */}
-                <button onClick={() => setAdvExpandedId(expanded ? null : g.id)}
-                  className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-all flex-shrink-0 ${
-                    expanded ? "bg-blue-900 border-blue-900 text-white" : "border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-900 bg-white"}`}>
-                  Options
-                </button>
+          <div className="px-4 py-3 border-t border-gray-200 flex-shrink-0">            {canAdd ? (
+              <button onClick={() => {
+                const newId = advNextId.current++;
+                setAdvGroups(g => [...g, { id: newId, level: "level1", qo: defaultLevelQO(), count: 5 }]);
+                setAdvSelectedId(newId);
+              }}
+                className="w-full py-2 rounded-lg border-2 border-dashed border-gray-200 text-xs font-bold text-gray-400 hover:border-blue-300 hover:text-blue-600 transition-colors">
+                + Add group
+              </button>
+            ) : (
+              <p className="text-center text-xs text-gray-400 font-semibold py-1">Maximum 10 groups reached</p>
+            )}
+          </div>
+        </div>
 
-                <div className="flex-1"/>
-
-                {/* Count stepper */}
-                <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 flex-shrink-0">
-                  <button onClick={() => updateGroup(g.id, { count: Math.max(1, g.count - 1) })} disabled={g.count <= 1}
-                    className="w-7 h-7 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-lg leading-none">−</button>
-                  <span className="w-7 text-center text-sm font-bold text-gray-800 tabular-nums">{g.count}</span>
-                  <button onClick={() => updateGroup(g.id, { count: Math.min(24, g.count + 1) })} disabled={g.count >= 24}
-                    className="w-7 h-7 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-lg leading-none">+</button>
-                </div>
-
-                {/* Remove */}
-                {advGroups.length > 1 && (
-                  <button onClick={() => { setAdvGroups(gs => gs.filter((_,i) => i !== idx)); if (advExpandedId === g.id) setAdvExpandedId(null); }}
-                    className="w-7 h-7 rounded-full flex items-center justify-center text-gray-300 hover:bg-red-50 hover:text-red-400 transition-colors flex-shrink-0">
-                    <X size={14}/>
-                  </button>
-                )}
-              </div>
-
-              {/* Expanded QO */}
-              {expanded && (
-                <div className="px-6 pb-5 pt-3 bg-slate-50 border-t border-slate-100">
-                  <EquationsQOPopoverInline level={g.level} qo={g.qo} onChange={u => updateGroup(g.id, { qo: u })} />
-                </div>
-              )}
-            </div>
-          );
-        })}
-
-        {/* Add group */}
-        <div className="px-4 py-3">
-          {canAdd ? (
-            <button onClick={() => setAdvGroups(g => [...g, { id: advNextId.current++, level: "level1", qo: defaultLevelQO(), count: 5 }])}
-              className="w-full py-2 rounded-lg border-2 border-dashed border-gray-200 text-sm font-bold text-gray-400 hover:border-blue-300 hover:text-blue-600 transition-colors">
-              + Add group
-            </button>
+        {/* ── Right panel: QO ── */}
+        <div className="flex-1 rounded-xl border-2 border-gray-300 px-5 py-4 overflow-y-auto" style={{backgroundColor:"#fff"}}>
+          {selectedGroup ? (
+            <>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">
+                Group {advGroups.indexOf(selectedGroup)+1} · {selectedGroup.level === "level1" ? "Level 1" : selectedGroup.level === "level2" ? "Level 2" : "Level 3"} · Options
+              </p>
+              <EquationsQOPopoverInlineCompact
+                level={selectedGroup.level}
+                qo={selectedGroup.qo}
+                onChange={u => updateGroup(selectedGroup.id, { qo: u })}
+              />
+            </>
           ) : (
-            <p className="text-center text-xs text-gray-400 font-semibold py-1">Maximum 10 groups reached</p>
+            <p className="text-sm text-gray-400 font-semibold">Select a group to configure its options.</p>
           )}
         </div>
       </div>
@@ -1925,7 +2040,18 @@ export default function App() {
               </div>
               <span className="text-sm font-bold text-gray-500">Advanced</span>
             </label>
-            {isAdv && <span className="ml-auto text-sm font-bold text-gray-600">{totalAdvQuestions} questions total</span>}
+            {isAdv && <>
+              <div className="ml-auto flex items-center gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <div onClick={() => setAdvShuffle(s => !s)}
+                    className={`w-9 h-5 rounded-full transition-colors relative ${advShuffle ? "bg-blue-900" : "bg-gray-300"}`}>
+                    <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${advShuffle ? "translate-x-4" : "translate-x-0.5"}`}/>
+                  </div>
+                  <span className="text-sm font-semibold text-gray-500">Shuffle</span>
+                </label>
+                <span className="text-sm font-bold text-gray-600">{totalAdvQuestions} questions total</span>
+              </div>
+            </>}
           </div>
 
           {!isAdv ? (
@@ -1984,13 +2110,6 @@ export default function App() {
               {renderAdvancedWorksheet()}
               {/* Actions */}
               <div className="flex justify-center items-center gap-4 flex-wrap mt-4">
-                <label className="flex items-center gap-2 cursor-pointer flex-shrink-0">
-                  <div onClick={() => setAdvShuffle(s => !s)}
-                    className={`w-11 h-6 rounded-full transition-colors relative ${advShuffle ? "bg-blue-900" : "bg-gray-300"}`}>
-                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${advShuffle ? "translate-x-6" : "translate-x-1"}`}/>
-                  </div>
-                  <span className="text-sm font-bold text-gray-500">Shuffle</span>
-                </label>
                 <div className="flex items-center gap-2">
                   <label className="text-base font-semibold text-gray-700">Columns:</label>
                   <input type="number" min="1" max="4" value={numColumns}
