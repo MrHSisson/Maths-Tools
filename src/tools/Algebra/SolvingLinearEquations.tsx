@@ -1216,6 +1216,7 @@ const EquationsQOPopoverInlineCompact = ({ level, qo, onChange }: {
 };
 
 // ── InfoModal ─────────────────────────────────────────────────────────────────
+void (EquationsQOPopoverInline as unknown);
 void (StandardQOPopover as unknown);
 void (DiffQOPopover as unknown);
 
