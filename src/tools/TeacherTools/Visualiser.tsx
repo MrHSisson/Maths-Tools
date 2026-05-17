@@ -195,7 +195,12 @@ export default function Visualiser() {
     setCamError("");
     try {
       const constraints: MediaStreamConstraints = {
-        video: deviceId ? { deviceId: { exact: deviceId } } : true,
+        video: {
+          ...(deviceId ? { deviceId: { exact: deviceId } } : {}),
+          width:     { ideal: 3840 },
+          height:    { ideal: 2160 },
+          frameRate: { ideal: 60 },
+        },
         audio: false,
       };
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -314,7 +319,7 @@ export default function Visualiser() {
 
           {/* Controls bar — styled like whiteboard control bar (qBg background, rounded-xl) */}
           {/* Note: no overflow-hidden so the camera dropdown can escape downward */}
-          <div className="px-5 py-4 rounded-xl mb-6" style={{ backgroundColor: qBg }}>
+          <div className="px-5 py-4 rounded-xl shadow-lg mb-6" style={{ backgroundColor: qBg }}>
             <div className="flex items-center justify-center gap-4 flex-wrap">
 
               {/* Camera selector — matches QO popover trigger style */}
