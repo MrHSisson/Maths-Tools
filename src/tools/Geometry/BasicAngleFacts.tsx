@@ -26,13 +26,19 @@ const TOOL_CONFIG = {
             defaultValue: "integer",
           },
           variables: [
-            { key: "useXExpression", label: "Unknown as expression (e.g. x + 20)", defaultValue: false },
+            { key: "exprCoefficient", label: "Coefficient (e.g. 2x)", defaultValue: false },
+            { key: "exprConstant", label: "Constant (e.g. x + 14)", defaultValue: false },
+            { key: "exprBoth", label: "Both (e.g. 2x + 30)", defaultValue: false },
+            { key: "showSquare", label: "Show right angle square symbol", defaultValue: true },
           ],
         },
         level2: {
           dropdown: null as null,
           variables: [
-            { key: "useXExpression", label: "Unknown as expression (e.g. x + 20)", defaultValue: false },
+            { key: "exprCoefficient", label: "Coefficient (e.g. 2x)", defaultValue: false },
+            { key: "exprConstant", label: "Constant (e.g. x + 14)", defaultValue: false },
+            { key: "exprBoth", label: "Both (e.g. 2x + 30)", defaultValue: false },
+            { key: "showSquare", label: "Show right angle square symbol", defaultValue: true },
           ],
         },
         level3: {
@@ -43,6 +49,7 @@ const TOOL_CONFIG = {
           },
           variables: [
             { key: "useCoefficients", label: "Include coefficients (e.g. 2x)", defaultValue: false },
+            { key: "showSquare", label: "Show right angle square symbol", defaultValue: true },
           ],
         },
       },
@@ -60,14 +67,18 @@ const TOOL_CONFIG = {
             defaultValue: "integer",
           },
           variables: [
-            { key: "useXExpression", label: "Unknown as expression (e.g. x + 40)", defaultValue: false },
+            { key: "exprCoefficient", label: "Coefficient (e.g. 2x)", defaultValue: false },
+            { key: "exprConstant", label: "Constant (e.g. x + 14)", defaultValue: false },
+            { key: "exprBoth", label: "Both (e.g. 2x + 30)", defaultValue: false },
             { key: "fixedRotation", label: "Always horizontal (no rotation)", defaultValue: false },
           ],
         },
         level2: {
           dropdown: null as null,
           variables: [
-            { key: "useXExpression", label: "Unknown as expression (e.g. x + 40)", defaultValue: false },
+            { key: "exprCoefficient", label: "Coefficient (e.g. 2x)", defaultValue: false },
+            { key: "exprConstant", label: "Constant (e.g. x + 14)", defaultValue: false },
+            { key: "exprBoth", label: "Both (e.g. 2x + 30)", defaultValue: false },
             { key: "fixedRotation", label: "Always horizontal (no rotation)", defaultValue: false },
           ],
         },
@@ -97,13 +108,17 @@ const TOOL_CONFIG = {
             defaultValue: "integer",
           },
           variables: [
-            { key: "useXExpression", label: "Unknown as expression (e.g. x + 40)", defaultValue: false },
+            { key: "exprCoefficient", label: "Coefficient (e.g. 2x)", defaultValue: false },
+            { key: "exprConstant", label: "Constant (e.g. x + 14)", defaultValue: false },
+            { key: "exprBoth", label: "Both (e.g. 2x + 30)", defaultValue: false },
           ],
         },
         level2: {
           dropdown: null as null,
           variables: [
-            { key: "useXExpression", label: "Unknown as expression (e.g. x + 40)", defaultValue: false },
+            { key: "exprCoefficient", label: "Coefficient (e.g. 2x)", defaultValue: false },
+            { key: "exprConstant", label: "Constant (e.g. x + 14)", defaultValue: false },
+            { key: "exprBoth", label: "Both (e.g. 2x + 30)", defaultValue: false },
           ],
         },
         level3: {
@@ -138,7 +153,7 @@ const INFO_SECTIONS = [
   {
     title: "Right Angle", icon: "⊾",
     content: [
-      { label: "Overview", detail: "Angles inside a right angle always sum to 90°. The right angle is marked with a square." },
+      { label: "Overview", detail: "Angles inside a right angle always sum to 90°. The right angle square symbol can be toggled off to reduce clutter — a text note replaces it." },
       { label: "Level 1 — Green", detail: "One interior ray splitting the right angle. One given angle, find x." },
       { label: "Level 2 — Yellow", detail: "Two interior rays. Two given angles, find x." },
       { label: "Level 3 — Red", detail: "Algebraic angles summing to 90°. Form and solve an equation." },
@@ -166,7 +181,7 @@ const INFO_SECTIONS = [
     title: "Question Options", icon: "⚙️",
     content: [
       { label: "Number Type (L1)", detail: "Toggle between integer and decimal (1 d.p.) angles." },
-      { label: "Expression (L1 & L2)", detail: "Unknown shown as x + k instead of plain x. x is always positive." },
+      { label: "Expression Types (L1 & L2)", detail: "Toggle independently: Coefficient (e.g. 2x), Constant (e.g. x + 14), Both (e.g. 2x + 30). Any combination can be active — the question picks randomly from active types." },
       { label: "Parts (L3)", detail: "Control whether the question uses 2 or 3 angle regions, or mixed." },
       { label: "Coefficients (L3)", detail: "Algebraic terms may include coefficients such as 2x or 3x." },
       { label: "Fixed Rotation (Straight Line)", detail: "When on, the straight line is always horizontal." },
@@ -199,6 +214,17 @@ function exprLabel(c: number, k: number) {
   if (k === 0) return base;
   return k > 0 ? `${base} + ${k}` : `${base} − ${Math.abs(k)}`;
 }
+
+// Pick which expression type to use based on active toggles.
+type ExprType = "coefficient" | "constant" | "both" | null;
+function pickExprType(vars: Record<string, unknown>): ExprType {
+  const active: ExprType[] = [];
+  if (vars.exprCoefficient) active.push("coefficient");
+  if (vars.exprConstant)    active.push("constant");
+  if (vars.exprBoth)        active.push("both");
+  if (active.length === 0) return null;
+  return active[Math.floor(Math.random() * active.length)];
+}
 function getQuestionBg(cs: string) { return ({ blue: "#D1E7F8", pink: "#F8D1E7", yellow: "#F8F4D1" }[cs] ?? "#ffffff"); }
 function getStepBg(cs: string)     { return ({ blue: "#B3D9F2", pink: "#F2B3D9", yellow: "#F2EBB3" }[cs] ?? "#f3f4f6"); }
 
@@ -224,6 +250,7 @@ interface AngleQuestion {
   working: { text: string }[];
   id: number;
   _qo?: unknown;            // QOSnapshot stamped by shell — do not set manually
+  showSquare?: boolean;     // right angle only — whether to draw the square symbol
 }
 
 // ─── QO SNAPSHOT (for per-cell regen) ────────────────────────────────────────
@@ -236,27 +263,29 @@ interface QOSnapshot {
 // ─── STRAIGHT LINE GENERATION ─────────────────────────────────────────────────
 function buildStraightLevel1(vars: Record<string, unknown>): AngleQuestion {
   const useDecimal = vars.numberType === "decimal";
-  const useXExpr = vars.useXExpression === true;
+  const exprType = pickExprType(vars);
+  const useXExpr = exprType !== null;
   const rotations = [0, 45, 90, 135];
   const rotationDeg = vars.fixedRotation ? 0 : rotations[rnd(0, rotations.length - 1)];
   const lineLeftDeg = rotationDeg + 180;
 
   if (useXExpr) {
-    let known: number, k: number, xVal: number, attempts = 0;
+    let known: number, k: number, c: number, xVal: number, attempts = 0;
     do {
       known = useDecimal ? rndDecimal(20, 140) : rnd(20, 140);
-      const maxK = Math.floor(180 - known - 10);
-      k = rnd(5, Math.max(5, Math.min(maxK, 60)));
-      xVal = 180 - Math.round(known) - k;
+      c = (exprType === "coefficient" || exprType === "both") ? rnd(2, 3) : 1;
+      k = (exprType === "constant" || exprType === "both") ? rnd(5, Math.max(5, Math.min(Math.floor(180 - known - 10 * c), 60))) : 0;
+      xVal = Math.round((180 - Math.round(known) - k) / c);
       attempts++;
-    } while (xVal <= 0 && attempts < 50);
-    if (xVal <= 0) { known = 90; k = 20; xVal = 70; }
+    } while ((xVal <= 0 || c * xVal + k < 5) && attempts < 50);
+    if (xVal <= 0) { known = 90; k = 0; c = 1; xVal = 90; }
     k = Math.round(k); xVal = Math.round(xVal);
     const leftIsKnown = rnd(0, 1) === 0;
-    const leftAngle = leftIsKnown ? Math.round(known) : xVal + k;
+    const leftAngle = leftIsKnown ? Math.round(known) : c * xVal + k;
     const rayDeg = lineLeftDeg + leftAngle;
-    const xLabel = `x + ${k}`;
+    const xLabel = exprLabel(c, k);
     const givenStr = `${Math.round(known)}°`;
+    const cxk = c * xVal + k;
     return {
       tool: "straightLine", level: "level1", rotationDeg,
       segments: [{ angleDeg: lineLeftDeg }, { angleDeg: rayDeg }, { angleDeg: rotationDeg }],
@@ -268,9 +297,9 @@ function buildStraightLevel1(vars: Record<string, unknown>): AngleQuestion {
       working: [
         { text: "Angles on a straight line sum to 180°" },
         { text: `${givenStr} + ${xLabel} = 180°` },
-        { text: `${xLabel} = 180° − ${givenStr}` },
-        { text: `${xLabel} = ${xVal + k}°` },
-        { text: `x = ${xVal + k} − ${k}` },
+        { text: `${xLabel} = ${180 - Math.round(known)}°` },
+        ...(k !== 0 ? [{ text: `${c === 1 ? "" : `${c}`}x = ${c * xVal}°` }] : []),
+        ...(c !== 1 ? [{ text: `x = ${c * xVal} ÷ ${c}` }] : []),
         { text: `x = ${xVal}°` },
       ],
       id: Math.floor(Math.random() * 1_000_000),
@@ -303,7 +332,8 @@ function buildStraightLevel1(vars: Record<string, unknown>): AngleQuestion {
 }
 
 function buildStraightLevel2(vars: Record<string, unknown>): AngleQuestion {
-  const useXExpr = vars.useXExpression === true;
+  const exprType = pickExprType(vars);
+  const useXExpr = exprType !== null;
   const rotations = [0, 45, 90, 135];
   const rotationDeg = vars.fixedRotation ? 0 : rotations[rnd(0, rotations.length - 1)];
   const lineLeftDeg = rotationDeg + 180;
@@ -319,9 +349,10 @@ function buildStraightLevel2(vars: Record<string, unknown>): AngleQuestion {
   const xVal = vals[unknownIdx];
 
   if (useXExpr) {
-    const k = rnd(5, Math.min(Math.max(5, xVal - 10), 50));
-    const xSolve = xVal - k;
-    const xLabel = `x + ${k}`;
+    const c = (exprType === "coefficient" || exprType === "both") ? rnd(2, 3) : 1;
+    const k = (exprType === "constant" || exprType === "both") ? rnd(5, Math.min(Math.max(5, xVal - 10 * c), 50)) : 0;
+    const xSolve = Math.round((xVal - k) / c);
+    const xLabel = exprLabel(c, k);
     const knownNums = vals.filter((_, i) => i !== unknownIdx);
     const knownSum = knownNums.reduce((s, v) => s + v, 0);
     return {
@@ -333,8 +364,9 @@ function buildStraightLevel2(vars: Record<string, unknown>): AngleQuestion {
         { text: "Angles on a straight line sum to 180°" },
         { text: `${knownNums.join("° + ")}° + ${xLabel} = 180°` },
         { text: `${knownSum}° + ${xLabel} = 180°` },
-        { text: `${xLabel} = ${xVal}°` },
-        { text: `x = ${xVal} − ${k}` },
+        { text: `${xLabel} = ${c * xSolve + k}°` },
+        ...(k !== 0 ? [{ text: `${c === 1 ? "" : `${c}`}x = ${c * xSolve}°` }] : []),
+        ...(c !== 1 ? [{ text: `x = ${c * xSolve} ÷ ${c}` }] : []),
         { text: `x = ${xSolve}°` },
       ],
       id: Math.floor(Math.random() * 1_000_000),
@@ -469,28 +501,30 @@ function rightSector(rot: number): { sectorStart: number; sectorEnd: number } {
 
 function buildRightLevel1(vars: Record<string, unknown>): AngleQuestion {
   const useDecimal = vars.numberType === "decimal";
-  const useXExpr = vars.useXExpression === true;
+  const exprType = pickExprType(vars);
+  const useXExpr = exprType !== null;
   const rot = rnd(0, 3);
   const { sectorStart, sectorEnd } = rightSector(rot);
 
   if (useXExpr) {
-    let known: number, k: number, xVal: number, attempts = 0;
+    let known: number, k: number, c: number, xVal: number, attempts = 0;
     do {
       known = useDecimal ? rndDecimal(5, 80) : rnd(5, 80);
       const maxK = Math.floor(90 - Math.round(known) - 5);
-      k = rnd(3, Math.max(3, Math.min(maxK, 40)));
-      xVal = 90 - Math.round(known) - k;
+      c = (exprType === "coefficient" || exprType === "both") ? rnd(2, 3) : 1;
+      k = (exprType === "constant" || exprType === "both") ? rnd(3, Math.max(3, Math.min(Math.floor(90 - Math.round(known) - 5 * c), 40))) : 0;
+      xVal = Math.round((90 - Math.round(known) - k) / c);
       attempts++;
     } while (xVal <= 0 && attempts < 50);
-    if (xVal <= 0) { known = 50; k = 10; xVal = 30; }
+    if (xVal <= 0) { known = 50; k = 0; c = 1; xVal = 40; }
     k = Math.round(k); xVal = Math.round(xVal);
     const knownRnd = Math.round(known);
     const leftIsKnown = rnd(0, 1) === 0;
-    const leftSpan = leftIsKnown ? knownRnd : xVal + k;
+    const leftSpan = leftIsKnown ? knownRnd : c * xVal + k;
     const rayDeg = sectorStart + leftSpan;
-    const xLabel = `x + ${k}`;
+    const xLabel = exprLabel(c, k);
     return {
-      tool: "rightAngle", level: "level1", rotationDeg: rot,
+      tool: "rightAngle", level: "level1", rotationDeg: rot, showSquare: vars.showSquare !== false,
       segments: [{ angleDeg: sectorStart }, { angleDeg: rayDeg }, { angleDeg: sectorEnd }],
       angles: [
         { label: leftIsKnown ? `${knownRnd}°` : xLabel, isUnknown: !leftIsKnown, value: leftSpan, arcFromDeg: sectorStart, arcToDeg: rayDeg, bisectorDeg: sectorStart + leftSpan / 2 },
@@ -500,9 +534,9 @@ function buildRightLevel1(vars: Record<string, unknown>): AngleQuestion {
       working: [
         { text: "Angles in a right angle sum to 90°" },
         { text: `${knownRnd}° + ${xLabel} = 90°` },
-        { text: `${xLabel} = 90° − ${knownRnd}°` },
-        { text: `${xLabel} = ${xVal + k}°` },
-        { text: `x = ${xVal + k} − ${k}` },
+        { text: `${xLabel} = ${90 - knownRnd}°` },
+        ...(k !== 0 ? [{ text: `${c === 1 ? "" : `${c}`}x = ${c * xVal}°` }] : []),
+        ...(c !== 1 ? [{ text: `x = ${c * xVal} ÷ ${c}` }] : []),
         { text: `x = ${xVal}°` },
       ],
       id: Math.floor(Math.random() * 1_000_000),
@@ -518,7 +552,7 @@ function buildRightLevel1(vars: Record<string, unknown>): AngleQuestion {
   const rayDeg = sectorStart + leftSpan;
   const xVal = missing;
   return {
-    tool: "rightAngle", level: "level1", rotationDeg: rot,
+    tool: "rightAngle", level: "level1", rotationDeg: rot, showSquare: vars.showSquare !== false,
     segments: [{ angleDeg: sectorStart }, { angleDeg: rayDeg }, { angleDeg: sectorEnd }],
     angles: [
       { label: leftIsKnown ? `${knownRnd}°` : "x", isUnknown: !leftIsKnown, value: leftSpan, arcFromDeg: sectorStart, arcToDeg: rayDeg, bisectorDeg: sectorStart + leftSpan / 2 },
@@ -535,7 +569,8 @@ function buildRightLevel1(vars: Record<string, unknown>): AngleQuestion {
 }
 
 function buildRightLevel2(vars: Record<string, unknown>): AngleQuestion {
-  const useXExpr = vars.useXExpression === true;
+  const exprType = pickExprType(vars);
+  const useXExpr = exprType !== null;
   const rot = rnd(0, 3);
   const { sectorStart, sectorEnd } = rightSector(rot);
   let a1 = rnd(10, 50), a2 = rnd(10, 50);
@@ -549,13 +584,14 @@ function buildRightLevel2(vars: Record<string, unknown>): AngleQuestion {
   const xVal = vals[unknownIdx];
 
   if (useXExpr) {
-    const k = rnd(3, Math.min(Math.max(3, xVal - 5), 30));
-    const xSolve = xVal - k;
-    const xLabel = `x + ${k}`;
+    const c = (exprType === "coefficient" || exprType === "both") ? rnd(2, 3) : 1;
+    const k = (exprType === "constant" || exprType === "both") ? rnd(3, Math.min(Math.max(3, xVal - 5 * c), 30)) : 0;
+    const xSolve = Math.round((xVal - k) / c);
+    const xLabel = exprLabel(c, k);
     const knownNums = vals.filter((_, i) => i !== unknownIdx);
     const knownSum = knownNums.reduce((s, v) => s + v, 0);
     return {
-      tool: "rightAngle", level: "level2", rotationDeg: rot,
+      tool: "rightAngle", level: "level2", rotationDeg: rot, showSquare: vars.showSquare !== false,
       segments: [{ angleDeg: sectorStart }, { angleDeg: ray1Deg }, { angleDeg: ray2Deg }, { angleDeg: sectorEnd }],
       angles: vals.map((v, i) => ({ label: i === unknownIdx ? xLabel : `${v}°`, isUnknown: i === unknownIdx, value: v, arcFromDeg: arcPairs[i][0], arcToDeg: arcPairs[i][1], bisectorDeg: sectorStart + cumulative[i] + v / 2 })),
       answer: `x = ${xSolve}°`,
@@ -563,8 +599,9 @@ function buildRightLevel2(vars: Record<string, unknown>): AngleQuestion {
         { text: "Angles in a right angle sum to 90°" },
         { text: `${knownNums.join("° + ")}° + ${xLabel} = 90°` },
         { text: `${knownSum}° + ${xLabel} = 90°` },
-        { text: `${xLabel} = ${xVal}°` },
-        { text: `x = ${xVal} − ${k}` },
+        { text: `${xLabel} = ${c * xSolve + k}°` },
+        ...(k !== 0 ? [{ text: `${c === 1 ? "" : `${c}`}x = ${c * xSolve}°` }] : []),
+        ...(c !== 1 ? [{ text: `x = ${c * xSolve} ÷ ${c}` }] : []),
         { text: `x = ${xSolve}°` },
       ],
       id: Math.floor(Math.random() * 1_000_000),
@@ -573,7 +610,7 @@ function buildRightLevel2(vars: Record<string, unknown>): AngleQuestion {
 
   const knownSum = 90 - xVal;
   return {
-    tool: "rightAngle", level: "level2", rotationDeg: rot,
+    tool: "rightAngle", level: "level2", rotationDeg: rot, showSquare: vars.showSquare !== false,
     segments: [{ angleDeg: sectorStart }, { angleDeg: ray1Deg }, { angleDeg: ray2Deg }, { angleDeg: sectorEnd }],
     angles: vals.map((v, i) => ({ label: i === unknownIdx ? "x" : `${v}°`, isUnknown: i === unknownIdx, value: v, arcFromDeg: arcPairs[i][0], arcToDeg: arcPairs[i][1], bisectorDeg: sectorStart + cumulative[i] + v / 2 })),
     answer: `x = ${xVal}°`,
@@ -610,7 +647,7 @@ function buildRightLevel3(vars: Record<string, unknown>): AngleQuestion {
     const rayDeg = sectorStart + ang1Val;
     const k2Str = k2 >= 0 ? `+ ${k2}` : `− ${Math.abs(k2)}`;
     return {
-      tool: "rightAngle", level: "level3", rotationDeg: rot,
+      tool: "rightAngle", level: "level3", rotationDeg: rot, showSquare: vars.showSquare !== false,
       segments: [{ angleDeg: sectorStart }, { angleDeg: rayDeg }, { angleDeg: sectorEnd }],
       angles: [
         { label: ang1Label, isUnknown: true, value: ang1Val, arcFromDeg: sectorStart, arcToDeg: rayDeg, bisectorDeg: sectorStart + ang1Val / 2 },
@@ -640,7 +677,7 @@ function buildRightLevel3(vars: Record<string, unknown>): AngleQuestion {
     const kStr = kV >= 0 ? `+ ${kV}` : `− ${Math.abs(kV)}`;
     const r1 = sectorStart + fixedAngle, r2 = sectorStart + fixedAngle + xV;
     return {
-      tool: "rightAngle", level: "level3", rotationDeg: rot,
+      tool: "rightAngle", level: "level3", rotationDeg: rot, showSquare: vars.showSquare !== false,
       segments: [{ angleDeg: sectorStart }, { angleDeg: r1 }, { angleDeg: r2 }, { angleDeg: sectorEnd }],
       angles: [
         { label: `${fixedAngle}°`, isUnknown: false, value: fixedAngle, arcFromDeg: sectorStart, arcToDeg: r1, bisectorDeg: sectorStart + fixedAngle / 2 },
@@ -662,7 +699,7 @@ function buildRightLevel3(vars: Record<string, unknown>): AngleQuestion {
   const r1 = sectorStart + fixedAngle, r2 = sectorStart + fixedAngle + ang2Val;
   const kStr = k >= 0 ? `+ ${k}` : `− ${Math.abs(k)}`;
   return {
-    tool: "rightAngle", level: "level3", rotationDeg: rot,
+    tool: "rightAngle", level: "level3", rotationDeg: rot, showSquare: vars.showSquare !== false,
     segments: [{ angleDeg: sectorStart }, { angleDeg: r1 }, { angleDeg: r2 }, { angleDeg: sectorEnd }],
     angles: [
       { label: `${fixedAngle}°`, isUnknown: false, value: fixedAngle, arcFromDeg: sectorStart, arcToDeg: r1, bisectorDeg: sectorStart + fixedAngle / 2 },
@@ -684,7 +721,8 @@ function buildRightLevel3(vars: Record<string, unknown>): AngleQuestion {
 // ─── AROUND A POINT GENERATION ────────────────────────────────────────────────
 function buildAroundLevel1(vars: Record<string, unknown>): AngleQuestion {
   const useDecimal = vars.numberType === "decimal";
-  const useXExpr = vars.useXExpression === true;
+  const exprType = pickExprType(vars);
+  const useXExpr = exprType !== null;
   let a1: number, a2: number;
   if (useDecimal) {
     do { a1 = rndDecimal(40, 150); a2 = rndDecimal(40, 150); } while (a1 + a2 >= 340 || a1 + a2 <= 60);
@@ -702,9 +740,10 @@ function buildAroundLevel1(vars: Record<string, unknown>): AngleQuestion {
 
   if (useXExpr) {
     const maxK = Math.max(5, Math.floor(xVal) - 10);
-    const k = rnd(5, Math.min(maxK, 60));
-    const xSolve = Math.round(xVal) - k;
-    const xLabel = `x + ${k}`;
+    const c = (exprType === "coefficient" || exprType === "both") ? rnd(2, 3) : 1;
+    const k = (exprType === "constant" || exprType === "both") ? rnd(5, Math.min(maxK, 60)) : 0;
+    const xSolve = Math.round((Math.round(xVal) - k) / c);
+    const xLabel = exprLabel(c, k);
     const knownSum = Math.round((a1 + a2) * 10) / 10;
     return {
       tool: "aroundPoint", level: "level1", rotationDeg: 0,
@@ -716,7 +755,8 @@ function buildAroundLevel1(vars: Record<string, unknown>): AngleQuestion {
         { text: `${a1}° + ${a2}° + ${xLabel} = 360°` },
         { text: `${knownSum}° + ${xLabel} = 360°` },
         { text: `${xLabel} = ${Math.round(xVal)}°` },
-        { text: `x = ${Math.round(xVal)} − ${k}` },
+        ...(k !== 0 ? [{ text: `${c === 1 ? "" : `${c}`}x = ${c * xSolve}°` }] : []),
+        ...(c !== 1 ? [{ text: `x = ${c * xSolve} ÷ ${c}` }] : []),
         { text: `x = ${xSolve}°` },
       ],
       id: Math.floor(Math.random() * 1_000_000),
@@ -741,7 +781,8 @@ function buildAroundLevel1(vars: Record<string, unknown>): AngleQuestion {
 }
 
 function buildAroundLevel2(vars: Record<string, unknown>): AngleQuestion {
-  const useXExpr = vars.useXExpression === true;
+  const exprType = pickExprType(vars);
+  const useXExpr = exprType !== null;
   let a1 = rnd(30, 120), a2 = rnd(30, 120), a3 = rnd(30, 120);
   while (a1 + a2 + a3 >= 340 || a1 + a2 + a3 <= 60) { a1 = rnd(30, 120); a2 = rnd(30, 120); a3 = rnd(30, 120); }
   const a4 = 360 - a1 - a2 - a3;
@@ -755,9 +796,10 @@ function buildAroundLevel2(vars: Record<string, unknown>): AngleQuestion {
   const cumulative = [0, a1, a1 + a2, a1 + a2 + a3];
 
   if (useXExpr) {
-    const k = rnd(3, Math.min(Math.max(3, xVal - 5), 40));
-    const xSolve = xVal - k;
-    const xLabel = `x + ${k}`;
+    const c = (exprType === "coefficient" || exprType === "both") ? rnd(2, 3) : 1;
+    const k = (exprType === "constant" || exprType === "both") ? rnd(3, Math.min(Math.max(3, xVal - 5 * c), 40)) : 0;
+    const xSolve = Math.round((xVal - k) / c);
+    const xLabel = exprLabel(c, k);
     const knownNums = vals.filter((_, i) => i !== unknownIdx);
     const knownSum = knownNums.reduce((s, v) => s + v, 0);
     return {
@@ -769,8 +811,9 @@ function buildAroundLevel2(vars: Record<string, unknown>): AngleQuestion {
         { text: "Angles around a point sum to 360°" },
         { text: `${knownNums.join("° + ")}° + ${xLabel} = 360°` },
         { text: `${knownSum}° + ${xLabel} = 360°` },
-        { text: `${xLabel} = ${xVal}°` },
-        { text: `x = ${xVal} − ${k}` },
+        { text: `${xLabel} = ${c * xSolve + k}°` },
+        ...(k !== 0 ? [{ text: `${c === 1 ? "" : `${c}`}x = ${c * xSolve}°` }] : []),
+        ...(c !== 1 ? [{ text: `x = ${c * xSolve} ÷ ${c}` }] : []),
         { text: `x = ${xSolve}°` },
       ],
       id: Math.floor(Math.random() * 1_000_000),
@@ -1018,11 +1061,13 @@ function AngleDiagram({ q, showAnswer, small = false, dataIndex }: { q: AngleQue
           return <line key={`ray${i}`} x1={vx} y1={vy} x2={px} y2={py} stroke="#1e293b" strokeWidth={small ? 2 : 3} strokeLinecap="round" />;
         })}
 
-        {/* Right angle square symbol */}
-        <polyline
-          points={`${sqP1[0]},${sqP1[1]} ${sqP2[0]},${sqP2[1]} ${sqP3[0]},${sqP3[1]}`}
-          fill="none" stroke="#1e293b" strokeWidth={small ? 1.5 : 2.5} strokeLinejoin="miter"
-        />
+        {/* Right angle square symbol — only when showSquare is true */}
+        {q.showSquare !== false && (
+          <polyline
+            points={`${sqP1[0]},${sqP1[1]} ${sqP2[0]},${sqP2[1]} ${sqP3[0]},${sqP3[1]}`}
+            fill="none" stroke="#1e293b" strokeWidth={small ? 1.5 : 2.5} strokeLinejoin="miter"
+          />
+        )}
 
         {/* Arc strokes */}
         {q.angles.map((ang, i) => {
@@ -1059,12 +1104,32 @@ function AngleDiagram({ q, showAnswer, small = false, dataIndex }: { q: AngleQue
   const margin = small ? 18 : 60;
   const vbSize = size + margin * 2;
   const cx = vbSize / 2, cy = vbSize / 2;
-  const lineLen = size * 0.46;
-  const arcRKnown = size * 0.17, arcRUnknown = size * 0.21;
-  const labelOffK = size * 0.085, labelOffU = size * 0.095;
+  const lineLen = size * 0.62;
+  const arcRKnown = size * 0.22, arcRUnknown = size * 0.28;
+  const labelOffK = size * 0.11, labelOffU = size * 0.12;
+
+  // Compute tight bounding box from arm endpoints and label positions
+  const ctrPts: number[][] = [[cx, cy]];
+  q.segments.forEach(seg => {
+    const [px, py] = pt(cx, cy, lineLen, seg.angleDeg);
+    ctrPts.push([px, py]);
+  });
+  q.angles.forEach(ang => {
+    const r = ang.isUnknown ? arcRUnknown : arcRKnown;
+    const off = ang.isUnknown ? labelOffU : labelOffK;
+    const lr = r + off + (small ? 28 : 40);
+    const [lx, ly] = pt(cx, cy, lr, ang.bisectorDeg);
+    ctrPts.push([lx - 36, ly - 16], [lx + 36, ly + 16]);
+  });
+  const cPad = small ? 10 : 18;
+  const cMinX = Math.min(...ctrPts.map(p => p[0])) - cPad;
+  const cMinY = Math.min(...ctrPts.map(p => p[1])) - cPad;
+  const cMaxX = Math.max(...ctrPts.map(p => p[0])) + cPad;
+  const cMaxY = Math.max(...ctrPts.map(p => p[1])) + cPad;
+  const cW = cMaxX - cMinX, cH = cMaxY - cMinY;
 
   return (
-    <svg width="100%" height="100%" viewBox={`0 0 ${vbSize} ${vbSize}`} style={{ overflow: "visible" }} {...(dataIndex !== undefined ? { "data-q-index": dataIndex } : {})}>
+    <svg width="100%" height="100%" viewBox={`${cMinX} ${cMinY} ${cW} ${cH}`} style={{ overflow: "visible" }} {...(dataIndex !== undefined ? { "data-q-index": dataIndex } : {})}>
       {/* Around-a-point: dashed circle guide */}
       {q.tool === "aroundPoint" && (
         <circle cx={cx} cy={cy} r={lineLen} fill="none" stroke="#e5e7eb" strokeWidth={small ? 1 : 1.5} strokeDasharray="4 4" />
@@ -1340,7 +1405,7 @@ const MenuDropdown = ({ colorScheme, setColorScheme, onClose, onOpenInfo }: {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const PRINT_COLS = 3;
-const PRINT_ROWS = 4;
+const PRINT_ROWS = 5;
 const PRINT_PER_PAGE = PRINT_COLS * PRINT_ROWS;
 
 function handlePrint(
@@ -1742,7 +1807,8 @@ export default function BasicAngleFacts() {
 
   // ── Worksheet cell ─────────────────────────────────────────────────────────
   const renderQCell = (q: AngleQuestion, idx: number, bgOverride?: string) => {
-    const cellH = CELL_H;
+    const hintH = 28; // reserved for right-angle hint row — always subtracted for right-angle questions
+    const diagramH = q.tool === "rightAngle" ? CELL_H - hintH : CELL_H;
     const hasQo = !!(q as AngleQuestion & { _qo?: QOSnapshot })._qo;
     return (
       <div className="rounded-xl group" style={{ backgroundColor: bgOverride ?? stepBg, borderRadius: "12px", border: "1px solid #e5e7eb", overflow: "hidden", position: "relative" }}>
@@ -1754,13 +1820,16 @@ export default function BasicAngleFacts() {
             <RefreshCw size={12} />
           </button>
         )}
-        <div style={{ height: cellH, display: "flex", alignItems: "center", justifyContent: "center", padding: "4px", overflow: "hidden" }}>
+        <div style={{ height: diagramH, display: "flex", alignItems: "center", justifyContent: "center", padding: "4px", overflow: "hidden" }}>
           <div style={{ width: "95%", height: "95%", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <AngleDiagram q={q} showAnswer={showWorksheetAnswers} small dataIndex={idx} />
           </div>
         </div>
         {showWorksheetAnswers && (
           <div className="text-base font-bold text-center pb-2" style={{ color: "#059669" }}>{q.answer}</div>
+        )}
+        {q.tool === "rightAngle" && (
+          <div className="text-xs text-center pb-2 text-gray-500 italic">The angle shown is a right angle</div>
         )}
       </div>
     );
@@ -2010,6 +2079,9 @@ export default function BasicAngleFacts() {
         <div style={{ width: "100%", flex: 1, minHeight: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <AngleDiagram q={currentQuestion} showAnswer={showWhiteboardAnswer} />
         </div>
+        {currentQuestion.tool === "rightAngle" && (
+          <div className="text-base italic text-gray-500 text-center pb-1">The angle shown is a right angle</div>
+        )}
       </div>
     );
 
@@ -2117,6 +2189,9 @@ export default function BasicAngleFacts() {
           <div className="flex justify-center mb-4" style={{ width: 340, height: 340, margin: "0 auto" }}>
             <AngleDiagram q={currentQuestion} showAnswer={showAnswer} />
           </div>
+          {currentQuestion.tool === "rightAngle" && (
+            <div className="text-base italic text-gray-500 text-center mb-4">The angle shown is a right angle</div>
+          )}
           {showAnswer && (
             <>
               <div className="space-y-4 mt-4">
