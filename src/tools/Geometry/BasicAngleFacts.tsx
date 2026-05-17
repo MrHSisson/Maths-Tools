@@ -320,7 +320,6 @@ function buildStraightLevel1(vars: Record<string, unknown>): AngleQuestion {
     const rayDeg = lineLeftDeg + leftAngle;
     const xLabel = exprLabel(c, k);
     const givenStr = `${Math.round(known)}°`;
-    const cxk = c * xVal + k;
     return {
       tool: "straightLine", level: "level1", rotationDeg,
       segments: [{ angleDeg: lineLeftDeg }, { angleDeg: rayDeg }, { angleDeg: rotationDeg }],
@@ -545,7 +544,6 @@ function buildRightLevel1(vars: Record<string, unknown>): AngleQuestion {
     let known: number, k: number, c: number, xVal: number, attempts = 0;
     do {
       known = useDecimal ? rndDecimal(5, 80) : rnd(5, 80);
-      const maxK = Math.floor(90 - Math.round(known) - 5);
       c = (exprType === "coefficient" || exprType === "both") ? rnd(2, 3) : 1;
       k = (exprType === "constant" || exprType === "both") ? rnd(3, Math.max(3, Math.min(Math.floor(90 - Math.round(known) - 5 * c), 40))) : 0;
       xVal = Math.round((90 - Math.round(known) - k) / c);
