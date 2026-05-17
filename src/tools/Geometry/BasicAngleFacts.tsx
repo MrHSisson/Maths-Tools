@@ -1289,7 +1289,7 @@ function AngleDiagram({ q, showAnswer, small = false, dataIndex }: { q: AngleQue
           const lr = r + off + (small ? 6 : 10);
           const [lx, ly] = pt(vx, vy, lr, ang.bisectorDeg);
           const label = ang.isUnknown && !showAnswer ? ang.label : ang.isUnknown ? `${ang.value}°` : ang.label;
-          const tw = estTW(label, fontSize), th = fontSize * 1.3;
+          const tw = estTW(label, fontSize);
           return (
             <g key={`lbl${i}`}>
               <rect x={lx - tw / 2 - 5} y={ly - fontSize * 0.8} width={tw + 10} height={fontSize * 1.4} rx={3} fill="white" fillOpacity="0.9" stroke="#9ca3af" strokeWidth={0.5} />
@@ -1372,7 +1372,7 @@ function AngleDiagram({ q, showAnswer, small = false, dataIndex }: { q: AngleQue
         const lr = r + off + (small ? 8 : 12);
         const [lx, ly] = pt(cx, cy, lr, ang.bisectorDeg);
         const label = ang.isUnknown && !showAnswer ? ang.label : ang.isUnknown ? `${ang.value}°` : ang.label;
-        const tw = estTW(label, fontSize), th = fontSize * 1.3;
+        const tw = estTW(label, fontSize);
         return (
           <g key={`lbl${i}`}>
             <rect x={lx - tw / 2 - 5} y={ly - fontSize * 0.8} width={tw + 10} height={fontSize * 1.4} rx={3} fill="white" fillOpacity="0.85" stroke="#9ca3af" strokeWidth={0.5} />
