@@ -395,20 +395,16 @@ function r1dpStr(n: number): string { return Number.isInteger(n) ? `${n}` : `${r
 
 function niceXVal(minVal: number, maxVal: number, useDecimal: boolean): number {
   if (!useDecimal) return rnd(Math.ceil(minVal), Math.floor(maxVal));
-  // Build pool of tenths, quarters and thirds in range
+  // Build pool of 0.1 and 0.25 multiples only — no thirds (they produce ugly division)
   const pool: number[] = [];
+  // Tenths
   for (let n = Math.ceil(minVal * 10); n <= Math.floor(maxVal * 10); n++) {
-    const v = Math.round(n * 10) / 100; // tenths
-    pool.push(v);
+    pool.push(Math.round(n) / 10);
   }
-  // Also add quarters and thirds
+  // Quarters (0.25 increments)
   for (let n = Math.ceil(minVal * 4); n <= Math.floor(maxVal * 4); n++) {
-    const v = Math.round(n * 25) / 100; // quarters: 0.25, 0.5, 0.75...
-    if (v >= minVal && v <= maxVal) pool.push(v);
-  }
-  for (let n = Math.ceil(minVal * 3); n <= Math.floor(maxVal * 3); n++) {
-    const v = Math.round((n / 3) * 10) / 10; // thirds rounded to 1dp
-    if (v >= minVal && v <= maxVal) pool.push(v);
+    const v = Math.round(n * 25) / 100;
+    if (!pool.includes(v)) pool.push(v);
   }
   if (pool.length === 0) return rnd(Math.ceil(minVal), Math.floor(maxVal));
   return pool[Math.floor(Math.random() * pool.length)];
@@ -469,39 +465,51 @@ function buildStraightLevel1(vars: Record<string, unknown>): AngleQuestion {
   if (useXExpr) {
     let known = 0, k = 0, c = 1, xVal = 0, attempts = 0;
     do {
-      known = useDecimal ? rndDecimal(20, 140) : rnd(20, 140);
-      const knownInt = Math.round(known);
-      const remainder = 180 - knownInt;
+      // Always use an integer known angle so k stays integer
+      known = rnd(20, 140);
+      const remainder = 180 - known;
       c = (exprType === "coefficient" || exprType === "both") ? rnd(2, 4) : 1;
-      // Pick xVal first, then derive k
-      const xMin = 5 / c, xMax = (remainder - (exprType === "coefficient" ? 0 : 5)) / c;
-      if (xMax < xMin) { attempts++; continue; }
-      xVal = niceXVal(xMin, xMax, useDecimal);
-      k = exprType === "coefficient" ? 0 : r1dp(remainder - c * xVal);
-      // Validate k fits exprType
-      if (exprType === "constant" && k <= 0) { attempts++; continue; }
-      if (exprType === "both" && k === 0) { attempts++; continue; }
-      if (c * xVal + k !== remainder) { attempts++; continue; }
-      attempts++;
-    } while ((xVal <= 0 || c * xVal + k < 5) && attempts < 80);
-    if (xVal <= 0) { known = 90; k = 0; c = 1; xVal = 90; k = 0; }
+      // k is always integer; pick it first, then derive xVal
+      if (exprType === "coefficient") {
+        k = 0;
+        const xMin = 5 / c, xMax = (remainder - 1) / c;
+        if (xMax < xMin) { attempts++; continue; }
+        xVal = niceXVal(xMin, xMax, useDecimal);
+      } else {
+        // constant or both: pick integer k, then xVal from clean pool
+        const kMin = exprType === "constant" ? 1 : 1;
+        const kMax = Math.floor(remainder * 0.6);
+        if (kMax < kMin) { attempts++; continue; }
+        k = rnd(kMin, kMax);
+        const xMin = 5 / c, xMax = (remainder - k) / c;
+        if (xMax < xMin) { attempts++; continue; }
+        xVal = niceXVal(xMin, xMax, useDecimal);
+      }
+      if (xVal <= 0 || c * xVal + k < 5) { attempts++; continue; }
+      // Verify: known + c*xVal + k should equal 180 — adjust known to guarantee it
+      const actualAngleExpr = Math.round((c * xVal + k) * 10) / 10;
+      known = Math.round((180 - actualAngleExpr) * 10) / 10;
+      if (known < 5 || known > 170) { attempts++; continue; }
+      break;
+    } while (++attempts < 80);
+    if (attempts >= 80) { known = 90; k = 0; c = 1; xVal = 90; }
     const leftIsKnown = rnd(0, 1) === 0;
-    const leftAngle = leftIsKnown ? Math.round(known) : c * xVal + k;
+    const leftAngle = leftIsKnown ? known : c * xVal + k;
     const rayDeg = lineLeftDeg + leftAngle;
     const xLabel = exprLabel(c, k);
-    const givenStr = `${Math.round(known)}°`;
+    const givenStr = `${known}°`;
     return {
       tool: "straightLine", level: "level1", rotationDeg,
       segments: [{ angleDeg: lineLeftDeg }, { angleDeg: rayDeg }, { angleDeg: rotationDeg }],
       angles: [
-        { label: leftIsKnown ? `${Math.round(known)}°` : xLabel, isUnknown: !leftIsKnown, value: leftAngle, arcFromDeg: lineLeftDeg, arcToDeg: rayDeg, bisectorDeg: lineLeftDeg + leftAngle / 2 },
-        { label: leftIsKnown ? xLabel : `${Math.round(known)}°`, isUnknown: leftIsKnown, value: 180 - leftAngle, arcFromDeg: rayDeg, arcToDeg: rotationDeg + 360, bisectorDeg: lineLeftDeg + leftAngle + (180 - leftAngle) / 2 },
+        { label: leftIsKnown ? `${known}°` : xLabel, isUnknown: !leftIsKnown, value: leftAngle, arcFromDeg: lineLeftDeg, arcToDeg: rayDeg, bisectorDeg: lineLeftDeg + leftAngle / 2 },
+        { label: leftIsKnown ? xLabel : `${known}°`, isUnknown: leftIsKnown, value: 180 - leftAngle, arcFromDeg: rayDeg, arcToDeg: rotationDeg + 360, bisectorDeg: lineLeftDeg + leftAngle + (180 - leftAngle) / 2 },
       ],
       answer: `x = ${xVal}°`,
       working: [
         { text: "Angles on a straight line sum to 180°" },
         { text: `${givenStr} + ${xLabel} = 180°` },
-        { text: `${xLabel} = ${r1dpStr(180 - Math.round(known))}°` },
+        { text: `${xLabel} = ${r1dpStr(180 - known)}°` },
         ...(k !== 0 ? [{ text: `${c === 1 ? "" : `${c}`}x = ${r1dpStr(c * xVal)}°` }] : []),
         ...(c !== 1 ? [{ text: `x = ${r1dpStr(c * xVal)} ÷ ${c}` }] : []),
         { text: `x = ${xVal}°` },
@@ -510,10 +518,11 @@ function buildStraightLevel1(vars: Record<string, unknown>): AngleQuestion {
     };
   }
 
-  const knownAngle = useDecimal ? rndDecimal(15, 165) : rnd(15, 165);
-  let known = useDecimal ? Math.round(knownAngle * 10) / 10 : Math.round(knownAngle);
-  let missing = useDecimal ? Math.round((180 - known) * 10) / 10 : 180 - known;
-  if (missing < 10 || missing > 170) { known = 90; missing = 90; }
+  // Pick xVal (the answer) from clean pool first so division is never needed
+  const xVal_raw = useDecimal ? niceXVal(15, 165, true) : rnd(15, 165);
+  let known = useDecimal ? Math.round((180 - xVal_raw) * 10) / 10 : 180 - xVal_raw;
+  let missing = xVal_raw;
+  if (missing < 10 || missing > 170 || known < 10 || known > 170) { known = 90; missing = 90; }
   const leftIsKnown = rnd(0, 1) === 0;
   const leftAngle = leftIsKnown ? known : missing;
   const rayDeg = lineLeftDeg + leftAngle;
@@ -721,36 +730,45 @@ function buildRightLevel1(vars: Record<string, unknown>): AngleQuestion {
   if (useXExpr) {
     let known = 0, k = 0, c = 1, xVal = 0, attempts = 0;
     do {
-      known = useDecimal ? rndDecimal(5, 70) : rnd(5, 70);
-      const knownInt = Math.round(known);
-      const remainder = 90 - knownInt;
+      known = rnd(5, 70); // always integer
+      const remainder = 90 - known;
       c = (exprType === "coefficient" || exprType === "both") ? rnd(2, 4) : 1;
-      const xMin = 5 / c, xMax = (remainder - (exprType === "coefficient" ? 0 : 5)) / c;
-      if (xMax < xMin) { k = 0; xVal = 0; attempts++; continue; }
-      xVal = niceXVal(xMin, xMax, useDecimal);
-      k = exprType === "coefficient" ? 0 : r1dp(remainder - c * xVal);
-      if (exprType === "constant" && k <= 0) { xVal = 0; attempts++; continue; }
-      if (exprType === "both" && k === 0) { xVal = 0; attempts++; continue; }
-      attempts++;
-    } while ((xVal <= 0 || c * xVal + k < 5) && attempts < 80);
-    if (xVal <= 0) { known = 50; k = 0; c = 1; xVal = 40; }
-    const knownRnd = Math.round(known);
+      if (exprType === "coefficient") {
+        k = 0;
+        const xMin = 5 / c, xMax = (remainder - 1) / c;
+        if (xMax < xMin) { attempts++; continue; }
+        xVal = niceXVal(xMin, xMax, useDecimal);
+      } else {
+        const kMax = Math.floor(remainder * 0.6);
+        if (kMax < 1) { attempts++; continue; }
+        k = rnd(1, kMax);
+        const xMin = 5 / c, xMax = (remainder - k) / c;
+        if (xMax < xMin) { attempts++; continue; }
+        xVal = niceXVal(xMin, xMax, useDecimal);
+      }
+      if (xVal <= 0 || c * xVal + k < 3) { attempts++; continue; }
+      const actualAngleExpr = Math.round((c * xVal + k) * 10) / 10;
+      known = 90 - actualAngleExpr;
+      if (known < 3 || known > 87) { attempts++; continue; }
+      break;
+    } while (++attempts < 80);
+    if (attempts >= 80) { known = 50; k = 0; c = 1; xVal = 40; }
     const leftIsKnown = rnd(0, 1) === 0;
-    const leftSpan = leftIsKnown ? knownRnd : c * xVal + k;
+    const leftSpan = leftIsKnown ? known : c * xVal + k;
     const rayDeg = sectorStart + leftSpan;
     const xLabel = exprLabel(c, k);
     return {
       tool: "rightAngle", level: "level1", rotationDeg: rot, showSquare: vars.showSquare !== false,
       segments: [{ angleDeg: sectorStart }, { angleDeg: rayDeg }, { angleDeg: sectorEnd }],
       angles: [
-        { label: leftIsKnown ? `${knownRnd}°` : xLabel, isUnknown: !leftIsKnown, value: leftSpan, arcFromDeg: sectorStart, arcToDeg: rayDeg, bisectorDeg: sectorStart + leftSpan / 2 },
-        { label: leftIsKnown ? xLabel : `${knownRnd}°`, isUnknown: leftIsKnown, value: 90 - leftSpan, arcFromDeg: rayDeg, arcToDeg: sectorEnd, bisectorDeg: sectorStart + leftSpan + (90 - leftSpan) / 2 },
+        { label: leftIsKnown ? `${known}°` : xLabel, isUnknown: !leftIsKnown, value: leftSpan, arcFromDeg: sectorStart, arcToDeg: rayDeg, bisectorDeg: sectorStart + leftSpan / 2 },
+        { label: leftIsKnown ? xLabel : `${known}°`, isUnknown: leftIsKnown, value: 90 - leftSpan, arcFromDeg: rayDeg, arcToDeg: sectorEnd, bisectorDeg: sectorStart + leftSpan + (90 - leftSpan) / 2 },
       ],
       answer: `x = ${xVal}°`,
       working: [
         { text: "Angles in a right angle sum to 90°" },
-        { text: `${knownRnd}° + ${xLabel} = 90°` },
-        { text: `${xLabel} = ${r1dpStr(90 - knownRnd)}°` },
+        { text: `${known}° + ${xLabel} = 90°` },
+        { text: `${xLabel} = ${r1dpStr(90 - known)}°` },
         ...(k !== 0 ? [{ text: `${c === 1 ? "" : `${c}`}x = ${r1dpStr(c * xVal)}°` }] : []),
         ...(c !== 1 ? [{ text: `x = ${r1dpStr(c * xVal)} ÷ ${c}` }] : []),
         { text: `x = ${xVal}°` },
@@ -759,10 +777,11 @@ function buildRightLevel1(vars: Record<string, unknown>): AngleQuestion {
     };
   }
 
-  const known = useDecimal ? rndDecimal(5, 80) : rnd(5, 80);
-  const knownRnd = useDecimal ? Math.round(known * 10) / 10 : Math.round(known);
-  let missing = useDecimal ? Math.round((90 - knownRnd) * 10) / 10 : 90 - knownRnd;
-  if (missing < 3 || missing > 87) { missing = 45; }
+  // Pick xVal first from clean pool, derive known angles from it
+  const xVal_raw = useDecimal ? niceXVal(5, 80, true) : rnd(5, 80);
+  const knownRnd = useDecimal ? Math.round((90 - xVal_raw) * 10) / 10 : 90 - xVal_raw;
+  let missing = xVal_raw;
+  if (missing < 3 || missing > 87 || knownRnd < 3) { missing = 45; }
   const leftIsKnown = rnd(0, 1) === 0;
   const leftSpan = leftIsKnown ? knownRnd : missing;
   const rayDeg = sectorStart + leftSpan;
@@ -807,22 +826,44 @@ function buildRightLevel2(vars: Record<string, unknown>): AngleQuestion {
 
   if (useXExpr) {
     const c = (exprType === "coefficient" || exprType === "both") ? rnd(2, 4) : 1;
-    const xSolveMax = Math.floor((xVal - (exprType === "coefficient" ? 0 : 5)) / c);
-    const xSolve = xSolveMax > 1 ? niceXVal(1, xSolveMax, useDecimal) : Math.max(0.5, xVal / c);
-    const k = exprType === "coefficient" ? 0 : r1dp(xVal - c * xSolve);
+    let xSolve = 0, k = 0, xAngle = 0, attempts = 0;
+    do {
+      if (exprType === "coefficient") {
+        k = 0;
+        const xMin = 5 / c, xMax = (90 - a1 - a2 - 1) / c;
+        if (xMax < xMin) { attempts++; continue; }
+        xSolve = niceXVal(xMin, xMax, useDecimal);
+      } else {
+        const kMax = Math.floor((90 - a1 - a2) * 0.6);
+        if (kMax < 1) { attempts++; continue; }
+        k = rnd(1, kMax);
+        const xMin = 5 / c, xMax = (90 - a1 - a2 - k) / c;
+        if (xMax < xMin) { attempts++; continue; }
+        xSolve = niceXVal(xMin, xMax, useDecimal);
+      }
+      xAngle = Math.round((c * xSolve + k) * 10) / 10;
+      if (xAngle < 3) { attempts++; continue; }
+      break;
+    } while (++attempts < 80);
+    if (attempts >= 80) { k = 0; xSolve = a3; xAngle = a3; }
+    const knownSum = Math.round((90 - xAngle) * 10) / 10;
+    const a1r = Math.round(knownSum / 2), a2r = knownSum - a1r;
+    const ray1r = sectorStart + a1r, ray2r = sectorStart + a1r + a2r;
     const xLabel = exprLabel(c, k);
-    const knownNums = vals.filter((_, i) => i !== unknownIdx);
-    const knownSum = knownNums.reduce((s, v) => s + v, 0);
     return {
       tool: "rightAngle", level: "level2", rotationDeg: rot, showSquare: vars.showSquare !== false,
-      segments: [{ angleDeg: sectorStart }, { angleDeg: ray1Deg }, { angleDeg: ray2Deg }, { angleDeg: sectorEnd }],
-      angles: vals.map((v, i) => ({ label: i === unknownIdx ? xLabel : `${v}°`, isUnknown: i === unknownIdx, value: v, arcFromDeg: arcPairs[i][0], arcToDeg: arcPairs[i][1], bisectorDeg: sectorStart + cumulative[i] + v / 2 })),
+      segments: [{ angleDeg: sectorStart }, { angleDeg: ray1r }, { angleDeg: ray2r }, { angleDeg: sectorEnd }],
+      angles: [
+        { label: `${a1r}°`, isUnknown: false, value: a1r, arcFromDeg: sectorStart, arcToDeg: ray1r, bisectorDeg: sectorStart + a1r / 2 },
+        { label: `${a2r}°`, isUnknown: false, value: a2r, arcFromDeg: ray1r, arcToDeg: ray2r, bisectorDeg: sectorStart + a1r + a2r / 2 },
+        { label: xLabel, isUnknown: true, value: xAngle, arcFromDeg: ray2r, arcToDeg: sectorEnd, bisectorDeg: sectorStart + a1r + a2r + xAngle / 2 },
+      ],
       answer: `x = ${xSolve}°`,
       working: [
         { text: "Angles in a right angle sum to 90°" },
-        { text: `${knownNums.join("° + ")}° + ${xLabel} = 90°` },
+        { text: `${a1r}° + ${a2r}° + ${xLabel} = 90°` },
         { text: `${knownSum}° + ${xLabel} = 90°` },
-        { text: `${xLabel} = ${r1dpStr(c * xSolve + k)}°` },
+        { text: `${xLabel} = ${r1dpStr(xAngle)}°` },
         ...(k !== 0 ? [{ text: `${c === 1 ? "" : `${c}`}x = ${r1dpStr(c * xSolve)}°` }] : []),
         ...(c !== 1 ? [{ text: `x = ${r1dpStr(c * xSolve)} ÷ ${c}` }] : []),
         { text: `x = ${xSolve}°` },
@@ -946,9 +987,15 @@ function buildAroundLevel1(vars: Record<string, unknown>): AngleQuestion {
   const useDecimal = vars.numberType === "decimal";
   const exprType = pickExprType(vars);
   const useXExpr = exprType !== null;
+  // Pick xVal (a3, the answer) from clean pool first; derive a1+a2 sum from it
   let a1: number, a2: number;
+  const xVal_raw = useDecimal ? niceXVal(20, 280, true) : rnd(40, 280);
+  const remaining = useDecimal ? Math.round((360 - xVal_raw) * 10) / 10 : 360 - xVal_raw;
   if (useDecimal) {
-    do { a1 = rndDecimal(40, 150); a2 = rndDecimal(40, 150); } while (a1 + a2 >= 340 || a1 + a2 <= 60);
+    const half = Math.round(remaining / 2 * 10) / 10;
+    const spread = niceXVal(10, Math.min(half - 10, 100), true);
+    a1 = Math.round((half - spread) * 10) / 10;
+    a2 = Math.round((half + spread) * 10) / 10;
   } else {
     do { a1 = rnd(40, 150); a2 = rnd(40, 150); } while (a1 + a2 >= 340 || a1 + a2 <= 60);
   }
@@ -962,25 +1009,43 @@ function buildAroundLevel1(vars: Record<string, unknown>): AngleQuestion {
   const cumulative = [0, a1, a1 + a2];
 
   if (useXExpr) {
-    // xVal here is the actual angle value (a3). Derive k from xVal and c.
-    const xAngle = useDecimal ? (Math.round(xVal * 10) / 10) : Math.round(xVal);
     const c = (exprType === "coefficient" || exprType === "both") ? rnd(2, 4) : 1;
-    const xSolveMin = 5 / c, xSolveMax = (xAngle - (exprType === "coefficient" ? 0 : 5)) / c;
-    let xSolve = xSolveMax > xSolveMin ? niceXVal(xSolveMin, xSolveMax, useDecimal) : Math.max(1, xAngle / c);
-    const k = exprType === "coefficient" ? 0 : r1dp(xAngle - c * xSolve);
-    if (xSolve <= 0) { xSolve = 5; }
+    let xSolve = 0, k = 0, xAngle = 0, attempts = 0;
+    const knownSumBase = Math.round(a1 + a2); // integer sum of known angles
+    do {
+      if (exprType === "coefficient") {
+        k = 0;
+        const xMin = 20 / c, xMax = (360 - knownSumBase - 1) / c;
+        if (xMax < xMin) { attempts++; continue; }
+        xSolve = niceXVal(xMin, xMax, useDecimal);
+      } else {
+        const kMax = Math.floor((360 - knownSumBase) * 0.4);
+        if (kMax < 1) { attempts++; continue; }
+        k = rnd(1, kMax);
+        const xMin = 20 / c, xMax = (360 - knownSumBase - k) / c;
+        if (xMax < xMin) { attempts++; continue; }
+        xSolve = niceXVal(xMin, xMax, useDecimal);
+      }
+      xAngle = Math.round((c * xSolve + k) * 10) / 10;
+      if (xAngle < 20) { attempts++; continue; }
+      break;
+    } while (++attempts < 80);
+    if (attempts >= 80) { k = 0; xSolve = a3; xAngle = a3; }
     const xLabel = exprLabel(c, k);
-    const knownSum = Math.round((a1 + a2) * 10) / 10;
     return {
       tool: "aroundPoint", level: "level1", rotationDeg: 0,
       segments: [{ angleDeg: ray0 }, { angleDeg: ray1 }, { angleDeg: ray2 }],
-      angles: vals.map((v, i) => ({ label: i === unknownIdx ? xLabel : `${v}°`, isUnknown: i === unknownIdx, value: v, arcFromDeg: arcPairs[i][0], arcToDeg: arcPairs[i][1], bisectorDeg: startDeg + cumulative[i] + v / 2 })),
+      angles: [
+        { label: `${Math.round(a1)}°`, isUnknown: false, value: a1, arcFromDeg: arcPairs[0][0], arcToDeg: arcPairs[0][1], bisectorDeg: startDeg + a1 / 2 },
+        { label: `${Math.round(a2)}°`, isUnknown: false, value: a2, arcFromDeg: arcPairs[1][0], arcToDeg: arcPairs[1][1], bisectorDeg: startDeg + a1 + a2 / 2 },
+        { label: xLabel, isUnknown: true, value: xAngle, arcFromDeg: arcPairs[2][0], arcToDeg: arcPairs[2][1], bisectorDeg: startDeg + a1 + a2 + xAngle / 2 },
+      ],
       answer: `x = ${xSolve}°`,
       working: [
         { text: "Angles around a point sum to 360°" },
-        { text: `${a1}° + ${a2}° + ${xLabel} = 360°` },
-        { text: `${knownSum}° + ${xLabel} = 360°` },
-        { text: `${xLabel} = ${Math.round(xVal)}°` },
+        { text: `${Math.round(a1)}° + ${Math.round(a2)}° + ${xLabel} = 360°` },
+        { text: `${knownSumBase}° + ${xLabel} = 360°` },
+        { text: `${xLabel} = ${r1dpStr(xAngle)}°` },
         ...(k !== 0 ? [{ text: `${c === 1 ? "" : `${c}`}x = ${r1dpStr(c * xSolve)}°` }] : []),
         ...(c !== 1 ? [{ text: `x = ${r1dpStr(c * xSolve)} ÷ ${c}` }] : []),
         { text: `x = ${xSolve}°` },
@@ -1030,22 +1095,47 @@ function buildAroundLevel2(vars: Record<string, unknown>): AngleQuestion {
 
   if (useXExpr) {
     const c = (exprType === "coefficient" || exprType === "both") ? rnd(2, 4) : 1;
-    const xSolveMax = Math.floor((xVal - (exprType === "coefficient" ? 0 : 5)) / c);
-    const xSolve = xSolveMax > 1 ? niceXVal(1, xSolveMax, useDecimal) : Math.max(0.5, xVal / c);
-    const k = exprType === "coefficient" ? 0 : r1dp(xVal - c * xSolve);
-    const xLabel = exprLabel(c, k);
     const knownNums = vals.filter((_, i) => i !== unknownIdx);
-    const knownSum = knownNums.reduce((s, v) => s + v, 0);
+    const knownSumBase = knownNums.reduce((s, v) => s + Math.round(v), 0);
+    let xSolve = 0, k = 0, xAngle = 0, attempts = 0;
+    do {
+      if (exprType === "coefficient") {
+        k = 0;
+        const xMin = 20 / c, xMax = (360 - knownSumBase - 1) / c;
+        if (xMax < xMin) { attempts++; continue; }
+        xSolve = niceXVal(xMin, xMax, useDecimal);
+      } else {
+        const kMax = Math.floor((360 - knownSumBase) * 0.4);
+        if (kMax < 1) { attempts++; continue; }
+        k = rnd(1, kMax);
+        const xMin = 20 / c, xMax = (360 - knownSumBase - k) / c;
+        if (xMax < xMin) { attempts++; continue; }
+        xSolve = niceXVal(xMin, xMax, useDecimal);
+      }
+      xAngle = Math.round((c * xSolve + k) * 10) / 10;
+      if (xAngle < 20) { attempts++; continue; }
+      break;
+    } while (++attempts < 80);
+    if (attempts >= 80) { k = 0; xSolve = xVal; xAngle = xVal; }
+    const xLabel = exprLabel(c, k);
+    // Rebuild integer known angles summing to knownSumBase
+    const knownAngles = knownNums.map(v => Math.round(v));
+    let cumDeg2 = 0;
+    const rayDegs2 = [startDeg, ...knownAngles.map(v => { cumDeg2 += v; return startDeg + cumDeg2; })];
+    const ray_x_start = startDeg + knownSumBase;
     return {
       tool: "aroundPoint", level: "level2", rotationDeg: 0,
-      segments: rayDegs.map(d => ({ angleDeg: d })),
-      angles: vals.map((v, i) => ({ label: i === unknownIdx ? xLabel : `${v}°`, isUnknown: i === unknownIdx, value: v, arcFromDeg: arcPairs[i][0], arcToDeg: arcPairs[i][1], bisectorDeg: startDeg + cumulative[i] + v / 2 })),
+      segments: [...rayDegs2.map(d => ({ angleDeg: d }))],
+      angles: [
+        ...knownAngles.map((v, i) => ({ label: `${v}°`, isUnknown: false, value: v, arcFromDeg: rayDegs2[i], arcToDeg: rayDegs2[i + 1], bisectorDeg: rayDegs2[i] + v / 2 })),
+        { label: xLabel, isUnknown: true, value: xAngle, arcFromDeg: ray_x_start, arcToDeg: startDeg + 360, bisectorDeg: ray_x_start + xAngle / 2 },
+      ],
       answer: `x = ${xSolve}°`,
       working: [
         { text: "Angles around a point sum to 360°" },
-        { text: `${knownNums.join("° + ")}° + ${xLabel} = 360°` },
-        { text: `${knownSum}° + ${xLabel} = 360°` },
-        { text: `${xLabel} = ${r1dpStr(c * xSolve + k)}°` },
+        { text: `${knownAngles.join("° + ")}° + ${xLabel} = 360°` },
+        { text: `${knownSumBase}° + ${xLabel} = 360°` },
+        { text: `${xLabel} = ${r1dpStr(xAngle)}°` },
         ...(k !== 0 ? [{ text: `${c === 1 ? "" : `${c}`}x = ${r1dpStr(c * xSolve)}°` }] : []),
         ...(c !== 1 ? [{ text: `x = ${r1dpStr(c * xSolve)} ÷ ${c}` }] : []),
         { text: `x = ${xSolve}°` },
