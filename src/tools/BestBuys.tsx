@@ -765,7 +765,7 @@ const getStepBg    = (cs:string) => ({blue:"#B3D9F2",pink:"#F2B3D9",yellow:"#F2E
 // ── QuestionDisplay — renders any question's main display ─────────────────────
 
 const QuestionDisplay = ({ q, cls }: { q: AnyQuestion; cls: string }) => {
-  const anyQ = q as any;
+  const anyQ = q as any; // cast once — AnyQuestion is worded-only in this tool so kind checks need any
   if (anyQ.kind === "frac") {
     const parts = anyQ.latex.split(/\\text\{ of \}/);
     const fracLatex = parts[0].trim();
@@ -776,19 +776,17 @@ const QuestionDisplay = ({ q, cls }: { q: AnyQuestion; cls: string }) => {
       </div>
     );
   }
-  if ((anyQ as any).kind === "simple") {
+  if (anyQ.kind === "simple") {
     return (
       <div className={`${cls} font-semibold text-center`} style={{color:"#000",lineHeight:1.5}}>
-        {anyQ.displayLatex
-          ? <MathRenderer latex={anyQ.displayLatex} />
-          : (anyQ as any).display}
+        {anyQ.displayLatex ? <MathRenderer latex={anyQ.displayLatex} /> : anyQ.display}
       </div>
     );
   }
   // worded / asFrac — multi-line
   return (
     <div className="flex flex-col gap-2 text-center">
-      {(q as any).lines.map((line: string, i: number) => (
+      {anyQ.lines.map((line: string, i: number) => (
         <div key={i} className={`${cls} font-semibold`} style={{color:"#000",lineHeight:2.2}}>
           <InlineMath text={line} />
         </div>
