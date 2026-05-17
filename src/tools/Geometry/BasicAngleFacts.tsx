@@ -38,7 +38,11 @@ const TOOL_CONFIG = {
             },
         },
         level2: {
-          dropdown: null as null,
+          dropdown: {
+            key: "numberType", label: "Number Type",
+            options: [{ value: "integer", label: "Integers" }, { value: "decimal", label: "Decimals" }],
+            defaultValue: "integer",
+          },
           variables: [
           ],
           multiSelect: {
@@ -61,6 +65,15 @@ const TOOL_CONFIG = {
             { key: "useCoefficients", label: "Include coefficients (e.g. 2x)", defaultValue: false },
             { key: "showSquare", label: "Show right angle square symbol", defaultValue: true },
           ],
+          multiSelect: {
+              key: "exprType",
+              label: "Unknown as expression",
+              options: [
+                { value: "coefficient", label: "Coefficient|(e.g. 2x)",   defaultActive: false },
+                { value: "constant",    label: "Constant|(e.g. x+14)",  defaultActive: false },
+                { value: "both",        label: "Both|(e.g. 2x+30)",     defaultActive: false },
+              ],
+            },
         },
       },
     },
@@ -90,7 +103,11 @@ const TOOL_CONFIG = {
             },
         },
         level2: {
-          dropdown: null as null,
+          dropdown: {
+            key: "numberType", label: "Number Type",
+            options: [{ value: "integer", label: "Integers" }, { value: "decimal", label: "Decimals" }],
+            defaultValue: "integer",
+          },
           variables: [
             { key: "fixedRotation", label: "Always horizontal (no rotation)", defaultValue: false },
           ],
@@ -114,6 +131,15 @@ const TOOL_CONFIG = {
             { key: "useCoefficients", label: "Include coefficients (e.g. 2x)", defaultValue: false },
             { key: "fixedRotation", label: "Always horizontal (no rotation)", defaultValue: false },
           ],
+          multiSelect: {
+              key: "exprType",
+              label: "Unknown as expression",
+              options: [
+                { value: "coefficient", label: "Coefficient|(e.g. 2x)",   defaultActive: false },
+                { value: "constant",    label: "Constant|(e.g. x+14)",  defaultActive: false },
+                { value: "both",        label: "Both|(e.g. 2x+30)",     defaultActive: false },
+              ],
+            },
         },
       },
     },
@@ -142,7 +168,11 @@ const TOOL_CONFIG = {
             },
         },
         level2: {
-          dropdown: null as null,
+          dropdown: {
+            key: "numberType", label: "Number Type",
+            options: [{ value: "integer", label: "Integers" }, { value: "decimal", label: "Decimals" }],
+            defaultValue: "integer",
+          },
           variables: [
           ],
           multiSelect: {
@@ -164,6 +194,103 @@ const TOOL_CONFIG = {
           variables: [
             { key: "useCoefficients", label: "Include coefficients (e.g. 2x)", defaultValue: false },
           ],
+          multiSelect: {
+              key: "exprType",
+              label: "Unknown as expression",
+              options: [
+                { value: "coefficient", label: "Coefficient|(e.g. 2x)",   defaultActive: false },
+                { value: "constant",    label: "Constant|(e.g. x+14)",  defaultActive: false },
+                { value: "both",        label: "Both|(e.g. 2x+30)",     defaultActive: false },
+              ],
+            },
+        },
+      },
+    },
+    mixed: {
+      name: "Mixed",
+      useSubstantialBoxes: true,
+      variables: [] as { key: string; label: string; defaultValue: boolean }[],
+      dropdown: null as null,
+      difficultySettings: {
+        level1: {
+          dropdown: {
+            key: "numberType", label: "Number Type",
+            options: [{ value: "integer", label: "Integers" }, { value: "decimal", label: "Decimals" }],
+            defaultValue: "integer",
+          },
+          variables: [],
+          multiSelect: {
+              key: "exprType",
+              label: "Unknown as expression",
+              options: [
+                { value: "coefficient", label: "Coefficient|(e.g. 2x)",   defaultActive: false },
+                { value: "constant",    label: "Constant|(e.g. x+14)",  defaultActive: false },
+                { value: "both",        label: "Both|(e.g. 2x+30)",     defaultActive: false },
+              ],
+            },
+          multiSelect2: {
+            key: "angleType",
+            label: "Angle Types",
+            options: [
+              { value: "rightAngle",   label: "90°",  defaultActive: true },
+              { value: "straightLine", label: "180°", defaultActive: true },
+              { value: "aroundPoint",  label: "360°", defaultActive: true },
+            ],
+          },
+        },
+        level2: {
+          dropdown: {
+            key: "numberType", label: "Number Type",
+            options: [{ value: "integer", label: "Integers" }, { value: "decimal", label: "Decimals" }],
+            defaultValue: "integer",
+          },
+          variables: [],
+          multiSelect: {
+              key: "exprType",
+              label: "Unknown as expression",
+              options: [
+                { value: "coefficient", label: "Coefficient|(e.g. 2x)",   defaultActive: false },
+                { value: "constant",    label: "Constant|(e.g. x+14)",  defaultActive: false },
+                { value: "both",        label: "Both|(e.g. 2x+30)",     defaultActive: false },
+              ],
+            },
+          multiSelect2: {
+            key: "angleType",
+            label: "Angle Types",
+            options: [
+              { value: "rightAngle",   label: "90°",  defaultActive: true },
+              { value: "straightLine", label: "180°", defaultActive: true },
+              { value: "aroundPoint",  label: "360°", defaultActive: true },
+            ],
+          },
+        },
+        level3: {
+          dropdown: {
+            key: "parts", label: "Parts",
+            options: [{ value: "mixed", label: "Mixed" }, { value: "2", label: "2 parts" }, { value: "3", label: "3 parts" }],
+            defaultValue: "mixed",
+          },
+          variables: [
+            { key: "useCoefficients", label: "Include coefficients (e.g. 2x)", defaultValue: false },
+          ],
+          multiSelect: {
+              key: "exprType",
+              label: "Unknown as expression",
+              options: [
+                { value: "coefficient", label: "Coefficient|(e.g. 2x)",   defaultActive: false },
+                { value: "constant",    label: "Constant|(e.g. x+14)",  defaultActive: false },
+                { value: "both",        label: "Both|(e.g. 2x+30)",     defaultActive: false },
+              ],
+            },
+          multiSelect2: {
+            key: "angleType",
+            label: "Angle Types",
+            options: [
+              { value: "rightAngle",   label: "90°",  defaultActive: true },
+              { value: "straightLine", label: "180°", defaultActive: true },
+              { value: "aroundPoint",  label: "360°", defaultActive: true },
+            ],
+          },
         },
       },
     },
@@ -176,6 +303,7 @@ const TOOL_CONFIG = {
       dropdown: { key: string; label: string; options: { value: string; label: string }[]; defaultValue: string } | null;
       variables: { key: string; label: string; defaultValue: boolean }[];
       multiSelect?: { key: string; label: string; options: { value: string; label: string; defaultActive: boolean }[] };
+      multiSelect2?: { key: string; label: string; options: { value: string; label: string; defaultActive: boolean }[] };
     }>;
   }>,
 };
@@ -210,6 +338,15 @@ const INFO_SECTIONS = [
       { label: "Level 1 — Green", detail: "3 sectors from a centre point. Two given, find x." },
       { label: "Level 2 — Yellow", detail: "4 sectors. Three given, find x." },
       { label: "Level 3 — Red", detail: "Algebraic angles summing to 360°. Form and solve an equation." },
+    ],
+  },
+  {
+    title: "Mixed", icon: "🔀",
+    content: [
+      { label: "Overview", detail: "Randomly combines Right Angle (90°), Straight Line (180°) and Around a Point (360°) questions. Use the Angle Types selector to control which are included." },
+      { label: "Level 1 — Green", detail: "One unknown angle from a mixed selection of 90°, 180° and 360° diagrams." },
+      { label: "Level 2 — Yellow", detail: "Two given angles with one unknown, across all three angle types." },
+      { label: "Level 3 — Red", detail: "Algebraic angles. Form and solve an equation using the appropriate angle sum." },
     ],
   },
   {
@@ -366,14 +503,19 @@ function buildStraightLevel1(vars: Record<string, unknown>): AngleQuestion {
 }
 
 function buildStraightLevel2(vars: Record<string, unknown>): AngleQuestion {
+  const useDecimal = vars.numberType === "decimal";
   const exprType = pickExprType(vars);
   const useXExpr = exprType !== null;
   const rotations = [0, 45, 90, 135];
   const rotationDeg = vars.fixedRotation ? 0 : rotations[rnd(0, rotations.length - 1)];
   const lineLeftDeg = rotationDeg + 180;
-  let a1 = rnd(20, 100), a2 = rnd(20, 100);
-  while (a1 + a2 >= 170 || a1 + a2 <= 30) { a1 = rnd(20, 100); a2 = rnd(20, 100); }
-  const a3 = 180 - a1 - a2;
+  let a1 = useDecimal ? rndDecimal(20, 100) : rnd(20, 100);
+  let a2 = useDecimal ? rndDecimal(20, 100) : rnd(20, 100);
+  while (a1 + a2 >= 170 || a1 + a2 <= 30) {
+    a1 = useDecimal ? rndDecimal(20, 100) : rnd(20, 100);
+    a2 = useDecimal ? rndDecimal(20, 100) : rnd(20, 100);
+  }
+  const a3 = useDecimal ? Math.round((180 - a1 - a2) * 10) / 10 : 180 - a1 - a2;
   const vals = [a1, a2, a3];
   const ray1Deg = lineLeftDeg + a1;
   const ray2Deg = lineLeftDeg + a1 + a2;
@@ -602,13 +744,18 @@ function buildRightLevel1(vars: Record<string, unknown>): AngleQuestion {
 }
 
 function buildRightLevel2(vars: Record<string, unknown>): AngleQuestion {
+  const useDecimal = vars.numberType === "decimal";
   const exprType = pickExprType(vars);
   const useXExpr = exprType !== null;
   const rot = rnd(0, 3);
   const { sectorStart, sectorEnd } = rightSector(rot);
-  let a1 = rnd(10, 50), a2 = rnd(10, 50);
-  while (a1 + a2 >= 85 || a1 + a2 <= 15) { a1 = rnd(10, 50); a2 = rnd(10, 50); }
-  const a3 = 90 - a1 - a2;
+  let a1 = useDecimal ? rndDecimal(10, 50) : rnd(10, 50);
+  let a2 = useDecimal ? rndDecimal(10, 50) : rnd(10, 50);
+  while (a1 + a2 >= 85 || a1 + a2 <= 15) {
+    a1 = useDecimal ? rndDecimal(10, 50) : rnd(10, 50);
+    a2 = useDecimal ? rndDecimal(10, 50) : rnd(10, 50);
+  }
+  const a3 = useDecimal ? Math.round((90 - a1 - a2) * 10) / 10 : 90 - a1 - a2;
   const vals = [a1, a2, a3];
   const ray1Deg = sectorStart + a1, ray2Deg = sectorStart + a1 + a2;
   const arcPairs: [number, number][] = [[sectorStart, ray1Deg], [ray1Deg, ray2Deg], [ray2Deg, sectorEnd]];
@@ -814,11 +961,18 @@ function buildAroundLevel1(vars: Record<string, unknown>): AngleQuestion {
 }
 
 function buildAroundLevel2(vars: Record<string, unknown>): AngleQuestion {
+  const useDecimal = vars.numberType === "decimal";
   const exprType = pickExprType(vars);
   const useXExpr = exprType !== null;
-  let a1 = rnd(30, 120), a2 = rnd(30, 120), a3 = rnd(30, 120);
-  while (a1 + a2 + a3 >= 340 || a1 + a2 + a3 <= 60) { a1 = rnd(30, 120); a2 = rnd(30, 120); a3 = rnd(30, 120); }
-  const a4 = 360 - a1 - a2 - a3;
+  let a1 = useDecimal ? rndDecimal(30, 120) : rnd(30, 120);
+  let a2 = useDecimal ? rndDecimal(30, 120) : rnd(30, 120);
+  let a3 = useDecimal ? rndDecimal(30, 120) : rnd(30, 120);
+  while (a1 + a2 + a3 >= 340 || a1 + a2 + a3 <= 60) {
+    a1 = useDecimal ? rndDecimal(30, 120) : rnd(30, 120);
+    a2 = useDecimal ? rndDecimal(30, 120) : rnd(30, 120);
+    a3 = useDecimal ? rndDecimal(30, 120) : rnd(30, 120);
+  }
+  const a4 = useDecimal ? Math.round((360 - a1 - a2 - a3) * 10) / 10 : 360 - a1 - a2 - a3;
   const vals = [a1, a2, a3, a4];
   const unknownIdx = rnd(0, 3);
   const xVal = vals[unknownIdx];
@@ -968,6 +1122,20 @@ function buildAroundLevel3(vars: Record<string, unknown>): AngleQuestion {
 
 function generateQuestion(tool: string, level: string, vars: Record<string, unknown>): AngleQuestion {
   let q: AngleQuestion;
+  if (tool === "mixed") {
+    // Pick a random active angle type — only include types explicitly set to true (or defaulting to true if never changed)
+    const active: string[] = [];
+    if (vars.rightAngle   !== false) active.push("rightAngle");
+    if (vars.straightLine !== false) active.push("straightLine");
+    if (vars.aroundPoint  !== false) active.push("aroundPoint");
+    // Fallback: if all deselected somehow, use all three
+    const pool = active.length > 0 ? active : ["rightAngle", "straightLine", "aroundPoint"];
+    const picked = pool[Math.floor(Math.random() * pool.length)];
+    const delegateVars = picked === "rightAngle" ? { ...vars, showSquare: true } : vars;
+    q = generateQuestion(picked, level, delegateVars);
+    q.key = `mixed-${level}-${q.id}`;
+    return q;
+  }
   if (tool === "straightLine") {
     if (level === "level1") q = buildStraightLevel1(vars);
     else if (level === "level2") q = buildStraightLevel2(vars);
@@ -1008,7 +1176,7 @@ function arcPath(cx: number, cy: number, r: number, f: number, t: number) {
   const [x1, y1] = pt(cx, cy, r, f), [x2, y2] = pt(cx, cy, r, t);
   return `M${x1},${y1} A${r},${r} 0 ${t - f > 180 ? 1 : 0} 1 ${x2},${y2}`;
 }
-function estTW(label: string, fs: number) { return label.length * fs * 0.58 + fs * 0.5; }
+function estTW(label: string, fs: number) { return label.length * fs * 0.68 + fs * 0.6; }
 
 // ─── SVG DIAGRAM ──────────────────────────────────────────────────────────────
 function AngleDiagram({ q, showAnswer, small = false, dataIndex }: { q: AngleQuestion; showAnswer: boolean; small?: boolean; dataIndex?: number }) {
@@ -1124,8 +1292,8 @@ function AngleDiagram({ q, showAnswer, small = false, dataIndex }: { q: AngleQue
           const tw = estTW(label, fontSize), th = fontSize * 1.3;
           return (
             <g key={`lbl${i}`}>
-              <rect x={lx - tw / 2 - 2} y={ly - th / 2 - 1} width={tw + 4} height={th + 2} rx={3} fill="white" fillOpacity="0.9" stroke="#9ca3af" strokeWidth={0.5} />
-              <text x={lx} y={ly} textAnchor="middle" dominantBaseline="middle" fontSize={fontSize}
+              <rect x={lx - tw / 2 - 5} y={ly - fontSize * 0.8} width={tw + 10} height={fontSize * 1.4} rx={3} fill="white" fillOpacity="0.9" stroke="#9ca3af" strokeWidth={0.5} />
+              <text x={lx} y={ly} textAnchor="middle" dy="0.32em" dominantBaseline="auto" fontSize={fontSize}
                 fontStyle={ang.isUnknown && !showAnswer ? "italic" : "normal"}
                 fontWeight={ang.isUnknown ? "bold" : "600"}
                 fill={ang.isUnknown ? "#1d4ed8" : "#111827"}>{label}</text>
@@ -1207,8 +1375,8 @@ function AngleDiagram({ q, showAnswer, small = false, dataIndex }: { q: AngleQue
         const tw = estTW(label, fontSize), th = fontSize * 1.3;
         return (
           <g key={`lbl${i}`}>
-            <rect x={lx - tw / 2 - 2} y={ly - th / 2 - 1} width={tw + 4} height={th + 2} rx={3} fill="white" fillOpacity="0.85" stroke="#9ca3af" strokeWidth={0.5} />
-            <text x={lx} y={ly} textAnchor="middle" dominantBaseline="middle" fontSize={fontSize}
+            <rect x={lx - tw / 2 - 5} y={ly - fontSize * 0.8} width={tw + 10} height={fontSize * 1.4} rx={3} fill="white" fillOpacity="0.85" stroke="#9ca3af" strokeWidth={0.5} />
+            <text x={lx} y={ly} textAnchor="middle" dy="0.32em" dominantBaseline="auto" fontSize={fontSize}
               fontStyle={ang.isUnknown && !showAnswer ? "italic" : "normal"}
               fontWeight={ang.isUnknown ? "bold" : "600"}
               fill={ang.isUnknown ? "#1d4ed8" : "#111827"}>{label}</text>
@@ -1331,15 +1499,19 @@ interface StdQOProps {
   multiSelect: { key: string; label: string; options: { value: string; label: string }[] } | null;
   multiSelectValues: Record<string, boolean>;
   onMultiSelectChange: (k: string, v: boolean) => void;
+  multiSelect2?: { key: string; label: string; options: { value: string; label: string }[] } | null;
+  multiSelectValues2?: Record<string, boolean>;
+  onMultiSelectChange2?: (k: string, v: boolean) => void;
 }
-const StandardQOPopover = ({ variables, variableValues, onVariableChange, dropdown, dropdownValue, onDropdownChange, multiSelect, multiSelectValues, onMultiSelectChange }: StdQOProps) => {
+const StandardQOPopover = ({ variables, variableValues, onVariableChange, dropdown, dropdownValue, onDropdownChange, multiSelect, multiSelectValues, onMultiSelectChange, multiSelect2, multiSelectValues2 = {}, onMultiSelectChange2 = () => {} }: StdQOProps) => {
   const { open, setOpen, ref } = usePopover();
-  const hasContent = variables.length > 0 || dropdown !== null || multiSelect !== null;
+  const hasContent = variables.length > 0 || dropdown !== null || multiSelect !== null || !!multiSelect2;
   return (
     <div className="relative" ref={ref}>
       <PopoverButton open={open} onClick={() => setOpen(!open)} />
       {open && (
         <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-96 p-5 flex flex-col gap-5">
+          {multiSelect2 && <MultiSelectSection multiSelect={multiSelect2} values={multiSelectValues2} onChange={onMultiSelectChange2} />}
           {dropdown && <DropdownSection dropdown={dropdown} value={dropdownValue} onChange={onDropdownChange} />}
           {multiSelect && <MultiSelectSection multiSelect={multiSelect} values={multiSelectValues} onChange={onMultiSelectChange} />}
           {variables.length > 0 && <VariablesSection variables={variables} values={variableValues} onChange={onVariableChange} />}
@@ -1370,14 +1542,16 @@ const DiffQOPopover = ({ toolSettings, levelVariables, onLevelVariableChange, le
             const dd = toolSettings.difficultySettings?.[lv]?.dropdown;
             const vars = toolSettings.difficultySettings?.[lv]?.variables ?? [];
             const ms = toolSettings.difficultySettings?.[lv]?.multiSelect ?? null;
+            const ms2 = toolSettings.difficultySettings?.[lv]?.multiSelect2 ?? null;
             return (
               <div key={lv} className="flex flex-col gap-2">
                 <span className={`text-sm font-extrabold uppercase tracking-wider ${LV_HEADER_COLORS[lv]}`}>{LV_LABELS[lv]}</span>
                 <div className="flex flex-col gap-3 pl-1">
+                  {ms2 && <MultiSelectSection multiSelect={ms2} values={levelMultiSelect[lv] ?? {}} onChange={(k: string, v: boolean) => onLevelMultiSelectChange(lv, k, v)} />}
                   {dd && <DropdownSection dropdown={dd} value={levelDropdowns[lv] ?? dd.defaultValue} onChange={(v: string) => onLevelDropdownChange(lv, v)} />}
                   {ms && <MultiSelectSection multiSelect={ms} values={levelMultiSelect[lv] ?? {}} onChange={(k: string, v: boolean) => onLevelMultiSelectChange(lv, k, v)} />}
                   {vars.length > 0 && <VariablesSection variables={vars} values={levelVariables[lv] ?? {}} onChange={(k: string, v: boolean) => onLevelVariableChange(lv, k, v)} />}
-                  {!dd && !ms && vars.length === 0 && <p className="text-xs text-gray-400">No options at this level.</p>}
+                  {!dd && !ms && !ms2 && vars.length === 0 && <p className="text-xs text-gray-400">No options at this level.</p>}
                 </div>
               </div>
             );
@@ -1389,7 +1563,7 @@ const DiffQOPopover = ({ toolSettings, levelVariables, onLevelVariableChange, le
 };
 
 // InlineQOPanel — flat QO controls for advanced worksheet right panel (no popover trigger).
-const InlineQOPanel = ({ toolKey, level, variables, onVariableChange, dropdownValue, onDropdownChange, multiSelectValues, onMultiSelectChange }: {
+const InlineQOPanel = ({ toolKey, level, variables, onVariableChange, dropdownValue, onDropdownChange, multiSelectValues, onMultiSelectChange, multiSelectValues2, onMultiSelectChange2 }: {
   toolKey: string;
   level: DifficultyLevel;
   variables: Record<string, boolean>;
@@ -1398,15 +1572,19 @@ const InlineQOPanel = ({ toolKey, level, variables, onVariableChange, dropdownVa
   onDropdownChange: (v: string) => void;
   multiSelectValues: Record<string, boolean>;
   onMultiSelectChange: (k: string, v: boolean) => void;
+  multiSelectValues2?: Record<string, boolean>;
+  onMultiSelectChange2?: (k: string, v: boolean) => void;
 }) => {
   const t = TOOL_CONFIG.tools[toolKey];
   const dd = t.difficultySettings?.[level]?.dropdown ?? t.dropdown;
   const vars = t.difficultySettings?.[level]?.variables ?? t.variables;
   const ms = t.difficultySettings?.[level]?.multiSelect ?? null;
-  const hasContent = dd !== null || (vars?.length ?? 0) > 0 || ms !== null;
+  const ms2 = t.difficultySettings?.[level]?.multiSelect2 ?? null;
+  const hasContent = dd !== null || (vars?.length ?? 0) > 0 || ms !== null || ms2 !== null;
   if (!hasContent) return <p className="text-sm text-gray-400">No options for this level.</p>;
   return (
     <div className="flex flex-col gap-4">
+      {ms2 && onMultiSelectChange2 && <MultiSelectSection multiSelect={ms2} values={multiSelectValues2 ?? {}} onChange={onMultiSelectChange2} />}
       {dd && <DropdownSection dropdown={dd} value={dropdownValue} onChange={onDropdownChange} />}
       {ms && <MultiSelectSection multiSelect={ms} values={multiSelectValues} onChange={onMultiSelectChange} />}
       {(vars?.length ?? 0) > 0 && <VariablesSection variables={vars} values={variables} onChange={onVariableChange} />}
@@ -1650,6 +1828,8 @@ export default function BasicAngleFacts() {
       (["level1", "level2", "level3"] as DifficultyLevel[]).forEach(lv => {
         const ms = TOOL_CONFIG.tools[k].difficultySettings?.[lv]?.multiSelect;
         ms?.options.forEach(o => { init[k][`${lv}__${o.value}`] = o.defaultActive; });
+        const ms2 = TOOL_CONFIG.tools[k].difficultySettings?.[lv]?.multiSelect2;
+        ms2?.options.forEach(o => { init[k][`${lv}__ms2__${o.value}`] = o.defaultActive; });
       });
     });
     return init;
@@ -1688,17 +1868,21 @@ export default function BasicAngleFacts() {
     variables: Record<string, boolean>;
     dropdownValue: string;
     multiSelectValues: Record<string, boolean>;
+    multiSelectValues2: Record<string, boolean>;
   }
-  const makeDefaultAdvGroup = (id: number, lv: DifficultyLevel = "level1"): AdvGroup => {
-    const t = TOOL_CONFIG.tools[currentTool];
+  const makeDefaultAdvGroup = (id: number, lv: DifficultyLevel = "level1", toolOverride?: string): AdvGroup => {
+    const t = TOOL_CONFIG.tools[toolOverride ?? currentTool];
     const dd = t.difficultySettings?.[lv]?.dropdown ?? t.dropdown;
     const vars = t.difficultySettings?.[lv]?.variables ?? t.variables;
     const ms = t.difficultySettings?.[lv]?.multiSelect;
+    const ms2 = t.difficultySettings?.[lv]?.multiSelect2;
     const variables: Record<string, boolean> = {};
     vars.forEach(v => { variables[v.key] = v.defaultValue; });
     const multiSelectValues: Record<string, boolean> = {};
     ms?.options.forEach(o => { multiSelectValues[o.value] = o.defaultActive; });
-    return { id, level: lv, count: 5, variables, dropdownValue: dd?.defaultValue ?? "", multiSelectValues };
+    const multiSelectValues2: Record<string, boolean> = {};
+    ms2?.options.forEach(o => { multiSelectValues2[o.value] = o.defaultActive; });
+    return { id, level: lv, count: 5, variables, dropdownValue: dd?.defaultValue ?? "", multiSelectValues, multiSelectValues2 };
   };
   const [advGroups, setAdvGroups] = useState<AdvGroup[]>(() => [makeDefaultAdvGroup(1)]);
   const [advSelectedId, setAdvSelectedId] = useState<number>(1);
@@ -1792,12 +1976,23 @@ export default function BasicAngleFacts() {
     ms.options.forEach(o => { vals[o.value] = toolMultiSelect[currentTool]?.[`${difficulty}__${o.value}`] ?? o.defaultActive; });
     return vals;
   };
+  const getMultiSelect2Values = () => {
+    const ms = TOOL_CONFIG.tools[currentTool].difficultySettings?.[difficulty]?.multiSelect2;
+    if (!ms) return {};
+    const vals: Record<string, boolean> = {};
+    ms.options.forEach(o => { vals[o.value] = toolMultiSelect[currentTool]?.[`${difficulty}__ms2__${o.value}`] ?? o.defaultActive; });
+    return vals;
+  };
   const setMultiSelectValue = (k: string, v: boolean) => setToolMultiSelect(p => ({
     ...p, [currentTool]: { ...(p[currentTool] ?? {}), [`${difficulty}__${k}`]: v }
   }));
+  const setMultiSelect2Value = (k: string, v: boolean) => setToolMultiSelect(p => ({
+    ...p, [currentTool]: { ...(p[currentTool] ?? {}), [`${difficulty}__ms2__${k}`]: v }
+  }));
   const getMultiSelectConfig = () => TOOL_CONFIG.tools[currentTool].difficultySettings?.[difficulty]?.multiSelect ?? null;
+  const getMultiSelect2Config = () => TOOL_CONFIG.tools[currentTool].difficultySettings?.[difficulty]?.multiSelect2 ?? null;
 
-  // Build the vars object the generator expects (variables + dropdown + multiSelect merged)
+  // Build the vars object the generator expects (variables + dropdown + multiSelect + multiSelect2 merged)
   const buildVars = (tool: string, lv: string): Record<string, unknown> => {
     const t = TOOL_CONFIG.tools[tool];
     const ddCfg = t.difficultySettings?.[lv]?.dropdown;
@@ -1805,8 +2000,10 @@ export default function BasicAngleFacts() {
     const ddVal = toolDropdowns[`${tool}__${lv}`] ?? ddCfg?.defaultValue ?? "";
     const vars = toolVariables[tool]?.[lv] ?? {};
     const ms = t.difficultySettings?.[lv]?.multiSelect;
+    const ms2 = t.difficultySettings?.[lv]?.multiSelect2;
     const msVals: Record<string, boolean> = {};
     ms?.options.forEach(o => { msVals[o.value] = toolMultiSelect[tool]?.[`${lv}__${o.value}`] ?? o.defaultActive; });
+    ms2?.options.forEach(o => { msVals[o.value] = toolMultiSelect[tool]?.[`${lv}__ms2__${o.value}`] ?? o.defaultActive; });
     return ddKey ? { ...vars, ...msVals, [ddKey]: ddVal } : { ...vars, ...msVals };
   };
   const buildDiffVars = (lv: string): Record<string, unknown> => {
@@ -1870,8 +2067,8 @@ export default function BasicAngleFacts() {
       const ddCfg = t.difficultySettings?.[g.level]?.dropdown ?? t.dropdown;
       const ddKey = ddCfg?.key ?? "";
       const vars: Record<string, unknown> = ddKey
-        ? { ...g.variables, ...g.multiSelectValues, [ddKey]: g.dropdownValue }
-        : { ...g.variables, ...g.multiSelectValues };
+        ? { ...g.variables, ...g.multiSelectValues, ...g.multiSelectValues2, [ddKey]: g.dropdownValue }
+        : { ...g.variables, ...g.multiSelectValues, ...g.multiSelectValues2 };
       const snap: QOSnapshot = { level: g.level, variables: g.variables, dropdownValue: g.dropdownValue };
       for (let i = 0; i < g.count; i++)
         questions.push(stampQO(getUniqueQuestion(currentTool, g.level, vars, usedKeys), snap));
@@ -1913,6 +2110,9 @@ export default function BasicAngleFacts() {
     multiSelect: getMultiSelectConfig(),
     multiSelectValues: getMultiSelectValues(),
     onMultiSelectChange: setMultiSelectValue,
+    multiSelect2: getMultiSelect2Config(),
+    multiSelectValues2: getMultiSelect2Values(),
+    onMultiSelectChange2: setMultiSelect2Value,
   };
   const diffQOProps: DiffQOProps = {
     toolSettings: getToolSettings(),
@@ -2044,6 +2244,8 @@ export default function BasicAngleFacts() {
                 onDropdownChange={v => updateGroup(selectedGroup.id, { dropdownValue: v })}
                 multiSelectValues={selectedGroup.multiSelectValues}
                 onMultiSelectChange={(k, v) => updateGroup(selectedGroup.id, { multiSelectValues: { ...selectedGroup.multiSelectValues, [k]: v } })}
+                multiSelectValues2={selectedGroup.multiSelectValues2}
+                onMultiSelectChange2={(k, v) => updateGroup(selectedGroup.id, { multiSelectValues2: { ...selectedGroup.multiSelectValues2, [k]: v } })}
               />
             </>
           )}
@@ -2411,7 +2613,7 @@ export default function BasicAngleFacts() {
           {/* Sub-tool tabs */}
           <div className="flex justify-center gap-4 mb-6">
             {toolKeys.map(k => (
-              <button key={k} onClick={() => { setCurrentTool(k); setWorksheet([]); }}
+              <button key={k} onClick={() => { setCurrentTool(k); setWorksheet([]); advNextId.current = 2; setAdvGroups([makeDefaultAdvGroup(1, "level1", k)]); setAdvSelectedId(1); }}
                 className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${currentTool === k ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
                 {TOOL_CONFIG.tools[k].name}
               </button>
