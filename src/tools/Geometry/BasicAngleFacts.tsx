@@ -467,7 +467,7 @@ function buildStraightLevel1(vars: Record<string, unknown>): AngleQuestion {
   const lineLeftDeg = rotationDeg + 180;
 
   if (useXExpr) {
-    let known: number, k: number, c: number, xVal: number, attempts = 0;
+    let known = 0, k = 0, c = 1, xVal = 0, attempts = 0;
     do {
       known = useDecimal ? rndDecimal(20, 140) : rnd(20, 140);
       const knownInt = Math.round(known);
@@ -719,7 +719,7 @@ function buildRightLevel1(vars: Record<string, unknown>): AngleQuestion {
   const { sectorStart, sectorEnd } = rightSector(rot);
 
   if (useXExpr) {
-    let known: number, k: number, c: number, xVal: number, attempts = 0;
+    let known = 0, k = 0, c = 1, xVal = 0, attempts = 0;
     do {
       known = useDecimal ? rndDecimal(5, 70) : rnd(5, 70);
       const knownInt = Math.round(known);
