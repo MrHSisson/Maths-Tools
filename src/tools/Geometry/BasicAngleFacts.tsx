@@ -26,20 +26,30 @@ const TOOL_CONFIG = {
             defaultValue: "integer",
           },
           variables: [
-            { key: "exprCoefficient", label: "Coefficient (e.g. 2x)", defaultValue: false },
-            { key: "exprConstant", label: "Constant (e.g. x + 14)", defaultValue: false },
-            { key: "exprBoth", label: "Both (e.g. 2x + 30)", defaultValue: false },
-            { key: "showSquare", label: "Show right angle square symbol", defaultValue: true },
           ],
+          multiSelect: {
+              key: "exprType",
+              label: "Unknown as expression",
+              options: [
+                { value: "coefficient", label: "Coefficient (e.g. 2x)",   defaultActive: false },
+                { value: "constant",    label: "Constant (e.g. x + 14)",  defaultActive: false },
+                { value: "both",        label: "Both (e.g. 2x + 30)",     defaultActive: false },
+              ],
+            },
         },
         level2: {
           dropdown: null as null,
           variables: [
-            { key: "exprCoefficient", label: "Coefficient (e.g. 2x)", defaultValue: false },
-            { key: "exprConstant", label: "Constant (e.g. x + 14)", defaultValue: false },
-            { key: "exprBoth", label: "Both (e.g. 2x + 30)", defaultValue: false },
-            { key: "showSquare", label: "Show right angle square symbol", defaultValue: true },
           ],
+          multiSelect: {
+              key: "exprType",
+              label: "Unknown as expression",
+              options: [
+                { value: "coefficient", label: "Coefficient (e.g. 2x)",   defaultActive: false },
+                { value: "constant",    label: "Constant (e.g. x + 14)",  defaultActive: false },
+                { value: "both",        label: "Both (e.g. 2x + 30)",     defaultActive: false },
+              ],
+            },
         },
         level3: {
           dropdown: {
@@ -67,20 +77,32 @@ const TOOL_CONFIG = {
             defaultValue: "integer",
           },
           variables: [
-            { key: "exprCoefficient", label: "Coefficient (e.g. 2x)", defaultValue: false },
-            { key: "exprConstant", label: "Constant (e.g. x + 14)", defaultValue: false },
-            { key: "exprBoth", label: "Both (e.g. 2x + 30)", defaultValue: false },
             { key: "fixedRotation", label: "Always horizontal (no rotation)", defaultValue: false },
           ],
+          multiSelect: {
+              key: "exprType",
+              label: "Unknown as expression",
+              options: [
+                { value: "coefficient", label: "Coefficient (e.g. 2x)",   defaultActive: false },
+                { value: "constant",    label: "Constant (e.g. x + 14)",  defaultActive: false },
+                { value: "both",        label: "Both (e.g. 2x + 30)",     defaultActive: false },
+              ],
+            },
         },
         level2: {
           dropdown: null as null,
           variables: [
-            { key: "exprCoefficient", label: "Coefficient (e.g. 2x)", defaultValue: false },
-            { key: "exprConstant", label: "Constant (e.g. x + 14)", defaultValue: false },
-            { key: "exprBoth", label: "Both (e.g. 2x + 30)", defaultValue: false },
             { key: "fixedRotation", label: "Always horizontal (no rotation)", defaultValue: false },
           ],
+          multiSelect: {
+              key: "exprType",
+              label: "Unknown as expression",
+              options: [
+                { value: "coefficient", label: "Coefficient (e.g. 2x)",   defaultActive: false },
+                { value: "constant",    label: "Constant (e.g. x + 14)",  defaultActive: false },
+                { value: "both",        label: "Both (e.g. 2x + 30)",     defaultActive: false },
+              ],
+            },
         },
         level3: {
           dropdown: {
@@ -108,18 +130,30 @@ const TOOL_CONFIG = {
             defaultValue: "integer",
           },
           variables: [
-            { key: "exprCoefficient", label: "Coefficient (e.g. 2x)", defaultValue: false },
-            { key: "exprConstant", label: "Constant (e.g. x + 14)", defaultValue: false },
-            { key: "exprBoth", label: "Both (e.g. 2x + 30)", defaultValue: false },
           ],
+          multiSelect: {
+              key: "exprType",
+              label: "Unknown as expression",
+              options: [
+                { value: "coefficient", label: "Coefficient (e.g. 2x)",   defaultActive: false },
+                { value: "constant",    label: "Constant (e.g. x + 14)",  defaultActive: false },
+                { value: "both",        label: "Both (e.g. 2x + 30)",     defaultActive: false },
+              ],
+            },
         },
         level2: {
           dropdown: null as null,
           variables: [
-            { key: "exprCoefficient", label: "Coefficient (e.g. 2x)", defaultValue: false },
-            { key: "exprConstant", label: "Constant (e.g. x + 14)", defaultValue: false },
-            { key: "exprBoth", label: "Both (e.g. 2x + 30)", defaultValue: false },
           ],
+          multiSelect: {
+              key: "exprType",
+              label: "Unknown as expression",
+              options: [
+                { value: "coefficient", label: "Coefficient (e.g. 2x)",   defaultActive: false },
+                { value: "constant",    label: "Constant (e.g. x + 14)",  defaultActive: false },
+                { value: "both",        label: "Both (e.g. 2x + 30)",     defaultActive: false },
+              ],
+            },
         },
         level3: {
           dropdown: {
@@ -141,6 +175,7 @@ const TOOL_CONFIG = {
     difficultySettings: Record<string, {
       dropdown: { key: string; label: string; options: { value: string; label: string }[]; defaultValue: string } | null;
       variables: { key: string; label: string; defaultValue: boolean }[];
+      multiSelect?: { key: string; label: string; options: { value: string; label: string; defaultActive: boolean }[] };
     }>;
   }>,
 };
@@ -219,9 +254,9 @@ function exprLabel(c: number, k: number) {
 type ExprType = "coefficient" | "constant" | "both" | null;
 function pickExprType(vars: Record<string, unknown>): ExprType {
   const active: ExprType[] = [];
-  if (vars.exprCoefficient) active.push("coefficient");
-  if (vars.exprConstant)    active.push("constant");
-  if (vars.exprBoth)        active.push("both");
+  if (vars.coefficient) active.push("coefficient");
+  if (vars.constant)    active.push("constant");
+  if (vars.both)        active.push("both");
   if (active.length === 0) return null;
   return active[Math.floor(Math.random() * active.length)];
 }
@@ -980,7 +1015,7 @@ function estTW(label: string, fs: number) { return label.length * fs * 0.58 + fs
 // ─── SVG DIAGRAM ──────────────────────────────────────────────────────────────
 function AngleDiagram({ q, showAnswer, small = false, dataIndex }: { q: AngleQuestion; showAnswer: boolean; small?: boolean; dataIndex?: number }) {
   const size = small ? 300 : 340;
-  const fontSize = small ? 17 : 19;
+  const targetFontPx = small ? 20 : 30; // desired on-screen font size in px
 
   // ── Right angle: vertex sits at a corner, arms span the full canvas ──────────
   if (q.tool === "rightAngle") {
@@ -1042,10 +1077,16 @@ function AngleDiagram({ q, showAnswer, small = false, dataIndex }: { q: AngleQue
     const bMinY = Math.min(...geomPts.map(p => p[1])) - pad;
     const bMaxX = Math.max(...geomPts.map(p => p[0])) + pad;
     const bMaxY = Math.max(...geomPts.map(p => p[1])) + pad;
-    const bW = bMaxX - bMinX, bH = bMaxY - bMinY;
+    const bRawW = bMaxX - bMinX, bRawH = bMaxY - bMinY;
+    const bDim = Math.max(bRawW, bRawH);
+    const bCx = (bMinX + bMaxX) / 2, bCy = (bMinY + bMaxY) / 2;
+    const bW = bDim, bH = bDim;
+    // Font size in SVG coords so labels appear at targetFontPx on screen
+    const containerPx = small ? 266 : 460;
+    const fontSize = targetFontPx * bDim / containerPx;
 
     return (
-      <svg width="100%" height="100%" viewBox={`${bMinX} ${bMinY} ${bW} ${bH}`} style={{ overflow: "visible" }} {...(dataIndex !== undefined ? { "data-q-index": dataIndex } : {})}>
+      <svg width="100%" height="100%" viewBox={`${bCx - bW/2} ${bCy - bH/2} ${bW} ${bH}`} style={{ overflow: "visible" }} {...(dataIndex !== undefined ? { "data-q-index": dataIndex } : {})}>
         {/* Shaded unknown sectors */}
         {q.angles.map((ang, i) => ang.isUnknown ? (
           <path key={`sh${i}`} d={sectorPath(vx, vy, arcRUnknown, ang.arcFromDeg, ang.arcToDeg)} fill="#bfdbfe" fillOpacity="0.7" stroke="none" />
@@ -1126,10 +1167,16 @@ function AngleDiagram({ q, showAnswer, small = false, dataIndex }: { q: AngleQue
   const cMinY = Math.min(...ctrPts.map(p => p[1])) - cPad;
   const cMaxX = Math.max(...ctrPts.map(p => p[0])) + cPad;
   const cMaxY = Math.max(...ctrPts.map(p => p[1])) + cPad;
-  const cW = cMaxX - cMinX, cH = cMaxY - cMinY;
+  const cRawW = cMaxX - cMinX, cRawH = cMaxY - cMinY;
+  const cDim = Math.max(cRawW, cRawH);
+  const cCx = (cMinX + cMaxX) / 2, cCy = (cMinY + cMaxY) / 2;
+  const cW = cDim, cH = cDim;
+  // Font size in SVG coords so labels appear at targetFontPx on screen
+  const containerPxC = small ? 266 : 460;
+  const fontSize = targetFontPx * cDim / containerPxC;
 
   return (
-    <svg width="100%" height="100%" viewBox={`${cMinX} ${cMinY} ${cW} ${cH}`} style={{ overflow: "visible" }} {...(dataIndex !== undefined ? { "data-q-index": dataIndex } : {})}>
+    <svg width="100%" height="100%" viewBox={`${cCx - cW/2} ${cCy - cH/2} ${cW} ${cH}`} style={{ overflow: "visible" }} {...(dataIndex !== undefined ? { "data-q-index": dataIndex } : {})}>
       {/* Around-a-point: dashed circle guide */}
       {q.tool === "aroundPoint" && (
         <circle cx={cx} cy={cy} r={lineLen} fill="none" stroke="#e5e7eb" strokeWidth={small ? 1 : 1.5} strokeDasharray="4 4" />
@@ -1234,6 +1281,33 @@ interface VariablesSectionProps {
   values: Record<string, unknown>;
   onChange: (k: string, v: boolean) => void;
 }
+interface MultiSelectSectionProps {
+  multiSelect: { key: string; label: string; options: { value: string; label: string }[] };
+  values: Record<string, boolean>;
+  onChange: (k: string, v: boolean) => void;
+}
+const MultiSelectSection = ({ multiSelect, values, onChange }: MultiSelectSectionProps) => {
+  const activeCount = multiSelect.options.filter(o => values[o.value]).length;
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">{multiSelect.label}</span>
+      <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden">
+        {multiSelect.options.map(opt => {
+          const isActive = values[opt.value] ?? false;
+          const isLast = isActive && activeCount === 1;
+          return (
+            <button key={opt.value}
+              onClick={() => { if (!isLast) onChange(opt.value, !isActive); }}
+              className={`flex-1 px-3 py-2 text-sm font-bold transition-colors ${isActive ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}>
+              {opt.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 const VariablesSection = ({ variables, values, onChange }: VariablesSectionProps) => (
   <div className="flex flex-col gap-3">
     <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Options</span>
@@ -1256,16 +1330,20 @@ interface StdQOProps {
   dropdown: { key: string; label: string; options: { value: string; label: string }[] } | null;
   dropdownValue: string;
   onDropdownChange: (v: string) => void;
+  multiSelect: { key: string; label: string; options: { value: string; label: string }[] } | null;
+  multiSelectValues: Record<string, boolean>;
+  onMultiSelectChange: (k: string, v: boolean) => void;
 }
-const StandardQOPopover = ({ variables, variableValues, onVariableChange, dropdown, dropdownValue, onDropdownChange }: StdQOProps) => {
+const StandardQOPopover = ({ variables, variableValues, onVariableChange, dropdown, dropdownValue, onDropdownChange, multiSelect, multiSelectValues, onMultiSelectChange }: StdQOProps) => {
   const { open, setOpen, ref } = usePopover();
-  const hasContent = variables.length > 0 || dropdown !== null;
+  const hasContent = variables.length > 0 || dropdown !== null || multiSelect !== null;
   return (
     <div className="relative" ref={ref}>
       <PopoverButton open={open} onClick={() => setOpen(!open)} />
       {open && (
         <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-72 p-5 flex flex-col gap-5">
           {dropdown && <DropdownSection dropdown={dropdown} value={dropdownValue} onChange={onDropdownChange} />}
+          {multiSelect && <MultiSelectSection multiSelect={multiSelect} values={multiSelectValues} onChange={onMultiSelectChange} />}
           {variables.length > 0 && <VariablesSection variables={variables} values={variableValues} onChange={onVariableChange} />}
           {!hasContent && <p className="text-sm text-gray-400">No options at this level.</p>}
         </div>
@@ -1280,8 +1358,10 @@ interface DiffQOProps {
   onLevelVariableChange: (lv: string, k: string, v: boolean) => void;
   levelDropdowns: Record<string, string>;
   onLevelDropdownChange: (lv: string, v: string) => void;
+  levelMultiSelect: Record<string, Record<string, boolean>>;
+  onLevelMultiSelectChange: (lv: string, k: string, v: boolean) => void;
 }
-const DiffQOPopover = ({ toolSettings, levelVariables, onLevelVariableChange, levelDropdowns, onLevelDropdownChange }: DiffQOProps) => {
+const DiffQOPopover = ({ toolSettings, levelVariables, onLevelVariableChange, levelDropdowns, onLevelDropdownChange, levelMultiSelect, onLevelMultiSelectChange }: DiffQOProps) => {
   const { open, setOpen, ref } = usePopover();
   return (
     <div className="relative" ref={ref}>
@@ -1291,13 +1371,15 @@ const DiffQOPopover = ({ toolSettings, levelVariables, onLevelVariableChange, le
           {(["level1", "level2", "level3"] as DifficultyLevel[]).map(lv => {
             const dd = toolSettings.difficultySettings?.[lv]?.dropdown;
             const vars = toolSettings.difficultySettings?.[lv]?.variables ?? [];
+            const ms = toolSettings.difficultySettings?.[lv]?.multiSelect ?? null;
             return (
               <div key={lv} className="flex flex-col gap-2">
                 <span className={`text-sm font-extrabold uppercase tracking-wider ${LV_HEADER_COLORS[lv]}`}>{LV_LABELS[lv]}</span>
                 <div className="flex flex-col gap-3 pl-1">
                   {dd && <DropdownSection dropdown={dd} value={levelDropdowns[lv] ?? dd.defaultValue} onChange={(v: string) => onLevelDropdownChange(lv, v)} />}
+                  {ms && <MultiSelectSection multiSelect={ms} values={levelMultiSelect[lv] ?? {}} onChange={(k: string, v: boolean) => onLevelMultiSelectChange(lv, k, v)} />}
                   {vars.length > 0 && <VariablesSection variables={vars} values={levelVariables[lv] ?? {}} onChange={(k: string, v: boolean) => onLevelVariableChange(lv, k, v)} />}
-                  {!dd && vars.length === 0 && <p className="text-xs text-gray-400">No options at this level.</p>}
+                  {!dd && !ms && vars.length === 0 && <p className="text-xs text-gray-400">No options at this level.</p>}
                 </div>
               </div>
             );
@@ -1309,22 +1391,26 @@ const DiffQOPopover = ({ toolSettings, levelVariables, onLevelVariableChange, le
 };
 
 // InlineQOPanel — flat QO controls for advanced worksheet right panel (no popover trigger).
-const InlineQOPanel = ({ toolKey, level, variables, onVariableChange, dropdownValue, onDropdownChange }: {
+const InlineQOPanel = ({ toolKey, level, variables, onVariableChange, dropdownValue, onDropdownChange, multiSelectValues, onMultiSelectChange }: {
   toolKey: string;
   level: DifficultyLevel;
   variables: Record<string, boolean>;
   onVariableChange: (k: string, v: boolean) => void;
   dropdownValue: string;
   onDropdownChange: (v: string) => void;
+  multiSelectValues: Record<string, boolean>;
+  onMultiSelectChange: (k: string, v: boolean) => void;
 }) => {
   const t = TOOL_CONFIG.tools[toolKey];
   const dd = t.difficultySettings?.[level]?.dropdown ?? t.dropdown;
   const vars = t.difficultySettings?.[level]?.variables ?? t.variables;
-  const hasContent = dd !== null || (vars?.length ?? 0) > 0;
+  const ms = t.difficultySettings?.[level]?.multiSelect ?? null;
+  const hasContent = dd !== null || (vars?.length ?? 0) > 0 || ms !== null;
   if (!hasContent) return <p className="text-sm text-gray-400">No options for this level.</p>;
   return (
     <div className="flex flex-col gap-4">
       {dd && <DropdownSection dropdown={dd} value={dropdownValue} onChange={onDropdownChange} />}
+      {ms && <MultiSelectSection multiSelect={ms} values={multiSelectValues} onChange={onMultiSelectChange} />}
       {(vars?.length ?? 0) > 0 && <VariablesSection variables={vars} values={variables} onChange={onVariableChange} />}
     </div>
   );
@@ -1559,6 +1645,25 @@ export default function BasicAngleFacts() {
     });
     return init;
   });
+  const [toolMultiSelect, setToolMultiSelect] = useState<Record<string, Record<string, boolean>>>(() => {
+    const init: Record<string, Record<string, boolean>> = {};
+    Object.keys(TOOL_CONFIG.tools).forEach(k => {
+      init[k] = {};
+      (["level1", "level2", "level3"] as DifficultyLevel[]).forEach(lv => {
+        const ms = TOOL_CONFIG.tools[k].difficultySettings?.[lv]?.multiSelect;
+        ms?.options.forEach(o => { init[k][`${lv}__${o.value}`] = o.defaultActive; });
+      });
+    });
+    return init;
+  });
+  const [levelMultiSelect, setLevelMultiSelect] = useState<Record<string, Record<string, boolean>>>(() => {
+    const init: Record<string, Record<string, boolean>> = { level1: {}, level2: {}, level3: {} };
+    (["level1", "level2", "level3"] as DifficultyLevel[]).forEach(lv => {
+      const ms = TOOL_CONFIG.tools["rightAngle"].difficultySettings?.[lv]?.multiSelect;
+      ms?.options.forEach(o => { init[lv][o.value] = o.defaultActive; });
+    });
+    return init;
+  });
 
   // ── Shared state ──────────────────────────────────────────────────────────
   const [currentQuestion, setCurrentQuestion] = useState<AngleQuestion>(() =>
@@ -1584,14 +1689,18 @@ export default function BasicAngleFacts() {
     count: number;
     variables: Record<string, boolean>;
     dropdownValue: string;
+    multiSelectValues: Record<string, boolean>;
   }
   const makeDefaultAdvGroup = (id: number, lv: DifficultyLevel = "level1"): AdvGroup => {
     const t = TOOL_CONFIG.tools[currentTool];
     const dd = t.difficultySettings?.[lv]?.dropdown ?? t.dropdown;
     const vars = t.difficultySettings?.[lv]?.variables ?? t.variables;
+    const ms = t.difficultySettings?.[lv]?.multiSelect;
     const variables: Record<string, boolean> = {};
     vars.forEach(v => { variables[v.key] = v.defaultValue; });
-    return { id, level: lv, count: 5, variables, dropdownValue: dd?.defaultValue ?? "" };
+    const multiSelectValues: Record<string, boolean> = {};
+    ms?.options.forEach(o => { multiSelectValues[o.value] = o.defaultActive; });
+    return { id, level: lv, count: 5, variables, dropdownValue: dd?.defaultValue ?? "", multiSelectValues };
   };
   const [advGroups, setAdvGroups] = useState<AdvGroup[]>(() => [makeDefaultAdvGroup(1)]);
   const [advSelectedId, setAdvSelectedId] = useState<number>(1);
@@ -1675,22 +1784,42 @@ export default function BasicAngleFacts() {
   }));
   const handleLevelVarChange = (lv: string, k: string, v: boolean) => setLevelVariables(p => ({ ...p, [lv]: { ...p[lv], [k]: v } }));
   const handleLevelDDChange  = (lv: string, v: string) => setLevelDropdowns(p => ({ ...p, [lv]: v }));
+  const handleLevelMSChange  = (lv: string, k: string, v: boolean) => setLevelMultiSelect(p => ({ ...p, [lv]: { ...(p[lv] ?? {}), [k]: v } }));
 
-  // Build the vars object the generator expects (variables + dropdown value merged)
+  // Helpers to get current multiSelect values for standard mode (per tool/level)
+  const getMultiSelectValues = () => {
+    const ms = TOOL_CONFIG.tools[currentTool].difficultySettings?.[difficulty]?.multiSelect;
+    if (!ms) return {};
+    const vals: Record<string, boolean> = {};
+    ms.options.forEach(o => { vals[o.value] = toolMultiSelect[currentTool]?.[`${difficulty}__${o.value}`] ?? o.defaultActive; });
+    return vals;
+  };
+  const setMultiSelectValue = (k: string, v: boolean) => setToolMultiSelect(p => ({
+    ...p, [currentTool]: { ...(p[currentTool] ?? {}), [`${difficulty}__${k}`]: v }
+  }));
+  const getMultiSelectConfig = () => TOOL_CONFIG.tools[currentTool].difficultySettings?.[difficulty]?.multiSelect ?? null;
+
+  // Build the vars object the generator expects (variables + dropdown + multiSelect merged)
   const buildVars = (tool: string, lv: string): Record<string, unknown> => {
     const t = TOOL_CONFIG.tools[tool];
     const ddCfg = t.difficultySettings?.[lv]?.dropdown;
     const ddKey = ddCfg?.key ?? "";
     const ddVal = toolDropdowns[`${tool}__${lv}`] ?? ddCfg?.defaultValue ?? "";
     const vars = toolVariables[tool]?.[lv] ?? {};
-    return ddKey ? { ...vars, [ddKey]: ddVal } : { ...vars };
+    const ms = t.difficultySettings?.[lv]?.multiSelect;
+    const msVals: Record<string, boolean> = {};
+    ms?.options.forEach(o => { msVals[o.value] = toolMultiSelect[tool]?.[`${lv}__${o.value}`] ?? o.defaultActive; });
+    return ddKey ? { ...vars, ...msVals, [ddKey]: ddVal } : { ...vars, ...msVals };
   };
   const buildDiffVars = (lv: string): Record<string, unknown> => {
     const t = TOOL_CONFIG.tools[currentTool];
     const ddCfg = t.difficultySettings?.[lv]?.dropdown;
     const ddKey = ddCfg?.key ?? "";
     const ddVal = levelDropdowns[lv] ?? ddCfg?.defaultValue ?? "";
-    return ddKey ? { ...levelVariables[lv], [ddKey]: ddVal } : { ...levelVariables[lv] };
+    const ms = t.difficultySettings?.[lv]?.multiSelect;
+    const msVals: Record<string, boolean> = {};
+    ms?.options.forEach(o => { msVals[o.value] = levelMultiSelect[lv]?.[o.value] ?? o.defaultActive; });
+    return ddKey ? { ...levelVariables[lv], ...msVals, [ddKey]: ddVal } : { ...levelVariables[lv], ...msVals };
   };
 
   // ── Wiring ────────────────────────────────────────────────────────────────
@@ -1742,7 +1871,9 @@ export default function BasicAngleFacts() {
       const t = TOOL_CONFIG.tools[currentTool];
       const ddCfg = t.difficultySettings?.[g.level]?.dropdown ?? t.dropdown;
       const ddKey = ddCfg?.key ?? "";
-      const vars: Record<string, unknown> = ddKey ? { ...g.variables, [ddKey]: g.dropdownValue } : { ...g.variables };
+      const vars: Record<string, unknown> = ddKey
+        ? { ...g.variables, ...g.multiSelectValues, [ddKey]: g.dropdownValue }
+        : { ...g.variables, ...g.multiSelectValues };
       const snap: QOSnapshot = { level: g.level, variables: g.variables, dropdownValue: g.dropdownValue };
       for (let i = 0; i < g.count; i++)
         questions.push(stampQO(getUniqueQuestion(currentTool, g.level, vars, usedKeys), snap));
@@ -1781,6 +1912,9 @@ export default function BasicAngleFacts() {
     dropdown: getDropdownConfig(),
     dropdownValue: getDropdownValue(),
     onDropdownChange: setDropdownValue,
+    multiSelect: getMultiSelectConfig(),
+    multiSelectValues: getMultiSelectValues(),
+    onMultiSelectChange: setMultiSelectValue,
   };
   const diffQOProps: DiffQOProps = {
     toolSettings: getToolSettings(),
@@ -1788,6 +1922,8 @@ export default function BasicAngleFacts() {
     onLevelVariableChange: handleLevelVarChange,
     levelDropdowns,
     onLevelDropdownChange: handleLevelDDChange,
+    levelMultiSelect,
+    onLevelMultiSelectChange: handleLevelMSChange,
   };
   const qoEl = (isDiff = false) => isDiff ? <DiffQOPopover {...diffQOProps} /> : <StandardQOPopover {...stdQOProps} />;
 
@@ -1908,6 +2044,8 @@ export default function BasicAngleFacts() {
                 onVariableChange={(k, v) => updateGroup(selectedGroup.id, { variables: { ...selectedGroup.variables, [k]: v } })}
                 dropdownValue={selectedGroup.dropdownValue}
                 onDropdownChange={v => updateGroup(selectedGroup.id, { dropdownValue: v })}
+                multiSelectValues={selectedGroup.multiSelectValues}
+                onMultiSelectChange={(k, v) => updateGroup(selectedGroup.id, { multiSelectValues: { ...selectedGroup.multiSelectValues, [k]: v } })}
               />
             </>
           )}
