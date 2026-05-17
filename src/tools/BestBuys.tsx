@@ -20,10 +20,12 @@ const loadKaTeX = (() => {
     if (promise) return promise;
     promise = new Promise((resolve, reject) => {
       if (typeof window === "undefined" || w().katex) { resolve(); return; }
+      // CSS
       const link = document.createElement("link");
       link.rel = "stylesheet";
       link.href = "https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css";
       document.head.appendChild(link);
+      // JS
       const script = document.createElement("script");
       script.src = "https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js";
       script.onload = () => resolve();
@@ -33,6 +35,27 @@ const loadKaTeX = (() => {
     return promise;
   };
 })();
+
+// ── Math render component ─────────────────────────────────────────────────────
+//
+// KATEX GOTCHAS — read before implementing a new tool:
+//
+//   1. KaTeX renders its content at 1.21em internally. To match surrounding text,
+//      the container is set to fontSize: 0.826em (= 1/1.21) for non-fraction
+//      expressions. Fractions use 1em — their internal scaling looks correct as-is.
+//
+//   2. verticalAlign must be "baseline" not "middle". KaTeX spans set to "middle"
+//      drop below the text baseline, making numbers appear lower than prose.
+//
+//   3. displayMode is always false. If you want an expression on its own line,
+//      wrap <MathRenderer> in a <div>. Never use displayMode: true.
+//
+//   4. In print CSS, set font-size on .katex-render .katex (the inner KaTeX span),
+//      not on .katex-render itself — otherwise KaTeX compounds the scaling.
+//
+//   5. Ratios in prose: use mStr("3:4") — no spaces around the colon.
+//      KaTeX renders "3:4" correctly. "3 : 4" adds operator spacing.
+//
 
 interface MathProps {
   latex: string;
@@ -52,7 +75,7 @@ const MathRenderer = ({ latex, style, className }: MathProps) => {
     if (!ready || !ref.current) return;
     try {
       w().katex.render(latex, ref.current, {
-        displayMode: false,
+        displayMode: false,   // always inline — separate lines handled by wrapping div
         throwOnError: false,
         output: "html",
       });
@@ -64,6 +87,8 @@ const MathRenderer = ({ latex, style, className }: MathProps) => {
   const hasFrac = latex.includes("\\frac");
   return <span ref={ref} className={className} style={{display:"inline", verticalAlign:"baseline", fontSize: hasFrac ? "1em" : "0.826em", ...style}} />;
 };
+
+// ── Popover hook & button — available to QO popovers in the tool section ──────
 
 const usePopover = () => {
   const [open, setOpen] = useState(false);
@@ -83,9 +108,13 @@ const PopoverButton = ({ open, onClick }: { open: boolean; onClick: () => void }
   </button>
 );
 
+// Also available in tool section: TogglePill, SegButtons, LV_LABELS, LV_HEADER_COLORS
+
 const LV_LABELS:Record<string,string> = {level1:"Level 1",level2:"Level 2",level3:"Level 3"};
 const LV_HEADER_COLORS:Record<string,string> = {level1:"text-green-600",level2:"text-yellow-500",level3:"text-red-600"};
 
+// TogglePill and SegButtons are available for use in tool-specific QO popovers.
+// They are defined here so they are in scope for the tool section above.
 const TogglePill = ({checked,onChange,label}:{checked:boolean;onChange:(v:boolean)=>void;label:string}) => (
   <label className="flex items-center gap-3 cursor-pointer py-1">
     <div onClick={()=>onChange(!checked)} className={`w-12 h-6 rounded-full transition-colors relative flex-shrink-0 cursor-pointer ${checked?"bg-blue-900":"bg-gray-300"}`}>
@@ -719,8 +748,6 @@ const generateUniqueQ = (
 // ═══════════════════════════════════════════════════════════════════════════════
 // ██████████████████████████████████████████████████████████████████████████████
 // END OF TOOL-SPECIFIC SECTION
-// ██████████████████████████████████████████████████████████████████████████████
-// ═══════════════════════════════════════════════════════════════════════════════
 
 void (TogglePill as unknown);
 void (SegButtons as unknown);
@@ -735,12 +762,35 @@ const LV_COLORS:Record<DifficultyLevel,{bg:string;border:string;text:string;fill
 const getQuestionBg = (cs:string) => ({blue:"#D1E7F8",pink:"#F8D1E7",yellow:"#F8F4D1"}[cs]??"#ffffff");
 const getStepBg    = (cs:string) => ({blue:"#B3D9F2",pink:"#F2B3D9",yellow:"#F2EBB3"}[cs]??"#f3f4f6");
 
+// ── QuestionDisplay — renders any question's main display ─────────────────────
+
 const QuestionDisplay = ({ q, cls }: { q: AnyQuestion; cls: string }) => {
-  // All Best Buys questions are "worded" — multi-line plain text
+  const anyQ = q as any;
+  if (anyQ.kind === "frac") {
+    const parts = anyQ.latex.split(/\\text\{ of \}/);
+    const fracLatex = parts[0].trim();
+    const number = parts[1]?.trim() ?? "";
+    return (
+      <div className={`${cls} font-semibold text-center`} style={{color:"#000",lineHeight:1.5}}>
+        <span>Find </span><MathRenderer latex={fracLatex} /><span> of {number}</span>
+      </div>
+    );
+  }
+  if (anyQ.kind === "simple") {
+    const anyQ = q as any;
+    return (
+      <div className={`${cls} font-semibold text-center`} style={{color:"#000",lineHeight:1.5}}>
+        {anyQ.displayLatex
+          ? <MathRenderer latex={anyQ.displayLatex} />
+          : anyQ.display}
+      </div>
+    );
+  }
+  // worded / asFrac — multi-line
   return (
-    <div className="flex flex-col gap-1 text-center">
+    <div className="flex flex-col gap-2 text-center">
       {(q as any).lines.map((line: string, i: number) => (
-        <div key={i} className={`${cls} font-semibold`} style={{color:"#000", lineHeight:1.6}}>
+        <div key={i} className={`${cls} font-semibold`} style={{color:"#000",lineHeight:2.2}}>
           <InlineMath text={line} />
         </div>
       ))}
@@ -748,13 +798,17 @@ const QuestionDisplay = ({ q, cls }: { q: AnyQuestion; cls: string }) => {
   );
 };
 
+// Renders a string that may contain $...$ inline LaTeX.
+// Only genuine mathematical content (fractions, expressions, equations) should
+// be inside $...$. Words, labels, ratios, and plain numbers stay as plain text.
 const InlineMath = ({ text }: { text: string }) => {
   const parts = text.split(/(\$[^$]+\$)/g);
   return (
     <span style={{display:"inline"}}>
       {parts.map((part, i) => {
         if (part.startsWith("$") && part.endsWith("$")) {
-          return <MathRenderer key={i} latex={part.slice(1, -1)} />;
+          const latex = part.slice(1, -1);
+          return <MathRenderer key={i} latex={latex} />;
         }
         return <span key={i}>{part}</span>;
       })}
@@ -765,8 +819,10 @@ const InlineMath = ({ text }: { text: string }) => {
 const AnswerDisplay = ({ q, answerFormat: _answerFormat }: { q: AnyQuestion; answerFormat: string }) => {
   const anyQ = q as any;
   if (anyQ.answerLatex) return <><MathRenderer latex={`= ${anyQ.answerLatex}`} />{anyQ.answerSuffix && <span> {anyQ.answerSuffix}</span>}</>;
-  return <span>{anyQ.answer ?? ""}</span>;
+  return <span>= {anyQ.answer ?? ""}</span>;
 };
+
+// ── DifficultyToggle ──────────────────────────────────────────────────────────
 
 const DifficultyToggle = ({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
   <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm">
@@ -779,6 +835,10 @@ const DifficultyToggle = ({ value, onChange }: { value: string; onChange: (v: st
   </div>
 );
 
+// ── Shared popover sub-components ─────────────────────────────────────────────
+// (TogglePill, SegButtons, usePopover, PopoverButton defined before tool section)
+
+// DropdownSection — renders a segmented button selector inside a QO popover
 const DropdownSection = ({ dropdown, value, onChange }: {
   dropdown: { key: string; label: string; useTwoLineButtons?: boolean; options: { value: string; label: string; sub?: string }[] };
   value: string; onChange: (v: string) => void;
@@ -802,6 +862,10 @@ const DropdownSection = ({ dropdown, value, onChange }: {
   </div>
 );
 
+// MultiSelectSection — renders independent toggle buttons for non-mutually-exclusive options.
+// Use when options describe what's in the question pool rather than a single configuration choice.
+// At least one option must remain active — clicking the last active button does nothing.
+// Use pickActive(values, options) in generateQuestion to randomly pick from active options.
 const MultiSelectSection = ({ multiSelect, values, onChange }: {
   multiSelect: { key: string; label: string; options: { value: string; label: string }[] };
   values: Record<string, boolean>;
@@ -828,6 +892,7 @@ const MultiSelectSection = ({ multiSelect, values, onChange }: {
   );
 };
 
+// VariablesSection — renders toggle switches inside a QO popover
 const VariablesSection = ({ variables, values, onChange }: {
   variables: { key: string; label: string }[];
   values: Record<string, boolean>;
@@ -847,6 +912,7 @@ const VariablesSection = ({ variables, values, onChange }: {
   </div>
 );
 
+// StandardQOPopover — shown in whiteboard/worked example and non-differentiated worksheet
 const StandardQOPopover = ({ variables, variableValues, onVariableChange, dropdown, dropdownValue, onDropdownChange, multiSelect, multiSelectValues, onMultiSelectChange }: {
   variables: { key: string; label: string }[];
   variableValues: Record<string, boolean>;
@@ -860,7 +926,6 @@ const StandardQOPopover = ({ variables, variableValues, onVariableChange, dropdo
 }) => {
   const { open, setOpen, ref } = usePopover();
   const hasContent = variables.length > 0 || dropdown !== null || multiSelect !== null;
-  if (!hasContent) return null;
   return (
     <div className="relative" ref={ref}>
       <PopoverButton open={open} onClick={() => setOpen(!open)} />
@@ -869,12 +934,14 @@ const StandardQOPopover = ({ variables, variableValues, onVariableChange, dropdo
           {dropdown && <DropdownSection dropdown={dropdown} value={dropdownValue} onChange={onDropdownChange} />}
           {multiSelect && <MultiSelectSection multiSelect={multiSelect} values={multiSelectValues} onChange={onMultiSelectChange} />}
           {variables.length > 0 && <VariablesSection variables={variables} values={variableValues} onChange={onVariableChange} />}
+          {!hasContent && <p className="text-sm text-gray-400">No additional options for this tool.</p>}
         </div>
       )}
     </div>
   );
 };
 
+// DiffQOPopover — shown in differentiated worksheet mode; shows per-level options
 const DiffQOPopover = ({ toolSettings, levelVariables, onLevelVariableChange, levelDropdowns, onLevelDropdownChange, levelMultiSelect, onLevelMultiSelectChange }: {
   toolSettings: typeof TOOL_CONFIG.tools[string];
   levelVariables: Record<string, Record<string, boolean>>;
@@ -920,6 +987,34 @@ const DiffQOPopover = ({ toolSettings, levelVariables, onLevelVariableChange, le
   );
 };
 
+// ── InfoModal ─────────────────────────────────────────────────────────────────
+
+// InlineQOPanel — flat (non-popover) QO controls for advanced worksheet right panel.
+const InlineQOPanel = ({ toolKey, level, variables, onVariableChange, dropdownValue, onDropdownChange, multiSelectValues, onMultiSelectChange }: {
+  toolKey: string;
+  level: DifficultyLevel;
+  variables: Record<string, boolean>;
+  onVariableChange: (k: string, v: boolean) => void;
+  dropdownValue: string;
+  onDropdownChange: (v: string) => void;
+  multiSelectValues: Record<string, boolean>;
+  onMultiSelectChange: (k: string, v: boolean) => void;
+}) => {
+  const t = TOOL_CONFIG.tools[toolKey];
+  const dd = t.difficultySettings?.[level]?.dropdown ?? t.dropdown;
+  const vars = t.difficultySettings?.[level]?.variables ?? t.variables;
+  const ms = t.difficultySettings?.[level]?.multiSelect ?? t.multiSelect ?? null;
+  const hasContent = dd !== null || (vars?.length ?? 0) > 0 || ms !== null;
+  if (!hasContent) return <p className="text-sm text-gray-400">No options for this level.</p>;
+  return (
+    <div className="flex flex-col gap-4">
+      {dd && <DropdownSection dropdown={dd} value={dropdownValue} onChange={onDropdownChange} />}
+      {ms && <MultiSelectSection multiSelect={ms} values={multiSelectValues} onChange={onMultiSelectChange} />}
+      {(vars?.length ?? 0) > 0 && <VariablesSection variables={vars} values={variables} onChange={onVariableChange} />}
+    </div>
+  );
+};
+
 const InfoModal = ({ onClose }: { onClose: () => void }) => (
   <div className="fixed inset-0 z-[100] flex items-center justify-center" style={{backgroundColor:"rgba(0,0,0,0.5)"}} onClick={onClose}>
     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 flex flex-col" style={{height:"80vh"}} onClick={e=>e.stopPropagation()}>
@@ -948,6 +1043,8 @@ const InfoModal = ({ onClose }: { onClose: () => void }) => (
     </div>
   </div>
 );
+
+// ── MenuDropdown ──────────────────────────────────────────────────────────────
 
 const MenuDropdown = ({colorScheme,setColorScheme,onClose,onOpenInfo}:{colorScheme:string;setColorScheme:(s:string)=>void;onClose:()=>void;onOpenInfo:()=>void}) => {
   const [colorOpen,setColorOpen] = useState(false);
@@ -1046,24 +1143,29 @@ const handlePrint = (
     }
     const banner = `<div class="q-banner">Question ${idx + 1}</div>`;
     const instrHtml = instruction ? `<div class="q-instruction">${instruction}</div>` : "";
-
-    // All Best Buys questions are worded — plain text lines, no KaTeX
-    // Answer is plain text too, so override ansHtml for plain-text answer
-    if (showAnswer) {
-      ansHtml = `<div class="q-answer">${anyQ.answer ?? ""}</div>`;
+    let body = "";
+    if (anyQ.kind === "frac") {
+      body = `${instrHtml}<div style="text-align:center">${katexSpan(`\\text{Find } ${anyQ.latex}`, "q-math")}</div>${ansHtml}`;
+    } else if (q.kind === "simple") {
+      const mathHtml = anyQ.displayLatex
+        ? katexSpan(anyQ.displayLatex, "q-math")
+        : `<span class="q-math">${anyQ.display ?? ""}</span>`;
+      body = `${instrHtml}<div style="text-align:center">${mathHtml}</div>${ansHtml}`;
+    } else {
+      // worded / asFrac
+      body = `${instrHtml}<div style="text-align:center"><span class="q-math">${renderLine(anyQ.lines[0])}</span></div>`
+           + `<div class="q-lines">${anyQ.lines.slice(1).map((l: string) => `<div class="q-line">${renderLine(l)}</div>`).join("")}</div>`
+           + ansHtml;
     }
-    const body = instrHtml
-      + anyQ.lines.map((l: string, i: number) =>
-          `<div class="q-line" style="${i===0?"font-weight:700;":""}text-align:center;">${renderLine(l)}</div>`
-        ).join("");
-
-    return `${banner}<div class="qbody">${body}${ansHtml}</div>`;
+    return `${banner}<div class="qbody">${body}</div>`;
   };
 
+  // Build probe HTML — all questions with answers, at correct cell width
   const probeHtml = questions.map((q, i) =>
     `<div class="q-inner" id="probe-${i}">${questionToHtml(q, i, true)}</div>`
   ).join("");
 
+  // Pre-build question/answer HTML strings for JS to use
   const qHtmlData = questions.map((q, i) => ({
     q: questionToHtml(q, i, false),
     a: questionToHtml(q, i, true),
@@ -1081,30 +1183,57 @@ const handlePrint = (
   * { margin: 0; padding: 0; box-sizing: border-box; }
   @page { size: A4; margin: ${MARGIN_MM}mm; }
   body { font-family: "Segoe UI", Arial, sans-serif; background: #fff; }
+
   @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
   .page { width: ${PAGE_W_MM}mm; height: ${PAGE_H_MM}mm; overflow: hidden; page-break-after: always; }
   .page:last-child { page-break-after: auto; }
-  .page-header { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 0.4mm solid #1e3a8a; padding-bottom: 1.5mm; margin-bottom: 2mm; }
+  .page-header {
+    display: flex; justify-content: space-between; align-items: baseline;
+    border-bottom: 0.4mm solid #1e3a8a; padding-bottom: 1.5mm; margin-bottom: 2mm;
+  }
   .page-header h1 { font-size: 5mm; font-weight: 700; color: #1e3a8a; }
   .page-header .meta { font-size: 3mm; color: #6b7280; }
+
   .grid { display: grid; gap: ${GAP_MM}mm; }
-  .cell { border: 0.3mm solid #d1d5db; border-radius: 3mm; overflow: hidden; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; }
+  .cell {
+    border: 0.3mm solid #d1d5db; border-radius: 3mm;
+    overflow: hidden; display: flex; flex-direction: column;
+    align-items: stretch; justify-content: flex-start;
+  }
   .diff-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: ${GAP_MM}mm; }
   .diff-col  { display: flex; flex-direction: column; gap: ${GAP_MM}mm; }
-  .diff-header { height: ${diffHdrMM}mm; display: flex; align-items: center; justify-content: center; font-size: 3mm; font-weight: 700; border-radius: 1mm; }
+  .diff-header {
+    height: ${diffHdrMM}mm; display: flex; align-items: center; justify-content: center;
+    font-size: 3mm; font-weight: 700; border-radius: 1mm;
+  }
   .diff-header.level1 { background: #dcfce7; color: #166534; }
   .diff-header.level2 { background: #fef9c3; color: #854d0e; }
   .diff-header.level3 { background: #fee2e2; color: #991b1b; }
-  .diff-cell { border: 0.3mm solid #d1d5db; border-radius: 3mm; overflow: hidden; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; }
-  #probe { position: fixed; left: -9999px; top: 0; visibility: hidden; font-family: "Segoe UI", Arial, sans-serif; font-size: ${FONT_PX}px; line-height: 1.4; width: ${cellW_MM}mm; }
+  .diff-cell {
+    border: 0.3mm solid #d1d5db; border-radius: 3mm;
+    overflow: hidden; display: flex; flex-direction: column;
+    align-items: stretch; justify-content: flex-start;
+  }
+
+  /* Probe: off-screen, correct CONTENT width, fixed font for measurement */
+  #probe {
+    position: fixed; left: -9999px; top: 0; visibility: hidden;
+    font-family: "Segoe UI", Arial, sans-serif; font-size: ${FONT_PX}px; line-height: 1.4;
+    width: ${cellW_MM}mm;
+  }
+
   .q-inner  { width: 100%; display: flex; flex-direction: column; flex: 1; }
   .q-banner { width: 100%; text-align: center; font-size: ${Math.round(FONT_PX * 0.65)}px; font-weight: 700; color: #000; padding: 1mm 0; border-bottom: 0.3mm solid #000; }
   .qbody    { padding: ${PAD_MM * 0.4}mm ${PAD_MM}mm ${PAD_MM}mm; text-align: center; flex: 1; }
   .q-instruction { font-size: ${Math.round(FONT_PX * 0.8)}px; color: #000; text-align: center; margin-bottom: 1mm; font-weight: 600; }
-  .q-line   { display: block; text-align: center; font-size: ${FONT_PX}px; line-height: 1.5; }
-  .q-answer { font-size: ${FONT_PX}px; color: #059669; display: block; margin-top: 1mm; text-align: center; font-weight: 700; }
+  .q-math   { font-size: ${FONT_PX}px; display: inline; }
+  .q-lines  { font-size: ${FONT_PX}px; line-height: 1.4; text-align: center; }
+  .q-line   { display: block; text-align: center; margin-bottom: 0.2mm; }
+  .q-answer { font-size: ${FONT_PX}px; color: #059669; display: block; margin-top: 0.8mm; text-align: center; }
   .katex-render { display: inline-block; vertical-align: baseline; }
   .katex-render .katex { font-size: ${FONT_PX}px; }
+  .katex-render.frac .katex { font-size: ${FONT_PX}px; }
+  @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
 </style>
 </head>
 <body>
@@ -1125,59 +1254,92 @@ document.addEventListener("DOMContentLoaded", function() {
   var dateStr   = "${dateStr}";
   var toolName  = "${toolName}";
 
+  // Pre-determined row heights for 1–10 rows
   var rowHeights = [];
-  for (var r = 1; r <= 10; r++) rowHeights.push((usableH - GAP_MM * (r - 1)) / r);
+  for (var r = 1; r <= 10; r++) {
+    rowHeights.push((usableH - GAP_MM * (r - 1)) / r);
+  }
 
+  // Question data pre-built in TS
   var qData = ${JSON.stringify(qHtmlData)};
 
+  // Step 1: render KaTeX in probe
   var probe = document.getElementById('probe');
   probe.querySelectorAll('.katex-render').forEach(function(el) {
     try { katex.render(el.getAttribute('data-latex'), el, { throwOnError: false, output: 'html' }); }
     catch(e) { el.textContent = el.getAttribute('data-latex'); }
   });
 
+  // Step 2: measure tallest question+answer content
   var maxH_px = 0;
   probe.querySelectorAll('.q-inner').forEach(function(el) {
     if (el.scrollHeight > maxH_px) maxH_px = el.scrollHeight;
   });
   var maxH_mm = maxH_px / pxPerMm;
-  var needed_mm = maxH_mm + PAD_MM * 2 + 6;
+  var needed_mm = maxH_mm + PAD_MM * 2 + 6; // +6mm buffer for line-wrap variation and KaTeX height
 
-  var diffPerCol   = Math.floor(totalQ / 3);
-  var diffUsableH  = usableH - diffHdrMM - GAP_MM;
+  // For differentiated: calculate how many rows fit per page
+  var diffPerCol   = Math.floor(totalQ / 3); // questions per level
+  var diffUsableH  = usableH - diffHdrMM - GAP_MM; // usable height after level header
+  // For each row count tested, amortise the header cost across the rows so cells
+  // get credit for their share of that fixed overhead (dNeeded = needed - dHdr/rows).
   var diffRowsPerPage = 1;
-  var diffCellH_mm = diffUsableH;
+  var diffCellH_mm = diffUsableH; // fallback: 1 row
   for (var rd = 0; rd < diffPerCol; rd++) {
     var rows2 = rd + 1;
     var h = (diffUsableH - GAP_MM * rd) / rows2;
     var dNeeded = needed_mm - diffHdrMM / rows2;
-    if (h >= dNeeded) { diffRowsPerPage = rows2; diffCellH_mm = h; }
-  }
-
-  var chosenH_mm = rowHeights[0];
-  var rowsPerPage = 1;
-  var found = false;
-  for (var r = 0; r < rowHeights.length; r++) {
-    var capacity = (r + 1) * cols;
-    if (capacity >= totalQ && rowHeights[r] >= needed_mm) { chosenH_mm = rowHeights[r]; rowsPerPage = r + 1; found = true; break; }
-  }
-  if (!found) {
-    for (var r2 = 0; r2 < rowHeights.length; r2++) {
-      if (rowHeights[r2] >= needed_mm) { chosenH_mm = rowHeights[r2]; rowsPerPage = r2 + 1; }
+    if (h >= dNeeded) {
+      diffRowsPerPage = rows2;
+      diffCellH_mm = h;
     }
   }
 
+  // Step 3: find the optimal row count for STANDARD layout
+  var chosenH_mm = rowHeights[0];
+  var rowsPerPage = 1;
+
+  // First try: find smallest rows where capacity >= totalQ AND content fits
+  var found = false;
+  for (var r = 0; r < rowHeights.length; r++) {
+    var capacity = (r + 1) * cols;
+    if (capacity >= totalQ && rowHeights[r] >= needed_mm) {
+      chosenH_mm = rowHeights[r];
+      rowsPerPage = r + 1;
+      found = true;
+      break;
+    }
+  }
+
+  // Fallback: can't fit all on one page — use most rows where content fits
+  if (!found) {
+    for (var r2 = 0; r2 < rowHeights.length; r2++) {
+      if (rowHeights[r2] >= needed_mm) {
+        chosenH_mm = rowHeights[r2];
+        rowsPerPage = r2 + 1;
+      }
+    }
+  }
+
+  // Step 4: split into pages
   var pageCapacity = isDiff ? diffRowsPerPage : rowsPerPage * cols;
+  // For diff, pages is indexed by page number; each page shows diffRowsPerPage per level
   var pages = [];
   if (isDiff) {
     var numDiffPages = Math.ceil(diffPerCol / diffRowsPerPage);
-    for (var p = 0; p < numDiffPages; p++) pages.push(p);
+    for (var p = 0; p < numDiffPages; p++) {
+      pages.push(p); // store page index, not slice of flat array
+    }
   } else {
-    for (var s = 0; s < qData.length; s += pageCapacity) pages.push(qData.slice(s, s + pageCapacity));
+    for (var s = 0; s < qData.length; s += pageCapacity) {
+      pages.push(qData.slice(s, s + pageCapacity));
+    }
   }
   var totalPages = pages.length;
 
-  function makeCellW(c) { return (PAGE_W_MM - GAP_MM * (c - 1)) / c; }
+  function makeCellW(c) {
+    return (PAGE_W_MM - GAP_MM * (c - 1)) / c;
+  }
 
   function buildCell(inner, cW, cH, isDiffCell) {
     var cls = isDiffCell ? 'diff-cell' : 'cell';
@@ -1187,7 +1349,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
   function buildGrid(pageData, showAnswer, cH) {
     if (isDiff) {
-      var pgIdx = pageData;
+      var pgIdx = pageData; // for diff, pageData is the page index
       var start = pgIdx * diffRowsPerPage;
       var end   = start + diffRowsPerPage;
       var cW = makeCellW(3);
@@ -1195,14 +1357,18 @@ document.addEventListener("DOMContentLoaded", function() {
       var lbls = ['Level 1','Level 2','Level 3'];
       var cols3 = lvls.map(function(lv, li) {
         var lqs = qData.filter(function(q) { return q.difficulty === lv; }).slice(start, end);
-        var cells = lqs.map(function(q) { return buildCell(showAnswer ? q.a : q.q, cW, cH, true); }).join('');
+        var cells = lqs.map(function(q) {
+          return buildCell(showAnswer ? q.a : q.q, cW, cH, true);
+        }).join('');
         return '<div class="diff-col"><div class="diff-header ' + lv + '">' + lbls[li] + '</div>' + cells + '</div>';
       }).join('');
       return '<div class="diff-grid" style="grid-template-columns:repeat(3,' + cW + 'mm);">' + cols3 + '</div>';
     }
     var cW = makeCellW(cols);
     var gridRows = Math.ceil(pageData.length / cols);
-    var cells = pageData.map(function(item) { return buildCell(showAnswer ? item.a : item.q, cW, cH, false); }).join('');
+    var cells = pageData.map(function(item) {
+      return buildCell(showAnswer ? item.a : item.q, cW, cH, false);
+    }).join('');
     return '<div class="grid" style="grid-template-columns:repeat(' + cols + ',' + cW + 'mm);grid-template-rows:repeat(' + gridRows + ',' + cH + 'mm);">' + cells + '</div>';
   }
 
@@ -1219,15 +1385,22 @@ document.addEventListener("DOMContentLoaded", function() {
       + '</div>';
   }
 
+  // Render all question pages then all answer pages
   var html = pages.map(function(pg, i) { return buildPage(pg, false, i); }).join('')
            + pages.map(function(pg, i) { return buildPage(pg, true,  i); }).join('');
 
   document.getElementById('pages').innerHTML = html;
+
+  // Step 5: render KaTeX in actual pages
   document.getElementById('pages').querySelectorAll('.katex-render').forEach(function(el) {
     try { katex.render(el.getAttribute('data-latex'), el, { throwOnError: false, output: 'html' }); }
     catch(e) { el.textContent = el.getAttribute('data-latex'); }
   });
+
+  // Remove probe
   probe.remove();
+
+  // Auto-open print dialog after a short delay for KaTeX layout to settle
   setTimeout(function() { window.print(); }, 300);
 });
 <\/script>
@@ -1251,18 +1424,17 @@ export default function App() {
   const [mode, setMode] = useState<"whiteboard"|"single"|"worksheet">("whiteboard");
   const [difficulty, setDifficulty] = useState<DifficultyLevel>("level1");
 
-  // ── CONFIG-DRIVEN QO STATE ────────────────────────────────────────────────
-  const [toolVariables, setToolVariables] = useState<Record<string,Record<string,boolean>>>(() => {
-    const init: Record<string,Record<string,boolean>> = {};
+  // ── CONFIG-DRIVEN QO STATE (do not remove) ────────────────────────────────
+  // Variables stored per-tool. Dropdowns stored per tool__level key so that
+  // each tool/level combination remembers its own selection independently.
+  const [toolVariables, setToolVariables] = useState<Record<string,Record<string,Record<string,boolean>>>>(() => {
+    const init: Record<string,Record<string,Record<string,boolean>>> = {};
     Object.keys(TOOL_CONFIG.tools).forEach(k => {
+      init[k] = {};
       (["level1","level2","level3"] as DifficultyLevel[]).forEach(lv => {
-        const key = `${k}__${lv}`;
-        init[key] = {};
-        // Base variables (same across all levels)
-        TOOL_CONFIG.tools[k].variables.forEach(v => { init[key][v.key] = v.defaultValue; });
-        // Per-level overrides from difficultySettings
-        const ds = TOOL_CONFIG.tools[k].difficultySettings;
-        (ds?.[lv]?.variables ?? []).forEach(v => { init[key][v.key] = v.defaultValue; });
+        init[k][lv] = {};
+        const vars = TOOL_CONFIG.tools[k].difficultySettings?.[lv]?.variables ?? TOOL_CONFIG.tools[k].variables;
+        vars.forEach(v => { init[k][lv][v.key] = v.defaultValue; });
       });
     });
     return init;
@@ -1281,34 +1453,12 @@ export default function App() {
   const [toolMultiSelect, setToolMultiSelect] = useState<Record<string,Record<string,boolean>>>(() => {
     const init: Record<string,Record<string,boolean>> = {};
     Object.keys(TOOL_CONFIG.tools).forEach(k => {
-      (["level1","level2","level3"] as DifficultyLevel[]).forEach(lv => {
-        const key = `${k}__${lv}`;
-        init[key] = {};
-        // Top-level multiSelect (same across all levels)
-        const ms = TOOL_CONFIG.tools[k].multiSelect;
-        if (ms) ms.options.forEach(o => { init[key][o.value] = o.defaultActive; });
-        // Per-level multiSelect from difficultySettings (overrides/adds)
-        const dsMs = TOOL_CONFIG.tools[k].difficultySettings?.[lv]?.multiSelect;
-        if (dsMs) dsMs.options.forEach(o => { init[key][o.value] = o.defaultActive; });
-      });
+      const ms = TOOL_CONFIG.tools[k].multiSelect;
+      if (ms) { init[k] = {}; ms.options.forEach(o => { init[k][o.value] = o.defaultActive; }); }
     });
     return init;
   });
-  const [levelVariables, setLevelVariables] = useState<Record<string,Record<string,boolean>>>(() => {
-    // Initialise per-level variables for differentiated worksheet QO
-    const init: Record<string,Record<string,boolean>> = {level1:{},level2:{},level3:{}};
-    Object.keys(TOOL_CONFIG.tools).forEach(k => {
-      const ds = TOOL_CONFIG.tools[k].difficultySettings;
-      if (ds) {
-        (["level1","level2","level3"] as DifficultyLevel[]).forEach(lv => {
-          (ds[lv]?.variables ?? []).forEach(v => {
-            if (!(v.key in init[lv])) init[lv][v.key] = v.defaultValue;
-          });
-        });
-      }
-    });
-    return init;
-  });
+  const [levelVariables, setLevelVariables] = useState<Record<string,Record<string,boolean>>>({level1:{},level2:{},level3:{}});
   const [levelDropdowns, setLevelDropdowns] = useState<Record<string,string>>(() => {
     const init: Record<string,string> = {};
     const firstTool = Object.keys(TOOL_CONFIG.tools)[0];
@@ -1322,19 +1472,51 @@ export default function App() {
   const [levelMultiSelect, setLevelMultiSelect] = useState<Record<string,Record<string,boolean>>>({level1:{},level2:{},level3:{}});
   // ─────────────────────────────────────────────────────────────────────────
 
-  // ── SHARED STATE ─────────────────────────────────────────────────────────
+  // ── SHARED STATE (do not remove) ─────────────────────────────────────────
   const [currentQuestion, setCurrentQuestion] = useState<AnyQuestion>(() =>
     generateQuestion("unitCost", "level1", {}, "")
   );
   const [showWhiteboardAnswer, setShowWhiteboardAnswer] = useState(false);
   const [showAnswer, setShowAnswer] = useState(false);
-  const [numQuestions, setNumQuestions] = useState(6);
-  const [numColumns, setNumColumns] = useState(1);
+  const [numQuestions, setNumQuestions] = useState(15);
+  const [numColumns, setNumColumns] = useState(3);
   const [worksheet, setWorksheet] = useState<AnyQuestion[]>([]);
   const [showWorksheetAnswers, setShowWorksheetAnswers] = useState(false);
   const [isDifferentiated, setIsDifferentiated] = useState(false);
-  const [displayFontSize, setDisplayFontSize] = useState(1);
-  const [worksheetFontSize, setWorksheetFontSize] = useState(1);
+  const [worksheetMode, setWorksheetMode] = useState<"standard"|"advanced">("standard");
+
+  // ── Advanced worksheet state ──────────────────────────────────────────────
+  interface AdvGroup {
+    id: number;
+    level: DifficultyLevel;
+    count: number;
+    variables: Record<string, boolean>;
+    dropdownValue: string;
+    multiSelectValues: Record<string, boolean>;
+  }
+  const makeDefaultAdvGroup = (id: number, lv: DifficultyLevel = "level1"): AdvGroup => {
+    const t = TOOL_CONFIG.tools[currentTool as ToolType];
+    const dd = t.difficultySettings?.[lv]?.dropdown ?? t.dropdown;
+    const vars = t.difficultySettings?.[lv]?.variables ?? t.variables;
+    const ms = t.difficultySettings?.[lv]?.multiSelect ?? t.multiSelect;
+    const variables: Record<string,boolean> = {};
+    vars.forEach(v => { variables[v.key] = v.defaultValue; });
+    const multiSelectValues: Record<string,boolean> = {};
+    ms?.options.forEach(o => { multiSelectValues[o.value] = o.defaultActive; });
+    return { id, level: lv, count: 5, variables, dropdownValue: dd?.defaultValue ?? "", multiSelectValues };
+  };
+  const [advGroups, setAdvGroups] = useState<AdvGroup[]>(() => [makeDefaultAdvGroup(1)]);
+  const [advSelectedId, setAdvSelectedId] = useState<number>(1);
+  const advNextId = useRef(2);
+  const [advShuffle, setAdvShuffle] = useState(false);
+  const totalAdvQuestions = advGroups.reduce((s, g) => s + g.count, 0);
+  const _advDragNodeIdx = useRef<number|null>(null);
+  const _advListRef = useRef<HTMLDivElement>(null);
+  void _advDragNodeIdx; void _advListRef;
+  // ─────────────────────────────────────────────────────────────────────────
+
+  const [displayFontSize, setDisplayFontSize] = useState(1);  // whiteboard + worked example
+  const [worksheetFontSize, setWorksheetFontSize] = useState(1); // worksheet only — default text-xl
   const [colorScheme, setColorScheme] = useState("default");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
@@ -1342,7 +1524,7 @@ export default function App() {
   // Visualiser
   const [presenterMode, setPresenterMode] = useState(false);
   const [wbFullscreen, setWbFullscreen] = useState(false);
-  const [splitPct, setSplitPct] = useState(40);
+  const [splitPct, setSplitPct] = useState(40); // fullscreen question/working split %
   const [camDevices, setCamDevices] = useState<MediaDeviceInfo[]>([]);
   const [currentCamId, setCurrentCamId] = useState<string|null>(null);
   const [camError, setCamError] = useState<string|null>(null);
@@ -1353,9 +1535,10 @@ export default function App() {
   const camDropdownRef = useRef<HTMLDivElement>(null);
   const longPressTimer = useRef<ReturnType<typeof setTimeout>|null>(null);
   const didLongPress = useRef(false);
-  const isDraggingRef = useRef(false);
-  const splitContainerRef = useRef<HTMLDivElement>(null);
+  const isDraggingRef = useRef(false);      // must be at top level — not inside renderWhiteboard
+  const splitContainerRef = useRef<HTMLDivElement>(null); // same reason
 
+  // Load KaTeX on mount
   useEffect(() => { loadKaTeX(); }, []);
 
   const stopStream = useCallback(() => {
@@ -1409,16 +1592,20 @@ export default function App() {
   const getMultiSelectConfig = () => getToolSettings().difficultySettings?.[difficulty]?.multiSelect ?? getToolSettings().multiSelect ?? null;
   const getDropdownValue = () => toolDropdowns[`${currentTool}__${difficulty}`] ?? getDropdownConfig()?.defaultValue ?? "";
   const setDropdownValue = (v: string) => setToolDropdowns(p => ({...p, [`${currentTool}__${difficulty}`]: v}));
-  const setVariableValue = (k: string, v: boolean) => setToolVariables(p => ({...p, [`${currentTool}__${difficulty}`]: {...(p[`${currentTool}__${difficulty}`]??{}), [k]: v}}));
-  const setMultiSelectValue = (k: string, v: boolean) => setToolMultiSelect(p => ({...p, [`${currentTool}__${difficulty}`]: {...(p[`${currentTool}__${difficulty}`]??{}), [k]: v}}));
+  const getVariableValues = () => toolVariables[currentTool]?.[difficulty] ?? {};
+  const setVariableValue = (k: string, v: boolean) => setToolVariables(p => ({
+    ...p, [currentTool]: { ...(p[currentTool]??{}), [difficulty]: { ...(p[currentTool]?.[difficulty]??{}), [k]: v } }
+  }));
+  const setMultiSelectValue = (k: string, v: boolean) => setToolMultiSelect(p => ({...p, [currentTool]: {...(p[currentTool]??{}), [k]: v}}));
   const handleLevelVarChange = (lv: string, k: string, v: boolean) => setLevelVariables(p => ({...p, [lv]: {...p[lv], [k]: v}}));
   const handleLevelDDChange = (lv: string, v: string) => setLevelDropdowns(p => ({...p, [lv]: v}));
   const handleLevelMSChange = (lv: string, k: string, v: boolean) => setLevelMultiSelect(p => ({...p, [lv]: {...(p[lv]??{}), [k]: v}}));
-  const getInstruction = (_tool = currentTool) => TOOL_CONFIG.tools[_tool]?.instruction ?? "";
+  const getInstruction = (tool = currentTool) => TOOL_CONFIG.tools[tool]?.instruction ?? "";
   // ─────────────────────────────────────────────────────────────────────────
 
+  // ── WIRING ────────────────────────────────────────────────────────────────
   const makeQuestion = (): AnyQuestion =>
-    generateQuestion(currentTool, difficulty, toolVariables[`${currentTool}__${difficulty}`] || {}, getDropdownValue(), toolMultiSelect[`${currentTool}__${difficulty}`] ?? {});
+    generateQuestion(currentTool, difficulty, getVariableValues(), getDropdownValue(), toolMultiSelect[currentTool] ?? {});
 
   const handleNewQuestion = () => {
     setCurrentQuestion(makeQuestion());
@@ -1436,26 +1623,73 @@ export default function App() {
         const vars = levelVariables[lv] ?? {};
         const ddVal = levelDropdowns[lv] ?? (dd?.defaultValue ?? "");
         const msVals = levelMultiSelect[lv] ?? {};
+        const snap: QOSnapshot = { level: lv as DifficultyLevel, variables: vars, dropdownValue: ddVal, multiSelectValues: msVals };
         for (let i = 0; i < numQuestions; i++)
-          questions.push(generateUniqueQ(currentTool, lv, vars, ddVal, usedKeys, msVals));
+          questions.push(stampQO(generateUniqueQ(currentTool, lv as DifficultyLevel, vars, ddVal, usedKeys, msVals), snap));
       });
     } else {
+      const snap: QOSnapshot = { level: difficulty, variables: getVariableValues(), dropdownValue: getDropdownValue(), multiSelectValues: toolMultiSelect[currentTool] ?? {} };
       for (let i = 0; i < numQuestions; i++)
-        questions.push(generateUniqueQ(currentTool, difficulty, toolVariables[`${currentTool}__${difficulty}`] || {}, getDropdownValue(), usedKeys, toolMultiSelect[`${currentTool}__${difficulty}`] ?? {}));
+        questions.push(stampQO(generateUniqueQ(currentTool, difficulty, getVariableValues(), getDropdownValue(), usedKeys, toolMultiSelect[currentTool] ?? {}), snap));
     }
     setWorksheet(questions);
     setShowWorksheetAnswers(false);
   };
 
+  // _qo snapshot — stamped onto every generated question for per-cell regen
+  interface QOSnapshot {
+    level: DifficultyLevel;
+    variables: Record<string, boolean>;
+    dropdownValue: string;
+    multiSelectValues: Record<string, boolean>;
+  }
+
+  const stampQO = (q: AnyQuestion, snap: QOSnapshot): AnyQuestion =>
+    ({ ...q, _qo: snap } as AnyQuestion);
+
+  const handleGenerateAdvanced = () => {
+    const usedKeys = new Set<string>();
+    const questions: AnyQuestion[] = [];
+    advGroups.forEach(g => {
+      const snap: QOSnapshot = { level: g.level, variables: g.variables, dropdownValue: g.dropdownValue, multiSelectValues: g.multiSelectValues };
+      for (let i = 0; i < g.count; i++)
+        questions.push(stampQO(generateUniqueQ(currentTool, g.level, g.variables, g.dropdownValue, usedKeys, g.multiSelectValues), snap));
+    });
+    if (advShuffle) {
+      for (let i = questions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [questions[i], questions[j]] = [questions[j], questions[i]];
+      }
+    }
+    setWorksheet(questions);
+    setShowWorksheetAnswers(false);
+  };
+
+  const regenQuestion = (idx: number) => {
+    const q = worksheet[idx];
+    const snap = (q as any)._qo as QOSnapshot | undefined;
+    if (!snap) return;
+    const existing = new Set(worksheet.map(w => w.key));
+    existing.delete(q.key);
+    let replacement: AnyQuestion | null = null;
+    for (let attempt = 0; attempt < 100; attempt++) {
+      const candidate = generateQuestion(currentTool, snap.level, snap.variables, snap.dropdownValue, snap.multiSelectValues);
+      if (!existing.has(candidate.key)) { replacement = stampQO(candidate, snap); break; }
+    }
+    if (!replacement) return;
+    setWorksheet(prev => prev.map((w, i) => i === idx ? replacement! : w));
+  };
+
+  // QO popover — automatically driven by TOOL_CONFIG, no manual component needed
   const stdQOProps = {
     variables: getVariablesConfig() ?? [],
-    variableValues: toolVariables[`${currentTool}__${difficulty}`] || {},
+    variableValues: getVariableValues(),
     onVariableChange: setVariableValue,
     dropdown: getDropdownConfig() ?? null,
     dropdownValue: getDropdownValue(),
     onDropdownChange: setDropdownValue,
     multiSelect: getMultiSelectConfig(),
-    multiSelectValues: toolMultiSelect[`${currentTool}__${difficulty}`] ?? {},
+    multiSelectValues: toolMultiSelect[currentTool] ?? {},
     onMultiSelectChange: setMultiSelectValue,
   };
   const diffQOProps = {
@@ -1470,28 +1704,53 @@ export default function App() {
   const qoEl = (isDiff = false) => isDiff
     ? <DiffQOPopover {...diffQOProps} />
     : <StandardQOPopover {...stdQOProps} />;
+  // ─────────────────────────────────────────────────────────────────────────
+
+  // Arrow key navigation between groups in advanced mode
+  useEffect(() => {
+    if (mode !== "worksheet" || worksheetMode !== "advanced") return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      const idx = advGroups.findIndex(g => g.id === advSelectedId);
+      if (idx === -1) return;
+      const next = e.key === "ArrowLeft" ? idx - 1 : idx + 1;
+      if (next >= 0 && next < advGroups.length) { setAdvSelectedId(advGroups[next].id); e.preventDefault(); }
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [mode, worksheetMode, advGroups, advSelectedId]);
 
   useEffect(()=>{ if(mode!=="worksheet") handleNewQuestion(); },[difficulty,currentTool]);
 
+  // Whiteboard / worked example — larger sizes for single question display
   const displayFontSizes = ["text-2xl","text-3xl","text-4xl","text-5xl","text-6xl","text-7xl"];
   const canDisplayIncrease = displayFontSize < displayFontSizes.length - 1;
   const canDisplayDecrease = displayFontSize > 0;
 
+  // Worksheet — smaller sizes for grid of questions
   const fontSizes = ["text-lg","text-xl","text-2xl","text-3xl","text-4xl","text-5xl"];
   const canIncrease = worksheetFontSize < fontSizes.length-1;
   const canDecrease = worksheetFontSize > 0;
 
-  // ── Worksheet cell ────────────────────────────────────────────────────────
+    // ── Worksheet cell ────────────────────────────────────────────────────────
   const renderQCell = (q: AnyQuestion, idx: number, bgOverride?: string) => {
     const bg = bgOverride ?? stepBg;
     const fsz = fontSizes[worksheetFontSize];
-    const cellStyle = {backgroundColor:bg, height:"100%", boxSizing:"border-box" as const, position:"relative" as const};
+    const cellStyle = {backgroundColor:bg, height:"100%", boxSizing:"border-box" as const, position:"relative" as const, borderRadius:"12px", border:"1px solid #e5e7eb"};
     const numEl = <span style={{position:"absolute",top:0,left:0,fontSize:"0.65em",fontWeight:700,color:"#000",lineHeight:1,padding:"5px 5px 7px 5px",borderRight:"1px solid #000",borderBottom:"1px solid #000"}}>{idx+1})</span>;
 
-    // All questions are worded — lines[] of plain text
+    const regenBtn = (q as any)._qo ? (
+      <button onClick={() => regenQuestion(idx)} title="Regenerate this question"
+        className="absolute top-1 right-1 w-6 h-6 rounded flex items-center justify-center text-gray-300 hover:text-blue-600 hover:bg-blue-50 transition-all opacity-0 group-hover:opacity-100"
+        style={{zIndex:10}}>
+        <RefreshCw size={12}/>
+      </button>
+    ) : null;
+
+    // All Best Buys questions are worded — lines[] of plain text
     return (
-      <div className="rounded-lg p-4 shadow" style={cellStyle}>
-        {numEl}
+      <div className="rounded-xl p-4 shadow group" style={cellStyle}>
+        {numEl}{regenBtn}
         <div className={`${fsz} font-semibold w-full text-center`} style={{color:"#000",lineHeight:1.7,paddingTop:"0.4em"}}>
           {(q as any).lines.map((line: string, i: number) => (
             <div key={i} style={{fontWeight: i === 0 ? 700 : 600}}>
@@ -1508,56 +1767,196 @@ export default function App() {
     );
   };
 
-  // ── Control bar ───────────────────────────────────────────────────────────
-  const renderControlBar = () => {
-    if(mode==="worksheet") return (
-      <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-        <div className="flex justify-center items-center gap-6 mb-4">
-          <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm">
-            {([["level1","Level 1","bg-green-600"],["level2","Level 2","bg-yellow-500"],["level3","Level 3","bg-red-600"]] as const).map(([val,label,col])=>(
-              <button key={val} onClick={()=>{setDifficulty(val as DifficultyLevel);setIsDifferentiated(false);}}
-                className={`px-5 py-2 font-bold text-base transition-colors ${!isDifferentiated&&difficulty===val?`${col} text-white`:"bg-white text-gray-500 hover:bg-gray-50"}`}>
-                {label}
+  // ── Advanced Worksheet Builder ────────────────────────────────────────────
+  const renderAdvancedWorksheet = () => {
+    const lvColor  = (lv: DifficultyLevel) => lv==="level1"?"bg-green-600":lv==="level2"?"bg-yellow-500":"bg-red-600";
+    const lvBorder = (lv: DifficultyLevel) => lv==="level1"?"#16a34a":lv==="level2"?"#eab308":"#dc2626";
+    const canAdd = advGroups.length < 10;
+    const updateGroup = (id: number, patch: Partial<AdvGroup>) =>
+      setAdvGroups(gs => gs.map(g => g.id === id ? { ...g, ...patch } : g));
+    const selectedGroup = advGroups.find(g => g.id === advSelectedId) ?? advGroups[0];
+
+    return (
+      <div className="flex gap-3" style={{minHeight:300}}>
+        {/* Left panel: group list */}
+        <div className="flex flex-col rounded-xl border-2 border-gray-300 overflow-hidden" style={{width:"50%",flexShrink:0,backgroundColor:"#fff"}}>
+          <div className="flex-1 divide-y divide-gray-100 overflow-y-auto">
+            {advGroups.map((g, idx) => {
+              const isSel = g.id === advSelectedId;
+              return (
+                <div key={g.id} onClick={() => setAdvSelectedId(g.id)}
+                  className="flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-gray-50"
+                  style={{borderLeft:`3px solid ${isSel?lvBorder(g.level):"transparent"}`,backgroundColor:isSel?"#f0f4ff":undefined}}>
+                  <span className="text-xs font-bold text-gray-300 w-4 flex-shrink-0 tabular-nums">{idx+1}</span>
+                  <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden flex-shrink-0" onClick={e=>e.stopPropagation()}>
+                    {(["level1","level2","level3"] as DifficultyLevel[]).map((lv,li)=>(
+                      <button key={lv} onClick={()=>{updateGroup(g.id,{...makeDefaultAdvGroup(g.id,lv),id:g.id});setAdvSelectedId(g.id);}}
+                        className={`px-2.5 py-1 font-bold text-xs transition-colors ${g.level===lv?`${lvColor(lv)} text-white`:"bg-white text-gray-400 hover:bg-gray-50"}`}>
+                        L{li+1}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex-1"/>
+                  <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5 flex-shrink-0" onClick={e=>e.stopPropagation()}>
+                    <button onClick={()=>updateGroup(g.id,{count:Math.max(1,g.count-1)})} disabled={g.count<=1}
+                      className="w-6 h-6 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-base leading-none">−</button>
+                    <span className="w-6 text-center text-xs font-bold text-gray-800 tabular-nums">{g.count}</span>
+                    <button onClick={()=>updateGroup(g.id,{count:Math.min(24,g.count+1)})} disabled={g.count>=24}
+                      className="w-6 h-6 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-base leading-none">+</button>
+                  </div>
+                  {advGroups.length>1&&(
+                    <button onClick={e=>{e.stopPropagation();const rem=advGroups.filter((_,i)=>i!==idx);setAdvGroups(rem);if(g.id===advSelectedId)setAdvSelectedId(rem[Math.max(0,idx-1)].id);}}
+                      className="w-6 h-6 rounded-full flex items-center justify-center text-gray-300 hover:bg-red-50 hover:text-red-400 transition-colors flex-shrink-0">
+                      <X size={12}/>
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <div className="px-4 py-3 border-t border-gray-200 flex-shrink-0">
+            {canAdd?(
+              <button onClick={()=>{const newId=advNextId.current++;setAdvGroups(g=>[...g,makeDefaultAdvGroup(newId)]);setAdvSelectedId(newId);}}
+                className="w-full py-2 rounded-lg border-2 border-dashed border-gray-200 text-xs font-bold text-gray-400 hover:border-blue-300 hover:text-blue-600 transition-colors">
+                + Add group
               </button>
-            ))}
-          </div>
-          <button onClick={()=>setIsDifferentiated(!isDifferentiated)}
-            className={`px-6 py-2 rounded-xl font-bold text-base shadow-sm border-2 transition-colors ${isDifferentiated?"bg-blue-900 text-white border-blue-900":"bg-white text-gray-600 border-gray-300 hover:border-blue-900 hover:text-blue-900"}`}>
-            Differentiated
-          </button>
-        </div>
-        <div className="flex justify-center items-center gap-6 mb-4">
-          {qoEl(isDifferentiated)}
-          <div className="flex items-center gap-3">
-            <label className="text-base font-semibold text-gray-700">Questions:</label>
-            <input type="number" min="1" max="24" value={numQuestions}
-              onChange={e=>setNumQuestions(Math.max(1,Math.min(24,parseInt(e.target.value)||6)))}
-              className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-base font-semibold text-center"/>
-          </div>
-          <div className="flex items-center gap-3">
-            <label className="text-base font-semibold text-gray-700">Columns:</label>
-            <input type="number" min="1" max="4" value={isDifferentiated ? 3 : numColumns}
-              onChange={e=>{ if(!isDifferentiated) setNumColumns(Math.max(1,Math.min(4,parseInt(e.target.value)||1))); }}
-              disabled={isDifferentiated}
-              className={`w-20 px-4 py-2 border-2 rounded-lg text-base font-semibold text-center transition-colors ${isDifferentiated?"border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed":"border-gray-300 bg-white"}`}/>
+            ):(
+              <p className="text-center text-xs text-gray-400 font-semibold py-1">Maximum 10 groups reached</p>
+            )}
           </div>
         </div>
-        <div className="flex justify-center items-center gap-4">
-          <button onClick={handleGenerateWorksheet} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
-            <RefreshCw size={18}/> Generate
-          </button>
-          {worksheet.length>0&&<>
-            <button onClick={()=>setShowWorksheetAnswers(!showWorksheetAnswers)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
-              <Eye size={18}/> {showWorksheetAnswers?"Hide Answers":"Show Answers"}
-            </button>
-            <button onClick={()=>handlePrint(worksheet,TOOL_CONFIG.tools[currentTool].name,difficulty,isDifferentiated,numColumns,getInstruction())}
-              className="px-6 py-2 bg-green-700 text-white rounded-xl font-bold text-base shadow-sm hover:bg-green-800 flex items-center gap-2">
-              <Printer size={18}/> Print / PDF
-            </button>
-          </>}
+
+        {/* Right panel: inline QO for selected group */}
+        <div className="flex-1 rounded-xl border-2 border-gray-300 px-5 py-4 overflow-y-auto" style={{backgroundColor:"#fff"}}>
+          {selectedGroup&&(
+            <>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">
+                Group {advGroups.indexOf(selectedGroup)+1} · {selectedGroup.level==="level1"?"Level 1":selectedGroup.level==="level2"?"Level 2":"Level 3"} · Options
+              </p>
+              <InlineQOPanel
+                toolKey={currentTool}
+                level={selectedGroup.level}
+                variables={selectedGroup.variables}
+                onVariableChange={(k,v)=>updateGroup(selectedGroup.id,{variables:{...selectedGroup.variables,[k]:v}})}
+                dropdownValue={selectedGroup.dropdownValue}
+                onDropdownChange={v=>updateGroup(selectedGroup.id,{dropdownValue:v})}
+                multiSelectValues={selectedGroup.multiSelectValues}
+                onMultiSelectChange={(k,v)=>updateGroup(selectedGroup.id,{multiSelectValues:{...selectedGroup.multiSelectValues,[k]:v}})}
+              />
+            </>
+          )}
         </div>
       </div>
     );
+  };
+
+  // ── Control bar ───────────────────────────────────────────────────────────
+  const renderControlBar = () => {
+    if(mode==="worksheet") {
+      const isAdv = worksheetMode === "advanced";
+      return (
+        <div className="bg-white rounded-xl shadow-lg mb-8">
+          {/* Toggle row */}
+          <div className="flex items-center gap-3 px-6 pt-4 pb-0">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <div onClick={()=>setWorksheetMode(isAdv?"standard":"advanced")}
+                className={`w-11 h-6 rounded-full transition-colors relative ${isAdv?"bg-blue-900":"bg-gray-300"}`}>
+                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${isAdv?"translate-x-6":"translate-x-1"}`}/>
+              </div>
+              <span className="text-sm font-bold text-gray-500">Advanced</span>
+            </label>
+            {isAdv&&(
+              <div className="ml-auto flex items-center gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <div onClick={()=>setAdvShuffle(s=>!s)}
+                    className={`w-9 h-5 rounded-full transition-colors relative ${advShuffle?"bg-blue-900":"bg-gray-300"}`}>
+                    <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${advShuffle?"translate-x-4":"translate-x-0.5"}`}/>
+                  </div>
+                  <span className="text-sm font-semibold text-gray-500">Shuffle</span>
+                </label>
+                <span className="text-sm font-bold text-gray-600">{totalAdvQuestions} questions total</span>
+              </div>
+            )}
+          </div>
+
+          {!isAdv?(
+            <div className="p-6">
+              {/* Row 1: Level selector + Differentiated */}
+              <div className="flex justify-center items-center gap-6 mb-4">
+                <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm">
+                  {([["level1","Level 1","bg-green-600"],["level2","Level 2","bg-yellow-500"],["level3","Level 3","bg-red-600"]] as const).map(([val,label,col])=>(
+                    <button key={val} onClick={()=>{setDifficulty(val as DifficultyLevel);setIsDifferentiated(false);}}
+                      className={`px-5 py-2 font-bold text-base transition-colors ${!isDifferentiated&&difficulty===val?`${col} text-white`:"bg-white text-gray-500 hover:bg-gray-50"}`}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <button onClick={()=>setIsDifferentiated(!isDifferentiated)}
+                  className={`px-6 py-2 rounded-xl font-bold text-base shadow-sm border-2 transition-colors ${isDifferentiated?"bg-blue-900 text-white border-blue-900":"bg-white text-gray-600 border-gray-300 hover:border-blue-900 hover:text-blue-900"}`}>
+                  Differentiated
+                </button>
+              </div>
+              {/* Row 2: QO + Questions + Columns */}
+              <div className="flex justify-center items-center gap-6 mb-4">
+                {qoEl(isDifferentiated)}
+                <div className="flex items-center gap-3">
+                  <label className="text-base font-semibold text-gray-700">Questions:</label>
+                  <input type="number" min="1" max="24" value={numQuestions}
+                    onChange={e=>setNumQuestions(Math.max(1,Math.min(24,parseInt(e.target.value)||15)))}
+                    className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-base font-semibold text-center"/>
+                </div>
+                <div className="flex items-center gap-3">
+                  <label className="text-base font-semibold text-gray-700">Columns:</label>
+                  <input type="number" min="1" max="4" value={isDifferentiated?3:numColumns}
+                    onChange={e=>{if(!isDifferentiated)setNumColumns(Math.max(1,Math.min(4,parseInt(e.target.value)||1)));}}
+                    disabled={isDifferentiated}
+                    className={`w-20 px-4 py-2 border-2 rounded-lg text-base font-semibold text-center transition-colors ${isDifferentiated?"border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed":"border-gray-300 bg-white"}`}/>
+                </div>
+              </div>
+              {/* Row 3: Actions */}
+              <div className="flex justify-center items-center gap-4">
+                <button onClick={handleGenerateWorksheet} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
+                  <RefreshCw size={18}/> Generate
+                </button>
+                {worksheet.length>0&&<>
+                  <button onClick={()=>setShowWorksheetAnswers(!showWorksheetAnswers)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
+                    <Eye size={18}/> {showWorksheetAnswers?"Hide Answers":"Show Answers"}
+                  </button>
+                  <button onClick={()=>handlePrint(worksheet,TOOL_CONFIG.tools[currentTool].name,difficulty,isDifferentiated,numColumns,getInstruction())}
+                    className="px-6 py-2 bg-green-700 text-white rounded-xl font-bold text-base shadow-sm hover:bg-green-800 flex items-center gap-2">
+                    <Printer size={18}/> Print / PDF
+                  </button>
+                </>}
+              </div>
+            </div>
+          ):(
+            <div className="p-6 pt-4">
+              {renderAdvancedWorksheet()}
+              <div className="flex justify-center items-center gap-4 flex-wrap mt-4">
+                <div className="flex items-center gap-2">
+                  <label className="text-base font-semibold text-gray-700">Columns:</label>
+                  <input type="number" min="1" max="4" value={numColumns}
+                    onChange={e=>setNumColumns(Math.max(1,Math.min(4,parseInt(e.target.value)||1)))}
+                    className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-base font-semibold text-center"/>
+                </div>
+                <button onClick={handleGenerateAdvanced} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
+                  <RefreshCw size={18}/> Generate
+                </button>
+                {worksheet.length>0&&<>
+                  <button onClick={()=>setShowWorksheetAnswers(!showWorksheetAnswers)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
+                    <Eye size={18}/> {showWorksheetAnswers?"Hide Answers":"Show Answers"}
+                  </button>
+                  <button onClick={()=>handlePrint(worksheet,TOOL_CONFIG.tools[currentTool].name,"advanced",false,numColumns,getInstruction())}
+                    className="px-6 py-2 bg-green-700 text-white rounded-xl font-bold text-base shadow-sm hover:bg-green-800 flex items-center gap-2">
+                    <Printer size={18}/> Print / PDF
+                  </button>
+                </>}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
 
     return (
       <div className="px-5 py-4 rounded-xl" style={{backgroundColor:qBg}}>
@@ -1580,6 +1979,7 @@ export default function App() {
 
   // ── Whiteboard ────────────────────────────────────────────────────────────
   const renderWhiteboard = () => {
+
     const fsToolbar = (
       <div style={{background:fsToolbarBg,borderBottom:"2px solid #000",padding:"16px 32px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:16,flexShrink:0,zIndex:210}}>
         <DifficultyToggle value={difficulty} onChange={v=>setDifficulty(v as DifficultyLevel)}/>
@@ -1591,6 +1991,7 @@ export default function App() {
       </div>
     );
 
+    // Font size buttons — sit in top-right of question box
     const fontBtnStyle = (enabled: boolean) => ({
       background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8,
       cursor: enabled ? "pointer" : "not-allowed", width: 32, height: 32,
@@ -1598,32 +1999,46 @@ export default function App() {
       opacity: enabled ? 1 : 0.35,
     });
 
-    const questionBox = () => (
-      <div className="rounded-xl flex items-center justify-center flex-shrink-0 p-8" style={{position:"relative",width:"480px",height:"100%",backgroundColor:stepBg}}>
+    const questionBox = () => {
+      const fontControls = (
         <div style={{position:"absolute",top:10,right:10,display:"flex",gap:6,zIndex:20}}>
-          <button style={fontBtnStyle(canDisplayDecrease)} onClick={()=>canDisplayDecrease&&setDisplayFontSize(f=>f-1)}><ChevronDown size={16} color="#6b7280"/></button>
-          <button style={fontBtnStyle(canDisplayIncrease)} onClick={()=>canDisplayIncrease&&setDisplayFontSize(f=>f+1)}><ChevronUp size={16} color="#6b7280"/></button>
+          <button style={fontBtnStyle(canDisplayDecrease)} onClick={()=>canDisplayDecrease&&setDisplayFontSize(f=>f-1)} title="Decrease font size"><ChevronDown size={16} color="#6b7280"/></button>
+          <button style={fontBtnStyle(canDisplayIncrease)} onClick={()=>canDisplayIncrease&&setDisplayFontSize(f=>f+1)} title="Increase font size"><ChevronUp size={16} color="#6b7280"/></button>
         </div>
-        <div className="w-full text-center flex flex-col gap-4 items-center">
-          <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]}/>
-          {showWhiteboardAnswer&&<div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{color:"#166534"}}><AnswerDisplay q={currentQuestion} answerFormat=""/></div>}
+      );
+      return (
+        <div className="rounded-xl flex items-center justify-center flex-shrink-0 p-8" style={{position:"relative",width:"480px",height:"100%",backgroundColor:stepBg}}>
+          {fontControls}
+          <div className="w-full text-center flex flex-col gap-4 items-center">
+            {getInstruction() && <div className={`${["text-lg","text-xl","text-2xl","text-3xl","text-4xl","text-5xl"][displayFontSize]} font-semibold`} style={{color:"#000"}}>{getInstruction()}</div>}
+            <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]}/>
+            {showWhiteboardAnswer&&<div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{color:"#166534"}}><AnswerDisplay q={currentQuestion} answerFormat=""/></div>}
+          </div>
         </div>
-      </div>
-    );
+      );
+    };
 
-    const questionBoxFS = () => (
-      <div style={{position:"relative",width:`${splitPct}%`,height:"100%",backgroundColor:fsQuestionBg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:48,boxSizing:"border-box",flexShrink:0,overflowY:"auto",gap:16}}>
+    const questionBoxFS = () => {
+      const fontControls = (
         <div style={{position:"absolute",top:10,right:10,display:"flex",gap:6,zIndex:20}}>
-          <button style={fontBtnStyle(canDisplayDecrease)} onClick={()=>canDisplayDecrease&&setDisplayFontSize(f=>f-1)}><ChevronDown size={16} color="#6b7280"/></button>
-          <button style={fontBtnStyle(canDisplayIncrease)} onClick={()=>canDisplayIncrease&&setDisplayFontSize(f=>f+1)}><ChevronUp size={16} color="#6b7280"/></button>
+          <button style={fontBtnStyle(canDisplayDecrease)} onClick={()=>canDisplayDecrease&&setDisplayFontSize(f=>f-1)} title="Decrease font size"><ChevronDown size={16} color="#6b7280"/></button>
+          <button style={fontBtnStyle(canDisplayIncrease)} onClick={()=>canDisplayIncrease&&setDisplayFontSize(f=>f+1)} title="Increase font size"><ChevronUp size={16} color="#6b7280"/></button>
         </div>
-        <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]}/>
-        {showWhiteboardAnswer&&<div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{color:"#166534"}}><AnswerDisplay q={currentQuestion} answerFormat=""/></div>}
-      </div>
-    );
+      );
+      return (
+        <div style={{position:"relative",width:`${splitPct}%`,height:"100%",backgroundColor:fsQuestionBg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:48,boxSizing:"border-box",flexShrink:0,overflowY:"auto",gap:16}}>
+          {fontControls}
+          <>
+            {getInstruction() && <div className={`${["text-lg","text-xl","text-2xl","text-3xl","text-4xl","text-5xl"][displayFontSize]} font-semibold`} style={{color:"#000"}}>{getInstruction()}</div>}
+            <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]}/>
+            {showWhiteboardAnswer&&<div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{color:"#166534"}}><AnswerDisplay q={currentQuestion} answerFormat=""/></div>}
+          </>
+        </div>
+      );
+    };
 
     const makeRightPanel = (isFS: boolean) => (
-      <div style={{flex:1,height:"100%",position:"relative",overflow:"hidden",backgroundColor:presenterMode?"#000":(isFS?fsWorkingBg:stepBg),borderRadius:isFS?0:undefined}} className={isFS?"":"flex-1 rounded-xl"}>
+      <div style={{flex:isFS?1:1,width:isFS?undefined:undefined,height:"100%",position:"relative",overflow:"hidden",backgroundColor:presenterMode?"#000":(isFS?fsWorkingBg:stepBg),borderRadius:isFS?0:undefined}} className={isFS?"":"flex-1 rounded-xl"}>
         {presenterMode&&(
           <><video ref={videoRef} autoPlay playsInline muted style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}}/>
           {camError&&<div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",color:"rgba(255,255,255,0.4)",fontSize:"0.85rem",padding:"2rem",textAlign:"center",zIndex:1}}>{camError}</div>}</>
@@ -1636,6 +2051,7 @@ export default function App() {
                 onMouseUp={()=>{if(longPressTimer.current)clearTimeout(longPressTimer.current);if(!didLongPress.current)setPresenterMode(false);}}
                 onMouseLeave={()=>{if(longPressTimer.current)clearTimeout(longPressTimer.current);}}
                 style={{background:"rgba(0,0,0,0.55)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:8,cursor:"pointer",width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:"blur(6px)"}}
+                onMouseEnter={e=>(e.currentTarget.style.background="rgba(0,0,0,0.75)")}
               ><Video size={16} color="rgba(255,255,255,0.85)"/></button>
               {camDropdownOpen&&(
                 <div style={{position:"absolute",top:40,right:0,background:"rgba(12,12,12,0.96)",backdropFilter:"blur(14px)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,minWidth:200,overflow:"hidden",zIndex:30}}>
@@ -1659,6 +2075,8 @@ export default function App() {
           )}
           <button onClick={()=>setWbFullscreen(f=>!f)} title={wbFullscreen?"Exit Fullscreen":"Fullscreen"}
             style={{background:wbFullscreen?"#374151":(presenterMode?"rgba(0,0,0,0.55)":"rgba(0,0,0,0.08)"),border:presenterMode?"1px solid rgba(255,255,255,0.15)":"none",borderRadius:8,cursor:"pointer",width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:presenterMode?"blur(6px)":"none"}}
+            onMouseEnter={e=>(e.currentTarget.style.background=wbFullscreen?"#1f2937":(presenterMode?"rgba(0,0,0,0.75)":"rgba(0,0,0,0.15)"))}
+            onMouseLeave={e=>(e.currentTarget.style.background=wbFullscreen?"#374151":(presenterMode?"rgba(0,0,0,0.55)":"rgba(0,0,0,0.08)"))}
           >{wbFullscreen?<Minimize2 size={16} color="#ffffff"/>:<Maximize2 size={16} color={presenterMode?"rgba(255,255,255,0.85)":"#6b7280"}/>}</button>
         </div>
       </div>
@@ -1669,6 +2087,7 @@ export default function App() {
         {fsToolbar}
         <div ref={splitContainerRef} style={{flex:1,display:"flex",minHeight:0}}>
           {questionBoxFS()}
+          {/* Draggable divider — visible 2px line with wider transparent hit target */}
           <div
             style={{position:"relative",width:2,backgroundColor:"#000",flexShrink:0,cursor:"col-resize"}}
             onMouseDown={e => {
@@ -1678,7 +2097,7 @@ export default function App() {
                 const rect = splitContainerRef.current.getBoundingClientRect();
                 let pct = ((ev.clientX - rect.left) / rect.width) * 100;
                 pct = Math.min(75, Math.max(25, pct));
-                if (pct >= 38 && pct <= 42) pct = 40;
+                if (pct >= 38 && pct <= 42) pct = 40; // snap to default
                 setSplitPct(pct);
               };
               const onUp = () => { isDraggingRef.current = false; document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); };
@@ -1687,6 +2106,7 @@ export default function App() {
               e.preventDefault();
             }}
           >
+            {/* Wider transparent overlay is the actual hit target */}
             <div style={{position:"absolute",top:0,bottom:0,left:-5,width:12,cursor:"col-resize"}}/>
           </div>
           {makeRightPanel(true)}
@@ -1704,37 +2124,42 @@ export default function App() {
     );
   };
 
-  // ── Worked Example ────────────────────────────────────────────────────────
+  // ── Worked example ────────────────────────────────────────────────────────
   const renderWorkedExample = () => (
     <div className="overflow-y-auto" style={{maxHeight:"120vh"}}>
       <div className="p-8 w-full" style={{backgroundColor:qBg}}>
-        <div className="text-center py-4 relative">
-          <div style={{position:"absolute",top:0,right:0,display:"flex",gap:6}}>
-            <button style={{background:"rgba(0,0,0,0.08)",border:"none",borderRadius:8,cursor:canDisplayDecrease?"pointer":"not-allowed",width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center",opacity:canDisplayDecrease?1:0.35}} onClick={()=>canDisplayDecrease&&setDisplayFontSize(f=>f-1)}><ChevronDown size={16} color="#6b7280"/></button>
-            <button style={{background:"rgba(0,0,0,0.08)",border:"none",borderRadius:8,cursor:canDisplayIncrease?"pointer":"not-allowed",width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center",opacity:canDisplayIncrease?1:0.35}} onClick={()=>canDisplayIncrease&&setDisplayFontSize(f=>f+1)}><ChevronUp size={16} color="#6b7280"/></button>
+          <div className="text-center py-4 relative">
+            <div style={{position:"absolute",top:0,right:0,display:"flex",gap:6}}>
+              <button style={{background:"rgba(0,0,0,0.08)",border:"none",borderRadius:8,cursor:canDisplayDecrease?"pointer":"not-allowed",width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center",opacity:canDisplayDecrease?1:0.35}} onClick={()=>canDisplayDecrease&&setDisplayFontSize(f=>f-1)}><ChevronDown size={16} color="#6b7280"/></button>
+              <button style={{background:"rgba(0,0,0,0.08)",border:"none",borderRadius:8,cursor:canDisplayIncrease?"pointer":"not-allowed",width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center",opacity:canDisplayIncrease?1:0.35}} onClick={()=>canDisplayIncrease&&setDisplayFontSize(f=>f+1)}><ChevronUp size={16} color="#6b7280"/></button>
+            </div>
+            {getInstruction() && <div className={`${["text-lg","text-xl","text-2xl","text-3xl","text-4xl","text-5xl"][displayFontSize]} font-semibold mb-2`} style={{color:"#000"}}>{getInstruction()}</div>}
+            <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]}/>
           </div>
-          <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]}/>
-        </div>
-        {showAnswer&&(
-          <>
-            <div className="space-y-4 mt-8">
-              {currentQuestion.working.map((s,i)=>(
-                <div key={i} className="rounded-xl p-6" style={{backgroundColor:stepBg}}>
-                  <h4 className="text-xl font-bold mb-2" style={{color:"#000"}}>Step {i+1}</h4>
-                  <div className="text-2xl" style={{color:"#000"}}>
-                    {/* All Best Buys steps are plain text */}
-                    <span>{s.plain}</span>
+          {showAnswer&&(
+            <>
+              <div className="space-y-4 mt-8">
+                {currentQuestion.working.map((s,i)=>(
+                  <div key={i} className="rounded-xl p-6" style={{backgroundColor:stepBg}}>
+                    <h4 className="text-xl font-bold mb-2" style={{color:"#000"}}>Step {i+1}</h4>
+                    <div className="text-2xl" style={{color:"#000"}}>
+                      {s.type === "tStep"
+                        ? <span>{s.plain}</span>
+                        : s.type === "mStep"
+                          ? <><span>{s.label} </span><MathRenderer latex={s.latex}/>{s.unit && <span> {s.unit}</span>}</>
+                          : <MathRenderer latex={s.latex}/>
+                      }
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-            <div className="rounded-xl p-6 text-center mt-4" style={{backgroundColor:stepBg}}>
-              <span className={`${displayFontSizes[displayFontSize]} font-bold`} style={{color:"#166534"}}>
-                <AnswerDisplay q={currentQuestion} answerFormat=""/>
-              </span>
-            </div>
-          </>
-        )}
+                ))}
+              </div>
+              <div className="rounded-xl p-6 text-center mt-4" style={{backgroundColor:stepBg}}>
+                <span className={`${displayFontSizes[displayFontSize]} font-bold`} style={{color:"#166534"}}>
+                  <AnswerDisplay q={currentQuestion} answerFormat=""/>
+                </span>
+              </div>
+            </>
+          )}
       </div>
     </div>
   );
@@ -1766,6 +2191,7 @@ export default function App() {
             return (
               <div key={lv} className={`${c.bg} border-2 ${c.border} rounded-xl p-4`}>
                 <h3 className={`text-xl font-bold mb-4 text-center ${c.text}`}>Level {li+1}</h3>
+                {/* Each column is its own grid — grid-auto-rows:1fr equalises cells within the column */}
                 <div style={{display:"grid",gridTemplateColumns:"1fr",gridAutoRows:"1fr",gap:"0.75rem"}}>
                   {lqs.map((q,idx)=><div key={idx} style={{minHeight:0}}>{renderQCell(q,idx,c.fill)}</div>)}
                 </div>
@@ -1779,6 +2205,7 @@ export default function App() {
       <div className="rounded-xl shadow-2xl p-8 relative" style={{backgroundColor:qBg}}>
         {fontSizeControls}
         <h2 className="text-3xl font-bold text-center mb-8" style={{color:"#000"}}>{toolTitle} — Worksheet</h2>
+        {/* grid-auto-rows:1fr makes all rows equal height — tallest cell in each row sets the row height */}
         <div style={{display:"grid",gridTemplateColumns:`repeat(${numColumns},1fr)`,gridAutoRows:"1fr",gap:"1rem"}}>
           {worksheet.map((q,idx)=><div key={idx} style={{minHeight:0}}>{renderQCell(q,idx)}</div>)}
         </div>
