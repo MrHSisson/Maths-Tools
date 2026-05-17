@@ -26,6 +26,7 @@ const TOOL_CONFIG = {
             defaultValue: "integer",
           },
           variables: [
+            { key: "showSquare", label: "Show right angle square symbol", defaultValue: true },
           ],
           multiSelect: {
               key: "exprType",
@@ -44,6 +45,7 @@ const TOOL_CONFIG = {
             defaultValue: "integer",
           },
           variables: [
+            { key: "showSquare", label: "Show right angle square symbol", defaultValue: true },
           ],
           multiSelect: {
               key: "exprType",
@@ -218,7 +220,9 @@ const TOOL_CONFIG = {
             options: [{ value: "integer", label: "Integers" }, { value: "decimal", label: "Decimals" }],
             defaultValue: "integer",
           },
-          variables: [],
+          variables: [
+            { key: "showSquare", label: "Show right angle square symbol", defaultValue: true },
+          ],
           multiSelect: {
               key: "exprType",
               label: "Unknown as expression",
@@ -244,7 +248,9 @@ const TOOL_CONFIG = {
             options: [{ value: "integer", label: "Integers" }, { value: "decimal", label: "Decimals" }],
             defaultValue: "integer",
           },
-          variables: [],
+          variables: [
+            { key: "showSquare", label: "Show right angle square symbol", defaultValue: true },
+          ],
           multiSelect: {
               key: "exprType",
               label: "Unknown as expression",
@@ -272,6 +278,7 @@ const TOOL_CONFIG = {
           },
           variables: [
             { key: "useCoefficients", label: "Include coefficients (e.g. 2x)", defaultValue: false },
+            { key: "showSquare", label: "Show right angle square symbol", defaultValue: true },
           ],
           multiSelect: {
               key: "exprType",
@@ -1268,7 +1275,7 @@ function generateQuestion(tool: string, level: string, vars: Record<string, unkn
     // Fallback: if all deselected somehow, use all three
     const pool = active.length > 0 ? active : ["rightAngle", "straightLine", "aroundPoint"];
     const picked = pool[Math.floor(Math.random() * pool.length)];
-    const delegateVars = picked === "rightAngle" ? { ...vars, showSquare: true } : vars;
+    const delegateVars = vars;
     q = generateQuestion(picked, level, delegateVars);
     q.key = `mixed-${level}-${q.id}`;
     return q;
@@ -2300,7 +2307,7 @@ export default function BasicAngleFacts() {
           <div className="text-base font-bold text-center pb-2" style={{ color: "#059669" }}>{q.answer}</div>
         )}
         {q.tool === "rightAngle" && (
-          <div className="text-xs text-center pb-2 text-gray-500 italic">The angle shown is a right angle</div>
+          <div className="text-xs text-center pb-2 text-gray-500 italic">The diagram depicts a right angle</div>
         )}
       </div>
     );
@@ -2555,7 +2562,7 @@ export default function BasicAngleFacts() {
           <AngleDiagram q={currentQuestion} showAnswer={showWhiteboardAnswer} />
         </div>
         {currentQuestion.tool === "rightAngle" && (
-          <div className="text-base italic text-gray-500 text-center pb-1">The angle shown is a right angle</div>
+          <div className="text-base italic text-gray-500 text-center pb-1">The diagram depicts a right angle</div>
         )}
       </div>
     );
