@@ -776,13 +776,12 @@ const QuestionDisplay = ({ q, cls }: { q: AnyQuestion; cls: string }) => {
       </div>
     );
   }
-  if (anyQ.kind === "simple") {
-    const anyQ = q as any;
+  if ((anyQ as any).kind === "simple") {
     return (
       <div className={`${cls} font-semibold text-center`} style={{color:"#000",lineHeight:1.5}}>
         {anyQ.displayLatex
           ? <MathRenderer latex={anyQ.displayLatex} />
-          : anyQ.display}
+          : (anyQ as any).display}
       </div>
     );
   }
