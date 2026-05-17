@@ -1124,11 +1124,6 @@ const handlePrint = (
     let body = "";
     if (anyQ.kind === "frac") {
       body = `${instrHtml}<div style="text-align:center">${katexSpan(`\\text{Find } ${anyQ.latex}`, "q-math")}</div>${ansHtml}`;
-    } else if (q.kind === "simple") {
-      const mathHtml = anyQ.displayLatex
-        ? katexSpan(anyQ.displayLatex, "q-math")
-        : `<span class="q-math">${anyQ.display ?? ""}</span>`;
-      body = `${instrHtml}<div style="text-align:center">${mathHtml}</div>${ansHtml}`;
     } else {
       // worded / asFrac
       body = `${instrHtml}<div style="text-align:center"><span class="q-math">${renderLine(anyQ.lines[0])}</span></div>`
