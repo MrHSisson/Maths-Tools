@@ -936,15 +936,15 @@ function estTW(label: string, fs: number) { return label.length * fs * 0.58 + fs
 
 // ─── SVG DIAGRAM ──────────────────────────────────────────────────────────────
 function AngleDiagram({ q, showAnswer, small = false, dataIndex }: { q: AngleQuestion; showAnswer: boolean; small?: boolean; dataIndex?: number }) {
-  const size = small ? 240 : 340;
-  const fontSize = small ? 15 : 19;
+  const size = small ? 300 : 340;
+  const fontSize = small ? 17 : 19;
 
   // ── Right angle: vertex sits at a corner, arms span the full canvas ──────────
   if (q.tool === "rightAngle") {
     // The SVG canvas is (size × size). We place the vertex at a corner with a small
     // inset so the square symbol isn't clipped. Arms extend to the far edges.
-    const inset = small ? 28 : 48;   // vertex offset from corner
-    const margin = small ? 30 : 50;  // extra canvas space for labels
+    const inset = small ? 22 : 48;   // vertex offset from corner
+    const margin = small ? 24 : 50;  // extra canvas space for labels
     const armLen = size - inset - margin * 0.3; // arms don't reach the full edge
 
     // rot 0: vertex bottom-left  → corner = (inset, size-inset)  base=right(0°), top=up(270°)
@@ -984,8 +984,25 @@ function AngleDiagram({ q, showAnswer, small = false, dataIndex }: { q: AngleQue
     // Interior rays
     const interiorSegs = q.segments.slice(1, -1);
 
+    // Compute tight bounding box from all geometry points + label positions
+    const geomPts: number[][] = [[vx, vy], [b1x, b1y], [b2x, b2y]];
+    interiorSegs.forEach(seg => { const [px, py] = pt(vx, vy, armLen, seg.angleDeg); geomPts.push([px, py]); });
+    q.angles.forEach(ang => {
+      const r = ang.isUnknown ? arcRUnknown : arcRKnown;
+      const off = ang.isUnknown ? labelOffU : labelOffK;
+      const lr = r + off + (small ? 20 : 30);
+      const [lx, ly] = pt(vx, vy, lr, ang.bisectorDeg);
+      geomPts.push([lx - 30, ly - 15], [lx + 30, ly + 15]);
+    });
+    const pad = small ? 12 : 20;
+    const bMinX = Math.min(...geomPts.map(p => p[0])) - pad;
+    const bMinY = Math.min(...geomPts.map(p => p[1])) - pad;
+    const bMaxX = Math.max(...geomPts.map(p => p[0])) + pad;
+    const bMaxY = Math.max(...geomPts.map(p => p[1])) + pad;
+    const bW = bMaxX - bMinX, bH = bMaxY - bMinY;
+
     return (
-      <svg width="100%" height="100%" viewBox={`${-margin} ${-margin} ${size + margin * 2} ${size + margin * 2}`} style={{ overflow: "visible" }} {...(dataIndex !== undefined ? { "data-q-index": dataIndex } : {})}>
+      <svg width="100%" height="100%" viewBox={`${bMinX} ${bMinY} ${bW} ${bH}`} style={{ overflow: "visible" }} {...(dataIndex !== undefined ? { "data-q-index": dataIndex } : {})}>
         {/* Shaded unknown sectors */}
         {q.angles.map((ang, i) => ang.isUnknown ? (
           <path key={`sh${i}`} d={sectorPath(vx, vy, arcRUnknown, ang.arcFromDeg, ang.arcToDeg)} fill="#bfdbfe" fillOpacity="0.7" stroke="none" />
@@ -1039,7 +1056,7 @@ function AngleDiagram({ q, showAnswer, small = false, dataIndex }: { q: AngleQue
   }
 
   // ── Straight line & Around a point: centred diagram ──────────────────────────
-  const margin = small ? 22 : 60;
+  const margin = small ? 18 : 60;
   const vbSize = size + margin * 2;
   const cx = vbSize / 2, cy = vbSize / 2;
   const lineLen = size * 0.46;
@@ -1491,7 +1508,6 @@ export default function BasicAngleFacts() {
   const [isDifferentiated, setIsDifferentiated] = useState(false);
   const [worksheetMode, setWorksheetMode] = useState<"standard" | "advanced">("standard");
   const [displayFontSize, setDisplayFontSize] = useState(2);
-  const [worksheetCellSize, setWorksheetCellSize] = useState(1); // 0=small 1=medium 2=large
   const [colorScheme, setColorScheme] = useState("default");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
@@ -1715,9 +1731,7 @@ export default function BasicAngleFacts() {
   const canDisplayIncrease = displayFontSize < displayFontSizes.length - 1;
   const canDisplayDecrease = displayFontSize > 0;
   // Worksheet cell diagram heights: maps to px height of the cell container
-  const wsCellHeights = [160, 220, 280];
-  const canWsIncrease = worksheetCellSize < wsCellHeights.length - 1;
-  const canWsDecrease = worksheetCellSize > 0;
+  const CELL_H = 280; // fixed diagram cell height
 
   const fontBtnStyle = (enabled: boolean) => ({
     background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8,
@@ -1728,7 +1742,7 @@ export default function BasicAngleFacts() {
 
   // ── Worksheet cell ─────────────────────────────────────────────────────────
   const renderQCell = (q: AngleQuestion, idx: number, bgOverride?: string) => {
-    const cellH = wsCellHeights[worksheetCellSize];
+    const cellH = CELL_H;
     const hasQo = !!(q as AngleQuestion & { _qo?: QOSnapshot })._qo;
     return (
       <div className="rounded-xl group" style={{ backgroundColor: bgOverride ?? stepBg, borderRadius: "12px", border: "1px solid #e5e7eb", overflow: "hidden", position: "relative" }}>
@@ -1741,7 +1755,7 @@ export default function BasicAngleFacts() {
           </button>
         )}
         <div style={{ height: cellH, display: "flex", alignItems: "center", justifyContent: "center", padding: "4px", overflow: "hidden" }}>
-          <div style={{ width: "90%", height: "90%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ width: "95%", height: "95%", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <AngleDiagram q={q} showAnswer={showWorksheetAnswers} small dataIndex={idx} />
           </div>
         </div>
@@ -2130,18 +2144,9 @@ export default function BasicAngleFacts() {
         <span className="text-2xl text-gray-400">Generate worksheet</span>
       </div>
     );
-    const fontSizeControls = (
-      <div className="absolute top-4 right-4 flex items-center gap-1">
-        <button disabled={!canWsDecrease} onClick={() => canWsDecrease && setWorksheetCellSize(f => f - 1)}
-          className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${canWsDecrease ? "bg-blue-900 text-white hover:bg-blue-800" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}><ChevronDown size={20} /></button>
-        <button disabled={!canWsIncrease} onClick={() => canWsIncrease && setWorksheetCellSize(f => f + 1)}
-          className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${canWsIncrease ? "bg-blue-900 text-white hover:bg-blue-800" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}><ChevronUp size={20} /></button>
-      </div>
-    );
     const toolTitle = TOOL_CONFIG.tools[currentTool].name;
     if (isDifferentiated) return (
       <div ref={worksheetContainerRef} className="rounded-xl shadow-2xl p-8 relative" style={{ backgroundColor: qBg }}>
-        {fontSizeControls}
         <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
         <div className="grid grid-cols-3 gap-4" style={{ alignItems: "start" }}>
           {(["level1", "level2", "level3"] as DifficultyLevel[]).map((lv, li) => {
@@ -2161,7 +2166,6 @@ export default function BasicAngleFacts() {
     );
     return (
       <div ref={worksheetContainerRef} className="rounded-xl shadow-2xl p-8 relative" style={{ backgroundColor: qBg }}>
-        {fontSizeControls}
         <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
         <div style={{ display: "grid", gridTemplateColumns: `repeat(${numColumns}, 1fr)`, gridAutoRows: "1fr", gap: "1rem" }}>
           {worksheet.map((q, idx) => <div key={idx} style={{ minHeight: 0 }}>{renderQCell(q, idx)}</div>)}
