@@ -1726,7 +1726,7 @@ export default function App() {
         {numEl}{regenBtn}
         <div className={`${fsz} font-semibold w-full text-center`} style={{color:"#000",lineHeight:1.7,paddingTop:"0.4em"}}>
           {(q as any).lines.map((line: string, i: number) => (
-            <div key={i} style={{fontWeight: i === 0 ? 700 : 600}}>
+            <div key={i}>
               <InlineMath text={line}/>
             </div>
           ))}
