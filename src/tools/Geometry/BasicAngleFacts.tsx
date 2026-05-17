@@ -31,9 +31,9 @@ const TOOL_CONFIG = {
               key: "exprType",
               label: "Unknown as expression",
               options: [
-                { value: "coefficient", label: "Coefficient (e.g. 2x)",   defaultActive: false },
-                { value: "constant",    label: "Constant (e.g. x + 14)",  defaultActive: false },
-                { value: "both",        label: "Both (e.g. 2x + 30)",     defaultActive: false },
+                { value: "coefficient", label: "Coefficient|(e.g. 2x)",   defaultActive: false },
+                { value: "constant",    label: "Constant|(e.g. x+14)",  defaultActive: false },
+                { value: "both",        label: "Both|(e.g. 2x+30)",     defaultActive: false },
               ],
             },
         },
@@ -45,9 +45,9 @@ const TOOL_CONFIG = {
               key: "exprType",
               label: "Unknown as expression",
               options: [
-                { value: "coefficient", label: "Coefficient (e.g. 2x)",   defaultActive: false },
-                { value: "constant",    label: "Constant (e.g. x + 14)",  defaultActive: false },
-                { value: "both",        label: "Both (e.g. 2x + 30)",     defaultActive: false },
+                { value: "coefficient", label: "Coefficient|(e.g. 2x)",   defaultActive: false },
+                { value: "constant",    label: "Constant|(e.g. x+14)",  defaultActive: false },
+                { value: "both",        label: "Both|(e.g. 2x+30)",     defaultActive: false },
               ],
             },
         },
@@ -83,9 +83,9 @@ const TOOL_CONFIG = {
               key: "exprType",
               label: "Unknown as expression",
               options: [
-                { value: "coefficient", label: "Coefficient (e.g. 2x)",   defaultActive: false },
-                { value: "constant",    label: "Constant (e.g. x + 14)",  defaultActive: false },
-                { value: "both",        label: "Both (e.g. 2x + 30)",     defaultActive: false },
+                { value: "coefficient", label: "Coefficient|(e.g. 2x)",   defaultActive: false },
+                { value: "constant",    label: "Constant|(e.g. x+14)",  defaultActive: false },
+                { value: "both",        label: "Both|(e.g. 2x+30)",     defaultActive: false },
               ],
             },
         },
@@ -98,9 +98,9 @@ const TOOL_CONFIG = {
               key: "exprType",
               label: "Unknown as expression",
               options: [
-                { value: "coefficient", label: "Coefficient (e.g. 2x)",   defaultActive: false },
-                { value: "constant",    label: "Constant (e.g. x + 14)",  defaultActive: false },
-                { value: "both",        label: "Both (e.g. 2x + 30)",     defaultActive: false },
+                { value: "coefficient", label: "Coefficient|(e.g. 2x)",   defaultActive: false },
+                { value: "constant",    label: "Constant|(e.g. x+14)",  defaultActive: false },
+                { value: "both",        label: "Both|(e.g. 2x+30)",     defaultActive: false },
               ],
             },
         },
@@ -135,9 +135,9 @@ const TOOL_CONFIG = {
               key: "exprType",
               label: "Unknown as expression",
               options: [
-                { value: "coefficient", label: "Coefficient (e.g. 2x)",   defaultActive: false },
-                { value: "constant",    label: "Constant (e.g. x + 14)",  defaultActive: false },
-                { value: "both",        label: "Both (e.g. 2x + 30)",     defaultActive: false },
+                { value: "coefficient", label: "Coefficient|(e.g. 2x)",   defaultActive: false },
+                { value: "constant",    label: "Constant|(e.g. x+14)",  defaultActive: false },
+                { value: "both",        label: "Both|(e.g. 2x+30)",     defaultActive: false },
               ],
             },
         },
@@ -149,9 +149,9 @@ const TOOL_CONFIG = {
               key: "exprType",
               label: "Unknown as expression",
               options: [
-                { value: "coefficient", label: "Coefficient (e.g. 2x)",   defaultActive: false },
-                { value: "constant",    label: "Constant (e.g. x + 14)",  defaultActive: false },
-                { value: "both",        label: "Both (e.g. 2x + 30)",     defaultActive: false },
+                { value: "coefficient", label: "Coefficient|(e.g. 2x)",   defaultActive: false },
+                { value: "constant",    label: "Constant|(e.g. x+14)",  defaultActive: false },
+                { value: "both",        label: "Both|(e.g. 2x+30)",     defaultActive: false },
               ],
             },
         },
@@ -435,7 +435,7 @@ function buildStraightLevel3(vars: Record<string, unknown>): AngleQuestion {
   if (!twoLines) {
     let xVal = 0, c1 = 1, c2 = 1, k2 = 0, attempts = 0;
     do {
-      c1 = useCoefficients ? rnd(1, 3) : 1; c2 = useCoefficients ? rnd(1, 3) : 1;
+      c1 = useCoefficients ? rnd(1, 5) : 1; c2 = useCoefficients ? rnd(1, 5) : 1;
       xVal = rnd(10, Math.floor(175 / (c1 + c2 + 1)));
       k2 = 180 - (c1 + c2) * xVal;
       if (Math.abs(k2) > 80 || c2 * xVal + k2 < 5 || c1 * xVal < 5) { xVal = 0; }
@@ -465,7 +465,7 @@ function buildStraightLevel3(vars: Record<string, unknown>): AngleQuestion {
     };
   }
 
-  const c1 = useCoefficients ? rnd(1, 2) : 1, c2 = useCoefficients ? rnd(1, 2) : 1;
+  const c1 = useCoefficients ? rnd(1, 5) : 1, c2 = useCoefficients ? rnd(1, 5) : 1;
   const fixedAngle = rnd(20, 70);
   const remaining = 180 - fixedAngle;
   const maxX = Math.floor((remaining - 10) / (c1 + c2));
@@ -668,7 +668,7 @@ function buildRightLevel3(vars: Record<string, unknown>): AngleQuestion {
   if (twoRegions) {
     let xVal = 0, c1 = 1, c2 = 1, k2 = 0, attempts = 0;
     do {
-      c1 = useCoefficients ? rnd(1, 3) : 1; c2 = useCoefficients ? rnd(1, 3) : 1;
+      c1 = useCoefficients ? rnd(1, 5) : 1; c2 = useCoefficients ? rnd(1, 5) : 1;
       xVal = rnd(5, Math.floor(85 / (c1 + c2 + 1)));
       k2 = 90 - (c1 + c2) * xVal;
       if (Math.abs(k2) > 50 || c2 * xVal + k2 < 3 || c1 * xVal < 3) xVal = 0;
@@ -698,7 +698,7 @@ function buildRightLevel3(vars: Record<string, unknown>): AngleQuestion {
     };
   }
 
-  const c1 = useCoefficients ? rnd(1, 2) : 1, c2 = useCoefficients ? rnd(1, 2) : 1;
+  const c1 = useCoefficients ? rnd(1, 5) : 1, c2 = useCoefficients ? rnd(1, 5) : 1;
   const fixedAngle = rnd(5, 40);
   const remaining = 90 - fixedAngle;
   const maxX = Math.floor((remaining - 6) / (c1 + c2));
@@ -923,8 +923,8 @@ function buildAroundLevel3(vars: Record<string, unknown>): AngleQuestion {
   let ang2Val = 0, ang3Val = 0;
   let found = false;
   for (let attempt = 0; attempt < 300 && !found; attempt++) {
-    c1 = useCoefficients ? rnd(1, 3) : 1;
-    c2 = useCoefficients ? rnd(1, 3) : 1;
+    c1 = useCoefficients ? rnd(1, 5) : 1;
+    c2 = useCoefficients ? rnd(1, 5) : 1;
     fixedAngle = rnd(30, 120);
     const remaining = 360 - fixedAngle;
     const totalC = c1 + c2;
@@ -1296,8 +1296,8 @@ const MultiSelectSection = ({ multiSelect, values, onChange }: MultiSelectSectio
           return (
             <button key={opt.value}
               onClick={() => { if (!isLast) onChange(opt.value, !isActive); }}
-              className={`flex-1 px-3 py-2 text-sm font-bold transition-colors ${isActive ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}>
-              {opt.label}
+              className={`flex-1 px-3 py-2 text-sm font-bold transition-colors text-center ${isActive ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}>
+              {opt.label.split('|').map((line, i) => <span key={i} style={{ display: "block" }}>{line}</span>)}
             </button>
           );
         })}
@@ -1339,7 +1339,7 @@ const StandardQOPopover = ({ variables, variableValues, onVariableChange, dropdo
     <div className="relative" ref={ref}>
       <PopoverButton open={open} onClick={() => setOpen(!open)} />
       {open && (
-        <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-72 p-5 flex flex-col gap-5">
+        <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-96 p-5 flex flex-col gap-5">
           {dropdown && <DropdownSection dropdown={dropdown} value={dropdownValue} onChange={onDropdownChange} />}
           {multiSelect && <MultiSelectSection multiSelect={multiSelect} values={multiSelectValues} onChange={onMultiSelectChange} />}
           {variables.length > 0 && <VariablesSection variables={variables} values={variableValues} onChange={onVariableChange} />}
@@ -1365,7 +1365,7 @@ const DiffQOPopover = ({ toolSettings, levelVariables, onLevelVariableChange, le
     <div className="relative" ref={ref}>
       <PopoverButton open={open} onClick={() => setOpen(!open)} />
       {open && (
-        <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-80 p-5 flex flex-col gap-5">
+        <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-96 p-5 flex flex-col gap-5">
           {(["level1", "level2", "level3"] as DifficultyLevel[]).map(lv => {
             const dd = toolSettings.difficultySettings?.[lv]?.dropdown;
             const vars = toolSettings.difficultySettings?.[lv]?.variables ?? [];
