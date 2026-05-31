@@ -1121,8 +1121,9 @@ const handlePrint = (
   isDifferentiated: boolean,
   numColumns: number,
   instruction: string,
-  printMode: PrintMode = "both",
+  printMode_: PrintMode = "both",
 ) => {
+  void printMode_; // consumed via template literal in injected script — suppress TS6133
   const FONT_PX   = 14;
   const PAD_MM    = 2;
   const MARGIN_MM = 12;
@@ -1417,10 +1418,11 @@ document.addEventListener("DOMContentLoaded", function() {
       + '</div>';
   }
 
+  var totalPages = pages.length;
   var qPages = pages.map(function(pg, i) { return buildPage(pg, false, i); }).join('');
   var aPages = pages.map(function(pg, i) { return buildPage(pg, true,  i); }).join('');
-  var html = printMode === 'questions' ? qPages
-           : printMode === 'answers'   ? aPages
+  var html = "${printMode_}" === 'questions' ? qPages
+           : "${printMode_}" === 'answers'   ? aPages
            : qPages + aPages;
 
   document.getElementById('pages').innerHTML = html;
