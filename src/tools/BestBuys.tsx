@@ -1351,6 +1351,8 @@ document.addEventListener("DOMContentLoaded", function() {
       }
     }
   }
+  // Safety: never allow pageCapacity of 0 — use at least 1 row
+  if (rowsPerPage < 1) rowsPerPage = 1;
 
   // Step 4: split into pages
   var pageCapacity = isDiff ? diffRowsPerPage : rowsPerPage * cols;
