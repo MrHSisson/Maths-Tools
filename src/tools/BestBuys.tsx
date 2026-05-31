@@ -1368,7 +1368,6 @@ document.addEventListener("DOMContentLoaded", function() {
       pages.push(qData.slice(s, s + pageCapacity));
     }
   }
-  var printMode = "${printMode}";
 
   function makeCellW(c) {
     return (PAGE_W_MM - GAP_MM * (c - 1)) / c;
