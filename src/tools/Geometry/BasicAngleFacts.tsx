@@ -788,7 +788,6 @@ function buildVOL2(vars: QOVars): AngleQuestion {
   // Ensure α is large enough to split (min sub = 15, so α ≥ 30)
   let alpha = pickVOAngle();
   while (alpha < 30) alpha = pickVOAngle();
-  const beta = 180 - alpha;
   const minSub = 15;
 
   if (variant === "findX") {
