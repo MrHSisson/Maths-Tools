@@ -1121,7 +1121,7 @@ const handlePrint = (
   isDifferentiated: boolean,
   numColumns: number,
   instruction: string,
-  pMode: PrintMode = "both",
+  printMode: PrintMode = "both",
 ) => {
   const FONT_PX   = 14;
   const PAD_MM    = 2;
