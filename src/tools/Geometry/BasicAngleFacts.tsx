@@ -918,7 +918,6 @@ function buildVOL2(vars: QOVars): AngleQuestion {
     };
   }
   // Numeric findSub: x is one sub, other sub + VO shown
-  const beta = 180 - alpha;
   const parts = splitIntoN(alpha, 2, minSub, false) ?? [Math.floor(alpha/2), alpha - Math.floor(alpha/2)];
   const [sub1, sub2] = parts;
   const xIsSub1 = rnd(0, 1) === 0;
