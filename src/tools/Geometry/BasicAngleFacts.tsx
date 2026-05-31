@@ -792,6 +792,7 @@ function buildVOL2(vars: QOVars): AngleQuestion {
 
   if (variant === "findX") {
     if (exprType !== null) {
+      const beta = 180 - alpha;
       // One sub is algebraic (cx+k), the other is numeric. x = VO sector.
       // Constraint: exprVal + numericSub = α, and x = α (the VO answer).
       // We need cx+k = exprVal where exprVal ∈ [minSub, alpha-minSub] and x is a positive integer.
@@ -841,6 +842,7 @@ function buildVOL2(vars: QOVars): AngleQuestion {
       };
     }
     // Numeric: both subs given, x = α (VO)
+    const beta = 180 - alpha;
     const parts = splitIntoN(alpha, 2, minSub, false) ?? [Math.floor(alpha / 2), alpha - Math.floor(alpha / 2)];
     const [sub1, sub2] = parts;
     const subRay = rot + sub1;
@@ -867,6 +869,7 @@ function buildVOL2(vars: QOVars): AngleQuestion {
 
   // findSub: x is one of the sub-angles; the VO (= α) is given.
   if (exprType !== null) {
+    const beta = 180 - alpha;
     // x is an algebraic expression; knownSub is numeric; VO = α is shown.
     // cx + k + knownSub = α  →  solve for x (positive integer)
     const c = (exprType === "coefficient" || exprType === "both") ? rnd(2, 4) : 1;
@@ -915,7 +918,8 @@ function buildVOL2(vars: QOVars): AngleQuestion {
     };
   }
   // Numeric findSub: x is one sub, other sub + VO shown
-  const parts = splitIntoN(alpha, 2, minSub, false) ?? [Math.floor(alpha / 2), alpha - Math.floor(alpha / 2)];
+  const beta = 180 - alpha;
+  const parts = splitIntoN(alpha, 2, minSub, false) ?? [Math.floor(alpha/2), alpha - Math.floor(alpha/2)];
   const [sub1, sub2] = parts;
   const xIsSub1 = rnd(0, 1) === 0;
   const xVal = xIsSub1 ? sub1 : sub2;
