@@ -1,6 +1,54 @@
 import { useState, useEffect, useRef, useCallback, CSSProperties } from "react";
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, Printer } from "lucide-react";
 
+// ── PrintSplitButton ──────────────────────────────────────────────────────────
+type PrintMode = "both" | "questions" | "answers";
+const PRINT_MODE_LABELS: Record<PrintMode, string> = {
+  both:      "Print Both",
+  questions: "Questions",
+  answers:   "Answers",
+};
+const PrintSplitButton = ({ onPrint, printMode, setPrintMode }: {
+  onPrint: (mode: PrintMode) => void;
+  printMode: PrintMode;
+  setPrintMode: (m: PrintMode) => void;
+}) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("mousedown", h); return () => document.removeEventListener("mousedown", h);
+  }, [open]);
+  const fire = (mode: PrintMode) => { setPrintMode(mode); onPrint(mode); setOpen(false); };
+  return (
+    <div className="relative flex-shrink-0" ref={ref}>
+      <div className="flex rounded-xl overflow-hidden shadow-sm">
+        <button onClick={() => onPrint(printMode)}
+          className="px-5 py-2 bg-green-700 text-white font-bold text-base hover:bg-green-800 flex items-center gap-2 transition-colors">
+          <Printer size={18}/> {PRINT_MODE_LABELS[printMode]}
+        </button>
+        <div style={{width:"1px",backgroundColor:"rgba(255,255,255,0.3)",flexShrink:0}}/>
+        <button onClick={() => setOpen(o => !o)}
+          className="px-2.5 py-2 bg-green-700 text-white hover:bg-green-800 flex items-center transition-colors">
+          <ChevronDown size={16} style={{transition:"transform 0.15s",transform:open?"rotate(180deg)":"rotate(0)"}}/>
+        </button>
+      </div>
+      {open && (
+        <div className="absolute right-0 top-full mt-1.5 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden" style={{minWidth:"160px"}}>
+          {(["both","questions","answers"] as PrintMode[]).map(m => (
+            <button key={m} onClick={() => fire(m)}
+              className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold transition-colors ${printMode===m?"bg-green-700 text-white":"text-gray-700 hover:bg-gray-50"}`}>
+              {PRINT_MODE_LABELS[m]}
+              {printMode===m && <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7l3.5 3.5L12 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ── NAVIGATION ───────────────────────────────────────────────────────────────
 // Tools use window.location.href = "/" for the Home button.
 // No React Router / useNavigate — the parent app handles routing.
@@ -1073,6 +1121,7 @@ const handlePrint = (
   isDifferentiated: boolean,
   numColumns: number,
   instruction: string,
+  printMode: PrintMode = "both",
 ) => {
   const FONT_PX   = 14;
   const PAD_MM    = 2;
@@ -1133,15 +1182,25 @@ const handlePrint = (
     return `${banner}<div class="qbody">${body}</div>`;
   };
 
-  // Build probe HTML — all questions with answers, at correct cell width
+  // Answer-only cell: banner + answer, no question body
+  const answerOnlyToHtml = (q: AnyQuestion, idx: number): string => {
+    const anyQ = q as any;
+    const al = anyQ.answerLatex ? anyQ.answerLatex : `\\text{${anyQ.answer ?? ""}}`;
+    const suffix = anyQ.answerSuffix ? ` ${anyQ.answerSuffix}` : "";
+    const banner = `<div class="q-banner">Question ${idx + 1}</div>`;
+    const ansHtml = `<div class="q-answer q-answer-only">${katexSpan(`= ${al}`)}${suffix}</div>`;
+    return `${banner}<div class="qbody">${ansHtml}</div>`;
+  };
+
+  // Build probe HTML — questions only (no answers) — cell height based on question content
   const probeHtml = questions.map((q, i) =>
-    `<div class="q-inner" id="probe-${i}">${questionToHtml(q, i, true)}</div>`
+    `<div class="q-inner" id="probe-${i}">${questionToHtml(q, i, false)}</div>`
   ).join("");
 
   // Pre-build question/answer HTML strings for JS to use
   const qHtmlData = questions.map((q, i) => ({
     q: questionToHtml(q, i, false),
-    a: questionToHtml(q, i, true),
+    a: answerOnlyToHtml(q, i),
     difficulty: q.difficulty,
   }));
 
@@ -1203,6 +1262,7 @@ const handlePrint = (
   .q-lines  { font-size: ${FONT_PX}px; line-height: 1.4; text-align: center; }
   .q-line   { display: block; text-align: center; margin-bottom: 0.2mm; }
   .q-answer { font-size: ${FONT_PX}px; color: #059669; display: block; margin-top: 0.8mm; text-align: center; }
+  .q-answer-only { margin-top: 0; font-size: ${Math.round(FONT_PX * 1.1)}px; }
   .katex-render { display: inline-block; vertical-align: baseline; }
   .katex-render .katex { font-size: ${FONT_PX}px; }
   .katex-render.frac .katex { font-size: ${FONT_PX}px; }
@@ -1308,7 +1368,7 @@ document.addEventListener("DOMContentLoaded", function() {
       pages.push(qData.slice(s, s + pageCapacity));
     }
   }
-  var totalPages = pages.length;
+  var printMode = "${printMode}";
 
   function makeCellW(c) {
     return (PAGE_W_MM - GAP_MM * (c - 1)) / c;
@@ -1358,9 +1418,11 @@ document.addEventListener("DOMContentLoaded", function() {
       + '</div>';
   }
 
-  // Render all question pages then all answer pages
-  var html = pages.map(function(pg, i) { return buildPage(pg, false, i); }).join('')
-           + pages.map(function(pg, i) { return buildPage(pg, true,  i); }).join('');
+  var qPages = pages.map(function(pg, i) { return buildPage(pg, false, i); }).join('');
+  var aPages = pages.map(function(pg, i) { return buildPage(pg, true,  i); }).join('');
+  var html = printMode === 'questions' ? qPages
+           : printMode === 'answers'   ? aPages
+           : qPages + aPages;
 
   document.getElementById('pages').innerHTML = html;
 
@@ -1455,6 +1517,7 @@ export default function App() {
   const [numColumns, setNumColumns] = useState(3);
   const [worksheet, setWorksheet] = useState<AnyQuestion[]>([]);
   const [showWorksheetAnswers, setShowWorksheetAnswers] = useState(false);
+  const [printMode, setPrintMode] = useState<PrintMode>("both");
   const [isDifferentiated, setIsDifferentiated] = useState(false);
   const [worksheetMode, setWorksheetMode] = useState<"standard"|"advanced">("standard");
 
@@ -1895,10 +1958,10 @@ export default function App() {
                   <button onClick={()=>setShowWorksheetAnswers(!showWorksheetAnswers)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
                     <Eye size={18}/> {showWorksheetAnswers?"Hide Answers":"Show Answers"}
                   </button>
-                  <button onClick={()=>handlePrint(worksheet,TOOL_CONFIG.tools[currentTool].name,difficulty,isDifferentiated,numColumns,getInstruction())}
-                    className="px-6 py-2 bg-green-700 text-white rounded-xl font-bold text-base shadow-sm hover:bg-green-800 flex items-center gap-2">
-                    <Printer size={18}/> Print / PDF
-                  </button>
+                  <PrintSplitButton
+                    onPrint={m=>handlePrint(worksheet,TOOL_CONFIG.tools[currentTool].name,difficulty,isDifferentiated,numColumns,getInstruction(),m)}
+                    printMode={printMode} setPrintMode={setPrintMode}
+                  />
                 </>}
               </div>
             </div>
@@ -1919,10 +1982,10 @@ export default function App() {
                   <button onClick={()=>setShowWorksheetAnswers(!showWorksheetAnswers)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
                     <Eye size={18}/> {showWorksheetAnswers?"Hide Answers":"Show Answers"}
                   </button>
-                  <button onClick={()=>handlePrint(worksheet,TOOL_CONFIG.tools[currentTool].name,"advanced",false,numColumns,getInstruction())}
-                    className="px-6 py-2 bg-green-700 text-white rounded-xl font-bold text-base shadow-sm hover:bg-green-800 flex items-center gap-2">
-                    <Printer size={18}/> Print / PDF
-                  </button>
+                  <PrintSplitButton
+                    onPrint={m=>handlePrint(worksheet,TOOL_CONFIG.tools[currentTool].name,"advanced",false,numColumns,getInstruction(),m)}
+                    printMode={printMode} setPrintMode={setPrintMode}
+                  />
                 </>}
               </div>
             </div>
