@@ -395,6 +395,7 @@ interface SimpleQuestion {
   working: { type: string; latex: string; plain: string; label?: string; unit?: string }[];
   key: string;
   difficulty: string;
+  _qo?: unknown;          // QOSnapshot stamped by shell for per-cell regen — do not set manually
 }
 
 // WordedQuestion: prose context with embedded maths.
@@ -409,6 +410,7 @@ interface WordedQuestion {
   working: { type: string; latex: string; plain: string; label?: string; unit?: string }[];
   key: string;
   difficulty: string;
+  _qo?: unknown;          // QOSnapshot stamped by shell for per-cell regen — do not set manually
 }
 
 type AnyQuestion = SimpleQuestion | WordedQuestion;
@@ -1736,7 +1738,7 @@ export default function App() {
                   <span className="text-xs font-bold text-gray-300 w-4 flex-shrink-0 tabular-nums">{idx+1}</span>
                   <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden flex-shrink-0" onClick={e=>e.stopPropagation()}>
                     {(["level1","level2","level3"] as DifficultyLevel[]).map((lv,li)=>(
-                      <button key={lv} onClick={()=>{updateGroup(g.id,{level:lv,...makeDefaultAdvGroup(g.id,lv),id:g.id});setAdvSelectedId(g.id);}}
+                      <button key={lv} onClick={()=>{updateGroup(g.id,{...makeDefaultAdvGroup(g.id,lv),id:g.id});setAdvSelectedId(g.id);}}
                         className={`px-2.5 py-1 font-bold text-xs transition-colors ${g.level===lv?`${lvColor(lv)} text-white`:"bg-white text-gray-400 hover:bg-gray-50"}`}>
                         L{li+1}
                       </button>
