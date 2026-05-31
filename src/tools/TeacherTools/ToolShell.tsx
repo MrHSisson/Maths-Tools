@@ -395,7 +395,6 @@ interface SimpleQuestion {
   working: { type: string; latex: string; plain: string; label?: string; unit?: string }[];
   key: string;
   difficulty: string;
-  _qo?: unknown;          // QOSnapshot stamped by shell for per-cell regen — do not set manually
 }
 
 // WordedQuestion: prose context with embedded maths.
@@ -410,7 +409,6 @@ interface WordedQuestion {
   working: { type: string; latex: string; plain: string; label?: string; unit?: string }[];
   key: string;
   difficulty: string;
-  _qo?: unknown;          // QOSnapshot stamped by shell for per-cell regen — do not set manually
 }
 
 type AnyQuestion = SimpleQuestion | WordedQuestion;
@@ -918,9 +916,68 @@ const MenuDropdown = ({colorScheme,setColorScheme,onClose,onOpenInfo}:{colorSche
   );
 };
 
+// ── PrintSplitButton ──────────────────────────────────────────────────────────
+// Left half fires the current default print mode immediately.
+// Right half (chevron) opens a dropdown to change the default — selecting an
+// option fires that mode immediately AND sets it as the new default.
+
+const PRINT_MODE_LABELS: Record<PrintMode, string> = {
+  both:      "Print Both",
+  questions: "Questions",
+  answers:   "Answers",
+};
+
+const PrintSplitButton = ({ onPrint, printMode, setPrintMode }: {
+  onPrint: (mode: PrintMode) => void;
+  printMode: PrintMode;
+  setPrintMode: (m: PrintMode) => void;
+}) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("mousedown", h); return () => document.removeEventListener("mousedown", h);
+  }, [open]);
+
+  const fire = (mode: PrintMode) => { setPrintMode(mode); onPrint(mode); setOpen(false); };
+
+  return (
+    <div className="relative flex-shrink-0" ref={ref}>
+      <div className="flex rounded-xl overflow-hidden shadow-sm" style={{border:"none"}}>
+        {/* Left: fire current default */}
+        <button onClick={() => onPrint(printMode)}
+          className="px-5 py-2 bg-green-700 text-white font-bold text-base hover:bg-green-800 flex items-center gap-2 transition-colors">
+          <Printer size={18}/> {PRINT_MODE_LABELS[printMode]}
+        </button>
+        {/* Divider */}
+        <div style={{width:"1px",backgroundColor:"rgba(255,255,255,0.3)",flexShrink:0}}/>
+        {/* Right: open dropdown */}
+        <button onClick={() => setOpen(o => !o)}
+          className="px-2.5 py-2 bg-green-700 text-white hover:bg-green-800 flex items-center transition-colors">
+          <ChevronDown size={16} style={{transition:"transform 0.15s",transform:open?"rotate(180deg)":"rotate(0)"}}/>
+        </button>
+      </div>
+      {open && (
+        <div className="absolute right-0 top-full mt-1.5 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden" style={{minWidth:"160px"}}>
+          {(["both","questions","answers"] as PrintMode[]).map(m => (
+            <button key={m} onClick={() => fire(m)}
+              className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold transition-colors ${printMode===m?"bg-green-700 text-white":"text-gray-700 hover:bg-gray-50"}`}>
+              {PRINT_MODE_LABELS[m]}
+              {printMode===m && <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7l3.5 3.5L12 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // PRINT / PDF
 // ═══════════════════════════════════════════════════════════════════════════════
+
+type PrintMode = "both" | "questions" | "answers";
 
 const handlePrint = (
   questions: AnyQuestion[],
@@ -929,6 +986,7 @@ const handlePrint = (
   isDifferentiated: boolean,
   numColumns: number,
   instruction: string,
+  pMode: PrintMode = "both",
 ) => {
   const FONT_PX   = 14;
   const PAD_MM    = 2;
@@ -971,9 +1029,13 @@ const handlePrint = (
     const anyQ = q as any;
     let ansHtml = "";
     if (showAnswer) {
-      const al = anyQ.answerLatex ? anyQ.answerLatex : `\\text{${anyQ.answer ?? ""}}`;
-      const suffix = anyQ.answerSuffix ? ` ${anyQ.answerSuffix}` : "";
-      ansHtml = `<div class="q-answer">${katexSpan(`= ${al}`)}${suffix}</div>`;
+      if (anyQ.answerLatex) {
+        const suffix = anyQ.answerSuffix ? ` ${anyQ.answerSuffix}` : "";
+        ansHtml = `<div class="q-answer">${katexSpan(`= ${anyQ.answerLatex}`)}${suffix}</div>`;
+      } else {
+        const suffix = anyQ.answerSuffix ? ` ${anyQ.answerSuffix}` : "";
+        ansHtml = `<div class="q-answer">= ${anyQ.answer ?? ""}${suffix}</div>`;
+      }
     }
     const banner = `<div class="q-banner">Question ${idx + 1}</div>`;
     const instrHtml = instruction ? `<div class="q-instruction">${instruction}</div>` : "";
@@ -994,17 +1056,31 @@ const handlePrint = (
     return `${banner}<div class="qbody">${body}</div>`;
   };
 
-  // Build probe HTML — all questions with answers, at correct cell width
+  // Build probe HTML — questions only (no answers) — cell height is always based on question content
   const probeHtml = questions.map((q, i) =>
-    `<div class="q-inner" id="probe-${i}">${questionToHtml(q, i, true)}</div>`
+    `<div class="q-inner" id="probe-${i}">${questionToHtml(q, i, false)}</div>`
   ).join("");
+
+  // Answer-only cell: banner + answer, no question body
+  const answerOnlyToHtml = (q: AnyQuestion, idx: number): string => {
+    const anyQ = q as any;
+    const suffix = anyQ.answerSuffix ? ` ${anyQ.answerSuffix}` : "";
+    const banner = `<div class="q-banner">Question ${idx + 1}</div>`;
+    const ansHtml = anyQ.answerLatex
+      ? `<div class="q-answer q-answer-only">${katexSpan(`= ${anyQ.answerLatex}`)}${suffix}</div>`
+      : `<div class="q-answer q-answer-only">= ${anyQ.answer ?? ""}${suffix}</div>`;
+    return `${banner}<div class="qbody">${ansHtml}</div>`;
+  };
 
   // Pre-build question/answer HTML strings for JS to use
   const qHtmlData = questions.map((q, i) => ({
     q: questionToHtml(q, i, false),
-    a: questionToHtml(q, i, true),
+    a: answerOnlyToHtml(q, i),
     difficulty: q.difficulty,
   }));
+
+  // Parameters used only via template literal interpolation — void-suppress to prevent TS6133:
+  void (difficulty as unknown); void (instruction as unknown); void (pMode as unknown);
 
   const html = `<!DOCTYPE html>
 <html>
@@ -1064,6 +1140,7 @@ const handlePrint = (
   .q-lines  { font-size: ${FONT_PX}px; line-height: 1.4; text-align: center; }
   .q-line   { display: block; text-align: center; margin-bottom: 0.2mm; }
   .q-answer { font-size: ${FONT_PX}px; color: #059669; display: block; margin-top: 0.8mm; text-align: center; }
+  .q-answer-only { margin-top: 0; font-size: ${Math.round(FONT_PX * 1.4)}px; }
   .katex-render { display: inline-block; vertical-align: baseline; }
   .katex-render .katex { font-size: ${FONT_PX}px; }
   .katex-render.frac .katex { font-size: ${FONT_PX}px; }
@@ -1087,6 +1164,7 @@ document.addEventListener("DOMContentLoaded", function() {
   var diffLabel = "${difficultyLabel}";
   var dateStr   = "${dateStr}";
   var toolName  = "${toolName}";
+  var printMode = "${pMode}";
 
   // Pre-determined row heights for 1–10 rows
   var rowHeights = [];
@@ -1104,7 +1182,7 @@ document.addEventListener("DOMContentLoaded", function() {
     catch(e) { el.textContent = el.getAttribute('data-latex'); }
   });
 
-  // Step 2: measure tallest question+answer content
+  // Step 2: measure tallest question-only content (probe never includes answers)
   var maxH_px = 0;
   probe.querySelectorAll('.q-inner').forEach(function(el) {
     if (el.scrollHeight > maxH_px) maxH_px = el.scrollHeight;
@@ -1219,9 +1297,12 @@ document.addEventListener("DOMContentLoaded", function() {
       + '</div>';
   }
 
-  // Render all question pages then all answer pages
-  var html = pages.map(function(pg, i) { return buildPage(pg, false, i); }).join('')
-           + pages.map(function(pg, i) { return buildPage(pg, true,  i); }).join('');
+  // Render pages according to printMode
+  var qPages = pages.map(function(pg, i) { return buildPage(pg, false, i); }).join('');
+  var aPages = pages.map(function(pg, i) { return buildPage(pg, true,  i); }).join('');
+  var html = printMode === 'questions' ? qPages
+           : printMode === 'answers'   ? aPages
+           : qPages + aPages;
 
   document.getElementById('pages').innerHTML = html;
 
@@ -1316,6 +1397,7 @@ export default function App() {
   const [numColumns, setNumColumns] = useState(3);
   const [worksheet, setWorksheet] = useState<AnyQuestion[]>([]);
   const [showWorksheetAnswers, setShowWorksheetAnswers] = useState(false);
+  const [printMode, setPrintMode] = useState<PrintMode>("both");
   const [isDifferentiated, setIsDifferentiated] = useState(false);
   const [worksheetMode, setWorksheetMode] = useState<"standard"|"advanced">("standard");
   const [displayFontSize, setDisplayFontSize] = useState(2);  // whiteboard + worked example
@@ -1654,7 +1736,7 @@ export default function App() {
                   <span className="text-xs font-bold text-gray-300 w-4 flex-shrink-0 tabular-nums">{idx+1}</span>
                   <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden flex-shrink-0" onClick={e=>e.stopPropagation()}>
                     {(["level1","level2","level3"] as DifficultyLevel[]).map((lv,li)=>(
-                      <button key={lv} onClick={()=>{updateGroup(g.id,{...makeDefaultAdvGroup(g.id,lv),id:g.id});setAdvSelectedId(g.id);}}
+                      <button key={lv} onClick={()=>{updateGroup(g.id,{level:lv,...makeDefaultAdvGroup(g.id,lv),id:g.id});setAdvSelectedId(g.id);}}
                         className={`px-2.5 py-1 font-bold text-xs transition-colors ${g.level===lv?`${lvColor(lv)} text-white`:"bg-white text-gray-400 hover:bg-gray-50"}`}>
                         L{li+1}
                       </button>
@@ -1786,10 +1868,10 @@ export default function App() {
                   <button onClick={()=>setShowWorksheetAnswers(!showWorksheetAnswers)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
                     <Eye size={18}/> {showWorksheetAnswers?"Hide Answers":"Show Answers"}
                   </button>
-                  <button onClick={()=>handlePrint(worksheet,TOOL_CONFIG.tools[currentTool].name,difficulty,isDifferentiated,numColumns,getInstruction())}
-                    className="px-6 py-2 bg-green-700 text-white rounded-xl font-bold text-base shadow-sm hover:bg-green-800 flex items-center gap-2">
-                    <Printer size={18}/> Print / PDF
-                  </button>
+                  <PrintSplitButton
+                    onPrint={m=>handlePrint(worksheet,TOOL_CONFIG.tools[currentTool].name,difficulty,isDifferentiated,numColumns,getInstruction(),m)}
+                    printMode={printMode} setPrintMode={setPrintMode}
+                  />
                 </>}
               </div>
             </div>
@@ -1810,10 +1892,10 @@ export default function App() {
                   <button onClick={()=>setShowWorksheetAnswers(!showWorksheetAnswers)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
                     <Eye size={18}/> {showWorksheetAnswers?"Hide Answers":"Show Answers"}
                   </button>
-                  <button onClick={()=>handlePrint(worksheet,TOOL_CONFIG.tools[currentTool].name,"advanced",false,numColumns,getInstruction())}
-                    className="px-6 py-2 bg-green-700 text-white rounded-xl font-bold text-base shadow-sm hover:bg-green-800 flex items-center gap-2">
-                    <Printer size={18}/> Print / PDF
-                  </button>
+                  <PrintSplitButton
+                    onPrint={m=>handlePrint(worksheet,TOOL_CONFIG.tools[currentTool].name,"advanced",false,numColumns,getInstruction(),m)}
+                    printMode={printMode} setPrintMode={setPrintMode}
+                  />
                 </>}
               </div>
             </div>
