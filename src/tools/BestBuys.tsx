@@ -1164,9 +1164,8 @@ const handlePrint = (
     const anyQ = q as any;
     let ansHtml = "";
     if (showAnswer) {
-      const al = anyQ.answerLatex ? anyQ.answerLatex : `\\text{${anyQ.answer ?? ""}}`;
-      const suffix = anyQ.answerSuffix ? ` ${anyQ.answerSuffix}` : "";
-      ansHtml = `<div class="q-answer">${katexSpan(`= ${al}`)}${suffix}</div>`;
+      const answerText = (anyQ as any).answer ?? "";
+      ansHtml = `<div class="q-answer">${answerText}</div>`;
     }
     const banner = `<div class="q-banner">Question ${idx + 1}</div>`;
     const instrHtml = instruction ? `<div class="q-instruction">${instruction}</div>` : "";
@@ -1182,13 +1181,12 @@ const handlePrint = (
     return `${banner}<div class="qbody">${body}</div>`;
   };
 
-  // Answer-only cell: banner + answer, no question body
+  // Answer-only cell: banner + answer as plain text (Best Buys answers are always plain strings)
   const answerOnlyToHtml = (q: AnyQuestion, idx: number): string => {
     const anyQ = q as any;
-    const al = anyQ.answerLatex ? anyQ.answerLatex : `\\text{${anyQ.answer ?? ""}}`;
-    const suffix = anyQ.answerSuffix ? ` ${anyQ.answerSuffix}` : "";
+    const answerText = anyQ.answer ?? "";
     const banner = `<div class="q-banner">Question ${idx + 1}</div>`;
-    const ansHtml = `<div class="q-answer q-answer-only">${katexSpan(`= ${al}`)}${suffix}</div>`;
+    const ansHtml = `<div class="q-answer q-answer-only">${answerText}</div>`;
     return `${banner}<div class="qbody">${ansHtml}</div>`;
   };
 
