@@ -20,6 +20,7 @@ export type {
   InfoSection,
   InfoItem,
   QOSnapshot,
+  ToolShellDefaults,
 } from "./types";
 
 export { ToolShell } from "./ToolShell";

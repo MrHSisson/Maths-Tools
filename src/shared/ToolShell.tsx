@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2 } from "lucide-react";
-import type { DifficultyLevel, AnyQuestion, ToolConfig, InfoSection, PrintMode, QOSnapshot } from "./types";
+import type { DifficultyLevel, AnyQuestion, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
 import { LV_COLORS, getQuestionBg, getStepBg } from "./colors";
 import { loadKaTeX } from "./katex";
 import { MathRenderer } from "./components/MathRenderer";
@@ -34,9 +34,10 @@ export interface ToolShellProps {
     usedKeys: Set<string>,
     multiSelectValues?: Record<string, boolean>,
   ) => AnyQuestion;
+  defaults?: ToolShellDefaults;
 }
 
-export const ToolShell = ({ config, infoSections, generateQuestion, generateUniqueQ }: ToolShellProps) => {
+export const ToolShell = ({ config, infoSections, generateQuestion, generateUniqueQ, defaults = {} }: ToolShellProps) => {
   const toolKeys = Object.keys(config.tools);
 
   const [currentTool, setCurrentTool] = useState<string>(toolKeys[0]);
@@ -95,15 +96,15 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   );
   const [showWhiteboardAnswer, setShowWhiteboardAnswer] = useState(false);
   const [showAnswer, setShowAnswer] = useState(false);
-  const [numQuestions, setNumQuestions] = useState(15);
-  const [numColumns, setNumColumns] = useState(3);
+  const [numQuestions, setNumQuestions] = useState(defaults.numQuestions ?? 15);
+  const [numColumns, setNumColumns] = useState(defaults.numColumns ?? 3);
   const [worksheet, setWorksheet] = useState<AnyQuestion[]>([]);
   const [showWorksheetAnswers, setShowWorksheetAnswers] = useState(false);
   const [printMode, setPrintMode] = useState<PrintMode>("both");
   const [isDifferentiated, setIsDifferentiated] = useState(false);
   const [worksheetMode, setWorksheetMode] = useState<"standard" | "advanced">("standard");
-  const [displayFontSize, setDisplayFontSize] = useState(2);
-  const [worksheetFontSize, setWorksheetFontSize] = useState(1);
+  const [displayFontSize, setDisplayFontSize] = useState(defaults.displayFontSize ?? 2);
+  const [worksheetFontSize, setWorksheetFontSize] = useState(defaults.worksheetFontSize ?? 1);
   const [colorScheme, setColorScheme] = useState("default");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
@@ -539,19 +540,23 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               </div>
               <div className="flex justify-center items-center gap-6 mb-4">
                 {qoEl(isDifferentiated)}
-                <div className="flex items-center gap-3">
-                  <label className="text-base font-semibold text-gray-700">Questions:</label>
-                  <input type="number" min="1" max="24" value={numQuestions}
-                    onChange={e => setNumQuestions(Math.max(1, Math.min(24, parseInt(e.target.value) || 15)))}
-                    className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-base font-semibold text-center" />
-                </div>
-                <div className="flex items-center gap-3">
-                  <label className="text-base font-semibold text-gray-700">Columns:</label>
-                  <input type="number" min="1" max="4" value={isDifferentiated ? 3 : numColumns}
-                    onChange={e => { if (!isDifferentiated) setNumColumns(Math.max(1, Math.min(4, parseInt(e.target.value) || 3))); }}
-                    disabled={isDifferentiated}
-                    className={`w-20 px-4 py-2 border-2 rounded-lg text-base font-semibold text-center transition-colors ${isDifferentiated ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed" : "border-gray-300 bg-white"}`} />
-                </div>
+                {!defaults.fixedQuestions && (
+                  <div className="flex items-center gap-3">
+                    <label className="text-base font-semibold text-gray-700">Questions:</label>
+                    <input type="number" min="1" max="24" value={numQuestions}
+                      onChange={e => setNumQuestions(Math.max(1, Math.min(24, parseInt(e.target.value) || (defaults.numQuestions ?? 15))))}
+                      className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-base font-semibold text-center" />
+                  </div>
+                )}
+                {!defaults.fixedColumns && (
+                  <div className="flex items-center gap-3">
+                    <label className="text-base font-semibold text-gray-700">Columns:</label>
+                    <input type="number" min="1" max={defaults.maxColumns ?? 4} value={isDifferentiated ? 3 : numColumns}
+                      onChange={e => { if (!isDifferentiated) setNumColumns(Math.max(1, Math.min(defaults.maxColumns ?? 4, parseInt(e.target.value) || (defaults.numColumns ?? 3)))); }}
+                      disabled={isDifferentiated}
+                      className={`w-20 px-4 py-2 border-2 rounded-lg text-base font-semibold text-center transition-colors ${isDifferentiated ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed" : "border-gray-300 bg-white"}`} />
+                  </div>
+                )}
               </div>
               <div className="flex justify-center items-center gap-4">
                 <button onClick={handleGenerateWorksheet} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
@@ -574,12 +579,14 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             <div className="p-6 pt-4">
               {renderAdvancedWorksheet()}
               <div className="flex justify-center items-center gap-4 flex-wrap mt-4">
-                <div className="flex items-center gap-2">
-                  <label className="text-base font-semibold text-gray-700">Columns:</label>
-                  <input type="number" min="1" max="4" value={numColumns}
-                    onChange={e => setNumColumns(Math.max(1, Math.min(4, parseInt(e.target.value) || 3)))}
-                    className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-base font-semibold text-center" />
-                </div>
+                {!defaults.fixedColumns && (
+                  <div className="flex items-center gap-2">
+                    <label className="text-base font-semibold text-gray-700">Columns:</label>
+                    <input type="number" min="1" max={defaults.maxColumns ?? 4} value={numColumns}
+                      onChange={e => setNumColumns(Math.max(1, Math.min(defaults.maxColumns ?? 4, parseInt(e.target.value) || (defaults.numColumns ?? 3))))}
+                      className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-base font-semibold text-center" />
+                  </div>
+                )}
                 <button onClick={handleGenerateAdvanced} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
                   <RefreshCw size={18} /> Generate
                 </button>

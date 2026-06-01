@@ -96,3 +96,13 @@ export interface QOSnapshot {
   dropdownValue: string;
   multiSelectValues: Record<string, boolean>;
 }
+
+export interface ToolShellDefaults {
+  displayFontSize?: number;    // 0–5, default 2 (text-3xl)
+  worksheetFontSize?: number;  // 0–5, default 1 (text-xl)
+  numQuestions?: number;       // default 15
+  fixedQuestions?: boolean;    // locks and hides the questions count input
+  numColumns?: number;         // default 3
+  fixedColumns?: boolean;      // locks and hides the columns input
+  maxColumns?: number;         // caps the column input maximum (e.g. 3 prevents 4-col)
+}

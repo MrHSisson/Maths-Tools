@@ -1,10 +1,16 @@
 # Maths Tools — Claude Code Instructions
 
+## What this file is
+
+CLAUDE.md is read automatically by Claude Code at the start of every session in this repository. It replaces the need to re-read the codebase each time. Everything Claude needs to build tools correctly — conventions, APIs, checklists, gotchas — lives here.
+
+---
+
 ## What this project is
 
-A React/TypeScript app of interactive maths tools for teachers. Each tool has three modes — Whiteboard, Worked Example, Worksheet — and supports Levels 1–3 with differentiated worksheets and PDF export. Deployed to Vercel.
+A React/TypeScript/Vite app of interactive maths tools for teachers. Each tool has three modes — Whiteboard, Worked Example, Worksheet — with Levels 1–3, differentiated worksheets, and PDF export. Deployed to Vercel. CI runs on every push via `.github/workflows/ci.yml`.
 
-**Claude's job:** build complete new tools end-to-end when given a spec, then commit and push. The user provides the maths content; Claude writes all the code.
+**Claude's job:** build complete new tools end-to-end from a user spec. The user provides the maths content; Claude writes all the code, registers the route, and pushes.
 
 ---
 
@@ -14,55 +20,42 @@ All development goes on `claude/tool-shell-deployment-Wix8A`. Push to that branc
 
 ---
 
-## How to create a new tool (complete checklist)
+## How to create a new tool — complete checklist
 
-### Step 1 — Create the tool file
+### 1. Create the tool file
 
-Copy the template from `src/tools/TeacherTools/ToolShell.tsx`. Save to:
-- `src/tools/<Category>/<ToolName>.tsx` for categorised tools (Algebra, Geometry, Number, etc.)
-- `src/tools/<ToolName>.tsx` for root-level tools (Ratio, Fractions, etc.)
+- Copy `src/tools/TeacherTools/ToolShell.tsx` (the canonical template)
+- Save to `src/tools/<Category>/<ToolName>.tsx` or `src/tools/<ToolName>.tsx` for root-level tools
+- Fill in the tool-specific section only (Types → TOOL_CONFIG → INFO_SECTIONS → generateQuestion → generateUniqueQ)
+- Leave the imports and `export default function App()` unchanged
 
-Replace the tool-specific section only. **Do not modify imports or the final `export default function App()` block** — those are fixed.
-
-The tool-specific section contains:
-1. `ToolType` — string union matching the keys in `TOOL_CONFIG.tools`
-2. `TOOL_CONFIG` — `pageTitle` + `tools` object (see format below)
-3. `INFO_SECTIONS` — modal content explaining the tool
-4. `generateQuestion()` — all question generation logic
-5. `generateUniqueQ()` — always the same deduplication wrapper (copy verbatim)
-
-**Critical:** both `generateQuestion` and `generateUniqueQ` must be typed as `(tool: string, ...)` not `(tool: ToolType, ...)`. Cast inside the body: `const t = tool as ToolType;`
-
-### Step 2 — Register the route in `src/App.tsx`
+### 2. Register in `src/App.tsx`
 
 Add import under the correct category comment:
 ```tsx
 import MyNewTool from './tools/Category/MyNewTool';
 ```
-
-Add route inside `<Routes>` under the correct category comment:
+Add route inside `<Routes>`:
 ```tsx
 <Route path="/my-new-tool" element={<MyNewTool />} />
 ```
 
-### Step 3 — Register the card in `src/components/LandingPage.tsx`
+### 3. Register in `src/components/LandingPage.tsx`
 
-Find the correct category in the `categories` array and add to its `tools` array:
+Add to the correct category's `tools` array:
 ```ts
-{ id: 'my-new-tool', path: '/my-new-tool', name: 'Display Name', description: 'One sentence description.', ready: 'v1.0' }
+{ id: 'my-new-tool', path: '/my-new-tool', name: 'Display Name', description: 'One sentence.', ready: 'v1.0' }
 ```
+Add `enabled: false` only if the tool should not be publicly visible yet.
 
-Add `enabled: false` if the tool is not ready to show publicly.
-
-### Step 4 — Build and verify
+### 4. Build
 
 ```bash
 npm run build
 ```
+Must complete with zero TypeScript errors. The chunk size warning is expected and harmless.
 
-Must complete with zero TypeScript errors. The chunk size warning is expected and can be ignored.
-
-### Step 5 — Commit and push
+### 5. Commit and push
 
 ```bash
 git add src/tools/... src/App.tsx src/components/LandingPage.tsx
@@ -74,7 +67,9 @@ git push
 
 ## Shared library (`src/shared/`)
 
-All new tools import from `src/shared/` — never copy-paste boilerplate.
+All new tools import from `src/shared/` — never copy-paste boilerplate from old tools.
+
+### Minimal import set for a new tool
 
 ```ts
 import {
@@ -84,24 +79,51 @@ import {
 } from "../../shared";
 ```
 
-### Key imports
+### Helper reference
 
-| Import | Purpose |
+| Helper | Purpose |
 |--------|---------|
-| `ToolShell` | The shell component — render this in the default export |
-| `ToolConfig` | Type for `TOOL_CONFIG` |
-| `InfoSection` | Type for `INFO_SECTIONS` |
-| `DifficultyLevel` | `"level1" \| "level2" \| "level3"` |
-| `AnyQuestion` | `SimpleQuestion \| WordedQuestion` |
-| `randInt(min, max)` | Random integer inclusive |
-| `pick(arr)` | Random array element |
-| `step(latex)` | Pure KaTeX working step |
-| `mStep(label, latex, unit?)` | Prose label + KaTeX |
-| `tStep(text)` | Plain text step (no numbers) |
-| `fracStr(n, d)` | `"$\frac{n}{d}$"` for InlineMath |
-| `mStr(x)` | `"$x$"` wraps number/expression for InlineMath |
-| `pickActive(values, opts)` | Random active multiSelect value |
-| `fmt(n, dp?)` | Number to string, trailing zeros stripped |
+| `randInt(min, max)` | Random integer, inclusive both ends |
+| `pick(arr)` | Random element from array |
+| `step(latex)` | Pure KaTeX working step — centred, use for any line with maths |
+| `mStep(label, latex, unit?)` | Prose label + KaTeX result, label left-aligned |
+| `tStep(text)` | Plain text step — only when zero numbers/operators in the sentence |
+| `fracStr(n, d)` | `"$\frac{n}{d}$"` — fraction for InlineMath lines |
+| `mStr(x)` | `"$x$"` — wraps a number/expression for InlineMath lines |
+| `pickActive(values, opts)` | Picks a random active value from a multiSelect state |
+| `fmt(n, dp?)` | Number to string, trailing zeros stripped, default 2dp |
+
+---
+
+## `ToolShellProps` — the four required props + defaults
+
+```tsx
+<ToolShell
+  config={TOOL_CONFIG}
+  infoSections={INFO_SECTIONS}
+  generateQuestion={generateQuestion}
+  generateUniqueQ={generateUniqueQ}
+  defaults={{ ... }}           // optional — see below
+/>
+```
+
+### `defaults` — per-tool overrides
+
+```ts
+defaults?: {
+  displayFontSize?: number;    // starting font size index 0–5, default 2 (text-3xl)
+  worksheetFontSize?: number;  // starting font size index 0–5, default 1 (text-xl)
+  numQuestions?: number;       // starting question count, default 15
+  fixedQuestions?: boolean;    // hides the questions input entirely
+  numColumns?: number;         // starting column count, default 3
+  fixedColumns?: boolean;      // hides the columns input entirely
+  maxColumns?: number;         // caps the columns input max (e.g. 3 = no 4-col option)
+}
+```
+
+Font size indices: `0=text-lg  1=text-xl  2=text-3xl  3=text-4xl  4=text-5xl  5=text-7xl`
+
+Use `fixedQuestions` when a tool always generates a specific count (e.g. exactly 12 questions for a 3×4 grid). Use `maxColumns` when 4 columns is never appropriate for the question type. Use `fixedColumns` when the column count must never change at all.
 
 ---
 
@@ -111,150 +133,174 @@ import {
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Displayed at top of page",
   tools: {
+
     subtool1: {
       name: "Button label",
-      instruction: "Solve:",        // optional — shown above question
-      useSubstantialBoxes: false,   // true = card cells, false = compact
-      variables: [                  // toggle switches
-        { key: "showHint", label: "Show hint", defaultValue: false },
-      ],
-      dropdown: {                   // segmented selector (or null)
-        key: "method", label: "Method", useTwoLineButtons: false,
-        options: [{ value: "a", label: "Method A" }],
-        defaultValue: "a",
+      instruction: "Solve:",        // optional — shown above question in all modes
+      useSubstantialBoxes: false,   // true = card-style cells with shadow; false = compact
+      variables: [],                // toggle switches — prefer multiSelect instead
+      dropdown: null,               // single-select segmented buttons, or null
+      multiSelect: {                // default QO control — reach for this first
+        key: "questionPool",
+        label: "Question Types",
+        options: [
+          { value: "a", label: "Type A", defaultActive: true  },
+          { value: "b", label: "Type B", defaultActive: true  },
+          { value: "c", label: "Type C", defaultActive: false },
+        ],
       },
-      multiSelect: null,            // multi-toggle pool (or object)
       difficultySettings: null,     // null = same options all levels
-                                    // or: { level1: {...}, level2: {...}, level3: {...} }
     },
+
   },
 };
 ```
 
-`difficultySettings` per level can override `dropdown`, `variables`, and `multiSelect` independently.
+### QO control types — when to use each
+
+| Control | When to use |
+|---------|------------|
+| `multiSelect` | **Default choice.** Options describe what's in the question pool. Multiple can be active. At least one must stay active. Use `pickActive(values, options)` in the generator to pick randomly from active options. |
+| `dropdown` | A single setting that changes the question type (e.g. method choice). Mutually exclusive. |
+| `variables` | Binary toggles for independent on/off options (e.g. "Include negatives"). Use sparingly — prefer multiSelect. |
+
+### `difficultySettings` — per-level overrides
+
+```ts
+difficultySettings: {
+  level1: { dropdown: { ...level1Version }, variables: [] },
+  level2: { dropdown: { ...level2Version }, variables: [{ key: "showHint", label: "Show hint", defaultValue: false }] },
+  level3: { dropdown: { ...level3Version }, variables: [...] },
+}
+```
+
+Each level can independently override `dropdown`, `variables`, and/or `multiSelect`. Omitting a key at a level inherits the tool-level default.
 
 ---
 
-## Question kinds
+## Question kinds — required fields
 
-### SimpleQuestion
+### `SimpleQuestion`
 ```ts
 {
   kind: "simple",
-  display: "3 + 4",           // plain text fallback
-  displayLatex: "3 + 4",      // KaTeX expression (use for all maths)
-  answer: "7",
-  answerLatex: "7",
-  answerSuffix: "kg",         // optional unit after answer
-  working: [step("3 + 4 = 7")],
-  key: `unique-key-${id}`,
+  display: "3 + 4",           // plain-text fallback
+  displayLatex: "3 + 4",      // KaTeX expression — use for all maths content
+  answer: "7",                // plain-text fallback
+  answerLatex: "7",           // KaTeX expression for the answer
+  answerSuffix: "kg",         // optional plain-text unit after answerLatex
+  working: [ step("3 + 4 = 7") ],
+  key: `tool-level-a-b-${id}`,
   difficulty: level,
 }
 ```
 
-### WordedQuestion
+### `WordedQuestion`
 ```ts
 {
   kind: "worded",
   lines: [
-    `A bag weighs ${mStr(16)} kg.`,   // mStr wraps numbers/expressions
-    `Find ${fracStr(3,4)} of it.`,    // fracStr for fractions
-    "What is the answer?",            // plain prose stays plain
+    `A bag weighs ${mStr(16)} kg.`,
+    `Find ${fracStr(3, 4)} of it.`,
+    "How many kg?",
   ],
   answer: "12 kg",
   answerLatex: "12",
   answerSuffix: "kg",
   working: [
-    mStep("Divide:", "16 \\div 4 = 4"),
-    mStep("Multiply:", "4 \\times 3 = 12"),
+    mStep("Divide by denominator:", "16 \\div 4 = 4"),
+    mStep("Multiply by numerator:", "4 \\times 3 = 12"),
+    mStep("Answer:", "12", "kg"),
   ],
-  key: `unique-key-${id}`,
+  key: `tool-level-d-k-n-${id}`,
   difficulty: level,
 }
 ```
 
-### Working step types
-- `step("latex")` — pure KaTeX, centred. Use for any line containing maths.
-- `mStep("label:", "latex", "unit?")` — prose label left, KaTeX right.
-- `tStep("text")` — plain text only. Only for genuinely numberless prose.
-
-**Rule:** if a sentence contains any number or operator, use `step()` or `mStep()`, not `tStep()`.
+### Key rules
+- Keys must be unique within a worksheet — include all parameters that vary the question
+- Always append a random `id` (`Math.floor(Math.random() * 1_000_000)`) to prevent false duplicates
+- `answerSuffix` is always plain text — never put units inside KaTeX
 
 ---
 
-## KaTeX rendering rules
+## KaTeX rendering — the rules (check every question)
 
-| Content | Approach |
-|---------|---------|
-| Numbers or operators in prose | `mStr(n)` → wraps in `$...$` |
-| Fractions in prose | `fracStr(n, d)` → `$\frac{n}{d}$` |
-| Pure maths step | `step("latex")` |
-| Prose label + result | `mStep("label:", "latex")` |
-| Purely numberless prose | `tStep("text")` |
-| Question display (simple) | `displayLatex: "latex string"` |
+| Content | Correct approach |
+|---------|----------------|
+| Number or operator in prose | `mStr(n)` — e.g. `"A bag weighs " + mStr(16) + " kg."` |
+| Fraction in prose | `fracStr(n, d)` — e.g. `fracStr(3, 4) + " of the bag"` |
+| Ratio in prose | `mStr("3:4")` — no spaces around colon; `3 : 4` adds KaTeX operator spacing |
+| Pure maths working step | `step("16 \\div 4 = 4")` |
+| Prose label + maths result | `mStep("Divide:", "16 \\div 4 = 4")` |
+| Genuinely numberless prose | `tStep("Simplify the fraction.")` — only if zero numbers/operators |
+| Question display | `displayLatex: "..."` on SimpleQuestion |
+| `\frac` vs plain expression | `fracStr` / `\frac` containers use `1em`; all others use `0.826em` |
 
-Never use `\text{}` inside `step()`. Never put prose words inside `$...$`.
+**Never use `\text{}` inside `step()`.** Never put prose words inside `$...$`.
 
----
-
-## Categories (LandingPage)
-
-| Category name | Folder | Gradient |
-|--------------|--------|---------|
-| Generators | `src/tools/Generators/` | blue-indigo |
-| Number | `src/tools/Number/` | cyan-sky |
-| Algebra | `src/tools/Algebra/` | purple-fuchsia |
-| Ratio & Proportion | `src/tools/` (root) | orange-amber |
-| Geometry | `src/tools/Geometry/` | green-emerald |
-| Probability & Statistics | `src/tools/` (root) | rose-pink |
-| Teacher Tools | `src/tools/TeacherTools/` | slate-gray |
-| Computer Science | `src/tools/` (root) | teal-cyan |
+### KaTeX gotchas
+- `verticalAlign` must be `"baseline"` — `"middle"` drops spans below the text baseline
+- `displayMode` is always `false` — wrap in a `<div>` for block display
+- Plain-text answers: if a tool's answers are plain strings (no `answerLatex`), never wrap them in `katexSpan()` in the print handler — characters like `£`, `<`, `>` crash KaTeX silently and produce a blank print window
+- In print CSS: set `font-size` on `.katex-render .katex` (inner span), not on `.katex-render` — setting it on the wrapper causes KaTeX to compound the scaling
 
 ---
 
-## What Claude needs to build a tool (spec format)
+## TypeScript / build rules (check before committing)
 
-When a user asks for a new tool, ask for (or infer from context):
+- `generateQuestion` and `generateUniqueQ` must be typed `(tool: string, ...)` — cast internally: `const t = tool as ToolType;`
+- Never use `useNavigate` — home navigation uses `window.location.href = "/"`
+- Never import `react-router-dom` inside a tool file
+- Never add `declare global` — use `const w = () => window as any` for untyped globals
+- Unused shared helpers must be suppressed: `void (tStep as unknown); void (fmt as unknown); void (pickActive as unknown)` — add only for helpers actually unused in the specific tool
+- `_variables` and `_dropdownValue` use `_` prefix in the stub generator to signal intentional non-use
+- `currentQuestion` initialised via `useState` initialiser, never `null`
+- If `AnyQuestion` for a tool does not include `"frac"` kind, remove any `q.kind === "frac"` branches — they cause TS2367
+
+---
+
+## PDF print — edge cases to check
+
+- `totalPages`, `printMode`, and any other `var` referenced inside a function declaration must be declared in the injected script's **outer scope** (above `buildPage` and the `.map()` calls) — declaring them inside `buildPage` causes "not defined" at runtime
+- Params that appear only as `${...}` in the HTML string are invisible to TypeScript — use distinct names (e.g. `pMode` not `printMode`) and add `void (param as unknown)` suppressions immediately before the `html` template literal
+- If a tool has only worded questions, remove the `"simple"` and `"frac"` branches from `questionToHtml` — TS2367 at build time otherwise
+
+---
+
+## Categories and file locations
+
+| Category | Folder | LandingPage gradient |
+|----------|--------|---------------------|
+| Generators | `src/tools/Generators/` | blue → indigo |
+| Number | `src/tools/Number/` | cyan → sky |
+| Algebra | `src/tools/Algebra/` | purple → fuchsia |
+| Ratio & Proportion | `src/tools/` (root) | orange → amber |
+| Geometry | `src/tools/Geometry/` | green → emerald |
+| Probability & Statistics | `src/tools/` (root) | rose → pink |
+| Teacher Tools | `src/tools/TeacherTools/` | slate → gray |
+| Computer Science | `src/tools/` (root) | teal → cyan |
+
+---
+
+## What to ask the user for (new tool spec)
+
+Request these — or infer from context — before writing a tool:
 
 1. **Tool name** — display name, e.g. "Multiplying Fractions"
 2. **URL path** — e.g. `/multiplying-fractions`
 3. **Category** — which section on the landing page
 4. **Description** — one sentence for the landing page card
-5. **Sub-tools** — list of sub-tool names (the tab buttons at the top)
+5. **Sub-tools** — names of the tab buttons (1–5)
 6. **For each sub-tool:**
-   - Question type: simple (one expression), worded (multi-line context), or fraction
-   - Level 1: what makes it easy (small numbers, integer answers, etc.)
-   - Level 2: what adds difficulty
-   - Level 3: what makes it hardest
-   - Any options: toggles (e.g., "Include negatives"), dropdowns (e.g., method choice)
-   - instruction? (e.g., "Simplify:", "Solve:", "Find:")
-7. **Worked example steps** — how to explain the solution at each level
+   - Question type: simple (single expression), worded (multi-line context), or fraction
+   - Level 1 — what makes it easiest
+   - Level 2 — what adds difficulty
+   - Level 3 — what makes it hardest
+   - QO options: any dropdowns, toggles, or multiSelect pools
+   - `instruction`? e.g. "Simplify:", "Solve:", "Find:"
+   - `useSubstantialBoxes`? — true for multi-line worded questions
+7. **Worked example steps** — how the solution is explained at each level
+8. **Defaults** — any non-standard font size, question count, or column constraints
 
-INFO_SECTIONS can be drafted by Claude from the above — no need for the user to write it.
-
----
-
-## Example: minimal complete tool file structure
-
-```
-src/tools/Algebra/MyTool.tsx
-─────────────────────────────
-imports (from ../../shared)
-ToolType = "subtool1" | "subtool2"
-TOOL_CONFIG: ToolConfig = { ... }
-INFO_SECTIONS: InfoSection[] = [ ... ]
-generateQuestion(tool: string, level, variables, dropdownValue, multiSelectValues): AnyQuestion
-generateUniqueQ(tool: string, level, variables, dropdownValue, usedKeys, multiSelectValues): AnyQuestion
-void(tStep, fmt, pickActive) — suppress unused warnings if not used
-export default function App() { return <ToolShell config=... infoSections=... generateQuestion=... generateUniqueQ=... /> }
-```
-
----
-
-## Common mistakes to avoid
-
-- Do NOT type `generateQuestion` or `generateUniqueQ` with `tool: ToolType` — use `tool: string` and cast internally
-- Do NOT import `useNavigate` — tools use `window.location.href = "/"` for home navigation
-- Do NOT add `enabled: false` to LandingPage unless the tool genuinely shouldn't be visible yet
-- Do NOT forget `void(tStep, fmt, pickActive)` suppression for helpers imported but not used in the specific tool
-- Do NOT skip the build check before committing
+Claude drafts `INFO_SECTIONS` from the above — the user does not need to write it.
