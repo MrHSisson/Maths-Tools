@@ -46,6 +46,7 @@ import EquationsOfLines from './tools/Geometry/EquationsOfLines';
 import Visualiser from './tools/TeacherTools/Visualiser';
 import ToolShell from './tools/TeacherTools/ToolShell';
 import CallSelector from './tools/TeacherTools/CallSelector';
+import PValue from './tools/TeacherTools/p-value';
 
 //Computer Science
 
