@@ -85,7 +85,6 @@ const TOOL_CONFIG = {
   tools: {
     numerical: {
       name: "Numerical Processing",
-      useSubstantialBoxes: true,
       variables: [{ key: "calcSteps", label: "Calculator Steps", defaultValue: false }],
       dropdown: {
         key: "formulaType", label: "Formula Type", useTwoLineButtons: false,
@@ -101,7 +100,6 @@ const TOOL_CONFIG = {
     },
     rearranging: {
       name: "Rearranging & Solving",
-      useSubstantialBoxes: true,
       variables: [{ key: "targetFormula", label: "Show Target Formula", defaultValue: true }],
       dropdown: {
         key: "answerType", label: "Answer Type", useTwoLineButtons: true,
@@ -115,14 +113,12 @@ const TOOL_CONFIG = {
     },
     verification: {
       name: "Root Verification",
-      useSubstantialBoxes: true,
       variables: [],
       dropdown: null,
       difficultySettings: null,
     },
   } as Record<string, {
     name: string;
-    useSubstantialBoxes: boolean;
     variables: { key: string; label: string; defaultValue: boolean }[];
     dropdown: { key: string; label: string; useTwoLineButtons?: boolean; options: { value: string; label: string; sub?: string }[]; defaultValue: string } | null;
     difficultySettings: null;

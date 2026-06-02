@@ -119,7 +119,6 @@ const TOOL_CONFIG = {
   tools: {
     linearScaling: {
       name: "Linear Scaling",
-      useSubstantialBoxes: true,
       variables: [
         { key: "allowDecimalDiscrete", label: "Allow decimal eggs", defaultValue: false },
       ],
@@ -137,7 +136,6 @@ const TOOL_CONFIG = {
 
     constraints: {
       name: "Constraints",
-      useSubstantialBoxes: true,
       variables: [
         { key: "showPlenty", label: "Show 'Plenty'", defaultValue: true }
       ],
@@ -187,7 +185,6 @@ const TOOL_CONFIG = {
   } as Record<string, {
     name: string;
     instruction?: string;
-    useSubstantialBoxes: boolean;
     variables: { key: string; label: string; defaultValue: boolean }[];
     dropdown: {
       key: string; label: string; useTwoLineButtons?: boolean;

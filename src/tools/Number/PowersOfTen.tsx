@@ -10,7 +10,7 @@ const TOOL_CONFIG = {
   tools: {
     directCalc: { 
       name: 'Direct Calculation', 
-      useSubstantialBoxes: true,
+
       variables: [
         { key: 'powersNotation', label: '10ⁿ', defaultValue: false },
       ],
@@ -74,7 +74,7 @@ type DifficultySettings = {
 
 type ToolSettings = {
   name: string;
-  useSubstantialBoxes: boolean;
+
   variables: VariableConfig[];
   dropdown: DropdownConfig | null;
   difficultySettings: Record<string, DifficultySettings> | null;
@@ -1031,8 +1031,6 @@ export default function PowersOfTenTool() {
       );
     }
     
-    const toolSettings = getCurrentToolSettings();
-    
     if (isDifferentiated) {
       const levels = ['level1', 'level2', 'level3'];
       const levelNames = ['Level 1', 'Level 2', 'Level 3'];
@@ -1087,19 +1085,8 @@ export default function PowersOfTenTool() {
                   <h3 className={`text-xl font-bold mb-4 text-center ${config.text}`}>{levelNames[levelIdx]}</h3>
                   <div className="space-y-3">
                     {levelQuestions.map((q: Question, idx: number) => (
-                      toolSettings.useSubstantialBoxes ? (
+                      (
                         <div key={idx} className="rounded-lg p-3" style={{ backgroundColor: getLevelQuestionBoxBg(level) }}>
-                          <span className={`${fontSizes[worksheetFontSize]} font-semibold`} style={{ color: '#000000' }}>
-                            {idx + 1}. {q.display}
-                          </span>
-                          {showWorksheetAnswers && (
-                            <span className={`${fontSizes[worksheetFontSize]} font-semibold ml-2`} style={{ color: '#059669' }}>
-                              = {q.answer}
-                            </span>
-                          )}
-                        </div>
-                      ) : (
-                        <div key={idx} className="p-2">
                           <span className={`${fontSizes[worksheetFontSize]} font-semibold`} style={{ color: '#000000' }}>
                             {idx + 1}. {q.display}
                           </span>
@@ -1153,29 +1140,16 @@ export default function PowersOfTenTool() {
         
         <div className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${numColumns}, 1fr)` }}>
           {worksheet.map((q: Question, idx: number) => (
-            toolSettings.useSubstantialBoxes ? (
-              <div key={idx} className="rounded-lg p-4 shadow" style={{ backgroundColor: getQuestionBoxBg() }}>
-                <span className={`${fontSizes[worksheetFontSize]} font-semibold`} style={{ color: '#000000' }}>
-                  {idx + 1}. {q.display}
+            <div key={idx} className="rounded-lg p-4 shadow" style={{ backgroundColor: getQuestionBoxBg() }}>
+              <span className={`${fontSizes[worksheetFontSize]} font-semibold`} style={{ color: '#000000' }}>
+                {idx + 1}. {q.display}
+              </span>
+              {showWorksheetAnswers && (
+                <span className={`${fontSizes[worksheetFontSize]} font-semibold ml-2`} style={{ color: '#059669' }}>
+                  = {q.answer}
                 </span>
-                {showWorksheetAnswers && (
-                  <span className={`${fontSizes[worksheetFontSize]} font-semibold ml-2`} style={{ color: '#059669' }}>
-                    = {q.answer}
-                  </span>
-                )}
-              </div>
-            ) : (
-              <div key={idx} className="p-3">
-                <span className={`${fontSizes[worksheetFontSize]} font-semibold`} style={{ color: '#000000' }}>
-                  {idx + 1}. {q.display}
-                </span>
-                {showWorksheetAnswers && (
-                  <span className={`${fontSizes[worksheetFontSize]} font-semibold ml-2`} style={{ color: '#059669' }}>
-                    = {q.answer}
-                  </span>
-                )}
-              </div>
-            )
+              )}
+            </div>
           ))}
         </div>
       </div>

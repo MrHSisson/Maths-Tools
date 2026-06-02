@@ -118,7 +118,6 @@ const TOOL_CONFIG = {
     completing: {
       name: "Completing the Square",
       instruction: "Write the following in completed the square form:",
-      useSubstantialBoxes: false,
       variables: [],
       dropdown: null,
       difficultySettings: {
@@ -134,7 +133,6 @@ const TOOL_CONFIG = {
     roots: {
       name: "Finding Roots",
       instruction: "By completing the square, find the roots of:",
-      useSubstantialBoxes: false,
       variables: [],
       dropdown: null,
       difficultySettings: {
@@ -150,7 +148,6 @@ const TOOL_CONFIG = {
     turning: {
       name: "Turning Points",
       instruction: "By completing the square, find the turning point of:",
-      useSubstantialBoxes: false,
       variables: [],
       dropdown: null,
       difficultySettings: {
@@ -166,7 +163,6 @@ const TOOL_CONFIG = {
   } as Record<string, {
     name: string;
     instruction?: string;
-    useSubstantialBoxes: boolean;
     variables: { key: string; label: string; defaultValue: boolean }[];
     dropdown: { key: string; label: string; useTwoLineButtons?: boolean; options: { value: string; label: string; sub?: string }[]; defaultValue: string; } | null;
     difficultySettings: Record<string, {

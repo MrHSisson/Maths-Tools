@@ -67,7 +67,6 @@ export interface DifficultyLevelSettings {
 export interface ToolEntry {
   name: string;
   instruction?: string;
-  useSubstantialBoxes: boolean;
   variables: ToolVariable[];
   dropdown: ToolDropdown | null;
   multiSelect?: ToolMultiSelect;

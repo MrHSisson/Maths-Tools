@@ -53,7 +53,6 @@ type DifficultySettings = {
 
 type ToolSettings = {
   name: string;
-  useSubstantialBoxes: boolean;
   variables: VariableConfig[];
   dropdown: DropdownConfig | null;
   difficultySettings: Record<string, DifficultySettings> | null;
@@ -99,7 +98,6 @@ const TOOL_CONFIG: {
   tools: {
     estimation: {
       name: 'Estimation',
-      useSubstantialBoxes: false,
       variables: [],
       dropdown: OPERATION_DROPDOWN,
       difficultySettings: {
@@ -1186,7 +1184,6 @@ const EstimationTool: React.FC = () => {
   // ── Worksheet ──
 
   const renderWorksheetMode = (): JSX.Element => {
-    const toolSettings = getToolSettings();
     if (worksheet.length === 0) return (
       <div className="rounded-xl shadow-2xl p-8 text-center" style={{ backgroundColor: getQuestionBg() }}>
         <span className="text-2xl text-gray-400">Generate worksheet</span>
@@ -1214,13 +1211,8 @@ const EstimationTool: React.FC = () => {
       const aEl = showWorksheetAnswers
         ? <span className="font-semibold ml-2" style={{ color: '#059669', fontSize: px }}>= {q.answer}</span>
         : null;
-      return toolSettings.useSubstantialBoxes ? (
+      return (
         <div className="rounded-lg p-4 shadow" style={{ backgroundColor: bg }}>
-          <span className="font-semibold mr-1" style={{ color: '#000000', fontSize: px }}>{idx + 1}.</span>
-          {qEl}{aEl}
-        </div>
-      ) : (
-        <div className="p-3 flex items-center flex-wrap gap-x-1">
           <span className="font-semibold mr-1" style={{ color: '#000000', fontSize: px }}>{idx + 1}.</span>
           {qEl}{aEl}
         </div>

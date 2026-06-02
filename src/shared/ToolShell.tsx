@@ -339,10 +339,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const renderQCell = (q: AnyQuestion, idx: number, bgOverride?: string) => {
     const bg = bgOverride ?? stepBg;
     const fsz = fontSizes[worksheetFontSize];
-    const useCards = config.tools[currentTool]?.useSubstantialBoxes ?? false;
     const cellStyle = { backgroundColor: bg, height: "100%", boxSizing: "border-box" as const, position: "relative" as const, borderRadius: "12px", border: "1px solid #e5e7eb" };
     const numEl = <span style={{ position: "absolute", top: 0, left: 0, fontSize: "0.65em", fontWeight: 700, color: "#000", lineHeight: 1, padding: "5px 5px 7px 5px", borderRight: "1px solid #000", borderBottom: "1px solid #000" }}>{idx + 1})</span>;
-    const wrapperClass = useCards ? "rounded-xl p-4 shadow group" : "rounded-xl p-3 group";
+    const wrapperClass = "rounded-xl p-4 shadow group";
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const regenBtn = (q as any)._qo ? (

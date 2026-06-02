@@ -38,7 +38,6 @@ Repeat this block for each sub-tool above.
 
 **Instruction line:** (shown above the question, e.g. "Simplify:", "Solve:", "Find:" — leave blank if none)
 
-**Use substantial boxes:** (yes / no — yes for multi-line worded questions, no for compact single-line)
 
 ---
 

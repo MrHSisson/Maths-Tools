@@ -80,7 +80,7 @@ const TOOL_CONFIG = {
   pageTitle: "Fractions & Ratios",
   tools: {
     formingRatios: {
-      name: "Forming Ratios", useSubstantialBoxes: true,
+      name: "Forming Ratios",
       variables: [
         { key: "threeWay", label: "3-Way Ratio", defaultValue: false },
         { key: "simplestForm", label: "Simplest Form", defaultValue: false },
@@ -88,7 +88,7 @@ const TOOL_CONFIG = {
       dropdown: null, difficultySettings: null,
     },
     fractionToRatio: {
-      name: "Fraction to Ratio", useSubstantialBoxes: true,
+      name: "Fraction to Ratio",
       variables: [], dropdown: null,
       difficultySettings: {
         level1: { variables: [], dropdown: null },
@@ -100,7 +100,7 @@ const TOOL_CONFIG = {
       },
     },
     ratioToFraction: {
-      name: "Ratio to Fraction", useSubstantialBoxes: true,
+      name: "Ratio to Fraction",
       variables: [], dropdown: null,
       difficultySettings: {
         level1: { variables: [], dropdown: null },
@@ -112,7 +112,8 @@ const TOOL_CONFIG = {
       },
     },
   } as Record<string, {
-    name: string; instruction?: string; useSubstantialBoxes: boolean;
+    name: string;
+    instruction?: string;
     variables: { key: string; label: string; defaultValue: boolean }[];
     dropdown: { key: string; label: string; useTwoLineButtons?: boolean; options: { value: string; label: string; sub?: string }[]; defaultValue: string } | null;
     difficultySettings: Record<string, { dropdown?: any; variables?: { key: string; label: string; defaultValue: boolean }[] }> | null;

@@ -89,7 +89,7 @@ const TOOL_CONFIG: ToolConfig = {
     gradient: {
       name: "Gradients",
       instruction: "Find the gradient of the line connecting:",
-      useSubstantialBoxes: true,
+
       variables: SHARED_VARIABLES,
       dropdown: null,
       difficultySettings: SHARED_DIFF_SETTINGS,
@@ -97,7 +97,7 @@ const TOOL_CONFIG: ToolConfig = {
     equation: {
       name: "Line Equations",
       instruction: "Find the equation of the line connecting:",
-      useSubstantialBoxes: true,
+
       variables: SHARED_VARIABLES,
       dropdown: null,
       difficultySettings: SHARED_DIFF_SETTINGS,
@@ -105,7 +105,7 @@ const TOOL_CONFIG: ToolConfig = {
     missing: {
       name: "Missing Values",
       instruction: "",
-      useSubstantialBoxes: true,
+
       variables: [],
       dropdown: null,
       multiSelect: {

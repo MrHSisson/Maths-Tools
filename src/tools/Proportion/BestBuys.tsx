@@ -201,7 +201,6 @@ const TOOL_CONFIG = {
 
     unitCost: {
       name: "Unit Cost",
-      useSubstantialBoxes: true,
       variables: [],
       dropdown: null,
       difficultySettings: {
@@ -242,7 +241,6 @@ const TOOL_CONFIG = {
 
     specialOffers: {
       name: "Special Offers",
-      useSubstantialBoxes: true,
       variables: [],
       dropdown: null,
       difficultySettings: null,
@@ -251,7 +249,6 @@ const TOOL_CONFIG = {
   } as Record<string, {
     name: string;
     instruction?: string;
-    useSubstantialBoxes: boolean;
     variables: { key: string; label: string; defaultValue: boolean }[];
     dropdown: {
       key: string; label: string; useTwoLineButtons?: boolean;

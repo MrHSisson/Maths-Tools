@@ -137,7 +137,7 @@ const TOOL_CONFIG: ToolConfig = {
     subtool1: {
       name: "Button label",
       instruction: "Solve:",        // optional — shown above question in all modes
-      useSubstantialBoxes: false,   // true = card-style cells with shadow; false = compact
+
       variables: [],                // toggle switches — prefer multiSelect instead
       dropdown: null,               // single-select segmented buttons, or null
       multiSelect: {                // default QO control — reach for this first
@@ -299,7 +299,7 @@ Request these — or infer from context — before writing a tool:
    - Level 3 — what makes it hardest
    - QO options: any dropdowns, toggles, or multiSelect pools
    - `instruction`? e.g. "Simplify:", "Solve:", "Find:"
-   - `useSubstantialBoxes`? — true for multi-line worded questions
+
 7. **Worked example steps** — how the solution is explained at each level
 8. **Defaults** — any non-standard font size, question count, or column constraints
 

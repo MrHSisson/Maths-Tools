@@ -132,7 +132,6 @@ const TOOL_CONFIG = {
   tools: {
     circumference: {
       name: "Circumference",
-      useSubstantialBoxes: true,
       variables: [
         { key: "decimals",  label: "Allow decimals",    defaultValue: false },
         { key: "answerPi",  label: "Answers in π",      defaultValue: false },
@@ -143,7 +142,6 @@ const TOOL_CONFIG = {
 
     area: {
       name: "Area",
-      useSubstantialBoxes: true,
       variables: [
         { key: "decimals",  label: "Allow decimals",    defaultValue: false },
         { key: "answerPi",  label: "Answers in π",      defaultValue: false },
@@ -154,7 +152,6 @@ const TOOL_CONFIG = {
 
     sectors: {
       name: "Sectors",
-      useSubstantialBoxes: true,
       variables: [
         { key: "decimals",  label: "Allow decimals",    defaultValue: false },
         { key: "answerPi",  label: "Answers in π",      defaultValue: false },
@@ -225,7 +222,6 @@ const TOOL_CONFIG = {
   } as Record<string, {
     name: string;
     instruction?: string;
-    useSubstantialBoxes: boolean;
     variables: { key: string; label: string; defaultValue: boolean }[];
     dropdown: {
       key: string; label: string; useTwoLineButtons?: boolean;

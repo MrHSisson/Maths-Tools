@@ -51,7 +51,6 @@ type ToolType = "tool1" | "tool2" | "tool3"; // ← one per key in TOOL_CONFIG.t
 // Fields:
 //   name              — button label
 //   instruction?      — prompt above the question ("Solve:", "Simplify:", etc.)
-//   useSubstantialBoxes — true = card-style cells, false = compact cells
 //   variables         — toggle switches: [{ key, label, defaultValue }]
 //   dropdown          — segmented selector: { key, label, options, defaultValue }
 //   multiSelect?      — multi-toggle pool: { key, label, options }
@@ -62,10 +61,9 @@ const TOOL_CONFIG: ToolConfig = {
 
   tools: {
 
-    // Tool 1: toggle switches + multiSelect pool, compact cells
+    // Tool 1: toggle switches + multiSelect pool
     tool1: {
       name: "Sub-Tool 1",
-      useSubstantialBoxes: false,
       variables: [
         { key: "option1", label: "Option A", defaultValue: false },
         { key: "option2", label: "Option B", defaultValue: false },
@@ -83,10 +81,9 @@ const TOOL_CONFIG: ToolConfig = {
       difficultySettings: null,
     },
 
-    // Tool 2: worded questions with dropdown, substantial cells
+    // Tool 2: worded questions with dropdown
     tool2: {
       name: "Sub-Tool 2",
-      useSubstantialBoxes: true,
       variables: [
         { key: "includeExtra", label: "Include extras", defaultValue: false },
       ],
@@ -108,7 +105,6 @@ const TOOL_CONFIG: ToolConfig = {
     tool3: {
       name: "Sub-Tool 3",
       instruction: "Solve:",
-      useSubstantialBoxes: false,
       variables: [],
       dropdown: {
         key: "method",

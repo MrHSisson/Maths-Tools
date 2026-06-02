@@ -156,7 +156,6 @@ const SegButtons = ({value,onChange,opts}:{value:string;onChange:(v:string)=>voi
 //   name: string
 //     — displayed as the sub-tool button label
 //
-//   useSubstantialBoxes: boolean
 //     — true  = card-style cells with padding and shadow (good for multi-line)
 //     — false = compact cells (good for short single-line questions)
 //
@@ -209,7 +208,6 @@ const TOOL_CONFIG = {
     equations: {
       name: "Unknowns on Both Sides",
       instruction: "Solve:",
-      useSubstantialBoxes: false,
       variables: [],
       dropdown: null,
       difficultySettings: null,
@@ -217,7 +215,6 @@ const TOOL_CONFIG = {
   } as Record<string, {
     name: string;
     instruction?: string;
-    useSubstantialBoxes: boolean;
     variables: { key: string; label: string; defaultValue: boolean }[];
     dropdown: {
       key: string; label: string; useTwoLineButtons?: boolean;
@@ -1863,10 +1860,9 @@ export default function App() {
   const renderQCell = (q: AnyQuestion, idx: number, bgOverride?: string) => {
     const bg = bgOverride ?? stepBg;
     const fsz = fontSizes[worksheetFontSize];
-    const useCards = TOOL_CONFIG.tools[currentTool]?.useSubstantialBoxes ?? false;
     const cellStyle = {backgroundColor:bg, height:"100%", boxSizing:"border-box" as const, position:"relative" as const, borderRadius:"12px", border:"1px solid #e5e7eb"};
     const numEl = <span style={{position:"absolute",top:0,left:0,fontSize:"0.65em",fontWeight:700,color:"#000",lineHeight:1,padding:"5px 5px 7px 5px",borderRight:"1px solid #000",borderBottom:"1px solid #000"}}>{idx+1})</span>;
-    const wrapperClass = useCards ? "rounded-xl p-4 shadow" : "rounded-xl p-3";
+    const wrapperClass = "rounded-xl p-4 shadow";
 
     // Hover regen button — top-right corner, only shown on hover
     const regenBtn = (q as any)._qo ? (
