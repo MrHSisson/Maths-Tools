@@ -101,6 +101,7 @@ function App() {
       <Route path="/visualiser" element={<Visualiser />} />
       <Route path="/tool-shell" element={<ToolShell />} />
       <Route path="/call-selector" element={<CallSelector />} />
+      <Route path="/p-value" element={<PValue />} />
 
       //Computer Science
 
