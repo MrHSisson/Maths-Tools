@@ -1,11 +1,12 @@
 import { Routes, Route } from 'react-router-dom'
 import LandingPage from './components/LandingPage'
-import RatioSharingTool from './tools/RatioSharingTool'
-import SimplifyingRatiosTool from './tools/SimplifyingRatiosTool'
-import RecipesTool from './tools/RecipesTool'
-import FractionToRatio from './tools/FractionToRatio';
-import FractionsOfAmounts from './tools/FractionsOfAmounts';
-import BestBuys from './tools/BestBuys';
+// Proportion
+import RatioSharingTool from './tools/Proportion/RatioSharingTool';
+import SimplifyingRatiosTool from './tools/Proportion/SimplifyingRatiosTool';
+import RecipesTool from './tools/Proportion/RecipesTool';
+import FractionToRatio from './tools/Proportion/FractionToRatio';
+import FractionsOfAmounts from './tools/Proportion/FractionsOfAmounts';
+import BestBuys from './tools/Proportion/BestBuys';
 
 //Generators
 

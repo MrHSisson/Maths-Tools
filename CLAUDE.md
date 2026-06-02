@@ -275,7 +275,7 @@ Each level can independently override `dropdown`, `variables`, and/or `multiSele
 | Generators | `src/tools/Generators/` | blue → indigo |
 | Number | `src/tools/Number/` | cyan → sky |
 | Algebra | `src/tools/Algebra/` | purple → fuchsia |
-| Ratio & Proportion | `src/tools/` (root) | orange → amber |
+| Ratio & Proportion | `src/tools/Proportion/` | orange → amber |
 | Geometry | `src/tools/Geometry/` | green → emerald |
 | Probability & Statistics | `src/tools/` (root) | rose → pink |
 | Teacher Tools | `src/tools/TeacherTools/` | slate → gray |
