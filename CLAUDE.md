@@ -279,7 +279,7 @@ Each level can independently override `dropdown`, `variables`, and/or `multiSele
 | Geometry | `src/tools/Geometry/` | green → emerald |
 | Probability & Statistics | `src/tools/` (root) | rose → pink |
 | Teacher Tools | `src/tools/TeacherTools/` | slate → gray |
-| Computer Science | `src/tools/` (root) | teal → cyan |
+| Computer Science | `src/tools/ComputerScience/` | teal → cyan |
 
 ---
 
