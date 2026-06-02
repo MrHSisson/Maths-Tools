@@ -267,11 +267,7 @@ export default function BinomialPValueExplorer() {
 
   const side = x >= mean ? "upper" : "lower";
   const oneTailDesc = x >= mean ? `P(X ≥ ${x})` : `P(X ≤ ${x})`;
-  const threshold = tail === "two" ? alpha / 2 : alpha;
   const thresholdStr = tail === "two" ? `α/2 = ${(alpha/2).toFixed(3)}` : `α = ${alphaStr}`;
-
-  const tailDesc =
-    tail === "right" ? "right-tailed" : tail === "left" ? "left-tailed" : "two-tailed";
 
   const twoTailNote = tail === "two"
     ? ` x = ${x} fell in the ${side} tail (E(X) = ${mean.toFixed(1)}), so p-value = ${oneTailDesc} = ${pvStr}. Comparing to ${thresholdStr}.`
