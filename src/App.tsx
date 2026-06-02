@@ -46,6 +46,7 @@ import EquationsOfLines from './tools/Geometry/EquationsOfLines';
 import Visualiser from './tools/TeacherTools/Visualiser';
 import ToolShell from './tools/TeacherTools/ToolShell';
 import CallSelector from './tools/TeacherTools/CallSelector';
+import PValue from './tools/TeacherTools/p-value';
 
 //Computer Science
 
@@ -100,6 +101,7 @@ function App() {
       <Route path="/visualiser" element={<Visualiser />} />
       <Route path="/tool-shell" element={<ToolShell />} />
       <Route path="/call-selector" element={<CallSelector />} />
+      <Route path="/p-value" element={<PValue />} />
 
       //Computer Science
 

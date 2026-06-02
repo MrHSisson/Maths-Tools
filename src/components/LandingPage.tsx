@@ -115,7 +115,7 @@ const categories: Category[] = [
       { id: 'Recipes', path: '/recipes', name: 'Recipes', description: 'Find amounts of ingredients by scaling recipes and understanding limiting factors', ready: 'v2.1.2' },
       { id: 'fraction-to-ratio', path: '/fraction-to-ratio', name: 'Converting Fractions and Ratios', description: 'To convert fractions and ratios interchangably', ready: 'v2.0' },
       { id: 'fractions-of-amounts', path: '/fractions-of-amounts', name: 'Fractions of Amounts', description: 'To find a fraction of an amount', ready: 'v2.0' },
-      { id: 'best-buys', path: '/best-buys', name: 'Best Buys', description: 'To find the best value from two prices', ready: 'v2.2' },
+      { id: 'best-buys', path: '/best-buys', name: 'Best Buys', description: 'To find the best value from two prices', ready: 'v2.3' },
     ]
   },
   {
@@ -166,8 +166,9 @@ const categories: Category[] = [
     },
     tools: [
       { id: 'visualiser', path: '/visualiser', name: 'Visualiser', description: 'A tool for displaying your visualiser', ready: 'Ready' },
-      { id: 'tool-shell', path: '/tool-shell', name: 'Tool Shell', description: 'A tool shell for developing new tools', ready: 'v2.1.1' },
+      { id: 'tool-shell', path: '/tool-shell', name: 'Tool Shell', description: 'A tool shell for developing new tools', ready: 'v2.3' },
       { id: 'call-selector', path: '/call-selector', name: 'Friday Phonecalls', description: 'A tool to randomly select students for phonecalls', ready: 'v1.0', enabled: false },
+      { id: 'p-value', path: '/p-value', name: 'P-Value Grapher', description: 'A tool to generate P-Values from Binomial Distributions', ready: 'v1.0' },
     ]
   },
   {

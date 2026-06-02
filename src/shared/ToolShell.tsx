@@ -1,0 +1,909 @@
+import { useState, useEffect, useRef, useCallback } from "react";
+import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2 } from "lucide-react";
+import type { DifficultyLevel, AnyQuestion, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
+import { LV_COLORS, getQuestionBg, getStepBg } from "./colors";
+import { loadKaTeX } from "./katex";
+import { MathRenderer } from "./components/MathRenderer";
+import { QuestionDisplay, AnswerDisplay } from "./components/QuestionDisplay";
+import { DifficultyToggle } from "./components/DifficultyToggle";
+import {
+  StandardQOPopover,
+  DiffQOPopover,
+  InlineQOPanel,
+} from "./components/QOPopovers";
+import { InfoModal } from "./components/InfoModal";
+import { MenuDropdown } from "./components/MenuDropdown";
+import { PrintSplitButton } from "./components/PrintSplitButton";
+import { handlePrint } from "./print";
+
+export interface ToolShellProps {
+  config: ToolConfig;
+  infoSections: InfoSection[];
+  generateQuestion: (
+    tool: string,
+    level: DifficultyLevel,
+    variables: Record<string, boolean>,
+    dropdownValue: string,
+    multiSelectValues?: Record<string, boolean>,
+  ) => AnyQuestion;
+  generateUniqueQ: (
+    tool: string,
+    level: DifficultyLevel,
+    variables: Record<string, boolean>,
+    dropdownValue: string,
+    usedKeys: Set<string>,
+    multiSelectValues?: Record<string, boolean>,
+  ) => AnyQuestion;
+  defaults?: ToolShellDefaults;
+}
+
+export const ToolShell = ({ config, infoSections, generateQuestion, generateUniqueQ, defaults = {} }: ToolShellProps) => {
+  const toolKeys = Object.keys(config.tools);
+
+  const [currentTool, setCurrentTool] = useState<string>(toolKeys[0]);
+  const [mode, setMode] = useState<"whiteboard" | "single" | "worksheet">("whiteboard");
+  const [difficulty, setDifficulty] = useState<DifficultyLevel>("level1");
+
+  const [toolVariables, setToolVariables] = useState<Record<string, Record<string, Record<string, boolean>>>>(() => {
+    const init: Record<string, Record<string, Record<string, boolean>>> = {};
+    toolKeys.forEach(k => {
+      init[k] = {};
+      (["level1", "level2", "level3"] as DifficultyLevel[]).forEach(lv => {
+        init[k][lv] = {};
+        const vars = config.tools[k].difficultySettings?.[lv]?.variables ?? config.tools[k].variables;
+        vars.forEach(v => { init[k][lv][v.key] = v.defaultValue; });
+      });
+    });
+    return init;
+  });
+
+  const [toolDropdowns, setToolDropdowns] = useState<Record<string, string>>(() => {
+    const init: Record<string, string> = {};
+    toolKeys.forEach(k => {
+      const t = config.tools[k];
+      (["level1", "level2", "level3"] as DifficultyLevel[]).forEach(lv => {
+        const dd = t.difficultySettings?.[lv]?.dropdown ?? t.dropdown;
+        if (dd) init[`${k}__${lv}`] = dd.defaultValue;
+      });
+    });
+    return init;
+  });
+
+  const [toolMultiSelect, setToolMultiSelect] = useState<Record<string, Record<string, boolean>>>(() => {
+    const init: Record<string, Record<string, boolean>> = {};
+    toolKeys.forEach(k => {
+      const ms = config.tools[k].multiSelect;
+      if (ms) { init[k] = {}; ms.options.forEach(o => { init[k][o.value] = o.defaultActive; }); }
+    });
+    return init;
+  });
+
+  const [levelVariables, setLevelVariables] = useState<Record<string, Record<string, boolean>>>({ level1: {}, level2: {}, level3: {} });
+  const [levelDropdowns, setLevelDropdowns] = useState<Record<string, string>>(() => {
+    const init: Record<string, string> = {};
+    const firstTool = toolKeys[0];
+    const t = config.tools[firstTool];
+    (["level1", "level2", "level3"] as DifficultyLevel[]).forEach(lv => {
+      const dd = t.difficultySettings?.[lv]?.dropdown ?? t.dropdown;
+      if (dd) init[lv] = dd.defaultValue;
+    });
+    return init;
+  });
+  const [levelMultiSelect, setLevelMultiSelect] = useState<Record<string, Record<string, boolean>>>({ level1: {}, level2: {}, level3: {} });
+
+  const [currentQuestion, setCurrentQuestion] = useState<AnyQuestion>(() =>
+    generateQuestion(toolKeys[0], "level1", {}, "")
+  );
+  const [showWhiteboardAnswer, setShowWhiteboardAnswer] = useState(false);
+  const [showAnswer, setShowAnswer] = useState(false);
+  const [numQuestions, setNumQuestions] = useState(defaults.numQuestions ?? 15);
+  const [numColumns, setNumColumns] = useState(defaults.numColumns ?? 3);
+  const [worksheet, setWorksheet] = useState<AnyQuestion[]>([]);
+  const [showWorksheetAnswers, setShowWorksheetAnswers] = useState(false);
+  const [printMode, setPrintMode] = useState<PrintMode>("both");
+  const [isDifferentiated, setIsDifferentiated] = useState(false);
+  const [worksheetMode, setWorksheetMode] = useState<"standard" | "advanced">("standard");
+  const [displayFontSize, setDisplayFontSize] = useState(defaults.displayFontSize ?? 2);
+  const [worksheetFontSize, setWorksheetFontSize] = useState(defaults.worksheetFontSize ?? 1);
+  const [colorScheme, setColorScheme] = useState("default");
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isInfoOpen, setIsInfoOpen] = useState(false);
+
+  interface AdvGroup {
+    id: number;
+    level: DifficultyLevel;
+    count: number;
+    variables: Record<string, boolean>;
+    dropdownValue: string;
+    multiSelectValues: Record<string, boolean>;
+  }
+
+  const makeDefaultAdvGroup = (id: number, lv: DifficultyLevel = "level1"): AdvGroup => {
+    const t = config.tools[currentTool];
+    const dd = t.difficultySettings?.[lv]?.dropdown ?? t.dropdown;
+    const vars = t.difficultySettings?.[lv]?.variables ?? t.variables;
+    const ms = t.difficultySettings?.[lv]?.multiSelect ?? t.multiSelect;
+    const variables: Record<string, boolean> = {};
+    vars.forEach(v => { variables[v.key] = v.defaultValue; });
+    const multiSelectValues: Record<string, boolean> = {};
+    ms?.options.forEach(o => { multiSelectValues[o.value] = o.defaultActive; });
+    return { id, level: lv, count: 5, variables, dropdownValue: dd?.defaultValue ?? "", multiSelectValues };
+  };
+
+  const [advGroups, setAdvGroups] = useState<AdvGroup[]>(() => [makeDefaultAdvGroup(1)]);
+  const [advSelectedId, setAdvSelectedId] = useState<number>(1);
+  const advNextId = useRef(2);
+  const [advShuffle, setAdvShuffle] = useState(false);
+  const totalAdvQuestions = advGroups.reduce((s, g) => s + g.count, 0);
+  const _advDragNodeIdx = useRef<number | null>(null);
+  const _advListRef = useRef<HTMLDivElement>(null);
+  void _advDragNodeIdx; void _advListRef;
+
+  const [presenterMode, setPresenterMode] = useState(false);
+  const [wbFullscreen, setWbFullscreen] = useState(false);
+  const [splitPct, setSplitPct] = useState(40);
+  const [camDevices, setCamDevices] = useState<MediaDeviceInfo[]>([]);
+  const [currentCamId, setCurrentCamId] = useState<string | null>(null);
+  const [camError, setCamError] = useState<string | null>(null);
+  const [camDropdownOpen, setCamDropdownOpen] = useState(false);
+
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const camDropdownRef = useRef<HTMLDivElement>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const didLongPress = useRef(false);
+  const isDraggingRef = useRef(false);
+  const splitContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => { loadKaTeX(); }, []);
+
+  const stopStream = useCallback(() => {
+    if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null; }
+    if (videoRef.current) videoRef.current.srcObject = null;
+  }, []);
+
+  const startCam = useCallback(async (deviceId?: string) => {
+    stopStream(); setCamError(null);
+    try {
+      let targetDeviceId = deviceId;
+      if (!targetDeviceId) {
+        const tmp = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        tmp.getTracks().forEach(t => t.stop());
+        const all = await navigator.mediaDevices.enumerateDevices();
+        const builtInPattern = /facetime|built.?in|integrated|internal|front|rear/i;
+        const ext = all.filter(d => d.kind === "videoinput").find(d => d.label && !builtInPattern.test(d.label));
+        if (ext) targetDeviceId = ext.deviceId;
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({ video: targetDeviceId ? { deviceId: { exact: targetDeviceId } } : true, audio: false });
+      streamRef.current = stream;
+      if (videoRef.current) videoRef.current.srcObject = stream;
+      setCurrentCamId(stream.getVideoTracks()[0].getSettings().deviceId ?? null);
+      setCamDevices((await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === "videoinput"));
+    } catch (e: unknown) { setCamError((e instanceof Error ? e.message : null) ?? "Camera unavailable"); }
+  }, [stopStream]);
+
+  useEffect(() => { if (presenterMode) startCam(); else stopStream(); }, [presenterMode]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (presenterMode && streamRef.current && videoRef.current) videoRef.current.srcObject = streamRef.current; }, [wbFullscreen]);
+  useEffect(() => {
+    if (!camDropdownOpen) return;
+    const h = (e: MouseEvent) => { if (camDropdownRef.current && !camDropdownRef.current.contains(e.target as Node)) setCamDropdownOpen(false); };
+    document.addEventListener("mousedown", h); return () => document.removeEventListener("mousedown", h);
+  }, [camDropdownOpen]);
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => { if (e.key === "Escape") { setPresenterMode(false); setWbFullscreen(false); } };
+    document.addEventListener("keydown", h); return () => document.removeEventListener("keydown", h);
+  }, []);
+
+  const qBg = getQuestionBg(colorScheme);
+  const stepBg = getStepBg(colorScheme);
+  const isDefaultScheme = colorScheme === "default";
+  const fsToolbarBg = isDefaultScheme ? "#ffffff" : stepBg;
+  const fsQuestionBg = isDefaultScheme ? "#ffffff" : qBg;
+  const fsWorkingBg  = isDefaultScheme ? "#f5f3f0" : qBg;
+
+  const getToolSettings = () => config.tools[currentTool];
+  const getDropdownConfig = () => getToolSettings().difficultySettings?.[difficulty]?.dropdown ?? getToolSettings().dropdown;
+  const getVariablesConfig = () => getToolSettings().difficultySettings?.[difficulty]?.variables ?? getToolSettings().variables;
+  const getMultiSelectConfig = () => getToolSettings().difficultySettings?.[difficulty]?.multiSelect ?? getToolSettings().multiSelect ?? null;
+  const getDropdownValue = () => toolDropdowns[`${currentTool}__${difficulty}`] ?? getDropdownConfig()?.defaultValue ?? "";
+  const setDropdownValue = (v: string) => setToolDropdowns(p => ({ ...p, [`${currentTool}__${difficulty}`]: v }));
+  const getVariableValues = () => toolVariables[currentTool]?.[difficulty] ?? {};
+  const setVariableValue = (k: string, v: boolean) => setToolVariables(p => ({
+    ...p, [currentTool]: { ...(p[currentTool] ?? {}), [difficulty]: { ...(p[currentTool]?.[difficulty] ?? {}), [k]: v } },
+  }));
+  const setMultiSelectValue = (k: string, v: boolean) => setToolMultiSelect(p => ({ ...p, [currentTool]: { ...(p[currentTool] ?? {}), [k]: v } }));
+  const handleLevelVarChange = (lv: string, k: string, v: boolean) => setLevelVariables(p => ({ ...p, [lv]: { ...p[lv], [k]: v } }));
+  const handleLevelDDChange  = (lv: string, v: string) => setLevelDropdowns(p => ({ ...p, [lv]: v }));
+  const handleLevelMSChange  = (lv: string, k: string, v: boolean) => setLevelMultiSelect(p => ({ ...p, [lv]: { ...(p[lv] ?? {}), [k]: v } }));
+  const getInstruction = (tool = currentTool) => config.tools[tool]?.instruction ?? "";
+
+  const makeQuestion = (): AnyQuestion =>
+    generateQuestion(currentTool, difficulty, getVariableValues(), getDropdownValue(), toolMultiSelect[currentTool] ?? {});
+
+  const handleNewQuestion = () => {
+    setCurrentQuestion(makeQuestion());
+    setShowWhiteboardAnswer(false);
+    setShowAnswer(false);
+  };
+
+  const stampQO = (q: AnyQuestion, snap: QOSnapshot): AnyQuestion => ({ ...q, _qo: snap } as AnyQuestion);
+
+  const handleGenerateWorksheet = () => {
+    const usedKeys = new Set<string>();
+    const questions: AnyQuestion[] = [];
+    if (isDifferentiated) {
+      (["level1", "level2", "level3"] as DifficultyLevel[]).forEach(lv => {
+        const t = getToolSettings();
+        const dd = t.difficultySettings?.[lv]?.dropdown ?? t.dropdown;
+        const vars = levelVariables[lv] ?? {};
+        const ddVal = levelDropdowns[lv] ?? (dd?.defaultValue ?? "");
+        const msVals = levelMultiSelect[lv] ?? {};
+        const snap: QOSnapshot = { level: lv, variables: vars, dropdownValue: ddVal, multiSelectValues: msVals };
+        for (let i = 0; i < numQuestions; i++)
+          questions.push(stampQO(generateUniqueQ(currentTool, lv, vars, ddVal, usedKeys, msVals), snap));
+      });
+    } else {
+      const snap: QOSnapshot = { level: difficulty, variables: getVariableValues(), dropdownValue: getDropdownValue(), multiSelectValues: toolMultiSelect[currentTool] ?? {} };
+      for (let i = 0; i < numQuestions; i++)
+        questions.push(stampQO(generateUniqueQ(currentTool, difficulty, getVariableValues(), getDropdownValue(), usedKeys, toolMultiSelect[currentTool] ?? {}), snap));
+    }
+    setWorksheet(questions);
+    setShowWorksheetAnswers(false);
+  };
+
+  const handleGenerateAdvanced = () => {
+    const usedKeys = new Set<string>();
+    const questions: AnyQuestion[] = [];
+    advGroups.forEach(g => {
+      const snap: QOSnapshot = { level: g.level, variables: g.variables, dropdownValue: g.dropdownValue, multiSelectValues: g.multiSelectValues };
+      for (let i = 0; i < g.count; i++)
+        questions.push(stampQO(generateUniqueQ(currentTool, g.level, g.variables, g.dropdownValue, usedKeys, g.multiSelectValues), snap));
+    });
+    if (advShuffle) {
+      for (let i = questions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [questions[i], questions[j]] = [questions[j], questions[i]];
+      }
+    }
+    setWorksheet(questions);
+    setShowWorksheetAnswers(false);
+  };
+
+  const regenQuestion = (idx: number) => {
+    const q = worksheet[idx];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const snap = (q as any)._qo as QOSnapshot | undefined;
+    if (!snap) return;
+    const existing = new Set(worksheet.map(w => w.key));
+    existing.delete(q.key);
+    let replacement: AnyQuestion | null = null;
+    for (let attempt = 0; attempt < 100; attempt++) {
+      const candidate = generateQuestion(currentTool, snap.level, snap.variables, snap.dropdownValue, snap.multiSelectValues);
+      if (!existing.has(candidate.key)) { replacement = stampQO(candidate, snap); break; }
+    }
+    if (!replacement) return;
+    setWorksheet(prev => prev.map((w, i) => i === idx ? replacement! : w));
+  };
+
+  const stdQOProps = {
+    variables: getVariablesConfig() ?? [],
+    variableValues: getVariableValues(),
+    onVariableChange: setVariableValue,
+    dropdown: getDropdownConfig() ?? null,
+    dropdownValue: getDropdownValue(),
+    onDropdownChange: setDropdownValue,
+    multiSelect: getMultiSelectConfig(),
+    multiSelectValues: toolMultiSelect[currentTool] ?? {},
+    onMultiSelectChange: setMultiSelectValue,
+  };
+
+  const diffQOProps = {
+    toolSettings: getToolSettings(),
+    levelVariables,
+    onLevelVariableChange: handleLevelVarChange,
+    levelDropdowns,
+    onLevelDropdownChange: handleLevelDDChange,
+    levelMultiSelect,
+    onLevelMultiSelectChange: handleLevelMSChange,
+  };
+
+  const qoEl = (isDiff = false) => isDiff
+    ? <DiffQOPopover {...diffQOProps} />
+    : <StandardQOPopover {...stdQOProps} />;
+
+  useEffect(() => {
+    if (mode !== "worksheet" || worksheetMode !== "advanced") return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      const idx = advGroups.findIndex(g => g.id === advSelectedId);
+      if (idx === -1) return;
+      const next = e.key === "ArrowLeft" ? idx - 1 : idx + 1;
+      if (next >= 0 && next < advGroups.length) { setAdvSelectedId(advGroups[next].id); e.preventDefault(); }
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [mode, worksheetMode, advGroups, advSelectedId]);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (mode !== "worksheet") handleNewQuestion(); }, [difficulty, currentTool]);
+
+  const displayFontSizes = ["text-2xl", "text-3xl", "text-4xl", "text-5xl", "text-6xl", "text-7xl"];
+  const canDisplayIncrease = displayFontSize < displayFontSizes.length - 1;
+  const canDisplayDecrease = displayFontSize > 0;
+
+  const fontSizes = ["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"];
+  const canIncrease = worksheetFontSize < fontSizes.length - 1;
+  const canDecrease = worksheetFontSize > 0;
+
+  const renderQCell = (q: AnyQuestion, idx: number, bgOverride?: string) => {
+    const bg = bgOverride ?? stepBg;
+    const fsz = fontSizes[worksheetFontSize];
+    const useCards = config.tools[currentTool]?.useSubstantialBoxes ?? false;
+    const cellStyle = { backgroundColor: bg, height: "100%", boxSizing: "border-box" as const, position: "relative" as const, borderRadius: "12px", border: "1px solid #e5e7eb" };
+    const numEl = <span style={{ position: "absolute", top: 0, left: 0, fontSize: "0.65em", fontWeight: 700, color: "#000", lineHeight: 1, padding: "5px 5px 7px 5px", borderRight: "1px solid #000", borderBottom: "1px solid #000" }}>{idx + 1})</span>;
+    const wrapperClass = useCards ? "rounded-xl p-4 shadow group" : "rounded-xl p-3 group";
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const regenBtn = (q as any)._qo ? (
+      <button onClick={() => regenQuestion(idx)} title="Regenerate this question"
+        className="absolute top-1 right-1 w-6 h-6 rounded flex items-center justify-center text-gray-300 hover:text-blue-600 hover:bg-blue-50 transition-all opacity-0 group-hover:opacity-100"
+        style={{ zIndex: 10 }}>
+        <RefreshCw size={12} />
+      </button>
+    ) : null;
+
+    if (q.kind === "simple") {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const anyQ = q as any;
+      const instrFsz = fontSizes[Math.max(0, worksheetFontSize - 1)];
+      return (
+        <div className={wrapperClass} style={cellStyle}>
+          {numEl}{regenBtn}
+          {getInstruction() && <div className={`${instrFsz} font-semibold text-center w-full mb-1`} style={{ color: "#000", paddingTop: "0.15em" }}>{getInstruction()}</div>}
+          <div className={`${fsz} font-semibold text-center w-full`} style={{ color: "#000" }}>
+            {anyQ.displayLatex ? <MathRenderer latex={anyQ.displayLatex} /> : anyQ.display}
+          </div>
+          {showWorksheetAnswers && (
+            <div className={`${fsz} font-semibold mt-1 text-center`} style={{ color: "#059669" }}>
+              {anyQ.answerLatex ? <MathRenderer latex={`= ${anyQ.answerLatex}`} /> : <span>= {anyQ.answer}</span>}
+            </div>
+          )}
+        </div>
+      );
+    }
+    if ("lines" in q) {
+      const instrFsz = fontSizes[Math.max(0, worksheetFontSize - 1)];
+      return (
+        <div className={wrapperClass} style={cellStyle}>
+          {numEl}{regenBtn}
+          {getInstruction() && <div className={`${instrFsz} font-semibold text-center w-full mb-1`} style={{ color: "#000" }}>{getInstruction()}</div>}
+          <div className={`${fsz} font-semibold w-full text-center`} style={{ color: "#000", lineHeight: 1.6 }}>
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            {(q as any).lines.map((line: string, i: number) => <div key={i}>{line}</div>)}
+          </div>
+          {showWorksheetAnswers && (
+            <div className={`${fsz} font-semibold mt-1 text-center`} style={{ color: "#059669" }}>
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              {(q as any).answerLatex ? <MathRenderer latex={`= ${(q as any).answerLatex}`} /> : <span>= {(q as any).answer}</span>}
+            </div>
+          )}
+        </div>
+      );
+    }
+    // "frac" kind
+    const instrFsz = fontSizes[Math.max(0, worksheetFontSize - 1)];
+    return (
+      <div className={wrapperClass} style={cellStyle}>
+        {numEl}{regenBtn}
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+        {getInstruction() && <div className={`${instrFsz} font-semibold text-center w-full mb-1`} style={{ color: "#000" }}>{getInstruction()}</div>}
+        <div className={`${fsz} font-semibold text-center w-full`} style={{ color: "#000" }}>
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+          <span>Find </span><MathRenderer latex={(q as any).latex?.replace(/\\text\{ of \}.*/, '') ?? ''} /><span> of {(q as any).latex?.replace(/.*\\text\{ of \}/, '').trim()}</span>
+        </div>
+        {showWorksheetAnswers && (
+          <div className={`${fsz} font-semibold mt-1 text-center`} style={{ color: "#059669" }}>
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            <MathRenderer latex={`= ${(q as any).answerLatex}`} />
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderAdvancedWorksheet = () => {
+    const lvColor  = (lv: DifficultyLevel) => lv === "level1" ? "bg-green-600" : lv === "level2" ? "bg-yellow-500" : "bg-red-600";
+    const lvBorder = (lv: DifficultyLevel) => lv === "level1" ? "#16a34a" : lv === "level2" ? "#eab308" : "#dc2626";
+    const canAdd = advGroups.length < 10;
+    const updateGroup = (id: number, patch: Partial<AdvGroup>) =>
+      setAdvGroups(gs => gs.map(g => g.id === id ? { ...g, ...patch } : g));
+    const selectedGroup = advGroups.find(g => g.id === advSelectedId) ?? advGroups[0];
+
+    return (
+      <div className="flex gap-3" style={{ minHeight: 300 }}>
+        <div className="flex flex-col rounded-xl border-2 border-gray-300 overflow-hidden" style={{ width: "50%", flexShrink: 0, backgroundColor: "#fff" }}>
+          <div className="flex-1 divide-y divide-gray-100 overflow-y-auto">
+            {advGroups.map((g, idx) => {
+              const isSel = g.id === advSelectedId;
+              return (
+                <div key={g.id} onClick={() => setAdvSelectedId(g.id)}
+                  className="flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-gray-50"
+                  style={{ borderLeft: `3px solid ${isSel ? lvBorder(g.level) : "transparent"}`, backgroundColor: isSel ? "#f0f4ff" : undefined }}>
+                  <span className="text-xs font-bold text-gray-300 w-4 flex-shrink-0 tabular-nums">{idx + 1}</span>
+                  <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden flex-shrink-0" onClick={e => e.stopPropagation()}>
+                    {(["level1", "level2", "level3"] as DifficultyLevel[]).map((lv, li) => (
+                      <button key={lv} onClick={() => { updateGroup(g.id, { ...makeDefaultAdvGroup(g.id, lv), id: g.id }); setAdvSelectedId(g.id); }}
+                        className={`px-2.5 py-1 font-bold text-xs transition-colors ${g.level === lv ? `${lvColor(lv)} text-white` : "bg-white text-gray-400 hover:bg-gray-50"}`}>
+                        L{li + 1}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex-1" />
+                  <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5 flex-shrink-0" onClick={e => e.stopPropagation()}>
+                    <button onClick={() => updateGroup(g.id, { count: Math.max(1, g.count - 1) })} disabled={g.count <= 1}
+                      className="w-6 h-6 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-base leading-none">−</button>
+                    <span className="w-6 text-center text-xs font-bold text-gray-800 tabular-nums">{g.count}</span>
+                    <button onClick={() => updateGroup(g.id, { count: Math.min(24, g.count + 1) })} disabled={g.count >= 24}
+                      className="w-6 h-6 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-base leading-none">+</button>
+                  </div>
+                  {advGroups.length > 1 && (
+                    <button onClick={e => { e.stopPropagation(); const rem = advGroups.filter((_, i) => i !== idx); setAdvGroups(rem); if (g.id === advSelectedId) setAdvSelectedId(rem[Math.max(0, idx - 1)].id); }}
+                      className="w-6 h-6 rounded-full flex items-center justify-center text-gray-300 hover:bg-red-50 hover:text-red-400 transition-colors flex-shrink-0">
+                      <X size={12} />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <div className="px-4 py-3 border-t border-gray-200 flex-shrink-0">
+            {canAdd ? (
+              <button onClick={() => { const newId = advNextId.current++; setAdvGroups(g => [...g, makeDefaultAdvGroup(newId)]); setAdvSelectedId(newId); }}
+                className="w-full py-2 rounded-lg border-2 border-dashed border-gray-200 text-xs font-bold text-gray-400 hover:border-blue-300 hover:text-blue-600 transition-colors">
+                + Add group
+              </button>
+            ) : (
+              <p className="text-center text-xs text-gray-400 font-semibold py-1">Maximum 10 groups reached</p>
+            )}
+          </div>
+        </div>
+
+        <div className="flex-1 rounded-xl border-2 border-gray-300 px-5 py-4 overflow-y-auto" style={{ backgroundColor: "#fff" }}>
+          {selectedGroup && (
+            <>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">
+                Group {advGroups.indexOf(selectedGroup) + 1} · {selectedGroup.level === "level1" ? "Level 1" : selectedGroup.level === "level2" ? "Level 2" : "Level 3"} · Options
+              </p>
+              <InlineQOPanel
+                toolEntry={config.tools[currentTool]}
+                level={selectedGroup.level}
+                variables={selectedGroup.variables}
+                onVariableChange={(k, v) => updateGroup(selectedGroup.id, { variables: { ...selectedGroup.variables, [k]: v } })}
+                dropdownValue={selectedGroup.dropdownValue}
+                onDropdownChange={v => updateGroup(selectedGroup.id, { dropdownValue: v })}
+                multiSelectValues={selectedGroup.multiSelectValues}
+                onMultiSelectChange={(k, v) => updateGroup(selectedGroup.id, { multiSelectValues: { ...selectedGroup.multiSelectValues, [k]: v } })}
+              />
+            </>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderControlBar = () => {
+    if (mode === "worksheet") {
+      const isAdv = worksheetMode === "advanced";
+      return (
+        <div className="bg-white rounded-xl shadow-lg mb-8">
+          <div className="flex items-center gap-3 px-6 pt-4 pb-0">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <div onClick={() => setWorksheetMode(isAdv ? "standard" : "advanced")}
+                className={`w-11 h-6 rounded-full transition-colors relative ${isAdv ? "bg-blue-900" : "bg-gray-300"}`}>
+                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${isAdv ? "translate-x-6" : "translate-x-1"}`} />
+              </div>
+              <span className="text-sm font-bold text-gray-500">Advanced</span>
+            </label>
+            {isAdv && (
+              <div className="ml-auto flex items-center gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <div onClick={() => setAdvShuffle(s => !s)}
+                    className={`w-9 h-5 rounded-full transition-colors relative ${advShuffle ? "bg-blue-900" : "bg-gray-300"}`}>
+                    <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${advShuffle ? "translate-x-4" : "translate-x-0.5"}`} />
+                  </div>
+                  <span className="text-sm font-semibold text-gray-500">Shuffle</span>
+                </label>
+                <span className="text-sm font-bold text-gray-600">{totalAdvQuestions} questions total</span>
+              </div>
+            )}
+          </div>
+
+          {!isAdv ? (
+            <div className="p-6">
+              <div className="flex justify-center items-center gap-6 mb-4">
+                <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm">
+                  {(["level1", "level2", "level3"] as DifficultyLevel[]).map((val, i) => {
+                    const [label, col] = [["Level 1", "bg-green-600"], ["Level 2", "bg-yellow-500"], ["Level 3", "bg-red-600"]][i] as [string, string];
+                    return (
+                      <button key={val} onClick={() => { setDifficulty(val); setIsDifferentiated(false); }}
+                        className={`px-5 py-2 font-bold text-base transition-colors ${!isDifferentiated && difficulty === val ? `${col} text-white` : "bg-white text-gray-500 hover:bg-gray-50"}`}>
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <button onClick={() => setIsDifferentiated(!isDifferentiated)}
+                  className={`px-6 py-2 rounded-xl font-bold text-base shadow-sm border-2 transition-colors ${isDifferentiated ? "bg-blue-900 text-white border-blue-900" : "bg-white text-gray-600 border-gray-300 hover:border-blue-900 hover:text-blue-900"}`}>
+                  Differentiated
+                </button>
+              </div>
+              <div className="flex justify-center items-center gap-6 mb-4">
+                {qoEl(isDifferentiated)}
+                {!defaults.fixedQuestions && (
+                  <div className="flex items-center gap-3">
+                    <label className="text-base font-semibold text-gray-700">Questions:</label>
+                    <input type="number" min="1" max="24" value={numQuestions}
+                      onChange={e => setNumQuestions(Math.max(1, Math.min(24, parseInt(e.target.value) || (defaults.numQuestions ?? 15))))}
+                      className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-base font-semibold text-center" />
+                  </div>
+                )}
+                {!defaults.fixedColumns && (
+                  <div className="flex items-center gap-3">
+                    <label className="text-base font-semibold text-gray-700">Columns:</label>
+                    <input type="number" min="1" max={defaults.maxColumns ?? 4} value={isDifferentiated ? 3 : numColumns}
+                      onChange={e => { if (!isDifferentiated) setNumColumns(Math.max(1, Math.min(defaults.maxColumns ?? 4, parseInt(e.target.value) || (defaults.numColumns ?? 3)))); }}
+                      disabled={isDifferentiated}
+                      className={`w-20 px-4 py-2 border-2 rounded-lg text-base font-semibold text-center transition-colors ${isDifferentiated ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed" : "border-gray-300 bg-white"}`} />
+                  </div>
+                )}
+              </div>
+              <div className="flex justify-center items-center gap-4">
+                <button onClick={handleGenerateWorksheet} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
+                  <RefreshCw size={18} /> Generate
+                </button>
+                {worksheet.length > 0 && (
+                  <>
+                    <button onClick={() => setShowWorksheetAnswers(!showWorksheetAnswers)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
+                      <Eye size={18} /> {showWorksheetAnswers ? "Hide Answers" : "Show Answers"}
+                    </button>
+                    <PrintSplitButton
+                      onPrint={m => handlePrint(worksheet, config.tools[currentTool].name, difficulty, isDifferentiated, numColumns, getInstruction(), m)}
+                      printMode={printMode} setPrintMode={setPrintMode}
+                    />
+                  </>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="p-6 pt-4">
+              {renderAdvancedWorksheet()}
+              <div className="flex justify-center items-center gap-4 flex-wrap mt-4">
+                {!defaults.fixedColumns && (
+                  <div className="flex items-center gap-2">
+                    <label className="text-base font-semibold text-gray-700">Columns:</label>
+                    <input type="number" min="1" max={defaults.maxColumns ?? 4} value={numColumns}
+                      onChange={e => setNumColumns(Math.max(1, Math.min(defaults.maxColumns ?? 4, parseInt(e.target.value) || (defaults.numColumns ?? 3))))}
+                      className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-base font-semibold text-center" />
+                  </div>
+                )}
+                <button onClick={handleGenerateAdvanced} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
+                  <RefreshCw size={18} /> Generate
+                </button>
+                {worksheet.length > 0 && (
+                  <>
+                    <button onClick={() => setShowWorksheetAnswers(!showWorksheetAnswers)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
+                      <Eye size={18} /> {showWorksheetAnswers ? "Hide Answers" : "Show Answers"}
+                    </button>
+                    <PrintSplitButton
+                      onPrint={m => handlePrint(worksheet, config.tools[currentTool].name, "advanced", false, numColumns, getInstruction(), m)}
+                      printMode={printMode} setPrintMode={setPrintMode}
+                    />
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <div className="px-5 py-4 rounded-xl" style={{ backgroundColor: qBg }}>
+        <div className="flex items-center justify-between gap-4">
+          <DifficultyToggle value={difficulty} onChange={v => setDifficulty(v as DifficultyLevel)} />
+          {qoEl()}
+          <div className="flex gap-3 items-center">
+            <button onClick={handleNewQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
+              <RefreshCw size={18} /> New Question
+            </button>
+            <button onClick={() => mode === "whiteboard" ? setShowWhiteboardAnswer(!showWhiteboardAnswer) : setShowAnswer(!showAnswer)}
+              className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
+              <Eye size={18} /> {(mode === "whiteboard" ? showWhiteboardAnswer : showAnswer) ? "Hide Answer" : "Show Answer"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderWhiteboard = () => {
+    const fsToolbar = (
+      <div style={{ background: fsToolbarBg, borderBottom: "2px solid #000", padding: "16px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexShrink: 0, zIndex: 210 }}>
+        <DifficultyToggle value={difficulty} onChange={v => setDifficulty(v as DifficultyLevel)} />
+        {qoEl()}
+        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          <button onClick={handleNewQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18} /> New Question</button>
+          <button onClick={() => setShowWhiteboardAnswer(a => !a)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><Eye size={18} /> {showWhiteboardAnswer ? "Hide Answer" : "Show Answer"}</button>
+        </div>
+      </div>
+    );
+
+    const fontBtnStyle = (enabled: boolean) => ({
+      background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8,
+      cursor: enabled ? "pointer" : "not-allowed", width: 32, height: 32,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      opacity: enabled ? 1 : 0.35,
+    });
+
+    const questionBox = () => (
+      <div className="rounded-xl flex items-center justify-center flex-shrink-0 p-8" style={{ position: "relative", width: "480px", height: "100%", backgroundColor: stepBg }}>
+        <div style={{ position: "absolute", top: 10, right: 10, display: "flex", gap: 6, zIndex: 20 }}>
+          <button style={fontBtnStyle(canDisplayDecrease)} onClick={() => canDisplayDecrease && setDisplayFontSize(f => f - 1)}><ChevronDown size={16} color="#6b7280" /></button>
+          <button style={fontBtnStyle(canDisplayIncrease)} onClick={() => canDisplayIncrease && setDisplayFontSize(f => f + 1)}><ChevronUp size={16} color="#6b7280" /></button>
+        </div>
+        <div className="w-full text-center flex flex-col gap-4 items-center">
+          {getInstruction() && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold`} style={{ color: "#000" }}>{getInstruction()}</div>}
+          <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
+          {showWhiteboardAnswer && <div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}><AnswerDisplay q={currentQuestion} /></div>}
+        </div>
+      </div>
+    );
+
+    const questionBoxFS = () => (
+      <div style={{ position: "relative", width: `${splitPct}%`, height: "100%", backgroundColor: fsQuestionBg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 48, boxSizing: "border-box", flexShrink: 0, overflowY: "auto", gap: 16 }}>
+        <div style={{ position: "absolute", top: 10, right: 10, display: "flex", gap: 6, zIndex: 20 }}>
+          <button style={fontBtnStyle(canDisplayDecrease)} onClick={() => canDisplayDecrease && setDisplayFontSize(f => f - 1)}><ChevronDown size={16} color="#6b7280" /></button>
+          <button style={fontBtnStyle(canDisplayIncrease)} onClick={() => canDisplayIncrease && setDisplayFontSize(f => f + 1)}><ChevronUp size={16} color="#6b7280" /></button>
+        </div>
+        <>
+          {getInstruction() && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold`} style={{ color: "#000" }}>{getInstruction()}</div>}
+          <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
+          {showWhiteboardAnswer && <div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}><AnswerDisplay q={currentQuestion} /></div>}
+        </>
+      </div>
+    );
+
+    const makeRightPanel = (isFS: boolean) => (
+      <div style={{ flex: 1, height: "100%", position: "relative", overflow: "hidden", backgroundColor: presenterMode ? "#000" : (isFS ? fsWorkingBg : stepBg), borderRadius: isFS ? 0 : undefined }} className={isFS ? "" : "flex-1 rounded-xl"}>
+        {presenterMode && (
+          <>
+            <video ref={videoRef} autoPlay playsInline muted style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+            {camError && <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", padding: "2rem", textAlign: "center", zIndex: 1 }}>{camError}</div>}
+          </>
+        )}
+        <div style={{ position: "absolute", top: 10, right: 10, display: "flex", gap: 6, zIndex: 20 }}>
+          {presenterMode ? (
+            <div style={{ position: "relative" }} ref={camDropdownRef}>
+              <button title="Exit Visualiser (hold for cameras)"
+                onMouseDown={() => { didLongPress.current = false; longPressTimer.current = setTimeout(() => { didLongPress.current = true; setCamDropdownOpen(o => !o); }, 500); }}
+                onMouseUp={() => { if (longPressTimer.current) clearTimeout(longPressTimer.current); if (!didLongPress.current) setPresenterMode(false); }}
+                onMouseLeave={() => { if (longPressTimer.current) clearTimeout(longPressTimer.current); }}
+                style={{ background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(6px)" }}
+                onMouseEnter={e => (e.currentTarget.style.background = "rgba(0,0,0,0.75)")}
+              ><Video size={16} color="rgba(255,255,255,0.85)" /></button>
+              {camDropdownOpen && (
+                <div style={{ position: "absolute", top: 40, right: 0, background: "rgba(12,12,12,0.96)", backdropFilter: "blur(14px)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, minWidth: 200, overflow: "hidden", zIndex: 30 }}>
+                  <div style={{ padding: "6px 14px", fontSize: "0.55rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(255,255,255,0.25)" }}>Camera</div>
+                  {camDevices.map((d, i) => (
+                    <div key={d.deviceId} onClick={() => { setCamDropdownOpen(false); if (d.deviceId !== currentCamId) startCam(d.deviceId); }}
+                      style={{ padding: "10px 14px", fontSize: "0.75rem", color: d.deviceId === currentCamId ? "#60a5fa" : "rgba(255,255,255,0.65)", cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}
+                      onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.07)")}
+                      onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                    ><div style={{ width: 5, height: 5, borderRadius: "50%", background: d.deviceId === currentCamId ? "#60a5fa" : "transparent", flexShrink: 0 }} />{d.label || `Camera ${i + 1}`}</div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <button onClick={() => setPresenterMode(true)} title="Visualiser mode"
+              style={{ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center" }}
+              onMouseEnter={e => (e.currentTarget.style.background = "rgba(0,0,0,0.15)")}
+              onMouseLeave={e => (e.currentTarget.style.background = "rgba(0,0,0,0.08)")}
+            ><Video size={16} color="#6b7280" /></button>
+          )}
+          <button onClick={() => setWbFullscreen(f => !f)} title={wbFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+            style={{ background: wbFullscreen ? "#374151" : (presenterMode ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.08)"), border: presenterMode ? "1px solid rgba(255,255,255,0.15)" : "none", borderRadius: 8, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: presenterMode ? "blur(6px)" : "none" }}
+            onMouseEnter={e => (e.currentTarget.style.background = wbFullscreen ? "#1f2937" : (presenterMode ? "rgba(0,0,0,0.75)" : "rgba(0,0,0,0.15)"))}
+            onMouseLeave={e => (e.currentTarget.style.background = wbFullscreen ? "#374151" : (presenterMode ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.08)"))}
+          >{wbFullscreen ? <Minimize2 size={16} color="#ffffff" /> : <Maximize2 size={16} color={presenterMode ? "rgba(255,255,255,0.85)" : "#6b7280"} />}</button>
+        </div>
+      </div>
+    );
+
+    if (wbFullscreen) return (
+      <div style={{ position: "fixed", inset: 0, zIndex: 200, backgroundColor: fsToolbarBg, display: "flex", flexDirection: "column" }}>
+        {fsToolbar}
+        <div ref={splitContainerRef} style={{ flex: 1, display: "flex", minHeight: 0 }}>
+          {questionBoxFS()}
+          <div
+            style={{ position: "relative", width: 2, backgroundColor: "#000", flexShrink: 0, cursor: "col-resize" }}
+            onMouseDown={e => {
+              isDraggingRef.current = true;
+              const onMove = (ev: MouseEvent) => {
+                if (!isDraggingRef.current || !splitContainerRef.current) return;
+                const rect = splitContainerRef.current.getBoundingClientRect();
+                let pct = ((ev.clientX - rect.left) / rect.width) * 100;
+                pct = Math.min(75, Math.max(25, pct));
+                if (pct >= 38 && pct <= 42) pct = 40;
+                setSplitPct(pct);
+              };
+              const onUp = () => { isDraggingRef.current = false; document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); };
+              document.addEventListener("mousemove", onMove);
+              document.addEventListener("mouseup", onUp);
+              e.preventDefault();
+            }}
+          >
+            <div style={{ position: "absolute", top: 0, bottom: 0, left: -5, width: 12, cursor: "col-resize" }} />
+          </div>
+          {makeRightPanel(true)}
+        </div>
+      </div>
+    );
+
+    return (
+      <div className="p-8" style={{ backgroundColor: qBg, height: "480px", boxSizing: "border-box" }}>
+        <div className="flex gap-6" style={{ height: "100%" }}>
+          {questionBox()}
+          {makeRightPanel(false)}
+        </div>
+      </div>
+    );
+  };
+
+  const renderWorkedExample = () => (
+    <div className="overflow-y-auto" style={{ maxHeight: "120vh" }}>
+      <div className="p-8 w-full" style={{ backgroundColor: qBg }}>
+        <div className="text-center py-4 relative">
+          <div style={{ position: "absolute", top: 0, right: 0, display: "flex", gap: 6 }}>
+            <button style={{ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: canDisplayDecrease ? "pointer" : "not-allowed", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", opacity: canDisplayDecrease ? 1 : 0.35 }} onClick={() => canDisplayDecrease && setDisplayFontSize(f => f - 1)}><ChevronDown size={16} color="#6b7280" /></button>
+            <button style={{ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: canDisplayIncrease ? "pointer" : "not-allowed", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", opacity: canDisplayIncrease ? 1 : 0.35 }} onClick={() => canDisplayIncrease && setDisplayFontSize(f => f + 1)}><ChevronUp size={16} color="#6b7280" /></button>
+          </div>
+          {getInstruction() && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold mb-2`} style={{ color: "#000" }}>{getInstruction()}</div>}
+          <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
+        </div>
+        {showAnswer && (
+          <>
+            <div className="space-y-4 mt-8">
+              {currentQuestion.working.map((s, i) => (
+                <div key={i} className="rounded-xl p-6" style={{ backgroundColor: stepBg }}>
+                  <h4 className="text-xl font-bold mb-2" style={{ color: "#000" }}>Step {i + 1}</h4>
+                  <div className="text-2xl" style={{ color: "#000" }}>
+                    {s.type === "tStep"
+                      ? <span>{s.plain}</span>
+                      : s.type === "mStep"
+                        ? <div className="flex flex-col gap-1">
+                            <span className="text-left">{s.label}</span>
+                            <div className="text-center"><MathRenderer latex={s.latex} />{s.unit && <span> {s.unit}</span>}</div>
+                          </div>
+                        : <div className="text-center"><MathRenderer latex={s.latex} /></div>
+                    }
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="rounded-xl p-6 text-center mt-4" style={{ backgroundColor: stepBg }}>
+              <span className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>
+                <AnswerDisplay q={currentQuestion} />
+              </span>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderWorksheet = () => {
+    if (worksheet.length === 0) return (
+      <div className="rounded-xl shadow-2xl p-8 text-center" style={{ backgroundColor: qBg }}>
+        <span className="text-2xl text-gray-400">Generate worksheet</span>
+      </div>
+    );
+    const fontSizeControls = (
+      <div className="absolute top-4 right-4 flex items-center gap-1">
+        <button disabled={!canDecrease} onClick={() => canDecrease && setWorksheetFontSize(f => f - 1)}
+          className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${canDecrease ? "bg-blue-900 text-white hover:bg-blue-800" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}><ChevronDown size={20} /></button>
+        <button disabled={!canIncrease} onClick={() => canIncrease && setWorksheetFontSize(f => f + 1)}
+          className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${canIncrease ? "bg-blue-900 text-white hover:bg-blue-800" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}><ChevronUp size={20} /></button>
+      </div>
+    );
+    const toolTitle = config.tools[currentTool].name;
+    if (isDifferentiated) return (
+      <div className="rounded-xl shadow-2xl p-8 relative" style={{ backgroundColor: qBg }}>
+        {fontSizeControls}
+        <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
+        <div className="grid grid-cols-3 gap-4" style={{ alignItems: "start" }}>
+          {(["level1", "level2", "level3"] as DifficultyLevel[]).map((lv, li) => {
+            const lqs = worksheet.filter(q => q.difficulty === lv);
+            const c = LV_COLORS[lv];
+            return (
+              <div key={lv} className={`${c.bg} border-2 ${c.border} rounded-xl p-4`}>
+                <h3 className={`text-xl font-bold mb-4 text-center ${c.text}`}>Level {li + 1}</h3>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr", gridAutoRows: "1fr", gap: "0.75rem" }}>
+                  {lqs.map((q, idx) => <div key={idx} style={{ minHeight: 0 }}>{renderQCell(q, idx, c.fill)}</div>)}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+    return (
+      <div className="rounded-xl shadow-2xl p-8 relative" style={{ backgroundColor: qBg }}>
+        {fontSizeControls}
+        <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${numColumns},1fr)`, gridAutoRows: "1fr", gap: "1rem" }}>
+          {worksheet.map((q, idx) => <div key={idx} style={{ minHeight: 0 }}>{renderQCell(q, idx)}</div>)}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <>
+      <div className="bg-blue-900 shadow-lg">
+        <div className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
+          <button onClick={() => { window.location.href = "/"; }} className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors">
+            <Home size={24} /><span className="font-semibold text-lg">Home</span>
+          </button>
+          <div className="relative">
+            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-white hover:bg-blue-800 p-2 rounded-lg transition-colors">
+              {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
+            </button>
+            {isMenuOpen && <MenuDropdown colorScheme={colorScheme} setColorScheme={setColorScheme} onClose={() => setIsMenuOpen(false)} onOpenInfo={() => setIsInfoOpen(true)} />}
+          </div>
+        </div>
+      </div>
+      {isInfoOpen && <InfoModal infoSections={infoSections} onClose={() => setIsInfoOpen(false)} />}
+      <div className="min-h-screen p-8" style={{ backgroundColor: "#f5f3f0" }}>
+        <div className="max-w-6xl mx-auto">
+          <h1 className="text-5xl font-bold text-center mb-8" style={{ color: "#000" }}>{config.pageTitle}</h1>
+          <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
+          <div className="flex justify-center gap-4 mb-6">
+            {toolKeys.map(k => (
+              <button key={k} onClick={() => setCurrentTool(k)}
+                className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${currentTool === k ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
+                {config.tools[k].name}
+              </button>
+            ))}
+          </div>
+          <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
+          <div className="flex justify-center gap-4 mb-8">
+            {(["whiteboard", "single", "worksheet"] as const).map((m, i) => {
+              const label = ["Whiteboard", "Worked Example", "Worksheet"][i];
+              return (
+                <button key={m} onClick={() => { setMode(m); setPresenterMode(false); setWbFullscreen(false); }}
+                  className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${mode === m ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+
+          {mode === "worksheet" && <>{renderControlBar()}{renderWorksheet()}</>}
+          {mode !== "worksheet" && (
+            <div className="flex flex-col gap-6">
+              <div className="rounded-xl shadow-lg">
+                {renderControlBar()}
+              </div>
+              <div className="rounded-xl shadow-lg overflow-hidden">
+                {mode === "whiteboard" && renderWhiteboard()}
+                {mode === "single" && renderWorkedExample()}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </>
+  );
+};
