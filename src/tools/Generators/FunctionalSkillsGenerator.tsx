@@ -642,9 +642,13 @@ export default function MathsSkillsGenerator() {
     if (enabledSkills.length === 0) { setError('Please enable at least one skill.'); return; }
     const allPageQs: Question[][] = [];
     for (let p = 0; p < numPages; p++) {
-      const qs = buildQuestions();
-      if (qs.length === 0) { setError('No questions could be generated with the current settings.'); return; }
-      allPageQs.push(qs);
+      if (p === 0 && previewQuestions.length > 0) {
+        allPageQs.push(previewQuestions);
+      } else {
+        const qs = buildQuestions();
+        if (qs.length === 0) { setError('No questions could be generated with the current settings.'); return; }
+        allPageQs.push(qs);
+      }
     }
     handlePrint(allPageQs);
     setError('');
