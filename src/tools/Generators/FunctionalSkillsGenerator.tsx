@@ -285,7 +285,7 @@ function handlePrint(allPages: Question[][]) {
       const ans = String(q.answer);
       const display = q.displayQuestion || q.question;
       if (showAnswer) {
-        return `<div class="qbody">${display.replace('___', `<strong style="color:#059669">${ans}</strong>`)}</div>`;
+        return `<div class="qbody qbody-ans"><div class="q-text">${display}</div><div class="q-ans">${ans}</div></div>`;
       }
       return `<div class="qbody">${display}</div>`;
     };
@@ -333,6 +333,14 @@ function handlePrint(allPages: Question[][]) {
   .qbody {
     padding:${PAD_MM}mm; text-align:center; flex:1;
     font-size:${FONT_PX}px; line-height:1.4;
+  }
+  .qbody-ans {
+    display:flex; flex-direction:column; justify-content:space-between; align-items:center;
+  }
+  .q-text { text-align:center; width:100%; }
+  .q-ans {
+    font-size:${Math.round(FONT_PX * 1.6)}px; font-weight:700; color:#059669;
+    text-align:center; width:100%; padding-top:${PAD_MM}mm;
   }
 </style>
 </head>
@@ -642,9 +650,13 @@ export default function MathsSkillsGenerator() {
     if (enabledSkills.length === 0) { setError('Please enable at least one skill.'); return; }
     const allPageQs: Question[][] = [];
     for (let p = 0; p < numPages; p++) {
-      const qs = buildQuestions();
-      if (qs.length === 0) { setError('No questions could be generated with the current settings.'); return; }
-      allPageQs.push(qs);
+      if (p === 0 && previewQuestions.length > 0) {
+        allPageQs.push(previewQuestions);
+      } else {
+        const qs = buildQuestions();
+        if (qs.length === 0) { setError('No questions could be generated with the current settings.'); return; }
+        allPageQs.push(qs);
+      }
     }
     handlePrint(allPageQs);
     setError('');
