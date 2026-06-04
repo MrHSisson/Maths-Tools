@@ -23,19 +23,16 @@ const generateQuestions = (
   includeMultiply: boolean,
   includeDivide: boolean,
   includeStandard: boolean,
-  includeMissingFactor: boolean,
-  tableFirst: boolean
+  includeMissingFactor: boolean
 ): Question[] => {
   const pool: Question[] = [];
 
   selectedTables.forEach(tt => {
     for (let other = 1; other <= 12; other++) {
       const product = tt * other;
-      const first = tableFirst ? tt : other;
-      const second = tableFirst ? other : tt;
 
       if (includeStandard && includeMultiply) {
-        pool.push({ question: `${first} × ${second} = ___`, answer: product });
+        pool.push({ question: `${tt} × ${other} = ___`, answer: product });
       }
       if (includeStandard && includeDivide) {
         pool.push({ question: `${product} ÷ ${tt} = ___`, answer: other });
@@ -44,7 +41,7 @@ const generateQuestions = (
         }
       }
       if (includeMissingFactor && includeMultiply) {
-        pool.push({ question: `${first} × ___ = ${product}`, answer: second });
+        pool.push({ question: `${tt} × ___ = ${product}`, answer: other });
       }
       if (includeMissingFactor && includeDivide) {
         pool.push({ question: `___ ÷ ${tt} = ${other}`, answer: product });
@@ -162,7 +159,6 @@ export default function TimesTablesQuizGenerator() {
   const [includeDivide, setIncludeDivide] = useState<boolean>(false);
   const [includeStandard, setIncludeStandard] = useState<boolean>(true);
   const [includeMissingFactor, setIncludeMissingFactor] = useState<boolean>(false);
-  const [tableFirst, setTableFirst] = useState<boolean>(false);
   const [layoutMode, setLayoutMode] = useState<LayoutMode>('list');
   const [colorScheme, setColorScheme] = useState<ColorScheme>('default');
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
@@ -228,7 +224,7 @@ export default function TimesTablesQuizGenerator() {
   };
 
   const getQuestions = (): Question[] =>
-    generateQuestions(selectedTables, numQuestions, includeMultiply, includeDivide, includeStandard, includeMissingFactor, tableFirst);
+    generateQuestions(selectedTables, numQuestions, includeMultiply, includeDivide, includeStandard, includeMissingFactor);
 
   const handleGeneratePreview = (): void => {
     if (!validate()) return;
@@ -404,32 +400,6 @@ export default function TimesTablesQuizGenerator() {
               </div>
             </div>
 
-            {/* TT Position */}
-            <div className="flex justify-center items-center gap-4 mb-7">
-              <SectionLabel>TT Position</SectionLabel>
-              <div className="flex items-center gap-3">
-                <span className={`text-sm font-semibold ${!tableFirst ? 'text-blue-900' : 'text-gray-400'}`}>
-                  TT First &nbsp;<span className="font-normal text-gray-400">(e.g. <u>7</u> × 3)</span>
-                </span>
-                <button
-                  onClick={() => setTableFirst(v => !v)}
-                  className="relative w-12 h-6 rounded-full bg-blue-900 flex-shrink-0"
-                >
-                  <span
-                    className="absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all"
-                    style={{ left: tableFirst ? '28px' : '4px' }}
-                  />
-                </button>
-                <span className={`text-sm font-semibold ${tableFirst ? 'text-blue-900' : 'text-gray-400'}`}>
-                  TT Last &nbsp;<span className="font-normal text-gray-400">(e.g. 3 × <u>7</u>)</span>
-                </span>
-              </div>
-            </div>
-
-            <div className="flex justify-center mb-7">
-              <div style={{ width: '85%', height: '1px', backgroundColor: '#e5e7eb' }} />
-            </div>
-
             {/* Times Tables Selection */}
             <div className="mb-7">
               <div className="flex justify-center items-center gap-4 mb-4">
@@ -574,7 +544,6 @@ export default function TimesTablesQuizGenerator() {
               {[
                 'Pick one or both operations (× and/or ÷), then choose your question format — Standard (answer at the end) or Missing Factor (gap in the middle), or both together.',
                 'Select which times tables to include from 1–20.',
-                'Toggle TT Position to control whether the times table number appears first or second.',
                 '"No Cells" generates a numbered list (21–60 questions). "Cells" generates a bordered grid (21–45 cells).',
                 'Generate Example previews a sample on screen. Generate PDF opens a printable worksheet with an answer key on the second page.',
               ].map((t, i) => (
