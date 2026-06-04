@@ -128,12 +128,12 @@ function handlePrintCells(questions: Question[]) {
   .grid { display:grid; gap:${GAP_MM}mm; }
   .cell {
     border:0.3mm solid #000; border-radius:3mm;
-    overflow:hidden; display:flex; align-items:center; justify-content:center;
+    overflow:hidden; display:flex; align-items:stretch; justify-content:flex-start;
   }
-  .qbody { padding:2mm; text-align:center; font-size:${FONT_PX}px; line-height:1.4; width:100%; }
-  .qbody-ans { display:flex; flex-direction:column; justify-content:center; align-items:center; gap:1.5mm; }
-  .q-text { text-align:center; width:100%; font-size:${FONT_PX}px; }
-  .q-ans { font-size:${ANS_PX}px; font-weight:700; color:#059669; text-align:center; width:100%; }
+  .qbody { padding:2mm; flex:1; font-size:${FONT_PX}px; line-height:1.4; }
+  .qbody-ans { display:flex; flex-direction:column; justify-content:space-between; align-items:flex-start; padding:2mm; flex:1; }
+  .q-text { width:100%; font-size:${FONT_PX}px; }
+  .q-ans { font-size:${ANS_PX}px; font-weight:700; color:#059669; width:100%; }
 </style>
 </head>
 <body>
