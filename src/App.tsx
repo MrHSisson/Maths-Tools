@@ -36,6 +36,7 @@ import CircleProperties from './tools/Geometry/CircleProperties';
 import PerimeterTool from './tools/Geometry/PerimeterTool';
 import BasicAngleFacts from './tools/Geometry/BasicAngleFacts';
 import AnglesInTriangles from './tools/Geometry/AnglesInTriangles';
+import AnglesInParallelLines from './tools/Geometry/AnglesInParallelLines';
 import EquationsOfLines from './tools/Geometry/EquationsOfLines';
 
 // Teacher Tools
@@ -87,6 +88,7 @@ function App() {
       <Route path="/perimeter" element={<PerimeterTool />} />
       <Route path="/basic-angle-facts" element={<BasicAngleFacts />} />
       <Route path="/angles-in-triangles" element={<AnglesInTriangles />} />
+      <Route path="/angles-in-parallel-lines" element={<AnglesInParallelLines />} />
       <Route path="/equations-of-lines" element={<EquationsOfLines />} />
 
       {/* Teacher Tools */}
