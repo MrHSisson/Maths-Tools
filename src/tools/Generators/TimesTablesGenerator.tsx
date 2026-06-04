@@ -42,6 +42,7 @@ const generateQuestions = (
       }
       if (includeMissingFactor && includeMultiply) {
         pool.push({ question: `${tt} × ___ = ${product}`, answer: other });
+        pool.push({ question: `___ × ${other} = ${product}`, answer: tt });
       }
       if (includeMissingFactor && includeDivide) {
         pool.push({ question: `___ ÷ ${tt} = ${other}`, answer: product });
