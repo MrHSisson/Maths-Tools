@@ -2,17 +2,19 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { Home, Menu, X, RefreshCw, Eye, EyeOff, ChevronDown } from "lucide-react";
 
 const DEG = Math.PI / 180;
-const norm = (a) => { a %= 2 * Math.PI; return a < 0 ? a + 2 * Math.PI : a; };
+const norm = (a: number): number => { let r = a % (2 * Math.PI); return r < 0 ? r + 2 * Math.PI : r; };
 
 // ── Geometry ──────────────────────────────────────────────────────────────────
-// Transversal is anchored at (CX, MID_Y). The two parallel lines are at L1Y / L2Y.
-// CX is kept generous so intersections stay within a reasonable range.
 const L1Y = 160, L2Y = 340, MID_Y = (L1Y + L2Y) / 2;
 const CX = 250;
 const ARC_R = 50;
-const PAD = 60; // label breathing room — used in line arm caps only
 
-const getIntersections = (tvAngle) => {
+type Point = { x: number; y: number };
+type SectorData = { s: number; e: number; mid: number };
+type SectorMap = Record<string, SectorData>;
+type AngleMap = { tl: number; tr: number; bl: number; br: number };
+
+const getIntersections = (tvAngle: number) => {
   const sinA = Math.sin(tvAngle), cosA = Math.cos(tvAngle);
   return {
     p1: { x: CX + cosA * (L1Y - MID_Y) / sinA, y: L1Y },
@@ -20,34 +22,34 @@ const getIntersections = (tvAngle) => {
   };
 };
 
-const getTransversalEndpoints = (tvAngle, p1, p2) => {
+const getTransversalEndpoints = (tvAngle: number, p1: Point, p2: Point) => {
   const cosA = Math.cos(tvAngle), sinA = Math.sin(tvAngle);
-  const ext = 75 / Math.abs(sinA); // extend 75px vertically beyond each parallel
+  const ext = 75 / Math.abs(sinA);
   return {
     start: { x: p1.x - cosA * ext, y: p1.y - Math.abs(sinA) * ext },
     end:   { x: p2.x + cosA * ext, y: p2.y + Math.abs(sinA) * ext },
   };
 };
 
-const getSectors = (tvAngle) => {
+const getSectors = (tvAngle: number): SectorMap => {
   const dirs = [norm(0), norm(tvAngle), norm(Math.PI), norm(tvAngle + Math.PI)].sort((a, b) => a - b);
-  const secs = [];
+  const secs: SectorData[] = [];
   for (let i = 0; i < 4; i++) {
     const s = dirs[i], eR = dirs[(i + 1) % 4];
     const e = eR <= s ? eR + 2 * Math.PI : eR;
     secs.push({ s, e, mid: norm((s + e) / 2) });
   }
-  const cls = (mid) => {
+  const cls = (mid: number): string => {
     const m = norm(mid), top = m > Math.PI, right = m < Math.PI / 2 || m > 3 * Math.PI / 2;
     if (top && right) return "tr"; if (top && !right) return "tl";
     if (!top && right) return "br"; return "bl";
   };
-  const sMap = {};
+  const sMap: SectorMap = {};
   secs.forEach(s => { sMap[cls(s.mid)] = s; });
   return sMap;
 };
 
-const getAngles = (tvAngle) => {
+const getAngles = (tvAngle: number): AngleMap => {
   let deg = Math.abs(tvAngle * 180 / Math.PI);
   if (deg > 90) deg = 180 - deg;
   const theta = Math.round(Math.max(1, Math.min(89, deg)));
@@ -58,7 +60,7 @@ const getAngles = (tvAngle) => {
 };
 
 // Filled pie-slice path
-const sectorPath = (cx, cy, r, s, e) => {
+const sectorPath = (cx: number, cy: number, r: number, s: number, e: number): string => {
   let eA = e; if (eA <= s) eA += 2 * Math.PI;
   const sweep = eA - s;
   const x1 = cx + r * Math.cos(s), y1 = cy + r * Math.sin(s);
@@ -68,7 +70,7 @@ const sectorPath = (cx, cy, r, s, e) => {
 };
 
 // Arc-only path (no radii)
-const arcOnlyPath = (cx, cy, r, s, e) => {
+const arcOnlyPath = (cx: number, cy: number, r: number, s: number, e: number): string => {
   let eA = e; if (eA <= s) eA += 2 * Math.PI;
   const sweep = eA - s;
   const x1 = cx + r * Math.cos(s), y1 = cy + r * Math.sin(s);
@@ -122,33 +124,24 @@ const RULES = [
   },
 ];
 
-const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
-const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-
-// Short labels for the multiselect buttons
-const RULE_SHORT_LABELS = {
-  corresponding:     "Corresponding",
-  alternate:         "Alternate",
-  coInterior:        "Co-interior",
-  straightLine:      "Straight Line",
-  verticallyOpposite:"Vert. Opposite",
-};
+const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
+const randInt = (min: number, max: number): number => Math.floor(Math.random() * (max - min + 1)) + min;
 
 // ── Shell-pattern popover ─────────────────────────────────────────────────────
 
 const usePopover = () => {
   const [open, setOpen] = useState(false);
-  const ref = useRef(null);
+  const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!open) return;
-    const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
   }, [open]);
   return { open, setOpen, ref };
 };
 
-const PopoverButton = ({ open, onClick }) => (
+const PopoverButton = ({ open, onClick }: { open: boolean; onClick: () => void }) => (
   <button onClick={onClick}
     style={{
       display: "flex", alignItems: "center", gap: 8,
@@ -164,8 +157,14 @@ const PopoverButton = ({ open, onClick }) => (
   </button>
 );
 
-// Shell-pattern single-select segmented buttons
-const DropdownSection = ({ label, options, value, onChange }) => (
+type DropdownOption = { value: string; label: string };
+
+const DropdownSection = ({ label, options, value, onChange }: {
+  label: string;
+  options: DropdownOption[];
+  value: string;
+  onChange: (v: string) => void;
+}) => (
   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
     <span style={{ fontSize: 11, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.09em" }}>
       {label}
@@ -188,9 +187,13 @@ const DropdownSection = ({ label, options, value, onChange }) => (
   </div>
 );
 
-// Shell-faithful MultiSelectSection — grid of individual toggle buttons
-// Last active can't be deselected (click silently blocked)
-const MultiSelectSection = ({ options, values, onChange }) => {
+type MultiSelectOption = { value: string; label: string };
+
+const MultiSelectSection = ({ options, values, onChange }: {
+  options: MultiSelectOption[];
+  values: Record<string, boolean>;
+  onChange: (key: string, val: boolean) => void;
+}) => {
   const activeCount = options.filter(o => values[o.value]).length;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -226,7 +229,7 @@ const MultiSelectSection = ({ options, values, onChange }) => {
   );
 };
 
-const generateQuestion = (activeRules, fixedRotation = null) => {
+const generateQuestion = (activeRules: Record<string, boolean>, fixedRotation: number | null = null) => {
   const acuteDeg = randInt(50, 70);
   const leanRight = Math.random() < 0.5;
   const tvAngle = (leanRight ? acuteDeg : 180 - acuteDeg) * DEG;
@@ -236,7 +239,7 @@ const generateQuestion = (activeRules, fixedRotation = null) => {
   const angles = getAngles(tvAngle);
   const sectors = getSectors(tvAngle);
   const pts = getIntersections(tvAngle);
-  const val1 = angles[variant.quad1], val2 = angles[variant.quad2];
+  const val1 = angles[variant.quad1 as keyof AngleMap], val2 = angles[variant.quad2 as keyof AngleMap];
   const swapped = Math.random() < 0.5;
   const ROTATIONS = [0, 45, 90, 135];
   const canvasRotation = fixedRotation !== null ? fixedRotation : ROTATIONS[Math.floor(Math.random() * ROTATIONS.length)];
@@ -252,6 +255,8 @@ const generateQuestion = (activeRules, fixedRotation = null) => {
   };
 };
 
+type Question = ReturnType<typeof generateQuestion>;
+
 // ── Colours ───────────────────────────────────────────────────────────────────
 const KNOWN_FILL = "rgba(29,78,216,0.15)";
 const KNOWN_STROKE = "#1d4ed8";
@@ -260,28 +265,22 @@ const X_STROKE = "#dc2626";
 const LINE_COLOR = "#111827";
 
 // ── Diagram ───────────────────────────────────────────────────────────────────
-const Diagram = ({ q, showAnswer }) => {
+const Diagram = ({ q, showAnswer }: { q: Question; showAnswer: boolean }) => {
   const { tvAngle, sectors, knownVal, xVal, knownQuad, knownInter, xQuad, xInter, pts, canvasRotation } = q;
   const { p1, p2 } = pts;
   const tv = getTransversalEndpoints(tvAngle, p1, p2);
 
-  // Per-intersection line half-lengths: trim so lines don't run far off-canvas
-  // Left arm = distance from intersection to left edge with some padding
-  // Right arm = distance to right edge. We cap at 200px each side.
-  const lineHalf = (ix) => {
+  const lineHalf = (ix: number) => {
     const maxLeft = Math.min(220, ix - 10);
     const maxRight = Math.min(220, 490 - ix);
     return { left: maxLeft, right: maxRight };
   };
   const lh1 = lineHalf(p1.x), lh2 = lineHalf(p2.x);
 
-  // Mid-line direction arrow (chevron), pointing RIGHT on both lines (same direction = parallel)
-  // Drawn at the midpoint between the intersection and the right end
-  const MidArrow = ({ ix, iy, armRight }) => {
-    const ax = ix + armRight * 0.55; // 55% along the right arm
+  const MidArrow = ({ ix, iy, armRight }: { ix: number; iy: number; armRight: number }) => {
+    const ax = ix + armRight * 0.55;
     const ay = iy;
     const size = 10;
-    // Chevron: >, pointing right
     return (
       <polyline
         points={`${ax - size},${ay - size * 0.65} ${ax},${ay} ${ax - size},${ay + size * 0.65}`}
@@ -290,11 +289,12 @@ const Diagram = ({ q, showAnswer }) => {
     );
   };
 
-  // Sector component — label is counter-rotated so it stays upright
-  const Sector = ({ interKey, quadKey, fill, stroke, labelText }) => {
+  const Sector = ({ interKey, quadKey, fill, stroke, labelText }: {
+    interKey: string; quadKey: string; fill: string; stroke: string; labelText: string;
+  }) => {
     const sec = sectors[quadKey];
     if (!sec) return null;
-    const pt = pts[interKey];
+    const pt = pts[interKey as keyof typeof pts];
     const lx = pt.x + (ARC_R + 26) * Math.cos(sec.mid);
     const ly = pt.y + (ARC_R + 26) * Math.sin(sec.mid);
     const isX = !showAnswer && labelText === "x";
@@ -302,7 +302,6 @@ const Diagram = ({ q, showAnswer }) => {
       <>
         <path d={sectorPath(pt.x, pt.y, ARC_R, sec.s, sec.e)} fill={fill} stroke="none"/>
         <path d={arcOnlyPath(pt.x, pt.y, ARC_R, sec.s, sec.e)} fill="none" stroke={stroke} strokeWidth="3.5" strokeLinecap="round"/>
-        {/* Translate to label pos, undo canvas rotation so text is always upright */}
         <g transform={`translate(${lx},${ly}) rotate(${-canvasRotation})`}>
           <text x={0} y={0} textAnchor="middle" dominantBaseline="central"
             fill={stroke} fontSize="18" fontWeight="800"
@@ -315,9 +314,7 @@ const Diagram = ({ q, showAnswer }) => {
     );
   };
 
-  // Fixed 500×500 viewBox centred at (250,250) — geometry is scaled to fill it.
-  // Rotation pivots around the same centre point.
-  const VB = 500, VC = 250; // viewBox size and centre
+  const VB = 500, VC = 250;
 
   return (
     <svg
@@ -350,21 +347,20 @@ const Diagram = ({ q, showAnswer }) => {
 };
 
 // ── Colour scheme ─────────────────────────────────────────────────────────────
-const getQBg    = (cs) => ({ blue:"#D1E7F8", pink:"#F8D1E7", yellow:"#F8F4D1" }[cs] ?? "#ffffff");
-const getStepBg = (cs) => ({ blue:"#B3D9F2", pink:"#F2B3D9", yellow:"#F2EBB3" }[cs] ?? "#f3f4f6");
+const getQBg    = (cs: string): string => ({ blue:"#D1E7F8", pink:"#F8D1E7", yellow:"#F8F4D1" } as Record<string,string>)[cs] ?? "#ffffff";
+const getStepBg = (cs: string): string => ({ blue:"#B3D9F2", pink:"#F2B3D9", yellow:"#F2EBB3" } as Record<string,string>)[cs] ?? "#f3f4f6";
 
 // ── App ───────────────────────────────────────────────────────────────────────
 export default function App() {
-  const [question, setQuestion]       = useState(() => generateQuestion({}));
+  const [question, setQuestion]       = useState<Question>(() => generateQuestion({}));
   const [showAnswer, setShowAnswer]   = useState(false);
   const [colorScheme, setColorScheme] = useState("default");
   const [menuOpen, setMenuOpen]       = useState(false);
   const [colorOpen, setColorOpen]     = useState(false);
-  // activeRules: all true by default
-  const [activeRules, setActiveRules] = useState(() =>
+  const [activeRules, setActiveRules] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(RULES.map(r => [r.key, true]))
   );
-  const [fixedRotation, setFixedRotation] = useState(null); // null = random
+  const [fixedRotation, setFixedRotation] = useState<number | null>(null);
   const { open: qoOpen, setOpen: setQoOpen, ref: qoRef } = usePopover();
 
   const qBg    = getQBg(colorScheme);
@@ -375,7 +371,7 @@ export default function App() {
     setShowAnswer(false);
   }, [activeRules, fixedRotation]);
 
-  const handleRuleToggle = useCallback((key, val) => {
+  const handleRuleToggle = useCallback((key: string, val: boolean) => {
     setActiveRules(prev => ({ ...prev, [key]: val }));
   }, []);
 
