@@ -435,23 +435,27 @@ export default function TimesTablesQuizGenerator() {
             </div>
 
             {/* Layout + Questions */}
-            <div className="flex justify-center items-end gap-10 mb-6 flex-wrap">
+            <div className="flex justify-center items-start gap-10 mb-6 flex-wrap">
 
               <div className="flex flex-col items-center gap-2">
                 <SectionLabel>Layout</SectionLabel>
-                <div className="flex rounded-lg overflow-hidden border-2 border-gray-200">
+                <div className="flex gap-2">
                   <button
                     onClick={() => setLayoutAndClamp('list')}
-                    className={`px-5 py-2.5 text-sm font-bold transition-all ${
-                      layoutMode === 'list' ? 'bg-blue-900 text-white' : 'bg-white text-gray-500 hover:text-blue-900'
+                    className={`px-5 py-2.5 rounded-lg font-bold text-base border-2 transition-all ${
+                      layoutMode === 'list'
+                        ? 'bg-blue-900 border-blue-900 text-white'
+                        : 'bg-white border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-900'
                     }`}
                   >
                     No Cells
                   </button>
                   <button
                     onClick={() => setLayoutAndClamp('cells')}
-                    className={`px-5 py-2.5 text-sm font-bold border-l-2 border-gray-200 transition-all ${
-                      layoutMode === 'cells' ? 'bg-blue-900 text-white' : 'bg-white text-gray-500 hover:text-blue-900'
+                    className={`px-5 py-2.5 rounded-lg font-bold text-base border-2 transition-all ${
+                      layoutMode === 'cells'
+                        ? 'bg-blue-900 border-blue-900 text-white'
+                        : 'bg-white border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-900'
                     }`}
                   >
                     Cells
@@ -460,9 +464,7 @@ export default function TimesTablesQuizGenerator() {
               </div>
 
               <div className="flex flex-col items-center gap-2">
-                <SectionLabel>
-                  {layoutMode === 'cells' ? 'Cells (21–45)' : 'Questions (21–60)'}
-                </SectionLabel>
+                <SectionLabel>Questions</SectionLabel>
                 <input
                   type="number"
                   min={21}
@@ -470,7 +472,7 @@ export default function TimesTablesQuizGenerator() {
                   value={qInput}
                   onChange={e => setQInput(e.target.value)}
                   onBlur={commitQInput}
-                  className="w-24 px-4 py-2.5 border-2 border-gray-200 rounded-lg text-lg font-bold text-gray-800 text-center focus:outline-none focus:border-blue-900"
+                  className="w-24 px-4 py-2.5 border-2 border-gray-200 rounded-lg text-base font-bold text-gray-800 text-center focus:outline-none focus:border-blue-900"
                 />
               </div>
             </div>
