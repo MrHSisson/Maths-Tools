@@ -387,13 +387,11 @@ export default function TimesTablesQuizGenerator() {
                 <div className="flex gap-2">
                   <Pill
                     label="Standard"
-                    sub="e.g. 3 × 7 = ___"
                     active={includeStandard}
                     onClick={() => setIncludeStandard(v => !v)}
                   />
                   <Pill
                     label="Missing Factor"
-                    sub="e.g. 3 × ___ = 21"
                     active={includeMissingFactor}
                     onClick={() => setIncludeMissingFactor(v => !v)}
                   />
@@ -406,10 +404,10 @@ export default function TimesTablesQuizGenerator() {
               <div className="flex justify-center items-center gap-4 mb-4">
                 <SectionLabel>Select Times Tables</SectionLabel>
                 <div className="flex gap-2">
-                  <button onClick={selectAll} className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg font-semibold text-sm transition-colors">
+                  <button onClick={selectAll} className="px-3 py-1.5 rounded-lg text-sm font-bold border-2 border-gray-200 bg-white text-gray-500 hover:border-blue-300 hover:text-blue-900 transition-all">
                     All
                   </button>
-                  <button onClick={selectNone} className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg font-semibold text-sm transition-colors">
+                  <button onClick={selectNone} className="px-3 py-1.5 rounded-lg text-sm font-bold border-2 border-gray-200 bg-white text-gray-500 hover:border-blue-300 hover:text-blue-900 transition-all">
                     None
                   </button>
                 </div>
