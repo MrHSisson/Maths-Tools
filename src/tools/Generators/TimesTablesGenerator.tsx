@@ -22,6 +22,7 @@ const generateQuestions = (
   numQuestions: number,
   includeMultiply: boolean,
   includeDivide: boolean,
+  includeStandard: boolean,
   includeMissingFactor: boolean,
   tableFirst: boolean
 ): Question[] => {
@@ -33,25 +34,18 @@ const generateQuestions = (
       const first = tableFirst ? tt : other;
       const second = tableFirst ? other : tt;
 
-      // Standard: a × b = ___
-      if (includeMultiply) {
+      if (includeStandard && includeMultiply) {
         pool.push({ question: `${first} × ${second} = ___`, answer: product });
       }
-
-      // Standard: dividend ÷ divisor = ___
-      if (includeDivide) {
+      if (includeStandard && includeDivide) {
         pool.push({ question: `${product} ÷ ${tt} = ___`, answer: other });
         if (other !== tt) {
           pool.push({ question: `${product} ÷ ${other} = ___`, answer: tt });
         }
       }
-
-      // Missing factor: a × ___ = product
       if (includeMissingFactor && includeMultiply) {
         pool.push({ question: `${first} × ___ = ${product}`, answer: second });
       }
-
-      // Missing dividend: ___ ÷ divisor = quotient
       if (includeMissingFactor && includeDivide) {
         pool.push({ question: `___ ÷ ${tt} = ${other}`, answer: product });
         if (other !== tt) {
@@ -163,8 +157,10 @@ export default function TimesTablesQuizGenerator() {
   const navigate = useNavigate();
   const [selectedTables, setSelectedTables] = useState<number[]>([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
   const [numQuestions, setNumQuestions] = useState<number>(40);
+  const [qInput, setQInput] = useState<string>('40');
   const [includeMultiply, setIncludeMultiply] = useState<boolean>(true);
   const [includeDivide, setIncludeDivide] = useState<boolean>(false);
+  const [includeStandard, setIncludeStandard] = useState<boolean>(true);
   const [includeMissingFactor, setIncludeMissingFactor] = useState<boolean>(false);
   const [tableFirst, setTableFirst] = useState<boolean>(false);
   const [layoutMode, setLayoutMode] = useState<LayoutMode>('list');
@@ -173,8 +169,44 @@ export default function TimesTablesQuizGenerator() {
   const [error, setError] = useState<string>('');
   const [previewQuestions, setPreviewQuestions] = useState<Question[]>([]);
 
+  const Pill = ({ label, sub, active, onClick }: {
+    label: string; sub?: string; active: boolean; onClick: () => void;
+  }) => (
+    <button
+      onClick={onClick}
+      className={`px-5 py-2.5 rounded-lg font-bold text-base border-2 transition-all text-center ${
+        active
+          ? 'bg-blue-900 border-blue-900 text-white'
+          : 'bg-white border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-900'
+      }`}
+    >
+      {label}
+      {sub && <span className={`block text-xs font-normal mt-0.5 ${active ? 'text-blue-200' : 'text-gray-400'}`}>{sub}</span>}
+    </button>
+  );
+
+  const SectionLabel = ({ children }: { children: string }) => (
+    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 text-center">{children}</p>
+  );
+
   const maxQ = layoutMode === 'cells' ? 45 : 60;
-  const hasQuestionType = includeMultiply || includeDivide;
+  const hasOperation = includeMultiply || includeDivide;
+  const hasFormat = includeStandard || includeMissingFactor;
+
+  const commitQInput = () => {
+    const parsed = parseInt(qInput);
+    const clamped = isNaN(parsed) ? 21 : Math.min(maxQ, Math.max(21, parsed));
+    setNumQuestions(clamped);
+    setQInput(String(clamped));
+  };
+
+  const setLayoutAndClamp = (mode: LayoutMode) => {
+    setLayoutMode(mode);
+    if (mode === 'cells' && numQuestions > 45) {
+      setNumQuestions(45);
+      setQInput('45');
+    }
+  };
 
   const toggleTable = (table: number): void => {
     setSelectedTables(prev =>
@@ -185,23 +217,18 @@ export default function TimesTablesQuizGenerator() {
     setError('');
   };
 
-  const selectAll = (): void => setSelectedTables(Array.from({ length: 20 }, (_, i) => i + 1));
-  const selectNone = (): void => setSelectedTables([]);
+  const selectAll = () => setSelectedTables(Array.from({ length: 20 }, (_, i) => i + 1));
+  const selectNone = () => setSelectedTables([]);
 
   const validate = (): boolean => {
-    if (selectedTables.length === 0) {
-      setError('Please select at least one times table');
-      return false;
-    }
-    if (!hasQuestionType) {
-      setError('Please select at least one question type (Multiply or Divide)');
-      return false;
-    }
+    if (selectedTables.length === 0) { setError('Please select at least one times table.'); return false; }
+    if (!hasOperation) { setError('Please select at least one operation (× or ÷).'); return false; }
+    if (!hasFormat) { setError('Please select at least one question format (Standard or Missing Factor).'); return false; }
     return true;
   };
 
   const getQuestions = (): Question[] =>
-    generateQuestions(selectedTables, numQuestions, includeMultiply, includeDivide, includeMissingFactor, tableFirst);
+    generateQuestions(selectedTables, numQuestions, includeMultiply, includeDivide, includeStandard, includeMissingFactor, tableFirst);
 
   const handleGeneratePreview = (): void => {
     if (!validate()) return;
@@ -226,7 +253,6 @@ export default function TimesTablesQuizGenerator() {
 
     const today = new Date();
     const dateStr = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${String(today.getFullYear()).slice(-2)}`;
-
     doc.setProperties({ title: `Times Tables ${dateStr}`, subject: 'Mathematics Practice' });
 
     // Page 1: Questions
@@ -278,14 +304,15 @@ export default function TimesTablesQuizGenerator() {
     doc.setTextColor(100);
     doc.text('Times Tables Generator', pageWidth / 2, pageHeight - 10, { align: 'center' });
 
-    const pdfBlob = doc.output('blob');
-    window.open(URL.createObjectURL(pdfBlob), '_blank');
+    window.open(URL.createObjectURL(doc.output('blob')), '_blank');
     setError('');
   };
 
+  const canGenerate = selectedTables.length > 0 && hasOperation && hasFormat;
+
   return (
     <>
-      {/* Header Bar */}
+      {/* Header */}
       <div className="bg-blue-900 shadow-lg">
         <div className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
           <button
@@ -304,15 +331,15 @@ export default function TimesTablesQuizGenerator() {
               {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
             </button>
             {isMenuOpen && (
-              <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border-2 border-gray-200 overflow-hidden z-50">
+              <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border-2 border-gray-200 overflow-hidden z-50">
                 <div className="py-2">
-                  <div className="px-6 py-2 font-bold text-gray-700 text-sm uppercase tracking-wide">Color Schemes</div>
-                  {(['default', 'blue', 'pink', 'yellow'] as const).map((scheme: ColorScheme) => (
+                  <div className="px-5 py-2 font-bold text-gray-400 text-xs uppercase tracking-widest">Colour Scheme</div>
+                  {(['default', 'blue', 'pink', 'yellow'] as const).map(scheme => (
                     <button
                       key={scheme}
                       onClick={() => { setColorScheme(scheme); setIsMenuOpen(false); }}
-                      className={`w-full text-left px-6 py-3 font-semibold transition-colors ${
-                        colorScheme === scheme ? 'bg-blue-100 text-blue-900' : 'text-gray-800 hover:bg-gray-100'
+                      className={`w-full text-left px-5 py-2.5 font-semibold transition-colors text-sm ${
+                        colorScheme === scheme ? 'bg-blue-50 text-blue-900' : 'text-gray-700 hover:bg-gray-50'
                       }`}
                     >
                       {scheme.charAt(0).toUpperCase() + scheme.slice(1)}
@@ -325,154 +352,136 @@ export default function TimesTablesQuizGenerator() {
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Main */}
       <div className="min-h-screen p-8" style={{ backgroundColor: '#f5f3f0' }}>
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-5xl mx-auto">
 
           <h1 className="text-5xl font-bold text-center mb-8" style={{ color: '#000000' }}>
             {TOOL_CONFIG.pageTitle}
           </h1>
 
-          <div className="flex justify-center mb-8">
-            <div style={{ width: '90%', height: '2px', backgroundColor: '#d1d5db' }} />
-          </div>
-
           {/* Control Panel */}
-          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-            <h2 className="text-2xl font-bold text-center mb-4" style={{ color: '#000000' }}>Customisation Options</h2>
-            <div className="flex justify-center mb-6">
-              <div style={{ width: '80%', height: '1px', backgroundColor: '#d1d5db' }} />
-            </div>
+          <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
+            <h2 className="text-2xl font-bold text-center mb-6" style={{ color: '#000000' }}>Customisation Options</h2>
 
-            {/* Question Types */}
-            <div className="flex justify-center items-center gap-6 mb-6 flex-wrap">
-              <span className="text-lg font-semibold" style={{ color: '#000000' }}>Question Types:</span>
-              <div className="flex gap-6 flex-wrap justify-center">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={includeMultiply}
-                    onChange={e => setIncludeMultiply(e.target.checked)}
-                    className="w-5 h-5 cursor-pointer"
-                    style={{ accentColor: '#1e3a8a' }}
+            {/* Operations + Format — two columns */}
+            <div className="flex justify-center gap-12 mb-7 flex-wrap">
+
+              {/* Operations */}
+              <div className="flex flex-col items-center">
+                <SectionLabel>Operations</SectionLabel>
+                <div className="flex gap-2">
+                  <Pill
+                    label="× Multiply"
+                    active={includeMultiply}
+                    onClick={() => setIncludeMultiply(v => !v)}
                   />
-                  <span className="text-lg font-semibold" style={{ color: '#000000' }}>
-                    Multiply <span className="text-sm text-gray-500 font-normal">(e.g. 3 × 7 = ___)</span>
-                  </span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={includeDivide}
-                    onChange={e => setIncludeDivide(e.target.checked)}
-                    className="w-5 h-5 cursor-pointer"
-                    style={{ accentColor: '#1e3a8a' }}
+                  <Pill
+                    label="÷ Divide"
+                    active={includeDivide}
+                    onClick={() => setIncludeDivide(v => !v)}
                   />
-                  <span className="text-lg font-semibold" style={{ color: '#000000' }}>
-                    Divide <span className="text-sm text-gray-500 font-normal">(e.g. 21 ÷ 7 = ___)</span>
-                  </span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={includeMissingFactor}
-                    onChange={e => setIncludeMissingFactor(e.target.checked)}
-                    className="w-5 h-5 cursor-pointer"
-                    style={{ accentColor: '#1e3a8a' }}
+                </div>
+              </div>
+
+              {/* Question Format */}
+              <div className="flex flex-col items-center">
+                <SectionLabel>Question Format</SectionLabel>
+                <div className="flex gap-2">
+                  <Pill
+                    label="Standard"
+                    sub="e.g. 3 × 7 = ___"
+                    active={includeStandard}
+                    onClick={() => setIncludeStandard(v => !v)}
                   />
-                  <span className="text-lg font-semibold" style={{ color: '#000000' }}>
-                    Missing Factor <span className="text-sm text-gray-500 font-normal">(e.g. 3 × ___ = 21, ___ ÷ 7 = 3)</span>
-                  </span>
-                </label>
+                  <Pill
+                    label="Missing Factor"
+                    sub="e.g. 3 × ___ = 21"
+                    active={includeMissingFactor}
+                    onClick={() => setIncludeMissingFactor(v => !v)}
+                  />
+                </div>
               </div>
             </div>
 
-            {/* Format Toggle */}
-            <div className="flex justify-center items-center gap-4 mb-6">
-              <span className="text-sm font-semibold" style={{ color: '#000000' }}>Format:</span>
+            {/* TT Position */}
+            <div className="flex justify-center items-center gap-4 mb-7">
+              <SectionLabel>TT Position</SectionLabel>
               <div className="flex items-center gap-3">
-                <span className={`text-sm font-semibold ${!tableFirst ? 'text-blue-900' : 'text-gray-500'}`}>
-                  TT First (e.g. <span style={{ textDecoration: 'underline' }}>2</span> × 3)
+                <span className={`text-sm font-semibold ${!tableFirst ? 'text-blue-900' : 'text-gray-400'}`}>
+                  TT First &nbsp;<span className="font-normal text-gray-400">(e.g. <u>7</u> × 3)</span>
                 </span>
                 <button
-                  onClick={() => setTableFirst(!tableFirst)}
-                  className="relative w-14 h-7 rounded-full transition-colors bg-blue-900"
+                  onClick={() => setTableFirst(v => !v)}
+                  className="relative w-12 h-6 rounded-full bg-blue-900 flex-shrink-0"
                 >
-                  <div
-                    className="absolute top-1 w-5 h-5 bg-white rounded-full transition-transform"
-                    style={{ left: tableFirst ? '32px' : '4px' }}
+                  <span
+                    className="absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all"
+                    style={{ left: tableFirst ? '28px' : '4px' }}
                   />
                 </button>
-                <span className={`text-sm font-semibold ${tableFirst ? 'text-blue-900' : 'text-gray-500'}`}>
-                  TT Last (e.g. 3 × <span style={{ textDecoration: 'underline' }}>2</span>)
+                <span className={`text-sm font-semibold ${tableFirst ? 'text-blue-900' : 'text-gray-400'}`}>
+                  TT Last &nbsp;<span className="font-normal text-gray-400">(e.g. 3 × <u>7</u>)</span>
                 </span>
               </div>
             </div>
 
-            <div className="flex justify-center my-6">
-              <div style={{ width: '80%', height: '1px', backgroundColor: '#e5e7eb' }} />
+            <div className="flex justify-center mb-7">
+              <div style={{ width: '85%', height: '1px', backgroundColor: '#e5e7eb' }} />
             </div>
 
             {/* Times Tables Selection */}
-            <div className="mb-6">
+            <div className="mb-7">
               <div className="flex justify-center items-center gap-4 mb-4">
-                <span className="text-lg font-semibold" style={{ color: '#000000' }}>Select Times Tables:</span>
+                <SectionLabel>Select Times Tables</SectionLabel>
                 <div className="flex gap-2">
-                  <button onClick={selectAll} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg font-semibold text-sm">
-                    Select All
+                  <button onClick={selectAll} className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg font-semibold text-sm transition-colors">
+                    All
                   </button>
-                  <button onClick={selectNone} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg font-semibold text-sm">
-                    Clear All
+                  <button onClick={selectNone} className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg font-semibold text-sm transition-colors">
+                    None
                   </button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-10 gap-3 max-w-4xl mx-auto">
+              <div className="grid grid-cols-10 gap-3 max-w-3xl mx-auto">
                 {Array.from({ length: 20 }, (_, i) => i + 1).map(table => (
-                  <div key={table} className="flex flex-col items-center gap-2">
-                    <span
-                      onClick={() => toggleTable(table)}
-                      className="text-xl font-bold text-gray-800 cursor-pointer hover:text-blue-900 transition-colors"
-                    >
-                      {table}
-                    </span>
-                    <input
-                      type="checkbox"
-                      checked={selectedTables.includes(table)}
-                      onChange={() => toggleTable(table)}
-                      className="w-4 h-4 cursor-pointer"
-                      style={{ accentColor: '#1e3a8a' }}
-                    />
-                  </div>
+                  <button
+                    key={table}
+                    onClick={() => toggleTable(table)}
+                    className={`py-2 rounded-lg font-bold text-sm border-2 transition-all ${
+                      selectedTables.includes(table)
+                        ? 'bg-blue-900 border-blue-900 text-white'
+                        : 'bg-white border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-900'
+                    }`}
+                  >
+                    {table}
+                  </button>
                 ))}
               </div>
             </div>
 
-            <div className="flex justify-center my-6">
-              <div style={{ width: '80%', height: '1px', backgroundColor: '#e5e7eb' }} />
+            <div className="flex justify-center mb-7">
+              <div style={{ width: '85%', height: '1px', backgroundColor: '#e5e7eb' }} />
             </div>
 
-            {/* Layout Mode + Questions — single row */}
-            <div className="flex justify-center items-center gap-8 mb-6 flex-wrap">
+            {/* Layout + Questions */}
+            <div className="flex justify-center items-end gap-10 mb-6 flex-wrap">
 
-              {/* Layout mode */}
-              <div className="flex items-center gap-3">
-                <span className="text-lg font-semibold" style={{ color: '#000000' }}>Layout:</span>
+              <div className="flex flex-col items-center gap-2">
+                <SectionLabel>Layout</SectionLabel>
                 <div className="flex rounded-lg overflow-hidden border-2 border-gray-200">
                   <button
-                    onClick={() => setLayoutMode('list')}
-                    className={`px-4 py-2 text-sm font-bold transition-all ${
+                    onClick={() => setLayoutAndClamp('list')}
+                    className={`px-5 py-2.5 text-sm font-bold transition-all ${
                       layoutMode === 'list' ? 'bg-blue-900 text-white' : 'bg-white text-gray-500 hover:text-blue-900'
                     }`}
                   >
                     No Cells
                   </button>
                   <button
-                    onClick={() => {
-                      setLayoutMode('cells');
-                      if (numQuestions > 45) setNumQuestions(45);
-                    }}
-                    className={`px-4 py-2 text-sm font-bold border-l-2 border-gray-200 transition-all ${
+                    onClick={() => setLayoutAndClamp('cells')}
+                    className={`px-5 py-2.5 text-sm font-bold border-l-2 border-gray-200 transition-all ${
                       layoutMode === 'cells' ? 'bg-blue-900 text-white' : 'bg-white text-gray-500 hover:text-blue-900'
                     }`}
                   >
@@ -481,26 +490,18 @@ export default function TimesTablesQuizGenerator() {
                 </div>
               </div>
 
-              {/* Number of questions */}
-              <div className="flex items-center gap-3">
-                <label className="text-lg font-semibold" style={{ color: '#000000' }}>
-                  {layoutMode === 'cells' ? 'Cells (21–45):' : 'Questions (21–60):'}
-                </label>
+              <div className="flex flex-col items-center gap-2">
+                <SectionLabel>
+                  {layoutMode === 'cells' ? 'Cells (21–45)' : 'Questions (21–60)'}
+                </SectionLabel>
                 <input
                   type="number"
                   min={21}
                   max={maxQ}
-                  value={numQuestions}
-                  onChange={e => {
-                    const val = parseInt(e.target.value) || 21;
-                    if (val >= 21 && val <= maxQ) {
-                      setNumQuestions(val);
-                      setError('');
-                    } else {
-                      setError(`Please enter a number between 21 and ${maxQ}`);
-                    }
-                  }}
-                  className="w-24 px-4 py-2 border-2 border-gray-300 rounded-lg text-lg"
+                  value={qInput}
+                  onChange={e => setQInput(e.target.value)}
+                  onBlur={commitQInput}
+                  className="w-24 px-4 py-2.5 border-2 border-gray-200 rounded-lg text-lg font-bold text-gray-800 text-center focus:outline-none focus:border-blue-900"
                 />
               </div>
             </div>
@@ -508,78 +509,77 @@ export default function TimesTablesQuizGenerator() {
             {/* Error */}
             {error && (
               <div className="flex justify-center mb-4">
-                <div className="px-4 py-2 bg-red-100 border-2 border-red-500 rounded-lg text-red-700 font-semibold">
+                <div className="px-4 py-2 bg-red-50 border-2 border-red-400 rounded-lg text-red-700 font-semibold text-sm">
                   {error}
                 </div>
               </div>
             )}
 
-            {/* Generate Buttons */}
+            {/* Buttons */}
             <div className="flex justify-center gap-4">
               <button
                 onClick={handleGeneratePreview}
-                disabled={selectedTables.length === 0 || !hasQuestionType}
+                disabled={!canGenerate}
                 className={`px-8 py-3 rounded-lg font-bold text-lg flex items-center gap-2 transition-all ${
-                  selectedTables.length === 0 || !hasQuestionType
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-blue-900 text-white hover:bg-blue-800 shadow-xl'
+                  !canGenerate
+                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    : 'bg-white border-2 border-blue-900 text-blue-900 hover:bg-blue-50 shadow-sm'
                 }`}
               >
-                <Eye size={24} />
+                <Eye size={22} />
                 Generate Example
               </button>
               <button
                 onClick={handleGeneratePDF}
-                disabled={selectedTables.length === 0 || !hasQuestionType}
+                disabled={!canGenerate}
                 className={`px-8 py-3 rounded-lg font-bold text-lg flex items-center gap-2 transition-all ${
-                  selectedTables.length === 0 || !hasQuestionType
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-blue-900 text-white hover:bg-blue-800 shadow-xl'
+                  !canGenerate
+                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    : 'bg-blue-900 text-white hover:bg-blue-800 shadow-lg'
                 }`}
               >
-                <Download size={24} />
+                <Download size={22} />
                 Generate PDF
               </button>
             </div>
           </div>
 
-          {/* Example Questions */}
+          {/* Preview */}
           {previewQuestions.length > 0 && (
             <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
-              <h2 className="text-3xl font-bold text-center mb-6" style={{ color: '#000000' }}>
+              <h2 className="text-2xl font-bold text-center mb-6" style={{ color: '#000000' }}>
                 Question Example
               </h2>
-              <div className="grid grid-cols-3 gap-6">
+              <div className="grid grid-cols-3 gap-4">
                 {previewQuestions.slice(0, 12).map((q, idx) => (
-                  <div key={idx}>
-                    <span className="text-xl font-semibold" style={{ color: '#000000' }}>
+                  <div key={idx} className="bg-gray-50 rounded-lg px-4 py-3 border border-gray-100">
+                    <span className="text-lg font-semibold" style={{ color: '#000000' }}>
                       {idx + 1}. {q.question}
                     </span>
                   </div>
                 ))}
               </div>
               {previewQuestions.length > 12 && (
-                <p className="text-center mt-6 text-gray-700 font-semibold text-lg">
-                  ...plus {previewQuestions.length - 12} more questions
+                <p className="text-center mt-5 text-gray-500 font-semibold">
+                  …plus {previewQuestions.length - 12} more questions
                 </p>
               )}
             </div>
           )}
 
-          {/* Info Box */}
+          {/* Info */}
           <div className="bg-white rounded-xl shadow-lg p-6">
-            <h3 className="text-xl font-bold mb-3" style={{ color: '#000000' }}>How it works:</h3>
-            <ul className="space-y-2 text-gray-700">
+            <h3 className="text-xl font-bold mb-3" style={{ color: '#000000' }}>How it works</h3>
+            <ul className="space-y-2 text-gray-600">
               {[
-                'Select which times tables you want to practice (1–20).',
-                'Choose from Multiply (3 × 7 = ___), Divide (21 ÷ 7 = ___), or Missing Factor (3 × ___ = 21 / ___ ÷ 7 = 3). Any combination can be active.',
-                'Toggle between TT First and TT Last to control which factor appears on the left in multiply questions.',
-                '"No Cells" produces a numbered list (21–60 questions). "Cells" produces a bordered grid (21–45 cells).',
-                'Click "Generate Example" to preview up to 12 questions on screen.',
-                'Click "Generate PDF" to open a print-ready worksheet with questions on page 1 and answers on page 2.',
+                'Pick one or both operations (× and/or ÷), then choose your question format — Standard (answer at the end) or Missing Factor (gap in the middle), or both together.',
+                'Select which times tables to include from 1–20.',
+                'Toggle TT Position to control whether the times table number appears first or second.',
+                '"No Cells" generates a numbered list (21–60 questions). "Cells" generates a bordered grid (21–45 cells).',
+                'Generate Example previews a sample on screen. Generate PDF opens a printable worksheet with an answer key on the second page.',
               ].map((t, i) => (
                 <li key={i} className="flex items-start gap-2">
-                  <span className="text-blue-900 font-bold">•</span>
+                  <span className="text-blue-900 font-bold mt-0.5">·</span>
                   <span>{t}</span>
                 </li>
               ))}
