@@ -486,7 +486,7 @@ export default function App() {
           </p>
 
           {/* Diagram */}
-          <div style={{ background: "white", borderRadius: 14, padding: "16px", boxShadow: "0 2px 12px rgba(0,0,0,0.08)", width: "100%" }}>
+          <div style={{ background: qBg, borderRadius: 14, padding: "16px", boxShadow: "0 2px 12px rgba(0,0,0,0.08)", width: "100%" }}>
             <Diagram q={question} showAnswer={showAnswer}/>
           </div>
 
