@@ -363,8 +363,10 @@ export default function App() {
   const [fixedRotation, setFixedRotation] = useState<number | null>(null);
   const { open: qoOpen, setOpen: setQoOpen, ref: qoRef } = usePopover();
 
-  const qBg    = getQBg(colorScheme);
-  const stepBg = getStepBg(colorScheme);
+  const isDefaultScheme = colorScheme === "default";
+  const qBg       = getQBg(colorScheme);
+  const stepBg    = getStepBg(colorScheme);
+  const workingBg = isDefaultScheme ? "#f5f3f0" : qBg;
 
   const handleNew = useCallback(() => {
     setQuestion(generateQuestion(activeRules, fixedRotation));
@@ -486,7 +488,7 @@ export default function App() {
           </p>
 
           {/* Diagram */}
-          <div style={{ background: qBg, borderRadius: 14, padding: "16px", boxShadow: "0 2px 12px rgba(0,0,0,0.08)", width: "100%" }}>
+          <div style={{ background: workingBg, borderRadius: 14, padding: "16px", boxShadow: "0 2px 12px rgba(0,0,0,0.08)", width: "100%" }}>
             <Diagram q={question} showAnswer={showAnswer}/>
           </div>
 
