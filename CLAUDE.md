@@ -65,6 +65,49 @@ git push
 
 ---
 
+## How to migrate an old tool to v2.3
+
+Old tools (v1.x) embed their own shell — UI components, state management, local type definitions — making them 800–1,300 lines. v2.3 tools use the shared ToolShell and are ~250–350 lines.
+
+### Identifying old tools
+
+Check the landing page `ready` version. Any tool below `v2.0` uses an old shell. The file will have a large self-contained component and no `import { ToolShell } from "../../shared"` line.
+
+### Migration checklist
+
+1. **Replace all imports** — the entire import block becomes the minimal shared import set (see below)
+2. **Delete all local type definitions** — `type Question`, `type ToolSettings`, etc. are replaced by `AnyQuestion`, `ToolConfig`, etc. from shared
+3. **Keep TOOL_CONFIG content, update its type** — change the local type annotation to `: ToolConfig`
+4. **Keep INFO_SECTIONS content, update its type** — change to `: InfoSection[]`
+5. **Keep all math generation functions** — the question logic is reusable as-is
+6. **Convert question return types** — replace local `Question` with `AnyQuestion`; use `SimpleQuestion` or `WordedQuestion` structure
+7. **Convert working steps** — replace `{ type: 'step', content: '...' }` objects with `mStep()` / `step()` / `tStep()` calls
+8. **Delete all UI code** — remove every React component below the generators (DifficultyToggle, QO popovers, InfoModal, MenuDropdown, the main component, all `useState`/`useEffect`)
+9. **Replace the export** — the entire component becomes `export default function App() { return <ToolShell ... /> }`
+10. **Update landing page version** to `v2.3`
+
+### Old pattern → new pattern
+
+| Old (v1.x) | New (v2.3) |
+|---|---|
+| `import { useNavigate } from 'react-router-dom'` | Remove entirely |
+| `const navigate = useNavigate(); navigate('/')` | `window.location.href = "/"` |
+| `type Question = { display, answer, working, ... }` | `import { type AnyQuestion }` from shared |
+| `type ToolSettings = { ... }` | `import { type ToolConfig }` from shared |
+| `type InfoSection = { ... }` | `import { type InfoSection }` from shared |
+| `{ type: 'step', content: 'Round: 34 → 30' }` | `mStep("Round to 1 s.f.:", "34 \\to 30")` |
+| `{ type: 'step', content: 'Calculate: 4 × 3 = 12' }` | `mStep("Calculate:", "4 \\times 3 = 12")` |
+| Custom `getQuestionUniqueKey` + display-based dedup | Use `q.key` directly in `generateUniqueQ` |
+| `export default function ToolNameTool()` with full JSX | `export default function App() { return <ToolShell ... /> }` |
+| `displayType: 'fraction'` with custom HTML renderer | `displayLatex: "\\dfrac{num}{den}"` on SimpleQuestion |
+| `declare global { interface Window { katex: any } }` | `const w = () => window as any` |
+
+### What the shared ToolShell provides (never re-implement these)
+
+Whiteboard / Worked Example / Worksheet modes · difficulty toggle · QO popovers (dropdown, variables, multiSelect, differentiated) · tool tab buttons · font size controls · PDF print · colour scheme picker · info modal · home button
+
+---
+
 ## Shared library (`src/shared/`)
 
 All new tools import from `src/shared/` — never copy-paste boilerplate from old tools.
@@ -92,6 +135,17 @@ import {
 | `mStr(x)` | `"$x$"` — wraps a number/expression for InlineMath lines |
 | `pickActive(values, opts)` | Picks a random active value from a multiSelect state |
 | `fmt(n, dp?)` | Number to string, trailing zeros stripped, default 2dp |
+
+### Working step rendering — how each type appears on screen
+
+| Helper call | Renders as |
+|-------------|------------|
+| `step("16 \\div 4 = 4")` | Centred KaTeX — no label. Use for pure maths lines. |
+| `mStep("Divide by 4:", "16 \\div 4 = 4")` | Left-aligned prose label on one line, centred KaTeX below it. Use when the step needs a word description. |
+| `mStep("Answer:", "12", "kg")` | Same as above, with plain-text unit appended after the KaTeX. |
+| `tStep("Simplify the fraction.")` | Plain text only — no KaTeX at all. Use only when the sentence contains zero numbers or operators. |
+
+Pick `mStep` by default for worked examples. Use `step` when the label would be redundant (e.g. a chain of equals steps). Use `tStep` only for genuinely numberless prose (rare).
 
 ---
 
@@ -244,6 +298,7 @@ Each level can independently override `dropdown`, `variables`, and/or `multiSele
 - `displayMode` is always `false` — wrap in a `<div>` for block display
 - Plain-text answers: if a tool's answers are plain strings (no `answerLatex`), never wrap them in `katexSpan()` in the print handler — characters like `£`, `<`, `>` crash KaTeX silently and produce a blank print window
 - In print CSS: set `font-size` on `.katex-render .katex` (inner span), not on `.katex-render` — setting it on the wrapper causes KaTeX to compound the scaling
+- **Thousands separators**: a plain `,` inside KaTeX math mode adds a thin space — `2,400` renders as "2, 400". Use `{,}` instead: `2{,}400` renders correctly. When formatting large numbers for use inside `step()` or `mStep()` LaTeX strings, replace commas: `const fmtK = (n: number) => formatNumber(n).replace(/,/g, "{,}")`
 
 ---
 
