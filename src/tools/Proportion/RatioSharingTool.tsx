@@ -209,6 +209,7 @@ const generateSharingQuestion = (
       const mult = randInt(2, 12);
       total = ratioSum * mult;
       if (Math.max(a, b) * mult > 144) continue;
+      if (total < 60) continue;
     } else {
       const a = randInt(3, 9), b = randInt(3, 9);
       if (!isCoprime(a, b) || a === b) continue;
@@ -308,11 +309,11 @@ const generateKnownAmountsQuestion = (
       parts = [a, b];
       const rs = a + b;
       if (rs < 5 || rs > 12) continue;
-      const lo = Math.ceil(40 / rs), hi = Math.floor(144 / rs);
+      const lo = Math.ceil(60 / rs), hi = Math.floor(144 / rs);
       if (lo > hi) continue;
       partValue = randInt(lo, hi);
       const t = rs * partValue;
-      if (t < 40 || t > 144) continue;
+      if (t < 60 || t > 144) continue;
       knownPerson = Math.random() < 0.5 ? 0 : 1;
     } else {
       const a = randInt(2, 12), b = randInt(2, 12);
@@ -419,11 +420,11 @@ const generateDifferenceQuestion = (
       parts = [a, b];
       const rs = a + b;
       if (rs < 5 || rs > 12) continue;
-      const lo = Math.ceil(40 / rs), hi = Math.floor(144 / rs);
+      const lo = Math.ceil(60 / rs), hi = Math.floor(144 / rs);
       if (lo > hi) continue;
       partValue = randInt(lo, hi);
       const t = rs * partValue;
-      if (t < 40 || t > 144) continue;
+      if (t < 60 || t > 144) continue;
     } else {
       const a = randInt(2, 12), b = randInt(2, 12);
       if (!isCoprime(a, b) || a === b) continue;
@@ -601,7 +602,7 @@ const ratioStepRenderer = (step: WorkingStep, cs: string): JSX.Element | null =>
   if (T === "bar_empty" && bars) return (
     <div>
       <h4 className="text-xl font-semibold mb-4 text-center" style={{ color: "#000" }}>Bar Model:</h4>
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3" style={{ width: "fit-content", margin: "0 auto" }}>
         {bars.map((bar, i) => (
           <BarRow key={i} person={bar.person} boxes={bar.boxes}
             fillBg={getBarEmptyBg(cs)} borderColor="#1e3a8a" />
@@ -629,7 +630,7 @@ const ratioStepRenderer = (step: WorkingStep, cs: string): JSX.Element | null =>
   if (T === "bar_filled" && bars) return (
     <div>
       <h4 className="text-xl font-semibold mb-4 text-center" style={{ color: "#000" }}>Calculate shares:</h4>
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3" style={{ width: "fit-content", margin: "0 auto" }}>
         {bars.map((bar, i) => (
           <BarRow key={i} person={bar.person} boxes={bar.boxes}
             fillBg={getBarEmptyBg(cs)} borderColor="#1e3a8a"
@@ -643,7 +644,7 @@ const ratioStepRenderer = (step: WorkingStep, cs: string): JSX.Element | null =>
   if (T === "ka_bar_known" && bars) return (
     <div>
       <h4 className="text-xl font-semibold mb-4 text-center" style={{ color: "#000" }}>Bar Model — Given information:</h4>
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3" style={{ width: "fit-content", margin: "0 auto" }}>
         {bars.map((bar, i) => (
           <BarRow key={i} person={bar.person} boxes={bar.boxes}
             fillBg={bar.isKnown ? getBarKnownBg(cs) : getBarEmptyBg(cs)}
@@ -693,7 +694,7 @@ const ratioStepRenderer = (step: WorkingStep, cs: string): JSX.Element | null =>
     return (
       <div>
         <h4 className="text-xl font-semibold mb-4 text-center" style={{ color: "#000" }}>Bar Model — showing the difference:</h4>
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3" style={{ width: "fit-content", margin: "0 auto" }}>
           {bars.map((bar, i) => {
             const isLarger = i === (d.largerPerson as number);
             return (
