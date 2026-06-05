@@ -1,1579 +1,768 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { RefreshCw, Eye, Home, Menu, X, ChevronUp, ChevronDown } from 'lucide-react';
+import {
+  ToolShell, getQuestionBg,
+  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WordedQuestion, type WorkingStep,
+  mStep, mStr, pick, randInt, pickActive,
+} from "../../shared";
 
-// Type definitions
-type QuestionType = {
-  display: string;
-  answer: string;
-  ratio: string;
-  ratioParts: number[];
-  total: number;
-  ratioSum?: number;
-  partValue: number;
-  shares: number[];
-  questionType: string;
-  working: any[];
-  names: string[];
-  difficulty: string;
-  knownAmount?: number;
-  knownPerson?: number;
-  difference?: number;
-  largerPerson?: number;
-  mixedType?: string;
+// ═══════════════════════════════════════════════════════════════════════════════
+// TOOL-SPECIFIC SECTION
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ── 1. Types ──────────────────────────────────────────────────────────────────
+
+type ToolType = "sharing" | "known" | "difference" | "mixed";
+
+// ── 2. Number helpers ─────────────────────────────────────────────────────────
+
+const NAMES = ["Alice","Ben","Charlie","Diana","Emma","Finn","Grace","Harry","Isla","Jack","Kate","Liam","Mia","Noah","Olivia","Peter"];
+const twoNames = (): string[] => [...NAMES].sort(() => Math.random() - 0.5).slice(0, 2);
+
+const fmtAmt = (n: number): string => n % 1 === 0 ? String(n) : n.toFixed(2);
+const fp = (n: number): string => `£${fmtAmt(n)}`;
+const fc = (n: number): string => `\\pounds ${fmtAmt(n)}`;
+
+const gcd = (a: number, b: number): number => b === 0 ? a : gcd(b, a % b);
+const isCoprime = (a: number, b: number): boolean => gcd(a, b) === 1;
+
+// ── 3. Bar color helpers ──────────────────────────────────────────────────────
+
+const getBarEmptyBg = (cs: string) => getQuestionBg(cs);
+const getBarKnownBg = (cs: string) => ({ blue: "#7eb8e0", pink: "#e07eb8", yellow: "#e0e07e" }[cs] ?? "#93c5fd");
+const getBarDiffBg  = (cs: string) => ({ blue: "#d8b4fe", pink: "#fed8b4", yellow: "#b4fed8" }[cs] ?? "#e9d5ff");
+
+// ── 4. Bar step builder ───────────────────────────────────────────────────────
+
+const bStep = (t: string, data: Record<string, unknown>): WorkingStep => ({
+  type: t, latex: "", plain: "", extra: data,
+});
+
+// ── 5. Bar step builders ──────────────────────────────────────────────────────
+
+const sharingBarSteps = (
+  parts: number[], total: number, ratioSum: number, partValue: number, shares: number[], names: string[],
+): WorkingStep[] => [
+  bStep("bar_empty", { bars: parts.map((p, i) => ({ person: names[i], boxes: p })) }),
+  bStep("bar_total", { sum: ratioSum }),
+  bStep("bar_part",  { total, sum: ratioSum, value: partValue }),
+  bStep("bar_filled", { bars: parts.map((p, i) => ({ person: names[i], boxes: p, value: partValue, total: shares[i] })) }),
+];
+
+const knownBarSteps = (
+  parts: number[], knownAmount: number, knownPerson: number, partValue: number,
+  shares: number[], total: number, qtype: string, names: string[],
+): WorkingStep[] => {
+  const other = knownPerson === 0 ? 1 : 0;
+  return [
+    bStep("ka_bar_known", { bars: parts.map((p, i) => ({ person: names[i], boxes: p, isKnown: i === knownPerson, knownAmount: i === knownPerson ? knownAmount : null })) }),
+    bStep("ka_identify",  { knownPerson: names[knownPerson], ratioPart: parts[knownPerson] }),
+    bStep("ka_part_val",  { knownAmount, ratioPart: parts[knownPerson], partValue }),
+    bStep("bar_filled",   { bars: parts.map((p, i) => ({ person: names[i], boxes: p, value: partValue, total: shares[i] })) }),
+    ...(qtype === "total"
+      ? [bStep("ka_total_bar", { shares, total })]
+      : [bStep("ka_other_bar", { otherPerson: names[other], share: shares[other] })]),
+  ];
 };
 
-const RatioSharingTool = () => {
-  const navigate = useNavigate();
-  
-  const [topic, setTopic] = useState('sharing');
-  const [mode, setMode] = useState('whiteboard');
-  const [difficulty, setDifficulty] = useState('level1');
-  const [shareQuestionType, setShareQuestionType] = useState('mixed');
-  const [useAlgebraicMethod, setUseAlgebraicMethod] = useState(false);
-  const [knownAmountsQuestionType, setKnownAmountsQuestionType] = useState('mixed');
-  const [useNumericalMethod, setUseNumericalMethod] = useState(false);
-  const [differenceQuestionType, setDifferenceQuestionType] = useState('mixed');
-  const [useDifferenceNumericalMethod, setUseDifferenceNumericalMethod] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [colorScheme, setColorScheme] = useState('default');
-  
-  const [question, setQuestion] = useState<QuestionType | null>(null);
-  const [showAnswer, setShowAnswer] = useState(false);
-  const [showWhiteboardAnswer, setShowWhiteboardAnswer] = useState(false);
-  
-  const [numQuestions, setNumQuestions] = useState(5);
-  const [worksheet, setWorksheet] = useState<QuestionType[]>([]);
-  const [showWorksheetAnswers, setShowWorksheetAnswers] = useState(false);
-  const [isDifferentiated, setIsDifferentiated] = useState(false);
-  const [numColumns, setNumColumns] = useState(2);
-  const [worksheetFontSize, setWorksheetFontSize] = useState(1);
+const diffBarSteps = (
+  parts: number[], difference: number, largerPerson: number, partValue: number,
+  shares: number[], total: number, qtype: string, names: string[],
+): WorkingStep[] => {
+  const partDiff = Math.abs(parts[1] - parts[0]);
+  return [
+    bStep("diff_bar",     { bars: parts.map((p, i) => ({ person: names[i], boxes: p })), difference, largerPerson }),
+    bStep("diff_identify", { difference, partDiff }),
+    bStep("diff_part_val", { difference, partDiff, partValue }),
+    bStep("bar_filled",    { bars: parts.map((p, i) => ({ person: names[i], boxes: p, value: partValue, total: shares[i] })) }),
+    ...(qtype === "total"
+      ? [bStep("ka_total_bar", { shares, total })]
+      : qtype === "personA"
+      ? [bStep("diff_read", { person: names[0], share: shares[0] })]
+      : [bStep("diff_read", { person: names[1], share: shares[1] })]),
+  ];
+};
 
-  const fontSizes = ['text-xl', 'text-2xl', 'text-3xl', 'text-4xl'];
-  const getFontSize = (): string => fontSizes[worksheetFontSize];
-  
-  const getStepBg = (): string => {
-    if (colorScheme === 'blue') return '#B3D9F2';
-    if (colorScheme === 'pink') return '#F2B3D9';
-    if (colorScheme === 'yellow') return '#F2EBB3';
-    return '#f3f4f6';
-  };
-  
-  const getQuestionBg = (): string => {
-    if (colorScheme === 'blue') return '#D1E7F8';
-    if (colorScheme === 'pink') return '#F8D1E7';
-    if (colorScheme === 'yellow') return '#F8F4D1';
-    return '#ffffff';
-  };
-  
-  const getBarEmptyBg = (): string => {
-    if (colorScheme === 'blue') return '#D1E7F8';
-    if (colorScheme === 'pink') return '#F8D1E7';
-    if (colorScheme === 'yellow') return '#F8F4D1';
-    return '#ffffff';
-  };
-  
-  const getBarFilledBg = (): string => {
-    if (colorScheme === 'blue') return '#9ec9e3';
-    if (colorScheme === 'pink') return '#e39ec9';
-    if (colorScheme === 'yellow') return '#e3e39e';
-    return '#d1d5db';
-  };
-  
-  const getBarKnownBg = (): string => {
-    if (colorScheme === 'blue') return '#7eb8e0';
-    if (colorScheme === 'pink') return '#e07eb8';
-    if (colorScheme === 'yellow') return '#e0e07e';
-    return '#93c5fd';
-  };
-  
-  const getBarDiffBg = (): string => {
-    if (colorScheme === 'blue') return '#d8b4fe';
-    if (colorScheme === 'pink') return '#fed8b4';
-    if (colorScheme === 'yellow') return '#b4fed8';
-    return '#e9d5ff';
-  };
-  
-  const getWhiteboardWorkingBg = (): string => {
-    if (colorScheme === 'blue') return '#B3D9F2';
-    if (colorScheme === 'pink') return '#F2B3D9';
-    if (colorScheme === 'yellow') return '#F2EBB3';
-    return '#f3f4f6';
-  };
+// ── 6. QO options ─────────────────────────────────────────────────────────────
 
-  const getFinalAnswerBg = (): string => {
-    if (colorScheme === 'blue') return '#B3D9F2';
-    if (colorScheme === 'pink') return '#F2B3D9';
-    if (colorScheme === 'yellow') return '#F2EBB3';
-    return '#f3f4f6';
-  };
+const SHARE_OPTIONS = [
+  { value: "personA", label: "Person A", defaultActive: true },
+  { value: "personB", label: "Person B", defaultActive: true },
+  { value: "both",    label: "Both",     defaultActive: true },
+];
 
-  const randomInt = (min: number, max: number): number => Math.floor(Math.random() * (max - min + 1)) + min;
-  const randomChoice = (arr: any[]): any => arr[Math.floor(Math.random() * arr.length)];
+const KNOWN_OPTIONS = [
+  { value: "total", label: "Total",        defaultActive: true },
+  { value: "other", label: "Other person", defaultActive: true },
+];
 
-  const namesList = ['Alice', 'Ben', 'Charlie', 'Diana', 'Emma', 'Finn', 'Grace', 'Harry', 'Isla', 'Jack', 'Kate', 'Liam', 'Mia', 'Noah', 'Olivia', 'Peter'];
-  
-  const getRandomNames = (count: number): string[] => {
-    const shuffled = [...namesList].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, count);
-  };
+const DIFF_OPTIONS = [
+  { value: "total",   label: "Total",    defaultActive: true },
+  { value: "personA", label: "Person A", defaultActive: true },
+  { value: "personB", label: "Person B", defaultActive: true },
+];
 
-  const formatCurrency = (amount: number): string => {
-    if (amount % 1 === 0) return `£${amount}`;
-    return `£${amount.toFixed(2)}`;
-  };
+const MIXED_OPTIONS = [
+  { value: "sharing",    label: "Sharing",    defaultActive: true },
+  { value: "known",      label: "Known",      defaultActive: true },
+  { value: "difference", label: "Difference", defaultActive: true },
+];
 
-  const findHCF = (numbers: number[]): number => {
-    const gcd = (a: number, b: number): number => b === 0 ? a : gcd(b, a % b);
-    return numbers.reduce((acc: number, num: number) => gcd(acc, num));
-  };
+// ── 7. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
-  const generateSharingWorking = (ratioParts: number[], total: number, ratioSum: number, partValue: number, shares: number[], names: string[], algebraic = false): any[] => {
-    // Level 3 always uses algebraic method
-    if (algebraic) {
-      return [
-        { type: 'showRatio', parts: ratioParts, names: names },
-        { type: 'explainParts', parts: ratioParts, names: names },
-        { type: 'ratioSum', parts: ratioParts, names: names, sum: ratioSum },
-        { type: 'partValue', total: total, sum: ratioSum, value: partValue },
-        { type: 'calculateShares', parts: ratioParts, names: names, partValue: partValue, shares: shares },
-        { type: 'verifyTotal', shares: shares, total: total, names: names }
-      ];
+const NUMERICAL_VAR = [{ key: "numerical", label: "Numerical method", defaultValue: false }];
+
+const TOOL_CONFIG: ToolConfig = {
+  pageTitle: "Dividing Into Ratios",
+  tools: {
+    sharing: {
+      name: "Sharing in a Ratio",
+      variables: NUMERICAL_VAR,
+      dropdown: null,
+      multiSelect: { key: "shareType", label: "Find", options: SHARE_OPTIONS },
+      difficultySettings: { level3: { variables: [] } },
+    },
+    known: {
+      name: "Known Amounts",
+      variables: NUMERICAL_VAR,
+      dropdown: null,
+      multiSelect: { key: "knownType", label: "Find", options: KNOWN_OPTIONS },
+      difficultySettings: { level3: { variables: [] } },
+    },
+    difference: {
+      name: "Given Difference",
+      variables: NUMERICAL_VAR,
+      dropdown: null,
+      multiSelect: { key: "diffType", label: "Find", options: DIFF_OPTIONS },
+      difficultySettings: { level3: { variables: [] } },
+    },
+    mixed: {
+      name: "Mixed",
+      variables: NUMERICAL_VAR,
+      dropdown: null,
+      multiSelect: { key: "mixedPool", label: "Include", options: MIXED_OPTIONS },
+      difficultySettings: { level3: { variables: [] } },
+    },
+  },
+};
+
+// ── 8. INFO_SECTIONS ──────────────────────────────────────────────────────────
+
+const INFO_SECTIONS: InfoSection[] = [
+  {
+    title: "Dividing Into Ratios", icon: "⚖️",
+    content: [
+      { label: "Overview",          detail: "Practice sharing amounts in a ratio using three different problem types, each at three difficulty levels." },
+      { label: "Level 1 — Green",   detail: "Times-table-friendly ratios and totals (shares within the 12×12 table), ideal for introducing the method." },
+      { label: "Level 2 — Yellow",  detail: "Randomly generated coprime ratios; all shares stay within 144 for mental arithmetic." },
+      { label: "Level 3 — Red",     detail: "Larger ratios with totals up to 600. Algebraic method always used regardless of the toggle." },
+    ],
+  },
+  {
+    title: "Question Types", icon: "❓",
+    content: [
+      { label: "Sharing in a Ratio", detail: "Given the total and the ratio, find one or both shares. Use Question Options to choose which to ask for." },
+      { label: "Known Amounts",      detail: "One person's share is given — find the total or the other person's share." },
+      { label: "Given Difference",   detail: "The difference between the two shares is given — find a share or the total." },
+      { label: "Mixed",              detail: "Random mix of all three types. Use Question Options to choose which types to include." },
+    ],
+  },
+  {
+    title: "Methods", icon: "📐",
+    content: [
+      { label: "Bar Model (default)", detail: "Proportional bar diagram shown at Level 1 & 2. Toggle 'Numerical method' in Question Options to switch to the algebraic method." },
+      { label: "Numerical method",    detail: "Algebraic step-by-step solution. Always used at Level 3 regardless of the toggle." },
+    ],
+  },
+  {
+    title: "Modes", icon: "🖥️",
+    content: [
+      { label: "Whiteboard",     detail: "Single large question for whole-class discussion." },
+      { label: "Worked Example", detail: "Step-by-step solution shown below the question." },
+      { label: "Worksheet",      detail: "Grid of questions. Use Differentiated to show all three levels side by side." },
+    ],
+  },
+];
+
+// ── 9. Sharing generator ──────────────────────────────────────────────────────
+
+const generateSharingQuestion = (
+  level: DifficultyLevel, questionType: string, variables: Record<string, boolean>,
+): WordedQuestion => {
+  const useBar = level !== "level3" && !(variables["numerical"] ?? false);
+
+  for (let att = 0; att < 200; att++) {
+    const names = twoNames();
+    let parts: number[] = [];
+    let total = 0;
+    let ratioSum = 0;
+
+    if (level === "level1") {
+      parts = pick([[1,2],[1,3],[1,4],[1,5],[1,6],[2,3],[2,5],[3,4]]);
+      if (Math.random() < 0.5) parts = [parts[1], parts[0]];
+      ratioSum = parts[0] + parts[1];
+      const mult = randInt(2, 12);
+      total = ratioSum * mult;
+      if (total > 64) continue;
+    } else if (level === "level2") {
+      const a = randInt(1, 11), b = randInt(1, 11);
+      if (!isCoprime(a, b) || a === b) continue;
+      parts = [a, b]; ratioSum = a + b;
+      if (ratioSum < 5 || ratioSum > 12) continue;
+      const mult = randInt(2, 12);
+      total = ratioSum * mult;
+      if (Math.max(a, b) * mult > 144) continue;
+      if (total < 60) continue;
     } else {
-      return [
-        { type: 'barModelEmpty', bars: ratioParts.map((parts: number, idx: number) => ({ person: names[idx], boxes: parts })) },
-        { type: 'totalParts', sum: ratioSum },
-        { type: 'partValue', total: total, sum: ratioSum, value: partValue },
-        { type: 'barModelFilled', bars: ratioParts.map((parts: number, idx: number) => ({ person: names[idx], boxes: parts, value: partValue, total: shares[idx] })) }
-      ];
-    }
-  };
-
-  const generateSharingQuestion = (diff: string): QuestionType => {
-    let attempts = 0;
-    const maxAttempts = 100;
-
-    while (attempts < maxAttempts) {
-      attempts++;
-
-      const names = getRandomNames(2);
-      let ratioParts: number[] = [];
-      let total = 0, ratioSum = 0, partValue = 0;
-
-      if (diff === 'level1') {
-        const options = [[1,2], [1,3], [1,4], [2,3], [3,4]];
-        ratioParts = randomChoice(options);
-        ratioSum = ratioParts.reduce((a: number, b: number) => a + b, 0);
-        const multiplier = randomInt(10, 20);
-        total = ratioSum * multiplier;
-      } else if (diff === 'level2') {
-        ratioParts = [randomInt(1, 6), randomInt(1, 6)];
-        ratioSum = ratioParts.reduce((a: number, b: number) => a + b, 0);
-        if (ratioSum < 5 || ratioSum > 15) continue;
-        const multiplier = randomInt(8, 15);
-        total = ratioSum * multiplier;
-      } else {
-        ratioParts = [randomInt(3, 9), randomInt(3, 9)];
-        ratioSum = ratioParts.reduce((a: number, b: number) => a + b, 0);
-        if (ratioSum < 8 || ratioSum > 25) continue;
-        
-        if (Math.random() < 0.8) {
-          const multiplier = randomInt(10, 30);
-          total = ratioSum * multiplier;
-        } else {
-          const multiplier = randomInt(10, 30) + 0.5;
-          total = ratioSum * multiplier;
-        }
-      }
-
-      const allEqual = ratioParts.every((p: number) => p === ratioParts[0]);
-      if (allEqual) continue;
-
-      const ratioHCF = findHCF(ratioParts);
-      if (ratioHCF > 1) continue;
-
-      partValue = total / ratioSum;
-      const shares = ratioParts.map((p: number) => p * partValue);
-
-      if (total < 20 || total > 500) continue;
-
-      let actualQuestionType = shareQuestionType;
-      if (shareQuestionType === 'mixed') {
-        actualQuestionType = randomChoice(['personA', 'personB', 'both']);
-      }
-
-      const displayText = `${names[0]} and ${names[1]} share ${formatCurrency(total)} in the ratio ${ratioParts.join(':')}.${
-            actualQuestionType === 'personA' ? ` What is ${names[0]}'s share?` :
-            actualQuestionType === 'personB' ? ` What is ${names[1]}'s share?` :
-            ' Find both shares.'
-          }`;
-
-      let answerText = '';
-      if (actualQuestionType === 'personA') {
-        answerText = `${names[0]}: ${formatCurrency(shares[0])}`;
-      } else if (actualQuestionType === 'personB') {
-        answerText = `${names[1]}: ${formatCurrency(shares[1])}`;
-      } else {
-        answerText = shares.map((s: number, i: number) => `${names[i]}: ${formatCurrency(s)}`).join(', ');
-      }
-
-      return {
-        display: displayText,
-        answer: answerText,
-        ratio: ratioParts.join(':'),
-        ratioParts: ratioParts,
-        total: total,
-        ratioSum: ratioSum,
-        partValue: partValue,
-        shares: shares,
-        questionType: actualQuestionType,
-        working: generateSharingWorking(ratioParts, total, ratioSum, partValue, shares, names, diff === 'level3' ? true : useAlgebraicMethod),
-        names: names,
-        difficulty: diff
-      };
+      const a = randInt(3, 9), b = randInt(3, 9);
+      if (!isCoprime(a, b) || a === b) continue;
+      parts = [a, b]; ratioSum = a + b;
+      if (ratioSum < 8 || ratioSum > 25) continue;
+      total = ratioSum * (Math.random() < 0.7 ? randInt(10, 30) : randInt(10, 30) + 0.5);
     }
 
-    const fallbackNames = getRandomNames(2);
+    if (parts.length < 2 || parts[0] === parts[1]) continue;
+    if (!isCoprime(parts[0], parts[1])) continue;
+    if (total < 10 || total > 500) continue;
+
+    const partValue = total / ratioSum;
+    const shares = parts.map(p => p * partValue);
+
+    const qLine =
+      questionType === "personA" ? `How much does ${names[0]} receive?` :
+      questionType === "personB" ? `How much does ${names[1]} receive?` :
+      "Find both shares.";
+
+    const answer =
+      questionType === "personA" ? `${names[0]}: ${fp(shares[0])}` :
+      questionType === "personB" ? `${names[1]}: ${fp(shares[1])}` :
+      `${names[0]}: ${fp(shares[0])}, ${names[1]}: ${fp(shares[1])}`;
+
+    const working: WorkingStep[] = useBar
+      ? sharingBarSteps(parts, total, ratioSum, partValue, shares, names)
+      : [
+          mStep("Total parts:", `${parts.join(" + ")} = ${ratioSum}`),
+          mStep("1 part =", `${fc(total)} \\div ${ratioSum} = ${fc(partValue)}`),
+          ...(questionType === "personA"
+            ? [mStep(`${names[0]}'s share:`, `${parts[0]} \\times ${fc(partValue)} = ${fc(shares[0])}`)]
+            : questionType === "personB"
+            ? [mStep(`${names[1]}'s share:`, `${parts[1]} \\times ${fc(partValue)} = ${fc(shares[1])}`)]
+            : [
+                mStep(`${names[0]}:`, `${parts[0]} \\times ${fc(partValue)} = ${fc(shares[0])}`),
+                mStep(`${names[1]}:`, `${parts[1]} \\times ${fc(partValue)} = ${fc(shares[1])}`),
+              ]),
+        ];
+
+    const id = Math.floor(Math.random() * 1_000_000);
     return {
-      display: `${fallbackNames[0]} and ${fallbackNames[1]} share £90 in the ratio 1:2. What is ${fallbackNames[0]}'s share?`,
-      answer: `${fallbackNames[0]}: £30`,
-      ratio: '1:2',
-      ratioParts: [1, 2],
-      total: 90,
-      ratioSum: 3,
-      partValue: 30,
-      shares: [30, 60],
-      questionType: 'personA',
-      working: generateSharingWorking([1, 2], 90, 3, 30, [30, 60], fallbackNames, diff === 'level3' ? true : useAlgebraicMethod),
-      names: fallbackNames,
-      difficulty: diff
+      kind: "worded",
+      lines: [
+        `${names[0]} and ${names[1]} share £${fmtAmt(total)} in the ratio ${mStr(parts.join(":"))}`,
+        qLine,
+      ],
+      answer, working,
+      key: `ratio-sharing-${level}-${parts.join("_")}-${total}-${questionType}-${id}`,
+      difficulty: level,
     };
-  };
+  }
 
-  const generateKnownAmountsWorking = (ratioParts: number[], knownAmount: number, knownPerson: number, partValue: number, shares: number[], total: number, questionType: string, names: string[], useBarModel = true): any[] => {
-    if (useBarModel) {
-      const steps = [];
-      const otherPerson = knownPerson === 0 ? 1 : 0;
-      
-      steps.push({
-        type: 'barModelKnown',
-        bars: [
-          { person: names[0], boxes: ratioParts[0], isKnown: knownPerson === 0, knownAmount: knownPerson === 0 ? knownAmount : null },
-          { person: names[1], boxes: ratioParts[1], isKnown: knownPerson === 1, knownAmount: knownPerson === 1 ? knownAmount : null }
-        ]
-      });
-
-      steps.push({
-        type: 'identifyRatioPart',
-        knownPerson: names[knownPerson],
-        ratioPart: ratioParts[knownPerson]
-      });
-
-      steps.push({
-        type: 'calculatePartValue',
-        knownAmount: knownAmount,
-        ratioPart: ratioParts[knownPerson],
-        partValue: partValue
-      });
-
-      steps.push({
-        type: 'barModelFilled',
-        bars: [
-          { person: names[0], boxes: ratioParts[0], value: partValue, total: shares[0] },
-          { person: names[1], boxes: ratioParts[1], value: partValue, total: shares[1] }
-        ]
-      });
-
-      if (questionType === 'total') {
-        steps.push({
-          type: 'calculateTotalFromBar',
-          shares: shares,
-          total: total,
-          names: names
-        });
-      } else if (questionType === 'other') {
-        steps.push({
-          type: 'readOtherFromBar',
-          otherPerson: names[otherPerson],
-          share: shares[otherPerson]
-        });
-      }
-
-      return steps;
-    } else {
-      const steps = [];
-      
-      steps.push({
-        type: 'showGiven',
-        knownPerson: names[knownPerson],
-        knownAmount: knownAmount,
-        ratio: ratioParts.join(':'),
-        names: names
-      });
-
-      steps.push({
-        type: 'identifyRatioPart',
-        knownPerson: names[knownPerson],
-        ratioPart: ratioParts[knownPerson]
-      });
-
-      steps.push({
-        type: 'calculatePartValue',
-        knownAmount: knownAmount,
-        ratioPart: ratioParts[knownPerson],
-        partValue: partValue
-      });
-
-      if (questionType === 'total') {
-        steps.push({
-          type: 'calculateTotal',
-          parts: ratioParts,
-          names: names,
-          partValue: partValue,
-          shares: shares,
-          total: total
-        });
-      } else if (questionType === 'other') {
-        const otherPerson = knownPerson === 0 ? 1 : 0;
-        steps.push({
-          type: 'calculateOther',
-          otherPerson: names[otherPerson],
-          ratioPart: ratioParts[otherPerson],
-          partValue: partValue,
-          share: shares[otherPerson]
-        });
-      }
-
-      return steps;
-    }
-  };
-
-  const generateKnownAmountsQuestion = (diff: string): QuestionType => {
-    let attempts = 0;
-    const maxAttempts = 100;
-
-    while (attempts < maxAttempts) {
-      attempts++;
-
-      const names = getRandomNames(2);
-      let ratioParts: number[] = [];
-      let partValue = 0;
-      let knownPerson = 0;
-
-      if (diff === 'level1') {
-        const options = [[1,2], [1,3], [2,3], [1,4], [3,4], [1,5], [2,5], [3,5], [4,5]];
-        ratioParts = randomChoice(options);
-        knownPerson = Math.random() < 0.5 ? 0 : 1;
-        partValue = randomInt(2, 10);
-      } else if (diff === 'level2') {
-        ratioParts = [randomInt(1, 7), randomInt(1, 7)];
-        if (findHCF(ratioParts) > 1) continue;
-        
-        if (ratioParts[0] === 1 && ratioParts[1] === 1) continue;
-        if (ratioParts[0] === 1) {
-          knownPerson = 1;
-        } else if (ratioParts[1] === 1) {
-          knownPerson = 0;
-        } else {
-          knownPerson = Math.random() < 0.5 ? 0 : 1;
-        }
-        
-        partValue = randomInt(5, 25);
-      } else {
-        ratioParts = [randomInt(5, 15), randomInt(5, 15)];
-        if (findHCF(ratioParts) > 1) continue;
-        if (Math.abs(ratioParts[0] - ratioParts[1]) < 2) continue;
-        knownPerson = Math.random() < 0.5 ? 0 : 1;
-        partValue = randomInt(3, 20);
-      }
-
-      const allEqual = ratioParts.every((p: number) => p === ratioParts[0]);
-      if (allEqual) continue;
-
-      const knownAmount = ratioParts[knownPerson] * partValue;
-      
-      const shares = ratioParts.map((p: number) => p * partValue);
-      const total = shares.reduce((a: number, b: number) => a + b, 0);
-
-      if (diff === 'level1') {
-        if (knownAmount >= 50 || total >= 50) continue;
-      }
-
-      if (knownAmount < 10 || knownAmount > 400) continue;
-      if (total < 20 || total > 600) continue;
-
-      let actualQuestionType = knownAmountsQuestionType;
-      if (knownAmountsQuestionType === 'mixed') {
-        actualQuestionType = randomChoice(['total', 'other']);
-      }
-
-      const otherPerson = knownPerson === 0 ? 1 : 0;
-      
-      let displayText = `${names[0]} and ${names[1]} share money in the ratio ${ratioParts.join(':')}. `;
-      displayText += `${names[knownPerson]} receives ${formatCurrency(knownAmount)}. `;
-      
-      if (actualQuestionType === 'total') {
-        displayText += `What is the total amount shared?`;
-      } else if (actualQuestionType === 'other') {
-        displayText += `How much does ${names[otherPerson]} receive?`;
-      }
-
-      let answerText = '';
-      if (actualQuestionType === 'total') {
-        answerText = `Total: ${formatCurrency(total)}`;
-      } else if (actualQuestionType === 'other') {
-        answerText = `${names[otherPerson]}: ${formatCurrency(shares[otherPerson])}`;
-      }
-
-      const shouldUseBarModel = diff !== 'level3' && !useNumericalMethod;
-
-      return {
-        display: displayText,
-        answer: answerText,
-        ratio: ratioParts.join(':'),
-        ratioParts: ratioParts,
-        knownAmount: knownAmount,
-        knownPerson: knownPerson,
-        partValue: partValue,
-        shares: shares,
-        total: total,
-        questionType: actualQuestionType,
-        working: generateKnownAmountsWorking(ratioParts, knownAmount, knownPerson, partValue, shares, total, actualQuestionType, names, shouldUseBarModel),
-        names: names,
-        difficulty: diff
-      };
-    }
-
-    const fallbackNames = getRandomNames(2);
-    const shouldUseBarModel = diff !== 'level3' && !useNumericalMethod;
-    return {
-      display: `${fallbackNames[0]} and ${fallbackNames[1]} share money in the ratio 2:3. ${fallbackNames[0]} receives £40. What is the total amount shared?`,
-      answer: 'Total: £100',
-      ratio: '2:3',
-      ratioParts: [2, 3],
-      knownAmount: 40,
-      knownPerson: 0,
-      partValue: 20,
-      shares: [40, 60],
-      total: 100,
-      questionType: 'total',
-      working: generateKnownAmountsWorking([2, 3], 40, 0, 20, [40, 60], 100, 'total', fallbackNames, shouldUseBarModel),
-      names: fallbackNames,
-      difficulty: diff
-    };
-  };
-
-  const generateDifferenceWorking = (ratioParts: number[], difference: number, largerPerson: number, partValue: number, shares: number[], total: number, questionType: string, names: string[], useBarModel = true): any[] => {
-    if (useBarModel) {
-      const steps = [];
-      
-      steps.push({
-        type: 'barModelDifference',
-        bars: [
-          { person: names[0], boxes: ratioParts[0] },
-          { person: names[1], boxes: ratioParts[1] }
+  const fb = twoNames();
+  return {
+    kind: "worded",
+    lines: [`${fb[0]} and ${fb[1]} share £90 in the ratio ${mStr("1:2")}`, "Find both shares."],
+    answer: `${fb[0]}: £30, ${fb[1]}: £60`,
+    working: useBar
+      ? sharingBarSteps([1, 2], 90, 3, 30, [30, 60], fb)
+      : [
+          mStep("Total parts:", "1 + 2 = 3"),
+          mStep("1 part =", "\\pounds 90 \\div 3 = \\pounds 30"),
+          mStep(`${fb[0]}:`, "1 \\times \\pounds 30 = \\pounds 30"),
+          mStep(`${fb[1]}:`, "2 \\times \\pounds 30 = \\pounds 60"),
         ],
-        difference: difference,
-        largerPerson: largerPerson
-      });
-
-      steps.push({
-        type: 'identifyDifferenceParts',
-        difference: difference,
-        partDifference: Math.abs(ratioParts[1] - ratioParts[0])
-      });
-
-      steps.push({
-        type: 'calculatePartValueFromDifference',
-        difference: difference,
-        partDifference: Math.abs(ratioParts[1] - ratioParts[0]),
-        partValue: partValue
-      });
-
-      steps.push({
-        type: 'barModelFilled',
-        bars: [
-          { person: names[0], boxes: ratioParts[0], value: partValue, total: shares[0] },
-          { person: names[1], boxes: ratioParts[1], value: partValue, total: shares[1] }
-        ]
-      });
-
-      if (questionType === 'total') {
-        steps.push({
-          type: 'calculateTotalFromBar',
-          shares: shares,
-          total: total,
-          names: names
-        });
-      } else if (questionType === 'personA') {
-        steps.push({
-          type: 'readPersonAFromBar',
-          person: names[0],
-          share: shares[0]
-        });
-      } else if (questionType === 'personB') {
-        steps.push({
-          type: 'readPersonBFromBar',
-          person: names[1],
-          share: shares[1]
-        });
-      }
-
-      return steps;
-    } else {
-      const steps = [];
-      
-      steps.push({
-        type: 'showGivenDifference',
-        names: names,
-        ratio: ratioParts.join(':'),
-        difference: difference,
-        largerPerson: largerPerson
-      });
-
-      steps.push({
-        type: 'identifyDifferenceParts',
-        difference: difference,
-        partDifference: Math.abs(ratioParts[1] - ratioParts[0])
-      });
-
-      steps.push({
-        type: 'calculatePartValueFromDifference',
-        difference: difference,
-        partDifference: Math.abs(ratioParts[1] - ratioParts[0]),
-        partValue: partValue
-      });
-
-      if (questionType === 'total') {
-        steps.push({
-          type: 'calculateTotal',
-          parts: ratioParts,
-          names: names,
-          partValue: partValue,
-          shares: shares,
-          total: total
-        });
-      } else if (questionType === 'personA') {
-        steps.push({
-          type: 'calculatePersonA',
-          person: names[0],
-          ratioPart: ratioParts[0],
-          partValue: partValue,
-          share: shares[0]
-        });
-      } else if (questionType === 'personB') {
-        steps.push({
-          type: 'calculatePersonB',
-          person: names[1],
-          ratioPart: ratioParts[1],
-          partValue: partValue,
-          share: shares[1]
-        });
-      }
-
-      return steps;
-    }
+    key: `ratio-sharing-fallback-${Math.floor(Math.random() * 1_000_000)}`,
+    difficulty: level,
   };
+};
 
-  const generateDifferenceQuestion = (diff: string): QuestionType => {
-    let attempts = 0;
-    const maxAttempts = 100;
+// ── 10. Known Amounts generator ───────────────────────────────────────────────
 
-    while (attempts < maxAttempts) {
-      attempts++;
+const generateKnownAmountsQuestion = (
+  level: DifficultyLevel, questionType: string, variables: Record<string, boolean>,
+): WordedQuestion => {
+  const useBar = level !== "level3" && !(variables["numerical"] ?? false);
 
-      const names = getRandomNames(2);
-      let ratioParts: number[] = [];
-      let partValue = 0;
+  for (let att = 0; att < 200; att++) {
+    const names = twoNames();
+    let parts: number[] = [];
+    let partValue = 0;
+    let knownPerson = 0;
 
-      if (diff === 'level1') {
-        const options = [[1,2], [1,3], [2,3], [1,4], [3,4], [2,5], [3,5]];
-        ratioParts = randomChoice(options);
-        partValue = randomInt(3, 12);
-      } else if (diff === 'level2') {
-        ratioParts = [randomInt(1, 8), randomInt(1, 8)];
-        if (findHCF(ratioParts) > 1) continue;
-        if (Math.abs(ratioParts[0] - ratioParts[1]) < 1) continue;
-        partValue = randomInt(5, 20);
-      } else {
-        ratioParts = [randomInt(3, 12), randomInt(3, 12)];
-        if (findHCF(ratioParts) > 1) continue;
-        if (Math.abs(ratioParts[0] - ratioParts[1]) < 2) continue;
-        partValue = randomInt(4, 25);
-      }
-
-      const allEqual = ratioParts.every((p: number) => p === ratioParts[0]);
-      if (allEqual) continue;
-
-      const shares = ratioParts.map((p: number) => p * partValue);
-      const difference = Math.abs(shares[1] - shares[0]);
-      const total = shares.reduce((a: number, b: number) => a + b, 0);
-      const largerPerson = shares[0] > shares[1] ? 0 : 1;
-
-      if (diff === 'level1') {
-        if (difference >= 50 || total >= 100) continue;
-      }
-
-      if (difference < 5 || difference > 400) continue;
-      if (total < 20 || total > 700) continue;
-
-      let actualQuestionType = differenceQuestionType;
-      if (differenceQuestionType === 'mixed') {
-        actualQuestionType = randomChoice(['total', 'personA', 'personB']);
-      }
-
-      const smallerPerson = largerPerson === 0 ? 1 : 0;
-      
-      const wordingStyle = randomInt(1, 3);
-      let comparisonText;
-      
-      if (wordingStyle === 1) {
-        comparisonText = `${names[largerPerson]} receives ${formatCurrency(difference)} more than ${names[smallerPerson]}`;
-      } else if (wordingStyle === 2) {
-        comparisonText = `${names[smallerPerson]} receives ${formatCurrency(difference)} less than ${names[largerPerson]}`;
-      } else {
-        comparisonText = `The difference in amounts is ${formatCurrency(difference)}`;
-      }
-      
-      let displayText = `${names[0]} and ${names[1]} share money in the ratio ${ratioParts.join(':')}. `;
-      displayText += `${comparisonText}. `;
-      
-      if (actualQuestionType === 'total') {
-        displayText += `What is the total amount shared?`;
-      } else if (actualQuestionType === 'personA') {
-        displayText += `How much does ${names[0]} receive?`;
-      } else if (actualQuestionType === 'personB') {
-        displayText += `How much does ${names[1]} receive?`;
-      }
-
-      let answerText = '';
-      if (actualQuestionType === 'total') {
-        answerText = `Total: ${formatCurrency(total)}`;
-      } else if (actualQuestionType === 'personA') {
-        answerText = `${names[0]}: ${formatCurrency(shares[0])}`;
-      } else if (actualQuestionType === 'personB') {
-        answerText = `${names[1]}: ${formatCurrency(shares[1])}`;
-      }
-
-      const shouldUseBarModel = diff !== 'level3' && !useDifferenceNumericalMethod;
-
-      return {
-        display: displayText,
-        answer: answerText,
-        ratio: ratioParts.join(':'),
-        ratioParts: ratioParts,
-        difference: difference,
-        largerPerson: largerPerson,
-        partValue: partValue,
-        shares: shares,
-        total: total,
-        questionType: actualQuestionType,
-        working: generateDifferenceWorking(ratioParts, difference, largerPerson, partValue, shares, total, actualQuestionType, names, shouldUseBarModel),
-        names: names,
-        difficulty: diff
-      };
+    if (level === "level1") {
+      const a = randInt(1, 6), b = randInt(1, 6);
+      if (!isCoprime(a, b) || a === b) continue;
+      parts = [a, b];
+      const rs = a + b;
+      if (rs < 2 || rs > 7) continue;
+      partValue = randInt(1, Math.floor(64 / rs));
+      if (rs * partValue < 2 || rs * partValue > 64) continue;
+      knownPerson = Math.random() < 0.5 ? 0 : 1;
+    } else if (level === "level2") {
+      const a = randInt(1, 11), b = randInt(1, 11);
+      if (!isCoprime(a, b) || a === b) continue;
+      parts = [a, b];
+      const rs = a + b;
+      if (rs < 5 || rs > 12) continue;
+      const lo = Math.ceil(60 / rs), hi = Math.floor(144 / rs);
+      if (lo > hi) continue;
+      partValue = randInt(lo, hi);
+      const t = rs * partValue;
+      if (t < 60 || t > 144) continue;
+      knownPerson = Math.random() < 0.5 ? 0 : 1;
+    } else {
+      const a = randInt(2, 12), b = randInt(2, 12);
+      if (!isCoprime(a, b) || a === b) continue;
+      parts = [a, b];
+      const rs = a + b;
+      if (rs < 10 || rs > 20) continue;
+      const lo = Math.ceil(40 / rs), hi = Math.floor(600 / rs);
+      if (lo > hi) continue;
+      partValue = randInt(lo, hi);
+      const t = rs * partValue;
+      if (t < 40 || t > 600) continue;
+      knownPerson = Math.random() < 0.5 ? 0 : 1;
     }
 
-    const fallbackNames = getRandomNames(2);
-    const shouldUseBarModel = diff !== 'level3' && !useDifferenceNumericalMethod;
+    const knownAmount = parts[knownPerson] * partValue;
+    const shares = parts.map(p => p * partValue);
+    const total = shares[0] + shares[1];
+    const other = knownPerson === 0 ? 1 : 0;
+
+    if (knownAmount < 1 || knownAmount > 400) continue;
+    if (total < 2 || total > 600) continue;
+
+    const qLine = questionType === "total"
+      ? "What is the total amount shared?"
+      : `How much does ${names[other]} receive?`;
+
+    const answer = questionType === "total"
+      ? `Total: ${fp(total)}`
+      : `${names[other]}: ${fp(shares[other])}`;
+
+    const working: WorkingStep[] = useBar
+      ? knownBarSteps(parts, knownAmount, knownPerson, partValue, shares, total, questionType, names)
+      : [
+          mStep(`${names[knownPerson]} has ${parts[knownPerson]} part${parts[knownPerson] !== 1 ? "s" : ""}:`, fc(knownAmount)),
+          mStep("1 part =", `${fc(knownAmount)} \\div ${parts[knownPerson]} = ${fc(partValue)}`),
+          ...(questionType === "total"
+            ? [
+                mStep("Total parts:", `${parts.join(" + ")} = ${parts[0] + parts[1]}`),
+                mStep("Total =", `${parts[0] + parts[1]} \\times ${fc(partValue)} = ${fc(total)}`),
+              ]
+            : [mStep(`${names[other]}'s share:`, `${parts[other]} \\times ${fc(partValue)} = ${fc(shares[other])}`)]),
+        ];
+
+    const id = Math.floor(Math.random() * 1_000_000);
     return {
-      display: `${fallbackNames[0]} and ${fallbackNames[1]} share money in the ratio 2:3. The difference in amounts is £20. What is the total amount shared?`,
-      answer: 'Total: £100',
-      ratio: '2:3',
-      ratioParts: [2, 3],
-      difference: 20,
-      largerPerson: 1,
-      partValue: 20,
-      shares: [40, 60],
-      total: 100,
-      questionType: 'total',
-      working: generateDifferenceWorking([2, 3], 20, 1, 20, [40, 60], 100, 'total', fallbackNames, shouldUseBarModel),
-      names: fallbackNames,
-      difficulty: diff
+      kind: "worded",
+      lines: [
+        `${names[0]} and ${names[1]} share money in the ratio ${mStr(parts.join(":"))}`,
+        `${names[knownPerson]} receives £${fmtAmt(knownAmount)}`,
+        qLine,
+      ],
+      answer, working,
+      key: `ratio-known-${level}-${parts.join("_")}-${knownAmount}-${knownPerson}-${questionType}-${id}`,
+      difficulty: level,
     };
-  };
+  }
 
-  const generateMixedSharingQuestion = (level: string): QuestionType => {
-    const questionTypes = ['sharing', 'known', 'difference'];
-    const selectedType = randomChoice(questionTypes);
-    
-    let question: QuestionType;
-    
-    if (selectedType === 'sharing') {
-      question = generateSharingQuestion(level);
-      question.mixedType = 'sharing';
-    } else if (selectedType === 'known') {
-      question = generateKnownAmountsQuestion(level);
-      question.mixedType = 'known';
+  const fb = twoNames();
+  return {
+    kind: "worded",
+    lines: [
+      `${fb[0]} and ${fb[1]} share money in the ratio ${mStr("2:3")}`,
+      `${fb[0]} receives £40`,
+      "What is the total amount shared?",
+    ],
+    answer: "Total: £100",
+    working: useBar
+      ? knownBarSteps([2, 3], 40, 0, 20, [40, 60], 100, "total", fb)
+      : [
+          mStep(`${fb[0]} has 2 parts:`, "\\pounds 40"),
+          mStep("1 part =", "\\pounds 40 \\div 2 = \\pounds 20"),
+          mStep("Total parts:", "2 + 3 = 5"),
+          mStep("Total =", "5 \\times \\pounds 20 = \\pounds 100"),
+        ],
+    key: `ratio-known-fallback-${Math.floor(Math.random() * 1_000_000)}`,
+    difficulty: level,
+  };
+};
+
+// ── 11. Given Difference generator ───────────────────────────────────────────
+
+const generateDifferenceQuestion = (
+  level: DifficultyLevel, questionType: string, variables: Record<string, boolean>,
+): WordedQuestion => {
+  const useBar = level !== "level3" && !(variables["numerical"] ?? false);
+
+  for (let att = 0; att < 200; att++) {
+    const names = twoNames();
+    let parts: number[] = [];
+    let partValue = 0;
+
+    if (level === "level1") {
+      const a = randInt(1, 6), b = randInt(1, 6);
+      if (!isCoprime(a, b) || a === b) continue;
+      parts = [a, b];
+      const rs = a + b;
+      if (rs < 2 || rs > 7) continue;
+      partValue = randInt(1, Math.floor(64 / rs));
+      if (rs * partValue < 2 || rs * partValue > 64) continue;
+    } else if (level === "level2") {
+      const a = randInt(1, 11), b = randInt(1, 11);
+      if (!isCoprime(a, b) || a === b) continue;
+      parts = [a, b];
+      const rs = a + b;
+      if (rs < 5 || rs > 12) continue;
+      const lo = Math.ceil(60 / rs), hi = Math.floor(144 / rs);
+      if (lo > hi) continue;
+      partValue = randInt(lo, hi);
+      const t = rs * partValue;
+      if (t < 60 || t > 144) continue;
     } else {
-      question = generateDifferenceQuestion(level);
-      question.mixedType = 'difference';
+      const a = randInt(2, 12), b = randInt(2, 12);
+      if (!isCoprime(a, b) || a === b) continue;
+      parts = [a, b];
+      const rs = a + b;
+      if (rs < 10 || rs > 20) continue;
+      const lo = Math.ceil(40 / rs), hi = Math.floor(600 / rs);
+      if (lo > hi) continue;
+      partValue = randInt(lo, hi);
+      const t = rs * partValue;
+      if (t < 40 || t > 600) continue;
     }
-    
-    return question;
-  };
 
-  const generateQuestion = (level: string): QuestionType => {
-    if (topic === 'sharing') {
-      return generateSharingQuestion(level);
-    } else if (topic === 'known') {
-      return generateKnownAmountsQuestion(level);
-    } else if (topic === 'difference') {
-      return generateDifferenceQuestion(level);
-    } else {
-      return generateMixedSharingQuestion(level);
-    }
-  };
+    if (Math.abs(parts[0] - parts[1]) < 1) continue;
 
-  const handleNewQuestion = (): void => {
-    setQuestion(generateQuestion(difficulty));
-    setShowAnswer(false);
-    setShowWhiteboardAnswer(false);
-  };
+    const shares = parts.map(p => p * partValue);
+    const difference = Math.abs(shares[1] - shares[0]);
+    const total = shares[0] + shares[1];
+    const largerPerson = shares[0] > shares[1] ? 0 : 1;
+    const smallerPerson = largerPerson === 0 ? 1 : 0;
+    const partDiff = Math.abs(parts[1] - parts[0]);
 
-  const handleGenerateWorksheet = (): void => {
-    const questions: QuestionType[] = [];
-    const usedKeys = new Set();
-    
-    const generateUniqueQuestion = (level: string): QuestionType => {
-      let attempts = 0;
-      const maxAttempts = 100;
-      
-      while (attempts < maxAttempts) {
-        const q = generateQuestion(level);
-        const uniqueKey = q.display;
-        
-        if (!usedKeys.has(uniqueKey)) {
-          usedKeys.add(uniqueKey);
-          return q;
-        }
-        
-        attempts++;
-      }
-      
-      return generateQuestion(level);
+    if (difference < 1) continue;
+
+    const style = randInt(1, 3);
+    const compLine =
+      style === 1 ? `${names[largerPerson]} receives £${fmtAmt(difference)} more than ${names[smallerPerson]}` :
+      style === 2 ? `${names[smallerPerson]} receives £${fmtAmt(difference)} less than ${names[largerPerson]}` :
+      `The difference in their amounts is £${fmtAmt(difference)}`;
+
+    const qLine =
+      questionType === "total"   ? "What is the total amount shared?" :
+      questionType === "personA" ? `How much does ${names[0]} receive?` :
+                                   `How much does ${names[1]} receive?`;
+
+    const answer =
+      questionType === "total"   ? `Total: ${fp(total)}` :
+      questionType === "personA" ? `${names[0]}: ${fp(shares[0])}` :
+                                   `${names[1]}: ${fp(shares[1])}`;
+
+    const ratioSum = parts[0] + parts[1];
+    const working: WorkingStep[] = useBar
+      ? diffBarSteps(parts, difference, largerPerson, partValue, shares, total, questionType, names)
+      : [
+          mStep(`Difference = ${partDiff} part${partDiff !== 1 ? "s" : ""}:`, fc(difference)),
+          mStep("1 part =", `${fc(difference)} \\div ${partDiff} = ${fc(partValue)}`),
+          ...(questionType === "total"
+            ? [
+                mStep("Total parts:", `${parts.join(" + ")} = ${ratioSum}`),
+                mStep("Total =", `${ratioSum} \\times ${fc(partValue)} = ${fc(total)}`),
+              ]
+            : questionType === "personA"
+            ? [mStep(`${names[0]}'s share:`, `${parts[0]} \\times ${fc(partValue)} = ${fc(shares[0])}`)]
+            : [mStep(`${names[1]}'s share:`, `${parts[1]} \\times ${fc(partValue)} = ${fc(shares[1])}`)]),
+        ];
+
+    const id = Math.floor(Math.random() * 1_000_000);
+    return {
+      kind: "worded",
+      lines: [
+        `${names[0]} and ${names[1]} share money in the ratio ${mStr(parts.join(":"))}`,
+        compLine,
+        qLine,
+      ],
+      answer, working,
+      key: `ratio-diff-${level}-${parts.join("_")}-${difference}-${questionType}-${id}`,
+      difficulty: level,
     };
-    
-    if (isDifferentiated) {
-      ['level1', 'level2', 'level3'].forEach(lvl => {
-        for (let i = 0; i < numQuestions; i++) {
-          questions.push({ ...generateUniqueQuestion(lvl), difficulty: lvl });
-        }
-      });
-    } else {
-      for (let i = 0; i < numQuestions; i++) {
-        questions.push({ ...generateUniqueQuestion(difficulty), difficulty });
-      }
-    }
-    
-    setWorksheet(questions);
-    setShowWorksheetAnswers(false);
+  }
+
+  const fb = twoNames();
+  return {
+    kind: "worded",
+    lines: [
+      `${fb[0]} and ${fb[1]} share money in the ratio ${mStr("2:3")}`,
+      `The difference in their amounts is £20`,
+      "What is the total amount shared?",
+    ],
+    answer: "Total: £100",
+    working: useBar
+      ? diffBarSteps([2, 3], 20, 1, 20, [40, 60], 100, "total", fb)
+      : [
+          mStep("Difference = 1 part:", "\\pounds 20"),
+          mStep("1 part =", "\\pounds 20 \\div 1 = \\pounds 20"),
+          mStep("Total parts:", "2 + 3 = 5"),
+          mStep("Total =", "5 \\times \\pounds 20 = \\pounds 100"),
+        ],
+    key: `ratio-diff-fallback-${Math.floor(Math.random() * 1_000_000)}`,
+    difficulty: level,
   };
+};
 
-  useEffect(() => {
-    if ((mode === 'single' || mode === 'whiteboard') && !question) {
-      handleNewQuestion();
-    }
-  }, [mode]);
+// ── 12. Mixed generator ───────────────────────────────────────────────────────
 
-  useEffect(() => {
-    if ((mode === 'single' || mode === 'whiteboard') && question) {
-      handleNewQuestion();
-    }
-  }, [difficulty, topic]);
+const generateMixedQuestion = (
+  level: DifficultyLevel, variables: Record<string, boolean>, multiSelectValues: Record<string, boolean>,
+): WordedQuestion => {
+  const subTool = pickActive(multiSelectValues, MIXED_OPTIONS);
+  if (subTool === "sharing")    return generateSharingQuestion(level, pick(["personA","personB","both"]), variables);
+  if (subTool === "known")      return generateKnownAmountsQuestion(level, pick(["total","other"]), variables);
+  return generateDifferenceQuestion(level, pick(["total","personA","personB"]), variables);
+};
 
-  useEffect(() => {
-    if (mode === 'single' && question && (topic === 'sharing' || topic === 'known' || topic === 'difference' || topic === 'mixed')) {
-      handleNewQuestion();
-    }
-  }, [shareQuestionType, useAlgebraicMethod, knownAmountsQuestionType, useNumericalMethod, differenceQuestionType, useDifferenceNumericalMethod]);
+// ── 13. generateQuestion ──────────────────────────────────────────────────────
 
-  const renderStep = (step: any, idx: number): JSX.Element => {
+const generateQuestion = (
+  tool: string,
+  level: DifficultyLevel,
+  variables: Record<string, boolean>,
+  _dropdownValue: string,
+  multiSelectValues: Record<string, boolean> = {},
+): AnyQuestion => {
+  const t = tool as ToolType;
+  if (t === "sharing")    return generateSharingQuestion(level, pickActive(multiSelectValues, SHARE_OPTIONS), variables);
+  if (t === "known")      return generateKnownAmountsQuestion(level, pickActive(multiSelectValues, KNOWN_OPTIONS), variables);
+  if (t === "difference") return generateDifferenceQuestion(level, pickActive(multiSelectValues, DIFF_OPTIONS), variables);
+  return generateMixedQuestion(level, variables, multiSelectValues);
+};
+
+// ── 14. generateUniqueQ ───────────────────────────────────────────────────────
+
+const generateUniqueQ = (
+  tool: string,
+  level: DifficultyLevel,
+  variables: Record<string, boolean>,
+  dropdownValue: string,
+  usedKeys: Set<string>,
+  multiSelectValues: Record<string, boolean> = {},
+): AnyQuestion => {
+  let q: AnyQuestion;
+  let attempts = 0;
+  do {
+    q = generateQuestion(tool, level, variables, dropdownValue, multiSelectValues);
+    attempts++;
+  } while (usedKeys.has(q.key) && attempts < 100);
+  usedKeys.add(q.key);
+  return q;
+};
+
+// ── 15. Bar component ─────────────────────────────────────────────────────────
+
+const BOX_W = 52, BOX_H = 48, BOX_GAP = 3, NAME_W = 110;
+
+const BarRow = ({ person, boxes, fillBg, borderColor, cellLabel, totalLabel }: {
+  person: string; boxes: number;
+  fillBg: string; borderColor: string;
+  cellLabel?: string; totalLabel?: string;
+}) => (
+  <div className="flex items-center gap-3">
+    <div className="font-bold text-base text-right flex-shrink-0" style={{ width: NAME_W, color: "#000" }}>{person}</div>
+    <div className="flex flex-shrink-0" style={{ gap: BOX_GAP }}>
+      {Array.from({ length: boxes }, (_, bi) => (
+        <div key={bi} className="flex items-center justify-center rounded"
+          style={{ width: BOX_W, height: BOX_H, border: `3px solid ${borderColor}`, backgroundColor: fillBg, flexShrink: 0 }}>
+          {cellLabel && (
+            <span className="font-bold text-center leading-tight" style={{ color: "#000", fontSize: "0.7rem" }}>{cellLabel}</span>
+          )}
+        </div>
+      ))}
+    </div>
+    {totalLabel && <span className="text-lg font-bold ml-2" style={{ color: "#000" }}>= {totalLabel}</span>}
+  </div>
+);
+
+// ── 16. ratioStepRenderer ─────────────────────────────────────────────────────
+
+type BarEntry = { person: string; boxes: number; isKnown?: boolean; knownAmount?: number | null; value?: number; total?: number };
+
+const ratioStepRenderer = (step: WorkingStep, cs: string): JSX.Element | null => {
+  if (!step.extra) return null;
+  const d = step.extra as Record<string, unknown>;
+  const T = step.type;
+  const bars = d.bars as BarEntry[] | undefined;
+
+  if (T === "bar_empty" && bars) return (
+    <div>
+      <h4 className="text-xl font-semibold mb-4 text-center" style={{ color: "#000" }}>Bar Model:</h4>
+      <div className="flex flex-col gap-3" style={{ width: "fit-content", margin: "0 auto" }}>
+        {bars.map((bar, i) => (
+          <BarRow key={i} person={bar.person} boxes={bar.boxes}
+            fillBg={getBarEmptyBg(cs)} borderColor="#1e3a8a" />
+        ))}
+      </div>
+    </div>
+  );
+
+  if (T === "bar_total") return (
+    <div className="text-center">
+      <h4 className="text-xl font-semibold mb-3" style={{ color: "#000" }}>Total parts:</h4>
+      <div className="text-3xl font-medium" style={{ color: "#000" }}>{d.sum as number} parts</div>
+    </div>
+  );
+
+  if (T === "bar_part") return (
+    <div className="text-center">
+      <h4 className="text-xl font-semibold mb-3" style={{ color: "#000" }}>Value of 1 part:</h4>
+      <div className="text-3xl font-medium" style={{ color: "#000" }}>
+        {fp(d.total as number)} ÷ {d.sum as number} = {fp(d.value as number)}
+      </div>
+    </div>
+  );
+
+  if (T === "bar_filled" && bars) return (
+    <div>
+      <h4 className="text-xl font-semibold mb-4 text-center" style={{ color: "#000" }}>Calculate shares:</h4>
+      <div className="flex flex-col gap-3" style={{ width: "fit-content", margin: "0 auto" }}>
+        {bars.map((bar, i) => (
+          <BarRow key={i} person={bar.person} boxes={bar.boxes}
+            fillBg={getBarEmptyBg(cs)} borderColor="#1e3a8a"
+            cellLabel={bar.value !== undefined ? fp(bar.value) : undefined}
+            totalLabel={bar.total !== undefined ? fp(bar.total) : undefined} />
+        ))}
+      </div>
+    </div>
+  );
+
+  if (T === "ka_bar_known" && bars) return (
+    <div>
+      <h4 className="text-xl font-semibold mb-4 text-center" style={{ color: "#000" }}>Bar Model — Given information:</h4>
+      <div className="flex flex-col gap-3" style={{ width: "fit-content", margin: "0 auto" }}>
+        {bars.map((bar, i) => (
+          <BarRow key={i} person={bar.person} boxes={bar.boxes}
+            fillBg={bar.isKnown ? getBarKnownBg(cs) : getBarEmptyBg(cs)}
+            borderColor="#1e3a8a"
+            totalLabel={bar.isKnown && bar.knownAmount != null ? fp(bar.knownAmount) : undefined} />
+        ))}
+      </div>
+    </div>
+  );
+
+  if (T === "ka_identify") return (
+    <div className="text-center">
+      <h4 className="text-xl font-semibold mb-3" style={{ color: "#000" }}>Identify the ratio part:</h4>
+      <div className="text-3xl font-bold" style={{ color: "#000" }}>
+        {d.knownPerson as string} has {d.ratioPart as number} part{(d.ratioPart as number) !== 1 ? "s" : ""}
+      </div>
+    </div>
+  );
+
+  if (T === "ka_part_val") return (
+    <div className="text-center">
+      <h4 className="text-xl font-semibold mb-3" style={{ color: "#000" }}>Calculate value of 1 part:</h4>
+      <div className="text-3xl font-bold" style={{ color: "#000" }}>
+        {fp(d.knownAmount as number)} ÷ {d.ratioPart as number} = {fp(d.partValue as number)}
+      </div>
+    </div>
+  );
+
+  if (T === "ka_total_bar") return (
+    <div className="text-center">
+      <h4 className="text-xl font-semibold mb-3" style={{ color: "#000" }}>Add all parts to find total:</h4>
+      <div className="text-3xl font-bold" style={{ color: "#000" }}>
+        {(d.shares as number[]).map(s => fp(s)).join(" + ")} = {fp(d.total as number)}
+      </div>
+    </div>
+  );
+
+  if (T === "ka_other_bar") return (
+    <div className="text-center">
+      <h4 className="text-xl font-semibold mb-3" style={{ color: "#000" }}>Read {d.otherPerson as string}'s share from bar:</h4>
+      <div className="text-3xl font-bold" style={{ color: "#000" }}>{fp(d.share as number)}</div>
+    </div>
+  );
+
+  if (T === "diff_bar" && bars) {
+    const smallerCount = Math.min(bars[0].boxes, bars[1].boxes);
     return (
-      <div key={idx} className="rounded-lg p-6 border border-gray-200" style={{ backgroundColor: getStepBg() }}>
-        {step.type === 'showRatio' && step.names && (
-          <div className="text-center">
-            <h4 className="text-xl font-semibold mb-3" style={{ color: '#000000' }}>Ratio:</h4>
-            <div className="text-3xl font-medium" style={{ color: '#000000' }}>
-              {step.names.map((name: string, i: number) => (
-                <span key={i}>{i > 0 && ' : '}{name} = {step.parts[i]}</span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {step.type === 'explainParts' && step.names && (
-          <div className="text-center">
-            <h4 className="text-xl font-semibold mb-3" style={{ color: '#000000' }}>Understanding the parts:</h4>
-            <div className="space-y-2">
-              {step.names.map((name: string, i: number) => (
-                <div key={i} className="text-2xl font-medium" style={{ color: '#000000' }}>
-                  {name} gets {step.parts[i]} part{step.parts[i] !== 1 ? 's' : ''}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {step.type === 'ratioSum' && step.parts && (
-          <div className="text-center">
-            <h4 className="text-xl font-semibold mb-3" style={{ color: '#000000' }}>Total number of parts:</h4>
-            <div className="text-3xl font-medium" style={{ color: '#000000' }}>
-              {step.parts.map((p: number, i: number) => (
-                <span key={i}>{i > 0 && ' + '}{p}</span>
-              ))} = {step.sum} parts
-            </div>
-          </div>
-        )}
-
-        {step.type === 'partValue' && (
-          <div className="text-center">
-            <h4 className="text-xl font-semibold mb-3" style={{ color: '#000000' }}>Value of 1 part:</h4>
-            <div className="text-3xl font-medium" style={{ color: '#000000' }}>
-              {formatCurrency(step.total)} ÷ {step.sum} = {formatCurrency(step.value)}
-            </div>
-          </div>
-        )}
-
-        {step.type === 'calculateShares' && step.names && (
-          <div className="text-center">
-            <h4 className="text-xl font-semibold mb-4" style={{ color: '#000000' }}>Calculate each share:</h4>
-            <div className="space-y-3">
-              {step.names.map((name: string, i: number) => (
-                <div key={i} className="text-2xl font-medium" style={{ color: '#000000' }}>
-                  {name}: {step.parts[i]} × {formatCurrency(step.partValue)} = {formatCurrency(step.shares[i])}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {step.type === 'verifyTotal' && step.shares && (
-          <div className="text-center">
-            <h4 className="text-xl font-semibold mb-3" style={{ color: '#000000' }}>Check (optional):</h4>
-            <div className="text-2xl font-medium" style={{ color: '#000000' }}>
-              {step.shares.map((s: number) => formatCurrency(s)).join(' + ')} = {formatCurrency(step.total)} ✓
-            </div>
-          </div>
-        )}
-
-        {step.type === 'barModelEmpty' && step.bars && (
-          <div>
-            <h4 className="text-xl font-semibold mb-4 text-center" style={{ color: '#000000' }}>Bar Model:</h4>
-            <div className="flex flex-col gap-3 items-start" style={{ marginLeft: '25%' }}>
-              {step.bars.map((bar: any, i: number) => (
-                <div key={i} className="flex items-center">
-                  <div className="w-32 text-2xl font-bold text-left flex-shrink-0" style={{ color: '#000000' }}>{bar.person}</div>
-                  <div className="flex gap-1">
-                    {Array(bar.boxes).fill(0).map((_: any, boxIdx: number) => (
-                      <div key={boxIdx} className="w-20 h-20 border-4 border-blue-900 rounded flex-shrink-0" style={{ backgroundColor: getBarEmptyBg() }}></div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {step.type === 'totalParts' && (
-          <div className="text-center">
-            <h4 className="text-xl font-semibold mb-3" style={{ color: '#000000' }}>Total parts:</h4>
-            <div className="text-3xl font-medium" style={{ color: '#000000' }}>{step.sum} parts</div>
-          </div>
-        )}
-
-        {step.type === 'barModelFilled' && step.bars && (
-          <div>
-            <h4 className="text-xl font-semibold mb-4 text-center" style={{ color: '#000000' }}>Calculate shares:</h4>
-            <div className="flex flex-col gap-3 items-start" style={{ marginLeft: '25%' }}>
-              {step.bars.map((bar: any, i: number) => (
-                <div key={i} className="flex items-center">
-                  <div className="w-32 text-2xl font-bold text-left flex-shrink-0" style={{ color: '#000000' }}>{bar.person}</div>
-                  <div className="flex gap-1">
-                    {Array(bar.boxes).fill(0).map((_: any, boxIdx: number) => (
-                      <div key={boxIdx} className="w-20 h-20 border-4 border-blue-900 rounded flex items-center justify-center text-xs font-bold flex-shrink-0" style={{ color: '#000000', backgroundColor: getBarFilledBg() }}>
-                        {formatCurrency(bar.value)}
-                      </div>
-                    ))}
-                  </div>
-                  <span className="text-2xl font-bold ml-4" style={{ color: '#000000' }}>= {formatCurrency(bar.total)}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {step.type === 'answer' && step.names && step.shares && (
-          <div className="text-center">
-            <h4 className="text-xl font-semibold mb-3" style={{ color: '#000000' }}>Answer:</h4>
-            <div className="text-5xl font-bold" style={{ color: '#166534' }}>
-              {step.questionType === 'personA' && `${step.names[0]}: ${formatCurrency(step.shares[0])}`}
-              {step.questionType === 'personB' && `${step.names[1]}: ${formatCurrency(step.shares[1])}`}
-              {step.questionType === 'both' && (
-                <div className="flex flex-col gap-2">
-                  {step.shares.map((share: number, i: number) => (
-                    <div key={i}>{step.names[i]}: {formatCurrency(share)}</div>
-                  ))}
-                </div>
-              )}
-              {step.questionType === 'total' && `Total: ${formatCurrency(step.total)}`}
-              {step.questionType === 'other' && step.knownPerson !== undefined && `${step.names[step.knownPerson === 0 ? 1 : 0]}: ${formatCurrency(step.shares[step.knownPerson === 0 ? 1 : 0])}`}
-            </div>
-          </div>
-        )}
-
-        {step.type === 'showGiven' && step.names && (
-          <div className="text-center">
-            <h4 className="text-2xl font-semibold mb-4" style={{ color: '#000000' }}>Given information:</h4>
-            <div className="space-y-3">
-              <div className="text-3xl font-medium" style={{ color: '#000000' }}>
-                {step.names.join(' : ')} = {step.ratio}
-              </div>
-              <div className="text-3xl font-medium" style={{ color: '#000000' }}>
-                {step.knownPerson} receives {formatCurrency(step.knownAmount)}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {step.type === 'identifyRatioPart' && (
-          <div className="text-center">
-            <h4 className="text-2xl font-semibold mb-4" style={{ color: '#000000' }}>Identify the ratio part:</h4>
-            <div className="text-4xl font-bold" style={{ color: '#000000' }}>
-              {step.knownPerson} has {step.ratioPart} part{step.ratioPart !== 1 ? 's' : ''}
-            </div>
-          </div>
-        )}
-
-        {step.type === 'calculatePartValue' && (
-          <div className="text-center">
-            <h4 className="text-2xl font-semibold mb-4" style={{ color: '#000000' }}>Calculate value of 1 part:</h4>
-            <div className="text-4xl font-bold" style={{ color: '#000000' }}>
-              {formatCurrency(step.knownAmount)} ÷ {step.ratioPart} = {formatCurrency(step.partValue)}
-            </div>
-          </div>
-        )}
-
-        {step.type === 'calculateTotal' && step.parts && (
-          <div className="text-center">
-            <h4 className="text-2xl font-semibold mb-4" style={{ color: '#000000' }}>Calculate total amount:</h4>
-            <div className="space-y-4">
-              <div className="text-2xl font-medium" style={{ color: '#000000' }}>
-                Total parts: {step.parts.join(' + ')} = {step.parts.reduce((a: number, b: number) => a + b, 0)}
-              </div>
-              <div className="text-4xl font-bold" style={{ color: '#000000' }}>
-                Total: {step.parts.reduce((a: number, b: number) => a + b, 0)} × {formatCurrency(step.partValue)} = {formatCurrency(step.total)}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {step.type === 'calculateOther' && (
-          <div className="text-center">
-            <h4 className="text-2xl font-semibold mb-4" style={{ color: '#000000' }}>Calculate {step.otherPerson}'s share:</h4>
-            <div className="text-4xl font-bold" style={{ color: '#000000' }}>
-              {step.ratioPart} × {formatCurrency(step.partValue)} = {formatCurrency(step.share)}
-            </div>
-          </div>
-        )}
-
-        {step.type === 'barModelKnown' && step.bars && (
-          <div>
-            <h4 className="text-2xl font-semibold mb-4 text-center" style={{ color: '#000000' }}>Bar Model - Given information:</h4>
-            <div className="flex flex-col gap-3 items-start" style={{ marginLeft: '25%' }}>
-              {step.bars.map((bar: any, i: number) => (
-                <div key={i} className="flex items-center">
-                  <div className="w-32 text-2xl font-bold text-left flex-shrink-0" style={{ color: '#000000' }}>{bar.person}</div>
-                  <div className="flex gap-1">
-                    {Array(bar.boxes).fill(0).map((_: any, boxIdx: number) => (
-                      <div key={boxIdx} className="w-20 h-20 border-4 rounded flex-shrink-0" style={{
-                        borderColor: bar.isKnown ? '#1e3a8a' : '#9ca3af',
-                        backgroundColor: bar.isKnown ? getBarKnownBg() : getBarEmptyBg()
-                      }}></div>
-                    ))}
-                  </div>
-                  {bar.isKnown && (
-                    <span className="text-2xl font-bold ml-4" style={{ color: '#000000' }}>= {formatCurrency(bar.knownAmount)}</span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {step.type === 'calculateTotalFromBar' && step.shares && (
-          <div className="text-center">
-            <h4 className="text-2xl font-semibold mb-4" style={{ color: '#000000' }}>Add all parts to find total:</h4>
-            <div className="text-4xl font-bold" style={{ color: '#000000' }}>
-              {step.shares.map((s: number) => formatCurrency(s)).join(' + ')} = {formatCurrency(step.total)}
-            </div>
-          </div>
-        )}
-
-        {step.type === 'readOtherFromBar' && (
-          <div className="text-center">
-            <h4 className="text-2xl font-semibold mb-4" style={{ color: '#000000' }}>Read {step.otherPerson}'s share from bar:</h4>
-            <div className="text-4xl font-bold" style={{ color: '#000000' }}>
-              {formatCurrency(step.share)}
-            </div>
-          </div>
-        )}
-
-        {step.type === 'barModelDifference' && step.bars && (
-          <div>
-            <h4 className="text-2xl font-semibold mb-4 text-center" style={{ color: '#000000' }}>Bar Model - showing the difference:</h4>
-            <div className="flex flex-col gap-3 items-start" style={{ marginLeft: '25%' }}>
-              {step.bars.map((bar: any, i: number) => {
-                const isLargerPerson = i === step.largerPerson;
-                const smallerBoxCount = Math.min(step.bars[0].boxes, step.bars[1].boxes);
-                
-                return (
-                  <div key={i} className="flex items-center">
-                    <div className="w-32 text-2xl font-bold text-left flex-shrink-0" style={{ color: '#000000' }}>{bar.person}</div>
-                    <div className="flex gap-1">
-                      {Array(bar.boxes).fill(0).map((_: any, boxIdx: number) => {
-                        const isDifferenceBox = isLargerPerson && boxIdx >= smallerBoxCount;
-                        return (
-                          <div 
-                            key={boxIdx} 
-                            className="w-20 h-20 border-4 rounded flex-shrink-0"
-                            style={{
-                              borderColor: isDifferenceBox ? '#a855f7' : '#9ca3af',
-                              backgroundColor: isDifferenceBox ? getBarDiffBg() : getBarEmptyBg()
-                            }}>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-              <div className="ml-32 mt-2">
-                <div className="text-2xl font-bold px-4 py-2 rounded-lg inline-flex items-center gap-2" style={{ color: '#000000', backgroundColor: getBarDiffBg() }}>
-                  <span className="inline-block w-6 h-6 border-4 rounded" style={{ borderColor: '#a855f7', backgroundColor: getBarDiffBg() }}></span>
-                  Difference: {formatCurrency(step.difference)}
+      <div>
+        <h4 className="text-xl font-semibold mb-4 text-center" style={{ color: "#000" }}>Bar Model — showing the difference:</h4>
+        <div className="flex flex-col gap-3" style={{ width: "fit-content", margin: "0 auto" }}>
+          {bars.map((bar, i) => {
+            const isLarger = i === (d.largerPerson as number);
+            return (
+              <div key={i} className="flex items-center gap-3">
+                <div className="font-bold text-base text-right flex-shrink-0" style={{ width: NAME_W, color: "#000" }}>{bar.person}</div>
+                <div className="flex flex-shrink-0" style={{ gap: BOX_GAP }}>
+                  {Array.from({ length: bar.boxes }, (_, bi) => {
+                    const isDiff = isLarger && bi >= smallerCount;
+                    return (
+                      <div key={bi} className="rounded flex-shrink-0"
+                        style={{ width: BOX_W, height: BOX_H, border: `3px solid ${isDiff ? "#a855f7" : "#1e3a8a"}`, backgroundColor: isDiff ? getBarDiffBg(cs) : getBarEmptyBg(cs) }} />
+                    );
+                  })}
                 </div>
               </div>
-            </div>
+            );
+          })}
+          <div className="flex items-center gap-2 mt-1" style={{ marginLeft: NAME_W + 12 }}>
+            <div className="rounded" style={{ width: Math.round(BOX_W * 0.55), height: Math.round(BOX_H * 0.55), border: "3px solid #a855f7", backgroundColor: getBarDiffBg(cs), flexShrink: 0 }} />
+            <span className="text-base font-bold" style={{ color: "#000" }}>= {fp(d.difference as number)}</span>
           </div>
-        )}
-
-        {step.type === 'identifyDifferenceParts' && (
-          <div className="text-center">
-            <h4 className="text-2xl font-semibold mb-4" style={{ color: '#000000' }}>The difference represents:</h4>
-            <div className="text-4xl font-bold" style={{ color: '#000000' }}>
-              {step.partDifference} part{step.partDifference !== 1 ? 's' : ''} = {formatCurrency(step.difference)}
-            </div>
-          </div>
-        )}
-
-        {step.type === 'calculatePartValueFromDifference' && (
-          <div className="text-center">
-            <h4 className="text-2xl font-semibold mb-4" style={{ color: '#000000' }}>Calculate value of 1 part:</h4>
-            <div className="text-4xl font-bold" style={{ color: '#000000' }}>
-              {formatCurrency(step.difference)} ÷ {step.partDifference} = {formatCurrency(step.partValue)}
-            </div>
-          </div>
-        )}
-
-        {step.type === 'readPersonAFromBar' && (
-          <div className="text-center">
-            <h4 className="text-2xl font-semibold mb-4" style={{ color: '#000000' }}>Read {step.person}'s share from bar:</h4>
-            <div className="text-4xl font-bold" style={{ color: '#000000' }}>
-              {formatCurrency(step.share)}
-            </div>
-          </div>
-        )}
-
-        {step.type === 'readPersonBFromBar' && (
-          <div className="text-center">
-            <h4 className="text-2xl font-semibold mb-4" style={{ color: '#000000' }}>Read {step.person}'s share from bar:</h4>
-            <div className="text-4xl font-bold" style={{ color: '#000000' }}>
-              {formatCurrency(step.share)}
-            </div>
-          </div>
-        )}
-
-        {step.type === 'showGivenDifference' && step.names && (
-          <div className="text-center">
-            <h4 className="text-2xl font-semibold mb-4" style={{ color: '#000000' }}>Given information:</h4>
-            <div className="space-y-3">
-              <div className="text-3xl font-medium" style={{ color: '#000000' }}>
-                {step.names.join(' : ')} = {step.ratio}
-              </div>
-              <div className="text-3xl font-medium" style={{ color: '#000000' }}>
-                Difference: {formatCurrency(step.difference)}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {step.type === 'calculatePersonA' && (
-          <div className="text-center">
-            <h4 className="text-2xl font-semibold mb-4" style={{ color: '#000000' }}>Calculate {step.person}'s share:</h4>
-            <div className="text-4xl font-bold" style={{ color: '#000000' }}>
-              {step.ratioPart} × {formatCurrency(step.partValue)} = {formatCurrency(step.share)}
-            </div>
-          </div>
-        )}
-
-        {step.type === 'calculatePersonB' && (
-          <div className="text-center">
-            <h4 className="text-2xl font-semibold mb-4" style={{ color: '#000000' }}>Calculate {step.person}'s share:</h4>
-            <div className="text-4xl font-bold" style={{ color: '#000000' }}>
-              {step.ratioPart} × {formatCurrency(step.partValue)} = {formatCurrency(step.share)}
-            </div>
-          </div>
-        )}
-
-        {step.type === 'answerDifference' && step.names && step.shares && (
-          <div className="text-center">
-            <h4 className="text-xl font-semibold mb-3" style={{ color: '#000000' }}>Answer:</h4>
-            <div className="text-5xl font-bold" style={{ color: '#166534' }}>
-              {step.questionType === 'personA' && `${step.names[0]}: ${formatCurrency(step.shares[0])}`}
-              {step.questionType === 'personB' && `${step.names[1]}: ${formatCurrency(step.shares[1])}`}
-              {step.questionType === 'total' && `Total: ${formatCurrency(step.total)}`}
-            </div>
-          </div>
-        )}
+        </div>
       </div>
     );
-  };
+  }
 
-  return (
-    <>
-      <div className="bg-blue-900 shadow-lg">
-        <div className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
-          <button 
-            onClick={() => navigate('/')}
-            className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors">
-            <Home size={24} />
-            <span className="font-semibold text-lg">Home</span>
-          </button>
-
-          <div className="relative">
-            <button 
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-white hover:bg-blue-800 p-2 rounded-lg transition-colors">
-              {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
-            </button>
-
-            {isMenuOpen && (
-              <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border-2 border-gray-200 overflow-hidden z-50">
-                <div className="py-2">
-                  <div className="px-6 py-2 font-bold text-gray-700 text-sm uppercase tracking-wide">
-                    Color Schemes
-                  </div>
-                  <button 
-                    onClick={() => setColorScheme('default')}
-                    className={'w-full text-left px-6 py-3 font-semibold transition-colors ' + 
-                      (colorScheme === 'default' ? 'bg-blue-100 text-blue-900' : 'text-gray-800 hover:bg-gray-100')}>
-                    Default
-                  </button>
-                  <button 
-                    onClick={() => setColorScheme('blue')}
-                    className={'w-full text-left px-6 py-3 font-semibold transition-colors ' + 
-                      (colorScheme === 'blue' ? 'bg-blue-100 text-blue-900' : 'text-gray-800 hover:bg-gray-100')}>
-                    Blue
-                  </button>
-                  <button 
-                    onClick={() => setColorScheme('pink')}
-                    className={'w-full text-left px-6 py-3 font-semibold transition-colors ' + 
-                      (colorScheme === 'pink' ? 'bg-blue-100 text-blue-900' : 'text-gray-800 hover:bg-gray-100')}>
-                    Pink
-                  </button>
-                  <button 
-                    onClick={() => setColorScheme('yellow')}
-                    className={'w-full text-left px-6 py-3 font-semibold transition-colors ' + 
-                      (colorScheme === 'yellow' ? 'bg-blue-100 text-blue-900' : 'text-gray-800 hover:bg-gray-100')}>
-                    Yellow
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+  if (T === "diff_identify") return (
+    <div className="text-center">
+      <h4 className="text-xl font-semibold mb-3" style={{ color: "#000" }}>The difference represents:</h4>
+      <div className="text-3xl font-bold" style={{ color: "#000" }}>
+        {d.partDiff as number} part{(d.partDiff as number) !== 1 ? "s" : ""} = {fp(d.difference as number)}
       </div>
-
-      <div className="min-h-screen p-8" style={{ backgroundColor: '#f5f3f0' }}>
-        <div className="max-w-6xl mx-auto">
-          <h1 className="text-5xl font-bold text-center mb-8" style={{ color: '#000000' }}>Dividing Into Ratios</h1>
-
-          {/* Topic Selector */}
-          <div className="flex justify-center gap-3 flex-wrap mb-6">
-            {(['sharing', 'known', 'difference', 'mixed'] as const).map((t: string) => (
-              <button
-                key={t}
-                onClick={() => setTopic(t)}
-                className={'px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ' + 
-                  (topic === t 
-                    ? 'bg-blue-900 text-white' 
-                    : 'bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900')}>
-                {t === 'sharing' ? 'Sharing in a Ratio' :
-                 t === 'known' ? 'Known Amounts' :
-                 t === 'difference' ? 'Given Difference' :
-                 'Mixed Sharing'}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex justify-center mb-8">
-            <div style={{ width: '90%', height: '2px', backgroundColor: '#d1d5db' }}></div>
-          </div>
-
-          {/* Mode Toggle */}
-          <div className="flex justify-center gap-4 mb-8">
-            {(['whiteboard', 'single', 'worksheet'] as const).map((m: string) => (
-              <button 
-                key={m}
-                onClick={() => setMode(m)}
-                className={'px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ' + 
-                  (mode === m 
-                    ? 'bg-blue-900 text-white' 
-                    : 'bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900')}>
-                {m === 'whiteboard' ? 'Whiteboard' :
-                 m === 'single' ? 'Worked Example' :
-                 'Worksheet'}
-              </button>
-            ))}
-          </div>
-
-          {/* WHITEBOARD & SINGLE Q MODES */}
-          {(mode === 'whiteboard' || mode === 'single') && (
-            <div className="flex flex-col gap-4">
-              {/* Compact Control Bar */}
-              <div className="bg-white rounded-xl shadow-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-semibold" style={{ color: '#000000' }}>Difficulty:</span>
-                    <div className="flex gap-2">
-                      {(['level1', 'level2', 'level3'] as const).map((lvl: string, idx: number) => (
-                        <button 
-                          key={lvl}
-                          onClick={() => setDifficulty(lvl)}
-                          className={'px-4 py-2 rounded-lg font-bold text-sm w-24 ' + 
-                            (difficulty === lvl 
-                              ? (lvl === 'level1' ? 'bg-green-600 text-white' :
-                                 lvl === 'level2' ? 'bg-yellow-600 text-white' :
-                                 'bg-red-600 text-white')
-                              : (lvl === 'level1' ? 'bg-white text-green-600 border-2 border-green-600' :
-                                 lvl === 'level2' ? 'bg-white text-yellow-600 border-2 border-yellow-600' :
-                                 'bg-white text-red-600 border-2 border-red-600'))}>
-                          Level {idx + 1}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  {mode !== 'whiteboard' && (
-                    <div className="flex flex-col gap-1">
-                      {topic === 'sharing' && difficulty !== 'level3' && (
-                        <label className="flex items-center gap-2 text-sm font-semibold" style={{ color: '#000000' }}>
-                          <input type="checkbox" checked={useAlgebraicMethod}
-                            onChange={(e) => setUseAlgebraicMethod(e.target.checked)}
-                            className="w-3 h-3" />
-                          Numerical
-                        </label>
-                      )}
-                      {topic === 'known' && difficulty !== 'level3' && (
-                        <label className="flex items-center gap-2 text-sm font-semibold" style={{ color: '#000000' }}>
-                          <input type="checkbox" checked={useNumericalMethod}
-                            onChange={(e) => setUseNumericalMethod(e.target.checked)}
-                            className="w-3 h-3" />
-                          Numerical
-                        </label>
-                      )}
-                      {topic === 'difference' && difficulty !== 'level3' && (
-                        <label className="flex items-center gap-2 text-sm font-semibold" style={{ color: '#000000' }}>
-                          <input type="checkbox" checked={useDifferenceNumericalMethod}
-                            onChange={(e) => setUseDifferenceNumericalMethod(e.target.checked)}
-                            className="w-3 h-3" />
-                          Numerical
-                        </label>
-                      )}
-                      {topic === 'mixed' && difficulty !== 'level3' && (
-                        <label className="flex items-center gap-2 text-sm font-semibold" style={{ color: '#000000' }}>
-                          <input type="checkbox" checked={useNumericalMethod || useDifferenceNumericalMethod}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                              setUseNumericalMethod(e.target.checked);
-                              setUseDifferenceNumericalMethod(e.target.checked);
-                            }}
-                            className="w-3 h-3" />
-                          Numerical
-                        </label>
-                      )}
-                    </div>
-                  )}
-                  
-                  <div className="flex flex-col gap-1">
-                    {topic === 'sharing' && (
-                      <div className="flex items-center gap-2">
-                        <label className="text-xs font-semibold" style={{ color: '#000000' }}>Type:</label>
-                        <select value={shareQuestionType}
-                          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setShareQuestionType(e.target.value)}
-                          className="px-2 py-1 border-2 border-gray-300 rounded-lg text-xs font-semibold">
-                          <option value="mixed">Mixed</option>
-                          <option value="personA">Person A</option>
-                          <option value="personB">Person B</option>
-                          <option value="both">Both</option>
-                        </select>
-                      </div>
-                    )}
-                    {topic === 'known' && (
-                      <div className="flex items-center gap-2">
-                        <label className="text-xs font-semibold" style={{ color: '#000000' }}>Type:</label>
-                        <select value={knownAmountsQuestionType}
-                          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setKnownAmountsQuestionType(e.target.value)}
-                          className="px-2 py-1 border-2 border-gray-300 rounded-lg text-xs font-semibold">
-                          <option value="mixed">Mixed</option>
-                          <option value="total">Total</option>
-                          <option value="other">Other</option>
-                        </select>
-                      </div>
-                    )}
-                    {topic === 'difference' && (
-                      <div className="flex items-center gap-2">
-                        <label className="text-xs font-semibold" style={{ color: '#000000' }}>Type:</label>
-                        <select value={differenceQuestionType}
-                          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setDifferenceQuestionType(e.target.value)}
-                          className="px-2 py-1 border-2 border-gray-300 rounded-lg text-xs font-semibold">
-                          <option value="mixed">Mixed</option>
-                          <option value="total">Total</option>
-                          <option value="personA">Person A</option>
-                          <option value="personB">Person B</option>
-                        </select>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="flex gap-3">
-                    <button 
-                      onClick={handleNewQuestion}
-                      className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-lg hover:bg-blue-800 transition-colors flex items-center justify-center gap-2 w-52">
-                      <RefreshCw size={18} />
-                      New Question
-                    </button>
-                    <button 
-                      onClick={() => mode === 'whiteboard' ? setShowWhiteboardAnswer(!showWhiteboardAnswer) : setShowAnswer(!showAnswer)}
-                      className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-lg hover:bg-blue-800 transition-colors flex items-center justify-center gap-2 w-52">
-                      <Eye size={18} />
-                      {(mode === 'whiteboard' ? showWhiteboardAnswer : showAnswer) ? 'Hide Answer' : 'Show Answer'}
-                    </button>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Question Display */}
-              {question && (
-                <>
-                  {mode === 'whiteboard' ? (
-                    <div className="rounded-xl shadow-2xl p-8" style={{ backgroundColor: getQuestionBg() }}>
-                      <div className="text-center">
-                        <span className="text-6xl font-bold" style={{ color: '#000000' }}>
-                          {question.display}
-                        </span>
-                        {showWhiteboardAnswer && (
-                          <span className="text-6xl font-bold ml-4" style={{ color: '#166534' }}>
-                            = {question.answer}
-                          </span>
-                        )}
-                      </div>
-                      
-                      <div className="rounded-xl mt-8" style={{ height: '500px', backgroundColor: getWhiteboardWorkingBg() }}></div>
-                    </div>
-                  ) : (
-                    <div className="overflow-y-auto" style={{ height: '120vh' }}>
-                      <div className="rounded-xl shadow-lg p-8" style={{ backgroundColor: getQuestionBg() }}>
-                        <div className="text-center">
-                          <span className="text-6xl font-bold" style={{ color: '#000000' }}>{question.display}</span>
-                        </div>
-                        
-                        {showAnswer && question.working && (
-                          <>
-                            <div className="space-y-4 mt-8">
-                              {question.working.map((step, idx) => renderStep(step, idx))}
-                            </div>
-                            
-                            <div className="rounded-xl p-6 text-center mt-4" style={{ backgroundColor: getFinalAnswerBg() }}>
-                              <span className="text-5xl font-bold" style={{ color: '#166534' }}>= {question.answer}</span>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          )}
-
-          {/* WORKSHEET MODE */}
-          {mode === 'worksheet' && (
-            <>
-              <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-                <div className="space-y-4">
-                  {/* Line 1: Questions + Differentiated */}
-                  <div className="flex justify-center items-center gap-6">
-                    <div className="flex items-center gap-3">
-                      <label className="text-lg font-semibold" style={{ color: '#000000' }}>Questions per level:</label>
-                      <input 
-                        type="number" 
-                        min="1" 
-                        max="20" 
-                        value={numQuestions} 
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNumQuestions(Math.max(1, Math.min(20, parseInt(e.target.value) || 5)))} 
-                        className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-lg"
-                      />
-                    </div>
-                    
-                    <div className="flex items-center gap-3">
-                      <input 
-                        type="checkbox" 
-                        id="diff" 
-                        checked={isDifferentiated} 
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setIsDifferentiated(e.target.checked)} 
-                        className="w-5 h-5" 
-                      />
-                      <label htmlFor="diff" className="text-lg font-semibold" style={{ color: '#000000' }}>Differentiated</label>
-                    </div>
-                  </div>
-
-                  {/* Line 2: Difficulty + Columns (only when not differentiated) */}
-                  {!isDifferentiated && (
-                    <div className="flex justify-center items-center gap-6">
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg font-semibold whitespace-nowrap" style={{ color: '#000000' }}>Difficulty:</span>
-                        {['level1', 'level2', 'level3'].map((lvl, idx) => (
-                          <button 
-                            key={lvl}
-                            onClick={() => setDifficulty(lvl)}
-                            className={'px-6 py-2 rounded-lg font-semibold whitespace-nowrap ' + 
-                              (difficulty === lvl 
-                                ? (lvl === 'level1' ? 'bg-green-600 text-white' :
-                                   lvl === 'level2' ? 'bg-yellow-600 text-white' :
-                                   'bg-red-600 text-white')
-                                : (lvl === 'level1' ? 'bg-white text-green-600 border-2 border-green-600' :
-                                   lvl === 'level2' ? 'bg-white text-yellow-600 border-2 border-yellow-600' :
-                                   'bg-white text-red-600 border-2 border-red-600'))}>
-                            Level {idx + 1}
-                          </button>
-                        ))}
-                      </div>
-                      
-                      <div className="flex items-center gap-3">
-                        <label className="text-lg font-semibold whitespace-nowrap" style={{ color: '#000000' }}>Columns:</label>
-                        <input 
-                          type="number" 
-                          min="1" 
-                          max="4" 
-                          value={numColumns} 
-                          onChange={(e) => setNumColumns(Math.max(1, Math.min(4, parseInt(e.target.value) || 2)))} 
-                          className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-lg" 
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Line 3: Generate Button + Show Answers */}
-                  <div className="flex justify-center gap-4">
-                    <button onClick={handleGenerateWorksheet}
-                      className="px-6 py-3 bg-blue-900 text-white rounded-lg font-semibold flex items-center gap-2 hover:bg-blue-800 shadow-lg">
-                      <RefreshCw size={20} />
-                      Generate Worksheet
-                    </button>
-                    {worksheet.length > 0 && (
-                      <button onClick={() => setShowWorksheetAnswers(!showWorksheetAnswers)}
-                        className="px-6 py-3 bg-blue-900 text-white rounded-lg font-semibold flex items-center gap-2 hover:bg-blue-800 shadow-lg">
-                        <Eye size={20} />
-                        {showWorksheetAnswers ? 'Hide' : 'Show'} Answers
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {worksheet.length > 0 && (
-                <div className="bg-white rounded-xl shadow-2xl p-8 relative" style={{ backgroundColor: getQuestionBg() }}>
-                  {/* Font Size Controls */}
-                  <div className="absolute top-4 right-4 flex items-center gap-1">
-                    <button 
-                      onClick={() => setWorksheetFontSize(Math.max(0, worksheetFontSize - 1))} 
-                      disabled={worksheetFontSize === 0} 
-                      className={'w-8 h-8 rounded-lg font-bold flex items-center justify-center transition-colors ' + 
-                        (worksheetFontSize === 0 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-blue-900 text-white hover:bg-blue-800')}>
-                      <ChevronDown size={20} />
-                    </button>
-                    <button 
-                      onClick={() => setWorksheetFontSize(Math.min(3, worksheetFontSize + 1))} 
-                      disabled={worksheetFontSize === 3} 
-                      className={'w-8 h-8 rounded-lg font-bold flex items-center justify-center transition-colors ' + 
-                        (worksheetFontSize === 3 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-blue-900 text-white hover:bg-blue-800')}>
-                      <ChevronUp size={20} />
-                    </button>
-                  </div>
-
-                  <h2 className="text-3xl font-bold text-center mb-8" style={{ color: '#000000' }}>
-                    Dividing Into Ratios - Worksheet
-                  </h2>
-                  
-                  {isDifferentiated ? (
-                    <div className="grid grid-cols-3 gap-6">
-                      {(['level1', 'level2', 'level3'] as const).map((lvl: string, idx: number) => (
-                        <div key={lvl} className={'rounded-xl p-6 border-4 ' +
-                          (lvl === 'level1' ? 'bg-green-50 border-green-500' :
-                           lvl === 'level2' ? 'bg-yellow-50 border-yellow-500' :
-                           'bg-red-50 border-red-500')}>
-                          <h3 className="text-2xl font-bold text-center mb-6" style={{ color: '#000000' }}>
-                            Level {idx + 1}
-                          </h3>
-                          <div className="space-y-3">
-                            {worksheet.filter((q: QuestionType) => q.difficulty === lvl).map((q: QuestionType, i: number) => (
-                              <div key={i} className={getFontSize()} style={{ color: '#000000' }}>
-                                <span className="font-semibold" style={{ color: '#000000' }}>{i + 1}.</span>
-                                <span className="ml-3 font-bold" style={{ color: '#000000' }}>
-                                  {q.display}
-                                </span>
-                                {showWorksheetAnswers && (
-                                  <div className="ml-8 font-semibold mt-1" style={{ color: '#059669' }}>
-                                    = {q.answer}
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className={`grid gap-x-6 gap-y-3 ${
-                      numColumns === 1 ? 'grid-cols-1' :
-                      numColumns === 2 ? 'grid-cols-2' :
-                      numColumns === 3 ? 'grid-cols-3' :
-                      'grid-cols-4'
-                    }`}>
-                      {worksheet.map((q: QuestionType, i: number) => (
-                        <div key={i} className={getFontSize()} style={{ color: '#000000' }}>
-                          <span className="font-semibold" style={{ color: '#000000' }}>{i + 1}.</span>
-                          <span className="ml-2 font-bold" style={{ color: '#000000' }}>
-                            {q.display}
-                          </span>
-                          {showWorksheetAnswers && (
-                            <span className="ml-3 font-semibold" style={{ color: '#059669' }}>
-                              = {q.answer}
-                            </span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-    </>
+    </div>
   );
+
+  if (T === "diff_part_val") return (
+    <div className="text-center">
+      <h4 className="text-xl font-semibold mb-3" style={{ color: "#000" }}>Calculate value of 1 part:</h4>
+      <div className="text-3xl font-bold" style={{ color: "#000" }}>
+        {fp(d.difference as number)} ÷ {d.partDiff as number} = {fp(d.partValue as number)}
+      </div>
+    </div>
+  );
+
+  if (T === "diff_read") return (
+    <div className="text-center">
+      <h4 className="text-xl font-semibold mb-3" style={{ color: "#000" }}>Read {d.person as string}'s share from bar:</h4>
+      <div className="text-3xl font-bold" style={{ color: "#000" }}>{fp(d.share as number)}</div>
+    </div>
+  );
+
+  return null;
 };
 
-export default RatioSharingTool;
+// ═══════════════════════════════════════════════════════════════════════════════
+// END OF TOOL-SPECIFIC SECTION
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export default function App() {
+  return (
+    <ToolShell
+      config={TOOL_CONFIG}
+      infoSections={INFO_SECTIONS}
+      generateQuestion={generateQuestion}
+      generateUniqueQ={generateUniqueQ}
+      stepRenderer={ratioStepRenderer}
+      defaults={{ displayFontSize: 1, numQuestions: 5, numColumns: 2, maxColumns: 2 }}
+    />
+  );
+}

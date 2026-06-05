@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2 } from "lucide-react";
-import type { DifficultyLevel, AnyQuestion, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
+import type { DifficultyLevel, AnyQuestion, WorkingStep, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
 import { LV_COLORS, getQuestionBg, getStepBg } from "./colors";
 import { loadKaTeX } from "./katex";
-import { MathRenderer } from "./components/MathRenderer";
+import { MathRenderer, InlineMath } from "./components/MathRenderer";
 import { QuestionDisplay, AnswerDisplay } from "./components/QuestionDisplay";
 import { DifficultyToggle } from "./components/DifficultyToggle";
 import {
@@ -35,9 +35,10 @@ export interface ToolShellProps {
     multiSelectValues?: Record<string, boolean>,
   ) => AnyQuestion;
   defaults?: ToolShellDefaults;
+  stepRenderer?: (step: WorkingStep, colorScheme: string) => JSX.Element | null;
 }
 
-export const ToolShell = ({ config, infoSections, generateQuestion, generateUniqueQ, defaults = {} }: ToolShellProps) => {
+export const ToolShell = ({ config, infoSections, generateQuestion, generateUniqueQ, defaults = {}, stepRenderer }: ToolShellProps) => {
   const toolKeys = Object.keys(config.tools);
 
   const [currentTool, setCurrentTool] = useState<string>(toolKeys[0]);
@@ -72,8 +73,13 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const [toolMultiSelect, setToolMultiSelect] = useState<Record<string, Record<string, boolean>>>(() => {
     const init: Record<string, Record<string, boolean>> = {};
     toolKeys.forEach(k => {
-      const ms = config.tools[k].multiSelect;
-      if (ms) { init[k] = {}; ms.options.forEach(o => { init[k][o.value] = o.defaultActive; }); }
+      init[k] = {};
+      const t = config.tools[k];
+      if (t.multiSelect) { t.multiSelect.options.forEach(o => { init[k][o.value] = o.defaultActive; }); }
+      (["level1", "level2", "level3"] as DifficultyLevel[]).forEach(lv => {
+        const ms = t.difficultySettings?.[lv]?.multiSelect;
+        if (ms) { ms.options.forEach(o => { if (!(o.value in init[k])) init[k][o.value] = o.defaultActive; }); }
+      });
     });
     return init;
   });
@@ -379,7 +385,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           {getInstruction() && <div className={`${instrFsz} font-semibold text-center w-full mb-1`} style={{ color: "#000" }}>{getInstruction()}</div>}
           <div className={`${fsz} font-semibold w-full text-center`} style={{ color: "#000", lineHeight: 1.6 }}>
             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-            {(q as any).lines.map((line: string, i: number) => <div key={i}>{line}</div>)}
+            {(q as any).lines.map((line: string, i: number) => <div key={i}><InlineMath text={line} /></div>)}
           </div>
           {showWorksheetAnswers && (
             <div className={`${fsz} font-semibold mt-1 text-center`} style={{ color: "#059669" }}>
@@ -774,22 +780,25 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         {showAnswer && (
           <>
             <div className="space-y-4 mt-8">
-              {currentQuestion.working.map((s, i) => (
-                <div key={i} className="rounded-xl p-6" style={{ backgroundColor: stepBg }}>
-                  <h4 className="text-xl font-bold mb-2" style={{ color: "#000" }}>Step {i + 1}</h4>
-                  <div className="text-2xl" style={{ color: "#000" }}>
-                    {s.type === "tStep"
-                      ? <span>{s.plain}</span>
-                      : s.type === "mStep"
-                        ? <div className="flex flex-col gap-1">
-                            <span className="text-left">{s.label}</span>
-                            <div className="text-center"><MathRenderer latex={s.latex} />{s.unit && <span> {s.unit}</span>}</div>
-                          </div>
-                        : <div className="text-center"><MathRenderer latex={s.latex} /></div>
-                    }
+              {currentQuestion.working.map((s, i) => {
+                const custom = stepRenderer ? stepRenderer(s, colorScheme) : null;
+                return (
+                  <div key={i} className="rounded-xl p-6" style={{ backgroundColor: stepBg }}>
+                    <h4 className="text-xl font-bold mb-2" style={{ color: "#000" }}>Step {i + 1}</h4>
+                    <div className="text-2xl" style={{ color: "#000" }}>
+                      {custom ?? (s.type === "tStep"
+                        ? <span>{s.plain}</span>
+                        : s.type === "mStep"
+                          ? <div className="flex flex-col gap-1">
+                              <span className="text-left">{s.label}</span>
+                              <div className="text-center"><MathRenderer latex={s.latex} />{s.unit && <span> {s.unit}</span>}</div>
+                            </div>
+                          : <div className="text-center"><MathRenderer latex={s.latex} /></div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
             <div className="rounded-xl p-6 text-center mt-4" style={{ backgroundColor: stepBg }}>
               <span className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>
