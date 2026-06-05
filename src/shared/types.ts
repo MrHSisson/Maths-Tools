@@ -9,6 +9,7 @@ export interface WorkingStep {
   plain: string;
   label?: string;
   unit?: string;
+  extra?: unknown;
 }
 
 export interface SimpleQuestion {
