@@ -3,7 +3,7 @@ import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2
 import type { DifficultyLevel, AnyQuestion, WorkingStep, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
 import { LV_COLORS, getQuestionBg, getStepBg } from "./colors";
 import { loadKaTeX } from "./katex";
-import { MathRenderer } from "./components/MathRenderer";
+import { MathRenderer, InlineMath } from "./components/MathRenderer";
 import { QuestionDisplay, AnswerDisplay } from "./components/QuestionDisplay";
 import { DifficultyToggle } from "./components/DifficultyToggle";
 import {
@@ -385,7 +385,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           {getInstruction() && <div className={`${instrFsz} font-semibold text-center w-full mb-1`} style={{ color: "#000" }}>{getInstruction()}</div>}
           <div className={`${fsz} font-semibold w-full text-center`} style={{ color: "#000", lineHeight: 1.6 }}>
             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-            {(q as any).lines.map((line: string, i: number) => <div key={i}>{line}</div>)}
+            {(q as any).lines.map((line: string, i: number) => <div key={i}><InlineMath text={line} /></div>)}
           </div>
           {showWorksheetAnswers && (
             <div className={`${fsz} font-semibold mt-1 text-center`} style={{ color: "#059669" }}>

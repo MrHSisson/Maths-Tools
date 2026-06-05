@@ -200,12 +200,12 @@ const generateSharingQuestion = (
       ratioSum = parts[0] + parts[1];
       const mult = randInt(2, 12);
       total = ratioSum * mult;
-      if (total > 84) continue;
+      if (total > 64) continue;
     } else if (level === "level2") {
       const a = randInt(1, 5), b = randInt(1, 5);
       if (!isCoprime(a, b) || a === b) continue;
       parts = [a, b]; ratioSum = a + b;
-      if (ratioSum < 4 || ratioSum > 10) continue;
+      if (ratioSum < 5 || ratioSum > 12) continue;
       const mult = randInt(2, 12);
       total = ratioSum * mult;
       if (Math.max(a, b) * mult > 144) continue;
@@ -295,13 +295,13 @@ const generateKnownAmountsQuestion = (
     let knownPerson = 0;
 
     if (level === "level1") {
-      const a = randInt(1, 4), b = randInt(1, 4);
+      const a = randInt(1, 6), b = randInt(1, 6);
       if (!isCoprime(a, b) || a === b) continue;
       parts = [a, b];
       const rs = a + b;
       if (rs < 2 || rs > 7) continue;
-      partValue = randInt(1, Math.floor(49 / rs));
-      if (rs * partValue < 2 || rs * partValue > 49) continue;
+      partValue = randInt(1, Math.floor(64 / rs));
+      if (rs * partValue < 2 || rs * partValue > 64) continue;
       knownPerson = Math.random() < 0.5 ? 0 : 1;
     } else if (level === "level2") {
       const a = randInt(1, 8), b = randInt(1, 8);
@@ -407,13 +407,13 @@ const generateDifferenceQuestion = (
     let partValue = 0;
 
     if (level === "level1") {
-      const a = randInt(1, 4), b = randInt(1, 4);
+      const a = randInt(1, 6), b = randInt(1, 6);
       if (!isCoprime(a, b) || a === b) continue;
       parts = [a, b];
       const rs = a + b;
       if (rs < 2 || rs > 7) continue;
-      partValue = randInt(1, Math.floor(49 / rs));
-      if (rs * partValue < 2 || rs * partValue > 49) continue;
+      partValue = randInt(1, Math.floor(64 / rs));
+      if (rs * partValue < 2 || rs * partValue > 64) continue;
     } else if (level === "level2") {
       const a = randInt(1, 8), b = randInt(1, 8);
       if (!isCoprime(a, b) || a === b) continue;
