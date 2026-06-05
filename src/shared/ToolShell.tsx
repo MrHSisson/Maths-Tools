@@ -72,8 +72,13 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const [toolMultiSelect, setToolMultiSelect] = useState<Record<string, Record<string, boolean>>>(() => {
     const init: Record<string, Record<string, boolean>> = {};
     toolKeys.forEach(k => {
-      const ms = config.tools[k].multiSelect;
-      if (ms) { init[k] = {}; ms.options.forEach(o => { init[k][o.value] = o.defaultActive; }); }
+      init[k] = {};
+      const t = config.tools[k];
+      if (t.multiSelect) { t.multiSelect.options.forEach(o => { init[k][o.value] = o.defaultActive; }); }
+      (["level1", "level2", "level3"] as DifficultyLevel[]).forEach(lv => {
+        const ms = t.difficultySettings?.[lv]?.multiSelect;
+        if (ms) { ms.options.forEach(o => { if (!(o.value in init[k])) init[k][o.value] = o.defaultActive; }); }
+      });
     });
     return init;
   });

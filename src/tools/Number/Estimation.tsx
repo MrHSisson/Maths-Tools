@@ -5,6 +5,7 @@ import {
   type DifficultyLevel,
   type AnyQuestion,
   mStep,
+  pickActive,
 } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -17,29 +18,24 @@ type ToolType = "estimation";
 
 // ── 2. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
-const OPERATION_DROPDOWN = {
+const OPERATION_MULTISELECT = {
   key: "operation",
   label: "Operation",
   options: [
-    { value: "mixed",    label: "Mixed" },
-    { value: "add",      label: "Addition (+)" },
-    { value: "subtract", label: "Subtraction (−)" },
-    { value: "multiply", label: "Multiplication (×)" },
-    { value: "divide",   label: "Division (÷)" },
+    { value: "add",      label: "Addition (+)",       defaultActive: true },
+    { value: "subtract", label: "Subtraction (−)",    defaultActive: true },
+    { value: "multiply", label: "Multiplication (×)", defaultActive: true },
+    { value: "divide",   label: "Division (÷)",       defaultActive: true },
   ],
-  defaultValue: "mixed",
 };
 
-const LEVEL3_DROPDOWN = {
+const LEVEL3_MULTISELECT = {
   key: "l3type",
   label: "Question Type",
-  useTwoLineButtons: true,
   options: [
-    { value: "mixed",    label: "Mixed",           sub: "All types" },
-    { value: "fracbar",  label: "Fraction Bar",    sub: "expr / expr" },
-    { value: "fracterm", label: "Fraction + Term", sub: "a/b ± c  or  a/b × c" },
+    { value: "fracbar",  label: "Fraction Bar",    defaultActive: true },
+    { value: "fracterm", label: "Fraction + Term", defaultActive: true },
   ],
-  defaultValue: "mixed",
 };
 
 const TOOL_CONFIG: ToolConfig = {
@@ -48,12 +44,13 @@ const TOOL_CONFIG: ToolConfig = {
     estimation: {
       name: "Estimation",
       variables: [],
-      dropdown: OPERATION_DROPDOWN,
+      dropdown: null,
+      multiSelect: OPERATION_MULTISELECT,
       difficultySettings: {
-        level1: { dropdown: OPERATION_DROPDOWN },
-        level2: { dropdown: OPERATION_DROPDOWN },
+        level1: { multiSelect: OPERATION_MULTISELECT },
+        level2: { multiSelect: OPERATION_MULTISELECT },
         level3: {
-          dropdown: LEVEL3_DROPDOWN,
+          multiSelect: LEVEL3_MULTISELECT,
           variables: [
             { key: "bothSidesExpr", label: "Both sides can have expression", defaultValue: false },
           ],
@@ -143,10 +140,8 @@ const formatAnswer = (n: number): string => {
 
 // ── 5. Level 1 generator ──────────────────────────────────────────────────────
 
-const generateLevel1 = (forcedOp: string | null = null): AnyQuestion => {
-  const ops = forcedOp ? [forcedOp] : ["add", "subtract", "multiply", "divide"];
+const generateLevel1 = (op: string): AnyQuestion => {
   for (let att = 0; att < 50; att++) {
-    const op = ops[Math.floor(Math.random() * ops.length)];
     let num1 = 0, num2 = 0;
     if (op === "multiply") {
       if (Math.random() > 0.3) { num1 = Math.floor(Math.random() * 90) + 10; num2 = Math.floor(Math.random() * 90) + 10; }
@@ -204,12 +199,10 @@ const generateLevel1 = (forcedOp: string | null = null): AnyQuestion => {
 
 // ── 6. Level 2 generator ──────────────────────────────────────────────────────
 
-const generateLevel2 = (forcedOp: string | null = null): AnyQuestion => {
-  const ops = forcedOp ? [forcedOp] : ["add", "subtract", "multiply", "divide"];
+const generateLevel2 = (op: string): AnyQuestion => {
   for (let att = 0; att < 50; att++) {
     const useDecimals = Math.random() > 0.3;
     let num1 = 0, num2 = 0;
-    const op = ops[Math.floor(Math.random() * ops.length)];
     if (useDecimals) {
       if (op === "multiply" || op === "divide") {
         num1 = Math.round((Math.random() * 9 + 1) * 10) / 10;
@@ -492,9 +485,7 @@ const generateLevel3 = (l3type: string, allowBothSides: boolean): AnyQuestion =>
     difficulty: "level3",
   };
   for (let att = 0; att < 40; att++) {
-    let type = l3type;
-    if (type === "mixed") type = Math.random() < 0.5 ? "fracbar" : "fracterm";
-    const q = type === "fracbar" ? generateFracBar(allowBothSides) : generateFracTerm();
+    const q = l3type === "fracbar" ? generateFracBar(allowBothSides) : generateFracTerm();
     if (q) return q;
   }
   return FALLBACK;
@@ -506,13 +497,13 @@ const generateQuestion = (
   _tool: string,
   level: DifficultyLevel,
   variables: Record<string, boolean>,
-  dropdownValue: string,
-  _multiSelectValues: Record<string, boolean> = {},
+  _dropdownValue: string,
+  multiSelectValues: Record<string, boolean> = {},
 ): AnyQuestion => {
   void (_tool as ToolType);
-  if (level === "level1") return generateLevel1(dropdownValue === "mixed" ? null : dropdownValue);
-  if (level === "level2") return generateLevel2(dropdownValue === "mixed" ? null : dropdownValue);
-  return generateLevel3(dropdownValue, !!variables["bothSidesExpr"]);
+  if (level === "level1") return generateLevel1(pickActive(multiSelectValues, OPERATION_MULTISELECT.options));
+  if (level === "level2") return generateLevel2(pickActive(multiSelectValues, OPERATION_MULTISELECT.options));
+  return generateLevel3(pickActive(multiSelectValues, LEVEL3_MULTISELECT.options), !!variables["bothSidesExpr"]);
 };
 
 // ── 12. generateUniqueQ ───────────────────────────────────────────────────────
