@@ -197,12 +197,13 @@ const generateSharingQuestion = (
 
     if (level === "level1") {
       parts = pick([[1,2],[1,3],[1,4],[1,5],[1,6],[2,3],[2,5],[3,4]]);
+      if (Math.random() < 0.5) parts = [parts[1], parts[0]];
       ratioSum = parts[0] + parts[1];
       const mult = randInt(2, 12);
       total = ratioSum * mult;
       if (total > 64) continue;
     } else if (level === "level2") {
-      const a = randInt(1, 5), b = randInt(1, 5);
+      const a = randInt(1, 11), b = randInt(1, 11);
       if (!isCoprime(a, b) || a === b) continue;
       parts = [a, b]; ratioSum = a + b;
       if (ratioSum < 5 || ratioSum > 12) continue;
@@ -304,7 +305,7 @@ const generateKnownAmountsQuestion = (
       if (rs * partValue < 2 || rs * partValue > 64) continue;
       knownPerson = Math.random() < 0.5 ? 0 : 1;
     } else if (level === "level2") {
-      const a = randInt(1, 8), b = randInt(1, 8);
+      const a = randInt(1, 11), b = randInt(1, 11);
       if (!isCoprime(a, b) || a === b) continue;
       parts = [a, b];
       const rs = a + b;
@@ -415,7 +416,7 @@ const generateDifferenceQuestion = (
       partValue = randInt(1, Math.floor(64 / rs));
       if (rs * partValue < 2 || rs * partValue > 64) continue;
     } else if (level === "level2") {
-      const a = randInt(1, 8), b = randInt(1, 8);
+      const a = randInt(1, 11), b = randInt(1, 11);
       if (!isCoprime(a, b) || a === b) continue;
       parts = [a, b];
       const rs = a + b;
