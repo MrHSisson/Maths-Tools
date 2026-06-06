@@ -37,3 +37,8 @@ export const mStep = (label: string, latex: string, unit?: string) =>
 
 // Formats a number to dp decimal places, stripping trailing zeros.
 export const fmt = (n: number, dp = 2): string => n.toFixed(dp).replace(/\.?0+$/, "");
+
+// Renders an answer with its leading "= ". Bare-value answers ("10", "\frac{3}{4}")
+// get the "= " prefix; full-equation answers ("x = 10") already read correctly on
+// their own and are returned unchanged — prevents "= x = 10" ever being shown.
+export const ansEq = (answer: string): string => (/=/.test(answer) ? answer : `= ${answer}`);

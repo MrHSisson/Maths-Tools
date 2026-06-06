@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2 } from "lucide-react";
 import type { DifficultyLevel, AnyQuestion, WorkingStep, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
 import { LV_COLORS, getQuestionBg, getStepBg } from "./colors";
-import { normalizeMultiSelect } from "./helpers";
+import { normalizeMultiSelect, ansEq } from "./helpers";
 import { loadKaTeX } from "./katex";
 import { MathRenderer, InlineMath } from "./components/MathRenderer";
 import { QuestionDisplay, AnswerDisplay } from "./components/QuestionDisplay";
@@ -380,7 +380,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           )}
           {showWorksheetAnswers && !answerRenderer && (
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            <div className={`${fsz} font-semibold mt-1 text-center`} style={{ color: "#059669" }}>= {(q as any).answer}</div>
+            <div className={`${fsz} font-semibold mt-1 text-center`} style={{ color: "#059669" }}>{ansEq((q as any).answer)}</div>
           )}
         </div>
       );
@@ -399,7 +399,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           </div>
           {showWorksheetAnswers && (
             <div className={`${fsz} font-semibold mt-1 text-center`} style={{ color: "#059669" }}>
-              {anyQ.answerLatex ? <MathRenderer latex={`= ${anyQ.answerLatex}`} /> : <span>= {anyQ.answer}</span>}
+              {anyQ.answerLatex ? <MathRenderer latex={ansEq(anyQ.answerLatex)} /> : <span>{ansEq(anyQ.answer)}</span>}
             </div>
           )}
         </div>
@@ -418,7 +418,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           {showWorksheetAnswers && (
             <div className={`${fsz} font-semibold mt-1 text-center`} style={{ color: "#059669" }}>
               {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-              {(q as any).answerLatex ? <MathRenderer latex={`= ${(q as any).answerLatex}`} /> : <span>= {(q as any).answer}</span>}
+              {(q as any).answerLatex ? <MathRenderer latex={ansEq((q as any).answerLatex)} /> : <span>{ansEq((q as any).answer)}</span>}
             </div>
           )}
         </div>
@@ -438,7 +438,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         {showWorksheetAnswers && (
           <div className={`${fsz} font-semibold mt-1 text-center`} style={{ color: "#059669" }}>
             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-            <MathRenderer latex={`= ${(q as any).answerLatex}`} />
+            <MathRenderer latex={ansEq((q as any).answerLatex)} />
           </div>
         )}
       </div>

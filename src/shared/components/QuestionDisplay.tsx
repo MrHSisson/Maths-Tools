@@ -1,5 +1,6 @@
 import { MathRenderer, InlineMath } from "./MathRenderer";
 import type { AnyQuestion } from "../types";
+import { ansEq } from "../helpers";
 
 export const QuestionDisplay = ({ q, cls }: { q: AnyQuestion; cls: string }) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -39,10 +40,10 @@ export const AnswerDisplay = ({ q }: { q: AnyQuestion }) => {
   if (anyQ.answerLatex) {
     return (
       <>
-        <MathRenderer latex={`= ${anyQ.answerLatex}`} />
+        <MathRenderer latex={ansEq(anyQ.answerLatex)} />
         {anyQ.answerSuffix && <span> {anyQ.answerSuffix}</span>}
       </>
     );
   }
-  return <span>= {anyQ.answer ?? ""}</span>;
+  return <span>{ansEq(anyQ.answer ?? "")}</span>;
 };
