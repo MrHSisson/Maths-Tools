@@ -335,14 +335,11 @@ function dataToQuestion(d: DiagramData, level: DifficultyLevel): AnyQuestion {
   const answer = isChain ? `x = ${d.midVal}°, y = ${d.xVal}°` : `x = ${d.xVal}°`;
   const working = isChain
     ? [
-        { type: "tStep", latex: "", plain: `${d.rule.label} — ${d.rule.statement}`, label: "" },
-        { type: "tStep", latex: "", plain: `x = ${d.midVal}°`, label: "" },
-        { type: "tStep", latex: "", plain: `${d.rule2!.label} — ${d.rule2!.statement}`, label: "" },
-        { type: "tStep", latex: "", plain: `y = ${d.xVal}°`, label: "" },
+        { type: "tStep", latex: "", plain: `${d.rule.statement}, x = ${d.midVal}°`, label: "" },
+        { type: "tStep", latex: "", plain: `${d.rule2!.statement}, y = ${d.xVal}°`, label: "" },
       ]
     : [
-        { type: "tStep", latex: "", plain: `${d.rule.label} — ${d.rule.statement}`, label: "" },
-        { type: "tStep", latex: "", plain: `x = ${d.xVal}°`, label: "" },
+        { type: "tStep", latex: "", plain: `${d.rule.statement}, x = ${d.xVal}°`, label: "" },
       ];
 
   const id = Math.floor(Math.random() * 1_000_000);
@@ -487,22 +484,17 @@ function answerRenderer(q: AnyQuestion, _colorScheme: string): JSX.Element | nul
     <div style={{ textAlign: "center" }}>
       {isChain ? (
         <>
-          <div style={{ fontSize: 20, fontWeight: 800, color: "#b91c1c" }}>x = {d.midVal}°</div>
-          <div style={{ fontSize: 14, fontWeight: 600, color: "#374151", marginBottom: 10 }}>
-            {d.rule.label} — {d.rule.statement}
+          <div style={{ fontSize: 16, fontWeight: 600, color: "#374151", marginBottom: 6 }}>
+            {d.rule.statement}, <span style={{ fontWeight: 800, color: "#b91c1c" }}>x = {d.midVal}°</span>
           </div>
-          <div style={{ fontSize: 22, fontWeight: 800, color: "#15803d" }}>y = {d.xVal}°</div>
-          <div style={{ fontSize: 14, fontWeight: 600, color: "#374151" }}>
-            {d.rule2!.label} — {d.rule2!.statement}
+          <div style={{ fontSize: 16, fontWeight: 600, color: "#374151" }}>
+            {d.rule2!.statement}, <span style={{ fontWeight: 800, color: "#15803d" }}>y = {d.xVal}°</span>
           </div>
         </>
       ) : (
-        <>
-          <div style={{ fontSize: 24, fontWeight: 800, color: "#166534" }}>x = {d.xVal}°</div>
-          <div style={{ fontSize: 16, fontWeight: 600, color: "#374151", marginTop: 4 }}>
-            {d.rule.label} — {d.rule.statement}
-          </div>
-        </>
+        <div style={{ fontSize: 16, fontWeight: 600, color: "#374151" }}>
+          {d.rule.statement}, <span style={{ fontWeight: 800, color: "#166534" }}>x = {d.xVal}°</span>
+        </div>
       )}
     </div>
   );
@@ -530,12 +522,15 @@ function customPrintHandler(questions: AnyQuestion[], printMode: PrintMode, cont
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const d = (q as any)._diagram as DiagramData | undefined;
     const isChain = d?.isChain && !!d?.rule2;
-    const ansHtml = showAns && d
-      ? isChain
-        ? `<div class="answer"><span class="ans-x">x = ${d.midVal}°</span>&ensp;<span class="ans-y">y = ${d.xVal}°</span></div>`
-        : `<div class="answer"><span class="ans-x">x = ${d.xVal}°</span></div>`
-      : "";
-    return `<div class="cell"><div class="cell-num">${li + 1}</div><div class="cell-diag">${svgStrings[gi] ?? ""}</div>${ansHtml}</div>`;
+
+    if (showAns && d) {
+      const statementsHtml = isChain
+        ? `<div>${d.rule.statement}, <span class="ans-x">x = ${d.midVal}°</span></div><div>${d.rule2!.statement}, <span class="ans-y">y = ${d.xVal}°</span></div>`
+        : `<div>${d.rule.statement}, <span class="ans-x">x = ${d.xVal}°</span></div>`;
+      return `<div class="cell"><div class="cell-num">${li + 1}</div><div class="cell-ans">${statementsHtml}</div></div>`;
+    }
+
+    return `<div class="cell"><div class="cell-num">${li + 1}</div><div class="cell-diag">${svgStrings[gi] ?? ""}</div></div>`;
   };
 
   const page = (qs: AnyQuestion[], start: number, pn: number, tp: number, ans: boolean): string => {
@@ -572,9 +567,9 @@ function customPrintHandler(questions: AnyQuestion[], printMode: PrintMode, cont
   .cell-num{position:absolute;top:1.5mm;left:2mm;font-size:2.8mm;font-weight:700;color:#374151}
   .cell-diag{width:100%;flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
   .cell-diag svg{width:100%;height:100%;overflow:visible}
-  .answer{font-size:3.5mm;font-weight:700;text-align:center;flex-shrink:0;margin-top:1mm}
-  .ans-x{color:#dc2626}
-  .ans-y{color:#16a34a}
+  .cell-ans{width:100%;flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2mm;font-size:3.4mm;font-weight:600;color:#374151;text-align:center;padding:0 2mm}
+  .ans-x{color:#dc2626;font-weight:800}
+  .ans-y{color:#16a34a;font-weight:800}
 </style>
 </head><body>${body}</body></html>`;
 
