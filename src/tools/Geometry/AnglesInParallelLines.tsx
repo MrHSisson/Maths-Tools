@@ -199,6 +199,13 @@ const generateChainQuestion = (activeRules: Record<string, boolean>, fixedRotati
           // Reject if loops back to the given angle or stays at intermediate
           if (m.finalInter === knownInter && m.finalQuad === knownQuad) continue;
           if (m.finalInter === xInter && m.finalQuad === xQuad) continue;
+          // Reject if the given angle and y are directly linked by any rule —
+          // that would let students skip x entirely and undermine the chain
+          const shortcutExists = RULES.some(r => r.variants.some(v2 =>
+            (v2.inter1 === knownInter && v2.quad1 === knownQuad && v2.inter2 === m.finalInter && v2.quad2 === m.finalQuad) ||
+            (v2.inter2 === knownInter && v2.quad2 === knownQuad && v2.inter1 === m.finalInter && v2.quad1 === m.finalQuad)
+          ));
+          if (shortcutExists) continue;
           candidates.push({ rule2, ...m });
         }
       }
