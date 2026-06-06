@@ -189,8 +189,15 @@ const generateChainQuestion = (activeRules: Record<string, boolean>, fixedRotati
     type Candidate = { rule2: RuleDef; finalInter: string; finalQuad: string };
     const candidates: Candidate[] = [];
 
+    // VO + SL in either order is always rejected: VO gives x = given, so
+    // SL from x gives y = 180° − given, letting students skip x entirely.
+    const isVOSL = (a: string, b: string) =>
+      (a === "verticallyOpposite" && b === "straightLine") ||
+      (a === "straightLine" && b === "verticallyOpposite");
+
     for (const rule2 of shuffled(RULES)) {
       if (rule2.key === base.rule.key) continue;
+      if (isVOSL(base.rule.key, rule2.key)) continue;
       for (const v of rule2.variants) {
         const matches: Array<{ finalInter: string; finalQuad: string }> = [];
         if (v.inter1 === xInter && v.quad1 === xQuad) matches.push({ finalInter: v.inter2, finalQuad: v.quad2 });
