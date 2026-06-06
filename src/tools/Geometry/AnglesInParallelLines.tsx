@@ -469,7 +469,7 @@ function questionRenderer(q: AnyQuestion, showAnswer: boolean, _colorScheme: str
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const d = (q as any)._diagram as DiagramData | undefined;
   if (!d) return null;
-  const maxW = compact ? 180 : 340;
+  const maxW = compact === true ? 180 : compact === undefined ? 340 : 500;
   return (
     <div style={{ width: "100%", maxWidth: maxW, margin: "0 auto" }}>
       <Diagram d={d} showAnswer={showAnswer} />

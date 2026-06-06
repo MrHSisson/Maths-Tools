@@ -710,7 +710,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         <>
           {getInstruction() && !questionRenderer && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold`} style={{ color: "#000" }}>{getInstruction()}</div>}
           {questionRenderer
-            ? questionRenderer(currentQuestion, showWhiteboardAnswer, colorScheme)
+            ? questionRenderer(currentQuestion, showWhiteboardAnswer, colorScheme, false)
             : <>
                 <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
                 {showWhiteboardAnswer && <div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>
@@ -819,7 +819,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           </div>
           {getInstruction() && !questionRenderer && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold mb-2`} style={{ color: "#000" }}>{getInstruction()}</div>}
           {questionRenderer
-            ? questionRenderer(currentQuestion, showAnswer, colorScheme)
+            ? questionRenderer(currentQuestion, showAnswer, colorScheme, false)
             : <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
           }
         </div>
