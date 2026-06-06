@@ -36,13 +36,15 @@ export interface ToolShellProps {
   ) => AnyQuestion;
   defaults?: ToolShellDefaults;
   stepRenderer?: (step: WorkingStep, colorScheme: string) => JSX.Element | null;
-  /** Replaces QuestionDisplay in all modes. Receives showAnswer so diagrams can update. compact=true in worksheet cells. */
-  questionRenderer?: (q: AnyQuestion, showAnswer: boolean, colorScheme: string, compact?: boolean) => JSX.Element | null;
+  /** Replaces QuestionDisplay in all modes. compact=true in worksheet cells, false in worked example/fullscreen, undefined in regular whiteboard. idx is the worksheet question index (only provided in worksheet cells). */
+  questionRenderer?: (q: AnyQuestion, showAnswer: boolean, colorScheme: string, compact?: boolean, idx?: number) => JSX.Element | null;
   /** Replaces the final answer box (AnswerDisplay). Shown when showAnswer=true. */
   answerRenderer?: (q: AnyQuestion, colorScheme: string) => JSX.Element | null;
+  /** Custom print handler for diagram tools. Receives the worksheet array, print mode, and the worksheet container DOM element (for SVG extraction). */
+  customPrintHandler?: (questions: AnyQuestion[], printMode: PrintMode, worksheetEl: HTMLElement | null) => void;
 }
 
-export const ToolShell = ({ config, infoSections, generateQuestion, generateUniqueQ, defaults = {}, stepRenderer, questionRenderer, answerRenderer }: ToolShellProps) => {
+export const ToolShell = ({ config, infoSections, generateQuestion, generateUniqueQ, defaults = {}, stepRenderer, questionRenderer, answerRenderer, customPrintHandler }: ToolShellProps) => {
   const toolKeys = Object.keys(config.tools);
 
   const [currentTool, setCurrentTool] = useState<string>(toolKeys[0]);
@@ -161,6 +163,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const worksheetWrapRef = useRef<HTMLDivElement>(null);
   const camDropdownRef = useRef<HTMLDivElement>(null);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const didLongPress = useRef(false);
@@ -369,7 +372,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       return (
         <div className={wrapperClass} style={cellStyle}>
           {numEl}{regenBtn}
-          {questionRenderer(q, false, colorScheme, true)}
+          {questionRenderer(q, false, colorScheme, true, idx)}
           {showWorksheetAnswers && answerRenderer && (
             <div style={{ marginTop: 4 }}>{answerRenderer(q, colorScheme)}</div>
           )}
@@ -602,7 +605,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                       <Eye size={18} /> {showWorksheetAnswers ? "Hide Answers" : "Show Answers"}
                     </button>
                     <PrintSplitButton
-                      onPrint={m => handlePrint(worksheet, config.tools[currentTool].name, difficulty, isDifferentiated, numColumns, getInstruction(), m)}
+                      onPrint={m => customPrintHandler
+                        ? customPrintHandler(worksheet, m, worksheetWrapRef.current)
+                        : handlePrint(worksheet, config.tools[currentTool].name, difficulty, isDifferentiated, numColumns, getInstruction(), m)}
                       printMode={printMode} setPrintMode={setPrintMode}
                     />
                   </>
@@ -630,7 +635,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                       <Eye size={18} /> {showWorksheetAnswers ? "Hide Answers" : "Show Answers"}
                     </button>
                     <PrintSplitButton
-                      onPrint={m => handlePrint(worksheet, config.tools[currentTool].name, "advanced", false, numColumns, getInstruction(), m)}
+                      onPrint={m => customPrintHandler
+                        ? customPrintHandler(worksheet, m, worksheetWrapRef.current)
+                        : handlePrint(worksheet, config.tools[currentTool].name, "advanced", false, numColumns, getInstruction(), m)}
                       printMode={printMode} setPrintMode={setPrintMode}
                     />
                   </>
@@ -944,7 +951,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             })}
           </div>
 
-          {mode === "worksheet" && <>{renderControlBar()}{renderWorksheet()}</>}
+          {mode === "worksheet" && <>{renderControlBar()}<div ref={worksheetWrapRef}>{renderWorksheet()}</div></>}
           {mode !== "worksheet" && (
             <div className="flex flex-col gap-6">
               <div className="rounded-xl shadow-lg">

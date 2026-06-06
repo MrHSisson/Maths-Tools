@@ -1,6 +1,6 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion,
+  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type PrintMode,
   tStep,
 } from "../../shared";
 
@@ -164,7 +164,7 @@ const X_STROKE     = "#16a34a";
 const LINE_COLOR   = "#111827";
 
 // ── Diagram component ─────────────────────────────────────────────────────────
-const Diagram = ({ d, showAnswer }: { d: DiagramData; showAnswer: boolean }) => {
+const Diagram = ({ d, showAnswer, qIndex }: { d: DiagramData; showAnswer: boolean; qIndex?: number }) => {
   const { tvAngle, sectors, knownVal, xVal, knownQuad, knownInter, xQuad, xInter, pts, canvasRotation, isChain, midQuad, midInter, midVal } = d;
   const { p1, p2 } = pts;
   const tv = getTransversalEndpoints(tvAngle, p1, p2);
@@ -216,6 +216,7 @@ const Diagram = ({ d, showAnswer }: { d: DiagramData; showAnswer: boolean }) => 
       viewBox={`0 0 ${VB} ${VB}`}
       style={{ display: "block", width: "100%", height: "auto" }}
       preserveAspectRatio="xMidYMid meet"
+      {...(qIndex !== undefined ? { "data-q-index": qIndex } : {})}
     >
       <g transform={`rotate(${canvasRotation}, ${VC}, ${VC})`}>
         <line x1={p1.x - lh1.left} y1={L1Y} x2={p1.x + lh1.right} y2={L1Y} stroke={LINE_COLOR} strokeWidth="3.5"/>
@@ -465,14 +466,14 @@ function generateUniqueQ(
 }
 
 // ── Custom renderers ──────────────────────────────────────────────────────────
-function questionRenderer(q: AnyQuestion, showAnswer: boolean, _colorScheme: string, compact?: boolean): JSX.Element | null {
+function questionRenderer(q: AnyQuestion, showAnswer: boolean, _colorScheme: string, compact?: boolean, idx?: number): JSX.Element | null {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const d = (q as any)._diagram as DiagramData | undefined;
   if (!d) return null;
   const maxW = compact === true ? 180 : compact === undefined ? 340 : 500;
   return (
     <div style={{ width: "100%", maxWidth: maxW, margin: "0 auto" }}>
-      <Diagram d={d} showAnswer={showAnswer} />
+      <Diagram d={d} showAnswer={showAnswer} qIndex={idx} />
     </div>
   );
 }
@@ -507,6 +508,83 @@ function answerRenderer(q: AnyQuestion, _colorScheme: string): JSX.Element | nul
   );
 }
 
+// ── Custom print handler ──────────────────────────────────────────────────────
+const PRINT_COLS = 3, PRINT_ROWS = 5, PRINT_PER_PAGE = PRINT_COLS * PRINT_ROWS;
+
+function customPrintHandler(questions: AnyQuestion[], printMode: PrintMode, container: HTMLElement | null): void {
+  const svgStrings: Record<number, string> = {};
+  if (container) {
+    container.querySelectorAll<SVGSVGElement>("svg[data-q-index]").forEach(el => {
+      const idx = parseInt(el.getAttribute("data-q-index") ?? "0", 10);
+      const clone = el.cloneNode(true) as SVGSVGElement;
+      clone.setAttribute("width", "100%");
+      clone.setAttribute("height", "100%");
+      svgStrings[idx] = clone.outerHTML;
+    });
+  }
+
+  const toolName = "Angles in Parallel Lines";
+  const dateStr = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+
+  const cell = (q: AnyQuestion, gi: number, li: number, showAns: boolean): string => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const d = (q as any)._diagram as DiagramData | undefined;
+    const isChain = d?.isChain && !!d?.rule2;
+    const ansHtml = showAns && d
+      ? isChain
+        ? `<div class="answer"><span class="ans-x">x = ${d.midVal}°</span>&ensp;<span class="ans-y">y = ${d.xVal}°</span></div>`
+        : `<div class="answer"><span class="ans-x">x = ${d.xVal}°</span></div>`
+      : "";
+    return `<div class="cell"><div class="cell-num">${li + 1}</div><div class="cell-diag">${svgStrings[gi] ?? ""}</div>${ansHtml}</div>`;
+  };
+
+  const page = (qs: AnyQuestion[], start: number, pn: number, tp: number, ans: boolean): string => {
+    const cells = qs.map((q, i) => cell(q, start + i, start + i, ans)).join("");
+    const pageLabel = tp > 1 ? ` &middot; Page ${pn} of ${tp}` : "";
+    const title = toolName + (ans ? " — Answers" : "");
+    return `<div class="page"><div class="ph"><h1>${title}</h1><div class="meta">Worksheet &middot; ${dateStr}${pageLabel}</div></div><div class="sg">${cells}</div></div>`;
+  };
+
+  const build = (ans: boolean): string => {
+    const out: string[] = [];
+    const tp = Math.ceil(questions.length / PRINT_PER_PAGE);
+    for (let p = 0; p < questions.length; p += PRINT_PER_PAGE) {
+      out.push(page(questions.slice(p, p + PRINT_PER_PAGE), p, Math.floor(p / PRINT_PER_PAGE) + 1, tp, ans));
+    }
+    return out.join("");
+  };
+
+  const body = printMode === "questions" ? build(false) : printMode === "answers" ? build(true) : build(false) + build(true);
+
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${toolName}</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  @page{size:A4 portrait;margin:12mm}
+  body{font-family:"Segoe UI",Arial,sans-serif}
+  @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+  .page{width:186mm;height:273mm;display:flex;flex-direction:column;page-break-after:always;overflow:hidden}
+  .page:last-child{page-break-after:auto}
+  .ph{display:flex;justify-content:space-between;align-items:baseline;border-bottom:.4mm solid #1e3a8a;padding-bottom:1.5mm;margin-bottom:2mm;flex-shrink:0}
+  .ph h1{font-size:5mm;font-weight:700;color:#1e3a8a}
+  .meta{font-size:3mm;color:#6b7280}
+  .sg{display:grid;grid-template-columns:repeat(${PRINT_COLS},1fr);grid-template-rows:repeat(${PRINT_ROWS},1fr);gap:2mm;flex:1;min-height:0}
+  .cell{border:.3mm solid #d1d5db;border-radius:2mm;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2mm;overflow:hidden;flex:1;min-height:0;position:relative}
+  .cell-num{position:absolute;top:1.5mm;left:2mm;font-size:2.8mm;font-weight:700;color:#374151}
+  .cell-diag{width:100%;flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .cell-diag svg{width:100%;height:100%;overflow:visible}
+  .answer{font-size:3.5mm;font-weight:700;text-align:center;flex-shrink:0;margin-top:1mm}
+  .ans-x{color:#dc2626}
+  .ans-y{color:#16a34a}
+</style>
+</head><body>${body}</body></html>`;
+
+  const win = window.open("", "_blank");
+  if (!win) { alert("Please allow popups to use the PDF export."); return; }
+  win.document.write(html);
+  win.document.close();
+  setTimeout(() => win.print(), 400);
+}
+
 // ── App ───────────────────────────────────────────────────────────────────────
 export default function App() {
   return (
@@ -517,11 +595,12 @@ export default function App() {
       generateUniqueQ={generateUniqueQ}
       questionRenderer={questionRenderer}
       answerRenderer={answerRenderer}
+      customPrintHandler={customPrintHandler}
       defaults={{
         comingSoonLevels: ["level3"],
-        maxColumns: 2,
-        numColumns: 2,
-        numQuestions: 6,
+        fixedColumns: true,
+        numColumns: 3,
+        numQuestions: 9,
       }}
     />
   );
