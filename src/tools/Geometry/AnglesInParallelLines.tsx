@@ -126,6 +126,103 @@ const RULES = [
 
 const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 const randInt = (min: number, max: number): number => Math.floor(Math.random() * (max - min + 1)) + min;
+const shuffled = <T,>(arr: T[]): T[] => [...arr].sort(() => Math.random() - 0.5);
+
+// ── Question types ────────────────────────────────────────────────────────────
+type RuleDef = typeof RULES[0];
+
+type Question = {
+  tvAngle: number;
+  rule: RuleDef;
+  angles: AngleMap;
+  sectors: SectorMap;
+  pts: { p1: Point; p2: Point };
+  canvasRotation: number;
+  knownVal: number;
+  xVal: number;
+  knownQuad: string;
+  knownInter: string;
+  xQuad: string;
+  xInter: string;
+  isChain: boolean;
+  rule2?: RuleDef;
+  midInter?: string;
+  midQuad?: string;
+  midVal?: number;
+};
+
+// ── Question generators ────────────────────────────────────────────────────────
+const generateQuestion = (activeRules: Record<string, boolean>, fixedRotation: number | null = null): Question => {
+  const acuteDeg = randInt(50, 70);
+  const leanRight = Math.random() < 0.5;
+  const tvAngle = (leanRight ? acuteDeg : 180 - acuteDeg) * DEG;
+  const pool = RULES.filter(r => activeRules[r.key] !== false);
+  const rule = pick(pool.length > 0 ? pool : RULES);
+  const variant = pick(rule.variants);
+  const angles = getAngles(tvAngle);
+  const sectors = getSectors(tvAngle);
+  const pts = getIntersections(tvAngle);
+  const val1 = angles[variant.quad1 as keyof AngleMap], val2 = angles[variant.quad2 as keyof AngleMap];
+  const swapped = Math.random() < 0.5;
+  const ROTATIONS = [0, 45, 90, 135];
+  const canvasRotation = fixedRotation !== null ? fixedRotation : ROTATIONS[Math.floor(Math.random() * ROTATIONS.length)];
+
+  return {
+    tvAngle, rule, angles, sectors, pts, canvasRotation,
+    knownVal:   swapped ? val2 : val1,
+    xVal:       swapped ? val1 : val2,
+    knownQuad:  swapped ? variant.quad2 : variant.quad1,
+    knownInter: swapped ? variant.inter2 : variant.inter1,
+    xQuad:      swapped ? variant.quad1 : variant.quad2,
+    xInter:     swapped ? variant.inter1 : variant.inter2,
+    isChain: false,
+  };
+};
+
+const generateChainQuestion = (activeRules: Record<string, boolean>, fixedRotation: number | null = null): Question => {
+  // Try up to 30 times to build a valid 2-rule chain
+  for (let attempt = 0; attempt < 30; attempt++) {
+    const base = generateQuestion(activeRules, fixedRotation);
+    const { xInter, xQuad, knownInter, knownQuad, angles } = base;
+
+    // Find all rules (excluding rule1) that touch the intermediate angle position
+    type Candidate = { rule2: RuleDef; finalInter: string; finalQuad: string };
+    const candidates: Candidate[] = [];
+
+    for (const rule2 of shuffled(RULES)) {
+      if (rule2.key === base.rule.key) continue;
+      for (const v of rule2.variants) {
+        const matches: Array<{ finalInter: string; finalQuad: string }> = [];
+        if (v.inter1 === xInter && v.quad1 === xQuad) matches.push({ finalInter: v.inter2, finalQuad: v.quad2 });
+        if (v.inter2 === xInter && v.quad2 === xQuad) matches.push({ finalInter: v.inter1, finalQuad: v.quad1 });
+        for (const m of matches) {
+          // Reject if loops back to the given angle or stays at intermediate
+          if (m.finalInter === knownInter && m.finalQuad === knownQuad) continue;
+          if (m.finalInter === xInter && m.finalQuad === xQuad) continue;
+          candidates.push({ rule2, ...m });
+        }
+      }
+    }
+
+    if (candidates.length === 0) continue;
+
+    const { rule2, finalInter, finalQuad } = pick(candidates);
+    return {
+      ...base,
+      isChain: true,
+      rule2,
+      midInter: xInter,
+      midQuad: xQuad,
+      midVal: base.xVal,
+      xInter: finalInter,
+      xQuad: finalQuad,
+      xVal: angles[finalQuad as keyof AngleMap],
+    };
+  }
+
+  // Fallback: return a standard question
+  return generateQuestion(activeRules, fixedRotation);
+};
 
 // ── Shell-pattern popover ─────────────────────────────────────────────────────
 
@@ -229,44 +326,19 @@ const MultiSelectSection = ({ options, values, onChange }: {
   );
 };
 
-const generateQuestion = (activeRules: Record<string, boolean>, fixedRotation: number | null = null) => {
-  const acuteDeg = randInt(50, 70);
-  const leanRight = Math.random() < 0.5;
-  const tvAngle = (leanRight ? acuteDeg : 180 - acuteDeg) * DEG;
-  const pool = RULES.filter(r => activeRules[r.key] !== false);
-  const rule = pick(pool.length > 0 ? pool : RULES);
-  const variant = pick(rule.variants);
-  const angles = getAngles(tvAngle);
-  const sectors = getSectors(tvAngle);
-  const pts = getIntersections(tvAngle);
-  const val1 = angles[variant.quad1 as keyof AngleMap], val2 = angles[variant.quad2 as keyof AngleMap];
-  const swapped = Math.random() < 0.5;
-  const ROTATIONS = [0, 45, 90, 135];
-  const canvasRotation = fixedRotation !== null ? fixedRotation : ROTATIONS[Math.floor(Math.random() * ROTATIONS.length)];
-
-  return {
-    tvAngle, rule, angles, sectors, pts, canvasRotation,
-    knownVal:   swapped ? val2 : val1,
-    xVal:       swapped ? val1 : val2,
-    knownQuad:  swapped ? variant.quad2 : variant.quad1,
-    knownInter: swapped ? variant.inter2 : variant.inter1,
-    xQuad:      swapped ? variant.quad1 : variant.quad2,
-    xInter:     swapped ? variant.inter1 : variant.inter2,
-  };
-};
-
-type Question = ReturnType<typeof generateQuestion>;
-
 // ── Colours ───────────────────────────────────────────────────────────────────
-const KNOWN_FILL = "rgba(29,78,216,0.15)";
+const KNOWN_FILL   = "rgba(29,78,216,0.15)";
 const KNOWN_STROKE = "#1d4ed8";
-const X_FILL = "rgba(220,38,38,0.15)";
-const X_STROKE = "#dc2626";
-const LINE_COLOR = "#111827";
+const MID_FILL     = "rgba(22,163,74,0.15)";
+const MID_STROKE   = "#16a34a";
+const X_FILL       = "rgba(220,38,38,0.15)";
+const X_STROKE     = "#dc2626";
+const LINE_COLOR   = "#111827";
 
 // ── Diagram ───────────────────────────────────────────────────────────────────
 const Diagram = ({ q, showAnswer }: { q: Question; showAnswer: boolean }) => {
-  const { tvAngle, sectors, knownVal, xVal, knownQuad, knownInter, xQuad, xInter, pts, canvasRotation } = q;
+  const { tvAngle, sectors, knownVal, xVal, knownQuad, knownInter, xQuad, xInter, pts, canvasRotation,
+    isChain, midQuad, midInter, midVal } = q;
   const { p1, p2 } = pts;
   const tv = getTransversalEndpoints(tvAngle, p1, p2);
 
@@ -289,15 +361,14 @@ const Diagram = ({ q, showAnswer }: { q: Question; showAnswer: boolean }) => {
     );
   };
 
-  const Sector = ({ interKey, quadKey, fill, stroke, labelText }: {
-    interKey: string; quadKey: string; fill: string; stroke: string; labelText: string;
+  const Sector = ({ interKey, quadKey, fill, stroke, labelText, italic }: {
+    interKey: string; quadKey: string; fill: string; stroke: string; labelText: string; italic?: boolean;
   }) => {
     const sec = sectors[quadKey];
     if (!sec) return null;
     const pt = pts[interKey as keyof typeof pts];
     const lx = pt.x + (ARC_R + 26) * Math.cos(sec.mid);
     const ly = pt.y + (ARC_R + 26) * Math.sin(sec.mid);
-    const isX = !showAnswer && labelText === "x";
     return (
       <>
         <path d={sectorPath(pt.x, pt.y, ARC_R, sec.s, sec.e)} fill={fill} stroke="none"/>
@@ -305,7 +376,7 @@ const Diagram = ({ q, showAnswer }: { q: Question; showAnswer: boolean }) => {
         <g transform={`translate(${lx},${ly}) rotate(${-canvasRotation})`}>
           <text x={0} y={0} textAnchor="middle" dominantBaseline="central"
             fill={stroke} fontSize="18" fontWeight="800"
-            fontStyle={isX ? "italic" : "normal"}
+            fontStyle={italic ? "italic" : "normal"}
             fontFamily="'Segoe UI', Arial, sans-serif">
             {labelText}
           </text>
@@ -340,7 +411,22 @@ const Diagram = ({ q, showAnswer }: { q: Question; showAnswer: boolean }) => {
 
         {/* Angle sectors */}
         <Sector interKey={knownInter} quadKey={knownQuad} fill={KNOWN_FILL} stroke={KNOWN_STROKE} labelText={`${knownVal}°`}/>
-        <Sector interKey={xInter}     quadKey={xQuad}     fill={X_FILL}     stroke={X_STROKE}     labelText={showAnswer ? `${xVal}°` : "x"}/>
+        {/* In chain mode: mid = x (red, found first via rule1), final = y (green, found second via rule2) */}
+        {isChain && midInter && midQuad && (
+          <Sector
+            interKey={midInter} quadKey={midQuad}
+            fill={X_FILL} stroke={X_STROKE}
+            labelText={showAnswer ? `${midVal}°` : "x"}
+            italic={!showAnswer}
+          />
+        )}
+        <Sector
+          interKey={xInter} quadKey={xQuad}
+          fill={isChain ? MID_FILL : X_FILL}
+          stroke={isChain ? MID_STROKE : X_STROKE}
+          labelText={showAnswer ? `${xVal}°` : (isChain ? "y" : "x")}
+          italic={!showAnswer}
+        />
       </g>
     </svg>
   );
@@ -352,6 +438,7 @@ const getStepBg = (cs: string): string => ({ blue:"#B3D9F2", pink:"#F2B3D9", yel
 
 // ── App ───────────────────────────────────────────────────────────────────────
 export default function App() {
+  const [mode, setMode]               = useState<"standard" | "chain">("standard");
   const [question, setQuestion]       = useState<Question>(() => generateQuestion({}));
   const [showAnswer, setShowAnswer]   = useState(false);
   const [colorScheme, setColorScheme] = useState("default");
@@ -366,16 +453,27 @@ export default function App() {
   const qBg    = getQBg(colorScheme);
   const stepBg = getStepBg(colorScheme);
 
-  const handleNew = useCallback(() => {
-    setQuestion(generateQuestion(activeRules, fixedRotation));
+  const newQ = useCallback((m: "standard" | "chain", rules: Record<string, boolean>, rot: number | null) => {
+    setQuestion(m === "chain" ? generateChainQuestion(rules, rot) : generateQuestion(rules, rot));
     setShowAnswer(false);
-  }, [activeRules, fixedRotation]);
+  }, []);
+
+  const handleNew = useCallback(() => {
+    newQ(mode, activeRules, fixedRotation);
+  }, [mode, activeRules, fixedRotation, newQ]);
 
   const handleRuleToggle = useCallback((key: string, val: boolean) => {
     setActiveRules(prev => ({ ...prev, [key]: val }));
   }, []);
 
+  const handleModeChange = useCallback((v: string) => {
+    const m = v as "standard" | "chain";
+    setMode(m);
+    newQ(m, activeRules, fixedRotation);
+  }, [activeRules, fixedRotation, newQ]);
+
   const { rule, xVal } = question;
+  const isChain = question.isChain && !!question.rule2;
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#f5f3f0" }}>
@@ -459,6 +557,16 @@ export default function App() {
                   display: "flex", flexDirection: "column", gap: 20,
                 }}>
                   <DropdownSection
+                    label="Mode"
+                    value={mode}
+                    onChange={handleModeChange}
+                    options={[
+                      { value: "standard",  label: "Standard" },
+                      { value: "chain", label: "Multi-step" },
+                    ]}
+                  />
+                  <div style={{ height: 1, background: "#f3f4f6" }}/>
+                  <DropdownSection
                     label="Orientation"
                     value={fixedRotation === null ? "random" : String(fixedRotation)}
                     onChange={v => setFixedRotation(v === "random" ? null : Number(v))}
@@ -481,8 +589,11 @@ export default function App() {
             </div>
           </div>
 
-          <p style={{ fontSize: 18, fontWeight: 600, color: "#374151", margin: 0 }}>
-            Name the rule and find <em style={{ color: "#dc2626" }}>x</em>.
+          <p style={{ fontSize: 18, fontWeight: 600, color: "#374151", margin: 0, textAlign: "center" }}>
+            {isChain
+              ? <>Name both rules and find <em style={{ color: X_STROKE }}>x</em>, then use it to find <em style={{ color: MID_STROKE }}>y</em>.</>
+              : <>Name the rule and find <em style={{ color: X_STROKE }}>x</em>.</>
+            }
           </p>
 
           {/* Diagram */}
@@ -492,11 +603,31 @@ export default function App() {
 
           {/* Answer */}
           {showAnswer && (
-            <div style={{ background: stepBg, borderRadius: 12, padding: "20px 36px", textAlign: "center", width: "100%", maxWidth: 560 }}>
-              <p style={{ margin: 0, fontSize: 24, fontWeight: 800, color: "#166534" }}>x = {xVal}°</p>
-              <p style={{ margin: "8px 0 0", fontSize: 17, fontWeight: 600, color: "#374151" }}>
-                {rule.label} — {rule.statement}
-              </p>
+            <div style={{ background: stepBg, borderRadius: 12, padding: "20px 36px", textAlign: "center", width: "100%", maxWidth: 600 }}>
+              {isChain ? (
+                <>
+                  <p style={{ margin: 0, fontSize: 22, fontWeight: 800, color: "#b91c1c" }}>
+                    x = {question.midVal}°
+                  </p>
+                  <p style={{ margin: "4px 0 16px", fontSize: 16, fontWeight: 600, color: "#374151" }}>
+                    {rule.label} — {rule.statement}
+                  </p>
+                  <div style={{ height: 1, background: "#d1d5db", marginBottom: 16 }}/>
+                  <p style={{ margin: 0, fontSize: 24, fontWeight: 800, color: "#15803d" }}>
+                    y = {xVal}°
+                  </p>
+                  <p style={{ margin: "4px 0 0", fontSize: 16, fontWeight: 600, color: "#374151" }}>
+                    {question.rule2!.label} — {question.rule2!.statement}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p style={{ margin: 0, fontSize: 24, fontWeight: 800, color: "#166534" }}>x = {xVal}°</p>
+                  <p style={{ margin: "8px 0 0", fontSize: 17, fontWeight: 600, color: "#374151" }}>
+                    {rule.label} — {rule.statement}
+                  </p>
+                </>
+              )}
             </div>
           )}
 
