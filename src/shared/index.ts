@@ -15,6 +15,7 @@ export type {
   ToolEntry,
   ToolDropdown,
   ToolMultiSelect,
+  ToolMultiSelectConfig,
   ToolVariable,
   DifficultyLevelSettings,
   InfoSection,
@@ -31,7 +32,7 @@ export { handlePrint } from "./print";
 
 export { LV_COLORS, LV_LABELS, LV_HEADER_COLORS, getQuestionBg, getStepBg } from "./colors";
 
-export { randInt, pick, fracStr, mStr, pickActive, step, tStep, mStep, fmt } from "./helpers";
+export { randInt, pick, fracStr, mStr, pickActive, normalizeMultiSelect, step, tStep, mStep, fmt } from "./helpers";
 
 export { MathRenderer, InlineMath } from "./components/MathRenderer";
 export { QuestionDisplay, AnswerDisplay } from "./components/QuestionDisplay";

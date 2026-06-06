@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2 } from "lucide-react";
 import type { DifficultyLevel, AnyQuestion, WorkingStep, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
 import { LV_COLORS, getQuestionBg, getStepBg } from "./colors";
+import { normalizeMultiSelect } from "./helpers";
 import { loadKaTeX } from "./katex";
 import { MathRenderer, InlineMath } from "./components/MathRenderer";
 import { QuestionDisplay, AnswerDisplay } from "./components/QuestionDisplay";
@@ -83,10 +84,11 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     toolKeys.forEach(k => {
       init[k] = {};
       const t = config.tools[k];
-      if (t.multiSelect) { t.multiSelect.options.forEach(o => { init[k][o.value] = o.defaultActive; }); }
+      normalizeMultiSelect(t.multiSelect).forEach(ms => { ms.options.forEach(o => { init[k][o.value] = o.defaultActive; }); });
       (["level1", "level2", "level3"] as DifficultyLevel[]).forEach(lv => {
-        const ms = t.difficultySettings?.[lv]?.multiSelect;
-        if (ms) { ms.options.forEach(o => { if (!(o.value in init[k])) init[k][o.value] = o.defaultActive; }); }
+        normalizeMultiSelect(t.difficultySettings?.[lv]?.multiSelect).forEach(ms => {
+          ms.options.forEach(o => { if (!(o.value in init[k])) init[k][o.value] = o.defaultActive; });
+        });
       });
     });
     return init;
@@ -136,11 +138,11 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     const t = config.tools[currentTool];
     const dd = t.difficultySettings?.[lv]?.dropdown ?? t.dropdown;
     const vars = t.difficultySettings?.[lv]?.variables ?? t.variables;
-    const ms = t.difficultySettings?.[lv]?.multiSelect ?? t.multiSelect;
+    const ms = normalizeMultiSelect(t.difficultySettings?.[lv]?.multiSelect ?? t.multiSelect);
     const variables: Record<string, boolean> = {};
     vars.forEach(v => { variables[v.key] = v.defaultValue; });
     const multiSelectValues: Record<string, boolean> = {};
-    ms?.options.forEach(o => { multiSelectValues[o.value] = o.defaultActive; });
+    ms.forEach(g => g.options.forEach(o => { multiSelectValues[o.value] = o.defaultActive; }));
     return { id, level: lv, count: 5, variables, dropdownValue: dd?.defaultValue ?? "", multiSelectValues };
   };
 
@@ -220,7 +222,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const getToolSettings = () => config.tools[currentTool];
   const getDropdownConfig = () => getToolSettings().difficultySettings?.[difficulty]?.dropdown ?? getToolSettings().dropdown;
   const getVariablesConfig = () => getToolSettings().difficultySettings?.[difficulty]?.variables ?? getToolSettings().variables;
-  const getMultiSelectConfig = () => getToolSettings().difficultySettings?.[difficulty]?.multiSelect ?? getToolSettings().multiSelect ?? null;
+  const getMultiSelectConfig = () => normalizeMultiSelect(getToolSettings().difficultySettings?.[difficulty]?.multiSelect ?? getToolSettings().multiSelect);
   const getDropdownValue = () => toolDropdowns[`${currentTool}__${difficulty}`] ?? getDropdownConfig()?.defaultValue ?? "";
   const setDropdownValue = (v: string) => setToolDropdowns(p => ({ ...p, [`${currentTool}__${difficulty}`]: v }));
   const getVariableValues = () => toolVariables[currentTool]?.[difficulty] ?? {};

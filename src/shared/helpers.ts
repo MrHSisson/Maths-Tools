@@ -18,6 +18,11 @@ export const pickActive = (values: Record<string, boolean>, options: { value: st
   return active.length > 0 ? active[Math.floor(Math.random() * active.length)].value : options[0].value;
 };
 
+// A tool's `multiSelect` may be a single group or an array of independent groups
+// (each rendered as its own pool in the QO popover). Normalize to an array.
+export const normalizeMultiSelect = <T extends { key: string }>(ms?: T | T[] | null): T[] =>
+  ms ? (Array.isArray(ms) ? ms : [ms]) : [];
+
 // Pure KaTeX step — use for any line containing maths.
 export const step = (latex: string, plain?: string) =>
   ({ type: "step", latex, plain: plain ?? latex });

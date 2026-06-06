@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { ChevronDown } from "lucide-react";
 import type { ToolEntry, DifficultyLevel } from "../types";
 import { LV_LABELS, LV_HEADER_COLORS } from "../colors";
+import { normalizeMultiSelect } from "../helpers";
 
 export const usePopover = () => {
   const [open, setOpen] = useState(false);
@@ -131,6 +132,25 @@ export const MultiSelectSection = ({
   );
 };
 
+// Renders one or more independent multi-select pools, all sharing one flat values record.
+const MultiSelectGroups = ({
+  groups,
+  values,
+  onChange,
+}: {
+  groups: { key: string; label: string; options: { value: string; label: string }[] }[];
+  values: Record<string, boolean>;
+  onChange: (k: string, v: boolean) => void;
+}) => (
+  <>
+    {groups.map(g => (
+      <div key={g.key} style={{ display: "contents" }}>
+        <MultiSelectSection multiSelect={g} values={values} onChange={onChange} />
+      </div>
+    ))}
+  </>
+);
+
 export const VariablesSection = ({
   variables,
   values,
@@ -173,19 +193,19 @@ export const StandardQOPopover = ({
   dropdown: { key: string; label: string; useTwoLineButtons?: boolean; options: { value: string; label: string; sub?: string }[] } | null;
   dropdownValue: string;
   onDropdownChange: (v: string) => void;
-  multiSelect: { key: string; label: string; options: { value: string; label: string }[] } | null;
+  multiSelect: { key: string; label: string; options: { value: string; label: string }[] }[];
   multiSelectValues: Record<string, boolean>;
   onMultiSelectChange: (k: string, v: boolean) => void;
 }) => {
   const { open, setOpen, ref } = usePopover();
-  const hasContent = variables.length > 0 || dropdown !== null || multiSelect !== null;
+  const hasContent = variables.length > 0 || dropdown !== null || multiSelect.length > 0;
   return (
     <div className="relative" ref={ref}>
       <PopoverButton open={open} onClick={() => setOpen(!open)} />
       {open && (
         <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-72 p-5 flex flex-col gap-5">
           {dropdown && <DropdownSection dropdown={dropdown} value={dropdownValue} onChange={onDropdownChange} />}
-          {multiSelect && <MultiSelectSection multiSelect={multiSelect} values={multiSelectValues} onChange={onMultiSelectChange} />}
+          <MultiSelectGroups groups={multiSelect} values={multiSelectValues} onChange={onMultiSelectChange} />
           {variables.length > 0 && <VariablesSection variables={variables} values={variableValues} onChange={onVariableChange} />}
           {!hasContent && <p className="text-sm text-gray-400">No additional options for this tool.</p>}
         </div>
@@ -215,8 +235,8 @@ export const DiffQOPopover = ({
   const levels = ["level1", "level2", "level3"] as DifficultyLevel[];
   const getDDForLevel = (lv: string) => toolSettings.difficultySettings?.[lv]?.dropdown ?? toolSettings.dropdown;
   const getVarsForLevel = (lv: string) => toolSettings.difficultySettings?.[lv]?.variables ?? toolSettings.variables;
-  const getMSForLevel = (lv: string) => toolSettings.difficultySettings?.[lv]?.multiSelect ?? toolSettings.multiSelect ?? null;
-  const anyContent = levels.some(lv => getDDForLevel(lv) !== null || (getVarsForLevel(lv)?.length ?? 0) > 0 || getMSForLevel(lv) !== null);
+  const getMSForLevel = (lv: string) => normalizeMultiSelect(toolSettings.difficultySettings?.[lv]?.multiSelect ?? toolSettings.multiSelect);
+  const anyContent = levels.some(lv => getDDForLevel(lv) !== null || (getVarsForLevel(lv)?.length ?? 0) > 0 || getMSForLevel(lv).length > 0);
   return (
     <div className="relative" ref={ref}>
       <PopoverButton open={open} onClick={() => setOpen(!open)} />
@@ -234,9 +254,9 @@ export const DiffQOPopover = ({
                   <span className={`text-sm font-extrabold uppercase tracking-wider ${LV_HEADER_COLORS[lv]}`}>{LV_LABELS[lv]}</span>
                   <div className="flex flex-col gap-3 pl-1">
                     {dd && <DropdownSection dropdown={dd} value={levelDropdowns[lv] ?? dd.defaultValue} onChange={v => onLevelDropdownChange(lv, v)} />}
-                    {ms && <MultiSelectSection multiSelect={ms} values={levelMultiSelect[lv] ?? {}} onChange={(k, v) => onLevelMultiSelectChange(lv, k, v)} />}
+                    <MultiSelectGroups groups={ms} values={levelMultiSelect[lv] ?? {}} onChange={(k, v) => onLevelMultiSelectChange(lv, k, v)} />
                     {vars.length > 0 && <VariablesSection variables={vars} values={levelVariables[lv] ?? {}} onChange={(k, v) => onLevelVariableChange(lv, k, v)} />}
-                    {!dd && !ms && vars.length === 0 && <p className="text-xs text-gray-400">No options at this level.</p>}
+                    {!dd && ms.length === 0 && vars.length === 0 && <p className="text-xs text-gray-400">No options at this level.</p>}
                   </div>
                 </div>
               );
@@ -269,13 +289,13 @@ export const InlineQOPanel = ({
 }) => {
   const dd = toolEntry.difficultySettings?.[level]?.dropdown ?? toolEntry.dropdown;
   const vars = toolEntry.difficultySettings?.[level]?.variables ?? toolEntry.variables;
-  const ms = toolEntry.difficultySettings?.[level]?.multiSelect ?? toolEntry.multiSelect ?? null;
-  const hasContent = dd !== null || (vars?.length ?? 0) > 0 || ms !== null;
+  const ms = normalizeMultiSelect(toolEntry.difficultySettings?.[level]?.multiSelect ?? toolEntry.multiSelect);
+  const hasContent = dd !== null || (vars?.length ?? 0) > 0 || ms.length > 0;
   if (!hasContent) return <p className="text-sm text-gray-400">No options for this level.</p>;
   return (
     <div className="flex flex-col gap-4">
       {dd && <DropdownSection dropdown={dd} value={dropdownValue} onChange={onDropdownChange} />}
-      {ms && <MultiSelectSection multiSelect={ms} values={multiSelectValues} onChange={onMultiSelectChange} />}
+      <MultiSelectGroups groups={ms} values={multiSelectValues} onChange={onMultiSelectChange} />
       {(vars?.length ?? 0) > 0 && <VariablesSection variables={vars} values={variables} onChange={onVariableChange} />}
     </div>
   );

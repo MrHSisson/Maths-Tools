@@ -53,6 +53,12 @@ export interface ToolMultiSelect {
   options: { value: string; label: string; defaultActive: boolean }[];
 }
 
+// A tool may need several independent option pools at once (e.g. "Constants"
+// and "Larger x on" both active simultaneously). Pass an array to render each
+// as its own group in the QO popover; option `value`s must be unique across
+// all groups since their active-states share one flat record.
+export type ToolMultiSelectConfig = ToolMultiSelect | ToolMultiSelect[];
+
 export interface ToolVariable {
   key: string;
   label: string;
@@ -62,7 +68,7 @@ export interface ToolVariable {
 export interface DifficultyLevelSettings {
   dropdown?: ToolDropdown | null;
   variables?: ToolVariable[];
-  multiSelect?: ToolMultiSelect;
+  multiSelect?: ToolMultiSelectConfig;
 }
 
 export interface ToolEntry {
@@ -70,7 +76,7 @@ export interface ToolEntry {
   instruction?: string;
   variables: ToolVariable[];
   dropdown: ToolDropdown | null;
-  multiSelect?: ToolMultiSelect;
+  multiSelect?: ToolMultiSelectConfig;
   difficultySettings: Record<string, DifficultyLevelSettings> | null;
 }
 
