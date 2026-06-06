@@ -105,4 +105,5 @@ export interface ToolShellDefaults {
   numColumns?: number;         // default 3
   fixedColumns?: boolean;      // locks and hides the columns input
   maxColumns?: number;         // caps the column input maximum (e.g. 3 prevents 4-col)
+  comingSoonLevels?: DifficultyLevel[]; // levels shown but disabled with "Coming soon" tooltip
 }
