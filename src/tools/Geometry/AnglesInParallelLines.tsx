@@ -472,6 +472,32 @@ function questionRenderer(q: AnyQuestion, showAnswer: boolean, _colorScheme: str
     <div style={{ width: "100%", maxWidth: maxW, margin: "0 auto" }}>
       <Diagram d={d} showAnswer={showAnswer} qIndex={idx} />
       {showAnswer && <AnswerStatements d={d} />}
+    </div>
+  );
+}
+
+function AnswerStatements({ d }: { d: DiagramData }): JSX.Element {
+  const isChain = d.isChain && !!d.rule2;
+  return (
+    <div style={{ textAlign: "center", marginTop: 8 }}>
+      {isChain ? (
+        <>
+          <div style={{ fontSize: 16, fontWeight: 600, color: "#374151", marginBottom: 6 }}>
+            {d.rule.statement}, <span style={{ fontWeight: 800, color: "#b91c1c" }}>x = {d.midVal}°</span>
+          </div>
+          <div style={{ fontSize: 16, fontWeight: 600, color: "#374151" }}>
+            {d.rule2!.statement}, <span style={{ fontWeight: 800, color: "#15803d" }}>y = {d.xVal}°</span>
+          </div>
+        </>
+      ) : (
+        <div style={{ fontSize: 16, fontWeight: 600, color: "#374151" }}>
+          {d.rule.statement}, <span style={{ fontWeight: 800, color: "#166534" }}>x = {d.xVal}°</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function answerRenderer(q: AnyQuestion, _colorScheme: string): JSX.Element | null {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const d = (q as any)._diagram as DiagramData | undefined;
