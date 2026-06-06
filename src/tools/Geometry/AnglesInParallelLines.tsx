@@ -136,6 +136,7 @@ const shuffled = <T,>(arr: T[]): T[] => [...arr].sort(() => Math.random() - 0.5)
 // ── Diagram data type (stored in q._diagram) ──────────────────────────────────
 type DiagramData = {
   tvAngle: number;
+  angles: AngleMap;
   sectors: SectorMap;
   pts: { p1: Point; p2: Point };
   canvasRotation: number;
