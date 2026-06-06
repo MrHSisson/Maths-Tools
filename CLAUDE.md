@@ -16,7 +16,26 @@ A React/TypeScript/Vite app of interactive maths tools for teachers. Each tool h
 
 ## Branch convention
 
-All development goes on `claude/festive-bell-ftoTC`. Push to that branch after every new tool or change. Never push to `main` directly.
+Each Claude Code session works on its own freshly created branch (e.g. `claude/<session-name>`), branched from an up-to-date `main`. Never push directly to `main` — the only exception is an emergency fix to a broken production deployment, and even then `main` should be synced back into any in-flight feature branches immediately afterward.
+
+### The cycle for each session
+
+1. **Start from a fresh, up-to-date `main`.** Before branching, pull the latest `main` so the new branch diverges as little as possible — this keeps any eventual merge conflict small and easy to verify.
+2. **Do all the session's work on that one branch.** Don't hop between branches mid-session, and don't let unrelated changes pile up on top of each other — one branch per logical unit of work (one tool, one fix, one feature).
+3. **Open a PR and merge it into `main`** when the work is complete and the build is clean (`npm run build` with zero new errors — see the TypeScript section below for the full list of error codes to check, not just a narrow grep for a few codes).
+4. **Delete the branch once merged.** A merged branch has no further purpose — leaving it around risks a future session accidentally building on stale code. Delete via the GitHub UI ("Delete branch" on the merged PR page), `git push origin --delete <branch-name>`, or — better — enable "Automatically delete head branches" in the repo settings so this happens for free.
+5. **Repeat for the next session on a brand new branch off the latest `main`.**
+
+### Conflict-resolution discipline
+
+If a merge produces conflicts:
+- Resolve them by hand or with a targeted, reviewed change — never with a broad regex-based script. A flawed automated resolution can silently delete code (e.g. closing braces, whole component definitions) while still looking syntactically plausible in a narrow check.
+- After resolving, run a **broad** verification: `npm run build` and check for *any* new error codes versus a clean baseline, not just a hand-picked subset (e.g. checking only for TS2353/TS2339/TS2345 will miss syntax-level breakage like TS17008, TS1109, TS1381 — exactly the kind of corruption that has broken production before).
+- Prefer a regular merge over a squash merge for any branch that itself contains merge commits — squashing can bake a bad conflict resolution into a single opaque commit, making it much harder to spot in review.
+
+### Concurrent sessions
+
+If more than one session is active at once, keep them on disjoint files/tools where possible. Two sessions editing the same tool file on separate branches will produce the exact kind of merge conflict described above — and the more they overlap, the larger and riskier that conflict becomes.
 
 ---
 
