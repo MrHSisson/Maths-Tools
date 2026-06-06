@@ -930,15 +930,19 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         <div className="max-w-6xl mx-auto">
           <h1 className="text-5xl font-bold text-center mb-8" style={{ color: "#000" }}>{config.pageTitle}</h1>
           <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
-          <div className="flex justify-center gap-4 mb-6">
-            {toolKeys.map(k => (
-              <button key={k} onClick={() => setCurrentTool(k)}
-                className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${currentTool === k ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
-                {config.tools[k].name}
-              </button>
-            ))}
-          </div>
-          <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
+          {toolKeys.length > 1 && (
+            <>
+              <div className="flex justify-center gap-4 mb-6">
+                {toolKeys.map(k => (
+                  <button key={k} onClick={() => setCurrentTool(k)}
+                    className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${currentTool === k ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
+                    {config.tools[k].name}
+                  </button>
+                ))}
+              </div>
+              <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
+            </>
+          )}
           <div className="flex justify-center gap-4 mb-8">
             {(["whiteboard", "single", "worksheet"] as const).map((m, i) => {
               const label = ["Whiteboard", "Worked Example", "Worksheet"][i];
