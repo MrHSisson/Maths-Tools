@@ -471,17 +471,15 @@ function questionRenderer(q: AnyQuestion, showAnswer: boolean, _colorScheme: str
   return (
     <div style={{ width: "100%", maxWidth: maxW, margin: "0 auto" }}>
       <Diagram d={d} showAnswer={showAnswer} qIndex={idx} />
+      {showAnswer && <AnswerStatements d={d} />}
     </div>
   );
 }
 
-function answerRenderer(q: AnyQuestion, _colorScheme: string): JSX.Element | null {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const d = (q as any)._diagram as DiagramData | undefined;
-  if (!d) return null;
+function AnswerStatements({ d }: { d: DiagramData }): JSX.Element {
   const isChain = d.isChain && !!d.rule2;
   return (
-    <div style={{ textAlign: "center" }}>
+    <div style={{ textAlign: "center", marginTop: 8 }}>
       {isChain ? (
         <>
           <div style={{ fontSize: 16, fontWeight: 600, color: "#374151", marginBottom: 6 }}>
@@ -498,6 +496,13 @@ function answerRenderer(q: AnyQuestion, _colorScheme: string): JSX.Element | nul
       )}
     </div>
   );
+}
+
+function answerRenderer(q: AnyQuestion, _colorScheme: string): JSX.Element | null {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const d = (q as any)._diagram as DiagramData | undefined;
+  if (!d) return null;
+  return <AnswerStatements d={d} />;
 }
 
 // ── Custom print handler ──────────────────────────────────────────────────────
