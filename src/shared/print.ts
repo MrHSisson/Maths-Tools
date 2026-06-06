@@ -1,4 +1,5 @@
 import type { AnyQuestion, PrintMode } from "./types";
+import { ansEq } from "./helpers";
 
 export const handlePrint = (
   questions: AnyQuestion[],
@@ -53,10 +54,10 @@ export const handlePrint = (
     if (showAnswer) {
       if (anyQ.answerLatex) {
         const suffix = anyQ.answerSuffix ? ` ${anyQ.answerSuffix}` : "";
-        ansHtml = `<div class="q-answer">${katexSpan(`= ${anyQ.answerLatex}`)}${suffix}</div>`;
+        ansHtml = `<div class="q-answer">${katexSpan(ansEq(anyQ.answerLatex))}${suffix}</div>`;
       } else {
         const suffix = anyQ.answerSuffix ? ` ${anyQ.answerSuffix}` : "";
-        ansHtml = `<div class="q-answer">= ${anyQ.answer ?? ""}${suffix}</div>`;
+        ansHtml = `<div class="q-answer">${ansEq(anyQ.answer ?? "")}${suffix}</div>`;
       }
     }
     const banner = `<div class="q-banner">Question ${idx + 1}</div>`;
@@ -87,8 +88,8 @@ export const handlePrint = (
     const suffix = anyQ.answerSuffix ? ` ${anyQ.answerSuffix}` : "";
     const banner = `<div class="q-banner">Question ${idx + 1}</div>`;
     const ansHtml = anyQ.answerLatex
-      ? `<div class="q-answer q-answer-only">${katexSpan(`= ${anyQ.answerLatex}`)}${suffix}</div>`
-      : `<div class="q-answer q-answer-only">= ${anyQ.answer ?? ""}${suffix}</div>`;
+      ? `<div class="q-answer q-answer-only">${katexSpan(ansEq(anyQ.answerLatex))}${suffix}</div>`
+      : `<div class="q-answer q-answer-only">${ansEq(anyQ.answer ?? "")}${suffix}</div>`;
     return `${banner}<div class="qbody">${ansHtml}</div>`;
   };
 

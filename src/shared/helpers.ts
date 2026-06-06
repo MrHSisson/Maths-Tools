@@ -18,6 +18,11 @@ export const pickActive = (values: Record<string, boolean>, options: { value: st
   return active.length > 0 ? active[Math.floor(Math.random() * active.length)].value : options[0].value;
 };
 
+// A tool's `multiSelect` may be a single group or an array of independent groups
+// (each rendered as its own pool in the QO popover). Normalize to an array.
+export const normalizeMultiSelect = <T extends { key: string }>(ms?: T | T[] | null): T[] =>
+  ms ? (Array.isArray(ms) ? ms : [ms]) : [];
+
 // Pure KaTeX step — use for any line containing maths.
 export const step = (latex: string, plain?: string) =>
   ({ type: "step", latex, plain: plain ?? latex });
@@ -32,3 +37,8 @@ export const mStep = (label: string, latex: string, unit?: string) =>
 
 // Formats a number to dp decimal places, stripping trailing zeros.
 export const fmt = (n: number, dp = 2): string => n.toFixed(dp).replace(/\.?0+$/, "");
+
+// Renders an answer with its leading "= ". Bare-value answers ("10", "\frac{3}{4}")
+// get the "= " prefix; full-equation answers ("x = 10") already read correctly on
+// their own and are returned unchanged — prevents "= x = 10" ever being shown.
+export const ansEq = (answer: string): string => (/=/.test(answer) ? answer : `= ${answer}`);
