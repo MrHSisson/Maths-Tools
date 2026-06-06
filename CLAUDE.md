@@ -16,7 +16,7 @@ A React/TypeScript/Vite app of interactive maths tools for teachers. Each tool h
 
 ## Branch convention
 
-All development goes on `claude/tool-shell-deployment-Wix8A`. Push to that branch after every new tool or change. Never push to `main` directly.
+All development goes on `claude/festive-bell-ftoTC`. Push to that branch after every new tool or change. Never push to `main` directly.
 
 ---
 
@@ -44,7 +44,7 @@ Add route inside `<Routes>`:
 
 Add to the correct category's `tools` array:
 ```ts
-{ id: 'my-new-tool', path: '/my-new-tool', name: 'Display Name', description: 'One sentence.', ready: 'v1.0' }
+{ id: 'my-new-tool', path: '/my-new-tool', name: 'Display Name', description: 'One sentence.', ready: 'v2.3' }
 ```
 Add `enabled: false` only if the tool should not be publicly visible yet.
 
@@ -73,10 +73,19 @@ Old tools (v1.x) embed their own shell — UI components, state management, loca
 
 Check the landing page `ready` version. Any tool below `v2.0` uses an old shell. The file will have a large self-contained component and no `import { ToolShell } from "../../shared"` line.
 
+Tools currently needing migration (v1.x as of this writing):
+- `src/tools/Number/IntegerAddSub.tsx` — v1.4, number line diagram questions
+- `src/tools/Number/PowersOfTen.tsx` — v1.4, place value table questions
+- `src/tools/Proportion/SimplifyingRatiosTool.tsx` — v1.4
+- `src/tools/Proportion/FractionToRatio.tsx` — v1.4
+- `src/tools/Algebra/` — several v1.4 expanding brackets tools (some `enabled: false`)
+- `src/tools/Geometry/` — AnglesInTriangles, CircleProperties
+- Generator tools (`TimesTablesGenerator`, etc.) — v1.0, primarily PDF-generation tools
+
 ### Migration checklist
 
 1. **Replace all imports** — the entire import block becomes the minimal shared import set (see below)
-2. **Delete all local type definitions** — `type Question`, `type ToolSettings`, etc. are replaced by `AnyQuestion`, `ToolConfig`, etc. from shared
+2. **Delete all local type definitions** — `type Question`, `type ToolSettings`, `type WorkingStep`, etc. are replaced by `AnyQuestion`, `ToolConfig`, etc. from shared
 3. **Keep TOOL_CONFIG content, update its type** — change the local type annotation to `: ToolConfig`
 4. **Keep INFO_SECTIONS content, update its type** — change to `: InfoSection[]`
 5. **Keep all math generation functions** — the question logic is reusable as-is
@@ -104,7 +113,7 @@ Check the landing page `ready` version. Any tool below `v2.0` uses an old shell.
 
 ### What the shared ToolShell provides (never re-implement these)
 
-Whiteboard / Worked Example / Worksheet modes · difficulty toggle · QO popovers (dropdown, variables, multiSelect, differentiated) · tool tab buttons · font size controls · PDF print · colour scheme picker · info modal · home button
+Whiteboard / Worked Example / Worksheet modes · difficulty toggle (with coming-soon level support) · QO popovers (dropdown, variables, multiSelect, differentiated) · tool tab buttons (auto-hidden when only one sub-tool) · font size controls · PDF print (with SVG override hook) · colour scheme picker · info modal · home button
 
 ---
 
@@ -119,6 +128,15 @@ import {
   ToolShell,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion,
   randInt, pick, step, mStep, tStep, fracStr, mStr, pickActive, fmt,
+} from "../../shared";
+```
+
+For diagram/SVG tools also import `PrintMode`:
+```ts
+import {
+  ToolShell,
+  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type PrintMode,
+  tStep,
 } from "../../shared";
 ```
 
@@ -149,7 +167,7 @@ Pick `mStep` by default for worked examples. Use `step` when the label would be 
 
 ---
 
-## `ToolShellProps` — the four required props + defaults
+## `ToolShellProps` — required props + optional extensions
 
 ```tsx
 <ToolShell
@@ -157,7 +175,10 @@ Pick `mStep` by default for worked examples. Use `step` when the label would be 
   infoSections={INFO_SECTIONS}
   generateQuestion={generateQuestion}
   generateUniqueQ={generateUniqueQ}
-  defaults={{ ... }}           // optional — see below
+  defaults={{ ... }}                        // optional — see below
+  questionRenderer={questionRenderer}       // optional — for diagram tools
+  answerRenderer={answerRenderer}           // optional — for diagram tools
+  customPrintHandler={customPrintHandler}   // optional — for SVG worksheet printing
 />
 ```
 
@@ -165,19 +186,36 @@ Pick `mStep` by default for worked examples. Use `step` when the label would be 
 
 ```ts
 defaults?: {
-  displayFontSize?: number;    // starting font size index 0–5, default 2 (text-3xl)
-  worksheetFontSize?: number;  // starting font size index 0–5, default 1 (text-xl)
-  numQuestions?: number;       // starting question count, default 15
-  fixedQuestions?: boolean;    // hides the questions input entirely
-  numColumns?: number;         // starting column count, default 3
-  fixedColumns?: boolean;      // hides the columns input entirely
-  maxColumns?: number;         // caps the columns input max (e.g. 3 = no 4-col option)
+  displayFontSize?: number;           // starting font size index 0–5, default 2 (text-3xl)
+  worksheetFontSize?: number;         // starting font size index 0–5, default 1 (text-xl)
+  numQuestions?: number;              // starting question count, default 15
+  fixedQuestions?: boolean;           // hides the questions input entirely
+  numColumns?: number;                // starting column count, default 3
+  fixedColumns?: boolean;             // hides the columns input entirely
+  maxColumns?: number;                // caps the columns input max (e.g. 3 = no 4-col option)
+  comingSoonLevels?: DifficultyLevel[]; // levels shown but disabled — "Coming soon" on hover
 }
 ```
 
 Font size indices: `0=text-lg  1=text-xl  2=text-3xl  3=text-4xl  4=text-5xl  5=text-7xl`
 
 Use `fixedQuestions` when a tool always generates a specific count (e.g. exactly 12 questions for a 3×4 grid). Use `maxColumns` when 4 columns is never appropriate for the question type. Use `fixedColumns` when the column count must never change at all.
+
+### `comingSoonLevels` — partially-developed tools
+
+```ts
+defaults={{ comingSoonLevels: ["level3"] }}
+```
+
+- The listed level buttons are rendered but greyed out and unclickable
+- Hovering shows a "Coming soon" tooltip
+- The Differentiated button in worksheet mode is automatically greyed out when any level is coming soon (since differentiated uses all three levels)
+- The L1/L2/L3 level-selector buttons in advanced worksheet mode also respect coming soon
+- The tool stays functional on the non-coming-soon levels
+
+### Single sub-tool — no tab buttons needed
+
+If `config.tools` has exactly one key, the tool tab buttons and their surrounding divider are **automatically hidden**. Nothing special needs to be done in the tool file.
 
 ---
 
@@ -278,6 +316,133 @@ Each level can independently override `dropdown`, `variables`, and/or `multiSele
 
 ---
 
+## Diagram tools — custom renderers and SVG printing
+
+For tools whose questions are diagrams (SVG-based) rather than text/KaTeX — e.g. angle geometry, number lines — use the three optional ToolShell props together.
+
+See `src/tools/Geometry/AnglesInParallelLines.tsx` and `src/tools/Geometry/BasicAngleFacts.tsx` as reference implementations.
+
+### Storing diagram data on the question object
+
+Store diagram data in the `_diagram` field, cast through `unknown`:
+
+```ts
+return {
+  kind: "simple",
+  display: "find x",
+  answer: `x = ${xVal}°`,
+  working: [...],
+  key: `tool-level-${id}`,
+  difficulty: level,
+  _diagram: diagramData,        // typed locally, cast to unknown
+} as unknown as AnyQuestion;
+```
+
+Retrieve it in renderers:
+```ts
+const d = (q as any)._diagram as DiagramData | undefined;
+```
+
+### `questionRenderer`
+
+Replaces `QuestionDisplay` in all three modes. Signature:
+
+```ts
+questionRenderer?: (
+  q: AnyQuestion,
+  showAnswer: boolean,
+  colorScheme: string,
+  compact?: boolean,   // see context table below
+  idx?: number,        // worksheet cell index — pass to SVG as data-q-index
+) => JSX.Element | null
+```
+
+The `compact` parameter signals which rendering context the question is in — use it to set diagram size:
+
+| `compact` value | Context | Typical maxWidth |
+|---|---|---|
+| `true` | Worksheet cell | ~180px |
+| `undefined` | Regular whiteboard box (fixed 480px panel) | ~340px |
+| `false` | Worked example or fullscreen whiteboard | ~500px (fills available width) |
+
+Always wrap the diagram in a `maxWidth` container so it never overflows the whiteboard panel:
+
+```tsx
+function questionRenderer(q, showAnswer, _colorScheme, compact, idx) {
+  const d = (q as any)._diagram as DiagramData | undefined;
+  if (!d) return null;
+  const maxW = compact === true ? 180 : compact === undefined ? 340 : 500;
+  return (
+    <div style={{ width: "100%", maxWidth: maxW, margin: "0 auto" }}>
+      <MySVGDiagram d={d} showAnswer={showAnswer} qIndex={idx} />
+    </div>
+  );
+}
+```
+
+### `answerRenderer`
+
+Replaces `AnswerDisplay`. Shown when the answer is revealed in whiteboard and worked example modes:
+
+```ts
+answerRenderer?: (q: AnyQuestion, colorScheme: string) => JSX.Element | null
+```
+
+### SVG diagram requirements
+
+- Use `viewBox="0 0 W H"`, `width="100%"`, `height="auto"` — never a fixed pixel height, which causes overflow in the whiteboard panel
+- When `qIndex` is provided, add `data-q-index={qIndex}` to the `<svg>` element — this is how the print handler locates the SVG in the DOM
+
+```tsx
+<svg
+  viewBox="0 0 500 500"
+  style={{ display: "block", width: "100%", height: "auto" }}
+  preserveAspectRatio="xMidYMid meet"
+  {...(qIndex !== undefined ? { "data-q-index": qIndex } : {})}
+>
+```
+
+### `customPrintHandler` — SVG worksheet printing
+
+The default `handlePrint` in `src/shared/print.ts` renders questions as HTML/KaTeX text. For SVG tools it produces a blank output. Supply a `customPrintHandler` instead:
+
+```ts
+customPrintHandler?: (
+  questions: AnyQuestion[],
+  printMode: PrintMode,
+  worksheetEl: HTMLElement | null,  // the worksheet container DOM node
+) => void
+```
+
+ToolShell passes `worksheetEl` as the ref to the div wrapping the worksheet grid. At print time, clone the live SVGs from it:
+
+```ts
+function customPrintHandler(questions, printMode, container) {
+  const svgStrings: Record<number, string> = {};
+  if (container) {
+    container.querySelectorAll<SVGSVGElement>("svg[data-q-index]").forEach(el => {
+      const idx = parseInt(el.getAttribute("data-q-index") ?? "0", 10);
+      const clone = el.cloneNode(true) as SVGSVGElement;
+      clone.setAttribute("width", "100%");
+      clone.setAttribute("height", "100%");
+      svgStrings[idx] = clone.outerHTML;
+    });
+  }
+  // build A4 HTML using svgStrings[gi] in each cell
+}
+```
+
+**Fixed layout for SVG worksheets:** use 3 columns × 5 rows = 15 questions per page (matches `BasicAngleFacts`). This keeps cell sizes consistent so all diagrams render at the same scale. Set `fixedColumns: true, numColumns: 3` in defaults.
+
+The print cell CSS pattern:
+```css
+.cell { display:flex; flex-direction:column; flex:1; min-height:0; position:relative; }
+.cell-diag { width:100%; flex:1; min-height:0; display:flex; align-items:center; justify-content:center; }
+.cell-diag svg { width:100%; height:100%; overflow:visible; }
+```
+
+---
+
 ## KaTeX rendering — the rules (check every question)
 
 | Content | Correct approach |
@@ -312,6 +477,7 @@ Each level can independently override `dropdown`, `variables`, and/or `multiSele
 - `_variables` and `_dropdownValue` use `_` prefix in the stub generator to signal intentional non-use
 - `currentQuestion` initialised via `useState` initialiser, never `null`
 - If `AnyQuestion` for a tool does not include `"frac"` kind, remove any `q.kind === "frac"` branches — they cause TS2367
+- The pre-existing environment errors (TS2307 for react/lucide-react, TS7026 JSX implicit any) appear in `npm run build` output but are harmless — Vercel has the packages installed. A build that introduces *new* errors of types TS2353, TS2339, TS2345, etc. is broken and must be fixed.
 
 ---
 
@@ -320,6 +486,7 @@ Each level can independently override `dropdown`, `variables`, and/or `multiSele
 - `totalPages`, `printMode`, and any other `var` referenced inside a function declaration must be declared in the injected script's **outer scope** (above `buildPage` and the `.map()` calls) — declaring them inside `buildPage` causes "not defined" at runtime
 - Params that appear only as `${...}` in the HTML string are invisible to TypeScript — use distinct names (e.g. `pMode` not `printMode`) and add `void (param as unknown)` suppressions immediately before the `html` template literal
 - If a tool has only worded questions, remove the `"simple"` and `"frac"` branches from `questionToHtml` — TS2367 at build time otherwise
+- For SVG-based tools, use `customPrintHandler` (see Diagram tools section above) — the shared `handlePrint` has no knowledge of SVGs
 
 ---
 
@@ -346,16 +513,16 @@ Request these — or infer from context — before writing a tool:
 2. **URL path** — e.g. `/multiplying-fractions`
 3. **Category** — which section on the landing page
 4. **Description** — one sentence for the landing page card
-5. **Sub-tools** — names of the tab buttons (1–5)
+5. **Sub-tools** — names of the tab buttons (1–5). If there is only one sub-tool, tab buttons are hidden automatically — no special action needed.
 6. **For each sub-tool:**
-   - Question type: simple (single expression), worded (multi-line context), or fraction
+   - Question type: simple (single expression), worded (multi-line context), fraction, or diagram/SVG
    - Level 1 — what makes it easiest
    - Level 2 — what adds difficulty
-   - Level 3 — what makes it hardest
+   - Level 3 — what makes it hardest (or "coming soon" if not yet designed)
    - QO options: any dropdowns, toggles, or multiSelect pools
    - `instruction`? e.g. "Simplify:", "Solve:", "Find:"
 
 7. **Worked example steps** — how the solution is explained at each level
-8. **Defaults** — any non-standard font size, question count, or column constraints
+8. **Defaults** — any non-standard font size, question count, column constraints, or coming-soon levels
 
 Claude drafts `INFO_SECTIONS` from the above — the user does not need to write it.

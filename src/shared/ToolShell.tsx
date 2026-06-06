@@ -36,14 +36,22 @@ export interface ToolShellProps {
   ) => AnyQuestion;
   defaults?: ToolShellDefaults;
   stepRenderer?: (step: WorkingStep, colorScheme: string) => JSX.Element | null;
+  /** Replaces QuestionDisplay in all modes. compact=true in worksheet cells, false in worked example/fullscreen, undefined in regular whiteboard. idx is the worksheet question index (only provided in worksheet cells). */
+  questionRenderer?: (q: AnyQuestion, showAnswer: boolean, colorScheme: string, compact?: boolean, idx?: number) => JSX.Element | null;
+  /** Replaces the final answer box (AnswerDisplay). Shown when showAnswer=true. */
+  answerRenderer?: (q: AnyQuestion, colorScheme: string) => JSX.Element | null;
+  /** Custom print handler for diagram tools. Receives the worksheet array, print mode, and the worksheet container DOM element (for SVG extraction). */
+  customPrintHandler?: (questions: AnyQuestion[], printMode: PrintMode, worksheetEl: HTMLElement | null) => void;
 }
 
-export const ToolShell = ({ config, infoSections, generateQuestion, generateUniqueQ, defaults = {}, stepRenderer }: ToolShellProps) => {
+export const ToolShell = ({ config, infoSections, generateQuestion, generateUniqueQ, defaults = {}, stepRenderer, questionRenderer, answerRenderer, customPrintHandler }: ToolShellProps) => {
   const toolKeys = Object.keys(config.tools);
 
   const [currentTool, setCurrentTool] = useState<string>(toolKeys[0]);
   const [mode, setMode] = useState<"whiteboard" | "single" | "worksheet">("whiteboard");
+  const comingSoon = defaults.comingSoonLevels ?? [];
   const [difficulty, setDifficulty] = useState<DifficultyLevel>("level1");
+  const setDifficultyGuarded = (v: DifficultyLevel) => { if (!comingSoon.includes(v)) setDifficulty(v); };
 
   const [toolVariables, setToolVariables] = useState<Record<string, Record<string, Record<string, boolean>>>>(() => {
     const init: Record<string, Record<string, Record<string, boolean>>> = {};
@@ -155,6 +163,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const worksheetWrapRef = useRef<HTMLDivElement>(null);
   const camDropdownRef = useRef<HTMLDivElement>(null);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const didLongPress = useRef(false);
@@ -358,6 +367,23 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       </button>
     ) : null;
 
+    // If a custom questionRenderer is provided, use it for all question kinds
+    if (questionRenderer) {
+      return (
+        <div className={wrapperClass} style={cellStyle}>
+          {numEl}{regenBtn}
+          {questionRenderer(q, false, colorScheme, true, idx)}
+          {showWorksheetAnswers && answerRenderer && (
+            <div style={{ marginTop: 4 }}>{answerRenderer(q, colorScheme)}</div>
+          )}
+          {showWorksheetAnswers && !answerRenderer && (
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            <div className={`${fsz} font-semibold mt-1 text-center`} style={{ color: "#059669" }}>= {(q as any).answer}</div>
+          )}
+        </div>
+      );
+    }
+
     if (q.kind === "simple") {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const anyQ = q as any;
@@ -437,12 +463,15 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                   style={{ borderLeft: `3px solid ${isSel ? lvBorder(g.level) : "transparent"}`, backgroundColor: isSel ? "#f0f4ff" : undefined }}>
                   <span className="text-xs font-bold text-gray-300 w-4 flex-shrink-0 tabular-nums">{idx + 1}</span>
                   <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden flex-shrink-0" onClick={e => e.stopPropagation()}>
-                    {(["level1", "level2", "level3"] as DifficultyLevel[]).map((lv, li) => (
-                      <button key={lv} onClick={() => { updateGroup(g.id, { ...makeDefaultAdvGroup(g.id, lv), id: g.id }); setAdvSelectedId(g.id); }}
-                        className={`px-2.5 py-1 font-bold text-xs transition-colors ${g.level === lv ? `${lvColor(lv)} text-white` : "bg-white text-gray-400 hover:bg-gray-50"}`}>
-                        L{li + 1}
-                      </button>
-                    ))}
+                    {(["level1", "level2", "level3"] as DifficultyLevel[]).map((lv, li) => {
+                      const isLvDisabled = comingSoon.includes(lv);
+                      return (
+                        <button key={lv} onClick={() => { if (!isLvDisabled) { updateGroup(g.id, { ...makeDefaultAdvGroup(g.id, lv), id: g.id }); setAdvSelectedId(g.id); } }}
+                          className={`px-2.5 py-1 font-bold text-xs transition-colors ${isLvDisabled ? "bg-gray-100 text-gray-300 cursor-not-allowed" : g.level === lv ? `${lvColor(lv)} text-white` : "bg-white text-gray-400 hover:bg-gray-50"}`}>
+                          L{li + 1}
+                        </button>
+                      );
+                    })}
                   </div>
                   <div className="flex-1" />
                   <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5 flex-shrink-0" onClick={e => e.stopPropagation()}>
@@ -530,18 +559,21 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                 <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm">
                   {(["level1", "level2", "level3"] as DifficultyLevel[]).map((val, i) => {
                     const [label, col] = [["Level 1", "bg-green-600"], ["Level 2", "bg-yellow-500"], ["Level 3", "bg-red-600"]][i] as [string, string];
+                    const isLvDisabled = comingSoon.includes(val);
                     return (
-                      <button key={val} onClick={() => { setDifficulty(val); setIsDifferentiated(false); }}
-                        className={`px-5 py-2 font-bold text-base transition-colors ${!isDifferentiated && difficulty === val ? `${col} text-white` : "bg-white text-gray-500 hover:bg-gray-50"}`}>
+                      <button key={val} onClick={() => { setDifficultyGuarded(val); setIsDifferentiated(false); }}
+                        className={`px-5 py-2 font-bold text-base transition-colors ${isLvDisabled ? "bg-gray-100 text-gray-300 cursor-not-allowed" : !isDifferentiated && difficulty === val ? `${col} text-white` : "bg-white text-gray-500 hover:bg-gray-50"}`}>
                         {label}
                       </button>
                     );
                   })}
                 </div>
-                <button onClick={() => setIsDifferentiated(!isDifferentiated)}
-                  className={`px-6 py-2 rounded-xl font-bold text-base shadow-sm border-2 transition-colors ${isDifferentiated ? "bg-blue-900 text-white border-blue-900" : "bg-white text-gray-600 border-gray-300 hover:border-blue-900 hover:text-blue-900"}`}>
+                {(() => { const diffDisabled = comingSoon.length > 0; return (
+                <button onClick={() => { if (!diffDisabled) setIsDifferentiated(!isDifferentiated); }}
+                  className={`px-6 py-2 rounded-xl font-bold text-base shadow-sm border-2 transition-colors ${diffDisabled ? "bg-gray-100 text-gray-300 border-gray-200 cursor-not-allowed" : isDifferentiated ? "bg-blue-900 text-white border-blue-900" : "bg-white text-gray-600 border-gray-300 hover:border-blue-900 hover:text-blue-900"}`}>
                   Differentiated
                 </button>
+                ); })()}
               </div>
               <div className="flex justify-center items-center gap-6 mb-4">
                 {qoEl(isDifferentiated)}
@@ -573,7 +605,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                       <Eye size={18} /> {showWorksheetAnswers ? "Hide Answers" : "Show Answers"}
                     </button>
                     <PrintSplitButton
-                      onPrint={m => handlePrint(worksheet, config.tools[currentTool].name, difficulty, isDifferentiated, numColumns, getInstruction(), m)}
+                      onPrint={m => customPrintHandler
+                        ? customPrintHandler(worksheet, m, worksheetWrapRef.current)
+                        : handlePrint(worksheet, config.tools[currentTool].name, difficulty, isDifferentiated, numColumns, getInstruction(), m)}
                       printMode={printMode} setPrintMode={setPrintMode}
                     />
                   </>
@@ -601,7 +635,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                       <Eye size={18} /> {showWorksheetAnswers ? "Hide Answers" : "Show Answers"}
                     </button>
                     <PrintSplitButton
-                      onPrint={m => handlePrint(worksheet, config.tools[currentTool].name, "advanced", false, numColumns, getInstruction(), m)}
+                      onPrint={m => customPrintHandler
+                        ? customPrintHandler(worksheet, m, worksheetWrapRef.current)
+                        : handlePrint(worksheet, config.tools[currentTool].name, "advanced", false, numColumns, getInstruction(), m)}
                       printMode={printMode} setPrintMode={setPrintMode}
                     />
                   </>
@@ -616,7 +652,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     return (
       <div className="px-5 py-4 rounded-xl" style={{ backgroundColor: qBg }}>
         <div className="flex items-center justify-between gap-4">
-          <DifficultyToggle value={difficulty} onChange={v => setDifficulty(v as DifficultyLevel)} />
+          <DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} />
           {qoEl()}
           <div className="flex gap-3 items-center">
             <button onClick={handleNewQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
@@ -635,7 +671,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const renderWhiteboard = () => {
     const fsToolbar = (
       <div style={{ background: fsToolbarBg, borderBottom: "2px solid #000", padding: "16px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexShrink: 0, zIndex: 210 }}>
-        <DifficultyToggle value={difficulty} onChange={v => setDifficulty(v as DifficultyLevel)} />
+        <DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} />
         {qoEl()}
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
           <button onClick={handleNewQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18} /> New Question</button>
@@ -658,9 +694,16 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           <button style={fontBtnStyle(canDisplayIncrease)} onClick={() => canDisplayIncrease && setDisplayFontSize(f => f + 1)}><ChevronUp size={16} color="#6b7280" /></button>
         </div>
         <div className="w-full text-center flex flex-col gap-4 items-center">
-          {getInstruction() && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold`} style={{ color: "#000" }}>{getInstruction()}</div>}
-          <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
-          {showWhiteboardAnswer && <div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}><AnswerDisplay q={currentQuestion} /></div>}
+          {getInstruction() && !questionRenderer && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold`} style={{ color: "#000" }}>{getInstruction()}</div>}
+          {questionRenderer
+            ? questionRenderer(currentQuestion, showWhiteboardAnswer, colorScheme)
+            : <>
+                <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
+                {showWhiteboardAnswer && <div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>
+                  {answerRenderer ? answerRenderer(currentQuestion, colorScheme) : <AnswerDisplay q={currentQuestion} />}
+                </div>}
+              </>
+          }
         </div>
       </div>
     );
@@ -672,9 +715,16 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           <button style={fontBtnStyle(canDisplayIncrease)} onClick={() => canDisplayIncrease && setDisplayFontSize(f => f + 1)}><ChevronUp size={16} color="#6b7280" /></button>
         </div>
         <>
-          {getInstruction() && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold`} style={{ color: "#000" }}>{getInstruction()}</div>}
-          <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
-          {showWhiteboardAnswer && <div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}><AnswerDisplay q={currentQuestion} /></div>}
+          {getInstruction() && !questionRenderer && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold`} style={{ color: "#000" }}>{getInstruction()}</div>}
+          {questionRenderer
+            ? questionRenderer(currentQuestion, showWhiteboardAnswer, colorScheme, false)
+            : <>
+                <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
+                {showWhiteboardAnswer && <div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>
+                  {answerRenderer ? answerRenderer(currentQuestion, colorScheme) : <AnswerDisplay q={currentQuestion} />}
+                </div>}
+              </>
+          }
         </>
       </div>
     );
@@ -774,8 +824,11 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             <button style={{ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: canDisplayDecrease ? "pointer" : "not-allowed", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", opacity: canDisplayDecrease ? 1 : 0.35 }} onClick={() => canDisplayDecrease && setDisplayFontSize(f => f - 1)}><ChevronDown size={16} color="#6b7280" /></button>
             <button style={{ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: canDisplayIncrease ? "pointer" : "not-allowed", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", opacity: canDisplayIncrease ? 1 : 0.35 }} onClick={() => canDisplayIncrease && setDisplayFontSize(f => f + 1)}><ChevronUp size={16} color="#6b7280" /></button>
           </div>
-          {getInstruction() && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold mb-2`} style={{ color: "#000" }}>{getInstruction()}</div>}
-          <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
+          {getInstruction() && !questionRenderer && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold mb-2`} style={{ color: "#000" }}>{getInstruction()}</div>}
+          {questionRenderer
+            ? questionRenderer(currentQuestion, showAnswer, colorScheme, false)
+            : <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
+          }
         </div>
         {showAnswer && (
           <>
@@ -802,7 +855,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             </div>
             <div className="rounded-xl p-6 text-center mt-4" style={{ backgroundColor: stepBg }}>
               <span className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>
-                <AnswerDisplay q={currentQuestion} />
+                {answerRenderer ? answerRenderer(currentQuestion, colorScheme) : <AnswerDisplay q={currentQuestion} />}
               </span>
             </div>
           </>
@@ -877,15 +930,19 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         <div className="max-w-6xl mx-auto">
           <h1 className="text-5xl font-bold text-center mb-8" style={{ color: "#000" }}>{config.pageTitle}</h1>
           <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
-          <div className="flex justify-center gap-4 mb-6">
-            {toolKeys.map(k => (
-              <button key={k} onClick={() => setCurrentTool(k)}
-                className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${currentTool === k ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
-                {config.tools[k].name}
-              </button>
-            ))}
-          </div>
-          <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
+          {toolKeys.length > 1 && (
+            <>
+              <div className="flex justify-center gap-4 mb-6">
+                {toolKeys.map(k => (
+                  <button key={k} onClick={() => setCurrentTool(k)}
+                    className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${currentTool === k ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
+                    {config.tools[k].name}
+                  </button>
+                ))}
+              </div>
+              <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
+            </>
+          )}
           <div className="flex justify-center gap-4 mb-8">
             {(["whiteboard", "single", "worksheet"] as const).map((m, i) => {
               const label = ["Whiteboard", "Worked Example", "Worksheet"][i];
@@ -898,7 +955,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             })}
           </div>
 
-          {mode === "worksheet" && <>{renderControlBar()}{renderWorksheet()}</>}
+          {mode === "worksheet" && <>{renderControlBar()}<div ref={worksheetWrapRef}>{renderWorksheet()}</div></>}
           {mode !== "worksheet" && (
             <div className="flex flex-col gap-6">
               <div className="rounded-xl shadow-lg">
