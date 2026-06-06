@@ -164,9 +164,8 @@ const X_STROKE     = "#16a34a";
 const LINE_COLOR   = "#111827";
 
 // ── Diagram component ─────────────────────────────────────────────────────────
-const Diagram = ({ d, showAnswer, compact }: { d: DiagramData; showAnswer: boolean; compact?: boolean }) => {
-  const { tvAngle, sectors, knownVal, xVal, knownQuad, knownInter, xQuad, xInter, pts, canvasRotation,
-    isChain, midQuad, midInter, midVal } = d;
+const Diagram = ({ d, showAnswer }: { d: DiagramData; showAnswer: boolean }) => {
+  const { tvAngle, sectors, knownVal, xVal, knownQuad, knownInter, xQuad, xInter, pts, canvasRotation, isChain, midQuad, midInter, midVal } = d;
   const { p1, p2 } = pts;
   const tv = getTransversalEndpoints(tvAngle, p1, p2);
 
@@ -211,12 +210,11 @@ const Diagram = ({ d, showAnswer, compact }: { d: DiagramData; showAnswer: boole
   };
 
   const VB = 500, VC = 250;
-  const height = compact ? "200px" : "440px";
 
   return (
     <svg
       viewBox={`0 0 ${VB} ${VB}`}
-      style={{ display: "block", width: "100%", height }}
+      style={{ display: "block", width: "100%", height: "auto" }}
       preserveAspectRatio="xMidYMid meet"
     >
       <g transform={`rotate(${canvasRotation}, ${VC}, ${VC})`}>
@@ -471,16 +469,10 @@ function questionRenderer(q: AnyQuestion, showAnswer: boolean, _colorScheme: str
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const d = (q as any)._diagram as DiagramData | undefined;
   if (!d) return null;
-  const isChain = d.isChain && !!d.rule2;
+  const maxW = compact ? 180 : 340;
   return (
-    <div style={{ width: "100%" }}>
-      <p style={{ fontSize: 16, fontWeight: 600, color: "#374151", margin: "0 0 8px", textAlign: "center" }}>
-        {isChain
-          ? <>Name both rules and find <em style={{ color: "#dc2626" }}>x</em>, then use it to find <em style={{ color: "#16a34a" }}>y</em>.</>
-          : <>Name the rule and find <em style={{ color: "#dc2626" }}>x</em>.</>
-        }
-      </p>
-      <Diagram d={d} showAnswer={showAnswer} compact={compact} />
+    <div style={{ width: "100%", maxWidth: maxW, margin: "0 auto" }}>
+      <Diagram d={d} showAnswer={showAnswer} />
     </div>
   );
 }

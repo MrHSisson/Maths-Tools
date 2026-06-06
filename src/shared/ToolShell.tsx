@@ -460,12 +460,15 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                   style={{ borderLeft: `3px solid ${isSel ? lvBorder(g.level) : "transparent"}`, backgroundColor: isSel ? "#f0f4ff" : undefined }}>
                   <span className="text-xs font-bold text-gray-300 w-4 flex-shrink-0 tabular-nums">{idx + 1}</span>
                   <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden flex-shrink-0" onClick={e => e.stopPropagation()}>
-                    {(["level1", "level2", "level3"] as DifficultyLevel[]).map((lv, li) => (
-                      <button key={lv} onClick={() => { updateGroup(g.id, { ...makeDefaultAdvGroup(g.id, lv), id: g.id }); setAdvSelectedId(g.id); }}
-                        className={`px-2.5 py-1 font-bold text-xs transition-colors ${g.level === lv ? `${lvColor(lv)} text-white` : "bg-white text-gray-400 hover:bg-gray-50"}`}>
-                        L{li + 1}
-                      </button>
-                    ))}
+                    {(["level1", "level2", "level3"] as DifficultyLevel[]).map((lv, li) => {
+                      const isLvDisabled = comingSoon.includes(lv);
+                      return (
+                        <button key={lv} onClick={() => { if (!isLvDisabled) { updateGroup(g.id, { ...makeDefaultAdvGroup(g.id, lv), id: g.id }); setAdvSelectedId(g.id); } }}
+                          className={`px-2.5 py-1 font-bold text-xs transition-colors ${isLvDisabled ? "bg-gray-100 text-gray-300 cursor-not-allowed" : g.level === lv ? `${lvColor(lv)} text-white` : "bg-white text-gray-400 hover:bg-gray-50"}`}>
+                          L{li + 1}
+                        </button>
+                      );
+                    })}
                   </div>
                   <div className="flex-1" />
                   <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5 flex-shrink-0" onClick={e => e.stopPropagation()}>
@@ -553,18 +556,21 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                 <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm">
                   {(["level1", "level2", "level3"] as DifficultyLevel[]).map((val, i) => {
                     const [label, col] = [["Level 1", "bg-green-600"], ["Level 2", "bg-yellow-500"], ["Level 3", "bg-red-600"]][i] as [string, string];
+                    const isLvDisabled = comingSoon.includes(val);
                     return (
                       <button key={val} onClick={() => { setDifficultyGuarded(val); setIsDifferentiated(false); }}
-                        className={`px-5 py-2 font-bold text-base transition-colors ${!isDifferentiated && difficulty === val ? `${col} text-white` : "bg-white text-gray-500 hover:bg-gray-50"}`}>
+                        className={`px-5 py-2 font-bold text-base transition-colors ${isLvDisabled ? "bg-gray-100 text-gray-300 cursor-not-allowed" : !isDifferentiated && difficulty === val ? `${col} text-white` : "bg-white text-gray-500 hover:bg-gray-50"}`}>
                         {label}
                       </button>
                     );
                   })}
                 </div>
-                <button onClick={() => setIsDifferentiated(!isDifferentiated)}
-                  className={`px-6 py-2 rounded-xl font-bold text-base shadow-sm border-2 transition-colors ${isDifferentiated ? "bg-blue-900 text-white border-blue-900" : "bg-white text-gray-600 border-gray-300 hover:border-blue-900 hover:text-blue-900"}`}>
+                {(() => { const diffDisabled = comingSoon.length > 0; return (
+                <button onClick={() => { if (!diffDisabled) setIsDifferentiated(!isDifferentiated); }}
+                  className={`px-6 py-2 rounded-xl font-bold text-base shadow-sm border-2 transition-colors ${diffDisabled ? "bg-gray-100 text-gray-300 border-gray-200 cursor-not-allowed" : isDifferentiated ? "bg-blue-900 text-white border-blue-900" : "bg-white text-gray-600 border-gray-300 hover:border-blue-900 hover:text-blue-900"}`}>
                   Differentiated
                 </button>
+                ); })()}
               </div>
               <div className="flex justify-center items-center gap-6 mb-4">
                 {qoEl(isDifferentiated)}
