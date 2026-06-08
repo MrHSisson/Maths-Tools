@@ -36,11 +36,11 @@ export interface ToolShellProps {
     multiSelectValues?: Record<string, boolean>,
   ) => AnyQuestion;
   defaults?: ToolShellDefaults;
-  stepRenderer?: (step: WorkingStep, colorScheme: string) => JSX.Element | null;
-  /** Replaces QuestionDisplay in all modes. compact=true in worksheet cells, false in worked example/fullscreen, undefined in regular whiteboard. idx is the worksheet question index (only provided in worksheet cells). */
-  questionRenderer?: (q: AnyQuestion, showAnswer: boolean, colorScheme: string, compact?: boolean, idx?: number) => JSX.Element | null;
-  /** Replaces the final answer box (AnswerDisplay). Shown when showAnswer=true. */
-  answerRenderer?: (q: AnyQuestion, colorScheme: string) => JSX.Element | null;
+  stepRenderer?: (step: WorkingStep, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null;
+  /** Replaces QuestionDisplay in all modes. compact=true in worksheet cells, false in worked example/fullscreen, undefined in regular whiteboard. idx is the worksheet question index (only provided in worksheet cells). qo is the live QO state snapshot — use it for render-time reformatting (e.g. decimal/fraction toggle). */
+  questionRenderer?: (q: AnyQuestion, showAnswer: boolean, colorScheme: string, compact?: boolean, idx?: number, qo?: QOSnapshot) => JSX.Element | null;
+  /** Replaces the final answer box (AnswerDisplay). Shown when showAnswer=true. qo is the live QO state snapshot. */
+  answerRenderer?: (q: AnyQuestion, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null;
   /** Custom print handler for diagram tools. Receives the worksheet array, print mode, and the worksheet container DOM element (for SVG extraction). */
   customPrintHandler?: (questions: AnyQuestion[], printMode: PrintMode, worksheetEl: HTMLElement | null) => void;
 }
@@ -234,6 +234,12 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const handleLevelDDChange  = (lv: string, v: string) => setLevelDropdowns(p => ({ ...p, [lv]: v }));
   const handleLevelMSChange  = (lv: string, k: string, v: boolean) => setLevelMultiSelect(p => ({ ...p, [lv]: { ...(p[lv] ?? {}), [k]: v } }));
   const getInstruction = (tool = currentTool) => config.tools[tool]?.instruction ?? "";
+  const getQOSnapshot = (): QOSnapshot => ({
+    level: difficulty,
+    variables: getVariableValues(),
+    dropdownValue: getDropdownValue(),
+    multiSelectValues: toolMultiSelect[currentTool] ?? {},
+  });
 
   const makeQuestion = (): AnyQuestion =>
     generateQuestion(currentTool, difficulty, getVariableValues(), getDropdownValue(), toolMultiSelect[currentTool] ?? {});
@@ -374,9 +380,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       return (
         <div className={wrapperClass} style={cellStyle}>
           {numEl}{regenBtn}
-          {questionRenderer(q, false, colorScheme, true, idx)}
+          {questionRenderer(q, false, colorScheme, true, idx, getQOSnapshot())}
           {showWorksheetAnswers && answerRenderer && (
-            <div style={{ marginTop: 4 }}>{answerRenderer(q, colorScheme)}</div>
+            <div style={{ marginTop: 4 }}>{answerRenderer(q, colorScheme, getQOSnapshot())}</div>
           )}
           {showWorksheetAnswers && !answerRenderer && (
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -698,11 +704,11 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         <div className="w-full text-center flex flex-col gap-4 items-center">
           {getInstruction() && !questionRenderer && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold`} style={{ color: "#000" }}>{getInstruction()}</div>}
           {questionRenderer
-            ? questionRenderer(currentQuestion, showWhiteboardAnswer, colorScheme)
+            ? questionRenderer(currentQuestion, showWhiteboardAnswer, colorScheme, undefined, undefined, getQOSnapshot())
             : <>
                 <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
                 {showWhiteboardAnswer && <div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>
-                  {answerRenderer ? answerRenderer(currentQuestion, colorScheme) : <AnswerDisplay q={currentQuestion} />}
+                  {answerRenderer ? answerRenderer(currentQuestion, colorScheme, getQOSnapshot()) : <AnswerDisplay q={currentQuestion} />}
                 </div>}
               </>
           }
@@ -719,11 +725,11 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         <>
           {getInstruction() && !questionRenderer && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold`} style={{ color: "#000" }}>{getInstruction()}</div>}
           {questionRenderer
-            ? questionRenderer(currentQuestion, showWhiteboardAnswer, colorScheme, false)
+            ? questionRenderer(currentQuestion, showWhiteboardAnswer, colorScheme, false, undefined, getQOSnapshot())
             : <>
                 <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
                 {showWhiteboardAnswer && <div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>
-                  {answerRenderer ? answerRenderer(currentQuestion, colorScheme) : <AnswerDisplay q={currentQuestion} />}
+                  {answerRenderer ? answerRenderer(currentQuestion, colorScheme, getQOSnapshot()) : <AnswerDisplay q={currentQuestion} />}
                 </div>}
               </>
           }
@@ -828,7 +834,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           </div>
           {getInstruction() && !questionRenderer && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold mb-2`} style={{ color: "#000" }}>{getInstruction()}</div>}
           {questionRenderer
-            ? questionRenderer(currentQuestion, showAnswer, colorScheme, false)
+            ? questionRenderer(currentQuestion, showAnswer, colorScheme, false, undefined, getQOSnapshot())
             : <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
           }
         </div>
@@ -836,7 +842,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           <>
             <div className="space-y-4 mt-8">
               {currentQuestion.working.map((s, i) => {
-                const custom = stepRenderer ? stepRenderer(s, colorScheme) : null;
+                const custom = stepRenderer ? stepRenderer(s, colorScheme, getQOSnapshot()) : null;
                 return (
                   <div key={i} className="rounded-xl p-6" style={{ backgroundColor: stepBg }}>
                     <h4 className="text-xl font-bold mb-2" style={{ color: "#000" }}>Step {i + 1}</h4>
@@ -857,7 +863,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             </div>
             <div className="rounded-xl p-6 text-center mt-4" style={{ backgroundColor: stepBg }}>
               <span className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>
-                {answerRenderer ? answerRenderer(currentQuestion, colorScheme) : <AnswerDisplay q={currentQuestion} />}
+                {answerRenderer ? answerRenderer(currentQuestion, colorScheme, getQOSnapshot()) : <AnswerDisplay q={currentQuestion} />}
               </span>
             </div>
           </>

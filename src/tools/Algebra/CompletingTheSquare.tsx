@@ -1,7 +1,7 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep,
-  randInt, fmt, step, mStep,
+  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type QOSnapshot,
+  randInt, fmt, mStep, MathRenderer,
 } from "../../shared";
 
 // ── 1. Types ──────────────────────────────────────────────────────────────────
@@ -89,7 +89,7 @@ const INFO_SECTIONS: InfoSection[] = [
     { label: "Worksheet",        detail: "Grid of questions with PDF export." },
   ]},
   { title: "Question Options", icon: "⚙️", content: [
-    { label: "Display: Decimal / Fraction", detail: "Levels 2 & 3. Controls whether half-integer values show as decimals (e.g. 2.5) or fractions (e.g. 5/2)." },
+    { label: "Display: Decimal / Fraction", detail: "Levels 2 & 3. Controls whether half-integer values show as decimals (e.g. 2.5) or fractions (e.g. 5/2). Switching is instant — the same question reformats without regenerating." },
     { label: "Integer +c",                 detail: "Levels 2 & 3. When enabled, the constant term c is always an integer." },
     { label: "Negative Coefficients",       detail: "Level 3 only. When enabled, the leading coefficient may be negative." },
     { label: "Differentiated",              detail: "Worksheet mode produces three columns — one per level — simultaneously." },
@@ -98,7 +98,6 @@ const INFO_SECTIONS: InfoSection[] = [
 
 // ── 4. Helpers ────────────────────────────────────────────────────────────────
 
-// Format a number as a fraction string for halves/quarters, otherwise as decimal.
 const fmtF = (n: number): string => {
   if (n % 1 === 0) return String(n);
   if ((n * 2) % 1 === 0) { const num = Math.round(n * 2); return num < 0 ? `-${Math.abs(num)}/2` : `${num}/2`; }
@@ -106,7 +105,6 @@ const fmtF = (n: number): string => {
   return fmt(n);
 };
 
-// Convert a fraction string like "5/2" to \frac{5}{2} for KaTeX; pass through otherwise.
 const toLatex = (s: string): string => {
   const m = s.match(/^(-?)(\d+)\/(\d+)$/);
   if (m) return `${m[1]}\\frac{${m[2]}}{${m[3]}}`;
@@ -115,8 +113,9 @@ const toLatex = (s: string): string => {
 
 // ── 5. buildDisplay ───────────────────────────────────────────────────────────
 //
-// Converts the raw quadratic parameters and current display mode into
-// displayLatex, answerLatex, and working steps. Called once at generation time.
+// Converts the raw quadratic parameters and display mode into displayLatex,
+// answerLatex, and working steps. Called at generation time for both decimal
+// and fraction modes so both versions are pre-computed on the question.
 
 interface RawValues {
   tool: ToolType;
@@ -134,14 +133,12 @@ const buildDisplay = (rv: RawValues, useFractions: boolean): Built => {
   const fmtP = (n: number) => useFractions ? fmtF(n) : fmt(n);
   const L = (s: string) => toLatex(s);
 
-  // Question display
   const aStr   = a === 1 ? "" : a === -1 ? "-" : a > 0 ? String(a) : `-${Math.abs(a)}`;
   const bAbs   = Math.abs(b);
   const bLatex = b === 0 ? "" : bAbs === 1 ? (b > 0 ? " + x" : " - x") : b > 0 ? ` + ${L(fmtP(b))}x` : ` - ${L(fmtP(bAbs))}x`;
   const cLatex = c === 0 ? "" : c > 0 ? ` + ${L(fmtP(c))}` : ` - ${L(fmtP(Math.abs(c)))}`;
   const displayLatex = `y = ${aStr}x^2${bLatex}${cLatex}`;
 
-  // Shared intermediate strings
   const pStr  = p > 0 ? `+ ${L(fmtP(p))}` : p < 0 ? `- ${L(fmtP(Math.abs(p)))}` : "";
   const pSqL  = L(fmtP(p * p));
   const aPSqL = L(fmtP(a * p * p));
@@ -167,7 +164,6 @@ const buildDisplay = (rv: RawValues, useFractions: boolean): Built => {
     working.push(mStep("Expand the square brackets:", `y = (x ${pStr})^2 - ${pSqL} ${cPart}`));
   }
 
-  // Answer and tool-specific final steps
   const aFinal  = a === 1 ? "" : a === -1 ? "-" : String(a);
   const pFinal  = p > 0 ? `+ ${L(fmtP(p))}` : p < 0 ? `- ${L(fmtP(Math.abs(p)))}` : "";
   const qFinal  = q > 0 ? `+ ${L(fmtP(q))}` : q < 0 ? `- ${L(fmtP(Math.abs(q)))}` : "";
@@ -213,7 +209,6 @@ const generateQuestion = (
   dropdownValue: string,
 ): AnyQuestion => {
   const t           = tool as ToolType;
-  const useFractions = dropdownValue === "fraction";
   const useNegative = variables["negativeCoefficients"] ?? false;
   const integerC    = variables["integerC"] ?? false;
 
@@ -249,8 +244,21 @@ const generateQuestion = (
 
   const b = 2 * a * p;
   const c = a * p * p + q;
+  const rv: RawValues = { tool: t, a, b, c, p, q };
 
-  const built = buildDisplay({ tool: t, a, b, c, p, q }, useFractions);
+  // Pre-compute both display modes so switching is instant
+  const builtD = buildDisplay(rv, false);
+  const builtF = buildDisplay(rv, true);
+
+  // Store fraction-version steps on each decimal step's extra field
+  const working = builtD.working.map((s, i) => ({
+    ...s,
+    extra: { _fractionStep: builtF.working[i] },
+  }));
+
+  const useFractions = dropdownValue === "fraction";
+  const displayLatex = useFractions ? builtF.displayLatex : builtD.displayLatex;
+  const answerLatex  = useFractions ? builtF.answerLatex  : builtD.answerLatex;
 
   const aStr = a === 1 ? "" : a === -1 ? "-" : a > 0 ? String(a) : `-${Math.abs(a)}`;
   const bAbs = Math.abs(b);
@@ -260,13 +268,17 @@ const generateQuestion = (
   return {
     kind: "simple",
     display: `y = ${aStr}x²${bStr}${cStr}`,
-    displayLatex: built.displayLatex,
+    displayLatex,
     answer: "",
-    answerLatex: built.answerLatex,
-    working: built.working,
+    answerLatex,
+    working,
+    // Store both pre-computed versions and raw values for instant reformat
+    _rawValues: rv,
+    _builtDecimal: builtD,
+    _builtFraction: builtF,
     key: `${t}-${level}-${a}-${b}-${c}`,
     difficulty: level,
-  };
+  } as unknown as AnyQuestion;
 };
 
 // ── 7. generateUniqueQ ────────────────────────────────────────────────────────
@@ -286,9 +298,80 @@ const generateUniqueQ = (
   return q;
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ── 8. Custom renderers for instant decimal/fraction reformat ─────────────────
 
-void (step as unknown);
+const questionRenderer = (
+  q: AnyQuestion,
+  showAnswer: boolean,
+  _colorScheme: string,
+  _compact?: boolean,
+  _idx?: number,
+  qo?: QOSnapshot,
+) => {
+  const anyQ = q as any;
+  const rv   = anyQ._rawValues as RawValues | undefined;
+  if (!rv) return null;
+
+  const useFractions  = qo?.dropdownValue === "fraction";
+  const built: Built  = useFractions ? anyQ._builtFraction : anyQ._builtDecimal;
+  if (!built) return null;
+
+  const instruction = TOOL_CONFIG.tools[rv.tool]?.instruction ?? "";
+
+  return (
+    <div className="w-full text-center flex flex-col gap-4 items-center">
+      {instruction && (
+        <div className="text-2xl font-semibold" style={{ color: "#000" }}>{instruction}</div>
+      )}
+      <div className="text-4xl font-semibold" style={{ color: "#000" }}>
+        <MathRenderer latex={built.displayLatex} />
+      </div>
+      {showAnswer && (
+        <div className="text-4xl font-bold" style={{ color: "#166534" }}>
+          <MathRenderer latex={built.answerLatex} />
+        </div>
+      )}
+    </div>
+  );
+};
+
+const answerRenderer = (
+  q: AnyQuestion,
+  _colorScheme: string,
+  qo?: QOSnapshot,
+) => {
+  const anyQ = q as any;
+  const useFractions = qo?.dropdownValue === "fraction";
+  const built: Built = useFractions ? anyQ._builtFraction : anyQ._builtDecimal;
+  if (!built) return null;
+  return <MathRenderer latex={built.answerLatex} />;
+};
+
+const stepRenderer = (
+  s: WorkingStep,
+  _colorScheme: string,
+  qo?: QOSnapshot,
+) => {
+  const useFractions = qo?.dropdownValue === "fraction";
+  const activeStep: WorkingStep = useFractions
+    ? ((s.extra as any)?._fractionStep ?? s)
+    : s;
+
+  if (activeStep.type === "mStep") {
+    return (
+      <div className="flex flex-col gap-1">
+        <span className="text-left">{activeStep.label}</span>
+        <div className="text-center">
+          <MathRenderer latex={activeStep.latex} />
+          {activeStep.unit && <span> {activeStep.unit}</span>}
+        </div>
+      </div>
+    );
+  }
+  return <div className="text-center"><MathRenderer latex={activeStep.latex} /></div>;
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 export default function App() {
   return (
@@ -297,6 +380,9 @@ export default function App() {
       infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       generateUniqueQ={generateUniqueQ}
+      questionRenderer={questionRenderer}
+      answerRenderer={answerRenderer}
+      stepRenderer={stepRenderer}
       defaults={{ numQuestions: 6, numColumns: 2 }}
     />
   );
