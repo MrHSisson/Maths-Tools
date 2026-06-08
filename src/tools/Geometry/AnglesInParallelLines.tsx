@@ -197,15 +197,15 @@ const Diagram = ({ d, showAnswer, qIndex }: { d: DiagramData; showAnswer: boolea
     const sec = sectors[quadKey];
     if (!sec) return null;
     const pt = pts[interKey as keyof typeof pts];
-    const lx = pt.x + (ARC_R + 26) * Math.cos(sec.mid);
-    const ly = pt.y + (ARC_R + 26) * Math.sin(sec.mid);
+    const lx = pt.x + (ARC_R + 30) * Math.cos(sec.mid);
+    const ly = pt.y + (ARC_R + 30) * Math.sin(sec.mid);
     return (
       <>
         <path d={sectorPath(pt.x, pt.y, ARC_R, sec.s, sec.e)} fill={fill} stroke="none"/>
         <path d={arcOnlyPath(pt.x, pt.y, ARC_R, sec.s, sec.e)} fill="none" stroke={stroke} strokeWidth="3.5" strokeLinecap="round"/>
         <g transform={`translate(${lx},${ly}) rotate(${-canvasRotation})`}>
           <text x={0} y={0} textAnchor="middle" dominantBaseline="central"
-            fill={stroke} fontSize="18" fontWeight="800"
+            fill={stroke} fontSize="24" fontWeight="800"
             fontStyle={italic ? "italic" : "normal"}
             fontFamily="'Segoe UI', Arial, sans-serif">
             {labelText}
@@ -482,9 +482,15 @@ function questionRenderer(q: AnyQuestion, showAnswer: boolean, _colorScheme: str
   const d = (q as any)._diagram as DiagramData | undefined;
   if (!d) return null;
   const maxW = compact === true ? 180 : compact === undefined ? 340 : 500;
+  const isChain = d.isChain && !!d.rule2;
+  // Shrink the diagram when the answer (and its explanatory text) is shown so the
+  // combined content stays inside the fixed-height question box instead of overflowing it.
+  const diagramW = showAnswer ? Math.round(maxW * (isChain ? 0.7 : 0.8)) : maxW;
   return (
-    <div style={{ width: "100%", maxWidth: maxW, margin: "0 auto" }}>
-      <Diagram d={d} showAnswer={showAnswer} qIndex={idx} />
+    <div style={{ width: "100%", maxWidth: maxW, margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <div style={{ width: "100%", maxWidth: diagramW }}>
+        <Diagram d={d} showAnswer={showAnswer} qIndex={idx} />
+      </div>
       {showAnswer && <AnswerStatements d={d} />}
     </div>
   );
@@ -494,27 +500,27 @@ function AnswerStatements({ d }: { d: DiagramData }): JSX.Element {
   const isChain = d.isChain && !!d.rule2;
   const isL3 = d.level === "level3";
   return (
-    <div style={{ textAlign: "center", marginTop: 8 }}>
+    <div style={{ textAlign: "center", marginTop: 6, lineHeight: 1.3 }}>
       {isChain && !isL3 ? (
         <>
-          <div style={{ fontSize: 16, fontWeight: 600, color: "#374151", marginBottom: 6 }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: "#374151", marginBottom: 4 }}>
             {d.rule.statement}, <span style={{ fontWeight: 800, color: "#b91c1c" }}>x = {d.midVal}°</span>
           </div>
-          <div style={{ fontSize: 16, fontWeight: 600, color: "#374151" }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: "#374151" }}>
             {d.rule2!.statement}, <span style={{ fontWeight: 800, color: "#15803d" }}>y = {d.xVal}°</span>
           </div>
         </>
       ) : isChain && isL3 ? (
         <>
-          <div style={{ fontSize: 16, fontWeight: 600, color: "#374151", marginBottom: 6 }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: "#374151", marginBottom: 4 }}>
             Missing angle — {d.rule.statement}, <span style={{ fontWeight: 800, color: "#dc2626" }}>{d.midVal}°</span>
           </div>
-          <div style={{ fontSize: 16, fontWeight: 600, color: "#374151" }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: "#374151" }}>
             {d.rule2!.statement}, <span style={{ fontWeight: 800, color: "#166534" }}>x = {d.xVal}°</span>
           </div>
         </>
       ) : (
-        <div style={{ fontSize: 16, fontWeight: 600, color: "#374151" }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: "#374151" }}>
           {d.rule.statement}, <span style={{ fontWeight: 800, color: "#166534" }}>x = {d.xVal}°</span>
         </div>
       )}
@@ -599,7 +605,7 @@ function customPrintHandler(questions: AnyQuestion[], printMode: PrintMode, cont
   .cell-num{position:absolute;top:1.5mm;left:2mm;font-size:2.8mm;font-weight:700;color:#374151}
   .cell-diag{width:100%;flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
   .cell-diag svg{width:100%;height:100%;overflow:visible}
-  .cell-ans{width:100%;flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2mm;font-size:3.4mm;font-weight:600;color:#374151;text-align:center;padding:0 2mm}
+  .cell-ans{width:100%;flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.2mm;font-size:2.9mm;line-height:1.25;font-weight:600;color:#374151;text-align:center;padding:0 2mm;overflow:hidden}
   .ans-x{color:#dc2626;font-weight:800}
   .ans-y{color:#16a34a;font-weight:800}
 </style>
