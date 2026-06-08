@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   ToolShell,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type PrintMode,
@@ -137,6 +138,26 @@ const pickArr = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)]
 const randInt = (min: number, max: number): number => Math.floor(Math.random() * (max - min + 1)) + min;
 const shuffled = <T,>(arr: T[]): T[] => [...arr].sort(() => Math.random() - 0.5);
 
+// Two consecutive rules that are functionally equivalent (a vertically-opposite step can
+// always be replaced by a straight-line step to the same angle, and vice versa) — never chain them.
+const isVOSL = (a: string, b: string): boolean =>
+  (a === "verticallyOpposite" && b === "straightLine") ||
+  (a === "straightLine" && b === "verticallyOpposite");
+
+const ALL_POSITIONS: Array<{ inter: string; quad: string }> =
+  ["p1", "p2"].flatMap(inter => ["tl", "tr", "bl", "br"].map(quad => ({ inter, quad })));
+
+// The single rule directly connecting two angle positions, or null if they have no direct relationship
+const ruleForPair = (a: { inter: string; quad: string }, b: { inter: string; quad: string }): RuleDef | null => {
+  for (const r of RULES) {
+    for (const v of r.variants) {
+      if ((v.inter1 === a.inter && v.quad1 === a.quad && v.inter2 === b.inter && v.quad2 === b.quad) ||
+          (v.inter2 === a.inter && v.quad2 === a.quad && v.inter1 === b.inter && v.quad1 === b.quad)) return r;
+    }
+  }
+  return null;
+};
+
 // ── Diagram data type (stored in q._diagram) ──────────────────────────────────
 type DiagramData = {
   tvAngle: number;
@@ -157,7 +178,11 @@ type DiagramData = {
   midQuad?: string;
   midVal?: number;
   level?: DifficultyLevel;
+  /** Level 3 only — every valid two-rule route from the given angle to x (when more than one exists) */
+  chains?: ChainOption[];
 };
+
+type ChainOption = { rule: RuleDef; rule2: RuleDef; midInter: string; midQuad: string; midVal: number };
 
 // ── Colours ───────────────────────────────────────────────────────────────────
 const KNOWN_FILL   = "rgba(29,78,216,0.15)";
@@ -287,10 +312,6 @@ function buildStandardData(activeRules: Record<string, boolean>, fixedRotation: 
 }
 
 function buildChainData(activeRules: Record<string, boolean>, fixedRotation: number | null): DiagramData {
-  const isVOSL = (a: string, b: string) =>
-    (a === "verticallyOpposite" && b === "straightLine") ||
-    (a === "straightLine" && b === "verticallyOpposite");
-
   for (let attempt = 0; attempt < 30; attempt++) {
     const base = buildStandardData(activeRules, fixedRotation);
     const { xInter, xQuad, knownInter, knownQuad, angles } = base;
@@ -335,6 +356,56 @@ function buildChainData(activeRules: Record<string, boolean>, fixedRotation: num
   }
 
   return buildStandardData(activeRules, fixedRotation);
+}
+
+// Level 3: pick a given-angle / x pair with NO direct relationship, then find every
+// valid two-rule route that links them via a hidden, unlabelled angle.
+function findChainsBetween(known: { inter: string; quad: string }, final: { inter: string; quad: string }, angles: AngleMap): ChainOption[] {
+  const chains: ChainOption[] = [];
+  for (const mid of ALL_POSITIONS) {
+    if ((mid.inter === known.inter && mid.quad === known.quad) || (mid.inter === final.inter && mid.quad === final.quad)) continue;
+    const rule = ruleForPair(known, mid);
+    const rule2 = ruleForPair(mid, final);
+    if (!rule || !rule2) continue;
+    if (rule.key === rule2.key) continue;
+    if (isVOSL(rule.key, rule2.key)) continue;
+    chains.push({ rule, rule2, midInter: mid.inter, midQuad: mid.quad, midVal: angles[mid.quad as keyof AngleMap] });
+  }
+  return chains;
+}
+
+function buildHiddenLinkData(fixedRotation: number | null): DiagramData {
+  const acuteDeg = randInt(50, 70);
+  const leanRight = Math.random() < 0.5;
+  const tvAngle = (leanRight ? acuteDeg : 180 - acuteDeg) * DEG;
+  const angles = getAngles(tvAngle);
+  const sectors = getSectors(tvAngle);
+  const pts = getIntersections(tvAngle);
+  const ROTATIONS = [0, 45, 90, 135];
+  const canvasRotation = fixedRotation !== null ? fixedRotation : ROTATIONS[Math.floor(Math.random() * ROTATIONS.length)];
+
+  for (let attempt = 0; attempt < 60; attempt++) {
+    const known = pickArr(ALL_POSITIONS);
+    const final = pickArr(ALL_POSITIONS);
+    if (final.inter === known.inter && final.quad === known.quad) continue;
+    if (ruleForPair(known, final)) continue; // direct relationship — not a hidden-link pair
+    const chains = shuffled(findChainsBetween(known, final, angles));
+    if (chains.length === 0) continue;
+    const first = chains[0];
+    return {
+      tvAngle, angles, sectors, pts, canvasRotation,
+      knownVal: angles[known.quad as keyof AngleMap],
+      xVal: angles[final.quad as keyof AngleMap],
+      knownQuad: known.quad, knownInter: known.inter,
+      xQuad: final.quad, xInter: final.inter,
+      rule: first.rule, rule2: first.rule2,
+      midInter: first.midInter, midQuad: first.midQuad, midVal: first.midVal,
+      isChain: true,
+      chains,
+    };
+  }
+
+  return buildChainData({}, fixedRotation);
 }
 
 function dataToQuestion(d: DiagramData, level: DifficultyLevel): AnyQuestion {
@@ -419,7 +490,7 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Overview", detail: "A transversal crossing two parallel lines creates pairs of angles linked by rules." },
       { label: "Level 1 — Standard", detail: "One given angle. Name the rule and find x. Choose which rules to practise using the Question Options." },
       { label: "Level 2 — Multi-step", detail: "One given angle. Find x using rule 1, then use x to find y using a different rule. Genuinely chains two rules — no shortcut between the given angle and y." },
-      { label: "Level 3 — Hidden link", detail: "One given angle and one labelled x — but they have no direct relationship. A missing, unlabelled angle connects them: find it first using one rule, then use a second rule to find x." },
+      { label: "Level 3 — Hidden link", detail: "One given angle and one labelled x — but they have no direct relationship. A missing, unlabelled angle connects them: find it first using one rule, then use a second rule to find x. In Whiteboard mode, where more than one valid route exists, use the ‹ Method › buttons on the answer to explore the alternatives." },
     ],
   },
   {
@@ -454,9 +525,11 @@ function generateQuestion(
 ): AnyQuestion {
   const rot = dropdownValue === "random" || !dropdownValue ? null : Number(dropdownValue);
   const activeRules = multiSelectValues ?? {};
-  const baseData = level === "level2" || level === "level3"
+  const baseData = level === "level2"
     ? buildChainData(activeRules, rot)
-    : buildStandardData(activeRules, rot);
+    : level === "level3"
+      ? buildHiddenLinkData(rot)
+      : buildStandardData(activeRules, rot);
   const data: DiagramData = { ...baseData, level };
   return dataToQuestion(data, level);
 }
@@ -477,23 +550,57 @@ function generateUniqueQ(
 }
 
 // ── Custom renderers ──────────────────────────────────────────────────────────
+function ParallelLinesQuestion({ d, qKey, showAnswer, compact, idx }: {
+  d: DiagramData; qKey: string; showAnswer: boolean; compact?: boolean; idx?: number;
+}): JSX.Element {
+  const [chainIdx, setChainIdx] = useState(0);
+  useEffect(() => { setChainIdx(0); }, [qKey]);
+
+  const chains = d.chains;
+  const hasAlternatives = !!chains && chains.length > 1;
+  const active = chains ? chains[chainIdx % chains.length] : null;
+  const dView: DiagramData = active
+    ? { ...d, rule: active.rule, rule2: active.rule2, midInter: active.midInter, midQuad: active.midQuad, midVal: active.midVal }
+    : d;
+
+  const maxW = compact === true ? 180 : compact === undefined ? 340 : 500;
+  const isChain = dView.isChain && !!dView.rule2;
+  // Shrink the diagram when the answer (and its explanatory text) is shown so the
+  // combined content stays inside the fixed-height question box instead of overflowing it.
+  const diagramW = showAnswer ? Math.round(maxW * (isChain ? 0.7 : 0.8)) : maxW;
+
+  const arrowBtnStyle = {
+    width: 30, height: 30, borderRadius: 8, border: "none", cursor: "pointer",
+    background: "rgba(0,0,0,0.08)", display: "flex", alignItems: "center", justifyContent: "center",
+    fontSize: 16, fontWeight: 800, color: "#374151",
+  };
+
+  return (
+    <div style={{ width: "100%", maxWidth: maxW, margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <div style={{ width: "100%", maxWidth: diagramW }}>
+        <Diagram d={dView} showAnswer={showAnswer} qIndex={idx} />
+      </div>
+      {showAnswer && <AnswerStatements d={dView} />}
+      {showAnswer && compact !== true && hasAlternatives && (
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8 }}>
+          <button aria-label="Previous method" style={arrowBtnStyle}
+            onClick={() => setChainIdx(i => (i - 1 + chains!.length) % chains!.length)}>‹</button>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "#6b7280" }}>
+            Method {chainIdx + 1} of {chains!.length}
+          </span>
+          <button aria-label="Next method" style={arrowBtnStyle}
+            onClick={() => setChainIdx(i => (i + 1) % chains!.length)}>›</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function questionRenderer(q: AnyQuestion, showAnswer: boolean, _colorScheme: string, compact?: boolean, idx?: number): JSX.Element | null {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const d = (q as any)._diagram as DiagramData | undefined;
   if (!d) return null;
-  const maxW = compact === true ? 180 : compact === undefined ? 340 : 500;
-  const isChain = d.isChain && !!d.rule2;
-  // Shrink the diagram when the answer (and its explanatory text) is shown so the
-  // combined content stays inside the fixed-height question box instead of overflowing it.
-  const diagramW = showAnswer ? Math.round(maxW * (isChain ? 0.7 : 0.8)) : maxW;
-  return (
-    <div style={{ width: "100%", maxWidth: maxW, margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center" }}>
-      <div style={{ width: "100%", maxWidth: diagramW }}>
-        <Diagram d={d} showAnswer={showAnswer} qIndex={idx} />
-      </div>
-      {showAnswer && <AnswerStatements d={d} />}
-    </div>
-  );
+  return <ParallelLinesQuestion d={d} qKey={q.key} showAnswer={showAnswer} compact={compact} idx={idx} />;
 }
 
 function AnswerStatements({ d }: { d: DiagramData }): JSX.Element {
