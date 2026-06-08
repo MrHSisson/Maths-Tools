@@ -20,16 +20,17 @@ Each Claude Code session works on its own freshly created branch (e.g. `claude/<
 
 ### The cycle for each session
 
-1. **Start from a fresh, up-to-date `main`.** Pull before branching.
-2. **Do all the session's work on that one branch.** One branch per logical unit of work.
-3. **Open a PR and merge it into `main`** when work is complete and build is clean.
-4. **Delete the branch once merged.**
-5. **Repeat for the next session on a brand new branch off the latest `main`.**
+1. **Run `npm install` first.** The container clones the repo fresh — `node_modules/` does not exist until you install. Without it, `tsc` resolves to the system-global TypeScript and reports thousands of false errors. With it, the build is completely clean.
+2. **Start from a fresh, up-to-date `main`.** Pull before branching.
+3. **Do all the session's work on that one branch.** One branch per logical unit of work.
+4. **Open a PR and merge it into `main`** when work is complete and build is clean.
+5. **Delete the branch once merged.**
+6. **Repeat for the next session on a brand new branch off the latest `main`.**
 
 ### Conflict-resolution discipline
 
 - Resolve conflicts by hand — never with a broad regex-based script.
-- After resolving, run a **broad** `npm run build` and check for *any* new error codes — not just a hand-picked subset.
+- After resolving, run `npm install && npm run build` and confirm zero errors — not just a grep for a hand-picked subset of codes.
 - Prefer a regular merge over a squash merge for branches that contain merge commits.
 
 ### Concurrent sessions
@@ -66,7 +67,8 @@ Add `enabled: false` only if the tool should not be publicly visible yet.
 ### 4. Build and push
 
 ```bash
-npm run build   # must complete with zero new TypeScript errors
+npm install     # required — node_modules/ is not present in a fresh container
+npm run build   # must complete with zero TypeScript errors
 git add src/tools/... src/App.tsx src/components/LandingPage.tsx
 git commit -m "Add <ToolName> tool"
 git push
@@ -630,28 +632,17 @@ Print cell CSS:
 - Unused shared helpers: suppress with `void (tStep as unknown)` etc. — only for helpers actually imported but unused
 - `currentQuestion` initialised via `useState` initialiser, never `null`
 - If a tool's questions never include `"frac"` kind, remove any `q.kind === "frac"` branches — they cause TS2367
-- `ToolShellProps` renderer props use `JSX.Element | null` return types — this causes TS2503 in the type-check environment and is pre-existing/harmless
+- `ToolShellProps` renderer props use `JSX.Element | null` return types in their signatures — TypeScript accepts this fine once `@types/react` is installed via `npm install`
 
-### Pre-existing errors — harmless, expected in every build
+### Build correctness — zero errors expected
 
-These appear in `npm run build` output on this repo and are harmless (Vercel has all packages installed):
+With `npm install` run, `npm run build` should produce **zero TypeScript errors**. Any error in the output is a real problem to fix.
 
-| Error code | Cause |
-|------------|-------|
-| TS2307 | `Cannot find module 'react'` / `'lucide-react'` |
-| TS7026 | `JSX element implicitly has type 'any'` |
-| TS2875 | `This JSX tag requires 'react/jsx-runtime'` |
-| TS7006 | `Parameter implicitly has 'any' type` (in shared) |
-| TS2503 | `Cannot find namespace 'JSX'` (in renderer prop signatures) |
-| TS2322 | `Property 'key' does not exist` (in several old tools) |
-| TS2882 | `Cannot find module for side-effect import of './index.css'` |
+If you see a flood of TS7026 / TS2307 / TS2503 / TS2875 errors, `node_modules/` is missing — run `npm install` first.
 
-**A build that introduces *new* error codes of types TS2353, TS2339, TS2345, TS17008, TS1109, TS1381, TS2367, etc. is broken and must be fixed.**
-
-The safe verification pattern:
 ```bash
-# Baseline the pre-existing error count before your changes, then compare after
-npm run build 2>&1 | grep "error TS" | grep -v "TS2307\|TS7026\|TS2875\|TS7006\|TS2503\|TS2322\|TS2882" | head -20
+npm install && npm run build 2>&1 | grep "error TS"
+# should return nothing
 ```
 
 ---
