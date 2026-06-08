@@ -152,6 +152,7 @@ type DiagramData = {
   midInter?: string;
   midQuad?: string;
   midVal?: number;
+  level?: DifficultyLevel;
 };
 
 // ── Colours ───────────────────────────────────────────────────────────────────
@@ -166,6 +167,7 @@ const LINE_COLOR   = "#111827";
 // ── Diagram component ─────────────────────────────────────────────────────────
 const Diagram = ({ d, showAnswer, qIndex }: { d: DiagramData; showAnswer: boolean; qIndex?: number }) => {
   const { tvAngle, sectors, knownVal, xVal, knownQuad, knownInter, xQuad, xInter, pts, canvasRotation, isChain, midQuad, midInter, midVal } = d;
+  const isL3 = d.level === "level3";
   const { p1, p2 } = pts;
   const tv = getTransversalEndpoints(tvAngle, p1, p2);
 
@@ -230,20 +232,21 @@ const Diagram = ({ d, showAnswer, qIndex }: { d: DiagramData; showAnswer: boolea
         {/* Given angle — always blue */}
         <Sector interKey={knownInter} quadKey={knownQuad} fill={KNOWN_FILL} stroke={KNOWN_STROKE} labelText={`${knownVal}°`}/>
 
-        {/* Chain: x = intermediate (red), y = final (green) */}
-        {isChain && midInter && midQuad && (
+        {/* Chain: level 2 shows intermediate as "x" (red) then final as "y" (green).
+            Level 3 hides the intermediate entirely until the answer is revealed. */}
+        {isChain && midInter && midQuad && (!isL3 || showAnswer) && (
           <Sector
             interKey={midInter} quadKey={midQuad}
             fill={MID_FILL} stroke={MID_STROKE}
             labelText={showAnswer ? `${midVal}°` : "x"}
-            italic={!showAnswer}
+            italic={!isL3 && !showAnswer}
           />
         )}
         <Sector
           interKey={xInter} quadKey={xQuad}
-          fill={isChain ? X_FILL : MID_FILL}
-          stroke={isChain ? X_STROKE : MID_STROKE}
-          labelText={showAnswer ? `${xVal}°` : (isChain ? "y" : "x")}
+          fill={isChain && !isL3 ? X_FILL : MID_FILL}
+          stroke={isChain && !isL3 ? X_STROKE : MID_STROKE}
+          labelText={showAnswer ? `${xVal}°` : (isChain && !isL3 ? "y" : "x")}
           italic={!showAnswer}
         />
       </g>
@@ -332,12 +335,18 @@ function buildChainData(activeRules: Record<string, boolean>, fixedRotation: num
 
 function dataToQuestion(d: DiagramData, level: DifficultyLevel): AnyQuestion {
   const isChain = d.isChain && !!d.rule2;
-  const answer = isChain ? `x = ${d.midVal}°, y = ${d.xVal}°` : `x = ${d.xVal}°`;
+  const isL3 = level === "level3";
+  const answer = isChain && !isL3 ? `x = ${d.midVal}°, y = ${d.xVal}°` : `x = ${d.xVal}°`;
   const working = isChain
-    ? [
-        { type: "tStep", latex: "", plain: `${d.rule.statement}, x = ${d.midVal}°`, label: "" },
-        { type: "tStep", latex: "", plain: `${d.rule2!.statement}, y = ${d.xVal}°`, label: "" },
-      ]
+    ? (isL3
+        ? [
+            { type: "tStep", latex: "", plain: `First find the missing angle: ${d.rule.statement}, missing angle = ${d.midVal}°`, label: "" },
+            { type: "tStep", latex: "", plain: `Then use it to find x: ${d.rule2!.statement}, x = ${d.xVal}°`, label: "" },
+          ]
+        : [
+            { type: "tStep", latex: "", plain: `${d.rule.statement}, x = ${d.midVal}°`, label: "" },
+            { type: "tStep", latex: "", plain: `${d.rule2!.statement}, y = ${d.xVal}°`, label: "" },
+          ])
     : [
         { type: "tStep", latex: "", plain: `${d.rule.statement}, x = ${d.xVal}°`, label: "" },
       ];
@@ -347,7 +356,7 @@ function dataToQuestion(d: DiagramData, level: DifficultyLevel): AnyQuestion {
 
   return {
     kind: "simple",
-    display: isChain ? `${d.knownVal}° — find x then y` : `${d.knownVal}° — find x`,
+    display: isChain && !isL3 ? `${d.knownVal}° — find x then y` : `${d.knownVal}° — find x`,
     answer,
     working,
     key,
@@ -406,7 +415,7 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Overview", detail: "A transversal crossing two parallel lines creates pairs of angles linked by rules." },
       { label: "Level 1 — Standard", detail: "One given angle. Name the rule and find x. Choose which rules to practise using the Question Options." },
       { label: "Level 2 — Multi-step", detail: "One given angle. Find x using rule 1, then use x to find y using a different rule. Genuinely chains two rules — no shortcut between the given angle and y." },
-      { label: "Level 3", detail: "Coming soon." },
+      { label: "Level 3 — Hidden link", detail: "One given angle and one labelled x — but they have no direct relationship. A missing, unlabelled angle connects them: find it first using one rule, then use a second rule to find x." },
     ],
   },
   {
@@ -441,9 +450,10 @@ function generateQuestion(
 ): AnyQuestion {
   const rot = dropdownValue === "random" || !dropdownValue ? null : Number(dropdownValue);
   const activeRules = multiSelectValues ?? {};
-  const data = level === "level2"
+  const baseData = level === "level2" || level === "level3"
     ? buildChainData(activeRules, rot)
     : buildStandardData(activeRules, rot);
+  const data: DiagramData = { ...baseData, level };
   return dataToQuestion(data, level);
 }
 
@@ -478,15 +488,25 @@ function questionRenderer(q: AnyQuestion, showAnswer: boolean, _colorScheme: str
 
 function AnswerStatements({ d }: { d: DiagramData }): JSX.Element {
   const isChain = d.isChain && !!d.rule2;
+  const isL3 = d.level === "level3";
   return (
     <div style={{ textAlign: "center", marginTop: 8 }}>
-      {isChain ? (
+      {isChain && !isL3 ? (
         <>
           <div style={{ fontSize: 16, fontWeight: 600, color: "#374151", marginBottom: 6 }}>
             {d.rule.statement}, <span style={{ fontWeight: 800, color: "#b91c1c" }}>x = {d.midVal}°</span>
           </div>
           <div style={{ fontSize: 16, fontWeight: 600, color: "#374151" }}>
             {d.rule2!.statement}, <span style={{ fontWeight: 800, color: "#15803d" }}>y = {d.xVal}°</span>
+          </div>
+        </>
+      ) : isChain && isL3 ? (
+        <>
+          <div style={{ fontSize: 16, fontWeight: 600, color: "#374151", marginBottom: 6 }}>
+            Missing angle — {d.rule.statement}, <span style={{ fontWeight: 800, color: "#dc2626" }}>{d.midVal}°</span>
+          </div>
+          <div style={{ fontSize: 16, fontWeight: 600, color: "#374151" }}>
+            {d.rule2!.statement}, <span style={{ fontWeight: 800, color: "#166534" }}>x = {d.xVal}°</span>
           </div>
         </>
       ) : (
@@ -527,10 +547,13 @@ function customPrintHandler(questions: AnyQuestion[], printMode: PrintMode, cont
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const d = (q as any)._diagram as DiagramData | undefined;
     const isChain = d?.isChain && !!d?.rule2;
+    const isL3 = d?.level === "level3";
 
     if (showAns && d) {
       const statementsHtml = isChain
-        ? `<div>${d.rule.statement}, <span class="ans-x">x = ${d.midVal}°</span></div><div>${d.rule2!.statement}, <span class="ans-y">y = ${d.xVal}°</span></div>`
+        ? (isL3
+            ? `<div>Missing angle — ${d.rule.statement}, <span class="ans-x">${d.midVal}°</span></div><div>${d.rule2!.statement}, <span class="ans-y">x = ${d.xVal}°</span></div>`
+            : `<div>${d.rule.statement}, <span class="ans-x">x = ${d.midVal}°</span></div><div>${d.rule2!.statement}, <span class="ans-y">y = ${d.xVal}°</span></div>`)
         : `<div>${d.rule.statement}, <span class="ans-x">x = ${d.xVal}°</span></div>`;
       return `<div class="cell"><div class="cell-num">${li + 1}</div><div class="cell-ans">${statementsHtml}</div></div>`;
     }
@@ -597,7 +620,6 @@ export default function App() {
       answerRenderer={answerRenderer}
       customPrintHandler={customPrintHandler}
       defaults={{
-        comingSoonLevels: ["level3"],
         fixedColumns: true,
         numColumns: 3,
         numQuestions: 9,
