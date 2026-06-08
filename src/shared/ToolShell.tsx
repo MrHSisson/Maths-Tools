@@ -41,11 +41,13 @@ export interface ToolShellProps {
   questionRenderer?: (q: AnyQuestion, showAnswer: boolean, colorScheme: string, compact?: boolean, idx?: number, qo?: QOSnapshot) => JSX.Element | null;
   /** Replaces the final answer box (AnswerDisplay). Shown when showAnswer=true. qo is the live QO state snapshot. */
   answerRenderer?: (q: AnyQuestion, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null;
+  /** Called when a QO option changes before falling back to full regeneration. Return a reformatted copy of the question, or null to trigger a new question instead. Use this for instant display-mode switches (e.g. decimal ↔ fraction) where the maths doesn't change. */
+  reformatQuestion?: (q: AnyQuestion, qo: QOSnapshot) => AnyQuestion | null;
   /** Custom print handler for diagram tools. Receives the worksheet array, print mode, and the worksheet container DOM element (for SVG extraction). */
   customPrintHandler?: (questions: AnyQuestion[], printMode: PrintMode, worksheetEl: HTMLElement | null) => void;
 }
 
-export const ToolShell = ({ config, infoSections, generateQuestion, generateUniqueQ, defaults = {}, stepRenderer, questionRenderer, answerRenderer, customPrintHandler }: ToolShellProps) => {
+export const ToolShell = ({ config, infoSections, generateQuestion, generateUniqueQ, defaults = {}, stepRenderer, questionRenderer, answerRenderer, reformatQuestion, customPrintHandler }: ToolShellProps) => {
   const toolKeys = Object.keys(config.tools);
 
   const [currentTool, setCurrentTool] = useState<string>(toolKeys[0]);
@@ -348,8 +350,22 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     return () => document.removeEventListener("keydown", handler);
   }, [mode, worksheetMode, advGroups, advSelectedId]);
 
+  const qoFingerprint = [
+    getDropdownValue(),
+    JSON.stringify(getVariableValues()),
+    JSON.stringify(toolMultiSelect[currentTool] ?? {}),
+  ].join("|");
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { if (mode !== "worksheet") handleNewQuestion(); }, [difficulty, currentTool]);
+  useEffect(() => {
+    if (mode === "worksheet") return;
+    if (reformatQuestion) {
+      const snap = getQOSnapshot();
+      const reformatted = reformatQuestion(currentQuestion, snap);
+      if (reformatted !== null) { setCurrentQuestion(reformatted); setShowAnswer(false); return; }
+    }
+    handleNewQuestion();
+  }, [difficulty, currentTool, qoFingerprint]);
 
   const displayFontSizes = ["text-2xl", "text-3xl", "text-4xl", "text-5xl", "text-6xl", "text-7xl"];
   const canDisplayIncrease = displayFontSize < displayFontSizes.length - 1;
