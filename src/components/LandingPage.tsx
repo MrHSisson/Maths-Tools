@@ -87,7 +87,7 @@ const categories: Category[] = [
     },
     tools: [
       { id: 'solving-linear-equations', path: '/solving-linear-equations', name: 'Unknowns on Both Sides', description: 'Solve equations where the unknown occurs more than once', ready: 'v2.3' },
-      { id: 'completing-square', path: '/completing-the-square', name: 'Completing the Square', description: 'Rewrite and solve quadratic expressions in completed square form', ready: 'v2.0' },
+      { id: 'completing-square', path: '/completing-the-square', name: 'Completing the Square', description: 'Rewrite and solve quadratic expressions in completed square form', ready: 'v2.3' },
       { id: 'iterations', path: '/iterations', name: 'Iteration', description: 'Find roots to eqautions using iterative methods', ready: 'v2.1.1' },
       { id: 'simultaneous-equations-elimination', path: '/simultaneous-equations-elimination', name: 'Simultaneous Equations (Elimination)', description: 'Solve simultaneous equations, including rearranging', ready: 'v2.1.1' },
       { id: 'simultaneous-equations-substitution', path: '/simultaneous-equations-substitution', name: 'Simultaneous Equations (Substitution)', description: 'Solve Simultaneous Equations (including Non-Linear) by Substitution', ready: 'v2.1.2' },

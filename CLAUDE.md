@@ -2,7 +2,7 @@
 
 ## What this file is
 
-CLAUDE.md is read automatically by Claude Code at the start of every session in this repository. It replaces the need to re-read the codebase each time. Everything Claude needs to build tools correctly — conventions, APIs, checklists, gotchas — lives here.
+CLAUDE.md is read automatically by Claude Code at the start of every session. It is the single source of truth for this codebase — every interface, type, export, and convention is documented here so no shared source files need to be read before starting work.
 
 ---
 
@@ -16,26 +16,26 @@ A React/TypeScript/Vite app of interactive maths tools for teachers. Each tool h
 
 ## Branch convention
 
-Each Claude Code session works on its own freshly created branch (e.g. `claude/<session-name>`), branched from an up-to-date `main`. Never push directly to `main` — the only exception is an emergency fix to a broken production deployment, and even then `main` should be synced back into any in-flight feature branches immediately afterward.
+Each Claude Code session works on its own freshly created branch (e.g. `claude/<session-name>`), branched from an up-to-date `main`. Never push directly to `main`.
 
 ### The cycle for each session
 
-1. **Start from a fresh, up-to-date `main`.** Before branching, pull the latest `main` so the new branch diverges as little as possible — this keeps any eventual merge conflict small and easy to verify.
-2. **Do all the session's work on that one branch.** Don't hop between branches mid-session, and don't let unrelated changes pile up on top of each other — one branch per logical unit of work (one tool, one fix, one feature).
-3. **Open a PR and merge it into `main`** when the work is complete and the build is clean (`npm run build` with zero new errors — see the TypeScript section below for the full list of error codes to check, not just a narrow grep for a few codes).
-4. **Delete the branch once merged.** A merged branch has no further purpose — leaving it around risks a future session accidentally building on stale code. Delete via the GitHub UI ("Delete branch" on the merged PR page), `git push origin --delete <branch-name>`, or — better — enable "Automatically delete head branches" in the repo settings so this happens for free.
-5. **Repeat for the next session on a brand new branch off the latest `main`.**
+1. **Run `npm install` first.** The container clones the repo fresh — `node_modules/` does not exist until you install. Without it, `tsc` resolves to the system-global TypeScript and reports thousands of false errors. With it, the build is completely clean.
+2. **Start from a fresh, up-to-date `main`.** Pull before branching.
+3. **Do all the session's work on that one branch.** One branch per logical unit of work.
+4. **Open a PR and merge it into `main`** when work is complete and build is clean.
+5. **Delete the branch once merged.**
+6. **Repeat for the next session on a brand new branch off the latest `main`.**
 
 ### Conflict-resolution discipline
 
-If a merge produces conflicts:
-- Resolve them by hand or with a targeted, reviewed change — never with a broad regex-based script. A flawed automated resolution can silently delete code (e.g. closing braces, whole component definitions) while still looking syntactically plausible in a narrow check.
-- After resolving, run a **broad** verification: `npm run build` and check for *any* new error codes versus a clean baseline, not just a hand-picked subset (e.g. checking only for TS2353/TS2339/TS2345 will miss syntax-level breakage like TS17008, TS1109, TS1381 — exactly the kind of corruption that has broken production before).
-- Prefer a regular merge over a squash merge for any branch that itself contains merge commits — squashing can bake a bad conflict resolution into a single opaque commit, making it much harder to spot in review.
+- Resolve conflicts by hand — never with a broad regex-based script.
+- After resolving, run `npm install && npm run build` and confirm zero errors — not just a grep for a hand-picked subset of codes.
+- Prefer a regular merge over a squash merge for branches that contain merge commits.
 
 ### Concurrent sessions
 
-If more than one session is active at once, keep them on disjoint files/tools where possible. Two sessions editing the same tool file on separate branches will produce the exact kind of merge conflict described above — and the more they overlap, the larger and riskier that conflict becomes.
+Keep concurrent sessions on disjoint files/tools. Two sessions editing the same file will produce merge conflicts.
 
 ---
 
@@ -44,39 +44,31 @@ If more than one session is active at once, keep them on disjoint files/tools wh
 ### 1. Create the tool file
 
 - Copy `src/tools/TeacherTools/ToolShell.tsx` (the canonical template)
-- Save to `src/tools/<Category>/<ToolName>.tsx` or `src/tools/<ToolName>.tsx` for root-level tools
+- Save to `src/tools/<Category>/<ToolName>.tsx`
 - Fill in the tool-specific section only (Types → TOOL_CONFIG → INFO_SECTIONS → generateQuestion → generateUniqueQ)
 - Leave the imports and `export default function App()` unchanged
 
 ### 2. Register in `src/App.tsx`
 
-Add import under the correct category comment:
 ```tsx
 import MyNewTool from './tools/Category/MyNewTool';
-```
-Add route inside `<Routes>`:
-```tsx
+// inside <Routes>:
 <Route path="/my-new-tool" element={<MyNewTool />} />
 ```
 
 ### 3. Register in `src/components/LandingPage.tsx`
 
-Add to the correct category's `tools` array:
 ```ts
 { id: 'my-new-tool', path: '/my-new-tool', name: 'Display Name', description: 'One sentence.', ready: 'v2.3' }
 ```
+
 Add `enabled: false` only if the tool should not be publicly visible yet.
 
-### 4. Build
+### 4. Build and push
 
 ```bash
-npm run build
-```
-Must complete with zero TypeScript errors. The chunk size warning is expected and harmless.
-
-### 5. Commit and push
-
-```bash
+npm install     # required — node_modules/ is not present in a fresh container
+npm run build   # must complete with zero TypeScript errors
 git add src/tools/... src/App.tsx src/components/LandingPage.tsx
 git commit -m "Add <ToolName> tool"
 git push
@@ -86,11 +78,11 @@ git push
 
 ## How to migrate an old tool to v2.3
 
-Old tools (v1.x) embed their own shell — UI components, state management, local type definitions — making them 800–1,300 lines. v2.3 tools use the shared ToolShell and are ~250–350 lines.
+Old tools (v1.x) are 800–1,300 lines with embedded UI. v2.3 tools use the shared ToolShell and are ~250–350 lines.
 
 ### Identifying old tools
 
-Check the landing page `ready` version. Any tool below `v2.0` uses an old shell. The file will have a large self-contained component and no `import { ToolShell } from "../../shared"` line.
+Check the landing page `ready` version. Any tool below `v2.0` uses an old shell. The file will have no `import { ToolShell } from "../../shared"` line.
 
 Tools currently needing migration (v1.x as of this writing):
 - `src/tools/Number/IntegerAddSub.tsx` — v1.4, number line diagram questions
@@ -103,16 +95,16 @@ Tools currently needing migration (v1.x as of this writing):
 
 ### Migration checklist
 
-1. **Replace all imports** — the entire import block becomes the minimal shared import set (see below)
-2. **Delete all local type definitions** — `type Question`, `type ToolSettings`, `type WorkingStep`, etc. are replaced by `AnyQuestion`, `ToolConfig`, etc. from shared
-3. **Keep TOOL_CONFIG content, update its type** — change the local type annotation to `: ToolConfig`
-4. **Keep INFO_SECTIONS content, update its type** — change to `: InfoSection[]`
-5. **Keep all math generation functions** — the question logic is reusable as-is
-6. **Convert question return types** — replace local `Question` with `AnyQuestion`; use `SimpleQuestion` or `WordedQuestion` structure
-7. **Convert working steps** — replace `{ type: 'step', content: '...' }` objects with `mStep()` / `step()` / `tStep()` calls
-8. **Delete all UI code** — remove every React component below the generators (DifficultyToggle, QO popovers, InfoModal, MenuDropdown, the main component, all `useState`/`useEffect`)
-9. **Replace the export** — the entire component becomes `export default function App() { return <ToolShell ... /> }`
-10. **Update landing page version** to `v2.3`
+1. Replace all imports with the minimal shared import set
+2. Delete all local type definitions — use `AnyQuestion`, `ToolConfig`, etc. from shared
+3. Keep TOOL_CONFIG content, annotate as `: ToolConfig`
+4. Keep INFO_SECTIONS content, annotate as `: InfoSection[]`
+5. Keep all math generation functions
+6. Convert question return types — use `SimpleQuestion` or `WordedQuestion` structure
+7. Convert working steps — `mStep()` / `step()` / `tStep()`
+8. Delete all UI code (DifficultyToggle, popovers, InfoModal, MenuDropdown, all `useState`/`useEffect`)
+9. Replace the export with `export default function App() { return <ToolShell ... /> }`
+10. Update landing page version to `v2.3`
 
 ### Old pattern → new pattern
 
@@ -122,23 +114,17 @@ Tools currently needing migration (v1.x as of this writing):
 | `const navigate = useNavigate(); navigate('/')` | `window.location.href = "/"` |
 | `type Question = { display, answer, working, ... }` | `import { type AnyQuestion }` from shared |
 | `type ToolSettings = { ... }` | `import { type ToolConfig }` from shared |
-| `type InfoSection = { ... }` | `import { type InfoSection }` from shared |
-| `{ type: 'step', content: 'Round: 34 → 30' }` | `mStep("Round to 1 s.f.:", "34 \\to 30")` |
-| `{ type: 'step', content: 'Calculate: 4 × 3 = 12' }` | `mStep("Calculate:", "4 \\times 3 = 12")` |
+| `{ type: 'step', content: '...' }` | `mStep(...)` / `step(...)` / `tStep(...)` |
 | Custom `getQuestionUniqueKey` + display-based dedup | Use `q.key` directly in `generateUniqueQ` |
 | `export default function ToolNameTool()` with full JSX | `export default function App() { return <ToolShell ... /> }` |
 | `displayType: 'fraction'` with custom HTML renderer | `displayLatex: "\\dfrac{num}{den}"` on SimpleQuestion |
 | `declare global { interface Window { katex: any } }` | `const w = () => window as any` |
 
-### What the shared ToolShell provides (never re-implement these)
-
-Whiteboard / Worked Example / Worksheet modes · difficulty toggle (with coming-soon level support) · QO popovers (dropdown, variables, multiSelect, differentiated) · tool tab buttons (auto-hidden when only one sub-tool) · font size controls · PDF print (with SVG override hook) · colour scheme picker · info modal · home button
-
 ---
 
-## Shared library (`src/shared/`)
+## Shared library (`src/shared/`) — complete API reference
 
-All new tools import from `src/shared/` — never copy-paste boilerplate from old tools.
+All tools import exclusively from `"../../shared"`. Never read the shared source files to discover the API — it is fully documented here.
 
 ### Minimal import set for a new tool
 
@@ -150,91 +136,290 @@ import {
 } from "../../shared";
 ```
 
-For diagram/SVG tools also import `PrintMode`:
+For tools using `reformatQuestion`, `stepRenderer`, or QO snapshots, also import:
 ```ts
-import {
-  ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type PrintMode,
-  tStep,
-} from "../../shared";
+import { type WorkingStep, type QOSnapshot } from "../../shared";
 ```
 
-### Helper reference
+For diagram/SVG tools also import:
+```ts
+import { type PrintMode } from "../../shared";
+```
 
-| Helper | Purpose |
-|--------|---------|
-| `randInt(min, max)` | Random integer, inclusive both ends |
-| `pick(arr)` | Random element from array |
-| `step(latex)` | Pure KaTeX working step — centred, use for any line with maths |
-| `mStep(label, latex, unit?)` | Prose label + KaTeX result, label left-aligned |
-| `tStep(text)` | Plain text step — only when zero numbers/operators in the sentence |
-| `fracStr(n, d)` | `"$\frac{n}{d}$"` — fraction for InlineMath lines |
-| `mStr(x)` | `"$x$"` — wraps a number/expression for InlineMath lines |
-| `pickActive(values, opts)` | Picks a random active value from a multiSelect state |
-| `fmt(n, dp?)` | Number to string, trailing zeros stripped, default 2dp |
+### All available exports from `src/shared/`
 
-### Working step rendering — how each type appears on screen
+**Types** (use `type` keyword in imports):
+`DifficultyLevel` · `PrintMode` · `AnyQuestion` · `SimpleQuestion` · `WordedQuestion` · `WorkingStep` · `ToolConfig` · `ToolEntry` · `ToolDropdown` · `ToolMultiSelect` · `ToolMultiSelectConfig` · `ToolVariable` · `DifficultyLevelSettings` · `InfoSection` · `InfoItem` · `QOSnapshot` · `ToolShellDefaults` · `ToolShellProps`
 
-| Helper call | Renders as |
-|-------------|------------|
-| `step("16 \\div 4 = 4")` | Centred KaTeX — no label. Use for pure maths lines. |
-| `mStep("Divide by 4:", "16 \\div 4 = 4")` | Left-aligned prose label on one line, centred KaTeX below it. Use when the step needs a word description. |
-| `mStep("Answer:", "12", "kg")` | Same as above, with plain-text unit appended after the KaTeX. |
-| `tStep("Simplify the fraction.")` | Plain text only — no KaTeX at all. Use only when the sentence contains zero numbers or operators. |
+**Components / hooks**:
+`ToolShell` · `MathRenderer` · `InlineMath` · `QuestionDisplay` · `AnswerDisplay` · `DifficultyToggle` · `StandardQOPopover` · `DiffQOPopover` · `InlineQOPanel` · `InfoModal` · `MenuDropdown` · `PrintSplitButton`
 
-Pick `mStep` by default for worked examples. Use `step` when the label would be redundant (e.g. a chain of equals steps). Use `tStep` only for genuinely numberless prose (rare).
+**Helpers**:
+`randInt` · `pick` · `fracStr` · `mStr` · `pickActive` · `normalizeMultiSelect` · `step` · `tStep` · `mStep` · `fmt` · `ansEq`
+
+**Utilities**:
+`loadKaTeX` · `handlePrint` · `LV_COLORS` · `LV_LABELS` · `LV_HEADER_COLORS` · `getQuestionBg` · `getStepBg`
 
 ---
 
-## `ToolShellProps` — required props + optional extensions
+## Key types — full definitions
 
-```tsx
-<ToolShell
-  config={TOOL_CONFIG}
-  infoSections={INFO_SECTIONS}
-  generateQuestion={generateQuestion}
-  generateUniqueQ={generateUniqueQ}
-  defaults={{ ... }}                        // optional — see below
-  questionRenderer={questionRenderer}       // optional — for diagram tools
-  answerRenderer={answerRenderer}           // optional — for diagram tools
-  customPrintHandler={customPrintHandler}   // optional — for SVG worksheet printing
-/>
+### `WorkingStep`
+```ts
+interface WorkingStep {
+  type: string;       // "step" | "mStep" | "tStep"
+  latex: string;      // KaTeX string — always present
+  plain: string;      // plain-text fallback
+  label?: string;     // mStep only — left-aligned prose label
+  unit?: string;      // mStep only — plain-text unit appended after KaTeX
+  extra?: unknown;    // arbitrary payload for tool-specific use
+}
+```
+Always create `WorkingStep` objects via the helpers (`step`, `mStep`, `tStep`) — never construct raw objects.
+
+### `QOSnapshot`
+```ts
+interface QOSnapshot {
+  level: DifficultyLevel;                 // "level1" | "level2" | "level3"
+  variables: Record<string, boolean>;     // variable key → current on/off value
+  dropdownValue: string;                  // current dropdown selection
+  multiSelectValues: Record<string, boolean>; // option value → active
+}
+```
+Passed to renderer props and `reformatQuestion` so they can read the live QO state without separate prop-drilling.
+
+### `SimpleQuestion`
+```ts
+{
+  kind: "simple";
+  display: string;          // plain-text fallback
+  displayLatex?: string;    // KaTeX — use for all maths content
+  answer: string;           // plain-text fallback
+  answerLatex?: string;     // KaTeX answer
+  answerSuffix?: string;    // plain-text unit after answerLatex (never put units in KaTeX)
+  working: WorkingStep[];
+  key: string;
+  difficulty: string;
+  _qo?: unknown;            // reserved — do not use
+}
+```
+
+### `WordedQuestion`
+```ts
+{
+  kind: "worded";
+  lines: string[];          // each line can contain $...$ for InlineMath
+  answer: string;
+  answerLatex?: string;
+  answerSuffix?: string;
+  working: WorkingStep[];
+  key: string;
+  difficulty: string;
+  _qo?: unknown;
+}
+```
+
+### `AnyQuestion`
+```ts
+type AnyQuestion = SimpleQuestion | WordedQuestion;
+```
+
+### Key rules for questions
+- Keys must be unique within a worksheet — include all parameters that vary the question
+- Always append a random `id` (`Math.floor(Math.random() * 1_000_000)`) to prevent false duplicates
+- Store tool-specific data (diagram, raw params) in underscore fields: `_diagram`, `_rawValues`, etc. Cast through `unknown`: `} as unknown as AnyQuestion`
+- Retrieve in renderers: `const d = (q as any)._rawValues as MyType | undefined`
+- `answerSuffix` is always plain text — never put units inside KaTeX
+
+---
+
+## `ToolShellProps` — complete interface
+
+`ToolShellProps` is defined and exported from `src/shared/ToolShell.tsx`. Do not read that file — this section is the authoritative reference.
+
+```ts
+export interface ToolShellProps {
+  // ── Required ────────────────────────────────────────────────────────────────
+  config: ToolConfig;
+  infoSections: InfoSection[];
+
+  generateQuestion: (
+    tool: string,
+    level: DifficultyLevel,
+    variables: Record<string, boolean>,
+    dropdownValue: string,
+    multiSelectValues?: Record<string, boolean>,
+  ) => AnyQuestion;
+
+  generateUniqueQ: (
+    tool: string,
+    level: DifficultyLevel,
+    variables: Record<string, boolean>,
+    dropdownValue: string,
+    usedKeys: Set<string>,
+    multiSelectValues?: Record<string, boolean>,
+  ) => AnyQuestion;
+
+  // ── Optional — layout & behaviour ───────────────────────────────────────────
+  defaults?: ToolShellDefaults;
+
+  // ── Optional — custom renderers ──────────────────────────────────────────────
+  /** Replaces QuestionDisplay in all modes.
+   *  compact: true=worksheet cell, undefined=regular whiteboard, false=worked-example/fullscreen.
+   *  idx: worksheet cell index (pass to SVG as data-q-index).
+   *  qo: live QO state — use for display-time decisions. */
+  questionRenderer?: (
+    q: AnyQuestion,
+    showAnswer: boolean,
+    colorScheme: string,
+    compact?: boolean,
+    idx?: number,
+    qo?: QOSnapshot,
+  ) => JSX.Element | null;
+
+  /** Replaces AnswerDisplay. Shown when answer is revealed. */
+  answerRenderer?: (
+    q: AnyQuestion,
+    colorScheme: string,
+    qo?: QOSnapshot,
+  ) => JSX.Element | null;
+
+  /** Replaces default step rendering in the worked-example step list. */
+  stepRenderer?: (
+    step: WorkingStep,
+    colorScheme: string,
+    qo?: QOSnapshot,
+  ) => JSX.Element | null;
+
+  /** Called when a QO option changes, before falling back to full regeneration.
+   *  Return a reformatted copy of the question (same maths, different display),
+   *  or null to let ToolShell generate a fresh question instead.
+   *  Use this for instant display-mode switches (e.g. decimal ↔ fraction). */
+  reformatQuestion?: (
+    q: AnyQuestion,
+    qo: QOSnapshot,
+  ) => AnyQuestion | null;
+
+  /** Custom print handler for diagram/SVG tools.
+   *  Replaces the default handlePrint for worksheet PDF export. */
+  customPrintHandler?: (
+    questions: AnyQuestion[],
+    printMode: PrintMode,
+    worksheetEl: HTMLElement | null,
+  ) => void;
+}
 ```
 
 ### `defaults` — per-tool overrides
 
 ```ts
 defaults?: {
-  displayFontSize?: number;           // starting font size index 0–5, default 2 (text-3xl)
-  worksheetFontSize?: number;         // starting font size index 0–5, default 1 (text-xl)
-  numQuestions?: number;              // starting question count, default 15
-  fixedQuestions?: boolean;           // hides the questions input entirely
-  numColumns?: number;                // starting column count, default 3
-  fixedColumns?: boolean;             // hides the columns input entirely
-  maxColumns?: number;                // caps the columns input max (e.g. 3 = no 4-col option)
+  displayFontSize?: number;             // starting font size index 0–5, default 2 (text-3xl)
+  worksheetFontSize?: number;           // starting font size index 0–5, default 1 (text-xl)
+  numQuestions?: number;                // starting question count, default 15
+  fixedQuestions?: boolean;             // hides the questions input entirely
+  numColumns?: number;                  // starting column count, default 3
+  fixedColumns?: boolean;               // hides the columns input entirely
+  maxColumns?: number;                  // caps the columns input max (e.g. 3 = no 4-col option)
   comingSoonLevels?: DifficultyLevel[]; // levels shown but disabled — "Coming soon" on hover
 }
 ```
 
 Font size indices: `0=text-lg  1=text-xl  2=text-3xl  3=text-4xl  4=text-5xl  5=text-7xl`
 
-Use `fixedQuestions` when a tool always generates a specific count (e.g. exactly 12 questions for a 3×4 grid). Use `maxColumns` when 4 columns is never appropriate for the question type. Use `fixedColumns` when the column count must never change at all.
+### What ToolShell provides automatically (never re-implement)
 
-### `comingSoonLevels` — partially-developed tools
+Whiteboard / Worked Example / Worksheet modes · difficulty toggle · QO popovers (dropdown, variables, multiSelect, differentiated) · tool tab buttons (auto-hidden when only one sub-tool) · font size controls · PDF print · colour scheme picker · info modal · home button
+
+### Single sub-tool — no tab buttons needed
+
+If `config.tools` has exactly one key, the tool tab buttons are **automatically hidden**. Nothing special needed.
+
+### `comingSoonLevels`
 
 ```ts
 defaults={{ comingSoonLevels: ["level3"] }}
 ```
 
-- The listed level buttons are rendered but greyed out and unclickable
-- Hovering shows a "Coming soon" tooltip
-- The Differentiated button in worksheet mode is automatically greyed out when any level is coming soon (since differentiated uses all three levels)
-- The L1/L2/L3 level-selector buttons in advanced worksheet mode also respect coming soon
-- The tool stays functional on the non-coming-soon levels
+Listed levels are greyed out and unclickable with a "Coming soon" tooltip. The Differentiated button and level selectors in advanced worksheet mode also respect this.
 
-### Single sub-tool — no tab buttons needed
+---
 
-If `config.tools` has exactly one key, the tool tab buttons and their surrounding divider are **automatically hidden**. Nothing special needs to be done in the tool file.
+## QO-driven behaviour — how ToolShell reacts to option changes
+
+ToolShell tracks a `qoFingerprint` computed from the current dropdown value, variable values, and multiSelect values. Whenever the fingerprint changes (i.e. any QO option changes), the following happens **in whiteboard and worked-example modes only** (worksheet mode is unaffected):
+
+1. If `reformatQuestion` is provided, call it with the current question and new QO snapshot.
+   - If it returns a non-null question → swap in the reformatted question without regenerating. Use this for pure display changes (e.g. decimal ↔ fraction) where the underlying maths is unchanged.
+   - If it returns `null` → fall through to step 2.
+2. Call `generateQuestion` to generate a fresh question.
+
+Changing the difficulty level or active sub-tool always triggers a fresh `generateQuestion` (they are separate deps).
+
+### `reformatQuestion` — implementation pattern
+
+Store raw parameters on the question at generation time:
+
+```ts
+return {
+  kind: "simple",
+  // ...
+  _rawValues: rv,    // store raw params so reformatQuestion can recompute display
+  key: `...`,
+  difficulty: level,
+} as unknown as AnyQuestion;
+```
+
+Provide `reformatQuestion` alongside the generators:
+
+```ts
+const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null => {
+  const rv = (q as any)._rawValues as RawValues | undefined;
+  if (!rv) return null;
+  const built = buildDisplay(rv, qo.dropdownValue === "fraction");
+  return {
+    ...q,
+    displayLatex: built.displayLatex,
+    answerLatex: built.answerLatex,
+    working: built.working,
+  } as unknown as AnyQuestion;
+};
+```
+
+Pass it to `<ToolShell reformatQuestion={reformatQuestion} />`.
+
+**Reference implementation:** `src/tools/Algebra/CompletingTheSquare.tsx`
+
+---
+
+## Helper reference
+
+| Helper | Signature | Purpose |
+|--------|-----------|---------|
+| `randInt(min, max)` | `(min: number, max: number) => number` | Random integer, inclusive both ends |
+| `pick(arr)` | `<T>(arr: T[]) => T` | Random element from array |
+| `step(latex, plain?)` | `(latex: string, plain?: string) => WorkingStep` | Pure KaTeX working step |
+| `mStep(label, latex, unit?)` | `(label: string, latex: string, unit?: string) => WorkingStep` | Prose label + KaTeX |
+| `tStep(text)` | `(text: string) => WorkingStep` | Plain-text only step |
+| `fracStr(n, d)` | `(n: number \| string, d: number \| string) => string` | `"$\\frac{n}{d}$"` for InlineMath |
+| `mStr(x)` | `(x: number \| string) => string` | `"$x$"` — wraps value for InlineMath |
+| `pickActive(values, opts)` | `(values: Record<string, boolean>, options: {value: string}[]) => string` | Random active multiSelect value |
+| `fmt(n, dp?)` | `(n: number, dp?: number) => string` | Number → string, trailing zeros stripped, default 2dp |
+| `ansEq(answer)` | `(answer: string) => string` | Prepends `"= "` unless answer already contains `=` |
+| `normalizeMultiSelect(ms)` | `<T>(ms?: T \| T[] \| null) => T[]` | Normalises single/array multiSelect config |
+
+### Working step rendering — how each type appears
+
+| Call | Renders as |
+|------|-----------|
+| `step("16 \\div 4 = 4")` | Centred KaTeX — no label |
+| `mStep("Divide by 4:", "16 \\div 4 = 4")` | Left-aligned prose label, centred KaTeX below |
+| `mStep("Answer:", "12", "kg")` | Same as above, plain-text unit after KaTeX |
+| `tStep("Simplify the fraction.")` | Plain text only — zero KaTeX |
+
+**Pick `mStep` by default.** Use `step` when a label would be redundant (e.g. a chain of equals steps). Use `tStep` only for genuinely numberless prose (rare).
+
+**Never use `\text{}` inside `step()` or `mStep()`.** Never put prose words inside `$...$`.
 
 ---
 
@@ -247,11 +432,11 @@ const TOOL_CONFIG: ToolConfig = {
 
     subtool1: {
       name: "Button label",
-      instruction: "Solve:",        // optional — shown above question in all modes
+      instruction: "Solve:",          // optional — shown above question in all modes
 
-      variables: [],                // toggle switches — prefer multiSelect instead
-      dropdown: null,               // single-select segmented buttons, or null
-      multiSelect: {                // default QO control — reach for this first
+      variables: [],                  // toggle switches — prefer multiSelect instead
+      dropdown: null,                 // single-select segmented buttons, or null
+      multiSelect: {                  // default QO control — reach for this first
         key: "questionPool",
         label: "Question Types",
         options: [
@@ -260,32 +445,32 @@ const TOOL_CONFIG: ToolConfig = {
           { value: "c", label: "Type C", defaultActive: false },
         ],
       },
-      difficultySettings: null,     // null = same options all levels
+      difficultySettings: null,       // null = same options at all levels
     },
 
   },
 };
 ```
 
-### QO control types — when to use each
+### QO control types
 
 | Control | When to use |
 |---------|------------|
-| `multiSelect` | **Default choice.** Options describe what's in the question pool. Multiple can be active. At least one must stay active. Use `pickActive(values, options)` in the generator to pick randomly from active options. |
-| `dropdown` | A single setting that changes the question type (e.g. method choice). Mutually exclusive. |
-| `variables` | Binary toggles for independent on/off options (e.g. "Include negatives"). Use sparingly — prefer multiSelect. |
+| `multiSelect` | **Default.** Pool of question types, multiple can be active. Use `pickActive(values, options)` in the generator. |
+| `dropdown` | A single mutually-exclusive setting (e.g. method choice, display format). |
+| `variables` | Independent on/off toggles. Use sparingly — prefer `multiSelect`. |
 
-### `difficultySettings` — per-level overrides
+### `difficultySettings` — per-level QO overrides
 
 ```ts
 difficultySettings: {
-  level1: { dropdown: { ...level1Version }, variables: [] },
-  level2: { dropdown: { ...level2Version }, variables: [{ key: "showHint", label: "Show hint", defaultValue: false }] },
-  level3: { dropdown: { ...level3Version }, variables: [...] },
+  level1: { variables: [], dropdown: null },
+  level2: { variables: [INTEGER_C_VAR], dropdown: DISPLAY_DD },
+  level3: { variables: [INTEGER_C_VAR, NEG_COEFF_VAR], dropdown: DISPLAY_DD },
 }
 ```
 
-Each level can independently override `dropdown`, `variables`, and/or `multiSelect`. Omitting a key at a level inherits the tool-level default.
+Each level independently overrides `dropdown`, `variables`, and/or `multiSelect`. Omitted keys inherit the tool-level default.
 
 ---
 
@@ -297,9 +482,9 @@ Each level can independently override `dropdown`, `variables`, and/or `multiSele
   kind: "simple",
   display: "3 + 4",           // plain-text fallback
   displayLatex: "3 + 4",      // KaTeX expression — use for all maths content
-  answer: "7",                // plain-text fallback
-  answerLatex: "7",           // KaTeX expression for the answer
-  answerSuffix: "kg",         // optional plain-text unit after answerLatex
+  answer: "7",
+  answerLatex: "7",
+  answerSuffix: "kg",         // optional plain-text unit
   working: [ step("3 + 4 = 7") ],
   key: `tool-level-a-b-${id}`,
   difficulty: level,
@@ -328,22 +513,15 @@ Each level can independently override `dropdown`, `variables`, and/or `multiSele
 }
 ```
 
-### Key rules
-- Keys must be unique within a worksheet — include all parameters that vary the question
-- Always append a random `id` (`Math.floor(Math.random() * 1_000_000)`) to prevent false duplicates
-- `answerSuffix` is always plain text — never put units inside KaTeX
-
 ---
 
 ## Diagram tools — custom renderers and SVG printing
 
-For tools whose questions are diagrams (SVG-based) rather than text/KaTeX — e.g. angle geometry, number lines — use the three optional ToolShell props together.
+For SVG-based tools (angle geometry, number lines, etc.).
 
-See `src/tools/Geometry/AnglesInParallelLines.tsx` and `src/tools/Geometry/BasicAngleFacts.tsx` as reference implementations.
+**Reference implementations:** `src/tools/Geometry/AnglesInParallelLines.tsx` and `src/tools/Geometry/BasicAngleFacts.tsx`
 
-### Storing diagram data on the question object
-
-Store diagram data in the `_diagram` field, cast through `unknown`:
+### Storing diagram data
 
 ```ts
 return {
@@ -353,41 +531,21 @@ return {
   working: [...],
   key: `tool-level-${id}`,
   difficulty: level,
-  _diagram: diagramData,        // typed locally, cast to unknown
+  _diagram: diagramData,
 } as unknown as AnyQuestion;
+// Retrieve: const d = (q as any)._diagram as DiagramData | undefined;
 ```
 
-Retrieve it in renderers:
-```ts
-const d = (q as any)._diagram as DiagramData | undefined;
-```
-
-### `questionRenderer`
-
-Replaces `QuestionDisplay` in all three modes. Signature:
-
-```ts
-questionRenderer?: (
-  q: AnyQuestion,
-  showAnswer: boolean,
-  colorScheme: string,
-  compact?: boolean,   // see context table below
-  idx?: number,        // worksheet cell index — pass to SVG as data-q-index
-) => JSX.Element | null
-```
-
-The `compact` parameter signals which rendering context the question is in — use it to set diagram size:
+### `questionRenderer` — compact context table
 
 | `compact` value | Context | Typical maxWidth |
 |---|---|---|
 | `true` | Worksheet cell | ~180px |
-| `undefined` | Regular whiteboard box (fixed 480px panel) | ~340px |
-| `false` | Worked example or fullscreen whiteboard | ~500px (fills available width) |
-
-Always wrap the diagram in a `maxWidth` container so it never overflows the whiteboard panel:
+| `undefined` | Regular whiteboard panel (480px fixed) | ~340px |
+| `false` | Worked example or fullscreen whiteboard | ~500px |
 
 ```tsx
-function questionRenderer(q, showAnswer, _colorScheme, compact, idx) {
+const questionRenderer = (q, showAnswer, _cs, compact, idx, _qo) => {
   const d = (q as any)._diagram as DiagramData | undefined;
   if (!d) return null;
   const maxW = compact === true ? 180 : compact === undefined ? 340 : 500;
@@ -396,21 +554,10 @@ function questionRenderer(q, showAnswer, _colorScheme, compact, idx) {
       <MySVGDiagram d={d} showAnswer={showAnswer} qIndex={idx} />
     </div>
   );
-}
+};
 ```
 
-### `answerRenderer`
-
-Replaces `AnswerDisplay`. Shown when the answer is revealed in whiteboard and worked example modes:
-
-```ts
-answerRenderer?: (q: AnyQuestion, colorScheme: string) => JSX.Element | null
-```
-
-### SVG diagram requirements
-
-- Use `viewBox="0 0 W H"`, `width="100%"`, `height="auto"` — never a fixed pixel height, which causes overflow in the whiteboard panel
-- When `qIndex` is provided, add `data-q-index={qIndex}` to the `<svg>` element — this is how the print handler locates the SVG in the DOM
+### SVG element requirements
 
 ```tsx
 <svg
@@ -421,19 +568,10 @@ answerRenderer?: (q: AnyQuestion, colorScheme: string) => JSX.Element | null
 >
 ```
 
-### `customPrintHandler` — SVG worksheet printing
+- Never use a fixed pixel height — causes overflow in the whiteboard panel
+- `data-q-index` is required for the print handler to locate the SVG in the DOM
 
-The default `handlePrint` in `src/shared/print.ts` renders questions as HTML/KaTeX text. For SVG tools it produces a blank output. Supply a `customPrintHandler` instead:
-
-```ts
-customPrintHandler?: (
-  questions: AnyQuestion[],
-  printMode: PrintMode,
-  worksheetEl: HTMLElement | null,  // the worksheet container DOM node
-) => void
-```
-
-ToolShell passes `worksheetEl` as the ref to the div wrapping the worksheet grid. At print time, clone the live SVGs from it:
+### `customPrintHandler`
 
 ```ts
 function customPrintHandler(questions, printMode, container) {
@@ -451,9 +589,9 @@ function customPrintHandler(questions, printMode, container) {
 }
 ```
 
-**Fixed layout for SVG worksheets:** use 3 columns × 5 rows = 15 questions per page (matches `BasicAngleFacts`). This keeps cell sizes consistent so all diagrams render at the same scale. Set `fixedColumns: true, numColumns: 3` in defaults.
+**Fixed layout for SVG worksheets:** 3 columns × 5 rows = 15 questions per page. Set `fixedColumns: true, numColumns: 3` in defaults.
 
-The print cell CSS pattern:
+Print cell CSS:
 ```css
 .cell { display:flex; flex-direction:column; flex:1; min-height:0; position:relative; }
 .cell-diag { width:100%; flex:1; min-height:0; display:flex; align-items:center; justify-content:center; }
@@ -462,50 +600,59 @@ The print cell CSS pattern:
 
 ---
 
-## KaTeX rendering — the rules (check every question)
+## KaTeX rendering — the rules
 
 | Content | Correct approach |
 |---------|----------------|
 | Number or operator in prose | `mStr(n)` — e.g. `"A bag weighs " + mStr(16) + " kg."` |
-| Fraction in prose | `fracStr(n, d)` — e.g. `fracStr(3, 4) + " of the bag"` |
-| Ratio in prose | `mStr("3:4")` — no spaces around colon; `3 : 4` adds KaTeX operator spacing |
+| Fraction in prose | `fracStr(n, d)` |
+| Ratio in prose | `mStr("3:4")` — no spaces around colon |
 | Pure maths working step | `step("16 \\div 4 = 4")` |
 | Prose label + maths result | `mStep("Divide:", "16 \\div 4 = 4")` |
-| Genuinely numberless prose | `tStep("Simplify the fraction.")` — only if zero numbers/operators |
+| Genuinely numberless prose | `tStep("Simplify the fraction.")` |
 | Question display | `displayLatex: "..."` on SimpleQuestion |
-| `\frac` vs plain expression | `fracStr` / `\frac` containers use `1em`; all others use `0.826em` |
-
-**Never use `\text{}` inside `step()`.** Never put prose words inside `$...$`.
 
 ### KaTeX gotchas
-- `verticalAlign` must be `"baseline"` — `"middle"` drops spans below the text baseline
+
+- `verticalAlign` must be `"baseline"` — `"middle"` drops spans below the baseline
 - `displayMode` is always `false` — wrap in a `<div>` for block display
-- Plain-text answers: if a tool's answers are plain strings (no `answerLatex`), never wrap them in `katexSpan()` in the print handler — characters like `£`, `<`, `>` crash KaTeX silently and produce a blank print window
-- In print CSS: set `font-size` on `.katex-render .katex` (inner span), not on `.katex-render` — setting it on the wrapper causes KaTeX to compound the scaling
-- **Thousands separators**: a plain `,` inside KaTeX math mode adds a thin space — `2,400` renders as "2, 400". Use `{,}` instead: `2{,}400` renders correctly. When formatting large numbers for use inside `step()` or `mStep()` LaTeX strings, replace commas: `const fmtK = (n: number) => formatNumber(n).replace(/,/g, "{,}")`
+- Plain-text answers: never wrap in `katexSpan()` in the print handler — `£`, `<`, `>` crash KaTeX silently
+- In print CSS: set `font-size` on `.katex-render .katex` (inner span), not on `.katex-render` — the wrapper causes KaTeX to compound the scaling
+- **Thousands separators**: plain `,` inside KaTeX math mode adds a thin space — `2,400` renders as "2, 400". Use `{,}`: `2{,}400`. Pattern: `const fmtK = (n: number) => formatNumber(n).replace(/,/g, "{,}")`
+- **`\text{}` in steps**: never use `\text{}` inside `step()` or `mStep()` — use `tStep()` for prose
 
 ---
 
-## TypeScript / build rules (check before committing)
+## TypeScript / build rules
 
 - `generateQuestion` and `generateUniqueQ` must be typed `(tool: string, ...)` — cast internally: `const t = tool as ToolType;`
-- Never use `useNavigate` — home navigation uses `window.location.href = "/"`
+- Never use `useNavigate` — use `window.location.href = "/"`
 - Never import `react-router-dom` inside a tool file
 - Never add `declare global` — use `const w = () => window as any` for untyped globals
-- Unused shared helpers must be suppressed: `void (tStep as unknown); void (fmt as unknown); void (pickActive as unknown)` — add only for helpers actually unused in the specific tool
-- `_variables` and `_dropdownValue` use `_` prefix in the stub generator to signal intentional non-use
+- Unused shared helpers: suppress with `void (tStep as unknown)` etc. — only for helpers actually imported but unused
 - `currentQuestion` initialised via `useState` initialiser, never `null`
-- If `AnyQuestion` for a tool does not include `"frac"` kind, remove any `q.kind === "frac"` branches — they cause TS2367
-- The pre-existing environment errors (TS2307 for react/lucide-react, TS7026 JSX implicit any) appear in `npm run build` output but are harmless — Vercel has the packages installed. A build that introduces *new* errors of types TS2353, TS2339, TS2345, etc. is broken and must be fixed.
+- If a tool's questions never include `"frac"` kind, remove any `q.kind === "frac"` branches — they cause TS2367
+- `ToolShellProps` renderer props use `JSX.Element | null` return types in their signatures — TypeScript accepts this fine once `@types/react` is installed via `npm install`
+
+### Build correctness — zero errors expected
+
+With `npm install` run, `npm run build` should produce **zero TypeScript errors**. Any error in the output is a real problem to fix.
+
+If you see a flood of TS7026 / TS2307 / TS2503 / TS2875 errors, `node_modules/` is missing — run `npm install` first.
+
+```bash
+npm install && npm run build 2>&1 | grep "error TS"
+# should return nothing
+```
 
 ---
 
-## PDF print — edge cases to check
+## PDF print — edge cases
 
-- `totalPages`, `printMode`, and any other `var` referenced inside a function declaration must be declared in the injected script's **outer scope** (above `buildPage` and the `.map()` calls) — declaring them inside `buildPage` causes "not defined" at runtime
-- Params that appear only as `${...}` in the HTML string are invisible to TypeScript — use distinct names (e.g. `pMode` not `printMode`) and add `void (param as unknown)` suppressions immediately before the `html` template literal
-- If a tool has only worded questions, remove the `"simple"` and `"frac"` branches from `questionToHtml` — TS2367 at build time otherwise
-- For SVG-based tools, use `customPrintHandler` (see Diagram tools section above) — the shared `handlePrint` has no knowledge of SVGs
+- `totalPages`, `printMode`, and any `var` referenced inside a function declaration must be declared in the injected script's **outer scope** — declaring them inside `buildPage` causes "not defined" at runtime
+- Params appearing only as `${...}` in the HTML string are invisible to TypeScript — use distinct names (e.g. `pMode` not `printMode`) and add `void (param as unknown)` suppressions before the template literal
+- If a tool has only worded questions, remove `"simple"` and `"frac"` branches from `questionToHtml` — TS2367 otherwise
+- For SVG tools use `customPrintHandler` — the shared `handlePrint` has no SVG support
 
 ---
 
@@ -524,24 +671,33 @@ The print cell CSS pattern:
 
 ---
 
-## What to ask the user for (new tool spec)
+## Reference implementations — which file to look at
 
-Request these — or infer from context — before writing a tool:
+| Pattern | Reference file |
+|---------|---------------|
+| Standard v2.3 tool (simple questions) | `src/tools/Algebra/CompletingTheSquare.tsx` |
+| Standard v2.3 tool (worded questions) | `src/tools/Proportion/SimplifyingRatios.tsx` *(check if migrated)* |
+| Diagram/SVG tool with custom print | `src/tools/Geometry/BasicAngleFacts.tsx` |
+| Diagram/SVG tool | `src/tools/Geometry/AnglesInParallelLines.tsx` |
+| `reformatQuestion` (instant display reformat) | `src/tools/Algebra/CompletingTheSquare.tsx` |
+| Multi-group `multiSelect` | search for `ToolMultiSelect[]` in `src/tools/` |
+| `difficultySettings` per-level QO | `src/tools/Algebra/CompletingTheSquare.tsx` |
+
+---
+
+## What to ask the user for (new tool spec)
 
 1. **Tool name** — display name, e.g. "Multiplying Fractions"
 2. **URL path** — e.g. `/multiplying-fractions`
 3. **Category** — which section on the landing page
 4. **Description** — one sentence for the landing page card
-5. **Sub-tools** — names of the tab buttons (1–5). If there is only one sub-tool, tab buttons are hidden automatically — no special action needed.
+5. **Sub-tools** — names of the tab buttons (1–5). One sub-tool → tabs hidden automatically.
 6. **For each sub-tool:**
-   - Question type: simple (single expression), worded (multi-line context), fraction, or diagram/SVG
-   - Level 1 — what makes it easiest
-   - Level 2 — what adds difficulty
-   - Level 3 — what makes it hardest (or "coming soon" if not yet designed)
-   - QO options: any dropdowns, toggles, or multiSelect pools
+   - Question type: simple, worded, or diagram/SVG
+   - Level 1 / 2 / 3 — what changes at each level (or "coming soon")
+   - QO options: dropdowns, variables, multiSelect
    - `instruction`? e.g. "Simplify:", "Solve:", "Find:"
-
 7. **Worked example steps** — how the solution is explained at each level
-8. **Defaults** — any non-standard font size, question count, column constraints, or coming-soon levels
+8. **Defaults** — non-standard font size, question count, column constraints, coming-soon levels
 
 Claude drafts `INFO_SECTIONS` from the above — the user does not need to write it.
