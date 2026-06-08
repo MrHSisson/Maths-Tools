@@ -112,8 +112,12 @@ const RULES = [
     variants: [
       { inter1:"p1", quad1:"br", inter2:"p1", quad2:"bl" },
       { inter1:"p1", quad1:"tr", inter2:"p1", quad2:"tl" },
+      { inter1:"p1", quad1:"tl", inter2:"p1", quad2:"bl" },
+      { inter1:"p1", quad1:"tr", inter2:"p1", quad2:"br" },
       { inter1:"p2", quad1:"br", inter2:"p2", quad2:"bl" },
       { inter1:"p2", quad1:"tr", inter2:"p2", quad2:"tl" },
+      { inter1:"p2", quad1:"tl", inter2:"p2", quad2:"bl" },
+      { inter1:"p2", quad1:"tr", inter2:"p2", quad2:"br" },
     ],
   },
   {
