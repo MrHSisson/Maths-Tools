@@ -4,7 +4,8 @@
 // To create a new tool from this template:
 //   1. Copy this file to src/tools/<Category>/<ToolName>.tsx
 //   2. Replace ToolType, TOOL_CONFIG, INFO_SECTIONS, and generateQuestion
-//   3. Register the route in src/App.tsx and the card in src/components/LandingPage.tsx
+//   3. Add one entry to src/registry.ts — the route and landing-page card
+//      are generated from it automatically
 //
 // Everything BELOW the tool-specific section is provided by src/shared/ToolShell.tsx
 // and requires no modification. Shell improvements flow to all tools automatically.

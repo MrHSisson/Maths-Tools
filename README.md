@@ -31,7 +31,7 @@ Deployed at: [maths-tools.vercel.app](https://maths-tools.vercel.app)
 │       └── ci.yml              # CI pipeline — type-checks and builds on every push to main
 ├── src/
 │   ├── components/
-│   │   └── LandingPage.tsx     # Home page — category list, tool cards, tool counter
+│   │   └── LandingPage.tsx     # Home page — renders categories/cards from the registry
 │   ├── shared/                 # Shared shell used by all v2.3+ tools
 │   │   ├── ToolShell.tsx       # Main shell component (modes, nav, QO controls, print)
 │   │   ├── print.ts            # PDF/print handler
@@ -88,7 +88,8 @@ Deployed at: [maths-tools.vercel.app](https://maths-tools.vercel.app)
 │   │       ├── p-value.tsx
 │   │       ├── ToolShell.tsx   # Canonical template for new tools
 │   │       └── Visualiser.tsx
-│   ├── App.tsx                 # Route definitions
+│   ├── registry.ts             # Single source of truth — every tool's path, card data, lazy import
+│   ├── App.tsx                 # Routes generated from the registry (lazy-loaded chunks)
 │   ├── main.tsx                # React entry point
 │   └── index.css               # Global styles
 ├── CLAUDE.md                   # Instructions for Claude Code (AI development)
@@ -145,10 +146,9 @@ Worksheets support three layouts:
 
 1. Copy `src/tools/TeacherTools/ToolShell.tsx` as a template
 2. Save to `src/tools/<Category>/<ToolName>.tsx`
-3. Add import + route to `src/App.tsx`
-4. Add entry to the correct category in `src/components/LandingPage.tsx`
-5. Run `npm run build` — must pass with zero TypeScript errors
-6. Commit and push
+3. Add one entry to the correct category in `src/registry.ts` — the route and landing-page card are generated from it
+4. Run `npm run build` — must pass with zero TypeScript errors
+5. Commit and push
 
 Full instructions, helper API reference, and gotchas are in `CLAUDE.md`.
 

@@ -1,22 +1,16 @@
 import { useNavigate } from 'react-router-dom';
 import { Calculator } from 'lucide-react';
+import { CATEGORIES } from '../registry';
 
 // ==========================================
 // DEVELOPER SETTINGS
 // ==========================================
 // Set to 'true' to completely hide tools where enabled: false
 // Set to 'false' to show them as grayed-out "Coming Soon" cards
-const CONFIG_HIDE_DISABLED = true; 
+const CONFIG_HIDE_DISABLED = true;
 // ==========================================
 
-interface Tool {
-  id: string;
-  path: string;
-  name: string;
-  description: string;
-  ready: string;
-  enabled?: boolean;
-}
+// Tool data lives in src/registry.ts — this file only owns presentation.
 
 interface CategoryTheme {
   border: string;
@@ -28,16 +22,21 @@ interface CategoryTheme {
   badgeBorder: string;
 }
 
-interface Category {
-  name: string;
-  gradient: string;
-  theme: CategoryTheme;
-  tools: Tool[];
-}
+const DEFAULT_THEME: { gradient: string; theme: CategoryTheme } = {
+  gradient: 'from-slate-500 to-slate-700',
+  theme: {
+    border: 'border-l-slate-500',
+    hoverBorder: 'hover:border-l-slate-400',
+    shadow: 'hover:shadow-slate-300/40',
+    text: 'group-hover:text-slate-700',
+    badgeBg: 'bg-slate-50',
+    badgeText: 'text-slate-700',
+    badgeBorder: 'border-slate-200/60'
+  },
+};
 
-const categories: Category[] = [
-  {
-    name: 'Generators',
+const CATEGORY_THEMES: Record<string, { gradient: string; theme: CategoryTheme }> = {
+  'Generators': {
     gradient: 'from-blue-500 to-indigo-600',
     theme: {
       border: 'border-l-blue-500',
@@ -48,15 +47,8 @@ const categories: Category[] = [
       badgeText: 'text-blue-700',
       badgeBorder: 'border-blue-200/60'
     },
-    tools: [
-      { id: 'Times Tables', path: '/timestables', name: 'Times Tables', description: 'Generate PDFs designed to test and improve TimesTable fluency', ready: 'v1.0' },
-      { id: 'Negative Operations', path: '/negative-operations', name: 'Negative Operations', description: 'Generate PDFs designed to test and improve operations with negative numbers', ready: 'v2.0' },
-      { id: 'Multiplication Methods', path: '/multiplication-methods', name: 'Multiplication Methods', description: 'Generate PDFs designed to test and improve use of multiplication methods', ready: 'v1.0' },
-      { id: 'Functional Skills', path: '/functional-skills', name: 'Functional Skills', description: 'Generate PDFs designed to test functional skills such as number bonds, addition, subtraction and more', ready: 'v1.0' },
-    ]
   },
-  {
-    name: 'Number',
+  'Number': {
     gradient: 'from-cyan-500 to-sky-600',
     theme: {
       border: 'border-l-cyan-500',
@@ -67,14 +59,8 @@ const categories: Category[] = [
       badgeText: 'text-cyan-700',
       badgeBorder: 'border-cyan-200/60'
     },
-    tools: [
-      { id: 'integers', path: '/integer-add-and-subtract', name: 'Adding & Subtracting Integers', description: 'Practice adding and subtracting positive and negative numbers using number lines', ready: 'v1.4' },
-      { id: 'estimation', path: '/estimation', name: 'Estimation', description: 'Develop estimation skills by rounding numbers to make calculations easier', ready: 'v2.3' },
-      { id: 'powers-of-ten', path: '/powers-of-ten', name: 'Multiplying & Dividing by 10ⁿ', description: 'Use a place value table to scale by powers of 10', ready: 'v1.4' },
-    ]
   },
-  {
-    name: 'Algebra',
+  'Algebra': {
     gradient: 'from-purple-500 to-fuchsia-600',
     theme: {
       border: 'border-l-purple-500',
@@ -85,20 +71,8 @@ const categories: Category[] = [
       badgeText: 'text-purple-700',
       badgeBorder: 'border-purple-200/60'
     },
-    tools: [
-      { id: 'solving-linear-equations', path: '/solving-linear-equations', name: 'Unknowns on Both Sides', description: 'Solve equations where the unknown occurs more than once', ready: 'v2.3' },
-      { id: 'completing-square', path: '/completing-the-square', name: 'Completing the Square', description: 'Rewrite and solve quadratic expressions in completed square form', ready: 'v2.3' },
-      { id: 'iterations', path: '/iterations', name: 'Iteration', description: 'Find roots to eqautions using iterative methods', ready: 'v2.1.1' },
-      { id: 'simultaneous-equations-elimination', path: '/simultaneous-equations-elimination', name: 'Simultaneous Equations (Elimination)', description: 'Solve simultaneous equations, including rearranging', ready: 'v2.1.1' },
-      { id: 'simultaneous-equations-substitution', path: '/simultaneous-equations-substitution', name: 'Simultaneous Equations (Substitution)', description: 'Solve Simultaneous Equations (including Non-Linear) by Substitution', ready: 'v2.1.2' },
-      { id: 'single-brackets-foil', path: '/expanding-single-brackets-FOIL', name: 'Expanding Single Brackets (FOIL)', description: 'Expand single brackets by using arrows for each term', ready: 'v1.4', enabled: false },
-      { id: 'expanding-double-brackets-foil', path: '/expanding-double-brackets-foil', name: 'Expanding Double Brackets (FOIL)', description: 'Expand pairs of brackets using the FOIL method', ready: 'v1.4', enabled: false },
-      { id: 'single-brackets-grid', path: '/expanding-single-brackets-GRID', name: 'Expanding Single Brackets (GRID)', description: 'Expand single brackets by using the grid method', ready: 'v1.4', enabled: false },
-      { id: 'expanding-double-brackets-grid', path: '/expanding-double-brackets-grid', name: 'Expanding Double Brackets (GRID)', description: 'Expand pairs of brackets using the grid method', ready: 'v1.4', enabled: false },
-    ]
   },
-  {
-    name: 'Ratio & Proportion',
+  'Ratio & Proportion': {
     gradient: 'from-emerald-500 to-teal-600',
     theme: {
       border: 'border-l-emerald-500',
@@ -109,17 +83,8 @@ const categories: Category[] = [
       badgeText: 'text-emerald-700',
       badgeBorder: 'border-emerald-200/60'
     },
-    tools: [
-      { id: 'ratio', path: '/ratio-sharing', name: 'Dividing Ratios', description: 'Sharing amounts using the total, a known amount or known difference', ready: 'v2.3' },
-      { id: 'simplifying-ratios', path: '/simplifying-ratios', name: 'Simplifying Ratios', description: 'Simplifying ratios in numerical and algebraic forms', ready: 'v1.4' },
-      { id: 'Recipes', path: '/recipes', name: 'Recipes', description: 'Find amounts of ingredients by scaling recipes and understanding limiting factors', ready: 'v2.1.2' },
-      { id: 'fraction-to-ratio', path: '/fraction-to-ratio', name: 'Converting Fractions and Ratios', description: 'To convert fractions and ratios interchangably', ready: 'v2.0' },
-      { id: 'fractions-of-amounts', path: '/fractions-of-amounts', name: 'Fractions of Amounts', description: 'To find a fraction of an amount', ready: 'v2.0' },
-      { id: 'best-buys', path: '/best-buys', name: 'Best Buys', description: 'To find the best value from two prices', ready: 'v2.3' },
-    ]
   },
-  {
-    name: 'Geometry',
+  'Geometry': {
     gradient: 'from-amber-500 to-orange-600',
     theme: {
       border: 'border-l-amber-500',
@@ -130,17 +95,8 @@ const categories: Category[] = [
       badgeText: 'text-amber-700',
       badgeBorder: 'border-amber-200/60'
     },
-    tools: [
-      { id: 'circles', path: '/circle-properties', name: 'Properties of Circles', description: 'Find the circumference, area and arc lengths of circles and sectors', ready: 'v1.4' },
-      { id: 'basic-angle-facts', path: '/basic-angle-facts', name: 'Basic Angle Facts', description: 'Find missing angles from right angles, on striaght lines and around a point', ready: 'v2.2' },
-      { id: 'angles-in-triangles', path: '/angles-in-triangles', name: 'Angles In Triangles', description: 'Find missing angles using triangle properties - including split trangles and exterior angles', ready: 'v2.1' },
-      { id: 'angles-in-parallel-lines', path: '/angles-in-parallel-lines', name: 'Angles in Parallel Lines', description: 'Explore corresponding, alternate and co-interior angles formed by a transversal cutting parallel lines', ready: 'v2.3' },
-      { id: 'equations-of-lines', path: '/equations-of-lines', name: 'Properties of Line Equations', description: 'Use co-ordinates and line equations to find properties of lines', ready: 'v2.1' },
-      { id: 'perimeter', path: '/perimeter', name: 'Perimeter (BETA)', description: 'Calculate the perimeter of various 2D shapes', ready: 'v2.1', enabled: false},
-    ]
   },
-  {
-    name: 'Probability & Statistics',
+  'Probability & Statistics': {
     gradient: 'from-pink-500 to-rose-600',
     theme: {
       border: 'border-l-pink-500',
@@ -151,10 +107,8 @@ const categories: Category[] = [
       badgeText: 'text-pink-700',
       badgeBorder: 'border-pink-200/60'
     },
-    tools: []
   },
-  {
-    name: 'Teacher Tools',
+  'Teacher Tools': {
     gradient: 'from-violet-500 to-purple-600',
     theme: {
       border: 'border-l-violet-500',
@@ -165,15 +119,8 @@ const categories: Category[] = [
       badgeText: 'text-violet-700',
       badgeBorder: 'border-violet-200/60'
     },
-    tools: [
-      { id: 'visualiser', path: '/visualiser', name: 'Visualiser', description: 'A tool for displaying your visualiser', ready: 'Ready' },
-      { id: 'tool-shell', path: '/tool-shell', name: 'Tool Shell', description: 'A tool shell for developing new tools', ready: 'v2.3' },
-      { id: 'call-selector', path: '/call-selector', name: 'Friday Phonecalls', description: 'A tool to randomly select students for phonecalls', ready: 'v1.0', enabled: false },
-      { id: 'p-value', path: '/p-value', name: 'P-Value Grapher', description: 'A tool to generate P-Values from Binomial Distributions', ready: 'v1.0' },
-    ]
   },
-  {
-    name: 'Computer Science',
+  'Computer Science': {
     gradient: 'from-slate-600 to-slate-800',
     theme: {
       border: 'border-l-slate-600',
@@ -184,11 +131,14 @@ const categories: Category[] = [
       badgeText: 'text-slate-700',
       badgeBorder: 'border-slate-300/60'
     },
-    tools: [
-      { id: 'system architecture', path: '/system-architecture', name: '1.1 - System Architectures', description: 'A tool for learning the 1.1 content for system architectures', ready: 'v1.0' },
-    ]
   },
-];
+};
+
+const categories = CATEGORIES.map((category) => ({
+  name: category.name,
+  tools: category.tools,
+  ...(CATEGORY_THEMES[category.name] ?? DEFAULT_THEME),
+}));
 
 export default function LandingPage(): JSX.Element {
   const navigate = useNavigate();

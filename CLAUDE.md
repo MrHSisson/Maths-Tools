@@ -48,28 +48,22 @@ Keep concurrent sessions on disjoint files/tools. Two sessions editing the same 
 - Fill in the tool-specific section only (Types → TOOL_CONFIG → INFO_SECTIONS → generateQuestion → generateUniqueQ)
 - Leave the imports and `export default function App()` unchanged
 
-### 2. Register in `src/App.tsx`
+### 2. Register in `src/registry.ts` (single registration point)
 
-```tsx
-import MyNewTool from './tools/Category/MyNewTool';
-// inside <Routes>:
-<Route path="/my-new-tool" element={<MyNewTool />} />
-```
-
-### 3. Register in `src/components/LandingPage.tsx`
+`src/registry.ts` is the single source of truth for every tool. `App.tsx` generates the route (lazy-loaded — each tool builds as its own chunk) and `LandingPage.tsx` renders the card from it. Do **not** edit `App.tsx` or `LandingPage.tsx` — add one entry to the correct category's `tools` array:
 
 ```ts
-{ id: 'my-new-tool', path: '/my-new-tool', name: 'Display Name', description: 'One sentence.', ready: 'v2.3' }
+{ id: 'my-new-tool', path: '/my-new-tool', name: 'Display Name', description: 'One sentence.', ready: 'v2.3', load: () => import('./tools/Category/MyNewTool') }
 ```
 
-Add `enabled: false` only if the tool should not be publicly visible yet.
+Add `enabled: false` only if the tool should not be publicly visible yet (the route still works for direct URL access).
 
-### 4. Build and push
+### 3. Build and push
 
 ```bash
 npm install     # required — node_modules/ is not present in a fresh container
 npm run build   # must complete with zero TypeScript errors
-git add src/tools/... src/App.tsx src/components/LandingPage.tsx
+git add src/tools/... src/registry.ts
 git commit -m "Add <ToolName> tool"
 git push
 ```
@@ -82,7 +76,7 @@ Old tools (v1.x) are 800–1,300 lines with embedded UI. v2.3 tools use the shar
 
 ### Identifying old tools
 
-Check the landing page `ready` version. Any tool below `v2.0` uses an old shell. The file will have no `import { ToolShell } from "../../shared"` line.
+Check the tool's `ready` version in `src/registry.ts`. Any tool below `v2.0` uses an old shell. The file will have no `import { ToolShell } from "../../shared"` line.
 
 Tools currently needing migration (v1.x as of this writing):
 - `src/tools/Number/IntegerAddSub.tsx` — v1.4, number line diagram questions
@@ -104,7 +98,7 @@ Tools currently needing migration (v1.x as of this writing):
 7. Convert working steps — `mStep()` / `step()` / `tStep()`
 8. Delete all UI code (DifficultyToggle, popovers, InfoModal, MenuDropdown, all `useState`/`useEffect`)
 9. Replace the export with `export default function App() { return <ToolShell ... /> }`
-10. Update landing page version to `v2.3`
+10. Update the tool's `ready` version in `src/registry.ts` to `v2.3`
 
 ### Old pattern → new pattern
 
