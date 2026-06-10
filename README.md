@@ -142,6 +142,10 @@ Worksheets support three layouts:
 - **Standard** — single difficulty level, configurable question count and columns
 - **Differentiated** — three levels side by side on one sheet, independently configured
 
+### Shareable links
+
+The URL always reflects the current setup (mode, level, sub-tool, question options), so any configured state can be bookmarked or copied via the burger menu's **Copy Link to Setup**. A link pointing at worksheet mode generates the worksheet on arrival — one click from bookmark to teaching.
+
 ### Adding a New Tool
 
 1. **Design** the tool in the *Tool Designer* claude.ai project (see `TOOL_DESIGNER_PROMPT.md`), which outputs a completed spec (`TOOL_SPEC_TEMPLATE.md`) saved to `specs/<tool-id>.md`

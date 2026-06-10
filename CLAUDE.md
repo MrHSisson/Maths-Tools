@@ -351,7 +351,24 @@ Font size indices: `0=text-lg  1=text-xl  2=text-3xl  3=text-4xl  4=text-5xl  5=
 
 ### What ToolShell provides automatically (never re-implement)
 
-Whiteboard / Worked Example / Worksheet modes · difficulty toggle · QO popovers (dropdown, variables, multiSelect, differentiated) · tool tab buttons (auto-hidden when only one sub-tool) · font size controls · PDF print · colour scheme picker · info modal · home button
+Whiteboard / Worked Example / Worksheet modes · difficulty toggle · QO popovers (dropdown, variables, multiSelect, differentiated) · tool tab buttons (auto-hidden when only one sub-tool) · font size controls · PDF print · colour scheme picker · info modal · home button · shareable links (URL ⇄ state sync + "Copy Link to Setup" menu item)
+
+### Shareable links — URL parameter format
+
+ToolShell mirrors the current setup into the URL query string (`history.replaceState`, only non-default values), so the address bar is always bookmarkable and the burger menu's "Copy Link to Setup" copies it. Opening a link restores the full setup; a `mode=worksheet` link auto-generates the worksheet on arrival. Invalid/stale params fall back to defaults — old links never break.
+
+| Param | Meaning | Example |
+|---|---|---|
+| `tool` | sub-tool key (omitted for the first tab) | `tool=findingRoots` |
+| `mode` | `example` or `worksheet` (whiteboard is default) | `mode=worksheet` |
+| `level` | `1` `2` `3` | `level=2` |
+| `dd` | dropdown value for the current tool+level | `dd=fraction` |
+| `vars` | variable toggles; `-` prefix = off | `vars=integerC,-negCoeff` |
+| `ms` | multiSelect options; `-` prefix = off | `ms=bothNeg,-typeA` |
+| `n` / `cols` | worksheet question count / columns | `n=20&cols=2` |
+| `diff` | differentiated worksheet flag | `diff=1` |
+
+Only the current tool+level's QO state is encoded (the URL reflects what is on screen). Differentiated per-level QO customisation and advanced-mode groups are not encoded. Tools get all of this for free — never re-implement URL handling in a tool file.
 
 ### Single sub-tool — no tab buttons needed
 

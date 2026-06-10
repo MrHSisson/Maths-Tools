@@ -54,10 +54,46 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const generateUniqueQ = generateUniqueQProp ?? makeUniqueQ(generateQuestion);
   const toolKeys = Object.keys(config.tools);
 
-  const [currentTool, setCurrentTool] = useState<string>(toolKeys[0]);
-  const [mode, setMode] = useState<"whiteboard" | "single" | "worksheet">("whiteboard");
+  // ── Shareable links: read the initial state from the URL (parsed once) ─────
+  // ?tool=key&mode=example|worksheet&level=2&dd=value&vars=a,-b&ms=x,-y&n=20&cols=2&diff=1
+  // Tokens in vars/ms set a key on; a "-" prefix sets it off. Invalid or stale
+  // values fall back to defaults, so old bookmarks never break a tool.
+  const [urlInit] = useState(() => {
+    const p = new URLSearchParams(typeof window === "undefined" ? "" : window.location.search);
+    const toggles = (param: string | null): Record<string, boolean> => {
+      const out: Record<string, boolean> = {};
+      for (const tok of (param ?? "").split(",")) {
+        const off = tok.startsWith("-");
+        const key = off ? tok.slice(1) : tok;
+        if (key) out[key] = !off;
+      }
+      return out;
+    };
+    const toolParam = p.get("tool");
+    const modeMap: Record<string, "whiteboard" | "single" | "worksheet"> = { whiteboard: "whiteboard", example: "single", worksheet: "worksheet" };
+    const levelMap: Record<string, DifficultyLevel> = { "1": "level1", "2": "level2", "3": "level3" };
+    const levelParam = levelMap[p.get("level") ?? ""];
+    const intParam = (key: string, min: number, max: number): number | null => {
+      const n = parseInt(p.get(key) ?? "", 10);
+      return Number.isFinite(n) ? Math.max(min, Math.min(max, n)) : null;
+    };
+    return {
+      tool: toolParam && toolKeys.includes(toolParam) ? toolParam : toolKeys[0],
+      mode: modeMap[p.get("mode") ?? ""] ?? "whiteboard",
+      level: levelParam && !(defaults.comingSoonLevels ?? []).includes(levelParam) ? levelParam : "level1" as DifficultyLevel,
+      vars: toggles(p.get("vars")),
+      ms: toggles(p.get("ms")),
+      dd: p.get("dd"),
+      n: defaults.fixedQuestions ? null : intParam("n", 1, 24),
+      cols: defaults.fixedColumns ? null : intParam("cols", 1, defaults.maxColumns ?? 4),
+      diff: p.get("diff") === "1",
+    };
+  });
+
+  const [currentTool, setCurrentTool] = useState<string>(urlInit.tool);
+  const [mode, setMode] = useState<"whiteboard" | "single" | "worksheet">(urlInit.mode);
   const comingSoon = defaults.comingSoonLevels ?? [];
-  const [difficulty, setDifficulty] = useState<DifficultyLevel>("level1");
+  const [difficulty, setDifficulty] = useState<DifficultyLevel>(urlInit.level);
   const setDifficultyGuarded = (v: DifficultyLevel) => { if (!comingSoon.includes(v)) setDifficulty(v); };
 
   const [toolVariables, setToolVariables] = useState<Record<string, Record<string, Record<string, boolean>>>>(() => {
@@ -69,6 +105,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         const vars = config.tools[k].difficultySettings?.[lv]?.variables ?? config.tools[k].variables;
         vars.forEach(v => { init[k][lv][v.key] = v.defaultValue; });
       });
+    });
+    Object.entries(urlInit.vars).forEach(([k, v]) => {
+      if (k in (init[urlInit.tool]?.[urlInit.level] ?? {})) init[urlInit.tool][urlInit.level][k] = v;
     });
     return init;
   });
@@ -82,6 +121,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         if (dd) init[`${k}__${lv}`] = dd.defaultValue;
       });
     });
+    const t0 = config.tools[urlInit.tool];
+    const dd0 = t0.difficultySettings?.[urlInit.level]?.dropdown ?? t0.dropdown;
+    if (urlInit.dd && dd0?.options.some(o => o.value === urlInit.dd)) init[`${urlInit.tool}__${urlInit.level}`] = urlInit.dd;
     return init;
   });
 
@@ -96,6 +138,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           ms.options.forEach(o => { if (!(o.value in init[k])) init[k][o.value] = o.defaultActive; });
         });
       });
+    });
+    Object.entries(urlInit.ms).forEach(([k, v]) => {
+      if (k in (init[urlInit.tool] ?? {})) init[urlInit.tool][k] = v;
     });
     return init;
   });
@@ -113,17 +158,29 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   });
   const [levelMultiSelect, setLevelMultiSelect] = useState<Record<string, Record<string, boolean>>>({ level1: {}, level2: {}, level3: {} });
 
-  const [currentQuestion, setCurrentQuestion] = useState<AnyQuestion>(() =>
-    generateQuestion(toolKeys[0], "level1", {}, "")
-  );
+  const [currentQuestion, setCurrentQuestion] = useState<AnyQuestion>(() => {
+    const t = config.tools[urlInit.tool];
+    const ddCfg = t.difficultySettings?.[urlInit.level]?.dropdown ?? t.dropdown;
+    const ddVal = urlInit.dd && ddCfg?.options.some(o => o.value === urlInit.dd) ? urlInit.dd : (ddCfg?.defaultValue ?? "");
+    const vars: Record<string, boolean> = {};
+    (t.difficultySettings?.[urlInit.level]?.variables ?? t.variables).forEach(v => { vars[v.key] = urlInit.vars[v.key] ?? v.defaultValue; });
+    const ms: Record<string, boolean> = {};
+    normalizeMultiSelect(t.multiSelect).forEach(g => g.options.forEach(o => { ms[o.value] = urlInit.ms[o.value] ?? o.defaultActive; }));
+    (["level1", "level2", "level3"] as DifficultyLevel[]).forEach(lv => {
+      normalizeMultiSelect(t.difficultySettings?.[lv]?.multiSelect).forEach(g => g.options.forEach(o => {
+        if (!(o.value in ms)) ms[o.value] = urlInit.ms[o.value] ?? o.defaultActive;
+      }));
+    });
+    return generateQuestion(urlInit.tool, urlInit.level, vars, ddVal, ms);
+  });
   const [showWhiteboardAnswer, setShowWhiteboardAnswer] = useState(false);
   const [showAnswer, setShowAnswer] = useState(false);
-  const [numQuestions, setNumQuestions] = useState(defaults.numQuestions ?? 15);
-  const [numColumns, setNumColumns] = useState(defaults.numColumns ?? 3);
+  const [numQuestions, setNumQuestions] = useState(urlInit.n ?? defaults.numQuestions ?? 15);
+  const [numColumns, setNumColumns] = useState(urlInit.cols ?? defaults.numColumns ?? 3);
   const [worksheet, setWorksheet] = useState<AnyQuestion[]>([]);
   const [showWorksheetAnswers, setShowWorksheetAnswers] = useState(false);
   const [printMode, setPrintMode] = useState<PrintMode>("both");
-  const [isDifferentiated, setIsDifferentiated] = useState(false);
+  const [isDifferentiated, setIsDifferentiated] = useState(urlInit.diff && comingSoon.length === 0);
   const [worksheetMode, setWorksheetMode] = useState<"standard" | "advanced">("standard");
   const [displayFontSize, setDisplayFontSize] = useState(defaults.displayFontSize ?? 2);
   const [worksheetFontSize, setWorksheetFontSize] = useState(defaults.worksheetFontSize ?? 1);
@@ -370,6 +427,54 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     }
     handleNewQuestion();
   }, [difficulty, currentTool, qoFingerprint]);
+
+  // ── Shareable links: keep the URL in sync with the current setup ───────────
+  // Only non-default values are written, so a freshly opened tool keeps a clean
+  // URL. replaceState (not pushState) — Back still leaves the tool in one step.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const p = new URLSearchParams();
+    if (currentTool !== toolKeys[0]) p.set("tool", currentTool);
+    if (mode !== "whiteboard") p.set("mode", mode === "single" ? "example" : "worksheet");
+    if (difficulty !== "level1") p.set("level", difficulty.slice(-1));
+    const t = config.tools[currentTool];
+    const ddCfg = t.difficultySettings?.[difficulty]?.dropdown ?? t.dropdown;
+    const ddVal = toolDropdowns[`${currentTool}__${difficulty}`];
+    if (ddCfg && ddVal && ddVal !== ddCfg.defaultValue) p.set("dd", ddVal);
+    const varTokens: string[] = [];
+    (t.difficultySettings?.[difficulty]?.variables ?? t.variables).forEach(v => {
+      const cur = toolVariables[currentTool]?.[difficulty]?.[v.key];
+      if (cur !== undefined && cur !== v.defaultValue) varTokens.push(cur ? v.key : `-${v.key}`);
+    });
+    if (varTokens.length) p.set("vars", varTokens.join(","));
+    const msTokens: string[] = [];
+    const seenMS = new Set<string>();
+    const msGroups = [
+      ...normalizeMultiSelect(t.multiSelect),
+      ...(["level1", "level2", "level3"] as DifficultyLevel[]).flatMap(lv => normalizeMultiSelect(t.difficultySettings?.[lv]?.multiSelect)),
+    ];
+    msGroups.forEach(g => g.options.forEach(o => {
+      if (seenMS.has(o.value)) return;
+      seenMS.add(o.value);
+      const cur = toolMultiSelect[currentTool]?.[o.value];
+      if (cur !== undefined && cur !== o.defaultActive) msTokens.push(cur ? o.value : `-${o.value}`);
+    }));
+    if (msTokens.length) p.set("ms", msTokens.join(","));
+    if (mode === "worksheet") {
+      if (numQuestions !== (defaults.numQuestions ?? 15)) p.set("n", String(numQuestions));
+      if (!isDifferentiated && numColumns !== (defaults.numColumns ?? 3)) p.set("cols", String(numColumns));
+      if (isDifferentiated) p.set("diff", "1");
+    }
+    const qs = p.toString();
+    window.history.replaceState(null, "", qs ? `${window.location.pathname}?${qs}` : window.location.pathname);
+  }, [currentTool, mode, difficulty, toolDropdowns, toolVariables, toolMultiSelect, numQuestions, numColumns, isDifferentiated]);
+
+  // A link that points straight at a worksheet generates it on arrival —
+  // a bookmarked worksheet link is ready to teach from without extra clicks.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (urlInit.mode === "worksheet") handleGenerateWorksheet();
+  }, []);
 
   const displayFontSizes = ["text-2xl", "text-3xl", "text-4xl", "text-5xl", "text-6xl", "text-7xl"];
   const canDisplayIncrease = displayFontSize < displayFontSizes.length - 1;
