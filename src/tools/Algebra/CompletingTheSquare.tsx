@@ -294,6 +294,9 @@ const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null =>
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Exposed for the generator smoke-test suite (src/tests/generators.test.ts).
+export const __test = { TOOL_CONFIG, generateQuestion };
+
 export default function App() {
   return (
     <ToolShell

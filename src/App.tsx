@@ -1,105 +1,55 @@
+import { Suspense, lazy } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import LandingPage from './components/LandingPage';
+import { ToolErrorBoundary } from './components/ToolErrorBoundary';
+import { ALL_TOOLS } from './registry';
 
-// Generators
-import TimesTablesGenerator from './tools/Generators/TimesTablesGenerator';
-import NegativeOperationsGenerator from './tools/Generators/NegativeOperationsGenerator';
-import MultiplicationGenerator from './tools/Generators/MultiplicationGenerator';
-import FunctionalSkillsGenerator from './tools/Generators/FunctionalSkillsGenerator';
+// Routes are generated from the registry. Each tool is lazy-loaded so it
+// builds as its own chunk — the landing page stays small and a tool's code
+// only downloads when it is opened.
+const TOOL_ROUTES = ALL_TOOLS.map((tool) => ({
+  path: tool.path,
+  Component: lazy(tool.load),
+}));
 
-// Number
-import IntegerAddSub from './tools/Number/IntegerAddSub';
-import Estimation from './tools/Number/Estimation';
-import PowersOfTen from './tools/Number/PowersOfTen';
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <p className="text-slate-500 font-medium">Loading…</p>
+    </div>
+  );
+}
 
-// Algebra
-import CompletingTheSquare from './tools/Algebra/CompletingTheSquare';
-import ExpandingDoubleBracketsFOIL from './tools/Algebra/ExpandingDoubleBracketsFOIL';
-import ExpandingDoubleBracketsGRID from './tools/Algebra/ExpandingDoubleBracketsGRID';
-import ExpandingSingleBracketsFOIL from './tools/Algebra/ExpandingSingleBracketsFOIL';
-import ExpandingSingleBracketsGRID from './tools/Algebra/ExpandingSingleBracketsGRID';
-import Iterations from './tools/Algebra/Iterations';
-import SimultaneousEquations from './tools/Algebra/SimultaneousEquations';
-import NonLinearSimEq from './tools/Algebra/NonLinearSimEq';
-import SolvingLinearEquations from './tools/Algebra/SolvingLinearEquations';
-
-// Ratio & Proportion
-import RatioSharingTool from './tools/Proportion/RatioSharingTool';
-import SimplifyingRatiosTool from './tools/Proportion/SimplifyingRatiosTool';
-import RecipesTool from './tools/Proportion/RecipesTool';
-import FractionToRatio from './tools/Proportion/FractionToRatio';
-import FractionsOfAmounts from './tools/Proportion/FractionsOfAmounts';
-import BestBuys from './tools/Proportion/BestBuys';
-
-// Geometry
-import CircleProperties from './tools/Geometry/CircleProperties';
-import PerimeterTool from './tools/Geometry/PerimeterTool';
-import BasicAngleFacts from './tools/Geometry/BasicAngleFacts';
-import AnglesInTriangles from './tools/Geometry/AnglesInTriangles';
-import AnglesInParallelLines from './tools/Geometry/AnglesInParallelLines';
-import EquationsOfLines from './tools/Geometry/EquationsOfLines';
-
-// Teacher Tools
-import Visualiser from './tools/TeacherTools/Visualiser';
-import ToolShell from './tools/TeacherTools/ToolShell';
-import CallSelector from './tools/TeacherTools/CallSelector';
-import PValue from './tools/TeacherTools/p-value';
-
-// Computer Science
-import SystemArchitecture from './tools/ComputerScience/SystemArchitecture';
+function NotFound() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-6">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-md p-8 max-w-lg text-center">
+        <h1 className="text-xl font-bold text-slate-800 mb-2">Page not found</h1>
+        <p className="text-slate-500 text-sm mb-6">There's no tool at this address.</p>
+        <button
+          onClick={() => { window.location.href = '/'; }}
+          className="px-5 py-2.5 rounded-lg bg-blue-900 text-white font-semibold text-sm hover:bg-blue-800 transition-colors"
+        >
+          Back to home
+        </button>
+      </div>
+    </div>
+  );
+}
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<LandingPage />} />
-
-      {/* Generators */}
-      <Route path="/timestables" element={<TimesTablesGenerator />} />
-      <Route path="/negative-operations" element={<NegativeOperationsGenerator />} />
-      <Route path="/multiplication-methods" element={<MultiplicationGenerator />} />
-      <Route path="/functional-skills" element={<FunctionalSkillsGenerator />} />
-
-      {/* Number */}
-      <Route path="/integer-add-and-subtract" element={<IntegerAddSub />} />
-      <Route path="/estimation" element={<Estimation />} />
-      <Route path="/powers-of-ten" element={<PowersOfTen />} />
-
-      {/* Algebra */}
-      <Route path="/completing-the-square" element={<CompletingTheSquare />} />
-      <Route path="/expanding-double-brackets-foil" element={<ExpandingDoubleBracketsFOIL />} />
-      <Route path="/expanding-double-brackets-grid" element={<ExpandingDoubleBracketsGRID />} />
-      <Route path="/expanding-single-brackets-foil" element={<ExpandingSingleBracketsFOIL />} />
-      <Route path="/expanding-single-brackets-grid" element={<ExpandingSingleBracketsGRID />} />
-      <Route path="/iterations" element={<Iterations />} />
-      <Route path="/simultaneous-equations-elimination" element={<SimultaneousEquations />} />
-      <Route path="/simultaneous-equations-substitution" element={<NonLinearSimEq />} />
-      <Route path="/solving-linear-equations" element={<SolvingLinearEquations />} />
-
-      {/* Ratio & Proportion */}
-      <Route path="/ratio-sharing" element={<RatioSharingTool />} />
-      <Route path="/simplifying-ratios" element={<SimplifyingRatiosTool />} />
-      <Route path="/recipes" element={<RecipesTool />} />
-      <Route path="/fraction-to-ratio" element={<FractionToRatio />} />
-      <Route path="/fractions-of-amounts" element={<FractionsOfAmounts />} />
-      <Route path="/best-buys" element={<BestBuys />} />
-
-      {/* Geometry */}
-      <Route path="/circle-properties" element={<CircleProperties />} />
-      <Route path="/perimeter" element={<PerimeterTool />} />
-      <Route path="/basic-angle-facts" element={<BasicAngleFacts />} />
-      <Route path="/angles-in-triangles" element={<AnglesInTriangles />} />
-      <Route path="/angles-in-parallel-lines" element={<AnglesInParallelLines />} />
-      <Route path="/equations-of-lines" element={<EquationsOfLines />} />
-
-      {/* Teacher Tools */}
-      <Route path="/visualiser" element={<Visualiser />} />
-      <Route path="/tool-shell" element={<ToolShell />} />
-      <Route path="/call-selector" element={<CallSelector />} />
-      <Route path="/p-value" element={<PValue />} />
-
-      {/* Computer Science */}
-      <Route path="/system-architecture" element={<SystemArchitecture />} />
-    </Routes>
+    <ToolErrorBoundary>
+      <Suspense fallback={<LoadingFallback />}>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          {TOOL_ROUTES.map(({ path, Component }) => (
+            <Route key={path} path={path} element={<Component />} />
+          ))}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
+    </ToolErrorBoundary>
   );
 }
 

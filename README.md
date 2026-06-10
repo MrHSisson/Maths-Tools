@@ -14,7 +14,7 @@ Deployed at: [maths-tools.vercel.app](https://maths-tools.vercel.app)
 | Build tool | Vite 5 |
 | Styling | Tailwind CSS 3 |
 | Routing | React Router v6 |
-| Maths rendering | KaTeX (loaded via CDN) |
+| Maths rendering | KaTeX (bundled via npm; print documents still use the CDN) |
 | Charts | Recharts |
 | PDF export | jsPDF + html2canvas |
 | Icons | Lucide React |
@@ -31,7 +31,7 @@ Deployed at: [maths-tools.vercel.app](https://maths-tools.vercel.app)
 │       └── ci.yml              # CI pipeline — type-checks and builds on every push to main
 ├── src/
 │   ├── components/
-│   │   └── LandingPage.tsx     # Home page — category list, tool cards, tool counter
+│   │   └── LandingPage.tsx     # Home page — renders categories/cards from the registry
 │   ├── shared/                 # Shared shell used by all v2.3+ tools
 │   │   ├── ToolShell.tsx       # Main shell component (modes, nav, QO controls, print)
 │   │   ├── print.ts            # PDF/print handler
@@ -88,7 +88,8 @@ Deployed at: [maths-tools.vercel.app](https://maths-tools.vercel.app)
 │   │       ├── p-value.tsx
 │   │       ├── ToolShell.tsx   # Canonical template for new tools
 │   │       └── Visualiser.tsx
-│   ├── App.tsx                 # Route definitions
+│   ├── registry.ts             # Single source of truth — every tool's path, card data, lazy import
+│   ├── App.tsx                 # Routes generated from the registry (lazy-loaded chunks)
 │   ├── main.tsx                # React entry point
 │   └── index.css               # Global styles
 ├── CLAUDE.md                   # Instructions for Claude Code (AI development)
@@ -141,14 +142,17 @@ Worksheets support three layouts:
 - **Standard** — single difficulty level, configurable question count and columns
 - **Differentiated** — three levels side by side on one sheet, independently configured
 
+### Shareable links
+
+The URL always reflects the current setup (mode, level, sub-tool, question options), so any configured state can be bookmarked or copied via the burger menu's **Copy Link to Setup**. A link pointing at worksheet mode generates the worksheet on arrival — one click from bookmark to teaching.
+
 ### Adding a New Tool
 
-1. Copy `src/tools/TeacherTools/ToolShell.tsx` as a template
-2. Save to `src/tools/<Category>/<ToolName>.tsx`
-3. Add import + route to `src/App.tsx`
-4. Add entry to the correct category in `src/components/LandingPage.tsx`
-5. Run `npm run build` — must pass with zero TypeScript errors
-6. Commit and push
+1. **Design** the tool in the *Tool Designer* claude.ai project (see `TOOL_DESIGNER_PROMPT.md`), which outputs a completed spec (`TOOL_SPEC_TEMPLATE.md`) saved to `specs/<tool-id>.md`
+2. **Scaffold**: `npm run new-tool -- --name "Display Name" --category Folder --path /url-path` — copies the template and registers it in `src/registry.ts`
+3. **Implement** the tool-specific section (usually done by Claude Code working from the spec)
+4. Run `npm run build` (zero TypeScript errors) and `npm test` (generator smoke tests)
+5. Commit and push
 
 Full instructions, helper API reference, and gotchas are in `CLAUDE.md`.
 

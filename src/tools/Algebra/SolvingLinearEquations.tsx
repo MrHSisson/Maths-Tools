@@ -527,6 +527,9 @@ const generateUniqueQ = (
 // END OF TOOL-SPECIFIC SECTION
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// Exposed for the generator smoke-test suite (src/tests/generators.test.ts).
+export const __test = { TOOL_CONFIG, generateQuestion };
+
 export default function App() {
   return (
     <ToolShell

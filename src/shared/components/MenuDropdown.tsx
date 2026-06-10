@@ -12,7 +12,21 @@ export const MenuDropdown = ({
   onOpenInfo: () => void;
 }) => {
   const [colorOpen, setColorOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+
+  // The URL always reflects the current setup (ToolShell keeps it in sync),
+  // so copying it gives a link that reopens the tool exactly as configured.
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      setTimeout(() => { setCopied(false); onClose(); }, 900);
+    } catch {
+      window.prompt("Copy this link:", window.location.href);
+      onClose();
+    }
+  };
   useEffect(() => {
     const h = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) onClose();
@@ -53,6 +67,23 @@ export const MenuDropdown = ({
             ))}
           </div>
         )}
+        <div className="border-t border-gray-100 my-1" />
+        <button
+          onClick={copyLink}
+          className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+        >
+          {copied ? (
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-green-600 flex-shrink-0">
+              <path d="M2.5 8.5l3.5 3.5L13.5 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          ) : (
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400 flex-shrink-0">
+              <path d="M6.5 9.5a3 3 0 004.2.3l2-2a3 3 0 00-4.2-4.2l-1 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <path d="M9.5 6.5a3 3 0 00-4.2-.3l-2 2a3 3 0 004.2 4.2l1-1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          )}
+          {copied ? "Link copied!" : "Copy Link to Setup"}
+        </button>
         <div className="border-t border-gray-100 my-1" />
         <button
           onClick={() => { onOpenInfo(); onClose(); }}
