@@ -42,3 +42,30 @@ export const fmt = (n: number, dp = 2): string => n.toFixed(dp).replace(/\.?0+$/
 // get the "= " prefix; full-equation answers ("x = 10") already read correctly on
 // their own and are returned unchanged — prevents "= x = 10" ever being shown.
 export const ansEq = (answer: string): string => (/=/.test(answer) ? answer : `= ${answer}`);
+
+// Wraps a generateQuestion function with the standard retry-until-unique loop.
+// ToolShell uses this automatically when a tool doesn't supply its own
+// generateUniqueQ — new tools only need to write generateQuestion.
+export const makeUniqueQ = <Q extends { key: string }, L extends string = string>(
+  generate: (
+    tool: string,
+    level: L,
+    variables: Record<string, boolean>,
+    dropdownValue: string,
+    multiSelectValues?: Record<string, boolean>,
+  ) => Q,
+) => (
+  tool: string,
+  level: L,
+  variables: Record<string, boolean>,
+  dropdownValue: string,
+  usedKeys: Set<string>,
+  multiSelectValues: Record<string, boolean> = {},
+): Q => {
+  let q: Q;
+  let attempts = 0;
+  do { q = generate(tool, level, variables, dropdownValue, multiSelectValues); attempts++; }
+  while (usedKeys.has(q.key) && attempts < 100);
+  usedKeys.add(q.key);
+  return q;
+};

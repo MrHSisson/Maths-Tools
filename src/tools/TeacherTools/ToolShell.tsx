@@ -281,23 +281,8 @@ const generateQuestion = (
   };
 };
 
-// ── 7. generateUniqueQ ────────────────────────────────────────────────────────
-
-const generateUniqueQ = (
-  tool: string,
-  level: DifficultyLevel,
-  variables: Record<string, boolean>,
-  dropdownValue: string,
-  usedKeys: Set<string>,
-  multiSelectValues: Record<string, boolean> = {},
-): AnyQuestion => {
-  let q: AnyQuestion;
-  let attempts = 0;
-  do { q = generateQuestion(tool, level, variables, dropdownValue, multiSelectValues); attempts++; }
-  while (usedKeys.has(q.key) && attempts < 100);
-  usedKeys.add(q.key);
-  return q;
-};
+// Worksheet uniqueness is automatic — ToolShell wraps generateQuestion with the
+// standard retry-until-unique loop. No generateUniqueQ needed.
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // END OF TOOL-SPECIFIC SECTION
@@ -306,13 +291,17 @@ const generateUniqueQ = (
 // Suppress unused import warnings for helpers that aren't used in the stub generator.
 void (tStep as unknown); void (fmt as unknown); void (pickActive as unknown);
 
+// Exposes internals to the generator smoke-test suite (src/tests/generators.test.ts).
+// Every tool must export this. Add `levels: ["level1", "level2"]` if some levels
+// are coming soon.
+export const __test = { TOOL_CONFIG, generateQuestion };
+
 export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
       infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
-      generateUniqueQ={generateUniqueQ}
     />
   );
 }

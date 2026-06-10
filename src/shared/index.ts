@@ -32,7 +32,7 @@ export { handlePrint } from "./print";
 
 export { LV_COLORS, LV_LABELS, LV_HEADER_COLORS, getQuestionBg, getStepBg } from "./colors";
 
-export { randInt, pick, fracStr, mStr, pickActive, normalizeMultiSelect, step, tStep, mStep, fmt, ansEq } from "./helpers";
+export { randInt, pick, fracStr, mStr, pickActive, normalizeMultiSelect, step, tStep, mStep, fmt, ansEq, makeUniqueQ } from "./helpers";
 
 export { MathRenderer, InlineMath } from "./components/MathRenderer";
 export { QuestionDisplay, AnswerDisplay } from "./components/QuestionDisplay";

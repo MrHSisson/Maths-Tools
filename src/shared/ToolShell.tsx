@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2 } from "lucide-react";
 import type { DifficultyLevel, AnyQuestion, WorkingStep, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
 import { LV_COLORS, getQuestionBg, getStepBg } from "./colors";
-import { normalizeMultiSelect, ansEq } from "./helpers";
+import { normalizeMultiSelect, ansEq, makeUniqueQ } from "./helpers";
 import { loadKaTeX } from "./katex";
 import { MathRenderer, InlineMath } from "./components/MathRenderer";
 import { QuestionDisplay, AnswerDisplay } from "./components/QuestionDisplay";
@@ -27,7 +27,10 @@ export interface ToolShellProps {
     dropdownValue: string,
     multiSelectValues?: Record<string, boolean>,
   ) => AnyQuestion;
-  generateUniqueQ: (
+  /** Optional — ToolShell wraps generateQuestion with the standard
+   *  retry-until-unique loop (makeUniqueQ) when this is omitted. Only supply
+   *  it for tools needing non-standard uniqueness handling. */
+  generateUniqueQ?: (
     tool: string,
     level: DifficultyLevel,
     variables: Record<string, boolean>,
@@ -47,7 +50,8 @@ export interface ToolShellProps {
   customPrintHandler?: (questions: AnyQuestion[], printMode: PrintMode, worksheetEl: HTMLElement | null) => void;
 }
 
-export const ToolShell = ({ config, infoSections, generateQuestion, generateUniqueQ, defaults = {}, stepRenderer, questionRenderer, answerRenderer, reformatQuestion, customPrintHandler }: ToolShellProps) => {
+export const ToolShell = ({ config, infoSections, generateQuestion, generateUniqueQ: generateUniqueQProp, defaults = {}, stepRenderer, questionRenderer, answerRenderer, reformatQuestion, customPrintHandler }: ToolShellProps) => {
+  const generateUniqueQ = generateUniqueQProp ?? makeUniqueQ(generateQuestion);
   const toolKeys = Object.keys(config.tools);
 
   const [currentTool, setCurrentTool] = useState<string>(toolKeys[0]);

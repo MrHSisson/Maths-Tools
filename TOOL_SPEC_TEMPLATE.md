@@ -1,119 +1,150 @@
-# New Tool Spec
+# Tool Spec: <Tool Name>
 
-Copy this file, fill it in, and hand it to Claude. The more detail you provide here, the faster and more accurately the tool gets built with no back-and-forth.
+**Status:** draft <!-- draft → ready → implemented. Claude Code only implements specs marked `ready`. -->
 
----
-
-## Overview
-
-**Tool name:** (display name shown on landing page and at top of tool, e.g. "Multiplying Fractions")
-
-**URL path:** (e.g. `/multiplying-fractions`)
-
-**Category:** (Generators / Number / Algebra / Ratio & Proportion / Geometry / Probability & Statistics / Teacher Tools / Computer Science)
-
-**Landing page description:** (one sentence, e.g. "Multiply pairs of fractions, including mixed numbers and improper fractions.")
+A completed copy of this template is everything Claude Code needs to build the
+tool end-to-end with **zero follow-up questions**. Every section is required
+unless marked optional. Save completed specs as `specs/<tool-id>.md`.
 
 ---
 
-## Sub-tools
+## 1. Overview
 
-(List the tab button names — 1 to 5. Each becomes a separate question generator.)
+| Field | Value |
+|---|---|
+| Tool name | <!-- display name, e.g. "Multiplying Fractions" --> |
+| Tool id / URL path | <!-- `/multiplying-fractions` — the id is the path without the slash --> |
+| Category | <!-- Generators / Number / Algebra / Ratio & Proportion / Geometry / Probability & Statistics / Teacher Tools / Computer Science --> |
+| Card description | <!-- one sentence for the landing page card --> |
+| Defaults | <!-- only non-standard ones: numQuestions, numColumns, fixedColumns, font sizes, comingSoonLevels. Write "standard" if none. --> |
 
-1. 
-2. 
-3. 
-
----
-
-## Sub-tool Detail
-
-Repeat this block for each sub-tool above.
-
----
-
-### Sub-tool: [Name]
-
-**Question type:** (simple — single expression with one answer / worded — multi-line context question)
-
-**Instruction line:** (shown above the question, e.g. "Simplify:", "Solve:", "Find:" — leave blank if none)
-
+**Pedagogical intent (2–3 sentences):** what should a student be able to do
+after a lesson built on this tool, and where does it sit in the teaching
+sequence (what comes before and after it)?
 
 ---
 
-#### Levels
+## 2. Sub-tools
 
-**Level 1 (easiest):**
-(Describe what makes it easy — e.g. "positive integers only, denominators 2–5")
+<!-- 1–5 sub-tools. One sub-tool = one tab = one question generator. -->
 
-**Level 2 (medium):**
-(What extra difficulty is added — e.g. "includes negative values")
-
-**Level 3 (hardest):**
-(What makes it hardest — e.g. "fractional denominators, mixed numbers")
+| Key | Tab label | Kind | Instruction line |
+|---|---|---|---|
+| `subtool1` | <!-- label --> | simple / worded / diagram | <!-- e.g. "Simplify:" or — --> |
 
 ---
 
-#### Question Options (QO)
+## 3. Sub-tool detail
 
-What controls should the teacher have to customise the question pool?
+<!-- Repeat this whole section for each sub-tool. -->
 
-**Multi-select pool** (tick-box options the teacher can turn on/off — default choice):
+### Sub-tool: <Tab label> (`key`)
 
-| Option label | What it does | On by default? |
-|---|---|---|
-| e.g. "Proper fractions" | Only generates proper fractions | Yes |
-| e.g. "Mixed numbers" | Includes mixed numbers | No |
+#### 3.1 Question options (QO)
 
-**Dropdown** (single mutually-exclusive setting — use only if one option must be active at a time):
+<!-- Exact control configs. multiSelect is the default choice. State every
+     option's value, label, and whether it is defaultActive. If controls
+     differ by level, give the per-level breakdown. Write "none" if no QO. -->
 
-| Option label | What it does | Default? |
-|---|---|---|
-| | | |
+- **multiSelect** `questionPool` — "Question Types":
+  - `typeA` — "Label A" — defaultActive: true
+  - `typeB` — "Label B" — defaultActive: false
+- **dropdown / variables:** none
+- **Per-level differences:** none
 
-**Toggles** (independent on/off switches — use sparingly):
+#### 3.2 Levels
 
-| Toggle label | What it controls | Default |
-|---|---|---|
-| | | |
+<!-- The heart of the spec. For each level give:
+     Parameters — every random value with its exact range or set.
+     Constraints — invariants every generated question must satisfy
+       (e.g. "answer is always a positive integer").
+     Exclusions — degenerate cases to reject (e.g. a = b, answer = 0,
+       multiplying by 1, ratio already simplified).
+     Misconceptions targeted — the wrong thinking this level exposes, and how
+       parameters are chosen so the misconception produces a visibly wrong
+       answer (not accidentally the right one). -->
 
-(Delete the controls you don't need)
+**Level 1 (confidence builder — simplest complete form of the skill):**
+- Parameters:
+- Constraints:
+- Exclusions:
+- Misconceptions targeted:
+
+**Level 2 (the standard KS3/GCSE domain of the skill):**
+- Parameters:
+- Constraints:
+- Exclusions:
+- Misconceptions targeted:
+
+**Level 3 (stretch — reverse questions, problem solving, negatives/algebra):**
+- Parameters:
+- Constraints:
+- Exclusions:
+- Misconceptions targeted:
+
+#### 3.3 Worked example script
+
+<!-- The exact step sequence shown in Worked Example mode, written in the
+     site's step grammar:
+       mStep("<prose label>", <maths>)  — labelled step (the default)
+       step(<maths>)                    — bare maths (chains of equals)
+       tStep("<prose>")                 — numberless prose (rare)
+     Give the script per level (or once if identical), each with one fully
+     worked numeric example. Prose never goes inside the maths. -->
+
+**Level 1 example — question: `<display>`**
+1. `mStep("…:", "…")`
+2. `mStep("Answer:", "…", "<unit>")`
+
+**Level 2:** same as Level 1 / <script>
+
+**Level 3:** <script>
+
+#### 3.4 Sample questions (acceptance set)
+
+<!-- At least 3 per level, using realistic values from the ranges in 3.2.
+     These define correctness: Claude Code verifies its generator produces
+     questions of exactly these shapes with matching answers and working. -->
+
+| Level | Question as displayed | Answer | Working (one line) |
+|---|---|---|---|
+| 1 | | | |
+| 1 | | | |
+| 1 | | | |
+| 2 | | | |
+| 2 | | | |
+| 2 | | | |
+| 3 | | | |
+| 3 | | | |
+| 3 | | | |
+
+#### 3.5 Uniqueness
+
+<!-- Which parameters must appear in the question key so two visually
+     identical questions can never share a worksheet. -->
+
+Key parameters:
 
 ---
 
-#### Worked Example Steps
+## 4. Variety requirements
 
-How is the solution explained, step by step? Write it out as a teacher would on a board.
-Label each step and show the maths clearly — Claude will convert this to KaTeX.
-
-**Level 1 example:**
-
-- Step 1 — [label]: [maths]
-- Step 2 — [label]: [maths]
-- Step 3 — [label]: [maths]
-
-**Level 2 example:** (describe if steps differ from Level 1, otherwise write "same as Level 1")
-
-**Level 3 example:** (describe if steps differ, otherwise write "same as Level 2")
+<!-- What stops a worksheet feeling samey: operation/type mix, context and
+     name pools for worded questions, parameter distribution notes (e.g.
+     "spread denominators across the full set — don't cluster on 2"),
+     anything the generator should actively balance. -->
 
 ---
 
-## Display Defaults
+## 5. Info modal content
 
-(Leave blank to use standard defaults)
-
-**Starting font size:** (small / medium / large / x-large — default is large)
-
-**Starting question count:** (default is 15)
-
-**Fixed question count:** (yes / no — yes hides the question count input entirely)
-
-**Max columns:** (default is 4 — set to 3 if 4-column layout never makes sense for this question type)
-
-**Fixed columns:** (yes / no — yes hides the column input entirely)
+<!-- Draft INFO_SECTIONS: one section per sub-tool (Overview + what each
+     level contains), plus anything a teacher needs to choose the right level
+     for a class. Written for a teacher, not a student. -->
 
 ---
 
-## Extra Notes
+## 6. Out of scope / future ideas (optional)
 
-(Anything else Claude should know — edge cases to avoid, specific number ranges, formatting preferences, real-world context for worded questions, etc.)
+<!-- Deliberate exclusions, possible extensions, diagram versions — so the
+     implementer doesn't guess or scope-creep. -->

@@ -14,7 +14,7 @@ Deployed at: [maths-tools.vercel.app](https://maths-tools.vercel.app)
 | Build tool | Vite 5 |
 | Styling | Tailwind CSS 3 |
 | Routing | React Router v6 |
-| Maths rendering | KaTeX (loaded via CDN) |
+| Maths rendering | KaTeX (bundled via npm; print documents still use the CDN) |
 | Charts | Recharts |
 | PDF export | jsPDF + html2canvas |
 | Icons | Lucide React |
@@ -144,10 +144,10 @@ Worksheets support three layouts:
 
 ### Adding a New Tool
 
-1. Copy `src/tools/TeacherTools/ToolShell.tsx` as a template
-2. Save to `src/tools/<Category>/<ToolName>.tsx`
-3. Add one entry to the correct category in `src/registry.ts` — the route and landing-page card are generated from it
-4. Run `npm run build` — must pass with zero TypeScript errors
+1. **Design** the tool in the *Tool Designer* claude.ai project (see `TOOL_DESIGNER_PROMPT.md`), which outputs a completed spec (`TOOL_SPEC_TEMPLATE.md`) saved to `specs/<tool-id>.md`
+2. **Scaffold**: `npm run new-tool -- --name "Display Name" --category Folder --path /url-path` — copies the template and registers it in `src/registry.ts`
+3. **Implement** the tool-specific section (usually done by Claude Code working from the spec)
+4. Run `npm run build` (zero TypeScript errors) and `npm test` (generator smoke tests)
 5. Commit and push
 
 Full instructions, helper API reference, and gotchas are in `CLAUDE.md`.

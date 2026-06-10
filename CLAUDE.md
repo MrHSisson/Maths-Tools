@@ -39,31 +39,54 @@ Keep concurrent sessions on disjoint files/tools. Two sessions editing the same 
 
 ---
 
+## Implementing from a spec (`specs/`)
+
+The preferred pipeline: the user designs the tool conversationally in a claude.ai Project (instructions in `TOOL_DESIGNER_PROMPT.md`), which outputs a completed spec following `TOOL_SPEC_TEMPLATE.md`. Specs live in `specs/<tool-id>.md`.
+
+When the user provides a spec (pasted, or already in `specs/`):
+
+1. Save it to `specs/<tool-id>.md` if not already there.
+2. Only implement specs with `Status: ready`. If sections are missing or ambiguous, ask before building — otherwise build **without further questions**.
+3. The spec's **sample questions (acceptance set)** define correctness: verify the generator produces questions of those shapes with matching answers and working steps before pushing.
+4. Take INFO_SECTIONS content from the spec's info modal section.
+5. After the tool builds clean and tests pass, change the spec's status line to `**Status:** implemented` in the same commit.
+
+For ad-hoc requests without a spec, gather the details in "What to ask the user for" below.
+
+---
+
 ## How to create a new tool — complete checklist
 
-### 1. Create the tool file
+### 1. Scaffold the tool file
 
-- Copy `src/tools/TeacherTools/ToolShell.tsx` (the canonical template)
-- Save to `src/tools/<Category>/<ToolName>.tsx`
-- Fill in the tool-specific section only (Types → TOOL_CONFIG → INFO_SECTIONS → generateQuestion → generateUniqueQ)
-- Leave the imports and `export default function App()` unchanged
+```bash
+npm run new-tool -- --name "Display Name" --category <Folder> --path /url-path --description "One sentence."
+```
 
-### 2. Register in `src/registry.ts` (single registration point)
+This copies the canonical template (`src/tools/TeacherTools/ToolShell.tsx`) to `src/tools/<Folder>/<DisplayName>.tsx` and registers it in `src/registry.ts` with `enabled: false`. (Manual alternative: copy the template and add the registry entry yourself.)
 
-`src/registry.ts` is the single source of truth for every tool. `App.tsx` generates the route (lazy-loaded — each tool builds as its own chunk) and `LandingPage.tsx` renders the card from it. Do **not** edit `App.tsx` or `LandingPage.tsx` — add one entry to the correct category's `tools` array:
+### 2. Fill in the tool-specific section only
+
+- Types → TOOL_CONFIG → INFO_SECTIONS → generateQuestion
+- `generateUniqueQ` is **not needed** — ToolShell wraps `generateQuestion` with the standard retry-until-unique loop automatically. Only write one for non-standard uniqueness handling.
+- Keep the `export const __test = { TOOL_CONFIG, generateQuestion }` export — the CI smoke tests discover tools through it. Add `levels: ["level1", "level2"]` to it if some levels are coming soon.
+- Leave the imports and `export default function App()` unchanged.
+
+### 3. Registry entry (`src/registry.ts` — single registration point)
+
+`src/registry.ts` is the single source of truth for every tool. `App.tsx` generates the route (lazy-loaded — each tool builds as its own chunk) and `LandingPage.tsx` renders the card from it. Do **not** edit `App.tsx` or `LandingPage.tsx`. The scaffold script adds the entry; review it and remove `enabled: false` when the tool is ready to go live:
 
 ```ts
 { id: 'my-new-tool', path: '/my-new-tool', name: 'Display Name', description: 'One sentence.', ready: 'v2.3', load: () => import('./tools/Category/MyNewTool') }
 ```
 
-Add `enabled: false` only if the tool should not be publicly visible yet (the route still works for direct URL access).
-
-### 3. Build and push
+### 4. Build, test and push
 
 ```bash
 npm install     # required — node_modules/ is not present in a fresh container
 npm run build   # must complete with zero TypeScript errors
-git add src/tools/... src/registry.ts
+npm test        # generator smoke tests — validates keys + every KaTeX string
+git add src/tools/... src/registry.ts specs/...
 git commit -m "Add <ToolName> tool"
 git push
 ```
@@ -97,8 +120,10 @@ Tools currently needing migration (v1.x as of this writing):
 6. Convert question return types — use `SimpleQuestion` or `WordedQuestion` structure
 7. Convert working steps — `mStep()` / `step()` / `tStep()`
 8. Delete all UI code (DifficultyToggle, popovers, InfoModal, MenuDropdown, all `useState`/`useEffect`)
-9. Replace the export with `export default function App() { return <ToolShell ... /> }`
-10. Update the tool's `ready` version in `src/registry.ts` to `v2.3`
+9. Delete any local `generateUniqueQ` — ToolShell provides the retry loop automatically
+10. Replace the export with `export default function App() { return <ToolShell ... /> }`
+11. Add `export const __test = { TOOL_CONFIG, generateQuestion }` so the CI smoke tests cover the tool
+12. Update the tool's `ready` version in `src/registry.ts` to `v2.3`
 
 ### Old pattern → new pattern
 
@@ -149,7 +174,7 @@ import { type PrintMode } from "../../shared";
 `ToolShell` · `MathRenderer` · `InlineMath` · `QuestionDisplay` · `AnswerDisplay` · `DifficultyToggle` · `StandardQOPopover` · `DiffQOPopover` · `InlineQOPanel` · `InfoModal` · `MenuDropdown` · `PrintSplitButton`
 
 **Helpers**:
-`randInt` · `pick` · `fracStr` · `mStr` · `pickActive` · `normalizeMultiSelect` · `step` · `tStep` · `mStep` · `fmt` · `ansEq`
+`randInt` · `pick` · `fracStr` · `mStr` · `pickActive` · `normalizeMultiSelect` · `step` · `tStep` · `mStep` · `fmt` · `ansEq` · `makeUniqueQ`
 
 **Utilities**:
 `loadKaTeX` · `handlePrint` · `LV_COLORS` · `LV_LABELS` · `LV_HEADER_COLORS` · `getQuestionBg` · `getStepBg`
@@ -245,7 +270,10 @@ export interface ToolShellProps {
     multiSelectValues?: Record<string, boolean>,
   ) => AnyQuestion;
 
-  generateUniqueQ: (
+  /** Optional — omit it. ToolShell wraps generateQuestion with the standard
+   *  retry-until-unique loop (makeUniqueQ) automatically. Only supply for
+   *  non-standard uniqueness handling. */
+  generateUniqueQ?: (
     tool: string,
     level: DifficultyLevel,
     variables: Record<string, boolean>,
@@ -619,7 +647,7 @@ Print cell CSS:
 
 ## TypeScript / build rules
 
-- `generateQuestion` and `generateUniqueQ` must be typed `(tool: string, ...)` — cast internally: `const t = tool as ToolType;`
+- `generateQuestion` must be typed `(tool: string, ...)` — cast internally: `const t = tool as ToolType;`
 - Never use `useNavigate` — use `window.location.href = "/"`
 - Never import `react-router-dom` inside a tool file
 - Never add `declare global` — use `const w = () => window as any` for untyped globals
@@ -639,6 +667,10 @@ npm install && npm run build 2>&1 | grep "error TS"
 # should return nothing
 ```
 
+### Generator smoke tests — `npm test`
+
+CI also runs `npm test` (Vitest, `src/tests/generators.test.ts`). The suite discovers every tool exporting `__test = { TOOL_CONFIG, generateQuestion }` and, for each sub-tool × level with default QO settings, generates 40 questions asserting: no throw, unique non-empty keys, and every KaTeX string (`displayLatex`, `answerLatex`, working-step latex, `$...$` segments in worded lines) renders under `katex.renderToString` with `throwOnError`. This catches `£`/`<` in KaTeX, malformed latex, and key collisions at CI time. **Every new or migrated tool must keep its `__test` export.** Restrict levels with `levels: ["level1", "level2"]` when a level is coming soon.
+
 ---
 
 ## PDF print — edge cases
@@ -657,11 +689,11 @@ npm install && npm run build 2>&1 | grep "error TS"
 | Generators | `src/tools/Generators/` | blue → indigo |
 | Number | `src/tools/Number/` | cyan → sky |
 | Algebra | `src/tools/Algebra/` | purple → fuchsia |
-| Ratio & Proportion | `src/tools/Proportion/` | orange → amber |
-| Geometry | `src/tools/Geometry/` | green → emerald |
-| Probability & Statistics | `src/tools/` (root) | rose → pink |
-| Teacher Tools | `src/tools/TeacherTools/` | slate → gray |
-| Computer Science | `src/tools/ComputerScience/` | teal → cyan |
+| Ratio & Proportion | `src/tools/Proportion/` | emerald → teal |
+| Geometry | `src/tools/Geometry/` | amber → orange |
+| Probability & Statistics | `src/tools/` (root) | pink → rose |
+| Teacher Tools | `src/tools/TeacherTools/` | violet → purple |
+| Computer Science | `src/tools/ComputerScience/` | slate → slate |
 
 ---
 
@@ -680,6 +712,8 @@ npm install && npm run build 2>&1 | grep "error TS"
 ---
 
 ## What to ask the user for (new tool spec)
+
+**Only for ad-hoc requests with no spec.** The preferred route is a completed `specs/<tool-id>.md` (see "Implementing from a spec" at the top of this file) — if one exists or the user can produce one via the Tool Designer project, use that instead of asking these questions.
 
 1. **Tool name** — display name, e.g. "Multiplying Fractions"
 2. **URL path** — e.g. `/multiplying-fractions`
