@@ -460,17 +460,19 @@ const DimLine = ({ x1, y1, x2, y2 }: { x1: number; y1: number; x2: number; y2: n
   );
 };
 
+const pillW = (text: string): number => text.length * 28 * 0.56 + 28 * 0.9;
+
 const Pill = ({ x, y, text, color = ACCENT, italic = false, boxed = false }: {
   x: number; y: number; text: string; color?: string; italic?: boolean; boxed?: boolean;
 }) => {
   const fs = 28;
-  const w = text.length * fs * 0.56 + fs * 0.9;
+  const w = pillW(text);
   const h = fs * 1.5;
   return (
     <g>
       <rect x={x - w / 2} y={y - h / 2} width={w} height={h} rx={9}
-        fill={boxed ? "#eff6ff" : "#ffffff"} opacity={0.96}
-        stroke={ACCENT_LIGHT} strokeWidth={1.8} />
+        fill="#ffffff" opacity={0.96}
+        stroke={boxed ? ACCENT_LIGHT : "#d1d5db"} strokeWidth={1.8} />
       <text x={x} y={y + 1} textAnchor="middle" dominantBaseline="central"
         fontSize={fs} fontWeight={700} fill={color}
         fontStyle={italic ? "italic" : "normal"}
@@ -487,48 +489,74 @@ const CircleSVG = ({ d, showAnswer, qIndex }: { d: DiagramData; showAnswer: bool
   if (d.shape === "sector") {
     const lvl = d.lvl ?? 1;
     const theta = d.theta ?? 180;
+    const R = 200;
+    // Semicircles open upwards from a horizontal diameter; other sectors sweep
+    // clockwise from the upward radius. Drawn around (0,0) — the viewBox is
+    // computed from the content's bounding box so the diagram is always tight
+    // and centred, whatever the angle.
+    const startDeg = lvl === 1 ? 180 : -90;
 
-    let cx: number, cy: number, r: number, startDeg: number, vbH: number;
-    if (lvl === 1)      { cx = 250; cy = 310; r = 190; startDeg = 180; vbH = 400; }
-    else if (lvl === 2) { cx = 145; cy = 390; r = 235; startDeg = -90; vbH = 440; }
-    else                { cx = 250; cy = 295; r = 180; startDeg = -90; vbH = 560; }
+    const [sx, sy] = polar(0, 0, R, startDeg);
+    const [ex, ey] = polar(0, 0, R, startDeg + theta);
+
+    // Bounding box: vertex, both edge endpoints, plus every cardinal direction
+    // the arc sweeps through.
+    const xs = [0, sx, ex], ys = [0, sy, ey];
+    for (let a = Math.ceil(startDeg / 90) * 90; a <= startDeg + theta; a += 90) {
+      const [px, py] = polar(0, 0, R, a);
+      xs.push(px); ys.push(py);
+    }
 
     // Dimension: L1 labels the diameter (the flat edge); L2/L3 label the starting radius.
-    const [sx, sy] = polar(cx, cy, r, startDeg);
-    const [ex, ey] = polar(cx, cy, r, startDeg + theta);
-    const dimEnd: [number, number] = lvl === 1 ? [ex, ey] : [cx, cy];
+    const dimEnd: [number, number] = lvl === 1 ? [ex, ey] : [0, 0];
     const dimLabel = lvl === 1 ? `d = ${fmt(d.d)} cm` : `r = ${fmt(d.r)} cm`;
     const midX = (sx + dimEnd[0]) / 2, midY = (sy + dimEnd[1]) / 2;
+    xs.push(midX - pillW(dimLabel) / 2, midX + pillW(dimLabel) / 2);
+    ys.push(midY - 21, midY + 21);
+
+    // θ pill sits directly under the shape, centred on it.
+    const thetaLabel = `θ = ${theta}°`;
+    const thetaPillX = (Math.min(...xs) + Math.max(...xs)) / 2;
+    const thetaPillY = Math.max(...ys) + 48;
+    if (lvl === 3) {
+      xs.push(thetaPillX - pillW(thetaLabel) / 2, thetaPillX + pillW(thetaLabel) / 2);
+      ys.push(thetaPillY + 21);
+    }
+
+    const PAD = 16;
+    const minX = Math.min(...xs) - PAD, maxX = Math.max(...xs) + PAD;
+    const minY = Math.min(...ys) - PAD, maxY = Math.max(...ys) + PAD;
 
     // Right-angle marker for quarter circles; θ arc for arbitrary sectors.
-    const sq = 30;
-    const [q1x, q1y] = polar(cx, cy, sq, startDeg);
-    const [q3x, q3y] = polar(cx, cy, sq, startDeg + theta);
+    const sq = 32;
+    const [q1x, q1y] = polar(0, 0, sq, startDeg);
+    const [q3x, q3y] = polar(0, 0, sq, startDeg + theta);
 
     return (
-      <svg viewBox={`0 0 500 ${vbH}`} style={{ display: "block", width: "100%", height: "auto" }}
+      <svg viewBox={`${minX} ${minY} ${maxX - minX} ${maxY - minY}`}
+        style={{ display: "block", width: "100%", height: "auto" }}
         preserveAspectRatio="xMidYMid meet" {...ep}>
-        <path d={sectorPath(cx, cy, r, startDeg, theta)} fill={SECTOR_FILL} stroke={ACCENT} strokeWidth={4} strokeLinejoin="round" />
-        {lvl !== 1 && <circle cx={cx} cy={cy} r={6} fill={ACCENT} />}
+        <path d={sectorPath(0, 0, R, startDeg, theta)} fill={SECTOR_FILL} stroke={ACCENT} strokeWidth={4} strokeLinejoin="round" />
+        {lvl !== 1 && <circle cx={0} cy={0} r={6} fill={ACCENT} />}
         {lvl === 2 && (
-          <polyline points={`${q1x},${q1y} ${q1x + (q3x - cx)},${q1y + (q3y - cy)} ${q3x},${q3y}`}
+          <polyline points={`${q1x},${q1y} ${q1x + q3x},${q1y + q3y} ${q3x},${q3y}`}
             fill="none" stroke={ACCENT} strokeWidth={2.5} />
         )}
         {lvl === 3 && (
-          <path d={`M ${polar(cx, cy, 48, startDeg).join(" ")} A 48 48 0 ${theta > 180 ? 1 : 0} 1 ${polar(cx, cy, 48, startDeg + theta).join(" ")}`}
+          <path d={`M ${polar(0, 0, 48, startDeg).join(" ")} A 48 48 0 ${theta > 180 ? 1 : 0} 1 ${polar(0, 0, 48, startDeg + theta).join(" ")}`}
             fill="none" stroke={ACCENT} strokeWidth={2.5} />
         )}
         <DimLine x1={sx} y1={sy} x2={dimEnd[0]} y2={dimEnd[1]} />
         <Pill x={midX} y={midY} text={dimLabel} color={LINE} />
-        {lvl === 3 && <Pill x={250} y={520} text={`θ = ${theta}°`} boxed />}
+        {lvl === 3 && <Pill x={thetaPillX} y={thetaPillY} text={thetaLabel} boxed />}
       </svg>
     );
   }
 
   // ── Full circle ──────────────────────────────────────────────────────────
   const hasPill = !!d.givenLabel;
-  const cx = 250, cy = hasPill ? 245 : 250, r = 185;
-  const vbH = hasPill ? 560 : 500;
+  const cx = 250, cy = 250, r = 185;
+  const vbH = hasPill ? 528 : 500;
   const a = d.angle ?? 30;
   const [ex, ey] = polar(cx, cy, r, a);
   const [sx, sy] = polar(cx, cy, r, a + 180);
@@ -561,7 +589,7 @@ const CircleSVG = ({ d, showAnswer, qIndex }: { d: DiagramData; showAnswer: bool
       {lineProp === "diameter" && <DimLine x1={sx} y1={sy} x2={ex} y2={ey} />}
       {lineProp === "radius" && <DimLine x1={cx} y1={cy} x2={ex} y2={ey} />}
       {lineProp && <Pill x={lx} y={ly} text={lineLabel} color={labelColor} italic={isUnknown && !showAnswer} />}
-      {hasPill && <Pill x={250} y={510} text={d.givenLabel!} boxed />}
+      {hasPill && <Pill x={250} y={487} text={d.givenLabel!} boxed />}
     </svg>
   );
 };
@@ -600,6 +628,9 @@ function customPrintHandler(questions: AnyQuestion[], printMode: PrintMode, cont
     container.querySelectorAll<SVGSVGElement>("svg[data-q-index]").forEach(el => {
       const idx = parseInt(el.getAttribute("data-q-index") ?? "0", 10);
       const clone = el.cloneNode(true) as SVGSVGElement;
+      // React's inline style (height:auto) would override the print CSS and
+      // clip the bottom of the diagram — strip it so the cell CSS controls size.
+      clone.removeAttribute("style");
       clone.setAttribute("width", "100%");
       clone.setAttribute("height", "100%");
       svgStrings[idx] = clone.outerHTML;
