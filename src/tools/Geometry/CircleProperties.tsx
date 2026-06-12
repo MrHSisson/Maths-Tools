@@ -541,6 +541,16 @@ const CircleSVG = ({ d, showAnswer, qIndex }: { d: DiagramData; showAnswer: bool
       k = Math.max(maxX - minX, maxY - minY) / VIEW_REF;
     }
 
+    // Pad the bounding box out to a square. Every diagram then has the same
+    // viewBox aspect ratio, so any container — width-bound on screen or
+    // meet-fitted in print — scales them all identically and the k-scaled
+    // labels render at exactly the same size in every cell.
+    {
+      const w = maxX - minX, h = maxY - minY;
+      if (w > h) { const g = (w - h) / 2; minY -= g; maxY += g; }
+      else if (h > w) { const g = (h - w) / 2; minX -= g; maxX += g; }
+    }
+
     // Right-angle marker for quarter circles; θ arc for arbitrary sectors.
     const sq = 32;
     const [q1x, q1y] = polar(0, 0, sq, startDeg);
@@ -569,9 +579,11 @@ const CircleSVG = ({ d, showAnswer, qIndex }: { d: DiagramData; showAnswer: bool
   }
 
   // ── Full circle ──────────────────────────────────────────────────────────
+  // Always a 500 × 500 square (matching the sectors' square viewBox) so labels
+  // render at the same size in every cell. With a given-value pill the circle
+  // shrinks to make room for it inside the square.
   const hasPill = !!d.givenLabel;
-  const cx = 250, cy = 250, r = 185;
-  const vbH = hasPill ? 528 : 500;
+  const cx = 250, cy = hasPill ? 207 : 250, r = hasPill ? 165 : 185;
   const a = d.angle ?? 30;
   const [ex, ey] = polar(cx, cy, r, a);
   const [sx, sy] = polar(cx, cy, r, a + 180);
@@ -597,14 +609,14 @@ const CircleSVG = ({ d, showAnswer, qIndex }: { d: DiagramData; showAnswer: bool
     : polar(cx, cy, r * 0.42, a);
 
   return (
-    <svg viewBox={`0 0 500 ${vbH}`} style={{ display: "block", width: "100%", height: "auto" }}
+    <svg viewBox="0 0 500 500" style={{ display: "block", width: "100%", height: "auto" }}
       preserveAspectRatio="xMidYMid meet" {...ep}>
       <circle cx={cx} cy={cy} r={r} fill={CIRCLE_FILL} stroke={ACCENT} strokeWidth={4} />
       <circle cx={cx} cy={cy} r={6} fill={ACCENT} />
       {lineProp === "diameter" && <DimLine x1={sx} y1={sy} x2={ex} y2={ey} />}
       {lineProp === "radius" && <DimLine x1={cx} y1={cy} x2={ex} y2={ey} />}
       {lineProp && <Pill x={lx} y={ly} text={lineLabel} color={labelColor} italic={isUnknown && !showAnswer} />}
-      {hasPill && <Pill x={250} y={487} text={d.givenLabel!} boxed />}
+      {hasPill && <Pill x={250} y={435} text={d.givenLabel!} boxed />}
     </svg>
   );
 };
