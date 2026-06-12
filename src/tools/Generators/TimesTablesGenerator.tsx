@@ -304,6 +304,9 @@ export default function TimesTablesQuizGenerator() {
         doc.setTextColor(5, 150, 105); // #059669 — matches .q-ans in the cells PDF
         doc.text(String(q.answer), x + beforeW, y);
         const ansW = doc.getTextWidth(String(q.answer));
+        doc.setDrawColor(5, 150, 105);
+        doc.setLineWidth(0.4);
+        doc.line(x + beforeW, y + 1, x + beforeW + ansW, y + 1);
         if (after) {
           doc.setFont('helvetica', 'normal');
           doc.setTextColor(0);
