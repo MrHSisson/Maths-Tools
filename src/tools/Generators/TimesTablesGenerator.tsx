@@ -286,16 +286,33 @@ export default function TimesTablesQuizGenerator() {
     doc.text('Answer Key', pageWidth / 2, 20, { align: 'center' });
 
     doc.setFontSize(13);
-    doc.setFont('helvetica', 'normal');
     questions.forEach((q, i) => {
       const row = Math.floor(i / numCols);
       const col = i % numCols;
       const x = 20 + col * colWidth;
       const y = 35 + row * lineH;
       if (y < pageHeight - 20) {
-        doc.text(q.question.replace('___', String(q.answer)), x, y);
+        // Render the answer inline where the blank was, in the same bold green
+        // as the cells layout, so it stands out — especially for missing-factor
+        // questions where it sits mid-expression.
+        const [before, after] = q.question.split('___');
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(0);
+        doc.text(before, x, y);
+        const beforeW = doc.getTextWidth(before);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(5, 150, 105); // #059669 — matches .q-ans in the cells PDF
+        doc.text(String(q.answer), x + beforeW, y);
+        const ansW = doc.getTextWidth(String(q.answer));
+        if (after) {
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(0);
+          doc.text(after, x + beforeW + ansW, y);
+        }
       }
     });
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(0);
 
     doc.setFontSize(7);
     doc.setTextColor(100);
