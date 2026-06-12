@@ -23,7 +23,13 @@ type SkillId =
   | 'multiplication'
   | 'negatives'
   | 'busStop'
-  | 'indices';
+  | 'indices'
+  | 'powersOfTen'
+  | 'rounding'
+  | 'primes'
+  | 'fdp'
+  | 'metric'
+  | 'bidmas';
 
 // ─── SKILL CONFIG ─────────────────────────────────────────────────────────────
 
@@ -37,6 +43,28 @@ type MultiplicationConfig = { types: ('2dx1d' | '2dx2d' | '3dx1d' | '3dx2d')[] }
 type BusStopConfig = { types: ('2d1d' | '3d1d' | '3d2d')[] };
 type IndicesConfig = { baseRange: 10 | 15; exponentRange: (2 | 3 | 4)[] };
 
+type PowersOfTenConfig = {
+  operations: ('multiply' | 'divide')[];
+  powers: (10 | 100 | 1000)[];
+  baseType: 'int' | '1dp' | '2dp';
+};
+type RoundTarget = 'n10' | 'n100' | 'n1000' | '1dp' | '2dp' | '1sf' | '2sf';
+type RoundingConfig = { targets: RoundTarget[]; edgeCases: boolean };
+type PrimesConfig = { tasks: ('identify' | 'next')[]; max: 20 | 50 | 100 };
+type FdpPath = 'fd' | 'fp' | 'df' | 'dp' | 'pf' | 'pd';
+type FdpConfig = { paths: FdpPath[]; complexity: 'common' | 'extended' };
+type MetricConfig = {
+  categories: ('length' | 'mass' | 'capacity')[];
+  step: 'adjacent' | 'nonadjacent';
+  decimals: boolean;
+};
+type BidmasConfig = {
+  steps: 2 | 3;
+  brackets: boolean;
+  indices: boolean;
+  allowNegatives: boolean;
+};
+
 type SkillConfigs = {
   numberBonds: NumberBondsConfig;
   timesTables: TimesTablesConfig;
@@ -47,6 +75,12 @@ type SkillConfigs = {
   negatives: NegativesConfig;
   busStop: BusStopConfig;
   indices: IndicesConfig;
+  powersOfTen: PowersOfTenConfig;
+  rounding: RoundingConfig;
+  primes: PrimesConfig;
+  fdp: FdpConfig;
+  metric: MetricConfig;
+  bidmas: BidmasConfig;
 };
 
 // ─── QUESTION GENERATORS ─────────────────────────────────────────────────────
@@ -62,6 +96,33 @@ function shuffle<T>(arr: T[]): T[] {
 
 function randInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function pick<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+// Round away floating-point noise, default 6 dp.
+function round(n: number, dp = 6): number {
+  const f = Math.pow(10, dp);
+  return Math.round(n * f) / f;
+}
+
+// Number → string with trailing zeros stripped (e.g. 2.50 → "2.5", 10.0 → "10").
+function numStr(n: number): string {
+  return String(round(n, 6));
+}
+
+function isPrime(n: number): boolean {
+  if (n < 2) return false;
+  for (let i = 2; i * i <= n; i++) if (n % i === 0) return false;
+  return true;
+}
+
+function nextPrime(n: number): number {
+  let p = n + 1;
+  while (!isPrime(p)) p++;
+  return p;
 }
 
 function genNumberBonds(config: NumberBondsConfig): Question[] {
@@ -253,6 +314,354 @@ function genIndices(config: IndicesConfig): Question[] {
         displayQuestion: `${base}<sup>${exp}</sup> = ___`,
       });
     }
+  }
+  return shuffle(pool);
+}
+
+function genPowersOfTen(config: PowersOfTenConfig): Question[] {
+  const pool: Question[] = [];
+  const seen = new Set<string>();
+  const ops = config.operations.length ? config.operations : (['multiply'] as const);
+  const powers = config.powers.length ? config.powers : ([10] as const);
+  for (let i = 0; i < 800; i++) {
+    const op = pick(ops as ('multiply' | 'divide')[]);
+    const power = pick(powers as (10 | 100 | 1000)[]);
+    let base: number;
+    if (config.baseType === 'int') base = randInt(1, 99);
+    else if (config.baseType === '1dp') base = round(randInt(1, 999) / 10, 1);
+    else base = round(randInt(1, 9999) / 100, 2);
+    const sym = op === 'multiply' ? '×' : '÷';
+    const ans = op === 'multiply' ? round(base * power, 6) : round(base / power, 6);
+    const q = `${numStr(base)} ${sym} ${power} = ___`;
+    if (seen.has(q)) continue;
+    seen.add(q);
+    pool.push({ question: q, answer: numStr(ans) });
+  }
+  return shuffle(pool);
+}
+
+function genRounding(config: RoundingConfig): Question[] {
+  const pool: Question[] = [];
+  const seen = new Set<string>();
+  const targets = config.targets.length ? config.targets : (['n10'] as RoundTarget[]);
+  const labelMap: Record<RoundTarget, string> = {
+    n10: 'the nearest 10',
+    n100: 'the nearest 100',
+    n1000: 'the nearest 1000',
+    '1dp': '1 decimal place',
+    '2dp': '2 decimal places',
+    '1sf': '1 significant figure',
+    '2sf': '2 significant figures',
+  };
+
+  // Build one candidate number + the place-value unit it rounds to.
+  const makeRaw = (target: RoundTarget): { n: number; u: number } => {
+    switch (target) {
+      case 'n10':   return { n: randInt(11, 2999),     u: 10 };
+      case 'n100':  return { n: randInt(101, 29999),   u: 100 };
+      case 'n1000': return { n: randInt(1001, 299999), u: 1000 };
+      case '1dp':   return { n: round(randInt(11, 9999) / 100, 2),    u: 0.1 };
+      case '2dp':   return { n: round(randInt(101, 99999) / 1000, 3), u: 0.01 };
+      case '1sf':
+      case '2sf': {
+        const sf = target === '1sf' ? 1 : 2;
+        const n = round(randInt(11, 9989) / pick([1, 10, 100, 1000]), 4);
+        const digits = Math.floor(Math.log10(n)) + 1; // integer-part digits (≤0 if n<1)
+        const u = Math.pow(10, digits - sf);
+        return { n, u };
+      }
+    }
+  };
+
+  for (const target of targets) {
+    let count = 0;
+    for (let i = 0; i < 1200 && count < 120; i++) {
+      const { n, u } = makeRaw(target);
+      const r = n / u;
+      const floor = Math.floor(r);
+      const frac = r - floor;
+      const boundary = Math.abs(frac - 0.5) < 1e-9;        // exact halfway (ends in 5)
+      const rounded = round(Math.round(r) * u, 6);
+      const roundedUp = Math.round(r) > floor;
+      const digit = Math.floor(Math.abs(n) / u) % 10;
+      const cascade = roundedUp && digit === 9;             // carries into a higher place
+      if (!config.edgeCases && (boundary || cascade)) continue;
+      const q = `Round ${numStr(n)} to ${labelMap[target]}`;
+      if (seen.has(q)) continue;
+      seen.add(q);
+      pool.push({ question: q, answer: numStr(rounded) });
+      count++;
+    }
+  }
+  return shuffle(pool);
+}
+
+function genPrimes(config: PrimesConfig): Question[] {
+  const pool: Question[] = [];
+  const seen = new Set<string>();
+  const tasks = config.tasks.length ? config.tasks : (['identify'] as ('identify' | 'next')[]);
+  const max = config.max;
+  for (const task of tasks) {
+    if (task === 'identify') {
+      for (let n = 2; n <= max; n++) {
+        const q = `Is ${n} prime?`;
+        if (seen.has(q)) continue;
+        seen.add(q);
+        pool.push({ question: q, answer: isPrime(n) ? 'Yes' : 'No' });
+      }
+    } else {
+      for (let n = 2; n < max; n++) {
+        const q = `Next prime after ${n} = ___`;
+        if (seen.has(q)) continue;
+        seen.add(q);
+        pool.push({ question: q, answer: nextPrime(n) });
+      }
+    }
+  }
+  return shuffle(pool);
+}
+
+type FdpTriple = { frac: string; dec: number; pct: number };
+const FDP_COMMON: FdpTriple[] = [
+  { frac: '1/2', dec: 0.5, pct: 50 },
+  { frac: '1/4', dec: 0.25, pct: 25 },
+  { frac: '3/4', dec: 0.75, pct: 75 },
+  { frac: '1/10', dec: 0.1, pct: 10 },
+  { frac: '3/10', dec: 0.3, pct: 30 },
+  { frac: '7/10', dec: 0.7, pct: 70 },
+  { frac: '9/10', dec: 0.9, pct: 90 },
+  { frac: '1/5', dec: 0.2, pct: 20 },
+  { frac: '2/5', dec: 0.4, pct: 40 },
+  { frac: '3/5', dec: 0.6, pct: 60 },
+  { frac: '4/5', dec: 0.8, pct: 80 },
+];
+const FDP_EXTENDED: FdpTriple[] = [
+  { frac: '1/8', dec: 0.125, pct: 12.5 },
+  { frac: '3/8', dec: 0.375, pct: 37.5 },
+  { frac: '5/8', dec: 0.625, pct: 62.5 },
+  { frac: '7/8', dec: 0.875, pct: 87.5 },
+  { frac: '1/20', dec: 0.05, pct: 5 },
+  { frac: '3/20', dec: 0.15, pct: 15 },
+  { frac: '1/25', dec: 0.04, pct: 4 },
+  { frac: '3/25', dec: 0.12, pct: 12 },
+  { frac: '1/50', dec: 0.02, pct: 2 },
+  { frac: '1/100', dec: 0.01, pct: 1 },
+];
+
+function genFdp(config: FdpConfig): Question[] {
+  const pool: Question[] = [];
+  const seen = new Set<string>();
+  const paths = config.paths.length ? config.paths : (['fd'] as FdpPath[]);
+  const triples = config.complexity === 'extended'
+    ? [...FDP_COMMON, ...FDP_EXTENDED]
+    : FDP_COMMON;
+  for (const t of triples) {
+    for (const path of paths) {
+      let q = '', answer: string | number = '';
+      switch (path) {
+        case 'fd': q = `${t.frac} as a decimal`;    answer = numStr(t.dec); break;
+        case 'fp': q = `${t.frac} as a percentage`; answer = `${numStr(t.pct)}%`; break;
+        case 'df': q = `${numStr(t.dec)} as a fraction`;   answer = t.frac; break;
+        case 'dp': q = `${numStr(t.dec)} as a percentage`; answer = `${numStr(t.pct)}%`; break;
+        case 'pf': q = `${numStr(t.pct)}% as a fraction`;  answer = t.frac; break;
+        case 'pd': q = `${numStr(t.pct)}% as a decimal`;   answer = numStr(t.dec); break;
+      }
+      if (seen.has(q)) continue;
+      seen.add(q);
+      pool.push({ question: q, answer });
+    }
+  }
+  return shuffle(pool);
+}
+
+type MetricUnit = { name: string; factor: number; order: number };
+const METRIC_UNITS: Record<'length' | 'mass' | 'capacity', MetricUnit[]> = {
+  length: [
+    { name: 'mm', factor: 0.001, order: 0 },
+    { name: 'cm', factor: 0.01, order: 1 },
+    { name: 'm', factor: 1, order: 2 },
+    { name: 'km', factor: 1000, order: 3 },
+  ],
+  mass: [
+    { name: 'mg', factor: 0.001, order: 0 },
+    { name: 'g', factor: 1, order: 1 },
+    { name: 'kg', factor: 1000, order: 2 },
+    { name: 't', factor: 1000000, order: 3 },
+  ],
+  capacity: [
+    { name: 'ml', factor: 0.001, order: 0 },
+    { name: 'cl', factor: 0.01, order: 1 },
+    { name: 'l', factor: 1, order: 2 },
+  ],
+};
+
+function genMetric(config: MetricConfig): Question[] {
+  const pool: Question[] = [];
+  const seen = new Set<string>();
+  const cats = config.categories.length
+    ? config.categories
+    : (['length'] as ('length' | 'mass' | 'capacity')[]);
+
+  // Enumerate every unit pair with the required order gap.
+  const pairs: { cat: string; small: MetricUnit; big: MetricUnit }[] = [];
+  for (const cat of cats) {
+    const units = METRIC_UNITS[cat];
+    for (let i = 0; i < units.length; i++) {
+      for (let j = i + 1; j < units.length; j++) {
+        const gap = units[j].order - units[i].order;
+        if (config.step === 'adjacent' ? gap === 1 : gap >= 2) {
+          pairs.push({ cat, small: units[i], big: units[j] });
+        }
+      }
+    }
+  }
+  if (pairs.length === 0) return [];
+
+  for (let i = 0; i < 1000 && pool.length < 400; i++) {
+    const { small, big } = pick(pairs);
+    const ratio = round(big.factor / small.factor, 6); // power of 10
+    let from: MetricUnit, to: MetricUnit, val: number, ans: number;
+    // "down" = big→small (integer); "up" = small→big (may be decimal)
+    const goUp = config.decimals && Math.random() < 0.6;
+    if (goUp) {
+      from = small; to = big; val = randInt(1, ratio * 99); ans = round(val / ratio, 6);
+    } else if (!config.decimals && Math.random() < 0.5) {
+      // small→big but forced clean: val is a multiple of ratio
+      from = small; to = big; const k = randInt(1, 99); val = k * ratio; ans = k;
+    } else {
+      from = big; to = small; val = randInt(1, 99); ans = round(val * ratio, 6);
+    }
+    const q = `${numStr(val)} ${from.name} = ___ ${to.name}`;
+    if (seen.has(q)) continue;
+    seen.add(q);
+    pool.push({ question: q, answer: numStr(ans) });
+  }
+  return shuffle(pool);
+}
+
+// ─── BIDMAS TEMPLATES ─────────────────────────────────────────────────────────
+
+type BidmasInstance = { q: string; display?: string; answer: number; ints: number[] };
+type BidmasTmpl = { steps: 2 | 3; brackets: boolean; indices: boolean; gen: () => BidmasInstance };
+
+const sq = (b: number) => b * b;
+
+const BIDMAS_TEMPLATES: BidmasTmpl[] = [
+  // ── 2-step, no brackets, no indices ──
+  { steps: 2, brackets: false, indices: false, gen: () => {
+    const a = randInt(1, 20), b = randInt(2, 9), c = randInt(2, 9);
+    return { q: `${a} + ${b} × ${c}`, answer: a + b * c, ints: [b * c] }; } },
+  { steps: 2, brackets: false, indices: false, gen: () => {
+    const a = randInt(2, 9), b = randInt(2, 9), c = randInt(1, 20);
+    return { q: `${a} × ${b} + ${c}`, answer: a * b + c, ints: [a * b] }; } },
+  { steps: 2, brackets: false, indices: false, gen: () => {
+    const a = randInt(2, 9), b = randInt(2, 9), c = randInt(1, 20);
+    return { q: `${a} × ${b} − ${c}`, answer: a * b - c, ints: [a * b, a * b - c] }; } },
+  { steps: 2, brackets: false, indices: false, gen: () => {
+    const a = randInt(1, 20), b = randInt(2, 9), c = randInt(2, 9);
+    return { q: `${a} − ${b} × ${c}`, answer: a - b * c, ints: [b * c, a - b * c] }; } },
+  { steps: 2, brackets: false, indices: false, gen: () => {
+    const c = randInt(2, 9), q2 = randInt(2, 9), a = randInt(1, 20), b = c * q2;
+    return { q: `${a} + ${b} ÷ ${c}`, answer: a + q2, ints: [q2] }; } },
+  { steps: 2, brackets: false, indices: false, gen: () => {
+    const b = randInt(2, 9), q2 = randInt(2, 9), c = randInt(1, 12), dividend = b * q2;
+    return { q: `${dividend} ÷ ${b} + ${c}`, answer: q2 + c, ints: [q2] }; } },
+
+  // ── 2-step, brackets ──
+  { steps: 2, brackets: true, indices: false, gen: () => {
+    const a = randInt(2, 12), b = randInt(2, 12), c = randInt(2, 9);
+    return { q: `(${a} + ${b}) × ${c}`, answer: (a + b) * c, ints: [a + b] }; } },
+  { steps: 2, brackets: true, indices: false, gen: () => {
+    const a = randInt(2, 15), b = randInt(1, 14), c = randInt(2, 9);
+    return { q: `(${a} − ${b}) × ${c}`, answer: (a - b) * c, ints: [a - b, (a - b) * c] }; } },
+  { steps: 2, brackets: true, indices: false, gen: () => {
+    const a = randInt(2, 12), b = randInt(2, 12), c = randInt(2, 9);
+    return { q: `${c} × (${a} + ${b})`, answer: c * (a + b), ints: [a + b] }; } },
+  { steps: 2, brackets: true, indices: false, gen: () => {
+    const c = randInt(2, 6), q2 = randInt(2, 9), s = c * q2, a = randInt(1, s - 1), b = s - a;
+    return { q: `(${a} + ${b}) ÷ ${c}`, answer: q2, ints: [s, q2] }; } },
+
+  // ── 2-step, indices ──
+  { steps: 2, brackets: false, indices: true, gen: () => {
+    const a = randInt(1, 30), b = randInt(2, 9);
+    return { q: `${a} + ${b}²`, display: `${a} + ${b}<sup>2</sup>`, answer: a + sq(b), ints: [sq(b)] }; } },
+  { steps: 2, brackets: false, indices: true, gen: () => {
+    const a = randInt(20, 90), b = randInt(2, 9);
+    return { q: `${a} − ${b}²`, display: `${a} − ${b}<sup>2</sup>`, answer: a - sq(b), ints: [sq(b), a - sq(b)] }; } },
+  { steps: 2, brackets: false, indices: true, gen: () => {
+    const b = randInt(2, 9), c = randInt(1, 30);
+    return { q: `${b}² + ${c}`, display: `${b}<sup>2</sup> + ${c}`, answer: sq(b) + c, ints: [sq(b)] }; } },
+  { steps: 2, brackets: false, indices: true, gen: () => {
+    const a = randInt(2, 5), b = randInt(2, 6);
+    return { q: `${a} × ${b}²`, display: `${a} × ${b}<sup>2</sup>`, answer: a * sq(b), ints: [sq(b)] }; } },
+
+  // ── 3-step, no brackets, no indices ──
+  { steps: 3, brackets: false, indices: false, gen: () => {
+    const a = randInt(1, 20), b = randInt(2, 9), c = randInt(2, 9), d = randInt(1, 20);
+    return { q: `${a} + ${b} × ${c} − ${d}`, answer: a + b * c - d, ints: [b * c, a + b * c, a + b * c - d] }; } },
+  { steps: 3, brackets: false, indices: false, gen: () => {
+    const a = randInt(2, 9), b = randInt(2, 9), c = randInt(2, 9), d = randInt(2, 9);
+    return { q: `${a} × ${b} + ${c} × ${d}`, answer: a * b + c * d, ints: [a * b, c * d] }; } },
+  { steps: 3, brackets: false, indices: false, gen: () => {
+    const a = randInt(2, 9), b = randInt(2, 9), c = randInt(2, 9), d = randInt(2, 9);
+    return { q: `${a} × ${b} − ${c} × ${d}`, answer: a * b - c * d, ints: [a * b, c * d, a * b - c * d] }; } },
+  { steps: 3, brackets: false, indices: false, gen: () => {
+    const a = randInt(2, 9), b = randInt(2, 9), c = randInt(1, 15), d = randInt(1, 15);
+    return { q: `${a} × ${b} + ${c} − ${d}`, answer: a * b + c - d, ints: [a * b, a * b + c, a * b + c - d] }; } },
+
+  // ── 3-step, brackets ──
+  { steps: 3, brackets: true, indices: false, gen: () => {
+    const a = randInt(2, 12), b = randInt(2, 12), c = randInt(2, 9), d = randInt(1, 20);
+    return { q: `(${a} + ${b}) × ${c} − ${d}`, answer: (a + b) * c - d, ints: [a + b, (a + b) * c, (a + b) * c - d] }; } },
+  { steps: 3, brackets: true, indices: false, gen: () => {
+    const a = randInt(2, 12), b = randInt(2, 12), c = randInt(2, 9), d = randInt(1, 20);
+    return { q: `(${a} + ${b}) × ${c} + ${d}`, answer: (a + b) * c + d, ints: [a + b, (a + b) * c] }; } },
+  { steps: 3, brackets: true, indices: false, gen: () => {
+    const a = randInt(2, 15), b = randInt(1, 14), c = randInt(2, 9), d = randInt(1, 20);
+    return { q: `(${a} − ${b}) × ${c} + ${d}`, answer: (a - b) * c + d, ints: [a - b, (a - b) * c] }; } },
+  { steps: 3, brackets: true, indices: false, gen: () => {
+    const a = randInt(2, 9), b = randInt(2, 12), c = randInt(2, 12), d = randInt(1, 20);
+    return { q: `${a} × (${b} + ${c}) − ${d}`, answer: a * (b + c) - d, ints: [b + c, a * (b + c), a * (b + c) - d] }; } },
+
+  // ── 3-step, indices ──
+  { steps: 3, brackets: false, indices: true, gen: () => {
+    const a = randInt(1, 20), b = randInt(2, 9), c = randInt(1, 20);
+    return { q: `${a} + ${b}² − ${c}`, display: `${a} + ${b}<sup>2</sup> − ${c}`, answer: a + sq(b) - c, ints: [sq(b), a + sq(b), a + sq(b) - c] }; } },
+  { steps: 3, brackets: false, indices: true, gen: () => {
+    const a = randInt(2, 4), b = randInt(2, 6), c = randInt(1, 20);
+    return { q: `${a} × ${b}² + ${c}`, display: `${a} × ${b}<sup>2</sup> + ${c}`, answer: a * sq(b) + c, ints: [sq(b), a * sq(b)] }; } },
+  { steps: 3, brackets: false, indices: true, gen: () => {
+    const b = randInt(2, 7), c = randInt(2, 9), d = randInt(2, 9);
+    return { q: `${b}² + ${c} × ${d}`, display: `${b}<sup>2</sup> + ${c} × ${d}`, answer: sq(b) + c * d, ints: [sq(b), c * d] }; } },
+
+  // ── 3-step, brackets + indices ──
+  { steps: 3, brackets: true, indices: true, gen: () => {
+    const a = randInt(1, 8), b = randInt(1, 8), c = randInt(1, 30);
+    return { q: `(${a} + ${b})² − ${c}`, display: `(${a} + ${b})<sup>2</sup> − ${c}`, answer: sq(a + b) - c, ints: [a + b, sq(a + b), sq(a + b) - c] }; } },
+  { steps: 3, brackets: true, indices: true, gen: () => {
+    const a = randInt(1, 8), b = randInt(1, 8), c = randInt(1, 30);
+    return { q: `(${a} + ${b})² + ${c}`, display: `(${a} + ${b})<sup>2</sup> + ${c}`, answer: sq(a + b) + c, ints: [a + b, sq(a + b)] }; } },
+];
+
+function genBidmas(config: BidmasConfig): Question[] {
+  const pool: Question[] = [];
+  const seen = new Set<string>();
+  const eligible = BIDMAS_TEMPLATES.filter(t =>
+    t.steps === config.steps &&
+    (!t.brackets || config.brackets) &&
+    (!t.indices || config.indices));
+  if (eligible.length === 0) return [];
+  for (let i = 0; i < 2500 && pool.length < 400; i++) {
+    const inst = pick(eligible).gen();
+    if (!config.allowNegatives && (inst.answer < 0 || inst.ints.some(x => x < 0))) continue;
+    const q = `${inst.q} = ___`;
+    if (seen.has(q)) continue;
+    seen.add(q);
+    pool.push({
+      question: q,
+      answer: inst.answer,
+      displayQuestion: inst.display ? `${inst.display} = ___` : undefined,
+    });
   }
   return shuffle(pool);
 }
@@ -451,9 +860,15 @@ const SKILL_META: Record<SkillId, { label: string; description: string }> = {
   negatives:      { label: 'Negatives',            description: 'Operations with negative numbers' },
   busStop:        { label: 'Division',             description: 'Long division, integer answers' },
   indices:        { label: 'Indices',              description: 'Powers and exponents' },
+  powersOfTen:    { label: 'Powers of 10',         description: 'Multiply/divide by 10, 100, 1000' },
+  rounding:       { label: 'Rounding',             description: 'Decimal places, sig figs, nearest 10' },
+  primes:         { label: 'Primes',               description: 'Identify primes and find the next prime' },
+  fdp:            { label: 'FDP Conversion',       description: 'Fractions, decimals and percentages' },
+  metric:         { label: 'Metric Conversions',   description: 'Length, mass and capacity units' },
+  bidmas:         { label: 'BIDMAS',               description: 'Order of operations' },
 };
 
-const ALL_SKILLS: SkillId[] = ['numberBonds', 'timesTables', 'reverseTT', 'addition', 'subtraction', 'multiplication', 'busStop', 'negatives', 'indices'];
+const ALL_SKILLS: SkillId[] = ['numberBonds', 'timesTables', 'reverseTT', 'addition', 'subtraction', 'multiplication', 'busStop', 'negatives', 'indices', 'powersOfTen', 'rounding', 'primes', 'fdp', 'metric', 'bidmas'];
 
 // ─── DEFAULT CONFIGS ──────────────────────────────────────────────────────────
 
@@ -467,6 +882,12 @@ const defaultConfigs: SkillConfigs = {
   negatives:      { operations: ['addition', 'subtraction'], range: 10 },
   busStop:        { types: ['2d1d'] },
   indices:        { baseRange: 10, exponentRange: [2, 3] },
+  powersOfTen:    { operations: ['multiply'], powers: [10, 100], baseType: 'int' },
+  rounding:       { targets: ['n10', 'n100'], edgeCases: false },
+  primes:         { tasks: ['identify'], max: 50 },
+  fdp:            { paths: ['fd', 'dp'], complexity: 'common' },
+  metric:         { categories: ['length'], step: 'adjacent', decimals: false },
+  bidmas:         { steps: 2, brackets: true, indices: false, allowNegatives: false },
 };
 
 
@@ -549,6 +970,7 @@ export default function MathsSkillsGenerator() {
   const [skillCounts, setSkillCounts] = useState<Record<SkillId, number>>({
     numberBonds: 5, timesTables: 5, reverseTT: 5, addition: 5, subtraction: 5,
     multiplication: 5, negatives: 5, busStop: 5, indices: 5,
+    powersOfTen: 5, rounding: 5, primes: 5, fdp: 5, metric: 5, bidmas: 5,
   });
   const [configs, setConfigs] = useState<SkillConfigs>(defaultConfigs);
   const [maxQuestions, setMaxQuestions] = useState<number>(30);
@@ -615,6 +1037,12 @@ export default function MathsSkillsGenerator() {
       case 'negatives':      pool = genNegatives(configs.negatives); break;
       case 'busStop':        pool = genBusStop(configs.busStop); break;
       case 'indices':        pool = genIndices(configs.indices); break;
+      case 'powersOfTen':    pool = genPowersOfTen(configs.powersOfTen); break;
+      case 'rounding':       pool = genRounding(configs.rounding); break;
+      case 'primes':         pool = genPrimes(configs.primes); break;
+      case 'fdp':            pool = genFdp(configs.fdp); break;
+      case 'metric':         pool = genMetric(configs.metric); break;
+      case 'bidmas':         pool = genBidmas(configs.bidmas); break;
     }
     return pool.map(q => ({ ...q, skill }));
   };
@@ -916,6 +1344,148 @@ export default function MathsSkillsGenerator() {
             onToggle={v => updateConfig('indices', { exponentRange: toggleArr(c.indices.exponentRange, v as 2|3|4) })}
             format={v => `x${['', '', '²', '³', '⁴'][v]}`}
           />
+        </>
+      ),
+
+      powersOfTen: (
+        <>
+          <PillMulti
+            label="Operations"
+            options={['multiply', 'divide'] as const}
+            selected={c.powersOfTen.operations}
+            onToggle={v => updateConfig('powersOfTen', { operations: toggleArr(c.powersOfTen.operations, v as 'multiply' | 'divide') })}
+            format={v => v === 'multiply' ? 'Multiply ×' : 'Divide ÷'}
+          />
+          <PillMulti
+            label="Multipliers / divisors"
+            options={[10, 100, 1000] as const}
+            selected={c.powersOfTen.powers}
+            onToggle={v => updateConfig('powersOfTen', { powers: toggleArr(c.powersOfTen.powers, v as 10 | 100 | 1000) })}
+          />
+          <PillSingle
+            label="Base number type"
+            options={['int', '1dp', '2dp'] as const}
+            selected={c.powersOfTen.baseType}
+            onSelect={v => updateConfig('powersOfTen', { baseType: v as 'int' | '1dp' | '2dp' })}
+            format={v => v === 'int' ? 'Integers' : v === '1dp' ? '1 d.p.' : '2+ d.p.'}
+          />
+        </>
+      ),
+
+      rounding: (
+        <>
+          <PillMulti
+            label="Target accuracy"
+            options={['n10', 'n100', 'n1000', '1dp', '2dp', '1sf', '2sf'] as const}
+            selected={c.rounding.targets}
+            onToggle={v => updateConfig('rounding', { targets: toggleArr(c.rounding.targets, v as RoundTarget) })}
+            format={v => ({ n10: 'Nearest 10', n100: 'Nearest 100', n1000: 'Nearest 1000', '1dp': '1 d.p.', '2dp': '2 d.p.', '1sf': '1 s.f.', '2sf': '2 s.f.' } as Record<RoundTarget, string>)[v]}
+          />
+          <div className="flex justify-center gap-2">
+            <PillToggle
+              label="Include edge cases"
+              active={c.rounding.edgeCases}
+              onToggle={() => updateConfig('rounding', { edgeCases: !c.rounding.edgeCases })}
+            />
+          </div>
+        </>
+      ),
+
+      primes: (
+        <>
+          <PillMulti
+            label="Task type"
+            options={['identify', 'next'] as const}
+            selected={c.primes.tasks}
+            onToggle={v => updateConfig('primes', { tasks: toggleArr(c.primes.tasks, v as 'identify' | 'next') })}
+            format={v => v === 'identify' ? 'Identify prime' : 'Next prime'}
+          />
+          <PillSingle
+            label="Range"
+            options={[20, 50, 100] as const}
+            selected={c.primes.max}
+            onSelect={v => updateConfig('primes', { max: v as 20 | 50 | 100 })}
+            format={v => `Up to ${v}`}
+          />
+        </>
+      ),
+
+      fdp: (
+        <>
+          <PillMulti
+            label="Conversion path"
+            options={['fd', 'fp', 'df', 'dp', 'pf', 'pd'] as const}
+            selected={c.fdp.paths}
+            onToggle={v => updateConfig('fdp', { paths: toggleArr(c.fdp.paths, v as FdpPath) })}
+            format={v => ({ fd: 'Frac → Dec', fp: 'Frac → %', df: 'Dec → Frac', dp: 'Dec → %', pf: '% → Frac', pd: '% → Dec' } as Record<FdpPath, string>)[v]}
+          />
+          <PillSingle
+            label="Fraction complexity"
+            options={['common', 'extended'] as const}
+            selected={c.fdp.complexity}
+            onSelect={v => updateConfig('fdp', { complexity: v as 'common' | 'extended' })}
+            format={v => v === 'common' ? 'Common' : 'Extended'}
+          />
+        </>
+      ),
+
+      metric: (
+        <>
+          <PillMulti
+            label="Measure category"
+            options={['length', 'mass', 'capacity'] as const}
+            selected={c.metric.categories}
+            onToggle={v => updateConfig('metric', { categories: toggleArr(c.metric.categories, v as 'length' | 'mass' | 'capacity') })}
+            format={v => v.charAt(0).toUpperCase() + v.slice(1)}
+          />
+          <PillSingle
+            label="Conversion step"
+            options={['adjacent', 'nonadjacent'] as const}
+            selected={c.metric.step}
+            onSelect={v => updateConfig('metric', { step: v as 'adjacent' | 'nonadjacent' })}
+            format={v => v === 'adjacent' ? 'Adjacent units' : 'Non-adjacent'}
+          />
+          <div className="flex justify-center gap-2">
+            <PillToggle
+              label="Include decimal answers"
+              active={c.metric.decimals}
+              onToggle={() => updateConfig('metric', { decimals: !c.metric.decimals })}
+            />
+          </div>
+        </>
+      ),
+
+      bidmas: (
+        <>
+          <PillSingle
+            label="Complexity"
+            options={[2, 3] as const}
+            selected={c.bidmas.steps}
+            onSelect={v => updateConfig('bidmas', { steps: v as 2 | 3 })}
+            format={v => `${v}-step`}
+          />
+          <div className="mb-4">
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Operations included</p>
+            <div className="flex justify-center gap-2">
+              <PillToggle
+                label="Brackets"
+                active={c.bidmas.brackets}
+                onToggle={() => updateConfig('bidmas', { brackets: !c.bidmas.brackets })}
+              />
+              <PillToggle
+                label="Indices"
+                active={c.bidmas.indices}
+                onToggle={() => updateConfig('bidmas', { indices: !c.bidmas.indices })}
+              />
+            </div>
+          </div>
+          <div className="flex justify-center gap-2">
+            <PillToggle
+              label="Allow negative numbers"
+              active={c.bidmas.allowNegatives}
+              onToggle={() => updateConfig('bidmas', { allowNegatives: !c.bidmas.allowNegatives })}
+            />
+          </div>
         </>
       ),
     };
