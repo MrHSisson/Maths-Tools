@@ -152,7 +152,7 @@ function handlePrintCells(questions: Question[], separate = false) {
   .page-header h1 { font-size:5mm; font-weight:700; color:#1e3a8a; }
   .page-header .meta { font-size:3mm; color:#6b7280; }
   .grid { display:grid; gap:${GAP_MM}mm; margin-bottom:${GAP_MM}mm; }
-  .divider { border-top:0.5mm solid #1e3a8a; margin:${(DIV_MM - 0.5) / 2}mm 0; }
+  .divider { width:60%; margin:${(DIV_MM - 0.3) / 2}mm auto; border-top:0.3mm solid #d1d5db; }
   .cell {
     border:0.3mm solid #000; border-radius:3mm;
     overflow:hidden; display:flex; align-items:stretch; justify-content:flex-start;
@@ -222,8 +222,8 @@ function handlePrintList(questions: Question[], separate = false) {
   .name { font-size:3.9mm; margin-top:6mm; }
   .list { display:grid; grid-template-columns:repeat(3,1fr); column-gap:4mm; margin-top:7mm; }
   .q { font-size:4.6mm; height:11.5mm; white-space:nowrap; }
-  .divider { border-top:0.5mm solid #1e3a8a; margin-top:3mm; }
-  .divider + .list { margin-top:5mm; }
+  .divider { width:60%; margin:0 auto 6mm; border-top:0.3mm solid #d1d5db; }
+  .divider + .list { margin-top:0; }
   .ans { color:#059669; font-weight:700; text-decoration:underline; text-decoration-thickness:0.4mm; text-underline-offset:0.8mm; }
   .footer { position:absolute; bottom:0; left:0; right:0; text-align:center; font-size:2.5mm; color:#646464; }
 </style>
@@ -602,7 +602,7 @@ export default function TimesTablesQuizGenerator() {
                 {previewQuestions.slice(0, 12).map((q, idx) => (
                   <Fragment key={idx}>
                     {separateSections && bothFormats && q.missing && idx > 0 && !previewQuestions[idx - 1].missing && (
-                      <div className="col-span-3 border-b-2 border-blue-900 my-1" />
+                      <div className="col-span-3 w-3/5 mx-auto border-b border-gray-300 my-1" />
                     )}
                     <div className="bg-gray-50 rounded-lg px-4 py-3 border border-gray-100">
                       <span className="text-lg font-semibold" style={{ color: '#000000' }}>
@@ -644,6 +644,7 @@ export default function TimesTablesQuizGenerator() {
     </>
   );
 }
+
 
 
 
