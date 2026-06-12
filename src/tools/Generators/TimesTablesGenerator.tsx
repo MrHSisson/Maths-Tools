@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Download, Home, Menu, X, Eye } from 'lucide-react';
-import { jsPDF } from 'jspdf';
 
 const TOOL_CONFIG = {
   pageTitle: 'Times Tables Generator',
@@ -149,6 +148,63 @@ ${buildPage(true)}
   win.document.close();
 }
 
+// ── LIST ("No Cells") PDF ─────────────────────────────────────────────────────
+
+function handlePrintList(questions: Question[]) {
+  // Answers render inline where the blank was, in the same bold green as the
+  // cells layout — important for missing-factor questions where the answer
+  // sits mid-expression.
+  const answerHtml = (q: Question): string => {
+    const [before, after] = q.question.split('___');
+    return `${before}<span class="ans">${q.answer}</span>${after ?? ''}`;
+  };
+
+  const buildPage = (showAnswer: boolean): string => {
+    const title = showAnswer ? 'Answer Key' : 'Times Tables Quiz';
+    const items = questions
+      .map(q => `<div class="q">${showAnswer ? answerHtml(q) : q.question}</div>`)
+      .join('');
+    return `<div class="page">
+      <h1>${title}</h1>
+      ${showAnswer ? '' : '<div class="name">Name: ________________________________</div>'}
+      <div class="list">${items}</div>
+      <div class="footer">Times Tables Generator</div>
+    </div>`;
+  };
+
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Times Tables Quiz</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  @page { size:A4 portrait; margin:14mm 20mm; }
+  body { font-family:Helvetica,Arial,sans-serif; background:#fff; }
+  @media print { body { -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
+  .page { width:170mm; height:269mm; position:relative; page-break-after:always; }
+  .page:last-child { page-break-after:auto; }
+  h1 { font-size:7mm; font-weight:700; text-align:center; }
+  .name { font-size:3.9mm; margin-top:6mm; }
+  .list { display:grid; grid-template-columns:repeat(3,1fr); column-gap:4mm; margin-top:7mm; }
+  .q { font-size:4.6mm; height:11.5mm; white-space:nowrap; }
+  .ans { color:#059669; font-weight:700; text-decoration:underline; text-decoration-thickness:0.4mm; text-underline-offset:0.8mm; }
+  .footer { position:absolute; bottom:0; left:0; right:0; text-align:center; font-size:2.5mm; color:#646464; }
+</style>
+</head>
+<body>
+${buildPage(false)}
+${buildPage(true)}
+<script>setTimeout(function(){ window.print(); }, 300);</script>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank');
+  if (!win) { alert('Please allow popups to use the PDF export.'); return; }
+  win.document.write(html);
+  win.document.close();
+}
+
 // ── COMPONENT ─────────────────────────────────────────────────────────────────
 
 export default function TimesTablesQuizGenerator() {
@@ -243,85 +299,7 @@ export default function TimesTablesQuizGenerator() {
       return;
     }
 
-    // List mode — jsPDF
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.width;
-    const pageHeight = doc.internal.pageSize.height;
-
-    const today = new Date();
-    const dateStr = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${String(today.getFullYear()).slice(-2)}`;
-    doc.setProperties({ title: `Times Tables ${dateStr}`, subject: 'Mathematics Practice' });
-
-    // Page 1: Questions
-    doc.setFontSize(20);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Times Tables Quiz', pageWidth / 2, 20, { align: 'center' });
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Name: ________________________________', 20, 35);
-
-    const startY = 48;
-    const colWidth = (pageWidth - 40) / 3;
-    const lineH = 11.5;
-    const numCols = 3;
-
-    doc.setFontSize(13);
-    questions.forEach((q, i) => {
-      const row = Math.floor(i / numCols);
-      const col = i % numCols;
-      const x = 20 + col * colWidth;
-      const y = startY + row * lineH;
-      if (y < pageHeight - 20) doc.text(q.question, x, y);
-    });
-
-    doc.setFontSize(7);
-    doc.setTextColor(100);
-    doc.text('Times Tables Generator', pageWidth / 2, pageHeight - 10, { align: 'center' });
-
-    // Page 2: Answers
-    doc.addPage();
-    doc.setFontSize(20);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(0);
-    doc.text('Answer Key', pageWidth / 2, 20, { align: 'center' });
-
-    doc.setFontSize(13);
-    questions.forEach((q, i) => {
-      const row = Math.floor(i / numCols);
-      const col = i % numCols;
-      const x = 20 + col * colWidth;
-      const y = 35 + row * lineH;
-      if (y < pageHeight - 20) {
-        // Render the answer inline where the blank was, in the same bold green
-        // as the cells layout, so it stands out — especially for missing-factor
-        // questions where it sits mid-expression.
-        const [before, after] = q.question.split('___');
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(0);
-        doc.text(before, x, y);
-        const beforeW = doc.getTextWidth(before);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(5, 150, 105); // #059669 — matches .q-ans in the cells PDF
-        doc.text(String(q.answer), x + beforeW, y);
-        const ansW = doc.getTextWidth(String(q.answer));
-        doc.setDrawColor(5, 150, 105);
-        doc.setLineWidth(0.4);
-        doc.line(x + beforeW, y + 1, x + beforeW + ansW, y + 1);
-        if (after) {
-          doc.setFont('helvetica', 'normal');
-          doc.setTextColor(0);
-          doc.text(after, x + beforeW + ansW, y);
-        }
-      }
-    });
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(0);
-
-    doc.setFontSize(7);
-    doc.setTextColor(100);
-    doc.text('Times Tables Generator', pageWidth / 2, pageHeight - 10, { align: 'center' });
-
-    window.open(URL.createObjectURL(doc.output('blob')), '_blank');
+    handlePrintList(questions);
     setError('');
   };
 
@@ -581,3 +559,4 @@ export default function TimesTablesQuizGenerator() {
     </>
   );
 }
+

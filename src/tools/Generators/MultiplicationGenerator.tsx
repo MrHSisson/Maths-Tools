@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Home, Menu, X, Eye, Download } from 'lucide-react';
-import { jsPDF } from 'jspdf';
 
 const TOOL_CONFIG = {
   pageTitle: 'Multiplication Worksheet Generator',
@@ -85,8 +84,6 @@ const L = {
 // px per mm — used to convert mm constants into preview pixel sizes
 const MM2PX = 3.78;
 
-const COL_W = (L.pageW - 2 * L.marginSide) / L.cols;
-
 // ─── Shared geometry helpers ──────────────────────────────────────────────────
 // All return mm values. Preview multiplies by MM2PX.
 
@@ -99,122 +96,84 @@ const latticeW = (cols: number): number => cols * L.latticeCell + L.latticeExt *
 const latticeH = (rows: number): number => rows * L.latticeCell + L.latticeExt * 2;
 const blockHmm = (has3x3: boolean): number => has3x3 ? L.blockH3x3 : L.blockH;
 
-// ─── PDF drawing ──────────────────────────────────────────────────────────────
-const drawPdfGrid = (doc: jsPDF, q: Question, ox: number, oy: number) => {
+// ─── Print SVG builders (mm units — viewBox is in mm, sized with mm widths) ──
+const printGridSvg = (q: Question): string => {
   const { cols, rows } = getDims(q);
   const colW = gridColWidths(cols);
   const colX = colW.reduce<number[]>((acc, _w, i) =>
-    [...acc, i === 0 ? ox : acc[i - 1] + colW[i - 1]], []);
-  doc.setDrawColor(55, 65, 81);
-  doc.setLineWidth(0.3);
+    [...acc, i === 0 ? 0 : acc[i - 1] + colW[i - 1]], []);
+  const w = gridW(cols), h = gridH(rows);
+  let rects = '';
   for (let ri = 0; ri < rows; ri++)
     for (let ci = 0; ci < cols; ci++)
-      doc.rect(colX[ci], oy + ri * L.gridCellH, colW[ci], L.gridCellH);
+      rects += `<rect x="${colX[ci]}" y="${ri * L.gridCellH}" width="${colW[ci]}" height="${L.gridCellH}" fill="white" stroke="#374151" stroke-width="0.3"/>`;
+  return `<svg width="${w}mm" height="${h}mm" viewBox="0 0 ${w} ${h}" style="display:block;overflow:visible">${rects}</svg>`;
 };
 
-const drawPdfLattice = (doc: jsPDF, q: Question, ox: number, oy: number) => {
-  // ox/oy = top-left of the full lattice area (including EXT padding)
+const printLatticeSvg = (q: Question): string => {
   const { cols, rows } = getDims(q);
   const C = L.latticeCell;
   const EXT = L.latticeExt;
-  const gx = ox + EXT;
-  const gy = oy + EXT;
-
-  doc.setLineWidth(0.2);
-  doc.setDrawColor(107, 114, 128);
+  const gx = EXT, gy = EXT;
+  const w = latticeW(cols), h = latticeH(rows);
+  let lines = '', cells = '';
   for (let ri = 0; ri < rows; ri++) {
     for (let ci = 0; ci < cols; ci++) {
       const x = gx + ci * C;
       const y = gy + ri * C;
       const extend = ri === rows - 1 || ci === 0;
-      doc.line(x + C, y,
-        extend ? x - EXT / Math.SQRT2 : x,
-        extend ? y + C + EXT / Math.SQRT2 : y + C);
+      lines += `<line x1="${x + C}" y1="${y}" x2="${extend ? x - EXT / Math.SQRT2 : x}" y2="${extend ? y + C + EXT / Math.SQRT2 : y + C}" stroke="#6b7280" stroke-width="0.2"/>`;
+      cells += `<rect x="${x}" y="${y}" width="${C}" height="${C}" fill="none" stroke="#374151" stroke-width="0.3"/>`;
     }
   }
-  doc.setDrawColor(55, 65, 81);
-  doc.setLineWidth(0.3);
-  for (let ri = 0; ri < rows; ri++)
-    for (let ci = 0; ci < cols; ci++)
-      doc.rect(gx + ci * C, gy + ri * C, C, C);
-  doc.setLineWidth(0.5);
-  doc.rect(gx, gy, cols * C, rows * C);
+  const outer = `<rect x="${gx}" y="${gy}" width="${cols * C}" height="${rows * C}" fill="none" stroke="#374151" stroke-width="0.5"/>`;
+  return `<svg width="${w}mm" height="${h}mm" viewBox="0 0 ${w} ${h}" style="display:block;overflow:visible">${lines}${cells}${outer}</svg>`;
 };
 
-// ─── Full PDF generation ──────────────────────────────────────────────────────
+// ─── Full PDF generation — print-window pattern (matches the rest of the app) ─
 const buildPDF = (questions: Question[], method: Method) => {
-  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-  const has3x3 = questions.some(q => q.type === '3x3');
-  const BLOCK_H = blockHmm(has3x3);
+  const BLOCK_H = blockHmm(questions.some(q => q.type === '3x3'));
 
-  const drawPage = (pageQuestions: Question[], pageNum: number, isAnswerKey: boolean) => {
-    if (pageNum > 1) doc.addPage();
-
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(18);
-    doc.setTextColor(0);
-    doc.text(isAnswerKey ? 'Answer Key' : 'Multiplication Worksheet',
-      L.pageW / 2, L.marginTop, { align: 'center' });
-
-    if (!isAnswerKey) {
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(11);
-      doc.text(`Name: ________________________________`, L.marginSide, L.marginTop + 8);
-    }
-
-    const startY = L.marginTop + (isAnswerKey ? 12 : 18);
-
-    pageQuestions.forEach((q, idx) => {
-      const col = idx % L.cols;
-      const row = Math.floor(idx / L.cols);
-      const bx = L.marginSide + col * COL_W;
-      const by = startY + row * BLOCK_H;
-
-      // Light block border
-      doc.setDrawColor(200, 200, 200);
-      doc.setLineWidth(0.2);
-      doc.rect(bx, by, COL_W, BLOCK_H);
-
-      // Question number + expression — centre-aligned in column
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(12);
-      doc.setTextColor(0);
-      doc.text(`${idx + 1}.  ${q.a} × ${q.b}`, bx + COL_W / 2, by + L.textOffsetY, { align: 'center' });
-
-      if (isAnswerKey) {
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(11);
-        doc.setTextColor(30, 58, 138);
-        doc.text(`= ${q.answer}`, bx + COL_W / 2, by + L.textOffsetY + 8, { align: 'center' });
-        doc.setTextColor(0);
-      } else {
-        const { cols: qc, rows: qr } = getDims(q);
-        if (method === 'grid') {
-          const gWmm = gridW(qc);
-          const gHmm = gridH(qr);
-          const cx = bx + (COL_W - gWmm) / 2;
-          const cy = by + L.structOffsetY + (BLOCK_H - L.structOffsetY - gHmm) / 2;
-          drawPdfGrid(doc, q, cx, cy);
-        } else if (method === 'lattice') {
-          const lWmm = latticeW(qc);
-          const lHmm = latticeH(qr);
-          const cx = bx + (COL_W - lWmm) / 2;
-          const cy = by + L.structOffsetY + (BLOCK_H - L.structOffsetY - lHmm) / 2;
-          drawPdfLattice(doc, q, cx, cy);
-        }
-      }
-    });
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7);
-    doc.setTextColor(120);
-    doc.text('Multiplication Worksheet Generator', L.pageW / 2, L.pageH - 8, { align: 'center' });
-    doc.setTextColor(0);
+  const block = (q: Question, idx: number, isAnswerKey: boolean): string => {
+    const structure = isAnswerKey
+      ? `<div class="answer">= ${q.answer}</div>`
+      : method === 'grid' ? `<div class="struct">${printGridSvg(q)}</div>`
+      : method === 'lattice' ? `<div class="struct">${printLatticeSvg(q)}</div>`
+      : '';
+    return `<div class="block" style="height:${BLOCK_H}mm"><div class="q-text">${idx + 1}.&nbsp;&nbsp;${q.a} × ${q.b}</div>${structure}</div>`;
   };
 
-  drawPage(questions, 1, false);
-  drawPage(questions, 2, true);
-  window.open(URL.createObjectURL(doc.output('blob')), '_blank');
+  const page = (isAnswerKey: boolean): string => `<div class="page">
+    <h1>${isAnswerKey ? 'Answer Key' : 'Multiplication Worksheet'}</h1>
+    ${isAnswerKey ? '' : '<div class="name">Name: ________________________________</div>'}
+    <div class="grid">${questions.map((q, i) => block(q, i, isAnswerKey)).join('')}</div>
+    <div class="footer">Multiplication Worksheet Generator</div>
+  </div>`;
+
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Multiplication Worksheet</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  @page { size:A4 portrait; margin:${L.marginTop}mm ${L.marginSide}mm; }
+  body { font-family:Helvetica,Arial,sans-serif; background:#fff; }
+  @media print { body { -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
+  .page { width:${L.pageW - 2 * L.marginSide}mm; height:${L.pageH - 2 * L.marginTop}mm; position:relative; page-break-after:always; }
+  .page:last-child { page-break-after:auto; }
+  h1 { font-size:6.3mm; font-weight:700; text-align:center; }
+  .name { font-size:3.9mm; margin-top:3mm; }
+  .grid { display:grid; grid-template-columns:repeat(${L.cols},1fr); margin-top:4mm; }
+  .block { border:0.2mm solid #c8c8c8; display:flex; flex-direction:column; align-items:center; padding-top:2.5mm; overflow:hidden; }
+  .q-text { font-size:4.2mm; font-weight:700; text-align:center; }
+  .answer { font-size:3.9mm; color:#1e3a8a; margin-top:3mm; text-align:center; }
+  .struct { flex:1; display:flex; align-items:center; justify-content:center; min-height:0; }
+  .footer { position:absolute; bottom:0; left:0; right:0; text-align:center; font-size:2.5mm; color:#787878; }
+</style>
+</head><body>${page(false)}${page(true)}</body></html>`;
+
+  const win = window.open('', '_blank');
+  if (!win) { alert('Please allow popups to use the PDF export.'); return; }
+  win.document.write(html);
+  win.document.close();
+  setTimeout(() => win.print(), 300);
 };
 
 // ─── SVG preview components (mm → px via MM2PX) ───────────────────────────────
@@ -635,3 +594,4 @@ export default function MultiplicationGenerator() {
     </>
   );
 }
+
