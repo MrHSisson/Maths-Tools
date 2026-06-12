@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Home, Eye, Download, RefreshCw, Menu, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Home, Eye, Download, RefreshCw, RotateCcw } from 'lucide-react';
 
 const TOOL_CONFIG = {
   pageTitle: 'Maths Skills Generator',
@@ -23,7 +23,13 @@ type SkillId =
   | 'multiplication'
   | 'negatives'
   | 'busStop'
-  | 'indices';
+  | 'indices'
+  | 'powersOfTen'
+  | 'rounding'
+  | 'primes'
+  | 'fdp'
+  | 'metric'
+  | 'bidmas';
 
 // ─── SKILL CONFIG ─────────────────────────────────────────────────────────────
 
@@ -37,6 +43,31 @@ type MultiplicationConfig = { types: ('2dx1d' | '2dx2d' | '3dx1d' | '3dx2d')[] }
 type BusStopConfig = { types: ('2d1d' | '3d1d' | '3d2d')[] };
 type IndicesConfig = { baseRange: 10 | 15; exponentRange: (2 | 3 | 4)[] };
 
+type BaseType = 'int' | '1dp' | '2dp';
+type PowersOfTenConfig = {
+  operations: ('multiply' | 'divide')[];
+  powers: (10 | 100 | 1000)[];
+  baseTypes: BaseType[];
+};
+type RoundTarget = 'n10' | 'n100' | 'n1000' | '1dp' | '2dp' | '1sf' | '2sf';
+type RoundingConfig = { targets: RoundTarget[]; edgeCases: boolean };
+type PrimesConfig = { tasks: ('identify' | 'next')[]; max: 20 | 50 | 100 };
+type FdpPath = 'fd' | 'fp' | 'df' | 'dp' | 'pf' | 'pd';
+type FdpComplexity = 'common' | 'extended';
+type FdpConfig = { paths: FdpPath[]; complexities: FdpComplexity[] };
+type MetricStep = 'adjacent' | 'nonadjacent';
+type MetricConfig = {
+  categories: ('length' | 'mass' | 'capacity')[];
+  steps: MetricStep[];
+  decimals: boolean;
+};
+type BidmasConfig = {
+  steps: (2 | 3)[];
+  brackets: boolean;
+  indices: boolean;
+  allowNegatives: boolean;
+};
+
 type SkillConfigs = {
   numberBonds: NumberBondsConfig;
   timesTables: TimesTablesConfig;
@@ -47,6 +78,12 @@ type SkillConfigs = {
   negatives: NegativesConfig;
   busStop: BusStopConfig;
   indices: IndicesConfig;
+  powersOfTen: PowersOfTenConfig;
+  rounding: RoundingConfig;
+  primes: PrimesConfig;
+  fdp: FdpConfig;
+  metric: MetricConfig;
+  bidmas: BidmasConfig;
 };
 
 // ─── QUESTION GENERATORS ─────────────────────────────────────────────────────
@@ -62,6 +99,33 @@ function shuffle<T>(arr: T[]): T[] {
 
 function randInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function pick<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+// Round away floating-point noise, default 6 dp.
+function round(n: number, dp = 6): number {
+  const f = Math.pow(10, dp);
+  return Math.round(n * f) / f;
+}
+
+// Number → string with trailing zeros stripped (e.g. 2.50 → "2.5", 10.0 → "10").
+function numStr(n: number): string {
+  return String(round(n, 6));
+}
+
+function isPrime(n: number): boolean {
+  if (n < 2) return false;
+  for (let i = 2; i * i <= n; i++) if (n % i === 0) return false;
+  return true;
+}
+
+function nextPrime(n: number): number {
+  let p = n + 1;
+  while (!isPrime(p)) p++;
+  return p;
 }
 
 function genNumberBonds(config: NumberBondsConfig): Question[] {
@@ -253,6 +317,361 @@ function genIndices(config: IndicesConfig): Question[] {
         displayQuestion: `${base}<sup>${exp}</sup> = ___`,
       });
     }
+  }
+  return shuffle(pool);
+}
+
+function genPowersOfTen(config: PowersOfTenConfig): Question[] {
+  const pool: Question[] = [];
+  const seen = new Set<string>();
+  const ops = config.operations.length ? config.operations : (['multiply'] as const);
+  const powers = config.powers.length ? config.powers : ([10] as const);
+  const baseTypes = config.baseTypes.length ? config.baseTypes : (['int'] as BaseType[]);
+  for (let i = 0; i < 800; i++) {
+    const op = pick(ops as ('multiply' | 'divide')[]);
+    const power = pick(powers as (10 | 100 | 1000)[]);
+    const bt = pick(baseTypes);
+    let base: number;
+    if (bt === 'int') base = randInt(1, 99);
+    else if (bt === '1dp') base = round(randInt(1, 999) / 10, 1);
+    else base = round(randInt(1, 9999) / 100, 2);
+    const sym = op === 'multiply' ? '×' : '÷';
+    const ans = op === 'multiply' ? round(base * power, 6) : round(base / power, 6);
+    const q = `${numStr(base)} ${sym} ${power} = ___`;
+    if (seen.has(q)) continue;
+    seen.add(q);
+    pool.push({ question: q, answer: numStr(ans) });
+  }
+  return shuffle(pool);
+}
+
+function genRounding(config: RoundingConfig): Question[] {
+  const pool: Question[] = [];
+  const seen = new Set<string>();
+  const targets = config.targets.length ? config.targets : (['n10'] as RoundTarget[]);
+  const labelMap: Record<RoundTarget, string> = {
+    n10: 'the nearest 10',
+    n100: 'the nearest 100',
+    n1000: 'the nearest 1000',
+    '1dp': '1 decimal place',
+    '2dp': '2 decimal places',
+    '1sf': '1 significant figure',
+    '2sf': '2 significant figures',
+  };
+
+  // Build one candidate number + the place-value unit it rounds to.
+  const makeRaw = (target: RoundTarget): { n: number; u: number } => {
+    switch (target) {
+      case 'n10':   return { n: randInt(11, 2999),     u: 10 };
+      case 'n100':  return { n: randInt(101, 29999),   u: 100 };
+      case 'n1000': return { n: randInt(1001, 299999), u: 1000 };
+      case '1dp':   return { n: round(randInt(11, 9999) / 100, 2),    u: 0.1 };
+      case '2dp':   return { n: round(randInt(101, 99999) / 1000, 3), u: 0.01 };
+      case '1sf':
+      case '2sf': {
+        const sf = target === '1sf' ? 1 : 2;
+        const n = round(randInt(11, 9989) / pick([1, 10, 100, 1000]), 4);
+        const digits = Math.floor(Math.log10(n)) + 1; // integer-part digits (≤0 if n<1)
+        const u = Math.pow(10, digits - sf);
+        return { n, u };
+      }
+    }
+  };
+
+  for (const target of targets) {
+    let count = 0;
+    for (let i = 0; i < 1200 && count < 120; i++) {
+      const { n, u } = makeRaw(target);
+      const r = n / u;
+      const floor = Math.floor(r);
+      const frac = r - floor;
+      const boundary = Math.abs(frac - 0.5) < 1e-9;        // exact halfway (ends in 5)
+      const rounded = round(Math.round(r) * u, 6);
+      const roundedUp = Math.round(r) > floor;
+      const digit = Math.floor(Math.abs(n) / u) % 10;
+      const cascade = roundedUp && digit === 9;             // carries into a higher place
+      if (!config.edgeCases && (boundary || cascade)) continue;
+      const q = `Round ${numStr(n)} to ${labelMap[target]}`;
+      if (seen.has(q)) continue;
+      seen.add(q);
+      pool.push({ question: q, answer: numStr(rounded) });
+      count++;
+    }
+  }
+  return shuffle(pool);
+}
+
+function genPrimes(config: PrimesConfig): Question[] {
+  const pool: Question[] = [];
+  const seen = new Set<string>();
+  const tasks = config.tasks.length ? config.tasks : (['identify'] as ('identify' | 'next')[]);
+  const max = config.max;
+  for (const task of tasks) {
+    if (task === 'identify') {
+      for (let n = 2; n <= max; n++) {
+        const q = `Is ${n} prime?`;
+        if (seen.has(q)) continue;
+        seen.add(q);
+        pool.push({ question: q, answer: isPrime(n) ? 'Yes' : 'No' });
+      }
+    } else {
+      for (let n = 2; n < max; n++) {
+        const q = `Next prime after ${n} = ___`;
+        if (seen.has(q)) continue;
+        seen.add(q);
+        pool.push({ question: q, answer: nextPrime(n) });
+      }
+    }
+  }
+  return shuffle(pool);
+}
+
+type FdpTriple = { frac: string; dec: number; pct: number };
+const FDP_COMMON: FdpTriple[] = [
+  { frac: '1/2', dec: 0.5, pct: 50 },
+  { frac: '1/4', dec: 0.25, pct: 25 },
+  { frac: '3/4', dec: 0.75, pct: 75 },
+  { frac: '1/10', dec: 0.1, pct: 10 },
+  { frac: '3/10', dec: 0.3, pct: 30 },
+  { frac: '7/10', dec: 0.7, pct: 70 },
+  { frac: '9/10', dec: 0.9, pct: 90 },
+  { frac: '1/5', dec: 0.2, pct: 20 },
+  { frac: '2/5', dec: 0.4, pct: 40 },
+  { frac: '3/5', dec: 0.6, pct: 60 },
+  { frac: '4/5', dec: 0.8, pct: 80 },
+];
+const FDP_EXTENDED: FdpTriple[] = [
+  { frac: '1/8', dec: 0.125, pct: 12.5 },
+  { frac: '3/8', dec: 0.375, pct: 37.5 },
+  { frac: '5/8', dec: 0.625, pct: 62.5 },
+  { frac: '7/8', dec: 0.875, pct: 87.5 },
+  { frac: '1/20', dec: 0.05, pct: 5 },
+  { frac: '3/20', dec: 0.15, pct: 15 },
+  { frac: '1/25', dec: 0.04, pct: 4 },
+  { frac: '3/25', dec: 0.12, pct: 12 },
+  { frac: '1/50', dec: 0.02, pct: 2 },
+  { frac: '1/100', dec: 0.01, pct: 1 },
+];
+
+function genFdp(config: FdpConfig): Question[] {
+  const pool: Question[] = [];
+  const seen = new Set<string>();
+  const paths = config.paths.length ? config.paths : (['fd'] as FdpPath[]);
+  const complexities = config.complexities.length ? config.complexities : (['common'] as FdpComplexity[]);
+  const triples = [
+    ...(complexities.includes('common') ? FDP_COMMON : []),
+    ...(complexities.includes('extended') ? FDP_EXTENDED : []),
+  ];
+  for (const t of triples) {
+    for (const path of paths) {
+      let q = '', answer: string | number = '';
+      switch (path) {
+        case 'fd': q = `${t.frac} as a decimal`;    answer = numStr(t.dec); break;
+        case 'fp': q = `${t.frac} as a percentage`; answer = `${numStr(t.pct)}%`; break;
+        case 'df': q = `${numStr(t.dec)} as a fraction`;   answer = t.frac; break;
+        case 'dp': q = `${numStr(t.dec)} as a percentage`; answer = `${numStr(t.pct)}%`; break;
+        case 'pf': q = `${numStr(t.pct)}% as a fraction`;  answer = t.frac; break;
+        case 'pd': q = `${numStr(t.pct)}% as a decimal`;   answer = numStr(t.dec); break;
+      }
+      if (seen.has(q)) continue;
+      seen.add(q);
+      pool.push({ question: q, answer });
+    }
+  }
+  return shuffle(pool);
+}
+
+type MetricUnit = { name: string; factor: number; order: number };
+const METRIC_UNITS: Record<'length' | 'mass' | 'capacity', MetricUnit[]> = {
+  length: [
+    { name: 'mm', factor: 0.001, order: 0 },
+    { name: 'cm', factor: 0.01, order: 1 },
+    { name: 'm', factor: 1, order: 2 },
+    { name: 'km', factor: 1000, order: 3 },
+  ],
+  mass: [
+    { name: 'mg', factor: 0.001, order: 0 },
+    { name: 'g', factor: 1, order: 1 },
+    { name: 'kg', factor: 1000, order: 2 },
+    { name: 't', factor: 1000000, order: 3 },
+  ],
+  capacity: [
+    { name: 'ml', factor: 0.001, order: 0 },
+    { name: 'cl', factor: 0.01, order: 1 },
+    { name: 'l', factor: 1, order: 2 },
+  ],
+};
+
+function genMetric(config: MetricConfig): Question[] {
+  const pool: Question[] = [];
+  const seen = new Set<string>();
+  const cats = config.categories.length
+    ? config.categories
+    : (['length'] as ('length' | 'mass' | 'capacity')[]);
+  const steps = config.steps.length ? config.steps : (['adjacent'] as MetricStep[]);
+  const wantAdjacent = steps.includes('adjacent');
+  const wantNon = steps.includes('nonadjacent');
+
+  // Enumerate every unit pair with an allowed order gap.
+  const pairs: { cat: string; small: MetricUnit; big: MetricUnit }[] = [];
+  for (const cat of cats) {
+    const units = METRIC_UNITS[cat];
+    for (let i = 0; i < units.length; i++) {
+      for (let j = i + 1; j < units.length; j++) {
+        const gap = units[j].order - units[i].order;
+        const ok = (gap === 1 && wantAdjacent) || (gap >= 2 && wantNon);
+        if (ok) pairs.push({ cat, small: units[i], big: units[j] });
+      }
+    }
+  }
+  if (pairs.length === 0) return [];
+
+  for (let i = 0; i < 1000 && pool.length < 400; i++) {
+    const { small, big } = pick(pairs);
+    const ratio = round(big.factor / small.factor, 6); // power of 10
+    let from: MetricUnit, to: MetricUnit, val: number, ans: number;
+    // "down" = big→small (integer); "up" = small→big (may be decimal)
+    const goUp = config.decimals && Math.random() < 0.6;
+    if (goUp) {
+      from = small; to = big; val = randInt(1, ratio * 99); ans = round(val / ratio, 6);
+    } else if (!config.decimals && Math.random() < 0.5) {
+      // small→big but forced clean: val is a multiple of ratio
+      from = small; to = big; const k = randInt(1, 99); val = k * ratio; ans = k;
+    } else {
+      from = big; to = small; val = randInt(1, 99); ans = round(val * ratio, 6);
+    }
+    const q = `${numStr(val)} ${from.name} = ___ ${to.name}`;
+    if (seen.has(q)) continue;
+    seen.add(q);
+    pool.push({ question: q, answer: numStr(ans) });
+  }
+  return shuffle(pool);
+}
+
+// ─── BIDMAS TEMPLATES ─────────────────────────────────────────────────────────
+
+type BidmasInstance = { q: string; display?: string; answer: number; ints: number[] };
+type BidmasTmpl = { steps: 2 | 3; brackets: boolean; indices: boolean; gen: () => BidmasInstance };
+
+const sq = (b: number) => b * b;
+
+const BIDMAS_TEMPLATES: BidmasTmpl[] = [
+  // ── 2-step, no brackets, no indices ──
+  { steps: 2, brackets: false, indices: false, gen: () => {
+    const a = randInt(1, 20), b = randInt(2, 9), c = randInt(2, 9);
+    return { q: `${a} + ${b} × ${c}`, answer: a + b * c, ints: [b * c] }; } },
+  { steps: 2, brackets: false, indices: false, gen: () => {
+    const a = randInt(2, 9), b = randInt(2, 9), c = randInt(1, 20);
+    return { q: `${a} × ${b} + ${c}`, answer: a * b + c, ints: [a * b] }; } },
+  { steps: 2, brackets: false, indices: false, gen: () => {
+    const a = randInt(2, 9), b = randInt(2, 9), c = randInt(1, 20);
+    return { q: `${a} × ${b} − ${c}`, answer: a * b - c, ints: [a * b, a * b - c] }; } },
+  { steps: 2, brackets: false, indices: false, gen: () => {
+    const a = randInt(1, 20), b = randInt(2, 9), c = randInt(2, 9);
+    return { q: `${a} − ${b} × ${c}`, answer: a - b * c, ints: [b * c, a - b * c] }; } },
+  { steps: 2, brackets: false, indices: false, gen: () => {
+    const c = randInt(2, 9), q2 = randInt(2, 9), a = randInt(1, 20), b = c * q2;
+    return { q: `${a} + ${b} ÷ ${c}`, answer: a + q2, ints: [q2] }; } },
+  { steps: 2, brackets: false, indices: false, gen: () => {
+    const b = randInt(2, 9), q2 = randInt(2, 9), c = randInt(1, 12), dividend = b * q2;
+    return { q: `${dividend} ÷ ${b} + ${c}`, answer: q2 + c, ints: [q2] }; } },
+
+  // ── 2-step, brackets ──
+  { steps: 2, brackets: true, indices: false, gen: () => {
+    const a = randInt(2, 12), b = randInt(2, 12), c = randInt(2, 9);
+    return { q: `(${a} + ${b}) × ${c}`, answer: (a + b) * c, ints: [a + b] }; } },
+  { steps: 2, brackets: true, indices: false, gen: () => {
+    const a = randInt(2, 15), b = randInt(1, 14), c = randInt(2, 9);
+    return { q: `(${a} − ${b}) × ${c}`, answer: (a - b) * c, ints: [a - b, (a - b) * c] }; } },
+  { steps: 2, brackets: true, indices: false, gen: () => {
+    const a = randInt(2, 12), b = randInt(2, 12), c = randInt(2, 9);
+    return { q: `${c} × (${a} + ${b})`, answer: c * (a + b), ints: [a + b] }; } },
+  { steps: 2, brackets: true, indices: false, gen: () => {
+    const c = randInt(2, 6), q2 = randInt(2, 9), s = c * q2, a = randInt(1, s - 1), b = s - a;
+    return { q: `(${a} + ${b}) ÷ ${c}`, answer: q2, ints: [s, q2] }; } },
+
+  // ── 2-step, indices ──
+  { steps: 2, brackets: false, indices: true, gen: () => {
+    const a = randInt(1, 30), b = randInt(2, 9);
+    return { q: `${a} + ${b}²`, display: `${a} + ${b}<sup>2</sup>`, answer: a + sq(b), ints: [sq(b)] }; } },
+  { steps: 2, brackets: false, indices: true, gen: () => {
+    const a = randInt(20, 90), b = randInt(2, 9);
+    return { q: `${a} − ${b}²`, display: `${a} − ${b}<sup>2</sup>`, answer: a - sq(b), ints: [sq(b), a - sq(b)] }; } },
+  { steps: 2, brackets: false, indices: true, gen: () => {
+    const b = randInt(2, 9), c = randInt(1, 30);
+    return { q: `${b}² + ${c}`, display: `${b}<sup>2</sup> + ${c}`, answer: sq(b) + c, ints: [sq(b)] }; } },
+  { steps: 2, brackets: false, indices: true, gen: () => {
+    const a = randInt(2, 5), b = randInt(2, 6);
+    return { q: `${a} × ${b}²`, display: `${a} × ${b}<sup>2</sup>`, answer: a * sq(b), ints: [sq(b)] }; } },
+
+  // ── 3-step, no brackets, no indices ──
+  { steps: 3, brackets: false, indices: false, gen: () => {
+    const a = randInt(1, 20), b = randInt(2, 9), c = randInt(2, 9), d = randInt(1, 20);
+    return { q: `${a} + ${b} × ${c} − ${d}`, answer: a + b * c - d, ints: [b * c, a + b * c, a + b * c - d] }; } },
+  { steps: 3, brackets: false, indices: false, gen: () => {
+    const a = randInt(2, 9), b = randInt(2, 9), c = randInt(2, 9), d = randInt(2, 9);
+    return { q: `${a} × ${b} + ${c} × ${d}`, answer: a * b + c * d, ints: [a * b, c * d] }; } },
+  { steps: 3, brackets: false, indices: false, gen: () => {
+    const a = randInt(2, 9), b = randInt(2, 9), c = randInt(2, 9), d = randInt(2, 9);
+    return { q: `${a} × ${b} − ${c} × ${d}`, answer: a * b - c * d, ints: [a * b, c * d, a * b - c * d] }; } },
+  { steps: 3, brackets: false, indices: false, gen: () => {
+    const a = randInt(2, 9), b = randInt(2, 9), c = randInt(1, 15), d = randInt(1, 15);
+    return { q: `${a} × ${b} + ${c} − ${d}`, answer: a * b + c - d, ints: [a * b, a * b + c, a * b + c - d] }; } },
+
+  // ── 3-step, brackets ──
+  { steps: 3, brackets: true, indices: false, gen: () => {
+    const a = randInt(2, 12), b = randInt(2, 12), c = randInt(2, 9), d = randInt(1, 20);
+    return { q: `(${a} + ${b}) × ${c} − ${d}`, answer: (a + b) * c - d, ints: [a + b, (a + b) * c, (a + b) * c - d] }; } },
+  { steps: 3, brackets: true, indices: false, gen: () => {
+    const a = randInt(2, 12), b = randInt(2, 12), c = randInt(2, 9), d = randInt(1, 20);
+    return { q: `(${a} + ${b}) × ${c} + ${d}`, answer: (a + b) * c + d, ints: [a + b, (a + b) * c] }; } },
+  { steps: 3, brackets: true, indices: false, gen: () => {
+    const a = randInt(2, 15), b = randInt(1, 14), c = randInt(2, 9), d = randInt(1, 20);
+    return { q: `(${a} − ${b}) × ${c} + ${d}`, answer: (a - b) * c + d, ints: [a - b, (a - b) * c] }; } },
+  { steps: 3, brackets: true, indices: false, gen: () => {
+    const a = randInt(2, 9), b = randInt(2, 12), c = randInt(2, 12), d = randInt(1, 20);
+    return { q: `${a} × (${b} + ${c}) − ${d}`, answer: a * (b + c) - d, ints: [b + c, a * (b + c), a * (b + c) - d] }; } },
+
+  // ── 3-step, indices ──
+  { steps: 3, brackets: false, indices: true, gen: () => {
+    const a = randInt(1, 20), b = randInt(2, 9), c = randInt(1, 20);
+    return { q: `${a} + ${b}² − ${c}`, display: `${a} + ${b}<sup>2</sup> − ${c}`, answer: a + sq(b) - c, ints: [sq(b), a + sq(b), a + sq(b) - c] }; } },
+  { steps: 3, brackets: false, indices: true, gen: () => {
+    const a = randInt(2, 4), b = randInt(2, 6), c = randInt(1, 20);
+    return { q: `${a} × ${b}² + ${c}`, display: `${a} × ${b}<sup>2</sup> + ${c}`, answer: a * sq(b) + c, ints: [sq(b), a * sq(b)] }; } },
+  { steps: 3, brackets: false, indices: true, gen: () => {
+    const b = randInt(2, 7), c = randInt(2, 9), d = randInt(2, 9);
+    return { q: `${b}² + ${c} × ${d}`, display: `${b}<sup>2</sup> + ${c} × ${d}`, answer: sq(b) + c * d, ints: [sq(b), c * d] }; } },
+
+  // ── 3-step, brackets + indices ──
+  { steps: 3, brackets: true, indices: true, gen: () => {
+    const a = randInt(1, 8), b = randInt(1, 8), c = randInt(1, 30);
+    return { q: `(${a} + ${b})² − ${c}`, display: `(${a} + ${b})<sup>2</sup> − ${c}`, answer: sq(a + b) - c, ints: [a + b, sq(a + b), sq(a + b) - c] }; } },
+  { steps: 3, brackets: true, indices: true, gen: () => {
+    const a = randInt(1, 8), b = randInt(1, 8), c = randInt(1, 30);
+    return { q: `(${a} + ${b})² + ${c}`, display: `(${a} + ${b})<sup>2</sup> + ${c}`, answer: sq(a + b) + c, ints: [a + b, sq(a + b)] }; } },
+];
+
+function genBidmas(config: BidmasConfig): Question[] {
+  const pool: Question[] = [];
+  const seen = new Set<string>();
+  const steps = config.steps.length ? config.steps : ([2] as (2 | 3)[]);
+  const eligible = BIDMAS_TEMPLATES.filter(t =>
+    steps.includes(t.steps) &&
+    (!t.brackets || config.brackets) &&
+    (!t.indices || config.indices));
+  if (eligible.length === 0) return [];
+  for (let i = 0; i < 2500 && pool.length < 400; i++) {
+    const inst = pick(eligible).gen();
+    if (!config.allowNegatives && (inst.answer < 0 || inst.ints.some(x => x < 0))) continue;
+    const q = `${inst.q} = ___`;
+    if (seen.has(q)) continue;
+    seen.add(q);
+    pool.push({
+      question: q,
+      answer: inst.answer,
+      displayQuestion: inst.display ? `${inst.display} = ___` : undefined,
+    });
   }
   return shuffle(pool);
 }
@@ -451,9 +870,26 @@ const SKILL_META: Record<SkillId, { label: string; description: string }> = {
   negatives:      { label: 'Negatives',            description: 'Operations with negative numbers' },
   busStop:        { label: 'Division',             description: 'Long division, integer answers' },
   indices:        { label: 'Indices',              description: 'Powers and exponents' },
+  powersOfTen:    { label: 'Powers of 10',         description: 'Multiply/divide by 10, 100, 1000' },
+  rounding:       { label: 'Rounding',             description: 'Decimal places, sig figs, nearest 10' },
+  primes:         { label: 'Primes',               description: 'Identify primes and find the next prime' },
+  fdp:            { label: 'FDP Conversion',       description: 'Fractions, decimals and percentages' },
+  metric:         { label: 'Metric Conversions',   description: 'Length, mass and capacity units' },
+  bidmas:         { label: 'BIDMAS',               description: 'Order of operations' },
 };
 
-const ALL_SKILLS: SkillId[] = ['numberBonds', 'timesTables', 'reverseTT', 'addition', 'subtraction', 'multiplication', 'busStop', 'negatives', 'indices'];
+const ALL_SKILLS: SkillId[] = ['numberBonds', 'timesTables', 'reverseTT', 'addition', 'subtraction', 'multiplication', 'busStop', 'negatives', 'indices', 'powersOfTen', 'rounding', 'primes', 'fdp', 'metric', 'bidmas'];
+
+// Skills grouped by number sub-topic (all skills are number skills — these are
+// teaching themes, not the app's top-level categories).
+const SKILL_GROUPS: { label: string; skills: SkillId[] }[] = [
+  { label: 'Number Facts',                 skills: ['numberBonds', 'timesTables', 'reverseTT'] },
+  { label: 'Written Methods',              skills: ['addition', 'subtraction', 'multiplication', 'busStop', 'negatives'] },
+  { label: 'Place Value & Rounding',       skills: ['powersOfTen', 'rounding'] },
+  { label: 'Number Properties',            skills: ['primes', 'indices'] },
+  { label: 'Fractions, Decimals & Measures', skills: ['fdp', 'metric'] },
+  { label: 'Order of Operations',          skills: ['bidmas'] },
+];
 
 // ─── DEFAULT CONFIGS ──────────────────────────────────────────────────────────
 
@@ -467,7 +903,52 @@ const defaultConfigs: SkillConfigs = {
   negatives:      { operations: ['addition', 'subtraction'], range: 10 },
   busStop:        { types: ['2d1d'] },
   indices:        { baseRange: 10, exponentRange: [2, 3] },
+  powersOfTen:    { operations: ['multiply'], powers: [10, 100], baseTypes: ['int'] },
+  rounding:       { targets: ['n10', 'n100'], edgeCases: false },
+  primes:         { tasks: ['identify'], max: 50 },
+  fdp:            { paths: ['fd', 'dp'], complexities: ['common'] },
+  metric:         { categories: ['length'], steps: ['adjacent'], decimals: false },
+  bidmas:         { steps: [2], brackets: true, indices: false, allowNegatives: false },
 };
+
+const DEFAULT_SKILL_COUNTS: Record<SkillId, number> = {
+  numberBonds: 5, timesTables: 5, reverseTT: 5, addition: 5, subtraction: 5,
+  multiplication: 5, negatives: 5, busStop: 5, indices: 5,
+  powersOfTen: 5, rounding: 5, primes: 5, fdp: 5, metric: 5, bidmas: 5,
+};
+
+// ─── SETUP PERSISTENCE ────────────────────────────────────────────────────────
+// The whole setup is mirrored to localStorage so it survives a page refresh.
+
+const STORAGE_KEY = 'fsGenerator.setup.v1';
+
+type SavedSetup = {
+  enabledSkills: SkillId[];
+  skillCounts: Record<SkillId, number>;
+  configs: SkillConfigs;
+  maxQuestions: number;
+  numPages: number;
+  grouped: boolean;
+};
+
+function loadSetup(): Partial<SavedSetup> {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as Partial<SavedSetup>) : {};
+  } catch {
+    return {};
+  }
+}
+
+// Merge saved configs over the current defaults, so a save made before a skill
+// (or option) existed still loads cleanly with the new keys filled in.
+function mergeConfigs(saved?: Partial<SkillConfigs>): SkillConfigs {
+  const out = {} as SkillConfigs;
+  (Object.keys(defaultConfigs) as SkillId[]).forEach(k => {
+    (out as any)[k] = { ...(defaultConfigs as any)[k], ...((saved as any)?.[k] ?? {}) };
+  });
+  return out;
+}
 
 
 
@@ -475,13 +956,15 @@ const defaultConfigs: SkillConfigs = {
 
 type Preset = {
   label: string;
+  desc: string;
   enabledSkills: SkillId[];
   skillCounts: Partial<Record<SkillId, number>>;
   configs: Partial<SkillConfigs>;
 };
 
 const PRESETS: Preset[] = [
-  { label: 'Preset 1',
+  { label: 'Foundation Number',
+    desc: 'Bonds, easy tables & addition',
     enabledSkills: ['numberBonds', 'timesTables', 'addition'],
     skillCounts: { numberBonds: 10, timesTables: 10, addition: 10 },
     configs: {
@@ -491,7 +974,8 @@ const PRESETS: Preset[] = [
     },
   },
   {
-    label: 'Preset 2',
+    label: 'Four Operations',
+    desc: 'Tables, division, +/− methods',
     enabledSkills: ['timesTables', 'reverseTT', 'addition', 'subtraction'],
     skillCounts: { timesTables: 8, reverseTT: 8, addition: 7, subtraction: 7 },
     configs: {
@@ -502,7 +986,8 @@ const PRESETS: Preset[] = [
     },
   },
   {
-    label: 'Preset 3',
+    label: 'Multiplication & Division',
+    desc: 'Written ×/÷ with tables recall',
     enabledSkills: ['timesTables', 'reverseTT', 'multiplication', 'busStop'],
     skillCounts: { timesTables: 8, reverseTT: 7, multiplication: 8, busStop: 7 },
     configs: {
@@ -513,7 +998,8 @@ const PRESETS: Preset[] = [
     },
   },
   {
-    label: 'Preset 4',
+    label: 'Higher Calculation',
+    desc: 'Long ×/÷, negatives & indices',
     enabledSkills: ['multiplication', 'busStop', 'negatives', 'indices'],
     skillCounts: { multiplication: 8, busStop: 8, negatives: 7, indices: 7 },
     configs: {
@@ -524,7 +1010,8 @@ const PRESETS: Preset[] = [
     },
   },
   {
-    label: 'Preset 5',
+    label: 'Times Tables Focus',
+    desc: 'Tables & division facts only',
     enabledSkills: ['timesTables', 'reverseTT'],
     skillCounts: { timesTables: 15, reverseTT: 15 },
     configs: {
@@ -533,11 +1020,34 @@ const PRESETS: Preset[] = [
     },
   },
   {
-    label: 'Preset 6',
+    label: 'Number Bonds Focus',
+    desc: 'Bonds to 10, 20, 50 & 100',
     enabledSkills: ['numberBonds'],
     skillCounts: { numberBonds: 30 },
     configs: {
       numberBonds: { targets: [10, 20, 50, 100] },
+    },
+  },
+  {
+    label: 'Number Sense',
+    desc: 'Powers of 10, rounding & primes',
+    enabledSkills: ['powersOfTen', 'rounding', 'primes'],
+    skillCounts: { powersOfTen: 10, rounding: 10, primes: 10 },
+    configs: {
+      powersOfTen: { operations: ['multiply', 'divide'], powers: [10, 100, 1000], baseTypes: ['int', '1dp'] },
+      rounding: { targets: ['n10', 'n100', '1dp'], edgeCases: false },
+      primes: { tasks: ['identify', 'next'], max: 50 },
+    },
+  },
+  {
+    label: 'Proportion & BIDMAS',
+    desc: 'FDP, metric units & order of ops',
+    enabledSkills: ['fdp', 'metric', 'bidmas'],
+    skillCounts: { fdp: 10, metric: 10, bidmas: 10 },
+    configs: {
+      fdp: { paths: ['fd', 'dp', 'fp'], complexities: ['common', 'extended'] },
+      metric: { categories: ['length', 'mass', 'capacity'], steps: ['adjacent'], decimals: true },
+      bidmas: { steps: [2, 3], brackets: true, indices: true, allowNegatives: false },
     },
   },
 ];
@@ -545,18 +1055,29 @@ const PRESETS: Preset[] = [
 
 
 export default function MathsSkillsGenerator() {
-  const [enabledSkills, setEnabledSkills] = useState<SkillId[]>([]);
-  const [skillCounts, setSkillCounts] = useState<Record<SkillId, number>>({
-    numberBonds: 5, timesTables: 5, reverseTT: 5, addition: 5, subtraction: 5,
-    multiplication: 5, negatives: 5, busStop: 5, indices: 5,
-  });
-  const [configs, setConfigs] = useState<SkillConfigs>(defaultConfigs);
-  const [maxQuestions, setMaxQuestions] = useState<number>(30);
-  const [numPages, setNumPages] = useState<number>(1);
-  const [grouped, setGrouped] = useState<boolean>(false);
+  const [saved] = useState<Partial<SavedSetup>>(loadSetup);
+  const [enabledSkills, setEnabledSkills] = useState<SkillId[]>(
+    () => (saved.enabledSkills ?? []).filter(s => ALL_SKILLS.includes(s)),
+  );
+  const [skillCounts, setSkillCounts] = useState<Record<SkillId, number>>(
+    () => ({ ...DEFAULT_SKILL_COUNTS, ...(saved.skillCounts ?? {}) }),
+  );
+  const [configs, setConfigs] = useState<SkillConfigs>(() => mergeConfigs(saved.configs));
+  const [maxQuestions, setMaxQuestions] = useState<number>(saved.maxQuestions ?? 30);
+  const [numPages, setNumPages] = useState<number>(saved.numPages ?? 1);
+  const [grouped, setGrouped] = useState<boolean>(saved.grouped ?? false);
   const [previewQuestions, setPreviewQuestions] = useState<Question[]>([]);
   const [error, setError] = useState<string>('');
   const [expandedSkill, setExpandedSkill] = useState<SkillId | null>(null);
+
+  // Mirror the setup to localStorage whenever it changes.
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        enabledSkills, skillCounts, configs, maxQuestions, numPages, grouped,
+      }));
+    } catch { /* storage unavailable — ignore */ }
+  }, [enabledSkills, skillCounts, configs, maxQuestions, numPages, grouped]);
 
   const total = enabledSkills.reduce((sum, s) => sum + skillCounts[s], 0);
   const overBudget = total > maxQuestions;
@@ -574,6 +1095,13 @@ export default function MathsSkillsGenerator() {
     setExpandedSkill(null);
     setError('');
     setPreviewQuestions([]);
+  };
+
+  const clearAll = () => {
+    setEnabledSkills([]);
+    setExpandedSkill(null);
+    setPreviewQuestions([]);
+    setError('');
   };
 
   const toggleSkill = (skill: SkillId) => {
@@ -615,6 +1143,12 @@ export default function MathsSkillsGenerator() {
       case 'negatives':      pool = genNegatives(configs.negatives); break;
       case 'busStop':        pool = genBusStop(configs.busStop); break;
       case 'indices':        pool = genIndices(configs.indices); break;
+      case 'powersOfTen':    pool = genPowersOfTen(configs.powersOfTen); break;
+      case 'rounding':       pool = genRounding(configs.rounding); break;
+      case 'primes':         pool = genPrimes(configs.primes); break;
+      case 'fdp':            pool = genFdp(configs.fdp); break;
+      case 'metric':         pool = genMetric(configs.metric); break;
+      case 'bidmas':         pool = genBidmas(configs.bidmas); break;
     }
     return pool.map(q => ({ ...q, skill }));
   };
@@ -918,6 +1452,148 @@ export default function MathsSkillsGenerator() {
           />
         </>
       ),
+
+      powersOfTen: (
+        <>
+          <PillMulti
+            label="Operations"
+            options={['multiply', 'divide'] as const}
+            selected={c.powersOfTen.operations}
+            onToggle={v => updateConfig('powersOfTen', { operations: toggleArr(c.powersOfTen.operations, v as 'multiply' | 'divide') })}
+            format={v => v === 'multiply' ? 'Multiply ×' : 'Divide ÷'}
+          />
+          <PillMulti
+            label="Multipliers / divisors"
+            options={[10, 100, 1000] as const}
+            selected={c.powersOfTen.powers}
+            onToggle={v => updateConfig('powersOfTen', { powers: toggleArr(c.powersOfTen.powers, v as 10 | 100 | 1000) })}
+          />
+          <PillMulti
+            label="Base number type"
+            options={['int', '1dp', '2dp'] as const}
+            selected={c.powersOfTen.baseTypes}
+            onToggle={v => updateConfig('powersOfTen', { baseTypes: toggleArr(c.powersOfTen.baseTypes, v as BaseType) })}
+            format={v => v === 'int' ? 'Integers' : v === '1dp' ? '1 d.p.' : '2+ d.p.'}
+          />
+        </>
+      ),
+
+      rounding: (
+        <>
+          <PillMulti
+            label="Target accuracy"
+            options={['n10', 'n100', 'n1000', '1dp', '2dp', '1sf', '2sf'] as const}
+            selected={c.rounding.targets}
+            onToggle={v => updateConfig('rounding', { targets: toggleArr(c.rounding.targets, v as RoundTarget) })}
+            format={v => ({ n10: 'Nearest 10', n100: 'Nearest 100', n1000: 'Nearest 1000', '1dp': '1 d.p.', '2dp': '2 d.p.', '1sf': '1 s.f.', '2sf': '2 s.f.' } as Record<RoundTarget, string>)[v]}
+          />
+          <div className="flex justify-center gap-2">
+            <PillToggle
+              label="Include edge cases"
+              active={c.rounding.edgeCases}
+              onToggle={() => updateConfig('rounding', { edgeCases: !c.rounding.edgeCases })}
+            />
+          </div>
+        </>
+      ),
+
+      primes: (
+        <>
+          <PillMulti
+            label="Task type"
+            options={['identify', 'next'] as const}
+            selected={c.primes.tasks}
+            onToggle={v => updateConfig('primes', { tasks: toggleArr(c.primes.tasks, v as 'identify' | 'next') })}
+            format={v => v === 'identify' ? 'Identify prime' : 'Next prime'}
+          />
+          <PillSingle
+            label="Range"
+            options={[20, 50, 100] as const}
+            selected={c.primes.max}
+            onSelect={v => updateConfig('primes', { max: v as 20 | 50 | 100 })}
+            format={v => `Up to ${v}`}
+          />
+        </>
+      ),
+
+      fdp: (
+        <>
+          <PillMulti
+            label="Conversion path"
+            options={['fd', 'fp', 'df', 'dp', 'pf', 'pd'] as const}
+            selected={c.fdp.paths}
+            onToggle={v => updateConfig('fdp', { paths: toggleArr(c.fdp.paths, v as FdpPath) })}
+            format={v => ({ fd: 'Frac → Dec', fp: 'Frac → %', df: 'Dec → Frac', dp: 'Dec → %', pf: '% → Frac', pd: '% → Dec' } as Record<FdpPath, string>)[v]}
+          />
+          <PillMulti
+            label="Fraction complexity"
+            options={['common', 'extended'] as const}
+            selected={c.fdp.complexities}
+            onToggle={v => updateConfig('fdp', { complexities: toggleArr(c.fdp.complexities, v as FdpComplexity) })}
+            format={v => v === 'common' ? 'Common' : 'Extended'}
+          />
+        </>
+      ),
+
+      metric: (
+        <>
+          <PillMulti
+            label="Measure category"
+            options={['length', 'mass', 'capacity'] as const}
+            selected={c.metric.categories}
+            onToggle={v => updateConfig('metric', { categories: toggleArr(c.metric.categories, v as 'length' | 'mass' | 'capacity') })}
+            format={v => v.charAt(0).toUpperCase() + v.slice(1)}
+          />
+          <PillMulti
+            label="Conversion step"
+            options={['adjacent', 'nonadjacent'] as const}
+            selected={c.metric.steps}
+            onToggle={v => updateConfig('metric', { steps: toggleArr(c.metric.steps, v as MetricStep) })}
+            format={v => v === 'adjacent' ? 'Adjacent units' : 'Non-adjacent'}
+          />
+          <div className="flex justify-center gap-2">
+            <PillToggle
+              label="Include decimal answers"
+              active={c.metric.decimals}
+              onToggle={() => updateConfig('metric', { decimals: !c.metric.decimals })}
+            />
+          </div>
+        </>
+      ),
+
+      bidmas: (
+        <>
+          <PillMulti
+            label="Complexity"
+            options={[2, 3] as const}
+            selected={c.bidmas.steps}
+            onToggle={v => updateConfig('bidmas', { steps: toggleArr(c.bidmas.steps, v as 2 | 3) })}
+            format={v => `${v}-step`}
+          />
+          <div className="mb-4">
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Operations included</p>
+            <div className="flex justify-center gap-2">
+              <PillToggle
+                label="Brackets"
+                active={c.bidmas.brackets}
+                onToggle={() => updateConfig('bidmas', { brackets: !c.bidmas.brackets })}
+              />
+              <PillToggle
+                label="Indices"
+                active={c.bidmas.indices}
+                onToggle={() => updateConfig('bidmas', { indices: !c.bidmas.indices })}
+              />
+            </div>
+          </div>
+          <div className="flex justify-center gap-2">
+            <PillToggle
+              label="Allow negative numbers"
+              active={c.bidmas.allowNegatives}
+              onToggle={() => updateConfig('bidmas', { allowNegatives: !c.bidmas.allowNegatives })}
+            />
+          </div>
+        </>
+      ),
     };
 
     return (
@@ -929,7 +1605,6 @@ export default function MathsSkillsGenerator() {
 
   // ── RENDER ───────────────────────────────────────────────────────────────
 
-  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   const canGenerate = enabledSkills.length > 0 && total > 0;
 
   return (
@@ -942,32 +1617,6 @@ export default function MathsSkillsGenerator() {
             <Home size={24} />
             <span className="font-semibold text-lg">Home</span>
           </button>
-
-          {/* Burger menu */}
-          <div className="relative">
-            <button
-              onClick={() => setIsMenuOpen(o => !o)}
-              className="text-white hover:bg-blue-800 p-2 rounded-lg transition-colors"
-            >
-              {isMenuOpen ? <X size={26} /> : <Menu size={26} />}
-            </button>
-            {isMenuOpen && (
-              <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-50">
-                <div className="px-4 py-2.5 border-b border-gray-100">
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Presets</p>
-                </div>
-                {PRESETS.map(p => (
-                  <button
-                    key={p.label}
-                    onClick={() => { applyPreset(p); setIsMenuOpen(false); }}
-                    className="w-full text-left px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-900 transition-colors"
-                  >
-                    {p.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
       </div>
 
@@ -980,12 +1629,29 @@ export default function MathsSkillsGenerator() {
           </h1>
           <p className="text-center text-gray-500 mb-6">Build a custom worksheet by selecting skills and question counts</p>
 
+          {/* Quick-start presets */}
+          <div className="bg-white rounded-2xl shadow-lg mb-6 p-5">
+            <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Quick-start presets</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {PRESETS.map(p => (
+                <button
+                  key={p.label}
+                  onClick={() => applyPreset(p)}
+                  className="text-left p-3 rounded-xl border-2 border-gray-200 bg-white hover:border-blue-400 hover:bg-blue-50 transition-all"
+                >
+                  <div className="font-bold text-sm text-gray-900 leading-tight">{p.label}</div>
+                  <div className="text-xs text-gray-400 mt-1 leading-snug">{p.desc}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Toolbar */}
           <div className="bg-white rounded-2xl shadow-lg mb-6 px-6 py-4 flex items-center gap-4 flex-wrap justify-center">
 
             {/* Max questions */}
             <div className="flex items-center gap-2">
-              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">Questions</label>
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">Max</label>
               <input
                 type="number"
                 min={3} max={30} step={3}
@@ -1039,7 +1705,18 @@ export default function MathsSkillsGenerator() {
 
             {/* Budget bar */}
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <span className="font-semibold text-gray-700">Questions</span>
+              <div className="flex items-center gap-3">
+                <span className="font-semibold text-gray-700">Questions</span>
+                {enabledSkills.length > 0 && (
+                  <button
+                    onClick={clearAll}
+                    className="flex items-center gap-1 text-xs font-bold text-gray-400 hover:text-red-600 transition-colors"
+                    title="Turn off all skills"
+                  >
+                    <RotateCcw size={13} /> Clear all
+                  </button>
+                )}
+              </div>
               <div className="flex items-center gap-3">
                 <div className="w-40 h-2.5 bg-gray-100 rounded-full overflow-hidden">
                   <div
@@ -1053,14 +1730,25 @@ export default function MathsSkillsGenerator() {
               </div>
             </div>
 
-            <div className="divide-y divide-gray-100">
-              {ALL_SKILLS.map(skill => {
-                const enabled = enabledSkills.includes(skill);
-                const expanded = expandedSkill === skill;
+            {SKILL_GROUPS.map(group => {
+              const activeInGroup = group.skills.filter(s => enabledSkills.includes(s)).length;
+              return (
+                <div key={group.label}>
+                  {/* Group header */}
+                  <div className="px-6 py-2 bg-slate-100/70 border-y border-slate-100 flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">{group.label}</span>
+                    {activeInGroup > 0 && (
+                      <span className="text-[11px] font-bold text-blue-900 tabular-nums">{activeInGroup} selected</span>
+                    )}
+                  </div>
+                  <div className="divide-y divide-gray-100">
+                    {group.skills.map(skill => {
+                      const enabled = enabledSkills.includes(skill);
+                      const expanded = expandedSkill === skill;
 
-                return (
-                  <div key={skill}>
-                    {/* Row */}
+                      return (
+                        <div key={skill}>
+                          {/* Row */}
                     <div className={`flex items-center gap-4 px-6 py-4 transition-colors ${enabled ? 'bg-white' : 'bg-gray-50/60'}`}>
 
                       {/* Toggle switch */}
@@ -1140,16 +1828,19 @@ export default function MathsSkillsGenerator() {
                       )}
                     </div>
 
-                    {/* Expanded config */}
-                    {enabled && expanded && (
-                      <div className="px-6 pb-5 bg-slate-50 border-t border-slate-100">
-                        {renderConfig(skill)}
-                      </div>
-                    )}
+                          {/* Expanded config */}
+                          {enabled && expanded && (
+                            <div className="px-6 pb-5 bg-slate-50 border-t border-slate-100">
+                              {renderConfig(skill)}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })}
           </div>
 
           {/* Error */}
@@ -1216,10 +1907,12 @@ export default function MathsSkillsGenerator() {
             <h3 className="font-bold text-gray-900 mb-3">How it works</h3>
             <ul className="space-y-1.5 text-sm text-gray-600">
               {[
+                'Tap a quick-start preset to load a ready-made mix, or build your own from the grouped skill list.',
                 'Toggle skills on, then use − / + to set how many questions each one contributes.',
-                'Maximum 30 questions total — the budget bar shows how many you have left.',
+                'Maximum 30 questions total — the budget bar shows how many you have left. Use Clear all to reset.',
                 'Click Options on any skill to configure difficulty and number ranges.',
                 'Preview shows a sample; Generate PDF opens a print-ready worksheet with answers.',
+                'Your setup is saved automatically and restored when you come back.',
               ].map((t, i) => (
                 <li key={i} className="flex items-start gap-2">
                   <span className="text-blue-900 font-bold mt-0.5">·</span>
