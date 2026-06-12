@@ -443,38 +443,39 @@ const sectorPath = (cx: number, cy: number, r: number, startDeg: number, sweep: 
   return `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${sweep > 180 ? 1 : 0} 1 ${x2} ${y2} Z`;
 };
 
-// Dimension line with outward-pointing arrowheads at both ends.
-const DimLine = ({ x1, y1, x2, y2 }: { x1: number; y1: number; x2: number; y2: number }) => {
+// Dimension line with outward-pointing arrowheads at both ends. `k` scales the
+// stroke and arrow sizes to the diagram's view scale (see VIEW_REF below).
+const DimLine = ({ x1, y1, x2, y2, k = 1 }: { x1: number; y1: number; x2: number; y2: number; k?: number }) => {
   const dx = x2 - x1, dy = y2 - y1;
   const len = Math.sqrt(dx * dx + dy * dy) || 1;
   const ux = dx / len, uy = dy / len, px = -uy, py = ux;
-  const A = 14, W = 6;
+  const A = 14 * k, W = 6 * k;
   const head = (ex: number, ey: number, dirX: number, dirY: number) =>
     `${ex - dirX * A + px * W},${ey - dirY * A + py * W} ${ex},${ey} ${ex - dirX * A - px * W},${ey - dirY * A - py * W}`;
   return (
     <g>
-      <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={LINE} strokeWidth={3.5} />
-      <polyline points={head(x1, y1, -ux, -uy)} fill="none" stroke={LINE} strokeWidth={3} strokeLinejoin="round" strokeLinecap="round" />
-      <polyline points={head(x2, y2, ux, uy)} fill="none" stroke={LINE} strokeWidth={3} strokeLinejoin="round" strokeLinecap="round" />
+      <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={LINE} strokeWidth={3.5 * k} />
+      <polyline points={head(x1, y1, -ux, -uy)} fill="none" stroke={LINE} strokeWidth={3 * k} strokeLinejoin="round" strokeLinecap="round" />
+      <polyline points={head(x2, y2, ux, uy)} fill="none" stroke={LINE} strokeWidth={3 * k} strokeLinejoin="round" strokeLinecap="round" />
     </g>
   );
 };
 
 const pillW = (text: string): number => text.length * 28 * 0.56 + 28 * 0.9;
+const PILL_H = 42;
 
-const Pill = ({ x, y, text, color = ACCENT, italic = false, boxed = false }: {
-  x: number; y: number; text: string; color?: string; italic?: boolean; boxed?: boolean;
+const Pill = ({ x, y, text, color = ACCENT, italic = false, boxed = false, k = 1 }: {
+  x: number; y: number; text: string; color?: string; italic?: boolean; boxed?: boolean; k?: number;
 }) => {
-  const fs = 28;
-  const w = pillW(text);
-  const h = fs * 1.5;
+  const w = pillW(text) * k;
+  const h = PILL_H * k;
   return (
     <g>
-      <rect x={x - w / 2} y={y - h / 2} width={w} height={h} rx={9}
+      <rect x={x - w / 2} y={y - h / 2} width={w} height={h} rx={9 * k}
         fill="#ffffff" opacity={0.96}
-        stroke={boxed ? ACCENT_LIGHT : "#d1d5db"} strokeWidth={1.8} />
-      <text x={x} y={y + 1} textAnchor="middle" dominantBaseline="central"
-        fontSize={fs} fontWeight={700} fill={color}
+        stroke={boxed ? ACCENT_LIGHT : "#d1d5db"} strokeWidth={1.8 * k} />
+      <text x={x} y={y + k} textAnchor="middle" dominantBaseline="central"
+        fontSize={28 * k} fontWeight={700} fill={color}
         fontStyle={italic ? "italic" : "normal"}
         fontFamily="'Segoe UI', Arial, sans-serif">
         {text}
@@ -482,6 +483,11 @@ const Pill = ({ x, y, text, color = ACCENT, italic = false, boxed = false }: {
     </g>
   );
 };
+
+// Every diagram is normalised so its longest viewBox side represents the same
+// on-screen size. Labels and strokes are drawn at (size × view/VIEW_REF), so
+// when the cell scales the viewBox down, they come out identical in every cell.
+const VIEW_REF = 500;
 
 const CircleSVG = ({ d, showAnswer, qIndex }: { d: DiagramData; showAnswer: boolean; qIndex?: number }) => {
   const ep = qIndex !== undefined ? { "data-q-index": qIndex } : {};
@@ -511,44 +517,53 @@ const CircleSVG = ({ d, showAnswer, qIndex }: { d: DiagramData; showAnswer: bool
     const dimEnd: [number, number] = lvl === 1 ? [ex, ey] : [0, 0];
     const dimLabel = lvl === 1 ? `d = ${fmt(d.d)} cm` : `r = ${fmt(d.r)} cm`;
     const midX = (sx + dimEnd[0]) / 2, midY = (sy + dimEnd[1]) / 2;
-    xs.push(midX - pillW(dimLabel) / 2, midX + pillW(dimLabel) / 2);
-    ys.push(midY - 21, midY + 21);
-
-    // θ pill sits directly under the shape, centred on it.
     const thetaLabel = `θ = ${theta}°`;
-    const thetaPillX = (Math.min(...xs) + Math.max(...xs)) / 2;
-    const thetaPillY = Math.max(...ys) + 48;
-    if (lvl === 3) {
-      xs.push(thetaPillX - pillW(thetaLabel) / 2, thetaPillX + pillW(thetaLabel) / 2);
-      ys.push(thetaPillY + 21);
-    }
 
-    const PAD = 16;
-    const minX = Math.min(...xs) - PAD, maxX = Math.max(...xs) + PAD;
-    const minY = Math.min(...ys) - PAD, maxY = Math.max(...ys) + PAD;
+    // Labels and strokes are drawn pre-scaled by k = view/VIEW_REF so the cell's
+    // own scaling undoes it and they render the same size in every diagram. The
+    // label sizes feed back into the bounding box, so iterate to the fixed point.
+    let k = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)) / VIEW_REF;
+    let minX = 0, maxX = 0, minY = 0, maxY = 0, thetaPillX = 0, thetaPillY = 0;
+    for (let i = 0; i < 4; i++) {
+      const bx = [...xs], by = [...ys];
+      bx.push(midX - pillW(dimLabel) * k / 2, midX + pillW(dimLabel) * k / 2);
+      by.push(midY - PILL_H * k / 2, midY + PILL_H * k / 2);
+      if (lvl === 3) {
+        // θ pill sits directly under the shape, centred on it.
+        thetaPillX = (Math.min(...bx) + Math.max(...bx)) / 2;
+        thetaPillY = Math.max(...by) + 48 * k;
+        bx.push(thetaPillX - pillW(thetaLabel) * k / 2, thetaPillX + pillW(thetaLabel) * k / 2);
+        by.push(thetaPillY + PILL_H * k / 2);
+      }
+      const PAD = 16 * k;
+      minX = Math.min(...bx) - PAD; maxX = Math.max(...bx) + PAD;
+      minY = Math.min(...by) - PAD; maxY = Math.max(...by) + PAD;
+      k = Math.max(maxX - minX, maxY - minY) / VIEW_REF;
+    }
 
     // Right-angle marker for quarter circles; θ arc for arbitrary sectors.
     const sq = 32;
     const [q1x, q1y] = polar(0, 0, sq, startDeg);
     const [q3x, q3y] = polar(0, 0, sq, startDeg + theta);
+    const arcR = 48;
 
     return (
       <svg viewBox={`${minX} ${minY} ${maxX - minX} ${maxY - minY}`}
         style={{ display: "block", width: "100%", height: "auto" }}
         preserveAspectRatio="xMidYMid meet" {...ep}>
-        <path d={sectorPath(0, 0, R, startDeg, theta)} fill={SECTOR_FILL} stroke={ACCENT} strokeWidth={4} strokeLinejoin="round" />
-        {lvl !== 1 && <circle cx={0} cy={0} r={6} fill={ACCENT} />}
+        <path d={sectorPath(0, 0, R, startDeg, theta)} fill={SECTOR_FILL} stroke={ACCENT} strokeWidth={4 * k} strokeLinejoin="round" />
+        {lvl !== 1 && <circle cx={0} cy={0} r={6 * k} fill={ACCENT} />}
         {lvl === 2 && (
           <polyline points={`${q1x},${q1y} ${q1x + q3x},${q1y + q3y} ${q3x},${q3y}`}
-            fill="none" stroke={ACCENT} strokeWidth={2.5} />
+            fill="none" stroke={ACCENT} strokeWidth={2.5 * k} />
         )}
         {lvl === 3 && (
-          <path d={`M ${polar(0, 0, 48, startDeg).join(" ")} A 48 48 0 ${theta > 180 ? 1 : 0} 1 ${polar(0, 0, 48, startDeg + theta).join(" ")}`}
-            fill="none" stroke={ACCENT} strokeWidth={2.5} />
+          <path d={`M ${polar(0, 0, arcR, startDeg).join(" ")} A ${arcR} ${arcR} 0 ${theta > 180 ? 1 : 0} 1 ${polar(0, 0, arcR, startDeg + theta).join(" ")}`}
+            fill="none" stroke={ACCENT} strokeWidth={2.5 * k} />
         )}
-        <DimLine x1={sx} y1={sy} x2={dimEnd[0]} y2={dimEnd[1]} />
-        <Pill x={midX} y={midY} text={dimLabel} color={LINE} />
-        {lvl === 3 && <Pill x={thetaPillX} y={thetaPillY} text={thetaLabel} boxed />}
+        <DimLine x1={sx} y1={sy} x2={dimEnd[0]} y2={dimEnd[1]} k={k} />
+        <Pill x={midX} y={midY} text={dimLabel} color={LINE} k={k} />
+        {lvl === 3 && <Pill x={thetaPillX} y={thetaPillY} text={thetaLabel} boxed k={k} />}
       </svg>
     );
   }
