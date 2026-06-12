@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Home, Eye, Download, RefreshCw, Menu, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Home, Eye, Download, RefreshCw, RotateCcw } from 'lucide-react';
 
 const TOOL_CONFIG = {
   pageTitle: 'Maths Skills Generator',
@@ -880,6 +880,17 @@ const SKILL_META: Record<SkillId, { label: string; description: string }> = {
 
 const ALL_SKILLS: SkillId[] = ['numberBonds', 'timesTables', 'reverseTT', 'addition', 'subtraction', 'multiplication', 'busStop', 'negatives', 'indices', 'powersOfTen', 'rounding', 'primes', 'fdp', 'metric', 'bidmas'];
 
+// Skills grouped by number sub-topic (all skills are number skills — these are
+// teaching themes, not the app's top-level categories).
+const SKILL_GROUPS: { label: string; skills: SkillId[] }[] = [
+  { label: 'Number Facts',                 skills: ['numberBonds', 'timesTables', 'reverseTT'] },
+  { label: 'Written Methods',              skills: ['addition', 'subtraction', 'multiplication', 'busStop', 'negatives'] },
+  { label: 'Place Value & Rounding',       skills: ['powersOfTen', 'rounding'] },
+  { label: 'Number Properties',            skills: ['primes', 'indices'] },
+  { label: 'Fractions, Decimals & Measures', skills: ['fdp', 'metric'] },
+  { label: 'Order of Operations',          skills: ['bidmas'] },
+];
+
 // ─── DEFAULT CONFIGS ──────────────────────────────────────────────────────────
 
 const defaultConfigs: SkillConfigs = {
@@ -900,19 +911,60 @@ const defaultConfigs: SkillConfigs = {
   bidmas:         { steps: [2], brackets: true, indices: false, allowNegatives: false },
 };
 
+const DEFAULT_SKILL_COUNTS: Record<SkillId, number> = {
+  numberBonds: 5, timesTables: 5, reverseTT: 5, addition: 5, subtraction: 5,
+  multiplication: 5, negatives: 5, busStop: 5, indices: 5,
+  powersOfTen: 5, rounding: 5, primes: 5, fdp: 5, metric: 5, bidmas: 5,
+};
+
+// ─── SETUP PERSISTENCE ────────────────────────────────────────────────────────
+// The whole setup is mirrored to localStorage so it survives a page refresh.
+
+const STORAGE_KEY = 'fsGenerator.setup.v1';
+
+type SavedSetup = {
+  enabledSkills: SkillId[];
+  skillCounts: Record<SkillId, number>;
+  configs: SkillConfigs;
+  maxQuestions: number;
+  numPages: number;
+  grouped: boolean;
+};
+
+function loadSetup(): Partial<SavedSetup> {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as Partial<SavedSetup>) : {};
+  } catch {
+    return {};
+  }
+}
+
+// Merge saved configs over the current defaults, so a save made before a skill
+// (or option) existed still loads cleanly with the new keys filled in.
+function mergeConfigs(saved?: Partial<SkillConfigs>): SkillConfigs {
+  const out = {} as SkillConfigs;
+  (Object.keys(defaultConfigs) as SkillId[]).forEach(k => {
+    (out as any)[k] = { ...(defaultConfigs as any)[k], ...((saved as any)?.[k] ?? {}) };
+  });
+  return out;
+}
+
 
 
 // ─── PRESETS ─────────────────────────────────────────────────────────────────
 
 type Preset = {
   label: string;
+  desc: string;
   enabledSkills: SkillId[];
   skillCounts: Partial<Record<SkillId, number>>;
   configs: Partial<SkillConfigs>;
 };
 
 const PRESETS: Preset[] = [
-  { label: 'Preset 1',
+  { label: 'Foundation Number',
+    desc: 'Bonds, easy tables & addition',
     enabledSkills: ['numberBonds', 'timesTables', 'addition'],
     skillCounts: { numberBonds: 10, timesTables: 10, addition: 10 },
     configs: {
@@ -922,7 +974,8 @@ const PRESETS: Preset[] = [
     },
   },
   {
-    label: 'Preset 2',
+    label: 'Four Operations',
+    desc: 'Tables, division, +/− methods',
     enabledSkills: ['timesTables', 'reverseTT', 'addition', 'subtraction'],
     skillCounts: { timesTables: 8, reverseTT: 8, addition: 7, subtraction: 7 },
     configs: {
@@ -933,7 +986,8 @@ const PRESETS: Preset[] = [
     },
   },
   {
-    label: 'Preset 3',
+    label: 'Multiplication & Division',
+    desc: 'Written ×/÷ with tables recall',
     enabledSkills: ['timesTables', 'reverseTT', 'multiplication', 'busStop'],
     skillCounts: { timesTables: 8, reverseTT: 7, multiplication: 8, busStop: 7 },
     configs: {
@@ -944,7 +998,8 @@ const PRESETS: Preset[] = [
     },
   },
   {
-    label: 'Preset 4',
+    label: 'Higher Calculation',
+    desc: 'Long ×/÷, negatives & indices',
     enabledSkills: ['multiplication', 'busStop', 'negatives', 'indices'],
     skillCounts: { multiplication: 8, busStop: 8, negatives: 7, indices: 7 },
     configs: {
@@ -955,7 +1010,8 @@ const PRESETS: Preset[] = [
     },
   },
   {
-    label: 'Preset 5',
+    label: 'Times Tables Focus',
+    desc: 'Tables & division facts only',
     enabledSkills: ['timesTables', 'reverseTT'],
     skillCounts: { timesTables: 15, reverseTT: 15 },
     configs: {
@@ -964,11 +1020,34 @@ const PRESETS: Preset[] = [
     },
   },
   {
-    label: 'Preset 6',
+    label: 'Number Bonds Focus',
+    desc: 'Bonds to 10, 20, 50 & 100',
     enabledSkills: ['numberBonds'],
     skillCounts: { numberBonds: 30 },
     configs: {
       numberBonds: { targets: [10, 20, 50, 100] },
+    },
+  },
+  {
+    label: 'Number Sense',
+    desc: 'Powers of 10, rounding & primes',
+    enabledSkills: ['powersOfTen', 'rounding', 'primes'],
+    skillCounts: { powersOfTen: 10, rounding: 10, primes: 10 },
+    configs: {
+      powersOfTen: { operations: ['multiply', 'divide'], powers: [10, 100, 1000], baseTypes: ['int', '1dp'] },
+      rounding: { targets: ['n10', 'n100', '1dp'], edgeCases: false },
+      primes: { tasks: ['identify', 'next'], max: 50 },
+    },
+  },
+  {
+    label: 'Proportion & BIDMAS',
+    desc: 'FDP, metric units & order of ops',
+    enabledSkills: ['fdp', 'metric', 'bidmas'],
+    skillCounts: { fdp: 10, metric: 10, bidmas: 10 },
+    configs: {
+      fdp: { paths: ['fd', 'dp', 'fp'], complexities: ['common', 'extended'] },
+      metric: { categories: ['length', 'mass', 'capacity'], steps: ['adjacent'], decimals: true },
+      bidmas: { steps: [2, 3], brackets: true, indices: true, allowNegatives: false },
     },
   },
 ];
@@ -976,19 +1055,29 @@ const PRESETS: Preset[] = [
 
 
 export default function MathsSkillsGenerator() {
-  const [enabledSkills, setEnabledSkills] = useState<SkillId[]>([]);
-  const [skillCounts, setSkillCounts] = useState<Record<SkillId, number>>({
-    numberBonds: 5, timesTables: 5, reverseTT: 5, addition: 5, subtraction: 5,
-    multiplication: 5, negatives: 5, busStop: 5, indices: 5,
-    powersOfTen: 5, rounding: 5, primes: 5, fdp: 5, metric: 5, bidmas: 5,
-  });
-  const [configs, setConfigs] = useState<SkillConfigs>(defaultConfigs);
-  const [maxQuestions, setMaxQuestions] = useState<number>(30);
-  const [numPages, setNumPages] = useState<number>(1);
-  const [grouped, setGrouped] = useState<boolean>(false);
+  const [saved] = useState<Partial<SavedSetup>>(loadSetup);
+  const [enabledSkills, setEnabledSkills] = useState<SkillId[]>(
+    () => (saved.enabledSkills ?? []).filter(s => ALL_SKILLS.includes(s)),
+  );
+  const [skillCounts, setSkillCounts] = useState<Record<SkillId, number>>(
+    () => ({ ...DEFAULT_SKILL_COUNTS, ...(saved.skillCounts ?? {}) }),
+  );
+  const [configs, setConfigs] = useState<SkillConfigs>(() => mergeConfigs(saved.configs));
+  const [maxQuestions, setMaxQuestions] = useState<number>(saved.maxQuestions ?? 30);
+  const [numPages, setNumPages] = useState<number>(saved.numPages ?? 1);
+  const [grouped, setGrouped] = useState<boolean>(saved.grouped ?? false);
   const [previewQuestions, setPreviewQuestions] = useState<Question[]>([]);
   const [error, setError] = useState<string>('');
   const [expandedSkill, setExpandedSkill] = useState<SkillId | null>(null);
+
+  // Mirror the setup to localStorage whenever it changes.
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        enabledSkills, skillCounts, configs, maxQuestions, numPages, grouped,
+      }));
+    } catch { /* storage unavailable — ignore */ }
+  }, [enabledSkills, skillCounts, configs, maxQuestions, numPages, grouped]);
 
   const total = enabledSkills.reduce((sum, s) => sum + skillCounts[s], 0);
   const overBudget = total > maxQuestions;
@@ -1006,6 +1095,13 @@ export default function MathsSkillsGenerator() {
     setExpandedSkill(null);
     setError('');
     setPreviewQuestions([]);
+  };
+
+  const clearAll = () => {
+    setEnabledSkills([]);
+    setExpandedSkill(null);
+    setPreviewQuestions([]);
+    setError('');
   };
 
   const toggleSkill = (skill: SkillId) => {
@@ -1509,7 +1605,6 @@ export default function MathsSkillsGenerator() {
 
   // ── RENDER ───────────────────────────────────────────────────────────────
 
-  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   const canGenerate = enabledSkills.length > 0 && total > 0;
 
   return (
@@ -1522,32 +1617,6 @@ export default function MathsSkillsGenerator() {
             <Home size={24} />
             <span className="font-semibold text-lg">Home</span>
           </button>
-
-          {/* Burger menu */}
-          <div className="relative">
-            <button
-              onClick={() => setIsMenuOpen(o => !o)}
-              className="text-white hover:bg-blue-800 p-2 rounded-lg transition-colors"
-            >
-              {isMenuOpen ? <X size={26} /> : <Menu size={26} />}
-            </button>
-            {isMenuOpen && (
-              <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-50">
-                <div className="px-4 py-2.5 border-b border-gray-100">
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Presets</p>
-                </div>
-                {PRESETS.map(p => (
-                  <button
-                    key={p.label}
-                    onClick={() => { applyPreset(p); setIsMenuOpen(false); }}
-                    className="w-full text-left px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-900 transition-colors"
-                  >
-                    {p.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
       </div>
 
@@ -1560,12 +1629,29 @@ export default function MathsSkillsGenerator() {
           </h1>
           <p className="text-center text-gray-500 mb-6">Build a custom worksheet by selecting skills and question counts</p>
 
+          {/* Quick-start presets */}
+          <div className="bg-white rounded-2xl shadow-lg mb-6 p-5">
+            <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Quick-start presets</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {PRESETS.map(p => (
+                <button
+                  key={p.label}
+                  onClick={() => applyPreset(p)}
+                  className="text-left p-3 rounded-xl border-2 border-gray-200 bg-white hover:border-blue-400 hover:bg-blue-50 transition-all"
+                >
+                  <div className="font-bold text-sm text-gray-900 leading-tight">{p.label}</div>
+                  <div className="text-xs text-gray-400 mt-1 leading-snug">{p.desc}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Toolbar */}
           <div className="bg-white rounded-2xl shadow-lg mb-6 px-6 py-4 flex items-center gap-4 flex-wrap justify-center">
 
             {/* Max questions */}
             <div className="flex items-center gap-2">
-              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">Questions</label>
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">Max</label>
               <input
                 type="number"
                 min={3} max={30} step={3}
@@ -1619,7 +1705,18 @@ export default function MathsSkillsGenerator() {
 
             {/* Budget bar */}
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <span className="font-semibold text-gray-700">Questions</span>
+              <div className="flex items-center gap-3">
+                <span className="font-semibold text-gray-700">Questions</span>
+                {enabledSkills.length > 0 && (
+                  <button
+                    onClick={clearAll}
+                    className="flex items-center gap-1 text-xs font-bold text-gray-400 hover:text-red-600 transition-colors"
+                    title="Turn off all skills"
+                  >
+                    <RotateCcw size={13} /> Clear all
+                  </button>
+                )}
+              </div>
               <div className="flex items-center gap-3">
                 <div className="w-40 h-2.5 bg-gray-100 rounded-full overflow-hidden">
                   <div
@@ -1633,14 +1730,25 @@ export default function MathsSkillsGenerator() {
               </div>
             </div>
 
-            <div className="divide-y divide-gray-100">
-              {ALL_SKILLS.map(skill => {
-                const enabled = enabledSkills.includes(skill);
-                const expanded = expandedSkill === skill;
+            {SKILL_GROUPS.map(group => {
+              const activeInGroup = group.skills.filter(s => enabledSkills.includes(s)).length;
+              return (
+                <div key={group.label}>
+                  {/* Group header */}
+                  <div className="px-6 py-2 bg-slate-100/70 border-y border-slate-100 flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">{group.label}</span>
+                    {activeInGroup > 0 && (
+                      <span className="text-[11px] font-bold text-blue-900 tabular-nums">{activeInGroup} selected</span>
+                    )}
+                  </div>
+                  <div className="divide-y divide-gray-100">
+                    {group.skills.map(skill => {
+                      const enabled = enabledSkills.includes(skill);
+                      const expanded = expandedSkill === skill;
 
-                return (
-                  <div key={skill}>
-                    {/* Row */}
+                      return (
+                        <div key={skill}>
+                          {/* Row */}
                     <div className={`flex items-center gap-4 px-6 py-4 transition-colors ${enabled ? 'bg-white' : 'bg-gray-50/60'}`}>
 
                       {/* Toggle switch */}
@@ -1720,16 +1828,19 @@ export default function MathsSkillsGenerator() {
                       )}
                     </div>
 
-                    {/* Expanded config */}
-                    {enabled && expanded && (
-                      <div className="px-6 pb-5 bg-slate-50 border-t border-slate-100">
-                        {renderConfig(skill)}
-                      </div>
-                    )}
+                          {/* Expanded config */}
+                          {enabled && expanded && (
+                            <div className="px-6 pb-5 bg-slate-50 border-t border-slate-100">
+                              {renderConfig(skill)}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })}
           </div>
 
           {/* Error */}
@@ -1796,10 +1907,12 @@ export default function MathsSkillsGenerator() {
             <h3 className="font-bold text-gray-900 mb-3">How it works</h3>
             <ul className="space-y-1.5 text-sm text-gray-600">
               {[
+                'Tap a quick-start preset to load a ready-made mix, or build your own from the grouped skill list.',
                 'Toggle skills on, then use − / + to set how many questions each one contributes.',
-                'Maximum 30 questions total — the budget bar shows how many you have left.',
+                'Maximum 30 questions total — the budget bar shows how many you have left. Use Clear all to reset.',
                 'Click Options on any skill to configure difficulty and number ranges.',
                 'Preview shows a sample; Generate PDF opens a print-ready worksheet with answers.',
+                'Your setup is saved automatically and restored when you come back.',
               ].map((t, i) => (
                 <li key={i} className="flex items-start gap-2">
                   <span className="text-blue-900 font-bold mt-0.5">·</span>
