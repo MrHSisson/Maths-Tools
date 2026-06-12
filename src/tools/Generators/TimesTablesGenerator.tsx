@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Download, Home, Menu, X, Eye } from 'lucide-react';
 
@@ -12,9 +12,18 @@ type LayoutMode = 'list' | 'cells';
 type Question = {
   question: string; // full string including ___ for the blank
   answer: number;
+  missing?: boolean; // true = missing-factor format
 };
 
 // ── QUESTION GENERATION ───────────────────────────────────────────────────────
+
+const shuffle = <T,>(arr: T[]): T[] => {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+};
 
 const generateQuestions = (
   selectedTables: number[],
@@ -22,57 +31,72 @@ const generateQuestions = (
   includeMultiply: boolean,
   includeDivide: boolean,
   includeStandard: boolean,
-  includeMissingFactor: boolean
+  includeMissingFactor: boolean,
+  missingPct: number,        // % of questions in missing-factor format (both formats on)
+  separateSections: boolean  // true = standard block first, then missing factors
 ): Question[] => {
-  const pool: Question[] = [];
+  const standardPool: Question[] = [];
+  const missingPool: Question[] = [];
 
   selectedTables.forEach(tt => {
     for (let other = 1; other <= 12; other++) {
       const product = tt * other;
 
-      if (includeStandard && includeMultiply) {
-        pool.push({ question: `${tt} × ${other} = ___`, answer: product });
+      if (includeMultiply) {
+        standardPool.push({ question: `${tt} × ${other} = ___`, answer: product });
+        missingPool.push({ question: `${tt} × ___ = ${product}`, answer: other, missing: true });
+        missingPool.push({ question: `___ × ${other} = ${product}`, answer: tt, missing: true });
       }
-      if (includeStandard && includeDivide) {
-        pool.push({ question: `${product} ÷ ${tt} = ___`, answer: other });
+      if (includeDivide) {
+        standardPool.push({ question: `${product} ÷ ${tt} = ___`, answer: other });
+        missingPool.push({ question: `___ ÷ ${tt} = ${other}`, answer: product, missing: true });
         if (other !== tt) {
-          pool.push({ question: `${product} ÷ ${other} = ___`, answer: tt });
-        }
-      }
-      if (includeMissingFactor && includeMultiply) {
-        pool.push({ question: `${tt} × ___ = ${product}`, answer: other });
-        pool.push({ question: `___ × ${other} = ${product}`, answer: tt });
-      }
-      if (includeMissingFactor && includeDivide) {
-        pool.push({ question: `___ ÷ ${tt} = ${other}`, answer: product });
-        if (other !== tt) {
-          pool.push({ question: `___ ÷ ${other} = ${tt}`, answer: product });
+          standardPool.push({ question: `${product} ÷ ${other} = ___`, answer: tt });
+          missingPool.push({ question: `___ ÷ ${other} = ${tt}`, answer: product, missing: true });
         }
       }
     }
   });
 
-  // Fisher-Yates shuffle
-  for (let i = pool.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
-  }
+  shuffle(standardPool);
+  shuffle(missingPool);
 
-  return pool.slice(0, numQuestions);
+  if (!includeMissingFactor) return standardPool.slice(0, numQuestions);
+  if (!includeStandard) return missingPool.slice(0, numQuestions);
+
+  // Both formats — honour the requested split, topping up from the other
+  // pool if one runs short of questions.
+  let missingCount = Math.round((numQuestions * missingPct) / 100);
+  missingCount = Math.min(missingCount, missingPool.length);
+  let standardCount = Math.min(numQuestions - missingCount, standardPool.length);
+  missingCount = Math.min(numQuestions - standardCount, missingPool.length);
+
+  const standard = standardPool.slice(0, standardCount);
+  const missing = missingPool.slice(0, missingCount);
+
+  return separateSections ? [...standard, ...missing] : shuffle([...standard, ...missing]);
 };
 
 // ── CELLS PDF ─────────────────────────────────────────────────────────────────
 
-function handlePrintCells(questions: Question[]) {
+function handlePrintCells(questions: Question[], separate = false) {
   const MARGIN_MM = 12;
   const HEADER_MM = 16;
   const GAP_MM = 1.5;
+  const SEC_MM = 7; // section heading row height
   const PAGE_H_MM = 297 - MARGIN_MM * 2;
   const PAGE_W_MM = 210 - MARGIN_MM * 2;
-  const usableH = PAGE_H_MM - HEADER_MM;
   const COLS = 3;
   const totalQ = questions.length;
-  const rows = Math.ceil(totalQ / COLS);
+  // Section headings only apply when both formats are present in separate blocks.
+  const firstMissing = questions.findIndex(q => q.missing);
+  const hasSections = separate && firstMissing > 0;
+  const stdQs = hasSections ? questions.slice(0, firstMissing) : questions;
+  const misQs = hasSections ? questions.slice(firstMissing) : [];
+  const rows = hasSections
+    ? Math.ceil(stdQs.length / COLS) + Math.ceil(misQs.length / COLS)
+    : Math.ceil(totalQ / COLS);
+  const usableH = PAGE_H_MM - HEADER_MM - (hasSections ? 2 * (SEC_MM + GAP_MM) : 0);
   const cellH_MM = (usableH - GAP_MM * (rows - 1)) / rows;
   const cellW_MM = (PAGE_W_MM - GAP_MM * (COLS - 1)) / COLS;
 
@@ -91,11 +115,14 @@ function handlePrintCells(questions: Question[]) {
   };
 
   const buildGrid = (showAnswer: boolean): string => {
-    let cells = '';
-    for (let i = 0; i < totalQ; i++) {
-      cells += `<div class="cell" style="width:${cellW_MM}mm;height:${cellH_MM}mm;">${qHtml(i, showAnswer)}</div>`;
-    }
-    return `<div class="grid" style="grid-template-columns:repeat(${COLS},${cellW_MM}mm);grid-template-rows:repeat(${rows},${cellH_MM}mm);">${cells}</div>`;
+    const gridOf = (qs: Question[], offset: number): string => {
+      const cells = qs
+        .map((_q, i) => `<div class="cell" style="width:${cellW_MM}mm;height:${cellH_MM}mm;">${qHtml(offset + i, showAnswer)}</div>`)
+        .join('');
+      return `<div class="grid" style="grid-template-columns:repeat(${COLS},${cellW_MM}mm);">${cells}</div>`;
+    };
+    if (!hasSections) return gridOf(questions, 0);
+    return `<div class="sec">Standard Questions</div>${gridOf(stdQs, 0)}<div class="sec">Missing Factors</div>${gridOf(misQs, firstMissing)}`;
   };
 
   const buildPage = (showAnswer: boolean): string => {
@@ -124,7 +151,8 @@ function handlePrintCells(questions: Question[]) {
   }
   .page-header h1 { font-size:5mm; font-weight:700; color:#1e3a8a; }
   .page-header .meta { font-size:3mm; color:#6b7280; }
-  .grid { display:grid; gap:${GAP_MM}mm; }
+  .grid { display:grid; gap:${GAP_MM}mm; margin-bottom:${GAP_MM}mm; }
+  .sec { height:${SEC_MM}mm; display:flex; align-items:flex-end; font-size:4mm; font-weight:700; color:#1e3a8a; margin-bottom:${GAP_MM}mm; }
   .cell {
     border:0.3mm solid #000; border-radius:3mm;
     overflow:hidden; display:flex; align-items:stretch; justify-content:flex-start;
@@ -150,7 +178,7 @@ ${buildPage(true)}
 
 // ── LIST ("No Cells") PDF ─────────────────────────────────────────────────────
 
-function handlePrintList(questions: Question[]) {
+function handlePrintList(questions: Question[], separate = false) {
   // Answers render inline where the blank was, in the same bold green as the
   // cells layout — important for missing-factor questions where the answer
   // sits mid-expression.
@@ -159,15 +187,21 @@ function handlePrintList(questions: Question[]) {
     return `${before}<span class="ans">${q.answer}</span>${after ?? ''}`;
   };
 
+  // Section headings only apply when both formats are present in separate blocks.
+  const firstMissing = questions.findIndex(q => q.missing);
+  const hasSections = separate && firstMissing > 0;
+
   const buildPage = (showAnswer: boolean): string => {
     const title = showAnswer ? 'Answer Key' : 'Times Tables Quiz';
-    const items = questions
-      .map(q => `<div class="q">${showAnswer ? answerHtml(q) : q.question}</div>`)
-      .join('');
+    const listOf = (qs: Question[]): string =>
+      `<div class="list">${qs.map(q => `<div class="q">${showAnswer ? answerHtml(q) : q.question}</div>`).join('')}</div>`;
+    const items = hasSections
+      ? `<div class="sec">Standard Questions</div>${listOf(questions.slice(0, firstMissing))}<div class="sec">Missing Factors</div>${listOf(questions.slice(firstMissing))}`
+      : listOf(questions);
     return `<div class="page">
       <h1>${title}</h1>
       ${showAnswer ? '' : '<div class="name">Name: ________________________________</div>'}
-      <div class="list">${items}</div>
+      ${items}
       <div class="footer">Times Tables Generator</div>
     </div>`;
   };
@@ -188,6 +222,8 @@ function handlePrintList(questions: Question[]) {
   .name { font-size:3.9mm; margin-top:6mm; }
   .list { display:grid; grid-template-columns:repeat(3,1fr); column-gap:4mm; margin-top:7mm; }
   .q { font-size:4.6mm; height:11.5mm; white-space:nowrap; }
+  .sec { font-size:4.4mm; font-weight:700; color:#1e3a8a; border-bottom:0.3mm solid #c7d2fe; padding-bottom:1mm; margin-top:7mm; }
+  .sec + .list { margin-top:3mm; }
   .ans { color:#059669; font-weight:700; text-decoration:underline; text-decoration-thickness:0.4mm; text-underline-offset:0.8mm; }
   .footer { position:absolute; bottom:0; left:0; right:0; text-align:center; font-size:2.5mm; color:#646464; }
 </style>
@@ -216,6 +252,9 @@ export default function TimesTablesQuizGenerator() {
   const [includeDivide, setIncludeDivide] = useState<boolean>(false);
   const [includeStandard, setIncludeStandard] = useState<boolean>(true);
   const [includeMissingFactor, setIncludeMissingFactor] = useState<boolean>(false);
+  const [missingPct, setMissingPct] = useState<number>(50);
+  const [pctInput, setPctInput] = useState<string>('50');
+  const [separateSections, setSeparateSections] = useState<boolean>(false);
   const [layoutMode, setLayoutMode] = useState<LayoutMode>('list');
   const [colorScheme, setColorScheme] = useState<ColorScheme>('default');
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
@@ -253,6 +292,15 @@ export default function TimesTablesQuizGenerator() {
     setQInput(String(clamped));
   };
 
+  const commitPctInput = () => {
+    const parsed = parseInt(pctInput);
+    const clamped = isNaN(parsed) ? 50 : Math.min(95, Math.max(5, parsed));
+    setMissingPct(clamped);
+    setPctInput(String(clamped));
+  };
+
+  const bothFormats = includeStandard && includeMissingFactor;
+
   const setLayoutAndClamp = (mode: LayoutMode) => {
     setLayoutMode(mode);
     if (mode === 'cells' && numQuestions > 45) {
@@ -281,7 +329,7 @@ export default function TimesTablesQuizGenerator() {
   };
 
   const getQuestions = (): Question[] =>
-    generateQuestions(selectedTables, numQuestions, includeMultiply, includeDivide, includeStandard, includeMissingFactor);
+    generateQuestions(selectedTables, numQuestions, includeMultiply, includeDivide, includeStandard, includeMissingFactor, missingPct, separateSections);
 
   const handleGeneratePreview = (): void => {
     if (!validate()) return;
@@ -293,13 +341,12 @@ export default function TimesTablesQuizGenerator() {
     if (!validate()) return;
     const questions = previewQuestions.length > 0 ? previewQuestions : getQuestions();
 
+    const separate = separateSections && bothFormats;
     if (layoutMode === 'cells') {
-      handlePrintCells(questions);
-      setError('');
-      return;
+      handlePrintCells(questions, separate);
+    } else {
+      handlePrintList(questions, separate);
     }
-
-    handlePrintList(questions);
     setError('');
   };
 
@@ -395,6 +442,38 @@ export default function TimesTablesQuizGenerator() {
                   />
                 </div>
               </div>
+
+              {/* Missing factor split — only when both formats are on */}
+              {bothFormats && (
+                <div className="flex flex-col items-center">
+                  <SectionLabel>Missing Factor Split</SectionLabel>
+                  <div className="flex gap-2 items-center">
+                    <Pill
+                      label="Mixed In"
+                      active={!separateSections}
+                      onClick={() => setSeparateSections(false)}
+                    />
+                    <Pill
+                      label="Separate Section"
+                      active={separateSections}
+                      onClick={() => setSeparateSections(true)}
+                    />
+                    <div className="flex items-center gap-1.5 ml-2">
+                      <input
+                        type="number"
+                        min={5}
+                        max={95}
+                        step={5}
+                        value={pctInput}
+                        onChange={e => setPctInput(e.target.value)}
+                        onBlur={commitPctInput}
+                        className="w-20 px-3 py-2.5 border-2 border-gray-200 rounded-lg text-base font-bold text-gray-800 text-center focus:outline-none focus:border-blue-900"
+                      />
+                      <span className="text-sm font-bold text-gray-500">% missing factor</span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Times Tables Selection */}
@@ -521,11 +600,18 @@ export default function TimesTablesQuizGenerator() {
               </h2>
               <div className="grid grid-cols-3 gap-4">
                 {previewQuestions.slice(0, 12).map((q, idx) => (
-                  <div key={idx} className="bg-gray-50 rounded-lg px-4 py-3 border border-gray-100">
-                    <span className="text-lg font-semibold" style={{ color: '#000000' }}>
-                      {idx + 1}. {q.question}
-                    </span>
-                  </div>
+                  <Fragment key={idx}>
+                    {separateSections && bothFormats && q.missing && (idx === 0 || !previewQuestions[idx - 1].missing) && (
+                      <div className="col-span-3 text-blue-900 font-bold border-b-2 border-blue-100 pb-1">
+                        Missing Factors
+                      </div>
+                    )}
+                    <div className="bg-gray-50 rounded-lg px-4 py-3 border border-gray-100">
+                      <span className="text-lg font-semibold" style={{ color: '#000000' }}>
+                        {idx + 1}. {q.question}
+                      </span>
+                    </div>
+                  </Fragment>
                 ))}
               </div>
               {previewQuestions.length > 12 && (
@@ -542,6 +628,7 @@ export default function TimesTablesQuizGenerator() {
             <ul className="space-y-2 text-gray-600">
               {[
                 'Pick one or both operations (× and/or ÷), then choose your question format — Standard (answer at the end) or Missing Factor (gap in the middle), or both together.',
+                'With both formats on, set what percentage of questions are missing factor, and choose whether they are mixed in or grouped into their own labelled section.',
                 'Select which times tables to include from 1–20.',
                 '"No Cells" generates a numbered list (21–60 questions). "Cells" generates a bordered grid (21–45 cells).',
                 'Generate Example previews a sample on screen. Generate PDF opens a printable worksheet with an answer key on the second page.',
@@ -559,4 +646,5 @@ export default function TimesTablesQuizGenerator() {
     </>
   );
 }
+
 
