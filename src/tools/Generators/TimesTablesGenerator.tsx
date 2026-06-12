@@ -83,7 +83,7 @@ function handlePrintCells(questions: Question[], separate = false) {
   const MARGIN_MM = 12;
   const HEADER_MM = 16;
   const GAP_MM = 1.5;
-  const SEC_MM = 7; // section heading row height
+  const DIV_MM = 4; // vertical space taken by the section divider line
   const PAGE_H_MM = 297 - MARGIN_MM * 2;
   const PAGE_W_MM = 210 - MARGIN_MM * 2;
   const COLS = 3;
@@ -96,7 +96,7 @@ function handlePrintCells(questions: Question[], separate = false) {
   const rows = hasSections
     ? Math.ceil(stdQs.length / COLS) + Math.ceil(misQs.length / COLS)
     : Math.ceil(totalQ / COLS);
-  const usableH = PAGE_H_MM - HEADER_MM - (hasSections ? 2 * (SEC_MM + GAP_MM) : 0);
+  const usableH = PAGE_H_MM - HEADER_MM - (hasSections ? DIV_MM + GAP_MM : 0);
   const cellH_MM = (usableH - GAP_MM * (rows - 1)) / rows;
   const cellW_MM = (PAGE_W_MM - GAP_MM * (COLS - 1)) / COLS;
 
@@ -122,7 +122,7 @@ function handlePrintCells(questions: Question[], separate = false) {
       return `<div class="grid" style="grid-template-columns:repeat(${COLS},${cellW_MM}mm);">${cells}</div>`;
     };
     if (!hasSections) return gridOf(questions, 0);
-    return `<div class="sec">Standard Questions</div>${gridOf(stdQs, 0)}<div class="sec">Missing Factors</div>${gridOf(misQs, firstMissing)}`;
+    return `${gridOf(stdQs, 0)}<div class="divider"></div>${gridOf(misQs, firstMissing)}`;
   };
 
   const buildPage = (showAnswer: boolean): string => {
@@ -152,7 +152,7 @@ function handlePrintCells(questions: Question[], separate = false) {
   .page-header h1 { font-size:5mm; font-weight:700; color:#1e3a8a; }
   .page-header .meta { font-size:3mm; color:#6b7280; }
   .grid { display:grid; gap:${GAP_MM}mm; margin-bottom:${GAP_MM}mm; }
-  .sec { height:${SEC_MM}mm; display:flex; align-items:flex-end; font-size:4mm; font-weight:700; color:#1e3a8a; margin-bottom:${GAP_MM}mm; }
+  .divider { border-top:0.5mm solid #1e3a8a; margin:${(DIV_MM - 0.5) / 2}mm 0; }
   .cell {
     border:0.3mm solid #000; border-radius:3mm;
     overflow:hidden; display:flex; align-items:stretch; justify-content:flex-start;
@@ -196,7 +196,7 @@ function handlePrintList(questions: Question[], separate = false) {
     const listOf = (qs: Question[]): string =>
       `<div class="list">${qs.map(q => `<div class="q">${showAnswer ? answerHtml(q) : q.question}</div>`).join('')}</div>`;
     const items = hasSections
-      ? `<div class="sec">Standard Questions</div>${listOf(questions.slice(0, firstMissing))}<div class="sec">Missing Factors</div>${listOf(questions.slice(firstMissing))}`
+      ? `${listOf(questions.slice(0, firstMissing))}<div class="divider"></div>${listOf(questions.slice(firstMissing))}`
       : listOf(questions);
     return `<div class="page">
       <h1>${title}</h1>
@@ -222,8 +222,8 @@ function handlePrintList(questions: Question[], separate = false) {
   .name { font-size:3.9mm; margin-top:6mm; }
   .list { display:grid; grid-template-columns:repeat(3,1fr); column-gap:4mm; margin-top:7mm; }
   .q { font-size:4.6mm; height:11.5mm; white-space:nowrap; }
-  .sec { font-size:4.4mm; font-weight:700; color:#1e3a8a; border-bottom:0.3mm solid #c7d2fe; padding-bottom:1mm; margin-top:7mm; }
-  .sec + .list { margin-top:3mm; }
+  .divider { border-top:0.5mm solid #1e3a8a; margin-top:3mm; }
+  .divider + .list { margin-top:5mm; }
   .ans { color:#059669; font-weight:700; text-decoration:underline; text-decoration-thickness:0.4mm; text-underline-offset:0.8mm; }
   .footer { position:absolute; bottom:0; left:0; right:0; text-align:center; font-size:2.5mm; color:#646464; }
 </style>
@@ -601,10 +601,8 @@ export default function TimesTablesQuizGenerator() {
               <div className="grid grid-cols-3 gap-4">
                 {previewQuestions.slice(0, 12).map((q, idx) => (
                   <Fragment key={idx}>
-                    {separateSections && bothFormats && q.missing && (idx === 0 || !previewQuestions[idx - 1].missing) && (
-                      <div className="col-span-3 text-blue-900 font-bold border-b-2 border-blue-100 pb-1">
-                        Missing Factors
-                      </div>
+                    {separateSections && bothFormats && q.missing && idx > 0 && !previewQuestions[idx - 1].missing && (
+                      <div className="col-span-3 border-b-2 border-blue-900 my-1" />
                     )}
                     <div className="bg-gray-50 rounded-lg px-4 py-3 border border-gray-100">
                       <span className="text-lg font-semibold" style={{ color: '#000000' }}>
@@ -628,7 +626,7 @@ export default function TimesTablesQuizGenerator() {
             <ul className="space-y-2 text-gray-600">
               {[
                 'Pick one or both operations (× and/or ÷), then choose your question format — Standard (answer at the end) or Missing Factor (gap in the middle), or both together.',
-                'With both formats on, set what percentage of questions are missing factor, and choose whether they are mixed in or grouped into their own labelled section.',
+                'With both formats on, set what percentage of questions are missing factor, and choose whether they are mixed in or grouped into a separate section below a divider line.',
                 'Select which times tables to include from 1–20.',
                 '"No Cells" generates a numbered list (21–60 questions). "Cells" generates a bordered grid (21–45 cells).',
                 'Generate Example previews a sample on screen. Generate PDF opens a printable worksheet with an answer key on the second page.',
@@ -646,5 +644,6 @@ export default function TimesTablesQuizGenerator() {
     </>
   );
 }
+
 
 
