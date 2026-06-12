@@ -43,23 +43,26 @@ type MultiplicationConfig = { types: ('2dx1d' | '2dx2d' | '3dx1d' | '3dx2d')[] }
 type BusStopConfig = { types: ('2d1d' | '3d1d' | '3d2d')[] };
 type IndicesConfig = { baseRange: 10 | 15; exponentRange: (2 | 3 | 4)[] };
 
+type BaseType = 'int' | '1dp' | '2dp';
 type PowersOfTenConfig = {
   operations: ('multiply' | 'divide')[];
   powers: (10 | 100 | 1000)[];
-  baseType: 'int' | '1dp' | '2dp';
+  baseTypes: BaseType[];
 };
 type RoundTarget = 'n10' | 'n100' | 'n1000' | '1dp' | '2dp' | '1sf' | '2sf';
 type RoundingConfig = { targets: RoundTarget[]; edgeCases: boolean };
 type PrimesConfig = { tasks: ('identify' | 'next')[]; max: 20 | 50 | 100 };
 type FdpPath = 'fd' | 'fp' | 'df' | 'dp' | 'pf' | 'pd';
-type FdpConfig = { paths: FdpPath[]; complexity: 'common' | 'extended' };
+type FdpComplexity = 'common' | 'extended';
+type FdpConfig = { paths: FdpPath[]; complexities: FdpComplexity[] };
+type MetricStep = 'adjacent' | 'nonadjacent';
 type MetricConfig = {
   categories: ('length' | 'mass' | 'capacity')[];
-  step: 'adjacent' | 'nonadjacent';
+  steps: MetricStep[];
   decimals: boolean;
 };
 type BidmasConfig = {
-  steps: 2 | 3;
+  steps: (2 | 3)[];
   brackets: boolean;
   indices: boolean;
   allowNegatives: boolean;
@@ -323,12 +326,14 @@ function genPowersOfTen(config: PowersOfTenConfig): Question[] {
   const seen = new Set<string>();
   const ops = config.operations.length ? config.operations : (['multiply'] as const);
   const powers = config.powers.length ? config.powers : ([10] as const);
+  const baseTypes = config.baseTypes.length ? config.baseTypes : (['int'] as BaseType[]);
   for (let i = 0; i < 800; i++) {
     const op = pick(ops as ('multiply' | 'divide')[]);
     const power = pick(powers as (10 | 100 | 1000)[]);
+    const bt = pick(baseTypes);
     let base: number;
-    if (config.baseType === 'int') base = randInt(1, 99);
-    else if (config.baseType === '1dp') base = round(randInt(1, 999) / 10, 1);
+    if (bt === 'int') base = randInt(1, 99);
+    else if (bt === '1dp') base = round(randInt(1, 999) / 10, 1);
     else base = round(randInt(1, 9999) / 100, 2);
     const sym = op === 'multiply' ? '×' : '÷';
     const ans = op === 'multiply' ? round(base * power, 6) : round(base / power, 6);
@@ -452,9 +457,11 @@ function genFdp(config: FdpConfig): Question[] {
   const pool: Question[] = [];
   const seen = new Set<string>();
   const paths = config.paths.length ? config.paths : (['fd'] as FdpPath[]);
-  const triples = config.complexity === 'extended'
-    ? [...FDP_COMMON, ...FDP_EXTENDED]
-    : FDP_COMMON;
+  const complexities = config.complexities.length ? config.complexities : (['common'] as FdpComplexity[]);
+  const triples = [
+    ...(complexities.includes('common') ? FDP_COMMON : []),
+    ...(complexities.includes('extended') ? FDP_EXTENDED : []),
+  ];
   for (const t of triples) {
     for (const path of paths) {
       let q = '', answer: string | number = '';
@@ -501,17 +508,19 @@ function genMetric(config: MetricConfig): Question[] {
   const cats = config.categories.length
     ? config.categories
     : (['length'] as ('length' | 'mass' | 'capacity')[]);
+  const steps = config.steps.length ? config.steps : (['adjacent'] as MetricStep[]);
+  const wantAdjacent = steps.includes('adjacent');
+  const wantNon = steps.includes('nonadjacent');
 
-  // Enumerate every unit pair with the required order gap.
+  // Enumerate every unit pair with an allowed order gap.
   const pairs: { cat: string; small: MetricUnit; big: MetricUnit }[] = [];
   for (const cat of cats) {
     const units = METRIC_UNITS[cat];
     for (let i = 0; i < units.length; i++) {
       for (let j = i + 1; j < units.length; j++) {
         const gap = units[j].order - units[i].order;
-        if (config.step === 'adjacent' ? gap === 1 : gap >= 2) {
-          pairs.push({ cat, small: units[i], big: units[j] });
-        }
+        const ok = (gap === 1 && wantAdjacent) || (gap >= 2 && wantNon);
+        if (ok) pairs.push({ cat, small: units[i], big: units[j] });
       }
     }
   }
@@ -646,8 +655,9 @@ const BIDMAS_TEMPLATES: BidmasTmpl[] = [
 function genBidmas(config: BidmasConfig): Question[] {
   const pool: Question[] = [];
   const seen = new Set<string>();
+  const steps = config.steps.length ? config.steps : ([2] as (2 | 3)[]);
   const eligible = BIDMAS_TEMPLATES.filter(t =>
-    t.steps === config.steps &&
+    steps.includes(t.steps) &&
     (!t.brackets || config.brackets) &&
     (!t.indices || config.indices));
   if (eligible.length === 0) return [];
@@ -882,12 +892,12 @@ const defaultConfigs: SkillConfigs = {
   negatives:      { operations: ['addition', 'subtraction'], range: 10 },
   busStop:        { types: ['2d1d'] },
   indices:        { baseRange: 10, exponentRange: [2, 3] },
-  powersOfTen:    { operations: ['multiply'], powers: [10, 100], baseType: 'int' },
+  powersOfTen:    { operations: ['multiply'], powers: [10, 100], baseTypes: ['int'] },
   rounding:       { targets: ['n10', 'n100'], edgeCases: false },
   primes:         { tasks: ['identify'], max: 50 },
-  fdp:            { paths: ['fd', 'dp'], complexity: 'common' },
-  metric:         { categories: ['length'], step: 'adjacent', decimals: false },
-  bidmas:         { steps: 2, brackets: true, indices: false, allowNegatives: false },
+  fdp:            { paths: ['fd', 'dp'], complexities: ['common'] },
+  metric:         { categories: ['length'], steps: ['adjacent'], decimals: false },
+  bidmas:         { steps: [2], brackets: true, indices: false, allowNegatives: false },
 };
 
 
@@ -1362,11 +1372,11 @@ export default function MathsSkillsGenerator() {
             selected={c.powersOfTen.powers}
             onToggle={v => updateConfig('powersOfTen', { powers: toggleArr(c.powersOfTen.powers, v as 10 | 100 | 1000) })}
           />
-          <PillSingle
+          <PillMulti
             label="Base number type"
             options={['int', '1dp', '2dp'] as const}
-            selected={c.powersOfTen.baseType}
-            onSelect={v => updateConfig('powersOfTen', { baseType: v as 'int' | '1dp' | '2dp' })}
+            selected={c.powersOfTen.baseTypes}
+            onToggle={v => updateConfig('powersOfTen', { baseTypes: toggleArr(c.powersOfTen.baseTypes, v as BaseType) })}
             format={v => v === 'int' ? 'Integers' : v === '1dp' ? '1 d.p.' : '2+ d.p.'}
           />
         </>
@@ -1419,11 +1429,11 @@ export default function MathsSkillsGenerator() {
             onToggle={v => updateConfig('fdp', { paths: toggleArr(c.fdp.paths, v as FdpPath) })}
             format={v => ({ fd: 'Frac → Dec', fp: 'Frac → %', df: 'Dec → Frac', dp: 'Dec → %', pf: '% → Frac', pd: '% → Dec' } as Record<FdpPath, string>)[v]}
           />
-          <PillSingle
+          <PillMulti
             label="Fraction complexity"
             options={['common', 'extended'] as const}
-            selected={c.fdp.complexity}
-            onSelect={v => updateConfig('fdp', { complexity: v as 'common' | 'extended' })}
+            selected={c.fdp.complexities}
+            onToggle={v => updateConfig('fdp', { complexities: toggleArr(c.fdp.complexities, v as FdpComplexity) })}
             format={v => v === 'common' ? 'Common' : 'Extended'}
           />
         </>
@@ -1438,11 +1448,11 @@ export default function MathsSkillsGenerator() {
             onToggle={v => updateConfig('metric', { categories: toggleArr(c.metric.categories, v as 'length' | 'mass' | 'capacity') })}
             format={v => v.charAt(0).toUpperCase() + v.slice(1)}
           />
-          <PillSingle
+          <PillMulti
             label="Conversion step"
             options={['adjacent', 'nonadjacent'] as const}
-            selected={c.metric.step}
-            onSelect={v => updateConfig('metric', { step: v as 'adjacent' | 'nonadjacent' })}
+            selected={c.metric.steps}
+            onToggle={v => updateConfig('metric', { steps: toggleArr(c.metric.steps, v as MetricStep) })}
             format={v => v === 'adjacent' ? 'Adjacent units' : 'Non-adjacent'}
           />
           <div className="flex justify-center gap-2">
@@ -1457,11 +1467,11 @@ export default function MathsSkillsGenerator() {
 
       bidmas: (
         <>
-          <PillSingle
+          <PillMulti
             label="Complexity"
             options={[2, 3] as const}
             selected={c.bidmas.steps}
-            onSelect={v => updateConfig('bidmas', { steps: v as 2 | 3 })}
+            onToggle={v => updateConfig('bidmas', { steps: toggleArr(c.bidmas.steps, v as 2 | 3) })}
             format={v => `${v}-step`}
           />
           <div className="mb-4">
