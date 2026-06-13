@@ -140,6 +140,8 @@ const INFO_SECTIONS: InfoSection[] = [
 function rnd(a: number, b: number): number { return Math.floor(Math.random() * (b - a + 1)) + a; }
 function rndDecimal(a: number, b: number): number { return Math.round((Math.random() * (b - a) + a) * 10) / 10; }
 function exprLabel(c: number, k: number): string { const base = c === 1 ? "x" : `${c}x`; if (k === 0) return base; if (k > 0) return `${base} + ${k}`; return `${base} − ${Math.abs(k)}`; }
+function coefXLabel(c: number): string { if (c === 1) return "x"; if (c === -1) return "−x"; return c > 0 ? `${c}x` : `−${Math.abs(c)}x`; }
+function numLabel(n: number): string { return n >= 0 ? `${n}` : `−${Math.abs(n)}`; }
 function pickX(minVal: number, maxVal: number, useDecimal: boolean): number | null { if (minVal > maxVal) return null; if (!useDecimal) { const lo = Math.ceil(minVal), hi = Math.floor(maxVal); if (lo > hi) return null; return rnd(lo, hi); } const lo = Math.ceil(minVal * 10), hi = Math.floor(maxVal * 10); if (lo > hi) return null; return Math.round(rnd(lo, hi)) / 10; }
 function pickExprType(vars: QOVars): string | null { const active: string[] = []; if (vars.coefficient) active.push("coefficient"); if (vars.constant) active.push("constant"); if (vars.both) active.push("both"); if (active.length === 0) return null; return active[Math.floor(Math.random() * active.length)]; }
 function splitIntoN(total: number, n: number, minPart: number, useDecimal: boolean): number[] | null { if (total < n * minPart) return null; const parts: number[] = []; let remaining = total; for (let i = 0; i < n - 1; i++) { const lo = minPart, hi = remaining - (n - 1 - i) * minPart; if (lo > hi) return null; let part: number; if (useDecimal) part = Math.round(rndDecimal(lo, hi) * 10) / 10; else part = rnd(Math.ceil(lo), Math.floor(hi)); parts.push(part); remaining = Math.round((remaining - part) * 10) / 10; } const last = Math.round(remaining * 10) / 10; if (last < minPart) return null; parts.push(last); return parts; }
@@ -481,8 +483,8 @@ function buildVOL3(vars: QOVars): AngleQuestion {
   if (variant === "pureVO") {
     let xVal = 0, c1 = 1, c2 = 1, k1 = 0, k2 = 0, alpha = 0, found = false;
     for (let att = 0; att < 500 && !found; att++) {
-      c1 = useCoef ? rnd(1, 5) : 1; c2 = useCoef ? rnd(1, 5) : 1;
-      if (!useCoef && c1 === c2) continue;
+      c1 = useCoef ? rnd(1, 5) : 1; c2 = useCoef ? rnd(1, 5) : 1 + rnd(1, 3);
+      if (c1 === c2) continue;
       xVal = rnd(5, 40); k1 = rnd(-20, 40); k2 = rnd(-20, 40); alpha = c1 * xVal + k1;
       if (alpha < 20 || alpha > 160) continue;
       if (c2 * xVal + k2 !== alpha) { k2 = alpha - c2 * xVal; if (Math.abs(k2) > 50) continue; }
@@ -491,7 +493,7 @@ function buildVOL3(vars: QOVars): AngleQuestion {
     if (!found) { c1 = 3; c2 = 1; xVal = 15; k1 = 5; alpha = 3 * 15 + 5; k2 = alpha - 15; }
     const betaL3pv = 180 - alpha;
     const labels: (string | null)[] = [exprLabel(c1, k1), null, exprLabel(c2, k2), null];
-    const dc = c1 - c2, dk = k2 - k1; const kStr = dk >= 0 ? `+ ${dk}` : `− ${Math.abs(dk)}`;
+    const dc = c1 - c2, dk = k2 - k1;
     const segs: SegmentDef[] = [{ angleDeg: rot }, { angleDeg: rot + alpha }, { angleDeg: rot + 180 }, { angleDeg: rot + 180 + alpha }];
     const angles: AngleDef[] = [
       { label: exprLabel(c1, k1), isUnknown: true, value: alpha, arcFromDeg: rot, arcToDeg: rot + alpha, bisectorDeg: rot + alpha / 2 },
@@ -500,7 +502,7 @@ function buildVOL3(vars: QOVars): AngleQuestion {
       { label: "", isUnknown: false, blank: true, value: betaL3pv, arcFromDeg: rot + 180 + alpha, arcToDeg: rot + 360, bisectorDeg: rot + 180 + alpha + betaL3pv / 2 },
     ];
     void labels;
-    return { tool: "verticallyOpposite", level: "level3", rotationDeg: rot, segments: segs, angles, answer: `x = ${xVal}`, working: [{ text: "Vertically opposite angles are equal" }, { text: `${exprLabel(c1, k1)} = ${exprLabel(c2, k2)}` }, { text: `${dc}x ${kStr} = 0` }, ...(dk !== 0 ? [{ text: `${dc}x = ${-dk}` }] : []), { text: `x = ${xVal}` }], id: Math.floor(Math.random() * 1e6) };
+    return { tool: "verticallyOpposite", level: "level3", rotationDeg: rot, segments: segs, angles, answer: `x = ${xVal}`, working: [{ text: "Vertically opposite angles are equal" }, { text: `${exprLabel(c1, k1)} = ${exprLabel(c2, k2)}` }, ...(dc !== 1 ? [{ text: `${coefXLabel(dc)} = ${numLabel(dk)}` }] : []), { text: `x = ${xVal}` }], id: Math.floor(Math.random() * 1e6) };
   }
   // subdivided
   let xVal = 0, c1 = 1, c2 = 2, k1 = 0, k2 = 0, fixed = 0, alpha = 0, found = false;
@@ -516,7 +518,7 @@ function buildVOL3(vars: QOVars): AngleQuestion {
   }
   if (!found) { c1 = 1; c2 = 2; xVal = 20; k1 = 5; fixed = 15; alpha = 60; k2 = alpha - c2 * xVal; }
   const betaL3sd = 180 - alpha; const sub1Val = c1 * xVal + k1; const subRay = rot + sub1Val;
-  const dc = c2 - c1; const dk = k1 + fixed - k2; const kStr2 = dk >= 0 ? `+ ${dk}` : `− ${Math.abs(dk)}`;
+  const dc = c2 - c1; const dk = k1 + fixed - k2;
   const segs: SegmentDef[] = [{ angleDeg: rot }, { angleDeg: subRay }, { angleDeg: rot + alpha }, { angleDeg: rot + 180 }, { angleDeg: rot + 180 + alpha }];
   const angles: AngleDef[] = [
     { label: exprLabel(c1, k1), isUnknown: true, value: sub1Val, arcFromDeg: rot, arcToDeg: subRay, bisectorDeg: rot + sub1Val / 2 },
@@ -525,7 +527,7 @@ function buildVOL3(vars: QOVars): AngleQuestion {
     { label: exprLabel(c2, k2), isUnknown: true, value: alpha, arcFromDeg: rot + 180, arcToDeg: rot + 180 + alpha, bisectorDeg: rot + 180 + alpha / 2 },
     { label: "", isUnknown: false, blank: true, value: betaL3sd, arcFromDeg: rot + 180 + alpha, arcToDeg: rot + 360, bisectorDeg: rot + 180 + alpha + betaL3sd / 2 },
   ];
-  return { tool: "verticallyOpposite", level: "level3", rotationDeg: rot, segments: segs, angles, answer: `x = ${xVal}`, working: [{ text: "Vertically opposite angles are equal" }, { text: `${exprLabel(c1, k1)} + ${fixed}° = ${exprLabel(c2, k2)}` }, { text: `${dc}x ${kStr2} = 0` }, ...(dk !== 0 ? [{ text: `${dc}x = ${-dk}` }] : []), { text: `x = ${xVal}` }], id: Math.floor(Math.random() * 1e6) };
+  return { tool: "verticallyOpposite", level: "level3", rotationDeg: rot, segments: segs, angles, answer: `x = ${xVal}`, working: [{ text: "Vertically opposite angles are equal" }, { text: `${exprLabel(c1, k1)} + ${fixed}° = ${exprLabel(c2, k2)}` }, ...(dc !== 1 ? [{ text: `${coefXLabel(dc)} = ${numLabel(dk)}` }] : []), { text: `x = ${xVal}` }], id: Math.floor(Math.random() * 1e6) };
 }
 
 // ─── DISPATCH ─────────────────────────────────────────────────────────────────
