@@ -100,7 +100,7 @@ export const CATEGORIES: CategoryMeta[] = [
   {
     name: 'Computer Science',
     tools: [
-      { id: 'system architecture', path: '/system-architecture', name: '1.1 - System Architectures', description: 'A tool for learning the 1.1 content for system architectures', ready: 'v1.0', enabled: false, load: () => import('./tools/ComputerScience/SystemArchitecture') },
+      { id: 'system architecture', path: '/system-architecture', name: '1.1 - System Architectures', description: 'A tool for learning the 1.1 content for system architectures', ready: 'v1.0', load: () => import('./tools/ComputerScience/SystemArchitecture') },
     ],
   },
 ];
