@@ -50,7 +50,12 @@ export interface ToolDropdown {
 export interface ToolMultiSelect {
   key: string;
   label: string;
-  options: { value: string; label: string; defaultActive: boolean }[];
+  options: { value: string; label: string; sub?: string; defaultActive: boolean }[];
+  /** Allow every option in this group to be deselected at once (e.g. a group
+   *  of optional add-on flags where "all off" is a valid, simplest-form
+   *  state). Default false — the last active option cannot be turned off,
+   *  for "pick at least one type" pools. */
+  allowEmpty?: boolean;
 }
 
 // A tool may need several independent option pools at once (e.g. "Constants"

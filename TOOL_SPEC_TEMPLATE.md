@@ -16,7 +16,19 @@ unless marked optional. Save completed specs as `specs/<tool-id>.md`.
 | Tool id / URL path | <!-- `/multiplying-fractions` — the id is the path without the slash --> |
 | Category | <!-- Generators / Number / Algebra / Ratio & Proportion / Geometry / Probability & Statistics / Teacher Tools / Computer Science --> |
 | Card description | <!-- one sentence for the landing page card --> |
-| Defaults | <!-- only non-standard ones: numQuestions, numColumns, fixedColumns, font sizes, comingSoonLevels. Write "standard" if none. --> |
+| Defaults | <!-- only non-standard ones: numQuestions, numColumns, fixedColumns, font sizes, comingSoonLevels. Write "standard" if none — see note below for the standard values. --> |
+
+**"Standard" values** (no `defaults` override needed): `numQuestions: 15`
+(worksheet count, teacher-adjustable 1–24) · `numColumns: 3` (worksheet grid,
+teacher-adjustable 1–4) · `displayFontSize: 2` (whiteboard/example, index
+0–5, `2 = text-3xl`) · `worksheetFontSize: 1` (worksheet cells, index 0–5,
+`1 = text-xl`). Only list a field here if it differs from these — e.g. an
+SVG worksheet needing `fixedColumns: true, numColumns: 3` for a 3×5 grid.
+
+`comingSoonLevels: ["level3"]` marks a level as built-but-disabled (greyed
+out, "Coming soon" tooltip, excluded from Differentiated mode) — use when
+this spec deliberately implements fewer than 3 levels and a future spec adds
+the rest. Pair with `levels: ["level1","level2"]` on the `__test` export.
 
 **Pedagogical intent (2–3 sentences):** what should a student be able to do
 after a lesson built on this tool, and where does it sit in the teaching
@@ -31,6 +43,11 @@ sequence (what comes before and after it)?
 | Key | Tab label | Kind | Instruction line |
 |---|---|---|---|
 | `subtool1` | <!-- label --> | simple / worded / diagram | <!-- e.g. "Simplify:" or — --> |
+
+`—` means no instruction line is shown above the question — the normal
+choice for `worded` sub-tools, whose question text is self-contained.
+`simple` and `diagram` sub-tools almost always need one (e.g. "Simplify:",
+"Find x:").
 
 ---
 
@@ -51,6 +68,14 @@ sequence (what comes before and after it)?
   - `typeB` — "Label B" — defaultActive: false
 - **dropdown / variables:** none
 - **Per-level differences:** none
+
+**Differentiated worksheet mode:** its three columns are Level 1 / 2 / 3,
+each generating `numQuestions` questions (the same count in every column)
+using **that level's own QO state** — seeded from this level's
+`difficultySettings` (or the tool-level defaults if none given), and
+independently adjustable by the teacher via the Differentiated QO popover.
+If QO should genuinely differ by level, define it under **Per-level
+differences** so each differentiated column starts sensibly configured.
 
 #### 3.2 Levels
 
@@ -82,6 +107,26 @@ sequence (what comes before and after it)?
 - Exclusions:
 - Misconceptions targeted:
 
+#### 3.2b Diagram spec (diagram sub-tools only — omit for simple/worded)
+
+<!-- Diagram sub-tools are meaningfully more expensive to build — confirm
+     with the teacher before committing to one (see TOOL_DESIGNER_PROMPT.md).
+     Describe, in prose, enough for the implementer to build the SVG without
+     guessing. -->
+
+- **What's drawn:** the fixed geometry (e.g. "two parallel horizontal lines
+  cut by a transversal").
+- **What varies per question:** which values are randomised per level (e.g.
+  "the angle at the top intersection, 20–160° excluding multiples of 90°")
+  and any layout randomisation (e.g. rotation of the whole figure).
+- **Labelling conventions:** how knowns vs unknowns are shown (e.g. known
+  angles labelled `"<value>°"`, the unknown angle always labelled `x` — `y`
+  for a second unknown in chained questions). State the convention once here
+  rather than repeating it per level.
+- **Reference implementation to follow:** name the closest existing diagram
+  tool (e.g. `AnglesInParallelLines.tsx`, `BasicAngleFacts.tsx`) so the
+  implementer reuses its SVG/print conventions.
+
 #### 3.3 Worked example script
 
 <!-- The exact step sequence shown in Worked Example mode, written in the
@@ -90,7 +135,20 @@ sequence (what comes before and after it)?
        step(<maths>)                    — bare maths (chains of equals)
        tStep("<prose>")                 — numberless prose (rare)
      Give the script per level (or once if identical), each with one fully
-     worked numeric example. Prose never goes inside the maths. -->
+     worked numeric example. Prose never goes inside the maths.
+
+     A unit after the final maths (e.g. "kg", "°", "cm²") is the THIRD
+     argument to mStep — mStep("Answer:", "12", "kg") — never written inside
+     the maths string and never wrapped in \text{}. This is the one and only
+     way units appear: as plain text after the rendered maths.
+
+     This script is the canonical example for a TYPICAL question at that
+     level, not a step count enforced for every question. If the exclusions
+     in 3.2 remove all degenerate cases, one fixed sequence is normal. If the
+     level genuinely has distinct solution paths (e.g. "no real roots" vs
+     "two roots"), describe each path as its own labelled sub-case with its
+     own worked example — never include a step that would be vacuous (e.g.
+     a "simplify" step when nothing simplifies). -->
 
 **Level 1 example — question: `<display>`**
 1. `mStep("…:", "…")`
@@ -104,7 +162,13 @@ sequence (what comes before and after it)?
 
 <!-- At least 3 per level, using realistic values from the ranges in 3.2.
      These define correctness: Claude Code verifies its generator produces
-     questions of exactly these shapes with matching answers and working. -->
+     questions of exactly these shapes with matching answers and working.
+
+     PDF export: the worksheet's "Answers" pages show answerLatex/answer +
+     answerSuffix only — never the working steps. House style for the answer
+     itself (simplest form, decimal places, units, degree symbol etc.) is
+     therefore part of THIS spec's Constraints (3.2), not a site-wide
+     default — state it per level if it isn't obvious from the parameters. -->
 
 | Level | Question as displayed | Answer | Working (one line) |
 |---|---|---|---|
@@ -125,6 +189,14 @@ sequence (what comes before and after it)?
 
 Key parameters:
 
+**Pool size:** each level's parameter space must yield at least
+`numQuestions` (15 by default, teacher-adjustable to 24) distinct keys —
+ToolShell's retry loop gives up after 100 attempts and silently allows a
+repeat if the pool is smaller. This is easy to hit at Level 1 with a small
+multiSelect/range. If a level's natural pool is small, either widen the
+range/pool (preferred) or note the expected pool size here so the
+implementer can sanity-check it against the default worksheet size.
+
 ---
 
 ## 4. Variety requirements
@@ -132,7 +204,15 @@ Key parameters:
 <!-- What stops a worksheet feeling samey: operation/type mix, context and
      name pools for worded questions, parameter distribution notes (e.g.
      "spread denominators across the full set — don't cluster on 2"),
-     anything the generator should actively balance. -->
+     anything the generator should actively balance.
+
+     Worded question names: there's no shared site-wide name pool yet — each
+     tool defines its own. Reuse this existing pool unless the names matter
+     pedagogically:
+     ["Alice","Ben","Charlie","Diana","Emma","Finn","Grace","Harry","Isla",
+      "Jack","Kate","Liam","Mia","Olivia","Noah","Peter"]
+     (see RatioSharingTool.tsx). List a different/shorter pool here only if
+     the context needs specific names (e.g. dish names for a recipes tool). -->
 
 ---
 
@@ -140,7 +220,16 @@ Key parameters:
 
 <!-- Draft INFO_SECTIONS: one section per sub-tool (Overview + what each
      level contains), plus anything a teacher needs to choose the right level
-     for a class. Written for a teacher, not a student. -->
+     for a class. Written for a teacher, not a student.
+
+     Fixed structure per section — { title, icon, content: [{ label, detail }] }:
+       - title: the sub-tool's tab label ("Modes" and "Question Options"
+         sections are platform boilerplate Claude Code adds automatically —
+         no need to draft those here)
+       - icon: a single emoji
+       - content: a list of { label, detail } rows — typically "Overview"
+         plus one row per level (e.g. "Level 1 — Green": "...")
+     Free markdown isn't supported — keep each detail to 1–2 sentences. -->
 
 ---
 
