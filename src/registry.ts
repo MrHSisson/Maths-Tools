@@ -43,9 +43,9 @@ export const CATEGORIES: CategoryMeta[] = [
   {
     name: 'Number',
     tools: [
-      { id: 'integers', path: '/integer-add-and-subtract', name: 'Adding & Subtracting Integers', description: 'Practice adding and subtracting positive and negative numbers using number lines', ready: 'v1.4', load: () => import('./tools/Number/IntegerAddSub') },
+      { id: 'integers', path: '/integer-add-and-subtract', name: 'Adding & Subtracting Integers', description: 'Practice adding and subtracting positive and negative numbers using number lines', ready: 'v1.4', enabled: false, load: () => import('./tools/Number/IntegerAddSub') },
       { id: 'estimation', path: '/estimation', name: 'Estimation', description: 'Develop estimation skills by rounding numbers to make calculations easier', ready: 'v2.3', load: () => import('./tools/Number/Estimation') },
-      { id: 'powers-of-ten', path: '/powers-of-ten', name: 'Multiplying & Dividing by 10ⁿ', description: 'Use a place value table to scale by powers of 10', ready: 'v1.4', load: () => import('./tools/Number/PowersOfTen') },
+      { id: 'powers-of-ten', path: '/powers-of-ten', name: 'Multiplying & Dividing by 10ⁿ', description: 'Use a place value table to scale by powers of 10', ready: 'v1.4', enabled: false, load: () => import('./tools/Number/PowersOfTen') },
     ],
   },
   {
@@ -66,7 +66,7 @@ export const CATEGORIES: CategoryMeta[] = [
     name: 'Ratio & Proportion',
     tools: [
       { id: 'ratio', path: '/ratio-sharing', name: 'Dividing Ratios', description: 'Sharing amounts using the total, a known amount or known difference', ready: 'v2.3', load: () => import('./tools/Proportion/RatioSharingTool') },
-      { id: 'simplifying-ratios', path: '/simplifying-ratios', name: 'Simplifying Ratios', description: 'Simplifying ratios in numerical and algebraic forms', ready: 'v1.4', load: () => import('./tools/Proportion/SimplifyingRatiosTool') },
+      { id: 'simplifying-ratios', path: '/simplifying-ratios', name: 'Simplifying Ratios', description: 'Simplifying ratios in numerical and algebraic forms', ready: 'v1.4', enabled: false, load: () => import('./tools/Proportion/SimplifyingRatiosTool') },
       { id: 'Recipes', path: '/recipes', name: 'Recipes', description: 'Find amounts of ingredients by scaling recipes and understanding limiting factors', ready: 'v2.1.2', load: () => import('./tools/Proportion/RecipesTool') },
       { id: 'fraction-to-ratio', path: '/fraction-to-ratio', name: 'Converting Fractions and Ratios', description: 'To convert fractions and ratios interchangeably', ready: 'v2.0', load: () => import('./tools/Proportion/FractionToRatio') },
       { id: 'fractions-of-amounts', path: '/fractions-of-amounts', name: 'Fractions of Amounts', description: 'To find a fraction of an amount', ready: 'v2.0', load: () => import('./tools/Proportion/FractionsOfAmounts') },
@@ -100,7 +100,7 @@ export const CATEGORIES: CategoryMeta[] = [
   {
     name: 'Computer Science',
     tools: [
-      { id: 'system architecture', path: '/system-architecture', name: '1.1 - System Architectures', description: 'A tool for learning the 1.1 content for system architectures', ready: 'v1.0', load: () => import('./tools/ComputerScience/SystemArchitecture') },
+      { id: 'system architecture', path: '/system-architecture', name: '1.1 - System Architectures', description: 'A tool for learning the 1.1 content for system architectures', ready: 'v1.0', enabled: false, load: () => import('./tools/ComputerScience/SystemArchitecture') },
     ],
   },
 ];

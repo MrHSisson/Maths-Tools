@@ -238,13 +238,12 @@ export default function LandingPage(): JSX.Element {
                     >
                       {/* Badge - Absolutely positioned so it never moves */}
                       <div className="absolute top-6 right-6">
-                        <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-md border tracking-wider uppercase
-                          ${tool.enabled === false 
-                            ? 'bg-slate-50 text-slate-400 border-slate-200' 
+                        <span className={`inline-flex items-center text-[10px] font-bold px-2.5 py-1 rounded-md border tracking-wider uppercase
+                          ${tool.enabled === false
+                            ? 'bg-slate-50 text-slate-400 border-slate-200'
                             : 'bg-white text-slate-500 border-slate-200 shadow-sm'
                           }`}
                         >
-                          <span className={`w-1.5 h-1.5 rounded-full ${tool.enabled === false ? 'bg-slate-300' : 'bg-slate-400'}`} />
                           {tool.ready}
                         </span>
                       </div>
