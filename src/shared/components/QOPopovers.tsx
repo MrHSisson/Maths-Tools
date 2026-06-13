@@ -105,7 +105,7 @@ export const MultiSelectSection = ({
   values,
   onChange,
 }: {
-  multiSelect: { key: string; label: string; options: { value: string; label: string }[] };
+  multiSelect: { key: string; label: string; options: { value: string; label: string }[]; allowEmpty?: boolean };
   values: Record<string, boolean>;
   onChange: (k: string, v: boolean) => void;
 }) => {
@@ -116,7 +116,7 @@ export const MultiSelectSection = ({
       <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden">
         {multiSelect.options.map(opt => {
           const isActive = values[opt.value] ?? false;
-          const isLast = isActive && activeCount === 1;
+          const isLast = !multiSelect.allowEmpty && isActive && activeCount === 1;
           return (
             <button
               key={opt.value}
@@ -138,7 +138,7 @@ const MultiSelectGroups = ({
   values,
   onChange,
 }: {
-  groups: { key: string; label: string; options: { value: string; label: string }[] }[];
+  groups: { key: string; label: string; options: { value: string; label: string }[]; allowEmpty?: boolean }[];
   values: Record<string, boolean>;
   onChange: (k: string, v: boolean) => void;
 }) => (
@@ -193,7 +193,7 @@ export const StandardQOPopover = ({
   dropdown: { key: string; label: string; useTwoLineButtons?: boolean; options: { value: string; label: string; sub?: string }[] } | null;
   dropdownValue: string;
   onDropdownChange: (v: string) => void;
-  multiSelect: { key: string; label: string; options: { value: string; label: string }[] }[];
+  multiSelect: { key: string; label: string; options: { value: string; label: string }[]; allowEmpty?: boolean }[];
   multiSelectValues: Record<string, boolean>;
   onMultiSelectChange: (k: string, v: boolean) => void;
 }) => {

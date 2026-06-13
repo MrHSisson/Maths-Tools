@@ -36,7 +36,7 @@ const PARTS: ToolMultiSelect = {
   ],
 };
 const ALG_L12: ToolMultiSelect = {
-  key: "algOptions", label: "Algebraic Options",
+  key: "algOptions", label: "Algebraic Options", allowEmpty: true,
   options: [
     { value: "coefficient", label: "Coefficient (e.g. 2x)", defaultActive: false },
     { value: "constant", label: "Constant (e.g. x + 14)", defaultActive: false },
@@ -44,7 +44,7 @@ const ALG_L12: ToolMultiSelect = {
   ],
 };
 const ALG_L3: ToolMultiSelect = {
-  key: "algOptions", label: "Algebraic Options",
+  key: "algOptions", label: "Algebraic Options", allowEmpty: true,
   options: [
     { value: "useCoefficients", label: "Coefficients (e.g. 2x)", defaultActive: false },
   ],
