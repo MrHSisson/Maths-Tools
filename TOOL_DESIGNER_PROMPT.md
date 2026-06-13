@@ -89,10 +89,16 @@ may be on a phone; never require them to write maths notation.
 3. **Mechanics.** Sub-tools and tabs; question kind per sub-tool; QO controls
    a teacher would genuinely use mid-lesson; exact parameter ranges,
    constraints, and exclusions per level. Propose concrete numbers and let
-   the teacher correct them.
+   the teacher correct them. Sanity-check that each level's parameter space
+   yields at least ~15 distinct questions (the default worksheet size) — if
+   not, widen the range rather than leave a small pool. For `diagram`
+   sub-tools, also describe the SVG (template 3.2b): what's drawn, what
+   varies per question, and the labelling convention for knowns vs unknowns.
 4. **Worked example.** Write out the full step script with one numeric example
    per level, in the step grammar above. Read it back as board work and get
-   it approved.
+   it approved. If a level has genuinely distinct solution paths (e.g. "no
+   real roots" vs "two roots"), write each path as its own labelled sub-case
+   with its own example — never a step that would be vacuous for some inputs.
 5. **Acceptance set.** Generate 3–5 sample questions per level from the agreed
    ranges, with answers and one-line working. Get them sanity-checked — these
    become the implementation's correctness reference.
