@@ -38,15 +38,15 @@ const PARTS: ToolMultiSelect = {
 const ALG_L12: ToolMultiSelect = {
   key: "algOptions", label: "Algebraic Options", allowEmpty: true,
   options: [
-    { value: "coefficient", label: "Coefficient (e.g. 2x)", defaultActive: false },
-    { value: "constant", label: "Constant (e.g. x + 14)", defaultActive: false },
-    { value: "both", label: "Both (e.g. 2x + 30)", defaultActive: false },
+    { value: "coefficient", label: "Coefficient", sub: "(e.g. 2x)", defaultActive: false },
+    { value: "constant", label: "Constant", sub: "(e.g. x + 14)", defaultActive: false },
+    { value: "both", label: "Both", sub: "(e.g. 2x + 30)", defaultActive: false },
   ],
 };
 const ALG_L3: ToolMultiSelect = {
   key: "algOptions", label: "Algebraic Options", allowEmpty: true,
   options: [
-    { value: "useCoefficients", label: "Coefficients (e.g. 2x)", defaultActive: false },
+    { value: "useCoefficients", label: "Coefficients", sub: "(e.g. 2x)", defaultActive: false },
   ],
 };
 const VO_L1_VARIANTS: ToolMultiSelect = {
@@ -120,8 +120,8 @@ const TOOL_CONFIG: ToolConfig = {
     mixed: {
       name: "Mixed Practice", variables: [], dropdown: null,
       difficultySettings: {
-        level1: { variables: [SHOW_SQUARE], multiSelect: [ALG_L12, NUM_TYPE, ANGLE_TYPE] },
-        level2: { variables: [SHOW_SQUARE], multiSelect: [ALG_L12, NUM_TYPE, ANGLE_TYPE] },
+        level1: { variables: [], multiSelect: [ALG_L12, NUM_TYPE, ANGLE_TYPE] },
+        level2: { variables: [], multiSelect: [ALG_L12, NUM_TYPE, ANGLE_TYPE] },
         level3: { variables: [], multiSelect: [ALG_L3, ANGLE_TYPE] },
       },
     },

@@ -105,7 +105,7 @@ export const MultiSelectSection = ({
   values,
   onChange,
 }: {
-  multiSelect: { key: string; label: string; options: { value: string; label: string }[]; allowEmpty?: boolean };
+  multiSelect: { key: string; label: string; options: { value: string; label: string; sub?: string }[]; allowEmpty?: boolean };
   values: Record<string, boolean>;
   onChange: (k: string, v: boolean) => void;
 }) => {
@@ -121,9 +121,12 @@ export const MultiSelectSection = ({
             <button
               key={opt.value}
               onClick={() => { if (!isLast) onChange(opt.value, !isActive); }}
-              className={`flex-1 px-3 py-2 text-sm font-bold transition-colors ${isActive ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
+              className={`flex-1 min-w-0 px-3 py-2 text-sm font-bold transition-colors flex flex-col items-center justify-center text-center ${isActive ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
             >
-              {opt.label}
+              <span className="leading-tight">{opt.label}</span>
+              {opt.sub && (
+                <span className={`text-xs mt-0.5 leading-tight ${isActive ? "text-blue-200" : "text-gray-400"}`}>{opt.sub}</span>
+              )}
             </button>
           );
         })}
@@ -138,7 +141,7 @@ const MultiSelectGroups = ({
   values,
   onChange,
 }: {
-  groups: { key: string; label: string; options: { value: string; label: string }[]; allowEmpty?: boolean }[];
+  groups: { key: string; label: string; options: { value: string; label: string; sub?: string }[]; allowEmpty?: boolean }[];
   values: Record<string, boolean>;
   onChange: (k: string, v: boolean) => void;
 }) => (
@@ -203,7 +206,7 @@ export const StandardQOPopover = ({
     <div className="relative" ref={ref}>
       <PopoverButton open={open} onClick={() => setOpen(!open)} />
       {open && (
-        <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-72 p-5 flex flex-col gap-5">
+        <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-[26rem] p-5 flex flex-col gap-5">
           {dropdown && <DropdownSection dropdown={dropdown} value={dropdownValue} onChange={onDropdownChange} />}
           <MultiSelectGroups groups={multiSelect} values={multiSelectValues} onChange={onMultiSelectChange} />
           {variables.length > 0 && <VariablesSection variables={variables} values={variableValues} onChange={onVariableChange} />}
@@ -241,7 +244,7 @@ export const DiffQOPopover = ({
     <div className="relative" ref={ref}>
       <PopoverButton open={open} onClick={() => setOpen(!open)} />
       {open && (
-        <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-80 p-5 flex flex-col gap-5">
+        <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-[28rem] p-5 flex flex-col gap-5">
           {!anyContent ? (
             <p className="text-sm text-gray-400">No additional options for this tool.</p>
           ) : (
