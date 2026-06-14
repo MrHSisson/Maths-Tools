@@ -228,21 +228,11 @@ const buildCollectWorkingSteps = (allTerms: Term[], varOrder: string[], variable
 
 type ToolType = "subtool1" | "subtool2" | "subtool3";
 
-const QUESTION_POOL: ToolMultiSelect = {
-  key: "questionPool",
-  label: "Question Types",
-  options: [
-    { value: "singleVar", label: "Single variable terms", defaultActive: true },
-    { value: "withPowers", label: "Include squared and higher powers", defaultActive: true },
-    { value: "withConstants", label: "Include constants as distractors", defaultActive: true },
-  ],
-};
-
 const QUESTION_POOL_L3: ToolMultiSelect = {
   key: "questionPool",
   label: "Question Types",
+  allowEmpty: true,
   options: [
-    ...QUESTION_POOL.options,
     { value: "twoVariableTargets", label: "Two-variable target terms", defaultActive: false },
   ],
 };
@@ -278,12 +268,11 @@ const TERM_OPTIONS2_L1: ToolMultiSelect = {
 
 const TERM_OPTIONS2_L2: ToolMultiSelect = {
   key: "termOptions",
-  label: "Term Options",
-  allowEmpty: true,
+  label: "Second Term Type",
+  allowEmpty: false,
   options: [
-    { value: "noCoefficients", label: "No coefficients (x + x + x...)", defaultActive: false },
-    { value: "includeConstant", label: "Include a constant term", defaultActive: false },
-    { value: "includeSquare", label: "Include an x² term", defaultActive: false },
+    { value: "includeConstant", label: "Constants", defaultActive: true },
+    { value: "includeSquare", label: "Square terms", defaultActive: true },
   ],
 };
 
@@ -337,7 +326,6 @@ const TOOL_CONFIG: ToolConfig = {
       name: "Spot the Like Term",
       variables: [],
       dropdown: null,
-      multiSelect: QUESTION_POOL,
       difficultySettings: {
         level3: { multiSelect: QUESTION_POOL_L3 },
       },
@@ -709,14 +697,13 @@ const buildL3TwoVar = (id: number): WordedQuestion => {
 
 const genSubtool1 = (level: DifficultyLevel, msv: Record<string, boolean>): WordedQuestion => {
   const id = Math.floor(Math.random() * 1_000_000);
-  const withPowers = isOn(msv, "withPowers");
-  const withConstants = isOn(msv, "withConstants");
-  const maxPower = withPowers ? 5 : 1;
 
-  if (level === "level1") return buildL1(withPowers ? 3 : 1, withConstants, id);
-  if (level === "level2") return buildL2(maxPower, withConstants, id);
+  // L1 caps powers at cube; L2/L3 go up to 5. Constants always appear as
+  // distractors. L3 may use two-variable targets when that toggle is active.
+  if (level === "level1") return buildL1(3, true, id);
+  if (level === "level2") return buildL2(5, true, id);
   const twoVar = isOn(msv, "twoVariableTargets") && Math.random() < 0.5;
-  return twoVar ? buildL3TwoVar(id) : buildL3SingleVar(maxPower, id);
+  return twoVar ? buildL3TwoVar(id) : buildL3SingleVar(5, id);
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -768,18 +755,20 @@ const genSubtool2 = (level: DifficultyLevel, msv: Record<string, boolean>): Simp
   }
 
   if (level === "level2") {
-    // Main collectable x group (power 1) + optional singleton constant / x^2.
-    const minMag = noCoef ? 1 : 2;
-    const maxMag = noCoef ? 1 : 9;
-    const count = noCoef ? randInt(3, 6) : randInt(3, 4);
-    const coeffs = genMainCoeffs(count, caseType, minMag, maxMag);
-    const terms: Term[] = coeffs.map(c => ({ coef: c, vars: [{ v, n: 1 }] }));
-    if (isOn(msv, "includeConstant")) {
-      terms.push({ coef: genSingleCoeff(caseType, 2, 9), vars: [] });
-    }
-    if (isOn(msv, "includeSquare")) {
-      terms.push({ coef: genSingleCoeff(caseType, 2, 9), vars: [{ v, n: 2 }] });
-    }
+    // Exactly 4 terms: linear x terms plus ONE secondary type (constants or x²),
+    // split 2-2, 3-1 or 1-3. The secondary type is drawn from the active options.
+    // Any group of 2+ collects (following the subtraction case); a lone term is
+    // left uncollected.
+    const secondType = pickActive(msv, TERM_OPTIONS2_L2.options);
+    const secondVars: VarPower[] = secondType === "includeSquare" ? [{ v, n: 2 }] : [];
+    const splits: [number, number][] = [[2, 2], [3, 1], [1, 3]];
+    const [linCount, secCount] = pick(splits);
+    const coeffsFor = (cnt: number): number[] =>
+      cnt >= 2 ? genMainCoeffs(cnt, caseType, 2, 9) : [genSingleCoeff(caseType, 2, 9)];
+    const terms: Term[] = [
+      ...coeffsFor(linCount).map(c => ({ coef: c, vars: [{ v, n: 1 }] })),
+      ...coeffsFor(secCount).map(c => ({ coef: c, vars: secondVars })),
+    ];
     return buildCollectQuestion(level, terms, [v], false, `t2-L2-${v}`);
   }
 
