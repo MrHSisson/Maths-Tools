@@ -509,13 +509,10 @@ const buildL2 = (maxPower: number, withConstants: boolean, id: number): WordedQu
   const a = randInt(2, 9);
   const target: Term = { coef: a, vars: [{ v, n }] };
 
-  // Coefficients are randomised independently for every option, so the correct
-  // answer is not simply "the one with a different number" — students must judge
-  // by variable and power, not by the coefficient.
   const sc = () => (Math.random() < 0.5 ? 1 : -1) * randInt(2, 9);
 
-  // True like term: same variable and power, any coefficient except the target's
-  // own (otherwise it would be identical to the target).
+  // True like term — same variable and power, coefficient ≠ the target's own
+  // (otherwise it would be identical to the target). May be negative.
   let trueCoef = sc();
   while (trueCoef === a) trueCoef = sc();
   const trueLike: Term = { coef: trueCoef, vars: [{ v, n }] };
@@ -523,40 +520,41 @@ const buildL2 = (maxPower: number, withConstants: boolean, id: number): WordedQu
     ? `Same variable ${v}, same power ${n}. The negative sign does not change the term type — this IS a like term ✓`
     : `Same variable ${v}, same power ${n} — this IS a like term ✓`;
 
+  // Distractor shapes (each wrong on variable or power). Coefficients are filled
+  // in afterwards so we can deliberately plant the "same coefficient" trap.
   const candA = [n - 1, n + 1].filter(p => p >= 1 && p <= 5);
   const nmaPower = pick(candA.length ? candA : [1, 2, 3, 4, 5].filter(p => p !== n));
-  const nearMissA: Term = { coef: sc(), vars: [{ v, n: nmaPower }] };
-
   const nmbVar = pick(VAR_POOL.filter(x => x !== v));
-  const nearMissB: Term = { coef: sc(), vars: [{ v: nmbVar, n }] };
-
-  // Wild card — shares nothing with the target. Single-variable only (no two-
-  // variable terms at this level): a different variable AND power, or, only
-  // occasionally, a constant (so a constant does not appear in every question).
   const wildPowers = (maxPower > 1 ? [1, 2, 3, 4, 5] : [1]).filter(p => p !== n);
-  let wild: Term;
-  let wildExplain: string;
-  if ((withConstants && Math.random() < 0.25) || wildPowers.length === 0) {
-    wild = { coef: sc(), vars: [] };
-    wildExplain = "No variable — a constant, not a like term ✗";
-  } else {
-    const wv = pick(VAR_POOL.filter(x => x !== v && x !== nmbVar));
-    const wp = pick(wildPowers);
-    wild = { coef: sc(), vars: [{ v: wv, n: wp }] };
-    wildExplain = "Different variable and different power — not a like term ✗";
-  }
+  const useConstWild = (withConstants && Math.random() < 0.25) || wildPowers.length === 0;
+  const wv = pick(VAR_POOL.filter(x => x !== v && x !== nmbVar));
+  const wp = pick(wildPowers.length ? wildPowers : [n]);
 
-  const opts: MCQOption[] = [
-    { term: trueLike, correct: true, explain: trueExplain },
-    { term: nearMissA, correct: false,
-      explain: `Same variable ${v}, but power is ${nmaPower} not ${n} — different power, not a like term ✗` },
-    { term: nearMissB, correct: false,
-      explain: `Same power ${n}, but different variable — not a like term ✗` },
-    { term: wild, correct: false, explain: wildExplain },
+  type Dist = { vars: VarPower[]; explain: (echo: boolean) => string };
+  const dists: Dist[] = [
+    { vars: [{ v, n: nmaPower }], explain: e =>
+      `${e ? "Same coefficient and same variable" : `Same variable ${v}`}, but the power is ${nmaPower} not ${n} — not a like term ✗` },
+    { vars: [{ v: nmbVar, n }], explain: e =>
+      `${e ? "Same coefficient and same power" : `Same power ${n}`}, but a different variable — not a like term ✗` },
+    useConstWild
+      ? { vars: [], explain: e =>
+          `${e ? "The same number as the coefficient, but it" : "It"} has no variable — a constant, not a like term ✗` }
+      : { vars: [{ v: wv, n: wp }], explain: e =>
+          `${e ? "Same coefficient, but a" : "A"} different variable and different power — not a like term ✗` },
   ];
 
+  // Plant the "same coefficient" trap: 1-2 distractors carry the target's exact
+  // coefficient, the rest are randomised — so a matching number is not a reliable
+  // signal, but the trap still catches students who assume same number = like term.
+  const echoSet = new Set(shuffle([0, 1, 2]).slice(0, pick([1, 1, 2])));
+  const opts: MCQOption[] = [{ term: trueLike, correct: true, explain: trueExplain }];
+  dists.forEach((d, i) => {
+    const echo = echoSet.has(i);
+    opts.push({ term: { coef: echo ? a : sc(), vars: d.vars }, correct: false, explain: d.explain(echo) });
+  });
+
   return finishMCQ("level2", target, opts,
-    "Check each option — same variable AND same power required. Sign does not affect term type.",
+    "Check each option — a like term needs the same variable AND power. The coefficient does not decide the term type.",
     `t1-L2-${v}${n}-${a}-${id}`);
 };
 
