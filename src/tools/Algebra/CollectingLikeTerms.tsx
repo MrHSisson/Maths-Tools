@@ -278,12 +278,10 @@ const TERM_OPTIONS2_L2: ToolMultiSelect = {
 
 const TERM_OPTIONS2_L3: ToolMultiSelect = {
   key: "termOptions",
-  label: "Term Options",
+  label: "Higher Powers",
   allowEmpty: true,
   options: [
-    { value: "noCoefficients", label: "No coefficients (x + x + x...)", defaultActive: false },
-    { value: "includeConstant", label: "Include a constant term", defaultActive: true },
-    { value: "includeSquare", label: "Include an x² term", defaultActive: true },
+    { value: "includeCubicQuartic", label: "Cubics & quartics (x³, x⁴)", defaultActive: true },
   ],
 };
 
@@ -511,8 +509,15 @@ const buildL2 = (maxPower: number, withConstants: boolean, id: number): WordedQu
   const a = randInt(2, 9);
   const target: Term = { coef: a, vars: [{ v, n }] };
 
-  let trueCoef = (Math.random() < 0.5 ? 1 : -1) * randInt(2, 9);
-  while (trueCoef === a) trueCoef = (Math.random() < 0.5 ? 1 : -1) * randInt(2, 9);
+  // Coefficients are randomised independently for every option, so the correct
+  // answer is not simply "the one with a different number" — students must judge
+  // by variable and power, not by the coefficient.
+  const sc = () => (Math.random() < 0.5 ? 1 : -1) * randInt(2, 9);
+
+  // True like term: same variable and power, any coefficient except the target's
+  // own (otherwise it would be identical to the target).
+  let trueCoef = sc();
+  while (trueCoef === a) trueCoef = sc();
   const trueLike: Term = { coef: trueCoef, vars: [{ v, n }] };
   const trueExplain = trueCoef < 0
     ? `Same variable ${v}, same power ${n}. The negative sign does not change the term type — this IS a like term ✓`
@@ -520,33 +525,33 @@ const buildL2 = (maxPower: number, withConstants: boolean, id: number): WordedQu
 
   const candA = [n - 1, n + 1].filter(p => p >= 1 && p <= 5);
   const nmaPower = pick(candA.length ? candA : [1, 2, 3, 4, 5].filter(p => p !== n));
-  const nearMissA: Term = { coef: (Math.random() < 0.5 ? 1 : -1) * a, vars: [{ v, n: nmaPower }] };
+  const nearMissA: Term = { coef: sc(), vars: [{ v, n: nmaPower }] };
 
   const nmbVar = pick(VAR_POOL.filter(x => x !== v));
-  const nearMissB: Term = { coef: (Math.random() < 0.5 ? 1 : -1) * a, vars: [{ v: nmbVar, n }] };
+  const nearMissB: Term = { coef: sc(), vars: [{ v: nmbVar, n }] };
 
   // Wild card — shares nothing with the target. Single-variable only (no two-
-  // variable terms at this level): a different variable AND different power, or
-  // a constant. Falls back to a constant when no alternative power is available.
+  // variable terms at this level): a different variable AND power, or, only
+  // occasionally, a constant (so a constant does not appear in every question).
   const wildPowers = (maxPower > 1 ? [1, 2, 3, 4, 5] : [1]).filter(p => p !== n);
   let wild: Term;
   let wildExplain: string;
-  if ((withConstants && Math.random() < 0.5) || wildPowers.length === 0) {
-    wild = { coef: (Math.random() < 0.5 ? 1 : -1) * a, vars: [] };
+  if ((withConstants && Math.random() < 0.25) || wildPowers.length === 0) {
+    wild = { coef: sc(), vars: [] };
     wildExplain = "No variable — a constant, not a like term ✗";
   } else {
     const wv = pick(VAR_POOL.filter(x => x !== v && x !== nmbVar));
     const wp = pick(wildPowers);
-    wild = { coef: (Math.random() < 0.5 ? 1 : -1) * a, vars: [{ v: wv, n: wp }] };
+    wild = { coef: sc(), vars: [{ v: wv, n: wp }] };
     wildExplain = "Different variable and different power — not a like term ✗";
   }
 
   const opts: MCQOption[] = [
     { term: trueLike, correct: true, explain: trueExplain },
     { term: nearMissA, correct: false,
-      explain: `Same variable ${v}, same coefficient magnitude, but power is ${nmaPower} not ${n} — different power, not a like term ✗` },
+      explain: `Same variable ${v}, but power is ${nmaPower} not ${n} — different power, not a like term ✗` },
     { term: nearMissB, correct: false,
-      explain: `Same power ${n}, same coefficient magnitude, but different variable — not a like term ✗` },
+      explain: `Same power ${n}, but different variable — not a like term ✗` },
     { term: wild, correct: false, explain: wildExplain },
   ];
 
@@ -772,32 +777,41 @@ const genSubtool2 = (level: DifficultyLevel, msv: Record<string, boolean>): Simp
     return buildCollectQuestion(level, terms, [v], false, `t2-L2-${v}`);
   }
 
-  // level3 — seed a guaranteed collectable pair, add unlike singletons.
-  const minMag = noCoef ? 1 : 2;
-  const maxMag = noCoef ? 1 : 9;
-  const includeConstant = isOn(msv, "includeConstant");
-  const includeSquare = isOn(msv, "includeSquare");
+  // level3 — 4-6 terms drawn from a pool of constant / x / x² (plus x³ / x⁴ when
+  // the higher-powers toggle is active). At least one collectable set is always
+  // present, usually two. Coefficients follow the subtraction case.
+  const higher = isOn(msv, "includeCubicQuartic");
+  const powerPool = higher ? [0, 1, 2, 3, 4] : [0, 1, 2]; // 0 = constant
+  const makeTerm = (p: number, c: number): Term => ({ coef: c, vars: p === 0 ? [] : [{ v, n: p }] });
 
-  // Pick the power for the seeded collectable pair, and the pool of "extra" types.
-  const powerPool = includeSquare ? [1, 2, 3] : [1, 3];
-  const seedPower = pick(powerPool);
-  const seedCoeffs = genMainCoeffs(2, caseType, minMag, maxMag);
-  const terms: Term[] = seedCoeffs.map(c => ({ coef: c, vars: [{ v, n: seedPower }] }));
+  const buildTerms = (): Term[] => {
+    const total = randInt(4, 6);
+    // Collectable sets — usually 2, sometimes 1 or 3 — capped by pool size and
+    // how many terms there is room for (each set needs 2 terms).
+    let numSets = pick([1, 2, 2, 2, 3]);
+    numSets = Math.max(1, Math.min(numSets, powerPool.length, Math.floor(total / 2)));
+    const setPowers = shuffle(powerPool).slice(0, numSets);
+    const out: Term[] = [];
+    for (const p of setPowers) for (const c of genMainCoeffs(2, caseType, 2, 9)) out.push(makeTerm(p, c));
+    // Fill remaining slots with singletons from unused powers; if those run out,
+    // fall back to any power (which may grow a set into a triple).
+    const otherPowers = shuffle(powerPool.filter(p => !setPowers.includes(p)));
+    for (let i = out.length, j = 0; i < total; i++, j++) {
+      out.push(makeTerm(otherPowers[j] ?? pick(powerPool), genSingleCoeff(caseType, 2, 9)));
+    }
+    return out;
+  };
 
-  // Candidate extra term types (distinct from the seeded power), each a singleton.
-  const extraTypes: VarPower[][] = [];
-  for (const p of powerPool) if (p !== seedPower) extraTypes.push([{ v, n: p }]);
-  if (includeConstant) extraTypes.push([]);
-  const shuffledExtras = shuffle(extraTypes);
+  // A valid question keeps at least one collectable set and never lets a whole
+  // power collect to zero (which would silently drop a group from the answer).
+  const valid = (ts: Term[]): boolean => {
+    const counts = new Map<string, number>();
+    for (const t of ts) counts.set(varsKey(t.vars), (counts.get(varsKey(t.vars)) ?? 0) + 1);
+    return [...counts.values()].some(c => c >= 2) && groupTerms(ts).every(g => g.coef !== 0);
+  };
 
-  const numExtra = randInt(1, Math.min(3, shuffledExtras.length || 1));
-  for (let i = 0; i < numExtra && i < shuffledExtras.length; i++) {
-    terms.push({ coef: genSingleCoeff(caseType, minMag, maxMag), vars: shuffledExtras[i] });
-  }
-  // Guarantee at least 3 terms total and at least 2 distinct term types.
-  if (terms.length < 3) {
-    terms.push({ coef: genSingleCoeff(caseType, minMag, maxMag), vars: [{ v, n: seedPower === 1 ? 2 : 1 }] });
-  }
+  let terms = buildTerms();
+  for (let tries = 0; tries < 40 && !valid(terms); tries++) terms = buildTerms();
   return buildCollectQuestion(level, terms, [v], false, `t2-L3-${v}`);
 };
 
