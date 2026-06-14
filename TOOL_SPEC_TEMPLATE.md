@@ -77,6 +77,11 @@ independently adjustable by the teacher via the Differentiated QO popover.
 If QO should genuinely differ by level, define it under **Per-level
 differences** so each differentiated column starts sensibly configured.
 
+`difficultySettings` is not a separate thing to define — for level N it is
+simply whatever you wrote under **Per-level differences** for level N (its
+own multiSelect/dropdown/variables), or the tool-level QO config above if
+**Per-level differences** says "none". Nothing extra to write here.
+
 #### 3.2 Levels
 
 <!-- The heart of the spec. For each level give:
@@ -126,6 +131,15 @@ differences** so each differentiated column starts sensibly configured.
 - **Reference implementation to follow:** name the closest existing diagram
   tool (e.g. `AnglesInParallelLines.tsx`, `BasicAngleFacts.tsx`) so the
   implementer reuses its SVG/print conventions.
+- **Whiteboard / Worked Example display (default — only mention if this
+  sub-tool deviates):** diagram sub-tools render the *same SVG* via
+  `questionRenderer` in all three modes, just larger — worksheet cell
+  (~180px) → whiteboard panel (~340px) → worked example/fullscreen
+  (~500px). The unknown is shown as `x`/`y` until "Show answer" is toggled,
+  which reveals its value directly on the diagram; Worked Example mode does
+  **not** redraw or step through multiple copies of the diagram — the step
+  list below it does the explaining. Only add detail here if this sub-tool
+  needs something different (e.g. the figure must redraw between steps).
 
 #### 3.3 Worked example script
 
@@ -168,7 +182,13 @@ differences** so each differentiated column starts sensibly configured.
      answerSuffix only — never the working steps. House style for the answer
      itself (simplest form, decimal places, units, degree symbol etc.) is
      therefore part of THIS spec's Constraints (3.2), not a site-wide
-     default — state it per level if it isn't obvious from the parameters. -->
+     default — state it per level if it isn't obvious from the parameters.
+
+     answerSuffix is just the plain-text unit/symbol shown after the answer
+     — "kg", "cm²", "°", "%", etc. Write the Answer column below exactly as
+     it should appear (e.g. "12 kg", "35°", "£4.50") — the implementer splits
+     it into the maths part (answerLatex/answer) and the trailing plain-text
+     answerSuffix. Nothing separate to define. -->
 
 | Level | Question as displayed | Answer | Working (one line) |
 |---|---|---|---|
