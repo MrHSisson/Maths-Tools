@@ -92,11 +92,12 @@ Deployed at: [maths-tools.vercel.app](https://maths-tools.vercel.app)
 │   ├── App.tsx                 # Routes generated from the registry (lazy-loaded chunks)
 │   ├── main.tsx                # React entry point
 │   └── index.css               # Global styles
+├── Unpublished/                 # Old/in-progress tools — not built, not registered, not migrated
 ├── CLAUDE.md                   # Instructions for Claude Code (AI development)
 ├── index.html                  # Vite HTML entry point
 ├── package.json
 ├── tailwind.config.js
-├── tsconfig.json
+├── tsconfig.json               # excludes Unpublished/
 ├── vercel.json                 # SPA rewrite rule for client-side routing
 └── vite.config.ts
 ```
