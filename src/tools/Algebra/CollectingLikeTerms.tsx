@@ -109,7 +109,10 @@ const genMainCoeffs = (count: number, caseType: string, minMag: number, maxMag: 
     const sum = coeffs.reduce((s, c) => s + c, 0);
     if (sum === 0) continue;
     if (caseType === "crossingZero" ? sum >= 0 : sum <= 0) continue;
-    if (count > 1 && new Set(coeffs).size === 1) continue;
+    // Reject all-identical coefficients (e.g. 3x + 3x + 3x) — but only when
+    // variety is actually possible. In "no coefficients" mode (minMag === maxMag
+    // === 1) every term is ±1, so all-1s (x + x + x) is the intended output.
+    if (count > 1 && minMag !== maxMag && new Set(coeffs).size === 1) continue;
     return coeffs;
   }
   return caseType === "crossingZero"
@@ -267,6 +270,7 @@ const SUBTRACTION_GROUP_L3: ToolMultiSelect = {
 const TERM_OPTIONS2_L1: ToolMultiSelect = {
   key: "termOptions",
   label: "Term Options",
+  allowEmpty: true,
   options: [
     { value: "noCoefficients", label: "No coefficients (x + x + x...)", defaultActive: false },
   ],
@@ -275,6 +279,7 @@ const TERM_OPTIONS2_L1: ToolMultiSelect = {
 const TERM_OPTIONS2_L2: ToolMultiSelect = {
   key: "termOptions",
   label: "Term Options",
+  allowEmpty: true,
   options: [
     { value: "noCoefficients", label: "No coefficients (x + x + x...)", defaultActive: false },
     { value: "includeConstant", label: "Include a constant term", defaultActive: false },
@@ -285,6 +290,7 @@ const TERM_OPTIONS2_L2: ToolMultiSelect = {
 const TERM_OPTIONS2_L3: ToolMultiSelect = {
   key: "termOptions",
   label: "Term Options",
+  allowEmpty: true,
   options: [
     { value: "noCoefficients", label: "No coefficients (x + x + x...)", defaultActive: false },
     { value: "includeConstant", label: "Include a constant term", defaultActive: true },
@@ -295,6 +301,7 @@ const TERM_OPTIONS2_L3: ToolMultiSelect = {
 const TERM_OPTIONS3_L1: ToolMultiSelect = {
   key: "termOptions",
   label: "Extra Term Types",
+  allowEmpty: true,
   options: [
     { value: "noCoefficients", label: "No coefficients (x + y + x...)", defaultActive: false },
   ],
@@ -303,6 +310,7 @@ const TERM_OPTIONS3_L1: ToolMultiSelect = {
 const TERM_OPTIONS3_L2: ToolMultiSelect = {
   key: "termOptions",
   label: "Extra Term Types",
+  allowEmpty: true,
   options: [
     { value: "noCoefficients", label: "No coefficients (x + y + x...)", defaultActive: false },
     { value: "includeConstant", label: "Include a constant term", defaultActive: false },
@@ -313,6 +321,7 @@ const TERM_OPTIONS3_L2: ToolMultiSelect = {
 const TERM_OPTIONS3_L3: ToolMultiSelect = {
   key: "termOptions",
   label: "Extra Term Types",
+  allowEmpty: true,
   options: [
     { value: "noCoefficients", label: "No coefficients (x + y + x...)", defaultActive: false },
     { value: "includeConstant", label: "Include a constant term", defaultActive: true },
@@ -460,10 +469,12 @@ const buildL1 = (maxPower: number, withConstants: boolean, id: number): WordedQu
   while (trueCoef === a) trueCoef = randInt(2, 9);
   const trueLike: Term = { coef: trueCoef, vars: [{ v, n }] };
 
+  // Level 1 caps powers at 3 (cube). pickPower returns a power different from the
+  // target's, within the cube cap — repeats across distractors are fine because
+  // each distractor uses a distinct variable letter.
   const usedVars = new Set([v]);
-  const usedPowers = new Set([n]);
   const pickVar = () => { const c = pick(VAR_POOL.filter(x => !usedVars.has(x))); usedVars.add(c); return c; };
-  const pickPower = () => { const c = pick([1, 2, 3, 4, 5].filter(p => !usedPowers.has(p))); usedPowers.add(c); return c; };
+  const pickPower = () => pick([1, 2, 3].filter(p => p !== n));
   const offCoef = () => { let c = randInt(2, 9); while (c === a) c = randInt(2, 9); return c; };
 
   const types = shuffle(["A", "B", "C"] as const).slice(0, 2);
@@ -702,7 +713,7 @@ const genSubtool1 = (level: DifficultyLevel, msv: Record<string, boolean>): Word
   const withConstants = isOn(msv, "withConstants");
   const maxPower = withPowers ? 5 : 1;
 
-  if (level === "level1") return buildL1(maxPower, withConstants, id);
+  if (level === "level1") return buildL1(withPowers ? 3 : 1, withConstants, id);
   if (level === "level2") return buildL2(maxPower, withConstants, id);
   const twoVar = isOn(msv, "twoVariableTargets") && Math.random() < 0.5;
   return twoVar ? buildL3TwoVar(id) : buildL3SingleVar(maxPower, id);
@@ -745,12 +756,12 @@ const genSubtool2 = (level: DifficultyLevel, msv: Record<string, boolean>): Simp
   if (level === "level1") {
     // One group: all power-1 terms in v.
     if (noCoef) {
-      const count = randInt(2, 8);
+      const count = randInt(3, 6);
       const coeffs = genMainCoeffs(count, caseType, 1, 1);
       const terms = coeffs.map(c => ({ coef: c, vars: [{ v, n: 1 }] }));
       return buildCollectQuestion(level, terms, [v], false, `t2-L1nc-${v}`);
     }
-    const count = randInt(2, 4);
+    const count = randInt(3, 4);
     const coeffs = genMainCoeffs(count, caseType, 1, 9);
     const terms = coeffs.map(c => ({ coef: c, vars: [{ v, n: 1 }] }));
     return buildCollectQuestion(level, terms, [v], false, `t2-L1-${v}`);
@@ -760,7 +771,7 @@ const genSubtool2 = (level: DifficultyLevel, msv: Record<string, boolean>): Simp
     // Main collectable x group (power 1) + optional singleton constant / x^2.
     const minMag = noCoef ? 1 : 2;
     const maxMag = noCoef ? 1 : 9;
-    const count = randInt(2, 4);
+    const count = noCoef ? randInt(3, 6) : randInt(3, 4);
     const coeffs = genMainCoeffs(count, caseType, minMag, maxMag);
     const terms: Term[] = coeffs.map(c => ({ coef: c, vars: [{ v, n: 1 }] }));
     if (isOn(msv, "includeConstant")) {
@@ -914,15 +925,19 @@ const questionRenderer = (
     const big = compact === false;
     const fs = small ? "1.05rem" : big ? "2rem" : "1.6rem";
     const maxW = small ? 340 : big ? 640 : 520;
+    const gap = small ? 6 : 12;
     return (
       <div style={{ width: "100%", maxWidth: maxW, margin: "0 auto" }}>
         <div style={{ fontWeight: 600, textAlign: "center", color: "#000", fontSize: fs, marginBottom: small ? 8 : 16 }}>
           <span>{mcq.promptText} </span>
           <MathRenderer latex={mcq.targetLatex} />
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: small ? 6 : 12 }}>
-          {mcq.options.map((o) => {
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap }}>
+          {mcq.options.map((o, i) => {
             const reveal = showAnswer && o.correct;
+            // Odd option count (5 at L3): centre the final option across both
+            // columns so the layout reads 2, 2, then 1 centred.
+            const lastOdd = mcq.options.length % 2 === 1 && i === mcq.options.length - 1;
             return (
               <div key={o.letter} style={{
                 display: "flex", alignItems: "center", gap: 10,
@@ -930,6 +945,7 @@ const questionRenderer = (
                 background: reveal ? "#dcfce7" : "transparent",
                 borderRadius: 10, padding: small ? "6px 10px" : "10px 16px",
                 fontSize: fs, color: "#000",
+                ...(lastOdd ? { gridColumn: "1 / -1", justifySelf: "center", width: `calc(50% - ${gap / 2}px)` } : {}),
               }}>
                 <span style={{ fontWeight: 700, color: reveal ? "#16a34a" : "#64748b" }}>{o.letter})</span>
                 <MathRenderer latex={o.latex} />
