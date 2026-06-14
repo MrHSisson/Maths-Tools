@@ -9,7 +9,8 @@ import {
   type WorkingStep,
   type ToolMultiSelect,
   MathRenderer,
-  randInt, pick, mStep, tStep, pickActive,
+  QuestionDisplay,
+  randInt, pick, mStep, tStep, pickActive, ansEq,
 } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -430,6 +431,10 @@ const finishMCQ = (level: DifficultyLevel, target: Term, opts: MCQOption[], intr
     ? "None of these"
     : correctOnes.map(o => `${LETTERS[shuffled.indexOf(o)]} (${termPlain(o.term)})`).join(" and ");
 
+  const promptText = level === "level3"
+    ? "Circle any like terms — there may be zero. Target:"
+    : "Circle the like term:";
+
   return {
     kind: "worded",
     lines: [introLine, ...optionLines],
@@ -437,7 +442,12 @@ const finishMCQ = (level: DifficultyLevel, target: Term, opts: MCQOption[], intr
     working,
     key,
     difficulty: level,
-  };
+    _mcq: {
+      promptText,
+      targetLatex,
+      options: shuffled.map((o, i) => ({ letter: LETTERS[i], latex: termSigned(o.term), correct: o.correct })),
+    },
+  } as unknown as WordedQuestion;
 };
 
 const buildL1 = (maxPower: number, withConstants: boolean, id: number): WordedQuestion => {
@@ -516,15 +526,20 @@ const buildL2 = (maxPower: number, withConstants: boolean, id: number): WordedQu
   const nmbVar = pick(VAR_POOL.filter(x => x !== v));
   const nearMissB: Term = { coef: (Math.random() < 0.5 ? 1 : -1) * a, vars: [{ v: nmbVar, n }] };
 
+  // Wild card — shares nothing with the target. Single-variable only (no two-
+  // variable terms at this level): a different variable AND different power, or
+  // a constant. Falls back to a constant when no alternative power is available.
+  const wildPowers = (maxPower > 1 ? [1, 2, 3, 4, 5] : [1]).filter(p => p !== n);
   let wild: Term;
   let wildExplain: string;
-  if (withConstants && Math.random() < 0.5) {
+  if ((withConstants && Math.random() < 0.5) || wildPowers.length === 0) {
     wild = { coef: (Math.random() < 0.5 ? 1 : -1) * a, vars: [] };
     wildExplain = "No variable — a constant, not a like term ✗";
   } else {
     const wv = pick(VAR_POOL.filter(x => x !== v && x !== nmbVar));
-    wild = { coef: (Math.random() < 0.5 ? 1 : -1) * a, vars: [{ v, n: 1 }, { v: wv, n: 1 }] };
-    wildExplain = "Two variables present — not a like term ✗";
+    const wp = pick(wildPowers);
+    wild = { coef: (Math.random() < 0.5 ? 1 : -1) * a, vars: [{ v: wv, n: wp }] };
+    wildExplain = "Different variable and different power — not a like term ✗";
   }
 
   const opts: MCQOption[] = [
@@ -875,6 +890,74 @@ const genSubtool3 = (level: DifficultyLevel, msv: Record<string, boolean>): Simp
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// Question renderer — MCQ grid (Sub-tool 1) + expression display (Sub-tools 2 & 3)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface MCQData {
+  promptText: string;
+  targetLatex: string;
+  options: { letter: string; latex: string; correct: boolean }[];
+}
+
+// compact: true = worksheet cell · false = worked example / fullscreen · undefined = whiteboard
+const questionRenderer = (
+  q: AnyQuestion,
+  showAnswer: boolean,
+  _colorScheme: string,
+  compact?: boolean,
+): JSX.Element | null => {
+  const mcq = (q as unknown as { _mcq?: MCQData })._mcq;
+
+  // ── Sub-tool 1 — multiple choice in a 2-column grid ──
+  if (q.kind === "worded" && mcq) {
+    const small = compact === true;
+    const big = compact === false;
+    const fs = small ? "1.05rem" : big ? "2rem" : "1.6rem";
+    const maxW = small ? 340 : big ? 640 : 520;
+    return (
+      <div style={{ width: "100%", maxWidth: maxW, margin: "0 auto" }}>
+        <div style={{ fontWeight: 600, textAlign: "center", color: "#000", fontSize: fs, marginBottom: small ? 8 : 16 }}>
+          <span>{mcq.promptText} </span>
+          <MathRenderer latex={mcq.targetLatex} />
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: small ? 6 : 12 }}>
+          {mcq.options.map((o) => {
+            const reveal = showAnswer && o.correct;
+            return (
+              <div key={o.letter} style={{
+                display: "flex", alignItems: "center", gap: 10,
+                border: `2px solid ${reveal ? "#16a34a" : "#cbd5e1"}`,
+                background: reveal ? "#dcfce7" : "transparent",
+                borderRadius: 10, padding: small ? "6px 10px" : "10px 16px",
+                fontSize: fs, color: "#000",
+              }}>
+                <span style={{ fontWeight: 700, color: reveal ? "#16a34a" : "#64748b" }}>{o.letter})</span>
+                <MathRenderer latex={o.latex} />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Sub-tools 2 & 3 — simple expression (instruction + display + answer) ──
+  const cls = compact === true ? "text-xl" : compact === false ? "text-4xl" : "text-3xl";
+  const ansLatex = (q as unknown as { answerLatex?: string }).answerLatex;
+  return (
+    <div className="w-full flex flex-col gap-3 items-center text-center">
+      {compact !== true && <div className={`${cls} font-semibold`} style={{ color: "#000" }}>Simplify:</div>}
+      <QuestionDisplay q={q} cls={cls} />
+      {showAnswer && ansLatex && (
+        <div className={`${cls} font-bold`} style={{ color: "#166534" }}>
+          <MathRenderer latex={ansEq(ansLatex)} />
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // Dispatcher
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -899,6 +982,7 @@ export default function App() {
       config={TOOL_CONFIG}
       infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
+      questionRenderer={questionRenderer}
       stepRenderer={stepRenderer}
     />
   );
