@@ -14,6 +14,21 @@ A React/TypeScript/Vite app of interactive maths tools for teachers. Each tool h
 
 ---
 
+## The `Unpublished/` folder — leave alone
+
+`Unpublished/` (repo root, sibling to `src/`) holds old v1.x tool files that are not ready to publish and not registered anywhere — a personal archive/reference area, not part of the app.
+
+It is deliberately kept **outside** `src/` and is explicitly excluded in `tsconfig.json`, so it cannot break `tsc`, the Vite build, the vitest smoke tests (`src/tools/**/*.tsx` glob), or Vercel deploys, no matter how broken the contents are.
+
+**Never**, unless the user explicitly asks for a specific file in this folder:
+- Migrate, fix, or build any tool from here to v2.3
+- Move its contents into `src/`, or register anything from it in `src/registry.ts`
+- Treat it as part of the "migrate old tools" backlog in the section below
+
+Reading a file here for reference (e.g. porting maths logic into a brand-new v2.3 tool) is fine.
+
+---
+
 ## Branch convention
 
 Each Claude Code session works on its own freshly created branch (e.g. `claude/<session-name>`), branched from an up-to-date `main`. Never push directly to `main`.
