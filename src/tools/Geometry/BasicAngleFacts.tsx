@@ -577,8 +577,9 @@ function LeaderLabel({ tipX, tipY, labelX, labelY, label, fontSize, isUnknown, s
   return (<g><line x1={lsx} y1={lsy} x2={abx} y2={aby} stroke={col} strokeWidth={small ? 0.8 : 1.2} strokeDasharray={small ? "3 2" : "4 3"} strokeLinecap="round" /><polygon points={`${tipX},${tipY} ${abx + px * as * 0.4},${aby + py * as * 0.4} ${abx - px * as * 0.4},${aby - py * as * 0.4}`} fill={col} /><rect x={labelX - tw / 2 - 4} y={labelY - th / 2 - 2} width={tw + 8} height={th + 4} rx={3} fill="white" fillOpacity="0.97" stroke={isUnknown ? "#93c5fd" : "#d1d5db"} strokeWidth={0.6} /><text x={labelX} y={labelY} textAnchor="middle" dominantBaseline="middle" fontSize={fontSize} fontStyle={isUnknown && !showAnswer ? "italic" : "normal"} fontWeight={isUnknown ? "bold" : "600"} fill={isUnknown ? "#1d4ed8" : "#111827"}>{disp}</text></g>);
 }
 
-interface DiagramProps { q: AngleQuestion; showAnswer: boolean; small?: boolean; dataIndex?: number; }
-function AngleDiagram({ q, showAnswer, small = false, dataIndex }: DiagramProps) {
+interface DiagramProps { q: AngleQuestion; showAnswer: boolean; small?: boolean; dataIndex?: number; fillBox?: boolean; }
+function AngleDiagram({ q, showAnswer, small = false, dataIndex, fillBox = false }: DiagramProps) {
+  const svgStyle = { display: "block", width: "100%", height: fillBox ? "100%" : "auto", overflow: "visible" } as const;
   const size = small ? 300 : 340; const tfp = small ? 17 : 28;
   const ARC_SM = size * (small ? 0.20 : 0.22); const ARC_MD = size * (small ? 0.225 : 0.245); const ARC_LG = size * (small ? 0.25 : 0.27);
   const arcRFor = (deg: number) => deg <= 30 ? ARC_SM : deg <= 60 ? ARC_MD : ARC_LG;
@@ -596,7 +597,7 @@ function AngleDiagram({ q, showAnswer, small = false, dataIndex }: DiagramProps)
     const cx1 = Math.max(...cp.map(p => p[0])) + cPad, cy1 = Math.max(...cp.map(p => p[1])) + cPad;
     const cd = Math.max(cx1 - cx0, cy1 - cy0); const ccx = (cx0 + cx1) / 2, ccy = (cy0 + cy1) / 2;
     const fs = tfp * cd / (small ? 266 : 460);
-    return (<svg viewBox={`${ccx - cd / 2} ${ccy - cd / 2} ${cd} ${cd}`} style={{ display: "block", width: "100%", height: "auto", overflow: "visible" }} preserveAspectRatio="xMidYMid meet" {...ep}>{q.angles.map((ang, i) => (!ang.isUnknown || ang.blank) ? null : <path key={`sh${i}`} d={sectorPath(cx, cy, arcRFor(ang.value), ang.arcFromDeg, ang.arcToDeg)} fill="#bfdbfe" fillOpacity="0.5" stroke="none" />)}{allRays.map((a, i) => { const [px2, py2] = pt(cx, cy, ll2, a); return <line key={i} x1={cx} y1={cy} x2={px2} y2={py2} stroke="#1e293b" strokeWidth={small ? 2 : 3} strokeLinecap="round" />; })}{q.angles.map((ang, i) => ang.blank ? null : <path key={`arc${i}`} d={arcPath(cx, cy, arcRFor(ang.value), ang.arcFromDeg, ang.arcToDeg)} fill="none" stroke={ang.isUnknown ? "#3b82f6" : "#374151"} strokeWidth={small ? 1.5 : 2.5} />)}{q.angles.map((ang, i) => { if (ang.blank) return null; const ll = leaderLayout(cx, cy, arcRFor(ang.value), LL, ang.arcFromDeg, ang.arcToDeg); return <LeaderLabel key={`lbl${i}`} {...ll} label={ang.label} fontSize={fs} isUnknown={ang.isUnknown} showAnswer={showAnswer} value={ang.value} small={small} />; })}<circle cx={cx} cy={cy} r={small ? 3 : 4} fill="#1e293b" /></svg>);
+    return (<svg viewBox={`${ccx - cd / 2} ${ccy - cd / 2} ${cd} ${cd}`} style={svgStyle} preserveAspectRatio="xMidYMid meet" {...ep}>{q.angles.map((ang, i) => (!ang.isUnknown || ang.blank) ? null : <path key={`sh${i}`} d={sectorPath(cx, cy, arcRFor(ang.value), ang.arcFromDeg, ang.arcToDeg)} fill="#bfdbfe" fillOpacity="0.5" stroke="none" />)}{allRays.map((a, i) => { const [px2, py2] = pt(cx, cy, ll2, a); return <line key={i} x1={cx} y1={cy} x2={px2} y2={py2} stroke="#1e293b" strokeWidth={small ? 2 : 3} strokeLinecap="round" />; })}{q.angles.map((ang, i) => ang.blank ? null : <path key={`arc${i}`} d={arcPath(cx, cy, arcRFor(ang.value), ang.arcFromDeg, ang.arcToDeg)} fill="none" stroke={ang.isUnknown ? "#3b82f6" : "#374151"} strokeWidth={small ? 1.5 : 2.5} />)}{q.angles.map((ang, i) => { if (ang.blank) return null; const ll = leaderLayout(cx, cy, arcRFor(ang.value), LL, ang.arcFromDeg, ang.arcToDeg); return <LeaderLabel key={`lbl${i}`} {...ll} label={ang.label} fontSize={fs} isUnknown={ang.isUnknown} showAnswer={showAnswer} value={ang.value} small={small} />; })}<circle cx={cx} cy={cy} r={small ? 3 : 4} fill="#1e293b" /></svg>);
   }
 
   if (q.tool === "rightAngle") {
@@ -617,7 +618,7 @@ function AngleDiagram({ q, showAnswer, small = false, dataIndex }: DiagramProps)
     const bx1 = Math.max(...gp.map(p => p[0])) + pad, by1 = Math.max(...gp.map(p => p[1])) + pad;
     const bd = Math.max(bx1 - bx0, by1 - by0); const bcx = (bx0 + bx1) / 2, bcy = (by0 + by1) / 2;
     const fs = tfp * bd / (small ? 266 : 460);
-    return (<svg viewBox={`${bcx - bd / 2} ${bcy - bd / 2} ${bd} ${bd}`} style={{ display: "block", width: "100%", height: "auto", overflow: "visible" }} preserveAspectRatio="xMidYMid meet" {...ep}>{q.angles.map((ang, i) => ang.isUnknown ? <path key={`sh${i}`} d={sectorPath(vx, vy, arcRFor(ang.value), ang.arcFromDeg, ang.arcToDeg)} fill="#bfdbfe" fillOpacity="0.6" stroke="none" /> : null)}<line x1={vx} y1={vy} x2={b1x} y2={b1y} stroke="#1e293b" strokeWidth={small ? 2 : 3} strokeLinecap="round" /><line x1={vx} y1={vy} x2={b2x} y2={b2y} stroke="#1e293b" strokeWidth={small ? 2 : 3} strokeLinecap="round" />{iSegs.map((seg, i) => { const [px2, py2] = pt(vx, vy, armLen, seg.angleDeg); return <line key={`ray${i}`} x1={vx} y1={vy} x2={px2} y2={py2} stroke="#1e293b" strokeWidth={small ? 2 : 3} strokeLinecap="round" />; })}{q.showSquare !== false && <polyline points={`${sq1[0]},${sq1[1]} ${sq2[0]},${sq2[1]} ${sq3[0]},${sq3[1]}`} fill="none" stroke="#1e293b" strokeWidth={small ? 1.5 : 2.5} strokeLinejoin="miter" />}{q.angles.map((ang, i) => <path key={`arc${i}`} d={arcPath(vx, vy, arcRFor(ang.value), ang.arcFromDeg, ang.arcToDeg)} fill="none" stroke={ang.isUnknown ? "#3b82f6" : "#374151"} strokeWidth={small ? 1.5 : 2.5} />)}{q.angles.map((ang, i) => { const ll = leaderLayout(vx, vy, arcRFor(ang.value), LL, ang.arcFromDeg, ang.arcToDeg); return <LeaderLabel key={`lbl${i}`} {...ll} label={ang.label} fontSize={fs} isUnknown={ang.isUnknown} showAnswer={showAnswer} value={ang.value} small={small} />; })}<circle cx={vx} cy={vy} r={small ? 3 : 4} fill="#1e293b" /></svg>);
+    return (<svg viewBox={`${bcx - bd / 2} ${bcy - bd / 2} ${bd} ${bd}`} style={svgStyle} preserveAspectRatio="xMidYMid meet" {...ep}>{q.angles.map((ang, i) => ang.isUnknown ? <path key={`sh${i}`} d={sectorPath(vx, vy, arcRFor(ang.value), ang.arcFromDeg, ang.arcToDeg)} fill="#bfdbfe" fillOpacity="0.6" stroke="none" /> : null)}<line x1={vx} y1={vy} x2={b1x} y2={b1y} stroke="#1e293b" strokeWidth={small ? 2 : 3} strokeLinecap="round" /><line x1={vx} y1={vy} x2={b2x} y2={b2y} stroke="#1e293b" strokeWidth={small ? 2 : 3} strokeLinecap="round" />{iSegs.map((seg, i) => { const [px2, py2] = pt(vx, vy, armLen, seg.angleDeg); return <line key={`ray${i}`} x1={vx} y1={vy} x2={px2} y2={py2} stroke="#1e293b" strokeWidth={small ? 2 : 3} strokeLinecap="round" />; })}{q.showSquare !== false && <polyline points={`${sq1[0]},${sq1[1]} ${sq2[0]},${sq2[1]} ${sq3[0]},${sq3[1]}`} fill="none" stroke="#1e293b" strokeWidth={small ? 1.5 : 2.5} strokeLinejoin="miter" />}{q.angles.map((ang, i) => <path key={`arc${i}`} d={arcPath(vx, vy, arcRFor(ang.value), ang.arcFromDeg, ang.arcToDeg)} fill="none" stroke={ang.isUnknown ? "#3b82f6" : "#374151"} strokeWidth={small ? 1.5 : 2.5} />)}{q.angles.map((ang, i) => { const ll = leaderLayout(vx, vy, arcRFor(ang.value), LL, ang.arcFromDeg, ang.arcToDeg); return <LeaderLabel key={`lbl${i}`} {...ll} label={ang.label} fontSize={fs} isUnknown={ang.isUnknown} showAnswer={showAnswer} value={ang.value} small={small} />; })}<circle cx={vx} cy={vy} r={small ? 3 : 4} fill="#1e293b" /></svg>);
   }
 
   const margin = small ? 18 : 60, vbs = size + margin * 2; const cx = vbs / 2, cy = vbs / 2, ll2 = size * 0.62;
@@ -629,7 +630,7 @@ function AngleDiagram({ q, showAnswer, small = false, dataIndex }: DiagramProps)
   const cx1 = Math.max(...cp.map(p => p[0])) + cPad, cy1 = Math.max(...cp.map(p => p[1])) + cPad;
   const cd = Math.max(cx1 - cx0, cy1 - cy0); const ccx = (cx0 + cx1) / 2, ccy = (cy0 + cy1) / 2;
   const fs = tfp * cd / (small ? 266 : 460);
-  return (<svg viewBox={`${ccx - cd / 2} ${ccy - cd / 2} ${cd} ${cd}`} style={{ display: "block", width: "100%", height: "auto", overflow: "visible" }} preserveAspectRatio="xMidYMid meet" {...ep}>{q.tool === "aroundPoint" && <circle cx={cx} cy={cy} r={ll2} fill="none" stroke="#e5e7eb" strokeWidth={small ? 1 : 1.5} strokeDasharray="4 4" />}{q.angles.map((ang, i) => !ang.isUnknown ? null : <path key={`sh${i}`} d={sectorPath(cx, cy, arcRFor(ang.value), ang.arcFromDeg, ang.arcToDeg)} fill="#bfdbfe" fillOpacity="0.6" stroke="none" />)}{q.segments.map((seg, i) => { const [px2, py2] = pt(cx, cy, ll2, seg.angleDeg); return <line key={i} x1={cx} y1={cy} x2={px2} y2={py2} stroke="#1e293b" strokeWidth={small ? 2 : 3} strokeLinecap="round" />; })}{q.angles.map((ang, i) => <path key={`arc${i}`} d={arcPath(cx, cy, arcRFor(ang.value), ang.arcFromDeg, ang.arcToDeg)} fill="none" stroke={ang.isUnknown ? "#3b82f6" : "#374151"} strokeWidth={small ? 1.5 : 2.5} />)}{q.angles.map((ang, i) => { const ll = leaderLayout(cx, cy, arcRFor(ang.value), LL, ang.arcFromDeg, ang.arcToDeg); return <LeaderLabel key={`lbl${i}`} {...ll} label={ang.label} fontSize={fs} isUnknown={ang.isUnknown} showAnswer={showAnswer} value={ang.value} small={small} />; })}<circle cx={cx} cy={cy} r={small ? 3 : 4} fill="#1e293b" /></svg>);
+  return (<svg viewBox={`${ccx - cd / 2} ${ccy - cd / 2} ${cd} ${cd}`} style={svgStyle} preserveAspectRatio="xMidYMid meet" {...ep}>{q.tool === "aroundPoint" && <circle cx={cx} cy={cy} r={ll2} fill="none" stroke="#e5e7eb" strokeWidth={small ? 1 : 1.5} strokeDasharray="4 4" />}{q.angles.map((ang, i) => !ang.isUnknown ? null : <path key={`sh${i}`} d={sectorPath(cx, cy, arcRFor(ang.value), ang.arcFromDeg, ang.arcToDeg)} fill="#bfdbfe" fillOpacity="0.6" stroke="none" />)}{q.segments.map((seg, i) => { const [px2, py2] = pt(cx, cy, ll2, seg.angleDeg); return <line key={i} x1={cx} y1={cy} x2={px2} y2={py2} stroke="#1e293b" strokeWidth={small ? 2 : 3} strokeLinecap="round" />; })}{q.angles.map((ang, i) => <path key={`arc${i}`} d={arcPath(cx, cy, arcRFor(ang.value), ang.arcFromDeg, ang.arcToDeg)} fill="none" stroke={ang.isUnknown ? "#3b82f6" : "#374151"} strokeWidth={small ? 1.5 : 2.5} />)}{q.angles.map((ang, i) => { const ll = leaderLayout(cx, cy, arcRFor(ang.value), LL, ang.arcFromDeg, ang.arcToDeg); return <LeaderLabel key={`lbl${i}`} {...ll} label={ang.label} fontSize={fs} isUnknown={ang.isUnknown} showAnswer={showAnswer} value={ang.value} small={small} />; })}<circle cx={cx} cy={cy} r={small ? 3 : 4} fill="#1e293b" /></svg>);
 }
 
 // ─── QUESTION CONVERSION & RENDERING ───────────────────────────────────────────
@@ -660,11 +661,28 @@ function generateQuestion(
 const questionRenderer = (q: AnyQuestion, showAnswer: boolean, _colorScheme: string, compact?: boolean, idx?: number): JSX.Element | null => {
   const d = (q as any)._diagram as AngleQuestion | undefined;
   if (!d) return null;
-  const maxW = compact === true ? 180 : compact === undefined ? 340 : 500;
+  const note = d.tool === "rightAngle";
+  if (compact === true) {
+    // Worksheet cell: fill the cell and letterbox the square SVG by height so it
+    // never spills out of the box, whatever the cell's aspect ratio.
+    return (
+      <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+        <div style={{ flex: 1, minHeight: 0, width: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <AngleDiagram q={d} showAnswer={showAnswer} small dataIndex={idx} fillBox />
+        </div>
+        {note && (
+          <div className="text-center text-gray-500 italic" style={{ fontSize: "0.6em", lineHeight: 1.1, flexShrink: 0, marginTop: 2 }}>
+            The diagram depicts a right angle
+          </div>
+        )}
+      </div>
+    );
+  }
+  const maxW = compact === undefined ? 340 : 500;
   return (
     <div style={{ width: "100%", maxWidth: maxW, margin: "0 auto" }}>
-      <AngleDiagram q={d} showAnswer={showAnswer} small={compact === true} dataIndex={idx} />
-      {d.tool === "rightAngle" && (
+      <AngleDiagram q={d} showAnswer={showAnswer} small={false} dataIndex={idx} />
+      {note && (
         <div className="text-xs text-center text-gray-500 italic" style={{ marginTop: 4 }}>
           The diagram depicts a right angle
         </div>
@@ -777,7 +795,7 @@ export default function App() {
       generateQuestion={generateQuestion}
       questionRenderer={questionRenderer}
       customPrintHandler={customPrintHandler}
-      defaults={{ fixedColumns: true, numColumns: 3 }}
+      defaults={{ fixedColumns: true, numColumns: 3, hideFontControls: true }}
     />
   );
 }

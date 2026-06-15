@@ -359,6 +359,7 @@ defaults?: {
   fixedColumns?: boolean;               // hides the columns input entirely
   maxColumns?: number;                  // caps the columns input max (e.g. 3 = no 4-col option)
   comingSoonLevels?: DifficultyLevel[]; // levels shown but disabled — "Coming soon" on hover
+  hideFontControls?: boolean;           // hides the text-size up/down chevrons (diagram-only tools)
 }
 ```
 

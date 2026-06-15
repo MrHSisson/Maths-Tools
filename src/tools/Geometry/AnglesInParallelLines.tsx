@@ -740,6 +740,7 @@ export default function App() {
         fixedColumns: true,
         numColumns: 3,
         numQuestions: 9,
+        hideFontControls: true,
       }}
     />
   );

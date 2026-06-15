@@ -117,4 +117,5 @@ export interface ToolShellDefaults {
   fixedColumns?: boolean;      // locks and hides the columns input
   maxColumns?: number;         // caps the column input maximum (e.g. 3 prevents 4-col)
   comingSoonLevels?: DifficultyLevel[]; // levels shown but disabled with "Coming soon" tooltip
+  hideFontControls?: boolean;  // hides the text size up/down chevrons (e.g. diagram-only tools)
 }
