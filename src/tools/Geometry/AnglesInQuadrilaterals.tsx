@@ -113,14 +113,13 @@ function rotatePts(pts: Pt[], rotDeg: number): Pt[] {
   });
 }
 
-function tickMarks(v1: Pt, v2: Pt, count: number): { x1: number; y1: number; x2: number; y2: number }[] {
+function tickMarks(v1: Pt, v2: Pt, count: number, tickLen: number, spacing: number): { x1: number; y1: number; x2: number; y2: number }[] {
   const mx = (v1.x + v2.x) / 2, my = (v1.y + v2.y) / 2;
   const dx = v2.x - v1.x, dy = v2.y - v1.y;
   const len = Math.sqrt(dx * dx + dy * dy);
   if (len < 0.001) return [];
   const ux = dx / len, uy = dy / len;
   const nx = -uy, ny = ux;
-  const tickLen = 11, spacing = 6;
   const res: { x1: number; y1: number; x2: number; y2: number }[] = [];
   for (let i = 0; i < count; i++) {
     const off = (i - (count - 1) / 2) * spacing;
@@ -361,29 +360,31 @@ function estTW(s: string, fs: number) { return s.length * fs * 0.6; }
 interface DiagramProps { q: QuadQuestion; showAnswer: boolean; small?: boolean; dataIndex?: number; }
 
 function QuadDiagram({ q, showAnswer, small = false, dataIndex }: DiagramProps) {
-  const BASE_SIZE = small ? 220 : 380;
-  const fontSize = small ? 13 : 22;
-  const strokeW = small ? 2 : 2.5;
-  const arcR = small ? 15 : 24;
-  const unknownArcR = small ? 19 : 30;
-  const leaderLen = small ? 28 : 48;
+  // Geometry is fitted into a fixed `size` box, then the final viewBox is made
+  // SQUARE (so tall kites/arrowheads never overflow their panel) and the font /
+  // stroke widths are scaled to the viewBox so they read consistently on screen.
+  const size = small ? 230 : 380;
+  const tfp = small ? 16 : 26;          // base font in size-space
+  const arcR = small ? 16 : 24;
+  const unknownArcR = small ? 20 : 30;
+  const leaderLen = small ? 32 : 52;
+  const refSide = small ? 300 : 470;    // typical square side → keeps fs ~ tfp
 
   const geomPts: Pt[] = q.edges.flatMap(([a, b]) => [a, b]);
-  const geomPad = small ? 20 : 40;
-  const gMinX = Math.min(...geomPts.map(p => p.x)) - geomPad, gMaxX = Math.max(...geomPts.map(p => p.x)) + geomPad;
-  const gMinY = Math.min(...geomPts.map(p => p.y)) - geomPad, gMaxY = Math.max(...geomPts.map(p => p.y)) + geomPad;
-  const gbw = gMaxX - gMinX, gbh = gMaxY - gMinY;
-  const scl = BASE_SIZE / Math.max(gbw, gbh, 1);
-  const tx0 = (x: number) => (x - gMinX) * scl;
-  const ty0 = (y: number) => (y - gMinY) * scl;
-  const tp0 = (p: Pt): Pt => ({ x: tx0(p.x), y: ty0(p.y) });
+  const gMinX = Math.min(...geomPts.map(p => p.x)), gMaxX = Math.max(...geomPts.map(p => p.x));
+  const gMinY = Math.min(...geomPts.map(p => p.y)), gMaxY = Math.max(...geomPts.map(p => p.y));
+  const scl = size / Math.max(gMaxX - gMinX, gMaxY - gMinY, 1);
+  const cxG = (gMinX + gMaxX) / 2, cyG = (gMinY + gMaxY) / 2;
+  const tx = (x: number) => (x - cxG) * scl + size / 2;
+  const ty = (y: number) => (y - cyG) * scl + size / 2;
+  const tp = (p: Pt): Pt => ({ x: tx(p.x), y: ty(p.y) });
   const centroid: Pt = {
-    x: tx0(geomPts.reduce((s, p) => s + p.x, 0) / geomPts.length),
-    y: ty0(geomPts.reduce((s, p) => s + p.y, 0) / geomPts.length),
+    x: tx(geomPts.reduce((s, p) => s + p.x, 0) / geomPts.length),
+    y: ty(geomPts.reduce((s, p) => s + p.y, 0) / geomPts.length),
   };
 
   function outwardBisector(arcVertex: Pt, arcFrom: Pt, arcTo: Pt, reflex: boolean): Pt {
-    const v = tp0(arcVertex), f = tp0(arcFrom), t2 = tp0(arcTo);
+    const v = tp(arcVertex), f = tp(arcFrom), t2 = tp(arcTo);
     const ax = f.x - v.x, ay = f.y - v.y, cx = t2.x - v.x, cy = t2.y - v.y;
     const lenA = Math.hypot(ax, ay), lenC = Math.hypot(cx, cy);
     if (lenA < 0.001 || lenC < 0.001) return { x: 0, y: -1 };
@@ -397,7 +398,7 @@ function QuadDiagram({ q, showAnswer, small = false, dataIndex }: DiagramProps) 
   }
 
   function labelLayout(ang: AngleLabel, r: number): { tip: Pt; labelPt: Pt } {
-    const v = tp0(ang.arcVertex), ob = outwardBisector(ang.arcVertex, ang.arcFrom, ang.arcTo, !!ang.reflex);
+    const v = tp(ang.arcVertex), ob = outwardBisector(ang.arcVertex, ang.arcFrom, ang.arcTo, !!ang.reflex);
     const tip: Pt = { x: v.x - ob.x * (r / 2), y: v.y - ob.y * (r / 2) };
     const cos45 = Math.SQRT2 / 2;
     const dirCW: Pt = { x: ob.x * cos45 + ob.y * cos45, y: -ob.x * cos45 + ob.y * cos45 };
@@ -411,17 +412,23 @@ function QuadDiagram({ q, showAnswer, small = false, dataIndex }: DiagramProps) 
 
   const labelLayouts = q.angles.map(ang => labelLayout(ang, ang.isUnknown ? unknownArcR : arcR));
 
-  const allSvgPts: Pt[] = geomPts.map(p => tp0(p));
-  labelLayouts.forEach(d => allSvgPts.push(d.labelPt));
-  const labelPad = small ? 28 : 40;
-  const svgMinX = Math.min(...allSvgPts.map(p => p.x)) - labelPad, svgMaxX = Math.max(...allSvgPts.map(p => p.x)) + labelPad;
-  const svgMinY = Math.min(...allSvgPts.map(p => p.y)) - labelPad, svgMaxY = Math.max(...allSvgPts.map(p => p.y)) + labelPad;
-  const svgW = svgMaxX - svgMinX, svgH = svgMaxY - svgMinY;
+  // Square viewBox covering the shape + (roughly-sized) label boxes.
+  const roughHX = small ? 26 : 42, roughHY = small ? 13 : 20;
+  const bpts: number[][] = geomPts.map(p => { const t = tp(p); return [t.x, t.y]; });
+  labelLayouts.forEach(l => { bpts.push([l.labelPt.x - roughHX, l.labelPt.y - roughHY], [l.labelPt.x + roughHX, l.labelPt.y + roughHY]); });
+  const pad = small ? 8 : 14;
+  const bx0 = Math.min(...bpts.map(p => p[0])) - pad, by0 = Math.min(...bpts.map(p => p[1])) - pad;
+  const bx1 = Math.max(...bpts.map(p => p[0])) + pad, by1 = Math.max(...bpts.map(p => p[1])) + pad;
+  const side = Math.max(bx1 - bx0, by1 - by0);
+  const bcx = (bx0 + bx1) / 2, bcy = (by0 + by1) / 2;
 
-  const tx = (x: number) => tx0(x) - svgMinX;
-  const ty = (y: number) => ty0(y) - svgMinY;
-  const tp = (p: Pt): Pt => ({ x: tx(p.x), y: ty(p.y) });
-  const tps = (p: Pt): Pt => ({ x: p.x - svgMinX, y: p.y - svgMinY });
+  const k = side / refSide;                 // scale visual sizes to the viewBox
+  const fontSize = tfp * k;
+  const strokeW = (small ? 2 : 2.5) * k;
+  const arcStrokeU = (small ? 2 : 2.5) * k, arcStrokeK = (small ? 1.5 : 2) * k;
+  const arrowSize = (small ? 5 : 7) * k;
+  const tickLen = (small ? 9 : 13) * k, tickSpace = (small ? 5 : 7) * k;
+  const tps = (p: Pt): Pt => p;
 
   function sweep(v: Pt, f: Pt, t2: Pt, reflex: boolean) {
     const a1 = Math.atan2(f.y - v.y, f.x - v.x), a2 = Math.atan2(t2.y - v.y, t2.x - v.x);
@@ -455,16 +462,16 @@ function QuadDiagram({ q, showAnswer, small = false, dataIndex }: DiagramProps) 
     const { a1, diff } = sweep(v, f, t2, reflex);
     const mid = a1 + diff / 2;
     const inner = r - (small ? 3 : 5), outer = r + (small ? 3 : 5);
-    return <line x1={v.x + inner * Math.cos(mid)} y1={v.y + inner * Math.sin(mid)} x2={v.x + outer * Math.cos(mid)} y2={v.y + outer * Math.sin(mid)} stroke="#475569" strokeWidth={small ? 1.5 : 2} />;
+    return <line x1={v.x + inner * Math.cos(mid)} y1={v.y + inner * Math.sin(mid)} x2={v.x + outer * Math.cos(mid)} y2={v.y + outer * Math.sin(mid)} stroke="#475569" strokeWidth={arcStrokeK} />;
   }
 
   const extraProps = dataIndex !== undefined ? { "data-q-index": dataIndex } : {};
   return (
-    <svg viewBox={`0 0 ${svgW} ${svgH}`} style={{ display: "block", overflow: "visible", width: "100%", height: "auto" }} preserveAspectRatio="xMidYMid meet" {...extraProps}>
+    <svg viewBox={`${bcx - side / 2} ${bcy - side / 2} ${side} ${side}`} style={{ display: "block", overflow: "visible", width: "100%", height: "auto" }} preserveAspectRatio="xMidYMid meet" {...extraProps}>
       {q.edges.map(([a, b], i) => <line key={`e${i}`} x1={tx(a.x)} y1={ty(a.y)} x2={tx(b.x)} y2={ty(b.y)} stroke="#1e293b" strokeWidth={strokeW} strokeLinecap="round" strokeLinejoin="round" />)}
-      {q.tickEdges?.flatMap((te, i) => tickMarks(tp(te.a), tp(te.b), te.count).map((t, ti) => <line key={`tk-${i}-${ti}`} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} stroke="#1e293b" strokeWidth={strokeW} strokeLinecap="round" />))}
+      {q.tickEdges?.flatMap((te, i) => tickMarks(tp(te.a), tp(te.b), te.count, tickLen, tickSpace).map((t, ti) => <line key={`tk-${i}-${ti}`} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} stroke="#1e293b" strokeWidth={strokeW} strokeLinecap="round" />))}
       {q.angles.map((ang, i) => !ang.isUnknown ? null : <path key={`sh-${i}`} d={sectorFill(ang.arcVertex, ang.arcFrom, ang.arcTo, unknownArcR, !!ang.reflex)} fill="#bfdbfe" fillOpacity="0.45" stroke="none" />)}
-      {q.angles.map((ang, i) => <path key={`arc-${i}`} d={arcPath(ang.arcVertex, ang.arcFrom, ang.arcTo, ang.isUnknown ? unknownArcR : arcR, !!ang.reflex)} fill="none" stroke={ang.isUnknown ? "#2563eb" : "#475569"} strokeWidth={ang.isUnknown ? (small ? 2 : 2.5) : (small ? 1.5 : 2)} />)}
+      {q.angles.map((ang, i) => <path key={`arc-${i}`} d={arcPath(ang.arcVertex, ang.arcFrom, ang.arcTo, ang.isUnknown ? unknownArcR : arcR, !!ang.reflex)} fill="none" stroke={ang.isUnknown ? "#2563eb" : "#475569"} strokeWidth={ang.isUnknown ? arcStrokeU : arcStrokeK} />)}
       {q.angles.map((ang, i) => ang.equalMark ? <g key={`eq-${i}`}>{equalTick(ang.arcVertex, ang.arcFrom, ang.arcTo, ang.isUnknown ? unknownArcR : arcR, !!ang.reflex)}</g> : null)}
       {q.angles.map((ang, i) => {
         const layout = labelLayouts[i];
@@ -474,18 +481,19 @@ function QuadDiagram({ q, showAnswer, small = false, dataIndex }: DiagramProps) 
         const colour = ang.isUnknown ? "#2563eb" : "#6b7280";
         const dx = tip.x - lp.x, dy = tip.y - lp.y, dlen = Math.hypot(dx, dy);
         const ux = dlen > 0.001 ? dx / dlen : 0, uy = dlen > 0.001 ? dy / dlen : 0;
-        const boxHalfW = tw / 2 + 4, boxHalfH = th / 2 + 2;
+        const boxPadX = 4 * k, boxPadY = 2 * k;
+        const boxHalfW = tw / 2 + boxPadX, boxHalfH = th / 2 + boxPadY;
         const tEdge = dlen > 0.001 ? Math.min(Math.abs(boxHalfW / (ux || 0.0001)), Math.abs(boxHalfH / (uy || 0.0001))) : 0;
-        const lineStart: Pt = { x: lp.x + ux * (tEdge + 2), y: lp.y + uy * (tEdge + 2) };
-        const arrowSize = small ? 5 : 7, px = -uy, py = ux;
+        const lineStart: Pt = { x: lp.x + ux * (tEdge + 2 * k), y: lp.y + uy * (tEdge + 2 * k) };
+        const px = -uy, py = ux;
         const arrowBase: Pt = { x: tip.x - ux * arrowSize, y: tip.y - uy * arrowSize };
         const arrowPt1: Pt = { x: arrowBase.x + px * arrowSize * 0.45, y: arrowBase.y + py * arrowSize * 0.45 };
         const arrowPt2: Pt = { x: arrowBase.x - px * arrowSize * 0.45, y: arrowBase.y - py * arrowSize * 0.45 };
         return (
           <g key={`lbl-${i}`}>
-            <line x1={lineStart.x} y1={lineStart.y} x2={arrowBase.x} y2={arrowBase.y} stroke={colour} strokeWidth={small ? 1 : 1.5} strokeDasharray={small ? "3 2" : "5 3"} strokeLinecap="round" />
+            <line x1={lineStart.x} y1={lineStart.y} x2={arrowBase.x} y2={arrowBase.y} stroke={colour} strokeWidth={(small ? 1 : 1.5) * k} strokeDasharray={small ? "3 2" : "5 3"} strokeLinecap="round" />
             <polygon points={`${tip.x},${tip.y} ${arrowPt1.x},${arrowPt1.y} ${arrowPt2.x},${arrowPt2.y}`} fill={colour} />
-            <rect x={lp.x - tw / 2 - 4} y={lp.y - th / 2 - 2} width={tw + 8} height={th + 4} rx={4} fill="#ffffff" fillOpacity="0.97" stroke="#000000" strokeWidth={0.5} />
+            <rect x={lp.x - tw / 2 - boxPadX} y={lp.y - th / 2 - boxPadY} width={tw + 2 * boxPadX} height={th + 2 * boxPadY} rx={4 * k} fill="#ffffff" fillOpacity="0.97" stroke="#000000" strokeWidth={0.6 * k} />
             <text x={lp.x} y={lp.y} textAnchor="middle" dominantBaseline="middle" fontSize={fontSize} fontWeight={ang.isUnknown ? "bold" : "600"} fontStyle={ang.isUnknown && !showAnswer ? "italic" : "normal"} fill={ang.isUnknown ? "#1d4ed8" : "#111827"}>{label}</text>
           </g>
         );
