@@ -395,7 +395,7 @@ const INFO_SECTIONS: InfoSection[] = [
 // SUB-TOOL 1 — Spot the Like Term (worded MCQ)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const LETTERS = ["A", "B", "C", "D", "E"];
+const LETTERS = ["A", "B", "C", "D", "E", "F"];
 
 interface MCQOption { term: Term; correct: boolean; explain: string; }
 
@@ -558,68 +558,65 @@ const buildL2 = (maxPower: number, withConstants: boolean, id: number): WordedQu
     `t1-L2-${v}${n}-${a}-${id}`);
 };
 
-const singleVarDistractor = (target: Term, idx: number): MCQOption => {
-  const v = target.vars[0].v, n = target.vars[0].n, a = target.coef;
-  const type = idx % 4;
-  if (type === 0) {
-    let dn = randInt(1, 5); while (dn === n) dn = randInt(1, 5);
-    const coef = (Math.random() < 0.5 ? 1 : -1) * randInt(2, 9);
-    return { term: { coef, vars: [{ v, n: dn }] }, correct: false,
-      explain: `Same variable ${v}, but power is ${dn} not ${n} — different power, not a like term ✗` };
-  }
-  if (type === 1) {
-    const dv = pick(VAR_POOL.filter(x => x !== v));
-    const coef = (Math.random() < 0.5 ? 1 : -1) * randInt(2, 9);
-    return { term: { coef, vars: [{ v: dv, n }] }, correct: false,
-      explain: `Same power ${n}, but different variable — not a like term ✗` };
-  }
-  if (type === 2) {
-    const coef = (Math.random() < 0.5 ? 1 : -1) * randInt(2, 9);
-    return { term: { coef, vars: [] }, correct: false, explain: "No variable — a constant, not a like term ✗" };
-  }
-  const dv = pick(VAR_POOL.filter(x => x !== v));
-  let dn = randInt(1, 5); while (dn === n) dn = randInt(1, 5);
-  const sign = Math.random() < 0.5 ? 1 : -1;
-  return { term: { coef: sign * Math.abs(a), vars: [{ v: dv, n: dn }] }, correct: false,
-    explain: "Same coefficient size as the target, but different variable and power — not a like term ✗" };
-};
-
 const buildL3SingleVar = (maxPower: number, id: number): WordedQuestion => {
   const v = pick(VAR_POOL);
   const n = randInt(1, maxPower);
   const a = (Math.random() < 0.5 ? 1 : -1) * randInt(2, 9);
   const target: Term = { coef: a, vars: [{ v, n }] };
 
-  const numCorrect = pick([0, 1, 1, 2]);
-  const opts: MCQOption[] = [];
-  const termSig = (t: Term) => `${t.coef}|${varsKey(t.vars)}`;
-  const seen = new Set<string>([termSig(target)]);
+  const sc = () => randInt(2, 9) * (Math.random() < 0.5 ? 1 : -1);
+  const usedCoefs = new Set<number>([a]);
+  const freshCoef = () => { let c = sc(); while (usedCoefs.has(c)) c = sc(); usedCoefs.add(c); return c; };
 
   const correctExplain = (coef: number) => coef < 0
     ? `Same variable ${v}, same power ${n}. Negative sign does not change the term type — this IS a like term ✓`
     : `Same variable ${v}, same power ${n} — this IS a like term ✓`;
 
+  // 0-3 correct options — same variable and power as the target, each with
+  // a different coefficient (sign and size do not affect whether it's a like term).
+  const numCorrect = pick([0, 1, 1, 2, 2, 3]);
+  const correctOpts: MCQOption[] = [];
   for (let c = 0; c < numCorrect; c++) {
-    let coef = randInt(2, 9) * (Math.random() < 0.5 ? 1 : -1);
-    let guard = 0;
-    while (seen.has(termSig({ coef, vars: [{ v, n }] })) && guard < 30) { coef = randInt(2, 9) * (Math.random() < 0.5 ? 1 : -1); guard++; }
-    const term: Term = { coef, vars: [{ v, n }] };
-    seen.add(termSig(term));
-    opts.push({ term, correct: true, explain: correctExplain(coef) });
+    const coef = freshCoef();
+    correctOpts.push({ term: { coef, vars: [{ v, n }] }, correct: true, explain: correctExplain(coef) });
   }
 
-  let guard = 0;
-  while (opts.length < 5 && guard < 200) {
-    guard++;
-    const d = singleVarDistractor(target, opts.length);
-    const sig = termSig(d.term);
-    if (seen.has(sig)) continue;
-    seen.add(sig);
-    opts.push(d);
-  }
+  // Distractor shapes — wrong on variable, power, or both. Coefficients are
+  // filled in afterwards so 1-2 can echo the target's exact coefficient (the
+  // "same coefficient = like term" trap from level 2).
+  const [dn1, dn2, dn3] = shuffle([1, 2, 3, 4, 5].filter(p => p !== n));
+  const [dv1, dv2, dv3] = shuffle(VAR_POOL.filter(x => x !== v));
+
+  type Dist = { vars: VarPower[]; explain: (echo: boolean) => string };
+  const shapes: Dist[] = [
+    { vars: [{ v, n: dn1 }], explain: e =>
+      `${e ? "Same coefficient and same variable" : `Same variable ${v}`}, but the power is ${dn1} not ${n} — not a like term ✗` },
+    { vars: [{ v: dv1, n }], explain: e =>
+      `${e ? "Same coefficient and same power" : `Same power ${n}`}, but a different variable — not a like term ✗` },
+    { vars: [], explain: e =>
+      `${e ? "The same number as the coefficient, but it" : "It"} has no variable — a constant, not a like term ✗` },
+    { vars: [{ v: dv3, n: dn3 }], explain: e => e
+      ? "Same coefficient as the target, but a different variable and different power — not a like term ✗"
+      : "Different variable and different power — not a like term ✗" },
+    { vars: [{ v, n: dn2 }], explain: e =>
+      `${e ? "Same coefficient and same variable" : `Same variable ${v}`}, but the power is ${dn2} not ${n} — not a like term ✗` },
+    { vars: [{ v: dv2, n }], explain: e =>
+      `${e ? "Same coefficient and same power" : `Same power ${n}`}, but a different variable — not a like term ✗` },
+  ];
+
+  const need = 6 - numCorrect;
+  const chosenShapes = shuffle(shapes).slice(0, need);
+  const echoSet = new Set(shuffle(chosenShapes.map((_, i) => i)).slice(0, pick([1, 1, 2])));
+
+  const opts: MCQOption[] = [...correctOpts];
+  chosenShapes.forEach((d, i) => {
+    const echo = echoSet.has(i);
+    const coef = echo ? a : freshCoef();
+    opts.push({ term: { coef, vars: d.vars }, correct: false, explain: d.explain(echo) });
+  });
 
   return finishMCQ("level3", target, opts,
-    "Check each option — there may be zero like terms or more than one. Sign does not affect term type.",
+    "Check each option — there may be zero like terms or more than one. Sign does not affect term type, and a matching coefficient does not make two terms alike.",
     `t1-L3sv-${v}${n}-${a}-${numCorrect}-${id}`);
 };
 
@@ -631,70 +628,100 @@ const buildL3TwoVar = (id: number): WordedQuestion => {
   const target: Term = { coef: a, vars: [{ v: varA, n: powA }, { v: varB, n: powB }] };
 
   const randCoef = () => randInt(2, 9) * (Math.random() < 0.5 ? 1 : -1);
+  const usedCoefs = new Set<number>([a]);
+  const freshCoef = () => { let c = randCoef(); while (usedCoefs.has(c)) c = randCoef(); usedCoefs.add(c); return c; };
 
-  let trueCoef = randCoef();
-  while (trueCoef === a) trueCoef = randCoef();
-  const trueLike: Term = { coef: trueCoef, vars: [{ v: varA, n: powA }, { v: varB, n: powB }] };
-  const commTrap: Term = { coef: randCoef(), vars: [{ v: varB, n: powB }, { v: varA, n: powA }] };
+  // 0-3 correct options — same variables and same powers as the target, in
+  // either order (variable order does not matter), each with a different coefficient.
+  const trueExplain = "Same variables and same powers — this IS a like term ✓";
+  const commExplain = `Variables are ${varB} and ${varA} in a different order — variable order does not matter. Same powers — this IS a like term ✓`;
+  const numCorrect = pick([0, 1, 1, 2, 2, 3]);
+  const correctOpts: MCQOption[] = [];
+  for (let i = 0; i < numCorrect; i++) {
+    const coef = freshCoef();
+    const orderA = Math.random() < 0.5;
+    const term: Term = orderA
+      ? { coef, vars: [{ v: varA, n: powA }, { v: varB, n: powB }] }
+      : { coef, vars: [{ v: varB, n: powB }, { v: varA, n: powA }] };
+    correctOpts.push({ term, correct: true, explain: orderA ? trueExplain : commExplain });
+  }
 
+  // Distractor shapes — wrong on variable, power, or both. Coefficients are
+  // filled in afterwards so 1-2 can echo the target's exact coefficient (the
+  // "same coefficient = like term" trap from level 2).
   const nudges: [number, number][] = [];
   if (powA + 1 + powB <= 5) nudges.push([powA + 1, powB]);
   if (powA - 1 >= 1) nudges.push([powA - 1, powB]);
   if (powA + powB + 1 <= 5) nudges.push([powA, powB + 1]);
   if (powB - 1 >= 1) nudges.push([powA, powB - 1]);
   const [naA, naB] = pick(nudges);
-  const nearMissA: Term = { coef: randCoef(), vars: [{ v: varA, n: naA }, { v: varB, n: naB }] };
 
-  const z = pick(VAR_POOL.filter(x => x !== varA && x !== varB));
+  const [z, z2, z3] = shuffle(VAR_POOL.filter(x => x !== varA && x !== varB));
   const replaceA = Math.random() < 0.5;
-  const nearMissB: Term = replaceA
-    ? { coef: randCoef(), vars: [{ v: z, n: powA }, { v: varB, n: powB }] }
-    : { coef: randCoef(), vars: [{ v: varA, n: powA }, { v: z, n: powB }] };
-
   const wcVar = Math.random() < 0.5 ? varA : varB;
   const wcPow = wcVar === varA ? powA : powB;
-  const wildcard: Term = { coef: randCoef(), vars: [{ v: wcVar, n: wcPow }] };
 
-  const trueExplain = "Same variables and same powers — this IS a like term ✓";
-  const commExplain = `Variables are ${varB} and ${varA} in a different order — variable order does not matter. Same powers — this IS a like term ✓`;
-  const naExplain = naA !== powA
-    ? `Same variables, but the power of ${varA} is ${naA} not ${powA} — different power, not a like term ✗`
-    : `Same variables, but the power of ${varB} is ${naB} not ${powB} — different power, not a like term ✗`;
-  const nbExplain = replaceA
-    ? `Power of ${varB} matches, but ${z} is not the same as ${varA} — different variable, not a like term ✗`
-    : `Power of ${varA} matches, but ${z} is not the same as ${varB} — different variable, not a like term ✗`;
-  const wcExplain = `Only one variable — missing ${wcVar === varA ? varB : varA} entirely, not a like term ✗`;
+  type Dist = { vars: VarPower[]; explain: (echo: boolean) => string };
+  const shapes: Dist[] = [
+    { // power of one variable off by one
+      vars: [{ v: varA, n: naA }, { v: varB, n: naB }],
+      explain: e => {
+        const which = naA !== powA ? varA : varB;
+        const got = naA !== powA ? naA : naB;
+        const want = naA !== powA ? powA : powB;
+        return e
+          ? `Same coefficient as the target, but the power of ${which} is ${got} not ${want} — not a like term ✗`
+          : `Same variables, but the power of ${which} is ${got} not ${want} — different power, not a like term ✗`;
+      },
+    },
+    { // one variable swapped for z, powers unchanged
+      vars: replaceA ? [{ v: z, n: powA }, { v: varB, n: powB }] : [{ v: varA, n: powA }, { v: z, n: powB }],
+      explain: e => {
+        const matchVar = replaceA ? varB : varA, wrongVar = replaceA ? varA : varB;
+        return e
+          ? `Same coefficient as the target, and the power of ${matchVar} matches, but ${z} is not the same as ${wrongVar} — not a like term ✗`
+          : `Power of ${matchVar} matches, but ${z} is not the same as ${wrongVar} — different variable, not a like term ✗`;
+      },
+    },
+    { // only one variable present
+      vars: [{ v: wcVar, n: wcPow }],
+      explain: e => e
+        ? "Same coefficient as the target, but only one variable is present — not a like term ✗"
+        : `Only one variable — missing ${wcVar === varA ? varB : varA} entirely, not a like term ✗`,
+    },
+    { // the other variable swapped for z2, powers unchanged
+      vars: replaceA ? [{ v: z2, n: powA }, { v: varB, n: powB }] : [{ v: varA, n: powA }, { v: z2, n: powB }],
+      explain: e => {
+        const matchVar = replaceA ? varB : varA, wrongVar = replaceA ? varA : varB;
+        return e
+          ? `Same coefficient as the target, and the power of ${matchVar} matches, but ${z2} is not the same as ${wrongVar} — not a like term ✗`
+          : `Power of ${matchVar} matches, but ${z2} is not the same as ${wrongVar} — different variable, not a like term ✗`;
+      },
+    },
+    { // both variables different, powers unchanged
+      vars: [{ v: z, n: powA }, { v: z3, n: powB }],
+      explain: e => `Both variables differ from the target — ${z} and ${z3} instead of ${varA} and ${varB}${e ? " (the coefficient matches the target's)" : ""} — not a like term ✗`,
+    },
+    { // constant
+      vars: [],
+      explain: e => e
+        ? "The same number as the coefficient, but it has no variables — a constant, not a like term ✗"
+        : "It has no variables — a constant, not a like term ✗",
+    },
+  ];
 
-  const numCorrect = pick([0, 1, 1, 2]);
-  const opts: MCQOption[] = [];
-  const z2 = pick(VAR_POOL.filter(x => x !== varA && x !== varB && x !== z));
-  const extraDistractor: MCQOption = {
-    term: { coef: randCoef(), vars: [{ v: z2, n: powA }, { v: varB, n: powB }] }, correct: false,
-    explain: "Different variable from the target — not a like term ✗",
-  };
+  const need = 6 - numCorrect;
+  const chosenShapes = shuffle(shapes).slice(0, need);
+  const echoSet = new Set(shuffle(chosenShapes.map((_, i) => i)).slice(0, pick([1, 1, 2])));
 
-  if (numCorrect === 2) {
-    opts.push({ term: trueLike, correct: true, explain: trueExplain });
-    opts.push({ term: commTrap, correct: true, explain: commExplain });
-    opts.push({ term: nearMissA, correct: false, explain: naExplain });
-    opts.push({ term: nearMissB, correct: false, explain: nbExplain });
-    opts.push({ term: wildcard, correct: false, explain: wcExplain });
-  } else if (numCorrect === 1) {
-    if (Math.random() < 0.5) opts.push({ term: trueLike, correct: true, explain: trueExplain });
-    else opts.push({ term: commTrap, correct: true, explain: commExplain });
-    opts.push({ term: nearMissA, correct: false, explain: naExplain });
-    opts.push({ term: nearMissB, correct: false, explain: nbExplain });
-    opts.push({ term: wildcard, correct: false, explain: wcExplain });
-    opts.push(extraDistractor);
-  } else {
-    opts.push({ term: nearMissA, correct: false, explain: naExplain });
-    opts.push({ term: nearMissB, correct: false, explain: nbExplain });
-    opts.push({ term: wildcard, correct: false, explain: wcExplain });
-    opts.push(extraDistractor);
-    opts.push({ term: { coef: randCoef(), vars: [] }, correct: false, explain: "No variable — a constant, not a like term ✗" });
-  }
+  const opts: MCQOption[] = [...correctOpts];
+  chosenShapes.forEach((d, i) => {
+    const echo = echoSet.has(i);
+    const coef = echo ? a : freshCoef();
+    opts.push({ term: { coef, vars: d.vars }, correct: false, explain: d.explain(echo) });
+  });
 
-  const intro = "Check each option — every variable and every power must match. Variable order does not matter. There may be zero like terms.";
+  const intro = "Check each option — every variable and every power must match. Variable order does not matter, and a matching coefficient does not make two terms alike. There may be zero like terms.";
   return finishMCQ("level3", target, opts, intro, `t1-L3tv-${varA}${powA}${varB}${powB}-${a}-${numCorrect}-${id}`);
 };
 
