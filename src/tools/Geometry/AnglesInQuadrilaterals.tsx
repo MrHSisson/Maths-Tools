@@ -556,22 +556,56 @@ function QuadDiagram({ q, showAnswer, small = false, dataIndex, fillBox = false 
   const fixedPts: number[][] = geomPts.map(p => { const t = tp(p); return [t.x, t.y]; });
   q.angles.forEach(a => { if (a.hidden) return; const v = tp(a.arcVertex); const r = a.isUnknown ? unknownArcR : arcR; fixedPts.push([v.x - r, v.y - r], [v.x + r, v.y + r]); });
   const minHW = small ? 9 : 14, minHH = small ? 7 : 11, boxPad = small ? 3 : 5, edgePad = small ? 7 : 12;
+  const halfW = (i: number, fs: number) => Math.max(minHW, estTW(dispOf(q.angles[i]), fs) / 2 + boxPad);
+  const halfH = (fs: number) => Math.max(minHH, fs * 0.7 + boxPad);
 
-  let side = 0, bcx = 0, bcy = 0;
-  for (let iter = 0; iter < 4; iter++) {
-    const fs = side === 0 ? tfp : tfp * side / refSide;
-    const pts = fixedPts.slice();
-    labelLayouts.forEach((l, i) => {
-      if (q.angles[i].hidden) return;
-      const tw = estTW(dispOf(q.angles[i]), fs);
-      const hw = Math.max(minHW, tw / 2 + boxPad), hh = Math.max(minHH, fs * 0.7 + boxPad);
-      pts.push([l.labelPt.x - hw, l.labelPt.y - hh], [l.labelPt.x + hw, l.labelPt.y + hh]);
-    });
-    const x0 = Math.min(...pts.map(p => p[0])) - edgePad, y0 = Math.min(...pts.map(p => p[1])) - edgePad;
-    const x1 = Math.max(...pts.map(p => p[0])) + edgePad, y1 = Math.max(...pts.map(p => p[1])) + edgePad;
-    side = Math.max(x1 - x0, y1 - y0);
-    bcx = (x0 + x1) / 2; bcy = (y0 + y1) / 2;
-  }
+  // Fit a square viewBox around the shape, arcs and label boxes. Box size scales
+  // with the font, which scales with the side, so iterate a few times.
+  const fitSquare = (): { side: number; bcx: number; bcy: number; fs: number } => {
+    let side = 0, bcx = 0, bcy = 0;
+    for (let iter = 0; iter < 4; iter++) {
+      const fs = side === 0 ? tfp : tfp * side / refSide;
+      const pts = fixedPts.slice();
+      labelLayouts.forEach((l, i) => {
+        if (q.angles[i].hidden) return;
+        pts.push([l.labelPt.x - halfW(i, fs), l.labelPt.y - halfH(fs)], [l.labelPt.x + halfW(i, fs), l.labelPt.y + halfH(fs)]);
+      });
+      const x0 = Math.min(...pts.map(p => p[0])) - edgePad, y0 = Math.min(...pts.map(p => p[1])) - edgePad;
+      const x1 = Math.max(...pts.map(p => p[0])) + edgePad, y1 = Math.max(...pts.map(p => p[1])) + edgePad;
+      side = Math.max(x1 - x0, y1 - y0);
+      bcx = (x0 + x1) / 2; bcy = (y0 + y1) / 2;
+    }
+    return { side, bcx, bcy, fs: tfp * side / refSide };
+  };
+
+  // Push overlapping label boxes apart (e.g. two labels either side of a short
+  // side). Resolve at the rendered font size, then refit the viewBox.
+  const separate = (fs: number) => {
+    const idx = labelLayouts.map((_, i) => i).filter(i => !q.angles[i].hidden);
+    const gap = small ? 3 : 5, hh = halfH(fs) + gap;
+    for (let iter = 0; iter < 16; iter++) {
+      let moved = false;
+      for (let a = 0; a < idx.length; a++) for (let b = a + 1; b < idx.length; b++) {
+        const i = idx[a], j = idx[b], A = labelLayouts[i].labelPt, B = labelLayouts[j].labelPt;
+        const ox = halfW(i, fs) + halfW(j, fs) + gap - Math.abs(B.x - A.x);
+        const oy = hh + halfH(fs) - Math.abs(B.y - A.y);
+        if (ox <= 0 || oy <= 0) continue;          // not overlapping
+        moved = true;
+        if (ox < oy) {
+          const dir = (B.x - A.x) || 1, p = (ox / 2) * Math.sign(dir);
+          A.x -= p; B.x += p;
+        } else {
+          const dir = (B.y - A.y) || 1, p = (oy / 2) * Math.sign(dir);
+          A.y -= p; B.y += p;
+        }
+      }
+      if (!moved) break;
+    }
+  };
+
+  const { fs: fsEst } = fitSquare();
+  separate(fsEst);
+  let { side, bcx, bcy } = fitSquare();   // eslint-disable-line prefer-const
   side *= 1.04;   // small safety margin
 
   const k = side / refSide;                 // scale visual sizes to the viewBox
