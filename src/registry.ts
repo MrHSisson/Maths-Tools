@@ -51,6 +51,7 @@ export const CATEGORIES: CategoryMeta[] = [
   {
     name: 'Algebra',
     tools: [
+      { id: 'collecting-like-terms', path: '/collecting-like-terms', name: "Collecting Like Terms", description: "Practise identifying and collecting like terms across single and multiple variable expressions, from basic addition to multi-variable simplification.", ready: 'v2.3', load: () => import('./tools/Algebra/CollectingLikeTerms') },
       { id: 'solving-linear-equations', path: '/solving-linear-equations', name: 'Unknowns on Both Sides', description: 'Solve equations where the unknown occurs more than once', ready: 'v2.3', load: () => import('./tools/Algebra/SolvingLinearEquations') },
       { id: 'completing-square', path: '/completing-the-square', name: 'Completing the Square', description: 'Rewrite and solve quadratic expressions in completed square form', ready: 'v2.3', load: () => import('./tools/Algebra/CompletingTheSquare') },
       { id: 'iterations', path: '/iterations', name: 'Iteration', description: 'Find roots to equations using iterative methods', ready: 'v2.1.1', load: () => import('./tools/Algebra/Iterations') },
