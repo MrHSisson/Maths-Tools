@@ -93,6 +93,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const [currentTool, setCurrentTool] = useState<string>(urlInit.tool);
   const [mode, setMode] = useState<"whiteboard" | "single" | "worksheet">(urlInit.mode);
   const comingSoon = defaults.comingSoonLevels ?? [];
+  const hideFontControls = defaults.hideFontControls ?? false;
   const [difficulty, setDifficulty] = useState<DifficultyLevel>(urlInit.level);
   const setDifficultyGuarded = (v: DifficultyLevel) => { if (!comingSoon.includes(v)) setDifficulty(v); };
 
@@ -822,10 +823,10 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
 
     const questionBox = () => (
       <div className="rounded-xl flex items-center justify-center flex-shrink-0 p-8" style={{ position: "relative", width: "480px", height: "100%", backgroundColor: stepBg }}>
-        <div style={{ position: "absolute", top: 10, right: 10, display: "flex", gap: 6, zIndex: 20 }}>
+        {!hideFontControls && <div style={{ position: "absolute", top: 10, right: 10, display: "flex", gap: 6, zIndex: 20 }}>
           <button style={fontBtnStyle(canDisplayDecrease)} onClick={() => canDisplayDecrease && setDisplayFontSize(f => f - 1)}><ChevronDown size={16} color="#6b7280" /></button>
           <button style={fontBtnStyle(canDisplayIncrease)} onClick={() => canDisplayIncrease && setDisplayFontSize(f => f + 1)}><ChevronUp size={16} color="#6b7280" /></button>
-        </div>
+        </div>}
         <div className="w-full text-center flex flex-col gap-4 items-center">
           {getInstruction() && !questionRenderer && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold`} style={{ color: "#000" }}>{getInstruction()}</div>}
           {questionRenderer
@@ -843,10 +844,10 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
 
     const questionBoxFS = () => (
       <div style={{ position: "relative", width: `${splitPct}%`, height: "100%", backgroundColor: fsQuestionBg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 48, boxSizing: "border-box", flexShrink: 0, overflowY: "auto", gap: 16 }}>
-        <div style={{ position: "absolute", top: 10, right: 10, display: "flex", gap: 6, zIndex: 20 }}>
+        {!hideFontControls && <div style={{ position: "absolute", top: 10, right: 10, display: "flex", gap: 6, zIndex: 20 }}>
           <button style={fontBtnStyle(canDisplayDecrease)} onClick={() => canDisplayDecrease && setDisplayFontSize(f => f - 1)}><ChevronDown size={16} color="#6b7280" /></button>
           <button style={fontBtnStyle(canDisplayIncrease)} onClick={() => canDisplayIncrease && setDisplayFontSize(f => f + 1)}><ChevronUp size={16} color="#6b7280" /></button>
-        </div>
+        </div>}
         <>
           {getInstruction() && !questionRenderer && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold`} style={{ color: "#000" }}>{getInstruction()}</div>}
           {questionRenderer
@@ -953,10 +954,10 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     <div className="overflow-y-auto" style={{ maxHeight: "120vh" }}>
       <div className="p-8 w-full" style={{ backgroundColor: qBg }}>
         <div className="text-center py-4 relative">
-          <div style={{ position: "absolute", top: 0, right: 0, display: "flex", gap: 6 }}>
+          {!hideFontControls && <div style={{ position: "absolute", top: 0, right: 0, display: "flex", gap: 6 }}>
             <button style={{ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: canDisplayDecrease ? "pointer" : "not-allowed", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", opacity: canDisplayDecrease ? 1 : 0.35 }} onClick={() => canDisplayDecrease && setDisplayFontSize(f => f - 1)}><ChevronDown size={16} color="#6b7280" /></button>
             <button style={{ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: canDisplayIncrease ? "pointer" : "not-allowed", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", opacity: canDisplayIncrease ? 1 : 0.35 }} onClick={() => canDisplayIncrease && setDisplayFontSize(f => f + 1)}><ChevronUp size={16} color="#6b7280" /></button>
-          </div>
+          </div>}
           {getInstruction() && !questionRenderer && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold mb-2`} style={{ color: "#000" }}>{getInstruction()}</div>}
           {questionRenderer
             ? questionRenderer(currentQuestion, showAnswer, colorScheme, false, undefined, getQOSnapshot())
@@ -1003,7 +1004,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         <span className="text-2xl text-gray-400">Generate worksheet</span>
       </div>
     );
-    const fontSizeControls = (
+    const fontSizeControls = hideFontControls ? null : (
       <div className="absolute top-4 right-4 flex items-center gap-1">
         <button disabled={!canDecrease} onClick={() => canDecrease && setWorksheetFontSize(f => f - 1)}
           className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${canDecrease ? "bg-blue-900 text-white hover:bg-blue-800" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}><ChevronDown size={20} /></button>
