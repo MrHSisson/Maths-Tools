@@ -1,7 +1,7 @@
 import {
   ToolShell,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type PrintMode,
-  type ToolMultiSelect,
+  type ToolMultiSelect, type ToolVariable,
   tStep,
 } from "../../shared";
 
@@ -14,6 +14,8 @@ interface AngleLabel {
   value: number;
   reflex?: boolean;
   equalMark?: boolean;        // small tick on the arc to show equal angles
+  hidden?: boolean;           // vertex left completely unmarked (identify it yourself)
+  revealText?: string;        // overrides the on-reveal label (e.g. "x = 30°")
   arcVertex: Pt;
   arcFrom: Pt;
   arcTo: Pt;
@@ -59,6 +61,7 @@ const EXTERIOR_MS: ToolMultiSelect = {
     { value: "two", label: "Two", defaultActive: false },
   ],
 };
+const MARK_EQUAL_VAR: ToolVariable = { key: "markEqual", label: "Mark the equal angles", defaultValue: true };
 const ALG_MS: ToolMultiSelect = {
   key: "algebra", label: "Question Type",
   options: [
@@ -77,7 +80,7 @@ const TOOL_CONFIG: ToolConfig = {
       variables: [], dropdown: null,
       difficultySettings: {
         level1: { variables: [], multiSelect: [ALG_MS, EXTERIOR_MS] },
-        level2: { variables: [], multiSelect: [SHAPE_MS, FIND_MS] },
+        level2: { variables: [MARK_EQUAL_VAR], multiSelect: [SHAPE_MS, FIND_MS] },
         level3: { variables: [], dropdown: null },
       },
     },
@@ -101,6 +104,7 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Find the equal angles", detail: "The two unequal (apex) angles are given. Use the 360° rule and the equal pair to find x." },
       { label: "Find a vertex angle", detail: "The equal pair and one apex are given — find the remaining apex (or the reflex angle of an arrowhead)." },
       { label: "Arrowhead", detail: "A concave kite. The angle at the notch is reflex (more than 180°)." },
+      { label: "Mark the equal angles", detail: "On by default. Turn it off to leave one of the equal pair unmarked, so students must identify the equal angles from the kite/arrowhead shape (equal sides shown by ticks) themselves." },
     ],
   },
   {
@@ -295,7 +299,7 @@ function buildLevel1(vars: QOVars): QuadQuestion {
       return { label: `${180 - vals[i]}°`, isUnknown: false, value: 180 - vals[i], arcVertex: v, arcFrom: E, arcTo: other };
     }
     if (i === unknownIdx) {
-      return { label: xLabel, isUnknown: true, value: vals[i], arcVertex: v, arcFrom: prev, arcTo: next };
+      return { label: xLabel, isUnknown: true, value: vals[i], revealText: alg ? `x = ${xVal}°` : undefined, arcVertex: v, arcFrom: prev, arcTo: next };
     }
     return { label: `${vals[i]}°`, isUnknown: false, value: vals[i], arcVertex: v, arcFrom: prev, arcTo: next };
   });
@@ -432,6 +436,17 @@ function buildLevel2(vars: QOVars): QuadQuestion {
     void cWord;
   }
 
+  // When equal-angle marking is off, drop the arc ticks and leave one of the
+  // equal pair completely unmarked, so students must identify the equal angles
+  // from the kite/arrowhead shape themselves.
+  const markEqual = vars.markEqual !== false;
+  if (!markEqual) {
+    angles[1] = { ...angles[1], equalMark: false };
+    angles[3] = { ...angles[3], equalMark: false };
+    const hideIdx = rnd(0, 1) === 0 ? 1 : 3;
+    angles[hideIdx] = { ...angles[hideIdx], hidden: true };
+  }
+
   // equal-side tick marks: A's sides single, C's sides double
   const tickEdges: TickEdge[] = [
     { a: vA, b: vB, count: 1 }, { a: vA, b: vD, count: 1 },
@@ -537,9 +552,9 @@ function QuadDiagram({ q, showAnswer, small = false, dataIndex, fillBox = false 
   // Square viewBox that exactly contains the shape, extensions, arcs and label
   // boxes. The font scales with the viewBox, so box sizes depend on the side and
   // the side depends on box sizes — a few fixed-point iterations converge fast.
-  const dispOf = (ang: AngleLabel) => ang.isUnknown && !showAnswer ? ang.label : ang.isUnknown ? `${ang.value}°` : ang.label;
+  const dispOf = (ang: AngleLabel) => ang.isUnknown && !showAnswer ? ang.label : ang.isUnknown ? (ang.revealText ?? `${ang.value}°`) : ang.label;
   const fixedPts: number[][] = geomPts.map(p => { const t = tp(p); return [t.x, t.y]; });
-  q.angles.forEach(a => { const v = tp(a.arcVertex); const r = a.isUnknown ? unknownArcR : arcR; fixedPts.push([v.x - r, v.y - r], [v.x + r, v.y + r]); });
+  q.angles.forEach(a => { if (a.hidden) return; const v = tp(a.arcVertex); const r = a.isUnknown ? unknownArcR : arcR; fixedPts.push([v.x - r, v.y - r], [v.x + r, v.y + r]); });
   const minHW = small ? 9 : 14, minHH = small ? 7 : 11, boxPad = small ? 3 : 5, edgePad = small ? 7 : 12;
 
   let side = 0, bcx = 0, bcy = 0;
@@ -547,6 +562,7 @@ function QuadDiagram({ q, showAnswer, small = false, dataIndex, fillBox = false 
     const fs = side === 0 ? tfp : tfp * side / refSide;
     const pts = fixedPts.slice();
     labelLayouts.forEach((l, i) => {
+      if (q.angles[i].hidden) return;
       const tw = estTW(dispOf(q.angles[i]), fs);
       const hw = Math.max(minHW, tw / 2 + boxPad), hh = Math.max(minHH, fs * 0.7 + boxPad);
       pts.push([l.labelPt.x - hw, l.labelPt.y - hh], [l.labelPt.x + hw, l.labelPt.y + hh]);
@@ -607,13 +623,14 @@ function QuadDiagram({ q, showAnswer, small = false, dataIndex, fillBox = false 
       {q.extensions?.map((e, i) => <line key={`x${i}`} x1={tx(e.from.x)} y1={ty(e.from.y)} x2={tx(e.to.x)} y2={ty(e.to.y)} stroke="#1e293b" strokeWidth={strokeW} strokeLinecap="round" />)}
       {q.edges.map(([a, b], i) => <line key={`e${i}`} x1={tx(a.x)} y1={ty(a.y)} x2={tx(b.x)} y2={ty(b.y)} stroke="#1e293b" strokeWidth={strokeW} strokeLinecap="round" strokeLinejoin="round" />)}
       {q.tickEdges?.flatMap((te, i) => tickMarks(tp(te.a), tp(te.b), te.count, tickLen, tickSpace).map((t, ti) => <line key={`tk-${i}-${ti}`} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} stroke="#1e293b" strokeWidth={strokeW} strokeLinecap="round" />))}
-      {q.angles.map((ang, i) => !ang.isUnknown ? null : <path key={`sh-${i}`} d={sectorFill(ang.arcVertex, ang.arcFrom, ang.arcTo, unknownArcR, !!ang.reflex)} fill="#bfdbfe" fillOpacity="0.45" stroke="none" />)}
-      {q.angles.map((ang, i) => <path key={`arc-${i}`} d={arcPath(ang.arcVertex, ang.arcFrom, ang.arcTo, ang.isUnknown ? unknownArcR : arcR, !!ang.reflex)} fill="none" stroke={ang.isUnknown ? "#2563eb" : "#475569"} strokeWidth={ang.isUnknown ? arcStrokeU : arcStrokeK} />)}
-      {q.angles.map((ang, i) => ang.equalMark ? <g key={`eq-${i}`}>{equalTick(ang.arcVertex, ang.arcFrom, ang.arcTo, ang.isUnknown ? unknownArcR : arcR, !!ang.reflex)}</g> : null)}
+      {q.angles.map((ang, i) => (!ang.isUnknown || ang.hidden) ? null : <path key={`sh-${i}`} d={sectorFill(ang.arcVertex, ang.arcFrom, ang.arcTo, unknownArcR, !!ang.reflex)} fill="#bfdbfe" fillOpacity="0.45" stroke="none" />)}
+      {q.angles.map((ang, i) => ang.hidden ? null : <path key={`arc-${i}`} d={arcPath(ang.arcVertex, ang.arcFrom, ang.arcTo, ang.isUnknown ? unknownArcR : arcR, !!ang.reflex)} fill="none" stroke={ang.isUnknown ? "#2563eb" : "#475569"} strokeWidth={ang.isUnknown ? arcStrokeU : arcStrokeK} />)}
+      {q.angles.map((ang, i) => ang.equalMark && !ang.hidden ? <g key={`eq-${i}`}>{equalTick(ang.arcVertex, ang.arcFrom, ang.arcTo, ang.isUnknown ? unknownArcR : arcR, !!ang.reflex)}</g> : null)}
       {q.angles.map((ang, i) => {
+        if (ang.hidden) return null;
         const layout = labelLayouts[i];
         const tip = tps(layout.tip), lp = tps(layout.labelPt);
-        const label = ang.isUnknown && !showAnswer ? ang.label : ang.isUnknown ? `${ang.value}°` : ang.label;
+        const label = ang.isUnknown && !showAnswer ? ang.label : ang.isUnknown ? (ang.revealText ?? `${ang.value}°`) : ang.label;
         const tw = estTW(label, fontSize), th = fontSize * 1.4;
         const colour = ang.isUnknown ? "#2563eb" : "#6b7280";
         const dx = tip.x - lp.x, dy = tip.y - lp.y, dlen = Math.hypot(dx, dy);
