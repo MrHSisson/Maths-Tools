@@ -169,18 +169,28 @@ function placeKite(alpha: number, beta: number, isDart: boolean): Pt[] {
 
 // ─── QUESTION GENERATION ──────────────────────────────────────────────────────
 function buildLevel1(): QuadQuestion {
-  let A = 0, B = 0, C = 0, D = 0, pA = 0;
-  for (let att = 0; att < 400; att++) {
-    A = rnd(55, 135); B = rnd(55, 135); C = rnd(55, 135); D = 360 - A - B - C;
-    if (D < 55 || D > 135) continue;
-    if (Math.max(A, B, C, D) - Math.min(A, B, C, D) < 25) continue;   // keep it clearly irregular
-    const lo = Math.max(12, 188 - B - C);
-    const hi = Math.min(A - 12, 172 - B);
-    if (lo > hi) continue;
-    pA = rnd(lo, hi);
-    break;
+  // Pick 4 widely-spread angles summing to 360, then find an assignment to the
+  // diagonal-split construction that keeps every sub-angle >= MIN_SUB (which is
+  // exactly what guarantees a convex, non-self-crossing quad). Trying all four
+  // cyclic rotations lets us use whichever diagonal is feasible, so the angles
+  // are free to roam a wide range without forcing them toward 90°.
+  const MIN_ANG = 35, MAX_ANG = 150, MIN_SUB = 10;
+  let A = 0, B = 0, C = 0, D = 0, pA = 0, found = false;
+  for (let att = 0; att < 600 && !found; att++) {
+    const a = rnd(MIN_ANG, MAX_ANG), b = rnd(MIN_ANG, MAX_ANG), c = rnd(MIN_ANG, MAX_ANG), d = 360 - a - b - c;
+    if (d < MIN_ANG || d > MAX_ANG) continue;
+    if (Math.max(a, b, c, d) - Math.min(a, b, c, d) < 45) continue;   // clearly irregular
+    const base = [a, b, c, d];
+    const shifts = [0, 1, 2, 3].sort(() => Math.random() - 0.5);
+    for (const sh of shifts) {
+      const A2 = base[sh], B2 = base[(sh + 1) % 4], C2 = base[(sh + 2) % 4], D2 = base[(sh + 3) % 4];
+      const lo = Math.max(MIN_SUB, 180 - B2 - C2 + MIN_SUB);
+      const hi = Math.min(A2 - MIN_SUB, 180 - B2 - MIN_SUB);
+      if (lo > hi) continue;
+      A = A2; B = B2; C = C2; D = D2; pA = rnd(lo, hi); found = true; break;
+    }
   }
-  if (pA === 0) { A = 70; B = 110; C = 80; D = 100; pA = 35; }   // safe fallback
+  if (!found) { A = 70; B = 110; C = 80; D = 100; pA = 35; }   // safe fallback
 
   const rot = rnd(0, 359);
   const [vA, vB, vC, vD] = rotatePts(placeQuad(A, B, C, pA), rot);
@@ -217,19 +227,19 @@ function pickKiteAngles(isDart: boolean): { alpha: number; beta: number; cAngle:
   // alpha = top apex, beta = equal pair, cAngle = bottom apex (or reflex for dart)
   for (let att = 0; att < 600; att++) {
     if (isDart) {
-      const alpha = rnd(30, 110);
-      const beta = rnd(28, 80);
+      const alpha = rnd(24, 120);
+      const beta = rnd(22, 88);
       const reflex = 360 - alpha - 2 * beta;
-      if (reflex < 190 || reflex > 305) continue;
-      if (Math.abs(alpha - beta) < 8) continue;
+      if (reflex < 186 || reflex > 312) continue;
+      if (Math.abs(alpha - beta) < 6) continue;
       return { alpha, beta, cAngle: reflex };
     }
-    const alpha = rnd(40, 150);
-    const beta = rnd(45, 140);
+    const alpha = rnd(30, 158);
+    const beta = rnd(35, 150);
     const gamma = 360 - alpha - 2 * beta;
-    if (gamma < 40 || gamma > 155) continue;
-    if (Math.abs(alpha - gamma) < 12) continue;          // keep it clearly a kite
-    if (Math.abs(alpha - beta) < 8 || Math.abs(gamma - beta) < 8) continue;
+    if (gamma < 30 || gamma > 162) continue;
+    if (Math.abs(alpha - gamma) < 10) continue;          // keep it clearly a kite
+    if (Math.abs(alpha - beta) < 6 || Math.abs(gamma - beta) < 6) continue;
     return { alpha, beta, cAngle: gamma };
   }
   return isDart ? { alpha: 50, beta: 40, cAngle: 230 } : { alpha: 70, beta: 110, cAngle: 70 };
