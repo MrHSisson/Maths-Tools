@@ -28,6 +28,7 @@ interface QuadQuestion {
   key?: string;
   edges: [Pt, Pt][];
   tickEdges?: TickEdge[];
+  extensions?: { from: Pt; to: Pt }[];
   angles: AngleLabel[];
   answer: string;
   working: { text: string }[];
@@ -50,6 +51,14 @@ const FIND_MS: ToolMultiSelect = {
     { value: "findVertex", label: "Find a vertex angle", defaultActive: true },
   ],
 };
+const EXTERIOR_MS: ToolMultiSelect = {
+  key: "exterior", label: "Exterior Angles",
+  options: [
+    { value: "none", label: "None", defaultActive: true },
+    { value: "one", label: "One", defaultActive: false },
+    { value: "two", label: "Two", defaultActive: false },
+  ],
+};
 
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Angles in a Quadrilateral",
@@ -58,7 +67,7 @@ const TOOL_CONFIG: ToolConfig = {
       name: "Angles in a Quadrilateral",
       variables: [], dropdown: null,
       difficultySettings: {
-        level1: { variables: [], dropdown: null },
+        level1: { variables: [], multiSelect: [EXTERIOR_MS] },
         level2: { variables: [], multiSelect: [SHAPE_MS, FIND_MS] },
         level3: { variables: [], dropdown: null },
       },
@@ -72,6 +81,7 @@ const INFO_SECTIONS: InfoSection[] = [
     content: [
       { label: "Overview", detail: "Three angles are given inside an irregular quadrilateral. Find the missing angle using the fact that angles in a quadrilateral sum to 360°." },
       { label: "Questions", detail: "Irregular (scalene) quadrilaterals shown in varied orientations." },
+      { label: "Exterior angles", detail: "Choose None, One or Two extended sides. Where a side is extended, the exterior angle is given — use angles on a straight line (180°) to find the interior angle first, then apply the 360° rule." },
     ],
   },
   {
@@ -168,7 +178,14 @@ function placeKite(alpha: number, beta: number, isDart: boolean): Pt[] {
 }
 
 // ─── QUESTION GENERATION ──────────────────────────────────────────────────────
-function buildLevel1(): QuadQuestion {
+function resolveNumExt(vars: QOVars): number {
+  const map: Record<string, number> = { none: 0, one: 1, two: 2 };
+  const active = ["none", "one", "two"].filter(v => vars[v]);
+  const pick = active.length ? active[rnd(0, active.length - 1)] : "none";
+  return map[pick];
+}
+
+function buildLevel1(vars: QOVars): QuadQuestion {
   // Pick 4 widely-spread angles summing to 360, then find an assignment to the
   // diagonal-split construction that keeps every sub-angle >= MIN_SUB (which is
   // exactly what guarantees a convex, non-self-crossing quad). Trying all four
@@ -197,28 +214,57 @@ function buildLevel1(): QuadQuestion {
   const verts = [vA, vB, vC, vD];
   const vals = [A, B, C, D];
   const unknownIdx = rnd(0, 3);
-  const angles: AngleLabel[] = verts.map((v, i) => ({
-    label: i === unknownIdx ? "x" : `${vals[i]}°`,
-    isUnknown: i === unknownIdx,
-    value: vals[i],
-    arcVertex: v,
-    arcFrom: verts[(i + 3) % 4],
-    arcTo: verts[(i + 1) % 4],
-  }));
-  const given = vals.filter((_, i) => i !== unknownIdx);
-  const knownSum = given.reduce((s, v) => s + v, 0);
+
+  // Choose which of the three given vertices are shown as exterior angles.
+  const numExt = Math.min(resolveNumExt(vars), 2);
+  const givenIdx = [0, 1, 2, 3].filter(i => i !== unknownIdx).sort(() => Math.random() - 0.5);
+  const extIdx = new Set(givenIdx.slice(0, numExt));
+
+  const extensions: { from: Pt; to: Pt }[] = [];
+  const angles: AngleLabel[] = verts.map((v, i) => {
+    const prev = verts[(i + 3) % 4], next = verts[(i + 1) % 4];
+    if (i !== unknownIdx && extIdx.has(i)) {
+      // extend one side past the vertex; the exterior angle = 180 − interior
+      const extendPrev = rnd(0, 1) === 0;
+      const base = extendPrev ? prev : next;     // side base→v is extended beyond v
+      const other = extendPrev ? next : prev;    // exterior measured to this side
+      const dx = v.x - base.x, dy = v.y - base.y, len = Math.hypot(dx, dy) || 1;
+      const extLen = Math.min(140, Math.max(70, len * 0.5));
+      const E: Pt = { x: v.x + dx / len * extLen, y: v.y + dy / len * extLen };
+      extensions.push({ from: v, to: E });
+      return { label: `${180 - vals[i]}°`, isUnknown: false, value: 180 - vals[i], arcVertex: v, arcFrom: E, arcTo: other };
+    }
+    return {
+      label: i === unknownIdx ? "x" : `${vals[i]}°`,
+      isUnknown: i === unknownIdx,
+      value: vals[i],
+      arcVertex: v, arcFrom: prev, arcTo: next,
+    };
+  });
+
+  const givenInterior = givenIdx.slice().sort((a, b) => a - b).map(i => vals[i]);
+  const knownSum = givenInterior.reduce((s, v) => s + v, 0);
+  const working: { text: string }[] = [{ text: "Angles in a quadrilateral sum to 360°" }];
+  if (extIdx.size > 0) {
+    working.push({ text: "Angles on a straight line sum to 180°" });
+    [...extIdx].sort((a, b) => a - b).forEach(i => {
+      working.push({ text: `Interior angle = 180° − ${180 - vals[i]}° = ${vals[i]}°` });
+    });
+  }
+  working.push(
+    { text: `${givenInterior.join("° + ")}° + x = 360°` },
+    { text: `${knownSum}° + x = 360°` },
+    { text: `x = 360° − ${knownSum}°` },
+    { text: `x = ${vals[unknownIdx]}°` },
+  );
+
   return {
     tool: "anglesInQuad", level: "level1",
     edges: [[vA, vB], [vB, vC], [vC, vD], [vD, vA]],
+    extensions: extensions.length ? extensions : undefined,
     angles,
     answer: `x = ${vals[unknownIdx]}°`,
-    working: [
-      { text: "Angles in a quadrilateral sum to 360°" },
-      { text: `${given.join("° + ")}° + x = 360°` },
-      { text: `${knownSum}° + x = 360°` },
-      { text: `x = 360° − ${knownSum}°` },
-      { text: `x = ${vals[unknownIdx]}°` },
-    ],
+    working,
     id: Math.floor(Math.random() * 1_000_000),
   };
 }
@@ -338,7 +384,7 @@ function buildLevel2(vars: QOVars): QuadQuestion {
 function buildQuadQuestion(tool: string, level: string, vars: QOVars): QuadQuestion {
   let q: QuadQuestion;
   if (level === "level2") q = buildLevel2(vars);
-  else q = buildLevel1();
+  else q = buildLevel1(vars);
   q.difficulty = level;
   q.key = `${tool}-${level}-${q.id}`;
   return q;
@@ -381,6 +427,7 @@ function QuadDiagram({ q, showAnswer, small = false, dataIndex }: DiagramProps) 
   const refSide = small ? 300 : 470;    // typical square side → keeps fs ~ tfp
 
   const geomPts: Pt[] = q.edges.flatMap(([a, b]) => [a, b]);
+  q.extensions?.forEach(e => geomPts.push(e.to));
   const gMinX = Math.min(...geomPts.map(p => p.x)), gMaxX = Math.max(...geomPts.map(p => p.x));
   const gMinY = Math.min(...geomPts.map(p => p.y)), gMaxY = Math.max(...geomPts.map(p => p.y));
   const scl = size / Math.max(gMaxX - gMinX, gMaxY - gMinY, 1);
@@ -478,6 +525,7 @@ function QuadDiagram({ q, showAnswer, small = false, dataIndex }: DiagramProps) 
   const extraProps = dataIndex !== undefined ? { "data-q-index": dataIndex } : {};
   return (
     <svg viewBox={`${bcx - side / 2} ${bcy - side / 2} ${side} ${side}`} style={{ display: "block", overflow: "visible", width: "100%", height: "auto" }} preserveAspectRatio="xMidYMid meet" {...extraProps}>
+      {q.extensions?.map((e, i) => <line key={`x${i}`} x1={tx(e.from.x)} y1={ty(e.from.y)} x2={tx(e.to.x)} y2={ty(e.to.y)} stroke="#1e293b" strokeWidth={strokeW} strokeLinecap="round" />)}
       {q.edges.map(([a, b], i) => <line key={`e${i}`} x1={tx(a.x)} y1={ty(a.y)} x2={tx(b.x)} y2={ty(b.y)} stroke="#1e293b" strokeWidth={strokeW} strokeLinecap="round" strokeLinejoin="round" />)}
       {q.tickEdges?.flatMap((te, i) => tickMarks(tp(te.a), tp(te.b), te.count, tickLen, tickSpace).map((t, ti) => <line key={`tk-${i}-${ti}`} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} stroke="#1e293b" strokeWidth={strokeW} strokeLinecap="round" />))}
       {q.angles.map((ang, i) => !ang.isUnknown ? null : <path key={`sh-${i}`} d={sectorFill(ang.arcVertex, ang.arcFrom, ang.arcTo, unknownArcR, !!ang.reflex)} fill="#bfdbfe" fillOpacity="0.45" stroke="none" />)}
