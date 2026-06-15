@@ -118,4 +118,5 @@ export interface ToolShellDefaults {
   maxColumns?: number;         // caps the column input maximum (e.g. 3 prevents 4-col)
   comingSoonLevels?: DifficultyLevel[]; // levels shown but disabled with "Coming soon" tooltip
   hideFontControls?: boolean;  // hides the text size up/down chevrons (e.g. diagram-only tools)
+  collapseWorkingByDefault?: boolean; // whiteboard opens with the working/visualiser panel collapsed (still re-openable)
 }
