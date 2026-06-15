@@ -59,6 +59,15 @@ const EXTERIOR_MS: ToolMultiSelect = {
     { value: "two", label: "Two", defaultActive: false },
   ],
 };
+const ALG_MS: ToolMultiSelect = {
+  key: "algebra", label: "Question Type",
+  options: [
+    { value: "justX", label: "x", defaultActive: true },
+    { value: "constant", label: "x + a", sub: "(constant)", defaultActive: false },
+    { value: "coefficient", label: "ax", sub: "(coefficient)", defaultActive: false },
+    { value: "both", label: "ax + b", defaultActive: false },
+  ],
+};
 
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Angles in a Quadrilateral",
@@ -67,7 +76,7 @@ const TOOL_CONFIG: ToolConfig = {
       name: "Angles in a Quadrilateral",
       variables: [], dropdown: null,
       difficultySettings: {
-        level1: { variables: [], multiSelect: [EXTERIOR_MS] },
+        level1: { variables: [], multiSelect: [ALG_MS, EXTERIOR_MS] },
         level2: { variables: [], multiSelect: [SHAPE_MS, FIND_MS] },
         level3: { variables: [], dropdown: null },
       },
@@ -82,6 +91,7 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Overview", detail: "Three angles are given inside an irregular quadrilateral. Find the missing angle using the fact that angles in a quadrilateral sum to 360°." },
       { label: "Questions", detail: "Irregular (scalene) quadrilaterals shown in varied orientations." },
       { label: "Exterior angles", detail: "Choose None, One or Two extended sides. Where a side is extended, the exterior angle is given — use angles on a straight line (180°) to find the interior angle first, then apply the 360° rule." },
+      { label: "Algebraic angles", detail: "The unknown angle can be an expression: x, x + a (constant), ax (coefficient) or ax + b. Form an equation with the 360° sum and solve for x." },
     ],
   },
   {
@@ -185,6 +195,35 @@ function resolveNumExt(vars: QOVars): number {
   return map[pick];
 }
 
+function exprLabel(c: number, k: number): string {
+  const base = c === 1 ? "x" : `${c}x`;
+  if (k === 0) return base;
+  return k > 0 ? `${base} + ${k}` : `${base} − ${Math.abs(k)}`;
+}
+
+// Resolve the algebra type and produce the unknown's coefficient/constant/x.
+// Returns null for the plain numeric case (interior value comes from the quad).
+function resolveAlgebra(vars: QOVars): { c: number; k: number; x: number; interior: number } | null {
+  const active = ["justX", "constant", "coefficient", "both"].filter(v => vars[v]);
+  const type = active.length ? active[rnd(0, active.length - 1)] : "justX";
+  if (type === "justX") return null;
+  const LO = 40, HI = 150;
+  for (let att = 0; att < 200; att++) {
+    if (type === "coefficient") {
+      const c = rnd(2, 4), x = rnd(Math.ceil(LO / c), Math.floor(HI / c)), interior = c * x;
+      if (interior >= LO && interior <= HI) return { c, k: 0, x, interior };
+    } else if (type === "constant") {
+      const k = rnd(10, 40), x = rnd(Math.max(8, LO - k), HI - k), interior = x + k;
+      if (interior >= LO && interior <= HI) return { c: 1, k, x, interior };
+    } else {                                   // both
+      const c = rnd(2, 4), k = rnd(8, 30);
+      const x = rnd(Math.max(5, Math.ceil((LO - k) / c)), Math.floor((HI - k) / c)), interior = c * x + k;
+      if (interior >= LO && interior <= HI) return { c, k, x, interior };
+    }
+  }
+  return { c: 1, k: 0, x: 90, interior: 90 };
+}
+
 function buildLevel1(vars: QOVars): QuadQuestion {
   // Pick 4 widely-spread angles summing to 360, then find an assignment to the
   // diagonal-split construction that keeps every sub-angle >= MIN_SUB (which is
@@ -192,28 +231,49 @@ function buildLevel1(vars: QOVars): QuadQuestion {
   // cyclic rotations lets us use whichever diagonal is feasible, so the angles
   // are free to roam a wide range without forcing them toward 90°.
   const MIN_ANG = 35, MAX_ANG = 150, MIN_SUB = 10;
-  let A = 0, B = 0, C = 0, D = 0, pA = 0, found = false;
-  for (let att = 0; att < 600 && !found; att++) {
-    const a = rnd(MIN_ANG, MAX_ANG), b = rnd(MIN_ANG, MAX_ANG), c = rnd(MIN_ANG, MAX_ANG), d = 360 - a - b - c;
-    if (d < MIN_ANG || d > MAX_ANG) continue;
-    if (Math.max(a, b, c, d) - Math.min(a, b, c, d) < 45) continue;   // clearly irregular
-    const base = [a, b, c, d];
+  const alg = resolveAlgebra(vars);
+  // When algebraic, the unknown interior is pinned by the expression; otherwise
+  // it emerges from the four randomly-chosen angles.
+  const pinned = alg ? alg.interior : null;
+
+  let A = 0, B = 0, C = 0, D = 0, pA = 0, unknownIdx = 0, found = false;
+  for (let att = 0; att < 800 && !found; att++) {
+    let four: number[];
+    if (pinned !== null) {
+      const rest = 360 - pinned;
+      const o1 = rnd(MIN_ANG, MAX_ANG), o2 = rnd(MIN_ANG, MAX_ANG), o3 = rest - o1 - o2;
+      if (o3 < MIN_ANG || o3 > MAX_ANG) continue;
+      four = [pinned, o1, o2, o3];
+    } else {
+      const a = rnd(MIN_ANG, MAX_ANG), b = rnd(MIN_ANG, MAX_ANG), c = rnd(MIN_ANG, MAX_ANG), d = 360 - a - b - c;
+      if (d < MIN_ANG || d > MAX_ANG) continue;
+      four = [a, b, c, d];
+    }
+    const spread = Math.max(...four) - Math.min(...four);
+    if (spread < (pinned !== null ? 25 : 45)) continue;   // clearly irregular
+    // tag the unknown item so we can track it through the shuffle
+    const unkItem = pinned !== null ? 0 : rnd(0, 3);
+    const items = four.map((v, i) => ({ v, unk: i === unkItem }));
+    items.sort(() => Math.random() - 0.5);
     const shifts = [0, 1, 2, 3].sort(() => Math.random() - 0.5);
     for (const sh of shifts) {
-      const A2 = base[sh], B2 = base[(sh + 1) % 4], C2 = base[(sh + 2) % 4], D2 = base[(sh + 3) % 4];
+      const A2 = items[sh].v, B2 = items[(sh + 1) % 4].v, C2 = items[(sh + 2) % 4].v, D2 = items[(sh + 3) % 4].v;
       const lo = Math.max(MIN_SUB, 180 - B2 - C2 + MIN_SUB);
       const hi = Math.min(A2 - MIN_SUB, 180 - B2 - MIN_SUB);
       if (lo > hi) continue;
-      A = A2; B = B2; C = C2; D = D2; pA = rnd(lo, hi); found = true; break;
+      A = A2; B = B2; C = C2; D = D2; pA = rnd(lo, hi);
+      unknownIdx = [0, 1, 2, 3].find(p => items[(sh + p) % 4].unk)!;
+      found = true; break;
     }
   }
-  if (!found) { A = 70; B = 110; C = 80; D = 100; pA = 35; }   // safe fallback
+  if (!found) { A = 70; B = 110; C = 80; D = 100; pA = 35; unknownIdx = 0; }   // safe fallback
 
   const rot = rnd(0, 359);
   const [vA, vB, vC, vD] = rotatePts(placeQuad(A, B, C, pA), rot);
   const verts = [vA, vB, vC, vD];
   const vals = [A, B, C, D];
-  const unknownIdx = rnd(0, 3);
+  const xLabel = alg ? exprLabel(alg.c, alg.k) : "x";
+  const xVal = alg ? alg.x : vals[unknownIdx];
 
   // Choose which of the three given vertices are shown as exterior angles.
   const numExt = Math.min(resolveNumExt(vars), 2);
@@ -234,16 +294,15 @@ function buildLevel1(vars: QOVars): QuadQuestion {
       extensions.push({ from: v, to: E });
       return { label: `${180 - vals[i]}°`, isUnknown: false, value: 180 - vals[i], arcVertex: v, arcFrom: E, arcTo: other };
     }
-    return {
-      label: i === unknownIdx ? "x" : `${vals[i]}°`,
-      isUnknown: i === unknownIdx,
-      value: vals[i],
-      arcVertex: v, arcFrom: prev, arcTo: next,
-    };
+    if (i === unknownIdx) {
+      return { label: xLabel, isUnknown: true, value: vals[i], arcVertex: v, arcFrom: prev, arcTo: next };
+    }
+    return { label: `${vals[i]}°`, isUnknown: false, value: vals[i], arcVertex: v, arcFrom: prev, arcTo: next };
   });
 
   const givenInterior = givenIdx.slice().sort((a, b) => a - b).map(i => vals[i]);
   const knownSum = givenInterior.reduce((s, v) => s + v, 0);
+  const exprVal = 360 - knownSum;       // = the unknown interior = alg.c*x + alg.k
   const working: { text: string }[] = [{ text: "Angles in a quadrilateral sum to 360°" }];
   if (extIdx.size > 0) {
     working.push({ text: "Angles on a straight line sum to 180°" });
@@ -252,18 +311,24 @@ function buildLevel1(vars: QOVars): QuadQuestion {
     });
   }
   working.push(
-    { text: `${givenInterior.join("° + ")}° + x = 360°` },
-    { text: `${knownSum}° + x = 360°` },
-    { text: `x = 360° − ${knownSum}°` },
-    { text: `x = ${vals[unknownIdx]}°` },
+    { text: `${givenInterior.join("° + ")}° + ${xLabel} = 360°` },
+    { text: `${knownSum}° + ${xLabel} = 360°` },
+    { text: `${xLabel} = 360° − ${knownSum}°` },
   );
+  if (alg) {
+    working.push({ text: `${xLabel} = ${exprVal}°` });
+    if (alg.k !== 0 && alg.c !== 1) working.push({ text: `${alg.c}x = ${exprVal - alg.k}°` });
+    working.push({ text: `x = ${xVal}°` });
+  } else {
+    working.push({ text: `x = ${exprVal}°` });
+  }
 
   return {
     tool: "anglesInQuad", level: "level1",
     edges: [[vA, vB], [vB, vC], [vC, vD], [vD, vA]],
     extensions: extensions.length ? extensions : undefined,
     angles,
-    answer: `x = ${vals[unknownIdx]}°`,
+    answer: `x = ${xVal}°`,
     working,
     id: Math.floor(Math.random() * 1_000_000),
   };
@@ -413,9 +478,9 @@ function generateQuestion(
 // ─── DIAGRAM ─────────────────────────────────────────────────────────────────
 function estTW(s: string, fs: number) { return s.length * fs * 0.6; }
 
-interface DiagramProps { q: QuadQuestion; showAnswer: boolean; small?: boolean; dataIndex?: number; }
+interface DiagramProps { q: QuadQuestion; showAnswer: boolean; small?: boolean; dataIndex?: number; fillBox?: boolean; }
 
-function QuadDiagram({ q, showAnswer, small = false, dataIndex }: DiagramProps) {
+function QuadDiagram({ q, showAnswer, small = false, dataIndex, fillBox = false }: DiagramProps) {
   // Geometry is fitted into a fixed `size` box, then the final viewBox is made
   // SQUARE (so tall kites/arrowheads never overflow their panel) and the font /
   // stroke widths are scaled to the viewBox so they read consistently on screen.
@@ -469,15 +534,29 @@ function QuadDiagram({ q, showAnswer, small = false, dataIndex }: DiagramProps) 
 
   const labelLayouts = q.angles.map(ang => labelLayout(ang, ang.isUnknown ? unknownArcR : arcR));
 
-  // Square viewBox covering the shape + (roughly-sized) label boxes.
-  const roughHX = small ? 26 : 42, roughHY = small ? 13 : 20;
-  const bpts: number[][] = geomPts.map(p => { const t = tp(p); return [t.x, t.y]; });
-  labelLayouts.forEach(l => { bpts.push([l.labelPt.x - roughHX, l.labelPt.y - roughHY], [l.labelPt.x + roughHX, l.labelPt.y + roughHY]); });
-  const pad = small ? 8 : 14;
-  const bx0 = Math.min(...bpts.map(p => p[0])) - pad, by0 = Math.min(...bpts.map(p => p[1])) - pad;
-  const bx1 = Math.max(...bpts.map(p => p[0])) + pad, by1 = Math.max(...bpts.map(p => p[1])) + pad;
-  const side = Math.max(bx1 - bx0, by1 - by0);
-  const bcx = (bx0 + bx1) / 2, bcy = (by0 + by1) / 2;
+  // Square viewBox that exactly contains the shape, extensions, arcs and label
+  // boxes. The font scales with the viewBox, so box sizes depend on the side and
+  // the side depends on box sizes — a few fixed-point iterations converge fast.
+  const dispOf = (ang: AngleLabel) => ang.isUnknown && !showAnswer ? ang.label : ang.isUnknown ? `${ang.value}°` : ang.label;
+  const fixedPts: number[][] = geomPts.map(p => { const t = tp(p); return [t.x, t.y]; });
+  q.angles.forEach(a => { const v = tp(a.arcVertex); const r = a.isUnknown ? unknownArcR : arcR; fixedPts.push([v.x - r, v.y - r], [v.x + r, v.y + r]); });
+  const minHW = small ? 9 : 14, minHH = small ? 7 : 11, boxPad = small ? 3 : 5, edgePad = small ? 7 : 12;
+
+  let side = 0, bcx = 0, bcy = 0;
+  for (let iter = 0; iter < 4; iter++) {
+    const fs = side === 0 ? tfp : tfp * side / refSide;
+    const pts = fixedPts.slice();
+    labelLayouts.forEach((l, i) => {
+      const tw = estTW(dispOf(q.angles[i]), fs);
+      const hw = Math.max(minHW, tw / 2 + boxPad), hh = Math.max(minHH, fs * 0.7 + boxPad);
+      pts.push([l.labelPt.x - hw, l.labelPt.y - hh], [l.labelPt.x + hw, l.labelPt.y + hh]);
+    });
+    const x0 = Math.min(...pts.map(p => p[0])) - edgePad, y0 = Math.min(...pts.map(p => p[1])) - edgePad;
+    const x1 = Math.max(...pts.map(p => p[0])) + edgePad, y1 = Math.max(...pts.map(p => p[1])) + edgePad;
+    side = Math.max(x1 - x0, y1 - y0);
+    bcx = (x0 + x1) / 2; bcy = (y0 + y1) / 2;
+  }
+  side *= 1.04;   // small safety margin
 
   const k = side / refSide;                 // scale visual sizes to the viewBox
   const fontSize = tfp * k;
@@ -524,7 +603,7 @@ function QuadDiagram({ q, showAnswer, small = false, dataIndex }: DiagramProps) 
 
   const extraProps = dataIndex !== undefined ? { "data-q-index": dataIndex } : {};
   return (
-    <svg viewBox={`${bcx - side / 2} ${bcy - side / 2} ${side} ${side}`} style={{ display: "block", overflow: "visible", width: "100%", height: "auto" }} preserveAspectRatio="xMidYMid meet" {...extraProps}>
+    <svg viewBox={`${bcx - side / 2} ${bcy - side / 2} ${side} ${side}`} style={{ display: "block", overflow: "visible", width: "100%", height: fillBox ? "100%" : "auto" }} preserveAspectRatio="xMidYMid meet" {...extraProps}>
       {q.extensions?.map((e, i) => <line key={`x${i}`} x1={tx(e.from.x)} y1={ty(e.from.y)} x2={tx(e.to.x)} y2={ty(e.to.y)} stroke="#1e293b" strokeWidth={strokeW} strokeLinecap="round" />)}
       {q.edges.map(([a, b], i) => <line key={`e${i}`} x1={tx(a.x)} y1={ty(a.y)} x2={tx(b.x)} y2={ty(b.y)} stroke="#1e293b" strokeWidth={strokeW} strokeLinecap="round" strokeLinejoin="round" />)}
       {q.tickEdges?.flatMap((te, i) => tickMarks(tp(te.a), tp(te.b), te.count, tickLen, tickSpace).map((t, ti) => <line key={`tk-${i}-${ti}`} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} stroke="#1e293b" strokeWidth={strokeW} strokeLinecap="round" />))}
@@ -564,10 +643,19 @@ function QuadDiagram({ q, showAnswer, small = false, dataIndex }: DiagramProps) 
 const questionRenderer = (q: AnyQuestion, showAnswer: boolean, _cs: string, compact?: boolean, idx?: number): JSX.Element | null => {
   const d = (q as any)._diagram as QuadQuestion | undefined;
   if (!d) return null;
-  const maxW = compact === true ? 180 : compact === undefined ? 340 : 500;
+  if (compact === true) {
+    // Worksheet cell: fill the cell and letterbox by height so the square SVG
+    // never spills out of the box, whatever the cell's aspect ratio.
+    return (
+      <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+        <QuadDiagram q={d} showAnswer={showAnswer} small dataIndex={idx} fillBox />
+      </div>
+    );
+  }
+  const maxW = compact === undefined ? 340 : 500;
   return (
     <div style={{ width: "100%", maxWidth: maxW, margin: "0 auto" }}>
-      <QuadDiagram q={d} showAnswer={showAnswer} small={compact === true} dataIndex={idx} />
+      <QuadDiagram q={d} showAnswer={showAnswer} small={false} dataIndex={idx} />
     </div>
   );
 };
