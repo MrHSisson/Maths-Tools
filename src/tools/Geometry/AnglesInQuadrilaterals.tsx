@@ -68,7 +68,7 @@ const ALG_MS: ToolMultiSelect = {
     { value: "justX", label: "x", defaultActive: true },
     { value: "constant", label: "x + a", sub: "(constant)", defaultActive: false },
     { value: "coefficient", label: "ax", sub: "(coefficient)", defaultActive: false },
-    { value: "both", label: "ax + b", defaultActive: false },
+    { value: "both", label: "ax + b", sub: "(both)", defaultActive: false },
   ],
 };
 
