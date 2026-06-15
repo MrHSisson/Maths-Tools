@@ -795,7 +795,7 @@ export default function App() {
       generateQuestion={generateQuestion}
       questionRenderer={questionRenderer}
       customPrintHandler={customPrintHandler}
-      defaults={{ fixedColumns: true, numColumns: 3 }}
+      defaults={{ fixedColumns: true, numColumns: 3, hideFontControls: true }}
     />
   );
 }
