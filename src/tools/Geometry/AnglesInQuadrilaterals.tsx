@@ -50,7 +50,9 @@ const FIND_MS: ToolMultiSelect = {
   key: "findType", label: "Find",
   options: [
     { value: "findEqual", label: "Find the equal angles", defaultActive: true },
-    { value: "findVertex", label: "Find a vertex angle", defaultActive: true },
+    { value: "findApex", label: "Find an apex angle", defaultActive: true },
+    { value: "findReflex", label: "Find the reflex angle", sub: "(arrowhead)", defaultActive: false },
+    { value: "findBase", label: "Find a base angle", sub: "(from its pair)", defaultActive: false },
   ],
 };
 const EXTERIOR_MS: ToolMultiSelect = {
@@ -61,7 +63,7 @@ const EXTERIOR_MS: ToolMultiSelect = {
     { value: "two", label: "Two", defaultActive: false },
   ],
 };
-const MARK_EQUAL_VAR: ToolVariable = { key: "markEqual", label: "Mark the equal angles", defaultValue: true };
+const MARK_EQUAL_VAR: ToolVariable = { key: "markEqual", label: "Mark the equal angles", defaultValue: false };
 const ALG_MS: ToolMultiSelect = {
   key: "algebra", label: "Question Type",
   options: [
@@ -80,7 +82,7 @@ const TOOL_CONFIG: ToolConfig = {
       variables: [], dropdown: null,
       difficultySettings: {
         level1: { variables: [], multiSelect: [ALG_MS, EXTERIOR_MS] },
-        level2: { variables: [MARK_EQUAL_VAR], multiSelect: [SHAPE_MS, FIND_MS] },
+        level2: { variables: [MARK_EQUAL_VAR], multiSelect: [SHAPE_MS, FIND_MS, ALG_MS] },
         level3: { variables: [], dropdown: null },
       },
     },
@@ -100,11 +102,14 @@ const INFO_SECTIONS: InfoSection[] = [
   {
     title: "Level 2 — Kite & Arrowhead", icon: "◆",
     content: [
-      { label: "Overview", detail: "A kite (and its concave cousin, the arrowhead/dart) has one pair of equal angles, shown by matching side ticks." },
-      { label: "Find the equal angles", detail: "The two unequal (apex) angles are given. Use the 360° rule and the equal pair to find x." },
-      { label: "Find a vertex angle", detail: "The equal pair and one apex are given — find the remaining apex (or the reflex angle of an arrowhead)." },
+      { label: "Overview", detail: "A kite (and its concave cousin, the arrowhead/dart) has one pair of equal angles, shown by matching side ticks. The apex angles sit on the line of symmetry; the equal pair (base angles) sit either side of it." },
+      { label: "Find the equal angles", detail: "The two apex angles are given. Use the 360° rule with the equal pair (2x) to find x." },
+      { label: "Find an apex angle", detail: "The equal pair and the other apex are given — find the remaining apex using the 360° rule." },
+      { label: "Find the reflex angle", detail: "Arrowheads only. Find the reflex angle at the notch: apply the 360° rule, then state that the notch angle is reflex (more than 180°)." },
+      { label: "Find a base angle", detail: "One of the equal pair is given — the other is equal to it, so no 360° calculation is needed. Isolates the 'a kite has one pair of equal angles' fact." },
+      { label: "Algebraic angles", detail: "Apex and base questions can show the unknown as an expression: x, x + a (constant), ax (coefficient) or ax + b. Form an equation and solve for x." },
       { label: "Arrowhead", detail: "A concave kite. The angle at the notch is reflex (more than 180°)." },
-      { label: "Mark the equal angles", detail: "On by default. Turn it off to leave one of the equal pair unmarked, so students must identify the equal angles from the kite/arrowhead shape (equal sides shown by ticks) themselves." },
+      { label: "Mark the equal angles", detail: "Off by default — students identify the equal angles from the side ticks themselves (and one of the pair may be left unmarked). Turn it on to mark the equal pair with matching arc ticks." },
     ],
   },
   {
@@ -360,87 +365,191 @@ function pickKiteAngles(isDart: boolean): { alpha: number; beta: number; cAngle:
   return isDart ? { alpha: 50, beta: 40, cAngle: 230 } : { alpha: 70, beta: 110, cAngle: 70 };
 }
 
-function buildLevel2(vars: QOVars): QuadQuestion {
-  const shapes: string[] = [];
-  if (vars.kite !== false) shapes.push("kite");
-  if (vars.arrowhead) shapes.push("arrowhead");
-  const shapePool = shapes.length ? shapes : ["kite"];
-  const isDart = shapePool[rnd(0, shapePool.length - 1)] === "arrowhead";
+// Pick an algebra type from the ALG_MS multiSelect (justX / constant / coefficient / both).
+function pickAlgType(vars: QOVars): string {
+  const active = ["justX", "constant", "coefficient", "both"].filter(v => vars[v]);
+  return active.length ? active[rnd(0, active.length - 1)] : "justX";
+}
 
-  const finds: string[] = [];
-  if (vars.findEqual !== false) finds.push("findEqual");
-  if (vars.findVertex) finds.push("findVertex");
-  const findPool = finds.length ? finds : ["findEqual"];
-  const findType = findPool[rnd(0, findPool.length - 1)];
+// Express a known interior angle value V as an algebraic expression of the
+// requested type, returning the coefficient/constant/x. Returns null when no
+// clean integer solution exists so the caller can fall back to plain x.
+function exprForValue(V: number, type: string): { c: number; k: number; x: number } | null {
+  if (type === "justX") return { c: 1, k: 0, x: V };
+  if (type === "coefficient") {
+    const divs = [2, 3, 4].filter(c => V % c === 0 && V / c >= 2);
+    if (!divs.length) return null;
+    const c = divs[rnd(0, divs.length - 1)];
+    return { c, k: 0, x: V / c };
+  }
+  if (type === "constant") {
+    const hiK = Math.min(40, V - 5);
+    if (hiK < 10) return null;
+    const k = rnd(10, hiK);
+    return { c: 1, k, x: V - k };
+  }
+  // both: c·x + k = V
+  for (let att = 0; att < 60; att++) {
+    const c = rnd(2, 4);
+    const hiK = Math.min(30, V - c * 2);
+    if (hiK < 8) continue;
+    const k = rnd(8, hiK);
+    if ((V - k) % c === 0 && (V - k) / c >= 2) return { c, k, x: (V - k) / c };
+  }
+  return null;
+}
+
+// Resolve the unknown of value V into a labelled expression, falling back to
+// plain x when the chosen type has no clean form for V.
+function exprForUnknown(V: number, type: string): { c: number; k: number; x: number; label: string } {
+  const e = exprForValue(V, type) ?? { c: 1, k: 0, x: V };
+  return { ...e, label: exprLabel(e.c, e.k) };
+}
+
+// Working lines that rearrange "label = V°" down to "x = …°". Empty for plain x.
+function algSolveSteps(c: number, k: number, V: number, x: number): { text: string }[] {
+  const out: { text: string }[] = [];
+  if (k !== 0) out.push({ text: `${c === 1 ? "x" : `${c}x`} = ${V - k}°` });
+  if (c !== 1) out.push({ text: `x = ${x}°` });
+  return out;
+}
+
+function buildLevel2(vars: QOVars): QuadQuestion {
+  // ── shape pool ──
+  const shapePool: ("kite" | "arrowhead")[] = [];
+  if (vars.kite) shapePool.push("kite");
+  if (vars.arrowhead) shapePool.push("arrowhead");
+  if (!shapePool.length) shapePool.push("kite");
+
+  // ── find-type pool ──
+  const findActive = ["findEqual", "findApex", "findReflex", "findBase"].filter(v => vars[v]);
+  const finds = findActive.length ? findActive : ["findEqual"];
+
+  // Valid (shape, find) combinations — the reflex notch only exists on arrowheads.
+  const combos: { shape: "kite" | "arrowhead"; find: string }[] = [];
+  for (const s of shapePool) for (const f of finds) {
+    if (f === "findReflex" && s !== "arrowhead") continue;
+    combos.push({ shape: s, find: f });
+  }
+  if (!combos.length) {
+    // e.g. only "Find the reflex angle" chosen but no arrowhead available.
+    if (finds.every(f => f === "findReflex")) combos.push({ shape: "arrowhead", find: "findReflex" });
+    else for (const s of shapePool) combos.push({ shape: s, find: "findEqual" });
+  }
+  const { shape, find: findType } = combos[rnd(0, combos.length - 1)];
+  const isDart = shape === "arrowhead";
 
   const { alpha, beta, cAngle } = pickKiteAngles(isDart);
   const rot = rnd(-22, 22);
   const [vA, vB, vC, vD] = rotatePts(placeKite(alpha, beta, isDart), rot);
   const verts = [vA, vB, vC, vD];
   const vals = [alpha, beta, cAngle, beta];   // A, B, C, D
-  const shapeWord = isDart ? "arrowhead" : "kite";
+  const shapeArt = isDart ? "An arrowhead" : "A kite";
+  const markEqual = !!vars.markEqual;
+
+  // Algebra applies only where the unknown appears once (apex / base questions).
+  const algType = pickAlgType(vars);
+  const algEligible = findType === "findApex" || findType === "findBase";
 
   // index 1 (B) and 3 (D) are the equal pair; 0 (A) and 2 (C) are apexes.
-  const mk = (i: number, unknown: boolean, equalMark: boolean): AngleLabel => ({
-    label: unknown ? "x" : `${vals[i]}°`,
+  const mk = (i: number, unknown: boolean, equalMark: boolean, label?: string, revealText?: string): AngleLabel => ({
+    label: unknown ? (label ?? "x") : `${vals[i]}°`,
     isUnknown: unknown,
     value: vals[i],
     reflex: i === 2 && isDart,
     equalMark,
+    revealText: unknown ? revealText : undefined,
     arcVertex: verts[i],
     arcFrom: verts[(i + 3) % 4],
     arcTo: verts[(i + 1) % 4],
   });
 
+  const equalLine = markEqual
+    ? `The two marked angles are equal (${beta}°)`
+    : `${shapeArt} has one pair of equal angles (${beta}°)`;
+
   let angles: AngleLabel[];
   let answer: string;
   let working: { text: string }[];
-  const cWord = isDart ? "reflex angle" : `${cAngle}°`;
 
   if (findType === "findEqual") {
-    // apexes given, find the equal pair x = beta
+    // both apexes given, find the equal pair x = beta
     angles = [mk(0, false, false), mk(1, true, true), mk(2, false, false), mk(3, true, true)];
     answer = `x = ${beta}°`;
     working = [
       { text: "Angles in a quadrilateral sum to 360°" },
-      { text: `A ${shapeWord} has one pair of equal angles` },
+      { text: `${shapeArt} has one pair of equal angles` },
       { text: `x + x + ${alpha}° + ${cAngle}° = 360°` },
       { text: `2x = 360° − ${alpha}° − ${cAngle}°` },
       { text: `2x = ${360 - alpha - cAngle}°` },
       { text: `x = ${beta}°` },
     ];
+  } else if (findType === "findReflex") {
+    // arrowhead: equal pair + top apex given, find the reflex notch (C)
+    angles = [mk(0, false, false), mk(1, false, true), mk(2, true, false), mk(3, false, true)];
+    answer = `x = ${cAngle}°`;
+    working = [
+      { text: "Angles in a quadrilateral sum to 360°" },
+      { text: equalLine },
+      { text: `x + ${alpha}° + ${beta}° + ${beta}° = 360°` },
+      { text: `x = 360° − ${alpha}° − 2 × ${beta}°` },
+      { text: "The angle at the notch is reflex (more than 180°)" },
+      { text: `x = ${cAngle}°` },
+    ];
+  } else if (findType === "findBase") {
+    // one of the equal pair given, find the other — no 360° rule needed
+    const unkBase = rnd(0, 1) === 0 ? 1 : 3;
+    const single = algEligible ? exprForUnknown(beta, algType) : { c: 1, k: 0, x: beta, label: "x" };
+    const reveal = `x = ${single.x}°`;
+    angles = [
+      mk(0, false, false),
+      mk(1, unkBase === 1, true, unkBase === 1 ? single.label : undefined, unkBase === 1 ? reveal : undefined),
+      mk(2, false, false),
+      mk(3, unkBase === 3, true, unkBase === 3 ? single.label : undefined, unkBase === 3 ? reveal : undefined),
+    ];
+    // apex angles are irrelevant here — leave them unmarked
+    angles[0] = { ...angles[0], hidden: true };
+    angles[2] = { ...angles[2], hidden: true };
+    answer = `x = ${single.x}°`;
+    working = [
+      { text: `${shapeArt} has one pair of equal angles` },
+      { text: `${single.label} = ${beta}°` },
+      ...algSolveSteps(single.c, single.k, beta, single.x),
+    ];
   } else {
-    // equal pair given, find one apex (A or, for darts, the reflex C)
-    const unknownApex = isDart ? (rnd(0, 1) === 0 ? 0 : 2) : (rnd(0, 1) === 0 ? 0 : 2);
-    angles = [mk(0, unknownApex === 0, false), mk(1, false, true), mk(2, unknownApex === 2, false), mk(3, false, true)];
-    if (unknownApex === 0) {
-      answer = `x = ${alpha}°`;
-      working = [
-        { text: "Angles in a quadrilateral sum to 360°" },
-        { text: `The two marked angles are equal (${beta}°)` },
-        { text: `x + ${beta}° + ${cAngle}° + ${beta}° = 360°` },
-        { text: `x = 360° − ${cAngle}° − 2 × ${beta}°` },
-        { text: `x = ${alpha}°` },
-      ];
-    } else {
-      answer = `x = ${cAngle}°`;
-      working = [
-        { text: "Angles in a quadrilateral sum to 360°" },
-        { text: `The two marked angles are equal (${beta}°)` },
-        { text: `x + ${alpha}° + ${beta}° + ${beta}° = 360°` },
-        { text: `x = 360° − ${alpha}° − 2 × ${beta}°` },
-        ...(isDart ? [{ text: "The angle at the notch is reflex (more than 180°)" }] : []),
-        { text: `x = ${cAngle}°` },
-      ];
-    }
-    void cWord;
+    // findApex: equal pair + other apex given, find an apex (A, or C on a kite)
+    const unknownIdx = isDart ? 0 : (rnd(0, 1) === 0 ? 0 : 2);
+    const apexVal = vals[unknownIdx];               // alpha (A) or gamma (C)
+    const otherApex = unknownIdx === 0 ? cAngle : alpha;
+    const single = algEligible ? exprForUnknown(apexVal, algType) : { c: 1, k: 0, x: apexVal, label: "x" };
+    const reveal = `x = ${single.x}°`;
+    angles = [
+      mk(0, unknownIdx === 0, false, unknownIdx === 0 ? single.label : undefined, unknownIdx === 0 ? reveal : undefined),
+      mk(1, false, true),
+      mk(2, unknownIdx === 2, false, unknownIdx === 2 ? single.label : undefined, unknownIdx === 2 ? reveal : undefined),
+      mk(3, false, true),
+    ];
+    answer = `x = ${single.x}°`;
+    working = [
+      { text: "Angles in a quadrilateral sum to 360°" },
+      { text: equalLine },
+      { text: `${single.label} + ${beta}° + ${otherApex}° + ${beta}° = 360°` },
+      { text: `${single.label} = 360° − ${otherApex}° − 2 × ${beta}°` },
+      { text: `${single.label} = ${apexVal}°` },
+      ...algSolveSteps(single.c, single.k, apexVal, single.x),
+    ];
   }
 
-  // When equal-angle marking is off, drop the arc ticks and leave one of the
-  // equal pair completely unmarked, so students must identify the equal angles
-  // from the kite/arrowhead shape themselves.
-  const markEqual = vars.markEqual !== false;
-  if (!markEqual) {
+  // Equal-angle marking. When off, drop the arc ticks; for apex/equal/reflex
+  // questions also leave one of the equal pair unmarked so students must spot
+  // the equal angles from the side ticks themselves. (Not for findBase, where
+  // the equal pair *is* the question.)
+  if (findType === "findBase") {
+    if (!markEqual) {
+      angles[1] = { ...angles[1], equalMark: false };
+      angles[3] = { ...angles[3], equalMark: false };
+    }
+  } else if (!markEqual) {
     angles[1] = { ...angles[1], equalMark: false };
     angles[3] = { ...angles[3], equalMark: false };
     const hideIdx = rnd(0, 1) === 0 ? 1 : 3;
