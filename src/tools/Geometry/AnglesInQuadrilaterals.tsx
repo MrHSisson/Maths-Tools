@@ -15,7 +15,6 @@ interface AngleLabel {
   reflex?: boolean;
   equalMark?: boolean;        // small tick on the arc to show equal angles
   hidden?: boolean;           // vertex left completely unmarked (identify it yourself)
-  revealText?: string;        // overrides the on-reveal label (e.g. "x = 30°")
   arcVertex: Pt;
   arcFrom: Pt;
   arcTo: Pt;
@@ -51,7 +50,6 @@ const FIND_MS: ToolMultiSelect = {
   options: [
     { value: "findEqual", label: "Find the equal angles", defaultActive: true },
     { value: "findApex", label: "Find an apex angle", defaultActive: true },
-    { value: "findReflex", label: "Find the reflex angle", sub: "(arrowhead)", defaultActive: false },
     { value: "findBase", label: "Find a base angle", sub: "(from its pair)", defaultActive: false },
   ],
 };
@@ -104,8 +102,7 @@ const INFO_SECTIONS: InfoSection[] = [
     content: [
       { label: "Overview", detail: "A kite (and its concave cousin, the arrowhead/dart) has one pair of equal angles, shown by matching side ticks. The apex angles sit on the line of symmetry; the equal pair (base angles) sit either side of it." },
       { label: "Find the equal angles", detail: "The two apex angles are given. Use the 360° rule with the equal pair (2x) to find x." },
-      { label: "Find an apex angle", detail: "The equal pair and the other apex are given — find the remaining apex using the 360° rule." },
-      { label: "Find the reflex angle", detail: "Arrowheads only. Find the reflex angle at the notch: apply the 360° rule, then state that the notch angle is reflex (more than 180°)." },
+      { label: "Find an apex angle", detail: "The equal pair and the other apex are given — find the remaining apex using the 360° rule. On an arrowhead the unknown apex may be the reflex angle at the notch (more than 180°)." },
       { label: "Find a base angle", detail: "One of the equal pair is given — the other is equal to it, so no 360° calculation is needed. Isolates the 'a kite has one pair of equal angles' fact." },
       { label: "Algebraic angles", detail: "Apex and base questions can show the unknown as an expression: x, x + a (constant), ax (coefficient) or ax + b. Form an equation and solve for x." },
       { label: "Arrowhead", detail: "A concave kite. The angle at the notch is reflex (more than 180°)." },
@@ -304,7 +301,7 @@ function buildLevel1(vars: QOVars): QuadQuestion {
       return { label: `${180 - vals[i]}°`, isUnknown: false, value: 180 - vals[i], arcVertex: v, arcFrom: E, arcTo: other };
     }
     if (i === unknownIdx) {
-      return { label: xLabel, isUnknown: true, value: vals[i], revealText: alg ? `x = ${xVal}°` : undefined, arcVertex: v, arcFrom: prev, arcTo: next };
+      return { label: xLabel, isUnknown: true, value: vals[i], arcVertex: v, arcFrom: prev, arcTo: next };
     }
     return { label: `${vals[i]}°`, isUnknown: false, value: vals[i], arcVertex: v, arcFrom: prev, arcTo: next };
   });
@@ -421,23 +418,12 @@ function buildLevel2(vars: QOVars): QuadQuestion {
   if (vars.arrowhead) shapePool.push("arrowhead");
   if (!shapePool.length) shapePool.push("kite");
 
-  // ── find-type pool ──
-  const findActive = ["findEqual", "findApex", "findReflex", "findBase"].filter(v => vars[v]);
+  // ── find-type pool ── (every type works for both shapes)
+  const findActive = ["findEqual", "findApex", "findBase"].filter(v => vars[v]);
   const finds = findActive.length ? findActive : ["findEqual"];
+  const findType = finds[rnd(0, finds.length - 1)];
 
-  // Valid (shape, find) combinations — the reflex notch only exists on arrowheads.
-  const combos: { shape: "kite" | "arrowhead"; find: string }[] = [];
-  for (const s of shapePool) for (const f of finds) {
-    if (f === "findReflex" && s !== "arrowhead") continue;
-    combos.push({ shape: s, find: f });
-  }
-  if (!combos.length) {
-    // e.g. only "Find the reflex angle" chosen but no arrowhead available.
-    if (finds.every(f => f === "findReflex")) combos.push({ shape: "arrowhead", find: "findReflex" });
-    else for (const s of shapePool) combos.push({ shape: s, find: "findEqual" });
-  }
-  const { shape, find: findType } = combos[rnd(0, combos.length - 1)];
-  const isDart = shape === "arrowhead";
+  const isDart = shapePool[rnd(0, shapePool.length - 1)] === "arrowhead";
 
   const { alpha, beta, cAngle } = pickKiteAngles(isDart);
   const rot = rnd(-22, 22);
@@ -452,13 +438,14 @@ function buildLevel2(vars: QOVars): QuadQuestion {
   const algEligible = findType === "findApex" || findType === "findBase";
 
   // index 1 (B) and 3 (D) are the equal pair; 0 (A) and 2 (C) are apexes.
-  const mk = (i: number, unknown: boolean, equalMark: boolean, label?: string, revealText?: string): AngleLabel => ({
+  // The unknown reveals its actual angle value in place; the "x = …" form is
+  // shown in the green answer box under the diagram.
+  const mk = (i: number, unknown: boolean, equalMark: boolean, label?: string): AngleLabel => ({
     label: unknown ? (label ?? "x") : `${vals[i]}°`,
     isUnknown: unknown,
     value: vals[i],
     reflex: i === 2 && isDart,
     equalMark,
-    revealText: unknown ? revealText : undefined,
     arcVertex: verts[i],
     arcFrom: verts[(i + 3) % 4],
     arcTo: verts[(i + 1) % 4],
@@ -484,28 +471,15 @@ function buildLevel2(vars: QOVars): QuadQuestion {
       { text: `2x = ${360 - alpha - cAngle}°` },
       { text: `x = ${beta}°` },
     ];
-  } else if (findType === "findReflex") {
-    // arrowhead: equal pair + top apex given, find the reflex notch (C)
-    angles = [mk(0, false, false), mk(1, false, true), mk(2, true, false), mk(3, false, true)];
-    answer = `x = ${cAngle}°`;
-    working = [
-      { text: "Angles in a quadrilateral sum to 360°" },
-      { text: equalLine },
-      { text: `x + ${alpha}° + ${beta}° + ${beta}° = 360°` },
-      { text: `x = 360° − ${alpha}° − 2 × ${beta}°` },
-      { text: "The angle at the notch is reflex (more than 180°)" },
-      { text: `x = ${cAngle}°` },
-    ];
   } else if (findType === "findBase") {
     // one of the equal pair given, find the other — no 360° rule needed
     const unkBase = rnd(0, 1) === 0 ? 1 : 3;
     const single = algEligible ? exprForUnknown(beta, algType) : { c: 1, k: 0, x: beta, label: "x" };
-    const reveal = `x = ${single.x}°`;
     angles = [
       mk(0, false, false),
-      mk(1, unkBase === 1, true, unkBase === 1 ? single.label : undefined, unkBase === 1 ? reveal : undefined),
+      mk(1, unkBase === 1, true, unkBase === 1 ? single.label : undefined),
       mk(2, false, false),
-      mk(3, unkBase === 3, true, unkBase === 3 ? single.label : undefined, unkBase === 3 ? reveal : undefined),
+      mk(3, unkBase === 3, true, unkBase === 3 ? single.label : undefined),
     ];
     // apex angles are irrelevant here — leave them unmarked
     angles[0] = { ...angles[0], hidden: true };
@@ -517,16 +491,18 @@ function buildLevel2(vars: QOVars): QuadQuestion {
       ...algSolveSteps(single.c, single.k, beta, single.x),
     ];
   } else {
-    // findApex: equal pair + other apex given, find an apex (A, or C on a kite)
-    const unknownIdx = isDart ? 0 : (rnd(0, 1) === 0 ? 0 : 2);
-    const apexVal = vals[unknownIdx];               // alpha (A) or gamma (C)
+    // findApex: equal pair + the other apex given, find an apex. Either apex on
+    // a kite; on an arrowhead the top apex (A) or the reflex notch (C).
+    const unknownIdx = rnd(0, 1) === 0 ? 0 : 2;
+    const apexVal = vals[unknownIdx];               // alpha (A) or gamma/reflex (C)
     const otherApex = unknownIdx === 0 ? cAngle : alpha;
-    const single = algEligible ? exprForUnknown(apexVal, algType) : { c: 1, k: 0, x: apexVal, label: "x" };
-    const reveal = `x = ${single.x}°`;
+    const isReflex = isDart && unknownIdx === 2;
+    // algebra only for ordinary apex angles, never the large reflex notch
+    const single = (algEligible && !isReflex) ? exprForUnknown(apexVal, algType) : { c: 1, k: 0, x: apexVal, label: "x" };
     angles = [
-      mk(0, unknownIdx === 0, false, unknownIdx === 0 ? single.label : undefined, unknownIdx === 0 ? reveal : undefined),
+      mk(0, unknownIdx === 0, false, unknownIdx === 0 ? single.label : undefined),
       mk(1, false, true),
-      mk(2, unknownIdx === 2, false, unknownIdx === 2 ? single.label : undefined, unknownIdx === 2 ? reveal : undefined),
+      mk(2, unknownIdx === 2, false, unknownIdx === 2 ? single.label : undefined),
       mk(3, false, true),
     ];
     answer = `x = ${single.x}°`;
@@ -535,12 +511,13 @@ function buildLevel2(vars: QOVars): QuadQuestion {
       { text: equalLine },
       { text: `${single.label} + ${beta}° + ${otherApex}° + ${beta}° = 360°` },
       { text: `${single.label} = 360° − ${otherApex}° − 2 × ${beta}°` },
+      ...(isReflex ? [{ text: "The angle at the notch is reflex (more than 180°)" }] : []),
       { text: `${single.label} = ${apexVal}°` },
       ...algSolveSteps(single.c, single.k, apexVal, single.x),
     ];
   }
 
-  // Equal-angle marking. When off, drop the arc ticks; for apex/equal/reflex
+  // Equal-angle marking. When off, drop the arc ticks; for apex/equal
   // questions also leave one of the equal pair unmarked so students must spot
   // the equal angles from the side ticks themselves. (Not for findBase, where
   // the equal pair *is* the question.)
@@ -661,7 +638,7 @@ function QuadDiagram({ q, showAnswer, small = false, dataIndex, fillBox = false 
   // Square viewBox that exactly contains the shape, extensions, arcs and label
   // boxes. The font scales with the viewBox, so box sizes depend on the side and
   // the side depends on box sizes — a few fixed-point iterations converge fast.
-  const dispOf = (ang: AngleLabel) => ang.isUnknown && !showAnswer ? ang.label : ang.isUnknown ? (ang.revealText ?? `${ang.value}°`) : ang.label;
+  const dispOf = (ang: AngleLabel) => ang.isUnknown && !showAnswer ? ang.label : ang.isUnknown ? `${ang.value}°` : ang.label;
   const fixedPts: number[][] = geomPts.map(p => { const t = tp(p); return [t.x, t.y]; });
   q.angles.forEach(a => { if (a.hidden) return; const v = tp(a.arcVertex); const r = a.isUnknown ? unknownArcR : arcR; fixedPts.push([v.x - r, v.y - r], [v.x + r, v.y + r]); });
   const minHW = small ? 9 : 14, minHH = small ? 7 : 11, boxPad = small ? 3 : 5, edgePad = small ? 7 : 12;
@@ -773,7 +750,7 @@ function QuadDiagram({ q, showAnswer, small = false, dataIndex, fillBox = false 
         if (ang.hidden) return null;
         const layout = labelLayouts[i];
         const tip = tps(layout.tip), lp = tps(layout.labelPt);
-        const label = ang.isUnknown && !showAnswer ? ang.label : ang.isUnknown ? (ang.revealText ?? `${ang.value}°`) : ang.label;
+        const label = ang.isUnknown && !showAnswer ? ang.label : ang.isUnknown ? `${ang.value}°` : ang.label;
         const tw = estTW(label, fontSize), th = fontSize * 1.4;
         const colour = ang.isUnknown ? "#2563eb" : "#6b7280";
         const dx = tip.x - lp.x, dy = tip.y - lp.y, dlen = Math.hypot(dx, dy);
@@ -813,9 +790,17 @@ const questionRenderer = (q: AnyQuestion, showAnswer: boolean, _cs: string, comp
     );
   }
   const maxW = compact === undefined ? 340 : 500;
+  // The diagram reveals the angle's value in place; show the "x = …" form in
+  // the green answer font beneath it (ToolShell doesn't render an answer box of
+  // its own when a custom questionRenderer is supplied in whiteboard mode).
   return (
     <div style={{ width: "100%", maxWidth: maxW, margin: "0 auto" }}>
       <QuadDiagram q={d} showAnswer={showAnswer} small={false} dataIndex={idx} />
+      {showAnswer && (
+        <div className="text-3xl font-bold text-center" style={{ color: "#166534", marginTop: 8 }}>
+          {d.answer}
+        </div>
+      )}
     </div>
   );
 };
