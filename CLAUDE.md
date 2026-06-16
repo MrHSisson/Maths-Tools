@@ -360,8 +360,13 @@ defaults?: {
   maxColumns?: number;                  // caps the columns input max (e.g. 3 = no 4-col option)
   comingSoonLevels?: DifficultyLevel[]; // levels shown but disabled — "Coming soon" on hover
   hideFontControls?: boolean;           // hides the text-size up/down chevrons (diagram-only tools)
+  collapseWorkingByDefault?: boolean;   // whiteboard opens with the working/visualiser panel collapsed (diagram-heavy tools)
 }
 ```
+
+### Collapsible working / visualiser panel
+
+The whiteboard's right-hand **working / visualiser panel** can be collapsed via the **collapse button** (top-right of the panel) in both the embedded and fullscreen views. When collapsed, the panel is removed and the question box expands to fill the full width, with its contents **scaled up to fit** (`ScaleToFit`) so SVGs/diagrams and text genuinely grow into the reclaimed space — ideal for large diagrams in fullscreen. A **re-open button** (`PanelRightOpen`) then lives inside the question box's top-right control cluster (next to the font-size chevrons), so the panel is always recoverable — including fullscreen-expanded, and on diagram tools that hide the font controls. The panel is never gone for good; it stays available in every tool. State is session-only (resets on reload). Diagram-heavy tools can start collapsed with `defaults={{ collapseWorkingByDefault: true }}`.
 
 Font size indices: `0=text-lg  1=text-xl  2=text-3xl  3=text-4xl  4=text-5xl  5=text-7xl`
 

@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2 } from "lucide-react";
+import { useState, useEffect, useLayoutEffect, useRef, useCallback, type ReactNode } from "react";
+import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, PanelRightClose, PanelRightOpen } from "lucide-react";
 import type { DifficultyLevel, AnyQuestion, WorkingStep, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
 import { LV_COLORS, getQuestionBg, getStepBg } from "./colors";
 import { normalizeMultiSelect, ansEq, makeUniqueQ } from "./helpers";
@@ -48,6 +48,51 @@ export interface ToolShellProps {
   reformatQuestion?: (q: AnyQuestion, qo: QOSnapshot) => AnyQuestion | null;
   /** Custom print handler for diagram tools. Receives the worksheet array, print mode, and the worksheet container DOM element (for SVG extraction). */
   customPrintHandler?: (questions: AnyQuestion[], printMode: PrintMode, worksheetEl: HTMLElement | null) => void;
+}
+
+/** Scales its content up to fill the available space (never shrinks below 1x).
+ *  Used when the working/visualiser panel is collapsed so the diagram/SVG
+ *  genuinely grows into the reclaimed space — like dragging the splitter wide,
+ *  but past the tool's own maxWidth cap. Content renders at its natural size
+ *  first (width:100% preserved), then a CSS transform scales it up to fit. */
+function ScaleToFit({ children, maxScale = 3 }: { children: ReactNode; maxScale?: number }) {
+  const outerRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+  const scaleRef = useRef(1);
+  scaleRef.current = scale;
+  useLayoutEffect(() => {
+    const outer = outerRef.current, inner = innerRef.current;
+    if (!outer || !inner) return;
+    let raf = 0;
+    const recompute = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        if (!outerRef.current || !innerRef.current) return;
+        const availW = outerRef.current.clientWidth, availH = outerRef.current.clientHeight;
+        // Measure the diagram's real painted size; divide out the current scale.
+        const target = (innerRef.current.querySelector("svg") as SVGElement | null) ?? innerRef.current;
+        const rect = target.getBoundingClientRect();
+        const cur = scaleRef.current || 1;
+        const natW = rect.width / cur, natH = rect.height / cur;
+        if (!natW || !natH) return;
+        const s = Math.min((availW * 0.96) / natW, (availH * 0.96) / natH);
+        const clamped = Math.max(1, Math.min(maxScale, s));
+        if (Math.abs(clamped - scaleRef.current) > 0.005) setScale(clamped);
+      });
+    };
+    recompute();
+    const ro = new ResizeObserver(recompute);
+    ro.observe(outer); ro.observe(inner);
+    return () => { cancelAnimationFrame(raf); ro.disconnect(); };
+  }, [maxScale]);
+  return (
+    <div ref={outerRef} style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+      <div ref={innerRef} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, width: "100%", transform: `scale(${scale})`, transformOrigin: "center", transition: "transform 0.1s ease-out" }}>
+        {children}
+      </div>
+    </div>
+  );
 }
 
 export const ToolShell = ({ config, infoSections, generateQuestion, generateUniqueQ: generateUniqueQProp, defaults = {}, stepRenderer, questionRenderer, answerRenderer, reformatQuestion, customPrintHandler }: ToolShellProps) => {
@@ -222,6 +267,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const [presenterMode, setPresenterMode] = useState(false);
   const [wbFullscreen, setWbFullscreen] = useState(false);
   const [splitPct, setSplitPct] = useState(40);
+  const [workingCollapsed, setWorkingCollapsed] = useState(defaults.collapseWorkingByDefault ?? false);
   const [camDevices, setCamDevices] = useState<MediaDeviceInfo[]>([]);
   const [currentCamId, setCurrentCamId] = useState<string | null>(null);
   const [camError, setCamError] = useState<string | null>(null);
@@ -265,7 +311,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
 
   useEffect(() => { if (presenterMode) startCam(); else stopStream(); }, [presenterMode]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { if (presenterMode && streamRef.current && videoRef.current) videoRef.current.srcObject = streamRef.current; }, [wbFullscreen]);
+  useEffect(() => { if (presenterMode && streamRef.current && videoRef.current) videoRef.current.srcObject = streamRef.current; }, [wbFullscreen, workingCollapsed]);
   useEffect(() => {
     if (!camDropdownOpen) return;
     const h = (e: MouseEvent) => { if (camDropdownRef.current && !camDropdownRef.current.contains(e.target as Node)) setCamDropdownOpen(false); };
@@ -821,45 +867,63 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       opacity: enabled ? 1 : 0.35,
     });
 
-    const questionBox = () => (
-      <div className="rounded-xl flex items-center justify-center flex-shrink-0 p-8" style={{ position: "relative", width: "480px", height: "100%", backgroundColor: stepBg }}>
-        {!hideFontControls && <div style={{ position: "absolute", top: 10, right: 10, display: "flex", gap: 6, zIndex: 20 }}>
+    // Re-open control that lives inside the question box, so the working/
+    // visualiser panel is always recoverable — including fullscreen-expanded.
+    const expandBtn = (
+      <button title="Show working / visualiser" onClick={() => setWorkingCollapsed(false)}
+        style={{ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center" }}
+        onMouseEnter={e => (e.currentTarget.style.background = "rgba(0,0,0,0.15)")}
+        onMouseLeave={e => (e.currentTarget.style.background = "rgba(0,0,0,0.08)")}
+      ><PanelRightOpen size={16} color="#6b7280" /></button>
+    );
+    const qBoxControls = (
+      (!hideFontControls || workingCollapsed) && <div style={{ position: "absolute", top: 10, right: 10, display: "flex", gap: 6, zIndex: 20 }}>
+        {!hideFontControls && <>
           <button style={fontBtnStyle(canDisplayDecrease)} onClick={() => canDisplayDecrease && setDisplayFontSize(f => f - 1)}><ChevronDown size={16} color="#6b7280" /></button>
           <button style={fontBtnStyle(canDisplayIncrease)} onClick={() => canDisplayIncrease && setDisplayFontSize(f => f + 1)}><ChevronUp size={16} color="#6b7280" /></button>
-        </div>}
-        <div className="w-full text-center flex flex-col gap-4 items-center">
-          {getInstruction() && !questionRenderer && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold`} style={{ color: "#000" }}>{getInstruction()}</div>}
-          {questionRenderer
-            ? questionRenderer(currentQuestion, showWhiteboardAnswer, colorScheme, undefined, undefined, getQOSnapshot())
-            : <>
-                <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
-                {showWhiteboardAnswer && <div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>
-                  {answerRenderer ? answerRenderer(currentQuestion, colorScheme, getQOSnapshot()) : <AnswerDisplay q={currentQuestion} />}
-                </div>}
-              </>
-          }
-        </div>
+        </>}
+        {workingCollapsed && expandBtn}
+      </div>
+    );
+    const fit = (content: ReactNode) => workingCollapsed ? <ScaleToFit>{content}</ScaleToFit> : content;
+
+    const questionBox = () => (
+      <div className="rounded-xl flex items-center justify-center p-8" style={{ position: "relative", width: workingCollapsed ? "auto" : "480px", flex: workingCollapsed ? "1 1 auto" : "0 0 auto", height: "100%", backgroundColor: stepBg }}>
+        {qBoxControls}
+        {fit(
+          <div className="w-full text-center flex flex-col gap-4 items-center">
+            {getInstruction() && !questionRenderer && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold`} style={{ color: "#000" }}>{getInstruction()}</div>}
+            {questionRenderer
+              ? questionRenderer(currentQuestion, showWhiteboardAnswer, colorScheme, undefined, undefined, getQOSnapshot())
+              : <>
+                  <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
+                  {showWhiteboardAnswer && <div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>
+                    {answerRenderer ? answerRenderer(currentQuestion, colorScheme, getQOSnapshot()) : <AnswerDisplay q={currentQuestion} />}
+                  </div>}
+                </>
+            }
+          </div>
+        )}
       </div>
     );
 
     const questionBoxFS = () => (
-      <div style={{ position: "relative", width: `${splitPct}%`, height: "100%", backgroundColor: fsQuestionBg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 48, boxSizing: "border-box", flexShrink: 0, overflowY: "auto", gap: 16 }}>
-        {!hideFontControls && <div style={{ position: "absolute", top: 10, right: 10, display: "flex", gap: 6, zIndex: 20 }}>
-          <button style={fontBtnStyle(canDisplayDecrease)} onClick={() => canDisplayDecrease && setDisplayFontSize(f => f - 1)}><ChevronDown size={16} color="#6b7280" /></button>
-          <button style={fontBtnStyle(canDisplayIncrease)} onClick={() => canDisplayIncrease && setDisplayFontSize(f => f + 1)}><ChevronUp size={16} color="#6b7280" /></button>
-        </div>}
-        <>
-          {getInstruction() && !questionRenderer && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold`} style={{ color: "#000" }}>{getInstruction()}</div>}
-          {questionRenderer
-            ? questionRenderer(currentQuestion, showWhiteboardAnswer, colorScheme, false, undefined, getQOSnapshot())
-            : <>
-                <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
-                {showWhiteboardAnswer && <div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>
-                  {answerRenderer ? answerRenderer(currentQuestion, colorScheme, getQOSnapshot()) : <AnswerDisplay q={currentQuestion} />}
-                </div>}
-              </>
-          }
-        </>
+      <div style={{ position: "relative", width: workingCollapsed ? "100%" : `${splitPct}%`, height: "100%", backgroundColor: fsQuestionBg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 48, boxSizing: "border-box", flexShrink: 0, overflowY: "auto", gap: 16 }}>
+        {qBoxControls}
+        {fit(
+          <>
+            {getInstruction() && !questionRenderer && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold`} style={{ color: "#000" }}>{getInstruction()}</div>}
+            {questionRenderer
+              ? questionRenderer(currentQuestion, showWhiteboardAnswer, colorScheme, false, undefined, getQOSnapshot())
+              : <>
+                  <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
+                  {showWhiteboardAnswer && <div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>
+                    {answerRenderer ? answerRenderer(currentQuestion, colorScheme, getQOSnapshot()) : <AnswerDisplay q={currentQuestion} />}
+                  </div>}
+                </>
+            }
+          </>
+        )}
       </div>
     );
 
@@ -901,6 +965,11 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               onMouseLeave={e => (e.currentTarget.style.background = "rgba(0,0,0,0.08)")}
             ><Video size={16} color="#6b7280" /></button>
           )}
+          <button onClick={() => setWorkingCollapsed(true)} title="Collapse working / visualiser"
+            style={{ background: presenterMode ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.08)", border: presenterMode ? "1px solid rgba(255,255,255,0.15)" : "none", borderRadius: 8, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: presenterMode ? "blur(6px)" : "none" }}
+            onMouseEnter={e => (e.currentTarget.style.background = presenterMode ? "rgba(0,0,0,0.75)" : "rgba(0,0,0,0.15)")}
+            onMouseLeave={e => (e.currentTarget.style.background = presenterMode ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.08)")}
+          ><PanelRightClose size={16} color={presenterMode ? "rgba(255,255,255,0.85)" : "#6b7280"} /></button>
           <button onClick={() => setWbFullscreen(f => !f)} title={wbFullscreen ? "Exit Fullscreen" : "Fullscreen"}
             style={{ background: wbFullscreen ? "#374151" : (presenterMode ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.08)"), border: presenterMode ? "1px solid rgba(255,255,255,0.15)" : "none", borderRadius: 8, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: presenterMode ? "blur(6px)" : "none" }}
             onMouseEnter={e => (e.currentTarget.style.background = wbFullscreen ? "#1f2937" : (presenterMode ? "rgba(0,0,0,0.75)" : "rgba(0,0,0,0.15)"))}
@@ -915,6 +984,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         {fsToolbar}
         <div ref={splitContainerRef} style={{ flex: 1, display: "flex", minHeight: 0 }}>
           {questionBoxFS()}
+          {!workingCollapsed && <>
           <div
             style={{ position: "relative", width: 2, backgroundColor: "#000", flexShrink: 0, cursor: "col-resize" }}
             onMouseDown={e => {
@@ -936,6 +1006,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             <div style={{ position: "absolute", top: 0, bottom: 0, left: -5, width: 12, cursor: "col-resize" }} />
           </div>
           {makeRightPanel(true)}
+          </>}
         </div>
       </div>
     );
@@ -944,7 +1015,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       <div className="p-8" style={{ backgroundColor: qBg, height: "480px", boxSizing: "border-box" }}>
         <div className="flex gap-6" style={{ height: "100%" }}>
           {questionBox()}
-          {makeRightPanel(false)}
+          {!workingCollapsed && makeRightPanel(false)}
         </div>
       </div>
     );
