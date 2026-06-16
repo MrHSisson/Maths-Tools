@@ -702,6 +702,13 @@ function QuadDiagram({ q, showAnswer, small = false, dataIndex, fillBox = false 
   const tickLen = (small ? 9 : 13) * k, tickSpace = (small ? 5 : 7) * k;
   const tps = (p: Pt): Pt => p;
 
+  // On reveal, show the "x = …" answer in the green answer font as a band below
+  // the diagram, inside the SVG so it scales/fits with it (ScaleToFit measures
+  // only the <svg>, so a sibling <div> would be clipped in collapsed/full mode).
+  const ansFs = fontSize * 1.35;
+  const bandH = showAnswer ? ansFs * 1.9 : 0;
+  const vbX = bcx - side / 2, vbY = bcy - side / 2, vbW = side, vbH = side + bandH;
+
   function sweep(v: Pt, f: Pt, t2: Pt, reflex: boolean) {
     const a1 = Math.atan2(f.y - v.y, f.x - v.x), a2 = Math.atan2(t2.y - v.y, t2.x - v.x);
     let diff = a2 - a1;
@@ -739,7 +746,7 @@ function QuadDiagram({ q, showAnswer, small = false, dataIndex, fillBox = false 
 
   const extraProps = dataIndex !== undefined ? { "data-q-index": dataIndex } : {};
   return (
-    <svg viewBox={`${bcx - side / 2} ${bcy - side / 2} ${side} ${side}`} style={{ display: "block", overflow: "visible", width: "100%", height: fillBox ? "100%" : "auto" }} preserveAspectRatio="xMidYMid meet" {...extraProps}>
+    <svg viewBox={`${vbX} ${vbY} ${vbW} ${vbH}`} style={{ display: "block", overflow: "visible", width: "100%", height: fillBox ? "100%" : "auto" }} preserveAspectRatio="xMidYMid meet" {...extraProps}>
       {q.extensions?.map((e, i) => <line key={`x${i}`} x1={tx(e.from.x)} y1={ty(e.from.y)} x2={tx(e.to.x)} y2={ty(e.to.y)} stroke="#1e293b" strokeWidth={strokeW} strokeLinecap="round" />)}
       {q.edges.map(([a, b], i) => <line key={`e${i}`} x1={tx(a.x)} y1={ty(a.y)} x2={tx(b.x)} y2={ty(b.y)} stroke="#1e293b" strokeWidth={strokeW} strokeLinecap="round" strokeLinejoin="round" />)}
       {q.tickEdges?.flatMap((te, i) => tickMarks(tp(te.a), tp(te.b), te.count, tickLen, tickSpace).map((t, ti) => <line key={`tk-${i}-${ti}`} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} stroke="#1e293b" strokeWidth={strokeW} strokeLinecap="round" />))}
@@ -772,6 +779,9 @@ function QuadDiagram({ q, showAnswer, small = false, dataIndex, fillBox = false 
           </g>
         );
       })}
+      {showAnswer && (
+        <text x={bcx} y={vbY + side + bandH * 0.62} textAnchor="middle" dominantBaseline="middle" fontSize={ansFs} fontWeight="bold" fill="#166534">{q.answer}</text>
+      )}
     </svg>
   );
 }
@@ -790,17 +800,9 @@ const questionRenderer = (q: AnyQuestion, showAnswer: boolean, _cs: string, comp
     );
   }
   const maxW = compact === undefined ? 340 : 500;
-  // The diagram reveals the angle's value in place; show the "x = …" form in
-  // the green answer font beneath it (ToolShell doesn't render an answer box of
-  // its own when a custom questionRenderer is supplied in whiteboard mode).
   return (
     <div style={{ width: "100%", maxWidth: maxW, margin: "0 auto" }}>
       <QuadDiagram q={d} showAnswer={showAnswer} small={false} dataIndex={idx} />
-      {showAnswer && (
-        <div className="text-3xl font-bold text-center" style={{ color: "#166534", marginTop: 8 }}>
-          {d.answer}
-        </div>
-      )}
     </div>
   );
 };
