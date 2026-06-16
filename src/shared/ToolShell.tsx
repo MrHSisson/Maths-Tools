@@ -51,30 +51,44 @@ export interface ToolShellProps {
 }
 
 /** Scales its content up to fill the available space (never shrinks below 1x).
- *  Used when the working/visualiser panel is collapsed so SVGs/text genuinely
- *  grow into the reclaimed width instead of leaving the question box capped. */
-function ScaleToFit({ children, maxScale = 2.4 }: { children: ReactNode; maxScale?: number }) {
+ *  Used when the working/visualiser panel is collapsed so the diagram/SVG
+ *  genuinely grows into the reclaimed space — like dragging the splitter wide,
+ *  but past the tool's own maxWidth cap. Content renders at its natural size
+ *  first (width:100% preserved), then a CSS transform scales it up to fit. */
+function ScaleToFit({ children, maxScale = 3 }: { children: ReactNode; maxScale?: number }) {
   const outerRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
+  const scaleRef = useRef(1);
+  scaleRef.current = scale;
   useLayoutEffect(() => {
     const outer = outerRef.current, inner = innerRef.current;
     if (!outer || !inner) return;
+    let raf = 0;
     const recompute = () => {
-      const availW = outer.clientWidth, availH = outer.clientHeight;
-      const natW = inner.offsetWidth, natH = inner.offsetHeight; // layout size — unaffected by transform
-      if (!natW || !natH) return;
-      const s = Math.min((availW * 0.94) / natW, (availH * 0.94) / natH);
-      setScale(Math.max(1, Math.min(maxScale, s)));
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        if (!outerRef.current || !innerRef.current) return;
+        const availW = outerRef.current.clientWidth, availH = outerRef.current.clientHeight;
+        // Measure the diagram's real painted size; divide out the current scale.
+        const target = (innerRef.current.querySelector("svg") as SVGElement | null) ?? innerRef.current;
+        const rect = target.getBoundingClientRect();
+        const cur = scaleRef.current || 1;
+        const natW = rect.width / cur, natH = rect.height / cur;
+        if (!natW || !natH) return;
+        const s = Math.min((availW * 0.96) / natW, (availH * 0.96) / natH);
+        const clamped = Math.max(1, Math.min(maxScale, s));
+        if (Math.abs(clamped - scaleRef.current) > 0.005) setScale(clamped);
+      });
     };
     recompute();
     const ro = new ResizeObserver(recompute);
     ro.observe(outer); ro.observe(inner);
-    return () => ro.disconnect();
+    return () => { cancelAnimationFrame(raf); ro.disconnect(); };
   }, [maxScale]);
   return (
     <div ref={outerRef} style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-      <div ref={innerRef} style={{ display: "inline-block", transform: `scale(${scale})`, transformOrigin: "center", transition: "transform 0.12s ease-out" }}>
+      <div ref={innerRef} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, width: "100%", transform: `scale(${scale})`, transformOrigin: "center", transition: "transform 0.1s ease-out" }}>
         {children}
       </div>
     </div>
@@ -897,7 +911,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       <div style={{ position: "relative", width: workingCollapsed ? "100%" : `${splitPct}%`, height: "100%", backgroundColor: fsQuestionBg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 48, boxSizing: "border-box", flexShrink: 0, overflowY: "auto", gap: 16 }}>
         {qBoxControls}
         {fit(
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
+          <>
             {getInstruction() && !questionRenderer && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold`} style={{ color: "#000" }}>{getInstruction()}</div>}
             {questionRenderer
               ? questionRenderer(currentQuestion, showWhiteboardAnswer, colorScheme, false, undefined, getQOSnapshot())
@@ -908,7 +922,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                   </div>}
                 </>
             }
-          </div>
+          </>
         )}
       </div>
     );
