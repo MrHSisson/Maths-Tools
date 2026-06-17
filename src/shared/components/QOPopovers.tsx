@@ -105,14 +105,25 @@ export const MultiSelectSection = ({
   values,
   onChange,
 }: {
-  multiSelect: { key: string; label: string; options: { value: string; label: string; sub?: string }[]; allowEmpty?: boolean };
+  multiSelect: { key: string; label: string; info?: string; options: { value: string; label: string; sub?: string; divider?: boolean }[]; allowEmpty?: boolean };
   values: Record<string, boolean>;
   onChange: (k: string, v: boolean) => void;
 }) => {
   const activeCount = multiSelect.options.filter(o => values[o.value]).length;
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">{multiSelect.label}</span>
+      <div className="relative group flex items-center gap-1 self-start">
+        <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">{multiSelect.label}</span>
+        {multiSelect.info && (
+          <>
+            <span className="text-gray-400 text-sm leading-none cursor-help">&#9432;</span>
+            <div className="absolute bottom-full left-0 mb-2 hidden group-hover:flex pointer-events-none flex-col items-start" style={{ zIndex: 9999 }}>
+              <div className="bg-gray-800 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg shadow-lg" style={{ maxWidth: "15rem", whiteSpace: "normal" }}>{multiSelect.info}</div>
+              <div style={{ width: 0, height: 0, marginLeft: "0.6rem", borderLeft: "5px solid transparent", borderRight: "5px solid transparent", borderTop: "5px solid #1f2937" }} />
+            </div>
+          </>
+        )}
+      </div>
       <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden">
         {multiSelect.options.map(opt => {
           const isActive = values[opt.value] ?? false;
@@ -121,7 +132,7 @@ export const MultiSelectSection = ({
             <button
               key={opt.value}
               onClick={() => { if (!isLast) onChange(opt.value, !isActive); }}
-              className={`flex-1 min-w-0 px-3 py-2 text-sm font-bold transition-colors flex flex-col items-center justify-center text-center ${isActive ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
+              className={`flex-1 min-w-0 px-3 py-2 text-sm font-bold transition-colors flex flex-col items-center justify-center text-center ${opt.divider ? "border-l-2 border-gray-800" : ""} ${isActive ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
             >
               <span className="leading-tight">{opt.label}</span>
               {opt.sub && (
@@ -141,7 +152,7 @@ const MultiSelectGroups = ({
   values,
   onChange,
 }: {
-  groups: { key: string; label: string; options: { value: string; label: string; sub?: string }[]; allowEmpty?: boolean }[];
+  groups: { key: string; label: string; info?: string; options: { value: string; label: string; sub?: string; divider?: boolean }[]; allowEmpty?: boolean }[];
   values: Record<string, boolean>;
   onChange: (k: string, v: boolean) => void;
 }) => (

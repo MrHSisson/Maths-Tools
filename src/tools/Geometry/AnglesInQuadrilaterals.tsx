@@ -21,6 +21,7 @@ interface AngleLabel {
 }
 
 interface TickEdge { a: Pt; b: Pt; count: number; }
+interface ParallelEdge { a: Pt; b: Pt; count: number; }
 
 interface QuadQuestion {
   tool: string;
@@ -29,6 +30,7 @@ interface QuadQuestion {
   key?: string;
   edges: [Pt, Pt][];
   tickEdges?: TickEdge[];
+  parallelEdges?: ParallelEdge[];
   extensions?: { from: Pt; to: Pt }[];
   angles: AngleLabel[];
   answer: string;
@@ -72,6 +74,31 @@ const ALG_MS: ToolMultiSelect = {
   ],
 };
 
+// ── Level 3: parallel-line quadrilaterals ──
+const SHAPE3_MS: ToolMultiSelect = {
+  key: "shape3", label: "Shape",
+  options: [
+    { value: "trapezium", label: "Trapezium", defaultActive: true },
+    { value: "paraRhombus", label: "Parallelogram/Rhombus", defaultActive: true },
+  ],
+};
+const FIND3_MS: ToolMultiSelect = {
+  key: "find3", label: "Find",
+  info: "Opposite is only applicable to Parallelogram/Rhombus.",
+  options: [
+    { value: "coInterior", label: "Co-interior", defaultActive: true },
+    { value: "findAll", label: "All", defaultActive: false },
+    { value: "opposite", label: "Opposite", divider: true, defaultActive: true },
+  ],
+};
+const EXT3_MS: ToolMultiSelect = {
+  key: "ext3", label: "Exterior Angles",
+  options: [
+    { value: "none", label: "None", defaultActive: true },
+    { value: "extended", label: "Extended side", sub: "(alternate / straight line)", defaultActive: false },
+  ],
+};
+
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Angles in a Quadrilateral",
   tools: {
@@ -81,7 +108,7 @@ const TOOL_CONFIG: ToolConfig = {
       difficultySettings: {
         level1: { variables: [], multiSelect: [ALG_MS, EXTERIOR_MS] },
         level2: { variables: [MARK_EQUAL_VAR], multiSelect: [SHAPE_MS, FIND_MS, ALG_MS] },
-        level3: { variables: [], dropdown: null },
+        level3: { variables: [], multiSelect: [SHAPE3_MS, FIND3_MS, EXT3_MS, ALG_MS] },
       },
     },
   },
@@ -112,7 +139,13 @@ const INFO_SECTIONS: InfoSection[] = [
   {
     title: "Level 3 — Parallel Line Quadrilaterals", icon: "▰",
     content: [
-      { label: "Coming soon", detail: "Parallelograms, rhombuses and trapeziums using angles in parallel lines rules." },
+      { label: "Overview", detail: "Parallelograms, rhombuses and trapeziums, with their parallel sides marked by matching arrows. One (or two) angles are given; find the rest using the angles-in-parallel-lines rules." },
+      { label: "Co-interior angle", detail: "Two angles between the same pair of parallel sides (on one side of a connecting side) add up to 180°. Works for all three shapes. The unknown is the angle at the other end of a side." },
+      { label: "Opposite angle", detail: "In a parallelogram (and a rhombus) opposite angles are equal — no calculation needed. Not available for a trapezium, whose opposite angles are generally unequal." },
+      { label: "Find all remaining angles", detail: "Parallelogram/rhombus: one angle is given — find the other three (one equal opposite angle, two co-interior). Trapezium: the two angles on one parallel side are given — find the two co-interior angles facing them. Unknowns are labelled a, b, c." },
+      { label: "Parallelogram / Rhombus", detail: "Combined into one option — a rhombus is a parallelogram with four equal sides, so the angle rules (opposite equal, co-interior sum to 180°) are identical. Shapes appear at any rotation, and trapeziums also flip so the longer parallel side can be at the top — the parallel sides are always identified by the arrow marks, not their position." },
+      { label: "Exterior angles", detail: "Turn on 'Extended side' to draw one side extended past a vertex with the exterior angle marked. The student first brings that angle into the shape — by angles on a straight line (interior = 180° − exterior), or by alternate angles (the tail angle equals an interior angle, Z-shape) — then applies the co-interior or opposite rule. Alternate-angle questions use the second pair of parallel sides, so they appear on parallelograms and rhombuses; trapeziums use angles on a straight line." },
+      { label: "Algebraic angles", detail: "Co-interior and opposite questions can show the unknown as x, x + a, ax or ax + b. Form an equation from the rule and solve for x. (Find-all questions stay numeric.)" },
     ],
   },
   {
@@ -155,6 +188,28 @@ function tickMarks(v1: Pt, v2: Pt, count: number, tickLen: number, spacing: numb
   return res;
 }
 
+// Parallel-side arrow marks (chevrons pointing along the edge). `count` chevrons
+// distinguish one parallel pair from another (single vs double).
+function parallelMarks(v1: Pt, v2: Pt, count: number, size: number, spacing: number): { tip: Pt; w1: Pt; w2: Pt }[] {
+  const mx = (v1.x + v2.x) / 2, my = (v1.y + v2.y) / 2;
+  const dx = v2.x - v1.x, dy = v2.y - v1.y;
+  const len = Math.sqrt(dx * dx + dy * dy);
+  if (len < 0.001) return [];
+  const ux = dx / len, uy = dy / len;
+  const nx = -uy, ny = ux;
+  const res: { tip: Pt; w1: Pt; w2: Pt }[] = [];
+  for (let i = 0; i < count; i++) {
+    const off = (i - (count - 1) / 2) * spacing;
+    const cx = mx + ux * off, cy = my + uy * off;
+    res.push({
+      tip: { x: cx + ux * size, y: cy + uy * size },
+      w1: { x: cx - ux * size + nx * size, y: cy - uy * size + ny * size },
+      w2: { x: cx - ux * size - nx * size, y: cy - uy * size - ny * size },
+    });
+  }
+  return res;
+}
+
 // ─── PLACEMENT ──────────────────────────────────────────────────────────────
 // Level 1: general convex quad ABCD built from two triangles glued on diagonal AC.
 // A (left) and C (right) lie on a horizontal diagonal; B is above, D below.
@@ -191,6 +246,43 @@ function placeKite(alpha: number, beta: number, isDart: boolean): Pt[] {
     vC = { x: 0, y: hb + lc };
   }
   return [vA, vB, vC, vD];
+}
+
+// Level 3: parallelogram / rhombus. A (bottom-left), B (bottom-right),
+//   C (top-right), D (top-left). Interior angle at A is `theta`; `lean` (±1)
+//   tips the shape left or right. Sides AB & DC are parallel, AD & BC are parallel.
+function placeParallelogram(theta: number, base: number, side: number, lean: number): Pt[] {
+  const dx = lean * side * Math.cos(toRad(theta));
+  const dy = -side * Math.sin(toRad(theta));   // up the screen
+  const vA: Pt = { x: 0, y: 0 };
+  const vB: Pt = { x: base, y: 0 };
+  const vD: Pt = { x: dx, y: dy };
+  const vC: Pt = { x: base + dx, y: dy };
+  return [vA, vB, vC, vD];
+}
+
+// Level 3: trapezium with the horizontal pair AB (bottom) ∥ DC (top) parallel.
+//   Base angles thetaL (at A) and thetaR (at B); top angles are 180−thetaL and
+//   180−thetaR. `height` is the gap between the parallel sides.
+function placeTrapezium(thetaL: number, thetaR: number, base: number, height: number): Pt[] {
+  const vA: Pt = { x: 0, y: 0 };
+  const vB: Pt = { x: base, y: 0 };
+  const vD: Pt = { x: height / Math.tan(toRad(thetaL)), y: -height };
+  const vC: Pt = { x: base - height / Math.tan(toRad(thetaR)), y: -height };
+  return [vA, vB, vC, vD];
+}
+
+// Extend the side base→v beyond vertex v, returning the extension segment and a
+// (non-unknown) exterior angle label spanning from the extension tip E round to
+// `target`. Used by Level 3's exterior-angle overlay.
+function makeExterior(v: Pt, base: Pt, target: Pt, value: number): { ext: { from: Pt; to: Pt }; ang: AngleLabel } {
+  const dx = v.x - base.x, dy = v.y - base.y, len = Math.hypot(dx, dy) || 1;
+  const extLen = Math.min(120, Math.max(70, len * 0.5));
+  const E: Pt = { x: v.x + dx / len * extLen, y: v.y + dy / len * extLen };
+  return {
+    ext: { from: v, to: E },
+    ang: { label: `${value}°`, isUnknown: false, value, arcVertex: v, arcFrom: E, arcTo: target },
+  };
 }
 
 // ─── QUESTION GENERATION ──────────────────────────────────────────────────────
@@ -547,9 +639,219 @@ function buildLevel2(vars: QOVars): QuadQuestion {
   };
 }
 
+function buildLevel3(vars: QOVars): QuadQuestion {
+  // ── shape pool ── parallelogram & rhombus share one option (identical angle
+  // rules); a chosen para slot is randomly drawn as either for visual variety.
+  const catPool: ("para" | "trap")[] = [];
+  if (vars.paraRhombus) catPool.push("para");
+  if (vars.trapezium) catPool.push("trap");
+  if (!catPool.length) catPool.push("para");
+  const isTrap = catPool[rnd(0, catPool.length - 1)] === "trap";
+  const shape: "parallelogram" | "rhombus" | "trapezium" =
+    isTrap ? "trapezium" : (rnd(0, 1) === 0 ? "parallelogram" : "rhombus");
+  const shapeName = shape;                       // "parallelogram" | "rhombus" | "trapezium"
+
+  // ── find-type pool (opposite angle is meaningless on a general trapezium) ──
+  let findActive = ["coInterior", "opposite", "findAll"].filter(v => vars[v]);
+  if (isTrap) findActive = findActive.filter(v => v !== "opposite");
+  if (!findActive.length) findActive = ["coInterior"];
+  const findType = findActive[rnd(0, findActive.length - 1)];
+
+  const algType = pickAlgType(vars);
+  const algEligible = findType === "coInterior" || findType === "opposite";
+
+  // ── exterior-angle overlay ── extend a side and present the given angle as an
+  // exterior angle. "line" = recover the interior via angles on a straight line;
+  // "alt" = the tail angle equals an interior angle by alternate angles (needs a
+  // second parallel pair, so parallelogram/rhombus only). Applies to the single-
+  // given find-types (co-interior / opposite), never find-all.
+  const extOpts = ["none", "extended"].filter(v => vars[v]);
+  const extChoice = extOpts.length ? extOpts[rnd(0, extOpts.length - 1)] : "none";
+  let extMode: "none" | "line" | "alt" = "none";
+  if (extChoice === "extended" && (findType === "coInterior" || findType === "opposite")) {
+    const rules: ("line" | "alt")[] = isTrap ? ["line"] : ["line", "alt"];
+    extMode = rules[rnd(0, rules.length - 1)];
+  }
+
+  // Shapes are always drawn at a random rotation (and trapeziums randomly
+  // flipped). Rotation/reflection are isometries, so the interior angle values
+  // and the co-interior/opposite relationships are unchanged.
+  const flipV = (pts: Pt[]): Pt[] => pts.map(p => ({ x: p.x, y: -p.y }));
+
+  // ── geometry + interior angle values [A, B, C, D] ──
+  let verts: Pt[];
+  let vals: number[];
+  let parallelEdges: ParallelEdge[];
+
+  if (isTrap) {
+    let thetaL = rnd(52, 78), thetaR = rnd(52, 78);
+    if (Math.abs(thetaL - thetaR) < 8) thetaR = Math.min(78, thetaL + 9);
+    const height = 150;
+    const base = Math.round(height * (1 / Math.tan(toRad(thetaL)) + 1 / Math.tan(toRad(thetaR)))) + rnd(90, 170);
+    const rot = rnd(0, 359);
+    // randomly put the longer parallel side at the top (vertical flip)
+    const placed = rnd(0, 1) === 0 ? placeTrapezium(thetaL, thetaR, base, height) : flipV(placeTrapezium(thetaL, thetaR, base, height));
+    const [vA, vB, vC, vD] = rotatePts(placed, rot);
+    verts = [vA, vB, vC, vD];
+    vals = [thetaL, thetaR, 180 - thetaR, 180 - thetaL];   // A, B, C, D
+    // only the AB ∥ DC pair is parallel
+    parallelEdges = [{ a: vA, b: vB, count: 1 }, { a: vD, b: vC, count: 1 }];
+  } else {
+    const theta = rnd(38, 78);
+    const lean = rnd(0, 1) === 0 ? 1 : -1;
+    const side = shape === "rhombus" ? 200 : 175;
+    const base = shape === "rhombus" ? 200 : rnd(240, 280);
+    const rot = rnd(0, 359);
+    const [vA, vB, vC, vD] = rotatePts(placeParallelogram(theta, base, side, lean), rot);
+    verts = [vA, vB, vC, vD];
+    // leaning left swaps which vertices hold the acute angle
+    const aAng = lean === 1 ? theta : 180 - theta;
+    vals = [aAng, 180 - aAng, aAng, 180 - aAng];           // A, B, C, D
+    parallelEdges = [
+      { a: vA, b: vB, count: 1 }, { a: vD, b: vC, count: 1 },   // bottom ∥ top
+      { a: vA, b: vD, count: 2 }, { a: vB, b: vC, count: 2 },   // left ∥ right
+    ];
+  }
+
+  // every vertex starts hidden; given/unknown vertices are revealed below
+  const angles: AngleLabel[] = [0, 1, 2, 3].map(i => ({
+    label: `${vals[i]}°`, isUnknown: false, value: vals[i], hidden: true,
+    arcVertex: verts[i], arcFrom: verts[(i + 3) % 4], arcTo: verts[(i + 1) % 4],
+  }));
+  const reveal = (i: number) => { angles[i] = { ...angles[i], hidden: false }; };
+  const setUnknown = (i: number, label: string, value: number) => {
+    angles[i] = { ...angles[i], hidden: false, isUnknown: true, label, value };
+  };
+
+  // Present the given angle at vertex g — either plainly (reveal its interior),
+  // or as an exterior angle on an extended side. Returns the leading working
+  // steps that recover the interior value vals[g].
+  const extensions: { from: Pt; to: Pt }[] = [];
+  const legPartner: Record<number, number> = { 0: 3, 1: 2, 2: 1, 3: 0 };   // across a leg (transversal)
+  const parallelEnd: Record<number, number> = { 0: 2, 1: 3, 2: 0, 3: 1 };  // far end of the leg-partner's parallel side
+  const givenSteps = (g: number): { text: string }[] => {
+    const intG = vals[g];
+    if (extMode === "none") { reveal(g); return []; }
+    if (extMode === "line") {
+      const prev = verts[(g + 3) % 4], next = verts[(g + 1) % 4];
+      const extendPrev = rnd(0, 1) === 0;
+      const base = extendPrev ? prev : next, other = extendPrev ? next : prev;
+      const extVal = 180 - intG;
+      const { ext, ang } = makeExterior(verts[g], base, other, extVal);
+      extensions.push(ext); angles[g] = { ...ang, hidden: false };
+      return [
+        { text: "Angles on a straight line sum to 180°" },
+        { text: `Interior angle = 180° − ${extVal}° = ${intG}°` },
+      ];
+    }
+    // alt: tail angle at the leg-partner P equals interior g by alternate angles
+    const P = legPartner[g];
+    const { ext, ang } = makeExterior(verts[P], verts[parallelEnd[g]], verts[g], intG);
+    extensions.push(ext); angles[P] = { ...ang, hidden: false };
+    return [
+      { text: "Alternate angles are equal" },
+      { text: `Interior angle = ${intG}°` },
+    ];
+  };
+
+  let answer: string;
+  let working: { text: string }[];
+
+  if (findType === "findAll") {
+    const letters = ["a", "b", "c"];
+    if (isTrap) {
+      // give the two bottom angles (A, B); find the co-interior top pair (D, C)
+      reveal(0); reveal(1);
+      const unkA = 180 - vals[1];   // C (vertex 2) co-interior with B
+      const unkB = 180 - vals[0];   // D (vertex 3) co-interior with A
+      setUnknown(2, "a", unkA);
+      setUnknown(3, "b", unkB);
+      answer = `a = ${unkA}°, b = ${unkB}°`;
+      working = [
+        { text: "Co-interior angles add up to 180°" },
+        { text: `a = 180° − ${vals[1]}° = ${unkA}°` },
+        { text: `b = 180° − ${vals[0]}° = ${unkB}°` },
+      ];
+    } else {
+      // one given angle; the other three are one opposite (equal) + two co-interior
+      const g = rnd(0, 3);
+      reveal(g);
+      const others = [0, 1, 2, 3].filter(i => i !== g);   // ascending vertex order
+      const parts: string[] = [];
+      others.forEach((i, n) => {
+        const opposite = i === (g + 2) % 4;
+        const val = opposite ? vals[g] : 180 - vals[g];
+        setUnknown(i, letters[n], val);
+        parts.push(`${letters[n]} = ${val}°`);
+      });
+      answer = parts.join(", ");
+      working = [
+        { text: `Opposite angles in a ${shapeName} are equal` },
+        { text: "Co-interior angles add up to 180°" },
+      ];
+      others.forEach((i, n) => {
+        const opposite = i === (g + 2) % 4;
+        const val = opposite ? vals[g] : 180 - vals[g];
+        working.push({ text: opposite ? `${letters[n]} = ${vals[g]}°` : `${letters[n]} = 180° − ${vals[g]}° = ${val}°` });
+      });
+    }
+  } else if (findType === "opposite") {
+    // parallelogram / rhombus only: given + its opposite (equal)
+    const g = rnd(0, 3);
+    const u = (g + 2) % 4;
+    const lead = givenSteps(g);
+    const single = algEligible ? exprForUnknown(vals[u], algType) : { c: 1, k: 0, x: vals[u], label: "x" };
+    setUnknown(u, single.label, vals[u]);
+    answer = `x = ${single.x}°`;
+    working = [
+      ...lead,
+      { text: `Opposite angles in a ${shapeName} are equal` },
+      { text: `${single.label} = ${vals[g]}°` },
+      ...algSolveSteps(single.c, single.k, vals[u], single.x),
+    ];
+  } else {
+    // coInterior: given + an adjacent vertex (sum to 180°)
+    let g: number, u: number;
+    if (isTrap) {
+      // pick a leg: left = {A:0, D:3}, right = {B:1, C:2}
+      const leg = rnd(0, 1) === 0 ? [0, 3] : [1, 2];
+      if (rnd(0, 1) === 0) { g = leg[0]; u = leg[1]; } else { g = leg[1]; u = leg[0]; }
+    } else {
+      g = rnd(0, 3);
+      // alt-mode marks the given at g's leg-partner, so the unknown must be the
+      // other (parallel-side) neighbour to avoid landing on the same vertex.
+      const parallelNeighbour: Record<number, number> = { 0: 1, 1: 0, 2: 3, 3: 2 };
+      u = extMode === "alt" ? parallelNeighbour[g] : (rnd(0, 1) === 0 ? (g + 1) % 4 : (g + 3) % 4);
+    }
+    const lead = givenSteps(g);
+    const uVal = 180 - vals[g];
+    const single = algEligible ? exprForUnknown(uVal, algType) : { c: 1, k: 0, x: uVal, label: "x" };
+    setUnknown(u, single.label, uVal);
+    answer = `x = ${single.x}°`;
+    working = [
+      ...lead,
+      { text: "Co-interior angles add up to 180°" },
+      { text: `${single.label} + ${vals[g]}° = 180°` },
+      { text: `${single.label} = 180° − ${vals[g]}°` },
+      { text: `${single.label} = ${uVal}°` },
+      ...algSolveSteps(single.c, single.k, uVal, single.x),
+    ];
+  }
+
+  const [vA, vB, vC, vD] = verts;
+  return {
+    tool: "anglesInQuad", level: "level3",
+    edges: [[vA, vB], [vB, vC], [vC, vD], [vD, vA]],
+    extensions: extensions.length ? extensions : undefined,
+    parallelEdges, angles, answer, working,
+    id: Math.floor(Math.random() * 1_000_000),
+  };
+}
+
 function buildQuadQuestion(tool: string, level: string, vars: QOVars): QuadQuestion {
   let q: QuadQuestion;
-  if (level === "level2") q = buildLevel2(vars);
+  if (level === "level3") q = buildLevel3(vars);
+  else if (level === "level2") q = buildLevel2(vars);
   else q = buildLevel1(vars);
   q.difficulty = level;
   q.key = `${tool}-${level}-${q.id}`;
@@ -702,6 +1004,7 @@ function QuadDiagram({ q, showAnswer, small = false, dataIndex, fillBox = false 
   const arcStrokeU = (small ? 2 : 2.5) * k, arcStrokeK = (small ? 1.5 : 2) * k;
   const arrowSize = (small ? 5 : 7) * k;
   const tickLen = (small ? 9 : 13) * k, tickSpace = (small ? 5 : 7) * k;
+  const parSize = (small ? 4 : 6) * k, parSpace = (small ? 5 : 7) * k;
   const tps = (p: Pt): Pt => p;
 
   // On reveal, show the "x = …" answer in the green answer font as a band below
@@ -757,6 +1060,7 @@ function QuadDiagram({ q, showAnswer, small = false, dataIndex, fillBox = false 
       {q.extensions?.map((e, i) => <line key={`x${i}`} x1={tx(e.from.x)} y1={ty(e.from.y)} x2={tx(e.to.x)} y2={ty(e.to.y)} stroke="#1e293b" strokeWidth={strokeW} strokeLinecap="round" />)}
       {q.edges.map(([a, b], i) => <line key={`e${i}`} x1={tx(a.x)} y1={ty(a.y)} x2={tx(b.x)} y2={ty(b.y)} stroke="#1e293b" strokeWidth={strokeW} strokeLinecap="round" strokeLinejoin="round" />)}
       {q.tickEdges?.flatMap((te, i) => tickMarks(tp(te.a), tp(te.b), te.count, tickLen, tickSpace).map((t, ti) => <line key={`tk-${i}-${ti}`} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} stroke="#1e293b" strokeWidth={strokeW} strokeLinecap="round" />))}
+      {q.parallelEdges?.flatMap((pe, i) => parallelMarks(tp(pe.a), tp(pe.b), pe.count, parSize, parSpace).map((m, mi) => <polyline key={`pl-${i}-${mi}`} points={`${m.w1.x},${m.w1.y} ${m.tip.x},${m.tip.y} ${m.w2.x},${m.w2.y}`} fill="none" stroke="#1e293b" strokeWidth={strokeW} strokeLinecap="round" strokeLinejoin="round" />))}
       {q.angles.map((ang, i) => (!ang.isUnknown || ang.hidden) ? null : <path key={`sh-${i}`} d={sectorFill(ang.arcVertex, ang.arcFrom, ang.arcTo, unknownArcR, !!ang.reflex)} fill="#bfdbfe" fillOpacity="0.45" stroke="none" />)}
       {q.angles.map((ang, i) => ang.hidden ? null : <path key={`arc-${i}`} d={arcPath(ang.arcVertex, ang.arcFrom, ang.arcTo, ang.isUnknown ? unknownArcR : arcR, !!ang.reflex)} fill="none" stroke={ang.isUnknown ? "#2563eb" : "#475569"} strokeWidth={ang.isUnknown ? arcStrokeU : arcStrokeK} />)}
       {q.angles.map((ang, i) => ang.equalMark && !ang.hidden ? <g key={`eq-${i}`}>{equalTick(ang.arcVertex, ang.arcFrom, ang.arcTo, ang.isUnknown ? unknownArcR : arcR, !!ang.reflex)}</g> : null)}
@@ -918,9 +1222,9 @@ export default function App() {
       generateQuestion={generateQuestion}
       questionRenderer={questionRenderer}
       customPrintHandler={customPrintHandler}
-      defaults={{ fixedColumns: true, numColumns: 3, comingSoonLevels: ["level3"], hideFontControls: true }}
+      defaults={{ fixedColumns: true, numColumns: 3, hideFontControls: true }}
     />
   );
 }
 
-export const __test = { TOOL_CONFIG, generateQuestion, levels: ["level1", "level2"] };
+export const __test = { TOOL_CONFIG, generateQuestion, levels: ["level1", "level2", "level3"] };
