@@ -692,7 +692,9 @@ function QuadDiagram({ q, showAnswer, small = false, dataIndex, fillBox = false 
   const { fs: fsEst } = fitSquare();
   separate(fsEst);
   let { side, bcx, bcy } = fitSquare();   // eslint-disable-line prefer-const
-  side *= 1.04;   // small safety margin
+  // Extra breathing room in worksheet cells (small) so label boxes never reach
+  // the cell's clipped edge; whiteboard/example just need a hairline margin.
+  side *= small ? 1.14 : 1.04;
 
   const k = side / refSide;                 // scale visual sizes to the viewBox
   const fontSize = tfp * k;
@@ -797,10 +799,10 @@ const questionRenderer = (q: AnyQuestion, showAnswer: boolean, _cs: string, comp
   const d = (q as any)._diagram as QuadQuestion | undefined;
   if (!d) return null;
   if (compact === true) {
-    // Worksheet cell: fill the cell and letterbox by height so the square SVG
-    // never spills out of the box, whatever the cell's aspect ratio.
+    // Worksheet cell: a landscape (wider-than-tall) box keeps cells short so
+    // more rows fit on screen; the square SVG letterboxes by height within it.
     return (
-      <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+      <div style={{ width: "100%", aspectRatio: "1.4", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
         <QuadDiagram q={d} showAnswer={showAnswer} small dataIndex={idx} fillBox />
       </div>
     );
