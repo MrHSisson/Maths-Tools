@@ -703,11 +703,15 @@ function QuadDiagram({ q, showAnswer, small = false, dataIndex, fillBox = false 
   const tps = (p: Pt): Pt => p;
 
   // On reveal, show the "x = …" answer in the green answer font as a band below
-  // the diagram, inside the SVG so it scales/fits with it (ScaleToFit measures
-  // only the <svg>, so a sibling <div> would be clipped in collapsed/full mode).
+  // the diagram. Keep the viewBox SQUARE (same outer size as before) so the SVG
+  // never grows taller than its box — ScaleToFit only scales up, never down, so
+  // any extra height would clip in collapsed/full mode. Instead, shrink the
+  // diagram into the top portion and reserve the bottom band for the answer.
   const ansFs = fontSize * 1.35;
   const bandH = showAnswer ? ansFs * 1.9 : 0;
-  const vbX = bcx - side / 2, vbY = bcy - side / 2, vbW = side, vbH = side + bandH;
+  const vbX = bcx - side / 2, vbY = bcy - side / 2;
+  const shapeF = showAnswer ? (side - bandH) / side : 1;
+  const shapeTransform = `translate(${bcx} ${vbY}) scale(${shapeF}) translate(${-bcx} ${-vbY})`;
 
   function sweep(v: Pt, f: Pt, t2: Pt, reflex: boolean) {
     const a1 = Math.atan2(f.y - v.y, f.x - v.x), a2 = Math.atan2(t2.y - v.y, t2.x - v.x);
@@ -746,7 +750,8 @@ function QuadDiagram({ q, showAnswer, small = false, dataIndex, fillBox = false 
 
   const extraProps = dataIndex !== undefined ? { "data-q-index": dataIndex } : {};
   return (
-    <svg viewBox={`${vbX} ${vbY} ${vbW} ${vbH}`} style={{ display: "block", overflow: "visible", width: "100%", height: fillBox ? "100%" : "auto" }} preserveAspectRatio="xMidYMid meet" {...extraProps}>
+    <svg viewBox={`${vbX} ${vbY} ${side} ${side}`} style={{ display: "block", overflow: "visible", width: "100%", height: fillBox ? "100%" : "auto" }} preserveAspectRatio="xMidYMid meet" {...extraProps}>
+      <g transform={shapeTransform}>
       {q.extensions?.map((e, i) => <line key={`x${i}`} x1={tx(e.from.x)} y1={ty(e.from.y)} x2={tx(e.to.x)} y2={ty(e.to.y)} stroke="#1e293b" strokeWidth={strokeW} strokeLinecap="round" />)}
       {q.edges.map(([a, b], i) => <line key={`e${i}`} x1={tx(a.x)} y1={ty(a.y)} x2={tx(b.x)} y2={ty(b.y)} stroke="#1e293b" strokeWidth={strokeW} strokeLinecap="round" strokeLinejoin="round" />)}
       {q.tickEdges?.flatMap((te, i) => tickMarks(tp(te.a), tp(te.b), te.count, tickLen, tickSpace).map((t, ti) => <line key={`tk-${i}-${ti}`} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} stroke="#1e293b" strokeWidth={strokeW} strokeLinecap="round" />))}
@@ -779,8 +784,9 @@ function QuadDiagram({ q, showAnswer, small = false, dataIndex, fillBox = false 
           </g>
         );
       })}
+      </g>
       {showAnswer && (
-        <text x={bcx} y={vbY + side + bandH * 0.62} textAnchor="middle" dominantBaseline="middle" fontSize={ansFs} fontWeight="bold" fill="#166534">{q.answer}</text>
+        <text x={bcx} y={vbY + side - bandH / 2} textAnchor="middle" dominantBaseline="middle" fontSize={ansFs} fontWeight="bold" fill="#166534">{q.answer}</text>
       )}
     </svg>
   );
