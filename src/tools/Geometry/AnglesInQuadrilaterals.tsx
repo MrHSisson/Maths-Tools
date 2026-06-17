@@ -78,8 +78,8 @@ const ALG_MS: ToolMultiSelect = {
 const SHAPE3_MS: ToolMultiSelect = {
   key: "shape3", label: "Shape",
   options: [
-    { value: "paraRhombus", label: "Parallelogram/Rhombus", defaultActive: true },
     { value: "trapezium", label: "Trapezium", defaultActive: true },
+    { value: "paraRhombus", label: "Parallelogram/Rhombus", defaultActive: true },
   ],
 };
 const FIND3_MS: ToolMultiSelect = {
