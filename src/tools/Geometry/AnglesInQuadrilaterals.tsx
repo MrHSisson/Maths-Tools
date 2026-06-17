@@ -91,6 +91,13 @@ const FIND3_MS: ToolMultiSelect = {
     { value: "findAll", label: "Find all remaining angles", defaultActive: false },
   ],
 };
+const ORIENT3_MS: ToolMultiSelect = {
+  key: "orient3", label: "Orientation",
+  options: [
+    { value: "upright", label: "Upright", defaultActive: true },
+    { value: "rotated", label: "Rotated", sub: "(any angle)", defaultActive: true },
+  ],
+};
 
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Angles in a Quadrilateral",
@@ -101,7 +108,7 @@ const TOOL_CONFIG: ToolConfig = {
       difficultySettings: {
         level1: { variables: [], multiSelect: [ALG_MS, EXTERIOR_MS] },
         level2: { variables: [MARK_EQUAL_VAR], multiSelect: [SHAPE_MS, FIND_MS, ALG_MS] },
-        level3: { variables: [], multiSelect: [SHAPE3_MS, FIND3_MS, ALG_MS] },
+        level3: { variables: [], multiSelect: [SHAPE3_MS, FIND3_MS, ORIENT3_MS, ALG_MS] },
       },
     },
   },
@@ -137,6 +144,7 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Opposite angle", detail: "In a parallelogram (and a rhombus) opposite angles are equal — no calculation needed. Not available for a trapezium, whose opposite angles are generally unequal." },
       { label: "Find all remaining angles", detail: "Parallelogram/rhombus: one angle is given — find the other three (one equal opposite angle, two co-interior). Trapezium: the two angles on one parallel side are given — find the two co-interior angles facing them. Unknowns are labelled a, b, c." },
       { label: "Rhombus", detail: "A parallelogram with four equal sides. The angle rules are identical to a parallelogram." },
+      { label: "Orientation", detail: "Upright shows the shape roughly horizontal; Rotated spins it to any angle. Trapeziums also appear flipped, with the longer parallel side at the top as well as the bottom — the parallel sides are always identified by the arrow marks, not their position." },
       { label: "Algebraic angles", detail: "Co-interior and opposite questions can show the unknown as x, x + a, ax or ax + b. Form an equation from the rule and solve for x. (Find-all questions stay numeric.)" },
     ],
   },
@@ -638,6 +646,13 @@ function buildLevel3(vars: QOVars): QuadQuestion {
   const algType = pickAlgType(vars);
   const algEligible = findType === "coInterior" || findType === "opposite";
 
+  // ── orientation ── upright keeps the shape near-horizontal; rotated spins it
+  // to any angle. Reflection/rotation are isometries, so interior angle values
+  // (and the co-interior/opposite relationships) are unchanged either way.
+  const orientActive = ["upright", "rotated"].filter(v => vars[v]);
+  const bigRot = (orientActive.length ? orientActive[rnd(0, orientActive.length - 1)] : "upright") === "rotated";
+  const flipV = (pts: Pt[]): Pt[] => pts.map(p => ({ x: p.x, y: -p.y }));
+
   // ── geometry + interior angle values [A, B, C, D] ──
   let verts: Pt[];
   let vals: number[];
@@ -648,8 +663,10 @@ function buildLevel3(vars: QOVars): QuadQuestion {
     if (Math.abs(thetaL - thetaR) < 8) thetaR = Math.min(78, thetaL + 9);
     const height = 150;
     const base = Math.round(height * (1 / Math.tan(toRad(thetaL)) + 1 / Math.tan(toRad(thetaR)))) + rnd(90, 170);
-    const rot = rnd(-10, 10);
-    const [vA, vB, vC, vD] = rotatePts(placeTrapezium(thetaL, thetaR, base, height), rot);
+    const rot = bigRot ? rnd(0, 359) : rnd(-10, 10);
+    // randomly put the longer parallel side at the top (vertical flip)
+    const placed = rnd(0, 1) === 0 ? placeTrapezium(thetaL, thetaR, base, height) : flipV(placeTrapezium(thetaL, thetaR, base, height));
+    const [vA, vB, vC, vD] = rotatePts(placed, rot);
     verts = [vA, vB, vC, vD];
     vals = [thetaL, thetaR, 180 - thetaR, 180 - thetaL];   // A, B, C, D
     // only the AB ∥ DC pair is parallel
@@ -659,7 +676,7 @@ function buildLevel3(vars: QOVars): QuadQuestion {
     const lean = rnd(0, 1) === 0 ? 1 : -1;
     const side = shape === "rhombus" ? 200 : 175;
     const base = shape === "rhombus" ? 200 : rnd(240, 280);
-    const rot = rnd(-14, 14);
+    const rot = bigRot ? rnd(0, 359) : rnd(-14, 14);
     const [vA, vB, vC, vD] = rotatePts(placeParallelogram(theta, base, side, lean), rot);
     verts = [vA, vB, vC, vD];
     // leaning left swaps which vertices hold the acute angle
