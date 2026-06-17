@@ -299,14 +299,21 @@ const SPLIT_GROUP_L1: ToolMultiSelect = {
   ],
 };
 
-const TERM_OPTIONS3_L2: ToolMultiSelect = {
+// Sub-tool 3 Level 2 — each question is the two-variable base plus exactly ONE
+// enrichment drawn from the active pool (one complication per question):
+//   • Constants       — a number term (one, or a collectable pair) beside two vars
+//   • Squared terms   — one variable squared (capped to a single variable), giving
+//                       an x / x² split next to a linear anchor variable
+//   • Three variables — a third linear variable group to sort and collect
+// allowEmpty:false so L2 always steps up from the plain two-variable L1.
+const ENRICH_L2: ToolMultiSelect = {
   key: "termOptions",
-  label: "Extra Term Types",
-  allowEmpty: true,
+  label: "Term Types",
+  allowEmpty: false,
   options: [
-    { value: "noCoefficients", label: "No coefficients (x + y + x...)", defaultActive: false },
-    { value: "includeConstant", label: "Include a constant term", defaultActive: false },
-    { value: "includeSquare", label: "Include squared terms", defaultActive: false },
+    { value: "includeConstant", label: "Constants", defaultActive: true },
+    { value: "includeSquare", label: "Squared terms", defaultActive: true },
+    { value: "threeVariables", label: "Three variables", defaultActive: true },
   ],
 };
 
@@ -352,10 +359,10 @@ const TOOL_CONFIG: ToolConfig = {
       instruction: "Simplify:",
       variables: [],
       dropdown: null,
-      multiSelect: [SUBTRACTION_GROUP, TERM_OPTIONS3_L2],
+      multiSelect: [SUBTRACTION_GROUP, ENRICH_L2],
       difficultySettings: {
         level1: { multiSelect: [SUBTRACTION_GROUP, SPLIT_GROUP_L1] },
-        level2: { multiSelect: [SUBTRACTION_GROUP, TERM_OPTIONS3_L2] },
+        level2: { multiSelect: [SUBTRACTION_GROUP, ENRICH_L2] },
         level3: { multiSelect: [SUBTRACTION_GROUP_L3, TERM_OPTIONS3_L3] },
       },
     },
@@ -382,7 +389,7 @@ const INFO_SECTIONS: InfoSection[] = [
   { title: "Multiple Variables", icon: "🔡", content: [
     { label: "Overview", detail: "Students simplify expressions containing two distinct variables. Both variables are always present in every question — students must identify and collect each variable group independently." },
     { label: "Level 1 — Green", detail: "Exactly two variables, powers of 1, four terms, coefficients 2–9. The Term Split option chooses a 2 + 2 split (both variables collectable) or a 3 + 1 split (one collectable pair plus a single uncollectable term). Subtraction and crossing zero available." },
-    { label: "Level 2 — Yellow", detail: "Adds optional constants and squared terms as extra uncollectable or separately-collectable types. Subtraction and crossing zero available as QO options." },
+    { label: "Level 2 — Yellow", detail: "Each question adds one complication to the two-variable base — a constant (or a collectable pair of constants), one squared variable (capped to a single variable, giving an x / x² split beside a linear anchor), or a third variable to collect. Five or six terms with at least one collectable group guaranteed. Subtraction and crossing zero available." },
     { label: "Level 3 — Red", detail: "Both variables always have a collectable pair — students collect two groups simultaneously. Squared terms for both variables optional. Subtraction and crossing zero defaultActive." },
   ]},
   { title: "Modes", icon: "🖥️", content: [
@@ -850,7 +857,7 @@ const genSubtool2 = (level: DifficultyLevel, msv: Record<string, boolean>): Simp
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const genSubtool3 = (level: DifficultyLevel, msv: Record<string, boolean>): SimpleQuestion => {
-  const [varA, varB] = shuffle(VAR_POOL).slice(0, 2);
+  const [varA, varB, varC] = shuffle(VAR_POOL).slice(0, 3);
   const varOrder = [varA, varB];
   const caseType = pickActive(msv, SUBTRACTION_GROUP.options);
   const noCoef = isOn(msv, "noCoefficients");
@@ -879,21 +886,50 @@ const genSubtool3 = (level: DifficultyLevel, msv: Record<string, boolean>): Simp
   }
 
   if (level === "level2") {
-    // Collectable pair in varA, varB present (>=1), optional constant / squared.
-    const minMag = noCoef ? 1 : 2;
-    const maxMag = noCoef ? 1 : 9;
-    const countA = randInt(2, 3);
-    const aCoeffs = genMainCoeffs(countA, caseType, minMag, maxMag);
-    const terms: Term[] = aCoeffs.map(c => ({ coef: c, vars: [{ v: varA, n: 1 }] }));
-    terms.push({ coef: genSingleCoeff(caseType, minMag, maxMag), vars: [{ v: varB, n: 1 }] });
-    if (isOn(msv, "includeConstant")) {
-      terms.push({ coef: genSingleCoeff(caseType, 2, 9), vars: [] });
+    // One enrichment per question, drawn from the active pool (ENRICH_L2). Every
+    // question is 5-6 terms with at least one guaranteed collectable group. A
+    // group of 2+ terms is generated with genMainCoeffs (non-zero, non-uniform
+    // sum, following the subtraction case); a lone term uses genSingleCoeff.
+    const enrich = pickActive(msv, ENRICH_L2.options);
+    const grp = (cnt: number): number[] =>
+      cnt >= 2 ? genMainCoeffs(cnt, caseType, 2, 9) : [genSingleCoeff(caseType, 2, 9)];
+
+    if (enrich === "threeVariables") {
+      // Three linear variables, 5-6 terms. Each variable is present; the extra
+      // terms beyond one-each always grow at least one group into a pair.
+      const order = [varA, varB, varC];
+      const counts = [1, 1, 1];
+      for (let extra = randInt(5, 6) - 3; extra > 0; extra--) counts[randInt(0, 2)]++;
+      const terms: Term[] = [];
+      order.forEach((vv, i) => grp(counts[i]).forEach(c => terms.push({ coef: c, vars: [{ v: vv, n: 1 }] })));
+      return buildCollectQuestion(level, terms, order, true, `t3-L2-3v-${varA}${varB}${varC}`);
     }
-    if (isOn(msv, "includeSquare")) {
-      const sqVar = Math.random() < 0.5 ? varA : varB;
-      terms.push({ coef: genSingleCoeff(caseType, 2, 9), vars: [{ v: sqVar, n: 2 }] });
+
+    if (enrich === "includeConstant") {
+      // Two linear variables (varA a guaranteed pair) plus either a lone constant
+      // or a collectable pair of constants. 5-6 terms.
+      const numConst = pick([1, 2]);
+      const varTotal = randInt(5, 6) - numConst;               // 3-5
+      const countA = Math.min(pick([2, 3]), varTotal - 1);     // pair, leaving >=1 for varB
+      const terms: Term[] = [
+        ...grp(countA).map(c => ({ coef: c, vars: [{ v: varA, n: 1 }] })),
+        ...grp(varTotal - countA).map(c => ({ coef: c, vars: [{ v: varB, n: 1 }] })),
+        ...grp(numConst).map(c => ({ coef: c, vars: [] as VarPower[] })),
+      ];
+      return buildCollectQuestion(level, terms, varOrder, true, `t3-L2-c-${varA}${varB}`);
     }
-    return buildCollectQuestion(level, terms, varOrder, true, `t3-L2-${varA}${varB}`);
+
+    // includeSquare — exactly one variable squared (varA, capped); varB is the
+    // linear anchor. The square pair always collects, and varA also appears
+    // linear so the student must keep varA² and varA apart (the x / x² trap).
+    const sqLin = pick([1, 2]);
+    const lin = sqLin === 1 ? 2 : pick([1, 2]);                // keep 2 + sqLin + lin >= 5
+    const terms: Term[] = [
+      ...grp(2).map(c => ({ coef: c, vars: [{ v: varA, n: 2 }] })),
+      ...grp(sqLin).map(c => ({ coef: c, vars: [{ v: varA, n: 1 }] })),
+      ...grp(lin).map(c => ({ coef: c, vars: [{ v: varB, n: 1 }] })),
+    ];
+    return buildCollectQuestion(level, terms, varOrder, true, `t3-L2-sq-${varA}${varB}`);
   }
 
   // level3 — BOTH vars have a collectable pair. Powers 1–2 (univariate terms).
