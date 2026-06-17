@@ -285,12 +285,17 @@ const TERM_OPTIONS2_L3: ToolMultiSelect = {
   ],
 };
 
-const TERM_OPTIONS3_L1: ToolMultiSelect = {
-  key: "termOptions",
-  label: "Extra Term Types",
-  allowEmpty: true,
+// Sub-tool 3 Level 1 — mirrors Single Variable L2 (4 terms, one secondary type),
+// but the secondary type is the OTHER variable. The split selector chooses how the
+// 4 terms divide between the two variables: 2-2 (both collectable) or 3-1 (one
+// collectable pair plus a singleton). Both on by default → a mix across a worksheet.
+const SPLIT_GROUP_L1: ToolMultiSelect = {
+  key: "splitCases",
+  label: "Term Split",
+  allowEmpty: false,
   options: [
-    { value: "noCoefficients", label: "No coefficients (x + y + x...)", defaultActive: false },
+    { value: "split22", label: "2 and 2", defaultActive: true },
+    { value: "split31", label: "3 and 1", defaultActive: true },
   ],
 };
 
@@ -349,7 +354,7 @@ const TOOL_CONFIG: ToolConfig = {
       dropdown: null,
       multiSelect: [SUBTRACTION_GROUP, TERM_OPTIONS3_L2],
       difficultySettings: {
-        level1: { multiSelect: [SUBTRACTION_GROUP, TERM_OPTIONS3_L1] },
+        level1: { multiSelect: [SUBTRACTION_GROUP, SPLIT_GROUP_L1] },
         level2: { multiSelect: [SUBTRACTION_GROUP, TERM_OPTIONS3_L2] },
         level3: { multiSelect: [SUBTRACTION_GROUP_L3, TERM_OPTIONS3_L3] },
       },
@@ -376,7 +381,7 @@ const INFO_SECTIONS: InfoSection[] = [
   ]},
   { title: "Multiple Variables", icon: "🔡", content: [
     { label: "Overview", detail: "Students simplify expressions containing two distinct variables. Both variables are always present in every question — students must identify and collect each variable group independently." },
-    { label: "Level 1 — Green", detail: "Exactly two variables, powers of 1, positive coefficients (unless subtraction options active). At least one collectable pair guaranteed. No coefficients mode available." },
+    { label: "Level 1 — Green", detail: "Exactly two variables, powers of 1, four terms, coefficients 2–9. The Term Split option chooses a 2 + 2 split (both variables collectable) or a 3 + 1 split (one collectable pair plus a single uncollectable term). Subtraction and crossing zero available." },
     { label: "Level 2 — Yellow", detail: "Adds optional constants and squared terms as extra uncollectable or separately-collectable types. Subtraction and crossing zero available as QO options." },
     { label: "Level 3 — Red", detail: "Both variables always have a collectable pair — students collect two groups simultaneously. Squared terms for both variables optional. Subtraction and crossing zero defaultActive." },
   ]},
@@ -851,29 +856,24 @@ const genSubtool3 = (level: DifficultyLevel, msv: Record<string, boolean>): Simp
   const noCoef = isOn(msv, "noCoefficients");
 
   if (level === "level1") {
-    // Power-1 both vars; varA has a collectable pair, varB present (>=1).
-    if (noCoef) {
-      const total = randInt(4, 8);
-      const countA = randInt(2, total - 1);
-      const countB = total - countA;
-      const aCoeffs = genMainCoeffs(countA, caseType, 1, 1);
-      const bCoeffs = genFreeCoeffs(countB, 1, 1, caseType !== "positiveOnly");
+    // Mirrors Single Variable L2: exactly 4 power-1 terms across two variables.
+    // Split selector decides the division — 3-1 (one collectable pair + a
+    // singleton) or 2-2 (both variables collectable). Coefficients 2-9, signs
+    // following the subtraction case, exactly as in Single Variable L2.
+    const split = pickActive(msv, SPLIT_GROUP_L1.options);
+    if (split === "split31") {
+      const threeIsA = Math.random() < 0.5;
+      const threeVar = threeIsA ? varA : varB;
+      const oneVar = threeIsA ? varB : varA;
       const terms: Term[] = [
-        ...aCoeffs.map(c => ({ coef: c, vars: [{ v: varA, n: 1 }] })),
-        ...bCoeffs.map(c => ({ coef: c, vars: [{ v: varB, n: 1 }] })),
+        ...genMainCoeffs(3, caseType, 2, 9).map(c => ({ coef: c, vars: [{ v: threeVar, n: 1 }] })),
+        { coef: genSingleCoeff(caseType, 2, 9), vars: [{ v: oneVar, n: 1 }] },
       ];
-      return buildCollectQuestion(level, terms, varOrder, true, `t3-L1nc-${varA}${varB}`);
+      return buildCollectQuestion(level, terms, varOrder, true, `t3-L1-${varA}${varB}`);
     }
-    const total = randInt(3, 4);
-    const countA = randInt(2, total - 1);
-    const countB = total - countA;
-    const aCoeffs = genMainCoeffs(countA, caseType, 2, 9);
-    const bCoeffs = countB === 1
-      ? [genSingleCoeff(caseType, 2, 9)]
-      : genFreeCoeffs(countB, 2, 9, caseType !== "positiveOnly");
     const terms: Term[] = [
-      ...aCoeffs.map(c => ({ coef: c, vars: [{ v: varA, n: 1 }] })),
-      ...bCoeffs.map(c => ({ coef: c, vars: [{ v: varB, n: 1 }] })),
+      ...genMainCoeffs(2, caseType, 2, 9).map(c => ({ coef: c, vars: [{ v: varA, n: 1 }] })),
+      ...genMainCoeffs(2, caseType, 2, 9).map(c => ({ coef: c, vars: [{ v: varB, n: 1 }] })),
     ];
     return buildCollectQuestion(level, terms, varOrder, true, `t3-L1-${varA}${varB}`);
   }
