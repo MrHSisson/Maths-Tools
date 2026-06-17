@@ -84,10 +84,11 @@ const SHAPE3_MS: ToolMultiSelect = {
 };
 const FIND3_MS: ToolMultiSelect = {
   key: "find3", label: "Find",
+  info: "Opposite is only applicable to Parallelogram/Rhombus.",
   options: [
     { value: "coInterior", label: "Co-interior", defaultActive: true },
     { value: "findAll", label: "All", defaultActive: false },
-    { value: "opposite", label: "Opposite", info: "Only applicable to Parallelogram/Rhombus.", defaultActive: true },
+    { value: "opposite", label: "Opposite", divider: true, defaultActive: true },
   ],
 };
 const EXT3_MS: ToolMultiSelect = {
