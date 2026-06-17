@@ -136,7 +136,7 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Co-interior angle", detail: "Two angles between the same pair of parallel sides (on one side of a connecting side) add up to 180°. Works for all three shapes. The unknown is the angle at the other end of a side." },
       { label: "Opposite angle", detail: "In a parallelogram (and a rhombus) opposite angles are equal — no calculation needed. Not available for a trapezium, whose opposite angles are generally unequal." },
       { label: "Find all remaining angles", detail: "Parallelogram/rhombus: one angle is given — find the other three (one equal opposite angle, two co-interior). Trapezium: the two angles on one parallel side are given — find the two co-interior angles facing them. Unknowns are labelled a, b, c." },
-      { label: "Rhombus", detail: "A parallelogram with four equal sides (shown by side ticks). The angle rules are identical to a parallelogram." },
+      { label: "Rhombus", detail: "A parallelogram with four equal sides. The angle rules are identical to a parallelogram." },
       { label: "Algebraic angles", detail: "Co-interior and opposite questions can show the unknown as x, x + a, ax or ax + b. Form an equation from the rule and solve for x. (Find-all questions stay numeric.)" },
     ],
   },
@@ -642,7 +642,6 @@ function buildLevel3(vars: QOVars): QuadQuestion {
   let verts: Pt[];
   let vals: number[];
   let parallelEdges: ParallelEdge[];
-  let tickEdges: TickEdge[] | undefined;
 
   if (isTrap) {
     let thetaL = rnd(52, 78), thetaR = rnd(52, 78);
@@ -670,12 +669,6 @@ function buildLevel3(vars: QOVars): QuadQuestion {
       { a: vA, b: vB, count: 1 }, { a: vD, b: vC, count: 1 },   // bottom ∥ top
       { a: vA, b: vD, count: 2 }, { a: vB, b: vC, count: 2 },   // left ∥ right
     ];
-    if (shape === "rhombus") {
-      tickEdges = [
-        { a: vA, b: vB, count: 1 }, { a: vB, b: vC, count: 1 },
-        { a: vC, b: vD, count: 1 }, { a: vD, b: vA, count: 1 },
-      ];
-    }
   }
 
   // every vertex starts hidden; given/unknown vertices are revealed below
@@ -771,7 +764,7 @@ function buildLevel3(vars: QOVars): QuadQuestion {
   return {
     tool: "anglesInQuad", level: "level3",
     edges: [[vA, vB], [vB, vC], [vC, vD], [vD, vA]],
-    parallelEdges, tickEdges, angles, answer, working,
+    parallelEdges, angles, answer, working,
     id: Math.floor(Math.random() * 1_000_000),
   };
 }
