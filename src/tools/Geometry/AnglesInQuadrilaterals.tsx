@@ -98,6 +98,13 @@ const ORIENT3_MS: ToolMultiSelect = {
     { value: "rotated", label: "Rotated", sub: "(any angle)", defaultActive: true },
   ],
 };
+const EXT3_MS: ToolMultiSelect = {
+  key: "ext3", label: "Exterior Angles",
+  options: [
+    { value: "none", label: "None", defaultActive: true },
+    { value: "extended", label: "Extended side", sub: "(alternate / straight line)", defaultActive: false },
+  ],
+};
 
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Angles in a Quadrilateral",
@@ -108,7 +115,7 @@ const TOOL_CONFIG: ToolConfig = {
       difficultySettings: {
         level1: { variables: [], multiSelect: [ALG_MS, EXTERIOR_MS] },
         level2: { variables: [MARK_EQUAL_VAR], multiSelect: [SHAPE_MS, FIND_MS, ALG_MS] },
-        level3: { variables: [], multiSelect: [SHAPE3_MS, FIND3_MS, ORIENT3_MS, ALG_MS] },
+        level3: { variables: [], multiSelect: [SHAPE3_MS, FIND3_MS, ORIENT3_MS, EXT3_MS, ALG_MS] },
       },
     },
   },
@@ -145,6 +152,7 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Find all remaining angles", detail: "Parallelogram/rhombus: one angle is given — find the other three (one equal opposite angle, two co-interior). Trapezium: the two angles on one parallel side are given — find the two co-interior angles facing them. Unknowns are labelled a, b, c." },
       { label: "Rhombus", detail: "A parallelogram with four equal sides. The angle rules are identical to a parallelogram." },
       { label: "Orientation", detail: "Upright shows the shape roughly horizontal; Rotated spins it to any angle. Trapeziums also appear flipped, with the longer parallel side at the top as well as the bottom — the parallel sides are always identified by the arrow marks, not their position." },
+      { label: "Exterior angles", detail: "Turn on 'Extended side' to draw one side extended past a vertex with the exterior angle marked. The student first brings that angle into the shape — by angles on a straight line (interior = 180° − exterior), or by alternate angles (the tail angle equals an interior angle, Z-shape) — then applies the co-interior or opposite rule. Alternate-angle questions use the second pair of parallel sides, so they appear on parallelograms and rhombuses; trapeziums use angles on a straight line." },
       { label: "Algebraic angles", detail: "Co-interior and opposite questions can show the unknown as x, x + a, ax or ax + b. Form an equation from the rule and solve for x. (Find-all questions stay numeric.)" },
     ],
   },
@@ -270,6 +278,19 @@ function placeTrapezium(thetaL: number, thetaR: number, base: number, height: nu
   const vD: Pt = { x: height / Math.tan(toRad(thetaL)), y: -height };
   const vC: Pt = { x: base - height / Math.tan(toRad(thetaR)), y: -height };
   return [vA, vB, vC, vD];
+}
+
+// Extend the side base→v beyond vertex v, returning the extension segment and a
+// (non-unknown) exterior angle label spanning from the extension tip E round to
+// `target`. Used by Level 3's exterior-angle overlay.
+function makeExterior(v: Pt, base: Pt, target: Pt, value: number): { ext: { from: Pt; to: Pt }; ang: AngleLabel } {
+  const dx = v.x - base.x, dy = v.y - base.y, len = Math.hypot(dx, dy) || 1;
+  const extLen = Math.min(120, Math.max(70, len * 0.5));
+  const E: Pt = { x: v.x + dx / len * extLen, y: v.y + dy / len * extLen };
+  return {
+    ext: { from: v, to: E },
+    ang: { label: `${value}°`, isUnknown: false, value, arcVertex: v, arcFrom: E, arcTo: target },
+  };
 }
 
 // ─── QUESTION GENERATION ──────────────────────────────────────────────────────
@@ -646,6 +667,19 @@ function buildLevel3(vars: QOVars): QuadQuestion {
   const algType = pickAlgType(vars);
   const algEligible = findType === "coInterior" || findType === "opposite";
 
+  // ── exterior-angle overlay ── extend a side and present the given angle as an
+  // exterior angle. "line" = recover the interior via angles on a straight line;
+  // "alt" = the tail angle equals an interior angle by alternate angles (needs a
+  // second parallel pair, so parallelogram/rhombus only). Applies to the single-
+  // given find-types (co-interior / opposite), never find-all.
+  const extOpts = ["none", "extended"].filter(v => vars[v]);
+  const extChoice = extOpts.length ? extOpts[rnd(0, extOpts.length - 1)] : "none";
+  let extMode: "none" | "line" | "alt" = "none";
+  if (extChoice === "extended" && (findType === "coInterior" || findType === "opposite")) {
+    const rules: ("line" | "alt")[] = isTrap ? ["line"] : ["line", "alt"];
+    extMode = rules[rnd(0, rules.length - 1)];
+  }
+
   // ── orientation ── upright keeps the shape near-horizontal; rotated spins it
   // to any angle. Reflection/rotation are isometries, so interior angle values
   // (and the co-interior/opposite relationships) are unchanged either way.
@@ -698,6 +732,37 @@ function buildLevel3(vars: QOVars): QuadQuestion {
     angles[i] = { ...angles[i], hidden: false, isUnknown: true, label, value };
   };
 
+  // Present the given angle at vertex g — either plainly (reveal its interior),
+  // or as an exterior angle on an extended side. Returns the leading working
+  // steps that recover the interior value vals[g].
+  const extensions: { from: Pt; to: Pt }[] = [];
+  const legPartner: Record<number, number> = { 0: 3, 1: 2, 2: 1, 3: 0 };   // across a leg (transversal)
+  const parallelEnd: Record<number, number> = { 0: 2, 1: 3, 2: 0, 3: 1 };  // far end of the leg-partner's parallel side
+  const givenSteps = (g: number): { text: string }[] => {
+    const intG = vals[g];
+    if (extMode === "none") { reveal(g); return []; }
+    if (extMode === "line") {
+      const prev = verts[(g + 3) % 4], next = verts[(g + 1) % 4];
+      const extendPrev = rnd(0, 1) === 0;
+      const base = extendPrev ? prev : next, other = extendPrev ? next : prev;
+      const extVal = 180 - intG;
+      const { ext, ang } = makeExterior(verts[g], base, other, extVal);
+      extensions.push(ext); angles[g] = { ...ang, hidden: false };
+      return [
+        { text: "Angles on a straight line sum to 180°" },
+        { text: `Interior angle = 180° − ${extVal}° = ${intG}°` },
+      ];
+    }
+    // alt: tail angle at the leg-partner P equals interior g by alternate angles
+    const P = legPartner[g];
+    const { ext, ang } = makeExterior(verts[P], verts[parallelEnd[g]], verts[g], intG);
+    extensions.push(ext); angles[P] = { ...ang, hidden: false };
+    return [
+      { text: "Alternate angles are equal" },
+      { text: `Interior angle = ${intG}°` },
+    ];
+  };
+
   let answer: string;
   let working: { text: string }[];
 
@@ -743,11 +808,12 @@ function buildLevel3(vars: QOVars): QuadQuestion {
     // parallelogram / rhombus only: given + its opposite (equal)
     const g = rnd(0, 3);
     const u = (g + 2) % 4;
-    reveal(g);
+    const lead = givenSteps(g);
     const single = algEligible ? exprForUnknown(vals[u], algType) : { c: 1, k: 0, x: vals[u], label: "x" };
     setUnknown(u, single.label, vals[u]);
     answer = `x = ${single.x}°`;
     working = [
+      ...lead,
       { text: `Opposite angles in a ${shapeName} are equal` },
       { text: `${single.label} = ${vals[g]}°` },
       ...algSolveSteps(single.c, single.k, vals[u], single.x),
@@ -761,14 +827,18 @@ function buildLevel3(vars: QOVars): QuadQuestion {
       if (rnd(0, 1) === 0) { g = leg[0]; u = leg[1]; } else { g = leg[1]; u = leg[0]; }
     } else {
       g = rnd(0, 3);
-      u = rnd(0, 1) === 0 ? (g + 1) % 4 : (g + 3) % 4;
+      // alt-mode marks the given at g's leg-partner, so the unknown must be the
+      // other (parallel-side) neighbour to avoid landing on the same vertex.
+      const parallelNeighbour: Record<number, number> = { 0: 1, 1: 0, 2: 3, 3: 2 };
+      u = extMode === "alt" ? parallelNeighbour[g] : (rnd(0, 1) === 0 ? (g + 1) % 4 : (g + 3) % 4);
     }
-    reveal(g);
+    const lead = givenSteps(g);
     const uVal = 180 - vals[g];
     const single = algEligible ? exprForUnknown(uVal, algType) : { c: 1, k: 0, x: uVal, label: "x" };
     setUnknown(u, single.label, uVal);
     answer = `x = ${single.x}°`;
     working = [
+      ...lead,
       { text: "Co-interior angles add up to 180°" },
       { text: `${single.label} + ${vals[g]}° = 180°` },
       { text: `${single.label} = 180° − ${vals[g]}°` },
@@ -781,6 +851,7 @@ function buildLevel3(vars: QOVars): QuadQuestion {
   return {
     tool: "anglesInQuad", level: "level3",
     edges: [[vA, vB], [vB, vC], [vC, vD], [vD, vA]],
+    extensions: extensions.length ? extensions : undefined,
     parallelEdges, angles, answer, working,
     id: Math.floor(Math.random() * 1_000_000),
   };
