@@ -78,24 +78,16 @@ const ALG_MS: ToolMultiSelect = {
 const SHAPE3_MS: ToolMultiSelect = {
   key: "shape3", label: "Shape",
   options: [
-    { value: "parallelogram", label: "Parallelogram", defaultActive: true },
-    { value: "rhombus", label: "Rhombus", defaultActive: true },
+    { value: "paraRhombus", label: "Parallelogram/Rhombus", defaultActive: true },
     { value: "trapezium", label: "Trapezium", defaultActive: true },
   ],
 };
 const FIND3_MS: ToolMultiSelect = {
   key: "find3", label: "Find",
   options: [
-    { value: "coInterior", label: "Co-interior angle", sub: "(sum to 180°)", defaultActive: true },
-    { value: "opposite", label: "Opposite angle", sub: "(equal — not trapezium)", defaultActive: true },
-    { value: "findAll", label: "Find all remaining angles", defaultActive: false },
-  ],
-};
-const ORIENT3_MS: ToolMultiSelect = {
-  key: "orient3", label: "Orientation",
-  options: [
-    { value: "upright", label: "Upright", defaultActive: true },
-    { value: "rotated", label: "Rotated", sub: "(any angle)", defaultActive: true },
+    { value: "coInterior", label: "Co-interior", defaultActive: true },
+    { value: "findAll", label: "All", defaultActive: false },
+    { value: "opposite", label: "Opposite", info: "Only applicable to Parallelogram/Rhombus.", defaultActive: true },
   ],
 };
 const EXT3_MS: ToolMultiSelect = {
@@ -115,7 +107,7 @@ const TOOL_CONFIG: ToolConfig = {
       difficultySettings: {
         level1: { variables: [], multiSelect: [ALG_MS, EXTERIOR_MS] },
         level2: { variables: [MARK_EQUAL_VAR], multiSelect: [SHAPE_MS, FIND_MS, ALG_MS] },
-        level3: { variables: [], multiSelect: [SHAPE3_MS, FIND3_MS, ORIENT3_MS, EXT3_MS, ALG_MS] },
+        level3: { variables: [], multiSelect: [SHAPE3_MS, FIND3_MS, EXT3_MS, ALG_MS] },
       },
     },
   },
@@ -150,8 +142,7 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Co-interior angle", detail: "Two angles between the same pair of parallel sides (on one side of a connecting side) add up to 180°. Works for all three shapes. The unknown is the angle at the other end of a side." },
       { label: "Opposite angle", detail: "In a parallelogram (and a rhombus) opposite angles are equal — no calculation needed. Not available for a trapezium, whose opposite angles are generally unequal." },
       { label: "Find all remaining angles", detail: "Parallelogram/rhombus: one angle is given — find the other three (one equal opposite angle, two co-interior). Trapezium: the two angles on one parallel side are given — find the two co-interior angles facing them. Unknowns are labelled a, b, c." },
-      { label: "Rhombus", detail: "A parallelogram with four equal sides. The angle rules are identical to a parallelogram." },
-      { label: "Orientation", detail: "Upright shows the shape roughly horizontal; Rotated spins it to any angle. Trapeziums also appear flipped, with the longer parallel side at the top as well as the bottom — the parallel sides are always identified by the arrow marks, not their position." },
+      { label: "Parallelogram / Rhombus", detail: "Combined into one option — a rhombus is a parallelogram with four equal sides, so the angle rules (opposite equal, co-interior sum to 180°) are identical. Shapes appear at any rotation, and trapeziums also flip so the longer parallel side can be at the top — the parallel sides are always identified by the arrow marks, not their position." },
       { label: "Exterior angles", detail: "Turn on 'Extended side' to draw one side extended past a vertex with the exterior angle marked. The student first brings that angle into the shape — by angles on a straight line (interior = 180° − exterior), or by alternate angles (the tail angle equals an interior angle, Z-shape) — then applies the co-interior or opposite rule. Alternate-angle questions use the second pair of parallel sides, so they appear on parallelograms and rhombuses; trapeziums use angles on a straight line." },
       { label: "Algebraic angles", detail: "Co-interior and opposite questions can show the unknown as x, x + a, ax or ax + b. Form an equation from the rule and solve for x. (Find-all questions stay numeric.)" },
     ],
@@ -648,14 +639,15 @@ function buildLevel2(vars: QOVars): QuadQuestion {
 }
 
 function buildLevel3(vars: QOVars): QuadQuestion {
-  // ── shape pool ──
-  const shapePool: ("parallelogram" | "rhombus" | "trapezium")[] = [];
-  if (vars.parallelogram) shapePool.push("parallelogram");
-  if (vars.rhombus) shapePool.push("rhombus");
-  if (vars.trapezium) shapePool.push("trapezium");
-  if (!shapePool.length) shapePool.push("parallelogram");
-  const shape = shapePool[rnd(0, shapePool.length - 1)];
-  const isTrap = shape === "trapezium";
+  // ── shape pool ── parallelogram & rhombus share one option (identical angle
+  // rules); a chosen para slot is randomly drawn as either for visual variety.
+  const catPool: ("para" | "trap")[] = [];
+  if (vars.paraRhombus) catPool.push("para");
+  if (vars.trapezium) catPool.push("trap");
+  if (!catPool.length) catPool.push("para");
+  const isTrap = catPool[rnd(0, catPool.length - 1)] === "trap";
+  const shape: "parallelogram" | "rhombus" | "trapezium" =
+    isTrap ? "trapezium" : (rnd(0, 1) === 0 ? "parallelogram" : "rhombus");
   const shapeName = shape;                       // "parallelogram" | "rhombus" | "trapezium"
 
   // ── find-type pool (opposite angle is meaningless on a general trapezium) ──
@@ -680,11 +672,9 @@ function buildLevel3(vars: QOVars): QuadQuestion {
     extMode = rules[rnd(0, rules.length - 1)];
   }
 
-  // ── orientation ── upright keeps the shape near-horizontal; rotated spins it
-  // to any angle. Reflection/rotation are isometries, so interior angle values
-  // (and the co-interior/opposite relationships) are unchanged either way.
-  const orientActive = ["upright", "rotated"].filter(v => vars[v]);
-  const bigRot = (orientActive.length ? orientActive[rnd(0, orientActive.length - 1)] : "upright") === "rotated";
+  // Shapes are always drawn at a random rotation (and trapeziums randomly
+  // flipped). Rotation/reflection are isometries, so the interior angle values
+  // and the co-interior/opposite relationships are unchanged.
   const flipV = (pts: Pt[]): Pt[] => pts.map(p => ({ x: p.x, y: -p.y }));
 
   // ── geometry + interior angle values [A, B, C, D] ──
@@ -697,7 +687,7 @@ function buildLevel3(vars: QOVars): QuadQuestion {
     if (Math.abs(thetaL - thetaR) < 8) thetaR = Math.min(78, thetaL + 9);
     const height = 150;
     const base = Math.round(height * (1 / Math.tan(toRad(thetaL)) + 1 / Math.tan(toRad(thetaR)))) + rnd(90, 170);
-    const rot = bigRot ? rnd(0, 359) : rnd(-10, 10);
+    const rot = rnd(0, 359);
     // randomly put the longer parallel side at the top (vertical flip)
     const placed = rnd(0, 1) === 0 ? placeTrapezium(thetaL, thetaR, base, height) : flipV(placeTrapezium(thetaL, thetaR, base, height));
     const [vA, vB, vC, vD] = rotatePts(placed, rot);
@@ -710,7 +700,7 @@ function buildLevel3(vars: QOVars): QuadQuestion {
     const lean = rnd(0, 1) === 0 ? 1 : -1;
     const side = shape === "rhombus" ? 200 : 175;
     const base = shape === "rhombus" ? 200 : rnd(240, 280);
-    const rot = bigRot ? rnd(0, 359) : rnd(-14, 14);
+    const rot = rnd(0, 359);
     const [vA, vB, vC, vD] = rotatePts(placeParallelogram(theta, base, side, lean), rot);
     verts = [vA, vB, vC, vD];
     // leaning left swaps which vertices hold the acute angle

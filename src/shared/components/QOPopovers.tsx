@@ -105,7 +105,7 @@ export const MultiSelectSection = ({
   values,
   onChange,
 }: {
-  multiSelect: { key: string; label: string; options: { value: string; label: string; sub?: string }[]; allowEmpty?: boolean };
+  multiSelect: { key: string; label: string; options: { value: string; label: string; sub?: string; info?: string }[]; allowEmpty?: boolean };
   values: Record<string, boolean>;
   onChange: (k: string, v: boolean) => void;
 }) => {
@@ -121,11 +121,20 @@ export const MultiSelectSection = ({
             <button
               key={opt.value}
               onClick={() => { if (!isLast) onChange(opt.value, !isActive); }}
-              className={`flex-1 min-w-0 px-3 py-2 text-sm font-bold transition-colors flex flex-col items-center justify-center text-center ${isActive ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
+              className={`group relative flex-1 min-w-0 px-3 py-2 text-sm font-bold transition-colors flex flex-col items-center justify-center text-center ${isActive ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
             >
-              <span className="leading-tight">{opt.label}</span>
+              <span className="leading-tight">{opt.label}{opt.info ? <span className="ml-0.5 opacity-70">ⓘ</span> : null}</span>
               {opt.sub && (
                 <span className={`text-xs mt-0.5 leading-tight ${isActive ? "text-blue-200" : "text-gray-400"}`}>{opt.sub}</span>
+              )}
+              {opt.info && (
+                <div
+                  className="absolute bottom-full left-1/2 mb-2 hidden group-hover:flex pointer-events-none flex-col items-center"
+                  style={{ transform: "translateX(-50%)", zIndex: 9999 }}
+                >
+                  <div className="bg-gray-800 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg shadow-lg" style={{ maxWidth: "13rem", whiteSpace: "normal", textAlign: "center" }}>{opt.info}</div>
+                  <div style={{ width: 0, height: 0, borderLeft: "5px solid transparent", borderRight: "5px solid transparent", borderTop: "5px solid #1f2937" }} />
+                </div>
               )}
             </button>
           );
@@ -141,7 +150,7 @@ const MultiSelectGroups = ({
   values,
   onChange,
 }: {
-  groups: { key: string; label: string; options: { value: string; label: string; sub?: string }[]; allowEmpty?: boolean }[];
+  groups: { key: string; label: string; options: { value: string; label: string; sub?: string; info?: string }[]; allowEmpty?: boolean }[];
   values: Record<string, boolean>;
   onChange: (k: string, v: boolean) => void;
 }) => (
