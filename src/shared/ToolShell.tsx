@@ -41,7 +41,7 @@ export interface ToolShellProps {
   defaults?: ToolShellDefaults;
   stepRenderer?: (step: WorkingStep, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null;
   /** Replaces QuestionDisplay in all modes. compact=true in worksheet cells, false in worked example/fullscreen, undefined in regular whiteboard. idx is the worksheet question index (only provided in worksheet cells). qo is the live QO state snapshot — use it for render-time reformatting (e.g. decimal/fraction toggle). */
-  questionRenderer?: (q: AnyQuestion, showAnswer: boolean, colorScheme: string, compact?: boolean, idx?: number, qo?: QOSnapshot) => JSX.Element | null;
+  questionRenderer?: (q: AnyQuestion, showAnswer: boolean, colorScheme: string, compact?: boolean, idx?: number, qo?: QOSnapshot, fontClass?: string) => JSX.Element | null;
   /** Replaces the final answer box (AnswerDisplay). Shown when showAnswer=true. qo is the live QO state snapshot. */
   answerRenderer?: (q: AnyQuestion, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null;
   /** Called when a QO option changes before falling back to full regeneration. Return a reformatted copy of the question, or null to trigger a new question instead. Use this for instant display-mode switches (e.g. decimal ↔ fraction) where the maths doesn't change. */
@@ -552,7 +552,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       return (
         <div className={wrapperClass} style={cellStyle}>
           {numEl}{regenBtn}
-          {questionRenderer(q, false, colorScheme, true, idx, getQOSnapshot())}
+          {questionRenderer(q, false, colorScheme, true, idx, getQOSnapshot(), fontSizes[worksheetFontSize])}
           {showWorksheetAnswers && answerRenderer && (
             <div style={{ marginTop: 4 }}>{answerRenderer(q, colorScheme, getQOSnapshot())}</div>
           )}
@@ -894,7 +894,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           <div className="w-full text-center flex flex-col gap-4 items-center">
             {getInstruction() && !questionRenderer && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold`} style={{ color: "#000" }}>{getInstruction()}</div>}
             {questionRenderer
-              ? questionRenderer(currentQuestion, showWhiteboardAnswer, colorScheme, undefined, undefined, getQOSnapshot())
+              ? questionRenderer(currentQuestion, showWhiteboardAnswer, colorScheme, undefined, undefined, getQOSnapshot(), displayFontSizes[displayFontSize])
               : <>
                   <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
                   {showWhiteboardAnswer && <div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>
@@ -914,7 +914,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           <>
             {getInstruction() && !questionRenderer && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold`} style={{ color: "#000" }}>{getInstruction()}</div>}
             {questionRenderer
-              ? questionRenderer(currentQuestion, showWhiteboardAnswer, colorScheme, false, undefined, getQOSnapshot())
+              ? questionRenderer(currentQuestion, showWhiteboardAnswer, colorScheme, false, undefined, getQOSnapshot(), displayFontSizes[displayFontSize])
               : <>
                   <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
                   {showWhiteboardAnswer && <div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>
@@ -1031,7 +1031,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           </div>}
           {getInstruction() && !questionRenderer && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold mb-2`} style={{ color: "#000" }}>{getInstruction()}</div>}
           {questionRenderer
-            ? questionRenderer(currentQuestion, showAnswer, colorScheme, false, undefined, getQOSnapshot())
+            ? questionRenderer(currentQuestion, showAnswer, colorScheme, false, undefined, getQOSnapshot(), displayFontSizes[displayFontSize])
             : <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
           }
         </div>

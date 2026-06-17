@@ -751,14 +751,14 @@ function handlePrint(allPages: Question[][]) {
   .q-inner { width:100%; display:flex; flex-direction:column; flex:1; }
   .qbody {
     padding:${PAD_MM}mm; text-align:center; flex:1;
-    font-size:${FONT_PX}px; line-height:1.4;
+    font-size:var(--qfs, ${FONT_PX}px); line-height:1.4;
   }
   .qbody-ans {
     display:flex; flex-direction:column; justify-content:space-between; align-items:center;
   }
   .q-text { text-align:center; width:100%; }
   .q-ans {
-    font-size:${Math.round(FONT_PX * 1.6)}px; font-weight:700; color:#059669;
+    font-size:var(--afs, ${Math.round(FONT_PX * 1.6)}px); font-weight:700; color:#059669;
     text-align:center; width:100%; padding-top:${PAD_MM}mm;
   }
 </style>
@@ -783,33 +783,29 @@ document.addEventListener("DOMContentLoaded", function() {
     rowHeights.push((usableH - GAP_MM * (r - 1)) / r);
   }
 
-  // Measure tallest question across ALL sheets
+  // Measure tallest question (with its answer) across ALL sheets. scrollHeight
+  // already includes the cell's internal padding, so only a small margin for
+  // the cell border/rounding is added.
   var probe = document.getElementById("probe");
   var maxH_px = 0;
   probe.querySelectorAll(".q-inner").forEach(function(el) {
     if (el.scrollHeight > maxH_px) maxH_px = el.scrollHeight;
   });
   var maxH_mm = maxH_px / pxPerMm;
-  var needed_mm = maxH_mm + PAD_MM * 2 + 6;
+  var needed_mm = maxH_mm + 2;
 
-  // Find optimal cell height (same for all sheets)
-  var chosenH_mm = rowHeights[0];
-  var rowsPerPage = 1;
   var maxQ = 0;
   sheetsData.forEach(function(s) { if (s.totalQ > maxQ) maxQ = s.totalQ; });
 
-  var found = false;
-  for (var r = 0; r < rowHeights.length; r++) {
-    var capacity = (r + 1) * cols;
-    if (capacity >= maxQ && rowHeights[r] >= needed_mm) {
-      chosenH_mm = rowHeights[r]; rowsPerPage = r + 1; found = true; break;
-    }
-  }
-  if (!found) {
-    for (var r2 = 0; r2 < rowHeights.length; r2++) {
-      if (rowHeights[r2] >= needed_mm) { chosenH_mm = rowHeights[r2]; rowsPerPage = r2 + 1; }
-    }
-  }
+  // Always use enough rows to fit every question on the page — never drop any.
+  var rowsPerPage = Math.max(1, Math.min(rowHeights.length, Math.ceil(maxQ / cols)));
+  var chosenH_mm = rowHeights[rowsPerPage - 1];
+
+  // If the tallest question is taller than the chosen cell, scale the question
+  // (and answer) font down to fit rather than overflowing or dropping questions.
+  var fontScale = needed_mm > chosenH_mm ? Math.max(0.5, chosenH_mm / needed_mm) : 1;
+  var qFs = Math.round(${FONT_PX} * fontScale * 10) / 10;
+  var aFs = Math.round(${FONT_PX} * 1.6 * fontScale * 10) / 10;
 
   function cW() { return (PAGE_W_MM - GAP_MM * (cols - 1)) / cols; }
 
@@ -843,7 +839,10 @@ document.addEventListener("DOMContentLoaded", function() {
   sheetsData.forEach(function(s) { html += buildSheetPage(s, false); });
   sheetsData.forEach(function(s) { html += buildSheetPage(s, true); });
 
-  document.getElementById("pages").innerHTML = html;
+  var pagesEl = document.getElementById("pages");
+  pagesEl.innerHTML = html;
+  pagesEl.style.setProperty("--qfs", qFs + "px");
+  pagesEl.style.setProperty("--afs", aFs + "px");
   probe.remove();
   setTimeout(function() { window.print(); }, 300);
 });

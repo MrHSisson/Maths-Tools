@@ -304,7 +304,11 @@ export interface ToolShellProps {
   /** Replaces QuestionDisplay in all modes.
    *  compact: true=worksheet cell, undefined=regular whiteboard, false=worked-example/fullscreen.
    *  idx: worksheet cell index (pass to SVG as data-q-index).
-   *  qo: live QO state — use for display-time decisions. */
+   *  qo: live QO state — use for display-time decisions.
+   *  fontClass: the active font-size Tailwind class (driven by the size chevrons —
+   *    worksheetFontSize when compact, displayFontSize otherwise). Apply it so the
+   *    chevrons actually resize text in a custom renderer; ignore it for diagrams
+   *    that use hideFontControls. */
   questionRenderer?: (
     q: AnyQuestion,
     showAnswer: boolean,
@@ -312,6 +316,7 @@ export interface ToolShellProps {
     compact?: boolean,
     idx?: number,
     qo?: QOSnapshot,
+    fontClass?: string,
   ) => JSX.Element | null;
 
   /** Replaces AnswerDisplay. Shown when answer is revealed. */

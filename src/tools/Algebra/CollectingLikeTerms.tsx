@@ -939,11 +939,21 @@ interface MCQData {
 }
 
 // compact: true = worksheet cell · false = worked example / fullscreen · undefined = whiteboard
+// Tailwind text-size ladder, used to step a font-size class up or down.
+const TEXT_SIZES = ["text-xs", "text-sm", "text-base", "text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl", "text-6xl", "text-7xl"];
+const stepSize = (cls: string, by: number): string => {
+  const i = TEXT_SIZES.indexOf(cls);
+  return i < 0 ? cls : TEXT_SIZES[Math.max(0, Math.min(TEXT_SIZES.length - 1, i + by))];
+};
+
 const questionRenderer = (
   q: AnyQuestion,
   showAnswer: boolean,
   _colorScheme: string,
   compact?: boolean,
+  _idx?: number,
+  _qo?: unknown,
+  fontClass?: string,
 ): JSX.Element | null => {
   const mcq = (q as unknown as { _mcq?: MCQData })._mcq;
 
@@ -951,12 +961,17 @@ const questionRenderer = (
   if (q.kind === "worded" && mcq) {
     const small = compact === true;
     const big = compact === false;
-    const fs = small ? "1.05rem" : big ? "2rem" : "1.6rem";
+    // The MCQ grid carries a prompt + several options, so it reads a couple of
+    // steps smaller than the plain-expression display. Driven by the font-size
+    // chevrons (fontClass) so it scales; falls back to fixed sizes if absent.
+    const sizeCls = fontClass
+      ? stepSize(fontClass, big ? -1 : -2)
+      : small ? "text-base" : big ? "text-3xl" : "text-2xl";
     const maxW = small ? 340 : big ? 640 : 520;
     const gap = small ? 6 : 12;
     return (
-      <div style={{ width: "100%", maxWidth: maxW, margin: "0 auto" }}>
-        <div style={{ fontWeight: 600, textAlign: "center", color: "#000", fontSize: fs, marginBottom: small ? 8 : 16 }}>
+      <div className={sizeCls} style={{ width: "100%", maxWidth: maxW, margin: "0 auto" }}>
+        <div style={{ fontWeight: 600, textAlign: "center", color: "#000", marginBottom: small ? 8 : 16 }}>
           <span>{mcq.promptText} </span>
           <MathRenderer latex={mcq.targetLatex} />
         </div>
@@ -972,7 +987,7 @@ const questionRenderer = (
                 border: `2px solid ${reveal ? "#16a34a" : "#cbd5e1"}`,
                 background: reveal ? "#dcfce7" : "transparent",
                 borderRadius: 10, padding: small ? "6px 10px" : "10px 16px",
-                fontSize: fs, color: "#000",
+                color: "#000",
                 ...(lastOdd ? { gridColumn: "1 / -1", justifySelf: "center", width: `calc(50% - ${gap / 2}px)` } : {}),
               }}>
                 <span style={{ fontWeight: 700, color: reveal ? "#16a34a" : "#64748b" }}>{o.letter})</span>
@@ -986,7 +1001,7 @@ const questionRenderer = (
   }
 
   // ── Sub-tools 2 & 3 — simple expression (instruction + display + answer) ──
-  const cls = compact === true ? "text-xl" : compact === false ? "text-4xl" : "text-3xl";
+  const cls = fontClass ?? (compact === true ? "text-xl" : compact === false ? "text-4xl" : "text-3xl");
   const ansLatex = (q as unknown as { answerLatex?: string }).answerLatex;
   return (
     <div className="w-full flex flex-col gap-3 items-center text-center">
