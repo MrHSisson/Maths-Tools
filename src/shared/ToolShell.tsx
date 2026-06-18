@@ -276,10 +276,39 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     return { id, level: lv, count: 5, variables, dropdownValue: dd?.defaultValue ?? "", multiSelectValues };
   };
 
-  const [advGroups, setAdvGroups] = useState<AdvGroup[]>(() => wbInit?.advGroups?.length ? wbInit.advGroups : [makeDefaultAdvGroup(1)]);
+  // Fill any QO options/variables missing from a group with the CURRENT sub-tool's
+  // defaults. Advanced groups are first created against the default sub-tool (whose
+  // level may have no options), so switching sub-tools — or restoring a saved/partial
+  // group — could leave options unset. An unset option reads as "active" in the
+  // generator (undefined ≠ false), silently re-enabling everything; hydrating keeps
+  // the on-screen selection and the generated questions in sync. Existing choices are
+  // preserved (only missing keys are added).
+  const hydrateAdvGroup = (g: AdvGroup): AdvGroup => {
+    const t = config.tools[currentTool];
+    const ms = normalizeMultiSelect(t.difficultySettings?.[g.level]?.multiSelect ?? t.multiSelect);
+    const multiSelectValues = { ...g.multiSelectValues };
+    ms.forEach(grp => grp.options.forEach(o => { if (!(o.value in multiSelectValues)) multiSelectValues[o.value] = o.defaultActive; }));
+    const vars = t.difficultySettings?.[g.level]?.variables ?? t.variables;
+    const variables = { ...g.variables };
+    (vars ?? []).forEach(v => { if (!(v.key in variables)) variables[v.key] = v.defaultValue; });
+    return { ...g, multiSelectValues, variables };
+  };
+
+  const [advGroups, setAdvGroups] = useState<AdvGroup[]>(() =>
+    (wbInit?.advGroups?.length ? wbInit.advGroups : [makeDefaultAdvGroup(1)]).map(hydrateAdvGroup));
   const [advSelectedId, setAdvSelectedId] = useState<number>(wbInit?.advSelectedId ?? 1);
   const advNextId = useRef(wbInit?.advGroups?.length ? Math.max(...wbInit.advGroups.map(g => g.id)) + 1 : 2);
   const [advShuffle, setAdvShuffle] = useState(wbInit?.advShuffle ?? false);
+  // When the active sub-tool changes, re-hydrate the advanced groups so their QO
+  // options reflect the new sub-tool's defaults (the initial mount is already
+  // hydrated by the initializer above, so skip that first run).
+  const advToolRef = useRef(currentTool);
+  useEffect(() => {
+    if (advToolRef.current === currentTool) return;
+    advToolRef.current = currentTool;
+    setAdvGroups(gs => gs.map(hydrateAdvGroup));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentTool]);
   const totalAdvQuestions = advGroups.reduce((s, g) => s + g.count, 0);
   const _advDragNodeIdx = useRef<number | null>(null);
   const _advListRef = useRef<HTMLDivElement>(null);
