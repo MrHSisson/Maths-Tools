@@ -144,6 +144,7 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Opposite angle", detail: "In a parallelogram (and a rhombus) opposite angles are equal — no calculation needed. Not available for a trapezium, whose opposite angles are generally unequal." },
       { label: "Find all remaining angles", detail: "Parallelogram/rhombus: one angle is given — find the other three (one equal opposite angle, two co-interior). Trapezium: the two angles on one parallel side are given — find the two co-interior angles facing them. Unknowns are labelled a, b, c." },
       { label: "Parallelogram / Rhombus", detail: "Combined into one option — a rhombus is a parallelogram with four equal sides, so the angle rules (opposite equal, co-interior sum to 180°) are identical. Shapes appear at any rotation, and trapeziums also flip so the longer parallel side can be at the top — the parallel sides are always identified by the arrow marks, not their position." },
+      { label: "Trapezium", detail: "Trapeziums are drawn across a wide range of shapes — base angles span roughly 40°–90°, including right-angled trapeziums (a perpendicular side giving two 90° angles) and clearly scalene shapes — so they are never all the same near-isosceles form." },
       { label: "Exterior angles", detail: "Turn on 'Extended side' to draw one side extended past a vertex with the exterior angle marked. The student first brings that angle into the shape — by angles on a straight line (interior = 180° − exterior), or by alternate angles (the tail angle equals an interior angle, Z-shape) — then applies the co-interior or opposite rule. Alternate-angle questions use the second pair of parallel sides, so they appear on parallelograms and rhombuses; trapeziums use angles on a straight line." },
       { label: "Algebraic angles", detail: "Co-interior and opposite questions can show the unknown as x, x + a, ax or ax + b. Form an equation from the rule and solve for x. (Find-all questions stay numeric.)" },
     ],
@@ -684,8 +685,26 @@ function buildLevel3(vars: QOVars): QuadQuestion {
   let parallelEdges: ParallelEdge[];
 
   if (isTrap) {
-    let thetaL = rnd(52, 78), thetaR = rnd(52, 78);
-    if (Math.abs(thetaL - thetaR) < 8) thetaR = Math.min(78, thetaL + 9);
+    // Base angles thetaL (at A) and thetaR (at B); top angles are their co-interior
+    // partners (180 − θ). Generate a spread of trapezium shapes rather than the
+    // near-uniform ~65° pair: right trapezia (one perpendicular leg → two right
+    // angles) and general scalene trapezia across a wide acute range.
+    let thetaL: number, thetaR: number;
+    if (rnd(0, 3) === 0) {
+      // right trapezium — one 90° leg, the other angle clearly acute
+      const other = rnd(40, 72);
+      if (rnd(0, 1) === 0) { thetaL = 90; thetaR = other; }
+      else { thetaL = other; thetaR = 90; }
+    } else {
+      // general scalene trapezium — wide range, base angles clearly different so
+      // the shape never looks isosceles (pick thetaR from a band ≥12° from thetaL)
+      thetaL = rnd(40, 85);
+      const bands: [number, number][] = [];
+      if (thetaL - 12 >= 40) bands.push([40, thetaL - 12]);
+      if (thetaL + 12 <= 85) bands.push([thetaL + 12, 85]);
+      const [lo, hi] = bands[rnd(0, bands.length - 1)];
+      thetaR = rnd(lo, hi);
+    }
     const height = 150;
     const base = Math.round(height * (1 / Math.tan(toRad(thetaL)) + 1 / Math.tan(toRad(thetaR)))) + rnd(90, 170);
     const rot = rnd(0, 359);
