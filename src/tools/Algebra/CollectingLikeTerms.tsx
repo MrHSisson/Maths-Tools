@@ -94,45 +94,100 @@ const shuffle = <T,>(arr: T[]): T[] => {
 // Reads a multiSelect "pool" entry as an independent on/off flag (undefined → on)
 const isOn = (vals: Record<string, boolean>, key: string): boolean => vals[key] !== false;
 
-// ── Coefficient generators ──────────────────────────────────────────────────
-
-// Seeded "headline" group — sign pattern driven by the subtractionCases choice.
-const genMainCoeffs = (count: number, caseType: string, minMag: number, maxMag: number): number[] => {
-  for (let attempt = 0; attempt < 60; attempt++) {
-    const coeffs: number[] = [];
-    for (let i = 0; i < count; i++) {
-      const mag = randInt(minMag, maxMag);
-      const sign = (caseType === "positiveOnly" || i === 0) ? 1 : (Math.random() < 0.5 ? 1 : -1);
-      coeffs.push(sign * mag);
-    }
-    if (caseType !== "positiveOnly" && !coeffs.some(c => c < 0)) continue;
-    const sum = coeffs.reduce((s, c) => s + c, 0);
-    if (sum === 0) continue;
-    if (caseType === "crossingZero" ? sum >= 0 : sum <= 0) continue;
-    // Reject all-identical coefficients (e.g. 3x + 3x + 3x) — but only when
-    // variety is actually possible. In "no coefficients" mode (minMag === maxMag
-    // === 1) every term is ±1, so all-1s (x + x + x) is the intended output.
-    if (count > 1 && minMag !== maxMag && new Set(coeffs).size === 1) continue;
-    return coeffs;
+// Randomly riffles the terms for display while PRESERVING each group's internal
+// order. Because "crossing zero" is a per-group running-total property, the
+// relative order of same-group terms must survive into the display (and the
+// worked example), even though different variable groups are interleaved.
+// The very first displayed term is kept non-negative whenever any group can lead
+// with a positive term, so an expression never opens with a "- …" term (e.g. a
+// lone negative term in a 3/1 split). Leading negatives that are unavoidable
+// (every group's first term is negative, as in a single up-crossing group) are
+// left as-is.
+const interleaveGroups = (terms: Term[]): Term[] => {
+  const queues = new Map<string, Term[]>();
+  for (const t of terms) {
+    const k = varsKey(t.vars);
+    if (!queues.has(k)) queues.set(k, []);
+    queues.get(k)!.push(t);
   }
-  return caseType === "crossingZero"
-    ? Array.from({ length: count }, (_, i) => (i === 0 ? 3 : -5))
-    : Array.from({ length: count }, (_, i) => (i === 0 ? 3 : 2));
+  const lists = [...queues.values()];
+  const out: Term[] = [];
+  let remaining = terms.length;
+  while (remaining > 0) {
+    // For the first term only, restrict to groups whose next term is positive so
+    // the expression never opens with a negative (unless none can — then fall
+    // back to all groups). After that, a fair riffle weighted by group size.
+    const positiveHeads = lists.filter(l => l.length > 0 && l[0].coef > 0);
+    const pool = out.length === 0 && positiveHeads.length ? positiveHeads : lists.filter(l => l.length > 0);
+    const total = pool.reduce((s, l) => s + l.length, 0);
+    let r = Math.floor(Math.random() * total);
+    for (const list of pool) {
+      if (r < list.length) { out.push(list.shift()!); remaining--; break; }
+      r -= list.length;
+    }
+  }
+  return out;
 };
 
-// Free-running secondary group — only needs a non-zero, non-uniform sum.
-const genFreeCoeffs = (count: number, minMag: number, maxMag: number, allowNegative: boolean): number[] => {
-  for (let attempt = 0; attempt < 60; attempt++) {
+// ── Coefficient generators ──────────────────────────────────────────────────
+//
+// "Crossing zero" is a property of the RUNNING TOTAL as a group is read left to
+// right, not of the final answer. For a group's ordered coefficients the partial
+// sums P_k = c_1 + … + c_k decide the case:
+//   • positiveOnly         — every c_i > 0 (pure addition)
+//   • subtractionPositive  — ≥1 subtraction, every P_k > 0 (never dips to/through
+//                            zero), positive result — e.g. 8x − 3x, 9x − 2x − 1x
+//   • crossingZero         — the partial sums genuinely cross zero (some P_k > 0
+//                            AND some P_k < 0). Both directions are produced:
+//                            down-cross 3x − 8x = −5x and up-cross −3x + 8x = +5x,
+//                            so results land both negative and positive.
+// Coefficients are returned IN DISPLAY ORDER; buildCollectQuestion preserves each
+// group's internal order so the reading experience matches the intended case.
+
+const partialsOf = (cs: number[]): number[] => {
+  const ps: number[] = [];
+  let s = 0;
+  for (const c of cs) { s += c; ps.push(s); }
+  return ps;
+};
+
+const genMainCoeffs = (count: number, caseType: string, minMag: number, maxMag: number): number[] => {
+  // For crossing zero, fix the target result sign up front so both up-crosses
+  // (positive result) and down-crosses (negative result) occur over many calls.
+  const wantPositiveResult = Math.random() < 0.5;
+
+  for (let attempt = 0; attempt < 200; attempt++) {
     const coeffs = Array.from({ length: count }, () => {
       const mag = randInt(minMag, maxMag);
-      return allowNegative && Math.random() < 0.5 ? -mag : mag;
+      return caseType === "positiveOnly" ? mag : mag * (Math.random() < 0.5 ? 1 : -1);
     });
-    const sum = coeffs.reduce((s, c) => s + c, 0);
+    const ps = partialsOf(coeffs);
+    const sum = ps[ps.length - 1];
     if (sum === 0) continue;
-    if (count > 1 && new Set(coeffs).size === 1) continue;
-    return coeffs;
+    // Reject all-identical coefficients (e.g. 3x + 3x + 3x) — but only when
+    // variety is possible. In "no coefficients" mode (minMag === maxMag === 1)
+    // every term is ±1, so all-1s (x + x + x) is the intended output.
+    if (count > 1 && minMag !== maxMag && new Set(coeffs).size === 1) continue;
+
+    if (caseType === "positiveOnly") return coeffs;
+
+    const minP = Math.min(...ps), maxP = Math.max(...ps);
+    if (caseType === "crossingZero") {
+      if (!(minP < 0 && maxP > 0)) continue;            // must genuinely cross
+      if (wantPositiveResult ? sum < 0 : sum > 0) continue;
+      return coeffs;
+    }
+    // subtractionPositive — stays strictly positive throughout, with a subtraction
+    if (minP > 0 && coeffs.some(c => c < 0)) return coeffs;
   }
-  return Array.from({ length: count }, () => randInt(minMag, maxMag));
+
+  // Fallback: construct a guaranteed non-zero ordered sequence matching the case
+  // when the magnitudes allow it, otherwise the closest valid (all-positive) shape.
+  const lo = minMag, hi = maxMag;
+  const pad = (head: number[]) => [...head, ...Array(Math.max(0, count - head.length)).fill(lo)].slice(0, count);
+  if (caseType === "crossingZero" && hi > lo) return pad([-lo, hi]);          // up-cross
+  if (caseType === "subtractionPositive" && hi > lo) return pad([hi, -lo]);   // stays positive
+  return Array.from({ length: count }, (_, i) => (i === 0 && hi > lo ? hi : lo));
 };
 
 const genSingleCoeff = (caseType: string, minMag: number, maxMag: number): number => {
@@ -242,8 +297,8 @@ const SUBTRACTION_GROUP: ToolMultiSelect = {
   label: "Question Types",
   options: [
     { value: "positiveOnly", label: "Positive terms only", defaultActive: true },
-    { value: "subtractionPositive", label: "Subtraction (positive result)", defaultActive: false },
-    { value: "crossingZero", label: "Crossing zero (negative result)", defaultActive: false },
+    { value: "subtractionPositive", label: "Subtraction (stays positive)", defaultActive: false },
+    { value: "crossingZero", label: "Crossing zero", defaultActive: false },
   ],
 };
 
@@ -252,8 +307,8 @@ const SUBTRACTION_GROUP_L3: ToolMultiSelect = {
   label: "Question Types",
   options: [
     { value: "positiveOnly", label: "Positive terms only", defaultActive: false },
-    { value: "subtractionPositive", label: "Subtraction (positive result)", defaultActive: true },
-    { value: "crossingZero", label: "Crossing zero (negative result)", defaultActive: true },
+    { value: "subtractionPositive", label: "Subtraction (stays positive)", defaultActive: true },
+    { value: "crossingZero", label: "Crossing zero", defaultActive: true },
   ],
 };
 
@@ -285,23 +340,35 @@ const TERM_OPTIONS2_L3: ToolMultiSelect = {
   ],
 };
 
-const TERM_OPTIONS3_L1: ToolMultiSelect = {
-  key: "termOptions",
-  label: "Extra Term Types",
-  allowEmpty: true,
+// Sub-tool 3 Level 1 — mirrors Single Variable L2 (4 terms, one secondary type),
+// but the secondary type is the OTHER variable. The split selector chooses how the
+// 4 terms divide between the two variables: 2-2 (both collectable) or 3-1 (one
+// collectable pair plus a singleton). Both on by default → a mix across a worksheet.
+const SPLIT_GROUP_L1: ToolMultiSelect = {
+  key: "splitCases",
+  label: "Term Split",
+  allowEmpty: false,
   options: [
-    { value: "noCoefficients", label: "No coefficients (x + y + x...)", defaultActive: false },
+    { value: "split22", label: "2 and 2", defaultActive: true },
+    { value: "split31", label: "3 and 1", defaultActive: true },
   ],
 };
 
-const TERM_OPTIONS3_L2: ToolMultiSelect = {
+// Sub-tool 3 Level 2 — each question is the two-variable base plus exactly ONE
+// enrichment drawn from the active pool (one complication per question):
+//   • Constants       — a number term (one, or a collectable pair) beside two vars
+//   • Squared terms   — one variable squared (capped to a single variable), giving
+//                       an x / x² split next to a linear anchor variable
+//   • Three variables — a third linear variable group to sort and collect
+// allowEmpty:false so L2 always steps up from the plain two-variable L1.
+const ENRICH_L2: ToolMultiSelect = {
   key: "termOptions",
-  label: "Extra Term Types",
-  allowEmpty: true,
+  label: "Term Types",
+  allowEmpty: false,
   options: [
-    { value: "noCoefficients", label: "No coefficients (x + y + x...)", defaultActive: false },
-    { value: "includeConstant", label: "Include a constant term", defaultActive: false },
-    { value: "includeSquare", label: "Include squared terms", defaultActive: false },
+    { value: "includeConstant", label: "Constants", defaultActive: true },
+    { value: "includeSquare", label: "Squared terms", defaultActive: true },
+    { value: "threeVariables", label: "Three variables", defaultActive: true },
   ],
 };
 
@@ -347,10 +414,10 @@ const TOOL_CONFIG: ToolConfig = {
       instruction: "Simplify:",
       variables: [],
       dropdown: null,
-      multiSelect: [SUBTRACTION_GROUP, TERM_OPTIONS3_L2],
+      multiSelect: [SUBTRACTION_GROUP, ENRICH_L2],
       difficultySettings: {
-        level1: { multiSelect: [SUBTRACTION_GROUP, TERM_OPTIONS3_L1] },
-        level2: { multiSelect: [SUBTRACTION_GROUP, TERM_OPTIONS3_L2] },
+        level1: { multiSelect: [SUBTRACTION_GROUP, SPLIT_GROUP_L1] },
+        level2: { multiSelect: [SUBTRACTION_GROUP, ENRICH_L2] },
         level3: { multiSelect: [SUBTRACTION_GROUP_L3, TERM_OPTIONS3_L3] },
       },
     },
@@ -376,8 +443,8 @@ const INFO_SECTIONS: InfoSection[] = [
   ]},
   { title: "Multiple Variables", icon: "🔡", content: [
     { label: "Overview", detail: "Students simplify expressions containing two distinct variables. Both variables are always present in every question — students must identify and collect each variable group independently." },
-    { label: "Level 1 — Green", detail: "Exactly two variables, powers of 1, positive coefficients (unless subtraction options active). At least one collectable pair guaranteed. No coefficients mode available." },
-    { label: "Level 2 — Yellow", detail: "Adds optional constants and squared terms as extra uncollectable or separately-collectable types. Subtraction and crossing zero available as QO options." },
+    { label: "Level 1 — Green", detail: "Exactly two variables, powers of 1, four terms, coefficients 2–9. The Term Split option chooses a 2 + 2 split (both variables collectable) or a 3 + 1 split (one collectable pair plus a single uncollectable term). Subtraction and crossing zero available." },
+    { label: "Level 2 — Yellow", detail: "Each question adds one complication to the two-variable base — a constant (or a collectable pair of constants), one squared variable (capped to a single variable, giving an x / x² split beside a linear anchor), or a third variable to collect. Five or six terms with at least one collectable group guaranteed. Subtraction and crossing zero available." },
     { label: "Level 3 — Red", detail: "Both variables always have a collectable pair — students collect two groups simultaneously. Squared terms for both variables optional. Subtraction and crossing zero defaultActive." },
   ]},
   { title: "Modes", icon: "🖥️", content: [
@@ -387,6 +454,7 @@ const INFO_SECTIONS: InfoSection[] = [
   ]},
   { title: "Question Options", icon: "⚙️", content: [
     { label: "Question Types", detail: "Toggle which kinds of target terms, powers and distractors appear (Spot the Like Term), or which subtraction cases and extra term types appear (Single/Multiple Variables)." },
+    { label: "Subtraction cases", detail: "Positive only — pure addition. Subtraction (stays positive) — a subtraction where the running total never drops to or below zero, e.g. 8x − 3x. Crossing zero — the running total genuinely passes through zero as you collect, in both directions, so results land both positive (−3x + 8x = 5x) and negative (3x − 8x = −5x)." },
     { label: "Differentiated", detail: "QO popover shows all three levels so each column can be customised independently." },
   ]},
 ];
@@ -740,8 +808,9 @@ const genSubtool1 = (level: DifficultyLevel, msv: Record<string, boolean>): Word
 // SUB-TOOL 2 — Single Variable
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// Assembles a SimpleQuestion from a raw (unsorted) term list. Shuffles display
-// order, then builds display / answer / working via the shared helpers.
+// Assembles a SimpleQuestion from a raw term list. Interleaves the groups for
+// display (preserving each group's internal order so the running-total / crossing
+// pattern survives), then builds display / answer / working via the shared helpers.
 const buildCollectQuestion = (
   level: DifficultyLevel,
   rawTerms: Term[],
@@ -749,7 +818,7 @@ const buildCollectQuestion = (
   variableWords: boolean,
   keyPrefix: string,
 ): SimpleQuestion => {
-  const terms = shuffle(rawTerms);
+  const terms = interleaveGroups(rawTerms);
   const groups = sortedGroups(terms, varOrder);
   const id = Math.floor(Math.random() * 1_000_000);
   const termSig = terms.map(t => `${t.coef}:${varsKey(t.vars)}`).join("|");
@@ -845,55 +914,79 @@ const genSubtool2 = (level: DifficultyLevel, msv: Record<string, boolean>): Simp
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const genSubtool3 = (level: DifficultyLevel, msv: Record<string, boolean>): SimpleQuestion => {
-  const [varA, varB] = shuffle(VAR_POOL).slice(0, 2);
+  const [varA, varB, varC] = shuffle(VAR_POOL).slice(0, 3);
   const varOrder = [varA, varB];
   const caseType = pickActive(msv, SUBTRACTION_GROUP.options);
   const noCoef = isOn(msv, "noCoefficients");
 
   if (level === "level1") {
-    // Power-1 both vars; varA has a collectable pair, varB present (>=1).
-    if (noCoef) {
-      const total = randInt(4, 8);
-      const countA = randInt(2, total - 1);
-      const countB = total - countA;
-      const aCoeffs = genMainCoeffs(countA, caseType, 1, 1);
-      const bCoeffs = genFreeCoeffs(countB, 1, 1, caseType !== "positiveOnly");
+    // Mirrors Single Variable L2: exactly 4 power-1 terms across two variables.
+    // Split selector decides the division — 3-1 (one collectable pair + a
+    // singleton) or 2-2 (both variables collectable). Coefficients 2-9, signs
+    // following the subtraction case, exactly as in Single Variable L2.
+    const split = pickActive(msv, SPLIT_GROUP_L1.options);
+    if (split === "split31") {
+      const threeIsA = Math.random() < 0.5;
+      const threeVar = threeIsA ? varA : varB;
+      const oneVar = threeIsA ? varB : varA;
       const terms: Term[] = [
-        ...aCoeffs.map(c => ({ coef: c, vars: [{ v: varA, n: 1 }] })),
-        ...bCoeffs.map(c => ({ coef: c, vars: [{ v: varB, n: 1 }] })),
+        ...genMainCoeffs(3, caseType, 2, 9).map(c => ({ coef: c, vars: [{ v: threeVar, n: 1 }] })),
+        { coef: genSingleCoeff(caseType, 2, 9), vars: [{ v: oneVar, n: 1 }] },
       ];
-      return buildCollectQuestion(level, terms, varOrder, true, `t3-L1nc-${varA}${varB}`);
+      return buildCollectQuestion(level, terms, varOrder, true, `t3-L1-${varA}${varB}`);
     }
-    const total = randInt(3, 4);
-    const countA = randInt(2, total - 1);
-    const countB = total - countA;
-    const aCoeffs = genMainCoeffs(countA, caseType, 2, 9);
-    const bCoeffs = countB === 1
-      ? [genSingleCoeff(caseType, 2, 9)]
-      : genFreeCoeffs(countB, 2, 9, caseType !== "positiveOnly");
     const terms: Term[] = [
-      ...aCoeffs.map(c => ({ coef: c, vars: [{ v: varA, n: 1 }] })),
-      ...bCoeffs.map(c => ({ coef: c, vars: [{ v: varB, n: 1 }] })),
+      ...genMainCoeffs(2, caseType, 2, 9).map(c => ({ coef: c, vars: [{ v: varA, n: 1 }] })),
+      ...genMainCoeffs(2, caseType, 2, 9).map(c => ({ coef: c, vars: [{ v: varB, n: 1 }] })),
     ];
     return buildCollectQuestion(level, terms, varOrder, true, `t3-L1-${varA}${varB}`);
   }
 
   if (level === "level2") {
-    // Collectable pair in varA, varB present (>=1), optional constant / squared.
-    const minMag = noCoef ? 1 : 2;
-    const maxMag = noCoef ? 1 : 9;
-    const countA = randInt(2, 3);
-    const aCoeffs = genMainCoeffs(countA, caseType, minMag, maxMag);
-    const terms: Term[] = aCoeffs.map(c => ({ coef: c, vars: [{ v: varA, n: 1 }] }));
-    terms.push({ coef: genSingleCoeff(caseType, minMag, maxMag), vars: [{ v: varB, n: 1 }] });
-    if (isOn(msv, "includeConstant")) {
-      terms.push({ coef: genSingleCoeff(caseType, 2, 9), vars: [] });
+    // One enrichment per question, drawn from the active pool (ENRICH_L2). Every
+    // question is 5-6 terms with at least one guaranteed collectable group. A
+    // group of 2+ terms is generated with genMainCoeffs (non-zero, non-uniform
+    // sum, following the subtraction case); a lone term uses genSingleCoeff.
+    const enrich = pickActive(msv, ENRICH_L2.options);
+    const grp = (cnt: number): number[] =>
+      cnt >= 2 ? genMainCoeffs(cnt, caseType, 2, 9) : [genSingleCoeff(caseType, 2, 9)];
+
+    if (enrich === "threeVariables") {
+      // Three linear variables, 5-6 terms. Each variable is present; the extra
+      // terms beyond one-each always grow at least one group into a pair.
+      const order = [varA, varB, varC];
+      const counts = [1, 1, 1];
+      for (let extra = randInt(5, 6) - 3; extra > 0; extra--) counts[randInt(0, 2)]++;
+      const terms: Term[] = [];
+      order.forEach((vv, i) => grp(counts[i]).forEach(c => terms.push({ coef: c, vars: [{ v: vv, n: 1 }] })));
+      return buildCollectQuestion(level, terms, order, true, `t3-L2-3v-${varA}${varB}${varC}`);
     }
-    if (isOn(msv, "includeSquare")) {
-      const sqVar = Math.random() < 0.5 ? varA : varB;
-      terms.push({ coef: genSingleCoeff(caseType, 2, 9), vars: [{ v: sqVar, n: 2 }] });
+
+    if (enrich === "includeConstant") {
+      // Two linear variables (varA a guaranteed pair) plus either a lone constant
+      // or a collectable pair of constants. 5-6 terms.
+      const numConst = pick([1, 2]);
+      const varTotal = randInt(5, 6) - numConst;               // 3-5
+      const countA = Math.min(pick([2, 3]), varTotal - 1);     // pair, leaving >=1 for varB
+      const terms: Term[] = [
+        ...grp(countA).map(c => ({ coef: c, vars: [{ v: varA, n: 1 }] })),
+        ...grp(varTotal - countA).map(c => ({ coef: c, vars: [{ v: varB, n: 1 }] })),
+        ...grp(numConst).map(c => ({ coef: c, vars: [] as VarPower[] })),
+      ];
+      return buildCollectQuestion(level, terms, varOrder, true, `t3-L2-c-${varA}${varB}`);
     }
-    return buildCollectQuestion(level, terms, varOrder, true, `t3-L2-${varA}${varB}`);
+
+    // includeSquare — exactly one variable squared (varA, capped); varB is the
+    // linear anchor. The square pair always collects, and varA also appears
+    // linear so the student must keep varA² and varA apart (the x / x² trap).
+    const sqLin = pick([1, 2]);
+    const lin = sqLin === 1 ? 2 : pick([1, 2]);                // keep 2 + sqLin + lin >= 5
+    const terms: Term[] = [
+      ...grp(2).map(c => ({ coef: c, vars: [{ v: varA, n: 2 }] })),
+      ...grp(sqLin).map(c => ({ coef: c, vars: [{ v: varA, n: 1 }] })),
+      ...grp(lin).map(c => ({ coef: c, vars: [{ v: varB, n: 1 }] })),
+    ];
+    return buildCollectQuestion(level, terms, varOrder, true, `t3-L2-sq-${varA}${varB}`);
   }
 
   // level3 — BOTH vars have a collectable pair. Powers 1–2 (univariate terms).
@@ -906,7 +999,7 @@ const genSubtool3 = (level: DifficultyLevel, msv: Record<string, boolean>): Simp
   const powA = includeSquare && Math.random() < 0.5 ? 2 : 1;
   const powB = includeSquare && Math.random() < 0.5 ? 2 : 1;
   const aCoeffs = genMainCoeffs(2, caseType, minMag, maxMag);
-  const bCoeffs = genFreeCoeffs(2, minMag, maxMag, caseType !== "positiveOnly");
+  const bCoeffs = genMainCoeffs(2, caseType, minMag, maxMag);
   const terms: Term[] = [
     ...aCoeffs.map(c => ({ coef: c, vars: [{ v: varA, n: powA }] })),
     ...bCoeffs.map(c => ({ coef: c, vars: [{ v: varB, n: powB }] })),
