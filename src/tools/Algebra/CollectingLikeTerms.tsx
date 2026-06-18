@@ -94,45 +94,91 @@ const shuffle = <T,>(arr: T[]): T[] => {
 // Reads a multiSelect "pool" entry as an independent on/off flag (undefined → on)
 const isOn = (vals: Record<string, boolean>, key: string): boolean => vals[key] !== false;
 
-// ── Coefficient generators ──────────────────────────────────────────────────
-
-// Seeded "headline" group — sign pattern driven by the subtractionCases choice.
-const genMainCoeffs = (count: number, caseType: string, minMag: number, maxMag: number): number[] => {
-  for (let attempt = 0; attempt < 60; attempt++) {
-    const coeffs: number[] = [];
-    for (let i = 0; i < count; i++) {
-      const mag = randInt(minMag, maxMag);
-      const sign = (caseType === "positiveOnly" || i === 0) ? 1 : (Math.random() < 0.5 ? 1 : -1);
-      coeffs.push(sign * mag);
-    }
-    if (caseType !== "positiveOnly" && !coeffs.some(c => c < 0)) continue;
-    const sum = coeffs.reduce((s, c) => s + c, 0);
-    if (sum === 0) continue;
-    if (caseType === "crossingZero" ? sum >= 0 : sum <= 0) continue;
-    // Reject all-identical coefficients (e.g. 3x + 3x + 3x) — but only when
-    // variety is actually possible. In "no coefficients" mode (minMag === maxMag
-    // === 1) every term is ±1, so all-1s (x + x + x) is the intended output.
-    if (count > 1 && minMag !== maxMag && new Set(coeffs).size === 1) continue;
-    return coeffs;
+// Randomly riffles the terms for display while PRESERVING each group's internal
+// order. Because "crossing zero" is a per-group running-total property, the
+// relative order of same-group terms must survive into the display (and the
+// worked example), even though different variable groups are interleaved.
+const interleaveGroups = (terms: Term[]): Term[] => {
+  const queues = new Map<string, Term[]>();
+  for (const t of terms) {
+    const k = varsKey(t.vars);
+    if (!queues.has(k)) queues.set(k, []);
+    queues.get(k)!.push(t);
   }
-  return caseType === "crossingZero"
-    ? Array.from({ length: count }, (_, i) => (i === 0 ? 3 : -5))
-    : Array.from({ length: count }, (_, i) => (i === 0 ? 3 : 2));
+  const lists = [...queues.values()];
+  const out: Term[] = [];
+  let remaining = terms.length;
+  while (remaining > 0) {
+    // Pick the next term by position across all remaining terms, so each group's
+    // chance is proportional to how many terms it still has (a fair riffle).
+    let r = Math.floor(Math.random() * remaining);
+    for (const list of lists) {
+      if (r < list.length) { out.push(list.shift()!); remaining--; break; }
+      r -= list.length;
+    }
+  }
+  return out;
 };
 
-// Free-running secondary group — only needs a non-zero, non-uniform sum.
-const genFreeCoeffs = (count: number, minMag: number, maxMag: number, allowNegative: boolean): number[] => {
-  for (let attempt = 0; attempt < 60; attempt++) {
+// ── Coefficient generators ──────────────────────────────────────────────────
+//
+// "Crossing zero" is a property of the RUNNING TOTAL as a group is read left to
+// right, not of the final answer. For a group's ordered coefficients the partial
+// sums P_k = c_1 + … + c_k decide the case:
+//   • positiveOnly         — every c_i > 0 (pure addition)
+//   • subtractionPositive  — ≥1 subtraction, every P_k > 0 (never dips to/through
+//                            zero), positive result — e.g. 8x − 3x, 9x − 2x − 1x
+//   • crossingZero         — the partial sums genuinely cross zero (some P_k > 0
+//                            AND some P_k < 0). Both directions are produced:
+//                            down-cross 3x − 8x = −5x and up-cross −3x + 8x = +5x,
+//                            so results land both negative and positive.
+// Coefficients are returned IN DISPLAY ORDER; buildCollectQuestion preserves each
+// group's internal order so the reading experience matches the intended case.
+
+const partialsOf = (cs: number[]): number[] => {
+  const ps: number[] = [];
+  let s = 0;
+  for (const c of cs) { s += c; ps.push(s); }
+  return ps;
+};
+
+const genMainCoeffs = (count: number, caseType: string, minMag: number, maxMag: number): number[] => {
+  // For crossing zero, fix the target result sign up front so both up-crosses
+  // (positive result) and down-crosses (negative result) occur over many calls.
+  const wantPositiveResult = Math.random() < 0.5;
+
+  for (let attempt = 0; attempt < 200; attempt++) {
     const coeffs = Array.from({ length: count }, () => {
       const mag = randInt(minMag, maxMag);
-      return allowNegative && Math.random() < 0.5 ? -mag : mag;
+      return caseType === "positiveOnly" ? mag : mag * (Math.random() < 0.5 ? 1 : -1);
     });
-    const sum = coeffs.reduce((s, c) => s + c, 0);
+    const ps = partialsOf(coeffs);
+    const sum = ps[ps.length - 1];
     if (sum === 0) continue;
-    if (count > 1 && new Set(coeffs).size === 1) continue;
-    return coeffs;
+    // Reject all-identical coefficients (e.g. 3x + 3x + 3x) — but only when
+    // variety is possible. In "no coefficients" mode (minMag === maxMag === 1)
+    // every term is ±1, so all-1s (x + x + x) is the intended output.
+    if (count > 1 && minMag !== maxMag && new Set(coeffs).size === 1) continue;
+
+    if (caseType === "positiveOnly") return coeffs;
+
+    const minP = Math.min(...ps), maxP = Math.max(...ps);
+    if (caseType === "crossingZero") {
+      if (!(minP < 0 && maxP > 0)) continue;            // must genuinely cross
+      if (wantPositiveResult ? sum < 0 : sum > 0) continue;
+      return coeffs;
+    }
+    // subtractionPositive — stays strictly positive throughout, with a subtraction
+    if (minP > 0 && coeffs.some(c => c < 0)) return coeffs;
   }
-  return Array.from({ length: count }, () => randInt(minMag, maxMag));
+
+  // Fallback: construct a guaranteed non-zero ordered sequence matching the case
+  // when the magnitudes allow it, otherwise the closest valid (all-positive) shape.
+  const lo = minMag, hi = maxMag;
+  const pad = (head: number[]) => [...head, ...Array(Math.max(0, count - head.length)).fill(lo)].slice(0, count);
+  if (caseType === "crossingZero" && hi > lo) return pad([-lo, hi]);          // up-cross
+  if (caseType === "subtractionPositive" && hi > lo) return pad([hi, -lo]);   // stays positive
+  return Array.from({ length: count }, (_, i) => (i === 0 && hi > lo ? hi : lo));
 };
 
 const genSingleCoeff = (caseType: string, minMag: number, maxMag: number): number => {
@@ -242,8 +288,8 @@ const SUBTRACTION_GROUP: ToolMultiSelect = {
   label: "Question Types",
   options: [
     { value: "positiveOnly", label: "Positive terms only", defaultActive: true },
-    { value: "subtractionPositive", label: "Subtraction (positive result)", defaultActive: false },
-    { value: "crossingZero", label: "Crossing zero (negative result)", defaultActive: false },
+    { value: "subtractionPositive", label: "Subtraction (stays positive)", defaultActive: false },
+    { value: "crossingZero", label: "Crossing zero", defaultActive: false },
   ],
 };
 
@@ -252,8 +298,8 @@ const SUBTRACTION_GROUP_L3: ToolMultiSelect = {
   label: "Question Types",
   options: [
     { value: "positiveOnly", label: "Positive terms only", defaultActive: false },
-    { value: "subtractionPositive", label: "Subtraction (positive result)", defaultActive: true },
-    { value: "crossingZero", label: "Crossing zero (negative result)", defaultActive: true },
+    { value: "subtractionPositive", label: "Subtraction (stays positive)", defaultActive: true },
+    { value: "crossingZero", label: "Crossing zero", defaultActive: true },
   ],
 };
 
@@ -399,6 +445,7 @@ const INFO_SECTIONS: InfoSection[] = [
   ]},
   { title: "Question Options", icon: "⚙️", content: [
     { label: "Question Types", detail: "Toggle which kinds of target terms, powers and distractors appear (Spot the Like Term), or which subtraction cases and extra term types appear (Single/Multiple Variables)." },
+    { label: "Subtraction cases", detail: "Positive only — pure addition. Subtraction (stays positive) — a subtraction where the running total never drops to or below zero, e.g. 8x − 3x. Crossing zero — the running total genuinely passes through zero as you collect, in both directions, so results land both positive (−3x + 8x = 5x) and negative (3x − 8x = −5x)." },
     { label: "Differentiated", detail: "QO popover shows all three levels so each column can be customised independently." },
   ]},
 ];
@@ -752,8 +799,9 @@ const genSubtool1 = (level: DifficultyLevel, msv: Record<string, boolean>): Word
 // SUB-TOOL 2 — Single Variable
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// Assembles a SimpleQuestion from a raw (unsorted) term list. Shuffles display
-// order, then builds display / answer / working via the shared helpers.
+// Assembles a SimpleQuestion from a raw term list. Interleaves the groups for
+// display (preserving each group's internal order so the running-total / crossing
+// pattern survives), then builds display / answer / working via the shared helpers.
 const buildCollectQuestion = (
   level: DifficultyLevel,
   rawTerms: Term[],
@@ -761,7 +809,7 @@ const buildCollectQuestion = (
   variableWords: boolean,
   keyPrefix: string,
 ): SimpleQuestion => {
-  const terms = shuffle(rawTerms);
+  const terms = interleaveGroups(rawTerms);
   const groups = sortedGroups(terms, varOrder);
   const id = Math.floor(Math.random() * 1_000_000);
   const termSig = terms.map(t => `${t.coef}:${varsKey(t.vars)}`).join("|");
@@ -942,7 +990,7 @@ const genSubtool3 = (level: DifficultyLevel, msv: Record<string, boolean>): Simp
   const powA = includeSquare && Math.random() < 0.5 ? 2 : 1;
   const powB = includeSquare && Math.random() < 0.5 ? 2 : 1;
   const aCoeffs = genMainCoeffs(2, caseType, minMag, maxMag);
-  const bCoeffs = genFreeCoeffs(2, minMag, maxMag, caseType !== "positiveOnly");
+  const bCoeffs = genMainCoeffs(2, caseType, minMag, maxMag);
   const terms: Term[] = [
     ...aCoeffs.map(c => ({ coef: c, vars: [{ v: varA, n: powA }] })),
     ...bCoeffs.map(c => ({ coef: c, vars: [{ v: varB, n: powB }] })),
