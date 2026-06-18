@@ -98,6 +98,11 @@ const isOn = (vals: Record<string, boolean>, key: string): boolean => vals[key] 
 // order. Because "crossing zero" is a per-group running-total property, the
 // relative order of same-group terms must survive into the display (and the
 // worked example), even though different variable groups are interleaved.
+// The very first displayed term is kept non-negative whenever any group can lead
+// with a positive term, so an expression never opens with a "- …" term (e.g. a
+// lone negative term in a 3/1 split). Leading negatives that are unavoidable
+// (every group's first term is negative, as in a single up-crossing group) are
+// left as-is.
 const interleaveGroups = (terms: Term[]): Term[] => {
   const queues = new Map<string, Term[]>();
   for (const t of terms) {
@@ -109,10 +114,14 @@ const interleaveGroups = (terms: Term[]): Term[] => {
   const out: Term[] = [];
   let remaining = terms.length;
   while (remaining > 0) {
-    // Pick the next term by position across all remaining terms, so each group's
-    // chance is proportional to how many terms it still has (a fair riffle).
-    let r = Math.floor(Math.random() * remaining);
-    for (const list of lists) {
+    // For the first term only, restrict to groups whose next term is positive so
+    // the expression never opens with a negative (unless none can — then fall
+    // back to all groups). After that, a fair riffle weighted by group size.
+    const positiveHeads = lists.filter(l => l.length > 0 && l[0].coef > 0);
+    const pool = out.length === 0 && positiveHeads.length ? positiveHeads : lists.filter(l => l.length > 0);
+    const total = pool.reduce((s, l) => s + l.length, 0);
+    let r = Math.floor(Math.random() * total);
+    for (const list of pool) {
       if (r < list.length) { out.push(list.shift()!); remaining--; break; }
       r -= list.length;
     }
