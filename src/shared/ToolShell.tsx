@@ -135,6 +135,26 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     };
   });
 
+  // ── Worksheet builder persistence ─────────────────────────────────────────
+  // The advanced-builder groups and the differentiated per-level QO are NOT in
+  // the URL (too large to encode), so they were lost on reload. Persist them to
+  // sessionStorage (per tool route) so a refresh restores the full setup.
+  interface WBPersist {
+    worksheetMode?: "standard" | "advanced";
+    advGroups?: AdvGroup[];
+    advSelectedId?: number;
+    advShuffle?: boolean;
+    levelVariables?: Record<string, Record<string, boolean>>;
+    levelDropdowns?: Record<string, string>;
+    levelMultiSelect?: Record<string, Record<string, boolean>>;
+  }
+  const wbStorageKey = typeof window === "undefined" ? "" : `mt-wb:${window.location.pathname}`;
+  const [wbInit] = useState<WBPersist | null>(() => {
+    if (!wbStorageKey) return null;
+    try { const raw = sessionStorage.getItem(wbStorageKey); return raw ? (JSON.parse(raw) as WBPersist) : null; }
+    catch { return null; }
+  });
+
   const [currentTool, setCurrentTool] = useState<string>(urlInit.tool);
   const [mode, setMode] = useState<"whiteboard" | "single" | "worksheet">(urlInit.mode);
   const comingSoon = defaults.comingSoonLevels ?? [];
@@ -191,8 +211,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     return init;
   });
 
-  const [levelVariables, setLevelVariables] = useState<Record<string, Record<string, boolean>>>({ level1: {}, level2: {}, level3: {} });
+  const [levelVariables, setLevelVariables] = useState<Record<string, Record<string, boolean>>>(wbInit?.levelVariables ?? { level1: {}, level2: {}, level3: {} });
   const [levelDropdowns, setLevelDropdowns] = useState<Record<string, string>>(() => {
+    if (wbInit?.levelDropdowns) return wbInit.levelDropdowns;
     const init: Record<string, string> = {};
     const firstTool = toolKeys[0];
     const t = config.tools[firstTool];
@@ -202,7 +223,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     });
     return init;
   });
-  const [levelMultiSelect, setLevelMultiSelect] = useState<Record<string, Record<string, boolean>>>({ level1: {}, level2: {}, level3: {} });
+  const [levelMultiSelect, setLevelMultiSelect] = useState<Record<string, Record<string, boolean>>>(wbInit?.levelMultiSelect ?? { level1: {}, level2: {}, level3: {} });
 
   const [currentQuestion, setCurrentQuestion] = useState<AnyQuestion>(() => {
     const t = config.tools[urlInit.tool];
@@ -227,7 +248,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const [showWorksheetAnswers, setShowWorksheetAnswers] = useState(false);
   const [printMode, setPrintMode] = useState<PrintMode>("both");
   const [isDifferentiated, setIsDifferentiated] = useState(urlInit.diff && comingSoon.length === 0);
-  const [worksheetMode, setWorksheetMode] = useState<"standard" | "advanced">("standard");
+  const [worksheetMode, setWorksheetMode] = useState<"standard" | "advanced">(wbInit?.worksheetMode ?? "standard");
   const [displayFontSize, setDisplayFontSize] = useState(defaults.displayFontSize ?? 2);
   const [worksheetFontSize, setWorksheetFontSize] = useState(defaults.worksheetFontSize ?? 1);
   const [colorScheme, setColorScheme] = useState("default");
@@ -255,10 +276,10 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     return { id, level: lv, count: 5, variables, dropdownValue: dd?.defaultValue ?? "", multiSelectValues };
   };
 
-  const [advGroups, setAdvGroups] = useState<AdvGroup[]>(() => [makeDefaultAdvGroup(1)]);
-  const [advSelectedId, setAdvSelectedId] = useState<number>(1);
-  const advNextId = useRef(2);
-  const [advShuffle, setAdvShuffle] = useState(false);
+  const [advGroups, setAdvGroups] = useState<AdvGroup[]>(() => wbInit?.advGroups?.length ? wbInit.advGroups : [makeDefaultAdvGroup(1)]);
+  const [advSelectedId, setAdvSelectedId] = useState<number>(wbInit?.advSelectedId ?? 1);
+  const advNextId = useRef(wbInit?.advGroups?.length ? Math.max(...wbInit.advGroups.map(g => g.id)) + 1 : 2);
+  const [advShuffle, setAdvShuffle] = useState(wbInit?.advShuffle ?? false);
   const totalAdvQuestions = advGroups.reduce((s, g) => s + g.count, 0);
   const _advDragNodeIdx = useRef<number | null>(null);
   const _advListRef = useRef<HTMLDivElement>(null);
@@ -516,11 +537,25 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     window.history.replaceState(null, "", qs ? `${window.location.pathname}?${qs}` : window.location.pathname);
   }, [currentTool, mode, difficulty, toolDropdowns, toolVariables, toolMultiSelect, numQuestions, numColumns, isDifferentiated]);
 
+  // Persist the worksheet-builder state (advanced groups + differentiated
+  // per-level QO) so a refresh restores it — these are not encoded in the URL.
+  useEffect(() => {
+    if (!wbStorageKey) return;
+    try {
+      sessionStorage.setItem(wbStorageKey, JSON.stringify({
+        worksheetMode, advGroups, advSelectedId, advShuffle, levelVariables, levelDropdowns, levelMultiSelect,
+      } satisfies WBPersist));
+    } catch { /* ignore quota / serialisation errors */ }
+  }, [wbStorageKey, worksheetMode, advGroups, advSelectedId, advShuffle, levelVariables, levelDropdowns, levelMultiSelect]);
+
   // A link that points straight at a worksheet generates it on arrival —
   // a bookmarked worksheet link is ready to teach from without extra clicks.
+  // Honour the restored builder mode so an advanced setup regenerates correctly.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    if (urlInit.mode === "worksheet") handleGenerateWorksheet();
+    if (urlInit.mode !== "worksheet") return;
+    if (worksheetMode === "advanced") handleGenerateAdvanced();
+    else handleGenerateWorksheet();
   }, []);
 
   const displayFontSizes = ["text-2xl", "text-3xl", "text-4xl", "text-5xl", "text-6xl", "text-7xl"];
