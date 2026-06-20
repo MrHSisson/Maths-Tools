@@ -25,9 +25,6 @@ export const handlePrint = (
   const diffHdrMM  = 7;
 
   const cols    = isDifferentiated ? 3 : numColumns;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const maxSecCols = isDifferentiated ? 3 : Math.max(numColumns, ...questions.map(q => (q as any)._sectionCols as number ?? numColumns));
-  const cellW_MM = (PAGE_W_MM - GAP_MM * (maxSecCols - 1)) / maxSecCols;
 
   const difficultyLabel = isDifferentiated ? "Differentiated" :
     difficulty === "level1" ? "Level 1" : difficulty === "level2" ? "Level 2" :
@@ -125,11 +122,13 @@ export const handlePrint = (
     return `<div class="list-item list-item-answer">${num}${ansHtml}</div>`;
   };
 
-  const probeHtml = questions.map((q, i) =>
-    layout === "list"
-      ? `<div class="list-item" id="probe-${i}">${listQuestionToHtml(q, i, false)}</div>`
-      : `<div class="q-inner" id="probe-${i}">${questionToHtml(q, i, false)}</div>`
-  ).join("");
+  const probeHtml = questions.map((q, i) => {
+    const secCols = sectionColsArr[i] ?? cols;
+    const probeW = (PAGE_W_MM - GAP_MM * (secCols - 1)) / secCols;
+    return layout === "list"
+      ? `<div class="list-item" id="probe-${i}" style="width:${probeW}mm">${listQuestionToHtml(q, i, false)}</div>`
+      : `<div class="q-inner" id="probe-${i}" style="width:${probeW}mm">${questionToHtml(q, i, false)}</div>`;
+  }).join("");
 
   const answerOnlyToHtml = (q: AnyQuestion, idx: number): string => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -206,7 +205,7 @@ export const handlePrint = (
   #probe {
     position: fixed; left: -9999px; top: 0; visibility: hidden;
     font-family: "Segoe UI", Arial, sans-serif; font-size: ${FONT_PX}px; line-height: 1.4;
-    width: ${cellW_MM}mm;
+    width: ${PAGE_W_MM}mm;
   }
 
   .q-inner  { width: 100%; display: flex; flex-direction: column; flex: 1; position: relative; }
@@ -270,10 +269,23 @@ document.addEventListener("DOMContentLoaded", function() {
     catch(e) { el.textContent = el.getAttribute('data-latex'); }
   });
 
-  var maxH_px = 0;
-  probe.querySelectorAll(isListLayout ? '.list-item' : '.q-inner').forEach(function(el) {
-    if (el.scrollHeight > maxH_px) maxH_px = el.scrollHeight;
-  });
+  // Measure per-question heights for per-section cell sizing
+  var probeHts = [];
+  for (var pi = 0; pi < qData.length; pi++) {
+    var pel = document.getElementById('probe-' + pi);
+    probeHts.push(pel ? pel.scrollHeight : 0);
+  }
+  var secMaxProbeH = {};
+  for (var pi2 = 0; pi2 < qData.length; pi2++) {
+    var psi = qData[pi2].sectionIdx;
+    var hMm = probeHts[pi2] / pxPerMm;
+    if (secMaxProbeH[psi] === undefined || hMm > secMaxProbeH[psi]) secMaxProbeH[psi] = hMm;
+  }
+  var secNeeded = {};
+  for (var sn in secMaxProbeH) {
+    secNeeded[sn] = isListLayout ? secMaxProbeH[sn] + 2 : secMaxProbeH[sn] + PAD_MM * 2 + 6;
+  }
+  var maxH_px = Math.max.apply(null, probeHts.length > 0 ? probeHts : [0]);
   var maxH_mm = maxH_px / pxPerMm;
   var needed_mm = isListLayout ? maxH_mm + 2 : maxH_mm + PAD_MM * 2 + 6;
 
@@ -292,54 +304,78 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   }
 
-  // --- Grid layout calculations ---
-  // When sections exist, compute the actual row count including partial rows
-  // at section boundaries and subtract divider space from usable height.
-  var sectionRowCount = 0;
-  var sectionDividerCount = 0;
-  if (hasSections) {
+  // --- Grid layout calculations (per-section cell heights) ---
+  var chosenH_mm = rowHeights[0];
+  var rowsPerPage = 1;
+  var sectionCellH = {};
+
+  if (hasSections && !isDiff && !isListLayout) {
+    // Build section structure
+    var secInfo = [];
     var prevSI = -1;
-    var inSecCount = 0;
+    var secIC = 0;
+    var secCV = cols;
     for (var qi2 = 0; qi2 < qData.length; qi2++) {
       if (qData[qi2].sectionIdx !== prevSI) {
-        if (inSecCount > 0) sectionRowCount++;
-        if (prevSI >= 0) sectionDividerCount++;
+        if (prevSI >= 0) {
+          secInfo.push({ idx: prevSI, count: secIC, cols: secCV,
+            rows: Math.ceil(secIC / secCV), needed: secNeeded[prevSI] || needed_mm });
+        }
         prevSI = qData[qi2].sectionIdx;
-        inSecCount = 0;
+        secIC = 0;
+        secCV = qData[qi2].sectionCols;
       }
-      inSecCount++;
-      if (inSecCount >= qData[qi2].sectionCols) { sectionRowCount++; inSecCount = 0; }
+      secIC++;
     }
-    if (inSecCount > 0) sectionRowCount++;
-  }
-
-  var dividerTotalH = sectionDividerCount * DIV_MM;
-  var adjUsableH = hasSections ? usableH - dividerTotalH : usableH;
-  var adjRowHeights = [];
-  for (var rr = 1; rr <= 10; rr++) {
-    adjRowHeights.push((adjUsableH - GAP_MM * (rr - 1)) / rr);
-  }
-
-  var chosenH_mm = adjRowHeights[0];
-  var rowsPerPage = 1;
-  var effectiveTotalQ = hasSections ? sectionRowCount * cols : totalQ;
-
-  var found = false;
-  for (var r = 0; r < adjRowHeights.length; r++) {
-    var capacity = (r + 1) * cols;
-    if (capacity >= effectiveTotalQ && adjRowHeights[r] >= needed_mm) {
-      chosenH_mm = adjRowHeights[r];
-      rowsPerPage = r + 1;
-      found = true;
-      break;
+    if (prevSI >= 0) {
+      secInfo.push({ idx: prevSI, count: secIC, cols: secCV,
+        rows: Math.ceil(secIC / secCV), needed: secNeeded[prevSI] || needed_mm });
     }
-  }
 
-  if (!found) {
-    for (var r2 = 0; r2 < adjRowHeights.length; r2++) {
-      if (adjRowHeights[r2] >= needed_mm) {
-        chosenH_mm = adjRowHeights[r2];
-        rowsPerPage = r2 + 1;
+    // Total minimum height: sum of (rows × needed + within-section gaps) + dividers
+    var totalMinH = 0;
+    var totalSecRows = 0;
+    for (var si2 = 0; si2 < secInfo.length; si2++) {
+      var sec = secInfo[si2];
+      totalMinH += sec.rows * sec.needed + (sec.rows - 1) * GAP_MM;
+      if (si2 > 0) totalMinH += DIV_MM;
+      totalSecRows += sec.rows;
+    }
+
+    if (totalMinH <= usableH) {
+      // Fits on one page — distribute remaining space proportionally by row count
+      var extraH = usableH - totalMinH;
+      for (var si3 = 0; si3 < secInfo.length; si3++) {
+        var sec2 = secInfo[si3];
+        var share = totalSecRows > 0 ? extraH * (sec2.rows / totalSecRows) / sec2.rows : 0;
+        sectionCellH[sec2.idx] = sec2.needed + share;
+      }
+      rowsPerPage = totalSecRows;
+    } else {
+      // Doesn't fit on one page — use minimum needed per section
+      for (var si4 = 0; si4 < secInfo.length; si4++) {
+        sectionCellH[secInfo[si4].idx] = secInfo[si4].needed;
+      }
+      // rowsPerPage for fallback pagination
+      for (var r3 = 0; r3 < rowHeights.length; r3++) {
+        if (rowHeights[r3] >= needed_mm) { chosenH_mm = rowHeights[r3]; rowsPerPage = r3 + 1; }
+      }
+    }
+  } else {
+    // Non-section path: uniform cell height
+    var found = false;
+    for (var r = 0; r < rowHeights.length; r++) {
+      var capacity = (r + 1) * cols;
+      if (capacity >= totalQ && rowHeights[r] >= needed_mm) {
+        chosenH_mm = rowHeights[r];
+        rowsPerPage = r + 1;
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      for (var r2 = 0; r2 < rowHeights.length; r2++) {
+        if (rowHeights[r2] >= needed_mm) { chosenH_mm = rowHeights[r2]; rowsPerPage = r2 + 1; }
       }
     }
   }
@@ -435,11 +471,12 @@ document.addEventListener("DOMContentLoaded", function() {
         var segItems = segments[sg].items;
         var segCols = segItems.length > 0 ? segItems[0].sectionCols : cols;
         var segCW = makeCellW(segCols);
+        var segH = sectionCellH[segments[sg].section] !== undefined ? sectionCellH[segments[sg].section] : cH;
         var gridRows = Math.ceil(segItems.length / segCols);
         var cells = segItems.map(function(item) {
-          return buildCell(showAnswer ? item.a : item.q, segCW, cH, false);
+          return buildCell(showAnswer ? item.a : item.q, segCW, segH, false);
         }).join('');
-        out += '<div class="grid" style="grid-template-columns:repeat(' + segCols + ',' + segCW + 'mm);grid-template-rows:repeat(' + gridRows + ',' + cH + 'mm);">' + cells + '</div>';
+        out += '<div class="grid" style="grid-template-columns:repeat(' + segCols + ',' + segCW + 'mm);grid-template-rows:repeat(' + gridRows + ',' + segH + 'mm);">' + cells + '</div>';
       }
       return out;
     }
@@ -493,38 +530,49 @@ document.addEventListener("DOMContentLoaded", function() {
     // Grid layout pagination
     var pageCapacity = isDiff ? diffRowsPerPage : rowsPerPage * cols;
 
-    // Account for section dividers in page capacity
+    // Height-budget pagination for section-aware grids
     if (hasSections && !isDiff) {
       var gridPages = [];
       var curPage = [];
-      var usedRows = 0;
-      var maxRows = rowsPerPage;
+      var usedH = 0;
       var prevSection = qData.length > 0 ? qData[0].sectionIdx : 0;
       var secColsInPage = 0;
 
       for (var qi = 0; qi < qData.length; qi++) {
+        var curSecH = sectionCellH[qData[qi].sectionIdx] || chosenH_mm;
         var curSecCols = qData[qi].sectionCols;
         var needsDivider = qi > 0 && qData[qi].sectionIdx !== prevSection;
         if (needsDivider) {
-          // Flush partial row from previous section
-          if (secColsInPage > 0) { usedRows++; secColsInPage = 0; }
-          var divRows = DIV_MM / chosenH_mm;
-          if (usedRows + divRows + 1 > maxRows && curPage.length > 0) {
+          if (secColsInPage > 0) {
+            var prevH = sectionCellH[prevSection] || chosenH_mm;
+            usedH += prevH + GAP_MM;
+            secColsInPage = 0;
+          }
+          if (usedH + DIV_MM + curSecH > usableH && curPage.length > 0) {
             gridPages.push(curPage);
             curPage = [];
-            usedRows = 0;
+            usedH = 0;
+          } else {
+            usedH += DIV_MM;
           }
           prevSection = qData[qi].sectionIdx;
         }
         curPage.push(qData[qi]);
         secColsInPage++;
-        if (secColsInPage >= curSecCols) { usedRows++; secColsInPage = 0; }
-        if (usedRows >= maxRows) {
-          gridPages.push(curPage);
-          curPage = [];
-          usedRows = 0;
+        if (secColsInPage >= curSecCols) {
+          usedH += curSecH + GAP_MM;
           secColsInPage = 0;
-          prevSection = qi + 1 < qData.length ? qData[qi + 1].sectionIdx : prevSection;
+          if (qi + 1 < qData.length) {
+            var nxtDiv = qData[qi + 1].sectionIdx !== qData[qi].sectionIdx;
+            var nxtH = sectionCellH[qData[qi + 1].sectionIdx] || chosenH_mm;
+            var nxtNeed = nxtDiv ? DIV_MM + nxtH : nxtH;
+            if (usedH + nxtNeed > usableH) {
+              gridPages.push(curPage);
+              curPage = [];
+              usedH = 0;
+              prevSection = qData[qi + 1].sectionIdx;
+            }
+          }
         }
       }
       if (curPage.length > 0) gridPages.push(curPage);
