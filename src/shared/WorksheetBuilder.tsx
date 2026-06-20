@@ -277,9 +277,9 @@ export const WorksheetBuilder = ({
                 return (
                   <div key={g.id}>
                     <div onClick={() => setSelectedId(isSel ? -1 : g.id)}
-                      className={`flex items-center gap-3 px-5 py-3 cursor-pointer transition-colors ${isSel ? "" : "hover:bg-gray-50"}`}
+                      className={`flex items-center justify-between px-5 py-3 cursor-pointer transition-colors ${isSel ? "" : "hover:bg-gray-50"}`}
                       style={{ backgroundColor: isSel ? "#f0f4ff" : undefined }}>
-                      <div className="flex items-center gap-2 flex-shrink-0">
+                      <div className="flex items-center gap-3 flex-shrink-0">
                         <div className={`w-2.5 h-2.5 rounded-full ${lvDot(g.level)}`} />
                         <span className="text-sm font-bold text-gray-400 tabular-nums w-5">{idx + 1}</span>
                       </div>
@@ -318,23 +318,24 @@ export const WorksheetBuilder = ({
                         <button onClick={() => updateGroup(g.id, { count: Math.min(24, g.count + 1) })} disabled={g.count >= 24}
                           className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:bg-gray-100 hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-sm leading-none">+</button>
                       </div>
-                      <div className="flex-1" />
-                      <ChevronDown size={14} className={`text-gray-300 transition-transform flex-shrink-0 ${isSel ? "rotate-180" : ""}`} />
-                      <button onClick={e => {
-                        e.stopPropagation();
-                        if (groups.length <= 1) return;
-                        setDividers(prev => { const next = new Set(prev); next.delete(g.id); return next; });
-                        const rem = groups.filter(ag => ag.id !== g.id);
-                        setGroups(rem);
-                        if (g.id === selectedId) setSelectedId(rem[Math.max(0, groups.indexOf(g) - 1)]?.id ?? rem[0].id);
-                      }}
-                        className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${groups.length > 1 ? "text-gray-300 hover:bg-red-50 hover:text-red-400" : "invisible"}`}>
-                        <X size={12} />
-                      </button>
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <ChevronDown size={14} className={`text-gray-300 transition-transform ${isSel ? "rotate-180" : ""}`} />
+                        <button onClick={e => {
+                          e.stopPropagation();
+                          if (groups.length <= 1) return;
+                          setDividers(prev => { const next = new Set(prev); next.delete(g.id); return next; });
+                          const rem = groups.filter(ag => ag.id !== g.id);
+                          setGroups(rem);
+                          if (g.id === selectedId) setSelectedId(rem[Math.max(0, groups.indexOf(g) - 1)]?.id ?? rem[0].id);
+                        }}
+                          className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${groups.length > 1 ? "text-gray-300 hover:bg-red-50 hover:text-red-400" : "invisible"}`}>
+                          <X size={12} />
+                        </button>
+                      </div>
                     </div>
                     {isSel && (
-                      <div className="px-5 py-3 border-t border-blue-100" style={{ backgroundColor: "#f8faff" }}>
-                        <div style={{ maxWidth: "28rem" }}>
+                      <div className="px-5 py-3 border-t border-blue-100 flex justify-center" style={{ backgroundColor: "#f8faff" }}>
+                        <div style={{ maxWidth: "28rem", width: "100%" }}>
                           <InlineQOPanel
                             toolEntry={config.tools[g.tool]}
                             level={g.level}
