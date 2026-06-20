@@ -736,37 +736,27 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
 
     return (
       <div className="flex gap-3" style={{ minHeight: 300 }}>
-        <div className="flex flex-col rounded-xl border-2 border-gray-300 overflow-hidden" style={{ width: "50%", flexShrink: 0, backgroundColor: "#fff" }}>
+        <div className="flex flex-col rounded-xl border-2 border-gray-300 overflow-hidden" style={{ width: "62%", flexShrink: 0, backgroundColor: "#fff" }}>
           <div className="flex-1 overflow-y-auto">
             {sections.map((secGroups, secIdx) => (
               <div key={secIdx}>
-                {secIdx > 0 && (
-                  <div className="flex items-center gap-2 px-4 py-1.5" style={{ backgroundColor: "#f9fafb" }}>
-                    <div className="flex-1 border-t border-gray-300" />
-                    <button onClick={() => {
-                      const prevGroupId = sections[secIdx - 1][sections[secIdx - 1].length - 1]?.id;
-                      if (prevGroupId !== undefined) toggleDivider(prevGroupId);
-                    }}
-                      className="text-gray-300 hover:text-red-400 transition-colors" title="Remove divider">
-                      <X size={10} />
-                    </button>
+                {sections.length > 1 && (
+                  <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100" style={{ backgroundColor: "#f3f4f6" }}>
+                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Section {secIdx + 1}</span>
+                    <div className="flex-1" />
                     <button onClick={() => toggleSectionShuffle(secIdx)}
-                      className={`text-xs font-semibold px-2 py-0.5 rounded transition-colors ${sectionShuffles[secIdx] ? "bg-blue-900 text-white" : "bg-gray-200 text-gray-500 hover:bg-gray-300"}`}
-                      title={sectionShuffles[secIdx] ? "Shuffle on for this section" : "Shuffle off for this section"}>
+                      className={`text-xs font-semibold px-3 py-1 rounded transition-colors ${sectionShuffles[secIdx] ? "bg-blue-900 text-white" : "bg-gray-200 text-gray-500 hover:bg-gray-300"}`}>
                       Shuffle
                     </button>
-                    <div className="flex-1 border-t border-gray-300" />
-                  </div>
-                )}
-                {secIdx === 0 && sections.length > 1 && (
-                  <div className="flex items-center gap-2 px-4 py-1.5" style={{ backgroundColor: "#f9fafb" }}>
-                    <div className="flex-1" />
-                    <button onClick={() => toggleSectionShuffle(0)}
-                      className={`text-xs font-semibold px-2 py-0.5 rounded transition-colors ${sectionShuffles[0] ? "bg-blue-900 text-white" : "bg-gray-200 text-gray-500 hover:bg-gray-300"}`}
-                      title={sectionShuffles[0] ? "Shuffle on for this section" : "Shuffle off for this section"}>
-                      Shuffle
-                    </button>
-                    <div className="flex-1" />
+                    {secIdx > 0 && (
+                      <button onClick={() => {
+                        const prevGroupId = sections[secIdx - 1][sections[secIdx - 1].length - 1]?.id;
+                        if (prevGroupId !== undefined) toggleDivider(prevGroupId);
+                      }}
+                        className="w-6 h-6 rounded-full flex items-center justify-center text-gray-300 hover:bg-red-50 hover:text-red-400 transition-colors flex-shrink-0" title="Remove section">
+                        <X size={12} />
+                      </button>
+                    )}
                   </div>
                 )}
                 {secGroups.map((g) => {
@@ -813,17 +803,6 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                     </div>
                   );
                 })}
-                {secIdx === sections.length - 1 && sections.length > 1 && (
-                  <div className="flex items-center gap-2 px-4 py-1.5" style={{ backgroundColor: "#f9fafb" }}>
-                    <div className="flex-1" />
-                    <button onClick={() => toggleSectionShuffle(secIdx)}
-                      className={`text-xs font-semibold px-2 py-0.5 rounded transition-colors ${sectionShuffles[secIdx] ? "bg-blue-900 text-white" : "bg-gray-200 text-gray-500 hover:bg-gray-300"}`}
-                      title={sectionShuffles[secIdx] ? "Shuffle on for this section" : "Shuffle off for this section"}>
-                      Shuffle
-                    </button>
-                    <div className="flex-1" />
-                  </div>
-                )}
               </div>
             ))}
           </div>
