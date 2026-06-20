@@ -262,16 +262,15 @@ export const WorksheetBuilder = ({
                   <div key={g.id}>
                     <div
                       onClick={() => setSelectedId(g.id)}
-                      className="flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-gray-50 border-b border-gray-100"
+                      className="flex items-center gap-4 px-4 py-3 cursor-pointer transition-colors hover:bg-gray-50 border-b border-gray-100"
                       style={{
                         borderLeft: `3px solid ${isSel ? lvBorder(g.level) : "transparent"}`,
                         backgroundColor: isSel ? "#f0f4ff" : undefined,
                       }}
                     >
-                      <span className="text-xs font-bold text-gray-300 w-4 flex-shrink-0 tabular-nums">
+                      <span className="text-xs font-bold text-gray-400 w-5 flex-shrink-0 tabular-nums">
                         {idx + 1}
                       </span>
-                      {/* Sub-tool selector */}
                       {toolKeys.length > 1 && (
                         <select
                           value={g.tool}
@@ -286,7 +285,7 @@ export const WorksheetBuilder = ({
                             updateGroup(g.id, { ...fresh, id: g.id });
                             setSelectedId(g.id);
                           }}
-                          className="text-xs font-semibold bg-gray-50 border border-gray-200 rounded px-1.5 py-1 max-w-[100px] truncate"
+                          className="text-xs font-semibold bg-gray-50 border border-gray-200 rounded px-2 py-1.5 min-w-0 flex-1 max-w-[160px]"
                         >
                           {toolKeys.map((k) => (
                             <option key={k} value={k}>
@@ -295,7 +294,6 @@ export const WorksheetBuilder = ({
                           ))}
                         </select>
                       )}
-                      {/* Level selector */}
                       <div
                         className="flex rounded-lg border-2 border-gray-200 overflow-hidden flex-shrink-0"
                         onClick={(e) => e.stopPropagation()}
@@ -318,7 +316,7 @@ export const WorksheetBuilder = ({
                                   setSelectedId(g.id);
                                 }
                               }}
-                              className={`px-2.5 py-1 font-bold text-xs transition-colors ${isLvDisabled ? "bg-gray-100 text-gray-300 cursor-not-allowed" : g.level === lv ? `${lvColor(lv)} text-white` : "bg-white text-gray-400 hover:bg-gray-50"}`}
+                              className={`px-4 py-1.5 font-bold text-xs transition-colors ${isLvDisabled ? "bg-gray-100 text-gray-300 cursor-not-allowed" : g.level === lv ? `${lvColor(lv)} text-white` : "bg-white text-gray-400 hover:bg-gray-50"}`}
                             >
                               L{li + 1}
                             </button>
@@ -326,9 +324,8 @@ export const WorksheetBuilder = ({
                         })}
                       </div>
                       <div className="flex-1" />
-                      {/* Count stepper */}
                       <div
-                        className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5 flex-shrink-0"
+                        className="flex items-center gap-1.5 bg-gray-100 rounded-lg px-1 py-0.5 flex-shrink-0"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <button
@@ -338,11 +335,11 @@ export const WorksheetBuilder = ({
                             })
                           }
                           disabled={g.count <= 1}
-                          className="w-6 h-6 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-base leading-none"
+                          className="w-7 h-7 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-base leading-none"
                         >
                           −
                         </button>
-                        <span className="w-6 text-center text-xs font-bold text-gray-800 tabular-nums">
+                        <span className="w-7 text-center text-sm font-bold text-gray-800 tabular-nums">
                           {g.count}
                         </span>
                         <button
@@ -352,7 +349,7 @@ export const WorksheetBuilder = ({
                             })
                           }
                           disabled={g.count >= 24}
-                          className="w-6 h-6 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-base leading-none"
+                          className="w-7 h-7 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-base leading-none"
                         >
                           +
                         </button>
