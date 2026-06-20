@@ -518,7 +518,7 @@ export const WorksheetBuilder = ({
             </span>
             <div className="flex-1">
               {questionRenderer ? (
-                questionRenderer(q, showAnswers, "default", true, i)
+                questionRenderer(q, false, "default", true, i)
               ) : q.kind === "worded" ? (
                 <div className={`${fsz}`}>
                   {q.lines.map((line, li) => (
@@ -595,7 +595,7 @@ export const WorksheetBuilder = ({
             {i + 1}
           </span>
           {questionRenderer ? (
-            questionRenderer(q, showAnswers, "default", true, i)
+            questionRenderer(q, false, "default", true, i)
           ) : q.kind === "worded" ? (
             <div className={`${fsz}`}>
               {q.lines.map((line, li) => (
