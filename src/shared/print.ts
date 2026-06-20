@@ -144,12 +144,15 @@ export const handlePrint = (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sectionIndices = questions.map(q => (q as any)._sectionIdx as number | undefined);
   const hasSections = sectionIndices.some(s => s !== undefined && s > 0);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sectionColsArr = questions.map(q => (q as any)._sectionCols as number | undefined);
 
   const qHtmlData = questions.map((q, i) => ({
     q: layout === "list" ? listQuestionToHtml(q, i, false) : questionToHtml(q, i, false),
     a: layout === "list" ? listAnswerOnlyToHtml(q, i) : answerOnlyToHtml(q, i),
     difficulty: q.difficulty,
     sectionIdx: sectionIndices[i] ?? 0,
+    sectionCols: sectionColsArr[i] ?? cols,
   }));
 
   void (difficulty as unknown); void (instruction as unknown); void (pMode as unknown);
@@ -334,25 +337,43 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 
   // ── List layout builder ──
-  function buildListPage(pageItems, showAnswer) {
-    var colW = makeCellW(cols);
-    var itemsPerCol = Math.ceil(pageItems.length / cols);
+  function buildListSection(sectionItems, showAnswer, secCols) {
+    var colW = makeCellW(secCols);
+    var itemsPerCol = Math.ceil(sectionItems.length / secCols);
     var colsHtml = '';
-    for (var c = 0; c < cols; c++) {
+    for (var c = 0; c < secCols; c++) {
       var start = c * itemsPerCol;
-      var end = Math.min(start + itemsPerCol, pageItems.length);
+      var end = Math.min(start + itemsPerCol, sectionItems.length);
       var items = '';
       for (var i = start; i < end; i++) {
-        var item = pageItems[i];
-        if (item.divider) {
-          items += buildSectionDivider();
-        } else {
-          items += showAnswer ? item.a : item.q;
-        }
+        items += showAnswer ? sectionItems[i].a : sectionItems[i].q;
       }
       colsHtml += '<div class="list-col" style="width:' + colW + 'mm;">' + items + '</div>';
     }
-    return '<div style="display:grid;grid-template-columns:repeat(' + cols + ',' + colW + 'mm);gap:' + GAP_MM + 'mm;align-items:start;">' + colsHtml + '</div>';
+    return '<div style="display:grid;grid-template-columns:repeat(' + secCols + ',' + colW + 'mm);gap:' + GAP_MM + 'mm;align-items:start;">' + colsHtml + '</div>';
+  }
+  function buildListPage(pageItems, showAnswer) {
+    if (!hasSections) return buildListSection(pageItems, showAnswer, cols);
+    var segments = [];
+    var curSeg = [];
+    var curSec = -1;
+    for (var i = 0; i < pageItems.length; i++) {
+      if (pageItems[i].divider) continue;
+      var si = pageItems[i].sectionIdx;
+      if (si !== curSec && curSeg.length > 0) {
+        segments.push({ items: curSeg, cols: curSeg[0].sectionCols });
+        curSeg = [];
+      }
+      curSeg.push(pageItems[i]);
+      curSec = si;
+    }
+    if (curSeg.length > 0) segments.push({ items: curSeg, cols: curSeg[0].sectionCols });
+    var out = '';
+    for (var sg = 0; sg < segments.length; sg++) {
+      if (sg > 0) out += buildSectionDivider();
+      out += buildListSection(segments[sg].items, showAnswer, segments[sg].cols);
+    }
+    return out;
   }
 
   // ── Grid layout builder (with section dividers) ──
@@ -388,16 +409,17 @@ document.addEventListener("DOMContentLoaded", function() {
       }
       if (curSeg.length > 0) segments.push({ items: curSeg, section: curSec });
 
-      var cW = makeCellW(cols);
       var out = '';
       for (var sg = 0; sg < segments.length; sg++) {
         if (sg > 0) out += buildSectionDivider();
         var segItems = segments[sg].items;
-        var gridRows = Math.ceil(segItems.length / cols);
+        var segCols = segItems.length > 0 ? segItems[0].sectionCols : cols;
+        var segCW = makeCellW(segCols);
+        var gridRows = Math.ceil(segItems.length / segCols);
         var cells = segItems.map(function(item) {
-          return buildCell(showAnswer ? item.a : item.q, cW, cH, false);
+          return buildCell(showAnswer ? item.a : item.q, segCW, cH, false);
         }).join('');
-        out += '<div class="grid" style="grid-template-columns:repeat(' + cols + ',' + cW + 'mm);grid-template-rows:repeat(' + gridRows + ',' + cH + 'mm);">' + cells + '</div>';
+        out += '<div class="grid" style="grid-template-columns:repeat(' + segCols + ',' + segCW + 'mm);grid-template-rows:repeat(' + gridRows + ',' + cH + 'mm);">' + cells + '</div>';
       }
       return out;
     }
@@ -458,11 +480,14 @@ document.addEventListener("DOMContentLoaded", function() {
       var usedRows = 0;
       var maxRows = rowsPerPage;
       var prevSection = qData.length > 0 ? qData[0].sectionIdx : 0;
+      var secColsInPage = 0;
 
       for (var qi = 0; qi < qData.length; qi++) {
+        var curSecCols = qData[qi].sectionCols;
         var needsDivider = qi > 0 && qData[qi].sectionIdx !== prevSection;
         if (needsDivider) {
-          // Check if the divider + at least 1 row fits on current page
+          // Flush partial row from previous section
+          if (secColsInPage > 0) { usedRows++; secColsInPage = 0; }
           var divRows = DIV_MM / chosenH_mm;
           if (usedRows + divRows + 1 > maxRows && curPage.length > 0) {
             gridPages.push(curPage);
@@ -472,11 +497,13 @@ document.addEventListener("DOMContentLoaded", function() {
           prevSection = qData[qi].sectionIdx;
         }
         curPage.push(qData[qi]);
-        if (curPage.length % cols === 0) usedRows++;
+        secColsInPage++;
+        if (secColsInPage >= curSecCols) { usedRows++; secColsInPage = 0; }
         if (usedRows >= maxRows) {
           gridPages.push(curPage);
           curPage = [];
           usedRows = 0;
+          secColsInPage = 0;
           prevSection = qi + 1 < qData.length ? qData[qi + 1].sectionIdx : prevSection;
         }
       }

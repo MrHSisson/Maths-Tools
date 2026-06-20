@@ -109,8 +109,11 @@ export const WorksheetBuilder = ({
   const [sectionShuffles, setSectionShuffles] = useState<
     Record<number, boolean>
   >({});
+  const [sectionColumns, setSectionColumns] = useState<
+    Record<number, number>
+  >({});
   const [layout, setLayout] = useState<"grid" | "list">("grid");
-  const [numColumns, setNumColumns] = useState(3);
+  const [numColumns] = useState(3);
   const [worksheet, setWorksheet] = useState<AnyQuestion[]>([]);
   const [showAnswers, setShowAnswers] = useState(false);
   const [printMode, setPrintMode] = useState<PrintMode>("both");
@@ -170,9 +173,11 @@ export const WorksheetBuilder = ({
           [secQs[i], secQs[j]] = [secQs[j], secQs[i]];
         }
       }
+      const secCols = sectionColumns[secIdx] ?? numColumns;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       secQs.forEach((q) => {
         (q as any)._sectionIdx = secIdx;
+        (q as any)._sectionCols = secCols;
       });
       questions.push(...secQs);
     });
@@ -238,6 +243,17 @@ export const WorksheetBuilder = ({
                 >
                   Shuffle
                 </button>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-semibold text-gray-400">Cols</span>
+                  <div className="flex rounded border border-gray-300 overflow-hidden">
+                    {[1, 2, 3, 4].map(c => (
+                      <button key={c} onClick={() => setSectionColumns(prev => ({ ...prev, [secIdx]: c }))}
+                        className={`w-6 h-5 text-xs font-bold transition-colors ${(sectionColumns[secIdx] ?? numColumns) === c ? "bg-blue-900 text-white" : "bg-white text-gray-400 hover:bg-gray-50"}`}>
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 {secIdx > 0 && (
                   <button
                     onClick={() => {
@@ -493,183 +509,157 @@ export const WorksheetBuilder = ({
     if (worksheet.length === 0) return null;
     const fsz = "text-xl";
     if (layout === "list") {
-      return (
-        <div
-          ref={worksheetRef}
-          className="bg-white rounded-xl shadow-lg p-6 mt-6"
-        >
-          <div style={{ columnCount: numColumns, columnGap: "2rem" }}>
-            {worksheet.map((q, i) => {
-              const secIdx =
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (q as any)._sectionIdx as number | undefined;
-              const prevSec =
-                i > 0
-                  ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    ((worksheet[i - 1] as any)._sectionIdx as
-                      | number
-                      | undefined)
-                  : undefined;
-              const showDivider =
-                secIdx !== undefined &&
-                prevSec !== undefined &&
-                secIdx !== prevSec;
-              return (
-                <div key={q.key + i}>
-                  {showDivider && (
-                    <div
-                      className="border-t border-gray-300 my-2"
-                      style={{ breakInside: "avoid" }}
-                    />
-                  )}
-                  <div
-                    className="py-1 flex gap-2"
-                    style={{ breakInside: "avoid" }}
-                  >
-                    <span className="text-sm font-bold text-gray-400 w-6 text-right flex-shrink-0">
-                      {i + 1}.
+      const renderListItem = (q: AnyQuestion, i: number) => (
+        <div key={q.key + i}>
+          <div className="py-1 flex gap-2" style={{ breakInside: "avoid" }}>
+            <span className="text-sm font-bold text-gray-400 w-6 text-right flex-shrink-0">
+              {i + 1}.
+            </span>
+            <div className="flex-1">
+              {questionRenderer ? (
+                questionRenderer(q, showAnswers, "default", true, i)
+              ) : q.kind === "worded" ? (
+                <div className={`${fsz}`}>
+                  {q.lines.map((line, li) => (
+                    <span key={li}>
+                      <InlineMath text={line} />
+                      {li < q.lines.length - 1 && " "}
                     </span>
-                    <div className="flex-1">
-                      {questionRenderer ? (
-                        questionRenderer(
-                          q,
-                          showAnswers,
-                          "default",
-                          true,
-                          i,
-                        )
-                      ) : q.kind === "worded" ? (
-                        <div className={`${fsz}`}>
-                          {q.lines.map((line, li) => (
-                            <span key={li}>
-                              <InlineMath text={line} />
-                              {li < q.lines.length - 1 && " "}
-                            </span>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className={`${fsz}`}>
-                          <MathRenderer
-                            latex={
-                              (q as any).displayLatex ?? (q as any).display
-                            }
-                          />
-                        </div>
-                      )}
-                      {showAnswers && (
-                        <div
-                          className="text-sm font-semibold mt-0.5"
-                          style={{ color: "#059669" }}
-                        >
-                          <MathRenderer
-                            latex={ansEq(
-                              (q as any).answerLatex ?? (q as any).answer,
-                            )}
-                          />
-                          {(q as any).answerSuffix && (
-                            <span className="ml-1">
-                              {(q as any).answerSuffix}
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                  ))}
                 </div>
-              );
-            })}
+              ) : (
+                <div className={`${fsz}`}>
+                  <MathRenderer latex={(q as any).displayLatex ?? (q as any).display} />
+                </div>
+              )}
+              {showAnswers && (
+                <div className="text-sm font-semibold mt-0.5" style={{ color: "#059669" }}>
+                  <MathRenderer latex={ansEq((q as any).answerLatex ?? (q as any).answer)} />
+                  {(q as any).answerSuffix && <span className="ml-1">{(q as any).answerSuffix}</span>}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       );
-    }
-
-    // Grid layout
-    return (
-      <div ref={worksheetRef} className="bg-white rounded-xl shadow-lg p-6 mt-6">
-        <div
-          className="grid gap-4"
-          style={{
-            gridTemplateColumns: `repeat(${numColumns}, 1fr)`,
-          }}
-        >
-          {worksheet.map((q, i) => {
-            const secIdx =
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (q as any)._sectionIdx as number | undefined;
-            const prevSec =
-              i > 0
-                ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  ((worksheet[i - 1] as any)._sectionIdx as
-                    | number
-                    | undefined)
-                : undefined;
-            const showDivider =
-              secIdx !== undefined &&
-              prevSec !== undefined &&
-              secIdx !== prevSec;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const hasSec = worksheet.some(q => ((q as any)._sectionIdx ?? 0) > 0);
+      if (!hasSec) {
+        return (
+          <div ref={worksheetRef} className="bg-white rounded-xl shadow-lg p-6 mt-6">
+            <div style={{ columnCount: numColumns, columnGap: "2rem" }}>
+              {worksheet.map((q, i) => renderListItem(q, i))}
+            </div>
+          </div>
+        );
+      }
+      const segments: { items: { q: AnyQuestion; idx: number }[] }[] = [];
+      let curSec = -1;
+      worksheet.forEach((q, i) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const si = (q as any)._sectionIdx ?? 0;
+        if (si !== curSec) { segments.push({ items: [] }); curSec = si; }
+        segments[segments.length - 1].items.push({ q, idx: i });
+      });
+      return (
+        <div ref={worksheetRef} className="bg-white rounded-xl shadow-lg p-6 mt-6">
+          {segments.map((seg, si) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const segCols = (seg.items[0]?.q as any)?._sectionCols ?? numColumns;
             return (
-              <div key={q.key + i} style={showDivider ? { gridColumn: `1 / -1` } : undefined}>
-                {showDivider && (
-                  <div className="border-t-2 border-gray-300 my-2 col-span-full" />
-                )}
-                <div
-                  className="rounded-lg p-4 text-center"
-                  style={{
-                    backgroundColor: "#f5f3f0",
-                    minHeight: 60,
-                  }}
-                >
-                  <span className="text-xs font-bold text-gray-300 block mb-1">
-                    {i + 1}
-                  </span>
-                  {questionRenderer ? (
-                    questionRenderer(
-                      q,
-                      showAnswers,
-                      "default",
-                      true,
-                      i,
-                    )
-                  ) : q.kind === "worded" ? (
-                    <div className={`${fsz}`}>
-                      {q.lines.map((line, li) => (
-                        <span key={li}>
-                          <InlineMath text={line} />
-                          {li < q.lines.length - 1 && " "}
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className={`${fsz}`}>
-                      <MathRenderer
-                        latex={
-                          (q as any).displayLatex ?? (q as any).display
-                        }
-                      />
-                    </div>
-                  )}
-                  {showAnswers && (
-                    <div
-                      className={`${fsz} font-semibold mt-1`}
-                      style={{ color: "#059669" }}
-                    >
-                      <MathRenderer
-                        latex={ansEq(
-                          (q as any).answerLatex ?? (q as any).answer,
-                        )}
-                      />
-                      {(q as any).answerSuffix && (
-                        <span className="ml-1">
-                          {(q as any).answerSuffix}
-                        </span>
-                      )}
-                    </div>
-                  )}
+              <div key={si}>
+                {si > 0 && <div style={{ width: "60%", margin: "0.5rem auto", borderTop: "1px solid #d1d5db" }} />}
+                <div style={{ columnCount: segCols, columnGap: "2rem" }}>
+                  {seg.items.map(({ q, idx }) => renderListItem(q, idx))}
                 </div>
               </div>
             );
           })}
         </div>
+      );
+    }
+
+    // Grid layout — split into segments per section for per-section columns
+    const renderGridCell = (q: AnyQuestion, i: number) => (
+      <div key={q.key + i}>
+        <div
+          className="rounded-lg p-4 text-center"
+          style={{
+            backgroundColor: "#f5f3f0",
+            minHeight: 60,
+          }}
+        >
+          <span className="text-xs font-bold text-gray-300 block mb-1">
+            {i + 1}
+          </span>
+          {questionRenderer ? (
+            questionRenderer(q, showAnswers, "default", true, i)
+          ) : q.kind === "worded" ? (
+            <div className={`${fsz}`}>
+              {q.lines.map((line, li) => (
+                <span key={li}>
+                  <InlineMath text={line} />
+                  {li < q.lines.length - 1 && " "}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <div className={`${fsz}`}>
+              <MathRenderer
+                latex={(q as any).displayLatex ?? (q as any).display}
+              />
+            </div>
+          )}
+          {showAnswers && (
+            <div
+              className={`${fsz} font-semibold mt-1`}
+              style={{ color: "#059669" }}
+            >
+              <MathRenderer
+                latex={ansEq((q as any).answerLatex ?? (q as any).answer)}
+              />
+              {(q as any).answerSuffix && (
+                <span className="ml-1">{(q as any).answerSuffix}</span>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const hasSec = worksheet.some(q => ((q as any)._sectionIdx ?? 0) > 0);
+    if (!hasSec) {
+      return (
+        <div ref={worksheetRef} className="bg-white rounded-xl shadow-lg p-6 mt-6">
+          <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${numColumns}, 1fr)` }}>
+            {worksheet.map((q, i) => renderGridCell(q, i))}
+          </div>
+        </div>
+      );
+    }
+    const segments: { items: { q: AnyQuestion; idx: number }[] }[] = [];
+    let curSec = -1;
+    worksheet.forEach((q, i) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const si = (q as any)._sectionIdx ?? 0;
+      if (si !== curSec) { segments.push({ items: [] }); curSec = si; }
+      segments[segments.length - 1].items.push({ q, idx: i });
+    });
+    return (
+      <div ref={worksheetRef} className="bg-white rounded-xl shadow-lg p-6 mt-6">
+        {segments.map((seg, si) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const segCols = (seg.items[0]?.q as any)?._sectionCols ?? numColumns;
+          return (
+            <div key={si}>
+              {si > 0 && <div style={{ width: "60%", margin: "1rem auto", borderTop: "1px solid #d1d5db" }} />}
+              <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${segCols}, 1fr)` }}>
+                {seg.items.map(({ q, idx }) => renderGridCell(q, idx))}
+              </div>
+            </div>
+          );
+        })}
       </div>
     );
   };
@@ -682,23 +672,6 @@ export const WorksheetBuilder = ({
           {renderOptionsPanel()}
         </div>
         <div className="flex justify-center items-center gap-4 flex-wrap mt-4">
-          <div className="flex items-center gap-2">
-            <label className="text-base font-semibold text-gray-700">
-              Columns:
-            </label>
-            <input
-              type="number"
-              min="1"
-              max="4"
-              value={numColumns}
-              onChange={(e) =>
-                setNumColumns(
-                  Math.max(1, Math.min(4, parseInt(e.target.value) || 3)),
-                )
-              }
-              className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-base font-semibold text-center"
-            />
-          </div>
           <div className="flex rounded-lg border-2 border-gray-300 overflow-hidden">
             <button
               onClick={() => setLayout("grid")}

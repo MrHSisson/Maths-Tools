@@ -147,6 +147,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     advShuffle?: boolean;
     advDividers?: number[];
     sectionShuffles?: Record<number, boolean>;
+    sectionColumns?: Record<number, number>;
     worksheetLayout?: "grid" | "list";
     levelVariables?: Record<string, Record<string, boolean>>;
     levelDropdowns?: Record<string, string>;
@@ -305,6 +306,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const [advShuffle] = useState(wbInit?.advShuffle ?? false);
   const [advDividers, setAdvDividers] = useState<Set<number>>(() => new Set(wbInit?.advDividers ?? []));
   const [sectionShuffles, setSectionShuffles] = useState<Record<number, boolean>>(wbInit?.sectionShuffles ?? {});
+  const [sectionColumns, setSectionColumns] = useState<Record<number, number>>(wbInit?.sectionColumns ?? {});
   const [worksheetLayout, setWorksheetLayout] = useState<"grid" | "list">(wbInit?.worksheetLayout ?? "grid");
   // When the active sub-tool changes, re-hydrate the advanced groups so their QO
   // options reflect the new sub-tool's defaults (the initial mount is already
@@ -468,8 +470,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           [secQs[i], secQs[j]] = [secQs[j], secQs[i]];
         }
       }
+      const secCols = sectionColumns[secIdx] ?? numColumns;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      secQs.forEach(q => { (q as any)._sectionIdx = secIdx; });
+      secQs.forEach(q => { (q as any)._sectionIdx = secIdx; (q as any)._sectionCols = secCols; });
       questions.push(...secQs);
     });
     setWorksheet(questions);
@@ -596,11 +599,11 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     try {
       sessionStorage.setItem(wbStorageKey, JSON.stringify({
         worksheetMode, advGroups, advSelectedId, advShuffle,
-        advDividers: [...advDividers], sectionShuffles, worksheetLayout,
+        advDividers: [...advDividers], sectionShuffles, sectionColumns, worksheetLayout,
         levelVariables, levelDropdowns, levelMultiSelect,
       } satisfies WBPersist));
     } catch { /* ignore quota / serialisation errors */ }
-  }, [wbStorageKey, worksheetMode, advGroups, advSelectedId, advShuffle, advDividers, sectionShuffles, worksheetLayout, levelVariables, levelDropdowns, levelMultiSelect]);
+  }, [wbStorageKey, worksheetMode, advGroups, advSelectedId, advShuffle, advDividers, sectionShuffles, sectionColumns, worksheetLayout, levelVariables, levelDropdowns, levelMultiSelect]);
 
   // A link that points straight at a worksheet generates it on arrival —
   // a bookmarked worksheet link is ready to teach from without extra clicks.
@@ -746,6 +749,19 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                       className={`text-xs font-semibold px-3 py-1 rounded transition-colors ${sectionShuffles[secIdx] ? "bg-blue-900 text-white" : "bg-gray-200 text-gray-500 hover:bg-gray-300"}`}>
                       Shuffle
                     </button>
+                    {!defaults.fixedColumns && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-semibold text-gray-400">Cols</span>
+                        <div className="flex rounded border border-gray-300 overflow-hidden">
+                          {Array.from({ length: defaults.maxColumns ?? 4 }, (_, i) => i + 1).map(c => (
+                            <button key={c} onClick={() => setSectionColumns(prev => ({ ...prev, [secIdx]: c }))}
+                              className={`w-6 h-5 text-xs font-bold transition-colors ${(sectionColumns[secIdx] ?? numColumns) === c ? "bg-blue-900 text-white" : "bg-white text-gray-400 hover:bg-gray-50"}`}>
+                              {c}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     {secIdx > 0 && (
                       <button onClick={() => {
                         const prevGroupId = sections[secIdx - 1][sections[secIdx - 1].length - 1]?.id;
@@ -948,14 +964,6 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             <div className="p-6 pt-4">
               {renderAdvancedWorksheet()}
               <div className="flex justify-center items-center gap-4 flex-wrap mt-4">
-                {!defaults.fixedColumns && (
-                  <div className="flex items-center gap-2">
-                    <label className="text-base font-semibold text-gray-700">Columns:</label>
-                    <input type="number" min="1" max={defaults.maxColumns ?? 4} value={numColumns}
-                      onChange={e => setNumColumns(Math.max(1, Math.min(defaults.maxColumns ?? 4, parseInt(e.target.value) || (defaults.numColumns ?? 3))))}
-                      className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-base font-semibold text-center" />
-                  </div>
-                )}
                 <div className="flex rounded-lg border-2 border-gray-300 overflow-hidden">
                   <button onClick={() => setWorksheetLayout("grid")}
                     className={`px-3 py-1.5 text-sm font-bold transition-colors ${worksheetLayout === "grid" ? "bg-blue-900 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
@@ -1267,55 +1275,74 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     if (worksheetLayout === "list") {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const hasSec = worksheet.some(q => ((q as any)._sectionIdx ?? 0) > 0);
+      const renderListItem = (q: AnyQuestion, idx: number, showDivider: boolean) => {
+        const fsz = fontSizes[worksheetFontSize];
+        return (
+          <div key={idx}>
+            {showDivider && <div style={{ width: "60%", margin: "0.5rem auto", borderTop: "1px solid #d1d5db" }} />}
+            <div className="group flex items-baseline gap-2 py-1.5" style={{ breakInside: "avoid", position: "relative" }}>
+              <span className="text-xs font-bold text-gray-400 flex-shrink-0" style={{ minWidth: "1.5rem" }}>{idx + 1})</span>
+              <div className={`${fsz} font-semibold flex-1`} style={{ color: "#000" }}>
+                {getInstruction() && <span className={`${fontSizes[Math.max(0, worksheetFontSize - 1)]} font-semibold mr-1`}>{getInstruction()}</span>}
+                {questionRenderer
+                  ? questionRenderer(q, false, colorScheme, true, idx, getQOSnapshot(), fsz)
+                  : q.kind === "simple"
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    ? ((q as any).displayLatex ? <MathRenderer latex={(q as any).displayLatex} /> : <span>{(q as any).display}</span>)
+                    : "lines" in q
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      ? (q as any).lines.map((line: string, i: number) => <span key={i}><InlineMath text={line} />{i < (q as any).lines.length - 1 ? " " : ""}</span>)
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      : <MathRenderer latex={(q as any).latex ?? ""} />
+                }
+              </div>
+              {showWorksheetAnswers && (
+                <span className={`${fsz} font-semibold flex-shrink-0`} style={{ color: "#059669" }}>
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  {(q as any).answerLatex ? <MathRenderer latex={ansEq((q as any).answerLatex)} /> : <span>{ansEq((q as any).answer)}</span>}
+                </span>
+              )}
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              {(q as any)._qo && (
+                <button onClick={() => regenQuestion(idx)} title="Regenerate"
+                  className="w-5 h-5 rounded flex items-center justify-center text-gray-300 hover:text-blue-600 hover:bg-blue-50 transition-all opacity-0 group-hover:opacity-100 flex-shrink-0">
+                  <RefreshCw size={10} />
+                </button>
+              )}
+            </div>
+          </div>
+        );
+      };
       return (
         <div className="rounded-xl shadow-2xl p-8 relative" style={{ backgroundColor: qBg }}>
           {fontSizeControls}
           <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
-          <div style={{ columnCount: numColumns, columnGap: "1.5rem" }}>
-            {worksheet.map((q, idx) => {
+          {!hasSec ? (
+            <div style={{ columnCount: numColumns, columnGap: "1.5rem" }}>
+              {worksheet.map((q, idx) => renderListItem(q, idx, false))}
+            </div>
+          ) : (() => {
+            const segments: { items: { q: AnyQuestion; globalIdx: number }[] }[] = [];
+            let curSec = -1;
+            worksheet.forEach((q, idx) => {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const secIdx = (q as any)._sectionIdx as number | undefined;
+              const si = (q as any)._sectionIdx ?? 0;
+              if (si !== curSec) { segments.push({ items: [] }); curSec = si; }
+              segments[segments.length - 1].items.push({ q, globalIdx: idx });
+            });
+            return segments.map((seg, si) => {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const prevSec = idx > 0 ? ((worksheet[idx - 1] as any)._sectionIdx ?? 0) : 0;
-              const showDivider = hasSec && idx > 0 && (secIdx ?? 0) !== prevSec;
-              const fsz = fontSizes[worksheetFontSize];
+              const segCols = (seg.items[0]?.q as any)?._sectionCols ?? numColumns;
               return (
-                <div key={idx}>
-                  {showDivider && <div style={{ width: "60%", margin: "0.5rem auto", borderTop: "1px solid #d1d5db" }} />}
-                  <div className="group flex items-baseline gap-2 py-1.5" style={{ breakInside: "avoid", position: "relative" }}>
-                    <span className="text-xs font-bold text-gray-400 flex-shrink-0" style={{ minWidth: "1.5rem" }}>{idx + 1})</span>
-                    <div className={`${fsz} font-semibold flex-1`} style={{ color: "#000" }}>
-                      {getInstruction() && <span className={`${fontSizes[Math.max(0, worksheetFontSize - 1)]} font-semibold mr-1`}>{getInstruction()}</span>}
-                      {questionRenderer
-                        ? questionRenderer(q, false, colorScheme, true, idx, getQOSnapshot(), fsz)
-                        : q.kind === "simple"
-                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                          ? ((q as any).displayLatex ? <MathRenderer latex={(q as any).displayLatex} /> : <span>{(q as any).display}</span>)
-                          : "lines" in q
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            ? (q as any).lines.map((line: string, i: number) => <span key={i}><InlineMath text={line} />{i < (q as any).lines.length - 1 ? " " : ""}</span>)
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            : <MathRenderer latex={(q as any).latex ?? ""} />
-                      }
-                    </div>
-                    {showWorksheetAnswers && (
-                      <span className={`${fsz} font-semibold flex-shrink-0`} style={{ color: "#059669" }}>
-                        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                        {(q as any).answerLatex ? <MathRenderer latex={ansEq((q as any).answerLatex)} /> : <span>{ansEq((q as any).answer)}</span>}
-                      </span>
-                    )}
-                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                    {(q as any)._qo && (
-                      <button onClick={() => regenQuestion(idx)} title="Regenerate"
-                        className="w-5 h-5 rounded flex items-center justify-center text-gray-300 hover:text-blue-600 hover:bg-blue-50 transition-all opacity-0 group-hover:opacity-100 flex-shrink-0">
-                        <RefreshCw size={10} />
-                      </button>
-                    )}
+                <div key={si}>
+                  {si > 0 && <div style={{ width: "60%", margin: "0.5rem auto", borderTop: "1px solid #d1d5db" }} />}
+                  <div style={{ columnCount: segCols, columnGap: "1.5rem" }}>
+                    {seg.items.map(({ q, globalIdx }) => renderListItem(q, globalIdx, false))}
                   </div>
                 </div>
               );
-            })}
-          </div>
+            });
+          })()}
         </div>
       );
     }
@@ -1339,14 +1366,18 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             if (si !== curSec) { segments.push({ secIdx: si, items: [] }); curSec = si; }
             segments[segments.length - 1].items.push({ q, globalIdx: idx });
           });
-          return segments.map((seg, si) => (
-            <div key={si}>
-              {si > 0 && <div style={{ width: "60%", margin: "1rem auto", borderTop: "1px solid #d1d5db" }} />}
-              <div style={{ display: "grid", gridTemplateColumns: `repeat(${numColumns},1fr)`, gap: "1rem" }}>
-                {seg.items.map(({ q, globalIdx }) => <div key={globalIdx}>{renderQCell(q, globalIdx)}</div>)}
+          return segments.map((seg, si) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const segCols = (seg.items[0]?.q as any)?._sectionCols ?? numColumns;
+            return (
+              <div key={si}>
+                {si > 0 && <div style={{ width: "60%", margin: "1rem auto", borderTop: "1px solid #d1d5db" }} />}
+                <div style={{ display: "grid", gridTemplateColumns: `repeat(${segCols},1fr)`, gap: "1rem" }}>
+                  {seg.items.map(({ q, globalIdx }) => <div key={globalIdx}>{renderQCell(q, globalIdx)}</div>)}
+                </div>
               </div>
-            </div>
-          ));
+            );
+          });
         })()}
       </div>
     );
