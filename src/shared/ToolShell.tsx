@@ -16,6 +16,7 @@ import { InfoModal } from "./components/InfoModal";
 import { MenuDropdown } from "./components/MenuDropdown";
 import { PrintSplitButton } from "./components/PrintSplitButton";
 import { handlePrint } from "./print";
+import { WorksheetBuilder } from "./WorksheetBuilder";
 
 export interface ToolShellProps {
   config: ToolConfig;
@@ -115,7 +116,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       return out;
     };
     const toolParam = p.get("tool");
-    const modeMap: Record<string, "whiteboard" | "single" | "worksheet"> = { whiteboard: "whiteboard", example: "single", worksheet: "worksheet" };
+    const modeMap: Record<string, "whiteboard" | "single" | "worksheet" | "builder"> = { whiteboard: "whiteboard", example: "single", worksheet: "worksheet", builder: "builder" };
     const levelMap: Record<string, DifficultyLevel> = { "1": "level1", "2": "level2", "3": "level3" };
     const levelParam = levelMap[p.get("level") ?? ""];
     const intParam = (key: string, min: number, max: number): number | null => {
@@ -144,6 +145,11 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     advGroups?: AdvGroup[];
     advSelectedId?: number;
     advShuffle?: boolean;
+    advDividers?: number[];
+    sectionShuffles?: Record<number, boolean>;
+    sectionColumns?: Record<number, number>;
+    worksheetLayout?: "grid" | "list";
+    worksheetBorders?: boolean;
     levelVariables?: Record<string, Record<string, boolean>>;
     levelDropdowns?: Record<string, string>;
     levelMultiSelect?: Record<string, Record<string, boolean>>;
@@ -156,7 +162,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   });
 
   const [currentTool, setCurrentTool] = useState<string>(urlInit.tool);
-  const [mode, setMode] = useState<"whiteboard" | "single" | "worksheet">(urlInit.mode);
+  const [mode, setMode] = useState<"whiteboard" | "single" | "worksheet" | "builder">(urlInit.mode);
   const comingSoon = defaults.comingSoonLevels ?? [];
   const hideFontControls = defaults.hideFontControls ?? false;
   const [difficulty, setDifficulty] = useState<DifficultyLevel>(urlInit.level);
@@ -298,7 +304,12 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     (wbInit?.advGroups?.length ? wbInit.advGroups : [makeDefaultAdvGroup(1)]).map(hydrateAdvGroup));
   const [advSelectedId, setAdvSelectedId] = useState<number>(wbInit?.advSelectedId ?? 1);
   const advNextId = useRef(wbInit?.advGroups?.length ? Math.max(...wbInit.advGroups.map(g => g.id)) + 1 : 2);
-  const [advShuffle, setAdvShuffle] = useState(wbInit?.advShuffle ?? false);
+  const [advShuffle] = useState(wbInit?.advShuffle ?? false);
+  const [advDividers, setAdvDividers] = useState<Set<number>>(() => new Set(wbInit?.advDividers ?? []));
+  const [sectionShuffles, setSectionShuffles] = useState<Record<number, boolean>>(wbInit?.sectionShuffles ?? {});
+  const [sectionColumns, setSectionColumns] = useState<Record<number, number>>(wbInit?.sectionColumns ?? {});
+  const [worksheetLayout, setWorksheetLayout] = useState<"grid" | "list">(wbInit?.worksheetLayout ?? "grid");
+  const [worksheetBorders, setWorksheetBorders] = useState(wbInit?.worksheetBorders ?? true);
   // When the active sub-tool changes, re-hydrate the advanced groups so their QO
   // options reflect the new sub-tool's defaults (the initial mount is already
   // hydrated by the initializer above, so skip that first run).
@@ -435,20 +446,37 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     setShowWorksheetAnswers(false);
   };
 
+  const computeSections = (groups: AdvGroup[], dividers: Set<number>): AdvGroup[][] => {
+    const sections: AdvGroup[][] = [[]];
+    groups.forEach((g, i) => {
+      sections[sections.length - 1].push(g);
+      if (dividers.has(g.id) && i < groups.length - 1) sections.push([]);
+    });
+    return sections;
+  };
+
   const handleGenerateAdvanced = () => {
     const usedKeys = new Set<string>();
     const questions: AnyQuestion[] = [];
-    advGroups.forEach(g => {
-      const snap: QOSnapshot = { level: g.level, variables: g.variables, dropdownValue: g.dropdownValue, multiSelectValues: g.multiSelectValues };
-      for (let i = 0; i < g.count; i++)
-        questions.push(stampQO(generateUniqueQ(currentTool, g.level, g.variables, g.dropdownValue, usedKeys, g.multiSelectValues), snap));
-    });
-    if (advShuffle) {
-      for (let i = questions.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [questions[i], questions[j]] = [questions[j], questions[i]];
+    const sections = computeSections(advGroups, advDividers);
+    sections.forEach((sectionGroups, secIdx) => {
+      const secQs: AnyQuestion[] = [];
+      sectionGroups.forEach(g => {
+        const snap: QOSnapshot = { level: g.level, variables: g.variables, dropdownValue: g.dropdownValue, multiSelectValues: g.multiSelectValues };
+        for (let i = 0; i < g.count; i++)
+          secQs.push(stampQO(generateUniqueQ(currentTool, g.level, g.variables, g.dropdownValue, usedKeys, g.multiSelectValues), snap));
+      });
+      if (sectionShuffles[secIdx]) {
+        for (let i = secQs.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [secQs[i], secQs[j]] = [secQs[j], secQs[i]];
+        }
       }
-    }
+      const secCols = sectionColumns[secIdx] ?? numColumns;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      secQs.forEach(q => { (q as any)._sectionIdx = secIdx; (q as any)._sectionCols = secCols; });
+      questions.push(...secQs);
+    });
     setWorksheet(questions);
     setShowWorksheetAnswers(false);
   };
@@ -466,6 +494,10 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       if (!existing.has(candidate.key)) { replacement = stampQO(candidate, snap); break; }
     }
     if (!replacement) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const origAny = q as any;
+    if (origAny._sectionIdx !== undefined) (replacement as any)._sectionIdx = origAny._sectionIdx;
+    if (origAny._sectionCols !== undefined) (replacement as any)._sectionCols = origAny._sectionCols;
     setWorksheet(prev => prev.map((w, i) => i === idx ? replacement! : w));
   };
 
@@ -532,7 +564,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   useEffect(() => {
     const p = new URLSearchParams();
     if (currentTool !== toolKeys[0]) p.set("tool", currentTool);
-    if (mode !== "whiteboard") p.set("mode", mode === "single" ? "example" : "worksheet");
+    if (mode !== "whiteboard") p.set("mode", mode === "single" ? "example" : mode === "builder" ? "builder" : "worksheet");
     if (difficulty !== "level1") p.set("level", difficulty.slice(-1));
     const t = config.tools[currentTool];
     const ddCfg = t.difficultySettings?.[difficulty]?.dropdown ?? t.dropdown;
@@ -572,10 +604,12 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     if (!wbStorageKey) return;
     try {
       sessionStorage.setItem(wbStorageKey, JSON.stringify({
-        worksheetMode, advGroups, advSelectedId, advShuffle, levelVariables, levelDropdowns, levelMultiSelect,
+        worksheetMode, advGroups, advSelectedId, advShuffle,
+        advDividers: [...advDividers], sectionShuffles, sectionColumns, worksheetLayout, worksheetBorders,
+        levelVariables, levelDropdowns, levelMultiSelect,
       } satisfies WBPersist));
     } catch { /* ignore quota / serialisation errors */ }
-  }, [wbStorageKey, worksheetMode, advGroups, advSelectedId, advShuffle, levelVariables, levelDropdowns, levelMultiSelect]);
+  }, [wbStorageKey, worksheetMode, advGroups, advSelectedId, advShuffle, advDividers, sectionShuffles, sectionColumns, worksheetLayout, worksheetBorders, levelVariables, levelDropdowns, levelMultiSelect]);
 
   // A link that points straight at a worksheet generates it on arrival —
   // a bookmarked worksheet link is ready to teach from without extra clicks.
@@ -598,9 +632,12 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const renderQCell = (q: AnyQuestion, idx: number, bgOverride?: string) => {
     const bg = bgOverride ?? stepBg;
     const fsz = fontSizes[worksheetFontSize];
-    const cellStyle = { backgroundColor: bg, height: "100%", boxSizing: "border-box" as const, position: "relative" as const, borderRadius: "12px", border: "1px solid #e5e7eb" };
-    const numEl = <span style={{ position: "absolute", top: 0, left: 0, fontSize: "0.65em", fontWeight: 700, color: "#000", lineHeight: 1, padding: "5px 5px 7px 5px", borderRight: "1px solid #000", borderBottom: "1px solid #000" }}>{idx + 1})</span>;
-    const wrapperClass = "rounded-xl p-4 shadow group";
+    const borders = worksheetBorders || !!bgOverride;
+    const cellStyle = borders
+      ? { backgroundColor: bg, height: "100%", boxSizing: "border-box" as const, position: "relative" as const, borderRadius: "12px", border: "1px solid #e5e7eb" }
+      : { height: "100%", boxSizing: "border-box" as const, position: "relative" as const };
+    const numEl = <span className="text-xs font-bold text-gray-400" style={{ position: "absolute", top: 4, left: 6 }}>{idx + 1}</span>;
+    const wrapperClass = borders ? "rounded-xl p-4 shadow group" : "p-4 group";
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const regenBtn = (q as any)._qo ? (
@@ -695,52 +732,123 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       setAdvGroups(gs => gs.map(g => g.id === id ? { ...g, ...patch } : g));
     const selectedGroup = advGroups.find(g => g.id === advSelectedId) ?? advGroups[0];
 
+    const sections = computeSections(advGroups, advDividers);
+    const toggleDivider = (groupId: number) => {
+      setAdvDividers(prev => {
+        const next = new Set(prev);
+        if (next.has(groupId)) next.delete(groupId); else next.add(groupId);
+        return next;
+      });
+    };
+    const toggleSectionShuffle = (secIdx: number) => {
+      setSectionShuffles(prev => ({ ...prev, [secIdx]: !prev[secIdx] }));
+    };
+
+    let globalGroupIdx = 0;
+
     return (
       <div className="flex gap-3" style={{ minHeight: 300 }}>
-        <div className="flex flex-col rounded-xl border-2 border-gray-300 overflow-hidden" style={{ width: "50%", flexShrink: 0, backgroundColor: "#fff" }}>
-          <div className="flex-1 divide-y divide-gray-100 overflow-y-auto">
-            {advGroups.map((g, idx) => {
-              const isSel = g.id === advSelectedId;
-              return (
-                <div key={g.id} onClick={() => setAdvSelectedId(g.id)}
-                  className="flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-gray-50"
-                  style={{ borderLeft: `3px solid ${isSel ? lvBorder(g.level) : "transparent"}`, backgroundColor: isSel ? "#f0f4ff" : undefined }}>
-                  <span className="text-xs font-bold text-gray-300 w-4 flex-shrink-0 tabular-nums">{idx + 1}</span>
-                  <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden flex-shrink-0" onClick={e => e.stopPropagation()}>
-                    {(["level1", "level2", "level3"] as DifficultyLevel[]).map((lv, li) => {
-                      const isLvDisabled = comingSoon.includes(lv);
-                      return (
-                        <button key={lv} onClick={() => { if (!isLvDisabled) { updateGroup(g.id, { ...makeDefaultAdvGroup(g.id, lv), id: g.id }); setAdvSelectedId(g.id); } }}
-                          className={`px-2.5 py-1 font-bold text-xs transition-colors ${isLvDisabled ? "bg-gray-100 text-gray-300 cursor-not-allowed" : g.level === lv ? `${lvColor(lv)} text-white` : "bg-white text-gray-400 hover:bg-gray-50"}`}>
-                          L{li + 1}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <div className="flex-1" />
-                  <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5 flex-shrink-0" onClick={e => e.stopPropagation()}>
-                    <button onClick={() => updateGroup(g.id, { count: Math.max(1, g.count - 1) })} disabled={g.count <= 1}
-                      className="w-6 h-6 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-base leading-none">−</button>
-                    <span className="w-6 text-center text-xs font-bold text-gray-800 tabular-nums">{g.count}</span>
-                    <button onClick={() => updateGroup(g.id, { count: Math.min(24, g.count + 1) })} disabled={g.count >= 24}
-                      className="w-6 h-6 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-base leading-none">+</button>
-                  </div>
-                  {advGroups.length > 1 && (
-                    <button onClick={e => { e.stopPropagation(); const rem = advGroups.filter((_, i) => i !== idx); setAdvGroups(rem); if (g.id === advSelectedId) setAdvSelectedId(rem[Math.max(0, idx - 1)].id); }}
-                      className="w-6 h-6 rounded-full flex items-center justify-center text-gray-300 hover:bg-red-50 hover:text-red-400 transition-colors flex-shrink-0">
-                      <X size={12} />
+        <div className="flex flex-col rounded-xl border-2 border-gray-300 overflow-hidden" style={{ width: "62%", flexShrink: 0, backgroundColor: "#fff" }}>
+          <div className="flex-1 overflow-y-auto">
+            {sections.map((secGroups, secIdx) => (
+              <div key={secIdx}>
+                <div className="relative flex items-center justify-center gap-3 px-4 py-3 border-b border-gray-100" style={{ backgroundColor: "#f3f4f6" }}>
+                  <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Section {secIdx + 1}</span>
+                    <button onClick={() => toggleSectionShuffle(secIdx)}
+                      className={`text-xs font-semibold px-3 py-1 rounded transition-colors ${sectionShuffles[secIdx] ? "bg-blue-900 text-white" : "bg-gray-200 text-gray-500 hover:bg-gray-300"}`}>
+                      Shuffle
                     </button>
-                  )}
+                    {!defaults.fixedColumns && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-semibold text-gray-400">Cols</span>
+                        <div className="flex rounded border border-gray-300 overflow-hidden">
+                          {Array.from({ length: defaults.maxColumns ?? 4 }, (_, i) => i + 1).map(c => (
+                            <button key={c} onClick={() => setSectionColumns(prev => ({ ...prev, [secIdx]: c }))}
+                              className={`w-6 h-5 text-xs font-bold transition-colors ${(sectionColumns[secIdx] ?? numColumns) === c ? "bg-blue-900 text-white" : "bg-white text-gray-400 hover:bg-gray-50"}`}>
+                              {c}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {secIdx > 0 && (
+                      <button onClick={() => {
+                        const prevGroupId = sections[secIdx - 1][sections[secIdx - 1].length - 1]?.id;
+                        if (prevGroupId !== undefined) toggleDivider(prevGroupId);
+                      }}
+                        className="absolute right-4 w-6 h-6 rounded-full flex items-center justify-center text-gray-300 hover:bg-red-50 hover:text-red-400 transition-colors" title="Remove section">
+                        <X size={12} />
+                      </button>
+                    )}
                 </div>
-              );
-            })}
+                {secGroups.map((g) => {
+                  const idx = globalGroupIdx++;
+                  const isSel = g.id === advSelectedId;
+                  return (
+                    <div key={g.id}>
+                      <div onClick={() => setAdvSelectedId(g.id)}
+                        className="flex items-center gap-4 px-4 py-3 cursor-pointer transition-colors hover:bg-gray-50 border-b border-gray-100"
+                        style={{ borderLeft: `3px solid ${isSel ? lvBorder(g.level) : "transparent"}`, backgroundColor: isSel ? "#f0f4ff" : undefined }}>
+                        <span className="text-xs font-bold text-gray-400 w-5 flex-shrink-0 tabular-nums">{idx + 1}</span>
+                        <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden flex-shrink-0" onClick={e => e.stopPropagation()}>
+                          {(["level1", "level2", "level3"] as DifficultyLevel[]).map((lv, li) => {
+                            const isLvDisabled = comingSoon.includes(lv);
+                            return (
+                              <button key={lv} onClick={() => { if (!isLvDisabled) { updateGroup(g.id, { ...makeDefaultAdvGroup(g.id, lv), id: g.id }); setAdvSelectedId(g.id); } }}
+                                className={`px-4 py-1.5 font-bold text-xs transition-colors ${isLvDisabled ? "bg-gray-100 text-gray-300 cursor-not-allowed" : g.level === lv ? `${lvColor(lv)} text-white` : "bg-white text-gray-400 hover:bg-gray-50"}`}>
+                                Level {li + 1}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <div className="flex-1" />
+                        <div className="flex items-center gap-1.5 bg-gray-100 rounded-lg px-1 py-0.5 flex-shrink-0" onClick={e => e.stopPropagation()}>
+                          <button onClick={() => updateGroup(g.id, { count: Math.max(1, g.count - 1) })} disabled={g.count <= 1}
+                            className="w-7 h-7 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-base leading-none">−</button>
+                          <span className="w-7 text-center text-sm font-bold text-gray-800 tabular-nums">{g.count}</span>
+                          <button onClick={() => updateGroup(g.id, { count: Math.min(24, g.count + 1) })} disabled={g.count >= 24}
+                            className="w-7 h-7 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-base leading-none">+</button>
+                        </div>
+                        <button onClick={e => {
+                          e.stopPropagation();
+                          if (advGroups.length <= 1) return;
+                          setAdvDividers(prev => { const next = new Set(prev); next.delete(g.id); return next; });
+                          const rem = advGroups.filter(ag => ag.id !== g.id);
+                          setAdvGroups(rem);
+                          if (g.id === advSelectedId) setAdvSelectedId(rem[Math.max(0, advGroups.indexOf(g) - 1)]?.id ?? rem[0].id);
+                        }}
+                          className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${advGroups.length > 1 ? "text-gray-300 hover:bg-red-50 hover:text-red-400" : "invisible"}`}>
+                          <X size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
           </div>
           <div className="px-4 py-3 border-t border-gray-200 flex-shrink-0">
             {canAdd ? (
-              <button onClick={() => { const newId = advNextId.current++; setAdvGroups(g => [...g, makeDefaultAdvGroup(newId)]); setAdvSelectedId(newId); }}
-                className="w-full py-2 rounded-lg border-2 border-dashed border-gray-200 text-xs font-bold text-gray-400 hover:border-blue-300 hover:text-blue-600 transition-colors">
-                + Add group
-              </button>
+              <div className="flex gap-2">
+                <button onClick={() => { const newId = advNextId.current++; setAdvGroups(g => [...g, makeDefaultAdvGroup(newId)]); setAdvSelectedId(newId); }}
+                  className="flex-1 py-2 rounded-lg border-2 border-dashed border-gray-200 text-xs font-bold text-gray-400 hover:border-blue-300 hover:text-blue-600 transition-colors">
+                  + Add group
+                </button>
+                <button onClick={() => {
+                  const lastGroup = advGroups[advGroups.length - 1];
+                  if (lastGroup && !advDividers.has(lastGroup.id)) {
+                    setAdvDividers(prev => new Set([...prev, lastGroup.id]));
+                    const newId = advNextId.current++;
+                    setAdvGroups(g => [...g, makeDefaultAdvGroup(newId)]);
+                    setAdvSelectedId(newId);
+                  }
+                }}
+                  disabled={!advGroups.length || advDividers.has(advGroups[advGroups.length - 1]?.id)}
+                  className="aspect-square self-stretch rounded-lg border-2 border-dashed border-gray-200 text-xs font-bold text-gray-400 hover:border-blue-300 hover:text-blue-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center"
+                  title="Add section divider">
+                  + Section
+                </button>
+              </div>
             ) : (
               <p className="text-center text-xs text-gray-400 font-semibold py-1">Maximum 10 groups reached</p>
             )}
@@ -785,13 +893,6 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             </label>
             {isAdv && (
               <div className="ml-auto flex items-center gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <div onClick={() => setAdvShuffle(s => !s)}
-                    className={`w-9 h-5 rounded-full transition-colors relative ${advShuffle ? "bg-blue-900" : "bg-gray-300"}`}>
-                    <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${advShuffle ? "translate-x-4" : "translate-x-0.5"}`} />
-                  </div>
-                  <span className="text-sm font-semibold text-gray-500">Shuffle</span>
-                </label>
                 <span className="text-sm font-bold text-gray-600">{totalAdvQuestions} questions total</span>
               </div>
             )}
@@ -838,6 +939,25 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                       className={`w-20 px-4 py-2 border-2 rounded-lg text-base font-semibold text-center transition-colors ${isDifferentiated ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed" : "border-gray-300 bg-white"}`} />
                   </div>
                 )}
+                <div className="flex rounded-lg border-2 border-gray-300 overflow-hidden">
+                  <button onClick={() => setWorksheetLayout("grid")}
+                    className={`px-3 py-1.5 text-sm font-bold transition-colors ${worksheetLayout === "grid" ? "bg-blue-900 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
+                    Worksheet
+                  </button>
+                  <button onClick={() => setWorksheetLayout("list")}
+                    className={`px-3 py-1.5 text-sm font-bold transition-colors ${worksheetLayout === "list" ? "bg-blue-900 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
+                    Textbook
+                  </button>
+                </div>
+                {worksheetLayout === "grid" && (
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <div onClick={() => setWorksheetBorders(!worksheetBorders)}
+                      className={`w-9 h-5 rounded-full transition-colors relative ${worksheetBorders ? "bg-blue-900" : "bg-gray-300"}`}>
+                      <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${worksheetBorders ? "translate-x-4" : "translate-x-0.5"}`} />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-500">Borders</span>
+                  </label>
+                )}
               </div>
               <div className="flex justify-center items-center gap-4">
                 <button onClick={handleGenerateWorksheet} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
@@ -851,7 +971,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                     <PrintSplitButton
                       onPrint={m => customPrintHandler
                         ? customPrintHandler(worksheet, m, worksheetWrapRef.current)
-                        : handlePrint(worksheet, config.tools[currentTool].name, difficulty, isDifferentiated, numColumns, getInstruction(), m)}
+                        : handlePrint(worksheet, config.tools[currentTool].name, difficulty, isDifferentiated, numColumns, getInstruction(), m, worksheetLayout, worksheetBorders)}
                       printMode={printMode} setPrintMode={setPrintMode}
                     />
                   </>
@@ -862,13 +982,24 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             <div className="p-6 pt-4">
               {renderAdvancedWorksheet()}
               <div className="flex justify-center items-center gap-4 flex-wrap mt-4">
-                {!defaults.fixedColumns && (
-                  <div className="flex items-center gap-2">
-                    <label className="text-base font-semibold text-gray-700">Columns:</label>
-                    <input type="number" min="1" max={defaults.maxColumns ?? 4} value={numColumns}
-                      onChange={e => setNumColumns(Math.max(1, Math.min(defaults.maxColumns ?? 4, parseInt(e.target.value) || (defaults.numColumns ?? 3))))}
-                      className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-base font-semibold text-center" />
-                  </div>
+                <div className="flex rounded-lg border-2 border-gray-300 overflow-hidden">
+                  <button onClick={() => setWorksheetLayout("grid")}
+                    className={`px-3 py-1.5 text-sm font-bold transition-colors ${worksheetLayout === "grid" ? "bg-blue-900 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
+                    Worksheet
+                  </button>
+                  <button onClick={() => setWorksheetLayout("list")}
+                    className={`px-3 py-1.5 text-sm font-bold transition-colors ${worksheetLayout === "list" ? "bg-blue-900 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
+                    Textbook
+                  </button>
+                </div>
+                {worksheetLayout === "grid" && (
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <div onClick={() => setWorksheetBorders(!worksheetBorders)}
+                      className={`w-9 h-5 rounded-full transition-colors relative ${worksheetBorders ? "bg-blue-900" : "bg-gray-300"}`}>
+                      <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${worksheetBorders ? "translate-x-4" : "translate-x-0.5"}`} />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-500">Borders</span>
+                  </label>
                 )}
                 <button onClick={handleGenerateAdvanced} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
                   <RefreshCw size={18} /> Generate
@@ -881,7 +1012,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                     <PrintSplitButton
                       onPrint={m => customPrintHandler
                         ? customPrintHandler(worksheet, m, worksheetWrapRef.current)
-                        : handlePrint(worksheet, config.tools[currentTool].name, "advanced", false, numColumns, getInstruction(), m)}
+                        : handlePrint(worksheet, config.tools[currentTool].name, "advanced", false, numColumns, getInstruction(), m, worksheetLayout, worksheetBorders)}
                       printMode={printMode} setPrintMode={setPrintMode}
                     />
                   </>
@@ -1168,13 +1299,113 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         </div>
       </div>
     );
+    if (worksheetLayout === "list") {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const hasSec = worksheet.some(q => ((q as any)._sectionIdx ?? 0) > 0);
+      const renderListItem = (q: AnyQuestion, idx: number, showDivider: boolean) => {
+        const fsz = fontSizes[worksheetFontSize];
+        return (
+          <div key={idx}>
+            {showDivider && <div style={{ width: "60%", margin: "0.5rem auto", borderTop: "1px solid #d1d5db" }} />}
+            <div className="group flex items-baseline gap-2 py-1.5" style={{ breakInside: "avoid", position: "relative" }}>
+              <span className="text-xs font-bold text-gray-400 flex-shrink-0" style={{ minWidth: "1.5rem" }}>{idx + 1})</span>
+              <div className={`${fsz} font-semibold flex-1`} style={{ color: "#000" }}>
+                {getInstruction() && <span className={`${fontSizes[Math.max(0, worksheetFontSize - 1)]} font-semibold mr-1`}>{getInstruction()}</span>}
+                {questionRenderer
+                  ? questionRenderer(q, false, colorScheme, true, idx, getQOSnapshot(), fsz)
+                  : q.kind === "simple"
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    ? ((q as any).displayLatex ? <MathRenderer latex={(q as any).displayLatex} /> : <span>{(q as any).display}</span>)
+                    : "lines" in q
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      ? (q as any).lines.map((line: string, i: number) => <span key={i}><InlineMath text={line} />{i < (q as any).lines.length - 1 ? " " : ""}</span>)
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      : <MathRenderer latex={(q as any).latex ?? ""} />
+                }
+              </div>
+              {showWorksheetAnswers && (
+                <span className={`${fsz} font-semibold flex-shrink-0`} style={{ color: "#059669" }}>
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  {(q as any).answerLatex ? <MathRenderer latex={ansEq((q as any).answerLatex)} /> : <span>{ansEq((q as any).answer)}</span>}
+                </span>
+              )}
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              {(q as any)._qo && (
+                <button onClick={() => regenQuestion(idx)} title="Regenerate"
+                  className="w-5 h-5 rounded flex items-center justify-center text-gray-300 hover:text-blue-600 hover:bg-blue-50 transition-all opacity-0 group-hover:opacity-100 flex-shrink-0">
+                  <RefreshCw size={10} />
+                </button>
+              )}
+            </div>
+          </div>
+        );
+      };
+      return (
+        <div className="rounded-xl shadow-2xl p-8 relative" style={{ backgroundColor: qBg }}>
+          {fontSizeControls}
+          <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
+          {!hasSec ? (
+            <div style={{ display: "grid", gridTemplateColumns: `repeat(${numColumns}, 1fr)`, columnGap: "1.5rem" }}>
+              {worksheet.map((q, idx) => renderListItem(q, idx, false))}
+            </div>
+          ) : (() => {
+            const segments: { items: { q: AnyQuestion; globalIdx: number }[] }[] = [];
+            let curSec = -1;
+            worksheet.forEach((q, idx) => {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const si = (q as any)._sectionIdx ?? 0;
+              if (si !== curSec) { segments.push({ items: [] }); curSec = si; }
+              segments[segments.length - 1].items.push({ q, globalIdx: idx });
+            });
+            return segments.map((seg, si) => {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const segCols = (seg.items[0]?.q as any)?._sectionCols ?? numColumns;
+              return (
+                <div key={si}>
+                  {si > 0 && <div style={{ width: "60%", margin: "0.5rem auto", borderTop: "1px solid #d1d5db" }} />}
+                  <div style={{ display: "grid", gridTemplateColumns: `repeat(${segCols}, 1fr)`, columnGap: "1.5rem" }}>
+                    {seg.items.map(({ q, globalIdx }) => renderListItem(q, globalIdx, false))}
+                  </div>
+                </div>
+              );
+            });
+          })()}
+        </div>
+      );
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const hasSec = worksheet.some(q => ((q as any)._sectionIdx ?? 0) > 0);
     return (
       <div className="rounded-xl shadow-2xl p-8 relative" style={{ backgroundColor: qBg }}>
         {fontSizeControls}
         <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
-        <div style={{ display: "grid", gridTemplateColumns: `repeat(${numColumns},1fr)`, gridAutoRows: "1fr", gap: "1rem" }}>
-          {worksheet.map((q, idx) => <div key={idx} style={{ minHeight: 0 }}>{renderQCell(q, idx)}</div>)}
-        </div>
+        {(() => {
+          if (!hasSec) return (
+            <div style={{ display: "grid", gridTemplateColumns: `repeat(${numColumns},1fr)`, gap: "1rem" }}>
+              {worksheet.map((q, idx) => <div key={idx}>{renderQCell(q, idx)}</div>)}
+            </div>
+          );
+          const segments: { secIdx: number; items: { q: AnyQuestion; globalIdx: number }[] }[] = [];
+          let curSec = -1;
+          worksheet.forEach((q, idx) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const si = (q as any)._sectionIdx ?? 0;
+            if (si !== curSec) { segments.push({ secIdx: si, items: [] }); curSec = si; }
+            segments[segments.length - 1].items.push({ q, globalIdx: idx });
+          });
+          return segments.map((seg, si) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const segCols = (seg.items[0]?.q as any)?._sectionCols ?? numColumns;
+            return (
+              <div key={si}>
+                {si > 0 && <div style={{ width: "60%", margin: "1rem auto", borderTop: "1px solid #d1d5db" }} />}
+                <div style={{ display: "grid", gridTemplateColumns: `repeat(${segCols},1fr)`, gap: "1rem" }}>
+                  {seg.items.map(({ q, globalIdx }) => <div key={globalIdx}>{renderQCell(q, globalIdx)}</div>)}
+                </div>
+              </div>
+            );
+          });
+        })()}
       </div>
     );
   };
@@ -1203,29 +1434,45 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             <>
               <div className="flex justify-center gap-4 mb-6">
                 {toolKeys.map(k => (
-                  <button key={k} onClick={() => setCurrentTool(k)}
-                    className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${currentTool === k ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
+                  <button key={k} onClick={() => { if (mode === "builder") return; setCurrentTool(k); }}
+                    className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${mode !== "builder" && currentTool === k ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
                     {config.tools[k].name}
                   </button>
                 ))}
+                <div className="w-px bg-gray-300 mx-1 self-stretch" />
+                <button onClick={() => { setMode(mode === "builder" ? "whiteboard" : "builder"); setPresenterMode(false); setWbFullscreen(false); }}
+                  className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${mode === "builder" ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
+                  Builder
+                </button>
               </div>
               <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
             </>
           )}
-          <div className="flex justify-center gap-4 mb-8">
-            {(["whiteboard", "single", "worksheet"] as const).map((m, i) => {
-              const label = ["Whiteboard", "Worked Example", "Worksheet"][i];
-              return (
-                <button key={m} onClick={() => { setMode(m); setPresenterMode(false); setWbFullscreen(false); }}
-                  className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${mode === m ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
-                  {label}
-                </button>
-              );
-            })}
-          </div>
+          {mode !== "builder" && (
+            <div className="flex justify-center gap-4 mb-8">
+              {(["whiteboard", "single", "worksheet"] as const).map((m, i) => {
+                const label = ["Whiteboard", "Worked Example", "Worksheet"][i];
+                return (
+                  <button key={m} onClick={() => { setMode(m); setPresenterMode(false); setWbFullscreen(false); }}
+                    className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${mode === m ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
+          {mode === "builder" && (
+            <WorksheetBuilder
+              config={config}
+              generateQuestion={generateQuestion}
+              questionRenderer={questionRenderer}
+              customPrintHandler={customPrintHandler}
+              comingSoonLevels={comingSoon}
+            />
+          )}
           {mode === "worksheet" && <>{renderControlBar()}<div ref={worksheetWrapRef}>{renderWorksheet()}</div></>}
-          {mode !== "worksheet" && (
+          {mode !== "worksheet" && mode !== "builder" && (
             <div className="flex flex-col gap-6">
               <div className="rounded-xl shadow-lg">
                 {renderControlBar()}
