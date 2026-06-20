@@ -771,7 +771,6 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                 {secGroups.map((g) => {
                   const idx = globalGroupIdx++;
                   const isSel = g.id === advSelectedId;
-                  const isLastGroup = idx === advGroups.length - 1;
                   return (
                     <div key={g.id}>
                       <div onClick={() => setAdvSelectedId(g.id)}
@@ -810,14 +809,6 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                           </button>
                         )}
                       </div>
-                      {!isLastGroup && !advDividers.has(g.id) && (
-                        <div className="flex justify-center py-0.5" onClick={e => e.stopPropagation()}>
-                          <button onClick={() => toggleDivider(g.id)}
-                            className="text-xs text-gray-300 hover:text-blue-600 font-semibold px-3 py-0.5 rounded hover:bg-blue-50 transition-colors">
-                            + divider
-                          </button>
-                        </div>
-                      )}
                     </div>
                   );
                 })}
@@ -837,10 +828,21 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           </div>
           <div className="px-4 py-3 border-t border-gray-200 flex-shrink-0">
             {canAdd ? (
-              <button onClick={() => { const newId = advNextId.current++; setAdvGroups(g => [...g, makeDefaultAdvGroup(newId)]); setAdvSelectedId(newId); }}
-                className="w-full py-2 rounded-lg border-2 border-dashed border-gray-200 text-xs font-bold text-gray-400 hover:border-blue-300 hover:text-blue-600 transition-colors">
-                + Add group
-              </button>
+              <div className="flex gap-2">
+                <button onClick={() => { const newId = advNextId.current++; setAdvGroups(g => [...g, makeDefaultAdvGroup(newId)]); setAdvSelectedId(newId); }}
+                  className="flex-1 py-2 rounded-lg border-2 border-dashed border-gray-200 text-xs font-bold text-gray-400 hover:border-blue-300 hover:text-blue-600 transition-colors">
+                  + Add group
+                </button>
+                <button onClick={() => {
+                  const lastGroup = advGroups[advGroups.length - 1];
+                  if (lastGroup && !advDividers.has(lastGroup.id)) toggleDivider(lastGroup.id);
+                }}
+                  disabled={!advGroups.length || advDividers.has(advGroups[advGroups.length - 1]?.id)}
+                  className="aspect-square py-2 px-3 rounded-lg border-2 border-dashed border-gray-200 text-xs font-bold text-gray-400 hover:border-blue-300 hover:text-blue-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  title="Add section divider">
+                  + Section
+                </button>
+              </div>
             ) : (
               <p className="text-center text-xs text-gray-400 font-semibold py-1">Maximum 10 groups reached</p>
             )}
