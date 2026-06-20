@@ -748,15 +748,14 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                       className={`text-xs font-semibold px-3 py-1 rounded transition-colors ${sectionShuffles[secIdx] ? "bg-blue-900 text-white" : "bg-gray-200 text-gray-500 hover:bg-gray-300"}`}>
                       Shuffle
                     </button>
-                    {secIdx > 0 && (
-                      <button onClick={() => {
-                        const prevGroupId = sections[secIdx - 1][sections[secIdx - 1].length - 1]?.id;
-                        if (prevGroupId !== undefined) toggleDivider(prevGroupId);
-                      }}
-                        className="w-6 h-6 rounded-full flex items-center justify-center text-gray-300 hover:bg-red-50 hover:text-red-400 transition-colors flex-shrink-0" title="Remove section">
-                        <X size={12} />
-                      </button>
-                    )}
+                    <button onClick={() => {
+                      if (secIdx === 0) return;
+                      const prevGroupId = sections[secIdx - 1][sections[secIdx - 1].length - 1]?.id;
+                      if (prevGroupId !== undefined) toggleDivider(prevGroupId);
+                    }}
+                      className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${secIdx > 0 ? "text-gray-300 hover:bg-red-50 hover:text-red-400" : "invisible"}`} title="Remove section">
+                      <X size={12} />
+                    </button>
                   </div>
                 )}
                 {secGroups.map((g) => {
@@ -787,18 +786,17 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                           <button onClick={() => updateGroup(g.id, { count: Math.min(24, g.count + 1) })} disabled={g.count >= 24}
                             className="w-6 h-6 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-base leading-none">+</button>
                         </div>
-                        {advGroups.length > 1 && (
-                          <button onClick={e => {
-                            e.stopPropagation();
-                            setAdvDividers(prev => { const next = new Set(prev); next.delete(g.id); return next; });
-                            const rem = advGroups.filter(ag => ag.id !== g.id);
-                            setAdvGroups(rem);
-                            if (g.id === advSelectedId) setAdvSelectedId(rem[Math.max(0, advGroups.indexOf(g) - 1)]?.id ?? rem[0].id);
-                          }}
-                            className="w-6 h-6 rounded-full flex items-center justify-center text-gray-300 hover:bg-red-50 hover:text-red-400 transition-colors flex-shrink-0">
-                            <X size={12} />
-                          </button>
-                        )}
+                        <button onClick={e => {
+                          e.stopPropagation();
+                          if (advGroups.length <= 1) return;
+                          setAdvDividers(prev => { const next = new Set(prev); next.delete(g.id); return next; });
+                          const rem = advGroups.filter(ag => ag.id !== g.id);
+                          setAdvGroups(rem);
+                          if (g.id === advSelectedId) setAdvSelectedId(rem[Math.max(0, advGroups.indexOf(g) - 1)]?.id ?? rem[0].id);
+                        }}
+                          className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${advGroups.length > 1 ? "text-gray-300 hover:bg-red-50 hover:text-red-400" : "invisible"}`}>
+                          <X size={12} />
+                        </button>
                       </div>
                     </div>
                   );

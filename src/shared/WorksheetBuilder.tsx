@@ -240,22 +240,21 @@ export const WorksheetBuilder = ({
                   >
                     Shuffle
                   </button>
-                  {secIdx > 0 && (
-                    <button
-                      onClick={() => {
-                        const prevGroupId =
-                          sections[secIdx - 1][
-                            sections[secIdx - 1].length - 1
-                          ]?.id;
-                        if (prevGroupId !== undefined)
-                          toggleDivider(prevGroupId);
-                      }}
-                      className="w-6 h-6 rounded-full flex items-center justify-center text-gray-300 hover:bg-red-50 hover:text-red-400 transition-colors flex-shrink-0"
-                      title="Remove section"
-                    >
-                      <X size={12} />
-                    </button>
-                  )}
+                  <button
+                    onClick={() => {
+                      if (secIdx === 0) return;
+                      const prevGroupId =
+                        sections[secIdx - 1][
+                          sections[secIdx - 1].length - 1
+                        ]?.id;
+                      if (prevGroupId !== undefined)
+                        toggleDivider(prevGroupId);
+                    }}
+                    className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${secIdx > 0 ? "text-gray-300 hover:bg-red-50 hover:text-red-400" : "invisible"}`}
+                    title="Remove section"
+                  >
+                    <X size={12} />
+                  </button>
                 </div>
               )}
               {secGroups.map((g) => {
@@ -360,30 +359,28 @@ export const WorksheetBuilder = ({
                           +
                         </button>
                       </div>
-                      {/* Delete */}
-                      {groups.length > 1 && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDividers((prev) => {
-                              const next = new Set(prev);
-                              next.delete(g.id);
-                              return next;
-                            });
-                            const rem = groups.filter((ag) => ag.id !== g.id);
-                            setGroups(rem);
-                            if (g.id === selectedId)
-                              setSelectedId(
-                                rem[
-                                  Math.max(0, groups.indexOf(g) - 1)
-                                ]?.id ?? rem[0].id,
-                              );
-                          }}
-                          className="w-6 h-6 rounded-full flex items-center justify-center text-gray-300 hover:bg-red-50 hover:text-red-400 transition-colors flex-shrink-0"
-                        >
-                          <X size={12} />
-                        </button>
-                      )}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (groups.length <= 1) return;
+                          setDividers((prev) => {
+                            const next = new Set(prev);
+                            next.delete(g.id);
+                            return next;
+                          });
+                          const rem = groups.filter((ag) => ag.id !== g.id);
+                          setGroups(rem);
+                          if (g.id === selectedId)
+                            setSelectedId(
+                              rem[
+                                Math.max(0, groups.indexOf(g) - 1)
+                              ]?.id ?? rem[0].id,
+                            );
+                        }}
+                        className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${groups.length > 1 ? "text-gray-300 hover:bg-red-50 hover:text-red-400" : "invisible"}`}
+                      >
+                        <X size={12} />
+                      </button>
                     </div>
                   </div>
                 );
