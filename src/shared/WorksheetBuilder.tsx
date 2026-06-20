@@ -226,34 +226,34 @@ export const WorksheetBuilder = ({
           {sections.map((secGroups, secIdx) => (
             <div key={secIdx}>
               <div
-                className="flex items-center gap-3 px-4 py-3 border-b border-gray-100"
+                className="relative flex items-center justify-center gap-3 px-4 py-3 border-b border-gray-100"
                 style={{ backgroundColor: "#f3f4f6" }}
               >
                 <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                   Section {secIdx + 1}
                 </span>
-                <div className="flex-1" />
                 <button
                   onClick={() => toggleSectionShuffle(secIdx)}
                   className={`text-xs font-semibold px-3 py-1 rounded transition-colors ${sectionShuffles[secIdx] ? "bg-blue-900 text-white" : "bg-gray-200 text-gray-500 hover:bg-gray-300"}`}
                 >
                   Shuffle
                 </button>
-                <button
-                  onClick={() => {
-                    if (secIdx === 0) return;
-                    const prevGroupId =
-                      sections[secIdx - 1][
-                        sections[secIdx - 1].length - 1
-                      ]?.id;
-                    if (prevGroupId !== undefined)
-                      toggleDivider(prevGroupId);
-                  }}
-                  className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${secIdx > 0 ? "text-gray-300 hover:bg-red-50 hover:text-red-400" : "invisible"}`}
-                  title="Remove section"
-                >
-                  <X size={12} />
-                </button>
+                {secIdx > 0 && (
+                  <button
+                    onClick={() => {
+                      const prevGroupId =
+                        sections[secIdx - 1][
+                          sections[secIdx - 1].length - 1
+                        ]?.id;
+                      if (prevGroupId !== undefined)
+                        toggleDivider(prevGroupId);
+                    }}
+                    className="absolute right-4 w-6 h-6 rounded-full flex items-center justify-center text-gray-300 hover:bg-red-50 hover:text-red-400 transition-colors"
+                    title="Remove section"
+                  >
+                    <X size={12} />
+                  </button>
+                )}
               </div>
               {secGroups.map((g) => {
                 const idx = globalIdx++;
@@ -285,7 +285,7 @@ export const WorksheetBuilder = ({
                             updateGroup(g.id, { ...fresh, id: g.id });
                             setSelectedId(g.id);
                           }}
-                          className="text-xs font-semibold bg-gray-50 border border-gray-200 rounded px-2 py-1.5 min-w-0 flex-1 max-w-[160px]"
+                          className="text-xs font-semibold bg-gray-50 border border-gray-200 rounded px-2 py-1.5 min-w-0 flex-1"
                         >
                           {toolKeys.map((k) => (
                             <option key={k} value={k}>
@@ -316,7 +316,7 @@ export const WorksheetBuilder = ({
                                   setSelectedId(g.id);
                                 }
                               }}
-                              className={`px-4 py-1.5 font-bold text-xs transition-colors ${isLvDisabled ? "bg-gray-100 text-gray-300 cursor-not-allowed" : g.level === lv ? `${lvColor(lv)} text-white` : "bg-white text-gray-400 hover:bg-gray-50"}`}
+                              className={`px-3 py-1.5 font-bold text-xs transition-colors ${isLvDisabled ? "bg-gray-100 text-gray-300 cursor-not-allowed" : g.level === lv ? `${lvColor(lv)} text-white` : "bg-white text-gray-400 hover:bg-gray-50"}`}
                             >
                               L{li + 1}
                             </button>
