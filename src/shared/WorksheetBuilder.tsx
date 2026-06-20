@@ -558,7 +558,7 @@ export const WorksheetBuilder = ({
         </div>
       );
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const hasSec = worksheet.some(q => ((q as any)._sectionIdx ?? 0) > 0);
+      const hasSec = worksheet.some(q => ((q as any)._sectionIdx ?? 0) > 0 || !!(q as any)._sectionHeader);
       if (!hasSec) {
         return (
           <div ref={worksheetRef} className="bg-white rounded-xl shadow-lg p-6 mt-6">
@@ -647,7 +647,7 @@ export const WorksheetBuilder = ({
     );
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const hasSec = worksheet.some(q => ((q as any)._sectionIdx ?? 0) > 0);
+    const hasSec = worksheet.some(q => ((q as any)._sectionIdx ?? 0) > 0 || !!(q as any)._sectionHeader);
     if (!hasSec) {
       return (
         <div ref={worksheetRef} className="bg-white rounded-xl shadow-lg p-6 mt-6">

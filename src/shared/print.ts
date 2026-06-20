@@ -126,7 +126,9 @@ export const handlePrint = (
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sectionIndices = questions.map(q => (q as any)._sectionIdx as number | undefined);
-  const hasSections = sectionIndices.some(s => s !== undefined && s > 0);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sectionHeadersArr = questions.map(q => (q as any)._sectionHeader as string | undefined);
+  const hasSections = sectionIndices.some(s => s !== undefined && s > 0) || sectionHeadersArr.some(h => !!h);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sectionColsArr = questions.map(q => (q as any)._sectionCols as number | undefined);
 
@@ -149,8 +151,6 @@ export const handlePrint = (
     return `${numHtml}<div class="qbody">${ansHtml}</div>`;
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sectionHeadersArr = questions.map(q => (q as any)._sectionHeader as string | undefined);
   const qHtmlData = questions.map((q, i) => ({
     q: layout === "list" ? listQuestionToHtml(q, i, false) : questionToHtml(q, i, false),
     a: layout === "list" ? listAnswerOnlyToHtml(q, i) : answerOnlyToHtml(q, i),

@@ -1315,7 +1315,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     );
     if (worksheetLayout === "list") {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const hasSec = worksheet.some(q => ((q as any)._sectionIdx ?? 0) > 0);
+      const hasSec = worksheet.some(q => ((q as any)._sectionIdx ?? 0) > 0 || !!(q as any)._sectionHeader);
       const renderListItem = (q: AnyQuestion, idx: number, showDivider: boolean) => {
         const fsz = fontSizes[worksheetFontSize];
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1393,7 +1393,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       );
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const hasSec = worksheet.some(q => ((q as any)._sectionIdx ?? 0) > 0);
+    const hasSec = worksheet.some(q => ((q as any)._sectionIdx ?? 0) > 0 || !!(q as any)._sectionHeader);
     return (
       <div className="rounded-xl shadow-2xl p-8 relative" style={{ backgroundColor: qBg }}>
         {fontSizeControls}
