@@ -122,6 +122,12 @@ export const handlePrint = (
     return `<div class="list-item list-item-answer">${num}${ansHtml}</div>`;
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sectionIndices = questions.map(q => (q as any)._sectionIdx as number | undefined);
+  const hasSections = sectionIndices.some(s => s !== undefined && s > 0);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sectionColsArr = questions.map(q => (q as any)._sectionCols as number | undefined);
+
   const probeHtml = questions.map((q, i) => {
     const secCols = sectionColsArr[i] ?? cols;
     const probeW = (PAGE_W_MM - GAP_MM * (secCols - 1)) / secCols;
@@ -140,12 +146,6 @@ export const handlePrint = (
       : `<div class="q-answer q-answer-only">${ansEq(anyQ.answer ?? "")}${suffix}</div>`;
     return `${numHtml}<div class="qbody">${ansHtml}</div>`;
   };
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sectionIndices = questions.map(q => (q as any)._sectionIdx as number | undefined);
-  const hasSections = sectionIndices.some(s => s !== undefined && s > 0);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sectionColsArr = questions.map(q => (q as any)._sectionCols as number | undefined);
 
   const qHtmlData = questions.map((q, i) => ({
     q: layout === "list" ? listQuestionToHtml(q, i, false) : questionToHtml(q, i, false),
