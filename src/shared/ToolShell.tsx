@@ -1327,8 +1327,8 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
         {(() => {
           if (!hasSec) return (
-            <div style={{ display: "grid", gridTemplateColumns: `repeat(${numColumns},1fr)`, gridAutoRows: "1fr", gap: "1rem" }}>
-              {worksheet.map((q, idx) => <div key={idx} style={{ minHeight: 0 }}>{renderQCell(q, idx)}</div>)}
+            <div style={{ display: "grid", gridTemplateColumns: `repeat(${numColumns},1fr)`, gap: "1rem" }}>
+              {worksheet.map((q, idx) => <div key={idx}>{renderQCell(q, idx)}</div>)}
             </div>
           );
           const segments: { secIdx: number; items: { q: AnyQuestion; globalIdx: number }[] }[] = [];
@@ -1342,8 +1342,8 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           return segments.map((seg, si) => (
             <div key={si}>
               {si > 0 && <div style={{ width: "60%", margin: "1rem auto", borderTop: "1px solid #d1d5db" }} />}
-              <div style={{ display: "grid", gridTemplateColumns: `repeat(${numColumns},1fr)`, gridAutoRows: "1fr", gap: "1rem" }}>
-                {seg.items.map(({ q, globalIdx }) => <div key={globalIdx} style={{ minHeight: 0 }}>{renderQCell(q, globalIdx)}</div>)}
+              <div style={{ display: "grid", gridTemplateColumns: `repeat(${numColumns},1fr)`, gap: "1rem" }}>
+                {seg.items.map(({ q, globalIdx }) => <div key={globalIdx}>{renderQCell(q, globalIdx)}</div>)}
               </div>
             </div>
           ));

@@ -197,7 +197,7 @@ export const handlePrint = (
     align-items: stretch; justify-content: flex-start;
   }
 
-  .section-divider { width: 60%; margin: 0 auto; border-top: 0.3mm solid #d1d5db; }
+  .section-divider { width: 100%; }
 
   #probe {
     position: fixed; left: -9999px; top: 0; visibility: hidden;
