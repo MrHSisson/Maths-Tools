@@ -731,7 +731,6 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
 
   const renderAdvancedWorksheet = () => {
     const lvColor  = (lv: DifficultyLevel) => lv === "level1" ? "bg-green-600" : lv === "level2" ? "bg-yellow-500" : "bg-red-600";
-    const lvBorder = (lv: DifficultyLevel) => lv === "level1" ? "#16a34a" : lv === "level2" ? "#eab308" : "#dc2626";
     const canAdd = advGroups.length < 10;
     const updateGroup = (id: number, patch: Partial<AdvGroup>) =>
       setAdvGroups(gs => gs.map(g => g.id === id ? { ...g, ...patch } : g));
@@ -750,76 +749,93 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
 
     let globalGroupIdx = 0;
 
+    const lvDot = (lv: DifficultyLevel) => lv === "level1" ? "bg-green-500" : lv === "level2" ? "bg-yellow-400" : "bg-red-500";
+
     return (
-      <div className="rounded-xl border-2 border-gray-300 overflow-hidden" style={{ backgroundColor: "#fff" }}>
-        <div className="overflow-y-auto" style={{ maxHeight: 500 }}>
-          {sections.map((secGroups, secIdx) => (
-            <div key={secIdx}>
-              <div className="relative flex items-center gap-3 px-4 py-2.5 border-b border-gray-100" style={{ backgroundColor: "#f3f4f6" }}>
-                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider flex-shrink-0">Section {secIdx + 1}</span>
-                <input
-                  type="text"
-                  placeholder="Section heading…"
-                  value={sectionHeaders[secIdx] ?? ""}
-                  onChange={e => setSectionHeaders(prev => ({ ...prev, [secIdx]: e.target.value }))}
-                  onClick={e => e.stopPropagation()}
-                  className="text-xs font-semibold bg-white border border-gray-200 rounded px-2 py-1 flex-1 min-w-0 placeholder-gray-300 focus:outline-none focus:border-blue-400"
-                />
-                <button onClick={() => toggleSectionShuffle(secIdx)}
-                  className={`text-xs font-semibold px-2.5 py-1 rounded transition-colors flex-shrink-0 ${sectionShuffles[secIdx] ? "bg-blue-900 text-white" : "bg-gray-200 text-gray-500 hover:bg-gray-300"}`}>
-                  Shuffle
-                </button>
-                {!defaults.fixedColumns && (
-                  <div className="flex items-center gap-1 flex-shrink-0">
-                    <span className="text-xs font-semibold text-gray-400">Cols</span>
-                    <div className="flex rounded border border-gray-300 overflow-hidden">
-                      {Array.from({ length: defaults.maxColumns ?? 4 }, (_, i) => i + 1).map(c => (
-                        <button key={c} onClick={() => setSectionColumns(prev => ({ ...prev, [secIdx]: c }))}
-                          className={`w-6 h-5 text-xs font-bold transition-colors ${(sectionColumns[secIdx] ?? numColumns) === c ? "bg-blue-900 text-white" : "bg-white text-gray-400 hover:bg-gray-50"}`}>
-                          {c}
-                        </button>
-                      ))}
-                    </div>
+      <div className="flex flex-col gap-4">
+        {sections.map((secGroups, secIdx) => (
+          <div key={secIdx} className="rounded-xl border border-gray-200 overflow-hidden" style={{ backgroundColor: "#fff" }}>
+            {/* Section header */}
+            <div className="flex items-center gap-3 px-5 py-3" style={{ backgroundColor: "#f8f9fa", borderBottom: "1px solid #e5e7eb" }}>
+              <span className="text-xs font-bold text-gray-400 uppercase tracking-wider flex-shrink-0">Section {secIdx + 1}</span>
+              <div className="h-4 w-px bg-gray-300" />
+              <input
+                type="text"
+                placeholder="Heading (e.g. Solve for x)"
+                value={sectionHeaders[secIdx] ?? ""}
+                onChange={e => setSectionHeaders(prev => ({ ...prev, [secIdx]: e.target.value }))}
+                className="text-sm bg-transparent border-none px-0 py-0 flex-1 min-w-0 placeholder-gray-300 focus:outline-none font-medium text-gray-700"
+              />
+              <div className="h-4 w-px bg-gray-300" />
+              <button onClick={() => toggleSectionShuffle(secIdx)}
+                className={`text-xs font-semibold px-2.5 py-1 rounded transition-colors flex-shrink-0 ${sectionShuffles[secIdx] ? "bg-blue-900 text-white" : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"}`}>
+                Shuffle
+              </button>
+              {!defaults.fixedColumns && (
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <div className="flex rounded-md overflow-hidden border border-gray-200">
+                    {Array.from({ length: defaults.maxColumns ?? 4 }, (_, i) => i + 1).map(c => (
+                      <button key={c} onClick={() => setSectionColumns(prev => ({ ...prev, [secIdx]: c }))}
+                        className={`w-7 h-6 text-xs font-bold transition-colors ${(sectionColumns[secIdx] ?? numColumns) === c ? "bg-blue-900 text-white" : "bg-white text-gray-400 hover:bg-gray-50"}`}>
+                        {c}
+                      </button>
+                    ))}
                   </div>
-                )}
-                {secIdx > 0 && (
-                  <button onClick={() => {
-                    const prevGroupId = sections[secIdx - 1][sections[secIdx - 1].length - 1]?.id;
-                    if (prevGroupId !== undefined) toggleDivider(prevGroupId);
-                  }}
-                    className="w-6 h-6 rounded-full flex items-center justify-center text-gray-300 hover:bg-red-50 hover:text-red-400 transition-colors flex-shrink-0" title="Remove section">
-                    <X size={12} />
-                  </button>
-                )}
-              </div>
+                  <span className="text-xs text-gray-400">col</span>
+                </div>
+              )}
+              {secIdx > 0 && (
+                <button onClick={() => {
+                  const prevGroupId = sections[secIdx - 1][sections[secIdx - 1].length - 1]?.id;
+                  if (prevGroupId !== undefined) toggleDivider(prevGroupId);
+                }}
+                  className="w-6 h-6 rounded-full flex items-center justify-center text-gray-300 hover:bg-red-50 hover:text-red-400 transition-colors flex-shrink-0" title="Merge with section above">
+                  <X size={12} />
+                </button>
+              )}
+            </div>
+
+            {/* Group rows */}
+            <div className="divide-y divide-gray-100">
               {secGroups.map((g) => {
                 const idx = globalGroupIdx++;
                 const isSel = g.id === advSelectedId;
                 return (
                   <div key={g.id}>
-                    <div onClick={() => setAdvSelectedId(g.id)}
-                      className={`flex items-center gap-4 px-4 py-2.5 cursor-pointer transition-colors border-b border-gray-100 ${isSel ? "" : "hover:bg-gray-50"}`}
-                      style={{ borderLeft: `3px solid ${isSel ? lvBorder(g.level) : "transparent"}`, backgroundColor: isSel ? "#f0f4ff" : undefined }}>
-                      <span className="text-xs font-bold text-gray-400 w-5 flex-shrink-0 tabular-nums">{idx + 1}</span>
-                      <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden flex-shrink-0" onClick={e => e.stopPropagation()}>
+                    <div onClick={() => setAdvSelectedId(isSel ? -1 : g.id)}
+                      className={`flex items-center gap-3 px-5 py-3 cursor-pointer transition-colors ${isSel ? "" : "hover:bg-gray-50"}`}
+                      style={{ backgroundColor: isSel ? "#f0f4ff" : undefined }}>
+                      {/* Level dot + number */}
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <div className={`w-2.5 h-2.5 rounded-full ${lvDot(g.level)}`} />
+                        <span className="text-sm font-bold text-gray-400 tabular-nums w-5">{idx + 1}</span>
+                      </div>
+                      {/* Level selector */}
+                      <div className="flex rounded-lg overflow-hidden border border-gray-200 flex-shrink-0" onClick={e => e.stopPropagation()}>
                         {(["level1", "level2", "level3"] as DifficultyLevel[]).map((lv, li) => {
                           const isLvDisabled = comingSoon.includes(lv);
                           return (
                             <button key={lv} onClick={() => { if (!isLvDisabled) { updateGroup(g.id, { ...makeDefaultAdvGroup(g.id, lv), id: g.id }); setAdvSelectedId(g.id); } }}
-                              className={`px-4 py-1.5 font-bold text-xs transition-colors ${isLvDisabled ? "bg-gray-100 text-gray-300 cursor-not-allowed" : g.level === lv ? `${lvColor(lv)} text-white` : "bg-white text-gray-400 hover:bg-gray-50"}`}>
-                              Level {li + 1}
+                              className={`px-3 py-1 font-semibold text-xs transition-colors ${isLvDisabled ? "bg-gray-50 text-gray-300 cursor-not-allowed" : g.level === lv ? `${lvColor(lv)} text-white` : "bg-white text-gray-400 hover:bg-gray-50"}`}>
+                              L{li + 1}
                             </button>
                           );
                         })}
                       </div>
-                      <div className="flex-1" />
-                      <div className="flex items-center gap-1.5 bg-gray-100 rounded-lg px-1 py-0.5 flex-shrink-0" onClick={e => e.stopPropagation()}>
+                      {/* Count stepper */}
+                      <div className="flex items-center gap-1 flex-shrink-0" onClick={e => e.stopPropagation()}>
                         <button onClick={() => updateGroup(g.id, { count: Math.max(1, g.count - 1) })} disabled={g.count <= 1}
-                          className="w-7 h-7 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-base leading-none">−</button>
-                        <span className="w-7 text-center text-sm font-bold text-gray-800 tabular-nums">{g.count}</span>
+                          className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:bg-gray-100 hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-sm leading-none">−</button>
+                        <span className="w-6 text-center text-sm font-bold text-gray-700 tabular-nums">{g.count}</span>
                         <button onClick={() => updateGroup(g.id, { count: Math.min(24, g.count + 1) })} disabled={g.count >= 24}
-                          className="w-7 h-7 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-base leading-none">+</button>
+                          className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:bg-gray-100 hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-sm leading-none">+</button>
+                        <span className="text-xs text-gray-400 ml-0.5">qs</span>
                       </div>
+                      {/* Spacer */}
+                      <div className="flex-1" />
+                      {/* Expand indicator */}
+                      <ChevronDown size={14} className={`text-gray-300 transition-transform flex-shrink-0 ${isSel ? "rotate-180" : ""}`} />
+                      {/* Delete */}
                       <button onClick={e => {
                         e.stopPropagation();
                         if (advGroups.length <= 1) return;
@@ -832,8 +848,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                         <X size={12} />
                       </button>
                     </div>
+                    {/* Inline QO panel */}
                     {isSel && (
-                      <div className="px-6 py-3 border-b border-gray-100" style={{ backgroundColor: "#f8f9ff" }}>
+                      <div className="px-5 py-3 border-t border-blue-100" style={{ backgroundColor: "#f8faff" }}>
                         <InlineQOPanel
                           toolEntry={config.tools[currentTool]}
                           level={g.level}
@@ -850,32 +867,43 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                 );
               })}
             </div>
-          ))}
-        </div>
-        <div className="px-4 py-3 border-t border-gray-200 flex-shrink-0">
-          {canAdd ? (
-            <div className="flex gap-2">
-              <button onClick={() => { const newId = advNextId.current++; setAdvGroups(g => [...g, makeDefaultAdvGroup(newId)]); setAdvSelectedId(newId); }}
-                className="flex-1 py-2 rounded-lg border-2 border-dashed border-gray-200 text-xs font-bold text-gray-400 hover:border-blue-300 hover:text-blue-600 transition-colors">
-                + Add group
-              </button>
-              <button onClick={() => {
-                const lastGroup = advGroups[advGroups.length - 1];
-                if (lastGroup && !advDividers.has(lastGroup.id)) {
-                  setAdvDividers(prev => new Set([...prev, lastGroup.id]));
-                  const newId = advNextId.current++;
-                  setAdvGroups(g => [...g, makeDefaultAdvGroup(newId)]);
+
+            {/* Add group within section */}
+            {canAdd && (
+              <div className="px-5 py-2 border-t border-gray-100">
+                <button onClick={() => { const newId = advNextId.current++;
+                  const lastInSec = secGroups[secGroups.length - 1];
+                  if (lastInSec) {
+                    const lastIdx = advGroups.indexOf(lastInSec);
+                    setAdvGroups(prev => { const next = [...prev]; next.splice(lastIdx + 1, 0, makeDefaultAdvGroup(newId)); return next; });
+                  } else {
+                    setAdvGroups(prev => [...prev, makeDefaultAdvGroup(newId)]);
+                  }
                   setAdvSelectedId(newId);
-                }
-              }}
-                disabled={!advGroups.length || advDividers.has(advGroups[advGroups.length - 1]?.id)}
-                className="aspect-square self-stretch rounded-lg border-2 border-dashed border-gray-200 text-xs font-bold text-gray-400 hover:border-blue-300 hover:text-blue-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center"
-                title="Add section divider">
-                + Section
-              </button>
-            </div>
-          ) : (
-            <p className="text-center text-xs text-gray-400 font-semibold py-1">Maximum 10 groups reached</p>
+                }}
+                  className="w-full py-1.5 text-xs font-semibold text-gray-300 hover:text-blue-600 transition-colors">
+                  + Add group
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
+
+        {/* Bottom actions */}
+        <div className="flex gap-3">
+          {canAdd && (
+            <button onClick={() => {
+              const lastGroup = advGroups[advGroups.length - 1];
+              if (lastGroup && !advDividers.has(lastGroup.id)) {
+                setAdvDividers(prev => new Set([...prev, lastGroup.id]));
+              }
+              const newId = advNextId.current++;
+              setAdvGroups(g => [...g, makeDefaultAdvGroup(newId)]);
+              setAdvSelectedId(newId);
+            }}
+              className="flex-1 py-2.5 rounded-xl border-2 border-dashed border-gray-200 text-sm font-semibold text-gray-400 hover:border-blue-300 hover:text-blue-600 transition-colors">
+              + Add section
+            </button>
           )}
         </div>
       </div>
