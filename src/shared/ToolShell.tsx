@@ -308,6 +308,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const [advDividers, setAdvDividers] = useState<Set<number>>(() => new Set(wbInit?.advDividers ?? []));
   const [sectionShuffles, setSectionShuffles] = useState<Record<number, boolean>>(wbInit?.sectionShuffles ?? {});
   const [sectionColumns, setSectionColumns] = useState<Record<number, number>>(wbInit?.sectionColumns ?? {});
+  const [sectionHeaders, setSectionHeaders] = useState<Record<number, string>>({});
   const [worksheetLayout, setWorksheetLayout] = useState<"grid" | "list">(wbInit?.worksheetLayout ?? "grid");
   const [worksheetBorders, setWorksheetBorders] = useState(wbInit?.worksheetBorders ?? true);
   // When the active sub-tool changes, re-hydrate the advanced groups so their QO
@@ -473,8 +474,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         }
       }
       const secCols = sectionColumns[secIdx] ?? numColumns;
+      const secHdr = sectionHeaders[secIdx] ?? "";
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      secQs.forEach(q => { (q as any)._sectionIdx = secIdx; (q as any)._sectionCols = secCols; });
+      secQs.forEach(q => { (q as any)._sectionIdx = secIdx; (q as any)._sectionCols = secCols; if (secHdr) (q as any)._sectionHeader = secHdr; });
       questions.push(...secQs);
     });
     setWorksheet(questions);
@@ -498,6 +500,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     const origAny = q as any;
     if (origAny._sectionIdx !== undefined) (replacement as any)._sectionIdx = origAny._sectionIdx;
     if (origAny._sectionCols !== undefined) (replacement as any)._sectionCols = origAny._sectionCols;
+    if (origAny._sectionHeader !== undefined) (replacement as any)._sectionHeader = origAny._sectionHeader;
     setWorksheet(prev => prev.map((w, i) => i === idx ? replacement! : w));
   };
 
@@ -633,6 +636,8 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     const bg = bgOverride ?? stepBg;
     const fsz = fontSizes[worksheetFontSize];
     const borders = worksheetBorders || !!bgOverride;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const suppressInstruction = !!(q as any)._sectionHeader;
     const cellStyle = borders
       ? { backgroundColor: bg, height: "100%", boxSizing: "border-box" as const, position: "relative" as const, borderRadius: "12px", border: "1px solid #e5e7eb" }
       : { height: "100%", boxSizing: "border-box" as const, position: "relative" as const };
@@ -672,7 +677,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       return (
         <div className={wrapperClass} style={cellStyle}>
           {numEl}{regenBtn}
-          {getInstruction() && <div className={`${instrFsz} font-semibold text-center w-full mb-1`} style={{ color: "#000", paddingTop: "0.15em" }}>{getInstruction()}</div>}
+          {!suppressInstruction && getInstruction() && <div className={`${instrFsz} font-semibold text-center w-full mb-1`} style={{ color: "#000", paddingTop: "0.15em" }}>{getInstruction()}</div>}
           <div className={`${fsz} font-semibold text-center w-full`} style={{ color: "#000" }}>
             {anyQ.displayLatex ? <MathRenderer latex={anyQ.displayLatex} /> : anyQ.display}
           </div>
@@ -689,7 +694,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       return (
         <div className={wrapperClass} style={cellStyle}>
           {numEl}{regenBtn}
-          {getInstruction() && <div className={`${instrFsz} font-semibold text-center w-full mb-1`} style={{ color: "#000" }}>{getInstruction()}</div>}
+          {!suppressInstruction && getInstruction() && <div className={`${instrFsz} font-semibold text-center w-full mb-1`} style={{ color: "#000" }}>{getInstruction()}</div>}
           <div className={`${fsz} font-semibold w-full text-center`} style={{ color: "#000", lineHeight: 1.6 }}>
             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             {(q as any).lines.map((line: string, i: number) => <div key={i}><InlineMath text={line} /></div>)}
@@ -709,7 +714,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       <div className={wrapperClass} style={cellStyle}>
         {numEl}{regenBtn}
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        {getInstruction() && <div className={`${instrFsz} font-semibold text-center w-full mb-1`} style={{ color: "#000" }}>{getInstruction()}</div>}
+        {!suppressInstruction && getInstruction() && <div className={`${instrFsz} font-semibold text-center w-full mb-1`} style={{ color: "#000" }}>{getInstruction()}</div>}
         <div className={`${fsz} font-semibold text-center w-full`} style={{ color: "#000" }}>
           {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           <span>Find </span><MathRenderer latex={(q as any).latex?.replace(/\\text\{ of \}.*/, '') ?? ''} /><span> of {(q as any).latex?.replace(/.*\\text\{ of \}/, '').trim()}</span>
@@ -753,7 +758,16 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             {sections.map((secGroups, secIdx) => (
               <div key={secIdx}>
                 <div className="relative flex items-center justify-center gap-3 px-4 py-3 border-b border-gray-100" style={{ backgroundColor: "#f3f4f6" }}>
-                  <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Section {secIdx + 1}</span>
+                  <span className="text-xs font-bold text-gray-500 uppercase tracking-wider flex-shrink-0">Section {secIdx + 1}</span>
+                    <input
+                      type="text"
+                      placeholder="Section heading…"
+                      value={sectionHeaders[secIdx] ?? ""}
+                      onChange={e => setSectionHeaders(prev => ({ ...prev, [secIdx]: e.target.value }))}
+                      onClick={e => e.stopPropagation()}
+                      className="text-xs font-semibold bg-white border border-gray-200 rounded px-2 py-1 flex-1 min-w-0 placeholder-gray-300 focus:outline-none focus:border-blue-400"
+                      style={{ maxWidth: 200 }}
+                    />
                     <button onClick={() => toggleSectionShuffle(secIdx)}
                       className={`text-xs font-semibold px-3 py-1 rounded transition-colors ${sectionShuffles[secIdx] ? "bg-blue-900 text-white" : "bg-gray-200 text-gray-500 hover:bg-gray-300"}`}>
                       Shuffle
@@ -1304,13 +1318,15 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       const hasSec = worksheet.some(q => ((q as any)._sectionIdx ?? 0) > 0);
       const renderListItem = (q: AnyQuestion, idx: number, showDivider: boolean) => {
         const fsz = fontSizes[worksheetFontSize];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const listSuppressInstr = !!(q as any)._sectionHeader;
         return (
           <div key={idx}>
             {showDivider && <div style={{ width: "60%", margin: "0.5rem auto", borderTop: "1px solid #d1d5db" }} />}
             <div className="group flex items-baseline gap-2 py-1.5" style={{ breakInside: "avoid", position: "relative" }}>
               <span className="text-xs font-bold text-gray-400 flex-shrink-0" style={{ minWidth: "1.5rem" }}>{idx + 1})</span>
               <div className={`${fsz} font-semibold flex-1`} style={{ color: "#000" }}>
-                {getInstruction() && <span className={`${fontSizes[Math.max(0, worksheetFontSize - 1)]} font-semibold mr-1`}>{getInstruction()}</span>}
+                {!listSuppressInstr && getInstruction() && <span className={`${fontSizes[Math.max(0, worksheetFontSize - 1)]} font-semibold mr-1`}>{getInstruction()}</span>}
                 {questionRenderer
                   ? questionRenderer(q, false, colorScheme, true, idx, getQOSnapshot(), fsz)
                   : q.kind === "simple"
@@ -1360,9 +1376,12 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             return segments.map((seg, si) => {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const segCols = (seg.items[0]?.q as any)?._sectionCols ?? numColumns;
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const segHeader = (seg.items[0]?.q as any)?._sectionHeader as string | undefined;
               return (
                 <div key={si}>
                   {si > 0 && <div style={{ width: "60%", margin: "0.5rem auto", borderTop: "1px solid #d1d5db" }} />}
+                  {segHeader && <p className="text-lg font-semibold mb-1 mt-2" style={{ color: "#000" }}>{segHeader}</p>}
                   <div style={{ display: "grid", gridTemplateColumns: `repeat(${segCols}, 1fr)`, columnGap: "1.5rem" }}>
                     {seg.items.map(({ q, globalIdx }) => renderListItem(q, globalIdx, false))}
                   </div>
@@ -1396,9 +1415,12 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           return segments.map((seg, si) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const segCols = (seg.items[0]?.q as any)?._sectionCols ?? numColumns;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const segHeader = (seg.items[0]?.q as any)?._sectionHeader as string | undefined;
             return (
               <div key={si}>
                 {si > 0 && <div style={{ width: "60%", margin: "1rem auto", borderTop: "1px solid #d1d5db" }} />}
+                {segHeader && <p className="text-lg font-semibold mb-2 mt-1" style={{ color: "#000" }}>{segHeader}</p>}
                 <div style={{ display: "grid", gridTemplateColumns: `repeat(${segCols},1fr)`, gap: "1rem" }}>
                   {seg.items.map(({ q, globalIdx }) => <div key={globalIdx}>{renderQCell(q, globalIdx)}</div>)}
                 </div>

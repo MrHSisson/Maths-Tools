@@ -112,6 +112,9 @@ export const WorksheetBuilder = ({
   const [sectionColumns, setSectionColumns] = useState<
     Record<number, number>
   >({});
+  const [sectionHeaders, setSectionHeaders] = useState<
+    Record<number, string>
+  >({});
   const [layout, setLayout] = useState<"grid" | "list">("grid");
   const [borders, setBorders] = useState(true);
   const [numColumns] = useState(3);
@@ -175,10 +178,12 @@ export const WorksheetBuilder = ({
         }
       }
       const secCols = sectionColumns[secIdx] ?? numColumns;
+      const secHdr = sectionHeaders[secIdx] ?? "";
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       secQs.forEach((q) => {
         (q as any)._sectionIdx = secIdx;
         (q as any)._sectionCols = secCols;
+        if (secHdr) (q as any)._sectionHeader = secHdr;
       });
       questions.push(...secQs);
     });
@@ -235,9 +240,18 @@ export const WorksheetBuilder = ({
                 className="relative flex items-center justify-center gap-3 px-4 py-3 border-b border-gray-100"
                 style={{ backgroundColor: "#f3f4f6" }}
               >
-                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider flex-shrink-0">
                   Section {secIdx + 1}
                 </span>
+                <input
+                  type="text"
+                  placeholder="Section heading…"
+                  value={sectionHeaders[secIdx] ?? ""}
+                  onChange={e => setSectionHeaders(prev => ({ ...prev, [secIdx]: e.target.value }))}
+                  onClick={e => e.stopPropagation()}
+                  className="text-xs font-semibold bg-white border border-gray-200 rounded px-2 py-1 flex-1 min-w-0 placeholder-gray-300 focus:outline-none focus:border-blue-400"
+                  style={{ maxWidth: 200 }}
+                />
                 <button
                   onClick={() => toggleSectionShuffle(secIdx)}
                   className={`text-xs font-semibold px-3 py-1 rounded transition-colors ${sectionShuffles[secIdx] ? "bg-blue-900 text-white" : "bg-gray-200 text-gray-500 hover:bg-gray-300"}`}
@@ -567,9 +581,12 @@ export const WorksheetBuilder = ({
           {segments.map((seg, si) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const segCols = (seg.items[0]?.q as any)?._sectionCols ?? numColumns;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const segHeader = (seg.items[0]?.q as any)?._sectionHeader as string | undefined;
             return (
               <div key={si}>
                 {si > 0 && <div style={{ width: "60%", margin: "0.5rem auto", borderTop: "1px solid #d1d5db" }} />}
+                {segHeader && <p className="text-lg font-semibold mb-1 mt-2" style={{ color: "#000" }}>{segHeader}</p>}
                 <div style={{ display: "grid", gridTemplateColumns: `repeat(${segCols}, 1fr)`, columnGap: "2rem" }}>
                   {seg.items.map(({ q, idx }) => renderListItem(q, idx))}
                 </div>
@@ -653,9 +670,12 @@ export const WorksheetBuilder = ({
         {segments.map((seg, si) => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const segCols = (seg.items[0]?.q as any)?._sectionCols ?? numColumns;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const segHeader = (seg.items[0]?.q as any)?._sectionHeader as string | undefined;
           return (
             <div key={si}>
               {si > 0 && <div style={{ width: "60%", margin: "1rem auto", borderTop: "1px solid #d1d5db" }} />}
+              {segHeader && <p className="text-lg font-semibold mb-2 mt-1" style={{ color: "#000" }}>{segHeader}</p>}
               <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${segCols}, 1fr)` }}>
                 {seg.items.map(({ q, idx }) => renderGridCell(q, idx))}
               </div>

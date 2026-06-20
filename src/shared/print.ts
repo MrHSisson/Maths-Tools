@@ -63,7 +63,8 @@ export const handlePrint = (
       }
     }
     const numHtml = `<div class="q-num">${idx + 1}</div>`;
-    const instrHtml = instruction ? `<div class="q-instruction">${instruction}</div>` : "";
+    const suppressInstr = !!anyQ._sectionHeader;
+    const instrHtml = instruction && !suppressInstr ? `<div class="q-instruction">${instruction}</div>` : "";
     let body = "";
     if (anyQ.kind === "frac") {
       body = `${instrHtml}<div style="text-align:center">${katexSpan(`\\text{Find } ${anyQ.latex}`, "q-math")}</div>${ansHtml}`;
@@ -94,7 +95,8 @@ export const handlePrint = (
       }
     }
     const num = `<span class="list-num">${idx + 1})</span>`;
-    const instrHtml = instruction ? `<span class="list-instr">${instruction}</span> ` : "";
+    const suppressInstr = !!(q as any)._sectionHeader;
+    const instrHtml = instruction && !suppressInstr ? `<span class="list-instr">${instruction}</span> ` : "";
     let content = "";
     if (anyQ.kind === "frac") {
       content = `${instrHtml}${katexSpan(`\\text{Find } ${anyQ.latex}`, "q-math")}`;
@@ -147,12 +149,15 @@ export const handlePrint = (
     return `${numHtml}<div class="qbody">${ansHtml}</div>`;
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sectionHeadersArr = questions.map(q => (q as any)._sectionHeader as string | undefined);
   const qHtmlData = questions.map((q, i) => ({
     q: layout === "list" ? listQuestionToHtml(q, i, false) : questionToHtml(q, i, false),
     a: layout === "list" ? listAnswerOnlyToHtml(q, i) : answerOnlyToHtml(q, i),
     difficulty: q.difficulty,
     sectionIdx: sectionIndices[i] ?? 0,
     sectionCols: sectionColsArr[i] ?? cols,
+    sectionHeader: sectionHeadersArr[i] ?? "",
   }));
 
   void (difficulty as unknown); void (instruction as unknown); void (pMode as unknown);
@@ -201,6 +206,7 @@ export const handlePrint = (
   }
 
   .section-divider { width: 100%; }
+  .section-header { font-size: ${Math.round(FONT_PX * 1.1)}px; font-weight: 600; color: #000; margin-bottom: 1mm; }
 
   #probe {
     position: fixed; left: -9999px; top: 0; visibility: hidden;
@@ -394,9 +400,11 @@ document.addEventListener("DOMContentLoaded", function() {
          + '<div class="q-inner">' + inner + '</div></div>';
   }
 
-  function buildSectionDivider() {
-    return '<div class="section-divider" style="height:' + DIV_MM + 'mm;display:flex;align-items:center;">'
+  function buildSectionDivider(header) {
+    var div = '<div class="section-divider" style="height:' + DIV_MM + 'mm;display:flex;align-items:center;">'
          + '<div style="width:60%;margin:0 auto;border-top:0.3mm solid #d1d5db;"></div></div>';
+    if (header) div += '<div class="section-header">' + header + '</div>';
+    return div;
   }
 
   // ── List layout builder ──
@@ -426,7 +434,9 @@ document.addEventListener("DOMContentLoaded", function() {
     if (curSeg.length > 0) segments.push({ items: curSeg, cols: curSeg[0].sectionCols });
     var out = '';
     for (var sg = 0; sg < segments.length; sg++) {
-      if (sg > 0) out += buildSectionDivider();
+      var segHdr = segments[sg].items[0] ? segments[sg].items[0].sectionHeader : '';
+      if (sg > 0) out += buildSectionDivider(segHdr);
+      else if (segHdr) out += '<div class="section-header">' + segHdr + '</div>';
       out += buildListSection(segments[sg].items, showAnswer, segments[sg].cols);
     }
     return out;
@@ -467,7 +477,9 @@ document.addEventListener("DOMContentLoaded", function() {
 
       var out = '';
       for (var sg = 0; sg < segments.length; sg++) {
-        if (sg > 0) out += buildSectionDivider();
+        var segHdr = segments[sg].items.length > 0 ? segments[sg].items[0].sectionHeader : '';
+        if (sg > 0) out += buildSectionDivider(segHdr);
+        else if (segHdr) out += '<div class="section-header">' + segHdr + '</div>';
         var segItems = segments[sg].items;
         var segCols = segItems.length > 0 ? segItems[0].sectionCols : cols;
         var segCW = makeCellW(segCols);
