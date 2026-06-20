@@ -9,12 +9,15 @@ export const handlePrint = (
   numColumns: number,
   instruction: string,
   pMode: PrintMode = "both",
+  layout: "grid" | "list" = "grid",
 ) => {
+  if (difficulty === "advanced") isDifferentiated = false;
   const FONT_PX   = 14;
   const PAD_MM    = 2;
   const MARGIN_MM = 12;
   const HEADER_MM = 14;
   const GAP_MM    = 2;
+  const DIV_MM    = 4;
   const PAGE_H_MM = 297 - MARGIN_MM * 2;
   const PAGE_W_MM = 210 - MARGIN_MM * 2;
   const usableH_MM = PAGE_H_MM - HEADER_MM;
@@ -26,7 +29,8 @@ export const handlePrint = (
     : (PAGE_W_MM - GAP_MM * (numColumns - 1)) / numColumns;
 
   const difficultyLabel = isDifferentiated ? "Differentiated" :
-    difficulty === "level1" ? "Level 1" : difficulty === "level2" ? "Level 2" : "Level 3";
+    difficulty === "level1" ? "Level 1" : difficulty === "level2" ? "Level 2" :
+    difficulty === "level3" ? "Level 3" : difficulty === "advanced" ? "Advanced" : "Level 1";
   const now     = new Date();
   const dateStr = now.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
   const totalQ  = questions.length;
@@ -78,8 +82,52 @@ export const handlePrint = (
     return `${banner}<div class="qbody">${body}</div>`;
   };
 
+  const listQuestionToHtml = (q: AnyQuestion, idx: number, showAnswer: boolean): string => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const anyQ = q as any;
+    let ansHtml = "";
+    if (showAnswer) {
+      if (anyQ.answerLatex) {
+        const suffix = anyQ.answerSuffix ? ` ${anyQ.answerSuffix}` : "";
+        ansHtml = `<span class="list-answer">${katexSpan(ansEq(anyQ.answerLatex))}${suffix}</span>`;
+      } else {
+        const suffix = anyQ.answerSuffix ? ` ${anyQ.answerSuffix}` : "";
+        ansHtml = `<span class="list-answer">${ansEq(anyQ.answer ?? "")}${suffix}</span>`;
+      }
+    }
+    const num = `<span class="list-num">${idx + 1})</span>`;
+    const instrHtml = instruction ? `<span class="list-instr">${instruction}</span> ` : "";
+    let content = "";
+    if (anyQ.kind === "frac") {
+      content = `${instrHtml}${katexSpan(`\\text{Find } ${anyQ.latex}`, "q-math")}`;
+    } else if (q.kind === "simple") {
+      content = anyQ.displayLatex
+        ? `${instrHtml}${katexSpan(anyQ.displayLatex, "q-math")}`
+        : `${instrHtml}<span class="q-math">${anyQ.display ?? ""}</span>`;
+    } else {
+      content = `${instrHtml}<span class="q-math">${renderLine(anyQ.lines[0])}</span>`;
+      if (anyQ.lines.length > 1) {
+        content += anyQ.lines.slice(1).map((l: string) => `<span class="list-subline">${renderLine(l)}</span>`).join("");
+      }
+    }
+    return `<div class="list-item">${num}<span class="list-content">${content}</span>${ansHtml}</div>`;
+  };
+
+  const listAnswerOnlyToHtml = (q: AnyQuestion, idx: number): string => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const anyQ = q as any;
+    const suffix = anyQ.answerSuffix ? ` ${anyQ.answerSuffix}` : "";
+    const num = `<span class="list-num">${idx + 1})</span>`;
+    const ansHtml = anyQ.answerLatex
+      ? `<span class="list-answer-only">${katexSpan(ansEq(anyQ.answerLatex))}${suffix}</span>`
+      : `<span class="list-answer-only">${ansEq(anyQ.answer ?? "")}${suffix}</span>`;
+    return `<div class="list-item list-item-answer">${num}${ansHtml}</div>`;
+  };
+
   const probeHtml = questions.map((q, i) =>
-    `<div class="q-inner" id="probe-${i}">${questionToHtml(q, i, false)}</div>`
+    layout === "list"
+      ? `<div class="list-item" id="probe-${i}">${listQuestionToHtml(q, i, false)}</div>`
+      : `<div class="q-inner" id="probe-${i}">${questionToHtml(q, i, false)}</div>`
   ).join("");
 
   const answerOnlyToHtml = (q: AnyQuestion, idx: number): string => {
@@ -93,10 +141,15 @@ export const handlePrint = (
     return `${banner}<div class="qbody">${ansHtml}</div>`;
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sectionIndices = questions.map(q => (q as any)._sectionIdx as number | undefined);
+  const hasSections = sectionIndices.some(s => s !== undefined && s > 0);
+
   const qHtmlData = questions.map((q, i) => ({
-    q: questionToHtml(q, i, false),
-    a: answerOnlyToHtml(q, i),
+    q: layout === "list" ? listQuestionToHtml(q, i, false) : questionToHtml(q, i, false),
+    a: layout === "list" ? listAnswerOnlyToHtml(q, i) : answerOnlyToHtml(q, i),
     difficulty: q.difficulty,
+    sectionIdx: sectionIndices[i] ?? 0,
   }));
 
   void (difficulty as unknown); void (instruction as unknown); void (pMode as unknown);
@@ -144,6 +197,8 @@ export const handlePrint = (
     align-items: stretch; justify-content: flex-start;
   }
 
+  .section-divider { width: 60%; margin: 0 auto; border-top: 0.3mm solid #d1d5db; }
+
   #probe {
     position: fixed; left: -9999px; top: 0; visibility: hidden;
     font-family: "Segoe UI", Arial, sans-serif; font-size: ${FONT_PX}px; line-height: 1.4;
@@ -162,6 +217,19 @@ export const handlePrint = (
   .katex-render { display: inline-block; vertical-align: baseline; }
   .katex-render .katex { font-size: ${FONT_PX}px; }
   .katex-render.frac .katex { font-size: ${FONT_PX}px; }
+
+  .list-item {
+    display: flex; align-items: baseline; gap: 2mm; padding: 1.2mm 0;
+  }
+  .list-item-answer { padding: 0.6mm 0; }
+  .list-num { font-size: ${Math.round(FONT_PX * 0.85)}px; font-weight: 700; color: #000; flex-shrink: 0; min-width: 5mm; }
+  .list-content { font-size: ${FONT_PX}px; color: #000; }
+  .list-instr { font-size: ${Math.round(FONT_PX * 0.85)}px; font-weight: 600; color: #000; }
+  .list-answer { font-size: ${FONT_PX}px; color: #059669; margin-left: 2mm; }
+  .list-answer-only { font-size: ${Math.round(FONT_PX * 1.1)}px; color: #059669; }
+  .list-subline { display: block; margin-left: 7mm; font-size: ${FONT_PX}px; }
+  .list-col { display: flex; flex-direction: column; }
+
   @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
 </style>
 </head>
@@ -173,11 +241,14 @@ document.addEventListener("DOMContentLoaded", function() {
   var pxPerMm   = 3.7795;
   var PAD_MM    = ${PAD_MM};
   var GAP_MM    = ${GAP_MM};
+  var DIV_MM    = ${DIV_MM};
   var usableH   = ${usableH_MM};
   var diffHdrMM = ${diffHdrMM};
   var PAGE_W_MM = ${PAGE_W_MM};
   var cols      = ${cols};
   var isDiff    = ${isDifferentiated ? "true" : "false"};
+  var isListLayout = ${layout === "list" ? "true" : "false"};
+  var hasSections  = ${hasSections ? "true" : "false"};
   var totalQ    = ${totalQ};
   var diffLabel = "${difficultyLabel}";
   var dateStr   = "${dateStr}";
@@ -198,12 +269,13 @@ document.addEventListener("DOMContentLoaded", function() {
   });
 
   var maxH_px = 0;
-  probe.querySelectorAll('.q-inner').forEach(function(el) {
+  probe.querySelectorAll(isListLayout ? '.list-item' : '.q-inner').forEach(function(el) {
     if (el.scrollHeight > maxH_px) maxH_px = el.scrollHeight;
   });
   var maxH_mm = maxH_px / pxPerMm;
-  var needed_mm = maxH_mm + PAD_MM * 2 + 6;
+  var needed_mm = isListLayout ? maxH_mm + 2 : maxH_mm + PAD_MM * 2 + 6;
 
+  // --- Differentiated layout calculations ---
   var diffPerCol   = Math.floor(totalQ / 3);
   var diffUsableH  = usableH - diffHdrMM - GAP_MM;
   var diffRowsPerPage = 1;
@@ -218,6 +290,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   }
 
+  // --- Grid layout calculations ---
   var chosenH_mm = rowHeights[0];
   var rowsPerPage = 1;
 
@@ -241,19 +314,9 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   }
 
-  var pageCapacity = isDiff ? diffRowsPerPage : rowsPerPage * cols;
-  var pages = [];
-  if (isDiff) {
-    var numDiffPages = Math.ceil(diffPerCol / diffRowsPerPage);
-    for (var p = 0; p < numDiffPages; p++) {
-      pages.push(p);
-    }
-  } else {
-    for (var s = 0; s < qData.length; s += pageCapacity) {
-      pages.push(qData.slice(s, s + pageCapacity));
-    }
-  }
-  var totalPages = pages.length;
+  // --- List layout: items per column ---
+  var listItemH_mm = needed_mm;
+  var listItemsPerCol = Math.max(1, Math.floor(usableH / listItemH_mm));
 
   function makeCellW(c) {
     return (PAGE_W_MM - GAP_MM * (c - 1)) / c;
@@ -265,6 +328,34 @@ document.addEventListener("DOMContentLoaded", function() {
          + '<div class="q-inner">' + inner + '</div></div>';
   }
 
+  function buildSectionDivider() {
+    return '<div class="section-divider" style="height:' + DIV_MM + 'mm;display:flex;align-items:center;">'
+         + '<div style="width:60%;margin:0 auto;border-top:0.3mm solid #d1d5db;"></div></div>';
+  }
+
+  // ── List layout builder ──
+  function buildListPage(pageItems, showAnswer) {
+    var colW = makeCellW(cols);
+    var itemsPerCol = Math.ceil(pageItems.length / cols);
+    var colsHtml = '';
+    for (var c = 0; c < cols; c++) {
+      var start = c * itemsPerCol;
+      var end = Math.min(start + itemsPerCol, pageItems.length);
+      var items = '';
+      for (var i = start; i < end; i++) {
+        var item = pageItems[i];
+        if (item.divider) {
+          items += buildSectionDivider();
+        } else {
+          items += showAnswer ? item.a : item.q;
+        }
+      }
+      colsHtml += '<div class="list-col" style="width:' + colW + 'mm;">' + items + '</div>';
+    }
+    return '<div style="display:grid;grid-template-columns:repeat(' + cols + ',' + colW + 'mm);gap:' + GAP_MM + 'mm;align-items:start;">' + colsHtml + '</div>';
+  }
+
+  // ── Grid layout builder (with section dividers) ──
   function buildGrid(pageData, showAnswer, cH) {
     if (isDiff) {
       var pgIdx = pageData;
@@ -282,6 +373,34 @@ document.addEventListener("DOMContentLoaded", function() {
       }).join('');
       return '<div class="diff-grid" style="grid-template-columns:repeat(3,' + cW + 'mm);">' + cols3 + '</div>';
     }
+    // Non-differentiated grid: build sub-grids per section with dividers between
+    if (hasSections && Array.isArray(pageData)) {
+      var segments = [];
+      var curSeg = [];
+      var curSec = pageData.length > 0 ? pageData[0].sectionIdx : 0;
+      for (var si = 0; si < pageData.length; si++) {
+        if (pageData[si].sectionIdx !== curSec) {
+          segments.push({ items: curSeg, section: curSec });
+          curSeg = [];
+          curSec = pageData[si].sectionIdx;
+        }
+        curSeg.push(pageData[si]);
+      }
+      if (curSeg.length > 0) segments.push({ items: curSeg, section: curSec });
+
+      var cW = makeCellW(cols);
+      var out = '';
+      for (var sg = 0; sg < segments.length; sg++) {
+        if (sg > 0) out += buildSectionDivider();
+        var segItems = segments[sg].items;
+        var gridRows = Math.ceil(segItems.length / cols);
+        var cells = segItems.map(function(item) {
+          return buildCell(showAnswer ? item.a : item.q, cW, cH, false);
+        }).join('');
+        out += '<div class="grid" style="grid-template-columns:repeat(' + cols + ',' + cW + 'mm);grid-template-rows:repeat(' + gridRows + ',' + cH + 'mm);">' + cells + '</div>';
+      }
+      return out;
+    }
     var cW = makeCellW(cols);
     var gridRows = Math.ceil(pageData.length / cols);
     var cells = pageData.map(function(item) {
@@ -290,26 +409,114 @@ document.addEventListener("DOMContentLoaded", function() {
     return '<div class="grid" style="grid-template-columns:repeat(' + cols + ',' + cW + 'mm);grid-template-rows:repeat(' + gridRows + ',' + cH + 'mm);">' + cells + '</div>';
   }
 
-  function buildPage(pageData, showAnswer, pgIdx) {
-    var cH  = isDiff ? diffCellH_mm : chosenH_mm;
-    var lbl = totalPages > 1
-      ? (isDiff ? diffPerCol + ' per level' : totalQ + ' questions') + ' (' + (pgIdx+1) + '/' + totalPages + ')'
-      : isDiff ? diffPerCol + ' per level' : totalQ + ' questions';
-    var title = toolName + (showAnswer ? ' — Answers' : '');
-    return '<div class="page">'
-      + '<div class="page-header"><h1>' + title + '</h1>'
-      + '<div class="meta">' + diffLabel + ' &nbsp;&middot;&nbsp; ' + dateStr + ' &nbsp;&middot;&nbsp; ' + lbl + '</div></div>'
-      + buildGrid(pageData, showAnswer, cH)
-      + '</div>';
+  // ── Pagination ──
+  if (isListLayout) {
+    // List layout pagination: flow items into columns, detect section boundaries
+    var listItems = [];
+    for (var li = 0; li < qData.length; li++) {
+      if (hasSections && li > 0 && qData[li].sectionIdx !== qData[li - 1].sectionIdx) {
+        listItems.push({ divider: true, q: '', a: '' });
+      }
+      listItems.push(qData[li]);
+    }
+    var totalListItems = listItems.length;
+    var itemsPerPage = listItemsPerCol * cols;
+    var pages = [];
+    for (var lp = 0; lp < totalListItems; lp += itemsPerPage) {
+      pages.push(listItems.slice(lp, lp + itemsPerPage));
+    }
+    if (pages.length === 0) pages.push([]);
+    var totalPages = pages.length;
+
+    function buildListPageFull(pageData, showAnswer, pgIdx) {
+      var lbl = totalPages > 1
+        ? totalQ + ' questions (' + (pgIdx+1) + '/' + totalPages + ')'
+        : totalQ + ' questions';
+      var title = toolName + (showAnswer ? ' — Answers' : '');
+      return '<div class="page">'
+        + '<div class="page-header"><h1>' + title + '</h1>'
+        + '<div class="meta">' + diffLabel + ' &nbsp;\\u00b7&nbsp; ' + dateStr + ' &nbsp;\\u00b7&nbsp; ' + lbl + '</div></div>'
+        + buildListPage(pageData, showAnswer)
+        + '</div>';
+    }
+
+    var qPages = pages.map(function(pg, i) { return buildListPageFull(pg, false, i); }).join('');
+    var aPages = pages.map(function(pg, i) { return buildListPageFull(pg, true,  i); }).join('');
+    var finalHtml = printMode === 'questions' ? qPages
+             : printMode === 'answers'   ? aPages
+             : qPages + aPages;
+
+    document.getElementById('pages').innerHTML = finalHtml;
+  } else {
+    // Grid layout pagination
+    var pageCapacity = isDiff ? diffRowsPerPage : rowsPerPage * cols;
+
+    // Account for section dividers in page capacity
+    if (hasSections && !isDiff) {
+      var gridPages = [];
+      var curPage = [];
+      var usedRows = 0;
+      var maxRows = rowsPerPage;
+      var prevSection = qData.length > 0 ? qData[0].sectionIdx : 0;
+
+      for (var qi = 0; qi < qData.length; qi++) {
+        var needsDivider = qi > 0 && qData[qi].sectionIdx !== prevSection;
+        if (needsDivider) {
+          // Check if the divider + at least 1 row fits on current page
+          var divRows = DIV_MM / chosenH_mm;
+          if (usedRows + divRows + 1 > maxRows && curPage.length > 0) {
+            gridPages.push(curPage);
+            curPage = [];
+            usedRows = 0;
+          }
+          prevSection = qData[qi].sectionIdx;
+        }
+        curPage.push(qData[qi]);
+        if (curPage.length % cols === 0) usedRows++;
+        if (usedRows >= maxRows) {
+          gridPages.push(curPage);
+          curPage = [];
+          usedRows = 0;
+          prevSection = qi + 1 < qData.length ? qData[qi + 1].sectionIdx : prevSection;
+        }
+      }
+      if (curPage.length > 0) gridPages.push(curPage);
+      var pages = gridPages;
+    } else if (isDiff) {
+      var pages = [];
+      var numDiffPages = Math.ceil(diffPerCol / diffRowsPerPage);
+      for (var p = 0; p < numDiffPages; p++) {
+        pages.push(p);
+      }
+    } else {
+      var pages = [];
+      for (var s = 0; s < qData.length; s += pageCapacity) {
+        pages.push(qData.slice(s, s + pageCapacity));
+      }
+    }
+    var totalPages = pages.length;
+
+    function buildPage(pageData, showAnswer, pgIdx) {
+      var cH  = isDiff ? diffCellH_mm : chosenH_mm;
+      var lbl = totalPages > 1
+        ? (isDiff ? diffPerCol + ' per level' : totalQ + ' questions') + ' (' + (pgIdx+1) + '/' + totalPages + ')'
+        : isDiff ? diffPerCol + ' per level' : totalQ + ' questions';
+      var title = toolName + (showAnswer ? ' — Answers' : '');
+      return '<div class="page">'
+        + '<div class="page-header"><h1>' + title + '</h1>'
+        + '<div class="meta">' + diffLabel + ' &nbsp;\\u00b7&nbsp; ' + dateStr + ' &nbsp;\\u00b7&nbsp; ' + lbl + '</div></div>'
+        + buildGrid(pageData, showAnswer, cH)
+        + '</div>';
+    }
+
+    var qPages = pages.map(function(pg, i) { return buildPage(pg, false, i); }).join('');
+    var aPages = pages.map(function(pg, i) { return buildPage(pg, true,  i); }).join('');
+    var finalHtml = printMode === 'questions' ? qPages
+             : printMode === 'answers'   ? aPages
+             : qPages + aPages;
+
+    document.getElementById('pages').innerHTML = finalHtml;
   }
-
-  var qPages = pages.map(function(pg, i) { return buildPage(pg, false, i); }).join('');
-  var aPages = pages.map(function(pg, i) { return buildPage(pg, true,  i); }).join('');
-  var html = printMode === 'questions' ? qPages
-           : printMode === 'answers'   ? aPages
-           : qPages + aPages;
-
-  document.getElementById('pages').innerHTML = html;
 
   document.getElementById('pages').querySelectorAll('.katex-render').forEach(function(el) {
     try { katex.render(el.getAttribute('data-latex'), el, { throwOnError: false, output: 'html' }); }
