@@ -771,7 +771,6 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                 {secGroups.map((g) => {
                   const idx = globalGroupIdx++;
                   const isSel = g.id === advSelectedId;
-                  const isLastInSection = g === secGroups[secGroups.length - 1];
                   const isLastGroup = idx === advGroups.length - 1;
                   return (
                     <div key={g.id}>
@@ -811,12 +810,11 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                           </button>
                         )}
                       </div>
-                      {!isLastGroup && !advDividers.has(g.id) && isLastInSection === false && null}
                       {!isLastGroup && !advDividers.has(g.id) && (
-                        <div className="flex justify-center py-0.5 opacity-0 hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-center py-0.5" onClick={e => e.stopPropagation()}>
                           <button onClick={() => toggleDivider(g.id)}
-                            className="text-xs text-gray-400 hover:text-blue-600 font-semibold px-3 py-0.5 rounded hover:bg-blue-50 transition-colors">
-                            + section divider
+                            className="text-xs text-gray-300 hover:text-blue-600 font-semibold px-3 py-0.5 rounded hover:bg-blue-50 transition-colors">
+                            + divider
                           </button>
                         </div>
                       )}
