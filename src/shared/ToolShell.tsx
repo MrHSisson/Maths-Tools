@@ -839,7 +839,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                   if (lastGroup && !advDividers.has(lastGroup.id)) toggleDivider(lastGroup.id);
                 }}
                   disabled={!advGroups.length || advDividers.has(advGroups[advGroups.length - 1]?.id)}
-                  className="aspect-square py-2 px-3 rounded-lg border-2 border-dashed border-gray-200 text-xs font-bold text-gray-400 hover:border-blue-300 hover:text-blue-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="aspect-square self-stretch rounded-lg border-2 border-dashed border-gray-200 text-xs font-bold text-gray-400 hover:border-blue-300 hover:text-blue-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center"
                   title="Add section divider">
                   + Section
                 </button>
@@ -941,7 +941,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                   </button>
                   <button onClick={() => setWorksheetLayout("list")}
                     className={`px-3 py-1.5 text-sm font-bold transition-colors ${worksheetLayout === "list" ? "bg-blue-900 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
-                    List
+                    Textbook
                   </button>
                 </div>
               </div>
@@ -983,7 +983,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                   </button>
                   <button onClick={() => setWorksheetLayout("list")}
                     className={`px-3 py-1.5 text-sm font-bold transition-colors ${worksheetLayout === "list" ? "bg-blue-900 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
-                    List
+                    Textbook
                   </button>
                 </div>
                 <button onClick={handleGenerateAdvanced} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
@@ -1392,36 +1392,37 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         <div className="max-w-6xl mx-auto">
           <h1 className="text-5xl font-bold text-center mb-8" style={{ color: "#000" }}>{config.pageTitle}</h1>
           <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
-          {toolKeys.length > 1 && mode !== "builder" && (
+          {toolKeys.length > 1 && (
             <>
               <div className="flex justify-center gap-4 mb-6">
                 {toolKeys.map(k => (
-                  <button key={k} onClick={() => setCurrentTool(k)}
-                    className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${currentTool === k ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
+                  <button key={k} onClick={() => { if (mode === "builder") return; setCurrentTool(k); }}
+                    className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${mode !== "builder" && currentTool === k ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
                     {config.tools[k].name}
                   </button>
                 ))}
+                <div className="w-px bg-gray-300 mx-1 self-stretch" />
+                <button onClick={() => { setMode(mode === "builder" ? "whiteboard" : "builder"); setPresenterMode(false); setWbFullscreen(false); }}
+                  className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${mode === "builder" ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
+                  Builder
+                </button>
               </div>
               <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
             </>
           )}
-          <div className="flex justify-center gap-4 mb-8">
-            {(["whiteboard", "single", "worksheet"] as const).map((m, i) => {
-              const label = ["Whiteboard", "Worked Example", "Worksheet"][i];
-              return (
-                <button key={m} onClick={() => { setMode(m); setPresenterMode(false); setWbFullscreen(false); }}
-                  className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${mode === m ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
-                  {label}
-                </button>
-              );
-            })}
-            {toolKeys.length > 1 && (
-              <button onClick={() => { setMode("builder"); setPresenterMode(false); setWbFullscreen(false); }}
-                className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${mode === "builder" ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
-                Builder
-              </button>
-            )}
-          </div>
+          {mode !== "builder" && (
+            <div className="flex justify-center gap-4 mb-8">
+              {(["whiteboard", "single", "worksheet"] as const).map((m, i) => {
+                const label = ["Whiteboard", "Worked Example", "Worksheet"][i];
+                return (
+                  <button key={m} onClick={() => { setMode(m); setPresenterMode(false); setWbFullscreen(false); }}
+                    className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${mode === m ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {mode === "builder" && (
             <WorksheetBuilder

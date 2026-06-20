@@ -460,7 +460,7 @@ export const WorksheetBuilder = ({
                   !groups.length ||
                   dividers.has(groups[groups.length - 1]?.id)
                 }
-                className="aspect-square py-2 px-3 rounded-lg border-2 border-dashed border-gray-200 text-xs font-bold text-gray-400 hover:border-blue-300 hover:text-blue-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                className="aspect-square self-stretch rounded-lg border-2 border-dashed border-gray-200 text-xs font-bold text-gray-400 hover:border-blue-300 hover:text-blue-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center"
                 title="Add section divider"
               >
                 + Section
@@ -746,7 +746,7 @@ export const WorksheetBuilder = ({
               onClick={() => setLayout("list")}
               className={`px-3 py-1.5 text-sm font-bold transition-colors ${layout === "list" ? "bg-blue-900 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}
             >
-              List
+              Textbook
             </button>
           </div>
           <span className="text-sm font-bold text-gray-600">
