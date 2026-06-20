@@ -216,7 +216,6 @@ export const WorksheetBuilder = ({
   const lvBorder = (lv: DifficultyLevel) =>
     lv === "level1" ? "#16a34a" : lv === "level2" ? "#eab308" : "#dc2626";
 
-  const selectedGroup = groups.find((g) => g.id === selectedId) ?? groups[0];
   const sections = computeSections(groups, dividers);
   const canAdd = groups.length < 10;
 
@@ -229,20 +228,12 @@ export const WorksheetBuilder = ({
   const renderGroupList = () => {
     let globalIdx = 0;
     return (
-      <div
-        className="flex flex-col rounded-xl border-2 border-gray-300 overflow-hidden"
-        style={{ width: "62%", flexShrink: 0, backgroundColor: "#fff" }}
-      >
-        <div className="flex-1 overflow-y-auto">
+      <div className="rounded-xl border-2 border-gray-300 overflow-hidden" style={{ backgroundColor: "#fff" }}>
+        <div className="overflow-y-auto" style={{ maxHeight: 500 }}>
           {sections.map((secGroups, secIdx) => (
             <div key={secIdx}>
-              <div
-                className="relative flex items-center justify-center gap-3 px-4 py-3 border-b border-gray-100"
-                style={{ backgroundColor: "#f3f4f6" }}
-              >
-                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider flex-shrink-0">
-                  Section {secIdx + 1}
-                </span>
+              <div className="relative flex items-center gap-3 px-4 py-2.5 border-b border-gray-100" style={{ backgroundColor: "#f3f4f6" }}>
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider flex-shrink-0">Section {secIdx + 1}</span>
                 <input
                   type="text"
                   placeholder="Section heading…"
@@ -250,15 +241,12 @@ export const WorksheetBuilder = ({
                   onChange={e => setSectionHeaders(prev => ({ ...prev, [secIdx]: e.target.value }))}
                   onClick={e => e.stopPropagation()}
                   className="text-xs font-semibold bg-white border border-gray-200 rounded px-2 py-1 flex-1 min-w-0 placeholder-gray-300 focus:outline-none focus:border-blue-400"
-                  style={{ maxWidth: 200 }}
                 />
-                <button
-                  onClick={() => toggleSectionShuffle(secIdx)}
-                  className={`text-xs font-semibold px-3 py-1 rounded transition-colors ${sectionShuffles[secIdx] ? "bg-blue-900 text-white" : "bg-gray-200 text-gray-500 hover:bg-gray-300"}`}
-                >
+                <button onClick={() => toggleSectionShuffle(secIdx)}
+                  className={`text-xs font-semibold px-2.5 py-1 rounded transition-colors flex-shrink-0 ${sectionShuffles[secIdx] ? "bg-blue-900 text-white" : "bg-gray-200 text-gray-500 hover:bg-gray-300"}`}>
                   Shuffle
                 </button>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1 flex-shrink-0">
                   <span className="text-xs font-semibold text-gray-400">Cols</span>
                   <div className="flex rounded border border-gray-300 overflow-hidden">
                     {[1, 2, 3, 4].map(c => (
@@ -270,18 +258,11 @@ export const WorksheetBuilder = ({
                   </div>
                 </div>
                 {secIdx > 0 && (
-                  <button
-                    onClick={() => {
-                      const prevGroupId =
-                        sections[secIdx - 1][
-                          sections[secIdx - 1].length - 1
-                        ]?.id;
-                      if (prevGroupId !== undefined)
-                        toggleDivider(prevGroupId);
-                    }}
-                    className="absolute right-4 w-6 h-6 rounded-full flex items-center justify-center text-gray-300 hover:bg-red-50 hover:text-red-400 transition-colors"
-                    title="Remove section"
-                  >
+                  <button onClick={() => {
+                    const prevGroupId = sections[secIdx - 1][sections[secIdx - 1].length - 1]?.id;
+                    if (prevGroupId !== undefined) toggleDivider(prevGroupId);
+                  }}
+                    className="w-6 h-6 rounded-full flex items-center justify-center text-gray-300 hover:bg-red-50 hover:text-red-400 transition-colors flex-shrink-0" title="Remove section">
                     <X size={12} />
                   </button>
                 )}
@@ -293,7 +274,7 @@ export const WorksheetBuilder = ({
                   <div key={g.id}>
                     <div
                       onClick={() => setSelectedId(g.id)}
-                      className="flex items-center gap-4 px-4 py-3 cursor-pointer transition-colors hover:bg-gray-50 border-b border-gray-100"
+                      className={`flex items-center gap-4 px-4 py-2.5 cursor-pointer transition-colors border-b border-gray-100 ${isSel ? "" : "hover:bg-gray-50"}`}
                       style={{
                         borderLeft: `3px solid ${isSel ? lvBorder(g.level) : "transparent"}`,
                         backgroundColor: isSel ? "#f0f4ff" : undefined,
@@ -308,106 +289,64 @@ export const WorksheetBuilder = ({
                           onClick={(e) => e.stopPropagation()}
                           onChange={(e) => {
                             const newTool = e.target.value;
-                            const fresh = makeDefaultGroup(
-                              g.id,
-                              newTool,
-                              g.level,
-                            );
+                            const fresh = makeDefaultGroup(g.id, newTool, g.level);
                             updateGroup(g.id, { ...fresh, id: g.id });
                             setSelectedId(g.id);
                           }}
                           className="text-xs font-semibold bg-gray-50 border border-gray-200 rounded px-2 py-1.5 min-w-0 flex-1"
                         >
                           {toolKeys.map((k) => (
-                            <option key={k} value={k}>
-                              {config.tools[k].name}
-                            </option>
+                            <option key={k} value={k}>{config.tools[k].name}</option>
                           ))}
                         </select>
                       )}
-                      <div
-                        className="flex rounded-lg border-2 border-gray-200 overflow-hidden flex-shrink-0"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {(
-                          ["level1", "level2", "level3"] as DifficultyLevel[]
-                        ).map((lv, li) => {
+                      <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                        {(["level1", "level2", "level3"] as DifficultyLevel[]).map((lv, li) => {
                           const isLvDisabled = comingSoonLevels.includes(lv);
                           return (
-                            <button
-                              key={lv}
-                              onClick={() => {
-                                if (!isLvDisabled) {
-                                  const fresh = makeDefaultGroup(
-                                    g.id,
-                                    g.tool,
-                                    lv,
-                                  );
-                                  updateGroup(g.id, { ...fresh, id: g.id });
-                                  setSelectedId(g.id);
-                                }
-                              }}
-                              className={`px-3 py-1.5 font-bold text-xs transition-colors ${isLvDisabled ? "bg-gray-100 text-gray-300 cursor-not-allowed" : g.level === lv ? `${lvColor(lv)} text-white` : "bg-white text-gray-400 hover:bg-gray-50"}`}
-                            >
+                            <button key={lv}
+                              onClick={() => { if (!isLvDisabled) { const fresh = makeDefaultGroup(g.id, g.tool, lv); updateGroup(g.id, { ...fresh, id: g.id }); setSelectedId(g.id); } }}
+                              className={`px-3 py-1.5 font-bold text-xs transition-colors ${isLvDisabled ? "bg-gray-100 text-gray-300 cursor-not-allowed" : g.level === lv ? `${lvColor(lv)} text-white` : "bg-white text-gray-400 hover:bg-gray-50"}`}>
                               L{li + 1}
                             </button>
                           );
                         })}
                       </div>
                       <div className="flex-1" />
-                      <div
-                        className="flex items-center gap-1.5 bg-gray-100 rounded-lg px-1 py-0.5 flex-shrink-0"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <button
-                          onClick={() =>
-                            updateGroup(g.id, {
-                              count: Math.max(1, g.count - 1),
-                            })
-                          }
-                          disabled={g.count <= 1}
-                          className="w-7 h-7 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-base leading-none"
-                        >
-                          −
-                        </button>
-                        <span className="w-7 text-center text-sm font-bold text-gray-800 tabular-nums">
-                          {g.count}
-                        </span>
-                        <button
-                          onClick={() =>
-                            updateGroup(g.id, {
-                              count: Math.min(24, g.count + 1),
-                            })
-                          }
-                          disabled={g.count >= 24}
-                          className="w-7 h-7 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-base leading-none"
-                        >
-                          +
-                        </button>
+                      <div className="flex items-center gap-1.5 bg-gray-100 rounded-lg px-1 py-0.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <button onClick={() => updateGroup(g.id, { count: Math.max(1, g.count - 1) })} disabled={g.count <= 1}
+                          className="w-7 h-7 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-base leading-none">−</button>
+                        <span className="w-7 text-center text-sm font-bold text-gray-800 tabular-nums">{g.count}</span>
+                        <button onClick={() => updateGroup(g.id, { count: Math.min(24, g.count + 1) })} disabled={g.count >= 24}
+                          className="w-7 h-7 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-base leading-none">+</button>
                       </div>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           if (groups.length <= 1) return;
-                          setDividers((prev) => {
-                            const next = new Set(prev);
-                            next.delete(g.id);
-                            return next;
-                          });
+                          setDividers((prev) => { const next = new Set(prev); next.delete(g.id); return next; });
                           const rem = groups.filter((ag) => ag.id !== g.id);
                           setGroups(rem);
-                          if (g.id === selectedId)
-                            setSelectedId(
-                              rem[
-                                Math.max(0, groups.indexOf(g) - 1)
-                              ]?.id ?? rem[0].id,
-                            );
+                          if (g.id === selectedId) setSelectedId(rem[Math.max(0, groups.indexOf(g) - 1)]?.id ?? rem[0].id);
                         }}
-                        className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${groups.length > 1 ? "text-gray-300 hover:bg-red-50 hover:text-red-400" : "invisible"}`}
-                      >
+                        className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${groups.length > 1 ? "text-gray-300 hover:bg-red-50 hover:text-red-400" : "invisible"}`}>
                         <X size={12} />
                       </button>
                     </div>
+                    {isSel && (
+                      <div className="px-6 py-3 border-b border-gray-100" style={{ backgroundColor: "#f8f9ff" }}>
+                        <InlineQOPanel
+                          toolEntry={config.tools[g.tool]}
+                          level={g.level}
+                          variables={g.variables}
+                          onVariableChange={(k, v) => updateGroup(g.id, { variables: { ...g.variables, [k]: v } })}
+                          dropdownValue={g.dropdownValue}
+                          onDropdownChange={v => updateGroup(g.id, { dropdownValue: v })}
+                          multiSelectValues={g.multiSelectValues}
+                          onMultiSelectChange={(k, v) => updateGroup(g.id, { multiSelectValues: { ...g.multiSelectValues, [k]: v } })}
+                        />
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -417,40 +356,25 @@ export const WorksheetBuilder = ({
         <div className="px-4 py-3 border-t border-gray-200 flex-shrink-0">
           {canAdd ? (
             <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  const newId = nextId.current++;
-                  const lastTool =
-                    groups.length > 0
-                      ? groups[groups.length - 1].tool
-                      : toolKeys[0];
-                  setGroups((g) => [
-                    ...g,
-                    makeDefaultGroup(newId, lastTool),
-                  ]);
-                  setSelectedId(newId);
-                }}
-                className="flex-1 py-2 rounded-lg border-2 border-dashed border-gray-200 text-xs font-bold text-gray-400 hover:border-blue-300 hover:text-blue-600 transition-colors"
-              >
+              <button onClick={() => {
+                const newId = nextId.current++;
+                const lastTool = groups.length > 0 ? groups[groups.length - 1].tool : toolKeys[0];
+                setGroups((g) => [...g, makeDefaultGroup(newId, lastTool)]);
+                setSelectedId(newId);
+              }}
+                className="flex-1 py-2 rounded-lg border-2 border-dashed border-gray-200 text-xs font-bold text-gray-400 hover:border-blue-300 hover:text-blue-600 transition-colors">
                 + Add group
               </button>
-              <button
-                onClick={() => {
-                  const lastGroup = groups[groups.length - 1];
-                  if (lastGroup && !dividers.has(lastGroup.id)) {
-                    setDividers((prev) => new Set([...prev, lastGroup.id]));
-                    const newId = nextId.current++;
-                    const lastTool =
-                      groups.length > 0
-                        ? groups[groups.length - 1].tool
-                        : toolKeys[0];
-                    setGroups((g) => [
-                      ...g,
-                      makeDefaultGroup(newId, lastTool),
-                    ]);
-                    setSelectedId(newId);
-                  }
-                }}
+              <button onClick={() => {
+                const lastGroup = groups[groups.length - 1];
+                if (lastGroup && !dividers.has(lastGroup.id)) {
+                  setDividers((prev) => new Set([...prev, lastGroup.id]));
+                  const newId = nextId.current++;
+                  const lastTool = groups.length > 0 ? groups[groups.length - 1].tool : toolKeys[0];
+                  setGroups((g) => [...g, makeDefaultGroup(newId, lastTool)]);
+                  setSelectedId(newId);
+                }
+              }}
                 disabled={
                   !groups.length ||
                   dividers.has(groups[groups.length - 1]?.id)
@@ -467,55 +391,6 @@ export const WorksheetBuilder = ({
             </p>
           )}
         </div>
-      </div>
-    );
-  };
-
-  const renderOptionsPanel = () => {
-    if (!selectedGroup) return null;
-    const toolEntry = config.tools[selectedGroup.tool];
-    if (!toolEntry) return null;
-    const groupIdx = groups.indexOf(selectedGroup);
-    return (
-      <div
-        className="flex-1 rounded-xl border-2 border-gray-300 px-5 py-4 overflow-y-auto"
-        style={{ backgroundColor: "#fff" }}
-      >
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">
-          Group {groupIdx + 1} ·{" "}
-          {toolKeys.length > 1
-            ? `${toolEntry.name} · `
-            : ""}
-          {selectedGroup.level === "level1"
-            ? "Level 1"
-            : selectedGroup.level === "level2"
-              ? "Level 2"
-              : "Level 3"}{" "}
-          · Options
-        </p>
-        <InlineQOPanel
-          toolEntry={toolEntry}
-          level={selectedGroup.level}
-          variables={selectedGroup.variables}
-          onVariableChange={(k, v) =>
-            updateGroup(selectedGroup.id, {
-              variables: { ...selectedGroup.variables, [k]: v },
-            })
-          }
-          dropdownValue={selectedGroup.dropdownValue}
-          onDropdownChange={(v) =>
-            updateGroup(selectedGroup.id, { dropdownValue: v })
-          }
-          multiSelectValues={selectedGroup.multiSelectValues}
-          onMultiSelectChange={(k, v) =>
-            updateGroup(selectedGroup.id, {
-              multiSelectValues: {
-                ...selectedGroup.multiSelectValues,
-                [k]: v,
-              },
-            })
-          }
-        />
       </div>
     );
   };
@@ -689,10 +564,7 @@ export const WorksheetBuilder = ({
   return (
     <div className="bg-white rounded-xl shadow-lg mb-8">
       <div className="p-6">
-        <div className="flex gap-3" style={{ minHeight: 300 }}>
-          {renderGroupList()}
-          {renderOptionsPanel()}
-        </div>
+        {renderGroupList()}
         <div className="flex justify-center items-center gap-4 flex-wrap mt-4">
           <div className="flex rounded-lg border-2 border-gray-300 overflow-hidden">
             <button
