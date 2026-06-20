@@ -16,6 +16,7 @@ import { InfoModal } from "./components/InfoModal";
 import { MenuDropdown } from "./components/MenuDropdown";
 import { PrintSplitButton } from "./components/PrintSplitButton";
 import { handlePrint } from "./print";
+import { WorksheetBuilder } from "./WorksheetBuilder";
 
 export interface ToolShellProps {
   config: ToolConfig;
@@ -115,7 +116,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       return out;
     };
     const toolParam = p.get("tool");
-    const modeMap: Record<string, "whiteboard" | "single" | "worksheet"> = { whiteboard: "whiteboard", example: "single", worksheet: "worksheet" };
+    const modeMap: Record<string, "whiteboard" | "single" | "worksheet" | "builder"> = { whiteboard: "whiteboard", example: "single", worksheet: "worksheet", builder: "builder" };
     const levelMap: Record<string, DifficultyLevel> = { "1": "level1", "2": "level2", "3": "level3" };
     const levelParam = levelMap[p.get("level") ?? ""];
     const intParam = (key: string, min: number, max: number): number | null => {
@@ -159,7 +160,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   });
 
   const [currentTool, setCurrentTool] = useState<string>(urlInit.tool);
-  const [mode, setMode] = useState<"whiteboard" | "single" | "worksheet">(urlInit.mode);
+  const [mode, setMode] = useState<"whiteboard" | "single" | "worksheet" | "builder">(urlInit.mode);
   const comingSoon = defaults.comingSoonLevels ?? [];
   const hideFontControls = defaults.hideFontControls ?? false;
   const [difficulty, setDifficulty] = useState<DifficultyLevel>(urlInit.level);
@@ -554,7 +555,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   useEffect(() => {
     const p = new URLSearchParams();
     if (currentTool !== toolKeys[0]) p.set("tool", currentTool);
-    if (mode !== "whiteboard") p.set("mode", mode === "single" ? "example" : "worksheet");
+    if (mode !== "whiteboard") p.set("mode", mode === "single" ? "example" : mode === "builder" ? "builder" : "worksheet");
     if (difficulty !== "level1") p.set("level", difficulty.slice(-1));
     const t = config.tools[currentTool];
     const ddCfg = t.difficultySettings?.[difficulty]?.dropdown ?? t.dropdown;
@@ -1391,7 +1392,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         <div className="max-w-6xl mx-auto">
           <h1 className="text-5xl font-bold text-center mb-8" style={{ color: "#000" }}>{config.pageTitle}</h1>
           <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
-          {toolKeys.length > 1 && (
+          {toolKeys.length > 1 && mode !== "builder" && (
             <>
               <div className="flex justify-center gap-4 mb-6">
                 {toolKeys.map(k => (
@@ -1414,10 +1415,25 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                 </button>
               );
             })}
+            {toolKeys.length > 1 && (
+              <button onClick={() => { setMode("builder"); setPresenterMode(false); setWbFullscreen(false); }}
+                className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${mode === "builder" ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
+                Builder
+              </button>
+            )}
           </div>
 
+          {mode === "builder" && (
+            <WorksheetBuilder
+              config={config}
+              generateQuestion={generateQuestion}
+              questionRenderer={questionRenderer}
+              customPrintHandler={customPrintHandler}
+              comingSoonLevels={comingSoon}
+            />
+          )}
           {mode === "worksheet" && <>{renderControlBar()}<div ref={worksheetWrapRef}>{renderWorksheet()}</div></>}
-          {mode !== "worksheet" && (
+          {mode !== "worksheet" && mode !== "builder" && (
             <div className="flex flex-col gap-6">
               <div className="rounded-xl shadow-lg">
                 {renderControlBar()}
