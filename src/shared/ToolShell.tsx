@@ -740,9 +740,8 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           <div className="flex-1 overflow-y-auto">
             {sections.map((secGroups, secIdx) => (
               <div key={secIdx}>
-                {sections.length > 1 && (
-                  <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100" style={{ backgroundColor: "#f3f4f6" }}>
-                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Section {secIdx + 1}</span>
+                <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100" style={{ backgroundColor: "#f3f4f6" }}>
+                  <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Section {secIdx + 1}</span>
                     <div className="flex-1" />
                     <button onClick={() => toggleSectionShuffle(secIdx)}
                       className={`text-xs font-semibold px-3 py-1 rounded transition-colors ${sectionShuffles[secIdx] ? "bg-blue-900 text-white" : "bg-gray-200 text-gray-500 hover:bg-gray-300"}`}>
@@ -756,8 +755,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                       className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${secIdx > 0 ? "text-gray-300 hover:bg-red-50 hover:text-red-400" : "invisible"}`} title="Remove section">
                       <X size={12} />
                     </button>
-                  </div>
-                )}
+                </div>
                 {secGroups.map((g) => {
                   const idx = globalGroupIdx++;
                   const isSel = g.id === advSelectedId;
@@ -813,7 +811,12 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                 </button>
                 <button onClick={() => {
                   const lastGroup = advGroups[advGroups.length - 1];
-                  if (lastGroup && !advDividers.has(lastGroup.id)) toggleDivider(lastGroup.id);
+                  if (lastGroup && !advDividers.has(lastGroup.id)) {
+                    setAdvDividers(prev => new Set([...prev, lastGroup.id]));
+                    const newId = advNextId.current++;
+                    setAdvGroups(g => [...g, makeDefaultAdvGroup(newId)]);
+                    setAdvSelectedId(newId);
+                  }
                 }}
                   disabled={!advGroups.length || advDividers.has(advGroups[advGroups.length - 1]?.id)}
                   className="aspect-square self-stretch rounded-lg border-2 border-dashed border-gray-200 text-xs font-bold text-gray-400 hover:border-blue-300 hover:text-blue-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center"
