@@ -548,7 +548,7 @@ export const WorksheetBuilder = ({
       if (!hasSec) {
         return (
           <div ref={worksheetRef} className="bg-white rounded-xl shadow-lg p-6 mt-6">
-            <div style={{ columnCount: numColumns, columnGap: "2rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: `repeat(${numColumns}, 1fr)`, columnGap: "2rem" }}>
               {worksheet.map((q, i) => renderListItem(q, i))}
             </div>
           </div>
@@ -570,7 +570,7 @@ export const WorksheetBuilder = ({
             return (
               <div key={si}>
                 {si > 0 && <div style={{ width: "60%", margin: "0.5rem auto", borderTop: "1px solid #d1d5db" }} />}
-                <div style={{ columnCount: segCols, columnGap: "2rem" }}>
+                <div style={{ display: "grid", gridTemplateColumns: `repeat(${segCols}, 1fr)`, columnGap: "2rem" }}>
                   {seg.items.map(({ q, idx }) => renderListItem(q, idx))}
                 </div>
               </div>

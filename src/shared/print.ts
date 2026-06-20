@@ -293,14 +293,42 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 
   // --- Grid layout calculations ---
-  var chosenH_mm = rowHeights[0];
+  // When sections exist, compute the actual row count including partial rows
+  // at section boundaries and subtract divider space from usable height.
+  var sectionRowCount = 0;
+  var sectionDividerCount = 0;
+  if (hasSections) {
+    var prevSI = -1;
+    var inSecCount = 0;
+    for (var qi2 = 0; qi2 < qData.length; qi2++) {
+      if (qData[qi2].sectionIdx !== prevSI) {
+        if (inSecCount > 0) sectionRowCount++;
+        if (prevSI >= 0) sectionDividerCount++;
+        prevSI = qData[qi2].sectionIdx;
+        inSecCount = 0;
+      }
+      inSecCount++;
+      if (inSecCount >= qData[qi2].sectionCols) { sectionRowCount++; inSecCount = 0; }
+    }
+    if (inSecCount > 0) sectionRowCount++;
+  }
+
+  var dividerTotalH = sectionDividerCount * DIV_MM;
+  var adjUsableH = hasSections ? usableH - dividerTotalH : usableH;
+  var adjRowHeights = [];
+  for (var rr = 1; rr <= 10; rr++) {
+    adjRowHeights.push((adjUsableH - GAP_MM * (rr - 1)) / rr);
+  }
+
+  var chosenH_mm = adjRowHeights[0];
   var rowsPerPage = 1;
+  var effectiveTotalQ = hasSections ? sectionRowCount * cols : totalQ;
 
   var found = false;
-  for (var r = 0; r < rowHeights.length; r++) {
+  for (var r = 0; r < adjRowHeights.length; r++) {
     var capacity = (r + 1) * cols;
-    if (capacity >= totalQ && rowHeights[r] >= needed_mm) {
-      chosenH_mm = rowHeights[r];
+    if (capacity >= effectiveTotalQ && adjRowHeights[r] >= needed_mm) {
+      chosenH_mm = adjRowHeights[r];
       rowsPerPage = r + 1;
       found = true;
       break;
@@ -308,9 +336,9 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 
   if (!found) {
-    for (var r2 = 0; r2 < rowHeights.length; r2++) {
-      if (rowHeights[r2] >= needed_mm) {
-        chosenH_mm = rowHeights[r2];
+    for (var r2 = 0; r2 < adjRowHeights.length; r2++) {
+      if (adjRowHeights[r2] >= needed_mm) {
+        chosenH_mm = adjRowHeights[r2];
         rowsPerPage = r2 + 1;
       }
     }
@@ -338,18 +366,11 @@ document.addEventListener("DOMContentLoaded", function() {
   // ── List layout builder ──
   function buildListSection(sectionItems, showAnswer, secCols) {
     var colW = makeCellW(secCols);
-    var itemsPerCol = Math.ceil(sectionItems.length / secCols);
-    var colsHtml = '';
-    for (var c = 0; c < secCols; c++) {
-      var start = c * itemsPerCol;
-      var end = Math.min(start + itemsPerCol, sectionItems.length);
-      var items = '';
-      for (var i = start; i < end; i++) {
-        items += showAnswer ? sectionItems[i].a : sectionItems[i].q;
-      }
-      colsHtml += '<div class="list-col" style="width:' + colW + 'mm;">' + items + '</div>';
+    var itemsHtml = '';
+    for (var i = 0; i < sectionItems.length; i++) {
+      itemsHtml += showAnswer ? sectionItems[i].a : sectionItems[i].q;
     }
-    return '<div style="display:grid;grid-template-columns:repeat(' + secCols + ',' + colW + 'mm);gap:' + GAP_MM + 'mm;align-items:start;">' + colsHtml + '</div>';
+    return '<div style="display:grid;grid-template-columns:repeat(' + secCols + ',' + colW + 'mm);gap:0 ' + GAP_MM + 'mm;">' + itemsHtml + '</div>';
   }
   function buildListPage(pageItems, showAnswer) {
     if (!hasSections) return buildListSection(pageItems, showAnswer, cols);

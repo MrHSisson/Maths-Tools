@@ -1345,7 +1345,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           {fontSizeControls}
           <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
           {!hasSec ? (
-            <div style={{ columnCount: numColumns, columnGap: "1.5rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: `repeat(${numColumns}, 1fr)`, columnGap: "1.5rem" }}>
               {worksheet.map((q, idx) => renderListItem(q, idx, false))}
             </div>
           ) : (() => {
@@ -1363,7 +1363,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               return (
                 <div key={si}>
                   {si > 0 && <div style={{ width: "60%", margin: "0.5rem auto", borderTop: "1px solid #d1d5db" }} />}
-                  <div style={{ columnCount: segCols, columnGap: "1.5rem" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: `repeat(${segCols}, 1fr)`, columnGap: "1.5rem" }}>
                     {seg.items.map(({ q, globalIdx }) => renderListItem(q, globalIdx, false))}
                   </div>
                 </div>
