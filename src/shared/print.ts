@@ -25,9 +25,9 @@ export const handlePrint = (
   const diffHdrMM  = 7;
 
   const cols    = isDifferentiated ? 3 : numColumns;
-  const cellW_MM = isDifferentiated
-    ? (PAGE_W_MM - GAP_MM * 2) / 3
-    : (PAGE_W_MM - GAP_MM * (numColumns - 1)) / numColumns;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const maxSecCols = isDifferentiated ? 3 : Math.max(numColumns, ...questions.map(q => (q as any)._sectionCols as number ?? numColumns));
+  const cellW_MM = (PAGE_W_MM - GAP_MM * (maxSecCols - 1)) / maxSecCols;
 
   const difficultyLabel = isDifferentiated ? "Differentiated" :
     difficulty === "level1" ? "Level 1" : difficulty === "level2" ? "Level 2" :
@@ -233,8 +233,6 @@ export const handlePrint = (
   .list-answer-only { font-size: ${Math.round(FONT_PX * 1.1)}px; color: #059669; }
   .list-subline { display: block; margin-left: 7mm; font-size: ${FONT_PX}px; }
   .list-col { display: flex; flex-direction: column; }
-
-  @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
 </style>
 </head>
 <body>

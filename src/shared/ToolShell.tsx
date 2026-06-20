@@ -494,6 +494,10 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       if (!existing.has(candidate.key)) { replacement = stampQO(candidate, snap); break; }
     }
     if (!replacement) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const origAny = q as any;
+    if (origAny._sectionIdx !== undefined) (replacement as any)._sectionIdx = origAny._sectionIdx;
+    if (origAny._sectionCols !== undefined) (replacement as any)._sectionCols = origAny._sectionCols;
     setWorksheet(prev => prev.map((w, i) => i === idx ? replacement! : w));
   };
 
