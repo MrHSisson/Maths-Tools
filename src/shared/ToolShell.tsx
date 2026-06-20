@@ -149,6 +149,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     sectionShuffles?: Record<number, boolean>;
     sectionColumns?: Record<number, number>;
     worksheetLayout?: "grid" | "list";
+    worksheetBorders?: boolean;
     levelVariables?: Record<string, Record<string, boolean>>;
     levelDropdowns?: Record<string, string>;
     levelMultiSelect?: Record<string, Record<string, boolean>>;
@@ -308,6 +309,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const [sectionShuffles, setSectionShuffles] = useState<Record<number, boolean>>(wbInit?.sectionShuffles ?? {});
   const [sectionColumns, setSectionColumns] = useState<Record<number, number>>(wbInit?.sectionColumns ?? {});
   const [worksheetLayout, setWorksheetLayout] = useState<"grid" | "list">(wbInit?.worksheetLayout ?? "grid");
+  const [worksheetBorders, setWorksheetBorders] = useState(wbInit?.worksheetBorders ?? true);
   // When the active sub-tool changes, re-hydrate the advanced groups so their QO
   // options reflect the new sub-tool's defaults (the initial mount is already
   // hydrated by the initializer above, so skip that first run).
@@ -599,11 +601,11 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     try {
       sessionStorage.setItem(wbStorageKey, JSON.stringify({
         worksheetMode, advGroups, advSelectedId, advShuffle,
-        advDividers: [...advDividers], sectionShuffles, sectionColumns, worksheetLayout,
+        advDividers: [...advDividers], sectionShuffles, sectionColumns, worksheetLayout, worksheetBorders,
         levelVariables, levelDropdowns, levelMultiSelect,
       } satisfies WBPersist));
     } catch { /* ignore quota / serialisation errors */ }
-  }, [wbStorageKey, worksheetMode, advGroups, advSelectedId, advShuffle, advDividers, sectionShuffles, sectionColumns, worksheetLayout, levelVariables, levelDropdowns, levelMultiSelect]);
+  }, [wbStorageKey, worksheetMode, advGroups, advSelectedId, advShuffle, advDividers, sectionShuffles, sectionColumns, worksheetLayout, worksheetBorders, levelVariables, levelDropdowns, levelMultiSelect]);
 
   // A link that points straight at a worksheet generates it on arrival —
   // a bookmarked worksheet link is ready to teach from without extra clicks.
@@ -626,9 +628,12 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const renderQCell = (q: AnyQuestion, idx: number, bgOverride?: string) => {
     const bg = bgOverride ?? stepBg;
     const fsz = fontSizes[worksheetFontSize];
-    const cellStyle = { backgroundColor: bg, height: "100%", boxSizing: "border-box" as const, position: "relative" as const, borderRadius: "12px", border: "1px solid #e5e7eb" };
-    const numEl = <span style={{ position: "absolute", top: 0, left: 0, fontSize: "0.65em", fontWeight: 700, color: "#000", lineHeight: 1, padding: "5px 5px 7px 5px", borderRight: "1px solid #000", borderBottom: "1px solid #000" }}>{idx + 1})</span>;
-    const wrapperClass = "rounded-xl p-4 shadow group";
+    const borders = worksheetBorders || !!bgOverride;
+    const cellStyle = borders
+      ? { backgroundColor: bg, height: "100%", boxSizing: "border-box" as const, position: "relative" as const, borderRadius: "12px", border: "1px solid #e5e7eb" }
+      : { height: "100%", boxSizing: "border-box" as const, position: "relative" as const };
+    const numEl = <span className="text-xs font-bold text-gray-400" style={{ position: "absolute", top: 4, left: 6 }}>{idx + 1}</span>;
+    const wrapperClass = borders ? "rounded-xl p-4 shadow group" : "p-4 group";
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const regenBtn = (q as any)._qo ? (
@@ -933,13 +938,22 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                 <div className="flex rounded-lg border-2 border-gray-300 overflow-hidden">
                   <button onClick={() => setWorksheetLayout("grid")}
                     className={`px-3 py-1.5 text-sm font-bold transition-colors ${worksheetLayout === "grid" ? "bg-blue-900 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
-                    Grid
+                    Worksheet
                   </button>
                   <button onClick={() => setWorksheetLayout("list")}
                     className={`px-3 py-1.5 text-sm font-bold transition-colors ${worksheetLayout === "list" ? "bg-blue-900 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
                     Textbook
                   </button>
                 </div>
+                {worksheetLayout === "grid" && (
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <div onClick={() => setWorksheetBorders(!worksheetBorders)}
+                      className={`w-9 h-5 rounded-full transition-colors relative ${worksheetBorders ? "bg-blue-900" : "bg-gray-300"}`}>
+                      <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${worksheetBorders ? "translate-x-4" : "translate-x-0.5"}`} />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-500">Borders</span>
+                  </label>
+                )}
               </div>
               <div className="flex justify-center items-center gap-4">
                 <button onClick={handleGenerateWorksheet} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
@@ -953,7 +967,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                     <PrintSplitButton
                       onPrint={m => customPrintHandler
                         ? customPrintHandler(worksheet, m, worksheetWrapRef.current)
-                        : handlePrint(worksheet, config.tools[currentTool].name, difficulty, isDifferentiated, numColumns, getInstruction(), m, worksheetLayout)}
+                        : handlePrint(worksheet, config.tools[currentTool].name, difficulty, isDifferentiated, numColumns, getInstruction(), m, worksheetLayout, worksheetBorders)}
                       printMode={printMode} setPrintMode={setPrintMode}
                     />
                   </>
@@ -967,13 +981,22 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                 <div className="flex rounded-lg border-2 border-gray-300 overflow-hidden">
                   <button onClick={() => setWorksheetLayout("grid")}
                     className={`px-3 py-1.5 text-sm font-bold transition-colors ${worksheetLayout === "grid" ? "bg-blue-900 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
-                    Grid
+                    Worksheet
                   </button>
                   <button onClick={() => setWorksheetLayout("list")}
                     className={`px-3 py-1.5 text-sm font-bold transition-colors ${worksheetLayout === "list" ? "bg-blue-900 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
                     Textbook
                   </button>
                 </div>
+                {worksheetLayout === "grid" && (
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <div onClick={() => setWorksheetBorders(!worksheetBorders)}
+                      className={`w-9 h-5 rounded-full transition-colors relative ${worksheetBorders ? "bg-blue-900" : "bg-gray-300"}`}>
+                      <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${worksheetBorders ? "translate-x-4" : "translate-x-0.5"}`} />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-500">Borders</span>
+                  </label>
+                )}
                 <button onClick={handleGenerateAdvanced} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
                   <RefreshCw size={18} /> Generate
                 </button>
@@ -985,7 +1008,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                     <PrintSplitButton
                       onPrint={m => customPrintHandler
                         ? customPrintHandler(worksheet, m, worksheetWrapRef.current)
-                        : handlePrint(worksheet, config.tools[currentTool].name, "advanced", false, numColumns, getInstruction(), m, worksheetLayout)}
+                        : handlePrint(worksheet, config.tools[currentTool].name, "advanced", false, numColumns, getInstruction(), m, worksheetLayout, worksheetBorders)}
                       printMode={printMode} setPrintMode={setPrintMode}
                     />
                   </>

@@ -113,6 +113,7 @@ export const WorksheetBuilder = ({
     Record<number, number>
   >({});
   const [layout, setLayout] = useState<"grid" | "list">("grid");
+  const [borders, setBorders] = useState(true);
   const [numColumns] = useState(3);
   const [worksheet, setWorksheet] = useState<AnyQuestion[]>([]);
   const [showAnswers, setShowAnswers] = useState(false);
@@ -583,13 +584,14 @@ export const WorksheetBuilder = ({
     const renderGridCell = (q: AnyQuestion, i: number) => (
       <div key={q.key + i}>
         <div
-          className="rounded-lg p-4 text-center"
+          className={borders ? "rounded-lg border border-gray-200 p-4 text-center" : "p-4 text-center"}
           style={{
-            backgroundColor: "#f5f3f0",
+            ...(borders ? { backgroundColor: "#f5f3f0" } : {}),
             minHeight: 60,
+            position: "relative",
           }}
         >
-          <span className="text-xs font-bold text-gray-300 block mb-1">
+          <span className="text-xs font-bold text-gray-400" style={{ position: "absolute", top: 4, left: 6 }}>
             {i + 1}
           </span>
           {questionRenderer ? (
@@ -677,7 +679,7 @@ export const WorksheetBuilder = ({
               onClick={() => setLayout("grid")}
               className={`px-3 py-1.5 text-sm font-bold transition-colors ${layout === "grid" ? "bg-blue-900 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}
             >
-              Grid
+              Worksheet
             </button>
             <button
               onClick={() => setLayout("list")}
@@ -686,6 +688,15 @@ export const WorksheetBuilder = ({
               Textbook
             </button>
           </div>
+          {layout === "grid" && (
+            <label className="flex items-center gap-2 cursor-pointer">
+              <div onClick={() => setBorders(!borders)}
+                className={`w-9 h-5 rounded-full transition-colors relative ${borders ? "bg-blue-900" : "bg-gray-300"}`}>
+                <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${borders ? "translate-x-4" : "translate-x-0.5"}`} />
+              </div>
+              <span className="text-sm font-semibold text-gray-500">Borders</span>
+            </label>
+          )}
           <span className="text-sm font-bold text-gray-600">
             {totalQuestions} questions total
           </span>
@@ -720,6 +731,7 @@ export const WorksheetBuilder = ({
                         getInstruction(),
                         m,
                         layout,
+                        borders,
                       )
                 }
                 printMode={printMode}

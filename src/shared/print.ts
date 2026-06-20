@@ -10,6 +10,7 @@ export const handlePrint = (
   instruction: string,
   pMode: PrintMode = "both",
   layout: "grid" | "list" = "grid",
+  showBorders: boolean = true,
 ) => {
   if (difficulty === "advanced") isDifferentiated = false;
   const FONT_PX   = 14;
@@ -64,7 +65,7 @@ export const handlePrint = (
         ansHtml = `<div class="q-answer">${ansEq(anyQ.answer ?? "")}${suffix}</div>`;
       }
     }
-    const banner = `<div class="q-banner">Question ${idx + 1}</div>`;
+    const numHtml = `<div class="q-num">${idx + 1}</div>`;
     const instrHtml = instruction ? `<div class="q-instruction">${instruction}</div>` : "";
     let body = "";
     if (anyQ.kind === "frac") {
@@ -79,7 +80,7 @@ export const handlePrint = (
            + `<div class="q-lines">${anyQ.lines.slice(1).map((l: string) => `<div class="q-line">${renderLine(l)}</div>`).join("")}</div>`
            + ansHtml;
     }
-    return `${banner}<div class="qbody">${body}</div>`;
+    return `${numHtml}<div class="qbody">${body}</div>`;
   };
 
   const listQuestionToHtml = (q: AnyQuestion, idx: number, showAnswer: boolean): string => {
@@ -134,11 +135,11 @@ export const handlePrint = (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const anyQ = q as any;
     const suffix = anyQ.answerSuffix ? ` ${anyQ.answerSuffix}` : "";
-    const banner = `<div class="q-banner">Question ${idx + 1}</div>`;
+    const numHtml = `<div class="q-num">${idx + 1}</div>`;
     const ansHtml = anyQ.answerLatex
       ? `<div class="q-answer q-answer-only">${katexSpan(ansEq(anyQ.answerLatex))}${suffix}</div>`
       : `<div class="q-answer q-answer-only">${ansEq(anyQ.answer ?? "")}${suffix}</div>`;
-    return `${banner}<div class="qbody">${ansHtml}</div>`;
+    return `${numHtml}<div class="qbody">${ansHtml}</div>`;
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -181,7 +182,7 @@ export const handlePrint = (
 
   .grid { display: grid; gap: ${GAP_MM}mm; }
   .cell {
-    border: 0.3mm solid #d1d5db; border-radius: 3mm;
+    ${showBorders ? "border: 0.3mm solid #d1d5db; border-radius: 3mm;" : ""}
     overflow: hidden; display: flex; flex-direction: column;
     align-items: stretch; justify-content: flex-start;
   }
@@ -208,8 +209,8 @@ export const handlePrint = (
     width: ${cellW_MM}mm;
   }
 
-  .q-inner  { width: 100%; display: flex; flex-direction: column; flex: 1; }
-  .q-banner { width: 100%; text-align: center; font-size: ${Math.round(FONT_PX * 0.65)}px; font-weight: 700; color: #000; padding: 1mm 0; border-bottom: 0.3mm solid #000; }
+  .q-inner  { width: 100%; display: flex; flex-direction: column; flex: 1; position: relative; }
+  .q-num    { position: absolute; top: 0.5mm; left: 1mm; font-size: ${Math.round(FONT_PX * 0.6)}px; font-weight: 700; color: #9ca3af; }
   .qbody    { padding: ${PAD_MM * 0.4}mm ${PAD_MM}mm ${PAD_MM}mm; text-align: center; flex: 1; }
   .q-instruction { font-size: ${Math.round(FONT_PX * 0.8)}px; color: #000; text-align: center; margin-bottom: 1mm; font-weight: 600; }
   .q-math   { font-size: ${FONT_PX}px; display: inline; }
