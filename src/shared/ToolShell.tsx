@@ -975,15 +975,13 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                     Textbook
                   </button>
                 </div>
-                {worksheetLayout === "grid" && (
-                  <label className="flex items-center gap-2 cursor-pointer">
+                <label className={`flex items-center gap-2 cursor-pointer transition-opacity ${worksheetLayout === "grid" ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
                     <div onClick={() => setWorksheetBorders(!worksheetBorders)}
                       className={`w-9 h-5 rounded-full transition-colors relative ${worksheetBorders ? "bg-blue-900" : "bg-gray-300"}`}>
                       <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${worksheetBorders ? "translate-x-4" : "translate-x-0.5"}`} />
                     </div>
                     <span className="text-sm font-semibold text-gray-500">Borders</span>
                   </label>
-                )}
               </div>
               <div className="flex justify-center items-center gap-4">
                 <button onClick={handleGenerateWorksheet} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
@@ -1018,15 +1016,13 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                     Textbook
                   </button>
                 </div>
-                {worksheetLayout === "grid" && (
-                  <label className="flex items-center gap-2 cursor-pointer">
+                <label className={`flex items-center gap-2 cursor-pointer transition-opacity ${worksheetLayout === "grid" ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
                     <div onClick={() => setWorksheetBorders(!worksheetBorders)}
                       className={`w-9 h-5 rounded-full transition-colors relative ${worksheetBorders ? "bg-blue-900" : "bg-gray-300"}`}>
                       <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${worksheetBorders ? "translate-x-4" : "translate-x-0.5"}`} />
                     </div>
                     <span className="text-sm font-semibold text-gray-500">Borders</span>
                   </label>
-                )}
                 <button onClick={handleGenerateAdvanced} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
                   <RefreshCw size={18} /> Generate
                 </button>

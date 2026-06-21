@@ -581,15 +581,13 @@ export const WorksheetBuilder = ({
               Textbook
             </button>
           </div>
-          {layout === "grid" && (
-            <label className="flex items-center gap-2 cursor-pointer">
+          <label className={`flex items-center gap-2 cursor-pointer transition-opacity ${layout === "grid" ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
               <div onClick={() => setBorders(!borders)}
                 className={`w-9 h-5 rounded-full transition-colors relative ${borders ? "bg-blue-900" : "bg-gray-300"}`}>
                 <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${borders ? "translate-x-4" : "translate-x-0.5"}`} />
               </div>
               <span className="text-sm font-semibold text-gray-500">Borders</span>
             </label>
-          )}
           <span className="text-sm font-bold text-gray-600">
             {totalQuestions} questions total
           </span>
