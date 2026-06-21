@@ -36,8 +36,12 @@ export interface WorksheetLayoutPlan {
   needed_mm: number;
   chosenH_mm: number;
   rowsPerPage: number;
-  /** Per-section cell height (mm), keyed by section index. */
+  /** Per-section cell height (mm), keyed by section index. Inflated to fill the
+   *  page (used by the text path, where content sits at the cell top). */
   sectionCellH: Record<number, number>;
+  /** Per-section *natural* (un-inflated) needed height (mm). What pagination
+   *  budgets against; use this to render diagrams at their true size. */
+  sectionMinH: Record<number, number>;
   diffPerCol: number;
   diffRowsPerPage: number;
   diffCellH_mm: number;
@@ -216,7 +220,7 @@ export function computeWorksheetLayout(input: WorksheetLayoutInput): WorksheetLa
   const numDiffPages = Math.ceil(diffPerCol / diffRowsPerPage);
 
   return {
-    needed_mm, chosenH_mm, rowsPerPage, sectionCellH,
+    needed_mm, chosenH_mm, rowsPerPage, sectionCellH, sectionMinH,
     diffPerCol, diffRowsPerPage, diffCellH_mm, numDiffPages,
     listItemsPerCol, pages,
   };

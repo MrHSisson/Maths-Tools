@@ -343,11 +343,17 @@ export interface ToolShellProps {
   ) => AnyQuestion | null;
 
   /** Custom print handler for diagram/SVG tools.
-   *  Replaces the default handlePrint for worksheet PDF export. */
+   *  Replaces the default handlePrint for worksheet PDF export.
+   *  For SVG tools, pass the shared `handleDiagramPrint` directly — it measures
+   *  nothing in the DOM (diagram heights are derived from the aspect ratio) and
+   *  routes pagination through the same computeWorksheetLayout engine the text
+   *  path uses, so diagrams get variable columns, sections and differentiated
+   *  layout for free. `ctx` carries the live print setup (columns, etc.). */
   customPrintHandler?: (
     questions: AnyQuestion[],
     printMode: PrintMode,
     worksheetEl: HTMLElement | null,
+    ctx: PrintContext,  // { toolName, difficulty, isDifferentiated, numColumns, instruction, layout, showBorders }
   ) => void;
 }
 ```
@@ -636,32 +642,45 @@ const questionRenderer = (q, showAnswer, _cs, compact, idx, _qo) => {
 - Never use a fixed pixel height — causes overflow in the whiteboard panel
 - `data-q-index` is required for the print handler to locate the SVG in the DOM
 
-### `customPrintHandler`
+### Printing SVG worksheets — use the shared `handleDiagramPrint`
+
+**Do not hand-write a `customPrintHandler` with a fixed grid.** Pass the shared
+`handleDiagramPrint` (exported from `"../../shared"`) straight to ToolShell:
 
 ```ts
-function customPrintHandler(questions, printMode, container) {
-  const svgStrings: Record<number, string> = {};
-  if (container) {
-    container.querySelectorAll<SVGSVGElement>("svg[data-q-index]").forEach(el => {
-      const idx = parseInt(el.getAttribute("data-q-index") ?? "0", 10);
-      const clone = el.cloneNode(true) as SVGSVGElement;
-      clone.setAttribute("width", "100%");
-      clone.setAttribute("height", "100%");
-      svgStrings[idx] = clone.outerHTML;
-    });
-  }
-  // build A4 HTML using svgStrings[gi] in each cell
-}
+import { ToolShell, handleDiagramPrint } from "../../shared";
+
+<ToolShell
+  questionRenderer={questionRenderer}
+  customPrintHandler={handleDiagramPrint}
+  defaults={{ numColumns: 3, maxColumns: 4, hideFontControls: true }}
+/>
 ```
 
-**Fixed layout for SVG worksheets:** 3 columns × 5 rows = 15 questions per page. Set `fixedColumns: true, numColumns: 3` in defaults.
+How it works: a diagram has no measured height — only an aspect ratio — so
+`handleDiagramPrint` *derives* each cell height from the chosen column width
+(`cellHeight = columnWidth ÷ aspect`, aspect defaults to 1 for square diagrams),
+feeds those synthetic heights to the same unit-tested `computeWorksheetLayout`
+engine the text path uses, and renders the planned pages. Everything is computed
+app-side and written as static HTML — no probe, no measurement round-trip.
 
-Print cell CSS:
-```css
-.cell { display:flex; flex-direction:column; flex:1; min-height:0; position:relative; }
-.cell-diag { width:100%; flex:1; min-height:0; display:flex; align-items:center; justify-content:center; }
-.cell-diag svg { width:100%; height:100%; overflow:visible; }
-```
+This means SVG worksheets get, for free and with no per-tool code:
+- **Variable columns = diagram size** — fewer columns → bigger diagrams, more →
+  smaller/denser. Expose it by *not* setting `fixedColumns` (use `maxColumns` to
+  cap, default columns via `numColumns`).
+- **Sections** (advanced worksheets) — per-section columns, headers, dividers.
+- **Differentiated** three-column layout and **arbitrary question counts** that
+  flow across pages.
+
+The old fixed **3×5 = 15** preset is gone. Diagrams render at their natural
+square size (top-aligned), not stretched to fill the page.
+
+**Requirements on the tool:** the worksheet `questionRenderer` must emit an
+`<svg data-q-index={idx}>` (see SVG element requirements above) so the handler can
+clone it. For non-square diagrams, store `_aspect` (= viewBoxWidth ÷ viewBoxHeight)
+on the question; it defaults to 1.
+
+**Reference:** `src/tools/Geometry/AnglesInQuadrilaterals.tsx`.
 
 ---
 
@@ -721,7 +740,7 @@ CI also runs `npm test` (Vitest, `src/tests/generators.test.ts`). The suite disc
 - `totalPages`, `printMode`, and any `var` referenced inside a function declaration must be declared in the injected script's **outer scope** — declaring them inside `buildPage` causes "not defined" at runtime
 - Params appearing only as `${...}` in the HTML string are invisible to TypeScript — use distinct names (e.g. `pMode` not `printMode`) and add `void (param as unknown)` suppressions before the template literal
 - If a tool has only worded questions, remove `"simple"` and `"frac"` branches from `questionToHtml` — TS2367 otherwise
-- For SVG tools use `customPrintHandler` — the shared `handlePrint` has no SVG support
+- For SVG tools use `handleDiagramPrint` (via `customPrintHandler`) — the text `handlePrint` has no SVG support
 
 ---
 
@@ -746,8 +765,8 @@ CI also runs `npm test` (Vitest, `src/tests/generators.test.ts`). The suite disc
 |---------|---------------|
 | Standard v2.3 tool (simple questions) | `src/tools/Algebra/CompletingTheSquare.tsx` |
 | Standard v2.3 tool (worded questions) | `src/tools/Proportion/SimplifyingRatios.tsx` *(check if migrated)* |
-| Diagram/SVG tool with custom print | `src/tools/Geometry/BasicAngleFacts.tsx` |
-| Diagram/SVG tool | `src/tools/Geometry/AnglesInParallelLines.tsx` |
+| Diagram/SVG tool with shared print (`handleDiagramPrint`) | `src/tools/Geometry/AnglesInQuadrilaterals.tsx` |
+| Diagram/SVG tool (renderer/SVG conventions) | `src/tools/Geometry/AnglesInParallelLines.tsx` |
 | `reformatQuestion` (instant display reformat) | `src/tools/Algebra/CompletingTheSquare.tsx` |
 | Multi-group `multiSelect` | search for `ToolMultiSelect[]` in `src/tools/` |
 | `difficultySettings` per-level QO | `src/tools/Algebra/CompletingTheSquare.tsx` |

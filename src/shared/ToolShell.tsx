@@ -15,6 +15,7 @@ import { InfoModal } from "./components/InfoModal";
 import { MenuDropdown } from "./components/MenuDropdown";
 import { PrintSplitButton } from "./components/PrintSplitButton";
 import { handlePrint } from "./print";
+import type { PrintContext } from "./printDiagram";
 import { WorksheetBuilder } from "./WorksheetBuilder";
 
 export interface ToolShellProps {
@@ -46,8 +47,8 @@ export interface ToolShellProps {
   answerRenderer?: (q: AnyQuestion, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null;
   /** Called when a QO option changes before falling back to full regeneration. Return a reformatted copy of the question, or null to trigger a new question instead. Use this for instant display-mode switches (e.g. decimal ↔ fraction) where the maths doesn't change. */
   reformatQuestion?: (q: AnyQuestion, qo: QOSnapshot) => AnyQuestion | null;
-  /** Custom print handler for diagram tools. Receives the worksheet array, print mode, and the worksheet container DOM element (for SVG extraction). */
-  customPrintHandler?: (questions: AnyQuestion[], printMode: PrintMode, worksheetEl: HTMLElement | null) => void;
+  /** Custom print handler for diagram tools. Receives the worksheet array, print mode, the worksheet container DOM element (for SVG extraction), and the live print context (columns, differentiated, etc.). Diagram tools should pass this to the shared handleDiagramPrint. */
+  customPrintHandler?: (questions: AnyQuestion[], printMode: PrintMode, worksheetEl: HTMLElement | null, ctx: PrintContext) => void;
 }
 
 /** Scales its content up to fill the available space (never shrinks below 1x).
@@ -691,7 +692,10 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                     </button>
                     <PrintSplitButton
                       onPrint={m => customPrintHandler
-                        ? customPrintHandler(worksheet, m, worksheetWrapRef.current)
+                        ? customPrintHandler(worksheet, m, worksheetWrapRef.current, {
+                            toolName: config.tools[currentTool].name, difficulty, isDifferentiated,
+                            numColumns, instruction: getInstruction(), layout: worksheetLayout, showBorders: worksheetBorders,
+                          })
                         : handlePrint(worksheet, config.tools[currentTool].name, difficulty, isDifferentiated, numColumns, getInstruction(), m, worksheetLayout, worksheetBorders)}
                       printMode={printMode} setPrintMode={setPrintMode}
                     />

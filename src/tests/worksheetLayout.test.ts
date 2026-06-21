@@ -102,6 +102,21 @@ describe("computeWorksheetLayout — sections", () => {
     expect(plan.pages).toEqual([[0, 1, 2, 3]]);
   });
 
+  it("exposes per-section natural heights for diagram rendering", () => {
+    const plan = computeWorksheetLayout(base({
+      hasSections: true,
+      cols: 2,
+      totalQ: 4,
+      sectionIdx: [0, 0, 1, 1],
+      sectionCols: [2, 2, 2, 2],
+    }));
+    // sectionMinH is the un-inflated needed height (90 + PAD*2 + 6 = 100),
+    // distinct from the page-filling sectionCellH (148 here).
+    expect(plan.sectionMinH[0]).toBeCloseTo(100, 5);
+    expect(plan.sectionMinH[1]).toBeCloseTo(100, 5);
+    expect(plan.sectionCellH[0]).toBeCloseTo(148, 5);
+  });
+
   it("paginates a tall single section across pages", () => {
     // One headed section, 3 questions at 1 col, needed=100, usableH=100 → one
     // question per page.
@@ -117,5 +132,32 @@ describe("computeWorksheetLayout — sections", () => {
       HDR_MM: 0,
     }));
     expect(plan.pages).toEqual([[0], [1], [2]]);
+  });
+});
+
+describe("computeWorksheetLayout — diagram model (columns = size)", () => {
+  // Mirrors handleDiagramPrint: a square diagram's synthetic height is its column
+  // width (aspect 1). Real print geometry, pxPerMm=1 so px reads as mm.
+  const PAGE_W = 186, GAP = 2;
+  const colW = (c: number) => (PAGE_W - GAP * (c - 1)) / c;
+  const diagram = (cols: number, totalQ: number) => computeWorksheetLayout({
+    isList: false, isDiff: false, hasSections: false, cols, totalQ,
+    heightsPx: Array(totalQ).fill(colW(cols)),
+    sectionIdx: Array(totalQ).fill(0),
+    sectionCols: Array(totalQ).fill(cols),
+    itemHasHeader: Array(totalQ).fill(false),
+    usableH: 259, GAP_MM: GAP, PAD_MM: 2, DIV_MM: 4, HDR_MM: 6, diffHdrMM: 7, pxPerMm: 1,
+  });
+
+  it("fewer columns -> bigger diagrams, fewer per page", () => {
+    const wide = diagram(2, 12); // colW 92, needed 102
+    expect(wide.needed_mm).toBeCloseTo(102, 5);
+    expect(wide.pages.length).toBe(3); // 4 per page
+  });
+
+  it("more columns -> smaller diagrams, more per page", () => {
+    const tight = diagram(4, 12); // colW 45, needed 55
+    expect(tight.needed_mm).toBeCloseTo(55, 5);
+    expect(tight.pages.length).toBe(1); // all 12 fit
   });
 });

@@ -13,6 +13,7 @@ import { MathRenderer, InlineMath } from "./components/MathRenderer";
 import { InlineQOPanel } from "./components/QOPopovers";
 import { PrintSplitButton } from "./components/PrintSplitButton";
 import { handlePrint } from "./print";
+import type { PrintContext } from "./printDiagram";
 import { ansEq } from "./helpers";
 
 interface BuilderGroup {
@@ -47,6 +48,7 @@ export interface WorksheetBuilderProps {
     questions: AnyQuestion[],
     printMode: PrintMode,
     worksheetEl: HTMLElement | null,
+    ctx: PrintContext,
   ) => void;
   comingSoonLevels?: DifficultyLevel[];
   hideFontControls?: boolean;
@@ -666,6 +668,15 @@ export const WorksheetBuilder = ({
                         worksheet,
                         m,
                         worksheetRef.current,
+                        {
+                          toolName: config.pageTitle,
+                          difficulty: "advanced",
+                          isDifferentiated: false,
+                          numColumns,
+                          instruction: getInstruction(),
+                          layout,
+                          showBorders: borders,
+                        },
                       )
                     : handlePrint(
                         worksheet,
