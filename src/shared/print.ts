@@ -1,5 +1,6 @@
 import type { AnyQuestion, PrintMode } from "./types";
 import { ansEq } from "./helpers";
+import { computeWorksheetLayout } from "./worksheetLayout";
 
 export const handlePrint = (
   questions: AnyQuestion[],
@@ -263,11 +264,6 @@ document.addEventListener("DOMContentLoaded", function() {
   var toolName  = "${toolName}";
   var printMode = "${pMode}";
 
-  var rowHeights = [];
-  for (var r = 1; r <= 10; r++) {
-    rowHeights.push((usableH - GAP_MM * (r - 1)) / r);
-  }
-
   var qData = ${JSON.stringify(qHtmlData)};
 
   var probe = document.getElementById('probe');
@@ -282,119 +278,32 @@ document.addEventListener("DOMContentLoaded", function() {
     var pel = document.getElementById('probe-' + pi);
     probeHts.push(pel ? pel.scrollHeight : 0);
   }
-  var secMaxProbeH = {};
-  for (var pi2 = 0; pi2 < qData.length; pi2++) {
-    var psi = qData[pi2].sectionIdx;
-    var hMm = probeHts[pi2] / pxPerMm;
-    if (secMaxProbeH[psi] === undefined || hMm > secMaxProbeH[psi]) secMaxProbeH[psi] = hMm;
+  // Hand the measured heights to the shared, unit-tested page-fill engine in the
+  // opener window. Measurement stays here (the popup is the real print surface);
+  // the engine — the same compiled code vitest exercises — returns the full
+  // layout plan (cell heights, rows per page, per-section heights, page groups).
+  if (!window.opener || !window.opener.__mtWorksheetLayout) {
+    alert('Worksheet layout engine unavailable — please keep the original tab open while printing.');
+    return;
   }
-  var secNeeded = {};
-  for (var sn in secMaxProbeH) {
-    secNeeded[sn] = isListLayout ? secMaxProbeH[sn] + 2 : secMaxProbeH[sn] + PAD_MM * 2 + 6;
-  }
-  var maxH_px = Math.max.apply(null, probeHts.length > 0 ? probeHts : [0]);
-  var maxH_mm = maxH_px / pxPerMm;
-  var needed_mm = isListLayout ? maxH_mm + 2 : maxH_mm + PAD_MM * 2 + 6;
+  var plan = window.opener.__mtWorksheetLayout({
+    isList: isListLayout, isDiff: isDiff, hasSections: hasSections,
+    cols: cols, totalQ: totalQ, heightsPx: probeHts,
+    sectionIdx: qData.map(function(d) { return d.sectionIdx; }),
+    sectionCols: qData.map(function(d) { return d.sectionCols; }),
+    itemHasHeader: qData.map(function(d) { return !!d.sectionHeader; }),
+    usableH: usableH, GAP_MM: GAP_MM, PAD_MM: PAD_MM, DIV_MM: DIV_MM,
+    HDR_MM: ${HDR_MM}, diffHdrMM: diffHdrMM, pxPerMm: pxPerMm
+  });
 
-  // --- Differentiated layout calculations ---
-  var diffPerCol   = Math.floor(totalQ / 3);
-  var diffUsableH  = usableH - diffHdrMM - GAP_MM;
-  var diffRowsPerPage = 1;
-  var diffCellH_mm = diffUsableH;
-  for (var rd = 0; rd < diffPerCol; rd++) {
-    var rows2 = rd + 1;
-    var h = (diffUsableH - GAP_MM * rd) / rows2;
-    var dNeeded = needed_mm - diffHdrMM / rows2;
-    if (h >= dNeeded) {
-      diffRowsPerPage = rows2;
-      diffCellH_mm = h;
-    }
-  }
-
-  // --- Grid layout calculations (per-section cell heights) ---
-  var chosenH_mm = rowHeights[0];
-  var rowsPerPage = 1;
-  var sectionCellH = {};
-
-  if (hasSections && !isDiff && !isListLayout) {
-    // Build section structure
-    var secInfo = [];
-    var prevSI = -1;
-    var secIC = 0;
-    var secCV = cols;
-    var secHdr = '';
-    for (var qi2 = 0; qi2 < qData.length; qi2++) {
-      if (qData[qi2].sectionIdx !== prevSI) {
-        if (prevSI >= 0) {
-          secInfo.push({ idx: prevSI, count: secIC, cols: secCV,
-            rows: Math.ceil(secIC / secCV), needed: secNeeded[prevSI] || needed_mm, hasHeader: !!secHdr });
-        }
-        prevSI = qData[qi2].sectionIdx;
-        secIC = 0;
-        secCV = qData[qi2].sectionCols;
-        secHdr = qData[qi2].sectionHeader;
-      }
-      secIC++;
-    }
-    if (prevSI >= 0) {
-      secInfo.push({ idx: prevSI, count: secIC, cols: secCV,
-        rows: Math.ceil(secIC / secCV), needed: secNeeded[prevSI] || needed_mm, hasHeader: !!secHdr });
-    }
-
-    // Total minimum height: sum of (rows × needed + within-section gaps) + dividers + headers
-    var totalMinH = 0;
-    var totalSecRows = 0;
-    for (var si2 = 0; si2 < secInfo.length; si2++) {
-      var sec = secInfo[si2];
-      totalMinH += sec.rows * sec.needed + (sec.rows - 1) * GAP_MM;
-      if (si2 > 0) totalMinH += DIV_MM;
-      if (sec.hasHeader) totalMinH += ${HDR_MM};
-      totalSecRows += sec.rows;
-    }
-
-    // Store minimum needed heights for pagination budget checks
-    var sectionMinH = {};
-    for (var si4 = 0; si4 < secInfo.length; si4++) {
-      sectionMinH[secInfo[si4].idx] = secInfo[si4].needed;
-      sectionCellH[secInfo[si4].idx] = secInfo[si4].needed;
-    }
-    if (totalMinH <= usableH) {
-      // Fits on one page — distribute remaining space proportionally by row count
-      var extraH = usableH - totalMinH;
-      for (var si3 = 0; si3 < secInfo.length; si3++) {
-        var sec2 = secInfo[si3];
-        var share = totalSecRows > 0 ? extraH * (sec2.rows / totalSecRows) / sec2.rows : 0;
-        sectionCellH[sec2.idx] = sec2.needed + share;
-      }
-      rowsPerPage = totalSecRows;
-    } else {
-      // rowsPerPage for fallback pagination
-      for (var r3 = 0; r3 < rowHeights.length; r3++) {
-        if (rowHeights[r3] >= needed_mm) { chosenH_mm = rowHeights[r3]; rowsPerPage = r3 + 1; }
-      }
-    }
-  } else {
-    // Non-section path: uniform cell height
-    var found = false;
-    for (var r = 0; r < rowHeights.length; r++) {
-      var capacity = (r + 1) * cols;
-      if (capacity >= totalQ && rowHeights[r] >= needed_mm) {
-        chosenH_mm = rowHeights[r];
-        rowsPerPage = r + 1;
-        found = true;
-        break;
-      }
-    }
-    if (!found) {
-      for (var r2 = 0; r2 < rowHeights.length; r2++) {
-        if (rowHeights[r2] >= needed_mm) { chosenH_mm = rowHeights[r2]; rowsPerPage = r2 + 1; }
-      }
-    }
-  }
-
-  // --- List layout: items per column ---
-  var listItemH_mm = needed_mm;
-  var listItemsPerCol = Math.max(1, Math.floor(usableH / listItemH_mm));
+  var chosenH_mm      = plan.chosenH_mm;
+  var rowsPerPage     = plan.rowsPerPage;
+  var sectionCellH    = plan.sectionCellH;
+  var diffPerCol      = plan.diffPerCol;
+  var diffRowsPerPage = plan.diffRowsPerPage;
+  var diffCellH_mm    = plan.diffCellH_mm;
+  var numDiffPages    = plan.numDiffPages;
+  var planPages       = plan.pages;
 
   function makeCellW(c) {
     return (PAGE_W_MM - GAP_MM * (c - 1)) / c;
@@ -508,20 +417,13 @@ document.addEventListener("DOMContentLoaded", function() {
 
   // ── Pagination ──
   if (isListLayout) {
-    // List layout pagination: flow items into columns, detect section boundaries
-    var listItems = [];
-    for (var li = 0; li < qData.length; li++) {
-      if (hasSections && li > 0 && qData[li].sectionIdx !== qData[li - 1].sectionIdx) {
-        listItems.push({ divider: true, q: '', a: '' });
-      }
-      listItems.push(qData[li]);
-    }
-    var totalListItems = listItems.length;
-    var itemsPerPage = listItemsPerCol * cols;
-    var pages = [];
-    for (var lp = 0; lp < totalListItems; lp += itemsPerPage) {
-      pages.push(listItems.slice(lp, lp + itemsPerPage));
-    }
+    // Map the engine's page groupings (question indices; -1 = divider spacer)
+    // back to qData entries so the renderers below are unchanged.
+    var pages = planPages.map(function(pg) {
+      return pg.map(function(idx) {
+        return idx === -1 ? { divider: true, q: '', a: '' } : qData[idx];
+      });
+    });
     if (pages.length === 0) pages.push([]);
     var totalPages = pages.length;
 
@@ -545,73 +447,17 @@ document.addEventListener("DOMContentLoaded", function() {
 
     document.getElementById('pages').innerHTML = finalHtml;
   } else {
-    // Grid layout pagination
-    var pageCapacity = isDiff ? diffRowsPerPage : rowsPerPage * cols;
-
-    // Height-budget pagination for section-aware grids
-    if (hasSections && !isDiff) {
-      var gridPages = [];
-      var curPage = [];
-      var usedH = 0;
-      var prevSection = qData.length > 0 ? qData[0].sectionIdx : 0;
-      var secColsInPage = 0;
-      var hdrMM = ${HDR_MM};
-
-      // Account for first section header
-      if (qData.length > 0 && qData[0].sectionHeader) usedH += hdrMM;
-
-      for (var qi = 0; qi < qData.length; qi++) {
-        var curSecH = sectionMinH[qData[qi].sectionIdx] || chosenH_mm;
-        var curSecCols = qData[qi].sectionCols;
-        var needsDivider = qi > 0 && qData[qi].sectionIdx !== prevSection;
-        if (needsDivider) {
-          if (secColsInPage > 0) {
-            var prevH = sectionMinH[prevSection] || chosenH_mm;
-            usedH += prevH + GAP_MM;
-            secColsInPage = 0;
-          }
-          var divCost = DIV_MM + (qData[qi].sectionHeader ? hdrMM : 0);
-          if (usedH + divCost + curSecH > usableH && curPage.length > 0) {
-            gridPages.push(curPage);
-            curPage = [];
-            usedH = qData[qi].sectionHeader ? hdrMM : 0;
-          } else {
-            usedH += divCost;
-          }
-          prevSection = qData[qi].sectionIdx;
-        }
-        curPage.push(qData[qi]);
-        secColsInPage++;
-        if (secColsInPage >= curSecCols) {
-          usedH += curSecH + GAP_MM;
-          secColsInPage = 0;
-          if (qi + 1 < qData.length) {
-            var nxtDiv = qData[qi + 1].sectionIdx !== qData[qi].sectionIdx;
-            var nxtH = sectionMinH[qData[qi + 1].sectionIdx] || chosenH_mm;
-            var nxtHdr = nxtDiv && qData[qi + 1].sectionHeader ? hdrMM : 0;
-            var nxtNeed = (nxtDiv ? DIV_MM : 0) + nxtHdr + nxtH;
-            if (usedH + nxtNeed > usableH) {
-              gridPages.push(curPage);
-              curPage = [];
-              usedH = 0;
-              prevSection = qData[qi + 1].sectionIdx;
-            }
-          }
-        }
-      }
-      if (curPage.length > 0) gridPages.push(curPage);
-      var pages = gridPages;
-    } else if (isDiff) {
-      var pages = [];
-      var numDiffPages = Math.ceil(diffPerCol / diffRowsPerPage);
-      for (var p = 0; p < numDiffPages; p++) {
-        pages.push(p);
-      }
+    // The engine returns either page index numbers (differentiated) or page
+    // groupings of question indices (section + non-section grids). Map the
+    // latter back to qData entries so the renderers below are unchanged.
+    var pages;
+    if (isDiff) {
+      pages = [];
+      for (var p = 0; p < numDiffPages; p++) pages.push(p);
     } else {
-      var pages = [];
-      for (var s = 0; s < qData.length; s += pageCapacity) {
-        pages.push(qData.slice(s, s + pageCapacity));
-      }
+      pages = planPages.map(function(pg) {
+        return pg.map(function(idx) { return qData[idx]; });
+      });
     }
     var totalPages = pages.length;
 
@@ -649,6 +495,11 @@ document.addEventListener("DOMContentLoaded", function() {
 <\/script>
 </body>
 </html>`;
+
+  // Expose the shared, unit-tested page-fill engine so the print popup can call
+  // back into it (the popup measures heights against the real print surface,
+  // then paginates via this same compiled code — see the bridge in the script).
+  (window as unknown as { __mtWorksheetLayout: typeof computeWorksheetLayout }).__mtWorksheetLayout = computeWorksheetLayout;
 
   const win = window.open("", "_blank");
   if (!win) { alert("Please allow popups to use the PDF export."); return; }
