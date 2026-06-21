@@ -10,7 +10,6 @@ import { DifficultyToggle } from "./components/DifficultyToggle";
 import {
   StandardQOPopover,
   DiffQOPopover,
-  InlineQOPanel,
 } from "./components/QOPopovers";
 import { InfoModal } from "./components/InfoModal";
 import { MenuDropdown } from "./components/MenuDropdown";
@@ -137,17 +136,12 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   });
 
   // ── Worksheet builder persistence ─────────────────────────────────────────
-  // The advanced-builder groups and the differentiated per-level QO are NOT in
-  // the URL (too large to encode), so they were lost on reload. Persist them to
-  // sessionStorage (per tool route) so a refresh restores the full setup.
+  // The worksheet mode/layout and the differentiated per-level QO are NOT in the
+  // URL (too large to encode), so they were lost on reload. Persist them to
+  // sessionStorage (per tool route) so a refresh restores the setup. The advanced
+  // builder's own group state lives inside <WorksheetBuilder> and is session-only.
   interface WBPersist {
     worksheetMode?: "standard" | "advanced";
-    advGroups?: AdvGroup[];
-    advSelectedId?: number;
-    advShuffle?: boolean;
-    advDividers?: number[];
-    sectionShuffles?: Record<number, boolean>;
-    sectionColumns?: Record<number, number>;
     worksheetLayout?: "grid" | "list";
     worksheetBorders?: boolean;
     levelVariables?: Record<string, Record<string, boolean>>;
@@ -261,70 +255,8 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
 
-  interface AdvGroup {
-    id: number;
-    level: DifficultyLevel;
-    count: number;
-    variables: Record<string, boolean>;
-    dropdownValue: string;
-    multiSelectValues: Record<string, boolean>;
-  }
-
-  const makeDefaultAdvGroup = (id: number, lv: DifficultyLevel = "level1"): AdvGroup => {
-    const t = config.tools[currentTool];
-    const dd = t.difficultySettings?.[lv]?.dropdown ?? t.dropdown;
-    const vars = t.difficultySettings?.[lv]?.variables ?? t.variables;
-    const ms = normalizeMultiSelect(t.difficultySettings?.[lv]?.multiSelect ?? t.multiSelect);
-    const variables: Record<string, boolean> = {};
-    vars.forEach(v => { variables[v.key] = v.defaultValue; });
-    const multiSelectValues: Record<string, boolean> = {};
-    ms.forEach(g => g.options.forEach(o => { multiSelectValues[o.value] = o.defaultActive; }));
-    return { id, level: lv, count: 5, variables, dropdownValue: dd?.defaultValue ?? "", multiSelectValues };
-  };
-
-  // Fill any QO options/variables missing from a group with the CURRENT sub-tool's
-  // defaults. Advanced groups are first created against the default sub-tool (whose
-  // level may have no options), so switching sub-tools — or restoring a saved/partial
-  // group — could leave options unset. An unset option reads as "active" in the
-  // generator (undefined ≠ false), silently re-enabling everything; hydrating keeps
-  // the on-screen selection and the generated questions in sync. Existing choices are
-  // preserved (only missing keys are added).
-  const hydrateAdvGroup = (g: AdvGroup): AdvGroup => {
-    const t = config.tools[currentTool];
-    const ms = normalizeMultiSelect(t.difficultySettings?.[g.level]?.multiSelect ?? t.multiSelect);
-    const multiSelectValues = { ...g.multiSelectValues };
-    ms.forEach(grp => grp.options.forEach(o => { if (!(o.value in multiSelectValues)) multiSelectValues[o.value] = o.defaultActive; }));
-    const vars = t.difficultySettings?.[g.level]?.variables ?? t.variables;
-    const variables = { ...g.variables };
-    (vars ?? []).forEach(v => { if (!(v.key in variables)) variables[v.key] = v.defaultValue; });
-    return { ...g, multiSelectValues, variables };
-  };
-
-  const [advGroups, setAdvGroups] = useState<AdvGroup[]>(() =>
-    (wbInit?.advGroups?.length ? wbInit.advGroups : [makeDefaultAdvGroup(1)]).map(hydrateAdvGroup));
-  const [advSelectedId, setAdvSelectedId] = useState<number>(wbInit?.advSelectedId ?? 1);
-  const advNextId = useRef(wbInit?.advGroups?.length ? Math.max(...wbInit.advGroups.map(g => g.id)) + 1 : 2);
-  const [advShuffle] = useState(wbInit?.advShuffle ?? false);
-  const [advDividers, setAdvDividers] = useState<Set<number>>(() => new Set(wbInit?.advDividers ?? []));
-  const [sectionShuffles, setSectionShuffles] = useState<Record<number, boolean>>(wbInit?.sectionShuffles ?? {});
-  const [sectionColumns, setSectionColumns] = useState<Record<number, number>>(wbInit?.sectionColumns ?? {});
-  const [sectionHeaders, setSectionHeaders] = useState<Record<number, string>>({});
   const [worksheetLayout, setWorksheetLayout] = useState<"grid" | "list">(wbInit?.worksheetLayout ?? "grid");
   const [worksheetBorders, setWorksheetBorders] = useState(wbInit?.worksheetBorders ?? true);
-  // When the active sub-tool changes, re-hydrate the advanced groups so their QO
-  // options reflect the new sub-tool's defaults (the initial mount is already
-  // hydrated by the initializer above, so skip that first run).
-  const advToolRef = useRef(currentTool);
-  useEffect(() => {
-    if (advToolRef.current === currentTool) return;
-    advToolRef.current = currentTool;
-    setAdvGroups(gs => gs.map(hydrateAdvGroup));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentTool]);
-  const totalAdvQuestions = advGroups.reduce((s, g) => s + g.count, 0);
-  const _advDragNodeIdx = useRef<number | null>(null);
-  const _advListRef = useRef<HTMLDivElement>(null);
-  void _advDragNodeIdx; void _advListRef;
 
   const [presenterMode, setPresenterMode] = useState(false);
   const [wbFullscreen, setWbFullscreen] = useState(false);
@@ -447,41 +379,6 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     setShowWorksheetAnswers(false);
   };
 
-  const computeSections = (groups: AdvGroup[], dividers: Set<number>): AdvGroup[][] => {
-    const sections: AdvGroup[][] = [[]];
-    groups.forEach((g, i) => {
-      sections[sections.length - 1].push(g);
-      if (dividers.has(g.id) && i < groups.length - 1) sections.push([]);
-    });
-    return sections;
-  };
-
-  const handleGenerateAdvanced = () => {
-    const usedKeys = new Set<string>();
-    const questions: AnyQuestion[] = [];
-    const sections = computeSections(advGroups, advDividers);
-    sections.forEach((sectionGroups, secIdx) => {
-      const secQs: AnyQuestion[] = [];
-      sectionGroups.forEach(g => {
-        const snap: QOSnapshot = { level: g.level, variables: g.variables, dropdownValue: g.dropdownValue, multiSelectValues: g.multiSelectValues };
-        for (let i = 0; i < g.count; i++)
-          secQs.push(stampQO(generateUniqueQ(currentTool, g.level, g.variables, g.dropdownValue, usedKeys, g.multiSelectValues), snap));
-      });
-      if (sectionShuffles[secIdx]) {
-        for (let i = secQs.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [secQs[i], secQs[j]] = [secQs[j], secQs[i]];
-        }
-      }
-      const secCols = sectionColumns[secIdx] ?? numColumns;
-      const secHdr = sectionHeaders[secIdx] ?? "";
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      secQs.forEach(q => { (q as any)._sectionIdx = secIdx; (q as any)._sectionCols = secCols; if (secHdr) (q as any)._sectionHeader = secHdr; });
-      questions.push(...secQs);
-    });
-    setWorksheet(questions);
-    setShowWorksheetAnswers(false);
-  };
 
   const regenQuestion = (idx: number) => {
     const q = worksheet[idx];
@@ -496,11 +393,6 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       if (!existing.has(candidate.key)) { replacement = stampQO(candidate, snap); break; }
     }
     if (!replacement) return;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const origAny = q as any;
-    if (origAny._sectionIdx !== undefined) (replacement as any)._sectionIdx = origAny._sectionIdx;
-    if (origAny._sectionCols !== undefined) (replacement as any)._sectionCols = origAny._sectionCols;
-    if (origAny._sectionHeader !== undefined) (replacement as any)._sectionHeader = origAny._sectionHeader;
     setWorksheet(prev => prev.map((w, i) => i === idx ? replacement! : w));
   };
 
@@ -529,19 +421,6 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const qoEl = (isDiff = false) => isDiff
     ? <DiffQOPopover {...diffQOProps} />
     : <StandardQOPopover {...stdQOProps} />;
-
-  useEffect(() => {
-    if (mode !== "worksheet" || worksheetMode !== "advanced") return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
-      const idx = advGroups.findIndex(g => g.id === advSelectedId);
-      if (idx === -1) return;
-      const next = e.key === "ArrowLeft" ? idx - 1 : idx + 1;
-      if (next >= 0 && next < advGroups.length) { setAdvSelectedId(advGroups[next].id); e.preventDefault(); }
-    };
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
-  }, [mode, worksheetMode, advGroups, advSelectedId]);
 
   const qoFingerprint = [
     getDropdownValue(),
@@ -601,27 +480,25 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     window.history.replaceState(null, "", qs ? `${window.location.pathname}?${qs}` : window.location.pathname);
   }, [currentTool, mode, difficulty, toolDropdowns, toolVariables, toolMultiSelect, numQuestions, numColumns, isDifferentiated]);
 
-  // Persist the worksheet-builder state (advanced groups + differentiated
-  // per-level QO) so a refresh restores it — these are not encoded in the URL.
+  // Persist the worksheet mode/layout and differentiated per-level QO so a refresh
+  // restores it — these are not encoded in the URL.
   useEffect(() => {
     if (!wbStorageKey) return;
     try {
       sessionStorage.setItem(wbStorageKey, JSON.stringify({
-        worksheetMode, advGroups, advSelectedId, advShuffle,
-        advDividers: [...advDividers], sectionShuffles, sectionColumns, worksheetLayout, worksheetBorders,
+        worksheetMode, worksheetLayout, worksheetBorders,
         levelVariables, levelDropdowns, levelMultiSelect,
       } satisfies WBPersist));
     } catch { /* ignore quota / serialisation errors */ }
-  }, [wbStorageKey, worksheetMode, advGroups, advSelectedId, advShuffle, advDividers, sectionShuffles, sectionColumns, worksheetLayout, worksheetBorders, levelVariables, levelDropdowns, levelMultiSelect]);
+  }, [wbStorageKey, worksheetMode, worksheetLayout, worksheetBorders, levelVariables, levelDropdowns, levelMultiSelect]);
 
   // A link that points straight at a worksheet generates it on arrival —
   // a bookmarked worksheet link is ready to teach from without extra clicks.
-  // Honour the restored builder mode so an advanced setup regenerates correctly.
+  // The advanced builder generates on demand from its own Generate button.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (urlInit.mode !== "worksheet") return;
-    if (worksheetMode === "advanced") handleGenerateAdvanced();
-    else handleGenerateWorksheet();
+    if (worksheetMode !== "advanced") handleGenerateWorksheet();
   }, []);
 
   const displayFontSizes = ["text-2xl", "text-3xl", "text-4xl", "text-5xl", "text-6xl", "text-7xl"];
@@ -729,181 +606,6 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     );
   };
 
-  const renderAdvancedWorksheet = () => {
-    const lvColor  = (lv: DifficultyLevel) => lv === "level1" ? "bg-green-600" : lv === "level2" ? "bg-yellow-500" : "bg-red-600";
-    const canAdd = advGroups.length < 10;
-    const updateGroup = (id: number, patch: Partial<AdvGroup>) =>
-      setAdvGroups(gs => gs.map(g => g.id === id ? { ...g, ...patch } : g));
-
-    const sections = computeSections(advGroups, advDividers);
-    const toggleDivider = (groupId: number) => {
-      setAdvDividers(prev => {
-        const next = new Set(prev);
-        if (next.has(groupId)) next.delete(groupId); else next.add(groupId);
-        return next;
-      });
-    };
-    const toggleSectionShuffle = (secIdx: number) => {
-      setSectionShuffles(prev => ({ ...prev, [secIdx]: !prev[secIdx] }));
-    };
-
-    let globalGroupIdx = 0;
-
-    const lvDot = (lv: DifficultyLevel) => lv === "level1" ? "bg-green-500" : lv === "level2" ? "bg-yellow-400" : "bg-red-500";
-
-    return (
-      <div className="flex flex-col gap-4">
-        {sections.map((secGroups, secIdx) => (
-          <div key={secIdx} className="rounded-xl border border-gray-200 overflow-hidden" style={{ backgroundColor: "#fff" }}>
-            {/* Section header */}
-            <div className="flex items-center gap-3 px-5 py-3" style={{ backgroundColor: "#f8f9fa", borderBottom: "1px solid #e5e7eb" }}>
-              <span className="text-xs font-bold text-gray-400 uppercase tracking-wider flex-shrink-0">Section {secIdx + 1}</span>
-              <div className="h-4 w-px bg-gray-300" />
-              <input
-                type="text"
-                placeholder="Heading (e.g. Solve for x)"
-                value={sectionHeaders[secIdx] ?? ""}
-                onChange={e => setSectionHeaders(prev => ({ ...prev, [secIdx]: e.target.value }))}
-                className="text-sm bg-transparent border-none px-0 py-0 flex-1 min-w-0 placeholder-gray-300 focus:outline-none font-medium text-gray-700"
-              />
-              <div className="h-4 w-px bg-gray-300" />
-              <button onClick={() => toggleSectionShuffle(secIdx)}
-                className={`text-xs font-semibold px-2.5 py-1 rounded transition-colors flex-shrink-0 ${sectionShuffles[secIdx] ? "bg-blue-900 text-white" : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"}`}>
-                Shuffle
-              </button>
-              {!defaults.fixedColumns && (
-                <div className="flex items-center gap-1.5 flex-shrink-0">
-                  <div className="flex rounded-md overflow-hidden border border-gray-200">
-                    {Array.from({ length: defaults.maxColumns ?? 4 }, (_, i) => i + 1).map(c => (
-                      <button key={c} onClick={() => setSectionColumns(prev => ({ ...prev, [secIdx]: c }))}
-                        className={`w-7 h-6 text-xs font-bold transition-colors ${(sectionColumns[secIdx] ?? numColumns) === c ? "bg-blue-900 text-white" : "bg-white text-gray-400 hover:bg-gray-50"}`}>
-                        {c}
-                      </button>
-                    ))}
-                  </div>
-                  <span className="text-xs text-gray-400">col</span>
-                </div>
-              )}
-              {secIdx > 0 && (
-                <button onClick={() => {
-                  const prevGroupId = sections[secIdx - 1][sections[secIdx - 1].length - 1]?.id;
-                  if (prevGroupId !== undefined) toggleDivider(prevGroupId);
-                }}
-                  className="w-6 h-6 rounded-full flex items-center justify-center text-gray-300 hover:bg-red-50 hover:text-red-400 transition-colors flex-shrink-0" title="Merge with section above">
-                  <X size={12} />
-                </button>
-              )}
-            </div>
-
-            {/* Group rows */}
-            <div className="divide-y divide-gray-100">
-              {secGroups.map((g) => {
-                const idx = globalGroupIdx++;
-                const isSel = g.id === advSelectedId;
-                return (
-                  <div key={g.id}>
-                    <div onClick={() => setAdvSelectedId(isSel ? -1 : g.id)}
-                      className={`flex items-center gap-4 px-5 py-3 cursor-pointer transition-colors ${isSel ? "" : "hover:bg-gray-50"}`}
-                      style={{ backgroundColor: isSel ? "#f0f4ff" : undefined }}>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <div className={`w-2.5 h-2.5 rounded-full ${lvDot(g.level)}`} />
-                        <span className="text-sm font-bold text-gray-400 tabular-nums w-5">{idx + 1}</span>
-                      </div>
-                      <div className="flex rounded-lg overflow-hidden border border-gray-200 flex-shrink-0" onClick={e => e.stopPropagation()}>
-                        {(["level1", "level2", "level3"] as DifficultyLevel[]).map((lv, li) => {
-                          const isLvDisabled = comingSoon.includes(lv);
-                          return (
-                            <button key={lv} onClick={() => { if (!isLvDisabled) { updateGroup(g.id, { ...makeDefaultAdvGroup(g.id, lv), id: g.id }); setAdvSelectedId(g.id); } }}
-                              className={`px-3 py-1 font-semibold text-xs transition-colors ${isLvDisabled ? "bg-gray-50 text-gray-300 cursor-not-allowed" : g.level === lv ? `${lvColor(lv)} text-white` : "bg-white text-gray-400 hover:bg-gray-50"}`}>
-                              L{li + 1}
-                            </button>
-                          );
-                        })}
-                      </div>
-                      <div className="flex items-center gap-1 flex-shrink-0" onClick={e => e.stopPropagation()}>
-                        <button onClick={() => updateGroup(g.id, { count: Math.max(1, g.count - 1) })} disabled={g.count <= 1}
-                          className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:bg-gray-100 hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-sm leading-none">−</button>
-                        <span className="w-6 text-center text-sm font-bold text-gray-700 tabular-nums">{g.count}</span>
-                        <button onClick={() => updateGroup(g.id, { count: Math.min(24, g.count + 1) })} disabled={g.count >= 24}
-                          className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:bg-gray-100 hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-sm leading-none">+</button>
-                      </div>
-                      <div className="flex-1" />
-                      <ChevronDown size={14} className={`text-gray-300 transition-transform flex-shrink-0 ${isSel ? "rotate-180" : ""}`} />
-                      <button onClick={e => {
-                        e.stopPropagation();
-                        if (advGroups.length <= 1) return;
-                        setAdvDividers(prev => { const next = new Set(prev); next.delete(g.id); return next; });
-                        const rem = advGroups.filter(ag => ag.id !== g.id);
-                        setAdvGroups(rem);
-                        if (g.id === advSelectedId) setAdvSelectedId(rem[Math.max(0, advGroups.indexOf(g) - 1)]?.id ?? rem[0].id);
-                      }}
-                        className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${advGroups.length > 1 ? "text-gray-300 hover:bg-red-50 hover:text-red-400" : "invisible"}`}>
-                        <X size={12} />
-                      </button>
-                    </div>
-                    {isSel && (
-                      <div className="px-5 py-3 border-t border-blue-100 flex justify-center" style={{ backgroundColor: "#f8faff" }}>
-                        <div style={{ maxWidth: "28rem", width: "100%" }}>
-                          <InlineQOPanel
-                            toolEntry={config.tools[currentTool]}
-                            level={g.level}
-                            variables={g.variables}
-                            onVariableChange={(k, v) => updateGroup(g.id, { variables: { ...g.variables, [k]: v } })}
-                            dropdownValue={g.dropdownValue}
-                            onDropdownChange={v => updateGroup(g.id, { dropdownValue: v })}
-                            multiSelectValues={g.multiSelectValues}
-                            onMultiSelectChange={(k, v) => updateGroup(g.id, { multiSelectValues: { ...g.multiSelectValues, [k]: v } })}
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Add group within section */}
-            {canAdd && (
-              <div className="px-5 py-2 border-t border-gray-100">
-                <button onClick={() => { const newId = advNextId.current++;
-                  const lastInSec = secGroups[secGroups.length - 1];
-                  if (lastInSec) {
-                    const lastIdx = advGroups.indexOf(lastInSec);
-                    setAdvGroups(prev => { const next = [...prev]; next.splice(lastIdx + 1, 0, makeDefaultAdvGroup(newId)); return next; });
-                  } else {
-                    setAdvGroups(prev => [...prev, makeDefaultAdvGroup(newId)]);
-                  }
-                  setAdvSelectedId(newId);
-                }}
-                  className="w-full py-1.5 text-xs font-semibold text-gray-300 hover:text-blue-600 transition-colors">
-                  + Add group
-                </button>
-              </div>
-            )}
-          </div>
-        ))}
-
-        {/* Bottom actions */}
-        <div className="flex gap-3">
-          {canAdd && (
-            <button onClick={() => {
-              const lastGroup = advGroups[advGroups.length - 1];
-              if (lastGroup && !advDividers.has(lastGroup.id)) {
-                setAdvDividers(prev => new Set([...prev, lastGroup.id]));
-              }
-              const newId = advNextId.current++;
-              setAdvGroups(g => [...g, makeDefaultAdvGroup(newId)]);
-              setAdvSelectedId(newId);
-            }}
-              className="flex-1 py-2.5 rounded-xl border-2 border-dashed border-gray-200 text-sm font-semibold text-gray-400 hover:border-blue-300 hover:text-blue-600 transition-colors">
-              + Add section
-            </button>
-          )}
-        </div>
-      </div>
-    );
-  };
-
   const renderControlBar = () => {
     if (mode === "worksheet") {
       const isAdv = worksheetMode === "advanced";
@@ -917,14 +619,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               </div>
               <span className="text-sm font-bold text-gray-500">Advanced</span>
             </label>
-            {isAdv && (
-              <div className="ml-auto flex items-center gap-4">
-                <span className="text-sm font-bold text-gray-600">{totalAdvQuestions} questions total</span>
-              </div>
-            )}
           </div>
 
-          {!isAdv ? (
+          {!isAdv && (
             <div className="p-6">
               <div className="flex justify-center items-center gap-6 mb-4">
                 <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm">
@@ -996,45 +693,6 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                       onPrint={m => customPrintHandler
                         ? customPrintHandler(worksheet, m, worksheetWrapRef.current)
                         : handlePrint(worksheet, config.tools[currentTool].name, difficulty, isDifferentiated, numColumns, getInstruction(), m, worksheetLayout, worksheetBorders)}
-                      printMode={printMode} setPrintMode={setPrintMode}
-                    />
-                  </>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="p-6 pt-4">
-              {renderAdvancedWorksheet()}
-              <div className="flex justify-center items-center gap-4 flex-wrap mt-4">
-                <div className="flex rounded-lg border-2 border-gray-300 overflow-hidden">
-                  <button onClick={() => setWorksheetLayout("grid")}
-                    className={`px-3 py-1.5 text-sm font-bold transition-colors ${worksheetLayout === "grid" ? "bg-blue-900 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
-                    Worksheet
-                  </button>
-                  <button onClick={() => setWorksheetLayout("list")}
-                    className={`px-3 py-1.5 text-sm font-bold transition-colors ${worksheetLayout === "list" ? "bg-blue-900 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
-                    Textbook
-                  </button>
-                </div>
-                <label className={`flex items-center gap-2 cursor-pointer transition-opacity ${worksheetLayout === "grid" ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
-                    <div onClick={() => setWorksheetBorders(!worksheetBorders)}
-                      className={`w-9 h-5 rounded-full transition-colors relative ${worksheetBorders ? "bg-blue-900" : "bg-gray-300"}`}>
-                      <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${worksheetBorders ? "translate-x-4" : "translate-x-0.5"}`} />
-                    </div>
-                    <span className="text-sm font-semibold text-gray-500">Borders</span>
-                  </label>
-                <button onClick={handleGenerateAdvanced} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
-                  <RefreshCw size={18} /> Generate
-                </button>
-                {worksheet.length > 0 && (
-                  <>
-                    <button onClick={() => setShowWorksheetAnswers(!showWorksheetAnswers)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
-                      <Eye size={18} /> {showWorksheetAnswers ? "Hide Answers" : "Show Answers"}
-                    </button>
-                    <PrintSplitButton
-                      onPrint={m => customPrintHandler
-                        ? customPrintHandler(worksheet, m, worksheetWrapRef.current)
-                        : handlePrint(worksheet, config.tools[currentTool].name, "advanced", false, numColumns, getInstruction(), m, worksheetLayout, worksheetBorders)}
                       printMode={printMode} setPrintMode={setPrintMode}
                     />
                   </>
@@ -1301,7 +959,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       </div>
     );
     const toolTitle = config.tools[currentTool].name;
-    if (isDifferentiated && worksheetMode !== "advanced") return (
+    if (isDifferentiated) return (
       <div className="rounded-xl shadow-2xl p-8 relative" style={{ backgroundColor: qBg }}>
         {fontSizeControls}
         <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
@@ -1322,19 +980,14 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       </div>
     );
     if (worksheetLayout === "list") {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const hasSec = worksheet.some(q => ((q as any)._sectionIdx ?? 0) > 0 || !!(q as any)._sectionHeader);
-      const renderListItem = (q: AnyQuestion, idx: number, showDivider: boolean) => {
+      const renderListItem = (q: AnyQuestion, idx: number) => {
         const fsz = fontSizes[worksheetFontSize];
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const listSuppressInstr = !!(q as any)._sectionHeader;
         return (
           <div key={idx}>
-            {showDivider && <div style={{ width: "60%", margin: "0.5rem auto", borderTop: "1px solid #d1d5db" }} />}
             <div className="group flex items-baseline gap-2 py-1.5" style={{ breakInside: "avoid", position: "relative" }}>
               <span className="text-xs font-bold text-gray-400 flex-shrink-0" style={{ minWidth: "1.5rem" }}>{idx + 1})</span>
               <div className={`${fsz} font-semibold flex-1`} style={{ color: "#000" }}>
-                {!listSuppressInstr && getInstruction() && <span className={`${fontSizes[Math.max(0, worksheetFontSize - 1)]} font-semibold mr-1`}>{getInstruction()}</span>}
+                {getInstruction() && <span className={`${fontSizes[Math.max(0, worksheetFontSize - 1)]} font-semibold mr-1`}>{getInstruction()}</span>}
                 {questionRenderer
                   ? questionRenderer(q, false, colorScheme, true, idx, getQOSnapshot(), fsz)
                   : q.kind === "simple"
@@ -1368,74 +1021,19 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         <div className="rounded-xl shadow-2xl p-8 relative" style={{ backgroundColor: qBg }}>
           {fontSizeControls}
           <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
-          {!hasSec ? (
-            <div style={{ display: "grid", gridTemplateColumns: `repeat(${numColumns}, 1fr)`, columnGap: "1.5rem" }}>
-              {worksheet.map((q, idx) => renderListItem(q, idx, false))}
-            </div>
-          ) : (() => {
-            const segments: { items: { q: AnyQuestion; globalIdx: number }[] }[] = [];
-            let curSec = -1;
-            worksheet.forEach((q, idx) => {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const si = (q as any)._sectionIdx ?? 0;
-              if (si !== curSec) { segments.push({ items: [] }); curSec = si; }
-              segments[segments.length - 1].items.push({ q, globalIdx: idx });
-            });
-            return segments.map((seg, si) => {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const segCols = (seg.items[0]?.q as any)?._sectionCols ?? numColumns;
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const segHeader = (seg.items[0]?.q as any)?._sectionHeader as string | undefined;
-              return (
-                <div key={si}>
-                  {si > 0 && <div style={{ width: "60%", margin: "0.5rem auto", borderTop: "1px solid #d1d5db" }} />}
-                  {segHeader && <p className="text-lg font-semibold mb-1 mt-2" style={{ color: "#000" }}>{segHeader}</p>}
-                  <div style={{ display: "grid", gridTemplateColumns: `repeat(${segCols}, 1fr)`, columnGap: "1.5rem" }}>
-                    {seg.items.map(({ q, globalIdx }) => renderListItem(q, globalIdx, false))}
-                  </div>
-                </div>
-              );
-            });
-          })()}
+          <div style={{ display: "grid", gridTemplateColumns: `repeat(${numColumns}, 1fr)`, columnGap: "1.5rem" }}>
+            {worksheet.map((q, idx) => renderListItem(q, idx))}
+          </div>
         </div>
       );
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const hasSec = worksheet.some(q => ((q as any)._sectionIdx ?? 0) > 0 || !!(q as any)._sectionHeader);
     return (
       <div className="rounded-xl shadow-2xl p-8 relative" style={{ backgroundColor: qBg }}>
         {fontSizeControls}
         <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
-        {(() => {
-          if (!hasSec) return (
-            <div style={{ display: "grid", gridTemplateColumns: `repeat(${numColumns},1fr)`, gap: "1rem" }}>
-              {worksheet.map((q, idx) => <div key={idx}>{renderQCell(q, idx)}</div>)}
-            </div>
-          );
-          const segments: { secIdx: number; items: { q: AnyQuestion; globalIdx: number }[] }[] = [];
-          let curSec = -1;
-          worksheet.forEach((q, idx) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const si = (q as any)._sectionIdx ?? 0;
-            if (si !== curSec) { segments.push({ secIdx: si, items: [] }); curSec = si; }
-            segments[segments.length - 1].items.push({ q, globalIdx: idx });
-          });
-          return segments.map((seg, si) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const segCols = (seg.items[0]?.q as any)?._sectionCols ?? numColumns;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const segHeader = (seg.items[0]?.q as any)?._sectionHeader as string | undefined;
-            return (
-              <div key={si}>
-                {si > 0 && <div style={{ width: "60%", margin: "1rem auto", borderTop: "1px solid #d1d5db" }} />}
-                {segHeader && <p className="text-lg font-semibold mb-2 mt-1" style={{ color: "#000" }}>{segHeader}</p>}
-                <div style={{ display: "grid", gridTemplateColumns: `repeat(${segCols},1fr)`, gap: "1rem" }}>
-                  {seg.items.map(({ q, globalIdx }) => <div key={globalIdx}>{renderQCell(q, globalIdx)}</div>)}
-                </div>
-              </div>
-            );
-          });
-        })()}
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${numColumns},1fr)`, gap: "1rem" }}>
+          {worksheet.map((q, idx) => <div key={idx}>{renderQCell(q, idx)}</div>)}
+        </div>
       </div>
     );
   };
@@ -1503,7 +1101,20 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               hideFontControls={hideFontControls}
             />
           )}
-          {mode === "worksheet" && <>{renderControlBar()}<div ref={worksheetWrapRef}>{renderWorksheet()}</div></>}
+          {mode === "worksheet" && <>
+            {renderControlBar()}
+            {worksheetMode === "advanced"
+              ? <WorksheetBuilder
+                  config={config}
+                  generateQuestion={generateQuestion}
+                  questionRenderer={questionRenderer}
+                  customPrintHandler={customPrintHandler}
+                  comingSoonLevels={comingSoon}
+                  hideFontControls={hideFontControls}
+                  lockedTool={currentTool}
+                />
+              : <div ref={worksheetWrapRef}>{renderWorksheet()}</div>}
+          </>}
           {mode !== "worksheet" && mode !== "builder" && (
             <div className="flex flex-col gap-6">
               <div className="rounded-xl shadow-lg">

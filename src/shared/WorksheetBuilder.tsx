@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { RefreshCw, Eye, X, ChevronDown, ChevronUp } from "lucide-react";
 import type {
   DifficultyLevel,
@@ -49,6 +49,11 @@ export interface WorksheetBuilderProps {
   ) => void;
   comingSoonLevels?: DifficultyLevel[];
   hideFontControls?: boolean;
+  /** When set, every group is locked to this single sub-tool and the per-group
+   *  sub-tool selector is hidden (used for the in-tool "Advanced" worksheet mode,
+   *  which must only draw from the current sub-tool). Omit for the cross-tool
+   *  Builder, where groups can mix sub-tools. */
+  lockedTool?: string;
 }
 
 export const WorksheetBuilder = ({
@@ -58,9 +63,13 @@ export const WorksheetBuilder = ({
   customPrintHandler,
   comingSoonLevels = [],
   hideFontControls = false,
+  lockedTool,
 }: WorksheetBuilderProps) => {
   const generateUniqueQ = makeUniqueQ(generateQuestion);
-  const toolKeys = Object.keys(config.tools);
+  const allToolKeys = Object.keys(config.tools);
+  // When locked to a single sub-tool, the per-group selector is hidden and every
+  // group is forced to that tool.
+  const toolKeys = lockedTool ? [lockedTool] : allToolKeys;
 
   const makeDefaultGroup = (
     id: number,
@@ -131,6 +140,21 @@ export const WorksheetBuilder = ({
   const fontSizes = ["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"];
   const canFontIncrease = worksheetFontSize < fontSizes.length - 1;
   const canFontDecrease = worksheetFontSize > 0;
+
+  // If the locked sub-tool changes (the user switches the active sub-tool tab while
+  // in the in-tool Advanced mode), remap every group to the new tool — re-deriving
+  // its QO defaults while preserving the section structure and per-group counts —
+  // and clear the now-stale worksheet.
+  const prevLockedTool = useRef(lockedTool);
+  useEffect(() => {
+    if (!lockedTool || prevLockedTool.current === lockedTool) return;
+    prevLockedTool.current = lockedTool;
+    setGroups((gs) =>
+      gs.map((g) => ({ ...makeDefaultGroup(g.id, lockedTool, g.level), count: g.count })),
+    );
+    setWorksheet([]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lockedTool]);
 
   const computeSections = (
     gs: BuilderGroup[],
