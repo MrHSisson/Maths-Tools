@@ -19,6 +19,7 @@ export const handlePrint = (
   const HEADER_MM = 14;
   const GAP_MM    = 2;
   const DIV_MM    = 4;
+  const HDR_MM    = 6;
   const PAGE_H_MM = 297 - MARGIN_MM * 2;
   const PAGE_W_MM = 210 - MARGIN_MM * 2;
   const usableH_MM = PAGE_H_MM - HEADER_MM;
@@ -63,7 +64,8 @@ export const handlePrint = (
       }
     }
     const numHtml = `<div class="q-num">${idx + 1}</div>`;
-    const instrHtml = instruction ? `<div class="q-instruction">${instruction}</div>` : "";
+    const suppressInstr = !!anyQ._sectionHeader;
+    const instrHtml = instruction && !suppressInstr ? `<div class="q-instruction">${instruction}</div>` : "";
     let body = "";
     if (anyQ.kind === "frac") {
       body = `${instrHtml}<div style="text-align:center">${katexSpan(`\\text{Find } ${anyQ.latex}`, "q-math")}</div>${ansHtml}`;
@@ -94,7 +96,8 @@ export const handlePrint = (
       }
     }
     const num = `<span class="list-num">${idx + 1})</span>`;
-    const instrHtml = instruction ? `<span class="list-instr">${instruction}</span> ` : "";
+    const suppressInstr = !!(q as any)._sectionHeader;
+    const instrHtml = instruction && !suppressInstr ? `<span class="list-instr">${instruction}</span> ` : "";
     let content = "";
     if (anyQ.kind === "frac") {
       content = `${instrHtml}${katexSpan(`\\text{Find } ${anyQ.latex}`, "q-math")}`;
@@ -124,7 +127,9 @@ export const handlePrint = (
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sectionIndices = questions.map(q => (q as any)._sectionIdx as number | undefined);
-  const hasSections = sectionIndices.some(s => s !== undefined && s > 0);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sectionHeadersArr = questions.map(q => (q as any)._sectionHeader as string | undefined);
+  const hasSections = sectionIndices.some(s => s !== undefined && s > 0) || sectionHeadersArr.some(h => !!h);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sectionColsArr = questions.map(q => (q as any)._sectionCols as number | undefined);
 
@@ -153,6 +158,7 @@ export const handlePrint = (
     difficulty: q.difficulty,
     sectionIdx: sectionIndices[i] ?? 0,
     sectionCols: sectionColsArr[i] ?? cols,
+    sectionHeader: sectionHeadersArr[i] ?? "",
   }));
 
   void (difficulty as unknown); void (instruction as unknown); void (pMode as unknown);
@@ -201,6 +207,7 @@ export const handlePrint = (
   }
 
   .section-divider { width: 100%; }
+  .section-header { font-size: ${Math.round(FONT_PX * 1.1)}px; font-weight: 600; color: #000; margin-bottom: 1mm; }
 
   #probe {
     position: fixed; left: -9999px; top: 0; visibility: hidden;
@@ -315,33 +322,42 @@ document.addEventListener("DOMContentLoaded", function() {
     var prevSI = -1;
     var secIC = 0;
     var secCV = cols;
+    var secHdr = '';
     for (var qi2 = 0; qi2 < qData.length; qi2++) {
       if (qData[qi2].sectionIdx !== prevSI) {
         if (prevSI >= 0) {
           secInfo.push({ idx: prevSI, count: secIC, cols: secCV,
-            rows: Math.ceil(secIC / secCV), needed: secNeeded[prevSI] || needed_mm });
+            rows: Math.ceil(secIC / secCV), needed: secNeeded[prevSI] || needed_mm, hasHeader: !!secHdr });
         }
         prevSI = qData[qi2].sectionIdx;
         secIC = 0;
         secCV = qData[qi2].sectionCols;
+        secHdr = qData[qi2].sectionHeader;
       }
       secIC++;
     }
     if (prevSI >= 0) {
       secInfo.push({ idx: prevSI, count: secIC, cols: secCV,
-        rows: Math.ceil(secIC / secCV), needed: secNeeded[prevSI] || needed_mm });
+        rows: Math.ceil(secIC / secCV), needed: secNeeded[prevSI] || needed_mm, hasHeader: !!secHdr });
     }
 
-    // Total minimum height: sum of (rows × needed + within-section gaps) + dividers
+    // Total minimum height: sum of (rows × needed + within-section gaps) + dividers + headers
     var totalMinH = 0;
     var totalSecRows = 0;
     for (var si2 = 0; si2 < secInfo.length; si2++) {
       var sec = secInfo[si2];
       totalMinH += sec.rows * sec.needed + (sec.rows - 1) * GAP_MM;
       if (si2 > 0) totalMinH += DIV_MM;
+      if (sec.hasHeader) totalMinH += ${HDR_MM};
       totalSecRows += sec.rows;
     }
 
+    // Store minimum needed heights for pagination budget checks
+    var sectionMinH = {};
+    for (var si4 = 0; si4 < secInfo.length; si4++) {
+      sectionMinH[secInfo[si4].idx] = secInfo[si4].needed;
+      sectionCellH[secInfo[si4].idx] = secInfo[si4].needed;
+    }
     if (totalMinH <= usableH) {
       // Fits on one page — distribute remaining space proportionally by row count
       var extraH = usableH - totalMinH;
@@ -352,10 +368,6 @@ document.addEventListener("DOMContentLoaded", function() {
       }
       rowsPerPage = totalSecRows;
     } else {
-      // Doesn't fit on one page — use minimum needed per section
-      for (var si4 = 0; si4 < secInfo.length; si4++) {
-        sectionCellH[secInfo[si4].idx] = secInfo[si4].needed;
-      }
       // rowsPerPage for fallback pagination
       for (var r3 = 0; r3 < rowHeights.length; r3++) {
         if (rowHeights[r3] >= needed_mm) { chosenH_mm = rowHeights[r3]; rowsPerPage = r3 + 1; }
@@ -394,9 +406,11 @@ document.addEventListener("DOMContentLoaded", function() {
          + '<div class="q-inner">' + inner + '</div></div>';
   }
 
-  function buildSectionDivider() {
-    return '<div class="section-divider" style="height:' + DIV_MM + 'mm;display:flex;align-items:center;">'
+  function buildSectionDivider(header) {
+    var div = '<div class="section-divider" style="height:' + DIV_MM + 'mm;display:flex;align-items:center;">'
          + '<div style="width:60%;margin:0 auto;border-top:0.3mm solid #d1d5db;"></div></div>';
+    if (header) div += '<div class="section-header">' + header + '</div>';
+    return div;
   }
 
   // ── List layout builder ──
@@ -426,7 +440,9 @@ document.addEventListener("DOMContentLoaded", function() {
     if (curSeg.length > 0) segments.push({ items: curSeg, cols: curSeg[0].sectionCols });
     var out = '';
     for (var sg = 0; sg < segments.length; sg++) {
-      if (sg > 0) out += buildSectionDivider();
+      var segHdr = segments[sg].items[0] ? segments[sg].items[0].sectionHeader : '';
+      if (sg > 0) out += buildSectionDivider(segHdr);
+      else if (segHdr) out += '<div class="section-header">' + segHdr + '</div>';
       out += buildListSection(segments[sg].items, showAnswer, segments[sg].cols);
     }
     return out;
@@ -467,7 +483,9 @@ document.addEventListener("DOMContentLoaded", function() {
 
       var out = '';
       for (var sg = 0; sg < segments.length; sg++) {
-        if (sg > 0) out += buildSectionDivider();
+        var segHdr = segments[sg].items.length > 0 ? segments[sg].items[0].sectionHeader : '';
+        if (sg > 0) out += buildSectionDivider(segHdr);
+        else if (segHdr) out += '<div class="section-header">' + segHdr + '</div>';
         var segItems = segments[sg].items;
         var segCols = segItems.length > 0 ? segItems[0].sectionCols : cols;
         var segCW = makeCellW(segCols);
@@ -537,23 +555,28 @@ document.addEventListener("DOMContentLoaded", function() {
       var usedH = 0;
       var prevSection = qData.length > 0 ? qData[0].sectionIdx : 0;
       var secColsInPage = 0;
+      var hdrMM = ${HDR_MM};
+
+      // Account for first section header
+      if (qData.length > 0 && qData[0].sectionHeader) usedH += hdrMM;
 
       for (var qi = 0; qi < qData.length; qi++) {
-        var curSecH = sectionCellH[qData[qi].sectionIdx] || chosenH_mm;
+        var curSecH = sectionMinH[qData[qi].sectionIdx] || chosenH_mm;
         var curSecCols = qData[qi].sectionCols;
         var needsDivider = qi > 0 && qData[qi].sectionIdx !== prevSection;
         if (needsDivider) {
           if (secColsInPage > 0) {
-            var prevH = sectionCellH[prevSection] || chosenH_mm;
+            var prevH = sectionMinH[prevSection] || chosenH_mm;
             usedH += prevH + GAP_MM;
             secColsInPage = 0;
           }
-          if (usedH + DIV_MM + curSecH > usableH && curPage.length > 0) {
+          var divCost = DIV_MM + (qData[qi].sectionHeader ? hdrMM : 0);
+          if (usedH + divCost + curSecH > usableH && curPage.length > 0) {
             gridPages.push(curPage);
             curPage = [];
-            usedH = 0;
+            usedH = qData[qi].sectionHeader ? hdrMM : 0;
           } else {
-            usedH += DIV_MM;
+            usedH += divCost;
           }
           prevSection = qData[qi].sectionIdx;
         }
@@ -564,8 +587,9 @@ document.addEventListener("DOMContentLoaded", function() {
           secColsInPage = 0;
           if (qi + 1 < qData.length) {
             var nxtDiv = qData[qi + 1].sectionIdx !== qData[qi].sectionIdx;
-            var nxtH = sectionCellH[qData[qi + 1].sectionIdx] || chosenH_mm;
-            var nxtNeed = nxtDiv ? DIV_MM + nxtH : nxtH;
+            var nxtH = sectionMinH[qData[qi + 1].sectionIdx] || chosenH_mm;
+            var nxtHdr = nxtDiv && qData[qi + 1].sectionHeader ? hdrMM : 0;
+            var nxtNeed = (nxtDiv ? DIV_MM : 0) + nxtHdr + nxtH;
             if (usedH + nxtNeed > usableH) {
               gridPages.push(curPage);
               curPage = [];

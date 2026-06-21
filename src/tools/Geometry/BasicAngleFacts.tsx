@@ -705,7 +705,8 @@ function customPrintHandler(questions: AnyQuestion[], printMode: PrintMode, cont
     });
   }
 
-  const isDiff = new Set(questions.map(q => q.difficulty)).size > 1;
+  const isAdvanced = questions.some(q => (q as any)._sectionIdx !== undefined);
+  const isDiff = !isAdvanced && new Set(questions.map(q => q.difficulty)).size > 1;
   const toolKey = (questions[0]?.key.split("-")[0] ?? "rightAngle") as ToolKey;
   const toolName = TOOL_CONFIG.tools[toolKey].name;
   const dateStr = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });

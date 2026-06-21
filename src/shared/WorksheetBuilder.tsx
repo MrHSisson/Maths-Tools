@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { RefreshCw, Eye, X } from "lucide-react";
+import { RefreshCw, Eye, X, ChevronDown } from "lucide-react";
 import type {
   DifficultyLevel,
   AnyQuestion,
@@ -112,6 +112,9 @@ export const WorksheetBuilder = ({
   const [sectionColumns, setSectionColumns] = useState<
     Record<number, number>
   >({});
+  const [sectionHeaders, setSectionHeaders] = useState<
+    Record<number, string>
+  >({});
   const [layout, setLayout] = useState<"grid" | "list">("grid");
   const [borders, setBorders] = useState(true);
   const [numColumns] = useState(3);
@@ -175,10 +178,12 @@ export const WorksheetBuilder = ({
         }
       }
       const secCols = sectionColumns[secIdx] ?? numColumns;
+      const secHdr = sectionHeaders[secIdx] ?? "";
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       secQs.forEach((q) => {
         (q as any)._sectionIdx = secIdx;
         (q as any)._sectionCols = secCols;
+        if (secHdr) (q as any)._sectionHeader = secHdr;
       });
       questions.push(...secQs);
     });
@@ -208,10 +213,9 @@ export const WorksheetBuilder = ({
       : lv === "level2"
         ? "bg-yellow-500"
         : "bg-red-600";
-  const lvBorder = (lv: DifficultyLevel) =>
-    lv === "level1" ? "#16a34a" : lv === "level2" ? "#eab308" : "#dc2626";
+  const lvDot = (lv: DifficultyLevel) =>
+    lv === "level1" ? "bg-green-500" : lv === "level2" ? "bg-yellow-400" : "bg-red-500";
 
-  const selectedGroup = groups.find((g) => g.id === selectedId) ?? groups[0];
   const sections = computeSections(groups, dividers);
   const canAdd = groups.length < 10;
 
@@ -224,284 +228,170 @@ export const WorksheetBuilder = ({
   const renderGroupList = () => {
     let globalIdx = 0;
     return (
-      <div
-        className="flex flex-col rounded-xl border-2 border-gray-300 overflow-hidden"
-        style={{ width: "62%", flexShrink: 0, backgroundColor: "#fff" }}
-      >
-        <div className="flex-1 overflow-y-auto">
-          {sections.map((secGroups, secIdx) => (
-            <div key={secIdx}>
-              <div
-                className="relative flex items-center justify-center gap-3 px-4 py-3 border-b border-gray-100"
-                style={{ backgroundColor: "#f3f4f6" }}
-              >
-                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                  Section {secIdx + 1}
-                </span>
-                <button
-                  onClick={() => toggleSectionShuffle(secIdx)}
-                  className={`text-xs font-semibold px-3 py-1 rounded transition-colors ${sectionShuffles[secIdx] ? "bg-blue-900 text-white" : "bg-gray-200 text-gray-500 hover:bg-gray-300"}`}
-                >
-                  Shuffle
-                </button>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-semibold text-gray-400">Cols</span>
-                  <div className="flex rounded border border-gray-300 overflow-hidden">
-                    {[1, 2, 3, 4].map(c => (
-                      <button key={c} onClick={() => setSectionColumns(prev => ({ ...prev, [secIdx]: c }))}
-                        className={`w-6 h-5 text-xs font-bold transition-colors ${(sectionColumns[secIdx] ?? numColumns) === c ? "bg-blue-900 text-white" : "bg-white text-gray-400 hover:bg-gray-50"}`}>
-                        {c}
-                      </button>
-                    ))}
-                  </div>
+      <div className="flex flex-col gap-4">
+        {sections.map((secGroups, secIdx) => (
+          <div key={secIdx} className="rounded-xl border border-gray-200 overflow-hidden" style={{ backgroundColor: "#fff" }}>
+            {/* Section header */}
+            <div className="flex items-center gap-3 px-5 py-3" style={{ backgroundColor: "#f8f9fa", borderBottom: "1px solid #e5e7eb" }}>
+              <span className="text-xs font-bold text-gray-400 uppercase tracking-wider flex-shrink-0">Section {secIdx + 1}</span>
+              <div className="h-4 w-px bg-gray-300" />
+              <input
+                type="text"
+                placeholder="Heading (e.g. Solve for x)"
+                value={sectionHeaders[secIdx] ?? ""}
+                onChange={e => setSectionHeaders(prev => ({ ...prev, [secIdx]: e.target.value }))}
+                className="text-sm bg-transparent border-none px-0 py-0 flex-1 min-w-0 placeholder-gray-300 focus:outline-none font-medium text-gray-700"
+              />
+              <div className="h-4 w-px bg-gray-300" />
+              <button onClick={() => toggleSectionShuffle(secIdx)}
+                className={`text-xs font-semibold px-2.5 py-1 rounded transition-colors flex-shrink-0 ${sectionShuffles[secIdx] ? "bg-blue-900 text-white" : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"}`}>
+                Shuffle
+              </button>
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                <div className="flex rounded-md overflow-hidden border border-gray-200">
+                  {[1, 2, 3, 4].map(c => (
+                    <button key={c} onClick={() => setSectionColumns(prev => ({ ...prev, [secIdx]: c }))}
+                      className={`w-7 h-6 text-xs font-bold transition-colors ${(sectionColumns[secIdx] ?? numColumns) === c ? "bg-blue-900 text-white" : "bg-white text-gray-400 hover:bg-gray-50"}`}>
+                      {c}
+                    </button>
+                  ))}
                 </div>
-                {secIdx > 0 && (
-                  <button
-                    onClick={() => {
-                      const prevGroupId =
-                        sections[secIdx - 1][
-                          sections[secIdx - 1].length - 1
-                        ]?.id;
-                      if (prevGroupId !== undefined)
-                        toggleDivider(prevGroupId);
-                    }}
-                    className="absolute right-4 w-6 h-6 rounded-full flex items-center justify-center text-gray-300 hover:bg-red-50 hover:text-red-400 transition-colors"
-                    title="Remove section"
-                  >
-                    <X size={12} />
-                  </button>
-                )}
+                <span className="text-xs text-gray-400">col</span>
               </div>
+              {secIdx > 0 && (
+                <button onClick={() => {
+                  const prevGroupId = sections[secIdx - 1][sections[secIdx - 1].length - 1]?.id;
+                  if (prevGroupId !== undefined) toggleDivider(prevGroupId);
+                }}
+                  className="w-6 h-6 rounded-full flex items-center justify-center text-gray-300 hover:bg-red-50 hover:text-red-400 transition-colors flex-shrink-0" title="Merge with section above">
+                  <X size={12} />
+                </button>
+              )}
+            </div>
+
+            {/* Group rows */}
+            <div className="divide-y divide-gray-100">
               {secGroups.map((g) => {
                 const idx = globalIdx++;
                 const isSel = g.id === selectedId;
                 return (
                   <div key={g.id}>
-                    <div
-                      onClick={() => setSelectedId(g.id)}
-                      className="flex items-center gap-4 px-4 py-3 cursor-pointer transition-colors hover:bg-gray-50 border-b border-gray-100"
-                      style={{
-                        borderLeft: `3px solid ${isSel ? lvBorder(g.level) : "transparent"}`,
-                        backgroundColor: isSel ? "#f0f4ff" : undefined,
-                      }}
-                    >
-                      <span className="text-xs font-bold text-gray-400 w-5 flex-shrink-0 tabular-nums">
-                        {idx + 1}
-                      </span>
+                    <div onClick={() => setSelectedId(isSel ? -1 : g.id)}
+                      className={`flex items-center gap-4 px-5 py-3 cursor-pointer transition-colors ${isSel ? "" : "hover:bg-gray-50"}`}
+                      style={{ backgroundColor: isSel ? "#f0f4ff" : undefined }}>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <div className={`w-2.5 h-2.5 rounded-full ${lvDot(g.level)}`} />
+                        <span className="text-sm font-bold text-gray-400 tabular-nums w-5">{idx + 1}</span>
+                      </div>
                       {toolKeys.length > 1 && (
                         <select
                           value={g.tool}
                           onClick={(e) => e.stopPropagation()}
                           onChange={(e) => {
                             const newTool = e.target.value;
-                            const fresh = makeDefaultGroup(
-                              g.id,
-                              newTool,
-                              g.level,
-                            );
+                            const fresh = makeDefaultGroup(g.id, newTool, g.level);
                             updateGroup(g.id, { ...fresh, id: g.id });
                             setSelectedId(g.id);
                           }}
                           className="text-xs font-semibold bg-gray-50 border border-gray-200 rounded px-2 py-1.5 min-w-0 flex-1"
                         >
                           {toolKeys.map((k) => (
-                            <option key={k} value={k}>
-                              {config.tools[k].name}
-                            </option>
+                            <option key={k} value={k}>{config.tools[k].name}</option>
                           ))}
                         </select>
                       )}
-                      <div
-                        className="flex rounded-lg border-2 border-gray-200 overflow-hidden flex-shrink-0"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {(
-                          ["level1", "level2", "level3"] as DifficultyLevel[]
-                        ).map((lv, li) => {
+                      <div className="flex rounded-lg overflow-hidden border border-gray-200 flex-shrink-0" onClick={e => e.stopPropagation()}>
+                        {(["level1", "level2", "level3"] as DifficultyLevel[]).map((lv, li) => {
                           const isLvDisabled = comingSoonLevels.includes(lv);
                           return (
-                            <button
-                              key={lv}
-                              onClick={() => {
-                                if (!isLvDisabled) {
-                                  const fresh = makeDefaultGroup(
-                                    g.id,
-                                    g.tool,
-                                    lv,
-                                  );
-                                  updateGroup(g.id, { ...fresh, id: g.id });
-                                  setSelectedId(g.id);
-                                }
-                              }}
-                              className={`px-3 py-1.5 font-bold text-xs transition-colors ${isLvDisabled ? "bg-gray-100 text-gray-300 cursor-not-allowed" : g.level === lv ? `${lvColor(lv)} text-white` : "bg-white text-gray-400 hover:bg-gray-50"}`}
-                            >
+                            <button key={lv} onClick={() => { if (!isLvDisabled) { const fresh = makeDefaultGroup(g.id, g.tool, lv); updateGroup(g.id, { ...fresh, id: g.id }); setSelectedId(g.id); } }}
+                              className={`px-3 py-1 font-semibold text-xs transition-colors ${isLvDisabled ? "bg-gray-50 text-gray-300 cursor-not-allowed" : g.level === lv ? `${lvColor(lv)} text-white` : "bg-white text-gray-400 hover:bg-gray-50"}`}>
                               L{li + 1}
                             </button>
                           );
                         })}
                       </div>
-                      <div className="flex-1" />
-                      <div
-                        className="flex items-center gap-1.5 bg-gray-100 rounded-lg px-1 py-0.5 flex-shrink-0"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <button
-                          onClick={() =>
-                            updateGroup(g.id, {
-                              count: Math.max(1, g.count - 1),
-                            })
-                          }
-                          disabled={g.count <= 1}
-                          className="w-7 h-7 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-base leading-none"
-                        >
-                          −
-                        </button>
-                        <span className="w-7 text-center text-sm font-bold text-gray-800 tabular-nums">
-                          {g.count}
-                        </span>
-                        <button
-                          onClick={() =>
-                            updateGroup(g.id, {
-                              count: Math.min(24, g.count + 1),
-                            })
-                          }
-                          disabled={g.count >= 24}
-                          className="w-7 h-7 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-base leading-none"
-                        >
-                          +
-                        </button>
+                      <div className="flex items-center gap-1 flex-shrink-0" onClick={e => e.stopPropagation()}>
+                        <button onClick={() => updateGroup(g.id, { count: Math.max(1, g.count - 1) })} disabled={g.count <= 1}
+                          className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:bg-gray-100 hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-sm leading-none">−</button>
+                        <span className="w-6 text-center text-sm font-bold text-gray-700 tabular-nums">{g.count}</span>
+                        <button onClick={() => updateGroup(g.id, { count: Math.min(24, g.count + 1) })} disabled={g.count >= 24}
+                          className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:bg-gray-100 hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-sm leading-none">+</button>
                       </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (groups.length <= 1) return;
-                          setDividers((prev) => {
-                            const next = new Set(prev);
-                            next.delete(g.id);
-                            return next;
-                          });
-                          const rem = groups.filter((ag) => ag.id !== g.id);
-                          setGroups(rem);
-                          if (g.id === selectedId)
-                            setSelectedId(
-                              rem[
-                                Math.max(0, groups.indexOf(g) - 1)
-                              ]?.id ?? rem[0].id,
-                            );
-                        }}
-                        className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${groups.length > 1 ? "text-gray-300 hover:bg-red-50 hover:text-red-400" : "invisible"}`}
-                      >
+                      <div className="flex-1" />
+                      <ChevronDown size={14} className={`text-gray-300 transition-transform flex-shrink-0 ${isSel ? "rotate-180" : ""}`} />
+                      <button onClick={e => {
+                        e.stopPropagation();
+                        if (groups.length <= 1) return;
+                        setDividers(prev => { const next = new Set(prev); next.delete(g.id); return next; });
+                        const rem = groups.filter(ag => ag.id !== g.id);
+                        setGroups(rem);
+                        if (g.id === selectedId) setSelectedId(rem[Math.max(0, groups.indexOf(g) - 1)]?.id ?? rem[0].id);
+                      }}
+                        className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${groups.length > 1 ? "text-gray-300 hover:bg-red-50 hover:text-red-400" : "invisible"}`}>
                         <X size={12} />
                       </button>
                     </div>
+                    {isSel && (
+                      <div className="px-5 py-3 border-t border-blue-100 flex justify-center" style={{ backgroundColor: "#f8faff" }}>
+                        <div style={{ maxWidth: "28rem", width: "100%" }}>
+                          <InlineQOPanel
+                            toolEntry={config.tools[g.tool]}
+                            level={g.level}
+                            variables={g.variables}
+                            onVariableChange={(k, v) => updateGroup(g.id, { variables: { ...g.variables, [k]: v } })}
+                            dropdownValue={g.dropdownValue}
+                            onDropdownChange={v => updateGroup(g.id, { dropdownValue: v })}
+                            multiSelectValues={g.multiSelectValues}
+                            onMultiSelectChange={(k, v) => updateGroup(g.id, { multiSelectValues: { ...g.multiSelectValues, [k]: v } })}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })}
             </div>
-          ))}
-        </div>
-        <div className="px-4 py-3 border-t border-gray-200 flex-shrink-0">
-          {canAdd ? (
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  const newId = nextId.current++;
-                  const lastTool =
-                    groups.length > 0
-                      ? groups[groups.length - 1].tool
-                      : toolKeys[0];
-                  setGroups((g) => [
-                    ...g,
-                    makeDefaultGroup(newId, lastTool),
-                  ]);
+
+            {/* Add group within section */}
+            {canAdd && (
+              <div className="px-5 py-2 border-t border-gray-100">
+                <button onClick={() => { const newId = nextId.current++;
+                  const lastInSec = secGroups[secGroups.length - 1];
+                  if (lastInSec) {
+                    const lastIdx = groups.indexOf(lastInSec);
+                    setGroups(prev => { const next = [...prev]; next.splice(lastIdx + 1, 0, makeDefaultGroup(newId, lastInSec.tool)); return next; });
+                  } else {
+                    setGroups(prev => [...prev, makeDefaultGroup(newId)]);
+                  }
                   setSelectedId(newId);
                 }}
-                className="flex-1 py-2 rounded-lg border-2 border-dashed border-gray-200 text-xs font-bold text-gray-400 hover:border-blue-300 hover:text-blue-600 transition-colors"
-              >
-                + Add group
-              </button>
-              <button
-                onClick={() => {
-                  const lastGroup = groups[groups.length - 1];
-                  if (lastGroup && !dividers.has(lastGroup.id)) {
-                    setDividers((prev) => new Set([...prev, lastGroup.id]));
-                    const newId = nextId.current++;
-                    const lastTool =
-                      groups.length > 0
-                        ? groups[groups.length - 1].tool
-                        : toolKeys[0];
-                    setGroups((g) => [
-                      ...g,
-                      makeDefaultGroup(newId, lastTool),
-                    ]);
-                    setSelectedId(newId);
-                  }
-                }}
-                disabled={
-                  !groups.length ||
-                  dividers.has(groups[groups.length - 1]?.id)
-                }
-                className="aspect-square self-stretch rounded-lg border-2 border-dashed border-gray-200 text-xs font-bold text-gray-400 hover:border-blue-300 hover:text-blue-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center"
-                title="Add section divider"
-              >
-                + Section
-              </button>
-            </div>
-          ) : (
-            <p className="text-center text-xs text-gray-400 font-semibold py-1">
-              Maximum 10 groups reached
-            </p>
+                  className="w-full py-1.5 text-xs font-semibold text-gray-300 hover:text-blue-600 transition-colors">
+                  + Add group
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
+
+        {/* Bottom actions */}
+        <div className="flex gap-3">
+          {canAdd && (
+            <button onClick={() => {
+              const lastGroup = groups[groups.length - 1];
+              if (lastGroup && !dividers.has(lastGroup.id)) {
+                setDividers(prev => new Set([...prev, lastGroup.id]));
+              }
+              const newId = nextId.current++;
+              const lastTool = groups.length > 0 ? groups[groups.length - 1].tool : toolKeys[0];
+              setGroups(g => [...g, makeDefaultGroup(newId, lastTool)]);
+              setSelectedId(newId);
+            }}
+              className="flex-1 py-2.5 rounded-xl border-2 border-dashed border-gray-200 text-sm font-semibold text-gray-400 hover:border-blue-300 hover:text-blue-600 transition-colors">
+              + Add section
+            </button>
           )}
         </div>
-      </div>
-    );
-  };
-
-  const renderOptionsPanel = () => {
-    if (!selectedGroup) return null;
-    const toolEntry = config.tools[selectedGroup.tool];
-    if (!toolEntry) return null;
-    const groupIdx = groups.indexOf(selectedGroup);
-    return (
-      <div
-        className="flex-1 rounded-xl border-2 border-gray-300 px-5 py-4 overflow-y-auto"
-        style={{ backgroundColor: "#fff" }}
-      >
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">
-          Group {groupIdx + 1} ·{" "}
-          {toolKeys.length > 1
-            ? `${toolEntry.name} · `
-            : ""}
-          {selectedGroup.level === "level1"
-            ? "Level 1"
-            : selectedGroup.level === "level2"
-              ? "Level 2"
-              : "Level 3"}{" "}
-          · Options
-        </p>
-        <InlineQOPanel
-          toolEntry={toolEntry}
-          level={selectedGroup.level}
-          variables={selectedGroup.variables}
-          onVariableChange={(k, v) =>
-            updateGroup(selectedGroup.id, {
-              variables: { ...selectedGroup.variables, [k]: v },
-            })
-          }
-          dropdownValue={selectedGroup.dropdownValue}
-          onDropdownChange={(v) =>
-            updateGroup(selectedGroup.id, { dropdownValue: v })
-          }
-          multiSelectValues={selectedGroup.multiSelectValues}
-          onMultiSelectChange={(k, v) =>
-            updateGroup(selectedGroup.id, {
-              multiSelectValues: {
-                ...selectedGroup.multiSelectValues,
-                [k]: v,
-              },
-            })
-          }
-        />
       </div>
     );
   };
@@ -544,7 +434,7 @@ export const WorksheetBuilder = ({
         </div>
       );
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const hasSec = worksheet.some(q => ((q as any)._sectionIdx ?? 0) > 0);
+      const hasSec = worksheet.some(q => ((q as any)._sectionIdx ?? 0) > 0 || !!(q as any)._sectionHeader);
       if (!hasSec) {
         return (
           <div ref={worksheetRef} className="bg-white rounded-xl shadow-lg p-6 mt-6">
@@ -567,9 +457,12 @@ export const WorksheetBuilder = ({
           {segments.map((seg, si) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const segCols = (seg.items[0]?.q as any)?._sectionCols ?? numColumns;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const segHeader = (seg.items[0]?.q as any)?._sectionHeader as string | undefined;
             return (
               <div key={si}>
                 {si > 0 && <div style={{ width: "60%", margin: "0.5rem auto", borderTop: "1px solid #d1d5db" }} />}
+                {segHeader && <p className="text-lg font-semibold mb-1 mt-2" style={{ color: "#000" }}>{segHeader}</p>}
                 <div style={{ display: "grid", gridTemplateColumns: `repeat(${segCols}, 1fr)`, columnGap: "2rem" }}>
                   {seg.items.map(({ q, idx }) => renderListItem(q, idx))}
                 </div>
@@ -630,7 +523,7 @@ export const WorksheetBuilder = ({
     );
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const hasSec = worksheet.some(q => ((q as any)._sectionIdx ?? 0) > 0);
+    const hasSec = worksheet.some(q => ((q as any)._sectionIdx ?? 0) > 0 || !!(q as any)._sectionHeader);
     if (!hasSec) {
       return (
         <div ref={worksheetRef} className="bg-white rounded-xl shadow-lg p-6 mt-6">
@@ -653,9 +546,12 @@ export const WorksheetBuilder = ({
         {segments.map((seg, si) => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const segCols = (seg.items[0]?.q as any)?._sectionCols ?? numColumns;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const segHeader = (seg.items[0]?.q as any)?._sectionHeader as string | undefined;
           return (
             <div key={si}>
               {si > 0 && <div style={{ width: "60%", margin: "1rem auto", borderTop: "1px solid #d1d5db" }} />}
+              {segHeader && <p className="text-lg font-semibold mb-2 mt-1" style={{ color: "#000" }}>{segHeader}</p>}
               <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${segCols}, 1fr)` }}>
                 {seg.items.map(({ q, idx }) => renderGridCell(q, idx))}
               </div>
@@ -669,10 +565,7 @@ export const WorksheetBuilder = ({
   return (
     <div className="bg-white rounded-xl shadow-lg mb-8">
       <div className="p-6">
-        <div className="flex gap-3" style={{ minHeight: 300 }}>
-          {renderGroupList()}
-          {renderOptionsPanel()}
-        </div>
+        {renderGroupList()}
         <div className="flex justify-center items-center gap-4 flex-wrap mt-4">
           <div className="flex rounded-lg border-2 border-gray-300 overflow-hidden">
             <button
@@ -688,15 +581,13 @@ export const WorksheetBuilder = ({
               Textbook
             </button>
           </div>
-          {layout === "grid" && (
-            <label className="flex items-center gap-2 cursor-pointer">
+          <label className={`flex items-center gap-2 cursor-pointer transition-opacity ${layout === "grid" ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
               <div onClick={() => setBorders(!borders)}
                 className={`w-9 h-5 rounded-full transition-colors relative ${borders ? "bg-blue-900" : "bg-gray-300"}`}>
                 <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${borders ? "translate-x-4" : "translate-x-0.5"}`} />
               </div>
               <span className="text-sm font-semibold text-gray-500">Borders</span>
             </label>
-          )}
           <span className="text-sm font-bold text-gray-600">
             {totalQuestions} questions total
           </span>
