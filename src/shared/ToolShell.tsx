@@ -607,103 +607,110 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     );
   };
 
+  const advancedToggle = (
+    <label className="flex items-center gap-2 cursor-pointer">
+      <div onClick={() => setWorksheetMode(worksheetMode === "advanced" ? "standard" : "advanced")}
+        className={`w-11 h-6 rounded-full transition-colors relative ${worksheetMode === "advanced" ? "bg-blue-900" : "bg-gray-300"}`}>
+        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${worksheetMode === "advanced" ? "translate-x-6" : "translate-x-1"}`} />
+      </div>
+      <span className="text-sm font-bold text-gray-500">Advanced</span>
+    </label>
+  );
+
   const renderControlBar = () => {
     if (mode === "worksheet") {
-      const isAdv = worksheetMode === "advanced";
+      // Standard mode only — advanced mode renders via the WorksheetBuilder header slot.
+      const bordersDisabled = worksheetLayout !== "grid";
       return (
-        <div className="bg-white rounded-xl shadow-lg mb-8">
-          <div className="flex items-center gap-3 px-6 pt-4 pb-0">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <div onClick={() => setWorksheetMode(isAdv ? "standard" : "advanced")}
-                className={`w-11 h-6 rounded-full transition-colors relative ${isAdv ? "bg-blue-900" : "bg-gray-300"}`}>
-                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${isAdv ? "translate-x-6" : "translate-x-1"}`} />
-              </div>
-              <span className="text-sm font-bold text-gray-500">Advanced</span>
-            </label>
+        <div className="bg-white rounded-xl shadow-lg border-2 border-gray-200 mb-6">
+          <div className="px-6 py-4 border-b-2 border-gray-200">
+            {advancedToggle}
           </div>
-
-          {!isAdv && (
-            <div className="p-6">
-              <div className="flex justify-center items-center gap-6 mb-4">
-                <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm">
-                  {(["level1", "level2", "level3"] as DifficultyLevel[]).map((val, i) => {
-                    const [label, col] = [["Level 1", "bg-green-600"], ["Level 2", "bg-yellow-500"], ["Level 3", "bg-red-600"]][i] as [string, string];
-                    const isLvDisabled = comingSoon.includes(val);
-                    return (
-                      <button key={val} onClick={() => { setDifficultyGuarded(val); setIsDifferentiated(false); }}
-                        className={`px-5 py-2 font-bold text-base transition-colors ${isLvDisabled ? "bg-gray-100 text-gray-300 cursor-not-allowed" : !isDifferentiated && difficulty === val ? `${col} text-white` : "bg-white text-gray-500 hover:bg-gray-50"}`}>
-                        {label}
-                      </button>
-                    );
-                  })}
-                </div>
-                {(() => { const diffDisabled = comingSoon.length > 0; return (
-                <button onClick={() => { if (!diffDisabled) setIsDifferentiated(!isDifferentiated); }}
-                  className={`px-6 py-2 rounded-xl font-bold text-base shadow-sm border-2 transition-colors ${diffDisabled ? "bg-gray-100 text-gray-300 border-gray-200 cursor-not-allowed" : isDifferentiated ? "bg-blue-900 text-white border-blue-900" : "bg-white text-gray-600 border-gray-300 hover:border-blue-900 hover:text-blue-900"}`}>
-                  Differentiated
-                </button>
-                ); })()}
-              </div>
-              <div className="flex justify-center items-center gap-6 mb-4">
-                {qoEl(isDifferentiated)}
-                {!defaults.fixedQuestions && (
-                  <div className="flex items-center gap-3">
-                    <label className="text-base font-semibold text-gray-700">Questions:</label>
-                    <input type="number" min="1" max="24" value={numQuestions}
-                      onChange={e => setNumQuestions(Math.max(1, Math.min(24, parseInt(e.target.value) || (defaults.numQuestions ?? 15))))}
-                      className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-base font-semibold text-center" />
-                  </div>
-                )}
-                {!defaults.fixedColumns && (
-                  <div className="flex items-center gap-3">
-                    <label className="text-base font-semibold text-gray-700">Columns:</label>
-                    <input type="number" min="1" max={defaults.maxColumns ?? 4} value={isDifferentiated ? 3 : numColumns}
-                      onChange={e => { if (!isDifferentiated) setNumColumns(Math.max(1, Math.min(defaults.maxColumns ?? 4, parseInt(e.target.value) || (defaults.numColumns ?? 3)))); }}
-                      disabled={isDifferentiated}
-                      className={`w-20 px-4 py-2 border-2 rounded-lg text-base font-semibold text-center transition-colors ${isDifferentiated ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed" : "border-gray-300 bg-white"}`} />
-                  </div>
-                )}
-                <div className="flex rounded-lg border-2 border-gray-300 overflow-hidden">
-                  <button onClick={() => setWorksheetLayout("grid")}
-                    className={`px-3 py-1.5 text-sm font-bold transition-colors ${worksheetLayout === "grid" ? "bg-blue-900 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
-                    Worksheet
-                  </button>
-                  <button onClick={() => setWorksheetLayout("list")}
-                    className={`px-3 py-1.5 text-sm font-bold transition-colors ${worksheetLayout === "list" ? "bg-blue-900 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
-                    Textbook
-                  </button>
-                </div>
-                <label className={`flex items-center gap-2 cursor-pointer transition-opacity ${worksheetLayout === "grid" ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
-                    <div onClick={() => setWorksheetBorders(!worksheetBorders)}
-                      className={`w-9 h-5 rounded-full transition-colors relative ${worksheetBorders ? "bg-blue-900" : "bg-gray-300"}`}>
-                      <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${worksheetBorders ? "translate-x-4" : "translate-x-0.5"}`} />
-                    </div>
-                    <span className="text-sm font-semibold text-gray-500">Borders</span>
-                  </label>
-              </div>
-              <div className="flex justify-center items-center gap-4">
-                <button onClick={handleGenerateWorksheet} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
-                  <RefreshCw size={18} /> Generate
-                </button>
-                {worksheet.length > 0 && (
-                  <>
-                    <button onClick={() => setShowWorksheetAnswers(!showWorksheetAnswers)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
-                      <Eye size={18} /> {showWorksheetAnswers ? "Hide Answers" : "Show Answers"}
+          <div className="p-6">
+            {/* Row 1: levels · QO · differentiated */}
+            <div className="flex justify-center items-center gap-6 mb-5">
+              <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm">
+                {(["level1", "level2", "level3"] as DifficultyLevel[]).map((val, i) => {
+                  const [label, col] = [["Level 1", "bg-green-600"], ["Level 2", "bg-yellow-500"], ["Level 3", "bg-red-600"]][i] as [string, string];
+                  const isLvDisabled = comingSoon.includes(val);
+                  return (
+                    <button key={val} onClick={() => { setDifficultyGuarded(val); setIsDifferentiated(false); }}
+                      className={`px-5 py-2 font-bold text-base transition-colors ${isLvDisabled ? "bg-gray-100 text-gray-300 cursor-not-allowed" : !isDifferentiated && difficulty === val ? `${col} text-white` : "bg-white text-gray-500 hover:bg-gray-50"}`}>
+                      {label}
                     </button>
-                    <PrintSplitButton
-                      onPrint={m => customPrintHandler
-                        ? customPrintHandler(worksheet, m, worksheetWrapRef.current, {
-                            toolName: config.tools[currentTool].name, difficulty, isDifferentiated,
-                            numColumns, instruction: getInstruction(), layout: worksheetLayout, showBorders: worksheetBorders,
-                          })
-                        : handlePrint(worksheet, config.tools[currentTool].name, difficulty, isDifferentiated, numColumns, getInstruction(), m, worksheetLayout, worksheetBorders)}
-                      printMode={printMode} setPrintMode={setPrintMode}
-                    />
-                  </>
-                )}
+                  );
+                })}
               </div>
+              {qoEl(isDifferentiated)}
+              {(() => { const diffDisabled = comingSoon.length > 0; return (
+              <button onClick={() => { if (!diffDisabled) setIsDifferentiated(!isDifferentiated); }}
+                className={`px-6 py-2 rounded-xl font-bold text-base shadow-sm border-2 transition-colors ${diffDisabled ? "bg-gray-100 text-gray-300 border-gray-200 cursor-not-allowed" : isDifferentiated ? "bg-blue-900 text-white border-blue-900" : "bg-white text-gray-600 border-gray-300 hover:border-blue-900 hover:text-blue-900"}`}>
+                Differentiated
+              </button>
+              ); })()}
             </div>
-          )}
+
+            {/* Row 2: worksheet design — questions · columns · layout · borders */}
+            <div className="flex justify-center items-center gap-6 mb-5 pt-5 border-t-2 border-gray-100">
+              {!defaults.fixedQuestions && (
+                <div className="flex items-center gap-3">
+                  <label className="text-base font-semibold text-gray-700">Questions:</label>
+                  <input type="number" min="1" max="24" value={numQuestions}
+                    onChange={e => setNumQuestions(Math.max(1, Math.min(24, parseInt(e.target.value) || (defaults.numQuestions ?? 15))))}
+                    className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-base font-semibold text-center" />
+                </div>
+              )}
+              {!defaults.fixedColumns && (
+                <div className="flex items-center gap-3">
+                  <label className="text-base font-semibold text-gray-700">Columns:</label>
+                  <input type="number" min="1" max={defaults.maxColumns ?? 4} value={isDifferentiated ? 3 : numColumns}
+                    onChange={e => { if (!isDifferentiated) setNumColumns(Math.max(1, Math.min(defaults.maxColumns ?? 4, parseInt(e.target.value) || (defaults.numColumns ?? 3)))); }}
+                    disabled={isDifferentiated}
+                    className={`w-20 px-4 py-2 border-2 rounded-lg text-base font-semibold text-center transition-colors ${isDifferentiated ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed" : "border-gray-300 bg-white"}`} />
+                </div>
+              )}
+              <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm">
+                <button onClick={() => setWorksheetLayout("grid")}
+                  className={`px-5 py-2 text-base font-bold transition-colors ${worksheetLayout === "grid" ? "bg-blue-900 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
+                  Worksheet
+                </button>
+                <button onClick={() => setWorksheetLayout("list")}
+                  className={`px-5 py-2 text-base font-bold transition-colors ${worksheetLayout === "list" ? "bg-blue-900 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
+                  Textbook
+                </button>
+              </div>
+              <label className={`flex items-center gap-2 ${bordersDisabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}`}>
+                <div onClick={() => { if (!bordersDisabled) setWorksheetBorders(!worksheetBorders); }}
+                  className={`w-9 h-5 rounded-full transition-colors relative ${worksheetBorders && !bordersDisabled ? "bg-blue-900" : "bg-gray-300"}`}>
+                  <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${worksheetBorders ? "translate-x-4" : "translate-x-0.5"}`} />
+                </div>
+                <span className="text-sm font-semibold text-gray-500">Borders</span>
+              </label>
+            </div>
+
+            {/* Row 3: actions — generate · answers · print */}
+            <div className="flex justify-center items-center gap-4">
+              <button onClick={handleGenerateWorksheet} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
+                <RefreshCw size={18} /> Generate
+              </button>
+              {worksheet.length > 0 && (
+                <>
+                  <button onClick={() => setShowWorksheetAnswers(!showWorksheetAnswers)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
+                    <Eye size={18} /> {showWorksheetAnswers ? "Hide Answers" : "Show Answers"}
+                  </button>
+                  <PrintSplitButton
+                    onPrint={m => customPrintHandler
+                      ? customPrintHandler(worksheet, m, worksheetWrapRef.current, {
+                          toolName: config.tools[currentTool].name, difficulty, isDifferentiated,
+                          numColumns, instruction: getInstruction(), layout: worksheetLayout, showBorders: worksheetBorders,
+                        })
+                      : handlePrint(worksheet, config.tools[currentTool].name, difficulty, isDifferentiated, numColumns, getInstruction(), m, worksheetLayout, worksheetBorders)}
+                    printMode={printMode} setPrintMode={setPrintMode}
+                  />
+                </>
+              )}
+            </div>
+          </div>
         </div>
       );
     }
@@ -1105,9 +1112,8 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               hideFontControls={hideFontControls}
             />
           )}
-          {mode === "worksheet" && <>
-            {renderControlBar()}
-            {worksheetMode === "advanced"
+          {mode === "worksheet" && (
+            worksheetMode === "advanced"
               ? <WorksheetBuilder
                   config={config}
                   generateQuestion={generateQuestion}
@@ -1116,9 +1122,13 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                   comingSoonLevels={comingSoon}
                   hideFontControls={hideFontControls}
                   lockedTool={currentTool}
+                  headerSlot={advancedToggle}
                 />
-              : <div ref={worksheetWrapRef}>{renderWorksheet()}</div>}
-          </>}
+              : <>
+                  {renderControlBar()}
+                  <div ref={worksheetWrapRef}>{renderWorksheet()}</div>
+                </>
+          )}
           {mode !== "worksheet" && mode !== "builder" && (
             <div className="flex flex-col gap-6">
               <div className="rounded-xl shadow-lg">
