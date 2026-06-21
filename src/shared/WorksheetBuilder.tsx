@@ -8,6 +8,7 @@ import type {
   QOSnapshot,
 } from "./types";
 import { normalizeMultiSelect, makeUniqueQ } from "./helpers";
+import { splitIntoSections, hasSections } from "./sections";
 import { MathRenderer, InlineMath } from "./components/MathRenderer";
 import { InlineQOPanel } from "./components/QOPopovers";
 import { PrintSplitButton } from "./components/PrintSplitButton";
@@ -517,9 +518,7 @@ export const WorksheetBuilder = ({
           </div>
         </div>
       );
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const hasSec = worksheet.some(q => ((q as any)._sectionIdx ?? 0) > 0 || !!(q as any)._sectionHeader);
-      if (!hasSec) {
+      if (!hasSections(worksheet)) {
         return (
           <div ref={worksheetRef} className="bg-white rounded-xl shadow-lg p-6 mt-6 relative">{fontSizeControls}
             <div style={{ display: "grid", gridTemplateColumns: `repeat(${numColumns}, 1fr)`, columnGap: "2rem" }}>
@@ -528,31 +527,17 @@ export const WorksheetBuilder = ({
           </div>
         );
       }
-      const segments: { items: { q: AnyQuestion; idx: number }[] }[] = [];
-      let curSec = -1;
-      worksheet.forEach((q, i) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const si = (q as any)._sectionIdx ?? 0;
-        if (si !== curSec) { segments.push({ items: [] }); curSec = si; }
-        segments[segments.length - 1].items.push({ q, idx: i });
-      });
       return (
         <div ref={worksheetRef} className="bg-white rounded-xl shadow-lg p-6 mt-6 relative">{fontSizeControls}
-          {segments.map((seg, si) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const segCols = (seg.items[0]?.q as any)?._sectionCols ?? numColumns;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const segHeader = (seg.items[0]?.q as any)?._sectionHeader as string | undefined;
-            return (
-              <div key={si}>
-                {si > 0 && <div style={{ width: "60%", margin: "0.5rem auto", borderTop: "1px solid #d1d5db" }} />}
-                {segHeader && <p className="text-lg font-semibold mb-1 mt-2" style={{ color: "#000" }}>{segHeader}</p>}
-                <div style={{ display: "grid", gridTemplateColumns: `repeat(${segCols}, 1fr)`, columnGap: "2rem" }}>
-                  {seg.items.map(({ q, idx }) => renderListItem(q, idx))}
-                </div>
+          {splitIntoSections(worksheet, numColumns).map((seg, si) => (
+            <div key={si}>
+              {si > 0 && <div style={{ width: "60%", margin: "0.5rem auto", borderTop: "1px solid #d1d5db" }} />}
+              {seg.header && <p className="text-lg font-semibold mb-1 mt-2" style={{ color: "#000" }}>{seg.header}</p>}
+              <div style={{ display: "grid", gridTemplateColumns: `repeat(${seg.cols}, 1fr)`, columnGap: "2rem" }}>
+                {seg.items.map(({ q, globalIdx }) => renderListItem(q, globalIdx))}
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       );
     }
@@ -607,9 +592,7 @@ export const WorksheetBuilder = ({
       </div>
     );
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const hasSec = worksheet.some(q => ((q as any)._sectionIdx ?? 0) > 0 || !!(q as any)._sectionHeader);
-    if (!hasSec) {
+    if (!hasSections(worksheet)) {
       return (
         <div ref={worksheetRef} className="bg-white rounded-xl shadow-lg p-6 mt-6 relative">{fontSizeControls}
           <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${numColumns}, 1fr)` }}>
@@ -618,31 +601,17 @@ export const WorksheetBuilder = ({
         </div>
       );
     }
-    const segments: { items: { q: AnyQuestion; idx: number }[] }[] = [];
-    let curSec = -1;
-    worksheet.forEach((q, i) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const si = (q as any)._sectionIdx ?? 0;
-      if (si !== curSec) { segments.push({ items: [] }); curSec = si; }
-      segments[segments.length - 1].items.push({ q, idx: i });
-    });
     return (
-      <div ref={worksheetRef} className="bg-white rounded-xl shadow-lg p-6 mt-6">
-        {segments.map((seg, si) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const segCols = (seg.items[0]?.q as any)?._sectionCols ?? numColumns;
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const segHeader = (seg.items[0]?.q as any)?._sectionHeader as string | undefined;
-          return (
-            <div key={si}>
-              {si > 0 && <div style={{ width: "60%", margin: "1rem auto", borderTop: "1px solid #d1d5db" }} />}
-              {segHeader && <p className="text-lg font-semibold mb-2 mt-1" style={{ color: "#000" }}>{segHeader}</p>}
-              <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${segCols}, 1fr)` }}>
-                {seg.items.map(({ q, idx }) => renderGridCell(q, idx))}
-              </div>
+      <div ref={worksheetRef} className="bg-white rounded-xl shadow-lg p-6 mt-6 relative">{fontSizeControls}
+        {splitIntoSections(worksheet, numColumns).map((seg, si) => (
+          <div key={si}>
+            {si > 0 && <div style={{ width: "60%", margin: "1rem auto", borderTop: "1px solid #d1d5db" }} />}
+            {seg.header && <p className="text-lg font-semibold mb-2 mt-1" style={{ color: "#000" }}>{seg.header}</p>}
+            <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${seg.cols}, 1fr)` }}>
+              {seg.items.map(({ q, globalIdx }) => renderGridCell(q, globalIdx))}
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
     );
   };
