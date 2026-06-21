@@ -19,6 +19,7 @@ export const handlePrint = (
   const HEADER_MM = 14;
   const GAP_MM    = 2;
   const DIV_MM    = 4;
+  const HDR_MM    = 6;
   const PAGE_H_MM = 297 - MARGIN_MM * 2;
   const PAGE_W_MM = 210 - MARGIN_MM * 2;
   const usableH_MM = PAGE_H_MM - HEADER_MM;
@@ -321,30 +322,33 @@ document.addEventListener("DOMContentLoaded", function() {
     var prevSI = -1;
     var secIC = 0;
     var secCV = cols;
+    var secHdr = '';
     for (var qi2 = 0; qi2 < qData.length; qi2++) {
       if (qData[qi2].sectionIdx !== prevSI) {
         if (prevSI >= 0) {
           secInfo.push({ idx: prevSI, count: secIC, cols: secCV,
-            rows: Math.ceil(secIC / secCV), needed: secNeeded[prevSI] || needed_mm });
+            rows: Math.ceil(secIC / secCV), needed: secNeeded[prevSI] || needed_mm, hasHeader: !!secHdr });
         }
         prevSI = qData[qi2].sectionIdx;
         secIC = 0;
         secCV = qData[qi2].sectionCols;
+        secHdr = qData[qi2].sectionHeader;
       }
       secIC++;
     }
     if (prevSI >= 0) {
       secInfo.push({ idx: prevSI, count: secIC, cols: secCV,
-        rows: Math.ceil(secIC / secCV), needed: secNeeded[prevSI] || needed_mm });
+        rows: Math.ceil(secIC / secCV), needed: secNeeded[prevSI] || needed_mm, hasHeader: !!secHdr });
     }
 
-    // Total minimum height: sum of (rows × needed + within-section gaps) + dividers
+    // Total minimum height: sum of (rows × needed + within-section gaps) + dividers + headers
     var totalMinH = 0;
     var totalSecRows = 0;
     for (var si2 = 0; si2 < secInfo.length; si2++) {
       var sec = secInfo[si2];
       totalMinH += sec.rows * sec.needed + (sec.rows - 1) * GAP_MM;
       if (si2 > 0) totalMinH += DIV_MM;
+      if (sec.hasHeader) totalMinH += ${HDR_MM};
       totalSecRows += sec.rows;
     }
 
@@ -551,6 +555,10 @@ document.addEventListener("DOMContentLoaded", function() {
       var usedH = 0;
       var prevSection = qData.length > 0 ? qData[0].sectionIdx : 0;
       var secColsInPage = 0;
+      var hdrMM = ${HDR_MM};
+
+      // Account for first section header
+      if (qData.length > 0 && qData[0].sectionHeader) usedH += hdrMM;
 
       for (var qi = 0; qi < qData.length; qi++) {
         var curSecH = sectionMinH[qData[qi].sectionIdx] || chosenH_mm;
@@ -562,12 +570,13 @@ document.addEventListener("DOMContentLoaded", function() {
             usedH += prevH + GAP_MM;
             secColsInPage = 0;
           }
-          if (usedH + DIV_MM + curSecH > usableH && curPage.length > 0) {
+          var divCost = DIV_MM + (qData[qi].sectionHeader ? hdrMM : 0);
+          if (usedH + divCost + curSecH > usableH && curPage.length > 0) {
             gridPages.push(curPage);
             curPage = [];
-            usedH = 0;
+            usedH = qData[qi].sectionHeader ? hdrMM : 0;
           } else {
-            usedH += DIV_MM;
+            usedH += divCost;
           }
           prevSection = qData[qi].sectionIdx;
         }
@@ -579,7 +588,8 @@ document.addEventListener("DOMContentLoaded", function() {
           if (qi + 1 < qData.length) {
             var nxtDiv = qData[qi + 1].sectionIdx !== qData[qi].sectionIdx;
             var nxtH = sectionMinH[qData[qi + 1].sectionIdx] || chosenH_mm;
-            var nxtNeed = nxtDiv ? DIV_MM + nxtH : nxtH;
+            var nxtHdr = nxtDiv && qData[qi + 1].sectionHeader ? hdrMM : 0;
+            var nxtNeed = (nxtDiv ? DIV_MM : 0) + nxtHdr + nxtH;
             if (usedH + nxtNeed > usableH) {
               gridPages.push(curPage);
               curPage = [];
