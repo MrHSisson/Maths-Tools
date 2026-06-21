@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { RefreshCw, Eye, X, ChevronDown } from "lucide-react";
+import { RefreshCw, Eye, X, ChevronDown, ChevronUp } from "lucide-react";
 import type {
   DifficultyLevel,
   AnyQuestion,
@@ -48,6 +48,7 @@ export interface WorksheetBuilderProps {
     worksheetEl: HTMLElement | null,
   ) => void;
   comingSoonLevels?: DifficultyLevel[];
+  hideFontControls?: boolean;
 }
 
 export const WorksheetBuilder = ({
@@ -56,6 +57,7 @@ export const WorksheetBuilder = ({
   questionRenderer,
   customPrintHandler,
   comingSoonLevels = [],
+  hideFontControls = false,
 }: WorksheetBuilderProps) => {
   const generateUniqueQ = makeUniqueQ(generateQuestion);
   const toolKeys = Object.keys(config.tools);
@@ -121,9 +123,14 @@ export const WorksheetBuilder = ({
   const [worksheet, setWorksheet] = useState<AnyQuestion[]>([]);
   const [showAnswers, setShowAnswers] = useState(false);
   const [printMode, setPrintMode] = useState<PrintMode>("both");
+  const [worksheetFontSize, setWorksheetFontSize] = useState(1);
   const worksheetRef = useRef<HTMLDivElement>(null);
 
   const totalQuestions = groups.reduce((s, g) => s + g.count, 0);
+
+  const fontSizes = ["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"];
+  const canFontIncrease = worksheetFontSize < fontSizes.length - 1;
+  const canFontDecrease = worksheetFontSize > 0;
 
   const computeSections = (
     gs: BuilderGroup[],
@@ -156,20 +163,22 @@ export const WorksheetBuilder = ({
           dropdownValue: g.dropdownValue,
           multiSelectValues: g.multiSelectValues,
         };
-        for (let i = 0; i < g.count; i++)
-          secQs.push(
-            stampQO(
-              generateUniqueQ(
-                g.tool,
-                g.level,
-                g.variables,
-                g.dropdownValue,
-                usedKeys,
-                g.multiSelectValues,
-              ),
-              snap,
+        for (let i = 0; i < g.count; i++) {
+          const q = stampQO(
+            generateUniqueQ(
+              g.tool,
+              g.level,
+              g.variables,
+              g.dropdownValue,
+              usedKeys,
+              g.multiSelectValues,
             ),
+            snap,
           );
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (q as any)._tool = g.tool;
+          secQs.push(q);
+        }
       });
       if (sectionShuffles[secIdx]) {
         for (let i = secQs.length - 1; i > 0; i--) {
@@ -189,6 +198,40 @@ export const WorksheetBuilder = ({
     });
     setWorksheet(questions);
     setShowAnswers(false);
+  };
+
+  const regenQuestion = (idx: number) => {
+    const q = worksheet[idx];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const anyQ = q as any;
+    const snap = anyQ._qo as QOSnapshot | undefined;
+    if (!snap) return;
+    const tool = (anyQ._tool as string | undefined) ?? toolKeys[0];
+    const existing = new Set(worksheet.map((w) => w.key));
+    existing.delete(q.key);
+    let replacement: AnyQuestion | null = null;
+    for (let attempt = 0; attempt < 100; attempt++) {
+      const candidate = generateQuestion(
+        tool,
+        snap.level,
+        snap.variables,
+        snap.dropdownValue,
+        snap.multiSelectValues,
+      );
+      if (!existing.has(candidate.key)) {
+        replacement = stampQO(candidate, snap);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (replacement as any)._tool = tool;
+        break;
+      }
+    }
+    if (!replacement) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const repl = replacement as any;
+    if (anyQ._sectionIdx !== undefined) repl._sectionIdx = anyQ._sectionIdx;
+    if (anyQ._sectionCols !== undefined) repl._sectionCols = anyQ._sectionCols;
+    if (anyQ._sectionHeader !== undefined) repl._sectionHeader = anyQ._sectionHeader;
+    setWorksheet((prev) => prev.map((w, i) => (i === idx ? replacement! : w)));
   };
 
   const updateGroup = (id: number, patch: Partial<BuilderGroup>) =>
@@ -398,17 +441,34 @@ export const WorksheetBuilder = ({
 
   const renderPreview = () => {
     if (worksheet.length === 0) return null;
-    const fsz = "text-xl";
+    const fsz = fontSizes[worksheetFontSize];
+    const fontSizeControls = hideFontControls ? null : (
+      <div className="flex items-center justify-end gap-1 mb-3">
+        <button disabled={!canFontDecrease} onClick={() => canFontDecrease && setWorksheetFontSize(f => f - 1)}
+          className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${canFontDecrease ? "bg-blue-900 text-white hover:bg-blue-800" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}><ChevronDown size={20} /></button>
+        <button disabled={!canFontIncrease} onClick={() => canFontIncrease && setWorksheetFontSize(f => f + 1)}
+          className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${canFontIncrease ? "bg-blue-900 text-white hover:bg-blue-800" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}><ChevronUp size={20} /></button>
+      </div>
+    );
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const regenBtn = (q: AnyQuestion, i: number) => (q as any)._qo ? (
+      <button onClick={() => regenQuestion(i)} title="Regenerate this question"
+        className="absolute top-1 right-1 w-6 h-6 rounded flex items-center justify-center text-gray-300 hover:text-blue-600 hover:bg-blue-50 transition-all opacity-0 group-hover:opacity-100"
+        style={{ zIndex: 10 }}>
+        <RefreshCw size={12} />
+      </button>
+    ) : null;
     if (layout === "list") {
       const renderListItem = (q: AnyQuestion, i: number) => (
         <div key={q.key + i}>
-          <div className="py-1 flex gap-2" style={{ breakInside: "avoid" }}>
+          <div className="group py-1 flex gap-2" style={{ breakInside: "avoid", position: "relative", paddingRight: "1.5rem" }}>
+            {regenBtn(q, i)}
             <span className="text-sm font-bold text-gray-400 w-6 text-right flex-shrink-0">
               {i + 1}.
             </span>
             <div className="flex-1">
               {questionRenderer ? (
-                questionRenderer(q, false, "default", true, i)
+                questionRenderer(q, false, "default", true, i, (q as any)._qo, fsz)
               ) : q.kind === "worded" ? (
                 <div className={`${fsz}`}>
                   {q.lines.map((line, li) => (
@@ -437,7 +497,7 @@ export const WorksheetBuilder = ({
       const hasSec = worksheet.some(q => ((q as any)._sectionIdx ?? 0) > 0 || !!(q as any)._sectionHeader);
       if (!hasSec) {
         return (
-          <div ref={worksheetRef} className="bg-white rounded-xl shadow-lg p-6 mt-6">
+          <div ref={worksheetRef} className="bg-white rounded-xl shadow-lg p-6 mt-6 relative">{fontSizeControls}
             <div style={{ display: "grid", gridTemplateColumns: `repeat(${numColumns}, 1fr)`, columnGap: "2rem" }}>
               {worksheet.map((q, i) => renderListItem(q, i))}
             </div>
@@ -453,7 +513,7 @@ export const WorksheetBuilder = ({
         segments[segments.length - 1].items.push({ q, idx: i });
       });
       return (
-        <div ref={worksheetRef} className="bg-white rounded-xl shadow-lg p-6 mt-6">
+        <div ref={worksheetRef} className="bg-white rounded-xl shadow-lg p-6 mt-6 relative">{fontSizeControls}
           {segments.map((seg, si) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const segCols = (seg.items[0]?.q as any)?._sectionCols ?? numColumns;
@@ -477,7 +537,7 @@ export const WorksheetBuilder = ({
     const renderGridCell = (q: AnyQuestion, i: number) => (
       <div key={q.key + i}>
         <div
-          className={borders ? "rounded-lg border border-gray-200 p-4 text-center" : "p-4 text-center"}
+          className={borders ? "group rounded-lg border border-gray-200 p-4 text-center" : "group p-4 text-center"}
           style={{
             ...(borders ? { backgroundColor: "#f5f3f0" } : {}),
             minHeight: 60,
@@ -487,8 +547,9 @@ export const WorksheetBuilder = ({
           <span className="text-xs font-bold text-gray-400" style={{ position: "absolute", top: 4, left: 6 }}>
             {i + 1}
           </span>
+          {regenBtn(q, i)}
           {questionRenderer ? (
-            questionRenderer(q, false, "default", true, i)
+            questionRenderer(q, false, "default", true, i, (q as any)._qo, fsz)
           ) : q.kind === "worded" ? (
             <div className={`${fsz}`}>
               {q.lines.map((line, li) => (
@@ -526,7 +587,7 @@ export const WorksheetBuilder = ({
     const hasSec = worksheet.some(q => ((q as any)._sectionIdx ?? 0) > 0 || !!(q as any)._sectionHeader);
     if (!hasSec) {
       return (
-        <div ref={worksheetRef} className="bg-white rounded-xl shadow-lg p-6 mt-6">
+        <div ref={worksheetRef} className="bg-white rounded-xl shadow-lg p-6 mt-6 relative">{fontSizeControls}
           <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${numColumns}, 1fr)` }}>
             {worksheet.map((q, i) => renderGridCell(q, i))}
           </div>

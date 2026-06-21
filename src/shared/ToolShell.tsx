@@ -1500,6 +1500,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               questionRenderer={questionRenderer}
               customPrintHandler={customPrintHandler}
               comingSoonLevels={comingSoon}
+              hideFontControls={hideFontControls}
             />
           )}
           {mode === "worksheet" && <>{renderControlBar()}<div ref={worksheetWrapRef}>{renderWorksheet()}</div></>}
