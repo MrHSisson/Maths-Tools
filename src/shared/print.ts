@@ -153,16 +153,22 @@ export const handlePrint = (
     return `${numHtml}<div class="qbody">${ansHtml}</div>`;
   };
 
+  // Only build the HTML each print mode actually renders: question-only print
+  // never shows answers, answer-only print never shows questions. The probe
+  // (above) renders its own question HTML for measurement regardless, so the
+  // layout is always sized to the question. "both" needs each side.
+  const needQ = pMode === "questions" || pMode === "both";
+  const needA = pMode === "answers" || pMode === "both";
   const qHtmlData = questions.map((q, i) => ({
-    q: layout === "list" ? listQuestionToHtml(q, i, false) : questionToHtml(q, i, false),
-    a: layout === "list" ? listAnswerOnlyToHtml(q, i) : answerOnlyToHtml(q, i),
+    q: needQ ? (layout === "list" ? listQuestionToHtml(q, i, false) : questionToHtml(q, i, false)) : "",
+    a: needA ? (layout === "list" ? listAnswerOnlyToHtml(q, i) : answerOnlyToHtml(q, i)) : "",
     difficulty: q.difficulty,
     sectionIdx: sectionIndices[i] ?? 0,
     sectionCols: sectionColsArr[i] ?? cols,
     sectionHeader: sectionHeadersArr[i] ?? "",
   }));
 
-  void (difficulty as unknown); void (instruction as unknown); void (pMode as unknown);
+  void (difficulty as unknown); void (instruction as unknown);
 
   const html = `<!DOCTYPE html>
 <html>
