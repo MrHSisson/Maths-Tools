@@ -348,6 +348,12 @@ document.addEventListener("DOMContentLoaded", function() {
       totalSecRows += sec.rows;
     }
 
+    // Store minimum needed heights for pagination budget checks
+    var sectionMinH = {};
+    for (var si4 = 0; si4 < secInfo.length; si4++) {
+      sectionMinH[secInfo[si4].idx] = secInfo[si4].needed;
+      sectionCellH[secInfo[si4].idx] = secInfo[si4].needed;
+    }
     if (totalMinH <= usableH) {
       // Fits on one page — distribute remaining space proportionally by row count
       var extraH = usableH - totalMinH;
@@ -358,10 +364,6 @@ document.addEventListener("DOMContentLoaded", function() {
       }
       rowsPerPage = totalSecRows;
     } else {
-      // Doesn't fit on one page — use minimum needed per section
-      for (var si4 = 0; si4 < secInfo.length; si4++) {
-        sectionCellH[secInfo[si4].idx] = secInfo[si4].needed;
-      }
       // rowsPerPage for fallback pagination
       for (var r3 = 0; r3 < rowHeights.length; r3++) {
         if (rowHeights[r3] >= needed_mm) { chosenH_mm = rowHeights[r3]; rowsPerPage = r3 + 1; }
@@ -551,12 +553,12 @@ document.addEventListener("DOMContentLoaded", function() {
       var secColsInPage = 0;
 
       for (var qi = 0; qi < qData.length; qi++) {
-        var curSecH = sectionCellH[qData[qi].sectionIdx] || chosenH_mm;
+        var curSecH = sectionMinH[qData[qi].sectionIdx] || chosenH_mm;
         var curSecCols = qData[qi].sectionCols;
         var needsDivider = qi > 0 && qData[qi].sectionIdx !== prevSection;
         if (needsDivider) {
           if (secColsInPage > 0) {
-            var prevH = sectionCellH[prevSection] || chosenH_mm;
+            var prevH = sectionMinH[prevSection] || chosenH_mm;
             usedH += prevH + GAP_MM;
             secColsInPage = 0;
           }
@@ -576,7 +578,7 @@ document.addEventListener("DOMContentLoaded", function() {
           secColsInPage = 0;
           if (qi + 1 < qData.length) {
             var nxtDiv = qData[qi + 1].sectionIdx !== qData[qi].sectionIdx;
-            var nxtH = sectionCellH[qData[qi + 1].sectionIdx] || chosenH_mm;
+            var nxtH = sectionMinH[qData[qi + 1].sectionIdx] || chosenH_mm;
             var nxtNeed = nxtDiv ? DIV_MM + nxtH : nxtH;
             if (usedH + nxtNeed > usableH) {
               gridPages.push(curPage);
