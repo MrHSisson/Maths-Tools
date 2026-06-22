@@ -38,6 +38,14 @@ const usableH_MM = PAGE_H_MM - HEADER_MM; // 259
 const diffHdrMM  = 7;
 const pxPerMm    = 3.7795;
 
+// Chrome added around the diagram inside a cell (padding + answer line),
+// matching the engine's per-cell allowance (PAD*2 + 6).
+const CHROME_MM = PAD_MM * 2 + 6;
+// Density floor: pagination never demands more than this per diagram row, so a
+// page packs ~5 rows like the old fixed grid. Cells still grow back toward the
+// full column width when there are few questions (capped per segment below).
+const DENSITY_FLOOR_MM = 40;
+
 const makeCellW = (c: number) => (PAGE_W_MM - GAP_MM * (c - 1)) / c;
 
 const esc = (s: string) =>
@@ -63,12 +71,16 @@ export const handleDiagramPrint = (
   if (hasSections) isDiff = false;
   const cols = isDiff ? 3 : ctx.numColumns;
 
-  // Synthetic per-question heights: the diagram's natural (square-ish) box at
-  // its column width. The engine adds the standard cell chrome (number, answer
-  // line, padding) on top, exactly as it does for measured text.
+  // Synthetic per-question heights drive pagination. A diagram's *natural* box is
+  // its column width (height = width / aspect), but we cap the value fed to the
+  // engine at the density floor so the page stays dense (~5 rows) rather than
+  // fitting only a few huge squares. Cells are grown back toward natural size at
+  // render time (see the per-segment cap), so few-question sheets still get big
+  // diagrams without floating in whitespace.
   const heightsPx = questions.map((_, i) => {
     const secCols = isDiff ? 3 : sectionColsArr[i];
-    return (makeCellW(secCols) / aspects[i]) * pxPerMm;
+    const naturalH = makeCellW(secCols) / aspects[i];
+    return Math.min(naturalH, DENSITY_FLOOR_MM) * pxPerMm;
   });
 
   const plan = computeWorksheetLayout({
@@ -122,9 +134,12 @@ export const handleDiagramPrint = (
       else if (header) out += `<div class="section-header">${esc(header)}</div>`;
       const segCols = sectionColsArr[seg[0]];
       const segCW = makeCellW(segCols);
-      // Natural (un-inflated) height so square diagrams render at full column
-      // width instead of floating in stretched, page-filling cells.
-      const segH = plan.sectionMinH[sectionIdx[seg[0]]] ?? plan.needed_mm;
+      // Fill the page (engine's page-filling height) but never exceed the
+      // tallest natural diagram in the segment — so few-question pages grow the
+      // diagrams up to the column width instead of stretching past it.
+      const segNaturalH = segCW / Math.min(...seg.map(qi => aspects[qi]));
+      const fillingH = plan.sectionCellH[sectionIdx[seg[0]]] ?? plan.chosenH_mm;
+      const segH = Math.min(fillingH, segNaturalH + CHROME_MM);
       const cells = seg.map(qi => cellHtml(qi, qi + 1, showAns, segCW, segH)).join("");
       out += `<div class="grid" style="grid-template-columns:repeat(${segCols},${segCW}mm);grid-auto-rows:${segH}mm;">${cells}</div>`;
     });
@@ -138,7 +153,9 @@ export const handleDiagramPrint = (
   const lvls: ("level1" | "level2" | "level3")[] = ["level1", "level2", "level3"];
   const diffPage = (p: number, tp: number, showAns: boolean): string => {
     const cW = makeCellW(3);
-    const cH = plan.needed_mm; // natural height — diagrams render at column width
+    // Fill the column but cap at the natural diagram size (see gridPage).
+    const natH = cW / Math.min(...aspects);
+    const cH = Math.min(plan.diffCellH_mm, natH + CHROME_MM);
     const offsets: Record<string, number> = {};
     let run = 0;
     for (const lv of lvls) { offsets[lv] = run; run += questions.filter(q => q.difficulty === lv).length; }

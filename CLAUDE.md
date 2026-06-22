@@ -658,22 +658,26 @@ import { ToolShell, handleDiagramPrint } from "../../shared";
 ```
 
 How it works: a diagram has no measured height — only an aspect ratio — so
-`handleDiagramPrint` *derives* each cell height from the chosen column width
-(`cellHeight = columnWidth ÷ aspect`, aspect defaults to 1 for square diagrams),
-feeds those synthetic heights to the same unit-tested `computeWorksheetLayout`
-engine the text path uses, and renders the planned pages. Everything is computed
-app-side and written as static HTML — no probe, no measurement round-trip.
+`handleDiagramPrint` *derives* a synthetic cell height from the column width and
+feeds it to the same unit-tested `computeWorksheetLayout` engine the text path
+uses. The fed height is capped at a **density floor** (~40 mm) so a page packs
+~5 rows (matching the old fixed grid) rather than a few oversized squares; at
+render time each cell is grown back toward the full column width, but never past
+it, so few-question sheets still get big diagrams without floating in whitespace.
+Everything is computed app-side and written as static HTML — no probe, no
+measurement round-trip.
 
 This means SVG worksheets get, for free and with no per-tool code:
-- **Variable columns = diagram size** — fewer columns → bigger diagrams, more →
-  smaller/denser. Expose it by *not* setting `fixedColumns` (use `maxColumns` to
-  cap, default columns via `numColumns`).
+- **Variable columns = density/size** — more columns → more per row (denser),
+  fewer columns → wider cells and bigger diagrams. Expose it by *not* setting
+  `fixedColumns` (use `maxColumns` to cap, default columns via `numColumns`).
 - **Sections** (advanced worksheets) — per-section columns, headers, dividers.
 - **Differentiated** three-column layout and **arbitrary question counts** that
   flow across pages.
 
-The old fixed **3×5 = 15** preset is gone. Diagrams render at their natural
-square size (top-aligned), not stretched to fill the page.
+The old fixed **3×5 = 15** preset is gone, but the density it gave is preserved:
+15 questions in 3 columns still fit one page, while pages with only a few
+diagrams now render them larger.
 
 **Requirements on the tool:** the worksheet `questionRenderer` must emit an
 `<svg data-q-index={idx}>` (see SVG element requirements above) so the handler can
