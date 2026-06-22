@@ -12,10 +12,12 @@ export const PrintSplitButton = ({
   onPrint,
   printMode,
   setPrintMode,
+  compact,
 }: {
   onPrint: (mode: PrintMode) => void;
   printMode: PrintMode;
   setPrintMode: (m: PrintMode) => void;
+  compact?: boolean;
 }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -32,17 +34,17 @@ export const PrintSplitButton = ({
 
   return (
     <div className="relative flex-shrink-0" ref={ref}>
-      <div className="flex rounded-xl overflow-hidden shadow-sm" style={{ border: "none" }}>
+      <div className={`flex ${compact ? "rounded-lg" : "rounded-xl"} overflow-hidden shadow-sm`} style={{ border: "none" }}>
         <button
           onClick={() => onPrint(printMode)}
-          className="px-5 py-2 bg-green-700 text-white font-bold text-base hover:bg-green-800 flex items-center gap-2 transition-colors"
+          className={`${compact ? "px-3 py-1.5 font-semibold text-sm gap-1.5" : "px-5 py-2 font-bold text-base gap-2"} bg-green-700 text-white hover:bg-green-800 flex items-center transition-colors`}
         >
-          <Printer size={18} /> {PRINT_MODE_LABELS[printMode]}
+          <Printer size={compact ? 14 : 18} /> {PRINT_MODE_LABELS[printMode]}
         </button>
         <div style={{ width: "1px", backgroundColor: "rgba(255,255,255,0.3)", flexShrink: 0 }} />
         <button
           onClick={() => setOpen(o => !o)}
-          className="px-2.5 py-2 bg-green-700 text-white hover:bg-green-800 flex items-center transition-colors"
+          className={`${compact ? "px-2 py-1.5" : "px-2.5 py-2"} bg-green-700 text-white hover:bg-green-800 flex items-center transition-colors`}
         >
           <ChevronDown size={16} style={{ transition: "transform 0.15s", transform: open ? "rotate(180deg)" : "rotate(0)" }} />
         </button>

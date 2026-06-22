@@ -1,5 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback, type ReactNode } from "react";
-import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, LayoutGrid } from "lucide-react";
+import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, LayoutGrid, Settings } from "lucide-react";
 import type { DifficultyLevel, AnyQuestion, WorkingStep, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
 import { LV_COLORS, getQuestionBg, getStepBg } from "./colors";
 import { normalizeMultiSelect, ansEq, makeUniqueQ } from "./helpers";
@@ -267,6 +267,8 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const [currentCamId, setCurrentCamId] = useState<string | null>(null);
   const [camError, setCamError] = useState<string | null>(null);
   const [camDropdownOpen, setCamDropdownOpen] = useState(false);
+  const [showDesignMenu, setShowDesignMenu] = useState(false);
+  const designMenuRef = useRef<HTMLDivElement>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -278,6 +280,15 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const splitContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { loadKaTeX(); }, []);
+
+  useEffect(() => {
+    if (!showDesignMenu) return;
+    const handler = (e: MouseEvent) => {
+      if (designMenuRef.current && !designMenuRef.current.contains(e.target as Node)) setShowDesignMenu(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showDesignMenu]);
 
   const stopStream = useCallback(() => {
     if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null; }
@@ -619,23 +630,19 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
 
   const renderControlBar = () => {
     if (mode === "worksheet") {
-      // Standard mode only — advanced mode renders via the WorksheetBuilder header slot.
       const bordersDisabled = worksheetLayout !== "grid";
       return (
-        <div className="bg-white rounded-xl shadow-lg border-2 border-gray-200 mb-6">
-          <div className="px-6 py-4 border-b-2 border-gray-200">
-            {advancedToggle}
-          </div>
-          <div className="p-6">
-            {/* Row 1: levels · QO · differentiated */}
-            <div className="flex justify-center items-center gap-6 mb-5">
-              <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm">
+        <div className="bg-white rounded-lg shadow-md border border-gray-200 mb-4 px-4 py-2.5">
+          <div className="flex items-center justify-between gap-3">
+            {/* Left: levels · QO · differentiated */}
+            <div className="flex items-center gap-3">
+              <div className="flex rounded-lg border border-gray-300 overflow-hidden">
                 {(["level1", "level2", "level3"] as DifficultyLevel[]).map((val, i) => {
-                  const [label, col] = [["Level 1", "bg-green-600"], ["Level 2", "bg-yellow-500"], ["Level 3", "bg-red-600"]][i] as [string, string];
+                  const [label, col] = [["L1", "bg-green-600"], ["L2", "bg-yellow-500"], ["L3", "bg-red-600"]][i] as [string, string];
                   const isLvDisabled = comingSoon.includes(val);
                   return (
                     <button key={val} onClick={() => { setDifficultyGuarded(val); setIsDifferentiated(false); }}
-                      className={`px-5 py-2 font-bold text-base transition-colors ${isLvDisabled ? "bg-gray-100 text-gray-300 cursor-not-allowed" : !isDifferentiated && difficulty === val ? `${col} text-white` : "bg-white text-gray-500 hover:bg-gray-50"}`}>
+                      className={`px-3 py-1.5 font-semibold text-sm transition-colors ${isLvDisabled ? "bg-gray-100 text-gray-300 cursor-not-allowed" : !isDifferentiated && difficulty === val ? `${col} text-white` : "bg-white text-gray-500 hover:bg-gray-50"}`}>
                       {label}
                     </button>
                   );
@@ -644,61 +651,23 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               {qoEl(isDifferentiated)}
               {(() => { const diffDisabled = comingSoon.length > 0; return (
               <button onClick={() => { if (!diffDisabled) setIsDifferentiated(!isDifferentiated); }}
-                className={`px-6 py-2 rounded-xl font-bold text-base shadow-sm border-2 transition-colors ${diffDisabled ? "bg-gray-100 text-gray-300 border-gray-200 cursor-not-allowed" : isDifferentiated ? "bg-blue-900 text-white border-blue-900" : "bg-white text-gray-600 border-gray-300 hover:border-blue-900 hover:text-blue-900"}`}>
-                Differentiated
+                className={`px-3 py-1.5 rounded-lg font-semibold text-sm border transition-colors ${diffDisabled ? "bg-gray-100 text-gray-300 border-gray-200 cursor-not-allowed" : isDifferentiated ? "bg-blue-900 text-white border-blue-900" : "bg-white text-gray-500 border-gray-300 hover:border-blue-900 hover:text-blue-900"}`}>
+                Diff
               </button>
               ); })()}
             </div>
 
-            {/* Row 2: worksheet design — questions · columns · layout · borders */}
-            <div className="flex justify-center items-center gap-6 mb-5 pt-5 border-t-2 border-gray-100">
-              {!defaults.fixedQuestions && (
-                <div className="flex items-center gap-3">
-                  <label className="text-base font-semibold text-gray-700">Questions:</label>
-                  <input type="number" min="1" max="24" value={numQuestions}
-                    onChange={e => setNumQuestions(Math.max(1, Math.min(24, parseInt(e.target.value) || (defaults.numQuestions ?? 15))))}
-                    className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-base font-semibold text-center" />
-                </div>
-              )}
-              {!defaults.fixedColumns && (
-                <div className="flex items-center gap-3">
-                  <label className="text-base font-semibold text-gray-700">Columns:</label>
-                  <input type="number" min="1" max={defaults.maxColumns ?? 4} value={isDifferentiated ? 3 : numColumns}
-                    onChange={e => { if (!isDifferentiated) setNumColumns(Math.max(1, Math.min(defaults.maxColumns ?? 4, parseInt(e.target.value) || (defaults.numColumns ?? 3)))); }}
-                    disabled={isDifferentiated}
-                    className={`w-20 px-4 py-2 border-2 rounded-lg text-base font-semibold text-center transition-colors ${isDifferentiated ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed" : "border-gray-300 bg-white"}`} />
-                </div>
-              )}
-              <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm">
-                <button onClick={() => setWorksheetLayout("grid")}
-                  className={`px-5 py-2 text-base font-bold transition-colors ${worksheetLayout === "grid" ? "bg-blue-900 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
-                  Worksheet
-                </button>
-                <button onClick={() => setWorksheetLayout("list")}
-                  className={`px-5 py-2 text-base font-bold transition-colors ${worksheetLayout === "list" ? "bg-blue-900 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
-                  Textbook
-                </button>
-              </div>
-              <label className={`flex items-center gap-2 ${bordersDisabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}`}>
-                <div onClick={() => { if (!bordersDisabled) setWorksheetBorders(!worksheetBorders); }}
-                  className={`w-9 h-5 rounded-full transition-colors relative ${worksheetBorders && !bordersDisabled ? "bg-blue-900" : "bg-gray-300"}`}>
-                  <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${worksheetBorders ? "translate-x-4" : "translate-x-0.5"}`} />
-                </div>
-                <span className="text-sm font-semibold text-gray-500">Borders</span>
-              </label>
-            </div>
-
-            {/* Row 3: actions — generate · answers · print */}
-            <div className="flex justify-center items-center gap-4">
-              <button onClick={handleGenerateWorksheet} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
-                <RefreshCw size={18} /> Generate
+            {/* Right: actions · design menu */}
+            <div className="flex items-center gap-2">
+              <button onClick={handleGenerateWorksheet} className="px-4 py-1.5 bg-blue-900 text-white rounded-lg font-semibold text-sm hover:bg-blue-800 flex items-center gap-1.5">
+                <RefreshCw size={14} /> Generate
               </button>
               {worksheet.length > 0 && (
                 <>
-                  <button onClick={() => setShowWorksheetAnswers(!showWorksheetAnswers)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
-                    <Eye size={18} /> {showWorksheetAnswers ? "Hide Answers" : "Show Answers"}
+                  <button onClick={() => setShowWorksheetAnswers(!showWorksheetAnswers)} className="px-4 py-1.5 bg-blue-900 text-white rounded-lg font-semibold text-sm hover:bg-blue-800 flex items-center gap-1.5">
+                    <Eye size={14} /> {showWorksheetAnswers ? "Hide" : "Answers"}
                   </button>
-                  <PrintSplitButton
+                  <PrintSplitButton compact
                     onPrint={m => customPrintHandler
                       ? customPrintHandler(worksheet, m, worksheetWrapRef.current, {
                           toolName: config.tools[currentTool].name, difficulty, isDifferentiated,
@@ -709,6 +678,62 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                   />
                 </>
               )}
+              {/* Design settings popover */}
+              <div className="relative" ref={designMenuRef}>
+                <button onClick={() => setShowDesignMenu(!showDesignMenu)}
+                  className={`p-1.5 rounded-lg transition-colors ${showDesignMenu ? "bg-blue-900 text-white" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"}`}
+                  title="Design settings">
+                  <Settings size={18} />
+                </button>
+                {showDesignMenu && (
+                  <div className="absolute right-0 top-full mt-2 bg-white rounded-lg shadow-xl border border-gray-200 p-4 z-50 w-64">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-600">Advanced</span>
+                        {advancedToggle}
+                      </div>
+                      <div className="border-t border-gray-100" />
+                      {!defaults.fixedQuestions && (
+                        <div className="flex items-center justify-between">
+                          <label className="text-sm font-medium text-gray-600">Questions</label>
+                          <input type="number" min="1" max="24" value={numQuestions}
+                            onChange={e => setNumQuestions(Math.max(1, Math.min(24, parseInt(e.target.value) || (defaults.numQuestions ?? 15))))}
+                            className="w-16 px-2 py-1 border border-gray-300 rounded text-sm font-semibold text-center" />
+                        </div>
+                      )}
+                      {!defaults.fixedColumns && (
+                        <div className="flex items-center justify-between">
+                          <label className="text-sm font-medium text-gray-600">Columns</label>
+                          <input type="number" min="1" max={defaults.maxColumns ?? 4} value={isDifferentiated ? 3 : numColumns}
+                            onChange={e => { if (!isDifferentiated) setNumColumns(Math.max(1, Math.min(defaults.maxColumns ?? 4, parseInt(e.target.value) || (defaults.numColumns ?? 3)))); }}
+                            disabled={isDifferentiated}
+                            className={`w-16 px-2 py-1 border rounded text-sm font-semibold text-center transition-colors ${isDifferentiated ? "border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed" : "border-gray-300 bg-white"}`} />
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium text-gray-600">Layout</label>
+                        <div className="flex rounded-md border border-gray-300 overflow-hidden">
+                          <button onClick={() => setWorksheetLayout("grid")}
+                            className={`px-3 py-1 text-xs font-semibold transition-colors ${worksheetLayout === "grid" ? "bg-blue-900 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
+                            Grid
+                          </button>
+                          <button onClick={() => setWorksheetLayout("list")}
+                            className={`px-3 py-1 text-xs font-semibold transition-colors ${worksheetLayout === "list" ? "bg-blue-900 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
+                            List
+                          </button>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <label className={`text-sm font-medium ${bordersDisabled ? "text-gray-400" : "text-gray-600"}`}>Borders</label>
+                        <div onClick={() => { if (!bordersDisabled) setWorksheetBorders(!worksheetBorders); }}
+                          className={`w-8 h-[18px] rounded-full transition-colors relative ${bordersDisabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer"} ${worksheetBorders && !bordersDisabled ? "bg-blue-900" : "bg-gray-300"}`}>
+                          <div className={`absolute top-[2px] w-3.5 h-3.5 bg-white rounded-full shadow transition-transform ${worksheetBorders ? "translate-x-[14px]" : "translate-x-[2px]"}`} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -957,8 +982,8 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
 
   const renderWorksheet = () => {
     if (worksheet.length === 0) return (
-      <div className="rounded-xl shadow-2xl p-8 text-center" style={{ backgroundColor: qBg }}>
-        <span className="text-2xl text-gray-400">Generate worksheet</span>
+      <div className="rounded-lg shadow-lg p-6 text-center" style={{ backgroundColor: qBg }}>
+        <span className="text-lg text-gray-400">Generate worksheet</span>
       </div>
     );
     const fontSizeControls = hideFontControls ? null : (
@@ -971,16 +996,16 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     );
     const toolTitle = config.tools[currentTool].name;
     if (isDifferentiated) return (
-      <div className="rounded-xl shadow-2xl p-8 relative" style={{ backgroundColor: qBg }}>
+      <div className="rounded-lg shadow-lg p-5 relative" style={{ backgroundColor: qBg }}>
         {fontSizeControls}
-        <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
-        <div className="grid grid-cols-3 gap-4" style={{ alignItems: "start" }}>
+        <h2 className="text-xl font-bold text-center mb-4" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
+        <div className="grid grid-cols-3 gap-3" style={{ alignItems: "start" }}>
           {(["level1", "level2", "level3"] as DifficultyLevel[]).map((lv, li) => {
             const lqs = worksheet.filter(q => q.difficulty === lv);
             const c = LV_COLORS[lv];
             return (
-              <div key={lv} className={`${c.bg} border-2 ${c.border} rounded-xl p-4`}>
-                <h3 className={`text-xl font-bold mb-4 text-center ${c.text}`}>Level {li + 1}</h3>
+              <div key={lv} className={`${c.bg} border ${c.border} rounded-lg p-3`}>
+                <h3 className={`text-base font-bold mb-3 text-center ${c.text}`}>Level {li + 1}</h3>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr", gridAutoRows: "1fr", gap: "0.75rem" }}>
                   {lqs.map((q, idx) => <div key={idx} style={{ minHeight: 0 }}>{renderQCell(q, idx, c.fill)}</div>)}
                 </div>
@@ -1029,9 +1054,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         );
       };
       return (
-        <div className="rounded-xl shadow-2xl p-8 relative" style={{ backgroundColor: qBg }}>
+        <div className="rounded-lg shadow-lg p-5 relative" style={{ backgroundColor: qBg }}>
           {fontSizeControls}
-          <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
+          <h2 className="text-xl font-bold text-center mb-4" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
           <div style={{ display: "grid", gridTemplateColumns: `repeat(${numColumns}, 1fr)`, columnGap: "1.5rem" }}>
             {worksheet.map((q, idx) => renderListItem(q, idx))}
           </div>
@@ -1039,9 +1064,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       );
     }
     return (
-      <div className="rounded-xl shadow-2xl p-8 relative" style={{ backgroundColor: qBg }}>
+      <div className="rounded-lg shadow-lg p-5 relative" style={{ backgroundColor: qBg }}>
         {fontSizeControls}
-        <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
+        <h2 className="text-xl font-bold text-center mb-4" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
         <div style={{ display: "grid", gridTemplateColumns: `repeat(${numColumns},1fr)`, gap: "1rem" }}>
           {worksheet.map((q, idx) => <div key={idx}>{renderQCell(q, idx)}</div>)}
         </div>
@@ -1051,19 +1076,19 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
 
   return (
     <>
-      <div className="bg-blue-900 shadow-lg">
-        <div className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
-          <button onClick={() => { window.location.href = "/"; }} className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors">
-            <Home size={24} /><span className="font-semibold text-lg">Home</span>
+      <div className="bg-blue-900 shadow-md">
+        <div className="max-w-[1400px] mx-auto px-5 py-2.5 flex justify-between items-center">
+          <button onClick={() => { window.location.href = "/"; }} className="flex items-center gap-1.5 text-white hover:bg-blue-800 px-3 py-1.5 rounded-lg transition-colors">
+            <Home size={20} /><span className="font-semibold text-sm">Home</span>
           </button>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <button onClick={() => { setMode(mode === "builder" ? "whiteboard" : "builder"); setPresenterMode(false); setWbFullscreen(false); }}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg font-semibold text-sm transition-colors ${mode === "builder" ? "bg-white text-blue-900" : "text-white hover:bg-blue-800"}`}>
-              <LayoutGrid size={18} /><span>Builder</span>
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-sm transition-colors ${mode === "builder" ? "bg-white text-blue-900" : "text-white hover:bg-blue-800"}`}>
+              <LayoutGrid size={16} /><span>Builder</span>
             </button>
             <div className="relative">
-              <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-white hover:bg-blue-800 p-2 rounded-lg transition-colors">
-                {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
+              <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-white hover:bg-blue-800 p-1.5 rounded-lg transition-colors">
+                {isMenuOpen ? <X size={22} /> : <Menu size={22} />}
               </button>
               {isMenuOpen && <MenuDropdown colorScheme={colorScheme} setColorScheme={setColorScheme} onClose={() => setIsMenuOpen(false)} onOpenInfo={() => setIsInfoOpen(true)} />}
             </div>
@@ -1071,30 +1096,26 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         </div>
       </div>
       {isInfoOpen && <InfoModal infoSections={infoSections} onClose={() => setIsInfoOpen(false)} />}
-      <div className="min-h-screen p-8" style={{ backgroundColor: "#f5f3f0" }}>
-        <div className="max-w-6xl mx-auto">
-          <h1 className="text-5xl font-bold text-center mb-8" style={{ color: "#000" }}>{config.pageTitle}</h1>
-          <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
+      <div className="min-h-screen p-5" style={{ backgroundColor: "#f5f3f0" }}>
+        <div className={`mx-auto ${mode === "worksheet" || mode === "builder" ? "max-w-[1400px]" : "max-w-6xl"}`}>
+          <h1 className="text-3xl font-bold text-center mb-3" style={{ color: "#000" }}>{config.pageTitle}</h1>
           {toolKeys.length > 1 && mode !== "builder" && (
-            <>
-              <div className="flex justify-center gap-4 mb-6">
-                {toolKeys.map(k => (
-                  <button key={k} onClick={() => { setCurrentTool(k); }}
-                    className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${currentTool === k ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
-                    {config.tools[k].name}
-                  </button>
-                ))}
-              </div>
-              <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
-            </>
+            <div className="flex justify-center gap-2 mb-3">
+              {toolKeys.map(k => (
+                <button key={k} onClick={() => { setCurrentTool(k); }}
+                  className={`px-5 py-2 rounded-lg font-semibold text-sm transition-all shadow-sm ${currentTool === k ? "bg-blue-900 text-white" : "bg-white text-gray-700 hover:bg-gray-100 hover:text-blue-900"}`}>
+                  {config.tools[k].name}
+                </button>
+              ))}
+            </div>
           )}
           {mode !== "builder" && (
-            <div className="flex justify-center gap-4 mb-8">
+            <div className="flex justify-center gap-2 mb-4">
               {(["whiteboard", "single", "worksheet"] as const).map((m, i) => {
                 const label = ["Whiteboard", "Worked Example", "Worksheet"][i];
                 return (
                   <button key={m} onClick={() => { setMode(m); setPresenterMode(false); setWbFullscreen(false); }}
-                    className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${mode === m ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
+                    className={`px-5 py-2 rounded-lg font-semibold text-sm transition-all shadow-sm ${mode === m ? "bg-blue-900 text-white" : "bg-white text-gray-700 hover:bg-gray-100 hover:text-blue-900"}`}>
                     {label}
                   </button>
                 );
@@ -1130,11 +1151,11 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                 </>
           )}
           {mode !== "worksheet" && mode !== "builder" && (
-            <div className="flex flex-col gap-6">
-              <div className="rounded-xl shadow-lg">
+            <div className="flex flex-col gap-4">
+              <div className="rounded-lg shadow-md">
                 {renderControlBar()}
               </div>
-              <div className="rounded-xl shadow-lg overflow-hidden">
+              <div className="rounded-lg shadow-md overflow-hidden">
                 {mode === "whiteboard" && renderWhiteboard()}
                 {mode === "single" && renderWorkedExample()}
               </div>
