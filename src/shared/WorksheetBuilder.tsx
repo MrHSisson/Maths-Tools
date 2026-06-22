@@ -1,5 +1,6 @@
-import { useState, useRef } from "react";
-import { RefreshCw, Eye, X, ChevronDown } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import type { ReactNode } from "react";
+import { RefreshCw, Eye, X, ChevronDown, ChevronUp } from "lucide-react";
 import type {
   DifficultyLevel,
   AnyQuestion,
@@ -8,10 +9,12 @@ import type {
   QOSnapshot,
 } from "./types";
 import { normalizeMultiSelect, makeUniqueQ } from "./helpers";
+import { splitIntoSections, hasSections } from "./sections";
 import { MathRenderer, InlineMath } from "./components/MathRenderer";
 import { InlineQOPanel } from "./components/QOPopovers";
 import { PrintSplitButton } from "./components/PrintSplitButton";
 import { handlePrint } from "./print";
+import type { PrintContext } from "./printDiagram";
 import { ansEq } from "./helpers";
 
 interface BuilderGroup {
@@ -46,8 +49,18 @@ export interface WorksheetBuilderProps {
     questions: AnyQuestion[],
     printMode: PrintMode,
     worksheetEl: HTMLElement | null,
+    ctx: PrintContext,
   ) => void;
   comingSoonLevels?: DifficultyLevel[];
+  hideFontControls?: boolean;
+  /** When set, every group is locked to this single sub-tool and the per-group
+   *  sub-tool selector is hidden (used for the in-tool "Advanced" worksheet mode,
+   *  which must only draw from the current sub-tool). Omit for the cross-tool
+   *  Builder, where groups can mix sub-tools. */
+  lockedTool?: string;
+  /** Optional content rendered as a header row at the very top of the controls
+   *  card (used to host the in-tool "Advanced" toggle so it shares the card). */
+  headerSlot?: ReactNode;
 }
 
 export const WorksheetBuilder = ({
@@ -56,9 +69,15 @@ export const WorksheetBuilder = ({
   questionRenderer,
   customPrintHandler,
   comingSoonLevels = [],
+  hideFontControls = false,
+  lockedTool,
+  headerSlot,
 }: WorksheetBuilderProps) => {
   const generateUniqueQ = makeUniqueQ(generateQuestion);
-  const toolKeys = Object.keys(config.tools);
+  const allToolKeys = Object.keys(config.tools);
+  // When locked to a single sub-tool, the per-group selector is hidden and every
+  // group is forced to that tool.
+  const toolKeys = lockedTool ? [lockedTool] : allToolKeys;
 
   const makeDefaultGroup = (
     id: number,
@@ -121,9 +140,29 @@ export const WorksheetBuilder = ({
   const [worksheet, setWorksheet] = useState<AnyQuestion[]>([]);
   const [showAnswers, setShowAnswers] = useState(false);
   const [printMode, setPrintMode] = useState<PrintMode>("both");
+  const [worksheetFontSize, setWorksheetFontSize] = useState(1);
   const worksheetRef = useRef<HTMLDivElement>(null);
 
   const totalQuestions = groups.reduce((s, g) => s + g.count, 0);
+
+  const fontSizes = ["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"];
+  const canFontIncrease = worksheetFontSize < fontSizes.length - 1;
+  const canFontDecrease = worksheetFontSize > 0;
+
+  // If the locked sub-tool changes (the user switches the active sub-tool tab while
+  // in the in-tool Advanced mode), remap every group to the new tool — re-deriving
+  // its QO defaults while preserving the section structure and per-group counts —
+  // and clear the now-stale worksheet.
+  const prevLockedTool = useRef(lockedTool);
+  useEffect(() => {
+    if (!lockedTool || prevLockedTool.current === lockedTool) return;
+    prevLockedTool.current = lockedTool;
+    setGroups((gs) =>
+      gs.map((g) => ({ ...makeDefaultGroup(g.id, lockedTool, g.level), count: g.count })),
+    );
+    setWorksheet([]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lockedTool]);
 
   const computeSections = (
     gs: BuilderGroup[],
@@ -156,20 +195,22 @@ export const WorksheetBuilder = ({
           dropdownValue: g.dropdownValue,
           multiSelectValues: g.multiSelectValues,
         };
-        for (let i = 0; i < g.count; i++)
-          secQs.push(
-            stampQO(
-              generateUniqueQ(
-                g.tool,
-                g.level,
-                g.variables,
-                g.dropdownValue,
-                usedKeys,
-                g.multiSelectValues,
-              ),
-              snap,
+        for (let i = 0; i < g.count; i++) {
+          const q = stampQO(
+            generateUniqueQ(
+              g.tool,
+              g.level,
+              g.variables,
+              g.dropdownValue,
+              usedKeys,
+              g.multiSelectValues,
             ),
+            snap,
           );
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (q as any)._tool = g.tool;
+          secQs.push(q);
+        }
       });
       if (sectionShuffles[secIdx]) {
         for (let i = secQs.length - 1; i > 0; i--) {
@@ -189,6 +230,40 @@ export const WorksheetBuilder = ({
     });
     setWorksheet(questions);
     setShowAnswers(false);
+  };
+
+  const regenQuestion = (idx: number) => {
+    const q = worksheet[idx];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const anyQ = q as any;
+    const snap = anyQ._qo as QOSnapshot | undefined;
+    if (!snap) return;
+    const tool = (anyQ._tool as string | undefined) ?? toolKeys[0];
+    const existing = new Set(worksheet.map((w) => w.key));
+    existing.delete(q.key);
+    let replacement: AnyQuestion | null = null;
+    for (let attempt = 0; attempt < 100; attempt++) {
+      const candidate = generateQuestion(
+        tool,
+        snap.level,
+        snap.variables,
+        snap.dropdownValue,
+        snap.multiSelectValues,
+      );
+      if (!existing.has(candidate.key)) {
+        replacement = stampQO(candidate, snap);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (replacement as any)._tool = tool;
+        break;
+      }
+    }
+    if (!replacement) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const repl = replacement as any;
+    if (anyQ._sectionIdx !== undefined) repl._sectionIdx = anyQ._sectionIdx;
+    if (anyQ._sectionCols !== undefined) repl._sectionCols = anyQ._sectionCols;
+    if (anyQ._sectionHeader !== undefined) repl._sectionHeader = anyQ._sectionHeader;
+    setWorksheet((prev) => prev.map((w, i) => (i === idx ? replacement! : w)));
   };
 
   const updateGroup = (id: number, patch: Partial<BuilderGroup>) =>
@@ -228,11 +303,11 @@ export const WorksheetBuilder = ({
   const renderGroupList = () => {
     let globalIdx = 0;
     return (
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-5">
         {sections.map((secGroups, secIdx) => (
-          <div key={secIdx} className="rounded-xl border border-gray-200 overflow-hidden" style={{ backgroundColor: "#fff" }}>
+          <div key={secIdx} className="rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm" style={{ backgroundColor: "#fff" }}>
             {/* Section header */}
-            <div className="flex items-center gap-3 px-5 py-3" style={{ backgroundColor: "#f8f9fa", borderBottom: "1px solid #e5e7eb" }}>
+            <div className="flex items-center gap-3 px-5 py-3" style={{ backgroundColor: "#eef2f7", borderBottom: "2px solid #cbd5e1" }}>
               <span className="text-xs font-bold text-gray-400 uppercase tracking-wider flex-shrink-0">Section {secIdx + 1}</span>
               <div className="h-4 w-px bg-gray-300" />
               <input
@@ -270,7 +345,7 @@ export const WorksheetBuilder = ({
             </div>
 
             {/* Group rows */}
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y-2 divide-gray-100">
               {secGroups.map((g) => {
                 const idx = globalIdx++;
                 const isSel = g.id === selectedId;
@@ -355,7 +430,7 @@ export const WorksheetBuilder = ({
 
             {/* Add group within section */}
             {canAdd && (
-              <div className="px-5 py-2 border-t border-gray-100">
+              <div className="px-5 py-2 border-t-2 border-gray-100">
                 <button onClick={() => { const newId = nextId.current++;
                   const lastInSec = secGroups[secGroups.length - 1];
                   if (lastInSec) {
@@ -366,7 +441,7 @@ export const WorksheetBuilder = ({
                   }
                   setSelectedId(newId);
                 }}
-                  className="w-full py-1.5 text-xs font-semibold text-gray-300 hover:text-blue-600 transition-colors">
+                  className="w-full py-1.5 text-xs font-semibold text-gray-400 hover:text-blue-600 transition-colors">
                   + Add group
                 </button>
               </div>
@@ -387,7 +462,7 @@ export const WorksheetBuilder = ({
               setGroups(g => [...g, makeDefaultGroup(newId, lastTool)]);
               setSelectedId(newId);
             }}
-              className="flex-1 py-2.5 rounded-xl border-2 border-dashed border-gray-200 text-sm font-semibold text-gray-400 hover:border-blue-300 hover:text-blue-600 transition-colors">
+              className="flex-1 py-2.5 rounded-xl border-2 border-dashed border-gray-300 text-sm font-semibold text-gray-500 hover:border-blue-400 hover:text-blue-600 transition-colors">
               + Add section
             </button>
           )}
@@ -398,17 +473,34 @@ export const WorksheetBuilder = ({
 
   const renderPreview = () => {
     if (worksheet.length === 0) return null;
-    const fsz = "text-xl";
+    const fsz = fontSizes[worksheetFontSize];
+    const fontSizeControls = hideFontControls ? null : (
+      <div className="flex items-center justify-end gap-1 mb-3">
+        <button disabled={!canFontDecrease} onClick={() => canFontDecrease && setWorksheetFontSize(f => f - 1)}
+          className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${canFontDecrease ? "bg-blue-900 text-white hover:bg-blue-800" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}><ChevronDown size={20} /></button>
+        <button disabled={!canFontIncrease} onClick={() => canFontIncrease && setWorksheetFontSize(f => f + 1)}
+          className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${canFontIncrease ? "bg-blue-900 text-white hover:bg-blue-800" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}><ChevronUp size={20} /></button>
+      </div>
+    );
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const regenBtn = (q: AnyQuestion, i: number) => (q as any)._qo ? (
+      <button onClick={() => regenQuestion(i)} title="Regenerate this question"
+        className="absolute top-1 right-1 w-6 h-6 rounded flex items-center justify-center text-gray-300 hover:text-blue-600 hover:bg-blue-50 transition-all opacity-0 group-hover:opacity-100"
+        style={{ zIndex: 10 }}>
+        <RefreshCw size={12} />
+      </button>
+    ) : null;
     if (layout === "list") {
       const renderListItem = (q: AnyQuestion, i: number) => (
         <div key={q.key + i}>
-          <div className="py-1 flex gap-2" style={{ breakInside: "avoid" }}>
+          <div className="group py-1 flex gap-2" style={{ breakInside: "avoid", position: "relative", paddingRight: "1.5rem" }}>
+            {regenBtn(q, i)}
             <span className="text-sm font-bold text-gray-400 w-6 text-right flex-shrink-0">
               {i + 1}.
             </span>
             <div className="flex-1">
               {questionRenderer ? (
-                questionRenderer(q, false, "default", true, i)
+                questionRenderer(q, false, "default", true, i, (q as any)._qo, fsz)
               ) : q.kind === "worded" ? (
                 <div className={`${fsz}`}>
                   {q.lines.map((line, li) => (
@@ -433,42 +525,26 @@ export const WorksheetBuilder = ({
           </div>
         </div>
       );
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const hasSec = worksheet.some(q => ((q as any)._sectionIdx ?? 0) > 0 || !!(q as any)._sectionHeader);
-      if (!hasSec) {
+      if (!hasSections(worksheet)) {
         return (
-          <div ref={worksheetRef} className="bg-white rounded-xl shadow-lg p-6 mt-6">
+          <div ref={worksheetRef} className="bg-white rounded-xl shadow-lg p-6 mt-6 relative">{fontSizeControls}
             <div style={{ display: "grid", gridTemplateColumns: `repeat(${numColumns}, 1fr)`, columnGap: "2rem" }}>
               {worksheet.map((q, i) => renderListItem(q, i))}
             </div>
           </div>
         );
       }
-      const segments: { items: { q: AnyQuestion; idx: number }[] }[] = [];
-      let curSec = -1;
-      worksheet.forEach((q, i) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const si = (q as any)._sectionIdx ?? 0;
-        if (si !== curSec) { segments.push({ items: [] }); curSec = si; }
-        segments[segments.length - 1].items.push({ q, idx: i });
-      });
       return (
-        <div ref={worksheetRef} className="bg-white rounded-xl shadow-lg p-6 mt-6">
-          {segments.map((seg, si) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const segCols = (seg.items[0]?.q as any)?._sectionCols ?? numColumns;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const segHeader = (seg.items[0]?.q as any)?._sectionHeader as string | undefined;
-            return (
-              <div key={si}>
-                {si > 0 && <div style={{ width: "60%", margin: "0.5rem auto", borderTop: "1px solid #d1d5db" }} />}
-                {segHeader && <p className="text-lg font-semibold mb-1 mt-2" style={{ color: "#000" }}>{segHeader}</p>}
-                <div style={{ display: "grid", gridTemplateColumns: `repeat(${segCols}, 1fr)`, columnGap: "2rem" }}>
-                  {seg.items.map(({ q, idx }) => renderListItem(q, idx))}
-                </div>
+        <div ref={worksheetRef} className="bg-white rounded-xl shadow-lg p-6 mt-6 relative">{fontSizeControls}
+          {splitIntoSections(worksheet, numColumns).map((seg, si) => (
+            <div key={si}>
+              {si > 0 && <div style={{ width: "60%", margin: "0.5rem auto", borderTop: "1px solid #d1d5db" }} />}
+              {seg.header && <p className="text-lg font-semibold mb-1 mt-2" style={{ color: "#000" }}>{seg.header}</p>}
+              <div style={{ display: "grid", gridTemplateColumns: `repeat(${seg.cols}, 1fr)`, columnGap: "2rem" }}>
+                {seg.items.map(({ q, globalIdx }) => renderListItem(q, globalIdx))}
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       );
     }
@@ -477,9 +553,9 @@ export const WorksheetBuilder = ({
     const renderGridCell = (q: AnyQuestion, i: number) => (
       <div key={q.key + i}>
         <div
-          className={borders ? "rounded-lg border border-gray-200 p-4 text-center" : "p-4 text-center"}
+          className={borders ? "group rounded-lg border border-gray-200 p-4 text-center" : "group p-4 text-center"}
           style={{
-            ...(borders ? { backgroundColor: "#f5f3f0" } : {}),
+            ...(borders ? { backgroundColor: "#f3f4f6" } : {}),
             minHeight: 60,
             position: "relative",
           }}
@@ -487,8 +563,9 @@ export const WorksheetBuilder = ({
           <span className="text-xs font-bold text-gray-400" style={{ position: "absolute", top: 4, left: 6 }}>
             {i + 1}
           </span>
+          {regenBtn(q, i)}
           {questionRenderer ? (
-            questionRenderer(q, false, "default", true, i)
+            questionRenderer(q, false, "default", true, i, (q as any)._qo, fsz)
           ) : q.kind === "worded" ? (
             <div className={`${fsz}`}>
               {q.lines.map((line, li) => (
@@ -522,117 +599,122 @@ export const WorksheetBuilder = ({
       </div>
     );
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const hasSec = worksheet.some(q => ((q as any)._sectionIdx ?? 0) > 0 || !!(q as any)._sectionHeader);
-    if (!hasSec) {
+    if (!hasSections(worksheet)) {
       return (
-        <div ref={worksheetRef} className="bg-white rounded-xl shadow-lg p-6 mt-6">
+        <div ref={worksheetRef} className="bg-white rounded-xl shadow-lg p-6 mt-6 relative">{fontSizeControls}
           <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${numColumns}, 1fr)` }}>
             {worksheet.map((q, i) => renderGridCell(q, i))}
           </div>
         </div>
       );
     }
-    const segments: { items: { q: AnyQuestion; idx: number }[] }[] = [];
-    let curSec = -1;
-    worksheet.forEach((q, i) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const si = (q as any)._sectionIdx ?? 0;
-      if (si !== curSec) { segments.push({ items: [] }); curSec = si; }
-      segments[segments.length - 1].items.push({ q, idx: i });
-    });
     return (
-      <div ref={worksheetRef} className="bg-white rounded-xl shadow-lg p-6 mt-6">
-        {segments.map((seg, si) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const segCols = (seg.items[0]?.q as any)?._sectionCols ?? numColumns;
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const segHeader = (seg.items[0]?.q as any)?._sectionHeader as string | undefined;
-          return (
-            <div key={si}>
-              {si > 0 && <div style={{ width: "60%", margin: "1rem auto", borderTop: "1px solid #d1d5db" }} />}
-              {segHeader && <p className="text-lg font-semibold mb-2 mt-1" style={{ color: "#000" }}>{segHeader}</p>}
-              <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${segCols}, 1fr)` }}>
-                {seg.items.map(({ q, idx }) => renderGridCell(q, idx))}
-              </div>
+      <div ref={worksheetRef} className="bg-white rounded-xl shadow-lg p-6 mt-6 relative">{fontSizeControls}
+        {splitIntoSections(worksheet, numColumns).map((seg, si) => (
+          <div key={si}>
+            {si > 0 && <div style={{ width: "60%", margin: "1rem auto", borderTop: "1px solid #d1d5db" }} />}
+            {seg.header && <p className="text-lg font-semibold mb-2 mt-1" style={{ color: "#000" }}>{seg.header}</p>}
+            <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${seg.cols}, 1fr)` }}>
+              {seg.items.map(({ q, globalIdx }) => renderGridCell(q, globalIdx))}
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
     );
   };
 
+  const bordersDisabled = layout !== "grid";
   return (
-    <div className="bg-white rounded-xl shadow-lg mb-8">
-      <div className="p-6">
-        {renderGroupList()}
-        <div className="flex justify-center items-center gap-4 flex-wrap mt-4">
-          <div className="flex rounded-lg border-2 border-gray-300 overflow-hidden">
-            <button
-              onClick={() => setLayout("grid")}
-              className={`px-3 py-1.5 text-sm font-bold transition-colors ${layout === "grid" ? "bg-blue-900 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}
-            >
-              Worksheet
-            </button>
-            <button
-              onClick={() => setLayout("list")}
-              className={`px-3 py-1.5 text-sm font-bold transition-colors ${layout === "list" ? "bg-blue-900 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}
-            >
-              Textbook
-            </button>
-          </div>
-          <label className={`flex items-center gap-2 cursor-pointer transition-opacity ${layout === "grid" ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
-              <div onClick={() => setBorders(!borders)}
-                className={`w-9 h-5 rounded-full transition-colors relative ${borders ? "bg-blue-900" : "bg-gray-300"}`}>
+    <>
+      <div className="bg-white rounded-xl shadow-lg border-2 border-gray-200 mb-6">
+        {headerSlot && (
+          <div className="px-6 py-4 border-b-2 border-gray-200">{headerSlot}</div>
+        )}
+        <div className="p-6">
+          {renderGroupList()}
+
+          {/* ── Design line: layout + borders ── */}
+          <div className="flex justify-center items-center gap-5 flex-wrap mt-5 pt-5 border-t-2 border-gray-200">
+            <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm">
+              <button
+                onClick={() => setLayout("grid")}
+                className={`px-5 py-2 text-base font-bold transition-colors ${layout === "grid" ? "bg-blue-900 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}
+              >
+                Worksheet
+              </button>
+              <button
+                onClick={() => setLayout("list")}
+                className={`px-5 py-2 text-base font-bold transition-colors ${layout === "list" ? "bg-blue-900 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}
+              >
+                Textbook
+              </button>
+            </div>
+            <label className={`flex items-center gap-2 ${bordersDisabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}`}>
+              <div onClick={() => { if (!bordersDisabled) setBorders(!borders); }}
+                className={`w-9 h-5 rounded-full transition-colors relative ${borders && !bordersDisabled ? "bg-blue-900" : "bg-gray-300"}`}>
                 <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${borders ? "translate-x-4" : "translate-x-0.5"}`} />
               </div>
               <span className="text-sm font-semibold text-gray-500">Borders</span>
             </label>
-          <span className="text-sm font-bold text-gray-600">
-            {totalQuestions} questions total
-          </span>
-          <button
-            onClick={handleGenerate}
-            className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"
-          >
-            <RefreshCw size={18} /> Generate
-          </button>
-          {worksheet.length > 0 && (
-            <>
-              <button
-                onClick={() => setShowAnswers(!showAnswers)}
-                className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"
-              >
-                <Eye size={18} /> {showAnswers ? "Hide Answers" : "Show Answers"}
-              </button>
-              <PrintSplitButton
-                onPrint={(m) =>
-                  customPrintHandler
-                    ? customPrintHandler(
-                        worksheet,
-                        m,
-                        worksheetRef.current,
-                      )
-                    : handlePrint(
-                        worksheet,
-                        config.pageTitle,
-                        "advanced",
-                        false,
-                        numColumns,
-                        getInstruction(),
-                        m,
-                        layout,
-                        borders,
-                      )
-                }
-                printMode={printMode}
-                setPrintMode={setPrintMode}
-              />
-            </>
-          )}
+          </div>
+
+          {/* ── Action line: generate / answers / print ── */}
+          <div className="flex justify-center items-center gap-4 flex-wrap mt-5">
+            <span className="text-sm font-bold text-gray-600">
+              {totalQuestions} questions total
+            </span>
+            <button
+              onClick={handleGenerate}
+              className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"
+            >
+              <RefreshCw size={18} /> Generate
+            </button>
+            {worksheet.length > 0 && (
+              <>
+                <button
+                  onClick={() => setShowAnswers(!showAnswers)}
+                  className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"
+                >
+                  <Eye size={18} /> {showAnswers ? "Hide Answers" : "Show Answers"}
+                </button>
+                <PrintSplitButton
+                  onPrint={(m) =>
+                    customPrintHandler
+                      ? customPrintHandler(
+                          worksheet,
+                          m,
+                          worksheetRef.current,
+                          {
+                            toolName: config.pageTitle,
+                            difficulty: "advanced",
+                            isDifferentiated: false,
+                            numColumns,
+                            instruction: getInstruction(),
+                            layout,
+                            showBorders: borders,
+                          },
+                        )
+                      : handlePrint(
+                          worksheet,
+                          config.pageTitle,
+                          "advanced",
+                          false,
+                          numColumns,
+                          getInstruction(),
+                          m,
+                          layout,
+                          borders,
+                        )
+                  }
+                  printMode={printMode}
+                  setPrintMode={setPrintMode}
+                />
+              </>
+            )}
+          </div>
         </div>
       </div>
       {renderPreview()}
-    </div>
+    </>
   );
 };

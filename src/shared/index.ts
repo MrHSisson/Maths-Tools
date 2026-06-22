@@ -32,6 +32,8 @@ export type { WorksheetBuilderProps } from "./WorksheetBuilder";
 
 export { loadKaTeX } from "./katex";
 export { handlePrint } from "./print";
+export { handleDiagramPrint } from "./printDiagram";
+export type { PrintContext } from "./printDiagram";
 
 export { LV_COLORS, LV_LABELS, LV_HEADER_COLORS, getQuestionBg, getStepBg } from "./colors";
 

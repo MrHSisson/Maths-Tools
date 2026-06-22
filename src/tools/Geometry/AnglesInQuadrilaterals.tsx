@@ -1,6 +1,6 @@
 import {
-  ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type PrintMode,
+  ToolShell, handleDiagramPrint,
+  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion,
   type ToolMultiSelect, type ToolVariable,
   tStep,
 } from "../../shared";
@@ -1138,100 +1138,6 @@ const questionRenderer = (q: AnyQuestion, showAnswer: boolean, _cs: string, comp
   );
 };
 
-// ─── PRINT ──────────────────────────────────────────────────────────────────
-const PRINT_COLS = 3, PRINT_ROWS = 5, PRINT_PER_PAGE = PRINT_COLS * PRINT_ROWS;
-
-function customPrintHandler(questions: AnyQuestion[], printMode: PrintMode, container: HTMLElement | null): void {
-  const svgList: string[] = [];
-  if (container) {
-    container.querySelectorAll<SVGSVGElement>("svg[data-q-index]").forEach(el => {
-      const clone = el.cloneNode(true) as SVGSVGElement;
-      clone.setAttribute("width", "100%");
-      clone.setAttribute("height", "100%");
-      svgList.push(clone.outerHTML);
-    });
-  }
-
-  const isAdvanced = questions.some(q => (q as any)._sectionIdx !== undefined);
-  const isDiff = !isAdvanced && new Set(questions.map(q => q.difficulty)).size > 1;
-  const toolName = TOOL_CONFIG.pageTitle;
-  const dateStr = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
-
-  const cell = (q: AnyQuestion, gi: number, li: number, showAns: boolean): string =>
-    `<div class="cell"><div class="cell-num">${li + 1}</div><div class="cell-diag">${svgList[gi] ?? ""}</div>${showAns ? `<div class="answer">${q.answer}</div>` : ""}</div>`;
-
-  const stdPage = (qs: AnyQuestion[], start: number, pn: number, tp: number, ans: boolean): string => {
-    const cells = qs.map((q, i) => cell(q, start + i, start + i, ans)).join("");
-    const title = toolName + (ans ? " — Answers" : "");
-    const pageLabel = tp > 1 ? ` &middot; Page ${pn} of ${tp}` : "";
-    return `<div class="page"><div class="ph"><h1>${title}</h1><div class="meta">Worksheet &middot; ${dateStr}${pageLabel}</div></div><div class="sg">${cells}</div></div>`;
-  };
-
-  const buildStd = (ans: boolean): string => {
-    const tp = Math.ceil(questions.length / PRINT_PER_PAGE);
-    const pages: string[] = [];
-    for (let p = 0; p < questions.length; p += PRINT_PER_PAGE) {
-      pages.push(stdPage(questions.slice(p, p + PRINT_PER_PAGE), p, Math.floor(p / PRINT_PER_PAGE) + 1, tp, ans));
-    }
-    return pages.join("");
-  };
-
-  const buildDiff = (ans: boolean): string => {
-    const byLv: Record<DifficultyLevel, AnyQuestion[]> = {
-      level1: questions.filter(q => q.difficulty === "level1"),
-      level2: questions.filter(q => q.difficulty === "level2"),
-      level3: questions.filter(q => q.difficulty === "level3"),
-    };
-    const offsets: Record<DifficultyLevel, number> = { level1: 0, level2: byLv.level1.length, level3: byLv.level1.length + byLv.level2.length };
-    const tp = Math.max(1, Math.ceil(Math.max(...(["level1", "level2", "level3"] as DifficultyLevel[]).map(lv => byLv[lv].length)) / PRINT_ROWS));
-    const title = toolName + (ans ? " — Answers" : "");
-    return Array.from({ length: tp }, (_, p) => {
-      const cols = (["level1", "level2", "level3"] as DifficultyLevel[]).map((lv, li) => {
-        const textCol = ["#166534", "#854d0e", "#991b1b"][li];
-        const bgCol = ["#dcfce7", "#fef9c3", "#fee2e2"][li];
-        const label = ["Level 1", "Level 2", "Level 3"][li];
-        const qs = byLv[lv].slice(p * PRINT_ROWS, (p + 1) * PRINT_ROWS);
-        const cells = qs.map((q, i) => cell(q, offsets[lv] + p * PRINT_ROWS + i, p * PRINT_ROWS + i, ans)).join("");
-        return `<div class="dc"><div class="dh" style="color:${textCol};background:${bgCol}">${label}</div><div class="dcs">${cells}</div></div>`;
-      }).join("");
-      const pageLabel = tp > 1 ? ` &middot; Page ${p + 1} of ${tp}` : "";
-      return `<div class="page"><div class="ph"><h1>${title}</h1><div class="meta">Differentiated &middot; ${dateStr}${pageLabel}</div></div><div class="dg">${cols}</div></div>`;
-    }).join("");
-  };
-
-  const build = (ans: boolean): string => (isDiff ? buildDiff(ans) : buildStd(ans));
-  const body = printMode === "questions" ? build(false) : printMode === "answers" ? build(true) : build(false) + build(true);
-
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${toolName}</title>
-<style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  @page{size:A4 portrait;margin:12mm}
-  body{font-family:"Segoe UI",Arial,sans-serif}
-  @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
-  .page{width:186mm;height:273mm;display:flex;flex-direction:column;page-break-after:always;overflow:hidden}
-  .page:last-child{page-break-after:auto}
-  .ph{display:flex;justify-content:space-between;align-items:baseline;border-bottom:.4mm solid #1e3a8a;padding-bottom:1.5mm;margin-bottom:2mm;flex-shrink:0}
-  .ph h1{font-size:5mm;font-weight:700;color:#1e3a8a}
-  .meta{font-size:3mm;color:#6b7280}
-  .sg{display:grid;grid-template-columns:repeat(${PRINT_COLS},1fr);grid-template-rows:repeat(${PRINT_ROWS},1fr);gap:2mm;flex:1;min-height:0}
-  .dg{display:grid;grid-template-columns:repeat(3,1fr);gap:2mm;flex:1;min-height:0}
-  .dc{display:flex;flex-direction:column;gap:2mm;min-height:0}
-  .dh{text-align:center;font-size:3.5mm;font-weight:700;padding:1.5mm 0;border-radius:1.5mm;flex-shrink:0}
-  .dcs{display:flex;flex-direction:column;gap:2mm;flex:1;min-height:0}
-  .cell{border:.3mm solid #d1d5db;border-radius:2mm;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2mm;overflow:hidden;flex:1;min-height:0;position:relative}
-  .cell-num{position:absolute;top:1.5mm;left:2mm;font-size:2.8mm;font-weight:700;color:#374151}
-  .cell-diag{width:100%;flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
-  .cell-diag svg{width:100%;height:100%;overflow:visible}
-  .answer{font-size:3mm;font-weight:700;color:#059669;text-align:center;flex-shrink:0;margin-top:1mm}
-</style>
-</head><body>${body}</body></html>`;
-
-  const win = window.open("", "_blank");
-  if (!win) { alert("Please allow popups to use the PDF export."); return; }
-  win.document.write(html);
-  win.document.close();
-  setTimeout(() => win.print(), 400);
-}
 
 // ─── APP ──────────────────────────────────────────────────────────────────────
 export default function App() {
@@ -1241,8 +1147,8 @@ export default function App() {
       infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       questionRenderer={questionRenderer}
-      customPrintHandler={customPrintHandler}
-      defaults={{ fixedColumns: true, numColumns: 3, hideFontControls: true }}
+      customPrintHandler={handleDiagramPrint}
+      defaults={{ numColumns: 3, maxColumns: 4, hideFontControls: true }}
     />
   );
 }
