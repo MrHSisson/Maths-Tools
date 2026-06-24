@@ -135,6 +135,12 @@ const canRotate = (kind: TileKind) => {
   return b === "x" || b === "y" || b === "xy";
 };
 
+// Single source of truth for label sizing — keeps palette tiles, placed tiles
+// and product-cell text consistent across the tool. `minD` is the tile's
+// shorter side in px.
+const labelFontSize = (minD: number): number =>
+  minD >= X_LEN ? 20 : minD >= Y_LEN ? 18 : minD >= 30 ? 16 : minD >= UNIT ? 15 : 0;
+
 // ── Edge-aware snapping ──────────────────────────────────────────────────────
 
 const snapPos = (
@@ -956,7 +962,7 @@ export default function App() {
       {items.map(({ kind, rot, row, col }) => {
         const [w, h] = dims(kind, rot);
         const minD = Math.min(w, h);
-        const fs = minD >= X_LEN ? 15 : minD >= 30 ? 12 : minD >= UNIT ? 9 : 0;
+        const fs = labelFontSize(minD);
         return (
           <div key={`pal-${kind}-${rot}`}
             onPointerDown={e => onPaletteDown(e, kind, rot)}
@@ -1137,7 +1143,7 @@ export default function App() {
                                 display: "flex", alignItems: "center", justifyContent: "center",
                                 cursor: "pointer", padding: 0, flexShrink: 0,
                               }}>
-                              <span style={{ fontSize: 11, fontWeight: 700, color: TEXT_CLR[hk] }}>{LBL[hk]}</span>
+                              <span style={{ fontSize: 14, fontWeight: 700, color: TEXT_CLR[hk] }}>{LBL[hk]}</span>
                             </button>
                           ))}
                           {canRemove && (
@@ -1198,7 +1204,7 @@ export default function App() {
                           borderTop: BD, borderLeft: BD, borderRight: BD, borderBottom: BD,
                           borderTopLeftRadius: 6,
                         }}>
-                        <span style={{ fontSize: 12, fontWeight: 800, color: "#475569" }}>×</span>
+                        <span style={{ fontSize: 14, fontWeight: 800, color: "#475569" }}>×</span>
                         {tableRevealed
                           ? <EyeOff size={10} color="#64748b" />
                           : <Eye size={10} color="#64748b" />}
@@ -1224,7 +1230,7 @@ export default function App() {
                             flex: 1, background: COLOR[k], borderRadius: 3,
                             display: "flex", alignItems: "center", justifyContent: "center",
                           }}>
-                            <span style={{ fontSize: 12, fontWeight: 700, color: TEXT_CLR[k] }}>{LBL[k]}</span>
+                            <span style={{ fontSize: 15, fontWeight: 700, color: TEXT_CLR[k] }}>{LBL[k]}</span>
                           </div>
                           {hdrPicker("col", c, k, colHeaders.length > 1)}
                         </div>
@@ -1264,7 +1270,7 @@ export default function App() {
                             display: "flex", alignItems: "center", justifyContent: "center",
                           }}>
                             <span style={{
-                              fontSize: 12, fontWeight: 700, color: TEXT_CLR[k],
+                              fontSize: 15, fontWeight: 700, color: TEXT_CLR[k],
                               writingMode: kindLen(k) > 40 ? "vertical-lr" : undefined,
                             }}>{LBL[k]}</span>
                           </div>
@@ -1297,7 +1303,7 @@ export default function App() {
                           const isRevealed = tableRevealed || revealedCells.has(cellKey);
                           const cw = kindLen(ck), rh = kindLen(rk);
                           const minD = Math.min(cw, rh);
-                          const fs = minD >= X_LEN ? 15 : minD >= Y_LEN ? 13 : minD >= 30 ? 11 : minD >= UNIT ? 8 : 0;
+                          const fs = labelFontSize(minD);
                           return (
                             <div key={`p-${r}-${c}`}
                               onClick={() => {
@@ -1394,7 +1400,7 @@ export default function App() {
                 const active = dragId === tile.id;
                 const selected = selectedIds.has(tile.id);
                 const minD = Math.min(w, h);
-                const fs = minD >= X_LEN ? 15 : minD >= 30 ? 12 : minD >= UNIT ? 9 : 0;
+                const fs = labelFontSize(minD);
                 return (
                   <div key={tile.id}
                     onPointerDown={e => onTileDown(e, tile)}
