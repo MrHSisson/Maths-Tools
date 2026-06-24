@@ -743,9 +743,10 @@ export default function App() {
 
         {/* ── Multiplication table ───────────────────────────────────── */}
         {showTable && (() => {
-          const HDR = 28, ADD = 28;
-          const gridCols = `${HDR}px ${colHeaders.map(k => `${kindLen(k)}px`).join(" ")} ${ADD}px`;
-          const gridRows = `${HDR}px ${rowHeaders.map(k => `${kindLen(k)}px`).join(" ")} ${ADD}px`;
+          const HDR = 28, ADD = 28, PAD = 3, BDW = 2;
+          const BD = `${BDW}px solid #334155`;
+          const gridCols = `${HDR + PAD * 2 + BDW * 2}px ${colHeaders.map(k => `${kindLen(k) + PAD * 2 + BDW}px`).join(" ")} ${ADD}px`;
+          const gridRows = `${HDR + PAD * 2 + BDW * 2}px ${rowHeaders.map(k => `${kindLen(k) + PAD * 2 + BDW}px`).join(" ")} ${ADD}px`;
 
           const hdrPicker = (axis: "col" | "row", idx: number, current: TileKind, canRemove: boolean) => {
             const isOpen = openHdr?.axis === axis && openHdr.idx === idx;
@@ -799,9 +800,6 @@ export default function App() {
             );
           };
 
-          const BD = "2px solid #334155";
-          const PAD = 3;
-
           return (
             <div style={{ position: "absolute", left: 16, top: 16, zIndex: 5 }}
               onPointerDown={e => e.stopPropagation()}>
@@ -822,7 +820,7 @@ export default function App() {
                   style={{
                     gridRow: 1, gridColumn: 1, background: "#e2e8f0",
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    cursor: "pointer", gap: 4,
+                    cursor: "pointer", gap: 4, padding: PAD,
                     borderTop: BD, borderLeft: BD, borderRight: BD, borderBottom: BD,
                   }}>
                   <span style={{ fontSize: 14, fontWeight: 800, color: "#475569" }}>×</span>
