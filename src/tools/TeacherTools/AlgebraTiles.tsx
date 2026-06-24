@@ -161,6 +161,20 @@ const layoutTiles = (kinds: TileKind[], startX: number, startY: number, maxW: nu
 
 const ZP: [TileKind, TileKind][] = [["x2", "-x2"], ["x", "-x"], ["1", "-1"]];
 
+const zpPartner = (kind: TileKind): TileKind | null => {
+  for (const [a, b] of ZP) { if (kind === a) return b; if (kind === b) return a; }
+  return null;
+};
+
+const overlapFrac = (a: TileState, b: TileState): number => {
+  const [aw, ah] = dims(a.kind, a.rot);
+  const [bw, bh] = dims(b.kind, b.rot);
+  const ox = Math.max(0, Math.min(a.x + aw, b.x + bw) - Math.max(a.x, b.x));
+  const oy = Math.max(0, Math.min(a.y + ah, b.y + bh) - Math.max(a.y, b.y));
+  const overlap = ox * oy;
+  return overlap / Math.min(aw * ah, bw * bh);
+};
+
 const hasZP = (tiles: TileState[]): boolean => {
   const c: Partial<Record<TileKind, number>> = {};
   for (const t of tiles) c[t.kind] = (c[t.kind] || 0) + 1;
@@ -249,6 +263,16 @@ export default function App() {
       pushUndo(preRef.current);
       if (e.clientY < r.top - UNIT) {
         setTiles(ts => ts.filter(t => t.id !== d.id));
+      } else {
+        setTiles(ts => {
+          const dragged = ts.find(t => t.id === d.id);
+          if (!dragged) return ts;
+          const partner = zpPartner(dragged.kind);
+          if (!partner) return ts;
+          const match = ts.find(t => t.id !== d.id && t.kind === partner && overlapFrac(dragged, t) > 0.5);
+          if (!match) return ts;
+          return ts.filter(t => t.id !== d.id && t.id !== match.id);
+        });
       }
       dragRef.current = null;
       setDragId(null);
