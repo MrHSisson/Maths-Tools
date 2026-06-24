@@ -61,7 +61,7 @@ const PAL_NEG_XY: PalCell[] = [
   { kind: "-y", rot: 0, row: 3, col: 2 },
   { kind: "-1", rot: 0, row: 3, col: 3 },
 ];
-const PAL_S = 0.55;
+const PAL_S = 1;
 
 const COLOR: Record<TileKind, string> = {
   "x2": "#3b82f6", "-x2": "#ef4444",
@@ -302,8 +302,6 @@ const multiplyKinds = (a: TileKind, b: TileKind): TileKind => {
 export default function App() {
   const [tiles, setTiles] = useState<TileState[]>([]);
   const [history, setHistory] = useState<TileState[][]>([]);
-  const [showFrame, setShowFrame] = useState(false);
-  const [showGrid, setShowGrid] = useState(true);
   const [showY, setShowY] = useState(false);
   const [eqMode, setEqMode] = useState(false);
   const [dragId, setDragId] = useState<number | null>(null);
@@ -315,7 +313,7 @@ export default function App() {
   const [rowHeaders, setRowHeaders] = useState<TileKind[]>(["x"]);
   const [openHdr, setOpenHdr] = useState<{ axis: "col" | "row"; idx: number } | null>(null);
   const [tableRevealed, setTableRevealed] = useState(false);
-  const [scale, setScale] = useState(1.5);
+  const [scale, setScale] = useState(1);
   const [revealedCells, setRevealedCells] = useState<Set<string>>(new Set());
 
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -602,7 +600,6 @@ export default function App() {
     setExprInput("");
   };
 
-  const FRAME = X_LEN + UNIT;
   const zpOk = hasZP(tiles);
   const anyRotatable = tiles.some(t => selectedIds.has(t.id) && canRotate(t.kind));
   const posGrid = showY ? PAL_POS_XY : PAL_POS_X;
@@ -660,26 +657,25 @@ export default function App() {
   const palRowsTpl = palColsTpl;
 
   const renderPalGrid = (items: PalCell[]) => (
-    <div style={{ display: "grid", gridTemplateColumns: palColsTpl, gridTemplateRows: palRowsTpl, gap: 1 }}>
+    <div style={{ display: "grid", gridTemplateColumns: palColsTpl, gridTemplateRows: palRowsTpl, gap: 2 }}>
       {items.map(({ kind, rot, row, col }) => {
         const [w, h] = dims(kind, rot);
-        const sw = w * PAL_S, sh = h * PAL_S;
-        const minD = Math.min(sw, sh);
-        const fs = minD >= 30 ? 11 : minD >= 15 ? 9 : minD >= 10 ? 7 : 0;
+        const minD = Math.min(w, h);
+        const fs = minD >= X_LEN ? 15 : minD >= 30 ? 12 : minD >= UNIT ? 9 : 0;
         return (
           <div key={`pal-${kind}-${rot}`}
             onPointerDown={e => onPaletteDown(e, kind, rot)}
             style={{
               gridRow: row, gridColumn: col,
-              backgroundColor: COLOR[kind], borderRadius: 3,
-              border: "1.5px solid rgba(0,0,0,0.18)",
+              backgroundColor: COLOR[kind], borderRadius: 4,
+              border: "2px solid rgba(0,0,0,0.18)",
               display: "flex", alignItems: "center", justifyContent: "center",
               cursor: "grab", touchAction: "none",
             }}>
             {fs > 0 && (
               <span style={{
                 fontSize: fs, fontWeight: 700, color: TEXT_CLR[kind], pointerEvents: "none",
-                writingMode: sw < sh && sh > 20 ? "vertical-lr" : undefined,
+                writingMode: w < h && h > 40 ? "vertical-lr" : undefined,
               }}>{LBL[kind]}</span>
             )}
           </div>
@@ -692,15 +688,14 @@ export default function App() {
     <div style={{ display: "flex", flexDirection: "column", height: "100dvh", fontFamily: "'Inter', system-ui, sans-serif" }}>
 
       {/* ── Header ──────────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-2 px-4 py-2 flex-shrink-0"
-        style={{ background: "linear-gradient(135deg, #7c3aed 0%, #c026d3 100%)", borderBottom: "1px solid rgba(255,255,255,0.15)" }}>
-        <button onClick={() => { window.location.href = "/"; }}
-          className="p-1.5 rounded-lg" style={{ border: "none", background: "rgba(255,255,255,0.15)", cursor: "pointer" }}
-          onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.25)")}
-          onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.15)")}>
-          <Home size={16} color="#fff" />
-        </button>
-        <h1 className="font-bold text-white m-0" style={{ fontSize: 16, letterSpacing: 0.3 }}>Algebra Tiles</h1>
+      <div className="bg-blue-900 shadow-lg flex-shrink-0">
+        <div className="px-8 py-4 flex items-center gap-2">
+          <button onClick={() => { window.location.href = "/"; }}
+            className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors"
+            style={{ border: "none", background: "transparent", cursor: "pointer", fontSize: 16, fontWeight: 600 }}>
+            <Home size={24} color="#fff" /><span className="text-white font-semibold text-lg">Home</span>
+          </button>
+        </div>
       </div>
 
       {/* ── Main: side panel + canvas ─────────────────────────────────── */}
@@ -708,49 +703,47 @@ export default function App() {
 
         {/* ── Side panel ────────────────────────────────────────────────── */}
         <div style={{
-          background: "#1e293b", width: 130, flexShrink: 0, overflowY: "auto",
-          display: "flex", flexDirection: "column", padding: 8, gap: 6,
-          borderRight: "1px solid #334155",
+          background: "#f5f3f0", flexShrink: 0, overflow: "hidden",
+          display: "flex", flexDirection: "column", padding: 12, gap: 8,
+          borderRight: "2px solid #d1d5db",
         }}>
           {/* Controls */}
           <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
-            <Btn on={showGrid} onClick={() => setShowGrid(g => !g)} label="Grid" />
-            <Btn on={showFrame} onClick={() => setShowFrame(f => !f)} label="Frame" />
             <Btn on={showTable} onClick={() => { setShowTable(t => !t); setOpenHdr(null); }} label="Table" />
             <Btn on={showY} onClick={() => setShowY(y => !y)} label="y" />
             <Btn on={eqMode} onClick={() => setEqMode(m => !m)} label="=" />
             <Btn on={false} onClick={doZP} label="ZP" disabled={!zpOk}
-              activeColor="rgba(34,197,94,0.2)" activeText="#86efac" />
+              activeColor="#dcfce7" activeText="#166534" />
           </div>
 
           {/* Actions + zoom */}
           <div style={{ display: "flex", gap: 3, alignItems: "center" }}>
             <SmBtn onClick={undo} disabled={!history.length} title="Undo">
-              <Undo2 size={13} color={history.length ? "#e2e8f0" : "#475569"} />
+              <Undo2 size={13} color={history.length ? "#374151" : "#d1d5db"} />
             </SmBtn>
             <SmBtn onClick={clear} disabled={!tiles.length} title="Clear">
-              <Trash2 size={13} color={tiles.length ? "#fca5a5" : "#475569"} />
+              <Trash2 size={13} color={tiles.length ? "#ef4444" : "#d1d5db"} />
             </SmBtn>
             <div style={{ flex: 1 }} />
-            <SmBtn onClick={() => setScale(s => Math.max(0.75, +(s - 0.25).toFixed(2)))} title="Zoom out">
-              <Minus size={12} color="#e2e8f0" />
+            <SmBtn onClick={() => setScale(s => Math.max(0.5, +(s - 0.25).toFixed(2)))} title="Zoom out">
+              <Minus size={12} color="#374151" />
             </SmBtn>
-            <span style={{ fontSize: 9, color: "#94a3b8", fontWeight: 600, minWidth: 24, textAlign: "center" }}>
+            <span style={{ fontSize: 10, color: "#6b7280", fontWeight: 600, minWidth: 28, textAlign: "center" }}>
               {Math.round(scale * 100)}%
             </span>
             <SmBtn onClick={() => setScale(s => Math.min(3, +(s + 0.25).toFixed(2)))} title="Zoom in">
-              <Plus size={12} color="#e2e8f0" />
+              <Plus size={12} color="#374151" />
             </SmBtn>
           </div>
 
           {/* Positive tiles */}
-          <div style={{ fontSize: 9, color: "#64748b", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8 }}>Positive</div>
+          <div style={{ fontSize: 10, color: "#6b7280", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8 }}>Positive</div>
           {renderPalGrid(posGrid)}
 
-          <div style={{ height: 1, background: "#334155" }} />
+          <div style={{ height: 1, background: "#d1d5db" }} />
 
           {/* Negative tiles */}
-          <div style={{ fontSize: 9, color: "#64748b", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8 }}>Negative</div>
+          <div style={{ fontSize: 10, color: "#6b7280", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8 }}>Negative</div>
           {renderPalGrid(negGrid)}
 
           {/* Expression input */}
@@ -759,18 +752,18 @@ export default function App() {
             <input type="text" value={exprInput} onChange={e => setExprInput(e.target.value)}
               placeholder={eqMode ? "2x+3 = x+5" : showY ? "x²+2xy" : "x²+3x+2"}
               style={{
-                width: "100%", padding: "4px 6px", borderRadius: 6, boxSizing: "border-box",
-                border: "1px solid #475569", background: "#0f172a",
-                color: "#e2e8f0", fontSize: 11, outline: "none",
+                width: "100%", padding: "6px 8px", borderRadius: 8, boxSizing: "border-box",
+                border: "2px solid #d1d5db", background: "#fff",
+                color: "#1f2937", fontSize: 13, outline: "none",
               }}
-              onFocus={e => (e.currentTarget.style.borderColor = "#7c3aed")}
-              onBlur={e => (e.currentTarget.style.borderColor = "#475569")} />
+              onFocus={e => (e.currentTarget.style.borderColor = "#3b82f6")}
+              onBlur={e => (e.currentTarget.style.borderColor = "#d1d5db")} />
             <button type="submit" disabled={!exprInput.trim()}
               style={{
-                width: "100%", padding: "4px", borderRadius: 6, fontWeight: 600,
-                fontSize: 11, border: "none", cursor: exprInput.trim() ? "pointer" : "default",
-                background: exprInput.trim() ? "#7c3aed" : "#334155",
-                color: exprInput.trim() ? "#fff" : "#64748b",
+                width: "100%", padding: "6px", borderRadius: 8, fontWeight: 600,
+                fontSize: 13, border: "none", cursor: exprInput.trim() ? "pointer" : "default",
+                background: exprInput.trim() ? "#1e3a5f" : "#e5e7eb",
+                color: exprInput.trim() ? "#fff" : "#9ca3af",
               }}>Build</button>
           </form>
         </div>
@@ -784,28 +777,15 @@ export default function App() {
             {/* ── Scaled content wrapper ────────────────────────────────── */}
             <div style={{ position: "absolute", inset: 0, transform: `scale(${scale})`, transformOrigin: "0 0" }}>
 
-              {showGrid && (
-                <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 1 }}>
-                  <defs>
-                    <pattern id="atg" width={UNIT} height={UNIT} patternUnits="userSpaceOnUse">
-                      <circle cx={UNIT} cy={UNIT} r="0.8" fill="#cbd5e1" />
-                    </pattern>
-                  </defs>
-                  <rect width="100%" height="100%" fill="url(#atg)" />
-                </svg>
-              )}
-
-              {showFrame && (
-                <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 2 }}>
-                  <rect x={0} y={0} width={FRAME} height={FRAME} fill="rgba(100,116,139,0.06)" rx="4" />
-                  <line x1={FRAME} y1={0} x2={FRAME} y2="100%" stroke="#475569" strokeWidth="2.5" strokeDasharray="6 4" />
-                  <line x1={0} y1={FRAME} x2="100%" y2={FRAME} stroke="#475569" strokeWidth="2.5" strokeDasharray="6 4" />
-                  <text x={FRAME / 2} y={FRAME / 2} textAnchor="middle" dominantBaseline="central"
-                    style={{ fontSize: 24, fontWeight: 800, fill: "#94a3b8", fontFamily: "serif" }}>{"×"}</text>
-                  <text x={FRAME + 10} y={14} textAnchor="start" style={{ fontSize: 11, fill: "#94a3b8", fontWeight: 600 }}>Factor 1</text>
-                  <text x={4} y={FRAME + 14} textAnchor="start" style={{ fontSize: 11, fill: "#94a3b8", fontWeight: 600 }}>Factor 2</text>
-                </svg>
-              )}
+              {/* Dot grid */}
+              <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 1 }}>
+                <defs>
+                  <pattern id="atg" width={UNIT} height={UNIT} patternUnits="userSpaceOnUse">
+                    <circle cx={UNIT} cy={UNIT} r="0.8" fill="#cbd5e1" />
+                  </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#atg)" />
+              </svg>
 
               {eqMode && (
                 <div className="absolute pointer-events-none" style={{ top: 0, bottom: 0, left: `${50 / scale}%`, transform: "translateX(-50%)", zIndex: 3, display: "flex", flexDirection: "column", alignItems: "center" }}>
@@ -889,8 +869,7 @@ export default function App() {
                     <div style={{
                       position: "relative", zIndex: 6,
                       display: "grid", gridTemplateColumns: gridCols, gridTemplateRows: gridRows,
-                      gap: 0, background: "#fff", borderRadius: 6,
-                      boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
+                      gap: 0,
                     }}>
                       {/* Corner cell */}
                       <div onClick={() => {
@@ -1116,13 +1095,13 @@ export default function App() {
 
           {/* ── Expression bar ──────────────────────────────────────────────── */}
           <div className="flex items-center justify-center gap-3 px-4 py-2 flex-shrink-0"
-            style={{ background: "#1e293b", borderTop: "1px solid #334155" }}>
-            <span style={{ fontSize: 13, color: "#64748b", fontWeight: 600 }}>Expression:</span>
-            <span className="font-bold text-white" style={{ fontSize: 18, letterSpacing: 0.5 }}>
+            style={{ background: "#f5f3f0", borderTop: "2px solid #d1d5db" }}>
+            <span style={{ fontSize: 13, color: "#6b7280", fontWeight: 600 }}>Expression:</span>
+            <span className="font-bold" style={{ fontSize: 18, letterSpacing: 0.5, color: "#1f2937" }}>
               {exprDisplay}
             </span>
             {tiles.length > 0 && (
-              <span style={{ fontSize: 12, color: "#475569", marginLeft: 4 }}>
+              <span style={{ fontSize: 12, color: "#9ca3af", marginLeft: 4 }}>
                 ({tiles.length} tile{tiles.length !== 1 ? "s" : ""})
               </span>
             )}
@@ -1139,16 +1118,17 @@ function Btn({ on, onClick, label, disabled, activeColor, activeText }: {
   on: boolean; onClick: () => void; label: string; disabled?: boolean;
   activeColor?: string; activeText?: string;
 }) {
-  const ac = activeColor || "rgba(96,165,250,0.25)";
-  const at = activeText || "#93c5fd";
+  const ac = activeColor || "#dbeafe";
+  const at = activeText || "#1e40af";
   return (
     <button onClick={onClick} disabled={disabled}
       style={{
-        padding: "2px 7px", borderRadius: 6, fontWeight: 600,
-        fontSize: 11, border: "none", cursor: disabled ? "default" : "pointer",
-        background: disabled ? "rgba(255,255,255,0.04)" : on ? ac : "rgba(255,255,255,0.08)",
-        color: disabled ? "#475569" : on ? at : "#94a3b8",
-        transition: "background 0.15s, color 0.15s",
+        padding: "4px 10px", borderRadius: 8, fontWeight: 600,
+        fontSize: 13, border: "2px solid " + (disabled ? "#e5e7eb" : on ? "#93c5fd" : "#d1d5db"),
+        cursor: disabled ? "default" : "pointer",
+        background: disabled ? "#f3f4f6" : on ? ac : "#fff",
+        color: disabled ? "#d1d5db" : on ? at : "#374151",
+        transition: "background 0.15s, color 0.15s, border-color 0.15s",
       }}>
       {label}
     </button>
@@ -1161,13 +1141,14 @@ function SmBtn({ onClick, disabled, title, children }: {
   return (
     <button onClick={onClick} disabled={disabled} title={title}
       style={{
-        width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center",
-        border: "none", borderRadius: 6, cursor: disabled ? "default" : "pointer",
-        background: disabled ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.08)",
+        width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center",
+        border: "2px solid " + (disabled ? "#e5e7eb" : "#d1d5db"), borderRadius: 8,
+        cursor: disabled ? "default" : "pointer",
+        background: disabled ? "#f3f4f6" : "#fff",
         transition: "background 0.15s", padding: 0, flexShrink: 0,
       }}
-      onMouseEnter={e => { if (!disabled) e.currentTarget.style.background = "rgba(255,255,255,0.18)"; }}
-      onMouseLeave={e => { e.currentTarget.style.background = disabled ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.08)"; }}>
+      onMouseEnter={e => { if (!disabled) e.currentTarget.style.background = "#f3f4f6"; }}
+      onMouseLeave={e => { e.currentTarget.style.background = disabled ? "#f3f4f6" : "#fff"; }}>
       {children}
     </button>
   );
