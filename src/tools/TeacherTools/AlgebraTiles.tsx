@@ -358,7 +358,7 @@ export default function App() {
   const [revealedCells, setRevealedCells] = useState<Set<string>>(new Set());
   const [menuOpen, setMenuOpen] = useState(false);
   const [showBuilder, setShowBuilder] = useState(true);
-  const [showExprBar, setShowExprBar] = useState(true);
+  const [showExprBar, setShowExprBar] = useState(false);
   const [drawMode, setDrawMode] = useState(false);
   const [eraserMode, setEraserMode] = useState(false);
   const [strokes, setStrokes] = useState<Stroke[]>([]);
@@ -459,6 +459,13 @@ export default function App() {
     setShowToolbar(false);
   }, [selectedIds, pushUndo]);
 
+  const deleteTable = useCallback(() => {
+    setShowTable(false);
+    setTableSelected(false);
+    setTablePos(null);
+    setOpenHdr(null);
+  }, []);
+
   // ── Keyboard shortcuts ─────────────────────────────────────────────────
 
   useEffect(() => {
@@ -467,6 +474,7 @@ export default function App() {
       if ((e.target as HTMLElement).tagName === "INPUT") return;
 
       if (e.key === "Delete" || e.key === "Backspace") {
+        if (tableSelected) { e.preventDefault(); deleteTable(); return; }
         if (!selectedIds.size) return;
         e.preventDefault();
         deleteSelected();
@@ -494,7 +502,7 @@ export default function App() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [undo, selectedIds, deleteSelected, flipSelected, rotateSelected, duplicateDir]);
+  }, [undo, selectedIds, deleteSelected, flipSelected, rotateSelected, duplicateDir, tableSelected, deleteTable]);
 
   // ── Global drag listeners ──────────────────────────────────────────────
 
@@ -1057,7 +1065,7 @@ export default function App() {
             <form style={{ display: "flex", flexDirection: "column", gap: 3, marginTop: "auto" }}
               onSubmit={e => { e.preventDefault(); buildFromInput(); }}>
               <input type="text" value={exprInput} onChange={e => setExprInput(e.target.value)}
-                placeholder={eqMode ? "2x+3 = x+5" : showY ? "x²+2xy" : "x²+3x+2"}
+                placeholder={eqMode ? "2x+3 = x+5" : showY ? "x^2+2xy" : "x^2+3x+2"}
                 style={{
                   width: "100%", padding: "6px 8px", borderRadius: 8, boxSizing: "border-box",
                   border: "2px solid #d1d5db", background: "#fff",
@@ -1184,6 +1192,22 @@ export default function App() {
                     {openHdr && (
                       <div style={{ position: "fixed", inset: 0, zIndex: 5 }}
                         onClick={() => setOpenHdr(null)} />
+                    )}
+
+                    {/* Delete bin — shown when the table is lasso-selected */}
+                    {tableSelected && (
+                      <button
+                        onPointerDown={e => e.stopPropagation()}
+                        onClick={deleteTable}
+                        title="Delete table"
+                        style={{
+                          position: "absolute", top: -46, right: -10, zIndex: 250,
+                          width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center",
+                          background: "#1e293b", border: "none", borderRadius: 9, cursor: "pointer",
+                          boxShadow: "0 4px 14px rgba(0,0,0,0.35)",
+                        }}>
+                        <Trash2 size={17} color="#fca5a5" />
+                      </button>
                     )}
 
                     <div style={{
