@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Home, Trash2, Undo2, RotateCw, Plus, Minus, Eye, EyeOff,
-  ArrowUp, ArrowDown, ArrowLeft, ArrowRight,
+  ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Menu, X,
 } from "lucide-react";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -315,6 +315,9 @@ export default function App() {
   const [tableRevealed, setTableRevealed] = useState(false);
   const [scale, setScale] = useState(1);
   const [revealedCells, setRevealedCells] = useState<Set<string>>(new Set());
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [showBuilder, setShowBuilder] = useState(true);
+  const [showExprBar, setShowExprBar] = useState(true);
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const scaleRef = useRef(scale);
@@ -689,12 +692,27 @@ export default function App() {
 
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <div className="bg-blue-900 shadow-lg flex-shrink-0">
-        <div className="px-8 py-4 flex items-center gap-2">
+        <div className="px-8 py-4 flex justify-between items-center">
           <button onClick={() => { window.location.href = "/"; }}
             className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors"
             style={{ border: "none", background: "transparent", cursor: "pointer", fontSize: 16, fontWeight: 600 }}>
             <Home size={24} color="#fff" /><span className="text-white font-semibold text-lg">Home</span>
           </button>
+          <div className="relative">
+            <button onClick={() => setMenuOpen(o => !o)}
+              className="text-white hover:bg-blue-800 p-2 rounded-lg transition-colors"
+              style={{ border: "none", background: "transparent", cursor: "pointer" }}>
+              {menuOpen ? <X size={28} /> : <Menu size={28} />}
+            </button>
+            {menuOpen && (
+              <BurgerMenu
+                scale={scale} setScale={setScale}
+                showBuilder={showBuilder} setShowBuilder={setShowBuilder}
+                showExprBar={showExprBar} setShowExprBar={setShowExprBar}
+                onClose={() => setMenuOpen(false)}
+              />
+            )}
+          </div>
         </div>
       </div>
 
@@ -716,23 +734,13 @@ export default function App() {
               activeColor="#dcfce7" activeText="#166534" />
           </div>
 
-          {/* Actions + zoom */}
+          {/* Actions */}
           <div style={{ display: "flex", gap: 3, alignItems: "center" }}>
             <SmBtn onClick={undo} disabled={!history.length} title="Undo">
               <Undo2 size={13} color={history.length ? "#374151" : "#d1d5db"} />
             </SmBtn>
             <SmBtn onClick={clear} disabled={!tiles.length} title="Clear">
               <Trash2 size={13} color={tiles.length ? "#ef4444" : "#d1d5db"} />
-            </SmBtn>
-            <div style={{ flex: 1 }} />
-            <SmBtn onClick={() => setScale(s => Math.max(0.5, +(s - 0.25).toFixed(2)))} title="Zoom out">
-              <Minus size={12} color="#374151" />
-            </SmBtn>
-            <span style={{ fontSize: 10, color: "#6b7280", fontWeight: 600, minWidth: 28, textAlign: "center" }}>
-              {Math.round(scale * 100)}%
-            </span>
-            <SmBtn onClick={() => setScale(s => Math.min(3, +(s + 0.25).toFixed(2)))} title="Zoom in">
-              <Plus size={12} color="#374151" />
             </SmBtn>
           </div>
 
@@ -747,25 +755,27 @@ export default function App() {
           {renderPalGrid(negGrid)}
 
           {/* Expression input */}
-          <form style={{ display: "flex", flexDirection: "column", gap: 3, marginTop: "auto" }}
-            onSubmit={e => { e.preventDefault(); buildFromInput(); }}>
-            <input type="text" value={exprInput} onChange={e => setExprInput(e.target.value)}
-              placeholder={eqMode ? "2x+3 = x+5" : showY ? "x²+2xy" : "x²+3x+2"}
-              style={{
-                width: "100%", padding: "6px 8px", borderRadius: 8, boxSizing: "border-box",
-                border: "2px solid #d1d5db", background: "#fff",
-                color: "#1f2937", fontSize: 13, outline: "none",
-              }}
-              onFocus={e => (e.currentTarget.style.borderColor = "#3b82f6")}
-              onBlur={e => (e.currentTarget.style.borderColor = "#d1d5db")} />
-            <button type="submit" disabled={!exprInput.trim()}
-              style={{
-                width: "100%", padding: "6px", borderRadius: 8, fontWeight: 600,
-                fontSize: 13, border: "none", cursor: exprInput.trim() ? "pointer" : "default",
-                background: exprInput.trim() ? "#1e3a5f" : "#e5e7eb",
-                color: exprInput.trim() ? "#fff" : "#9ca3af",
-              }}>Build</button>
-          </form>
+          {showBuilder && (
+            <form style={{ display: "flex", flexDirection: "column", gap: 3, marginTop: "auto" }}
+              onSubmit={e => { e.preventDefault(); buildFromInput(); }}>
+              <input type="text" value={exprInput} onChange={e => setExprInput(e.target.value)}
+                placeholder={eqMode ? "2x+3 = x+5" : showY ? "x²+2xy" : "x²+3x+2"}
+                style={{
+                  width: "100%", padding: "6px 8px", borderRadius: 8, boxSizing: "border-box",
+                  border: "2px solid #d1d5db", background: "#fff",
+                  color: "#1f2937", fontSize: 13, outline: "none",
+                }}
+                onFocus={e => (e.currentTarget.style.borderColor = "#3b82f6")}
+                onBlur={e => (e.currentTarget.style.borderColor = "#d1d5db")} />
+              <button type="submit" disabled={!exprInput.trim()}
+                style={{
+                  width: "100%", padding: "6px", borderRadius: 8, fontWeight: 600,
+                  fontSize: 13, border: "none", cursor: exprInput.trim() ? "pointer" : "default",
+                  background: exprInput.trim() ? "#1e3a5f" : "#e5e7eb",
+                  color: exprInput.trim() ? "#fff" : "#9ca3af",
+                }}>Build</button>
+            </form>
+          )}
         </div>
 
         {/* ── Canvas column ─────────────────────────────────────────────── */}
@@ -1094,18 +1104,20 @@ export default function App() {
           </div>
 
           {/* ── Expression bar ──────────────────────────────────────────────── */}
-          <div className="flex items-center justify-center gap-3 px-4 py-2 flex-shrink-0"
-            style={{ background: "#f5f3f0", borderTop: "2px solid #d1d5db" }}>
-            <span style={{ fontSize: 13, color: "#6b7280", fontWeight: 600 }}>Expression:</span>
-            <span className="font-bold" style={{ fontSize: 18, letterSpacing: 0.5, color: "#1f2937" }}>
-              {exprDisplay}
-            </span>
-            {tiles.length > 0 && (
-              <span style={{ fontSize: 12, color: "#9ca3af", marginLeft: 4 }}>
-                ({tiles.length} tile{tiles.length !== 1 ? "s" : ""})
+          {showExprBar && (
+            <div className="flex items-center justify-center gap-3 px-4 py-2 flex-shrink-0"
+              style={{ background: "#f5f3f0", borderTop: "2px solid #d1d5db" }}>
+              <span style={{ fontSize: 13, color: "#6b7280", fontWeight: 600 }}>Expression:</span>
+              <span className="font-bold" style={{ fontSize: 18, letterSpacing: 0.5, color: "#1f2937" }}>
+                {exprDisplay}
               </span>
-            )}
-          </div>
+              {tiles.length > 0 && (
+                <span style={{ fontSize: 12, color: "#9ca3af", marginLeft: 4 }}>
+                  ({tiles.length} tile{tiles.length !== 1 ? "s" : ""})
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -1168,5 +1180,81 @@ function TBBtn({ onClick, title, children }: {
       onPointerLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.06)")}>
       {children}
     </button>
+  );
+}
+
+function BurgerMenu({ scale, setScale, showBuilder, setShowBuilder, showExprBar, setShowExprBar, onClose }: {
+  scale: number; setScale: (fn: (s: number) => number) => void;
+  showBuilder: boolean; setShowBuilder: (v: boolean) => void;
+  showExprBar: boolean; setShowExprBar: (v: boolean) => void;
+  onClose: () => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const h = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [onClose]);
+
+  return (
+    <div ref={ref} className="absolute right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden" style={{ minWidth: 220 }}>
+      <div className="py-1">
+        {/* Zoom */}
+        <div className="px-4 py-2.5 flex items-center justify-between">
+          <span className="text-sm font-semibold text-gray-700">Zoom</span>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setScale(s => Math.max(0.5, +(s - 0.25).toFixed(2)))}
+              className="hover:bg-gray-100 transition-colors"
+              style={{ width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #d1d5db", borderRadius: 6, background: "#fff", cursor: "pointer" }}>
+              <Minus size={14} color="#374151" />
+            </button>
+            <span className="text-sm font-semibold text-gray-600" style={{ minWidth: 36, textAlign: "center" }}>
+              {Math.round(scale * 100)}%
+            </span>
+            <button onClick={() => setScale(s => Math.min(3, +(s + 0.25).toFixed(2)))}
+              className="hover:bg-gray-100 transition-colors"
+              style={{ width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #d1d5db", borderRadius: 6, background: "#fff", cursor: "pointer" }}>
+              <Plus size={14} color="#374151" />
+            </button>
+          </div>
+        </div>
+
+        <div className="border-t border-gray-100 my-1" />
+
+        {/* Expression Builder toggle */}
+        <button onClick={() => setShowBuilder(!showBuilder)}
+          className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+          style={{ border: "none", background: "transparent", cursor: "pointer" }}>
+          <span>Expression Builder</span>
+          <TogglePill on={showBuilder} />
+        </button>
+
+        {/* Expression Bar toggle */}
+        <button onClick={() => setShowExprBar(!showExprBar)}
+          className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+          style={{ border: "none", background: "transparent", cursor: "pointer" }}>
+          <span>Expression Summary</span>
+          <TogglePill on={showExprBar} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function TogglePill({ on }: { on: boolean }) {
+  return (
+    <div style={{
+      width: 36, height: 20, borderRadius: 10, padding: 2,
+      background: on ? "#1e40af" : "#d1d5db",
+      transition: "background 0.15s", cursor: "pointer", flexShrink: 0,
+    }}>
+      <div style={{
+        width: 16, height: 16, borderRadius: 8, background: "#fff",
+        transition: "transform 0.15s",
+        transform: on ? "translateX(16px)" : "translateX(0)",
+      }} />
+    </div>
   );
 }
