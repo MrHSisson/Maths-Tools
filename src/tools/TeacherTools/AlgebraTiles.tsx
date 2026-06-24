@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Home, Trash2, Undo2, RotateCw, Plus, Minus, Eye, EyeOff,
   ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Menu, X,
+  Pencil, Eraser,
 } from "lucide-react";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -319,6 +320,10 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [showBuilder, setShowBuilder] = useState(true);
   const [showExprBar, setShowExprBar] = useState(true);
+  const [drawMode, setDrawMode] = useState(false);
+  const [eraserMode, setEraserMode] = useState(false);
+  const [strokes, setStrokes] = useState<{ x: number; y: number }[][]>([]);
+  const drawingRef = useRef<{ x: number; y: number }[] | null>(null);
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const scaleRef = useRef(scale);
@@ -610,6 +615,56 @@ export default function App() {
     };
   }, [lasso, tiles]);
 
+  // ── Drawing (freehand pen) ──────────────────────────────────────────
+
+  const drawModeRef = useRef(drawMode);
+  drawModeRef.current = drawMode;
+  const eraserModeRef = useRef(eraserMode);
+  eraserModeRef.current = eraserMode;
+  const strokesRef = useRef(strokes);
+  strokesRef.current = strokes;
+
+  useEffect(() => {
+    if (!drawingRef.current) return;
+
+    const onMove = (e: PointerEvent) => {
+      const cv = canvasRef.current;
+      if (!cv) return;
+      const r = cv.getBoundingClientRect();
+      const s = scaleRef.current;
+      const px = (e.clientX - r.left) / s;
+      const py = (e.clientY - r.top) / s;
+
+      if (eraserModeRef.current) {
+        const ERASE_R = 12;
+        setStrokes(prev => prev.filter(stroke =>
+          !stroke.some(pt => Math.abs(pt.x - px) < ERASE_R && Math.abs(pt.y - py) < ERASE_R)
+        ));
+        return;
+      }
+
+      if (!drawingRef.current) return;
+      drawingRef.current.push({ x: px, y: py });
+      const cur = drawingRef.current;
+      setStrokes(prev => {
+        const copy = [...prev];
+        copy[copy.length - 1] = [...cur];
+        return copy;
+      });
+    };
+
+    const onUp = () => {
+      drawingRef.current = null;
+    };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+  }, [strokes]);
+
   const onCanvasDown = (e: React.PointerEvent) => {
     setOpenHdr(null);
     if (dragId !== null) return;
@@ -619,6 +674,19 @@ export default function App() {
     const s = scaleRef.current;
     const x = (e.clientX - r.left) / s;
     const y = (e.clientY - r.top) / s;
+
+    if (drawMode || eraserMode) {
+      if (eraserMode) {
+        const ERASE_R = 12;
+        setStrokes(prev => prev.filter(stroke =>
+          !stroke.some(pt => Math.abs(pt.x - x) < ERASE_R && Math.abs(pt.y - y) < ERASE_R)
+        ));
+      }
+      drawingRef.current = [{ x, y }];
+      if (!eraserMode) setStrokes(prev => [...prev, [{ x, y }]]);
+      return;
+    }
+
     lassoRef.current = { x1: x, y1: y };
     setLasso({ x1: x, y1: y, x2: x, y2: y });
     setSelectedIds(new Set());
@@ -845,6 +913,34 @@ export default function App() {
             <Btn on={eqMode} onClick={() => setEqMode(m => !m)} label="=" />
             <Btn on={false} onClick={doZP} label="ZP" disabled={!zpOk}
               activeColor="#dcfce7" activeText="#166534" />
+            <button onClick={() => { setDrawMode(d => !d); setEraserMode(false); }}
+              title="Draw"
+              style={{
+                padding: "4px 8px", borderRadius: 8, border: "2px solid " + (drawMode ? "#93c5fd" : "#d1d5db"),
+                cursor: "pointer", display: "flex", alignItems: "center", gap: 4,
+                background: drawMode ? "#dbeafe" : "#fff",
+                transition: "background 0.15s, border-color 0.15s",
+              }}>
+              <Pencil size={14} color={drawMode ? "#1e40af" : "#374151"} />
+            </button>
+            <button onClick={() => {
+              if (eraserMode) { setEraserMode(false); }
+              else { setEraserMode(true); setDrawMode(false); }
+            }}
+              title="Eraser"
+              style={{
+                padding: "4px 8px", borderRadius: 8, border: "2px solid " + (eraserMode ? "#fca5a5" : "#d1d5db"),
+                cursor: "pointer", display: "flex", alignItems: "center", gap: 4,
+                background: eraserMode ? "#fee2e2" : "#fff",
+                transition: "background 0.15s, border-color 0.15s",
+              }}>
+              <Eraser size={14} color={eraserMode ? "#dc2626" : "#374151"} />
+            </button>
+            {strokes.length > 0 && (
+              <SmBtn onClick={() => setStrokes([])} title="Clear all drawings">
+                <Trash2 size={13} color="#f97316" />
+              </SmBtn>
+            )}
           </div>
 
           {/* Actions */}
@@ -895,7 +991,8 @@ export default function App() {
         <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
           <div ref={canvasRef} className="relative flex-1"
             onPointerDown={onCanvasDown}
-            style={{ overflow: "hidden", touchAction: "none", background: "#f8fafc", minHeight: 200 }}>
+            style={{ overflow: "hidden", touchAction: "none", background: "#f8fafc", minHeight: 200,
+              cursor: drawMode ? "crosshair" : eraserMode ? "cell" : undefined }}>
 
             {/* ── Scaled content wrapper ────────────────────────────────── */}
             <div style={{ position: "absolute", inset: 0, transform: `scale(${scale})`, transformOrigin: "0 0" }}>
@@ -1280,6 +1377,18 @@ export default function App() {
                   pointerEvents: "none",
                   zIndex: 50,
                 }} />
+              )}
+
+              {/* Drawing strokes */}
+              {strokes.length > 0 && (
+                <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 60 }}>
+                  {strokes.map((pts, i) => (
+                    <polyline key={i}
+                      points={pts.map(p => `${p.x},${p.y}`).join(" ")}
+                      fill="none" stroke="#1e3a5f" strokeWidth={2.5}
+                      strokeLinecap="round" strokeLinejoin="round" />
+                  ))}
+                </svg>
               )}
 
             </div>{/* end scaled wrapper */}
