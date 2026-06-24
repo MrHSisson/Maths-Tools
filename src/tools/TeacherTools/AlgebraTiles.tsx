@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
-  Home, Trash2, Undo2, RotateCw, Plus, Eye, EyeOff,
+  Home, Trash2, Undo2, RotateCw, Plus, Minus, Eye, EyeOff,
   ArrowUp, ArrowDown, ArrowLeft, ArrowRight,
 } from "lucide-react";
 
@@ -61,10 +61,7 @@ const PAL_NEG_XY: PalCell[] = [
   { kind: "-y", rot: 0, row: 3, col: 2 },
   { kind: "-1", rot: 0, row: 3, col: 3 },
 ];
-const PAL_COLS_X = `${X_LEN}px ${UNIT}px`;
-const PAL_COLS_XY = `${X_LEN}px ${Y_LEN}px ${UNIT}px`;
-const PAL_ROWS_X = PAL_COLS_X;
-const PAL_ROWS_XY = PAL_COLS_XY;
+const PAL_S = 0.55;
 
 const COLOR: Record<TileKind, string> = {
   "x2": "#3b82f6", "-x2": "#ef4444",
@@ -318,8 +315,12 @@ export default function App() {
   const [rowHeaders, setRowHeaders] = useState<TileKind[]>(["x"]);
   const [openHdr, setOpenHdr] = useState<{ axis: "col" | "row"; idx: number } | null>(null);
   const [tableRevealed, setTableRevealed] = useState(false);
+  const [scale, setScale] = useState(1.5);
+  const [revealedCells, setRevealedCells] = useState<Set<string>>(new Set());
 
   const canvasRef = useRef<HTMLDivElement>(null);
+  const scaleRef = useRef(scale);
+  scaleRef.current = scale;
   const dragRef = useRef<{
     id: number; ox: number; oy: number;
     starts: Map<number, { x: number; y: number }>;
@@ -442,9 +443,10 @@ export default function App() {
       const d = dragRef.current;
       const cv = canvasRef.current;
       if (!d || !cv) return;
+      const s = scaleRef.current;
       const r = cv.getBoundingClientRect();
-      const rawX = e.clientX - r.left - d.ox;
-      const rawY = e.clientY - r.top - d.oy;
+      const rawX = (e.clientX - r.left) / s - d.ox;
+      const rawY = (e.clientY - r.top) / s - d.oy;
 
       if (!d.moved) {
         const ps = d.starts.get(d.id);
@@ -518,8 +520,8 @@ export default function App() {
     const r = cv.getBoundingClientRect();
     const [w, h] = dims(kind, rot);
     const id = nextId++;
-    const rx = Math.round((e.clientX - r.left - w / 2) / SNAP) * SNAP;
-    const ry = Math.round((e.clientY - r.top - h / 2) / SNAP) * SNAP;
+    const rx = Math.round(((e.clientX - r.left) / scale - w / 2) / SNAP) * SNAP;
+    const ry = Math.round(((e.clientY - r.top) / scale - h / 2) / SNAP) * SNAP;
     const tile: TileState = { id, kind, x: rx, y: ry, rot };
     const sel = new Set([id]);
     setSelectedIds(sel);
@@ -556,7 +558,7 @@ export default function App() {
     }
 
     setTiles(ts => [...ts.filter(t => t.id !== tile.id), tile]);
-    startDrag(tile.id, e.clientX - (r.left + tile.x), e.clientY - (r.top + tile.y), sel, wasSelected);
+    startDrag(tile.id, (e.clientX - r.left) / scale - tile.x, (e.clientY - r.top) / scale - tile.y, sel, wasSelected);
   };
 
   const clear = () => {
@@ -605,10 +607,7 @@ export default function App() {
   const anyRotatable = tiles.some(t => selectedIds.has(t.id) && canRotate(t.kind));
   const posGrid = showY ? PAL_POS_XY : PAL_POS_X;
   const negGrid = showY ? PAL_NEG_XY : PAL_NEG_X;
-  const palCols = showY ? PAL_COLS_XY : PAL_COLS_X;
-  const palRows = showY ? PAL_ROWS_XY : PAL_ROWS_X;
 
-  // Reset y-headers when y tiles toggled off
   useEffect(() => {
     if (showY) return;
     setColHeaders(h => h.map(k => k === "y" ? "x" as TileKind : k === "-y" ? "-x" as TileKind : k));
@@ -629,7 +628,6 @@ export default function App() {
     return `${factor(colHeaders)}${factor(rowHeaders)} = ${buildExpr(pt)}`;
   })() : null;
 
-  // Toolbar position — anchored above (or below) selected tiles
   const toolbarPos = (() => {
     if (!showToolbar || !selectedIds.size) return null;
     const sel = tiles.filter(t => selectedIds.has(t.id));
@@ -650,35 +648,38 @@ export default function App() {
   const exprDisplay = (() => {
     if (!eqMode) return buildExpr(tiles);
     const cv = canvasRef.current;
-    const mid = cv ? cv.getBoundingClientRect().width / 2 : 400;
+    const mid = cv ? cv.getBoundingClientRect().width / (2 * scale) : 400;
     const left = tiles.filter(t => t.x + dims(t.kind, t.rot)[0] / 2 < mid);
     const right = tiles.filter(t => t.x + dims(t.kind, t.rot)[0] / 2 >= mid);
     return `${buildExpr(left)}  =  ${buildExpr(right)}`;
   })();
 
+  const palColsTpl = showY
+    ? `${X_LEN * PAL_S}px ${Y_LEN * PAL_S}px ${UNIT * PAL_S}px`
+    : `${X_LEN * PAL_S}px ${UNIT * PAL_S}px`;
+  const palRowsTpl = palColsTpl;
+
   const renderPalGrid = (items: PalCell[]) => (
-    <div style={{
-      display: "grid", gridTemplateColumns: palCols, gridTemplateRows: palRows, gap: 2,
-    }}>
+    <div style={{ display: "grid", gridTemplateColumns: palColsTpl, gridTemplateRows: palRowsTpl, gap: 1 }}>
       {items.map(({ kind, rot, row, col }) => {
         const [w, h] = dims(kind, rot);
-        const minD = Math.min(w, h);
-        const fs = minD >= X_LEN ? 15 : minD >= 30 ? 12 : minD >= UNIT ? 9 : 0;
+        const sw = w * PAL_S, sh = h * PAL_S;
+        const minD = Math.min(sw, sh);
+        const fs = minD >= 30 ? 11 : minD >= 15 ? 9 : minD >= 10 ? 7 : 0;
         return (
           <div key={`pal-${kind}-${rot}`}
             onPointerDown={e => onPaletteDown(e, kind, rot)}
             style={{
               gridRow: row, gridColumn: col,
-              backgroundColor: COLOR[kind], borderRadius: 4,
-              border: "2px solid rgba(0,0,0,0.18)",
+              backgroundColor: COLOR[kind], borderRadius: 3,
+              border: "1.5px solid rgba(0,0,0,0.18)",
               display: "flex", alignItems: "center", justifyContent: "center",
               cursor: "grab", touchAction: "none",
-              boxShadow: "0 1px 4px rgba(0,0,0,0.12)",
             }}>
             {fs > 0 && (
               <span style={{
                 fontSize: fs, fontWeight: 700, color: TEXT_CLR[kind], pointerEvents: "none",
-                writingMode: w < h && h > 40 ? "vertical-lr" : undefined,
+                writingMode: sw < sh && sh > 20 ? "vertical-lr" : undefined,
               }}>{LBL[kind]}</span>
             )}
           </div>
@@ -691,14 +692,15 @@ export default function App() {
     <div style={{ display: "flex", flexDirection: "column", height: "100dvh", fontFamily: "'Inter', system-ui, sans-serif" }}>
 
       {/* ── Header ──────────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-2 px-3 py-1.5 flex-shrink-0" style={{ background: "#0f172a", borderBottom: "1px solid #1e293b" }}>
+      <div className="flex items-center gap-2 px-4 py-2 flex-shrink-0"
+        style={{ background: "linear-gradient(135deg, #7c3aed 0%, #c026d3 100%)", borderBottom: "1px solid rgba(255,255,255,0.15)" }}>
         <button onClick={() => { window.location.href = "/"; }}
-          className="p-1 rounded-lg" style={{ border: "none", background: "none", cursor: "pointer" }}
-          onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.1)")}
-          onMouseLeave={e => (e.currentTarget.style.background = "none")}>
-          <Home size={18} color="#e2e8f0" />
+          className="p-1.5 rounded-lg" style={{ border: "none", background: "rgba(255,255,255,0.15)", cursor: "pointer" }}
+          onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.25)")}
+          onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.15)")}>
+          <Home size={16} color="#fff" />
         </button>
-        <h1 className="font-bold text-white m-0" style={{ fontSize: 16 }}>Algebra Tiles</h1>
+        <h1 className="font-bold text-white m-0" style={{ fontSize: 16, letterSpacing: 0.3 }}>Algebra Tiles</h1>
       </div>
 
       {/* ── Main: side panel + canvas ─────────────────────────────────── */}
@@ -706,52 +708,68 @@ export default function App() {
 
         {/* ── Side panel ────────────────────────────────────────────────── */}
         <div style={{
-          background: "#1e293b", flexShrink: 0, overflowY: "auto",
-          display: "flex", flexDirection: "column", padding: 10, gap: 10,
-          borderRight: "2px solid #334155",
+          background: "#1e293b", width: 130, flexShrink: 0, overflowY: "auto",
+          display: "flex", flexDirection: "column", padding: 8, gap: 6,
+          borderRight: "1px solid #334155",
         }}>
           {/* Controls */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
             <Btn on={showGrid} onClick={() => setShowGrid(g => !g)} label="Grid" />
             <Btn on={showFrame} onClick={() => setShowFrame(f => !f)} label="Frame" />
             <Btn on={showTable} onClick={() => { setShowTable(t => !t); setOpenHdr(null); }} label="Table" />
             <Btn on={showY} onClick={() => setShowY(y => !y)} label="y" />
-            <Btn on={eqMode} onClick={() => setEqMode(m => !m)} label="Eq" />
+            <Btn on={eqMode} onClick={() => setEqMode(m => !m)} label="=" />
             <Btn on={false} onClick={doZP} label="ZP" disabled={!zpOk}
               activeColor="rgba(34,197,94,0.2)" activeText="#86efac" />
-            <IconBtn onClick={undo} disabled={!history.length} title="Undo (Ctrl+Z)">
-              <Undo2 size={15} color={history.length ? "#e2e8f0" : "#475569"} />
-            </IconBtn>
-            <IconBtn onClick={clear} disabled={!tiles.length} title="Clear all">
-              <Trash2 size={15} color={tiles.length ? "#fca5a5" : "#475569"} />
-            </IconBtn>
+          </div>
+
+          {/* Actions + zoom */}
+          <div style={{ display: "flex", gap: 3, alignItems: "center" }}>
+            <SmBtn onClick={undo} disabled={!history.length} title="Undo">
+              <Undo2 size={13} color={history.length ? "#e2e8f0" : "#475569"} />
+            </SmBtn>
+            <SmBtn onClick={clear} disabled={!tiles.length} title="Clear">
+              <Trash2 size={13} color={tiles.length ? "#fca5a5" : "#475569"} />
+            </SmBtn>
+            <div style={{ flex: 1 }} />
+            <SmBtn onClick={() => setScale(s => Math.max(0.75, +(s - 0.25).toFixed(2)))} title="Zoom out">
+              <Minus size={12} color="#e2e8f0" />
+            </SmBtn>
+            <span style={{ fontSize: 9, color: "#94a3b8", fontWeight: 600, minWidth: 24, textAlign: "center" }}>
+              {Math.round(scale * 100)}%
+            </span>
+            <SmBtn onClick={() => setScale(s => Math.min(3, +(s + 0.25).toFixed(2)))} title="Zoom in">
+              <Plus size={12} color="#e2e8f0" />
+            </SmBtn>
           </div>
 
           {/* Positive tiles */}
+          <div style={{ fontSize: 9, color: "#64748b", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8 }}>Positive</div>
           {renderPalGrid(posGrid)}
 
-          <div style={{ height: 1, background: "#475569" }} />
+          <div style={{ height: 1, background: "#334155" }} />
 
           {/* Negative tiles */}
+          <div style={{ fontSize: 9, color: "#64748b", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8 }}>Negative</div>
           {renderPalGrid(negGrid)}
 
           {/* Expression input */}
-          <form style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: "auto" }}
+          <form style={{ display: "flex", flexDirection: "column", gap: 3, marginTop: "auto" }}
             onSubmit={e => { e.preventDefault(); buildFromInput(); }}>
             <input type="text" value={exprInput} onChange={e => setExprInput(e.target.value)}
-              placeholder={eqMode ? "e.g. 2x + 3 = x + 5" : showY ? "e.g. x² + 2xy" : "e.g. x² + 3x + 2"}
+              placeholder={eqMode ? "2x+3 = x+5" : showY ? "x²+2xy" : "x²+3x+2"}
               style={{
-                width: "100%", padding: "6px 8px", borderRadius: 6, boxSizing: "border-box",
-                border: "1.5px solid #475569", background: "#0f172a",
-                color: "#e2e8f0", fontSize: 13, outline: "none",
+                width: "100%", padding: "4px 6px", borderRadius: 6, boxSizing: "border-box",
+                border: "1px solid #475569", background: "#0f172a",
+                color: "#e2e8f0", fontSize: 11, outline: "none",
               }}
-              onFocus={e => (e.currentTarget.style.borderColor = "#3b82f6")}
+              onFocus={e => (e.currentTarget.style.borderColor = "#7c3aed")}
               onBlur={e => (e.currentTarget.style.borderColor = "#475569")} />
             <button type="submit" disabled={!exprInput.trim()}
               style={{
-                width: "100%", padding: "6px", borderRadius: 6, fontWeight: 600,
-                fontSize: 13, border: "none", cursor: exprInput.trim() ? "pointer" : "default",
-                background: exprInput.trim() ? "#3b82f6" : "#334155",
+                width: "100%", padding: "4px", borderRadius: 6, fontWeight: 600,
+                fontSize: 11, border: "none", cursor: exprInput.trim() ? "pointer" : "default",
+                background: exprInput.trim() ? "#7c3aed" : "#334155",
                 color: exprInput.trim() ? "#fff" : "#64748b",
               }}>Build</button>
           </form>
@@ -761,306 +779,333 @@ export default function App() {
         <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
           <div ref={canvasRef} className="relative flex-1"
             onPointerDown={() => { setSelectedIds(new Set()); setShowToolbar(false); setOpenHdr(null); }}
-            style={{ overflow: "visible", touchAction: "none", background: "#f1f5f9", minHeight: 200 }}>
+            style={{ overflow: "hidden", touchAction: "none", background: "#f8fafc", minHeight: 200 }}>
 
-            {showGrid && (
-              <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 1 }}>
-                <defs>
-                  <pattern id="atg" width={UNIT} height={UNIT} patternUnits="userSpaceOnUse">
-                    <circle cx={UNIT} cy={UNIT} r="0.8" fill="#b0bec5" />
-                  </pattern>
-                </defs>
-                <rect width="100%" height="100%" fill="url(#atg)" />
-              </svg>
-            )}
+            {/* ── Scaled content wrapper ────────────────────────────────── */}
+            <div style={{ position: "absolute", inset: 0, transform: `scale(${scale})`, transformOrigin: "0 0" }}>
 
-            {showFrame && (
-              <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 2 }}>
-                <rect x={0} y={0} width={FRAME} height={FRAME} fill="rgba(100,116,139,0.06)" rx="4" />
-                <line x1={FRAME} y1={0} x2={FRAME} y2="100%" stroke="#475569" strokeWidth="2.5" strokeDasharray="6 4" />
-                <line x1={0} y1={FRAME} x2="100%" y2={FRAME} stroke="#475569" strokeWidth="2.5" strokeDasharray="6 4" />
-                <text x={FRAME / 2} y={FRAME / 2} textAnchor="middle" dominantBaseline="central"
-                  style={{ fontSize: 24, fontWeight: 800, fill: "#94a3b8", fontFamily: "serif" }}>{"×"}</text>
-                <text x={FRAME + 10} y={14} textAnchor="start" style={{ fontSize: 11, fill: "#94a3b8", fontWeight: 600 }}>Factor 1</text>
-                <text x={4} y={FRAME + 14} textAnchor="start" style={{ fontSize: 11, fill: "#94a3b8", fontWeight: 600 }}>Factor 2</text>
-              </svg>
-            )}
+              {showGrid && (
+                <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 1 }}>
+                  <defs>
+                    <pattern id="atg" width={UNIT} height={UNIT} patternUnits="userSpaceOnUse">
+                      <circle cx={UNIT} cy={UNIT} r="0.8" fill="#cbd5e1" />
+                    </pattern>
+                  </defs>
+                  <rect width="100%" height="100%" fill="url(#atg)" />
+                </svg>
+              )}
 
-            {eqMode && (
-              <div className="absolute pointer-events-none" style={{ top: 0, bottom: 0, left: "50%", transform: "translateX(-50%)", zIndex: 3, display: "flex", flexDirection: "column", alignItems: "center" }}>
-                <div style={{ flex: 1, width: 2, background: "repeating-linear-gradient(to bottom, #475569 0, #475569 6px, transparent 6px, transparent 12px)" }} />
-                <div style={{ padding: "6px 10px", background: "#334155", borderRadius: 8, color: "#e2e8f0", fontWeight: 800, fontSize: 18, lineHeight: 1 }}>=</div>
-                <div style={{ flex: 1, width: 2, background: "repeating-linear-gradient(to bottom, #475569 0, #475569 6px, transparent 6px, transparent 12px)" }} />
-              </div>
-            )}
+              {showFrame && (
+                <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 2 }}>
+                  <rect x={0} y={0} width={FRAME} height={FRAME} fill="rgba(100,116,139,0.06)" rx="4" />
+                  <line x1={FRAME} y1={0} x2={FRAME} y2="100%" stroke="#475569" strokeWidth="2.5" strokeDasharray="6 4" />
+                  <line x1={0} y1={FRAME} x2="100%" y2={FRAME} stroke="#475569" strokeWidth="2.5" strokeDasharray="6 4" />
+                  <text x={FRAME / 2} y={FRAME / 2} textAnchor="middle" dominantBaseline="central"
+                    style={{ fontSize: 24, fontWeight: 800, fill: "#94a3b8", fontFamily: "serif" }}>{"×"}</text>
+                  <text x={FRAME + 10} y={14} textAnchor="start" style={{ fontSize: 11, fill: "#94a3b8", fontWeight: 600 }}>Factor 1</text>
+                  <text x={4} y={FRAME + 14} textAnchor="start" style={{ fontSize: 11, fill: "#94a3b8", fontWeight: 600 }}>Factor 2</text>
+                </svg>
+              )}
 
-            {/* ── Multiplication table ───────────────────────────────────── */}
-            {showTable && (() => {
-              const HDR = UNIT, ADD = 30, PAD = 3, BDW = 2;
-              const BD = `${BDW}px solid #334155`;
-              const gridCols = `${HDR + PAD * 2 + BDW * 2}px ${colHeaders.map(k => `${kindLen(k) + PAD * 2 + BDW}px`).join(" ")} ${ADD}px`;
-              const gridRows = `${HDR + PAD * 2 + BDW * 2}px ${rowHeaders.map(k => `${kindLen(k) + PAD * 2 + BDW}px`).join(" ")} ${ADD}px`;
+              {eqMode && (
+                <div className="absolute pointer-events-none" style={{ top: 0, bottom: 0, left: `${50 / scale}%`, transform: "translateX(-50%)", zIndex: 3, display: "flex", flexDirection: "column", alignItems: "center" }}>
+                  <div style={{ flex: 1, width: 2, background: "repeating-linear-gradient(to bottom, #475569 0, #475569 6px, transparent 6px, transparent 12px)" }} />
+                  <div style={{ padding: "6px 10px", background: "#334155", borderRadius: 8, color: "#e2e8f0", fontWeight: 800, fontSize: 18, lineHeight: 1 }}>=</div>
+                  <div style={{ flex: 1, width: 2, background: "repeating-linear-gradient(to bottom, #475569 0, #475569 6px, transparent 6px, transparent 12px)" }} />
+                </div>
+              )}
 
-              const hdrPicker = (axis: "col" | "row", idx: number, current: TileKind, canRemove: boolean) => {
-                const isOpen = openHdr?.axis === axis && openHdr.idx === idx;
-                return (
-                  <>
-                    {isOpen && (
-                      <div style={{
-                        position: "absolute",
-                        ...(axis === "col"
-                          ? { top: "calc(100% + 8px)", left: "50%", transform: "translateX(-50%)" }
-                          : { top: "50%", left: "calc(100% + 8px)", transform: "translateY(-50%)" }),
-                        zIndex: 200, display: "flex", alignItems: "center", gap: 3,
-                        padding: 5, background: "#1e293b", borderRadius: 10,
-                        boxShadow: "0 4px 20px rgba(0,0,0,0.4)",
-                      }}>
-                        {headerKinds.map(hk => (
-                          <button key={hk} onClick={e => {
-                            e.stopPropagation();
-                            if (axis === "col") setColHeaders(h => h.map((k, i) => i === idx ? hk : k));
-                            else setRowHeaders(h => h.map((k, i) => i === idx ? hk : k));
-                            setOpenHdr(null);
-                          }}
-                            style={{
-                              width: 34, height: 34, background: COLOR[hk], borderRadius: 6,
-                              border: current === hk ? "2.5px solid #fff" : "2px solid rgba(255,255,255,0.12)",
-                              display: "flex", alignItems: "center", justifyContent: "center",
-                              cursor: "pointer", padding: 0, flexShrink: 0,
-                            }}>
-                            <span style={{ fontSize: 11, fontWeight: 700, color: TEXT_CLR[hk] }}>{LBL[hk]}</span>
-                          </button>
-                        ))}
-                        {canRemove && (
-                          <>
-                            <div style={{ width: 1, height: 24, background: "#475569", flexShrink: 0 }} />
-                            <button onClick={e => {
+              {/* ── Multiplication table ───────────────────────────────────── */}
+              {showTable && (() => {
+                const HDR = UNIT, ADD = 30, PAD = 3, BDW = 2;
+                const BD = `${BDW}px solid #334155`;
+                const gridCols = `${HDR + PAD * 2 + BDW * 2}px ${colHeaders.map(k => `${kindLen(k) + PAD * 2 + BDW}px`).join(" ")} ${ADD}px`;
+                const gridRows = `${HDR + PAD * 2 + BDW * 2}px ${rowHeaders.map(k => `${kindLen(k) + PAD * 2 + BDW}px`).join(" ")} ${ADD}px`;
+
+                const hdrPicker = (axis: "col" | "row", idx: number, current: TileKind, canRemove: boolean) => {
+                  const isOpen = openHdr?.axis === axis && openHdr.idx === idx;
+                  return (
+                    <>
+                      {isOpen && (
+                        <div style={{
+                          position: "absolute",
+                          ...(axis === "col"
+                            ? { top: "calc(100% + 8px)", left: "50%", transform: "translateX(-50%)" }
+                            : { top: "50%", left: "calc(100% + 8px)", transform: "translateY(-50%)" }),
+                          zIndex: 300, display: "flex", alignItems: "center", gap: 3,
+                          padding: 5, background: "#1e293b", borderRadius: 10,
+                          boxShadow: "0 4px 20px rgba(0,0,0,0.4)",
+                        }}>
+                          {headerKinds.map(hk => (
+                            <button key={hk} onClick={e => {
                               e.stopPropagation();
-                              if (axis === "col") setColHeaders(h => h.filter((_, i) => i !== idx));
-                              else setRowHeaders(h => h.filter((_, i) => i !== idx));
+                              if (axis === "col") setColHeaders(h => h.map((k, i) => i === idx ? hk : k));
+                              else setRowHeaders(h => h.map((k, i) => i === idx ? hk : k));
                               setOpenHdr(null);
                             }}
                               style={{
-                                width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center",
-                                border: "none", borderRadius: 6, cursor: "pointer", padding: 0, flexShrink: 0,
-                                background: "rgba(239,68,68,0.15)",
-                              }}><Trash2 size={15} color="#fca5a5" /></button>
-                          </>
-                        )}
-                      </div>
-                    )}
-                  </>
-                );
-              };
+                                width: 34, height: 34, background: COLOR[hk], borderRadius: 6,
+                                border: current === hk ? "2.5px solid #fff" : "2px solid rgba(255,255,255,0.12)",
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                cursor: "pointer", padding: 0, flexShrink: 0,
+                              }}>
+                              <span style={{ fontSize: 11, fontWeight: 700, color: TEXT_CLR[hk] }}>{LBL[hk]}</span>
+                            </button>
+                          ))}
+                          {canRemove && (
+                            <>
+                              <div style={{ width: 1, height: 24, background: "#475569", flexShrink: 0 }} />
+                              <button onClick={e => {
+                                e.stopPropagation();
+                                if (axis === "col") setColHeaders(h => h.filter((_, i) => i !== idx));
+                                else setRowHeaders(h => h.filter((_, i) => i !== idx));
+                                setOpenHdr(null);
+                              }}
+                                style={{
+                                  width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center",
+                                  border: "none", borderRadius: 6, cursor: "pointer", padding: 0, flexShrink: 0,
+                                  background: "rgba(239,68,68,0.15)",
+                                }}><Trash2 size={15} color="#fca5a5" /></button>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  );
+                };
 
-              return (
-                <div style={{ position: "absolute", left: 16, top: 16, zIndex: 130 }}
-                  onPointerDown={e => e.stopPropagation()}>
-
-                  {openHdr && (
-                    <div style={{ position: "fixed", inset: 0, zIndex: 150 }}
-                      onClick={() => setOpenHdr(null)} />
-                  )}
-
+                return (
                   <div style={{
-                    position: "relative", zIndex: 160,
-                    display: "grid", gridTemplateColumns: gridCols, gridTemplateRows: gridRows,
-                    gap: 0,
-                  }}>
-                    {/* Corner cell — tap to reveal/hide products */}
-                    <div onClick={() => setTableRevealed(v => !v)}
-                      style={{
-                        gridRow: 1, gridColumn: 1, background: "#e2e8f0",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        cursor: "pointer", gap: 2, padding: 1,
-                        borderTop: BD, borderLeft: BD, borderRight: BD, borderBottom: BD,
-                      }}>
-                      <span style={{ fontSize: 12, fontWeight: 800, color: "#475569" }}>×</span>
-                      {tableRevealed
-                        ? <EyeOff size={10} color="#64748b" />
-                        : <Eye size={10} color="#64748b" />}
-                    </div>
+                    position: "absolute", left: `${50 / scale}%`, top: `${40 / scale}%`,
+                    transform: "translate(-50%, -50%)", zIndex: 5,
+                  }}
+                    onPointerDown={e => e.stopPropagation()}>
 
-                    {/* Column headers */}
-                    {colHeaders.map((k, c) => (
-                      <div key={`ch-${c}`}
-                        onClick={() => setOpenHdr(prev =>
-                          prev?.axis === "col" && prev.idx === c ? null : { axis: "col", idx: c })}
-                        style={{
-                          gridRow: 1, gridColumn: c + 2, position: "relative",
-                          background: "#fff", cursor: "pointer", padding: PAD,
-                          display: "flex",
-                          borderTop: BD, borderRight: BD, borderBottom: BD,
-                        }}>
-                        <div style={{
-                          flex: 1, background: COLOR[k], borderRadius: 3,
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                        }}>
-                          <span style={{ fontSize: 12, fontWeight: 700, color: TEXT_CLR[k] }}>{LBL[k]}</span>
-                        </div>
-                        {hdrPicker("col", c, k, colHeaders.length > 1)}
-                      </div>
-                    ))}
+                    {openHdr && (
+                      <div style={{ position: "fixed", inset: 0, zIndex: 250 }}
+                        onClick={() => setOpenHdr(null)} />
+                    )}
 
-                    {/* Add column button */}
-                    <button onClick={() => {
-                      const ni = colHeaders.length;
-                      setColHeaders(h => [...h, "1"]);
-                      setOpenHdr({ axis: "col", idx: ni });
-                    }}
-                      style={{
-                        gridRow: 1, gridColumn: colHeaders.length + 2,
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        background: "rgba(148,163,184,0.1)", cursor: "pointer",
-                        border: "1px dashed #64748b", borderRadius: 6, padding: 0,
+                    <div style={{
+                      position: "relative", zIndex: 6,
+                      display: "grid", gridTemplateColumns: gridCols, gridTemplateRows: gridRows,
+                      gap: 0, background: "#fff", borderRadius: 6,
+                      boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
+                    }}>
+                      {/* Corner cell */}
+                      <div onClick={() => {
+                        if (tableRevealed) { setTableRevealed(false); setRevealedCells(new Set()); }
+                        else setTableRevealed(true);
                       }}
-                      onMouseEnter={e => (e.currentTarget.style.background = "rgba(148,163,184,0.25)")}
-                      onMouseLeave={e => (e.currentTarget.style.background = "rgba(148,163,184,0.1)")}
-                    ><Plus size={16} color="#94a3b8" /></button>
-
-                    {/* Row headers */}
-                    {rowHeaders.map((k, r) => (
-                      <div key={`rh-${r}`}
-                        onClick={() => setOpenHdr(prev =>
-                          prev?.axis === "row" && prev.idx === r ? null : { axis: "row", idx: r })}
                         style={{
-                          gridRow: r + 2, gridColumn: 1, position: "relative",
-                          background: "#fff", cursor: "pointer", padding: PAD,
-                          display: "flex",
-                          borderLeft: BD, borderRight: BD, borderBottom: BD,
-                        }}>
-                        <div style={{
-                          flex: 1, background: COLOR[k], borderRadius: 3,
+                          gridRow: 1, gridColumn: 1, background: "#e2e8f0",
                           display: "flex", alignItems: "center", justifyContent: "center",
+                          cursor: "pointer", gap: 2, padding: 1,
+                          borderTop: BD, borderLeft: BD, borderRight: BD, borderBottom: BD,
+                          borderTopLeftRadius: 6,
                         }}>
-                          <span style={{
-                            fontSize: 12, fontWeight: 700, color: TEXT_CLR[k],
-                            writingMode: kindLen(k) > 40 ? "vertical-lr" : undefined,
-                          }}>{LBL[k]}</span>
-                        </div>
-                        {hdrPicker("row", r, k, rowHeaders.length > 1)}
+                        <span style={{ fontSize: 12, fontWeight: 800, color: "#475569" }}>×</span>
+                        {tableRevealed
+                          ? <EyeOff size={10} color="#64748b" />
+                          : <Eye size={10} color="#64748b" />}
                       </div>
-                    ))}
 
-                    {/* Add row button */}
-                    <button onClick={() => {
-                      const ni = rowHeaders.length;
-                      setRowHeaders(h => [...h, "1"]);
-                      setOpenHdr({ axis: "row", idx: ni });
-                    }}
-                      style={{
-                        gridRow: rowHeaders.length + 2, gridColumn: 1,
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        background: "rgba(148,163,184,0.1)", cursor: "pointer",
-                        border: "1px dashed #64748b", borderRadius: 6, padding: 0,
-                      }}
-                      onMouseEnter={e => (e.currentTarget.style.background = "rgba(148,163,184,0.25)")}
-                      onMouseLeave={e => (e.currentTarget.style.background = "rgba(148,163,184,0.1)")}
-                    ><Plus size={16} color="#94a3b8" /></button>
-
-                    {/* Product cells */}
-                    {rowHeaders.map((rk, r) =>
-                      colHeaders.map((ck, c) => {
-                        const pk = multiplyKinds(rk, ck);
-                        const cw = kindLen(ck), rh = kindLen(rk);
-                        const minD = Math.min(cw, rh);
-                        const fs = minD >= X_LEN ? 15 : minD >= Y_LEN ? 13 : minD >= 30 ? 11 : minD >= UNIT ? 8 : 0;
-                        return (
-                          <div key={`p-${r}-${c}`}
-                            style={{
-                              gridRow: r + 2, gridColumn: c + 2,
-                              background: "#fff", padding: PAD,
-                              display: "flex",
-                              borderRight: BD, borderBottom: BD,
-                            }}>
-                            <div style={{
-                              flex: 1, borderRadius: 3,
-                              background: tableRevealed ? COLOR[pk] : "transparent",
-                              display: "flex", alignItems: "center", justifyContent: "center",
-                              transition: "background 0.2s ease",
-                            }}>
-                              {tableRevealed && fs > 0 && (
-                                <span style={{
-                                  fontSize: fs, fontWeight: 700, color: TEXT_CLR[pk],
-                                  writingMode: cw < rh && rh > 30 ? "vertical-lr" : undefined,
-                                }}>{LBL[pk]}</span>
-                              )}
-                            </div>
+                      {/* Column headers */}
+                      {colHeaders.map((k, c) => (
+                        <div key={`ch-${c}`}
+                          onClick={() => setOpenHdr(prev =>
+                            prev?.axis === "col" && prev.idx === c ? null : { axis: "col", idx: c })}
+                          style={{
+                            gridRow: 1, gridColumn: c + 2, position: "relative",
+                            background: "#fff", cursor: "pointer", padding: PAD,
+                            display: "flex",
+                            borderTop: BD, borderRight: BD, borderBottom: BD,
+                          }}>
+                          <div style={{
+                            flex: 1, background: COLOR[k], borderRadius: 3,
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                          }}>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: TEXT_CLR[k] }}>{LBL[k]}</span>
                           </div>
-                        );
-                      })
+                          {hdrPicker("col", c, k, colHeaders.length > 1)}
+                        </div>
+                      ))}
+
+                      {/* Add column button */}
+                      <button onClick={() => {
+                        const ni = colHeaders.length;
+                        setColHeaders(h => [...h, "1"]);
+                        setOpenHdr({ axis: "col", idx: ni });
+                      }}
+                        style={{
+                          gridRow: 1, gridColumn: colHeaders.length + 2,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          background: "rgba(148,163,184,0.08)", cursor: "pointer",
+                          border: "1px dashed #94a3b8", borderRadius: 6, padding: 0,
+                        }}
+                        onMouseEnter={e => (e.currentTarget.style.background = "rgba(148,163,184,0.2)")}
+                        onMouseLeave={e => (e.currentTarget.style.background = "rgba(148,163,184,0.08)")}
+                      ><Plus size={14} color="#94a3b8" /></button>
+
+                      {/* Row headers */}
+                      {rowHeaders.map((k, r) => (
+                        <div key={`rh-${r}`}
+                          onClick={() => setOpenHdr(prev =>
+                            prev?.axis === "row" && prev.idx === r ? null : { axis: "row", idx: r })}
+                          style={{
+                            gridRow: r + 2, gridColumn: 1, position: "relative",
+                            background: "#fff", cursor: "pointer", padding: PAD,
+                            display: "flex",
+                            borderLeft: BD, borderRight: BD, borderBottom: BD,
+                          }}>
+                          <div style={{
+                            flex: 1, background: COLOR[k], borderRadius: 3,
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                          }}>
+                            <span style={{
+                              fontSize: 12, fontWeight: 700, color: TEXT_CLR[k],
+                              writingMode: kindLen(k) > 40 ? "vertical-lr" : undefined,
+                            }}>{LBL[k]}</span>
+                          </div>
+                          {hdrPicker("row", r, k, rowHeaders.length > 1)}
+                        </div>
+                      ))}
+
+                      {/* Add row button */}
+                      <button onClick={() => {
+                        const ni = rowHeaders.length;
+                        setRowHeaders(h => [...h, "1"]);
+                        setOpenHdr({ axis: "row", idx: ni });
+                      }}
+                        style={{
+                          gridRow: rowHeaders.length + 2, gridColumn: 1,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          background: "rgba(148,163,184,0.08)", cursor: "pointer",
+                          border: "1px dashed #94a3b8", borderRadius: 6, padding: 0,
+                        }}
+                        onMouseEnter={e => (e.currentTarget.style.background = "rgba(148,163,184,0.2)")}
+                        onMouseLeave={e => (e.currentTarget.style.background = "rgba(148,163,184,0.08)")}
+                      ><Plus size={14} color="#94a3b8" /></button>
+
+                      {/* Product cells */}
+                      {rowHeaders.map((rk, r) =>
+                        colHeaders.map((ck, c) => {
+                          const pk = multiplyKinds(rk, ck);
+                          const cellKey = `${r}-${c}`;
+                          const isRevealed = tableRevealed || revealedCells.has(cellKey);
+                          const cw = kindLen(ck), rh = kindLen(rk);
+                          const minD = Math.min(cw, rh);
+                          const fs = minD >= X_LEN ? 15 : minD >= Y_LEN ? 13 : minD >= 30 ? 11 : minD >= UNIT ? 8 : 0;
+                          return (
+                            <div key={`p-${r}-${c}`}
+                              onClick={() => {
+                                if (!tableRevealed) {
+                                  setRevealedCells(s => {
+                                    const n = new Set(s);
+                                    if (n.has(cellKey)) n.delete(cellKey); else n.add(cellKey);
+                                    return n;
+                                  });
+                                }
+                              }}
+                              style={{
+                                gridRow: r + 2, gridColumn: c + 2,
+                                background: "#fff", padding: PAD,
+                                display: "flex", cursor: "pointer",
+                                borderRight: BD, borderBottom: BD,
+                              }}>
+                              <div style={{
+                                flex: 1, borderRadius: 3,
+                                background: isRevealed ? COLOR[pk] : "rgba(148,163,184,0.08)",
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                transition: "background 0.2s ease",
+                              }}>
+                                {isRevealed && fs > 0 && (
+                                  <span style={{
+                                    fontSize: fs, fontWeight: 700, color: TEXT_CLR[pk],
+                                    writingMode: cw < rh && rh > 30 ? "vertical-lr" : undefined,
+                                  }}>{LBL[pk]}</span>
+                                )}
+                                {!isRevealed && (
+                                  <span style={{ fontSize: 10, color: "#cbd5e1" }}>?</span>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                    {tableRevealed && tableExpr && (
+                      <div style={{ marginTop: 8, fontSize: 13, color: "#475569", fontWeight: 600, textAlign: "center" }}>
+                        {tableExpr}
+                      </div>
                     )}
                   </div>
-                  {tableRevealed && tableExpr && (
-                    <div style={{ marginTop: 8, fontSize: 13, color: "#475569", fontWeight: 600, textAlign: "center" }}>
-                      {tableExpr}
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
+                );
+              })()}
 
-            {/* Placed tiles */}
-            {tiles.map(tile => {
-              const [w, h] = dims(tile.kind, tile.rot);
-              const active = dragId === tile.id;
-              const selected = selectedIds.has(tile.id);
-              const minD = Math.min(w, h);
-              const fs = minD >= X_LEN ? 15 : minD >= 30 ? 12 : minD >= UNIT ? 9 : 0;
-              return (
-                <div key={tile.id}
-                  onPointerDown={e => onTileDown(e, tile)}
+              {/* Placed tiles */}
+              {tiles.map(tile => {
+                const [w, h] = dims(tile.kind, tile.rot);
+                const active = dragId === tile.id;
+                const selected = selectedIds.has(tile.id);
+                const minD = Math.min(w, h);
+                const fs = minD >= X_LEN ? 15 : minD >= 30 ? 12 : minD >= UNIT ? 9 : 0;
+                return (
+                  <div key={tile.id}
+                    onPointerDown={e => onTileDown(e, tile)}
+                    style={{
+                      position: "absolute", left: tile.x, top: tile.y, width: w, height: h,
+                      backgroundColor: COLOR[tile.kind], borderRadius: 4,
+                      border: `2px solid ${active ? "rgba(0,0,0,0.45)" : selected ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.18)"}`,
+                      boxShadow: active ? "0 8px 24px rgba(0,0,0,0.3)" : selected ? "0 0 0 2px rgba(59,130,246,0.7), 0 1px 4px rgba(0,0,0,0.12)" : "0 1px 4px rgba(0,0,0,0.12)",
+                      cursor: active ? "grabbing" : "grab",
+                      zIndex: active ? 100 : selected ? 50 : 10,
+                      userSelect: "none", touchAction: "none",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      transition: active ? "none" : "box-shadow 0.15s ease",
+                    }}>
+                    {fs > 0 && (
+                      <span style={{
+                        fontSize: fs, fontWeight: 700, color: TEXT_CLR[tile.kind], pointerEvents: "none",
+                        writingMode: w < h && h > 40 ? "vertical-lr" : undefined,
+                      }}>{LBL[tile.kind]}</span>
+                    )}
+                  </div>
+                );
+              })}
+
+              {/* ── Floating toolbar ──────────────────────────────────────────── */}
+              {toolbarPos && (
+                <div onPointerDown={e => e.stopPropagation()}
                   style={{
-                    position: "absolute", left: tile.x, top: tile.y, width: w, height: h,
-                    backgroundColor: COLOR[tile.kind], borderRadius: 4,
-                    border: `2px solid ${active ? "rgba(0,0,0,0.45)" : selected ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.18)"}`,
-                    boxShadow: active ? "0 8px 24px rgba(0,0,0,0.3)" : selected ? "0 0 0 2px rgba(59,130,246,0.7), 0 1px 4px rgba(0,0,0,0.12)" : "0 1px 4px rgba(0,0,0,0.12)",
-                    cursor: active ? "grabbing" : "grab",
-                    zIndex: active ? 100 : selected ? 50 : 10,
-                    userSelect: "none", touchAction: "none",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    transition: active ? "none" : "box-shadow 0.15s ease",
+                    position: "absolute", left: toolbarPos.x, top: toolbarPos.y,
+                    transform: toolbarPos.above ? "translate(-50%, -100%)" : "translateX(-50%)",
+                    zIndex: 200, display: "flex", alignItems: "center", gap: 2,
+                    padding: "3px 5px", background: "#1e293b", borderRadius: 10,
+                    boxShadow: "0 4px 20px rgba(0,0,0,0.35)",
                   }}>
-                  {fs > 0 && (
-                    <span style={{
-                      fontSize: fs, fontWeight: 700, color: TEXT_CLR[tile.kind], pointerEvents: "none",
-                      writingMode: w < h && h > 40 ? "vertical-lr" : undefined,
-                    }}>{LBL[tile.kind]}</span>
+                  <TBBtn onClick={() => duplicateDir(-1, 0)} title="Duplicate left"><ArrowLeft size={16} color="#e2e8f0" /></TBBtn>
+                  <TBBtn onClick={() => duplicateDir(0, -1)} title="Duplicate up"><ArrowUp size={16} color="#e2e8f0" /></TBBtn>
+                  <TBBtn onClick={() => duplicateDir(0, 1)} title="Duplicate down"><ArrowDown size={16} color="#e2e8f0" /></TBBtn>
+                  <TBBtn onClick={() => duplicateDir(1, 0)} title="Duplicate right"><ArrowRight size={16} color="#e2e8f0" /></TBBtn>
+                  <div style={{ width: 1, height: 22, background: "#475569", margin: "0 2px" }} />
+                  {anyRotatable && (
+                    <TBBtn onClick={rotateSelected} title="Rotate"><RotateCw size={16} color="#e2e8f0" /></TBBtn>
                   )}
+                  <TBBtn onClick={flipSelected} title="Flip sign (±)">
+                    <span style={{ fontSize: 15, fontWeight: 800, color: "#e2e8f0", lineHeight: 1 }}>±</span>
+                  </TBBtn>
+                  <TBBtn onClick={deleteSelected} title="Delete">
+                    <Trash2 size={16} color="#fca5a5" />
+                  </TBBtn>
                 </div>
-              );
-            })}
+              )}
 
-            {/* ── Floating toolbar ──────────────────────────────────────────── */}
-            {toolbarPos && (
-              <div onPointerDown={e => e.stopPropagation()}
-                style={{
-                  position: "absolute", left: toolbarPos.x, top: toolbarPos.y,
-                  transform: toolbarPos.above ? "translate(-50%, -100%)" : "translateX(-50%)",
-                  zIndex: 200, display: "flex", alignItems: "center", gap: 2,
-                  padding: "3px 5px", background: "#1e293b", borderRadius: 10,
-                  boxShadow: "0 4px 20px rgba(0,0,0,0.35)",
-                }}>
-                <TBBtn onClick={() => duplicateDir(-1, 0)} title="Duplicate left"><ArrowLeft size={16} color="#e2e8f0" /></TBBtn>
-                <TBBtn onClick={() => duplicateDir(0, -1)} title="Duplicate up"><ArrowUp size={16} color="#e2e8f0" /></TBBtn>
-                <TBBtn onClick={() => duplicateDir(0, 1)} title="Duplicate down"><ArrowDown size={16} color="#e2e8f0" /></TBBtn>
-                <TBBtn onClick={() => duplicateDir(1, 0)} title="Duplicate right"><ArrowRight size={16} color="#e2e8f0" /></TBBtn>
-                <div style={{ width: 1, height: 22, background: "#475569", margin: "0 2px" }} />
-                {anyRotatable && (
-                  <TBBtn onClick={rotateSelected} title="Rotate"><RotateCw size={16} color="#e2e8f0" /></TBBtn>
-                )}
-                <TBBtn onClick={flipSelected} title="Flip sign (±)">
-                  <span style={{ fontSize: 15, fontWeight: 800, color: "#e2e8f0", lineHeight: 1 }}>±</span>
-                </TBBtn>
-                <TBBtn onClick={deleteSelected} title="Delete">
-                  <Trash2 size={16} color="#fca5a5" />
-                </TBBtn>
-              </div>
-            )}
+            </div>{/* end scaled wrapper */}
 
-            {/* Empty state */}
-            {tiles.length === 0 && dragId === null && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            {/* Empty state — outside scale wrapper for proper centering */}
+            {tiles.length === 0 && dragId === null && !showTable && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 4 }}>
                 <div className="text-center" style={{ color: "#94a3b8" }}>
                   <p style={{ fontSize: 16, fontWeight: 500, margin: "0 0 4px" }}>Drag tiles from the panel</p>
                   <p style={{ fontSize: 13, margin: 0 }}>or type an expression and click Build</p>
@@ -1070,7 +1115,8 @@ export default function App() {
           </div>
 
           {/* ── Expression bar ──────────────────────────────────────────────── */}
-          <div className="flex items-center justify-center gap-3 px-4 py-2 flex-shrink-0" style={{ background: "#1e293b" }}>
+          <div className="flex items-center justify-center gap-3 px-4 py-2 flex-shrink-0"
+            style={{ background: "#1e293b", borderTop: "1px solid #334155" }}>
             <span style={{ fontSize: 13, color: "#64748b", fontWeight: 600 }}>Expression:</span>
             <span className="font-bold text-white" style={{ fontSize: 18, letterSpacing: 0.5 }}>
               {exprDisplay}
@@ -1097,9 +1143,9 @@ function Btn({ on, onClick, label, disabled, activeColor, activeText }: {
   const at = activeText || "#93c5fd";
   return (
     <button onClick={onClick} disabled={disabled}
-      className="px-2.5 py-1 rounded-lg font-semibold"
       style={{
-        fontSize: 13, border: "none", cursor: disabled ? "default" : "pointer",
+        padding: "2px 7px", borderRadius: 6, fontWeight: 600,
+        fontSize: 11, border: "none", cursor: disabled ? "default" : "pointer",
         background: disabled ? "rgba(255,255,255,0.04)" : on ? ac : "rgba(255,255,255,0.08)",
         color: disabled ? "#475569" : on ? at : "#94a3b8",
         transition: "background 0.15s, color 0.15s",
@@ -1109,16 +1155,16 @@ function Btn({ on, onClick, label, disabled, activeColor, activeText }: {
   );
 }
 
-function IconBtn({ onClick, disabled, title, children }: {
+function SmBtn({ onClick, disabled, title, children }: {
   onClick: () => void; disabled?: boolean; title: string; children: React.ReactNode;
 }) {
   return (
     <button onClick={onClick} disabled={disabled} title={title}
-      className="p-1.5 rounded-lg"
       style={{
-        border: "none", cursor: disabled ? "default" : "pointer",
+        width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center",
+        border: "none", borderRadius: 6, cursor: disabled ? "default" : "pointer",
         background: disabled ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.08)",
-        transition: "background 0.15s",
+        transition: "background 0.15s", padding: 0, flexShrink: 0,
       }}
       onMouseEnter={e => { if (!disabled) e.currentTarget.style.background = "rgba(255,255,255,0.18)"; }}
       onMouseLeave={e => { e.currentTarget.style.background = disabled ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.08)"; }}>
