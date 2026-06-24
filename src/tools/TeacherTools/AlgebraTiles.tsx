@@ -307,6 +307,7 @@ export default function App() {
   const [dragId, setDragId] = useState<number | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [showToolbar, setShowToolbar] = useState(false);
+  const [lasso, setLasso] = useState<{ x1: number; y1: number; x2: number; y2: number } | null>(null);
   const [exprInput, setExprInput] = useState("");
   const [showTable, setShowTable] = useState(false);
   const [colHeaders, setColHeaders] = useState<TileKind[]>(["x"]);
@@ -563,6 +564,66 @@ export default function App() {
       window.removeEventListener("pointerup", onUp);
     };
   }, [dragId, pushUndo]);
+
+  // ── Lasso (marquee) selection ──────────────────────────────────────────
+
+  const lassoRef = useRef<{ x1: number; y1: number } | null>(null);
+
+  useEffect(() => {
+    if (!lassoRef.current) return;
+
+    const onMove = (e: PointerEvent) => {
+      const cv = canvasRef.current;
+      if (!cv) return;
+      const r = cv.getBoundingClientRect();
+      const s = scaleRef.current;
+      const x2 = (e.clientX - r.left) / s;
+      const y2 = (e.clientY - r.top) / s;
+      const { x1, y1 } = lassoRef.current!;
+      setLasso({ x1, y1, x2, y2 });
+    };
+
+    const onUp = () => {
+      const l = lasso;
+      lassoRef.current = null;
+      setLasso(null);
+      if (!l) return;
+      const lx = Math.min(l.x1, l.x2), ly = Math.min(l.y1, l.y2);
+      const lw = Math.abs(l.x2 - l.x1), lh = Math.abs(l.y2 - l.y1);
+      if (lw < 5 && lh < 5) return;
+      const hit = new Set<number>();
+      for (const t of tiles) {
+        const [tw, th] = dims(t.kind, t.rot);
+        if (t.x + tw > lx && t.x < lx + lw && t.y + th > ly && t.y < ly + lh) {
+          hit.add(t.id);
+        }
+      }
+      setSelectedIds(hit);
+      setShowToolbar(hit.size > 0);
+    };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+  }, [lasso, tiles]);
+
+  const onCanvasDown = (e: React.PointerEvent) => {
+    setOpenHdr(null);
+    if (dragId !== null) return;
+    const cv = canvasRef.current;
+    if (!cv) return;
+    const r = cv.getBoundingClientRect();
+    const s = scaleRef.current;
+    const x = (e.clientX - r.left) / s;
+    const y = (e.clientY - r.top) / s;
+    lassoRef.current = { x1: x, y1: y };
+    setLasso({ x1: x, y1: y, x2: x, y2: y });
+    setSelectedIds(new Set());
+    setShowToolbar(false);
+  };
 
   const onPaletteDown = (e: React.PointerEvent, kind: TileKind, rot: 0 | 90 = 0) => {
     e.preventDefault();
@@ -833,7 +894,7 @@ export default function App() {
         {/* ── Canvas column ─────────────────────────────────────────────── */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
           <div ref={canvasRef} className="relative flex-1"
-            onPointerDown={() => { setSelectedIds(new Set()); setShowToolbar(false); setOpenHdr(null); }}
+            onPointerDown={onCanvasDown}
             style={{ overflow: "hidden", touchAction: "none", background: "#f8fafc", minHeight: 200 }}>
 
             {/* ── Scaled content wrapper ────────────────────────────────── */}
@@ -1203,6 +1264,22 @@ export default function App() {
                     <Trash2 size={16} color="#fca5a5" />
                   </TBBtn>
                 </div>
+              )}
+
+              {/* Lasso selection rectangle */}
+              {lasso && (
+                <div style={{
+                  position: "absolute",
+                  left: Math.min(lasso.x1, lasso.x2),
+                  top: Math.min(lasso.y1, lasso.y2),
+                  width: Math.abs(lasso.x2 - lasso.x1),
+                  height: Math.abs(lasso.y2 - lasso.y1),
+                  border: "1.5px dashed #3b82f6",
+                  background: "rgba(59,130,246,0.08)",
+                  borderRadius: 2,
+                  pointerEvents: "none",
+                  zIndex: 50,
+                }} />
               )}
 
             </div>{/* end scaled wrapper */}
