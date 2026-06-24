@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
-  Home, Trash2, Undo2, RotateCw,
+  Home, Trash2, Undo2, RotateCw, Plus, X,
   ArrowUp, ArrowDown, ArrowLeft, ArrowRight,
 } from "lucide-react";
 
@@ -248,6 +248,30 @@ const removeZP = (tiles: TileState[]): TileState[] => {
   return r;
 };
 
+// ── Grid table helpers ──────────────────────────────────────────────────────
+
+const kindLen = (kind: TileKind): number => {
+  const b = kind.replace("-", "");
+  if (b === "x") return X_LEN;
+  if (b === "y") return Y_LEN;
+  return UNIT;
+};
+
+const MULT_BASE: Record<string, Record<string, string>> = {
+  x: { x: "x2", y: "xy", "1": "x" },
+  y: { x: "xy", y: "y2", "1": "y" },
+  "1": { x: "x", y: "y", "1": "1" },
+};
+
+const multiplyKinds = (a: TileKind, b: TileKind): TileKind => {
+  const sA = a.startsWith("-") ? -1 : 1;
+  const sB = b.startsWith("-") ? -1 : 1;
+  const bA = a.replace("-", "");
+  const bB = b.replace("-", "");
+  const base = MULT_BASE[bA]?.[bB] ?? "1";
+  return (sA * sB < 0 ? `-${base}` : base) as TileKind;
+};
+
 // ── Component ────────────────────────────────────────────────────────────────
 
 export default function App() {
@@ -261,6 +285,9 @@ export default function App() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [showToolbar, setShowToolbar] = useState(false);
   const [exprInput, setExprInput] = useState("");
+  const [showTable, setShowTable] = useState(false);
+  const [colHeaders, setColHeaders] = useState<TileKind[]>(["x"]);
+  const [rowHeaders, setRowHeaders] = useState<TileKind[]>(["x"]);
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{
@@ -548,6 +575,32 @@ export default function App() {
   const palette = showY ? PALETTE_XY : PALETTE_X;
   const anyRotatable = tiles.some(t => selectedIds.has(t.id) && canRotate(t.kind));
 
+  // Reset y-headers when y tiles toggled off
+  useEffect(() => {
+    if (showY) return;
+    setColHeaders(h => h.map(k => k === "y" ? "x" as TileKind : k === "-y" ? "-x" as TileKind : k));
+    setRowHeaders(h => h.map(k => k === "y" ? "x" as TileKind : k === "-y" ? "-x" as TileKind : k));
+  }, [showY]);
+
+  const headerKinds: TileKind[] = showY
+    ? ["x", "y", "1", "-x", "-y", "-1"]
+    : ["x", "1", "-x", "-1"];
+  const cycleHeader = (k: TileKind): TileKind => {
+    const i = headerKinds.indexOf(k);
+    return headerKinds[i >= 0 ? (i + 1) % headerKinds.length : 0];
+  };
+
+  const tableExpr = showTable ? (() => {
+    const factor = (kinds: TileKind[]) => {
+      const t = kinds.map((k, i) => ({ id: -(i + 1), kind: k, x: 0, y: 0, rot: 0 as const }));
+      return `(${buildExpr(t)})`;
+    };
+    const products: TileKind[] = [];
+    for (const rk of rowHeaders) for (const ck of colHeaders) products.push(multiplyKinds(rk, ck));
+    const pt = products.map((k, i) => ({ id: -(i + 1), kind: k, x: 0, y: 0, rot: 0 as const }));
+    return `${factor(colHeaders)}${factor(rowHeaders)} = ${buildExpr(pt)}`;
+  })() : null;
+
   // Toolbar position — anchored above (or below) selected tiles
   const toolbarPos = (() => {
     if (!showToolbar || !selectedIds.size) return null;
@@ -590,6 +643,7 @@ export default function App() {
 
         <Btn on={showGrid} onClick={() => setShowGrid(g => !g)} label="Grid" />
         <Btn on={showFrame} onClick={() => setShowFrame(f => !f)} label="Frame" />
+        <Btn on={showTable} onClick={() => setShowTable(t => !t)} label="Table" />
         <Btn on={showY} onClick={() => setShowY(y => !y)} label="y tiles" />
         <Btn on={eqMode} onClick={() => setEqMode(m => !m)} label="Equation" />
         <Btn on={false} onClick={doZP} label="Zero Pairs" disabled={!zpOk}
@@ -689,6 +743,122 @@ export default function App() {
             <div style={{ flex: 1, width: 2, background: "repeating-linear-gradient(to bottom, #475569 0, #475569 6px, transparent 6px, transparent 12px)" }} />
           </div>
         )}
+
+        {/* ── Multiplication table ───────────────────────────────────── */}
+        {showTable && (() => {
+          const HDR = 28, GAP = 2, ADD = 26;
+          const gridCols = `${HDR}px ${colHeaders.map(k => `${kindLen(k)}px`).join(" ")} ${ADD}px`;
+          const gridRows = `${HDR}px ${rowHeaders.map(k => `${kindLen(k)}px`).join(" ")} ${ADD}px`;
+          return (
+            <div style={{ position: "absolute", left: 16, top: 16, zIndex: 5 }}
+              onPointerDown={e => e.stopPropagation()}>
+              <div style={{ display: "grid", gridTemplateColumns: gridCols, gridTemplateRows: gridRows, gap: GAP }}>
+                {/* Corner cell */}
+                <div style={{ gridRow: 1, gridColumn: 1, background: "#cbd5e1", borderRadius: 4,
+                  display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <span style={{ fontSize: 16, fontWeight: 800, color: "#475569" }}>×</span>
+                </div>
+
+                {/* Column headers */}
+                {colHeaders.map((k, c) => (
+                  <div key={`ch-${c}`}
+                    onClick={() => setColHeaders(h => h.map((hk, i) => i === c ? cycleHeader(hk) : hk))}
+                    style={{
+                      gridRow: 1, gridColumn: c + 2, position: "relative",
+                      background: COLOR[k], borderRadius: 4, cursor: "pointer",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      border: "2px solid rgba(0,0,0,0.15)", minHeight: HDR,
+                    }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: TEXT_CLR[k] }}>{LBL[k]}</span>
+                    {colHeaders.length > 1 && (
+                      <button onClick={e => { e.stopPropagation(); setColHeaders(h => h.filter((_, i) => i !== c)); }}
+                        style={{
+                          position: "absolute", top: -6, right: -6, width: 16, height: 16, borderRadius: 8,
+                          background: "#dc2626", color: "#fff", border: "none", cursor: "pointer", padding: 0,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                        }}><X size={10} strokeWidth={3} /></button>
+                    )}
+                  </div>
+                ))}
+
+                {/* Add column button */}
+                <div onClick={() => setColHeaders(h => [...h, "1"])}
+                  style={{
+                    gridRow: 1, gridColumn: colHeaders.length + 2,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    background: "rgba(100,116,139,0.08)", borderRadius: 4, cursor: "pointer",
+                    border: "1.5px dashed #94a3b8",
+                  }}><Plus size={14} color="#64748b" /></div>
+
+                {/* Row headers */}
+                {rowHeaders.map((k, r) => (
+                  <div key={`rh-${r}`}
+                    onClick={() => setRowHeaders(h => h.map((hk, i) => i === r ? cycleHeader(hk) : hk))}
+                    style={{
+                      gridRow: r + 2, gridColumn: 1, position: "relative",
+                      background: COLOR[k], borderRadius: 4, cursor: "pointer",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      border: "2px solid rgba(0,0,0,0.15)", minWidth: HDR,
+                    }}>
+                    <span style={{
+                      fontSize: 12, fontWeight: 700, color: TEXT_CLR[k],
+                      writingMode: kindLen(k) > 40 ? "vertical-lr" : undefined,
+                    }}>{LBL[k]}</span>
+                    {rowHeaders.length > 1 && (
+                      <button onClick={e => { e.stopPropagation(); setRowHeaders(h => h.filter((_, i) => i !== r)); }}
+                        style={{
+                          position: "absolute", top: -6, right: -6, width: 16, height: 16, borderRadius: 8,
+                          background: "#dc2626", color: "#fff", border: "none", cursor: "pointer", padding: 0,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                        }}><X size={10} strokeWidth={3} /></button>
+                    )}
+                  </div>
+                ))}
+
+                {/* Add row button */}
+                <div onClick={() => setRowHeaders(h => [...h, "1"])}
+                  style={{
+                    gridRow: rowHeaders.length + 2, gridColumn: 1,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    background: "rgba(100,116,139,0.08)", borderRadius: 4, cursor: "pointer",
+                    border: "1.5px dashed #94a3b8",
+                  }}><Plus size={14} color="#64748b" /></div>
+
+                {/* Product cells */}
+                {rowHeaders.map((rk, r) =>
+                  colHeaders.map((ck, c) => {
+                    const pk = multiplyKinds(rk, ck);
+                    const cw = kindLen(ck), rh = kindLen(rk);
+                    const minD = Math.min(cw, rh);
+                    const fs = minD >= X_LEN ? 15 : minD >= Y_LEN ? 13 : minD >= 30 ? 11 : minD >= UNIT ? 8 : 0;
+                    return (
+                      <div key={`p-${r}-${c}`}
+                        style={{
+                          gridRow: r + 2, gridColumn: c + 2,
+                          background: COLOR[pk], borderRadius: 4,
+                          border: "2px solid rgba(0,0,0,0.15)",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                        }}>
+                        {fs > 0 && (
+                          <span style={{
+                            fontSize: fs, fontWeight: 700, color: TEXT_CLR[pk],
+                            writingMode: cw < rh && rh > 30 ? "vertical-lr" : undefined,
+                          }}>{LBL[pk]}</span>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+              {/* Table expression */}
+              {tableExpr && (
+                <div style={{ marginTop: 6, fontSize: 13, color: "#475569", fontWeight: 600, textAlign: "center" }}>
+                  {tableExpr}
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Placed tiles */}
         {tiles.map(tile => {
