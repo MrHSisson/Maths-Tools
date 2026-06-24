@@ -366,6 +366,7 @@ export default function App() {
   const [rowHeaders, setRowHeaders] = useState<TileKind[]>(["x"]);
   const [openHdr, setOpenHdr] = useState<{ axis: "col" | "row"; idx: number } | null>(null);
   const [tableRevealed, setTableRevealed] = useState(false);
+  const [tableMenuOpen, setTableMenuOpen] = useState(false);
   const [tableSelected, setTableSelected] = useState(false);
   // Logical-coord centre of the table once it has been dragged; null = default
   // centred position.
@@ -489,6 +490,7 @@ export default function App() {
     setTableSelected(false);
     setTablePos(null);
     setOpenHdr(null);
+    setTableMenuOpen(false);
   }, []);
 
   // ── Keyboard shortcuts ─────────────────────────────────────────────────
@@ -820,9 +822,9 @@ export default function App() {
     };
   }, [panning]);
 
-  // Clear table selection when the table is hidden.
+  // Clear table selection / menu when the table is hidden.
   useEffect(() => {
-    if (!showTable) setTableSelected(false);
+    if (!showTable) { setTableSelected(false); setTableMenuOpen(false); }
   }, [showTable]);
 
   const onTableDown = (e: React.PointerEvent) => {
@@ -886,6 +888,7 @@ export default function App() {
 
   const onPaletteDown = (e: React.PointerEvent, kind: TileKind, rot: 0 | 90 = 0) => {
     e.preventDefault();
+    setTableMenuOpen(false);
     const cv = canvasRef.current;
     if (!cv) return;
     const r = cv.getBoundingClientRect();
@@ -905,6 +908,7 @@ export default function App() {
     if (panMode) return;  // let the press pan the board instead of grabbing a tile
     e.preventDefault();
     e.stopPropagation();
+    setTableMenuOpen(false);
     const cv = canvasRef.current;
     if (!cv) return;
     const r = cv.getBoundingClientRect();
@@ -1270,29 +1274,6 @@ export default function App() {
                         onClick={() => setOpenHdr(null)} />
                     )}
 
-                    {/* Reveal-all toggle — moved out of the × corner, sits above
-                        the table top-left and is always available */}
-                    <button
-                      onPointerDown={e => e.stopPropagation()}
-                      onClick={() => {
-                        if (tableRevealed) { setTableRevealed(false); setRevealedCells(new Set()); }
-                        else setTableRevealed(true);
-                      }}
-                      title={tableRevealed ? "Hide all answers" : "Reveal all answers"}
-                      style={{
-                        position: "absolute", top: -46, left: -10, zIndex: 240,
-                        display: "flex", alignItems: "center", gap: 5,
-                        padding: "6px 10px", background: "#1e293b", border: "none", borderRadius: 9,
-                        cursor: "pointer", boxShadow: "0 4px 14px rgba(0,0,0,0.3)",
-                      }}>
-                      {tableRevealed
-                        ? <EyeOff size={15} color="#e2e8f0" />
-                        : <Eye size={15} color="#e2e8f0" />}
-                      <span style={{ fontSize: 12, fontWeight: 600, color: "#e2e8f0" }}>
-                        {tableRevealed ? "Hide" : "Reveal"}
-                      </span>
-                    </button>
-
                     {/* Delete bin — shown when the table is lasso-selected */}
                     {tableSelected && (
                       <button
@@ -1314,11 +1295,19 @@ export default function App() {
                       display: "grid", gridTemplateColumns: gridCols, gridTemplateRows: gridRows,
                       gap: 0,
                     }}>
-                      {/* Corner cell — just the × to show this is a multiplication grid */}
-                      <div style={{
-                          gridRow: 1, gridColumn: 1, background: "#e2e8f0",
+                      {/* Corner cell — × shows it is a multiplication grid, and
+                          doubles as the trigger for the table settings menu */}
+                      <div
+                        onClick={() => {
+                          if (tableMovedRef.current) return;
+                          setOpenHdr(null);
+                          setTableMenuOpen(o => !o);
+                        }}
+                        style={{
+                          gridRow: 1, gridColumn: 1,
+                          background: tableMenuOpen ? "#cbd5e1" : "#e2e8f0",
                           display: "flex", alignItems: "center", justifyContent: "center",
-                          padding: 1,
+                          cursor: "pointer", padding: 1,
                           borderTop: BD, borderLeft: BD, borderRight: BD, borderBottom: BD,
                           borderTopLeftRadius: 6,
                         }}>
@@ -1332,7 +1321,7 @@ export default function App() {
                       {/* Column headers */}
                       {colHeaders.map((k, c) => (
                         <div key={`ch-${c}`}
-                          onClick={() => { if (tableMovedRef.current) return; setOpenHdr(prev =>
+                          onClick={() => { if (tableMovedRef.current) return; setTableMenuOpen(false); setOpenHdr(prev =>
                             prev?.axis === "col" && prev.idx === c ? null : { axis: "col", idx: c }); }}
                           style={{
                             gridRow: 1, gridColumn: c + 3, position: "relative",
@@ -1371,7 +1360,7 @@ export default function App() {
                       {/* Row headers */}
                       {rowHeaders.map((k, r) => (
                         <div key={`rh-${r}`}
-                          onClick={() => { if (tableMovedRef.current) return; setOpenHdr(prev =>
+                          onClick={() => { if (tableMovedRef.current) return; setTableMenuOpen(false); setOpenHdr(prev =>
                             prev?.axis === "row" && prev.idx === r ? null : { axis: "row", idx: r }); }}
                           style={{
                             gridRow: r + 3, gridColumn: 1, position: "relative",
@@ -1460,6 +1449,49 @@ export default function App() {
                         })
                       )}
                     </div>
+
+                    {/* Table settings menu — opened from the × corner. Sits above
+                        an invisible full-cover overlay so any outside click closes
+                        it. Designed to hold more settings later. */}
+                    {tableMenuOpen && (
+                      <>
+                        <div
+                          onPointerDown={e => { e.stopPropagation(); setTableMenuOpen(false); }}
+                          style={{ position: "absolute", left: -5000, top: -5000, width: 10000, height: 10000, zIndex: 300 }} />
+                        <div
+                          onPointerDown={e => e.stopPropagation()}
+                          style={{
+                            position: "absolute", top: cornerW + 8, left: 0, zIndex: 320,
+                            minWidth: 184, background: "#fff", borderRadius: 10,
+                            boxShadow: "0 6px 24px rgba(0,0,0,0.22)", border: "1px solid #e2e8f0",
+                            padding: 5,
+                          }}>
+                          <div style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.6, padding: "4px 8px 6px" }}>
+                            Table settings
+                          </div>
+                          <button
+                            onClick={() => {
+                              if (tableRevealed) { setTableRevealed(false); setRevealedCells(new Set()); }
+                              else setTableRevealed(true);
+                            }}
+                            style={{
+                              width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+                              gap: 10, padding: "7px 8px", borderRadius: 7, border: "none", background: "transparent",
+                              cursor: "pointer",
+                            }}
+                            onMouseEnter={e => (e.currentTarget.style.background = "#f1f5f9")}
+                            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                            <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                              {tableRevealed
+                                ? <EyeOff size={15} color="#475569" />
+                                : <Eye size={15} color="#475569" />}
+                              <span style={{ fontSize: 13, fontWeight: 600, color: "#334155" }}>Reveal all</span>
+                            </span>
+                            <TogglePill on={tableRevealed} />
+                          </button>
+                        </div>
+                      </>
+                    )}
 
                     {/* Curly braces for column and row expressions */}
                     {tableRevealed && (
