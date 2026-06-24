@@ -624,6 +624,27 @@ export default function App() {
   const strokesRef = useRef(strokes);
   strokesRef.current = strokes;
 
+  const ERASE_R = 14;
+  const eraseAt = useCallback((px: number, py: number) => {
+    setStrokes(prev => {
+      const out: { x: number; y: number }[][] = [];
+      for (const stroke of prev) {
+        let seg: { x: number; y: number }[] = [];
+        for (const pt of stroke) {
+          const dx = pt.x - px, dy = pt.y - py;
+          if (dx * dx + dy * dy < ERASE_R * ERASE_R) {
+            if (seg.length >= 2) out.push(seg);
+            seg = [];
+          } else {
+            seg.push(pt);
+          }
+        }
+        if (seg.length >= 2) out.push(seg);
+      }
+      return out;
+    });
+  }, []);
+
   useEffect(() => {
     if (!drawingRef.current) return;
 
@@ -636,10 +657,7 @@ export default function App() {
       const py = (e.clientY - r.top) / s;
 
       if (eraserModeRef.current) {
-        const ERASE_R = 12;
-        setStrokes(prev => prev.filter(stroke =>
-          !stroke.some(pt => Math.abs(pt.x - px) < ERASE_R && Math.abs(pt.y - py) < ERASE_R)
-        ));
+        eraseAt(px, py);
         return;
       }
 
@@ -663,7 +681,7 @@ export default function App() {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
     };
-  }, [strokes]);
+  }, [strokes, eraseAt]);
 
   const onCanvasDown = (e: React.PointerEvent) => {
     setOpenHdr(null);
@@ -676,12 +694,7 @@ export default function App() {
     const y = (e.clientY - r.top) / s;
 
     if (drawMode || eraserMode) {
-      if (eraserMode) {
-        const ERASE_R = 12;
-        setStrokes(prev => prev.filter(stroke =>
-          !stroke.some(pt => Math.abs(pt.x - x) < ERASE_R && Math.abs(pt.y - y) < ERASE_R)
-        ));
-      }
+      if (eraserMode) eraseAt(x, y);
       drawingRef.current = [{ x, y }];
       if (!eraserMode) setStrokes(prev => [...prev, [{ x, y }]]);
       return;
