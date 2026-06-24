@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
-  Home, Trash2, Undo2, RotateCw, Plus, X,
+  Home, Trash2, Undo2, RotateCw, Plus,
   ArrowUp, ArrowDown, ArrowLeft, ArrowRight,
 } from "lucide-react";
 
@@ -288,6 +288,7 @@ export default function App() {
   const [showTable, setShowTable] = useState(false);
   const [colHeaders, setColHeaders] = useState<TileKind[]>(["x"]);
   const [rowHeaders, setRowHeaders] = useState<TileKind[]>(["x"]);
+  const [openHdr, setOpenHdr] = useState<{ axis: "col" | "row"; idx: number } | null>(null);
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{
@@ -585,11 +586,6 @@ export default function App() {
   const headerKinds: TileKind[] = showY
     ? ["x", "y", "1", "-x", "-y", "-1"]
     : ["x", "1", "-x", "-1"];
-  const cycleHeader = (k: TileKind): TileKind => {
-    const i = headerKinds.indexOf(k);
-    return headerKinds[i >= 0 ? (i + 1) % headerKinds.length : 0];
-  };
-
   const tableExpr = showTable ? (() => {
     const factor = (kinds: TileKind[]) => {
       const t = kinds.map((k, i) => ({ id: -(i + 1), kind: k, x: 0, y: 0, rot: 0 as const }));
@@ -643,7 +639,7 @@ export default function App() {
 
         <Btn on={showGrid} onClick={() => setShowGrid(g => !g)} label="Grid" />
         <Btn on={showFrame} onClick={() => setShowFrame(f => !f)} label="Frame" />
-        <Btn on={showTable} onClick={() => setShowTable(t => !t)} label="Table" />
+        <Btn on={showTable} onClick={() => { setShowTable(t => !t); setOpenHdr(null); }} label="Table" />
         <Btn on={showY} onClick={() => setShowY(y => !y)} label="y tiles" />
         <Btn on={eqMode} onClick={() => setEqMode(m => !m)} label="Equation" />
         <Btn on={false} onClick={doZP} label="Zero Pairs" disabled={!zpOk}
@@ -710,7 +706,7 @@ export default function App() {
 
       {/* ── Canvas ──────────────────────────────────────────────────────── */}
       <div ref={canvasRef} className="relative flex-1"
-        onPointerDown={() => { setSelectedIds(new Set()); setShowToolbar(false); }}
+        onPointerDown={() => { setSelectedIds(new Set()); setShowToolbar(false); setOpenHdr(null); }}
         style={{ overflow: "visible", touchAction: "none", background: "#f1f5f9", minHeight: 200 }}>
 
         {showGrid && (
@@ -746,83 +742,141 @@ export default function App() {
 
         {/* ── Multiplication table ───────────────────────────────────── */}
         {showTable && (() => {
-          const HDR = 28, GAP = 2, ADD = 26;
+          const HDR = 28, GAP = 3, ADD = 28;
           const gridCols = `${HDR}px ${colHeaders.map(k => `${kindLen(k)}px`).join(" ")} ${ADD}px`;
           const gridRows = `${HDR}px ${rowHeaders.map(k => `${kindLen(k)}px`).join(" ")} ${ADD}px`;
+
+          const hdrPicker = (axis: "col" | "row", idx: number, current: TileKind, canRemove: boolean) => {
+            const isOpen = openHdr?.axis === axis && openHdr.idx === idx;
+            return (
+              <>
+                {isOpen && (
+                  <div style={{
+                    position: "absolute",
+                    ...(axis === "col"
+                      ? { top: "calc(100% + 8px)", left: "50%", transform: "translateX(-50%)" }
+                      : { top: "50%", left: "calc(100% + 8px)", transform: "translateY(-50%)" }),
+                    zIndex: 200, display: "flex", alignItems: "center", gap: 3,
+                    padding: 5, background: "#1e293b", borderRadius: 10,
+                    boxShadow: "0 4px 20px rgba(0,0,0,0.4)",
+                  }}>
+                    {headerKinds.map(hk => (
+                      <button key={hk} onClick={e => {
+                        e.stopPropagation();
+                        if (axis === "col") setColHeaders(h => h.map((k, i) => i === idx ? hk : k));
+                        else setRowHeaders(h => h.map((k, i) => i === idx ? hk : k));
+                        setOpenHdr(null);
+                      }}
+                        style={{
+                          width: 34, height: 34, background: COLOR[hk], borderRadius: 6,
+                          border: current === hk ? "2.5px solid #fff" : "2px solid rgba(255,255,255,0.12)",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          cursor: "pointer", padding: 0, flexShrink: 0,
+                        }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: TEXT_CLR[hk] }}>{LBL[hk]}</span>
+                      </button>
+                    ))}
+                    {canRemove && (
+                      <>
+                        <div style={{ width: 1, height: 24, background: "#475569", flexShrink: 0 }} />
+                        <button onClick={e => {
+                          e.stopPropagation();
+                          if (axis === "col") setColHeaders(h => h.filter((_, i) => i !== idx));
+                          else setRowHeaders(h => h.filter((_, i) => i !== idx));
+                          setOpenHdr(null);
+                        }}
+                          style={{
+                            width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center",
+                            border: "none", borderRadius: 6, cursor: "pointer", padding: 0, flexShrink: 0,
+                            background: "rgba(239,68,68,0.15)",
+                          }}><Trash2 size={15} color="#fca5a5" /></button>
+                      </>
+                    )}
+                  </div>
+                )}
+              </>
+            );
+          };
+
           return (
             <div style={{ position: "absolute", left: 16, top: 16, zIndex: 5 }}
               onPointerDown={e => e.stopPropagation()}>
-              <div style={{ display: "grid", gridTemplateColumns: gridCols, gridTemplateRows: gridRows, gap: GAP }}>
+
+              {/* Dismiss backdrop when a dropdown is open */}
+              {openHdr && (
+                <div style={{ position: "fixed", inset: 0, zIndex: 150 }}
+                  onClick={() => setOpenHdr(null)} />
+              )}
+
+              <div style={{
+                position: "relative", zIndex: 160,
+                display: "grid", gridTemplateColumns: gridCols, gridTemplateRows: gridRows,
+                gap: GAP, background: "#334155", padding: GAP, borderRadius: 8,
+              }}>
                 {/* Corner cell */}
-                <div style={{ gridRow: 1, gridColumn: 1, background: "#cbd5e1", borderRadius: 4,
+                <div style={{ gridRow: 1, gridColumn: 1, background: "#94a3b8", borderRadius: 3,
                   display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <span style={{ fontSize: 16, fontWeight: 800, color: "#475569" }}>×</span>
+                  <span style={{ fontSize: 16, fontWeight: 800, color: "#fff" }}>×</span>
                 </div>
 
                 {/* Column headers */}
                 {colHeaders.map((k, c) => (
                   <div key={`ch-${c}`}
-                    onClick={() => setColHeaders(h => h.map((hk, i) => i === c ? cycleHeader(hk) : hk))}
+                    onClick={() => setOpenHdr(prev =>
+                      prev?.axis === "col" && prev.idx === c ? null : { axis: "col", idx: c })}
                     style={{
                       gridRow: 1, gridColumn: c + 2, position: "relative",
-                      background: COLOR[k], borderRadius: 4, cursor: "pointer",
+                      background: COLOR[k], borderRadius: 3, cursor: "pointer",
                       display: "flex", alignItems: "center", justifyContent: "center",
-                      border: "2px solid rgba(0,0,0,0.15)", minHeight: HDR,
                     }}>
                     <span style={{ fontSize: 12, fontWeight: 700, color: TEXT_CLR[k] }}>{LBL[k]}</span>
-                    {colHeaders.length > 1 && (
-                      <button onClick={e => { e.stopPropagation(); setColHeaders(h => h.filter((_, i) => i !== c)); }}
-                        style={{
-                          position: "absolute", top: -6, right: -6, width: 16, height: 16, borderRadius: 8,
-                          background: "#dc2626", color: "#fff", border: "none", cursor: "pointer", padding: 0,
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                        }}><X size={10} strokeWidth={3} /></button>
-                    )}
+                    {hdrPicker("col", c, k, colHeaders.length > 1)}
                   </div>
                 ))}
 
                 {/* Add column button */}
-                <div onClick={() => setColHeaders(h => [...h, "1"])}
+                <button onClick={() => {
+                  const ni = colHeaders.length;
+                  setColHeaders(h => [...h, "1"]);
+                  setOpenHdr({ axis: "col", idx: ni });
+                }}
                   style={{
                     gridRow: 1, gridColumn: colHeaders.length + 2,
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    background: "rgba(100,116,139,0.08)", borderRadius: 4, cursor: "pointer",
-                    border: "1.5px dashed #94a3b8",
-                  }}><Plus size={14} color="#64748b" /></div>
+                    background: "rgba(255,255,255,0.06)", borderRadius: 3, cursor: "pointer",
+                    border: "1.5px dashed rgba(148,163,184,0.5)", padding: 0,
+                  }}><Plus size={14} color="#94a3b8" /></button>
 
                 {/* Row headers */}
                 {rowHeaders.map((k, r) => (
                   <div key={`rh-${r}`}
-                    onClick={() => setRowHeaders(h => h.map((hk, i) => i === r ? cycleHeader(hk) : hk))}
+                    onClick={() => setOpenHdr(prev =>
+                      prev?.axis === "row" && prev.idx === r ? null : { axis: "row", idx: r })}
                     style={{
                       gridRow: r + 2, gridColumn: 1, position: "relative",
-                      background: COLOR[k], borderRadius: 4, cursor: "pointer",
+                      background: COLOR[k], borderRadius: 3, cursor: "pointer",
                       display: "flex", alignItems: "center", justifyContent: "center",
-                      border: "2px solid rgba(0,0,0,0.15)", minWidth: HDR,
                     }}>
                     <span style={{
                       fontSize: 12, fontWeight: 700, color: TEXT_CLR[k],
                       writingMode: kindLen(k) > 40 ? "vertical-lr" : undefined,
                     }}>{LBL[k]}</span>
-                    {rowHeaders.length > 1 && (
-                      <button onClick={e => { e.stopPropagation(); setRowHeaders(h => h.filter((_, i) => i !== r)); }}
-                        style={{
-                          position: "absolute", top: -6, right: -6, width: 16, height: 16, borderRadius: 8,
-                          background: "#dc2626", color: "#fff", border: "none", cursor: "pointer", padding: 0,
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                        }}><X size={10} strokeWidth={3} /></button>
-                    )}
+                    {hdrPicker("row", r, k, rowHeaders.length > 1)}
                   </div>
                 ))}
 
                 {/* Add row button */}
-                <div onClick={() => setRowHeaders(h => [...h, "1"])}
+                <button onClick={() => {
+                  const ni = rowHeaders.length;
+                  setRowHeaders(h => [...h, "1"]);
+                  setOpenHdr({ axis: "row", idx: ni });
+                }}
                   style={{
                     gridRow: rowHeaders.length + 2, gridColumn: 1,
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    background: "rgba(100,116,139,0.08)", borderRadius: 4, cursor: "pointer",
-                    border: "1.5px dashed #94a3b8",
-                  }}><Plus size={14} color="#64748b" /></div>
+                    background: "rgba(255,255,255,0.06)", borderRadius: 3, cursor: "pointer",
+                    border: "1.5px dashed rgba(148,163,184,0.5)", padding: 0,
+                  }}><Plus size={14} color="#94a3b8" /></button>
 
                 {/* Product cells */}
                 {rowHeaders.map((rk, r) =>
@@ -835,8 +889,7 @@ export default function App() {
                       <div key={`p-${r}-${c}`}
                         style={{
                           gridRow: r + 2, gridColumn: c + 2,
-                          background: COLOR[pk], borderRadius: 4,
-                          border: "2px solid rgba(0,0,0,0.15)",
+                          background: COLOR[pk], borderRadius: 3,
                           display: "flex", alignItems: "center", justifyContent: "center",
                         }}>
                         {fs > 0 && (
@@ -852,7 +905,7 @@ export default function App() {
               </div>
               {/* Table expression */}
               {tableExpr && (
-                <div style={{ marginTop: 6, fontSize: 13, color: "#475569", fontWeight: 600, textAlign: "center" }}>
+                <div style={{ marginTop: 8, fontSize: 13, color: "#475569", fontWeight: 600, textAlign: "center" }}>
                   {tableExpr}
                 </div>
               )}
