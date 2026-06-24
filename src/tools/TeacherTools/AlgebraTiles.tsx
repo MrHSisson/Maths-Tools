@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Home, Trash2, Undo2, RotateCw, Plus, Minus, Eye, EyeOff,
   ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Menu, X,
-  Pencil, Eraser, MousePointer2,
+  Pencil, Eraser, MousePointer2, Hand,
 } from "lucide-react";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -355,6 +355,11 @@ export default function App() {
   const [tablePos, setTablePos] = useState<{ x: number; y: number } | null>(null);
   const [tableDragging, setTableDragging] = useState(false);
   const [scale, setScale] = useState(1);
+  // Pan offset in *screen* px (applied as translate before scale, so it is
+  // independent of the zoom level). Lets the whole canvas be dragged around.
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [panMode, setPanMode] = useState(false);
+  const [panning, setPanning] = useState(false);
   const [revealedCells, setRevealedCells] = useState<Set<string>>(new Set());
   const [menuOpen, setMenuOpen] = useState(false);
   const [showBuilder, setShowBuilder] = useState(true);
@@ -371,6 +376,9 @@ export default function App() {
   const tableMovedRef = useRef(false);
   const scaleRef = useRef(scale);
   scaleRef.current = scale;
+  const panRef = useRef(pan);
+  panRef.current = pan;
+  const panDragRef = useRef<{ sx: number; sy: number; px: number; py: number } | null>(null);
   const showTableRef = useRef(showTable);
   showTableRef.current = showTable;
   const colHeadersRef = useRef(colHeaders);
@@ -514,9 +522,10 @@ export default function App() {
       const cv = canvasRef.current;
       if (!d || !cv) return;
       const s = scaleRef.current;
+      const p = panRef.current;
       const r = cv.getBoundingClientRect();
-      const rawX = (e.clientX - r.left) / s - d.ox;
-      const rawY = (e.clientY - r.top) / s - d.oy;
+      const rawX = (e.clientX - r.left - p.x) / s - d.ox;
+      const rawY = (e.clientY - r.top - p.y) / s - d.oy;
 
       if (!d.moved) {
         const ps = d.starts.get(d.id);
@@ -573,8 +582,8 @@ export default function App() {
               if (d.lastKind !== multiplyKinds(rows[ri], cols[ci])) continue;
 
               const br = cell.getBoundingClientRect();
-              const ix = (br.left - cr.left) / sc;
-              const iy = (br.top - cr.top) / sc;
+              const ix = (br.left - cr.left - panRef.current.x) / sc;
+              const iy = (br.top - cr.top - panRef.current.y) / sc;
               const iw = br.width / sc;
               const ih = br.height / sc;
 
@@ -633,8 +642,9 @@ export default function App() {
       if (!cv) return;
       const r = cv.getBoundingClientRect();
       const s = scaleRef.current;
-      const x2 = (e.clientX - r.left) / s;
-      const y2 = (e.clientY - r.top) / s;
+      const p = panRef.current;
+      const x2 = (e.clientX - r.left - p.x) / s;
+      const y2 = (e.clientY - r.top - p.y) / s;
       const { x1, y1 } = lassoRef.current!;
       setLasso({ x1, y1, x2, y2 });
     };
@@ -663,8 +673,9 @@ export default function App() {
       if (showTableRef.current && cv && tEl) {
         const r = cv.getBoundingClientRect();
         const s = scaleRef.current;
+        const p = panRef.current;
         const tr = tEl.getBoundingClientRect();
-        const tx = (tr.left - r.left) / s, ty = (tr.top - r.top) / s;
+        const tx = (tr.left - r.left - p.x) / s, ty = (tr.top - r.top - p.y) / s;
         const tw = tr.width / s, th = tr.height / s;
         const ox = Math.max(0, Math.min(lx + lw, tx + tw) - Math.max(lx, tx));
         const oy = Math.max(0, Math.min(ly + lh, ty + th) - Math.max(ly, ty));
@@ -702,8 +713,9 @@ export default function App() {
       if (!cv) return;
       const r = cv.getBoundingClientRect();
       const s = scaleRef.current;
-      const px = (e.clientX - r.left) / s;
-      const py = (e.clientY - r.top) / s;
+      const p = panRef.current;
+      const px = (e.clientX - r.left - p.x) / s;
+      const py = (e.clientY - r.top - p.y) / s;
 
       if (eraserModeRef.current) {
         setStrokes(prev => eraseNear(prev, px, py));
@@ -744,8 +756,9 @@ export default function App() {
       if (!d || !cv) return;
       const r = cv.getBoundingClientRect();
       const s = scaleRef.current;
-      const px = (e.clientX - r.left) / s;
-      const py = (e.clientY - r.top) / s;
+      const p = panRef.current;
+      const px = (e.clientX - r.left - p.x) / s;
+      const py = (e.clientY - r.top - p.y) / s;
       const dx = px - d.sx, dy = py - d.sy;
       if (!tableMovedRef.current && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
         tableMovedRef.current = true;
@@ -766,12 +779,39 @@ export default function App() {
     };
   }, [tableDragging]);
 
+  // ── Panning the whole canvas (grab tool) ────────────────────────────────
+
+  useEffect(() => {
+    if (!panning) return;
+
+    const onMove = (e: PointerEvent) => {
+      const d = panDragRef.current;
+      if (!d) return;
+      setPan({ x: d.px + (e.clientX - d.sx), y: d.py + (e.clientY - d.sy) });
+    };
+
+    const onUp = () => {
+      panDragRef.current = null;
+      setPanning(false);
+    };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+  }, [panning]);
+
   // Clear table selection when the table is hidden.
   useEffect(() => {
     if (!showTable) setTableSelected(false);
   }, [showTable]);
 
   const onTableDown = (e: React.PointerEvent) => {
+    // In pan mode, let the press fall through to the canvas so it pans the
+    // whole board (including this table) instead of moving the table alone.
+    if (panMode) return;
     e.stopPropagation();
     // Reset on every fresh press so a stale "moved" flag from an earlier drag
     // can never keep blocking clicks (add side / reveal / etc.).
@@ -782,12 +822,13 @@ export default function App() {
     if (!cv || !tEl) return;
     const r = cv.getBoundingClientRect();
     const s = scaleRef.current;
+    const p = panRef.current;
     const tr = tEl.getBoundingClientRect();
     tableDragRef.current = {
-      sx: (e.clientX - r.left) / s,
-      sy: (e.clientY - r.top) / s,
-      cx: (tr.left + tr.width / 2 - r.left) / s,
-      cy: (tr.top + tr.height / 2 - r.top) / s,
+      sx: (e.clientX - r.left - p.x) / s,
+      sy: (e.clientY - r.top - p.y) / s,
+      cx: (tr.left + tr.width / 2 - r.left - p.x) / s,
+      cy: (tr.top + tr.height / 2 - r.top - p.y) / s,
     };
     setTableDragging(true);
   };
@@ -797,10 +838,18 @@ export default function App() {
     if (dragId !== null) return;
     const cv = canvasRef.current;
     if (!cv) return;
+
+    // Pan / grab tool: drag the whole board (screen-space delta).
+    if (panMode) {
+      panDragRef.current = { sx: e.clientX, sy: e.clientY, px: pan.x, py: pan.y };
+      setPanning(true);
+      return;
+    }
+
     const r = cv.getBoundingClientRect();
     const s = scaleRef.current;
-    const x = (e.clientX - r.left) / s;
-    const y = (e.clientY - r.top) / s;
+    const x = (e.clientX - r.left - pan.x) / s;
+    const y = (e.clientY - r.top - pan.y) / s;
 
     if (drawMode || eraserMode) {
       if (eraserMode) {
@@ -825,8 +874,8 @@ export default function App() {
     const r = cv.getBoundingClientRect();
     const [w, h] = dims(kind, rot);
     const id = nextId++;
-    const rx = Math.round(((e.clientX - r.left) / scale - w / 2) / SNAP) * SNAP;
-    const ry = Math.round(((e.clientY - r.top) / scale - h / 2) / SNAP) * SNAP;
+    const rx = Math.round(((e.clientX - r.left - pan.x) / scale - w / 2) / SNAP) * SNAP;
+    const ry = Math.round(((e.clientY - r.top - pan.y) / scale - h / 2) / SNAP) * SNAP;
     const tile: TileState = { id, kind, x: rx, y: ry, rot };
     const sel = new Set([id]);
     setSelectedIds(sel);
@@ -836,6 +885,7 @@ export default function App() {
   };
 
   const onTileDown = (e: React.PointerEvent, tile: TileState) => {
+    if (panMode) return;  // let the press pan the board instead of grabbing a tile
     e.preventDefault();
     e.stopPropagation();
     const cv = canvasRef.current;
@@ -863,7 +913,7 @@ export default function App() {
     }
 
     setTiles(ts => [...ts.filter(t => t.id !== tile.id), tile]);
-    startDrag(tile.id, (e.clientX - r.left) / scale - tile.x, (e.clientY - r.top) / scale - tile.y, sel, wasSelected);
+    startDrag(tile.id, (e.clientX - r.left - pan.x) / scale - tile.x, (e.clientY - r.top - pan.y) / scale - tile.y, sel, wasSelected);
   };
 
   const clear = () => {
@@ -1015,6 +1065,7 @@ export default function App() {
                 scale={scale} setScale={setScale}
                 showBuilder={showBuilder} setShowBuilder={setShowBuilder}
                 showExprBar={showExprBar} setShowExprBar={setShowExprBar}
+                onResetView={() => { setScale(1); setPan({ x: 0, y: 0 }); }}
                 onClose={() => setMenuOpen(false)}
               />
             )}
@@ -1089,19 +1140,19 @@ export default function App() {
           <div ref={canvasRef} className="relative flex-1"
             onPointerDown={onCanvasDown}
             style={{ overflow: "hidden", touchAction: "none", background: "#f8fafc", minHeight: 200,
-              cursor: drawMode ? "crosshair" : eraserMode ? "cell" : undefined }}>
+              cursor: panMode ? (panning ? "grabbing" : "grab") : drawMode ? "crosshair" : eraserMode ? "cell" : undefined }}>
 
-            {/* ── Scaled content wrapper ────────────────────────────────── */}
-            <div style={{ position: "absolute", inset: 0, transform: `scale(${scale})`, transformOrigin: "0 0" }}>
+            {/* ── Pan + scale content wrapper ───────────────────────────── */}
+            <div style={{ position: "absolute", inset: 0, transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})`, transformOrigin: "0 0" }}>
 
-              {/* Dot grid */}
-              <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 1 }}>
+              {/* Dot grid — oversized so the board feels endless while panning */}
+              <svg style={{ position: "absolute", left: -4000, top: -4000, width: 8000, height: 8000, pointerEvents: "none", zIndex: 1 }}>
                 <defs>
                   <pattern id="atg" width={UNIT} height={UNIT} patternUnits="userSpaceOnUse">
                     <circle cx={UNIT} cy={UNIT} r="0.8" fill="#cbd5e1" />
                   </pattern>
                 </defs>
-                <rect width="100%" height="100%" fill="url(#atg)" />
+                <rect width="8000" height="8000" fill="url(#atg)" />
               </svg>
 
               {eqMode && (
@@ -1494,7 +1545,7 @@ export default function App() {
 
               {/* Drawing strokes */}
               {strokes.length > 0 && (
-                <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 60 }}>
+                <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 60, overflow: "visible" }}>
                   {strokes.map((s, i) => (
                     <polyline key={i}
                       points={s.points.map(p => `${p.x},${p.y}`).join(" ")}
@@ -1518,12 +1569,13 @@ export default function App() {
 
             {/* ── Floating draw hotbar ──────────────────────────────────────── */}
             <DrawHotbar
-              drawMode={drawMode} eraserMode={eraserMode}
+              drawMode={drawMode} eraserMode={eraserMode} panMode={panMode}
               penColor={penColor} setPenColor={setPenColor}
               hasStrokes={strokes.length > 0}
-              onCursor={() => { setDrawMode(false); setEraserMode(false); }}
-              onPen={() => { setDrawMode(true); setEraserMode(false); }}
-              onEraser={() => { setEraserMode(true); setDrawMode(false); }}
+              onCursor={() => { setDrawMode(false); setEraserMode(false); setPanMode(false); }}
+              onGrab={() => { setPanMode(true); setDrawMode(false); setEraserMode(false); }}
+              onPen={() => { setDrawMode(true); setEraserMode(false); setPanMode(false); }}
+              onEraser={() => { setEraserMode(true); setDrawMode(false); setPanMode(false); }}
               onClearBoard={() => setStrokes([])}
             />
           </div>
@@ -1592,14 +1644,14 @@ function SmBtn({ onClick, disabled, title, children }: {
 }
 
 function DrawHotbar({
-  drawMode, eraserMode, penColor, setPenColor, hasStrokes,
-  onCursor, onPen, onEraser, onClearBoard,
+  drawMode, eraserMode, panMode, penColor, setPenColor, hasStrokes,
+  onCursor, onGrab, onPen, onEraser, onClearBoard,
 }: {
-  drawMode: boolean; eraserMode: boolean;
+  drawMode: boolean; eraserMode: boolean; panMode: boolean;
   penColor: string; setPenColor: (c: string) => void; hasStrokes: boolean;
-  onCursor: () => void; onPen: () => void; onEraser: () => void; onClearBoard: () => void;
+  onCursor: () => void; onGrab: () => void; onPen: () => void; onEraser: () => void; onClearBoard: () => void;
 }) {
-  const cursorActive = !drawMode && !eraserMode;
+  const cursorActive = !drawMode && !eraserMode && !panMode;
   return (
     <div
       onPointerDown={e => e.stopPropagation()}
@@ -1611,6 +1663,9 @@ function DrawHotbar({
       }}>
       <HotBtn active={cursorActive} onClick={onCursor} title="Select">
         <MousePointer2 size={18} color="#e2e8f0" />
+      </HotBtn>
+      <HotBtn active={panMode} onClick={onGrab} title="Grab / pan board">
+        <Hand size={18} color="#e2e8f0" />
       </HotBtn>
       <HotBtn active={drawMode} onClick={onPen} title="Pen">
         <Pencil size={18} color="#e2e8f0" />
@@ -1677,10 +1732,11 @@ function TBBtn({ onClick, title, children }: {
   );
 }
 
-function BurgerMenu({ scale, setScale, showBuilder, setShowBuilder, showExprBar, setShowExprBar, onClose }: {
+function BurgerMenu({ scale, setScale, showBuilder, setShowBuilder, showExprBar, setShowExprBar, onResetView, onClose }: {
   scale: number; setScale: (fn: (s: number) => number) => void;
   showBuilder: boolean; setShowBuilder: (v: boolean) => void;
   showExprBar: boolean; setShowExprBar: (v: boolean) => void;
+  onResetView: () => void;
   onClose: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -1714,6 +1770,14 @@ function BurgerMenu({ scale, setScale, showBuilder, setShowBuilder, showExprBar,
             </button>
           </div>
         </div>
+
+        {/* Reset view — recentre & zoom to 100% (escape hatch for the infinite board) */}
+        <button onClick={onResetView}
+          className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+          style={{ border: "none", background: "transparent", cursor: "pointer" }}>
+          <span>Reset view</span>
+          <span className="text-xs font-medium text-gray-400">recentre</span>
+        </button>
 
         <div className="border-t border-gray-100 my-1" />
 
