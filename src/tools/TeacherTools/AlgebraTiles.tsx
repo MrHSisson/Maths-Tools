@@ -759,6 +759,9 @@ export default function App() {
 
   const onTableDown = (e: React.PointerEvent) => {
     e.stopPropagation();
+    // Reset on every fresh press so a stale "moved" flag from an earlier drag
+    // can never keep blocking clicks (add side / reveal / etc.).
+    tableMovedRef.current = false;
     if (!tableSelected) return;
     const cv = canvasRef.current;
     const tEl = tableRef.current;
@@ -772,7 +775,6 @@ export default function App() {
       cx: (tr.left + tr.width / 2 - r.left) / s,
       cy: (tr.top + tr.height / 2 - r.top) / s,
     };
-    tableMovedRef.current = false;
     setTableDragging(true);
   };
 
@@ -1216,6 +1218,7 @@ export default function App() {
                             background: "#f1f5f9", cursor: "pointer", padding: PAD,
                             display: "flex",
                             borderTop: BD, borderRight: BD, borderBottom: BD,
+                            ...(c === 0 ? { borderLeft: BD } : null),
                           }}>
                           <div style={{
                             flex: 1, background: COLOR[k], borderRadius: 3,
@@ -1254,6 +1257,7 @@ export default function App() {
                             background: "#f1f5f9", cursor: "pointer", padding: PAD,
                             display: "flex",
                             borderLeft: BD, borderRight: BD, borderBottom: BD,
+                            ...(r === 0 ? { borderTop: BD } : null),
                           }}>
                           <div style={{
                             flex: 1, background: COLOR[k], borderRadius: 3,
