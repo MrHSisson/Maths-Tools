@@ -199,6 +199,23 @@ const buildExpr = (tiles: TileState[]): string => {
   return p.join(" ");
 };
 
+// How many terms an expression collapses to (after combining like tiles).
+// Used to decide whether a factor needs brackets: 3x -> 1, 2x+1 -> 2.
+const termCount = (tiles: TileState[]): number => {
+  let x2 = 0, xy = 0, y2 = 0, x1 = 0, y1 = 0, c = 0;
+  for (const t of tiles) {
+    switch (t.kind) {
+      case "x2": x2++; break; case "-x2": x2--; break;
+      case "xy": xy++; break; case "-xy": xy--; break;
+      case "y2": y2++; break; case "-y2": y2--; break;
+      case "x": x1++; break; case "-x": x1--; break;
+      case "y": y1++; break; case "-y": y1--; break;
+      case "1": c++; break; case "-1": c--; break;
+    }
+  }
+  return [x2, xy, y2, x1, y1, c].filter(v => v !== 0).length;
+};
+
 // ── Expression parser ───────────────────────────────────────────────────────
 
 const parseExpr = (raw: string): TileKind[] => {
@@ -981,7 +998,15 @@ export default function App() {
     const products: TileKind[] = [];
     for (const rk of rowHeaders) for (const ck of colHeaders) products.push(multiplyKinds(rk, ck));
     const pt = products.map((k, i) => ({ id: -(i + 1), kind: k, x: 0, y: 0, rot: 0 as const }));
-    return `(${rowExpr})(${colExpr}) = ${buildExpr(pt)}`;
+    const toTiles = (ks: TileKind[]) => ks.map((k, i) => ({ id: -(i + 1), kind: k, x: 0, y: 0, rot: 0 as const }));
+    const rowN = termCount(toTiles(rowHeaders));
+    const colN = termCount(toTiles(colHeaders));
+    // Only bracket a factor when it has more than one term: 3x(2x+1), but
+    // (x+1)(x+3). Two single-term factors get an explicit × to stay readable.
+    const rowStr = rowN > 1 ? `(${rowExpr})` : `${rowExpr}`;
+    const colStr = colN > 1 ? `(${colExpr})` : `${colExpr}`;
+    const sep = rowN > 1 || colN > 1 ? "" : " × ";
+    return `${rowStr}${sep}${colStr} = ${buildExpr(pt)}`;
   })() : null;
 
   const toolbarPos = (() => {
@@ -1245,6 +1270,29 @@ export default function App() {
                         onClick={() => setOpenHdr(null)} />
                     )}
 
+                    {/* Reveal-all toggle — moved out of the × corner, sits above
+                        the table top-left and is always available */}
+                    <button
+                      onPointerDown={e => e.stopPropagation()}
+                      onClick={() => {
+                        if (tableRevealed) { setTableRevealed(false); setRevealedCells(new Set()); }
+                        else setTableRevealed(true);
+                      }}
+                      title={tableRevealed ? "Hide all answers" : "Reveal all answers"}
+                      style={{
+                        position: "absolute", top: -46, left: -10, zIndex: 240,
+                        display: "flex", alignItems: "center", gap: 5,
+                        padding: "6px 10px", background: "#1e293b", border: "none", borderRadius: 9,
+                        cursor: "pointer", boxShadow: "0 4px 14px rgba(0,0,0,0.3)",
+                      }}>
+                      {tableRevealed
+                        ? <EyeOff size={15} color="#e2e8f0" />
+                        : <Eye size={15} color="#e2e8f0" />}
+                      <span style={{ fontSize: 12, fontWeight: 600, color: "#e2e8f0" }}>
+                        {tableRevealed ? "Hide" : "Reveal"}
+                      </span>
+                    </button>
+
                     {/* Delete bin — shown when the table is lasso-selected */}
                     {tableSelected && (
                       <button
@@ -1266,23 +1314,15 @@ export default function App() {
                       display: "grid", gridTemplateColumns: gridCols, gridTemplateRows: gridRows,
                       gap: 0,
                     }}>
-                      {/* Corner cell */}
-                      <div onClick={() => {
-                        if (tableMovedRef.current) return;
-                        if (tableRevealed) { setTableRevealed(false); setRevealedCells(new Set()); }
-                        else setTableRevealed(true);
-                      }}
-                        style={{
+                      {/* Corner cell — just the × to show this is a multiplication grid */}
+                      <div style={{
                           gridRow: 1, gridColumn: 1, background: "#e2e8f0",
                           display: "flex", alignItems: "center", justifyContent: "center",
-                          cursor: "pointer", gap: 2, padding: 1,
+                          padding: 1,
                           borderTop: BD, borderLeft: BD, borderRight: BD, borderBottom: BD,
                           borderTopLeftRadius: 6,
                         }}>
-                        <span style={{ fontSize: 14, fontWeight: 800, color: "#475569" }}>×</span>
-                        {tableRevealed
-                          ? <EyeOff size={10} color="#64748b" />
-                          : <Eye size={10} color="#64748b" />}
+                        <span style={{ fontSize: 16, fontWeight: 800, color: "#475569" }}>×</span>
                       </div>
 
                       {/* Tramline = header's own far wall (already drawn on the header
