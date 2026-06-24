@@ -92,13 +92,16 @@ const eraseNear = (strokes: Stroke[], px: number, py: number): Stroke[] => {
   return out;
 };
 
+// Every negative tile is red, matching the back of physical algebra-tile
+// manipulatives (tell them apart by size/shape, not colour).
+const NEG_RED = "#ef4444";
 const COLOR: Record<TileKind, string> = {
-  "x2": "#3b82f6", "-x2": "#ef4444",
-  "x": "#22c55e", "-x": "#f97316",
-  "1": "#facc15", "-1": "#a855f7",
-  "y2": "#06b6d4", "-y2": "#ec4899",
-  "y": "#84cc16", "-y": "#f43f5e",
-  "xy": "#6366f1", "-xy": "#d97706",
+  "x2": "#3b82f6", "-x2": NEG_RED,
+  "x": "#22c55e", "-x": NEG_RED,
+  "1": "#facc15", "-1": NEG_RED,
+  "y2": "#06b6d4", "-y2": NEG_RED,
+  "y": "#84cc16", "-y": NEG_RED,
+  "xy": "#6366f1", "-xy": NEG_RED,
 };
 
 const TEXT_CLR: Record<TileKind, string> = {
