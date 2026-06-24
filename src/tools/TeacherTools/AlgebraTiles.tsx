@@ -322,11 +322,23 @@ export default function App() {
   const canvasRef = useRef<HTMLDivElement>(null);
   const scaleRef = useRef(scale);
   scaleRef.current = scale;
+  const showTableRef = useRef(showTable);
+  showTableRef.current = showTable;
+  const colHeadersRef = useRef(colHeaders);
+  colHeadersRef.current = colHeaders;
+  const rowHeadersRef = useRef(rowHeaders);
+  rowHeadersRef.current = rowHeaders;
+  const tableRevealedRef = useRef(tableRevealed);
+  tableRevealedRef.current = tableRevealed;
+  const revealedCellsRef = useRef(revealedCells);
+  revealedCellsRef.current = revealedCells;
   const dragRef = useRef<{
     id: number; ox: number; oy: number;
     starts: Map<number, { x: number; y: number }>;
     moved: boolean;
     wasSelected: boolean;
+    lastKind?: TileKind; lastRot?: 0 | 90;
+    lastX?: number; lastY?: number;
   } | null>(null);
   const preRef = useRef<TileState[]>([]);
 
@@ -460,6 +472,7 @@ export default function App() {
         const exclude = new Set(d.starts.keys());
         const [sx, sy] = snapPos(rawX, rawY, exclude, tile.kind, tile.rot, ts);
         if (d.starts.size <= 1) {
+          d.lastKind = tile.kind; d.lastRot = tile.rot; d.lastX = sx; d.lastY = sy;
           return ts.map(t => t.id === d.id ? { ...t, x: sx, y: sy } : t);
         }
         const ps = d.starts.get(d.id);
@@ -484,15 +497,52 @@ export default function App() {
         setSelectedIds(new Set());
         setShowToolbar(false);
       } else if (d.starts.size === 1) {
-        setTiles(ts => {
-          const dragged = ts.find(t => t.id === d.id);
-          if (!dragged) return ts;
-          const partner = zpPartner(dragged.kind);
-          if (!partner) return ts;
-          const match = ts.find(t => !d.starts.has(t.id) && t.kind === partner && overlapFrac(dragged, t) > 0.5);
-          if (!match) return ts;
-          return ts.filter(t => t.id !== d.id && t.id !== match.id);
-        });
+        let snapped = false;
+        if (d.lastKind != null && d.lastX != null && d.lastY != null && showTableRef.current) {
+          const cvEl = canvasRef.current;
+          if (cvEl) {
+            const cr = cvEl.getBoundingClientRect();
+            const sc = scaleRef.current;
+            const cols = colHeadersRef.current;
+            const rows = rowHeadersRef.current;
+            const revealed = revealedCellsRef.current;
+            const [tw, th] = dims(d.lastKind, d.lastRot ?? 0);
+
+            const cells = cvEl.querySelectorAll<HTMLElement>("[data-product-cell]");
+            for (const cell of cells) {
+              const ck = cell.getAttribute("data-product-cell")!;
+              const [ri, ci] = ck.split("-").map(Number);
+              if (tableRevealedRef.current || revealed.has(ck)) continue;
+              if (d.lastKind !== multiplyKinds(rows[ri], cols[ci])) continue;
+
+              const br = cell.getBoundingClientRect();
+              const ix = (br.left - cr.left) / sc;
+              const iy = (br.top - cr.top) / sc;
+              const iw = br.width / sc;
+              const ih = br.height / sc;
+
+              const ox = Math.max(0, Math.min(d.lastX + tw, ix + iw) - Math.max(d.lastX, ix));
+              const oy = Math.max(0, Math.min(d.lastY! + th, iy + ih) - Math.max(d.lastY!, iy));
+              if ((ox * oy) / (iw * ih) >= 0.8) {
+                setTiles(ts => ts.filter(t => t.id !== d.id));
+                setRevealedCells(s => { const n = new Set(s); n.add(ck); return n; });
+                snapped = true;
+                break;
+              }
+            }
+          }
+        }
+        if (!snapped) {
+          setTiles(ts => {
+            const dragged = ts.find(t => t.id === d.id);
+            if (!dragged) return ts;
+            const partner = zpPartner(dragged.kind);
+            if (!partner) return ts;
+            const match = ts.find(t => !d.starts.has(t.id) && t.kind === partner && overlapFrac(dragged, t) > 0.5);
+            if (!match) return ts;
+            return ts.filter(t => t.id !== d.id && t.id !== match.id);
+          });
+        }
         setSelectedIds(new Set([d.id]));
       }
 
@@ -1002,7 +1052,7 @@ export default function App() {
                                 display: "flex", cursor: "pointer",
                                 borderRight: BD, borderBottom: BD,
                               }}>
-                              <div style={{
+                              <div data-product-cell={`${r}-${c}`} style={{
                                 flex: 1, borderRadius: 3,
                                 background: isRevealed ? COLOR[pk] : "rgba(148,163,184,0.08)",
                                 display: "flex", alignItems: "center", justifyContent: "center",
