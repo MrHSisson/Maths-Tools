@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
-  Home, Trash2, Undo2, RotateCw, Plus,
+  Home, Trash2, Undo2, RotateCw, Plus, Eye, EyeOff,
   ArrowUp, ArrowDown, ArrowLeft, ArrowRight,
 } from "lucide-react";
 
@@ -289,6 +289,7 @@ export default function App() {
   const [colHeaders, setColHeaders] = useState<TileKind[]>(["x"]);
   const [rowHeaders, setRowHeaders] = useState<TileKind[]>(["x"]);
   const [openHdr, setOpenHdr] = useState<{ axis: "col" | "row"; idx: number } | null>(null);
+  const [tableRevealed, setTableRevealed] = useState(false);
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{
@@ -742,7 +743,7 @@ export default function App() {
 
         {/* ── Multiplication table ───────────────────────────────────── */}
         {showTable && (() => {
-          const HDR = 28, GAP = 3, ADD = 28;
+          const HDR = 28, ADD = 28;
           const gridCols = `${HDR}px ${colHeaders.map(k => `${kindLen(k)}px`).join(" ")} ${ADD}px`;
           const gridRows = `${HDR}px ${rowHeaders.map(k => `${kindLen(k)}px`).join(" ")} ${ADD}px`;
 
@@ -811,12 +812,21 @@ export default function App() {
               <div style={{
                 position: "relative", zIndex: 160,
                 display: "grid", gridTemplateColumns: gridCols, gridTemplateRows: gridRows,
-                gap: GAP, background: "#334155", padding: GAP, borderRadius: 8,
+                gap: 0, borderRadius: 6, overflow: "visible",
+                border: "2px solid #334155",
               }}>
-                {/* Corner cell */}
-                <div style={{ gridRow: 1, gridColumn: 1, background: "#94a3b8", borderRadius: 3,
-                  display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <span style={{ fontSize: 16, fontWeight: 800, color: "#fff" }}>×</span>
+                {/* Corner cell — tap to reveal/hide products */}
+                <div onClick={() => setTableRevealed(v => !v)}
+                  style={{
+                    gridRow: 1, gridColumn: 1, background: "#e2e8f0",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    cursor: "pointer", gap: 4,
+                    borderRight: "2px solid #334155", borderBottom: "2px solid #334155",
+                  }}>
+                  <span style={{ fontSize: 14, fontWeight: 800, color: "#475569" }}>×</span>
+                  {tableRevealed
+                    ? <EyeOff size={12} color="#64748b" />
+                    : <Eye size={12} color="#64748b" />}
                 </div>
 
                 {/* Column headers */}
@@ -826,8 +836,9 @@ export default function App() {
                       prev?.axis === "col" && prev.idx === c ? null : { axis: "col", idx: c })}
                     style={{
                       gridRow: 1, gridColumn: c + 2, position: "relative",
-                      background: COLOR[k], borderRadius: 3, cursor: "pointer",
+                      background: COLOR[k], cursor: "pointer",
                       display: "flex", alignItems: "center", justifyContent: "center",
+                      borderRight: "2px solid #334155", borderBottom: "2px solid #334155",
                     }}>
                     <span style={{ fontSize: 12, fontWeight: 700, color: TEXT_CLR[k] }}>{LBL[k]}</span>
                     {hdrPicker("col", c, k, colHeaders.length > 1)}
@@ -843,9 +854,9 @@ export default function App() {
                   style={{
                     gridRow: 1, gridColumn: colHeaders.length + 2,
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    background: "rgba(255,255,255,0.06)", borderRadius: 3, cursor: "pointer",
-                    border: "1.5px dashed rgba(148,163,184,0.5)", padding: 0,
-                  }}><Plus size={14} color="#94a3b8" /></button>
+                    background: "#f1f5f9", cursor: "pointer",
+                    border: "none", borderBottom: "2px solid #334155", padding: 0,
+                  }}><Plus size={14} color="#64748b" /></button>
 
                 {/* Row headers */}
                 {rowHeaders.map((k, r) => (
@@ -854,8 +865,9 @@ export default function App() {
                       prev?.axis === "row" && prev.idx === r ? null : { axis: "row", idx: r })}
                     style={{
                       gridRow: r + 2, gridColumn: 1, position: "relative",
-                      background: COLOR[k], borderRadius: 3, cursor: "pointer",
+                      background: COLOR[k], cursor: "pointer",
                       display: "flex", alignItems: "center", justifyContent: "center",
+                      borderRight: "2px solid #334155", borderBottom: "2px solid #334155",
                     }}>
                     <span style={{
                       fontSize: 12, fontWeight: 700, color: TEXT_CLR[k],
@@ -874,9 +886,9 @@ export default function App() {
                   style={{
                     gridRow: rowHeaders.length + 2, gridColumn: 1,
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    background: "rgba(255,255,255,0.06)", borderRadius: 3, cursor: "pointer",
-                    border: "1.5px dashed rgba(148,163,184,0.5)", padding: 0,
-                  }}><Plus size={14} color="#94a3b8" /></button>
+                    background: "#f1f5f9", cursor: "pointer",
+                    border: "none", borderRight: "2px solid #334155", padding: 0,
+                  }}><Plus size={14} color="#64748b" /></button>
 
                 {/* Product cells */}
                 {rowHeaders.map((rk, r) =>
@@ -889,10 +901,12 @@ export default function App() {
                       <div key={`p-${r}-${c}`}
                         style={{
                           gridRow: r + 2, gridColumn: c + 2,
-                          background: COLOR[pk], borderRadius: 3,
+                          background: tableRevealed ? COLOR[pk] : "#fff",
+                          borderRight: "2px solid #334155", borderBottom: "2px solid #334155",
                           display: "flex", alignItems: "center", justifyContent: "center",
+                          transition: "background 0.2s ease",
                         }}>
-                        {fs > 0 && (
+                        {tableRevealed && fs > 0 && (
                           <span style={{
                             fontSize: fs, fontWeight: 700, color: TEXT_CLR[pk],
                             writingMode: cw < rh && rh > 30 ? "vertical-lr" : undefined,
@@ -903,8 +917,8 @@ export default function App() {
                   })
                 )}
               </div>
-              {/* Table expression */}
-              {tableExpr && (
+              {/* Table expression — only when revealed */}
+              {tableRevealed && tableExpr && (
                 <div style={{ marginTop: 8, fontSize: 13, color: "#475569", fontWeight: 600, textAlign: "center" }}>
                   {tableExpr}
                 </div>
