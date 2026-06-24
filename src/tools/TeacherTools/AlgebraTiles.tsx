@@ -859,15 +859,15 @@ export default function App() {
 
               {/* ── Multiplication table ───────────────────────────────────── */}
               {showTable && (() => {
-                const HDR = UNIT, ADD = 30, PAD = 3, BDW = 2;
+                const HDR = UNIT, ADD = 30, PAD = 3, BDW = 2, GAP = 4;
                 const BD = `${BDW}px solid #334155`;
                 const cornerW = HDR + PAD * 2 + BDW * 2;
                 const colWidths = colHeaders.map(k => kindLen(k) + PAD * 2 + BDW);
                 const rowHeights = rowHeaders.map(k => kindLen(k) + PAD * 2 + BDW);
                 const totalColW = colWidths.reduce((a, b) => a + b, 0);
                 const totalRowH = rowHeights.reduce((a, b) => a + b, 0);
-                const gridCols = `${cornerW}px ${colWidths.map(w => `${w}px`).join(" ")} ${ADD}px`;
-                const gridRows = `${cornerW}px ${rowHeights.map(h => `${h}px`).join(" ")} ${ADD}px`;
+                const gridCols = `${cornerW}px ${GAP}px ${colWidths.map(w => `${w}px`).join(" ")} ${ADD}px`;
+                const gridRows = `${cornerW}px ${GAP}px ${rowHeights.map(h => `${h}px`).join(" ")} ${ADD}px`;
 
                 const hdrPicker = (axis: "col" | "row", idx: number, current: TileKind, canRemove: boolean) => {
                   const isOpen = openHdr?.axis === axis && openHdr.idx === idx;
@@ -929,12 +929,12 @@ export default function App() {
                     onPointerDown={e => e.stopPropagation()}>
 
                     {openHdr && (
-                      <div style={{ position: "fixed", inset: 0, zIndex: 250 }}
+                      <div style={{ position: "fixed", inset: 0, zIndex: 5 }}
                         onClick={() => setOpenHdr(null)} />
                     )}
 
                     <div style={{
-                      position: "relative", zIndex: 6,
+                      position: "relative", zIndex: 10,
                       display: "grid", gridTemplateColumns: gridCols, gridTemplateRows: gridRows,
                       gap: 0,
                     }}>
@@ -956,13 +956,31 @@ export default function App() {
                           : <Eye size={10} color="#64748b" />}
                       </div>
 
+                      {/* Tramline — vertical gap between row headers and products */}
+                      <div style={{
+                        gridRow: `1 / ${rowHeaders.length + 4}`, gridColumn: 2,
+                        display: "flex", alignItems: "stretch", justifyContent: "center", gap: 1,
+                      }}>
+                        <div style={{ width: 1, background: "#94a3b8" }} />
+                        <div style={{ width: 1, background: "#94a3b8" }} />
+                      </div>
+
+                      {/* Tramline — horizontal gap between column headers and products */}
+                      <div style={{
+                        gridRow: 2, gridColumn: `1 / ${colHeaders.length + 4}`,
+                        display: "flex", flexDirection: "column", alignItems: "stretch", justifyContent: "center", gap: 1,
+                      }}>
+                        <div style={{ height: 1, background: "#94a3b8" }} />
+                        <div style={{ height: 1, background: "#94a3b8" }} />
+                      </div>
+
                       {/* Column headers */}
                       {colHeaders.map((k, c) => (
                         <div key={`ch-${c}`}
                           onClick={() => setOpenHdr(prev =>
                             prev?.axis === "col" && prev.idx === c ? null : { axis: "col", idx: c })}
                           style={{
-                            gridRow: 1, gridColumn: c + 2, position: "relative",
+                            gridRow: 1, gridColumn: c + 3, position: "relative",
                             background: "#f1f5f9", cursor: "pointer", padding: PAD,
                             display: "flex",
                             borderTop: BD, borderRight: BD, borderBottom: BD,
@@ -984,7 +1002,7 @@ export default function App() {
                         setOpenHdr({ axis: "col", idx: ni });
                       }}
                         style={{
-                          gridRow: 1, gridColumn: colHeaders.length + 2,
+                          gridRow: 1, gridColumn: colHeaders.length + 3,
                           display: "flex", alignItems: "center", justifyContent: "center",
                           background: "rgba(148,163,184,0.08)", cursor: "pointer",
                           border: "1px dashed #94a3b8", borderRadius: 6, padding: 0,
@@ -999,7 +1017,7 @@ export default function App() {
                           onClick={() => setOpenHdr(prev =>
                             prev?.axis === "row" && prev.idx === r ? null : { axis: "row", idx: r })}
                           style={{
-                            gridRow: r + 2, gridColumn: 1, position: "relative",
+                            gridRow: r + 3, gridColumn: 1, position: "relative",
                             background: "#f1f5f9", cursor: "pointer", padding: PAD,
                             display: "flex",
                             borderLeft: BD, borderRight: BD, borderBottom: BD,
@@ -1024,7 +1042,7 @@ export default function App() {
                         setOpenHdr({ axis: "row", idx: ni });
                       }}
                         style={{
-                          gridRow: rowHeaders.length + 2, gridColumn: 1,
+                          gridRow: rowHeaders.length + 3, gridColumn: 1,
                           display: "flex", alignItems: "center", justifyContent: "center",
                           background: "rgba(148,163,184,0.08)", cursor: "pointer",
                           border: "1px dashed #94a3b8", borderRadius: 6, padding: 0,
@@ -1054,7 +1072,7 @@ export default function App() {
                                 }
                               }}
                               style={{
-                                gridRow: r + 2, gridColumn: c + 2,
+                                gridRow: r + 3, gridColumn: c + 3,
                                 background: "#fff", padding: PAD,
                                 display: "flex", cursor: "pointer",
                                 borderRight: BD, borderBottom: BD,
@@ -1087,7 +1105,7 @@ export default function App() {
                         {/* Column brace — above column headers */}
                         <div style={{
                           position: "absolute", top: -28,
-                          left: cornerW, width: totalColW,
+                          left: cornerW + GAP, width: totalColW,
                           display: "flex", flexDirection: "column", alignItems: "center",
                         }}>
                           <span style={{ fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 2, whiteSpace: "nowrap" }}>
@@ -1102,7 +1120,7 @@ export default function App() {
                         {/* Row brace — left of row headers */}
                         <div style={{
                           position: "absolute", left: -28,
-                          top: cornerW, height: totalRowH,
+                          top: cornerW + GAP, height: totalRowH,
                           display: "flex", alignItems: "center",
                         }}>
                           <span style={{
