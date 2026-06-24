@@ -667,15 +667,17 @@ export default function App() {
   const headerKinds: TileKind[] = showY
     ? ["x", "y", "1", "-x", "-y", "-1"]
     : ["x", "1", "-x", "-1"];
+  const factorExpr = (kinds: TileKind[]) => {
+    const t = kinds.map((k, i) => ({ id: -(i + 1), kind: k, x: 0, y: 0, rot: 0 as const }));
+    return buildExpr(t);
+  };
+  const colExpr = showTable ? factorExpr(colHeaders) : null;
+  const rowExpr = showTable ? factorExpr(rowHeaders) : null;
   const tableExpr = showTable ? (() => {
-    const factor = (kinds: TileKind[]) => {
-      const t = kinds.map((k, i) => ({ id: -(i + 1), kind: k, x: 0, y: 0, rot: 0 as const }));
-      return `(${buildExpr(t)})`;
-    };
     const products: TileKind[] = [];
     for (const rk of rowHeaders) for (const ck of colHeaders) products.push(multiplyKinds(rk, ck));
     const pt = products.map((k, i) => ({ id: -(i + 1), kind: k, x: 0, y: 0, rot: 0 as const }));
-    return `${factor(colHeaders)}${factor(rowHeaders)} = ${buildExpr(pt)}`;
+    return `(${rowExpr})(${colExpr}) = ${buildExpr(pt)}`;
   })() : null;
 
   const toolbarPos = (() => {
@@ -859,8 +861,13 @@ export default function App() {
               {showTable && (() => {
                 const HDR = UNIT, ADD = 30, PAD = 3, BDW = 2;
                 const BD = `${BDW}px solid #334155`;
-                const gridCols = `${HDR + PAD * 2 + BDW * 2}px ${colHeaders.map(k => `${kindLen(k) + PAD * 2 + BDW}px`).join(" ")} ${ADD}px`;
-                const gridRows = `${HDR + PAD * 2 + BDW * 2}px ${rowHeaders.map(k => `${kindLen(k) + PAD * 2 + BDW}px`).join(" ")} ${ADD}px`;
+                const cornerW = HDR + PAD * 2 + BDW * 2;
+                const colWidths = colHeaders.map(k => kindLen(k) + PAD * 2 + BDW);
+                const rowHeights = rowHeaders.map(k => kindLen(k) + PAD * 2 + BDW);
+                const totalColW = colWidths.reduce((a, b) => a + b, 0);
+                const totalRowH = rowHeights.reduce((a, b) => a + b, 0);
+                const gridCols = `${cornerW}px ${colWidths.map(w => `${w}px`).join(" ")} ${ADD}px`;
+                const gridRows = `${cornerW}px ${rowHeights.map(h => `${h}px`).join(" ")} ${ADD}px`;
 
                 const hdrPicker = (axis: "col" | "row", idx: number, current: TileKind, canRemove: boolean) => {
                   const isOpen = openHdr?.axis === axis && openHdr.idx === idx;
@@ -956,7 +963,7 @@ export default function App() {
                             prev?.axis === "col" && prev.idx === c ? null : { axis: "col", idx: c })}
                           style={{
                             gridRow: 1, gridColumn: c + 2, position: "relative",
-                            background: "#fff", cursor: "pointer", padding: PAD,
+                            background: "#f1f5f9", cursor: "pointer", padding: PAD,
                             display: "flex",
                             borderTop: BD, borderRight: BD, borderBottom: BD,
                           }}>
@@ -993,7 +1000,7 @@ export default function App() {
                             prev?.axis === "row" && prev.idx === r ? null : { axis: "row", idx: r })}
                           style={{
                             gridRow: r + 2, gridColumn: 1, position: "relative",
-                            background: "#fff", cursor: "pointer", padding: PAD,
+                            background: "#f1f5f9", cursor: "pointer", padding: PAD,
                             display: "flex",
                             borderLeft: BD, borderRight: BD, borderBottom: BD,
                           }}>
@@ -1073,6 +1080,46 @@ export default function App() {
                         })
                       )}
                     </div>
+
+                    {/* Curly braces for column and row expressions */}
+                    {tableRevealed && (
+                      <>
+                        {/* Column brace — above column headers */}
+                        <div style={{
+                          position: "absolute", top: -28,
+                          left: cornerW, width: totalColW,
+                          display: "flex", flexDirection: "column", alignItems: "center",
+                        }}>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 2, whiteSpace: "nowrap" }}>
+                            {colExpr}
+                          </span>
+                          <svg width={totalColW} height={10} viewBox={`0 0 ${totalColW} 10`} style={{ display: "block" }}>
+                            <path d={`M 2 0 Q 2 8, ${totalColW / 2} 8 Q ${totalColW - 2} 8, ${totalColW - 2} 0`}
+                              fill="none" stroke="#64748b" strokeWidth="1.5" />
+                          </svg>
+                        </div>
+
+                        {/* Row brace — left of row headers */}
+                        <div style={{
+                          position: "absolute", left: -28,
+                          top: cornerW, height: totalRowH,
+                          display: "flex", alignItems: "center",
+                        }}>
+                          <span style={{
+                            fontSize: 12, fontWeight: 700, color: "#334155",
+                            writingMode: "vertical-lr", transform: "rotate(180deg)",
+                            marginRight: 2, whiteSpace: "nowrap",
+                          }}>
+                            {rowExpr}
+                          </span>
+                          <svg width={10} height={totalRowH} viewBox={`0 0 10 ${totalRowH}`} style={{ display: "block" }}>
+                            <path d={`M 10 2 Q 2 2, 2 ${totalRowH / 2} Q 2 ${totalRowH - 2}, 10 ${totalRowH - 2}`}
+                              fill="none" stroke="#64748b" strokeWidth="1.5" />
+                          </svg>
+                        </div>
+                      </>
+                    )}
+
                     {tableRevealed && tableExpr && (
                       <div style={{ marginTop: 8, fontSize: 13, color: "#475569", fontWeight: 600, textAlign: "center" }}>
                         {tableExpr}
