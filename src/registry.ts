@@ -57,10 +57,7 @@ export const CATEGORIES: CategoryMeta[] = [
       { id: 'iterations', path: '/iterations', name: 'Iteration', description: 'Find roots to equations using iterative methods', ready: 'v2.1.1', load: () => import('./tools/Algebra/Iterations') },
       { id: 'simultaneous-equations-elimination', path: '/simultaneous-equations-elimination', name: 'Simultaneous Equations (Elimination)', description: 'Solve simultaneous equations, including rearranging', ready: 'v2.1.1', load: () => import('./tools/Algebra/SimultaneousEquations') },
       { id: 'simultaneous-equations-substitution', path: '/simultaneous-equations-substitution', name: 'Simultaneous Equations (Substitution)', description: 'Solve Simultaneous Equations (including Non-Linear) by Substitution', ready: 'v2.1.2', load: () => import('./tools/Algebra/NonLinearSimEq') },
-      { id: 'single-brackets-foil', path: '/expanding-single-brackets-foil', name: 'Expanding Single Brackets (FOIL)', description: 'Expand single brackets by using arrows for each term', ready: 'v1.4', enabled: false, load: () => import('./tools/Algebra/ExpandingSingleBracketsFOIL') },
-      { id: 'expanding-double-brackets-foil', path: '/expanding-double-brackets-foil', name: 'Expanding Double Brackets (FOIL)', description: 'Expand pairs of brackets using the FOIL method', ready: 'v1.4', enabled: false, load: () => import('./tools/Algebra/ExpandingDoubleBracketsFOIL') },
-      { id: 'single-brackets-grid', path: '/expanding-single-brackets-grid', name: 'Expanding Single Brackets (GRID)', description: 'Expand single brackets by using the grid method', ready: 'v1.4', enabled: false, load: () => import('./tools/Algebra/ExpandingSingleBracketsGRID') },
-      { id: 'expanding-double-brackets-grid', path: '/expanding-double-brackets-grid', name: 'Expanding Double Brackets (GRID)', description: 'Expand pairs of brackets using the grid method', ready: 'v1.4', enabled: false, load: () => import('./tools/Algebra/ExpandingDoubleBracketsGRID') },
+      { id: 'expanding-brackets', path: '/expanding-brackets', name: 'Expanding Brackets', description: 'Expand single and double brackets with step-by-step working', ready: 'v2.3', load: () => import('./tools/Algebra/ExpandingBrackets') },
     ],
   },
   {
@@ -97,6 +94,7 @@ export const CATEGORIES: CategoryMeta[] = [
       { id: 'tool-shell', path: '/tool-shell', name: 'Tool Shell', description: 'A tool shell for developing new tools', ready: 'v2.3', load: () => import('./tools/TeacherTools/ToolShell') },
       { id: 'call-selector', path: '/call-selector', name: 'Friday Phonecalls', description: 'A tool to randomly select students for phonecalls', ready: 'v1.0', enabled: false, load: () => import('./tools/TeacherTools/CallSelector') },
       { id: 'p-value', path: '/p-value', name: 'P-Value Grapher', description: 'A tool to generate P-Values from Binomial Distributions', ready: 'v1.0', load: () => import('./tools/TeacherTools/p-value') },
+      { id: 'algebra-tiles', path: '/algebra-tiles', name: 'Algebra Tiles', description: 'Interactive sandbox for dragging and manipulating algebra tiles', ready: 'v2.3', load: () => import('./tools/TeacherTools/AlgebraTiles') },
     ],
   },
   {

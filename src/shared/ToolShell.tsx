@@ -1,5 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback, type ReactNode } from "react";
-import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, LayoutGrid } from "lucide-react";
+import { RefreshCw, Eye, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Home, Menu, X, Video, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, LayoutGrid } from "lucide-react";
 import type { DifficultyLevel, AnyQuestion, WorkingStep, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
 import { LV_COLORS, getQuestionBg, getStepBg } from "./colors";
 import { normalizeMultiSelect, ansEq, makeUniqueQ } from "./helpers";
@@ -243,6 +243,8 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   });
   const [showWhiteboardAnswer, setShowWhiteboardAnswer] = useState(false);
   const [showAnswer, setShowAnswer] = useState(false);
+  const [steppedMode, setSteppedMode] = useState(true);
+  const [workedStepIdx, setWorkedStepIdx] = useState(0);
   const [numQuestions, setNumQuestions] = useState(urlInit.n ?? defaults.numQuestions ?? 15);
   const [numColumns, setNumColumns] = useState(urlInit.cols ?? defaults.numColumns ?? 3);
   const [worksheet, setWorksheet] = useState<AnyQuestion[]>([]);
@@ -353,6 +355,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     setCurrentQuestion(makeQuestion());
     setShowWhiteboardAnswer(false);
     setShowAnswer(false);
+    setWorkedStepIdx(0);
   };
 
   const stampQO = (q: AnyQuestion, snap: QOSnapshot): AnyQuestion => ({ ...q, _qo: snap } as AnyQuestion);
@@ -435,7 +438,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     if (reformatQuestion) {
       const snap = getQOSnapshot();
       const reformatted = reformatQuestion(currentQuestion, snap);
-      if (reformatted !== null) { setCurrentQuestion(reformatted); setShowAnswer(false); return; }
+      if (reformatted !== null) { setCurrentQuestion(reformatted); setShowAnswer(false); setWorkedStepIdx(0); return; }
     }
     handleNewQuestion();
   }, [difficulty, currentTool, qoFingerprint]);
@@ -907,53 +910,128 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     );
   };
 
-  const renderWorkedExample = () => (
-    <div className="overflow-y-auto" style={{ maxHeight: "120vh" }}>
-      <div className="p-8 w-full" style={{ backgroundColor: qBg }}>
-        <div className="text-center py-4 relative">
-          {!hideFontControls && <div style={{ position: "absolute", top: 0, right: 0, display: "flex", gap: 6 }}>
-            <button style={{ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: canDisplayDecrease ? "pointer" : "not-allowed", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", opacity: canDisplayDecrease ? 1 : 0.35 }} onClick={() => canDisplayDecrease && setDisplayFontSize(f => f - 1)}><ChevronDown size={16} color="#6b7280" /></button>
-            <button style={{ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: canDisplayIncrease ? "pointer" : "not-allowed", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", opacity: canDisplayIncrease ? 1 : 0.35 }} onClick={() => canDisplayIncrease && setDisplayFontSize(f => f + 1)}><ChevronUp size={16} color="#6b7280" /></button>
-          </div>}
-          {getInstruction() && !questionRenderer && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold mb-2`} style={{ color: "#000" }}>{getInstruction()}</div>}
-          {questionRenderer
-            ? questionRenderer(currentQuestion, showAnswer, colorScheme, false, undefined, getQOSnapshot(), displayFontSizes[displayFontSize])
-            : <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
-          }
-        </div>
-        {showAnswer && (
-          <>
-            <div className="space-y-4 mt-8">
-              {currentQuestion.working.map((s, i) => {
-                const custom = stepRenderer ? stepRenderer(s, colorScheme, getQOSnapshot()) : null;
-                return (
-                  <div key={i} className="rounded-xl p-6" style={{ backgroundColor: stepBg }}>
-                    <h4 className="text-xl font-bold mb-2" style={{ color: "#000" }}>Step {i + 1}</h4>
-                    <div className="text-2xl" style={{ color: "#000" }}>
-                      {custom ?? (s.type === "tStep"
-                        ? <span>{s.plain}</span>
-                        : s.type === "mStep"
-                          ? <div className="flex flex-col gap-1">
-                              <span className="text-left">{s.label}</span>
-                              <div className="text-center"><MathRenderer latex={s.latex} />{s.unit && <span> {s.unit}</span>}</div>
-                            </div>
-                          : <div className="text-center"><MathRenderer latex={s.latex} /></div>
-                      )}
-                    </div>
+  const renderWorkedExample = () => {
+    const totalSteps = currentQuestion.working.length;
+    const atAnswer = workedStepIdx >= totalSteps;
+    const canPrev = workedStepIdx > 0;
+    const canNext = workedStepIdx <= totalSteps;
+
+    const renderStep = (s: WorkingStep, i: number) => {
+      const custom = stepRenderer ? stepRenderer(s, colorScheme, getQOSnapshot()) : null;
+      return (
+        <div key={i} className="rounded-xl p-6" style={{ backgroundColor: stepBg }}>
+          <h4 className="text-xl font-bold mb-2" style={{ color: "#000" }}>Step {i + 1}</h4>
+          <div className="text-2xl" style={{ color: "#000" }}>
+            {custom ?? (s.type === "tStep"
+              ? <span>{s.plain}</span>
+              : s.type === "mStep"
+                ? <div className="flex flex-col gap-1">
+                    <span className="text-left">{s.label}</span>
+                    <div className="text-center"><MathRenderer latex={s.latex} />{s.unit && <span> {s.unit}</span>}</div>
                   </div>
-                );
-              })}
-            </div>
-            <div className="rounded-xl p-6 text-center mt-4" style={{ backgroundColor: stepBg }}>
-              <span className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>
-                {answerRenderer ? answerRenderer(currentQuestion, colorScheme, getQOSnapshot()) : <AnswerDisplay q={currentQuestion} />}
-              </span>
-            </div>
-          </>
-        )}
+                : <div className="text-center"><MathRenderer latex={s.latex} /></div>
+            )}
+          </div>
+        </div>
+      );
+    };
+
+    const navArrowStyle = (enabled: boolean): React.CSSProperties => ({
+      background: enabled ? "#1e3a8a" : "rgba(0,0,0,0.08)",
+      color: enabled ? "#fff" : "#9ca3af",
+      border: "none", borderRadius: 12, cursor: enabled ? "pointer" : "not-allowed",
+      width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center",
+      opacity: enabled ? 1 : 0.4, transition: "background 0.15s",
+    });
+
+    const steppedToggle = (
+      <button onClick={() => { setSteppedMode(m => !m); setWorkedStepIdx(0); }}
+        className="px-4 py-1.5 rounded-lg font-bold text-sm transition-colors border-2"
+        style={{
+          background: steppedMode ? "#1e3a8a" : "#fff",
+          color: steppedMode ? "#fff" : "#6b7280",
+          borderColor: steppedMode ? "#1e3a8a" : "#d1d5db",
+        }}>
+        {steppedMode ? "Step-by-Step" : "Show All"}
+      </button>
+    );
+
+    return (
+      <div className="overflow-y-auto" style={{ maxHeight: "120vh" }}>
+        <div className="p-8 w-full" style={{ backgroundColor: qBg }}>
+          <div className="text-center py-4 relative">
+            {!hideFontControls && <div style={{ position: "absolute", top: 0, right: 0, display: "flex", gap: 6 }}>
+              <button style={{ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: canDisplayDecrease ? "pointer" : "not-allowed", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", opacity: canDisplayDecrease ? 1 : 0.35 }} onClick={() => canDisplayDecrease && setDisplayFontSize(f => f - 1)}><ChevronDown size={16} color="#6b7280" /></button>
+              <button style={{ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: canDisplayIncrease ? "pointer" : "not-allowed", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", opacity: canDisplayIncrease ? 1 : 0.35 }} onClick={() => canDisplayIncrease && setDisplayFontSize(f => f + 1)}><ChevronUp size={16} color="#6b7280" /></button>
+            </div>}
+            {getInstruction() && !questionRenderer && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold mb-2`} style={{ color: "#000" }}>{getInstruction()}</div>}
+            {questionRenderer
+              ? questionRenderer(currentQuestion, showAnswer, colorScheme, false, undefined, getQOSnapshot(), displayFontSizes[displayFontSize])
+              : <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
+            }
+          </div>
+          {showAnswer && (
+            <>
+              {steppedMode ? (
+                <>
+                  <div className="flex items-center justify-between mt-6 mb-4">
+                    <button style={navArrowStyle(canPrev)} onClick={() => canPrev && setWorkedStepIdx(i => i - 1)}>
+                      <ChevronLeft size={24} />
+                    </button>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-bold text-gray-500">
+                        {atAnswer ? "Answer" : `Step ${workedStepIdx + 1} of ${totalSteps}`}
+                      </span>
+                      {steppedToggle}
+                    </div>
+                    <button style={navArrowStyle(canNext && !atAnswer)} onClick={() => canNext && !atAnswer && setWorkedStepIdx(i => i + 1)}>
+                      <ChevronRight size={24} />
+                    </button>
+                  </div>
+                  {!atAnswer ? (
+                    <div className="space-y-4">
+                      {renderStep(currentQuestion.working[workedStepIdx], workedStepIdx)}
+                    </div>
+                  ) : (
+                    <div className="rounded-xl p-6 text-center" style={{ backgroundColor: stepBg }}>
+                      <span className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>
+                        {answerRenderer ? answerRenderer(currentQuestion, colorScheme, getQOSnapshot()) : <AnswerDisplay q={currentQuestion} />}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex justify-center gap-2 mt-4">
+                    {Array.from({ length: totalSteps + 1 }, (_, i) => (
+                      <button key={i} onClick={() => setWorkedStepIdx(i)}
+                        style={{
+                          width: i === totalSteps ? 24 : 10, height: 10, borderRadius: 5, border: "none", cursor: "pointer",
+                          background: i === workedStepIdx ? "#1e3a8a" : "#d1d5db", transition: "background 0.15s",
+                        }}
+                        title={i === totalSteps ? "Answer" : `Step ${i + 1}`}
+                      />
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex justify-end mt-6 mb-4">
+                    {steppedToggle}
+                  </div>
+                  <div className="space-y-4">
+                    {currentQuestion.working.map((s, i) => renderStep(s, i))}
+                  </div>
+                  <div className="rounded-xl p-6 text-center mt-4" style={{ backgroundColor: stepBg }}>
+                    <span className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>
+                      {answerRenderer ? answerRenderer(currentQuestion, colorScheme, getQOSnapshot()) : <AnswerDisplay q={currentQuestion} />}
+                    </span>
+                  </div>
+                </>
+              )}
+            </>
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderWorksheet = () => {
     if (worksheet.length === 0) return (
