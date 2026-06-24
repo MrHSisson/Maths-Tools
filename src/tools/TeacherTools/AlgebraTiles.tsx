@@ -22,7 +22,11 @@ const SNAP = 2;
 const EDGE_SNAP = 8;
 let nextId = 1;
 
-const KINDS: TileKind[] = ["x2", "x", "1", "-x2", "-x", "-1"];
+type PaletteItem = { kind: TileKind; rot: 0 | 90 };
+const PALETTE: PaletteItem[] = [
+  { kind: "x2", rot: 0 }, { kind: "x", rot: 0 }, { kind: "x", rot: 90 }, { kind: "1", rot: 0 },
+  { kind: "-x2", rot: 0 }, { kind: "-x", rot: 0 }, { kind: "-x", rot: 90 }, { kind: "-1", rot: 0 },
+];
 
 const COLOR: Record<TileKind, string> = {
   "x2": "#3b82f6", "-x2": "#ef4444",
@@ -286,16 +290,16 @@ export default function App() {
     };
   }, [dragId, pushUndo]);
 
-  const onPaletteDown = (e: React.PointerEvent, kind: TileKind) => {
+  const onPaletteDown = (e: React.PointerEvent, kind: TileKind, rot: 0 | 90 = 0) => {
     e.preventDefault();
     const cv = canvasRef.current;
     if (!cv) return;
     const r = cv.getBoundingClientRect();
-    const [w, h] = dims(kind, 0);
+    const [w, h] = dims(kind, rot);
     const id = nextId++;
     const rx = Math.round((e.clientX - r.left - w / 2) / SNAP) * SNAP;
     const ry = Math.round((e.clientY - r.top - h / 2) / SNAP) * SNAP;
-    const tile: TileState = { id, kind, x: rx, y: ry, rot: 0 };
+    const tile: TileState = { id, kind, x: rx, y: ry, rot };
     setTiles(ts => [...ts, tile]);
     startDrag(id, w / 2, h / 2);
   };
@@ -395,20 +399,23 @@ export default function App() {
 
         {/* Tile palette */}
         <div className="flex gap-3 items-end">
-          {KINDS.map(kind => {
-            const [w, h] = dims(kind, 0);
+          {PALETTE.map(({ kind, rot }, i) => {
+            const [w, h] = dims(kind, rot);
             const s = Math.min(1, 48 / Math.max(w, h));
             return (
-              <div key={kind} className="flex flex-col items-center gap-0.5 select-none"
-                style={{ cursor: "grab", touchAction: "none" }}
-                onPointerDown={e => onPaletteDown(e, kind)}>
+              <div key={`${kind}-${rot}`} className="flex flex-col items-center gap-0.5 select-none"
+                style={{ cursor: "grab", touchAction: "none", marginLeft: i === 4 ? 12 : 0 }}
+                onPointerDown={e => onPaletteDown(e, kind, rot)}>
                 <div style={{
                   width: w * s, height: h * s, backgroundColor: COLOR[kind],
                   borderRadius: 3, border: "2px solid rgba(0,0,0,0.2)",
                   display: "flex", alignItems: "center", justifyContent: "center",
                 }}>
-                  {w * s > 28 && h * s > 16 && (
-                    <span style={{ fontSize: 9, fontWeight: 700, color: TEXT_CLR[kind], pointerEvents: "none" }}>{LBL[kind]}</span>
+                  {Math.min(w, h) * s > 16 && Math.max(w, h) * s > 28 && (
+                    <span style={{
+                      fontSize: 9, fontWeight: 700, color: TEXT_CLR[kind], pointerEvents: "none",
+                      writingMode: w < h ? "vertical-lr" : undefined,
+                    }}>{LBL[kind]}</span>
                   )}
                 </div>
                 <span className="font-semibold" style={{ fontSize: 10, color: "#475569" }}>{LBL[kind]}</span>
