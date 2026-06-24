@@ -207,6 +207,7 @@ export default function App() {
   const [showGrid, setShowGrid] = useState(true);
   const [eqMode, setEqMode] = useState(false);
   const [dragId, setDragId] = useState<number | null>(null);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
   const [exprInput, setExprInput] = useState("");
 
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -231,14 +232,40 @@ export default function App() {
     setDragId(id);
   }, [tiles]);
 
-  // Ctrl+Z
+  // Keyboard shortcuts
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "z") { e.preventDefault(); undo(); }
+      if ((e.metaKey || e.ctrlKey) && e.key === "z") { e.preventDefault(); undo(); return; }
+      if (e.key === "Delete" || e.key === "Backspace") {
+        if (selectedId === null) return;
+        if ((e.target as HTMLElement).tagName === "INPUT") return;
+        e.preventDefault();
+        setTiles(ts => {
+          const t = ts.find(t => t.id === selectedId);
+          if (!t) return ts;
+          pushUndo(ts);
+          return ts.filter(t => t.id !== selectedId);
+        });
+        setSelectedId(null);
+        return;
+      }
+      const dir = { ArrowRight: [1, 0], ArrowLeft: [-1, 0], ArrowDown: [0, 1], ArrowUp: [0, -1] }[e.key];
+      if (!dir || selectedId === null) return;
+      e.preventDefault();
+      setTiles(ts => {
+        const sel = ts.find(t => t.id === selectedId);
+        if (!sel) return ts;
+        const [w, h] = dims(sel.kind, sel.rot);
+        const nid = nextId++;
+        const clone: TileState = { ...sel, id: nid, x: sel.x + dir[0] * w, y: sel.y + dir[1] * h };
+        pushUndo(ts);
+        setSelectedId(nid);
+        return [...ts, clone];
+      });
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [undo]);
+  }, [undo, selectedId, pushUndo]);
 
   // Global drag listeners
   useEffect(() => {
@@ -267,7 +294,9 @@ export default function App() {
       pushUndo(preRef.current);
       if (e.clientY < r.top - UNIT) {
         setTiles(ts => ts.filter(t => t.id !== d.id));
+        setSelectedId(null);
       } else {
+        let cancelled = false;
         setTiles(ts => {
           const dragged = ts.find(t => t.id === d.id);
           if (!dragged) return ts;
@@ -275,8 +304,10 @@ export default function App() {
           if (!partner) return ts;
           const match = ts.find(t => t.id !== d.id && t.kind === partner && overlapFrac(dragged, t) > 0.5);
           if (!match) return ts;
+          cancelled = true;
           return ts.filter(t => t.id !== d.id && t.id !== match.id);
         });
+        setSelectedId(cancelled ? null : d.id);
       }
       dragRef.current = null;
       setDragId(null);
@@ -324,6 +355,7 @@ export default function App() {
     if (!tiles.length) return;
     pushUndo(tiles);
     setTiles([]);
+    setSelectedId(null);
   };
 
   const doZP = () => {
@@ -447,6 +479,7 @@ export default function App() {
 
       {/* ── Canvas ──────────────────────────────────────────────────────── */}
       <div ref={canvasRef} className="relative flex-1"
+        onPointerDown={() => setSelectedId(null)}
         style={{ overflow: "visible", touchAction: "none", background: "#f1f5f9", minHeight: 200 }}>
 
         {/* Grid dots */}
@@ -487,20 +520,21 @@ export default function App() {
         {tiles.map(tile => {
           const [w, h] = dims(tile.kind, tile.rot);
           const active = dragId === tile.id;
+          const selected = selectedId === tile.id;
           const minD = Math.min(w, h);
           const fs = minD >= X_LEN ? 15 : minD >= 30 ? 12 : minD >= UNIT ? 9 : 0;
           return (
             <div key={tile.id}
               onPointerDown={e => onTileDown(e, tile)}
               onDoubleClick={() => rotate(tile)}
-              title={canRotate(tile.kind) ? "Double-click to rotate" : undefined}
+              title={canRotate(tile.kind) ? "Double-click to rotate" : "Arrow keys to duplicate, Delete to remove"}
               style={{
                 position: "absolute", left: tile.x, top: tile.y, width: w, height: h,
                 backgroundColor: COLOR[tile.kind], borderRadius: 4,
-                border: `2px solid ${active ? "rgba(0,0,0,0.45)" : "rgba(0,0,0,0.18)"}`,
-                boxShadow: active ? "0 8px 24px rgba(0,0,0,0.3)" : "0 1px 4px rgba(0,0,0,0.12)",
+                border: `2px solid ${active ? "rgba(0,0,0,0.45)" : selected ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.18)"}`,
+                boxShadow: active ? "0 8px 24px rgba(0,0,0,0.3)" : selected ? "0 0 0 2px rgba(59,130,246,0.7), 0 1px 4px rgba(0,0,0,0.12)" : "0 1px 4px rgba(0,0,0,0.12)",
                 cursor: active ? "grabbing" : "grab",
-                zIndex: active ? 100 : 10,
+                zIndex: active ? 100 : selected ? 50 : 10,
                 userSelect: "none", touchAction: "none",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 transition: active ? "none" : "box-shadow 0.15s ease",
