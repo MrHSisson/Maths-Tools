@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Home, Trash2, Undo2 } from "lucide-react";
+import {
+  Home, Trash2, Undo2, RotateCw,
+  ArrowUp, ArrowDown, ArrowLeft, ArrowRight,
+} from "lucide-react";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -15,7 +18,6 @@ interface TileState {
 }
 
 // ── Constants ────────────────────────────────────────────────────────────────
-// x ≈ 4.18 units, y ≈ 3.18 units — deliberately non-integer
 
 const UNIT = 22;
 const X_LEN = 92;
@@ -257,12 +259,15 @@ export default function App() {
   const [eqMode, setEqMode] = useState(false);
   const [dragId, setDragId] = useState<number | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [showToolbar, setShowToolbar] = useState(false);
   const [exprInput, setExprInput] = useState("");
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{
     id: number; ox: number; oy: number;
     starts: Map<number, { x: number; y: number }>;
+    moved: boolean;
+    wasSelected: boolean;
   } | null>(null);
   const preRef = useRef<TileState[]>([]);
 
@@ -276,20 +281,66 @@ export default function App() {
       setTiles(h[h.length - 1]);
       return h.slice(0, -1);
     });
+    setShowToolbar(false);
   }, []);
 
-  const startDrag = useCallback((id: number, ox: number, oy: number, sel: Set<number>, extra?: TileState) => {
+  const startDrag = useCallback((id: number, ox: number, oy: number, sel: Set<number>, wasSelected: boolean, extra?: TileState) => {
     preRef.current = tiles;
     const starts = new Map<number, { x: number; y: number }>();
     for (const t of tiles) {
       if (sel.has(t.id)) starts.set(t.id, { x: t.x, y: t.y });
     }
     if (extra && !starts.has(extra.id)) starts.set(extra.id, { x: extra.x, y: extra.y });
-    dragRef.current = { id, ox, oy, starts };
+    dragRef.current = { id, ox, oy, starts, moved: false, wasSelected };
     setDragId(id);
   }, [tiles]);
 
-  // Keyboard shortcuts
+  // ── Shared actions (keyboard + toolbar) ────────────────────────────────
+
+  const duplicateDir = useCallback((dx: number, dy: number) => {
+    if (!selectedIds.size) return;
+    setTiles(ts => {
+      pushUndo(ts);
+      const newSel = new Set<number>();
+      const clones: TileState[] = [];
+      for (const t of ts) {
+        if (!selectedIds.has(t.id)) continue;
+        const [w, h] = dims(t.kind, t.rot);
+        const nid = nextId++;
+        clones.push({ ...t, id: nid, x: t.x + dx * w, y: t.y + dy * h });
+        newSel.add(nid);
+      }
+      setSelectedIds(newSel);
+      return [...ts, ...clones];
+    });
+  }, [selectedIds, pushUndo]);
+
+  const flipSelected = useCallback(() => {
+    if (!selectedIds.size) return;
+    setTiles(ts => { pushUndo(ts); return ts.map(t => selectedIds.has(t.id) ? { ...t, kind: FLIP[t.kind] } : t); });
+  }, [selectedIds, pushUndo]);
+
+  const rotateSelected = useCallback(() => {
+    if (!selectedIds.size) return;
+    setTiles(ts => {
+      pushUndo(ts);
+      return ts.map(t =>
+        selectedIds.has(t.id) && canRotate(t.kind)
+          ? { ...t, rot: (t.rot === 0 ? 90 : 0) as 0 | 90 }
+          : t
+      );
+    });
+  }, [selectedIds, pushUndo]);
+
+  const deleteSelected = useCallback(() => {
+    if (!selectedIds.size) return;
+    setTiles(ts => { pushUndo(ts); return ts.filter(t => !selectedIds.has(t.id)); });
+    setSelectedIds(new Set());
+    setShowToolbar(false);
+  }, [selectedIds, pushUndo]);
+
+  // ── Keyboard shortcuts ─────────────────────────────────────────────────
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "z") { e.preventDefault(); undo(); return; }
@@ -298,41 +349,35 @@ export default function App() {
       if (e.key === "Delete" || e.key === "Backspace") {
         if (!selectedIds.size) return;
         e.preventDefault();
-        setTiles(ts => { pushUndo(ts); return ts.filter(t => !selectedIds.has(t.id)); });
-        setSelectedIds(new Set());
+        deleteSelected();
         return;
       }
 
       if (e.key === "f" || e.key === "F") {
         if (!selectedIds.size) return;
         e.preventDefault();
-        setTiles(ts => { pushUndo(ts); return ts.map(t => selectedIds.has(t.id) ? { ...t, kind: FLIP[t.kind] } : t); });
+        flipSelected();
+        return;
+      }
+
+      if (e.key === "r" || e.key === "R") {
+        if (!selectedIds.size) return;
+        e.preventDefault();
+        rotateSelected();
         return;
       }
 
       const dir = { ArrowRight: [1, 0], ArrowLeft: [-1, 0], ArrowDown: [0, 1], ArrowUp: [0, -1] }[e.key];
       if (!dir || !selectedIds.size) return;
       e.preventDefault();
-      setTiles(ts => {
-        pushUndo(ts);
-        const newSel = new Set<number>();
-        const clones: TileState[] = [];
-        for (const t of ts) {
-          if (!selectedIds.has(t.id)) continue;
-          const [w, h] = dims(t.kind, t.rot);
-          const nid = nextId++;
-          clones.push({ ...t, id: nid, x: t.x + dir[0] * w, y: t.y + dir[1] * h });
-          newSel.add(nid);
-        }
-        setSelectedIds(newSel);
-        return [...ts, ...clones];
-      });
+      duplicateDir(dir[0], dir[1]);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [undo, selectedIds, pushUndo]);
+  }, [undo, selectedIds, deleteSelected, flipSelected, rotateSelected, duplicateDir]);
 
-  // Global drag listeners
+  // ── Global drag listeners ──────────────────────────────────────────────
+
   useEffect(() => {
     if (dragId === null) return;
 
@@ -343,6 +388,12 @@ export default function App() {
       const r = cv.getBoundingClientRect();
       const rawX = e.clientX - r.left - d.ox;
       const rawY = e.clientY - r.top - d.oy;
+
+      if (!d.moved) {
+        const ps = d.starts.get(d.id);
+        if (ps && (Math.abs(rawX - ps.x) > 3 || Math.abs(rawY - ps.y) > 3)) d.moved = true;
+      }
+
       setTiles(ts => {
         const tile = ts.find(t => t.id === d.id);
         if (!tile) return ts;
@@ -367,9 +418,11 @@ export default function App() {
       if (!d || !cv) return;
       const r = cv.getBoundingClientRect();
       pushUndo(preRef.current);
+
       if (e.clientY < r.top - UNIT) {
         setTiles(ts => ts.filter(t => !d.starts.has(t.id)));
         setSelectedIds(new Set());
+        setShowToolbar(false);
       } else if (d.starts.size === 1) {
         setTiles(ts => {
           const dragged = ts.find(t => t.id === d.id);
@@ -382,6 +435,13 @@ export default function App() {
         });
         setSelectedIds(new Set([d.id]));
       }
+
+      if (!d.moved && d.wasSelected) {
+        setShowToolbar(v => !v);
+      } else {
+        setShowToolbar(false);
+      }
+
       dragRef.current = null;
       setDragId(null);
     };
@@ -406,8 +466,9 @@ export default function App() {
     const tile: TileState = { id, kind, x: rx, y: ry, rot };
     const sel = new Set([id]);
     setSelectedIds(sel);
+    setShowToolbar(false);
     setTiles(ts => [...ts, tile]);
-    startDrag(id, w / 2, h / 2, sel, tile);
+    startDrag(id, w / 2, h / 2, sel, false, tile);
   };
 
   const onTileDown = (e: React.PointerEvent, tile: TileState) => {
@@ -418,26 +479,27 @@ export default function App() {
     const r = cv.getBoundingClientRect();
 
     let sel: Set<number>;
+    let wasSelected: boolean;
+
     if (e.shiftKey) {
       sel = new Set(selectedIds);
       if (sel.has(tile.id)) sel.delete(tile.id); else sel.add(tile.id);
       setSelectedIds(sel);
+      setShowToolbar(false);
+      wasSelected = false;
       if (!sel.has(tile.id)) return;
     } else if (selectedIds.has(tile.id)) {
       sel = selectedIds;
+      wasSelected = true;
     } else {
       sel = new Set([tile.id]);
       setSelectedIds(sel);
+      setShowToolbar(false);
+      wasSelected = false;
     }
 
     setTiles(ts => [...ts.filter(t => t.id !== tile.id), tile]);
-    startDrag(tile.id, e.clientX - (r.left + tile.x), e.clientY - (r.top + tile.y), sel);
-  };
-
-  const rotate = (tile: TileState) => {
-    if (!canRotate(tile.kind)) return;
-    pushUndo(tiles);
-    setTiles(ts => ts.map(t => t.id === tile.id ? { ...t, rot: (t.rot === 0 ? 90 : 0) as 0 | 90 } : t));
+    startDrag(tile.id, e.clientX - (r.left + tile.x), e.clientY - (r.top + tile.y), sel, wasSelected);
   };
 
   const clear = () => {
@@ -445,11 +507,17 @@ export default function App() {
     pushUndo(tiles);
     setTiles([]);
     setSelectedIds(new Set());
+    setShowToolbar(false);
   };
 
   const doZP = () => {
     const result = removeZP(tiles);
-    if (result.length < tiles.length) { pushUndo(tiles); setTiles(result); setSelectedIds(new Set()); }
+    if (result.length < tiles.length) {
+      pushUndo(tiles);
+      setTiles(result);
+      setSelectedIds(new Set());
+      setShowToolbar(false);
+    }
   };
 
   const buildFromInput = () => {
@@ -478,6 +546,25 @@ export default function App() {
   const FRAME = X_LEN + UNIT;
   const zpOk = hasZP(tiles);
   const palette = showY ? PALETTE_XY : PALETTE_X;
+  const anyRotatable = tiles.some(t => selectedIds.has(t.id) && canRotate(t.kind));
+
+  // Toolbar position — anchored above (or below) selected tiles
+  const toolbarPos = (() => {
+    if (!showToolbar || !selectedIds.size) return null;
+    const sel = tiles.filter(t => selectedIds.has(t.id));
+    if (!sel.length) return null;
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const t of sel) {
+      const [w, h] = dims(t.kind, t.rot);
+      minX = Math.min(minX, t.x);
+      minY = Math.min(minY, t.y);
+      maxX = Math.max(maxX, t.x + w);
+      maxY = Math.max(maxY, t.y + h);
+    }
+    const cx = (minX + maxX) / 2;
+    const above = minY > 56;
+    return { x: cx, y: above ? minY - 8 : maxY + 8, above };
+  })();
 
   const exprDisplay = (() => {
     if (!eqMode) return buildExpr(tiles);
@@ -569,7 +656,7 @@ export default function App() {
 
       {/* ── Canvas ──────────────────────────────────────────────────────── */}
       <div ref={canvasRef} className="relative flex-1"
-        onPointerDown={() => setSelectedIds(new Set())}
+        onPointerDown={() => { setSelectedIds(new Set()); setShowToolbar(false); }}
         style={{ overflow: "visible", touchAction: "none", background: "#f1f5f9", minHeight: 200 }}>
 
         {showGrid && (
@@ -603,6 +690,7 @@ export default function App() {
           </div>
         )}
 
+        {/* Placed tiles */}
         {tiles.map(tile => {
           const [w, h] = dims(tile.kind, tile.rot);
           const active = dragId === tile.id;
@@ -612,8 +700,6 @@ export default function App() {
           return (
             <div key={tile.id}
               onPointerDown={e => onTileDown(e, tile)}
-              onDoubleClick={() => rotate(tile)}
-              title={canRotate(tile.kind) ? "Double-click to rotate · F to flip · Arrows to duplicate" : "F to flip sign · Arrows to duplicate · Shift+click to multi-select"}
               style={{
                 position: "absolute", left: tile.x, top: tile.y, width: w, height: h,
                 backgroundColor: COLOR[tile.kind], borderRadius: 4,
@@ -635,6 +721,34 @@ export default function App() {
           );
         })}
 
+        {/* ── Floating toolbar ──────────────────────────────────────────── */}
+        {toolbarPos && (
+          <div onPointerDown={e => e.stopPropagation()}
+            style={{
+              position: "absolute", left: toolbarPos.x, top: toolbarPos.y,
+              transform: toolbarPos.above ? "translate(-50%, -100%)" : "translateX(-50%)",
+              zIndex: 200, display: "flex", alignItems: "center", gap: 2,
+              padding: "3px 5px", background: "#1e293b", borderRadius: 10,
+              boxShadow: "0 4px 20px rgba(0,0,0,0.35)",
+            }}>
+            <TBBtn onClick={() => duplicateDir(-1, 0)} title="Duplicate left"><ArrowLeft size={16} color="#e2e8f0" /></TBBtn>
+            <TBBtn onClick={() => duplicateDir(0, -1)} title="Duplicate up"><ArrowUp size={16} color="#e2e8f0" /></TBBtn>
+            <TBBtn onClick={() => duplicateDir(0, 1)} title="Duplicate down"><ArrowDown size={16} color="#e2e8f0" /></TBBtn>
+            <TBBtn onClick={() => duplicateDir(1, 0)} title="Duplicate right"><ArrowRight size={16} color="#e2e8f0" /></TBBtn>
+            <div style={{ width: 1, height: 22, background: "#475569", margin: "0 2px" }} />
+            {anyRotatable && (
+              <TBBtn onClick={rotateSelected} title="Rotate"><RotateCw size={16} color="#e2e8f0" /></TBBtn>
+            )}
+            <TBBtn onClick={flipSelected} title="Flip sign (±)">
+              <span style={{ fontSize: 15, fontWeight: 800, color: "#e2e8f0", lineHeight: 1 }}>±</span>
+            </TBBtn>
+            <TBBtn onClick={deleteSelected} title="Delete">
+              <Trash2 size={16} color="#fca5a5" />
+            </TBBtn>
+          </div>
+        )}
+
+        {/* Empty state */}
         {tiles.length === 0 && dragId === null && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="text-center" style={{ color: "#94a3b8" }}>
@@ -696,6 +810,23 @@ function IconBtn({ onClick, disabled, title, children }: {
       }}
       onMouseEnter={e => { if (!disabled) e.currentTarget.style.background = "rgba(255,255,255,0.18)"; }}
       onMouseLeave={e => { e.currentTarget.style.background = disabled ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.08)"; }}>
+      {children}
+    </button>
+  );
+}
+
+function TBBtn({ onClick, title, children }: {
+  onClick: () => void; title: string; children: React.ReactNode;
+}) {
+  return (
+    <button onClick={onClick} title={title}
+      style={{
+        width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center",
+        border: "none", borderRadius: 7, cursor: "pointer",
+        background: "rgba(255,255,255,0.06)", transition: "background 0.12s",
+      }}
+      onPointerEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.18)")}
+      onPointerLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.06)")}>
       {children}
     </button>
   );
