@@ -658,9 +658,11 @@ export default function App() {
         style={{ background: "#e2e8f0", borderBottom: "2px solid #cbd5e1" }}>
 
         <div className="flex gap-2 items-end flex-wrap">
-          {palette.map(({ kind, rot }, i) => {
+          {(() => {
+            const palS = 60 / X_LEN;
+            return palette.map(({ kind, rot }, i) => {
             const [w, h] = dims(kind, rot);
-            const s = Math.min(1, 44 / Math.max(w, h));
+            const pw = w * palS, ph = h * palS;
             const prev = i > 0 ? palette[i - 1].kind : "";
             const isSep = kind.startsWith("-") && !prev.startsWith("-");
             return (
@@ -668,11 +670,11 @@ export default function App() {
                 style={{ cursor: "grab", touchAction: "none", marginLeft: isSep ? 10 : 0 }}
                 onPointerDown={e => onPaletteDown(e, kind, rot)}>
                 <div style={{
-                  width: w * s, height: h * s, backgroundColor: COLOR[kind],
+                  width: pw, height: ph, backgroundColor: COLOR[kind],
                   borderRadius: 3, border: "2px solid rgba(0,0,0,0.2)",
                   display: "flex", alignItems: "center", justifyContent: "center",
                 }}>
-                  {Math.min(w, h) * s > 14 && Math.max(w, h) * s > 24 && (
+                  {Math.min(pw, ph) > 18 && (
                     <span style={{
                       fontSize: 8, fontWeight: 700, color: TEXT_CLR[kind], pointerEvents: "none",
                       writingMode: w < h ? "vertical-lr" : undefined,
@@ -682,7 +684,8 @@ export default function App() {
                 <span className="font-semibold" style={{ fontSize: 9, color: "#475569" }}>{LBL[kind]}</span>
               </div>
             );
-          })}
+          });
+          })()}
         </div>
 
         <div className="flex-1" />
@@ -743,7 +746,7 @@ export default function App() {
 
         {/* ── Multiplication table ───────────────────────────────────── */}
         {showTable && (() => {
-          const HDR = 28, ADD = 28, PAD = 3, BDW = 2;
+          const HDR = UNIT, ADD = 28, PAD = 3, BDW = 2;
           const BD = `${BDW}px solid #334155`;
           const gridCols = `${HDR + PAD * 2 + BDW * 2}px ${colHeaders.map(k => `${kindLen(k) + PAD * 2 + BDW}px`).join(" ")} ${ADD}px`;
           const gridRows = `${HDR + PAD * 2 + BDW * 2}px ${rowHeaders.map(k => `${kindLen(k) + PAD * 2 + BDW}px`).join(" ")} ${ADD}px`;
@@ -820,13 +823,13 @@ export default function App() {
                   style={{
                     gridRow: 1, gridColumn: 1, background: "#e2e8f0",
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    cursor: "pointer", gap: 4, padding: PAD,
+                    cursor: "pointer", gap: 2, padding: 1,
                     borderTop: BD, borderLeft: BD, borderRight: BD, borderBottom: BD,
                   }}>
-                  <span style={{ fontSize: 14, fontWeight: 800, color: "#475569" }}>×</span>
+                  <span style={{ fontSize: 12, fontWeight: 800, color: "#475569" }}>×</span>
                   {tableRevealed
-                    ? <EyeOff size={12} color="#64748b" />
-                    : <Eye size={12} color="#64748b" />}
+                    ? <EyeOff size={10} color="#64748b" />
+                    : <Eye size={10} color="#64748b" />}
                 </div>
 
                 {/* Column headers */}
