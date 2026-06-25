@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Home, Trash2, Undo2, RotateCw, Plus, Minus, Eye, EyeOff,
   ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Menu, X,
-  Pencil, Eraser,
+  Pencil, Eraser, MousePointer2, Hand,
 } from "lucide-react";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -16,6 +16,11 @@ interface TileState {
   x: number;
   y: number;
   rot: 0 | 90;
+}
+
+interface Stroke {
+  color: string;
+  points: { x: number; y: number }[];
 }
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -64,13 +69,39 @@ const PAL_NEG_XY: PalCell[] = [
 ];
 const PAL_S = 1;
 
+// ── Pen / eraser ─────────────────────────────────────────────────────────────
+
+const PEN_COLORS = ["#1e3a5f", "#dc2626", "#16a34a", "#9333ea", "#ea580c"];
+const ERASE_R = 14;
+
+// Proximity eraser: drop every point within ERASE_R of (px,py) and split each
+// stroke into the surviving runs, so an eraser pass cuts through a line rather
+// than deleting the whole thing.
+const eraseNear = (strokes: Stroke[], px: number, py: number): Stroke[] => {
+  const out: Stroke[] = [];
+  for (const s of strokes) {
+    let cur: { x: number; y: number }[] = [];
+    for (const pt of s.points) {
+      if (Math.hypot(pt.x - px, pt.y - py) < ERASE_R) {
+        if (cur.length >= 2) out.push({ color: s.color, points: cur });
+        cur = [];
+      } else cur.push(pt);
+    }
+    if (cur.length >= 2) out.push({ color: s.color, points: cur });
+  }
+  return out;
+};
+
+// Every negative tile is red, matching the back of physical algebra-tile
+// manipulatives (tell them apart by size/shape, not colour).
+const NEG_RED = "#ef4444";
 const COLOR: Record<TileKind, string> = {
-  "x2": "#3b82f6", "-x2": "#ef4444",
-  "x": "#22c55e", "-x": "#f97316",
-  "1": "#facc15", "-1": "#a855f7",
-  "y2": "#06b6d4", "-y2": "#ec4899",
-  "y": "#84cc16", "-y": "#f43f5e",
-  "xy": "#6366f1", "-xy": "#d97706",
+  "x2": "#3b82f6", "-x2": NEG_RED,
+  "x": "#22c55e", "-x": NEG_RED,
+  "1": "#facc15", "-1": NEG_RED,
+  "y2": "#06b6d4", "-y2": NEG_RED,
+  "y": "#84cc16", "-y": NEG_RED,
+  "xy": "#6366f1", "-xy": NEG_RED,
 };
 
 const TEXT_CLR: Record<TileKind, string> = {
@@ -106,6 +137,12 @@ const canRotate = (kind: TileKind) => {
   const b = kind.replace("-", "");
   return b === "x" || b === "y" || b === "xy";
 };
+
+// Single source of truth for label sizing — keeps palette tiles, placed tiles
+// and product-cell text consistent across the tool. `minD` is the tile's
+// shorter side in px.
+const labelFontSize = (minD: number): number =>
+  minD >= X_LEN ? 20 : minD >= Y_LEN ? 18 : minD >= 30 ? 16 : minD >= UNIT ? 15 : 0;
 
 // ── Edge-aware snapping ──────────────────────────────────────────────────────
 
@@ -163,6 +200,23 @@ const buildExpr = (tiles: TileState[]): string => {
   };
   add(x2, "x²"); add(xy, "xy"); add(y2, "y²"); add(x1, "x"); add(y1, "y"); add(c, "");
   return p.join(" ");
+};
+
+// How many terms an expression collapses to (after combining like tiles).
+// Used to decide whether a factor needs brackets: 3x -> 1, 2x+1 -> 2.
+const termCount = (tiles: TileState[]): number => {
+  let x2 = 0, xy = 0, y2 = 0, x1 = 0, y1 = 0, c = 0;
+  for (const t of tiles) {
+    switch (t.kind) {
+      case "x2": x2++; break; case "-x2": x2--; break;
+      case "xy": xy++; break; case "-xy": xy--; break;
+      case "y2": y2++; break; case "-y2": y2--; break;
+      case "x": x1++; break; case "-x": x1--; break;
+      case "y": y1++; break; case "-y": y1--; break;
+      case "1": c++; break; case "-1": c--; break;
+    }
+  }
+  return [x2, xy, y2, x1, y1, c].filter(v => v !== 0).length;
 };
 
 // ── Expression parser ───────────────────────────────────────────────────────
@@ -315,19 +369,37 @@ export default function App() {
   const [rowHeaders, setRowHeaders] = useState<TileKind[]>(["x"]);
   const [openHdr, setOpenHdr] = useState<{ axis: "col" | "row"; idx: number } | null>(null);
   const [tableRevealed, setTableRevealed] = useState(false);
+  const [tableMenuOpen, setTableMenuOpen] = useState(false);
+  const [tableSelected, setTableSelected] = useState(false);
+  // Logical-coord centre of the table once it has been dragged; null = default
+  // centred position.
+  const [tablePos, setTablePos] = useState<{ x: number; y: number } | null>(null);
+  const [tableDragging, setTableDragging] = useState(false);
   const [scale, setScale] = useState(1);
+  // Pan offset in *screen* px (applied as translate before scale, so it is
+  // independent of the zoom level). Lets the whole canvas be dragged around.
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [panMode, setPanMode] = useState(false);
+  const [panning, setPanning] = useState(false);
   const [revealedCells, setRevealedCells] = useState<Set<string>>(new Set());
   const [menuOpen, setMenuOpen] = useState(false);
   const [showBuilder, setShowBuilder] = useState(true);
-  const [showExprBar, setShowExprBar] = useState(true);
+  const [showExprBar, setShowExprBar] = useState(false);
   const [drawMode, setDrawMode] = useState(false);
   const [eraserMode, setEraserMode] = useState(false);
-  const [strokes, setStrokes] = useState<{ x: number; y: number }[][]>([]);
+  const [strokes, setStrokes] = useState<Stroke[]>([]);
+  const [penColor, setPenColor] = useState(PEN_COLORS[0]);
   const drawingRef = useRef<{ x: number; y: number }[] | null>(null);
 
   const canvasRef = useRef<HTMLDivElement>(null);
+  const tableRef = useRef<HTMLDivElement>(null);
+  const tableDragRef = useRef<{ sx: number; sy: number; cx: number; cy: number } | null>(null);
+  const tableMovedRef = useRef(false);
   const scaleRef = useRef(scale);
   scaleRef.current = scale;
+  const panRef = useRef(pan);
+  panRef.current = pan;
+  const panDragRef = useRef<{ sx: number; sy: number; px: number; py: number } | null>(null);
   const showTableRef = useRef(showTable);
   showTableRef.current = showTable;
   const colHeadersRef = useRef(colHeaders);
@@ -416,6 +488,14 @@ export default function App() {
     setShowToolbar(false);
   }, [selectedIds, pushUndo]);
 
+  const deleteTable = useCallback(() => {
+    setShowTable(false);
+    setTableSelected(false);
+    setTablePos(null);
+    setOpenHdr(null);
+    setTableMenuOpen(false);
+  }, []);
+
   // ── Keyboard shortcuts ─────────────────────────────────────────────────
 
   useEffect(() => {
@@ -424,6 +504,7 @@ export default function App() {
       if ((e.target as HTMLElement).tagName === "INPUT") return;
 
       if (e.key === "Delete" || e.key === "Backspace") {
+        if (tableSelected) { e.preventDefault(); deleteTable(); return; }
         if (!selectedIds.size) return;
         e.preventDefault();
         deleteSelected();
@@ -451,7 +532,7 @@ export default function App() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [undo, selectedIds, deleteSelected, flipSelected, rotateSelected, duplicateDir]);
+  }, [undo, selectedIds, deleteSelected, flipSelected, rotateSelected, duplicateDir, tableSelected, deleteTable]);
 
   // ── Global drag listeners ──────────────────────────────────────────────
 
@@ -463,9 +544,10 @@ export default function App() {
       const cv = canvasRef.current;
       if (!d || !cv) return;
       const s = scaleRef.current;
+      const p = panRef.current;
       const r = cv.getBoundingClientRect();
-      const rawX = (e.clientX - r.left) / s - d.ox;
-      const rawY = (e.clientY - r.top) / s - d.oy;
+      const rawX = (e.clientX - r.left - p.x) / s - d.ox;
+      const rawY = (e.clientY - r.top - p.y) / s - d.oy;
 
       if (!d.moved) {
         const ps = d.starts.get(d.id);
@@ -522,8 +604,8 @@ export default function App() {
               if (d.lastKind !== multiplyKinds(rows[ri], cols[ci])) continue;
 
               const br = cell.getBoundingClientRect();
-              const ix = (br.left - cr.left) / sc;
-              const iy = (br.top - cr.top) / sc;
+              const ix = (br.left - cr.left - panRef.current.x) / sc;
+              const iy = (br.top - cr.top - panRef.current.y) / sc;
               const iw = br.width / sc;
               const ih = br.height / sc;
 
@@ -582,8 +664,9 @@ export default function App() {
       if (!cv) return;
       const r = cv.getBoundingClientRect();
       const s = scaleRef.current;
-      const x2 = (e.clientX - r.left) / s;
-      const y2 = (e.clientY - r.top) / s;
+      const p = panRef.current;
+      const x2 = (e.clientX - r.left - p.x) / s;
+      const y2 = (e.clientY - r.top - p.y) / s;
       const { x1, y1 } = lassoRef.current!;
       setLasso({ x1, y1, x2, y2 });
     };
@@ -605,6 +688,24 @@ export default function App() {
       }
       setSelectedIds(hit);
       setShowToolbar(hit.size > 0);
+
+      // Select the whole table if the lasso covers most of it.
+      const cv = canvasRef.current;
+      const tEl = tableRef.current;
+      if (showTableRef.current && cv && tEl) {
+        const r = cv.getBoundingClientRect();
+        const s = scaleRef.current;
+        const p = panRef.current;
+        const tr = tEl.getBoundingClientRect();
+        const tx = (tr.left - r.left - p.x) / s, ty = (tr.top - r.top - p.y) / s;
+        const tw = tr.width / s, th = tr.height / s;
+        const ox = Math.max(0, Math.min(lx + lw, tx + tw) - Math.max(lx, tx));
+        const oy = Math.max(0, Math.min(ly + lh, ty + th) - Math.max(ly, ty));
+        const frac = tw * th > 0 ? (ox * oy) / (tw * th) : 0;
+        setTableSelected(frac >= 0.6);
+      } else {
+        setTableSelected(false);
+      }
     };
 
     window.addEventListener("pointermove", onMove);
@@ -623,6 +724,8 @@ export default function App() {
   eraserModeRef.current = eraserMode;
   const strokesRef = useRef(strokes);
   strokesRef.current = strokes;
+  const penColorRef = useRef(penColor);
+  penColorRef.current = penColor;
 
   useEffect(() => {
     if (!drawingRef.current) return;
@@ -632,23 +735,22 @@ export default function App() {
       if (!cv) return;
       const r = cv.getBoundingClientRect();
       const s = scaleRef.current;
-      const px = (e.clientX - r.left) / s;
-      const py = (e.clientY - r.top) / s;
+      const p = panRef.current;
+      const px = (e.clientX - r.left - p.x) / s;
+      const py = (e.clientY - r.top - p.y) / s;
 
       if (eraserModeRef.current) {
-        const ERASE_R = 12;
-        setStrokes(prev => prev.filter(stroke =>
-          !stroke.some(pt => Math.abs(pt.x - px) < ERASE_R && Math.abs(pt.y - py) < ERASE_R)
-        ));
+        setStrokes(prev => eraseNear(prev, px, py));
         return;
       }
 
       if (!drawingRef.current) return;
       drawingRef.current.push({ x: px, y: py });
       const cur = drawingRef.current;
+      const col = penColorRef.current;
       setStrokes(prev => {
         const copy = [...prev];
-        copy[copy.length - 1] = [...cur];
+        copy[copy.length - 1] = { color: col, points: [...cur] };
         return copy;
       });
     };
@@ -665,43 +767,138 @@ export default function App() {
     };
   }, [strokes]);
 
+  // ── Table dragging (after lasso-selecting the whole table) ──────────────
+
+  useEffect(() => {
+    if (!tableDragging) return;
+
+    const onMove = (e: PointerEvent) => {
+      const d = tableDragRef.current;
+      const cv = canvasRef.current;
+      if (!d || !cv) return;
+      const r = cv.getBoundingClientRect();
+      const s = scaleRef.current;
+      const p = panRef.current;
+      const px = (e.clientX - r.left - p.x) / s;
+      const py = (e.clientY - r.top - p.y) / s;
+      const dx = px - d.sx, dy = py - d.sy;
+      if (!tableMovedRef.current && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
+        tableMovedRef.current = true;
+      }
+      setTablePos({ x: d.cx + dx, y: d.cy + dy });
+    };
+
+    const onUp = () => {
+      tableDragRef.current = null;
+      setTableDragging(false);
+    };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+  }, [tableDragging]);
+
+  // ── Panning the whole canvas (grab tool) ────────────────────────────────
+
+  useEffect(() => {
+    if (!panning) return;
+
+    const onMove = (e: PointerEvent) => {
+      const d = panDragRef.current;
+      if (!d) return;
+      setPan({ x: d.px + (e.clientX - d.sx), y: d.py + (e.clientY - d.sy) });
+    };
+
+    const onUp = () => {
+      panDragRef.current = null;
+      setPanning(false);
+    };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+  }, [panning]);
+
+  // Clear table selection / menu when the table is hidden.
+  useEffect(() => {
+    if (!showTable) { setTableSelected(false); setTableMenuOpen(false); }
+  }, [showTable]);
+
+  const onTableDown = (e: React.PointerEvent) => {
+    // In pan mode, let the press fall through to the canvas so it pans the
+    // whole board (including this table) instead of moving the table alone.
+    if (panMode) return;
+    e.stopPropagation();
+    // Reset on every fresh press so a stale "moved" flag from an earlier drag
+    // can never keep blocking clicks (add side / reveal / etc.).
+    tableMovedRef.current = false;
+    if (!tableSelected) return;
+    const cv = canvasRef.current;
+    const tEl = tableRef.current;
+    if (!cv || !tEl) return;
+    const r = cv.getBoundingClientRect();
+    const s = scaleRef.current;
+    const p = panRef.current;
+    const tr = tEl.getBoundingClientRect();
+    tableDragRef.current = {
+      sx: (e.clientX - r.left - p.x) / s,
+      sy: (e.clientY - r.top - p.y) / s,
+      cx: (tr.left + tr.width / 2 - r.left - p.x) / s,
+      cy: (tr.top + tr.height / 2 - r.top - p.y) / s,
+    };
+    setTableDragging(true);
+  };
+
   const onCanvasDown = (e: React.PointerEvent) => {
     setOpenHdr(null);
     if (dragId !== null) return;
     const cv = canvasRef.current;
     if (!cv) return;
+
+    // Pan / grab tool: drag the whole board (screen-space delta).
+    if (panMode) {
+      panDragRef.current = { sx: e.clientX, sy: e.clientY, px: pan.x, py: pan.y };
+      setPanning(true);
+      return;
+    }
+
     const r = cv.getBoundingClientRect();
     const s = scaleRef.current;
-    const x = (e.clientX - r.left) / s;
-    const y = (e.clientY - r.top) / s;
+    const x = (e.clientX - r.left - pan.x) / s;
+    const y = (e.clientY - r.top - pan.y) / s;
 
     if (drawMode || eraserMode) {
       if (eraserMode) {
-        const ERASE_R = 12;
-        setStrokes(prev => prev.filter(stroke =>
-          !stroke.some(pt => Math.abs(pt.x - x) < ERASE_R && Math.abs(pt.y - y) < ERASE_R)
-        ));
+        setStrokes(prev => eraseNear(prev, x, y));
       }
       drawingRef.current = [{ x, y }];
-      if (!eraserMode) setStrokes(prev => [...prev, [{ x, y }]]);
+      if (!eraserMode) setStrokes(prev => [...prev, { color: penColor, points: [{ x, y }] }]);
       return;
     }
 
     lassoRef.current = { x1: x, y1: y };
     setLasso({ x1: x, y1: y, x2: x, y2: y });
     setSelectedIds(new Set());
+    setTableSelected(false);
     setShowToolbar(false);
   };
 
   const onPaletteDown = (e: React.PointerEvent, kind: TileKind, rot: 0 | 90 = 0) => {
     e.preventDefault();
+    setTableMenuOpen(false);
     const cv = canvasRef.current;
     if (!cv) return;
     const r = cv.getBoundingClientRect();
     const [w, h] = dims(kind, rot);
     const id = nextId++;
-    const rx = Math.round(((e.clientX - r.left) / scale - w / 2) / SNAP) * SNAP;
-    const ry = Math.round(((e.clientY - r.top) / scale - h / 2) / SNAP) * SNAP;
+    const rx = Math.round(((e.clientX - r.left - pan.x) / scale - w / 2) / SNAP) * SNAP;
+    const ry = Math.round(((e.clientY - r.top - pan.y) / scale - h / 2) / SNAP) * SNAP;
     const tile: TileState = { id, kind, x: rx, y: ry, rot };
     const sel = new Set([id]);
     setSelectedIds(sel);
@@ -711,8 +908,10 @@ export default function App() {
   };
 
   const onTileDown = (e: React.PointerEvent, tile: TileState) => {
+    if (panMode) return;  // let the press pan the board instead of grabbing a tile
     e.preventDefault();
     e.stopPropagation();
+    setTableMenuOpen(false);
     const cv = canvasRef.current;
     if (!cv) return;
     const r = cv.getBoundingClientRect();
@@ -738,7 +937,7 @@ export default function App() {
     }
 
     setTiles(ts => [...ts.filter(t => t.id !== tile.id), tile]);
-    startDrag(tile.id, (e.clientX - r.left) / scale - tile.x, (e.clientY - r.top) / scale - tile.y, sel, wasSelected);
+    startDrag(tile.id, (e.clientX - r.left - pan.x) / scale - tile.x, (e.clientY - r.top - pan.y) / scale - tile.y, sel, wasSelected);
   };
 
   const clear = () => {
@@ -806,7 +1005,15 @@ export default function App() {
     const products: TileKind[] = [];
     for (const rk of rowHeaders) for (const ck of colHeaders) products.push(multiplyKinds(rk, ck));
     const pt = products.map((k, i) => ({ id: -(i + 1), kind: k, x: 0, y: 0, rot: 0 as const }));
-    return `(${rowExpr})(${colExpr}) = ${buildExpr(pt)}`;
+    const toTiles = (ks: TileKind[]) => ks.map((k, i) => ({ id: -(i + 1), kind: k, x: 0, y: 0, rot: 0 as const }));
+    const rowN = termCount(toTiles(rowHeaders));
+    const colN = termCount(toTiles(colHeaders));
+    // Only bracket a factor when it has more than one term: 3x(2x+1), but
+    // (x+1)(x+3). Two single-term factors get an explicit × to stay readable.
+    const rowStr = rowN > 1 ? `(${rowExpr})` : `${rowExpr}`;
+    const colStr = colN > 1 ? `(${colExpr})` : `${colExpr}`;
+    const sep = rowN > 1 || colN > 1 ? "" : " × ";
+    return `${rowStr}${sep}${colStr} = ${buildExpr(pt)}`;
   })() : null;
 
   const toolbarPos = (() => {
@@ -845,7 +1052,7 @@ export default function App() {
       {items.map(({ kind, rot, row, col }) => {
         const [w, h] = dims(kind, rot);
         const minD = Math.min(w, h);
-        const fs = minD >= X_LEN ? 15 : minD >= 30 ? 12 : minD >= UNIT ? 9 : 0;
+        const fs = labelFontSize(minD);
         return (
           <div key={`pal-${kind}-${rot}`}
             onPointerDown={e => onPaletteDown(e, kind, rot)}
@@ -890,6 +1097,7 @@ export default function App() {
                 scale={scale} setScale={setScale}
                 showBuilder={showBuilder} setShowBuilder={setShowBuilder}
                 showExprBar={showExprBar} setShowExprBar={setShowExprBar}
+                onResetView={() => { setScale(1); setPan({ x: 0, y: 0 }); }}
                 onClose={() => setMenuOpen(false)}
               />
             )}
@@ -913,34 +1121,6 @@ export default function App() {
             <Btn on={eqMode} onClick={() => setEqMode(m => !m)} label="=" />
             <Btn on={false} onClick={doZP} label="ZP" disabled={!zpOk}
               activeColor="#dcfce7" activeText="#166534" />
-            <button onClick={() => { setDrawMode(d => !d); setEraserMode(false); }}
-              title="Draw"
-              style={{
-                padding: "4px 8px", borderRadius: 8, border: "2px solid " + (drawMode ? "#93c5fd" : "#d1d5db"),
-                cursor: "pointer", display: "flex", alignItems: "center", gap: 4,
-                background: drawMode ? "#dbeafe" : "#fff",
-                transition: "background 0.15s, border-color 0.15s",
-              }}>
-              <Pencil size={14} color={drawMode ? "#1e40af" : "#374151"} />
-            </button>
-            <button onClick={() => {
-              if (eraserMode) { setEraserMode(false); }
-              else { setEraserMode(true); setDrawMode(false); }
-            }}
-              title="Eraser"
-              style={{
-                padding: "4px 8px", borderRadius: 8, border: "2px solid " + (eraserMode ? "#fca5a5" : "#d1d5db"),
-                cursor: "pointer", display: "flex", alignItems: "center", gap: 4,
-                background: eraserMode ? "#fee2e2" : "#fff",
-                transition: "background 0.15s, border-color 0.15s",
-              }}>
-              <Eraser size={14} color={eraserMode ? "#dc2626" : "#374151"} />
-            </button>
-            {strokes.length > 0 && (
-              <SmBtn onClick={() => setStrokes([])} title="Clear all drawings">
-                <Trash2 size={13} color="#f97316" />
-              </SmBtn>
-            )}
           </div>
 
           {/* Actions */}
@@ -968,7 +1148,7 @@ export default function App() {
             <form style={{ display: "flex", flexDirection: "column", gap: 3, marginTop: "auto" }}
               onSubmit={e => { e.preventDefault(); buildFromInput(); }}>
               <input type="text" value={exprInput} onChange={e => setExprInput(e.target.value)}
-                placeholder={eqMode ? "2x+3 = x+5" : showY ? "x²+2xy" : "x²+3x+2"}
+                placeholder={eqMode ? "2x+3 = x+5" : showY ? "x^2+2xy" : "x^2+3x+2"}
                 style={{
                   width: "100%", padding: "6px 8px", borderRadius: 8, boxSizing: "border-box",
                   border: "2px solid #d1d5db", background: "#fff",
@@ -992,19 +1172,19 @@ export default function App() {
           <div ref={canvasRef} className="relative flex-1"
             onPointerDown={onCanvasDown}
             style={{ overflow: "hidden", touchAction: "none", background: "#f8fafc", minHeight: 200,
-              cursor: drawMode ? "crosshair" : eraserMode ? "cell" : undefined }}>
+              cursor: panMode ? (panning ? "grabbing" : "grab") : drawMode ? "crosshair" : eraserMode ? "cell" : undefined }}>
 
-            {/* ── Scaled content wrapper ────────────────────────────────── */}
-            <div style={{ position: "absolute", inset: 0, transform: `scale(${scale})`, transformOrigin: "0 0" }}>
+            {/* ── Pan + scale content wrapper ───────────────────────────── */}
+            <div style={{ position: "absolute", inset: 0, transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})`, transformOrigin: "0 0" }}>
 
-              {/* Dot grid */}
-              <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 1 }}>
+              {/* Dot grid — oversized so the board feels endless while panning */}
+              <svg style={{ position: "absolute", left: -4000, top: -4000, width: 8000, height: 8000, pointerEvents: "none", zIndex: 1 }}>
                 <defs>
                   <pattern id="atg" width={UNIT} height={UNIT} patternUnits="userSpaceOnUse">
                     <circle cx={UNIT} cy={UNIT} r="0.8" fill="#cbd5e1" />
                   </pattern>
                 </defs>
-                <rect width="100%" height="100%" fill="url(#atg)" />
+                <rect width="8000" height="8000" fill="url(#atg)" />
               </svg>
 
               {eqMode && (
@@ -1054,7 +1234,7 @@ export default function App() {
                                 display: "flex", alignItems: "center", justifyContent: "center",
                                 cursor: "pointer", padding: 0, flexShrink: 0,
                               }}>
-                              <span style={{ fontSize: 11, fontWeight: 700, color: TEXT_CLR[hk] }}>{LBL[hk]}</span>
+                              <span style={{ fontSize: 14, fontWeight: 700, color: TEXT_CLR[hk] }}>{LBL[hk]}</span>
                             </button>
                           ))}
                           {canRemove && (
@@ -1080,15 +1260,37 @@ export default function App() {
                 };
 
                 return (
-                  <div style={{
-                    position: "absolute", left: `${50 / scale}%`, top: `${40 / scale}%`,
+                  <div ref={tableRef} style={{
+                    position: "absolute",
+                    ...(tablePos
+                      ? { left: tablePos.x, top: tablePos.y }
+                      : { left: `${50 / scale}%`, top: `${40 / scale}%` }),
                     transform: "translate(-50%, -50%)", zIndex: 5,
+                    outline: tableSelected ? "2px dashed #3b82f6" : "none",
+                    outlineOffset: 8,
+                    cursor: tableSelected ? (tableDragging ? "grabbing" : "grab") : "default",
                   }}
-                    onPointerDown={e => e.stopPropagation()}>
+                    onPointerDown={onTableDown}>
 
                     {openHdr && (
                       <div style={{ position: "fixed", inset: 0, zIndex: 5 }}
                         onClick={() => setOpenHdr(null)} />
+                    )}
+
+                    {/* Delete bin — shown when the table is lasso-selected */}
+                    {tableSelected && (
+                      <button
+                        onPointerDown={e => e.stopPropagation()}
+                        onClick={deleteTable}
+                        title="Delete table"
+                        style={{
+                          position: "absolute", top: -46, right: -10, zIndex: 250,
+                          width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center",
+                          background: "#1e293b", border: "none", borderRadius: 9, cursor: "pointer",
+                          boxShadow: "0 4px 14px rgba(0,0,0,0.35)",
+                        }}>
+                        <Trash2 size={17} color="#fca5a5" />
+                      </button>
                     )}
 
                     <div style={{
@@ -1096,58 +1298,46 @@ export default function App() {
                       display: "grid", gridTemplateColumns: gridCols, gridTemplateRows: gridRows,
                       gap: 0,
                     }}>
-                      {/* Corner cell */}
-                      <div onClick={() => {
-                        if (tableRevealed) { setTableRevealed(false); setRevealedCells(new Set()); }
-                        else setTableRevealed(true);
-                      }}
+                      {/* Corner cell — × shows it is a multiplication grid, and
+                          doubles as the trigger for the table settings menu */}
+                      <div
+                        onClick={() => {
+                          if (tableMovedRef.current) return;
+                          setOpenHdr(null);
+                          setTableMenuOpen(o => !o);
+                        }}
                         style={{
-                          gridRow: 1, gridColumn: 1, background: "#e2e8f0",
+                          gridRow: 1, gridColumn: 1,
+                          background: tableMenuOpen ? "#cbd5e1" : "#e2e8f0",
                           display: "flex", alignItems: "center", justifyContent: "center",
-                          cursor: "pointer", gap: 2, padding: 1,
+                          cursor: "pointer", padding: 1,
                           borderTop: BD, borderLeft: BD, borderRight: BD, borderBottom: BD,
                           borderTopLeftRadius: 6,
                         }}>
-                        <span style={{ fontSize: 12, fontWeight: 800, color: "#475569" }}>×</span>
-                        {tableRevealed
-                          ? <EyeOff size={10} color="#64748b" />
-                          : <Eye size={10} color="#64748b" />}
+                        <span style={{ fontSize: 16, fontWeight: 800, color: "#475569" }}>×</span>
                       </div>
 
-                      {/* Tramline — vertical gap between row headers and products */}
-                      <div style={{
-                        gridRow: `1 / ${rowHeaders.length + 4}`, gridColumn: 2,
-                        display: "flex", alignItems: "stretch", justifyContent: "center", gap: 1,
-                      }}>
-                        <div style={{ width: 1, background: "#94a3b8" }} />
-                        <div style={{ width: 1, background: "#94a3b8" }} />
-                      </div>
-
-                      {/* Tramline — horizontal gap between column headers and products */}
-                      <div style={{
-                        gridRow: 2, gridColumn: `1 / ${colHeaders.length + 4}`,
-                        display: "flex", flexDirection: "column", alignItems: "stretch", justifyContent: "center", gap: 1,
-                      }}>
-                        <div style={{ height: 1, background: "#94a3b8" }} />
-                        <div style={{ height: 1, background: "#94a3b8" }} />
-                      </div>
+                      {/* Tramline = header's own far wall (already drawn on the header
+                          cells) + the GAP column/row + the leading wall of the first
+                          product cell (added below). No extra grey lines needed. */}
 
                       {/* Column headers */}
                       {colHeaders.map((k, c) => (
                         <div key={`ch-${c}`}
-                          onClick={() => setOpenHdr(prev =>
-                            prev?.axis === "col" && prev.idx === c ? null : { axis: "col", idx: c })}
+                          onClick={() => { if (tableMovedRef.current) return; setTableMenuOpen(false); setOpenHdr(prev =>
+                            prev?.axis === "col" && prev.idx === c ? null : { axis: "col", idx: c }); }}
                           style={{
                             gridRow: 1, gridColumn: c + 3, position: "relative",
                             background: "#f1f5f9", cursor: "pointer", padding: PAD,
                             display: "flex",
                             borderTop: BD, borderRight: BD, borderBottom: BD,
+                            ...(c === 0 ? { borderLeft: BD } : null),
                           }}>
                           <div style={{
                             flex: 1, background: COLOR[k], borderRadius: 3,
                             display: "flex", alignItems: "center", justifyContent: "center",
                           }}>
-                            <span style={{ fontSize: 12, fontWeight: 700, color: TEXT_CLR[k] }}>{LBL[k]}</span>
+                            <span style={{ fontSize: 15, fontWeight: 700, color: TEXT_CLR[k] }}>{LBL[k]}</span>
                           </div>
                           {hdrPicker("col", c, k, colHeaders.length > 1)}
                         </div>
@@ -1155,6 +1345,7 @@ export default function App() {
 
                       {/* Add column button */}
                       <button onClick={() => {
+                        if (tableMovedRef.current) return;
                         const ni = colHeaders.length;
                         setColHeaders(h => [...h, "1"]);
                         setOpenHdr({ axis: "col", idx: ni });
@@ -1172,20 +1363,21 @@ export default function App() {
                       {/* Row headers */}
                       {rowHeaders.map((k, r) => (
                         <div key={`rh-${r}`}
-                          onClick={() => setOpenHdr(prev =>
-                            prev?.axis === "row" && prev.idx === r ? null : { axis: "row", idx: r })}
+                          onClick={() => { if (tableMovedRef.current) return; setTableMenuOpen(false); setOpenHdr(prev =>
+                            prev?.axis === "row" && prev.idx === r ? null : { axis: "row", idx: r }); }}
                           style={{
                             gridRow: r + 3, gridColumn: 1, position: "relative",
                             background: "#f1f5f9", cursor: "pointer", padding: PAD,
                             display: "flex",
                             borderLeft: BD, borderRight: BD, borderBottom: BD,
+                            ...(r === 0 ? { borderTop: BD } : null),
                           }}>
                           <div style={{
                             flex: 1, background: COLOR[k], borderRadius: 3,
                             display: "flex", alignItems: "center", justifyContent: "center",
                           }}>
                             <span style={{
-                              fontSize: 12, fontWeight: 700, color: TEXT_CLR[k],
+                              fontSize: 15, fontWeight: 700, color: TEXT_CLR[k],
                               writingMode: kindLen(k) > 40 ? "vertical-lr" : undefined,
                             }}>{LBL[k]}</span>
                           </div>
@@ -1195,6 +1387,7 @@ export default function App() {
 
                       {/* Add row button */}
                       <button onClick={() => {
+                        if (tableMovedRef.current) return;
                         const ni = rowHeaders.length;
                         setRowHeaders(h => [...h, "1"]);
                         setOpenHdr({ axis: "row", idx: ni });
@@ -1217,10 +1410,11 @@ export default function App() {
                           const isRevealed = tableRevealed || revealedCells.has(cellKey);
                           const cw = kindLen(ck), rh = kindLen(rk);
                           const minD = Math.min(cw, rh);
-                          const fs = minD >= X_LEN ? 15 : minD >= Y_LEN ? 13 : minD >= 30 ? 11 : minD >= UNIT ? 8 : 0;
+                          const fs = labelFontSize(minD);
                           return (
                             <div key={`p-${r}-${c}`}
                               onClick={() => {
+                                if (tableMovedRef.current) return;
                                 if (!tableRevealed) {
                                   setRevealedCells(s => {
                                     const n = new Set(s);
@@ -1234,6 +1428,8 @@ export default function App() {
                                 background: "#fff", padding: PAD,
                                 display: "flex", cursor: "pointer",
                                 borderRight: BD, borderBottom: BD,
+                                ...(c === 0 ? { borderLeft: BD } : null),
+                                ...(r === 0 ? { borderTop: BD } : null),
                               }}>
                               <div data-product-cell={`${r}-${c}`} style={{
                                 flex: 1, borderRadius: 3,
@@ -1257,27 +1453,70 @@ export default function App() {
                       )}
                     </div>
 
+                    {/* Table settings menu — opened from the × corner. Sits above
+                        an invisible full-cover overlay so any outside click closes
+                        it. Designed to hold more settings later. */}
+                    {tableMenuOpen && (
+                      <>
+                        <div
+                          onPointerDown={e => { e.stopPropagation(); setTableMenuOpen(false); }}
+                          style={{ position: "absolute", left: -5000, top: -5000, width: 10000, height: 10000, zIndex: 300 }} />
+                        <div
+                          onPointerDown={e => e.stopPropagation()}
+                          style={{
+                            position: "absolute", top: cornerW + 8, left: 0, zIndex: 320,
+                            minWidth: 184, background: "#fff", borderRadius: 10,
+                            boxShadow: "0 6px 24px rgba(0,0,0,0.22)", border: "1px solid #e2e8f0",
+                            padding: 5,
+                          }}>
+                          <div style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 0.6, padding: "4px 8px 6px" }}>
+                            Table settings
+                          </div>
+                          <button
+                            onClick={() => {
+                              if (tableRevealed) { setTableRevealed(false); setRevealedCells(new Set()); }
+                              else setTableRevealed(true);
+                            }}
+                            style={{
+                              width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+                              gap: 10, padding: "7px 8px", borderRadius: 7, border: "none", background: "transparent",
+                              cursor: "pointer",
+                            }}
+                            onMouseEnter={e => (e.currentTarget.style.background = "#f1f5f9")}
+                            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                            <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                              {tableRevealed
+                                ? <EyeOff size={15} color="#475569" />
+                                : <Eye size={15} color="#475569" />}
+                              <span style={{ fontSize: 13, fontWeight: 600, color: "#334155" }}>Reveal all</span>
+                            </span>
+                            <TogglePill on={tableRevealed} />
+                          </button>
+                        </div>
+                      </>
+                    )}
+
                     {/* Curly braces for column and row expressions */}
                     {tableRevealed && (
                       <>
                         {/* Column brace — above column headers */}
                         <div style={{
-                          position: "absolute", top: -28,
+                          position: "absolute", top: -34,
                           left: cornerW + GAP, width: totalColW,
                           display: "flex", flexDirection: "column", alignItems: "center",
                         }}>
                           <span style={{ fontSize: 12, fontWeight: 700, color: "#334155", marginBottom: 2, whiteSpace: "nowrap" }}>
                             {colExpr}
                           </span>
-                          <svg width={totalColW} height={10} viewBox={`0 0 ${totalColW} 10`} style={{ display: "block" }}>
-                            <path d={`M 2 0 Q 2 8, ${totalColW / 2} 8 Q ${totalColW - 2} 8, ${totalColW - 2} 0`}
-                              fill="none" stroke="#64748b" strokeWidth="1.5" />
+                          <svg width={totalColW} height={14} viewBox={`0 0 ${totalColW} 14`} style={{ display: "block" }}>
+                            <path d={`M 0 14 Q 0 7 ${totalColW * 0.25} 7 Q ${totalColW * 0.5} 7 ${totalColW * 0.5} 0 Q ${totalColW * 0.5} 7 ${totalColW * 0.75} 7 Q ${totalColW} 7 ${totalColW} 14`}
+                              fill="none" stroke="#64748b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
                         </div>
 
                         {/* Row brace — left of row headers */}
                         <div style={{
-                          position: "absolute", left: -28,
+                          position: "absolute", left: -34,
                           top: cornerW + GAP, height: totalRowH,
                           display: "flex", alignItems: "center",
                         }}>
@@ -1288,9 +1527,9 @@ export default function App() {
                           }}>
                             {rowExpr}
                           </span>
-                          <svg width={10} height={totalRowH} viewBox={`0 0 10 ${totalRowH}`} style={{ display: "block" }}>
-                            <path d={`M 10 2 Q 2 2, 2 ${totalRowH / 2} Q 2 ${totalRowH - 2}, 10 ${totalRowH - 2}`}
-                              fill="none" stroke="#64748b" strokeWidth="1.5" />
+                          <svg width={14} height={totalRowH} viewBox={`0 0 14 ${totalRowH}`} style={{ display: "block" }}>
+                            <path d={`M 14 0 Q 7 0 7 ${totalRowH * 0.25} Q 7 ${totalRowH / 2} 0 ${totalRowH / 2} Q 7 ${totalRowH / 2} 7 ${totalRowH * 0.75} Q 7 ${totalRowH} 14 ${totalRowH}`}
+                              fill="none" stroke="#64748b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
                         </div>
                       </>
@@ -1311,7 +1550,7 @@ export default function App() {
                 const active = dragId === tile.id;
                 const selected = selectedIds.has(tile.id);
                 const minD = Math.min(w, h);
-                const fs = minD >= X_LEN ? 15 : minD >= 30 ? 12 : minD >= UNIT ? 9 : 0;
+                const fs = labelFontSize(minD);
                 return (
                   <div key={tile.id}
                     onPointerDown={e => onTileDown(e, tile)}
@@ -1381,11 +1620,11 @@ export default function App() {
 
               {/* Drawing strokes */}
               {strokes.length > 0 && (
-                <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 60 }}>
-                  {strokes.map((pts, i) => (
+                <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 60, overflow: "visible" }}>
+                  {strokes.map((s, i) => (
                     <polyline key={i}
-                      points={pts.map(p => `${p.x},${p.y}`).join(" ")}
-                      fill="none" stroke="#1e3a5f" strokeWidth={2.5}
+                      points={s.points.map(p => `${p.x},${p.y}`).join(" ")}
+                      fill="none" stroke={s.color} strokeWidth={2.5}
                       strokeLinecap="round" strokeLinejoin="round" />
                   ))}
                 </svg>
@@ -1402,6 +1641,18 @@ export default function App() {
                 </div>
               </div>
             )}
+
+            {/* ── Floating draw hotbar ──────────────────────────────────────── */}
+            <DrawHotbar
+              drawMode={drawMode} eraserMode={eraserMode} panMode={panMode}
+              penColor={penColor} setPenColor={setPenColor}
+              hasStrokes={strokes.length > 0}
+              onCursor={() => { setDrawMode(false); setEraserMode(false); setPanMode(false); }}
+              onGrab={() => { setPanMode(true); setDrawMode(false); setEraserMode(false); }}
+              onPen={() => { setDrawMode(true); setEraserMode(false); setPanMode(false); }}
+              onEraser={() => { setEraserMode(true); setDrawMode(false); setPanMode(false); }}
+              onClearBoard={() => setStrokes([])}
+            />
           </div>
 
           {/* ── Expression bar ──────────────────────────────────────────────── */}
@@ -1467,6 +1718,78 @@ function SmBtn({ onClick, disabled, title, children }: {
   );
 }
 
+function DrawHotbar({
+  drawMode, eraserMode, panMode, penColor, setPenColor, hasStrokes,
+  onCursor, onGrab, onPen, onEraser, onClearBoard,
+}: {
+  drawMode: boolean; eraserMode: boolean; panMode: boolean;
+  penColor: string; setPenColor: (c: string) => void; hasStrokes: boolean;
+  onCursor: () => void; onGrab: () => void; onPen: () => void; onEraser: () => void; onClearBoard: () => void;
+}) {
+  const cursorActive = !drawMode && !eraserMode && !panMode;
+  return (
+    <div
+      onPointerDown={e => e.stopPropagation()}
+      style={{
+        position: "absolute", bottom: 16, left: "50%", transform: "translateX(-50%)",
+        zIndex: 150, display: "flex", alignItems: "center", gap: 4,
+        padding: "6px 8px", background: "#2d3340", borderRadius: 14,
+        boxShadow: "0 8px 28px rgba(0,0,0,0.35)",
+      }}>
+      <HotBtn active={cursorActive} onClick={onCursor} title="Select">
+        <MousePointer2 size={18} color="#e2e8f0" />
+      </HotBtn>
+      <HotBtn active={panMode} onClick={onGrab} title="Grab / pan board">
+        <Hand size={18} color="#e2e8f0" />
+      </HotBtn>
+      <HotBtn active={drawMode} onClick={onPen} title="Pen">
+        <Pencil size={18} color="#e2e8f0" />
+      </HotBtn>
+      <HotBtn active={eraserMode} onClick={onEraser} title="Eraser">
+        <Eraser size={18} color="#e2e8f0" />
+      </HotBtn>
+      <HotBtn active={false} onClick={onClearBoard} title="Clear all drawings" disabled={!hasStrokes}>
+        <Trash2 size={18} color={hasStrokes ? "#fca5a5" : "#64748b"} />
+      </HotBtn>
+
+      <div style={{ width: 1, height: 26, background: "#475569", margin: "0 2px" }} />
+
+      {/* Pen colours */}
+      {PEN_COLORS.map(c => (
+        <button key={c}
+          onClick={() => { setPenColor(c); onPen(); }}
+          title="Pen colour"
+          style={{
+            width: 22, height: 22, borderRadius: "50%", background: c, cursor: "pointer",
+            padding: 0, flexShrink: 0,
+            border: penColor === c ? "2.5px solid #fff" : "2px solid rgba(255,255,255,0.2)",
+            boxShadow: penColor === c ? "0 0 0 2px rgba(255,255,255,0.25)" : "none",
+            transition: "border-color 0.12s, box-shadow 0.12s",
+          }} />
+      ))}
+    </div>
+  );
+}
+
+function HotBtn({ active, disabled, onClick, title, children }: {
+  active: boolean; disabled?: boolean; onClick: () => void; title: string; children: React.ReactNode;
+}) {
+  return (
+    <button onClick={onClick} title={title} disabled={disabled}
+      style={{
+        width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center",
+        border: "none", borderRadius: 10, padding: 0, flexShrink: 0,
+        cursor: disabled ? "default" : "pointer",
+        background: active ? "rgba(255,255,255,0.22)" : "rgba(255,255,255,0.06)",
+        transition: "background 0.12s",
+      }}
+      onPointerEnter={e => { if (!disabled && !active) e.currentTarget.style.background = "rgba(255,255,255,0.14)"; }}
+      onPointerLeave={e => { e.currentTarget.style.background = active ? "rgba(255,255,255,0.22)" : "rgba(255,255,255,0.06)"; }}>
+      {children}
+    </button>
+  );
+}
+
 function TBBtn({ onClick, title, children }: {
   onClick: () => void; title: string; children: React.ReactNode;
 }) {
@@ -1484,10 +1807,11 @@ function TBBtn({ onClick, title, children }: {
   );
 }
 
-function BurgerMenu({ scale, setScale, showBuilder, setShowBuilder, showExprBar, setShowExprBar, onClose }: {
+function BurgerMenu({ scale, setScale, showBuilder, setShowBuilder, showExprBar, setShowExprBar, onResetView, onClose }: {
   scale: number; setScale: (fn: (s: number) => number) => void;
   showBuilder: boolean; setShowBuilder: (v: boolean) => void;
   showExprBar: boolean; setShowExprBar: (v: boolean) => void;
+  onResetView: () => void;
   onClose: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -1521,6 +1845,14 @@ function BurgerMenu({ scale, setScale, showBuilder, setShowBuilder, showExprBar,
             </button>
           </div>
         </div>
+
+        {/* Reset view — recentre & zoom to 100% (escape hatch for the infinite board) */}
+        <button onClick={onResetView}
+          className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+          style={{ border: "none", background: "transparent", cursor: "pointer" }}>
+          <span>Reset view</span>
+          <span className="text-xs font-medium text-gray-400">recentre</span>
+        </button>
 
         <div className="border-t border-gray-100 my-1" />
 
