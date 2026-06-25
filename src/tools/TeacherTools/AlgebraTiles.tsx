@@ -1238,8 +1238,12 @@ export default function App() {
                 const HDR = UNIT, ADD = 30, PAD = 3, BDW = 2, GAP = 4;
                 const BD = `${BDW}px solid #334155`;
                 const cornerW = HDR + PAD * 2 + BDW * 2;
-                const colWidths = colHeaders.map(k => kindLen(k) + PAD * 2 + BDW);
-                const rowHeights = rowHeaders.map(k => kindLen(k) + PAD * 2 + BDW);
+                // The first column/row draws a leading border too (borderLeft on
+                // c===0, borderTop on r===0), so its track must budget two borders
+                // — otherwise its coloured tile gets clipped 2px narrower/shorter
+                // than the rest.
+                const colWidths = colHeaders.map((k, i) => kindLen(k) + PAD * 2 + BDW + (i === 0 ? BDW : 0));
+                const rowHeights = rowHeaders.map((k, i) => kindLen(k) + PAD * 2 + BDW + (i === 0 ? BDW : 0));
                 const totalColW = colWidths.reduce((a, b) => a + b, 0);
                 const totalRowH = rowHeights.reduce((a, b) => a + b, 0);
                 const gridCols = `${cornerW}px ${GAP}px ${colWidths.map(w => `${w}px`).join(" ")} ${ADD}px`;
