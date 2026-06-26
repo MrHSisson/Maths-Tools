@@ -418,6 +418,9 @@ export default function App() {
   const [penColor, setPenColor] = useState(PEN_COLORS[0]);
   const drawingRef = useRef<{ x: number; y: number }[] | null>(null);
   const rafRef = useRef<number | null>(null);
+  // Pending long-press on a table's × corner (lets you pick the table up and
+  // drag it without lasso-selecting first).
+  const longPressRef = useRef<{ timer: number; sx: number; sy: number; fired: boolean } | null>(null);
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const tableDragRef = useRef<{ tableId: number; sx: number; sy: number; cx: number; cy: number } | null>(null);
@@ -919,6 +922,54 @@ export default function App() {
     setTableDragging(true);
   };
 
+  // Long-press the × corner of an *unselected* table to pick it up and drag it
+  // straight away — no lasso needed. A short press still toggles the settings
+  // menu; a selected table already drags from anywhere via onTableDown.
+  const LONGPRESS_MS = 400;
+  const onCornerDown = (e: React.PointerEvent, table: TableState) => {
+    if (panMode) return;                          // let the board pan
+    if (selectedTableId === table.id) return;     // already draggable via onTableDown
+    const cv = canvasRef.current;
+    if (!cv) return;
+    const r = cv.getBoundingClientRect();
+    const sx = (e.clientX - r.left - panRef.current.x) / scaleRef.current;
+    const sy = (e.clientY - r.top - panRef.current.y) / scaleRef.current;
+
+    const cleanup = () => {
+      longPressRef.current = null;
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+    const onMove = (ev: PointerEvent) => {
+      const lp = longPressRef.current;
+      if (!lp || lp.fired) return;
+      const mx = (ev.clientX - r.left - panRef.current.x) / scaleRef.current;
+      const my = (ev.clientY - r.top - panRef.current.y) / scaleRef.current;
+      // Moving away before the hold completes means it wasn't a long-press.
+      if (Math.hypot(mx - lp.sx, my - lp.sy) > 8) { clearTimeout(lp.timer); cleanup(); }
+    };
+    const onUp = () => {
+      const lp = longPressRef.current;
+      if (lp && !lp.fired) clearTimeout(lp.timer);
+      cleanup();
+    };
+
+    const timer = window.setTimeout(() => {
+      const lp = longPressRef.current;
+      if (!lp) return;
+      lp.fired = true;
+      tableMovedRef.current = true;   // suppress the menu-toggle click on release
+      tableDragRef.current = { tableId: table.id, sx, sy, cx: table.pos.x, cy: table.pos.y };
+      setSelectedTableId(table.id);
+      setTableMenuOpen(null);
+      setTableDragging(true);
+    }, LONGPRESS_MS);
+    longPressRef.current = { timer, sx, sy, fired: false };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  };
+
   const onCanvasDown = (e: React.PointerEvent) => {
     setOpenHdr(null);
     if (dragId !== null) return;
@@ -1381,6 +1432,8 @@ export default function App() {
                       {/* Corner cell — × shows it is a multiplication grid, and
                           doubles as the trigger for the table settings menu */}
                       <div
+                        title="Click for settings · hold to drag"
+                        onPointerDown={e => onCornerDown(e, table)}
                         onClick={() => {
                           if (tableMovedRef.current) return;
                           setOpenHdr(null);
@@ -1390,7 +1443,7 @@ export default function App() {
                           gridRow: 1, gridColumn: 1,
                           background: isMenuOpen ? "#cbd5e1" : "#e2e8f0",
                           display: "flex", alignItems: "center", justifyContent: "center",
-                          cursor: "pointer", padding: 1,
+                          cursor: "pointer", padding: 1, touchAction: "none",
                           borderTop: BD, borderLeft: BD, borderRight: BD, borderBottom: BD,
                           borderTopLeftRadius: 6,
                         }}>
