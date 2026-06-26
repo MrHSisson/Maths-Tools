@@ -415,6 +415,9 @@ export default function App() {
   // in-progress line re-renders on its own without copying/redrawing every
   // committed stroke each pointer move — that keeps writing fluid.
   const [liveStroke, setLiveStroke] = useState<Stroke | null>(null);
+  // True only while a stroke is actively being drawn/erased — used to hide the
+  // cursor mid-write (it stays visible when the pen is merely armed).
+  const [writing, setWriting] = useState(false);
   const [penColor, setPenColor] = useState(PEN_COLORS[0]);
   const drawingRef = useRef<{ x: number; y: number }[] | null>(null);
   const rafRef = useRef<number | null>(null);
@@ -821,6 +824,7 @@ export default function App() {
       if (!drawingRef.current) return;
       const pts = drawingRef.current;
       drawingRef.current = null;
+      setWriting(false);
       if (rafRef.current != null) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
       setLiveStroke(null);
       // Commit the finished line (drawn strokes only; eraser mutates as it goes).
@@ -990,6 +994,7 @@ export default function App() {
 
     if (drawMode || eraserMode) {
       drawingRef.current = [{ x, y }];
+      setWriting(true);
       if (eraserMode) setStrokes(prev => eraseNear(prev, x, y));
       else setLiveStroke({ color: penColor, points: [{ x, y }] });
       return;
@@ -1288,7 +1293,9 @@ export default function App() {
           <div ref={canvasRef} className="relative flex-1"
             onPointerDown={onCanvasDown}
             style={{ overflow: "hidden", touchAction: "none", background: "#f8fafc", minHeight: 200,
-              cursor: panMode ? (panning ? "grabbing" : "grab") : (drawMode || eraserMode) ? "none" : undefined }}>
+              cursor: panMode ? (panning ? "grabbing" : "grab")
+                : writing ? "none"
+                : drawMode ? "crosshair" : eraserMode ? "cell" : undefined }}>
 
             {/* ── Pan + scale content wrapper ───────────────────────────── */}
             <div style={{ position: "absolute", inset: 0, transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})`, transformOrigin: "0 0" }}>
@@ -1400,6 +1407,7 @@ export default function App() {
                     outline: tableSelected ? "2px dashed #3b82f6" : "none",
                     outlineOffset: 8,
                     cursor: tableSelected ? (tableDragging ? "grabbing" : "grab") : "default",
+                    userSelect: "none", WebkitUserSelect: "none",
                   }}
                     onPointerDown={e => onTableDown(e, table)}>
 
