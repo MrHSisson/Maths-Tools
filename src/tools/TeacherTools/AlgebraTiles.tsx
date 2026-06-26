@@ -104,6 +104,22 @@ const eraseNear = (strokes: Stroke[], px: number, py: number): Stroke[] => {
   return out;
 };
 
+// Smooth a freehand stroke into an SVG path: a quadratic curve through the
+// midpoint of each pair of points rounds off the polyline so writing flows
+// instead of looking jagged.
+const strokePath = (pts: { x: number; y: number }[]): string => {
+  if (pts.length < 2) return pts.length ? `M ${pts[0].x} ${pts[0].y}` : "";
+  let d = `M ${pts[0].x} ${pts[0].y}`;
+  for (let i = 1; i < pts.length - 1; i++) {
+    const mx = (pts[i].x + pts[i + 1].x) / 2;
+    const my = (pts[i].y + pts[i + 1].y) / 2;
+    d += ` Q ${pts[i].x} ${pts[i].y} ${mx} ${my}`;
+  }
+  const last = pts[pts.length - 1];
+  d += ` L ${last.x} ${last.y}`;
+  return d;
+};
+
 // Every negative tile is red, matching the back of physical algebra-tile
 // manipulatives (tell them apart by size/shape, not colour).
 const NEG_RED = "#ef4444";
@@ -395,8 +411,13 @@ export default function App() {
   const [drawMode, setDrawMode] = useState(false);
   const [eraserMode, setEraserMode] = useState(false);
   const [strokes, setStrokes] = useState<Stroke[]>([]);
+  // The stroke currently being drawn. Kept separate from `strokes` so an
+  // in-progress line re-renders on its own without copying/redrawing every
+  // committed stroke each pointer move — that keeps writing fluid.
+  const [liveStroke, setLiveStroke] = useState<Stroke | null>(null);
   const [penColor, setPenColor] = useState(PEN_COLORS[0]);
   const drawingRef = useRef<{ x: number; y: number }[] | null>(null);
+  const rafRef = useRef<number | null>(null);
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const tableDragRef = useRef<{ tableId: number; sx: number; sy: number; cx: number; cy: number } | null>(null);
@@ -498,8 +519,10 @@ export default function App() {
       const off = tbls.length * 28;   // cascade so new tables don't stack exactly
       return [...tbls, {
         id: nextTableId++,
-        colHeaders: ["x"],
-        rowHeaders: ["x"],
+        // A new table starts genuinely blank — the teacher adds rows/columns
+        // with the + buttons. No pre-filled x row/column.
+        colHeaders: [],
+        rowHeaders: [],
         pos: { x: cx + off, y: cy + off },
         revealed: false,
         revealedCells: new Set<string>(),
@@ -507,6 +530,15 @@ export default function App() {
     });
     setOpenHdr(null);
     setTableMenuOpen(null);
+  }, []);
+
+  // Reset a table back to blank (no headers, nothing revealed) without removing
+  // it from the board.
+  const clearTable = useCallback((id: number) => {
+    setTables(tbls => tbls.map(t => t.id === id
+      ? { ...t, colHeaders: [], rowHeaders: [], revealed: false, revealedCells: new Set<string>() }
+      : t));
+    setOpenHdr(o => (o && o.tableId === id ? null : o));
   }, []);
 
   const deleteTable = useCallback((id: number) => {
@@ -748,41 +780,51 @@ export default function App() {
   drawModeRef.current = drawMode;
   const eraserModeRef = useRef(eraserMode);
   eraserModeRef.current = eraserMode;
-  const strokesRef = useRef(strokes);
-  strokesRef.current = strokes;
   const penColorRef = useRef(penColor);
   penColorRef.current = penColor;
 
+  // Subscribed once; the handlers read live state through refs, so they never
+  // need re-attaching mid-stroke (which used to churn on every points update).
   useEffect(() => {
-    if (!drawingRef.current) return;
+    const flushLive = () => {
+      rafRef.current = null;
+      if (drawingRef.current) setLiveStroke({ color: penColorRef.current, points: drawingRef.current.slice() });
+    };
+    const scheduleLive = () => {
+      if (rafRef.current == null) rafRef.current = requestAnimationFrame(flushLive);
+    };
 
     const onMove = (e: PointerEvent) => {
+      if (!drawingRef.current) return;
       const cv = canvasRef.current;
       if (!cv) return;
       const r = cv.getBoundingClientRect();
       const s = scaleRef.current;
       const p = panRef.current;
-      const px = (e.clientX - r.left - p.x) / s;
-      const py = (e.clientY - r.top - p.y) / s;
+      const toLocal = (cx: number, cy: number) => ({ x: (cx - r.left - p.x) / s, y: (cy - r.top - p.y) / s });
+      // Coalesced events recover the high-frequency points the browser merged
+      // into one move — denser samples make the line smoother.
+      const evs = e.getCoalescedEvents?.().length ? e.getCoalescedEvents() : [e];
 
       if (eraserModeRef.current) {
-        setStrokes(prev => eraseNear(prev, px, py));
+        for (const ev of evs) { const { x, y } = toLocal(ev.clientX, ev.clientY); setStrokes(prev => eraseNear(prev, x, y)); }
         return;
       }
-
-      if (!drawingRef.current) return;
-      drawingRef.current.push({ x: px, y: py });
-      const cur = drawingRef.current;
-      const col = penColorRef.current;
-      setStrokes(prev => {
-        const copy = [...prev];
-        copy[copy.length - 1] = { color: col, points: [...cur] };
-        return copy;
-      });
+      for (const ev of evs) drawingRef.current.push(toLocal(ev.clientX, ev.clientY));
+      scheduleLive();
     };
 
     const onUp = () => {
+      if (!drawingRef.current) return;
+      const pts = drawingRef.current;
       drawingRef.current = null;
+      if (rafRef.current != null) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
+      setLiveStroke(null);
+      // Commit the finished line (drawn strokes only; eraser mutates as it goes).
+      if (!eraserModeRef.current && pts.length >= 2) {
+        const col = penColorRef.current;
+        setStrokes(prev => [...prev, { color: col, points: pts }]);
+      }
     };
 
     window.addEventListener("pointermove", onMove);
@@ -791,7 +833,7 @@ export default function App() {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
     };
-  }, [strokes]);
+  }, []);
 
   // ── Table dragging (after lasso-selecting the whole table) ──────────────
 
@@ -896,11 +938,9 @@ export default function App() {
     const y = (e.clientY - r.top - pan.y) / s;
 
     if (drawMode || eraserMode) {
-      if (eraserMode) {
-        setStrokes(prev => eraseNear(prev, x, y));
-      }
       drawingRef.current = [{ x, y }];
-      if (!eraserMode) setStrokes(prev => [...prev, { color: penColor, points: [{ x, y }] }]);
+      if (eraserMode) setStrokes(prev => eraseNear(prev, x, y));
+      else setLiveStroke({ color: penColor, points: [{ x, y }] });
       return;
     }
 
@@ -1197,7 +1237,7 @@ export default function App() {
           <div ref={canvasRef} className="relative flex-1"
             onPointerDown={onCanvasDown}
             style={{ overflow: "hidden", touchAction: "none", background: "#f8fafc", minHeight: 200,
-              cursor: panMode ? (panning ? "grabbing" : "grab") : drawMode ? "crosshair" : eraserMode ? "cell" : undefined }}>
+              cursor: panMode ? (panning ? "grabbing" : "grab") : (drawMode || eraserMode) ? "none" : undefined }}>
 
             {/* ── Pan + scale content wrapper ───────────────────────────── */}
             <div style={{ position: "absolute", inset: 0, transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})`, transformOrigin: "0 0" }}>
@@ -1535,6 +1575,23 @@ export default function App() {
                             </span>
                             <TogglePill on={tableRevealed} />
                           </button>
+
+                          <div style={{ height: 1, background: "#eef2f7", margin: "4px 6px" }} />
+
+                          {/* Clear table — wipe back to a blank grid (no headers,
+                              nothing revealed) without removing it from the board */}
+                          <button
+                            onClick={() => { clearTable(table.id); setTableMenuOpen(null); }}
+                            style={{
+                              width: "100%", display: "flex", alignItems: "center",
+                              gap: 8, padding: "7px 8px", borderRadius: 7, border: "none", background: "transparent",
+                              cursor: "pointer",
+                            }}
+                            onMouseEnter={e => (e.currentTarget.style.background = "#f1f5f9")}
+                            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                            <Eraser size={15} color="#475569" />
+                            <span style={{ fontSize: 13, fontWeight: 600, color: "#334155" }}>Clear table</span>
+                          </button>
                         </div>
                       </>
                     )}
@@ -1661,22 +1718,29 @@ export default function App() {
                 }} />
               )}
 
-              {/* Drawing strokes */}
-              {strokes.length > 0 && (
+              {/* Drawing strokes — committed lines plus the live in-progress one */}
+              {(strokes.length > 0 || liveStroke) && (
                 <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 60, overflow: "visible" }}>
                   {strokes.map((s, i) => (
-                    <polyline key={i}
-                      points={s.points.map(p => `${p.x},${p.y}`).join(" ")}
+                    <path key={i} d={strokePath(s.points)}
                       fill="none" stroke={s.color} strokeWidth={2.5}
                       strokeLinecap="round" strokeLinejoin="round" />
                   ))}
+                  {liveStroke && (
+                    <path d={strokePath(liveStroke.points)}
+                      fill="none" stroke={liveStroke.color} strokeWidth={2.5}
+                      strokeLinecap="round" strokeLinejoin="round" />
+                  )}
                 </svg>
               )}
 
             </div>{/* end scaled wrapper */}
 
-            {/* Empty state — outside scale wrapper for proper centering */}
-            {tiles.length === 0 && dragId === null && tables.length === 0 && (
+            {/* Empty state — outside scale wrapper for proper centering. Hidden
+                once the user starts writing (pen/eraser active, or any ink on
+                the board) so the prompt never sits under their handwriting. */}
+            {tiles.length === 0 && dragId === null && tables.length === 0 &&
+              !drawMode && !eraserMode && strokes.length === 0 && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 4 }}>
                 <div className="text-center" style={{ color: "#94a3b8" }}>
                   <p style={{ fontSize: 16, fontWeight: 500, margin: "0 0 4px" }}>Drag tiles from the panel</p>
