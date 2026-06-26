@@ -563,6 +563,17 @@ export default function App() {
       if ((e.target as HTMLElement).tagName === "INPUT") return;
 
       if (e.key === "Delete" || e.key === "Backspace") {
+        // A header picker being open means that row/column is "selected" — delete
+        // removes it.
+        if (openHdr) {
+          e.preventDefault();
+          const { tableId, axis, idx } = openHdr;
+          setTables(tbls => tbls.map(t => t.id !== tableId ? t : (axis === "col"
+            ? { ...t, colHeaders: t.colHeaders.filter((_, i) => i !== idx) }
+            : { ...t, rowHeaders: t.rowHeaders.filter((_, i) => i !== idx) })));
+          setOpenHdr(null);
+          return;
+        }
         if (selectedTableId !== null) { e.preventDefault(); deleteTable(selectedTableId); return; }
         if (!selectedIds.size) return;
         e.preventDefault();
@@ -591,7 +602,7 @@ export default function App() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [undo, selectedIds, deleteSelected, flipSelected, rotateSelected, duplicateDir, selectedTableId, deleteTable]);
+  }, [undo, selectedIds, deleteSelected, flipSelected, rotateSelected, duplicateDir, selectedTableId, deleteTable, openHdr]);
 
   // ── Global drag listeners ──────────────────────────────────────────────
 
@@ -1397,7 +1408,9 @@ export default function App() {
                     position: "absolute",
                     left: pos.x, top: pos.y,
                     transform: "translate(-50%, -50%)", zIndex: 5,
-                    outline: tableSelected ? "2px dashed #3b82f6" : "none",
+                    // Selection ring stays off while dragging — no lasso dashes
+                    // chasing the table around.
+                    outline: tableSelected && !tableDragging ? "2px dashed #3b82f6" : "none",
                     outlineOffset: 8,
                     cursor: tableSelected ? (tableDragging ? "grabbing" : "grab") : "default",
                     userSelect: "none", WebkitUserSelect: "none",
@@ -1407,22 +1420,6 @@ export default function App() {
                     {openHdr?.tableId === table.id && (
                       <div style={{ position: "fixed", inset: 0, zIndex: 5 }}
                         onClick={() => setOpenHdr(null)} />
-                    )}
-
-                    {/* Delete bin — shown when the table is lasso-selected */}
-                    {tableSelected && (
-                      <button
-                        onPointerDown={e => e.stopPropagation()}
-                        onClick={() => deleteTable(table.id)}
-                        title="Delete table"
-                        style={{
-                          position: "absolute", top: -46, right: -10, zIndex: 250,
-                          width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center",
-                          background: "#1e293b", border: "none", borderRadius: 9, cursor: "pointer",
-                          boxShadow: "0 4px 14px rgba(0,0,0,0.35)",
-                        }}>
-                        <Trash2 size={17} color="#fca5a5" />
-                      </button>
                     )}
 
                     <div style={{
@@ -1645,6 +1642,20 @@ export default function App() {
                             onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
                             <Eraser size={15} color="#475569" />
                             <span style={{ fontSize: 13, fontWeight: 600, color: "#334155" }}>Clear table</span>
+                          </button>
+
+                          {/* Delete table — remove it from the board entirely */}
+                          <button
+                            onClick={() => { deleteTable(table.id); setTableMenuOpen(null); }}
+                            style={{
+                              width: "100%", display: "flex", alignItems: "center",
+                              gap: 8, padding: "7px 8px", borderRadius: 7, border: "none", background: "transparent",
+                              cursor: "pointer",
+                            }}
+                            onMouseEnter={e => (e.currentTarget.style.background = "#fef2f2")}
+                            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                            <Trash2 size={15} color="#dc2626" />
+                            <span style={{ fontSize: 13, fontWeight: 600, color: "#dc2626" }}>Delete table</span>
                           </button>
                         </div>
                       </>
