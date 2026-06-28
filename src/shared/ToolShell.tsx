@@ -1,5 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback, type ReactNode } from "react";
-import { RefreshCw, Eye, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Home, Menu, X, Video, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, LayoutGrid } from "lucide-react";
+import { RefreshCw, Eye, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Home, Menu, X, Video, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, LayoutGrid, SlidersHorizontal } from "lucide-react";
 import type { DifficultyLevel, AnyQuestion, WorkingStep, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
 import { LV_COLORS, getQuestionBg, getStepBg } from "./colors";
 import { normalizeMultiSelect, ansEq, makeUniqueQ } from "./helpers";
@@ -159,12 +159,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
 
   const [currentTool, setCurrentTool] = useState<string>(urlInit.tool);
   const [mode, setMode] = useState<"whiteboard" | "single" | "worksheet" | "builder">(urlInit.mode);
-  // The step-by-step "Worked Example" mode is in development: hidden from general
-  // use, revealed only when the global Developing-tools switch is on.
+  // Worked Example is always available; only its step-by-step navigation (one
+  // step at a time) is reserved for Developing mode.
   const devMode = useDevMode();
-  useEffect(() => {
-    if (!devMode && mode === "single") setMode("whiteboard");
-  }, [devMode, mode]);
   const comingSoon = defaults.comingSoonLevels ?? [];
   const hideFontControls = defaults.hideFontControls ?? false;
   const [difficulty, setDifficulty] = useState<DifficultyLevel>(urlInit.level);
@@ -267,6 +264,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
 
   const [worksheetLayout, setWorksheetLayout] = useState<"grid" | "list">(wbInit?.worksheetLayout ?? "grid");
   const [worksheetBorders, setWorksheetBorders] = useState(wbInit?.worksheetBorders ?? true);
+  const [wsSettingsOpen, setWsSettingsOpen] = useState(false);
 
   const [presenterMode, setPresenterMode] = useState(false);
   const [wbFullscreen, setWbFullscreen] = useState(false);
@@ -660,8 +658,8 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               ); })()}
             </div>
 
-            {/* Row 2: worksheet design — questions · columns · layout · borders */}
-            <div className="flex justify-center items-center gap-6 mb-5 pt-5 border-t-2 border-gray-100">
+            {/* Row 2: questions · columns · settings · actions */}
+            <div className="flex justify-center items-center gap-4 flex-wrap">
               {!defaults.fixedQuestions && (
                 <div className="flex items-center gap-3">
                   <label className="text-base font-semibold text-gray-700">Questions:</label>
@@ -679,27 +677,41 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                     className={`w-20 px-4 py-2 border-2 rounded-lg text-base font-semibold text-center transition-colors ${isDifferentiated ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed" : "border-gray-300 bg-white"}`} />
                 </div>
               )}
-              <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm">
-                <button onClick={() => setWorksheetLayout("grid")}
-                  className={`px-5 py-2 text-base font-bold transition-colors ${worksheetLayout === "grid" ? "bg-blue-900 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
-                  Worksheet
-                </button>
-                <button onClick={() => setWorksheetLayout("list")}
-                  className={`px-5 py-2 text-base font-bold transition-colors ${worksheetLayout === "list" ? "bg-blue-900 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
-                  Textbook
-                </button>
-              </div>
-              <label className={`flex items-center gap-2 ${bordersDisabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}`}>
-                <div onClick={() => { if (!bordersDisabled) setWorksheetBorders(!worksheetBorders); }}
-                  className={`w-9 h-5 rounded-full transition-colors relative ${worksheetBorders && !bordersDisabled ? "bg-blue-900" : "bg-gray-300"}`}>
-                  <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${worksheetBorders ? "translate-x-4" : "translate-x-0.5"}`} />
-                </div>
-                <span className="text-sm font-semibold text-gray-500">Borders</span>
-              </label>
-            </div>
 
-            {/* Row 3: actions — generate · answers · print */}
-            <div className="flex justify-center items-center gap-4">
+              {/* Layout & borders tucked into a settings popover */}
+              <div className="relative">
+                <button onClick={() => setWsSettingsOpen(o => !o)}
+                  className={`px-4 py-2 rounded-xl font-bold text-base border-2 transition-colors flex items-center gap-2 ${wsSettingsOpen ? "bg-blue-900 text-white border-blue-900" : "bg-white text-gray-600 border-gray-300 hover:border-blue-900 hover:text-blue-900"}`}>
+                  <SlidersHorizontal size={18} /> Settings
+                </button>
+                {wsSettingsOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setWsSettingsOpen(false)} />
+                    <div className="absolute z-50 mt-2 left-1/2 -translate-x-1/2 bg-white rounded-xl shadow-xl border-2 border-gray-200 p-4" style={{ minWidth: 220 }}>
+                      <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Layout</div>
+                      <div className="flex rounded-lg border-2 border-gray-300 overflow-hidden mb-4">
+                        <button onClick={() => setWorksheetLayout("grid")}
+                          className={`flex-1 px-4 py-2 text-sm font-bold transition-colors ${worksheetLayout === "grid" ? "bg-blue-900 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
+                          Worksheet
+                        </button>
+                        <button onClick={() => setWorksheetLayout("list")}
+                          className={`flex-1 px-4 py-2 text-sm font-bold transition-colors ${worksheetLayout === "list" ? "bg-blue-900 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
+                          Textbook
+                        </button>
+                      </div>
+                      <label className={`flex items-center justify-between gap-3 ${bordersDisabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}`}>
+                        <span className="text-sm font-semibold text-gray-600">Borders</span>
+                        <div onClick={() => { if (!bordersDisabled) setWorksheetBorders(!worksheetBorders); }}
+                          className={`w-9 h-5 rounded-full transition-colors relative flex-shrink-0 ${worksheetBorders && !bordersDisabled ? "bg-blue-900" : "bg-gray-300"}`}>
+                          <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${worksheetBorders ? "translate-x-4" : "translate-x-0.5"}`} />
+                        </div>
+                      </label>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div className="w-px h-8 bg-gray-200" />
               <button onClick={handleGenerateWorksheet} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
                 <RefreshCw size={18} /> Generate
               </button>
@@ -922,6 +934,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     const atAnswer = workedStepIdx >= totalSteps;
     const canPrev = workedStepIdx > 0;
     const canNext = workedStepIdx <= totalSteps;
+    // Step-by-step (one step at a time, < > arrows) is a Developing-mode feature.
+    // General use shows the full worked solution at once.
+    const stepped = devMode && steppedMode;
 
     const renderStep = (s: WorkingStep, i: number) => {
       const custom = stepRenderer ? stepRenderer(s, colorScheme, getQOSnapshot()) : null;
@@ -979,7 +994,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           </div>
           {showAnswer && (
             <>
-              {steppedMode ? (
+              {stepped ? (
                 <>
                   <div className="flex items-center justify-between mt-6 mb-4">
                     <button style={navArrowStyle(canPrev)} onClick={() => canPrev && setWorkedStepIdx(i => i - 1)}>
@@ -1020,9 +1035,11 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                 </>
               ) : (
                 <>
-                  <div className="flex justify-end mt-6 mb-4">
-                    {steppedToggle}
-                  </div>
+                  {devMode && (
+                    <div className="flex justify-end mt-6 mb-4">
+                      {steppedToggle}
+                    </div>
+                  )}
                   <div className="space-y-4">
                     {currentQuestion.working.map((s, i) => renderStep(s, i))}
                   </div>
@@ -1176,7 +1193,6 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           {mode !== "builder" && (
             <div className="flex justify-center gap-4 mb-8">
               {(["whiteboard", "single", "worksheet"] as const)
-                .filter(m => devMode || m !== "single")  // Worked Example is dev-only
                 .map(m => {
                   const label = m === "whiteboard" ? "Whiteboard" : m === "single" ? "Worked Example" : "Worksheet";
                   return (
