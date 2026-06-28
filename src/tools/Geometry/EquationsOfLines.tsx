@@ -230,10 +230,14 @@ const generateMissingQuestion = (level: DifficultyLevel, allowedVars: MissingVar
       const crdL = `\\left(${xStr},\\,${yStr}\\right)`;
       const answerVal = mv === "x" ? xq : mv === "y" ? yq : mv === "m" ? mq : cq;
       const ansLtx = `${mv} = ${ratLatex(answerVal)}`;
+      // Worded (not a single displayLatex) so the prose wraps inside the
+      // question box instead of overflowing it in whiteboard mode.
       return {
-        kind: "simple",
-        display: "",
-        displayLatex: `\\text{The line } ${eqL} \\text{ passes through } ${crdL}\\text{. Find } ${mv}`,
+        kind: "worded",
+        lines: [
+          `The line $${eqL}$ passes through $${crdL}$.`,
+          `Find $${mv}$.`,
+        ],
         answer: ansLtx,
         answerLatex: ansLtx,
         working: buildMissingWorking(mv, mq, cq, xq, yq),
