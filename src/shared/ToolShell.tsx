@@ -73,15 +73,28 @@ function ScaleToFit({ children, maxScale = 3 }: { children: ReactNode; maxScale?
         const o = outerRef.current, n = innerRef.current;
         if (!o || !n) return;
         const availW = o.clientWidth, availH = o.clientHeight;
-        // Measure the *natural* size by neutralising the transform first, so the
-        // reading never depends on the current scale (dividing a mid-transition
-        // transformed rect by the target scale is what caused the zoom to jitter).
+        // Measure the *natural* content size with the transform neutralised, so
+        // the reading never depends on the current scale. Use the union of the
+        // inner's children rather than querySelector("svg") — KaTeX renders roots
+        // (\sqrt) as inline <svg>, which the old selector grabbed instead of the
+        // content, producing a wild zoom whenever a root appeared.
         const prev = n.style.transform;
         n.style.transform = "none";
-        const target = (n.querySelector("svg") as SVGElement | null) ?? n;
-        const rect = target.getBoundingClientRect();
+        const kids = Array.from(n.children) as HTMLElement[];
+        let natW = 0, natH = 0;
+        if (kids.length) {
+          let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
+          for (const k of kids) {
+            const r = k.getBoundingClientRect();
+            left = Math.min(left, r.left); top = Math.min(top, r.top);
+            right = Math.max(right, r.right); bottom = Math.max(bottom, r.bottom);
+          }
+          natW = right - left; natH = bottom - top;
+        } else {
+          const r = n.getBoundingClientRect();
+          natW = r.width; natH = r.height;
+        }
         n.style.transform = prev;
-        const natW = rect.width, natH = rect.height;
         if (!natW || !natH) return;
         const s = Math.min((availW * 0.96) / natW, (availH * 0.96) / natH);
         const clamped = Math.max(1, Math.min(maxScale, s));
