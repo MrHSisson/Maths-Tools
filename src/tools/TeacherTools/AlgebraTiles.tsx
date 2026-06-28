@@ -475,27 +475,43 @@ export default function App() {
   const duplicateDir = useCallback((dx: number, dy: number) => {
     if (!selectedIds.size) return;
     setTiles(ts => {
-      pushUndo(ts);
+      const sel = ts.filter(t => selectedIds.has(t.id));
+      const others = ts.filter(t => !selectedIds.has(t.id));
       // Offset by the whole selection's extent in the arrow direction, so a
       // multi-tile block lands next to itself instead of overlapping (a single
       // tile still shifts by exactly its own width/height).
       let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-      for (const t of ts) {
-        if (!selectedIds.has(t.id)) continue;
+      for (const t of sel) {
         const [w, h] = dims(t.kind, t.rot);
         minX = Math.min(minX, t.x); minY = Math.min(minY, t.y);
         maxX = Math.max(maxX, t.x + w); maxY = Math.max(maxY, t.y + h);
       }
       const offX = dx * (maxX - minX);
       const offY = dy * (maxY - minY);
+
+      // Block the duplication entirely if any clone would land on top of an
+      // existing (non-selected) tile. Edge-touching is fine — only a real
+      // overlap counts.
+      const EPS = 2;
+      const blocked = sel.some(t => {
+        const [w, h] = dims(t.kind, t.rot);
+        const cx = t.x + offX, cy = t.y + offY;
+        return others.some(o => {
+          const [ow, oh] = dims(o.kind, o.rot);
+          const ox = Math.min(cx + w, o.x + ow) - Math.max(cx, o.x);
+          const oy = Math.min(cy + h, o.y + oh) - Math.max(cy, o.y);
+          return ox > EPS && oy > EPS;
+        });
+      });
+      if (blocked) return ts;
+
+      pushUndo(ts);
       const newSel = new Set<number>();
-      const clones: TileState[] = [];
-      for (const t of ts) {
-        if (!selectedIds.has(t.id)) continue;
+      const clones = sel.map(t => {
         const nid = nextId++;
-        clones.push({ ...t, id: nid, x: t.x + offX, y: t.y + offY });
         newSel.add(nid);
-      }
+        return { ...t, id: nid, x: t.x + offX, y: t.y + offY };
+      });
       setSelectedIds(newSel);
       return [...ts, ...clones];
     });
