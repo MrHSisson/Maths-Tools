@@ -79,7 +79,7 @@ export const CATEGORIES: CategoryMeta[] = [
       { id: 'angles-in-triangles', path: '/angles-in-triangles', name: 'Angles In Triangles', description: 'Find missing angles using triangle properties - including split triangles and exterior angles', ready: 'v2.1', load: () => import('./tools/Geometry/AnglesInTriangles') },
       { id: 'angles-in-parallel-lines', path: '/angles-in-parallel-lines', name: 'Angles in Parallel Lines', description: 'Explore corresponding, alternate and co-interior angles formed by a transversal cutting parallel lines', ready: 'v2.3', load: () => import('./tools/Geometry/AnglesInParallelLines') },
       { id: 'angles-in-quadrilaterals', path: '/angles-in-quadrilaterals', name: 'Angles In Quadrilaterals', description: 'Find missing angles using quadrilateral properties - including kites and arrowheads', ready: 'v2.3', load: () => import('./tools/Geometry/AnglesInQuadrilaterals') },
-      { id: 'equations-of-lines', path: '/equations-of-lines', name: 'Properties of Line Equations', description: 'Use co-ordinates and line equations to find properties of lines', ready: 'v2.1', load: () => import('./tools/Geometry/EquationsOfLines') },
+      { id: 'equations-of-lines', path: '/equations-of-lines', name: 'Properties of Line Equations', description: 'Use co-ordinates and line equations to find properties of lines', ready: 'v2.3', load: () => import('./tools/Geometry/EquationsOfLines') },
       { id: 'perimeter', path: '/perimeter', name: 'Perimeter (BETA)', description: 'Calculate the perimeter of various 2D shapes', ready: 'v2.1', enabled: false, load: () => import('./tools/Geometry/PerimeterTool') },
     ],
   },
