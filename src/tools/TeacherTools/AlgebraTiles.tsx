@@ -516,11 +516,13 @@ export default function App() {
 
   const addTable = useCallback(() => {
     const cv = canvasRef.current;
-    let cx = 220, cy = 170;
+    // cx/cy is the new table's top-left corner; nudge left of centre so it has
+    // room to grow right and down.
+    let cx = 200, cy = 150;
     if (cv) {
       const r = cv.getBoundingClientRect();
-      cx = (r.width / 2 - panRef.current.x) / scaleRef.current;
-      cy = (r.height * 0.4 - panRef.current.y) / scaleRef.current;
+      cx = (r.width / 2 - 40 - panRef.current.x) / scaleRef.current;
+      cy = (r.height * 0.3 - panRef.current.y) / scaleRef.current;
     }
     setTables(tbls => {
       const off = tbls.length * 28;   // cascade so new tables don't stack exactly
@@ -932,8 +934,9 @@ export default function App() {
       tableId: table.id,
       sx: (e.clientX - r.left - p.x) / s,
       sy: (e.clientY - r.top - p.y) / s,
-      cx: (tr.left + tr.width / 2 - r.left - p.x) / s,
-      cy: (tr.top + tr.height / 2 - r.top - p.y) / s,
+      // pos is the table's top-left corner.
+      cx: (tr.left - r.left - p.x) / s,
+      cy: (tr.top - r.top - p.y) / s,
     };
     setTableDragging(true);
   };
@@ -1406,8 +1409,9 @@ export default function App() {
                 return (
                   <div key={table.id} data-table-id={table.id} style={{
                     position: "absolute",
-                    left: pos.x, top: pos.y,
-                    transform: "translate(-50%, -50%)", zIndex: 5,
+                    // Anchored by its top-left corner so adding a row/column grows
+                    // the grid right and down — the × corner stays put.
+                    left: pos.x, top: pos.y, zIndex: 5,
                     // Selection ring stays off while dragging — no lasso dashes
                     // chasing the table around.
                     outline: tableSelected && !tableDragging ? "2px dashed #3b82f6" : "none",
