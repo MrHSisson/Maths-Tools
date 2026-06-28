@@ -476,13 +476,24 @@ export default function App() {
     if (!selectedIds.size) return;
     setTiles(ts => {
       pushUndo(ts);
+      // Offset by the whole selection's extent in the arrow direction, so a
+      // multi-tile block lands next to itself instead of overlapping (a single
+      // tile still shifts by exactly its own width/height).
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      for (const t of ts) {
+        if (!selectedIds.has(t.id)) continue;
+        const [w, h] = dims(t.kind, t.rot);
+        minX = Math.min(minX, t.x); minY = Math.min(minY, t.y);
+        maxX = Math.max(maxX, t.x + w); maxY = Math.max(maxY, t.y + h);
+      }
+      const offX = dx * (maxX - minX);
+      const offY = dy * (maxY - minY);
       const newSel = new Set<number>();
       const clones: TileState[] = [];
       for (const t of ts) {
         if (!selectedIds.has(t.id)) continue;
-        const [w, h] = dims(t.kind, t.rot);
         const nid = nextId++;
-        clones.push({ ...t, id: nid, x: t.x + dx * w, y: t.y + dy * h });
+        clones.push({ ...t, id: nid, x: t.x + offX, y: t.y + offY });
         newSel.add(nid);
       }
       setSelectedIds(newSel);
