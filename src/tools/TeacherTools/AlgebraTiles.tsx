@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Home, Trash2, Undo2, RotateCw, Plus, Minus, Eye, EyeOff,
   ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Menu, X,
-  Pencil, Eraser, MousePointer2, Hand,
+  Pencil, Eraser, MousePointer2, Hand, Scissors,
 } from "lucide-react";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -556,6 +556,49 @@ export default function App() {
     setOpenHdr(o => (o && o.tableId === id ? null : o));
     setTableMenuOpen(m => (m === id ? null : m));
   }, []);
+
+  // Extract: strip away the grid/headers and drop the product tiles onto the
+  // board where the table's answer area was — the expanded area model on its
+  // own. The tiles are laid out contiguously so they form a solid rectangle.
+  const extractTable = useCallback((table: TableState) => {
+    const cvEl = canvasRef.current;
+    const { colHeaders, rowHeaders } = table;
+    if (!cvEl || !colHeaders.length || !rowHeaders.length) { deleteTable(table.id); return; }
+
+    // Anchor at the first product cell's on-screen position so the tiles land
+    // exactly where the answer was sitting.
+    const cr = cvEl.getBoundingClientRect();
+    const sc = scaleRef.current;
+    const p = panRef.current;
+    const first = cvEl.querySelector<HTMLElement>(`[data-product-cell="${table.id}:0-0"]`);
+    let startX = table.pos.x, startY = table.pos.y;
+    if (first) {
+      const br = first.getBoundingClientRect();
+      startX = (br.left - cr.left - p.x) / sc;
+      startY = (br.top - cr.top - p.y) / sc;
+    }
+
+    const newTiles: TileState[] = [];
+    let y = startY;
+    for (const rk of rowHeaders) {
+      const rh = kindLen(rk);
+      let x = startX;
+      for (const ck of colHeaders) {
+        const cw = kindLen(ck);
+        const pk = multiplyKinds(rk, ck);
+        const [w0, h0] = dims(pk, 0);
+        // Rotate the product tile so it fills the cw × rh slot it came from.
+        const rot: 0 | 90 = (w0 === cw && h0 === rh) ? 0 : 90;
+        newTiles.push({ id: nextId++, kind: pk, x: Math.round(x), y: Math.round(y), rot });
+        x += cw;
+      }
+      y += rh;
+    }
+
+    pushUndo(tiles);
+    setTiles(ts => [...ts, ...newTiles]);
+    deleteTable(table.id);
+  }, [tiles, pushUndo, deleteTable]);
 
   // ── Keyboard shortcuts ─────────────────────────────────────────────────
 
@@ -1632,6 +1675,21 @@ export default function App() {
                           </button>
 
                           <div style={{ height: 1, background: "#eef2f7", margin: "4px 6px" }} />
+
+                          {/* Extract — strip the grid and leave the product tiles
+                              (the expanded answer) on the board */}
+                          <button
+                            onClick={() => { extractTable(table); setTableMenuOpen(null); }}
+                            style={{
+                              width: "100%", display: "flex", alignItems: "center",
+                              gap: 8, padding: "7px 8px", borderRadius: 7, border: "none", background: "transparent",
+                              cursor: "pointer",
+                            }}
+                            onMouseEnter={e => (e.currentTarget.style.background = "#f1f5f9")}
+                            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                            <Scissors size={15} color="#475569" />
+                            <span style={{ fontSize: 13, fontWeight: 600, color: "#334155" }}>Extract tiles</span>
+                          </button>
 
                           {/* Clear table — wipe back to a blank grid (no headers,
                               nothing revealed) without removing it from the board */}
