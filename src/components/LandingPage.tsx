@@ -138,9 +138,15 @@ export default function LandingPage(): JSX.Element {
   const devMode = useDevMode();
 
   // In developing mode every tool is visible (including enabled: false ones);
-  // otherwise the in-progress tools are hidden from general use.
-  const visibleIn = (tools: typeof categories[number]['tools']) =>
-    devMode ? tools : tools.filter(t => t.enabled !== false);
+  // otherwise the in-progress tools are hidden from general use. Developing
+  // tools are sorted to the end of their section (sort is stable, so the
+  // relative order within each group is preserved).
+  const visibleIn = (tools: typeof categories[number]['tools']) => {
+    const shown = devMode ? tools : tools.filter(t => t.enabled !== false);
+    return [...shown].sort(
+      (a, b) => (a.enabled === false ? 1 : 0) - (b.enabled === false ? 1 : 0),
+    );
+  };
 
   const totalTools: number = categories.reduce((acc, cat) => acc + visibleIn(cat.tools).length, 0);
 

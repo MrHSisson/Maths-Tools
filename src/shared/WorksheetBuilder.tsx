@@ -764,7 +764,7 @@ export const WorksheetBuilder = ({
                 Textbook
               </button>
             </div>
-            {classic && layout === "grid" && (
+            {classic && (
               <div className="flex items-center gap-1.5">
                 <div className="flex rounded-md overflow-hidden border border-gray-300">
                   {[1, 2, 3, 4].map(c => (
