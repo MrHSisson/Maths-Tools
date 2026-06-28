@@ -61,6 +61,10 @@ export interface WorksheetBuilderProps {
   /** Optional content rendered as a header row at the very top of the controls
    *  card (used to host the in-tool "Advanced" toggle so it shares the card). */
   headerSlot?: ReactNode;
+  /** Classic two-pane layout (group list | QO panel, no sections). This is the
+   *  general-use builder; the full sectioned layout is reserved for Developing
+   *  mode. */
+  classic?: boolean;
 }
 
 export const WorksheetBuilder = ({
@@ -72,6 +76,7 @@ export const WorksheetBuilder = ({
   hideFontControls = false,
   lockedTool,
   headerSlot,
+  classic = false,
 }: WorksheetBuilderProps) => {
   const generateUniqueQ = makeUniqueQ(generateQuestion);
   const allToolKeys = Object.keys(config.tools);
@@ -136,7 +141,9 @@ export const WorksheetBuilder = ({
   >({});
   const [layout, setLayout] = useState<"grid" | "list">("grid");
   const [borders, setBorders] = useState(true);
-  const [numColumns] = useState(3);
+  // Global column count. The sectioned layout overrides this per-section; the
+  // classic layout exposes it directly via a small column picker.
+  const [numColumns, setNumColumns] = useState(3);
   const [worksheet, setWorksheet] = useState<AnyQuestion[]>([]);
   const [showAnswers, setShowAnswers] = useState(false);
   const [printMode, setPrintMode] = useState<PrintMode>("both");
@@ -185,7 +192,9 @@ export const WorksheetBuilder = ({
   const handleGenerate = () => {
     const usedKeys = new Set<string>();
     const questions: AnyQuestion[] = [];
-    const sections = computeSections(groups, dividers);
+    // Classic mode is always a single, header-less, unshuffled section, even if
+    // section state lingers from a Developing-mode session.
+    const sections = classic ? [groups] : computeSections(groups, dividers);
     sections.forEach((sectionGroups, secIdx) => {
       const secQs: AnyQuestion[] = [];
       sectionGroups.forEach((g) => {
@@ -212,14 +221,14 @@ export const WorksheetBuilder = ({
           secQs.push(q);
         }
       });
-      if (sectionShuffles[secIdx]) {
+      if (!classic && sectionShuffles[secIdx]) {
         for (let i = secQs.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
           [secQs[i], secQs[j]] = [secQs[j], secQs[i]];
         }
       }
-      const secCols = sectionColumns[secIdx] ?? numColumns;
-      const secHdr = sectionHeaders[secIdx] ?? "";
+      const secCols = classic ? numColumns : (sectionColumns[secIdx] ?? numColumns);
+      const secHdr = classic ? "" : (sectionHeaders[secIdx] ?? "");
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       secQs.forEach((q) => {
         (q as any)._sectionIdx = secIdx;
@@ -471,6 +480,112 @@ export const WorksheetBuilder = ({
     );
   };
 
+  // Classic two-pane editor: the group list on the left, the selected group's QO
+  // options on the right. No sections, dividers or per-section controls.
+  const renderGroupListClassic = () => {
+    const selectedGroup = groups.find((g) => g.id === selectedId) ?? groups[0];
+    return (
+      <div className="flex flex-col md:flex-row gap-4" style={{ minHeight: 280 }}>
+        {/* Left: group list */}
+        <div className="rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm flex flex-col" style={{ backgroundColor: "#fff", flex: "1 1 58%" }}>
+          <div className="divide-y-2 divide-gray-100 flex-1">
+            {groups.map((g, idx) => {
+              const isSel = g.id === selectedGroup?.id;
+              return (
+                <div key={g.id} onClick={() => setSelectedId(g.id)}
+                  className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors ${isSel ? "" : "hover:bg-gray-50"}`}
+                  style={{ backgroundColor: isSel ? "#f0f4ff" : undefined }}>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className={`w-2.5 h-2.5 rounded-full ${lvDot(g.level)}`} />
+                    <span className="text-sm font-bold text-gray-400 tabular-nums w-5">{idx + 1}</span>
+                  </div>
+                  {toolKeys.length > 1 && (
+                    <select
+                      value={g.tool}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => {
+                        const fresh = makeDefaultGroup(g.id, e.target.value, g.level);
+                        updateGroup(g.id, { ...fresh, id: g.id });
+                        setSelectedId(g.id);
+                      }}
+                      className="text-xs font-semibold bg-gray-50 border border-gray-200 rounded px-2 py-1.5 min-w-0 flex-1"
+                    >
+                      {toolKeys.map((k) => (
+                        <option key={k} value={k}>{config.tools[k].name}</option>
+                      ))}
+                    </select>
+                  )}
+                  <div className="flex rounded-lg overflow-hidden border border-gray-200 flex-shrink-0" onClick={e => e.stopPropagation()}>
+                    {(["level1", "level2", "level3"] as DifficultyLevel[]).map((lv, li) => {
+                      const isLvDisabled = comingSoonLevels.includes(lv);
+                      return (
+                        <button key={lv} onClick={() => { if (!isLvDisabled) { const fresh = makeDefaultGroup(g.id, g.tool, lv); updateGroup(g.id, { ...fresh, id: g.id }); setSelectedId(g.id); } }}
+                          className={`px-3 py-1 font-semibold text-xs transition-colors ${isLvDisabled ? "bg-gray-50 text-gray-300 cursor-not-allowed" : g.level === lv ? `${lvColor(lv)} text-white` : "bg-white text-gray-400 hover:bg-gray-50"}`}>
+                          L{li + 1}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="flex items-center gap-1 flex-shrink-0" onClick={e => e.stopPropagation()}>
+                    <button onClick={() => updateGroup(g.id, { count: Math.max(1, g.count - 1) })} disabled={g.count <= 1}
+                      className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:bg-gray-100 hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-sm leading-none">−</button>
+                    <span className="w-6 text-center text-sm font-bold text-gray-700 tabular-nums">{g.count}</span>
+                    <button onClick={() => updateGroup(g.id, { count: Math.min(24, g.count + 1) })} disabled={g.count >= 24}
+                      className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:bg-gray-100 hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-sm leading-none">+</button>
+                  </div>
+                  <div className="flex-1" />
+                  <button onClick={e => {
+                    e.stopPropagation();
+                    if (groups.length <= 1) return;
+                    const rem = groups.filter(ag => ag.id !== g.id);
+                    setGroups(rem);
+                    if (g.id === selectedId) setSelectedId(rem[Math.max(0, groups.indexOf(g) - 1)]?.id ?? rem[0].id);
+                  }}
+                    className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${groups.length > 1 ? "text-gray-300 hover:bg-red-50 hover:text-red-400" : "invisible"}`}>
+                    <X size={12} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+          {canAdd && (
+            <div className="px-4 py-2 border-t-2 border-gray-100">
+              <button onClick={() => {
+                const newId = nextId.current++;
+                const lastTool = groups.length > 0 ? groups[groups.length - 1].tool : toolKeys[0];
+                setGroups(g => [...g, makeDefaultGroup(newId, lastTool)]);
+                setSelectedId(newId);
+              }}
+                className="w-full py-1.5 text-xs font-semibold text-gray-400 hover:text-blue-600 transition-colors">
+                + Add group
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Right: QO options for the selected group */}
+        <div className="rounded-xl border-2 border-gray-300 shadow-sm p-4 flex" style={{ backgroundColor: "#f8faff", flex: "1 1 42%" }}>
+          {selectedGroup ? (
+            <div className="w-full">
+              <InlineQOPanel
+                toolEntry={config.tools[selectedGroup.tool]}
+                level={selectedGroup.level}
+                variables={selectedGroup.variables}
+                onVariableChange={(k, v) => updateGroup(selectedGroup.id, { variables: { ...selectedGroup.variables, [k]: v } })}
+                dropdownValue={selectedGroup.dropdownValue}
+                onDropdownChange={v => updateGroup(selectedGroup.id, { dropdownValue: v })}
+                multiSelectValues={selectedGroup.multiSelectValues}
+                onMultiSelectChange={(k, v) => updateGroup(selectedGroup.id, { multiSelectValues: { ...selectedGroup.multiSelectValues, [k]: v } })}
+              />
+            </div>
+          ) : (
+            <p className="text-sm text-gray-400 m-auto">Select a group to edit its options</p>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const renderPreview = () => {
     if (worksheet.length === 0) return null;
     const fsz = fontSizes[worksheetFontSize];
@@ -631,9 +746,9 @@ export const WorksheetBuilder = ({
           <div className="px-6 py-4 border-b-2 border-gray-200">{headerSlot}</div>
         )}
         <div className="p-6">
-          {renderGroupList()}
+          {classic ? renderGroupListClassic() : renderGroupList()}
 
-          {/* ── Design line: layout + borders ── */}
+          {/* ── Design line: layout + columns (classic) + borders ── */}
           <div className="flex justify-center items-center gap-5 flex-wrap mt-5 pt-5 border-t-2 border-gray-200">
             <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm">
               <button
@@ -649,6 +764,19 @@ export const WorksheetBuilder = ({
                 Textbook
               </button>
             </div>
+            {classic && layout === "grid" && (
+              <div className="flex items-center gap-1.5">
+                <div className="flex rounded-md overflow-hidden border border-gray-300">
+                  {[1, 2, 3, 4].map(c => (
+                    <button key={c} onClick={() => setNumColumns(c)}
+                      className={`w-8 h-8 text-sm font-bold transition-colors ${numColumns === c ? "bg-blue-900 text-white" : "bg-white text-gray-400 hover:bg-gray-50"}`}>
+                      {c}
+                    </button>
+                  ))}
+                </div>
+                <span className="text-sm font-semibold text-gray-500">columns</span>
+              </div>
+            )}
             <label className={`flex items-center gap-2 ${bordersDisabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}`}>
               <div onClick={() => { if (!bordersDisabled) setBorders(!borders); }}
                 className={`w-9 h-5 rounded-full transition-colors relative ${borders && !bordersDisabled ? "bg-blue-900" : "bg-gray-300"}`}>
