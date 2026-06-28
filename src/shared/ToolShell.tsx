@@ -678,11 +678,14 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                 </div>
               )}
 
-              {/* Layout & borders tucked into a settings popover */}
-              <div className="relative">
+              {/* Layout & borders tucked into a settings popover, labelled to
+                  match the Questions/Columns selectors */}
+              <div className="flex items-center gap-3">
+                <label className="text-base font-semibold text-gray-700">Settings:</label>
+                <div className="relative">
                 <button onClick={() => setWsSettingsOpen(o => !o)}
-                  className={`px-4 py-2 rounded-xl font-bold text-base border-2 transition-colors flex items-center gap-2 ${wsSettingsOpen ? "bg-blue-900 text-white border-blue-900" : "bg-white text-gray-600 border-gray-300 hover:border-blue-900 hover:text-blue-900"}`}>
-                  <SlidersHorizontal size={18} /> Settings
+                  className={`px-4 py-2 rounded-lg font-semibold text-base border-2 transition-colors flex items-center gap-2 ${wsSettingsOpen ? "bg-blue-900 text-white border-blue-900" : "bg-white text-gray-600 border-gray-300 hover:border-blue-900 hover:text-blue-900"}`}>
+                  <SlidersHorizontal size={18} /> <ChevronDown size={16} className={`transition-transform ${wsSettingsOpen ? "rotate-180" : ""}`} />
                 </button>
                 {wsSettingsOpen && (
                   <>
@@ -709,6 +712,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                     </div>
                   </>
                 )}
+                </div>
               </div>
             </div>
 
