@@ -46,18 +46,17 @@ const equationLatex = (gradN: number, gradD: number, c: number): string => {
   return `y = ${mxStr} ${c > 0 ? "+" : "-"} ${Math.abs(c)}`;
 };
 
-const fullEqLatex = (m: Rat | "?", c: Rat | "?"): string => {
+// m/c may be a Rat value or a variable letter ("m"/"c") to show as the unknown.
+const fullEqLatex = (m: Rat | string, c: Rat | string): string => {
   let mx: string;
-  if (m === "?") { mx = "{?}x"; }
+  if (typeof m === "string") { mx = `${m}x`; }
   else {
-    const mr = m as Rat;
-    mx = isInt(mr) ? (mr.n === 1 ? "x" : mr.n === -1 ? "-x" : `${mr.n}x`) : `${ratLatex(mr)}x`;
+    mx = isInt(m) ? (m.n === 1 ? "x" : m.n === -1 ? "-x" : `${m.n}x`) : `${ratLatex(m)}x`;
   }
-  if (c === "?") return `y = ${mx} + {?}`;
-  const cr = c as Rat;
-  if (cr.n === 0) return `y = ${mx}`;
-  const cIsNeg = cr.n < 0;
-  const cAbs = cIsNeg ? ratLatex(rat(-cr.n, cr.d)) : ratLatex(cr);
+  if (typeof c === "string") return `y = ${mx} + ${c}`;
+  if (c.n === 0) return `y = ${mx}`;
+  const cIsNeg = c.n < 0;
+  const cAbs = cIsNeg ? ratLatex(rat(-c.n, c.d)) : ratLatex(c);
   return `y = ${mx} ${cIsNeg ? "-" : "+"} ${cAbs}`;
 };
 
@@ -224,16 +223,20 @@ const generateMissingQuestion = (level: DifficultyLevel, allowedVars: MissingVar
       const check = ratAdd(ratMul(m!, x!), c!);
       if (!ratEq(check, y!)) continue;
       const mq = m!, cq = c!, xq = x!, yq = y!;
-      const eqL = mv === "m" ? fullEqLatex("?", cq) : mv === "c" ? fullEqLatex(mq, "?") : fullEqLatex(mq, cq);
+      const eqL = mv === "m" ? fullEqLatex("m", cq) : mv === "c" ? fullEqLatex(mq, "c") : fullEqLatex(mq, cq);
       const xStr = mv === "x" ? "x" : ratLatex(xq);
       const yStr = mv === "y" ? "y" : ratLatex(yq);
       const crdL = `\\left(${xStr},\\,${yStr}\\right)`;
       const answerVal = mv === "x" ? xq : mv === "y" ? yq : mv === "m" ? mq : cq;
       const ansLtx = `${mv} = ${ratLatex(answerVal)}`;
+      // Worded (not a single displayLatex) so the prose wraps inside the
+      // question box instead of overflowing it in whiteboard mode.
       return {
-        kind: "simple",
-        display: "",
-        displayLatex: `\\text{The line } ${eqL} \\text{ passes through } ${crdL}\\text{. Find } ${mv}`,
+        kind: "worded",
+        lines: [
+          `The line $${eqL}$ passes through $${crdL}$.`,
+          `Find $${mv}$.`,
+        ],
         answer: ansLtx,
         answerLatex: ansLtx,
         working: buildMissingWorking(mv, mq, cq, xq, yq),

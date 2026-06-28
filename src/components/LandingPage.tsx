@@ -1,14 +1,7 @@
 import { useNavigate } from 'react-router-dom';
-import { Calculator } from 'lucide-react';
+import { Calculator, FlaskConical } from 'lucide-react';
 import { CATEGORIES } from '../registry';
-
-// ==========================================
-// DEVELOPER SETTINGS
-// ==========================================
-// Set to 'true' to completely hide tools where enabled: false
-// Set to 'false' to show them as grayed-out "Coming Soon" cards
-const CONFIG_HIDE_DISABLED = true;
-// ==========================================
+import { useDevMode, setDevMode } from '../devMode';
 
 // Tool data lives in src/registry.ts — this file only owns presentation.
 
@@ -142,14 +135,20 @@ const categories = CATEGORIES.map((category) => ({
 
 export default function LandingPage(): JSX.Element {
   const navigate = useNavigate();
+  const devMode = useDevMode();
 
-  // Calculate total tools, respecting the CONFIG_HIDE_DISABLED setting
-  const totalTools: number = categories.reduce((acc, cat) => {
-    const visibleTools = CONFIG_HIDE_DISABLED 
-      ? cat.tools.filter(t => t.enabled !== false) 
-      : cat.tools;
-    return acc + visibleTools.length;
-  }, 0);
+  // In developing mode every tool is visible (including enabled: false ones);
+  // otherwise the in-progress tools are hidden from general use. Developing
+  // tools are sorted to the end of their section (sort is stable, so the
+  // relative order within each group is preserved).
+  const visibleIn = (tools: typeof categories[number]['tools']) => {
+    const shown = devMode ? tools : tools.filter(t => t.enabled !== false);
+    return [...shown].sort(
+      (a, b) => (a.enabled === false ? 1 : 0) - (b.enabled === false ? 1 : 0),
+    );
+  };
+
+  const totalTools: number = categories.reduce((acc, cat) => acc + visibleIn(cat.tools).length, 0);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -169,14 +168,37 @@ export default function LandingPage(): JSX.Element {
       {/* Header Bar */}
       <header className="sticky top-0 z-50 bg-blue-900 shadow-xl shadow-blue-900/10">
         <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 bg-white rounded-xl flex items-center justify-center shadow-md">
-              <Calculator className="text-blue-900" size={24} />
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 bg-white rounded-xl flex items-center justify-center shadow-md">
+                <Calculator className="text-blue-900" size={24} />
+              </div>
+              <div>
+                <h1 className="text-white font-bold text-xl tracking-tight">Maths Tools</h1>
+                <p className="text-blue-200 text-xs">Interactive Learning</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-white font-bold text-xl tracking-tight">Maths Tools</h1>
-              <p className="text-blue-200 text-xs">Interactive Learning</p>
-            </div>
+
+            {/* Developing tools toggle — reveals in-progress tools & features */}
+            <button
+              onClick={() => setDevMode(!devMode)}
+              title="Reveal in-progress tools and the step-by-step Worked Example mode"
+              className={`flex items-center gap-2.5 pl-3 pr-2.5 py-2 rounded-xl font-semibold text-sm transition-colors border ${
+                devMode
+                  ? 'bg-amber-400 text-blue-950 border-amber-300'
+                  : 'bg-blue-800/60 text-blue-100 border-blue-700 hover:bg-blue-800'
+              }`}
+            >
+              <FlaskConical size={16} />
+              <span className="hidden sm:inline">Developing tools</span>
+              <span
+                className={`relative inline-block w-9 h-5 rounded-full transition-colors ${devMode ? 'bg-blue-950/30' : 'bg-blue-950/40'}`}
+              >
+                <span
+                  className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${devMode ? 'translate-x-4' : ''}`}
+                />
+              </span>
+            </button>
           </div>
         </div>
       </header>
@@ -206,10 +228,7 @@ export default function LandingPage(): JSX.Element {
       {/* Main Content */}
       <main className="relative z-10 max-w-7xl mx-auto px-6 pb-24">
         {categories.map((category) => {
-          // Filter tools based on our developer config
-          const visibleTools = CONFIG_HIDE_DISABLED 
-            ? category.tools.filter(t => t.enabled !== false) 
-            : category.tools;
+          const visibleTools = visibleIn(category.tools);
 
           return (
             <section key={category.name} className="mb-16">
@@ -223,28 +242,31 @@ export default function LandingPage(): JSX.Element {
 
               {visibleTools.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {visibleTools.map((tool) => (
+                  {visibleTools.map((tool) => {
+                    // enabled:false tools only appear in developing mode, where
+                    // they're clickable for testing and flagged with a DEV badge.
+                    const isDevTool = tool.enabled === false;
+                    return (
                     <button
                       key={tool.id}
-                      onClick={() => tool.enabled !== false && navigate(tool.path)}
-                      disabled={tool.enabled === false}
+                      onClick={() => navigate(tool.path)}
                       // Added: flex flex-col, h-full, and min-h-[170px] to enforce uniform sizing
                       className={`group relative flex flex-col justify-start h-full min-h-[170px] bg-white p-6 text-left transition-all duration-300 rounded-xl
-                        border border-slate-200 border-l-4
-                        ${tool.enabled === false
-                          ? 'opacity-60 cursor-not-allowed border-l-slate-300 grayscale-[20%]'
-                          : `${category.theme.border} ${category.theme.hoverBorder} hover:shadow-lg hover:shadow-slate-200/60 hover:-translate-y-1 cursor-pointer`
+                        border border-slate-200 border-l-4 cursor-pointer hover:shadow-lg hover:shadow-slate-200/60 hover:-translate-y-1
+                        ${isDevTool
+                          ? 'border-l-amber-400 hover:border-l-amber-300'
+                          : `${category.theme.border} ${category.theme.hoverBorder}`
                         }`}
                     >
                       {/* Badge - Absolutely positioned so it never moves */}
                       <div className="absolute top-6 right-6">
                         <span className={`inline-flex items-center text-[10px] font-bold px-2.5 py-1 rounded-md border tracking-wider uppercase
-                          ${tool.enabled === false
-                            ? 'bg-slate-50 text-slate-400 border-slate-200'
+                          ${isDevTool
+                            ? 'bg-amber-50 text-amber-700 border-amber-200'
                             : 'bg-white text-slate-500 border-slate-200 shadow-sm'
                           }`}
                         >
-                          {tool.ready}
+                          {isDevTool ? 'Dev' : tool.ready}
                         </span>
                       </div>
 
@@ -258,7 +280,8 @@ export default function LandingPage(): JSX.Element {
                         {tool.description}
                       </p>
                     </button>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="bg-white/40 backdrop-blur-sm rounded-xl p-8 text-left border border-dashed border-slate-300 shadow-sm transition-all hover:bg-white/60">

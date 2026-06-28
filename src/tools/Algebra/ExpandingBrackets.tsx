@@ -328,226 +328,6 @@ const DGridDisplay = ({ a, b, c, d }: { a: number; b: number; c: number; d: numb
   );
 };
 
-// ── Algebra Tiles components ─────────────────────────────────────────────────
-
-const TILE_COLORS = {
-  x2: { pos: "#3b82f6", neg: "#ef4444" },
-  x:  { pos: "#22c55e", neg: "#f97316" },
-  u:  { pos: "#facc15", neg: "#a855f7" },
-};
-
-const TileKey = () => {
-  const items: [string, string, string][] = [
-    [TILE_COLORS.x2.pos, "x²", "32"],
-    [TILE_COLORS.x.pos, "x", "32"],
-    [TILE_COLORS.u.pos, "1", "18"],
-    [TILE_COLORS.x2.neg, "-x²", "32"],
-    [TILE_COLORS.x.neg, "-x", "32"],
-    [TILE_COLORS.u.neg, "-1", "18"],
-  ];
-  return (
-    <div style={{ display: "flex", gap: 16, flexWrap: "wrap", justifyContent: "center", marginBottom: 12 }}>
-      {items.map(([color, label, sz]) => {
-        const size = parseInt(sz);
-        const isRect = label.replace("-", "") === "x";
-        return (
-          <div key={label} style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <div style={{
-              width: isRect ? size * 0.55 : size, height: isRect ? size : size,
-              backgroundColor: color, borderRadius: 3, border: "1.5px solid rgba(0,0,0,0.2)",
-            }} />
-            <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>
-              <MathRenderer latex={label} style={{ fontSize: "0.85em" }} />
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
-};
-
-const Tile = ({ color, w, h, label }: { color: string; w: number; h: number; label?: string }) => (
-  <div style={{
-    width: w, height: h, backgroundColor: color, borderRadius: 3,
-    border: "1.5px solid rgba(0,0,0,0.25)", display: "flex", alignItems: "center", justifyContent: "center",
-    fontSize: Math.min(w, h) * 0.4, fontWeight: 700, color: "rgba(0,0,0,0.35)", userSelect: "none",
-  }}>
-    {label}
-  </div>
-);
-
-const STilesDisplay = ({ fd }: { fd: FoilData }) => {
-  if (fd.withVariable) return null;
-
-  const a = Math.abs(fd.a), b = Math.abs(fd.b), cAbs = Math.abs(fd.c);
-  const aNeg = fd.a < 0;
-  const bNeg = fd.isReversed ? true : fd.b < 0;
-  const cNeg = fd.isReversed ? false : fd.c < 0;
-
-  const U = 22, X_W = 18, X_H = 50;
-  const xProdNeg = aNeg !== bNeg;
-  const cProdNeg = aNeg !== cNeg;
-  const xColor = xProdNeg ? TILE_COLORS.x.neg : TILE_COLORS.x.pos;
-  const uColor = cProdNeg ? TILE_COLORS.u.neg : TILE_COLORS.u.pos;
-
-  const topTerms = (
-    <div style={{ display: "flex", gap: 6, marginLeft: 4 }}>
-      {b > 0 && <div style={{ display: "flex", gap: 2 }}>
-        {Array.from({ length: b }, (_, i) => (
-          <Tile key={`x${i}`} color={bNeg ? TILE_COLORS.x.neg : TILE_COLORS.x.pos} w={X_W} h={X_H * 0.5} />
-        ))}
-      </div>}
-      {cAbs > 0 && <div style={{ display: "flex", gap: 2 }}>
-        {Array.from({ length: cAbs }, (_, i) => (
-          <Tile key={`u${i}`} color={cNeg ? TILE_COLORS.u.neg : TILE_COLORS.u.pos} w={U} h={U} />
-        ))}
-      </div>}
-    </div>
-  );
-
-  const leftTerms = (
-    <div style={{ display: "flex", flexDirection: "column", gap: 2, marginTop: 4 }}>
-      {Array.from({ length: a }, (_, i) => (
-        <Tile key={i} color={aNeg ? TILE_COLORS.u.neg : TILE_COLORS.u.pos} w={U} h={U} />
-      ))}
-    </div>
-  );
-
-  const xTotal = a * b, uTotal = a * cAbs;
-
-  return (
-    <div className="flex flex-col items-center gap-3 py-2">
-      <TileKey />
-      <div style={{ display: "flex", gap: 0, alignItems: "flex-start" }}>
-        <div style={{ width: U + 8, display: "flex", flexDirection: "column", alignItems: "center" }}>
-          <div style={{ width: U, height: X_H * 0.5 + 4 }} />
-          {leftTerms}
-        </div>
-        <div>
-          <div style={{ marginBottom: 4 }}>{topTerms}</div>
-          <div style={{ display: "flex", gap: 6 }}>
-            {b > 0 && (
-              <div style={{ display: "grid", gridTemplateColumns: `repeat(${b}, ${X_W}px)`, gap: 2 }}>
-                {Array.from({ length: xTotal }, (_, i) => (
-                  <Tile key={i} color={xColor} w={X_W} h={U} />
-                ))}
-              </div>
-            )}
-            {cAbs > 0 && (
-              <div style={{ display: "grid", gridTemplateColumns: `repeat(${cAbs}, ${U}px)`, gap: 2 }}>
-                {Array.from({ length: uTotal }, (_, i) => (
-                  <Tile key={i} color={uColor} w={U} h={U} />
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-      <div style={{ fontSize: 18, fontWeight: 700, color: "#166534", marginTop: 4 }}>
-        <MathRenderer latex={`= ${foilAnswerLatex(fd)}`} style={{ fontSize: "1em" }} />
-      </div>
-    </div>
-  );
-};
-
-const DTilesDisplay = ({ a, b, c, d }: { a: number; b: number; c: number; d: number }) => {
-  const aAbs = Math.abs(a), bAbs = Math.abs(b), cAbs = Math.abs(c), dAbs = Math.abs(d);
-  const aNeg = a < 0, bNeg = b < 0, cNeg = c < 0, dNeg = d < 0;
-
-  const X2 = 44, X_H = 44, U = 18, GAP = 2;
-
-  const acNeg = aNeg !== cNeg, adNeg = aNeg !== dNeg, bcNeg = bNeg !== cNeg, bdNeg = bNeg !== dNeg;
-  const acColor = acNeg ? TILE_COLORS.x2.neg : TILE_COLORS.x2.pos;
-  const adColor = adNeg ? TILE_COLORS.x.neg : TILE_COLORS.x.pos;
-  const bcColor = bcNeg ? TILE_COLORS.x.neg : TILE_COLORS.x.pos;
-  const bdColor = bdNeg ? TILE_COLORS.u.neg : TILE_COLORS.u.pos;
-
-  const topRow = (
-    <div style={{ display: "flex", gap: 8, marginLeft: 4, alignItems: "flex-end" }}>
-      <div style={{ display: "flex", gap: GAP }}>
-        {Array.from({ length: cAbs }, (_, i) => (
-          <Tile key={`cx${i}`} color={cNeg ? TILE_COLORS.x.neg : TILE_COLORS.x.pos} w={X2 / aAbs} h={X_H * 0.5} />
-        ))}
-      </div>
-      {dAbs > 0 && <div style={{ display: "flex", gap: GAP }}>
-        {Array.from({ length: dAbs }, (_, i) => (
-          <Tile key={`d${i}`} color={dNeg ? TILE_COLORS.u.neg : TILE_COLORS.u.pos} w={U} h={U} />
-        ))}
-      </div>}
-    </div>
-  );
-
-  const leftCol = (
-    <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4, alignItems: "center" }}>
-      <div style={{ display: "flex", flexDirection: "column", gap: GAP }}>
-        {Array.from({ length: aAbs }, (_, i) => (
-          <Tile key={`ax${i}`} color={aNeg ? TILE_COLORS.x.neg : TILE_COLORS.x.pos} w={X_H * 0.5} h={X2 / aAbs} />
-        ))}
-      </div>
-      {bAbs > 0 && <div style={{ display: "flex", flexDirection: "column", gap: GAP }}>
-        {Array.from({ length: bAbs }, (_, i) => (
-          <Tile key={`b${i}`} color={bNeg ? TILE_COLORS.u.neg : TILE_COLORS.u.pos} w={U} h={U} />
-        ))}
-      </div>}
-    </div>
-  );
-
-  const x2W = X2, x2H = X2;
-  const acCount = aAbs * cAbs, adCount = aAbs * dAbs, bcCount = bAbs * cAbs, bdCount = bAbs * dAbs;
-
-  const ansLx = doubleAnswerLatex(a, b, c, d);
-
-  return (
-    <div className="flex flex-col items-center gap-3 py-2">
-      <TileKey />
-      <div style={{ display: "flex", gap: 0, alignItems: "flex-start" }}>
-        <div style={{ width: X_H * 0.5 + 12, display: "flex", flexDirection: "column", alignItems: "center" }}>
-          <div style={{ height: X_H * 0.5 + 8 }} />
-          {leftCol}
-        </div>
-        <div>
-          <div style={{ marginBottom: 4 }}>{topRow}</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <div style={{ display: "flex", gap: 8 }}>
-              <div style={{ display: "grid", gridTemplateColumns: `repeat(${cAbs}, ${x2W / aAbs}px)`, gap: GAP }}>
-                {Array.from({ length: acCount }, (_, i) => (
-                  <Tile key={i} color={acColor} w={x2W / aAbs} h={x2H / aAbs} />
-                ))}
-              </div>
-              {dAbs > 0 && (
-                <div style={{ display: "grid", gridTemplateColumns: `repeat(${dAbs}, ${U}px)`, gap: GAP }}>
-                  {Array.from({ length: adCount }, (_, i) => (
-                    <Tile key={i} color={adColor} w={U} h={x2H / aAbs} />
-                  ))}
-                </div>
-              )}
-            </div>
-            {bAbs > 0 && (
-              <div style={{ display: "flex", gap: 8 }}>
-                <div style={{ display: "grid", gridTemplateColumns: `repeat(${cAbs}, ${x2W / aAbs}px)`, gap: GAP }}>
-                  {Array.from({ length: bcCount }, (_, i) => (
-                    <Tile key={i} color={bcColor} w={x2W / aAbs} h={U} />
-                  ))}
-                </div>
-                {dAbs > 0 && (
-                  <div style={{ display: "grid", gridTemplateColumns: `repeat(${dAbs}, ${U}px)`, gap: GAP }}>
-                    {Array.from({ length: bdCount }, (_, i) => (
-                      <Tile key={i} color={bdColor} w={U} h={U} />
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-      <div style={{ fontSize: 18, fontWeight: 700, color: "#166534", marginTop: 4 }}>
-        <MathRenderer latex={`= ${ansLx}`} style={{ fontSize: "1em" }} />
-      </div>
-    </div>
-  );
-};
-
 // ── TOOL_CONFIG ──────────────────────────────────────────────────────────────
 
 const METHOD_DD = {
@@ -556,7 +336,6 @@ const METHOD_DD = {
   options: [
     { value: "foil", label: "FOIL" },
     { value: "grid", label: "Grid" },
-    { value: "tiles", label: "Tiles" },
     { value: "both", label: "Both" },
   ],
   defaultValue: "foil",
@@ -622,7 +401,7 @@ const INFO_SECTIONS: InfoSection[] = [
     { label: "Level 3 — Red", detail: "Non-unit leading coefficients and mixed signs." },
   ] },
   { title: "Question Options", icon: "⚙️", content: [
-    { label: "Method", detail: "FOIL shows curved arrows connecting multiplied terms. Grid shows a multiplication table. Tiles shows an area model using coloured algebra tiles (x² squares, x rectangles, unit squares). Both shows FOIL and Grid side by side." },
+    { label: "Method", detail: "FOIL shows curved arrows connecting multiplied terms. Grid shows a multiplication table. Both shows FOIL and Grid side by side." },
     { label: "Multiplier Type", detail: "Numerical: number outside the bracket. Algebraic: variable term outside. Both active: randomly either." },
     { label: "Differentiated", detail: "Worksheet mode produces three columns — one per level — simultaneously." },
   ] },
@@ -690,8 +469,6 @@ const buildExpandWorking = (fd: FoilData, method: string): WorkingStep[] => {
     steps.push(diagramStep("FOIL", dispLx, { diagramType: "singleFoil", foilData: fd }));
   if (method === "grid" || method === "both")
     steps.push(diagramStep("Grid", dispLx, { diagramType: "singleGrid", foilData: fd }));
-  if (method === "tiles")
-    steps.push(diagramStep("Algebra Tiles", dispLx, { diagramType: "singleTiles", foilData: fd }));
   steps.push(mStep("Answer:", foilAnswerLatex(fd)));
   return steps;
 };
@@ -706,10 +483,6 @@ const buildSimplifyWorking = (fd1: FoilData, fd2: FoilData, op: string, method: 
   if (method === "grid" || method === "both") {
     steps.push(diagramStep(`Expand: ${d1}`, d1, { diagramType: "singleGrid", foilData: fd1, label: `Expand: ${d1}` }));
     steps.push(diagramStep(`Expand: ${d2}`, d2, { diagramType: "singleGrid", foilData: fd2, label: `Expand: ${d2}` }));
-  }
-  if (method === "tiles") {
-    steps.push(diagramStep(`Expand: ${d1}`, d1, { diagramType: "singleTiles", foilData: fd1, label: `Expand: ${d1}` }));
-    steps.push(diagramStep(`Expand: ${d2}`, d2, { diagramType: "singleTiles", foilData: fd2, label: `Expand: ${d2}` }));
   }
   const a1 = foilAnswerLatex(fd1), a2 = foilAnswerLatex(fd2);
   steps.push(mStep("Combine:", `(${a1}) ${op} (${a2})`));
@@ -737,8 +510,6 @@ const buildDoubleWorking = (raw: DoubleRaw, method: string): WorkingStep[] => {
     steps.push(diagramStep("FOIL Method", dispLx, { diagramType: "doubleFoil", doubleData: raw }));
   if (method === "grid" || method === "both")
     steps.push(diagramStep("Grid Method", dispLx, { diagramType: "doubleGrid", doubleData: raw }));
-  if (method === "tiles")
-    steps.push(diagramStep("Algebra Tiles", dispLx, { diagramType: "doubleTiles", doubleData: raw }));
 
   const outer = a * d, inner = b * c, xCoeff = outer + inner;
   if (outer !== 0 && inner !== 0 && xCoeff !== outer && xCoeff !== inner) {
@@ -908,23 +679,6 @@ const stepRenderer = (ws: WorkingStep, colorScheme: string): JSX.Element | null 
         </div>
       );
 
-    if (diagramType === "singleTiles" && foilData)
-      return (
-        <div className="rounded-xl p-6" style={{ backgroundColor: bg }}>
-          {label ? <h4 className="text-lg font-bold mb-2" style={{ color: "#000" }}>{label}</h4>
-            : <h4 className="text-lg font-bold mb-1" style={{ color: "#000" }}>Algebra Tiles</h4>}
-          <STilesDisplay fd={foilData} />
-        </div>
-      );
-
-    if (diagramType === "doubleTiles" && doubleData)
-      return (
-        <div className="rounded-xl p-6" style={{ backgroundColor: bg }}>
-          <h4 className="text-lg font-bold mb-1" style={{ color: "#000" }}>Algebra Tiles</h4>
-          <p className="text-base text-gray-500 mb-4">Area model with coloured tiles</p>
-          <DTilesDisplay a={doubleData.a} b={doubleData.b} c={doubleData.c} d={doubleData.d} />
-        </div>
-      );
   }
 
   // Regular step rendering
