@@ -658,8 +658,8 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               ); })()}
             </div>
 
-            {/* Row 2: questions · columns · settings · actions */}
-            <div className="flex justify-center items-center gap-4 flex-wrap">
+            {/* Row 2: questions · columns · settings */}
+            <div className="flex justify-center items-center gap-6 mb-5 flex-wrap">
               {!defaults.fixedQuestions && (
                 <div className="flex items-center gap-3">
                   <label className="text-base font-semibold text-gray-700">Questions:</label>
@@ -710,8 +710,10 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                   </>
                 )}
               </div>
+            </div>
 
-              <div className="w-px h-8 bg-gray-200" />
+            {/* Row 3: actions — generate · answers · print */}
+            <div className="flex justify-center items-center gap-4 flex-wrap">
               <button onClick={handleGenerateWorksheet} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
                 <RefreshCw size={18} /> Generate
               </button>
