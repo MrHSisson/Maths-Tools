@@ -70,17 +70,22 @@ function ScaleToFit({ children, maxScale = 3 }: { children: ReactNode; maxScale?
     const recompute = () => {
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(() => {
-        if (!outerRef.current || !innerRef.current) return;
-        const availW = outerRef.current.clientWidth, availH = outerRef.current.clientHeight;
-        // Measure the diagram's real painted size; divide out the current scale.
-        const target = (innerRef.current.querySelector("svg") as SVGElement | null) ?? innerRef.current;
+        const o = outerRef.current, n = innerRef.current;
+        if (!o || !n) return;
+        const availW = o.clientWidth, availH = o.clientHeight;
+        // Measure the *natural* size by neutralising the transform first, so the
+        // reading never depends on the current scale (dividing a mid-transition
+        // transformed rect by the target scale is what caused the zoom to jitter).
+        const prev = n.style.transform;
+        n.style.transform = "none";
+        const target = (n.querySelector("svg") as SVGElement | null) ?? n;
         const rect = target.getBoundingClientRect();
-        const cur = scaleRef.current || 1;
-        const natW = rect.width / cur, natH = rect.height / cur;
+        n.style.transform = prev;
+        const natW = rect.width, natH = rect.height;
         if (!natW || !natH) return;
         const s = Math.min((availW * 0.96) / natW, (availH * 0.96) / natH);
         const clamped = Math.max(1, Math.min(maxScale, s));
-        if (Math.abs(clamped - scaleRef.current) > 0.005) setScale(clamped);
+        if (Math.abs(clamped - scaleRef.current) > 0.01) setScale(clamped);
       });
     };
     recompute();
@@ -90,7 +95,7 @@ function ScaleToFit({ children, maxScale = 3 }: { children: ReactNode; maxScale?
   }, [maxScale]);
   return (
     <div ref={outerRef} style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-      <div ref={innerRef} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, width: "100%", transform: `scale(${scale})`, transformOrigin: "center", transition: "transform 0.1s ease-out" }}>
+      <div ref={innerRef} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, width: "100%", transform: `scale(${scale})`, transformOrigin: "center" }}>
         {children}
       </div>
     </div>
