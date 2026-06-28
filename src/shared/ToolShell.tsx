@@ -17,6 +17,7 @@ import { PrintSplitButton } from "./components/PrintSplitButton";
 import { handlePrint } from "./print";
 import type { PrintContext } from "./printDiagram";
 import { WorksheetBuilder } from "./WorksheetBuilder";
+import { useDevMode } from "../devMode";
 
 export interface ToolShellProps {
   config: ToolConfig;
@@ -158,6 +159,12 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
 
   const [currentTool, setCurrentTool] = useState<string>(urlInit.tool);
   const [mode, setMode] = useState<"whiteboard" | "single" | "worksheet" | "builder">(urlInit.mode);
+  // The step-by-step "Worked Example" mode is in development: hidden from general
+  // use, revealed only when the global Developing-tools switch is on.
+  const devMode = useDevMode();
+  useEffect(() => {
+    if (!devMode && mode === "single") setMode("whiteboard");
+  }, [devMode, mode]);
   const comingSoon = defaults.comingSoonLevels ?? [];
   const hideFontControls = defaults.hideFontControls ?? false;
   const [difficulty, setDifficulty] = useState<DifficultyLevel>(urlInit.level);
@@ -1168,15 +1175,17 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           )}
           {mode !== "builder" && (
             <div className="flex justify-center gap-4 mb-8">
-              {(["whiteboard", "single", "worksheet"] as const).map((m, i) => {
-                const label = ["Whiteboard", "Worked Example", "Worksheet"][i];
-                return (
-                  <button key={m} onClick={() => { setMode(m); setPresenterMode(false); setWbFullscreen(false); }}
-                    className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${mode === m ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
-                    {label}
-                  </button>
-                );
-              })}
+              {(["whiteboard", "single", "worksheet"] as const)
+                .filter(m => devMode || m !== "single")  // Worked Example is dev-only
+                .map(m => {
+                  const label = m === "whiteboard" ? "Whiteboard" : m === "single" ? "Worked Example" : "Worksheet";
+                  return (
+                    <button key={m} onClick={() => { setMode(m); setPresenterMode(false); setWbFullscreen(false); }}
+                      className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${mode === m ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
+                      {label}
+                    </button>
+                  );
+                })}
             </div>
           )}
 
