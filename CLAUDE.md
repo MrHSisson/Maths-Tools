@@ -183,7 +183,7 @@ import { type PrintMode } from "../../shared";
 ### All available exports from `src/shared/`
 
 **Types** (use `type` keyword in imports):
-`DifficultyLevel` · `PrintMode` · `AnyQuestion` · `SimpleQuestion` · `WordedQuestion` · `WorkingStep` · `ToolConfig` · `ToolEntry` · `ToolDropdown` · `ToolMultiSelect` · `ToolMultiSelectConfig` · `ToolVariable` · `DifficultyLevelSettings` · `InfoSection` · `InfoItem` · `QOSnapshot` · `ToolShellDefaults` · `ToolShellProps` · `TeachingSlide` · `TeachBlock` · `TeachBar` · `TeachAccent`
+`DifficultyLevel` · `PrintMode` · `AnyQuestion` · `SimpleQuestion` · `WordedQuestion` · `WorkingStep` · `ToolConfig` · `ToolEntry` · `ToolDropdown` · `ToolMultiSelect` · `ToolMultiSelectConfig` · `ToolVariable` · `DifficultyLevelSettings` · `InfoSection` · `InfoItem` · `QOSnapshot` · `ToolShellDefaults` · `ToolShellProps` · `TeachingSlide` · `TeachBlock` · `TeachBar` · `TeachScene` · `TeachCategory`
 
 **Components / hooks**:
 `ToolShell` · `TeachingDeck` · `MathRenderer` · `InlineMath` · `QuestionDisplay` · `AnswerDisplay` · `DifficultyToggle` · `StandardQOPopover` · `DiffQOPopover` · `InlineQOPanel` · `InfoModal` · `MenuDropdown` · `PrintSplitButton`
@@ -392,24 +392,24 @@ Whiteboard / Worked Example / Worksheet modes · **Teach mode (when `teachingSli
 
 ### Teaching slides — the "Teach" deck
 
-Pass `teachingSlides={[...]}` to `ToolShell` to add a **Teach** tab: an embeddable, PowerPoint-style deck (`TeachingDeck`) the teacher presses through step by step (→ / space / click to advance a stage, ← to step back). No prop → no Teach tab; nothing else changes. Reference: `src/tools/Number/FractionsAddSub.tsx` (`TEACHING_SLIDES`); a minimal example lives in the `ToolShell.tsx` template.
+Pass `teachingSlides={[...]}` to `ToolShell` to add a **Teach** tab: an embeddable `TeachingDeck`. The teacher first picks a **category** from a menu, then presses through that category's slides one **beat** at a time (→ / space / click to advance, ← to step back, Esc back to the menu). No prop → no Teach tab. Reference: `src/tools/Number/FractionsAddSub.tsx` (`TEACHING_SLIDES`); a fuller example lives in the `ToolShell.tsx` template.
 
-Two slide kinds (`TeachingSlide`):
+Every slide has a `category: "concept" | "trueFalse" | "spotMistake"` (`TeachCategory`). The menu lists all three; a category with no slides shows as **"Coming soon"**. Styling matches the rest of the app (white cards, navy accents) — no emoji. Two slide kinds (`TeachingSlide`):
 
 ```ts
-// static (default kind) — body blocks + one optional reveal (press to reveal)
-{ tag: "True or false?", accent: "amber", title: "$2+3=6$",
+// static (default kind) — body blocks + one optional reveal (one extra beat)
+{ category: "trueFalse", title: "$2+3=6$",
   body:   [{ t: "text", s: "Decide first." }],
-  reveal: [{ t: "verdict", value: false }, { t: "callout", tone: "good", s: "It's $2+3=5$." }],
+  reveal: [{ t: "verdict", value: false }, { t: "note", tone: "good", label: "Correct", s: "$2+3=5$." }],
   revealLabel: "Reveal" }
 
-// anim — a scene pressed through in stages, one caption per stage
-{ kind: "anim", tag: "Key idea", accent: "blue", title: "Split each piece.",
-  scene: { type: "split", num: 3, den: 5, factor: 2 },   // cut each piece into `factor`; shaded area stays put
-  steps: ["Here is $\\dfrac{3}{5}$.", "Cut each piece in half…", "…now it's $\\dfrac{6}{10}$."] }
+// anim — a scene choreographed across beats, one caption per beat
+{ kind: "anim", category: "concept", title: "Split each piece.",
+  scene: { type: "split", num: 3, den: 5, factor: 2 },  // cuts ONE piece per press; shaded area stays put
+  steps: ["Here is $\\dfrac{3}{5}$.", "Cut the first fifth…", /* …one per piece… */ "…now it's $\\dfrac{6}{10}$."] }
 ```
 
-`TeachBlock` types: `{ t:"text", s }` (`$...$` inline maths, `**bold**`) · `{ t:"math", s }` · `{ t:"bars", bars:[{num,den,color?,label?}] }` · `{ t:"verdict", value }` · `{ t:"callout", tone:"good"|"bad"|"info", s }`. Scenes (`TeachScene`): `{ type:"split", num, den, factor, color? }` and `{ type:"combine", a, b, sumLabel }` (two shaded bars flow into one; needs a common denominator). Accents: `blue` `green` `red` `amber`. The URL `mode=teach` deep-links to the deck.
+`TeachBlock` types: `{ t:"text", s }` (`$...$` inline maths, `**bold**`) · `{ t:"math", s }` · `{ t:"bars", bars:[{num,den,label?}] }` · `{ t:"verdict", value }` · `{ t:"note", tone?:"good"|"bad"|"plain", label?, s }` (clean bordered note, no emoji). Scenes (`TeachScene`): `{ type:"split", num, den, factor, shadeByOne? }` (an anim slide's beat count is derived from the scene — a split runs `den` cut beats plus a relabel, so supply that many captions) and `{ type:"combine", a, b, sumLabel }` (two shaded bars flow into one; common denominator). The URL `mode=teach` deep-links to the deck.
 
 ### Shareable links — URL parameter format
 

@@ -458,93 +458,25 @@ const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null =>
   return { ...q, answer, answerLatex, working } as unknown as AnyQuestion;
 };
 
-// ── Teaching slides — curated key ideas & misconceptions ───────────────────────
-
-const BLUE = "#2563eb", GREEN = "#16a34a", AMBER = "#d97706";
+// ── Teaching slides ────────────────────────────────────────────────────────────
+// Rebuilt around the animated deck: press through one beat at a time. The True
+// or False and Spot the Mistake categories are yet to be built (they show as
+// "Coming soon" in the Teach menu until slides with those categories exist).
 
 const TEACHING_SLIDES: TeachingSlide[] = [
   {
-    tag: "Key idea", accent: "blue",
-    title: "Same denominator? Just add the numerators.",
-    body: [
-      { t: "text", s: "The denominator tells you the size of the pieces. When the pieces are the same size, you just count how many you have." },
-      { t: "bars", bars: [
-        { num: 1, den: 5, color: BLUE, label: "\\dfrac{1}{5}" },
-        { num: 3, den: 5, color: BLUE, label: "\\dfrac{3}{5}" },
-      ] },
-      { t: "math", s: "\\dfrac{1}{5} + \\dfrac{3}{5} = \\dfrac{4}{5}" },
-    ],
-    reveal: [
-      { t: "bars", bars: [{ num: 4, den: 5, color: GREEN, label: "\\dfrac{4}{5}" }] },
-      { t: "callout", tone: "info", s: "The denominator stays as $5$ — you are not making new-sized pieces, only counting more of them." },
-    ],
-    revealLabel: "Show the total",
-  },
-  {
-    tag: "True or false?", accent: "amber",
-    title: "$\\dfrac{1}{2} + \\dfrac{1}{3} = \\dfrac{2}{5}$",
-    body: [{ t: "text", s: "Decide with the class before you reveal." }],
-    reveal: [
-      { t: "verdict", value: false },
-      { t: "bars", bars: [
-        { num: 1, den: 2, color: BLUE, label: "\\dfrac{1}{2}" },
-        { num: 1, den: 3, color: AMBER, label: "\\dfrac{1}{3}" },
-      ] },
-      { t: "callout", tone: "bad", s: "The pieces are different sizes, so you cannot add them directly — and you never add the denominators." },
-      { t: "math", s: "\\dfrac{1}{2} + \\dfrac{1}{3} = \\dfrac{3}{6} + \\dfrac{2}{6} = \\dfrac{5}{6}" },
-    ],
-    revealLabel: "Reveal",
-  },
-  {
-    tag: "Key idea", accent: "blue",
-    title: "Different denominators? Make the pieces the same size first.",
-    body: [
-      { t: "text", s: "Rewrite each fraction over a common denominator, then add. Here the common denominator is $6$." },
-      { t: "bars", bars: [
-        { num: 3, den: 6, color: BLUE, label: "\\dfrac{1}{2} = \\dfrac{3}{6}" },
-        { num: 2, den: 6, color: AMBER, label: "\\dfrac{1}{3} = \\dfrac{2}{6}" },
-      ] },
-    ],
-    reveal: [
-      { t: "bars", bars: [{ num: 5, den: 6, color: GREEN, label: "\\dfrac{5}{6}" }] },
-      { t: "math", s: "\\dfrac{3}{6} + \\dfrac{2}{6} = \\dfrac{5}{6}" },
-    ],
-    revealLabel: "Add them",
-  },
-  {
-    kind: "anim", tag: "Key idea", accent: "blue",
+    kind: "anim", category: "concept",
     title: "Equivalent fractions: split each piece.",
-    scene: { type: "split", num: 3, den: 5, factor: 2, color: BLUE },
+    scene: { type: "split", num: 3, den: 5, factor: 2 },
     steps: [
-      "Here is $\\dfrac{3}{5}$ — three of five equal pieces.",
-      "Cut every piece in half…",
-      "…now it is $\\dfrac{6}{10}$. The shaded amount hasn't changed — only the number of pieces.",
+      "Here is $\\dfrac{3}{5}$ — three of five equal pieces shaded.",
+      "Cut the first fifth in half…",
+      "…the second…",
+      "…the third…",
+      "…the fourth…",
+      "…and the fifth. Every piece is now split in two.",
+      "Ten pieces, six shaded — it is $\\dfrac{6}{10}$. The shaded amount never changed.",
     ],
-  },
-  {
-    tag: "Spot the mistake", accent: "red",
-    title: "What went wrong?",
-    body: [
-      { t: "text", s: "A student wrote:" },
-      { t: "math", s: "\\dfrac{2}{3} + \\dfrac{1}{6} = \\dfrac{3}{9}" },
-    ],
-    reveal: [
-      { t: "callout", tone: "bad", s: "They added the numerators **and** the denominators. Denominators are never added." },
-      { t: "callout", tone: "good", s: "Use a common denominator of $6$:" },
-      { t: "math", s: "\\dfrac{2}{3} + \\dfrac{1}{6} = \\dfrac{4}{6} + \\dfrac{1}{6} = \\dfrac{5}{6}" },
-    ],
-    revealLabel: "Reveal the mistake",
-  },
-  {
-    tag: "True or false?", accent: "amber",
-    title: "$1\\dfrac{1}{4} + 2\\dfrac{1}{2}$ can be done by adding the wholes and the fractions separately.",
-    body: [{ t: "text", s: "Would this method work?" }],
-    reveal: [
-      { t: "verdict", value: true },
-      { t: "callout", tone: "good", s: "Wholes: $1 + 2 = 3$. Parts: $\\dfrac{1}{4} + \\dfrac{2}{4} = \\dfrac{3}{4}$. Answer: $3\\dfrac{3}{4}$." },
-      { t: "callout", tone: "info", s: "Converting to improper fractions also works — both give the same answer." },
-    ],
-    revealLabel: "Reveal",
   },
 ];
 

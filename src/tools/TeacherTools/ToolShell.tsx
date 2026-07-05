@@ -288,44 +288,50 @@ const generateQuestion = (
 
 // ── 7. TEACHING SLIDES (optional) ─────────────────────────────────────────────
 //
-// Pass `teachingSlides` to ToolShell to add a "Teach" tab — a PowerPoint-style
-// deck the teacher presses through (→ / space / click; ← steps back). Omit the
-// prop entirely and no Teach tab appears. Two slide kinds:
+// Pass `teachingSlides` to ToolShell to add a "Teach" tab. The teacher first
+// picks a category (Concepts / True or False / Spot the Mistake), then presses
+// through that category's slides one beat at a time (→ / space / click; ← steps
+// back; Esc back to the menu). Omit the prop and no Teach tab appears.
+//
+// Every slide has a `category: "concept" | "trueFalse" | "spotMistake"`. Empty
+// categories show as "Coming soon" in the menu. Two slide kinds:
 //
 //   static (default) — body blocks + one optional `reveal` (press to reveal):
 //     block types: { t:"text", s } (｢$...$｣ inline maths, **bold**),
-//                  { t:"math", s }, { t:"bars", bars:[{num,den,color?,label?}] },
-//                  { t:"verdict", value:boolean }, { t:"callout", tone, s }
+//                  { t:"math", s }, { t:"bars", bars:[{num,den,label?}] },
+//                  { t:"verdict", value:boolean },
+//                  { t:"note", tone?:"good"|"bad"|"plain", label?, s }  (no emoji)
 //
-//   anim — a scene pressed through in stages, one caption per stage:
-//     { type:"split", num, den, factor }   cut each piece into `factor` (area stays put)
-//     { type:"combine", a, b, sumLabel }   two shaded bars flow into one (common denominator)
+//   anim — a scene choreographed across several beats, one caption per beat:
+//     { type:"split", num, den, factor, shadeByOne? }  cuts one piece per press; area stays put
+//     { type:"combine", a, b, sumLabel }               two shaded bars flow into one
 //
 // Delete this constant (and the teachingSlides prop below) if your tool has no deck.
 
 const TEACHING_SLIDES: TeachingSlide[] = [
   {
-    tag: "True or false?", accent: "amber",
+    category: "trueFalse",
     title: "$2 + 3 = 6$",
     body: [{ t: "text", s: "Decide before you reveal." }],
     reveal: [
       { t: "verdict", value: false },
-      { t: "callout", tone: "good", s: "It's $2 + 3 = 5$." },
+      { t: "note", tone: "good", label: "Correct", s: "$2 + 3 = 5$." },
     ],
     revealLabel: "Reveal",
   },
   {
-    kind: "anim", tag: "Key idea", accent: "blue",
+    kind: "anim", category: "concept",
     title: "Splitting each piece keeps the value the same.",
     scene: { type: "split", num: 1, den: 2, factor: 2 },
     steps: [
       "Here is $\\dfrac{1}{2}$.",
-      "Cut each piece in half…",
-      "…now it's $\\dfrac{2}{4}$ — the shaded amount hasn't changed.",
+      "Cut the first half…",
+      "…and the second half.",
+      "Now it's $\\dfrac{2}{4}$ — the shaded amount hasn't changed.",
     ],
   },
   {
-    kind: "anim", tag: "Key idea", accent: "green",
+    kind: "anim", category: "concept",
     title: "Adding: the pieces combine.",
     scene: { type: "combine", a: { num: 1, den: 4, label: "\\dfrac{1}{4}" }, b: { num: 2, den: 4, label: "\\dfrac{2}{4}" }, sumLabel: "\\dfrac{3}{4}" },
     steps: [

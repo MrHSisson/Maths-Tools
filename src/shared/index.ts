@@ -28,7 +28,7 @@ export { ToolShell } from "./ToolShell";
 export type { ToolShellProps } from "./ToolShell";
 
 export { TeachingDeck } from "./TeachingDeck";
-export type { TeachingSlide, TeachBlock, TeachBar, TeachAccent } from "./TeachingDeck";
+export type { TeachingSlide, TeachBlock, TeachBar, TeachScene, TeachCategory } from "./TeachingDeck";
 
 export { WorksheetBuilder } from "./WorksheetBuilder";
 export type { WorksheetBuilderProps } from "./WorksheetBuilder";
