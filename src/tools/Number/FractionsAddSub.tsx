@@ -33,11 +33,16 @@ const OPS_MS = {
   ],
 };
 
-const FORMAT_DD = {
+// Fractions default to improper answers; mixed numbers default to mixed-number
+// answers (the conventional form students give), so each sub-tool gets its own
+// dropdown with a different default.
+const makeFormatDD = (defaultValue: string) => ({
   key: "format", label: "Answer Format",
   options: [{ value: "improper", label: "Improper" }, { value: "mixed", label: "Mixed Number" }],
-  defaultValue: "improper",
-};
+  defaultValue,
+});
+const FORMAT_DD = makeFormatDD("improper");
+const FORMAT_DD_MIXED = makeFormatDD("mixed");
 
 const ANS_LT1_VAR       = { key: "answerLessThanOne", label: "Answer < 1",       defaultValue: false };
 const CARRY_VAR         = { key: "requiresCarrying",  label: "Requires Carrying", defaultValue: false };
@@ -62,7 +67,7 @@ const TOOL_CONFIG: ToolConfig = {
       name: "Mixed Numbers",
       instruction: "Work out:",
       variables: [CARRY_VAR],
-      dropdown: FORMAT_DD,
+      dropdown: FORMAT_DD_MIXED,
       multiSelect: OPS_MS,
       difficultySettings: {
         level3: { variables: [CARRY_VAR, EXTENDED_VAR] },
@@ -136,15 +141,16 @@ const buildAnswerWorking = (rv: RawValues, isMixedFmt: boolean): { answer: strin
 const opLatex = (isAdd: boolean) => (isAdd ? "+" : "-");
 const addOrSubLabel = (isAdd: boolean) => `${isAdd ? "Add" : "Subtract"} the numerators:`;
 
+// A simplify working step, or nothing when the fraction is already in lowest terms.
+const simplifyStep = (raw: number, den: number, sn: number, sd: number): WorkingStep[] =>
+  sd !== den && raw !== 0 ? [mStep(`Simplify (÷${gcd(raw, den)}):`, `\\dfrac{${raw}}{${den}} = ${fracL(sn, sd)}`)] : [];
+
 // ── 5. Core generators (produce RawValues, format-independent) ─────────────────
 
 const generateFractionCore = (level: DifficultyLevel, variables: Record<string, boolean>, isAdd: boolean): RawValues => {
   const opL = opLatex(isAdd);
   const extended = variables["extendedRange"] || false;
   const ansLT1 = variables["answerLessThanOne"] || false;
-
-  const simplifyStep = (raw: number, den: number, sn: number, sd: number): WorkingStep[] =>
-    sd !== den && raw !== 0 ? [mStep(`Simplify (÷${gcd(raw, den)}):`, `\\dfrac{${raw}}{${den}} = ${fracL(sn, sd)}`)] : [];
 
   for (let attempt = 0; attempt < 500; attempt++) {
 
@@ -247,8 +253,6 @@ const generateMixedCore = (level: DifficultyLevel, variables: Record<string, boo
       ? [mStep(`Convert ${mixedP(f)} to an improper fraction:`,
           `${f.whole}\\dfrac{${f.num}}{${f.den}} = \\dfrac{${f.whole} \\times ${f.den} + ${f.num}}{${f.den}} = \\dfrac{${num}}{${f.den}}`)]
       : [];
-  const simplifyStep = (raw: number, den: number, sn: number, sd: number): WorkingStep[] =>
-    sd !== den && raw !== 0 ? [mStep(`Simplify (÷${gcd(raw, den)}):`, `\\dfrac{${raw}}{${den}} = ${fracL(sn, sd)}`)] : [];
 
   for (let attempt = 0; attempt < 500; attempt++) {
 
