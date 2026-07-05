@@ -183,10 +183,10 @@ import { type PrintMode } from "../../shared";
 ### All available exports from `src/shared/`
 
 **Types** (use `type` keyword in imports):
-`DifficultyLevel` · `PrintMode` · `AnyQuestion` · `SimpleQuestion` · `WordedQuestion` · `WorkingStep` · `ToolConfig` · `ToolEntry` · `ToolDropdown` · `ToolMultiSelect` · `ToolMultiSelectConfig` · `ToolVariable` · `DifficultyLevelSettings` · `InfoSection` · `InfoItem` · `QOSnapshot` · `ToolShellDefaults` · `ToolShellProps`
+`DifficultyLevel` · `PrintMode` · `AnyQuestion` · `SimpleQuestion` · `WordedQuestion` · `WorkingStep` · `ToolConfig` · `ToolEntry` · `ToolDropdown` · `ToolMultiSelect` · `ToolMultiSelectConfig` · `ToolVariable` · `DifficultyLevelSettings` · `InfoSection` · `InfoItem` · `QOSnapshot` · `ToolShellDefaults` · `ToolShellProps` · `TeachingSlide` · `TeachBlock` · `TeachBar` · `TeachAccent`
 
 **Components / hooks**:
-`ToolShell` · `MathRenderer` · `InlineMath` · `QuestionDisplay` · `AnswerDisplay` · `DifficultyToggle` · `StandardQOPopover` · `DiffQOPopover` · `InlineQOPanel` · `InfoModal` · `MenuDropdown` · `PrintSplitButton`
+`ToolShell` · `TeachingDeck` · `MathRenderer` · `InlineMath` · `QuestionDisplay` · `AnswerDisplay` · `DifficultyToggle` · `StandardQOPopover` · `DiffQOPopover` · `InlineQOPanel` · `InfoModal` · `MenuDropdown` · `PrintSplitButton`
 
 **Helpers**:
 `randInt` · `pick` · `fracStr` · `mStr` · `pickActive` · `normalizeMultiSelect` · `step` · `tStep` · `mStep` · `fmt` · `ansEq` · `makeUniqueQ`
@@ -355,6 +355,11 @@ export interface ToolShellProps {
     worksheetEl: HTMLElement | null,
     ctx: PrintContext,  // { toolName, difficulty, isDifferentiated, numColumns, instruction, layout, showBorders }
   ) => void;
+
+  /** Optional. When provided, ToolShell shows a "Teach" mode — a PowerPoint-style
+   *  deck the teacher presses through (→ / space / click; ← steps back). Omit it
+   *  and no Teach tab appears. See "Teaching slides" below. */
+  teachingSlides?: TeachingSlide[];
 }
 ```
 
@@ -383,7 +388,28 @@ Font size indices: `0=text-lg  1=text-xl  2=text-3xl  3=text-4xl  4=text-5xl  5=
 
 ### What ToolShell provides automatically (never re-implement)
 
-Whiteboard / Worked Example / Worksheet modes · difficulty toggle · QO popovers (dropdown, variables, multiSelect, differentiated) · tool tab buttons (auto-hidden when only one sub-tool) · font size controls · PDF print · colour scheme picker · info modal · home button · shareable links (URL ⇄ state sync + "Copy Link to Setup" menu item)
+Whiteboard / Worked Example / Worksheet modes · **Teach mode (when `teachingSlides` supplied)** · difficulty toggle · QO popovers (dropdown, variables, multiSelect, differentiated) · tool tab buttons (auto-hidden when only one sub-tool) · font size controls · PDF print · colour scheme picker · info modal · home button · shareable links (URL ⇄ state sync + "Copy Link to Setup" menu item)
+
+### Teaching slides — the "Teach" deck
+
+Pass `teachingSlides={[...]}` to `ToolShell` to add a **Teach** tab: an embeddable, PowerPoint-style deck (`TeachingDeck`) the teacher presses through step by step (→ / space / click to advance a stage, ← to step back). No prop → no Teach tab; nothing else changes. Reference: `src/tools/Number/FractionsAddSub.tsx` (`TEACHING_SLIDES`); a minimal example lives in the `ToolShell.tsx` template.
+
+Two slide kinds (`TeachingSlide`):
+
+```ts
+// static (default kind) — body blocks + one optional reveal (press to reveal)
+{ tag: "True or false?", accent: "amber", title: "$2+3=6$",
+  body:   [{ t: "text", s: "Decide first." }],
+  reveal: [{ t: "verdict", value: false }, { t: "callout", tone: "good", s: "It's $2+3=5$." }],
+  revealLabel: "Reveal" }
+
+// anim — a scene pressed through in stages, one caption per stage
+{ kind: "anim", tag: "Key idea", accent: "blue", title: "Split each piece.",
+  scene: { type: "split", num: 3, den: 5, factor: 2 },   // cut each piece into `factor`; shaded area stays put
+  steps: ["Here is $\\dfrac{3}{5}$.", "Cut each piece in half…", "…now it's $\\dfrac{6}{10}$."] }
+```
+
+`TeachBlock` types: `{ t:"text", s }` (`$...$` inline maths, `**bold**`) · `{ t:"math", s }` · `{ t:"bars", bars:[{num,den,color?,label?}] }` · `{ t:"verdict", value }` · `{ t:"callout", tone:"good"|"bad"|"info", s }`. Scenes (`TeachScene`): `{ type:"split", num, den, factor, color? }` and `{ type:"combine", a, b, sumLabel }` (two shaded bars flow into one; needs a common denominator). Accents: `blue` `green` `red` `amber`. The URL `mode=teach` deep-links to the deck.
 
 ### Shareable links — URL parameter format
 
@@ -392,7 +418,7 @@ ToolShell mirrors the current setup into the URL query string (`history.replaceS
 | Param | Meaning | Example |
 |---|---|---|
 | `tool` | sub-tool key (omitted for the first tab) | `tool=findingRoots` |
-| `mode` | `example` or `worksheet` (whiteboard is default) | `mode=worksheet` |
+| `mode` | `example`, `worksheet` or `teach` (whiteboard is default) | `mode=worksheet` |
 | `level` | `1` `2` `3` | `level=2` |
 | `dd` | dropdown value for the current tool+level | `dd=fraction` |
 | `vars` | variable toggles; `-` prefix = off | `vars=integerC,-negCoeff` |

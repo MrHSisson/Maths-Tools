@@ -17,6 +17,7 @@ import {
   type InfoSection,
   type DifficultyLevel,
   type AnyQuestion,
+  type TeachingSlide,
   randInt, pick, step, tStep, mStep, fracStr, mStr, pickActive, fmt,
 } from "../../shared";
 
@@ -186,6 +187,7 @@ const INFO_SECTIONS: InfoSection[] = [
     { label: "Whiteboard",     detail: "Single question on the left, working space on the right. Visualiser available." },
     { label: "Worked Example", detail: "Full step-by-step solution revealed on demand." },
     { label: "Worksheet",      detail: "Grid of questions with PDF export." },
+    { label: "Teach",          detail: "Optional slide deck of key ideas (only appears when the tool provides teachingSlides)." },
   ]},
   { title: "Question Options", icon: "⚙️", content: [
     { label: "Dropdowns",    detail: "Select the question style or method for the active tool and level." },
@@ -284,6 +286,55 @@ const generateQuestion = (
 // Worksheet uniqueness is automatic — ToolShell wraps generateQuestion with the
 // standard retry-until-unique loop. No generateUniqueQ needed.
 
+// ── 7. TEACHING SLIDES (optional) ─────────────────────────────────────────────
+//
+// Pass `teachingSlides` to ToolShell to add a "Teach" tab — a PowerPoint-style
+// deck the teacher presses through (→ / space / click; ← steps back). Omit the
+// prop entirely and no Teach tab appears. Two slide kinds:
+//
+//   static (default) — body blocks + one optional `reveal` (press to reveal):
+//     block types: { t:"text", s } (｢$...$｣ inline maths, **bold**),
+//                  { t:"math", s }, { t:"bars", bars:[{num,den,color?,label?}] },
+//                  { t:"verdict", value:boolean }, { t:"callout", tone, s }
+//
+//   anim — a scene pressed through in stages, one caption per stage:
+//     { type:"split", num, den, factor }   cut each piece into `factor` (area stays put)
+//     { type:"combine", a, b, sumLabel }   two shaded bars flow into one (common denominator)
+//
+// Delete this constant (and the teachingSlides prop below) if your tool has no deck.
+
+const TEACHING_SLIDES: TeachingSlide[] = [
+  {
+    tag: "True or false?", accent: "amber",
+    title: "$2 + 3 = 6$",
+    body: [{ t: "text", s: "Decide before you reveal." }],
+    reveal: [
+      { t: "verdict", value: false },
+      { t: "callout", tone: "good", s: "It's $2 + 3 = 5$." },
+    ],
+    revealLabel: "Reveal",
+  },
+  {
+    kind: "anim", tag: "Key idea", accent: "blue",
+    title: "Splitting each piece keeps the value the same.",
+    scene: { type: "split", num: 1, den: 2, factor: 2 },
+    steps: [
+      "Here is $\\dfrac{1}{2}$.",
+      "Cut each piece in half…",
+      "…now it's $\\dfrac{2}{4}$ — the shaded amount hasn't changed.",
+    ],
+  },
+  {
+    kind: "anim", tag: "Key idea", accent: "green",
+    title: "Adding: the pieces combine.",
+    scene: { type: "combine", a: { num: 1, den: 4, label: "\\dfrac{1}{4}" }, b: { num: 2, den: 4, label: "\\dfrac{2}{4}" }, sumLabel: "\\dfrac{3}{4}" },
+    steps: [
+      "Start with $\\dfrac{1}{4}$ and $\\dfrac{2}{4}$ (same denominator).",
+      "Slide the pieces together to get $\\dfrac{3}{4}$.",
+    ],
+  },
+];
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // END OF TOOL-SPECIFIC SECTION
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -302,6 +353,7 @@ export default function App() {
       config={TOOL_CONFIG}
       infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
+      teachingSlides={TEACHING_SLIDES}
     />
   );
 }
