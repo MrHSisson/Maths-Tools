@@ -409,7 +409,7 @@ Every slide has a `category: "concept" | "trueFalse" | "spotMistake"` (`TeachCat
   steps: ["Here is $\\dfrac{3}{5}$.", "Cut the first fifth…", /* …one per piece… */ "…now it's $\\dfrac{6}{10}$."] }
 ```
 
-`TeachBlock` types: `{ t:"text", s }` (`$...$` inline maths, `**bold**`) · `{ t:"math", s }` · `{ t:"bars", bars:[{num,den,label?}] }` · `{ t:"verdict", value }` · `{ t:"note", tone?:"good"|"bad"|"plain", label?, s }` (clean bordered note, no emoji). Scenes (`TeachScene`): `{ type:"split", num, den, factor, shadeByOne? }` (an anim slide's beat count is derived from the scene — a split runs `den` cut beats plus a relabel, so supply that many captions) and `{ type:"combine", a, b, sumLabel }` (two shaded bars flow into one; common denominator). The URL `mode=teach` deep-links to the deck.
+`TeachBlock` types: `{ t:"text", s }` (`$...$` inline maths, `**bold**`) · `{ t:"math", s }` · `{ t:"bars", bars:[{num,den,label?}] }` · `{ t:"verdict", value }` · `{ t:"note", tone?:"good"|"bad"|"plain", label?, s }` (clean bordered note, no emoji). Scenes (`TeachScene`): `{ type:"split", num, den, factor, shadeByOne?, predict? }` (cuts one piece per press, then shows the answer as the ×factor equation `num/den = (num·f)/(den·f)`; `predict` hides the answer behind one extra beat for a "You do" test — an anim slide's beat count is derived from the scene, so supply that many captions) and `{ type:"combine", a, b, sumLabel }` (two shaded bars flow into one; common denominator). Slides are hand-authored, misconception-driven examples — no generators (that's what Whiteboard/Worksheet are for). The URL `mode=teach` deep-links to the deck.
 
 ### Shareable links — URL parameter format
 

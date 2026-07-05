@@ -459,23 +459,57 @@ const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null =>
 };
 
 // ── Teaching slides ────────────────────────────────────────────────────────────
-// Rebuilt around the animated deck: press through one beat at a time. The True
-// or False and Spot the Mistake categories are yet to be built (they show as
+// Hand-authored, misconception-driven examples that cover the teaching part of a
+// lesson (before moving to Whiteboard / Worksheet). The Concepts sequence below
+// runs I do → We do → You do on equivalent fractions by splitting. The True or
+// False and Spot the Mistake categories are yet to be built (they show as
 // "Coming soon" in the Teach menu until slides with those categories exist).
 
 const TEACHING_SLIDES: TeachingSlide[] = [
   {
+    // I DO — teacher demonstrates that splitting each piece doesn't change the value.
     kind: "anim", category: "concept",
-    title: "Equivalent fractions: split each piece.",
+    title: "I do: splitting each piece keeps the value the same.",
     scene: { type: "split", num: 3, den: 5, factor: 2 },
     steps: [
       "Here is $\\dfrac{3}{5}$ — three of five equal pieces shaded.",
-      "Cut the first fifth in half…",
+      "Watch: I cut the first fifth in half…",
       "…the second…",
       "…the third…",
       "…the fourth…",
-      "…and the fifth. Every piece is now split in two.",
-      "Ten pieces, six shaded — it is $\\dfrac{6}{10}$. The shaded amount never changed.",
+      "…and the fifth. Every piece is now in two.",
+      "Six shaded out of ten. Splitting each piece in two is the same as multiplying the top and bottom by 2.",
+    ],
+  },
+  {
+    // WE DO — same idea, worked through together.
+    kind: "anim", category: "concept",
+    title: "We do: let's split $\\dfrac{2}{3}$ together.",
+    scene: { type: "split", num: 2, den: 3, factor: 2 },
+    steps: [
+      "Here is $\\dfrac{2}{3}$. What will we do to each piece?",
+      "We cut the first third in half…",
+      "…the second…",
+      "…and the third. How many pieces now?",
+      "Four shaded out of six — again, top and bottom both multiplied by 2.",
+    ],
+  },
+  {
+    // YOU DO — students predict before the answer is revealed.
+    kind: "anim", category: "concept",
+    title: "You do: your turn with $\\dfrac{3}{7}$.",
+    scene: { type: "split", num: 3, den: 7, factor: 2, predict: true },
+    steps: [
+      "Here is $\\dfrac{3}{7}$. Split each piece in half — predict the answer first.",
+      "Cut the first seventh in half…",
+      "…the second…",
+      "…the third…",
+      "…the fourth…",
+      "…the fifth…",
+      "…the sixth…",
+      "…and the seventh. Every piece is split.",
+      "So — what fraction is shaded now? Decide before you reveal.",
+      "$\\dfrac{6}{14}$: the top and bottom are both multiplied by 2.",
     ],
   },
 ];

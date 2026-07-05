@@ -32,7 +32,7 @@ export type TeachBlock =
   | { t: "note"; tone?: "good" | "bad" | "plain"; label?: string; s: string }; // clean bordered note (no emoji)
 
 export type TeachScene =
-  | { type: "split"; num: number; den: number; factor: number; shadeByOne?: boolean }  // cut each piece into `factor`
+  | { type: "split"; num: number; den: number; factor: number; shadeByOne?: boolean; predict?: boolean }  // cut each piece into `factor`; predict hides the answer
   | { type: "combine"; a: TeachBar; b: TeachBar; sumLabel: string };
 
 export interface StaticSlide {
@@ -102,47 +102,54 @@ function Bar({ num, den, label, shade = true }: TeachBar) {
 
 // How many beats (max step index) a scene runs for.
 const sceneMaxStep = (s: TeachScene): number => {
-  if (s.type === "split") return (s.shadeByOne ? s.num : 0) + s.den + 1;  // [initial/shade] + one cut per piece + relabel
+  if (s.type === "split") return (s.shadeByOne ? s.num : 0) + s.den + 1 + (s.predict ? 1 : 0);
   return 1;                                                               // combine: 0 apart, 1 together
 };
 
 // "Split": the shaded area never moves while each original piece is cut into
-// `factor` sub-pieces — one piece per press — then the label ticks over.
-function SplitScene({ num, den, factor, shadeByOne = false, step }: { num: number; den: number; factor: number; shadeByOne?: boolean; step: number }) {
+// `factor` sub-pieces — one piece per press. The answer (relabel + the
+// ×factor equation) appears on the final beat; in `predict` mode it stays "?"
+// behind one extra beat so students can guess first.
+function SplitScene({ num, den, factor, shadeByOne = false, predict = false, step }: { num: number; den: number; factor: number; shadeByOne?: boolean; predict?: boolean; step: number }) {
   const W = 440, H = 62, seg = W / den;
   const shadeSteps = shadeByOne ? num : 0;
   const shadedPieces = shadeByOne ? clamp(step, 0, num) : num;
   const cutStart = shadeSteps + 1;
   const cutCount = clamp(step - cutStart + 1, 0, den);
-  const relabel = step >= shadeSteps + den + 1;
+  const answerStep = shadeSteps + den + 1 + (predict ? 1 : 0);
+  const promptStep = predict ? shadeSteps + den + 1 : Infinity;
+  const showAnswer = step >= answerStep;
+  const showPrompt = step >= promptStep && !showAnswer;
+  const nf = num * factor, df = den * factor;
+  const labelTex = showAnswer ? `\\dfrac{${nf}}{${df}}` : showPrompt ? `\\dfrac{?}{\\,?\\,}` : `\\dfrac{${num}}{${den}}`;
 
   return (
-    <div className="flex items-center justify-center gap-6 flex-wrap">
-      <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="max-w-full" preserveAspectRatio="xMidYMid meet">
-        {/* piece backgrounds */}
-        {range(0, den).map((i) => <rect key={"p" + i} x={i * seg} y={0} width={seg} height={H} fill="#fff" stroke="#334155" strokeWidth={1.5} />)}
-        {/* shaded pieces (fill in one-by-one when shadeByOne) */}
-        {range(0, num).map((i) => (
-          <rect key={"s" + i} x={i * seg} y={0} width={seg} height={H} fill={NAVY}
-            style={{ transition: "opacity .35s ease", opacity: i < shadedPieces ? 0.92 : 0 }} />
-        ))}
-        {/* cut lines appear per piece as it is split */}
-        {range(0, den).flatMap((p) =>
-          range(1, factor).map((k) => {
-            const x = p * seg + (k * seg) / factor;
-            const shown = p < cutCount;
-            return (
-              <line key={`c${p}-${k}`} x1={x} y1={0} x2={x} y2={H} stroke={AMBER} strokeWidth={2.5} strokeDasharray="5 3"
-                style={{ transition: "opacity .3s ease, transform .3s cubic-bezier(.2,.8,.2,1)", transformBox: "fill-box", transformOrigin: "center", opacity: shown ? 1 : 0, transform: shown ? "scaleY(1)" : "scaleY(0.05)" }} />
-            );
-          }),
-        )}
-        {range(1, den).map((i) => <line key={"b" + i} x1={i * seg} y1={0} x2={i * seg} y2={H} stroke="#334155" strokeWidth={2} />)}
-        <rect x={1} y={1} width={W - 2} height={H - 2} fill="none" stroke="#334155" strokeWidth={2.5} rx={6} />
-      </svg>
-      <div className="relative text-3xl" style={{ minWidth: 96, height: 66 }}>
-        <span className="absolute inset-0 flex items-center" style={{ opacity: relabel ? 0 : 1, transition: "opacity .35s ease" }}><Tex tex={`\\dfrac{${num}}{${den}}`} /></span>
-        <span className="absolute inset-0 flex items-center" style={{ opacity: relabel ? 1 : 0, transition: "opacity .35s ease" }}><Tex tex={`\\dfrac{${num * factor}}{${den * factor}}`} /></span>
+    <div className="flex flex-col items-center gap-4">
+      <div className="flex items-center justify-center gap-6 flex-wrap">
+        <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="max-w-full" preserveAspectRatio="xMidYMid meet">
+          {range(0, den).map((i) => <rect key={"p" + i} x={i * seg} y={0} width={seg} height={H} fill="#fff" stroke="#334155" strokeWidth={1.5} />)}
+          {range(0, num).map((i) => (
+            <rect key={"s" + i} x={i * seg} y={0} width={seg} height={H} fill={NAVY}
+              style={{ transition: "opacity .35s ease", opacity: i < shadedPieces ? 0.92 : 0 }} />
+          ))}
+          {range(0, den).flatMap((p) =>
+            range(1, factor).map((k) => {
+              const x = p * seg + (k * seg) / factor;
+              const shown = p < cutCount;
+              return (
+                <line key={`c${p}-${k}`} x1={x} y1={0} x2={x} y2={H} stroke={AMBER} strokeWidth={2.5} strokeDasharray="5 3"
+                  style={{ transition: "opacity .3s ease, transform .3s cubic-bezier(.2,.8,.2,1)", transformBox: "fill-box", transformOrigin: "center", opacity: shown ? 1 : 0, transform: shown ? "scaleY(1)" : "scaleY(0.05)" }} />
+              );
+            }),
+          )}
+          {range(1, den).map((i) => <line key={"b" + i} x1={i * seg} y1={0} x2={i * seg} y2={H} stroke="#334155" strokeWidth={2} />)}
+          <rect x={1} y={1} width={W - 2} height={H - 2} fill="none" stroke="#334155" strokeWidth={2.5} rx={6} />
+        </svg>
+        <div className="text-3xl flex items-center" style={{ minWidth: 96, height: 66 }}><Tex tex={labelTex} /></div>
+      </div>
+      {/* the actual result: multiplying top and bottom by `factor` */}
+      <div className="text-gray-900" style={{ fontSize: "1.8rem", minHeight: "2.4rem", opacity: showAnswer ? 1 : 0, transition: "opacity .4s ease" }}>
+        <Tex tex={`\\dfrac{${num}}{${den}} = \\dfrac{${num} \\times ${factor}}{${den} \\times ${factor}} = \\dfrac{${nf}}{${df}}`} />
       </div>
     </div>
   );
@@ -289,10 +296,8 @@ export function TeachingDeck({ slides }: { slides: TeachingSlide[] }) {
           <>
             <div className="my-3"><SceneView scene={(slide as AnimSlide).scene} step={step} /></div>
             <div className="min-h-[3rem] flex items-center justify-center text-xl text-gray-700 text-center"><RichText s={caption} /></div>
-            {/* per-beat progress pips */}
-            <div className="flex justify-center gap-1.5">
-              {range(0, maxStep + 1).map((i) => <span key={i} className="rounded-full" style={{ width: 7, height: 7, background: i <= step ? color : "#e5e7eb" }} />)}
-            </div>
+            {/* current / total beat counter */}
+            <div className="text-center font-bold" style={{ color }}>{step + 1} / {maxStep + 1}</div>
           </>
         ) : (
           <>
