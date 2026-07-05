@@ -1,6 +1,7 @@
 import {
   ToolShell,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type QOSnapshot,
+  type TeachingSlide,
   randInt, mStep, pickActive,
 } from "../../shared";
 
@@ -457,6 +458,101 @@ const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null =>
   return { ...q, answer, answerLatex, working } as unknown as AnyQuestion;
 };
 
+// ── Teaching slides — curated key ideas & misconceptions ───────────────────────
+
+const BLUE = "#2563eb", GREEN = "#16a34a", AMBER = "#d97706";
+
+const TEACHING_SLIDES: TeachingSlide[] = [
+  {
+    tag: "Key idea", accent: "blue",
+    title: "Same denominator? Just add the numerators.",
+    body: [
+      { t: "text", s: "The denominator tells you the size of the pieces. When the pieces are the same size, you just count how many you have." },
+      { t: "bars", bars: [
+        { num: 1, den: 5, color: BLUE, label: "\\dfrac{1}{5}" },
+        { num: 3, den: 5, color: BLUE, label: "\\dfrac{3}{5}" },
+      ] },
+      { t: "math", s: "\\dfrac{1}{5} + \\dfrac{3}{5} = \\dfrac{4}{5}" },
+    ],
+    reveal: [
+      { t: "bars", bars: [{ num: 4, den: 5, color: GREEN, label: "\\dfrac{4}{5}" }] },
+      { t: "callout", tone: "info", s: "The denominator stays as $5$ — you are not making new-sized pieces, only counting more of them." },
+    ],
+    revealLabel: "Show the total",
+  },
+  {
+    tag: "True or false?", accent: "amber",
+    title: "$\\dfrac{1}{2} + \\dfrac{1}{3} = \\dfrac{2}{5}$",
+    body: [{ t: "text", s: "Decide with the class before you reveal." }],
+    reveal: [
+      { t: "verdict", value: false },
+      { t: "bars", bars: [
+        { num: 1, den: 2, color: BLUE, label: "\\dfrac{1}{2}" },
+        { num: 1, den: 3, color: AMBER, label: "\\dfrac{1}{3}" },
+      ] },
+      { t: "callout", tone: "bad", s: "The pieces are different sizes, so you cannot add them directly — and you never add the denominators." },
+      { t: "math", s: "\\dfrac{1}{2} + \\dfrac{1}{3} = \\dfrac{3}{6} + \\dfrac{2}{6} = \\dfrac{5}{6}" },
+    ],
+    revealLabel: "Reveal",
+  },
+  {
+    tag: "Key idea", accent: "blue",
+    title: "Different denominators? Make the pieces the same size first.",
+    body: [
+      { t: "text", s: "Rewrite each fraction over a common denominator, then add. Here the common denominator is $6$." },
+      { t: "bars", bars: [
+        { num: 3, den: 6, color: BLUE, label: "\\dfrac{1}{2} = \\dfrac{3}{6}" },
+        { num: 2, den: 6, color: AMBER, label: "\\dfrac{1}{3} = \\dfrac{2}{6}" },
+      ] },
+    ],
+    reveal: [
+      { t: "bars", bars: [{ num: 5, den: 6, color: GREEN, label: "\\dfrac{5}{6}" }] },
+      { t: "math", s: "\\dfrac{3}{6} + \\dfrac{2}{6} = \\dfrac{5}{6}" },
+    ],
+    revealLabel: "Add them",
+  },
+  {
+    tag: "Key idea", accent: "blue",
+    title: "Equivalent fractions: multiply top and bottom by the same number.",
+    body: [
+      { t: "math", s: "\\dfrac{1}{3} = \\dfrac{1 \\times 4}{3 \\times 4} = \\dfrac{4}{12}" },
+      { t: "bars", bars: [
+        { num: 1, den: 3, color: BLUE, label: "\\dfrac{1}{3}" },
+        { num: 4, den: 12, color: BLUE, label: "\\dfrac{4}{12}" },
+      ] },
+    ],
+    reveal: [
+      { t: "callout", tone: "info", s: "The shaded amount is identical — you have only cut each piece into smaller equal pieces, so the value does not change." },
+    ],
+    revealLabel: "Why is it the same?",
+  },
+  {
+    tag: "Spot the mistake", accent: "red",
+    title: "What went wrong?",
+    body: [
+      { t: "text", s: "A student wrote:" },
+      { t: "math", s: "\\dfrac{2}{3} + \\dfrac{1}{6} = \\dfrac{3}{9}" },
+    ],
+    reveal: [
+      { t: "callout", tone: "bad", s: "They added the numerators **and** the denominators. Denominators are never added." },
+      { t: "callout", tone: "good", s: "Use a common denominator of $6$:" },
+      { t: "math", s: "\\dfrac{2}{3} + \\dfrac{1}{6} = \\dfrac{4}{6} + \\dfrac{1}{6} = \\dfrac{5}{6}" },
+    ],
+    revealLabel: "Reveal the mistake",
+  },
+  {
+    tag: "True or false?", accent: "amber",
+    title: "$1\\dfrac{1}{4} + 2\\dfrac{1}{2}$ can be done by adding the wholes and the fractions separately.",
+    body: [{ t: "text", s: "Would this method work?" }],
+    reveal: [
+      { t: "verdict", value: true },
+      { t: "callout", tone: "good", s: "Wholes: $1 + 2 = 3$. Parts: $\\dfrac{1}{4} + \\dfrac{2}{4} = \\dfrac{3}{4}$. Answer: $3\\dfrac{3}{4}$." },
+      { t: "callout", tone: "info", s: "Converting to improper fractions also works — both give the same answer." },
+    ],
+    revealLabel: "Reveal",
+  },
+];
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Exposed for the generator smoke-test suite (src/tests/generators.test.ts).
@@ -469,6 +565,7 @@ export default function App() {
       infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       reformatQuestion={reformatQuestion}
+      teachingSlides={TEACHING_SLIDES}
       defaults={{ numQuestions: 12, numColumns: 3 }}
     />
   );

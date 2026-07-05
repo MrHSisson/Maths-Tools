@@ -17,6 +17,7 @@ import { PrintSplitButton } from "./components/PrintSplitButton";
 import { handlePrint } from "./print";
 import type { PrintContext } from "./printDiagram";
 import { WorksheetBuilder } from "./WorksheetBuilder";
+import { TeachingDeck, type TeachingSlide } from "./TeachingDeck";
 import { useDevMode } from "../devMode";
 
 export interface ToolShellProps {
@@ -50,6 +51,9 @@ export interface ToolShellProps {
   reformatQuestion?: (q: AnyQuestion, qo: QOSnapshot) => AnyQuestion | null;
   /** Custom print handler for diagram tools. Receives the worksheet array, print mode, the worksheet container DOM element (for SVG extraction), and the live print context (columns, differentiated, etc.). Diagram tools should pass this to the shared handleDiagramPrint. */
   customPrintHandler?: (questions: AnyQuestion[], printMode: PrintMode, worksheetEl: HTMLElement | null, ctx: PrintContext) => void;
+  /** Optional curated teaching slides. When provided, a "Teach" mode is shown
+   *  that runs the slides as a PowerPoint-style deck (see TeachingDeck). */
+  teachingSlides?: TeachingSlide[];
 }
 
 /** Scales its content up to fill the available space (never shrinks below 1x).
@@ -115,7 +119,7 @@ function ScaleToFit({ children, maxScale = 3 }: { children: ReactNode; maxScale?
   );
 }
 
-export const ToolShell = ({ config, infoSections, generateQuestion, generateUniqueQ: generateUniqueQProp, defaults = {}, stepRenderer, questionRenderer, answerRenderer, reformatQuestion, customPrintHandler }: ToolShellProps) => {
+export const ToolShell = ({ config, infoSections, generateQuestion, generateUniqueQ: generateUniqueQProp, defaults = {}, stepRenderer, questionRenderer, answerRenderer, reformatQuestion, customPrintHandler, teachingSlides }: ToolShellProps) => {
   const generateUniqueQ = generateUniqueQProp ?? makeUniqueQ(generateQuestion);
   const toolKeys = Object.keys(config.tools);
 
@@ -135,7 +139,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       return out;
     };
     const toolParam = p.get("tool");
-    const modeMap: Record<string, "whiteboard" | "single" | "worksheet" | "builder"> = { whiteboard: "whiteboard", example: "single", worksheet: "worksheet", builder: "builder" };
+    const modeMap: Record<string, "whiteboard" | "single" | "worksheet" | "builder" | "teach"> = { whiteboard: "whiteboard", example: "single", worksheet: "worksheet", builder: "builder", teach: "teach" };
     const levelMap: Record<string, DifficultyLevel> = { "1": "level1", "2": "level2", "3": "level3" };
     const levelParam = levelMap[p.get("level") ?? ""];
     const intParam = (key: string, min: number, max: number): number | null => {
@@ -176,7 +180,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   });
 
   const [currentTool, setCurrentTool] = useState<string>(urlInit.tool);
-  const [mode, setMode] = useState<"whiteboard" | "single" | "worksheet" | "builder">(urlInit.mode);
+  const [mode, setMode] = useState<"whiteboard" | "single" | "worksheet" | "builder" | "teach">(urlInit.mode);
   // Worked Example is always available; only its step-by-step navigation (one
   // step at a time) is reserved for Developing mode.
   const devMode = useDevMode();
@@ -465,7 +469,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     const levelOrToolChanged = prevDiffRef.current !== difficulty || prevToolRef.current !== currentTool;
     prevDiffRef.current = difficulty;
     prevToolRef.current = currentTool;
-    if (mode === "worksheet") return;
+    if (mode === "worksheet" || mode === "teach") return;
     // reformatQuestion only applies to pure QO-option changes (same maths, new
     // display). A level or sub-tool switch must always yield a fresh question.
     if (!levelOrToolChanged && reformatQuestion) {
@@ -483,7 +487,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   useEffect(() => {
     const p = new URLSearchParams();
     if (currentTool !== toolKeys[0]) p.set("tool", currentTool);
-    if (mode !== "whiteboard") p.set("mode", mode === "single" ? "example" : mode === "builder" ? "builder" : "worksheet");
+    if (mode !== "whiteboard") p.set("mode", mode === "single" ? "example" : mode === "builder" ? "builder" : mode === "teach" ? "teach" : "worksheet");
     if (difficulty !== "level1") p.set("level", difficulty.slice(-1));
     const t = config.tools[currentTool];
     const ddCfg = t.difficultySettings?.[difficulty]?.dropdown ?? t.dropdown;
@@ -1211,7 +1215,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         <div className="max-w-6xl mx-auto">
           <h1 className="text-5xl font-bold text-center mb-8" style={{ color: "#000" }}>{config.pageTitle}</h1>
           <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
-          {toolKeys.length > 1 && mode !== "builder" && (
+          {toolKeys.length > 1 && mode !== "builder" && mode !== "teach" && (
             <>
               <div className="flex justify-center gap-4 mb-6">
                 {toolKeys.map(k => (
@@ -1226,9 +1230,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           )}
           {mode !== "builder" && (
             <div className="flex justify-center gap-4 mb-8">
-              {(["whiteboard", "single", "worksheet"] as const)
+              {([...(["whiteboard", "single", "worksheet"] as const), ...(teachingSlides && teachingSlides.length ? (["teach"] as const) : [])] as const)
                 .map(m => {
-                  const label = m === "whiteboard" ? "Whiteboard" : m === "single" ? "Worked Example" : "Worksheet";
+                  const label = m === "whiteboard" ? "Whiteboard" : m === "single" ? "Worked Example" : m === "teach" ? "Teach" : "Worksheet";
                   return (
                     <button key={m} onClick={() => { setMode(m); setPresenterMode(false); setWbFullscreen(false); }}
                       className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${mode === m ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
@@ -1268,7 +1272,10 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                   <div ref={worksheetWrapRef}>{renderWorksheet()}</div>
                 </>
           )}
-          {mode !== "worksheet" && mode !== "builder" && (
+          {mode === "teach" && teachingSlides && (
+            <TeachingDeck slides={teachingSlides} />
+          )}
+          {mode !== "worksheet" && mode !== "builder" && mode !== "teach" && (
             <div className="flex flex-col gap-6">
               <div className="rounded-xl shadow-lg">
                 {renderControlBar()}
