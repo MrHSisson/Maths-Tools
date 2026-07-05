@@ -45,6 +45,7 @@ const FORMAT_DD = makeFormatDD("improper");
 const FORMAT_DD_MIXED = makeFormatDD("mixed");
 
 const ANS_LT1_VAR       = { key: "answerLessThanOne", label: "Answer < 1",       defaultValue: true  };
+const ALLOW_NEG_VAR     = { key: "allowNegatives",    label: "Allow Negatives",  defaultValue: true  };
 const CARRY_VAR         = { key: "requiresCarrying",  label: "Requires Carrying", defaultValue: false };
 const EXTENDED_VAR      = { key: "extendedRange",     label: "Extended Range",    defaultValue: false };
 
@@ -55,11 +56,11 @@ const TOOL_CONFIG: ToolConfig = {
     fractions: {
       name: "Fractions",
       instruction: "Work out:",
-      variables: [ANS_LT1_VAR],
+      variables: [ANS_LT1_VAR, ALLOW_NEG_VAR],
       dropdown: FORMAT_DD,
       multiSelect: OPS_MS,
       difficultySettings: {
-        level3: { variables: [ANS_LT1_VAR, EXTENDED_VAR] },
+        level3: { variables: [ANS_LT1_VAR, ALLOW_NEG_VAR, EXTENDED_VAR] },
       },
     },
 
@@ -97,6 +98,7 @@ const INFO_SECTIONS: InfoSection[] = [
     { label: "Operations",       detail: "Choose Addition, Subtraction, or both. With both active, questions are a random mix." },
     { label: "Answer Format",    detail: "Improper shows the answer as a top-heavy fraction; Mixed Number converts an improper answer to a whole number and fraction." },
     { label: "Answer < 1",       detail: "Fractions only, on by default. Keeps every answer below 1 (a proper fraction) so the result is never an improper or mixed number. Turn it off to allow answers of 1 or more." },
+    { label: "Allow Negatives",  detail: "Fractions only, on by default. Lets subtraction give a negative answer (e.g. 1/4 − 3/4 = −1/2). Turn it off to restrict subtraction so the larger fraction always comes first and the answer stays positive." },
     { label: "Extended Range",   detail: "Level 3 only. Allows larger denominators and lowest common multiples for harder questions." },
     { label: "Differentiated",   detail: "Worksheet mode produces three columns — one per level — simultaneously." },
   ]},
@@ -122,9 +124,11 @@ const mixedP = (f: MixedFmt): string => (f.whole === 0 ? fracP(f.num, f.den) : f
 
 const ansParts = (sn: number, sd: number, isMixedFmt: boolean): { latex: string; plain: string } => {
   if (sn === 0) return { latex: "0", plain: "0" };
+  const sign = sn < 0 ? "-" : "";
+  const a = Math.abs(sn);
   if (sd === 1) return { latex: `${sn}`, plain: `${sn}` };
-  if (isMixedFmt && sn > sd) { const m = toMixed(sn, sd); return { latex: mixedL(m), plain: mixedP(m) }; }
-  return { latex: fracL(sn, sd), plain: fracP(sn, sd) };
+  if (isMixedFmt && a > sd) { const m = toMixed(a, sd); return { latex: `${sign}${mixedL(m)}`, plain: `${sign}${mixedP(m)}` }; }
+  return { latex: `${sign}${fracL(a, sd)}`, plain: `${sign}${fracP(a, sd)}` };
 };
 
 // Combine the fixed core working with the format-dependent tail (convert back
@@ -151,6 +155,7 @@ const generateFractionCore = (level: DifficultyLevel, variables: Record<string, 
   const opL = opLatex(isAdd);
   const extended = variables["extendedRange"] || false;
   const ansLT1 = variables["answerLessThanOne"] || false;
+  const restrictNeg = !(variables["allowNegatives"] ?? true);   // off => keep the result non-negative
 
   for (let attempt = 0; attempt < 500; attempt++) {
 
@@ -159,7 +164,7 @@ const generateFractionCore = (level: DifficultyLevel, variables: Record<string, 
       let num1 = randInt(1, den - 1);
       let num2 = randInt(1, den - 1);
       if (num1 === num2) continue;
-      if (!isAdd && num1 < num2) { [num1, num2] = [num2, num1]; }
+      if (!isAdd && restrictNeg && num1 < num2) { [num1, num2] = [num2, num1]; }
       if (isAdd && num1 + num2 === den && Math.random() < 0.8) continue;
       const raw = isAdd ? num1 + num2 : num1 - num2;
       if (ansLT1 && raw >= den) continue;
@@ -185,7 +190,7 @@ const generateFractionCore = (level: DifficultyLevel, variables: Record<string, 
       const smallD = Math.min(den1, den2), largeD = Math.max(den1, den2), m = largeD / smallD;
       let num1 = randInt(1, den1 - 1);
       let num2 = randInt(1, den2 - 1);
-      if (!isAdd && num1 / den1 < num2 / den2) { [num1, den1, num2, den2] = [num2, den2, num1, den1]; }
+      if (!isAdd && restrictNeg && num1 / den1 < num2 / den2) { [num1, den1, num2, den2] = [num2, den2, num1, den1]; }
       const sc1 = den1 === smallD ? num1 * m : num1;
       const sc2 = den1 === smallD ? num2 : num2 * m;
       const raw = isAdd ? sc1 + sc2 : sc1 - sc2;
@@ -214,7 +219,7 @@ const generateFractionCore = (level: DifficultyLevel, variables: Record<string, 
     if (extended && (cl < 65 || cl >= 225)) continue;
     let num1 = randInt(1, den1 - 1);
     let num2 = randInt(1, den2 - 1);
-    if (!isAdd && num1 / den1 < num2 / den2) { [num1, den1, num2, den2] = [num2, den2, num1, den1]; }
+    if (!isAdd && restrictNeg && num1 / den1 < num2 / den2) { [num1, den1, num2, den2] = [num2, den2, num1, den1]; }
     const m1 = cl / den1, m2 = cl / den2;
     const sc1 = num1 * m1, sc2 = num2 * m2;
     const raw = isAdd ? sc1 + sc2 : sc1 - sc2;
