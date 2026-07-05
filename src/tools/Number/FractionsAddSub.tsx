@@ -512,19 +512,14 @@ const TEACHING_SLIDES: TeachingSlide[] = [
     revealLabel: "Add them",
   },
   {
-    tag: "Key idea", accent: "blue",
-    title: "Equivalent fractions: multiply top and bottom by the same number.",
-    body: [
-      { t: "math", s: "\\dfrac{1}{3} = \\dfrac{1 \\times 4}{3 \\times 4} = \\dfrac{4}{12}" },
-      { t: "bars", bars: [
-        { num: 1, den: 3, color: BLUE, label: "\\dfrac{1}{3}" },
-        { num: 4, den: 12, color: BLUE, label: "\\dfrac{4}{12}" },
-      ] },
+    kind: "anim", tag: "Key idea", accent: "blue",
+    title: "Equivalent fractions: split each piece.",
+    scene: { type: "split", num: 3, den: 5, factor: 2, color: BLUE },
+    steps: [
+      "Here is $\\dfrac{3}{5}$ — three of five equal pieces.",
+      "Cut every piece in half…",
+      "…now it is $\\dfrac{6}{10}$. The shaded amount hasn't changed — only the number of pieces.",
     ],
-    reveal: [
-      { t: "callout", tone: "info", s: "The shaded amount is identical — you have only cut each piece into smaller equal pieces, so the value does not change." },
-    ],
-    revealLabel: "Why is it the same?",
   },
   {
     tag: "Spot the mistake", accent: "red",
