@@ -394,7 +394,7 @@ Whiteboard / Worked Example / Worksheet modes · **Teach mode (when `teachingSli
 
 Pass `teachingSlides={[...]}` to `ToolShell` to add a **Teach** tab: an embeddable `TeachingDeck`. The teacher first picks a **category** from a menu, then presses through that category's slides one **beat** at a time (→ / space / click to advance, ← to step back, Esc back to the menu). No prop → no Teach tab. Reference: `src/tools/Number/FractionsAddSub.tsx` (`TEACHING_SLIDES`); a fuller example lives in the `ToolShell.tsx` template.
 
-Every slide has a `category: "concept" | "trueFalse" | "spotMistake"` (`TeachCategory`). The menu lists all three; a category with no slides shows as **"Coming soon"**. Styling matches the rest of the app (white cards, navy accents) — no emoji. Two slide kinds (`TeachingSlide`):
+Every slide has a `category: "concept" | "trueFalse" | "spotMistake"` (`TeachCategory`) and an optional `phase: "iDo" | "weDo" | "youDo"` (`TeachPhase`) shown as a corner badge. The menu lists all three categories; an empty one shows as **"Coming soon"**. Styling matches the rest of the app (white cards, navy accents) — no emoji. Two slide kinds (`TeachingSlide`):
 
 ```ts
 // static (default kind) — body blocks + one optional reveal (one extra beat)
@@ -409,7 +409,7 @@ Every slide has a `category: "concept" | "trueFalse" | "spotMistake"` (`TeachCat
   steps: ["Here is $\\dfrac{3}{5}$.", "Cut the first fifth…", /* …one per piece… */ "…now it's $\\dfrac{6}{10}$."] }
 ```
 
-`TeachBlock` types: `{ t:"text", s }` (`$...$` inline maths, `**bold**`) · `{ t:"math", s }` · `{ t:"bars", bars:[{num,den,label?}] }` · `{ t:"verdict", value }` · `{ t:"note", tone?:"good"|"bad"|"plain", label?, s }` (clean bordered note, no emoji). Scenes (`TeachScene`): `{ type:"split", num, den, factor, shadeByOne?, predict? }` (cuts one piece per press, then shows the answer as the ×factor equation `num/den = (num·f)/(den·f)`; `predict` hides the answer behind one extra beat for a "You do" test — an anim slide's beat count is derived from the scene, so supply that many captions) and `{ type:"combine", a, b, sumLabel }` (two shaded bars flow into one; common denominator). Slides are hand-authored, misconception-driven examples — no generators (that's what Whiteboard/Worksheet are for). The URL `mode=teach` deep-links to the deck.
+`TeachBlock` types: `{ t:"text", s }` (`$...$` inline maths, `**bold**`) · `{ t:"math", s }` · `{ t:"bars", bars:[{num,den,label?}] }` · `{ t:"verdict", value }` · `{ t:"note", tone?:"good"|"bad"|"plain", label?, s }` (clean bordered note, no emoji). Scenes (`TeachScene`): `{ type:"split", num, den, factor, shadeByOne?, predict? }` (cuts one piece per press, then shows the ×factor equation `num/den = (num·f)/(den·f)`; `predict` hides the answer behind one extra beat) · `{ type:"equivalents", num, den, factors:number[] }` (reveals one ×factor equivalent per beat — for a "find two equivalent fractions" You-do) · `{ type:"combine", a, b, sumLabel }` (two shaded bars flow into one; common denominator). An anim slide's beat count is derived from the scene, so supply that many captions. Slides are hand-authored, misconception-driven examples — no generators (that's what Whiteboard/Worksheet are for). The URL `mode=teach` deep-links to the deck.
 
 ### Shareable links — URL parameter format
 

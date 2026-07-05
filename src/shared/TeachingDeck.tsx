@@ -33,11 +33,15 @@ export type TeachBlock =
 
 export type TeachScene =
   | { type: "split"; num: number; den: number; factor: number; shadeByOne?: boolean; predict?: boolean }  // cut each piece into `factor`; predict hides the answer
-  | { type: "combine"; a: TeachBar; b: TeachBar; sumLabel: string };
+  | { type: "combine"; a: TeachBar; b: TeachBar; sumLabel: string }
+  | { type: "equivalents"; num: number; den: number; factors: number[] };  // reveal one ×factor equivalent per beat
+
+export type TeachPhase = "iDo" | "weDo" | "youDo";   // shown as a corner badge
 
 export interface StaticSlide {
   kind?: "static";
   category: TeachCategory;
+  phase?: TeachPhase;
   title: string;
   body?: TeachBlock[];
   reveal?: TeachBlock[];
@@ -46,11 +50,14 @@ export interface StaticSlide {
 export interface AnimSlide {
   kind: "anim";
   category: TeachCategory;
+  phase?: TeachPhase;
   title: string;
   scene: TeachScene;
   steps: string[];   // captions, one per beat (clamped if fewer than the scene's beats)
 }
 export type TeachingSlide = StaticSlide | AnimSlide;
+
+const PHASE_LABEL: Record<TeachPhase, string> = { iDo: "I do", weDo: "We do", youDo: "You do" };
 
 // ── Palette (matches the rest of the app) ─────────────────────────────────────
 
@@ -103,6 +110,7 @@ function Bar({ num, den, label, shade = true }: TeachBar) {
 // How many beats (max step index) a scene runs for.
 const sceneMaxStep = (s: TeachScene): number => {
   if (s.type === "split") return (s.shadeByOne ? s.num : 0) + s.den + 1 + (s.predict ? 1 : 0);
+  if (s.type === "equivalents") return s.factors.length;                 // prompt + one per factor
   return 1;                                                               // combine: 0 apart, 1 together
 };
 
@@ -181,8 +189,28 @@ function CombineScene({ a, b, sumLabel, step }: { a: TeachBar; b: TeachBar; sumL
   );
 }
 
+// "Equivalents": the base fraction, then one ×factor equivalent revealed per beat
+// (for a "find two equivalent fractions" You-do, checked against common answers).
+function EquivalentsScene({ num, den, factors, step }: { num: number; den: number; factors: number[]; step: number }) {
+  return (
+    <div className="flex flex-col items-center gap-6">
+      <div style={{ fontSize: "2.6rem" }} className="text-gray-900"><Tex tex={`\\dfrac{${num}}{${den}}`} /></div>
+      <div className="grid grid-cols-2 gap-x-12 gap-y-4">
+        {factors.map((f, i) => (
+          <div key={f} className="flex items-baseline gap-3 justify-center" style={{ opacity: i < step ? 1 : 0, transition: "opacity .35s ease", minHeight: "3rem" }}>
+            <span style={{ fontSize: "1.7rem" }} className="text-gray-900"><Tex tex={`\\dfrac{${num}}{${den}} = \\dfrac{${num * f}}{${den * f}}`} /></span>
+            <span className="text-sm font-bold uppercase tracking-wide" style={{ color: AMBER }}>×{f}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function SceneView({ scene, step }: { scene: TeachScene; step: number }) {
-  return scene.type === "split" ? <SplitScene {...scene} step={step} /> : <CombineScene {...scene} step={step} />;
+  if (scene.type === "split") return <SplitScene {...scene} step={step} />;
+  if (scene.type === "equivalents") return <EquivalentsScene {...scene} step={step} />;
+  return <CombineScene {...scene} step={step} />;
 }
 
 // ── Static blocks ─────────────────────────────────────────────────────────────
@@ -289,29 +317,37 @@ export function TeachingDeck({ slides }: { slides: TeachingSlide[] }) {
         <span className="text-gray-400 font-bold text-sm">{idx + 1} / {deck.length}</span>
       </div>
 
-      <div onClick={isAnim ? goNext : undefined} className={`bg-white rounded-2xl shadow-lg px-10 py-9 flex flex-col gap-5 ${isAnim ? "cursor-pointer" : ""}`} style={{ borderTop: `5px solid ${color}`, minHeight: "48vh" }}>
-        <h2 className="text-3xl font-bold text-gray-900 leading-tight"><RichText s={slide.title} /></h2>
+      <div onClick={isAnim ? goNext : undefined} className={`relative bg-white rounded-2xl shadow-lg px-10 pt-9 pb-7 flex flex-col ${isAnim ? "cursor-pointer" : ""}`} style={{ borderTop: `5px solid ${color}`, minHeight: "56vh" }}>
+        {slide.phase && (
+          <span className="absolute top-6 right-6 px-4 py-1.5 rounded-full text-white text-xs font-extrabold uppercase tracking-widest" style={{ background: color }}>{PHASE_LABEL[slide.phase]}</span>
+        )}
 
-        {isAnim ? (
+        <h2 className="text-3xl font-bold text-gray-900 leading-tight pr-32"><RichText s={slide.title} /></h2>
+
+        <div className="flex-1 flex flex-col items-center justify-center gap-6 py-6">
+          {isAnim ? (
+            <SceneView scene={(slide as AnimSlide).scene} step={step} />
+          ) : (
+            <div className="w-full flex flex-col gap-5 items-stretch">
+              {(slide as StaticSlide).body?.map((b, i) => <BlockView key={i} b={b} />)}
+              {step >= 1 && (slide as StaticSlide).reveal && (
+                <div className="flex flex-col gap-4 pt-4 border-t border-gray-200">
+                  {(slide as StaticSlide).reveal!.map((b, i) => <BlockView key={i} b={b} />)}
+                </div>
+              )}
+              {step < 1 && (slide as StaticSlide).reveal && (
+                <button onClick={() => setStep(1)} className="self-center mt-1 px-6 py-2.5 rounded-xl text-white font-bold text-lg" style={{ background: color }}>
+                  {(slide as StaticSlide).revealLabel ?? "Reveal"}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {isAnim && (
           <>
-            <div className="my-3"><SceneView scene={(slide as AnimSlide).scene} step={step} /></div>
-            <div className="min-h-[3rem] flex items-center justify-center text-xl text-gray-700 text-center"><RichText s={caption} /></div>
-            {/* current / total beat counter */}
-            <div className="text-center font-bold" style={{ color }}>{step + 1} / {maxStep + 1}</div>
-          </>
-        ) : (
-          <>
-            {(slide as StaticSlide).body?.map((b, i) => <BlockView key={i} b={b} />)}
-            {step >= 1 && (slide as StaticSlide).reveal && (
-              <div className="flex flex-col gap-4 pt-4 border-t border-gray-200">
-                {(slide as StaticSlide).reveal!.map((b, i) => <BlockView key={i} b={b} />)}
-              </div>
-            )}
-            {step < 1 && (slide as StaticSlide).reveal && (
-              <button onClick={() => setStep(1)} className="self-center mt-1 px-6 py-2.5 rounded-xl text-white font-bold text-lg" style={{ background: color }}>
-                {(slide as StaticSlide).revealLabel ?? "Reveal"}
-              </button>
-            )}
+            <div className="min-h-[3.5rem] flex items-center justify-center text-xl text-gray-700 text-center px-2"><RichText s={caption} /></div>
+            <div className="text-center font-bold mt-1" style={{ color }}>{step + 1} / {maxStep + 1}</div>
           </>
         )}
       </div>

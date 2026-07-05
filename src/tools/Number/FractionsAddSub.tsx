@@ -467,49 +467,46 @@ const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null =>
 
 const TEACHING_SLIDES: TeachingSlide[] = [
   {
-    // I DO — teacher demonstrates that splitting each piece doesn't change the value.
-    kind: "anim", category: "concept",
-    title: "I do: splitting each piece keeps the value the same.",
+    // I DO — demonstrate that splitting each piece doesn't change the value.
+    kind: "anim", category: "concept", phase: "iDo",
+    title: "Splitting each piece keeps the value the same.",
     scene: { type: "split", num: 3, den: 5, factor: 2 },
     steps: [
       "Here is $\\dfrac{3}{5}$ — three of five equal pieces shaded.",
-      "Watch: I cut the first fifth in half…",
+      "Watch: I split the first fifth in half…",
       "…the second…",
       "…the third…",
       "…the fourth…",
       "…and the fifth. Every piece is now in two.",
-      "Six shaded out of ten. Splitting each piece in two is the same as multiplying the top and bottom by 2.",
+      "Six shaded out of ten — I've multiplied the top and bottom by 2.",
     ],
   },
   {
-    // WE DO — same idea, worked through together.
-    kind: "anim", category: "concept",
-    title: "We do: let's split $\\dfrac{2}{3}$ together.",
-    scene: { type: "split", num: 2, den: 3, factor: 2 },
+    // WE DO — same fraction, split into 3 this time → a different equivalent.
+    kind: "anim", category: "concept", phase: "weDo",
+    title: "Split the same fraction a different way.",
+    scene: { type: "split", num: 3, den: 5, factor: 3 },
     steps: [
-      "Here is $\\dfrac{2}{3}$. What will we do to each piece?",
-      "We cut the first third in half…",
-      "…the second…",
-      "…and the third. How many pieces now?",
-      "Four shaded out of six — again, top and bottom both multiplied by 2.",
-    ],
-  },
-  {
-    // YOU DO — students predict before the answer is revealed.
-    kind: "anim", category: "concept",
-    title: "You do: your turn with $\\dfrac{3}{7}$.",
-    scene: { type: "split", num: 3, den: 7, factor: 2, predict: true },
-    steps: [
-      "Here is $\\dfrac{3}{7}$. Split each piece in half — predict the answer first.",
-      "Cut the first seventh in half…",
+      "The same $\\dfrac{3}{5}$. This time, what if we split each piece into 3?",
+      "Split the first fifth into three…",
       "…the second…",
       "…the third…",
       "…the fourth…",
-      "…the fifth…",
-      "…the sixth…",
-      "…and the seventh. Every piece is split.",
-      "So — what fraction is shaded now? Decide before you reveal.",
-      "$\\dfrac{6}{14}$: the top and bottom are both multiplied by 2.",
+      "…and the fifth. Each piece is now three.",
+      "Nine shaded out of fifteen — this time the top and bottom are multiplied by 3.",
+    ],
+  },
+  {
+    // YOU DO — students find two equivalents; the four common answers are revealed.
+    kind: "anim", category: "concept", phase: "youDo",
+    title: "Find two equivalent fractions to $\\dfrac{3}{5}$.",
+    scene: { type: "equivalents", num: 3, den: 5, factors: [2, 3, 4, 5] },
+    steps: [
+      "Your turn — write down two different equivalent fractions before we check.",
+      "Splitting into 2 gives one answer…",
+      "…into 3, another…",
+      "…into 4…",
+      "…into 5. Any two of these are correct — did you find two?",
     ],
   },
 ];
