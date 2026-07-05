@@ -44,7 +44,7 @@ const makeFormatDD = (defaultValue: string) => ({
 const FORMAT_DD = makeFormatDD("improper");
 const FORMAT_DD_MIXED = makeFormatDD("mixed");
 
-const ANS_LT1_VAR       = { key: "answerLessThanOne", label: "Answer < 1",       defaultValue: false };
+const ANS_LT1_VAR       = { key: "answerLessThanOne", label: "Answer < 1",       defaultValue: true  };
 const CARRY_VAR         = { key: "requiresCarrying",  label: "Requires Carrying", defaultValue: false };
 const EXTENDED_VAR      = { key: "extendedRange",     label: "Extended Range",    defaultValue: false };
 
@@ -96,7 +96,7 @@ const INFO_SECTIONS: InfoSection[] = [
   { title: "Question Options", icon: "⚙️", content: [
     { label: "Operations",       detail: "Choose Addition, Subtraction, or both. With both active, questions are a random mix." },
     { label: "Answer Format",    detail: "Improper shows the answer as a top-heavy fraction; Mixed Number converts an improper answer to a whole number and fraction." },
-    { label: "Answer < 1",       detail: "Fractions only. Keeps every answer below 1 (a proper fraction)." },
+    { label: "Answer < 1",       detail: "Fractions only, on by default. Keeps every answer below 1 (a proper fraction) so the result is never an improper or mixed number. Turn it off to allow answers of 1 or more." },
     { label: "Extended Range",   detail: "Level 3 only. Allows larger denominators and lowest common multiples for harder questions." },
     { label: "Differentiated",   detail: "Worksheet mode produces three columns — one per level — simultaneously." },
   ]},
