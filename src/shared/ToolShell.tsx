@@ -455,10 +455,20 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     JSON.stringify(toolMultiSelect[currentTool] ?? {}),
   ].join("|");
 
+  // Track the last difficulty/tool the current question was generated for, so we
+  // can tell a level/sub-tool switch apart from a plain QO-option change.
+  const prevDiffRef = useRef(difficulty);
+  const prevToolRef = useRef(currentTool);
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
+    const levelOrToolChanged = prevDiffRef.current !== difficulty || prevToolRef.current !== currentTool;
+    prevDiffRef.current = difficulty;
+    prevToolRef.current = currentTool;
     if (mode === "worksheet") return;
-    if (reformatQuestion) {
+    // reformatQuestion only applies to pure QO-option changes (same maths, new
+    // display). A level or sub-tool switch must always yield a fresh question.
+    if (!levelOrToolChanged && reformatQuestion) {
       const snap = getQOSnapshot();
       const reformatted = reformatQuestion(currentQuestion, snap);
       if (reformatted !== null) { setCurrentQuestion(reformatted); setShowAnswer(false); setWorkedStepIdx(0); return; }
