@@ -179,6 +179,7 @@ const generateFractionCore = (level: DifficultyLevel, variables: Record<string, 
     if (level === "level2") {
       const base = randInt(2, 10);
       const mult = randInt(2, 8);
+      if (base * mult > 50) continue;   // cap the larger denominator at 50
       let den1 = base, den2 = base * mult;
       if (Math.random() < 0.5) { [den1, den2] = [den2, den1]; }
       const smallD = Math.min(den1, den2), largeD = Math.max(den1, den2), m = largeD / smallD;
