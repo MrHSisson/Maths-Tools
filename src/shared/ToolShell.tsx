@@ -184,6 +184,8 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   // Worked Example is always available; only its step-by-step navigation (one
   // step at a time) is reserved for Developing mode.
   const devMode = useDevMode();
+  // The Teach deck is in-progress, so it only appears in Developing-tools mode.
+  const showTeach = !!(devMode && teachingSlides && teachingSlides.length);
   const comingSoon = defaults.comingSoonLevels ?? [];
   const hideFontControls = defaults.hideFontControls ?? false;
   const [difficulty, setDifficulty] = useState<DifficultyLevel>(urlInit.level);
@@ -307,6 +309,8 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const splitContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { loadKaTeX(); }, []);
+  // If Teach isn't available (dev mode off, or a stale mode=teach link), fall back.
+  useEffect(() => { if (mode === "teach" && !showTeach) setMode("whiteboard"); }, [mode, showTeach]);
 
   const stopStream = useCallback(() => {
     if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null; }
@@ -1230,7 +1234,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           )}
           {mode !== "builder" && (
             <div className="flex justify-center gap-4 mb-8">
-              {([...(["whiteboard", "single", "worksheet"] as const), ...(teachingSlides && teachingSlides.length ? (["teach"] as const) : [])] as const)
+              {([...(["whiteboard", "single", "worksheet"] as const), ...(showTeach ? (["teach"] as const) : [])] as const)
                 .map(m => {
                   const label = m === "whiteboard" ? "Whiteboard" : m === "single" ? "Worked Example" : m === "teach" ? "Teach" : "Worksheet";
                   return (
@@ -1272,7 +1276,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                   <div ref={worksheetWrapRef}>{renderWorksheet()}</div>
                 </>
           )}
-          {mode === "teach" && teachingSlides && (
+          {mode === "teach" && showTeach && teachingSlides && (
             <TeachingDeck slides={teachingSlides} />
           )}
           {mode !== "worksheet" && mode !== "builder" && mode !== "teach" && (
