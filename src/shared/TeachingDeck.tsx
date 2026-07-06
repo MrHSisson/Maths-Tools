@@ -62,7 +62,8 @@ const PHASE_LABEL: Record<TeachPhase, string> = { iDo: "I do", weDo: "We do", yo
 // ── Palette (matches the rest of the app) ─────────────────────────────────────
 
 const NAVY = "#1e3a8a";   // blue-900
-const AMBER = "#d97706";  // amber-600
+const AMBER = "#d97706";  // amber-600 (True/False category accent only)
+const CUT = "#64748b";    // slate-500 — the "split" cut lines (neutral, reads on navy + white)
 const RED = "#dc2626";    // red-600
 const GREEN = "#16a34a";  // green-600
 
@@ -147,7 +148,7 @@ function SplitScene({ num, den, factor, shadeByOne = false, predict = false, ste
               const x = p * seg + (k * seg) / factor;
               const shown = p < cutCount;
               return (
-                <line key={`c${p}-${k}`} x1={x} y1={0} x2={x} y2={H} stroke={AMBER} strokeWidth={2.5} strokeDasharray="5 3"
+                <line key={`c${p}-${k}`} x1={x} y1={0} x2={x} y2={H} stroke={CUT} strokeWidth={2.5} strokeDasharray="5 3"
                   style={{ transition: "opacity .3s ease, transform .3s cubic-bezier(.2,.8,.2,1)", transformBox: "fill-box", transformOrigin: "center", opacity: shown ? 1 : 0, transform: shown ? "scaleY(1)" : "scaleY(0.05)" }} />
               );
             }),
@@ -201,7 +202,7 @@ function EquivalentsScene({ num, den, factors, step }: { num: number; den: numbe
         {factors.map((f, i) => (
           <div key={f} className="flex items-baseline gap-3 justify-center" style={{ opacity: i < step ? 1 : 0, transition: "opacity .35s ease", minHeight: "3rem" }}>
             <span style={{ fontSize: "1.7rem" }} className="text-gray-900"><Tex tex={`\\dfrac{${num}}{${den}} = \\dfrac{${num * f}}{${den * f}}`} /></span>
-            <span className="text-sm font-bold uppercase tracking-wide" style={{ color: AMBER }}>×{f}</span>
+            <span className="text-sm font-bold uppercase tracking-wide" style={{ color: NAVY }}>×{f}</span>
           </div>
         ))}
       </div>
