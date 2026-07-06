@@ -34,6 +34,9 @@ const RANGE_MS: ToolMultiSelect = {
   ],
 };
 
+// Level 3 dresses the points as real places and mixes the wording.
+const PLACES = ["Shop", "Park", "School", "Church", "Port", "Farm", "Tower", "Bank", "Camp", "Pier", "Mill", "Dock", "Beach", "Hotel", "Cave"];
+
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Bearings",
   tools: {
@@ -55,23 +58,24 @@ const INFO_SECTIONS: InfoSection[] = [
     content: [
       { label: "What is a bearing?", detail: "A bearing describes a direction. It is the angle, measured clockwise, from the North line at one point round to another point." },
       { label: "Three figures", detail: "Bearings are always written with three figures, so 45° is written 045° and 5° is written 005°. This keeps them unambiguous on a map or compass." },
-      { label: "How to read one", detail: "Put your protractor on the point you are measuring FROM, with 0° on its North line. Turn clockwise until you reach the line to the other point and read off the angle." },
+      { label: "'A from B'", detail: "The instruction tells you where to stand and where to look. 'The bearing of A from B' means: stand at B, face North, and turn clockwise until you point at A — that turn is the bearing. So the point after 'from' is where you measure FROM." },
+      { label: "Identifying the bearing", detail: "This tool is about identifying and drawing the correct angle for a given instruction. Find the point you measure from, start at its North line, and mark the clockwise turn to the other point. Reveal the answer to see the angle drawn on." },
     ],
   },
   {
     title: "Levels", icon: "📈",
     content: [
-      { label: "Level 1", detail: "Two points, bearings to the nearest 10°. Read the bearing of one point from the other straight off the diagram." },
-      { label: "Level 2", detail: "Two points, bearings to the nearest 5° across the full range, including bearings greater than 180°." },
-      { label: "Level 3", detail: "Three connected points (a route). Identify the bearing along one of the legs — either forwards or backwards along the path." },
-      { label: "Bearing Size", detail: "Use the Question Options to focus on bearings less than 180° (less than half a turn) or more than 180° (more than half a turn), or mix both." },
+      { label: "Level 1", detail: "Two points. Decode an instruction like 'A from B' (or 'B from A'), then identify and draw on the correct bearing. Bearings are to the nearest 5°." },
+      { label: "Level 2", detail: "Three connected points (a route). Identify a bearing along either leg — forwards or as a back bearing along the path." },
+      { label: "Level 3", detail: "Real-place contexts with mixed wording, e.g. 'the bearing of the Shop from the Park' and 'the bearing from the Park to the Shop'. Read carefully to spot which place you measure from." },
+      { label: "Bearing Size", detail: "Use the Question Options to focus on bearings less than 180° (less than half a turn) or more than 180° (the long way round, past South), or mix both." },
     ],
   },
   {
     title: "Modes", icon: "🖥️",
     content: [
-      { label: "Whiteboard", detail: "A single large diagram with space to work. Reveal the answer to show the measured bearing." },
-      { label: "Worked Example", detail: "Talks through measuring the bearing step by step." },
+      { label: "Whiteboard", detail: "A single large diagram with space to work. Reveal the answer to draw the bearing on." },
+      { label: "Worked Example", detail: "Talks through identifying and drawing the bearing step by step." },
       { label: "Worksheet", detail: "A grid of diagrams with differentiated layout and PDF export." },
     ],
   },
@@ -154,13 +158,18 @@ function layoutIsClean(points: { p: Pt }[], edges: [number, number][]): boolean 
 
 // ─── QUESTION GENERATION ────────────────────────────────────────────────────
 function buildQuestion(tool: string, level: string, vars: QOVars): BearingQuestion {
-  const threePoint = level === "level3";
-  const step = level === "level1" ? 10 : 5;
+  // Level 1: two points (letters). Level 2: three points (letters, a route).
+  // Level 3: three points dressed as places, with mixed "from / to" wording.
+  const threePoint = level !== "level1";
+  const usePlaces = level === "level3";
+  const step = 5;   // bearings to the nearest 5° at every level (for measuring later)
   // which bearing sizes are allowed
   let ranges: QOVars = { under180: !!vars.under180, over180: !!vars.over180 };
   if (!ranges.under180 && !ranges.over180) ranges = { under180: true, over180: true };
 
-  const labels = threePoint ? ["A", "B", "C"] : ["P", "Q"];
+  const labels = usePlaces
+    ? [...PLACES].sort(() => Math.random() - 0.5).slice(0, 3)
+    : threePoint ? ["A", "B", "C"] : ["A", "B"];
 
   // Build the geometry (a traverse) and enumerate the directed bearings we could
   // ask about — one per direction along each drawn leg. Keep trying until at
@@ -216,14 +225,26 @@ function buildQuestion(tool: string, level: string, vars: QOVars): BearingQuesti
   const toLabel = points[chosen.toIdx].label;
   const value = chosen.value;
 
-  const prompt = `Find the bearing of ${toLabel} from ${fromLabel}`;
+  // Name used in the sentence: places get a "the" article; letters stay bare.
+  const nm = (lbl: string) => usePlaces ? `the ${lbl}` : lbl;
+  const fromN = nm(fromLabel), toN = nm(toLabel);
+  // Level 3 mixes two equivalent phrasings; both mean "stand at fromN, look to toN".
+  let prompt: string;
+  if (usePlaces) {
+    prompt = rnd(0, 1) === 0
+      ? `What is the bearing of ${toN} from ${fromN}?`
+      : `What is the bearing from ${fromN} to ${toN}?`;
+  } else {
+    prompt = `Find the bearing of ${toN} from ${fromN}`;
+  }
+
   const working: { text: string }[] = [
-    { text: "A bearing is measured clockwise from the North line." },
-    { text: "Bearings are always written with three figures, e.g. 045°." },
-    { text: `Measure the angle at ${fromLabel}, clockwise from North round to ${toLabel}.` },
+    { text: `'Bearing of ${toN} from ${fromN}' means: stand at ${fromN} and look towards ${toN}.` },
+    { text: `Start at the North line at ${fromN} and turn clockwise until you reach ${toN}.` },
+    { text: "Bearings are written with three figures, e.g. 045°." },
   ];
-  if (value > 180) working.push({ text: "This bearing is more than 180°, so it turns more than halfway round." });
-  working.push({ text: `Bearing of ${toLabel} from ${fromLabel} = ${pad3(value)}°.` });
+  if (value > 180) working.push({ text: "This bearing is more than 180°, so it turns more than halfway round (past South)." });
+  working.push({ text: `Bearing of ${toN} from ${fromN} = ${pad3(value)}°.` });
 
   return {
     tool, level,
@@ -284,26 +305,34 @@ function BearingDiagram({ q, showAnswer, dataIndex }: DiagramProps) {
   const pts = q.points.map(pp => pp.p);
   const from = pts[q.fromIdx];
 
-  // Place each point's letter label at the candidate direction (tried all round
-  // the point) that sits furthest from every line, other point and already-placed
+  // approximate label box half-extents in world units (place names are wider)
+  const labHalfW = (i: number) => Math.max(15, q.points[i].label.length * 8.5);
+  const labHalfH = 14;
+  // push a label further from its point when the word is wide, so it clears cleanly
+  const labDist = (i: number) => LABEL_DIST + Math.max(0, labHalfW(i) - 15) * 0.75;
+
+  // Place each point's label at the candidate direction (tried all round the
+  // point) that sits furthest from every line, other point and already-placed
   // label — with a gentle downward bias so labels favour sitting below the point,
   // as in a textbook. This clears the North lines and connecting edges cleanly.
   const obstacles: [Pt, Pt][] = [];
   q.edges.forEach(([a, b]) => obstacles.push([pts[a], pts[b]]));
   pts.forEach(p => obstacles.push([p, { x: p.x, y: p.y - NORTH_LEN }]));   // North lines
-  const placed: Pt[] = [];
+  const placed: { c: Pt; hw: number }[] = [];
   const labelPositions = pts.map((p, i) => {
-    let best: Pt = { x: p.x, y: p.y + LABEL_DIST }, bestScore = -Infinity;
-    for (let deg = 0; deg < 360; deg += 15) {
-      const cand = polar(p.x, p.y, LABEL_DIST, deg);
+    const dist = labDist(i), hw = labHalfW(i);
+    let best: Pt = { x: p.x, y: p.y + dist }, bestScore = -Infinity;
+    for (let deg = 0; deg < 360; deg += 10) {
+      const cand = polar(p.x, p.y, dist, deg);
       let score = Infinity;
-      obstacles.forEach(([a, b]) => { score = Math.min(score, pointSegDist(cand, a, b)); });
-      pts.forEach((o, j) => { if (j !== i) score = Math.min(score, Math.hypot(cand.x - o.x, cand.y - o.y)); });
-      placed.forEach(pl => { score = Math.min(score, Math.hypot(cand.x - pl.x, cand.y - pl.y)); });
-      score += Math.sin(toRad(deg)) * 7;   // small preference for below the point
+      // clearance from lines, measured to the near edge of the label box
+      obstacles.forEach(([a, b]) => { score = Math.min(score, pointSegDist(cand, a, b) - hw * 0.5); });
+      pts.forEach((o, j) => { if (j !== i) score = Math.min(score, Math.hypot(cand.x - o.x, cand.y - o.y) - hw * 0.5); });
+      placed.forEach(pl => { score = Math.min(score, Math.hypot(cand.x - pl.c.x, cand.y - pl.c.y) - (hw + pl.hw) * 0.5); });
+      score += Math.sin(toRad(deg)) * 4;   // small preference for below the point
       if (score > bestScore) { bestScore = score; best = cand; }
     }
-    placed.push(best);
+    placed.push({ c: best, hw });
     return best;
   });
 
@@ -320,7 +349,7 @@ function BearingDiagram({ q, showAnswer, dataIndex }: DiagramProps) {
   ext.push([from.x - ARC_R - ARC_LABEL_OFF, from.y - ARC_R - ARC_LABEL_OFF]);
   ext.push([from.x + ARC_R + ARC_LABEL_OFF, from.y + ARC_R + ARC_LABEL_OFF]);
   ext.push([valLabelPos.x - 22, valLabelPos.y - 16], [valLabelPos.x + 22, valLabelPos.y + 16]);
-  labelPositions.forEach(l => { ext.push([l.x - 16, l.y - 14], [l.x + 16, l.y + 14]); });
+  labelPositions.forEach((l, i) => { ext.push([l.x - labHalfW(i), l.y - labHalfH], [l.x + labHalfW(i), l.y + labHalfH]); });
 
   const minX = Math.min(...ext.map(e => e[0])) - PAD;
   const maxX = Math.max(...ext.map(e => e[0])) + PAD;
