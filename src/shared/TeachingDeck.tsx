@@ -132,8 +132,10 @@ function SplitScene({ num, den, factor, shadeByOne = false, predict = false, ste
   const labelTex = showAnswer ? `\\dfrac{${nf}}{${df}}` : showPrompt ? `\\dfrac{?}{\\,?\\,}` : `\\dfrac{${num}}{${den}}`;
 
   return (
-    <div className="flex flex-col items-center gap-4">
-      <div className="flex items-center justify-center gap-6 flex-wrap">
+    <div className="flex flex-col items-center gap-4 w-full">
+      {/* grid keeps the BAR centred; the fraction label sits in the right track without shifting it */}
+      <div className="grid items-center w-full" style={{ gridTemplateColumns: "1fr auto 1fr" }}>
+        <div />
         <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="max-w-full" preserveAspectRatio="xMidYMid meet">
           {range(0, den).map((i) => <rect key={"p" + i} x={i * seg} y={0} width={seg} height={H} fill="#fff" stroke="#334155" strokeWidth={1.5} />)}
           {range(0, num).map((i) => (
@@ -153,7 +155,7 @@ function SplitScene({ num, den, factor, shadeByOne = false, predict = false, ste
           {range(1, den).map((i) => <line key={"b" + i} x1={i * seg} y1={0} x2={i * seg} y2={H} stroke="#334155" strokeWidth={2} />)}
           <rect x={1} y={1} width={W - 2} height={H - 2} fill="none" stroke="#334155" strokeWidth={2.5} rx={6} />
         </svg>
-        <div className="text-3xl flex items-center" style={{ minWidth: 96, height: 66 }}><Tex tex={labelTex} /></div>
+        <div className="justify-self-start text-3xl flex items-center pl-4" style={{ height: 66 }}><Tex tex={labelTex} /></div>
       </div>
       {/* the actual result: multiplying top and bottom by `factor` */}
       <div className="text-gray-900" style={{ fontSize: "1.8rem", minHeight: "2.4rem", opacity: showAnswer ? 1 : 0, transition: "opacity .4s ease" }}>
@@ -311,22 +313,24 @@ export function TeachingDeck({ slides }: { slides: TeachingSlide[] }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <button onClick={toMenu} className="px-4 py-2 rounded-lg border-2 border-gray-300 bg-white text-gray-700 font-bold hover:border-blue-900 hover:text-blue-900 transition-colors">← Menu</button>
-        <span className="text-sm font-bold uppercase tracking-wider" style={{ color }}>{catMeta(cat).label}</span>
-        <span className="text-gray-400 font-bold text-sm">{idx + 1} / {deck.length}</span>
+      <div className="relative flex items-center h-10">
+        <button onClick={toMenu} className="absolute left-0 px-4 py-2 rounded-lg border-2 border-gray-300 bg-white text-gray-700 font-bold hover:border-blue-900 hover:text-blue-900 transition-colors">← Menu</button>
+        <span className="mx-auto text-sm font-bold uppercase tracking-wider" style={{ color }}>{catMeta(cat).label}</span>
       </div>
 
-      <div onClick={isAnim ? goNext : undefined} className={`relative bg-white rounded-2xl shadow-lg px-10 pt-9 pb-7 flex flex-col ${isAnim ? "cursor-pointer" : ""}`} style={{ borderTop: `5px solid ${color}`, minHeight: "56vh" }}>
+      <div onClick={isAnim ? goNext : undefined} className={`relative bg-white rounded-2xl shadow-lg px-10 pt-7 pb-6 flex flex-col ${isAnim ? "cursor-pointer" : ""}`} style={{ borderTop: `5px solid ${color}`, minHeight: "44vh" }}>
         {slide.phase && (
           <span className="absolute top-6 right-6 px-4 py-1.5 rounded-full text-white text-xs font-extrabold uppercase tracking-widest" style={{ background: color }}>{PHASE_LABEL[slide.phase]}</span>
         )}
 
-        <h2 className="text-3xl font-bold text-gray-900 leading-tight pr-32"><RichText s={slide.title} /></h2>
+        <h2 className="text-xl font-bold text-gray-500 leading-snug pr-28"><RichText s={slide.title} /></h2>
 
-        <div className="flex-1 flex flex-col items-center justify-center gap-6 py-6">
+        <div className="flex-1 flex flex-col items-center justify-center gap-7 py-4">
           {isAnim ? (
-            <SceneView scene={(slide as AnimSlide).scene} step={step} />
+            <>
+              <SceneView scene={(slide as AnimSlide).scene} step={step} />
+              <div className="min-h-[3.25rem] max-w-2xl flex items-center justify-center text-2xl text-gray-800 text-center px-2"><RichText s={caption} /></div>
+            </>
           ) : (
             <div className="w-full flex flex-col gap-5 items-stretch">
               {(slide as StaticSlide).body?.map((b, i) => <BlockView key={i} b={b} />)}
@@ -344,24 +348,16 @@ export function TeachingDeck({ slides }: { slides: TeachingSlide[] }) {
           )}
         </div>
 
-        {isAnim && (
-          <>
-            <div className="min-h-[3.5rem] flex items-center justify-center text-xl text-gray-700 text-center px-2"><RichText s={caption} /></div>
-            <div className="text-center font-bold mt-1" style={{ color }}>{step + 1} / {maxStep + 1}</div>
-          </>
-        )}
+        {isAnim && <div className="text-center font-bold text-sm" style={{ color }}>{step + 1} / {maxStep + 1}</div>}
       </div>
 
       <div className="flex items-center justify-between">
         <button onClick={goPrev} disabled={idx === 0 && step === 0}
           className={`px-5 py-2.5 rounded-xl border-2 font-bold transition-colors ${idx === 0 && step === 0 ? "border-gray-200 text-gray-300 cursor-default" : "border-gray-300 text-gray-700 bg-white hover:border-blue-900 hover:text-blue-900"}`}>← Back</button>
-        <div className="flex gap-2">
-          {deck.map((_, i) => <span key={i} className="rounded-full" style={{ width: 9, height: 9, background: i === idx ? color : "#cbd5e1" }} />)}
-        </div>
         <button onClick={goNext} disabled={atEnd && idx === deck.length - 1}
           className="px-6 py-2.5 rounded-xl text-white font-bold transition-opacity"
           style={{ background: color, opacity: atEnd && idx === deck.length - 1 ? 0.4 : 1 }}>
-          {!atEnd ? "Next step ▸" : idx === deck.length - 1 ? "Done" : "Next slide →"}
+          {atEnd && idx === deck.length - 1 ? "Done" : "Next ▸"}
         </button>
       </div>
     </div>

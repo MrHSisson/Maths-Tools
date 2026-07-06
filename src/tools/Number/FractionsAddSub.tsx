@@ -469,7 +469,7 @@ const TEACHING_SLIDES: TeachingSlide[] = [
   {
     // I DO — demonstrate that splitting each piece doesn't change the value.
     kind: "anim", category: "concept", phase: "iDo",
-    title: "Splitting each piece keeps the value the same.",
+    title: "Equivalent fractions",
     scene: { type: "split", num: 3, den: 5, factor: 2 },
     steps: [
       "Here is $\\dfrac{3}{5}$ — three of five equal pieces shaded.",
@@ -484,7 +484,7 @@ const TEACHING_SLIDES: TeachingSlide[] = [
   {
     // WE DO — same fraction, split into 3 this time → a different equivalent.
     kind: "anim", category: "concept", phase: "weDo",
-    title: "Split the same fraction a different way.",
+    title: "Equivalent fractions",
     scene: { type: "split", num: 3, den: 5, factor: 3 },
     steps: [
       "The same $\\dfrac{3}{5}$. This time, what if we split each piece into 3?",
@@ -499,7 +499,7 @@ const TEACHING_SLIDES: TeachingSlide[] = [
   {
     // YOU DO — students find two equivalents; the four common answers are revealed.
     kind: "anim", category: "concept", phase: "youDo",
-    title: "Find two equivalent fractions to $\\dfrac{3}{5}$.",
+    title: "Equivalent fractions",
     scene: { type: "equivalents", num: 3, den: 5, factors: [2, 3, 4, 5] },
     steps: [
       "Your turn — write down two different equivalent fractions before we check.",
