@@ -183,10 +183,10 @@ import { type PrintMode } from "../../shared";
 ### All available exports from `src/shared/`
 
 **Types** (use `type` keyword in imports):
-`DifficultyLevel` · `PrintMode` · `AnyQuestion` · `SimpleQuestion` · `WordedQuestion` · `WorkingStep` · `ToolConfig` · `ToolEntry` · `ToolDropdown` · `ToolMultiSelect` · `ToolMultiSelectConfig` · `ToolVariable` · `DifficultyLevelSettings` · `InfoSection` · `InfoItem` · `QOSnapshot` · `ToolShellDefaults` · `ToolShellProps`
+`DifficultyLevel` · `PrintMode` · `AnyQuestion` · `SimpleQuestion` · `WordedQuestion` · `WorkingStep` · `ToolConfig` · `ToolEntry` · `ToolDropdown` · `ToolMultiSelect` · `ToolMultiSelectConfig` · `ToolVariable` · `DifficultyLevelSettings` · `InfoSection` · `InfoItem` · `QOSnapshot` · `ToolShellDefaults` · `ToolShellProps` · `TeachingSlide` · `TeachBlock` · `TeachBar` · `TeachScene` · `TeachCategory`
 
 **Components / hooks**:
-`ToolShell` · `MathRenderer` · `InlineMath` · `QuestionDisplay` · `AnswerDisplay` · `DifficultyToggle` · `StandardQOPopover` · `DiffQOPopover` · `InlineQOPanel` · `InfoModal` · `MenuDropdown` · `PrintSplitButton`
+`ToolShell` · `TeachingDeck` · `MathRenderer` · `InlineMath` · `QuestionDisplay` · `AnswerDisplay` · `DifficultyToggle` · `StandardQOPopover` · `DiffQOPopover` · `InlineQOPanel` · `InfoModal` · `MenuDropdown` · `PrintSplitButton`
 
 **Helpers**:
 `randInt` · `pick` · `fracStr` · `mStr` · `pickActive` · `normalizeMultiSelect` · `step` · `tStep` · `mStep` · `fmt` · `ansEq` · `makeUniqueQ`
@@ -355,6 +355,11 @@ export interface ToolShellProps {
     worksheetEl: HTMLElement | null,
     ctx: PrintContext,  // { toolName, difficulty, isDifferentiated, numColumns, instruction, layout, showBorders }
   ) => void;
+
+  /** Optional. When provided, ToolShell shows a "Teach" mode — a PowerPoint-style
+   *  deck the teacher presses through (→ / space / click; ← steps back). Omit it
+   *  and no Teach tab appears. See "Teaching slides" below. */
+  teachingSlides?: TeachingSlide[];
 }
 ```
 
@@ -383,7 +388,48 @@ Font size indices: `0=text-lg  1=text-xl  2=text-3xl  3=text-4xl  4=text-5xl  5=
 
 ### What ToolShell provides automatically (never re-implement)
 
-Whiteboard / Worked Example / Worksheet modes · difficulty toggle · QO popovers (dropdown, variables, multiSelect, differentiated) · tool tab buttons (auto-hidden when only one sub-tool) · font size controls · PDF print · colour scheme picker · info modal · home button · shareable links (URL ⇄ state sync + "Copy Link to Setup" menu item)
+Whiteboard / Worked Example / Worksheet modes · **Teach mode (when `teachingSlides` supplied)** · difficulty toggle · QO popovers (dropdown, variables, multiSelect, differentiated) · tool tab buttons (auto-hidden when only one sub-tool) · font size controls · PDF print · colour scheme picker · info modal · home button · shareable links (URL ⇄ state sync + "Copy Link to Setup" menu item)
+
+### Teaching slides — the "Teach" deck  (authoring guide / leap-off point)
+
+The **Teach** deck (`TeachingDeck`, `src/shared/TeachingDeck.tsx`) is a slide-based "teaching part of the lesson": the teacher picks a category, then presses through hand-authored, misconception-driven slides one **beat** at a time before moving to Whiteboard / Worksheet. This section is the complete guide to authoring them.
+
+**Status / where it's up to.** The feature is **gated behind Developing-tools mode** (`devMode`) — the Teach tab only shows when dev mode is on, so it can ship unfinished. Only `FractionsAddSub` has a deck so far: the **Concepts** category runs an I-do → We-do → You-do sequence on equivalent fractions (3/5 ×2, 3/5 ×3, then "find two"). **True or False and Spot the Mistake are empty** ("Coming soon" in the menu) — build them next as authored slides. When the deck is classroom-ready, remove the dev gate in `ToolShell.tsx` (`showTeach`).
+
+**Add a deck to a tool.** Define an array in the tool file and pass it: `<ToolShell teachingSlides={TEACHING_SLIDES} … />`. No prop → no Teach tab. Reference implementation: `src/tools/Number/FractionsAddSub.tsx` (`TEACHING_SLIDES`); a minimal one in the `ToolShell.tsx` template.
+
+**Authoring philosophy — read before writing slides.**
+- Slides are **specific, hand-authored, misconception-driven examples** — NOT generated. The randomised/varied side is exactly what Whiteboard and Worksheet are for; do not add generators here.
+- Prefer an **I-do → We-do → You-do** arc within a category, on **one coherent example** (e.g. keep the same fraction across the three). You-do should make the student **predict/answer** before the reveal.
+- `title` is a short **topic label** (e.g. "Equivalent fractions"), not a sentence — it renders small and muted. The **changing caption is the voice**; put the teaching there.
+- No emoji. Palette is navy shade + slate cut-lines + white cards; the phase badge sits in the top-right corner. Keep to it.
+
+**Slide model (`TeachingSlide`).** Every slide has `category: "concept" | "trueFalse" | "spotMistake"` (`TeachCategory`) and an optional `phase: "iDo" | "weDo" | "youDo"` (`TeachPhase`, shown as the corner badge). Two kinds:
+
+```ts
+// static (default kind) — body blocks, then one optional `reveal` (one extra beat / a Reveal button)
+{ category: "trueFalse", phase: "youDo", title: "$2+3=6$",
+  body:   [{ t: "text", s: "Decide first." }],
+  reveal: [{ t: "verdict", value: false }, { t: "note", tone: "good", label: "Correct", s: "$2+3=5$." }],
+  revealLabel: "Reveal" }
+
+// anim — a scene choreographed across beats, ONE caption per beat
+{ kind: "anim", category: "concept", phase: "iDo", title: "Equivalent fractions",
+  scene: { type: "split", num: 3, den: 5, factor: 2 },
+  steps: ["Here is $\\dfrac{3}{5}$…", "Split the first fifth…", /* one per piece */ "…$\\dfrac{6}{10}$." ] }
+```
+
+**`TeachBlock` types (static slides):** `{ t:"text", s }` (`$...$` inline maths, `**bold**`) · `{ t:"math", s }` (large centred KaTeX) · `{ t:"bars", bars:[{num,den,label?}] }` (static shaded bars) · `{ t:"verdict", value:boolean }` (TRUE/FALSE pill) · `{ t:"note", tone?:"good"|"bad"|"plain", label?, s }` (bordered note, coloured left rule, **no emoji**).
+
+**`TeachScene` types (anim slides)** — the beat count is **derived from the scene**, so `steps` must supply one caption per beat (fewer is allowed; the last caption persists — avoid that with `predict`):
+
+| scene | beats (max step = beats−1) | what it does |
+|---|---|---|
+| `{ type:"split", num, den, factor, shadeByOne?, predict? }` | `den + 2` (`+1` if `predict`, `+num` if `shadeByOne`) | cuts ONE original piece into `factor` per press (shaded area never moves), then shows the equation `num/den = (num·f)/(den·f)`. `predict` holds the answer at `?/?` for one extra beat (You-do). |
+| `{ type:"equivalents", num, den, factors:number[] }` | `factors.length + 1` | beat 0 is the prompt; each later beat reveals one `×factor` equivalent — for a "find two equivalent fractions" You-do (`factors:[2,3,4,5]` gives the four common answers). |
+| `{ type:"combine", a, b, sumLabel }` | `2` | two shaded bars (common denominator) flow into one. |
+
+**Adding a new scene type:** extend the `TeachScene` union, add its beat count to `sceneMaxStep`, and render it in `SceneView` (+ a component). Drive animation with CSS transitions on SVG (opacity/transform), no libraries — see `SplitScene`. The URL `mode=teach` deep-links to the deck.
 
 ### Shareable links — URL parameter format
 
@@ -392,7 +438,7 @@ ToolShell mirrors the current setup into the URL query string (`history.replaceS
 | Param | Meaning | Example |
 |---|---|---|
 | `tool` | sub-tool key (omitted for the first tab) | `tool=findingRoots` |
-| `mode` | `example` or `worksheet` (whiteboard is default) | `mode=worksheet` |
+| `mode` | `example`, `worksheet` or `teach` (whiteboard is default) | `mode=worksheet` |
 | `level` | `1` `2` `3` | `level=2` |
 | `dd` | dropdown value for the current tool+level | `dd=fraction` |
 | `vars` | variable toggles; `-` prefix = off | `vars=integerC,-negCoeff` |

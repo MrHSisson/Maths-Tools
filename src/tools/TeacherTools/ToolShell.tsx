@@ -17,6 +17,7 @@ import {
   type InfoSection,
   type DifficultyLevel,
   type AnyQuestion,
+  type TeachingSlide,
   randInt, pick, step, tStep, mStep, fracStr, mStr, pickActive, fmt,
 } from "../../shared";
 
@@ -186,6 +187,7 @@ const INFO_SECTIONS: InfoSection[] = [
     { label: "Whiteboard",     detail: "Single question on the left, working space on the right. Visualiser available." },
     { label: "Worked Example", detail: "Full step-by-step solution revealed on demand." },
     { label: "Worksheet",      detail: "Grid of questions with PDF export." },
+    { label: "Teach",          detail: "Optional slide deck of key ideas (only appears when the tool provides teachingSlides)." },
   ]},
   { title: "Question Options", icon: "⚙️", content: [
     { label: "Dropdowns",    detail: "Select the question style or method for the active tool and level." },
@@ -284,6 +286,73 @@ const generateQuestion = (
 // Worksheet uniqueness is automatic — ToolShell wraps generateQuestion with the
 // standard retry-until-unique loop. No generateUniqueQ needed.
 
+// ── 7. TEACHING SLIDES (optional) ─────────────────────────────────────────────
+//
+// Pass `teachingSlides` to ToolShell to add a "Teach" tab. The teacher first
+// picks a category (Concepts / True or False / Spot the Mistake), then presses
+// through that category's slides one beat at a time (→ / space / click; ← steps
+// back; Esc back to the menu). Omit the prop and no Teach tab appears.
+//
+// Every slide has a `category: "concept" | "trueFalse" | "spotMistake"` and an
+// optional `phase: "iDo" | "weDo" | "youDo"` (corner badge). Empty categories
+// show as "Coming soon". Keep `title` a short TOPIC — the changing caption is the
+// voice. Slides are hand-authored, misconception-driven (no generators). Two kinds:
+//
+//   static (default) — body blocks + one optional `reveal` (press to reveal):
+//     block types: { t:"text", s } (｢$...$｣ inline maths, **bold**),
+//                  { t:"math", s }, { t:"bars", bars:[{num,den,label?}] },
+//                  { t:"verdict", value:boolean },
+//                  { t:"note", tone?:"good"|"bad"|"plain", label?, s }  (no emoji)
+//
+//   anim — a scene choreographed across several beats, one caption per beat:
+//     { type:"split", num, den, factor, shadeByOne?, predict? }  cuts one piece per press
+//     { type:"equivalents", num, den, factors:number[] }         reveals one ×factor equivalent per beat
+//     { type:"combine", a, b, sumLabel }                         two shaded bars flow into one
+//   (beat count is derived from the scene — supply that many captions.)
+//   Full authoring guide: CLAUDE.md → "Teaching slides".
+//
+// Delete this constant (and the teachingSlides prop below) if your tool has no deck.
+
+const TEACHING_SLIDES: TeachingSlide[] = [
+  {
+    kind: "anim", category: "concept", phase: "iDo",
+    title: "Equivalent fractions",
+    scene: { type: "split", num: 1, den: 2, factor: 2 },
+    steps: [
+      "Here is $\\dfrac{1}{2}$.",
+      "Split the first half…",
+      "…and the second half.",
+      "Now it's $\\dfrac{2}{4}$ — the shaded amount hasn't changed.",
+    ],
+  },
+  {
+    kind: "anim", category: "concept", phase: "youDo",
+    title: "Equivalent fractions",
+    scene: { type: "equivalents", num: 1, den: 2, factors: [2, 3, 4, 5] },
+    steps: [
+      "Find two fractions equal to $\\dfrac{1}{2}$ — write two down first.",
+      "Splitting into 2 gives one…",
+      "…into 3, another…",
+      "…into 4…",
+      "…into 5. Any two are correct.",
+    ],
+  },
+  {
+    // Title is the TOPIC; the statement being judged goes in a prominent body block.
+    category: "trueFalse", phase: "youDo",
+    title: "True or false?",
+    body: [
+      { t: "math", s: "2 + 3 = 6" },
+      { t: "text", s: "Decide before you reveal." },
+    ],
+    reveal: [
+      { t: "verdict", value: false },
+      { t: "note", tone: "good", label: "Correct", s: "$2 + 3 = 5$." },
+    ],
+    revealLabel: "Reveal",
+  },
+];
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // END OF TOOL-SPECIFIC SECTION
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -302,6 +371,7 @@ export default function App() {
       config={TOOL_CONFIG}
       infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
+      teachingSlides={TEACHING_SLIDES}
     />
   );
 }

@@ -46,6 +46,8 @@ export const CATEGORIES: CategoryMeta[] = [
       { id: 'integers', path: '/integer-add-and-subtract', name: 'Adding & Subtracting Integers', description: 'Practice adding and subtracting positive and negative numbers using number lines', ready: 'v1.4', enabled: false, load: () => import('./tools/Number/IntegerAddSub') },
       { id: 'estimation', path: '/estimation', name: 'Estimation', description: 'Develop estimation skills by rounding numbers to make calculations easier', ready: 'v2.3', load: () => import('./tools/Number/Estimation') },
       { id: 'powers-of-ten', path: '/powers-of-ten', name: 'Multiplying & Dividing by 10ⁿ', description: 'Use a place value table to scale by powers of 10', ready: 'v1.4', enabled: false, load: () => import('./tools/Number/PowersOfTen') },
+      { id: 'fractions-add-sub', path: '/add-subtract-fractions', name: 'Adding & Subtracting Fractions', description: 'Add and subtract fractions and mixed numbers, with common denominators, scaling and LCM methods', ready: 'v2.3', load: () => import('./tools/Number/FractionsAddSub') },
+      { id: 'fractions-mult-div', path: '/multiply-divide-fractions', name: 'Multiplying & Dividing Fractions', description: 'Multiply and divide fractions and mixed numbers using Keep, Flip, Change', ready: 'v2.3', load: () => import('./tools/Number/FractionMultDiv') },
     ],
   },
   {

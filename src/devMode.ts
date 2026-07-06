@@ -5,6 +5,7 @@
 // classroom use:
 //   • tools registered with `enabled: false` (LandingPage shows them, badged DEV)
 //   • the step-by-step "Worked Example" mode in every ToolShell tool
+//   • the "Teach" slide-deck mode (when a tool provides teachingSlides)
 //
 // The flag is persisted in localStorage and shared across the whole app (and
 // across tabs) via a tiny external store, so any component can read it with the
