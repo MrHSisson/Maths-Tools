@@ -102,6 +102,56 @@ function inRange(value: number, ranges: QOVars): boolean {
   return !!ranges.over180;
 }
 
+// ─── LAYOUT CONSTANTS (world units) ───────────────────────────────────────────
+const NORTH_LEN = 88;         // length of each North line (shortened for cleaner diagrams)
+const ARC_R = 42;
+const ARC_LABEL_OFF = 26;
+const LABEL_DIST = 30;
+const N_LABEL_GAP = 16;
+const PAD = 30;
+const PROMPT_BAND = 78;
+const REF = 520;
+
+// shortest distance from point p to the segment a→b
+function pointSegDist(p: Pt, a: Pt, b: Pt): number {
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const len2 = dx * dx + dy * dy;
+  if (len2 < 1e-6) return Math.hypot(p.x - a.x, p.y - a.y);
+  let t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
+}
+
+// A layout is "clean" when no North line passes too close to another point, no
+// two points sit on top of each other, and no drawn edge grazes a non-endpoint
+// point — the collisions that make bearing diagrams look messy.
+function layoutIsClean(points: { p: Pt }[], edges: [number, number][]): boolean {
+  const pts = points.map(pp => pp.p);
+  // extend the tested North line past its tip to cover the "N" label sitting above it
+  const northTip = (p: Pt): Pt => ({ x: p.x, y: p.y - NORTH_LEN - N_LABEL_GAP - 8 });
+  for (let i = 0; i < pts.length; i++) {
+    for (let j = 0; j < pts.length; j++) {
+      if (i === j) continue;
+      if (Math.hypot(pts[i].x - pts[j].x, pts[i].y - pts[j].y) < 96) return false;
+      // point j (and its letter label) must clear point i's North line + "N" label
+      if (pointSegDist(pts[j], pts[i], northTip(pts[i])) < 40) return false;
+    }
+  }
+  for (const [a, b] of edges) {
+    for (let k = 0; k < pts.length; k++) {
+      if (k === a || k === b) continue;
+      if (pointSegDist(pts[k], pts[a], pts[b]) < 34) return false;
+    }
+    // An edge that leaves a vertex within ~20° of due North runs alongside that
+    // vertex's North line — the cramped look. Reject it (checking both ends).
+    const bAB = norm360(Math.atan2(pts[b].x - pts[a].x, pts[a].y - pts[b].y) * 180 / Math.PI);
+    const bBA = norm360(bAB + 180);
+    const nearNorth = (x: number) => x < 20 || x > 340;
+    if (nearNorth(bAB) || nearNorth(bBA)) return false;
+  }
+  return true;
+}
+
 // ─── QUESTION GENERATION ────────────────────────────────────────────────────
 function buildQuestion(tool: string, level: string, vars: QOVars): BearingQuestion {
   const threePoint = level === "level3";
@@ -150,7 +200,8 @@ function buildQuestion(tool: string, level: string, vars: QOVars): BearingQuesti
     }
 
     const allowed = candidates.filter(c => inRange(c.value, ranges));
-    if (allowed.length) { candidates = allowed; break; }
+    if (allowed.length && layoutIsClean(points, edges)) { candidates = allowed; break; }
+    candidates = [];
   }
   if (!candidates.length) {
     // safe fallback — a simple two-point diagram
@@ -208,15 +259,6 @@ function generateQuestion(
 }
 
 // ─── DIAGRAM ─────────────────────────────────────────────────────────────────
-const NORTH_LEN = 118;
-const ARC_R = 46;
-const ARC_LABEL_OFF = 26;
-const LABEL_DIST = 30;
-const N_LABEL_GAP = 16;
-const PAD = 30;
-const PROMPT_BAND = 82;
-const REF = 520;
-
 function polar(cx: number, cy: number, r: number, deg: number): Pt {
   return { x: cx + r * Math.cos(toRad(deg)), y: cy + r * Math.sin(toRad(deg)) };
 }
@@ -242,25 +284,27 @@ function BearingDiagram({ q, showAnswer, dataIndex }: DiagramProps) {
   const pts = q.points.map(pp => pp.p);
   const from = pts[q.fromIdx];
 
-  // direction to nudge each point's letter label away from its lines and North
-  const labelDir = (i: number): Pt => {
-    let dx = 0, dy = -1;   // start biased away from the North line (which points up)
-    q.edges.forEach(([a, b]) => {
-      let other = -1;
-      if (a === i) other = b; else if (b === i) other = a;
-      if (other >= 0) {
-        const vx = pts[other].x - pts[i].x, vy = pts[other].y - pts[i].y;
-        const len = Math.hypot(vx, vy) || 1;
-        dx += vx / len; dy += vy / len;
-      }
-    });
-    const len = Math.hypot(dx, dy);
-    if (len < 0.001) return { x: 0, y: 1 };
-    return { x: -dx / len, y: -dy / len };
-  };
+  // Place each point's letter label at the candidate direction (tried all round
+  // the point) that sits furthest from every line, other point and already-placed
+  // label — with a gentle downward bias so labels favour sitting below the point,
+  // as in a textbook. This clears the North lines and connecting edges cleanly.
+  const obstacles: [Pt, Pt][] = [];
+  q.edges.forEach(([a, b]) => obstacles.push([pts[a], pts[b]]));
+  pts.forEach(p => obstacles.push([p, { x: p.x, y: p.y - NORTH_LEN }]));   // North lines
+  const placed: Pt[] = [];
   const labelPositions = pts.map((p, i) => {
-    const d = labelDir(i);
-    return { x: p.x + d.x * LABEL_DIST, y: p.y + d.y * LABEL_DIST };
+    let best: Pt = { x: p.x, y: p.y + LABEL_DIST }, bestScore = -Infinity;
+    for (let deg = 0; deg < 360; deg += 15) {
+      const cand = polar(p.x, p.y, LABEL_DIST, deg);
+      let score = Infinity;
+      obstacles.forEach(([a, b]) => { score = Math.min(score, pointSegDist(cand, a, b)); });
+      pts.forEach((o, j) => { if (j !== i) score = Math.min(score, Math.hypot(cand.x - o.x, cand.y - o.y)); });
+      placed.forEach(pl => { score = Math.min(score, Math.hypot(cand.x - pl.x, cand.y - pl.y)); });
+      score += Math.sin(toRad(deg)) * 7;   // small preference for below the point
+      if (score > bestScore) { bestScore = score; best = cand; }
+    }
+    placed.push(best);
+    return best;
   });
 
   // bearing value label sits on the bisector of the swept sector, just outside it
