@@ -293,8 +293,10 @@ const generateQuestion = (
 // through that category's slides one beat at a time (→ / space / click; ← steps
 // back; Esc back to the menu). Omit the prop and no Teach tab appears.
 //
-// Every slide has a `category: "concept" | "trueFalse" | "spotMistake"`. Empty
-// categories show as "Coming soon" in the menu. Two slide kinds:
+// Every slide has a `category: "concept" | "trueFalse" | "spotMistake"` and an
+// optional `phase: "iDo" | "weDo" | "youDo"` (corner badge). Empty categories
+// show as "Coming soon". Keep `title` a short TOPIC — the changing caption is the
+// voice. Slides are hand-authored, misconception-driven (no generators). Two kinds:
 //
 //   static (default) — body blocks + one optional `reveal` (press to reveal):
 //     block types: { t:"text", s } (｢$...$｣ inline maths, **bold**),
@@ -303,41 +305,51 @@ const generateQuestion = (
 //                  { t:"note", tone?:"good"|"bad"|"plain", label?, s }  (no emoji)
 //
 //   anim — a scene choreographed across several beats, one caption per beat:
-//     { type:"split", num, den, factor, shadeByOne? }  cuts one piece per press; area stays put
-//     { type:"combine", a, b, sumLabel }               two shaded bars flow into one
+//     { type:"split", num, den, factor, shadeByOne?, predict? }  cuts one piece per press
+//     { type:"equivalents", num, den, factors:number[] }         reveals one ×factor equivalent per beat
+//     { type:"combine", a, b, sumLabel }                         two shaded bars flow into one
+//   (beat count is derived from the scene — supply that many captions.)
+//   Full authoring guide: CLAUDE.md → "Teaching slides".
 //
 // Delete this constant (and the teachingSlides prop below) if your tool has no deck.
 
 const TEACHING_SLIDES: TeachingSlide[] = [
   {
-    category: "trueFalse",
-    title: "$2 + 3 = 6$",
-    body: [{ t: "text", s: "Decide before you reveal." }],
-    reveal: [
-      { t: "verdict", value: false },
-      { t: "note", tone: "good", label: "Correct", s: "$2 + 3 = 5$." },
-    ],
-    revealLabel: "Reveal",
-  },
-  {
-    kind: "anim", category: "concept",
-    title: "Splitting each piece keeps the value the same.",
+    kind: "anim", category: "concept", phase: "iDo",
+    title: "Equivalent fractions",
     scene: { type: "split", num: 1, den: 2, factor: 2 },
     steps: [
       "Here is $\\dfrac{1}{2}$.",
-      "Cut the first half…",
+      "Split the first half…",
       "…and the second half.",
       "Now it's $\\dfrac{2}{4}$ — the shaded amount hasn't changed.",
     ],
   },
   {
-    kind: "anim", category: "concept",
-    title: "Adding: the pieces combine.",
-    scene: { type: "combine", a: { num: 1, den: 4, label: "\\dfrac{1}{4}" }, b: { num: 2, den: 4, label: "\\dfrac{2}{4}" }, sumLabel: "\\dfrac{3}{4}" },
+    kind: "anim", category: "concept", phase: "youDo",
+    title: "Equivalent fractions",
+    scene: { type: "equivalents", num: 1, den: 2, factors: [2, 3, 4, 5] },
     steps: [
-      "Start with $\\dfrac{1}{4}$ and $\\dfrac{2}{4}$ (same denominator).",
-      "Slide the pieces together to get $\\dfrac{3}{4}$.",
+      "Find two fractions equal to $\\dfrac{1}{2}$ — write two down first.",
+      "Splitting into 2 gives one…",
+      "…into 3, another…",
+      "…into 4…",
+      "…into 5. Any two are correct.",
     ],
+  },
+  {
+    // Title is the TOPIC; the statement being judged goes in a prominent body block.
+    category: "trueFalse", phase: "youDo",
+    title: "True or false?",
+    body: [
+      { t: "math", s: "2 + 3 = 6" },
+      { t: "text", s: "Decide before you reveal." },
+    ],
+    reveal: [
+      { t: "verdict", value: false },
+      { t: "note", tone: "good", label: "Correct", s: "$2 + 3 = 5$." },
+    ],
+    revealLabel: "Reveal",
   },
 ];
 
