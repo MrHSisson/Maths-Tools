@@ -299,9 +299,9 @@ function arcOnlyPath(cx: number, cy: number, r: number, sweepDeg: number): strin
   return `M ${s.x} ${s.y} A ${r} ${r} 0 ${large} 1 ${e.x} ${e.y}`;
 }
 
-interface DiagramProps { q: BearingQuestion; showAnswer: boolean; dataIndex?: number; fillBox?: boolean; }
+interface DiagramProps { q: BearingQuestion; showAnswer: boolean; dataIndex?: number; answerIndex?: number; fillBox?: boolean; }
 
-function BearingDiagram({ q, showAnswer, dataIndex, fillBox = false }: DiagramProps) {
+function BearingDiagram({ q, showAnswer, dataIndex, answerIndex, fillBox = false }: DiagramProps) {
   const pts = q.points.map(pp => pp.p);
   const from = pts[q.fromIdx];
 
@@ -396,7 +396,11 @@ function BearingDiagram({ q, showAnswer, dataIndex, fillBox = false }: DiagramPr
     );
   };
 
-  const extraProps = dataIndex !== undefined ? { "data-q-index": dataIndex } : {};
+  // A diagram tagged data-q-answer-index is the hidden "solution drawn on" copy
+  // the print handler uses for the answer pages; otherwise it is a question SVG.
+  const extraProps = answerIndex !== undefined
+    ? { "data-q-answer-index": answerIndex }
+    : dataIndex !== undefined ? { "data-q-index": dataIndex } : {};
   return (
     <svg
       viewBox={`${vbX} ${vbY} ${side} ${side}`}
@@ -448,9 +452,17 @@ const questionRenderer = (q: AnyQuestion, showAnswer: boolean, _cs: string, comp
     // filling the box here is what keeps the printed cells from cropping the
     // instruction and diagram edges at any column count.
     return (
-      <div style={{ width: "100%", aspectRatio: "1", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-        <BearingDiagram q={d} showAnswer={showAnswer} dataIndex={idx} fillBox />
-      </div>
+      <>
+        <div style={{ width: "100%", aspectRatio: "1", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+          <BearingDiagram q={d} showAnswer={showAnswer} dataIndex={idx} fillBox />
+        </div>
+        {/* Hidden "solution drawn on" copy the print handler clones for the
+            answer pages, so the printed answer key shows the bearing drawn on
+            rather than just its value. */}
+        <div style={{ display: "none" }} aria-hidden>
+          <BearingDiagram q={d} showAnswer answerIndex={idx} fillBox />
+        </div>
+      </>
     );
   }
   const maxW = compact === undefined ? 360 : 520;
