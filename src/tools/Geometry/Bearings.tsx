@@ -336,9 +336,30 @@ function BearingDiagram({ q, showAnswer, dataIndex, answerIndex, fillBox = false
     return best;
   });
 
-  // bearing value label sits on the bisector of the swept sector, just outside it
+  // Bearing value label: start on the swept sector's bisector, then search
+  // outward (with a small angular window) for the spot clearest of the lines,
+  // vertex letters and dots, so it never sits on top of a line or a place name.
   const midDeg = -90 + q.value / 2;
-  const valLabelPos = polar(from.x, from.y, ARC_R + ARC_LABEL_OFF, midDeg);
+  const valHalfW = 24, valHalfH = 14;
+  let valLabelPos = polar(from.x, from.y, ARC_R + ARC_LABEL_OFF, midDeg);
+  {
+    // The label may sit anywhere INSIDE the swept sector: this window is narrow
+    // for a small bearing (pinned near the bisector) and wide for a reflex one
+    // (free to slide to a clear spot instead of landing on the vertex letter).
+    const ddMax = Math.max(0, q.value / 2 - 16);
+    let bestScore = -Infinity;
+    for (let r = ARC_R + 16; r <= ARC_R + 70; r += 7) {
+      for (let dd = -ddMax; dd <= ddMax; dd += 6) {
+        const cand = polar(from.x, from.y, r, midDeg + dd);
+        let score = Infinity;
+        obstacles.forEach(([a, b]) => { score = Math.min(score, pointSegDist(cand, a, b)); });
+        labelPositions.forEach((lp, i) => { score = Math.min(score, Math.hypot(cand.x - lp.x, cand.y - lp.y) - (valHalfW + labHalfW(i)) * 0.5); });
+        pts.forEach(pp => { score = Math.min(score, Math.hypot(cand.x - pp.x, cand.y - pp.y)); });
+        score -= (r - (ARC_R + 16)) * 0.1 + Math.abs(dd) * 0.05;   // prefer near the arc, toward the bisector
+        if (score > bestScore) { bestScore = score; valLabelPos = cand; }
+      }
+    }
+  }
 
   // ── bounding box over everything that gets drawn ──
   const ext: number[][] = [];
@@ -348,7 +369,7 @@ function BearingDiagram({ q, showAnswer, dataIndex, answerIndex, fillBox = false
   });
   ext.push([from.x - ARC_R - ARC_LABEL_OFF, from.y - ARC_R - ARC_LABEL_OFF]);
   ext.push([from.x + ARC_R + ARC_LABEL_OFF, from.y + ARC_R + ARC_LABEL_OFF]);
-  ext.push([valLabelPos.x - 22, valLabelPos.y - 16], [valLabelPos.x + 22, valLabelPos.y + 16]);
+  ext.push([valLabelPos.x - valHalfW, valLabelPos.y - valHalfH], [valLabelPos.x + valHalfW, valLabelPos.y + valHalfH]);
   labelPositions.forEach((l, i) => { ext.push([l.x - labHalfW(i), l.y - labHalfH], [l.x + labHalfW(i), l.y + labHalfH]); });
 
   const minX = Math.min(...ext.map(e => e[0])) - PAD;
@@ -419,14 +440,22 @@ function BearingDiagram({ q, showAnswer, dataIndex, answerIndex, fillBox = false
       ))}
 
       {/* bearing arc — revealed with the answer */}
-      {showAnswer && (
-        <g>
-          <path d={sectorPath(from.x, from.y, ARC_R, q.value)} fill={ARC_COL} fillOpacity="0.16" stroke="none" />
-          <path d={arcOnlyPath(from.x, from.y, ARC_R, q.value)} fill="none" stroke={ARC_COL} strokeWidth={arcStroke} strokeLinecap="round" />
-          <text x={valLabelPos.x} y={valLabelPos.y} textAnchor="middle" dominantBaseline="middle"
-            fontSize={fontVal} fontWeight="800" fill={ARC_COL}>{pad3(q.value)}°</text>
-        </g>
-      )}
+      {showAnswer && (() => {
+        const valTxt = `${pad3(q.value)}°`;
+        const pillW = valTxt.length * fontVal * 0.56 + 8 * k;
+        const pillH = fontVal * 1.2;
+        return (
+          <g>
+            <path d={sectorPath(from.x, from.y, ARC_R, q.value)} fill={ARC_COL} fillOpacity="0.16" stroke="none" />
+            <path d={arcOnlyPath(from.x, from.y, ARC_R, q.value)} fill="none" stroke={ARC_COL} strokeWidth={arcStroke} strokeLinecap="round" />
+            {/* white pill keeps the value readable over the sector fill / any line */}
+            <rect x={valLabelPos.x - pillW / 2} y={valLabelPos.y - pillH / 2} width={pillW} height={pillH} rx={5 * k}
+              fill="#ffffff" fillOpacity="0.92" stroke={ARC_COL} strokeWidth={0.9 * k} />
+            <text x={valLabelPos.x} y={valLabelPos.y} textAnchor="middle" dominantBaseline="middle"
+              fontSize={fontVal} fontWeight="800" fill={ARC_COL}>{valTxt}</text>
+          </g>
+        );
+      })()}
 
       {/* North arrows */}
       {pts.map((p, i) => <NorthArrow key={`n${i}`} p={p} />)}
