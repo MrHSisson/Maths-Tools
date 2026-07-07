@@ -279,6 +279,27 @@ function generateQuestion(
   } as unknown as AnyQuestion;
 }
 
+// Dedupe a worksheet on the BEARING VALUE (per level), not the random key — so a
+// sheet never shows two questions with the same angle/answer. Falls back to a
+// repeat only if the pool of distinct bearings for the active options is used up.
+function generateUniqueQ(
+  tool: string,
+  level: DifficultyLevel,
+  variables: Record<string, boolean>,
+  dropdownValue: string,
+  usedKeys: Set<string>,
+  multiSelectValues?: Record<string, boolean>,
+): AnyQuestion {
+  let q!: AnyQuestion;
+  for (let i = 0; i < 80; i++) {
+    q = generateQuestion(tool, level, variables, dropdownValue, multiSelectValues);
+    const val = ((q as any)._diagram as BearingQuestion).value;
+    const token = `${tool}-${level}-${val}`;
+    if (!usedKeys.has(token)) { usedKeys.add(token); return q; }
+  }
+  return q;
+}
+
 // ─── DIAGRAM ─────────────────────────────────────────────────────────────────
 function polar(cx: number, cy: number, r: number, deg: number): Pt {
   return { x: cx + r * Math.cos(toRad(deg)), y: cy + r * Math.sin(toRad(deg)) };
@@ -509,6 +530,7 @@ export default function App() {
       config={TOOL_CONFIG}
       infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
+      generateUniqueQ={generateUniqueQ}
       questionRenderer={questionRenderer}
       customPrintHandler={handleDiagramPrint}
       defaults={{ numColumns: 3, maxColumns: 4, hideFontControls: true, collapseWorkingByDefault: true }}
