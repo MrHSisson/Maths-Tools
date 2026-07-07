@@ -238,87 +238,59 @@ function BlockView({ b }: { b: TeachBlock }) {
 
 // ── Runner ────────────────────────────────────────────────────────────────────
 
-const maxStepOf = (s: TeachingSlide) => (s.kind === "anim" ? sceneMaxStep(s.scene) : s.reveal ? 1 : 0);
+// Beats a slide runs for (exported for the slide smoke tests).
+export const slideMaxStep = (s: TeachingSlide) => (s.kind === "anim" ? sceneMaxStep(s.scene) : s.reveal ? 1 : 0);
 
-export function TeachingDeck({ slides }: { slides: TeachingSlide[] }) {
-  const [ready, setReady] = useState(!!w().katex);
-  const [cat, setCat] = useState<TeachCategory | null>(null);
+// ── SlideDeck — plays a flat slide array, one beat per press ──────────────────
+// The reusable core of the Teach deck: TeachingDeck uses it after a category is
+// chosen, and the skill-library overlay (src/shared/skills) plays a skill's
+// slides through it directly. Owns its own slide/beat state and keyboard
+// handling (→/space/Enter advance, ← back, Esc → onEscape).
+export function SlideDeck({ slides, color, onEscape, onDone }: {
+  slides: TeachingSlide[];
+  color: string;
+  onEscape?: () => void;
+  /** When provided, the Next button becomes "Done" on the last beat and fires
+   *  this instead of disabling — used by the skill overlay to close itself. */
+  onDone?: () => void;
+}) {
   const [idx, setIdx] = useState(0);
   const [step, setStep] = useState(0);
   const idxRef = useRef(0); idxRef.current = idx;
   const stepRef = useRef(0); stepRef.current = step;
 
-  useEffect(() => {
-    if (!w().katex) loadKaTeX().then(() => setReady(true)).catch(() => setReady(true));
-    else setReady(true);
-  }, []);
-
-  const deck = cat ? slides.filter((s) => s.category === cat) : [];
-
   const goNext = useCallback(() => {
-    const list = slides.filter((s) => s.category === cat);
     const i = idxRef.current, s = stepRef.current;
-    if (!list[i]) return;
-    if (s < maxStepOf(list[i])) { setStep(s + 1); return; }
-    if (i < list.length - 1) { setIdx(i + 1); setStep(0); }
-  }, [slides, cat]);
+    if (!slides[i]) return;
+    if (s < slideMaxStep(slides[i])) { setStep(s + 1); return; }
+    if (i < slides.length - 1) { setIdx(i + 1); setStep(0); }
+  }, [slides]);
   const goPrev = useCallback(() => {
     const i = idxRef.current, s = stepRef.current;
     if (s > 0) { setStep(s - 1); return; }
     if (i > 0) { setIdx(i - 1); setStep(0); }
   }, []);
-  const toMenu = useCallback(() => { setCat(null); setIdx(0); setStep(0); }, []);
 
   useEffect(() => {
-    if (!cat) return;
     const h = (e: KeyboardEvent) => {
       if (e.key === "ArrowRight" || e.key === " " || e.key === "Enter") { e.preventDefault(); goNext(); }
       else if (e.key === "ArrowLeft") { e.preventDefault(); goPrev(); }
-      else if (e.key === "Escape") toMenu();
+      else if (e.key === "Escape" && onEscape) onEscape();
     };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
-  }, [cat, goNext, goPrev, toMenu]);
+  }, [goNext, goPrev, onEscape]);
 
-  if (!ready) return <div className="text-center text-gray-400 py-16">Loading…</div>;
-
-  // ── Menu ──
-  if (!cat) {
-    return (
-      <div className="flex flex-col gap-4">
-        {CATEGORY.map((c) => {
-          const count = slides.filter((s) => s.category === c.key).length;
-          const disabled = count === 0;
-          return (
-            <button key={c.key} disabled={disabled} onClick={() => { setCat(c.key); setIdx(0); setStep(0); }}
-              className={`bg-white rounded-xl shadow-lg p-6 flex items-center justify-between text-left transition-all ${disabled ? "opacity-60 cursor-default" : "hover:shadow-xl hover:-translate-y-0.5"}`}
-              style={{ borderLeft: `6px solid ${c.color}` }}>
-              <span className="text-2xl font-bold" style={{ color: disabled ? "#9ca3af" : "#111827" }}>{c.label}</span>
-              <span className="text-sm font-bold uppercase tracking-wider" style={{ color: disabled ? "#9ca3af" : c.color }}>
-                {disabled ? "Coming soon" : `${count} slide${count > 1 ? "s" : ""}`}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    );
-  }
-
-  // ── Deck ──
-  const slide = deck[idx];
-  const color = catMeta(cat).color;
-  const maxStep = maxStepOf(slide);
+  const slide = slides[idx];
+  if (!slide) return null;
+  const maxStep = slideMaxStep(slide);
   const atEnd = step >= maxStep;
+  const atLast = atEnd && idx === slides.length - 1;
   const isAnim = slide.kind === "anim";
   const caption = isAnim ? (slide as AnimSlide).steps[Math.min(step, (slide as AnimSlide).steps.length - 1)] : "";
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="relative flex items-center h-10">
-        <button onClick={toMenu} className="absolute left-0 px-4 py-2 rounded-lg border-2 border-gray-300 bg-white text-gray-700 font-bold hover:border-blue-900 hover:text-blue-900 transition-colors">← Menu</button>
-        <span className="mx-auto text-sm font-bold uppercase tracking-wider" style={{ color }}>{catMeta(cat).label}</span>
-      </div>
-
       <div onClick={isAnim ? goNext : undefined} className={`relative bg-white rounded-2xl shadow-lg px-10 pt-7 pb-6 flex flex-col ${isAnim ? "cursor-pointer" : ""}`} style={{ borderTop: `5px solid ${color}`, minHeight: "44vh" }}>
         {slide.phase && (
           <span className="absolute top-6 right-6 px-4 py-1.5 rounded-full text-white text-xs font-extrabold uppercase tracking-widest" style={{ background: color }}>{PHASE_LABEL[slide.phase]}</span>
@@ -355,12 +327,60 @@ export function TeachingDeck({ slides }: { slides: TeachingSlide[] }) {
       <div className="flex items-center justify-between">
         <button onClick={goPrev} disabled={idx === 0 && step === 0}
           className={`px-5 py-2.5 rounded-xl border-2 font-bold transition-colors ${idx === 0 && step === 0 ? "border-gray-200 text-gray-300 cursor-default" : "border-gray-300 text-gray-700 bg-white hover:border-blue-900 hover:text-blue-900"}`}>← Back</button>
-        <button onClick={goNext} disabled={atEnd && idx === deck.length - 1}
+        <button onClick={() => { if (atLast) { if (onDone) onDone(); } else goNext(); }} disabled={atLast && !onDone}
           className="px-6 py-2.5 rounded-xl text-white font-bold transition-opacity"
-          style={{ background: color, opacity: atEnd && idx === deck.length - 1 ? 0.4 : 1 }}>
-          {atEnd && idx === deck.length - 1 ? "Done" : "Next ▸"}
+          style={{ background: color, opacity: atLast && !onDone ? 0.4 : 1 }}>
+          {atLast ? "Done" : "Next ▸"}
         </button>
       </div>
+    </div>
+  );
+}
+
+export function TeachingDeck({ slides }: { slides: TeachingSlide[] }) {
+  const [ready, setReady] = useState(!!w().katex);
+  const [cat, setCat] = useState<TeachCategory | null>(null);
+
+  useEffect(() => {
+    if (!w().katex) loadKaTeX().then(() => setReady(true)).catch(() => setReady(true));
+    else setReady(true);
+  }, []);
+
+  const toMenu = useCallback(() => setCat(null), []);
+
+  if (!ready) return <div className="text-center text-gray-400 py-16">Loading…</div>;
+
+  // ── Menu ──
+  if (!cat) {
+    return (
+      <div className="flex flex-col gap-4">
+        {CATEGORY.map((c) => {
+          const count = slides.filter((s) => s.category === c.key).length;
+          const disabled = count === 0;
+          return (
+            <button key={c.key} disabled={disabled} onClick={() => setCat(c.key)}
+              className={`bg-white rounded-xl shadow-lg p-6 flex items-center justify-between text-left transition-all ${disabled ? "opacity-60 cursor-default" : "hover:shadow-xl hover:-translate-y-0.5"}`}
+              style={{ borderLeft: `6px solid ${c.color}` }}>
+              <span className="text-2xl font-bold" style={{ color: disabled ? "#9ca3af" : "#111827" }}>{c.label}</span>
+              <span className="text-sm font-bold uppercase tracking-wider" style={{ color: disabled ? "#9ca3af" : c.color }}>
+                {disabled ? "Coming soon" : `${count} slide${count > 1 ? "s" : ""}`}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // ── Deck ── (keyed by category so slide/beat state resets on re-entry)
+  const color = catMeta(cat).color;
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="relative flex items-center h-10">
+        <button onClick={toMenu} className="absolute left-0 px-4 py-2 rounded-lg border-2 border-gray-300 bg-white text-gray-700 font-bold hover:border-blue-900 hover:text-blue-900 transition-colors">← Menu</button>
+        <span className="mx-auto text-sm font-bold uppercase tracking-wider" style={{ color }}>{catMeta(cat).label}</span>
+      </div>
+      <SlideDeck key={cat} slides={slides.filter((s) => s.category === cat)} color={color} onEscape={toMenu} />
     </div>
   );
 }

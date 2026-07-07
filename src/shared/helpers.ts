@@ -23,17 +23,47 @@ export const pickActive = (values: Record<string, boolean>, options: { value: st
 export const normalizeMultiSelect = <T extends { key: string }>(ms?: T | T[] | null): T[] =>
   ms ? (Array.isArray(ms) ? ms : [ms]) : [];
 
+// ── Skill-link markers ────────────────────────────────────────────────────────
+// A prose label may mark a term as a drill-down into the skill library:
+//   mStep("Find the common denominator — the [[lcm|LCM]] of 11 and 13:", "143")
+// In the dev-gated Worked Example the marked term renders underlined and opens
+// the skill's slides in an overlay; everywhere else only the term shows.
+
+export const SKILL_MARKER_RE = /\[\[([a-z0-9-]+)\|([^\]]+)\]\]/g;
+
+// Replaces every [[skill-id|term]] marker with its bare term.
+export const stripSkillMarkers = (s: string): string => s.replace(SKILL_MARKER_RE, "$2");
+
+// step()/mStep() accept the latex as a string[] of ordered fragments — the line
+// then reveals one fragment per press in the dev-gated step-by-step Worked
+// Example ("live modelling": the line is written in the order a teacher would
+// write it). latex is always the joined string, so print, show-all mode and the
+// smoke tests see one normal KaTeX string and fragments can never diverge.
+const joinFrags = (latex: string | string[]): { latex: string; frags?: string[] } =>
+  Array.isArray(latex) ? { latex: latex.join(" "), frags: latex } : { latex };
+
 // Pure KaTeX step — use for any line containing maths.
-export const step = (latex: string, plain?: string) =>
-  ({ type: "step", latex, plain: plain ?? latex });
+export const step = (latex: string | string[], plain?: string) => {
+  const j = joinFrags(latex);
+  return { type: "step", latex: j.latex, plain: plain ?? j.latex, ...(j.frags ? { frags: j.frags } : {}) };
+};
 
-// Plain text step — use ONLY for genuinely numberless prose.
+// Plain text step — use ONLY for genuinely numberless prose. May contain
+// [[skill-id|term]] markers; they are stripped from the latex fallback.
 export const tStep = (text: string) =>
-  ({ type: "tStep", latex: `\\text{${text}}`, plain: text });
+  ({ type: "tStep", latex: `\\text{${stripSkillMarkers(text)}}`, plain: text });
 
-// Prose label + KaTeX on the right.
-export const mStep = (label: string, latex: string, unit?: string) =>
-  ({ type: "mStep", latex, plain: `${label} ${latex}${unit ? " " + unit : ""}`, label, unit });
+// Prose label + KaTeX on the right. The label may contain [[skill-id|term]]
+// markers; `plain` gets the stripped label so markers never leak into text output.
+export const mStep = (label: string, latex: string | string[], unit?: string) => {
+  const j = joinFrags(latex);
+  return {
+    type: "mStep", latex: j.latex,
+    plain: `${stripSkillMarkers(label)} ${j.latex}${unit ? " " + unit : ""}`,
+    label, unit,
+    ...(j.frags ? { frags: j.frags } : {}),
+  };
+};
 
 // Formats a number to dp decimal places, stripping trailing zeros.
 export const fmt = (n: number, dp = 2): string => n.toFixed(dp).replace(/\.?0+$/, "");

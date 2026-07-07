@@ -9,6 +9,11 @@ export interface WorkingStep {
   plain: string;
   label?: string;
   unit?: string;
+  /** Reveal-in-parts fragments (live modelling). Set automatically when the
+   *  step()/mStep() helpers are given a string[] — latex is the joined string,
+   *  so print/show-all/tests see one normal KaTeX string. Only the dev-gated
+   *  step-by-step Worked Example mode walks the fragments one press at a time. */
+  frags?: string[];
   extra?: unknown;
 }
 

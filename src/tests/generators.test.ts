@@ -12,7 +12,8 @@
 
 import { describe, it, expect } from "vitest";
 import katex from "katex";
-import { makeUniqueQ, normalizeMultiSelect } from "../shared/helpers";
+import { makeUniqueQ, normalizeMultiSelect, SKILL_MARKER_RE } from "../shared/helpers";
+import { getSkill } from "../shared/skills";
 import type { AnyQuestion, DifficultyLevel, ToolConfig, ToolEntry } from "../shared/types";
 
 interface ToolTestExport {
@@ -55,8 +56,32 @@ const latexOf = (q: AnyQuestion): [string, string][] => {
       for (const m of line.matchAll(/\$([^$]+)\$/g)) out.push(["worded line", m[1]]);
     }
   }
-  q.working.forEach((s, i) => { if (s.latex) out.push([`working[${i}] (${s.type})`, s.latex]); });
+  q.working.forEach((s, i) => {
+    if (s.latex) out.push([`working[${i}] (${s.type})`, s.latex]);
+    // Fragments (live modelling) render individually in stepped mode, so each
+    // must be valid KaTeX on its own, not just as part of the joined line.
+    s.frags?.forEach((f, fi) => out.push([`working[${i}] frag[${fi}]`, f]));
+  });
   return out;
+};
+
+// Every [[skill-id|term]] marker in a question's working must resolve to a
+// registered skill (src/shared/skills) — a dangling link fails CI here rather
+// than shipping a dead underline. `plain` must never carry markers (the
+// helpers strip them), so text output can't leak the syntax.
+const checkSkillMarkers = (q: AnyQuestion, ctx: string) => {
+  for (const s of q.working) {
+    for (const m of (s.label ?? "").matchAll(SKILL_MARKER_RE)) {
+      if (!getSkill(m[1])) throw new Error(`${ctx}: unknown skill "${m[1]}" in step label "${s.label}"`);
+    }
+    if (s.type === "tStep") {
+      for (const m of s.plain.matchAll(SKILL_MARKER_RE)) {
+        if (!getSkill(m[1])) throw new Error(`${ctx}: unknown skill "${m[1]}" in tStep "${s.plain}"`);
+      }
+    } else if ([...s.plain.matchAll(SKILL_MARKER_RE)].length > 0) {
+      throw new Error(`${ctx}: skill marker leaked into plain text "${s.plain}"`);
+    }
+  }
 };
 
 const renderOk = (label: string, latex: string, ctx: string) => {
@@ -105,6 +130,7 @@ for (const [path, { TOOL_CONFIG, generateQuestion, levels }] of optedIn) {
             expect(q.key, `${ctx}: key must be non-empty`).toBeTruthy();
             expect(q.working, `${ctx}: working steps must exist`).toBeInstanceOf(Array);
             for (const [label, latex] of latexOf(q)) renderOk(label, latex, ctx);
+            checkSkillMarkers(q, ctx);
           }
           expect(usedKeys.size, "keys must be unique across the batch").toBe(QUESTIONS_PER_CASE);
         });

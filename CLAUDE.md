@@ -183,13 +183,15 @@ import { type PrintMode } from "../../shared";
 ### All available exports from `src/shared/`
 
 **Types** (use `type` keyword in imports):
-`DifficultyLevel` · `PrintMode` · `AnyQuestion` · `SimpleQuestion` · `WordedQuestion` · `WorkingStep` · `ToolConfig` · `ToolEntry` · `ToolDropdown` · `ToolMultiSelect` · `ToolMultiSelectConfig` · `ToolVariable` · `DifficultyLevelSettings` · `InfoSection` · `InfoItem` · `QOSnapshot` · `ToolShellDefaults` · `ToolShellProps` · `TeachingSlide` · `TeachBlock` · `TeachBar` · `TeachScene` · `TeachCategory`
+`DifficultyLevel` · `PrintMode` · `AnyQuestion` · `SimpleQuestion` · `WordedQuestion` · `WorkingStep` · `ToolConfig` · `ToolEntry` · `ToolDropdown` · `ToolMultiSelect` · `ToolMultiSelectConfig` · `ToolVariable` · `DifficultyLevelSettings` · `InfoSection` · `InfoItem` · `QOSnapshot` · `ToolShellDefaults` · `ToolShellProps` · `TeachingSlide` · `TeachBlock` · `TeachBar` · `TeachScene` · `TeachCategory` · `SkillDef`
 
 **Components / hooks**:
-`ToolShell` · `TeachingDeck` · `MathRenderer` · `InlineMath` · `QuestionDisplay` · `AnswerDisplay` · `DifficultyToggle` · `StandardQOPopover` · `DiffQOPopover` · `InlineQOPanel` · `InfoModal` · `MenuDropdown` · `PrintSplitButton`
+`ToolShell` · `TeachingDeck` · `SlideDeck` · `MathRenderer` · `InlineMath` · `QuestionDisplay` · `AnswerDisplay` · `DifficultyToggle` · `StandardQOPopover` · `DiffQOPopover` · `InlineQOPanel` · `InfoModal` · `MenuDropdown` · `PrintSplitButton` · `SkillLabel` · `SkillOverlay`
 
 **Helpers**:
-`randInt` · `pick` · `fracStr` · `mStr` · `pickActive` · `normalizeMultiSelect` · `step` · `tStep` · `mStep` · `fmt` · `ansEq` · `makeUniqueQ`
+`randInt` · `pick` · `fracStr` · `mStr` · `pickActive` · `normalizeMultiSelect` · `step` · `tStep` · `mStep` · `fmt` · `ansEq` · `makeUniqueQ` · `stripSkillMarkers` · `SKILL_MARKER_RE` · `slideMaxStep`
+
+**Skill library**: `SKILLS` · `getSkill` (see "Skill library" section)
 
 **Utilities**:
 `loadKaTeX` · `handlePrint` · `LV_COLORS` · `LV_LABELS` · `LV_HEADER_COLORS` · `getQuestionBg` · `getStepBg`
@@ -202,10 +204,11 @@ import { type PrintMode } from "../../shared";
 ```ts
 interface WorkingStep {
   type: string;       // "step" | "mStep" | "tStep"
-  latex: string;      // KaTeX string — always present
-  plain: string;      // plain-text fallback
-  label?: string;     // mStep only — left-aligned prose label
+  latex: string;      // KaTeX string — always present (joined from frags when authored in parts)
+  plain: string;      // plain-text fallback (skill markers stripped)
+  label?: string;     // mStep only — left-aligned prose label; may contain [[skill-id|term]] markers
   unit?: string;      // mStep only — plain-text unit appended after KaTeX
+  frags?: string[];   // set automatically when step()/mStep() get a string[] — see "fragments"
   extra?: unknown;    // arbitrary payload for tool-specific use
 }
 ```
@@ -388,7 +391,7 @@ Font size indices: `0=text-lg  1=text-xl  2=text-3xl  3=text-4xl  4=text-5xl  5=
 
 ### What ToolShell provides automatically (never re-implement)
 
-Whiteboard / Worked Example / Worksheet modes · **Teach mode (when `teachingSlides` supplied)** · difficulty toggle · QO popovers (dropdown, variables, multiSelect, differentiated) · tool tab buttons (auto-hidden when only one sub-tool) · font size controls · PDF print · colour scheme picker · info modal · home button · shareable links (URL ⇄ state sync + "Copy Link to Setup" menu item)
+Whiteboard / Worked Example / Worksheet modes · **Teach mode (when `teachingSlides` supplied)** · difficulty toggle · QO popovers (dropdown, variables, multiSelect, differentiated) · tool tab buttons (auto-hidden when only one sub-tool) · font size controls · PDF print · colour scheme picker · info modal · home button · shareable links (URL ⇄ state sync + "Copy Link to Setup" menu item) · **step-by-step Worked Example with fragment walking and skill-link overlays (dev-gated)** — tools only author `string[]` steps and `[[skill-id|term]]` markers; never re-implement the reveal or the overlay
 
 ### Teaching slides — the "Teach" deck  (authoring guide / leap-off point)
 
@@ -397,6 +400,8 @@ The **Teach** deck (`TeachingDeck`, `src/shared/TeachingDeck.tsx`) is a slide-ba
 **Status / where it's up to.** The feature is **gated behind Developing-tools mode** (`devMode`) — the Teach tab only shows when dev mode is on, so it can ship unfinished. Only `FractionsAddSub` has a deck so far: the **Concepts** category runs an I-do → We-do → You-do sequence on equivalent fractions (3/5 ×2, 3/5 ×3, then "find two"). **True or False and Spot the Mistake are empty** ("Coming soon" in the menu) — build them next as authored slides. When the deck is classroom-ready, remove the dev gate in `ToolShell.tsx` (`showTeach`).
 
 **Add a deck to a tool.** Define an array in the tool file and pass it: `<ToolShell teachingSlides={TEACHING_SLIDES} … />`. No prop → no Teach tab. Reference implementation: `src/tools/Number/FractionsAddSub.tsx` (`TEACHING_SLIDES`); a minimal one in the `ToolShell.tsx` template.
+
+**`SlideDeck`** is the reusable core: it plays a flat `TeachingSlide[]` one beat per press (keyboard included) and is exported from shared. `TeachingDeck` wraps it with the category menu; the skill-library overlay (`SkillOverlay`) plays a skill's slides through it directly. New slide-playing surfaces should reuse it, not reimplement beats.
 
 **Authoring philosophy — read before writing slides.**
 - Slides are **specific, hand-authored, misconception-driven examples** — NOT generated. The randomised/varied side is exactly what Whiteboard and Worksheet are for; do not add generators here.
@@ -515,9 +520,10 @@ Pass it to `<ToolShell reformatQuestion={reformatQuestion} />`.
 |--------|-----------|---------|
 | `randInt(min, max)` | `(min: number, max: number) => number` | Random integer, inclusive both ends |
 | `pick(arr)` | `<T>(arr: T[]) => T` | Random element from array |
-| `step(latex, plain?)` | `(latex: string, plain?: string) => WorkingStep` | Pure KaTeX working step |
-| `mStep(label, latex, unit?)` | `(label: string, latex: string, unit?: string) => WorkingStep` | Prose label + KaTeX |
+| `step(latex, plain?)` | `(latex: string \| string[], plain?: string) => WorkingStep` | Pure KaTeX working step; array = reveal-in-parts fragments |
+| `mStep(label, latex, unit?)` | `(label: string, latex: string \| string[], unit?: string) => WorkingStep` | Prose label + KaTeX; array = fragments; label may carry `[[skill-id\|term]]` |
 | `tStep(text)` | `(text: string) => WorkingStep` | Plain-text only step |
+| `stripSkillMarkers(s)` | `(s: string) => string` | Replaces every `[[skill-id\|term]]` marker with its bare term |
 | `fracStr(n, d)` | `(n: number \| string, d: number \| string) => string` | `"$\\frac{n}{d}$"` for InlineMath |
 | `mStr(x)` | `(x: number \| string) => string` | `"$x$"` — wraps value for InlineMath |
 | `pickActive(values, opts)` | `(values: Record<string, boolean>, options: {value: string}[]) => string` | Random active multiSelect value |
@@ -537,6 +543,69 @@ Pass it to `<ToolShell reformatQuestion={reformatQuestion} />`.
 **Pick `mStep` by default.** Use `step` when a label would be redundant (e.g. a chain of equals steps). Use `tStep` only for genuinely numberless prose (rare).
 
 **Never use `\text{}` inside `step()` or `mStep()`.** Never put prose words inside `$...$`.
+
+### Working-step fragments — live modelling (author these by default)
+
+`step()` and `mStep()` accept the latex as a **`string[]` of ordered fragments**. In the dev-gated step-by-step Worked Example, the line then reveals one fragment per press — *live modelling*: the line is written in the order a teacher would write it on the board, and the pause between presses is the class's thinking time. Everywhere else (show-all mode, print, worksheets, tests) the fragments join into one normal KaTeX line, so fragments can never diverge from the printed working. All fragments are laid out immediately (hidden ones at opacity 0), so the line never reflows and ← exactly retraces →.
+
+```ts
+mStep("Convert the first fraction:", ["\\dfrac{1}{11}", "= \\dfrac{1 \\times 13}{11 \\times 13}", "= \\dfrac{13}{143}"])
+```
+
+**The board-writing rule:** a fragment is the next *mark a teacher would write* — a whole decision (an operator with its operand, a complete `= …` link), never a lone token. Fragment any line containing two or more written moves; 2–4 fragments per step is the norm.
+
+| Line shape | Fragmentation |
+|---|---|
+| Apply an operation | `start` → `× operation applied` → `= result` |
+| Equals chain | one fragment per `= …` link |
+| Substitution | expression → expression with values → `= result` |
+| Single fact (`LCM = 143`) | no fragments — arrives whole |
+
+Each fragment must be valid KaTeX **on its own** (the smoke tests render them individually).
+
+### Skill links — `[[skill-id|term]]` drill-downs
+
+A prose label (`mStep` label or `tStep` text) may mark a term as a drill-down into the **skill library**:
+
+```ts
+mStep(`Find the common denominator — the [[lcm|LCM]] of ${d1} and ${d2}:`, `${cl}`)
+```
+
+In the dev-gated Worked Example the term renders with a dotted underline; clicking it plays the skill's slides in an overlay, then returns to the same step. In classic mode (and in `plain`/print) only the bare term shows — the helpers strip markers from `plain` automatically. The smoke tests fail on any marker whose id isn't in the skill registry, so a dangling link can't ship.
+
+**When to link:** whenever a step's label names a prerequisite skill the tool *uses* but doesn't *teach* (LCM, equivalent fractions, factor pairs…). If the skill doesn't exist yet, create it (see "Skill library" below) in the same commit.
+
+---
+
+## Skill library (`src/shared/skills/`)
+
+Small, reusable slide sequences that each teach **one** core skill pedagogically, on hand-picked model-friendly exemplar numbers. They are the drill-downs behind `[[skill-id|term]]` markers, and are browsable at `/skills` (the **Skill Library** page — registered `enabled: false`, so it shows on the landing page only in Developing-tools mode).
+
+```ts
+interface SkillDef {
+  id: string;           // kebab-case, referenced by [[id|term]] markers
+  title: string;
+  description: string;  // one sentence, shown on the Skill Library card
+  category: string;     // landing-page strand name (Number, Algebra, …)
+  slides: TeachingSlide[];   // same slide types as the Teach deck
+}
+```
+
+**Adding a skill:** create `src/shared/skills/<id>.ts` exporting a `SkillDef`, add it to `SKILLS` in `src/shared/skills/index.tsx`, and add a row to the table below. The `/skills` page and CI pick it up automatically.
+
+**Authoring rules:**
+- 3–6 slides, ideally an intro → I-do → We-do → You-do arc using the `phase` badge.
+- **Exemplars are hand-picked friendly numbers, never the question's numbers** — the question that links here brings its own numbers to the worked example; the skill teaches the *idea*. Never author a visual that only formats well for small numbers and then feed it large ones.
+- One level deep: skill slides never link to other skills.
+- Claude drafts the slides from the maths; the user reviews the pedagogy on the `/skills` page in dev mode.
+
+**Existing skills:**
+
+| id | Title | Category | Exemplars |
+|---|---|---|---|
+| `lcm` | Lowest Common Multiple | Number | 4 & 6, 5 & 3, 6 & 9 (listing multiples) |
+
+CI (`src/tests/skills.test.ts`) validates every skill: unique kebab-case ids, every KaTeX string renders, anim slides never supply more captions than beats.
 
 ---
 
@@ -781,7 +850,9 @@ npm install && npm run build 2>&1 | grep "error TS"
 
 ### Generator smoke tests — `npm test`
 
-CI also runs `npm test` (Vitest, `src/tests/generators.test.ts`). The suite discovers every tool exporting `__test = { TOOL_CONFIG, generateQuestion }` and, for each sub-tool × level with default QO settings, generates 40 questions asserting: no throw, unique non-empty keys, and every KaTeX string (`displayLatex`, `answerLatex`, working-step latex, `$...$` segments in worded lines) renders under `katex.renderToString` with `throwOnError`. This catches `£`/`<` in KaTeX, malformed latex, and key collisions at CI time. **Every new or migrated tool must keep its `__test` export.** Restrict levels with `levels: ["level1", "level2"]` when a level is coming soon.
+CI also runs `npm test` (Vitest, `src/tests/generators.test.ts`). The suite discovers every tool exporting `__test = { TOOL_CONFIG, generateQuestion }` and, for each sub-tool × level with default QO settings, generates 40 questions asserting: no throw, unique non-empty keys, and every KaTeX string (`displayLatex`, `answerLatex`, working-step latex, **each fragment individually**, `$...$` segments in worded lines) renders under `katex.renderToString` with `throwOnError`. It also asserts every `[[skill-id|term]]` marker resolves to a registered skill and that markers never leak into `plain`. This catches `£`/`<` in KaTeX, malformed latex, key collisions and dangling skill links at CI time. **Every new or migrated tool must keep its `__test` export.** Restrict levels with `levels: ["level1", "level2"]` when a level is coming soon.
+
+`src/tests/skills.test.ts` separately validates every skill in the skill library (see "Skill library" section).
 
 ---
 

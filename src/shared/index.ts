@@ -27,8 +27,11 @@ export type {
 export { ToolShell } from "./ToolShell";
 export type { ToolShellProps } from "./ToolShell";
 
-export { TeachingDeck } from "./TeachingDeck";
+export { TeachingDeck, SlideDeck, slideMaxStep } from "./TeachingDeck";
 export type { TeachingSlide, TeachBlock, TeachBar, TeachScene, TeachCategory } from "./TeachingDeck";
+
+export { SKILLS, getSkill, SkillLabel, SkillOverlay } from "./skills";
+export type { SkillDef } from "./skills";
 
 export { WorksheetBuilder } from "./WorksheetBuilder";
 export type { WorksheetBuilderProps } from "./WorksheetBuilder";
@@ -40,7 +43,7 @@ export type { PrintContext } from "./printDiagram";
 
 export { LV_COLORS, LV_LABELS, LV_HEADER_COLORS, getQuestionBg, getStepBg } from "./colors";
 
-export { randInt, pick, fracStr, mStr, pickActive, normalizeMultiSelect, step, tStep, mStep, fmt, ansEq, makeUniqueQ } from "./helpers";
+export { randInt, pick, fracStr, mStr, pickActive, normalizeMultiSelect, step, tStep, mStep, fmt, ansEq, makeUniqueQ, stripSkillMarkers, SKILL_MARKER_RE } from "./helpers";
 
 export { MathRenderer, InlineMath } from "./components/MathRenderer";
 export { QuestionDisplay, AnswerDisplay } from "./components/QuestionDisplay";
