@@ -90,27 +90,39 @@ export const handleDiagramPrint = (
     usableH: usableH_MM, GAP_MM, PAD_MM, DIV_MM, HDR_MM, diffHdrMM, pxPerMm,
   });
 
-  // Clone the live on-screen SVGs, keyed by their data-q-index.
-  const svgList: string[] = [];
-  if (container) {
-    container.querySelectorAll<SVGSVGElement>("svg[data-q-index]").forEach(el => {
+  // Clone the live on-screen SVGs, keyed by their data-q-index. A tool may also
+  // render a hidden answer diagram per question tagged data-q-answer-index (e.g.
+  // the same diagram with the solution drawn on); when present it is used on the
+  // answer pages instead of the plain question diagram + text answer.
+  const collect = (attr: string): string[] => {
+    const out: string[] = [];
+    if (!container) return out;
+    container.querySelectorAll<SVGSVGElement>(`svg[${attr}]`).forEach(el => {
       const clone = el.cloneNode(true) as SVGSVGElement;
       clone.setAttribute("width", "100%");
       clone.setAttribute("height", "100%");
-      const idx = parseInt(el.getAttribute("data-q-index") ?? String(svgList.length), 10);
-      svgList[idx] = clone.outerHTML;
+      const idx = parseInt(el.getAttribute(attr) ?? String(out.length), 10);
+      out[idx] = clone.outerHTML;
     });
-  }
+    return out;
+  };
+  const svgList = collect("data-q-index");
+  const answerSvgList = collect("data-q-answer-index");
 
   const toolName = ctx.toolName;
   const dateStr = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 
-  const cellHtml = (qi: number, displayNum: number, showAns: boolean, cW: number, cH: number): string =>
-    `<div class="cell" style="width:${cW}mm;height:${cH}mm;">`
-    + `<div class="cell-num">${displayNum}</div>`
-    + `<div class="cell-diag">${svgList[qi] ?? ""}</div>`
-    + (showAns ? `<div class="answer">${esc(questions[qi].answer ?? "")}</div>` : "")
-    + `</div>`;
+  const cellHtml = (qi: number, displayNum: number, showAns: boolean, cW: number, cH: number): string => {
+    // On answer pages, prefer the tool's answer diagram (solution drawn on); it
+    // already carries the answer visually, so the text answer line is dropped.
+    const hasAnsSvg = showAns && !!answerSvgList[qi];
+    const diag = hasAnsSvg ? answerSvgList[qi] : svgList[qi];
+    return `<div class="cell" style="width:${cW}mm;height:${cH}mm;">`
+      + `<div class="cell-num">${displayNum}</div>`
+      + `<div class="cell-diag">${diag ?? ""}</div>`
+      + (showAns && !hasAnsSvg ? `<div class="answer">${esc(questions[qi].answer ?? "")}</div>` : "")
+      + `</div>`;
+  };
 
   const pageWrap = (title: string, metaLine: string, body: string): string =>
     `<div class="page"><div class="ph"><h1>${esc(title)}</h1>`
