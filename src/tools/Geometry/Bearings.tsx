@@ -299,9 +299,9 @@ function arcOnlyPath(cx: number, cy: number, r: number, sweepDeg: number): strin
   return `M ${s.x} ${s.y} A ${r} ${r} 0 ${large} 1 ${e.x} ${e.y}`;
 }
 
-interface DiagramProps { q: BearingQuestion; showAnswer: boolean; dataIndex?: number; }
+interface DiagramProps { q: BearingQuestion; showAnswer: boolean; dataIndex?: number; fillBox?: boolean; }
 
-function BearingDiagram({ q, showAnswer, dataIndex }: DiagramProps) {
+function BearingDiagram({ q, showAnswer, dataIndex, fillBox = false }: DiagramProps) {
   const pts = q.points.map(pp => pp.p);
   const from = pts[q.fromIdx];
 
@@ -400,7 +400,7 @@ function BearingDiagram({ q, showAnswer, dataIndex }: DiagramProps) {
   return (
     <svg
       viewBox={`${vbX} ${vbY} ${side} ${side}`}
-      style={{ display: "block", width: "100%", height: "auto", overflow: "visible" }}
+      style={{ display: "block", width: "100%", height: fillBox ? "100%" : "auto", overflow: "visible" }}
       preserveAspectRatio="xMidYMid meet"
       {...extraProps}
     >
@@ -442,9 +442,14 @@ const questionRenderer = (q: AnyQuestion, showAnswer: boolean, _cs: string, comp
   const d = (q as any)._diagram as BearingQuestion | undefined;
   if (!d) return null;
   if (compact === true) {
+    // Worksheet cell: a fixed-aspect box the square SVG fills by HEIGHT, letter-
+    // boxing (preserveAspectRatio="meet") instead of sizing by width and spilling
+    // over the top/bottom of a wide cell. The print handler clones this SVG, so
+    // filling the box here is what keeps the printed cells from cropping the
+    // instruction and diagram edges at any column count.
     return (
-      <div style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-        <BearingDiagram q={d} showAnswer={showAnswer} dataIndex={idx} />
+      <div style={{ width: "100%", aspectRatio: "1", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+        <BearingDiagram q={d} showAnswer={showAnswer} dataIndex={idx} fillBox />
       </div>
     );
   }
