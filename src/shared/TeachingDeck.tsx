@@ -345,41 +345,65 @@ export function SlideDeck({ slides, color, onEscape, onDone }: {
   const atEnd = step >= maxStep;
   const atLast = atEnd && idx === slides.length - 1;
   const isAnim = slide.kind === "anim";
-  const caption = isAnim ? (slide as AnimSlide).steps[Math.min(step, (slide as AnimSlide).steps.length - 1)] : "";
+  const capIdx = isAnim ? Math.min(step, (slide as AnimSlide).steps.length - 1) : 0;
 
+  // The card is a FIXED height and every beat's content is laid out from the
+  // first press: captions all occupy one grid cell (the row sizes to the
+  // tallest caption up front), and a static slide's reveal reserves its space
+  // with the Reveal button overlaying the blank area. Nothing mounts or grows
+  // mid-slide, so the card never jumps while pressing. Oversized content
+  // scrolls inside the card rather than resizing it.
   return (
     <div className="flex flex-col gap-4">
-      <div onClick={isAnim ? goNext : undefined} className={`relative bg-white rounded-2xl shadow-lg px-10 pt-7 pb-6 flex flex-col ${isAnim ? "cursor-pointer" : ""}`} style={{ borderTop: `5px solid ${color}`, minHeight: "44vh" }}>
+      <div onClick={isAnim ? goNext : undefined} className={`relative bg-white rounded-2xl shadow-lg px-10 pt-7 pb-6 flex flex-col ${isAnim ? "cursor-pointer" : ""}`} style={{ borderTop: `5px solid ${color}`, height: "48vh", minHeight: 380 }}>
         {slide.phase && (
           <span className="absolute top-6 right-6 px-4 py-1.5 rounded-full text-white text-xs font-extrabold uppercase tracking-widest" style={{ background: color }}>{PHASE_LABEL[slide.phase]}</span>
         )}
 
-        <h2 className="text-xl font-bold text-gray-500 leading-snug pr-28"><RichText s={slide.title} /></h2>
+        <h2 className="text-xl font-bold text-gray-500 leading-snug pr-28 flex-shrink-0"><RichText s={slide.title} /></h2>
 
-        <div className="flex-1 flex flex-col items-center justify-center gap-7 py-4">
-          {isAnim ? (
-            <>
-              <SceneView scene={(slide as AnimSlide).scene} step={step} />
-              <div className="min-h-[3.25rem] max-w-2xl flex items-center justify-center text-2xl text-gray-800 text-center px-2"><RichText s={caption} /></div>
-            </>
-          ) : (
-            <div className="w-full flex flex-col gap-5 items-stretch">
-              {(slide as StaticSlide).body?.map((b, i) => <BlockView key={i} b={b} />)}
-              {step >= 1 && (slide as StaticSlide).reveal && (
-                <div className="flex flex-col gap-4 pt-4 border-t border-gray-200">
-                  {(slide as StaticSlide).reveal!.map((b, i) => <BlockView key={i} b={b} />)}
+        <div className="flex-1 flex flex-col" style={{ minHeight: 0, overflowY: "auto" }}>
+          {/* m-auto centres when the content is smaller than the card and still
+              scrolls from the top when it isn't (justify-center would clip). */}
+          <div className="m-auto w-full flex flex-col items-center gap-7 py-4">
+            {isAnim ? (
+              <>
+                <SceneView scene={(slide as AnimSlide).scene} step={step} />
+                <div className="w-full max-w-2xl px-2" style={{ display: "grid" }}>
+                  {(slide as AnimSlide).steps.map((cap, i) => (
+                    // Incoming caption fades in; outgoing ones vanish instantly —
+                    // a cross-fade superimposes both texts for the fade duration.
+                    <div key={i} className="flex items-center justify-center text-2xl text-gray-800 text-center"
+                      style={{ gridArea: "1 / 1", opacity: i === capIdx ? 1 : 0, transition: i === capIdx ? "opacity .3s ease" : "none" }}>
+                      <RichText s={cap} />
+                    </div>
+                  ))}
                 </div>
-              )}
-              {step < 1 && (slide as StaticSlide).reveal && (
-                <button onClick={() => setStep(1)} className="self-center mt-1 px-6 py-2.5 rounded-xl text-white font-bold text-lg" style={{ background: color }}>
-                  {(slide as StaticSlide).revealLabel ?? "Reveal"}
-                </button>
-              )}
-            </div>
-          )}
+              </>
+            ) : (
+              <div className="w-full flex flex-col gap-5 items-stretch">
+                {(slide as StaticSlide).body?.map((b, i) => <BlockView key={i} b={b} />)}
+                {(slide as StaticSlide).reveal && (
+                  <div className="relative">
+                    <div className="flex flex-col gap-4 pt-4 border-t border-gray-200"
+                      style={{ opacity: step >= 1 ? 1 : 0, transition: "opacity .35s ease", pointerEvents: step >= 1 ? "auto" : "none" }}>
+                      {(slide as StaticSlide).reveal!.map((b, i) => <BlockView key={i} b={b} />)}
+                    </div>
+                    {step < 1 && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <button onClick={() => setStep(1)} className="px-6 py-2.5 rounded-xl text-white font-bold text-lg shadow-md" style={{ background: color }}>
+                          {(slide as StaticSlide).revealLabel ?? "Reveal"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
-        {isAnim && <div className="text-center font-bold text-sm" style={{ color }}>{step + 1} / {maxStep + 1}</div>}
+        {isAnim && <div className="text-center font-bold text-sm flex-shrink-0" style={{ color }}>{step + 1} / {maxStep + 1}</div>}
       </div>
 
       <div className="flex items-center justify-between">
