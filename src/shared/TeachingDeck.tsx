@@ -31,11 +31,20 @@ export type TeachBlock =
   | { t: "verdict"; value: boolean }               // True / False
   | { t: "note"; tone?: "good" | "bad" | "plain"; label?: string; s: string }; // clean bordered note (no emoji)
 
+// Scenes are grouped into representation families (see "Core representations"
+// in CLAUDE.md): bar model (split, combine, equivalents), number line
+// (multiples), prime factor tiles (factorTree, primeVenn). New scenes should
+// extend one of the five core representations before inventing a new visual.
 export type TeachScene =
+  // ── bar model family ──
   | { type: "split"; num: number; den: number; factor: number; shadeByOne?: boolean; predict?: boolean }  // cut each piece into `factor`; predict hides the answer
   | { type: "combine"; a: TeachBar; b: TeachBar; sumLabel: string }
   | { type: "equivalents"; num: number; den: number; factors: number[] }  // reveal one ×factor equivalent per beat
-  | { type: "multiples"; a: number; b: number };  // list each number's multiples one per press up to the LCM, then highlight the shared value
+  // ── number line family ──
+  | { type: "multiples"; a: number; b: number }  // list each number's multiples one per press up to the LCM, then highlight the shared value
+  // ── prime factor tiles family ──
+  | { type: "factorTree"; n: number }            // build n's factor tree one split per press (smallest prime first), then state the product
+  | { type: "primeVenn"; a: number; b: number }; // place each prime in the Venn one per press (shared → middle), then state the LCM
 
 export type TeachPhase = "iDo" | "weDo" | "youDo";   // shown as a corner badge
 
@@ -115,11 +124,34 @@ function Bar({ num, den, label, shade = true }: TeachBar) {
 const gcdOf = (a: number, b: number): number => (b === 0 ? Math.abs(a) : gcdOf(b, a % b));
 const lcmOf = (a: number, b: number): number => (a * b) / gcdOf(a, b);
 
+// Prime factors of n in ascending order, with multiplicity: 12 → [2, 2, 3].
+const primeFactorsOf = (n: number): number[] => {
+  const out: number[] = [];
+  let m = n;
+  for (let p = 2; p * p <= m; p++) while (m % p === 0) { out.push(p); m /= p; }
+  if (m > 1) out.push(m);
+  return out;
+};
+
+// The three regions of a prime-factor Venn: shared primes (the gcd's factors)
+// and each number's leftovers, all as multisets.
+const vennParts = (a: number, b: number) => {
+  const shared = primeFactorsOf(gcdOf(a, b));
+  const remove = (list: number[], rem: number[]) => {
+    const c = [...list];
+    rem.forEach((r) => { const i = c.indexOf(r); if (i >= 0) c.splice(i, 1); });
+    return c;
+  };
+  return { shared, aOnly: remove(primeFactorsOf(a), shared), bOnly: remove(primeFactorsOf(b), shared) };
+};
+
 // How many beats (max step index) a scene runs for.
 const sceneMaxStep = (s: TeachScene): number => {
   if (s.type === "split") return (s.shadeByOne ? s.num : 0) + s.den + 1 + (s.predict ? 1 : 0);
   if (s.type === "equivalents") return s.factors.length;                 // prompt + one per factor
   if (s.type === "multiples") { const l = lcmOf(s.a, s.b); return l / s.a + l / s.b + 1; }  // one per multiple, then the answer
+  if (s.type === "factorTree") return primeFactorsOf(s.n).length;        // one per split, then the product
+  if (s.type === "primeVenn") { const v = vennParts(s.a, s.b); return v.shared.length + v.aOnly.length + v.bOnly.length + 1; }  // one per prime, then the LCM
   return 1;                                                               // combine: 0 apart, 1 together
 };
 
@@ -267,10 +299,107 @@ function MultiplesScene({ a, b, step }: { a: number; b: number; step: number }) 
   );
 }
 
+// "FactorTree": builds n's factor tree one split per press, always dividing
+// out the smallest prime — exactly the board method. Primes circle in navy as
+// they're produced; the final beat states the product. The whole tree is laid
+// out from beat 0 (hidden at opacity 0) so nothing moves as it builds.
+function FactorTreeScene({ n, step }: { n: number; step: number }) {
+  const primes = primeFactorsOf(n);
+  const splits = primes.length - 1;
+  const chain: number[] = [n];                       // composites down the right-hand chain
+  for (let i = 0; i < splits; i++) chain.push(chain[i] / primes[i]);
+  const revealedSplits = clamp(step, 0, splits);
+  const showAnswer = step >= splits + 1;
+
+  const DX = 50, DY = 46, R = 17;
+  const px = (k: number) => 90 + DX * k, py = (k: number) => 26 + DY * k;
+  const W = px(splits) + 90, H = py(splits) + 32;
+
+  const node = (x: number, y: number, v: number, isPrime: boolean, visible: boolean, key: string) => (
+    <g key={key} style={{ opacity: visible ? 1 : 0, transition: "opacity .35s ease" }}>
+      <circle cx={x} cy={y} r={R} fill={isPrime ? NAVY : "#fff"} stroke={isPrime ? NAVY : "#334155"} strokeWidth={2} />
+      <text x={x} y={y} textAnchor="middle" dominantBaseline="central" fontSize={15} fontWeight={700} fill={isPrime ? "#fff" : "#111827"}>{v}</text>
+    </g>
+  );
+  const edge = (x1: number, y1: number, x2: number, y2: number, visible: boolean, key: string) => (
+    <line key={key} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#94a3b8" strokeWidth={2}
+      style={{ opacity: visible ? 1 : 0, transition: "opacity .35s ease" }} />
+  );
+
+  return (
+    <div className="flex flex-col items-center gap-4 w-full">
+      <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="max-w-full" preserveAspectRatio="xMidYMid meet">
+        {range(1, splits + 1).flatMap((k) => {
+          const shown = revealedSplits >= k;
+          const parX = px(k - 1), parY = py(k - 1);
+          const leafX = px(k - 1) - DX, chainX = px(k), y = py(k);
+          return [
+            edge(parX - 10, parY + 13, leafX + 8, y - 13, shown, `el${k}`),
+            edge(parX + 10, parY + 13, chainX - 8, y - 13, shown, `ec${k}`),
+            node(leafX, y, primes[k - 1], true, shown, `l${k}`),
+            node(chainX, y, chain[k], k === splits, shown, `c${k}`),
+          ];
+        })}
+        {node(px(0), py(0), n, splits === 0, true, "root")}
+      </svg>
+      <div className="text-gray-900" style={{ fontSize: "1.9rem", minHeight: "2.5rem", opacity: showAnswer ? 1 : 0, transition: "opacity .4s ease" }}>
+        <Tex tex={`${n} = ${primes.join(" \\times ")}`} />
+      </div>
+    </div>
+  );
+}
+
+// "PrimeVenn": both factorisations are stated up front; each press places the
+// next prime in the Venn — shared primes to the middle first, then each
+// number's leftovers to its own side. The final beat multiplies everything in
+// the diagram to give the LCM.
+function PrimeVennScene({ a, b, step }: { a: number; b: number; step: number }) {
+  const { shared, aOnly, bOnly } = vennParts(a, b);
+  const placements = shared.length + aOnly.length + bOnly.length;
+  const placed = clamp(step, 0, placements);
+  const showAnswer = step >= placements + 1;
+  const all = [...shared, ...aOnly, ...bOnly].sort((x, y) => x - y);
+
+  const spread = (cx: number, count: number, i: number): [number, number] =>
+    [cx, 86 + (i - (count - 1) / 2) * 36];
+  const chips: { x: number; y: number; v: number }[] = [
+    ...shared.map((v, i) => { const [x, y] = spread(160, shared.length, i); return { x, y, v }; }),
+    ...aOnly.map((v, i) => { const [x, y] = spread(74, aOnly.length, i); return { x, y, v }; }),
+    ...bOnly.map((v, i) => { const [x, y] = spread(246, bOnly.length, i); return { x, y, v }; }),
+  ];
+
+  // Kept compact on purpose — factorisations + Venn + equation must all fit
+  // the fixed-height slide card without scrolling.
+  return (
+    <div className="flex flex-col items-center gap-2 w-full">
+      <div className="text-gray-800" style={{ fontSize: "1.25rem" }}>
+        <Tex tex={`${a} = ${primeFactorsOf(a).join(" \\times ")} \\qquad ${b} = ${primeFactorsOf(b).join(" \\times ")}`} />
+      </div>
+      <svg viewBox="0 0 320 162" width={320} height={162} className="max-w-full" preserveAspectRatio="xMidYMid meet">
+        <circle cx={118} cy={86} r={66} fill="none" stroke="#334155" strokeWidth={2.5} />
+        <circle cx={202} cy={86} r={66} fill="none" stroke="#334155" strokeWidth={2.5} />
+        <text x={44} y={18} fontSize={16} fontWeight={700} fill="#6b7280">{a}</text>
+        <text x={276} y={18} fontSize={16} fontWeight={700} fill="#6b7280" textAnchor="end">{b}</text>
+        {chips.map((c, i) => (
+          <g key={i} style={{ opacity: i < placed ? 1 : 0, transition: "opacity .35s ease" }}>
+            <circle cx={c.x} cy={c.y} r={14} fill={NAVY} />
+            <text x={c.x} y={c.y} textAnchor="middle" dominantBaseline="central" fontSize={14} fontWeight={700} fill="#fff">{c.v}</text>
+          </g>
+        ))}
+      </svg>
+      <div className="text-gray-900" style={{ fontSize: "1.5rem", minHeight: "2rem", opacity: showAnswer ? 1 : 0, transition: "opacity .4s ease" }}>
+        <Tex tex={`\\mathrm{LCM}(${a},\\ ${b}) = ${all.join(" \\times ")} = ${lcmOf(a, b)}`} />
+      </div>
+    </div>
+  );
+}
+
 function SceneView({ scene, step }: { scene: TeachScene; step: number }) {
   if (scene.type === "split") return <SplitScene {...scene} step={step} />;
   if (scene.type === "equivalents") return <EquivalentsScene {...scene} step={step} />;
   if (scene.type === "multiples") return <MultiplesScene {...scene} step={step} />;
+  if (scene.type === "factorTree") return <FactorTreeScene {...scene} step={step} />;
+  if (scene.type === "primeVenn") return <PrimeVennScene {...scene} step={step} />;
   return <CombineScene {...scene} step={step} />;
 }
 
@@ -365,7 +494,7 @@ export function SlideDeck({ slides, color, onEscape, onDone }: {
         <div className="flex-1 flex flex-col" style={{ minHeight: 0, overflowY: "auto" }}>
           {/* m-auto centres when the content is smaller than the card and still
               scrolls from the top when it isn't (justify-center would clip). */}
-          <div className="m-auto w-full flex flex-col items-center gap-7 py-4">
+          <div className="m-auto w-full flex flex-col items-center gap-5 py-2">
             {isAnim ? (
               <>
                 <SceneView scene={(slide as AnimSlide).scene} step={step} />

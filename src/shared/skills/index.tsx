@@ -3,6 +3,7 @@ import { X } from "lucide-react";
 import { SlideDeck, type TeachingSlide } from "../TeachingDeck";
 import { loadKaTeX } from "../katex";
 import { LCM_SKILL } from "./lcm";
+import { LCM_PRIME_FACTORS_SKILL } from "./lcm-prime-factors";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SKILL LIBRARY — small, reusable slide sequences that each teach ONE core
@@ -22,8 +23,9 @@ import { LCM_SKILL } from "./lcm";
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface SkillDef {
-  id: string;           // kebab-case, referenced by [[id|term]] markers
-  title: string;
+  id: string;           // kebab-case, referenced by [[id|term]] markers; variants use <base>-<method> (e.g. lcm-prime-factors)
+  title: string;        // variants of one skill share the SAME title — the /skills page groups on it
+  method?: string;      // variant label when a skill is taught more than one way, e.g. "From times tables"
   description: string;  // one sentence, shown on the Skill Library card
   category: string;     // landing-page strand name (Number, Algebra, …)
   slides: TeachingSlide[];
@@ -31,6 +33,7 @@ export interface SkillDef {
 
 export const SKILLS: SkillDef[] = [
   LCM_SKILL,
+  LCM_PRIME_FACTORS_SKILL,
 ];
 
 export const getSkill = (id: string): SkillDef | undefined => SKILLS.find((s) => s.id === id);
@@ -82,7 +85,7 @@ export function SkillOverlay({ skillId, onClose }: { skillId: string; onClose: (
         style={{ maxWidth: 800, maxHeight: "92vh", backgroundColor: "#f5f3f0", padding: 24 }}>
         <div className="flex items-center justify-between mb-4">
           <span className="text-sm font-bold uppercase tracking-wider" style={{ color: NAVY }}>
-            Skill — {skill.title}
+            Skill — {skill.title}{skill.method ? ` (${skill.method.toLowerCase()})` : ""}
           </span>
           <button onClick={onClose} title="Back to the question"
             className="w-9 h-9 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors">

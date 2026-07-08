@@ -9,7 +9,8 @@ import type { SkillDef } from "./index";
 export const LCM_SKILL: SkillDef = {
   id: "lcm",
   title: "Lowest Common Multiple",
-  description: "Find the LCM of two numbers by listing multiples until a number appears in both lists.",
+  method: "From times tables",
+  description: "List the multiples of each number until one appears in both lists. Best for small numbers.",
   category: "Number",
   slides: [
     {

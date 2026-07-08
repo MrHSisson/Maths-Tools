@@ -27,19 +27,56 @@ export default function App() {
 
   const strands = [...new Set(SKILLS.map((s) => s.category))];
 
-  const card = (skill: SkillDef, color: string) => (
-    <button key={skill.id} onClick={() => setOpenSkillId(skill.id)}
-      className="group bg-white rounded-xl shadow-lg p-6 text-left transition-all hover:shadow-xl hover:-translate-y-0.5 flex flex-col gap-2"
-      style={{ borderLeft: `6px solid ${color}` }}>
-      <div className="flex items-start justify-between gap-3">
-        <span className="text-xl font-bold text-gray-900 group-hover:text-blue-900 transition-colors">{skill.title}</span>
-        <span className="text-xs font-bold uppercase tracking-wider flex-shrink-0 mt-1" style={{ color }}>
-          {skill.slides.length} slide{skill.slides.length > 1 ? "s" : ""}
-        </span>
+  // Variants of one skill (LCM from times tables / from prime factors) share a
+  // title — they render as ONE card with a clickable row per method.
+  const groupByTitle = (skills: SkillDef[]): SkillDef[][] => {
+    const groups: SkillDef[][] = [];
+    for (const s of skills) {
+      const g = groups.find((grp) => grp[0].title === s.title);
+      if (g) g.push(s); else groups.push([s]);
+    }
+    return groups;
+  };
+
+  const slideCount = (s: SkillDef) => `${s.slides.length} slide${s.slides.length > 1 ? "s" : ""}`;
+
+  const card = (variants: SkillDef[], color: string) => {
+    const primary = variants[0];
+    if (variants.length === 1 && !primary.method) {
+      return (
+        <button key={primary.id} onClick={() => setOpenSkillId(primary.id)}
+          className="group bg-white rounded-xl shadow-lg p-6 text-left transition-all hover:shadow-xl hover:-translate-y-0.5 flex flex-col gap-2"
+          style={{ borderLeft: `6px solid ${color}` }}>
+          <div className="flex items-start justify-between gap-3">
+            <span className="text-xl font-bold text-gray-900 group-hover:text-blue-900 transition-colors">{primary.title}</span>
+            <span className="text-xs font-bold uppercase tracking-wider flex-shrink-0 mt-1" style={{ color }}>{slideCount(primary)}</span>
+          </div>
+          <p className="text-sm text-gray-500 leading-relaxed">{primary.description}</p>
+        </button>
+      );
+    }
+    return (
+      <div key={primary.title} className="bg-white rounded-xl shadow-lg p-6 flex flex-col gap-3"
+        style={{ borderLeft: `6px solid ${color}` }}>
+        <div className="flex items-start justify-between gap-3">
+          <span className="text-xl font-bold text-gray-900">{primary.title}</span>
+          <span className="text-xs font-bold uppercase tracking-wider flex-shrink-0 mt-1" style={{ color }}>
+            {variants.length} method{variants.length > 1 ? "s" : ""}
+          </span>
+        </div>
+        {variants.map((v) => (
+          <button key={v.id} onClick={() => setOpenSkillId(v.id)}
+            className="group text-left rounded-lg border-2 border-gray-200 hover:border-blue-900 p-3 transition-colors flex flex-col gap-1">
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="font-bold text-sm group-hover:text-blue-900 transition-colors" style={{ color }}>{v.method ?? v.title}</span>
+              <span className="text-xs text-gray-400 font-semibold flex-shrink-0">{slideCount(v)}</span>
+            </div>
+            <p className="text-xs text-gray-500 leading-relaxed">{v.description}</p>
+          </button>
+        ))}
       </div>
-      <p className="text-sm text-gray-500 leading-relaxed">{skill.description}</p>
-    </button>
-  );
+    );
+  };
 
   return (
     <>
@@ -72,7 +109,7 @@ export default function App() {
                   <div className="flex-1 h-px bg-gray-300" />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {SKILLS.filter((s) => s.category === strand).map((s) => card(s, color))}
+                  {groupByTitle(SKILLS.filter((s) => s.category === strand)).map((g) => card(g, color))}
                 </div>
               </section>
             );

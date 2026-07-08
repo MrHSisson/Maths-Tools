@@ -433,6 +433,8 @@ The **Teach** deck (`TeachingDeck`, `src/shared/TeachingDeck.tsx`) is a slide-ba
 | `{ type:"split", num, den, factor, shadeByOne?, predict? }` | `den + 2` (`+1` if `predict`, `+num` if `shadeByOne`) | cuts ONE original piece into `factor` per press (shaded area never moves), then shows the equation `num/den = (num·f)/(den·f)`. `predict` holds the answer at `?/?` for one extra beat (You-do). |
 | `{ type:"equivalents", num, den, factors:number[] }` | `factors.length + 1` | beat 0 is the prompt; each later beat reveals one `×factor` equivalent — for a "find two equivalent fractions" You-do (`factors:[2,3,4,5]` gives the four common answers). |
 | `{ type:"multiples", a, b }` | `lcm/a + lcm/b + 2` | LCM walkthrough: each press writes the next multiple (a's list up to the LCM, then b's); the shared value highlights when it lands, and the final beat states `LCM(a, b)`. |
+| `{ type:"factorTree", n }` | `Ω(n) + 1` (Ω = prime factors with multiplicity) | builds n's factor tree one split per press, always dividing out the smallest prime; primes circle in navy as produced, final beat states the product. |
+| `{ type:"primeVenn", a, b }` | `(total primes across regions) + 2` | both factorisations stated up front; each press places the next prime in the Venn (shared → middle first, then each side's leftovers); final beat multiplies everything for the LCM. |
 | `{ type:"combine", a, b, sumLabel }` | `2` | two shaded bars (common denominator) flow into one. |
 
 **Adding a new scene type:** extend the `TeachScene` union, add its beat count to `sceneMaxStep`, and render it in `SceneView` (+ a component). Drive animation with CSS transitions on SVG (opacity/transform), no libraries — see `SplitScene`. The URL `mode=teach` deep-links to the deck.
@@ -578,19 +580,38 @@ In the dev-gated Worked Example the term renders with a dotted underline; clicki
 
 ---
 
+## Core representations — the visual vocabulary
+
+Every taught visual on the site (skill slides, Teach decks, and eventually whiteboard visualisers) is built from **five core representations**. Consistency is the point: a student who met the bar model in fractions meets the *same* bar in ratio — the representation library is the site's visual scheme of work.
+
+| Representation | Carries | Scene family (TeachingDeck) |
+|---|---|---|
+| **Bar model** | fractions, ratio, proportion, percentages | `split` · `combine` · `equivalents` |
+| **Number line** | integers, rounding, inequalities, sequences, multiples | `multiples` |
+| **Area model** | multiplication, expanding brackets, completing the square | *(none yet)* |
+| **Algebra tiles** | collecting terms, solving equations, factorising | *(manipulative exists; no scenes yet)* |
+| **Prime factor tiles** | HCF/LCM, factors, prime decomposition | `factorTree` · `primeVenn` |
+
+**The rule: before authoring any new visual, pick one of the five.** A brand-new representation needs a reason. New scenes extend an existing family in `TeachingDeck.tsx` (grouped by family comments in the `TeachScene` union) and follow the standing scene contract: beat count derived from the scene, reserve space for everything (opacity, not mounting), animate only opacity/transform.
+
+---
+
 ## Skill library (`src/shared/skills/`)
 
 Small, reusable slide sequences that each teach **one** core skill pedagogically, on hand-picked model-friendly exemplar numbers. They are the drill-downs behind `[[skill-id|term]]` markers, and are browsable at `/skills` (the **Skill Library** page — registered `enabled: false`, so it shows on the landing page only in Developing-tools mode).
 
 ```ts
 interface SkillDef {
-  id: string;           // kebab-case, referenced by [[id|term]] markers
-  title: string;
+  id: string;           // kebab-case, referenced by [[id|term]] markers; variants use <base>-<method>
+  title: string;        // variants of one skill share the SAME title — /skills groups on it
+  method?: string;      // variant label when a skill has multiple methods, e.g. "From times tables"
   description: string;  // one sentence, shown on the Skill Library card
   category: string;     // landing-page strand name (Number, Algebra, …)
   slides: TeachingSlide[];   // same slide types as the Teach deck
 }
 ```
+
+**Skill variants — same skill, different method.** When a skill is taught more than one way (LCM from times tables vs from prime factors), each method is a **separate skill with its own id** (`lcm`, `lcm-prime-factors`), its own exemplars suited to *its* representation, and the same `title` + a `method` label. The `/skills` page groups same-titled variants onto one card with a row per method. **The link site chooses the method**: a step author writes `[[lcm|LCM]]` where numbers are small and `[[lcm-prime-factors|LCM]]` where listing multiples would be absurd — pick the variant whose exemplars match the context the student is coming from.
 
 **Adding a skill:** create `src/shared/skills/<id>.ts` exporting a `SkillDef`, add it to `SKILLS` in `src/shared/skills/index.tsx`, and add a row to the table below. The `/skills` page and CI pick it up automatically.
 
@@ -604,9 +625,10 @@ interface SkillDef {
 
 **Existing skills:**
 
-| id | Title | Category | Exemplars |
-|---|---|---|---|
-| `lcm` | Lowest Common Multiple | Number | 4 & 6, then 5 & 3 — multiples listed one per press (`multiples` scene) |
+| id | Title | Method | Category | Exemplars |
+|---|---|---|---|---|
+| `lcm` | Lowest Common Multiple | From times tables | Number | 4 & 6, then 5 & 3 — multiples listed one per press (`multiples` scene) |
+| `lcm-prime-factors` | Lowest Common Multiple | From prime factors | Number | 12 & 18 — factor trees one split per press, then the Venn (`factorTree`, `primeVenn`) |
 
 CI (`src/tests/skills.test.ts`) validates every skill: unique kebab-case ids, every KaTeX string renders, anim slides never supply more captions than beats.
 
