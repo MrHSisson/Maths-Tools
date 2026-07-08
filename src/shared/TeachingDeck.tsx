@@ -34,7 +34,8 @@ export type TeachBlock =
 export type TeachScene =
   | { type: "split"; num: number; den: number; factor: number; shadeByOne?: boolean; predict?: boolean }  // cut each piece into `factor`; predict hides the answer
   | { type: "combine"; a: TeachBar; b: TeachBar; sumLabel: string }
-  | { type: "equivalents"; num: number; den: number; factors: number[] };  // reveal one ×factor equivalent per beat
+  | { type: "equivalents"; num: number; den: number; factors: number[] }  // reveal one ×factor equivalent per beat
+  | { type: "multiples"; a: number; b: number };  // list each number's multiples one per press up to the LCM, then highlight the shared value
 
 export type TeachPhase = "iDo" | "weDo" | "youDo";   // shown as a corner badge
 
@@ -82,12 +83,15 @@ function Tex({ tex }: { tex: string }) {
 }
 function RichText({ s }: { s: string }) {
   const parts = s.split(/\$([^$]+)\$/g);
+  // A single inline wrapper, not a fragment — inside flex containers, sibling
+  // spans become separate flex items and their edge whitespace collapses,
+  // jamming words together around every $...$ segment.
   return (
-    <>
+    <span style={{ display: "inline" }}>
       {parts.map((p, i) =>
-        i % 2 === 1 ? <Tex key={i} tex={p} /> : p.split(/\*\*([^*]+)\*\*/g).map((seg, j) => (j % 2 === 1 ? <strong key={j}>{seg}</strong> : <span key={j}>{seg}</span>)),
+        i % 2 === 1 ? <Tex key={i} tex={p} /> : p.split(/\*\*([^*]+)\*\*/g).map((seg, j) => (j % 2 === 1 ? <strong key={`${i}-${j}`}>{seg}</strong> : <span key={`${i}-${j}`}>{seg}</span>)),
       )}
-    </>
+    </span>
   );
 }
 
@@ -108,10 +112,14 @@ function Bar({ num, den, label, shade = true }: TeachBar) {
 
 // ── Animated scenes ───────────────────────────────────────────────────────────
 
+const gcdOf = (a: number, b: number): number => (b === 0 ? Math.abs(a) : gcdOf(b, a % b));
+const lcmOf = (a: number, b: number): number => (a * b) / gcdOf(a, b);
+
 // How many beats (max step index) a scene runs for.
 const sceneMaxStep = (s: TeachScene): number => {
   if (s.type === "split") return (s.shadeByOne ? s.num : 0) + s.den + 1 + (s.predict ? 1 : 0);
   if (s.type === "equivalents") return s.factors.length;                 // prompt + one per factor
+  if (s.type === "multiples") { const l = lcmOf(s.a, s.b); return l / s.a + l / s.b + 1; }  // one per multiple, then the answer
   return 1;                                                               // combine: 0 apart, 1 together
 };
 
@@ -210,9 +218,59 @@ function EquivalentsScene({ num, den, factors, step }: { num: number; den: numbe
   );
 }
 
+// "Multiples": the walkthrough for finding an LCM. Each press writes the next
+// multiple — first a's list up to the LCM, then b's — exactly as a teacher
+// would list them on the board. When the shared value lands in the second
+// list, both copies highlight; the final beat states the LCM.
+function MultiplesScene({ a, b, step }: { a: number; b: number; step: number }) {
+  const l = lcmOf(a, b);
+  const listA = range(1, l / a + 1).map((i) => i * a);
+  const listB = range(1, l / b + 1).map((i) => i * b);
+  const revealedA = clamp(step, 0, listA.length);
+  const revealedB = clamp(step - listA.length, 0, listB.length);
+  const commonFound = revealedB >= listB.length;   // the LCM is always the last multiple listed
+  const showAnswer = step >= listA.length + listB.length + 1;
+
+  const row = (n: number, list: number[], revealed: number) => (
+    <div className="flex items-baseline gap-4 justify-start w-full">
+      <span className="text-xl font-bold text-gray-500 flex-shrink-0" style={{ minWidth: "9.5rem" }}>Multiples of {n}:</span>
+      <div className="flex items-baseline gap-3 flex-wrap">
+        {list.map((m, i) => {
+          const isCommon = m === l && commonFound;
+          return (
+            <span key={m}
+              className="text-3xl font-semibold"
+              style={{
+                opacity: i < revealed ? 1 : 0,
+                transition: "opacity .35s ease, background .35s ease, color .35s ease",
+                color: isCommon ? "#fff" : "#111827",
+                background: isCommon ? NAVY : "transparent",
+                borderRadius: 10,
+                padding: "0 0.4em",
+              }}>
+              {m}
+            </span>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="flex flex-col items-center gap-5 w-full max-w-xl">
+      {row(a, listA, revealedA)}
+      {row(b, listB, revealedB)}
+      <div className="text-gray-900" style={{ fontSize: "1.9rem", minHeight: "2.5rem", opacity: showAnswer ? 1 : 0, transition: "opacity .4s ease" }}>
+        <Tex tex={`\\mathrm{LCM}(${a},\\ ${b}) = ${l}`} />
+      </div>
+    </div>
+  );
+}
+
 function SceneView({ scene, step }: { scene: TeachScene; step: number }) {
   if (scene.type === "split") return <SplitScene {...scene} step={step} />;
   if (scene.type === "equivalents") return <EquivalentsScene {...scene} step={step} />;
+  if (scene.type === "multiples") return <MultiplesScene {...scene} step={step} />;
   return <CombineScene {...scene} step={step} />;
 }
 

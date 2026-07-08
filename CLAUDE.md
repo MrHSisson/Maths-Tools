@@ -432,6 +432,7 @@ The **Teach** deck (`TeachingDeck`, `src/shared/TeachingDeck.tsx`) is a slide-ba
 |---|---|---|
 | `{ type:"split", num, den, factor, shadeByOne?, predict? }` | `den + 2` (`+1` if `predict`, `+num` if `shadeByOne`) | cuts ONE original piece into `factor` per press (shaded area never moves), then shows the equation `num/den = (num·f)/(den·f)`. `predict` holds the answer at `?/?` for one extra beat (You-do). |
 | `{ type:"equivalents", num, den, factors:number[] }` | `factors.length + 1` | beat 0 is the prompt; each later beat reveals one `×factor` equivalent — for a "find two equivalent fractions" You-do (`factors:[2,3,4,5]` gives the four common answers). |
+| `{ type:"multiples", a, b }` | `lcm/a + lcm/b + 2` | LCM walkthrough: each press writes the next multiple (a's list up to the LCM, then b's); the shared value highlights when it lands, and the final beat states `LCM(a, b)`. |
 | `{ type:"combine", a, b, sumLabel }` | `2` | two shaded bars (common denominator) flow into one. |
 
 **Adding a new scene type:** extend the `TeachScene` union, add its beat count to `sceneMaxStep`, and render it in `SceneView` (+ a component). Drive animation with CSS transitions on SVG (opacity/transform), no libraries — see `SplitScene`. The URL `mode=teach` deep-links to the deck.
@@ -594,7 +595,9 @@ interface SkillDef {
 **Adding a skill:** create `src/shared/skills/<id>.ts` exporting a `SkillDef`, add it to `SKILLS` in `src/shared/skills/index.tsx`, and add a row to the table below. The `/skills` page and CI pick it up automatically.
 
 **Authoring rules:**
-- 3–6 slides, ideally an intro → I-do → We-do → You-do arc using the `phase` badge.
+- Skills are **stand-alone taught walkthroughs** — the drill-down a student presses on mid-question. **No I-do/We-do/You-do phases and no practice questions**: those belong to a tool's Teach deck, not here. Teach the idea, then walk a demonstration.
+- **Reveal by parts, walkthrough pacing.** Prefer `anim` scenes that build one press at a time (each press = the next mark a teacher would write — same board-writing rule as working-step fragments) over static slides with a single Reveal button. A static `reveal` is acceptable only for one short closing fact. If no existing scene fits the skill, add a generic scene type to TeachingDeck (see "Adding a new scene type").
+- 2–4 slides: a short definition slide, then one or two walked examples.
 - **Exemplars are hand-picked friendly numbers, never the question's numbers** — the question that links here brings its own numbers to the worked example; the skill teaches the *idea*. Never author a visual that only formats well for small numbers and then feed it large ones.
 - One level deep: skill slides never link to other skills.
 - Claude drafts the slides from the maths; the user reviews the pedagogy on the `/skills` page in dev mode.
@@ -603,7 +606,7 @@ interface SkillDef {
 
 | id | Title | Category | Exemplars |
 |---|---|---|---|
-| `lcm` | Lowest Common Multiple | Number | 4 & 6, 5 & 3, 6 & 9 (listing multiples) |
+| `lcm` | Lowest Common Multiple | Number | 4 & 6, then 5 & 3 — multiples listed one per press (`multiples` scene) |
 
 CI (`src/tests/skills.test.ts`) validates every skill: unique kebab-case ids, every KaTeX string renders, anim slides never supply more captions than beats.
 

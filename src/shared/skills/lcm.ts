@@ -1,8 +1,10 @@
 import type { SkillDef } from "./index";
 
-// Lowest Common Multiple — taught by listing multiples until the lists share a
-// number. Exemplars are hand-picked model-friendly numbers (4 & 6, 5 & 3, 6 & 9);
-// the questions that link here bring their own numbers to the worked example.
+// Lowest Common Multiple — a stand-alone taught walkthrough (the drill-down a
+// student presses on mid-question). Each press writes the next multiple on the
+// board, exactly as a teacher would list them; no practice phases. Exemplars
+// are hand-picked model-friendly numbers (4 & 6, then 5 & 3) — the question
+// that links here brings its own numbers to the worked example.
 
 export const LCM_SKILL: SkillDef = {
   id: "lcm",
@@ -19,40 +21,34 @@ export const LCM_SKILL: SkillDef = {
       ],
     },
     {
-      category: "concept", phase: "iDo",
+      kind: "anim", category: "concept",
       title: "LCM of $4$ and $6$",
-      body: [
-        { t: "text", s: "List the multiples of each number:" },
-        { t: "math", s: "4:\\;\\; 4,\\ 8,\\ \\mathbf{12},\\ 16,\\ 20,\\ 24" },
-        { t: "math", s: "6:\\;\\; 6,\\ \\mathbf{12},\\ 18,\\ 24" },
+      scene: { type: "multiples", a: 4, b: 6 },
+      steps: [
+        "To find the LCM of $4$ and $6$, list the multiples of each number.",
+        "Multiples of $4$: four…",
+        "…eight…",
+        "…twelve.",
+        "Now the multiples of $6$: six…",
+        "…twelve — there it is, in both lists.",
+        "$12$ is the smallest number in both lists — the LCM of $4$ and $6$ is $12$.",
       ],
-      reveal: [
-        { t: "note", tone: "good", label: "LCM", s: "$12$ is the first number in both lists — the LCM of $4$ and $6$ is $12$." },
-      ],
-      revealLabel: "Find the LCM",
     },
     {
-      category: "concept", phase: "weDo",
+      kind: "anim", category: "concept",
       title: "LCM of $5$ and $3$",
-      body: [
-        { t: "text", s: "List the multiples together — which number appears first in **both** lists?" },
-        { t: "math", s: "5:\\;\\; 5,\\ 10,\\ 15,\\ 20" },
-        { t: "math", s: "3:\\;\\; 3,\\ 6,\\ 9,\\ 12,\\ 15" },
-      ],
-      reveal: [
-        { t: "note", tone: "good", label: "LCM", s: "The LCM of $5$ and $3$ is $15$." },
-        { t: "note", tone: "plain", label: "Shortcut", s: "When two numbers share no common factor, the LCM is simply their product: $5 \\times 3 = 15$." },
-      ],
-    },
-    {
-      category: "concept", phase: "youDo",
-      title: "Your turn — LCM of $6$ and $9$",
-      body: [
-        { t: "text", s: "Write down the multiples of $6$ and of $9$, and find the LCM, before revealing." },
-      ],
-      reveal: [
-        { t: "math", s: "6:\\;\\; 6,\\ 12,\\ \\mathbf{18} \\qquad\\quad 9:\\;\\; 9,\\ \\mathbf{18}" },
-        { t: "note", tone: "good", label: "LCM", s: "The LCM of $6$ and $9$ is $18$ — not $54$. The product shortcut only works when the numbers share no common factor." },
+      scene: { type: "multiples", a: 5, b: 3 },
+      steps: [
+        "Once more — the LCM of $5$ and $3$. List the multiples.",
+        "Multiples of $5$: five…",
+        "…ten…",
+        "…fifteen.",
+        "Now the multiples of $3$: three…",
+        "…six…",
+        "…nine…",
+        "…twelve…",
+        "…fifteen — in both lists.",
+        "The LCM of $5$ and $3$ is $15$. When two numbers share no common factor, the LCM is simply their product: $5 \\times 3 = 15$.",
       ],
     },
   ],
