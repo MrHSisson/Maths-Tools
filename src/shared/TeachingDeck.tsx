@@ -265,13 +265,13 @@ function MultiplesScene({ a, b, step }: { a: number; b: number; step: number }) 
 
   const row = (n: number, list: number[], revealed: number) => (
     <div className="flex items-baseline gap-4 justify-start w-full">
-      <span className="text-xl font-bold text-gray-500 flex-shrink-0" style={{ minWidth: "9.5rem" }}>Multiples of {n}:</span>
+      <span className="text-2xl font-bold text-gray-500 flex-shrink-0" style={{ minWidth: "11.5rem" }}>Multiples of {n}:</span>
       <div className="flex items-baseline gap-3 flex-wrap">
         {list.map((m, i) => {
           const isCommon = m === l && commonFound;
           return (
             <span key={m}
-              className="text-3xl font-semibold"
+              className="text-4xl font-semibold"
               style={{
                 opacity: i < revealed ? 1 : 0,
                 transition: "opacity .35s ease, background .35s ease, color .35s ease",
@@ -289,10 +289,10 @@ function MultiplesScene({ a, b, step }: { a: number; b: number; step: number }) 
   );
 
   return (
-    <div className="flex flex-col items-center gap-5 w-full max-w-xl">
+    <div className="flex flex-col items-center gap-6 w-full max-w-2xl">
       {row(a, listA, revealedA)}
       {row(b, listB, revealedB)}
-      <div className="text-gray-900" style={{ fontSize: "1.9rem", minHeight: "2.5rem", opacity: showAnswer ? 1 : 0, transition: "opacity .4s ease" }}>
+      <div className="text-gray-900" style={{ fontSize: "2.2rem", minHeight: "2.8rem", opacity: showAnswer ? 1 : 0, transition: "opacity .4s ease" }}>
         <Tex tex={`\\mathrm{LCM}(${a},\\ ${b}) = ${l}`} />
       </div>
     </div>
@@ -351,7 +351,8 @@ function FactorTreeScene({ n, step }: { n: number; step: number }) {
 
   return (
     <div className="flex flex-col items-center gap-4 w-full">
-      <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="max-w-full" preserveAspectRatio="xMidYMid meet">
+      {/* rendered at 1.4× the viewBox — the SVG scales crisply into the card */}
+      <svg viewBox={`0 0 ${W} ${H}`} width={W * 1.4} height={H * 1.4} className="max-w-full" style={{ height: "auto" }} preserveAspectRatio="xMidYMid meet">
         {range(1, splits + 1).flatMap((k) => {
           const shown = revealedSplits >= k;
           const parX = px(k - 1), parY = py(k - 1);
@@ -365,7 +366,7 @@ function FactorTreeScene({ n, step }: { n: number; step: number }) {
         })}
         {node(px(0), py(0), n, splits === 0, true, "root")}
       </svg>
-      <div className="text-gray-900" style={{ fontSize: "1.9rem", minHeight: "2.5rem", opacity: showAnswer ? 1 : 0, transition: "opacity .4s ease" }}>
+      <div className="text-gray-900" style={{ fontSize: "2.1rem", minHeight: "2.7rem", opacity: showAnswer ? 1 : 0, transition: "opacity .4s ease" }}>
         <Tex tex={`${n} = ${primes.join(" \\times ")}`} />
       </div>
     </div>
@@ -401,15 +402,15 @@ function PrimeVennScene({ a, b, step }: { a: number; b: number; step: number }) 
 
   const listRow = (n: number, list: number[], struckAt: number[]) => (
     <div className="flex items-center gap-1.5">
-      <span className="text-xl font-bold text-gray-800 mr-1">{n} =</span>
+      <span className="text-2xl font-bold text-gray-800 mr-1">{n} =</span>
       {list.map((v, i) => {
         const struck = placed >= struckAt[i];
         return (
           <span key={i} className="flex items-center gap-1.5">
-            {i > 0 && <span className="text-gray-500 font-bold">×</span>}
+            {i > 0 && <span className="text-gray-500 font-bold text-lg">×</span>}
             <span style={{
               position: "relative", display: "inline-flex", alignItems: "center", justifyContent: "center",
-              width: 28, height: 28, borderRadius: 6, fontWeight: 700, fontSize: 14, color: "#fff",
+              width: 32, height: 32, borderRadius: 6, fontWeight: 700, fontSize: 16, color: "#fff",
               background: tileColor(v), opacity: struck ? 0.35 : 1, transition: "opacity .3s ease",
             }}>
               {v}
@@ -437,18 +438,19 @@ function PrimeVennScene({ a, b, step }: { a: number; b: number; step: number }) 
   // the fixed-height slide card without scrolling.
   return (
     <div className="flex flex-col items-center gap-2 w-full">
-      <div className="flex items-center justify-center gap-10 flex-wrap">
+      <div className="flex items-center justify-center gap-12 flex-wrap">
         {listRow(a, pa, paStruck)}
         {listRow(b, pb, pbStruck)}
       </div>
-      <svg viewBox="0 0 320 162" width={320} height={162} className="max-w-full" preserveAspectRatio="xMidYMid meet">
+      {/* rendered at ~1.45× the viewBox — the Venn is the teaching object, let it fill the card */}
+      <svg viewBox="0 0 320 162" width={464} height={235} className="max-w-full" style={{ height: "auto" }} preserveAspectRatio="xMidYMid meet">
         <circle cx={118} cy={86} r={66} fill="none" stroke="#334155" strokeWidth={2.5} />
         <circle cx={202} cy={86} r={66} fill="none" stroke="#334155" strokeWidth={2.5} />
         <text x={44} y={18} fontSize={16} fontWeight={700} fill="#6b7280">{a}</text>
         <text x={276} y={18} fontSize={16} fontWeight={700} fill="#6b7280" textAnchor="end">{b}</text>
         {chips.map((c, i) => svgTile(c.x, c.y, c.v, 26, i < placed, `chip${i}`))}
       </svg>
-      <div className="text-gray-900" style={{ fontSize: "1.5rem", minHeight: "2rem", opacity: showAnswer ? 1 : 0, transition: "opacity .4s ease" }}>
+      <div className="text-gray-900" style={{ fontSize: "1.8rem", minHeight: "2.4rem", opacity: showAnswer ? 1 : 0, transition: "opacity .4s ease" }}>
         <Tex tex={`\\mathrm{LCM}(${a},\\ ${b}) = ${all.join(" \\times ")} = ${lcmOf(a, b)}`} />
       </div>
     </div>
@@ -543,11 +545,14 @@ export function SlideDeck({ slides, color, onEscape, onDone }: {
   // with the Reveal button overlaying the blank area. Nothing mounts or grows
   // mid-slide, so the card never jumps while pressing. Oversized content
   // scrolls inside the card rather than resizing it.
+  //
+  // The nav controls live INSIDE the card (bottom corners, beat counter
+  // between them) so the whole surface is teaching space — no external
+  // button row eating into the card's height.
   return (
-    <div className="flex flex-col gap-4">
-      <div onClick={isAnim ? goNext : undefined} className={`relative bg-white rounded-2xl shadow-lg px-10 pt-7 pb-6 flex flex-col ${isAnim ? "cursor-pointer" : ""}`} style={{ borderTop: `5px solid ${color}`, height: "48vh", minHeight: 380 }}>
+      <div onClick={isAnim ? goNext : undefined} className={`relative bg-white rounded-2xl shadow-lg px-8 pt-5 pb-4 flex flex-col ${isAnim ? "cursor-pointer" : ""}`} style={{ borderTop: `5px solid ${color}`, height: "62vh", minHeight: 440 }}>
         {slide.phase && (
-          <span className="absolute top-6 right-6 px-4 py-1.5 rounded-full text-white text-xs font-extrabold uppercase tracking-widest" style={{ background: color }}>{PHASE_LABEL[slide.phase]}</span>
+          <span className="absolute top-5 right-6 px-4 py-1.5 rounded-full text-white text-xs font-extrabold uppercase tracking-widest" style={{ background: color }}>{PHASE_LABEL[slide.phase]}</span>
         )}
 
         <h2 className="text-xl font-bold text-gray-500 leading-snug pr-28 flex-shrink-0"><RichText s={slide.title} /></h2>
@@ -593,19 +598,19 @@ export function SlideDeck({ slides, color, onEscape, onDone }: {
           </div>
         </div>
 
-        {isAnim && <div className="text-center font-bold text-sm flex-shrink-0" style={{ color }}>{step + 1} / {maxStep + 1}</div>}
+        {/* Nav row inside the card. stopPropagation so the buttons don't also
+            fire the card's click-to-advance on anim slides. */}
+        <div className="flex items-center justify-between flex-shrink-0 pt-1" onClick={(e) => e.stopPropagation()}>
+          <button onClick={goPrev} disabled={idx === 0 && step === 0}
+            className={`px-4 py-1.5 rounded-lg border-2 font-bold text-sm transition-colors ${idx === 0 && step === 0 ? "border-gray-100 text-gray-300 cursor-default" : "border-gray-300 text-gray-600 bg-white hover:border-blue-900 hover:text-blue-900"}`}>← Back</button>
+          {isAnim ? <span className="font-bold text-sm" style={{ color }}>{step + 1} / {maxStep + 1}</span> : <span />}
+          <button onClick={() => { if (atLast) { if (onDone) onDone(); } else goNext(); }} disabled={atLast && !onDone}
+            className="px-5 py-1.5 rounded-lg text-white font-bold text-sm transition-opacity"
+            style={{ background: color, opacity: atLast && !onDone ? 0.4 : 1 }}>
+            {atLast ? "Done" : "Next ▸"}
+          </button>
+        </div>
       </div>
-
-      <div className="flex items-center justify-between">
-        <button onClick={goPrev} disabled={idx === 0 && step === 0}
-          className={`px-5 py-2.5 rounded-xl border-2 font-bold transition-colors ${idx === 0 && step === 0 ? "border-gray-200 text-gray-300 cursor-default" : "border-gray-300 text-gray-700 bg-white hover:border-blue-900 hover:text-blue-900"}`}>← Back</button>
-        <button onClick={() => { if (atLast) { if (onDone) onDone(); } else goNext(); }} disabled={atLast && !onDone}
-          className="px-6 py-2.5 rounded-xl text-white font-bold transition-opacity"
-          style={{ background: color, opacity: atLast && !onDone ? 0.4 : 1 }}>
-          {atLast ? "Done" : "Next ▸"}
-        </button>
-      </div>
-    </div>
   );
 }
 
@@ -647,9 +652,9 @@ export function TeachingDeck({ slides }: { slides: TeachingSlide[] }) {
   // ── Deck ── (keyed by category so slide/beat state resets on re-entry)
   const color = catMeta(cat).color;
   return (
-    <div className="flex flex-col gap-4">
-      <div className="relative flex items-center h-10">
-        <button onClick={toMenu} className="absolute left-0 px-4 py-2 rounded-lg border-2 border-gray-300 bg-white text-gray-700 font-bold hover:border-blue-900 hover:text-blue-900 transition-colors">← Menu</button>
+    <div className="flex flex-col gap-2">
+      <div className="relative flex items-center h-9">
+        <button onClick={toMenu} className="absolute left-0 px-3 py-1.5 rounded-lg border-2 border-gray-300 bg-white text-gray-700 font-bold text-sm hover:border-blue-900 hover:text-blue-900 transition-colors">← Menu</button>
         <span className="mx-auto text-sm font-bold uppercase tracking-wider" style={{ color }}>{catMeta(cat).label}</span>
       </div>
       <SlideDeck key={cat} slides={slides.filter((s) => s.category === cat)} color={color} onEscape={toMenu} />
