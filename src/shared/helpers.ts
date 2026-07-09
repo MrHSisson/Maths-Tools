@@ -50,8 +50,10 @@ export const step = (latex: string | string[], plain?: string) => {
 
 // Plain text step — use ONLY for genuinely numberless prose. May contain
 // [[skill-id|term]] markers; they are stripped from the latex fallback.
+// LaTeX specials (% # & _) are escaped in the latex fallback — a bare % would
+// otherwise start a KaTeX comment and fail the smoke tests' render check.
 export const tStep = (text: string) =>
-  ({ type: "tStep", latex: `\\text{${stripSkillMarkers(text)}}`, plain: text });
+  ({ type: "tStep", latex: `\\text{${stripSkillMarkers(text).replace(/([%#&_])/g, "\\$1")}}`, plain: text });
 
 // Prose label + KaTeX on the right. The label may contain [[skill-id|term]]
 // markers; `plain` gets the stripped label so markers never leak into text output.

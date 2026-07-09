@@ -116,14 +116,18 @@ Old tools (v1.x) are 800–1,300 lines with embedded UI. v2.3 tools use the shar
 
 Check the tool's `ready` version in `src/registry.ts`. Any tool below `v2.0` uses an old shell. The file will have no `import { ToolShell } from "../../shared"` line.
 
-Tools currently needing migration (v1.x as of this writing):
-- `src/tools/Number/IntegerAddSub.tsx` — v1.4, number line diagram questions
-- `src/tools/Number/PowersOfTen.tsx` — v1.4, place value table questions
-- `src/tools/Proportion/SimplifyingRatiosTool.tsx` — v1.4
-- `src/tools/Proportion/FractionToRatio.tsx` — v1.4
-- `src/tools/Algebra/` — several v1.4 expanding brackets tools (some `enabled: false`)
-- `src/tools/Geometry/` — AnglesInTriangles, CircleProperties
+Tools currently needing migration (still on an embedded v1.x shell, enabled):
+- `src/tools/Algebra/NonLinearSimEq.tsx` — v2.1.2
+- `src/tools/Proportion/RecipesTool.tsx` — v2.1.2
+- `src/tools/Proportion/FractionsOfAmounts.tsx` — v2.0
+- `src/tools/Proportion/FractionToRatio.tsx` — v2.0
+- `src/tools/Geometry/AnglesInTriangles.tsx` — v2.1
+- `src/tools/ComputerScience/SystemArchitecture.tsx` — v1.0
 - Generator tools (`TimesTablesGenerator`, etc.) — v1.0, primarily PDF-generation tools
+
+Dev-gated (`enabled: false`) and therefore lower priority: `IntegerAddSub`, `PowersOfTen`, `SimplifyingRatiosTool`, `PerimeterTool`.
+
+The registry `ready` label is not a reliable shell indicator — verify with the ToolShell import. AlgebraTiles, SkillLibrary, Visualiser, CallSelector and p-value are standalone by design (not question tools) and never migrate to ToolShell.
 
 ### Migration checklist
 
