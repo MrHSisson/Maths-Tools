@@ -848,6 +848,15 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     );
     const fit = (content: ReactNode) => workingCollapsed ? <ScaleToFit>{content}</ScaleToFit> : content;
 
+    // Fullscreen ALWAYS fit-scales: grow-to-fill when the panel is collapsed,
+    // shrink-to-fit (maxScale 1) in the split view — so dragging the splitter
+    // wider grows the diagram only up to the viable height and the box never
+    // needs a scrollbar. Content is wrapped in a div because ScaleToFit
+    // measures the union of its children.
+    const fitFS = (content: ReactNode) => (
+      <ScaleToFit maxScale={workingCollapsed ? 3 : 1}>{content}</ScaleToFit>
+    );
+
     const questionBox = () => (
       <div className="rounded-xl flex items-center justify-center p-8" style={{ position: "relative", width: workingCollapsed ? "auto" : "480px", flex: workingCollapsed ? "1 1 auto" : "0 0 auto", height: "100%", backgroundColor: stepBg }}>
         {qBoxControls}
@@ -869,9 +878,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     );
 
     const questionBoxFS = () => (
-      <div style={{ position: "relative", width: workingCollapsed ? "100%" : `${splitPct}%`, height: "100%", backgroundColor: fsQuestionBg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 48, boxSizing: "border-box", flexShrink: 0, overflowY: "auto", gap: 16 }}>
+      <div style={{ position: "relative", width: workingCollapsed ? "100%" : `${splitPct}%`, height: "100%", backgroundColor: fsQuestionBg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 48, boxSizing: "border-box", flexShrink: 0, overflow: "hidden", gap: 16 }}>
         {qBoxControls}
-        {fit(
+        {fitFS(
           <>
             {getInstruction() && !questionRenderer && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold`} style={{ color: "#000" }}>{getInstruction()}</div>}
             {questionRenderer
