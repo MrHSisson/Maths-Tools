@@ -57,11 +57,12 @@ export interface ToolShellProps {
   teachingSlides?: TeachingSlide[];
 }
 
-/** Scales its content up to fill the available space (never shrinks below 1x).
- *  Used when the working/visualiser panel is collapsed so the diagram/SVG
- *  genuinely grows into the reclaimed space — like dragging the splitter wide,
- *  but past the tool's own maxWidth cap. Content renders at its natural size
- *  first (width:100% preserved), then a CSS transform scales it up to fit. */
+/** Scales its content to fit the available space — up to fill when the panel
+ *  collapse frees room (like dragging the splitter wide, past the tool's own
+ *  maxWidth cap), and DOWN below 1x when the content wouldn't fit (short
+ *  screens, answer revealed under a tall diagram) so the top of a centred
+ *  diagram is never clipped. Content renders at its natural size first
+ *  (width:100% preserved), then a CSS transform scales it. */
 function ScaleToFit({ children, maxScale = 3 }: { children: ReactNode; maxScale?: number }) {
   const outerRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
@@ -102,7 +103,10 @@ function ScaleToFit({ children, maxScale = 3 }: { children: ReactNode; maxScale?
         n.style.transform = prev;
         if (!natW || !natH) return;
         const s = Math.min((availW * 0.96) / natW, (availH * 0.96) / natH);
-        const clamped = Math.max(1, Math.min(maxScale, s));
+        // No lower clamp: when the natural content is taller than the box the
+        // flex-centred overflow would clip it at BOTH ends (the top being the
+        // visible casualty) — shrinking to fit is always better than clipping.
+        const clamped = Math.min(maxScale, s);
         if (Math.abs(clamped - scaleRef.current) > 0.01) setScale(clamped);
       });
     };
