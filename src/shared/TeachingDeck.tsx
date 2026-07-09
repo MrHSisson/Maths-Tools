@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useLayoutEffect, useState, useCallback, useRef } from "react";
 import { loadKaTeX } from "./katex";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -532,6 +532,31 @@ export function SlideDeck({ slides, color, onEscape, onDone }: {
   }, [goNext, goPrev, onEscape]);
 
   const slide = slides[idx];
+
+  // ── Fit-to-card scaling ──────────────────────────────────────────────────
+  // Scenes are authored at a generous fixed size; on smaller screens the
+  // content is scaled DOWN (CSS transform) to fit the card's content area.
+  // There are never scrollbars in a slide. offsetHeight ignores transforms,
+  // so the natural size can be measured without neutralising the scale.
+  const outerRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const [fitScale, setFitScale] = useState(1);
+  useLayoutEffect(() => {
+    const recompute = () => {
+      const o = outerRef.current, n = innerRef.current;
+      if (!o || !n) return;
+      const availH = o.clientHeight, natH = n.offsetHeight;
+      if (!availH || !natH) return;
+      const s = Math.min(1, (availH * 0.99) / natH);
+      setFitScale((prev) => (Math.abs(prev - s) > 0.01 ? s : prev));
+    };
+    recompute();
+    const ro = new ResizeObserver(recompute);
+    if (outerRef.current) ro.observe(outerRef.current);
+    if (innerRef.current) ro.observe(innerRef.current);
+    return () => ro.disconnect();
+  }, [idx]);
+
   if (!slide) return null;
   const maxStep = slideMaxStep(slide);
   const atEnd = step >= maxStep;
@@ -543,8 +568,8 @@ export function SlideDeck({ slides, color, onEscape, onDone }: {
   // first press: captions all occupy one grid cell (the row sizes to the
   // tallest caption up front), and a static slide's reveal reserves its space
   // with the Reveal button overlaying the blank area. Nothing mounts or grows
-  // mid-slide, so the card never jumps while pressing. Oversized content
-  // scrolls inside the card rather than resizing it.
+  // mid-slide, so the card never jumps while pressing. Content that would
+  // exceed the card scales down to fit (see fitScale) — never scrollbars.
   //
   // The nav controls live INSIDE the card (bottom corners, beat counter
   // between them) so the whole surface is teaching space — no external
@@ -557,10 +582,10 @@ export function SlideDeck({ slides, color, onEscape, onDone }: {
 
         <h2 className="text-xl font-bold text-gray-500 leading-snug pr-28 flex-shrink-0"><RichText s={slide.title} /></h2>
 
-        <div className="flex-1 flex flex-col" style={{ minHeight: 0, overflowY: "auto" }}>
-          {/* m-auto centres when the content is smaller than the card and still
-              scrolls from the top when it isn't (justify-center would clip). */}
-          <div className="m-auto w-full flex flex-col items-center gap-5 py-2">
+        <div ref={outerRef} className="flex-1" style={{ minHeight: 0, position: "relative", overflow: "hidden" }}>
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div ref={innerRef} className="w-full flex flex-col items-center gap-5 py-1"
+              style={{ flexShrink: 0, transform: `scale(${fitScale})`, transformOrigin: "center center" }}>
             {isAnim ? (
               <>
                 <SceneView scene={(slide as AnimSlide).scene} step={step} />
@@ -595,6 +620,7 @@ export function SlideDeck({ slides, color, onEscape, onDone }: {
                 )}
               </div>
             )}
+            </div>
           </div>
         </div>
 
