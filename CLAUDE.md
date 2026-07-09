@@ -92,8 +92,10 @@ This copies the canonical template (`src/tools/TeacherTools/ToolShell.tsx`) to `
 `src/registry.ts` is the single source of truth for every tool. `App.tsx` generates the route (lazy-loaded — each tool builds as its own chunk) and `LandingPage.tsx` renders the card from it. Do **not** edit `App.tsx` or `LandingPage.tsx`. The scaffold script adds the entry; review it and remove `enabled: false` when the tool is ready to go live:
 
 ```ts
-{ id: 'my-new-tool', path: '/my-new-tool', name: 'Display Name', description: 'One sentence.', ready: 'v2.3', load: () => import('./tools/Category/MyNewTool') }
+{ id: 'my-new-tool', path: '/my-new-tool', name: 'Display Name', description: 'One sentence.', load: () => import('./tools/Category/MyNewTool') }
 ```
+
+The registry entry has no version/`ready` field — tools carry no version label. The landing page shows only a "Dev" badge for `enabled: false` tools; there is no version badge.
 
 ### 4. Build, test and push
 
@@ -110,24 +112,27 @@ git push
 
 ## How to migrate an old tool to v2.3
 
-Old tools (v1.x) are 800–1,300 lines with embedded UI. v2.3 tools use the shared ToolShell and are ~250–350 lines.
+Old tools are 800–1,300 lines with embedded UI. v2.3 tools use the shared ToolShell and are ~250–350 lines.
 
 ### Identifying old tools
 
-Check the tool's `ready` version in `src/registry.ts`. Any tool below `v2.0` uses an old shell. The file will have no `import { ToolShell } from "../../shared"` line.
+The reliable shell indicator is the code, not any registry field (tools carry no version label). A v2.3 tool imports `ToolShell` from `"../../shared"` and renders `<ToolShell … />` in its `App()`; an old tool has neither and hand-rolls its own shell. Confirm with:
 
-Tools currently needing migration (still on an embedded v1.x shell, enabled):
-- `src/tools/Algebra/NonLinearSimEq.tsx` — v2.1.2
-- `src/tools/Proportion/RecipesTool.tsx` — v2.1.2
-- `src/tools/Proportion/FractionsOfAmounts.tsx` — v2.0
-- `src/tools/Proportion/FractionToRatio.tsx` — v2.0
-- `src/tools/Geometry/AnglesInTriangles.tsx` — v2.1
-- `src/tools/ComputerScience/SystemArchitecture.tsx` — v1.0
-- Generator tools (`TimesTablesGenerator`, etc.) — v1.0, primarily PDF-generation tools
+```bash
+grep -L "<ToolShell" src/tools/**/*.tsx   # files that do NOT render the shared shell
+```
+
+Tools currently needing migration (still on an embedded old shell, enabled):
+- `src/tools/Algebra/NonLinearSimEq.tsx`
+- `src/tools/Proportion/FractionsOfAmounts.tsx`
+- `src/tools/Proportion/FractionToRatio.tsx`
+- `src/tools/Geometry/AnglesInTriangles.tsx`
+- `src/tools/ComputerScience/SystemArchitecture.tsx` — a quiz tool, not a question generator
+- Generator tools (`TimesTablesGenerator`, etc.) — primarily PDF-generation tools
 
 Dev-gated (`enabled: false`) and therefore lower priority: `IntegerAddSub`, `PowersOfTen`, `SimplifyingRatiosTool`, `PerimeterTool`.
 
-The registry `ready` label is not a reliable shell indicator — verify with the ToolShell import. AlgebraTiles, SkillLibrary, Visualiser, CallSelector and p-value are standalone by design (not question tools) and never migrate to ToolShell.
+AlgebraTiles, SkillLibrary, Visualiser, CallSelector and p-value are standalone by design (not question tools) and never migrate to ToolShell — they are not part of the backlog above even though they don't use the shared shell.
 
 ### Migration checklist
 
@@ -142,7 +147,7 @@ The registry `ready` label is not a reliable shell indicator — verify with the
 9. Delete any local `generateUniqueQ` — ToolShell provides the retry loop automatically
 10. Replace the export with `export default function App() { return <ToolShell ... /> }`
 11. Add `export const __test = { TOOL_CONFIG, generateQuestion }` so the CI smoke tests cover the tool
-12. Update the tool's `ready` version in `src/registry.ts` to `v2.3`
+12. Remove the tool from the migration backlog list in this file (registry entries carry no version field to update)
 
 ### Old pattern → new pattern
 
