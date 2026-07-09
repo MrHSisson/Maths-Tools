@@ -299,10 +299,32 @@ function MultiplesScene({ a, b, step }: { a: number; b: number; step: number }) 
   );
 }
 
+// ── Prime factor tiles ────────────────────────────────────────────────────────
+// Primes render as coloured square tiles, keyed by value so the same prime
+// always looks the same everywhere (tree leaves, Venn regions, factor lists).
+const PRIME_TILE_COLORS: Record<number, string> = {
+  2: "#0284c7",   // sky-600
+  3: "#059669",   // emerald-600
+  5: "#d97706",   // amber-600
+  7: "#9333ea",   // purple-600
+  11: "#db2777",  // pink-600
+  13: "#0891b2",  // cyan-600
+};
+const tileColor = (p: number) => PRIME_TILE_COLORS[p] ?? "#475569";
+
+// SVG prime tile, centred on (x, y).
+const svgTile = (x: number, y: number, v: number, size: number, visible: boolean, key: string) => (
+  <g key={key} style={{ opacity: visible ? 1 : 0, transition: "opacity .35s ease" }}>
+    <rect x={x - size / 2} y={y - size / 2} width={size} height={size} rx={6} fill={tileColor(v)} />
+    <text x={x} y={y} textAnchor="middle" dominantBaseline="central" fontSize={size / 2} fontWeight={700} fill="#fff">{v}</text>
+  </g>
+);
+
 // "FactorTree": builds n's factor tree one split per press, always dividing
-// out the smallest prime — exactly the board method. Primes circle in navy as
-// they're produced; the final beat states the product. The whole tree is laid
-// out from beat 0 (hidden at opacity 0) so nothing moves as it builds.
+// out the smallest prime — exactly the board method. Composites are plain
+// numbers; a prime is "taken as a tile" the moment it's produced (only primes
+// get the tile treatment, so the visual act matches the caption). The whole
+// tree is laid out from beat 0 (hidden at opacity 0) so nothing moves.
 function FactorTreeScene({ n, step }: { n: number; step: number }) {
   const primes = primeFactorsOf(n);
   const splits = primes.length - 1;
@@ -311,16 +333,17 @@ function FactorTreeScene({ n, step }: { n: number; step: number }) {
   const revealedSplits = clamp(step, 0, splits);
   const showAnswer = step >= splits + 1;
 
-  const DX = 50, DY = 46, R = 17;
+  const DX = 50, DY = 46, T = 30;
   const px = (k: number) => 90 + DX * k, py = (k: number) => 26 + DY * k;
-  const W = px(splits) + 90, H = py(splits) + 32;
+  const W = px(splits) + 90, H = py(splits) + 34;
 
-  const node = (x: number, y: number, v: number, isPrime: boolean, visible: boolean, key: string) => (
+  const numNode = (x: number, y: number, v: number, visible: boolean, key: string) => (
     <g key={key} style={{ opacity: visible ? 1 : 0, transition: "opacity .35s ease" }}>
-      <circle cx={x} cy={y} r={R} fill={isPrime ? NAVY : "#fff"} stroke={isPrime ? NAVY : "#334155"} strokeWidth={2} />
-      <text x={x} y={y} textAnchor="middle" dominantBaseline="central" fontSize={15} fontWeight={700} fill={isPrime ? "#fff" : "#111827"}>{v}</text>
+      <text x={x} y={y} textAnchor="middle" dominantBaseline="central" fontSize={17} fontWeight={700} fill="#111827">{v}</text>
     </g>
   );
+  const node = (x: number, y: number, v: number, isPrime: boolean, visible: boolean, key: string) =>
+    isPrime ? svgTile(x, y, v, T, visible, key) : numNode(x, y, v, visible, key);
   const edge = (x1: number, y1: number, x2: number, y2: number, visible: boolean, key: string) => (
     <line key={key} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#94a3b8" strokeWidth={2}
       style={{ opacity: visible ? 1 : 0, transition: "opacity .35s ease" }} />
@@ -334,8 +357,8 @@ function FactorTreeScene({ n, step }: { n: number; step: number }) {
           const parX = px(k - 1), parY = py(k - 1);
           const leafX = px(k - 1) - DX, chainX = px(k), y = py(k);
           return [
-            edge(parX - 10, parY + 13, leafX + 8, y - 13, shown, `el${k}`),
-            edge(parX + 10, parY + 13, chainX - 8, y - 13, shown, `ec${k}`),
+            edge(parX - 10, parY + 14, leafX + 9, y - 17, shown, `el${k}`),
+            edge(parX + 10, parY + 14, chainX - 9, y - 17, shown, `ec${k}`),
             node(leafX, y, primes[k - 1], true, shown, `l${k}`),
             node(chainX, y, chain[k], k === splits, shown, `c${k}`),
           ];
@@ -349,16 +372,58 @@ function FactorTreeScene({ n, step }: { n: number; step: number }) {
   );
 }
 
-// "PrimeVenn": both factorisations are stated up front; each press places the
-// next prime in the Venn — shared primes to the middle first, then each
-// number's leftovers to its own side. The final beat multiplies everything in
-// the diagram to give the LCM.
+// "PrimeVenn": both factorisations are shown up front as rows of prime tiles;
+// each press crosses the next tile(s) off the lists and places the prime in
+// the Venn — a shared prime crosses one tile off EACH list and puts a single
+// tile in the middle (the board move), then each number's leftovers go to
+// their own side. The final beat multiplies everything in the diagram.
 function PrimeVennScene({ a, b, step }: { a: number; b: number; step: number }) {
+  const pa = primeFactorsOf(a), pb = primeFactorsOf(b);
   const { shared, aOnly, bOnly } = vennParts(a, b);
   const placements = shared.length + aOnly.length + bOnly.length;
   const placed = clamp(step, 0, placements);
   const showAnswer = step >= placements + 1;
   const all = [...shared, ...aOnly, ...bOnly].sort((x, y) => x - y);
+
+  // Which placement (1-based) crosses off each list entry: shared placements
+  // strike the first unstruck occurrence in BOTH lists, then a's leftovers
+  // strike from a's list and b's from b's.
+  const paStruck: number[] = new Array(pa.length).fill(Infinity);
+  const pbStruck: number[] = new Array(pb.length).fill(Infinity);
+  const strikeFirst = (list: number[], struck: number[], v: number, p: number) => {
+    const i = list.findIndex((x, j) => x === v && struck[j] === Infinity);
+    if (i >= 0) struck[i] = p;
+  };
+  let p = 1;
+  for (const v of shared) { strikeFirst(pa, paStruck, v, p); strikeFirst(pb, pbStruck, v, p); p++; }
+  for (const v of aOnly) { strikeFirst(pa, paStruck, v, p); p++; }
+  for (const v of bOnly) { strikeFirst(pb, pbStruck, v, p); p++; }
+
+  const listRow = (n: number, list: number[], struckAt: number[]) => (
+    <div className="flex items-center gap-1.5">
+      <span className="text-xl font-bold text-gray-800 mr-1">{n} =</span>
+      {list.map((v, i) => {
+        const struck = placed >= struckAt[i];
+        return (
+          <span key={i} className="flex items-center gap-1.5">
+            {i > 0 && <span className="text-gray-500 font-bold">×</span>}
+            <span style={{
+              position: "relative", display: "inline-flex", alignItems: "center", justifyContent: "center",
+              width: 28, height: 28, borderRadius: 6, fontWeight: 700, fontSize: 14, color: "#fff",
+              background: tileColor(v), opacity: struck ? 0.35 : 1, transition: "opacity .3s ease",
+            }}>
+              {v}
+              {/* the cross-off slash — layered over the tile, no layout change */}
+              <span style={{
+                position: "absolute", inset: 0, borderRadius: 6, opacity: struck ? 1 : 0, transition: "opacity .3s ease",
+                backgroundImage: "linear-gradient(to top right, transparent 44%, #1f2937 44%, #1f2937 56%, transparent 56%)",
+              }} />
+            </span>
+          </span>
+        );
+      })}
+    </div>
+  );
 
   const spread = (cx: number, count: number, i: number): [number, number] =>
     [cx, 86 + (i - (count - 1) / 2) * 36];
@@ -368,24 +433,20 @@ function PrimeVennScene({ a, b, step }: { a: number; b: number; step: number }) 
     ...bOnly.map((v, i) => { const [x, y] = spread(246, bOnly.length, i); return { x, y, v }; }),
   ];
 
-  // Kept compact on purpose — factorisations + Venn + equation must all fit
+  // Kept compact on purpose — factor lists + Venn + equation must all fit
   // the fixed-height slide card without scrolling.
   return (
     <div className="flex flex-col items-center gap-2 w-full">
-      <div className="text-gray-800" style={{ fontSize: "1.25rem" }}>
-        <Tex tex={`${a} = ${primeFactorsOf(a).join(" \\times ")} \\qquad ${b} = ${primeFactorsOf(b).join(" \\times ")}`} />
+      <div className="flex items-center justify-center gap-10 flex-wrap">
+        {listRow(a, pa, paStruck)}
+        {listRow(b, pb, pbStruck)}
       </div>
       <svg viewBox="0 0 320 162" width={320} height={162} className="max-w-full" preserveAspectRatio="xMidYMid meet">
         <circle cx={118} cy={86} r={66} fill="none" stroke="#334155" strokeWidth={2.5} />
         <circle cx={202} cy={86} r={66} fill="none" stroke="#334155" strokeWidth={2.5} />
         <text x={44} y={18} fontSize={16} fontWeight={700} fill="#6b7280">{a}</text>
         <text x={276} y={18} fontSize={16} fontWeight={700} fill="#6b7280" textAnchor="end">{b}</text>
-        {chips.map((c, i) => (
-          <g key={i} style={{ opacity: i < placed ? 1 : 0, transition: "opacity .35s ease" }}>
-            <circle cx={c.x} cy={c.y} r={14} fill={NAVY} />
-            <text x={c.x} y={c.y} textAnchor="middle" dominantBaseline="central" fontSize={14} fontWeight={700} fill="#fff">{c.v}</text>
-          </g>
-        ))}
+        {chips.map((c, i) => svgTile(c.x, c.y, c.v, 26, i < placed, `chip${i}`))}
       </svg>
       <div className="text-gray-900" style={{ fontSize: "1.5rem", minHeight: "2rem", opacity: showAnswer ? 1 : 0, transition: "opacity .4s ease" }}>
         <Tex tex={`\\mathrm{LCM}(${a},\\ ${b}) = ${all.join(" \\times ")} = ${lcmOf(a, b)}`} />

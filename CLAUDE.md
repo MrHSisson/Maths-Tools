@@ -433,8 +433,8 @@ The **Teach** deck (`TeachingDeck`, `src/shared/TeachingDeck.tsx`) is a slide-ba
 | `{ type:"split", num, den, factor, shadeByOne?, predict? }` | `den + 2` (`+1` if `predict`, `+num` if `shadeByOne`) | cuts ONE original piece into `factor` per press (shaded area never moves), then shows the equation `num/den = (num·f)/(den·f)`. `predict` holds the answer at `?/?` for one extra beat (You-do). |
 | `{ type:"equivalents", num, den, factors:number[] }` | `factors.length + 1` | beat 0 is the prompt; each later beat reveals one `×factor` equivalent — for a "find two equivalent fractions" You-do (`factors:[2,3,4,5]` gives the four common answers). |
 | `{ type:"multiples", a, b }` | `lcm/a + lcm/b + 2` | LCM walkthrough: each press writes the next multiple (a's list up to the LCM, then b's); the shared value highlights when it lands, and the final beat states `LCM(a, b)`. |
-| `{ type:"factorTree", n }` | `Ω(n) + 1` (Ω = prime factors with multiplicity) | builds n's factor tree one split per press, always dividing out the smallest prime; primes circle in navy as produced, final beat states the product. |
-| `{ type:"primeVenn", a, b }` | `(total primes across regions) + 2` | both factorisations stated up front; each press places the next prime in the Venn (shared → middle first, then each side's leftovers); final beat multiplies everything for the LCM. |
+| `{ type:"factorTree", n }` | `Ω(n) + 1` (Ω = prime factors with multiplicity) | builds n's factor tree one split per press, always dividing out the smallest prime; composites are plain numbers, each prime becomes a coloured tile as it's produced; final beat states the product. |
+| `{ type:"primeVenn", a, b }` | `(total primes across regions) + 2` | both factor lists shown as tile rows up front; each press crosses the next tile(s) off the list(s) and places the prime in the Venn (a shared prime strikes one tile off EACH list and puts a single tile in the middle); final beat multiplies everything for the LCM. |
 | `{ type:"combine", a, b, sumLabel }` | `2` | two shaded bars (common denominator) flow into one. |
 
 **Adding a new scene type:** extend the `TeachScene` union, add its beat count to `sceneMaxStep`, and render it in `SceneView` (+ a component). Drive animation with CSS transitions on SVG (opacity/transform), no libraries — see `SplitScene`. The URL `mode=teach` deep-links to the deck.
@@ -582,7 +582,7 @@ In the dev-gated Worked Example the term renders with a dotted underline; clicki
 
 ## Core representations — the visual vocabulary
 
-Every taught visual on the site (skill slides, Teach decks, and eventually whiteboard visualisers) is built from **five core representations**. Consistency is the point: a student who met the bar model in fractions meets the *same* bar in ratio — the representation library is the site's visual scheme of work.
+Every taught visual on the site (skill slides, Teach decks, and eventually whiteboard visualisers) is built from **six core representations**. Consistency is the point: a student who met the bar model in fractions meets the *same* bar in ratio — the representation library is the site's visual scheme of work.
 
 | Representation | Carries | Scene family (TeachingDeck) |
 |---|---|---|
@@ -590,9 +590,12 @@ Every taught visual on the site (skill slides, Teach decks, and eventually white
 | **Number line** | integers, rounding, inequalities, sequences, multiples | `multiples` |
 | **Area model** | multiplication, expanding brackets, completing the square | *(none yet)* |
 | **Algebra tiles** | collecting terms, solving equations, factorising | *(manipulative exists; no scenes yet)* |
+| **Negative counters** | directed numbers, integer add/sub, zero pairs | *(manipulative planned; no scenes yet)* |
 | **Prime factor tiles** | HCF/LCM, factors, prime decomposition | `factorTree` · `primeVenn` |
 
-**The rule: before authoring any new visual, pick one of the five.** A brand-new representation needs a reason. New scenes extend an existing family in `TeachingDeck.tsx` (grouped by family comments in the `TeachScene` union) and follow the standing scene contract: beat count derived from the scene, reserve space for everything (opacity, not mounting), animate only opacity/transform.
+**The rule: before authoring any new visual, pick one of the six.** A brand-new representation needs a reason. New scenes extend an existing family in `TeachingDeck.tsx` (grouped by family comments in the `TeachScene` union) and follow the standing scene contract: beat count derived from the scene, reserve space for everything (opacity, not mounting), animate only opacity/transform.
+
+Prime factor tiles are **coloured squares keyed by the prime** (2 sky, 3 emerald, 5 amber, 7 purple, 11 pink — `tileColor` in TeachingDeck), so the same prime looks the same in a factor tree, a Venn region, and a factor list. Composites stay plain numbers; only primes become tiles.
 
 ---
 
@@ -618,7 +621,8 @@ interface SkillDef {
 **Authoring rules:**
 - Skills are **stand-alone taught walkthroughs** — the drill-down a student presses on mid-question. **No I-do/We-do/You-do phases and no practice questions**: those belong to a tool's Teach deck, not here. Teach the idea, then walk a demonstration.
 - **Reveal by parts, walkthrough pacing.** Prefer `anim` scenes that build one press at a time (each press = the next mark a teacher would write — same board-writing rule as working-step fragments) over static slides with a single Reveal button. A static `reveal` is acceptable only for one short closing fact. If no existing scene fits the skill, add a generic scene type to TeachingDeck (see "Adding a new scene type").
-- 2–4 slides: a short definition slide, then one or two walked examples.
+- **Examples cover the skill's distinct cases — never an arbitrary count.** List the cases first, then give one walked example per case (median: an odd-length list and an even-length one; prime-factor LCM: distinct spares, a repeated shared prime, one number contained in the other). The first case gets the full scaffold; later cases fade it (e.g. trees compressed to stated factor lists). An example that repeats an already-covered case is padding — cut it.
+- Shape: a short definition slide, then the case examples.
 - **Exemplars are hand-picked friendly numbers, never the question's numbers** — the question that links here brings its own numbers to the worked example; the skill teaches the *idea*. Never author a visual that only formats well for small numbers and then feed it large ones.
 - One level deep: skill slides never link to other skills.
 - Claude drafts the slides from the maths; the user reviews the pedagogy on the `/skills` page in dev mode.
@@ -628,7 +632,7 @@ interface SkillDef {
 | id | Title | Method | Category | Exemplars |
 |---|---|---|---|---|
 | `lcm` | Lowest Common Multiple | From times tables | Number | 4 & 6, then 5 & 3 — multiples listed one per press (`multiples` scene) |
-| `lcm-prime-factors` | Lowest Common Multiple | From prime factors | Number | 12 & 18 — factor trees one split per press, then the Venn (`factorTree`, `primeVenn`) |
+| `lcm-prime-factors` | Lowest Common Multiple | From prime factors | Number | trees for 12 & 18, then Venns covering the cases: 12 & 18 (distinct spares), 8 & 12 (repeated shared prime), 9 & 18 (one number inside the other) (`factorTree`, `primeVenn`) |
 
 CI (`src/tests/skills.test.ts`) validates every skill: unique kebab-case ids, every KaTeX string renders, anim slides never supply more captions than beats.
 
