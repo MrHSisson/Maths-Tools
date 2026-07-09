@@ -469,7 +469,7 @@ function SceneView({ scene, step }: { scene: TeachScene; step: number }) {
 // ── Static blocks ─────────────────────────────────────────────────────────────
 
 function BlockView({ b }: { b: TeachBlock }) {
-  if (b.t === "text") return <p className="text-xl text-gray-700 text-center leading-relaxed"><RichText s={b.s} /></p>;
+  if (b.t === "text") return <p className="text-2xl text-gray-700 text-center leading-relaxed"><RichText s={b.s} /></p>;
   if (b.t === "math") return <div className="text-center text-gray-900" style={{ fontSize: "2.2rem" }}><Tex tex={b.s} /></div>;
   if (b.t === "bars") return <div className="flex flex-col gap-3 items-center">{b.bars.map((bar, i) => <Bar key={i} {...bar} />)}</div>;
   if (b.t === "verdict") return (
@@ -496,13 +496,16 @@ export const slideMaxStep = (s: TeachingSlide) => (s.kind === "anim" ? sceneMaxS
 // chosen, and the skill-library overlay (src/shared/skills) plays a skill's
 // slides through it directly. Owns its own slide/beat state and keyboard
 // handling (→/space/Enter advance, ← back, Esc → onEscape).
-export function SlideDeck({ slides, color, onEscape, onDone }: {
+export function SlideDeck({ slides, color, onEscape, onDone, fill }: {
   slides: TeachingSlide[];
   color: string;
   onEscape?: () => void;
   /** When provided, the Next button becomes "Done" on the last beat and fires
    *  this instead of disabling — used by the skill overlay to close itself. */
   onDone?: () => void;
+  /** Fill the parent's height instead of the default 62vh card — used when the
+   *  host (e.g. the near-fullscreen skill overlay) owns the sizing. */
+  fill?: boolean;
 }) {
   const [idx, setIdx] = useState(0);
   const [step, setStep] = useState(0);
@@ -575,7 +578,7 @@ export function SlideDeck({ slides, color, onEscape, onDone }: {
   // between them) so the whole surface is teaching space — no external
   // button row eating into the card's height.
   return (
-      <div onClick={isAnim ? goNext : undefined} className={`relative bg-white rounded-2xl shadow-lg px-8 pt-5 pb-4 flex flex-col ${isAnim ? "cursor-pointer" : ""}`} style={{ borderTop: `5px solid ${color}`, height: "62vh", minHeight: 440 }}>
+      <div onClick={isAnim ? goNext : undefined} className={`relative bg-white rounded-2xl shadow-lg px-8 pt-5 pb-4 flex flex-col ${isAnim ? "cursor-pointer" : ""}`} style={{ borderTop: `5px solid ${color}`, height: fill ? "100%" : "62vh", minHeight: fill ? 0 : 440 }}>
         {slide.phase && (
           <span className="absolute top-5 right-6 px-4 py-1.5 rounded-full text-white text-xs font-extrabold uppercase tracking-widest" style={{ background: color }}>{PHASE_LABEL[slide.phase]}</span>
         )}

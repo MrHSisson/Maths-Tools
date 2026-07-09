@@ -77,13 +77,15 @@ export function SkillOverlay({ skillId, onClose }: { skillId: string; onClose: (
   const skill = getSkill(skillId);
   useEffect(() => { loadKaTeX(); }, []);
   if (!skill) return null;
+  // Near-fullscreen: the slim dimmed rim is what says "overlay" — the rest of
+  // the viewport belongs to the teaching surface.
   return (
-    <div className="fixed inset-0 flex items-center justify-center p-4"
-      style={{ zIndex: 300, background: "rgba(15, 23, 42, 0.55)" }} onClick={onClose}>
+    <div className="fixed inset-0 flex items-center justify-center"
+      style={{ zIndex: 300, background: "rgba(15, 23, 42, 0.55)", padding: 12 }} onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()}
-        className="rounded-2xl shadow-2xl w-full overflow-y-auto"
-        style={{ maxWidth: 960, maxHeight: "94vh", backgroundColor: "#f5f3f0", padding: 14 }}>
-        <div className="flex items-center justify-between mb-2 px-1">
+        className="rounded-2xl shadow-2xl w-full flex flex-col overflow-hidden"
+        style={{ maxWidth: 1200, height: "100%", backgroundColor: "#f5f3f0", padding: 12 }}>
+        <div className="flex items-center justify-between mb-2 px-1 flex-shrink-0">
           <span className="text-sm font-bold uppercase tracking-wider" style={{ color: NAVY }}>
             Skill — {skill.title}{skill.method ? ` (${skill.method.toLowerCase()})` : ""}
           </span>
@@ -92,7 +94,9 @@ export function SkillOverlay({ skillId, onClose }: { skillId: string; onClose: (
             <X size={20} />
           </button>
         </div>
-        <SlideDeck slides={skill.slides} color={NAVY} onEscape={onClose} onDone={onClose} />
+        <div className="flex-1" style={{ minHeight: 0 }}>
+          <SlideDeck slides={skill.slides} color={NAVY} onEscape={onClose} onDone={onClose} fill />
+        </div>
       </div>
     </div>
   );
