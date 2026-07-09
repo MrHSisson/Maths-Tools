@@ -153,19 +153,24 @@ const buildAnswerWorking = (rv: RawValues, isMixedFmt: boolean): { answer: strin
 const opLatex = (isAdd: boolean) => (isAdd ? "+" : "-");
 const addOrSubLabel = (isAdd: boolean) => `${isAdd ? "Add" : "Subtract"} the numerators:`;
 
+// Working steps are authored as fragment arrays (live modelling): in the
+// dev-gated step-by-step Worked Example each line is written one press at a
+// time, in the order a teacher would write it on the board. Everywhere else
+// the fragments join into one normal line.
+
 // A simplify working step, or nothing when the fraction is already in lowest terms.
 const simplifyStep = (raw: number, den: number, sn: number, sd: number): WorkingStep[] =>
-  sd !== den && raw !== 0 ? [mStep(`Simplify (÷${gcd(raw, den)}):`, `\\dfrac{${raw}}{${den}} = ${fracL(sn, sd)}`)] : [];
+  sd !== den && raw !== 0 ? [mStep(`Simplify (÷${gcd(raw, den)}):`, [`\\dfrac{${raw}}{${den}}`, `= ${fracL(sn, sd)}`])] : [];
 
 // An equivalent-fraction step showing the ×m applied to top and bottom.
 const rewriteStep = (label: string, n: number, d: number, target: number): WorkingStep => {
   const m = target / d;
-  return mStep(label, `\\dfrac{${n}}{${d}} = \\dfrac{${n} \\times ${m}}{${d} \\times ${m}} = \\dfrac{${n * m}}{${target}}`);
+  return mStep(label, [`\\dfrac{${n}}{${d}}`, `= \\dfrac{${n} \\times ${m}}{${d} \\times ${m}}`, `= \\dfrac{${n * m}}{${target}}`]);
 };
 
 const convertMixedStep = (whole: number, num: number, den: number, imp: number): WorkingStep =>
   mStep(`Convert ${whole} ${num}/${den} to an improper fraction:`,
-    `${whole}\\dfrac{${num}}{${den}} = \\dfrac{${whole} \\times ${den} + ${num}}{${den}} = \\dfrac{${imp}}{${den}}`);
+    [`${whole}\\dfrac{${num}}{${den}}`, `= \\dfrac{${whole} \\times ${den} + ${num}}{${den}}`, `= \\dfrac{${imp}}{${den}}`]);
 
 // ── Mixed-number working builders (convert-to-improper vs whole-and-part) ──────
 //
@@ -188,7 +193,7 @@ const improperMethodWorking = (
   if (d1 !== commonD) core.push(rewriteStep("Rewrite the first fraction:", imp1, d1, commonD));
   if (d2 !== commonD) core.push(rewriteStep("Rewrite the second fraction:", imp2, d2, commonD));
   const raw = isAdd ? isc1 + isc2 : isc1 - isc2;
-  core.push(mStep(addOrSubLabel(isAdd), `\\dfrac{${isc1}}{${commonD}} ${opL} \\dfrac{${isc2}}{${commonD}} = \\dfrac{${raw}}{${commonD}}`));
+  core.push(mStep(addOrSubLabel(isAdd), [`\\dfrac{${isc1}}{${commonD}} ${opL} \\dfrac{${isc2}}{${commonD}}`, `= \\dfrac{${raw}}{${commonD}}`]));
   const [sn, sd] = simplify(raw, commonD);
   core.push(...simplifyStep(raw, commonD, sn, sd));
   return { core, rawNum: sn, rawDen: sd };
@@ -202,7 +207,7 @@ const separatePartsWorking = (
   const core: WorkingStep[] = [];
 
   const Wraw = isAdd ? w1 + w2 : w1 - w2;
-  core.push(mStep(isAdd ? "Add the whole numbers:" : "Subtract the whole numbers:", `${w1} ${opL} ${w2} = ${Wraw}`));
+  core.push(mStep(isAdd ? "Add the whole numbers:" : "Subtract the whole numbers:", [`${w1} ${opL} ${w2}`, `= ${Wraw}`]));
 
   if (d1 !== commonD) core.push(rewriteStep("Rewrite the first fraction:", fn1, d1, commonD));
   if (d2 !== commonD) core.push(rewriteStep("Rewrite the second fraction:", fn2, d2, commonD));
@@ -211,7 +216,7 @@ const separatePartsWorking = (
   let carryLatex = "";
 
   if (isAdd) {
-    core.push(mStep("Add the fractional parts:", `\\dfrac{${sc1}}{${commonD}} + \\dfrac{${sc2}}{${commonD}} = \\dfrac{${fracN}}{${commonD}}`));
+    core.push(mStep("Add the fractional parts:", [`\\dfrac{${sc1}}{${commonD}} + \\dfrac{${sc2}}{${commonD}}`, `= \\dfrac{${fracN}}{${commonD}}`]));
     if (fracN >= commonD) {
       const rem = fracN - commonD;              // each part < 1, so the carry is exactly 1
       const [rn, rd] = rem === 0 ? [0, 1] : simplify(rem, commonD);
@@ -225,9 +230,9 @@ const separatePartsWorking = (
     core.push(mStep("The first fraction is smaller — borrow 1 whole:",
       `${Wraw} \\rightarrow ${finalW}, \\quad \\dfrac{${sc1}}{${commonD}} + \\dfrac{${commonD}}{${commonD}} = \\dfrac{${sc1 + commonD}}{${commonD}}`));
     fracN = sc1 + commonD - sc2;
-    core.push(mStep("Subtract the fractional parts:", `\\dfrac{${sc1 + commonD}}{${commonD}} - \\dfrac{${sc2}}{${commonD}} = \\dfrac{${fracN}}{${commonD}}`));
+    core.push(mStep("Subtract the fractional parts:", [`\\dfrac{${sc1 + commonD}}{${commonD}} - \\dfrac{${sc2}}{${commonD}}`, `= \\dfrac{${fracN}}{${commonD}}`]));
   } else {
-    core.push(mStep("Subtract the fractional parts:", `\\dfrac{${sc1}}{${commonD}} - \\dfrac{${sc2}}{${commonD}} = \\dfrac{${fracN}}{${commonD}}`));
+    core.push(mStep("Subtract the fractional parts:", [`\\dfrac{${sc1}}{${commonD}} - \\dfrac{${sc2}}{${commonD}}`, `= \\dfrac{${fracN}}{${commonD}}`]));
   }
 
   const [fsn, fsd] = fracN === 0 ? [0, 1] : simplify(fracN, commonD);
@@ -272,7 +277,7 @@ const generateFractionCore = (level: DifficultyLevel, variables: Record<string, 
       const [sn, sd] = simplify(raw, den);
       const core: WorkingStep[] = [
         mStep(`Same denominator — ${addOrSubLabel(isAdd)}`,
-          `${fracL(num1, den)} ${opL} ${fracL(num2, den)} = \\dfrac{${num1} ${opL} ${num2}}{${den}} = \\dfrac{${raw}}{${den}}`),
+          [`${fracL(num1, den)} ${opL} ${fracL(num2, den)}`, `= \\dfrac{${num1} ${opL} ${num2}}{${den}}`, `= \\dfrac{${raw}}{${den}}`]),
         ...simplifyStep(raw, den, sn, sd),
       ];
       return {
@@ -303,7 +308,7 @@ const generateFractionCore = (level: DifficultyLevel, variables: Record<string, 
         scaleFirst
           ? rewriteStep("Write over a common denominator:", num1, den1, largeD)
           : rewriteStep("Write over a common denominator:", num2, den2, largeD),
-        mStep(addOrSubLabel(isAdd), `\\dfrac{${sc1}}{${largeD}} ${opL} \\dfrac{${sc2}}{${largeD}} = \\dfrac{${raw}}{${largeD}}`),
+        mStep(addOrSubLabel(isAdd), [`\\dfrac{${sc1}}{${largeD}} ${opL} \\dfrac{${sc2}}{${largeD}}`, `= \\dfrac{${raw}}{${largeD}}`]),
         ...simplifyStep(raw, largeD, sn, sd),
       ];
       return {
@@ -330,10 +335,11 @@ const generateFractionCore = (level: DifficultyLevel, variables: Record<string, 
     if (ansLT1 && raw >= cl) continue;
     const [sn, sd] = simplify(raw, cl);
     const core: WorkingStep[] = [
-      mStep(`LCM of ${den1} and ${den2}:`, `${cl}`),
+      // The [[lcm|LCM]] marker links the skill-library drill-down (dev-gated).
+      mStep(`Find the common denominator — the [[lcm|LCM]] of ${den1} and ${den2}:`, `${cl}`),
       rewriteStep("Rewrite the first fraction:", num1, den1, cl),
       rewriteStep("Rewrite the second fraction:", num2, den2, cl),
-      mStep(addOrSubLabel(isAdd), `\\dfrac{${sc1}}{${cl}} ${opL} \\dfrac{${sc2}}{${cl}} = \\dfrac{${raw}}{${cl}}`),
+      mStep(addOrSubLabel(isAdd), [`\\dfrac{${sc1}}{${cl}} ${opL} \\dfrac{${sc2}}{${cl}}`, `= \\dfrac{${raw}}{${cl}}`]),
       ...simplifyStep(raw, cl, sn, sd),
     ];
     return {

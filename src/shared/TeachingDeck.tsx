@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useLayoutEffect, useState, useCallback, useRef } from "react";
 import { loadKaTeX } from "./katex";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -31,10 +31,20 @@ export type TeachBlock =
   | { t: "verdict"; value: boolean }               // True / False
   | { t: "note"; tone?: "good" | "bad" | "plain"; label?: string; s: string }; // clean bordered note (no emoji)
 
+// Scenes are grouped into representation families (see "Core representations"
+// in CLAUDE.md): bar model (split, combine, equivalents), number line
+// (multiples), prime factor tiles (factorTree, primeVenn). New scenes should
+// extend one of the five core representations before inventing a new visual.
 export type TeachScene =
+  // ── bar model family ──
   | { type: "split"; num: number; den: number; factor: number; shadeByOne?: boolean; predict?: boolean }  // cut each piece into `factor`; predict hides the answer
   | { type: "combine"; a: TeachBar; b: TeachBar; sumLabel: string }
-  | { type: "equivalents"; num: number; den: number; factors: number[] };  // reveal one ×factor equivalent per beat
+  | { type: "equivalents"; num: number; den: number; factors: number[] }  // reveal one ×factor equivalent per beat
+  // ── number line family ──
+  | { type: "multiples"; a: number; b: number }  // list each number's multiples one per press up to the LCM, then highlight the shared value
+  // ── prime factor tiles family ──
+  | { type: "factorTree"; n: number }            // build n's factor tree one split per press (smallest prime first), then state the product
+  | { type: "primeVenn"; a: number; b: number }; // place each prime in the Venn one per press (shared → middle), then state the LCM
 
 export type TeachPhase = "iDo" | "weDo" | "youDo";   // shown as a corner badge
 
@@ -82,12 +92,15 @@ function Tex({ tex }: { tex: string }) {
 }
 function RichText({ s }: { s: string }) {
   const parts = s.split(/\$([^$]+)\$/g);
+  // A single inline wrapper, not a fragment — inside flex containers, sibling
+  // spans become separate flex items and their edge whitespace collapses,
+  // jamming words together around every $...$ segment.
   return (
-    <>
+    <span style={{ display: "inline" }}>
       {parts.map((p, i) =>
-        i % 2 === 1 ? <Tex key={i} tex={p} /> : p.split(/\*\*([^*]+)\*\*/g).map((seg, j) => (j % 2 === 1 ? <strong key={j}>{seg}</strong> : <span key={j}>{seg}</span>)),
+        i % 2 === 1 ? <Tex key={i} tex={p} /> : p.split(/\*\*([^*]+)\*\*/g).map((seg, j) => (j % 2 === 1 ? <strong key={`${i}-${j}`}>{seg}</strong> : <span key={`${i}-${j}`}>{seg}</span>)),
       )}
-    </>
+    </span>
   );
 }
 
@@ -108,10 +121,37 @@ function Bar({ num, den, label, shade = true }: TeachBar) {
 
 // ── Animated scenes ───────────────────────────────────────────────────────────
 
+const gcdOf = (a: number, b: number): number => (b === 0 ? Math.abs(a) : gcdOf(b, a % b));
+const lcmOf = (a: number, b: number): number => (a * b) / gcdOf(a, b);
+
+// Prime factors of n in ascending order, with multiplicity: 12 → [2, 2, 3].
+const primeFactorsOf = (n: number): number[] => {
+  const out: number[] = [];
+  let m = n;
+  for (let p = 2; p * p <= m; p++) while (m % p === 0) { out.push(p); m /= p; }
+  if (m > 1) out.push(m);
+  return out;
+};
+
+// The three regions of a prime-factor Venn: shared primes (the gcd's factors)
+// and each number's leftovers, all as multisets.
+const vennParts = (a: number, b: number) => {
+  const shared = primeFactorsOf(gcdOf(a, b));
+  const remove = (list: number[], rem: number[]) => {
+    const c = [...list];
+    rem.forEach((r) => { const i = c.indexOf(r); if (i >= 0) c.splice(i, 1); });
+    return c;
+  };
+  return { shared, aOnly: remove(primeFactorsOf(a), shared), bOnly: remove(primeFactorsOf(b), shared) };
+};
+
 // How many beats (max step index) a scene runs for.
 const sceneMaxStep = (s: TeachScene): number => {
   if (s.type === "split") return (s.shadeByOne ? s.num : 0) + s.den + 1 + (s.predict ? 1 : 0);
   if (s.type === "equivalents") return s.factors.length;                 // prompt + one per factor
+  if (s.type === "multiples") { const l = lcmOf(s.a, s.b); return l / s.a + l / s.b + 1; }  // one per multiple, then the answer
+  if (s.type === "factorTree") return primeFactorsOf(s.n).length;        // one per split, then the product
+  if (s.type === "primeVenn") { const v = vennParts(s.a, s.b); return v.shared.length + v.aOnly.length + v.bOnly.length + 1; }  // one per prime, then the LCM
   return 1;                                                               // combine: 0 apart, 1 together
 };
 
@@ -210,16 +250,226 @@ function EquivalentsScene({ num, den, factors, step }: { num: number; den: numbe
   );
 }
 
+// "Multiples": the walkthrough for finding an LCM. Each press writes the next
+// multiple — first a's list up to the LCM, then b's — exactly as a teacher
+// would list them on the board. When the shared value lands in the second
+// list, both copies highlight; the final beat states the LCM.
+function MultiplesScene({ a, b, step }: { a: number; b: number; step: number }) {
+  const l = lcmOf(a, b);
+  const listA = range(1, l / a + 1).map((i) => i * a);
+  const listB = range(1, l / b + 1).map((i) => i * b);
+  const revealedA = clamp(step, 0, listA.length);
+  const revealedB = clamp(step - listA.length, 0, listB.length);
+  const commonFound = revealedB >= listB.length;   // the LCM is always the last multiple listed
+  const showAnswer = step >= listA.length + listB.length + 1;
+
+  const row = (n: number, list: number[], revealed: number) => (
+    <div className="flex items-baseline gap-4 justify-start w-full">
+      <span className="text-2xl font-bold text-gray-500 flex-shrink-0" style={{ minWidth: "11.5rem" }}>Multiples of {n}:</span>
+      <div className="flex items-baseline gap-3 flex-wrap">
+        {list.map((m, i) => {
+          const isCommon = m === l && commonFound;
+          return (
+            <span key={m}
+              className="text-4xl font-semibold"
+              style={{
+                opacity: i < revealed ? 1 : 0,
+                transition: "opacity .35s ease, background .35s ease, color .35s ease",
+                color: isCommon ? "#fff" : "#111827",
+                background: isCommon ? NAVY : "transparent",
+                borderRadius: 10,
+                padding: "0 0.4em",
+              }}>
+              {m}
+            </span>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="flex flex-col items-center gap-6 w-full max-w-2xl">
+      {row(a, listA, revealedA)}
+      {row(b, listB, revealedB)}
+      <div className="text-gray-900" style={{ fontSize: "2.2rem", minHeight: "2.8rem", opacity: showAnswer ? 1 : 0, transition: "opacity .4s ease" }}>
+        <Tex tex={`\\mathrm{LCM}(${a},\\ ${b}) = ${l}`} />
+      </div>
+    </div>
+  );
+}
+
+// ── Prime factor tiles ────────────────────────────────────────────────────────
+// Primes render as coloured square tiles, keyed by value so the same prime
+// always looks the same everywhere (tree leaves, Venn regions, factor lists).
+const PRIME_TILE_COLORS: Record<number, string> = {
+  2: "#0284c7",   // sky-600
+  3: "#059669",   // emerald-600
+  5: "#d97706",   // amber-600
+  7: "#9333ea",   // purple-600
+  11: "#db2777",  // pink-600
+  13: "#0891b2",  // cyan-600
+};
+const tileColor = (p: number) => PRIME_TILE_COLORS[p] ?? "#475569";
+
+// SVG prime tile, centred on (x, y).
+const svgTile = (x: number, y: number, v: number, size: number, visible: boolean, key: string) => (
+  <g key={key} style={{ opacity: visible ? 1 : 0, transition: "opacity .35s ease" }}>
+    <rect x={x - size / 2} y={y - size / 2} width={size} height={size} rx={6} fill={tileColor(v)} />
+    <text x={x} y={y} textAnchor="middle" dominantBaseline="central" fontSize={size / 2} fontWeight={700} fill="#fff">{v}</text>
+  </g>
+);
+
+// "FactorTree": builds n's factor tree one split per press, always dividing
+// out the smallest prime — exactly the board method. Composites are plain
+// numbers; a prime is "taken as a tile" the moment it's produced (only primes
+// get the tile treatment, so the visual act matches the caption). The whole
+// tree is laid out from beat 0 (hidden at opacity 0) so nothing moves.
+function FactorTreeScene({ n, step }: { n: number; step: number }) {
+  const primes = primeFactorsOf(n);
+  const splits = primes.length - 1;
+  const chain: number[] = [n];                       // composites down the right-hand chain
+  for (let i = 0; i < splits; i++) chain.push(chain[i] / primes[i]);
+  const revealedSplits = clamp(step, 0, splits);
+  const showAnswer = step >= splits + 1;
+
+  const DX = 50, DY = 46, T = 30;
+  const px = (k: number) => 90 + DX * k, py = (k: number) => 26 + DY * k;
+  const W = px(splits) + 90, H = py(splits) + 34;
+
+  const numNode = (x: number, y: number, v: number, visible: boolean, key: string) => (
+    <g key={key} style={{ opacity: visible ? 1 : 0, transition: "opacity .35s ease" }}>
+      <text x={x} y={y} textAnchor="middle" dominantBaseline="central" fontSize={17} fontWeight={700} fill="#111827">{v}</text>
+    </g>
+  );
+  const node = (x: number, y: number, v: number, isPrime: boolean, visible: boolean, key: string) =>
+    isPrime ? svgTile(x, y, v, T, visible, key) : numNode(x, y, v, visible, key);
+  const edge = (x1: number, y1: number, x2: number, y2: number, visible: boolean, key: string) => (
+    <line key={key} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#94a3b8" strokeWidth={2}
+      style={{ opacity: visible ? 1 : 0, transition: "opacity .35s ease" }} />
+  );
+
+  return (
+    <div className="flex flex-col items-center gap-4 w-full">
+      {/* rendered at 1.4× the viewBox — the SVG scales crisply into the card */}
+      <svg viewBox={`0 0 ${W} ${H}`} width={W * 1.4} height={H * 1.4} className="max-w-full" style={{ height: "auto" }} preserveAspectRatio="xMidYMid meet">
+        {range(1, splits + 1).flatMap((k) => {
+          const shown = revealedSplits >= k;
+          const parX = px(k - 1), parY = py(k - 1);
+          const leafX = px(k - 1) - DX, chainX = px(k), y = py(k);
+          return [
+            edge(parX - 10, parY + 14, leafX + 9, y - 17, shown, `el${k}`),
+            edge(parX + 10, parY + 14, chainX - 9, y - 17, shown, `ec${k}`),
+            node(leafX, y, primes[k - 1], true, shown, `l${k}`),
+            node(chainX, y, chain[k], k === splits, shown, `c${k}`),
+          ];
+        })}
+        {node(px(0), py(0), n, splits === 0, true, "root")}
+      </svg>
+      <div className="text-gray-900" style={{ fontSize: "2.1rem", minHeight: "2.7rem", opacity: showAnswer ? 1 : 0, transition: "opacity .4s ease" }}>
+        <Tex tex={`${n} = ${primes.join(" \\times ")}`} />
+      </div>
+    </div>
+  );
+}
+
+// "PrimeVenn": both factorisations are shown up front as rows of prime tiles;
+// each press crosses the next tile(s) off the lists and places the prime in
+// the Venn — a shared prime crosses one tile off EACH list and puts a single
+// tile in the middle (the board move), then each number's leftovers go to
+// their own side. The final beat multiplies everything in the diagram.
+function PrimeVennScene({ a, b, step }: { a: number; b: number; step: number }) {
+  const pa = primeFactorsOf(a), pb = primeFactorsOf(b);
+  const { shared, aOnly, bOnly } = vennParts(a, b);
+  const placements = shared.length + aOnly.length + bOnly.length;
+  const placed = clamp(step, 0, placements);
+  const showAnswer = step >= placements + 1;
+  const all = [...shared, ...aOnly, ...bOnly].sort((x, y) => x - y);
+
+  // Which placement (1-based) crosses off each list entry: shared placements
+  // strike the first unstruck occurrence in BOTH lists, then a's leftovers
+  // strike from a's list and b's from b's.
+  const paStruck: number[] = new Array(pa.length).fill(Infinity);
+  const pbStruck: number[] = new Array(pb.length).fill(Infinity);
+  const strikeFirst = (list: number[], struck: number[], v: number, p: number) => {
+    const i = list.findIndex((x, j) => x === v && struck[j] === Infinity);
+    if (i >= 0) struck[i] = p;
+  };
+  let p = 1;
+  for (const v of shared) { strikeFirst(pa, paStruck, v, p); strikeFirst(pb, pbStruck, v, p); p++; }
+  for (const v of aOnly) { strikeFirst(pa, paStruck, v, p); p++; }
+  for (const v of bOnly) { strikeFirst(pb, pbStruck, v, p); p++; }
+
+  const listRow = (n: number, list: number[], struckAt: number[]) => (
+    <div className="flex items-center gap-1.5">
+      <span className="text-2xl font-bold text-gray-800 mr-1">{n} =</span>
+      {list.map((v, i) => {
+        const struck = placed >= struckAt[i];
+        return (
+          <span key={i} className="flex items-center gap-1.5">
+            {i > 0 && <span className="text-gray-500 font-bold text-lg">×</span>}
+            <span style={{
+              position: "relative", display: "inline-flex", alignItems: "center", justifyContent: "center",
+              width: 32, height: 32, borderRadius: 6, fontWeight: 700, fontSize: 16, color: "#fff",
+              background: tileColor(v), opacity: struck ? 0.35 : 1, transition: "opacity .3s ease",
+            }}>
+              {v}
+              {/* the cross-off slash — layered over the tile, no layout change */}
+              <span style={{
+                position: "absolute", inset: 0, borderRadius: 6, opacity: struck ? 1 : 0, transition: "opacity .3s ease",
+                backgroundImage: "linear-gradient(to top right, transparent 44%, #1f2937 44%, #1f2937 56%, transparent 56%)",
+              }} />
+            </span>
+          </span>
+        );
+      })}
+    </div>
+  );
+
+  const spread = (cx: number, count: number, i: number): [number, number] =>
+    [cx, 86 + (i - (count - 1) / 2) * 36];
+  const chips: { x: number; y: number; v: number }[] = [
+    ...shared.map((v, i) => { const [x, y] = spread(160, shared.length, i); return { x, y, v }; }),
+    ...aOnly.map((v, i) => { const [x, y] = spread(74, aOnly.length, i); return { x, y, v }; }),
+    ...bOnly.map((v, i) => { const [x, y] = spread(246, bOnly.length, i); return { x, y, v }; }),
+  ];
+
+  // Kept compact on purpose — factor lists + Venn + equation must all fit
+  // the fixed-height slide card without scrolling.
+  return (
+    <div className="flex flex-col items-center gap-2 w-full">
+      <div className="flex items-center justify-center gap-12 flex-wrap">
+        {listRow(a, pa, paStruck)}
+        {listRow(b, pb, pbStruck)}
+      </div>
+      {/* rendered at ~1.45× the viewBox — the Venn is the teaching object, let it fill the card */}
+      <svg viewBox="0 0 320 162" width={464} height={235} className="max-w-full" style={{ height: "auto" }} preserveAspectRatio="xMidYMid meet">
+        <circle cx={118} cy={86} r={66} fill="none" stroke="#334155" strokeWidth={2.5} />
+        <circle cx={202} cy={86} r={66} fill="none" stroke="#334155" strokeWidth={2.5} />
+        <text x={44} y={18} fontSize={16} fontWeight={700} fill="#6b7280">{a}</text>
+        <text x={276} y={18} fontSize={16} fontWeight={700} fill="#6b7280" textAnchor="end">{b}</text>
+        {chips.map((c, i) => svgTile(c.x, c.y, c.v, 26, i < placed, `chip${i}`))}
+      </svg>
+      <div className="text-gray-900" style={{ fontSize: "1.8rem", minHeight: "2.4rem", opacity: showAnswer ? 1 : 0, transition: "opacity .4s ease" }}>
+        <Tex tex={`\\mathrm{LCM}(${a},\\ ${b}) = ${all.join(" \\times ")} = ${lcmOf(a, b)}`} />
+      </div>
+    </div>
+  );
+}
+
 function SceneView({ scene, step }: { scene: TeachScene; step: number }) {
   if (scene.type === "split") return <SplitScene {...scene} step={step} />;
   if (scene.type === "equivalents") return <EquivalentsScene {...scene} step={step} />;
+  if (scene.type === "multiples") return <MultiplesScene {...scene} step={step} />;
+  if (scene.type === "factorTree") return <FactorTreeScene {...scene} step={step} />;
+  if (scene.type === "primeVenn") return <PrimeVennScene {...scene} step={step} />;
   return <CombineScene {...scene} step={step} />;
 }
 
 // ── Static blocks ─────────────────────────────────────────────────────────────
 
 function BlockView({ b }: { b: TeachBlock }) {
-  if (b.t === "text") return <p className="text-xl text-gray-700 text-center leading-relaxed"><RichText s={b.s} /></p>;
+  if (b.t === "text") return <p className="text-2xl text-gray-700 text-center leading-relaxed"><RichText s={b.s} /></p>;
   if (b.t === "math") return <div className="text-center text-gray-900" style={{ fontSize: "2.2rem" }}><Tex tex={b.s} /></div>;
   if (b.t === "bars") return <div className="flex flex-col gap-3 items-center">{b.bars.map((bar, i) => <Bar key={i} {...bar} />)}</div>;
   if (b.t === "verdict") return (
@@ -238,47 +488,171 @@ function BlockView({ b }: { b: TeachBlock }) {
 
 // ── Runner ────────────────────────────────────────────────────────────────────
 
-const maxStepOf = (s: TeachingSlide) => (s.kind === "anim" ? sceneMaxStep(s.scene) : s.reveal ? 1 : 0);
+// Beats a slide runs for (exported for the slide smoke tests).
+export const slideMaxStep = (s: TeachingSlide) => (s.kind === "anim" ? sceneMaxStep(s.scene) : s.reveal ? 1 : 0);
 
-export function TeachingDeck({ slides }: { slides: TeachingSlide[] }) {
-  const [ready, setReady] = useState(!!w().katex);
-  const [cat, setCat] = useState<TeachCategory | null>(null);
+// ── SlideDeck — plays a flat slide array, one beat per press ──────────────────
+// The reusable core of the Teach deck: TeachingDeck uses it after a category is
+// chosen, and the skill-library overlay (src/shared/skills) plays a skill's
+// slides through it directly. Owns its own slide/beat state and keyboard
+// handling (→/space/Enter advance, ← back, Esc → onEscape).
+export function SlideDeck({ slides, color, onEscape, onDone, fill }: {
+  slides: TeachingSlide[];
+  color: string;
+  onEscape?: () => void;
+  /** When provided, the Next button becomes "Done" on the last beat and fires
+   *  this instead of disabling — used by the skill overlay to close itself. */
+  onDone?: () => void;
+  /** Fill the parent's height instead of the default 62vh card — used when the
+   *  host (e.g. the near-fullscreen skill overlay) owns the sizing. */
+  fill?: boolean;
+}) {
   const [idx, setIdx] = useState(0);
   const [step, setStep] = useState(0);
   const idxRef = useRef(0); idxRef.current = idx;
   const stepRef = useRef(0); stepRef.current = step;
+
+  const goNext = useCallback(() => {
+    const i = idxRef.current, s = stepRef.current;
+    if (!slides[i]) return;
+    if (s < slideMaxStep(slides[i])) { setStep(s + 1); return; }
+    if (i < slides.length - 1) { setIdx(i + 1); setStep(0); }
+  }, [slides]);
+  const goPrev = useCallback(() => {
+    const i = idxRef.current, s = stepRef.current;
+    if (s > 0) { setStep(s - 1); return; }
+    if (i > 0) { setIdx(i - 1); setStep(0); }
+  }, []);
+
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight" || e.key === " " || e.key === "Enter") { e.preventDefault(); goNext(); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); goPrev(); }
+      else if (e.key === "Escape" && onEscape) onEscape();
+    };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [goNext, goPrev, onEscape]);
+
+  const slide = slides[idx];
+
+  // ── Fit-to-card scaling ──────────────────────────────────────────────────
+  // Scenes are authored at a generous fixed size; on smaller screens the
+  // content is scaled DOWN (CSS transform) to fit the card's content area.
+  // There are never scrollbars in a slide. offsetHeight ignores transforms,
+  // so the natural size can be measured without neutralising the scale.
+  const outerRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const [fitScale, setFitScale] = useState(1);
+  useLayoutEffect(() => {
+    const recompute = () => {
+      const o = outerRef.current, n = innerRef.current;
+      if (!o || !n) return;
+      const availH = o.clientHeight, natH = n.offsetHeight;
+      if (!availH || !natH) return;
+      const s = Math.min(1, (availH * 0.99) / natH);
+      setFitScale((prev) => (Math.abs(prev - s) > 0.01 ? s : prev));
+    };
+    recompute();
+    const ro = new ResizeObserver(recompute);
+    if (outerRef.current) ro.observe(outerRef.current);
+    if (innerRef.current) ro.observe(innerRef.current);
+    return () => ro.disconnect();
+  }, [idx]);
+
+  if (!slide) return null;
+  const maxStep = slideMaxStep(slide);
+  const atEnd = step >= maxStep;
+  const atLast = atEnd && idx === slides.length - 1;
+  const isAnim = slide.kind === "anim";
+  const capIdx = isAnim ? Math.min(step, (slide as AnimSlide).steps.length - 1) : 0;
+
+  // The card is a FIXED height and every beat's content is laid out from the
+  // first press: captions all occupy one grid cell (the row sizes to the
+  // tallest caption up front), and a static slide's reveal reserves its space
+  // with the Reveal button overlaying the blank area. Nothing mounts or grows
+  // mid-slide, so the card never jumps while pressing. Content that would
+  // exceed the card scales down to fit (see fitScale) — never scrollbars.
+  //
+  // The nav controls live INSIDE the card (bottom corners, beat counter
+  // between them) so the whole surface is teaching space — no external
+  // button row eating into the card's height.
+  return (
+      <div onClick={isAnim ? goNext : undefined} className={`relative bg-white rounded-2xl shadow-lg px-8 pt-5 pb-4 flex flex-col ${isAnim ? "cursor-pointer" : ""}`} style={{ borderTop: `5px solid ${color}`, height: fill ? "100%" : "62vh", minHeight: fill ? 0 : 440 }}>
+        {slide.phase && (
+          <span className="absolute top-5 right-6 px-4 py-1.5 rounded-full text-white text-xs font-extrabold uppercase tracking-widest" style={{ background: color }}>{PHASE_LABEL[slide.phase]}</span>
+        )}
+
+        <h2 className="text-xl font-bold text-gray-500 leading-snug pr-28 flex-shrink-0"><RichText s={slide.title} /></h2>
+
+        <div ref={outerRef} className="flex-1" style={{ minHeight: 0, position: "relative", overflow: "hidden" }}>
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div ref={innerRef} className="w-full flex flex-col items-center gap-5 py-1"
+              style={{ flexShrink: 0, transform: `scale(${fitScale})`, transformOrigin: "center center" }}>
+            {isAnim ? (
+              <>
+                <SceneView scene={(slide as AnimSlide).scene} step={step} />
+                <div className="w-full max-w-2xl px-2" style={{ display: "grid" }}>
+                  {(slide as AnimSlide).steps.map((cap, i) => (
+                    // Incoming caption fades in; outgoing ones vanish instantly —
+                    // a cross-fade superimposes both texts for the fade duration.
+                    <div key={i} className="flex items-center justify-center text-2xl text-gray-800 text-center"
+                      style={{ gridArea: "1 / 1", opacity: i === capIdx ? 1 : 0, transition: i === capIdx ? "opacity .3s ease" : "none" }}>
+                      <RichText s={cap} />
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="w-full flex flex-col gap-5 items-stretch">
+                {(slide as StaticSlide).body?.map((b, i) => <BlockView key={i} b={b} />)}
+                {(slide as StaticSlide).reveal && (
+                  <div className="relative">
+                    <div className="flex flex-col gap-4 pt-4 border-t border-gray-200"
+                      style={{ opacity: step >= 1 ? 1 : 0, transition: "opacity .35s ease", pointerEvents: step >= 1 ? "auto" : "none" }}>
+                      {(slide as StaticSlide).reveal!.map((b, i) => <BlockView key={i} b={b} />)}
+                    </div>
+                    {step < 1 && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <button onClick={() => setStep(1)} className="px-6 py-2.5 rounded-xl text-white font-bold text-lg shadow-md" style={{ background: color }}>
+                          {(slide as StaticSlide).revealLabel ?? "Reveal"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+            </div>
+          </div>
+        </div>
+
+        {/* Nav row inside the card. stopPropagation so the buttons don't also
+            fire the card's click-to-advance on anim slides. */}
+        <div className="flex items-center justify-between flex-shrink-0 pt-1" onClick={(e) => e.stopPropagation()}>
+          <button onClick={goPrev} disabled={idx === 0 && step === 0}
+            className={`px-4 py-1.5 rounded-lg border-2 font-bold text-sm transition-colors ${idx === 0 && step === 0 ? "border-gray-100 text-gray-300 cursor-default" : "border-gray-300 text-gray-600 bg-white hover:border-blue-900 hover:text-blue-900"}`}>← Back</button>
+          {isAnim ? <span className="font-bold text-sm" style={{ color }}>{step + 1} / {maxStep + 1}</span> : <span />}
+          <button onClick={() => { if (atLast) { if (onDone) onDone(); } else goNext(); }} disabled={atLast && !onDone}
+            className="px-5 py-1.5 rounded-lg text-white font-bold text-sm transition-opacity"
+            style={{ background: color, opacity: atLast && !onDone ? 0.4 : 1 }}>
+            {atLast ? "Done" : "Next ▸"}
+          </button>
+        </div>
+      </div>
+  );
+}
+
+export function TeachingDeck({ slides }: { slides: TeachingSlide[] }) {
+  const [ready, setReady] = useState(!!w().katex);
+  const [cat, setCat] = useState<TeachCategory | null>(null);
 
   useEffect(() => {
     if (!w().katex) loadKaTeX().then(() => setReady(true)).catch(() => setReady(true));
     else setReady(true);
   }, []);
 
-  const deck = cat ? slides.filter((s) => s.category === cat) : [];
-
-  const goNext = useCallback(() => {
-    const list = slides.filter((s) => s.category === cat);
-    const i = idxRef.current, s = stepRef.current;
-    if (!list[i]) return;
-    if (s < maxStepOf(list[i])) { setStep(s + 1); return; }
-    if (i < list.length - 1) { setIdx(i + 1); setStep(0); }
-  }, [slides, cat]);
-  const goPrev = useCallback(() => {
-    const i = idxRef.current, s = stepRef.current;
-    if (s > 0) { setStep(s - 1); return; }
-    if (i > 0) { setIdx(i - 1); setStep(0); }
-  }, []);
-  const toMenu = useCallback(() => { setCat(null); setIdx(0); setStep(0); }, []);
-
-  useEffect(() => {
-    if (!cat) return;
-    const h = (e: KeyboardEvent) => {
-      if (e.key === "ArrowRight" || e.key === " " || e.key === "Enter") { e.preventDefault(); goNext(); }
-      else if (e.key === "ArrowLeft") { e.preventDefault(); goPrev(); }
-      else if (e.key === "Escape") toMenu();
-    };
-    window.addEventListener("keydown", h);
-    return () => window.removeEventListener("keydown", h);
-  }, [cat, goNext, goPrev, toMenu]);
+  const toMenu = useCallback(() => setCat(null), []);
 
   if (!ready) return <div className="text-center text-gray-400 py-16">Loading…</div>;
 
@@ -290,7 +664,7 @@ export function TeachingDeck({ slides }: { slides: TeachingSlide[] }) {
           const count = slides.filter((s) => s.category === c.key).length;
           const disabled = count === 0;
           return (
-            <button key={c.key} disabled={disabled} onClick={() => { setCat(c.key); setIdx(0); setStep(0); }}
+            <button key={c.key} disabled={disabled} onClick={() => setCat(c.key)}
               className={`bg-white rounded-xl shadow-lg p-6 flex items-center justify-between text-left transition-all ${disabled ? "opacity-60 cursor-default" : "hover:shadow-xl hover:-translate-y-0.5"}`}
               style={{ borderLeft: `6px solid ${c.color}` }}>
               <span className="text-2xl font-bold" style={{ color: disabled ? "#9ca3af" : "#111827" }}>{c.label}</span>
@@ -304,63 +678,15 @@ export function TeachingDeck({ slides }: { slides: TeachingSlide[] }) {
     );
   }
 
-  // ── Deck ──
-  const slide = deck[idx];
+  // ── Deck ── (keyed by category so slide/beat state resets on re-entry)
   const color = catMeta(cat).color;
-  const maxStep = maxStepOf(slide);
-  const atEnd = step >= maxStep;
-  const isAnim = slide.kind === "anim";
-  const caption = isAnim ? (slide as AnimSlide).steps[Math.min(step, (slide as AnimSlide).steps.length - 1)] : "";
-
   return (
-    <div className="flex flex-col gap-4">
-      <div className="relative flex items-center h-10">
-        <button onClick={toMenu} className="absolute left-0 px-4 py-2 rounded-lg border-2 border-gray-300 bg-white text-gray-700 font-bold hover:border-blue-900 hover:text-blue-900 transition-colors">← Menu</button>
+    <div className="flex flex-col gap-2">
+      <div className="relative flex items-center h-9">
+        <button onClick={toMenu} className="absolute left-0 px-3 py-1.5 rounded-lg border-2 border-gray-300 bg-white text-gray-700 font-bold text-sm hover:border-blue-900 hover:text-blue-900 transition-colors">← Menu</button>
         <span className="mx-auto text-sm font-bold uppercase tracking-wider" style={{ color }}>{catMeta(cat).label}</span>
       </div>
-
-      <div onClick={isAnim ? goNext : undefined} className={`relative bg-white rounded-2xl shadow-lg px-10 pt-7 pb-6 flex flex-col ${isAnim ? "cursor-pointer" : ""}`} style={{ borderTop: `5px solid ${color}`, minHeight: "44vh" }}>
-        {slide.phase && (
-          <span className="absolute top-6 right-6 px-4 py-1.5 rounded-full text-white text-xs font-extrabold uppercase tracking-widest" style={{ background: color }}>{PHASE_LABEL[slide.phase]}</span>
-        )}
-
-        <h2 className="text-xl font-bold text-gray-500 leading-snug pr-28"><RichText s={slide.title} /></h2>
-
-        <div className="flex-1 flex flex-col items-center justify-center gap-7 py-4">
-          {isAnim ? (
-            <>
-              <SceneView scene={(slide as AnimSlide).scene} step={step} />
-              <div className="min-h-[3.25rem] max-w-2xl flex items-center justify-center text-2xl text-gray-800 text-center px-2"><RichText s={caption} /></div>
-            </>
-          ) : (
-            <div className="w-full flex flex-col gap-5 items-stretch">
-              {(slide as StaticSlide).body?.map((b, i) => <BlockView key={i} b={b} />)}
-              {step >= 1 && (slide as StaticSlide).reveal && (
-                <div className="flex flex-col gap-4 pt-4 border-t border-gray-200">
-                  {(slide as StaticSlide).reveal!.map((b, i) => <BlockView key={i} b={b} />)}
-                </div>
-              )}
-              {step < 1 && (slide as StaticSlide).reveal && (
-                <button onClick={() => setStep(1)} className="self-center mt-1 px-6 py-2.5 rounded-xl text-white font-bold text-lg" style={{ background: color }}>
-                  {(slide as StaticSlide).revealLabel ?? "Reveal"}
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-
-        {isAnim && <div className="text-center font-bold text-sm" style={{ color }}>{step + 1} / {maxStep + 1}</div>}
-      </div>
-
-      <div className="flex items-center justify-between">
-        <button onClick={goPrev} disabled={idx === 0 && step === 0}
-          className={`px-5 py-2.5 rounded-xl border-2 font-bold transition-colors ${idx === 0 && step === 0 ? "border-gray-200 text-gray-300 cursor-default" : "border-gray-300 text-gray-700 bg-white hover:border-blue-900 hover:text-blue-900"}`}>← Back</button>
-        <button onClick={goNext} disabled={atEnd && idx === deck.length - 1}
-          className="px-6 py-2.5 rounded-xl text-white font-bold transition-opacity"
-          style={{ background: color, opacity: atEnd && idx === deck.length - 1 ? 0.4 : 1 }}>
-          {atEnd && idx === deck.length - 1 ? "Done" : "Next ▸"}
-        </button>
-      </div>
+      <SlideDeck key={cat} slides={slides.filter((s) => s.category === cat)} color={color} onEscape={toMenu} />
     </div>
   );
 }
