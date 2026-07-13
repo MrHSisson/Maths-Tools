@@ -53,9 +53,83 @@ function computePValue(x: number, n: number, p0: number, tail: TailType): number
   }
 }
 
+// ── Critical region ───────────────────────────────────────────────────────────
+//
+// The critical (rejection) region is the fixed set of X values that would lead
+// us to reject H₀ *before* seeing the data — it depends only on n, p₀, tail and α,
+// not on the observed x. For each relevant tail we find the extreme critical
+// value c such that the tail probability first drops to ≤ the tail's α budget
+// (α for one-tailed, α/2 for each tail of a two-tailed test). The *actual*
+// significance level is the true probability of landing in that region, which
+// is usually a little below the nominal α because X is discrete.
+
+interface CriticalRegion {
+  lower: number | null;   // reject when X ≤ lower (left tail); null if that tail has no region
+  upper: number | null;   // reject when X ≥ upper (right tail); null if that tail has no region
+  actualSig: number;      // true P(reject H₀ | H₀), i.e. total probability of the region
+}
+
+function computeCriticalRegion(n: number, p0: number, tail: TailType, alpha: number): CriticalRegion {
+  const pmf = (k: number) => binomPMF(k, n, p0);
+
+  // Largest c with P(X ≤ c) ≤ budget (lower tail), or null if even P(X = 0) exceeds it.
+  const lowerCrit = (budget: number): number | null => {
+    let cum = 0, crit: number | null = null;
+    for (let k = 0; k <= n; k++) {
+      cum += pmf(k);
+      if (cum <= budget) crit = k; else break;
+    }
+    return crit;
+  };
+  // Smallest c with P(X ≥ c) ≤ budget (upper tail), or null if even P(X = n) exceeds it.
+  const upperCrit = (budget: number): number | null => {
+    let cum = 0, crit: number | null = null;
+    for (let k = n; k >= 0; k--) {
+      cum += pmf(k);
+      if (cum <= budget) crit = k; else break;
+    }
+    return crit;
+  };
+  const tailBelow = (c: number) => { let p = 0; for (let k = 0; k <= c; k++) p += pmf(k); return p; };
+  const tailAbove = (c: number) => { let p = 0; for (let k = c; k <= n; k++) p += pmf(k); return p; };
+
+  let lower: number | null = null;
+  let upper: number | null = null;
+  if (tail === "left")  lower = lowerCrit(alpha);
+  else if (tail === "right") upper = upperCrit(alpha);
+  else { lower = lowerCrit(alpha / 2); upper = upperCrit(alpha / 2); }
+
+  // Guard against the (degenerate, very-large-α) case where the two tails would meet.
+  if (lower !== null && upper !== null && lower >= upper) { upper = lower + 1 > n ? null : upper; }
+
+  const actualSig =
+    (lower !== null ? tailBelow(lower) : 0) +
+    (upper !== null ? tailAbove(upper) : 0);
+
+  return { lower, upper, actualSig };
+}
+
+function inCriticalRegion(k: number, cr: CriticalRegion): boolean {
+  return (cr.lower !== null && k <= cr.lower) || (cr.upper !== null && k >= cr.upper);
+}
+
+function criticalRegionDesc(cr: CriticalRegion): string {
+  const parts: string[] = [];
+  if (cr.lower !== null) parts.push(`X ≤ ${cr.lower}`);
+  if (cr.upper !== null) parts.push(`X ≥ ${cr.upper}`);
+  return parts.length ? parts.join(" or ") : "none";
+}
+
+function criticalValuesStr(cr: CriticalRegion): string {
+  const parts: string[] = [];
+  if (cr.lower !== null) parts.push(String(cr.lower));
+  if (cr.upper !== null) parts.push(String(cr.upper));
+  return parts.length ? parts.join(", ") : "—";
+}
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-interface BarDatum { k: number; pmf: number; inRegion: boolean }
+interface BarDatum { k: number; pmf: number; inRegion: boolean; inCritical: boolean }
 
 // ── Custom tooltip ────────────────────────────────────────────────────────────
 
@@ -71,18 +145,19 @@ function CustomTooltip({ active, payload }: TooltipProps) {
       <div className="font-bold text-gray-800">k = {d.k}</div>
       <div className="text-gray-500">P(X = {d.k}) = {d.pmf.toFixed(4)}</div>
       {d.inRegion && <div className="text-red-500 font-semibold text-xs mt-1">contributes to p-value</div>}
+      {d.inCritical && <div className="text-amber-500 font-semibold text-xs mt-0.5">in critical region</div>}
     </div>
   );
 }
 
-// ── Number input ──────────────────────────────────────────────────────────────
+// ── Parameter slider ──────────────────────────────────────────────────────────
 
-interface NumInputProps {
-  label: string; id: string; value: number;
+interface ParamSliderProps {
+  label: string; sub: string; id: string; value: number;
   min: number; max: number; step?: number;
   onChange: (v: number) => void;
 }
-function NumInput({ label, id, value, min, max, step = 1, onChange }: NumInputProps) {
+function ParamSlider({ label, sub, id, value, min, max, step = 1, onChange }: ParamSliderProps) {
   const [raw, setRaw] = useState(String(value));
   useEffect(() => { setRaw(String(value)); }, [value]);
   const commit = (str: string) => {
@@ -96,69 +171,64 @@ function NumInput({ label, id, value, min, max, step = 1, onChange }: NumInputPr
     }
   };
   return (
-    <div className="flex flex-col gap-1">
-      <label htmlFor={id} className="text-xs font-bold text-gray-500 uppercase tracking-wide whitespace-nowrap">
-        {label}
-      </label>
+    <div className="bg-white rounded-2xl border-2 border-gray-200 px-5 py-4 flex flex-col gap-3 shadow-sm">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-col">
+          <label htmlFor={id} className="text-sm font-bold text-blue-900 leading-none">{label}</label>
+          <span className="text-xs text-gray-400 mt-1 leading-none">{sub}</span>
+        </div>
+        <input
+          id={id} type="number" min={min} max={max} step={step} value={raw}
+          onChange={(e) => setRaw(e.target.value)}
+          onBlur={(e) => commit(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") commit((e.target as HTMLInputElement).value); }}
+          className="w-20 px-2 py-1.5 border-2 border-gray-200 rounded-lg text-xl font-bold tabular-nums text-center text-gray-800 focus:outline-none focus:border-blue-900 transition-colors"
+        />
+      </div>
       <input
-        id={id} type="number" min={min} max={max} step={step} value={raw}
-        onChange={(e) => setRaw(e.target.value)}
-        onBlur={(e) => commit(e.target.value)}
-        onKeyDown={(e) => { if (e.key === "Enter") commit((e.target as HTMLInputElement).value); }}
-        className="w-20 px-2 py-2 border-2 border-gray-300 rounded-lg text-base font-semibold text-center focus:outline-none focus:border-blue-900 transition-colors"
+        type="range" min={min} max={max} step={step} value={value}
+        onChange={(e) => onChange(parseFloat(e.target.value))}
+        className="w-full accent-blue-900 cursor-pointer"
+        aria-label={label}
       />
-      <span className="text-xs text-gray-400 text-center">{min} – {max}</span>
-    </div>
-  );
-}
-
-// ── Segmented button group (generic) ──────────────────────────────────────────
-
-function SegGroup<T extends string>({
-  label, options, value, onChange,
-}: {
-  label: string;
-  options: { value: T; label: string; sub?: string }[];
-  value: T;
-  onChange: (v: T) => void;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <div className="text-xs font-bold text-gray-500 uppercase tracking-wide whitespace-nowrap">{label}</div>
-      <div className="flex gap-2">
-        {options.map((o) => {
-          const active = value === o.value;
-          return (
-            <button
-              key={o.value}
-              onClick={() => onChange(o.value)}
-              className={`flex flex-col items-center px-4 py-2 rounded-xl border-2 font-bold transition-colors whitespace-nowrap ${
-                active
-                  ? "bg-blue-900 border-blue-900 text-white"
-                  : "bg-white border-gray-200 text-gray-700 hover:border-blue-900 hover:text-blue-900"
-              }`}
-            >
-              <span className="text-sm font-bold leading-tight">{o.label}</span>
-              {o.sub && (
-                <span className={`text-xs font-normal leading-tight mt-0.5 ${active ? "text-blue-200" : "text-gray-400"}`}>
-                  {o.sub}
-                </span>
-              )}
-            </button>
-          );
-        })}
+      <div className="flex justify-between text-[11px] font-semibold text-gray-400 tabular-nums">
+        <span>{min}</span><span>{max}</span>
       </div>
     </div>
   );
 }
 
+// ── Segmented button (single) ─────────────────────────────────────────────────
+
+function SegButton({ active, label, sub, onClick }: {
+  active: boolean; label: string; sub?: string; onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex-1 min-w-0 flex flex-col items-center justify-center px-2 py-2.5 rounded-xl border-2 font-bold transition-all ${
+        active
+          ? "bg-blue-900 border-blue-900 text-white shadow-md"
+          : "bg-white border-gray-200 text-gray-700 hover:border-blue-900 hover:text-blue-900 hover:shadow-sm"
+      }`}
+    >
+      <span className="text-sm font-bold leading-tight">{label}</span>
+      {sub && (
+        <span className={`text-xs font-normal leading-tight mt-0.5 ${active ? "text-blue-200" : "text-gray-400"}`}>
+          {sub}
+        </span>
+      )}
+    </button>
+  );
+}
+
 // ── Metric card ───────────────────────────────────────────────────────────────
 
-function Metric({ label, value, valueClass = "text-gray-800" }: { label: string; value: string; valueClass?: string }) {
+function Metric({ label, value, valueClass = "text-gray-800", small = false }: { label: string; value: string; valueClass?: string; small?: boolean }) {
   return (
-    <div className="bg-white rounded-xl border-2 border-gray-200 px-4 py-3 flex-1">
-      <div className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-1">{label}</div>
-      <div className={`text-2xl font-bold tabular-nums ${valueClass}`}>{value}</div>
+    <div className="bg-white rounded-xl border-2 border-gray-200 px-4 py-3 flex-1 min-w-[150px]">
+      <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1 whitespace-nowrap">{label}</div>
+      <div className={`${small ? "text-lg" : "text-2xl"} font-bold tabular-nums leading-tight ${valueClass}`}>{value}</div>
     </div>
   );
 }
@@ -214,7 +284,7 @@ function HeaderBar() {
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const TAIL_OPTIONS = [
-  { value: "two"   as TailType, label: "Two-tailed",   sub: "p vs α/2 each tail" },
+  { value: "two"   as TailType, label: "Two-tailed",   sub: "α/2 per tail"    },
   { value: "right" as TailType, label: "Right-tailed",  sub: "P(X ≥ x)"        },
   { value: "left"  as TailType, label: "Left-tailed",   sub: "P(X ≤ x)"        },
 ];
@@ -225,6 +295,11 @@ const ALPHA_OPTIONS = [
   { value: "0.10", label: "10%", sub: "α = 0.10" },
 ];
 
+const MODE_OPTIONS = [
+  { value: "pvalue"   as const, label: "p-value",  sub: "region" },
+  { value: "critical" as const, label: "Critical", sub: "region" },
+];
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function BinomialPValueExplorer() {
@@ -233,10 +308,13 @@ export default function BinomialPValueExplorer() {
   const [x, setX]     = useState(14);
   const [tail, setTail]   = useState<TailType>("two");
   const [alphaStr, setAlphaStr] = useState("0.05");
+  const [mode, setMode] = useState<"pvalue" | "critical">("pvalue");
 
   useEffect(() => { if (x > n) setX(n); }, [n, x]);
 
   const alpha = parseFloat(alphaStr);
+  const showCritical = mode === "critical";
+  const cr = computeCriticalRegion(n, p0, tail, alpha);
 
   const buildData = useCallback((): BarDatum[] => {
     return Array.from({ length: n + 1 }, (_, k) => {
@@ -252,9 +330,9 @@ export default function BinomialPValueExplorer() {
         // The p-value is compared to α/2, so we only need one tail
         inRegion = x >= distMean ? k >= x : k <= x;
       }
-      return { k, pmf, inRegion };
+      return { k, pmf, inRegion, inCritical: showCritical && inCriticalRegion(k, cr) };
     });
-  }, [p0, n, x, tail]);
+  }, [p0, n, x, tail, showCritical, cr]);
 
   const data  = buildData();
   const pv    = computePValue(x, n, p0, tail);
@@ -265,6 +343,16 @@ export default function BinomialPValueExplorer() {
   const mean  = p0 * n;
   const sd    = Math.sqrt(n * p0 * (1 - p0)).toFixed(2);
 
+  // Critical-region derived values
+  const xInCrit    = inCriticalRegion(x, cr);
+  const critDesc   = criticalRegionDesc(cr);
+  const critVals   = criticalValuesStr(cr);
+  const actualSig  = cr.actualSig;
+  const actualSigStr = actualSig < 0.0001 ? "< 0.0001" : actualSig.toFixed(4);
+
+  // Verdict reflects whichever method is on screen (the two always agree).
+  const rejected = showCritical ? (critDesc !== "none" && xInCrit) : sig;
+
   const side = x >= mean ? "upper" : "lower";
   const oneTailDesc = x >= mean ? `P(X ≥ ${x})` : `P(X ≤ ${x})`;
   const thresholdStr = tail === "two" ? `α/2 = ${(alpha/2).toFixed(3)}` : `α = ${alphaStr}`;
@@ -273,14 +361,35 @@ export default function BinomialPValueExplorer() {
     ? ` x = ${x} fell in the ${side} tail (E(X) = ${mean.toFixed(1)}), so p-value = ${oneTailDesc} = ${pvStr}. Comparing to ${thresholdStr}.`
     : "";
 
-  const interpText =
-    `H₀: p = ${p0.toFixed(2)}, X ∼ B(${n}, ${p0.toFixed(2)}). Observed x = ${x}.` +
+  const header = `H₀: p = ${p0.toFixed(2)}, X ∼ B(${n}, ${p0.toFixed(2)}). Observed x = ${x}.`;
+
+  const pvalueInterp =
+    header +
     twoTailNote +
     (sig
       ? ` p-value < ${thresholdStr} — reject H₀. Sufficient evidence that p ≠ ${p0.toFixed(2)}.`
       : ` p-value ≥ ${thresholdStr} — fail to reject H₀. Insufficient evidence that p ≠ ${p0.toFixed(2)}.`);
 
-  const tickEvery = n <= 20 ? 1 : n <= 50 ? 5 : 10;
+  const criticalInterp =
+    header +
+    ` Critical region: ${critDesc === "none" ? "none exists at this α" : critDesc} ` +
+    `(actual significance level ${actualSigStr}).` +
+    (critDesc === "none"
+      ? " No value of x is extreme enough to reject H₀ at this significance level."
+      : xInCrit
+        ? ` x = ${x} lies in the critical region — reject H₀. Sufficient evidence that p ≠ ${p0.toFixed(2)}.`
+        : ` x = ${x} lies outside the critical region — fail to reject H₀. Insufficient evidence that p ≠ ${p0.toFixed(2)}.`);
+
+  const interpText = showCritical ? criticalInterp : pvalueInterp;
+
+  // One region on screen at a time: p-value mode shades the observed tail (red),
+  // critical mode shades the fixed rejection zone (amber).
+  const barFill = (d: BarDatum): string => {
+    if (showCritical) return d.inCritical ? "#F5A623" : "#85B7EB";
+    return d.inRegion ? "#E24B4A" : "#85B7EB";
+  };
+
+  const tickEvery = n <= 20 ? 1 : n <= 50 ? 5 : n <= 100 ? 10 : 20;
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#f5f3f0" }}>
@@ -298,19 +407,50 @@ export default function BinomialPValueExplorer() {
 
           <div className="bg-white rounded-xl shadow-lg p-8 flex flex-col gap-6">
 
-            {/* ── Controls row ── */}
-            <div className="flex items-end gap-5 flex-wrap">
-              <NumInput label="p₀" id="bpe-p0" value={p0} min={0.01} max={0.99} step={0.01} onChange={setP0} />
-              <NumInput label="n"  id="bpe-n"  value={n}  min={1}    max={100}  step={1}    onChange={(v) => setN(Math.round(v))} />
-              <NumInput label="x"  id="bpe-x"  value={x}  min={0}    max={n}    step={1}    onChange={(v) => setX(Math.round(v))} />
-              <div style={{ width: "2px", alignSelf: "stretch", backgroundColor: "#d1d5db", flexShrink: 0, margin: "0 4px" }} />
-              <SegGroup label="Tail type"          options={TAIL_OPTIONS}  value={tail}     onChange={setTail} />
-              <div style={{ width: "2px", alignSelf: "stretch", backgroundColor: "#d1d5db", flexShrink: 0, margin: "0 4px" }} />
-              <SegGroup label="Significance level" options={ALPHA_OPTIONS} value={alphaStr} onChange={setAlphaStr} />
-            </div>
+            {/* ── Controls ── */}
+            <div className="rounded-2xl bg-gray-50 border border-gray-200 p-5 md:p-6 flex flex-col gap-6">
+              {/* Parameters */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <ParamSlider label="p₀" sub="hypothesised probability" id="bpe-p0" value={p0} min={0.01} max={0.99} step={0.01} onChange={setP0} />
+                <ParamSlider label="n"  sub="number of trials"          id="bpe-n"  value={n}  min={1}    max={200}  step={1}    onChange={(v) => setN(Math.round(v))} />
+                <ParamSlider label="x"  sub="observed successes"        id="bpe-x"  value={x}  min={0}    max={n}    step={1}    onChange={(v) => setX(Math.round(v))} />
+              </div>
 
-            {/* Divider */}
-            <div style={{ height: "2px", backgroundColor: "#d1d5db" }} />
+              {/* Divider */}
+              <div className="border-t border-gray-200" />
+
+              {/* Options — three 3:3:2 flex groups so every button resolves to the
+                  same width, with subtle dividers separating the groups. Labels and
+                  buttons share the same structure so they stay aligned. */}
+              <div className="flex flex-col gap-2.5">
+                <div className="flex gap-2.5">
+                  <div className="flex-[3] text-xs font-bold text-gray-500 uppercase tracking-wide text-center">Tail type</div>
+                  <div className="w-px" />
+                  <div className="flex-[3] text-xs font-bold text-gray-500 uppercase tracking-wide text-center">Significance level</div>
+                  <div className="w-px" />
+                  <div className="flex-[2] text-xs font-bold text-gray-500 uppercase tracking-wide text-center">Region shown</div>
+                </div>
+                <div className="flex items-stretch gap-2.5">
+                  <div className="flex-[3] flex gap-2.5">
+                    {TAIL_OPTIONS.map((o) => (
+                      <SegButton key={o.value} active={tail === o.value} label={o.label} sub={o.sub} onClick={() => setTail(o.value)} />
+                    ))}
+                  </div>
+                  <div className="w-px bg-gray-300 self-stretch my-1" />
+                  <div className="flex-[3] flex gap-2.5">
+                    {ALPHA_OPTIONS.map((o) => (
+                      <SegButton key={o.value} active={alphaStr === o.value} label={o.label} sub={o.sub} onClick={() => setAlphaStr(o.value)} />
+                    ))}
+                  </div>
+                  <div className="w-px bg-gray-300 self-stretch my-1" />
+                  <div className="flex-[2] flex gap-2.5">
+                    {MODE_OPTIONS.map((o) => (
+                      <SegButton key={o.value} active={mode === o.value} label={o.label} sub={o.sub} onClick={() => setMode(o.value)} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
 
             {/* ── Legend ── */}
             <div className="flex items-center gap-6 text-sm text-gray-500">
@@ -318,10 +458,17 @@ export default function BinomialPValueExplorer() {
                 <span className="w-3 h-3 rounded-sm inline-block" style={{ background: "#85B7EB" }} />
                 P(X = k)
               </span>
-              <span className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-sm inline-block" style={{ background: "#E24B4A" }} />
-                p-value region
-              </span>
+              {showCritical ? (
+                <span className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-sm inline-block" style={{ background: "#F5A623" }} />
+                  critical region
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-sm inline-block" style={{ background: "#E24B4A" }} />
+                  p-value region
+                </span>
+              )}
             </div>
 
             {/* ── Chart ── */}
@@ -345,7 +492,7 @@ export default function BinomialPValueExplorer() {
                   <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(0,0,0,0.04)" }} />
                   <Bar dataKey="pmf" isAnimationActive={false}>
                     {data.map((d) => (
-                      <Cell key={d.k} fill={d.inRegion ? "#E24B4A" : "#85B7EB"} />
+                      <Cell key={d.k} fill={barFill(d)} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -355,17 +502,34 @@ export default function BinomialPValueExplorer() {
             {/* Divider */}
             <div style={{ height: "2px", backgroundColor: "#d1d5db" }} />
 
-            {/* ── Output metrics row ── */}
-            <div className="flex gap-4">
-              <Metric label="p-value"  value={pvStr} valueClass={sig ? "text-green-700" : "text-gray-800"} />
-              <Metric label={tail === "two" ? "α/2 (threshold)" : "α (threshold)"} value={tail === "two" ? (alpha / 2).toFixed(3) : alphaStr} />
-              <Metric label="Verdict"  value={sig ? "Reject H₀" : "Accept H₀"} valueClass={sig ? "text-green-700" : "text-gray-400"} />
+            {/* ── Output metrics ── */}
+            <div className="flex gap-4 flex-wrap">
+              {showCritical ? (
+                <>
+                  <Metric label="Critical value(s)" value={critVals} />
+                  <Metric
+                    label="Critical region"
+                    value={critDesc}
+                    small
+                    valueClass={critDesc === "none" ? "text-gray-400" : "text-gray-800"}
+                  />
+                  <Metric label="Actual sig. level" value={actualSigStr} />
+                </>
+              ) : (
+                <>
+                  <Metric label="p-value" value={pvStr} valueClass={sig ? "text-green-700" : "text-gray-800"} />
+                  <Metric label={tail === "two" ? "α/2 (threshold)" : "α (threshold)"} value={tail === "two" ? (alpha / 2).toFixed(3) : alphaStr} />
+                </>
+              )}
+              <Metric label="Verdict"  value={rejected ? "Reject H₀" : "Accept H₀"} valueClass={rejected ? "text-green-700" : "text-gray-400"} />
               <Metric label="Mean (np)" value={mean.toFixed(2)} />
               <Metric label="Std dev"  value={sd} />
-              <div className="bg-white rounded-xl border-2 border-gray-200 px-4 py-3 flex-[2]">
-                <div className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-1">Interpretation</div>
-                <p className="text-sm text-gray-600 leading-relaxed">{interpText}</p>
-              </div>
+            </div>
+
+            {/* ── Interpretation ── */}
+            <div className="bg-white rounded-xl border-2 border-gray-200 px-5 py-4">
+              <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Interpretation</div>
+              <p className="text-sm text-gray-600 leading-relaxed">{interpText}</p>
             </div>
 
           </div>
