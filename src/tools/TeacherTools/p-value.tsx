@@ -231,9 +231,9 @@ function SegGroup<T extends string>({
 
 function Metric({ label, value, valueClass = "text-gray-800", small = false }: { label: string; value: string; valueClass?: string; small?: boolean }) {
   return (
-    <div className="bg-white rounded-xl border-2 border-gray-200 px-4 py-3 flex-1">
-      <div className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-1">{label}</div>
-      <div className={`${small ? "text-lg" : "text-2xl"} font-bold tabular-nums ${valueClass}`}>{value}</div>
+    <div className="bg-white rounded-xl border-2 border-gray-200 px-4 py-3 flex-1 min-w-[150px]">
+      <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1 whitespace-nowrap">{label}</div>
+      <div className={`${small ? "text-lg" : "text-2xl"} font-bold tabular-nums leading-tight ${valueClass}`}>{value}</div>
     </div>
   );
 }
@@ -301,8 +301,8 @@ const ALPHA_OPTIONS = [
 ];
 
 const MODE_OPTIONS = [
-  { value: "pvalue"   as const, label: "p-value region",  sub: "observed tail"  },
-  { value: "critical" as const, label: "Critical region", sub: "rejection zone" },
+  { value: "pvalue"   as const, label: "p-value",  sub: "region" },
+  { value: "critical" as const, label: "Critical", sub: "region" },
 ];
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -412,17 +412,24 @@ export default function BinomialPValueExplorer() {
 
           <div className="bg-white rounded-xl shadow-lg p-8 flex flex-col gap-6">
 
-            {/* ── Controls row ── */}
-            <div className="flex items-end gap-5 flex-wrap">
-              <NumInput label="p₀" id="bpe-p0" value={p0} min={0.01} max={0.99} step={0.01} onChange={setP0} />
-              <NumInput label="n"  id="bpe-n"  value={n}  min={1}    max={100}  step={1}    onChange={(v) => setN(Math.round(v))} />
-              <NumInput label="x"  id="bpe-x"  value={x}  min={0}    max={n}    step={1}    onChange={(v) => setX(Math.round(v))} />
-              <div style={{ width: "2px", alignSelf: "stretch", backgroundColor: "#d1d5db", flexShrink: 0, margin: "0 4px" }} />
-              <SegGroup label="Tail type"          options={TAIL_OPTIONS}  value={tail}     onChange={setTail} />
-              <div style={{ width: "2px", alignSelf: "stretch", backgroundColor: "#d1d5db", flexShrink: 0, margin: "0 4px" }} />
-              <SegGroup label="Significance level" options={ALPHA_OPTIONS} value={alphaStr} onChange={setAlphaStr} />
-              <div style={{ width: "2px", alignSelf: "stretch", backgroundColor: "#d1d5db", flexShrink: 0, margin: "0 4px" }} />
-              <SegGroup label="Show" options={MODE_OPTIONS} value={mode} onChange={setMode} />
+            {/* ── Controls ── */}
+            <div className="flex flex-col gap-5">
+              {/* Parameters */}
+              <div className="flex items-end gap-5 flex-wrap">
+                <NumInput label="p₀" id="bpe-p0" value={p0} min={0.01} max={0.99} step={0.01} onChange={setP0} />
+                <NumInput label="n"  id="bpe-n"  value={n}  min={1}    max={100}  step={1}    onChange={(v) => setN(Math.round(v))} />
+                <NumInput label="x"  id="bpe-x"  value={x}  min={0}    max={n}    step={1}    onChange={(v) => setX(Math.round(v))} />
+              </div>
+
+              {/* Divider */}
+              <div style={{ height: "2px", backgroundColor: "#d1d5db" }} />
+
+              {/* Options */}
+              <div className="flex items-end gap-x-8 gap-y-5 flex-wrap">
+                <SegGroup label="Tail type"          options={TAIL_OPTIONS}  value={tail}     onChange={setTail} />
+                <SegGroup label="Significance level" options={ALPHA_OPTIONS} value={alphaStr} onChange={setAlphaStr} />
+                <SegGroup label="Region shown"       options={MODE_OPTIONS}  value={mode}     onChange={setMode} />
+              </div>
             </div>
 
             {/* Divider */}
@@ -478,18 +485,18 @@ export default function BinomialPValueExplorer() {
             {/* Divider */}
             <div style={{ height: "2px", backgroundColor: "#d1d5db" }} />
 
-            {/* ── Output metrics row ── */}
+            {/* ── Output metrics ── */}
             <div className="flex gap-4 flex-wrap">
               {showCritical ? (
                 <>
-                  <Metric label="Critical value(s)" value={critVals} small />
+                  <Metric label="Critical value(s)" value={critVals} />
                   <Metric
                     label="Critical region"
                     value={critDesc}
                     small
                     valueClass={critDesc === "none" ? "text-gray-400" : "text-gray-800"}
                   />
-                  <Metric label="Actual sig. level" value={actualSigStr} small />
+                  <Metric label="Actual sig. level" value={actualSigStr} />
                 </>
               ) : (
                 <>
@@ -500,10 +507,12 @@ export default function BinomialPValueExplorer() {
               <Metric label="Verdict"  value={rejected ? "Reject H₀" : "Accept H₀"} valueClass={rejected ? "text-green-700" : "text-gray-400"} />
               <Metric label="Mean (np)" value={mean.toFixed(2)} />
               <Metric label="Std dev"  value={sd} />
-              <div className="bg-white rounded-xl border-2 border-gray-200 px-4 py-3 flex-[2] min-w-[240px]">
-                <div className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-1">Interpretation</div>
-                <p className="text-sm text-gray-600 leading-relaxed">{interpText}</p>
-              </div>
+            </div>
+
+            {/* ── Interpretation ── */}
+            <div className="bg-white rounded-xl border-2 border-gray-200 px-5 py-4">
+              <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Interpretation</div>
+              <p className="text-sm text-gray-600 leading-relaxed">{interpText}</p>
             </div>
 
           </div>
