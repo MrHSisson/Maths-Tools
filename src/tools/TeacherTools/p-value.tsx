@@ -53,9 +53,83 @@ function computePValue(x: number, n: number, p0: number, tail: TailType): number
   }
 }
 
+// ── Critical region ───────────────────────────────────────────────────────────
+//
+// The critical (rejection) region is the fixed set of X values that would lead
+// us to reject H₀ *before* seeing the data — it depends only on n, p₀, tail and α,
+// not on the observed x. For each relevant tail we find the extreme critical
+// value c such that the tail probability first drops to ≤ the tail's α budget
+// (α for one-tailed, α/2 for each tail of a two-tailed test). The *actual*
+// significance level is the true probability of landing in that region, which
+// is usually a little below the nominal α because X is discrete.
+
+interface CriticalRegion {
+  lower: number | null;   // reject when X ≤ lower (left tail); null if that tail has no region
+  upper: number | null;   // reject when X ≥ upper (right tail); null if that tail has no region
+  actualSig: number;      // true P(reject H₀ | H₀), i.e. total probability of the region
+}
+
+function computeCriticalRegion(n: number, p0: number, tail: TailType, alpha: number): CriticalRegion {
+  const pmf = (k: number) => binomPMF(k, n, p0);
+
+  // Largest c with P(X ≤ c) ≤ budget (lower tail), or null if even P(X = 0) exceeds it.
+  const lowerCrit = (budget: number): number | null => {
+    let cum = 0, crit: number | null = null;
+    for (let k = 0; k <= n; k++) {
+      cum += pmf(k);
+      if (cum <= budget) crit = k; else break;
+    }
+    return crit;
+  };
+  // Smallest c with P(X ≥ c) ≤ budget (upper tail), or null if even P(X = n) exceeds it.
+  const upperCrit = (budget: number): number | null => {
+    let cum = 0, crit: number | null = null;
+    for (let k = n; k >= 0; k--) {
+      cum += pmf(k);
+      if (cum <= budget) crit = k; else break;
+    }
+    return crit;
+  };
+  const tailBelow = (c: number) => { let p = 0; for (let k = 0; k <= c; k++) p += pmf(k); return p; };
+  const tailAbove = (c: number) => { let p = 0; for (let k = c; k <= n; k++) p += pmf(k); return p; };
+
+  let lower: number | null = null;
+  let upper: number | null = null;
+  if (tail === "left")  lower = lowerCrit(alpha);
+  else if (tail === "right") upper = upperCrit(alpha);
+  else { lower = lowerCrit(alpha / 2); upper = upperCrit(alpha / 2); }
+
+  // Guard against the (degenerate, very-large-α) case where the two tails would meet.
+  if (lower !== null && upper !== null && lower >= upper) { upper = lower + 1 > n ? null : upper; }
+
+  const actualSig =
+    (lower !== null ? tailBelow(lower) : 0) +
+    (upper !== null ? tailAbove(upper) : 0);
+
+  return { lower, upper, actualSig };
+}
+
+function inCriticalRegion(k: number, cr: CriticalRegion): boolean {
+  return (cr.lower !== null && k <= cr.lower) || (cr.upper !== null && k >= cr.upper);
+}
+
+function criticalRegionDesc(cr: CriticalRegion): string {
+  const parts: string[] = [];
+  if (cr.lower !== null) parts.push(`X ≤ ${cr.lower}`);
+  if (cr.upper !== null) parts.push(`X ≥ ${cr.upper}`);
+  return parts.length ? parts.join(" or ") : "none";
+}
+
+function criticalValuesStr(cr: CriticalRegion): string {
+  const parts: string[] = [];
+  if (cr.lower !== null) parts.push(String(cr.lower));
+  if (cr.upper !== null) parts.push(String(cr.upper));
+  return parts.length ? parts.join(", ") : "—";
+}
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-interface BarDatum { k: number; pmf: number; inRegion: boolean }
+interface BarDatum { k: number; pmf: number; inRegion: boolean; inCritical: boolean }
 
 // ── Custom tooltip ────────────────────────────────────────────────────────────
 
@@ -71,6 +145,7 @@ function CustomTooltip({ active, payload }: TooltipProps) {
       <div className="font-bold text-gray-800">k = {d.k}</div>
       <div className="text-gray-500">P(X = {d.k}) = {d.pmf.toFixed(4)}</div>
       {d.inRegion && <div className="text-red-500 font-semibold text-xs mt-1">contributes to p-value</div>}
+      {d.inCritical && <div className="text-amber-500 font-semibold text-xs mt-0.5">in critical region</div>}
     </div>
   );
 }
@@ -154,11 +229,11 @@ function SegGroup<T extends string>({
 
 // ── Metric card ───────────────────────────────────────────────────────────────
 
-function Metric({ label, value, valueClass = "text-gray-800" }: { label: string; value: string; valueClass?: string }) {
+function Metric({ label, value, valueClass = "text-gray-800", small = false }: { label: string; value: string; valueClass?: string; small?: boolean }) {
   return (
     <div className="bg-white rounded-xl border-2 border-gray-200 px-4 py-3 flex-1">
       <div className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-1">{label}</div>
-      <div className={`text-2xl font-bold tabular-nums ${valueClass}`}>{value}</div>
+      <div className={`${small ? "text-lg" : "text-2xl"} font-bold tabular-nums ${valueClass}`}>{value}</div>
     </div>
   );
 }
@@ -225,6 +300,11 @@ const ALPHA_OPTIONS = [
   { value: "0.10", label: "10%", sub: "α = 0.10" },
 ];
 
+const CRIT_OPTIONS = [
+  { value: "on"  as const, label: "Show", sub: "rejection zone" },
+  { value: "off" as const, label: "Hide", sub: "p-value only"   },
+];
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function BinomialPValueExplorer() {
@@ -233,10 +313,13 @@ export default function BinomialPValueExplorer() {
   const [x, setX]     = useState(14);
   const [tail, setTail]   = useState<TailType>("two");
   const [alphaStr, setAlphaStr] = useState("0.05");
+  const [critStr, setCritStr] = useState<"on" | "off">("on");
 
   useEffect(() => { if (x > n) setX(n); }, [n, x]);
 
   const alpha = parseFloat(alphaStr);
+  const showCritical = critStr === "on";
+  const cr = computeCriticalRegion(n, p0, tail, alpha);
 
   const buildData = useCallback((): BarDatum[] => {
     return Array.from({ length: n + 1 }, (_, k) => {
@@ -252,9 +335,9 @@ export default function BinomialPValueExplorer() {
         // The p-value is compared to α/2, so we only need one tail
         inRegion = x >= distMean ? k >= x : k <= x;
       }
-      return { k, pmf, inRegion };
+      return { k, pmf, inRegion, inCritical: showCritical && inCriticalRegion(k, cr) };
     });
-  }, [p0, n, x, tail]);
+  }, [p0, n, x, tail, showCritical, cr]);
 
   const data  = buildData();
   const pv    = computePValue(x, n, p0, tail);
@@ -265,6 +348,13 @@ export default function BinomialPValueExplorer() {
   const mean  = p0 * n;
   const sd    = Math.sqrt(n * p0 * (1 - p0)).toFixed(2);
 
+  // Critical-region derived values
+  const xInCrit    = inCriticalRegion(x, cr);
+  const critDesc   = criticalRegionDesc(cr);
+  const critVals   = criticalValuesStr(cr);
+  const actualSig  = cr.actualSig;
+  const actualSigStr = actualSig < 0.0001 ? "< 0.0001" : actualSig.toFixed(4);
+
   const side = x >= mean ? "upper" : "lower";
   const oneTailDesc = x >= mean ? `P(X ≥ ${x})` : `P(X ≤ ${x})`;
   const thresholdStr = tail === "two" ? `α/2 = ${(alpha/2).toFixed(3)}` : `α = ${alphaStr}`;
@@ -273,12 +363,32 @@ export default function BinomialPValueExplorer() {
     ? ` x = ${x} fell in the ${side} tail (E(X) = ${mean.toFixed(1)}), so p-value = ${oneTailDesc} = ${pvStr}. Comparing to ${thresholdStr}.`
     : "";
 
+  const critNote = showCritical
+    ? ` Critical region: ${critDesc === "none" ? "none exists at this α" : critDesc} ` +
+      `(actual significance level ${actualSigStr}). ` +
+      (critDesc === "none"
+        ? ""
+        : xInCrit
+          ? `x = ${x} lies in the critical region — reject H₀.`
+          : `x = ${x} lies outside the critical region — fail to reject H₀.`)
+    : "";
+
   const interpText =
     `H₀: p = ${p0.toFixed(2)}, X ∼ B(${n}, ${p0.toFixed(2)}). Observed x = ${x}.` +
     twoTailNote +
     (sig
       ? ` p-value < ${thresholdStr} — reject H₀. Sufficient evidence that p ≠ ${p0.toFixed(2)}.`
-      : ` p-value ≥ ${thresholdStr} — fail to reject H₀. Insufficient evidence that p ≠ ${p0.toFixed(2)}.`);
+      : ` p-value ≥ ${thresholdStr} — fail to reject H₀. Insufficient evidence that p ≠ ${p0.toFixed(2)}.`) +
+    critNote;
+
+  // Bar fill: four states so the p-value tail and the fixed rejection zone are
+  // both legible, and their overlap (a bar in both) reads at a glance.
+  const barFill = (d: BarDatum): string => {
+    if (d.inRegion && d.inCritical) return "#B3261E"; // both — deep crimson
+    if (d.inCritical) return "#F5A623";                // critical region only — amber
+    if (d.inRegion)   return "#E24B4A";                // p-value region only — red
+    return "#85B7EB";                                  // neither — blue
+  };
 
   const tickEvery = n <= 20 ? 1 : n <= 50 ? 5 : 10;
 
@@ -307,6 +417,8 @@ export default function BinomialPValueExplorer() {
               <SegGroup label="Tail type"          options={TAIL_OPTIONS}  value={tail}     onChange={setTail} />
               <div style={{ width: "2px", alignSelf: "stretch", backgroundColor: "#d1d5db", flexShrink: 0, margin: "0 4px" }} />
               <SegGroup label="Significance level" options={ALPHA_OPTIONS} value={alphaStr} onChange={setAlphaStr} />
+              <div style={{ width: "2px", alignSelf: "stretch", backgroundColor: "#d1d5db", flexShrink: 0, margin: "0 4px" }} />
+              <SegGroup label="Critical region" options={CRIT_OPTIONS} value={critStr} onChange={setCritStr} />
             </div>
 
             {/* Divider */}
@@ -322,6 +434,18 @@ export default function BinomialPValueExplorer() {
                 <span className="w-3 h-3 rounded-sm inline-block" style={{ background: "#E24B4A" }} />
                 p-value region
               </span>
+              {showCritical && (
+                <>
+                  <span className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-sm inline-block" style={{ background: "#F5A623" }} />
+                    critical region
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-sm inline-block" style={{ background: "#B3261E" }} />
+                    both
+                  </span>
+                </>
+              )}
             </div>
 
             {/* ── Chart ── */}
@@ -345,7 +469,7 @@ export default function BinomialPValueExplorer() {
                   <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(0,0,0,0.04)" }} />
                   <Bar dataKey="pmf" isAnimationActive={false}>
                     {data.map((d) => (
-                      <Cell key={d.k} fill={d.inRegion ? "#E24B4A" : "#85B7EB"} />
+                      <Cell key={d.k} fill={barFill(d)} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -367,6 +491,26 @@ export default function BinomialPValueExplorer() {
                 <p className="text-sm text-gray-600 leading-relaxed">{interpText}</p>
               </div>
             </div>
+
+            {/* ── Critical-region metrics row ── */}
+            {showCritical && (
+              <div className="flex gap-4">
+                <Metric label="Critical value(s)" value={critVals} />
+                <Metric
+                  label="Critical region"
+                  value={critDesc}
+                  small
+                  valueClass={critDesc === "none" ? "text-gray-400" : "text-gray-800"}
+                />
+                <Metric label="Actual sig. level" value={actualSigStr} />
+                <Metric
+                  label="x in region?"
+                  value={critDesc === "none" ? "—" : xInCrit ? "Yes → reject" : "No → accept"}
+                  small
+                  valueClass={xInCrit && critDesc !== "none" ? "text-green-700" : "text-gray-400"}
+                />
+              </div>
+            )}
 
           </div>
         </div>
