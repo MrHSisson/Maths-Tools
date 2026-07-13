@@ -206,7 +206,7 @@ function SegButton({ active, label, sub, onClick }: {
   return (
     <button
       onClick={onClick}
-      className={`w-full flex flex-col items-center justify-center px-2 py-2.5 rounded-xl border-2 font-bold transition-all ${
+      className={`flex-1 min-w-0 flex flex-col items-center justify-center px-2 py-2.5 rounded-xl border-2 font-bold transition-all ${
         active
           ? "bg-blue-900 border-blue-900 text-white shadow-md"
           : "bg-white border-gray-200 text-gray-700 hover:border-blue-900 hover:text-blue-900 hover:shadow-sm"
@@ -419,24 +419,35 @@ export default function BinomialPValueExplorer() {
               {/* Divider */}
               <div className="border-t border-gray-200" />
 
-              {/* Options — one 8-column grid so every button is the same width
-                  with a single consistent gap; labels centre over their span. */}
+              {/* Options — three 3:3:2 flex groups so every button resolves to the
+                  same width, with subtle dividers separating the groups. Labels and
+                  buttons share the same structure so they stay aligned. */}
               <div className="flex flex-col gap-2.5">
-                <div className="grid grid-cols-8 gap-2.5">
-                  <div className="col-span-3 text-xs font-bold text-gray-500 uppercase tracking-wide text-center">Tail type</div>
-                  <div className="col-span-3 text-xs font-bold text-gray-500 uppercase tracking-wide text-center">Significance level</div>
-                  <div className="col-span-2 text-xs font-bold text-gray-500 uppercase tracking-wide text-center">Region shown</div>
+                <div className="flex gap-2.5">
+                  <div className="flex-[3] text-xs font-bold text-gray-500 uppercase tracking-wide text-center">Tail type</div>
+                  <div className="w-px" />
+                  <div className="flex-[3] text-xs font-bold text-gray-500 uppercase tracking-wide text-center">Significance level</div>
+                  <div className="w-px" />
+                  <div className="flex-[2] text-xs font-bold text-gray-500 uppercase tracking-wide text-center">Region shown</div>
                 </div>
-                <div className="grid grid-cols-8 gap-2.5">
-                  {TAIL_OPTIONS.map((o) => (
-                    <SegButton key={o.value} active={tail === o.value} label={o.label} sub={o.sub} onClick={() => setTail(o.value)} />
-                  ))}
-                  {ALPHA_OPTIONS.map((o) => (
-                    <SegButton key={o.value} active={alphaStr === o.value} label={o.label} sub={o.sub} onClick={() => setAlphaStr(o.value)} />
-                  ))}
-                  {MODE_OPTIONS.map((o) => (
-                    <SegButton key={o.value} active={mode === o.value} label={o.label} sub={o.sub} onClick={() => setMode(o.value)} />
-                  ))}
+                <div className="flex items-stretch gap-2.5">
+                  <div className="flex-[3] flex gap-2.5">
+                    {TAIL_OPTIONS.map((o) => (
+                      <SegButton key={o.value} active={tail === o.value} label={o.label} sub={o.sub} onClick={() => setTail(o.value)} />
+                    ))}
+                  </div>
+                  <div className="w-px bg-gray-300 self-stretch my-1" />
+                  <div className="flex-[3] flex gap-2.5">
+                    {ALPHA_OPTIONS.map((o) => (
+                      <SegButton key={o.value} active={alphaStr === o.value} label={o.label} sub={o.sub} onClick={() => setAlphaStr(o.value)} />
+                    ))}
+                  </div>
+                  <div className="w-px bg-gray-300 self-stretch my-1" />
+                  <div className="flex-[2] flex gap-2.5">
+                    {MODE_OPTIONS.map((o) => (
+                      <SegButton key={o.value} active={mode === o.value} label={o.label} sub={o.sub} onClick={() => setMode(o.value)} />
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
