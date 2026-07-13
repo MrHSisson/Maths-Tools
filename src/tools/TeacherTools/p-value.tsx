@@ -198,44 +198,27 @@ function ParamSlider({ label, sub, id, value, min, max, step = 1, onChange }: Pa
   );
 }
 
-// ── Segmented button group (generic) ──────────────────────────────────────────
+// ── Segmented button (single) ─────────────────────────────────────────────────
 
-function SegGroup<T extends string>({
-  label, options, value, onChange, fill = false,
-}: {
-  label: string;
-  options: { value: T; label: string; sub?: string }[];
-  value: T;
-  onChange: (v: T) => void;
-  fill?: boolean;
+function SegButton({ active, label, sub, onClick }: {
+  active: boolean; label: string; sub?: string; onClick: () => void;
 }) {
   return (
-    <div className="flex flex-col gap-2">
-      <div className="text-xs font-bold text-gray-500 uppercase tracking-wide text-center">{label}</div>
-      <div className={`flex gap-2 ${fill ? "w-full" : ""}`}>
-        {options.map((o) => {
-          const active = value === o.value;
-          return (
-            <button
-              key={o.value}
-              onClick={() => onChange(o.value)}
-              className={`${fill ? "flex-1" : ""} flex flex-col items-center justify-center px-4 py-2.5 rounded-xl border-2 font-bold transition-all whitespace-nowrap ${
-                active
-                  ? "bg-blue-900 border-blue-900 text-white shadow-md scale-[1.03]"
-                  : "bg-white border-gray-200 text-gray-700 hover:border-blue-900 hover:text-blue-900 hover:shadow-sm"
-              }`}
-            >
-              <span className="text-sm font-bold leading-tight">{o.label}</span>
-              {o.sub && (
-                <span className={`text-xs font-normal leading-tight mt-0.5 ${active ? "text-blue-200" : "text-gray-400"}`}>
-                  {o.sub}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-    </div>
+    <button
+      onClick={onClick}
+      className={`w-full flex flex-col items-center justify-center px-2 py-2.5 rounded-xl border-2 font-bold transition-all ${
+        active
+          ? "bg-blue-900 border-blue-900 text-white shadow-md"
+          : "bg-white border-gray-200 text-gray-700 hover:border-blue-900 hover:text-blue-900 hover:shadow-sm"
+      }`}
+    >
+      <span className="text-sm font-bold leading-tight">{label}</span>
+      {sub && (
+        <span className={`text-xs font-normal leading-tight mt-0.5 ${active ? "text-blue-200" : "text-gray-400"}`}>
+          {sub}
+        </span>
+      )}
+    </button>
   );
 }
 
@@ -301,7 +284,7 @@ function HeaderBar() {
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const TAIL_OPTIONS = [
-  { value: "two"   as TailType, label: "Two-tailed",   sub: "p vs α/2 each tail" },
+  { value: "two"   as TailType, label: "Two-tailed",   sub: "α/2 per tail"    },
   { value: "right" as TailType, label: "Right-tailed",  sub: "P(X ≥ x)"        },
   { value: "left"  as TailType, label: "Left-tailed",   sub: "P(X ≤ x)"        },
 ];
@@ -436,11 +419,25 @@ export default function BinomialPValueExplorer() {
               {/* Divider */}
               <div className="border-t border-gray-200" />
 
-              {/* Options */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-                <SegGroup label="Tail type"          options={TAIL_OPTIONS}  value={tail}     onChange={setTail}     fill />
-                <SegGroup label="Significance level" options={ALPHA_OPTIONS} value={alphaStr} onChange={setAlphaStr} fill />
-                <SegGroup label="Region shown"       options={MODE_OPTIONS}  value={mode}     onChange={setMode}     fill />
+              {/* Options — one 8-column grid so every button is the same width
+                  with a single consistent gap; labels centre over their span. */}
+              <div className="flex flex-col gap-2.5">
+                <div className="grid grid-cols-8 gap-2.5">
+                  <div className="col-span-3 text-xs font-bold text-gray-500 uppercase tracking-wide text-center">Tail type</div>
+                  <div className="col-span-3 text-xs font-bold text-gray-500 uppercase tracking-wide text-center">Significance level</div>
+                  <div className="col-span-2 text-xs font-bold text-gray-500 uppercase tracking-wide text-center">Region shown</div>
+                </div>
+                <div className="grid grid-cols-8 gap-2.5">
+                  {TAIL_OPTIONS.map((o) => (
+                    <SegButton key={o.value} active={tail === o.value} label={o.label} sub={o.sub} onClick={() => setTail(o.value)} />
+                  ))}
+                  {ALPHA_OPTIONS.map((o) => (
+                    <SegButton key={o.value} active={alphaStr === o.value} label={o.label} sub={o.sub} onClick={() => setAlphaStr(o.value)} />
+                  ))}
+                  {MODE_OPTIONS.map((o) => (
+                    <SegButton key={o.value} active={mode === o.value} label={o.label} sub={o.sub} onClick={() => setMode(o.value)} />
+                  ))}
+                </div>
               </div>
             </div>
 
