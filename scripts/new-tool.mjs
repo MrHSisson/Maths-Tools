@@ -62,7 +62,7 @@ if (registry.includes(`path: '${path}'`)) {
   console.error(`Path ${path} is already registered in src/registry.ts`);
   process.exit(1);
 }
-const entry = `      { id: '${id}', path: '${path}', name: ${JSON.stringify(name)}, description: ${JSON.stringify(description)}, ready: 'v2.3', enabled: false, load: () => import('./tools/${category}/${componentName}') },\n`;
+const entry = `      { id: '${id}', path: '${path}', name: ${JSON.stringify(name)}, description: ${JSON.stringify(description)}, enabled: false, load: () => import('./tools/${category}/${componentName}') },\n`;
 const anchor = new RegExp(`(name: '${displayCategory.replace(/[&]/g, '\\$&')}',\\n    tools: \\[\\n)`);
 if (!anchor.test(registry)) {
   console.error(`Could not find category "${displayCategory}" in src/registry.ts — add the entry manually:\n${entry}`);

@@ -258,17 +258,14 @@ export default function LandingPage(): JSX.Element {
                           : `${category.theme.border} ${category.theme.hoverBorder}`
                         }`}
                     >
-                      {/* Badge - Absolutely positioned so it never moves */}
-                      <div className="absolute top-6 right-6">
-                        <span className={`inline-flex items-center text-[10px] font-bold px-2.5 py-1 rounded-md border tracking-wider uppercase
-                          ${isDevTool
-                            ? 'bg-amber-50 text-amber-700 border-amber-200'
-                            : 'bg-white text-slate-500 border-slate-200 shadow-sm'
-                          }`}
-                        >
-                          {isDevTool ? 'Dev' : tool.ready}
-                        </span>
-                      </div>
+                      {/* Badge - dev-gated tools only; absolutely positioned so it never moves */}
+                      {isDevTool && (
+                        <div className="absolute top-6 right-6">
+                          <span className="inline-flex items-center text-[10px] font-bold px-2.5 py-1 rounded-md border tracking-wider uppercase bg-amber-50 text-amber-700 border-amber-200">
+                            Dev
+                          </span>
+                        </div>
+                      )}
 
                       {/* Title */}
                       <h3 className="font-bold text-lg leading-tight text-slate-800 mb-3 pr-16 group-hover:text-slate-900 transition-colors">
