@@ -389,7 +389,7 @@ export default function BinomialPValueExplorer() {
     return d.inRegion ? "#E24B4A" : "#85B7EB";
   };
 
-  const tickEvery = n <= 20 ? 1 : n <= 50 ? 5 : 10;
+  const tickEvery = n <= 20 ? 1 : n <= 50 ? 5 : n <= 100 ? 10 : 20;
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#f5f3f0" }}>
@@ -412,7 +412,7 @@ export default function BinomialPValueExplorer() {
               {/* Parameters */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <ParamSlider label="p₀" sub="hypothesised probability" id="bpe-p0" value={p0} min={0.01} max={0.99} step={0.01} onChange={setP0} />
-                <ParamSlider label="n"  sub="number of trials"          id="bpe-n"  value={n}  min={1}    max={100}  step={1}    onChange={(v) => setN(Math.round(v))} />
+                <ParamSlider label="n"  sub="number of trials"          id="bpe-n"  value={n}  min={1}    max={200}  step={1}    onChange={(v) => setN(Math.round(v))} />
                 <ParamSlider label="x"  sub="observed successes"        id="bpe-x"  value={x}  min={0}    max={n}    step={1}    onChange={(v) => setX(Math.round(v))} />
               </div>
 
