@@ -150,14 +150,14 @@ function CustomTooltip({ active, payload }: TooltipProps) {
   );
 }
 
-// ── Number input ──────────────────────────────────────────────────────────────
+// ── Parameter slider ──────────────────────────────────────────────────────────
 
-interface NumInputProps {
-  label: string; id: string; value: number;
+interface ParamSliderProps {
+  label: string; sub: string; id: string; value: number;
   min: number; max: number; step?: number;
   onChange: (v: number) => void;
 }
-function NumInput({ label, id, value, min, max, step = 1, onChange }: NumInputProps) {
+function ParamSlider({ label, sub, id, value, min, max, step = 1, onChange }: ParamSliderProps) {
   const [raw, setRaw] = useState(String(value));
   useEffect(() => { setRaw(String(value)); }, [value]);
   const commit = (str: string) => {
@@ -171,18 +171,29 @@ function NumInput({ label, id, value, min, max, step = 1, onChange }: NumInputPr
     }
   };
   return (
-    <div className="flex flex-col gap-1">
-      <label htmlFor={id} className="text-xs font-bold text-gray-500 uppercase tracking-wide whitespace-nowrap">
-        {label}
-      </label>
+    <div className="bg-white rounded-2xl border-2 border-gray-200 px-5 py-4 flex flex-col gap-3 shadow-sm">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-col">
+          <label htmlFor={id} className="text-sm font-bold text-blue-900 leading-none">{label}</label>
+          <span className="text-xs text-gray-400 mt-1 leading-none">{sub}</span>
+        </div>
+        <input
+          id={id} type="number" min={min} max={max} step={step} value={raw}
+          onChange={(e) => setRaw(e.target.value)}
+          onBlur={(e) => commit(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") commit((e.target as HTMLInputElement).value); }}
+          className="w-20 px-2 py-1.5 border-2 border-gray-200 rounded-lg text-xl font-bold tabular-nums text-center text-gray-800 focus:outline-none focus:border-blue-900 transition-colors"
+        />
+      </div>
       <input
-        id={id} type="number" min={min} max={max} step={step} value={raw}
-        onChange={(e) => setRaw(e.target.value)}
-        onBlur={(e) => commit(e.target.value)}
-        onKeyDown={(e) => { if (e.key === "Enter") commit((e.target as HTMLInputElement).value); }}
-        className="w-20 px-2 py-2 border-2 border-gray-300 rounded-lg text-base font-semibold text-center focus:outline-none focus:border-blue-900 transition-colors"
+        type="range" min={min} max={max} step={step} value={value}
+        onChange={(e) => onChange(parseFloat(e.target.value))}
+        className="w-full accent-blue-900 cursor-pointer"
+        aria-label={label}
       />
-      <span className="text-xs text-gray-400 text-center">{min} – {max}</span>
+      <div className="flex justify-between text-[11px] font-semibold text-gray-400 tabular-nums">
+        <span>{min}</span><span>{max}</span>
+      </div>
     </div>
   );
 }
@@ -190,27 +201,28 @@ function NumInput({ label, id, value, min, max, step = 1, onChange }: NumInputPr
 // ── Segmented button group (generic) ──────────────────────────────────────────
 
 function SegGroup<T extends string>({
-  label, options, value, onChange,
+  label, options, value, onChange, fill = false,
 }: {
   label: string;
   options: { value: T; label: string; sub?: string }[];
   value: T;
   onChange: (v: T) => void;
+  fill?: boolean;
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <div className="text-xs font-bold text-gray-500 uppercase tracking-wide whitespace-nowrap">{label}</div>
-      <div className="flex gap-2">
+    <div className="flex flex-col gap-2">
+      <div className="text-xs font-bold text-gray-500 uppercase tracking-wide text-center">{label}</div>
+      <div className={`flex gap-2 ${fill ? "w-full" : ""}`}>
         {options.map((o) => {
           const active = value === o.value;
           return (
             <button
               key={o.value}
               onClick={() => onChange(o.value)}
-              className={`flex flex-col items-center px-4 py-2 rounded-xl border-2 font-bold transition-colors whitespace-nowrap ${
+              className={`${fill ? "flex-1" : ""} flex flex-col items-center justify-center px-4 py-2.5 rounded-xl border-2 font-bold transition-all whitespace-nowrap ${
                 active
-                  ? "bg-blue-900 border-blue-900 text-white"
-                  : "bg-white border-gray-200 text-gray-700 hover:border-blue-900 hover:text-blue-900"
+                  ? "bg-blue-900 border-blue-900 text-white shadow-md scale-[1.03]"
+                  : "bg-white border-gray-200 text-gray-700 hover:border-blue-900 hover:text-blue-900 hover:shadow-sm"
               }`}
             >
               <span className="text-sm font-bold leading-tight">{o.label}</span>
@@ -413,27 +425,24 @@ export default function BinomialPValueExplorer() {
           <div className="bg-white rounded-xl shadow-lg p-8 flex flex-col gap-6">
 
             {/* ── Controls ── */}
-            <div className="flex flex-col gap-5">
+            <div className="rounded-2xl bg-gray-50 border border-gray-200 p-5 md:p-6 flex flex-col gap-6">
               {/* Parameters */}
-              <div className="flex items-end gap-5 flex-wrap">
-                <NumInput label="p₀" id="bpe-p0" value={p0} min={0.01} max={0.99} step={0.01} onChange={setP0} />
-                <NumInput label="n"  id="bpe-n"  value={n}  min={1}    max={100}  step={1}    onChange={(v) => setN(Math.round(v))} />
-                <NumInput label="x"  id="bpe-x"  value={x}  min={0}    max={n}    step={1}    onChange={(v) => setX(Math.round(v))} />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <ParamSlider label="p₀" sub="hypothesised probability" id="bpe-p0" value={p0} min={0.01} max={0.99} step={0.01} onChange={setP0} />
+                <ParamSlider label="n"  sub="number of trials"          id="bpe-n"  value={n}  min={1}    max={100}  step={1}    onChange={(v) => setN(Math.round(v))} />
+                <ParamSlider label="x"  sub="observed successes"        id="bpe-x"  value={x}  min={0}    max={n}    step={1}    onChange={(v) => setX(Math.round(v))} />
               </div>
 
               {/* Divider */}
-              <div style={{ height: "2px", backgroundColor: "#d1d5db" }} />
+              <div className="border-t border-gray-200" />
 
               {/* Options */}
-              <div className="flex items-end gap-x-8 gap-y-5 flex-wrap">
-                <SegGroup label="Tail type"          options={TAIL_OPTIONS}  value={tail}     onChange={setTail} />
-                <SegGroup label="Significance level" options={ALPHA_OPTIONS} value={alphaStr} onChange={setAlphaStr} />
-                <SegGroup label="Region shown"       options={MODE_OPTIONS}  value={mode}     onChange={setMode} />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+                <SegGroup label="Tail type"          options={TAIL_OPTIONS}  value={tail}     onChange={setTail}     fill />
+                <SegGroup label="Significance level" options={ALPHA_OPTIONS} value={alphaStr} onChange={setAlphaStr} fill />
+                <SegGroup label="Region shown"       options={MODE_OPTIONS}  value={mode}     onChange={setMode}     fill />
               </div>
             </div>
-
-            {/* Divider */}
-            <div style={{ height: "2px", backgroundColor: "#d1d5db" }} />
 
             {/* ── Legend ── */}
             <div className="flex items-center gap-6 text-sm text-gray-500">
