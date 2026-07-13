@@ -300,9 +300,9 @@ const ALPHA_OPTIONS = [
   { value: "0.10", label: "10%", sub: "α = 0.10" },
 ];
 
-const CRIT_OPTIONS = [
-  { value: "on"  as const, label: "Show", sub: "rejection zone" },
-  { value: "off" as const, label: "Hide", sub: "p-value only"   },
+const MODE_OPTIONS = [
+  { value: "pvalue"   as const, label: "p-value region",  sub: "observed tail"  },
+  { value: "critical" as const, label: "Critical region", sub: "rejection zone" },
 ];
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -313,12 +313,12 @@ export default function BinomialPValueExplorer() {
   const [x, setX]     = useState(14);
   const [tail, setTail]   = useState<TailType>("two");
   const [alphaStr, setAlphaStr] = useState("0.05");
-  const [critStr, setCritStr] = useState<"on" | "off">("on");
+  const [mode, setMode] = useState<"pvalue" | "critical">("pvalue");
 
   useEffect(() => { if (x > n) setX(n); }, [n, x]);
 
   const alpha = parseFloat(alphaStr);
-  const showCritical = critStr === "on";
+  const showCritical = mode === "critical";
   const cr = computeCriticalRegion(n, p0, tail, alpha);
 
   const buildData = useCallback((): BarDatum[] => {
@@ -355,6 +355,9 @@ export default function BinomialPValueExplorer() {
   const actualSig  = cr.actualSig;
   const actualSigStr = actualSig < 0.0001 ? "< 0.0001" : actualSig.toFixed(4);
 
+  // Verdict reflects whichever method is on screen (the two always agree).
+  const rejected = showCritical ? (critDesc !== "none" && xInCrit) : sig;
+
   const side = x >= mean ? "upper" : "lower";
   const oneTailDesc = x >= mean ? `P(X ≥ ${x})` : `P(X ≤ ${x})`;
   const thresholdStr = tail === "two" ? `α/2 = ${(alpha/2).toFixed(3)}` : `α = ${alphaStr}`;
@@ -363,31 +366,32 @@ export default function BinomialPValueExplorer() {
     ? ` x = ${x} fell in the ${side} tail (E(X) = ${mean.toFixed(1)}), so p-value = ${oneTailDesc} = ${pvStr}. Comparing to ${thresholdStr}.`
     : "";
 
-  const critNote = showCritical
-    ? ` Critical region: ${critDesc === "none" ? "none exists at this α" : critDesc} ` +
-      `(actual significance level ${actualSigStr}). ` +
-      (critDesc === "none"
-        ? ""
-        : xInCrit
-          ? `x = ${x} lies in the critical region — reject H₀.`
-          : `x = ${x} lies outside the critical region — fail to reject H₀.`)
-    : "";
+  const header = `H₀: p = ${p0.toFixed(2)}, X ∼ B(${n}, ${p0.toFixed(2)}). Observed x = ${x}.`;
 
-  const interpText =
-    `H₀: p = ${p0.toFixed(2)}, X ∼ B(${n}, ${p0.toFixed(2)}). Observed x = ${x}.` +
+  const pvalueInterp =
+    header +
     twoTailNote +
     (sig
       ? ` p-value < ${thresholdStr} — reject H₀. Sufficient evidence that p ≠ ${p0.toFixed(2)}.`
-      : ` p-value ≥ ${thresholdStr} — fail to reject H₀. Insufficient evidence that p ≠ ${p0.toFixed(2)}.`) +
-    critNote;
+      : ` p-value ≥ ${thresholdStr} — fail to reject H₀. Insufficient evidence that p ≠ ${p0.toFixed(2)}.`);
 
-  // Bar fill: four states so the p-value tail and the fixed rejection zone are
-  // both legible, and their overlap (a bar in both) reads at a glance.
+  const criticalInterp =
+    header +
+    ` Critical region: ${critDesc === "none" ? "none exists at this α" : critDesc} ` +
+    `(actual significance level ${actualSigStr}).` +
+    (critDesc === "none"
+      ? " No value of x is extreme enough to reject H₀ at this significance level."
+      : xInCrit
+        ? ` x = ${x} lies in the critical region — reject H₀. Sufficient evidence that p ≠ ${p0.toFixed(2)}.`
+        : ` x = ${x} lies outside the critical region — fail to reject H₀. Insufficient evidence that p ≠ ${p0.toFixed(2)}.`);
+
+  const interpText = showCritical ? criticalInterp : pvalueInterp;
+
+  // One region on screen at a time: p-value mode shades the observed tail (red),
+  // critical mode shades the fixed rejection zone (amber).
   const barFill = (d: BarDatum): string => {
-    if (d.inRegion && d.inCritical) return "#B3261E"; // both — deep crimson
-    if (d.inCritical) return "#F5A623";                // critical region only — amber
-    if (d.inRegion)   return "#E24B4A";                // p-value region only — red
-    return "#85B7EB";                                  // neither — blue
+    if (showCritical) return d.inCritical ? "#F5A623" : "#85B7EB";
+    return d.inRegion ? "#E24B4A" : "#85B7EB";
   };
 
   const tickEvery = n <= 20 ? 1 : n <= 50 ? 5 : 10;
@@ -418,7 +422,7 @@ export default function BinomialPValueExplorer() {
               <div style={{ width: "2px", alignSelf: "stretch", backgroundColor: "#d1d5db", flexShrink: 0, margin: "0 4px" }} />
               <SegGroup label="Significance level" options={ALPHA_OPTIONS} value={alphaStr} onChange={setAlphaStr} />
               <div style={{ width: "2px", alignSelf: "stretch", backgroundColor: "#d1d5db", flexShrink: 0, margin: "0 4px" }} />
-              <SegGroup label="Critical region" options={CRIT_OPTIONS} value={critStr} onChange={setCritStr} />
+              <SegGroup label="Show" options={MODE_OPTIONS} value={mode} onChange={setMode} />
             </div>
 
             {/* Divider */}
@@ -430,21 +434,16 @@ export default function BinomialPValueExplorer() {
                 <span className="w-3 h-3 rounded-sm inline-block" style={{ background: "#85B7EB" }} />
                 P(X = k)
               </span>
-              <span className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-sm inline-block" style={{ background: "#E24B4A" }} />
-                p-value region
-              </span>
-              {showCritical && (
-                <>
-                  <span className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-sm inline-block" style={{ background: "#F5A623" }} />
-                    critical region
-                  </span>
-                  <span className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-sm inline-block" style={{ background: "#B3261E" }} />
-                    both
-                  </span>
-                </>
+              {showCritical ? (
+                <span className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-sm inline-block" style={{ background: "#F5A623" }} />
+                  critical region
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-sm inline-block" style={{ background: "#E24B4A" }} />
+                  p-value region
+                </span>
               )}
             </div>
 
@@ -480,37 +479,32 @@ export default function BinomialPValueExplorer() {
             <div style={{ height: "2px", backgroundColor: "#d1d5db" }} />
 
             {/* ── Output metrics row ── */}
-            <div className="flex gap-4">
-              <Metric label="p-value"  value={pvStr} valueClass={sig ? "text-green-700" : "text-gray-800"} />
-              <Metric label={tail === "two" ? "α/2 (threshold)" : "α (threshold)"} value={tail === "two" ? (alpha / 2).toFixed(3) : alphaStr} />
-              <Metric label="Verdict"  value={sig ? "Reject H₀" : "Accept H₀"} valueClass={sig ? "text-green-700" : "text-gray-400"} />
+            <div className="flex gap-4 flex-wrap">
+              {showCritical ? (
+                <>
+                  <Metric label="Critical value(s)" value={critVals} small />
+                  <Metric
+                    label="Critical region"
+                    value={critDesc}
+                    small
+                    valueClass={critDesc === "none" ? "text-gray-400" : "text-gray-800"}
+                  />
+                  <Metric label="Actual sig. level" value={actualSigStr} small />
+                </>
+              ) : (
+                <>
+                  <Metric label="p-value" value={pvStr} valueClass={sig ? "text-green-700" : "text-gray-800"} />
+                  <Metric label={tail === "two" ? "α/2 (threshold)" : "α (threshold)"} value={tail === "two" ? (alpha / 2).toFixed(3) : alphaStr} />
+                </>
+              )}
+              <Metric label="Verdict"  value={rejected ? "Reject H₀" : "Accept H₀"} valueClass={rejected ? "text-green-700" : "text-gray-400"} />
               <Metric label="Mean (np)" value={mean.toFixed(2)} />
               <Metric label="Std dev"  value={sd} />
-              <div className="bg-white rounded-xl border-2 border-gray-200 px-4 py-3 flex-[2]">
+              <div className="bg-white rounded-xl border-2 border-gray-200 px-4 py-3 flex-[2] min-w-[240px]">
                 <div className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-1">Interpretation</div>
                 <p className="text-sm text-gray-600 leading-relaxed">{interpText}</p>
               </div>
             </div>
-
-            {/* ── Critical-region metrics row ── */}
-            {showCritical && (
-              <div className="flex gap-4">
-                <Metric label="Critical value(s)" value={critVals} />
-                <Metric
-                  label="Critical region"
-                  value={critDesc}
-                  small
-                  valueClass={critDesc === "none" ? "text-gray-400" : "text-gray-800"}
-                />
-                <Metric label="Actual sig. level" value={actualSigStr} />
-                <Metric
-                  label="x in region?"
-                  value={critDesc === "none" ? "—" : xInCrit ? "Yes → reject" : "No → accept"}
-                  small
-                  valueClass={xInCrit && critDesc !== "none" ? "text-green-700" : "text-gray-400"}
-                />
-              </div>
-            )}
 
           </div>
         </div>
