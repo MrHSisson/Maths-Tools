@@ -67,6 +67,8 @@ const cLabels = (n: number): string[] => Array.from({ length: n }, (_, i) => `C_
 // Rendered on screen and cloned into the worksheet PDF by handleDiagramPrint.
 
 const SUBS = ["", "₁", "₂", "₃", "₄", "₅", "₆"];
+// "C_1" → "C₁" for plain SVG <text> (which can't render KaTeX).
+const uniSub = (s: string) => s.replace(/_(\d)/g, (_m, d) => SUBS[+d] ?? `_${d}`);
 const TD = { nameW: 42, labW: 58, dataW: 58, headH: 30, lblH: 34, rowH: 42 };
 const tblW = (n: number) => TD.nameW + TD.labW + n * TD.dataW;
 const tblH = (m: number) => TD.headH + TD.lblH + m * TD.rowH;
@@ -76,41 +78,55 @@ const MatrixTable = ({ M, dataIndex }: { M: number[][]; dataIndex?: number }): J
   const m = M.length, n = M[0].length;
   const { nameW, labW, dataW, headH, lblH, rowH } = TD;
   const W = tblW(n), H = tblH(m);
-  const grid = "#94a3b8", headBg = "#f1f5f9", nameBg = "#e2e8f0";
-  const dataX = nameW + labW;
-  const bodyY = headH + lblH;
-  const rects: JSX.Element[] = [], texts: JSX.Element[] = [];
-  const cell = (x: number, y: number, w: number, h: number, fill: string, key: string) =>
-    rects.push(<rect key={key} x={x} y={y} width={w} height={h} fill={fill} stroke={grid} strokeWidth={1} shapeRendering="crispEdges" />);
-  const label = (x: number, y: number, s: string, opts: { bold?: boolean; size?: number; fill?: string } = {}) =>
-    texts.push(<text key={"t" + x + "_" + y + s} x={x} y={y + 1} fontSize={opts.size ?? 17} fontWeight={opts.bold ? 700 : 400} fill={opts.fill ?? "#0f172a"} textAnchor="middle" dominantBaseline="central" fontFamily="Segoe UI, Arial, sans-serif">{s}</text>);
+  const dataX = nameW + labW, bodyY = headH + lblH;
+  const grid = "#94a3b8", headBg = "#f1f5f9", nameBg = "#e2e8f0", SW = 1.25;
+  const fills: JSX.Element[] = [], lines: JSX.Element[] = [], texts: JSX.Element[] = [];
+  let k = 0;
+  const rect = (x: number, y: number, w: number, h: number, fill: string) =>
+    fills.push(<rect key={"f" + k++} x={x} y={y} width={w} height={h} fill={fill} />);
+  const hline = (x1: number, x2: number, y: number) =>
+    lines.push(<line key={"l" + k++} x1={x1} y1={y} x2={x2} y2={y} stroke={grid} strokeWidth={SW} shapeRendering="crispEdges" />);
+  const vline = (y1: number, y2: number, x: number) =>
+    lines.push(<line key={"l" + k++} x1={x} y1={y1} x2={x} y2={y2} stroke={grid} strokeWidth={SW} shapeRendering="crispEdges" />);
+  const txt = (x: number, y: number, s: string, o: { bold?: boolean; size?: number; fill?: string } = {}) =>
+    texts.push(<text key={"t" + k++} x={x} y={y} fontSize={o.size ?? 17} fontWeight={o.bold ? 700 : 400} fill={o.fill ?? "#0f172a"} textAnchor="middle" dominantBaseline="central" fontFamily="Segoe UI, Arial, sans-serif">{s}</text>);
 
-  // player-name banners
-  cell(0, headH, nameW, H - headH, nameBg, "rose");
-  label(nameW / 2, headH + (H - headH) / 2, "Rose", { bold: true, size: 15, fill: "#334155" });
-  cell(dataX, 0, n * dataW, headH, nameBg, "colin");
-  label(dataX + (n * dataW) / 2, headH / 2, "Colin", { bold: true, size: 15, fill: "#334155" });
-  // "Strategy" corner + column labels
-  cell(nameW, headH, labW, lblH, headBg, "strat");
-  label(nameW + labW / 2, headH + lblH / 2, "Strategy", { size: 13, fill: "#475569" });
-  for (let j = 0; j < n; j++) {
-    cell(dataX + j * dataW, headH, dataW, lblH, headBg, "c" + j);
-    label(dataX + j * dataW + dataW / 2, headH + lblH / 2, "C" + SUBS[j + 1], { bold: true, fill: "#1e293b" });
-  }
-  // row labels + payoffs
+  // fills (no per-cell strokes — borders are drawn once, below, for uniformity)
+  rect(dataX, 0, W - dataX, headH, nameBg);                    // Colin banner
+  rect(0, headH, nameW, H - headH, nameBg);                    // Rose banner
+  rect(nameW, headH, labW, lblH, headBg);                      // Strategy corner
+  for (let j = 0; j < n; j++) rect(dataX + j * dataW, headH, dataW, lblH, headBg);
   for (let i = 0; i < m; i++) {
-    cell(nameW, bodyY + i * rowH, labW, rowH, headBg, "r" + i);
-    label(nameW + labW / 2, bodyY + i * rowH + rowH / 2, "R" + SUBS[i + 1], { bold: true, fill: "#1e293b" });
-    for (let j = 0; j < n; j++) {
-      cell(dataX + j * dataW, bodyY + i * rowH, dataW, rowH, "#ffffff", "p" + i + "_" + j);
-      label(dataX + j * dataW + dataW / 2, bodyY + i * rowH + rowH / 2, minus(M[i][j]));
-    }
+    rect(nameW, bodyY + i * rowH, labW, rowH, headBg);
+    for (let j = 0; j < n; j++) rect(dataX + j * dataW, bodyY + i * rowH, dataW, rowH, "#ffffff");
+  }
+
+  // uniform internal grid lines (each drawn exactly once)
+  hline(dataX, W, headH);                                      // under the Colin banner
+  hline(nameW, W, bodyY);                                      // under the label row
+  for (let i = 1; i < m; i++) hline(nameW, W, bodyY + i * rowH);
+  vline(headH, H, nameW);                                      // right of the Rose banner
+  vline(headH, H, dataX);                                      // right of Strategy / row labels
+  for (let j = 1; j < n; j++) vline(headH, H, dataX + j * dataW);
+
+  // texts
+  txt(dataX + (W - dataX) / 2, headH / 2, "Colin", { bold: true, size: 15, fill: "#334155" });
+  txt(nameW / 2, headH + (H - headH) / 2, "Rose", { bold: true, size: 15, fill: "#334155" });
+  txt(nameW + labW / 2, headH + lblH / 2, "Strategy", { size: 13, fill: "#475569" });
+  for (let j = 0; j < n; j++) txt(dataX + j * dataW + dataW / 2, headH + lblH / 2, "C" + SUBS[j + 1], { bold: true, fill: "#1e293b" });
+  for (let i = 0; i < m; i++) {
+    txt(nameW + labW / 2, bodyY + i * rowH + rowH / 2, "R" + SUBS[i + 1], { bold: true, fill: "#1e293b" });
+    for (let j = 0; j < n; j++) txt(dataX + j * dataW + dataW / 2, bodyY + i * rowH + rowH / 2, minus(M[i][j]));
   }
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} style={{ display: "block", width: "100%", height: "auto" }}
       preserveAspectRatio="xMidYMid meet" {...(dataIndex !== undefined ? { "data-q-index": dataIndex } : {})}>
-      {rects}{texts}
+      {fills}
+      {/* notched outer frame (open top-left corner) */}
+      <path d={`M ${dataX} 0 H ${W} V ${H} H 0 V ${headH} H ${dataX} Z`} fill="none" stroke={grid} strokeWidth={SW} shapeRendering="crispEdges" />
+      {lines}
+      {texts}
     </svg>
   );
 };
@@ -118,7 +134,9 @@ const MatrixTable = ({ M, dataIndex }: { M: number[][]; dataIndex?: number }): J
 const INSTRUCTION = "Find the optimal mixed strategy and the value of the game.";
 
 // Renders the payoff table (+ short instruction off the worksheet) in every mode.
-const questionRenderer = (q: AnyQuestion, _showAns: boolean, _cs: string, compact?: boolean, idx?: number): JSX.Element | null => {
+// In the embedded whiteboard (compact === undefined) the shell suppresses its own
+// answer block, so we render the answer inline here when it is revealed.
+const questionRenderer = (q: AnyQuestion, showAns: boolean, _cs: string, compact?: boolean, idx?: number): JSX.Element | null => {
   const M = (q as any)._matrix as number[][] | undefined;
   if (!M) return null;
   const n = M[0].length;
@@ -131,6 +149,9 @@ const questionRenderer = (q: AnyQuestion, _showAns: boolean, _cs: string, compac
       <div style={{ width: "100%", maxWidth: maxW, margin: "0 auto" }}>
         <MatrixTable M={M} dataIndex={idx} />
       </div>
+      {showAns && compact === undefined && (
+        <div style={{ marginTop: 4, color: "#166534", fontWeight: 700 }}>{answerBody(q, false)}</div>
+      )}
     </div>
   );
 };
@@ -173,6 +194,12 @@ const genCore = (needColin: boolean): Core2 => {
   for (let i = 0; i < 60000; i++) {
     const a = randInt(-8, 8), b = randInt(-8, 8), c = randInt(-8, 8), d = randInt(-8, 8);
     if (!saddle([[a, b], [c, d]]).noSaddle) continue;   // must require mixing
+    // A game where every payoff has the same sign is degenerate in context
+    // (one player always wins/loses), so require a genuine mix of signs. The
+    // core cells always survive into the displayed matrix, so this suffices.
+    const hasPos = a > 0 || b > 0 || c > 0 || d > 0;
+    const hasNeg = a < 0 || b < 0 || c < 0 || d < 0;
+    if (!hasPos || !hasNeg) continue;
     const co = solve2(a, b, c, d);
     if (co.D === 0) continue;
     const pv = fVal(co.p), qv = fVal(co.q);
@@ -277,13 +304,13 @@ const roseSteps = (co: Core2, rTop: string, cLeft: string): WorkingStep[] => {
   const { a, b, c, d, D, p, V } = co;
   const numP = D < 0 ? -(d - c) : d - c, denP = Math.abs(D);
   return [
-    mStep(`Let Rose play ${rTop} with probability p. Make Colin indifferent — equate the columns:`,
+    mStep(`Let Rose play $${rTop}$ with probability $p$. Make Colin indifferent — equate the columns:`,
       [`${colExpr(a, c)}`, `= ${colExpr(b, d)}`]),
-    mStep("Collect the p terms:",
+    mStep("Collect the $p$ terms:",
       [`${cf(a - c, "p")} ${signed(c)}`, `= ${cf(b - d, "p")} ${signed(d)}`]),
-    mStep("Solve for p:",
+    mStep("Solve for $p$:",
       [`${cf(a - b - c + d, "p")} = ${d - c}`, `p = \\dfrac{${numP}}{${denP}} = ${fLatex(p)}`]),
-    mStep(`Substitute into ${cLeft} for the value of the game:`,
+    mStep(`Substitute into $${cLeft}$ for the value of the game:`,
       [`V = ${a}(${fLatex(p)}) ${signed(c)}(1-${fLatex(p)})`, `= ${fLatex(V)}`]),
   ];
 };
@@ -293,9 +320,9 @@ const colinSteps = (co: Core2, cLeft: string): WorkingStep[] => {
   const { a, b, c, d, D, q } = co;
   const numP = D < 0 ? -(d - b) : d - b, denP = Math.abs(D);
   return [
-    mStep(`Now Colin. Let Colin play ${cLeft} with probability q. Equate Rose's rows:`,
+    mStep(`Now Colin. Let Colin play $${cLeft}$ with probability $q$. Equate Rose's rows:`,
       [`${rowExpr(a, b)}`, `= ${rowExpr(c, d)}`]),
-    mStep("Solve for q:",
+    mStep("Solve for $q$:",
       [`${cf(a - b - c + d, "q")} = ${d - b}`, `q = \\dfrac{${numP}}{${denP}} = ${fLatex(q)}`]),
   ];
 };
@@ -305,12 +332,12 @@ const graphSteps = (co: Core2, c3: [number, number], c3Lab: string, cA: string, 
   const [e, f] = c3;
   const E3 = mkFrac(e * co.p.n + f * (co.p.d - co.p.n), co.p.d);   // E3(p*)
   return [
-    tStep("Plot each column's expected payoff as a line against p. Colin takes the lowest line, so Rose maximises the lower envelope — its highest point is the answer."),
-    mStep(`The lower envelope peaks where columns ${cA} and ${cB} cross, giving the p found below.`,
+    tStep("Plot each column's expected payoff as a line against $p$. Colin takes the lowest line, so Rose maximises the lower envelope — its highest point is the answer."),
+    mStep(`The lower envelope peaks where columns $${cA}$ and $${cB}$ cross, giving the $p$ found below.`,
       `p = ${fLatex(co.p)}`),
-    mStep(`Check the third line ${c3Lab} at that p:`,
+    mStep(`Check the third line $${c3Lab}$ at that $p$:`,
       [`E = ${e}(${fLatex(co.p)}) ${signed(f)}(1-${fLatex(co.p)})`, `= ${fLatex(E3)}`]),
-    mStep(`This lies above the value, so Colin never plays ${c3Lab} — the graph was needed to see it:`,
+    mStep(`This lies above the value, so Colin never plays $${c3Lab}$ — the graph was needed to see it:`,
       `${fLatex(E3)} > ${fLatex(co.V)}`),
   ];
 };
@@ -385,7 +412,7 @@ const GraphView = ({ g }: { g: GraphData }): JSX.Element => {
       {/* legend (outside the plot, never clipped) */}
       {g.lines.map((l, i) => (
         <text key={i} x={W - mR + 8} y={mT + 16 + i * 18} fontSize={13} fill={l.binding ? LINE_COLORS[i % 2] : C3_COLOR} fontWeight={l.binding ? 600 : 400}>
-          {l.label}{l.binding ? "" : " (unused)"}
+          {uniSub(l.label)}{l.binding ? "" : " (unused)"}
         </text>
       ))}
       {/* axes */}
@@ -394,7 +421,7 @@ const GraphView = ({ g }: { g: GraphData }): JSX.Element => {
       {/* x ticks: p = 0 (all R_bot) .. 1 (all R_top) */}
       <text x={mL} y={H - mB + 18} fontSize={12} fill="#334155" textAnchor="middle">0</text>
       <text x={W - mR} y={H - mB + 18} fontSize={12} fill="#334155" textAnchor="middle">1</text>
-      <text x={(mL + W - mR) / 2} y={H - 6} fontSize={13} fill="#334155" textAnchor="middle">p = P({g.rTop})</text>
+      <text x={(mL + W - mR) / 2} y={H - 6} fontSize={13} fill="#334155" textAnchor="middle">p = P({uniSub(g.rTop)})</text>
       <text x={x0} y={H - mB + 18} fontSize={12} fill="#dc2626" textAnchor="middle" fontWeight={600}>p*</text>
       {/* y label */}
       <text x={14} y={mT + (H - mT - mB) / 2} fontSize={13} fill="#334155" textAnchor="middle" transform={`rotate(-90 14 ${mT + (H - mT - mB) / 2})`}>Expected payoff</text>
@@ -403,14 +430,16 @@ const GraphView = ({ g }: { g: GraphData }): JSX.Element => {
   );
 };
 
-// Replaces AnswerDisplay: the algebraic answer, plus the graph for Level 3.
-const answerRenderer = (q: AnyQuestion): JSX.Element | null => {
+// The answer body: algebraic answer, plus the graph for Level 3. Shared by the
+// answerRenderer (worked example / worksheet) and the whiteboard questionRenderer
+// (the shell suppresses its own answer block when a questionRenderer is present).
+const answerBody = (q: AnyQuestion, withGraph: boolean): JSX.Element => {
   const g = (q as any)._graph as GraphData | undefined;
   const latex = (q as any).answerLatex as string | undefined;
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
       {latex && <MathRenderer latex={latex} />}
-      {g && (
+      {withGraph && g && (
         <div style={{ width: "100%", maxWidth: 460, background: "#ffffff", borderRadius: 10, padding: "10px 8px", boxShadow: "0 1px 3px rgba(0,0,0,0.12)" }}>
           <GraphView g={g} />
         </div>
@@ -418,6 +447,9 @@ const answerRenderer = (q: AnyQuestion): JSX.Element | null => {
     </div>
   );
 };
+// Worked example / worksheet answers get the graph; the whiteboard answer is
+// rendered text-only from questionRenderer (its box is too small for the plot).
+const answerRenderer = (q: AnyQuestion): JSX.Element | null => answerBody(q, true);
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TOOL CONFIG
@@ -527,9 +559,9 @@ const generateQuestion = (
     const coreM = [[co.a, co.b], [co.c, co.d]];
     const working: WorkingStep[] = [
       ...saddleSteps(saddle(A.M)),
-      mStep(`Row ${A.rLab[rd.at]} is dominated by row ${A.rLab[rd.by]} (smaller in every column), so Rose never plays it — delete it:`,
+      mStep(`Row $${A.rLab[rd.at]}$ is dominated by row $${A.rLab[rd.by]}$ (smaller in every column), so Rose never plays it — delete it:`,
         `${A.rLab[rd.at]} < ${A.rLab[rd.by]}`),
-      mStep(`Column ${A.cLab[cd.at]} is dominated by column ${A.cLab[cd.by]} (larger in every row, worse for Colin) — delete it:`,
+      mStep(`Column $${A.cLab[cd.at]}$ is dominated by column $${A.cLab[cd.by]}$ (larger in every row, worse for Colin) — delete it:`,
         `${A.cLab[cd.at]} > ${A.cLab[cd.by]}`),
       mStep("This leaves the 2×2 game:", matrixLatex(coreM, rLabels(2), cLabels(2))),
       ...roseSteps(co, "R_1", "C_1"),
@@ -578,13 +610,13 @@ const generateQuestion = (
   const cA = A.cLab[A.bindCols[0]], cB = A.cLab[A.bindCols[1]];
   const working: WorkingStep[] = [...saddleSteps(saddle(A.M))];
   if (A.rowDecoy) {
-    working.push(mStep(`Row ${A.rLab[A.rowDecoy.at]} is dominated by row ${A.rLab[A.rowDecoy.by]}, so delete it:`,
+    working.push(mStep(`Row $${A.rLab[A.rowDecoy.at]}$ is dominated by row $${A.rLab[A.rowDecoy.by]}$, so delete it:`,
       `${A.rLab[A.rowDecoy.at]} < ${A.rLab[A.rowDecoy.by]}`));
   }
   if (A.colDecoy) {
-    working.push(mStep(`Column ${A.cLab[A.colDecoy.at]} is dominated by column ${A.cLab[A.colDecoy.by]}, so delete it:`,
+    working.push(mStep(`Column $${A.cLab[A.colDecoy.at]}$ is dominated by column $${A.cLab[A.colDecoy.by]}$, so delete it:`,
       `${A.cLab[A.colDecoy.at]} > ${A.cLab[A.colDecoy.by]}`));
-    working.push(tStep(`The remaining columns ${cA}, ${cB} and ${c3Lab} have no dominance between them — a graph is needed.`));
+    working.push(tStep(`The remaining columns $${cA}$, $${cB}$ and $${c3Lab}$ have no dominance between them — a graph is needed.`));
   }
   working.push(...graphSteps(co, c3, c3Lab, cA, cB));
   working.push(...roseSteps(co, A.rLab[A.bindRows[0]], cA));
