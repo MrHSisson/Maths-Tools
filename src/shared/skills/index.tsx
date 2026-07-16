@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { X } from "lucide-react";
 import { SlideDeck, type TeachingSlide } from "../TeachingDeck";
+import { InlineMath } from "../components/MathRenderer";
 import { loadKaTeX } from "../katex";
 import { LCM_SKILL } from "./lcm";
 import { LCM_PRIME_FACTORS_SKILL } from "./lcm-prime-factors";
@@ -40,7 +41,8 @@ export const getSkill = (id: string): SkillDef | undefined => SKILLS.find((s) =>
 
 // ── SkillLabel — renders prose that may contain [[skill-id|term]] markers ─────
 // Without onOpenSkill (or for an unknown id) the bare term renders as plain
-// text, so classic mode and stale links degrade silently.
+// text, so classic mode and stale links degrade silently. Non-marker text is
+// passed through InlineMath, so `$...$` segments render as KaTeX (e.g. $R_1$).
 
 const NAVY = "#1e3a8a";
 const MARKER_SPLIT_RE = /(\[\[[a-z0-9-]+\|[^\]]+\]\])/g;
@@ -51,7 +53,7 @@ export function SkillLabel({ text, onOpenSkill }: { text: string; onOpenSkill?: 
     <>
       {text.split(MARKER_SPLIT_RE).map((part, i) => {
         const m = MARKER_RE.exec(part);
-        if (!m) return <span key={i}>{part}</span>;
+        if (!m) return <InlineMath key={i} text={part} />;
         const [, id, term] = m;
         const skill = getSkill(id);
         if (!onOpenSkill || !skill) return <span key={i}>{term}</span>;
