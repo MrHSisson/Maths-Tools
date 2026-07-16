@@ -113,6 +113,11 @@ export interface QOSnapshot {
   variables: Record<string, boolean>;
   dropdownValue: string;
   multiSelectValues: Record<string, boolean>;
+  /** True when the question is being rendered in the fullscreen whiteboard.
+   *  Lets a questionRenderer that swaps in the answer on "Show Answer" (rather
+   *  than drawing it on the diagram) do so in fullscreen too, where compact is
+   *  otherwise indistinguishable from the worked-example view. */
+  fullscreen?: boolean;
 }
 
 export interface ToolShellDefaults {
