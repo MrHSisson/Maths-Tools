@@ -1,6 +1,6 @@
 import {
   ToolShell, MathRenderer, handleDiagramPrint,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep,
+  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type QOSnapshot,
   randInt, pick, mStep, tStep,
 } from "../shared";
 
@@ -136,15 +136,21 @@ const INSTRUCTION = "Find the optimal mixed strategy and the value of the game."
 // Renders the payoff table (+ short instruction off the worksheet) in every mode.
 // In the embedded whiteboard (compact === undefined) the shell suppresses its own
 // answer block, so we render the answer inline here when it is revealed.
-const questionRenderer = (q: AnyQuestion, showAns: boolean, _cs: string, compact?: boolean, idx?: number, _qo?: unknown, fontClass?: string): JSX.Element | null => {
+const questionRenderer = (q: AnyQuestion, showAns: boolean, _cs: string, compact?: boolean, idx?: number, qo?: QOSnapshot, fontClass?: string): JSX.Element | null => {
   const M = (q as any)._matrix as number[][] | undefined;
   if (!M) return null;
   const n = M[0].length;
-  // Whiteboard (compact === undefined): show the answer IN PLACE OF the matrix
-  // when revealed — cleaner than stacking the answer under the table. Use the
-  // shell's display font-size class so it matches the standard answer sizing.
-  if (compact === undefined && showAns) {
-    return <div className={fontClass} style={{ width: "100%", display: "flex", justifyContent: "center", color: "#166534", fontWeight: 700 }}>{answerBody(q, false)}</div>;
+  const isFS = qo?.fullscreen === true;
+  // Whiteboard — embedded (compact === undefined) or fullscreen — shows the answer
+  // IN PLACE OF the matrix when revealed. Worked example is compact === false but
+  // not fullscreen, so it keeps the matrix and its own separate answer box. The
+  // font-size class matches the standard answer sizing; fullscreen has room for
+  // the Level 3 graph.
+  if ((compact === undefined || isFS) && showAns) {
+    // No width:100% — under a flex/align-center parent (and inside ScaleToFit in
+    // fullscreen) the box then sizes to its content, so the fullscreen scaler can
+    // measure the real width and shrink it to fit instead of clipping.
+    return <div className={fontClass} style={{ color: "#166534", fontWeight: 700 }}>{answerBody(q, isFS)}</div>;
   }
   const maxW = compact === true ? (n >= 4 ? 260 : 230) : compact === undefined ? 380 : 470;
   return (
