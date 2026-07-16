@@ -88,7 +88,7 @@ export const CATEGORIES: CategoryMeta[] = [
   {
     name: 'Probability & Statistics',
     tools: [
-      { id: 'mixed-strategies', path: '/mixed-strategies', name: 'Mixed Strategies', description: 'Find optimal mixed strategies and the value of a zero-sum game from its payoff matrix.', load: () => import('./tools/MixedStrategies') },
+      { id: 'mixed-strategies', path: '/mixed-strategies', name: 'Mixed Strategies', description: 'Find optimal mixed strategies and the value of a zero-sum game from its payoff matrix.', enabled: false, load: () => import('./tools/MixedStrategies') },
     ],
   },
   {
