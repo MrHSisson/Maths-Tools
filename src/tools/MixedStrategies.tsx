@@ -140,6 +140,11 @@ const questionRenderer = (q: AnyQuestion, showAns: boolean, _cs: string, compact
   const M = (q as any)._matrix as number[][] | undefined;
   if (!M) return null;
   const n = M[0].length;
+  // Whiteboard (compact === undefined): show the answer IN PLACE OF the matrix
+  // when revealed — cleaner than stacking the answer under the table.
+  if (compact === undefined && showAns) {
+    return <div style={{ width: "100%", display: "flex", justifyContent: "center", color: "#166534", fontWeight: 700 }}>{answerBody(q, false)}</div>;
+  }
   const maxW = compact === true ? (n >= 4 ? 260 : 230) : compact === undefined ? 380 : 470;
   return (
     <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
@@ -149,9 +154,6 @@ const questionRenderer = (q: AnyQuestion, showAns: boolean, _cs: string, compact
       <div style={{ width: "100%", maxWidth: maxW, margin: "0 auto" }}>
         <MatrixTable M={M} dataIndex={idx} />
       </div>
-      {showAns && compact === undefined && (
-        <div style={{ marginTop: 4, color: "#166534", fontWeight: 700 }}>{answerBody(q, false)}</div>
-      )}
     </div>
   );
 };
@@ -455,7 +457,7 @@ const answerRenderer = (q: AnyQuestion): JSX.Element | null => answerBody(q, tru
 // TOOL CONFIG
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const COLIN_VAR = { key: "colinStrategy", label: "Show Colin's strategy", defaultValue: true };
+const COLIN_VAR = { key: "colinStrategy", label: "Show Colin's strategy", defaultValue: false };
 const WRAPPER_DD = {
   key: "wrapper", label: "Starting matrix",
   options: [
@@ -520,7 +522,7 @@ const generateQuestion = (
   dropdownValue: string,
 ): AnyQuestion => {
   const id = Math.floor(Math.random() * 1_000_000);
-  const showColin = variables["colinStrategy"] ?? true;
+  const showColin = variables["colinStrategy"] ?? false;
 
   // ── Level 1: bare 2×2 ─────────────────────────────────────────────────────────
   if (level === "level1") {
