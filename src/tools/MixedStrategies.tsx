@@ -1,5 +1,5 @@
 import {
-  ToolShell, MathRenderer,
+  ToolShell, MathRenderer, handleDiagramPrint,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep,
   randInt, pick, mStep, tStep,
 } from "../shared";
@@ -63,6 +63,78 @@ const matrixLatex = (M: number[][], rLab: string[], cLab: string[]): string => {
 const rLabels = (m: number): string[] => Array.from({ length: m }, (_, i) => `R_${i + 1}`);
 const cLabels = (n: number): string[] => Array.from({ length: n }, (_, i) => `C_${i + 1}`);
 
+// ── Payoff matrix as a labelled SVG table (Rose = rows, Colin = columns) ─────────
+// Rendered on screen and cloned into the worksheet PDF by handleDiagramPrint.
+
+const SUBS = ["", "₁", "₂", "₃", "₄", "₅", "₆"];
+const TD = { nameW: 42, labW: 58, dataW: 58, headH: 30, lblH: 34, rowH: 42 };
+const tblW = (n: number) => TD.nameW + TD.labW + n * TD.dataW;
+const tblH = (m: number) => TD.headH + TD.lblH + m * TD.rowH;
+const minus = (v: number) => (v < 0 ? `−${Math.abs(v)}` : `${v}`);
+
+const MatrixTable = ({ M, dataIndex }: { M: number[][]; dataIndex?: number }): JSX.Element => {
+  const m = M.length, n = M[0].length;
+  const { nameW, labW, dataW, headH, lblH, rowH } = TD;
+  const W = tblW(n), H = tblH(m);
+  const grid = "#94a3b8", headBg = "#f1f5f9", nameBg = "#e2e8f0";
+  const dataX = nameW + labW;
+  const bodyY = headH + lblH;
+  const rects: JSX.Element[] = [], texts: JSX.Element[] = [];
+  const cell = (x: number, y: number, w: number, h: number, fill: string, key: string) =>
+    rects.push(<rect key={key} x={x} y={y} width={w} height={h} fill={fill} stroke={grid} strokeWidth={1} shapeRendering="crispEdges" />);
+  const label = (x: number, y: number, s: string, opts: { bold?: boolean; size?: number; fill?: string } = {}) =>
+    texts.push(<text key={"t" + x + "_" + y + s} x={x} y={y + 1} fontSize={opts.size ?? 17} fontWeight={opts.bold ? 700 : 400} fill={opts.fill ?? "#0f172a"} textAnchor="middle" dominantBaseline="central" fontFamily="Segoe UI, Arial, sans-serif">{s}</text>);
+
+  // player-name banners
+  cell(0, headH, nameW, H - headH, nameBg, "rose");
+  label(nameW / 2, headH + (H - headH) / 2, "Rose", { bold: true, size: 15, fill: "#334155" });
+  cell(dataX, 0, n * dataW, headH, nameBg, "colin");
+  label(dataX + (n * dataW) / 2, headH / 2, "Colin", { bold: true, size: 15, fill: "#334155" });
+  // "Strategy" corner + column labels
+  cell(nameW, headH, labW, lblH, headBg, "strat");
+  label(nameW + labW / 2, headH + lblH / 2, "Strategy", { size: 13, fill: "#475569" });
+  for (let j = 0; j < n; j++) {
+    cell(dataX + j * dataW, headH, dataW, lblH, headBg, "c" + j);
+    label(dataX + j * dataW + dataW / 2, headH + lblH / 2, "C" + SUBS[j + 1], { bold: true, fill: "#1e293b" });
+  }
+  // row labels + payoffs
+  for (let i = 0; i < m; i++) {
+    cell(nameW, bodyY + i * rowH, labW, rowH, headBg, "r" + i);
+    label(nameW + labW / 2, bodyY + i * rowH + rowH / 2, "R" + SUBS[i + 1], { bold: true, fill: "#1e293b" });
+    for (let j = 0; j < n; j++) {
+      cell(dataX + j * dataW, bodyY + i * rowH, dataW, rowH, "#ffffff", "p" + i + "_" + j);
+      label(dataX + j * dataW + dataW / 2, bodyY + i * rowH + rowH / 2, minus(M[i][j]));
+    }
+  }
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} style={{ display: "block", width: "100%", height: "auto" }}
+      preserveAspectRatio="xMidYMid meet" {...(dataIndex !== undefined ? { "data-q-index": dataIndex } : {})}>
+      {rects}{texts}
+    </svg>
+  );
+};
+
+const INSTRUCTION = "Find the optimal mixed strategy and the value of the game.";
+
+// Renders the payoff table (+ short instruction off the worksheet) in every mode.
+const questionRenderer = (q: AnyQuestion, _showAns: boolean, _cs: string, compact?: boolean, idx?: number): JSX.Element | null => {
+  const M = (q as any)._matrix as number[][] | undefined;
+  if (!M) return null;
+  const n = M[0].length;
+  const maxW = compact === true ? (n >= 4 ? 260 : 230) : compact === undefined ? 380 : 470;
+  return (
+    <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+      {compact !== true && (
+        <div style={{ fontSize: compact === false ? 22 : 18, fontWeight: 600, color: "#000", textAlign: "center" }}>{INSTRUCTION}</div>
+      )}
+      <div style={{ width: "100%", maxWidth: maxW, margin: "0 auto" }}>
+        <MatrixTable M={M} dataIndex={idx} />
+      </div>
+    </div>
+  );
+};
+
 // ── Pure-strategy (saddle point) analysis of any matrix ─────────────────────────
 
 interface Saddle { rowMins: number[]; colMaxs: number[]; maximin: number; minimax: number; noSaddle: boolean; }
@@ -87,25 +159,31 @@ const solve2 = (a: number, b: number, c: number, d: number): Core2 => {
 // GENERATION
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const DENOM_POOL = [2, 3, 4, 5];        // acceptable denominators for p* (and q*)
+const DENOM_POOL = [2, 3, 4, 5, 6, 7, 8, 9];   // acceptable denominators for p* and q*
+const inPool = (d: number) => d >= 2 && d <= 9;
 
-// A random valid 2×2 core. `needColin` also demands a nice q*; V is always nice.
+// A random valid 2×2 core. To spread the answers evenly across denominators
+// (rather than clustering on p = 1/2), we pick a TARGET denominator up front and
+// return the first matrix that hits it; if none turns up we fall back to any
+// valid matrix. The value V is allowed any single-digit denominator — insisting
+// on an integer/half-integer was what forced the low-denominator clustering.
 const genCore = (needColin: boolean): Core2 => {
-  for (let i = 0; i < 40000; i++) {
-    const a = randInt(-6, 6), b = randInt(-6, 6), c = randInt(-6, 6), d = randInt(-6, 6);
-    const s = saddle([[a, b], [c, d]]);
-    if (!s.noSaddle) continue;                       // must require mixing
+  const target = pick(DENOM_POOL);
+  let fallback: Core2 | null = null;
+  for (let i = 0; i < 60000; i++) {
+    const a = randInt(-8, 8), b = randInt(-8, 8), c = randInt(-8, 8), d = randInt(-8, 8);
+    if (!saddle([[a, b], [c, d]]).noSaddle) continue;   // must require mixing
     const co = solve2(a, b, c, d);
     if (co.D === 0) continue;
     const pv = fVal(co.p), qv = fVal(co.q);
-    if (pv <= 0 || pv >= 1) continue;                // strictly interior
-    if (qv <= 0 || qv >= 1) continue;
-    if (!DENOM_POOL.includes(co.p.d)) continue;
-    if (needColin && !DENOM_POOL.includes(co.q.d)) continue;
-    if (co.V.d !== 1 && co.V.d !== 2) continue;      // integer or half-integer
-    return co;
+    if (pv <= 0 || pv >= 1 || qv <= 0 || qv >= 1) continue;   // strictly interior
+    if (!inPool(co.p.d)) continue;
+    if (needColin && !inPool(co.q.d)) continue;
+    if (co.V.d > 9) continue;                          // keep V a single-digit denominator
+    if (!fallback) fallback = co;
+    if (co.p.d === target) return co;                  // hit the target → even spread
   }
-  return solve2(3, -1, 0, 2);                        // guaranteed-valid fallback
+  return fallback ?? solve2(3, -1, 0, 2);              // guaranteed-valid fallback
 };
 
 // ── Decoy construction (additive offset — dominance holds at the corner for free)
@@ -361,7 +439,7 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     mixed: {
       name: "Mixed Strategies",
-      instruction: "Payoffs are Rose's winnings (Rose = rows, maximises; Colin = columns, minimises). Find the optimal mixed strategies and the value of the game:",
+      instruction: INSTRUCTION,
       variables: [],
       dropdown: null,
       difficultySettings: {
@@ -429,6 +507,7 @@ const generateQuestion = (
       answer: `p = ${fPlain(co.p)}, V = ${fPlain(co.V)}`,
       answerLatex: answerLatex(co, rLab[0], rLab[1], cLab[0], cLab[1], showColin, false),
       working,
+      _matrix: M, _aspect: tblW(2) / tblH(2),
       key: `l1-${co.a}-${co.b}-${co.c}-${co.d}-${showColin}-${id}`,
       difficulty: level,
     } as unknown as AnyQuestion;
@@ -463,6 +542,7 @@ const generateQuestion = (
       answer: `p = ${fPlain(co.p)}, V = ${fPlain(co.V)}`,
       answerLatex: answerLatex(co, A.rLab[A.bindRows[0]], A.rLab[A.bindRows[1]], A.cLab[A.bindCols[0]], A.cLab[A.bindCols[1]], showColin, false),
       working,
+      _matrix: A.M, _aspect: tblW(A.M[0].length) / tblH(A.M.length),
       key: `l2-${co.a}-${co.b}-${co.c}-${co.d}-${rd.at}-${cd.at}-${showColin}-${id}`,
       difficulty: level,
     } as unknown as AnyQuestion;
@@ -525,6 +605,7 @@ const generateQuestion = (
       p: fVal(co.p), pLatex: fLatex(co.p), vLatex: fLatex(co.V), V: fVal(co.V),
       rTop: A.rLab[A.bindRows[0]], rBot: A.rLab[A.bindRows[1]],
     } as GraphData,
+    _matrix: A.M, _aspect: tblW(A.M[0].length) / tblH(A.M.length),
     key: `l3-${wrapper}-${co.a}-${co.b}-${co.c}-${co.d}-${c3[0]}-${c3[1]}-${id}`,
     difficulty: level,
   } as unknown as AnyQuestion;
@@ -539,8 +620,10 @@ export default function App() {
       config={TOOL_CONFIG}
       infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
+      questionRenderer={questionRenderer}
       answerRenderer={answerRenderer}
-      defaults={{ numQuestions: 6, numColumns: 2, displayFontSize: 2 }}
+      customPrintHandler={handleDiagramPrint}
+      defaults={{ numQuestions: 6, numColumns: 2, maxColumns: 3, hideFontControls: true }}
     />
   );
 }
