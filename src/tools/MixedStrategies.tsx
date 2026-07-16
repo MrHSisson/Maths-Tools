@@ -136,14 +136,15 @@ const INSTRUCTION = "Find the optimal mixed strategy and the value of the game."
 // Renders the payoff table (+ short instruction off the worksheet) in every mode.
 // In the embedded whiteboard (compact === undefined) the shell suppresses its own
 // answer block, so we render the answer inline here when it is revealed.
-const questionRenderer = (q: AnyQuestion, showAns: boolean, _cs: string, compact?: boolean, idx?: number): JSX.Element | null => {
+const questionRenderer = (q: AnyQuestion, showAns: boolean, _cs: string, compact?: boolean, idx?: number, _qo?: unknown, fontClass?: string): JSX.Element | null => {
   const M = (q as any)._matrix as number[][] | undefined;
   if (!M) return null;
   const n = M[0].length;
   // Whiteboard (compact === undefined): show the answer IN PLACE OF the matrix
-  // when revealed — cleaner than stacking the answer under the table.
+  // when revealed — cleaner than stacking the answer under the table. Use the
+  // shell's display font-size class so it matches the standard answer sizing.
   if (compact === undefined && showAns) {
-    return <div style={{ width: "100%", display: "flex", justifyContent: "center", color: "#166534", fontWeight: 700 }}>{answerBody(q, false)}</div>;
+    return <div className={fontClass} style={{ width: "100%", display: "flex", justifyContent: "center", color: "#166534", fontWeight: 700 }}>{answerBody(q, false)}</div>;
   }
   const maxW = compact === true ? (n >= 4 ? 260 : 230) : compact === undefined ? 380 : 470;
   return (
