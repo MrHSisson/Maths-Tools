@@ -24,9 +24,9 @@ import type { ReactNode } from "react";
 import { Maximize2, Minimize2, Crosshair, Download, X } from "lucide-react";
 import {
   type EquationType, type FOI, type Viewport, type CurveSpec,
-  buildCurveSpec, computeFOIs, computeFrame,
+  buildCurveSpec, computeFOIs, computeFrame, findFunctionIntersections,
 } from "./mathEngine";
-import { drawGraph, type DrawStyle } from "./drawGraph";
+import { drawGraph, type DrawStyle, type CurveDraw, SERIES_COLORS } from "./drawGraph";
 import { usePanZoom } from "./usePanZoom";
 
 // ── Public API ───────────────────────────────────────────────────────────────
@@ -47,12 +47,34 @@ export interface GrapherConfig {
   style?: Partial<DrawStyle>;
 }
 
-export interface SmartGrapherProps {
+/** One plotted curve in a multi-line graph (simultaneous equations, mixed strategies…). */
+export interface GraphSeries {
   equationType: EquationType;
   /** Coefficients for presets: linear [m,c] · quadratic [a,b,c] · cubic [a,b,c,d] · circle [cx,cy,r]. */
   params?: number[];
   /** Custom curve y = fn(x) — used when equationType === "custom". */
   fn?: (x: number) => number;
+  /** Curve colour. Defaults to the series palette by position. */
+  color?: string;
+  /** Legend label, e.g. "y = 2x + 1". */
+  label?: string;
+}
+
+export interface SmartGrapherProps {
+  // ── Single-curve API (backward compatible) ──
+  equationType?: EquationType;
+  /** Coefficients for presets: linear [m,c] · quadratic [a,b,c] · cubic [a,b,c,d] · circle [cx,cy,r]. */
+  params?: number[];
+  /** Custom curve y = fn(x) — used when equationType === "custom". */
+  fn?: (x: number) => number;
+
+  // ── Multi-curve API ──
+  /** Multiple curves on one graph. When given, overrides equationType/params/fn.
+   *  Intersections between function curves are found and framed automatically. */
+  series?: GraphSeries[];
+  /** Show a legend for the series' labels. Default true when any series has a label. */
+  showLegend?: boolean;
+
   config?: GrapherConfig;
   /** Force full interactivity inline (default false → static thumbnail). */
   interactive?: boolean;
@@ -68,7 +90,7 @@ export interface SmartGrapherProps {
 // ── Inner canvas — owns the buffer, the draw loop and (optionally) pan/zoom ──
 
 interface GraphCanvasProps {
-  spec: CurveSpec | undefined;
+  curves: CurveDraw[];
   fois: FOI[];
   config: GrapherConfig;
   interactive: boolean;
@@ -80,7 +102,7 @@ interface GraphCanvasProps {
 }
 
 function GraphCanvas({
-  spec, fois, config, interactive, frameKey, registerAutoCenter, registerExport,
+  curves, fois, config, interactive, frameKey, registerAutoCenter, registerExport,
 }: GraphCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -98,13 +120,13 @@ function GraphCanvas({
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
     const { w, h } = cssSize();
-    drawGraph(ctx, w, h, viewportRef.current, spec, fois, {
+    drawGraph(ctx, w, h, viewportRef.current, curves, fois, {
       axisLabels: config.axisLabels,
       showFois: config.showFois ?? true,
       style: config.style,
       domain: config.domain,
     });
-  }, [spec, fois, config]);
+  }, [curves, fois, config]);
 
   const requestDraw = useCallback(() => {
     if (rafRef.current != null) return;
@@ -117,14 +139,14 @@ function GraphCanvas({
   const reframe = useCallback(() => {
     const { w, h } = cssSize();
     if (w <= 0 || h <= 0) return;
-    viewportRef.current = computeFrame(fois, spec, w, h, {
+    viewportRef.current = computeFrame(fois, curves.map((c) => c.spec), w, h, {
       domain: config.domain,
       lockDomain: config.lockDomain,
       padding: config.padding,
     });
     framedKeyRef.current = frameKey;
     requestDraw();
-  }, [fois, spec, config, frameKey, requestDraw]);
+  }, [fois, curves, config, frameKey, requestDraw]);
 
   // Keep the pixel buffer mapped 1:1 to the CSS box, and (re)frame when needed.
   useEffect(() => {
@@ -203,7 +225,7 @@ function ToolbarButton({ onClick, title, children }: {
 // ── Exported component ───────────────────────────────────────────────────────
 
 export function SmartGrapher({
-  equationType, params = [], fn, config = {},
+  equationType, params, fn, series, showLegend, config = {},
   interactive = false, allowExpand = true, height = 260, title, className,
 }: SmartGrapherProps) {
   const [expanded, setExpanded] = useState(false);
@@ -212,26 +234,63 @@ export function SmartGrapher({
   const autoCenterRef = useRef<(() => void) | null>(null);
   const exportRef = useRef<(() => void) | null>(null);
 
-  const spec = useMemo(
-    () => buildCurveSpec(equationType, params, fn),
+  // Normalise single-curve props into the series list (one source of truth).
+  const seriesList: GraphSeries[] = useMemo(
+    () => series ?? [{ equationType: equationType ?? "linear", params, fn }],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [equationType, JSON.stringify(params), fn],
+    [JSON.stringify(series?.map((s) => [s.equationType, s.params, s.color, s.label])),
+      equationType, JSON.stringify(params)],
   );
 
-  // FOIs: derived for presets, merged with any supplied in config.
-  const fois = useMemo(() => {
-    const derived = computeFOIs(equationType, params);
-    const extra = config.fois ?? [];
-    return [...derived, ...extra];
+  // Build the drawable curves (with colours) and all FOIs — per-series features,
+  // any supplied in config, plus automatically-detected intersections.
+  const { curves, fois } = useMemo(() => {
+    const built: CurveDraw[] = seriesList.map((s, i) => ({
+      spec: buildCurveSpec(s.equationType, s.params ?? [], s.fn),
+      color: s.color ?? SERIES_COLORS[i % SERIES_COLORS.length],
+    }));
+
+    const allFois: FOI[] = [];
+    for (const s of seriesList) allFois.push(...computeFOIs(s.equationType, s.params ?? []));
+    if (config.fois) allFois.push(...config.fois);
+
+    // Intersections between every pair of function curves, over a provisional
+    // x-range taken from the features so far (or the locked/domain range).
+    const xs = allFois.map((f) => f.x).filter(Number.isFinite);
+    if (config.domain?.xMin !== undefined) xs.push(config.domain.xMin);
+    if (config.domain?.xMax !== undefined) xs.push(config.domain.xMax);
+    let xMin = xs.length ? Math.min(...xs) : -10;
+    let xMax = xs.length ? Math.max(...xs) : 10;
+    if (xMax - xMin < 1e-6) { xMin -= 5; xMax += 5; }
+    const span = xMax - xMin;
+    const scanLo = config.domain?.xMin ?? xMin - span;
+    const scanHi = config.domain?.xMax ?? xMax + span;
+
+    const fns = built.filter((c) => c.spec.kind === "function").map((c) => c.spec) as Extract<CurveSpec, { kind: "function" }>[];
+    for (let i = 0; i < fns.length; i++) {
+      for (let j = i + 1; j < fns.length; j++) {
+        for (const pt of findFunctionIntersections(fns[i].f, fns[j].f, scanLo, scanHi)) {
+          allFois.push({ x: pt.x, y: pt.y, kind: "point", label: "intersection" });
+        }
+      }
+    }
+    return { curves: built, fois: allFois };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [equationType, JSON.stringify(params), JSON.stringify(config.fois)]);
+  }, [JSON.stringify(seriesList.map((s) => [s.equationType, s.params])), JSON.stringify(config.fois),
+      JSON.stringify(config.domain)]);
 
   // A stable-ish key so the inner canvas re-frames when the maths changes.
   const frameKey = useMemo(
-    () => JSON.stringify([equationType, params, config.domain, config.lockDomain, config.fois]),
+    () => JSON.stringify([seriesList.map((s) => [s.equationType, s.params]), config.domain, config.lockDomain, config.fois]),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [equationType, JSON.stringify(params), JSON.stringify(config.domain), config.lockDomain, JSON.stringify(config.fois)],
+    [JSON.stringify(seriesList.map((s) => [s.equationType, s.params])), JSON.stringify(config.domain), config.lockDomain, JSON.stringify(config.fois)],
   );
+
+  // Legend: shown when any series carries a label (or explicitly enabled).
+  const legendItems = seriesList
+    .map((s, i) => ({ label: s.label, color: s.color ?? SERIES_COLORS[i % SERIES_COLORS.length] }))
+    .filter((l) => !!l.label);
+  const wantLegend = showLegend ?? legendItems.length > 0;
 
   // Track native fullscreen state for the icon toggle.
   useEffect(() => {
@@ -276,6 +335,17 @@ export function SmartGrapher({
 
   const heightCss = typeof height === "number" ? `${height}px` : height;
 
+  const legend = wantLegend && legendItems.length > 0 && (
+    <div className="absolute bottom-2 left-2 z-10 flex flex-col gap-1 bg-white/85 rounded-lg px-2.5 py-1.5 border border-slate-200 shadow-sm">
+      {legendItems.map((l, i) => (
+        <div key={i} className="flex items-center gap-2 text-xs text-slate-700">
+          <span className="inline-block w-4 h-0.5 rounded" style={{ background: l.color }} />
+          <span>{l.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <div className={className}>
       {title && (
@@ -288,7 +358,7 @@ export function SmartGrapher({
         style={{ width: "100%", height: heightCss }}
       >
         <GraphCanvas
-          spec={spec}
+          curves={curves}
           fois={fois}
           config={config}
           interactive={interactive}
@@ -296,6 +366,7 @@ export function SmartGrapher({
           registerAutoCenter={interactive ? (f) => { autoCenterRef.current = f; } : undefined}
           registerExport={interactive ? (f) => { exportRef.current = f; } : undefined}
         />
+        {legend}
         {interactive && toolbar}
         {!interactive && allowExpand && (
           <button
@@ -325,7 +396,7 @@ export function SmartGrapher({
               </div>
             )}
             <GraphCanvas
-              spec={spec}
+              curves={curves}
               fois={fois}
               config={config}
               interactive
@@ -333,6 +404,7 @@ export function SmartGrapher({
               registerAutoCenter={(f) => { autoCenterRef.current = f; }}
               registerExport={(f) => { exportRef.current = f; }}
             />
+            {legend}
             {toolbar}
           </div>
         </div>

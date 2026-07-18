@@ -6,7 +6,7 @@ import { describe, it, expect } from "vitest";
 import {
   quadraticRoots, cubicRoots,
   getLinearFOIs, getQuadraticFOIs, getCubicFOIs, getCircleFOIs,
-  buildCurveSpec, computeFrame, niceStep,
+  buildCurveSpec, computeFrame, niceStep, findFunctionIntersections,
   type FOI,
 } from "../shared/grapher/mathEngine";
 
@@ -128,6 +128,47 @@ describe("computeFrame", () => {
     const vp = computeFrame([{ x: 2, y: 2, kind: "point" }], undefined, 300, 300);
     expect(Number.isFinite(vp.unitsPerPixel)).toBe(true);
     expect(vp.unitsPerPixel).toBeGreaterThan(0);
+  });
+});
+
+describe("findFunctionIntersections", () => {
+  it("two lines meet at one point (simultaneous equations)", () => {
+    // y = x + 1 and y = -x + 5 → (2, 3)
+    const pts = findFunctionIntersections((x) => x + 1, (x) => -x + 5, -50, 50);
+    expect(pts.length).toBe(1);
+    expect(close(pts[0].x, 2, 1e-6) && close(pts[0].y, 3, 1e-6)).toBe(true);
+  });
+
+  it("line and parabola meet at two points", () => {
+    // y = x² and y = x + 2 → x = -1, 2
+    const pts = findFunctionIntersections((x) => x * x, (x) => x + 2, -50, 50);
+    const xs = pts.map((p) => p.x);
+    expect(sortedClose(xs, [-1, 2], 1e-5)).toBe(true);
+  });
+
+  it("mixed-strategy payoff lines cross inside [0,1]", () => {
+    // 3p and 4 - 3p → p = 2/3, payoff 2
+    const pts = findFunctionIntersections((p) => 3 * p, (p) => 4 - 3 * p, 0, 1);
+    expect(pts.length).toBe(1);
+    expect(close(pts[0].x, 2 / 3, 1e-5) && close(pts[0].y, 2, 1e-5)).toBe(true);
+  });
+
+  it("parallel lines never meet", () => {
+    expect(findFunctionIntersections((x) => 2 * x + 1, (x) => 2 * x - 3, -50, 50)).toEqual([]);
+  });
+});
+
+describe("computeFrame (multi-curve)", () => {
+  it("frames both curves and their intersection", () => {
+    const l1 = buildCurveSpec("linear", [1, 1]);
+    const l2 = buildCurveSpec("linear", [-1, 5]);
+    const inter: FOI = { x: 2, y: 3, kind: "point", label: "solution" };
+    const vp = computeFrame([inter], [l1, l2], 400, 400, { padding: 0.15 });
+    expect(vp.unitsPerPixel).toBeGreaterThan(0);
+    const halfW = 200 * vp.unitsPerPixel;
+    const halfH = 200 * vp.unitsPerPixel;
+    expect(Math.abs(2 - vp.centreX)).toBeLessThanOrEqual(halfW + 1e-6);
+    expect(Math.abs(3 - vp.centreY)).toBeLessThanOrEqual(halfH + 1e-6);
   });
 });
 

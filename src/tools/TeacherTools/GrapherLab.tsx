@@ -1,10 +1,10 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // GRAPHER LAB — the test bench for SmartGrapher (src/shared/grapher).
 //
-// A dev-only playground: pick a curve type, type coefficients, toggle the
-// custom-condition switches (domain lock, axis labels), and watch the exact
-// same <SmartGrapher/> the tools embed redraw live. Because it renders the
-// shared component, "looks right here" == "right in the tool".
+// A dev-only playground: pick a curve type or a multi-line scenario, edit the
+// numbers, toggle the custom-condition switches, and watch the exact same
+// <SmartGrapher/> the tools embed redraw live. "Looks right here" == "right in
+// the tool", because it renders the shared component.
 //
 // Registered with enabled:false, so it only appears on the landing page in
 // Developing-tools mode. The route (/grapher) always works by direct URL.
@@ -12,7 +12,12 @@
 
 import { useMemo, useState } from "react";
 import { Home } from "lucide-react";
-import { SmartGrapher, computeFOIs, type EquationType, type FOI } from "../../shared";
+import {
+  SmartGrapher, computeFOIs, findFunctionIntersections,
+  type EquationType, type FOI, type GraphSeries,
+} from "../../shared";
+
+type Mode = "preset" | "custom" | "simeq" | "mixed";
 
 interface PresetDef {
   type: EquationType;
@@ -21,31 +26,44 @@ interface PresetDef {
 }
 
 const PRESETS: PresetDef[] = [
-  { type: "linear",    label: "Linear  y = mx + c",              coeffs: [
+  { type: "linear",    label: "Linear  y = mx + c",            coeffs: [
     { key: "m", label: "m", def: 2 }, { key: "c", label: "c", def: -1 } ] },
-  { type: "quadratic", label: "Quadratic  y = ax² + bx + c",     coeffs: [
+  { type: "quadratic", label: "Quadratic  y = ax² + bx + c",   coeffs: [
     { key: "a", label: "a", def: 1 }, { key: "b", label: "b", def: -2 }, { key: "c", label: "c", def: -3 } ] },
-  { type: "cubic",     label: "Cubic  y = ax³ + bx² + cx + d",   coeffs: [
+  { type: "cubic",     label: "Cubic  y = ax³ + bx² + cx + d", coeffs: [
     { key: "a", label: "a", def: 1 }, { key: "b", label: "b", def: 0 }, { key: "c", label: "c", def: -3 }, { key: "d", label: "d", def: 0 } ] },
-  { type: "circle",    label: "Circle  (x−h)² + (y−k)² = r²",    coeffs: [
+  { type: "circle",    label: "Circle  (x−h)² + (y−k)² = r²",  coeffs: [
     { key: "h", label: "h (centre x)", def: 1 }, { key: "k", label: "k (centre y)", def: -1 }, { key: "r", label: "r (radius)", def: 3 } ] },
 ];
 
-// A worked custom case: Mixed-Strategy expected payoff E(p) over p ∈ [0, 1],
-// with the axes renamed and the maximum marked as a supplied FOI.
-const PROB_A = -4, PROB_B = 3, PROB_C = 0; // E(p) = -4p² + 3p
-const probFn = (p: number) => PROB_A * p * p + PROB_B * p + PROB_C;
+// Custom probability case: E(p) = -4p² + 3p, locked to p ∈ [0, 1].
+const PROB_A = -4, PROB_B = 3;
+const probFn = (p: number) => PROB_A * p * p + PROB_B * p;
 const probMaxP = -PROB_B / (2 * PROB_A);
 const PROB_FOIS: FOI[] = [{ x: probMaxP, y: probFn(probMaxP), kind: "vertex", label: "optimal p" }];
 
+const round = (n: number) => {
+  const r = Math.round(n * 1000) / 1000;
+  return Object.is(r, -0) ? 0 : r;
+};
+
 export default function App() {
-  const [typeIdx, setTypeIdx] = useState(1); // quadratic by default
-  const [custom, setCustom] = useState(false);
+  const [mode, setMode] = useState<Mode>("preset");
+  const [typeIdx, setTypeIdx] = useState(1); // quadratic
   const [values, setValues] = useState<Record<string, number>>(() => {
     const v: Record<string, number> = {};
     for (const p of PRESETS) for (const c of p.coeffs) v[`${p.type}.${c.key}`] = c.def;
+    // Simultaneous-equation line coefficients.
+    v["l1.m"] = 1;  v["l1.c"] = 1;
+    v["l2.m"] = -1; v["l2.c"] = 5;
     return v;
   });
+
+  const set = (key: string, raw: string) => {
+    const n = parseFloat(raw);
+    setValues((v) => ({ ...v, [key]: Number.isFinite(n) ? n : 0 }));
+  };
+  const num = (k: string, d = 0) => values[k] ?? d;
 
   const preset = PRESETS[typeIdx];
   const params = useMemo(
@@ -53,13 +71,78 @@ export default function App() {
     [preset, values],
   );
 
-  const set = (key: string, raw: string) => {
-    const n = parseFloat(raw);
-    setValues((v) => ({ ...v, [key]: Number.isFinite(n) ? n : 0 }));
-  };
+  // Mixed-strategy demo: player-A payoff against opponent's two pure strategies,
+  // as a function of A's probability p of playing strategy 1.
+  //   vs opponent-left : 3p + 0(1−p) = 3p
+  //   vs opponent-right: 1p + 4(1−p) = 4 − 3p
+  const mixLeft = (p: number) => 3 * p;
+  const mixRight = (p: number) => 4 - 3 * p;
 
-  // FOIs for the info panel (presets derive; custom uses the supplied list).
-  const fois: FOI[] = custom ? PROB_FOIS : computeFOIs(preset.type, params);
+  // Build the series + FOI summary for whichever mode is active.
+  const { grapher, fois } = useMemo(() => {
+    if (mode === "custom") {
+      return {
+        fois: PROB_FOIS,
+        grapher: (
+          <SmartGrapher
+            equationType="custom"
+            fn={probFn}
+            config={{ domain: { xMin: 0, xMax: 1 }, lockDomain: true, axisLabels: { x: "p", y: "E(payoff)" }, fois: PROB_FOIS }}
+            height={340}
+            title="Expected payoff vs p"
+          />
+        ),
+      };
+    }
+    if (mode === "simeq") {
+      const l1 = (x: number) => num("l1.m") * x + num("l1.c");
+      const l2 = (x: number) => num("l2.m") * x + num("l2.c");
+      const inter = findFunctionIntersections(l1, l2, -50, 50);
+      const series: GraphSeries[] = [
+        { equationType: "linear", params: [num("l1.m"), num("l1.c")], label: `y = ${num("l1.m")}x + ${num("l1.c")}` },
+        { equationType: "linear", params: [num("l2.m"), num("l2.c")], label: `y = ${num("l2.m")}x + ${num("l2.c")}` },
+      ];
+      return {
+        fois: inter.map((p) => ({ x: p.x, y: p.y, kind: "point", label: "solution" } as FOI)),
+        grapher: <SmartGrapher series={series} height={340} title="Simultaneous equations" />,
+      };
+    }
+    if (mode === "mixed") {
+      const inter = findFunctionIntersections(mixLeft, mixRight, 0, 1);
+      const series: GraphSeries[] = [
+        { equationType: "custom", fn: mixLeft, label: "vs opponent plays L" },
+        { equationType: "custom", fn: mixRight, label: "vs opponent plays R" },
+      ];
+      return {
+        fois: inter.map((p) => ({ x: p.x, y: p.y, kind: "point", label: "equilibrium" } as FOI)),
+        grapher: (
+          <SmartGrapher
+            series={series}
+            config={{ domain: { xMin: 0, xMax: 1 }, lockDomain: true, axisLabels: { x: "p", y: "payoff" } }}
+            height={340}
+            title="Mixed strategy — value of the game"
+          />
+        ),
+      };
+    }
+    // preset
+    return {
+      fois: computeFOIs(preset.type, params),
+      grapher: <SmartGrapher equationType={preset.type} params={params} height={340} title={preset.label} />,
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, typeIdx, JSON.stringify(params), JSON.stringify(values)]);
+
+  const modeBtn = (m: Mode, label: string, accent: string) => (
+    <button
+      onClick={() => setMode(m)}
+      className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
+        mode === m ? `text-white ${accent}` : "bg-white text-slate-600 border-slate-200 hover:border-slate-400"
+      }`}
+    >
+      {label}
+    </button>
+  );
 
   return (
     <div className="min-h-screen bg-slate-50 p-6">
@@ -79,76 +162,90 @@ export default function App() {
           {/* ── Controls ── */}
           <div className="bg-white rounded-xl shadow p-5 flex flex-col gap-4">
             <div>
-              <div className="text-sm font-semibold text-slate-700 mb-2">Curve</div>
+              <div className="text-sm font-semibold text-slate-700 mb-2">Mode</div>
               <div className="flex flex-wrap gap-2">
-                {PRESETS.map((p, i) => (
-                  <button
-                    key={p.type}
-                    onClick={() => { setCustom(false); setTypeIdx(i); }}
-                    className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
-                      !custom && typeIdx === i
-                        ? "bg-blue-600 text-white border-blue-600"
-                        : "bg-white text-slate-600 border-slate-200 hover:border-blue-400"
-                    }`}
-                  >
-                    {p.type}
-                  </button>
-                ))}
-                <button
-                  onClick={() => setCustom(true)}
-                  className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
-                    custom
-                      ? "bg-fuchsia-600 text-white border-fuchsia-600"
-                      : "bg-white text-slate-600 border-slate-200 hover:border-fuchsia-400"
-                  }`}
-                >
-                  custom (probability)
-                </button>
+                {modeBtn("preset", "single curve", "bg-blue-600 border-blue-600")}
+                {modeBtn("simeq", "simultaneous eqs", "bg-emerald-600 border-emerald-600")}
+                {modeBtn("mixed", "mixed strategy", "bg-purple-600 border-purple-600")}
+                {modeBtn("custom", "custom probability", "bg-fuchsia-600 border-fuchsia-600")}
               </div>
             </div>
 
-            {!custom ? (
+            {mode === "preset" && (
               <div>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {PRESETS.map((p, i) => (
+                    <button
+                      key={p.type}
+                      onClick={() => setTypeIdx(i)}
+                      className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
+                        typeIdx === i ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-600 border-slate-200 hover:border-blue-400"
+                      }`}
+                    >
+                      {p.type}
+                    </button>
+                  ))}
+                </div>
                 <div className="text-sm font-semibold text-slate-700 mb-2">{preset.label}</div>
                 <div className="grid grid-cols-2 gap-3">
                   {preset.coeffs.map((c) => (
                     <label key={c.key} className="flex items-center gap-2 text-sm text-slate-600">
                       <span className="w-24">{c.label}</span>
-                      <input
-                        type="number"
-                        step="any"
-                        value={values[`${preset.type}.${c.key}`] ?? c.def}
+                      <input type="number" step="any" value={values[`${preset.type}.${c.key}`] ?? c.def}
                         onChange={(e) => set(`${preset.type}.${c.key}`, e.target.value)}
-                        className="w-full px-2 py-1 rounded border border-slate-300 focus:border-blue-500 outline-none"
-                      />
+                        className="w-full px-2 py-1 rounded border border-slate-300 focus:border-blue-500 outline-none" />
                     </label>
                   ))}
                 </div>
               </div>
-            ) : (
+            )}
+
+            {mode === "simeq" && (
+              <div>
+                <div className="text-sm font-semibold text-slate-700 mb-2">Two lines — the intersection is the solution</div>
+                {(["l1", "l2"] as const).map((ln, idx) => (
+                  <div key={ln} className="grid grid-cols-2 gap-3 mb-2">
+                    <label className="flex items-center gap-2 text-sm text-slate-600">
+                      <span className="w-20">line {idx + 1}: m</span>
+                      <input type="number" step="any" value={num(`${ln}.m`)} onChange={(e) => set(`${ln}.m`, e.target.value)}
+                        className="w-full px-2 py-1 rounded border border-slate-300 focus:border-emerald-500 outline-none" />
+                    </label>
+                    <label className="flex items-center gap-2 text-sm text-slate-600">
+                      <span className="w-8">c</span>
+                      <input type="number" step="any" value={num(`${ln}.c`)} onChange={(e) => set(`${ln}.c`, e.target.value)}
+                        className="w-full px-2 py-1 rounded border border-slate-300 focus:border-emerald-500 outline-none" />
+                    </label>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {mode === "mixed" && (
               <div className="text-sm text-slate-600 space-y-2">
-                <div className="font-semibold text-slate-700">Mixed-Strategy expected payoff</div>
-                <p>
-                  A custom curve <code className="bg-slate-100 px-1 rounded">fn(p) = −4p² + 3p</code>,
-                  domain-locked to <code className="bg-slate-100 px-1 rounded">p ∈ [0, 1]</code>, axes
-                  renamed to <code className="bg-slate-100 px-1 rounded">p</code> /
-                  <code className="bg-slate-100 px-1 rounded">E(payoff)</code>, and the optimal
-                  probability supplied as a Feature of Interest.
-                </p>
-                <p>Demonstrates custom mode + special conditions in one embed.</p>
+                <div className="font-semibold text-slate-700">Mixed strategy — value of the game</div>
+                <p>Two payoff lines over A's probability <code className="bg-slate-100 px-1 rounded">p ∈ [0, 1]</code>:
+                  <br />vs L: <code className="bg-slate-100 px-1 rounded">3p</code>,
+                  vs R: <code className="bg-slate-100 px-1 rounded">4 − 3p</code>.</p>
+                <p>Their intersection is the equilibrium — auto-detected and framed.</p>
+              </div>
+            )}
+
+            {mode === "custom" && (
+              <div className="text-sm text-slate-600 space-y-2">
+                <div className="font-semibold text-slate-700">Custom probability curve</div>
+                <p><code className="bg-slate-100 px-1 rounded">fn(p) = −4p² + 3p</code>, domain-locked to
+                  <code className="bg-slate-100 px-1 rounded">p ∈ [0, 1]</code>, axes renamed, optimal p supplied as a FOI.</p>
               </div>
             )}
 
             <div className="border-t border-slate-100 pt-3">
-              <div className="text-sm font-semibold text-slate-700 mb-1">Features of Interest</div>
+              <div className="text-sm font-semibold text-slate-700 mb-1">Key points</div>
               {fois.length === 0 ? (
                 <div className="text-sm text-slate-400">none derived</div>
               ) : (
                 <ul className="text-sm text-slate-600 space-y-0.5">
                   {fois.map((f, i) => (
-                    <li key={i} className="font-mono">
-                      {f.kind}: ({round(f.x)}, {round(f.y)})
-                    </li>
+                    <li key={i} className="font-mono">{f.label ?? f.kind}: ({round(f.x)}, {round(f.y)})</li>
                   ))}
                 </ul>
               )}
@@ -160,35 +257,10 @@ export default function App() {
             <div className="text-sm font-semibold text-slate-700 mb-3">
               Live embed — click <span className="text-blue-600">Expand</span> for full interactivity
             </div>
-            {custom ? (
-              <SmartGrapher
-                equationType="custom"
-                fn={probFn}
-                config={{
-                  domain: { xMin: 0, xMax: 1 },
-                  lockDomain: true,
-                  axisLabels: { x: "p", y: "E(payoff)" },
-                  fois: PROB_FOIS,
-                }}
-                height={340}
-                title="Expected payoff vs p"
-              />
-            ) : (
-              <SmartGrapher
-                equationType={preset.type}
-                params={params}
-                height={340}
-                title={preset.label}
-              />
-            )}
+            {grapher}
           </div>
         </div>
       </div>
     </div>
   );
 }
-
-const round = (n: number) => {
-  const r = Math.round(n * 1000) / 1000;
-  return Object.is(r, -0) ? 0 : r;
-};

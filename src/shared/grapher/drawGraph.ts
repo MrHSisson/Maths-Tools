@@ -39,6 +39,15 @@ export const DEFAULT_STYLE: DrawStyle = {
   foiText: "#9d174d",
 };
 
+/** One drawable curve with its colour. */
+export interface CurveDraw {
+  spec: CurveSpec;
+  color?: string;
+}
+
+/** Default series palette (cycled when a curve gives no colour). */
+export const SERIES_COLORS = ["#2563eb", "#db2777", "#059669", "#d97706", "#7c3aed"];
+
 export interface DrawOptions {
   style?: Partial<DrawStyle>;
   axisLabels?: { x?: string; y?: string };
@@ -63,7 +72,7 @@ export function drawGraph(
   cssW: number,
   cssH: number,
   vp: Viewport,
-  spec: CurveSpec | undefined,
+  curves: CurveDraw[],
   fois: FOI[],
   opts: DrawOptions = {},
 ): void {
@@ -159,37 +168,37 @@ export function drawGraph(
     ctx.fillText(yLabel, Math.min(cssW - 40, axisX + 6), 6);
   }
 
-  // ── The curve ──
-  ctx.strokeStyle = st.curve;
+  // ── The curves (each in its own colour) ──
   ctx.lineWidth = opts.curveWidth ?? 2.5;
   ctx.lineJoin = "round";
   ctx.lineCap = "round";
+  const dLo = opts.domain?.xMin ?? -Infinity;
+  const dHi = opts.domain?.xMax ?? Infinity;
+  const yGuard = cssH * 4; // don't draw wildly off-screen segments
 
-  if (spec?.kind === "circle") {
-    const cxp = sx(spec.cx);
-    const cyp = sy(spec.cy);
-    const rp = spec.r / vp.unitsPerPixel;
-    ctx.beginPath();
-    ctx.arc(cxp, cyp, rp, 0, 2 * Math.PI);
-    ctx.stroke();
-  } else if (spec?.kind === "function") {
-    const dLo = opts.domain?.xMin ?? -Infinity;
-    const dHi = opts.domain?.xMax ?? Infinity;
-    const yGuard = cssH * 4; // don't draw wildly off-screen segments
-    ctx.beginPath();
-    let penDown = false;
-    for (let px = 0; px <= cssW; px += 1) {
-      const x = screenToMathX(px, vp, cssW);
-      if (x < dLo || x > dHi) { penDown = false; continue; }
-      const y = spec.f(x);
-      if (!Number.isFinite(y)) { penDown = false; continue; }
-      const py = sy(y);
-      if (py < -yGuard || py > cssH + yGuard) { penDown = false; continue; }
-      if (penDown) ctx.lineTo(px, py);
-      else { ctx.moveTo(px, py); penDown = true; }
+  curves.forEach((c, i) => {
+    const spec = c.spec;
+    ctx.strokeStyle = c.color ?? SERIES_COLORS[i % SERIES_COLORS.length] ?? st.curve;
+    if (spec.kind === "circle") {
+      ctx.beginPath();
+      ctx.arc(sx(spec.cx), sy(spec.cy), spec.r / vp.unitsPerPixel, 0, 2 * Math.PI);
+      ctx.stroke();
+    } else {
+      ctx.beginPath();
+      let penDown = false;
+      for (let px = 0; px <= cssW; px += 1) {
+        const x = screenToMathX(px, vp, cssW);
+        if (x < dLo || x > dHi) { penDown = false; continue; }
+        const y = spec.f(x);
+        if (!Number.isFinite(y)) { penDown = false; continue; }
+        const py = sy(y);
+        if (py < -yGuard || py > cssH + yGuard) { penDown = false; continue; }
+        if (penDown) ctx.lineTo(px, py);
+        else { ctx.moveTo(px, py); penDown = true; }
+      }
+      ctx.stroke();
     }
-    ctx.stroke();
-  }
+  });
 
   // ── Feature-of-interest dots + labels ──
   if (showFois) {

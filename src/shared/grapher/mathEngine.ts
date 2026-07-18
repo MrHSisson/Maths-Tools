@@ -203,6 +203,61 @@ export function buildCurveSpec(
   }
 }
 
+// ── Intersections (for simultaneous equations / mixed strategies) ────────────
+
+/**
+ * Real intersection points of two single-valued curves y = f(x) and y = g(x)
+ * over [xMin, xMax], found by scanning h(x) = f(x) − g(x) for sign changes and
+ * refining each with bisection. Robust for the teaching cases (line/line,
+ * line/quadratic, quadratic/quadratic, payoff lines) without any analytic
+ * special-casing.
+ */
+export function findFunctionIntersections(
+  f: (x: number) => number,
+  g: (x: number) => number,
+  xMin: number,
+  xMax: number,
+  samples = 800,
+): Array<{ x: number; y: number }> {
+  if (!(xMax > xMin)) return [];
+  const h = (x: number) => f(x) - g(x);
+  const out: Array<{ x: number; y: number }> = [];
+  const push = (x: number) => {
+    const y = f(x);
+    if (Number.isFinite(x) && Number.isFinite(y) && !out.some((o) => near(o.x, x, 1e-6))) {
+      out.push({ x, y });
+    }
+  };
+
+  let prevX = xMin;
+  let prevH = h(xMin);
+  if (Number.isFinite(prevH) && Math.abs(prevH) < 1e-9) push(prevX);
+
+  for (let i = 1; i <= samples; i++) {
+    const x = xMin + ((xMax - xMin) * i) / samples;
+    const hx = h(x);
+    if (Number.isFinite(prevH) && Number.isFinite(hx)) {
+      if ((prevH < 0 && hx > 0) || (prevH > 0 && hx < 0)) {
+        // Bisection between the bracketing samples.
+        let lo = prevX, hi = x, flo = prevH;
+        for (let k = 0; k < 60; k++) {
+          const mid = (lo + hi) / 2;
+          const fm = h(mid);
+          if (Math.abs(fm) < 1e-12) { lo = hi = mid; break; }
+          if ((flo < 0 && fm < 0) || (flo > 0 && fm > 0)) { lo = mid; flo = fm; }
+          else { hi = mid; }
+        }
+        push((lo + hi) / 2);
+      } else if (Math.abs(hx) < 1e-9) {
+        push(x);
+      }
+    }
+    prevX = x;
+    prevH = hx;
+  }
+  return out.sort((a, b) => a.x - b.x);
+}
+
 // ── Framing — FOIs + curve → ideal viewport ──────────────────────────────────
 
 function dedupeFOIs(fois: FOI[]): FOI[] {
@@ -245,7 +300,7 @@ function sampleYExtent(f: (x: number) => number, xMin: number, xMax: number): [n
  */
 export function computeFrame(
   fois: FOI[],
-  spec: CurveSpec | undefined,
+  specs: CurveSpec | CurveSpec[] | undefined,
   cssW: number,
   cssH: number,
   opts: FrameOptions = {},
@@ -254,6 +309,7 @@ export function computeFrame(
   const H = cssH > 0 ? cssH : 300;
   const pad = opts.padding ?? 0.15;
   const dom = opts.domain;
+  const specList: CurveSpec[] = specs == null ? [] : Array.isArray(specs) ? specs : [specs];
 
   const box: Box = { xMin: Infinity, xMax: -Infinity, yMin: Infinity, yMax: -Infinity };
   const addX = (x: number) => { if (x < box.xMin) box.xMin = x; if (x > box.xMax) box.xMax = x; };
@@ -272,14 +328,16 @@ export function computeFrame(
   if (!Number.isFinite(box.xMin) || !Number.isFinite(box.xMax)) { box.xMin = -5; box.xMax = 5; }
   if (near(box.xMin, box.xMax)) { box.xMin -= 5; box.xMax += 5; }
 
-  // 2. Y-range: FOIs plus a sample of the curve across the x-range.
+  // 2. Y-range: FOIs plus a sample of every curve across the x-range.
   for (const f of fois) addY(f.y);
-  if (spec?.kind === "function") {
-    const [lo, hi] = sampleYExtent(spec.f, box.xMin, box.xMax);
-    addY(lo); addY(hi);
-  } else if (spec?.kind === "circle") {
-    addX(spec.cx - spec.r); addX(spec.cx + spec.r);
-    addY(spec.cy - spec.r); addY(spec.cy + spec.r);
+  for (const spec of specList) {
+    if (spec.kind === "function") {
+      const [lo, hi] = sampleYExtent(spec.f, box.xMin, box.xMax);
+      addY(lo); addY(hi);
+    } else if (spec.kind === "circle") {
+      addX(spec.cx - spec.r); addX(spec.cx + spec.r);
+      addY(spec.cy - spec.r); addY(spec.cy + spec.r);
+    }
   }
   if (dom?.yMin !== undefined) addY(dom.yMin);
   if (dom?.yMax !== undefined) addY(dom.yMax);
