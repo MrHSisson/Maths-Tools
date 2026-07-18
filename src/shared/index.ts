@@ -62,3 +62,14 @@ export {
 export { InfoModal } from "./components/InfoModal";
 export { MenuDropdown } from "./components/MenuDropdown";
 export { PrintSplitButton } from "./components/PrintSplitButton";
+
+// SmartGrapher — embeddable canvas graphing component + its maths engine.
+export { SmartGrapher } from "./grapher/SmartGrapher";
+export type { SmartGrapherProps, GrapherConfig } from "./grapher/SmartGrapher";
+export {
+  computeFOIs, computeFrame, buildCurveSpec,
+  getLinearFOIs, getQuadraticFOIs, getCubicFOIs, getCircleFOIs,
+  quadraticRoots, cubicRoots, niceStep,
+  mathToScreenX, mathToScreenY, screenToMathX, screenToMathY,
+} from "./grapher/mathEngine";
+export type { EquationType, FOI, Viewport, CurveSpec, FrameOptions } from "./grapher/mathEngine";

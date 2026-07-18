@@ -1,0 +1,210 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// drawGraph.ts — the imperative canvas painter.
+//
+// One pure-ish draw pass: given a 2D context, the CSS size, the current viewport
+// and the curve + FOIs, it clears and repaints axes, gridlines, the curve and
+// feature dots. No React, no state — it is called from an rAF loop and from the
+// initial paint, so both the inline thumbnail and the interactive overlay render
+// through exactly the same code and look identical.
+//
+// The context is assumed pre-scaled to devicePixelRatio (ctx.setTransform(dpr…)),
+// so everything here is authored in CSS pixels.
+// ─────────────────────────────────────────────────────────────────────────────
+
+import {
+  type CurveSpec, type FOI, type Viewport,
+  mathToScreenX, mathToScreenY, screenToMathX, niceStep,
+} from "./mathEngine";
+
+export interface DrawStyle {
+  background: string;
+  gridMinor: string;
+  gridMajor: string;
+  axis: string;
+  axisText: string;
+  curve: string;
+  foi: string;
+  foiText: string;
+}
+
+/** Clean, print-friendly default palette (light). */
+export const DEFAULT_STYLE: DrawStyle = {
+  background: "#ffffff",
+  gridMinor: "#eef2f7",
+  gridMajor: "#dbe3ec",
+  axis: "#334155",
+  axisText: "#64748b",
+  curve: "#2563eb",
+  foi: "#db2777",
+  foiText: "#9d174d",
+};
+
+export interface DrawOptions {
+  style?: Partial<DrawStyle>;
+  axisLabels?: { x?: string; y?: string };
+  showFois?: boolean;
+  showTickLabels?: boolean;
+  /** Line width for the plotted curve, in CSS px. Default 2.5. */
+  curveWidth?: number;
+  /** Clamp plotting to this x-domain (e.g. probability 0–1). */
+  domain?: { xMin?: number; xMax?: number };
+}
+
+/** Format a tick value without floating-point noise. */
+function fmtTick(v: number, step: number): string {
+  if (Math.abs(v) < step / 1e6) return "0";
+  const dp = Math.max(0, -Math.floor(Math.log10(step)) + (step < 1 ? 0 : 0));
+  const s = v.toFixed(Math.min(6, Math.max(0, dp)));
+  return s.replace(/\.?0+$/, "");
+}
+
+export function drawGraph(
+  ctx: CanvasRenderingContext2D,
+  cssW: number,
+  cssH: number,
+  vp: Viewport,
+  spec: CurveSpec | undefined,
+  fois: FOI[],
+  opts: DrawOptions = {},
+): void {
+  const st = { ...DEFAULT_STYLE, ...(opts.style ?? {}) };
+  const showFois = opts.showFois ?? true;
+  const showTicks = opts.showTickLabels ?? true;
+  const sx = (x: number) => mathToScreenX(x, vp, cssW);
+  const sy = (y: number) => mathToScreenY(y, vp, cssH);
+
+  // ── Background ──
+  ctx.clearRect(0, 0, cssW, cssH);
+  ctx.fillStyle = st.background;
+  ctx.fillRect(0, 0, cssW, cssH);
+
+  // ── Gridline step: aim for ~70px spacing, snapped to a nice 1/2/5 value ──
+  const targetPx = 70;
+  const step = niceStep(vp.unitsPerPixel * targetPx);
+
+  const xMinMath = screenToMathX(0, vp, cssW);
+  const xMaxMath = screenToMathX(cssW, vp, cssW);
+  const yTopMath = vp.centreY + (cssH / 2) * vp.unitsPerPixel;
+  const yBotMath = vp.centreY - (cssH / 2) * vp.unitsPerPixel;
+
+  const firstX = Math.ceil(xMinMath / step) * step;
+  const firstY = Math.ceil(yBotMath / step) * step;
+
+  // ── Minor + major gridlines ──
+  ctx.lineWidth = 1;
+  ctx.font = "11px ui-sans-serif, system-ui, sans-serif";
+  ctx.textBaseline = "top";
+
+  for (let x = firstX; x <= xMaxMath + step / 2; x += step) {
+    const px = sx(x);
+    ctx.strokeStyle = Math.abs(x) < step / 1e6 ? st.gridMajor : st.gridMinor;
+    ctx.beginPath();
+    ctx.moveTo(px, 0);
+    ctx.lineTo(px, cssH);
+    ctx.stroke();
+  }
+  for (let y = firstY; y <= yTopMath + step / 2; y += step) {
+    const py = sy(y);
+    ctx.strokeStyle = Math.abs(y) < step / 1e6 ? st.gridMajor : st.gridMinor;
+    ctx.beginPath();
+    ctx.moveTo(0, py);
+    ctx.lineTo(cssW, py);
+    ctx.stroke();
+  }
+
+  // ── Axes (x = 0 and y = 0), clamped to the visible edge ──
+  const axisX = Math.min(cssW, Math.max(0, sx(0)));
+  const axisY = Math.min(cssH, Math.max(0, sy(0)));
+  ctx.strokeStyle = st.axis;
+  ctx.lineWidth = 1.5;
+  // y-axis
+  ctx.beginPath(); ctx.moveTo(axisX, 0); ctx.lineTo(axisX, cssH); ctx.stroke();
+  // x-axis
+  ctx.beginPath(); ctx.moveTo(0, axisY); ctx.lineTo(cssW, axisY); ctx.stroke();
+
+  // ── Tick labels along the axes ──
+  if (showTicks) {
+    ctx.fillStyle = st.axisText;
+    ctx.textBaseline = "top";
+    ctx.textAlign = "center";
+    for (let x = firstX; x <= xMaxMath + step / 2; x += step) {
+      if (Math.abs(x) < step / 1e6) continue;
+      const px = sx(x);
+      const ly = Math.min(cssH - 14, Math.max(2, axisY + 4));
+      ctx.fillText(fmtTick(x, step), px, ly);
+    }
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+    for (let y = firstY; y <= yTopMath + step / 2; y += step) {
+      if (Math.abs(y) < step / 1e6) continue;
+      const py = sy(y);
+      const lx = Math.min(cssW - 4, Math.max(20, axisX - 6));
+      ctx.fillText(fmtTick(y, step), lx, py);
+    }
+  }
+
+  // ── Axis name labels (custom, e.g. p / E(payoff)) ──
+  const xLabel = opts.axisLabels?.x;
+  const yLabel = opts.axisLabels?.y;
+  ctx.fillStyle = st.axisText;
+  ctx.font = "italic 13px ui-sans-serif, system-ui, sans-serif";
+  if (xLabel) {
+    ctx.textAlign = "right";
+    ctx.textBaseline = "bottom";
+    ctx.fillText(xLabel, cssW - 6, Math.min(cssH - 4, axisY - 6) + 0);
+  }
+  if (yLabel) {
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillText(yLabel, Math.min(cssW - 40, axisX + 6), 6);
+  }
+
+  // ── The curve ──
+  ctx.strokeStyle = st.curve;
+  ctx.lineWidth = opts.curveWidth ?? 2.5;
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+
+  if (spec?.kind === "circle") {
+    const cxp = sx(spec.cx);
+    const cyp = sy(spec.cy);
+    const rp = spec.r / vp.unitsPerPixel;
+    ctx.beginPath();
+    ctx.arc(cxp, cyp, rp, 0, 2 * Math.PI);
+    ctx.stroke();
+  } else if (spec?.kind === "function") {
+    const dLo = opts.domain?.xMin ?? -Infinity;
+    const dHi = opts.domain?.xMax ?? Infinity;
+    const yGuard = cssH * 4; // don't draw wildly off-screen segments
+    ctx.beginPath();
+    let penDown = false;
+    for (let px = 0; px <= cssW; px += 1) {
+      const x = screenToMathX(px, vp, cssW);
+      if (x < dLo || x > dHi) { penDown = false; continue; }
+      const y = spec.f(x);
+      if (!Number.isFinite(y)) { penDown = false; continue; }
+      const py = sy(y);
+      if (py < -yGuard || py > cssH + yGuard) { penDown = false; continue; }
+      if (penDown) ctx.lineTo(px, py);
+      else { ctx.moveTo(px, py); penDown = true; }
+    }
+    ctx.stroke();
+  }
+
+  // ── Feature-of-interest dots + labels ──
+  if (showFois) {
+    ctx.font = "11px ui-sans-serif, system-ui, sans-serif";
+    for (const f of fois) {
+      const px = sx(f.x);
+      const py = sy(f.y);
+      if (px < -20 || px > cssW + 20 || py < -20 || py > cssH + 20) continue;
+      ctx.fillStyle = st.foi;
+      ctx.beginPath();
+      ctx.arc(px, py, 3.5, 0, 2 * Math.PI);
+      ctx.fill();
+      ctx.strokeStyle = st.background;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+  }
+}
