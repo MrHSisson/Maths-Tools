@@ -56,6 +56,69 @@ techniques engine restores per-tool pedagogy *once, reusably*.
 - ⬜ "Expand and rearrange to equal zero" jumps to the collected quadratic — the `(2x−5)²` expansion isn't shown.
 - ⬜ Cosmetic `− 1x` (should be `− x`) in some parabola expansions.
 
+### Technique audit — the backlog of moves
+
+Candidate techniques extracted from the working steps of all published tools
+(`mStep` step-titles by grep for v2.3 tools; the 3 old-shell tools' moves inferred
+from topic and to be **confirmed on migration**). This is the build backlog for the
+engine above — start with the high-frequency rows. Status: ✅ built · 🚧 partial · ⬜ needed.
+
+Method: `grep -hoE 'mStep\(\s*[\`"'"'"']...' src/tools` gives the raw move vocabulary;
+the same move is worded many ways (`Expand:` / `Expand brackets:` / `Expand the
+square brackets:`), so the clustering below normalises them.
+
+**Algebra & cross-cutting**
+
+| Technique | Move | Used by (tool · sub-tool) | Priority | Status |
+|---|---|---|---|---|
+| `solveLinearEquation` | isolate, collect, divide to solve `ax+b=c` | SolvingLinearEquations, EquationsOfLines, CompletingTheSquare, SimEq | **high** | 🚧 `solveLinearEquationSteps` (grain-aware) exists |
+| `expandBrackets` | expand single / double / squared brackets (FOIL, grid) | ExpandingBrackets, CompletingTheSquare, SolvingLinearEquations, SimEq | **high** | ⬜ |
+| `substitute` | substitute a value/expression into an equation or formula | SimEq, EquationsOfLines, NonLinearSimEq, CompletingTheSquare | **high** | 🚧 `substituteBackSteps` exists (substitute-back only) |
+| `collectLikeTerms` | gather like terms | CollectingLikeTerms, ExpandingBrackets | med | ⬜ |
+| `makeSubject` / rearrange | rearrange an equation for one variable | SimEq, EquationsOfLines, NonLinearSimEq | med | 🚧 `makeSubjectSteps` exists (brief only) |
+| `factoriseQuadratic` | factorise → set factors to zero → roots | CompletingTheSquare, NonLinearSimEq | med | 🚧 `solveFactorsSteps` (read-the-roots half) exists |
+| `quadraticFormula` | formula → substitute → discriminant → roots | NonLinearSimEq (+ any quadratic) | med | ✅ `quadraticFormulaSteps` (grain-aware) |
+| `completeTheSquare` | half the x-coefficient, form `(x+p)²+q` | CompletingTheSquare | low | ⬜ (self-contained; good skill) |
+| `solveByElimination` | scale equations, add/subtract to eliminate | SimultaneousEquations | med | ⬜ |
+| `solveByIteration` | change-of-sign interval, iterate, bound-test | Iterations | low | ⬜ |
+
+**Number**
+
+| Technique | Move | Used by | Priority | Status |
+|---|---|---|---|---|
+| `simplifyFraction` | divide num & den by a common factor | FractionsAddSub, FractionMultDiv | **high** | ⬜ (foundational sub-move) |
+| `fractionOfAmount` | ÷ by denominator, × by numerator | FractionsOfAmounts *(old shell)* | **high** | ⬜ |
+| `convertMixedImproper` | mixed ⇄ improper fraction | FractionsAddSub, FractionMultDiv | med | ⬜ (shared sub-move) |
+| `addSubtractFractions` | common denominator (LCM), add/subtract, regroup | FractionsAddSub | med | ⬜ (already links `[[lcm]]`) |
+| `multiplyDivideFractions` | keep-flip-change, multiply across | FractionMultDiv | med | ⬜ |
+| `roundToSigFig` | round each value to 1 s.f. | Estimation | med | ⬜ (foundational) |
+
+**Ratio & Proportion**
+
+| Technique | Move | Used by | Priority | Status |
+|---|---|---|---|---|
+| `shareInRatio` | total parts → 1 part → each share | RatioSharingTool | **high** | ⬜ |
+| `convertFractionRatio` | fraction ⇄ ratio | FractionToRatio *(old shell)* | med | ⬜ |
+| `simplifyRatio` | divide parts by a common factor | FractionToRatio, SimplifyingRatiosTool *(dev)* | med | ⬜ |
+| `unitPriceCompare` | price ÷ quantity, compare | BestBuys | low | ⬜ |
+| `scaleRecipe` | scale ingredients by a factor | RecipesTool | low | ⬜ |
+
+**Geometry**
+
+| Technique | Move | Used by | Priority | Status |
+|---|---|---|---|---|
+| `applyAngleFact` | sum to 180/360, isosceles, exterior, on a line/point | AnglesInTriangles *(old shell)*, BasicAngleFacts, AnglesInQuadrilaterals, AnglesInParallelLines | **high** | ⬜ (diagram tools — the reasoning IS the move) |
+| `gradientIntercept` | gradient formula, `y = mx + c`, solve for c | EquationsOfLines | med | ⬜ |
+| `circleFormula` | circumference / area / arc / sector | CircleProperties | med | ⬜ (self-contained) |
+
+**Reading of the audit:** ~24 candidate techniques; six exist in some form. Frequency
+concentrates on a handful — `solveLinearEquation`, `expandBrackets`, `substitute`,
+`simplifyFraction`, `collectLikeTerms`, `makeSubject`, `shareInRatio`,
+`fractionOfAmount`, `applyAngleFact`. Build those first; they cover most tools and
+each doubles as a needed skill (§2). Old-shell rows (`fractionOfAmount`,
+`convertFractionRatio`, `applyAngleFact`) are inferred — confirm the exact moves when
+those tools migrate (§6).
+
 ---
 
 ## 2. Skills library
