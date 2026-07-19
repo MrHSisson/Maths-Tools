@@ -1,6 +1,7 @@
 import {
-  ToolShell, MathRenderer, handleDiagramPrint,
+  ToolShell, MathRenderer, SmartGrapher, handleDiagramPrint,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type QOSnapshot,
+  type GraphSeries, type FOI,
   randInt, pick, mStep, tStep,
 } from "../shared";
 
@@ -150,7 +151,7 @@ const questionRenderer = (q: AnyQuestion, showAns: boolean, _cs: string, compact
     // No width:100% — under a flex/align-center parent (and inside ScaleToFit in
     // fullscreen) the box then sizes to its content, so the fullscreen scaler can
     // measure the real width and shrink it to fit instead of clipping.
-    return <div className={fontClass} style={{ color: "#166534", fontWeight: 700 }}>{answerBody(q, isFS)}</div>;
+    return <div className={fontClass} style={{ color: "#166534", fontWeight: 700 }}>{answerBody(q)}</div>;
   }
   const maxW = compact === true ? (n >= 4 ? 260 : 230) : compact === undefined ? 380 : 470;
   return (
@@ -337,11 +338,15 @@ const colinSteps = (co: Core2, cLeft: string): WorkingStep[] => {
 };
 
 // Level 3 graphical reasoning around the third (unused) column.
-const graphSteps = (co: Core2, c3: [number, number], c3Lab: string, cA: string, cB: string): WorkingStep[] => {
+const graphSteps = (co: Core2, c3: [number, number], c3Lab: string, cA: string, cB: string, graph: GraphData): WorkingStep[] => {
   const [e, f] = c3;
   const E3 = mkFrac(e * co.p.n + f * (co.p.d - co.p.n), co.p.d);   // E3(p*)
+  // The plotting step carries the graph data so the worked-example stepRenderer
+  // can draw the SmartGrapher right where the method says to plot it.
+  const plot: WorkingStep = tStep("Plot each column's expected payoff as a line against $p$. Colin takes the lowest line, so Rose maximises the lower envelope — its highest point is the answer.");
+  plot.extra = { graph };
   return [
-    tStep("Plot each column's expected payoff as a line against $p$. Colin takes the lowest line, so Rose maximises the lower envelope — its highest point is the answer."),
+    plot,
     mStep(`The lower envelope peaks where columns $${cA}$ and $${cB}$ cross, giving the $p$ found below.`,
       `p = ${fLatex(co.p)}`),
     mStep(`Check the third line $${c3Lab}$ at that $p$:`,
@@ -377,88 +382,68 @@ interface GraphData {
   rTop: string; rBot: string;
 }
 
-const LINE_COLORS = ["#2563eb", "#059669"];       // binding columns
-const C3_COLOR = "#94a3b8";                        // unused column (dashed)
+const LINE_COLORS = ["#2563eb", "#059669", "#d97706"];   // one per column line
 
+// The lower-envelope plot, rendered by the shared SmartGrapher: each column's
+// expected payoff is a line E(p) = top·p + bot·(1−p) over p ∈ [0, 1], all three
+// solid and colour-coded. Only the peak of the lower envelope is highlighted (a
+// ringed marker, no coordinate) — students still have to solve the two line
+// equations to find p and the value. Expandable to fullscreen via the embed.
 const GraphView = ({ g }: { g: GraphData }): JSX.Element => {
-  const W = 460, H = 320, mL = 46, mR = 96, mT = 18, mB = 42;
-  const cid = "clip" + Math.round(g.p * 1e6) + "_" + Math.round(g.V * 1e6);
-  // Scale to the binding lines, the value, and each unused line's height AT p*
-  // (not its extreme endpoints) so the crossing fills the frame; clip overflow.
-  const bind = g.lines.filter((l) => l.binding).flatMap((l) => [l.top, l.bot]);
-  const e3s = g.lines.filter((l) => !l.binding).map((l) => l.top * g.p + l.bot * (1 - g.p));
-  const focus = [...bind, g.V, ...e3s];
-  let yMin = Math.min(...focus), yMax = Math.max(...focus);
-  const pad = Math.max(1, (yMax - yMin) * 0.14);
-  yMin -= pad; yMax += pad;
-  const px = (p: number) => mL + p * (W - mL - mR);
-  const py = (v: number) => mT + ((yMax - v) / (yMax - yMin)) * (H - mT - mB);
-  const y0 = py(g.V), x0 = px(g.p);
-
+  const series: GraphSeries[] = g.lines.map((l, i) => ({
+    equationType: "linear",
+    params: [l.top - l.bot, l.bot],                 // E(p) = (top − bot)·p + bot
+    label: uniSub(l.label),
+    color: LINE_COLORS[i % LINE_COLORS.length],
+  }));
+  const fois: FOI[] = [{ x: g.p, y: g.V, kind: "point", highlight: true }];
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} style={{ display: "block", width: "100%", height: "auto", maxWidth: 460, margin: "0 auto" }} preserveAspectRatio="xMidYMid meet">
-      <defs><clipPath id={cid}><rect x={mL} y={mT} width={W - mL - mR} height={H - mT - mB} /></clipPath></defs>
-      {/* plot frame */}
-      <rect x={mL} y={mT} width={W - mL - mR} height={H - mT - mB} fill="#ffffff" stroke="#e2e8f0" />
-      <g clipPath={`url(#${cid})`}>
-        {/* zero payoff line, if in range */}
-        {yMin < 0 && yMax > 0 && (
-          <line x1={mL} y1={py(0)} x2={W - mR} y2={py(0)} stroke="#cbd5e1" strokeDasharray="2 3" />
-        )}
-        {/* value guide lines */}
-        <line x1={mL} y1={y0} x2={x0} y2={y0} stroke="#dc2626" strokeDasharray="4 3" strokeWidth={1.3} />
-        <line x1={x0} y1={y0} x2={x0} y2={H - mB} stroke="#dc2626" strokeDasharray="4 3" strokeWidth={1.3} />
-        {/* payoff lines */}
-        {g.lines.map((l, i) => {
-          const col = l.binding ? LINE_COLORS[i % 2] : C3_COLOR;
-          return (
-            <line key={i} x1={px(0)} y1={py(l.bot)} x2={px(1)} y2={py(l.top)} stroke={col} strokeWidth={l.binding ? 2.4 : 1.8} strokeDasharray={l.binding ? undefined : "6 4"} />
-          );
-        })}
-        {/* optimal point */}
-        <circle cx={x0} cy={y0} r={4.5} fill="#dc2626" />
-      </g>
-      {/* legend (outside the plot, never clipped) */}
-      {g.lines.map((l, i) => (
-        <text key={i} x={W - mR + 8} y={mT + 16 + i * 18} fontSize={13} fill={l.binding ? LINE_COLORS[i % 2] : C3_COLOR} fontWeight={l.binding ? 600 : 400}>
-          {uniSub(l.label)}{l.binding ? "" : " (unused)"}
-        </text>
-      ))}
-      {/* axes */}
-      <line x1={mL} y1={mT} x2={mL} y2={H - mB} stroke="#334155" strokeWidth={1.5} />
-      <line x1={mL} y1={H - mB} x2={W - mR} y2={H - mB} stroke="#334155" strokeWidth={1.5} />
-      {/* x ticks: p = 0 (all R_bot) .. 1 (all R_top) */}
-      <text x={mL} y={H - mB + 18} fontSize={12} fill="#334155" textAnchor="middle">0</text>
-      <text x={W - mR} y={H - mB + 18} fontSize={12} fill="#334155" textAnchor="middle">1</text>
-      <text x={(mL + W - mR) / 2} y={H - 6} fontSize={13} fill="#334155" textAnchor="middle">p = P({uniSub(g.rTop)})</text>
-      <text x={x0} y={H - mB + 18} fontSize={12} fill="#dc2626" textAnchor="middle" fontWeight={600}>p*</text>
-      {/* y label */}
-      <text x={14} y={mT + (H - mT - mB) / 2} fontSize={13} fill="#334155" textAnchor="middle" transform={`rotate(-90 14 ${mT + (H - mT - mB) / 2})`}>Expected payoff</text>
-      <text x={mL - 6} y={y0 + 4} fontSize={12} fill="#dc2626" textAnchor="end" fontWeight={600}>V</text>
-    </svg>
+    <SmartGrapher
+      series={series}
+      height={300}
+      config={{
+        domain: { xMin: 0, xMax: 1 },
+        lockDomain: true,
+        axisLabels: { x: `p = P(${uniSub(g.rTop)})`, y: "Expected payoff" },
+        autoIntersections: false,   // only the peak is marked, not every crossing
+        autoFois: false,
+        fois,
+        style: { foi: "#dc2626" },
+      }}
+    />
   );
 };
 
 // The answer body: algebraic answer, plus the graph for Level 3. Shared by the
 // answerRenderer (worked example / worksheet) and the whiteboard questionRenderer
 // (the shell suppresses its own answer block when a questionRenderer is present).
-const answerBody = (q: AnyQuestion, withGraph: boolean): JSX.Element => {
-  const g = (q as any)._graph as GraphData | undefined;
+const answerBody = (q: AnyQuestion): JSX.Element => {
   const latex = (q as any).answerLatex as string | undefined;
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
       {latex && <MathRenderer latex={latex} />}
-      {withGraph && g && (
-        <div style={{ width: "100%", maxWidth: 460, background: "#ffffff", borderRadius: 10, padding: "10px 8px", boxShadow: "0 1px 3px rgba(0,0,0,0.12)" }}>
-          <GraphView g={g} />
-        </div>
-      )}
     </div>
   );
 };
-// Worked example / worksheet answers get the graph; the whiteboard answer is
-// rendered text-only from questionRenderer (its box is too small for the plot).
-const answerRenderer = (q: AnyQuestion): JSX.Element | null => answerBody(q, true);
+// The answer is text-only (the algebraic result). The graph lives in its own
+// worked-example step cell, not in the answer.
+const answerRenderer = (q: AnyQuestion): JSX.Element | null => answerBody(q);
+
+// The worked example draws the graph inline at the plotting step (which carries
+// the graph data on step.extra), so it appears exactly where the method says to
+// plot it. All other steps fall through to the shell's default rendering.
+const stepRenderer = (s: WorkingStep): JSX.Element | null => {
+  const g = (s.extra as { graph?: GraphData } | undefined)?.graph;
+  if (!g) return null;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <span>{s.plain}</span>
+      <div style={{ width: "100%", maxWidth: 480, margin: "0 auto" }}>
+        <GraphView g={g} />
+      </div>
+    </div>
+  );
+};
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TOOL CONFIG
@@ -627,7 +612,16 @@ const generateQuestion = (
       `${A.cLab[A.colDecoy.at]} > ${A.cLab[A.colDecoy.by]}`));
     working.push(tStep(`The remaining columns $${cA}$, $${cB}$ and $${c3Lab}$ have no dominance between them — a graph is needed.`));
   }
-  working.push(...graphSteps(co, c3, c3Lab, cA, cB));
+  const graph: GraphData = {
+    lines: [
+      { label: cA, top: co.a, bot: co.c, binding: true },
+      { label: cB, top: co.b, bot: co.d, binding: true },
+      { label: c3Lab, top: c3[0], bot: c3[1], binding: false },
+    ],
+    p: fVal(co.p), pLatex: fLatex(co.p), vLatex: fLatex(co.V), V: fVal(co.V),
+    rTop: A.rLab[A.bindRows[0]], rBot: A.rLab[A.bindRows[1]],
+  };
+  working.push(...graphSteps(co, c3, c3Lab, cA, cB, graph));
   working.push(...roseSteps(co, A.rLab[A.bindRows[0]], cA));
 
   return {
@@ -637,15 +631,7 @@ const generateQuestion = (
     answer: `p = ${fPlain(co.p)}, V = ${fPlain(co.V)}`,
     answerLatex: answerLatex(co, A.rLab[A.bindRows[0]], A.rLab[A.bindRows[1]], cA, cB, false, true, c3Lab),
     working,
-    _graph: {
-      lines: [
-        { label: cA, top: co.a, bot: co.c, binding: true },
-        { label: cB, top: co.b, bot: co.d, binding: true },
-        { label: c3Lab, top: c3[0], bot: c3[1], binding: false },
-      ],
-      p: fVal(co.p), pLatex: fLatex(co.p), vLatex: fLatex(co.V), V: fVal(co.V),
-      rTop: A.rLab[A.bindRows[0]], rBot: A.rLab[A.bindRows[1]],
-    } as GraphData,
+    _graph: graph,
     _matrix: A.M, _aspect: tblW(A.M[0].length) / tblH(A.M.length),
     key: `l3-${wrapper}-${co.a}-${co.b}-${co.c}-${co.d}-${c3[0]}-${c3[1]}-${id}`,
     difficulty: level,
@@ -663,6 +649,7 @@ export default function App() {
       generateQuestion={generateQuestion}
       questionRenderer={questionRenderer}
       answerRenderer={answerRenderer}
+      stepRenderer={stepRenderer}
       customPrintHandler={handleDiagramPrint}
       defaults={{ numQuestions: 6, numColumns: 2, maxColumns: 3, hideFontControls: true }}
     />

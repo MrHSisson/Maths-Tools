@@ -142,7 +142,10 @@ export default function LandingPage(): JSX.Element {
   // tools are sorted to the end of their section (sort is stable, so the
   // relative order within each group is preserved).
   const visibleIn = (tools: typeof categories[number]['tools']) => {
-    const shown = devMode ? tools : tools.filter(t => t.enabled !== false);
+    // `hidden` tools are never listed — not even in developing mode (their route
+    // still works by direct URL). Otherwise dev mode reveals enabled:false tools.
+    const listable = tools.filter(t => !t.hidden);
+    const shown = devMode ? listable : listable.filter(t => t.enabled !== false);
     return [...shown].sort(
       (a, b) => (a.enabled === false ? 1 : 0) - (b.enabled === false ? 1 : 0),
     );
