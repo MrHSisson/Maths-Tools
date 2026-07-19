@@ -123,7 +123,6 @@ grep -L "<ToolShell" src/tools/**/*.tsx   # files that do NOT render the shared 
 ```
 
 Tools currently needing migration (still on an embedded old shell, enabled):
-- `src/tools/Algebra/NonLinearSimEq.tsx`
 - `src/tools/Proportion/FractionsOfAmounts.tsx`
 - `src/tools/Proportion/FractionToRatio.tsx`
 - `src/tools/Geometry/AnglesInTriangles.tsx`
