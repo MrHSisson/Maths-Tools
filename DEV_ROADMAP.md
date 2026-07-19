@@ -128,9 +128,45 @@ Small slide-sequences that each teach ONE core skill (`src/shared/skills/`), bro
 **State:** 🚧 only two skills exist — `lcm` (from times tables) and `lcm-prime-factors`. CI validates every skill.
 
 **Next:**
-- ⬜ **Author more skills** for the prerequisites tools link to (equivalent fractions, factorise a quadratic, solve a linear equation, rearrange to make x the subject, …).
 - ⬜ **Skill ⇄ technique unification** — a skill's `full`-grain teaching and a technique's `full` output are the *same pedagogy*. Let a skill embed a technique's `full` steps as its (text) spine so there is one source; the skill layers visuals on top. Prototype on one skill.
 - ⬜ **Link `brief` technique steps to their skill** via `[[skill|term]]`, so an assumed move drills down to the full visual teaching.
+
+### Skills to develop
+
+Derived from the technique audit (§1): a skill is the drill-down teaching for a
+prerequisite a tool *uses but doesn't teach*. The **Representation / scene** column
+also signals effort — skills on an existing scene family are cheap; those needing a
+new scene type (area model, negative counters) cost more (§3). Many of these ARE a
+technique's `full` grain — build the two together. Status: ✅ done · ⬜ needed.
+
+| Skill (id) | Teaches | Needed by | Representation / scene | Priority | Status |
+|---|---|---|---|---|---|
+| `lcm` / `lcm-prime-factors` | lowest common multiple | add/subtract fractions | number line `multiples`; prime tiles `factorTree`/`primeVenn` | — | ✅ |
+| `equivalent-fractions` | scale num & den by the same factor | add/subtract fractions, simplify fraction, fraction↔ratio | **bar model** `split`/`equivalents` *(exist)* | **high** | ⬜ |
+| `simplify-fraction` | divide num & den by the HCF | fractions, ratios | **bar model** *(exists)* | **high** | ⬜ |
+| `hcf` | highest common factor | simplify fraction, simplify ratio, factorise | **prime tiles** `primeVenn` *(exists)* | **high** | ⬜ |
+| `share-in-ratio` | total parts → 1 part → each share | RatioSharingTool | **bar model** *(exists)* | **high** | ⬜ |
+| `fraction-of-amount` | ÷ by denominator, × by numerator | FractionsOfAmounts | **bar model** *(exists)* | **high** | ⬜ |
+| `solve-linear-equation` | do the same to both sides | SolvingLinearEquations, EquationsOfLines, SimEq | **algebra tiles** or number line *(tiles: no scene yet)* | **high** | ⬜ |
+| `expand-double-brackets` | grid / area of each term pair | ExpandingBrackets, CompletingTheSquare, SimEq | **area model** *(no scene yet)* | **high** | ⬜ |
+| `collect-like-terms` | group matching terms | CollectingLikeTerms, ExpandingBrackets | **algebra tiles** *(no scene yet)* | med | ⬜ |
+| `convert-mixed-improper` | mixed ⇄ improper fraction | FractionsAddSub, FractionMultDiv | **bar model** *(exists)* | med | ⬜ |
+| `round-to-significant-figure` | find the place value, round | Estimation | **number line** *(exists)* | med | ⬜ |
+| `factorise-quadratic` | find the factor pair | CompletingTheSquare, NonLinearSimEq | **area model** *(no scene yet)* | med | ⬜ |
+| `substitute-into-formula` | replace letters with values | EquationsOfLines, SimEq, iteration | *(none — text)* | med | ⬜ |
+| `rearrange-formula` | inverse operations to change subject | EquationsOfLines, SimEq | *(none — text / algebra tiles)* | med | ⬜ |
+| `simplify-ratio` | divide parts by a common factor | FractionToRatio, SimplifyingRatiosTool | **bar model** *(exists)* | med | ⬜ |
+| `directed-number` | add/subtract/multiply negatives | expand, solve, substitute (everywhere) | **negative counters** *(no scene yet)* | med | ⬜ |
+| `factor-pairs` | list the factor pairs of n | hcf, factorise | **prime tiles** *(exists)* | low | ⬜ |
+
+**Build order.** The cheap, high-value cluster first — `equivalent-fractions`,
+`simplify-fraction`, `hcf`, `share-in-ratio`, `fraction-of-amount`,
+`convert-mixed-improper` — all sit on the **existing bar-model / prime-tile scenes**,
+and each is a prerequisite several tools link to. `solve-linear-equation`,
+`expand-double-brackets`, `collect-like-terms`, `factorise-quadratic` and
+`directed-number` are equally wanted but need a **new scene type** (area model,
+algebra-tile or negative-counter scenes — §3), so they cost more; sequence them with
+that scene work.
 
 ---
 
