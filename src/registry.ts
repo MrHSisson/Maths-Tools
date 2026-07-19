@@ -21,6 +21,10 @@ export interface ToolMeta {
   name: string;
   description: string;
   enabled?: boolean;
+  /** When true the tool is never listed on the landing page — not even in
+   *  Developing-tools mode. Its route still works by direct URL, and the file
+   *  stays in the repo. Use to shelve a tool without deleting it. */
+  hidden?: boolean;
   load: () => Promise<{ default: ComponentType }>;
 }
 
@@ -96,7 +100,7 @@ export const CATEGORIES: CategoryMeta[] = [
     tools: [
       { id: 'visualiser', path: '/visualiser', name: 'Visualiser', description: 'A tool for displaying your visualiser', load: () => import('./tools/TeacherTools/Visualiser') },
       { id: 'tool-shell', path: '/tool-shell', name: 'Tool Shell', description: 'A tool shell for developing new tools', load: () => import('./tools/TeacherTools/ToolShell') },
-      { id: 'call-selector', path: '/call-selector', name: 'Friday Phonecalls', description: 'A tool to randomly select students for phonecalls', enabled: false, load: () => import('./tools/TeacherTools/CallSelector') },
+      { id: 'call-selector', path: '/call-selector', name: 'Friday Phonecalls', description: 'A tool to randomly select students for phonecalls', enabled: false, hidden: true, load: () => import('./tools/TeacherTools/CallSelector') },
       { id: 'p-value', path: '/p-value', name: 'P-Value Grapher', description: 'A tool to generate P-Values from Binomial Distributions', load: () => import('./tools/TeacherTools/p-value') },
       { id: 'algebra-tiles', path: '/algebra-tiles', name: 'Algebra Tiles', description: 'Interactive sandbox for dragging and manipulating algebra tiles', load: () => import('./tools/TeacherTools/AlgebraTiles') },
       { id: 'skill-library', path: '/skills', name: 'Skill Library', description: 'Browse every core skill taught through short slide sequences — the drill-downs linked from worked-example steps', enabled: false, load: () => import('./tools/TeacherTools/SkillLibrary') },
