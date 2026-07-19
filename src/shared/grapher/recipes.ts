@@ -13,7 +13,7 @@
 // usually a new recipe here, occasionally a new region kind in drawGraph.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { quadraticRoots, buildCurveSpec, findFunctionIntersections } from "./mathEngine";
+import { quadraticRoots, cubicRoots, buildCurveSpec, findFunctionIntersections } from "./mathEngine";
 import type { FOI } from "./mathEngine";
 import type { ShadeRegion, Guide } from "./drawGraph";
 import type { GraphSeries, GrapherConfig } from "./SmartGrapher";
@@ -146,4 +146,139 @@ export function areaBetweenCurves(
     series: [a, b],
     regions: [{ kind: "between", a: 0, b: 1, from, to, color, opacity: 0.18 }],
   };
+}
+
+// ── Sketch a quadratic ───────────────────────────────────────────────────────
+//
+// The "sketch this parabola" answer: roots, vertex and y-intercept labelled,
+// with the axis of symmetry as a dashed guide.
+export function sketchQuadratic(
+  a: number, b: number, c: number,
+  opts: { color?: string } = {},
+): GrapherRecipe {
+  const color = opts.color ?? "#2563eb";
+  const fois: FOI[] = [{ x: 0, y: c, kind: "intercept", label: "y-intercept" }];
+  const guides: Guide[] = [];
+  if (Math.abs(a) > 1e-12) {
+    const vx = -b / (2 * a);
+    fois.push({ x: vx, y: a * vx * vx + b * vx + c, kind: "vertex", label: "vertex" });
+    guides.push({ kind: "vLine", at: vx, dashed: true, color });
+  }
+  for (const r of quadraticRoots(a, b, c)) fois.push({ x: r, y: 0, kind: "root", label: "root" });
+  return { series: [{ equationType: "quadratic", params: [a, b, c], color }], guides, config: { autoFois: false, fois } };
+}
+
+// ── Graphical solution of f(x) = k ───────────────────────────────────────────
+//
+// Draws y = f(x) and the horizontal line y = k; SmartGrapher auto-detects and
+// dots the crossings — "use the graph to solve f(x) = k".
+export function graphicalSolution(
+  base: GraphSeries, k: number,
+  opts: { baseLabel?: string } = {},
+): GrapherRecipe {
+  return {
+    series: [
+      { ...base, color: base.color ?? "#2563eb", label: base.label ?? opts.baseLabel },
+      { equationType: "linear", params: [0, k], color: "#db2777", label: `y = ${k}` },
+    ],
+  };
+}
+
+// ── Simultaneous linear equations ────────────────────────────────────────────
+//
+// Two lines and (only) their solution point — intercept clutter is suppressed so
+// the single crossing reads as "the solution".
+export function simultaneousLinear(
+  line1: [number, number], line2: [number, number],
+  opts: { label1?: string; label2?: string } = {},
+): GrapherRecipe {
+  const [m1, c1] = line1;
+  const [m2, c2] = line2;
+  return {
+    series: [
+      { equationType: "linear", params: [m1, c1], color: "#2563eb", label: opts.label1 ?? `y = ${m1}x + ${c1}` },
+      { equationType: "linear", params: [m2, c2], color: "#db2777", label: opts.label2 ?? `y = ${m2}x + ${c2}` },
+    ],
+    config: { autoFois: false }, // keep only the auto-detected intersection
+  };
+}
+
+// ── Graph transformation — y = f(x) → y = a·f(bx + c) + d ─────────────────────
+//
+// Overlays the base curve and its transform so the effect is visible side by
+// side. `base` must be a function curve (not a circle).
+export function transformation(
+  base: GraphSeries,
+  t: { a?: number; b?: number; c?: number; d?: number } = {},
+  opts: { baseLabel?: string; label?: string } = {},
+): GrapherRecipe {
+  const spec = buildCurveSpec(base.equationType, base.params ?? [], base.fn);
+  if (spec.kind !== "function") return { series: [base] };
+  const { a = 1, b = 1, c = 0, d = 0 } = t;
+  const f = spec.f;
+  return {
+    series: [
+      { ...base, color: "#94a3b8", label: opts.baseLabel ?? "y = f(x)", dashed: true },
+      { equationType: "custom", fn: (x) => a * f(b * x + c) + d, color: "#2563eb", label: opts.label ?? "y = a·f(bx + c) + d" },
+    ],
+  };
+}
+
+// ── Tangent to a curve at x₀ (intro to differentiation) ──────────────────────
+//
+// The curve plus its tangent line at x₀ (gradient by a central-difference
+// derivative) and the point of tangency. The tangency point is supplied
+// explicitly because a tangent touches without crossing (no sign change to
+// auto-detect).
+export function tangentAtPoint(
+  base: GraphSeries, x0: number,
+): GrapherRecipe {
+  const spec = buildCurveSpec(base.equationType, base.params ?? [], base.fn);
+  if (spec.kind !== "function") return { series: [base] };
+  const f = spec.f;
+  const h = 1e-4;
+  const slope = (f(x0 + h) - f(x0 - h)) / (2 * h);
+  const y0 = f(x0);
+  const intercept = y0 - slope * x0;
+  return {
+    series: [
+      { ...base, color: base.color ?? "#2563eb", label: base.label ?? "y = f(x)" },
+      { equationType: "linear", params: [slope, intercept], color: "#db2777", label: "tangent" },
+    ],
+    guides: [{ kind: "vLine", at: x0, dashed: true, color: "#94a3b8" }],
+    config: { autoFois: false, fois: [{ x: x0, y: y0, kind: "point", label: "point of tangency" }] },
+  };
+}
+
+// ── Cubic inequality — ax³ + bx² + cx + d ⋛ 0 ────────────────────────────────
+//
+// Shades the sign-intervals satisfying the inequality. Robust to repeated roots
+// because each interval's sign is decided by a test point rather than parity.
+export function cubicInequality(
+  a: number, b: number, c: number, d: number, op: InequalityOp,
+  opts: { color?: string } = {},
+): GrapherRecipe {
+  const color = opts.color ?? "#2563eb";
+  const strict = isStrict(op);
+  const greater = wantsGreater(op);
+  const f = (x: number) => a * x * x * x + b * x * x + c * x + d;
+  const roots = [...new Set(cubicRoots(a, b, c, d))].sort((p, q) => p - q);
+
+  const regions: ShadeRegion[] = [];
+  const guides: Guide[] = [];
+  const fois: FOI[] = [];
+
+  // Interval edges: -inf, each root, +inf.
+  const edges = [-Infinity, ...roots, Infinity];
+  for (let i = 0; i < edges.length - 1; i++) {
+    const lo = edges[i], hi = edges[i + 1];
+    const mid = lo === -Infinity ? hi - 1 : hi === Infinity ? lo + 1 : (lo + hi) / 2;
+    const positive = f(mid) > 0;
+    if (positive === greater) regions.push({ kind: "xBand", from: lo, to: hi, color, opacity: 0.16 });
+  }
+  for (const r of roots) {
+    guides.push({ kind: "vLine", at: r, dashed: strict, color });
+    fois.push({ x: r, y: 0, kind: "root", open: strict });
+  }
+  return { series: [{ equationType: "cubic", params: [a, b, c, d], color }], regions, guides, config: { autoFois: false, fois } };
 }

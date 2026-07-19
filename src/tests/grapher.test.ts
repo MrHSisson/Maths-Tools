@@ -174,6 +174,7 @@ describe("computeFrame (multi-curve)", () => {
 
 import {
   quadraticInequality, linearInequality, linearQuadraticIntersection, areaBetweenCurves,
+  sketchQuadratic, graphicalSolution, simultaneousLinear, transformation, tangentAtPoint, cubicInequality,
 } from "../shared/grapher/recipes";
 
 describe("quadraticInequality recipe", () => {
@@ -245,6 +246,77 @@ describe("areaBetweenCurves recipe", () => {
     const reg = r.regions?.[0] as { kind: string; from: number; to: number };
     expect(reg.kind).toBe("between");
     expect(close(reg.from, -1, 1e-4) && close(reg.to, 2, 1e-4)).toBe(true);
+  });
+});
+
+describe("sketchQuadratic recipe", () => {
+  it("labels roots, vertex, y-intercept and the axis of symmetry", () => {
+    // x² - 2x - 3 → roots -1, 3; vertex (1, -4); y-int (0,-3)
+    const r = sketchQuadratic(1, -2, -3);
+    const f = r.config?.fois ?? [];
+    expect(f.some((p) => p.kind === "vertex" && close(p.x, 1) && close(p.y, -4))).toBe(true);
+    expect(f.some((p) => p.kind === "intercept" && close(p.y, -3))).toBe(true);
+    expect(f.filter((p) => p.kind === "root").length).toBe(2);
+    // Axis of symmetry guide at x = 1, dashed.
+    expect((r.guides ?? []).some((g) => g.kind === "vLine" && close(g.at, 1) && g.dashed)).toBe(true);
+  });
+});
+
+describe("graphicalSolution recipe", () => {
+  it("adds a horizontal line y = k as the second series", () => {
+    const r = graphicalSolution({ equationType: "quadratic", params: [1, 0, -4] }, 5);
+    expect(r.series.length).toBe(2);
+    expect(r.series[1].equationType).toBe("linear");
+    expect(r.series[1].params).toEqual([0, 5]);
+  });
+});
+
+describe("simultaneousLinear recipe", () => {
+  it("returns two lines and suppresses intercept FOIs", () => {
+    const r = simultaneousLinear([1, 1], [-1, 5]);
+    expect(r.series.length).toBe(2);
+    expect(r.config?.autoFois).toBe(false);
+  });
+});
+
+describe("transformation recipe", () => {
+  it("overlays base and transformed curves", () => {
+    // f(x) = x², transform g(x) = f(x - 2) + 1  (b=1, c=-2, d=1)
+    const r = transformation({ equationType: "quadratic", params: [1, 0, 0] }, { c: -2, d: 1 });
+    expect(r.series.length).toBe(2);
+    const g = r.series[1].fn!;
+    // g(2) should equal f(0) + 1 = 1
+    expect(close(g(2), 1, 1e-6)).toBe(true);
+    // g(3) = f(1) + 1 = 2
+    expect(close(g(3), 2, 1e-6)).toBe(true);
+  });
+});
+
+describe("tangentAtPoint recipe", () => {
+  it("builds the correct tangent line for y = x² at x = 2", () => {
+    // f'(2) = 4, tangent: y = 4x - 4
+    const r = tangentAtPoint({ equationType: "quadratic", params: [1, 0, 0] }, 2);
+    const [slope, intercept] = r.series[1].params as number[];
+    expect(close(slope, 4, 1e-3)).toBe(true);
+    expect(close(intercept, -4, 1e-3)).toBe(true);
+    // Point of tangency (2, 4) supplied explicitly.
+    expect((r.config?.fois ?? []).some((p) => close(p.x, 2) && close(p.y, 4))).toBe(true);
+  });
+});
+
+describe("cubicInequality recipe", () => {
+  it("shades the correct sign-intervals for x³ - x > 0", () => {
+    // x³ - x = x(x-1)(x+1), roots -1, 0, 1. Positive on (-1,0) and (1,∞).
+    const r = cubicInequality(1, 0, -1, 0, ">");
+    const bands = (r.regions ?? []) as Array<{ from: number; to: number }>;
+    expect(bands.some((b) => close(b.from, -1) && close(b.to, 0))).toBe(true);
+    expect(bands.some((b) => close(b.from, 1) && b.to === Infinity)).toBe(true);
+    // Not the negative intervals.
+    expect(bands.some((b) => b.from === -Infinity && close(b.to, -1))).toBe(false);
+    expect(bands.length).toBe(2);
+    // Three roots, dashed (strict) with open dots.
+    expect((r.config?.fois ?? []).filter((p) => p.kind === "root").length).toBe(3);
+    expect((r.config?.fois ?? []).every((p) => p.kind !== "root" || p.open)).toBe(true);
   });
 });
 

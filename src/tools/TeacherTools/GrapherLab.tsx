@@ -15,10 +15,14 @@ import { Home } from "lucide-react";
 import {
   SmartGrapher, computeFOIs, findFunctionIntersections,
   quadraticInequality, linearInequality, linearQuadraticIntersection, areaBetweenCurves,
+  sketchQuadratic, graphicalSolution, simultaneousLinear, transformation, tangentAtPoint, cubicInequality,
   type EquationType, type FOI, type GraphSeries, type InequalityOp,
 } from "../../shared";
 
-type Mode = "preset" | "custom" | "simeq" | "mixed" | "quadineq" | "linineq" | "linquad" | "area";
+type Mode =
+  | "preset" | "custom" | "simeq" | "mixed"
+  | "quadineq" | "linineq" | "linquad" | "area"
+  | "sketch" | "graphsolve" | "simlin" | "transform" | "tangent" | "cubicineq";
 
 interface PresetDef {
   type: EquationType;
@@ -161,6 +165,38 @@ export default function App() {
         grapher: <SmartGrapher {...recipe} height={340} title="Area between y = x² and y = x + 2" />,
       };
     }
+    if (mode === "sketch") {
+      const recipe = sketchQuadratic(1, -2, -3);
+      return { fois: recipe.config?.fois ?? [], grapher: <SmartGrapher {...recipe} height={340} title="Sketch: y = x² − 2x − 3" /> };
+    }
+    if (mode === "graphsolve") {
+      const recipe = graphicalSolution({ equationType: "quadratic", params: [1, 0, -4] }, 3);
+      const inter = findFunctionIntersections((x) => x * x - 4, () => 3, -50, 50);
+      return {
+        fois: inter.map((p) => ({ x: p.x, y: p.y, kind: "point", label: "solution" } as FOI)),
+        grapher: <SmartGrapher {...recipe} height={340} title="Solve x² − 4 = 3 graphically" />,
+      };
+    }
+    if (mode === "simlin") {
+      const recipe = simultaneousLinear([1, 1], [-1, 5]);
+      const inter = findFunctionIntersections((x) => x + 1, (x) => -x + 5, -50, 50);
+      return {
+        fois: inter.map((p) => ({ x: p.x, y: p.y, kind: "point", label: "solution" } as FOI)),
+        grapher: <SmartGrapher {...recipe} height={340} title="Simultaneous linear equations" />,
+      };
+    }
+    if (mode === "transform") {
+      const recipe = transformation({ equationType: "quadratic", params: [1, 0, 0] }, { c: -2, d: 1 }, { baseLabel: "y = x²", label: "y = (x − 2)² + 1" });
+      return { fois: [], grapher: <SmartGrapher {...recipe} height={340} title="Transformation of y = x²" /> };
+    }
+    if (mode === "tangent") {
+      const recipe = tangentAtPoint({ equationType: "quadratic", params: [1, 0, 0] }, 2);
+      return { fois: recipe.config?.fois ?? [], grapher: <SmartGrapher {...recipe} height={340} title="Tangent to y = x² at x = 2" /> };
+    }
+    if (mode === "cubicineq") {
+      const recipe = cubicInequality(1, 0, -1, 0, op); // x³ − x ⋛ 0
+      return { fois: recipe.config?.fois ?? [], grapher: <SmartGrapher {...recipe} height={340} title={`x³ − x ${op} 0`} /> };
+    }
     // preset
     return {
       fois: computeFOIs(preset.type, params),
@@ -211,10 +247,19 @@ export default function App() {
                 {modeBtn("linineq", "linear inequality", "bg-blue-600 border-blue-600")}
                 {modeBtn("linquad", "line ∩ parabola", "bg-blue-600 border-blue-600")}
                 {modeBtn("area", "area between curves", "bg-blue-600 border-blue-600")}
+                {modeBtn("cubicineq", "cubic inequality", "bg-blue-600 border-blue-600")}
+              </div>
+              <div className="text-sm font-semibold text-slate-700 mt-3 mb-2">Sketch &amp; solve</div>
+              <div className="flex flex-wrap gap-2">
+                {modeBtn("sketch", "sketch quadratic", "bg-indigo-600 border-indigo-600")}
+                {modeBtn("graphsolve", "solve f(x)=k", "bg-indigo-600 border-indigo-600")}
+                {modeBtn("simlin", "simultaneous linear", "bg-indigo-600 border-indigo-600")}
+                {modeBtn("transform", "transformation", "bg-indigo-600 border-indigo-600")}
+                {modeBtn("tangent", "tangent at point", "bg-indigo-600 border-indigo-600")}
               </div>
             </div>
 
-            {(mode === "quadineq" || mode === "linineq") && (
+            {(mode === "quadineq" || mode === "linineq" || mode === "cubicineq") && (
               <div>
                 <div className="text-sm font-semibold text-slate-700 mb-2">Inequality</div>
                 <div className="flex gap-2">

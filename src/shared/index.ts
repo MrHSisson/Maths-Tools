@@ -76,5 +76,6 @@ export type { EquationType, FOI, Viewport, CurveSpec, FrameOptions } from "./gra
 export type { ShadeRegion, Guide } from "./grapher/drawGraph";
 export {
   quadraticInequality, linearQuadraticIntersection, linearInequality, areaBetweenCurves,
+  sketchQuadratic, graphicalSolution, simultaneousLinear, transformation, tangentAtPoint, cubicInequality,
 } from "./grapher/recipes";
 export type { GrapherRecipe, InequalityOp } from "./grapher/recipes";
