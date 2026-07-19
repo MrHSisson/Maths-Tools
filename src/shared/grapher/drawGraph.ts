@@ -87,9 +87,11 @@ export interface DrawOptions {
 /** Format a tick value without floating-point noise. */
 function fmtTick(v: number, step: number): string {
   if (Math.abs(v) < step / 1e6) return "0";
-  const dp = Math.max(0, -Math.floor(Math.log10(step)) + (step < 1 ? 0 : 0));
-  const s = v.toFixed(Math.min(6, Math.max(0, dp)));
-  return s.replace(/\.?0+$/, "");
+  const dp = Math.max(0, -Math.floor(Math.log10(step)));
+  const s = v.toFixed(Math.min(6, dp));
+  // Strip trailing zeros ONLY in the fractional part — never an integer's units
+  // digit (so 30 stays "30", not "3"); drop a bare trailing dot if left behind.
+  return s.includes(".") ? s.replace(/0+$/, "").replace(/\.$/, "") : s;
 }
 
 export function drawGraph(

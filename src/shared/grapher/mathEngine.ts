@@ -457,7 +457,7 @@ export function computeFrame(
 ): Viewport {
   const W = cssW > 0 ? cssW : 300;
   const H = cssH > 0 ? cssH : 300;
-  const pad = opts.padding ?? 0.23;
+  const pad = opts.padding ?? 0.28;
   const dom = opts.domain;
   const specList: CurveSpec[] = specs == null ? [] : Array.isArray(specs) ? specs : [specs];
 
