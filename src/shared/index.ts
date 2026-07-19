@@ -47,10 +47,10 @@ export { randInt, pick, fracStr, mStr, pickActive, normalizeMultiSelect, step, t
 
 // Techniques — reusable pedagogical working-step sequences (see src/shared/techniques).
 export {
-  workings, quadraticFormulaSteps, solveFactorsSteps, substituteBackSteps,
-  makeSubjectSteps, solveLinearlySteps,
+  workings, quadraticFormulaSteps, solveLinearEquationSteps, solveFactorsSteps,
+  substituteBackSteps, makeSubjectSteps, solveLinearlySteps,
 } from "./techniques";
-export type { Workings } from "./techniques";
+export type { Workings, Grain } from "./techniques";
 
 export { MathRenderer, InlineMath } from "./components/MathRenderer";
 export { QuestionDisplay, AnswerDisplay } from "./components/QuestionDisplay";

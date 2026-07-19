@@ -1,9 +1,9 @@
 import { Home, Layers } from "lucide-react";
 import {
   MathRenderer,
-  workings, quadraticFormulaSteps, solveFactorsSteps, substituteBackSteps,
-  makeSubjectSteps, solveLinearlySteps,
-  type WorkingStep,
+  workings, quadraticFormulaSteps, solveLinearEquationSteps, solveFactorsSteps,
+  substituteBackSteps, makeSubjectSteps, solveLinearlySteps,
+  type WorkingStep, type Grain,
 } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -88,6 +88,48 @@ const StepView = ({ s, i }: { s: WorkingStep; i: number }) => {
   );
 };
 
+// The same move rendered at all three grains, side by side — the headline idea.
+interface GrainDemo {
+  name: string;
+  desc: string;
+  render: (grain: Grain) => WorkingStep[];
+}
+const GRAIN_DEMOS: GrainDemo[] = [
+  {
+    name: "quadraticFormulaSteps(2, 4, -8)",
+    desc: "Solving a quadratic with the formula. Brief assumes the substitution; full is the skill-level teaching (discriminant, ± split, decimals).",
+    render: (g) => quadraticFormulaSteps(2, 4, -8, "x", g),
+  },
+  {
+    name: "solveLinearEquationSteps(2, 3, 11)",
+    desc: "Solving 2x + 3 = 11. Full names each both-sides move — the fundamental teaching pattern; brief just states the answer.",
+    render: (g) => solveLinearEquationSteps(2, 3, 11, "x", g),
+  },
+];
+
+const GRAIN_META: Record<Grain, { label: string; hue: string }> = {
+  brief: { label: "Brief", hue: "text-emerald-600 bg-emerald-50 border-emerald-200" },
+  standard: { label: "Standard", hue: "text-amber-600 bg-amber-50 border-amber-200" },
+  full: { label: "Full", hue: "text-rose-600 bg-rose-50 border-rose-200" },
+};
+
+const GrainLadder = ({ demo }: { demo: GrainDemo }) => (
+  <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+    <div className="px-6 py-4 border-b border-slate-100">
+      <h3 className="text-lg font-bold text-blue-900 font-mono">{demo.name}</h3>
+      <p className="text-sm text-slate-500 mt-1">{demo.desc}</p>
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
+      {(["brief", "standard", "full"] as Grain[]).map((g) => (
+        <div key={g} className="flex flex-col gap-2">
+          <span className={`self-start text-[11px] font-bold uppercase tracking-wide px-2 py-0.5 rounded border ${GRAIN_META[g].hue}`}>{GRAIN_META[g].label}</span>
+          {demo.render(g).map((s, i) => <StepView key={i} s={s} i={i} />)}
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
 const Card = ({ title, subtitle, call, steps }: { title: string; subtitle?: string; call?: string; steps: WorkingStep[] }) => (
   <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
     <div className="px-6 py-4 border-b border-slate-100">
@@ -126,6 +168,17 @@ export default function App() {
           per press in the step-by-step Worked Example, and join into a single line everywhere else.
         </div>
 
+        <h2 className="text-lg font-bold text-slate-800 mb-3">Grain — the same move at three levels of detail</h2>
+        <p className="text-sm text-slate-500 mb-4">
+          A tool picks the grain that suits its context: a prerequisite it doesn’t teach renders <strong>brief</strong>;
+          the move being taught (or a skill) renders <strong>full</strong>. The <strong>full</strong> grain is the
+          fundamental teaching pattern — the text spine of the matching skill.
+        </p>
+        <div className="flex flex-col gap-6 mb-8">
+          {GRAIN_DEMOS.map((d) => <GrainLadder key={d.name} demo={d} />)}
+        </div>
+
+        <h2 className="text-lg font-bold text-slate-800 mb-3">All techniques</h2>
         <div className="flex flex-col gap-6">
           {DEMOS.map((d) => (
             <Card key={d.name} title={d.name} subtitle={d.desc} call={d.call} steps={d.steps} />

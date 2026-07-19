@@ -1,40 +1,36 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// TECHNIQUES — reusable, pedagogically-titled working-step sequences.
+// TECHNIQUES — reusable, pedagogically-titled working-step sequences, each
+// renderable at a GRAIN.
 //
-// When tools moved onto the shared ToolShell, each tool's hand-authored working
-// steps were lost and replaced by thin wrappers that jumped straight to answers.
-// A "technique" fixes that at the source: it encodes the pedagogy of ONE recurring
-// mathematical move — its step titles and its live-model fragments — ONCE, so every
-// tool that performs that move gets the same complete, natural working for free and
-// can never silently degrade to "formula → answer" again.
+// A technique encodes the pedagogy of one recurring maths move — its step titles
+// and its live-model fragments — ONCE. The same move renders at three grains:
 //
-// This is the working-step sibling of the slide-based skill library (src/shared/
-// skills): skills teach a prerequisite in slides; techniques narrate a move in
-// working steps. Both can carry [[skill-id|term]] links.
+//   • "full"     — every micro-step ("Subtract 3 from both sides", "Divide by 2").
+//                  The fundamental teaching pattern; this grain IS the (text spine
+//                  of the) matching skill.
+//   • "standard" — the default worked-example grain: each conceptual move a step,
+//                  arithmetic folded into the result.
+//   • "brief"    — assumes the student can already do this move; one line, keep going.
+//                  What a higher-order tool wants for a prerequisite it doesn't teach.
 //
-// Grain: MEDIUM. Each conceptual move is its own titled step; substitution INTO a
-// formula and expansions are shown; pure arithmetic (4×3=12) is folded into the
-// result — the way a teacher models at the board, not every keystroke.
+// The TOOL chooses the grain per call (a prerequisite move → brief; the move being
+// taught → full). A runtime "detailed working" toggle can drive it later.
+//
+// Sibling of the slide-based skill library (src/shared/skills): skills teach a
+// prerequisite in slides; techniques narrate a move in working steps.
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { step, mStep, tStep } from "../helpers";
 import type { WorkingStep } from "../types";
 
+export type Grain = "brief" | "standard" | "full";
+
 // ── The authoring builder ────────────────────────────────────────────────────
-// Tools assemble their working through workings() rather than pushing onto a raw
-// array. Titles are mandatory (`.step`), technique blocks splice in via `.use`,
-// and consecutive-identical maths lines are dropped — structurally banning the
-// "restate the answer as a final step" duplication that plagued the old wrappers.
 export interface Workings {
-  /** A bespoke titled step. `latex` as string[] = live-model fragments. */
   step(title: string, latex: string | string[]): Workings;
-  /** An untitled continuation line (rare — prefer a titled step). */
   raw(latex: string | string[]): Workings;
-  /** A plain-text note (no maths). */
   note(text: string): Workings;
-  /** Splice in a technique block. */
   use(steps: WorkingStep[]): Workings;
-  /** A diagram/graph step: plain caption + arbitrary payload for a stepRenderer. */
   visual(caption: string, payload: unknown): Workings;
   build(): WorkingStep[];
 }
@@ -43,8 +39,7 @@ export const workings = (): Workings => {
   const out: WorkingStep[] = [];
   const push = (s: WorkingStep) => {
     const prev = out[out.length - 1];
-    // Skip a step whose rendered maths repeats the line immediately before it.
-    if (prev && s.latex && prev.latex === s.latex) return;
+    if (prev && s.latex && prev.latex === s.latex) return; // no restate-the-answer duplication
     out.push(s);
   };
   const api: Workings = {
@@ -58,29 +53,77 @@ export const workings = (): Workings => {
   return api;
 };
 
-// ── Techniques ────────────────────────────────────────────────────────────────
-
-// A titled first row followed by one untitled row per subsequent line. Use for a
-// derivation that spans SEPARATE lines (a solve chain, several substitutions) —
-// each is its own step, so it reads correctly in show-all mode and reveals one
-// per press in stepped mode. (Contrast `fragments`, which build a SINGLE line.)
+// ── Small LaTeX helpers ──────────────────────────────────────────────────────
+// A titled first row + one untitled row per subsequent SEPARATE line.
 const titledLines = (title: string, lines: string[]): WorkingStep[] =>
   lines.length ? [mStep(title, lines[0]), ...lines.slice(1).map((l) => step(l))] : [];
 
-// Solve a quadratic with the formula: state it, substitute a/b/c IN (the step
-// students most often skip), then simplify the discriminant. Ends at the ± surd —
-// splitting the ± into two decimals is the caller's job (or the answer box's).
-// The formula and its substituted form are ONE line (an equals-chain), so the
-// second fragment is a `=` continuation, not a restated `x =`.
-export const quadraticFormulaSteps = (a: number, b: number, c: number, v = "x"): WorkingStep[] => {
-  const disc = b * b - 4 * a * c;
+// " + 3" / " - 3" — a signed term to append.
+const signed = (n: number): string => (n < 0 ? `- ${-n}` : `+ ${n}`);
+// A coefficient prefix: 1 → "", -1 → "-", else the number.
+const coef = (n: number): string => (n === 1 ? "" : n === -1 ? "-" : `${n}`);
+// n/d as an integer or a reduced-sign fraction.
+const frac = (num: number, den: number): string => {
+  if (den === 0) return `${num}`;
+  if (num % den === 0) return `${num / den}`;
+  const s = (num < 0) !== (den < 0) ? "-" : "";
+  return `${s}\\dfrac{${Math.abs(num)}}{${Math.abs(den)}}`;
+};
+
+// ── Techniques ────────────────────────────────────────────────────────────────
+
+// Solve a quadratic with the formula.
+//   brief    — formula → simplified surd (assumes the substitution).
+//   standard — formula → substituted → simplified.
+//   full     — + the discriminant arithmetic, the ± split, and the decimals
+//              (the skill-level teaching of the formula itself).
+export const quadraticFormulaSteps = (a: number, b: number, c: number, v = "x", grain: Grain = "standard"): WorkingStep[] => {
+  const disc = b * b - 4 * a * c, twoA = 2 * a;
+  const formula = `${v} = \\dfrac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}`;
+  const subbed = `= \\dfrac{-(${b}) \\pm \\sqrt{(${b})^2 - 4(${a})(${c})}}{2(${a})}`;
+  const simplified = `${v} = \\dfrac{${-b} \\pm \\sqrt{${disc}}}{${twoA}}`;
+
+  if (grain === "brief") {
+    return [mStep("Use the quadratic formula", [formula, `= \\dfrac{${-b} \\pm \\sqrt{${disc}}}{${twoA}}`])];
+  }
+  if (grain === "full") {
+    const r1 = (-b + Math.sqrt(disc)) / twoA, r2 = (-b - Math.sqrt(disc)) / twoA;
+    return [
+      mStep("Substitute into the quadratic formula", [formula, subbed]),
+      mStep("Work out the discriminant", [
+        `b^2 - 4ac = (${b})^2 - 4(${a})(${c})`,
+        `= ${b * b} - (${4 * a * c})`,
+        `= ${disc}`,
+      ]),
+      mStep("Simplify", [simplified]),
+      mStep("Take the + and − in turn", [
+        `${v} = \\dfrac{${-b} + \\sqrt{${disc}}}{${twoA}} \\quad \\text{or} \\quad ${v} = \\dfrac{${-b} - \\sqrt{${disc}}}{${twoA}}`,
+      ]),
+      mStep("As decimals (2 d.p.)", [`${v} \\approx ${r1.toFixed(2)} \\quad \\text{or} \\quad ${v} \\approx ${r2.toFixed(2)}`]),
+    ];
+  }
   return [
-    mStep("Substitute into the quadratic formula", [
-      `${v} = \\dfrac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}`,
-      `= \\dfrac{-(${b}) \\pm \\sqrt{(${b})^2 - 4(${a})(${c})}}{2(${a})}`,
-    ]),
-    mStep("Simplify under the root", [`${v} = \\dfrac{${-b} \\pm \\sqrt{${disc}}}{${2 * a}}`]),
+    mStep("Substitute into the quadratic formula", [formula, subbed]),
+    mStep("Simplify under the root", [simplified]),
   ];
+};
+
+// Solve a linear equation a·v + b = c — the "do the same to both sides" teaching.
+//   full     — name each both-sides operation ("Subtract 3 from both sides", …).
+//   standard — collect, then divide (two rows).
+//   brief    — one line.
+export const solveLinearEquationSteps = (a: number, b: number, c: number, v = "x", grain: Grain = "standard"): WorkingStep[] => {
+  const rhs = c - b, result = frac(rhs, a);
+  if (grain === "brief") return [mStep(`Solve for ${v}`, [`${v} = ${result}`])];
+  if (grain === "full") {
+    const op = b < 0 ? `Add ${-b} to both sides` : `Subtract ${b} from both sides`;
+    const steps: WorkingStep[] = [
+      mStep(op, [`${coef(a)}${v} = ${c} ${signed(-b)}`, `${coef(a)}${v} = ${rhs}`]),
+    ];
+    if (a !== 1) steps.push(mStep(`Divide both sides by ${a}`, [`${v} = \\dfrac{${rhs}}{${a}}`, `${v} = ${result}`]));
+    return steps;
+  }
+  return titledLines(`Solve for ${v}`, a !== 1 ? [`${coef(a)}${v} = ${rhs}`, `${v} = ${result}`] : [`${v} = ${result}`]);
 };
 
 // Read the roots off a factorised expression. `roots` are ready LaTeX strings.
@@ -91,8 +134,7 @@ export const solveFactorsSteps = (roots: string[], v = "x"): WorkingStep[] => {
 };
 
 // Substitute a found value (or values) back to get the other unknown. Each line in
-// `body` is a SEPARATE row. When a value and the equation are supplied, the title
-// names them ("Substitute x = 3 into y = 2x − 5 to find y").
+// `body` is a SEPARATE row; the title names the value + equation when given.
 export const substituteBackSteps = (
   varName: string,
   body: string | string[],
@@ -109,7 +151,6 @@ export const makeSubjectSteps = (
   varName: string, resultLatex: string | string[], eqLabel = "(2)",
 ): WorkingStep[] => [mStep(`Rearrange equation ${eqLabel} to make ${varName} the subject`, resultLatex)];
 
-// Solve a linear equation: each move in the chain is its own row (they are
-// separate equations, not one built-up line).
+// Solve a linear equation from a pre-built chain of lines (one row per move).
 export const solveLinearlySteps = (v: string, chain: string[]): WorkingStep[] =>
   titledLines(`Expand and solve for ${v}`, chain);
