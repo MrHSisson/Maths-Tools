@@ -48,7 +48,7 @@ export interface GrapherConfig {
   autoIntersections?: boolean;
   /** Show the FOI dots. Default true. */
   showFois?: boolean;
-  /** Fractional framing padding. Default 0.15. */
+  /** Fractional framing padding. Default 0.23 (frames a little wider). */
   padding?: number;
   /** Force a 1:1 aspect ratio. Defaults to true only when a circle is present;
    *  function graphs scale each axis to fit independently. */

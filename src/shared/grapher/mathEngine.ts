@@ -54,7 +54,8 @@ export interface FrameOptions {
   /** When true, the framer uses the domain as the hard x-range instead of the
    *  FOI spread — used e.g. for probability graphs locked to p ∈ [0, 1]. */
   lockDomain?: boolean;
-  /** Fractional visual padding around the framed content. Default 0.15 (15%). */
+  /** Fractional visual padding around the framed content. Default 0.23 — frames
+   *  a little wider so the key points sit more centrally with surrounding context. */
   padding?: number;
   /** Force a 1:1 aspect ratio (equal x/y scale). Needed so circles stay round;
    *  function graphs leave it off and scale each axis to fit independently. */
@@ -456,7 +457,7 @@ export function computeFrame(
 ): Viewport {
   const W = cssW > 0 ? cssW : 300;
   const H = cssH > 0 ? cssH : 300;
-  const pad = opts.padding ?? 0.15;
+  const pad = opts.padding ?? 0.23;
   const dom = opts.domain;
   const specList: CurveSpec[] = specs == null ? [] : Array.isArray(specs) ? specs : [specs];
 
