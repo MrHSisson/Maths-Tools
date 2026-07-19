@@ -14,10 +14,11 @@ import { useMemo, useState } from "react";
 import { Home } from "lucide-react";
 import {
   SmartGrapher, computeFOIs, findFunctionIntersections,
-  type EquationType, type FOI, type GraphSeries,
+  quadraticInequality, linearInequality, linearQuadraticIntersection, areaBetweenCurves,
+  type EquationType, type FOI, type GraphSeries, type InequalityOp,
 } from "../../shared";
 
-type Mode = "preset" | "custom" | "simeq" | "mixed";
+type Mode = "preset" | "custom" | "simeq" | "mixed" | "quadineq" | "linineq" | "linquad" | "area";
 
 interface PresetDef {
   type: EquationType;
@@ -50,6 +51,7 @@ const round = (n: number) => {
 export default function App() {
   const [mode, setMode] = useState<Mode>("preset");
   const [typeIdx, setTypeIdx] = useState(1); // quadratic
+  const [op, setOp] = useState<InequalityOp>(">");
   const [values, setValues] = useState<Record<string, number>>(() => {
     const v: Record<string, number> = {};
     for (const p of PRESETS) for (const c of p.coeffs) v[`${p.type}.${c.key}`] = c.def;
@@ -125,13 +127,47 @@ export default function App() {
         ),
       };
     }
+    if (mode === "quadineq") {
+      const qa = num("quadratic.a", 1), qb = num("quadratic.b", -2), qc = num("quadratic.c", -3);
+      const recipe = quadraticInequality(qa, qb, qc, op);
+      return {
+        fois: recipe.config?.fois ?? [],
+        grapher: <SmartGrapher {...recipe} height={340} title={`${qa}x² + ${qb}x + ${qc} ${op} 0`} />,
+      };
+    }
+    if (mode === "linineq") {
+      const recipe = linearInequality(1, 1, op); // y ⋛ x + 1
+      return {
+        fois: [],
+        grapher: <SmartGrapher {...recipe} height={340} title={`y ${op} x + 1`} />,
+      };
+    }
+    if (mode === "linquad") {
+      const recipe = linearQuadraticIntersection([1, -1, -2], [1, 1], { quadLabel: "y = x² − x − 2", lineLabel: "y = x + 1" });
+      const inter = findFunctionIntersections((x) => x * x - x - 2, (x) => x + 1, -50, 50);
+      return {
+        fois: inter.map((p) => ({ x: p.x, y: p.y, kind: "point", label: "solution" } as FOI)),
+        grapher: <SmartGrapher {...recipe} height={340} title="Line meets parabola" />,
+      };
+    }
+    if (mode === "area") {
+      const recipe = areaBetweenCurves(
+        { equationType: "quadratic", params: [1, 0, 0], label: "y = x²" },
+        { equationType: "linear", params: [1, 2], label: "y = x + 2" },
+      );
+      const inter = findFunctionIntersections((x) => x * x, (x) => x + 2, -50, 50);
+      return {
+        fois: inter.map((p) => ({ x: p.x, y: p.y, kind: "point", label: "bound" } as FOI)),
+        grapher: <SmartGrapher {...recipe} height={340} title="Area between y = x² and y = x + 2" />,
+      };
+    }
     // preset
     return {
       fois: computeFOIs(preset.type, params),
       grapher: <SmartGrapher equationType={preset.type} params={params} height={340} title={preset.label} />,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, typeIdx, JSON.stringify(params), JSON.stringify(values)]);
+  }, [mode, typeIdx, op, JSON.stringify(params), JSON.stringify(values)]);
 
   const modeBtn = (m: Mode, label: string, accent: string) => (
     <button
@@ -169,7 +205,40 @@ export default function App() {
                 {modeBtn("mixed", "mixed strategy", "bg-purple-600 border-purple-600")}
                 {modeBtn("custom", "custom probability", "bg-fuchsia-600 border-fuchsia-600")}
               </div>
+              <div className="text-sm font-semibold text-slate-700 mt-3 mb-2">Regions &amp; recipes</div>
+              <div className="flex flex-wrap gap-2">
+                {modeBtn("quadineq", "quadratic inequality", "bg-blue-600 border-blue-600")}
+                {modeBtn("linineq", "linear inequality", "bg-blue-600 border-blue-600")}
+                {modeBtn("linquad", "line ∩ parabola", "bg-blue-600 border-blue-600")}
+                {modeBtn("area", "area between curves", "bg-blue-600 border-blue-600")}
+              </div>
             </div>
+
+            {(mode === "quadineq" || mode === "linineq") && (
+              <div>
+                <div className="text-sm font-semibold text-slate-700 mb-2">Inequality</div>
+                <div className="flex gap-2">
+                  {(([">", ">=", "<", "<="] as const)).map((o) => (
+                    <button key={o} onClick={() => setOp(o)}
+                      className={`px-3 py-1.5 rounded-lg text-sm border font-mono transition-colors ${
+                        op === o ? "bg-slate-800 text-white border-slate-800" : "bg-white text-slate-600 border-slate-200 hover:border-slate-400"
+                      }`}>{o}</button>
+                  ))}
+                </div>
+                {mode === "quadineq" && (
+                  <div className="grid grid-cols-3 gap-3 mt-3">
+                    {["a", "b", "c"].map((k) => (
+                      <label key={k} className="flex items-center gap-2 text-sm text-slate-600">
+                        <span className="w-4">{k}</span>
+                        <input type="number" step="any" value={values[`quadratic.${k}`] ?? 0}
+                          onChange={(e) => set(`quadratic.${k}`, e.target.value)}
+                          className="w-full px-2 py-1 rounded border border-slate-300 focus:border-blue-500 outline-none" />
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             {mode === "preset" && (
               <div>

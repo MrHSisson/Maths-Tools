@@ -73,3 +73,8 @@ export {
   mathToScreenX, mathToScreenY, screenToMathX, screenToMathY,
 } from "./grapher/mathEngine";
 export type { EquationType, FOI, Viewport, CurveSpec, FrameOptions } from "./grapher/mathEngine";
+export type { ShadeRegion, Guide } from "./grapher/drawGraph";
+export {
+  quadraticInequality, linearQuadraticIntersection, linearInequality, areaBetweenCurves,
+} from "./grapher/recipes";
+export type { GrapherRecipe, InequalityOp } from "./grapher/recipes";

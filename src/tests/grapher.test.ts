@@ -172,6 +172,82 @@ describe("computeFrame (multi-curve)", () => {
   });
 });
 
+import {
+  quadraticInequality, linearInequality, linearQuadraticIntersection, areaBetweenCurves,
+} from "../shared/grapher/recipes";
+
+describe("quadraticInequality recipe", () => {
+  it("> shades outside the roots with open dots + dashed guides (a>0)", () => {
+    // x² - x - 6 = (x+2)(x-3), roots -2 and 3
+    const r = quadraticInequality(1, -1, -6, ">");
+    expect(r.config?.autoFois).toBe(false);
+    // Two bands: (-inf,-2) and (3,inf)
+    const bands = (r.regions ?? []).filter((x) => x.kind === "xBand") as Array<{ from: number; to: number }>;
+    expect(bands.length).toBe(2);
+    expect(bands.some((b) => b.from === -Infinity && close(b.to, -2))).toBe(true);
+    expect(bands.some((b) => close(b.from, 3) && b.to === Infinity)).toBe(true);
+    // Strict → open root dots + dashed guides.
+    const roots = (r.config?.fois ?? []).filter((f) => f.kind === "root");
+    expect(roots.length).toBe(2);
+    expect(roots.every((f) => f.open === true)).toBe(true);
+    expect((r.guides ?? []).every((g) => g.dashed === true)).toBe(true);
+  });
+
+  it("≤ shades between the roots with closed dots (a>0)", () => {
+    const r = quadraticInequality(1, -1, -6, "<=");
+    const bands = (r.regions ?? []).filter((x) => x.kind === "xBand") as Array<{ from: number; to: number }>;
+    expect(bands.length).toBe(1);
+    expect(close(bands[0].from, -2) && close(bands[0].to, 3)).toBe(true);
+    const roots = (r.config?.fois ?? []).filter((f) => f.kind === "root");
+    expect(roots.every((f) => !f.open)).toBe(true);
+  });
+
+  it("flips the shaded side when a<0", () => {
+    // -x² + 1 → roots ±1, negative outside, positive between.  ">" → between.
+    const r = quadraticInequality(-1, 0, 1, ">");
+    const bands = (r.regions ?? []).filter((x) => x.kind === "xBand") as Array<{ from: number; to: number }>;
+    expect(bands.length).toBe(1);
+    expect(close(bands[0].from, -1) && close(bands[0].to, 1)).toBe(true);
+  });
+});
+
+describe("linearInequality recipe", () => {
+  it("y > mx+c shades above with a dashed boundary", () => {
+    const r = linearInequality(1, 0, ">");
+    expect(r.series[0].dashed).toBe(true);
+    const hp = r.regions?.[0] as { kind: string; side: string };
+    expect(hp.kind).toBe("halfPlane");
+    expect(hp.side).toBe("above");
+  });
+  it("y ≤ mx+c shades below with a solid boundary", () => {
+    const r = linearInequality(2, 1, "<=");
+    expect(r.series[0].dashed).toBe(false);
+    expect((r.regions?.[0] as { side: string }).side).toBe("below");
+  });
+});
+
+describe("linearQuadraticIntersection recipe", () => {
+  it("returns both curves as series", () => {
+    const r = linearQuadraticIntersection([1, 0, -4], [1, 0], { quadLabel: "q", lineLabel: "l" });
+    expect(r.series.length).toBe(2);
+    expect(r.series[0].equationType).toBe("quadratic");
+    expect(r.series[1].equationType).toBe("linear");
+  });
+});
+
+describe("areaBetweenCurves recipe", () => {
+  it("clamps the shaded band to the intersection x-range", () => {
+    // y = x² and y = x + 2 intersect at x = -1 and 2
+    const r = areaBetweenCurves(
+      { equationType: "quadratic", params: [1, 0, 0] },
+      { equationType: "linear", params: [1, 2] },
+    );
+    const reg = r.regions?.[0] as { kind: string; from: number; to: number };
+    expect(reg.kind).toBe("between");
+    expect(close(reg.from, -1, 1e-4) && close(reg.to, 2, 1e-4)).toBe(true);
+  });
+});
+
 describe("niceStep", () => {
   it("snaps to 1 / 2 / 5 × 10ⁿ", () => {
     expect(niceStep(1)).toBe(1);

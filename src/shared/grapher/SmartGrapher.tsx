@@ -26,7 +26,7 @@ import {
   type EquationType, type FOI, type Viewport, type CurveSpec,
   buildCurveSpec, computeFOIs, computeFrame, findFunctionIntersections,
 } from "./mathEngine";
-import { drawGraph, type DrawStyle, type CurveDraw, SERIES_COLORS } from "./drawGraph";
+import { drawGraph, type DrawStyle, type CurveDraw, type ShadeRegion, type Guide, SERIES_COLORS } from "./drawGraph";
 import { usePanZoom } from "./usePanZoom";
 
 // ── Public API ───────────────────────────────────────────────────────────────
@@ -39,6 +39,9 @@ export interface GrapherConfig {
   axisLabels?: { x?: string; y?: string };
   /** Extra / override features to frame and mark (required for custom curves). */
   fois?: FOI[];
+  /** Auto-derive FOIs (roots/vertex…) from preset curves. Default true.
+   *  Recipes that supply their own points (e.g. open/closed roots) set false. */
+  autoFois?: boolean;
   /** Show the FOI dots. Default true. */
   showFois?: boolean;
   /** Fractional framing padding. Default 0.15. */
@@ -58,6 +61,8 @@ export interface GraphSeries {
   color?: string;
   /** Legend label, e.g. "y = 2x + 1". */
   label?: string;
+  /** Draw dashed (a strict-inequality boundary). */
+  dashed?: boolean;
 }
 
 export interface SmartGrapherProps {
@@ -74,6 +79,11 @@ export interface SmartGrapherProps {
   series?: GraphSeries[];
   /** Show a legend for the series' labels. Default true when any series has a label. */
   showLegend?: boolean;
+
+  /** Shaded regions (inequalities, bounded areas). Indices refer to series order. */
+  regions?: ShadeRegion[];
+  /** Guide lines (dashed root markers, reference lines). */
+  guides?: Guide[];
 
   config?: GrapherConfig;
   /** Force full interactivity inline (default false → static thumbnail). */
@@ -92,6 +102,8 @@ export interface SmartGrapherProps {
 interface GraphCanvasProps {
   curves: CurveDraw[];
   fois: FOI[];
+  regions?: ShadeRegion[];
+  guides?: Guide[];
   config: GrapherConfig;
   interactive: boolean;
   /** Changing this string re-frames the view (new question / new params). */
@@ -102,7 +114,7 @@ interface GraphCanvasProps {
 }
 
 function GraphCanvas({
-  curves, fois, config, interactive, frameKey, registerAutoCenter, registerExport,
+  curves, fois, regions, guides, config, interactive, frameKey, registerAutoCenter, registerExport,
 }: GraphCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -125,8 +137,10 @@ function GraphCanvas({
       showFois: config.showFois ?? true,
       style: config.style,
       domain: config.domain,
+      regions,
+      guides,
     });
-  }, [curves, fois, config]);
+  }, [curves, fois, regions, guides, config]);
 
   const requestDraw = useCallback(() => {
     if (rafRef.current != null) return;
@@ -225,7 +239,7 @@ function ToolbarButton({ onClick, title, children }: {
 // ── Exported component ───────────────────────────────────────────────────────
 
 export function SmartGrapher({
-  equationType, params, fn, series, showLegend, config = {},
+  equationType, params, fn, series, showLegend, regions, guides, config = {},
   interactive = false, allowExpand = true, height = 260, title, className,
 }: SmartGrapherProps) {
   const [expanded, setExpanded] = useState(false);
@@ -248,10 +262,13 @@ export function SmartGrapher({
     const built: CurveDraw[] = seriesList.map((s, i) => ({
       spec: buildCurveSpec(s.equationType, s.params ?? [], s.fn),
       color: s.color ?? SERIES_COLORS[i % SERIES_COLORS.length],
+      dashed: s.dashed,
     }));
 
     const allFois: FOI[] = [];
-    for (const s of seriesList) allFois.push(...computeFOIs(s.equationType, s.params ?? []));
+    if (config.autoFois !== false) {
+      for (const s of seriesList) allFois.push(...computeFOIs(s.equationType, s.params ?? []));
+    }
     if (config.fois) allFois.push(...config.fois);
 
     // Intersections between every pair of function curves, over a provisional
@@ -277,7 +294,7 @@ export function SmartGrapher({
     return { curves: built, fois: allFois };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(seriesList.map((s) => [s.equationType, s.params])), JSON.stringify(config.fois),
-      JSON.stringify(config.domain)]);
+      JSON.stringify(config.domain), config.autoFois]);
 
   // A stable-ish key so the inner canvas re-frames when the maths changes.
   const frameKey = useMemo(
@@ -360,6 +377,8 @@ export function SmartGrapher({
         <GraphCanvas
           curves={curves}
           fois={fois}
+          regions={regions}
+          guides={guides}
           config={config}
           interactive={interactive}
           frameKey={frameKey}
@@ -398,6 +417,8 @@ export function SmartGrapher({
             <GraphCanvas
               curves={curves}
               fois={fois}
+              regions={regions}
+              guides={guides}
               config={config}
               interactive
               frameKey={frameKey}

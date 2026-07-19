@@ -43,10 +43,30 @@ export const DEFAULT_STYLE: DrawStyle = {
 export interface CurveDraw {
   spec: CurveSpec;
   color?: string;
+  /** Draw the curve dashed (e.g. a strict-inequality boundary). */
+  dashed?: boolean;
 }
 
 /** Default series palette (cycled when a curve gives no colour). */
 export const SERIES_COLORS = ["#2563eb", "#db2777", "#059669", "#d97706", "#7c3aed"];
+
+/**
+ * A shaded region — the "regions" layer that powers inequalities and bounded
+ * areas. `curve` / `a` / `b` index into the `curves` array. Use ±Infinity for
+ * an open-ended xBand.
+ */
+export type ShadeRegion =
+  | { kind: "xBand"; from: number; to: number; color?: string; opacity?: number }
+  | { kind: "halfPlane"; curve: number; side: "above" | "below"; from?: number; to?: number; color?: string; opacity?: number }
+  | { kind: "between"; a: number; b: number; from?: number; to?: number; color?: string; opacity?: number };
+
+/** A guide line — dashed root markers, asymptotes, reference lines. */
+export interface Guide {
+  kind: "vLine" | "hLine";
+  at: number;
+  dashed?: boolean;
+  color?: string;
+}
 
 export interface DrawOptions {
   style?: Partial<DrawStyle>;
@@ -57,6 +77,10 @@ export interface DrawOptions {
   curveWidth?: number;
   /** Clamp plotting to this x-domain (e.g. probability 0–1). */
   domain?: { xMin?: number; xMax?: number };
+  /** Shaded regions drawn under the curves (inequalities, bounded areas). */
+  regions?: ShadeRegion[];
+  /** Guide lines drawn over the curves (dashed root markers, etc.). */
+  guides?: Guide[];
 }
 
 /** Format a tick value without floating-point noise. */
@@ -121,6 +145,56 @@ export function drawGraph(
     ctx.stroke();
   }
 
+  // ── Shaded regions (under the axes & curves) ──
+  if (opts.regions?.length) {
+    for (const r of opts.regions) {
+      ctx.save();
+      ctx.globalAlpha = r.opacity ?? 0.16;
+      ctx.fillStyle = r.color ?? st.curve;
+      if (r.kind === "xBand") {
+        const x0 = Number.isFinite(r.from) ? sx(r.from) : 0;
+        const x1 = Number.isFinite(r.to) ? sx(r.to) : cssW;
+        const lo = Math.max(0, Math.min(x0, x1));
+        const hi = Math.min(cssW, Math.max(x0, x1));
+        if (hi > lo) ctx.fillRect(lo, 0, hi - lo, cssH);
+      } else {
+        const idxA = r.kind === "halfPlane" ? r.curve : r.a;
+        const specA = curves[idxA]?.spec;
+        if (specA?.kind === "function") {
+          const fromX = r.from ?? screenToMathX(0, vp, cssW);
+          const toX = r.to ?? screenToMathX(cssW, vp, cssW);
+          const pxFrom = Math.max(0, sx(fromX));
+          const pxTo = Math.min(cssW, sx(toX));
+          if (pxTo > pxFrom) {
+            ctx.beginPath();
+            let started = false;
+            for (let px = pxFrom; px <= pxTo; px++) {
+              const y = specA.f(screenToMathX(px, vp, cssW));
+              const py = Number.isFinite(y) ? sy(y) : (r.kind === "halfPlane" && r.side === "above" ? -cssH : cssH * 2);
+              if (!started) { ctx.moveTo(px, py); started = true; } else ctx.lineTo(px, py);
+            }
+            if (r.kind === "halfPlane") {
+              const edgeY = r.side === "above" ? 0 : cssH;
+              ctx.lineTo(pxTo, edgeY);
+              ctx.lineTo(pxFrom, edgeY);
+            } else {
+              const specB = curves[r.b]?.spec;
+              if (specB?.kind === "function") {
+                for (let px = pxTo; px >= pxFrom; px--) {
+                  const y = specB.f(screenToMathX(px, vp, cssW));
+                  ctx.lineTo(px, Number.isFinite(y) ? sy(y) : cssH * 2);
+                }
+              }
+            }
+            ctx.closePath();
+            ctx.fill();
+          }
+        }
+      }
+      ctx.restore();
+    }
+  }
+
   // ── Axes (x = 0 and y = 0), clamped to the visible edge ──
   const axisX = Math.min(cssW, Math.max(0, sx(0)));
   const axisY = Math.min(cssH, Math.max(0, sy(0)));
@@ -179,6 +253,7 @@ export function drawGraph(
   curves.forEach((c, i) => {
     const spec = c.spec;
     ctx.strokeStyle = c.color ?? SERIES_COLORS[i % SERIES_COLORS.length] ?? st.curve;
+    ctx.setLineDash(c.dashed ? [7, 5] : []);
     if (spec.kind === "circle") {
       ctx.beginPath();
       ctx.arc(sx(spec.cx), sy(spec.cy), spec.r / vp.unitsPerPixel, 0, 2 * Math.PI);
@@ -199,6 +274,22 @@ export function drawGraph(
       ctx.stroke();
     }
   });
+  ctx.setLineDash([]);
+
+  // ── Guide lines (over the curves) ──
+  if (opts.guides?.length) {
+    for (const g of opts.guides) {
+      ctx.save();
+      ctx.strokeStyle = g.color ?? st.axisText;
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash(g.dashed ? [5, 4] : []);
+      ctx.beginPath();
+      if (g.kind === "vLine") { const px = sx(g.at); ctx.moveTo(px, 0); ctx.lineTo(px, cssH); }
+      else { const py = sy(g.at); ctx.moveTo(0, py); ctx.lineTo(cssW, py); }
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
 
   // ── Feature-of-interest dots + labels ──
   if (showFois) {
@@ -207,13 +298,24 @@ export function drawGraph(
       const px = sx(f.x);
       const py = sy(f.y);
       if (px < -20 || px > cssW + 20 || py < -20 || py > cssH + 20) continue;
-      ctx.fillStyle = st.foi;
-      ctx.beginPath();
-      ctx.arc(px, py, 3.5, 0, 2 * Math.PI);
-      ctx.fill();
-      ctx.strokeStyle = st.background;
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
+      if (f.open) {
+        // Hollow dot — strict-inequality endpoint (x not included).
+        ctx.fillStyle = st.background;
+        ctx.beginPath();
+        ctx.arc(px, py, 4, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.strokeStyle = st.foi;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      } else {
+        ctx.fillStyle = st.foi;
+        ctx.beginPath();
+        ctx.arc(px, py, 3.5, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.strokeStyle = st.background;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
     }
   }
 }

@@ -22,6 +22,8 @@ export interface FOI {
   kind: "root" | "vertex" | "turning" | "intercept" | "centre" | "extent" | "point";
   /** Optional short label, e.g. "(2, 0)" or "vertex". */
   label?: string;
+  /** Render as a hollow dot (a strict-inequality endpoint, x not included). */
+  open?: boolean;
 }
 
 /** The mutable viewport — held in a ref by SmartGrapher, never in React state. */
