@@ -309,6 +309,96 @@ export function findFunctionIntersections(
   return out.sort((a, b) => a.x - b.x);
 }
 
+// ── Linear programming — feasible region from half-plane constraints ─────────
+
+/** A linear constraint  a·x + b·y  (op)  c. */
+export interface LinearConstraint {
+  a: number;
+  b: number;
+  c: number;
+  op: "<=" | ">=";
+}
+
+export interface Point2 { x: number; y: number }
+
+/** Clip a convex polygon by the half-plane a·x + b·y ≤ c (Sutherland–Hodgman). */
+function clipByHalfPlane(poly: Point2[], a: number, b: number, c: number): Point2[] {
+  if (poly.length === 0) return poly;
+  const out: Point2[] = [];
+  const inside = (p: Point2) => a * p.x + b * p.y <= c + 1e-9;
+  for (let i = 0; i < poly.length; i++) {
+    const cur = poly[i];
+    const nxt = poly[(i + 1) % poly.length];
+    const curIn = inside(cur);
+    const nxtIn = inside(nxt);
+    if (curIn) out.push(cur);
+    if (curIn !== nxtIn) {
+      // Segment crosses the boundary — add the intersection point.
+      const denom = a * (nxt.x - cur.x) + b * (nxt.y - cur.y);
+      if (Math.abs(denom) > 1e-12) {
+        const t = (c - (a * cur.x + b * cur.y)) / denom;
+        out.push({ x: cur.x + t * (nxt.x - cur.x), y: cur.y + t * (nxt.y - cur.y) });
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * The feasible region (a convex polygon, ordered CCW) satisfying every
+ * constraint. Starts from a bounding rectangle sized to the constraints'
+ * intercepts, then clips by each half-plane — so bounded regions are exact and
+ * unbounded ones are clamped to a sensible window. Returns [] if infeasible.
+ */
+export function computeFeasibleRegion(constraints: LinearConstraint[]): Point2[] {
+  // Size a start rectangle from the constraint intercepts (plus the origin).
+  const xs = [0], ys = [0];
+  for (const k of constraints) {
+    if (Math.abs(k.a) > 1e-9) xs.push(k.c / k.a);
+    if (Math.abs(k.b) > 1e-9) ys.push(k.c / k.b);
+  }
+  let xLo = Math.min(...xs), xHi = Math.max(...xs);
+  let yLo = Math.min(...ys), yHi = Math.max(...ys);
+  const padX = Math.max(1, (xHi - xLo) * 0.25);
+  const padY = Math.max(1, (yHi - yLo) * 0.25);
+  xLo -= padX; xHi += padX; yLo -= padY; yHi += padY;
+
+  // CCW rectangle.
+  let poly: Point2[] = [
+    { x: xLo, y: yLo }, { x: xHi, y: yLo }, { x: xHi, y: yHi }, { x: xLo, y: yHi },
+  ];
+  for (const k of constraints) {
+    // Normalise ≥ to ≤ by negating.
+    const s = k.op === ">=" ? -1 : 1;
+    poly = clipByHalfPlane(poly, s * k.a, s * k.b, s * k.c);
+    if (poly.length === 0) return [];
+  }
+  // Drop near-duplicate consecutive vertices.
+  const out: Point2[] = [];
+  for (const p of poly) {
+    if (!out.some((o) => near(o.x, p.x, 1e-6) && near(o.y, p.y, 1e-6))) out.push(p);
+  }
+  return out;
+}
+
+/**
+ * The vertex of `vertices` that optimises the objective a·x + b·y.
+ * (In linear programming the optimum always sits at a vertex.)
+ */
+export function optimiseLinear(
+  vertices: Point2[],
+  objective: { a: number; b: number },
+  maximise = true,
+): (Point2 & { value: number }) | null {
+  if (vertices.length === 0) return null;
+  let best: Point2 & { value: number } = { ...vertices[0], value: objective.a * vertices[0].x + objective.b * vertices[0].y };
+  for (const v of vertices) {
+    const value = objective.a * v.x + objective.b * v.y;
+    if (maximise ? value > best.value : value < best.value) best = { ...v, value };
+  }
+  return best;
+}
+
 // ── Framing — FOIs + curve → ideal viewport ──────────────────────────────────
 
 function dedupeFOIs(fois: FOI[]): FOI[] {

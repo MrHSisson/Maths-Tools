@@ -13,8 +13,11 @@
 // usually a new recipe here, occasionally a new region kind in drawGraph.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { quadraticRoots, cubicRoots, buildCurveSpec, findFunctionIntersections } from "./mathEngine";
-import type { FOI } from "./mathEngine";
+import {
+  quadraticRoots, cubicRoots, buildCurveSpec, findFunctionIntersections,
+  computeFeasibleRegion, optimiseLinear,
+} from "./mathEngine";
+import type { FOI, LinearConstraint } from "./mathEngine";
 import type { ShadeRegion, Guide } from "./drawGraph";
 import type { GraphSeries, GrapherConfig } from "./SmartGrapher";
 
@@ -281,4 +284,55 @@ export function cubicInequality(
     fois.push({ x: r, y: 0, kind: "root", open: strict });
   }
   return { series: [{ equationType: "cubic", params: [a, b, c, d], color }], regions, guides, config: { autoFois: false, fois } };
+}
+
+// ── Linear programming — feasible region + optional optimum ──────────────────
+//
+// Draws each constraint's boundary line, shades the feasible region (the convex
+// polygon satisfying all of them), and dots its vertices. If an objective is
+// given, the optimum vertex is found (the optimum of a linear objective always
+// sits at a vertex) and labelled with its value.
+//
+//   linearProgramming(
+//     [ { a:1, b:1, c:4, op:"<=" }, { a:1, b:0, c:0, op:">=" }, { a:0, b:1, c:0, op:">=" } ],
+//     { objective: { a:3, b:2 }, maximise: true },
+//   )
+export function linearProgramming(
+  constraints: LinearConstraint[],
+  opts: { objective?: { a: number; b: number }; maximise?: boolean; color?: string } = {},
+): GrapherRecipe {
+  const color = opts.color ?? "#059669";
+  const vertices = computeFeasibleRegion(constraints);
+
+  const series: GraphSeries[] = [];
+  const guides: Guide[] = [];
+  const near = (p: number, q: number) => Math.abs(p - q) < 1e-6;
+  const rnd = (n: number) => { const r = Math.round(n * 100) / 100; return Object.is(r, -0) ? 0 : r; };
+  const label = (k: LinearConstraint) => `${rnd(k.a)}x + ${rnd(k.b)}y ${k.op === "<=" ? "≤" : "≥"} ${rnd(k.c)}`;
+
+  for (const k of constraints) {
+    if (Math.abs(k.b) > 1e-9) {
+      series.push({ equationType: "linear", params: [-k.a / k.b, k.c / k.b], label: label(k) });
+    } else if (Math.abs(k.a) > 1e-9) {
+      // Vertical boundary (e.g. x ≥ 0) — a line y = mx+c can't express it.
+      guides.push({ kind: "vLine", at: k.c / k.a, color: "#94a3b8" });
+    }
+  }
+
+  const regions: ShadeRegion[] = vertices.length >= 3
+    ? [{ kind: "polygon", points: vertices, color, opacity: 0.22 }]
+    : [];
+
+  const fois: FOI[] = vertices.map((v) => ({ x: v.x, y: v.y, kind: "point", label: `(${rnd(v.x)}, ${rnd(v.y)})` }));
+
+  if (opts.objective) {
+    const opt = optimiseLinear(vertices, opts.objective, opts.maximise ?? true);
+    if (opt) {
+      const i = fois.findIndex((f) => near(f.x, opt.x) && near(f.y, opt.y));
+      const optFoi: FOI = { x: opt.x, y: opt.y, kind: "vertex", label: `optimum (${rnd(opt.x)}, ${rnd(opt.y)}) → ${rnd(opt.value)}` };
+      if (i >= 0) fois[i] = optFoi; else fois.push(optFoi);
+    }
+  }
+
+  return { series, guides, regions, config: { autoFois: false, fois } };
 }

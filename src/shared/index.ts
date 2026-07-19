@@ -71,11 +71,13 @@ export {
   getLinearFOIs, getQuadraticFOIs, getCubicFOIs, getCircleFOIs,
   quadraticRoots, cubicRoots, niceStep,
   mathToScreenX, mathToScreenY, screenToMathX, screenToMathY,
+  computeFeasibleRegion, optimiseLinear,
 } from "./grapher/mathEngine";
-export type { EquationType, FOI, Viewport, CurveSpec, FrameOptions } from "./grapher/mathEngine";
+export type { EquationType, FOI, Viewport, CurveSpec, FrameOptions, LinearConstraint, Point2 } from "./grapher/mathEngine";
 export type { ShadeRegion, Guide } from "./grapher/drawGraph";
 export {
   quadraticInequality, linearQuadraticIntersection, linearInequality, areaBetweenCurves,
   sketchQuadratic, graphicalSolution, simultaneousLinear, transformation, tangentAtPoint, cubicInequality,
+  linearProgramming,
 } from "./grapher/recipes";
 export type { GrapherRecipe, InequalityOp } from "./grapher/recipes";

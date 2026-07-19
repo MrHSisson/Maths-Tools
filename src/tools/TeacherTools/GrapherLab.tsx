@@ -16,13 +16,15 @@ import {
   SmartGrapher, computeFOIs, findFunctionIntersections,
   quadraticInequality, linearInequality, linearQuadraticIntersection, areaBetweenCurves,
   sketchQuadratic, graphicalSolution, simultaneousLinear, transformation, tangentAtPoint, cubicInequality,
-  type EquationType, type FOI, type GraphSeries, type InequalityOp,
+  linearProgramming,
+  type EquationType, type FOI, type GraphSeries, type InequalityOp, type LinearConstraint,
 } from "../../shared";
 
 type Mode =
   | "preset" | "custom" | "simeq" | "mixed"
   | "quadineq" | "linineq" | "linquad" | "area"
-  | "sketch" | "graphsolve" | "simlin" | "transform" | "tangent" | "cubicineq";
+  | "sketch" | "graphsolve" | "simlin" | "transform" | "tangent" | "cubicineq"
+  | "linprog";
 
 interface PresetDef {
   type: EquationType;
@@ -211,6 +213,16 @@ export default function App() {
       const recipe = cubicInequality(1, 0, -1, 0, op); // x³ − x ⋛ 0
       return { fois: recipe.config?.fois ?? [], grapher: <SmartGrapher {...recipe} height={340} title={`x³ − x ${op} 0`} /> };
     }
+    if (mode === "linprog") {
+      const constraints: LinearConstraint[] = [
+        { a: 1, b: 0, c: 0, op: ">=" },   // x ≥ 0
+        { a: 0, b: 1, c: 0, op: ">=" },   // y ≥ 0
+        { a: 1, b: 1, c: 6, op: "<=" },   // x + y ≤ 6
+        { a: 1, b: 2, c: 8, op: "<=" },   // x + 2y ≤ 8
+      ];
+      const recipe = linearProgramming(constraints, { objective: { a: 3, b: 2 }, maximise: true });
+      return { fois: recipe.config?.fois ?? [], grapher: <SmartGrapher {...recipe} height={340} title="Maximise 3x + 2y" /> };
+    }
     // preset
     return {
       fois: computeFOIs(preset.type, params),
@@ -262,6 +274,7 @@ export default function App() {
                 {modeBtn("linquad", "line ∩ parabola", "bg-blue-600 border-blue-600")}
                 {modeBtn("area", "area between curves", "bg-blue-600 border-blue-600")}
                 {modeBtn("cubicineq", "cubic inequality", "bg-blue-600 border-blue-600")}
+                {modeBtn("linprog", "linear programming", "bg-emerald-600 border-emerald-600")}
               </div>
               <div className="text-sm font-semibold text-slate-700 mt-3 mb-2">Sketch &amp; solve</div>
               <div className="flex flex-wrap gap-2">

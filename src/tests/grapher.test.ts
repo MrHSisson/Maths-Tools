@@ -7,7 +7,8 @@ import {
   quadraticRoots, cubicRoots,
   getLinearFOIs, getQuadraticFOIs, getCubicFOIs, getCircleFOIs,
   buildCurveSpec, computeFrame, computeFOIs, niceStep, findFunctionIntersections,
-  type FOI, type EquationType,
+  computeFeasibleRegion, optimiseLinear,
+  type FOI, type EquationType, type LinearConstraint, type Point2,
 } from "../shared/grapher/mathEngine";
 
 const close = (a: number, b: number, eps = 1e-6) => Math.abs(a - b) < eps;
@@ -175,7 +176,12 @@ describe("computeFrame (multi-curve)", () => {
 import {
   quadraticInequality, linearInequality, linearQuadraticIntersection, areaBetweenCurves,
   sketchQuadratic, graphicalSolution, simultaneousLinear, transformation, tangentAtPoint, cubicInequality,
+  linearProgramming,
 } from "../shared/grapher/recipes";
+
+// A polygon contains a point (ray-cast); used to verify feasible regions.
+const polyHasVertex = (poly: Point2[], x: number, y: number) =>
+  poly.some((p) => close(p.x, x, 1e-4) && close(p.y, y, 1e-4));
 
 describe("quadraticInequality recipe", () => {
   it("> shades outside the roots with open dots + dashed guides (a>0)", () => {
@@ -370,6 +376,48 @@ describe("extended curve families", () => {
       expect(Number.isFinite(vp.unitsPerPixel) && vp.unitsPerPixel > 0).toBe(true);
       expect(Number.isFinite(vp.centreX) && Number.isFinite(vp.centreY)).toBe(true);
     }
+  });
+});
+
+describe("computeFeasibleRegion + optimiseLinear (linear programming)", () => {
+  // x ≥ 0, y ≥ 0, x + y ≤ 4  → triangle with vertices (0,0), (4,0), (0,4)
+  const constraints: LinearConstraint[] = [
+    { a: 1, b: 0, c: 0, op: ">=" },
+    { a: 0, b: 1, c: 0, op: ">=" },
+    { a: 1, b: 1, c: 4, op: "<=" },
+  ];
+
+  it("produces the correct feasible polygon vertices", () => {
+    const poly = computeFeasibleRegion(constraints);
+    expect(poly.length).toBe(3);
+    expect(polyHasVertex(poly, 0, 0)).toBe(true);
+    expect(polyHasVertex(poly, 4, 0)).toBe(true);
+    expect(polyHasVertex(poly, 0, 4)).toBe(true);
+  });
+
+  it("finds the maximising vertex of an objective", () => {
+    const poly = computeFeasibleRegion(constraints);
+    // maximise 3x + 2y → (4,0) gives 12, beats (0,4)=8 and (0,0)=0
+    const opt = optimiseLinear(poly, { a: 3, b: 2 }, true);
+    expect(opt && close(opt.x, 4) && close(opt.y, 0) && close(opt.value, 12)).toBe(true);
+  });
+
+  it("returns [] for an infeasible system", () => {
+    const bad: LinearConstraint[] = [
+      { a: 1, b: 0, c: 0, op: "<=" }, // x ≤ 0
+      { a: 1, b: 0, c: 2, op: ">=" }, // x ≥ 2
+      { a: 0, b: 1, c: 0, op: ">=" },
+    ];
+    expect(computeFeasibleRegion(bad)).toEqual([]);
+  });
+
+  it("recipe: shades the polygon, draws boundaries, marks the optimum", () => {
+    const r = linearProgramming(constraints, { objective: { a: 3, b: 2 }, maximise: true });
+    // The x+y≤4 boundary is a sloped line; x≥0 / y≥0 are handled as a vertical
+    // guide and a horizontal line respectively.
+    expect(r.regions?.[0].kind).toBe("polygon");
+    const opt = (r.config?.fois ?? []).find((f) => f.label?.startsWith("optimum"));
+    expect(opt && close(opt.x, 4) && close(opt.y, 0)).toBe(true);
   });
 });
 

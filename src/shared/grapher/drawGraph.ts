@@ -58,7 +58,8 @@ export const SERIES_COLORS = ["#2563eb", "#db2777", "#059669", "#d97706", "#7c3a
 export type ShadeRegion =
   | { kind: "xBand"; from: number; to: number; color?: string; opacity?: number }
   | { kind: "halfPlane"; curve: number; side: "above" | "below"; from?: number; to?: number; color?: string; opacity?: number }
-  | { kind: "between"; a: number; b: number; from?: number; to?: number; color?: string; opacity?: number };
+  | { kind: "between"; a: number; b: number; from?: number; to?: number; color?: string; opacity?: number }
+  | { kind: "polygon"; points: Array<{ x: number; y: number }>; color?: string; opacity?: number };
 
 /** A guide line — dashed root markers, asymptotes, reference lines. */
 export interface Guide {
@@ -157,6 +158,14 @@ export function drawGraph(
         const lo = Math.max(0, Math.min(x0, x1));
         const hi = Math.min(cssW, Math.max(x0, x1));
         if (hi > lo) ctx.fillRect(lo, 0, hi - lo, cssH);
+      } else if (r.kind === "polygon") {
+        if (r.points.length >= 3) {
+          ctx.beginPath();
+          ctx.moveTo(sx(r.points[0].x), sy(r.points[0].y));
+          for (let p = 1; p < r.points.length; p++) ctx.lineTo(sx(r.points[p].x), sy(r.points[p].y));
+          ctx.closePath();
+          ctx.fill();
+        }
       } else {
         const idxA = r.kind === "halfPlane" ? r.curve : r.a;
         const specA = curves[idxA]?.spec;
