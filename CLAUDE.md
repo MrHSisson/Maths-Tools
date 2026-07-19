@@ -12,6 +12,8 @@ A React/TypeScript/Vite app of interactive maths tools for teachers. Each tool h
 
 **Claude's job:** build complete new tools end-to-end from a user spec. The user provides the maths content; Claude writes all the code, registers the route, and pushes.
 
+**In-development work** — what's unfinished behind Developing-tools mode (the techniques/working-steps engine, skills, Teach decks, grapher integration, the migration backlog) is tracked in `DEV_ROADMAP.md`. Read it when picking up feature work; keep it current as work lands.
+
 ---
 
 ## The `Unpublished/` folder — leave alone
