@@ -42,6 +42,9 @@ export interface GrapherConfig {
   /** Auto-derive FOIs (roots/vertex…) from preset curves. Default true.
    *  Recipes that supply their own points (e.g. open/closed roots) set false. */
   autoFois?: boolean;
+  /** Auto-detect and dot intersections between function curves. Default true.
+   *  Set false when only a specific crossing should be marked (supply it via fois). */
+  autoIntersections?: boolean;
   /** Show the FOI dots. Default true. */
   showFois?: boolean;
   /** Fractional framing padding. Default 0.15. */
@@ -283,18 +286,20 @@ export function SmartGrapher({
     const scanLo = config.domain?.xMin ?? xMin - span;
     const scanHi = config.domain?.xMax ?? xMax + span;
 
-    const fns = built.filter((c) => c.spec.kind === "function").map((c) => c.spec) as Extract<CurveSpec, { kind: "function" }>[];
-    for (let i = 0; i < fns.length; i++) {
-      for (let j = i + 1; j < fns.length; j++) {
-        for (const pt of findFunctionIntersections(fns[i].f, fns[j].f, scanLo, scanHi)) {
-          allFois.push({ x: pt.x, y: pt.y, kind: "point", label: "intersection" });
+    if (config.autoIntersections !== false) {
+      const fns = built.filter((c) => c.spec.kind === "function").map((c) => c.spec) as Extract<CurveSpec, { kind: "function" }>[];
+      for (let i = 0; i < fns.length; i++) {
+        for (let j = i + 1; j < fns.length; j++) {
+          for (const pt of findFunctionIntersections(fns[i].f, fns[j].f, scanLo, scanHi)) {
+            allFois.push({ x: pt.x, y: pt.y, kind: "point", label: "intersection" });
+          }
         }
       }
     }
     return { curves: built, fois: allFois };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(seriesList.map((s) => [s.equationType, s.params])), JSON.stringify(config.fois),
-      JSON.stringify(config.domain), config.autoFois]);
+      JSON.stringify(config.domain), config.autoFois, config.autoIntersections]);
 
   // A stable-ish key so the inner canvas re-frames when the maths changes.
   const frameKey = useMemo(

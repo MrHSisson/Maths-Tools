@@ -1,6 +1,7 @@
 import {
-  ToolShell, MathRenderer, handleDiagramPrint,
+  ToolShell, MathRenderer, SmartGrapher, handleDiagramPrint,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type QOSnapshot,
+  type GraphSeries, type FOI, type Guide,
   randInt, pick, mStep, tStep,
 } from "../shared";
 
@@ -380,62 +381,40 @@ interface GraphData {
 const LINE_COLORS = ["#2563eb", "#059669"];       // binding columns
 const C3_COLOR = "#94a3b8";                        // unused column (dashed)
 
+// The lower-envelope plot, now rendered by the shared SmartGrapher: each
+// column's expected payoff is a line E(p) = top·p + bot·(1−p) over p ∈ [0, 1];
+// the two binding columns are solid, the unused column dashed grey, and the
+// optimal point (p*, V) is marked with red p*/V guide lines. Expandable to a
+// fullscreen interactive graph via the embed's own control.
 const GraphView = ({ g }: { g: GraphData }): JSX.Element => {
-  const W = 460, H = 320, mL = 46, mR = 96, mT = 18, mB = 42;
-  const cid = "clip" + Math.round(g.p * 1e6) + "_" + Math.round(g.V * 1e6);
-  // Scale to the binding lines, the value, and each unused line's height AT p*
-  // (not its extreme endpoints) so the crossing fills the frame; clip overflow.
-  const bind = g.lines.filter((l) => l.binding).flatMap((l) => [l.top, l.bot]);
-  const e3s = g.lines.filter((l) => !l.binding).map((l) => l.top * g.p + l.bot * (1 - g.p));
-  const focus = [...bind, g.V, ...e3s];
-  let yMin = Math.min(...focus), yMax = Math.max(...focus);
-  const pad = Math.max(1, (yMax - yMin) * 0.14);
-  yMin -= pad; yMax += pad;
-  const px = (p: number) => mL + p * (W - mL - mR);
-  const py = (v: number) => mT + ((yMax - v) / (yMax - yMin)) * (H - mT - mB);
-  const y0 = py(g.V), x0 = px(g.p);
-
+  let bindIdx = 0;
+  const series: GraphSeries[] = g.lines.map((l) => ({
+    equationType: "linear",
+    params: [l.top - l.bot, l.bot],                 // E(p) = (top − bot)·p + bot
+    label: uniSub(l.label) + (l.binding ? "" : " (unused)"),
+    color: l.binding ? LINE_COLORS[bindIdx++ % 2] : C3_COLOR,
+    dashed: !l.binding,
+  }));
+  const fois: FOI[] = [{ x: g.p, y: g.V, kind: "point", label: "optimal (p*, V)" }];
+  const guides: Guide[] = [
+    { kind: "vLine", at: g.p, dashed: true, color: "#dc2626" },
+    { kind: "hLine", at: g.V, dashed: true, color: "#dc2626" },
+  ];
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} style={{ display: "block", width: "100%", height: "auto", maxWidth: 460, margin: "0 auto" }} preserveAspectRatio="xMidYMid meet">
-      <defs><clipPath id={cid}><rect x={mL} y={mT} width={W - mL - mR} height={H - mT - mB} /></clipPath></defs>
-      {/* plot frame */}
-      <rect x={mL} y={mT} width={W - mL - mR} height={H - mT - mB} fill="#ffffff" stroke="#e2e8f0" />
-      <g clipPath={`url(#${cid})`}>
-        {/* zero payoff line, if in range */}
-        {yMin < 0 && yMax > 0 && (
-          <line x1={mL} y1={py(0)} x2={W - mR} y2={py(0)} stroke="#cbd5e1" strokeDasharray="2 3" />
-        )}
-        {/* value guide lines */}
-        <line x1={mL} y1={y0} x2={x0} y2={y0} stroke="#dc2626" strokeDasharray="4 3" strokeWidth={1.3} />
-        <line x1={x0} y1={y0} x2={x0} y2={H - mB} stroke="#dc2626" strokeDasharray="4 3" strokeWidth={1.3} />
-        {/* payoff lines */}
-        {g.lines.map((l, i) => {
-          const col = l.binding ? LINE_COLORS[i % 2] : C3_COLOR;
-          return (
-            <line key={i} x1={px(0)} y1={py(l.bot)} x2={px(1)} y2={py(l.top)} stroke={col} strokeWidth={l.binding ? 2.4 : 1.8} strokeDasharray={l.binding ? undefined : "6 4"} />
-          );
-        })}
-        {/* optimal point */}
-        <circle cx={x0} cy={y0} r={4.5} fill="#dc2626" />
-      </g>
-      {/* legend (outside the plot, never clipped) */}
-      {g.lines.map((l, i) => (
-        <text key={i} x={W - mR + 8} y={mT + 16 + i * 18} fontSize={13} fill={l.binding ? LINE_COLORS[i % 2] : C3_COLOR} fontWeight={l.binding ? 600 : 400}>
-          {uniSub(l.label)}{l.binding ? "" : " (unused)"}
-        </text>
-      ))}
-      {/* axes */}
-      <line x1={mL} y1={mT} x2={mL} y2={H - mB} stroke="#334155" strokeWidth={1.5} />
-      <line x1={mL} y1={H - mB} x2={W - mR} y2={H - mB} stroke="#334155" strokeWidth={1.5} />
-      {/* x ticks: p = 0 (all R_bot) .. 1 (all R_top) */}
-      <text x={mL} y={H - mB + 18} fontSize={12} fill="#334155" textAnchor="middle">0</text>
-      <text x={W - mR} y={H - mB + 18} fontSize={12} fill="#334155" textAnchor="middle">1</text>
-      <text x={(mL + W - mR) / 2} y={H - 6} fontSize={13} fill="#334155" textAnchor="middle">p = P({uniSub(g.rTop)})</text>
-      <text x={x0} y={H - mB + 18} fontSize={12} fill="#dc2626" textAnchor="middle" fontWeight={600}>p*</text>
-      {/* y label */}
-      <text x={14} y={mT + (H - mT - mB) / 2} fontSize={13} fill="#334155" textAnchor="middle" transform={`rotate(-90 14 ${mT + (H - mT - mB) / 2})`}>Expected payoff</text>
-      <text x={mL - 6} y={y0 + 4} fontSize={12} fill="#dc2626" textAnchor="end" fontWeight={600}>V</text>
-    </svg>
+    <SmartGrapher
+      series={series}
+      guides={guides}
+      height={300}
+      config={{
+        domain: { xMin: 0, xMax: 1 },
+        lockDomain: true,
+        axisLabels: { x: `p = P(${uniSub(g.rTop)})`, y: "Expected payoff" },
+        autoIntersections: false,   // only the optimum is marked, not every crossing
+        autoFois: false,
+        fois,
+        style: { foi: "#dc2626", foiText: "#dc2626" },
+      }}
+    />
   );
 };
 
@@ -449,7 +428,7 @@ const answerBody = (q: AnyQuestion, withGraph: boolean): JSX.Element => {
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
       {latex && <MathRenderer latex={latex} />}
       {withGraph && g && (
-        <div style={{ width: "100%", maxWidth: 460, background: "#ffffff", borderRadius: 10, padding: "10px 8px", boxShadow: "0 1px 3px rgba(0,0,0,0.12)" }}>
+        <div style={{ width: "100%", maxWidth: 480 }}>
           <GraphView g={g} />
         </div>
       )}
