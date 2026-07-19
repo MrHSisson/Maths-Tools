@@ -60,19 +60,26 @@ export const workings = (): Workings => {
 
 // ── Techniques ────────────────────────────────────────────────────────────────
 
+// A titled first row followed by one untitled row per subsequent line. Use for a
+// derivation that spans SEPARATE lines (a solve chain, several substitutions) —
+// each is its own step, so it reads correctly in show-all mode and reveals one
+// per press in stepped mode. (Contrast `fragments`, which build a SINGLE line.)
+const titledLines = (title: string, lines: string[]): WorkingStep[] =>
+  lines.length ? [mStep(title, lines[0]), ...lines.slice(1).map((l) => step(l))] : [];
+
 // Solve a quadratic with the formula: state it, substitute a/b/c IN (the step
 // students most often skip), then simplify the discriminant. Ends at the ± surd —
 // splitting the ± into two decimals is the caller's job (or the answer box's).
+// The formula and its substituted form are ONE line (an equals-chain), so the
+// second fragment is a `=` continuation, not a restated `x =`.
 export const quadraticFormulaSteps = (a: number, b: number, c: number, v = "x"): WorkingStep[] => {
   const disc = b * b - 4 * a * c;
   return [
     mStep("Substitute into the quadratic formula", [
       `${v} = \\dfrac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}`,
-      `${v} = \\dfrac{-(${b}) \\pm \\sqrt{(${b})^2 - 4(${a})(${c})}}{2(${a})}`,
+      `= \\dfrac{-(${b}) \\pm \\sqrt{(${b})^2 - 4(${a})(${c})}}{2(${a})}`,
     ]),
-    mStep("Simplify under the root", [
-      `${v} = \\dfrac{${-b} \\pm \\sqrt{${disc}}}{${2 * a}}`,
-    ]),
+    mStep("Simplify under the root", [`${v} = \\dfrac{${-b} \\pm \\sqrt{${disc}}}{${2 * a}}`]),
   ];
 };
 
@@ -83,9 +90,9 @@ export const solveFactorsSteps = (roots: string[], v = "x"): WorkingStep[] => {
   return [mStep("Set each factor equal to zero and solve", [line])];
 };
 
-// Substitute a found value (or values) back to get the other unknown. When both a
-// value and the equation are supplied, the title names them ("Substitute x = 3
-// into y = 2x − 5 to find y") — the specificity that makes a step read naturally.
+// Substitute a found value (or values) back to get the other unknown. Each line in
+// `body` is a SEPARATE row. When a value and the equation are supplied, the title
+// names them ("Substitute x = 3 into y = 2x − 5 to find y").
 export const substituteBackSteps = (
   varName: string,
   body: string | string[],
@@ -94,7 +101,7 @@ export const substituteBackSteps = (
   const title = ctx?.value && ctx?.into
     ? `Substitute ${ctx.value} into ${ctx.into} to find ${varName}`
     : `Substitute back to find ${varName}`;
-  return [mStep(title, body)];
+  return titledLines(title, Array.isArray(body) ? body : [body]);
 };
 
 // Rearrange an equation to make a variable the subject.
@@ -102,6 +109,7 @@ export const makeSubjectSteps = (
   varName: string, resultLatex: string | string[], eqLabel = "(2)",
 ): WorkingStep[] => [mStep(`Rearrange equation ${eqLabel} to make ${varName} the subject`, resultLatex)];
 
-// Solve a linear equation: reveal the chain of moves one written line at a time.
+// Solve a linear equation: each move in the chain is its own row (they are
+// separate equations, not one built-up line).
 export const solveLinearlySteps = (v: string, chain: string[]): WorkingStep[] =>
-  chain.length ? [mStep(`Expand and solve for ${v}`, chain)] : [];
+  titledLines(`Expand and solve for ${v}`, chain);
