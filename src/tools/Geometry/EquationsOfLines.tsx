@@ -387,6 +387,8 @@ const generateUniqueQ = (
   return q;
 };
 
+export const __test = { TOOL_CONFIG, generateQuestion };
+
 // ── App ───────────────────────────────────────────────────────────────────────
 export default function App() {
   return (
