@@ -614,6 +614,9 @@ const bankToFormQuestion = (e: FormBankEntry, idx: number): NonLinearQuestion =>
   const solutions = e.isolateVar === "y"
     ? [{ x: p1, y: other(p1) }, { x: p2, y: other(p2) }]     // primary is x
     : [{ x: other(p1), y: p1 }, { x: other(p2), y: p2 }];    // primary is y
+  // Decimal answers are derived from the recomputed solutions too — the stored
+  // soln*dec strings were also wrong for some entries.
+  const dec = (s: { x: number; y: number }) => `x\\approx${s.x.toFixed(2)},\\;y\\approx${s.y.toFixed(2)}`;
   return {
     kind:"nonlinear", subTool:"formula",
     eq1Display:e.eq1, eq2Display:e.eq2,
@@ -624,7 +627,7 @@ const bankToFormQuestion = (e: FormBankEntry, idx: number): NonLinearQuestion =>
     surdLatex:primarySurd,
     surdX1:primarySurd, surdX2:primarySurd,
     surdYCombined:otherSurd,
-    decimalLatex:`${e.soln1dec}\\text{ or }${e.soln2dec}`,
+    decimalLatex:`${dec(solutions[0])}\\text{ or }${dec(solutions[1])}`,
     solutions,
     isDoubleRoot:false,
     A:e.A, B:e.B, C:e.C, isCircle:true, r2:e.r2,
