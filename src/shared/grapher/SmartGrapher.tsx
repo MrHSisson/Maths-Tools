@@ -49,6 +49,9 @@ export interface GrapherConfig {
   showFois?: boolean;
   /** Fractional framing padding. Default 0.15. */
   padding?: number;
+  /** Force a 1:1 aspect ratio. Defaults to true only when a circle is present;
+   *  function graphs scale each axis to fit independently. */
+  lockAspect?: boolean;
   /** Draw-style overrides (colours). */
   style?: Partial<DrawStyle>;
 }
@@ -121,7 +124,7 @@ function GraphCanvas({
 }: GraphCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
-  const viewportRef = useRef<Viewport>({ centreX: 0, centreY: 0, unitsPerPixel: 0.05 });
+  const viewportRef = useRef<Viewport>({ centreX: 0, centreY: 0, unitsPerPixelX: 0.05, unitsPerPixelY: 0.05 });
   const framedKeyRef = useRef<string>("");
   const rafRef = useRef<number | null>(null);
 
@@ -156,10 +159,14 @@ function GraphCanvas({
   const reframe = useCallback(() => {
     const { w, h } = cssSize();
     if (w <= 0 || h <= 0) return;
+    // Circles must stay round → lock the aspect when any circle is present;
+    // function graphs scale each axis independently. Overridable via config.
+    const hasCircle = curves.some((c) => c.spec.kind === "circle");
     viewportRef.current = computeFrame(fois, curves.map((c) => c.spec), w, h, {
       domain: config.domain,
       lockDomain: config.lockDomain,
       padding: config.padding,
+      lockAspect: config.lockAspect ?? hasCircle,
     });
     framedKeyRef.current = frameKey;
     requestDraw();

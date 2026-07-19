@@ -338,11 +338,15 @@ const colinSteps = (co: Core2, cLeft: string): WorkingStep[] => {
 };
 
 // Level 3 graphical reasoning around the third (unused) column.
-const graphSteps = (co: Core2, c3: [number, number], c3Lab: string, cA: string, cB: string): WorkingStep[] => {
+const graphSteps = (co: Core2, c3: [number, number], c3Lab: string, cA: string, cB: string, graph: GraphData): WorkingStep[] => {
   const [e, f] = c3;
   const E3 = mkFrac(e * co.p.n + f * (co.p.d - co.p.n), co.p.d);   // E3(p*)
+  // The plotting step carries the graph data so the worked-example stepRenderer
+  // can draw the SmartGrapher right where the method says to plot it.
+  const plot: WorkingStep = tStep("Plot each column's expected payoff as a line against $p$. Colin takes the lowest line, so Rose maximises the lower envelope — its highest point is the answer.");
+  plot.extra = { graph };
   return [
-    tStep("Plot each column's expected payoff as a line against $p$. Colin takes the lowest line, so Rose maximises the lower envelope — its highest point is the answer."),
+    plot,
     mStep(`The lower envelope peaks where columns $${cA}$ and $${cB}$ cross, giving the $p$ found below.`,
       `p = ${fLatex(co.p)}`),
     mStep(`Check the third line $${c3Lab}$ at that $p$:`,
@@ -438,6 +442,22 @@ const answerBody = (q: AnyQuestion, withGraph: boolean): JSX.Element => {
 // Worked example / worksheet answers get the graph; the whiteboard answer is
 // rendered text-only from questionRenderer (its box is too small for the plot).
 const answerRenderer = (q: AnyQuestion): JSX.Element | null => answerBody(q, true);
+
+// The worked example draws the graph inline at the plotting step (which carries
+// the graph data on step.extra), so it appears exactly where the method says to
+// plot it. All other steps fall through to the shell's default rendering.
+const stepRenderer = (s: WorkingStep): JSX.Element | null => {
+  const g = (s.extra as { graph?: GraphData } | undefined)?.graph;
+  if (!g) return null;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <span>{s.plain}</span>
+      <div style={{ width: "100%", maxWidth: 480, margin: "0 auto" }}>
+        <GraphView g={g} />
+      </div>
+    </div>
+  );
+};
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TOOL CONFIG
@@ -606,7 +626,16 @@ const generateQuestion = (
       `${A.cLab[A.colDecoy.at]} > ${A.cLab[A.colDecoy.by]}`));
     working.push(tStep(`The remaining columns $${cA}$, $${cB}$ and $${c3Lab}$ have no dominance between them — a graph is needed.`));
   }
-  working.push(...graphSteps(co, c3, c3Lab, cA, cB));
+  const graph: GraphData = {
+    lines: [
+      { label: cA, top: co.a, bot: co.c, binding: true },
+      { label: cB, top: co.b, bot: co.d, binding: true },
+      { label: c3Lab, top: c3[0], bot: c3[1], binding: false },
+    ],
+    p: fVal(co.p), pLatex: fLatex(co.p), vLatex: fLatex(co.V), V: fVal(co.V),
+    rTop: A.rLab[A.bindRows[0]], rBot: A.rLab[A.bindRows[1]],
+  };
+  working.push(...graphSteps(co, c3, c3Lab, cA, cB, graph));
   working.push(...roseSteps(co, A.rLab[A.bindRows[0]], cA));
 
   return {
@@ -616,15 +645,7 @@ const generateQuestion = (
     answer: `p = ${fPlain(co.p)}, V = ${fPlain(co.V)}`,
     answerLatex: answerLatex(co, A.rLab[A.bindRows[0]], A.rLab[A.bindRows[1]], cA, cB, false, true, c3Lab),
     working,
-    _graph: {
-      lines: [
-        { label: cA, top: co.a, bot: co.c, binding: true },
-        { label: cB, top: co.b, bot: co.d, binding: true },
-        { label: c3Lab, top: c3[0], bot: c3[1], binding: false },
-      ],
-      p: fVal(co.p), pLatex: fLatex(co.p), vLatex: fLatex(co.V), V: fVal(co.V),
-      rTop: A.rLab[A.bindRows[0]], rBot: A.rLab[A.bindRows[1]],
-    } as GraphData,
+    _graph: graph,
     _matrix: A.M, _aspect: tblW(A.M[0].length) / tblH(A.M.length),
     key: `l3-${wrapper}-${co.a}-${co.b}-${co.c}-${co.d}-${c3[0]}-${c3[1]}-${id}`,
     difficulty: level,
@@ -642,6 +663,7 @@ export default function App() {
       generateQuestion={generateQuestion}
       questionRenderer={questionRenderer}
       answerRenderer={answerRenderer}
+      stepRenderer={stepRenderer}
       customPrintHandler={handleDiagramPrint}
       defaults={{ numQuestions: 6, numColumns: 2, maxColumns: 3, hideFontControls: true }}
     />

@@ -39,8 +39,11 @@ export interface FOI {
 export interface Viewport {
   centreX: number;
   centreY: number;
-  /** Math units per CSS pixel. Same on both axes → 1:1 aspect ratio. */
-  unitsPerPixel: number;
+  /** Math units per CSS pixel on the x-axis. */
+  unitsPerPixelX: number;
+  /** Math units per CSS pixel on the y-axis. Equal to X when the aspect is
+   *  locked (circles/geometry); independent otherwise (function graphs). */
+  unitsPerPixelY: number;
 }
 
 /** Optional per-embed conditions (domain locks, etc.). */
@@ -51,6 +54,9 @@ export interface FrameOptions {
   lockDomain?: boolean;
   /** Fractional visual padding around the framed content. Default 0.15 (15%). */
   padding?: number;
+  /** Force a 1:1 aspect ratio (equal x/y scale). Needed so circles stay round;
+   *  function graphs leave it off and scale each axis to fit independently. */
+  lockAspect?: boolean;
 }
 
 /**
@@ -496,32 +502,39 @@ export function computeFrame(
   if (!Number.isFinite(box.yMin) || !Number.isFinite(box.yMax)) { box.yMin = -5; box.yMax = 5; }
   if (near(box.yMin, box.yMax)) { box.yMin -= 5; box.yMax += 5; }
 
-  // 3. Pad both ranges.
-  const xSpan = (box.xMax - box.xMin) * (1 + 2 * pad);
+  // 3. Pad both ranges. A locked domain gets a tight x-pad so it reads as its
+  //    exact interval (e.g. p ∈ [0, 1]); otherwise the standard visual padding.
+  const domLocked = !!(opts.lockDomain && dom && dom.xMin !== undefined && dom.xMax !== undefined);
+  const padX = domLocked ? 0.04 : pad;
+  const xSpan = (box.xMax - box.xMin) * (1 + 2 * padX);
   const ySpan = (box.yMax - box.yMin) * (1 + 2 * pad);
   const centreX = (box.xMin + box.xMax) / 2;
   const centreY = (box.yMin + box.yMax) / 2;
 
-  // 4. Lock 1:1 — the axis needing more units-per-pixel wins so both fit.
-  const unitsPerPixel = Math.max(xSpan / W, ySpan / H);
+  // 4. Scale each axis to fit. When the aspect is locked (circles), the axis
+  //    needing more units-per-pixel wins so the shape stays true; otherwise the
+  //    axes scale independently so unrelated ranges (p vs payoff) both fill.
+  let uppX = xSpan / W;
+  let uppY = ySpan / H;
+  if (opts.lockAspect) { const u = Math.max(uppX, uppY); uppX = u; uppY = u; }
 
-  return { centreX, centreY, unitsPerPixel };
+  return { centreX, centreY, unitsPerPixelX: uppX, unitsPerPixelY: uppY };
 }
 
 // ── Coordinate transforms (pure) ─────────────────────────────────────────────
 // Screen coordinates are in CSS pixels; (0,0) is the canvas top-left.
 
 export function mathToScreenX(x: number, vp: Viewport, cssW: number): number {
-  return cssW / 2 + (x - vp.centreX) / vp.unitsPerPixel;
+  return cssW / 2 + (x - vp.centreX) / vp.unitsPerPixelX;
 }
 export function mathToScreenY(y: number, vp: Viewport, cssH: number): number {
-  return cssH / 2 - (y - vp.centreY) / vp.unitsPerPixel;
+  return cssH / 2 - (y - vp.centreY) / vp.unitsPerPixelY;
 }
 export function screenToMathX(px: number, vp: Viewport, cssW: number): number {
-  return vp.centreX + (px - cssW / 2) * vp.unitsPerPixel;
+  return vp.centreX + (px - cssW / 2) * vp.unitsPerPixelX;
 }
 export function screenToMathY(py: number, vp: Viewport, cssH: number): number {
-  return vp.centreY - (py - cssH / 2) * vp.unitsPerPixel;
+  return vp.centreY - (py - cssH / 2) * vp.unitsPerPixelY;
 }
 
 /**

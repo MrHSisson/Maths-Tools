@@ -112,34 +112,36 @@ export function drawGraph(
   ctx.fillStyle = st.background;
   ctx.fillRect(0, 0, cssW, cssH);
 
-  // ── Gridline step: aim for ~70px spacing, snapped to a nice 1/2/5 value ──
+  // ── Gridline step: aim for ~70px spacing, snapped to a nice 1/2/5 value.
+  //    Each axis gets its own step (they may have very different scales). ──
   const targetPx = 70;
-  const step = niceStep(vp.unitsPerPixel * targetPx);
+  const stepX = niceStep(vp.unitsPerPixelX * targetPx);
+  const stepY = niceStep(vp.unitsPerPixelY * targetPx);
 
   const xMinMath = screenToMathX(0, vp, cssW);
   const xMaxMath = screenToMathX(cssW, vp, cssW);
-  const yTopMath = vp.centreY + (cssH / 2) * vp.unitsPerPixel;
-  const yBotMath = vp.centreY - (cssH / 2) * vp.unitsPerPixel;
+  const yTopMath = vp.centreY + (cssH / 2) * vp.unitsPerPixelY;
+  const yBotMath = vp.centreY - (cssH / 2) * vp.unitsPerPixelY;
 
-  const firstX = Math.ceil(xMinMath / step) * step;
-  const firstY = Math.ceil(yBotMath / step) * step;
+  const firstX = Math.ceil(xMinMath / stepX) * stepX;
+  const firstY = Math.ceil(yBotMath / stepY) * stepY;
 
   // ── Minor + major gridlines ──
   ctx.lineWidth = 1;
   ctx.font = "11px ui-sans-serif, system-ui, sans-serif";
   ctx.textBaseline = "top";
 
-  for (let x = firstX; x <= xMaxMath + step / 2; x += step) {
+  for (let x = firstX; x <= xMaxMath + stepX / 2; x += stepX) {
     const px = sx(x);
-    ctx.strokeStyle = Math.abs(x) < step / 1e6 ? st.gridMajor : st.gridMinor;
+    ctx.strokeStyle = Math.abs(x) < stepX / 1e6 ? st.gridMajor : st.gridMinor;
     ctx.beginPath();
     ctx.moveTo(px, 0);
     ctx.lineTo(px, cssH);
     ctx.stroke();
   }
-  for (let y = firstY; y <= yTopMath + step / 2; y += step) {
+  for (let y = firstY; y <= yTopMath + stepY / 2; y += stepY) {
     const py = sy(y);
-    ctx.strokeStyle = Math.abs(y) < step / 1e6 ? st.gridMajor : st.gridMinor;
+    ctx.strokeStyle = Math.abs(y) < stepY / 1e6 ? st.gridMajor : st.gridMinor;
     ctx.beginPath();
     ctx.moveTo(0, py);
     ctx.lineTo(cssW, py);
@@ -219,19 +221,19 @@ export function drawGraph(
     ctx.fillStyle = st.axisText;
     ctx.textBaseline = "top";
     ctx.textAlign = "center";
-    for (let x = firstX; x <= xMaxMath + step / 2; x += step) {
-      if (Math.abs(x) < step / 1e6) continue;
+    for (let x = firstX; x <= xMaxMath + stepX / 2; x += stepX) {
+      if (Math.abs(x) < stepX / 1e6) continue;
       const px = sx(x);
       const ly = Math.min(cssH - 14, Math.max(2, axisY + 4));
-      ctx.fillText(fmtTick(x, step), px, ly);
+      ctx.fillText(fmtTick(x, stepX), px, ly);
     }
     ctx.textAlign = "right";
     ctx.textBaseline = "middle";
-    for (let y = firstY; y <= yTopMath + step / 2; y += step) {
-      if (Math.abs(y) < step / 1e6) continue;
+    for (let y = firstY; y <= yTopMath + stepY / 2; y += stepY) {
+      if (Math.abs(y) < stepY / 1e6) continue;
       const py = sy(y);
       const lx = Math.min(cssW - 4, Math.max(20, axisX - 6));
-      ctx.fillText(fmtTick(y, step), lx, py);
+      ctx.fillText(fmtTick(y, stepY), lx, py);
     }
   }
 
@@ -264,8 +266,10 @@ export function drawGraph(
     ctx.strokeStyle = c.color ?? SERIES_COLORS[i % SERIES_COLORS.length] ?? st.curve;
     ctx.setLineDash(c.dashed ? [7, 5] : []);
     if (spec.kind === "circle") {
+      // Ellipse so it stays correct under independent axis scales; with a locked
+      // aspect (uppX === uppY) it renders as a true circle.
       ctx.beginPath();
-      ctx.arc(sx(spec.cx), sy(spec.cy), spec.r / vp.unitsPerPixel, 0, 2 * Math.PI);
+      ctx.ellipse(sx(spec.cx), sy(spec.cy), spec.r / vp.unitsPerPixelX, spec.r / vp.unitsPerPixelY, 0, 0, 2 * Math.PI);
       ctx.stroke();
     } else {
       ctx.beginPath();

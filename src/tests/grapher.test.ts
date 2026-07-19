@@ -88,7 +88,7 @@ describe("preset FOIs", () => {
 });
 
 describe("computeFrame", () => {
-  it("frames FOIs with padding at a locked 1:1 aspect ratio", () => {
+  it("frames every FOI inside the viewport (independent axes)", () => {
     const fois: FOI[] = [
       { x: -1, y: 0, kind: "root" },
       { x: 3, y: 0, kind: "root" },
@@ -96,39 +96,49 @@ describe("computeFrame", () => {
     ];
     const spec = buildCurveSpec("quadratic", [1, -2, -3]);
     const vp = computeFrame(fois, spec, 400, 400, { padding: 0.15 });
-    // Centre x is the midpoint of the x-features.
     expect(close(vp.centreX, 1, 1e-6)).toBe(true);
-    // 1:1 aspect ratio → both axes share unitsPerPixel (single scalar), positive.
-    expect(vp.unitsPerPixel).toBeGreaterThan(0);
-    // Every FOI must land inside the framed viewport.
-    const halfW = (400 / 2) * vp.unitsPerPixel;
-    const halfH = (400 / 2) * vp.unitsPerPixel;
+    expect(vp.unitsPerPixelX).toBeGreaterThan(0);
+    expect(vp.unitsPerPixelY).toBeGreaterThan(0);
+    const halfW = (400 / 2) * vp.unitsPerPixelX;
+    const halfH = (400 / 2) * vp.unitsPerPixelY;
     for (const f of fois) {
       expect(Math.abs(f.x - vp.centreX)).toBeLessThanOrEqual(halfW + 1e-6);
       expect(Math.abs(f.y - vp.centreY)).toBeLessThanOrEqual(halfH + 1e-6);
     }
   });
 
+  it("scales axes independently — a wide y-range does not blow out the x-window", () => {
+    // p ∈ [0,1] locked, payoff range large. Independent axes must keep x ≈ [0,1].
+    const spec = buildCurveSpec("linear", [16, -8]); // y = 16p - 8, spans [-8, 8]
+    const vp = computeFrame([], spec, 300, 300, { domain: { xMin: 0, xMax: 1 }, lockDomain: true });
+    const halfW = 150 * vp.unitsPerPixelX;
+    // x-window stays ≈ [0,1] (half-width ≈ 0.5), NOT stretched to the payoff
+    // scale — a 1:1 aspect lock would blow this out to ≈ 10.
+    expect(halfW).toBeLessThan(1);
+    // y-axis is scaled independently and much larger.
+    expect(vp.unitsPerPixelY).toBeGreaterThan(vp.unitsPerPixelX * 5);
+  });
+
+  it("locks the aspect (equal scales) when asked", () => {
+    const spec = buildCurveSpec("circle", [0, 0, 3]);
+    const vp = computeFrame([], spec, 300, 300, { lockAspect: true });
+    expect(close(vp.unitsPerPixelX, vp.unitsPerPixelY, 1e-9)).toBe(true);
+  });
+
   it("honours a locked domain as the exact x-range", () => {
     const fn = (p: number) => -4 * p * p + 3 * p;
     const spec = buildCurveSpec("custom", [], fn);
-    const vp = computeFrame([], spec, 300, 300, {
-      domain: { xMin: 0, xMax: 1 },
-      lockDomain: true,
-      padding: 0.15,
-    });
-    // The padded domain [0,1] is centred at 0.5.
+    const vp = computeFrame([], spec, 300, 300, { domain: { xMin: 0, xMax: 1 }, lockDomain: true, padding: 0.15 });
     expect(close(vp.centreX, 0.5, 1e-6)).toBe(true);
-    // The whole domain fits.
-    const halfW = (300 / 2) * vp.unitsPerPixel;
+    const halfW = (300 / 2) * vp.unitsPerPixelX;
     expect(0.5 - halfW).toBeLessThanOrEqual(0 + 1e-6);
     expect(0.5 + halfW).toBeGreaterThanOrEqual(1 - 1e-6);
   });
 
   it("never produces a degenerate viewport for a single point", () => {
     const vp = computeFrame([{ x: 2, y: 2, kind: "point" }], undefined, 300, 300);
-    expect(Number.isFinite(vp.unitsPerPixel)).toBe(true);
-    expect(vp.unitsPerPixel).toBeGreaterThan(0);
+    expect(Number.isFinite(vp.unitsPerPixelX) && vp.unitsPerPixelX > 0).toBe(true);
+    expect(Number.isFinite(vp.unitsPerPixelY) && vp.unitsPerPixelY > 0).toBe(true);
   });
 });
 
@@ -165,9 +175,9 @@ describe("computeFrame (multi-curve)", () => {
     const l2 = buildCurveSpec("linear", [-1, 5]);
     const inter: FOI = { x: 2, y: 3, kind: "point", label: "solution" };
     const vp = computeFrame([inter], [l1, l2], 400, 400, { padding: 0.15 });
-    expect(vp.unitsPerPixel).toBeGreaterThan(0);
-    const halfW = 200 * vp.unitsPerPixel;
-    const halfH = 200 * vp.unitsPerPixel;
+    expect(vp.unitsPerPixelX).toBeGreaterThan(0);
+    const halfW = 200 * vp.unitsPerPixelX;
+    const halfH = 200 * vp.unitsPerPixelY;
     expect(Math.abs(2 - vp.centreX)).toBeLessThanOrEqual(halfW + 1e-6);
     expect(Math.abs(3 - vp.centreY)).toBeLessThanOrEqual(halfH + 1e-6);
   });
@@ -373,7 +383,8 @@ describe("extended curve families", () => {
     for (const [type, params] of cases) {
       const spec = buildCurveSpec(type, params);
       const vp = computeFrame(computeFOIs(type, params), spec, 300, 300);
-      expect(Number.isFinite(vp.unitsPerPixel) && vp.unitsPerPixel > 0).toBe(true);
+      expect(Number.isFinite(vp.unitsPerPixelX) && vp.unitsPerPixelX > 0).toBe(true);
+      expect(Number.isFinite(vp.unitsPerPixelY) && vp.unitsPerPixelY > 0).toBe(true);
       expect(Number.isFinite(vp.centreX) && Number.isFinite(vp.centreY)).toBe(true);
     }
   });

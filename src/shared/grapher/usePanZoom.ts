@@ -51,8 +51,8 @@ export function usePanZoom(
 
     const applyClamp = () => {
       const vp = viewportRef.current;
-      const zClamped = clampNum(vp.unitsPerPixel, minUnitsPerPixel, maxUnitsPerPixel);
-      vp.unitsPerPixel = zClamped;
+      vp.unitsPerPixelX = clampNum(vp.unitsPerPixelX, minUnitsPerPixel, maxUnitsPerPixel);
+      vp.unitsPerPixelY = clampNum(vp.unitsPerPixelY, minUnitsPerPixel, maxUnitsPerPixel);
       if (clamp) {
         vp.centreX = clampNum(vp.centreX, clamp.xMin, clamp.xMax);
         vp.centreY = clampNum(vp.centreY, clamp.yMin, clamp.yMax);
@@ -76,8 +76,8 @@ export function usePanZoom(
       const dy = e.clientY - lastY;
       lastX = e.clientX;
       lastY = e.clientY;
-      vp.centreX -= dx * vp.unitsPerPixel;
-      vp.centreY += dy * vp.unitsPerPixel;
+      vp.centreX -= dx * vp.unitsPerPixelX;
+      vp.centreY += dy * vp.unitsPerPixelY;
       applyClamp();
       requestDraw();
     };
@@ -93,10 +93,12 @@ export function usePanZoom(
       // Math point under the cursor before zoom.
       const mx = screenToMathX(screenX, vp, w);
       const my = screenToMathY(screenY, vp, h);
-      vp.unitsPerPixel = clampNum(vp.unitsPerPixel * factor, minUnitsPerPixel, maxUnitsPerPixel);
+      // Uniform zoom preserves the current aspect ratio.
+      vp.unitsPerPixelX = clampNum(vp.unitsPerPixelX * factor, minUnitsPerPixel, maxUnitsPerPixel);
+      vp.unitsPerPixelY = clampNum(vp.unitsPerPixelY * factor, minUnitsPerPixel, maxUnitsPerPixel);
       // Re-centre so the same math point stays under the cursor.
-      vp.centreX = mx - (screenX - w / 2) * vp.unitsPerPixel;
-      vp.centreY = my + (screenY - h / 2) * vp.unitsPerPixel;
+      vp.centreX = mx - (screenX - w / 2) * vp.unitsPerPixelX;
+      vp.centreY = my + (screenY - h / 2) * vp.unitsPerPixelY;
       applyClamp();
       requestDraw();
     };
@@ -135,8 +137,8 @@ export function usePanZoom(
         const dy = e.touches[0].clientY - tLastY;
         tLastX = e.touches[0].clientX;
         tLastY = e.touches[0].clientY;
-        vp.centreX -= dx * vp.unitsPerPixel;
-        vp.centreY += dy * vp.unitsPerPixel;
+        vp.centreX -= dx * vp.unitsPerPixelX;
+        vp.centreY += dy * vp.unitsPerPixelY;
         applyClamp();
         requestDraw();
       } else if (touchMode === "pinch" && e.touches.length >= 2) {
