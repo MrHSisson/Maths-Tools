@@ -1,7 +1,7 @@
 import {
   ToolShell, MathRenderer, SmartGrapher, handleDiagramPrint,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type QOSnapshot,
-  type GraphSeries, type FOI, type Guide,
+  type GraphSeries, type FOI,
   randInt, pick, mStep, tStep,
 } from "../shared";
 
@@ -382,41 +382,33 @@ interface GraphData {
   rTop: string; rBot: string;
 }
 
-const LINE_COLORS = ["#2563eb", "#059669"];       // binding columns
-const C3_COLOR = "#94a3b8";                        // unused column (dashed)
+const LINE_COLORS = ["#2563eb", "#059669", "#d97706"];   // one per column line
 
-// The lower-envelope plot, now rendered by the shared SmartGrapher: each
-// column's expected payoff is a line E(p) = top·p + bot·(1−p) over p ∈ [0, 1];
-// the two binding columns are solid, the unused column dashed grey, and the
-// optimal point (p*, V) is marked with red p*/V guide lines. Expandable to a
-// fullscreen interactive graph via the embed's own control.
+// The lower-envelope plot, rendered by the shared SmartGrapher: each column's
+// expected payoff is a line E(p) = top·p + bot·(1−p) over p ∈ [0, 1], all three
+// solid and colour-coded. Only the peak of the lower envelope is highlighted (a
+// ringed marker, no coordinate) — students still have to solve the two line
+// equations to find p and the value. Expandable to fullscreen via the embed.
 const GraphView = ({ g }: { g: GraphData }): JSX.Element => {
-  let bindIdx = 0;
-  const series: GraphSeries[] = g.lines.map((l) => ({
+  const series: GraphSeries[] = g.lines.map((l, i) => ({
     equationType: "linear",
     params: [l.top - l.bot, l.bot],                 // E(p) = (top − bot)·p + bot
-    label: uniSub(l.label) + (l.binding ? "" : " (unused)"),
-    color: l.binding ? LINE_COLORS[bindIdx++ % 2] : C3_COLOR,
-    dashed: !l.binding,
+    label: uniSub(l.label),
+    color: LINE_COLORS[i % LINE_COLORS.length],
   }));
-  const fois: FOI[] = [{ x: g.p, y: g.V, kind: "point", label: "optimal (p*, V)" }];
-  const guides: Guide[] = [
-    { kind: "vLine", at: g.p, dashed: true, color: "#dc2626" },
-    { kind: "hLine", at: g.V, dashed: true, color: "#dc2626" },
-  ];
+  const fois: FOI[] = [{ x: g.p, y: g.V, kind: "point", highlight: true }];
   return (
     <SmartGrapher
       series={series}
-      guides={guides}
       height={300}
       config={{
         domain: { xMin: 0, xMax: 1 },
         lockDomain: true,
         axisLabels: { x: `p = P(${uniSub(g.rTop)})`, y: "Expected payoff" },
-        autoIntersections: false,   // only the optimum is marked, not every crossing
+        autoIntersections: false,   // only the peak is marked, not every crossing
         autoFois: false,
         fois,
-        style: { foi: "#dc2626", foiText: "#dc2626" },
+        style: { foi: "#dc2626" },
       }}
     />
   );

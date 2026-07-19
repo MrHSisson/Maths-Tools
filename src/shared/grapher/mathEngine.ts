@@ -33,6 +33,8 @@ export interface FOI {
   label?: string;
   /** Render as a hollow dot (a strict-inequality endpoint, x not included). */
   open?: boolean;
+  /** Render as an emphasised ringed marker (e.g. the peak of a lower envelope). */
+  highlight?: boolean;
 }
 
 /** The mutable viewport — held in a ref by SmartGrapher, never in React state. */

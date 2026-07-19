@@ -317,7 +317,20 @@ export function drawGraph(
       const px = sx(f.x);
       const py = sy(f.y);
       if (px < -20 || px > cssW + 20 || py < -20 || py > cssH + 20) continue;
-      if (f.open) {
+      if (f.highlight) {
+        // Emphasised marker: a filled dot inside a contrasting ring.
+        ctx.beginPath();
+        ctx.arc(px, py, 8, 0, 2 * Math.PI);
+        ctx.fillStyle = st.background;
+        ctx.fill();
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = st.foi;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(px, py, 4, 0, 2 * Math.PI);
+        ctx.fillStyle = st.foi;
+        ctx.fill();
+      } else if (f.open) {
         // Hollow dot — strict-inequality endpoint (x not included).
         ctx.fillStyle = st.background;
         ctx.beginPath();
