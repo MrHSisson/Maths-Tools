@@ -436,10 +436,10 @@ const FAC_BANK: BankEntry[] = [
   { eq1:"x^2+y^2=13",  eq2:"y=2x+1",   expanded:"5x^2+4x-12=0",     factorised:"(5x-6)(x+2)=0",     soln1:"x=-2,\\;y=-3",                         soln2:"x=\\frac{6}{5},\\;y=\\frac{17}{5}",  A:5,  B:4,   C:-12,  r2:13,  isolateVar:"y",linM:2,  linD:1,  quadSub:"x^2+(2x+1)^2=13",           x1:-2,   y1:-3,   x2:1.2,  y2:3.4,  coefType:"none" },
   { eq1:"x^2+y^2=17",  eq2:"y=x+3",    expanded:"2x^2+6x-8=0",      factorised:"2(x+4)(x-1)=0",     soln1:"x=-4,\\;y=-1",                         soln2:"x=1,\\;y=4",                          A:2,  B:6,   C:-8,   r2:17,  isolateVar:"y",linM:1,  linD:3,  quadSub:"x^2+(x+3)^2=17",            x1:-4,   y1:-1,   x2:1,    y2:4,    coefType:"none" },
   { eq1:"x^2+y^2=29",  eq2:"y=x+3",    expanded:"2x^2+6x-20=0",     factorised:"2(x+5)(x-2)=0",     soln1:"x=-5,\\;y=-2",                         soln2:"x=2,\\;y=5",                          A:2,  B:6,   C:-20,  r2:29,  isolateVar:"y",linM:1,  linD:3,  quadSub:"x^2+(x+3)^2=29",            x1:-5,   y1:-2,   x2:2,    y2:5,    coefType:"none" },
-  { eq1:"x^2+y^2=26",  eq2:"y=x+2",    expanded:"2x^2+4x-22=0",     factorised:"2(x+5)(x-3)=0",     soln1:"x=-5,\\;y=-3",                         soln2:"x=3,\\;y=5",                          A:2,  B:4,   C:-22,  r2:26,  isolateVar:"y",linM:1,  linD:2,  quadSub:"x^2+(x+2)^2=26",            x1:-5,   y1:-3,   x2:3,    y2:5,    coefType:"none" },
+  { eq1:"x^2+y^2=34",  eq2:"y=x+2",    expanded:"2x^2+4x-30=0",     factorised:"2(x+5)(x-3)=0",     soln1:"x=-5,\\;y=-3",                         soln2:"x=3,\\;y=5",                          A:2,  B:4,   C:-30,  r2:34,  isolateVar:"y",linM:1,  linD:2,  quadSub:"x^2+(x+2)^2=34",            x1:-5,   y1:-3,   x2:3,    y2:5,    coefType:"none" },
   { eq1:"x^2+y^2=41",  eq2:"y=x+1",    expanded:"2x^2+2x-40=0",     factorised:"2(x+5)(x-4)=0",     soln1:"x=-5,\\;y=-4",                         soln2:"x=4,\\;y=5",                          A:2,  B:2,   C:-40,  r2:41,  isolateVar:"y",linM:1,  linD:1,  quadSub:"x^2+(x+1)^2=41",            x1:-5,   y1:-4,   x2:4,    y2:5,    coefType:"none" },
   { eq1:"x^2+y^2=52",  eq2:"y=x+2",    expanded:"2x^2+4x-48=0",     factorised:"2(x+6)(x-4)=0",     soln1:"x=-6,\\;y=-4",                         soln2:"x=4,\\;y=6",                          A:2,  B:4,   C:-48,  r2:52,  isolateVar:"y",linM:1,  linD:2,  quadSub:"x^2+(x+2)^2=52",            x1:-6,   y1:-4,   x2:4,    y2:6,    coefType:"none" },
-  { eq1:"x^2+y^2=65",  eq2:"y=x+1",    expanded:"2x^2+2x-64=0",     factorised:"2(x+6)(x-5)=0",     soln1:"x=-6,\\;y=-5",                         soln2:"x=5,\\;y=6",                          A:2,  B:2,   C:-64,  r2:65,  isolateVar:"y",linM:1,  linD:1,  quadSub:"x^2+(x+1)^2=65",            x1:-6,   y1:-5,   x2:5,    y2:6,    coefType:"none" },
+  { eq1:"x^2+y^2=61",  eq2:"y=x+1",    expanded:"2x^2+2x-60=0",     factorised:"2(x+6)(x-5)=0",     soln1:"x=-6,\\;y=-5",                         soln2:"x=5,\\;y=6",                          A:2,  B:2,   C:-60,  r2:61,  isolateVar:"y",linM:1,  linD:1,  quadSub:"x^2+(x+1)^2=61",            x1:-6,   y1:-5,   x2:5,    y2:6,    coefType:"none" },
   { eq1:"x^2+y^2=5",   eq2:"y=2x-5",   expanded:"5x^2-20x+20=0",    factorised:"5(x-2)^2=0",        soln1:"x=2,\\;y=-1",                          soln2:"x=2,\\;y=-1",                         A:5,  B:-20, C:20,   r2:5,   isolateVar:"y",linM:2,  linD:-5, quadSub:"x^2+(2x-5)^2=5",            x1:2,    y1:-1,   x2:2,    y2:-1,   coefType:"none" },
   { eq1:"x^2+y^2=10",  eq2:"y=3x-10",  expanded:"10x^2-60x+90=0",   factorised:"10(x-3)^2=0",       soln1:"x=3,\\;y=-1",                          soln2:"x=3,\\;y=-1",                         A:10, B:-60, C:90,   r2:10,  isolateVar:"y",linM:3,  linD:-10,quadSub:"x^2+(3x-10)^2=10",          x1:3,    y1:-1,   x2:3,    y2:-1,   coefType:"none" },
   { eq1:"x^2+y^2=5",   eq2:"y=2x+3",   expanded:"5x^2+12x+4=0",     factorised:"(5x+2)(x+2)=0",     soln1:"x=-2,\\;y=-1",                         soln2:"x=-\\frac{2}{5},\\;y=\\frac{11}{5}", A:5,  B:12,  C:4,    r2:5,   isolateVar:"y",linM:2,  linD:3,  quadSub:"x^2+(2x+3)^2=5",            x1:-2,   y1:-1,   x2:-0.4, y2:2.2,  coefType:"none" },
@@ -598,22 +598,39 @@ const bankToFacQuestion = (e: BankEntry, idx: number): NonLinearQuestion => ({
   level:"level3", key:`bank-fac-${idx}`, difficulty:"level3", working:[]
 });
 
-const bankToFormQuestion = (e: FormBankEntry, idx: number): NonLinearQuestion => ({
-  kind:"nonlinear", subTool:"formula",
-  eq1Display:e.eq1, eq2Display:e.eq2,
-  isolateVar:e.isolateVar, isolatedExpr:"",
-  linM:e.linM, linD:e.linD,
-  needsRearrange:false, rearrangedLatex:e.eq2,
-  quadLatex:e.quadSub, expandedLatex:e.expanded,
-  surdLatex:e.surdX,
-  surdX1:e.surdX, surdX2:e.surdX,
-  surdYCombined:e.surdYcombined,
-  decimalLatex:`${e.soln1dec}\\text{ or }${e.soln2dec}`,
-  solutions:[{x:e.x1,y:e.y1},{x:e.x2,y:e.y2}],
-  isDoubleRoot:false,
-  A:e.A, B:e.B, C:e.C, isCircle:true, r2:e.r2,
-  level:"level3", key:`bank-form-${idx}`, difficulty:"level3", working:[]
-});
+// The formula bank's stored surd-y answers and numeric y-values were incorrect
+// (they disagreed with the entry's own — correct — decimal answers). Rather than
+// trust those fields, derive everything from the quadratic (A, B, disc) and the
+// line, using the same buildSurdDisplay / buildSurdPairs helpers that generate the
+// live (correct) formula questions. The substituted-away variable is the one the
+// quadratic is in ("primary"); the isolated variable is derived from the line.
+const bankToFormQuestion = (e: FormBankEntry, idx: number): NonLinearQuestion => {
+  const denom = 2 * e.A, negB = -e.B;
+  const primaryVar = e.isolateVar === "y" ? "x" : "y";      // quadratic is in this variable
+  const primarySurd = `${primaryVar} = \\frac{${negB} \\pm \\sqrt{${e.disc}}}{${denom}}`;
+  const otherSurd = buildSurdPairs(e.A, e.B, e.disc, e.linM, e.linD, e.isolateVar).syCombined;
+  const p1 = (negB - Math.sqrt(e.disc)) / denom, p2 = (negB + Math.sqrt(e.disc)) / denom;
+  const other = (p: number) => e.linM * p + e.linD;         // isolated var = m·primary + d
+  const solutions = e.isolateVar === "y"
+    ? [{ x: p1, y: other(p1) }, { x: p2, y: other(p2) }]     // primary is x
+    : [{ x: other(p1), y: p1 }, { x: other(p2), y: p2 }];    // primary is y
+  return {
+    kind:"nonlinear", subTool:"formula",
+    eq1Display:e.eq1, eq2Display:e.eq2,
+    isolateVar:e.isolateVar, isolatedExpr:"",
+    linM:e.linM, linD:e.linD,
+    needsRearrange:false, rearrangedLatex:e.eq2,
+    quadLatex:e.quadSub, expandedLatex:e.expanded,
+    surdLatex:primarySurd,
+    surdX1:primarySurd, surdX2:primarySurd,
+    surdYCombined:otherSurd,
+    decimalLatex:`${e.soln1dec}\\text{ or }${e.soln2dec}`,
+    solutions,
+    isDoubleRoot:false,
+    A:e.A, B:e.B, C:e.C, isCircle:true, r2:e.r2,
+    level:"level3", key:`bank-form-${idx}`, difficulty:"level3", working:[]
+  };
+};
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GRAPH — derive the two curves + intersection points for the SmartGrapher
