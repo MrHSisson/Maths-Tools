@@ -725,6 +725,8 @@ function customPrintHandler(questions: AnyQuestion[], printMode: PrintMode, cont
   setTimeout(() => win.print(), 400);
 }
 
+export const __test = { TOOL_CONFIG, generateQuestion };
+
 // ── App ───────────────────────────────────────────────────────────────────────
 export default function App() {
   return (

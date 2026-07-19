@@ -25,6 +25,7 @@ import { Maximize2, Minimize2, Crosshair, Download, X } from "lucide-react";
 import {
   type EquationType, type FOI, type Viewport, type CurveSpec,
   buildCurveSpec, computeFOIs, computeFrame, findFunctionIntersections,
+  mathToScreenX, mathToScreenY,
 } from "./mathEngine";
 import { drawGraph, type DrawStyle, type CurveDraw, type ShadeRegion, type Guide, SERIES_COLORS } from "./drawGraph";
 import { usePanZoom } from "./usePanZoom";
@@ -47,7 +48,7 @@ export interface GrapherConfig {
   autoIntersections?: boolean;
   /** Show the FOI dots. Default true. */
   showFois?: boolean;
-  /** Fractional framing padding. Default 0.15. */
+  /** Fractional framing padding. Default 0.23 (frames a little wider). */
   padding?: number;
   /** Force a 1:1 aspect ratio. Defaults to true only when a circle is present;
    *  function graphs scale each axis to fit independently. */
@@ -105,6 +106,17 @@ export interface SmartGrapherProps {
 
 // ── Inner canvas — owns the buffer, the draw loop and (optionally) pan/zoom ──
 
+// Turn a plain display string into readable maths notation for the legend:
+// x^2 → x², x^{-1} → x⁻¹, * → · (canvas text can't render LaTeX).
+const SUP: Record<string, string> = {
+  "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵",
+  "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹", "-": "⁻",
+};
+const prettifyMath = (s: string): string =>
+  s.replace(/\$/g, "")
+    .replace(/\^\{?(-?\d+)\}?/g, (_, d: string) => d.split("").map((c) => SUP[c] ?? c).join(""))
+    .replace(/\*/g, "·");
+
 interface GraphCanvasProps {
   curves: CurveDraw[];
   fois: FOI[];
@@ -117,10 +129,13 @@ interface GraphCanvasProps {
   /** Registers an auto-center callback with the parent (for the toolbar). */
   registerAutoCenter?: (fn: () => void) => void;
   registerExport?: (fn: () => void) => void;
+  /** Legend rows (already prettified). Rendered in whichever bottom corner is
+   *  clearest of key points. Omit for no legend. */
+  legendItems?: { label: string; color: string }[];
 }
 
 function GraphCanvas({
-  curves, fois, regions, guides, config, interactive, frameKey, registerAutoCenter, registerExport,
+  curves, fois, regions, guides, config, interactive, frameKey, registerAutoCenter, registerExport, legendItems,
 }: GraphCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -128,10 +143,40 @@ function GraphCanvas({
   const framedKeyRef = useRef<string>("");
   const rafRef = useRef<number | null>(null);
 
+  // Hover tooltip: the key point (FOI) under the cursor, in CSS px + its readout.
+  const [tip, setTip] = useState<{ left: number; top: number; text: string } | null>(null);
+  // Which bottom corner the legend sits in (chosen to dodge key points).
+  const [legendCorner, setLegendCorner] = useState<"bl" | "br">("bl");
+
   const cssSize = () => {
     const el = wrapRef.current;
     return { w: el?.clientWidth ?? 0, h: el?.clientHeight ?? 0 };
   };
+
+  // A short coordinate readout, e.g. "(1.3, 2.3)" — the FOI's own label wins if set.
+  const coordText = (f: FOI): string => {
+    if (f.label) return f.label;
+    const r = (n: number) => { const v = Math.round(n * 100) / 100; return Object.is(v, -0) ? "0" : `${v}`; };
+    return `(${r(f.x)}, ${r(f.y)})`;
+  };
+
+  // Find the nearest visible FOI within a hit radius of the cursor.
+  const handleHover = useCallback((e: React.MouseEvent) => {
+    const canvas = canvasRef.current;
+    if (!canvas || !(config.showFois ?? true) || fois.length === 0) { setTip(null); return; }
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    const { w, h } = cssSize();
+    const vp = viewportRef.current;
+    let best: { left: number; top: number; text: string } | null = null;
+    let bestD = 12; // px
+    for (const f of fois) {
+      const px = mathToScreenX(f.x, vp, w), py = mathToScreenY(f.y, vp, h);
+      const d = Math.hypot(px - mx, py - my);
+      if (d <= bestD) { bestD = d; best = { left: px, top: py, text: coordText(f) }; }
+    }
+    setTip(best);
+  }, [fois, config.showFois]);
 
   const paint = useCallback(() => {
     const canvas = canvasRef.current;
@@ -156,6 +201,22 @@ function GraphCanvas({
     });
   }, [paint]);
 
+  // Pick the bottom corner (left/right) with fewer key points behind it — recomputed
+  // only when the frame changes, never on the hot pan/zoom path.
+  const chooseLegendCorner = useCallback(() => {
+    const { w, h } = cssSize();
+    if (w <= 0 || h <= 0 || !legendItems?.length) return;
+    const vp = viewportRef.current;
+    const longest = Math.max(...legendItems.map((l) => l.label.length));
+    const boxW = 34 + longest * 6.5, boxH = legendItems.length * 18 + 14, m = 8, near = 18;
+    const inBox = (px: number, py: number, x0: number) =>
+      px >= x0 - near && px <= x0 + boxW + near && py >= h - m - boxH - near && py <= h - m + near;
+    const pts = fois.map((f) => ({ x: mathToScreenX(f.x, vp, w), y: mathToScreenY(f.y, vp, h) }));
+    const nLeft = pts.filter((p) => inBox(p.x, p.y, m)).length;
+    const nRight = pts.filter((p) => inBox(p.x, p.y, w - m - boxW)).length;
+    setLegendCorner(nRight < nLeft ? "br" : "bl"); // ties keep the familiar bottom-left
+  }, [fois, legendItems]);
+
   const reframe = useCallback(() => {
     const { w, h } = cssSize();
     if (w <= 0 || h <= 0) return;
@@ -169,8 +230,9 @@ function GraphCanvas({
       lockAspect: config.lockAspect ?? hasCircle,
     });
     framedKeyRef.current = frameKey;
+    chooseLegendCorner();
     requestDraw();
-  }, [fois, curves, config, frameKey, requestDraw]);
+  }, [fois, curves, config, frameKey, requestDraw, chooseLegendCorner]);
 
   // Keep the pixel buffer mapped 1:1 to the CSS box, and (re)frame when needed.
   useEffect(() => {
@@ -225,7 +287,35 @@ function GraphCanvas({
 
   return (
     <div ref={wrapRef} style={{ position: "absolute", inset: 0 }}>
-      <canvas ref={canvasRef} style={{ display: "block", width: "100%", height: "100%" }} />
+      <canvas
+        ref={canvasRef}
+        onMouseMove={handleHover}
+        onMouseLeave={() => setTip(null)}
+        style={{ display: "block", width: "100%", height: "100%", cursor: tip ? "pointer" : undefined }}
+      />
+      {legendItems && legendItems.length > 0 && (
+        <div className={`absolute z-10 flex flex-col gap-1 bg-white/85 rounded-lg px-2.5 py-1.5 border border-slate-200 shadow-sm ${legendCorner === "br" ? "bottom-2 right-2" : "bottom-2 left-2"}`}>
+          {legendItems.map((l, i) => (
+            <div key={i} className="flex items-center gap-2 text-xs text-slate-700">
+              <span className="inline-block w-4 h-0.5 rounded" style={{ background: l.color }} />
+              <span>{l.label}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      {tip && (
+        <div
+          style={{
+            position: "absolute", left: tip.left, top: tip.top - 12,
+            transform: "translate(-50%, -100%)", pointerEvents: "none",
+            background: "#1e293b", color: "#fff", fontSize: 12, fontWeight: 600,
+            padding: "3px 8px", borderRadius: 6, whiteSpace: "nowrap",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.25)", zIndex: 20,
+          }}
+        >
+          {tip.text}
+        </div>
+      )}
     </div>
   );
 }
@@ -315,11 +405,13 @@ export function SmartGrapher({
     [JSON.stringify(seriesList.map((s) => [s.equationType, s.params])), JSON.stringify(config.domain), config.lockDomain, JSON.stringify(config.fois)],
   );
 
-  // Legend: shown when any series carries a label (or explicitly enabled).
+  // Legend: shown when any series carries a label (or explicitly enabled). Labels
+  // are prettified (x^2 → x²) since the legend is plain text, not KaTeX.
   const legendItems = seriesList
-    .map((s, i) => ({ label: s.label, color: s.color ?? SERIES_COLORS[i % SERIES_COLORS.length] }))
+    .map((s, i) => ({ label: s.label ? prettifyMath(s.label) : "", color: s.color ?? SERIES_COLORS[i % SERIES_COLORS.length] }))
     .filter((l) => !!l.label);
   const wantLegend = showLegend ?? legendItems.length > 0;
+  const legendForCanvas = wantLegend && legendItems.length > 0 ? legendItems : undefined;
 
   // Track native fullscreen state for the icon toggle.
   useEffect(() => {
@@ -364,17 +456,6 @@ export function SmartGrapher({
 
   const heightCss = typeof height === "number" ? `${height}px` : height;
 
-  const legend = wantLegend && legendItems.length > 0 && (
-    <div className="absolute bottom-2 left-2 z-10 flex flex-col gap-1 bg-white/85 rounded-lg px-2.5 py-1.5 border border-slate-200 shadow-sm">
-      {legendItems.map((l, i) => (
-        <div key={i} className="flex items-center gap-2 text-xs text-slate-700">
-          <span className="inline-block w-4 h-0.5 rounded" style={{ background: l.color }} />
-          <span>{l.label}</span>
-        </div>
-      ))}
-    </div>
-  );
-
   return (
     <div className={className}>
       {title && (
@@ -396,8 +477,8 @@ export function SmartGrapher({
           frameKey={frameKey}
           registerAutoCenter={interactive ? (f) => { autoCenterRef.current = f; } : undefined}
           registerExport={interactive ? (f) => { exportRef.current = f; } : undefined}
+          legendItems={legendForCanvas}
         />
-        {legend}
         {interactive && toolbar}
         {!interactive && allowExpand && (
           <button
@@ -436,8 +517,8 @@ export function SmartGrapher({
               frameKey={frameKey}
               registerAutoCenter={(f) => { autoCenterRef.current = f; }}
               registerExport={(f) => { exportRef.current = f; }}
+              legendItems={legendForCanvas}
             />
-            {legend}
             {toolbar}
           </div>
         </div>

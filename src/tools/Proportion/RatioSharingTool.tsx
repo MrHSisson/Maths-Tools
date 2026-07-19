@@ -754,6 +754,8 @@ const ratioStepRenderer = (step: WorkingStep, cs: string): JSX.Element | null =>
 // END OF TOOL-SPECIFIC SECTION
 // ═══════════════════════════════════════════════════════════════════════════════
 
+export const __test = { TOOL_CONFIG, generateQuestion };
+
 export default function App() {
   return (
     <ToolShell

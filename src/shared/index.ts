@@ -45,6 +45,13 @@ export { LV_COLORS, LV_LABELS, LV_HEADER_COLORS, getQuestionBg, getStepBg } from
 
 export { randInt, pick, fracStr, mStr, pickActive, normalizeMultiSelect, step, tStep, mStep, fmt, ansEq, makeUniqueQ, stripSkillMarkers, SKILL_MARKER_RE } from "./helpers";
 
+// Techniques — reusable pedagogical working-step sequences (see src/shared/techniques).
+export {
+  workings, quadraticFormulaSteps, solveLinearEquationSteps, solveFactorsSteps,
+  substituteBackSteps, makeSubjectSteps, solveLinearlySteps,
+} from "./techniques";
+export type { Workings, Grain } from "./techniques";
+
 export { MathRenderer, InlineMath } from "./components/MathRenderer";
 export { QuestionDisplay, AnswerDisplay } from "./components/QuestionDisplay";
 export { DifficultyToggle } from "./components/DifficultyToggle";

@@ -1,86 +1,27 @@
-import { useState, useEffect, useRef, useCallback, CSSProperties } from "react";
-import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, Printer } from "lucide-react";
+import {
+  ToolShell, MathRenderer, InlineMath, SmartGrapher,
+  workings, quadraticFormulaSteps, solveFactorsSteps, substituteBackSteps,
+  makeSubjectSteps, solveLinearlySteps,
+  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion,
+  type WorkingStep, type QOSnapshot, type GraphSeries, type FOI,
+} from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// KATEX
+// Simultaneous Equations by Substitution — v2.3 (ToolShell + SmartGrapher)
+//
+// Linear substitution and non-linear (quadratic / circle / ellipse) substitution.
+// The pure question generators, string builders and question banks below are the
+// original, correct maths engine — kept intact. A thin v2.3 layer wraps them:
+// each internal question is converted to a worded ToolShell question, and the two
+// curves it describes are drawn on the shared SmartGrapher (the intersection
+// points ARE the solutions), shown on the whiteboard answer and in a worked step.
 // ═══════════════════════════════════════════════════════════════════════════════
-const w = () => window as any;
-const loadKaTeX = (() => {
-  let promise: Promise<void> | null = null;
-  return () => {
-    if (promise) return promise;
-    promise = new Promise((resolve, reject) => {
-      if (typeof window === "undefined" || w().katex) { resolve(); return; }
-      const link = document.createElement("link");
-      link.rel = "stylesheet";
-      link.href = "https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css";
-      document.head.appendChild(link);
-      const script = document.createElement("script");
-      script.src = "https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js";
-      script.onload = () => resolve(); script.onerror = reject;
-      document.head.appendChild(script);
-    });
-    return promise;
-  };
-})();
 
-const MathRenderer = ({ latex, style, className }: { latex: string; style?: CSSProperties; className?: string }) => {
-  const ref = useRef<HTMLSpanElement>(null);
-  const [ready, setReady] = useState(() => typeof window !== "undefined" && !!w().katex);
-  useEffect(() => { loadKaTeX().then(() => setReady(true)); }, []);
-  useEffect(() => {
-    if (!ready || !ref.current) return;
-    try { w().katex.render(latex, ref.current, { displayMode: false, throwOnError: false, output: "html" }); }
-    catch { if (ref.current) ref.current.textContent = latex; }
-  }, [latex, ready]);
-  const hasFrac = latex.includes("\\frac");
-  return <span ref={ref} className={className} style={{ display: "inline", verticalAlign: "baseline", fontSize: hasFrac ? "1em" : "0.826em", ...style }} />;
-};
-
-const usePopover = () => {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
-    document.addEventListener("mousedown", h); return () => document.removeEventListener("mousedown", h);
-  }, [open]);
-  return { open, setOpen, ref };
-};
-
-const PopoverButton = ({ open, onClick }: { open: boolean; onClick: () => void }) => (
-  <button onClick={onClick}
-    className={`px-4 py-2 rounded-xl border-2 font-bold text-base transition-colors shadow-sm flex items-center gap-2 ${open ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-gray-300 text-gray-600 hover:border-blue-900 hover:text-blue-900"}`}>
-    Question Options <ChevronDown size={18} style={{ transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "rotate(0)" }} />
-  </button>
-);
-
-const TogglePill = ({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) => (
-  <label className="flex items-center gap-3 cursor-pointer py-1">
-    <div onClick={() => onChange(!checked)} className={`w-12 h-6 rounded-full transition-colors relative flex-shrink-0 cursor-pointer ${checked ? "bg-blue-900" : "bg-gray-300"}`}>
-      <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${checked ? "translate-x-7" : "translate-x-1"}`} />
-    </div>
-    <span className="text-sm font-semibold text-gray-700">{label}</span>
-  </label>
-);
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// TYPES & COLOURS
-// ═══════════════════════════════════════════════════════════════════════════════
+// ── Tool-local types (kept from the original generator) ──
 type SubTool = "linear" | "factorising" | "formula";
-type DifficultyLevel = "level1" | "level2" | "level3";
 type NegMode = "pos-only" | "neg-only" | "both";
 type SurdDisplay = "surd" | "decimal" | "both";
 type AllowAMode = number;
-
-const getQuestionBg = (cs: string) => ({ blue: "#D1E7F8", pink: "#F8D1E7", yellow: "#F8F4D1" }[cs] ?? "#ffffff");
-const getStepBg    = (cs: string) => ({ blue: "#B3D9F2", pink: "#F2B3D9", yellow: "#F2EBB3" }[cs] ?? "#f3f4f6");
-
-const LV_COLORS: Record<string, { bg: string; border: string; text: string; fill: string }> = {
-  level1: { bg: "bg-green-50",  border: "border-green-500",  text: "text-green-700",  fill: "#dcfce7" },
-  level2: { bg: "bg-yellow-50", border: "border-yellow-500", text: "text-yellow-700", fill: "#fef9c3" },
-  level3: { bg: "bg-red-50",    border: "border-red-500",    text: "text-red-700",    fill: "#fee2e2" },
-};
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // QUESTION INTERFACES
@@ -125,7 +66,7 @@ interface NonLinearQuestion {
   working: { type: string; latex: string; plain: string }[];
 }
 
-type AnyQuestion = LinearQuestion | NonLinearQuestion;
+type InternalQ = LinearQuestion | NonLinearQuestion;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MATH HELPERS
@@ -496,10 +437,10 @@ const FAC_BANK: BankEntry[] = [
   { eq1:"x^2+y^2=13",  eq2:"y=2x+1",   expanded:"5x^2+4x-12=0",     factorised:"(5x-6)(x+2)=0",     soln1:"x=-2,\\;y=-3",                         soln2:"x=\\frac{6}{5},\\;y=\\frac{17}{5}",  A:5,  B:4,   C:-12,  r2:13,  isolateVar:"y",linM:2,  linD:1,  quadSub:"x^2+(2x+1)^2=13",           x1:-2,   y1:-3,   x2:1.2,  y2:3.4,  coefType:"none" },
   { eq1:"x^2+y^2=17",  eq2:"y=x+3",    expanded:"2x^2+6x-8=0",      factorised:"2(x+4)(x-1)=0",     soln1:"x=-4,\\;y=-1",                         soln2:"x=1,\\;y=4",                          A:2,  B:6,   C:-8,   r2:17,  isolateVar:"y",linM:1,  linD:3,  quadSub:"x^2+(x+3)^2=17",            x1:-4,   y1:-1,   x2:1,    y2:4,    coefType:"none" },
   { eq1:"x^2+y^2=29",  eq2:"y=x+3",    expanded:"2x^2+6x-20=0",     factorised:"2(x+5)(x-2)=0",     soln1:"x=-5,\\;y=-2",                         soln2:"x=2,\\;y=5",                          A:2,  B:6,   C:-20,  r2:29,  isolateVar:"y",linM:1,  linD:3,  quadSub:"x^2+(x+3)^2=29",            x1:-5,   y1:-2,   x2:2,    y2:5,    coefType:"none" },
-  { eq1:"x^2+y^2=26",  eq2:"y=x+2",    expanded:"2x^2+4x-22=0",     factorised:"2(x+5)(x-3)=0",     soln1:"x=-5,\\;y=-3",                         soln2:"x=3,\\;y=5",                          A:2,  B:4,   C:-22,  r2:26,  isolateVar:"y",linM:1,  linD:2,  quadSub:"x^2+(x+2)^2=26",            x1:-5,   y1:-3,   x2:3,    y2:5,    coefType:"none" },
+  { eq1:"x^2+y^2=34",  eq2:"y=x+2",    expanded:"2x^2+4x-30=0",     factorised:"2(x+5)(x-3)=0",     soln1:"x=-5,\\;y=-3",                         soln2:"x=3,\\;y=5",                          A:2,  B:4,   C:-30,  r2:34,  isolateVar:"y",linM:1,  linD:2,  quadSub:"x^2+(x+2)^2=34",            x1:-5,   y1:-3,   x2:3,    y2:5,    coefType:"none" },
   { eq1:"x^2+y^2=41",  eq2:"y=x+1",    expanded:"2x^2+2x-40=0",     factorised:"2(x+5)(x-4)=0",     soln1:"x=-5,\\;y=-4",                         soln2:"x=4,\\;y=5",                          A:2,  B:2,   C:-40,  r2:41,  isolateVar:"y",linM:1,  linD:1,  quadSub:"x^2+(x+1)^2=41",            x1:-5,   y1:-4,   x2:4,    y2:5,    coefType:"none" },
   { eq1:"x^2+y^2=52",  eq2:"y=x+2",    expanded:"2x^2+4x-48=0",     factorised:"2(x+6)(x-4)=0",     soln1:"x=-6,\\;y=-4",                         soln2:"x=4,\\;y=6",                          A:2,  B:4,   C:-48,  r2:52,  isolateVar:"y",linM:1,  linD:2,  quadSub:"x^2+(x+2)^2=52",            x1:-6,   y1:-4,   x2:4,    y2:6,    coefType:"none" },
-  { eq1:"x^2+y^2=65",  eq2:"y=x+1",    expanded:"2x^2+2x-64=0",     factorised:"2(x+6)(x-5)=0",     soln1:"x=-6,\\;y=-5",                         soln2:"x=5,\\;y=6",                          A:2,  B:2,   C:-64,  r2:65,  isolateVar:"y",linM:1,  linD:1,  quadSub:"x^2+(x+1)^2=65",            x1:-6,   y1:-5,   x2:5,    y2:6,    coefType:"none" },
+  { eq1:"x^2+y^2=61",  eq2:"y=x+1",    expanded:"2x^2+2x-60=0",     factorised:"2(x+6)(x-5)=0",     soln1:"x=-6,\\;y=-5",                         soln2:"x=5,\\;y=6",                          A:2,  B:2,   C:-60,  r2:61,  isolateVar:"y",linM:1,  linD:1,  quadSub:"x^2+(x+1)^2=61",            x1:-6,   y1:-5,   x2:5,    y2:6,    coefType:"none" },
   { eq1:"x^2+y^2=5",   eq2:"y=2x-5",   expanded:"5x^2-20x+20=0",    factorised:"5(x-2)^2=0",        soln1:"x=2,\\;y=-1",                          soln2:"x=2,\\;y=-1",                         A:5,  B:-20, C:20,   r2:5,   isolateVar:"y",linM:2,  linD:-5, quadSub:"x^2+(2x-5)^2=5",            x1:2,    y1:-1,   x2:2,    y2:-1,   coefType:"none" },
   { eq1:"x^2+y^2=10",  eq2:"y=3x-10",  expanded:"10x^2-60x+90=0",   factorised:"10(x-3)^2=0",       soln1:"x=3,\\;y=-1",                          soln2:"x=3,\\;y=-1",                         A:10, B:-60, C:90,   r2:10,  isolateVar:"y",linM:3,  linD:-10,quadSub:"x^2+(3x-10)^2=10",          x1:3,    y1:-1,   x2:3,    y2:-1,   coefType:"none" },
   { eq1:"x^2+y^2=5",   eq2:"y=2x+3",   expanded:"5x^2+12x+4=0",     factorised:"(5x+2)(x+2)=0",     soln1:"x=-2,\\;y=-1",                         soln2:"x=-\\frac{2}{5},\\;y=\\frac{11}{5}", A:5,  B:12,  C:4,    r2:5,   isolateVar:"y",linM:2,  linD:3,  quadSub:"x^2+(2x+3)^2=5",            x1:-2,   y1:-1,   x2:-0.4, y2:2.2,  coefType:"none" },
@@ -658,975 +599,466 @@ const bankToFacQuestion = (e: BankEntry, idx: number): NonLinearQuestion => ({
   level:"level3", key:`bank-fac-${idx}`, difficulty:"level3", working:[]
 });
 
-const bankToFormQuestion = (e: FormBankEntry, idx: number): NonLinearQuestion => ({
-  kind:"nonlinear", subTool:"formula",
-  eq1Display:e.eq1, eq2Display:e.eq2,
-  isolateVar:e.isolateVar, isolatedExpr:"",
-  linM:e.linM, linD:e.linD,
-  needsRearrange:false, rearrangedLatex:e.eq2,
-  quadLatex:e.quadSub, expandedLatex:e.expanded,
-  surdLatex:e.surdX,
-  surdX1:e.surdX, surdX2:e.surdX,
-  surdYCombined:e.surdYcombined,
-  decimalLatex:`${e.soln1dec}\\text{ or }${e.soln2dec}`,
-  solutions:[{x:e.x1,y:e.y1},{x:e.x2,y:e.y2}],
-  isDoubleRoot:false,
-  A:e.A, B:e.B, C:e.C, isCircle:true, r2:e.r2,
-  level:"level3", key:`bank-form-${idx}`, difficulty:"level3", working:[]
-});
+// The formula bank's stored surd-y answers and numeric y-values were incorrect
+// (they disagreed with the entry's own — correct — decimal answers). Rather than
+// trust those fields, derive everything from the quadratic (A, B, disc) and the
+// line, using the same buildSurdDisplay / buildSurdPairs helpers that generate the
+// live (correct) formula questions. The substituted-away variable is the one the
+// quadratic is in ("primary"); the isolated variable is derived from the line.
+const bankToFormQuestion = (e: FormBankEntry, idx: number): NonLinearQuestion => {
+  const denom = 2 * e.A, negB = -e.B;
+  const primaryVar = e.isolateVar === "y" ? "x" : "y";      // quadratic is in this variable
+  const primarySurd = `${primaryVar} = \\frac{${negB} \\pm \\sqrt{${e.disc}}}{${denom}}`;
+  const otherSurd = buildSurdPairs(e.A, e.B, e.disc, e.linM, e.linD, e.isolateVar).syCombined;
+  const p1 = (negB - Math.sqrt(e.disc)) / denom, p2 = (negB + Math.sqrt(e.disc)) / denom;
+  const other = (p: number) => e.linM * p + e.linD;         // isolated var = m·primary + d
+  const solutions = e.isolateVar === "y"
+    ? [{ x: p1, y: other(p1) }, { x: p2, y: other(p2) }]     // primary is x
+    : [{ x: other(p1), y: p1 }, { x: other(p2), y: p2 }];    // primary is y
+  // Decimal answers are derived from the recomputed solutions too — the stored
+  // soln*dec strings were also wrong for some entries.
+  const dec = (s: { x: number; y: number }) => `x\\approx${s.x.toFixed(2)},\\;y\\approx${s.y.toFixed(2)}`;
+  return {
+    kind:"nonlinear", subTool:"formula",
+    eq1Display:e.eq1, eq2Display:e.eq2,
+    isolateVar:e.isolateVar, isolatedExpr:"",
+    linM:e.linM, linD:e.linD,
+    needsRearrange:false, rearrangedLatex:e.eq2,
+    quadLatex:e.quadSub, expandedLatex:e.expanded,
+    surdLatex:primarySurd,
+    surdX1:primarySurd, surdX2:primarySurd,
+    surdYCombined:otherSurd,
+    decimalLatex:`${dec(solutions[0])}\\text{ or }${dec(solutions[1])}`,
+    solutions,
+    isDoubleRoot:false,
+    A:e.A, B:e.B, C:e.C, isCircle:true, r2:e.r2,
+    level:"level3", key:`bank-form-${idx}`, difficulty:"level3", working:[]
+  };
+};
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// UNIQUE GENERATORS — share a used set, draw from filtered bank
+// GRAPH — derive the two curves + intersection points for the SmartGrapher
 // ═══════════════════════════════════════════════════════════════════════════════
-const pickUniqueBankFac = (allowA: number, used: Set<string>): NonLinearQuestion => {
-  const pool = filteredFacPool(allowA);
-  let avail = pool.filter(({idx}) => !used.has(`bank-fac-${idx}`));
-  if (avail.length === 0) {
-    pool.forEach(({idx}) => used.delete(`bank-fac-${idx}`));
-    avail = pool;
+interface GraphInfo {
+  series: GraphSeries[];
+  points: { x: number; y: number }[];
+  axisLabels?: { x?: string; y?: string };
+  lockAspect?: boolean;
+}
+
+const CURVE_COLOR = "#2563eb";   // parabola / circle / equation (1)
+const LINE_COLOR  = "#059669";   // straight line / equation (2)
+
+// Parse a linear expression in variable `v` (e.g. "3t + 2", "7 - 3t", "-2y") into m·v + c.
+const parseLinExpr = (expr: string, v: string): { m: number; c: number } => {
+  const s = expr.replace(/\s+/g, "");
+  const re = new RegExp(`([+-]?\\d*)${v}`);
+  const mMatch = s.match(re);
+  let m = 0;
+  if (mMatch) {
+    const t = mMatch[1];
+    m = t === "" || t === "+" ? 1 : t === "-" ? -1 : parseInt(t, 10);
   }
-  const {entry, idx} = pick(avail);
-  used.add(`bank-fac-${idx}`);
-  return bankToFacQuestion(entry, idx);
+  const cMatch = s.replace(re, "").match(/([+-]?\d+)/);
+  const c = cMatch ? parseInt(cMatch[1], 10) : 0;
+  return { m, c };
 };
 
-const pickUniqueBankForm = (allowA: number, used: Set<string>): NonLinearQuestion => {
-  const pool = filteredFormPool(allowA);
-  let avail = pool.filter(({idx}) => !used.has(`bank-form-${idx}`));
-  if (avail.length === 0) {
-    pool.forEach(({idx}) => used.delete(`bank-form-${idx}`));
-    avail = pool;
+// A point lies on a series curve (within tolerance). Guards the graph against
+// any question whose stored solutions don't actually satisfy the drawn curves —
+// so a data inconsistency omits the graph rather than drawing a wrong picture.
+const onCurve = (s: GraphSeries, x: number, y: number): boolean => {
+  const p = s.params ?? [];
+  if (s.equationType === "linear")    return Math.abs(y - (p[0] * x + p[1])) < 1e-6;
+  if (s.equationType === "quadratic") return Math.abs(y - (p[0] * x * x + p[1] * x + p[2])) < 1e-6;
+  if (s.equationType === "circle")    return Math.abs((x - p[0]) ** 2 + (y - p[1]) ** 2 - p[2] ** 2) < 1e-4;
+  return true;
+};
+const consistent = (series: GraphSeries[], points: { x: number; y: number }[]): boolean =>
+  points.every((pt) => series.every((s) => onCurve(s, pt.x, pt.y)));
+
+// The straight line of a non-linear question as y = m·x + c.
+const nlLine = (q: NonLinearQuestion): [number, number] | null => {
+  if (q.isolateVar === "y") return [q.linM, q.linD];
+  if (q.linM === 0) return null;              // x = c — vertical, not a function of x
+  return [1 / q.linM, -q.linD / q.linM];      // x = linM·y + linD  →  y = (x − linD)/linM
+};
+
+const buildGraph = (q: InternalQ): GraphInfo | null => {
+  if (q.kind === "linear") {
+    if (q.b1 === 0) return null;
+    const [v1, v2] = q.varPair;
+    const m1 = -q.a1 / q.b1, c1 = q.c1 / q.b1;              // a1·v1 + b1·v2 = c1
+    const otherVar = q.isolatedVar === "v1" ? v2 : v1;
+    const { m: me, c: ce } = parseLinExpr(q.isolatedExpr, otherVar);
+    let m2: number, c2: number;
+    if (q.isolatedVar === "v2") { m2 = me; c2 = ce; }        // v2 = me·v1 + ce
+    else { if (me === 0) return null; m2 = 1 / me; c2 = -ce / me; }  // v1 = me·v2 + ce
+    const series: GraphSeries[] = [
+      { equationType: "linear", params: [m1, c1], label: q.eq1Display, color: CURVE_COLOR },
+      { equationType: "linear", params: [m2, c2], label: q.eq2Display, color: LINE_COLOR },
+    ];
+    const points = [{ x: q.v1Val, y: q.v2Val }];
+    if (!consistent(series, points)) return null;
+    return { series, points, axisLabels: { x: v1, y: v2 } };
   }
-  const {entry, idx} = pick(avail);
-  used.add(`bank-form-${idx}`);
-  return bankToFormQuestion(entry, idx);
+  const line = nlLine(q);
+  if (!line) return null;
+  if (!q.isCircle) {
+    // Parabola display coefficients recovered from the "= 0" form: y = A x² + (B+m) x + (C+d).
+    const pa = q.A, pb = q.B + q.linM, pc = q.C + q.linD;
+    const series: GraphSeries[] = [
+      { equationType: "quadratic", params: [pa, pb, pc], label: q.eq1Display, color: CURVE_COLOR },
+      { equationType: "linear", params: line, label: q.eq2Display, color: LINE_COLOR },
+    ];
+    if (!consistent(series, q.solutions)) return null;
+    return { series, points: q.solutions };
+  }
+  // A true circle x² + y² = r² is drawable; ellipses (leading coefficients) are not
+  // a preset curve, so those questions simply carry no graph.
+  const mm = q.eq1Display.match(/^x\^2\+y\^2=(\d+)$/);
+  if (!mm) return null;
+  const r = Math.sqrt(Number(mm[1]));
+  const series: GraphSeries[] = [
+    { equationType: "circle", params: [0, 0, r], label: q.eq1Display, color: CURVE_COLOR },
+    { equationType: "linear", params: line, label: q.eq2Display, color: LINE_COLOR },
+  ];
+  if (!consistent(series, q.solutions)) return null;
+  return { series, points: q.solutions, lockAspect: true };
 };
 
-const generateParabolaUnique = (subTool: "factorising"|"formula", level: DifficultyLevel, allowA: AllowAMode, sD: SurdDisplay, used: Set<string>): NonLinearQuestion => {
-  let q: NonLinearQuestion, a=0;
-  do { q=generateParabola(subTool,level,allowA,sD,false); a++; } while(used.has(q.key) && a<100);
-  used.add(q.key); return q;
+const GraphView = ({ g, height }: { g: GraphInfo; height?: number }): JSX.Element => {
+  const fois: FOI[] = g.points.map((p) => ({ x: p.x, y: p.y, kind: "point", highlight: true }));
+  return (
+    <SmartGrapher
+      series={g.series}
+      height={height ?? 280}
+      config={{
+        autoIntersections: false,
+        autoFois: false,
+        fois,
+        showFois: true,
+        axisLabels: g.axisLabels,
+        lockAspect: g.lockAspect,
+        style: { foi: "#dc2626" },
+      }}
+    />
+  );
 };
-
-const genUniqueLinear = (level: DifficultyLevel, negMode: NegMode, aZ: boolean, aNE: boolean, used: Set<string>): LinearQuestion => {
-  let q: LinearQuestion, a=0;
-  do { q=generateLinear(level,negMode,aZ,aNE); a++; } while(used.has(q.key) && a<100);
-  used.add(q.key); return q;
-};
-
-
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// UI COMPONENTS
+// SOLUTION LINES + WORKING STEPS
 // ═══════════════════════════════════════════════════════════════════════════════
-const DifficultyToggle=({value,onChange}:{value:string;onChange:(v:string)=>void})=>(
-  <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm">
-    {([["level1","Level 1","bg-green-600"],["level2","Level 2","bg-yellow-500"],["level3","Level 3","bg-red-600"]]as const).map(([val,label,col])=>(
-      <button key={val} onClick={()=>onChange(val)}
-        className={`px-5 py-2 font-bold text-base transition-colors ${value===val?`${col} text-white`:"bg-white text-gray-500 hover:bg-gray-50"}`}>{label}</button>
-    ))}
-  </div>
-);
-
-const EqPairDisplay=({eqs,cls}:{eqs:[string,string];cls:string})=>(
-  <div className="flex flex-col items-center gap-2 w-full">
-    {eqs.map((eq,i)=>(
-      <div key={i} className="flex items-baseline gap-3 justify-center">
-        <span className="text-sm font-bold text-gray-400 w-8 text-right flex-shrink-0">({i+1})</span>
-        <span className={`${cls} font-semibold`} style={{color:"#000"}}><MathRenderer latex={eq}/></span>
-      </div>
-    ))}
-  </div>
-);
-
-const SolutionDisplay=({q,surdDisplay}:{q:NonLinearQuestion;surdDisplay:SurdDisplay})=>{
-  const sf=(n: number)=>q.subTool==="factorising"?fmtSoln(n):fmt2(n);
+const solutionLines = (q: InternalQ, surdDisplay: SurdDisplay): string[] => {
+  if (q.kind === "linear") {
+    const [v1, v2] = q.varPair;
+    return [`${v1}=${q.v1Val},\\; ${v2}=${q.v2Val}`];
+  }
+  const sf = q.subTool === "factorising" ? fmtSoln : fmt2;
   if (q.isDoubleRoot) {
-    const s=q.solutions[0];
-    return <div className="text-center"><MathRenderer latex={`x=${sf(s.x)},\\quad y=${sf(s.y)} \\;\\text{(repeated root)}`}/></div>;
+    const s = q.solutions[0];
+    return [`x=${sf(s.x)},\\; y=${sf(s.y)}`];
   }
   if (q.isCircle && q.surdX1 && q.surdX2) {
-    if (q.subTool==="factorising") return (
-      <div className="flex flex-col gap-1 items-center">
-        <div><MathRenderer latex={q.surdX1}/></div>
-        {q.surdX1!==q.surdX2&&<div><MathRenderer latex={q.surdX2}/></div>}
-      </div>
-    );
-    // formula: surdX1 holds the x surd, surdYCombined holds the y surd
-    return (
-      <div className="flex flex-col gap-1 items-center">
-        {(surdDisplay==="surd"||surdDisplay==="both")&&(
-          <><div><MathRenderer latex={q.surdX1}/></div>
-          {q.surdYCombined&&<div><MathRenderer latex={q.surdYCombined}/></div>}</>
-        )}
-        {(surdDisplay==="decimal"||surdDisplay==="both")&&q.decimalLatex&&(
-          <div><MathRenderer latex={q.decimalLatex}/></div>
-        )}
-      </div>
-    );
+    if (q.subTool === "factorising") return q.surdX1 === q.surdX2 ? [q.surdX1] : [q.surdX1, q.surdX2];
+    const out: string[] = [];
+    if (surdDisplay === "surd" || surdDisplay === "both") { out.push(q.surdX1); if (q.surdYCombined) out.push(q.surdYCombined); }
+    if ((surdDisplay === "decimal" || surdDisplay === "both") && q.decimalLatex) out.push(q.decimalLatex);
+    return out.length ? out : [q.surdX1];
   }
-  if (q.subTool==="formula") return (
-    <div className="flex flex-col gap-1 items-center">
-      {(surdDisplay==="surd"||surdDisplay==="both")&&q.surdLatex&&<div><MathRenderer latex={q.surdLatex}/></div>}
-      {(surdDisplay==="surd"||surdDisplay==="both")&&q.surdYCombined&&<div><MathRenderer latex={q.surdYCombined}/></div>}
-      {(surdDisplay==="decimal"||surdDisplay==="both")&&q.solutions.map((s,i)=>{
-        const xV=q.isolateVar==="y"?s.x:s.y, yV=q.isolateVar==="y"?s.y:s.x;
-        return <div key={i}><MathRenderer latex={`x=${fmt2(xV)},\\quad y=${fmt2(yV)}`}/></div>;
-      })}
-    </div>
-  );
-  return (
-    <div className="flex flex-col gap-1 items-center">
-      {q.solutions.map((s,i)=><div key={i}><MathRenderer latex={`x=${sf(s.x)},\\quad y=${sf(s.y)}`}/></div>)}
-    </div>
-  );
+  if (q.subTool === "formula") {
+    const out: string[] = [];
+    if (surdDisplay === "surd" || surdDisplay === "both") { if (q.surdLatex) out.push(q.surdLatex); if (q.surdYCombined) out.push(q.surdYCombined); }
+    if (surdDisplay === "decimal" || surdDisplay === "both") q.solutions.forEach((s) => {
+      const xV = q.isolateVar === "y" ? s.x : s.y, yV = q.isolateVar === "y" ? s.y : s.x;
+      out.push(`x=${fmt2(xV)},\\; y=${fmt2(yV)}`);
+    });
+    return out.length ? out : (q.surdLatex ? [q.surdLatex] : []);
+  }
+  return q.solutions.map((s) => `x=${sf(s.x)},\\; y=${sf(s.y)}`);
+};
+
+// Strip LaTeX commands so a simple equation reads cleanly inside a prose step title.
+const titleEq = (latex: string): string => latex.replace(/\\[a-zA-Z]+/g, "").replace(/[{}]/g, "").replace(/\s+/g, " ").trim();
+
+// The working is now assembled through the shared `workings()` builder and the
+// technique library, so each move gets a proper, specific title and live-model
+// fragments — and the answer is shown once (by the answer renderer), never
+// restated as a final "Solution" step.
+const buildWorking = (q: InternalQ, graph: GraphInfo | null): WorkingStep[] => {
+  const w = workings();
+  if (q.kind === "linear") {
+    const [v1, v2] = q.varPair;
+    const iV = q.isolatedVar === "v1" ? v1 : v2;      // isolated in (2), found by substituting back
+    const oV = q.isolatedVar === "v1" ? v2 : v1;      // solved first from the substituted equation
+    const oVal = q.isolatedVar === "v1" ? q.v2Val : q.v1Val;
+    const line = q.needsRearrange ? q.rearrangedLatex : q.eq2Display;
+    if (q.needsRearrange) w.use(makeSubjectSteps(iV, q.rearrangedLatex));
+    w.step("Substitute equation (2) into equation (1)", [q.afterSubLatex]);
+    w.use(solveLinearlySteps(oV, q.solveSteps));
+    w.use(substituteBackSteps(iV, q.subBackSteps, { value: `${oV} = ${oVal}`, into: titleEq(line) }));
+  } else {
+    const primary = q.isolateVar === "y" ? "x" : "y";  // variable the quadratic is in
+    const backVar = q.isolateVar;                      // isolated var, found by substituting back
+    const pv = (s: { x: number; y: number }) => (primary === "x" ? s.x : s.y);
+    const bv = (s: { x: number; y: number }) => (primary === "x" ? s.y : s.x);
+    if (q.needsRearrange) w.use(makeSubjectSteps(q.isolateVar, q.rearrangedLatex));
+    w.step("Substitute equation (2) into equation (1)", [q.quadLatex]);
+    w.step("Expand and rearrange to equal zero", [q.expandedLatex]);
+    if (q.subTool === "factorising") {
+      if (q.factorisedLatex) w.step("Factorise", [q.factorisedLatex]);
+      const roots = q.solutions.map((s) => fmtSoln(pv(s)));
+      w.use(solveFactorsSteps(roots, primary));
+      // Substitute each root back into the line to get the other coordinate.
+      const seen = new Set<string>();
+      const mappings = q.solutions
+        .filter((s) => { const k = fmtSoln(pv(s)); if (seen.has(k)) return false; seen.add(k); return true; })
+        .map((s) => `${primary} = ${fmtSoln(pv(s))} \\Rightarrow ${backVar} = ${fmtSoln(bv(s))}`);
+      w.use(substituteBackSteps(backVar, mappings, { into: titleEq(q.eq2Display) }));
+    } else {
+      w.use(quadraticFormulaSteps(q.A, q.B, q.C, primary));
+      if (q.surdYCombined) w.use(substituteBackSteps(backVar, [q.surdYCombined], { into: titleEq(q.eq2Display) }));
+    }
+    if (q.isDoubleRoot) w.note("The line is a tangent to the curve, so there is one repeated solution.");
+  }
+  if (graph) w.visual("Plot both graphs — the solutions are where the curves meet:", { graph });
+  return w.build();
+};
+
+// Convert an internal question into a worded ToolShell question. The two equations
+// print/display as worded lines; the derived graph + solution lines ride along in
+// underscore fields for the renderers.
+const toQuestion = (q: InternalQ, surdDisplay: SurdDisplay): AnyQuestion => {
+  const graph = buildGraph(q);
+  const lines = solutionLines(q, surdDisplay);
+  return {
+    kind: "worded",
+    lines: [`$${q.eq1Display}$`, `$${q.eq2Display}$`],
+    answer: lines.join("  or  ").replace(/\\[a-zA-Z]+|[{}]/g, "").replace(/\s+/g, " ").trim() || "see working",
+    answerLatex: lines[0] ?? "",
+    working: buildWorking(q, graph),
+    key: q.key,
+    difficulty: q.difficulty,
+    _graph: graph,
+    _solLines: lines,
+  } as unknown as AnyQuestion;
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// WORKED STEPS
+// GENERATE — QO → the original generators
 // ═══════════════════════════════════════════════════════════════════════════════
-const Card=({title,children,stepBg,fsz}:{title:string;children:React.ReactNode;stepBg:string;fsz:string})=>(
-  <div className="rounded-xl p-5" style={{backgroundColor:stepBg}}>
-    <h4 className="text-sm font-bold mb-3 text-gray-500 uppercase tracking-wide">{title}</h4>
-    <div className={`${fsz} font-semibold flex flex-col gap-2 items-center`} style={{color:"#000"}}>{children}</div>
-  </div>
-);
-const ML=({latex,label}:{latex:string;label?:string})=>(
-  <div className="flex items-baseline gap-3 justify-center">
-    {label&&<span className="text-xs font-bold text-gray-400 w-16 text-right flex-shrink-0">{label}</span>}
-    <MathRenderer latex={latex}/>
-  </div>
-);
+// Level-3 banks hold a finite set of questions; a module-level rotating "used"
+// set walks the pool without repeats (resetting when exhausted), while a random
+// key suffix keeps every draw's key distinct so ToolShell's uniqueness loop never
+// has to discard one.
+const bankUsed = { fac: new Set<number>(), form: new Set<number>() };
 
-const LinearWorkedSteps=({q,stepBg,fsz}:{q:LinearQuestion;stepBg:string;fsz:string})=>{
-  const [v1,v2]=q.varPair;
-  const iV=q.isolatedVar==="v1"?v1:v2;
-  let n=1;
-  return (
-    <div className="space-y-4 mt-6">
-      <Card title={`Step ${n++} — Label the equations`} stepBg={stepBg} fsz={fsz}><EqPairDisplay eqs={[q.eq1Display,q.eq2Display]} cls={fsz}/></Card>
-      {q.needsRearrange&&<Card title={`Step ${n++} — Rearrange equation (2) to make ${iV} the subject`} stepBg={stepBg} fsz={fsz}><ML latex={q.eq2Display} label="(2)"/><ML latex={q.rearrangedLatex} label="⟹"/></Card>}
-      <Card title={`Step ${n++} — Substitute into equation (1)`} stepBg={stepBg} fsz={fsz}><ML latex={q.afterSubLatex}/></Card>
-      <Card title={`Step ${n++} — Expand and solve`} stepBg={stepBg} fsz={fsz}>{q.solveSteps.map((s,i)=><ML key={i} latex={s}/>)}</Card>
-      <Card title={`Step ${n++} — Substitute back`} stepBg={stepBg} fsz={fsz}>{q.subBackSteps.map((s,i)=><ML key={i} latex={s}/>)}</Card>
-      <Card title="Solution" stepBg={stepBg} fsz={fsz}><ML latex={`${v1}=${q.v1Val},\\quad ${v2}=${q.v2Val}`}/></Card>
-    </div>
-  );
+const pickBankFac = (allowA: number): NonLinearQuestion => {
+  const pool = filteredFacPool(allowA);
+  let avail = pool.filter(({ idx }) => !bankUsed.fac.has(idx));
+  if (!avail.length) { pool.forEach(({ idx }) => bankUsed.fac.delete(idx)); avail = pool; }
+  const { entry, idx } = pick(avail);
+  bankUsed.fac.add(idx);
+  const q = bankToFacQuestion(entry, idx);
+  q.key = `${q.key}-${randInt(0, 1_000_000)}`;
+  return q;
 };
 
-const NonLinearWorkedSteps=({q,stepBg,fsz,surdDisplay}:{q:NonLinearQuestion;stepBg:string;fsz:string;surdDisplay:SurdDisplay})=>{
-  const subVar=q.isolateVar==="y"?"x":"y";
-  let n=1;
-  return (
-    <div className="space-y-4 mt-6">
-      <Card title={`Step ${n++} — Label the equations`} stepBg={stepBg} fsz={fsz}><EqPairDisplay eqs={[q.eq1Display,q.eq2Display]} cls={fsz}/></Card>
-      {q.needsRearrange&&<Card title={`Step ${n++} — Rearrange equation (2)`} stepBg={stepBg} fsz={fsz}><ML latex={q.eq2Display} label="(2)"/><ML latex={q.rearrangedLatex} label="⟹"/></Card>}
-      <Card title={`Step ${n++} — Substitute into equation (1)`} stepBg={stepBg} fsz={fsz}><ML latex={q.quadLatex}/></Card>
-      <Card title={`Step ${n++} — Expand and rearrange to = 0`} stepBg={stepBg} fsz={fsz}><ML latex={q.expandedLatex}/></Card>
-      {q.subTool==="factorising"
-        ?<>
-          <Card title={`Step ${n++} — Factorise`} stepBg={stepBg} fsz={fsz}><ML latex={q.factorisedLatex??""}/></Card>
-          <Card title={`Step ${n++} — Solve for ${subVar} and substitute back`} stepBg={stepBg} fsz={fsz}>
-            {q.surdX1&&<ML latex={q.surdX1}/>}
-            {q.surdX2&&q.surdX2!==q.surdX1&&<ML latex={q.surdX2}/>}
-          </Card>
-        </>
-        :<Card title={`Step ${n++} — Apply the quadratic formula`} stepBg={stepBg} fsz={fsz}>
-          <ML latex={`${subVar}=\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}`}/>
-          <ML latex={`a=${q.A},\\;b=${q.B},\\;c=${q.C}`}/>
-          {q.surdLatex&&<ML latex={q.surdLatex}/>}
-          {q.surdYCombined&&<ML latex={q.surdYCombined}/>}
-        </Card>
-      }
-      <Card title="Solution" stepBg={stepBg} fsz={fsz}><SolutionDisplay q={q} surdDisplay={surdDisplay}/></Card>
-    </div>
-  );
+const pickBankForm = (allowA: number): NonLinearQuestion => {
+  const pool = filteredFormPool(allowA);
+  let avail = pool.filter(({ idx }) => !bankUsed.form.has(idx));
+  if (!avail.length) { pool.forEach(({ idx }) => bankUsed.form.delete(idx)); avail = pool; }
+  const { entry, idx } = pick(avail);
+  bankUsed.form.add(idx);
+  const q = bankToFormQuestion(entry, idx);
+  q.key = `${q.key}-${randInt(0, 1_000_000)}`;
+  return q;
 };
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// QO POPOVERS
-// ═══════════════════════════════════════════════════════════════════════════════
-const LinearQOPopover=({level,negMode,setNegMode,allowZero,setAllowZero,allowNegEq1,setAllowNegEq1}:{level:DifficultyLevel;negMode:NegMode;setNegMode:(v:NegMode)=>void;allowZero:boolean;setAllowZero:(v:boolean)=>void;allowNegEq1:boolean;setAllowNegEq1:(v:boolean)=>void})=>{
-  const {open,setOpen,ref}=usePopover();
-  const allowPos = negMode==="pos-only"||negMode==="both";
-  const allowNeg = negMode==="neg-only"||negMode==="both";
-  const togglePos = () => { if (allowPos && !allowNeg) return; setNegMode(allowPos ? "neg-only" : "both"); };
-  const toggleNeg = () => { if (allowNeg && !allowPos) return; setNegMode(allowNeg ? "pos-only" : "both"); };
-  return (
-    <div className="relative" ref={ref}>
-      <PopoverButton open={open} onClick={()=>setOpen(!open)}/>
-      {open&&(
-        <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-72 p-5 flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Solution Types</span>
-            <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden">
-              <button onClick={togglePos} className={`flex-1 px-3 py-2 text-sm font-bold transition-colors ${allowPos?"bg-blue-900 text-white":"bg-white text-gray-600 hover:bg-gray-50"}`}>Positive Solutions</button>
-              <button onClick={toggleNeg} className={`flex-1 px-3 py-2 text-sm font-bold transition-colors ${allowNeg?"bg-blue-900 text-white":"bg-white text-gray-600 hover:bg-gray-50"}`}>Negative Solutions</button>
-            </div>
-          </div>
-          <TogglePill checked={allowNegEq1} onChange={setAllowNegEq1} label="Allow negative coefficients in Equation 1"/>
-          {level==="level2"&&<TogglePill checked={allowZero} onChange={setAllowZero} label='Include "= 0" form'/>}
-        </div>
-      )}
-    </div>
-  );
-};
-
-const NonLinearQOPopover=({subTool,level,allowA,setAllowA,surdDisplay,setSurdDisplay}:{subTool:"factorising"|"formula";level:DifficultyLevel;allowA:AllowAMode;setAllowA:(v:AllowAMode)=>void;surdDisplay:SurdDisplay;setSurdDisplay:(v:SurdDisplay)=>void})=>{
-  const {open,setOpen,ref}=usePopover();
-  const showSurd = surdDisplay==="surd"||surdDisplay==="both";
-  const showDec  = surdDisplay==="decimal"||surdDisplay==="both";
-  const toggleSurd = () => { if (showSurd&&!showDec) return; setSurdDisplay(showSurd?"decimal":"both"); };
-  const toggleDec  = () => { if (showDec&&!showSurd) return; setSurdDisplay(showDec?"surd":"both"); };
-  return (
-    <div className="relative" ref={ref}>
-      <PopoverButton open={open} onClick={()=>setOpen(!open)}/>
-      {open&&(
-        <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-72 p-5 flex flex-col gap-4">
-          {subTool==="formula"&&(
-            <div className="flex flex-col gap-2">
-              <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Answer Display</span>
-              <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden">
-                <button onClick={toggleSurd} className={`flex-1 px-3 py-2 text-sm font-bold transition-colors ${showSurd?"bg-blue-900 text-white":"bg-white text-gray-600 hover:bg-gray-50"}`}>Surd</button>
-                <button onClick={toggleDec}  className={`flex-1 px-3 py-2 text-sm font-bold transition-colors ${showDec?"bg-blue-900 text-white":"bg-white text-gray-600 hover:bg-gray-50"}`}>Decimal</button>
-              </div>
-            </div>
-          )}
-          <div className="flex flex-col gap-2">
-            <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">
-              {level==="level3" ? "Circle / Ellipse Type" : "Equation 1 Coefficients"}
-            </span>
-            <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden">
-              {([{bit:1,label:"None"},{bit:2,label:"One"},{bit:4,label:"Both"}]).map(({bit,label})=>{
-                const active=!!(allowA & bit);
-                const isLast=active && (allowA & ~bit)===0;
-                return (
-                  <button key={bit} onClick={()=>{ if(!isLast) setAllowA(((Number(allowA)^bit)||1) as AllowAMode); }}
-                    className={`flex-1 px-3 py-2 text-sm font-bold transition-colors ${active?"bg-blue-900 text-white":"bg-white text-gray-600 hover:bg-gray-50"}`}>
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
-            {level==="level3"&&<p className="text-xs text-gray-400 italic">None = circle (x²+y²=r²). One/Both = ellipse.</p>}
-          </div>
-        </div>
-      )}
-    </div>
-  );
+const generateQuestion = (
+  tool: string,
+  level: DifficultyLevel,
+  variables: Record<string, boolean>,
+  dropdownValue: string,
+  multiSelectValues: Record<string, boolean> = {},
+): AnyQuestion => {
+  const t = tool as SubTool;
+  if (t === "linear") {
+    const posOn = multiSelectValues.posSol !== false;
+    const negOn = multiSelectValues.negSol === true;
+    const negMode: NegMode = negOn && posOn ? "both" : negOn ? "neg-only" : "pos-only";
+    const negEq1 = variables.negEq1 === true;
+    const zeroForm = variables.zeroForm === true;
+    return toQuestion(generateLinear(level, negMode, zeroForm, negEq1), "surd");
+  }
+  const allowA =
+    ((multiSelectValues.coefNone !== false ? 1 : 0) |
+     (multiSelectValues.coefOne ? 2 : 0) |
+     (multiSelectValues.coefBoth ? 4 : 0)) || 1;
+  const surdDisplay: SurdDisplay =
+    dropdownValue === "decimal" ? "decimal" : dropdownValue === "both" ? "both" : "surd";
+  const sub = t as "factorising" | "formula";
+  if (level === "level3") {
+    return toQuestion(sub === "factorising" ? pickBankFac(allowA) : pickBankForm(allowA), surdDisplay);
+  }
+  return toQuestion(generateParabola(sub, level, allowA, surdDisplay, false), surdDisplay);
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// INFO & MENU
+// RENDERERS
 // ═══════════════════════════════════════════════════════════════════════════════
-const INFO_SECTIONS=[
-  {title:"Linear Substitution",icon:"📐",content:[
-    {label:"Overview",detail:"One variable is isolated (or can be isolated) in one equation. Substitute into the other to solve."},
-    {label:"Level 1 — Green",detail:"Variable fully isolated. Direct substitution."},
-    {label:"Level 2 — Yellow",detail:"Variable has coefficient +1 but not isolated. One rearrangement needed."},
-    {label:"Level 3 — Red",detail:"Variable has coefficient −1. Students must manage the sign change."},
-  ]},
-  {title:"Non-Linear: Factorising",icon:"🟦",content:[
-    {label:"Overview",detail:"One equation is quadratic (or circle/ellipse at Level 3), the other linear. Solved by factorising."},
-    {label:"Level 1 — Green",detail:"Linear equation already isolated. Direct substitution."},
-    {label:"Level 2 — Yellow",detail:"Linear equation needs rearranging first."},
-    {label:"Level 3 — Red",detail:"Circle or ellipse equation. Roots are rational, sometimes fractional."},
-  ]},
-  {title:"Non-Linear: Formula",icon:"🔢",content:[
-    {label:"Overview",detail:"Same structure as Factorising but the quadratic never factorises — formula required."},
-    {label:"Level 3",detail:"Circle or ellipse with irrational roots. Answers given as surds and/or decimals."},
-    {label:"Answer display",detail:"Choose surd (exact), decimal (2dp), or both."},
-  ]},
-  {title:"Modes",icon:"🖥️",content:[
-    {label:"Whiteboard",detail:"Single question with working space. Visualiser available."},
-    {label:"Worked Example",detail:"Full step-by-step solution."},
-    {label:"Worksheet",detail:"Printable grid with PDF export."},
-  ]},
-];
-
-const InfoModal=({onClose}:{onClose:()=>void})=>(
-  <div className="fixed inset-0 z-[100] flex items-center justify-center" style={{backgroundColor:"rgba(0,0,0,0.5)"}} onClick={onClose}>
-    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 flex flex-col" style={{height:"80vh"}} onClick={e=>e.stopPropagation()}>
-      <div className="flex items-center justify-between px-7 py-5 border-b border-gray-100 flex-shrink-0">
-        <h2 className="text-2xl font-bold text-gray-900">Tool Information</h2>
-        <button onClick={onClose} className="w-9 h-9 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100"><X size={20}/></button>
-      </div>
-      <div className="overflow-y-auto px-7 py-6 flex flex-col gap-6 flex-1">
-        {INFO_SECTIONS.map(s=>(
-          <div key={s.title}>
-            <div className="flex items-center gap-2 mb-3"><span className="text-xl">{s.icon}</span><h3 className="text-lg font-bold text-blue-900">{s.title}</h3></div>
-            <div className="flex flex-col gap-2">
-              {s.content.map(item=>(
-                <div key={item.label} className="bg-gray-50 rounded-xl px-4 py-3">
-                  <span className="font-bold text-gray-800 text-sm">{item.label}</span>
-                  <p className="text-sm text-gray-500 mt-0.5 leading-relaxed">{item.detail}</p>
-                </div>
-              ))}
-            </div>
+// On-screen display: the two equations, plus the graph on the whiteboard once the
+// answer is revealed. Print falls back to the worded lines (both equations); the
+// worked-example graph lives in its own step; the worksheet cells stay text-only.
+const questionRenderer = (
+  q: AnyQuestion, showAnswer: boolean, _cs: string,
+  compact?: boolean, _idx?: number, _qo?: QOSnapshot, fontClass?: string,
+): JSX.Element | null => {
+  const lines = (q as { lines?: string[] }).lines;
+  if (!lines) return null;
+  const graph = (q as { _graph?: GraphInfo | null })._graph ?? null;
+  const eqFont = fontClass ?? (compact === true ? "text-lg" : "text-3xl");
+  return (
+    <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
+      <div className={`${eqFont} font-semibold`} style={{ color: "#000", display: "flex", flexDirection: "column", gap: 6, alignItems: "center" }}>
+        {lines.map((ln, i) => (
+          <div key={i} style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+            <span style={{ fontSize: "0.6em", fontWeight: 700, color: "#9ca3af" }}>({i + 1})</span>
+            <InlineMath text={ln} />
           </div>
         ))}
       </div>
-      <div className="px-7 py-4 border-t border-gray-100 flex justify-end flex-shrink-0">
-        <button onClick={onClose} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-sm hover:bg-blue-800">Close</button>
-      </div>
+      {compact === undefined && showAnswer && graph && (
+        <div style={{ width: "100%", maxWidth: 460 }}><GraphView g={graph} height={300} /></div>
+      )}
     </div>
-  </div>
-);
+  );
+};
 
-const MenuDropdown=({colorScheme,setColorScheme,onClose,onOpenInfo}:{colorScheme:string;setColorScheme:(s:string)=>void;onClose:()=>void;onOpenInfo:()=>void})=>{
-  const [colorOpen,setColorOpen]=useState(false);
-  const ref=useRef<HTMLDivElement>(null);
-  useEffect(()=>{
-    const h=(e:MouseEvent)=>{if(ref.current&&!ref.current.contains(e.target as Node))onClose();};
-    document.addEventListener("mousedown",h);return()=>document.removeEventListener("mousedown",h);
-  },[onClose]);
+const answerRenderer = (q: AnyQuestion): JSX.Element | null => {
+  const lines = (q as { _solLines?: string[] })._solLines;
+  if (!lines || !lines.length) return null;
   return (
-    <div ref={ref} className="absolute right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden" style={{minWidth:"200px"}}>
-      <div className="py-1">
-        <button onClick={()=>setColorOpen(!colorOpen)} className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
-          <div className="flex items-center gap-2">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={`text-gray-400 transition-transform ${colorOpen?"rotate-90":""}`}><path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            <span>Colour Scheme</span>
-          </div>
-          <span className="text-xs text-gray-400 capitalize">{colorScheme}</span>
-        </button>
-        {colorOpen&&(
-          <div className="border-t border-gray-100">
-            {["default","blue","pink","yellow"].map(s=>(
-              <button key={s} onClick={()=>{setColorScheme(s);onClose();}}
-                className={`w-full flex items-center justify-between pl-10 pr-4 py-2.5 text-sm font-semibold capitalize ${colorScheme===s?"bg-blue-900 text-white":"text-gray-600 hover:bg-gray-50"}`}>
-                {s}{colorScheme===s&&<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7l3.5 3.5L12 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-              </button>
-            ))}
-          </div>
-        )}
-        <div className="border-t border-gray-100 my-1"/>
-        <button onClick={()=>{onOpenInfo();onClose();}} className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-gray-400"><circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5"/><path d="M8 7v5M8 5v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-          Tool Information
-        </button>
-      </div>
+    <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "center", color: "#166534", fontWeight: 700 }}>
+      {lines.map((l, i) => <MathRenderer key={i} latex={l} />)}
+    </div>
+  );
+};
+
+const stepRenderer = (s: WorkingStep): JSX.Element | null => {
+  const graph = (s.extra as { graph?: GraphInfo } | undefined)?.graph;
+  if (!graph) return null;
+  return (
+    <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+      <div style={{ fontWeight: 600, color: "#374151", textAlign: "center" }}>{s.plain}</div>
+      <div style={{ width: "100%", maxWidth: 460 }}><GraphView g={graph} height={300} /></div>
     </div>
   );
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// PRINT
+// CONFIG + INFO
 // ═══════════════════════════════════════════════════════════════════════════════
-const handlePrint=(questions:AnyQuestion[],subTool:SubTool,difficulty:string,isDifferentiated:boolean,numColumns:number,surdDisplay:SurdDisplay)=>{
-  const FONT_PX=14,PAD_MM=2,MARGIN_MM=12,HEADER_MM=14,GAP_MM=2;
-  const PAGE_H_MM=297-MARGIN_MM*2,PAGE_W_MM=210-MARGIN_MM*2;
-  const usableH_MM=PAGE_H_MM-HEADER_MM,diffHdrMM=7;
-  const cols=isDifferentiated?3:numColumns;
-  const cellW_MM=isDifferentiated?(PAGE_W_MM-GAP_MM*2)/3:(PAGE_W_MM-GAP_MM*(numColumns-1))/numColumns;
-  const difficultyLabel=isDifferentiated?"Differentiated":difficulty==="level1"?"Level 1":difficulty==="level2"?"Level 2":"Level 3";
-  const dateStr=new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
-  const totalQ=questions.length;
-  const toolName=subTool==="linear"?"Linear Substitution":subTool==="factorising"?"Non-Linear (Factorising)":"Non-Linear (Formula)";
-  const qData=questions.map((q,i)=>({
-    eq1:q.eq1Display,eq2:q.eq2Display,
-    answerLatex:q.kind==="linear"
-      ?`${q.varPair[0]}=${q.v1Val},\\quad ${q.varPair[1]}=${q.v2Val}`
-      :(() => {
-        const nlq = q as NonLinearQuestion;
-        if (nlq.isCircle && nlq.surdX1 && nlq.surdX2) {
-          return nlq.subTool==="factorising"
-            ? `${nlq.surdX1}|SPLIT|${nlq.surdX2}`
-            : (surdDisplay==="decimal"&&nlq.decimalLatex ? nlq.decimalLatex : `${nlq.surdX1}|SPLIT|${nlq.surdYCombined??""}`);
-        }
-        if (nlq.subTool==="formula") {
-          const parts: string[] = [];
-          if (surdDisplay==="surd"||surdDisplay==="both") { if (nlq.surdLatex) parts.push(nlq.surdLatex); if (nlq.surdYCombined) parts.push(nlq.surdYCombined); }
-          if (surdDisplay==="decimal"||surdDisplay==="both") nlq.solutions.forEach(s=>{ const xV=nlq.isolateVar==="y"?s.x:s.y, yV=nlq.isolateVar==="y"?s.y:s.x; parts.push(`x=${fmt2(xV)},\\quad y=${fmt2(yV)}`); });
-          return parts.join("|SPLIT|");
-        }
-        return nlq.solutions.map(s=>`x=${fmtSoln(s.x)},\\quad y=${fmtSoln(s.y)}`).join("|SPLIT|");
-      })(),
-    difficulty:q.difficulty,idx:i,
-  }));
-  const html=`<!DOCTYPE html><html><head><meta charset="utf-8">
-<title>Substitution — ${toolName}</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
-<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"><\/script>
-<style>
-*{margin:0;padding:0;box-sizing:border-box;}
-@page{size:A4;margin:${MARGIN_MM}mm;}
-body{font-family:"Segoe UI",Arial,sans-serif;}
-@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
-.page{width:${PAGE_W_MM}mm;height:${PAGE_H_MM}mm;overflow:hidden;page-break-after:always;}
-.page:last-child{page-break-after:auto;}
-.ph{display:flex;justify-content:space-between;align-items:baseline;border-bottom:.4mm solid #1e3a8a;padding-bottom:1.5mm;margin-bottom:2mm;}
-.ph h1{font-size:5mm;font-weight:700;color:#1e3a8a;}.ph .meta{font-size:3mm;color:#6b7280;}
-.grid{display:grid;gap:${GAP_MM}mm;}
-.cell,.dc{border:.3mm solid #d1d5db;border-radius:3mm;overflow:hidden;display:flex;flex-direction:column;}
-.dg{display:grid;grid-template-columns:repeat(3,1fr);gap:${GAP_MM}mm;}
-.dcol{display:flex;flex-direction:column;gap:${GAP_MM}mm;}
-.dh{height:${diffHdrMM}mm;display:flex;align-items:center;justify-content:center;font-size:3mm;font-weight:700;border-radius:1mm;}
-.dh.level1{background:#dcfce7;color:#166534;}.dh.level2{background:#fef9c3;color:#854d0e;}.dh.level3{background:#fee2e2;color:#991b1b;}
-.qbanner{width:100%;padding:1mm 2mm;font-size:${Math.round(FONT_PX*0.72)}px;font-weight:700;color:#000;border-bottom:.3mm solid #000;text-align:center;flex-shrink:0;}
-.qbody{width:100%;display:flex;flex-direction:column;align-items:center;padding:${PAD_MM*0.4}mm ${PAD_MM}mm ${PAD_MM}mm;}
-.instr{font-size:${Math.round(FONT_PX*0.8)}px;font-weight:600;color:#000;text-align:center;margin-bottom:0.8mm;}
-.eqrow{display:flex;align-items:baseline;justify-content:center;gap:3px;margin:0.2mm 0;}
-.eqlbl{font-size:${Math.round(FONT_PX*0.7)}px;font-weight:700;color:#9ca3af;width:7mm;text-align:right;flex-shrink:0;}
-.em .katex{font-size:${FONT_PX}px;}
-.qa{font-size:${FONT_PX}px;color:#059669;text-align:center;margin-top:0.8mm;}
-.qa .katex{font-size:${FONT_PX}px;}
-#probe{position:fixed;left:-9999px;top:0;visibility:hidden;font-size:${FONT_PX}px;width:${cellW_MM-PAD_MM*2}mm;}
-</style></head><body>
-<div id="probe"></div><div id="pages"></div>
-<script>
-document.addEventListener("DOMContentLoaded",function(){
-  var pxMm=3.7795,PAD=${PAD_MM},GAP=${GAP_MM},usableH=${usableH_MM},dHdr=${diffHdrMM};
-  var PWmm=${PAGE_W_MM},cols=${cols},isDiff=${isDifferentiated?"true":"false"};
-  var totalQ=${totalQ},diffLabel="${difficultyLabel}",dateStr="${dateStr}",toolName="${toolName}";
-  var qData=${JSON.stringify(qData)};
-  function kr(el,latex){try{katex.render(latex,el,{throwOnError:false,output:"html"});}catch(e){el.textContent=latex;}}
-  function kEl(latex){var s=document.createElement("span");s.className="em";kr(s,latex);return s;}
-  function cellInner(item,showAns){
-    var body=document.createElement("div");body.className="qbody";
-    var instr=document.createElement("div");instr.className="instr";instr.textContent="Solve simultaneously:";body.appendChild(instr);
-    [["(1)",item.eq1],["(2)",item.eq2]].forEach(function(pair){
-      var row=document.createElement("div");row.className="eqrow";
-      var lbl=document.createElement("span");lbl.className="eqlbl";lbl.textContent=pair[0];
-      var m=document.createElement("span");m.className="em";kr(m,pair[1]);
-      row.appendChild(lbl);row.appendChild(m);body.appendChild(row);
-    });
-    if(showAns){
-      var pairs=item.answerLatex.split("|SPLIT|");
-      pairs.forEach(function(pair){if(pair){var a=document.createElement("div");a.className="qa";kr(a,pair);body.appendChild(a);}});
-    }
-    return body;
-  }
-  function makeCell(item,showAns,cW,cH,diff){
-    var cell=document.createElement("div");cell.className=diff?"dc":"cell";
-    cell.style.width=cW+"mm";cell.style.height=cH+"mm";
-    var banner=document.createElement("div");banner.className="qbanner";banner.textContent="Question "+(item.idx+1);
-    cell.appendChild(banner);cell.appendChild(cellInner(item,showAns));return cell;
-  }
-  var probe=document.getElementById("probe"),maxH=0;
-  qData.forEach(function(item){var el=cellInner(item,true);probe.appendChild(el);if(el.scrollHeight>maxH)maxH=el.scrollHeight;probe.removeChild(el);});
-  var needed=maxH/pxMm+PAD*2+5;
-  var rowH=[];for(var r=0;r<10;r++)rowH.push((usableH-GAP*r)/(r+1));
-  var chosenH=rowH[0],rpp=1,found=false;
-  for(var r=0;r<rowH.length;r++){if((r+1)*cols>=totalQ&&rowH[r]>=needed){chosenH=rowH[r];rpp=r+1;found=true;break;}}
-  if(!found)for(var r2=0;r2<rowH.length;r2++){if(rowH[r2]>=needed){chosenH=rowH[r2];rpp=r2+1;}}
-  var dpc=Math.floor(totalQ/3),dUsable=usableH-dHdr-GAP,dRows=1,dCellH=dUsable;
-  for(var rd=1;rd<=dpc;rd++){var dNeeded=needed-dHdr/rd;var hd=(dUsable-GAP*(rd-1))/rd;if(hd>=dNeeded){dRows=rd;dCellH=hd;}}
-  var cW=isDiff?(PWmm-GAP*2)/3:(PWmm-GAP*(cols-1))/cols;
-  var lvls=["level1","level2","level3"],lbls=["Level 1","Level 2","Level 3"];
-  function makePage(pageData,showAns,pgIdx,totalPages){
-    var page=document.createElement("div");page.className="page";
-    var hdr=document.createElement("div");hdr.className="ph";
-    var h1=document.createElement("h1");h1.textContent="Substitution — "+toolName+(showAns?" — Answers":"");
-    var meta=document.createElement("div");meta.className="meta";
-    var lbl=totalPages>1?(isDiff?dpc+" per level":totalQ+" questions")+" ("+(pgIdx+1)+"/"+totalPages+")":(isDiff?dpc+" per level":totalQ+" questions");
-    meta.textContent=diffLabel+"  ·  "+dateStr+"  ·  "+lbl;
-    hdr.appendChild(h1);hdr.appendChild(meta);page.appendChild(hdr);
-    var cH=isDiff?dCellH:chosenH;
-    if(isDiff){
-      var grid=document.createElement("div");grid.className="dg";grid.style.gridTemplateColumns="repeat(3,"+cW+"mm)";
-      lvls.forEach(function(lv,li){
-        var col=document.createElement("div");col.className="dcol";
-        var dh=document.createElement("div");dh.className="dh "+lv;dh.textContent=lbls[li];col.appendChild(dh);
-        var start=pageData*dRows;
-        qData.filter(function(q){return q.difficulty===lv;}).slice(start,start+dRows).forEach(function(item){col.appendChild(makeCell(item,showAns,cW,cH,true));});
-        grid.appendChild(col);
-      });
-      page.appendChild(grid);
-    }else{
-      var grid2=document.createElement("div");grid2.className="grid";
-      grid2.style.gridTemplateColumns="repeat("+cols+","+cW+"mm)";
-      grid2.style.gridTemplateRows="repeat("+Math.ceil(pageData.length/cols)+","+chosenH+"mm)";
-      pageData.forEach(function(item){grid2.appendChild(makeCell(item,showAns,cW,cH,false));});
-      page.appendChild(grid2);
-    }
-    return page;
-  }
-  var pageCapacity=isDiff?dRows:rpp*cols,pages=[];
-  if(isDiff){var np=Math.ceil(dpc/dRows);for(var p=0;p<np;p++)pages.push(p);}
-  else{for(var s=0;s<qData.length;s+=pageCapacity)pages.push(qData.slice(s,s+pageCapacity));}
-  var container=document.getElementById("pages"),tp=pages.length;
-  pages.forEach(function(pg,i){container.appendChild(makePage(pg,false,i,tp));});
-  pages.forEach(function(pg,i){container.appendChild(makePage(pg,true,i,tp));});
-  probe.remove();
-  setTimeout(function(){window.print();},300);
-});
-<\/script></body></html>`;
-  const win=window.open("","_blank");
-  if(!win){alert("Please allow popups.");return;}
-  win.document.write(html);win.document.close();
+const NEG_EQ1_VAR   = { key: "negEq1",   label: "Negative coefficients in equation (1)", defaultValue: false };
+const ZERO_FORM_VAR = { key: "zeroForm", label: 'Include "= 0" form',                    defaultValue: false };
+
+const SIGNS_MS = {
+  key: "signs", label: "Solution Types",
+  options: [
+    { value: "posSol", label: "Positive solutions", defaultActive: true },
+    { value: "negSol", label: "Negative solutions", defaultActive: false },
+  ],
 };
 
+const COEF_MS = {
+  key: "coeffs", label: "Curve Type",
+  info: "None = circle / simple parabola. One or Both = harder leading coefficients (ellipses at Level 3).",
+  options: [
+    { value: "coefNone", label: "None", defaultActive: true },
+    { value: "coefOne",  label: "One",  defaultActive: false },
+    { value: "coefBoth", label: "Both", defaultActive: false },
+  ],
+};
+
+const DISPLAY_DD = {
+  key: "display", label: "Answer Display",
+  options: [
+    { value: "surd",    label: "Surd" },
+    { value: "decimal", label: "Decimal" },
+    { value: "both",    label: "Both" },
+  ],
+  defaultValue: "surd",
+};
+
+const TOOL_CONFIG: ToolConfig = {
+  pageTitle: "Simultaneous Equations by Substitution",
+  tools: {
+    linear: {
+      name: "Linear",
+      instruction: "Solve simultaneously:",
+      variables: [NEG_EQ1_VAR],
+      dropdown: null,
+      multiSelect: SIGNS_MS,
+      difficultySettings: {
+        level2: { variables: [NEG_EQ1_VAR, ZERO_FORM_VAR] },
+      },
+    },
+    factorising: {
+      name: "Non-Linear (Factorising)",
+      instruction: "Solve simultaneously:",
+      variables: [],
+      dropdown: null,
+      multiSelect: COEF_MS,
+      difficultySettings: null,
+    },
+    formula: {
+      name: "Non-Linear (Formula)",
+      instruction: "Solve simultaneously:",
+      variables: [],
+      dropdown: DISPLAY_DD,
+      multiSelect: COEF_MS,
+      difficultySettings: null,
+    },
+  },
+};
+
+const INFO_SECTIONS: InfoSection[] = [
+  { title: "Linear Substitution", icon: "📐", content: [
+    { label: "Overview", detail: "One variable is isolated (or can be isolated) in one equation. Substitute into the other to solve." },
+    { label: "Level 1 — Green", detail: "Variable fully isolated. Direct substitution." },
+    { label: "Level 2 — Yellow", detail: "Variable has coefficient +1 but not isolated. One rearrangement needed." },
+    { label: "Level 3 — Red", detail: "Variable has coefficient −1. Students must manage the sign change." },
+  ] },
+  { title: "Non-Linear: Factorising", icon: "🟦", content: [
+    { label: "Overview", detail: "One equation is quadratic (or a circle / ellipse at Level 3), the other linear. Solved by factorising." },
+    { label: "Level 1 — Green", detail: "Linear equation already isolated. Direct substitution." },
+    { label: "Level 2 — Yellow", detail: "Linear equation needs rearranging first." },
+    { label: "Level 3 — Red", detail: "Circle or ellipse equation. Roots are rational, sometimes fractional." },
+  ] },
+  { title: "Non-Linear: Formula", icon: "🔢", content: [
+    { label: "Overview", detail: "Same structure as Factorising but the quadratic never factorises — the formula is required." },
+    { label: "Level 3", detail: "Circle or ellipse with irrational roots. Answers given as surds and/or decimals." },
+    { label: "Answer display", detail: "Choose surd (exact), decimal (2dp), or both from the Answer Display option." },
+  ] },
+  { title: "The Graph", icon: "📈", content: [
+    { label: "Intersections", detail: "The solutions are exactly where the two graphs cross — shown on the whiteboard answer and as a worked-example step." },
+    { label: "Ellipses", detail: "Circle and line questions are drawn in full; ellipse questions are solved algebraically without a graph." },
+  ] },
+];
+
 // ═══════════════════════════════════════════════════════════════════════════════
-// MAIN APP
-// ═══════════════════════════════════════════════════════════════════════════════
-export default function App(){
-  const [subTool,setSubTool]=useState<SubTool>("linear");
-  const [mode,setMode]=useState<"whiteboard"|"single"|"worksheet">("whiteboard");
-  const [difficulty,setDifficulty]=useState<DifficultyLevel>("level1");
-  const [negModeMap,setNegModeMap]=useState<Record<string,NegMode>>({});
-  const [allowZeroMap,setAllowZeroMap]=useState<Record<string,boolean>>({});
-  const [allowNegEq1Map,setAllowNegEq1Map]=useState<Record<string,boolean>>({});
-  const [allowAMap,setAllowAMap]=useState<Record<string,AllowAMode>>({});
-  const [surdDisplayMap,setSurdDisplayMap]=useState<Record<string,SurdDisplay>>({});
+export const __test = { TOOL_CONFIG, generateQuestion };
 
-
-  const qoKey = `${subTool}__${difficulty}`;
-  const negMode       = negModeMap[qoKey]        ?? "pos-only";
-  const allowZero     = allowZeroMap[qoKey]       ?? false;
-  const allowNegEq1   = allowNegEq1Map[qoKey]     ?? false;
-  const allowA        = (allowAMap[qoKey] ?? 1) as AllowAMode;
-  const surdDisplay   = surdDisplayMap[qoKey]      ?? "surd" as SurdDisplay;
-
-
-  const setNegMode       = (v: NegMode)     => setNegModeMap(p=>({...p,[qoKey]:v}));
-  const setAllowZero     = (v: boolean)     => setAllowZeroMap(p=>({...p,[qoKey]:v}));
-  const setAllowNegEq1   = (v: boolean)     => setAllowNegEq1Map(p=>({...p,[qoKey]:v}));
-  const setSurdDisplay   = (v: SurdDisplay) => setSurdDisplayMap(p=>({...p,[qoKey]:v}));
-
-
-  // Persistent used-key sets — one per subTool, reset when allowA changes
-  const usedKeysRef = useRef<Record<string, Set<string>>>({
-    factorising: new Set(), formula: new Set(), linear: new Set()
-  });
-
-  const setAllowA = (v: AllowAMode) => {
-    const n = (Number(v) || 1) as AllowAMode;
-    setAllowAMap(p=>({...p,[qoKey]: n}));
-    // Reset the used set for this subTool so new questions respect the new filter
-    if (subTool !== "linear") {
-      usedKeysRef.current[subTool] = new Set();
-      // Immediately pick a new question with the new allowA
-      if (mode !== "worksheet") {
-        const q = subTool==="factorising"
-          ? pickUniqueBankFac(n, usedKeysRef.current.factorising)
-          : pickUniqueBankForm(n, usedKeysRef.current.formula);
-        setCurrentQuestion(q); setShowWhiteboardAnswer(false); setShowAnswer(false);
-      }
-    }
-  };
-
-  const [isDifferentiated,setIsDifferentiated]=useState(false);
-  const [currentQuestion,setCurrentQuestion]=useState<AnyQuestion>(()=>generateLinear("level1","pos-only",false,false));
-  const [showWhiteboardAnswer,setShowWhiteboardAnswer]=useState(false);
-  const [showAnswer,setShowAnswer]=useState(false);
-  const [numQuestions,setNumQuestions]=useState(12);
-  const [numColumns,setNumColumns]=useState(2);
-  const [worksheet,setWorksheet]=useState<AnyQuestion[]>([]);
-  const [showWorksheetAnswers,setShowWorksheetAnswers]=useState(false);
-  const [displayFontSize,setDisplayFontSize]=useState(2);
-  const [worksheetFontSize,setWorksheetFontSize]=useState(1);
-  const [colorScheme,setColorScheme]=useState("default");
-  const [isMenuOpen,setIsMenuOpen]=useState(false);
-  const [isInfoOpen,setIsInfoOpen]=useState(false);
-  const [presenterMode,setPresenterMode]=useState(false);
-  const [wbFullscreen,setWbFullscreen]=useState(false);
-  const [camDevices,setCamDevices]=useState<MediaDeviceInfo[]>([]);
-  const [currentCamId,setCurrentCamId]=useState<string|null>(null);
-  const [camError,setCamError]=useState<string|null>(null);
-  const [camDropdownOpen,setCamDropdownOpen]=useState(false);
-  const videoRef=useRef<HTMLVideoElement>(null);
-  const streamRef=useRef<MediaStream|null>(null);
-  const camDropdownRef=useRef<HTMLDivElement>(null);
-  const longPressTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
-  const didLongPress=useRef(false);
-  const [splitPct,setSplitPct]=useState(40);
-  const isDraggingRef=useRef(false);
-  const splitContainerRef=useRef<HTMLDivElement>(null);
-
-  useEffect(()=>{loadKaTeX();},[]);
-  const stopStream=useCallback(()=>{
-    if(streamRef.current){streamRef.current.getTracks().forEach(t=>t.stop());streamRef.current=null;}
-    if(videoRef.current)videoRef.current.srcObject=null;
-  },[]);
-  const startCam=useCallback(async(deviceId?:string)=>{
-    stopStream();setCamError(null);
-    try{
-      let tid=deviceId;
-      if(!tid){const tmp=await navigator.mediaDevices.getUserMedia({video:true,audio:false});tmp.getTracks().forEach(t=>t.stop());const all=await navigator.mediaDevices.enumerateDevices();const ext=all.filter(d=>d.kind==="videoinput").find(d=>d.label&&!/facetime|built.?in|integrated|internal|front|rear/i.test(d.label));if(ext)tid=ext.deviceId;}
-      const stream=await navigator.mediaDevices.getUserMedia({video:tid?{deviceId:{exact:tid}}:true,audio:false});
-      streamRef.current=stream;if(videoRef.current)videoRef.current.srcObject=stream;
-      setCurrentCamId(stream.getVideoTracks()[0].getSettings().deviceId??null);
-      setCamDevices((await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==="videoinput"));
-    }catch(e:unknown){setCamError((e instanceof Error?e.message:null)??"Camera unavailable");}
-  },[stopStream]);
-  useEffect(()=>{if(presenterMode)startCam();else stopStream();},[presenterMode]);
-  useEffect(()=>{if(presenterMode&&streamRef.current&&videoRef.current)videoRef.current.srcObject=streamRef.current;},[wbFullscreen]);
-  useEffect(()=>{if(!camDropdownOpen)return;const h=(e:MouseEvent)=>{if(camDropdownRef.current&&!camDropdownRef.current.contains(e.target as Node))setCamDropdownOpen(false);};document.addEventListener("mousedown",h);return()=>document.removeEventListener("mousedown",h);},[camDropdownOpen]);
-  useEffect(()=>{const h=(e:KeyboardEvent)=>{if(e.key==="Escape"){setPresenterMode(false);setWbFullscreen(false);}};document.addEventListener("keydown",h);return()=>document.removeEventListener("keydown",h);},[]);
-
-  const qBg=getQuestionBg(colorScheme),stepBg=getStepBg(colorScheme);
-  const isDefault=colorScheme==="default";
-  const fsToolbarBg=isDefault?"#ffffff":stepBg,fsQuestionBg=isDefault?"#ffffff":qBg,fsWorkingBg=isDefault?"#f5f3f0":qBg;
-
-  const makeNewQuestion = useCallback((overrideAllowA?: AllowAMode): AnyQuestion => {
-    const effAllowA = overrideAllowA ?? allowA;
-    if (subTool==="linear") {
-      return genUniqueLinear(difficulty, negMode, allowZero, allowNegEq1, usedKeysRef.current.linear);
-    }
-    if (difficulty==="level3") {
-      return subTool==="factorising"
-        ? pickUniqueBankFac(effAllowA, usedKeysRef.current.factorising)
-        : pickUniqueBankForm(effAllowA, usedKeysRef.current.formula);
-    }
-    return generateParabolaUnique(subTool, difficulty, effAllowA, surdDisplay, usedKeysRef.current[subTool] ?? new Set());
-  }, [subTool, difficulty, negMode, allowZero, allowNegEq1, allowA, surdDisplay]);
-
-  const handleNewQuestion = useCallback((overrideAllowA?: AllowAMode) => {
-    setCurrentQuestion(makeNewQuestion(overrideAllowA));
-    setShowWhiteboardAnswer(false);
-    setShowAnswer(false);
-  }, [makeNewQuestion]);
-
-  const handleGenerateWorksheet = () => {
-    const used = new Set<string>();
-    const qs: AnyQuestion[] = [];
-    if (isDifferentiated) {
-      (["level1","level2","level3"] as DifficultyLevel[]).forEach(lv => {
-        for (let i=0; i<numQuestions; i++) {
-          if (subTool==="linear") {
-            qs.push(genUniqueLinear(lv, negMode, allowZero, allowNegEq1, used));
-          } else if (lv==="level3") {
-            qs.push(subTool==="factorising"
-              ? pickUniqueBankFac(allowA, used)
-              : pickUniqueBankForm(allowA, used));
-          } else {
-            qs.push(generateParabolaUnique(subTool, lv, allowA, surdDisplay, used));
-
-          }
-        }
-      });
-    } else {
-      for (let i=0; i<numQuestions; i++) {
-        if (subTool==="linear") {
-          qs.push(genUniqueLinear(difficulty, negMode, allowZero, allowNegEq1, used));
-        } else if (difficulty==="level3") {
-          qs.push(subTool==="factorising"
-            ? pickUniqueBankFac(allowA, used)
-            : pickUniqueBankForm(allowA, used));
-        } else {
-          qs.push(generateParabolaUnique(subTool, difficulty, allowA, surdDisplay, used));
-        }
-      }
-    }
-    setWorksheet(qs);
-    setShowWorksheetAnswers(false);
-  };
-
-  useEffect(()=>{
-    if(mode!=="worksheet"){
-      usedKeysRef.current = { factorising: new Set(), formula: new Set(), linear: new Set() };
-      handleNewQuestion();
-    }
-  },[difficulty,subTool]);
-
-  const displayFontSizes=["text-xl","text-2xl","text-3xl","text-4xl","text-5xl","text-6xl"];
-  const fontSizes=["text-base","text-lg","text-xl","text-2xl","text-3xl"];
-  const canDI=displayFontSize<displayFontSizes.length-1,canDD=displayFontSize>0;
-  const canInc=worksheetFontSize<fontSizes.length-1,canDec=worksheetFontSize>0;
-  const fbStyle=(en:boolean):CSSProperties=>({background:"rgba(0,0,0,0.08)",border:"none",borderRadius:8,cursor:en?"pointer":"not-allowed",width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center",opacity:en?1:0.35});
-
-  const renderQOPopover=()=>subTool==="linear"
-    ?<LinearQOPopover level={difficulty} negMode={negMode} setNegMode={setNegMode} allowZero={allowZero} setAllowZero={setAllowZero} allowNegEq1={allowNegEq1} setAllowNegEq1={setAllowNegEq1}/>
-    :<NonLinearQOPopover subTool={subTool} level={difficulty} allowA={allowA} setAllowA={setAllowA} surdDisplay={surdDisplay} setSurdDisplay={setSurdDisplay}/>;
-
-  const renderQuestionContent=(showAns:boolean)=>{
-    if(currentQuestion.kind==="linear"){
-      const lq=currentQuestion as LinearQuestion;
-      return <>
-        <div className={`${displayFontSizes[Math.max(0,displayFontSize-1)]} font-semibold`} style={{color:"#000"}}>Solve simultaneously:</div>
-        <EqPairDisplay eqs={[lq.eq1Display,lq.eq2Display]} cls={displayFontSizes[displayFontSize]}/>
-        {showAns&&<div className={`${displayFontSizes[displayFontSize]} font-bold text-center`} style={{color:"#166534"}}>
-          <MathRenderer latex={`${lq.varPair[0]}=${lq.v1Val},\\quad ${lq.varPair[1]}=${lq.v2Val}`}/>
-        </div>}
-      </>;
-    }
-    const nlq=currentQuestion as NonLinearQuestion;
-    return <>
-      <div className={`${displayFontSizes[Math.max(0,displayFontSize-1)]} font-semibold`} style={{color:"#000"}}>Solve simultaneously:</div>
-      <EqPairDisplay eqs={[nlq.eq1Display,nlq.eq2Display]} cls={displayFontSizes[displayFontSize]}/>
-      {showAns&&<div className={`${displayFontSizes[displayFontSize]} font-bold text-center`} style={{color:"#166534"}}><SolutionDisplay q={nlq} surdDisplay={surdDisplay}/></div>}
-    </>;
-  };
-
-  const renderQCell=(q:AnyQuestion,idx:number,bgOverride?:string)=>{
-    const bg=bgOverride??stepBg,fsz=fontSizes[worksheetFontSize],instrFsz=fontSizes[Math.max(0,worksheetFontSize-1)];
-    return(
-      <div style={{backgroundColor:bg,height:"100%",boxSizing:"border-box",position:"relative",padding:"8px 8px 8px 22px",borderRadius:"12px"}}>
-        <span style={{position:"absolute",top:0,left:0,fontSize:"0.62em",fontWeight:700,color:"#000",padding:"2px 3px 4px 3px",borderRight:"1px solid #000",borderBottom:"1px solid #000"}}>{idx+1})</span>
-        <div className="flex flex-col items-center gap-1 w-full">
-          <span className={`${instrFsz} font-semibold`} style={{color:"#000"}}>Solve:</span>
-          {[q.eq1Display,q.eq2Display].map((eq,i)=>(
-            <div key={i} className="flex items-baseline gap-2 justify-center">
-              <span className="text-xs font-bold text-gray-400 flex-shrink-0">({i+1})</span>
-              <span className={`${fsz} font-semibold`} style={{color:"#000"}}><MathRenderer latex={eq}/></span>
-            </div>
-          ))}
-          {showWorksheetAnswers&&<div className={`${fsz} font-semibold mt-1 text-center`} style={{color:"#059669"}}>
-            {q.kind==="linear"
-              ?<MathRenderer latex={`${q.varPair[0]}=${q.v1Val},\\quad ${q.varPair[1]}=${q.v2Val}`}/>
-              :(()=>{
-                const nlq=q as NonLinearQuestion;
-                if(nlq.isCircle&&nlq.subTool==="formula"&&nlq.surdX1) return (
-                  <><MathRenderer latex={nlq.surdX1}/>{nlq.surdYCombined&&<><br/><MathRenderer latex={nlq.surdYCombined}/></>}</>
-                );
-                if(nlq.isCircle&&nlq.surdX1) return (
-                  <><MathRenderer latex={nlq.surdX1}/>{nlq.surdX2&&nlq.surdX2!==nlq.surdX1&&<><br/><MathRenderer latex={nlq.surdX2}/></>}</>
-                );
-                if(nlq.subTool==="formula") return (
-                  <>{nlq.surdLatex&&<div><MathRenderer latex={nlq.surdLatex}/></div>}{nlq.surdYCombined&&<div><MathRenderer latex={nlq.surdYCombined}/></div>}</>
-                );
-                return <>{nlq.solutions.map((s,i)=><div key={i}><MathRenderer latex={`x=${fmtSoln(s.x)},\\;y=${fmtSoln(s.y)}`}/></div>)}</>;
-              })()
-            }
-          </div>}
-        </div>
-      </div>
-    );
-  };
-
-  const renderControlBar=()=>{
-    if(mode==="worksheet")return(
-      <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-        <div className="flex justify-center items-center gap-6 mb-4">
-          <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm">
-            {([["level1","Level 1","bg-green-600"],["level2","Level 2","bg-yellow-500"],["level3","Level 3","bg-red-600"]]as const).map(([val,label,col])=>(
-              <button key={val} onClick={()=>{setDifficulty(val as DifficultyLevel);setIsDifferentiated(false);}}
-                className={`px-5 py-2 font-bold text-base transition-colors ${!isDifferentiated&&difficulty===val?`${col} text-white`:"bg-white text-gray-500 hover:bg-gray-50"}`}>{label}</button>
-            ))}
-          </div>
-          <button onClick={()=>setIsDifferentiated(!isDifferentiated)}
-            className={`px-6 py-2 rounded-xl font-bold text-base shadow-sm border-2 transition-colors ${isDifferentiated?"bg-blue-900 text-white border-blue-900":"bg-white text-gray-600 border-gray-300 hover:border-blue-900 hover:text-blue-900"}`}>
-            Differentiated
-          </button>
-        </div>
-        <div className="flex justify-center items-center gap-6 mb-4">
-          {renderQOPopover()}
-          <div className="flex items-center gap-3">
-            <label className="text-base font-semibold text-gray-700">Questions:</label>
-            <input type="number" min="1" max="20" value={numQuestions} onChange={e=>setNumQuestions(Math.max(1,Math.min(20,parseInt(e.target.value)||12)))} className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-base font-semibold text-center"/>
-          </div>
-          <div className="flex items-center gap-3">
-            <label className="text-base font-semibold text-gray-700">Columns:</label>
-            <input type="number" min="1" max="4" value={isDifferentiated?3:numColumns} onChange={e=>{if(!isDifferentiated)setNumColumns(Math.max(1,Math.min(4,parseInt(e.target.value)||2)));}} disabled={isDifferentiated}
-              className={`w-20 px-4 py-2 border-2 rounded-lg text-base font-semibold text-center ${isDifferentiated?"border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed":"border-gray-300 bg-white"}`}/>
-          </div>
-        </div>
-        <div className="flex justify-center items-center gap-4">
-          <button onClick={handleGenerateWorksheet} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18}/> Generate</button>
-          {worksheet.length>0&&<>
-            <button onClick={()=>setShowWorksheetAnswers(!showWorksheetAnswers)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><Eye size={18}/> {showWorksheetAnswers?"Hide Answers":"Show Answers"}</button>
-            <button onClick={()=>handlePrint(worksheet,subTool,difficulty,isDifferentiated,numColumns,surdDisplay)} className="px-6 py-2 bg-green-700 text-white rounded-xl font-bold text-base shadow-sm hover:bg-green-800 flex items-center gap-2"><Printer size={18}/> Print / PDF</button>
-          </>}
-        </div>
-      </div>
-    );
-    return(
-      <div className="px-5 py-4 rounded-xl" style={{backgroundColor:qBg}}>
-        <div className="flex items-center justify-between gap-4">
-          <DifficultyToggle value={difficulty} onChange={v=>setDifficulty(v as DifficultyLevel)}/>
-          {renderQOPopover()}
-          <div className="flex gap-3">
-            <button onClick={()=>handleNewQuestion()} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18}/> New Question</button>
-            <button onClick={()=>mode==="whiteboard"?setShowWhiteboardAnswer(a=>!a):setShowAnswer(a=>!a)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
-              <Eye size={18}/> {(mode==="whiteboard"?showWhiteboardAnswer:showAnswer)?"Hide Answer":"Show Answer"}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const renderWhiteboard=()=>{
-    const fsToolbar=(
-      <div style={{background:fsToolbarBg,borderBottom:"2px solid #000",padding:"16px 32px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:16,flexShrink:0,zIndex:210}}>
-        <DifficultyToggle value={difficulty} onChange={v=>setDifficulty(v as DifficultyLevel)}/>
-        {renderQOPopover()}
-        <div style={{display:"flex",gap:12}}>
-          <button onClick={()=>handleNewQuestion()} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18}/> New Question</button>
-          <button onClick={()=>setShowWhiteboardAnswer(a=>!a)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><Eye size={18}/> {showWhiteboardAnswer?"Hide Answer":"Show Answer"}</button>
-        </div>
-      </div>
-    );
-    const questionBox=(isFS:boolean)=>(
-      <div style={{position:"relative",width:isFS?`${splitPct}%`:"500px",height:"100%",backgroundColor:isFS?fsQuestionBg:stepBg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:isFS?48:32,boxSizing:"border-box",flexShrink:0,gap:16,borderRadius:isFS?0:"12px"}}>
-        <div style={{position:"absolute",top:10,right:10,display:"flex",gap:6,zIndex:20}}>
-          <button style={fbStyle(canDD)} onClick={()=>canDD&&setDisplayFontSize(f=>f-1)}><ChevronDown size={16} color="#6b7280"/></button>
-          <button style={fbStyle(canDI)} onClick={()=>canDI&&setDisplayFontSize(f=>f+1)}><ChevronUp size={16} color="#6b7280"/></button>
-        </div>
-        {renderQuestionContent(showWhiteboardAnswer)}
-      </div>
-    );
-    const rightPanel=(isFS:boolean)=>(
-      <div style={{flex:1,height:"100%",position:"relative",overflow:"hidden",backgroundColor:presenterMode?"#000":(isFS?fsWorkingBg:stepBg),borderRadius:isFS?0:"12px"}} className={isFS?"":"flex-1"}>
-        {presenterMode&&<><video ref={videoRef} autoPlay playsInline muted style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}}/>{camError&&<div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",color:"rgba(255,255,255,0.4)",fontSize:"0.85rem",padding:"2rem",textAlign:"center"}}>{camError}</div>}</>}
-        <div style={{position:"absolute",top:10,right:10,display:"flex",gap:6,zIndex:20}}>
-          {presenterMode?(
-            <div style={{position:"relative"}} ref={camDropdownRef}>
-              <button onMouseDown={()=>{didLongPress.current=false;longPressTimer.current=setTimeout(()=>{didLongPress.current=true;setCamDropdownOpen(o=>!o);},500);}} onMouseUp={()=>{if(longPressTimer.current)clearTimeout(longPressTimer.current);if(!didLongPress.current)setPresenterMode(false);}} onMouseLeave={()=>{if(longPressTimer.current)clearTimeout(longPressTimer.current);}}
-                style={{background:"rgba(0,0,0,0.55)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:8,cursor:"pointer",width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                <Video size={16} color="rgba(255,255,255,0.85)"/>
-              </button>
-              {camDropdownOpen&&(
-                <div style={{position:"absolute",top:40,right:0,background:"rgba(12,12,12,0.96)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,minWidth:200,overflow:"hidden",zIndex:30}}>
-                  <div style={{padding:"6px 14px",fontSize:"0.55rem",letterSpacing:"0.2em",textTransform:"uppercase",color:"rgba(255,255,255,0.25)"}}>Camera</div>
-                  {camDevices.map((d,i)=>(
-                    <div key={d.deviceId} onClick={()=>{setCamDropdownOpen(false);if(d.deviceId!==currentCamId)startCam(d.deviceId);}} style={{padding:"10px 14px",fontSize:"0.75rem",color:d.deviceId===currentCamId?"#60a5fa":"rgba(255,255,255,0.65)",cursor:"pointer",display:"flex",alignItems:"center",gap:8}}>
-                      <div style={{width:5,height:5,borderRadius:"50%",background:d.deviceId===currentCamId?"#60a5fa":"transparent",flexShrink:0}}/>{d.label||`Camera ${i+1}`}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ):(
-            <button onClick={()=>setPresenterMode(true)} style={{background:"rgba(0,0,0,0.08)",border:"none",borderRadius:8,cursor:"pointer",width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center"}}><Video size={16} color="#6b7280"/></button>
-          )}
-          <button onClick={()=>setWbFullscreen(f=>!f)} style={{background:wbFullscreen?"#374151":(presenterMode?"rgba(0,0,0,0.55)":"rgba(0,0,0,0.08)"),border:"none",borderRadius:8,cursor:"pointer",width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center"}}>
-            {wbFullscreen?<Minimize2 size={16} color="#fff"/>:<Maximize2 size={16} color={presenterMode?"rgba(255,255,255,0.85)":"#6b7280"}/>}
-          </button>
-        </div>
-      </div>
-    );
-    if(wbFullscreen)return(
-      <div style={{position:"fixed",inset:0,zIndex:200,backgroundColor:fsToolbarBg,display:"flex",flexDirection:"column"}}>
-        {fsToolbar}
-        <div ref={splitContainerRef} style={{flex:1,display:"flex",minHeight:0}}>
-          {questionBox(true)}
-          <div style={{position:"relative",width:2,backgroundColor:"#000",flexShrink:0,cursor:"col-resize"}}
-            onMouseDown={e=>{
-              isDraggingRef.current=true;
-              const onMove=(ev: MouseEvent)=>{
-                if(!isDraggingRef.current||!splitContainerRef.current)return;
-                const rect=splitContainerRef.current.getBoundingClientRect();
-                let pct=((ev.clientX-rect.left)/rect.width)*100;
-                pct=Math.min(75,Math.max(25,pct));
-                if(pct>=38&&pct<=42)pct=40;
-                setSplitPct(pct);
-              };
-              const onUp=()=>{isDraggingRef.current=false;document.removeEventListener("mousemove",onMove);document.removeEventListener("mouseup",onUp);};
-              document.addEventListener("mousemove",onMove);
-              document.addEventListener("mouseup",onUp);
-              e.preventDefault();
-            }}>
-            <div style={{position:"absolute",top:0,bottom:0,left:-5,width:12,cursor:"col-resize"}}/>
-          </div>
-          {rightPanel(true)}
-        </div>
-      </div>
-    );
-    return(
-      <div className="p-8" style={{backgroundColor:qBg,height:"480px",boxSizing:"border-box"}}>
-        <div className="flex gap-6" style={{height:"100%"}}>{questionBox(false)}{rightPanel(false)}</div>
-      </div>
-    );
-  };
-
-  const renderWorkedExample=()=>(
-    <div className="overflow-y-auto" style={{maxHeight:"120vh"}}>
-      <div className="p-8" style={{backgroundColor:qBg}}>
-        <div className="relative">
-          <div style={{position:"absolute",top:0,right:0,display:"flex",gap:6}}>
-            <button style={fbStyle(canDD)} onClick={()=>canDD&&setDisplayFontSize(f=>f-1)}><ChevronDown size={16} color="#6b7280"/></button>
-            <button style={fbStyle(canDI)} onClick={()=>canDI&&setDisplayFontSize(f=>f+1)}><ChevronUp size={16} color="#6b7280"/></button>
-          </div>
-          <div className="py-2 flex flex-col items-center gap-3">{renderQuestionContent(false)}</div>
-        </div>
-        {showAnswer&&(currentQuestion.kind==="linear"
-          ?<LinearWorkedSteps q={currentQuestion as LinearQuestion} stepBg={stepBg} fsz={displayFontSizes[displayFontSize]}/>
-          :<NonLinearWorkedSteps q={currentQuestion as NonLinearQuestion} stepBg={stepBg} fsz={displayFontSizes[displayFontSize]} surdDisplay={surdDisplay}/>
-        )}
-      </div>
-    </div>
-  );
-
-  const renderWorksheet=()=>{
-    if(worksheet.length===0)return(
-      <div className="rounded-xl shadow-2xl p-8 text-center" style={{backgroundColor:qBg}}>
-        <span className="text-2xl text-gray-400">Generate worksheet above</span>
-      </div>
-    );
-    const fsCtrls=(
-      <div className="absolute top-4 right-4 flex gap-1">
-        <button disabled={!canDec} onClick={()=>canDec&&setWorksheetFontSize(f=>f-1)} className={`w-8 h-8 rounded flex items-center justify-center ${canDec?"bg-blue-900 text-white hover:bg-blue-800":"bg-gray-200 text-gray-400 cursor-not-allowed"}`}><ChevronDown size={20}/></button>
-        <button disabled={!canInc} onClick={()=>canInc&&setWorksheetFontSize(f=>f+1)} className={`w-8 h-8 rounded flex items-center justify-center ${canInc?"bg-blue-900 text-white hover:bg-blue-800":"bg-gray-200 text-gray-400 cursor-not-allowed"}`}><ChevronUp size={20}/></button>
-      </div>
-    );
-    const lbl=subTool==="linear"?"Linear Substitution":subTool==="factorising"?"Non-Linear (Factorising)":"Non-Linear (Formula)";
-    if(isDifferentiated)return(
-      <div className="rounded-xl shadow-2xl p-8 relative" style={{backgroundColor:qBg}}>
-        {fsCtrls}
-        <h2 className="text-3xl font-bold text-center mb-8" style={{color:"#000"}}>{lbl} — Worksheet</h2>
-        <div className="grid grid-cols-3 gap-4" style={{alignItems:"start"}}>
-          {(["level1","level2","level3"]as DifficultyLevel[]).map((lv,li)=>{
-            const lqs=worksheet.filter(q=>q.difficulty===lv),c=LV_COLORS[lv];
-            return(
-              <div key={lv} className={`${c.bg} border-2 ${c.border} rounded-xl p-4`}>
-                <h3 className={`text-xl font-bold mb-4 text-center ${c.text}`}>Level {li+1}</h3>
-                <div style={{display:"grid",gridTemplateColumns:"1fr",gridAutoRows:"1fr",gap:"0.75rem"}}>
-                  {lqs.map((q,idx)=><div key={idx} style={{minHeight:0,borderRadius:"12px",overflow:"hidden"}}>{renderQCell(q,idx,c.fill)}</div>)}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-    return(
-      <div className="rounded-xl shadow-2xl p-8 relative" style={{backgroundColor:qBg}}>
-        {fsCtrls}
-        <h2 className="text-3xl font-bold text-center mb-8" style={{color:"#000"}}>{lbl} — Worksheet</h2>
-        <div style={{display:"grid",gridTemplateColumns:`repeat(${numColumns},1fr)`,gridAutoRows:"1fr",gap:"1rem"}}>
-          {worksheet.map((q,idx)=><div key={idx} style={{minHeight:0,borderRadius:"12px",overflow:"hidden"}}>{renderQCell(q,idx)}</div>)}
-        </div>
-      </div>
-    );
-  };
-
-  return(
-    <>
-      <div className="bg-blue-900 shadow-lg">
-        <div className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
-          <button onClick={()=>{window.location.href="/";}} className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors">
-            <Home size={24}/><span className="font-semibold text-lg">Home</span>
-          </button>
-          <div className="relative">
-            <button onClick={()=>setIsMenuOpen(!isMenuOpen)} className="text-white hover:bg-blue-800 p-2 rounded-lg transition-colors">
-              {isMenuOpen?<X size={28}/>:<Menu size={28}/>}
-            </button>
-            {isMenuOpen&&<MenuDropdown colorScheme={colorScheme} setColorScheme={setColorScheme} onClose={()=>setIsMenuOpen(false)} onOpenInfo={()=>setIsInfoOpen(true)}/>}
-          </div>
-        </div>
-      </div>
-      {isInfoOpen&&<InfoModal onClose={()=>setIsInfoOpen(false)}/>}
-      <div className="min-h-screen p-8" style={{backgroundColor:"#f5f3f0"}}>
-        <div className="max-w-6xl mx-auto">
-          <h1 className="text-5xl font-bold text-center mb-8" style={{color:"#000"}}>Simultaneous Equations by Substitution</h1>
-          <div className="flex justify-center mb-6"><div style={{width:"90%",height:"2px",backgroundColor:"#d1d5db"}}/></div>
-          <div className="flex justify-center gap-4 mb-6">
-            {([["linear","Linear"],["factorising","Non-Linear (Factorising)"],["formula","Non-Linear (Formula)"]]as const).map(([st,label])=>(
-              <button key={st} onClick={()=>{setSubTool(st);setWorksheet([]);}}
-                className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${subTool===st?"bg-blue-900 text-white":"bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>{label}</button>
-            ))}
-          </div>
-          <div className="flex justify-center mb-8"><div style={{width:"90%",height:"2px",backgroundColor:"#d1d5db"}}/></div>
-          <div className="flex justify-center gap-4 mb-8">
-            {([["whiteboard","Whiteboard"],["single","Worked Example"],["worksheet","Worksheet"]]as const).map(([m,label])=>(
-              <button key={m} onClick={()=>{setMode(m);setPresenterMode(false);setWbFullscreen(false);}}
-                className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${mode===m?"bg-blue-900 text-white":"bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>{label}</button>
-            ))}
-          </div>
-          {mode==="worksheet"&&<>{renderControlBar()}{renderWorksheet()}</>}
-          {mode!=="worksheet"&&(
-            <div className="flex flex-col gap-6">
-              <div className="rounded-xl shadow-lg">{renderControlBar()}</div>
-              <div className="rounded-xl shadow-lg overflow-hidden">
-                {mode==="whiteboard"&&renderWhiteboard()}
-                {mode==="single"&&renderWorkedExample()}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </>
+export default function App() {
+  return (
+    <ToolShell
+      config={TOOL_CONFIG}
+      infoSections={INFO_SECTIONS}
+      generateQuestion={generateQuestion}
+      questionRenderer={questionRenderer}
+      answerRenderer={answerRenderer}
+      stepRenderer={stepRenderer}
+      defaults={{ numQuestions: 12, numColumns: 2, maxColumns: 3 }}
+    />
   );
 }
