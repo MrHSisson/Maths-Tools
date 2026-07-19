@@ -1,6 +1,7 @@
 import {
   ToolShell, MathRenderer, InlineMath, SmartGrapher,
-  step, mStep, tStep,
+  workings, quadraticFormulaSteps, solveFactorsSteps, substituteBackSteps,
+  makeSubjectSteps, solveLinearlySteps,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion,
   type WorkingStep, type QOSnapshot, type GraphSeries, type FOI,
 } from "../../shared";
@@ -777,49 +778,51 @@ const solutionLines = (q: InternalQ, surdDisplay: SurdDisplay): string[] => {
   return q.solutions.map((s) => `x=${sf(s.x)},\\; y=${sf(s.y)}`);
 };
 
-const buildWorking = (q: InternalQ, graph: GraphInfo | null, surdDisplay: SurdDisplay): WorkingStep[] => {
-  const steps: WorkingStep[] = [];
+// Strip LaTeX commands so a simple equation reads cleanly inside a prose step title.
+const titleEq = (latex: string): string => latex.replace(/\\[a-zA-Z]+/g, "").replace(/[{}]/g, "").replace(/\s+/g, " ").trim();
+
+// The working is now assembled through the shared `workings()` builder and the
+// technique library, so each move gets a proper, specific title and live-model
+// fragments — and the answer is shown once (by the answer renderer), never
+// restated as a final "Solution" step.
+const buildWorking = (q: InternalQ, graph: GraphInfo | null): WorkingStep[] => {
+  const w = workings();
   if (q.kind === "linear") {
     const [v1, v2] = q.varPair;
-    const iV = q.isolatedVar === "v1" ? v1 : v2;
-    if (q.needsRearrange) steps.push(mStep(`Rearrange equation (2) to make ${iV} the subject:`, q.rearrangedLatex));
-    steps.push(mStep("Substitute into equation (1):", q.afterSubLatex));
-    if (q.solveSteps.length) {
-      steps.push(mStep("Expand and solve:", q.solveSteps[0]));
-      q.solveSteps.slice(1).forEach((s) => steps.push(step(s)));
-    }
-    if (q.subBackSteps.length) {
-      steps.push(mStep("Substitute back to find the other unknown:", q.subBackSteps[0]));
-      q.subBackSteps.slice(1).forEach((s) => steps.push(step(s)));
-    }
+    const iV = q.isolatedVar === "v1" ? v1 : v2;      // isolated in (2), found by substituting back
+    const oV = q.isolatedVar === "v1" ? v2 : v1;      // solved first from the substituted equation
+    const oVal = q.isolatedVar === "v1" ? q.v2Val : q.v1Val;
+    const line = q.needsRearrange ? q.rearrangedLatex : q.eq2Display;
+    if (q.needsRearrange) w.use(makeSubjectSteps(iV, q.rearrangedLatex));
+    w.step("Substitute equation (2) into equation (1)", [q.afterSubLatex]);
+    w.use(solveLinearlySteps(oV, q.solveSteps));
+    w.use(substituteBackSteps(iV, q.subBackSteps, { value: `${oV} = ${oVal}`, into: titleEq(line) }));
   } else {
-    const subVar = q.isolateVar === "y" ? "x" : "y";
-    if (q.needsRearrange) steps.push(mStep("Rearrange equation (2):", q.rearrangedLatex));
-    steps.push(mStep("Substitute into equation (1):", q.quadLatex));
-    steps.push(mStep("Expand and rearrange to equal zero:", q.expandedLatex));
+    const primary = q.isolateVar === "y" ? "x" : "y";  // variable the quadratic is in
+    const backVar = q.isolateVar;                      // isolated var, found by substituting back
+    const pv = (s: { x: number; y: number }) => (primary === "x" ? s.x : s.y);
+    const bv = (s: { x: number; y: number }) => (primary === "x" ? s.y : s.x);
+    if (q.needsRearrange) w.use(makeSubjectSteps(q.isolateVar, q.rearrangedLatex));
+    w.step("Substitute equation (2) into equation (1)", [q.quadLatex]);
+    w.step("Expand and rearrange to equal zero", [q.expandedLatex]);
     if (q.subTool === "factorising") {
-      if (q.factorisedLatex) steps.push(mStep("Factorise:", q.factorisedLatex));
-      if (q.surdX1) steps.push(mStep(`Solve for ${subVar} and substitute back:`, q.surdX1));
-      if (q.surdX2 && q.surdX2 !== q.surdX1) steps.push(step(q.surdX2));
+      if (q.factorisedLatex) w.step("Factorise", [q.factorisedLatex]);
+      const roots = q.solutions.map((s) => fmtSoln(pv(s)));
+      w.use(solveFactorsSteps(roots, primary));
+      // Substitute each root back into the line to get the other coordinate.
+      const seen = new Set<string>();
+      const mappings = q.solutions
+        .filter((s) => { const k = fmtSoln(pv(s)); if (seen.has(k)) return false; seen.add(k); return true; })
+        .map((s) => `${primary} = ${fmtSoln(pv(s))} \\Rightarrow ${backVar} = ${fmtSoln(bv(s))}`);
+      w.use(substituteBackSteps(backVar, mappings, { into: titleEq(q.eq2Display) }));
     } else {
-      steps.push(mStep("Apply the quadratic formula:", `${subVar}=\\dfrac{-b\\pm\\sqrt{b^2-4ac}}{2a}`));
-      steps.push(step(`a=${q.A},\\; b=${q.B},\\; c=${q.C}`));
-      if (q.surdLatex) steps.push(step(q.surdLatex));
-      if (q.surdYCombined) steps.push(step(q.surdYCombined));
+      w.use(quadraticFormulaSteps(q.A, q.B, q.C, primary));
+      if (q.surdYCombined) w.use(substituteBackSteps(backVar, [q.surdYCombined], { into: titleEq(q.eq2Display) }));
     }
-    if (q.isDoubleRoot) steps.push(tStep("The line is a tangent to the curve, so there is one repeated solution."));
+    if (q.isDoubleRoot) w.note("The line is a tangent to the curve, so there is one repeated solution.");
   }
-  const lines = solutionLines(q, surdDisplay);
-  if (lines.length) {
-    steps.push(mStep("Solution:", lines[0]));
-    lines.slice(1).forEach((l) => steps.push(step(l)));
-  }
-  if (graph) {
-    const g: WorkingStep = tStep("Plot both graphs — the solutions are where the curves meet:");
-    g.extra = { graph };
-    steps.push(g);
-  }
-  return steps;
+  if (graph) w.visual("Plot both graphs — the solutions are where the curves meet:", { graph });
+  return w.build();
 };
 
 // Convert an internal question into a worded ToolShell question. The two equations
@@ -833,7 +836,7 @@ const toQuestion = (q: InternalQ, surdDisplay: SurdDisplay): AnyQuestion => {
     lines: [`$${q.eq1Display}$`, `$${q.eq2Display}$`],
     answer: lines.join("  or  ").replace(/\\[a-zA-Z]+|[{}]/g, "").replace(/\s+/g, " ").trim() || "see working",
     answerLatex: lines[0] ?? "",
-    working: buildWorking(q, graph, surdDisplay),
+    working: buildWorking(q, graph),
     key: q.key,
     difficulty: q.difficulty,
     _graph: graph,
