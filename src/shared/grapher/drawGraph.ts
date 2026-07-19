@@ -261,6 +261,7 @@ export function drawGraph(
     } else {
       ctx.beginPath();
       let penDown = false;
+      let prevPy = 0;
       for (let px = 0; px <= cssW; px += 1) {
         const x = screenToMathX(px, vp, cssW);
         if (x < dLo || x > dHi) { penDown = false; continue; }
@@ -268,8 +269,13 @@ export function drawGraph(
         if (!Number.isFinite(y)) { penDown = false; continue; }
         const py = sy(y);
         if (py < -yGuard || py > cssH + yGuard) { penDown = false; continue; }
-        if (penDown) ctx.lineTo(px, py);
-        else { ctx.moveTo(px, py); penDown = true; }
+        // A huge vertical jump between adjacent pixels is an asymptote crossing,
+        // not a real segment — lift the pen so no line spans the discontinuity.
+        if (penDown && Math.abs(py - prevPy) > cssH * 2) ctx.moveTo(px, py);
+        else if (penDown) ctx.lineTo(px, py);
+        else ctx.moveTo(px, py);
+        penDown = true;
+        prevPy = py;
       }
       ctx.stroke();
     }

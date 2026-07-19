@@ -39,6 +39,20 @@ const PRESETS: PresetDef[] = [
     { key: "a", label: "a", def: 1 }, { key: "b", label: "b", def: 0 }, { key: "c", label: "c", def: -3 }, { key: "d", label: "d", def: 0 } ] },
   { type: "circle",    label: "Circle  (x−h)² + (y−k)² = r²",  coeffs: [
     { key: "h", label: "h (centre x)", def: 1 }, { key: "k", label: "k (centre y)", def: -1 }, { key: "r", label: "r (radius)", def: 3 } ] },
+  { type: "reciprocal",  label: "Reciprocal  y = a/(x−h) + k",   coeffs: [
+    { key: "a", label: "a", def: 1 }, { key: "h", label: "h", def: 0 }, { key: "k", label: "k", def: 0 } ] },
+  { type: "exponential", label: "Exponential  y = a·bˣ + k",      coeffs: [
+    { key: "a", label: "a", def: 1 }, { key: "b", label: "b", def: 2 }, { key: "k", label: "k", def: 0 } ] },
+  { type: "logarithm",   label: "Logarithm  y = a·log_b(x−h)",    coeffs: [
+    { key: "a", label: "a", def: 1 }, { key: "b", label: "b", def: 10 }, { key: "h", label: "h", def: 0 } ] },
+  { type: "sine",        label: "Sine  y = A·sin(Bx + C) + D",    coeffs: [
+    { key: "A", label: "A", def: 2 }, { key: "B", label: "B", def: 1 }, { key: "C", label: "C", def: 0 }, { key: "D", label: "D", def: 0 } ] },
+  { type: "cosine",      label: "Cosine  y = A·cos(Bx + C) + D",  coeffs: [
+    { key: "A", label: "A", def: 2 }, { key: "B", label: "B", def: 1 }, { key: "C", label: "C", def: 0 }, { key: "D", label: "D", def: 0 } ] },
+  { type: "tangent",     label: "Tangent  y = A·tan(Bx + C) + D", coeffs: [
+    { key: "A", label: "A", def: 1 }, { key: "B", label: "B", def: 1 }, { key: "C", label: "C", def: 0 }, { key: "D", label: "D", def: 0 } ] },
+  { type: "absolute",    label: "Modulus  y = a·|x − h| + k",     coeffs: [
+    { key: "a", label: "a", def: 1 }, { key: "h", label: "h", def: 0 }, { key: "k", label: "k", def: 0 } ] },
 ];
 
 // Custom probability case: E(p) = -4p² + 3p, locked to p ∈ [0, 1].

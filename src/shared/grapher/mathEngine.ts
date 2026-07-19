@@ -13,7 +13,16 @@
 // consumes these; there is exactly one place the maths lives.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type EquationType = "linear" | "quadratic" | "cubic" | "circle" | "custom";
+export type EquationType =
+  | "linear" | "quadratic" | "cubic" | "circle" | "custom"
+  // Extended families:
+  | "reciprocal"   // y = a/(x − h) + k        params [a, h, k]
+  | "exponential"  // y = a·bˣ + k             params [a, b, k]
+  | "logarithm"    // y = a·log_b(x − h)        params [a, b, h]
+  | "sine"         // y = A·sin(Bx + C) + D     params [A, B, C, D]
+  | "cosine"       // y = A·cos(Bx + C) + D     params [A, B, C, D]
+  | "tangent"      // y = A·tan(Bx + C) + D     params [A, B, C, D]
+  | "absolute";    // y = a·|x − h| + k         params [a, h, k]
 
 /** A single Feature of Interest — a point worth framing and marking. */
 export interface FOI {
@@ -49,7 +58,7 @@ export interface FrameOptions {
  * handled specially by the painter (it is not a function).
  */
 export type CurveSpec =
-  | { kind: "function"; f: (x: number) => number }
+  | { kind: "function"; f: (x: number) => number; hintX?: [number, number]; hintY?: [number, number] }
   | { kind: "circle"; cx: number; cy: number; r: number };
 
 // ── Numeric helpers ──────────────────────────────────────────────────────────
@@ -173,7 +182,12 @@ export function computeFOIs(type: EquationType, params: number[] = []): FOI[] {
     case "quadratic": return getQuadraticFOIs(params[0] ?? 1, params[1] ?? 0, params[2] ?? 0);
     case "cubic":     return getCubicFOIs(params[0] ?? 1, params[1] ?? 0, params[2] ?? 0, params[3] ?? 0);
     case "circle":    return getCircleFOIs(params[0] ?? 0, params[1] ?? 0, params[2] ?? 1);
-    case "custom":    return [];
+    case "absolute": {
+      const [a = 1, h = 0, k = 0] = params;
+      void a;
+      return [{ x: h, y: k, kind: "vertex", label: "vertex" }];
+    }
+    default:          return []; // custom + extended families supply markers via recipes
   }
 }
 
@@ -199,6 +213,41 @@ export function buildCurveSpec(
     case "circle": {
       const [cx = 0, cy = 0, r = 1] = params;
       return { kind: "circle", cx, cy, r: Math.abs(r) };
+    }
+    case "reciprocal": {
+      const [a = 1, h = 0, k = 0] = params;
+      const m = Math.max(6, Math.abs(a) * 6);
+      return { kind: "function", f: (x) => (x === h ? NaN : a / (x - h) + k), hintX: [h - 6, h + 6], hintY: [k - m, k + m] };
+    }
+    case "exponential": {
+      const [a = 1, b = 2, k = 0] = params;
+      const base = b > 0 ? b : 2;
+      return { kind: "function", f: (x) => a * Math.pow(base, x) + k, hintX: [-4, 4] };
+    }
+    case "logarithm": {
+      const [a = 1, b = 10, h = 0] = params;
+      const lb = Math.log(b > 0 && b !== 1 ? b : 10);
+      return { kind: "function", f: (x) => (x > h ? (a * Math.log(x - h)) / lb : NaN), hintX: [h + 0.01, h + 10] };
+    }
+    case "sine": {
+      const [A = 1, B = 1, C = 0, D = 0] = params;
+      const T = (2 * Math.PI) / (Math.abs(B) || 1);
+      return { kind: "function", f: (x) => A * Math.sin(B * x + C) + D, hintX: [-T, T] };
+    }
+    case "cosine": {
+      const [A = 1, B = 1, C = 0, D = 0] = params;
+      const T = (2 * Math.PI) / (Math.abs(B) || 1);
+      return { kind: "function", f: (x) => A * Math.cos(B * x + C) + D, hintX: [-T, T] };
+    }
+    case "tangent": {
+      const [A = 1, B = 1, C = 0, D = 0] = params;
+      const P = Math.PI / (Math.abs(B) || 1); // asymptote spacing
+      const m = Math.max(6, Math.abs(A) * 6);
+      return { kind: "function", f: (x) => A * Math.tan(B * x + C) + D, hintX: [-1.5 * P, 1.5 * P], hintY: [D - m, D + m] };
+    }
+    case "absolute": {
+      const [a = 1, h = 0, k = 0] = params;
+      return { kind: "function", f: (x) => a * Math.abs(x - h) + k, hintX: [h - 5, h + 5] };
     }
     case "custom":
       return { kind: "function", f: fn ?? ((x) => x) };
@@ -324,6 +373,11 @@ export function computeFrame(
     for (const f of fois) addX(f.x);
     if (dom?.xMin !== undefined) addX(dom.xMin);
     if (dom?.xMax !== undefined) addX(dom.xMax);
+    // Curve-supplied hint ranges (trig period, exponential/reciprocal window)
+    // so unbounded/periodic curves frame to a meaningful window on their own.
+    for (const spec of specList) {
+      if (spec.kind === "function" && spec.hintX) { addX(spec.hintX[0]); addX(spec.hintX[1]); }
+    }
   }
 
   // Fallbacks when the x-range is empty or degenerate.
@@ -334,8 +388,13 @@ export function computeFrame(
   for (const f of fois) addY(f.y);
   for (const spec of specList) {
     if (spec.kind === "function") {
-      const [lo, hi] = sampleYExtent(spec.f, box.xMin, box.xMax);
-      addY(lo); addY(hi);
+      if (spec.hintY) {
+        // Bounded window (asymptotic curves) — trust it over raw sampling.
+        addY(spec.hintY[0]); addY(spec.hintY[1]);
+      } else {
+        const [lo, hi] = sampleYExtent(spec.f, box.xMin, box.xMax);
+        addY(lo); addY(hi);
+      }
     } else if (spec.kind === "circle") {
       addX(spec.cx - spec.r); addX(spec.cx + spec.r);
       addY(spec.cy - spec.r); addY(spec.cy + spec.r);

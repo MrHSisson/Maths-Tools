@@ -6,8 +6,8 @@ import { describe, it, expect } from "vitest";
 import {
   quadraticRoots, cubicRoots,
   getLinearFOIs, getQuadraticFOIs, getCubicFOIs, getCircleFOIs,
-  buildCurveSpec, computeFrame, niceStep, findFunctionIntersections,
-  type FOI,
+  buildCurveSpec, computeFrame, computeFOIs, niceStep, findFunctionIntersections,
+  type FOI, type EquationType,
 } from "../shared/grapher/mathEngine";
 
 const close = (a: number, b: number, eps = 1e-6) => Math.abs(a - b) < eps;
@@ -317,6 +317,59 @@ describe("cubicInequality recipe", () => {
     // Three roots, dashed (strict) with open dots.
     expect((r.config?.fois ?? []).filter((p) => p.kind === "root").length).toBe(3);
     expect((r.config?.fois ?? []).every((p) => p.kind !== "root" || p.open)).toBe(true);
+  });
+});
+
+describe("extended curve families", () => {
+  const fnOf = (type: EquationType, params: number[]) => {
+    const spec = buildCurveSpec(type, params);
+    if (spec.kind !== "function") throw new Error("expected function spec");
+    return spec.f;
+  };
+
+  it("reciprocal y = a/(x−h) + k evaluates correctly (and is undefined at the asymptote)", () => {
+    const f = fnOf("reciprocal", [2, 1, 3]); // 2/(x−1) + 3
+    expect(close(f(3), 4)).toBe(true);        // 2/2 + 3
+    expect(Number.isNaN(f(1))).toBe(true);    // vertical asymptote
+  });
+
+  it("exponential y = a·bˣ + k", () => {
+    const f = fnOf("exponential", [1, 2, 0]);
+    expect(close(f(3), 8)).toBe(true);
+    expect(close(f(0), 1)).toBe(true);
+  });
+
+  it("logarithm y = a·log_b(x−h), undefined below the domain", () => {
+    const f = fnOf("logarithm", [1, 10, 0]);
+    expect(close(f(10), 1)).toBe(true);   // log10(10)
+    expect(close(f(100), 2)).toBe(true);  // log10(100)
+    expect(Number.isNaN(f(-1))).toBe(true);
+  });
+
+  it("sine / cosine / tangent", () => {
+    expect(close(fnOf("sine", [2, 1, 0, 0])(Math.PI / 2), 2)).toBe(true);
+    expect(close(fnOf("cosine", [2, 1, 0, 0])(0), 2)).toBe(true);
+    expect(close(fnOf("tangent", [1, 1, 0, 0])(Math.PI / 4), 1, 1e-6)).toBe(true);
+  });
+
+  it("modulus y = a·|x−h| + k with a vertex FOI", () => {
+    const f = fnOf("absolute", [1, 0, 0]);
+    expect(close(f(-3), 3) && close(f(3), 3)).toBe(true);
+    const v = computeFOIs("absolute", [2, 1, -1]).find((p) => p.kind === "vertex");
+    expect(v && close(v.x, 1) && close(v.y, -1)).toBe(true);
+  });
+
+  it("each extended family frames to a finite, positive-scale viewport", () => {
+    const cases: Array<[EquationType, number[]]> = [
+      ["reciprocal", [1, 0, 0]], ["exponential", [1, 2, 0]], ["logarithm", [1, 10, 0]],
+      ["sine", [2, 1, 0, 0]], ["cosine", [2, 1, 0, 0]], ["tangent", [1, 1, 0, 0]], ["absolute", [1, 0, 0]],
+    ];
+    for (const [type, params] of cases) {
+      const spec = buildCurveSpec(type, params);
+      const vp = computeFrame(computeFOIs(type, params), spec, 300, 300);
+      expect(Number.isFinite(vp.unitsPerPixel) && vp.unitsPerPixel > 0).toBe(true);
+      expect(Number.isFinite(vp.centreX) && Number.isFinite(vp.centreY)).toBe(true);
+    }
   });
 });
 
