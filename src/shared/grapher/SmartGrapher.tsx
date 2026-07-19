@@ -25,6 +25,7 @@ import { Maximize2, Minimize2, Crosshair, Download, X } from "lucide-react";
 import {
   type EquationType, type FOI, type Viewport, type CurveSpec,
   buildCurveSpec, computeFOIs, computeFrame, findFunctionIntersections,
+  mathToScreenX, mathToScreenY,
 } from "./mathEngine";
 import { drawGraph, type DrawStyle, type CurveDraw, type ShadeRegion, type Guide, SERIES_COLORS } from "./drawGraph";
 import { usePanZoom } from "./usePanZoom";
@@ -128,10 +129,38 @@ function GraphCanvas({
   const framedKeyRef = useRef<string>("");
   const rafRef = useRef<number | null>(null);
 
+  // Hover tooltip: the key point (FOI) under the cursor, in CSS px + its readout.
+  const [tip, setTip] = useState<{ left: number; top: number; text: string } | null>(null);
+
   const cssSize = () => {
     const el = wrapRef.current;
     return { w: el?.clientWidth ?? 0, h: el?.clientHeight ?? 0 };
   };
+
+  // A short coordinate readout, e.g. "(1.3, 2.3)" — the FOI's own label wins if set.
+  const coordText = (f: FOI): string => {
+    if (f.label) return f.label;
+    const r = (n: number) => { const v = Math.round(n * 100) / 100; return Object.is(v, -0) ? "0" : `${v}`; };
+    return `(${r(f.x)}, ${r(f.y)})`;
+  };
+
+  // Find the nearest visible FOI within a hit radius of the cursor.
+  const handleHover = useCallback((e: React.MouseEvent) => {
+    const canvas = canvasRef.current;
+    if (!canvas || !(config.showFois ?? true) || fois.length === 0) { setTip(null); return; }
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    const { w, h } = cssSize();
+    const vp = viewportRef.current;
+    let best: { left: number; top: number; text: string } | null = null;
+    let bestD = 12; // px
+    for (const f of fois) {
+      const px = mathToScreenX(f.x, vp, w), py = mathToScreenY(f.y, vp, h);
+      const d = Math.hypot(px - mx, py - my);
+      if (d <= bestD) { bestD = d; best = { left: px, top: py, text: coordText(f) }; }
+    }
+    setTip(best);
+  }, [fois, config.showFois]);
 
   const paint = useCallback(() => {
     const canvas = canvasRef.current;
@@ -225,7 +254,25 @@ function GraphCanvas({
 
   return (
     <div ref={wrapRef} style={{ position: "absolute", inset: 0 }}>
-      <canvas ref={canvasRef} style={{ display: "block", width: "100%", height: "100%" }} />
+      <canvas
+        ref={canvasRef}
+        onMouseMove={handleHover}
+        onMouseLeave={() => setTip(null)}
+        style={{ display: "block", width: "100%", height: "100%", cursor: tip ? "pointer" : undefined }}
+      />
+      {tip && (
+        <div
+          style={{
+            position: "absolute", left: tip.left, top: tip.top - 12,
+            transform: "translate(-50%, -100%)", pointerEvents: "none",
+            background: "#1e293b", color: "#fff", fontSize: 12, fontWeight: 600,
+            padding: "3px 8px", borderRadius: 6, whiteSpace: "nowrap",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.25)", zIndex: 20,
+          }}
+        >
+          {tip.text}
+        </div>
+      )}
     </div>
   );
 }
