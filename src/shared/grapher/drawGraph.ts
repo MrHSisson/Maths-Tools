@@ -218,22 +218,35 @@ export function drawGraph(
 
   // ── Tick labels along the axes ──
   if (showTicks) {
-    ctx.fillStyle = st.axisText;
-    ctx.textBaseline = "top";
-    ctx.textAlign = "center";
+    // Each label gets a faint background pill so it never collides with the
+    // axis line, gridlines or a curve passing behind it.
+    const label = (text: string, cx: number, cy: number, align: "left" | "right" | "center", baseline: "top" | "middle") => {
+      ctx.textAlign = align;
+      ctx.textBaseline = baseline;
+      const w = ctx.measureText(text).width;
+      const bx = align === "right" ? cx - w : align === "center" ? cx - w / 2 : cx;
+      const by = baseline === "middle" ? cy - 7 : cy - 1;
+      ctx.globalAlpha = 0.82;
+      ctx.fillStyle = st.background;
+      ctx.fillRect(bx - 2, by, w + 4, 14);
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = st.axisText;
+      ctx.fillText(text, cx, cy);
+    };
+
+    const xTickY = Math.min(cssH - 14, Math.max(2, axisY + 4));
     for (let x = firstX; x <= xMaxMath + stepX / 2; x += stepX) {
       if (Math.abs(x) < stepX / 1e6) continue;
-      const px = sx(x);
-      const ly = Math.min(cssH - 14, Math.max(2, axisY + 4));
-      ctx.fillText(fmtTick(x, stepX), px, ly);
+      label(fmtTick(x, stepX), sx(x), xTickY, "center", "top");
     }
-    ctx.textAlign = "right";
-    ctx.textBaseline = "middle";
+    // When the y-axis sits at the left edge, put its labels just to the RIGHT of
+    // the axis (inside the plot) instead of clipping them off the left.
+    const yLabelsRight = axisX < cssW * 0.16;
     for (let y = firstY; y <= yTopMath + stepY / 2; y += stepY) {
       if (Math.abs(y) < stepY / 1e6) continue;
       const py = sy(y);
-      const lx = Math.min(cssW - 4, Math.max(20, axisX - 6));
-      ctx.fillText(fmtTick(y, stepY), lx, py);
+      if (yLabelsRight) label(fmtTick(y, stepY), Math.max(2, axisX) + 6, py, "left", "middle");
+      else label(fmtTick(y, stepY), Math.min(cssW - 4, axisX - 6), py, "right", "middle");
     }
   }
 

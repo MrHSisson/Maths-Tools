@@ -151,7 +151,7 @@ const questionRenderer = (q: AnyQuestion, showAns: boolean, _cs: string, compact
     // No width:100% — under a flex/align-center parent (and inside ScaleToFit in
     // fullscreen) the box then sizes to its content, so the fullscreen scaler can
     // measure the real width and shrink it to fit instead of clipping.
-    return <div className={fontClass} style={{ color: "#166534", fontWeight: 700 }}>{answerBody(q, isFS)}</div>;
+    return <div className={fontClass} style={{ color: "#166534", fontWeight: 700 }}>{answerBody(q)}</div>;
   }
   const maxW = compact === true ? (n >= 4 ? 260 : 230) : compact === undefined ? 380 : 470;
   return (
@@ -417,23 +417,17 @@ const GraphView = ({ g }: { g: GraphData }): JSX.Element => {
 // The answer body: algebraic answer, plus the graph for Level 3. Shared by the
 // answerRenderer (worked example / worksheet) and the whiteboard questionRenderer
 // (the shell suppresses its own answer block when a questionRenderer is present).
-const answerBody = (q: AnyQuestion, withGraph: boolean): JSX.Element => {
-  const g = (q as any)._graph as GraphData | undefined;
+const answerBody = (q: AnyQuestion): JSX.Element => {
   const latex = (q as any).answerLatex as string | undefined;
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
       {latex && <MathRenderer latex={latex} />}
-      {withGraph && g && (
-        <div style={{ width: "100%", maxWidth: 480 }}>
-          <GraphView g={g} />
-        </div>
-      )}
     </div>
   );
 };
-// Worked example / worksheet answers get the graph; the whiteboard answer is
-// rendered text-only from questionRenderer (its box is too small for the plot).
-const answerRenderer = (q: AnyQuestion): JSX.Element | null => answerBody(q, true);
+// The answer is text-only (the algebraic result). The graph lives in its own
+// worked-example step cell, not in the answer.
+const answerRenderer = (q: AnyQuestion): JSX.Element | null => answerBody(q);
 
 // The worked example draws the graph inline at the plotting step (which carries
 // the graph data on step.extra), so it appears exactly where the method says to
