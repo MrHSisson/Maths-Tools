@@ -10,7 +10,8 @@ const TOOL_CONFIG = {
 type Question = {
   question: string;
   answer: number | string;
-  displayQuestion?: string; // for superscript rendering in preview
+  displayQuestion?: string; // for superscript / stacked-fraction rendering in preview + print
+  displayAnswer?: string;   // stacked-fraction HTML for the answer key (falls back to answer)
   skill?: SkillId; // which skill generated this question
 };
 
@@ -29,7 +30,11 @@ type SkillId =
   | 'primes'
   | 'fdp'
   | 'metric'
-  | 'bidmas';
+  | 'bidmas'
+  | 'fracAdd'
+  | 'fracSub'
+  | 'fracMul'
+  | 'fracDiv';
 
 // ─── SKILL CONFIG ─────────────────────────────────────────────────────────────
 
@@ -67,6 +72,14 @@ type BidmasConfig = {
   indices: boolean;
   allowNegatives: boolean;
 };
+// Fractions. All operands are proper fractions / integers (no mixed-number inputs);
+// answers are always simplified, optionally shown as mixed numbers.
+type FracDenomType = 'common' | 'multiple' | 'lcm';
+type FracAddSubConfig = { denomTypes: FracDenomType[]; mixed: boolean };
+type FracMulType = 'fxi' | 'fxf';
+type FracMulConfig = { types: FracMulType[]; mixed: boolean };
+type FracDivType = 'fdi' | 'idf' | 'fdf';
+type FracDivConfig = { types: FracDivType[]; mixed: boolean };
 
 type SkillConfigs = {
   numberBonds: NumberBondsConfig;
@@ -84,6 +97,10 @@ type SkillConfigs = {
   fdp: FdpConfig;
   metric: MetricConfig;
   bidmas: BidmasConfig;
+  fracAdd: FracAddSubConfig;
+  fracSub: FracAddSubConfig;
+  fracMul: FracMulConfig;
+  fracDiv: FracDivConfig;
 };
 
 // ─── QUESTION GENERATORS ─────────────────────────────────────────────────────
@@ -676,6 +693,157 @@ function genBidmas(config: BidmasConfig): Question[] {
   return shuffle(pool);
 }
 
+// ─── FRACTION SKILLS ──────────────────────────────────────────────────────────
+// Design constraints (from the spec):
+//   • Every multiplication a student must do stays within the 12×12 tables — all
+//     denominators are ≤ 12, so common denominators, cross-multiplications and
+//     conversions only ever use a×b facts with a, b ≤ 12.
+//   • Operands are always proper fractions (in lowest terms) or integers — never
+//     mixed numbers. Answers are always fully simplified; the `mixed` option shows
+//     an improper answer as a mixed number instead.
+
+function fgcd(a: number, b: number): number { a = Math.abs(a); b = Math.abs(b); while (b) { [a, b] = [b, a % b]; } return a || 1; }
+function flcm(a: number, b: number): number { return (a * b) / fgcd(a, b); }
+
+// A stacked fraction as inline HTML. Inline styles + currentColor mean it renders
+// identically in the React preview and the print document, inheriting the text
+// colour (black in questions, green in the answer key).
+function fracSpan(n: number | string, d: number | string): string {
+  return '<span style="display:inline-block;vertical-align:middle;text-align:center;margin:0 0.12em;">'
+    + `<span style="display:block;border-bottom:0.08em solid currentColor;padding:0 0.15em;line-height:1.15;">${n}</span>`
+    + `<span style="display:block;padding:0 0.15em;line-height:1.15;">${d}</span>`
+    + '</span>';
+}
+
+type FracValue = { plain: string; html: string };
+
+// Format a raw num/den result, fully simplified, as an improper fraction or (when
+// mixed) a mixed number. Whole numbers collapse to an integer.
+function formatFrac(num: number, den: number, mixed: boolean): FracValue {
+  const g = fgcd(num, den);
+  let n = num / g; const d = den / g;
+  const sign = n < 0 ? '-' : '';
+  n = Math.abs(n);
+  if (d === 1) return { plain: `${sign}${n}`, html: `${sign}${n}` };
+  if (mixed && n >= d) {
+    const whole = Math.floor(n / d);
+    const rem = n - whole * d;
+    if (rem === 0) return { plain: `${sign}${whole}`, html: `${sign}${whole}` };
+    return { plain: `${sign}${whole} ${rem}/${d}`, html: `${sign}${whole}&nbsp;${fracSpan(rem, d)}` };
+  }
+  return { plain: `${sign}${n}/${d}`, html: `${sign}${fracSpan(n, d)}` };
+}
+
+// A proper-fraction operand in lowest terms with the given denominator.
+function properNumerator(d: number): number {
+  const cands: number[] = [];
+  for (let n = 1; n < d; n++) if (fgcd(n, d) === 1) cands.push(n);
+  return pick(cands);
+}
+function fracOperand(n: number, d: number): FracValue {
+  return { plain: `${n}/${d}`, html: fracSpan(n, d) };
+}
+
+function genFracAddSub(config: FracAddSubConfig, op: 'add' | 'sub'): Question[] {
+  const pool: Question[] = [];
+  const seen = new Set<string>();
+  const types = config.denomTypes.length ? config.denomTypes : (['common'] as FracDenomType[]);
+  const sym = op === 'add' ? '+' : '−';
+
+  // Denominator pairs [d1, d2] allowed by the chosen styles (denominators ≤ 12).
+  const pairKey = new Set<string>();
+  const pairs: [number, number][] = [];
+  const addPair = (x: number, y: number) => { const k = `${x},${y}`; if (!pairKey.has(k)) { pairKey.add(k); pairs.push([x, y]); } };
+  for (const t of types) {
+    for (let a = 2; a <= 12; a++) for (let b = 2; b <= 12; b++) {
+      if (t === 'common' && a === b) addPair(a, b);
+      else if (t === 'multiple' && a !== b && (b % a === 0 || a % b === 0)) addPair(a, b);
+      else if (t === 'lcm' && a !== b && b % a !== 0 && a % b !== 0) addPair(a, b);
+    }
+  }
+  if (pairs.length === 0) return [];
+
+  for (let i = 0; i < 3000 && pool.length < 250; i++) {
+    const [d1, d2] = pick(pairs);
+    const L = flcm(d1, d2);
+    const m1 = L / d1, m2 = L / d2;
+    const a = properNumerator(d1);
+    const b = properNumerator(d2);
+    let resNum: number;
+    if (op === 'add') resNum = a * m1 + b * m2;
+    else {
+      if (a * m1 <= b * m2) continue; // keep the answer strictly positive
+      resNum = a * m1 - b * m2;
+    }
+    const f1 = fracOperand(a, d1), f2 = fracOperand(b, d2);
+    const ans = formatFrac(resNum, L, config.mixed);
+    const plain = `${f1.plain} ${sym} ${f2.plain} = ___`;
+    if (seen.has(plain)) continue;
+    seen.add(plain);
+    pool.push({ question: plain, displayQuestion: `${f1.html} ${sym} ${f2.html} = ___`, answer: ans.plain, displayAnswer: ans.html });
+  }
+  return shuffle(pool);
+}
+
+function genFracMul(config: FracMulConfig): Question[] {
+  const pool: Question[] = [];
+  const seen = new Set<string>();
+  const types = config.types.length ? config.types : (['fxi'] as FracMulType[]);
+  for (let i = 0; i < 3000 && pool.length < 250; i++) {
+    const t = pick(types);
+    let plain = '', disp = '', num = 0, den = 1;
+    if (t === 'fxi') {
+      const b = randInt(2, 12), a = properNumerator(b), c = randInt(2, 12);
+      num = a * c; den = b;
+      const f = fracOperand(a, b);
+      plain = `${f.plain} × ${c} = ___`; disp = `${f.html} × ${c} = ___`;
+    } else {
+      const b = randInt(2, 12), d = randInt(2, 12);
+      const a = properNumerator(b), c = properNumerator(d);
+      num = a * c; den = b * d;
+      const f1 = fracOperand(a, b), f2 = fracOperand(c, d);
+      plain = `${f1.plain} × ${f2.plain} = ___`; disp = `${f1.html} × ${f2.html} = ___`;
+    }
+    if (seen.has(plain)) continue;
+    seen.add(plain);
+    const ans = formatFrac(num, den, config.mixed);
+    pool.push({ question: plain, displayQuestion: disp, answer: ans.plain, displayAnswer: ans.html });
+  }
+  return shuffle(pool);
+}
+
+function genFracDiv(config: FracDivConfig): Question[] {
+  const pool: Question[] = [];
+  const seen = new Set<string>();
+  const types = config.types.length ? config.types : (['fdi'] as FracDivType[]);
+  for (let i = 0; i < 3000 && pool.length < 250; i++) {
+    const t = pick(types);
+    let plain = '', disp = '', num = 0, den = 1;
+    if (t === 'fdi') { // fraction ÷ integer
+      const b = randInt(2, 12), a = properNumerator(b), c = randInt(2, 12);
+      num = a; den = b * c;
+      const f = fracOperand(a, b);
+      plain = `${f.plain} ÷ ${c} = ___`; disp = `${f.html} ÷ ${c} = ___`;
+    } else if (t === 'idf') { // integer ÷ fraction
+      const b = randInt(2, 12), a = properNumerator(b), c = randInt(2, 12);
+      num = c * b; den = a;
+      const f = fracOperand(a, b);
+      plain = `${c} ÷ ${f.plain} = ___`; disp = `${c} ÷ ${f.html} = ___`;
+    } else { // fraction ÷ fraction
+      const b = randInt(2, 12), d = randInt(2, 12);
+      const a = properNumerator(b), c = properNumerator(d);
+      num = a * d; den = b * c;
+      const f1 = fracOperand(a, b), f2 = fracOperand(c, d);
+      plain = `${f1.plain} ÷ ${f2.plain} = ___`; disp = `${f1.html} ÷ ${f2.html} = ___`;
+    }
+    if (seen.has(plain)) continue;
+    seen.add(plain);
+    const ans = formatFrac(num, den, config.mixed);
+    pool.push({ question: plain, displayQuestion: disp, answer: ans.plain, displayAnswer: ans.html });
+  }
+  return shuffle(pool);
+}
+
 
 // ─── PDF PRINT ────────────────────────────────────────────────────────────────
 
@@ -701,7 +869,7 @@ function handlePrint(allPages: Question[][]) {
 
     const qHtml = (idx: number, showAnswer: boolean): string => {
       const q = questions[idx];
-      const ans = String(q.answer);
+      const ans = q.displayAnswer || String(q.answer);
       const display = q.displayQuestion || q.question;
       if (showAnswer) {
         return `<div class="qbody qbody-ans"><div class="q-text">${display}</div><div class="q-ans">${ans}</div></div>`;
@@ -875,9 +1043,13 @@ const SKILL_META: Record<SkillId, { label: string; description: string }> = {
   fdp:            { label: 'FDP Conversion',       description: 'Fractions, decimals and percentages' },
   metric:         { label: 'Metric Conversions',   description: 'Length, mass and capacity units' },
   bidmas:         { label: 'BIDMAS',               description: 'Order of operations' },
+  fracAdd:        { label: 'Fraction Addition',        description: 'Common, multiple or LCM denominators' },
+  fracSub:        { label: 'Fraction Subtraction',     description: 'Common, multiple or LCM denominators' },
+  fracMul:        { label: 'Fraction Multiplication',  description: 'Fraction × integer or fraction × fraction' },
+  fracDiv:        { label: 'Fraction Division',        description: 'Fraction ÷ integer, integer ÷ fraction, fraction ÷ fraction' },
 };
 
-const ALL_SKILLS: SkillId[] = ['numberBonds', 'timesTables', 'reverseTT', 'addition', 'subtraction', 'multiplication', 'busStop', 'negatives', 'indices', 'powersOfTen', 'rounding', 'primes', 'fdp', 'metric', 'bidmas'];
+const ALL_SKILLS: SkillId[] = ['numberBonds', 'timesTables', 'reverseTT', 'addition', 'subtraction', 'multiplication', 'busStop', 'negatives', 'indices', 'powersOfTen', 'rounding', 'primes', 'fdp', 'metric', 'bidmas', 'fracAdd', 'fracSub', 'fracMul', 'fracDiv'];
 
 // Skills grouped by number sub-topic (all skills are number skills — these are
 // teaching themes, not the app's top-level categories).
@@ -886,6 +1058,7 @@ const SKILL_GROUPS: { label: string; skills: SkillId[] }[] = [
   { label: 'Written Methods',              skills: ['addition', 'subtraction', 'multiplication', 'busStop', 'negatives'] },
   { label: 'Place Value & Rounding',       skills: ['powersOfTen', 'rounding'] },
   { label: 'Number Properties',            skills: ['primes', 'indices'] },
+  { label: 'Fraction Arithmetic',          skills: ['fracAdd', 'fracSub', 'fracMul', 'fracDiv'] },
   { label: 'Fractions, Decimals & Measures', skills: ['fdp', 'metric'] },
   { label: 'Order of Operations',          skills: ['bidmas'] },
 ];
@@ -908,12 +1081,17 @@ const defaultConfigs: SkillConfigs = {
   fdp:            { paths: ['fd', 'dp'], complexities: ['common'] },
   metric:         { categories: ['length'], steps: ['adjacent'], decimals: false },
   bidmas:         { steps: [2], brackets: true, indices: false, allowNegatives: false },
+  fracAdd:        { denomTypes: ['common'], mixed: false },
+  fracSub:        { denomTypes: ['common'], mixed: false },
+  fracMul:        { types: ['fxi'], mixed: false },
+  fracDiv:        { types: ['fdi'], mixed: false },
 };
 
 const DEFAULT_SKILL_COUNTS: Record<SkillId, number> = {
   numberBonds: 5, timesTables: 5, reverseTT: 5, addition: 5, subtraction: 5,
   multiplication: 5, negatives: 5, busStop: 5, indices: 5,
   powersOfTen: 5, rounding: 5, primes: 5, fdp: 5, metric: 5, bidmas: 5,
+  fracAdd: 5, fracSub: 5, fracMul: 5, fracDiv: 5,
 };
 
 // ─── SETUP PERSISTENCE ────────────────────────────────────────────────────────
@@ -1049,6 +1227,18 @@ const PRESETS: Preset[] = [
       bidmas: { steps: [2, 3], brackets: true, indices: true, allowNegatives: false },
     },
   },
+  {
+    label: 'Fractions — Four Ops',
+    desc: 'Add, subtract, multiply & divide',
+    enabledSkills: ['fracAdd', 'fracSub', 'fracMul', 'fracDiv'],
+    skillCounts: { fracAdd: 8, fracSub: 7, fracMul: 8, fracDiv: 7 },
+    configs: {
+      fracAdd: { denomTypes: ['common', 'multiple', 'lcm'], mixed: false },
+      fracSub: { denomTypes: ['common', 'multiple'], mixed: false },
+      fracMul: { types: ['fxi', 'fxf'], mixed: true },
+      fracDiv: { types: ['fdi', 'idf', 'fdf'], mixed: true },
+    },
+  },
 ];
 
 
@@ -1148,6 +1338,10 @@ export default function MathsSkillsGenerator() {
       case 'fdp':            pool = genFdp(configs.fdp); break;
       case 'metric':         pool = genMetric(configs.metric); break;
       case 'bidmas':         pool = genBidmas(configs.bidmas); break;
+      case 'fracAdd':        pool = genFracAddSub(configs.fracAdd, 'add'); break;
+      case 'fracSub':        pool = genFracAddSub(configs.fracSub, 'sub'); break;
+      case 'fracMul':        pool = genFracMul(configs.fracMul); break;
+      case 'fracDiv':        pool = genFracDiv(configs.fracDiv); break;
     }
     return pool.map(q => ({ ...q, skill }));
   };
@@ -1589,6 +1783,82 @@ export default function MathsSkillsGenerator() {
               label="Allow negative numbers"
               active={c.bidmas.allowNegatives}
               onToggle={() => updateConfig('bidmas', { allowNegatives: !c.bidmas.allowNegatives })}
+            />
+          </div>
+        </>
+      ),
+
+      fracAdd: (
+        <>
+          <PillMulti
+            label="Denominators"
+            options={['common', 'multiple', 'lcm'] as const}
+            selected={c.fracAdd.denomTypes}
+            onToggle={v => updateConfig('fracAdd', { denomTypes: toggleArr(c.fracAdd.denomTypes, v as FracDenomType) })}
+            format={v => ({ common: 'Common', multiple: 'Multiple', lcm: 'Find LCM' } as Record<FracDenomType, string>)[v]}
+          />
+          <div className="flex justify-center gap-2">
+            <PillToggle
+              label="Mixed number answers"
+              active={c.fracAdd.mixed}
+              onToggle={() => updateConfig('fracAdd', { mixed: !c.fracAdd.mixed })}
+            />
+          </div>
+        </>
+      ),
+
+      fracSub: (
+        <>
+          <PillMulti
+            label="Denominators"
+            options={['common', 'multiple', 'lcm'] as const}
+            selected={c.fracSub.denomTypes}
+            onToggle={v => updateConfig('fracSub', { denomTypes: toggleArr(c.fracSub.denomTypes, v as FracDenomType) })}
+            format={v => ({ common: 'Common', multiple: 'Multiple', lcm: 'Find LCM' } as Record<FracDenomType, string>)[v]}
+          />
+          <div className="flex justify-center gap-2">
+            <PillToggle
+              label="Mixed number answers"
+              active={c.fracSub.mixed}
+              onToggle={() => updateConfig('fracSub', { mixed: !c.fracSub.mixed })}
+            />
+          </div>
+        </>
+      ),
+
+      fracMul: (
+        <>
+          <PillMulti
+            label="Question type"
+            options={['fxi', 'fxf'] as const}
+            selected={c.fracMul.types}
+            onToggle={v => updateConfig('fracMul', { types: toggleArr(c.fracMul.types, v as FracMulType) })}
+            format={v => ({ fxi: 'Fraction × integer', fxf: 'Fraction × fraction' } as Record<FracMulType, string>)[v]}
+          />
+          <div className="flex justify-center gap-2">
+            <PillToggle
+              label="Mixed number answers"
+              active={c.fracMul.mixed}
+              onToggle={() => updateConfig('fracMul', { mixed: !c.fracMul.mixed })}
+            />
+          </div>
+        </>
+      ),
+
+      fracDiv: (
+        <>
+          <PillMulti
+            label="Question type"
+            options={['fdi', 'idf', 'fdf'] as const}
+            selected={c.fracDiv.types}
+            onToggle={v => updateConfig('fracDiv', { types: toggleArr(c.fracDiv.types, v as FracDivType) })}
+            format={v => ({ fdi: 'Fraction ÷ integer', idf: 'Integer ÷ fraction', fdf: 'Fraction ÷ fraction' } as Record<FracDivType, string>)[v]}
+          />
+          <div className="flex justify-center gap-2">
+            <PillToggle
+              label="Mixed number answers"
+              active={c.fracDiv.mixed}
+              onToggle={() => updateConfig('fracDiv', { mixed: !c.fracDiv.mixed })}
             />
           </div>
         </>
