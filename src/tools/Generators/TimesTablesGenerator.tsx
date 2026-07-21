@@ -12,7 +12,7 @@ type Question = {
   answer: number;
   missing?: boolean; // true = missing-factor format
   key: string;       // canonical identity — commutative/duplicate questions share a key
-  table: number;     // source times table (the selected table it was generated from)
+  tables: number[];  // the selected tables among this fact's two factors (for distribution)
 };
 
 // ── QUESTION GENERATION ───────────────────────────────────────────────────────
@@ -56,29 +56,36 @@ const buildPools = (
   const addStd = (q: Question) => { if (!stdSeen.has(q.key)) { stdSeen.add(q.key); standardPool.push(q); } };
   const addMis = (q: Question) => { if (!misSeen.has(q.key)) { misSeen.add(q.key); missingPool.push(q); } };
 
+  const selectedSet = new Set(selectedTables);
+
   selectedTables.forEach(tt => {
     for (let other = 1; other <= 12; other++) {
       if (excludeOnes && (tt === 1 || other === 1)) continue;
       const product = tt * other;
 
+      // A fact's two factors are always tt and other; credit it to every
+      // selected table among them so distribution reflects both, not just the
+      // (smaller) table it happened to be generated under.
+      const tables = other !== tt && selectedSet.has(other) ? [tt, other] : [tt];
+
       if (includeMultiply) {
         const stdMulKey = suppressCommutative
           ? `sm|${Math.min(tt, other)}|${Math.max(tt, other)}`
           : `sm|${tt}|${other}`;
-        addStd({ question: `${tt} × ${other} = ___`, answer: product, key: stdMulKey, table: tt });
-        addMis({ question: `${tt} × ___ = ${product}`, answer: other, missing: true, key: `mm|${tt}|${product}`, table: tt });
-        addMis({ question: `___ × ${other} = ${product}`, answer: tt, missing: true, key: `mm|${other}|${product}`, table: tt });
+        addStd({ question: `${tt} × ${other} = ___`, answer: product, key: stdMulKey, tables });
+        addMis({ question: `${tt} × ___ = ${product}`, answer: other, missing: true, key: `mm|${tt}|${product}`, tables });
+        addMis({ question: `___ × ${other} = ${product}`, answer: tt, missing: true, key: `mm|${other}|${product}`, tables });
       }
       if (includeDivide) {
         // `${product} ÷ ${tt} = ${other}` has quotient `other` → n÷n=1 when other===1.
         if (!(suppressSelfDivide && other === 1)) {
-          addStd({ question: `${product} ÷ ${tt} = ___`, answer: other, key: `sd|${product}|${tt}`, table: tt });
-          addMis({ question: `___ ÷ ${tt} = ${other}`, answer: product, missing: true, key: `md|${tt}|${other}`, table: tt });
+          addStd({ question: `${product} ÷ ${tt} = ___`, answer: other, key: `sd|${product}|${tt}`, tables });
+          addMis({ question: `___ ÷ ${tt} = ${other}`, answer: product, missing: true, key: `md|${tt}|${other}`, tables });
         }
         // `${product} ÷ ${other} = ${tt}` has quotient `tt` → n÷n=1 when tt===1.
         if (other !== tt && !(suppressSelfDivide && tt === 1)) {
-          addStd({ question: `${product} ÷ ${other} = ___`, answer: tt, key: `sd|${product}|${other}`, table: tt });
-          addMis({ question: `___ ÷ ${other} = ${tt}`, answer: product, missing: true, key: `md|${other}|${tt}`, table: tt });
+          addStd({ question: `${product} ÷ ${other} = ___`, answer: tt, key: `sd|${product}|${other}`, tables });
+          addMis({ question: `___ ÷ ${other} = ${tt}`, answer: product, missing: true, key: `md|${other}|${tt}`, tables });
         }
       }
     }
@@ -88,27 +95,48 @@ const buildPools = (
 };
 
 // Even distribution across the selected tables. A plain shuffle-and-slice lets a
-// few tables dominate by chance; this round-robins one question per source table
-// per pass so every selected table contributes an equal share.
+// few tables dominate by chance. This repeatedly serves the *least-covered* table
+// and draws a random unused question that involves it, so coverage stays balanced
+// across tables. Because a fact is credited to both of its factors, a high table
+// is fed mostly by the many `k × N` facts — its own square/×1 are just one option
+// each and so stay rare rather than being force-included.
 const pickEvenSpread = (pool: Question[], count: number): Question[] => {
   if (count >= pool.length) return shuffle([...pool]);
-  const groups = new Map<number, Question[]>();
+
+  // Per-table queue of the questions that involve that table (shuffled).
+  const queues = new Map<number, Question[]>();
   for (const q of pool) {
-    const arr = groups.get(q.table) ?? [];
-    arr.push(q);
-    groups.set(q.table, arr);
-  }
-  const tableOrder = shuffle([...groups.keys()]);
-  groups.forEach(arr => shuffle(arr));
-  const result: Question[] = [];
-  let progressed = true;
-  while (result.length < count && progressed) {
-    progressed = false;
-    for (const t of tableOrder) {
-      if (result.length >= count) break;
-      const item = groups.get(t)!.pop();
-      if (item) { result.push(item); progressed = true; }
+    for (const t of q.tables) {
+      const arr = queues.get(t) ?? [];
+      arr.push(q);
+      queues.set(t, arr);
     }
+  }
+  queues.forEach(arr => shuffle(arr));
+
+  const counts = new Map<number, number>();
+  queues.forEach((_, t) => counts.set(t, 0));
+
+  const used = new Set<Question>();
+  const result: Question[] = [];
+
+  while (result.length < count) {
+    // Pick the least-covered table that still has an unused question.
+    let bestTable: number | null = null;
+    let bestCount = Infinity;
+    for (const t of shuffle([...queues.keys()])) {
+      const arr = queues.get(t)!;
+      while (arr.length && used.has(arr[arr.length - 1])) arr.pop(); // drop already-used
+      if (arr.length === 0) continue;
+      const c = counts.get(t)!;
+      if (c < bestCount) { bestCount = c; bestTable = t; }
+    }
+    if (bestTable === null) break; // pool exhausted
+
+    const chosen = queues.get(bestTable)!.pop()!;
+    used.add(chosen);
+    result.push(chosen);
+    for (const t of chosen.tables) counts.set(t, (counts.get(t) ?? 0) + 1);
   }
   return result;
 };
