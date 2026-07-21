@@ -308,7 +308,7 @@ export default function TimesTablesQuizGenerator() {
 
   // ── Reusable pill controls (matching the Maths Skills generator) ────────────
   const SectionLabel = ({ children }: { children: string }) => (
-    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">{children}</p>
+    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 text-center">{children}</p>
   );
 
   const PillToggle = ({ label, active, onToggle }: { label: string; active: boolean; onToggle: () => void }) => (
@@ -446,76 +446,68 @@ export default function TimesTablesQuizGenerator() {
           </h1>
           <p className="text-center text-gray-500 mb-6">Build a custom times tables worksheet, then export it to PDF</p>
 
-          {/* Question setup */}
+          {/* Question setup — one centred, flowing row of option groups */}
           <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+            <div className="flex flex-wrap justify-center items-start gap-x-10 gap-y-5">
 
-            {/* Operations + Format */}
-            <div className="grid sm:grid-cols-2 gap-6 mb-5">
-              <div>
+              {/* Operations */}
+              <div className="flex flex-col items-center">
                 <SectionLabel>Operations</SectionLabel>
                 <div className="flex gap-2">
                   <PillToggle label="× Multiply" active={includeMultiply} onToggle={() => setIncludeMultiply(v => !v)} />
                   <PillToggle label="÷ Divide" active={includeDivide} onToggle={() => setIncludeDivide(v => !v)} />
                 </div>
               </div>
-              <div>
+
+              {/* Question format */}
+              <div className="flex flex-col items-center">
                 <SectionLabel>Question format</SectionLabel>
                 <div className="flex gap-2">
                   <PillToggle label="Standard" active={includeStandard} onToggle={() => setIncludeStandard(v => !v)} />
                   <PillToggle label="Missing factor" active={includeMissingFactor} onToggle={() => setIncludeMissingFactor(v => !v)} />
                 </div>
               </div>
+
+              {/* Missing factor split — visible in the flow when both formats are on */}
+              {bothFormats && (
+                <div className="flex flex-col items-center">
+                  <SectionLabel>Missing factor split</SectionLabel>
+                  <div className="flex gap-2 items-center">
+                    <PillToggle label="Mixed in" active={!separateSections} onToggle={() => setSeparateSections(false)} />
+                    <PillToggle label="Separate" active={separateSections} onToggle={() => setSeparateSections(true)} />
+                    <input
+                      type="number"
+                      min={5}
+                      max={95}
+                      step={5}
+                      value={pctInput}
+                      onChange={e => setPctInput(e.target.value)}
+                      onBlur={commitPctInput}
+                      className="w-14 px-2 py-1.5 border-2 border-gray-200 rounded-full text-sm font-bold text-gray-800 text-center focus:outline-none focus:border-blue-900"
+                    />
+                    <span className="text-xs font-bold text-gray-400 whitespace-nowrap">% missing</span>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Question Options menu — matches the standard tool's QO popover */}
-            <div className="relative" ref={optionsRef}>
-              <button
-                onClick={() => setOptionsOpen(o => !o)}
-                className={`px-4 py-2 rounded-xl border-2 font-bold text-sm transition-colors shadow-sm flex items-center gap-2 ${
-                  optionsOpen
-                    ? 'bg-blue-900 border-blue-900 text-white'
-                    : 'bg-white border-gray-300 text-gray-600 hover:border-blue-900 hover:text-blue-900'
-                }`}
-              >
-                Question Options
-                <ChevronDown size={18} style={{ transition: 'transform 0.2s', transform: optionsOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
-              </button>
-              {optionsOpen && (
-                <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-[22rem] p-5 flex flex-col gap-5">
-
-                  {/* Missing factor split — only relevant when both formats are on */}
-                  {bothFormats && (
-                    <div className="flex flex-col gap-2">
-                      <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Missing factor split</span>
-                      <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden">
-                        <button
-                          onClick={() => setSeparateSections(false)}
-                          className={`flex-1 px-3 py-2 text-sm font-bold transition-colors ${!separateSections ? 'bg-blue-900 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
-                        >Mixed in</button>
-                        <button
-                          onClick={() => setSeparateSections(true)}
-                          className={`flex-1 px-3 py-2 text-sm font-bold transition-colors border-l-2 border-gray-200 ${separateSections ? 'bg-blue-900 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
-                        >Separate section</button>
-                      </div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <input
-                          type="number"
-                          min={5}
-                          max={95}
-                          step={5}
-                          value={pctInput}
-                          onChange={e => setPctInput(e.target.value)}
-                          onBlur={commitPctInput}
-                          className="w-16 px-2 py-1.5 border-2 border-gray-200 rounded-lg text-sm font-bold text-gray-800 text-center focus:outline-none focus:border-blue-900"
-                        />
-                        <span className="text-xs font-bold text-gray-500">% missing factor</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Extra options */}
-                  <div className="flex flex-col gap-3">
-                    <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Options</span>
+            {/* Question Options — centred menu for the extra fine-tuning toggles */}
+            <div className="flex justify-center mt-5">
+              <div className="relative" ref={optionsRef}>
+                <button
+                  onClick={() => setOptionsOpen(o => !o)}
+                  className={`px-4 py-1.5 rounded-full border-2 font-semibold text-sm transition-colors flex items-center gap-2 ${
+                    optionsOpen
+                      ? 'bg-blue-900 border-blue-900 text-white'
+                      : 'bg-white border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-900'
+                  }`}
+                >
+                  More options
+                  <ChevronDown size={16} style={{ transition: 'transform 0.2s', transform: optionsOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
+                </button>
+                {optionsOpen && (
+                  <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-[20rem] p-5 flex flex-col gap-3">
+                    <span className="text-sm font-bold text-gray-400 uppercase tracking-wider text-center">Options</span>
                     <TogglePill
                       label="Exclude × 1 / ÷ 1 facts"
                       checked={excludeOnes}
@@ -529,16 +521,16 @@ export default function TimesTablesQuizGenerator() {
                       />
                     )}
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
 
           {/* Times tables */}
           <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-center gap-3 mb-3">
               <SectionLabel>Times tables</SectionLabel>
-              <div className="flex gap-2">
+              <div className="flex gap-2 mb-2">
                 <button onClick={selectAll} className="px-3 py-1 rounded-full text-xs font-bold border-2 border-gray-200 bg-white text-gray-500 hover:border-blue-300 hover:text-blue-900 transition-all">
                   All
                 </button>
