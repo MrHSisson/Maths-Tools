@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Home, Eye, Download, RefreshCw, RotateCcw } from 'lucide-react';
+import { Home, Eye, Download, RefreshCw, RotateCcw, Plus, Check, X, SlidersHorizontal } from 'lucide-react';
 
 const TOOL_CONFIG = {
   pageTitle: 'Maths Skills Generator',
@@ -1129,117 +1129,6 @@ function mergeConfigs(saved?: Partial<SkillConfigs>): SkillConfigs {
 
 
 
-// ─── PRESETS ─────────────────────────────────────────────────────────────────
-
-type Preset = {
-  label: string;
-  desc: string;
-  enabledSkills: SkillId[];
-  skillCounts: Partial<Record<SkillId, number>>;
-  configs: Partial<SkillConfigs>;
-};
-
-const PRESETS: Preset[] = [
-  { label: 'Foundation Number',
-    desc: 'Bonds, easy tables & addition',
-    enabledSkills: ['numberBonds', 'timesTables', 'addition'],
-    skillCounts: { numberBonds: 10, timesTables: 10, addition: 10 },
-    configs: {
-      numberBonds: { targets: [10, 20] },
-      timesTables: { range: 10, specificTables: [2, 5, 10], suppressDuplicates: false },
-      addition: { digitBands: [2], allowCarrying: false },
-    },
-  },
-  {
-    label: 'Four Operations',
-    desc: 'Tables, division, +/− methods',
-    enabledSkills: ['timesTables', 'reverseTT', 'addition', 'subtraction'],
-    skillCounts: { timesTables: 8, reverseTT: 8, addition: 7, subtraction: 7 },
-    configs: {
-      timesTables: { range: 12, specificTables: [], suppressDuplicates: false },
-      reverseTT: { range: 12 },
-      addition: { digitBands: [2, 3], allowCarrying: true },
-      subtraction: { digitBands: [2, 3], requireExchange: false },
-    },
-  },
-  {
-    label: 'Multiplication & Division',
-    desc: 'Written ×/÷ with tables recall',
-    enabledSkills: ['timesTables', 'reverseTT', 'multiplication', 'busStop'],
-    skillCounts: { timesTables: 8, reverseTT: 7, multiplication: 8, busStop: 7 },
-    configs: {
-      timesTables: { range: 12, specificTables: [], suppressDuplicates: true },
-      reverseTT: { range: 12 },
-      multiplication: { types: ['2dx1d', '3dx1d'] },
-      busStop: { types: ['2d1d', '3d1d'] },
-    },
-  },
-  {
-    label: 'Higher Calculation',
-    desc: 'Long ×/÷, negatives & indices',
-    enabledSkills: ['multiplication', 'busStop', 'negatives', 'indices'],
-    skillCounts: { multiplication: 8, busStop: 8, negatives: 7, indices: 7 },
-    configs: {
-      multiplication: { types: ['2dx2d', '3dx1d', '3dx2d'] },
-      busStop: { types: ['3d1d', '3d2d'] },
-      negatives: { operations: ['addition', 'subtraction', 'multiplication'], range: 10 },
-      indices: { baseRange: 10, exponentRange: [2, 3] },
-    },
-  },
-  {
-    label: 'Times Tables Focus',
-    desc: 'Tables & division facts only',
-    enabledSkills: ['timesTables', 'reverseTT'],
-    skillCounts: { timesTables: 15, reverseTT: 15 },
-    configs: {
-      timesTables: { range: 12, specificTables: [], suppressDuplicates: false },
-      reverseTT: { range: 12 },
-    },
-  },
-  {
-    label: 'Number Bonds Focus',
-    desc: 'Bonds to 10, 20, 50 & 100',
-    enabledSkills: ['numberBonds'],
-    skillCounts: { numberBonds: 30 },
-    configs: {
-      numberBonds: { targets: [10, 20, 50, 100] },
-    },
-  },
-  {
-    label: 'Number Sense',
-    desc: 'Powers of 10, rounding & primes',
-    enabledSkills: ['powersOfTen', 'rounding', 'primes'],
-    skillCounts: { powersOfTen: 10, rounding: 10, primes: 10 },
-    configs: {
-      powersOfTen: { operations: ['multiply', 'divide'], powers: [10, 100, 1000], baseTypes: ['int', '1dp'] },
-      rounding: { targets: ['n10', 'n100', '1dp'], edgeCases: false },
-      primes: { tasks: ['identify', 'next'], max: 50 },
-    },
-  },
-  {
-    label: 'Proportion & BIDMAS',
-    desc: 'FDP, metric units & order of ops',
-    enabledSkills: ['fdp', 'metric', 'bidmas'],
-    skillCounts: { fdp: 10, metric: 10, bidmas: 10 },
-    configs: {
-      fdp: { paths: ['fd', 'dp', 'fp'], complexities: ['common', 'extended'] },
-      metric: { categories: ['length', 'mass', 'capacity'], steps: ['adjacent'], decimals: true },
-      bidmas: { steps: [2, 3], brackets: true, indices: true, allowNegatives: false },
-    },
-  },
-  {
-    label: 'Fractions — Four Ops',
-    desc: 'Add, subtract, multiply & divide',
-    enabledSkills: ['fracAdd', 'fracSub', 'fracMul', 'fracDiv'],
-    skillCounts: { fracAdd: 8, fracSub: 7, fracMul: 8, fracDiv: 7 },
-    configs: {
-      fracAdd: { denomTypes: ['common', 'multiple', 'lcm'], mixed: false },
-      fracSub: { denomTypes: ['common', 'multiple'], mixed: false },
-      fracMul: { types: ['fxi', 'fxf'], mixed: true },
-      fracDiv: { types: ['fdi', 'idf', 'fdf'], mixed: true },
-    },
-  },
-];
 
 
 
@@ -1270,21 +1159,6 @@ export default function MathsSkillsGenerator() {
 
   const total = enabledSkills.reduce((sum, s) => sum + skillCounts[s], 0);
   const overBudget = total > maxQuestions;
-
-  const applyPreset = (preset: Preset) => {
-    setEnabledSkills(preset.enabledSkills);
-    setSkillCounts(prev => ({ ...prev, ...preset.skillCounts }));
-    setConfigs(prev => {
-      const next = { ...prev };
-      for (const [k, v] of Object.entries(preset.configs)) {
-        (next as any)[k] = { ...(prev as any)[k], ...(v as any) };
-      }
-      return next;
-    });
-    setExpandedSkill(null);
-    setError('');
-    setPreviewQuestions([]);
-  };
 
   const clearAll = () => {
     setEnabledSkills([]);
@@ -1404,11 +1278,10 @@ export default function MathsSkillsGenerator() {
     onToggle: (v: T) => void;
     format?: (v: T) => string;
   }) => {
-    const cols = options.length > 4 ? Math.ceil(options.length / 2) : options.length;
     return (
       <div className="mb-4">
         <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">{label}</p>
-        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, auto)`, gap: '6px', justifyContent: 'center' }}>
+        <div className="flex flex-wrap gap-1.5 justify-center">
           {options.map(opt => {
             const active = selected.includes(opt);
             return (
@@ -1440,11 +1313,10 @@ export default function MathsSkillsGenerator() {
     onSelect: (v: T) => void;
     format?: (v: T) => string;
   }) => {
-    const cols = options.length > 4 ? Math.ceil(options.length / 2) : options.length;
     return (
       <div className="mb-4">
         <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">{label}</p>
-        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, auto)`, gap: '6px', justifyContent: 'center' }}>
+        <div className="flex flex-wrap gap-1.5 justify-center">
           {options.map(opt => {
             const active = selected === opt;
             return (
@@ -1891,215 +1763,131 @@ export default function MathsSkillsGenerator() {
 
       {/* Main */}
       <div className="min-h-screen p-8" style={{ backgroundColor: '#f5f3f0' }}>
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-5xl mx-auto">
 
           <h1 className="text-5xl font-bold text-center mb-2" style={{ color: '#000000' }}>
             {TOOL_CONFIG.pageTitle}
           </h1>
-          <p className="text-center text-gray-500 mb-6">Build a custom worksheet by selecting skills and question counts</p>
+          <p className="text-center text-gray-500 mb-6">Build a worksheet with intent — browse skills on the left, compose your sheet on the right.</p>
 
-          {/* Quick-start presets */}
-          <div className="bg-white rounded-2xl shadow-lg mb-6 p-5">
-            <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Quick-start presets</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {PRESETS.map(p => (
-                <button
-                  key={p.label}
-                  onClick={() => applyPreset(p)}
-                  className="text-left p-3 rounded-xl border-2 border-gray-200 bg-white hover:border-blue-400 hover:bg-blue-50 transition-all"
-                >
-                  <div className="font-bold text-sm text-gray-900 leading-tight">{p.label}</div>
-                  <div className="text-xs text-gray-400 mt-1 leading-snug">{p.desc}</div>
-                </button>
-              ))}
-            </div>
-          </div>
+          {/* Browse + build */}
+          <div className="flex flex-col lg:flex-row gap-6 items-start mb-6">
 
-          {/* Toolbar */}
-          <div className="bg-white rounded-2xl shadow-lg mb-6 px-6 py-4 flex items-center gap-4 flex-wrap justify-center">
-
-            {/* Max questions */}
-            <div className="flex items-center gap-2">
-              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">Max</label>
-              <input
-                type="number"
-                min={3} max={30} step={3}
-                value={maxQuestions}
-                onChange={e => {
-                  const v = Math.min(30, Math.max(3, parseInt(e.target.value) || 3));
-                  setMaxQuestions(v);
-                }}
-                className="w-16 px-2 py-1.5 border-2 border-gray-200 rounded-lg text-sm font-bold text-gray-800 text-center focus:outline-none focus:border-blue-900"
-              />
-            </div>
-
-            <div className="w-px self-stretch bg-gray-200 flex-shrink-0" />
-
-            {/* Pages */}
-            <div className="flex items-center gap-2">
-              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">Pages</label>
-              <input
-                type="number"
-                min={1} max={12} step={1}
-                value={numPages}
-                onChange={e => {
-                  const v = Math.min(12, Math.max(1, parseInt(e.target.value) || 1));
-                  setNumPages(v);
-                }}
-                className="w-16 px-2 py-1.5 border-2 border-gray-200 rounded-lg text-sm font-bold text-gray-800 text-center focus:outline-none focus:border-blue-900"
-              />
-            </div>
-
-            <div className="w-px self-stretch bg-gray-200 flex-shrink-0" />
-
-            {/* Order */}
-            <div className="flex items-center gap-2">
-              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">Order</label>
-              <div className="flex rounded-lg overflow-hidden border-2 border-gray-200">
-                <button
-                  onClick={() => setGrouped(false)}
-                  className={`px-3 py-1.5 text-sm font-bold transition-all ${!grouped ? 'bg-blue-900 text-white' : 'bg-white text-gray-500 hover:text-blue-900'}`}
-                >Mixed</button>
-                <button
-                  onClick={() => setGrouped(true)}
-                  className={`px-3 py-1.5 text-sm font-bold transition-all border-l-2 border-gray-200 ${grouped ? 'bg-blue-900 text-white' : 'bg-white text-gray-500 hover:text-blue-900'}`}
-                >Grouped</button>
+            {/* LEFT — browse skills by category */}
+            <div className="flex-1 w-full bg-white rounded-2xl shadow-lg overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-100">
+                <h2 className="font-bold text-gray-900">Browse skills</h2>
+                <p className="text-xs text-gray-400 mt-0.5">Tap a skill to add it to your worksheet.</p>
               </div>
-            </div>
-
-          </div>
-
-          {/* Skill list */}
-          <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-6">
-
-            {/* Budget bar */}
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="font-semibold text-gray-700">Questions</span>
-                {enabledSkills.length > 0 && (
-                  <button
-                    onClick={clearAll}
-                    className="flex items-center gap-1 text-xs font-bold text-gray-400 hover:text-red-600 transition-colors"
-                    title="Turn off all skills"
-                  >
-                    <RotateCcw size={13} /> Clear all
-                  </button>
-                )}
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-40 h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all ${overBudget ? 'bg-red-500' : 'bg-blue-900'}`}
-                    style={{ width: `${Math.min(100, (total / maxQuestions) * 100)}%` }}
-                  />
-                </div>
-                <span className={`text-sm font-bold tabular-nums w-16 text-right ${overBudget ? 'text-red-600' : 'text-gray-700'}`}>
-                  {total} / {maxQuestions}
-                </span>
-              </div>
-            </div>
-
-            {SKILL_GROUPS.map(group => {
-              const activeInGroup = group.skills.filter(s => enabledSkills.includes(s)).length;
-              return (
-                <div key={group.label}>
-                  {/* Group header */}
-                  <div className="px-6 py-2 bg-slate-100/70 border-y border-slate-100 flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">{group.label}</span>
-                    {activeInGroup > 0 && (
-                      <span className="text-[11px] font-bold text-blue-900 tabular-nums">{activeInGroup} selected</span>
-                    )}
-                  </div>
-                  <div className="divide-y divide-gray-100">
-                    {group.skills.map(skill => {
-                      const enabled = enabledSkills.includes(skill);
-                      const expanded = expandedSkill === skill;
-
-                      return (
-                        <div key={skill}>
-                          {/* Row */}
-                    <div className={`flex items-center gap-4 px-6 py-4 transition-colors ${enabled ? 'bg-white' : 'bg-gray-50/60'}`}>
-
-                      {/* Toggle switch */}
-                      <button
-                        onClick={() => toggleSkill(skill)}
-                        style={{
-                          position: 'relative',
-                          flexShrink: 0,
-                          width: '44px',
-                          height: '24px',
-                          borderRadius: '12px',
-                          backgroundColor: enabled ? '#1e3a8a' : '#d1d5db',
-                          border: 'none',
-                          cursor: 'pointer',
-                          transition: 'background-color 0.2s',
-                          padding: 0,
-                        }}
-                      >
-                        <span style={{
-                          position: 'absolute',
-                          top: '3px',
-                          left: enabled ? '23px' : '3px',
-                          width: '18px',
-                          height: '18px',
-                          borderRadius: '50%',
-                          backgroundColor: 'white',
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                          transition: 'left 0.2s',
-                          display: 'block',
-                        }} />
-                      </button>
-
-                      {/* Label */}
-                      <div className="flex-1 min-w-0">
-                        <span className={`font-bold text-sm ${enabled ? 'text-gray-900' : 'text-gray-400'}`}>
-                          {SKILL_META[skill].label}
-                        </span>
-                        <span className={`ml-2 text-xs ${enabled ? 'text-gray-400' : 'text-gray-300'}`}>
-                          {SKILL_META[skill].description}
-                        </span>
-                      </div>
-
-                      {/* Right side: stepper + options */}
-                      {enabled ? (
-                        <div className="flex items-center gap-3 flex-shrink-0">
-                          {/* Stepper */}
-                          <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-                            <button
-                              onClick={() => adjustCount(skill, -1)}
-                              disabled={skillCounts[skill] <= 1}
-                              className="w-7 h-7 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-lg leading-none"
-                            >−</button>
-                            <span className="w-7 text-center text-sm font-bold text-gray-800 tabular-nums">
-                              {skillCounts[skill]}
-                            </span>
-                            <button
-                              onClick={() => adjustCount(skill, 1)}
-                              disabled={total >= maxQuestions}
-                              className="w-7 h-7 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-lg leading-none"
-                            >+</button>
-                          </div>
-
-                          {/* Options toggle */}
-                          <button
-                            onClick={() => setExpandedSkill(expanded ? null : skill)}
-                            className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-all ${
-                              expanded
-                                ? 'bg-blue-900 border-blue-900 text-white'
-                                : 'border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-900 bg-white'
-                            }`}
-                          >
-                            Options
-                          </button>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-gray-300 flex-shrink-0">off</span>
+              {SKILL_GROUPS.map(group => {
+                const activeInGroup = group.skills.filter(s => enabledSkills.includes(s)).length;
+                return (
+                  <div key={group.label}>
+                    <div className="px-6 py-2 bg-slate-100/70 border-y border-slate-100 flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">{group.label}</span>
+                      {activeInGroup > 0 && (
+                        <span className="text-[11px] font-bold text-blue-900 tabular-nums">{activeInGroup} added</span>
                       )}
                     </div>
+                    <div className="divide-y divide-gray-100">
+                      {group.skills.map(skill => {
+                        const enabled = enabledSkills.includes(skill);
+                        return (
+                          <button
+                            key={skill}
+                            onClick={() => toggleSkill(skill)}
+                            className={`w-full flex items-center gap-3 px-6 py-3 text-left transition-colors ${enabled ? 'bg-blue-50/60' : 'hover:bg-gray-50'}`}
+                          >
+                            <span className={`flex items-center justify-center w-6 h-6 rounded-full border-2 flex-shrink-0 transition-colors ${enabled ? 'bg-blue-900 border-blue-900 text-white' : 'border-gray-300 text-gray-400'}`}>
+                              {enabled ? <Check size={14} /> : <Plus size={14} />}
+                            </span>
+                            <span className="flex-1 min-w-0">
+                              <span className={`block font-bold text-sm ${enabled ? 'text-blue-900' : 'text-gray-800'}`}>{SKILL_META[skill].label}</span>
+                              <span className="block text-xs text-gray-400 truncate">{SKILL_META[skill].description}</span>
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
 
-                          {/* Expanded config */}
-                          {enabled && expanded && (
-                            <div className="px-6 pb-5 bg-slate-50 border-t border-slate-100">
+            {/* RIGHT — your worksheet (sticky) */}
+            <div className="w-full lg:w-96 flex-shrink-0 lg:sticky lg:top-6">
+              <div className="bg-white rounded-2xl shadow-lg p-5">
+
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-lg font-bold text-gray-900">Your worksheet</h2>
+                  {enabledSkills.length > 0 && (
+                    <button
+                      onClick={clearAll}
+                      className="flex items-center gap-1 text-xs font-bold text-gray-400 hover:text-red-600 transition-colors"
+                      title="Remove all skills"
+                    >
+                      <RotateCcw size={13} /> Clear
+                    </button>
+                  )}
+                </div>
+
+                {/* Budget bar */}
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${overBudget ? 'bg-red-500' : 'bg-blue-900'}`}
+                      style={{ width: `${Math.min(100, (total / maxQuestions) * 100)}%` }}
+                    />
+                  </div>
+                  <span className={`text-sm font-bold tabular-nums ${overBudget ? 'text-red-600' : 'text-gray-700'}`}>
+                    {total} / {maxQuestions}
+                  </span>
+                </div>
+
+                {/* Selected skills */}
+                {enabledSkills.length === 0 ? (
+                  <p className="text-sm text-gray-400 text-center py-6 px-2">
+                    Nothing added yet. Pick skills from the left to build your worksheet with intent.
+                  </p>
+                ) : (
+                  <div className="space-y-2 mb-4">
+                    {enabledSkills.map((skill, i) => {
+                      const expanded = expandedSkill === skill;
+                      return (
+                        <div key={skill} className="rounded-xl border border-gray-200">
+                          <div className="flex items-center gap-2 px-3 py-2.5">
+                            <span className="text-xs font-bold text-gray-300 w-4 flex-shrink-0 tabular-nums">{i + 1}</span>
+                            <span className="flex-1 min-w-0 font-bold text-sm text-gray-900 truncate">{SKILL_META[skill].label}</span>
+                            <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5 flex-shrink-0">
+                              <button
+                                onClick={() => adjustCount(skill, -1)}
+                                disabled={skillCounts[skill] <= 1}
+                                className="w-6 h-6 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed font-bold text-base leading-none"
+                              >−</button>
+                              <span className="w-6 text-center text-sm font-bold text-gray-800 tabular-nums">{skillCounts[skill]}</span>
+                              <button
+                                onClick={() => adjustCount(skill, 1)}
+                                disabled={total >= maxQuestions}
+                                className="w-6 h-6 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed font-bold text-base leading-none"
+                              >+</button>
+                            </div>
+                            <button
+                              onClick={() => setExpandedSkill(expanded ? null : skill)}
+                              title="Options"
+                              className={`w-7 h-7 flex items-center justify-center rounded-lg border flex-shrink-0 transition-all ${expanded ? 'bg-blue-900 border-blue-900 text-white' : 'border-gray-200 text-gray-400 hover:border-blue-300 hover:text-blue-900'}`}
+                            >
+                              <SlidersHorizontal size={14} />
+                            </button>
+                            <button
+                              onClick={() => toggleSkill(skill)}
+                              title="Remove"
+                              className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-300 hover:text-red-600 hover:bg-red-50 flex-shrink-0 transition-all"
+                            >
+                              <X size={15} />
+                            </button>
+                          </div>
+                          {expanded && (
+                            <div className="px-3 pb-3 pt-1 border-t border-gray-100">
                               {renderConfig(skill)}
                             </div>
                           )}
@@ -2107,40 +1895,73 @@ export default function MathsSkillsGenerator() {
                       );
                     })}
                   </div>
+                )}
+
+                {/* Worksheet settings */}
+                <div className="border-t border-gray-100 pt-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Max questions</label>
+                    <input
+                      type="number"
+                      min={3} max={30} step={3}
+                      value={maxQuestions}
+                      onChange={e => setMaxQuestions(Math.min(30, Math.max(3, parseInt(e.target.value) || 3)))}
+                      className="w-16 px-2 py-1.5 border-2 border-gray-200 rounded-lg text-sm font-bold text-gray-800 text-center focus:outline-none focus:border-blue-900"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Pages</label>
+                    <input
+                      type="number"
+                      min={1} max={12} step={1}
+                      value={numPages}
+                      onChange={e => setNumPages(Math.min(12, Math.max(1, parseInt(e.target.value) || 1)))}
+                      className="w-16 px-2 py-1.5 border-2 border-gray-200 rounded-lg text-sm font-bold text-gray-800 text-center focus:outline-none focus:border-blue-900"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Order</label>
+                    <div className="flex rounded-lg overflow-hidden border-2 border-gray-200">
+                      <button
+                        onClick={() => setGrouped(false)}
+                        className={`px-3 py-1 text-sm font-bold transition-all ${!grouped ? 'bg-blue-900 text-white' : 'bg-white text-gray-500 hover:text-blue-900'}`}
+                      >Mixed</button>
+                      <button
+                        onClick={() => setGrouped(true)}
+                        className={`px-3 py-1 text-sm font-bold transition-all border-l-2 border-gray-200 ${grouped ? 'bg-blue-900 text-white' : 'bg-white text-gray-500 hover:text-blue-900'}`}
+                      >Grouped</button>
+                    </div>
+                  </div>
                 </div>
-              );
-            })}
-          </div>
 
-          {/* Error */}
-          {error && (
-            <div className="mb-4 px-4 py-3 bg-red-50 border-2 border-red-400 rounded-xl text-red-700 font-semibold text-sm text-center">
-              {error}
+                {/* Error */}
+                {error && (
+                  <div className="mt-4 px-3 py-2 bg-red-50 border-2 border-red-400 rounded-xl text-red-700 font-semibold text-xs text-center">
+                    {error}
+                  </div>
+                )}
+
+                {/* Generate buttons */}
+                <div className="flex flex-col gap-2 mt-4">
+                  <button
+                    onClick={handleGeneratePreview}
+                    disabled={!canGenerate || overBudget}
+                    className={`w-full py-3 rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-all ${(!canGenerate || overBudget) ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white border-2 border-blue-900 text-blue-900 hover:bg-blue-50 shadow-sm'}`}
+                  >
+                    <Eye size={20} /> Preview
+                  </button>
+                  <button
+                    onClick={handleGeneratePDF}
+                    disabled={!canGenerate || overBudget}
+                    className={`w-full py-3 rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-all ${(!canGenerate || overBudget) ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-blue-900 text-white hover:bg-blue-800 shadow-lg'}`}
+                  >
+                    <Download size={20} /> Generate PDF
+                  </button>
+                </div>
+
+              </div>
             </div>
-          )}
 
-          {/* Generate buttons */}
-          <div className="flex gap-3 mb-8">
-            <button
-              onClick={handleGeneratePreview}
-              disabled={!canGenerate || overBudget}
-              className={`flex-1 py-3.5 rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-all ${
-                !canGenerate || overBudget
-                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  : 'bg-white border-2 border-blue-900 text-blue-900 hover:bg-blue-50 shadow-sm'}`}
-            >
-              <Eye size={20} /> Preview
-            </button>
-            <button
-              onClick={handleGeneratePDF}
-              disabled={!canGenerate || overBudget}
-              className={`flex-1 py-3.5 rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-all ${
-                !canGenerate || overBudget
-                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  : 'bg-blue-900 text-white hover:bg-blue-800 shadow-lg'}`}
-            >
-              <Download size={20} /> Generate PDF
-            </button>
           </div>
 
           {/* Preview grid */}
@@ -2176,10 +1997,10 @@ export default function MathsSkillsGenerator() {
             <h3 className="font-bold text-gray-900 mb-3">How it works</h3>
             <ul className="space-y-1.5 text-sm text-gray-600">
               {[
-                'Tap a quick-start preset to load a ready-made mix, or build your own from the grouped skill list.',
-                'Toggle skills on, then use − / + to set how many questions each one contributes.',
-                'Maximum 30 questions total — the budget bar shows how many you have left. Use Clear all to reset.',
-                'Click Options on any skill to configure difficulty and number ranges.',
+                'Browse skills by topic on the left and tap to add them; they appear in "Your worksheet" on the right.',
+                'In your worksheet, use − / + to set how many questions each skill contributes, and the sliders icon to configure its difficulty and ranges.',
+                'Maximum 30 questions total — the budget bar shows how many you have left. Use Clear to start over.',
+                'Set the total, number of pages and question order (mixed or grouped) under your worksheet.',
                 'Preview shows a sample; Generate PDF opens a print-ready worksheet with answers.',
                 'Your setup is saved automatically and restored when you come back.',
               ].map((t, i) => (
