@@ -314,7 +314,7 @@ export default function TimesTablesQuizGenerator() {
   const PillToggle = ({ label, active, onToggle }: { label: string; active: boolean; onToggle: () => void }) => (
     <button
       onClick={onToggle}
-      className={`px-4 py-1.5 rounded-full text-sm font-semibold border-2 transition-all ${
+      className={`px-4 py-1.5 rounded-lg text-sm font-semibold border-2 transition-all ${
         active
           ? 'bg-blue-900 border-blue-900 text-white'
           : 'bg-white border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-900'
@@ -483,7 +483,7 @@ export default function TimesTablesQuizGenerator() {
                       value={pctInput}
                       onChange={e => setPctInput(e.target.value)}
                       onBlur={commitPctInput}
-                      className="w-14 px-2 py-1.5 border-2 border-gray-200 rounded-full text-sm font-bold text-gray-800 text-center focus:outline-none focus:border-blue-900"
+                      className="w-14 px-2 py-1.5 border-2 border-gray-200 rounded-lg text-sm font-bold text-gray-800 text-center focus:outline-none focus:border-blue-900"
                     />
                     <span className="text-xs font-bold text-gray-400 whitespace-nowrap">% missing</span>
                   </div>
@@ -496,7 +496,7 @@ export default function TimesTablesQuizGenerator() {
               <div className="relative" ref={optionsRef}>
                 <button
                   onClick={() => setOptionsOpen(o => !o)}
-                  className={`px-4 py-1.5 rounded-full border-2 font-semibold text-sm transition-colors flex items-center gap-2 ${
+                  className={`px-4 py-1.5 rounded-lg border-2 font-semibold text-sm transition-colors flex items-center gap-2 ${
                     optionsOpen
                       ? 'bg-blue-900 border-blue-900 text-white'
                       : 'bg-white border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-900'
@@ -531,10 +531,10 @@ export default function TimesTablesQuizGenerator() {
             <div className="flex items-center justify-center gap-3 mb-3">
               <SectionLabel>Times tables</SectionLabel>
               <div className="flex gap-2 mb-2">
-                <button onClick={selectAll} className="px-3 py-1 rounded-full text-xs font-bold border-2 border-gray-200 bg-white text-gray-500 hover:border-blue-300 hover:text-blue-900 transition-all">
+                <button onClick={selectAll} className="px-3 py-1 rounded-lg text-xs font-bold border-2 border-gray-200 bg-white text-gray-500 hover:border-blue-300 hover:text-blue-900 transition-all">
                   All
                 </button>
-                <button onClick={selectNone} className="px-3 py-1 rounded-full text-xs font-bold border-2 border-gray-200 bg-white text-gray-500 hover:border-blue-300 hover:text-blue-900 transition-all">
+                <button onClick={selectNone} className="px-3 py-1 rounded-lg text-xs font-bold border-2 border-gray-200 bg-white text-gray-500 hover:border-blue-300 hover:text-blue-900 transition-all">
                   None
                 </button>
               </div>
