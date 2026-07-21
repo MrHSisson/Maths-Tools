@@ -1,5 +1,5 @@
-import { Fragment, useState } from 'react';
-import { Download, Home, Eye, RefreshCw } from 'lucide-react';
+import { Fragment, useState, useEffect, useRef } from 'react';
+import { Download, Home, Eye, RefreshCw, ChevronDown } from 'lucide-react';
 
 const TOOL_CONFIG = {
   pageTitle: 'Times Tables Generator',
@@ -293,6 +293,18 @@ export default function TimesTablesQuizGenerator() {
   const [layoutMode, setLayoutMode] = useState<LayoutMode>('list');
   const [error, setError] = useState<string>('');
   const [previewQuestions, setPreviewQuestions] = useState<Question[]>([]);
+  const [optionsOpen, setOptionsOpen] = useState<boolean>(false);
+
+  // Close the Question Options popover on an outside click.
+  const optionsRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!optionsOpen) return;
+    const h = (e: MouseEvent) => {
+      if (optionsRef.current && !optionsRef.current.contains(e.target as Node)) setOptionsOpen(false);
+    };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, [optionsOpen]);
 
   // ── Reusable pill controls (matching the Maths Skills generator) ────────────
   const SectionLabel = ({ children }: { children: string }) => (
@@ -310,6 +322,20 @@ export default function TimesTablesQuizGenerator() {
     >
       {label}
     </button>
+  );
+
+  // Switch-style toggle used inside the Question Options popover (matches the
+  // standard tool's QO menu).
+  const TogglePill = ({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) => (
+    <label className="flex items-center gap-3 cursor-pointer py-1">
+      <div
+        onClick={() => onChange(!checked)}
+        className={`w-12 h-6 rounded-full transition-colors relative flex-shrink-0 cursor-pointer ${checked ? 'bg-blue-900' : 'bg-gray-300'}`}
+      >
+        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${checked ? 'translate-x-7' : 'translate-x-1'}`} />
+      </div>
+      <span className="text-sm font-semibold text-gray-700">{label}</span>
+    </label>
   );
 
   const maxQ = layoutMode === 'cells' ? 45 : 60;
@@ -441,47 +467,70 @@ export default function TimesTablesQuizGenerator() {
               </div>
             </div>
 
-            {/* Missing factor split — only when both formats are on */}
-            {bothFormats && (
-              <div className="mb-5 p-4 rounded-xl bg-slate-50 border border-slate-100">
-                <SectionLabel>Missing factor split</SectionLabel>
-                <div className="flex gap-2 items-center flex-wrap">
-                  <PillToggle label="Mixed in" active={!separateSections} onToggle={() => setSeparateSections(false)} />
-                  <PillToggle label="Separate section" active={separateSections} onToggle={() => setSeparateSections(true)} />
-                  <div className="flex items-center gap-1.5 ml-1">
-                    <input
-                      type="number"
-                      min={5}
-                      max={95}
-                      step={5}
-                      value={pctInput}
-                      onChange={e => setPctInput(e.target.value)}
-                      onBlur={commitPctInput}
-                      className="w-16 px-2 py-1.5 border-2 border-gray-200 rounded-lg text-sm font-bold text-gray-800 text-center focus:outline-none focus:border-blue-900"
+            {/* Question Options menu — matches the standard tool's QO popover */}
+            <div className="relative" ref={optionsRef}>
+              <button
+                onClick={() => setOptionsOpen(o => !o)}
+                className={`px-4 py-2 rounded-xl border-2 font-bold text-sm transition-colors shadow-sm flex items-center gap-2 ${
+                  optionsOpen
+                    ? 'bg-blue-900 border-blue-900 text-white'
+                    : 'bg-white border-gray-300 text-gray-600 hover:border-blue-900 hover:text-blue-900'
+                }`}
+              >
+                Question Options
+                <ChevronDown size={18} style={{ transition: 'transform 0.2s', transform: optionsOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
+              </button>
+              {optionsOpen && (
+                <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-[22rem] p-5 flex flex-col gap-5">
+
+                  {/* Missing factor split — only relevant when both formats are on */}
+                  {bothFormats && (
+                    <div className="flex flex-col gap-2">
+                      <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Missing factor split</span>
+                      <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden">
+                        <button
+                          onClick={() => setSeparateSections(false)}
+                          className={`flex-1 px-3 py-2 text-sm font-bold transition-colors ${!separateSections ? 'bg-blue-900 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                        >Mixed in</button>
+                        <button
+                          onClick={() => setSeparateSections(true)}
+                          className={`flex-1 px-3 py-2 text-sm font-bold transition-colors border-l-2 border-gray-200 ${separateSections ? 'bg-blue-900 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                        >Separate section</button>
+                      </div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <input
+                          type="number"
+                          min={5}
+                          max={95}
+                          step={5}
+                          value={pctInput}
+                          onChange={e => setPctInput(e.target.value)}
+                          onBlur={commitPctInput}
+                          className="w-16 px-2 py-1.5 border-2 border-gray-200 rounded-lg text-sm font-bold text-gray-800 text-center focus:outline-none focus:border-blue-900"
+                        />
+                        <span className="text-xs font-bold text-gray-500">% missing factor</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Extra options */}
+                  <div className="flex flex-col gap-3">
+                    <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Options</span>
+                    <TogglePill
+                      label="Exclude × 1 / ÷ 1 facts"
+                      checked={excludeOnes}
+                      onChange={setExcludeOnes}
                     />
-                    <span className="text-xs font-bold text-gray-500">% missing factor</span>
+                    {includeMultiply && (
+                      <TogglePill
+                        label="Suppress 4×5 / 5×4 duplicates"
+                        checked={suppressCommutative}
+                        onChange={setSuppressCommutative}
+                      />
+                    )}
                   </div>
                 </div>
-              </div>
-            )}
-
-            {/* Extra options */}
-            <div>
-              <SectionLabel>Options</SectionLabel>
-              <div className="flex gap-2 flex-wrap">
-                <PillToggle
-                  label="Exclude × 1 / ÷ 1"
-                  active={excludeOnes}
-                  onToggle={() => setExcludeOnes(v => !v)}
-                />
-                {includeMultiply && (
-                  <PillToggle
-                    label="Suppress 4×5 / 5×4 duplicates"
-                    active={suppressCommutative}
-                    onToggle={() => setSuppressCommutative(v => !v)}
-                  />
-                )}
-              </div>
+              )}
             </div>
           </div>
 
