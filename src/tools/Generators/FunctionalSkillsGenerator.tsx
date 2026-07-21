@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Home, Eye, Download, RefreshCw, RotateCcw, Plus, X } from 'lucide-react';
 
 const TOOL_CONFIG = {
@@ -1148,6 +1148,18 @@ export default function MathsSkillsGenerator() {
   const [error, setError] = useState<string>('');
   const [expandedSkill, setExpandedSkill] = useState<SkillId | null>(null);
 
+  // Close the open skill pop-over on an outside click (the ref wraps the open
+  // tile + its pop-over, so clicks on either are ignored).
+  const popoverRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!expandedSkill) return;
+    const h = (e: MouseEvent) => {
+      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) setExpandedSkill(null);
+    };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, [expandedSkill]);
+
   // Mirror the setup to localStorage whenever it changes.
   useEffect(() => {
     try {
@@ -1780,19 +1792,62 @@ export default function MathsSkillsGenerator() {
                   <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5">
                     {group.skills.map(skill => {
                       const enabled = enabledSkills.includes(skill);
+                      const open = expandedSkill === skill;
                       return (
-                        <button
-                          key={skill}
-                          onClick={() => setExpandedSkill(skill)}
-                          className={`relative text-left rounded-xl border-2 p-3 pr-9 min-h-[4.5rem] flex flex-col justify-center transition-all ${enabled ? 'bg-blue-900 border-blue-900 shadow-md' : 'bg-white border-gray-200 hover:border-blue-300 shadow-sm'}`}
-                        >
-                          <span className={`font-bold text-sm leading-tight ${enabled ? 'text-white' : 'text-gray-800'}`}>{SKILL_META[skill].label}</span>
-                          {enabled ? (
-                            <span className="absolute top-2 right-2 min-w-[1.5rem] h-6 px-1.5 flex items-center justify-center rounded-full bg-white text-blue-900 text-sm font-extrabold tabular-nums">{skillCounts[skill]}</span>
-                          ) : (
-                            <span className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full border-2 border-gray-200 text-gray-300"><Plus size={14} /></span>
+                        <div key={skill} className="relative" ref={open ? popoverRef : undefined}>
+                          <button
+                            onClick={() => setExpandedSkill(prev => (prev === skill ? null : skill))}
+                            className={`relative w-full h-full text-left rounded-xl border-2 p-3 pr-9 min-h-[4.75rem] flex flex-col justify-center transition-all ${enabled ? 'bg-blue-900 border-blue-900 shadow-md' : open ? 'bg-white border-blue-400 shadow-md' : 'bg-white border-gray-200 hover:border-blue-300 shadow-sm'}`}
+                          >
+                            <span className={`font-bold text-sm leading-tight ${enabled ? 'text-white' : 'text-gray-800'}`}>{SKILL_META[skill].label}</span>
+                            <span className={`block text-[11px] mt-0.5 leading-snug ${enabled ? 'text-blue-200' : 'text-gray-400'}`}>{SKILL_META[skill].description}</span>
+                            {enabled ? (
+                              <span className="absolute top-2 right-2 min-w-[1.5rem] h-6 px-1.5 flex items-center justify-center rounded-full bg-white text-blue-900 text-sm font-extrabold tabular-nums">{skillCounts[skill]}</span>
+                            ) : (
+                              <span className={`absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full border-2 ${open ? 'border-blue-400 text-blue-500' : 'border-gray-200 text-gray-300'}`}><Plus size={14} /></span>
+                            )}
+                          </button>
+
+                          {/* Anchored Question Options pop-over */}
+                          {open && (
+                            <div className="absolute left-0 top-full mt-2 z-50 w-80 max-w-[92vw] max-h-[70vh] overflow-y-auto bg-white rounded-xl shadow-2xl border border-gray-200 p-4">
+                              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider text-center mb-1">Question options</p>
+                              {renderConfig(skill)}
+                              <div className="border-t border-gray-100 pt-3 mt-1">
+                                {enabled ? (
+                                  <div className="flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+                                      <button
+                                        onClick={() => adjustCount(skill, -1)}
+                                        disabled={skillCounts[skill] <= 1}
+                                        className="w-7 h-7 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed font-bold text-lg leading-none"
+                                      >−</button>
+                                      <span className="w-8 text-center text-sm font-bold text-gray-800 tabular-nums">{skillCounts[skill]}</span>
+                                      <button
+                                        onClick={() => adjustCount(skill, 1)}
+                                        disabled={total >= maxQuestions}
+                                        className="w-7 h-7 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed font-bold text-lg leading-none"
+                                      >+</button>
+                                    </div>
+                                    <button
+                                      onClick={() => toggleSkill(skill)}
+                                      className="text-xs font-bold text-red-500 hover:text-red-700 flex items-center gap-1"
+                                    >
+                                      <X size={14} /> Remove
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    onClick={() => toggleSkill(skill)}
+                                    className="w-full py-2.5 rounded-xl font-bold text-sm bg-blue-900 text-white hover:bg-blue-800 shadow-sm flex items-center justify-center gap-2"
+                                  >
+                                    <Plus size={16} /> Add to worksheet
+                                  </button>
+                                )}
+                              </div>
+                            </div>
                           )}
-                        </button>
+                        </div>
                       );
                     })}
                   </div>
@@ -1900,77 +1955,6 @@ export default function MathsSkillsGenerator() {
 
           </div>
 
-          {/* Skill options popup */}
-          {expandedSkill && (() => {
-            const skill = expandedSkill;
-            const enabled = enabledSkills.includes(skill);
-            return (
-              <div
-                className="fixed inset-0 z-50 flex items-center justify-center p-4"
-                style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}
-                onClick={() => setExpandedSkill(null)}
-              >
-                <div
-                  className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[85vh] overflow-y-auto"
-                  onClick={e => e.stopPropagation()}
-                >
-                  <div className="flex items-start justify-between gap-3 p-5 border-b border-gray-100">
-                    <div>
-                      <h3 className="text-lg font-bold text-gray-900">{SKILL_META[skill].label}</h3>
-                      <p className="text-xs text-gray-400 mt-0.5">{SKILL_META[skill].description}</p>
-                    </div>
-                    <button
-                      onClick={() => setExpandedSkill(null)}
-                      className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 flex-shrink-0"
-                    >
-                      <X size={18} />
-                    </button>
-                  </div>
-
-                  <div className="p-5">
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 text-center">Question options</p>
-                    {renderConfig(skill)}
-                  </div>
-
-                  <div className="p-5 border-t border-gray-100">
-                    {enabled ? (
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                          <span className="text-sm font-bold text-gray-700">Questions</span>
-                          <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-                            <button
-                              onClick={() => adjustCount(skill, -1)}
-                              disabled={skillCounts[skill] <= 1}
-                              className="w-8 h-8 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed font-bold text-lg leading-none"
-                            >−</button>
-                            <span className="w-8 text-center text-base font-bold text-gray-800 tabular-nums">{skillCounts[skill]}</span>
-                            <button
-                              onClick={() => adjustCount(skill, 1)}
-                              disabled={total >= maxQuestions}
-                              className="w-8 h-8 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed font-bold text-lg leading-none"
-                            >+</button>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => toggleSkill(skill)}
-                          className="text-sm font-bold text-red-500 hover:text-red-700 flex items-center gap-1"
-                        >
-                          <X size={15} /> Remove
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => toggleSkill(skill)}
-                        className="w-full py-3 rounded-xl font-bold text-base bg-blue-900 text-white hover:bg-blue-800 shadow-sm flex items-center justify-center gap-2"
-                      >
-                        <Plus size={18} /> Add to worksheet
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })()}
 
           {/* Preview grid */}
           {previewQuestions.length > 0 && (
