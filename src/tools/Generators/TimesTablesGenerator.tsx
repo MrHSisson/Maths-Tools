@@ -353,9 +353,7 @@ export default function TimesTablesQuizGenerator() {
   const [missingPct, setMissingPct] = useState<number>(50);
   const [pctInput, setPctInput] = useState<string>('50');
   const [separateSections, setSeparateSections] = useState<boolean>(false);
-  const [excludeOnes, setExcludeOnes] = useState<boolean>(false);
-  const [excludeTwos, setExcludeTwos] = useState<boolean>(false);
-  const [excludeTens, setExcludeTens] = useState<boolean>(false);
+  const [excludedFactors, setExcludedFactors] = useState<number[]>([]);
   const [suppressCommutative, setSuppressCommutative] = useState<boolean>(true);
   const [suppressSelfDivide, setSuppressSelfDivide] = useState<boolean>(true);
   const [layoutMode, setLayoutMode] = useState<LayoutMode>('list');
@@ -410,11 +408,9 @@ export default function TimesTablesQuizGenerator() {
   const hasOperation = includeMultiply || includeDivide;
   const hasFormat = includeStandard || includeMissingFactor;
   const bothFormats = includeStandard && includeMissingFactor;
-  const excludedFactors = [
-    ...(excludeOnes ? [1] : []),
-    ...(excludeTwos ? [2] : []),
-    ...(excludeTens ? [10] : []),
-  ];
+
+  const toggleFactor = (f: number) =>
+    setExcludedFactors(prev => (prev.includes(f) ? prev.filter(x => x !== f) : [...prev, f]));
 
   const commitQInput = () => {
     const parsed = parseInt(qInput);
@@ -579,36 +575,41 @@ export default function TimesTablesQuizGenerator() {
                   <ChevronDown size={16} style={{ transition: 'transform 0.2s', transform: optionsOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
                 </button>
                 {optionsOpen && (
-                  <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-[20rem] p-5 flex flex-col gap-3">
-                    <span className="text-sm font-bold text-gray-400 uppercase tracking-wider text-center">Options</span>
-                    <TogglePill
-                      label="Exclude × 1 / ÷ 1 facts"
-                      checked={excludeOnes}
-                      onChange={setExcludeOnes}
-                    />
-                    <TogglePill
-                      label="Exclude × 2 / ÷ 2 facts"
-                      checked={excludeTwos}
-                      onChange={setExcludeTwos}
-                    />
-                    <TogglePill
-                      label="Exclude × 10 / ÷ 10 facts"
-                      checked={excludeTens}
-                      onChange={setExcludeTens}
-                    />
-                    {includeMultiply && (
-                      <TogglePill
-                        label="Suppress 4×5 / 5×4 duplicates"
-                        checked={suppressCommutative}
-                        onChange={setSuppressCommutative}
-                      />
-                    )}
-                    {includeDivide && (
-                      <TogglePill
-                        label="Suppress n ÷ n = 1"
-                        checked={suppressSelfDivide}
-                        onChange={setSuppressSelfDivide}
-                      />
+                  <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-[22rem] p-5 flex flex-col gap-4">
+
+                    {/* Exclude specific fact families — one header, four buttons */}
+                    <div className="flex flex-col gap-2">
+                      <span className="text-sm font-bold text-gray-400 uppercase tracking-wider text-center">Exclude facts</span>
+                      <div className="flex gap-2 justify-center flex-wrap">
+                        {[1, 2, 5, 10].map(f => (
+                          <PillToggle
+                            key={f}
+                            label={`×${f} / ÷${f}`}
+                            active={excludedFactors.includes(f)}
+                            onToggle={() => toggleFactor(f)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Duplicate suppression */}
+                    {(includeMultiply || includeDivide) && (
+                      <div className="flex flex-col gap-3">
+                        {includeMultiply && (
+                          <TogglePill
+                            label="Suppress 4×5 / 5×4 duplicates"
+                            checked={suppressCommutative}
+                            onChange={setSuppressCommutative}
+                          />
+                        )}
+                        {includeDivide && (
+                          <TogglePill
+                            label="Suppress n ÷ n = 1"
+                            checked={suppressSelfDivide}
+                            onChange={setSuppressSelfDivide}
+                          />
+                        )}
+                      </div>
                     )}
                   </div>
                 )}
