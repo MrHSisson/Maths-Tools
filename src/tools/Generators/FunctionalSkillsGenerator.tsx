@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Home, Eye, Download, RefreshCw, RotateCcw, Plus, X } from 'lucide-react';
+import { Home, Eye, Download, RefreshCw, RotateCcw, Plus, X, ChevronUp, ChevronDown } from 'lucide-react';
 
 const TOOL_CONFIG = {
   pageTitle: 'Maths Skills Generator',
@@ -1151,6 +1151,10 @@ export default function MathsSkillsGenerator() {
   // Close the open skill pop-over on an outside click (the ref wraps the open
   // tile + its pop-over, so clicks on either are ignored).
   const popoverRef = useRef<HTMLDivElement>(null);
+  const tilesPaneRef = useRef<HTMLDivElement>(null);
+  // Whether the open pop-over anchors to the tile's left or right edge — chosen
+  // so it opens into the tiles area rather than over the worksheet panel.
+  const [popoverAlign, setPopoverAlign] = useState<'left' | 'right'>('left');
   useEffect(() => {
     if (!expandedSkill) return;
     const h = (e: MouseEvent) => {
@@ -1159,6 +1163,18 @@ export default function MathsSkillsGenerator() {
     document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
   }, [expandedSkill]);
+
+  // Open a skill's pop-over, aligning it so it stays inside the tiles column.
+  const openSkill = (skill: SkillId, tileEl: HTMLElement) => {
+    setExpandedSkill(prev => {
+      if (prev === skill) return null; // tapping the open tile closes it
+      const POPOVER_W = 320;
+      const tile = tileEl.getBoundingClientRect();
+      const pane = tilesPaneRef.current?.getBoundingClientRect();
+      setPopoverAlign(pane && tile.left + POPOVER_W > pane.right ? 'right' : 'left');
+      return skill;
+    });
+  };
 
   // Mirror the setup to localStorage whenever it changes.
   useEffect(() => {
@@ -1785,7 +1801,7 @@ export default function MathsSkillsGenerator() {
           <div className="flex flex-col md:flex-row gap-6 items-start mb-6">
 
             {/* LEFT — skill tiles grouped by topic */}
-            <div className="flex-1 w-full space-y-5">
+            <div className="flex-1 w-full space-y-5" ref={tilesPaneRef}>
               {SKILL_GROUPS.map(group => (
                 <div key={group.label}>
                   <h2 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">{group.label}</h2>
@@ -1796,7 +1812,7 @@ export default function MathsSkillsGenerator() {
                       return (
                         <div key={skill} className="relative" ref={open ? popoverRef : undefined}>
                           <button
-                            onClick={() => setExpandedSkill(prev => (prev === skill ? null : skill))}
+                            onClick={e => openSkill(skill, e.currentTarget)}
                             className={`relative w-full h-full text-left rounded-xl border-2 p-3 pr-9 min-h-[4.75rem] flex flex-col justify-center transition-all ${enabled ? 'bg-blue-900 border-blue-900 shadow-md' : open ? 'bg-white border-blue-400 shadow-md' : 'bg-white border-gray-200 hover:border-blue-300 shadow-sm'}`}
                           >
                             <span className={`font-bold text-sm leading-tight ${enabled ? 'text-white' : 'text-gray-800'}`}>{SKILL_META[skill].label}</span>
@@ -1810,7 +1826,7 @@ export default function MathsSkillsGenerator() {
 
                           {/* Anchored Question Options pop-over */}
                           {open && (
-                            <div className="absolute left-0 top-full mt-2 z-50 w-80 max-w-[92vw] max-h-[70vh] overflow-y-auto bg-white rounded-xl shadow-2xl border border-gray-200 p-4">
+                            <div className={`absolute ${popoverAlign === 'right' ? 'right-0' : 'left-0'} top-full mt-2 z-50 w-80 max-w-[92vw] max-h-[70vh] overflow-y-auto bg-white rounded-xl shadow-2xl border border-gray-200 p-4`}>
                               <p className="text-xs font-bold text-gray-400 uppercase tracking-wider text-center mb-1">Question options</p>
                               {renderConfig(skill)}
                               <div className="border-t border-gray-100 pt-3 mt-1">
@@ -1887,6 +1903,37 @@ export default function MathsSkillsGenerator() {
                 <p className="text-xs text-gray-400 mb-4">
                   {enabledSkills.length === 0 ? 'Tap a tile to add a skill.' : `${enabledSkills.length} skill${enabledSkills.length > 1 ? 's' : ''} selected`}
                 </p>
+
+                {/* Selected skills — adjust counts without reopening the pop-over */}
+                {enabledSkills.length > 0 && (
+                  <div className="space-y-1.5 mb-4">
+                    {enabledSkills.map(skill => (
+                      <div key={skill} className="flex items-center gap-2 rounded-lg bg-gray-50 border border-gray-100 pl-3 pr-1.5 py-1.5">
+                        <span className="flex-1 min-w-0 truncate text-sm font-semibold text-gray-800">{SKILL_META[skill].label}</span>
+                        <span className="text-sm font-bold tabular-nums text-gray-800 w-5 text-right">{skillCounts[skill]}</span>
+                        <div className="flex flex-col flex-shrink-0">
+                          <button
+                            onClick={() => adjustCount(skill, 1)}
+                            disabled={total >= maxQuestions}
+                            title="More questions"
+                            className="w-5 h-3.5 flex items-center justify-center text-gray-500 hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed"
+                          ><ChevronUp size={13} /></button>
+                          <button
+                            onClick={() => adjustCount(skill, -1)}
+                            disabled={skillCounts[skill] <= 1}
+                            title="Fewer questions"
+                            className="w-5 h-3.5 flex items-center justify-center text-gray-500 hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed"
+                          ><ChevronDown size={13} /></button>
+                        </div>
+                        <button
+                          onClick={() => toggleSkill(skill)}
+                          title="Remove"
+                          className="w-6 h-6 flex items-center justify-center rounded text-gray-300 hover:text-red-600 hover:bg-red-50 flex-shrink-0 transition-all"
+                        ><X size={14} /></button>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 {/* Worksheet settings */}
                 <div className="border-t border-gray-100 pt-4 space-y-3">
