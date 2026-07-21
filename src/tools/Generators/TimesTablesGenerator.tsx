@@ -12,6 +12,7 @@ type Question = {
   answer: number;
   missing?: boolean; // true = missing-factor format
   key: string;       // canonical identity — commutative/duplicate questions share a key
+  table: number;     // source times table (the selected table it was generated from)
 };
 
 // ── QUESTION GENERATION ───────────────────────────────────────────────────────
@@ -31,17 +32,21 @@ const shuffle = <T,>(arr: T[]): T[] => {
 //     `4 × ___ = 12` and `___ × 4 = 12` are one question (commutative blank).
 //   • Missing/standard divide — the tt/other swap produces byte-identical
 //     strings (`12 ÷ 3` twice, `___ ÷ 3 = 4` twice), collapsed to one.
-// Two optional toggles:
+// Optional toggles:
 //   • excludeOnes — drop the trivial ×1 / ÷1 facts (e.g. `___ × 1 = 12`).
 //   • suppressCommutative — treat standard multiply `3 × 4` and `4 × 3` as one
 //     question. (Missing multiply always collapses its commutative pair; this
 //     only controls the standard-format ordering.)
+//   • suppressSelfDivide — drop the trivial `n ÷ n = 1` division facts, whichever
+//     way round they are written (kept independent of excludeOnes so ×1 / ÷1
+//     drilling can stay on while these go).
 const buildPools = (
   selectedTables: number[],
   includeMultiply: boolean,
   includeDivide: boolean,
   excludeOnes: boolean,
-  suppressCommutative: boolean
+  suppressCommutative: boolean,
+  suppressSelfDivide: boolean
 ): { standardPool: Question[]; missingPool: Question[] } => {
   const standardPool: Question[] = [];
   const missingPool: Question[] = [];
@@ -60,22 +65,52 @@ const buildPools = (
         const stdMulKey = suppressCommutative
           ? `sm|${Math.min(tt, other)}|${Math.max(tt, other)}`
           : `sm|${tt}|${other}`;
-        addStd({ question: `${tt} × ${other} = ___`, answer: product, key: stdMulKey });
-        addMis({ question: `${tt} × ___ = ${product}`, answer: other, missing: true, key: `mm|${tt}|${product}` });
-        addMis({ question: `___ × ${other} = ${product}`, answer: tt, missing: true, key: `mm|${other}|${product}` });
+        addStd({ question: `${tt} × ${other} = ___`, answer: product, key: stdMulKey, table: tt });
+        addMis({ question: `${tt} × ___ = ${product}`, answer: other, missing: true, key: `mm|${tt}|${product}`, table: tt });
+        addMis({ question: `___ × ${other} = ${product}`, answer: tt, missing: true, key: `mm|${other}|${product}`, table: tt });
       }
       if (includeDivide) {
-        addStd({ question: `${product} ÷ ${tt} = ___`, answer: other, key: `sd|${product}|${tt}` });
-        addMis({ question: `___ ÷ ${tt} = ${other}`, answer: product, missing: true, key: `md|${tt}|${other}` });
-        if (other !== tt) {
-          addStd({ question: `${product} ÷ ${other} = ___`, answer: tt, key: `sd|${product}|${other}` });
-          addMis({ question: `___ ÷ ${other} = ${tt}`, answer: product, missing: true, key: `md|${other}|${tt}` });
+        // `${product} ÷ ${tt} = ${other}` has quotient `other` → n÷n=1 when other===1.
+        if (!(suppressSelfDivide && other === 1)) {
+          addStd({ question: `${product} ÷ ${tt} = ___`, answer: other, key: `sd|${product}|${tt}`, table: tt });
+          addMis({ question: `___ ÷ ${tt} = ${other}`, answer: product, missing: true, key: `md|${tt}|${other}`, table: tt });
+        }
+        // `${product} ÷ ${other} = ${tt}` has quotient `tt` → n÷n=1 when tt===1.
+        if (other !== tt && !(suppressSelfDivide && tt === 1)) {
+          addStd({ question: `${product} ÷ ${other} = ___`, answer: tt, key: `sd|${product}|${other}`, table: tt });
+          addMis({ question: `___ ÷ ${other} = ${tt}`, answer: product, missing: true, key: `md|${other}|${tt}`, table: tt });
         }
       }
     }
   });
 
   return { standardPool, missingPool };
+};
+
+// Even distribution across the selected tables. A plain shuffle-and-slice lets a
+// few tables dominate by chance; this round-robins one question per source table
+// per pass so every selected table contributes an equal share.
+const pickEvenSpread = (pool: Question[], count: number): Question[] => {
+  if (count >= pool.length) return shuffle([...pool]);
+  const groups = new Map<number, Question[]>();
+  for (const q of pool) {
+    const arr = groups.get(q.table) ?? [];
+    arr.push(q);
+    groups.set(q.table, arr);
+  }
+  const tableOrder = shuffle([...groups.keys()]);
+  groups.forEach(arr => shuffle(arr));
+  const result: Question[] = [];
+  let progressed = true;
+  while (result.length < count && progressed) {
+    progressed = false;
+    for (const t of tableOrder) {
+      if (result.length >= count) break;
+      const item = groups.get(t)!.pop();
+      if (item) { result.push(item); progressed = true; }
+    }
+  }
+  return result;
 };
 
 const generateQuestions = (
@@ -88,15 +123,15 @@ const generateQuestions = (
   missingPct: number,        // % of questions in missing-factor format (both formats on)
   separateSections: boolean, // true = standard block first, then missing factors
   excludeOnes: boolean,
-  suppressCommutative: boolean
+  suppressCommutative: boolean,
+  suppressSelfDivide: boolean
 ): Question[] => {
-  const { standardPool, missingPool } = buildPools(selectedTables, includeMultiply, includeDivide, excludeOnes, suppressCommutative);
+  const { standardPool, missingPool } = buildPools(selectedTables, includeMultiply, includeDivide, excludeOnes, suppressCommutative, suppressSelfDivide);
 
-  shuffle(standardPool);
-  shuffle(missingPool);
-
-  if (!includeMissingFactor) return standardPool.slice(0, numQuestions);
-  if (!includeStandard) return missingPool.slice(0, numQuestions);
+  // pickEvenSpread handles the sampling (and its own shuffling) so every selected
+  // table gets a fair share rather than a few dominating.
+  if (!includeMissingFactor) return pickEvenSpread(standardPool, numQuestions);
+  if (!includeStandard) return pickEvenSpread(missingPool, numQuestions);
 
   // Both formats — honour the requested split, topping up from the other
   // pool if one runs short of questions.
@@ -105,8 +140,8 @@ const generateQuestions = (
   let standardCount = Math.min(numQuestions - missingCount, standardPool.length);
   missingCount = Math.min(numQuestions - standardCount, missingPool.length);
 
-  const standard = standardPool.slice(0, standardCount);
-  const missing = missingPool.slice(0, missingCount);
+  const standard = pickEvenSpread(standardPool, standardCount);
+  const missing = pickEvenSpread(missingPool, missingCount);
 
   return separateSections ? [...standard, ...missing] : shuffle([...standard, ...missing]);
 };
@@ -290,6 +325,7 @@ export default function TimesTablesQuizGenerator() {
   const [separateSections, setSeparateSections] = useState<boolean>(false);
   const [excludeOnes, setExcludeOnes] = useState<boolean>(false);
   const [suppressCommutative, setSuppressCommutative] = useState<boolean>(true);
+  const [suppressSelfDivide, setSuppressSelfDivide] = useState<boolean>(true);
   const [layoutMode, setLayoutMode] = useState<LayoutMode>('list');
   const [error, setError] = useState<string>('');
   const [previewQuestions, setPreviewQuestions] = useState<Question[]>([]);
@@ -385,7 +421,7 @@ export default function TimesTablesQuizGenerator() {
   };
 
   const getQuestions = (): Question[] =>
-    generateQuestions(selectedTables, numQuestions, includeMultiply, includeDivide, includeStandard, includeMissingFactor, missingPct, separateSections, excludeOnes, suppressCommutative);
+    generateQuestions(selectedTables, numQuestions, includeMultiply, includeDivide, includeStandard, includeMissingFactor, missingPct, separateSections, excludeOnes, suppressCommutative, suppressSelfDivide);
 
   const handleGeneratePreview = (): void => {
     if (!validate()) return;
@@ -399,7 +435,7 @@ export default function TimesTablesQuizGenerator() {
     setPreviewQuestions(prev => {
       const target = prev[idx];
       if (!target) return prev;
-      const { standardPool, missingPool } = buildPools(selectedTables, includeMultiply, includeDivide, excludeOnes, suppressCommutative);
+      const { standardPool, missingPool } = buildPools(selectedTables, includeMultiply, includeDivide, excludeOnes, suppressCommutative, suppressSelfDivide);
       const pool = target.missing ? missingPool : standardPool;
       const usedKeys = new Set(prev.map(q => q.key));
       const candidates = pool.filter(q => !usedKeys.has(q.key));
@@ -518,6 +554,13 @@ export default function TimesTablesQuizGenerator() {
                         label="Suppress 4×5 / 5×4 duplicates"
                         checked={suppressCommutative}
                         onChange={setSuppressCommutative}
+                      />
+                    )}
+                    {includeDivide && (
+                      <TogglePill
+                        label="Suppress n ÷ n = 1"
+                        checked={suppressSelfDivide}
+                        onChange={setSuppressSelfDivide}
                       />
                     )}
                   </div>
