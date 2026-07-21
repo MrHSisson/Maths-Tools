@@ -1,6 +1,6 @@
 import { Fragment, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Download, Home, Menu, X, Eye } from 'lucide-react';
+import { Download, Home, Menu, X, Eye, RefreshCw } from 'lucide-react';
 
 const TOOL_CONFIG = {
   pageTitle: 'Times Tables Generator',
@@ -13,6 +13,7 @@ type Question = {
   question: string; // full string including ___ for the blank
   answer: number;
   missing?: boolean; // true = missing-factor format
+  key: string;       // canonical identity — commutative/duplicate questions share a key
 };
 
 // ── QUESTION GENERATION ───────────────────────────────────────────────────────
@@ -25,6 +26,51 @@ const shuffle = <T,>(arr: T[]): T[] => {
   return arr;
 };
 
+// Build the standard and missing-factor question pools with duplicate questions
+// removed. Two questions are treated as "the same" when they test an identical
+// task, even if the operands are written in a different order:
+//   • Missing multiply — the known factor + product fix the answer, so
+//     `4 × ___ = 12` and `___ × 4 = 12` are one question (commutative blank).
+//   • Missing/standard divide — the tt/other swap produces byte-identical
+//     strings (`12 ÷ 3` twice, `___ ÷ 3 = 4` twice), collapsed to one.
+// Standard multiply keeps both orders (`3 × 4` and `4 × 3`) — legitimate
+// commutativity practice, and no identical strings arise there.
+const buildPools = (
+  selectedTables: number[],
+  includeMultiply: boolean,
+  includeDivide: boolean
+): { standardPool: Question[]; missingPool: Question[] } => {
+  const standardPool: Question[] = [];
+  const missingPool: Question[] = [];
+  const stdSeen = new Set<string>();
+  const misSeen = new Set<string>();
+
+  const addStd = (q: Question) => { if (!stdSeen.has(q.key)) { stdSeen.add(q.key); standardPool.push(q); } };
+  const addMis = (q: Question) => { if (!misSeen.has(q.key)) { misSeen.add(q.key); missingPool.push(q); } };
+
+  selectedTables.forEach(tt => {
+    for (let other = 1; other <= 12; other++) {
+      const product = tt * other;
+
+      if (includeMultiply) {
+        addStd({ question: `${tt} × ${other} = ___`, answer: product, key: `sm|${tt}|${other}` });
+        addMis({ question: `${tt} × ___ = ${product}`, answer: other, missing: true, key: `mm|${tt}|${product}` });
+        addMis({ question: `___ × ${other} = ${product}`, answer: tt, missing: true, key: `mm|${other}|${product}` });
+      }
+      if (includeDivide) {
+        addStd({ question: `${product} ÷ ${tt} = ___`, answer: other, key: `sd|${product}|${tt}` });
+        addMis({ question: `___ ÷ ${tt} = ${other}`, answer: product, missing: true, key: `md|${tt}|${other}` });
+        if (other !== tt) {
+          addStd({ question: `${product} ÷ ${other} = ___`, answer: tt, key: `sd|${product}|${other}` });
+          addMis({ question: `___ ÷ ${other} = ${tt}`, answer: product, missing: true, key: `md|${other}|${tt}` });
+        }
+      }
+    }
+  });
+
+  return { standardPool, missingPool };
+};
+
 const generateQuestions = (
   selectedTables: number[],
   numQuestions: number,
@@ -35,28 +81,7 @@ const generateQuestions = (
   missingPct: number,        // % of questions in missing-factor format (both formats on)
   separateSections: boolean  // true = standard block first, then missing factors
 ): Question[] => {
-  const standardPool: Question[] = [];
-  const missingPool: Question[] = [];
-
-  selectedTables.forEach(tt => {
-    for (let other = 1; other <= 12; other++) {
-      const product = tt * other;
-
-      if (includeMultiply) {
-        standardPool.push({ question: `${tt} × ${other} = ___`, answer: product });
-        missingPool.push({ question: `${tt} × ___ = ${product}`, answer: other, missing: true });
-        missingPool.push({ question: `___ × ${other} = ${product}`, answer: tt, missing: true });
-      }
-      if (includeDivide) {
-        standardPool.push({ question: `${product} ÷ ${tt} = ___`, answer: other });
-        missingPool.push({ question: `___ ÷ ${tt} = ${other}`, answer: product, missing: true });
-        if (other !== tt) {
-          standardPool.push({ question: `${product} ÷ ${other} = ___`, answer: tt });
-          missingPool.push({ question: `___ ÷ ${other} = ${tt}`, answer: product, missing: true });
-        }
-      }
-    }
-  });
+  const { standardPool, missingPool } = buildPools(selectedTables, includeMultiply, includeDivide);
 
   shuffle(standardPool);
   shuffle(missingPool);
@@ -337,6 +362,22 @@ export default function TimesTablesQuizGenerator() {
     setError('');
   };
 
+  // Refresh a single preview question — replace it with a fresh one of the same
+  // format (standard vs missing) that isn't already on the sheet.
+  const regenPreviewQuestion = (idx: number): void => {
+    setPreviewQuestions(prev => {
+      const target = prev[idx];
+      if (!target) return prev;
+      const { standardPool, missingPool } = buildPools(selectedTables, includeMultiply, includeDivide);
+      const pool = target.missing ? missingPool : standardPool;
+      const usedKeys = new Set(prev.map(q => q.key));
+      const candidates = pool.filter(q => !usedKeys.has(q.key));
+      if (candidates.length === 0) return prev; // no unused question available
+      const replacement = candidates[Math.floor(Math.random() * candidates.length)];
+      return prev.map((q, i) => (i === idx ? replacement : q));
+    });
+  };
+
   const handleGeneratePDF = (): void => {
     if (!validate()) return;
     const questions = previewQuestions.length > 0 ? previewQuestions : getQuestions();
@@ -595,28 +636,33 @@ export default function TimesTablesQuizGenerator() {
           {/* Preview */}
           {previewQuestions.length > 0 && (
             <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
-              <h2 className="text-2xl font-bold text-center mb-6" style={{ color: '#000000' }}>
-                Question Example
+              <h2 className="text-2xl font-bold text-center mb-1" style={{ color: '#000000' }}>
+                Worksheet Preview
               </h2>
+              <p className="text-center text-sm text-gray-400 mb-6 font-semibold">
+                Hover a question and click <RefreshCw size={13} className="inline align-text-bottom" /> to swap it for a new one
+              </p>
               <div className="grid grid-cols-3 gap-4">
-                {previewQuestions.slice(0, 12).map((q, idx) => (
-                  <Fragment key={idx}>
+                {previewQuestions.map((q, idx) => (
+                  <Fragment key={q.key}>
                     {separateSections && bothFormats && q.missing && idx > 0 && !previewQuestions[idx - 1].missing && (
                       <div className="col-span-3 w-3/5 mx-auto border-b border-gray-300 my-1" />
                     )}
-                    <div className="bg-gray-50 rounded-lg px-4 py-3 border border-gray-100">
+                    <div className="group relative bg-gray-50 rounded-lg px-4 py-3 border border-gray-100">
                       <span className="text-lg font-semibold" style={{ color: '#000000' }}>
                         {idx + 1}. {q.question}
                       </span>
+                      <button
+                        onClick={() => regenPreviewQuestion(idx)}
+                        title="Refresh this question"
+                        className="absolute top-1 right-1 w-6 h-6 rounded flex items-center justify-center text-gray-300 hover:text-blue-700 hover:bg-blue-50 transition-all opacity-0 group-hover:opacity-100"
+                      >
+                        <RefreshCw size={14} />
+                      </button>
                     </div>
                   </Fragment>
                 ))}
               </div>
-              {previewQuestions.length > 12 && (
-                <p className="text-center mt-5 text-gray-500 font-semibold">
-                  …plus {previewQuestions.length - 12} more questions
-                </p>
-              )}
             </div>
           )}
 
@@ -629,7 +675,7 @@ export default function TimesTablesQuizGenerator() {
                 'With both formats on, set what percentage of questions are missing factor, and choose whether they are mixed in or grouped into a separate section below a divider line.',
                 'Select which times tables to include from 1–20.',
                 '"No Cells" generates a numbered list (21–60 questions). "Cells" generates a bordered grid (21–45 cells).',
-                'Generate Example previews a sample on screen. Generate PDF opens a printable worksheet with an answer key on the second page.',
+                'Generate Example previews the full worksheet on screen — hover any question and click the refresh icon to swap just that one. Generate PDF opens a printable worksheet with an answer key on the second page.',
               ].map((t, i) => (
                 <li key={i} className="flex items-start gap-2">
                   <span className="text-blue-900 font-bold mt-0.5">·</span>
