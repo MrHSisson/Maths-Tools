@@ -33,18 +33,19 @@ const shuffle = <T,>(arr: T[]): T[] => {
 //   • Missing/standard divide — the tt/other swap produces byte-identical
 //     strings (`12 ÷ 3` twice, `___ ÷ 3 = 4` twice), collapsed to one.
 // Optional toggles:
-//   • excludeOnes — drop the trivial ×1 / ÷1 facts (e.g. `___ × 1 = 12`).
+//   • excludedFactors — drop facts using any of these as a factor, e.g. [1,2,10]
+//     removes the ×1/÷1, ×2/÷2 and ×10/÷10 facts.
 //   • suppressCommutative — treat standard multiply `3 × 4` and `4 × 3` as one
 //     question. (Missing multiply always collapses its commutative pair; this
 //     only controls the standard-format ordering.)
 //   • suppressSelfDivide — drop the trivial `n ÷ n = 1` division facts, whichever
-//     way round they are written (kept independent of excludeOnes so ×1 / ÷1
-//     drilling can stay on while these go).
+//     way round they are written (kept independent so ×1 / ÷1 drilling can stay
+//     on while these go).
 const buildPools = (
   selectedTables: number[],
   includeMultiply: boolean,
   includeDivide: boolean,
-  excludeOnes: boolean,
+  excludedFactors: number[],
   suppressCommutative: boolean,
   suppressSelfDivide: boolean
 ): { standardPool: Question[]; missingPool: Question[] } => {
@@ -57,10 +58,11 @@ const buildPools = (
   const addMis = (q: Question) => { if (!misSeen.has(q.key)) { misSeen.add(q.key); missingPool.push(q); } };
 
   const selectedSet = new Set(selectedTables);
+  const excludedSet = new Set(excludedFactors);
 
   selectedTables.forEach(tt => {
     for (let other = 1; other <= 12; other++) {
-      if (excludeOnes && (tt === 1 || other === 1)) continue;
+      if (excludedSet.has(tt) || excludedSet.has(other)) continue;
       const product = tt * other;
 
       // A fact's two factors are always tt and other; credit it to every
@@ -150,11 +152,11 @@ const generateQuestions = (
   includeMissingFactor: boolean,
   missingPct: number,        // % of questions in missing-factor format (both formats on)
   separateSections: boolean, // true = standard block first, then missing factors
-  excludeOnes: boolean,
+  excludedFactors: number[],
   suppressCommutative: boolean,
   suppressSelfDivide: boolean
 ): Question[] => {
-  const { standardPool, missingPool } = buildPools(selectedTables, includeMultiply, includeDivide, excludeOnes, suppressCommutative, suppressSelfDivide);
+  const { standardPool, missingPool } = buildPools(selectedTables, includeMultiply, includeDivide, excludedFactors, suppressCommutative, suppressSelfDivide);
 
   // pickEvenSpread handles the sampling (and its own shuffling) so every selected
   // table gets a fair share rather than a few dominating.
@@ -352,6 +354,8 @@ export default function TimesTablesQuizGenerator() {
   const [pctInput, setPctInput] = useState<string>('50');
   const [separateSections, setSeparateSections] = useState<boolean>(false);
   const [excludeOnes, setExcludeOnes] = useState<boolean>(false);
+  const [excludeTwos, setExcludeTwos] = useState<boolean>(false);
+  const [excludeTens, setExcludeTens] = useState<boolean>(false);
   const [suppressCommutative, setSuppressCommutative] = useState<boolean>(true);
   const [suppressSelfDivide, setSuppressSelfDivide] = useState<boolean>(true);
   const [layoutMode, setLayoutMode] = useState<LayoutMode>('list');
@@ -406,6 +410,11 @@ export default function TimesTablesQuizGenerator() {
   const hasOperation = includeMultiply || includeDivide;
   const hasFormat = includeStandard || includeMissingFactor;
   const bothFormats = includeStandard && includeMissingFactor;
+  const excludedFactors = [
+    ...(excludeOnes ? [1] : []),
+    ...(excludeTwos ? [2] : []),
+    ...(excludeTens ? [10] : []),
+  ];
 
   const commitQInput = () => {
     const parsed = parseInt(qInput);
@@ -449,7 +458,7 @@ export default function TimesTablesQuizGenerator() {
   };
 
   const getQuestions = (): Question[] =>
-    generateQuestions(selectedTables, numQuestions, includeMultiply, includeDivide, includeStandard, includeMissingFactor, missingPct, separateSections, excludeOnes, suppressCommutative, suppressSelfDivide);
+    generateQuestions(selectedTables, numQuestions, includeMultiply, includeDivide, includeStandard, includeMissingFactor, missingPct, separateSections, excludedFactors, suppressCommutative, suppressSelfDivide);
 
   const handleGeneratePreview = (): void => {
     if (!validate()) return;
@@ -463,7 +472,7 @@ export default function TimesTablesQuizGenerator() {
     setPreviewQuestions(prev => {
       const target = prev[idx];
       if (!target) return prev;
-      const { standardPool, missingPool } = buildPools(selectedTables, includeMultiply, includeDivide, excludeOnes, suppressCommutative, suppressSelfDivide);
+      const { standardPool, missingPool } = buildPools(selectedTables, includeMultiply, includeDivide, excludedFactors, suppressCommutative, suppressSelfDivide);
       const pool = target.missing ? missingPool : standardPool;
       const usedKeys = new Set(prev.map(q => q.key));
       const candidates = pool.filter(q => !usedKeys.has(q.key));
@@ -576,6 +585,16 @@ export default function TimesTablesQuizGenerator() {
                       label="Exclude × 1 / ÷ 1 facts"
                       checked={excludeOnes}
                       onChange={setExcludeOnes}
+                    />
+                    <TogglePill
+                      label="Exclude × 2 / ÷ 2 facts"
+                      checked={excludeTwos}
+                      onChange={setExcludeTwos}
+                    />
+                    <TogglePill
+                      label="Exclude × 10 / ÷ 10 facts"
+                      checked={excludeTens}
+                      onChange={setExcludeTens}
                     />
                     {includeMultiply && (
                       <TogglePill
