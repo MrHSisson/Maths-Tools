@@ -1,12 +1,10 @@
 import { Fragment, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Download, Home, Menu, X, Eye, RefreshCw } from 'lucide-react';
+import { Download, Home, Eye, RefreshCw } from 'lucide-react';
 
 const TOOL_CONFIG = {
   pageTitle: 'Times Tables Generator',
 };
 
-type ColorScheme = 'default' | 'blue' | 'pink' | 'yellow';
 type LayoutMode = 'list' | 'cells';
 
 type Question = {
@@ -33,12 +31,17 @@ const shuffle = <T,>(arr: T[]): T[] => {
 //     `4 × ___ = 12` and `___ × 4 = 12` are one question (commutative blank).
 //   • Missing/standard divide — the tt/other swap produces byte-identical
 //     strings (`12 ÷ 3` twice, `___ ÷ 3 = 4` twice), collapsed to one.
-// Standard multiply keeps both orders (`3 × 4` and `4 × 3`) — legitimate
-// commutativity practice, and no identical strings arise there.
+// Two optional toggles:
+//   • excludeOnes — drop the trivial ×1 / ÷1 facts (e.g. `___ × 1 = 12`).
+//   • suppressCommutative — treat standard multiply `3 × 4` and `4 × 3` as one
+//     question. (Missing multiply always collapses its commutative pair; this
+//     only controls the standard-format ordering.)
 const buildPools = (
   selectedTables: number[],
   includeMultiply: boolean,
-  includeDivide: boolean
+  includeDivide: boolean,
+  excludeOnes: boolean,
+  suppressCommutative: boolean
 ): { standardPool: Question[]; missingPool: Question[] } => {
   const standardPool: Question[] = [];
   const missingPool: Question[] = [];
@@ -50,10 +53,14 @@ const buildPools = (
 
   selectedTables.forEach(tt => {
     for (let other = 1; other <= 12; other++) {
+      if (excludeOnes && (tt === 1 || other === 1)) continue;
       const product = tt * other;
 
       if (includeMultiply) {
-        addStd({ question: `${tt} × ${other} = ___`, answer: product, key: `sm|${tt}|${other}` });
+        const stdMulKey = suppressCommutative
+          ? `sm|${Math.min(tt, other)}|${Math.max(tt, other)}`
+          : `sm|${tt}|${other}`;
+        addStd({ question: `${tt} × ${other} = ___`, answer: product, key: stdMulKey });
         addMis({ question: `${tt} × ___ = ${product}`, answer: other, missing: true, key: `mm|${tt}|${product}` });
         addMis({ question: `___ × ${other} = ${product}`, answer: tt, missing: true, key: `mm|${other}|${product}` });
       }
@@ -79,9 +86,11 @@ const generateQuestions = (
   includeStandard: boolean,
   includeMissingFactor: boolean,
   missingPct: number,        // % of questions in missing-factor format (both formats on)
-  separateSections: boolean  // true = standard block first, then missing factors
+  separateSections: boolean, // true = standard block first, then missing factors
+  excludeOnes: boolean,
+  suppressCommutative: boolean
 ): Question[] => {
-  const { standardPool, missingPool } = buildPools(selectedTables, includeMultiply, includeDivide);
+  const { standardPool, missingPool } = buildPools(selectedTables, includeMultiply, includeDivide, excludeOnes, suppressCommutative);
 
   shuffle(standardPool);
   shuffle(missingPool);
@@ -269,7 +278,6 @@ ${buildPage(true)}
 // ── COMPONENT ─────────────────────────────────────────────────────────────────
 
 export default function TimesTablesQuizGenerator() {
-  const navigate = useNavigate();
   const [selectedTables, setSelectedTables] = useState<number[]>([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
   const [numQuestions, setNumQuestions] = useState<number>(40);
   const [qInput, setQInput] = useState<string>('40');
@@ -280,35 +288,34 @@ export default function TimesTablesQuizGenerator() {
   const [missingPct, setMissingPct] = useState<number>(50);
   const [pctInput, setPctInput] = useState<string>('50');
   const [separateSections, setSeparateSections] = useState<boolean>(false);
+  const [excludeOnes, setExcludeOnes] = useState<boolean>(false);
+  const [suppressCommutative, setSuppressCommutative] = useState<boolean>(true);
   const [layoutMode, setLayoutMode] = useState<LayoutMode>('list');
-  const [colorScheme, setColorScheme] = useState<ColorScheme>('default');
-  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const [previewQuestions, setPreviewQuestions] = useState<Question[]>([]);
 
-  const Pill = ({ label, sub, active, onClick }: {
-    label: string; sub?: string; active: boolean; onClick: () => void;
-  }) => (
+  // ── Reusable pill controls (matching the Maths Skills generator) ────────────
+  const SectionLabel = ({ children }: { children: string }) => (
+    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">{children}</p>
+  );
+
+  const PillToggle = ({ label, active, onToggle }: { label: string; active: boolean; onToggle: () => void }) => (
     <button
-      onClick={onClick}
-      className={`px-5 py-2.5 rounded-lg font-bold text-base border-2 transition-all text-center ${
+      onClick={onToggle}
+      className={`px-4 py-1.5 rounded-full text-sm font-semibold border-2 transition-all ${
         active
           ? 'bg-blue-900 border-blue-900 text-white'
           : 'bg-white border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-900'
       }`}
     >
       {label}
-      {sub && <span className={`block text-xs font-normal mt-0.5 ${active ? 'text-blue-200' : 'text-gray-400'}`}>{sub}</span>}
     </button>
-  );
-
-  const SectionLabel = ({ children }: { children: string }) => (
-    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 text-center">{children}</p>
   );
 
   const maxQ = layoutMode === 'cells' ? 45 : 60;
   const hasOperation = includeMultiply || includeDivide;
   const hasFormat = includeStandard || includeMissingFactor;
+  const bothFormats = includeStandard && includeMissingFactor;
 
   const commitQInput = () => {
     const parsed = parseInt(qInput);
@@ -323,8 +330,6 @@ export default function TimesTablesQuizGenerator() {
     setMissingPct(clamped);
     setPctInput(String(clamped));
   };
-
-  const bothFormats = includeStandard && includeMissingFactor;
 
   const setLayoutAndClamp = (mode: LayoutMode) => {
     setLayoutMode(mode);
@@ -354,7 +359,7 @@ export default function TimesTablesQuizGenerator() {
   };
 
   const getQuestions = (): Question[] =>
-    generateQuestions(selectedTables, numQuestions, includeMultiply, includeDivide, includeStandard, includeMissingFactor, missingPct, separateSections);
+    generateQuestions(selectedTables, numQuestions, includeMultiply, includeDivide, includeStandard, includeMissingFactor, missingPct, separateSections, excludeOnes, suppressCommutative);
 
   const handleGeneratePreview = (): void => {
     if (!validate()) return;
@@ -368,7 +373,7 @@ export default function TimesTablesQuizGenerator() {
     setPreviewQuestions(prev => {
       const target = prev[idx];
       if (!target) return prev;
-      const { standardPool, missingPool } = buildPools(selectedTables, includeMultiply, includeDivide);
+      const { standardPool, missingPool } = buildPools(selectedTables, includeMultiply, includeDivide, excludeOnes, suppressCommutative);
       const pool = target.missing ? missingPool : standardPool;
       const usedKeys = new Set(prev.map(q => q.key));
       const candidates = pool.filter(q => !usedKeys.has(q.key));
@@ -396,268 +401,211 @@ export default function TimesTablesQuizGenerator() {
   return (
     <>
       {/* Header */}
-      <div className="bg-blue-900 shadow-lg">
-        <div className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
-          <button
-            onClick={() => navigate('/')}
-            className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors"
-          >
+      <div style={{ backgroundColor: '#1e3a8a' }}>
+        <div className="max-w-6xl mx-auto px-8 py-4 flex items-center justify-between">
+          <button onClick={() => window.location.href = '/'}
+            className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors">
             <Home size={24} />
             <span className="font-semibold text-lg">Home</span>
           </button>
-
-          <div className="relative">
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-white hover:bg-blue-800 p-2 rounded-lg transition-colors"
-            >
-              {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
-            </button>
-            {isMenuOpen && (
-              <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border-2 border-gray-200 overflow-hidden z-50">
-                <div className="py-2">
-                  <div className="px-5 py-2 font-bold text-gray-400 text-xs uppercase tracking-widest">Colour Scheme</div>
-                  {(['default', 'blue', 'pink', 'yellow'] as const).map(scheme => (
-                    <button
-                      key={scheme}
-                      onClick={() => { setColorScheme(scheme); setIsMenuOpen(false); }}
-                      className={`w-full text-left px-5 py-2.5 font-semibold transition-colors text-sm ${
-                        colorScheme === scheme ? 'bg-blue-50 text-blue-900' : 'text-gray-700 hover:bg-gray-50'
-                      }`}
-                    >
-                      {scheme.charAt(0).toUpperCase() + scheme.slice(1)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
         </div>
       </div>
 
       {/* Main */}
       <div className="min-h-screen p-8" style={{ backgroundColor: '#f5f3f0' }}>
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-3xl mx-auto">
 
-          <h1 className="text-5xl font-bold text-center mb-8" style={{ color: '#000000' }}>
+          <h1 className="text-5xl font-bold text-center mb-2" style={{ color: '#000000' }}>
             {TOOL_CONFIG.pageTitle}
           </h1>
+          <p className="text-center text-gray-500 mb-6">Build a custom times tables worksheet, then export it to PDF</p>
 
-          {/* Control Panel */}
-          <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
-            <h2 className="text-2xl font-bold text-center mb-6" style={{ color: '#000000' }}>Customisation Options</h2>
+          {/* Question setup */}
+          <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
 
-            {/* Operations + Format — two columns */}
-            <div className="flex justify-center gap-12 mb-7 flex-wrap">
-
-              {/* Operations */}
-              <div className="flex flex-col items-center">
+            {/* Operations + Format */}
+            <div className="grid sm:grid-cols-2 gap-6 mb-5">
+              <div>
                 <SectionLabel>Operations</SectionLabel>
                 <div className="flex gap-2">
-                  <Pill
-                    label="× Multiply"
-                    active={includeMultiply}
-                    onClick={() => setIncludeMultiply(v => !v)}
-                  />
-                  <Pill
-                    label="÷ Divide"
-                    active={includeDivide}
-                    onClick={() => setIncludeDivide(v => !v)}
-                  />
+                  <PillToggle label="× Multiply" active={includeMultiply} onToggle={() => setIncludeMultiply(v => !v)} />
+                  <PillToggle label="÷ Divide" active={includeDivide} onToggle={() => setIncludeDivide(v => !v)} />
                 </div>
               </div>
-
-              {/* Question Format */}
-              <div className="flex flex-col items-center">
-                <SectionLabel>Question Format</SectionLabel>
+              <div>
+                <SectionLabel>Question format</SectionLabel>
                 <div className="flex gap-2">
-                  <Pill
-                    label="Standard"
-                    active={includeStandard}
-                    onClick={() => setIncludeStandard(v => !v)}
-                  />
-                  <Pill
-                    label="Missing Factor"
-                    active={includeMissingFactor}
-                    onClick={() => setIncludeMissingFactor(v => !v)}
-                  />
+                  <PillToggle label="Standard" active={includeStandard} onToggle={() => setIncludeStandard(v => !v)} />
+                  <PillToggle label="Missing factor" active={includeMissingFactor} onToggle={() => setIncludeMissingFactor(v => !v)} />
                 </div>
               </div>
+            </div>
 
-              {/* Missing factor split — only when both formats are on */}
-              {bothFormats && (
-                <div className="flex flex-col items-center">
-                  <SectionLabel>Missing Factor Split</SectionLabel>
-                  <div className="flex gap-2 items-center">
-                    <Pill
-                      label="Mixed In"
-                      active={!separateSections}
-                      onClick={() => setSeparateSections(false)}
+            {/* Missing factor split — only when both formats are on */}
+            {bothFormats && (
+              <div className="mb-5 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                <SectionLabel>Missing factor split</SectionLabel>
+                <div className="flex gap-2 items-center flex-wrap">
+                  <PillToggle label="Mixed in" active={!separateSections} onToggle={() => setSeparateSections(false)} />
+                  <PillToggle label="Separate section" active={separateSections} onToggle={() => setSeparateSections(true)} />
+                  <div className="flex items-center gap-1.5 ml-1">
+                    <input
+                      type="number"
+                      min={5}
+                      max={95}
+                      step={5}
+                      value={pctInput}
+                      onChange={e => setPctInput(e.target.value)}
+                      onBlur={commitPctInput}
+                      className="w-16 px-2 py-1.5 border-2 border-gray-200 rounded-lg text-sm font-bold text-gray-800 text-center focus:outline-none focus:border-blue-900"
                     />
-                    <Pill
-                      label="Separate Section"
-                      active={separateSections}
-                      onClick={() => setSeparateSections(true)}
-                    />
-                    <div className="flex items-center gap-1.5 ml-2">
-                      <input
-                        type="number"
-                        min={5}
-                        max={95}
-                        step={5}
-                        value={pctInput}
-                        onChange={e => setPctInput(e.target.value)}
-                        onBlur={commitPctInput}
-                        className="w-20 px-3 py-2.5 border-2 border-gray-200 rounded-lg text-base font-bold text-gray-800 text-center focus:outline-none focus:border-blue-900"
-                      />
-                      <span className="text-sm font-bold text-gray-500">% missing factor</span>
-                    </div>
+                    <span className="text-xs font-bold text-gray-500">% missing factor</span>
                   </div>
-                </div>
-              )}
-            </div>
-
-            {/* Times Tables Selection */}
-            <div className="mb-7">
-              <div className="flex justify-center items-center gap-4 mb-4">
-                <SectionLabel>Select Times Tables</SectionLabel>
-                <div className="flex gap-2">
-                  <button onClick={selectAll} className="px-3 py-1.5 rounded-lg text-sm font-bold border-2 border-gray-200 bg-white text-gray-500 hover:border-blue-300 hover:text-blue-900 transition-all">
-                    All
-                  </button>
-                  <button onClick={selectNone} className="px-3 py-1.5 rounded-lg text-sm font-bold border-2 border-gray-200 bg-white text-gray-500 hover:border-blue-300 hover:text-blue-900 transition-all">
-                    None
-                  </button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-10 gap-3 max-w-3xl mx-auto">
-                {Array.from({ length: 20 }, (_, i) => i + 1).map(table => (
-                  <button
-                    key={table}
-                    onClick={() => toggleTable(table)}
-                    className={`py-2 rounded-lg font-bold text-sm border-2 transition-all ${
-                      selectedTables.includes(table)
-                        ? 'bg-blue-900 border-blue-900 text-white'
-                        : 'bg-white border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-900'
-                    }`}
-                  >
-                    {table}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex justify-center mb-7">
-              <div style={{ width: '85%', height: '1px', backgroundColor: '#e5e7eb' }} />
-            </div>
-
-            {/* Layout + Questions */}
-            <div className="flex justify-center items-start gap-10 mb-6 flex-wrap">
-
-              <div className="flex flex-col items-center gap-2">
-                <SectionLabel>Layout</SectionLabel>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setLayoutAndClamp('list')}
-                    className={`px-5 py-2.5 rounded-lg font-bold text-base border-2 transition-all ${
-                      layoutMode === 'list'
-                        ? 'bg-blue-900 border-blue-900 text-white'
-                        : 'bg-white border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-900'
-                    }`}
-                  >
-                    No Cells
-                  </button>
-                  <button
-                    onClick={() => setLayoutAndClamp('cells')}
-                    className={`px-5 py-2.5 rounded-lg font-bold text-base border-2 transition-all ${
-                      layoutMode === 'cells'
-                        ? 'bg-blue-900 border-blue-900 text-white'
-                        : 'bg-white border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-900'
-                    }`}
-                  >
-                    Cells
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex flex-col items-center gap-2">
-                <SectionLabel>Questions</SectionLabel>
-                <input
-                  type="number"
-                  min={21}
-                  max={maxQ}
-                  value={qInput}
-                  onChange={e => setQInput(e.target.value)}
-                  onBlur={commitQInput}
-                  className="w-24 px-4 py-2.5 border-2 border-gray-200 rounded-lg text-base font-bold text-gray-800 text-center focus:outline-none focus:border-blue-900"
-                />
-              </div>
-            </div>
-
-            {/* Error */}
-            {error && (
-              <div className="flex justify-center mb-4">
-                <div className="px-4 py-2 bg-red-50 border-2 border-red-400 rounded-lg text-red-700 font-semibold text-sm">
-                  {error}
                 </div>
               </div>
             )}
 
-            {/* Buttons */}
-            <div className="flex justify-center gap-4">
-              <button
-                onClick={handleGeneratePreview}
-                disabled={!canGenerate}
-                className={`px-8 py-3 rounded-lg font-bold text-lg flex items-center gap-2 transition-all ${
-                  !canGenerate
-                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                    : 'bg-white border-2 border-blue-900 text-blue-900 hover:bg-blue-50 shadow-sm'
-                }`}
-              >
-                <Eye size={22} />
-                Generate Example
-              </button>
-              <button
-                onClick={handleGeneratePDF}
-                disabled={!canGenerate}
-                className={`px-8 py-3 rounded-lg font-bold text-lg flex items-center gap-2 transition-all ${
-                  !canGenerate
-                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                    : 'bg-blue-900 text-white hover:bg-blue-800 shadow-lg'
-                }`}
-              >
-                <Download size={22} />
-                Generate PDF
-              </button>
+            {/* Extra options */}
+            <div>
+              <SectionLabel>Options</SectionLabel>
+              <div className="flex gap-2 flex-wrap">
+                <PillToggle
+                  label="Exclude × 1 / ÷ 1"
+                  active={excludeOnes}
+                  onToggle={() => setExcludeOnes(v => !v)}
+                />
+                {includeMultiply && (
+                  <PillToggle
+                    label="Suppress 4×5 / 5×4 duplicates"
+                    active={suppressCommutative}
+                    onToggle={() => setSuppressCommutative(v => !v)}
+                  />
+                )}
+              </div>
             </div>
+          </div>
+
+          {/* Times tables */}
+          <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <SectionLabel>Times tables</SectionLabel>
+              <div className="flex gap-2">
+                <button onClick={selectAll} className="px-3 py-1 rounded-full text-xs font-bold border-2 border-gray-200 bg-white text-gray-500 hover:border-blue-300 hover:text-blue-900 transition-all">
+                  All
+                </button>
+                <button onClick={selectNone} className="px-3 py-1 rounded-full text-xs font-bold border-2 border-gray-200 bg-white text-gray-500 hover:border-blue-300 hover:text-blue-900 transition-all">
+                  None
+                </button>
+              </div>
+            </div>
+            <div className="grid grid-cols-10 gap-2">
+              {Array.from({ length: 20 }, (_, i) => i + 1).map(table => (
+                <button
+                  key={table}
+                  onClick={() => toggleTable(table)}
+                  className={`py-2 rounded-lg font-bold text-sm border-2 transition-all ${
+                    selectedTables.includes(table)
+                      ? 'bg-blue-900 border-blue-900 text-white'
+                      : 'bg-white border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-900'
+                  }`}
+                >
+                  {table}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Toolbar — layout + questions */}
+          <div className="bg-white rounded-2xl shadow-lg mb-6 px-6 py-4 flex items-center gap-4 flex-wrap justify-center">
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">Layout</label>
+              <div className="flex rounded-lg overflow-hidden border-2 border-gray-200">
+                <button
+                  onClick={() => setLayoutAndClamp('list')}
+                  className={`px-3 py-1.5 text-sm font-bold transition-all ${layoutMode === 'list' ? 'bg-blue-900 text-white' : 'bg-white text-gray-500 hover:text-blue-900'}`}
+                >No cells</button>
+                <button
+                  onClick={() => setLayoutAndClamp('cells')}
+                  className={`px-3 py-1.5 text-sm font-bold transition-all border-l-2 border-gray-200 ${layoutMode === 'cells' ? 'bg-blue-900 text-white' : 'bg-white text-gray-500 hover:text-blue-900'}`}
+                >Cells</button>
+              </div>
+            </div>
+
+            <div className="w-px self-stretch bg-gray-200 flex-shrink-0" />
+
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">Questions</label>
+              <input
+                type="number"
+                min={21}
+                max={maxQ}
+                value={qInput}
+                onChange={e => setQInput(e.target.value)}
+                onBlur={commitQInput}
+                className="w-16 px-2 py-1.5 border-2 border-gray-200 rounded-lg text-sm font-bold text-gray-800 text-center focus:outline-none focus:border-blue-900"
+              />
+              <span className="text-xs text-gray-400 font-semibold whitespace-nowrap">max {maxQ}</span>
+            </div>
+          </div>
+
+          {/* Error */}
+          {error && (
+            <div className="mb-4 px-4 py-3 bg-red-50 border-2 border-red-400 rounded-xl text-red-700 font-semibold text-sm text-center">
+              {error}
+            </div>
+          )}
+
+          {/* Buttons */}
+          <div className="flex gap-3 mb-6">
+            <button
+              onClick={handleGeneratePreview}
+              disabled={!canGenerate}
+              className={`flex-1 py-3.5 rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-all ${
+                !canGenerate
+                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  : 'bg-white border-2 border-blue-900 text-blue-900 hover:bg-blue-50 shadow-sm'}`}
+            >
+              <Eye size={20} /> Preview
+            </button>
+            <button
+              onClick={handleGeneratePDF}
+              disabled={!canGenerate}
+              className={`flex-1 py-3.5 rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-all ${
+                !canGenerate
+                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  : 'bg-blue-900 text-white hover:bg-blue-800 shadow-lg'}`}
+            >
+              <Download size={20} /> Generate PDF
+            </button>
           </div>
 
           {/* Preview */}
           {previewQuestions.length > 0 && (
-            <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
-              <h2 className="text-2xl font-bold text-center mb-1" style={{ color: '#000000' }}>
-                Worksheet Preview
-              </h2>
-              <p className="text-center text-sm text-gray-400 mb-6 font-semibold">
-                Hover a question and click <RefreshCw size={13} className="inline align-text-bottom" /> to swap it for a new one
+            <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+              <div className="flex items-baseline justify-between mb-1">
+                <h2 className="text-lg font-bold" style={{ color: '#000000' }}>
+                  Preview — {previewQuestions.length} questions
+                </h2>
+              </div>
+              <p className="text-sm text-gray-400 mb-4 font-semibold flex items-center gap-1">
+                Hover a question and click <RefreshCw size={13} className="inline" /> to swap it for a new one
               </p>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-3 gap-2">
                 {previewQuestions.map((q, idx) => (
                   <Fragment key={q.key}>
                     {separateSections && bothFormats && q.missing && idx > 0 && !previewQuestions[idx - 1].missing && (
                       <div className="col-span-3 w-3/5 mx-auto border-b border-gray-300 my-1" />
                     )}
-                    <div className="group relative bg-gray-50 rounded-lg px-4 py-3 border border-gray-100">
-                      <span className="text-lg font-semibold" style={{ color: '#000000' }}>
+                    <div className="group relative p-3 bg-gray-50 rounded-lg border border-gray-100 hover:border-blue-200 transition-colors">
+                      <span className="text-sm font-semibold text-gray-800 pr-5 block">
                         {idx + 1}. {q.question}
                       </span>
                       <button
                         onClick={() => regenPreviewQuestion(idx)}
                         title="Refresh this question"
-                        className="absolute top-1 right-1 w-6 h-6 rounded flex items-center justify-center text-gray-300 hover:text-blue-700 hover:bg-blue-50 transition-all opacity-0 group-hover:opacity-100"
+                        className="absolute top-2 right-2 p-1 rounded text-gray-300 hover:text-blue-900 hover:bg-blue-50 opacity-0 group-hover:opacity-100 transition-all"
                       >
-                        <RefreshCw size={14} />
+                        <RefreshCw size={13} />
                       </button>
                     </div>
                   </Fragment>
@@ -667,15 +615,16 @@ export default function TimesTablesQuizGenerator() {
           )}
 
           {/* Info */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h3 className="text-xl font-bold mb-3" style={{ color: '#000000' }}>How it works</h3>
-            <ul className="space-y-2 text-gray-600">
+          <div className="bg-white rounded-2xl shadow-lg p-6">
+            <h3 className="font-bold text-gray-900 mb-3">How it works</h3>
+            <ul className="space-y-1.5 text-sm text-gray-600">
               {[
                 'Pick one or both operations (× and/or ÷), then choose your question format — Standard (answer at the end) or Missing Factor (gap in the middle), or both together.',
                 'With both formats on, set what percentage of questions are missing factor, and choose whether they are mixed in or grouped into a separate section below a divider line.',
+                'Use Exclude × 1 / ÷ 1 to drop the trivial one-times-table facts, and Suppress duplicates so 4 × 5 and 5 × 4 are never both included.',
                 'Select which times tables to include from 1–20.',
-                '"No Cells" generates a numbered list (21–60 questions). "Cells" generates a bordered grid (21–45 cells).',
-                'Generate Example previews the full worksheet on screen — hover any question and click the refresh icon to swap just that one. Generate PDF opens a printable worksheet with an answer key on the second page.',
+                '"No cells" generates a numbered list (21–60 questions). "Cells" generates a bordered grid (21–45 cells).',
+                'Preview shows the full worksheet — hover any question and click the refresh icon to swap just that one. Generate PDF opens a printable worksheet with an answer key on the second page.',
               ].map((t, i) => (
                 <li key={i} className="flex items-start gap-2">
                   <span className="text-blue-900 font-bold mt-0.5">·</span>
