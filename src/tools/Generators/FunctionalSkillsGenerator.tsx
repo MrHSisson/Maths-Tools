@@ -1824,7 +1824,7 @@ export default function MathsSkillsGenerator() {
               {SKILL_GROUPS.map(group => (
                 <div key={group.label}>
                   <h2 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">{group.label}</h2>
-                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5">
+                  <div className="grid grid-cols-2 gap-2.5">
                     {group.skills.map(skill => {
                       const enabled = enabledSkills.includes(skill);
                       return (
