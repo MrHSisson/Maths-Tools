@@ -112,6 +112,7 @@ export const CATEGORIES: CategoryMeta[] = [
     name: 'Computer Science',
     tools: [
       { id: 'system architecture', path: '/system-architecture', name: '1.1 - System Architectures', description: 'A tool for learning the 1.1 content for system architectures', load: () => import('./tools/ComputerScience/SystemArchitecture') },
+      { id: 'cpu-architecture', path: '/cpu-architecture', name: '1.1.1 - CPU Architecture (OCR J277)', description: 'Spec-tagged, exam-realistic, mobile-first revision for OCR J277 1.1.1 CPU architecture', load: () => import('./tools/ComputerScience/CpuArchitecture') },
     ],
   },
 ];
