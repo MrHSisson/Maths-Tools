@@ -1762,7 +1762,7 @@ export default function MathsSkillsGenerator() {
 
       {/* Main */}
       <div className="min-h-screen p-8" style={{ backgroundColor: '#f5f3f0' }}>
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-6xl mx-auto">
 
           <h1 className="text-5xl font-bold text-center mb-2" style={{ color: '#000000' }}>
             {TOOL_CONFIG.pageTitle}
@@ -1770,27 +1770,27 @@ export default function MathsSkillsGenerator() {
           <p className="text-center text-gray-500 mb-6">Build a worksheet with intent — tap a skill to set its options and how many questions it adds.</p>
 
           {/* Browse (tiles) + build (controls) */}
-          <div className="flex flex-col md:flex-row gap-6 items-start mb-6">
+          <div className="flex flex-col md:flex-row gap-6 mb-6 md:h-[calc(100vh-14rem)]">
 
-            {/* LEFT — skill tiles grouped by topic */}
-            <div className="flex-1 w-full space-y-5">
+            {/* LEFT — skill tiles grouped by topic; this column scrolls on its own */}
+            <div className="flex-1 w-full md:min-h-0 md:overflow-y-auto md:pr-1 space-y-5">
               {SKILL_GROUPS.map(group => (
                 <div key={group.label}>
                   <h2 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">{group.label}</h2>
-                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {group.skills.map(skill => {
                       const enabled = enabledSkills.includes(skill);
                       return (
                         <button
                           key={skill}
                           onClick={() => toggleSkill(skill)}
-                          className={`relative text-left rounded-xl border-2 p-3 pr-9 min-h-[4.75rem] flex flex-col justify-center transition-all ${enabled ? 'bg-blue-900 border-blue-900 shadow-md' : 'bg-white border-gray-200 hover:border-blue-300 shadow-sm'}`}
+                          className={`flex items-center gap-2.5 rounded-lg border-2 px-3 py-2.5 text-left transition-all ${enabled ? 'bg-blue-900 border-blue-900 shadow-sm' : 'bg-white border-gray-200 hover:border-blue-300 shadow-sm'}`}
                         >
-                          <span className={`font-bold text-sm leading-tight ${enabled ? 'text-white' : 'text-gray-800'}`}>{SKILL_META[skill].label}</span>
-                          <span className={`block text-[11px] mt-0.5 leading-snug ${enabled ? 'text-blue-200' : 'text-gray-400'}`}>{SKILL_META[skill].description}</span>
-                          <span className={`absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full ${enabled ? 'bg-white text-blue-900' : 'border-2 border-gray-200 text-gray-300'}`}>
-                            {enabled ? <Check size={15} /> : <Plus size={14} />}
+                          <span className={`flex items-center justify-center w-5 h-5 rounded-full flex-shrink-0 ${enabled ? 'bg-white text-blue-900' : 'border-2 border-gray-200 text-gray-300'}`}>
+                            {enabled ? <Check size={13} /> : <Plus size={12} />}
                           </span>
+                          <span className={`font-bold text-sm whitespace-nowrap flex-shrink-0 ${enabled ? 'text-white' : 'text-gray-800'}`}>{SKILL_META[skill].label}</span>
+                          <span className={`text-[11px] truncate min-w-0 ${enabled ? 'text-blue-200' : 'text-gray-400'}`}>{SKILL_META[skill].description}</span>
                         </button>
                       );
                     })}
@@ -1799,148 +1799,153 @@ export default function MathsSkillsGenerator() {
               ))}
             </div>
 
-            {/* RIGHT — worksheet controls (sticky) */}
-            <div className="w-full md:w-80 flex-shrink-0 md:sticky md:top-6">
-              <div className="bg-white rounded-2xl shadow-lg p-5">
+            {/* RIGHT — your worksheet: fixed header, scrolling skill list, fixed action footer */}
+            <div className="w-full md:flex-1 md:min-h-0">
+              <div className="bg-white rounded-2xl shadow-lg flex flex-col md:h-full">
 
-                <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-lg font-bold text-gray-900">Your worksheet</h2>
-                  {enabledSkills.length > 0 && (
-                    <button
-                      onClick={clearAll}
-                      className="flex items-center gap-1 text-xs font-bold text-gray-400 hover:text-red-600 transition-colors"
-                      title="Remove all skills"
-                    >
-                      <RotateCcw size={13} /> Clear
-                    </button>
-                  )}
-                </div>
-
-                {/* Budget bar */}
-                <div className="flex items-center gap-3 mb-1">
-                  <div className="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all ${overBudget ? 'bg-red-500' : 'bg-blue-900'}`}
-                      style={{ width: `${Math.min(100, (total / maxQuestions) * 100)}%` }}
-                    />
+                {/* Header */}
+                <div className="p-5 pb-3 flex-shrink-0">
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-lg font-bold text-gray-900">Your worksheet</h2>
+                    {enabledSkills.length > 0 && (
+                      <button
+                        onClick={clearAll}
+                        className="flex items-center gap-1 text-xs font-bold text-gray-400 hover:text-red-600 transition-colors"
+                        title="Remove all skills"
+                      >
+                        <RotateCcw size={13} /> Clear
+                      </button>
+                    )}
                   </div>
-                  <span className={`text-sm font-bold tabular-nums ${overBudget ? 'text-red-600' : 'text-gray-700'}`}>
-                    {total} / {maxQuestions}
-                  </span>
+                  <div className="flex items-center gap-3 mb-1">
+                    <div className="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${overBudget ? 'bg-red-500' : 'bg-blue-900'}`}
+                        style={{ width: `${Math.min(100, (total / maxQuestions) * 100)}%` }}
+                      />
+                    </div>
+                    <span className={`text-sm font-bold tabular-nums ${overBudget ? 'text-red-600' : 'text-gray-700'}`}>
+                      {total} / {maxQuestions}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-400">
+                    {enabledSkills.length === 0 ? 'Tap a tile to add a skill.' : `${enabledSkills.length} skill${enabledSkills.length > 1 ? 's' : ''} selected`}
+                  </p>
                 </div>
-                <p className="text-xs text-gray-400 mb-4">
-                  {enabledSkills.length === 0 ? 'Tap a tile to add a skill.' : `${enabledSkills.length} skill${enabledSkills.length > 1 ? 's' : ''} selected`}
-                </p>
 
-                {/* Selected skills — the single place to set counts + options */}
-                {enabledSkills.length > 0 && (
-                  <div className="space-y-2 mb-4">
-                    {enabledSkills.map(skill => {
-                      const expanded = expandedSkill === skill;
-                      return (
-                        <div key={skill} className={`rounded-xl border overflow-hidden transition-colors ${expanded ? 'border-blue-300' : 'border-gray-200'}`}>
-                          <div className="px-3 pt-2 pb-2">
-                            <div className="flex items-center gap-2">
-                              <span className="flex-1 min-w-0 truncate text-sm font-bold text-gray-900">{SKILL_META[skill].label}</span>
-                              <button
-                                onClick={() => toggleSkill(skill)}
-                                title="Remove"
-                                className="w-6 h-6 flex items-center justify-center rounded text-gray-300 hover:text-red-600 hover:bg-red-50 flex-shrink-0 transition-all"
-                              ><X size={15} /></button>
-                            </div>
-                            <div className="flex items-center justify-between mt-1.5">
-                              <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
+                {/* Scrolling body: selected skills + worksheet settings */}
+                <div className="flex-1 md:min-h-0 md:overflow-y-auto px-5 py-1">
+                  {enabledSkills.length === 0 ? (
+                    <p className="text-sm text-gray-400 text-center py-8 px-4">Nothing added yet. Tap skills on the left to build your worksheet.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {enabledSkills.map(skill => {
+                        const expanded = expandedSkill === skill;
+                        return (
+                          <div key={skill} className={`rounded-xl border overflow-hidden transition-colors ${expanded ? 'border-blue-300' : 'border-gray-200'}`}>
+                            <div className="px-3 pt-2 pb-2">
+                              <div className="flex items-center gap-2">
+                                <span className="flex-1 min-w-0 truncate text-sm font-bold text-gray-900">{SKILL_META[skill].label}</span>
                                 <button
-                                  onClick={() => adjustCount(skill, -1)}
-                                  disabled={skillCounts[skill] <= 1}
-                                  className="w-7 h-7 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed font-bold text-lg leading-none"
-                                >−</button>
-                                <span className="w-7 text-center text-sm font-bold text-gray-800 tabular-nums">{skillCounts[skill]}</span>
-                                <button
-                                  onClick={() => adjustCount(skill, 1)}
-                                  disabled={total >= maxQuestions}
-                                  className="w-7 h-7 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed font-bold text-lg leading-none"
-                                >+</button>
+                                  onClick={() => toggleSkill(skill)}
+                                  title="Remove"
+                                  className="w-6 h-6 flex items-center justify-center rounded text-gray-300 hover:text-red-600 hover:bg-red-50 flex-shrink-0 transition-all"
+                                ><X size={15} /></button>
                               </div>
-                              <button
-                                onClick={() => setExpandedSkill(expanded ? null : skill)}
-                                className={`flex items-center gap-1 text-xs font-bold px-2.5 py-1.5 rounded-lg border transition-all ${expanded ? 'bg-blue-900 border-blue-900 text-white' : 'border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-900'}`}
-                              >
-                                Options {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                              </button>
+                              <div className="flex items-center justify-between mt-1.5">
+                                <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
+                                  <button
+                                    onClick={() => adjustCount(skill, -1)}
+                                    disabled={skillCounts[skill] <= 1}
+                                    className="w-7 h-7 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed font-bold text-lg leading-none"
+                                  >−</button>
+                                  <span className="w-7 text-center text-sm font-bold text-gray-800 tabular-nums">{skillCounts[skill]}</span>
+                                  <button
+                                    onClick={() => adjustCount(skill, 1)}
+                                    disabled={total >= maxQuestions}
+                                    className="w-7 h-7 flex items-center justify-center rounded-md text-gray-600 hover:bg-white hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed font-bold text-lg leading-none"
+                                  >+</button>
+                                </div>
+                                <button
+                                  onClick={() => setExpandedSkill(expanded ? null : skill)}
+                                  className={`flex items-center gap-1 text-xs font-bold px-2.5 py-1.5 rounded-lg border transition-all ${expanded ? 'bg-blue-900 border-blue-900 text-white' : 'border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-900'}`}
+                                >
+                                  Options {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                                </button>
+                              </div>
                             </div>
+                            {expanded && (
+                              <div className="px-3 pb-3 pt-1 border-t border-gray-100 bg-slate-50">
+                                {renderConfig(skill)}
+                              </div>
+                            )}
                           </div>
-                          {expanded && (
-                            <div className="px-3 pb-3 pt-1 border-t border-gray-100 bg-slate-50">
-                              {renderConfig(skill)}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
+                        );
+                      })}
+                    </div>
+                  )}
 
-                {/* Worksheet settings */}
-                <div className="border-t border-gray-100 pt-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Max questions</label>
-                    <input
-                      type="number"
-                      min={3} max={30} step={3}
-                      value={maxQuestions}
-                      onChange={e => setMaxQuestions(Math.min(30, Math.max(3, parseInt(e.target.value) || 3)))}
-                      className="w-16 px-2 py-1.5 border-2 border-gray-200 rounded-lg text-sm font-bold text-gray-800 text-center focus:outline-none focus:border-blue-900"
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Pages</label>
-                    <input
-                      type="number"
-                      min={1} max={12} step={1}
-                      value={numPages}
-                      onChange={e => setNumPages(Math.min(12, Math.max(1, parseInt(e.target.value) || 1)))}
-                      className="w-16 px-2 py-1.5 border-2 border-gray-200 rounded-lg text-sm font-bold text-gray-800 text-center focus:outline-none focus:border-blue-900"
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Order</label>
-                    <div className="flex rounded-lg overflow-hidden border-2 border-gray-200">
-                      <button
-                        onClick={() => setGrouped(false)}
-                        className={`px-3 py-1 text-sm font-bold transition-all ${!grouped ? 'bg-blue-900 text-white' : 'bg-white text-gray-500 hover:text-blue-900'}`}
-                      >Mixed</button>
-                      <button
-                        onClick={() => setGrouped(true)}
-                        className={`px-3 py-1 text-sm font-bold transition-all border-l-2 border-gray-200 ${grouped ? 'bg-blue-900 text-white' : 'bg-white text-gray-500 hover:text-blue-900'}`}
-                      >Grouped</button>
+                  {/* Worksheet settings */}
+                  <div className="border-t border-gray-100 mt-3 pt-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Max questions</label>
+                      <input
+                        type="number"
+                        min={3} max={30} step={3}
+                        value={maxQuestions}
+                        onChange={e => setMaxQuestions(Math.min(30, Math.max(3, parseInt(e.target.value) || 3)))}
+                        className="w-16 px-2 py-1.5 border-2 border-gray-200 rounded-lg text-sm font-bold text-gray-800 text-center focus:outline-none focus:border-blue-900"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Pages</label>
+                      <input
+                        type="number"
+                        min={1} max={12} step={1}
+                        value={numPages}
+                        onChange={e => setNumPages(Math.min(12, Math.max(1, parseInt(e.target.value) || 1)))}
+                        className="w-16 px-2 py-1.5 border-2 border-gray-200 rounded-lg text-sm font-bold text-gray-800 text-center focus:outline-none focus:border-blue-900"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Order</label>
+                      <div className="flex rounded-lg overflow-hidden border-2 border-gray-200">
+                        <button
+                          onClick={() => setGrouped(false)}
+                          className={`px-3 py-1 text-sm font-bold transition-all ${!grouped ? 'bg-blue-900 text-white' : 'bg-white text-gray-500 hover:text-blue-900'}`}
+                        >Mixed</button>
+                        <button
+                          onClick={() => setGrouped(true)}
+                          className={`px-3 py-1 text-sm font-bold transition-all border-l-2 border-gray-200 ${grouped ? 'bg-blue-900 text-white' : 'bg-white text-gray-500 hover:text-blue-900'}`}
+                        >Grouped</button>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Error */}
-                {error && (
-                  <div className="mt-4 px-3 py-2 bg-red-50 border-2 border-red-400 rounded-xl text-red-700 font-semibold text-xs text-center">
-                    {error}
+                {/* Fixed action footer */}
+                <div className="p-5 pt-3 border-t border-gray-100 flex-shrink-0">
+                  {error && (
+                    <div className="mb-3 px-3 py-2 bg-red-50 border-2 border-red-400 rounded-xl text-red-700 font-semibold text-xs text-center">
+                      {error}
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleGeneratePreview}
+                      disabled={!canGenerate || overBudget}
+                      className={`flex-1 py-3 rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-all ${(!canGenerate || overBudget) ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white border-2 border-blue-900 text-blue-900 hover:bg-blue-50 shadow-sm'}`}
+                    >
+                      <Eye size={20} /> Preview
+                    </button>
+                    <button
+                      onClick={handleGeneratePDF}
+                      disabled={!canGenerate || overBudget}
+                      className={`flex-1 py-3 rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-all ${(!canGenerate || overBudget) ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-blue-900 text-white hover:bg-blue-800 shadow-lg'}`}
+                    >
+                      <Download size={20} /> Generate PDF
+                    </button>
                   </div>
-                )}
-
-                {/* Generate buttons */}
-                <div className="flex flex-col gap-2 mt-4">
-                  <button
-                    onClick={handleGeneratePreview}
-                    disabled={!canGenerate || overBudget}
-                    className={`w-full py-3 rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-all ${(!canGenerate || overBudget) ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white border-2 border-blue-900 text-blue-900 hover:bg-blue-50 shadow-sm'}`}
-                  >
-                    <Eye size={20} /> Preview
-                  </button>
-                  <button
-                    onClick={handleGeneratePDF}
-                    disabled={!canGenerate || overBudget}
-                    className={`w-full py-3 rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-all ${(!canGenerate || overBudget) ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-blue-900 text-white hover:bg-blue-800 shadow-lg'}`}
-                  >
-                    <Download size={20} /> Generate PDF
-                  </button>
                 </div>
 
               </div>
