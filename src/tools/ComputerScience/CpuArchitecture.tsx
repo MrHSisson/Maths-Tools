@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef, CSSProperties } from "react";
 import {
   Home, Menu, X, ChevronLeft, ChevronRight, Shuffle, RotateCcw, RefreshCw,
-  BookOpen, Layers, CheckSquare, PenLine, FileText, Info,
+  BookOpen, Layers, CheckSquare, PenLine, FileText, Info, GraduationCap,
 } from "lucide-react";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -575,6 +575,203 @@ const BeyondBadge = () => (
 );
 
 // ─────────────────────────────────────────────────────────────────────────────
+// MODE: LEARN — taught, stepped walkthroughs over one shared CPU schematic.
+// This is the *teaching* surface (I-do): explanation + a diagram that highlights
+// the part under discussion, revealed one beat per press. The schematic is the
+// topic's core representation, reused across every lesson for consistency.
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface LessonStep { text: string; highlight: string[]; legend?: boolean }
+interface Lesson { id: string; title: string; specTags: SpecTag[]; steps: LessonStep[] }
+
+const LESSONS: Lesson[] = [
+  {
+    id: "components", title: "What's inside the CPU?", specTags: ["1.1.1-R2"],
+    steps: [
+      { text: "The **CPU** carries out instructions. Everything inside this box works together each time an instruction runs.", highlight: [] },
+      { text: "The **Control Unit (CU)** is in charge. It coordinates the other parts and controls the flow of data around the CPU.", highlight: ["cu"] },
+      { text: "The **ALU** (Arithmetic Logic Unit) does the actual work — arithmetic like adding, and logic like comparing two values.", highlight: ["alu"] },
+      { text: "**Cache** is a small, very fast memory inside the CPU. It keeps frequently used data close, so the CPU waits less for slower RAM.", highlight: ["cache"] },
+      { text: "**Registers** are tiny, extremely fast stores. Each one holds a single value the CPU is using right now. Next lesson looks at what each holds.", highlight: ["pc", "mar", "mdr", "acc", "cir"] },
+    ],
+  },
+  {
+    id: "registers", title: "Registers: address or data?", specTags: ["1.1.1-R3", "1.1.1-R4"],
+    steps: [
+      { text: "Some registers hold an **address** (blue — *where* a value is). Others hold **data** (green — the value *itself*). Watch the colours.", highlight: [], legend: true },
+      { text: "The **Program Counter (PC)** holds an **address**: the location of the next instruction to be fetched.", highlight: ["pc"], legend: true },
+      { text: "The **MAR** (Memory Address Register) holds an **address**: the location the CPU wants to read from or write to.", highlight: ["mar"], legend: true },
+      { text: "The **MDR** (Memory Data Register) holds **data**: the value just read from, or about to be written to, memory.", highlight: ["mdr"], legend: true },
+      { text: "The **Accumulator (ACC)** holds **data**: the result of a calculation done by the ALU.", highlight: ["acc"], legend: true },
+      { text: "Big idea: an **address** tells you *where*; **data** is *what* is stored there. PC and MAR store where — MDR and ACC store what.", highlight: ["pc", "mar", "mdr", "acc"], legend: true },
+    ],
+  },
+  {
+    id: "cycle", title: "The fetch–execute cycle", specTags: ["1.1.1-R1"],
+    steps: [
+      { text: "Every instruction goes through three stages: **fetch**, then **decode**, then **execute**. Let's follow one all the way round.", highlight: [] },
+      { text: "**Fetch.** The **PC** holds the address of the next instruction to run.", highlight: ["pc"] },
+      { text: "That address is copied into the **MAR**, so memory knows which location to look at.", highlight: ["mar"] },
+      { text: "The instruction is read from **RAM** at that address…", highlight: ["mar", "ram"] },
+      { text: "…and the value arrives back in the **MDR**.", highlight: ["mdr", "ram"] },
+      { text: "**Decode.** The instruction moves to the **CIR**, and the **Control Unit** works out what it means.", highlight: ["cir", "cu"] },
+      { text: "**Execute.** The instruction is carried out — often the **ALU** calculates, leaving its result in the **ACC**.", highlight: ["alu", "acc"] },
+      { text: "Finally the **PC** increments to point at the next instruction, and the whole cycle repeats.", highlight: ["pc"] },
+    ],
+  },
+];
+
+const PARTS: Record<string, { x: number; y: number; w: number; h: number; label: string; role: "addr" | "data" | "instr" | "ctrl" | "mem" }> = {
+  cu:    { x: 24,  y: 44,  w: 100, h: 40,  label: "Control Unit", role: "ctrl" },
+  alu:   { x: 24,  y: 96,  w: 100, h: 40,  label: "ALU",          role: "ctrl" },
+  cache: { x: 24,  y: 148, w: 100, h: 40,  label: "Cache",        role: "mem" },
+  pc:    { x: 148, y: 52,  w: 92,  h: 28,  label: "PC",           role: "addr" },
+  mar:   { x: 148, y: 86,  w: 92,  h: 28,  label: "MAR",          role: "addr" },
+  mdr:   { x: 148, y: 120, w: 92,  h: 28,  label: "MDR",          role: "data" },
+  acc:   { x: 148, y: 154, w: 92,  h: 28,  label: "ACC",          role: "data" },
+  cir:   { x: 148, y: 188, w: 92,  h: 28,  label: "CIR",          role: "instr" },
+  ram:   { x: 288, y: 92,  w: 84,  h: 96,  label: "RAM",          role: "mem" },
+};
+const ROLE_COLOR: Record<string, string> = { addr: "#2563eb", data: "#059669", instr: "#64748b", ctrl: "#475569", mem: "#475569" };
+const ROLE_TINT:  Record<string, string> = { addr: "#dbeafe", data: "#d1fae5", instr: "#e2e8f0", ctrl: "#f1f5f9", mem: "#f1f5f9" };
+
+const CpuDiagram = ({ highlight }: { highlight: string[] }) => {
+  const on = (id: string) => highlight.includes(id);
+  const dim = (id: string) => (highlight.length && !on(id) ? 0.32 : 1);
+  const ramHot = on("ram") || on("mar") || on("mdr");
+  return (
+    <svg viewBox="0 0 380 244" style={{ display: "block", width: "100%", height: "auto", maxWidth: 520, margin: "0 auto" }} preserveAspectRatio="xMidYMid meet">
+      {/* bus between CPU and RAM */}
+      <line x1={256} y1={140} x2={288} y2={140} stroke={ramHot ? "#334155" : "#cbd5e1"} strokeWidth={ramHot ? 4 : 3} />
+      {/* CPU outer box */}
+      <rect x={8} y={16} width={248} height={220} rx={12} fill="none" stroke="#94a3b8" strokeWidth={1.5} strokeDasharray="5 4" />
+      <text x={20} y={33} fontSize={13} fontWeight={800} fill="#334155">CPU</text>
+      {/* registers group label */}
+      <text x={194} y={44} fontSize={9} fontWeight={700} fill="#94a3b8" textAnchor="middle" letterSpacing="0.06em">REGISTERS</text>
+      {Object.entries(PARTS).map(([id, p]) => {
+        const c = ROLE_COLOR[p.role]; const isReg = ["pc", "mar", "mdr", "acc", "cir"].includes(id);
+        return (
+          <g key={id} opacity={dim(id)} style={{ transition: "opacity 0.25s" }}>
+            <rect x={p.x} y={p.y} width={p.w} height={p.h} rx={7}
+              fill={on(id) ? ROLE_TINT[p.role] : "#fff"} stroke={c} strokeWidth={on(id) ? 3 : 1.4} />
+            <text x={p.x + p.w / 2} y={p.y + p.h / 2 + 1} fontSize={isReg ? 12 : 12} fontWeight={700}
+              fill={c} textAnchor="middle" dominantBaseline="central">{p.label}</text>
+          </g>
+        );
+      })}
+      <text x={330} y={210} fontSize={8.5} fontWeight={600} fill="#94a3b8" textAnchor="middle">main memory</text>
+    </svg>
+  );
+};
+
+// renders **bold** and *italic* markers in teaching text
+const boldText = (s: string) =>
+  s.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g).map((p, i) => {
+    if (p.startsWith("**") && p.endsWith("**")) return <strong key={i} style={{ color: "#111827" }}>{p.slice(2, -2)}</strong>;
+    if (p.startsWith("*") && p.endsWith("*") && p.length > 2) return <em key={i} style={{ fontStyle: "italic", color: "#1e3a8a" }}>{p.slice(1, -1)}</em>;
+    return <span key={i}>{p}</span>;
+  });
+
+const LEGEND = (
+  <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap", marginTop: 4 }}>
+    <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.78rem", fontWeight: 700, color: "#2563eb" }}>
+      <span style={{ width: 14, height: 14, borderRadius: 4, background: "#dbeafe", border: "2px solid #2563eb" }} /> address (where)
+    </span>
+    <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.78rem", fontWeight: 700, color: "#059669" }}>
+      <span style={{ width: 14, height: 14, borderRadius: 4, background: "#d1fae5", border: "2px solid #059669" }} /> data (what)
+    </span>
+  </div>
+);
+
+const LearnMode = () => {
+  const [lessonIdx, setLessonIdx] = useState(0);
+  const [step, setStep] = useState(0);
+
+  const lesson = LESSONS[lessonIdx];
+  const maxStep = lesson.steps.length - 1;
+
+  useEffect(() => { setStep(0); }, [lessonIdx]);
+
+  const next = useCallback(() => setStep(s => Math.min(maxStep, s + 1)), [maxStep]);
+  const prev = useCallback(() => setStep(s => Math.max(0, s - 1)), []);
+
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight" || e.key === " ") { if (e.target === document.body) { e.preventDefault(); next(); } }
+      else if (e.key === "ArrowLeft") prev();
+    };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [next, prev]);
+
+  const cur = lesson.steps[step];
+
+  return (
+    <div style={{ maxWidth: 640, margin: "0 auto", display: "flex", flexDirection: "column", gap: 14 }}>
+      {/* lesson picker */}
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
+        {LESSONS.map((l, i) => (
+          <button key={l.id} onClick={() => setLessonIdx(i)}
+            style={{ minHeight: 40, padding: "0 14px", borderRadius: 10, fontWeight: 700, fontSize: "0.8rem", border: "2px solid", cursor: "pointer",
+              background: i === lessonIdx ? "#1e3a8a" : "#fff", color: i === lessonIdx ? "#fff" : "#4b5563", borderColor: i === lessonIdx ? "#1e3a8a" : "#e5e7eb" }}>
+            {i + 1}. {l.title}
+          </button>
+        ))}
+      </div>
+
+      {/* lesson card */}
+      <div style={{ background: "#fff", borderRadius: 18, border: "2px solid #e5e7eb", padding: "18px 18px 16px", display: "flex", flexDirection: "column", gap: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+          <p style={{ fontWeight: 800, fontSize: "1rem", color: "#1e3a8a", margin: 0 }}>{lesson.title}</p>
+          <div style={{ display: "flex", gap: 6 }}>{lesson.specTags.map(t => <SpecBadge key={t} tag={t} />)}</div>
+        </div>
+
+        <div style={{ background: "#f8fafc", borderRadius: 12, padding: "14px 10px 10px" }}>
+          <CpuDiagram highlight={cur.highlight} />
+          {cur.legend && LEGEND}
+        </div>
+
+        {/* explanation — one beat at a time */}
+        <div style={{ minHeight: 84, background: "#eff6ff", borderRadius: 12, borderLeft: "4px solid #1e3a8a", padding: "14px 16px", display: "flex", alignItems: "center" }}>
+          <p style={{ fontSize: "1rem", color: "#334155", lineHeight: 1.6, margin: 0, fontWeight: 500 }}>{boldText(cur.text)}</p>
+        </div>
+
+        {/* progress dots */}
+        <div style={{ display: "flex", gap: 6, justifyContent: "center" }}>
+          {lesson.steps.map((_, i) => (
+            <span key={i} style={{ width: i === step ? 22 : 8, height: 8, borderRadius: 4, background: i === step ? "#1e3a8a" : i < step ? "#93c5fd" : "#e5e7eb", transition: "all 0.2s" }} />
+          ))}
+        </div>
+
+        {/* nav */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+          <button onClick={prev} disabled={step === 0}
+            style={{ minHeight: 44, display: "flex", alignItems: "center", gap: 6, padding: "0 18px", borderRadius: 12, fontWeight: 700, fontSize: "0.9rem", border: "2px solid", cursor: step === 0 ? "not-allowed" : "pointer", background: step === 0 ? "#f3f4f6" : "#fff", color: step === 0 ? "#d1d5db" : "#374151", borderColor: step === 0 ? "#e5e7eb" : "#d1d5db" }}>
+            <ChevronLeft size={18} /> Back
+          </button>
+          <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#9ca3af" }}>{step + 1} / {lesson.steps.length}</span>
+          {step < maxStep ? (
+            <button onClick={next}
+              style={{ minHeight: 44, display: "flex", alignItems: "center", gap: 6, padding: "0 22px", borderRadius: 12, fontWeight: 700, fontSize: "0.9rem", border: "2px solid #1e3a8a", cursor: "pointer", background: "#1e3a8a", color: "#fff" }}>
+              Next <ChevronRight size={18} />
+            </button>
+          ) : lessonIdx < LESSONS.length - 1 ? (
+            <button onClick={() => setLessonIdx(i => i + 1)}
+              style={{ minHeight: 44, display: "flex", alignItems: "center", gap: 6, padding: "0 18px", borderRadius: 12, fontWeight: 700, fontSize: "0.88rem", border: "2px solid #059669", cursor: "pointer", background: "#059669", color: "#fff" }}>
+              Next lesson <ChevronRight size={18} />
+            </button>
+          ) : (
+            <span style={{ minHeight: 44, display: "flex", alignItems: "center", padding: "0 18px", fontSize: "0.82rem", fontWeight: 700, color: "#059669" }}>Lesson complete ✓</span>
+          )}
+        </div>
+      </div>
+
+      <p style={{ textAlign: "center", fontSize: "0.75rem", color: "#9ca3af", fontWeight: 500, margin: 0 }}>Press → or space to step forward · ← to go back</p>
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // FLIP CARD — viewport-aware sizing + swipe navigation
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -975,13 +1172,16 @@ const ExamMode = ({ questions, synoptic, section, showHints }: {
   const [ctx, setCtx] = useState<string | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
 
-  const setup = useCallback((i: number) => {
-    setIndex(i); setRevealed(false); setSelected(null);
+  const pickCtx = (i: number): string | null => {
     const q = list[i];
-    setCtx(!isSyn && q ? resolvePrompt((q as ExamQuestion).prompt, (q as ExamQuestion).contexts).ctx : null);
-  }, [list, isSyn]);
+    return !isSyn && q ? resolvePrompt((q as ExamQuestion).prompt, (q as ExamQuestion).contexts).ctx : null;
+  };
+  const setup = (i: number) => { setIndex(i); setRevealed(false); setSelected(null); setCtx(pickCtx(i)); };
 
-  useEffect(() => { setup(0); }, [section, setup]);
+  // Reset ONLY when the section changes — not on every render. (list is a fresh
+  // array each render, so depending on it here would reset the reveal instantly.)
+  useEffect(() => { setIndex(0); setRevealed(false); setSelected(null); setCtx(pickCtx(0)); // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [section]);
 
   if (!list.length) return <div style={{ textAlign: "center", padding: 60, color: "#9ca3af", fontWeight: 600 }}>No questions in this section.</div>;
 
@@ -1155,10 +1355,11 @@ const InfoModal = ({ onClose }: { onClose: () => void }) => (
 // ─────────────────────────────────────────────────────────────────────────────
 
 const ACTIVITIES = [
-  { key: "study",     label: "Study",  icon: BookOpen,    blurb: "Read first — recognition, low effort. Start here." },
+  { key: "learn",     label: "Learn",  icon: GraduationCap, blurb: "Taught walkthroughs with a diagram — start here to understand it before testing yourself." },
+  { key: "study",     label: "Study",  icon: BookOpen,    blurb: "Read the question-and-answer cards — recognition, low effort." },
   { key: "flashcard", label: "Cards",  icon: Layers,      blurb: "Active recall — answer before you flip." },
   { key: "quiz",      label: "Quiz",   icon: CheckSquare, blurb: "MCQ warm-up — a high score here isn't exam-readiness." },
-  { key: "fillin",    label: "Fill In", icon: PenLine,    blurb: "Tap a term, then tap a slot to place it." },
+  { key: "fillin",    label: "Fill",   icon: PenLine,     blurb: "Tap a term, then tap a slot to place it." },
   { key: "exam",      label: "Exam",   icon: FileText,    blurb: "Real J277 formats, tariffs and synoptic questions." },
 ] as const;
 
@@ -1193,9 +1394,9 @@ const BottomNav = ({ activity, setActivity }: { activity: string; setActivity: (
       const active = activity === a.key; const Icon = a.icon;
       return (
         <button key={a.key} onClick={() => setActivity(a.key)}
-          style={{ flex: 1, minHeight: 56, border: "none", background: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3, color: active ? "#1e3a8a" : "#9ca3af", padding: "6px 2px" }}>
-          <Icon size={20} strokeWidth={active ? 2.4 : 2} />
-          <span style={{ fontSize: "0.66rem", fontWeight: 700 }}>{a.label}</span>
+          style={{ flex: 1, minWidth: 0, minHeight: 56, border: "none", background: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3, color: active ? "#1e3a8a" : "#9ca3af", padding: "6px 1px" }}>
+          <Icon size={19} strokeWidth={active ? 2.4 : 2} />
+          <span style={{ fontSize: "0.62rem", fontWeight: 700 }}>{a.label}</span>
         </button>
       );
     })}
@@ -1223,7 +1424,7 @@ const DesktopTabs = ({ activity, setActivity }: { activity: string; setActivity:
 
 export default function App() {
   const isMobile = useIsMobile();
-  const [activity, setActivity] = useState("study");
+  const [activity, setActivity] = useState("learn");
   const [examSection, setExamSection] = useState("all");
   const [showHints, setShowHints] = useState(true);
   const [showBeyond, setShowBeyond] = useState(false);
@@ -1252,13 +1453,14 @@ export default function App() {
 
       {/* Header */}
       <div className="bg-blue-900 shadow-lg" style={{ position: "sticky", top: 0, zIndex: 95 }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: isMobile ? "10px 14px" : "14px 28px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <button onClick={() => { window.location.href = "/"; }} className="flex items-center gap-2 text-white hover:bg-blue-800 rounded-lg transition-colors" style={{ minHeight: 44, padding: "0 12px" }}>
-            <Home size={22} /><span className="font-semibold" style={{ fontSize: isMobile ? "0.95rem" : "1.1rem" }}>{isMobile ? "1.1.1 CPU" : "1.1.1 CPU Architecture"}</span>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: isMobile ? "8px 10px" : "12px 24px", display: "grid", gridTemplateColumns: "44px 1fr 44px", alignItems: "center", gap: 8 }}>
+          <button onClick={() => { window.location.href = "/"; }} title="Home" className="text-white hover:bg-blue-800 rounded-lg transition-colors" style={{ minWidth: 44, minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Home size={22} />
           </button>
-          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <button onClick={() => setInfoOpen(true)} className="text-white hover:bg-blue-800 rounded-lg transition-colors" style={{ minWidth: 44, minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center" }}><Info size={22} /></button>
-            <div className="relative" ref={menuRef}>
+          <span className="font-semibold text-white" style={{ textAlign: "center", fontSize: isMobile ? "1rem" : "1.2rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            {isMobile ? "1.1.1 CPU Architecture" : "1.1.1 CPU Architecture"}
+          </span>
+          <div className="relative" ref={menuRef} style={{ justifySelf: "end" }}>
               <button onClick={() => setMenuOpen(o => !o)} className="text-white hover:bg-blue-800 rounded-lg transition-colors" style={{ minWidth: 44, minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center" }}>{menuOpen ? <X size={24} /> : <Menu size={24} />}</button>
               {menuOpen && (
                 <div style={{ position: "absolute", right: 0, top: "calc(100% + 8px)", background: "#fff", borderRadius: 12, boxShadow: "0 8px 32px rgba(0,0,0,0.15)", border: "1px solid #e5e7eb", minWidth: 240, zIndex: 100, overflow: "hidden" }}>
@@ -1272,7 +1474,6 @@ export default function App() {
                 </div>
               )}
             </div>
-          </div>
         </div>
       </div>
 
@@ -1313,6 +1514,7 @@ export default function App() {
           )}
 
           {/* Content */}
+          {activity === "learn"     && <LearnMode     key={contentKey} />}
           {activity === "study"     && <StudyMode     key={contentKey} cards={cards} />}
           {activity === "flashcard" && <FlashcardMode key={contentKey} cards={cards} />}
           {activity === "quiz"      && <QuizMode      key={contentKey} cards={cards} />}
