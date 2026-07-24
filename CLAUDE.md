@@ -53,6 +53,25 @@ Reading a file here for reference (e.g. porting maths logic into a brand-new v2.
 
 ---
 
+## Working efficiently — token & session awareness
+
+Prioritise real development, but be deliberate about token use. Two things dominate cost:
+
+- **Verifying with generated screenshots.** Rendering the app and reading the PNG back as an
+  image is the most expensive kind of tool result, and it lingers in context (reprocessed every
+  later turn). Default to cheap checks — `tsc`, `npm run build`, `npm test`, and headless
+  assertions (console-error count, a DOM text/element check). Generate-and-read a screenshot only
+  for genuine visual/layout judgement, at modest resolution and sparingly; otherwise let the user
+  eyeball the live preview themselves.
+- **Long single sessions.** The whole conversation is reprocessed each turn, so cost climbs the
+  longer a session runs. Commit and push at clean boundaries. When a logical unit is finished and
+  the context has grown large, say so and suggest continuing in a **fresh conversation** — a new
+  session resumes a pushed branch cheaply (it needs the relevant docs + files, not the old
+  history; an unmerged branch is fine to continue). Read targeted slices of large files rather
+  than re-reading them whole.
+
+---
+
 ## Branch convention
 
 Each Claude Code session works on its own freshly created branch (e.g. `claude/<session-name>`), branched from an up-to-date `main`. Never push directly to `main`.
