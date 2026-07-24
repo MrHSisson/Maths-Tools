@@ -18,3 +18,5 @@ export {
   type FlashCard, type ClozeExercise, type ExamQuestion, type SynopticQuestion,
   type MythItem, type Flow, type LessonStep, type Lesson, type InfoItem, type InfoSection,
 } from "./types";
+
+export { TopicProvider, useTopic, GlossaryText, SpecBadge } from "./context";

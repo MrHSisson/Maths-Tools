@@ -5,7 +5,8 @@ import {
 } from "lucide-react";
 import {
   NAVY, CARD_SHADOW, TAB_SHADOW, shuffleArr, parseCloze, useIsMobile, boldText,
-  BeyondBadge, SegRow, registerTooltip, showTooltip, TooltipOverlay, parseGlossaryText,
+  BeyondBadge, SegRow, registerTooltip, showTooltip, TooltipOverlay,
+  TopicProvider, GlossaryText, SpecBadge,
   MARK_FORMATS, COMMAND_GUIDE,
   type CSTooltip, type SpecTag, type FlashCard, type ClozeExercise,
   type ExamQuestion, type SynopticQuestion, type MythItem, type Flow,
@@ -427,33 +428,8 @@ const resolvePrompt = (prompt: string, contexts?: string[]): { text: string; ctx
 // Tap a term to open; tap the backdrop or the × to close. No hover dependency.
 // ─────────────────────────────────────────────────────────────────────────────
 
-// GlossaryText / SpecBadge — thin topic-bound wrappers over the shared tooltip
-// machinery (../../shared/cs). GlossaryText injects this topic's GLOSSARY; SpecBadge
-// injects its SPEC_DESCRIPTIONS. The tooltip overlay + parsing live in the shell.
-
-const GlossaryText = ({ text, terms, style, onCard = false }: { text: string; terms?: string[]; style?: CSSProperties; onCard?: boolean }) => {
-  const segments = parseGlossaryText(GLOSSARY, text, terms);
-  return (
-    <span style={style}>
-      {segments.map((seg, i) =>
-        seg.type === "text"
-          ? <span key={i}>{seg.value}</span>
-          : <span key={i} onClick={e => { e.stopPropagation(); showTooltip(seg.value, seg.def!, e.currentTarget as HTMLElement); }}
-              style={{ borderBottom: `2px dotted ${onCard ? "rgba(255,255,255,0.75)" : NAVY}`, cursor: "pointer", padding: "0 1px" }}>
-              {seg.value}
-            </span>
-      )}
-    </span>
-  );
-};
-
-const SpecBadge = ({ tag }: { tag: SpecTag }) => (
-  <button onClick={e => { e.stopPropagation(); showTooltip(tag, SPEC_DESCRIPTIONS[tag], e.currentTarget as HTMLElement); }}
-    style={{ minHeight: 24, padding: "2px 9px", borderRadius: 20, border: "1.5px solid #cbd5e1",
-      background: "#f8fafc", color: "#475569", fontSize: "0.68rem", fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>
-    {tag}
-  </button>
-);
+// GlossaryText and SpecBadge now come from ../../shared/cs; the topic's GLOSSARY and
+// SPEC_DESCRIPTIONS are supplied via <TopicProvider> in App (below).
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MODE: LEARN — taught, stepped walkthroughs over one shared CPU schematic.
@@ -1557,7 +1533,7 @@ export default function App() {
   const contentKey = `${activity}-${examSection}-${quizMode}-${showBeyond}`;
 
   return (
-    <>
+    <TopicProvider value={{ glossary: GLOSSARY, specDescriptions: SPEC_DESCRIPTIONS }}>
       {tip && <TooltipOverlay tip={tip} onClose={() => setTip(null)} />}
 
       {/* Header */}
@@ -1646,6 +1622,6 @@ export default function App() {
       </div>
 
       {isMobile && <BottomNav activity={activity} setActivity={setActivity} />}
-    </>
+    </TopicProvider>
   );
 }
