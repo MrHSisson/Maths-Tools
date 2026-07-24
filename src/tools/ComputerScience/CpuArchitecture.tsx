@@ -851,7 +851,10 @@ const LearnMode = () => {
 
   const lesson = LESSONS[lessonIdx];
   const maxStep = lesson.steps.length - 1;
-  const cur = lesson.steps[step];
+  // Clamp: when switching to a shorter lesson, `step` is briefly out of range
+  // for one render before the reset effect fires — guard against undefined.
+  const s = Math.min(step, maxStep);
+  const cur = lesson.steps[s];
   const isTrace = lesson.kind === "trace";
   const gated = !!cur.predict && !predicted;            // must predict before advancing
   const showFlow = !!cur.flow && !gated;
@@ -895,7 +898,7 @@ const LearnMode = () => {
         <div style={{ background: "#f8fafc", borderRadius: 12, padding: "14px 10px 10px" }}>
           {isTrace
             ? <TraceTable snapshot={cur.trace} hot={cur.highlight} />
-            : <CpuDiagram highlight={gated ? [] : cur.highlight} flow={showFlow ? cur.flow : undefined} flowKey={step} />}
+            : <CpuDiagram highlight={gated ? [] : cur.highlight} flow={showFlow ? cur.flow : undefined} flowKey={s} />}
           {cur.legend && LEGEND}
         </div>
 
@@ -926,18 +929,18 @@ const LearnMode = () => {
         {/* progress dots */}
         <div style={{ display: "flex", gap: 6, justifyContent: "center" }}>
           {lesson.steps.map((_, i) => (
-            <span key={i} style={{ width: i === step ? 22 : 8, height: 8, borderRadius: 4, background: i === step ? "#1e3a8a" : i < step ? "#93c5fd" : "#e5e7eb", transition: "all 0.2s" }} />
+            <span key={i} style={{ width: i === s ? 22 : 8, height: 8, borderRadius: 4, background: i === s ? "#1e3a8a" : i < s ? "#93c5fd" : "#e5e7eb", transition: "all 0.2s" }} />
           ))}
         </div>
 
         {/* nav */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-          <button onClick={prev} disabled={step === 0}
-            style={{ minHeight: 44, display: "flex", alignItems: "center", gap: 6, padding: "0 18px", borderRadius: 12, fontWeight: 700, fontSize: "0.9rem", border: "2px solid", cursor: step === 0 ? "not-allowed" : "pointer", background: step === 0 ? "#f3f4f6" : "#fff", color: step === 0 ? "#d1d5db" : "#374151", borderColor: step === 0 ? "#e5e7eb" : "#d1d5db" }}>
+          <button onClick={prev} disabled={s === 0}
+            style={{ minHeight: 44, display: "flex", alignItems: "center", gap: 6, padding: "0 18px", borderRadius: 12, fontWeight: 700, fontSize: "0.9rem", border: "2px solid", cursor: s === 0 ? "not-allowed" : "pointer", background: s === 0 ? "#f3f4f6" : "#fff", color: s === 0 ? "#d1d5db" : "#374151", borderColor: s === 0 ? "#e5e7eb" : "#d1d5db" }}>
             <ChevronLeft size={18} /> Back
           </button>
-          <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#9ca3af" }}>{step + 1} / {lesson.steps.length}</span>
-          {step < maxStep ? (
+          <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#9ca3af" }}>{s + 1} / {lesson.steps.length}</span>
+          {s < maxStep ? (
             <button onClick={next} disabled={gated} title={gated ? "Predict first" : undefined}
               style={{ minHeight: 44, display: "flex", alignItems: "center", gap: 6, padding: "0 22px", borderRadius: 12, fontWeight: 700, fontSize: "0.9rem", border: "2px solid", cursor: gated ? "not-allowed" : "pointer",
                 background: gated ? "#f3f4f6" : "#1e3a8a", color: gated ? "#d1d5db" : "#fff", borderColor: gated ? "#e5e7eb" : "#1e3a8a" }}>
@@ -1482,12 +1485,15 @@ const ExamMode = ({ questions, synoptic, section, showHints }: {
 
   if (!list.length) return <div style={{ textAlign: "center", padding: 60, color: "#9ca3af", fontWeight: 600 }}>No questions in this section.</div>;
 
-  const q = list[index];
+  // Clamp: switching to a shorter section leaves `index` out of range for one
+  // render before the reset effect runs — guard against reading undefined.
+  const idx = Math.min(index, list.length - 1);
+  const q = list[idx];
   const format = q.format;
   const cfg = MARK_FORMATS[format];
   const promptText = !isSyn ? (ctx ? (q as ExamQuestion).prompt.replace("{context}", ctx) : (q as ExamQuestion).prompt) : (q as SynopticQuestion).prompt;
 
-  const nav = (dir: number) => { const n = index + dir; if (n >= 0 && n < list.length) setup(n); };
+  const nav = (dir: number) => { const n = idx + dir; if (n >= 0 && n < list.length) setup(n); };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 720, margin: "0 auto" }}>
@@ -1503,7 +1509,7 @@ const ExamMode = ({ questions, synoptic, section, showHints }: {
           {isSyn && (q as SynopticQuestion).specTags.map(t => <SpecBadge key={t} tag={t} />)}
           {!isSyn && <SpecBadge tag={(q as ExamQuestion).specTag} />}
         </div>
-        <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#9ca3af" }}>{index + 1} of {list.length}</span>
+        <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#9ca3af" }}>{idx + 1} of {list.length}</span>
       </div>
 
       {isSyn && (
@@ -1622,11 +1628,11 @@ const ExamMode = ({ questions, synoptic, section, showHints }: {
 
       {/* Navigation */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-        <button onClick={() => nav(-1)} disabled={index === 0} style={{ minHeight: 44, display: "flex", alignItems: "center", gap: 6, padding: "0 16px", borderRadius: 12, fontWeight: 700, fontSize: "0.88rem", border: "2px solid", cursor: index === 0 ? "not-allowed" : "pointer", background: index === 0 ? "#f3f4f6" : "#fff", color: index === 0 ? "#d1d5db" : "#374151", borderColor: index === 0 ? "#e5e7eb" : "#d1d5db" }}><ChevronLeft size={18} /> Prev</button>
+        <button onClick={() => nav(-1)} disabled={idx === 0} style={{ minHeight: 44, display: "flex", alignItems: "center", gap: 6, padding: "0 16px", borderRadius: 12, fontWeight: 700, fontSize: "0.88rem", border: "2px solid", cursor: idx === 0 ? "not-allowed" : "pointer", background: idx === 0 ? "#f3f4f6" : "#fff", color: idx === 0 ? "#d1d5db" : "#374151", borderColor: idx === 0 ? "#e5e7eb" : "#d1d5db" }}><ChevronLeft size={18} /> Prev</button>
         {!isSyn && (q as ExamQuestion).contexts && (
-          <button onClick={() => setup(index)} title="New version" style={{ minHeight: 44, display: "flex", alignItems: "center", gap: 6, padding: "0 14px", borderRadius: 12, fontWeight: 700, fontSize: "0.82rem", border: `2px solid ${cfg.border}`, background: cfg.bg, color: cfg.color, cursor: "pointer" }}><RefreshCw size={15} /> New</button>
+          <button onClick={() => setup(idx)} title="New version" style={{ minHeight: 44, display: "flex", alignItems: "center", gap: 6, padding: "0 14px", borderRadius: 12, fontWeight: 700, fontSize: "0.82rem", border: `2px solid ${cfg.border}`, background: cfg.bg, color: cfg.color, cursor: "pointer" }}><RefreshCw size={15} /> New</button>
         )}
-        <button onClick={() => nav(1)} disabled={index === list.length - 1} style={{ minHeight: 44, display: "flex", alignItems: "center", gap: 6, padding: "0 16px", borderRadius: 12, fontWeight: 700, fontSize: "0.88rem", border: "2px solid", cursor: index === list.length - 1 ? "not-allowed" : "pointer", background: index === list.length - 1 ? "#f3f4f6" : "#1e3a8a", color: index === list.length - 1 ? "#d1d5db" : "#fff", borderColor: index === list.length - 1 ? "#e5e7eb" : "#1e3a8a" }}>Next <ChevronRight size={18} /></button>
+        <button onClick={() => nav(1)} disabled={idx === list.length - 1} style={{ minHeight: 44, display: "flex", alignItems: "center", gap: 6, padding: "0 16px", borderRadius: 12, fontWeight: 700, fontSize: "0.88rem", border: "2px solid", cursor: idx === list.length - 1 ? "not-allowed" : "pointer", background: idx === list.length - 1 ? "#f3f4f6" : "#1e3a8a", color: idx === list.length - 1 ? "#d1d5db" : "#fff", borderColor: idx === list.length - 1 ? "#e5e7eb" : "#1e3a8a" }}>Next <ChevronRight size={18} /></button>
       </div>
     </div>
   );
