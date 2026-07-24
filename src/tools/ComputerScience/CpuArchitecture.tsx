@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef, CSSProperties } from "react";
 import {
   Home, Menu, X, ChevronLeft, ChevronRight, Shuffle, RotateCcw, RefreshCw,
-  BookOpen, Layers, CheckSquare, PenLine, FileText, Info, GraduationCap,
+  BookOpen, Layers, CheckSquare, PenLine, FileText, Info, GraduationCap, Check, AlertTriangle,
 } from "lucide-react";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -62,6 +62,7 @@ interface FlashCard {
   a: string;
   terms?: string[];          // glossary terms to underline; [] = none
   distractors?: string[];    // for MCQ / Quiz mode
+  explain?: string;          // elaboration — the "why" / how-to-remember, shown as feedback
 }
 
 interface ClozeExercise {
@@ -86,6 +87,7 @@ interface ExamQuestion {
   hint: string;
   markScheme: string[];
   modelNotes?: Record<string, string[]>;
+  modelAnswer?: string;      // a full prose model answer; **bold** marks the mark-earning parts
 }
 
 interface SynopticQuestion {
@@ -97,7 +99,26 @@ interface SynopticQuestion {
   hint: string;
   // per-tag mark scheme attribution — which marks come from which sub-topic
   markScheme: { tag: SpecTag; points: string[] }[];
+  modelAnswer?: string;
 }
+
+// Misconception check — Spot-the-Mistake / True-or-False
+interface MythItem {
+  id: number;
+  specTag: SpecTag;
+  statement: string;
+  isTrue: boolean;
+  why: string;               // the correction / explanation shown after answering
+}
+
+// Command-word guidance — what each exam format is really asking for
+const COMMAND_GUIDE: Record<ExamFormat, string> = {
+  mcq:      "Multiple choice: pick the single best option. One mark, no working.",
+  state:    "State / Identify: give the fact only — no explanation is needed for the mark.",
+  short:    "Describe: say what happens, clearly and in the right order. 'Why' is not required.",
+  scenario: "Apply: use the idea in THIS scenario — refer to the specific details you're given.",
+  extended: "Explain: make each point AND justify it ('… because …'), and link your ideas together.",
+};
 
 interface GlossarySegment { type: "text" | "term"; value: string; def?: string }
 interface TooltipState { title: string; def: string; rect: DOMRect }
@@ -180,7 +201,8 @@ const CARDS: FlashCard[] = [
     distractors: ["The next instruction is fetched from memory", "The Control Unit decodes the instruction", "The address of the next instruction is stored"] },
   { id: 5, specTag: "1.1.1-R1", q: "What happens to the Program Counter during the fetch stage?",
     a: "It is incremented so it holds the address of the next instruction", terms: ["address"],
-    distractors: ["It stores the result of the calculation", "It is copied into the Accumulator", "It is reset to zero after every instruction"] },
+    distractors: ["It stores the result of the calculation", "It is copied into the Accumulator", "It is reset to zero after every instruction"],
+    explain: "Incrementing the PC is what keeps the program moving — without it the CPU would fetch the same instruction forever. It happens during fetch, before the instruction is executed." },
 
   // ── R2: component roles ─────────────────────────────────────────────────────
   { id: 6, specTag: "1.1.1-R2", q: "What is the role of the ALU?",
@@ -188,10 +210,12 @@ const CARDS: FlashCard[] = [
     distractors: ["Coordinates all of the CPU's components", "Stores the address of the next instruction", "Holds frequently used data close to the CPU"] },
   { id: 7, specTag: "1.1.1-R2", q: "What is the role of the Control Unit (CU)?",
     a: "Coordinates the CPU's components and controls the flow of data during the cycle", terms: ["CPU"],
-    distractors: ["Performs all arithmetic and logical operations", "Stores the result of the last calculation", "Holds the data fetched from memory"] },
+    distractors: ["Performs all arithmetic and logical operations", "Stores the result of the last calculation", "Holds the data fetched from memory"],
+    explain: "Easy to mix up with the ALU: the CU *directs*, the ALU *calculates*. The Control Unit never does arithmetic itself — it just tells everything else when to act." },
   { id: 8, specTag: "1.1.1-R2", q: "What is the purpose of cache in the CPU?",
     a: "Stores frequently used data and instructions close to the CPU for fast access", terms: ["CPU"],
-    distractors: ["Permanently stores the operating system", "Stores the address of the next instruction", "Performs logical comparisons for the CPU"] },
+    distractors: ["Permanently stores the operating system", "Stores the address of the next instruction", "Performs logical comparisons for the CPU"],
+    explain: "Cache is fast because it is small and physically close to the CPU. This is the bridge to 1.1.2: more cache → fewer slow trips to RAM → better performance." },
   { id: 9, specTag: "1.1.1-R2", q: "What is the role of the registers in the CPU?",
     a: "Very fast, small storage locations that hold the values the CPU is working with right now", terms: ["CPU"],
     distractors: ["Large stores that replace the need for RAM", "Permanent storage for the operating system", "The part that decodes each instruction"] },
@@ -199,16 +223,20 @@ const CARDS: FlashCard[] = [
   // ── R3: each register and what it stores (data or address) ──────────────────
   { id: 10, specTag: "1.1.1-R3", q: "What does the Program Counter (PC) store?",
     a: "The address of the next instruction to be fetched", terms: ["address"],
-    distractors: ["The result of the last calculation", "The data fetched from memory", "The instruction being decoded"] },
+    distractors: ["The result of the last calculation", "The data fetched from memory", "The instruction being decoded"],
+    explain: "The PC stores an ADDRESS (where the next instruction is), not the instruction itself — holding the actual instruction is the CIR's job." },
   { id: 11, specTag: "1.1.1-R3", q: "What does the Memory Address Register (MAR) store?",
     a: "The address of the memory location to be read from or written to", terms: ["address"],
-    distractors: ["The data read from memory", "The result of the last ALU operation", "The number of instructions executed"] },
+    distractors: ["The data read from memory", "The result of the last ALU operation", "The number of instructions executed"],
+    explain: "The name gives it away: MAR = Memory ADDRESS Register → it holds an ADDRESS. It answers 'which location?', never 'what value?'." },
   { id: 12, specTag: "1.1.1-R3", q: "What does the Memory Data Register (MDR) store?",
     a: "The data that has just been read from, or is about to be written to, memory", terms: ["data"],
-    distractors: ["The address of the memory location being used", "The address of the next instruction", "The result of a logical comparison"] },
+    distractors: ["The address of the memory location being used", "The address of the next instruction", "The result of a logical comparison"],
+    explain: "MDR = Memory DATA Register → it holds DATA. Pair it with the MAR: the MAR picks the location, the MDR carries the value to or from it." },
   { id: 13, specTag: "1.1.1-R3", q: "What does the Accumulator (ACC) store?",
     a: "The data result of a calculation carried out by the ALU", terms: ["data", "ALU"],
-    distractors: ["The address of the next instruction", "The address of the memory location to access", "The instruction currently being decoded"] },
+    distractors: ["The address of the next instruction", "The address of the memory location to access", "The instruction currently being decoded"],
+    explain: "The Accumulator 'accumulates' results — it holds DATA (a value), never an address. It's filled during the execute stage by the ALU." },
   { id: 14, specTag: "1.1.1-R3", q: "In the Von Neumann architecture, which four registers are used?",
     a: "The MAR, MDR, Program Counter and Accumulator", terms: ["MAR", "MDR", "Program Counter", "Accumulator"],
     distractors: ["The ALU, CU, cache and PC", "The PC, CIR, data bus and address bus", "The L1, L2, L3 and MDR"] },
@@ -216,13 +244,16 @@ const CARDS: FlashCard[] = [
   // ── R4: the difference between storing data and an address (the gap) ────────
   { id: 15, specTag: "1.1.1-R4", q: "What is the difference between storing an ADDRESS and storing DATA?",
     a: "An address says WHERE a value is in memory; data is the actual value itself", terms: ["address", "data"],
-    distractors: ["An address is always larger than a piece of data", "Data is stored in the CPU, an address is stored in RAM", "There is no difference — the terms mean the same thing"] },
+    distractors: ["An address is always larger than a piece of data", "Data is stored in the CPU, an address is stored in RAM", "There is no difference — the terms mean the same thing"],
+    explain: "Think of a locker: the address is the locker *number* (where); the data is what's *inside* it (what). Both are just numbers — it's what they mean that differs." },
   { id: 16, specTag: "1.1.1-R4", q: "Which registers store an ADDRESS, and which store DATA?",
     a: "Addresses: the PC and MAR. Data: the MDR and Accumulator", terms: ["PC", "MAR", "MDR", "Accumulator"],
-    distractors: ["Addresses: MDR and ACC. Data: PC and MAR", "All four registers store only data", "All four registers store only addresses"] },
+    distractors: ["Addresses: MDR and ACC. Data: PC and MAR", "All four registers store only data", "All four registers store only addresses"],
+    explain: "A memory hook: the register whose name contains 'ADDRESS' (MAR) plus the PC hold addresses; the one containing 'DATA' (MDR) plus the ACC hold data." },
   { id: 17, specTag: "1.1.1-R4", q: "The MAR holds an address and the MDR holds data. Why does this matter?",
     a: "The MAR's address selects which memory location to use; the MDR then carries the value in or out of it", terms: ["MAR", "MDR"],
-    distractors: ["Both actually hold the same address twice for safety", "The MDR chooses the location and the MAR holds the value", "Neither is needed if cache is used instead"] },
+    distractors: ["Both actually hold the same address twice for safety", "The MDR chooses the location and the MAR holds the value", "Neither is needed if cache is used instead"],
+    explain: "This is *why* there are two separate registers: one to say where (MAR) and one to carry what (MDR). Splitting the job keeps addressing and data-transfer independent." },
 
   // ── Beyond spec (excluded by default; clearly flagged in the UI) ────────────
   { id: 101, specTag: "1.1.1-R1", beyondSpec: true, q: "What does the Current Instruction Register (CIR) store?",
@@ -237,6 +268,34 @@ const CARDS: FlashCard[] = [
   { id: 104, specTag: "1.1.1-R2", beyondSpec: true, q: "How do the three cache levels compare?",
     a: "L1 is smallest and fastest (per core), L2 is larger, L3 is largest and slowest (shared)", terms: ["L1", "L2", "L3"],
     distractors: ["L1 is largest and slowest, L3 is smallest and fastest", "All three levels are the same size", "L3 is inside each core, L1 is shared"] },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MISCONCEPTIONS — Spot-the-Mistake / True-or-False. Each statement targets a
+// classic 1.1.1 error; the student judges it, then sees the correction.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const MYTHS: MythItem[] = [
+  { id: 1, specTag: "1.1.1-R3", statement: "The MDR holds the address of the memory location to be used.", isTrue: false,
+    why: "That's the MAR's job. The MDR holds the DATA read from or written to memory — not the address." },
+  { id: 2, specTag: "1.1.1-R3", statement: "The Program Counter stores the instruction currently being executed.", isTrue: false,
+    why: "The PC stores the ADDRESS of the next instruction. The instruction being executed is held in the CIR." },
+  { id: 3, specTag: "1.1.1-R2", statement: "Cache is just another name for RAM.", isTrue: false,
+    why: "Cache is much smaller and faster than RAM, and sits inside or right next to the CPU to cut down slow RAM accesses." },
+  { id: 4, specTag: "1.1.1-R4", statement: "The Accumulator stores an address.", isTrue: false,
+    why: "The Accumulator stores DATA — the result of an ALU calculation. Addresses are held by the PC and MAR." },
+  { id: 5, specTag: "1.1.1-R2", statement: "The Control Unit performs calculations.", isTrue: false,
+    why: "The ALU performs calculations. The Control Unit only coordinates and directs — it never does arithmetic." },
+  { id: 6, specTag: "1.1.1-R1", statement: "After an instruction is fetched, the PC is incremented to point to the next instruction.", isTrue: true,
+    why: "Correct — this is what keeps the program moving from one instruction to the next." },
+  { id: 7, specTag: "1.1.1-R1", statement: "During the fetch stage, the instruction is copied from RAM into the CPU.", isTrue: true,
+    why: "Correct — fetch brings the next instruction from memory into the CPU, ready to be decoded." },
+  { id: 8, specTag: "1.1.1-R2", statement: "The ALU decodes each instruction.", isTrue: false,
+    why: "Decoding is done by the Control Unit. The ALU only executes arithmetic and logic once the instruction is decoded." },
+  { id: 9, specTag: "1.1.1-R2", statement: "Registers are larger but slower than RAM.", isTrue: false,
+    why: "The opposite: registers are tiny but the fastest storage in the whole computer — faster even than cache." },
+  { id: 10, specTag: "1.1.1-R4", statement: "An address and a piece of data can look identical — both are just numbers.", isTrue: true,
+    why: "Correct — the difference is meaning, not appearance: an address says WHERE, data is the value stored there." },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -317,6 +376,7 @@ const EXAM_QUESTIONS: ExamQuestion[] = [
       "Coordinates / controls the components of the CPU (1)",
       "Directs the flow of data / decodes instructions during the cycle (1)",
     ],
+    modelAnswer: "The Control Unit **coordinates the components of the CPU**, and it **directs the flow of data between them and decodes each instruction** so the right action happens at the right time.",
   },
   {
     id: "x6", specTag: "1.1.1-R4", format: "short", marks: 2,
@@ -326,6 +386,7 @@ const EXAM_QUESTIONS: ExamQuestion[] = [
       "An address identifies where a value is located in memory (1)",
       "Data is the actual value stored/processed, not its location (1)",
     ],
+    modelAnswer: "**An address identifies where a value is located in memory**, whereas **data is the actual value being stored or processed** — the address tells you the location, the data is what is kept there.",
   },
   {
     id: "x7", specTag: "1.1.1-R1", format: "short", marks: 3,
@@ -336,6 +397,7 @@ const EXAM_QUESTIONS: ExamQuestion[] = [
       "Decode: the Control Unit interprets/works out the instruction (1)",
       "Execute: the instruction is carried out (e.g. the ALU calculates) (1)",
     ],
+    modelAnswer: "During **fetch, the next instruction is copied from memory into the CPU**. During **decode, the Control Unit works out what the instruction means**. During **execute, the instruction is carried out** — for example the ALU performs the calculation.",
   },
   // Apply to scenario (4) — AO2, the component's largest weighting
   {
@@ -353,6 +415,7 @@ const EXAM_QUESTIONS: ExamQuestion[] = [
       "Execute described in context — the operation actually performed (1)",
       "The PC increments / the cycle repeats for the next instruction (1)",
     ],
+    modelAnswer: "First the instruction is **fetched — brought from memory into the CPU**. The **Control Unit decodes it**, recognising the operation required (e.g. an addition). During **execute the operation is carried out — the ALU performs it on the values**. Finally the **PC increments so the cycle repeats** with the next instruction.",
   },
   // Extended response (6) — a genuinely descriptive, sustained question
   {
@@ -367,6 +430,7 @@ const EXAM_QUESTIONS: ExamQuestion[] = [
       "The instruction is executed (e.g. ALU calculates; result may go to the Accumulator) (1)",
       "The PC is incremented and the cycle repeats (1)",
     ],
+    modelAnswer: "**The Program Counter holds the address of the next instruction.** This **address is copied into the MAR**, which selects the memory location. **The instruction is fetched from memory into the MDR**, then passed to the CIR. **The Control Unit decodes the instruction** to work out what is required. **The instruction is then executed** — for example the ALU performs a calculation, with the result held in the Accumulator. Finally, **the PC is incremented** so the whole cycle repeats.",
   },
 
   // Beyond spec — excluded from default exam sessions
@@ -401,6 +465,7 @@ const SYNOPTIC_QUESTIONS: SynopticQuestion[] = [
         "The instruction is read from RAM at that address (1)",
       ]},
     ],
+    modelAnswer: "**RAM is the main memory that holds the running program.** During fetch, **the address in the MAR identifies the location in RAM** to read. **The instruction is then read from RAM at that address into the MDR**, ready to be decoded — so the CPU relies on RAM to supply each instruction in turn.",
   },
   {
     id: "s2", specTags: ["1.1.1", "1.1.2"] as SpecTag[], format: "scenario", marks: 4,
@@ -416,6 +481,7 @@ const SYNOPTIC_QUESTIONS: SynopticQuestion[] = [
         "Fewer accesses to slower RAM are needed, improving performance (1)",
       ]},
     ],
+    modelAnswer: "**Cache stores frequently used instructions close to the CPU**, so during fetch **the CPU can often take an instruction from cache instead of RAM**. **Increasing the cache lets it hold more of the program**, so more fetches are found in cache — meaning **fewer accesses to the slower RAM are needed**, which improves performance.",
   },
   {
     id: "s3", specTags: ["1.1.1", "1.1.2"] as SpecTag[], format: "extended", marks: 6,
@@ -433,6 +499,7 @@ const SYNOPTIC_QUESTIONS: SynopticQuestion[] = [
         "Some tasks are limited by other factors (e.g. cores, memory), so gains are limited (1)",
       ]},
     ],
+    modelAnswer: "**The clock controls how often the fetch-execute cycle runs**, so **a higher clock speed means more cycles per second** and therefore **more instructions fetched, decoded and executed each second**. However, **higher clock speeds generate more heat and use more power**, and **performance can still be limited by slow RAM access** or by tasks that depend on other factors such as the number of cores — so a faster clock does not always mean better real-world performance.",
   },
 ];
 
@@ -587,12 +654,26 @@ const BeyondBadge = () => (
 // topic's core representation, reused across every lesson for consistency.
 // ─────────────────────────────────────────────────────────────────────────────
 
-interface LessonStep { text: string; highlight: string[]; legend?: boolean }
-interface Lesson { id: string; title: string; specTags: SpecTag[]; steps: LessonStep[] }
+interface Flow { from: string; to: string; label: string; kind?: "addr" | "data" }
+interface LessonStep {
+  text: string;
+  highlight?: string[];
+  legend?: boolean;
+  flow?: Flow;                        // animated token travelling between parts
+  predict?: string;                   // You-do: a question posed before the answer (text)
+  trace?: Record<string, string>;     // register snapshot for kind:"trace" lessons
+}
+interface Lesson {
+  id: string; title: string; specTags: SpecTag[];
+  kind?: "diagram" | "trace";
+  analogy?: string;                   // "Think of it like…" concrete anchor
+  steps: LessonStep[];
+}
 
 const LESSONS: Lesson[] = [
   {
     id: "components", title: "What's inside the CPU?", specTags: ["1.1.1-R2"],
+    analogy: "Think of the CPU as a kitchen: the Control Unit is the head chef calling out orders, the ALU is the chef doing the actual cooking, and the registers are the small worktop where ingredients sit while they're being used.",
     steps: [
       { text: "The **CPU** carries out instructions. Everything inside this box works together each time an instruction runs.", highlight: [] },
       { text: "The **Control Unit (CU)** is in charge. It coordinates the other parts and controls the flow of data around the CPU.", highlight: ["cu"] },
@@ -603,6 +684,7 @@ const LESSONS: Lesson[] = [
   },
   {
     id: "registers", title: "Registers: address or data?", specTags: ["1.1.1-R3", "1.1.1-R4"],
+    analogy: "Think of a locker room: an address is a locker *number* (which locker), and data is what's *inside* that locker. The number and the contents are both just 'stuff' — but they mean completely different things.",
     steps: [
       { text: "Some registers hold an **address** (blue — *where* a value is). Others hold **data** (green — the value *itself*). Watch the colours.", highlight: [], legend: true },
       { text: "The **Program Counter (PC)** holds an **address**: the location of the next instruction to be fetched.", highlight: ["pc"], legend: true },
@@ -617,12 +699,24 @@ const LESSONS: Lesson[] = [
     steps: [
       { text: "Every instruction goes through three stages: **fetch**, then **decode**, then **execute**. Let's follow one all the way round.", highlight: [] },
       { text: "**Fetch.** The **PC** holds the address of the next instruction to run.", highlight: ["pc"] },
-      { text: "That address is copied into the **MAR**, so memory knows which location to look at.", highlight: ["mar"] },
+      { predict: "Your turn: where must that address go next, so memory knows which location to read?", text: "Right — it's copied into the **MAR**, which tells memory which location to look at.", highlight: ["mar"], flow: { from: "pc", to: "mar", label: "addr", kind: "addr" } },
       { text: "The instruction is read from **RAM** at that address…", highlight: ["mar", "ram"] },
-      { text: "…and the value arrives back in the **MDR**.", highlight: ["mdr", "ram"] },
-      { text: "**Decode.** The instruction moves to the **CIR**, and the **Control Unit** works out what it means.", highlight: ["cir", "cu"] },
-      { text: "**Execute.** The instruction is carried out — often the **ALU** calculates, leaving its result in the **ACC**.", highlight: ["alu", "acc"] },
+      { text: "…and the value travels back into the **MDR**.", highlight: ["mdr", "ram"], flow: { from: "ram", to: "mdr", label: "instr", kind: "data" } },
+      { text: "**Decode.** The instruction moves to the **CIR**, and the **Control Unit** works out what it means.", highlight: ["cir", "cu"], flow: { from: "mdr", to: "cir", label: "instr", kind: "data" } },
+      { predict: "**Execute** time: which component carries out a calculation, and where does the result go?", text: "The **ALU** carries it out, leaving the result in the **ACC**.", highlight: ["alu", "acc"], flow: { from: "alu", to: "acc", label: "result", kind: "data" } },
       { text: "Finally the **PC** increments to point at the next instruction, and the whole cycle repeats.", highlight: ["pc"] },
+    ],
+  },
+  {
+    id: "trace", title: "Trace it with real values", specTags: ["1.1.1-R1", "1.1.1-R4"], kind: "trace",
+    steps: [
+      { text: "Let's trace one instruction — an **ADD**, stored at address **64**. Watch each register fill in.", trace: { PC: "64" }, highlight: ["PC"], legend: true },
+      { text: "**Fetch:** the address **64** is copied from the PC into the **MAR**.", trace: { PC: "64", MAR: "64" }, highlight: ["MAR"], legend: true },
+      { text: "The instruction **ADD** is read from RAM at 64 into the **MDR**.", trace: { PC: "64", MAR: "64", MDR: "ADD" }, highlight: ["MDR"], legend: true },
+      { text: "The **PC** increments to **65**, ready for the next instruction.", trace: { PC: "65", MAR: "64", MDR: "ADD" }, highlight: ["PC"], legend: true },
+      { text: "**Decode:** the instruction moves to the **CIR** and the Control Unit works out it means 'add'.", trace: { PC: "65", MAR: "64", MDR: "ADD", CIR: "ADD" }, highlight: ["CIR"], legend: true },
+      { text: "**Execute:** the ALU adds, and the result **12** is stored in the **ACC**.", trace: { PC: "65", MAR: "64", MDR: "ADD", CIR: "ADD", ACC: "12" }, highlight: ["ACC"], legend: true },
+      { text: "Notice: **64** and **65** are addresses (blue); **ADD** and **12** are data (green). One table — two very different kinds of value.", trace: { PC: "65", MAR: "64", MDR: "ADD", CIR: "ADD", ACC: "12" }, highlight: [], legend: true },
     ],
   },
 ];
@@ -641,10 +735,22 @@ const PARTS: Record<string, { x: number; y: number; w: number; h: number; label:
 const ROLE_COLOR: Record<string, string> = { addr: "#2563eb", data: "#059669", instr: "#64748b", ctrl: "#475569", mem: "#475569" };
 const ROLE_TINT:  Record<string, string> = { addr: "#dbeafe", data: "#d1fae5", instr: "#e2e8f0", ctrl: "#f1f5f9", mem: "#f1f5f9" };
 
-const CpuDiagram = ({ highlight }: { highlight: string[] }) => {
-  const on = (id: string) => highlight.includes(id);
-  const dim = (id: string) => (highlight.length && !on(id) ? 0.32 : 1);
+const CpuDiagram = ({ highlight, flow, flowKey }: { highlight?: string[]; flow?: Flow; flowKey?: number }) => {
+  const hl = highlight ?? [];
+  const on = (id: string) => hl.includes(id);
+  const dim = (id: string) => (hl.length && !on(id) ? 0.32 : 1);
   const ramHot = on("ram") || on("mar") || on("mdr");
+
+  // animated token: sit at `from`, then transition to `to` one frame after mount
+  const [phase, setPhase] = useState(0);
+  useEffect(() => {
+    if (!flow) return;
+    setPhase(0);
+    let r2 = 0;
+    const r1 = requestAnimationFrame(() => { r2 = requestAnimationFrame(() => setPhase(1)); });
+    return () => { cancelAnimationFrame(r1); cancelAnimationFrame(r2); };
+  }, [flowKey, flow]);
+
   return (
     <svg viewBox="0 0 380 244" style={{ display: "block", width: "100%", height: "auto", maxWidth: 520, margin: "0 auto" }} preserveAspectRatio="xMidYMid meet">
       {/* bus between CPU and RAM */}
@@ -666,7 +772,56 @@ const CpuDiagram = ({ highlight }: { highlight: string[] }) => {
         );
       })}
       <text x={330} y={210} fontSize={8.5} fontWeight={600} fill="#94a3b8" textAnchor="middle">main memory</text>
+
+      {/* animated value token travelling from → to */}
+      {flow && (() => {
+        const f = PARTS[flow.from], t = PARTS[flow.to];
+        if (!f || !t) return null;
+        const fx = f.x + f.w / 2, fy = f.y + f.h / 2;
+        const dx = (t.x + t.w / 2) - fx, dy = (t.y + t.h / 2) - fy;
+        const col = flow.kind === "addr" ? "#2563eb" : "#059669";
+        const tint = flow.kind === "addr" ? "#dbeafe" : "#d1fae5";
+        const w = 46, h = 20;
+        return (
+          <g style={{ transition: "transform 0.85s ease", transform: `translate(${phase ? dx : 0}px, ${phase ? dy : 0}px)` }}>
+            <rect x={fx - w / 2} y={fy - h / 2} width={w} height={h} rx={6} fill={tint} stroke={col} strokeWidth={2} />
+            <text x={fx} y={fy + 1} fontSize={10} fontWeight={800} fill={col} textAnchor="middle" dominantBaseline="central">{flow.label}</text>
+          </g>
+        );
+      })()}
     </svg>
+  );
+};
+
+// ── Trace-table representation (the trace lesson): register contents step by step
+const TRACE_ROWS: { key: string; role: "addr" | "data" | "instr"; holds: string }[] = [
+  { key: "PC",  role: "addr",  holds: "an address" },
+  { key: "MAR", role: "addr",  holds: "an address" },
+  { key: "MDR", role: "data",  holds: "data" },
+  { key: "CIR", role: "instr", holds: "the instruction" },
+  { key: "ACC", role: "data",  holds: "data" },
+];
+
+const TraceTable = ({ snapshot, hot }: { snapshot?: Record<string, string>; hot?: string[] }) => {
+  const snap = snapshot ?? {};
+  const hotSet = new Set(hot ?? []);
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6, maxWidth: 440, margin: "0 auto" }}>
+      {TRACE_ROWS.map(r => {
+        const c = ROLE_COLOR[r.role]; const val = snap[r.key]; const isHot = hotSet.has(r.key);
+        return (
+          <div key={r.key} style={{ display: "grid", gridTemplateColumns: "48px 1fr 74px", alignItems: "center", gap: 8,
+            background: isHot ? ROLE_TINT[r.role] : "#fff", border: `2px solid ${isHot ? c : "#e5e7eb"}`, borderRadius: 10, padding: "8px 10px", transition: "all 0.25s" }}>
+            <span style={{ fontWeight: 800, fontSize: "0.9rem", color: c }}>{r.key}</span>
+            <span style={{ fontSize: "0.72rem", fontWeight: 600, color: "#94a3b8" }}>holds {r.holds}</span>
+            <span style={{ justifySelf: "stretch", textAlign: "center", fontWeight: 800, fontSize: "0.95rem",
+              color: val ? c : "#cbd5e1", border: val ? `2px solid ${c}` : "2px dashed #e5e7eb", borderRadius: 8, padding: "3px 6px", transition: "all 0.25s" }}>
+              {val ?? "—"}
+            </span>
+          </div>
+        );
+      })}
+    </div>
   );
 };
 
@@ -692,25 +847,30 @@ const LEGEND = (
 const LearnMode = () => {
   const [lessonIdx, setLessonIdx] = useState(0);
   const [step, setStep] = useState(0);
+  const [predicted, setPredicted] = useState(false);   // has the You-do answer been revealed?
 
   const lesson = LESSONS[lessonIdx];
   const maxStep = lesson.steps.length - 1;
+  const cur = lesson.steps[step];
+  const isTrace = lesson.kind === "trace";
+  const gated = !!cur.predict && !predicted;            // must predict before advancing
+  const showFlow = !!cur.flow && !gated;
 
   useEffect(() => { setStep(0); }, [lessonIdx]);
+  useEffect(() => { setPredicted(false); }, [step, lessonIdx]);
 
   const next = useCallback(() => setStep(s => Math.min(maxStep, s + 1)), [maxStep]);
   const prev = useCallback(() => setStep(s => Math.max(0, s - 1)), []);
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
-      if (e.key === "ArrowRight" || e.key === " ") { if (e.target === document.body) { e.preventDefault(); next(); } }
+      if (e.target !== document.body) return;
+      if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); if (!gated) next(); }
       else if (e.key === "ArrowLeft") prev();
     };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
-  }, [next, prev]);
-
-  const cur = lesson.steps[step];
+  }, [next, prev, gated]);
 
   return (
     <div style={{ maxWidth: 640, margin: "0 auto", display: "flex", flexDirection: "column", gap: 14 }}>
@@ -733,14 +893,35 @@ const LearnMode = () => {
         </div>
 
         <div style={{ background: "#f8fafc", borderRadius: 12, padding: "14px 10px 10px" }}>
-          <CpuDiagram highlight={cur.highlight} />
+          {isTrace
+            ? <TraceTable snapshot={cur.trace} hot={cur.highlight} />
+            : <CpuDiagram highlight={gated ? [] : cur.highlight} flow={showFlow ? cur.flow : undefined} flowKey={step} />}
           {cur.legend && LEGEND}
         </div>
 
-        {/* explanation — one beat at a time */}
-        <div style={{ minHeight: 84, background: "#eff6ff", borderRadius: 12, borderLeft: "4px solid #1e3a8a", padding: "14px 16px", display: "flex", alignItems: "center" }}>
-          <p style={{ fontSize: "1rem", color: "#334155", lineHeight: 1.6, margin: 0, fontWeight: 500 }}>{boldText(cur.text)}</p>
-        </div>
+        {/* explanation — one beat at a time; predict steps ask first (You-do) */}
+        {gated ? (
+          <div style={{ minHeight: 84, background: "#f5f3ff", borderRadius: 12, borderLeft: "4px solid #7c3aed", padding: "14px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
+            <span style={{ fontSize: "0.66rem", fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: "#7c3aed" }}>Your turn — predict first</span>
+            <p style={{ fontSize: "1rem", color: "#334155", lineHeight: 1.6, margin: 0, fontWeight: 500 }}>{boldText(cur.predict!)}</p>
+            <button onClick={() => setPredicted(true)}
+              style={{ alignSelf: "flex-start", minHeight: 40, padding: "0 18px", borderRadius: 10, fontWeight: 700, fontSize: "0.85rem", border: "none", cursor: "pointer", background: "#7c3aed", color: "#fff" }}>
+              Show answer
+            </button>
+          </div>
+        ) : (
+          <div style={{ minHeight: 84, background: "#eff6ff", borderRadius: 12, borderLeft: "4px solid #1e3a8a", padding: "14px 16px", display: "flex", alignItems: "center" }}>
+            <p style={{ fontSize: "1rem", color: "#334155", lineHeight: 1.6, margin: 0, fontWeight: 500 }}>{boldText(cur.text)}</p>
+          </div>
+        )}
+
+        {/* analogy — a concrete anchor for the whole lesson */}
+        {lesson.analogy && (
+          <div style={{ background: "#fffbeb", borderRadius: 12, border: "1.5px solid #fde68a", padding: "10px 14px" }}>
+            <span style={{ fontSize: "0.66rem", fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase", color: "#b45309" }}>Think of it like…</span>
+            <p style={{ fontSize: "0.86rem", color: "#78350f", lineHeight: 1.55, margin: "3px 0 0", fontWeight: 500 }}>{boldText(lesson.analogy)}</p>
+          </div>
+        )}
 
         {/* progress dots */}
         <div style={{ display: "flex", gap: 6, justifyContent: "center" }}>
@@ -757,8 +938,9 @@ const LearnMode = () => {
           </button>
           <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#9ca3af" }}>{step + 1} / {lesson.steps.length}</span>
           {step < maxStep ? (
-            <button onClick={next}
-              style={{ minHeight: 44, display: "flex", alignItems: "center", gap: 6, padding: "0 22px", borderRadius: 12, fontWeight: 700, fontSize: "0.9rem", border: "2px solid #1e3a8a", cursor: "pointer", background: "#1e3a8a", color: "#fff" }}>
+            <button onClick={next} disabled={gated} title={gated ? "Predict first" : undefined}
+              style={{ minHeight: 44, display: "flex", alignItems: "center", gap: 6, padding: "0 22px", borderRadius: 12, fontWeight: 700, fontSize: "0.9rem", border: "2px solid", cursor: gated ? "not-allowed" : "pointer",
+                background: gated ? "#f3f4f6" : "#1e3a8a", color: gated ? "#d1d5db" : "#fff", borderColor: gated ? "#e5e7eb" : "#1e3a8a" }}>
               Next <ChevronRight size={18} />
             </button>
           ) : lessonIdx < LESSONS.length - 1 ? (
@@ -942,6 +1124,11 @@ const StudyMode = ({ cards }: { cards: FlashCard[] }) => {
           {revealed.has(card.id) && (
             <div style={{ padding: "12px 16px 14px 54px", borderTop: "2px solid #a7f3d0", background: "#ecfdf5" }}>
               <GlossaryText text={card.a} terms={card.terms} style={{ color: "#065f46", fontWeight: 600, lineHeight: 1.7, fontSize: "0.9rem", display: "block" }} />
+              {card.explain && (
+                <p style={{ margin: "10px 0 0", fontSize: "0.82rem", color: "#047857", lineHeight: 1.55, fontWeight: 500 }}>
+                  <span style={{ fontWeight: 800 }}>Why: </span>{boldText(card.explain)}
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -1029,8 +1216,109 @@ const QuizMode = ({ cards }: { cards: FlashCard[] }) => {
           );
         })}
       </div>
+      {selected !== null && current.explain && (
+        <div style={{ background: "#eff6ff", borderLeft: "4px solid #1e3a8a", borderRadius: 10, padding: "10px 14px" }}>
+          <p style={{ fontSize: "0.84rem", color: "#334155", lineHeight: 1.55, margin: 0, fontWeight: 500 }}>
+            <span style={{ fontWeight: 800, color: selected === current.a ? "#059669" : "#b45309" }}>{selected === current.a ? "Why: " : "Not quite — "}</span>
+            {boldText(current.explain)}
+          </p>
+        </div>
+      )}
       {selected !== null && (
         <button onClick={nextQ} style={{ alignSelf: "center", minHeight: 44, padding: "0 32px", background: "#1e3a8a", color: "#fff", border: "none", borderRadius: 12, fontWeight: 700, fontSize: "0.95rem", cursor: "pointer" }}>
+          {index + 1 >= deck.length ? "See results" : "Next →"}
+        </button>
+      )}
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MODE: SPOT THE MISTAKE — misconception check. Judge each statement true/false,
+// then see the correction. Targets the classic 1.1.1 confusions head-on.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const SpotMistakeMode = ({ myths }: { myths: MythItem[] }) => {
+  const [deck, setDeck] = useState<MythItem[]>(() => shuffleArr(myths));
+  const [index, setIndex] = useState(0);
+  const [choice, setChoice] = useState<boolean | null>(null);
+  const [score, setScore] = useState(0);
+  const [done, setDone] = useState(false);
+
+  const restart = useCallback(() => { setDeck(shuffleArr(myths)); setIndex(0); setChoice(null); setScore(0); setDone(false); }, [myths]);
+  useEffect(() => { restart(); }, [restart]);
+
+  if (done) {
+    const pct = Math.round((score / deck.length) * 100);
+    return (
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        <div style={{ background: "#fff", borderRadius: 20, padding: "40px 28px", maxWidth: 400, width: "100%", textAlign: "center", display: "flex", flexDirection: "column", gap: 14, alignItems: "center", boxShadow: CARD_SHADOW }}>
+          <p style={{ fontSize: "1.3rem", fontWeight: 700, color: "#111827", margin: 0 }}>Misconception check done</p>
+          <p style={{ fontSize: "3rem", fontWeight: 800, color: "#1e3a8a", margin: 0, lineHeight: 1 }}>{score}/{deck.length}</p>
+          <p style={{ color: "#6b7280", fontWeight: 600, margin: 0 }}>{pct}% spotted</p>
+          <p style={{ fontSize: "0.84rem", color: "#6b7280", lineHeight: 1.5, margin: 0 }}>Re-read the corrections on any you missed — these are the traps examiners set.</p>
+          <button onClick={restart} style={{ minHeight: 44, padding: "0 24px", background: "#1e3a8a", color: "#fff", border: "none", borderRadius: 12, fontWeight: 700, fontSize: "0.9rem", cursor: "pointer", width: "100%" }}>Try again</button>
+        </div>
+      </div>
+    );
+  }
+
+  const cur = deck[index];
+  if (!cur) return null;
+  const answered = choice !== null;
+  const gotIt = answered && choice === cur.isTrue;
+
+  const answer = (val: boolean) => { if (answered) return; setChoice(val); if (val === cur.isTrue) setScore(s => s + 1); };
+  const next = () => { if (index + 1 >= deck.length) { setDone(true); return; } setIndex(i => i + 1); setChoice(null); };
+
+  const verdictBtn = (val: boolean, label: string) => {
+    let bg = "#fff", border = "#e5e7eb", color = "#374151";
+    if (answered) {
+      if (val === cur.isTrue) { bg = "#ecfdf5"; border = "#10b981"; color = "#065f46"; }
+      else if (val === choice) { bg = "#fef2f2"; border = "#ef4444"; color = "#991b1b"; }
+    }
+    return (
+      <button onClick={() => answer(val)} disabled={answered}
+        style={{ flex: 1, minHeight: 52, borderRadius: 12, border: `2px solid ${border}`, background: bg, color, fontWeight: 800, fontSize: "1rem", cursor: answered ? "default" : "pointer" }}>
+        {label}
+      </button>
+    );
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 640, margin: "0 auto" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em" }}>Statement {index + 1} of {deck.length}</span>
+        <SpecBadge tag={cur.specTag} />
+      </div>
+      <div style={{ width: "100%", height: 5, background: "#e5e7eb", borderRadius: 4, overflow: "hidden" }}>
+        <div style={{ width: `${(index / deck.length) * 100}%`, height: "100%", background: "#1e3a8a", transition: "width 0.3s" }} />
+      </div>
+
+      <div style={{ background: "#fff", borderRadius: 16, border: "2px solid #e5e7eb", boxShadow: CARD_SHADOW, padding: "22px 22px", textAlign: "center", display: "flex", flexDirection: "column", gap: 6 }}>
+        <span style={{ fontSize: "0.66rem", fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: "#9ca3af" }}>True or false?</span>
+        <p style={{ fontSize: "1.1rem", fontWeight: 700, color: "#111827", lineHeight: 1.5, margin: 0 }}>{cur.statement}</p>
+      </div>
+
+      <div style={{ display: "flex", gap: 10 }}>
+        {verdictBtn(true, "True")}
+        {verdictBtn(false, "False")}
+      </div>
+
+      {answered && (
+        <div style={{ background: gotIt ? "#ecfdf5" : "#fef2f2", border: `2px solid ${gotIt ? "#10b981" : "#ef4444"}`, borderRadius: 12, padding: "12px 16px", display: "flex", gap: 10, alignItems: "flex-start" }}>
+          <span style={{ flexShrink: 0, marginTop: 1, color: gotIt ? "#059669" : "#dc2626" }}>{gotIt ? <Check size={18} strokeWidth={3} /> : <AlertTriangle size={18} />}</span>
+          <div>
+            <p style={{ fontSize: "0.86rem", fontWeight: 800, color: gotIt ? "#065f46" : "#991b1b", margin: "0 0 3px" }}>
+              {gotIt ? "Correct" : "Careful"} — this statement is {cur.isTrue ? "TRUE" : "FALSE"}.
+            </p>
+            <p style={{ fontSize: "0.85rem", color: "#334155", lineHeight: 1.55, margin: 0, fontWeight: 500 }}>{boldText(cur.why)}</p>
+          </div>
+        </div>
+      )}
+
+      {answered && (
+        <button onClick={next} style={{ alignSelf: "center", minHeight: 44, padding: "0 32px", background: "#1e3a8a", color: "#fff", border: "none", borderRadius: 12, fontWeight: 700, fontSize: "0.95rem", cursor: "pointer" }}>
           {index + 1 >= deck.length ? "See results" : "Next →"}
         </button>
       )}
@@ -1177,16 +1465,19 @@ const ExamMode = ({ questions, synoptic, section, showHints }: {
   const [revealed, setRevealed] = useState(false);
   const [ctx, setCtx] = useState<string | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
+  const [ticks, setTicks] = useState<Set<string>>(new Set());   // self-marked points
+  const [showModel, setShowModel] = useState(false);
 
   const pickCtx = (i: number): string | null => {
     const q = list[i];
     return !isSyn && q ? resolvePrompt((q as ExamQuestion).prompt, (q as ExamQuestion).contexts).ctx : null;
   };
-  const setup = (i: number) => { setIndex(i); setRevealed(false); setSelected(null); setCtx(pickCtx(i)); };
+  const setup = (i: number) => { setIndex(i); setRevealed(false); setSelected(null); setTicks(new Set()); setShowModel(false); setCtx(pickCtx(i)); };
+  const toggleTick = (k: string) => setTicks(prev => { const n = new Set(prev); n.has(k) ? n.delete(k) : n.add(k); return n; });
 
   // Reset ONLY when the section changes — not on every render. (list is a fresh
   // array each render, so depending on it here would reset the reveal instantly.)
-  useEffect(() => { setIndex(0); setRevealed(false); setSelected(null); setCtx(pickCtx(0)); // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { setIndex(0); setRevealed(false); setSelected(null); setTicks(new Set()); setShowModel(false); setCtx(pickCtx(0)); // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [section]);
 
   if (!list.length) return <div style={{ textAlign: "center", padding: 60, color: "#9ca3af", fontWeight: 600 }}>No questions in this section.</div>;
@@ -1203,7 +1494,11 @@ const ExamMode = ({ questions, synoptic, section, showHints }: {
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-          <span style={{ minHeight: 24, display: "inline-flex", alignItems: "center", padding: "3px 12px", borderRadius: 20, fontSize: "0.72rem", fontWeight: 700, background: cfg.bg, color: cfg.color, border: `2px solid ${cfg.border}` }}>{cfg.label}</span>
+          <button onClick={e => { e.stopPropagation(); _setActiveTooltip?.({ title: `${cfg.label} — what it's asking`, def: COMMAND_GUIDE[format], rect: (e.currentTarget as HTMLElement).getBoundingClientRect() }); }}
+            title="What this command word wants"
+            style={{ minHeight: 24, display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 12px", borderRadius: 20, fontSize: "0.72rem", fontWeight: 700, background: cfg.bg, color: cfg.color, border: `2px solid ${cfg.border}`, cursor: "pointer" }}>
+            {cfg.label} <Info size={12} />
+          </button>
           <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#6b7280" }}>[{q.marks} mark{q.marks !== 1 ? "s" : ""}]</span>
           {isSyn && (q as SynopticQuestion).specTags.map(t => <SpecBadge key={t} tag={t} />)}
           {!isSyn && <SpecBadge tag={(q as ExamQuestion).specTag} />}
@@ -1258,30 +1553,43 @@ const ExamMode = ({ questions, synoptic, section, showHints }: {
       {/* Mark scheme */}
       {revealed && (
         <div style={{ background: "#fff", borderRadius: 16, border: `2px solid ${cfg.border}`, boxShadow: CARD_SHADOW, overflow: "hidden" }}>
-          <div style={{ background: cfg.bg, padding: "12px 18px", borderBottom: `2px solid ${cfg.border}` }}>
+          <div style={{ background: cfg.bg, padding: "12px 18px", borderBottom: `2px solid ${cfg.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
             <p style={{ fontWeight: 700, fontSize: "0.85rem", color: cfg.color, margin: 0 }}>Mark scheme — {q.marks} mark{q.marks !== 1 ? "s" : ""}</p>
+            {format !== "mcq" && <span style={{ fontSize: "0.82rem", fontWeight: 800, color: cfg.color }}>You: {Math.min(ticks.size, q.marks)} / {q.marks}</span>}
           </div>
           <div style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 14 }}>
+            {format !== "mcq" && (
+              <p style={{ fontSize: "0.78rem", color: "#6b7280", fontWeight: 600, margin: 0 }}>Tick each point you actually made — mark yourself honestly.</p>
+            )}
             {isSyn
-              ? (q as SynopticQuestion).markScheme.map(group => (
+              ? (q as SynopticQuestion).markScheme.map((group, gi) => (
                   <div key={group.tag}>
                     <div style={{ marginBottom: 8 }}><SpecBadge tag={group.tag} /></div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8, paddingLeft: 2 }}>
-                      {group.points.map((pt, i) => (
-                        <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                          <span style={{ flexShrink: 0, width: 8, height: 8, borderRadius: "50%", background: cfg.border, marginTop: 7 }} />
-                          <p style={{ fontSize: "0.9rem", color: "#374151", lineHeight: 1.6, margin: 0, fontWeight: 500 }}>{pt}</p>
-                        </div>
-                      ))}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6, paddingLeft: 2 }}>
+                      {group.points.map((pt, i) => {
+                        const key = `${gi}-${i}`; const ticked = ticks.has(key);
+                        return (
+                          <div key={i} onClick={() => toggleTick(key)} style={{ display: "flex", gap: 10, alignItems: "flex-start", cursor: "pointer", background: ticked ? "#ecfdf5" : "transparent", borderRadius: 8, padding: "4px 6px", margin: "-2px -4px" }}>
+                            <span style={{ flexShrink: 0, width: 24, height: 24, borderRadius: 6, border: `2px solid ${ticked ? "#10b981" : cfg.border}`, background: ticked ? "#10b981" : "#fff", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", marginTop: 1 }}>{ticked && <Check size={15} strokeWidth={3} />}</span>
+                            <p style={{ fontSize: "0.9rem", color: "#374151", lineHeight: 1.6, margin: 0, fontWeight: 500 }}>{pt}</p>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 ))
-              : (q as ExamQuestion).markScheme.map((pt, i) => (
-                  <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                    <span style={{ flexShrink: 0, width: 24, height: 24, borderRadius: "50%", background: cfg.bg, border: `2px solid ${cfg.border}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.7rem", fontWeight: 700, color: cfg.color, marginTop: 1 }}>{i + 1}</span>
-                    <p style={{ fontSize: "0.9rem", color: "#374151", lineHeight: 1.6, margin: 0, fontWeight: 500 }}>{pt}</p>
-                  </div>
-                ))}
+              : (q as ExamQuestion).markScheme.map((pt, i) => {
+                  const key = String(i); const ticked = ticks.has(key); const tickable = format !== "mcq";
+                  return (
+                    <div key={i} onClick={tickable ? () => toggleTick(key) : undefined}
+                      style={{ display: "flex", gap: 12, alignItems: "flex-start", cursor: tickable ? "pointer" : "default", background: ticked ? "#ecfdf5" : "transparent", borderRadius: 8, padding: "4px 6px", margin: "-2px -4px" }}>
+                      {tickable
+                        ? <span style={{ flexShrink: 0, width: 24, height: 24, borderRadius: 6, border: `2px solid ${ticked ? "#10b981" : cfg.border}`, background: ticked ? "#10b981" : "#fff", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", marginTop: 1 }}>{ticked && <Check size={15} strokeWidth={3} />}</span>
+                        : <span style={{ flexShrink: 0, width: 24, height: 24, borderRadius: "50%", background: cfg.bg, border: `2px solid ${cfg.border}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.7rem", fontWeight: 700, color: cfg.color, marginTop: 1 }}>{i + 1}</span>}
+                      <p style={{ fontSize: "0.9rem", color: "#374151", lineHeight: 1.6, margin: 0, fontWeight: 500 }}>{pt}</p>
+                    </div>
+                  );
+                })}
 
             {/* context-specific model notes (non-synoptic) */}
             {!isSyn && ctx && (q as ExamQuestion).modelNotes?.[ctx] && (
@@ -1290,6 +1598,22 @@ const ExamMode = ({ questions, synoptic, section, showHints }: {
                 {(q as ExamQuestion).modelNotes![ctx].map((n, i) => (
                   <p key={i} style={{ fontSize: "0.85rem", color: "#374151", lineHeight: 1.6, margin: i ? "6px 0 0" : 0 }}>{n}</p>
                 ))}
+              </div>
+            )}
+
+            {/* worked model answer — how to turn the mark points into a real answer */}
+            {q.modelAnswer && (
+              <div>
+                <button onClick={() => setShowModel(m => !m)}
+                  style={{ minHeight: 40, padding: "0 16px", borderRadius: 10, fontWeight: 700, fontSize: "0.82rem", border: `2px solid ${cfg.border}`, background: showModel ? cfg.bg : "#fff", color: cfg.color, cursor: "pointer" }}>
+                  {showModel ? "Hide model answer" : "Show model answer"}
+                </button>
+                {showModel && (
+                  <div style={{ marginTop: 10, background: "#f8fafc", borderRadius: 10, borderLeft: `4px solid ${cfg.border}`, padding: "12px 14px" }}>
+                    <p style={{ fontSize: "0.72rem", fontWeight: 700, color: "#6b7280", margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.06em" }}>Model answer — bold shows where the marks are</p>
+                    <p style={{ fontSize: "0.9rem", color: "#334155", lineHeight: 1.7, margin: 0 }}>{boldText(q.modelAnswer)}</p>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -1323,10 +1647,11 @@ const INFO_SECTIONS = [
     { label: "Buses, cache levels, CIR", detail: "Useful background but not required for 1.1.1. Kept out of default study, quiz and exam sessions; turn on 'Beyond spec' to include them, clearly flagged." },
   ]},
   { title: "How the modes differ", items: [
-    { label: "Study", detail: "First-pass reading — recognition, low effort. Start here." },
+    { label: "Learn", detail: "Taught walkthroughs over a CPU diagram, with predict-first prompts, an animated cycle, analogies and a value trace. Start here." },
+    { label: "Study", detail: "First-pass reading — recognition, low effort, with a 'why' note on key cards." },
     { label: "Flashcards", detail: "Active recall — answer before you flip. The core revision mode." },
-    { label: "Quiz", detail: "MCQ warm-up — recognising is easier than recalling. Not a readiness signal." },
-    { label: "Exam", detail: "Real J277 formats and tariffs, plus synoptic questions spanning sub-topics." },
+    { label: "Quiz", detail: "MCQ warm-up, or Spot-the-Mistake to confront the classic misconceptions. Not a readiness signal." },
+    { label: "Exam", detail: "Real J277 formats and tariffs; self-mark against the scheme, reveal model answers, plus synoptic questions." },
   ]},
 ];
 
@@ -1432,6 +1757,7 @@ export default function App() {
   const isMobile = useIsMobile();
   const [activity, setActivity] = useState("learn");
   const [examSection, setExamSection] = useState("all");
+  const [quizMode, setQuizMode] = useState("mcq");   // "mcq" | "spot"
   const [showHints, setShowHints] = useState(true);
   const [showBeyond, setShowBeyond] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -1450,8 +1776,10 @@ export default function App() {
   const cards = coreCards(showBeyond);
   const cloze = coreCloze(showBeyond);
   const exam = coreExam(showBeyond);
-  const activeBlurb = ACTIVITIES.find(a => a.key === activity)?.blurb ?? "";
-  const contentKey = `${activity}-${examSection}-${showBeyond}`;
+  const activeBlurb = activity === "quiz" && quizMode === "spot"
+    ? "Spot the mistake — judge each statement, then read the correction. Targets the classic traps."
+    : (ACTIVITIES.find(a => a.key === activity)?.blurb ?? "");
+  const contentKey = `${activity}-${examSection}-${quizMode}-${showBeyond}`;
 
   return (
     <>
@@ -1509,6 +1837,13 @@ export default function App() {
           {/* Activity blurb — makes the rigor of each mode explicit */}
           <p style={{ textAlign: "center", fontSize: "0.82rem", color: "#6b7280", fontWeight: 500, margin: "0 auto 14px", maxWidth: 560, lineHeight: 1.5 }}>{activeBlurb}</p>
 
+          {/* Quiz sub-controls — MCQ warm-up vs Spot-the-Mistake */}
+          {activity === "quiz" && (
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 18 }}>
+              <SegRow options={[{ key: "mcq", label: "Multiple choice" }, { key: "spot", label: "Spot the mistake" }]} value={quizMode} onChange={setQuizMode} />
+            </div>
+          )}
+
           {/* Exam / mode sub-controls */}
           {activity === "exam" && (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, marginBottom: 18 }}>
@@ -1526,7 +1861,9 @@ export default function App() {
           {activity === "learn"     && <LearnMode     key={contentKey} />}
           {activity === "study"     && <StudyMode     key={contentKey} cards={cards} />}
           {activity === "flashcard" && <FlashcardMode key={contentKey} cards={cards} />}
-          {activity === "quiz"      && <QuizMode      key={contentKey} cards={cards} />}
+          {activity === "quiz"      && (quizMode === "spot"
+            ? <SpotMistakeMode key={contentKey} myths={MYTHS} />
+            : <QuizMode        key={contentKey} cards={cards} />)}
           {activity === "fillin"    && <FillInMode    key={contentKey} exercises={cloze} />}
           {activity === "exam"      && <ExamMode      key={contentKey} questions={exam} synoptic={SYNOPTIC_QUESTIONS} section={examSection} showHints={showHints} />}
 
