@@ -18,6 +18,26 @@ A React/TypeScript/Vite app of interactive maths tools for teachers. Each tool h
 
 ---
 
+## Two subjects — repository map
+
+This is one website that hosts **two subjects**. The landing page groups tools into
+subject bands (a category's subject comes from its `subject` field in `src/registry.ts`,
+default `"Mathematics"`). Keep the division clear across all three axes:
+
+| Axis | Mathematics | Computer Science |
+|---|---|---|
+| **Tools** | `src/tools/{Generators,Number,Algebra,Proportion,Geometry,TeacherTools}` + root | `src/tools/ComputerScience/` |
+| **Shell / how to build** | `ToolShell` (`src/shared/`) — see this file's shared-library + ToolShell sections | `CSShell` (`src/shared/cs/`) — a *separate* revision-tool shell; see `CS_SHELL_PLAN.md` |
+| **Further developments** | `DEV_ROADMAP.md` | `CS_ROADMAP.md` (what to build next) + `CS_SHELL_PLAN.md` (the shell migration) |
+
+The two shells are deliberately separate: `ToolShell` is for **question generators**
+(Whiteboard / Worked Example / Worksheet); `CSShell` is for **knowledge/revision tools**
+(Learn / Study / Cards / Quiz / Fill / Exam). CS tools are standalone by design and never
+migrate to `ToolShell`. When adding a CS category to the registry, set
+`subject: 'Computer Science'` so the landing page bands it correctly.
+
+---
+
 ## The `Unpublished/` folder — leave alone
 
 `Unpublished/` (repo root, sibling to `src/`) holds old v1.x tool files that are not ready to publish and not registered anywhere — a personal archive/reference area, not part of the app.
@@ -93,7 +113,7 @@ This copies the canonical template (`src/tools/TeacherTools/ToolShell.tsx`) to `
 
 ### 3. Registry entry (`src/registry.ts` — single registration point)
 
-`src/registry.ts` is the single source of truth for every tool. `App.tsx` generates the route (lazy-loaded — each tool builds as its own chunk) and `LandingPage.tsx` renders the card from it. Do **not** edit `App.tsx` or `LandingPage.tsx`. The scaffold script adds the entry; review it and remove `enabled: false` when the tool is ready to go live:
+`src/registry.ts` is the single source of truth for every tool. `App.tsx` generates the route (lazy-loaded — each tool builds as its own chunk) and `LandingPage.tsx` renders the card from it, grouped into subject bands by each category's `subject` field (default `"Mathematics"`; set `"Computer Science"` for CS strands). Do **not** edit `App.tsx` or `LandingPage.tsx` to add a tool — everything is driven from the registry entry. The scaffold script adds the entry; review it and remove `enabled: false` when the tool is ready to go live:
 
 ```ts
 { id: 'my-new-tool', path: '/my-new-tool', name: 'Display Name', description: 'One sentence.', load: () => import('./tools/Category/MyNewTool') }

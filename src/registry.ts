@@ -30,6 +30,9 @@ export interface ToolMeta {
 
 export interface CategoryMeta {
   name: string;
+  /** Top-level subject the landing page groups this category under.
+   *  Defaults to "Mathematics" when omitted. Set "Computer Science" for CS strands. */
+  subject?: string;
   tools: ToolMeta[];
 }
 
@@ -110,9 +113,10 @@ export const CATEGORIES: CategoryMeta[] = [
   },
   {
     name: 'Computer Science',
+    subject: 'Computer Science',
     tools: [
       { id: 'system architecture', path: '/system-architecture', name: '1.1 - System Architectures', description: 'A tool for learning the 1.1 content for system architectures', load: () => import('./tools/ComputerScience/SystemArchitecture') },
-      { id: 'cpu-architecture', path: '/cpu-architecture', name: '1.1.1 - CPU Architecture (OCR J277)', description: 'Spec-tagged, exam-realistic, mobile-first revision for OCR J277 1.1.1 CPU architecture', load: () => import('./tools/ComputerScience/CpuArchitecture') },
+      { id: 'cpu-architecture', path: '/cpu-architecture', name: '1.1.1 - CPU Architecture', description: 'Spec-tagged, exam-realistic, mobile-first revision for OCR J277 1.1.1 CPU architecture', load: () => import('./tools/ComputerScience/CpuArchitecture') },
     ],
   },
 ];
