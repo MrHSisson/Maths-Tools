@@ -44,6 +44,12 @@ const MARK_FORMATS = {
 
 type ExamFormat = keyof typeof MARK_FORMATS;
 
+// Shared visual tokens — kept in line with the maths ToolShell house style
+// (deep blue-900 primary, soft card shadows, green-500 "correct" accent).
+const NAVY = "#1e3a8a";                                   // Tailwind blue-900
+const CARD_SHADOW = "0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.06)";  // ~shadow-lg
+const TAB_SHADOW  = "0 10px 15px -3px rgba(0,0,0,0.12), 0 4px 6px -4px rgba(0,0,0,0.1)";   // ~shadow-xl
+
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
 // ─────────────────────────────────────────────────────────────────────────────
@@ -720,7 +726,7 @@ const LearnMode = () => {
       </div>
 
       {/* lesson card */}
-      <div style={{ background: "#fff", borderRadius: 18, border: "2px solid #e5e7eb", padding: "18px 18px 16px", display: "flex", flexDirection: "column", gap: 14 }}>
+      <div style={{ background: "#fff", borderRadius: 16, border: "2px solid #e5e7eb", boxShadow: CARD_SHADOW, padding: "18px 18px 16px", display: "flex", flexDirection: "column", gap: 14 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
           <p style={{ fontWeight: 800, fontSize: "1rem", color: "#1e3a8a", margin: 0 }}>{lesson.title}</p>
           <div style={{ display: "flex", gap: 6 }}>{lesson.specTags.map(t => <SpecBadge key={t} tag={t} />)}</div>
@@ -923,7 +929,7 @@ const StudyMode = ({ cards }: { cards: FlashCard[] }) => {
         </button>
       </div>
       {cards.map((card, idx) => (
-        <div key={card.id} style={{ background: "#fff", borderRadius: 14, border: `2px solid ${revealed.has(card.id) ? "#a7f3d0" : "#e5e7eb"}`, overflow: "hidden", cursor: "pointer" }}>
+        <div key={card.id} style={{ background: "#fff", borderRadius: 14, border: `2px solid ${revealed.has(card.id) ? "#a7f3d0" : "#e5e7eb"}`, boxShadow: CARD_SHADOW, overflow: "hidden", cursor: "pointer" }}>
           <div onClick={() => toggle(card.id)} style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "14px 16px", minHeight: 44 }}>
             <span style={{ flexShrink: 0, width: 26, height: 26, borderRadius: "50%", background: "#1e3a8a", color: "#fff", fontSize: "0.7rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", marginTop: 2 }}>{idx + 1}</span>
             <div style={{ flex: 1 }}>
@@ -1004,7 +1010,7 @@ const QuizMode = ({ cards }: { cards: FlashCard[] }) => {
       <div style={{ width: "100%", height: 5, background: "#e5e7eb", borderRadius: 4, overflow: "hidden" }}>
         <div style={{ width: `${(index / deck.length) * 100}%`, height: "100%", background: "#1e3a8a", transition: "width 0.3s" }} />
       </div>
-      <div style={{ background: "#fff", borderRadius: 16, border: "2px solid #e5e7eb", padding: "20px 22px", textAlign: "center" }}>
+      <div style={{ background: "#fff", borderRadius: 16, border: "2px solid #e5e7eb", boxShadow: CARD_SHADOW, padding: "20px 22px", textAlign: "center" }}>
         <p style={{ fontSize: "1.05rem", fontWeight: 600, color: "#111827", lineHeight: 1.5, margin: 0 }}>{current.q}</p>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -1093,7 +1099,7 @@ const FillInMode = ({ exercises }: { exercises: ClozeExercise[] }) => {
         )}
       </div>
 
-      <div style={{ background: "#fff", borderRadius: 16, border: "2px solid #e5e7eb", padding: "22px 22px", lineHeight: 2.4, fontSize: "1rem", fontWeight: 500, color: "#111827" }}>
+      <div style={{ background: "#fff", borderRadius: 16, border: "2px solid #e5e7eb", boxShadow: CARD_SHADOW, padding: "22px 22px", lineHeight: 2.4, fontSize: "1rem", fontWeight: 500, color: "#111827" }}>
         {segments.map((seg, i) => {
           if (seg.type === "text") return <span key={i}>{seg.value}</span>;
           slotCounter++; const si = slotCounter; const placed = slots[si];
@@ -1212,7 +1218,7 @@ const ExamMode = ({ questions, synoptic, section, showHints }: {
       )}
 
       {/* Question card */}
-      <div style={{ background: "#fff", borderRadius: 16, border: `2px solid ${cfg.border}`, padding: "22px 22px", display: "flex", flexDirection: "column", gap: 14 }}>
+      <div style={{ background: "#fff", borderRadius: 16, border: `2px solid ${cfg.border}`, boxShadow: CARD_SHADOW, padding: "22px 22px", display: "flex", flexDirection: "column", gap: 14 }}>
         <p style={{ fontSize: "1.08rem", fontWeight: 700, color: "#111827", lineHeight: 1.5, margin: 0 }}>{promptText}</p>
 
         {/* MCQ options */}
@@ -1251,7 +1257,7 @@ const ExamMode = ({ questions, synoptic, section, showHints }: {
 
       {/* Mark scheme */}
       {revealed && (
-        <div style={{ background: "#fff", borderRadius: 16, border: `2px solid ${cfg.border}`, overflow: "hidden" }}>
+        <div style={{ background: "#fff", borderRadius: 16, border: `2px solid ${cfg.border}`, boxShadow: CARD_SHADOW, overflow: "hidden" }}>
           <div style={{ background: cfg.bg, padding: "12px 18px", borderBottom: `2px solid ${cfg.border}` }}>
             <p style={{ fontWeight: 700, fontSize: "0.85rem", color: cfg.color, margin: 0 }}>Mark scheme — {q.marks} mark{q.marks !== 1 ? "s" : ""}</p>
           </div>
@@ -1409,8 +1415,8 @@ const DesktopTabs = ({ activity, setActivity }: { activity: string; setActivity:
       const active = activity === a.key; const Icon = a.icon;
       return (
         <button key={a.key} onClick={() => setActivity(a.key)}
-          style={{ minHeight: 44, display: "flex", alignItems: "center", gap: 8, padding: "0 20px", borderRadius: 12, fontWeight: 700, fontSize: "0.92rem", border: "2px solid", cursor: "pointer",
-            background: active ? "#1e3a8a" : "#fff", color: active ? "#fff" : "#4b5563", borderColor: active ? "#1e3a8a" : "#e5e7eb", boxShadow: active ? "0 2px 8px rgba(30,58,138,0.2)" : "none" }}>
+          style={{ minHeight: 48, display: "flex", alignItems: "center", gap: 8, padding: "0 22px", borderRadius: 12, fontWeight: 700, fontSize: "1.05rem", border: "none", cursor: "pointer", transition: "all 0.15s",
+            background: active ? NAVY : "#fff", color: active ? "#fff" : "#1f2937", boxShadow: TAB_SHADOW }}>
           <Icon size={18} /> {a.label}
         </button>
       );
@@ -1453,14 +1459,11 @@ export default function App() {
 
       {/* Header */}
       <div className="bg-blue-900 shadow-lg" style={{ position: "sticky", top: 0, zIndex: 95 }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: isMobile ? "8px 10px" : "12px 24px", display: "grid", gridTemplateColumns: "44px 1fr 44px", alignItems: "center", gap: 8 }}>
-          <button onClick={() => { window.location.href = "/"; }} title="Home" className="text-white hover:bg-blue-800 rounded-lg transition-colors" style={{ minWidth: 44, minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Home size={22} />
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: isMobile ? "6px 10px" : "12px 32px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <button onClick={() => { window.location.href = "/"; }} className="text-white hover:bg-blue-800 rounded-lg transition-colors" style={{ minHeight: 44, display: "flex", alignItems: "center", gap: 8, padding: "0 10px" }}>
+            <Home size={24} /><span className="font-semibold" style={{ fontSize: "1.1rem" }}>Home</span>
           </button>
-          <span className="font-semibold text-white" style={{ textAlign: "center", fontSize: isMobile ? "1rem" : "1.2rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-            {isMobile ? "1.1.1 CPU Architecture" : "1.1.1 CPU Architecture"}
-          </span>
-          <div className="relative" ref={menuRef} style={{ justifySelf: "end" }}>
+          <div className="relative" ref={menuRef}>
               <button onClick={() => setMenuOpen(o => !o)} className="text-white hover:bg-blue-800 rounded-lg transition-colors" style={{ minWidth: 44, minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center" }}>{menuOpen ? <X size={24} /> : <Menu size={24} />}</button>
               {menuOpen && (
                 <div style={{ position: "absolute", right: 0, top: "calc(100% + 8px)", background: "#fff", borderRadius: 12, boxShadow: "0 8px 32px rgba(0,0,0,0.15)", border: "1px solid #e5e7eb", minWidth: 240, zIndex: 100, overflow: "hidden" }}>
@@ -1482,6 +1485,12 @@ export default function App() {
       {/* Page */}
       <div style={{ minHeight: "100vh", backgroundColor: "#f5f3f0", padding: isMobile ? "14px 12px 84px" : "24px 20px 40px" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+
+          {/* Page title — big centred heading + divider, matching the maths tools */}
+          <h1 style={{ textAlign: "center", fontWeight: 800, color: "#000", margin: isMobile ? "2px 0 8px" : "4px 0 12px", fontSize: isMobile ? "1.7rem" : "3rem", lineHeight: 1.12 }}>
+            1.1.1 CPU Architecture
+          </h1>
+          <div style={{ height: 1, background: "#d1d5db", maxWidth: 880, margin: isMobile ? "0 auto 14px" : "0 auto 22px" }} />
 
           {/* Desktop tabs (mobile uses bottom bar) */}
           {!isMobile && (
