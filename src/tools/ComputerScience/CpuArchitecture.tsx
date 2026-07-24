@@ -6,7 +6,10 @@ import {
 import {
   NAVY, CARD_SHADOW, TAB_SHADOW, shuffleArr, parseCloze, useIsMobile, boldText,
   BeyondBadge, SegRow, registerTooltip, showTooltip, TooltipOverlay, parseGlossaryText,
-  type CSTooltip,
+  MARK_FORMATS, COMMAND_GUIDE,
+  type CSTooltip, type SpecTag, type FlashCard, type ClozeExercise,
+  type ExamQuestion, type SynopticQuestion, type MythItem, type Flow,
+  type Lesson, type InfoSection,
 } from "../../shared/cs";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -28,8 +31,6 @@ import {
 // SPEC TAGS — the source of truth for coverage auditing
 // ─────────────────────────────────────────────────────────────────────────────
 
-type SpecTag = "1.1.1-R1" | "1.1.1-R2" | "1.1.1-R3" | "1.1.1-R4" | "1.1.2" | "1.2.1";
-
 const SPEC_DESCRIPTIONS: Record<SpecTag, string> = {
   "1.1.1-R1": "Required: the actions that occur at each stage of the fetch-execute cycle.",
   "1.1.1-R2": "Required: the role/purpose of each CPU component (ALU, CU, cache, registers) during the fetch-execute cycle.",
@@ -39,87 +40,8 @@ const SPEC_DESCRIPTIONS: Record<SpecTag, string> = {
   "1.2.1":    "Sub-topic 1.2.1 — Primary storage / RAM. Drawn in for synoptic links only.",
 };
 
-const MARK_FORMATS = {
-  mcq:      { label: "Multiple choice", short: "MCQ",       color: "#1e3a8a", bg: "#eff6ff", border: "#bfdbfe" },
-  state:    { label: "State / Identify", short: "State",    color: "#065f46", bg: "#ecfdf5", border: "#a7f3d0" },
-  short:    { label: "Short response",  short: "Short",     color: "#92400e", bg: "#fffbeb", border: "#fde68a" },
-  scenario: { label: "Apply to scenario", short: "Scenario", color: "#7c2d12", bg: "#fff7ed", border: "#fed7aa" },
-  extended: { label: "Extended response", short: "Extended", color: "#5b21b6", bg: "#f5f3ff", border: "#ddd6fe" },
-} as const;
+// Types, MARK_FORMATS, ExamFormat and COMMAND_GUIDE now come from ../../shared/cs.
 
-type ExamFormat = keyof typeof MARK_FORMATS;
-
-// Visual tokens (NAVY, CARD_SHADOW, TAB_SHADOW) now come from ../../shared/cs.
-
-// ─────────────────────────────────────────────────────────────────────────────
-// TYPES
-// ─────────────────────────────────────────────────────────────────────────────
-
-interface FlashCard {
-  id: number;
-  specTag: SpecTag;
-  beyondSpec?: boolean;      // enrichment — excluded from default sessions
-  q: string;
-  a: string;
-  terms?: string[];          // glossary terms to underline; [] = none
-  distractors?: string[];    // for MCQ / Quiz mode
-  explain?: string;          // elaboration — the "why" / how-to-remember, shown as feedback
-}
-
-interface ClozeExercise {
-  id: number;
-  title: string;
-  specTag: SpecTag;
-  beyondSpec?: boolean;
-  text: string;              // [WORD] marks a slot
-  words: string[];           // correct answers + distractors
-}
-
-interface ExamQuestion {
-  id: string;
-  specTag: SpecTag;
-  beyondSpec?: boolean;
-  format: ExamFormat;
-  marks: number;
-  prompt: string;            // may contain {context}
-  contexts?: string[];
-  options?: string[];        // mcq only
-  answerIndex?: number;      // mcq only
-  hint: string;
-  markScheme: string[];
-  modelNotes?: Record<string, string[]>;
-  modelAnswer?: string;      // a full prose model answer; **bold** marks the mark-earning parts
-}
-
-interface SynopticQuestion {
-  id: string;
-  specTags: SpecTag[];       // the sub-topics this question spans
-  format: ExamFormat;
-  marks: number;
-  prompt: string;
-  hint: string;
-  // per-tag mark scheme attribution — which marks come from which sub-topic
-  markScheme: { tag: SpecTag; points: string[] }[];
-  modelAnswer?: string;
-}
-
-// Misconception check — Spot-the-Mistake / True-or-False
-interface MythItem {
-  id: number;
-  specTag: SpecTag;
-  statement: string;
-  isTrue: boolean;
-  why: string;               // the correction / explanation shown after answering
-}
-
-// Command-word guidance — what each exam format is really asking for
-const COMMAND_GUIDE: Record<ExamFormat, string> = {
-  mcq:      "Multiple choice: pick the single best option. One mark, no working.",
-  state:    "State / Identify: give the fact only — no explanation is needed for the mark.",
-  short:    "Describe: say what happens, clearly and in the right order. 'Why' is not required.",
-  scenario: "Apply: use the idea in THIS scenario — refer to the specific details you're given.",
-  extended: "Explain: make each point AND justify it ('… because …'), and link your ideas together.",
-};
 
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -539,22 +461,6 @@ const SpecBadge = ({ tag }: { tag: SpecTag }) => (
 // the part under discussion, revealed one beat per press. The schematic is the
 // topic's core representation, reused across every lesson for consistency.
 // ─────────────────────────────────────────────────────────────────────────────
-
-interface Flow { from: string; to: string; label: string; kind?: "addr" | "data" }
-interface LessonStep {
-  text: string;
-  highlight?: string[];
-  legend?: boolean;
-  flow?: Flow;                        // animated token travelling between parts
-  predict?: string;                   // You-do: a question posed before the answer (text)
-  trace?: Record<string, string>;     // register snapshot for kind:"trace" lessons
-}
-interface Lesson {
-  id: string; title: string; specTags: SpecTag[];
-  kind?: "diagram" | "trace";
-  analogy?: string;                   // "Think of it like…" concrete anchor
-  steps: LessonStep[];
-}
 
 const LESSONS: Lesson[] = [
   {
@@ -1520,7 +1426,7 @@ const ExamMode = ({ questions, synoptic, section, showHints }: {
 // INFO MODAL
 // ─────────────────────────────────────────────────────────────────────────────
 
-const INFO_SECTIONS = [
+const INFO_SECTIONS: InfoSection[] = [
   { title: "What's in scope (1.1.1)", items: [
     { label: "Fetch-execute cycle (R1)", detail: "The actions at each stage: fetch, decode, execute — and the PC incrementing." },
     { label: "Component roles (R2)", detail: "ALU (arithmetic/logic), Control Unit (coordination), cache, and registers." },

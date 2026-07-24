@@ -11,3 +11,10 @@ export {
   type CSTooltip, type CSGlossarySegment,
   registerTooltip, showTooltip, TooltipOverlay, parseGlossaryText,
 } from "./tooltip";
+
+export {
+  MARK_FORMATS, COMMAND_GUIDE,
+  type SpecTag, type ExamFormat,
+  type FlashCard, type ClozeExercise, type ExamQuestion, type SynopticQuestion,
+  type MythItem, type Flow, type LessonStep, type Lesson, type InfoItem, type InfoSection,
+} from "./types";

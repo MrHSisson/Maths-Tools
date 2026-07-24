@@ -60,8 +60,10 @@ src/shared/cs/
                        parseCloze, BeyondBadge, SegRow                       ✅ done
   tooltip.tsx          CSTooltip, registerTooltip, showTooltip, TooltipOverlay,
                        parseGlossaryText(glossary, …)                        ✅ done
-  types.ts             CSTopic, Card, Cloze, ExamQuestion, SynopticQuestion,
-                       Myth, Lesson, LessonStep, Scene, SpecTag, ExamFormat  ⬜
+  types.ts             SpecTag, ExamFormat, MARK_FORMATS, COMMAND_GUIDE,
+                       FlashCard, ClozeExercise, ExamQuestion, SynopticQuestion,
+                       MythItem, Flow, LessonStep, Lesson, InfoSection         ✅ done
+                       (CSTopic + Scene union added when CSShell is assembled)  ⬜
   glossary.tsx         GlossaryText(glossary), SpecBadge(descriptions)       ⬜
   modes/
     StudyMode  FlashcardMode  QuizMode(+Spot)  FillInMode                    ⬜
@@ -109,8 +111,9 @@ working the whole way** — it is the regression test.
 1. **✅ Extract zero-coupling utilities + the tooltip/glossary machinery** into
    `src/shared/cs/{ui,tooltip}.tsx`. Proves the seam (shared singleton + the
    "inject topic data" pattern via `parseGlossaryText(glossary, …)`). Behaviour identical.
-2. ⬜ **`types.ts` + `glossary.tsx`** — lift the shared types and make `GlossaryText` /
-   `SpecBadge` take their topic data as props (glossary map, spec descriptions).
+2. ✅ **`types.ts`** — shared type contract lifted (types + `MARK_FORMATS` +
+   `COMMAND_GUIDE`). `CpuArchitecture` imports them; its `GlossaryText` / `SpecBadge`
+   stay as thin topic-bound wrappers (they fold into `CSShell` in step 7).
 3. ⬜ **Self-contained modes** — Study, Flashcard, Quiz+Spot, FillIn — parametrised by
    props (cards / cloze / myths / glossary).
 4. ⬜ **Representations** — `CpuDiagram → BoxSchematic`, `TraceTable`; move the CPU node
