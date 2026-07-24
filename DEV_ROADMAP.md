@@ -7,6 +7,11 @@ Status keys: ✅ done · 🚧 in progress · ⬜ not started.
 > Conventions, APIs and how-to-build-a-tool live in `CLAUDE.md`. This file is the
 > *roadmap* — what's unfinished and what's next. Keep it current as work lands.
 
+> **Computer Science shell:** the plan to make CS revision tools (1.1.2 → 1.6)
+> data-driven — a parallel shell to ToolShell — lives in `CS_SHELL_PLAN.md`.
+> Increment 1 (shared `src/shared/cs/{ui,tooltip}.tsx`) has landed; read that doc
+> before building the next CS sub-topic.
+
 ---
 
 ## Developing-tools mode — what it gates

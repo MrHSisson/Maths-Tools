@@ -3,6 +3,11 @@ import {
   Home, Menu, X, ChevronLeft, ChevronRight, Shuffle, RotateCcw, RefreshCw,
   BookOpen, Layers, CheckSquare, PenLine, FileText, Info, GraduationCap, Check, AlertTriangle,
 } from "lucide-react";
+import {
+  NAVY, CARD_SHADOW, TAB_SHADOW, shuffleArr, parseCloze, useIsMobile, boldText,
+  BeyondBadge, SegRow, registerTooltip, showTooltip, TooltipOverlay, parseGlossaryText,
+  type CSTooltip,
+} from "../../shared/cs";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // OCR J277 — 1.1.1 CPU Architecture (redesign pilot)
@@ -44,11 +49,7 @@ const MARK_FORMATS = {
 
 type ExamFormat = keyof typeof MARK_FORMATS;
 
-// Shared visual tokens — kept in line with the maths ToolShell house style
-// (deep blue-900 primary, soft card shadows, green-500 "correct" accent).
-const NAVY = "#1e3a8a";                                   // Tailwind blue-900
-const CARD_SHADOW = "0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.06)";  // ~shadow-lg
-const TAB_SHADOW  = "0 10px 15px -3px rgba(0,0,0,0.12), 0 4px 6px -4px rgba(0,0,0,0.1)";   // ~shadow-xl
+// Visual tokens (NAVY, CARD_SHADOW, TAB_SHADOW) now come from ../../shared/cs.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -120,8 +121,6 @@ const COMMAND_GUIDE: Record<ExamFormat, string> = {
   extended: "Explain: make each point AND justify it ('… because …'), and link your ideas together.",
 };
 
-interface GlossarySegment { type: "text" | "term"; value: string; def?: string }
-interface TooltipState { title: string; def: string; rect: DOMRect }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GLOSSARY — 1.1.1 core terms (+ a few beyond-spec ones used in enrichment)
@@ -156,29 +155,6 @@ const GLOSSARY: Record<string, string> = {
   "L1":           "Beyond spec — smallest, fastest cache, inside each core.",
   "L2":           "Beyond spec — larger, slightly slower cache.",
   "L3":           "Beyond spec — largest, slowest cache, shared between cores.",
-};
-
-const parseGlossaryText = (text: string, overrideTerms?: string[]): GlossarySegment[] => {
-  const termKeys = overrideTerms?.length
-    ? overrideTerms.filter(t => GLOSSARY[t])
-    : Object.keys(GLOSSARY).filter(t => {
-        const re = new RegExp(`\\b${t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
-        return re.test(text);
-      });
-  const sorted = [...termKeys].sort((a, b) => b.length - a.length);
-  if (!sorted.length) return [{ type: "text", value: text }];
-  const pattern = sorted.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
-  const re = new RegExp(`(${pattern})`, "gi");
-  const parts = text.split(re);
-  const used = new Set<string>();
-  return parts.filter(p => p !== "").map(part => {
-    const matchedKey = sorted.find(t => t.toLowerCase() === part.toLowerCase());
-    if (matchedKey && !used.has(matchedKey.toLowerCase())) {
-      used.add(matchedKey.toLowerCase());
-      return { type: "term" as const, value: part, def: GLOSSARY[matchedKey] };
-    }
-    return { type: "text" as const, value: part };
-  });
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -507,15 +483,6 @@ const SYNOPTIC_QUESTIONS: SynopticQuestion[] = [
 // HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
 
-const shuffleArr = <T,>(arr: T[]): T[] => {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-};
-
 const coreCards  = (showBeyond: boolean) => CARDS.filter(c => showBeyond || !c.beyondSpec);
 const coreCloze  = (showBeyond: boolean) => CLOZE.filter(c => showBeyond || !c.beyondSpec);
 const coreExam   = (showBeyond: boolean) => EXAM_QUESTIONS.filter(q => showBeyond || !q.beyondSpec);
@@ -527,30 +494,10 @@ const buildChoices = (card: FlashCard): string[] => {
   return shuffleArr([card.a, ...shuffleArr(others).slice(0, 3)]);
 };
 
-const parseCloze = (text: string): { type: "text" | "slot"; value: string }[] => {
-  const parts = text.split(/(\[[^\]]+\])/g);
-  return parts.map(p =>
-    p.startsWith("[") && p.endsWith("]")
-      ? { type: "slot" as const, value: p.slice(1, -1) }
-      : { type: "text" as const, value: p });
-};
-
 const resolvePrompt = (prompt: string, contexts?: string[]): { text: string; ctx: string | null } => {
   if (!contexts || !contexts.length) return { text: prompt, ctx: null };
   const ctx = contexts[Math.floor(Math.random() * contexts.length)];
   return { text: prompt.replace("{context}", ctx), ctx };
-};
-
-// mobile detection
-const useIsMobile = (): boolean => {
-  const [m, setM] = useState(() => typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches);
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 767px)");
-    const h = () => setM(mq.matches);
-    mq.addEventListener("change", h);
-    return () => mq.removeEventListener("change", h);
-  }, []);
-  return m;
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -558,63 +505,19 @@ const useIsMobile = (): boolean => {
 // Tap a term to open; tap the backdrop or the × to close. No hover dependency.
 // ─────────────────────────────────────────────────────────────────────────────
 
-let _setActiveTooltip: ((t: TooltipState | null) => void) | null = null;
-
-const TooltipOverlay = ({ tip, onClose }: { tip: TooltipState; onClose: () => void }) => {
-  const [pos, setPos] = useState({ top: 0, left: 0 });
-  const tipRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!tipRef.current) return;
-    const tw = tipRef.current.offsetWidth || 260;
-    const th = tipRef.current.offsetHeight || 90;
-    const cx = tip.rect.left + tip.rect.width / 2;
-    let left = cx - tw / 2;
-    left = Math.max(10, Math.min(left, window.innerWidth - tw - 10));
-    let top = tip.rect.top + window.scrollY - th - 12;
-    if (top < window.scrollY + 8) top = tip.rect.bottom + window.scrollY + 12; // flip below if no room
-    setPos({ top, left });
-  }, [tip]);
-
-  return (
-    <>
-      {/* Backdrop — any tap dismisses. Works identically for touch and mouse. */}
-      <div onClick={onClose} onTouchStart={onClose}
-        style={{ position: "fixed", inset: 0, zIndex: 9998, background: "transparent" }} />
-      <div ref={tipRef}
-        style={{
-          position: "absolute", top: pos.top, left: pos.left, zIndex: 9999,
-          background: "#0f172a", color: "#f8fafc", borderRadius: 12, padding: "12px 16px",
-          fontSize: "0.85rem", lineHeight: 1.6, fontWeight: 500, width: 260,
-          boxShadow: "0 8px 30px rgba(0,0,0,0.45)",
-        }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, marginBottom: 4 }}>
-          <span style={{ fontWeight: 700, fontSize: "0.9rem", color: "#7dd3fc" }}>{tip.title}</span>
-          <button onClick={onClose}
-            style={{ flexShrink: 0, width: 28, height: 28, marginTop: -2, marginRight: -6, borderRadius: 8, border: "none",
-              background: "rgba(255,255,255,0.12)", color: "#f8fafc", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <X size={15} />
-          </button>
-        </div>
-        <span style={{ color: "rgba(248,250,252,0.9)" }}>{tip.def}</span>
-      </div>
-    </>
-  );
-};
+// GlossaryText / SpecBadge — thin topic-bound wrappers over the shared tooltip
+// machinery (../../shared/cs). GlossaryText injects this topic's GLOSSARY; SpecBadge
+// injects its SPEC_DESCRIPTIONS. The tooltip overlay + parsing live in the shell.
 
 const GlossaryText = ({ text, terms, style, onCard = false }: { text: string; terms?: string[]; style?: CSSProperties; onCard?: boolean }) => {
-  const segments = parseGlossaryText(text, terms);
-  const open = (e: React.MouseEvent, term: string, def: string) => {
-    e.stopPropagation();
-    _setActiveTooltip?.({ title: term, def, rect: (e.currentTarget as HTMLElement).getBoundingClientRect() });
-  };
+  const segments = parseGlossaryText(GLOSSARY, text, terms);
   return (
     <span style={style}>
       {segments.map((seg, i) =>
         seg.type === "text"
           ? <span key={i}>{seg.value}</span>
-          : <span key={i} onClick={e => open(e, seg.value, seg.def!)}
-              style={{ borderBottom: `2px dotted ${onCard ? "rgba(255,255,255,0.75)" : "#1e3a8a"}`, cursor: "pointer", padding: "0 1px" }}>
+          : <span key={i} onClick={e => { e.stopPropagation(); showTooltip(seg.value, seg.def!, e.currentTarget as HTMLElement); }}
+              style={{ borderBottom: `2px dotted ${onCard ? "rgba(255,255,255,0.75)" : NAVY}`, cursor: "pointer", padding: "0 1px" }}>
               {seg.value}
             </span>
       )}
@@ -622,29 +525,12 @@ const GlossaryText = ({ text, terms, style, onCard = false }: { text: string; te
   );
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SHARED SMALL UI
-// ─────────────────────────────────────────────────────────────────────────────
-
-const SpecBadge = ({ tag }: { tag: SpecTag }) => {
-  const open = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    _setActiveTooltip?.({ title: tag, def: SPEC_DESCRIPTIONS[tag], rect: (e.currentTarget as HTMLElement).getBoundingClientRect() });
-  };
-  return (
-    <button onClick={open}
-      style={{ minHeight: 24, padding: "2px 9px", borderRadius: 20, border: "1.5px solid #cbd5e1",
-        background: "#f8fafc", color: "#475569", fontSize: "0.68rem", fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>
-      {tag}
-    </button>
-  );
-};
-
-const BeyondBadge = () => (
-  <span style={{ padding: "2px 9px", borderRadius: 20, border: "1.5px solid #fbbf24", background: "#fffbeb",
-    color: "#92400e", fontSize: "0.68rem", fontWeight: 800, letterSpacing: "0.03em", whiteSpace: "nowrap" }}>
-    BEYOND SPEC
-  </span>
+const SpecBadge = ({ tag }: { tag: SpecTag }) => (
+  <button onClick={e => { e.stopPropagation(); showTooltip(tag, SPEC_DESCRIPTIONS[tag], e.currentTarget as HTMLElement); }}
+    style={{ minHeight: 24, padding: "2px 9px", borderRadius: 20, border: "1.5px solid #cbd5e1",
+      background: "#f8fafc", color: "#475569", fontSize: "0.68rem", fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>
+    {tag}
+  </button>
 );
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -824,14 +710,6 @@ const TraceTable = ({ snapshot, hot }: { snapshot?: Record<string, string>; hot?
     </div>
   );
 };
-
-// renders **bold** and *italic* markers in teaching text
-const boldText = (s: string) =>
-  s.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g).map((p, i) => {
-    if (p.startsWith("**") && p.endsWith("**")) return <strong key={i} style={{ color: "#111827" }}>{p.slice(2, -2)}</strong>;
-    if (p.startsWith("*") && p.endsWith("*") && p.length > 2) return <em key={i} style={{ fontStyle: "italic", color: "#1e3a8a" }}>{p.slice(1, -1)}</em>;
-    return <span key={i}>{p}</span>;
-  });
 
 const LEGEND = (
   <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap", marginTop: 4 }}>
@@ -1500,7 +1378,7 @@ const ExamMode = ({ questions, synoptic, section, showHints }: {
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-          <button onClick={e => { e.stopPropagation(); _setActiveTooltip?.({ title: `${cfg.label} — what it's asking`, def: COMMAND_GUIDE[format], rect: (e.currentTarget as HTMLElement).getBoundingClientRect() }); }}
+          <button onClick={e => { e.stopPropagation(); showTooltip(`${cfg.label} — what it's asking`, COMMAND_GUIDE[format], e.currentTarget as HTMLElement); }}
             title="What this command word wants"
             style={{ minHeight: 24, display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 12px", borderRadius: 20, fontSize: "0.72rem", fontWeight: 700, background: cfg.bg, color: cfg.color, border: `2px solid ${cfg.border}`, cursor: "pointer" }}>
             {cfg.label} <Info size={12} />
@@ -1710,21 +1588,6 @@ const EXAM_SECTIONS = [
   { key: "synoptic", label: "Synoptic" },
 ];
 
-const SegRow = ({ options, value, onChange }: { options: { key: string; label: string }[]; value: string; onChange: (v: string) => void }) => (
-  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center" }}>
-    {options.map(o => {
-      const active = value === o.key;
-      return (
-        <button key={o.key} onClick={() => onChange(o.key)}
-          style={{ minHeight: 40, padding: "0 14px", borderRadius: 10, fontWeight: 700, fontSize: "0.82rem", border: "2px solid", cursor: "pointer",
-            background: active ? "#1e3a8a" : "#fff", color: active ? "#fff" : "#4b5563", borderColor: active ? "#1e3a8a" : "#e5e7eb" }}>
-          {o.label}
-        </button>
-      );
-    })}
-  </div>
-);
-
 const BottomNav = ({ activity, setActivity }: { activity: string; setActivity: (a: string) => void }) => (
   <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 90, background: "#fff", borderTop: "1px solid #e5e7eb", boxShadow: "0 -4px 20px rgba(0,0,0,0.06)", display: "flex", paddingBottom: "env(safe-area-inset-bottom)" }}>
     {ACTIVITIES.map(a => {
@@ -1768,10 +1631,10 @@ export default function App() {
   const [showBeyond, setShowBeyond] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
-  const [tip, setTip] = useState<TooltipState | null>(null);
+  const [tip, setTip] = useState<CSTooltip | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  _setActiveTooltip = setTip;
+  useEffect(() => { registerTooltip(setTip); return () => registerTooltip(null); }, []);
 
   useEffect(() => {
     const h = (e: MouseEvent) => { if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false); };
