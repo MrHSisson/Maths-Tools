@@ -142,7 +142,7 @@ const categories = CATEGORIES.map((category) => ({
 export default function LandingPage(): JSX.Element {
   const navigate = useNavigate();
   const devMode = useDevMode();
-  const [subjectFilter, setSubjectFilter] = useState<string>('all');
+  const [subjectFilter, setSubjectFilter] = useState<string>('Mathematics');
 
   // In developing mode every tool is visible (including enabled: false ones);
   // otherwise the in-progress tools are hidden from general use. Developing
@@ -157,8 +157,6 @@ export default function LandingPage(): JSX.Element {
       (a, b) => (a.enabled === false ? 1 : 0) - (b.enabled === false ? 1 : 0),
     );
   };
-
-  const totalTools: number = categories.reduce((acc, cat) => acc + visibleIn(cat.tools).length, 0);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -224,19 +222,10 @@ export default function LandingPage(): JSX.Element {
             Supporting the "I Do, We Do, You Do" pedagogy.
           </p>
 
-          {/* Tool Counter */}
-          <div className="inline-flex items-center gap-3 bg-white px-6 py-3 rounded-full shadow-md shadow-slate-200/50 border border-slate-200">
-            <div className="relative w-2.5 h-2.5">
-              <div className="absolute inset-0 bg-emerald-400 rounded-full animate-ping opacity-75" />
-              <div className="absolute inset-0 bg-emerald-500 rounded-full" />
-            </div>
-            <span className="text-slate-700 font-semibold text-sm tracking-wide uppercase">{totalTools} tools available</span>
-          </div>
-
           {/* Subject filter — one site, clear division between the two subjects */}
-          <div className="mt-8 flex justify-center">
+          <div className="flex justify-center">
             <div className="inline-flex items-center gap-1 bg-white p-1 rounded-full shadow-md shadow-slate-200/50 border border-slate-200">
-              {[{ k: 'all', label: 'All' }, { k: 'Mathematics', label: 'Mathematics' }, { k: 'Computer Science', label: 'Computer Science' }].map((opt) => (
+              {[{ k: 'Mathematics', label: 'Mathematics' }, { k: 'Computer Science', label: 'Computer Science' }].map((opt) => (
                 <button
                   key={opt.k}
                   onClick={() => setSubjectFilter(opt.k)}
@@ -252,7 +241,7 @@ export default function LandingPage(): JSX.Element {
 
       {/* Main Content — grouped into subject bands (Mathematics / Computer Science) */}
       <main className="relative z-10 max-w-7xl mx-auto px-6 pb-24">
-        {SUBJECTS.filter((s) => subjectFilter === 'all' || subjectFilter === s).map((s) => {
+        {SUBJECTS.filter((s) => subjectFilter === s).map((s) => {
           const subjectCats = categories.filter((c) => c.subject === s);
           if (!subjectCats.length) return null;
           const subjectCount = subjectCats.reduce((acc, c) => acc + visibleIn(c.tools).length, 0);
@@ -276,7 +265,7 @@ export default function LandingPage(): JSX.Element {
           const visibleTools = visibleIn(category.tools);
 
           return (
-            <section key={category.name} className="mb-12 md:ml-14">
+            <section key={category.name} className="mb-16">
               {/* Category Header — hidden when it would just repeat the subject band */}
               {category.name !== s && (
                 <div className="flex items-center gap-4 mb-8">
