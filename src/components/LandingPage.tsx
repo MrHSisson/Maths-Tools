@@ -1,7 +1,12 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calculator, FlaskConical } from 'lucide-react';
+import { Calculator, FlaskConical, Cpu } from 'lucide-react';
 import { CATEGORIES } from '../registry';
 import { useDevMode, setDevMode } from '../devMode';
+
+// Top-level subjects, in display order. Categories declare their subject in the
+// registry (default "Mathematics"); the landing page groups them into bands.
+const SUBJECTS = ['Mathematics', 'Computer Science'] as const;
 
 // Tool data lives in src/registry.ts — this file only owns presentation.
 
@@ -129,6 +134,7 @@ const CATEGORY_THEMES: Record<string, { gradient: string; theme: CategoryTheme }
 
 const categories = CATEGORIES.map((category) => ({
   name: category.name,
+  subject: category.subject ?? 'Mathematics',
   tools: category.tools,
   ...(CATEGORY_THEMES[category.name] ?? DEFAULT_THEME),
 }));
@@ -136,6 +142,7 @@ const categories = CATEGORIES.map((category) => ({
 export default function LandingPage(): JSX.Element {
   const navigate = useNavigate();
   const devMode = useDevMode();
+  const [subjectFilter, setSubjectFilter] = useState<string>('Mathematics');
 
   // In developing mode every tool is visible (including enabled: false ones);
   // otherwise the in-progress tools are hidden from general use. Developing
@@ -150,8 +157,6 @@ export default function LandingPage(): JSX.Element {
       (a, b) => (a.enabled === false ? 1 : 0) - (b.enabled === false ? 1 : 0),
     );
   };
-
-  const totalTools: number = categories.reduce((acc, cat) => acc + visibleIn(cat.tools).length, 0);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -217,31 +222,59 @@ export default function LandingPage(): JSX.Element {
             Supporting the "I Do, We Do, You Do" pedagogy.
           </p>
 
-          {/* Tool Counter */}
-          <div className="inline-flex items-center gap-3 bg-white px-6 py-3 rounded-full shadow-md shadow-slate-200/50 border border-slate-200">
-            <div className="relative w-2.5 h-2.5">
-              <div className="absolute inset-0 bg-emerald-400 rounded-full animate-ping opacity-75" />
-              <div className="absolute inset-0 bg-emerald-500 rounded-full" />
+          {/* Subject filter — one site, clear division between the two subjects */}
+          <div className="flex justify-center">
+            <div className="inline-flex items-center gap-1 bg-white p-1 rounded-full shadow-md shadow-slate-200/50 border border-slate-200">
+              {[{ k: 'Mathematics', label: 'Mathematics' }, { k: 'Computer Science', label: 'Computer Science' }].map((opt) => (
+                <button
+                  key={opt.k}
+                  onClick={() => setSubjectFilter(opt.k)}
+                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${subjectFilter === opt.k ? 'bg-blue-900 text-white shadow' : 'text-slate-600 hover:bg-slate-100'}`}
+                >
+                  {opt.label}
+                </button>
+              ))}
             </div>
-            <span className="text-slate-700 font-semibold text-sm tracking-wide uppercase">{totalTools} tools available</span>
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Main Content — grouped into subject bands (Mathematics / Computer Science) */}
       <main className="relative z-10 max-w-7xl mx-auto px-6 pb-24">
-        {categories.map((category) => {
+        {SUBJECTS.filter((s) => subjectFilter === s).map((s) => {
+          const subjectCats = categories.filter((c) => c.subject === s);
+          if (!subjectCats.length) return null;
+          const subjectCount = subjectCats.reduce((acc, c) => acc + visibleIn(c.tools).length, 0);
+          const SubjectIcon = s === 'Computer Science' ? Cpu : Calculator;
+
+          return (
+            <div key={s} className="mb-8">
+              {/* Subject band header */}
+              <div className="flex items-center gap-4 mb-10">
+                <div className="w-11 h-11 rounded-xl bg-blue-900 flex items-center justify-center shadow-md shrink-0">
+                  <SubjectIcon className="text-white" size={24} />
+                </div>
+                <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">{s}</h2>
+                <span className="text-xs font-bold px-3 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
+                  {subjectCount} {subjectCount === 1 ? 'tool' : 'tools'}
+                </span>
+                <div className="flex-1 h-px bg-gradient-to-r from-slate-300 to-transparent" />
+              </div>
+
+              {subjectCats.map((category) => {
           const visibleTools = visibleIn(category.tools);
 
           return (
             <section key={category.name} className="mb-16">
-              {/* Category Header */}
-              <div className="flex items-center gap-4 mb-8">
-                <h2 className={`text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r ${category.gradient} drop-shadow-sm`}>
-                  {category.name}
-                </h2>
-                <div className="flex-1 h-px bg-gradient-to-r from-slate-200 to-transparent" />
-              </div>
+              {/* Category Header — hidden when it would just repeat the subject band */}
+              {category.name !== s && (
+                <div className="flex items-center gap-4 mb-8">
+                  <h2 className={`text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r ${category.gradient} drop-shadow-sm`}>
+                    {category.name}
+                  </h2>
+                  <div className="flex-1 h-px bg-gradient-to-r from-slate-200 to-transparent" />
+                </div>
+              )}
 
               {visibleTools.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -290,6 +323,9 @@ export default function LandingPage(): JSX.Element {
                 </div>
               )}
             </section>
+          );
+              })}
+            </div>
           );
         })}
       </main>

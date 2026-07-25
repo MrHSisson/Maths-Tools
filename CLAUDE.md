@@ -18,6 +18,26 @@ A React/TypeScript/Vite app of interactive maths tools for teachers. Each tool h
 
 ---
 
+## Two subjects — repository map
+
+This is one website that hosts **two subjects**. The landing page groups tools into
+subject bands (a category's subject comes from its `subject` field in `src/registry.ts`,
+default `"Mathematics"`). Keep the division clear across all three axes:
+
+| Axis | Mathematics | Computer Science |
+|---|---|---|
+| **Tools** | `src/tools/{Generators,Number,Algebra,Proportion,Geometry,TeacherTools}` + root | `src/tools/ComputerScience/` |
+| **Shell / how to build** | `ToolShell` (`src/shared/`) — see this file's shared-library + ToolShell sections | `CSShell` (`src/shared/cs/`) — a *separate* revision-tool shell; see `CS_SHELL_PLAN.md` |
+| **Further developments** | `DEV_ROADMAP.md` | `CS_ROADMAP.md` (what to build next) + `CS_SHELL_PLAN.md` (the shell migration) |
+
+The two shells are deliberately separate: `ToolShell` is for **question generators**
+(Whiteboard / Worked Example / Worksheet); `CSShell` is for **knowledge/revision tools**
+(Learn / Study / Cards / Quiz / Fill / Exam). CS tools are standalone by design and never
+migrate to `ToolShell`. When adding a CS category to the registry, set
+`subject: 'Computer Science'` so the landing page bands it correctly.
+
+---
+
 ## The `Unpublished/` folder — leave alone
 
 `Unpublished/` (repo root, sibling to `src/`) holds old v1.x tool files that are not ready to publish and not registered anywhere — a personal archive/reference area, not part of the app.
@@ -30,6 +50,25 @@ It is deliberately kept **outside** `src/` and is explicitly excluded in `tsconf
 - Treat it as part of the "migrate old tools" backlog in the section below
 
 Reading a file here for reference (e.g. porting maths logic into a brand-new v2.3 tool) is fine.
+
+---
+
+## Working efficiently — token & session awareness
+
+Prioritise real development, but be deliberate about token use. Two things dominate cost:
+
+- **Verifying with generated screenshots.** Rendering the app and reading the PNG back as an
+  image is the most expensive kind of tool result, and it lingers in context (reprocessed every
+  later turn). Default to cheap checks — `tsc`, `npm run build`, `npm test`, and headless
+  assertions (console-error count, a DOM text/element check). Generate-and-read a screenshot only
+  for genuine visual/layout judgement, at modest resolution and sparingly; otherwise let the user
+  eyeball the live preview themselves.
+- **Long single sessions.** The whole conversation is reprocessed each turn, so cost climbs the
+  longer a session runs. Commit and push at clean boundaries. When a logical unit is finished and
+  the context has grown large, say so and suggest continuing in a **fresh conversation** — a new
+  session resumes a pushed branch cheaply (it needs the relevant docs + files, not the old
+  history; an unmerged branch is fine to continue). Read targeted slices of large files rather
+  than re-reading them whole.
 
 ---
 
@@ -93,7 +132,7 @@ This copies the canonical template (`src/tools/TeacherTools/ToolShell.tsx`) to `
 
 ### 3. Registry entry (`src/registry.ts` — single registration point)
 
-`src/registry.ts` is the single source of truth for every tool. `App.tsx` generates the route (lazy-loaded — each tool builds as its own chunk) and `LandingPage.tsx` renders the card from it. Do **not** edit `App.tsx` or `LandingPage.tsx`. The scaffold script adds the entry; review it and remove `enabled: false` when the tool is ready to go live:
+`src/registry.ts` is the single source of truth for every tool. `App.tsx` generates the route (lazy-loaded — each tool builds as its own chunk) and `LandingPage.tsx` renders the card from it, grouped into subject bands by each category's `subject` field (default `"Mathematics"`; set `"Computer Science"` for CS strands). Do **not** edit `App.tsx` or `LandingPage.tsx` to add a tool — everything is driven from the registry entry. The scaffold script adds the entry; review it and remove `enabled: false` when the tool is ready to go live:
 
 ```ts
 { id: 'my-new-tool', path: '/my-new-tool', name: 'Display Name', description: 'One sentence.', load: () => import('./tools/Category/MyNewTool') }
