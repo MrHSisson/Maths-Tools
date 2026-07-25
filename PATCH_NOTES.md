@@ -55,9 +55,13 @@ read when); **removed a contradiction** where a CS tool sat in the Maths migrati
 backlog (CS tools target `CSShell`, never `ToolShell`); made `npm run new-tool`
 **refuse `--category ComputerScience`** (it only scaffolds the Maths `ToolShell`, so
 CS tools were being pointed at the wrong shell); and **refreshed the README** to name
-the two-subject architecture and link the doc set. Deferred (audit backlog): a CI
-drift-check for the migration list and `__test` coverage, and splitting the
-shared-API reference out of `CLAUDE.md`.
+the two-subject architecture and link the doc set. Then added the **CI drift-check**
+(`src/tests/organisation.test.ts`) — it reads every tool's source and fails the build
+if a tool is un-categorised, if a migrated tool is left in the backlog, if a ToolShell
+tool lacks `__test`, or if a tool file isn't registered; it's now the authoritative
+shell-status list, with `CLAUDE.md` pointing to it. Considered and **dropped** the
+`CLAUDE.md`/`SHARED_API.md` split — it trades away the single-file "no source needed"
+guarantee for a shorter read, not worth it yet.
 
 ## 2026-07-21 → 07-23 — PDF generators: Functional Skills + Times Tables
 **Functional Skills generator** got a full redesign: a two-pane browse/build
