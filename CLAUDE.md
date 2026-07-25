@@ -16,6 +16,8 @@ A React/TypeScript/Vite app of interactive maths tools for teachers. Each tool h
 
 **Terminology** — the canonical name for every element (tool, sub-tool, strand, grain, technique, step, skill, deck, QO, …) is in `GLOSSARY.md`. Use those names when discussing or documenting changes.
 
+**Session history** — what each session actually shipped is logged in `PATCH_NOTES.md`, split into **Maths** and **Computer Science** strands (newest first). Read it at the **start** of a session to see where things are up to; **append a short entry to it at the end** of a session before pushing. `DEV_ROADMAP.md` is the plan (what's next); `PATCH_NOTES.md` is the history (what's done).
+
 ---
 
 ## Two subjects — repository map
