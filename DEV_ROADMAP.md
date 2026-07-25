@@ -6,6 +6,8 @@ Status keys: ✅ done · 🚧 in progress · ⬜ not started.
 
 > Conventions, APIs and how-to-build-a-tool live in `CLAUDE.md`. This file is the
 > *roadmap* — what's unfinished and what's next. Keep it current as work lands.
+> For what each session actually *shipped* (the history, split Maths / CS), see
+> `PATCH_NOTES.md`.
 
 > **This roadmap covers the Maths side.** Computer Science is a separate subject in the
 > same repo with its own roadmap and shell: **`CS_ROADMAP.md`** (what's next) and
