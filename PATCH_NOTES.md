@@ -45,6 +45,20 @@ already done.
 
 # Maths
 
+## 2026-07-25 — Repo consolidation + organisation audit
+Housekeeping session, no tool code. **Consolidated three parallel branches into
+`main`**: merged the CS/CPU work (PR #38) and this changelog (PR #39), and cleared
+a stale already-merged branch — `main` is now the single source of truth again.
+Ran an **organisation audit** and actioned four pickup-friction fixes: added a
+**documentation map** to `CLAUDE.md` and `README.md` (one table saying which doc to
+read when); **removed a contradiction** where a CS tool sat in the Maths migration
+backlog (CS tools target `CSShell`, never `ToolShell`); made `npm run new-tool`
+**refuse `--category ComputerScience`** (it only scaffolds the Maths `ToolShell`, so
+CS tools were being pointed at the wrong shell); and **refreshed the README** to name
+the two-subject architecture and link the doc set. Deferred (audit backlog): a CI
+drift-check for the migration list and `__test` coverage, and splitting the
+shared-API reference out of `CLAUDE.md`.
+
 ## 2026-07-21 → 07-23 — PDF generators: Functional Skills + Times Tables
 **Functional Skills generator** got a full redesign: a two-pane browse/build
 layout with tap-to-add skill tiles, a single worksheet editor, per-skill count

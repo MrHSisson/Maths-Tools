@@ -1,8 +1,24 @@
 # Maths Tools
 
-A collection of interactive maths tools for classroom teaching and independent practice, built around the **"I Do, We Do, You Do"** pedagogy. Each tool supports three modes — Whiteboard, Worked Example, and Worksheet — with three difficulty levels and PDF export.
+A web app of interactive teaching tools, hosting **two subjects** on one site:
+
+- **Mathematics** — question-generator tools built around the **"I Do, We Do, You Do"** pedagogy. Each supports three modes — Whiteboard, Worked Example, Worksheet — with three difficulty levels and PDF export, on the shared `ToolShell`.
+- **Computer Science** — OCR J277 GCSE knowledge/revision tools (Learn · Study · Cards · Quiz · Fill · Exam) on a separate shell, `CSShell`. Younger and growing.
+
+The landing page bands tools by subject. The two shells are deliberately separate — see the "Two subjects — repository map" in `CLAUDE.md`.
 
 Deployed at: [maths-tools.vercel.app](https://maths-tools.vercel.app)
+
+### Documentation
+
+| Doc | Job |
+|---|---|
+| `CLAUDE.md` | The rules — conventions, shared-API reference, how to build a tool. Start here. |
+| `PATCH_NOTES.md` | Session-by-session history (Maths / CS), newest first. |
+| `DEV_ROADMAP.md` · `CS_ROADMAP.md` | What's next — Maths plan · Computer Science plan. |
+| `CS_SHELL_PLAN.md` | The `CSShell` architecture and extraction steps. |
+| `GLOSSARY.md` | Canonical name for every element. |
+| `TOOL_SPEC_TEMPLATE.md` · `TOOL_DESIGNER_PROMPT.md` · `specs/` | The spec pipeline. |
 
 ---
 
@@ -115,15 +131,22 @@ Deployed at: [maths-tools.vercel.app](https://maths-tools.vercel.app)
 | Geometry | `src/tools/Geometry/` | Circle Properties, Basic Angle Facts, Angles in Triangles, Line Equations, Perimeter |
 | Probability & Statistics | *(coming soon)* | — |
 | Teacher Tools | `src/tools/TeacherTools/` | Visualiser, Tool Shell (template), Friday Phonecalls, P-Value Grapher |
-| Computer Science | `src/tools/ComputerScience/` | System Architectures |
+| Computer Science *(separate subject — see below)* | `src/tools/ComputerScience/` | System Architectures, CPU Architecture (OCR J277 1.1.1) |
 
 ---
 
 ## Tool Architecture
 
-### Shared Shell (v2.3+)
+### Two shells, by subject
 
-All current tools import from `src/shared/` and follow a common pattern. A tool file contains only its own logic:
+Maths and Computer Science tools use **different** shared shells — they are different products and never mix:
+
+- **`ToolShell`** (`src/shared/`) — the Maths shell for **question generators** (Whiteboard / Worked Example / Worksheet). This is the "shared shell" the rest of this section describes.
+- **`CSShell`** (`src/shared/cs/`) — the Computer Science shell for **knowledge/revision** tools (Learn / Study / Cards / Quiz / Fill / Exam). See `CS_SHELL_PLAN.md`.
+
+### Shared Shell (v2.3+) — Maths
+
+Maths tools import from `src/shared/` and follow a common pattern. A tool file contains only its own logic:
 
 ```
 Tool file = TOOL_CONFIG + INFO_SECTIONS + generateQuestion + generateUniqueQ
@@ -147,7 +170,9 @@ Worksheets support three layouts:
 
 The URL always reflects the current setup (mode, level, sub-tool, question options), so any configured state can be bookmarked or copied via the burger menu's **Copy Link to Setup**. A link pointing at worksheet mode generates the worksheet on arrival — one click from bookmark to teaching.
 
-### Adding a New Tool
+### Adding a New Tool (Maths)
+
+This is the **Maths** path (question generators on `ToolShell`). Computer Science tools use `CSShell` and are authored as data — `npm run new-tool` refuses `--category ComputerScience`; follow `CS_SHELL_PLAN.md` instead.
 
 1. **Design** the tool in the *Tool Designer* claude.ai project (see `TOOL_DESIGNER_PROMPT.md`), which outputs a completed spec (`TOOL_SPEC_TEMPLATE.md`) saved to `specs/<tool-id>.md`
 2. **Scaffold**: `npm run new-tool -- --name "Display Name" --category Folder --path /url-path` — copies the template and registers it in `src/registry.ts`

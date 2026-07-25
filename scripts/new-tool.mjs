@@ -6,7 +6,11 @@
 //     --path /multiplying-fractions --description "One sentence for the card."
 //
 // Category is the FOLDER name: Generators | Number | Algebra | Proportion |
-// Geometry | TeacherTools | ComputerScience (or a new folder).
+// Geometry | TeacherTools (or a new folder).
+//
+// This scaffolds MATHS tools (question generators on ToolShell) only. Computer
+// Science tools use a different shell (CSShell) and are refused here — see
+// CS_SHELL_PLAN.md.
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -37,6 +41,19 @@ const CATEGORY_DISPLAY = {
   ComputerScience: 'Computer Science',
 };
 const displayCategory = CATEGORY_DISPLAY[category] ?? category;
+
+// Computer Science tools are NOT built from this template. They are knowledge/
+// revision tools on `CSShell` (src/shared/cs/), authored as data — not question
+// generators on the maths `ToolShell` this script copies. Scaffolding one here
+// would produce the wrong shell. Refuse and point at the right references.
+if (category === 'ComputerScience') {
+  console.error(
+    'Computer Science tools do not use this scaffold — they build on CSShell, not ToolShell.\n' +
+    'See CS_SHELL_PLAN.md (the shell + authoring model) and CS_ROADMAP.md (what to build),\n' +
+    'using src/tools/ComputerScience/CpuArchitecture.tsx as the reference implementation.',
+  );
+  process.exit(1);
+}
 
 const componentName = name.replace(/[^a-zA-Z0-9 ]/g, '').split(/\s+/)
   .map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join('');
