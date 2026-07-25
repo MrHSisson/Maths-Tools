@@ -197,6 +197,8 @@ Tools currently needing migration (still on an embedded old shell, enabled):
 
 Dev-gated (`enabled: false`) and therefore lower priority: `IntegerAddSub`, `PowersOfTen`, `SimplifyingRatiosTool`, `PerimeterTool`.
 
+**This list is CI-enforced — `src/tests/organisation.test.ts` is authoritative.** That test holds the shell status of every tool (backlog / standalone / CS) and fails the build if a tool is un-categorised, if a backlog tool has been migrated but left in the list, if a ToolShell tool lacks `__test`, or if a tool file isn't registered. The prose above is a human summary; when you migrate a tool, update `organisation.test.ts` (move it out of `MIGRATION_BACKLOG`) — the failing message tells you exactly what to change.
+
 AlgebraTiles, SkillLibrary, Visualiser, CallSelector and p-value are standalone by design (not question tools) and never migrate to ToolShell — they are not part of the backlog above even though they don't use the shared shell.
 
 **Computer Science tools are not on this backlog.** CS tools (`SystemArchitecture`, `CpuArchitecture`) are knowledge/revision tools, not question generators, and target `CSShell` — never `ToolShell`. Their migration/build work is tracked in `CS_ROADMAP.md` and `CS_SHELL_PLAN.md`, not here. So `grep -L "<ToolShell"` will always list them; that is expected, not a to-do.
@@ -960,6 +962,8 @@ npm install && npm run build 2>&1 | grep "error TS"
 CI also runs `npm test` (Vitest, `src/tests/generators.test.ts`). The suite discovers every tool exporting `__test = { TOOL_CONFIG, generateQuestion }` and, for each sub-tool × level with default QO settings, generates 40 questions asserting: no throw, unique non-empty keys, and every KaTeX string (`displayLatex`, `answerLatex`, working-step latex, **each fragment individually**, `$...$` segments in worded lines) renders under `katex.renderToString` with `throwOnError`. It also asserts every `[[skill-id|term]]` marker resolves to a registered skill and that markers never leak into `plain`. This catches `£`/`<` in KaTeX, malformed latex, key collisions and dangling skill links at CI time. **Every new or migrated tool must keep its `__test` export.** Restrict levels with `levels: ["level1", "level2"]` when a level is coming soon.
 
 `src/tests/skills.test.ts` separately validates every skill in the skill library (see "Skill library" section).
+
+`src/tests/organisation.test.ts` is the **drift-check**: it guards the shell-status bookkeeping (see "How to migrate an old tool") — every tool categorised, no migrated tool left in the backlog, every ToolShell tool covered by `__test`, every tool file registered. It reads tool source text, so it needs no per-tool wiring; it just fails when the docs' lists stop matching the code.
 
 ---
 
