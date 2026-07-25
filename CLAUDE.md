@@ -6,6 +6,28 @@ CLAUDE.md is read automatically by Claude Code at the start of every session. It
 
 ---
 
+## Documentation map — which doc, and when
+
+The repo's knowledge is split across a small set of docs, each with one job. Read
+this table first; it tells you where to look and where to write.
+
+| Doc | Job | Read it when… |
+|---|---|---|
+| **`CLAUDE.md`** (this file) | The rules — conventions, shared-API reference, how to build/migrate a tool. | Always (auto-loaded). The default answer to "how do I…". |
+| **`README.md`** | Human-facing project overview, tech stack, local setup. | First orientation; onboarding a person. |
+| **`PATCH_NOTES.md`** | The history — what each session shipped, split Maths / CS, newest first. | **Start of a session** (where we're up to). **Append to it at the end.** |
+| **`DEV_ROADMAP.md`** | The Maths plan — what's unfinished behind dev mode and what's next. | Picking up Maths feature/engine work. Keep current as work lands. |
+| **`CS_ROADMAP.md`** | The Computer Science plan — what CS tools/topics to build next. | Picking up CS work. |
+| **`CS_SHELL_PLAN.md`** | The `CSShell` architecture and its extraction steps. | Building or extending a CS tool. |
+| **`GLOSSARY.md`** | Canonical name for every element (tool, grain, technique, skill, QO…). | Naming or discussing anything — use these words. |
+| **`TOOL_SPEC_TEMPLATE.md`** · **`TOOL_DESIGNER_PROMPT.md`** · **`specs/`** | The spec pipeline — the format, the claude.ai Project prompt that produces specs, and the specs themselves. | Designing or implementing a tool from a spec. |
+
+Rule of thumb: **plan** lives in the roadmaps, **history** in `PATCH_NOTES.md`,
+**rules** here. When work lands, update the roadmap (removed a to-do) *and* add a
+`PATCH_NOTES.md` line (what shipped).
+
+---
+
 ## What this project is
 
 A React/TypeScript/Vite app of interactive maths tools for teachers. Each tool has three modes — Whiteboard, Worked Example, Worksheet — with Levels 1–3, differentiated worksheets, and PDF export. Deployed to Vercel. CI runs on every push via `.github/workflows/ci.yml`.
@@ -171,12 +193,13 @@ Tools currently needing migration (still on an embedded old shell, enabled):
 - `src/tools/Proportion/FractionsOfAmounts.tsx`
 - `src/tools/Proportion/FractionToRatio.tsx`
 - `src/tools/Geometry/AnglesInTriangles.tsx`
-- `src/tools/ComputerScience/SystemArchitecture.tsx` — a quiz tool, not a question generator
 - Generator tools (`TimesTablesGenerator`, etc.) — primarily PDF-generation tools
 
 Dev-gated (`enabled: false`) and therefore lower priority: `IntegerAddSub`, `PowersOfTen`, `SimplifyingRatiosTool`, `PerimeterTool`.
 
 AlgebraTiles, SkillLibrary, Visualiser, CallSelector and p-value are standalone by design (not question tools) and never migrate to ToolShell — they are not part of the backlog above even though they don't use the shared shell.
+
+**Computer Science tools are not on this backlog.** CS tools (`SystemArchitecture`, `CpuArchitecture`) are knowledge/revision tools, not question generators, and target `CSShell` — never `ToolShell`. Their migration/build work is tracked in `CS_ROADMAP.md` and `CS_SHELL_PLAN.md`, not here. So `grep -L "<ToolShell"` will always list them; that is expected, not a to-do.
 
 ### Migration checklist
 
