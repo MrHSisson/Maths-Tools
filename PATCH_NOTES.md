@@ -45,6 +45,24 @@ already done.
 
 # Maths
 
+## 2026-07-26 — Migrated Fractions & Ratios onto ToolShell
+Brought `FractionToRatio` (the "Fractions & Ratios" tool, ~1,330 lines) onto the shared
+**`ToolShell`** (~470 lines). All three sub-tools and their maths generators are preserved
+verbatim: **Forming Ratios** (counts / total-with-remainder / constraint-based, with the
+3-Way and Simplest Form toggles), **Fraction to Ratio** (complementary part / three-part
+remainder / quantity-based, with the Different Denominators toggle and the Given
+dropdown), and **Ratio to Fraction** (part-to-whole / composite / part-to-part, with the
+Simplest Form toggle and Target dropdown). The bespoke shell was deleted in favour of
+ToolShell's built-ins: the hand-rolled `handlePrint`, difficulty toggle, standard/
+differentiated QO popovers, info modal, presenter/fullscreen chrome and the local KaTeX
+loader all go away. Local `step`/`mStep`/`tStep`/`fracStr`/`mStr`/`randInt`/`pick` now come
+from `../../shared`; the ratio-specific helpers (`frac`, `rLatex`, `rStr`, simplification,
+common-denominator) stay local. Per-level Question Options map onto `difficultySettings`
+dropdowns/variables, so whiteboard / worked-example / worksheet / differentiated /
+share-links / PDF export all come for free. Added the `__test` export (smoke suite now
+covers all three sub-tools × three levels) and moved the tool out of the migration backlog
+in `organisation.test.ts` and `CLAUDE.md`. Build clean, 182 tests pass.
+
 ## 2026-07-26 — Migrated Angles in a Triangle onto ToolShell
 Brought the largest remaining **live** old-shell tool (`AnglesInTriangles`, ~1,335
 lines) onto the shared **`ToolShell`** (~625 lines) — the first **SVG/diagram** tool
