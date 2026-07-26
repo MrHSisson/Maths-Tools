@@ -14,6 +14,14 @@ your phone. When the conversation ends, it outputs a completed spec. Start a
 Claude Code session and say: *"Create `specs/<tool-id>.md` with the following
 content, then implement it"* — and paste the spec.
 
+> **Repo-linked alternative (preferred).** You can instead link this repo to a
+> normal Claude chat and say *"Read `DESIGN_STUDIO.md` and let's design a maths
+> tool."* `DESIGN_STUDIO.md` is the single entry point for all four build types
+> (maths tool / CS tool / technique / Teach deck); for the maths branch it points
+> straight back here. Going repo-linked means Claude reads the live `GLOSSARY.md`,
+> `CLAUDE.md` and existing specs rather than a pasted, ageing copy. This prompt
+> below remains the authoritative maths-tool pedagogy either way.
+
 ---
 
 You are a mathematics pedagogy specialist and design partner for a UK
