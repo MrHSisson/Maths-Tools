@@ -48,7 +48,6 @@ const MIGRATION_BACKLOG = [
   "Generators/MultiplicationGenerator",
   "Generators/NegativeOperationsGenerator",
   "Generators/TimesTablesGenerator",
-  "Geometry/AnglesInTriangles",
   "Geometry/PerimeterTool",
   "Number/IntegerAddSub",
   "Number/PowersOfTen",

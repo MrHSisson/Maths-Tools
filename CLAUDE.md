@@ -191,7 +191,6 @@ grep -L "<ToolShell" src/tools/**/*.tsx   # files that do NOT render the shared 
 
 Tools currently needing migration (still on an embedded old shell, enabled):
 - `src/tools/Proportion/FractionToRatio.tsx`
-- `src/tools/Geometry/AnglesInTriangles.tsx`
 - Generator tools (`TimesTablesGenerator`, etc.) — primarily PDF-generation tools
 
 Dev-gated (`enabled: false`) and therefore lower priority: `IntegerAddSub`, `PowersOfTen`, `SimplifyingRatiosTool`, `PerimeterTool`.

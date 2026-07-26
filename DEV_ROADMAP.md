@@ -235,7 +235,7 @@ Old tools hand-roll their own shell (no `<ToolShell>`); v2.3 tools use the share
 **Enabled/live (user-facing — higher priority):**
 - ✅ `src/tools/Proportion/FractionsOfAmounts.tsx` — done (worded questions, fragmented working, `__test`). Techniques wiring still to add on a later pass.
 - ⬜ `src/tools/Proportion/FractionToRatio.tsx`
-- ⬜ `src/tools/Geometry/AnglesInTriangles.tsx`
+- ✅ `src/tools/Geometry/AnglesInTriangles.tsx` — done (SVG diagram tool on `handleDiagramPrint`, square viewBox + reveal answer-band, `tStep` working, `__test`). Techniques wiring (`applyAngleFact`) still to add on a later pass.
 - ✅ `src/tools/Algebra/NonLinearSimEq.tsx` — done (reference for techniques + grapher).
 
 **Dev-gated (`enabled: false`) — lower priority; decide finish-vs-delete:**
