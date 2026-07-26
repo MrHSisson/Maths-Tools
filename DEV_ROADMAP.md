@@ -233,7 +233,7 @@ Mistake** are empty ("Coming soon").
 Old tools hand-roll their own shell (no `<ToolShell>`); v2.3 tools use the shared shell. Migration is also the moment to add the techniques-based working (§1) and, where relevant, a graph (§5) and `__test` coverage.
 
 **Enabled/live (user-facing — higher priority):**
-- ⬜ `src/tools/Proportion/FractionsOfAmounts.tsx`
+- ✅ `src/tools/Proportion/FractionsOfAmounts.tsx` — done (worded questions, fragmented working, `__test`). Techniques wiring still to add on a later pass.
 - ⬜ `src/tools/Proportion/FractionToRatio.tsx`
 - ⬜ `src/tools/Geometry/AnglesInTriangles.tsx`
 - ✅ `src/tools/Algebra/NonLinearSimEq.tsx` — done (reference for techniques + grapher).

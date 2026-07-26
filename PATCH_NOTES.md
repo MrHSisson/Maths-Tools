@@ -45,6 +45,26 @@ already done.
 
 # Maths
 
+## 2026-07-26 — Migrated Fractions of Amounts onto ToolShell
+Took the largest remaining old-shell **question generator** (`FractionsOfAmounts`,
+~1,850 lines) and brought it onto the shared **`ToolShell`** (~600 lines). All the
+maths generation — Finding Amounts (L1 unit / L2 non-unit / L3 fractional answers),
+the worded contexts (L1 direct/indirect, L2 unit-conversion, L3 two-step keep/give
+with money or items, optional "answer as fraction of original"), and Expressing as
+a Fraction (L1 simplify-by-HCF, L2 direct/indirect contexts, L3 one/two-step) — is
+preserved verbatim; only the return shape and shell changed. Questions now use the
+shared `WordedQuestion` kind, working steps use `mStep`/`tStep` with **live-modelling
+fragments** (each `= …` link reveals separately), and all the bespoke UI, popovers,
+and hand-rolled PDF `handlePrint` were deleted in favour of ToolShell's built-ins.
+Per-level Question Options (denominator range, question type, conversion hint, steps,
+etc.) are re-expressed as ToolShell `difficultySettings` dropdowns/variables, so
+whiteboard/worked-example/worksheet/differentiated/share-links all come for free.
+Money is kept KaTeX-safe with `\pounds`. Dropped the non-functional Level-3 "Answer
+Format" control (it never affected generation). Added the `__test` export (smoke
+suite now covers all 9 sub-tool×level cases, 40 unique questions each) and moved the
+tool out of the migration backlog in `organisation.test.ts`, `CLAUDE.md` and
+`DEV_ROADMAP.md`. Build clean, 249 tests pass.
+
 ## 2026-07-25 — Repo consolidation + organisation audit
 Housekeeping session, no tool code. **Consolidated three parallel branches into
 `main`**: merged the CS/CPU work (PR #38) and this changelog (PR #39), and cleared

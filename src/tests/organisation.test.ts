@@ -53,7 +53,6 @@ const MIGRATION_BACKLOG = [
   "Number/IntegerAddSub",
   "Number/PowersOfTen",
   "Proportion/FractionToRatio",
-  "Proportion/FractionsOfAmounts",
   "Proportion/SimplifyingRatiosTool",
 ];
 
