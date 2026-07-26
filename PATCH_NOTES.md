@@ -45,6 +45,27 @@ already done.
 
 # Maths
 
+## 2026-07-26 — Migrated Angles in a Triangle onto ToolShell
+Brought the largest remaining **live** old-shell tool (`AnglesInTriangles`, ~1,335
+lines) onto the shared **`ToolShell`** (~625 lines) — the first **SVG/diagram** tool
+migrated onto the shared shell's `handleDiagramPrint` path (after `AnglesInQuadrilaterals`
+set the pattern). All the geometry and question generation is preserved verbatim:
+Level 1 basic triangle (with the No/Sometimes/Always-90° dropdown and the below-20°
+toggle), Level 2 isosceles (give apex / give base / mixed), and Level 3 extended
+angles (split-triangle and exterior-angle variants). The bespoke shell — the
+hand-rolled `handlePrint` with its fixed 3×5 grid, the difficulty toggle, dropdown/
+variable popovers, info modal and fullscreen chrome (~745 lines) — was deleted in
+favour of ToolShell's built-ins. The `TriangleDiagram` SVG now uses a **square viewBox**
+(so it never overflows its panel and prints at aspect 1 with no per-question `_aspect`)
+and a **reveal answer-band** baked into the SVG like the quadrilaterals tool. Per-level
+Question Options map onto `difficultySettings` dropdowns/variables, so whiteboard /
+worked-example / worksheet / differentiated / share-links / variable-column diagram
+printing all come for free. Working steps use `tStep` (a faithful port of the old
+plain-text lines; techniques wiring — `applyAngleFact` — is a later pass). Added the
+`__test` export (smoke suite now covers all three levels) and moved the tool out of the
+migration backlog in `organisation.test.ts`, `CLAUDE.md` and `DEV_ROADMAP.md`. Build
+clean, 173 tests pass.
+
 ## 2026-07-26 — Migrated Fractions of Amounts onto ToolShell
 Took the largest remaining old-shell **question generator** (`FractionsOfAmounts`,
 ~1,850 lines) and brought it onto the shared **`ToolShell`** (~600 lines). All the
