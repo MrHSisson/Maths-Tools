@@ -45,6 +45,26 @@ already done.
 
 # Maths
 
+## 2026-07-26 — Migrated Powers of 10 onto ToolShell (full-width place value grid)
+Brought `PowersOfTen` (the "Multiplying & Dividing by 10ⁿ" tool, ~1,240 lines) onto the
+shared **`ToolShell`** (~400 lines). The tool's exceptional requirement is its **place value
+grid** — a wide table (7 columns at L1, 13 at L2/L3) that must span the whole container, not
+the shell's usual question/working split. The workaround needs **no shell changes**: the
+entire grid renders through a custom **`questionRenderer`**, and the tool starts with the
+working panel collapsed via `defaults.collapseWorkingByDefault`, so the question box goes
+full-width and `ScaleToFit` grows the grid into the reclaimed space (the panel stays
+recoverable via the shell's re-open button). Two grid states are preserved deliberately:
+the **whiteboard** shows a blank scaffold to model on (Show Answer fills it in and reveals
+`= answer`), the **worked example** shows the filled grid plus the shell's verbal working
+steps + answer card, and the **worksheet** is text-only (`v × 10ⁿ = answer`) so the default
+text print handler works with no custom code. Level 3's extreme numbers keep the original
+"all digits move N places" statement instead of a grid. The `10ⁿ` toggle became a pure
+`reformatQuestion` display switch (raw params stored on the question, display rebuilt on
+toggle — no regeneration); display strings use KaTeX with `{,}` thousands separators and
+`10^{n}`. All maths generators are preserved verbatim. Added the `__test` export and moved
+the tool out of the migration backlog in `organisation.test.ts`, `CLAUDE.md` and
+`DEV_ROADMAP.md`. Build clean, 264 tests pass.
+
 ## 2026-07-26 — Migrated Fractions & Ratios onto ToolShell
 Brought `FractionToRatio` (the "Fractions & Ratios" tool, ~1,330 lines) onto the shared
 **`ToolShell`** (~470 lines). All three sub-tools and their maths generators are preserved
