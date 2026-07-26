@@ -20,7 +20,8 @@ this table first; it tells you where to look and where to write.
 | **`CS_ROADMAP.md`** | The Computer Science plan — what CS tools/topics to build next. | Picking up CS work. |
 | **`CS_SHELL_PLAN.md`** | The `CSShell` architecture and its extraction steps. | Building or extending a CS tool. |
 | **`GLOSSARY.md`** | Canonical name for every element (tool, grain, technique, skill, QO…). | Naming or discussing anything — use these words. |
-| **`TOOL_SPEC_TEMPLATE.md`** · **`TOOL_DESIGNER_PROMPT.md`** · **`specs/`** | The spec pipeline — the format, the claude.ai Project prompt that produces specs, and the specs themselves. | Designing or implementing a tool from a spec. |
+| **`DESIGN_STUDIO.md`** | The one entry point for designing a new build *with Claude in chat* (repo linked): routes to the right template for a maths tool / CS tool / technique / Teach deck. | Understanding where a brief in `specs/` came from, or how new ones are produced. |
+| **`TOOL_SPEC_TEMPLATE.md`** · **`CS_TOPIC_SPEC_TEMPLATE.md`** · **`TECHNIQUE_SPEC_TEMPLATE.md`** · **`TEACH_DECK_SPEC_TEMPLATE.md`** · **`TOOL_DESIGNER_PROMPT.md`** · **`specs/`** | The spec pipeline — one fill-in template per build type, the deep maths-tool designer prompt, and the completed briefs. | Designing or implementing any build from a brief. |
 
 Rule of thumb: **plan** lives in the roadmaps, **history** in `PATCH_NOTES.md`,
 **rules** here. When work lands, update the roadmap (removed a to-do) *and* add a
@@ -123,17 +124,30 @@ Keep concurrent sessions on disjoint files/tools. Two sessions editing the same 
 
 ## Implementing from a spec (`specs/`)
 
-The preferred pipeline: the user designs the tool conversationally in a claude.ai Project (instructions in `TOOL_DESIGNER_PROMPT.md`), which outputs a completed spec following `TOOL_SPEC_TEMPLATE.md`. Specs live in `specs/<tool-id>.md`.
+The preferred pipeline: the user designs the build conversationally with **Claude in a chat** (this repo linked; entry point `DESIGN_STUDIO.md`), which outputs a completed brief following the matching fill-in template. **Four build types**, each with its own template and home:
 
-When the user provides a spec (pasted, or already in `specs/`):
+| Build type | Template | Brief lives in |
+|---|---|---|
+| Maths tool (question generator) | `TOOL_SPEC_TEMPLATE.md` | `specs/<tool-id>.md` |
+| CS tool (J277 revision topic) | `CS_TOPIC_SPEC_TEMPLATE.md` | `specs/cs/<topic-id>.md` |
+| Technique (reusable working-step block) | `TECHNIQUE_SPEC_TEMPLATE.md` | `specs/techniques/<technique-id>.md` |
+| Teach deck (a tool's Teach-mode slides) | `TEACH_DECK_SPEC_TEMPLATE.md` | `specs/decks/<tool-id>.md` |
 
-1. Save it to `specs/<tool-id>.md` if not already there.
-2. Only implement specs with `Status: ready`. If sections are missing or ambiguous, ask before building — otherwise build **without further questions**.
-3. The spec's **sample questions (acceptance set)** define correctness: verify the generator produces questions of those shapes with matching answers and working steps before pushing.
-4. Take INFO_SECTIONS content from the spec's info modal section.
-5. After the tool builds clean and tests pass, change the spec's status line to `**Status:** implemented` in the same commit.
+The deep maths-tool pedagogy guide (`TOOL_DESIGNER_PROMPT.md`) still stands and is usable as claude.ai Project instructions; `DESIGN_STUDIO.md` routes the maths branch to it.
 
-For ad-hoc requests without a spec, gather the details in "What to ask the user for" below.
+When the user provides a brief (pasted, or already in `specs/`):
+
+1. Save it to the right path for its type (table above) if not already there.
+2. Only implement briefs with `Status: ready`. If sections are missing or ambiguous, ask before building — otherwise build **without further questions**.
+3. The brief's **acceptance/correctness reference** defines correctness — verify it before pushing:
+   - maths tool → sample questions produce those shapes with matching answers and working;
+   - CS tool → cards/exam questions match their answers and **mark schemes**;
+   - technique → the worked numeric example matches at each grain;
+   - Teach deck → the slides reproduce the coherent example beat-by-beat.
+4. Take info-modal / `INFO_SECTIONS` content from the brief's info section.
+5. After it builds clean and tests pass, change the brief's status line to `**Status:** implemented` in the same commit.
+
+For ad-hoc requests without a brief, gather the details in "What to ask the user for" below (maths tools), or from the relevant template's sections (other types).
 
 ---
 

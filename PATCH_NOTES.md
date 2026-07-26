@@ -45,6 +45,25 @@ already done.
 
 # Maths
 
+## 2026-07-26 — Design Studio: a repo-linked brief pipeline for all four build types
+Extended the maths-only spec pipeline (`TOOL_DESIGNER_PROMPT.md` + `TOOL_SPEC_TEMPLATE.md`
++ `specs/`) into a **single entry point for every kind of build** — designed *with Claude in
+a normal chat, repo linked*, then handed to Claude Code. New **`DESIGN_STUDIO.md`** is the one
+doc you point a chat at: it reads `GLOSSARY.md` + the relevant `CLAUDE.md` section + an
+existing example, asks *"maths tool / CS tool / technique / Teach deck?"*, then routes to the
+matching fill-in template. Added three new templates alongside the existing maths one —
+**`CS_TOPIC_SPEC_TEMPLATE.md`** (J277 revision topics, mirroring the `CSTopic` shape: spec
+tags, glossary, Learn beats, cards, cloze, exam mark schemes, synoptic, myths — the fact-based
+sweet spot with almost no generation logic), **`TECHNIQUE_SPEC_TEMPLATE.md`** (a reusable
+working-step move at brief/standard/full grains, with step titles + fragments), and
+**`TEACH_DECK_SPEC_TEMPLATE.md`** (misconception-driven slides, I-do→We-do→You-do on one
+coherent example, scenes from the existing families). Each template is self-teaching (inline
+authoring guidance) and stays about **pedagogy/content, not code**. Completed briefs land in
+typed homes — maths tools at `specs/`, and new `specs/cs/`, `specs/techniques/`, `specs/decks/`
+subfolders (each with a README). Wired the new pipeline into `CLAUDE.md` (doc map +
+"Implementing from a spec"), `README.md`, `specs/README.md`, and added a repo-linked note to
+`TOOL_DESIGNER_PROMPT.md`. Docs-only — no `src/` changes; build and tests unaffected.
+
 ## 2026-07-26 — Migrated Powers of 10 onto ToolShell (full-width place value grid)
 Brought `PowersOfTen` (the "Multiplying & Dividing by 10ⁿ" tool, ~1,240 lines) onto the
 shared **`ToolShell`** (~400 lines). The tool's exceptional requirement is its **place value
