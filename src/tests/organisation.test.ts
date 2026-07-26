@@ -51,7 +51,6 @@ const MIGRATION_BACKLOG = [
   "Geometry/PerimeterTool",
   "Number/IntegerAddSub",
   "Number/PowersOfTen",
-  "Proportion/FractionToRatio",
   "Proportion/SimplifyingRatiosTool",
 ];
 
