@@ -239,7 +239,8 @@ Old tools hand-roll their own shell (no `<ToolShell>`); v2.3 tools use the share
 - ✅ `src/tools/Algebra/NonLinearSimEq.tsx` — done (reference for techniques + grapher).
 
 **Dev-gated (`enabled: false`) — lower priority; decide finish-vs-delete:**
-- ⬜ `IntegerAddSub`, `PowersOfTen`, `SimplifyingRatiosTool`, `PerimeterTool`.
+- ⬜ `IntegerAddSub`, `SimplifyingRatiosTool`, `PerimeterTool`.
+- ✅ `PowersOfTen` — done. Migrated to ToolShell with a full-width place value grid via a custom `questionRenderer` + `collapseWorkingByDefault` (grid spans the container instead of the question/working split). `10ⁿ` toggle is a `reformatQuestion` display switch; worksheet is text-only (default print). `__test` added.
 
 **Standalone by design (never migrate):** the Generators, `SystemArchitecture` (quiz), `AlgebraTiles`, `Visualiser`, `CallSelector`, `p-value`, `SkillLibrary`, `TechniqueLibrary`, `GrapherLab`.
 
