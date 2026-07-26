@@ -149,12 +149,12 @@ const L2_CONVERSIONS = [
 ];
 
 const L3_CONTEXTS_ITEMS = [
-  { item: "sweets",   verb1: "eats",   verb2: "gives away" },
-  { item: "stickers", verb1: "uses",   verb2: "gives away" },
-  { item: "marbles",  verb1: "loses",  verb2: "gives away" },
-  { item: "cards",    verb1: "uses",   verb2: "gives away" },
-  { item: "coins",    verb1: "spends", verb2: "gives away" },
-  { item: "beads",    verb1: "uses",   verb2: "gives away" },
+  { item: "sweets",   verb1: "eat",   verb2: "give away" },
+  { item: "stickers", verb1: "use",   verb2: "give away" },
+  { item: "marbles",  verb1: "lose",  verb2: "give away" },
+  { item: "cards",    verb1: "use",   verb2: "give away" },
+  { item: "coins",    verb1: "spend", verb2: "give away" },
+  { item: "beads",    verb1: "use",   verb2: "give away" },
 ];
 
 const NAMES = ["James","Emma","Liam","Olivia","Noah","Ava","Jack","Sophia",
@@ -358,6 +358,7 @@ const genWordedL3 = (asFracOfOriginal: boolean, l3Mode: string): AnyQuestion => 
   const useMoney = Math.random() < 0.5;
   const ctx = useMoney ? null : pick(L3_CONTEXTS_ITEMS);
   const name = pick(NAMES);
+  const pron = useMoney ? "it" : "them"; // money is a mass noun ("of it"); items are countable ("of them")
   const finalQ = asFracOfOriginal
     ? "What fraction of the original amount do they have left?"
     : (useMoney ? "How much do they have left?" : "How many do they have left?");
@@ -384,7 +385,7 @@ const genWordedL3 = (asFracOfOriginal: boolean, l3Mode: string): AnyQuestion => 
       const part1 = total / rd1, fracPart1 = rn1 * part1, remaining1 = keep1 ? fracPart1 : total - fracPart1;
       const part2 = remaining1 / rd2, fracPart2 = rn2 * part2, finalLeft = keep2 ? fracPart2 : remaining1 - fracPart2;
       if (!allInt(part1, fracPart1, remaining1, part2, fracPart2, finalLeft) || finalLeft <= 0 || remaining1 <= 0) continue;
-      const s1 = keep1 ? `They keep ${fracStr(rn1, rd1)} of it.` : `They give ${fracStr(rn1, rd1)} of it away.`;
+      const s1 = keep1 ? `They keep ${fracStr(rn1, rd1)} of ${pron}.` : `They give ${fracStr(rn1, rd1)} of ${pron} away.`;
       const s2 = keep2 ? `They keep ${fracStr(rn2, rd2)} of what remains.` : `They give ${fracStr(rn2, rd2)} of what remains away.`;
       const lines = useMoney
         ? [`${name} has £${total}.`, s1, s2, finalQ]
@@ -445,7 +446,7 @@ const genWordedL3 = (asFracOfOriginal: boolean, l3Mode: string): AnyQuestion => 
       if (divisors.length === 0) continue;
       const fixedSpend = remaining1 / pick(divisors), finalLeft = remaining1 - fixedSpend;
       if (!allInt(part1, fracPart, remaining1, fixedSpend, finalLeft) || finalLeft <= 0) continue;
-      const fs = keepFrac ? `They keep ${f1} of it.` : `They give ${f1} of it away.`;
+      const fs = keepFrac ? `They keep ${f1} of ${pron}.` : `They give ${f1} of ${pron} away.`;
       const lines = useMoney
         ? [`${name} has £${total}.`, fs, `They then spend £${fixedSpend}.`, finalQ]
         : [`${name} has ${total} ${ctx!.item}.`, fs, `They then ${ctx!.verb1} ${fixedSpend}.`, finalQ];
@@ -503,9 +504,9 @@ const AF_L2_CONTEXTS = [
 ];
 
 const AF_L3_ITEMS = [
-  {item:"sweets",verb1:"eats",verb2:"gives away"},{item:"stickers",verb1:"uses",verb2:"gives away"},
-  {item:"marbles",verb1:"loses",verb2:"gives away"},{item:"cards",verb1:"uses",verb2:"gives away"},
-  {item:"coins",verb1:"spends",verb2:"gives away"},
+  {item:"sweets",verb1:"eat",verb2:"give away"},{item:"stickers",verb1:"use",verb2:"give away"},
+  {item:"marbles",verb1:"lose",verb2:"give away"},{item:"cards",verb1:"use",verb2:"give away"},
+  {item:"coins",verb1:"spend",verb2:"give away"},
 ];
 
 const genAsFracL1 = (pool: string, allowUnsimplified: boolean): AnyQuestion => {
