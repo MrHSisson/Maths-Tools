@@ -555,6 +555,10 @@ const CPU_TOPIC: CSTopic = {
   info: INFO_SECTIONS,
 };
 
+// Named export so the CSTopic validator (src/tests/cs-topics.test.ts) can discover
+// and check this topic without rendering the shell — the CS analog of `__test`.
+export const __topic = CPU_TOPIC;
+
 export default function App() {
   return <CSShell topic={CPU_TOPIC} />;
 }

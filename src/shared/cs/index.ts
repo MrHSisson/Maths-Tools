@@ -32,3 +32,5 @@ export {
 } from "./modes";
 
 export { CSShell } from "./CSShell";
+
+export { validateTopic } from "./validate";

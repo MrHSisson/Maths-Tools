@@ -69,6 +69,7 @@ const STANDALONE_BY_DESIGN = [
 // Their build/migration work is tracked in CS_ROADMAP.md / CS_SHELL_PLAN.md.
 const CS_TOOLS = [
   "ComputerScience/CpuArchitecture",
+  "ComputerScience/CpuPerformance",
   "ComputerScience/SystemArchitecture",
 ];
 

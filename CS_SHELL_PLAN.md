@@ -1,9 +1,10 @@
 # Computer Science Shell — architecture plan
 
-Status: **in progress** (increments 1–7 landed — the CS shell is fully assembled:
-utilities, types incl. the `CSTopic` contract, glossary/context, the six self-contained
-modes, the data-driven representations, LearnMode, and now `CSShell` itself. Next:
-increment 8 authors 1.1.2 as pure data + adds the CSTopic validator).
+Status: **in progress** (increments 1–8 landed — the CS shell is fully assembled AND
+the payoff is proven: 1.1.2 CPU Performance is authored as pure data on the `CSTopic`
+contract, guarded by the `validateTopic` CI check. Next: increment 9 rolls the same
+data-only pattern through 1.1.3 → 1.6, and moves synoptic to a shared cross-topic bank
+now that there is >1 topic).
 This doc is the reference for turning
 the one-off `CpuArchitecture` tool into a reusable **CS shell**, so future
 knowledge-heavy CS sub-topics (1.1.2 → 1.6) are authored as *data*, not bespoke code.
@@ -21,45 +22,43 @@ If the shell is finished, replace this with "Shell complete — see stage 8 (aut
 topics as data)".
 
 ```text
-Continue the CS tool shell build-out (Maths-Tools repo).
+Continue the CS revision build-out (Maths-Tools repo) — author the next J277 sub-topic
+as pure data (increment 9).
 
 Setup: work on THIS session's assigned branch — it's already cut fresh from main at
 session start. Do NOT check out or create any other branch. First confirm the baseline
 is current (git fetch origin main; the branch should be level with origin/main). Then
 run: npm install (node_modules isn't present in a fresh container).
 
-Where we're up to: increments 1–7 of CS_SHELL_PLAN.md are DONE — the CS shell is fully
-assembled. src/shared/cs/ owns everything: utilities, types (incl. the CSTopic contract),
-glossary/context, the six self-contained modes (Study/Flashcards/Quiz/Spot/Fill-in/Exam),
-LearnMode, the data-driven representations (BoxSchematic + TraceTable), and now
-CSShell.tsx — the header · desktop/mobile nav · burger menu · beyond-spec filtering ·
-info modal · quiz/spot + exam-section chips · activity routing, all wired from a single
-`topic` prop. CpuArchitecture.tsx is now pure data: its content consts + a
-CPU_TOPIC: CSTopic object + `export default () => <CSShell topic={CPU_TOPIC} />` (560
-lines, down from 779). Canary green: build clean, 264 tests pass, behaves identically.
-Read CS_SHELL_PLAN.md first (this block + the ticked checklist + the "author a topic"
-model near the top). Skim CpuArchitecture.tsx's CPU_TOPIC object to see the shape a topic
-must fill. Do NOT re-read the shell internals — they're done.
+Where we're up to: increments 1–8 of CS_SHELL_PLAN.md are DONE. The CS shell is fully
+assembled (src/shared/cs/ owns everything — the six modes, LearnMode, the BoxSchematic +
+TraceTable representations, and CSShell.tsx driven by one `topic` prop) AND the payoff is
+proven: TWO topics are now pure data — CpuArchitecture.tsx (1.1.1) and CpuPerformance.tsx
+(1.1.2), each a single CSTopic object + a two-line default export + `export const __topic`.
+A CI validator (src/shared/cs/validate.ts → validateTopic, run by src/tests/cs-topics.test.ts
+over every `__topic`-exporting CS tool) makes authoring-as-data safe. Green: build clean,
+268 tests pass. Read CS_SHELL_PLAN.md first (this block + the ticked increment list + the
+"author a topic" model near the top). Skim CpuPerformance.tsx as the current shape/quality
+bar for a data-only topic. Do NOT re-read the shell internals — they're done.
 
-Next increment (8): author 1.1.2 (CPU Performance — clock speed, cores, cache) as PURE
-DATA to prove the payoff. Create src/tools/ComputerScience/CpuPerformance.tsx as one
-CSTopic object + `export default () => <CSShell topic={CPU_PERFORMANCE} />`, register it
-in src/registry.ts (subject "Computer Science", enabled:false until reviewed), and fill
-every content array (specTags, glossary, lessons+scenes, cards, cloze, myths, exam,
-synoptic, info) from the OCR J277 1.1.2 spec. Reuse the BoxSchematic/TraceTable
-representations where a diagram helps (e.g. a cache-levels or cores schematic); only add a
-new scene renderer if genuinely needed. ALSO in this increment: add the deferred CSTopic
-validator — src/shared/cs/validate.ts + a vitest test — asserting per topic: every
-card/exam/cloze specTag is declared in specTags; MCQ answerIndex in range; each cloze
-[slot] has a matching word; myth ids unique; predict lesson steps have both a question and
-an answer; every lesson kind maps to a provided scene. NOTE the synoptic subtlety: a
-synoptic question's top-level specTags may name a bare sub-topic tag (e.g. "1.1.1") that
-isn't a specTags key — validate the per-tag markScheme attribution, not the top-level
-synoptic tags, or the CPU canary false-fails.
+Next increment (9): author the NEXT sub-topic (1.1.3 Embedded systems, then onward toward
+1.6) exactly like 1.1.2 — one src/tools/ComputerScience/<Topic>.tsx = a CSTopic object +
+`export const __topic` + `export default () => <CSShell topic={X} />`, registered in
+src/registry.ts (subject "Computer Science", enabled:false until reviewed) and added to
+CS_TOOLS in src/tests/organisation.test.ts. Fill every content array from the OCR J277
+spec (get a `Status: ready` brief in specs/cs/ first, per CLAUDE.md). Reuse BoxSchematic /
+TraceTable; only add a new scene renderer if nothing fits (scene contract in this doc).
+The validator auto-covers the new topic once it exports `__topic`.
 
-Verify before pushing: npm run build (zero TS errors) and npm test (all pass — count
-grows with the new topic + validator). Then tick increment 8 in CS_SHELL_PLAN.md, add a
-PATCH_NOTES.md entry, refresh this "▶ Resume here" block, and commit + push the branch.
+ALSO consider this increment (open decision, now unblocked with >1 topic): move synoptic
+questions out of individual topic files into a SHARED cross-topic bank keyed by tag-pairs,
+so a 1.1.1↔1.1.2 question lives once, not duplicated in both topics. Weigh it before
+authoring a third topic's synoptic set.
+
+Verify before pushing: npm run build (zero TS errors) and npm test (all pass — count grows
+with the new topic). Manually re-check each new exam question against its mark scheme and
+each cloze against its slots. Then tick increment 9 in CS_SHELL_PLAN.md, add a
+PATCH_NOTES.md entry (CS strand), refresh this "▶ Resume here" block, and commit + push.
 ```
 
 ---
@@ -131,7 +130,7 @@ src/shared/cs/
     TraceTable.tsx     generalised register/field trace                       ✅ done
     …                  BarCompare / NumberLine / StackDiagram as needed       ⬜
   CSShell.tsx          header · nav · beyond-spec · info · activity routing   ✅ done
-  validate.ts          CI contract checker for a CSTopic                      ⬜ (increment 8)
+  validate.ts          CI contract checker for a CSTopic                      ✅ done (increment 8)
 ```
 
 ---
@@ -207,8 +206,24 @@ working the whole way** — it is the regression test.
    increment 8 — see the CI section's synoptic-tag caveat.) Also landed **content-driven
    activity hiding**: the nav shows only the activities a topic backs (see "Open decisions →
    Per-topic activity opt-out"), so a data-only topic can omit whole modes for free.
-8. ⬜ **Build 1.1.2 as pure data** to prove the payoff (+ add `validate.ts` alongside),
-   then roll through 1.1.3 → 1.6.
+8. ✅ **Built 1.1.2 (CPU Performance) as pure data** — `src/tools/ComputerScience/
+   CpuPerformance.tsx` is one `CPU_PERFORMANCE: CSTopic` object + a two-line default
+   export, registered `enabled: false` pending review. Every content array is filled
+   from the OCR J277 1.1.2 spec (clock speed / cache / cores / combining): specTags
+   (four requirements + bare synoptic partners 1.1.1 / 1.1.3 / 1.2.1), glossary,
+   five lessons over ONE reused `BoxSchematic` "performance anatomy" scene (clock +
+   four cores + shared cache inside the CPU, RAM outside; cache lesson adds a
+   hit/miss value flow — no new renderer), cards (+2 beyond-spec), cloze, myths,
+   exam (mcq→extended-8, realistic tariffs + mark schemes + model answers) and
+   synoptic (spanning 1.1.1 and 1.1.3, per-tag attribution). Alongside it landed
+   `src/shared/cs/validate.ts` (`validateTopic`) + `src/tests/cs-topics.test.ts`,
+   which discovers every `__topic`-exporting CS tool and asserts: card/exam/cloze
+   specTags declared; MCQ answerIndex in range; each cloze `[slot]` has a matching
+   word; myth/card/exam/cloze ids unique; predict beats carry both question and
+   answer; every lesson kind maps to a provided scene; and the per-tag synoptic
+   markScheme attribution is declared (NOT the bare top-level synoptic specTags —
+   the caveat below). Both CpuArchitecture (canary) and CpuPerformance pass. Green:
+   build clean, 268 tests pass (+4). Next: roll through 1.1.3 → 1.6.
 
 ---
 
