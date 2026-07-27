@@ -12,17 +12,19 @@ Read this before building the next CS tool.
 
 ## ▶ Resume here — next session (keep current)
 
-This is the copy-paste kickoff for the next conversation, wrapped in the house
-delimiters (`>>>` … `<<<`). **Whoever lands an increment rewrites this block** so it
-always points at the true next step (see the end-of-session rule in `PATCH_NOTES.md`).
+This is the copy-paste kickoff for the next conversation, inside a fenced code block
+(triple backtick, language `text`). **Whoever lands an increment rewrites this block** so
+it always points at the true next step (see the end-of-session rule in `PATCH_NOTES.md`).
 If the shell is finished, replace this with "Shell complete — see stage 8 (author
 topics as data)".
 
->>>
+```text
 Continue the CS tool shell build-out (Maths-Tools repo).
 
-Setup: check out branch `claude/cs-tool-shell-stages-i5vb1n`, then run `npm install`
-(node_modules isn't present in a fresh container).
+Setup: work on THIS session's assigned branch — it's already cut fresh from main at
+session start. Do NOT check out or create any other branch. First confirm the baseline
+is current (git fetch origin main; the branch should be level with origin/main). Then
+run: npm install (node_modules isn't present in a fresh container).
 
 Where we're up to: increments 1–5 of CS_SHELL_PLAN.md are done — utilities, types,
 glossary/context, the five self-contained recall modes (Study/Flashcards/Quiz/Spot/
@@ -45,10 +47,10 @@ reading spec/glossary from the topic context. Keep CpuArchitecture building and 
 identically. Then increment 7 assembles CSShell and reduces CpuArchitecture to
 `export default () => <CSShell topic={CPU_TOPIC} />`.
 
-Verify before pushing: `npm run build` (zero TS errors) and `npm test` (all pass).
+Verify before pushing: npm run build (zero TS errors) and npm test (all pass).
 Then tick increment 6 in CS_SHELL_PLAN.md, add a PATCH_NOTES.md entry, refresh this
-"▶ Resume here" block, and commit + push to the same branch.
-<<<
+"▶ Resume here" block, and commit + push the session branch.
+```
 
 ---
 
