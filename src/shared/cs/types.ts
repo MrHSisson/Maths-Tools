@@ -98,7 +98,9 @@ export interface LessonStep {
 
 export interface Lesson {
   id: string; title: string; specTags: SpecTag[];
-  kind?: "diagram" | "trace";
+  kind?: "diagram" | "trace" | "text";  // "text" = a deliberately diagram-free lesson
+  scene?: string;                     // diagram lessons: names an entry in scenes.schematics
+                                      // (omit to use the topic's default scenes.schematic)
   analogy?: string;                   // "Think of it like…" concrete anchor
   steps: LessonStep[];
 }
@@ -182,7 +184,8 @@ export interface TraceConfig {
 // (kind:"trace"), plus an optional shared legend. Structurally the LearnMode's
 // LearnScenes; kept here so CSTopic is self-describing.
 export interface TopicScenes {
-  schematic?: SchematicConfig;
+  schematic?: SchematicConfig;                  // default schematic for diagram lessons
+  schematics?: Record<string, SchematicConfig>; // named schematics a lesson picks via `scene`
   trace?: TraceConfig;
   legend?: ReactNode;
 }

@@ -50,7 +50,7 @@
 ## 4. Learn — taught lessons
 
 ### Lesson: What makes a CPU fast? — covers `1.1.2-R1, 1.1.2-R2, 1.1.2-R3`
-- **Representation / scene:** shared "performance anatomy" box schematic (clock + cores + shared cache inside the CPU, RAM outside) — highlights only.
+- **Representation / scene:** none — a `kind: "text"` lesson (reasons across all three characteristics; no single diagram fits without clutter).
 - **Analogy:** Think of the CPU as a kitchen: clock speed is how fast the chef works, cache is the worktop right next to the chef holding ingredients ready to hand, and cores are how many chefs are cooking at once.
 - **Beats:** intro (three characteristics) → predict (double clock speed) → cache → predict (more cores) → none tells the whole story.
 
@@ -86,8 +86,10 @@ slot ↔ its word pool) was verified before the tool was enabled, and is CI-guar
 ## 12. Out of scope / future ideas
 
 - **No `bar-compare` representation built for this topic** — reused the existing
-  `BoxSchematic` for the cache/cores lessons per the shell's "reuse before building"
-  principle.
+  `BoxSchematic` for two focused diagrams (cache hit/miss; four cores) per the shell's
+  "reuse before building" principle. This increment added a small shell affordance —
+  per-lesson `scene` selection (`TopicScenes.schematics` + `Lesson.scene`) and a
+  `kind: "text"` for diagram-free lessons — so a topic can carry more than one diagram.
 - **No Von Neumann/register depth here** — that's 1.1.1's territory; this topic draws
   on cache's *existence* synoptically, not the fetch-execute mechanics.
 - Natural next synoptic partner once built: **1.2.1 Primary storage (RAM)**.

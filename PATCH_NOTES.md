@@ -253,20 +253,26 @@ topic={CPU_PERFORMANCE} />`, registered in `src/registry.ts` (`enabled: false` p
 user's content review) and added to `CS_TOOLS` in `organisation.test.ts`. Content is the OCR
 J277 **1.1.2** spec — clock speed, cache size, number of cores, and combining them: specTags
 (the four requirements + bare synoptic partners 1.1.1 / 1.1.3 / 1.2.1), glossary (+beyond-spec
-thread/bottleneck/hit/miss/overclocking), **five Learn lessons** over ONE reused `BoxSchematic`
-"performance anatomy" scene (a clock, four cores and a shared cache inside the CPU boundary,
-RAM outside on a bus; the cache lesson adds a hit→cache / miss→RAM value **flow** — no new
-renderer, per "reuse before building"), 12 core cards (+2 beyond-spec), 4 cloze, 5 myths,
+thread/bottleneck/hit/miss/overclocking), **five Learn lessons** — two with their own FOCUSED
+`BoxSchematic` (a CPU/cache/RAM diagram contrasting a short cache "hit" hop with a long "miss"
+trip out to RAM, and a four-core diagram for parallel work), the overview / clock-speed /
+combining lessons deliberately diagram-free — 12 core cards (+2 beyond-spec), 4 cloze, 5 myths,
 8 exam questions (mcq → an 8-mark extended response, with mark schemes + `**bold**` model
 answers) and 2 synoptic questions spanning 1.1.1 and 1.1.3 with per-tag attribution. Also
 landed the deferred **`src/shared/cs/validate.ts`** (`validateTopic`) + **`src/tests/cs-topics.test.ts`**,
 which discovers every `__topic`-exporting CS tool and asserts: card/exam/cloze specTags are
 declared; MCQ `answerIndex` is in range; each cloze `[slot]` has a matching word; myth/card/
-exam/cloze ids are unique; predict beats carry both a question and an answer; every lesson
-kind maps to a provided scene; and — the documented caveat — the **per-tag synoptic
-markScheme attribution** is declared (not the bare top-level synoptic `specTags`, which would
-false-fail the 1.1.1 canary). Added `export const __topic` to `CpuArchitecture.tsx` too, so
-the canary is validated the same way. Green: build clean, **268 tests pass** (+4). Ticked
+exam/cloze ids are unique; predict beats carry both a question and an answer; every diagram
+lesson resolves a schematic (or is deliberately `kind: "text"`); and — the documented caveat —
+the **per-tag synoptic markScheme attribution** is declared (not the bare top-level synoptic
+`specTags`, which would false-fail the 1.1.1 canary). Added `export const __topic` to
+`CpuArchitecture.tsx` too, so the canary is validated the same way. **Small shell enhancement
+to support the two-diagram design:** `TopicScenes` gained a `schematics` map and `Lesson` a
+`scene` key (a diagram lesson picks a named schematic; omitting it falls back to the topic's
+single `schematic`, so the 1.1.1 canary is untouched) plus a `kind: "text"` for deliberately
+diagram-free lessons; `LearnMode` resolves per lesson and drops the scene panel entirely for
+text lessons. Both new diagrams were rendered and eyeballed before pushing. Green: build clean,
+**268 tests pass** (+4). Ticked
 increment 8 in `CS_SHELL_PLAN.md` and refreshed the Resume-here block. **Next (increment 9):**
 roll the same data-only pattern through 1.1.3 → 1.6, and consider moving synoptic to a shared
 cross-topic bank now that there is >1 topic.

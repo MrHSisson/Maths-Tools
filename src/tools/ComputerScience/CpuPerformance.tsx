@@ -309,94 +309,111 @@ const SYNOPTIC_QUESTIONS: SynopticQuestion[] = [
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
-// LESSONS — Learn mode: taught, stepped walkthroughs over ONE shared schematic
-// (the CS shell renders a topic's single scene on every diagram lesson). The
-// schematic is a "performance anatomy" of the CPU — a clock, several cores and a
-// shared cache inside the CPU boundary, with RAM outside — and each lesson simply
-// highlights the part it is teaching. Cache lessons add a hit/miss value flow.
+// LESSONS — Learn mode: taught, stepped walkthroughs. Each diagram lesson names a
+// FOCUSED scene (via `scene`) so the visual carries only what that lesson teaches:
+// the cache lesson gets a CPU/cache/RAM hit-vs-miss diagram, the cores lesson gets
+// a multi-core diagram. The overview, clock-speed and combining lessons are
+// deliberately diagram-free (kind: "text") — they reason across all three
+// characteristics, which no single diagram captures without clutter.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const ALL_CORES = ["core1", "core2", "core3", "core4"];
 
 const LESSONS: Lesson[] = [
   {
-    id: "overview", title: "What makes a CPU fast?", specTags: ["1.1.2-R1", "1.1.2-R2", "1.1.2-R3"],
+    id: "overview", title: "What makes a CPU fast?", specTags: ["1.1.2-R1", "1.1.2-R2", "1.1.2-R3"], kind: "text",
     analogy: "Think of the CPU as a kitchen: **clock speed** is how fast the chef works, **cache** is the worktop right next to the chef holding ingredients ready to hand, and **cores** are how many chefs are cooking at once.",
     steps: [
-      { text: "Three characteristics affect how fast a CPU is: its **clock speed**, its **cache size**, and its **number of cores**. Here they all are inside one CPU.", highlight: [] },
-      { predict: "If you doubled a CPU's **clock speed** and changed nothing else, what would you expect to happen?", text: "Roughly twice as many cycles happen every second, so instructions are carried out faster.", highlight: ["clock"] },
-      { text: "A bigger **cache** means more frequently-used data is kept close to the CPU, so it needs fewer slow trips out to RAM.", highlight: ["cache"] },
-      { predict: "If a CPU has more **cores**, what can it do that a single core can't?", text: "It can work on more than one task at the same time, instead of doing everything one instruction after another.", highlight: ALL_CORES },
-      { text: "None of these figures tells the whole story on its own — the next lessons look at each in depth, then the last one looks at what happens when they're **combined**.", highlight: [] },
+      { text: "Three characteristics affect how fast a CPU is: its **clock speed**, its **cache size**, and its **number of cores**. The next lessons take each in turn." },
+      { predict: "If you doubled a CPU's **clock speed** and changed nothing else, what would you expect to happen?", text: "Roughly twice as many cycles happen every second, so instructions are carried out faster." },
+      { text: "A bigger **cache** means more frequently-used data is kept close to the CPU, so it needs fewer slow trips out to RAM." },
+      { predict: "If a CPU has more **cores**, what can it do that a single core can't?", text: "It can work on more than one task at the same time, instead of doing everything one instruction after another." },
+      { text: "None of these figures tells the whole story on its own — the next lessons look at each in depth, then the last one looks at what happens when they're **combined**." },
     ],
   },
   {
-    id: "clock", title: "Clock speed", specTags: ["1.1.2-R1"],
+    id: "clock", title: "Clock speed", specTags: ["1.1.2-R1"], kind: "text",
     steps: [
-      { text: "**Clock speed** is measured in **hertz (Hz)** — the number of clock cycles the CPU carries out per second. A modern CPU runs at a few **gigahertz (GHz)** — billions of cycles every second.", highlight: ["clock"] },
-      { predict: "A CPU running at 3.5 GHz is upgraded to one running at 4.0 GHz, with nothing else changed. What happens to its performance?", text: "It can process more instructions per second, so performance increases.", highlight: ["clock"] },
-      { text: "A higher clock speed generally means better performance — but clock speed on its own doesn't decide how fast a computer feels; the other characteristics still matter.", highlight: ["clock"] },
+      { text: "**Clock speed** is measured in **hertz (Hz)** — the number of clock cycles the CPU carries out per second. A modern CPU runs at a few **gigahertz (GHz)** — billions of cycles every second." },
+      { predict: "A CPU running at 3.5 GHz is upgraded to one running at 4.0 GHz, with nothing else changed. What happens to its performance?", text: "It can process more instructions per second, so performance increases." },
+      { text: "A higher clock speed generally means better performance — but clock speed on its own doesn't decide how fast a computer feels; the other characteristics still matter." },
     ],
   },
   {
-    id: "cache", title: "Cache size", specTags: ["1.1.2-R2"],
+    id: "cache", title: "Cache size", specTags: ["1.1.2-R2"], scene: "cache",
     steps: [
-      { text: "**Cache** sits inside/right next to the CPU. When the CPU needs data it has used recently, a core checks the cache first.", highlight: ["cache"] },
-      { predict: "If the data a core wants **is** in the cache, is that faster or slower than going to RAM?", text: "Much faster — this is called a cache **hit**.", highlight: ["cache", "core1"], flow: { from: "core1", to: "cache", label: "hit", kind: "data" } },
-      { text: "If the data isn't in the cache, the core has to fetch it from the much slower **RAM** instead — a cache **miss**. Notice how much further the value has to travel.", highlight: ["ram", "core1"], flow: { from: "core1", to: "ram", label: "wait…", kind: "data" } },
+      { text: "**Cache** sits inside/right next to the CPU. When the core needs data it has used recently, it checks the cache first.", highlight: ["cache", "core"] },
+      { predict: "If the data the core wants **is** in the cache, is that faster or slower than going to RAM?", text: "Much faster — this is called a cache **hit**. The value only has to travel a short way.", highlight: ["cache", "core"], flow: { from: "core", to: "cache", label: "found it!", kind: "data" } },
+      { text: "If the data isn't in the cache, the core has to fetch it from the much slower **RAM** instead — a cache **miss**. Notice how much further the value has to travel.", highlight: ["ram", "core"], flow: { from: "core", to: "ram", label: "wait…", kind: "data" } },
       { predict: "So if you increase the **size** of the cache, what happens to the chance of a hit versus a miss?", text: "More data can be kept close by, so more requests are hits, and the CPU spends less time waiting on RAM — performance improves.", highlight: ["cache"] },
     ],
   },
   {
-    id: "cores", title: "Number of cores", specTags: ["1.1.2-R3"],
+    id: "cores", title: "Number of cores", specTags: ["1.1.2-R3"], scene: "cores",
     steps: [
       { text: "A **core** is a complete, independent processing unit inside the CPU — it can fetch, decode and execute instructions on its own.", highlight: ["core1"] },
-      { text: "A single-core CPU can only work on one instruction stream at a time. A **multi-core** CPU can run several at once.", highlight: ALL_CORES },
+      { text: "A single-core CPU can only work on one instruction stream at a time. A **multi-core** CPU can run several at once — here all four are busy together.", highlight: ALL_CORES },
       { predict: "Would a 4-core CPU always run a single task four times faster than a 1-core CPU?", text: "Not necessarily — that task also needs to be written so it can be split across multiple cores; not all software is.", highlight: ALL_CORES },
     ],
   },
   {
-    id: "combining", title: "Combining the characteristics", specTags: ["1.1.2-R4"],
+    id: "combining", title: "Combining the characteristics", specTags: ["1.1.2-R4"], kind: "text",
     analogy: "A kitchen with a lightning-fast chef (clock speed) is still slow if the worktop is tiny (cache) and there's only one chef (cores) when six orders come in at once.",
     steps: [
-      { text: "These three characteristics don't act alone — a CPU's overall performance depends on **all of them together**.", highlight: ["clock", "cache", ...ALL_CORES] },
-      { predict: "A CPU has a very high clock speed but a tiny cache. Why might it still perform poorly on some tasks?", text: "It keeps having to wait on slow trips to RAM instead of using the cache, so the fast clock speed can't be fully used.", highlight: ["clock", "cache"] },
-      { predict: "A laptop has 8 cores but most everyday software only uses 1–2 of them. Will buying a laptop with even more cores make that software faster?", text: "Not by much — extra cores only help once software is written to use them; otherwise most cores sit idle.", highlight: ALL_CORES },
-      { text: "So comparing CPUs on a single number (just clock speed, or just core count) can be misleading — real performance depends on the **combination**.", highlight: [] },
+      { text: "These three characteristics don't act alone — a CPU's overall performance depends on **all of them together**." },
+      { predict: "A CPU has a very high clock speed but a tiny cache. Why might it still perform poorly on some tasks?", text: "It keeps having to wait on slow trips to RAM instead of using the cache, so the fast clock speed can't be fully used." },
+      { predict: "A laptop has 8 cores but most everyday software only uses 1–2 of them. Will buying a laptop with even more cores make that software faster?", text: "Not by much — extra cores only help once software is written to use them; otherwise most cores sit idle." },
+      { text: "So comparing CPUs on a single number (just clock speed, or just core count) can be misleading — real performance depends on the **combination**." },
     ],
   },
 ];
 
-// ── CPU-performance representation as data (see CS_SHELL_PLAN.md) ──────────────
-// A "performance anatomy": the clock, four cores and a shared cache inside the CPU
-// boundary, with RAM outside on a bus. Rendered by the shared BoxSchematic; each
-// lesson highlights the part it teaches. Reuses the schematic representation — no
-// new scene renderer needed (the brief's "reuse before building" principle).
-const ROLE_COLOR: Record<string, string> = { clock: "#d97706", core: "#2563eb", cache: "#059669", mem: "#475569", data: "#059669", addr: "#2563eb" };
-const ROLE_TINT:  Record<string, string> = { clock: "#fef3c7", core: "#dbeafe", cache: "#d1fae5", mem: "#f1f5f9", data: "#d1fae5", addr: "#dbeafe" };
+// ── CPU-performance representations as data (see CS_SHELL_PLAN.md) ─────────────
+// TWO focused BoxSchematics, each named so its lesson picks it via `scene`. Reuses
+// the existing schematic representation — no new scene renderer (the brief's
+// "reuse before building" principle). A lesson with no diagram is kind: "text".
+const ROLE_COLOR: Record<string, string> = { core: "#2563eb", cache: "#059669", mem: "#475569", data: "#059669", addr: "#2563eb" };
+const ROLE_TINT:  Record<string, string> = { core: "#dbeafe", cache: "#d1fae5", mem: "#f1f5f9", data: "#d1fae5", addr: "#dbeafe" };
 
-const PERF_SCHEMATIC: SchematicConfig = {
-  viewBox: "0 0 400 250",
-  maxWidth: 540,
+// Cache lesson: one core inside the CPU checks the cache (a short "hit" hop) or has
+// to reach all the way out to RAM (a long "miss" trip). The travel distance itself
+// carries the speed contrast.
+const CACHE_SCHEMATIC: SchematicConfig = {
+  viewBox: "0 0 400 232",
+  maxWidth: 520,
   roleColor: ROLE_COLOR,
   roleTint: ROLE_TINT,
   nodes: [
-    { id: "clock", x: 26,  y: 40,  w: 206, h: 30, label: "Clock",  role: "clock" },
-    { id: "core1", x: 26,  y: 86,  w: 98,  h: 36, label: "Core 1", role: "core" },
-    { id: "core2", x: 134, y: 86,  w: 98,  h: 36, label: "Core 2", role: "core" },
-    { id: "core3", x: 26,  y: 130, w: 98,  h: 36, label: "Core 3", role: "core" },
-    { id: "core4", x: 134, y: 130, w: 98,  h: 36, label: "Core 4", role: "core" },
-    { id: "cache", x: 26,  y: 180, w: 206, h: 36, label: "Cache (shared)", role: "cache" },
-    { id: "ram",   x: 300, y: 95,  w: 82,  h: 90, label: "RAM",    role: "mem" },
+    { id: "core",  x: 36,  y: 54,  w: 150, h: 48, label: "Core",  role: "core" },
+    { id: "cache", x: 36,  y: 140, w: 150, h: 44, label: "Cache", role: "cache" },
+    { id: "ram",   x: 292, y: 74,  w: 92,  h: 92, label: "RAM",   role: "mem" },
   ],
   buses: [
-    { x1: 260, y1: 140, x2: 300, y2: 140, hotWhen: ["ram", "cache", "core1"] },
+    { x1: 222, y1: 120, x2: 292, y2: 120, hotWhen: ["ram", "core"] },
   ],
   containers: [
-    { x: 10, y: 18, w: 250, h: 222, label: "CPU" },
+    { x: 12, y: 24, w: 210, h: 184, label: "CPU" },
   ],
   texts: [
-    { x: 341, y: 205, text: "main memory", size: 8.5, weight: 600 },
+    { x: 338, y: 182, text: "main memory", size: 8.5, weight: 600 },
+  ],
+};
+
+// Cores lesson: four independent cores in the CPU, highlighted together to show
+// parallel work. No RAM/flow — the teaching point is "how many run at once".
+const CORES_SCHEMATIC: SchematicConfig = {
+  viewBox: "0 0 372 176",
+  maxWidth: 520,
+  roleColor: ROLE_COLOR,
+  roleTint: ROLE_TINT,
+  nodes: [
+    { id: "core1", x: 30,  y: 58, w: 72, h: 74, label: "Core 1", role: "core" },
+    { id: "core2", x: 112, y: 58, w: 72, h: 74, label: "Core 2", role: "core" },
+    { id: "core3", x: 194, y: 58, w: 72, h: 74, label: "Core 3", role: "core" },
+    { id: "core4", x: 276, y: 58, w: 72, h: 74, label: "Core 4", role: "core" },
+  ],
+  containers: [
+    { x: 12, y: 22, w: 348, h: 132, label: "CPU" },
   ],
 };
 
@@ -415,7 +432,7 @@ const INFO_SECTIONS: InfoSection[] = [
     { label: "Throttling, overclocking, hit/miss", detail: "Thermal throttling, overclocking and the 'hit'/'miss' terms are useful context but not required for 1.1.2. Kept out of default study, quiz and exam sessions; turn on 'Beyond spec' to include them, clearly flagged." },
   ]},
   { title: "How the modes differ", items: [
-    { label: "Learn", detail: "Taught walkthroughs over a CPU 'performance anatomy' diagram, with predict-first prompts, an analogy, and a cache hit/miss flow. Start here." },
+    { label: "Learn", detail: "Taught walkthroughs with predict-first prompts and an analogy, plus two focused diagrams — a cache hit/miss diagram and a multi-core diagram. Start here." },
     { label: "Study", detail: "First-pass reading — recognition, low effort." },
     { label: "Flashcards", detail: "Active recall — answer before you flip. The core revision mode." },
     { label: "Quiz", detail: "MCQ warm-up, or Spot-the-Mistake to confront the classic 'bigger number = always faster' misconceptions." },
@@ -434,7 +451,7 @@ const CPU_PERFORMANCE: CSTopic = {
   specTags: SPEC_DESCRIPTIONS,
   glossary: GLOSSARY,
   lessons: LESSONS,
-  scenes: { schematic: PERF_SCHEMATIC },
+  scenes: { schematics: { cache: CACHE_SCHEMATIC, cores: CORES_SCHEMATIC } },
   cards: CARDS,
   cloze: CLOZE,
   myths: MYTHS,

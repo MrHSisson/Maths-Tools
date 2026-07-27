@@ -77,13 +77,25 @@ export function validateTopic(topic: CSTopic): string[] {
         at(`lesson "${l.id}" step ${i + 1} has a predict question but no answer text`);
     });
 
-  // 6. Every lesson's kind must map to a provided scene (diagram→schematic, trace→trace).
+  // 6. Every lesson's kind must map to a provided scene:
+  //    - trace   → scenes.trace must exist;
+  //    - diagram → must resolve a schematic (its named scenes.schematics[scene], or
+  //                the topic default scenes.schematic if no `scene` is named);
+  //    - text    → deliberately diagram-free, no scene required.
+  //    Also: any named `scene` must resolve (catches typos), whatever the kind.
   for (const l of topic.lessons) {
     const kind = l.kind ?? "diagram";
-    if (kind === "diagram" && !topic.scenes.schematic)
-      at(`lesson "${l.id}" is a diagram lesson but the topic provides no scenes.schematic`);
+    const named = l.scene !== undefined ? topic.scenes.schematics?.[l.scene] : undefined;
+    if (l.scene !== undefined && !named)
+      at(`lesson "${l.id}" names scene "${l.scene}" which is not in scenes.schematics`);
     if (kind === "trace" && !topic.scenes.trace)
       at(`lesson "${l.id}" is a trace lesson but the topic provides no scenes.trace`);
+    if (kind === "diagram") {
+      const resolved = l.scene !== undefined ? named : topic.scenes.schematic;
+      if (!resolved)
+        at(`lesson "${l.id}" is a diagram lesson but resolves no schematic ` +
+           `(no scenes.schematic default${l.scene !== undefined ? ` and scene "${l.scene}" is undefined` : ""}; mark it kind:"text" if it is meant to have no diagram)`);
+    }
   }
 
   // 7. Synoptic questions: validate the per-tag markScheme attribution (NOT the

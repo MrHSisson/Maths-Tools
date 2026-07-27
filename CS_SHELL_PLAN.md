@@ -211,19 +211,24 @@ working the whole way** — it is the regression test.
    export, registered `enabled: false` pending review. Every content array is filled
    from the OCR J277 1.1.2 spec (clock speed / cache / cores / combining): specTags
    (four requirements + bare synoptic partners 1.1.1 / 1.1.3 / 1.2.1), glossary,
-   five lessons over ONE reused `BoxSchematic` "performance anatomy" scene (clock +
-   four cores + shared cache inside the CPU, RAM outside; cache lesson adds a
-   hit/miss value flow — no new renderer), cards (+2 beyond-spec), cloze, myths,
+   five lessons — two with their own FOCUSED reused `BoxSchematic` (a CPU/cache/RAM
+   hit-vs-miss diagram, a four-core diagram), the other three deliberately
+   diagram-free (`kind: "text"`) — no new renderer, cards (+2 beyond-spec), cloze, myths,
    exam (mcq→extended-8, realistic tariffs + mark schemes + model answers) and
    synoptic (spanning 1.1.1 and 1.1.3, per-tag attribution). Alongside it landed
    `src/shared/cs/validate.ts` (`validateTopic`) + `src/tests/cs-topics.test.ts`,
    which discovers every `__topic`-exporting CS tool and asserts: card/exam/cloze
    specTags declared; MCQ answerIndex in range; each cloze `[slot]` has a matching
    word; myth/card/exam/cloze ids unique; predict beats carry both question and
-   answer; every lesson kind maps to a provided scene; and the per-tag synoptic
-   markScheme attribution is declared (NOT the bare top-level synoptic specTags —
-   the caveat below). Both CpuArchitecture (canary) and CpuPerformance pass. Green:
-   build clean, 268 tests pass (+4). Next: roll through 1.1.3 → 1.6.
+   answer; every diagram lesson resolves a schematic (or is `kind:"text"`); and the
+   per-tag synoptic markScheme attribution is declared (NOT the bare top-level synoptic
+   specTags — the caveat below). Both CpuArchitecture (canary) and CpuPerformance pass.
+   This increment also made a **small shell enhancement** to enable the two-diagram
+   design: `TopicScenes` gained a `schematics` map and `Lesson` a `scene` key (a diagram
+   lesson names one; omitting it falls back to the single `schematic`, so the canary is
+   untouched) + a `kind:"text"` for diagram-free lessons; `LearnMode` resolves per lesson
+   and hides the scene panel for text lessons. Both new diagrams were rendered/eyeballed
+   before pushing. Green: build clean, 268 tests pass (+4). Next: roll through 1.1.3 → 1.6.
 
 ---
 
