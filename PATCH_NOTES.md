@@ -244,6 +244,21 @@ in custom renderers.
 > own tools, and its own shell (`CSShell`, not `ToolShell`). It's younger than the
 > Maths side — expect it to grow fast.
 
+## 2026-07-27 — CS shell increment 4: data-driven representations
+Continued the `CSShell` extraction from `CpuArchitecture` (the canary). Generalised the
+hard-coded `CpuDiagram` into a reusable **`BoxSchematic`** and lifted **`TraceTable`**,
+both into **`src/shared/cs/representations/`**. Each is now driven purely by a config
+object: `BoxSchematic` takes a `SchematicConfig` (nodes + roles + dashed containers +
+buses + free annotations, with an animated value token flowing between two nodes), and
+`TraceTable` takes a `TraceConfig` (rows + role palette). The CPU box layout that used to
+live inside the component — `PARTS` / `ROLE_COLOR` / `ROLE_TINT` — is now **topic data**
+(`CPU_SCHEMATIC` / `CPU_TRACE` in `CpuArchitecture.tsx`), so other CS topics can supply
+their own layouts against the same primitive. Added the representation types to
+`types.ts` and exported both components from the barrel. The extraction preserves every
+coordinate and colour, so the CPU diagram renders identically; builds clean and 264
+tests pass. Ticked increment 4 in `CS_SHELL_PLAN.md`. Next: LearnMode (scene registry),
+then ExamMode, then assemble `CSShell`.
+
 ## 2026-07-27 — CS shell increment 3: self-contained recall modes
 Continued the `CSShell` extraction from `CpuArchitecture` (the canary). Lifted the
 five recall modes — **Study, Flashcards, Quiz, Spot-the-Mistake and Fill-in** — out

@@ -8,10 +8,11 @@ import {
   BeyondBadge, SegRow, registerTooltip, showTooltip, TooltipOverlay,
   TopicProvider, SpecBadge,
   FlashcardMode, StudyMode, QuizMode, SpotMistakeMode, FillInMode,
+  BoxSchematic, TraceTable,
   MARK_FORMATS, COMMAND_GUIDE,
   type CSTooltip, type SpecTag, type FlashCard, type ClozeExercise,
-  type ExamQuestion, type SynopticQuestion, type MythItem, type Flow,
-  type Lesson, type InfoSection,
+  type ExamQuestion, type SynopticQuestion, type MythItem,
+  type Lesson, type InfoSection, type SchematicConfig, type TraceConfig,
 } from "../../shared/cs";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -483,108 +484,51 @@ const LESSONS: Lesson[] = [
   },
 ];
 
-const PARTS: Record<string, { x: number; y: number; w: number; h: number; label: string; role: "addr" | "data" | "instr" | "ctrl" | "mem" }> = {
-  cu:    { x: 24,  y: 44,  w: 100, h: 40,  label: "Control Unit", role: "ctrl" },
-  alu:   { x: 24,  y: 96,  w: 100, h: 40,  label: "ALU",          role: "ctrl" },
-  cache: { x: 24,  y: 148, w: 100, h: 40,  label: "Cache",        role: "mem" },
-  pc:    { x: 148, y: 52,  w: 92,  h: 28,  label: "PC",           role: "addr" },
-  mar:   { x: 148, y: 86,  w: 92,  h: 28,  label: "MAR",          role: "addr" },
-  mdr:   { x: 148, y: 120, w: 92,  h: 28,  label: "MDR",          role: "data" },
-  acc:   { x: 148, y: 154, w: 92,  h: 28,  label: "ACC",          role: "data" },
-  cir:   { x: 148, y: 188, w: 92,  h: 28,  label: "CIR",          role: "instr" },
-  ram:   { x: 288, y: 92,  w: 84,  h: 96,  label: "RAM",          role: "mem" },
-};
+// ── CPU representations as data (see CS_SHELL_PLAN.md) ────────────────────────
+// The CPU box layout: nodes + roles + the dashed CPU boundary, the bus to RAM and
+// the group annotations. Rendered by the shared BoxSchematic representation.
 const ROLE_COLOR: Record<string, string> = { addr: "#2563eb", data: "#059669", instr: "#64748b", ctrl: "#475569", mem: "#475569" };
 const ROLE_TINT:  Record<string, string> = { addr: "#dbeafe", data: "#d1fae5", instr: "#e2e8f0", ctrl: "#f1f5f9", mem: "#f1f5f9" };
 
-const CpuDiagram = ({ highlight, flow, flowKey }: { highlight?: string[]; flow?: Flow; flowKey?: number }) => {
-  const hl = highlight ?? [];
-  const on = (id: string) => hl.includes(id);
-  const dim = (id: string) => (hl.length && !on(id) ? 0.32 : 1);
-  const ramHot = on("ram") || on("mar") || on("mdr");
-
-  // animated token: sit at `from`, then transition to `to` one frame after mount
-  const [phase, setPhase] = useState(0);
-  useEffect(() => {
-    if (!flow) return;
-    setPhase(0);
-    let r2 = 0;
-    const r1 = requestAnimationFrame(() => { r2 = requestAnimationFrame(() => setPhase(1)); });
-    return () => { cancelAnimationFrame(r1); cancelAnimationFrame(r2); };
-  }, [flowKey, flow]);
-
-  return (
-    <svg viewBox="0 0 380 244" style={{ display: "block", width: "100%", height: "auto", maxWidth: 520, margin: "0 auto" }} preserveAspectRatio="xMidYMid meet">
-      {/* bus between CPU and RAM */}
-      <line x1={256} y1={140} x2={288} y2={140} stroke={ramHot ? "#334155" : "#cbd5e1"} strokeWidth={ramHot ? 4 : 3} />
-      {/* CPU outer box */}
-      <rect x={8} y={16} width={248} height={220} rx={12} fill="none" stroke="#94a3b8" strokeWidth={1.5} strokeDasharray="5 4" />
-      <text x={20} y={33} fontSize={13} fontWeight={800} fill="#334155">CPU</text>
-      {/* registers group label */}
-      <text x={194} y={44} fontSize={9} fontWeight={700} fill="#94a3b8" textAnchor="middle" letterSpacing="0.06em">REGISTERS</text>
-      {Object.entries(PARTS).map(([id, p]) => {
-        const c = ROLE_COLOR[p.role]; const isReg = ["pc", "mar", "mdr", "acc", "cir"].includes(id);
-        return (
-          <g key={id} opacity={dim(id)} style={{ transition: "opacity 0.25s" }}>
-            <rect x={p.x} y={p.y} width={p.w} height={p.h} rx={7}
-              fill={on(id) ? ROLE_TINT[p.role] : "#fff"} stroke={c} strokeWidth={on(id) ? 3 : 1.4} />
-            <text x={p.x + p.w / 2} y={p.y + p.h / 2 + 1} fontSize={isReg ? 12 : 12} fontWeight={700}
-              fill={c} textAnchor="middle" dominantBaseline="central">{p.label}</text>
-          </g>
-        );
-      })}
-      <text x={330} y={210} fontSize={8.5} fontWeight={600} fill="#94a3b8" textAnchor="middle">main memory</text>
-
-      {/* animated value token travelling from → to */}
-      {flow && (() => {
-        const f = PARTS[flow.from], t = PARTS[flow.to];
-        if (!f || !t) return null;
-        const fx = f.x + f.w / 2, fy = f.y + f.h / 2;
-        const dx = (t.x + t.w / 2) - fx, dy = (t.y + t.h / 2) - fy;
-        const col = flow.kind === "addr" ? "#2563eb" : "#059669";
-        const tint = flow.kind === "addr" ? "#dbeafe" : "#d1fae5";
-        const w = 46, h = 20;
-        return (
-          <g style={{ transition: "transform 0.85s ease", transform: `translate(${phase ? dx : 0}px, ${phase ? dy : 0}px)` }}>
-            <rect x={fx - w / 2} y={fy - h / 2} width={w} height={h} rx={6} fill={tint} stroke={col} strokeWidth={2} />
-            <text x={fx} y={fy + 1} fontSize={10} fontWeight={800} fill={col} textAnchor="middle" dominantBaseline="central">{flow.label}</text>
-          </g>
-        );
-      })()}
-    </svg>
-  );
+const CPU_SCHEMATIC: SchematicConfig = {
+  viewBox: "0 0 380 244",
+  maxWidth: 520,
+  roleColor: ROLE_COLOR,
+  roleTint: ROLE_TINT,
+  nodes: [
+    { id: "cu",    x: 24,  y: 44,  w: 100, h: 40,  label: "Control Unit", role: "ctrl" },
+    { id: "alu",   x: 24,  y: 96,  w: 100, h: 40,  label: "ALU",          role: "ctrl" },
+    { id: "cache", x: 24,  y: 148, w: 100, h: 40,  label: "Cache",        role: "mem" },
+    { id: "pc",    x: 148, y: 52,  w: 92,  h: 28,  label: "PC",           role: "addr" },
+    { id: "mar",   x: 148, y: 86,  w: 92,  h: 28,  label: "MAR",          role: "addr" },
+    { id: "mdr",   x: 148, y: 120, w: 92,  h: 28,  label: "MDR",          role: "data" },
+    { id: "acc",   x: 148, y: 154, w: 92,  h: 28,  label: "ACC",          role: "data" },
+    { id: "cir",   x: 148, y: 188, w: 92,  h: 28,  label: "CIR",          role: "instr" },
+    { id: "ram",   x: 288, y: 92,  w: 84,  h: 96,  label: "RAM",          role: "mem" },
+  ],
+  buses: [
+    { x1: 256, y1: 140, x2: 288, y2: 140, hotWhen: ["ram", "mar", "mdr"] },
+  ],
+  containers: [
+    { x: 8, y: 16, w: 248, h: 220, label: "CPU" },
+  ],
+  texts: [
+    { x: 194, y: 44,  text: "REGISTERS",   letterSpacing: "0.06em" },
+    { x: 330, y: 210, text: "main memory", size: 8.5, weight: 600 },
+  ],
 };
 
 // ── Trace-table representation (the trace lesson): register contents step by step
-const TRACE_ROWS: { key: string; role: "addr" | "data" | "instr"; holds: string }[] = [
-  { key: "PC",  role: "addr",  holds: "an address" },
-  { key: "MAR", role: "addr",  holds: "an address" },
-  { key: "MDR", role: "data",  holds: "data" },
-  { key: "CIR", role: "instr", holds: "the instruction" },
-  { key: "ACC", role: "data",  holds: "data" },
-];
-
-const TraceTable = ({ snapshot, hot }: { snapshot?: Record<string, string>; hot?: string[] }) => {
-  const snap = snapshot ?? {};
-  const hotSet = new Set(hot ?? []);
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 6, maxWidth: 440, margin: "0 auto" }}>
-      {TRACE_ROWS.map(r => {
-        const c = ROLE_COLOR[r.role]; const val = snap[r.key]; const isHot = hotSet.has(r.key);
-        return (
-          <div key={r.key} style={{ display: "grid", gridTemplateColumns: "48px 1fr 74px", alignItems: "center", gap: 8,
-            background: isHot ? ROLE_TINT[r.role] : "#fff", border: `2px solid ${isHot ? c : "#e5e7eb"}`, borderRadius: 10, padding: "8px 10px", transition: "all 0.25s" }}>
-            <span style={{ fontWeight: 800, fontSize: "0.9rem", color: c }}>{r.key}</span>
-            <span style={{ fontSize: "0.72rem", fontWeight: 600, color: "#94a3b8" }}>holds {r.holds}</span>
-            <span style={{ justifySelf: "stretch", textAlign: "center", fontWeight: 800, fontSize: "0.95rem",
-              color: val ? c : "#cbd5e1", border: val ? `2px solid ${c}` : "2px dashed #e5e7eb", borderRadius: 8, padding: "3px 6px", transition: "all 0.25s" }}>
-              {val ?? "—"}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
+const CPU_TRACE: TraceConfig = {
+  roleColor: ROLE_COLOR,
+  roleTint: ROLE_TINT,
+  rows: [
+    { key: "PC",  role: "addr",  holds: "an address" },
+    { key: "MAR", role: "addr",  holds: "an address" },
+    { key: "MDR", role: "data",  holds: "data" },
+    { key: "CIR", role: "instr", holds: "the instruction" },
+    { key: "ACC", role: "data",  holds: "data" },
+  ],
 };
 
 const LEGEND = (
@@ -651,8 +595,8 @@ const LearnMode = () => {
 
         <div style={{ background: "#f8fafc", borderRadius: 12, padding: "14px 10px 10px" }}>
           {isTrace
-            ? <TraceTable snapshot={cur.trace} hot={cur.highlight} />
-            : <CpuDiagram highlight={gated ? [] : cur.highlight} flow={showFlow ? cur.flow : undefined} flowKey={s} />}
+            ? <TraceTable config={CPU_TRACE} snapshot={cur.trace} hot={cur.highlight} />
+            : <BoxSchematic config={CPU_SCHEMATIC} highlight={gated ? [] : cur.highlight} flow={showFlow ? cur.flow : undefined} flowKey={s} />}
           {cur.legend && LEGEND}
         </div>
 

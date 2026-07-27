@@ -17,7 +17,11 @@ export {
   type SpecTag, type ExamFormat,
   type FlashCard, type ClozeExercise, type ExamQuestion, type SynopticQuestion,
   type MythItem, type Flow, type LessonStep, type Lesson, type InfoItem, type InfoSection,
+  type SchematicNode, type SchematicContainer, type SchematicText, type SchematicBus,
+  type SchematicConfig, type TraceRow, type TraceConfig,
 } from "./types";
+
+export { BoxSchematic, TraceTable } from "./representations";
 
 export { TopicProvider, useTopic, GlossaryText, SpecBadge } from "./context";
 
