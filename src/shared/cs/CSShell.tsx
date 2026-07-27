@@ -77,9 +77,11 @@ const EXAM_SECTIONS = [
   { key: "synoptic", label: "Synoptic" },
 ];
 
-const BottomNav = ({ activity, setActivity }: { activity: string; setActivity: (a: string) => void }) => (
+type Activity = (typeof ACTIVITIES)[number];
+
+const BottomNav = ({ activities, activity, setActivity }: { activities: Activity[]; activity: string; setActivity: (a: string) => void }) => (
   <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 90, background: "#fff", borderTop: "1px solid #e5e7eb", boxShadow: "0 -4px 20px rgba(0,0,0,0.06)", display: "flex", paddingBottom: "env(safe-area-inset-bottom)" }}>
-    {ACTIVITIES.map(a => {
+    {activities.map(a => {
       const active = activity === a.key; const Icon = a.icon;
       return (
         <button key={a.key} onClick={() => setActivity(a.key)}
@@ -92,9 +94,9 @@ const BottomNav = ({ activity, setActivity }: { activity: string; setActivity: (
   </div>
 );
 
-const DesktopTabs = ({ activity, setActivity }: { activity: string; setActivity: (a: string) => void }) => (
+const DesktopTabs = ({ activities, activity, setActivity }: { activities: Activity[]; activity: string; setActivity: (a: string) => void }) => (
   <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
-    {ACTIVITIES.map(a => {
+    {activities.map(a => {
       const active = activity === a.key; const Icon = a.icon;
       return (
         <button key={a.key} onClick={() => setActivity(a.key)}
@@ -113,9 +115,25 @@ const DesktopTabs = ({ activity, setActivity }: { activity: string; setActivity:
 
 export const CSShell = ({ topic }: { topic: CSTopic }) => {
   const isMobile = useIsMobile();
-  const [activity, setActivity] = useState("learn");
+
+  // Which activities this topic actually provides — the nav auto-hides the rest
+  // (an activity with no backing content is dropped). A topic authors data only;
+  // omitting e.g. `myths` or `cloze` hides Spot / Fill without any extra config.
+  const hasMcq  = topic.cards.length > 0;
+  const hasSpot = topic.myths.length > 0;
+  const has: Record<string, boolean> = {
+    learn:     topic.lessons.length > 0,
+    study:     topic.cards.length > 0,
+    flashcard: topic.cards.length > 0,
+    quiz:      hasMcq || hasSpot,
+    fillin:    topic.cloze.length > 0,
+    exam:      topic.exam.length > 0 || topic.synoptic.length > 0,
+  };
+  const activities = ACTIVITIES.filter(a => has[a.key]);
+
+  const [activity, setActivity] = useState<string>(() => activities[0]?.key ?? "learn");
   const [examSection, setExamSection] = useState("all");
-  const [quizMode, setQuizMode] = useState("mcq");   // "mcq" | "spot"
+  const [quizMode, setQuizMode] = useState(() => (hasMcq ? "mcq" : "spot"));   // "mcq" | "spot"
   const [showHints, setShowHints] = useState(true);
   const [showBeyond, setShowBeyond] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -139,6 +157,19 @@ export const CSShell = ({ topic }: { topic: CSTopic }) => {
     ? "Spot the mistake — judge each statement, then read the correction. Targets the classic traps."
     : (ACTIVITIES.find(a => a.key === activity)?.blurb ?? "");
   const contentKey = `${activity}-${examSection}-${quizMode}-${showBeyond}`;
+
+  // Quiz sub-toggle: only offer the sub-modes the topic can back (cards → MCQ,
+  // myths → Spot). Hidden entirely when only one is available.
+  const quizOptions = [
+    ...(hasMcq  ? [{ key: "mcq",  label: "Multiple choice" }] : []),
+    ...(hasSpot ? [{ key: "spot", label: "Spot the mistake" }] : []),
+  ];
+
+  // Exam-section chips: keep only sections with questions (plus "All"). Derived
+  // from the full exam pool so toggling "Beyond spec" never removes a chip.
+  const examFormats = new Set<string>(topic.exam.map(q => q.format));
+  const examSections = EXAM_SECTIONS.filter(s =>
+    s.key === "all" || (s.key === "synoptic" ? topic.synoptic.length > 0 : examFormats.has(s.key)));
 
   return (
     <TopicProvider value={{ glossary: topic.glossary, specDescriptions: topic.specTags }}>
@@ -179,10 +210,10 @@ export const CSShell = ({ topic }: { topic: CSTopic }) => {
           </h1>
           <div style={{ height: 1, background: "#d1d5db", maxWidth: 880, margin: isMobile ? "0 auto 14px" : "0 auto 22px" }} />
 
-          {/* Desktop tabs (mobile uses bottom bar) */}
-          {!isMobile && (
+          {/* Desktop tabs (mobile uses bottom bar) — hidden when a topic offers one activity */}
+          {!isMobile && activities.length > 1 && (
             <div style={{ marginBottom: 18 }}>
-              <DesktopTabs activity={activity} setActivity={setActivity} />
+              <DesktopTabs activities={activities} activity={activity} setActivity={setActivity} />
             </div>
           )}
 
@@ -196,17 +227,17 @@ export const CSShell = ({ topic }: { topic: CSTopic }) => {
           {/* Activity blurb — makes the rigor of each mode explicit */}
           <p style={{ textAlign: "center", fontSize: "0.82rem", color: "#6b7280", fontWeight: 500, margin: "0 auto 14px", maxWidth: 560, lineHeight: 1.5 }}>{activeBlurb}</p>
 
-          {/* Quiz sub-controls — MCQ warm-up vs Spot-the-Mistake */}
-          {activity === "quiz" && (
+          {/* Quiz sub-controls — MCQ warm-up vs Spot-the-Mistake (only when both exist) */}
+          {activity === "quiz" && quizOptions.length > 1 && (
             <div style={{ display: "flex", justifyContent: "center", marginBottom: 18 }}>
-              <SegRow options={[{ key: "mcq", label: "Multiple choice" }, { key: "spot", label: "Spot the mistake" }]} value={quizMode} onChange={setQuizMode} />
+              <SegRow options={quizOptions} value={quizMode} onChange={setQuizMode} />
             </div>
           )}
 
           {/* Exam / mode sub-controls */}
           {activity === "exam" && (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, marginBottom: 18 }}>
-              <SegRow options={EXAM_SECTIONS} value={examSection} onChange={setExamSection} />
+              <SegRow options={examSections} value={examSection} onChange={setExamSection} />
               <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
                 <div onClick={() => setShowHints(v => !v)} style={{ width: 44, height: 24, borderRadius: 12, background: showHints ? "#1e3a8a" : "#d1d5db", position: "relative" }}>
                   <div style={{ position: "absolute", top: 4, width: 16, height: 16, borderRadius: "50%", background: "#fff", transition: "transform 0.2s", transform: showHints ? "translateX(24px)" : "translateX(4px)" }} />
@@ -229,7 +260,7 @@ export const CSShell = ({ topic }: { topic: CSTopic }) => {
         </div>
       </div>
 
-      {isMobile && <BottomNav activity={activity} setActivity={setActivity} />}
+      {isMobile && activities.length > 1 && <BottomNav activities={activities} activity={activity} setActivity={setActivity} />}
     </TopicProvider>
   );
 };

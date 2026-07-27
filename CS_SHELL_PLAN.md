@@ -204,7 +204,9 @@ working the whole way** — it is the regression test.
    surface. `CpuArchitecture.tsx` is reduced to its content consts + a `CPU_TOPIC: CSTopic`
    object + `export default () => <CSShell topic={CPU_TOPIC} />` (560 lines, from 779).
    Canary green: build clean, 264 tests pass, behaves identically. (validate.ts deferred to
-   increment 8 — see the CI section's synoptic-tag caveat.)
+   increment 8 — see the CI section's synoptic-tag caveat.) Also landed **content-driven
+   activity hiding**: the nav shows only the activities a topic backs (see "Open decisions →
+   Per-topic activity opt-out"), so a data-only topic can omit whole modes for free.
 8. ⬜ **Build 1.1.2 as pure data** to prove the payoff (+ add `validate.ts` alongside),
    then roll through 1.1.3 → 1.6.
 
@@ -271,8 +273,14 @@ questions, not their top-level `specTags`, or the CPU canary false-fails.
 - **Synoptic questions** become cross-topic. The `specTags: string[]` type already
   anticipates it, but once there is >1 topic they should move to a **shared synoptic
   bank** keyed by tag-pairs rather than living inside one topic file.
-- **Per-topic activity opt-out.** A topic declares which activities it provides; the nav
-  auto-hides the rest (same idea as ToolShell hiding tabs for a single sub-tool).
+- **Per-topic activity opt-out.** ✅ **Done** (increment 7). `CSShell` derives which of the
+  six activities a topic backs from its content — Learn needs `lessons`, Study/Cards/Quiz
+  need `cards`, Spot needs `myths`, Fill needs `cloze`, Exam needs `exam`/`synoptic` — and
+  the desktop tabs + mobile `BottomNav` auto-hide the rest (nav hidden entirely for a
+  single-activity topic, same idea as ToolShell hiding tabs for one sub-tool). The Quiz
+  MCQ/Spot sub-toggle and the exam-section chips filter the same way. No extra authoring:
+  omitting a content array hides its activity. `CpuArchitecture` backs all six, so it is
+  unaffected.
 - **Update `CLAUDE.md`** to document the CS shell the way it documents ToolShell, so
   future sessions author topics as data instead of re-deriving all of this.
 

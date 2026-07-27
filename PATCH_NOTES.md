@@ -259,7 +259,13 @@ renders the six modes + `LearnMode` — all wired from a single `topic` prop and
 **`CpuArchitecture.tsx` to pure data**: its content consts + a `CPU_TOPIC: CSTopic` object
 + `export default () => <CSShell topic={CPU_TOPIC} />` — **560 lines, down from 779**, and
 it's the canary: builds clean, 264 tests pass, behaves pixel-identically. Exported
-`CSShell` + the `CSTopic` / `TopicScenes` types from the barrel. The `validate.ts` CSTopic
+`CSShell` + the `CSTopic` / `TopicScenes` types from the barrel. Also added **content-driven
+activity hiding**: `CSShell` derives which of the six activities a topic backs from its data
+(Learn↔`lessons`, Study/Cards/Quiz↔`cards`, Spot↔`myths`, Fill↔`cloze`, Exam↔`exam`/`synoptic`)
+and auto-hides the rest from the desktop tabs and mobile `BottomNav` (nav hidden entirely for
+a single-activity topic); the Quiz MCQ/Spot sub-toggle and the exam-section chips filter the
+same way — so a data-only topic can omit whole modes with no extra config. `CpuArchitecture`
+backs all six, so it's unchanged. The `validate.ts` CSTopic
 CI checker is deferred to increment 8 (documented in `CS_SHELL_PLAN.md`, with the synoptic
 top-level-`specTags` caveat that would otherwise false-fail the canary). Ticked increment 7
 in `CS_SHELL_PLAN.md` and refreshed the Resume-here block. **Next (increment 8):** author
