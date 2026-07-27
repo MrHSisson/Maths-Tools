@@ -1,7 +1,8 @@
 # Computer Science Shell — architecture plan
 
-Status: **in progress** (increments 1–4 landed — utilities, types, glossary/context,
-the five self-contained recall modes, and the data-driven representations). This doc is the reference for turning
+Status: **in progress** (increments 1–5 landed — utilities, types, glossary/context,
+the five self-contained recall modes, the data-driven representations, and LearnMode).
+This doc is the reference for turning
 the one-off `CpuArchitecture` tool into a reusable **CS shell**, so future
 knowledge-heavy CS sub-topics (1.1.2 → 1.6) are authored as *data*, not bespoke code.
 
@@ -23,26 +24,29 @@ Continue the CS tool shell build-out (Maths-Tools repo).
 Setup: check out branch `claude/cs-tool-shell-stages-i5vb1n`, then run `npm install`
 (node_modules isn't present in a fresh container).
 
-Where we're up to: increments 1–4 of CS_SHELL_PLAN.md are done — utilities, types,
+Where we're up to: increments 1–5 of CS_SHELL_PLAN.md are done — utilities, types,
 glossary/context, the five self-contained recall modes (Study/Flashcards/Quiz/Spot/
-Fill-in), and the data-driven representations (BoxSchematic + TraceTable in
-src/shared/cs/representations/) now live in src/shared/cs/. The CPU box layout is now
-topic data (CPU_SCHEMATIC / CPU_TRACE in CpuArchitecture.tsx). CpuArchitecture is the
-canary and builds + behaves identically. Read CS_SHELL_PLAN.md first (this block + the
-ticked checklist). Do NOT re-read the whole ~1,100-line CpuArchitecture.tsx — grep for
-the component being extracted and read only that slice.
+Fill-in), the data-driven representations (BoxSchematic + TraceTable in
+src/shared/cs/representations/), and LearnMode now all live in src/shared/cs/. LearnMode
+is topic-agnostic: it takes `lessons` + a `scenes` config ({ schematic?, trace?, legend? })
+and maps each lesson's `kind` to a representation. The topic data (LESSONS / CPU_SCHEMATIC
+/ CPU_TRACE / LEGEND) stays in CpuArchitecture.tsx. CpuArchitecture is the canary and
+builds + behaves identically. Read CS_SHELL_PLAN.md first (this block + the ticked
+checklist). Do NOT re-read the whole ~1,000-line CpuArchitecture.tsx — grep for the
+component being extracted and read only that slice.
 
-Next increment (5): LearnMode. Lift LearnMode (the lesson picker + stepped
-predict/flow/analogy/trace engine, ~line 540 of CpuArchitecture.tsx) into
-src/shared/cs/modes/, driven by a scene registry that maps a lesson's descriptor to a
-representation (schematic → BoxSchematic, trace → TraceTable). The predict/flow/analogy
-engine is already generic; the coupling to unpick is that LearnMode currently hard-wires
-CpuDiagram/TraceTable + the LESSONS/LEGEND/CPU_SCHEMATIC/CPU_TRACE consts. Pass those in
-(lessons + a scene config) so LearnMode is topic-agnostic. Keep CpuArchitecture building
-and behaving identically.
+Next increment (6): ExamMode. Lift ExamMode (the exam/synoptic activity — format chips,
+command-word guide, self-mark, mark scheme + model answer reveal) into
+src/shared/cs/modes/. It currently lives inline in CpuArchitecture.tsx (grep for the exam
+render, ~the second half of the file — it uses MARK_FORMATS/COMMAND_GUIDE from shared plus
+the topic's EXAM_QUESTIONS / SYNOPTIC consts and resolvePrompt helper). Parametrise it by
+its content props (exam questions + synoptic questions) so it reads like the other modes,
+reading spec/glossary from the topic context. Keep CpuArchitecture building and behaving
+identically. Then increment 7 assembles CSShell and reduces CpuArchitecture to
+`export default () => <CSShell topic={CPU_TOPIC} />`.
 
 Verify before pushing: `npm run build` (zero TS errors) and `npm test` (all pass).
-Then tick increment 5 in CS_SHELL_PLAN.md, add a PATCH_NOTES.md entry, refresh this
+Then tick increment 6 in CS_SHELL_PLAN.md, add a PATCH_NOTES.md entry, refresh this
 "▶ Resume here" block, and commit + push to the same branch.
 <<<
 
@@ -108,7 +112,8 @@ src/shared/cs/
   glossary.tsx         GlossaryText(glossary), SpecBadge(descriptions)       ⬜
   modes/
     StudyMode  FlashcardMode  QuizMode(+Spot)  FillInMode                    ✅ done
-    LearnMode  ExamMode                                                       ⬜
+    LearnMode  (lessons + scenes config → BoxSchematic / TraceTable)          ✅ done
+    ExamMode                                                                  ⬜
   representations/     the CS "scheme of work" — data-configurable visuals
     BoxSchematic.tsx   generalised CpuDiagram: nodes + containers + flow token ✅ done
     TraceTable.tsx     generalised register/field trace                       ✅ done
@@ -165,7 +170,12 @@ working the whole way** — it is the regression test.
    containers/buses/annotations for the schematic; rows/roles for the trace). The CPU
    box layout is now topic data (`CPU_SCHEMATIC` / `CPU_TRACE` in `CpuArchitecture.tsx`).
    Canary green: build clean, 264 tests pass; SVG output byte-identical.
-5. ⬜ **LearnMode** with the scene registry (predict/flow/analogy engine is already generic).
+5. ✅ **LearnMode** lifted into `src/shared/cs/modes/LearnMode.tsx`, topic-agnostic. The
+   predict/flow/analogy/trace engine is unchanged; a topic passes `lessons` plus a
+   `scenes` config (`{ schematic?, trace?, legend? }`) that wires the lesson's `kind`
+   descriptor to a representation (schematic → `BoxSchematic`, trace → `TraceTable`).
+   `CpuArchitecture` renders `<LearnMode lessons={LESSONS} scenes={{ schematic: CPU_SCHEMATIC,
+   trace: CPU_TRACE, legend: LEGEND }} />`. Canary green: build clean, 264 tests pass.
 6. ⬜ **ExamMode** (formats, synoptic, self-mark, model answer, command word).
 7. ⬜ **Assemble `CSShell`**; reduce `CpuArchitecture.tsx` to
    `export default () => <CSShell topic={CPU_TOPIC} />`, where `CPU_TOPIC` is the
