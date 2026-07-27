@@ -20,3 +20,7 @@ export {
 } from "./types";
 
 export { TopicProvider, useTopic, GlossaryText, SpecBadge } from "./context";
+
+export {
+  FlashcardMode, StudyMode, QuizMode, SpotMistakeMode, FillInMode,
+} from "./modes";
