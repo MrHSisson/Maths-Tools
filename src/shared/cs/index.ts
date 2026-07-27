@@ -26,5 +26,6 @@ export { BoxSchematic, TraceTable } from "./representations";
 export { TopicProvider, useTopic, GlossaryText, SpecBadge } from "./context";
 
 export {
+  LearnMode, type LearnScenes,
   FlashcardMode, StudyMode, QuizMode, SpotMistakeMode, FillInMode,
 } from "./modes";

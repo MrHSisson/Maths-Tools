@@ -244,6 +244,21 @@ in custom renderers.
 > own tools, and its own shell (`CSShell`, not `ToolShell`). It's younger than the
 > Maths side — expect it to grow fast.
 
+## 2026-07-27 — CS shell increment 5: LearnMode
+Continued the `CSShell` extraction from `CpuArchitecture` (the canary). Lifted **LearnMode**
+— the lesson picker plus the stepped predict / flow / analogy / trace engine — out of the
+tool and into **`src/shared/cs/modes/LearnMode.tsx`**. The engine was already generic; the
+coupling to unpick was that it hard-wired `BoxSchematic` / `TraceTable` and the topic's
+`LESSONS` / `LEGEND` / `CPU_SCHEMATIC` / `CPU_TRACE` consts. It now takes `lessons` plus a
+**`scenes` config** (`{ schematic?, trace?, legend? }`) and maps each lesson's `kind`
+descriptor to a representation (schematic → `BoxSchematic`, trace → `TraceTable`), so the
+mode is topic-agnostic. The lesson content and CPU representation configs stay as **topic
+data** in `CpuArchitecture.tsx`, which now renders `<LearnMode lessons={LESSONS}
+scenes={{ schematic: CPU_SCHEMATIC, trace: CPU_TRACE, legend: LEGEND }} />`. Exported
+`LearnMode` + the `LearnScenes` type from the barrel. The extraction preserves every beat,
+gate and keyboard control, so Learn behaves identically; builds clean and 264 tests pass.
+Ticked increment 5 in `CS_SHELL_PLAN.md`. Next: ExamMode, then assemble `CSShell`.
+
 ## 2026-07-27 — CS shell increment 4: data-driven representations
 Continued the `CSShell` extraction from `CpuArchitecture` (the canary). Generalised the
 hard-coded `CpuDiagram` into a reusable **`BoxSchematic`** and lifted **`TraceTable`**,
