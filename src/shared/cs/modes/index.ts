@@ -8,3 +8,4 @@ export { StudyMode } from "./StudyMode";
 export { QuizMode } from "./QuizMode";
 export { SpotMistakeMode } from "./SpotMistakeMode";
 export { FillInMode } from "./FillInMode";
+export { ExamMode } from "./ExamMode";

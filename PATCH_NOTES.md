@@ -244,6 +244,28 @@ in custom renderers.
 > own tools, and its own shell (`CSShell`, not `ToolShell`). It's younger than the
 > Maths side — expect it to grow fast.
 
+## 2026-07-27 — CS shell increment 6: ExamMode
+Continued the `CSShell` extraction from `CpuArchitecture` (the canary). Lifted **ExamMode**
+— the exam/synoptic activity: command-word chips with a "what it's asking" guide, mark
+tariffs, MCQ auto-mark, self-marking against a mark scheme, context re-rolls, and the
+model-answer reveal — out of the tool and into **`src/shared/cs/modes/ExamMode.tsx`**. It's
+now self-contained and content-driven: it takes `questions` (exam) + `synoptic` props and
+reads spec descriptions from the topic context via `SpecBadge`; `MARK_FORMATS` /
+`COMMAND_GUIDE` come from shared. The pure `resolvePrompt` helper and the `MarkPips`
+sub-component moved into the mode with it. The topic's `EXAM_QUESTIONS` /
+`SYNOPTIC_QUESTIONS` stay as **topic data** in `CpuArchitecture.tsx`, which now just renders
+`<ExamMode questions={exam} synoptic={SYNOPTIC_QUESTIONS} … />` and shed its now-unused
+imports. Exported `ExamMode` from the barrel. All six recall modes now live in the shell;
+Exam behaves identically — builds clean and 264 tests pass. Ticked increment 6 in
+`CS_SHELL_PLAN.md`. Next (final extraction): assemble `CSShell` and reduce `CpuArchitecture`
+to `export default () => <CSShell topic={CPU_TOPIC} />`.
+
+Also switched the session-handoff kickoff convention: kickoff blocks now use a fenced
+`text` code block instead of the old `>>>` / `<<<` delimiters (which render as nested
+blockquotes and break the paste boundary), and the rule now forbids naming a branch — every
+kickoff starts from an up-to-date `main` on the session's own fresh branch. Updated
+`CLAUDE.md` and the `CS_SHELL_PLAN.md` Resume-here block.
+
 ## 2026-07-27 — CS shell increment 5: LearnMode
 Continued the `CSShell` extraction from `CpuArchitecture` (the canary). Lifted **LearnMode**
 — the lesson picker plus the stepped predict / flow / analogy / trace engine — out of the

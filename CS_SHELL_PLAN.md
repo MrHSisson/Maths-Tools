@@ -1,7 +1,7 @@
 # Computer Science Shell — architecture plan
 
-Status: **in progress** (increments 1–5 landed — utilities, types, glossary/context,
-the five self-contained recall modes, the data-driven representations, and LearnMode).
+Status: **in progress** (increments 1–6 landed — utilities, types, glossary/context,
+the six self-contained modes, the data-driven representations, and LearnMode).
 This doc is the reference for turning
 the one-off `CpuArchitecture` tool into a reusable **CS shell**, so future
 knowledge-heavy CS sub-topics (1.1.2 → 1.6) are authored as *data*, not bespoke code.
@@ -26,29 +26,32 @@ session start. Do NOT check out or create any other branch. First confirm the ba
 is current (git fetch origin main; the branch should be level with origin/main). Then
 run: npm install (node_modules isn't present in a fresh container).
 
-Where we're up to: increments 1–5 of CS_SHELL_PLAN.md are done — utilities, types,
-glossary/context, the five self-contained recall modes (Study/Flashcards/Quiz/Spot/
-Fill-in), the data-driven representations (BoxSchematic + TraceTable in
-src/shared/cs/representations/), and LearnMode now all live in src/shared/cs/. LearnMode
-is topic-agnostic: it takes `lessons` + a `scenes` config ({ schematic?, trace?, legend? })
-and maps each lesson's `kind` to a representation. The topic data (LESSONS / CPU_SCHEMATIC
-/ CPU_TRACE / LEGEND) stays in CpuArchitecture.tsx. CpuArchitecture is the canary and
-builds + behaves identically. Read CS_SHELL_PLAN.md first (this block + the ticked
-checklist). Do NOT re-read the whole ~1,000-line CpuArchitecture.tsx — grep for the
-component being extracted and read only that slice.
+Where we're up to: increments 1–6 of CS_SHELL_PLAN.md are done — utilities, types,
+glossary/context, the six self-contained modes (Study/Flashcards/Quiz/Spot/Fill-in/Exam),
+the data-driven representations (BoxSchematic + TraceTable in
+src/shared/cs/representations/), and LearnMode all now live in src/shared/cs/. Every mode
+is content-driven and reads spec/glossary from the topic context. The topic data (LESSONS
+/ CPU_SCHEMATIC / CPU_TRACE / LEGEND / EXAM_QUESTIONS / SYNOPTIC_QUESTIONS / CARDS / CLOZE
+/ MYTHS / SPEC_DESCRIPTIONS / GLOSSARY / INFO_SECTIONS) still lives in CpuArchitecture.tsx,
+which owns the header · nav · beyond-spec · info · activity routing. CpuArchitecture is the
+canary and builds + behaves identically. Read CS_SHELL_PLAN.md first (this block + the
+ticked checklist). Do NOT re-read the whole ~780-line CpuArchitecture.tsx — grep for the
+region being extracted and read only that slice plus the consts it uses.
 
-Next increment (6): ExamMode. Lift ExamMode (the exam/synoptic activity — format chips,
-command-word guide, self-mark, mark scheme + model answer reveal) into
-src/shared/cs/modes/. It currently lives inline in CpuArchitecture.tsx (grep for the exam
-render, ~the second half of the file — it uses MARK_FORMATS/COMMAND_GUIDE from shared plus
-the topic's EXAM_QUESTIONS / SYNOPTIC consts and resolvePrompt helper). Parametrise it by
-its content props (exam questions + synoptic questions) so it reads like the other modes,
-reading spec/glossary from the topic context. Keep CpuArchitecture building and behaving
-identically. Then increment 7 assembles CSShell and reduces CpuArchitecture to
-`export default () => <CSShell topic={CPU_TOPIC} />`.
+Next increment (7): assemble CSShell — the final extraction. Introduce a CSTopic type in
+types.ts (id/title/specTags/glossary + all the content arrays: lessons, scenes, cards,
+cloze, myths, exam, synoptic, info) and, in src/shared/cs/CSShell.tsx, lift the shell
+scaffold that currently lives in CpuArchitecture's App(): the header, the desktop/mobile
+nav (top tabs + BottomNav), the burger menu (beyond-spec toggle, hints, copy-link, topic
+info), the info modal, the beyond-spec filtering (coreCards/coreCloze/coreExam), the
+quiz/spot sub-toggle and exam-section chips, and the activity routing that renders the six
+modes + LearnMode. Wire it all from a single `topic` prop, wrapping everything in the
+existing <TopicProvider>. Then reduce CpuArchitecture.tsx to its topic data + a CPU_TOPIC
+object + `export default () => <CSShell topic={CPU_TOPIC} />`. Keep it building and behaving
+pixel-identically (it is the canary). Then increment 8 authors 1.1.2 as pure data.
 
-Verify before pushing: npm run build (zero TS errors) and npm test (all pass).
-Then tick increment 6 in CS_SHELL_PLAN.md, add a PATCH_NOTES.md entry, refresh this
+Verify before pushing: npm run build (zero TS errors) and npm test (all 264 pass).
+Then tick increment 7 in CS_SHELL_PLAN.md, add a PATCH_NOTES.md entry, refresh this
 "▶ Resume here" block, and commit + push the session branch.
 ```
 
@@ -115,7 +118,7 @@ src/shared/cs/
   modes/
     StudyMode  FlashcardMode  QuizMode(+Spot)  FillInMode                    ✅ done
     LearnMode  (lessons + scenes config → BoxSchematic / TraceTable)          ✅ done
-    ExamMode                                                                  ⬜
+    ExamMode   (formats, synoptic, self-mark, model answer, command word)     ✅ done
   representations/     the CS "scheme of work" — data-configurable visuals
     BoxSchematic.tsx   generalised CpuDiagram: nodes + containers + flow token ✅ done
     TraceTable.tsx     generalised register/field trace                       ✅ done
@@ -178,7 +181,12 @@ working the whole way** — it is the regression test.
    descriptor to a representation (schematic → `BoxSchematic`, trace → `TraceTable`).
    `CpuArchitecture` renders `<LearnMode lessons={LESSONS} scenes={{ schematic: CPU_SCHEMATIC,
    trace: CPU_TRACE, legend: LEGEND }} />`. Canary green: build clean, 264 tests pass.
-6. ⬜ **ExamMode** (formats, synoptic, self-mark, model answer, command word).
+6. ✅ **ExamMode** lifted into `src/shared/cs/modes/ExamMode.tsx`, self-contained and
+   content-driven: it takes `questions` (exam) + `synoptic` props and reads spec
+   descriptions from the topic context via `SpecBadge`; `MARK_FORMATS` / `COMMAND_GUIDE`
+   come from shared. The pure `resolvePrompt` helper and the `MarkPips` sub-component
+   moved into the mode. The topic's `EXAM_QUESTIONS` / `SYNOPTIC_QUESTIONS` stay as data
+   in `CpuArchitecture.tsx`. Canary green: build clean, 264 tests pass.
 7. ⬜ **Assemble `CSShell`**; reduce `CpuArchitecture.tsx` to
    `export default () => <CSShell topic={CPU_TOPIC} />`, where `CPU_TOPIC` is the
    extracted data. Pixel-identical result = extraction correct.
