@@ -19,6 +19,7 @@ export {
   type MythItem, type Flow, type LessonStep, type Lesson, type InfoItem, type InfoSection,
   type SchematicNode, type SchematicContainer, type SchematicText, type SchematicBus,
   type SchematicConfig, type TraceRow, type TraceConfig,
+  type TopicScenes, type CSTopic,
 } from "./types";
 
 export { BoxSchematic, TraceTable } from "./representations";
@@ -29,3 +30,5 @@ export {
   LearnMode, type LearnScenes,
   FlashcardMode, StudyMode, QuizMode, SpotMistakeMode, FillInMode, ExamMode,
 } from "./modes";
+
+export { CSShell } from "./CSShell";
