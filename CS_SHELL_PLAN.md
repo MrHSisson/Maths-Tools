@@ -1,7 +1,9 @@
 # Computer Science Shell — architecture plan
 
-Status: **in progress** (increments 1–6 landed — utilities, types, glossary/context,
-the six self-contained modes, the data-driven representations, and LearnMode).
+Status: **in progress** (increments 1–7 landed — the CS shell is fully assembled:
+utilities, types incl. the `CSTopic` contract, glossary/context, the six self-contained
+modes, the data-driven representations, LearnMode, and now `CSShell` itself. Next:
+increment 8 authors 1.1.2 as pure data + adds the CSTopic validator).
 This doc is the reference for turning
 the one-off `CpuArchitecture` tool into a reusable **CS shell**, so future
 knowledge-heavy CS sub-topics (1.1.2 → 1.6) are authored as *data*, not bespoke code.
@@ -26,33 +28,38 @@ session start. Do NOT check out or create any other branch. First confirm the ba
 is current (git fetch origin main; the branch should be level with origin/main). Then
 run: npm install (node_modules isn't present in a fresh container).
 
-Where we're up to: increments 1–6 of CS_SHELL_PLAN.md are done — utilities, types,
+Where we're up to: increments 1–7 of CS_SHELL_PLAN.md are DONE — the CS shell is fully
+assembled. src/shared/cs/ owns everything: utilities, types (incl. the CSTopic contract),
 glossary/context, the six self-contained modes (Study/Flashcards/Quiz/Spot/Fill-in/Exam),
-the data-driven representations (BoxSchematic + TraceTable in
-src/shared/cs/representations/), and LearnMode all now live in src/shared/cs/. Every mode
-is content-driven and reads spec/glossary from the topic context. The topic data (LESSONS
-/ CPU_SCHEMATIC / CPU_TRACE / LEGEND / EXAM_QUESTIONS / SYNOPTIC_QUESTIONS / CARDS / CLOZE
-/ MYTHS / SPEC_DESCRIPTIONS / GLOSSARY / INFO_SECTIONS) still lives in CpuArchitecture.tsx,
-which owns the header · nav · beyond-spec · info · activity routing. CpuArchitecture is the
-canary and builds + behaves identically. Read CS_SHELL_PLAN.md first (this block + the
-ticked checklist). Do NOT re-read the whole ~780-line CpuArchitecture.tsx — grep for the
-region being extracted and read only that slice plus the consts it uses.
+LearnMode, the data-driven representations (BoxSchematic + TraceTable), and now
+CSShell.tsx — the header · desktop/mobile nav · burger menu · beyond-spec filtering ·
+info modal · quiz/spot + exam-section chips · activity routing, all wired from a single
+`topic` prop. CpuArchitecture.tsx is now pure data: its content consts + a
+CPU_TOPIC: CSTopic object + `export default () => <CSShell topic={CPU_TOPIC} />` (560
+lines, down from 779). Canary green: build clean, 264 tests pass, behaves identically.
+Read CS_SHELL_PLAN.md first (this block + the ticked checklist + the "author a topic"
+model near the top). Skim CpuArchitecture.tsx's CPU_TOPIC object to see the shape a topic
+must fill. Do NOT re-read the shell internals — they're done.
 
-Next increment (7): assemble CSShell — the final extraction. Introduce a CSTopic type in
-types.ts (id/title/specTags/glossary + all the content arrays: lessons, scenes, cards,
-cloze, myths, exam, synoptic, info) and, in src/shared/cs/CSShell.tsx, lift the shell
-scaffold that currently lives in CpuArchitecture's App(): the header, the desktop/mobile
-nav (top tabs + BottomNav), the burger menu (beyond-spec toggle, hints, copy-link, topic
-info), the info modal, the beyond-spec filtering (coreCards/coreCloze/coreExam), the
-quiz/spot sub-toggle and exam-section chips, and the activity routing that renders the six
-modes + LearnMode. Wire it all from a single `topic` prop, wrapping everything in the
-existing <TopicProvider>. Then reduce CpuArchitecture.tsx to its topic data + a CPU_TOPIC
-object + `export default () => <CSShell topic={CPU_TOPIC} />`. Keep it building and behaving
-pixel-identically (it is the canary). Then increment 8 authors 1.1.2 as pure data.
+Next increment (8): author 1.1.2 (CPU Performance — clock speed, cores, cache) as PURE
+DATA to prove the payoff. Create src/tools/ComputerScience/CpuPerformance.tsx as one
+CSTopic object + `export default () => <CSShell topic={CPU_PERFORMANCE} />`, register it
+in src/registry.ts (subject "Computer Science", enabled:false until reviewed), and fill
+every content array (specTags, glossary, lessons+scenes, cards, cloze, myths, exam,
+synoptic, info) from the OCR J277 1.1.2 spec. Reuse the BoxSchematic/TraceTable
+representations where a diagram helps (e.g. a cache-levels or cores schematic); only add a
+new scene renderer if genuinely needed. ALSO in this increment: add the deferred CSTopic
+validator — src/shared/cs/validate.ts + a vitest test — asserting per topic: every
+card/exam/cloze specTag is declared in specTags; MCQ answerIndex in range; each cloze
+[slot] has a matching word; myth ids unique; predict lesson steps have both a question and
+an answer; every lesson kind maps to a provided scene. NOTE the synoptic subtlety: a
+synoptic question's top-level specTags may name a bare sub-topic tag (e.g. "1.1.1") that
+isn't a specTags key — validate the per-tag markScheme attribution, not the top-level
+synoptic tags, or the CPU canary false-fails.
 
-Verify before pushing: npm run build (zero TS errors) and npm test (all 264 pass).
-Then tick increment 7 in CS_SHELL_PLAN.md, add a PATCH_NOTES.md entry, refresh this
-"▶ Resume here" block, and commit + push the session branch.
+Verify before pushing: npm run build (zero TS errors) and npm test (all pass — count
+grows with the new topic + validator). Then tick increment 8 in CS_SHELL_PLAN.md, add a
+PATCH_NOTES.md entry, refresh this "▶ Resume here" block, and commit + push the branch.
 ```
 
 ---
@@ -113,8 +120,8 @@ src/shared/cs/
                        FlashCard, ClozeExercise, ExamQuestion, SynopticQuestion,
                        MythItem, Flow, LessonStep, Lesson, InfoSection         ✅ done
                        SchematicConfig/Node/Container/Text/Bus, TraceConfig/Row ✅ done
-                       (CSTopic + Scene union added when CSShell is assembled)  ⬜
-  glossary.tsx         GlossaryText(glossary), SpecBadge(descriptions)       ⬜
+                       CSTopic + TopicScenes contract                          ✅ done
+  glossary.tsx         GlossaryText(glossary), SpecBadge(descriptions)          ✅ done (in context.tsx)
   modes/
     StudyMode  FlashcardMode  QuizMode(+Spot)  FillInMode                    ✅ done
     LearnMode  (lessons + scenes config → BoxSchematic / TraceTable)          ✅ done
@@ -123,8 +130,8 @@ src/shared/cs/
     BoxSchematic.tsx   generalised CpuDiagram: nodes + containers + flow token ✅ done
     TraceTable.tsx     generalised register/field trace                       ✅ done
     …                  BarCompare / NumberLine / StackDiagram as needed       ⬜
-  CSShell.tsx          header · nav · beyond-spec · info · activity routing   ⬜
-  validate.ts          CI contract checker for a CSTopic                      ⬜
+  CSShell.tsx          header · nav · beyond-spec · info · activity routing   ✅ done
+  validate.ts          CI contract checker for a CSTopic                      ⬜ (increment 8)
 ```
 
 ---
@@ -187,10 +194,21 @@ working the whole way** — it is the regression test.
    come from shared. The pure `resolvePrompt` helper and the `MarkPips` sub-component
    moved into the mode. The topic's `EXAM_QUESTIONS` / `SYNOPTIC_QUESTIONS` stay as data
    in `CpuArchitecture.tsx`. Canary green: build clean, 264 tests pass.
-7. ⬜ **Assemble `CSShell`**; reduce `CpuArchitecture.tsx` to
-   `export default () => <CSShell topic={CPU_TOPIC} />`, where `CPU_TOPIC` is the
-   extracted data. Pixel-identical result = extraction correct.
-8. ⬜ **Build 1.1.2 as pure data** to prove the payoff, then roll through 1.1.3 → 1.6.
+7. ✅ **`CSShell` assembled** in `src/shared/cs/CSShell.tsx` — the header, desktop
+   top-tabs + mobile `BottomNav`, the burger menu (topic info + beyond-spec toggle), the
+   info modal, the beyond-spec filtering (now inline `topic.cards/cloze/exam.filter`), the
+   quiz/spot sub-toggle, the exam-section chips and the activity routing (six modes +
+   LearnMode) all lift out of `CpuArchitecture`'s `App()` and wire from one `topic` prop,
+   wrapped in `<TopicProvider>`. A new `CSTopic` contract in `types.ts` (id/title/specTags/
+   glossary + lessons/scenes/cards/cloze/myths/exam/synoptic/info) is the whole authoring
+   surface. `CpuArchitecture.tsx` is reduced to its content consts + a `CPU_TOPIC: CSTopic`
+   object + `export default () => <CSShell topic={CPU_TOPIC} />` (560 lines, from 779).
+   Canary green: build clean, 264 tests pass, behaves identically. (validate.ts deferred to
+   increment 8 — see the CI section's synoptic-tag caveat.) Also landed **content-driven
+   activity hiding**: the nav shows only the activities a topic backs (see "Open decisions →
+   Per-topic activity opt-out"), so a data-only topic can omit whole modes for free.
+8. ⬜ **Build 1.1.2 as pure data** to prove the payoff (+ add `validate.ts` alongside),
+   then roll through 1.1.3 → 1.6.
 
 ---
 
@@ -239,6 +257,12 @@ The analog of the maths generator smoke test. For every topic, assert:
 Wire it into the vitest suite so authoring mistakes fail at CI — this is what makes
 "author fast" safe.
 
+**Caveat (found assembling CSShell):** a `SynopticQuestion`'s top-level `specTags` names
+the *sub-topics it spans* (e.g. `["1.1.1", "1.1.2"]`) — bare sub-topic ids that are **not**
+necessarily keys in the topic's `specTags` map (which holds `"1.1.1-R3"`-style requirement
+tags + the synoptic partners). Validate the **per-tag `markScheme` attribution** on synoptic
+questions, not their top-level `specTags`, or the CPU canary false-fails.
+
 ---
 
 ## Open decisions / risks
@@ -249,8 +273,14 @@ Wire it into the vitest suite so authoring mistakes fail at CI — this is what 
 - **Synoptic questions** become cross-topic. The `specTags: string[]` type already
   anticipates it, but once there is >1 topic they should move to a **shared synoptic
   bank** keyed by tag-pairs rather than living inside one topic file.
-- **Per-topic activity opt-out.** A topic declares which activities it provides; the nav
-  auto-hides the rest (same idea as ToolShell hiding tabs for a single sub-tool).
+- **Per-topic activity opt-out.** ✅ **Done** (increment 7). `CSShell` derives which of the
+  six activities a topic backs from its content — Learn needs `lessons`, Study/Cards/Quiz
+  need `cards`, Spot needs `myths`, Fill needs `cloze`, Exam needs `exam`/`synoptic` — and
+  the desktop tabs + mobile `BottomNav` auto-hide the rest (nav hidden entirely for a
+  single-activity topic, same idea as ToolShell hiding tabs for one sub-tool). The Quiz
+  MCQ/Spot sub-toggle and the exam-section chips filter the same way. No extra authoring:
+  omitting a content array hides its activity. `CpuArchitecture` backs all six, so it is
+  unaffected.
 - **Update `CLAUDE.md`** to document the CS shell the way it documents ToolShell, so
   future sessions author topics as data instead of re-deriving all of this.
 

@@ -1,14 +1,6 @@
-import { useState, useEffect, useRef } from "react";
 import {
-  Home, Menu, X,
-  BookOpen, Layers, CheckSquare, PenLine, FileText, Info, GraduationCap,
-} from "lucide-react";
-import {
-  NAVY, TAB_SHADOW, useIsMobile,
-  BeyondBadge, SegRow, registerTooltip, TooltipOverlay,
-  TopicProvider,
-  LearnMode, FlashcardMode, StudyMode, QuizMode, SpotMistakeMode, FillInMode, ExamMode,
-  type CSTooltip, type SpecTag, type FlashCard, type ClozeExercise,
+  CSShell,
+  type CSTopic, type SpecTag, type FlashCard, type ClozeExercise,
   type ExamQuestion, type SynopticQuestion, type MythItem,
   type Lesson, type InfoSection, type SchematicConfig, type TraceConfig,
 } from "../../shared/cs";
@@ -403,26 +395,10 @@ const SYNOPTIC_QUESTIONS: SynopticQuestion[] = [
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
-// HELPERS
-// ─────────────────────────────────────────────────────────────────────────────
-
-const coreCards  = (showBeyond: boolean) => CARDS.filter(c => showBeyond || !c.beyondSpec);
-const coreCloze  = (showBeyond: boolean) => CLOZE.filter(c => showBeyond || !c.beyondSpec);
-const coreExam   = (showBeyond: boolean) => EXAM_QUESTIONS.filter(q => showBeyond || !q.beyondSpec);
-
-// ─────────────────────────────────────────────────────────────────────────────
-// TOUCH-FIRST GLOSSARY TOOLTIP
-// Tap a term to open; tap the backdrop or the × to close. No hover dependency.
-// ─────────────────────────────────────────────────────────────────────────────
-
-// GlossaryText and SpecBadge now come from ../../shared/cs; the topic's GLOSSARY and
-// SPEC_DESCRIPTIONS are supplied via <TopicProvider> in App (below).
-
-// ─────────────────────────────────────────────────────────────────────────────
-// MODE: LEARN — taught, stepped walkthroughs over one shared CPU schematic.
-// This is the *teaching* surface (I-do): explanation + a diagram that highlights
-// the part under discussion, revealed one beat per press. The schematic is the
-// topic's core representation, reused across every lesson for consistency.
+// LESSONS — Learn mode: taught, stepped walkthroughs over one shared CPU
+// schematic. This is the *teaching* surface (I-do): explanation + a diagram that
+// highlights the part under discussion, revealed one beat per press. The schematic
+// is the topic's core representation, reused across every lesson for consistency.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const LESSONS: Lesson[] = [
@@ -534,24 +510,8 @@ const LEGEND = (
   </div>
 );
 
-// LearnMode itself now lives in ../../shared/cs (the CS shell). It is topic-agnostic:
-// App (below) renders it with this topic's LESSONS and a scenes config wiring the
-// CPU schematic / trace representations and the address/data LEGEND.
-
 // ─────────────────────────────────────────────────────────────────────────────
-// RECALL MODES — Flashcards, Study, Quiz, Spot-the-Mistake and Fill-in now come
-// from ../../shared/cs (the CS shell). They are self-contained, driven purely by
-// their content props (cards / myths / exercises) and the topic context provider.
-// ─────────────────────────────────────────────────────────────────────────────
-
-// ─────────────────────────────────────────────────────────────────────────────
-// MODE: EXAM — MCQ/state/short/scenario/extended + a Synoptic section now comes
-// from ../../shared/cs (the CS shell). It is self-contained, driven by its exam +
-// synoptic content props and the topic context provider.
-// ─────────────────────────────────────────────────────────────────────────────
-
-// ─────────────────────────────────────────────────────────────────────────────
-// INFO MODAL
+// INFO — the topic-info modal content.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const INFO_SECTIONS: InfoSection[] = [
@@ -573,207 +533,28 @@ const INFO_SECTIONS: InfoSection[] = [
   ]},
 ];
 
-const InfoModal = ({ onClose }: { onClose: () => void }) => (
-  <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
-    <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 20, width: "100%", maxWidth: 560, maxHeight: "85vh", display: "flex", flexDirection: "column" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px 22px", borderBottom: "1px solid #f3f4f6" }}>
-        <h2 style={{ fontWeight: 800, fontSize: "1.15rem", color: "#111827", margin: 0 }}>1.1.1 CPU Architecture</h2>
-        <button onClick={onClose} style={{ minWidth: 44, minHeight: 44, borderRadius: "50%", border: "none", background: "#f3f4f6", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><X size={18} color="#6b7280" /></button>
-      </div>
-      <div style={{ overflowY: "auto", padding: "18px 22px", display: "flex", flexDirection: "column", gap: 22 }}>
-        {INFO_SECTIONS.map(s => (
-          <div key={s.title}>
-            <h3 style={{ fontWeight: 700, fontSize: "0.95rem", color: "#1e3a8a", margin: "0 0 10px" }}>{s.title}</h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {s.items.map(item => (
-                <div key={item.label} style={{ background: "#f9fafb", borderRadius: 10, padding: "10px 14px" }}>
-                  <p style={{ fontWeight: 700, fontSize: "0.82rem", color: "#374151", margin: "0 0 2px" }}>{item.label}</p>
-                  <p style={{ fontSize: "0.82rem", color: "#6b7280", lineHeight: 1.6, margin: 0 }}>{item.detail}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  </div>
-);
-
 // ─────────────────────────────────────────────────────────────────────────────
-// NAV — compact top segmented (desktop) / fixed bottom bar (mobile)
+// TOPIC — assemble all of the above into one CSTopic. The shell (CSShell) owns
+// every piece of UI: header, nav, beyond-spec filtering, info modal and the
+// activity routing that renders the six modes + LearnMode. This file is now pure
+// data (the payoff of the CS-shell extraction — see CS_SHELL_PLAN.md).
 // ─────────────────────────────────────────────────────────────────────────────
 
-const ACTIVITIES = [
-  { key: "learn",     label: "Learn",  icon: GraduationCap, blurb: "Taught walkthroughs with a diagram — start here to understand it before testing yourself." },
-  { key: "study",     label: "Study",  icon: BookOpen,    blurb: "Read the question-and-answer cards — recognition, low effort." },
-  { key: "flashcard", label: "Cards",  icon: Layers,      blurb: "Active recall — answer before you flip." },
-  { key: "quiz",      label: "Quiz",   icon: CheckSquare, blurb: "MCQ warm-up — a high score here isn't exam-readiness." },
-  { key: "fillin",    label: "Fill",   icon: PenLine,     blurb: "Tap a term, then tap a slot to place it." },
-  { key: "exam",      label: "Exam",   icon: FileText,    blurb: "Real J277 formats, tariffs and synoptic questions." },
-] as const;
-
-const EXAM_SECTIONS = [
-  { key: "all", label: "All" },
-  { key: "mcq", label: "MCQ" },
-  { key: "state", label: "State" },
-  { key: "short", label: "Short" },
-  { key: "scenario", label: "Scenario" },
-  { key: "extended", label: "Extended" },
-  { key: "synoptic", label: "Synoptic" },
-];
-
-const BottomNav = ({ activity, setActivity }: { activity: string; setActivity: (a: string) => void }) => (
-  <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 90, background: "#fff", borderTop: "1px solid #e5e7eb", boxShadow: "0 -4px 20px rgba(0,0,0,0.06)", display: "flex", paddingBottom: "env(safe-area-inset-bottom)" }}>
-    {ACTIVITIES.map(a => {
-      const active = activity === a.key; const Icon = a.icon;
-      return (
-        <button key={a.key} onClick={() => setActivity(a.key)}
-          style={{ flex: 1, minWidth: 0, minHeight: 56, border: "none", background: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3, color: active ? "#1e3a8a" : "#9ca3af", padding: "6px 1px" }}>
-          <Icon size={19} strokeWidth={active ? 2.4 : 2} />
-          <span style={{ fontSize: "0.62rem", fontWeight: 700 }}>{a.label}</span>
-        </button>
-      );
-    })}
-  </div>
-);
-
-const DesktopTabs = ({ activity, setActivity }: { activity: string; setActivity: (a: string) => void }) => (
-  <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
-    {ACTIVITIES.map(a => {
-      const active = activity === a.key; const Icon = a.icon;
-      return (
-        <button key={a.key} onClick={() => setActivity(a.key)}
-          style={{ minHeight: 48, display: "flex", alignItems: "center", gap: 8, padding: "0 22px", borderRadius: 12, fontWeight: 700, fontSize: "1.05rem", border: "none", cursor: "pointer", transition: "all 0.15s",
-            background: active ? NAVY : "#fff", color: active ? "#fff" : "#1f2937", boxShadow: TAB_SHADOW }}>
-          <Icon size={18} /> {a.label}
-        </button>
-      );
-    })}
-  </div>
-);
-
-// ─────────────────────────────────────────────────────────────────────────────
-// MAIN APP
-// ─────────────────────────────────────────────────────────────────────────────
+const CPU_TOPIC: CSTopic = {
+  id: "1.1.1",
+  title: "CPU Architecture",
+  specTags: SPEC_DESCRIPTIONS,
+  glossary: GLOSSARY,
+  lessons: LESSONS,
+  scenes: { schematic: CPU_SCHEMATIC, trace: CPU_TRACE, legend: LEGEND },
+  cards: CARDS,
+  cloze: CLOZE,
+  myths: MYTHS,
+  exam: EXAM_QUESTIONS,
+  synoptic: SYNOPTIC_QUESTIONS,
+  info: INFO_SECTIONS,
+};
 
 export default function App() {
-  const isMobile = useIsMobile();
-  const [activity, setActivity] = useState("learn");
-  const [examSection, setExamSection] = useState("all");
-  const [quizMode, setQuizMode] = useState("mcq");   // "mcq" | "spot"
-  const [showHints, setShowHints] = useState(true);
-  const [showBeyond, setShowBeyond] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [infoOpen, setInfoOpen] = useState(false);
-  const [tip, setTip] = useState<CSTooltip | null>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => { registerTooltip(setTip); return () => registerTooltip(null); }, []);
-
-  useEffect(() => {
-    const h = (e: MouseEvent) => { if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false); };
-    if (menuOpen) document.addEventListener("mousedown", h);
-    return () => document.removeEventListener("mousedown", h);
-  }, [menuOpen]);
-
-  const cards = coreCards(showBeyond);
-  const cloze = coreCloze(showBeyond);
-  const exam = coreExam(showBeyond);
-  const activeBlurb = activity === "quiz" && quizMode === "spot"
-    ? "Spot the mistake — judge each statement, then read the correction. Targets the classic traps."
-    : (ACTIVITIES.find(a => a.key === activity)?.blurb ?? "");
-  const contentKey = `${activity}-${examSection}-${quizMode}-${showBeyond}`;
-
-  return (
-    <TopicProvider value={{ glossary: GLOSSARY, specDescriptions: SPEC_DESCRIPTIONS }}>
-      {tip && <TooltipOverlay tip={tip} onClose={() => setTip(null)} />}
-
-      {/* Header */}
-      <div className="bg-blue-900 shadow-lg" style={{ position: "sticky", top: 0, zIndex: 95 }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: isMobile ? "6px 10px" : "12px 32px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <button onClick={() => { window.location.href = "/"; }} className="text-white hover:bg-blue-800 rounded-lg transition-colors" style={{ minHeight: 44, display: "flex", alignItems: "center", gap: 8, padding: "0 10px" }}>
-            <Home size={24} /><span className="font-semibold" style={{ fontSize: "1.1rem" }}>Home</span>
-          </button>
-          <div className="relative" ref={menuRef}>
-              <button onClick={() => setMenuOpen(o => !o)} className="text-white hover:bg-blue-800 rounded-lg transition-colors" style={{ minWidth: 44, minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center" }}>{menuOpen ? <X size={24} /> : <Menu size={24} />}</button>
-              {menuOpen && (
-                <div style={{ position: "absolute", right: 0, top: "calc(100% + 8px)", background: "#fff", borderRadius: 12, boxShadow: "0 8px 32px rgba(0,0,0,0.15)", border: "1px solid #e5e7eb", minWidth: 240, zIndex: 100, overflow: "hidden" }}>
-                  <button onClick={() => { setInfoOpen(true); setMenuOpen(false); }} style={{ width: "100%", minHeight: 48, display: "flex", alignItems: "center", gap: 10, padding: "0 16px", background: "none", border: "none", borderBottom: "1px solid #f3f4f6", cursor: "pointer", fontSize: "0.88rem", fontWeight: 600, color: "#374151" }}><Info size={16} color="#9ca3af" /> Topic information</button>
-                  <label style={{ width: "100%", minHeight: 48, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "0 16px", cursor: "pointer" }}>
-                    <span style={{ fontSize: "0.88rem", fontWeight: 600, color: "#374151" }}>Beyond spec</span>
-                    <div onClick={e => { e.preventDefault(); setShowBeyond(v => !v); }} style={{ width: 44, height: 24, borderRadius: 12, background: showBeyond ? "#1e3a8a" : "#d1d5db", position: "relative", flexShrink: 0 }}>
-                      <div style={{ position: "absolute", top: 4, width: 16, height: 16, borderRadius: "50%", background: "#fff", transition: "transform 0.2s", transform: showBeyond ? "translateX(24px)" : "translateX(4px)" }} />
-                    </div>
-                  </label>
-                </div>
-              )}
-            </div>
-        </div>
-      </div>
-
-      {infoOpen && <InfoModal onClose={() => setInfoOpen(false)} />}
-
-      {/* Page */}
-      <div style={{ minHeight: "100vh", backgroundColor: "#f5f3f0", padding: isMobile ? "14px 12px 84px" : "24px 20px 40px" }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-
-          {/* Page title — big centred heading + divider, matching the maths tools */}
-          <h1 style={{ textAlign: "center", fontWeight: 800, color: "#000", margin: isMobile ? "2px 0 8px" : "4px 0 12px", fontSize: isMobile ? "1.7rem" : "3rem", lineHeight: 1.12 }}>
-            1.1.1 CPU Architecture
-          </h1>
-          <div style={{ height: 1, background: "#d1d5db", maxWidth: 880, margin: isMobile ? "0 auto 14px" : "0 auto 22px" }} />
-
-          {/* Desktop tabs (mobile uses bottom bar) */}
-          {!isMobile && (
-            <div style={{ marginBottom: 18 }}>
-              <DesktopTabs activity={activity} setActivity={setActivity} />
-            </div>
-          )}
-
-          {/* Beyond-spec banner */}
-          {showBeyond && (
-            <div style={{ maxWidth: 720, margin: "0 auto 12px", background: "#fffbeb", border: "1.5px solid #fde68a", borderRadius: 10, padding: "8px 14px", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-              <BeyondBadge /><span style={{ fontSize: "0.8rem", color: "#92400e", fontWeight: 600 }}>content included — not required for 1.1.1</span>
-            </div>
-          )}
-
-          {/* Activity blurb — makes the rigor of each mode explicit */}
-          <p style={{ textAlign: "center", fontSize: "0.82rem", color: "#6b7280", fontWeight: 500, margin: "0 auto 14px", maxWidth: 560, lineHeight: 1.5 }}>{activeBlurb}</p>
-
-          {/* Quiz sub-controls — MCQ warm-up vs Spot-the-Mistake */}
-          {activity === "quiz" && (
-            <div style={{ display: "flex", justifyContent: "center", marginBottom: 18 }}>
-              <SegRow options={[{ key: "mcq", label: "Multiple choice" }, { key: "spot", label: "Spot the mistake" }]} value={quizMode} onChange={setQuizMode} />
-            </div>
-          )}
-
-          {/* Exam / mode sub-controls */}
-          {activity === "exam" && (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, marginBottom: 18 }}>
-              <SegRow options={EXAM_SECTIONS} value={examSection} onChange={setExamSection} />
-              <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
-                <div onClick={() => setShowHints(v => !v)} style={{ width: 44, height: 24, borderRadius: 12, background: showHints ? "#1e3a8a" : "#d1d5db", position: "relative" }}>
-                  <div style={{ position: "absolute", top: 4, width: 16, height: 16, borderRadius: "50%", background: "#fff", transition: "transform 0.2s", transform: showHints ? "translateX(24px)" : "translateX(4px)" }} />
-                </div>
-                <span style={{ fontSize: "0.82rem", fontWeight: 600, color: "#374151" }}>Hints</span>
-              </label>
-            </div>
-          )}
-
-          {/* Content */}
-          {activity === "learn"     && <LearnMode     key={contentKey} lessons={LESSONS} scenes={{ schematic: CPU_SCHEMATIC, trace: CPU_TRACE, legend: LEGEND }} />}
-          {activity === "study"     && <StudyMode     key={contentKey} cards={cards} />}
-          {activity === "flashcard" && <FlashcardMode key={contentKey} cards={cards} />}
-          {activity === "quiz"      && (quizMode === "spot"
-            ? <SpotMistakeMode key={contentKey} myths={MYTHS} />
-            : <QuizMode        key={contentKey} cards={cards} />)}
-          {activity === "fillin"    && <FillInMode    key={contentKey} exercises={cloze} />}
-          {activity === "exam"      && <ExamMode      key={contentKey} questions={exam} synoptic={SYNOPTIC_QUESTIONS} section={examSection} showHints={showHints} />}
-
-        </div>
-      </div>
-
-      {isMobile && <BottomNav activity={activity} setActivity={setActivity} />}
-    </TopicProvider>
-  );
+  return <CSShell topic={CPU_TOPIC} />;
 }

@@ -4,6 +4,8 @@
 // CS_SHELL_PLAN.md. Spec tags are plain strings (each topic defines its own).
 // ─────────────────────────────────────────────────────────────────────────────
 
+import type { ReactNode } from "react";
+
 export type SpecTag = string;   // e.g. "1.1.1-R3"
 
 // Exam formats — the same set for every CS topic (colours are shell-level).
@@ -167,4 +169,35 @@ export interface TraceConfig {
   roleColor: Record<string, string>;
   roleTint: Record<string, string>;
   maxWidth?: number;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CSTopic — the whole content contract for a knowledge/revision sub-topic. A tool
+// file supplies one of these and renders <CSShell topic={…} />; everything the
+// student sees (nav, glossary, self-marking, model answers, the crash-safe
+// steppers) comes from the shell. This is the CS analog of a maths tool's config.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// The scenes a topic's lessons draw on — schematic (kind:"diagram") and/or trace
+// (kind:"trace"), plus an optional shared legend. Structurally the LearnMode's
+// LearnScenes; kept here so CSTopic is self-describing.
+export interface TopicScenes {
+  schematic?: SchematicConfig;
+  trace?: TraceConfig;
+  legend?: ReactNode;
+}
+
+export interface CSTopic {
+  id: string;                                 // "1.1.1"
+  title: string;                              // "CPU Architecture" (shown as "1.1.1 CPU Architecture")
+  specTags: Record<SpecTag, string>;          // tag → description (the SpecBadge tooltips)
+  glossary: Record<string, string>;           // term → definition (touch-first tooltip)
+  lessons: Lesson[];                          // Learn mode: taught, stepped walkthroughs
+  scenes: TopicScenes;                        // representations the lessons reference
+  cards: FlashCard[];                         // Study / Flashcards / Quiz
+  cloze: ClozeExercise[];                     // Fill-in
+  myths: MythItem[];                          // Spot-the-Mistake
+  exam: ExamQuestion[];                       // Exam mode
+  synoptic: SynopticQuestion[];               // Exam mode — cross-topic synoptic section
+  info: InfoSection[];                        // the topic-info modal
 }

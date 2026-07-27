@@ -244,6 +244,34 @@ in custom renderers.
 > own tools, and its own shell (`CSShell`, not `ToolShell`). It's younger than the
 > Maths side — expect it to grow fast.
 
+## 2026-07-27 — CS shell increment 7: CSShell assembled (the final extraction)
+Completed the `CSShell` extraction — the CS revision shell is now a real, reusable shell.
+Introduced the **`CSTopic`** contract in `src/shared/cs/types.ts` (`id` / `title` /
+`specTags` / `glossary` + all the content arrays — `lessons`, `scenes`, `cards`, `cloze`,
+`myths`, `exam`, `synoptic`, `info`), the whole authoring surface for a knowledge topic.
+Built **`src/shared/cs/CSShell.tsx`** by lifting the shell scaffold that lived in
+`CpuArchitecture`'s `App()`: the sticky header + home button, the desktop top-tabs +
+mobile `BottomNav`, the burger menu (topic-info + beyond-spec toggle), the topic-info
+modal, the beyond-spec filtering (now inline `topic.cards/cloze/exam.filter`), the
+quiz/spot sub-toggle, the exam-section chips + hints toggle, and the activity routing that
+renders the six modes + `LearnMode` — all wired from a single `topic` prop and wrapped in
+`<TopicProvider>` (the `SPEC_DESCRIPTIONS` / `GLOSSARY` wiring folded in). Reduced
+**`CpuArchitecture.tsx` to pure data**: its content consts + a `CPU_TOPIC: CSTopic` object
++ `export default () => <CSShell topic={CPU_TOPIC} />` — **560 lines, down from 779**, and
+it's the canary: builds clean, 264 tests pass, behaves pixel-identically. Exported
+`CSShell` + the `CSTopic` / `TopicScenes` types from the barrel. Also added **content-driven
+activity hiding**: `CSShell` derives which of the six activities a topic backs from its data
+(Learn↔`lessons`, Study/Cards/Quiz↔`cards`, Spot↔`myths`, Fill↔`cloze`, Exam↔`exam`/`synoptic`)
+and auto-hides the rest from the desktop tabs and mobile `BottomNav` (nav hidden entirely for
+a single-activity topic); the Quiz MCQ/Spot sub-toggle and the exam-section chips filter the
+same way — so a data-only topic can omit whole modes with no extra config. `CpuArchitecture`
+backs all six, so it's unchanged. The `validate.ts` CSTopic
+CI checker is deferred to increment 8 (documented in `CS_SHELL_PLAN.md`, with the synoptic
+top-level-`specTags` caveat that would otherwise false-fail the canary). Ticked increment 7
+in `CS_SHELL_PLAN.md` and refreshed the Resume-here block. **Next (increment 8):** author
+**1.1.2 CPU Performance** as one pure-data `CSTopic` — the payoff proof — and add the
+CSTopic validator alongside it.
+
 ## 2026-07-27 — CS shell increment 6: ExamMode
 Continued the `CSShell` extraction from `CpuArchitecture` (the canary). Lifted **ExamMode**
 — the exam/synoptic activity: command-word chips with a "what it's asking" guide, mark
