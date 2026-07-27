@@ -1,10 +1,44 @@
 # Computer Science Shell — architecture plan
 
-Status: **in progress** (increment 1 landed). This doc is the reference for turning
+Status: **in progress** (increments 1–3 landed — utilities, types, glossary/context,
+and the five self-contained recall modes). This doc is the reference for turning
 the one-off `CpuArchitecture` tool into a reusable **CS shell**, so future
 knowledge-heavy CS sub-topics (1.1.2 → 1.6) are authored as *data*, not bespoke code.
 
 Read this before building the next CS tool.
+
+---
+
+## ▶ Resume here — next session (keep current)
+
+This is the copy-paste kickoff for the next conversation, wrapped in the house
+delimiters (`>>>` … `<<<`). **Whoever lands an increment rewrites this block** so it
+always points at the true next step (see the end-of-session rule in `PATCH_NOTES.md`).
+If the shell is finished, replace this with "Shell complete — see stage 8 (author
+topics as data)".
+
+>>>
+Continue the CS tool shell build-out (Maths-Tools repo).
+
+Setup: check out branch `claude/cs-tool-shell-stages-i5vb1n`, then run `npm install`
+(node_modules isn't present in a fresh container).
+
+Where we're up to: increments 1–3 of CS_SHELL_PLAN.md are done — utilities, types,
+glossary/context, and the five self-contained recall modes (Study/Flashcards/Quiz/
+Spot/Fill-in) now live in src/shared/cs/. CpuArchitecture is the canary and builds +
+behaves identically. Read CS_SHELL_PLAN.md first (this block + the ticked checklist).
+Do NOT re-read the whole ~1,600-line CpuArchitecture.tsx — grep for the component
+being extracted and read only that slice.
+
+Next increment (4): representations. Generalise CpuDiagram (in CpuArchitecture.tsx)
+into a data-driven BoxSchematic under src/shared/cs/representations/, lift TraceTable,
+and move the CPU node layout (PARTS / ROLE_COLOR / ROLE_TINT) into topic data. Keep
+CpuArchitecture building and behaving identically.
+
+Verify before pushing: `npm run build` (zero TS errors) and `npm test` (all pass).
+Then tick increment 4 in CS_SHELL_PLAN.md, add a PATCH_NOTES.md entry, refresh this
+"▶ Resume here" block, and commit + push to the same branch.
+<<<
 
 ---
 
@@ -66,7 +100,7 @@ src/shared/cs/
                        (CSTopic + Scene union added when CSShell is assembled)  ⬜
   glossary.tsx         GlossaryText(glossary), SpecBadge(descriptions)       ⬜
   modes/
-    StudyMode  FlashcardMode  QuizMode(+Spot)  FillInMode                    ⬜
+    StudyMode  FlashcardMode  QuizMode(+Spot)  FillInMode                    ✅ done
     LearnMode  ExamMode                                                       ⬜
   representations/     the CS "scheme of work" — data-configurable visuals
     BoxSchematic.tsx   generalised CpuDiagram: nodes + edges + flow tokens    ⬜
@@ -114,8 +148,11 @@ working the whole way** — it is the regression test.
 2. ✅ **`types.ts`** — shared type contract lifted (types + `MARK_FORMATS` +
    `COMMAND_GUIDE`). `CpuArchitecture` imports them; its `GlossaryText` / `SpecBadge`
    stay as thin topic-bound wrappers (they fold into `CSShell` in step 7).
-3. ⬜ **Self-contained modes** — Study, Flashcard, Quiz+Spot, FillIn — parametrised by
-   props (cards / cloze / myths / glossary).
+3. ✅ **Self-contained modes** — Study, Flashcard, Quiz+Spot, FillIn — lifted into
+   `src/shared/cs/modes/`, parametrised purely by their content props (cards / cloze /
+   myths) and reading glossary/spec data from the topic context. `buildChoices` now
+   takes the visible card pool instead of a topic global. `CpuArchitecture` imports the
+   five modes and behaves identically (canary green: build clean, 264 tests pass).
 4. ⬜ **Representations** — `CpuDiagram → BoxSchematic`, `TraceTable`; move the CPU node
    layout into topic data.
 5. ⬜ **LearnMode** with the scene registry (predict/flow/analogy engine is already generic).

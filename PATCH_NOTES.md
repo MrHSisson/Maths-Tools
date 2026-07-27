@@ -244,6 +244,18 @@ in custom renderers.
 > own tools, and its own shell (`CSShell`, not `ToolShell`). It's younger than the
 > Maths side — expect it to grow fast.
 
+## 2026-07-27 — CS shell increment 3: self-contained recall modes
+Continued the `CSShell` extraction from `CpuArchitecture` (the canary). Lifted the
+five recall modes — **Study, Flashcards, Quiz, Spot-the-Mistake and Fill-in** — out
+of the tool and into **`src/shared/cs/modes/`**, each parametrised purely by its
+content prop (`cards` / `myths` / `exercises`) and reading glossary/spec data from the
+topic context provider. The one topic-coupled helper (`buildChoices`, which drew MCQ
+distractors from a module global) now takes the visible card pool as an argument, so
+the modes carry no topic state. `CpuArchitecture.tsx` drops ~480 lines and imports the
+modes from `../../shared/cs`; it builds clean and behaves identically (264 tests pass).
+Ticked increment 3 in `CS_SHELL_PLAN.md`. Next: representations (`BoxSchematic`,
+`TraceTable`), then LearnMode and ExamMode, then assemble `CSShell`.
+
 ## 2026-07-24 — CPU Architecture tool + CS shell foundations
 The session that turned CS from a single quiz into a real strand. Built the
 **`CpuArchitecture`** tool (`/cpu-architecture`, enabled) — spec-tagged,
@@ -279,3 +291,7 @@ At the **end of a session**, before you push:
 3. Update the **"Where we're up to"** snapshot if the current focus moved.
 4. If the work opened or closed a roadmap item, reflect that in `DEV_ROADMAP.md`
    too — this file is the history, that file is the plan.
+5. If the work is part of a **multi-session build with a clear next step**, refresh the
+   living **"▶ Resume here"** block in that build's plan doc (e.g. `CS_SHELL_PLAN.md`) and
+   give the user a copy-paste kickoff block in chat — see *"Ending a session — leave a
+   clear successor"* in `CLAUDE.md`.
