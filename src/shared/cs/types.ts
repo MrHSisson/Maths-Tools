@@ -103,3 +103,68 @@ export interface Lesson {
 
 export interface InfoItem { label: string; detail: string }
 export interface InfoSection { title: string; items: InfoItem[] }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Representations — the CS "scheme of work": data-configurable visuals a topic
+// picks from. See CS_SHELL_PLAN.md ("representations as data"). A brand-new
+// representation needs a reason; extend an existing one where possible.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── Box schematic (generalised CpuDiagram): labelled boxes that highlight, with
+//    a value token flowing along a route. Nodes are keyed by id; a Flow names two
+//    node ids. Roles key into the topic's roleColor / roleTint palettes.
+export interface SchematicNode {
+  id: string;
+  x: number; y: number; w: number; h: number;
+  label: string;
+  role: string;                    // key into SchematicConfig.roleColor / roleTint
+}
+
+// A dashed (or solid) grouping box drawn behind the nodes, with an optional
+// corner label — e.g. the "CPU" boundary around the registers.
+export interface SchematicContainer {
+  x: number; y: number; w: number; h: number;
+  rx?: number;
+  dashed?: boolean;
+  stroke?: string;
+  label?: string;
+  labelX?: number; labelY?: number;
+  labelSize?: number; labelColor?: string;
+}
+
+// A free-standing text annotation (e.g. "REGISTERS", "main memory").
+export interface SchematicText {
+  x: number; y: number; text: string;
+  size?: number; weight?: number; color?: string;
+  anchor?: "start" | "middle" | "end";
+  letterSpacing?: string;
+}
+
+// A connecting line that thickens/darkens when any of its endpoints are hot.
+export interface SchematicBus {
+  x1: number; y1: number; x2: number; y2: number;
+  hotWhen?: string[];              // node ids whose highlight turns the bus hot
+  hotStroke?: string; coldStroke?: string;
+  hotWidth?: number; coldWidth?: number;
+}
+
+export interface SchematicConfig {
+  viewBox: string;
+  maxWidth?: number;
+  roleColor: Record<string, string>;
+  roleTint: Record<string, string>;
+  nodes: SchematicNode[];
+  containers?: SchematicContainer[];
+  texts?: SchematicText[];
+  buses?: SchematicBus[];
+}
+
+// ── Trace table: register/field contents shown row by row, updated per beat.
+export interface TraceRow { key: string; role: string; holds: string }
+
+export interface TraceConfig {
+  rows: TraceRow[];
+  roleColor: Record<string, string>;
+  roleTint: Record<string, string>;
+  maxWidth?: number;
+}
