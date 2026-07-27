@@ -21,8 +21,9 @@ import { type Lesson, type SchematicConfig, type TraceConfig } from "../types";
 // engine picks the right one per lesson. `legend` (optional) is shown under the
 // scene on any beat with `legend: true`.
 export interface LearnScenes {
-  schematic?: SchematicConfig;   // kind: "diagram" (default) lessons
-  trace?: TraceConfig;           // kind: "trace" lessons
+  schematic?: SchematicConfig;                  // default schematic for diagram lessons
+  schematics?: Record<string, SchematicConfig>; // named schematics a lesson picks via `scene`
+  trace?: TraceConfig;                          // kind: "trace" lessons
   legend?: ReactNode;
 }
 
@@ -38,6 +39,10 @@ export const LearnMode = ({ lessons, scenes }: { lessons: Lesson[]; scenes: Lear
   const s = Math.min(step, maxStep);
   const cur = lesson.steps[s];
   const isTrace = lesson.kind === "trace";
+  // A diagram lesson picks a named schematic via `scene`, else the topic default.
+  // A "text" lesson (or one that resolves to nothing) shows no scene panel at all.
+  const schematic = lesson.scene ? scenes.schematics?.[lesson.scene] : scenes.schematic;
+  const showScene = lesson.kind !== "text" && (isTrace ? !!scenes.trace : !!schematic);
   const gated = !!cur.predict && !predicted;            // must predict before advancing
   const showFlow = !!cur.flow && !gated;
 
@@ -77,12 +82,14 @@ export const LearnMode = ({ lessons, scenes }: { lessons: Lesson[]; scenes: Lear
           <div style={{ display: "flex", gap: 6 }}>{lesson.specTags.map(t => <SpecBadge key={t} tag={t} />)}</div>
         </div>
 
-        <div style={{ background: "#f8fafc", borderRadius: 12, padding: "14px 10px 10px" }}>
-          {isTrace && scenes.trace
-            ? <TraceTable config={scenes.trace} snapshot={cur.trace} hot={cur.highlight} />
-            : scenes.schematic && <BoxSchematic config={scenes.schematic} highlight={gated ? [] : cur.highlight} flow={showFlow ? cur.flow : undefined} flowKey={s} />}
-          {cur.legend && scenes.legend}
-        </div>
+        {showScene && (
+          <div style={{ background: "#f8fafc", borderRadius: 12, padding: "14px 10px 10px" }}>
+            {isTrace && scenes.trace
+              ? <TraceTable config={scenes.trace} snapshot={cur.trace} hot={cur.highlight} />
+              : schematic && <BoxSchematic config={schematic} highlight={gated ? [] : cur.highlight} flow={showFlow ? cur.flow : undefined} flowKey={s} />}
+            {cur.legend && scenes.legend}
+          </div>
+        )}
 
         {/* explanation — one beat at a time; predict steps ask first (You-do) */}
         {gated ? (

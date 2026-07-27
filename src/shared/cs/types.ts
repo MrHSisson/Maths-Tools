@@ -84,8 +84,10 @@ export interface MythItem {
   why: string;               // the correction / explanation shown after answering
 }
 
-// A value token that animates between two diagram parts on a lesson beat.
-export interface Flow { from: string; to: string; label: string; kind?: "addr" | "data" }
+// A value token that animates between two diagram parts on a lesson beat. `kind`
+// keys into the schematic's roleColor/roleTint palette — "addr"/"data" carry the
+// usual blue/green; "slow" flags a costly transfer (e.g. a cache miss out to RAM).
+export interface Flow { from: string; to: string; label: string; kind?: "addr" | "data" | "slow" }
 
 export interface LessonStep {
   text: string;
@@ -98,7 +100,9 @@ export interface LessonStep {
 
 export interface Lesson {
   id: string; title: string; specTags: SpecTag[];
-  kind?: "diagram" | "trace";
+  kind?: "diagram" | "trace" | "text";  // "text" = a deliberately diagram-free lesson
+  scene?: string;                     // diagram lessons: names an entry in scenes.schematics
+                                      // (omit to use the topic's default scenes.schematic)
   analogy?: string;                   // "Think of it like…" concrete anchor
   steps: LessonStep[];
 }
@@ -182,7 +186,8 @@ export interface TraceConfig {
 // (kind:"trace"), plus an optional shared legend. Structurally the LearnMode's
 // LearnScenes; kept here so CSTopic is self-describing.
 export interface TopicScenes {
-  schematic?: SchematicConfig;
+  schematic?: SchematicConfig;                  // default schematic for diagram lessons
+  schematics?: Record<string, SchematicConfig>; // named schematics a lesson picks via `scene`
   trace?: TraceConfig;
   legend?: ReactNode;
 }

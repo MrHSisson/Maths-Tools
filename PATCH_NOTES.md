@@ -22,7 +22,7 @@ subjects — repository map". Keep the split even when a session only touches on
 
 ---
 
-## Where we're up to (snapshot — 2026-07-25)
+## Where we're up to (snapshot — 2026-07-27)
 
 **Maths — current focus:** the **PDF generators** (`Times Tables`, `Functional
 Skills`) had a big UI/quality pass in July; the **techniques engine** and
@@ -31,12 +31,13 @@ Skills`) had a big UI/quality pass in July; the **techniques engine** and
 `Mixed Strategies` and `NonLinearSimEq`. Migration of the last old-shell tools
 (see `CLAUDE.md` → "migrate an old tool") is the standing backlog.
 
-**Computer Science — current focus:** the strand now has **two tools** —
-`SystemArchitecture` (the original quiz) and the new `CpuArchitecture` (OCR J277
-1.1.1) — and its own **`CSShell`** (`src/shared/cs/`) is being extracted so future
-sub-topics are authored as *data*, not bespoke code. The shell extraction is
-**in progress** (`CS_SHELL_PLAN.md`); the next tools and topics are in
-`CS_ROADMAP.md`. The landing page now bands tools by subject.
+**Computer Science — current focus:** the strand now has **three tools** —
+`SystemArchitecture` (the original quiz), `CpuArchitecture` (OCR J277 1.1.1) and
+`CpuPerformance` (OCR J277 1.1.2) — on its own **`CSShell`** (`src/shared/cs/`).
+The shell extraction is **done**, and the payoff is proven: 1.1.2 is authored
+entirely as a `CSTopic` data object, guarded by the `validateTopic` CI check.
+Future sub-topics (1.1.3 → 1.6, `CS_ROADMAP.md`) follow the same data-only pattern.
+The landing page bands tools by subject.
 
 **Best next steps** are tracked in `DEV_ROADMAP.md`; this file records what's
 already done.
@@ -243,6 +244,38 @@ in custom renderers.
 > subject with its own pedagogy (knowledge/recall, not question generation), its
 > own tools, and its own shell (`CSShell`, not `ToolShell`). It's younger than the
 > Maths side — expect it to grow fast.
+
+## 2026-07-27 — CS shell increment 8: 1.1.2 CPU Performance as pure data + the CSTopic validator
+The payoff increment — the first sub-topic authored **entirely as data** on the `CSTopic`
+contract, no bespoke code. Added **`src/tools/ComputerScience/CpuPerformance.tsx`**: one
+`CPU_PERFORMANCE: CSTopic` object + `export const __topic` + `export default () => <CSShell
+topic={CPU_PERFORMANCE} />`, registered in `src/registry.ts` (`enabled: false` pending the
+user's content review) and added to `CS_TOOLS` in `organisation.test.ts`. Content is the OCR
+J277 **1.1.2** spec — clock speed, cache size, number of cores, and combining them: specTags
+(the four requirements + bare synoptic partners 1.1.1 / 1.1.3 / 1.2.1), glossary (+beyond-spec
+thread/bottleneck/hit/miss/overclocking), **five Learn lessons** — two with their own FOCUSED
+`BoxSchematic` (a CPU/cache/RAM diagram contrasting a short cache "hit" hop with a long "miss"
+trip out to RAM, and a four-core diagram for parallel work), the overview / clock-speed /
+combining lessons deliberately diagram-free — 12 core cards (+2 beyond-spec), 4 cloze, 5 myths,
+8 exam questions (mcq → an 8-mark extended response, with mark schemes + `**bold**` model
+answers) and 2 synoptic questions spanning 1.1.1 and 1.1.3 with per-tag attribution. Also
+landed the deferred **`src/shared/cs/validate.ts`** (`validateTopic`) + **`src/tests/cs-topics.test.ts`**,
+which discovers every `__topic`-exporting CS tool and asserts: card/exam/cloze specTags are
+declared; MCQ `answerIndex` is in range; each cloze `[slot]` has a matching word; myth/card/
+exam/cloze ids are unique; predict beats carry both a question and an answer; every diagram
+lesson resolves a schematic (or is deliberately `kind: "text"`); and — the documented caveat —
+the **per-tag synoptic markScheme attribution** is declared (not the bare top-level synoptic
+`specTags`, which would false-fail the 1.1.1 canary). Added `export const __topic` to
+`CpuArchitecture.tsx` too, so the canary is validated the same way. **Small shell enhancement
+to support the two-diagram design:** `TopicScenes` gained a `schematics` map and `Lesson` a
+`scene` key (a diagram lesson picks a named schematic; omitting it falls back to the topic's
+single `schematic`, so the 1.1.1 canary is untouched) plus a `kind: "text"` for deliberately
+diagram-free lessons; `LearnMode` resolves per lesson and drops the scene panel entirely for
+text lessons. Both new diagrams were rendered and eyeballed before pushing. Green: build clean,
+**268 tests pass** (+4). Ticked
+increment 8 in `CS_SHELL_PLAN.md` and refreshed the Resume-here block. **Next (increment 9):**
+roll the same data-only pattern through 1.1.3 → 1.6, and consider moving synoptic to a shared
+cross-topic bank now that there is >1 topic.
 
 ## 2026-07-27 — CS shell increment 7: CSShell assembled (the final extraction)
 Completed the `CSShell` extraction — the CS revision shell is now a real, reusable shell.

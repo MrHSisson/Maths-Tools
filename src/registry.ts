@@ -117,6 +117,7 @@ export const CATEGORIES: CategoryMeta[] = [
     tools: [
       { id: 'system architecture', path: '/system-architecture', name: '1.1 - System Architectures', description: 'A tool for learning the 1.1 content for system architectures', load: () => import('./tools/ComputerScience/SystemArchitecture') },
       { id: 'cpu-architecture', path: '/cpu-architecture', name: '1.1.1 - CPU Architecture', description: 'Spec-tagged, exam-realistic, mobile-first revision for OCR J277 1.1.1 CPU architecture', load: () => import('./tools/ComputerScience/CpuArchitecture') },
+      { id: 'cpu-performance', path: '/cpu-performance', name: '1.1.2 - CPU Performance', description: 'Clock speed, cache size and cores — and why the CPU with the biggest single number isn\'t always the fastest', enabled: false, load: () => import('./tools/ComputerScience/CpuPerformance') },
     ],
   },
 ];
