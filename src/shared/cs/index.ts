@@ -27,5 +27,5 @@ export { TopicProvider, useTopic, GlossaryText, SpecBadge } from "./context";
 
 export {
   LearnMode, type LearnScenes,
-  FlashcardMode, StudyMode, QuizMode, SpotMistakeMode, FillInMode,
+  FlashcardMode, StudyMode, QuizMode, SpotMistakeMode, FillInMode, ExamMode,
 } from "./modes";

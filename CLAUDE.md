@@ -100,12 +100,16 @@ Prioritise real development, but be deliberate about token use. Two things domin
 Whenever you finish a unit of a **multi-session build** and there's an obvious next step,
 end by doing both of these, so the next conversation starts cold but oriented:
 
-1. **Output a copy-paste kickoff block in chat** — wrapped in `>>>` on its own line
-   above and `<<<` on its own line below (the house delimiters, so the paste boundary
-   is unmistakable — *not* a ```-fenced code block, which invites the user to run it as
-   a command). It must be self-sufficient: the branch to check out (+ `npm install`), a
-   one-line "where we're up to", the exact next task, which minimal files to read (and
-   which large files *not* to re-read whole), and the verification bar before pushing.
+1. **Output a copy-paste kickoff block in chat** — inside a fenced code block (triple
+   backtick, language `text`), so the paste boundary is unmistakable. (Do **not** use the
+   old `>>>` … `<<<` delimiters — they render as nested blockquotes in Markdown and break
+   the boundary.) It must be self-sufficient: a one-line "where we're up to", the exact
+   next task, which minimal files to read (and which large files *not* to re-read whole),
+   and the verification bar before pushing. **Never name a specific branch to check out.**
+   Every kickoff starts from an up-to-date `main` and works on the session's own fresh
+   branch (cut from `main` at session start) — the harness assigns that branch, so the
+   prompt must not name one, and a session must never check out or reuse an old feature
+   branch.
 2. **Refresh the living "▶ Resume here" block** in the relevant plan/roadmap doc so the
    pointer never goes stale. Each active multi-session build keeps one such block near
    the top of its plan doc (e.g. `CS_SHELL_PLAN.md`). Whoever lands an increment rewrites
