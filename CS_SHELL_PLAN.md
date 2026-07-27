@@ -11,12 +11,13 @@ Read this before building the next CS tool.
 
 ## ▶ Resume here — next session (keep current)
 
-This is the copy-paste kickoff for the next conversation. **Whoever lands an increment
-rewrites this block** so it always points at the true next step (see the end-of-session
-rule in `PATCH_NOTES.md`). If the shell is finished, replace this with "Shell complete —
-see stage 8 (author topics as data)".
+This is the copy-paste kickoff for the next conversation, wrapped in the house
+delimiters (`>>>` … `<<<`). **Whoever lands an increment rewrites this block** so it
+always points at the true next step (see the end-of-session rule in `PATCH_NOTES.md`).
+If the shell is finished, replace this with "Shell complete — see stage 8 (author
+topics as data)".
 
-```
+>>>
 Continue the CS tool shell build-out (Maths-Tools repo).
 
 Setup: check out branch `claude/cs-tool-shell-stages-i5vb1n`, then run `npm install`
@@ -37,7 +38,7 @@ CpuArchitecture building and behaving identically.
 Verify before pushing: `npm run build` (zero TS errors) and `npm test` (all pass).
 Then tick increment 4 in CS_SHELL_PLAN.md, add a PATCH_NOTES.md entry, refresh this
 "▶ Resume here" block, and commit + push to the same branch.
-```
+<<<
 
 ---
 
