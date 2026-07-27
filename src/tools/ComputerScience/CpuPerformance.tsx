@@ -344,7 +344,7 @@ const LESSONS: Lesson[] = [
     steps: [
       { text: "**Cache** sits inside/right next to the CPU. When the core needs data it has used recently, it checks the cache first.", highlight: ["cache", "core"] },
       { predict: "If the data the core wants **is** in the cache, is that faster or slower than going to RAM?", text: "Much faster — this is called a cache **hit**. The value only has to travel a short way.", highlight: ["cache", "core"], flow: { from: "core", to: "cache", label: "found it!", kind: "data" } },
-      { text: "If the data isn't in the cache, the core has to fetch it from the much slower **RAM** instead — a cache **miss**. Notice how much further the value has to travel.", highlight: ["ram", "core"], flow: { from: "core", to: "ram", label: "wait…", kind: "data" } },
+      { text: "If the data isn't in the cache, the core has to fetch it from the much slower **RAM** instead — a cache **miss**. Notice how much further the value has to travel.", highlight: ["ram", "core"], flow: { from: "core", to: "ram", label: "wait…", kind: "slow" } },
       { predict: "So if you increase the **size** of the cache, what happens to the chance of a hit versus a miss?", text: "More data can be kept close by, so more requests are hits, and the CPU spends less time waiting on RAM — performance improves.", highlight: ["cache"] },
     ],
   },
@@ -372,12 +372,12 @@ const LESSONS: Lesson[] = [
 // TWO focused BoxSchematics, each named so its lesson picks it via `scene`. Reuses
 // the existing schematic representation — no new scene renderer (the brief's
 // "reuse before building" principle). A lesson with no diagram is kind: "text".
-const ROLE_COLOR: Record<string, string> = { core: "#2563eb", cache: "#059669", mem: "#475569", data: "#059669", addr: "#2563eb" };
-const ROLE_TINT:  Record<string, string> = { core: "#dbeafe", cache: "#d1fae5", mem: "#f1f5f9", data: "#d1fae5", addr: "#dbeafe" };
+const ROLE_COLOR: Record<string, string> = { core: "#2563eb", cache: "#059669", mem: "#475569", data: "#059669", addr: "#2563eb", slow: "#d97706" };
+const ROLE_TINT:  Record<string, string> = { core: "#dbeafe", cache: "#d1fae5", mem: "#f1f5f9", data: "#d1fae5", addr: "#dbeafe", slow: "#fef3c7" };
 
-// Cache lesson: one core inside the CPU checks the cache (a short "hit" hop) or has
-// to reach all the way out to RAM (a long "miss" trip). The travel distance itself
-// carries the speed contrast.
+// Cache lesson: one core inside the CPU checks the cache (a short green "hit" hop) or
+// has to reach all the way out to RAM (a long amber "miss" trip). The travel distance
+// and the token colour together carry the speed contrast.
 const CACHE_SCHEMATIC: SchematicConfig = {
   viewBox: "0 0 400 232",
   maxWidth: 520,
