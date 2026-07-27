@@ -291,3 +291,7 @@ At the **end of a session**, before you push:
 3. Update the **"Where we're up to"** snapshot if the current focus moved.
 4. If the work opened or closed a roadmap item, reflect that in `DEV_ROADMAP.md`
    too — this file is the history, that file is the plan.
+5. If the work is part of a **multi-session build with a clear next step**, refresh the
+   living **"▶ Resume here"** block in that build's plan doc (e.g. `CS_SHELL_PLAN.md`) and
+   give the user a copy-paste kickoff block in chat — see *"Ending a session — leave a
+   clear successor"* in `CLAUDE.md`.

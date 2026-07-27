@@ -9,6 +9,38 @@ Read this before building the next CS tool.
 
 ---
 
+## ▶ Resume here — next session (keep current)
+
+This is the copy-paste kickoff for the next conversation. **Whoever lands an increment
+rewrites this block** so it always points at the true next step (see the end-of-session
+rule in `PATCH_NOTES.md`). If the shell is finished, replace this with "Shell complete —
+see stage 8 (author topics as data)".
+
+```
+Continue the CS tool shell build-out (Maths-Tools repo).
+
+Setup: check out branch `claude/cs-tool-shell-stages-i5vb1n`, then run `npm install`
+(node_modules isn't present in a fresh container).
+
+Where we're up to: increments 1–3 of CS_SHELL_PLAN.md are done — utilities, types,
+glossary/context, and the five self-contained recall modes (Study/Flashcards/Quiz/
+Spot/Fill-in) now live in src/shared/cs/. CpuArchitecture is the canary and builds +
+behaves identically. Read CS_SHELL_PLAN.md first (this block + the ticked checklist).
+Do NOT re-read the whole ~1,600-line CpuArchitecture.tsx — grep for the component
+being extracted and read only that slice.
+
+Next increment (4): representations. Generalise CpuDiagram (in CpuArchitecture.tsx)
+into a data-driven BoxSchematic under src/shared/cs/representations/, lift TraceTable,
+and move the CPU node layout (PARTS / ROLE_COLOR / ROLE_TINT) into topic data. Keep
+CpuArchitecture building and behaving identically.
+
+Verify before pushing: `npm run build` (zero TS errors) and `npm test` (all pass).
+Then tick increment 4 in CS_SHELL_PLAN.md, add a PATCH_NOTES.md entry, refresh this
+"▶ Resume here" block, and commit + push to the same branch.
+```
+
+---
+
 ## Why a separate shell (not the maths ToolShell)
 
 `src/shared/ToolShell.tsx` is built around **question generation** — Whiteboard /
