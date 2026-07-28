@@ -138,20 +138,23 @@ export default function App() {
     (e.target as Element).setPointerCapture?.(e.pointerId);
   };
   const onBoardPointerMove = (e: React.PointerEvent) => {
-    if (dragRef.current) {
-      const rect = boardRef.current!.getBoundingClientRect();
+    // Snapshot the refs into locals: the setNodes/setPan updaters can run after
+    // onBoardPointerUp has nulled them, so never deref the ref inside an updater.
+    const drag = dragRef.current;
+    if (drag && boardRef.current) {
+      const rect = boardRef.current.getBoundingClientRect();
       const lx = (e.clientX - rect.left - pan.x) / scale;
       const ly = (e.clientY - rect.top - pan.y) / scale;
-      const id = dragRef.current.id;
-      setNodes(ns => ns.map(n => n.id === id
-        ? { ...n, x: lx - dragRef.current!.dx, y: ly - dragRef.current!.dy }
+      setNodes(ns => ns.map(n => n.id === drag.id
+        ? { ...n, x: lx - drag.dx, y: ly - drag.dy }
         : n));
       return;
     }
-    if (panRef.current) {
+    const p = panRef.current;
+    if (p) {
       setPan({
-        x: panRef.current.px + (e.clientX - panRef.current.sx),
-        y: panRef.current.py + (e.clientY - panRef.current.sy),
+        x: p.px + (e.clientX - p.sx),
+        y: p.py + (e.clientY - p.sy),
       });
     }
   };
