@@ -46,6 +46,20 @@ already done.
 
 # Maths
 
+## 2026-07-28 — Decision Maths: design session + DECISION_SHELL_PLAN.md
+Turned the Network Sandbox spike into an agreed build plan. A design session settled five decisions:
+(1) a **new `DecisionShell`** — a purpose-built, network-native question-generator shell parallel to
+ToolShell/CSShell; (2) **parameterised templates** for generation — hand-authored crossing-free
+network *shapes* with declared degrees of freedom (weight ranges, optional edges), plus an advanced
+"free" bypass behind a clarity warning; (3) **stepper + show-all** worked answers (animate edge
+highlight/discount + matrix/table in sync); (4) **sandbox = both** — expand-the-generated-network AND
+a free-build mode sharing editing primitives with the bypass; (5) **MST thin slice first**. Wrote
+**`DECISION_SHELL_PLAN.md`** (mirrors `CS_SHELL_PLAN.md`): a three-layer architecture (representation
+library → DecisionShell → independent MST/TSP/CPA tools), the authoring contracts (`NetworkTemplate`,
+`DecisionProblem`, `SolveStep`, `DecisionShellProps`), a `validateProblem` CI plan, a seven-step
+increment plan (thin MST slice → breadth → sandbox → print → TSP → CPA → onward), and a "▶ Resume
+here" kickoff block. Indexed it in the `CLAUDE.md` doc map. Docs-only — no `src/` changes.
+
 ## 2026-07-28 — Decision Maths spike: a standalone Network Sandbox (pre-shell exploration)
 First step toward supporting **Decision / Discrete Mathematics** (AQA Further Maths: MST —
 Prim/Kruskal, Dijkstra, Chinese postman, TSP, critical path analysis, network flows, LP).

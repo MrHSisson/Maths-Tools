@@ -19,6 +19,7 @@ this table first; it tells you where to look and where to write.
 | **`DEV_ROADMAP.md`** | The Maths plan — what's unfinished behind dev mode and what's next. | Picking up Maths feature/engine work. Keep current as work lands. |
 | **`CS_ROADMAP.md`** | The Computer Science plan — what CS tools/topics to build next. | Picking up CS work. |
 | **`CS_SHELL_PLAN.md`** | The `CSShell` architecture and its extraction steps. | Building or extending a CS tool. |
+| **`DECISION_SHELL_PLAN.md`** | The `DecisionShell` architecture — network-native question generators (MST/TSP/CPA) on a shared representation library. | Building or extending a Decision Maths tool. |
 | **`GLOSSARY.md`** | Canonical name for every element (tool, grain, technique, skill, QO…). | Naming or discussing anything — use these words. |
 | **`DESIGN_STUDIO.md`** | The one entry point for designing a new build *with Claude in chat* (repo linked): routes to the right template for a maths tool / CS tool / technique / Teach deck. | Understanding where a brief in `specs/` came from, or how new ones are produced. |
 | **`TOOL_SPEC_TEMPLATE.md`** · **`CS_TOPIC_SPEC_TEMPLATE.md`** · **`TECHNIQUE_SPEC_TEMPLATE.md`** · **`TEACH_DECK_SPEC_TEMPLATE.md`** · **`TOOL_DESIGNER_PROMPT.md`** · **`specs/`** | The spec pipeline — one fill-in template per build type, the deep maths-tool designer prompt, and the completed briefs. | Designing or implementing any build from a brief. |
