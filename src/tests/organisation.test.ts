@@ -56,6 +56,7 @@ const MIGRATION_BACKLOG = [
 // Not question generators — standalone by design (manipulatives, dev-only pages,
 // bespoke tools). These never migrate to ToolShell and never need __test.
 const STANDALONE_BY_DESIGN = [
+  "Decision/NetworkSandbox",
   "TeacherTools/AlgebraTiles",
   "TeacherTools/CallSelector",
   "TeacherTools/GrapherLab",

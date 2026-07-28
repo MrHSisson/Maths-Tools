@@ -118,6 +118,18 @@ const CATEGORY_THEMES: Record<string, { gradient: string; theme: CategoryTheme }
       badgeBorder: 'border-violet-200/60'
     },
   },
+  'Decision Mathematics': {
+    gradient: 'from-rose-500 to-red-600',
+    theme: {
+      border: 'border-l-rose-500',
+      hoverBorder: 'hover:border-l-rose-400',
+      shadow: 'hover:shadow-rose-300/40',
+      text: 'group-hover:text-rose-700',
+      badgeBg: 'bg-rose-50',
+      badgeText: 'text-rose-700',
+      badgeBorder: 'border-rose-200/60'
+    },
+  },
   'Computer Science': {
     gradient: 'from-slate-600 to-slate-800',
     theme: {
