@@ -46,6 +46,29 @@ already done.
 
 # Maths
 
+## 2026-07-28 — Decision Maths increment 1: the MST thin vertical slice
+Built the first end-to-end path of the `DecisionShell` (Layers 1+2+one tool), per
+`DECISION_SHELL_PLAN.md`. **Layer 1 — representation library** (`src/shared/decision/`): promoted the
+Network Sandbox spike into two **pure renderers** — `NetworkView` (SVG graph, pan/zoom/drag, edges
+coloured by a `SolveStep`'s states: idle/considering/tree/rejected; framed by an auto-fitted viewBox)
+and `MatrixView` (distance matrix with per-cell highlight/strike) — plus `types.ts` (the authoring
+contracts: `NetworkTemplate`, `DecisionProblem`, `SolveStep`, `DecisionShellProps`,
+`DecisionProblemExport`) and `templating.ts` (`sampleTemplate`: samples each edge weight in its
+`[min,max]`, coin-flips optional edges → a concrete, always-connected `Network`). **Layer 2 — thin
+`DecisionShell`**: full-canvas navy chrome with **Question** mode (network + prompt) and **Solution**
+mode (forward/back stepper over `SolveStep[]`, network + matrix + caption + running total updating in
+sync, with a "show all" jump to the terminal state). No print, no sandbox-expand, no Prim yet. **The
+tool** — `MinimumSpanningTree` (`enabled:false`): one crossing-free 6-node template (mandatory edges
+span every node, two optional extras) + **Kruskal's algorithm** emitting one beat per considered edge
+(accept into tree / reject as a cycle, with a running total), one question type, one level. **CI**:
+`validate.ts` (`validateProblem` + an independent Prim MST reference) and `src/tests/decision.test.ts`
+discover every `__problem`-exporting Decision tool and assert templates sample to real-node networks
+with in-range weights, the network is connected, every `SolveStep` references real edges/cells, and
+solve()'s total **matches the brute-force MST** — what makes generate-fast safe. Registered under
+Decision Mathematics; added to the standalone list in `organisation.test.ts`. Build clean (0 TS
+errors); `npm test` **271 pass** (new decision suite). Verified on screen: Question + Solution
+mid-walk (green tree edges, a red-dashed rejected edge, matrix cell struck, running total).
+
 ## 2026-07-28 — Decision Maths: design session + DECISION_SHELL_PLAN.md
 Turned the Network Sandbox spike into an agreed build plan. A design session settled five decisions:
 (1) a **new `DecisionShell`** — a purpose-built, network-native question-generator shell parallel to
