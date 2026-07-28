@@ -112,6 +112,12 @@ export const CATEGORIES: CategoryMeta[] = [
     ],
   },
   {
+    name: 'Decision Mathematics',
+    tools: [
+      { id: 'network-sandbox', path: '/network-sandbox', name: 'Network Sandbox', description: 'Exploratory workspace for rendering weighted networks — the spike ahead of a Decision Maths shell', enabled: false, load: () => import('./tools/Decision/NetworkSandbox') },
+    ],
+  },
+  {
     name: 'Computer Science',
     subject: 'Computer Science',
     tools: [

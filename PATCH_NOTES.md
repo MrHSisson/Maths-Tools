@@ -46,6 +46,37 @@ already done.
 
 # Maths
 
+## 2026-07-28 — Decision Maths: design session + DECISION_SHELL_PLAN.md
+Turned the Network Sandbox spike into an agreed build plan. A design session settled five decisions:
+(1) a **new `DecisionShell`** — a purpose-built, network-native question-generator shell parallel to
+ToolShell/CSShell; (2) **parameterised templates** for generation — hand-authored crossing-free
+network *shapes* with declared degrees of freedom (weight ranges, optional edges), plus an advanced
+"free" bypass behind a clarity warning; (3) **stepper + show-all** worked answers (animate edge
+highlight/discount + matrix/table in sync); (4) **sandbox = both** — expand-the-generated-network AND
+a free-build mode sharing editing primitives with the bypass; (5) **MST thin slice first**. Wrote
+**`DECISION_SHELL_PLAN.md`** (mirrors `CS_SHELL_PLAN.md`): a three-layer architecture (representation
+library → DecisionShell → independent MST/TSP/CPA tools), the authoring contracts (`NetworkTemplate`,
+`DecisionProblem`, `SolveStep`, `DecisionShellProps`), a `validateProblem` CI plan, a seven-step
+increment plan (thin MST slice → breadth → sandbox → print → TSP → CPA → onward), and a "▶ Resume
+here" kickoff block. Indexed it in the `CLAUDE.md` doc map. Docs-only — no `src/` changes.
+
+## 2026-07-28 — Decision Maths spike: a standalone Network Sandbox (pre-shell exploration)
+First step toward supporting **Decision / Discrete Mathematics** (AQA Further Maths: MST —
+Prim/Kruskal, Dijkstra, Chinese postman, TSP, critical path analysis, network flows, LP).
+Established *why* ToolShell is the wrong home for this family: its whiteboard is a rigid
+`480px` working panel + `480px` question box inside `max-w-6xl`, and its question model is a
+KaTeX string with a flat `WorkingStep[]` — whereas a decision-maths problem *is* a data
+structure (`{nodes, edges}`, activity lists, LP constraints) rendered as a full-canvas diagram
++ matrix + stepped table. The CS strand's `CSShell` is the precedent: a parallel shell, not an
+extension of ToolShell. Rather than design that shell up front, shipped a deliberate **spike**:
+`src/tools/Decision/NetworkSandbox.tsx` — a standalone, full-screen, pannable/zoomable workspace
+(chrome borrowed from `AlgebraTiles`, not the constrained ToolShell pane) that renders a weighted
+network well: draggable nodes, edge weight labels, a live distance matrix, directed/undirected
+and grid toggles, two sample networks. New **Decision Mathematics** category in `src/registry.ts`
+(rose theme in `LandingPage.tsx`), tool `enabled: false` (dev-only) while we explore details
+before committing to a `DecisionShell`. Added to `STANDALONE_BY_DESIGN` in `organisation.test.ts`.
+Build clean, 268 tests pass, 0 page errors, rendering eyeballed.
+
 ## 2026-07-26 — Design Studio: a repo-linked brief pipeline for all four build types
 Extended the maths-only spec pipeline (`TOOL_DESIGNER_PROMPT.md` + `TOOL_SPEC_TEMPLATE.md`
 + `specs/`) into a **single entry point for every kind of build** — designed *with Claude in
