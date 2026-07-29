@@ -15,7 +15,7 @@ this table first; it tells you where to look and where to write.
 |---|---|---|
 | **`CLAUDE.md`** (this file) | The rules — conventions, shared-API reference, how to build/migrate a tool. | Always (auto-loaded). The default answer to "how do I…". |
 | **`README.md`** | Human-facing project overview, tech stack, local setup. | First orientation; onboarding a person. |
-| **`docs/PROJECTS.md`** | The plan — where every prong is up to and what could come next (absorbs the old Maths + CS roadmaps; deep detail tables live here). | **Start of a session** (where are we / what's next). Keep the moved prong current at the end. |
+| **`docs/PROJECTS.md`** | The plan — where every prong is up to and what could come next (deep detail tables live here). | **Start of a session** (current state / what's next). Keep the moved prong current at the end. |
 | **`docs/PATCH_NOTES.md`** | The history — what each session shipped, split Maths / CS, newest first. | Seeing what was actually done. **Append to it at the end of a session.** |
 | **`docs/architecture/CS_SHELL_PLAN.md`** | The `CSShell` architecture and its extraction stages. | Building or extending a CS tool. |
 | **`docs/architecture/DECISION_SHELL_PLAN.md`** | The `DecisionShell` architecture — network-native question generators (MST/TSP/CPA) on a shared representation library. | Building or extending a Decision Maths tool. |
@@ -33,13 +33,13 @@ Rule of thumb: **plan** lives in `docs/PROJECTS.md`, **history** in `docs/PATCH_
 
 A React/TypeScript/Vite app of interactive maths tools for teachers. Each tool has three modes — Whiteboard, Worked Example, Worksheet — with Levels 1–3, differentiated worksheets, and PDF export. Deployed to Vercel. CI runs on every push via `.github/workflows/ci.yml`.
 
-**Claude's job:** build complete new tools end-to-end from a user spec. The user provides the maths content; Claude writes all the code, registers the route, and pushes.
+**Purpose:** build complete new tools end-to-end from a spec — writing all the code, registering the route, and pushing. The spec supplies the maths content.
 
 **In-development work** — what's unfinished behind Developing-tools mode (the techniques/working-steps engine, skills, Teach decks, grapher integration, the migration backlog) is tracked in `docs/PROJECTS.md`. Read it when picking up feature work; keep the prong's status current as work lands.
 
 **Terminology** — the canonical name for every element (tool, sub-tool, strand, grain, technique, step, skill, deck, QO, …) is in `docs/GLOSSARY.md`. Use those names when discussing or documenting changes.
 
-**Session history** — what each session actually shipped is logged in `docs/PATCH_NOTES.md`, split into **Maths** and **Computer Science** strands (newest first). **Append a short entry to it at the end** of a session before pushing. `docs/PROJECTS.md` is the plan (where we are / what's next); `docs/PATCH_NOTES.md` is the history (what's done).
+**Session history** — what each session actually shipped is logged in `docs/PATCH_NOTES.md`, split into **Maths** and **Computer Science** strands (newest first). **Append a short entry to it at the end** of a session before pushing. `docs/PROJECTS.md` is the plan (current state / what's next); `docs/PATCH_NOTES.md` is the history (what's done).
 
 ---
 
@@ -98,7 +98,7 @@ Prioritise real development, but be deliberate about token use. Two things domin
 ### Ending a session / session kickoffs
 
 The single planning surface is **`docs/PROJECTS.md`** — where every prong is up to and what
-could come next. We do **not** keep standing "resume here" prompts in the docs (they rot);
+could come next. Standing "resume here" prompts are **not** kept in the docs (they rot);
 instead, kickoff blocks are **generated on demand** from `docs/PROJECTS.md`, and no session's
 kickoff is ever saved to a file.
 
@@ -112,8 +112,8 @@ but only in chat; never write it into a doc.
 that prong's `docs/PROJECTS.md` entry: a fenced code block (triple backtick, language `text`, so
 the paste boundary is unmistakable) containing:
 
-- a one-line **where we're up to** for the prong;
-- the **exact next task** — the specific option we picked from that prong's *Possible next
+- a one-line **current-state** summary for the prong;
+- the **exact next task** — the specific option chosen from that prong's *Possible next
   steps* (ask which, if it's not obvious);
 - the **minimal files to read** (and which large files *not* to re-read whole);
 - the **verification bar** before pushing (`npm run build` clean, `npm test`, any eyeball check);
@@ -385,7 +385,7 @@ type AnyQuestion = SimpleQuestion | WordedQuestion;
 - Store tool-specific data (diagram, raw params) in underscore fields: `_diagram`, `_rawValues`, etc. Cast through `unknown`: `} as unknown as AnyQuestion`
 - Retrieve in renderers: `const d = (q as any)._rawValues as MyType | undefined`
 - `answerSuffix` is always plain text — never put units inside KaTeX
-- **Never store the same fact twice.** Derive every representation of an answer — surd ⇄ decimal ⇄ numeric ⇄ graph — from one computation, so they cannot drift out of sync. (Lesson from the NonLinearSimEq banks, where independently-authored answer fields disagreed until the grapher exposed it.)
+- **Never store the same fact twice.** Derive every representation of an answer — surd ⇄ decimal ⇄ numeric ⇄ graph — from one computation, so they cannot drift out of sync.
 
 ---
 
@@ -512,11 +512,11 @@ Font size indices: `0=text-lg  1=text-xl  2=text-3xl  3=text-4xl  4=text-5xl  5=
 
 Whiteboard / Worked Example / Worksheet modes · **Teach mode (when `teachingSlides` supplied)** · difficulty toggle · QO popovers (dropdown, variables, multiSelect, differentiated) · tool tab buttons (auto-hidden when only one sub-tool) · font size controls · PDF print · colour scheme picker · info modal · home button · shareable links (URL ⇄ state sync + "Copy Link to Setup" menu item) · **step-by-step Worked Example with fragment walking and skill-link overlays (dev-gated)** — tools only author `string[]` steps and `[[skill-id|term]]` markers; never re-implement the reveal or the overlay
 
-### Teaching slides — the "Teach" deck  (authoring guide / leap-off point)
+### Teaching slides — the "Teach" deck  (authoring guide)
 
 The **Teach** deck (`TeachingDeck`, `src/shared/TeachingDeck.tsx`) is a slide-based "teaching part of the lesson": the teacher picks a category, then presses through hand-authored, misconception-driven slides one **beat** at a time before moving to Whiteboard / Worksheet. This section is the complete guide to authoring them.
 
-**Status / where it's up to.** The feature is **gated behind Developing-tools mode** (`devMode`) — the Teach tab only shows when dev mode is on, so it can ship unfinished. Only `FractionsAddSub` has a deck so far: the **Concepts** category runs an I-do → We-do → You-do sequence on equivalent fractions (3/5 ×2, 3/5 ×3, then "find two"). **True or False and Spot the Mistake are empty** ("Coming soon" in the menu) — build them next as authored slides. When the deck is classroom-ready, remove the dev gate in `ToolShell.tsx` (`showTeach`).
+**Dev-gated.** Decks are **gated behind Developing-tools mode** (`devMode`) — the Teach tab only shows when dev mode is on, so a deck can ship unfinished. Remove the gate in `ToolShell.tsx` (`showTeach`) when a deck is classroom-ready.
 
 **Add a deck to a tool.** Define an array in the tool file and pass it: `<ToolShell teachingSlides={TEACHING_SLIDES} … />`. No prop → no Teach tab. Reference implementation: `src/tools/Number/FractionsAddSub.tsx` (`TEACHING_SLIDES`); a minimal one in the `ToolShell.tsx` template.
 
@@ -926,7 +926,7 @@ How it works: a diagram has no measured height — only an aspect ratio — so
 `handleDiagramPrint` *derives* a synthetic cell height from the column width and
 feeds it to the same unit-tested `computeWorksheetLayout` engine the text path
 uses. The fed height is capped at a **density floor** (~40 mm) so a page packs
-~5 rows (matching the old fixed grid) rather than a few oversized squares; at
+~5 rows rather than a few oversized squares; at
 render time each cell is grown back toward the full column width, but never past
 it, so few-question sheets still get big diagrams without floating in whitespace.
 Everything is computed app-side and written as static HTML — no probe, no
@@ -940,9 +940,8 @@ This means SVG worksheets get, for free and with no per-tool code:
 - **Differentiated** three-column layout and **arbitrary question counts** that
   flow across pages.
 
-The old fixed **3×5 = 15** preset is gone, but the density it gave is preserved:
-15 questions in 3 columns still fit one page, while pages with only a few
-diagrams now render them larger.
+There is no fixed question preset, but the density holds: 15 questions in 3
+columns fit one page, while pages with only a few diagrams render them larger.
 
 **Requirements on the tool:** the worksheet `questionRenderer` must emit an
 `<svg data-q-index={idx}>` (see SVG element requirements above) so the handler can
