@@ -24,8 +24,8 @@ three kinds sit in the typed subfolders above, each with its own README.
 
 ## Workflow
 
-1. Design the build in a chat with this repo linked: *"Read `DESIGN_STUDIO.md`
-   and let's design a …"*. It reads `GLOSSARY.md`, the relevant `CLAUDE.md`
+1. Design the build in a chat with this repo linked: *"Read `docs/design/DESIGN_STUDIO.md`
+   and let's design a …"*. It reads `docs/GLOSSARY.md`, the relevant `CLAUDE.md`
    section and an existing example, then outputs a completed brief (`Status:
    ready`).
 2. Start a Claude Code session: *"Create `specs/<…>/<id>.md` with the following
@@ -38,4 +38,4 @@ is the starting point for future changes.
 
 > The maths-tool route also has a deep, standalone pedagogy guide,
 > `../TOOL_DESIGNER_PROMPT.md` (usable as claude.ai Project instructions).
-> `DESIGN_STUDIO.md` points to it for the maths branch.
+> `docs/design/DESIGN_STUDIO.md` points to it for the maths branch.

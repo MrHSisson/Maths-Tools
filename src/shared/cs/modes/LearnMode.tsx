@@ -6,7 +6,7 @@
 // Topic-agnostic: the predict/flow/analogy/trace engine is generic. A topic
 // supplies its `lessons` and a `scenes` config that maps a lesson's descriptor
 // (`kind`) to a representation — schematic → BoxSchematic, trace → TraceTable —
-// plus an optional legend. See CS_SHELL_PLAN.md ("representations as data").
+// plus an optional legend. See docs/architecture/CS_SHELL_PLAN.md ("representations as data").
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect, useCallback, type ReactNode } from "react";

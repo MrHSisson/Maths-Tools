@@ -10,7 +10,7 @@
 //
 // This scaffolds MATHS tools (question generators on ToolShell) only. Computer
 // Science tools use a different shell (CSShell) and are refused here — see
-// CS_SHELL_PLAN.md.
+// docs/architecture/CS_SHELL_PLAN.md.
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -49,7 +49,7 @@ const displayCategory = CATEGORY_DISPLAY[category] ?? category;
 if (category === 'ComputerScience') {
   console.error(
     'Computer Science tools do not use this scaffold — they build on CSShell, not ToolShell.\n' +
-    'See CS_SHELL_PLAN.md (the shell + authoring model) and PROJECTS.md (what to build),\n' +
+    'See docs/architecture/CS_SHELL_PLAN.md (the shell + authoring model) and docs/PROJECTS.md (what to build),\n' +
     'using src/tools/ComputerScience/CpuArchitecture.tsx as the reference implementation.',
   );
   process.exit(1);

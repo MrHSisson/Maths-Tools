@@ -14,12 +14,12 @@ Deployed at: [maths-tools.vercel.app](https://maths-tools.vercel.app)
 | Doc | Job |
 |---|---|
 | `CLAUDE.md` | The rules — conventions, shared-API reference, how to build a tool. Start here. |
-| `PROJECTS.md` | The plan — where every prong is up to and what's next (Maths + CS + Decision, in one place). |
-| `PATCH_NOTES.md` | Session-by-session history (Maths / CS), newest first. |
-| `CS_SHELL_PLAN.md` · `DECISION_SHELL_PLAN.md` | The `CSShell` / `DecisionShell` architecture. |
-| `GLOSSARY.md` | Canonical name for every element. |
-| `DESIGN_STUDIO.md` | The one entry point for designing a build with Claude (chat), repo linked — routes to the template for a maths tool / CS tool / technique / Teach deck. |
-| `TOOL_SPEC_TEMPLATE.md` · `CS_TOPIC_SPEC_TEMPLATE.md` · `TECHNIQUE_SPEC_TEMPLATE.md` · `TEACH_DECK_SPEC_TEMPLATE.md` · `TOOL_DESIGNER_PROMPT.md` · `specs/` | The spec pipeline — a fill-in template per build type, plus the completed briefs. |
+| `docs/PROJECTS.md` | The plan — where every prong is up to and what's next (Maths + CS + Decision, in one place). |
+| `docs/PATCH_NOTES.md` | Session-by-session history (Maths / CS), newest first. |
+| `docs/architecture/CS_SHELL_PLAN.md` · `docs/architecture/DECISION_SHELL_PLAN.md` | The `CSShell` / `DecisionShell` architecture. |
+| `docs/GLOSSARY.md` | Canonical name for every element. |
+| `docs/design/DESIGN_STUDIO.md` | The one entry point for designing a build with Claude (chat), repo linked — routes to the template for a maths tool / CS tool / technique / Teach deck. |
+| `docs/design/templates/TOOL_SPEC_TEMPLATE.md` · `docs/design/templates/CS_TOPIC_SPEC_TEMPLATE.md` · `docs/design/templates/TECHNIQUE_SPEC_TEMPLATE.md` · `docs/design/templates/TEACH_DECK_SPEC_TEMPLATE.md` · `docs/design/TOOL_DESIGNER_PROMPT.md` · `specs/` | The spec pipeline — a fill-in template per build type, plus the completed briefs. |
 
 ---
 
@@ -143,7 +143,7 @@ Deployed at: [maths-tools.vercel.app](https://maths-tools.vercel.app)
 Maths and Computer Science tools use **different** shared shells — they are different products and never mix:
 
 - **`ToolShell`** (`src/shared/`) — the Maths shell for **question generators** (Whiteboard / Worked Example / Worksheet). This is the "shared shell" the rest of this section describes.
-- **`CSShell`** (`src/shared/cs/`) — the Computer Science shell for **knowledge/revision** tools (Learn / Study / Cards / Quiz / Fill / Exam). See `CS_SHELL_PLAN.md`.
+- **`CSShell`** (`src/shared/cs/`) — the Computer Science shell for **knowledge/revision** tools (Learn / Study / Cards / Quiz / Fill / Exam). See `docs/architecture/CS_SHELL_PLAN.md`.
 
 ### Shared Shell (v2.3+) — Maths
 
@@ -173,9 +173,9 @@ The URL always reflects the current setup (mode, level, sub-tool, question optio
 
 ### Adding a New Tool (Maths)
 
-This is the **Maths** path (question generators on `ToolShell`). Computer Science tools use `CSShell` and are authored as data — `npm run new-tool` refuses `--category ComputerScience`; follow `CS_SHELL_PLAN.md` instead.
+This is the **Maths** path (question generators on `ToolShell`). Computer Science tools use `CSShell` and are authored as data — `npm run new-tool` refuses `--category ComputerScience`; follow `docs/architecture/CS_SHELL_PLAN.md` instead.
 
-1. **Design** the tool with Claude in a chat (this repo linked) via `DESIGN_STUDIO.md` — or the standalone *Tool Designer* project (`TOOL_DESIGNER_PROMPT.md`) — which outputs a completed spec (`TOOL_SPEC_TEMPLATE.md`) saved to `specs/<tool-id>.md`. CS tools, techniques and Teach decks have their own templates and homes — `DESIGN_STUDIO.md` routes to each.
+1. **Design** the tool with Claude in a chat (this repo linked) via `docs/design/DESIGN_STUDIO.md` — or the standalone *Tool Designer* project (`docs/design/TOOL_DESIGNER_PROMPT.md`) — which outputs a completed spec (`docs/design/templates/TOOL_SPEC_TEMPLATE.md`) saved to `specs/<tool-id>.md`. CS tools, techniques and Teach decks have their own templates and homes — `docs/design/DESIGN_STUDIO.md` routes to each.
 2. **Scaffold**: `npm run new-tool -- --name "Display Name" --category Folder --path /url-path` — copies the template and registers it in `src/registry.ts`
 3. **Implement** the tool-specific section (usually done by Claude Code working from the spec)
 4. Run `npm run build` (zero TypeScript errors) and `npm test` (generator smoke tests)

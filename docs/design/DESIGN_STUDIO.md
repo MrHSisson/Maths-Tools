@@ -21,7 +21,7 @@ needs almost no generation logic — designing a CS tool is mostly authoring the
 content, which is exactly what a chat conversation is good at.
 
 > **Using it:** in a chat with this repo linked, say something like *"Read
-> `DESIGN_STUDIO.md` and let's design a new CS tool."* You can also paste this
+> `docs/design/DESIGN_STUDIO.md` and let's design a new CS tool."* You can also paste this
 > file into a claude.ai Project's instructions if you prefer a standing project —
 > but the repo-linked route is the intended one, because the repo stays the
 > single source of truth (see "Why the repo is linked" below).
@@ -44,7 +44,7 @@ a QO nobody would toggle).
 
 Before designing anything, read — from the linked repo, not from memory:
 
-1. **`GLOSSARY.md`** — the canonical name for every element (tool, sub-tool,
+1. **`docs/GLOSSARY.md`** — the canonical name for every element (tool, sub-tool,
    grain, technique, step title, fragment, deck, phase, scene, skill, QO…). Use
    these words for the rest of the conversation; they each mean exactly one thing.
 2. **The `CLAUDE.md` section for the type you're designing** (the routing table
@@ -63,10 +63,10 @@ Then ask the one routing question and follow that branch.
 
 | You're designing… | Fill in this template | Read this in `CLAUDE.md` | Study this example | Output lands in |
 |---|---|---|---|---|
-| **Maths tool** — a question generator (Whiteboard / Worked Example / Worksheet, Levels 1–3) | `TOOL_SPEC_TEMPLATE.md` | "How to create a new tool", "TOOL_CONFIG format", "Question kinds" | `specs/collecting-like-terms.md`; `src/tools/Algebra/CompletingTheSquare.tsx` | `specs/<tool-id>.md` |
-| **CS tool** — an OCR J277 revision topic (Learn / Study / Cards / Quiz / Fill / Exam) | `CS_TOPIC_SPEC_TEMPLATE.md` | "Two subjects — repository map"; then `CS_SHELL_PLAN.md` + `PROJECTS.md` (CS) | `src/tools/ComputerScience/CpuArchitecture.tsx` (the 1.1.1 pilot) | `specs/cs/<topic-id>.md` |
-| **Technique** — a reusable working-step block for one recurring move, at three grains | `TECHNIQUE_SPEC_TEMPLATE.md` | "Working step rendering", "fragments"; GLOSSARY §4 | `src/shared/techniques/index.ts` (`quadraticFormulaSteps`) | `specs/techniques/<technique-id>.md` |
-| **Teach deck** — a slide deck for a tool's Teach mode (misconception-driven) | `TEACH_DECK_SPEC_TEMPLATE.md` | "Teaching slides — the Teach deck"; GLOSSARY §6 | `src/tools/Number/FractionsAddSub.tsx` (`TEACHING_SLIDES`) | `specs/decks/<tool-id>.md` |
+| **Maths tool** — a question generator (Whiteboard / Worked Example / Worksheet, Levels 1–3) | `docs/design/templates/TOOL_SPEC_TEMPLATE.md` | "How to create a new tool", "TOOL_CONFIG format", "Question kinds" | `specs/collecting-like-terms.md`; `src/tools/Algebra/CompletingTheSquare.tsx` | `specs/<tool-id>.md` |
+| **CS tool** — an OCR J277 revision topic (Learn / Study / Cards / Quiz / Fill / Exam) | `docs/design/templates/CS_TOPIC_SPEC_TEMPLATE.md` | "Two subjects — repository map"; then `docs/architecture/CS_SHELL_PLAN.md` + `docs/PROJECTS.md` (CS) | `src/tools/ComputerScience/CpuArchitecture.tsx` (the 1.1.1 pilot) | `specs/cs/<topic-id>.md` |
+| **Technique** — a reusable working-step block for one recurring move, at three grains | `docs/design/templates/TECHNIQUE_SPEC_TEMPLATE.md` | "Working step rendering", "fragments"; GLOSSARY §4 | `src/shared/techniques/index.ts` (`quadraticFormulaSteps`) | `specs/techniques/<technique-id>.md` |
+| **Teach deck** — a slide deck for a tool's Teach mode (misconception-driven) | `docs/design/templates/TEACH_DECK_SPEC_TEMPLATE.md` | "Teaching slides — the Teach deck"; GLOSSARY §6 | `src/tools/Number/FractionsAddSub.tsx` (`TEACHING_SLIDES`) | `specs/decks/<tool-id>.md` |
 
 Each template is **self-teaching**: its inline comments carry the full authoring
 guidance for that type. Open the matching one, read its comments, and drive the
@@ -81,14 +81,14 @@ of files added as knowledge. Now the docs **live in the repo** and you explore i
 live. That means:
 
 - **The glossary and platform constraints are always current** — you read the
-  real `CLAUDE.md`, `GLOSSARY.md`, `CS_SHELL_PLAN.md`, not a stale paste.
+  real `CLAUDE.md`, `docs/GLOSSARY.md`, `docs/architecture/CS_SHELL_PLAN.md`, not a stale paste.
 - **You learn from real examples** — read an existing spec, tool, technique or
   deck in the repo and match its shape, rather than inventing a format.
 - **The brief drops straight home** — you already know the exact folder and
   filename it belongs in (routing table), so the hand-off to Claude Code is one
   line.
 
-Use this. When a term comes up, check `GLOSSARY.md`. When you're unsure what the
+Use this. When a term comes up, check `docs/GLOSSARY.md`. When you're unsure what the
 platform allows, read the named `CLAUDE.md` section. When you need a shape,
 open the example.
 
@@ -139,7 +139,7 @@ When the teacher says the design is done (or asks for the brief):
   > following content, then implement it" — and paste the block.
 
 For a **maths tool**, the deep, battle-tested pedagogy guidance already lives in
-**`TOOL_DESIGNER_PROMPT.md`** (house pedagogy: levels as a progression,
+**`docs/design/TOOL_DESIGNER_PROMPT.md`** (house pedagogy: levels as a progression,
 misconception-aware numbers, the worked example as board work, designed variety,
 degenerate cases specified away). Read it for the maths branch — this file does
 not duplicate it. The other three branches carry their guidance inline in their

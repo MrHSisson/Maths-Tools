@@ -16,13 +16,13 @@ Read this before building the next CS tool.
 ## Status & next steps
 
 This doc is the **architecture reference** — how `CSShell` is built and the extraction stages
-below. **Where the CS build is up to and what topic is next lives in `PROJECTS.md`** (the single
+below. **Where the CS build is up to and what topic is next lives in `docs/PROJECTS.md`** (the single
 planning surface). To start a session, ask for a *kickoff for the CS shell* and one is generated
 from there — we don't keep a standing prompt here.
 
 Increments 1–8 are done (the shell is fully assembled; two topics — 1.1.1, 1.1.2 — ship as pure
 data, CI-validated). Next is authoring the next J277 sub-topic as data (1.1.3 onward) — see the
-Computer Science section of `PROJECTS.md`.
+Computer Science section of `docs/PROJECTS.md`.
 
 ---
 

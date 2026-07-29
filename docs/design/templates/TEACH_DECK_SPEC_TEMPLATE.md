@@ -7,7 +7,7 @@ A completed copy of this template is everything Claude Code needs to author a
 completed briefs as `specs/decks/<tool-id>.md`.
 
 > **What a Teach deck is** (see `CLAUDE.md` → "Teaching slides — the Teach deck",
-> and `GLOSSARY.md` §6). The **Teach** mode is the *teaching part of the lesson*:
+> and `docs/GLOSSARY.md` §6). The **Teach** mode is the *teaching part of the lesson*:
 > a PowerPoint-style deck the teacher presses through one **beat** at a time
 > before moving to Whiteboard / Worksheet. A deck attaches to one tool via its
 > `teachingSlides` prop. Reference deck: `FractionsAddSub.tsx` (`TEACHING_SLIDES`).

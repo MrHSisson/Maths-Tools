@@ -1,5 +1,5 @@
 // Computer Science revision shell — shared library barrel.
-// See CS_SHELL_PLAN.md for the architecture and migration plan.
+// See docs/architecture/CS_SHELL_PLAN.md for the architecture and migration plan.
 
 export {
   NAVY, CARD_SHADOW, TAB_SHADOW,

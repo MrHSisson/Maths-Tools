@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // CS shell — the shared type contract for a knowledge/revision topic.
 // A topic supplies data shaped like these; the shell renders it. See
-// CS_SHELL_PLAN.md. Spec tags are plain strings (each topic defines its own).
+// docs/architecture/CS_SHELL_PLAN.md. Spec tags are plain strings (each topic defines its own).
 // ─────────────────────────────────────────────────────────────────────────────
 
 import type { ReactNode } from "react";
@@ -112,7 +112,7 @@ export interface InfoSection { title: string; items: InfoItem[] }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Representations — the CS "scheme of work": data-configurable visuals a topic
-// picks from. See CS_SHELL_PLAN.md ("representations as data"). A brand-new
+// picks from. See docs/architecture/CS_SHELL_PLAN.md ("representations as data"). A brand-new
 // representation needs a reason; extend an existing one where possible.
 // ─────────────────────────────────────────────────────────────────────────────
 

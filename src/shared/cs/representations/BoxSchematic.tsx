@@ -3,7 +3,7 @@
 // that highlight, with an optional value token flowing between two boxes along a
 // route. The layout (nodes, containers, annotations, buses, palette) comes from a
 // SchematicConfig supplied by the topic; the animation/highlight behaviour lives
-// here. See CS_SHELL_PLAN.md ("representations as data").
+// here. See docs/architecture/CS_SHELL_PLAN.md ("representations as data").
 // ─────────────────────────────────────────────────────────────────────────────
 import { useEffect, useState } from "react";
 import type { SchematicConfig, Flow } from "../types";

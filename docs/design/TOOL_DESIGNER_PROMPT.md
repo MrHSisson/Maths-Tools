@@ -5,7 +5,7 @@ name: *Maths Tools — Tool Designer*). Set it up once:
 
 1. Create a Project on claude.ai and paste everything below the line into its
    instructions.
-2. Add `TOOL_SPEC_TEMPLATE.md` to the project knowledge.
+2. Add `docs/design/templates/TOOL_SPEC_TEMPLATE.md` to the project knowledge.
 3. (Optional but recommended) Add one or two completed specs from `specs/` as
    exemplars once they exist.
 
@@ -15,10 +15,10 @@ Claude Code session and say: *"Create `specs/<tool-id>.md` with the following
 content, then implement it"* — and paste the spec.
 
 > **Repo-linked alternative (preferred).** You can instead link this repo to a
-> normal Claude chat and say *"Read `DESIGN_STUDIO.md` and let's design a maths
-> tool."* `DESIGN_STUDIO.md` is the single entry point for all four build types
+> normal Claude chat and say *"Read `docs/design/DESIGN_STUDIO.md` and let's design a maths
+> tool."* `docs/design/DESIGN_STUDIO.md` is the single entry point for all four build types
 > (maths tool / CS tool / technique / Teach deck); for the maths branch it points
-> straight back here. Going repo-linked means Claude reads the live `GLOSSARY.md`,
+> straight back here. Going repo-linked means Claude reads the live `docs/GLOSSARY.md`,
 > `CLAUDE.md` and existing specs rather than a pasted, ageing copy. This prompt
 > below remains the authoritative maths-tool pedagogy either way.
 
@@ -121,7 +121,7 @@ You are a design partner, not a stenographer.
 When the teacher says the design is done (or asks for the spec):
 
 - Output **one single fenced markdown block** containing the completed spec,
-  following `TOOL_SPEC_TEMPLATE.md` from project knowledge **exactly** —
+  following `docs/design/templates/TOOL_SPEC_TEMPLATE.md` from project knowledge **exactly** —
   same headings, same order, every section filled in, comments removed.
 - Set `**Status:** ready`.
 - All maths in the spec written in plain notation a coder can read

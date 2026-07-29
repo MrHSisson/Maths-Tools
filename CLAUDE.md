@@ -15,18 +15,17 @@ this table first; it tells you where to look and where to write.
 |---|---|---|
 | **`CLAUDE.md`** (this file) | The rules — conventions, shared-API reference, how to build/migrate a tool. | Always (auto-loaded). The default answer to "how do I…". |
 | **`README.md`** | Human-facing project overview, tech stack, local setup. | First orientation; onboarding a person. |
-| **`PROJECTS.md`** | The plan — where every prong is up to and what could come next (absorbs the old Maths + CS roadmaps; deep detail tables live here). | **Start of a session** (where are we / what's next). Keep the moved prong current at the end. |
-| **`PATCH_NOTES.md`** | The history — what each session shipped, split Maths / CS, newest first. | Seeing what was actually done. **Append to it at the end of a session.** |
-| **`CS_SHELL_PLAN.md`** | The `CSShell` architecture and its extraction stages. | Building or extending a CS tool. |
-| **`DECISION_SHELL_PLAN.md`** | The `DecisionShell` architecture — network-native question generators (MST/TSP/CPA) on a shared representation library. | Building or extending a Decision Maths tool. |
-| **`README.md`** | Human-facing project overview, tech stack, local setup. | First orientation; onboarding a person. |
-| **`GLOSSARY.md`** | Canonical name for every element (tool, grain, technique, skill, QO…). | Naming or discussing anything — use these words. |
-| **`DESIGN_STUDIO.md`** | The one entry point for designing a new build *with Claude in chat* (repo linked): routes to the right template for a maths tool / CS tool / technique / Teach deck. | Understanding where a brief in `specs/` came from, or how new ones are produced. |
-| **`TOOL_SPEC_TEMPLATE.md`** · **`CS_TOPIC_SPEC_TEMPLATE.md`** · **`TECHNIQUE_SPEC_TEMPLATE.md`** · **`TEACH_DECK_SPEC_TEMPLATE.md`** · **`TOOL_DESIGNER_PROMPT.md`** · **`specs/`** | The spec pipeline — one fill-in template per build type, the deep maths-tool designer prompt, and the completed briefs. | Designing or implementing any build from a brief. |
+| **`docs/PROJECTS.md`** | The plan — where every prong is up to and what could come next (absorbs the old Maths + CS roadmaps; deep detail tables live here). | **Start of a session** (where are we / what's next). Keep the moved prong current at the end. |
+| **`docs/PATCH_NOTES.md`** | The history — what each session shipped, split Maths / CS, newest first. | Seeing what was actually done. **Append to it at the end of a session.** |
+| **`docs/architecture/CS_SHELL_PLAN.md`** | The `CSShell` architecture and its extraction stages. | Building or extending a CS tool. |
+| **`docs/architecture/DECISION_SHELL_PLAN.md`** | The `DecisionShell` architecture — network-native question generators (MST/TSP/CPA) on a shared representation library. | Building or extending a Decision Maths tool. |
+| **`docs/GLOSSARY.md`** | Canonical name for every element (tool, grain, technique, skill, QO…). | Naming or discussing anything — use these words. |
+| **`docs/design/DESIGN_STUDIO.md`** | The one entry point for designing a new build *with Claude in chat* (repo linked): routes to the right template for a maths tool / CS tool / technique / Teach deck. | Understanding where a brief in `specs/` came from, or how new ones are produced. |
+| **`docs/design/templates/TOOL_SPEC_TEMPLATE.md`** · **`docs/design/templates/CS_TOPIC_SPEC_TEMPLATE.md`** · **`docs/design/templates/TECHNIQUE_SPEC_TEMPLATE.md`** · **`docs/design/templates/TEACH_DECK_SPEC_TEMPLATE.md`** · **`docs/design/TOOL_DESIGNER_PROMPT.md`** · **`specs/`** | The spec pipeline — one fill-in template per build type, the deep maths-tool designer prompt, and the completed briefs. | Designing or implementing any build from a brief. |
 
-Rule of thumb: **plan** lives in `PROJECTS.md`, **history** in `PATCH_NOTES.md`,
-**rules** here. When work lands, refresh the prong's status in `PROJECTS.md` *and* add a
-`PATCH_NOTES.md` line (what shipped).
+Rule of thumb: **plan** lives in `docs/PROJECTS.md`, **history** in `docs/PATCH_NOTES.md`,
+**rules** here. When work lands, refresh the prong's status in `docs/PROJECTS.md` *and* add a
+`docs/PATCH_NOTES.md` line (what shipped).
 
 ---
 
@@ -36,11 +35,11 @@ A React/TypeScript/Vite app of interactive maths tools for teachers. Each tool h
 
 **Claude's job:** build complete new tools end-to-end from a user spec. The user provides the maths content; Claude writes all the code, registers the route, and pushes.
 
-**In-development work** — what's unfinished behind Developing-tools mode (the techniques/working-steps engine, skills, Teach decks, grapher integration, the migration backlog) is tracked in `PROJECTS.md`. Read it when picking up feature work; keep the prong's status current as work lands.
+**In-development work** — what's unfinished behind Developing-tools mode (the techniques/working-steps engine, skills, Teach decks, grapher integration, the migration backlog) is tracked in `docs/PROJECTS.md`. Read it when picking up feature work; keep the prong's status current as work lands.
 
-**Terminology** — the canonical name for every element (tool, sub-tool, strand, grain, technique, step, skill, deck, QO, …) is in `GLOSSARY.md`. Use those names when discussing or documenting changes.
+**Terminology** — the canonical name for every element (tool, sub-tool, strand, grain, technique, step, skill, deck, QO, …) is in `docs/GLOSSARY.md`. Use those names when discussing or documenting changes.
 
-**Session history** — what each session actually shipped is logged in `PATCH_NOTES.md`, split into **Maths** and **Computer Science** strands (newest first). **Append a short entry to it at the end** of a session before pushing. `PROJECTS.md` is the plan (where we are / what's next); `PATCH_NOTES.md` is the history (what's done).
+**Session history** — what each session actually shipped is logged in `docs/PATCH_NOTES.md`, split into **Maths** and **Computer Science** strands (newest first). **Append a short entry to it at the end** of a session before pushing. `docs/PROJECTS.md` is the plan (where we are / what's next); `docs/PATCH_NOTES.md` is the history (what's done).
 
 ---
 
@@ -53,8 +52,8 @@ default `"Mathematics"`). Keep the division clear across all three axes:
 | Axis | Mathematics | Computer Science |
 |---|---|---|
 | **Tools** | `src/tools/{Generators,Number,Algebra,Proportion,Geometry,TeacherTools}` + root | `src/tools/ComputerScience/` |
-| **Shell / how to build** | `ToolShell` (`src/shared/`) — see this file's shared-library + ToolShell sections | `CSShell` (`src/shared/cs/`) — a *separate* revision-tool shell; see `CS_SHELL_PLAN.md` |
-| **Further developments** | `PROJECTS.md` (Maths sections) | `PROJECTS.md` (Computer Science section) + `CS_SHELL_PLAN.md` (the shell architecture) |
+| **Shell / how to build** | `ToolShell` (`src/shared/`) — see this file's shared-library + ToolShell sections | `CSShell` (`src/shared/cs/`) — a *separate* revision-tool shell; see `docs/architecture/CS_SHELL_PLAN.md` |
+| **Further developments** | `docs/PROJECTS.md` (Maths sections) | `docs/PROJECTS.md` (Computer Science section) + `docs/architecture/CS_SHELL_PLAN.md` (the shell architecture) |
 
 The two shells are deliberately separate: `ToolShell` is for **question generators**
 (Whiteboard / Worked Example / Worksheet); `CSShell` is for **knowledge/revision tools**
@@ -98,19 +97,19 @@ Prioritise real development, but be deliberate about token use. Two things domin
 
 ### Ending a session / session kickoffs
 
-The single planning surface is **`PROJECTS.md`** — where every prong is up to and what
+The single planning surface is **`docs/PROJECTS.md`** — where every prong is up to and what
 could come next. We do **not** keep standing "resume here" prompts in the docs (they rot);
-instead, kickoff blocks are **generated on demand** from `PROJECTS.md`, and no session's
+instead, kickoff blocks are **generated on demand** from `docs/PROJECTS.md`, and no session's
 kickoff is ever saved to a file.
 
 **When you finish a unit of a multi-session build:** refresh the moved prong's **Where it's
-at** line (and its *At a glance* row) in `PROJECTS.md`, and add the `PATCH_NOTES.md` history
+at** line (and its *At a glance* row) in `docs/PROJECTS.md`, and add the `docs/PATCH_NOTES.md` history
 entry. If the user wants to carry straight on, also output a kickoff block in chat (below) —
 but only in chat; never write it into a doc.
 
 **The kickoff recipe (used both at session end and on demand).** When the user asks for a
 "kickoff for `<prong>`" — e.g. when firing off several sessions in a sitting — build one from
-that prong's `PROJECTS.md` entry: a fenced code block (triple backtick, language `text`, so
+that prong's `docs/PROJECTS.md` entry: a fenced code block (triple backtick, language `text`, so
 the paste boundary is unmistakable) containing:
 
 - a one-line **where we're up to** for the prong;
@@ -154,16 +153,16 @@ Keep concurrent sessions on disjoint files/tools. Two sessions editing the same 
 
 ## Implementing from a spec (`specs/`)
 
-The preferred pipeline: the user designs the build conversationally with **Claude in a chat** (this repo linked; entry point `DESIGN_STUDIO.md`), which outputs a completed brief following the matching fill-in template. **Four build types**, each with its own template and home:
+The preferred pipeline: the user designs the build conversationally with **Claude in a chat** (this repo linked; entry point `docs/design/DESIGN_STUDIO.md`), which outputs a completed brief following the matching fill-in template. **Four build types**, each with its own template and home:
 
 | Build type | Template | Brief lives in |
 |---|---|---|
-| Maths tool (question generator) | `TOOL_SPEC_TEMPLATE.md` | `specs/<tool-id>.md` |
-| CS tool (J277 revision topic) | `CS_TOPIC_SPEC_TEMPLATE.md` | `specs/cs/<topic-id>.md` |
-| Technique (reusable working-step block) | `TECHNIQUE_SPEC_TEMPLATE.md` | `specs/techniques/<technique-id>.md` |
-| Teach deck (a tool's Teach-mode slides) | `TEACH_DECK_SPEC_TEMPLATE.md` | `specs/decks/<tool-id>.md` |
+| Maths tool (question generator) | `docs/design/templates/TOOL_SPEC_TEMPLATE.md` | `specs/<tool-id>.md` |
+| CS tool (J277 revision topic) | `docs/design/templates/CS_TOPIC_SPEC_TEMPLATE.md` | `specs/cs/<topic-id>.md` |
+| Technique (reusable working-step block) | `docs/design/templates/TECHNIQUE_SPEC_TEMPLATE.md` | `specs/techniques/<technique-id>.md` |
+| Teach deck (a tool's Teach-mode slides) | `docs/design/templates/TEACH_DECK_SPEC_TEMPLATE.md` | `specs/decks/<tool-id>.md` |
 
-The deep maths-tool pedagogy guide (`TOOL_DESIGNER_PROMPT.md`) still stands and is usable as claude.ai Project instructions; `DESIGN_STUDIO.md` routes the maths branch to it.
+The deep maths-tool pedagogy guide (`docs/design/TOOL_DESIGNER_PROMPT.md`) still stands and is usable as claude.ai Project instructions; `docs/design/DESIGN_STUDIO.md` routes the maths branch to it.
 
 When the user provides a brief (pasted, or already in `specs/`):
 
@@ -242,7 +241,7 @@ Dev-gated (`enabled: false`) and therefore lower priority: `IntegerAddSub`, `Sim
 
 AlgebraTiles, SkillLibrary, Visualiser, CallSelector and p-value are standalone by design (not question tools) and never migrate to ToolShell — they are not part of the backlog above even though they don't use the shared shell.
 
-**Computer Science tools are not on this backlog.** CS tools (`SystemArchitecture`, `CpuArchitecture`) are knowledge/revision tools, not question generators, and target `CSShell` — never `ToolShell`. Their build work is tracked in `PROJECTS.md` (Computer Science) and `CS_SHELL_PLAN.md`, not here. So `grep -L "<ToolShell"` will always list them; that is expected, not a to-do.
+**Computer Science tools are not on this backlog.** CS tools (`SystemArchitecture`, `CpuArchitecture`) are knowledge/revision tools, not question generators, and target `CSShell` — never `ToolShell`. Their build work is tracked in `docs/PROJECTS.md` (Computer Science) and `docs/architecture/CS_SHELL_PLAN.md`, not here. So `grep -L "<ToolShell"` will always list them; that is expected, not a to-do.
 
 ### Migration checklist
 

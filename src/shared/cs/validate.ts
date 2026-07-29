@@ -4,7 +4,7 @@
 // the vitest suite (src/tests/cs-topics.test.ts) so authoring-as-data is safe: a bad
 // spec tag, an out-of-range MCQ answer, a cloze slot with no matching word, a
 // duplicate myth id, an unanswered predict beat or a lesson with no backing scene
-// all fail at CI instead of shipping. See CS_SHELL_PLAN.md ("CI: a CSTopic validator").
+// all fail at CI instead of shipping. See docs/architecture/CS_SHELL_PLAN.md ("CI: a CSTopic validator").
 // ─────────────────────────────────────────────────────────────────────────────
 
 import type { CSTopic } from "./types";
@@ -100,7 +100,7 @@ export function validateTopic(topic: CSTopic): string[] {
 
   // 7. Synoptic questions: validate the per-tag markScheme attribution (NOT the
   //    top-level `specTags`, which may name bare sub-topic ids like "1.1.1" that are
-  //    not requirement keys — see CS_SHELL_PLAN.md caveat). Each attributed tag must
+  //    not requirement keys — see docs/architecture/CS_SHELL_PLAN.md caveat). Each attributed tag must
   //    be declared, and each entry must carry at least one mark point.
   for (const sq of topic.synoptic)
     for (const entry of sq.markScheme) {

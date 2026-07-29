@@ -8,7 +8,7 @@
 // topic-info modal, the beyond-spec filtering, the Quiz/Spot sub-toggle, the exam
 // section chips, and the routing that renders the six modes + LearnMode. All topic
 // content (glossary, spec descriptions, cards, exam, …) is supplied via the single
-// `topic` prop; the shell wraps everything in a <TopicProvider>. See CS_SHELL_PLAN.md.
+// `topic` prop; the shell wraps everything in a <TopicProvider>. See docs/architecture/CS_SHELL_PLAN.md.
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { useState, useEffect, useRef } from "react";

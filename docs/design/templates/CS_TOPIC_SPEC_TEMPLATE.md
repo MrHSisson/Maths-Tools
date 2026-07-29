@@ -7,20 +7,20 @@ Computer Science revision topic end-to-end with **zero follow-up questions**.
 Save completed briefs as `specs/cs/<topic-id>.md`.
 
 > **What this is.** CS tools are **knowledge/revision** tools on the `CSShell`
-> (see `CS_SHELL_PLAN.md`), *not* question generators — so there are **no L1/L2/L3
+> (see `docs/architecture/CS_SHELL_PLAN.md`), *not* question generators — so there are **no L1/L2/L3
 > difficulty levels**, no Whiteboard/Worksheet, and almost **no generation
 > logic**. A topic is authored as **data**: the facts, the cards, the exam
 > questions and their mark schemes. That makes this brief mostly **content
 > authoring** — the sweet spot for designing in a chat.
 >
-> **Three principles (from the J277 brief — see `PROJECTS.md` → Computer Science):**
+> **Three principles (from the J277 brief — see `docs/PROJECTS.md` → Computer Science):**
 > 1. **Spec fidelity** — every card / question carries a **spec tag**; anything
 >    off-spec is a clearly-flagged "Beyond spec" layer, excluded by default.
 > 2. **Exam realism** — real OCR J277 formats and mark tariffs; a synoptic
 >    section that spans sub-topics.
 > 3. **Mobile-first** — short phone-sized revision sessions are the primary use.
 >
-> **Before filling this in:** read `CS_SHELL_PLAN.md` (the `CSTopic` shape and the
+> **Before filling this in:** read `docs/architecture/CS_SHELL_PLAN.md` (the `CSTopic` shape and the
 > six activities) and skim the pilot topic `CpuArchitecture.tsx` (OCR 1.1.1) for
 > the standard each section is held to.
 
@@ -87,7 +87,7 @@ sub-topics (its natural synoptic partners)?
        • analogy  — a "Think of it like…" concrete anchor for the whole lesson.
 
      A lesson MAY use a CS core representation (a "scene"). The existing/planned
-     representations (see CS_SHELL_PLAN.md) are:
+     representations (see docs/architecture/CS_SHELL_PLAN.md) are:
        box schematic (labelled boxes with tokens flowing along edges) ·
        trace table (register/field values changing per beat) ·
        bar-compare (planned, 1.1.2) · number line / place-value (planned, data rep) ·
