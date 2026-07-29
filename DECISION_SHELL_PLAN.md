@@ -17,50 +17,15 @@ critical path analysis, network flows, linear programming).
 
 ---
 
-## ▶ Resume here — next session (keep current)
+## Status & next steps
 
-Copy-paste kickoff for the next conversation, inside a fenced code block. **Whoever lands an
-increment rewrites this block** so it always points at the true next step (end-of-session rule in
-`PATCH_NOTES.md`). When the shell is finished, replace with "Shell complete — author tools as data".
+This doc is the **architecture reference** — the five locked decisions, the contracts, and the
+increment ladder below. **Where the Decision build is up to and what's next lives in
+`PROJECTS.md`** (the single planning surface). To start a session, ask for a *kickoff for Decision
+Maths* and one is generated from there — we don't keep a standing prompt here.
 
-```text
-Build increment 2 of the Decision Maths shell (Maths-Tools repo): MST breadth.
-
-Setup: work on THIS session's assigned branch (already cut fresh from main at session start). Do NOT
-check out any other branch. Confirm the baseline is current (git fetch origin main; branch level with
-origin/main). Then: npm install (node_modules isn't present in a fresh container).
-
-Where we're up to: increment 1 is SHIPPED — the MST thin vertical slice is live end-to-end. Read
-DECISION_SHELL_PLAN.md (esp. the Contracts + Increment plan). The shell + library are small; read
-them, do NOT re-read ToolShell or the whole sandbox:
-  - src/shared/decision/types.ts (contracts), templating.ts (sampleTemplate), validate.ts
-    (validateProblem + independent Prim reference)
-  - src/shared/decision/DecisionShell.tsx (Question + Solution stepper — thin)
-  - src/shared/decision/representations/NetworkView.tsx + MatrixView.tsx (pure renderers,
-    edge states idle/considering/tree/rejected, matrix highlight/strike)
-  - src/tools/Decision/MinimumSpanningTree.tsx (ONE template + Kruskal → SolveStep[], __problem export)
-  - src/tests/decision.test.ts (the __problem contract suite)
-
-Increment 2 (MST breadth) — grow the one tool, do NOT start TSP/CPA:
-  1. Prim's algorithm as a second method — network walk PLUS Prim-on-the-matrix (tick a column per
-     step). Reuse SolveStep; matrixCells already supports highlight/strike. Emit the running total.
-  2. More question types as named variants within the tool (prompt + answer + solve variant): e.g.
-     "apply Prim starting from node X", "list the rejected edges / the order edges are added".
-  3. Levels 1–3 (wire config.levels + generate(level)) and MORE templates (varied shapes, not just
-     weights) so questions vary in structure. Keep every template's mandatory edges spanning.
-  4. Keep validate.ts honest: it already brute-forces the MST weight with Prim — make sure each new
-     method/variant/level is covered (extend the __problem export / validateProblem levels).
-
-The shell may need a light QO surface (method + question-type + level selectors) — add it minimally,
-still no print / no sandbox-expand (those are increments 3–4).
-
-Verify before pushing: npm run build (0 TS errors), npm test (all pass, count grows), and eyeball ONE
-screenshot (a Prim walk mid-step + the matrix column ticked). Then tick increment 2 in
-DECISION_SHELL_PLAN.md, refresh this block to point at increment 3 (sandbox expand-from-question +
-representations/editing.ts), add a PATCH_NOTES entry (Maths strand), commit + push.
-
-Do NOT build TSP/CPA/print/sandbox in increment 2 — they are later increments.
-```
+Increment 1 (MST thin slice) is shipped; increment 2 (MST breadth) is next — see the increment
+ladder near the end of this doc and the Decision section of `PROJECTS.md`.
 
 ---
 

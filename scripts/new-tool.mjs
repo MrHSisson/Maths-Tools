@@ -49,7 +49,7 @@ const displayCategory = CATEGORY_DISPLAY[category] ?? category;
 if (category === 'ComputerScience') {
   console.error(
     'Computer Science tools do not use this scaffold — they build on CSShell, not ToolShell.\n' +
-    'See CS_SHELL_PLAN.md (the shell + authoring model) and CS_ROADMAP.md (what to build),\n' +
+    'See CS_SHELL_PLAN.md (the shell + authoring model) and PROJECTS.md (what to build),\n' +
     'using src/tools/ComputerScience/CpuArchitecture.tsx as the reference implementation.',
   );
   process.exit(1);

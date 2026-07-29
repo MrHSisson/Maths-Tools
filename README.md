@@ -14,9 +14,9 @@ Deployed at: [maths-tools.vercel.app](https://maths-tools.vercel.app)
 | Doc | Job |
 |---|---|
 | `CLAUDE.md` | The rules — conventions, shared-API reference, how to build a tool. Start here. |
+| `PROJECTS.md` | The plan — where every prong is up to and what's next (Maths + CS + Decision, in one place). |
 | `PATCH_NOTES.md` | Session-by-session history (Maths / CS), newest first. |
-| `DEV_ROADMAP.md` · `CS_ROADMAP.md` | What's next — Maths plan · Computer Science plan. |
-| `CS_SHELL_PLAN.md` | The `CSShell` architecture and extraction steps. |
+| `CS_SHELL_PLAN.md` · `DECISION_SHELL_PLAN.md` | The `CSShell` / `DecisionShell` architecture. |
 | `GLOSSARY.md` | Canonical name for every element. |
 | `DESIGN_STUDIO.md` | The one entry point for designing a build with Claude (chat), repo linked — routes to the template for a maths tool / CS tool / technique / Teach deck. |
 | `TOOL_SPEC_TEMPLATE.md` · `CS_TOPIC_SPEC_TEMPLATE.md` · `TECHNIQUE_SPEC_TEMPLATE.md` · `TEACH_DECK_SPEC_TEMPLATE.md` · `TOOL_DESIGNER_PROMPT.md` · `specs/` | The spec pipeline — a fill-in template per build type, plus the completed briefs. |
