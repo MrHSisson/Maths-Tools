@@ -1,8 +1,7 @@
 # Projects — the plan for everything in flight
 
 The **single planning surface** for the whole repo. Where every prong is up to, what we
-*could* do next, and the deep detail behind each. This doc **absorbs the old roadmaps** —
-there is no separate `DEV_ROADMAP.md` / `CS_ROADMAP.md` any more; it all lives here.
+*could* do next, and the deep detail behind each.
 
 **How it's laid out.** A scan-able *At a glance* table, then one section per prong. Each
 prong has:
@@ -10,8 +9,8 @@ prong has:
 - **Where it's at** — the honest current state, in a few sentences.
 - **Possible next steps** — *options to spitball from*, not a fixed queue. We pick the right
   one on the day. Prune the ones we've done or ruled out.
-- **Detail** — the deep lists (technique audit, skills-by-representation, spec order) that used
-  to live in the roadmaps. Skip it for the overview; open it when you actually pick the prong up.
+- **Detail** — the deep lists (technique audit, skills-by-representation, spec order). Skip it
+  for the overview; open it when you actually pick the prong up.
 
 **The loop.** You plan from this doc. When a session ships something, I log *what shipped* to
 `docs/PATCH_NOTES.md` (the history) and refresh the prong's **Where it's at** + its *At a glance* row
@@ -333,5 +332,5 @@ a tool moves.
 
 *Keeping this current: when a session moves a prong, update its **Where it's at** line and its *At a
 glance* row here, alongside the `docs/PATCH_NOTES.md` history entry. Next-step bullets are spitball — prune
-the done/ruled-out ones. Deep tables above replace the old roadmaps; keep them accurate as work lands.
+the done/ruled-out ones. Keep the deep tables above accurate as work lands.
 (Standing authoring principles — e.g. "never store the same fact twice" — live in `CLAUDE.md`, not here.)*
