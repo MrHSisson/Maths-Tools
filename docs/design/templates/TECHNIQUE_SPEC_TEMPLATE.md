@@ -6,7 +6,7 @@ A completed copy of this template is everything Claude Code needs to add a
 **technique** to `src/shared/techniques/` with **zero follow-up questions**.
 Save completed briefs as `specs/techniques/<technique-id>.md`.
 
-> **What a technique is** (see `GLOSSARY.md` §4 and `src/shared/techniques/index.ts`).
+> **What a technique is** (see `docs/GLOSSARY.md` §4 and `src/shared/techniques/index.ts`).
 > A **technique** encodes the pedagogy of **one recurring maths move** — its
 > **step titles** and its live-model **fragments** — authored **once** and reused
 > across many tools. The same move renders at three **grains**:

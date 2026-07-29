@@ -2,7 +2,7 @@
 // CS shell — touch-first tooltip + glossary parsing.
 // Tap a term/badge to open; tap the backdrop or the × to close. No hover
 // dependency. The glossary map is injected per topic (the shell's data seam).
-// See CS_SHELL_PLAN.md.
+// See docs/architecture/CS_SHELL_PLAN.md.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect, useRef } from "react";

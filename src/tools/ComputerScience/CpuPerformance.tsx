@@ -11,7 +11,7 @@ import {
 // The first CS sub-topic written entirely against the CSTopic contract: no bespoke
 // UI, no shell code — just this content object plus a two-line default export. The
 // shell (CSShell) owns everything the student sees. It proves the payoff of the
-// CS-shell extraction (see CS_SHELL_PLAN.md, increment 8), alongside the CSTopic
+// CS-shell extraction (see docs/architecture/CS_SHELL_PLAN.md, increment 8), alongside the CSTopic
 // validator that makes authoring-as-data safe.
 //
 // Content follows the same three principles as the 1.1.1 pilot:
@@ -271,7 +271,7 @@ const EXAM_QUESTIONS: ExamQuestion[] = [
 // ─────────────────────────────────────────────────────────────────────────────
 // SYNOPTIC QUESTIONS — span sub-topics, with per-tag mark attribution.
 // Per-tag markScheme tags are all declared in SPEC_DESCRIPTIONS (the validator
-// checks these, NOT the bare top-level specTags — see CS_SHELL_PLAN.md caveat).
+// checks these, NOT the bare top-level specTags — see docs/architecture/CS_SHELL_PLAN.md caveat).
 // ─────────────────────────────────────────────────────────────────────────────
 
 const SYNOPTIC_QUESTIONS: SynopticQuestion[] = [
@@ -368,7 +368,7 @@ const LESSONS: Lesson[] = [
   },
 ];
 
-// ── CPU-performance representations as data (see CS_SHELL_PLAN.md) ─────────────
+// ── CPU-performance representations as data (see docs/architecture/CS_SHELL_PLAN.md) ─────────────
 // TWO focused BoxSchematics, each named so its lesson picks it via `scene`. Reuses
 // the existing schematic representation — no new scene renderer (the brief's
 // "reuse before building" principle). A lesson with no diagram is kind: "text".

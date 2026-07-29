@@ -13,7 +13,7 @@ import {
 // ONE parameterised template, Kruskal's algorithm emitting a SolveStep[] beat
 // per considered edge, ONE question type, ONE level. Everything else (Prim, more
 // question types, Levels 2/3, print, sandbox) is a later increment.
-// See DECISION_SHELL_PLAN.md.
+// See docs/architecture/DECISION_SHELL_PLAN.md.
 // ═══════════════════════════════════════════════════════════════════════════
 
 // ── The template — a crossing-free 6-node shape. The MANDATORY (non-optional)

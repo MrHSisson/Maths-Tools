@@ -5,10 +5,10 @@ A running, human-readable log of what each session shipped. Read this at the
 **end of a session** before pushing. It complements the other docs:
 
 - `CLAUDE.md` — how to build (conventions, APIs, checklists). *The rules.*
-- `PROJECTS.md` — where every prong is up to and what's next. *The plan* (absorbs the old roadmaps).
-- `CS_SHELL_PLAN.md` · `DECISION_SHELL_PLAN.md` — the two purpose-built shells' architecture.
-- `GLOSSARY.md` — canonical names for every element. *The vocabulary.*
-- **`PATCH_NOTES.md` (this file)** — what actually happened, session by session. *The history.*
+- `docs/PROJECTS.md` — where every prong is up to and what's next. *The plan* (absorbs the old roadmaps).
+- `docs/architecture/CS_SHELL_PLAN.md` · `docs/architecture/DECISION_SHELL_PLAN.md` — the two purpose-built shells' architecture.
+- `docs/GLOSSARY.md` — canonical names for every element. *The vocabulary.*
+- **`docs/PATCH_NOTES.md` (this file)** — what actually happened, session by session. *The history.*
 
 The site hosts **two subjects** and they are tracked separately below: **Maths**
 (the bulk of the app, built on `ToolShell`) and **Computer Science** (a younger
@@ -16,7 +16,7 @@ strand on its own `CSShell`). See `CLAUDE.md` → "Two subjects — repository m
 Keep the split even when a session only touches one.
 
 > **This file is history, not status.** For "where are we now / what's next", see
-> `PROJECTS.md` — the single planning surface. This file is the newest-first record
+> `docs/PROJECTS.md` — the single planning surface. This file is the newest-first record
 > of what each session shipped.
 
 > **Dates** are the commit dates of the session's work. Newest first within each
@@ -26,6 +26,19 @@ Keep the split even when a session only touches one.
 ---
 
 # Maths
+
+## 2026-07-29 — Docs reorganised into a `docs/` folder
+Housekeeping: moved the loose organisational docs off the repo root into a
+structured `docs/` tree, leaving only `CLAUDE.md` (auto-loaded, must stay at
+root) and `README.md` beside the app config. New layout: `docs/PROJECTS.md`,
+`docs/PATCH_NOTES.md`, `docs/GLOSSARY.md`; `docs/architecture/` (`CS_SHELL_PLAN.md`,
+`DECISION_SHELL_PLAN.md`); `docs/design/` (`DESIGN_STUDIO.md`, `TOOL_DESIGNER_PROMPT.md`)
+with the four fill-in templates under `docs/design/templates/`. All cross-references
+(the `CLAUDE.md` documentation map, doc-to-doc pointers, `scripts/new-tool.mjs`
+guidance, the `specs/**` READMEs, and `// See …` source comments) were updated to
+the new repo-relative paths; the historical entries below keep their original
+bare filenames. No code or behaviour changed — `npm run build` and `npm test`
+clean. Also removed a stray duplicate `README.md` row from the doc map.
 
 ## 2026-07-28 — Decision Maths increment 1: the MST thin vertical slice
 Built the first end-to-end path of the `DecisionShell` (Layers 1+2+one tool), per

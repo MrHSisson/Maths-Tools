@@ -4,7 +4,7 @@
 // A Decision Maths problem is a DATA STRUCTURE (a weighted network), not a KaTeX
 // string, and its working is a STATEFUL WALKTHROUGH over that structure (highlight
 // this edge into the tree, discount that one as a cycle) — which is why this family
-// gets its own shell rather than living on ToolShell. See DECISION_SHELL_PLAN.md.
+// gets its own shell rather than living on ToolShell. See docs/architecture/DECISION_SHELL_PLAN.md.
 // ═══════════════════════════════════════════════════════════════════════════
 
 // ── A network, concrete ─────────────────────────────────────────────────────

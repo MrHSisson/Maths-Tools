@@ -115,7 +115,7 @@ own multiSelect/dropdown/variables), or the tool-level QO config above if
 #### 3.2b Diagram spec (diagram sub-tools only — omit for simple/worded)
 
 <!-- Diagram sub-tools are meaningfully more expensive to build — confirm
-     with the teacher before committing to one (see TOOL_DESIGNER_PROMPT.md).
+     with the teacher before committing to one (see docs/design/TOOL_DESIGNER_PROMPT.md).
      Describe, in prose, enough for the implementer to build the SVG without
      guessing. -->
 

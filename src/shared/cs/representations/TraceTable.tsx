@@ -3,7 +3,7 @@
 // time. Generalised from the CPU trace lesson: the rows (fields + roles + a short
 // "holds …" descriptor) and the role palette come from a TraceConfig supplied by
 // the topic; the per-beat snapshot + hot highlighting are passed in as props.
-// See CS_SHELL_PLAN.md ("representations as data").
+// See docs/architecture/CS_SHELL_PLAN.md ("representations as data").
 // ─────────────────────────────────────────────────────────────────────────────
 import type { TraceConfig } from "../types";
 

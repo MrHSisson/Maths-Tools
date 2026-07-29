@@ -15,7 +15,7 @@ the repo linked (see `../../DESIGN_STUDIO.md`).
 
 ## Workflow
 
-1. Design the deck in a chat: *"Read `DESIGN_STUDIO.md` and let's design a Teach
+1. Design the deck in a chat: *"Read `docs/design/DESIGN_STUDIO.md` and let's design a Teach
    deck for <tool>."* It outputs a completed brief with `Status: ready`.
 2. Start a Claude Code session: *"Create `specs/decks/<tool-id>.md` with the
    following content, then implement it"* — and paste the brief.

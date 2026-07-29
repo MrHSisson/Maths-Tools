@@ -15,7 +15,7 @@ produced by designing in a chat with the repo linked (see `../../DESIGN_STUDIO.m
 
 ## Workflow
 
-1. Design the topic in a chat: *"Read `DESIGN_STUDIO.md` and let's design a new CS
+1. Design the topic in a chat: *"Read `docs/design/DESIGN_STUDIO.md` and let's design a new CS
    tool."* It outputs a completed brief with `Status: ready`.
 2. Start a Claude Code session: *"Create `specs/cs/<topic-id>.md` with the
    following content, then implement it"* — and paste the brief.

@@ -7,7 +7,7 @@ turned it into the first vertical slice — a pure-renderer representation libra
 `MatrixView`), a thin `DecisionShell` (Question + Solution stepper), and a Kruskal-based
 `MinimumSpanningTree` tool, all CI-validated. This doc grows that into a family of
 **question-generator tools** (MST, TSP, CPA — independent tools sharing one representation library and
-one shell), the way `CS_SHELL_PLAN.md` turned `CpuArchitecture` into the CS shell.
+one shell), the way `docs/architecture/CS_SHELL_PLAN.md` turned `CpuArchitecture` into the CS shell.
 
 Read this before building any Decision Maths tool.
 
@@ -21,11 +21,11 @@ critical path analysis, network flows, linear programming).
 
 This doc is the **architecture reference** — the five locked decisions, the contracts, and the
 increment ladder below. **Where the Decision build is up to and what's next lives in
-`PROJECTS.md`** (the single planning surface). To start a session, ask for a *kickoff for Decision
+`docs/PROJECTS.md`** (the single planning surface). To start a session, ask for a *kickoff for Decision
 Maths* and one is generated from there — we don't keep a standing prompt here.
 
 Increment 1 (MST thin slice) is shipped; increment 2 (MST breadth) is next — see the increment
-ladder near the end of this doc and the Decision section of `PROJECTS.md`.
+ladder near the end of this doc and the Decision section of `docs/PROJECTS.md`.
 
 ---
 
@@ -63,7 +63,7 @@ Decision Maths problems are a different product:
   discount that one (it forms a cycle), tick the matrix column — which a flat KaTeX `WorkingStep[]`
   cannot express.
 
-This is the same conclusion the CS strand reached (`CS_SHELL_PLAN.md` → "Why a separate shell"):
+This is the same conclusion the CS strand reached (`docs/architecture/CS_SHELL_PLAN.md` → "Why a separate shell"):
 build a **parallel shell** that borrows ToolShell's *philosophy* (data-driven authoring, a shared
 component library, a curated set of core representations, CI-validated content) but shares none of
 its code. The one thing worth **reusing** is the diagram print engine (`handleDiagramPrint` /
@@ -95,7 +95,7 @@ Layer 1  Representation library   NetworkView · MatrixView · TableView   (+ Ac
 ```
 
 A new tool is **one generator + one algorithm**, not a new UI — the same payoff CSShell gives
-(`CS_SHELL_PLAN.md` → "Payoff").
+(`docs/architecture/CS_SHELL_PLAN.md` → "Payoff").
 
 ### Module layout (target)
 
@@ -258,7 +258,7 @@ bookkeeping needs (a Decision list, mirroring `CS_TOOLS`).
 
 ## Session rhythm — when to break
 
-Same economics as `CS_SHELL_PLAN.md`: per-turn cost grows with session length; reading screenshots
+Same economics as `docs/architecture/CS_SHELL_PLAN.md`: per-turn cost grows with session length; reading screenshots
 back is expensive and persists. **Break at an increment boundary** — each is committed, pushed, and
 leaves the build green. Aim for ~1 increment per session. A fresh session reintegrates from this
 doc + the small `src/shared/decision/*` files + the sandbox spike; it should **not** re-read

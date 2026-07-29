@@ -68,7 +68,7 @@ const STANDALONE_BY_DESIGN = [
 ];
 
 // Computer Science tools — a separate subject on CSShell, never ToolShell.
-// Their build/migration work is tracked in PROJECTS.md / CS_SHELL_PLAN.md.
+// Their build/migration work is tracked in docs/PROJECTS.md / docs/architecture/CS_SHELL_PLAN.md.
 const CS_TOOLS = [
   "ComputerScience/CpuArchitecture",
   "ComputerScience/CpuPerformance",

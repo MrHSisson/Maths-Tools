@@ -15,7 +15,7 @@ the repo linked (see `../../DESIGN_STUDIO.md`).
 
 ## Workflow
 
-1. Design the technique in a chat: *"Read `DESIGN_STUDIO.md` and let's design a
+1. Design the technique in a chat: *"Read `docs/design/DESIGN_STUDIO.md` and let's design a
    new technique."* It outputs a completed brief with `Status: ready`.
 2. Start a Claude Code session: *"Create `specs/techniques/<technique-id>.md` with
    the following content, then implement it"* — and paste the brief.

@@ -1,8 +1,7 @@
 # Projects — the plan for everything in flight
 
 The **single planning surface** for the whole repo. Where every prong is up to, what we
-*could* do next, and the deep detail behind each. This doc **absorbs the old roadmaps** —
-there is no separate `DEV_ROADMAP.md` / `CS_ROADMAP.md` any more; it all lives here.
+*could* do next, and the deep detail behind each.
 
 **How it's laid out.** A scan-able *At a glance* table, then one section per prong. Each
 prong has:
@@ -10,11 +9,11 @@ prong has:
 - **Where it's at** — the honest current state, in a few sentences.
 - **Possible next steps** — *options to spitball from*, not a fixed queue. We pick the right
   one on the day. Prune the ones we've done or ruled out.
-- **Detail** — the deep lists (technique audit, skills-by-representation, spec order) that used
-  to live in the roadmaps. Skip it for the overview; open it when you actually pick the prong up.
+- **Detail** — the deep lists (technique audit, skills-by-representation, spec order). Skip it
+  for the overview; open it when you actually pick the prong up.
 
 **The loop.** You plan from this doc. When a session ships something, I log *what shipped* to
-`PATCH_NOTES.md` (the history) and refresh the prong's **Where it's at** + its *At a glance* row
+`docs/PATCH_NOTES.md` (the history) and refresh the prong's **Where it's at** + its *At a glance* row
 here. One place you read, one place I record.
 
 **Session kickoffs (on demand, never saved).** When you're firing off several sessions in a
@@ -27,10 +26,10 @@ lives in `CLAUDE.md` → "Ending a session / session kickoffs".
 | For… | See |
 |---|---|
 | Conventions / how to build | `CLAUDE.md` |
-| Shell architecture + contracts | `CS_SHELL_PLAN.md` · `DECISION_SHELL_PLAN.md` |
-| What actually shipped, session by session | `PATCH_NOTES.md` |
-| Canonical names for every element | `GLOSSARY.md` |
-| Designing a new build in chat (pre-code) | `DESIGN_STUDIO.md` + the spec templates |
+| Shell architecture + contracts | `docs/architecture/CS_SHELL_PLAN.md` · `docs/architecture/DECISION_SHELL_PLAN.md` |
+| What actually shipped, session by session | `docs/PATCH_NOTES.md` |
+| Canonical names for every element | `docs/GLOSSARY.md` |
+| Designing a new build in chat (pre-code) | `docs/design/DESIGN_STUDIO.md` + the spec templates |
 
 ---
 
@@ -67,7 +66,7 @@ object, two representations so far (box schematic, trace table), and a CI valida
 (`validateTopic`) that checks every topic. The payoff is proven: **two topics now ship as pure
 data files** — 1.1.1 CPU Architecture (the pilot/reference) and 1.1.2 CPU Performance. So the
 remaining spec is *authoring*, not engineering. The architecture and extraction steps live in
-`CS_SHELL_PLAN.md`.
+`docs/architecture/CS_SHELL_PLAN.md`.
 
 **Possible next steps (spitball — pick on the day):**
 - Author the next sub-topic as data — **1.1.3 Embedded Systems** is the natural follow-on (mostly definitional, few new diagrams).
@@ -99,7 +98,7 @@ remaining spec is *authoring*, not engineering. The architecture and extraction 
 
 AQA A-level Further Maths, **Discrete Mathematics** (graphs & networks: MST, TSP, CPA, Dijkstra,
 route inspection, flows, LP). A network-native shell (`DecisionShell`, `src/shared/decision/`),
-parallel to the others; contracts and the full increment plan live in `DECISION_SHELL_PLAN.md`.
+parallel to the others; contracts and the full increment plan live in `docs/architecture/DECISION_SHELL_PLAN.md`.
 
 ## Decision tools
 
@@ -117,7 +116,7 @@ one question type, one level.
 - Start a **second tool** once MST feels complete — TSP reuses the same renderers; CPA needs two new views.
 
 **Detail.** The full increment ladder (MST breadth → sandbox → print → TSP → CPA → onward) and the
-per-strand representation budget live in `DECISION_SHELL_PLAN.md` → "Increment plan" — that doc owns
+per-strand representation budget live in `docs/architecture/DECISION_SHELL_PLAN.md` → "Increment plan" — that doc owns
 the ladder. We're on **increment 1 ✅**; **increment 2 (MST breadth)** is next.
 
 ---
@@ -332,6 +331,6 @@ a tool moves.
 ---
 
 *Keeping this current: when a session moves a prong, update its **Where it's at** line and its *At a
-glance* row here, alongside the `PATCH_NOTES.md` history entry. Next-step bullets are spitball — prune
-the done/ruled-out ones. Deep tables above replace the old roadmaps; keep them accurate as work lands.
+glance* row here, alongside the `docs/PATCH_NOTES.md` history entry. Next-step bullets are spitball — prune
+the done/ruled-out ones. Keep the deep tables above accurate as work lands.
 (Standing authoring principles — e.g. "never store the same fact twice" — live in `CLAUDE.md`, not here.)*

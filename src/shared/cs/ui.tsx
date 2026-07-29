@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // CS shell — shared UI primitives (no topic-data coupling).
-// Part of the Computer Science revision shell; see CS_SHELL_PLAN.md.
+// Part of the Computer Science revision shell; see docs/architecture/CS_SHELL_PLAN.md.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect } from "react";

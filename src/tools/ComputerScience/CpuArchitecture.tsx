@@ -452,7 +452,7 @@ const LESSONS: Lesson[] = [
   },
 ];
 
-// ── CPU representations as data (see CS_SHELL_PLAN.md) ────────────────────────
+// ── CPU representations as data (see docs/architecture/CS_SHELL_PLAN.md) ────────────────────────
 // The CPU box layout: nodes + roles + the dashed CPU boundary, the bus to RAM and
 // the group annotations. Rendered by the shared BoxSchematic representation.
 const ROLE_COLOR: Record<string, string> = { addr: "#2563eb", data: "#059669", instr: "#64748b", ctrl: "#475569", mem: "#475569" };
@@ -537,7 +537,7 @@ const INFO_SECTIONS: InfoSection[] = [
 // TOPIC — assemble all of the above into one CSTopic. The shell (CSShell) owns
 // every piece of UI: header, nav, beyond-spec filtering, info modal and the
 // activity routing that renders the six modes + LearnMode. This file is now pure
-// data (the payoff of the CS-shell extraction — see CS_SHELL_PLAN.md).
+// data (the payoff of the CS-shell extraction — see docs/architecture/CS_SHELL_PLAN.md).
 // ─────────────────────────────────────────────────────────────────────────────
 
 const CPU_TOPIC: CSTopic = {
