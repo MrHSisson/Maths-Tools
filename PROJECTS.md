@@ -116,11 +116,9 @@ one question type, one level.
 - Add **worksheet print** via the existing diagram-print engine.
 - Start a **second tool** once MST feels complete — TSP reuses the same renderers; CPA needs two new views.
 
-**Detail.** The plan doc's increment ladder: **1** MST thin slice ✅ · **2** MST breadth (Prim,
-question types, levels, templates) · **3** sandbox expand-from-question + shared editing
-primitives · **4** print + free-build sandbox · **5** TSP (nearest-neighbour + MST lower bound) ·
-**6** CPA (new ActivityNetwork + Gantt views) · **7** onward (Dijkstra, route inspection, flows,
-LP). Representations budgeted per *strand*: MST/TSP need only NetworkView + MatrixView + TableView.
+**Detail.** The full increment ladder (MST breadth → sandbox → print → TSP → CPA → onward) and the
+per-strand representation budget live in `DECISION_SHELL_PLAN.md` → "Increment plan" — that doc owns
+the ladder. We're on **increment 1 ✅**; **increment 2 (MST breadth)** is next.
 
 ---
 
@@ -333,14 +331,7 @@ a tool moves.
 
 ---
 
-## Principles we've learned
-
-- **Never store the same fact twice** (lesson from the NonLinearSimEq banks, where surd/decimal/numeric
-  answer fields had drifted out of sync). Derive every representation — surd ⇄ decimal ⇄ numeric ⇄ graph —
-  from one computation so they cannot disagree. Apply when authoring any new answer data.
-
----
-
 *Keeping this current: when a session moves a prong, update its **Where it's at** line and its *At a
 glance* row here, alongside the `PATCH_NOTES.md` history entry. Next-step bullets are spitball — prune
-the done/ruled-out ones. Deep tables above replace the old roadmaps; keep them accurate as work lands.*
+the done/ruled-out ones. Deep tables above replace the old roadmaps; keep them accurate as work lands.
+(Standing authoring principles — e.g. "never store the same fact twice" — live in `CLAUDE.md`, not here.)*

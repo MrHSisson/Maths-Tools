@@ -386,6 +386,7 @@ type AnyQuestion = SimpleQuestion | WordedQuestion;
 - Store tool-specific data (diagram, raw params) in underscore fields: `_diagram`, `_rawValues`, etc. Cast through `unknown`: `} as unknown as AnyQuestion`
 - Retrieve in renderers: `const d = (q as any)._rawValues as MyType | undefined`
 - `answerSuffix` is always plain text — never put units inside KaTeX
+- **Never store the same fact twice.** Derive every representation of an answer — surd ⇄ decimal ⇄ numeric ⇄ graph — from one computation, so they cannot drift out of sync. (Lesson from the NonLinearSimEq banks, where independently-authored answer fields disagreed until the grapher exposed it.)
 
 ---
 

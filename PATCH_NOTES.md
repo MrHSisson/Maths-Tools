@@ -421,11 +421,6 @@ subject (Mathematics / Computer Science), and added the CS reference docs
 a standalone **quiz tool** ("1.1 — System Architectures"), never on the maths
 shell by design. It's the reference for what the new `CSShell` is generalising.
 
-## Next for CS
-See the **Computer Science** section of `PROJECTS.md` (status + next steps) and
-`CS_SHELL_PLAN.md` (the shell architecture). In short: the shell is extracted; author
-the remaining 1.1.x sub-topics as content files against it.
-
 ---
 
 ## Keeping this current
