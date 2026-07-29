@@ -56,6 +56,7 @@ const MIGRATION_BACKLOG = [
 // Not question generators — standalone by design (manipulatives, dev-only pages,
 // bespoke tools). These never migrate to ToolShell and never need __test.
 const STANDALONE_BY_DESIGN = [
+  "Decision/MinimumSpanningTree",
   "Decision/NetworkSandbox",
   "TeacherTools/AlgebraTiles",
   "TeacherTools/CallSelector",
@@ -67,7 +68,7 @@ const STANDALONE_BY_DESIGN = [
 ];
 
 // Computer Science tools — a separate subject on CSShell, never ToolShell.
-// Their build/migration work is tracked in CS_ROADMAP.md / CS_SHELL_PLAN.md.
+// Their build/migration work is tracked in PROJECTS.md / CS_SHELL_PLAN.md.
 const CS_TOOLS = [
   "ComputerScience/CpuArchitecture",
   "ComputerScience/CpuPerformance",

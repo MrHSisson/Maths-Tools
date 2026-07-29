@@ -64,7 +64,7 @@ Then ask the one routing question and follow that branch.
 | You're designing… | Fill in this template | Read this in `CLAUDE.md` | Study this example | Output lands in |
 |---|---|---|---|---|
 | **Maths tool** — a question generator (Whiteboard / Worked Example / Worksheet, Levels 1–3) | `TOOL_SPEC_TEMPLATE.md` | "How to create a new tool", "TOOL_CONFIG format", "Question kinds" | `specs/collecting-like-terms.md`; `src/tools/Algebra/CompletingTheSquare.tsx` | `specs/<tool-id>.md` |
-| **CS tool** — an OCR J277 revision topic (Learn / Study / Cards / Quiz / Fill / Exam) | `CS_TOPIC_SPEC_TEMPLATE.md` | "Two subjects — repository map"; then `CS_SHELL_PLAN.md` + `CS_ROADMAP.md` | `src/tools/ComputerScience/CpuArchitecture.tsx` (the 1.1.1 pilot) | `specs/cs/<topic-id>.md` |
+| **CS tool** — an OCR J277 revision topic (Learn / Study / Cards / Quiz / Fill / Exam) | `CS_TOPIC_SPEC_TEMPLATE.md` | "Two subjects — repository map"; then `CS_SHELL_PLAN.md` + `PROJECTS.md` (CS) | `src/tools/ComputerScience/CpuArchitecture.tsx` (the 1.1.1 pilot) | `specs/cs/<topic-id>.md` |
 | **Technique** — a reusable working-step block for one recurring move, at three grains | `TECHNIQUE_SPEC_TEMPLATE.md` | "Working step rendering", "fragments"; GLOSSARY §4 | `src/shared/techniques/index.ts` (`quadraticFormulaSteps`) | `specs/techniques/<technique-id>.md` |
 | **Teach deck** — a slide deck for a tool's Teach mode (misconception-driven) | `TEACH_DECK_SPEC_TEMPLATE.md` | "Teaching slides — the Teach deck"; GLOSSARY §6 | `src/tools/Number/FractionsAddSub.tsx` (`TEACHING_SLIDES`) | `specs/decks/<tool-id>.md` |
 

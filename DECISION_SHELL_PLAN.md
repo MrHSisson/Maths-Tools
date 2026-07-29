@@ -1,10 +1,13 @@
 # Decision Mathematics Shell — architecture plan
 
-Status: **planning → increment 1 next.** A spike exists (`src/tools/Decision/NetworkSandbox.tsx`,
-`enabled:false`) that proves the *presentation*: a full-screen, pannable/zoomable weighted-network
-canvas with a live distance matrix. This doc turns that spike into a family of **question-generator
-tools** (MST, TSP, CPA — independent tools sharing one representation library and one shell), the way
-`CS_SHELL_PLAN.md` turned `CpuArchitecture` into the CS shell.
+Status: **increment 1 shipped → increment 2 next.** A spike exists
+(`src/tools/Decision/NetworkSandbox.tsx`, `enabled:false`) that proves the *presentation*: a
+full-screen, pannable/zoomable weighted-network canvas with a live distance matrix. Increment 1
+turned it into the first vertical slice — a pure-renderer representation library (`NetworkView` +
+`MatrixView`), a thin `DecisionShell` (Question + Solution stepper), and a Kruskal-based
+`MinimumSpanningTree` tool, all CI-validated. This doc grows that into a family of
+**question-generator tools** (MST, TSP, CPA — independent tools sharing one representation library and
+one shell), the way `CS_SHELL_PLAN.md` turned `CpuArchitecture` into the CS shell.
 
 Read this before building any Decision Maths tool.
 
@@ -14,44 +17,15 @@ critical path analysis, network flows, linear programming).
 
 ---
 
-## ▶ Resume here — next session (keep current)
+## Status & next steps
 
-Copy-paste kickoff for the next conversation, inside a fenced code block. **Whoever lands an
-increment rewrites this block** so it always points at the true next step (end-of-session rule in
-`PATCH_NOTES.md`). When the shell is finished, replace with "Shell complete — author tools as data".
+This doc is the **architecture reference** — the five locked decisions, the contracts, and the
+increment ladder below. **Where the Decision build is up to and what's next lives in
+`PROJECTS.md`** (the single planning surface). To start a session, ask for a *kickoff for Decision
+Maths* and one is generated from there — we don't keep a standing prompt here.
 
-```text
-Build increment 1 of the Decision Maths shell (Maths-Tools repo): the MST thin vertical slice.
-
-Setup: work on THIS session's assigned branch (already cut fresh from main at session start). Do NOT
-check out any other branch. Confirm the baseline is current (git fetch origin main; branch level with
-origin/main). Then: npm install (node_modules isn't present in a fresh container).
-
-Where we're up to: the plan is agreed (DECISION_SHELL_PLAN.md — read it, esp. the five locked
-decisions + the "Contracts" and "Increment plan" sections). A presentation spike exists at
-src/tools/Decision/NetworkSandbox.tsx (enabled:false) — it is the SEED for the NetworkView/MatrixView
-renderers, not a finished tool. Read it for the SVG node/edge/weight/matrix rendering and the
-pan/zoom/drag pattern; do not re-read the whole ToolShell.
-
-Increment 1 (MST thin slice) — smallest end-to-end path that proves Layers 1+2+a tool:
-  1. src/shared/decision/: promote NetworkView + MatrixView out of the sandbox as PURE renderers
-     that take a network + an optional SolveStep (edge states: tree/rejected/considering; matrix
-     cell highlights). Add the SolveStep + DecisionProblem + NetworkTemplate types.
-  2. A thin DecisionShell.tsx: Question mode (network + prompt) + Solution mode (forward/back stepper
-     over SolveStep[] with a 'show all' end-state). Full-canvas, navy chrome (borrow from the
-     sandbox / AlgebraTiles). No print, no sandbox-expand, no Prim yet.
-  3. One tool: src/tools/Decision/MinimumSpanningTree.tsx — ONE parameterised template + Kruskal's
-     algorithm emitting SolveStep[], ONE question type ("find the MST and its total weight"), one
-     level. export __problem for the (new) validateProblem CI check. Register enabled:false.
-  4. src/shared/decision/validate.ts + a test file: assert the template renders, weights in range,
-     the solve() answer matches a brute-force MST, every SolveStep references real edges.
-
-Verify before pushing: npm run build (0 TS errors), npm test (all pass, count grows), and eyeball
-ONE screenshot of Question + Solution (stepper mid-walk). Then tick increment 1 here, add a
-PATCH_NOTES entry (Maths strand), refresh this block to point at increment 2, commit + push.
-
-Do NOT build TSP/CPA/print/Prim/sandbox-expand in increment 1 — they are later increments.
-```
+Increment 1 (MST thin slice) is shipped; increment 2 (MST breadth) is next — see the increment
+ladder near the end of this doc and the Decision section of `PROJECTS.md`.
 
 ---
 
@@ -267,11 +241,11 @@ bookkeeping needs (a Decision list, mirroring `CS_TOOLS`).
 
 ## Increment plan (each ships green; the sandbox spike stays the reference)
 
-1. **MST thin slice** ← next. NetworkView + MatrixView as `SolveStep` renderers in
+1. **MST thin slice** ✅ *shipped 2026-07-28*. NetworkView + MatrixView as `SolveStep` renderers in
    `src/shared/decision/`; thin `DecisionShell` (Question + Solution stepper + show-all); MST tool
    (one template, Kruskal, one question type, one level); `validate.ts` + test. No print, no
    sandbox-expand, no Prim.
-2. **MST breadth.** Prim's (network + Prim-on-matrix), more question types (apply Prim from node X /
+2. **MST breadth** ← next. Prim's (network + Prim-on-matrix), more question types (apply Prim from node X /
    list rejected edges), Levels 1–3, more templates.
 3. **Sandbox — expand-from-question** + `representations/editing.ts`.
 4. **Print** via `handleDiagramPrint`; **free-build sandbox** mode.

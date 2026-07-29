@@ -5,16 +5,19 @@ A running, human-readable log of what each session shipped. Read this at the
 **end of a session** before pushing. It complements the other docs:
 
 - `CLAUDE.md` — how to build (conventions, APIs, checklists). *The rules.*
-- `DEV_ROADMAP.md` — Maths: what's unfinished and what's next. *The Maths plan.*
-- `CS_ROADMAP.md` — Computer Science: what to build next. *The CS plan.*
-- `CS_SHELL_PLAN.md` — the CS revision-tool shell (`CSShell`) migration.
+- `PROJECTS.md` — where every prong is up to and what's next. *The plan* (absorbs the old roadmaps).
+- `CS_SHELL_PLAN.md` · `DECISION_SHELL_PLAN.md` — the two purpose-built shells' architecture.
 - `GLOSSARY.md` — canonical names for every element. *The vocabulary.*
 - **`PATCH_NOTES.md` (this file)** — what actually happened, session by session. *The history.*
 
 The site hosts **two subjects** and they are tracked separately below: **Maths**
 (the bulk of the app, built on `ToolShell`) and **Computer Science** (a younger
-strand on its own `CSShell`, with its own roadmap). See `CLAUDE.md` → "Two
-subjects — repository map". Keep the split even when a session only touches one.
+strand on its own `CSShell`). See `CLAUDE.md` → "Two subjects — repository map".
+Keep the split even when a session only touches one.
+
+> **This file is history, not status.** For "where are we now / what's next", see
+> `PROJECTS.md` — the single planning surface. This file is the newest-first record
+> of what each session shipped.
 
 > **Dates** are the commit dates of the session's work. Newest first within each
 > strand. An entry is a *session's worth* of work, not a per-commit changelog —
@@ -22,29 +25,30 @@ subjects — repository map". Keep the split even when a session only touches on
 
 ---
 
-## Where we're up to (snapshot — 2026-07-27)
-
-**Maths — current focus:** the **PDF generators** (`Times Tables`, `Functional
-Skills`) had a big UI/quality pass in July; the **techniques engine** and
-**skill library** are the main in-development threads (both dev-gated), and the
-**SmartGrapher** is now embeddable and driving the Level 3 graphs in
-`Mixed Strategies` and `NonLinearSimEq`. Migration of the last old-shell tools
-(see `CLAUDE.md` → "migrate an old tool") is the standing backlog.
-
-**Computer Science — current focus:** the strand now has **three tools** —
-`SystemArchitecture` (the original quiz), `CpuArchitecture` (OCR J277 1.1.1) and
-`CpuPerformance` (OCR J277 1.1.2) — on its own **`CSShell`** (`src/shared/cs/`).
-The shell extraction is **done**, and the payoff is proven: 1.1.2 is authored
-entirely as a `CSTopic` data object, guarded by the `validateTopic` CI check.
-Future sub-topics (1.1.3 → 1.6, `CS_ROADMAP.md`) follow the same data-only pattern.
-The landing page bands tools by subject.
-
-**Best next steps** are tracked in `DEV_ROADMAP.md`; this file records what's
-already done.
-
----
-
 # Maths
+
+## 2026-07-28 — Decision Maths increment 1: the MST thin vertical slice
+Built the first end-to-end path of the `DecisionShell` (Layers 1+2+one tool), per
+`DECISION_SHELL_PLAN.md`. **Layer 1 — representation library** (`src/shared/decision/`): promoted the
+Network Sandbox spike into two **pure renderers** — `NetworkView` (SVG graph, pan/zoom/drag, edges
+coloured by a `SolveStep`'s states: idle/considering/tree/rejected; framed by an auto-fitted viewBox)
+and `MatrixView` (distance matrix with per-cell highlight/strike) — plus `types.ts` (the authoring
+contracts: `NetworkTemplate`, `DecisionProblem`, `SolveStep`, `DecisionShellProps`,
+`DecisionProblemExport`) and `templating.ts` (`sampleTemplate`: samples each edge weight in its
+`[min,max]`, coin-flips optional edges → a concrete, always-connected `Network`). **Layer 2 — thin
+`DecisionShell`**: full-canvas navy chrome with **Question** mode (network + prompt) and **Solution**
+mode (forward/back stepper over `SolveStep[]`, network + matrix + caption + running total updating in
+sync, with a "show all" jump to the terminal state). No print, no sandbox-expand, no Prim yet. **The
+tool** — `MinimumSpanningTree` (`enabled:false`): one crossing-free 6-node template (mandatory edges
+span every node, two optional extras) + **Kruskal's algorithm** emitting one beat per considered edge
+(accept into tree / reject as a cycle, with a running total), one question type, one level. **CI**:
+`validate.ts` (`validateProblem` + an independent Prim MST reference) and `src/tests/decision.test.ts`
+discover every `__problem`-exporting Decision tool and assert templates sample to real-node networks
+with in-range weights, the network is connected, every `SolveStep` references real edges/cells, and
+solve()'s total **matches the brute-force MST** — what makes generate-fast safe. Registered under
+Decision Mathematics; added to the standalone list in `organisation.test.ts`. Build clean (0 TS
+errors); `npm test` **271 pass** (new decision suite). Verified on screen: Question + Solution
+mid-walk (green tree edges, a red-dashed rejected edge, matrix cell struck, running total).
 
 ## 2026-07-28 — Decision Maths: design session + DECISION_SHELL_PLAN.md
 Turned the Network Sandbox spike into an agreed build plan. A design session settled five decisions:
@@ -417,11 +421,6 @@ subject (Mathematics / Computer Science), and added the CS reference docs
 a standalone **quiz tool** ("1.1 — System Architectures"), never on the maths
 shell by design. It's the reference for what the new `CSShell` is generalising.
 
-## Next for CS
-Tracked in **`CS_ROADMAP.md`** (what to build) and **`CS_SHELL_PLAN.md`** (the
-shell migration). In short: finish extracting `CSShell` from the CPU tool, then
-author the remaining 1.1.x sub-topics as content files against it.
-
 ---
 
 ## Keeping this current
@@ -432,10 +431,9 @@ At the **end of a session**, before you push:
    newest first, dated with the session's commit date.
 2. Write it as *what shipped*, in plain English — one short paragraph, linking the
    tool/page/file it changed. Group the session's commits; don't transcribe them.
-3. Update the **"Where we're up to"** snapshot if the current focus moved.
-4. If the work opened or closed a roadmap item, reflect that in `DEV_ROADMAP.md`
-   too — this file is the history, that file is the plan.
-5. If the work is part of a **multi-session build with a clear next step**, refresh the
-   living **"▶ Resume here"** block in that build's plan doc (e.g. `CS_SHELL_PLAN.md`) and
-   give the user a copy-paste kickoff block in chat — see *"Ending a session — leave a
-   clear successor"* in `CLAUDE.md`.
+3. Update the moved prong's **Where it's at** line (and *At a glance* row) in
+   `PROJECTS.md` — that is the single status/plan surface; this file is history only.
+4. If the work is part of a **multi-session build**, give the user a copy-paste kickoff
+   block in chat if they want to continue — but **do not save it anywhere**; kickoffs are
+   generated on demand from `PROJECTS.md` (see *"Ending a session / session kickoffs"* in
+   `CLAUDE.md`).

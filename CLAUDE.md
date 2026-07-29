@@ -15,17 +15,17 @@ this table first; it tells you where to look and where to write.
 |---|---|---|
 | **`CLAUDE.md`** (this file) | The rules — conventions, shared-API reference, how to build/migrate a tool. | Always (auto-loaded). The default answer to "how do I…". |
 | **`README.md`** | Human-facing project overview, tech stack, local setup. | First orientation; onboarding a person. |
-| **`PATCH_NOTES.md`** | The history — what each session shipped, split Maths / CS, newest first. | **Start of a session** (where we're up to). **Append to it at the end.** |
-| **`DEV_ROADMAP.md`** | The Maths plan — what's unfinished behind dev mode and what's next. | Picking up Maths feature/engine work. Keep current as work lands. |
-| **`CS_ROADMAP.md`** | The Computer Science plan — what CS tools/topics to build next. | Picking up CS work. |
-| **`CS_SHELL_PLAN.md`** | The `CSShell` architecture and its extraction steps. | Building or extending a CS tool. |
+| **`PROJECTS.md`** | The plan — where every prong is up to and what could come next (absorbs the old Maths + CS roadmaps; deep detail tables live here). | **Start of a session** (where are we / what's next). Keep the moved prong current at the end. |
+| **`PATCH_NOTES.md`** | The history — what each session shipped, split Maths / CS, newest first. | Seeing what was actually done. **Append to it at the end of a session.** |
+| **`CS_SHELL_PLAN.md`** | The `CSShell` architecture and its extraction stages. | Building or extending a CS tool. |
 | **`DECISION_SHELL_PLAN.md`** | The `DecisionShell` architecture — network-native question generators (MST/TSP/CPA) on a shared representation library. | Building or extending a Decision Maths tool. |
+| **`README.md`** | Human-facing project overview, tech stack, local setup. | First orientation; onboarding a person. |
 | **`GLOSSARY.md`** | Canonical name for every element (tool, grain, technique, skill, QO…). | Naming or discussing anything — use these words. |
 | **`DESIGN_STUDIO.md`** | The one entry point for designing a new build *with Claude in chat* (repo linked): routes to the right template for a maths tool / CS tool / technique / Teach deck. | Understanding where a brief in `specs/` came from, or how new ones are produced. |
 | **`TOOL_SPEC_TEMPLATE.md`** · **`CS_TOPIC_SPEC_TEMPLATE.md`** · **`TECHNIQUE_SPEC_TEMPLATE.md`** · **`TEACH_DECK_SPEC_TEMPLATE.md`** · **`TOOL_DESIGNER_PROMPT.md`** · **`specs/`** | The spec pipeline — one fill-in template per build type, the deep maths-tool designer prompt, and the completed briefs. | Designing or implementing any build from a brief. |
 
-Rule of thumb: **plan** lives in the roadmaps, **history** in `PATCH_NOTES.md`,
-**rules** here. When work lands, update the roadmap (removed a to-do) *and* add a
+Rule of thumb: **plan** lives in `PROJECTS.md`, **history** in `PATCH_NOTES.md`,
+**rules** here. When work lands, refresh the prong's status in `PROJECTS.md` *and* add a
 `PATCH_NOTES.md` line (what shipped).
 
 ---
@@ -36,11 +36,11 @@ A React/TypeScript/Vite app of interactive maths tools for teachers. Each tool h
 
 **Claude's job:** build complete new tools end-to-end from a user spec. The user provides the maths content; Claude writes all the code, registers the route, and pushes.
 
-**In-development work** — what's unfinished behind Developing-tools mode (the techniques/working-steps engine, skills, Teach decks, grapher integration, the migration backlog) is tracked in `DEV_ROADMAP.md`. Read it when picking up feature work; keep it current as work lands.
+**In-development work** — what's unfinished behind Developing-tools mode (the techniques/working-steps engine, skills, Teach decks, grapher integration, the migration backlog) is tracked in `PROJECTS.md`. Read it when picking up feature work; keep the prong's status current as work lands.
 
 **Terminology** — the canonical name for every element (tool, sub-tool, strand, grain, technique, step, skill, deck, QO, …) is in `GLOSSARY.md`. Use those names when discussing or documenting changes.
 
-**Session history** — what each session actually shipped is logged in `PATCH_NOTES.md`, split into **Maths** and **Computer Science** strands (newest first). Read it at the **start** of a session to see where things are up to; **append a short entry to it at the end** of a session before pushing. `DEV_ROADMAP.md` is the plan (what's next); `PATCH_NOTES.md` is the history (what's done).
+**Session history** — what each session actually shipped is logged in `PATCH_NOTES.md`, split into **Maths** and **Computer Science** strands (newest first). **Append a short entry to it at the end** of a session before pushing. `PROJECTS.md` is the plan (where we are / what's next); `PATCH_NOTES.md` is the history (what's done).
 
 ---
 
@@ -54,7 +54,7 @@ default `"Mathematics"`). Keep the division clear across all three axes:
 |---|---|---|
 | **Tools** | `src/tools/{Generators,Number,Algebra,Proportion,Geometry,TeacherTools}` + root | `src/tools/ComputerScience/` |
 | **Shell / how to build** | `ToolShell` (`src/shared/`) — see this file's shared-library + ToolShell sections | `CSShell` (`src/shared/cs/`) — a *separate* revision-tool shell; see `CS_SHELL_PLAN.md` |
-| **Further developments** | `DEV_ROADMAP.md` | `CS_ROADMAP.md` (what to build next) + `CS_SHELL_PLAN.md` (the shell migration) |
+| **Further developments** | `PROJECTS.md` (Maths sections) | `PROJECTS.md` (Computer Science section) + `CS_SHELL_PLAN.md` (the shell architecture) |
 
 The two shells are deliberately separate: `ToolShell` is for **question generators**
 (Whiteboard / Worked Example / Worksheet); `CSShell` is for **knowledge/revision tools**
@@ -96,27 +96,34 @@ Prioritise real development, but be deliberate about token use. Two things domin
   history; an unmerged branch is fine to continue). Read targeted slices of large files rather
   than re-reading them whole.
 
-### Ending a session — leave a clear successor
+### Ending a session / session kickoffs
 
-Whenever you finish a unit of a **multi-session build** and there's an obvious next step,
-end by doing both of these, so the next conversation starts cold but oriented:
+The single planning surface is **`PROJECTS.md`** — where every prong is up to and what
+could come next. We do **not** keep standing "resume here" prompts in the docs (they rot);
+instead, kickoff blocks are **generated on demand** from `PROJECTS.md`, and no session's
+kickoff is ever saved to a file.
 
-1. **Output a copy-paste kickoff block in chat** — inside a fenced code block (triple
-   backtick, language `text`), so the paste boundary is unmistakable. (Do **not** use the
-   old `>>>` … `<<<` delimiters — they render as nested blockquotes in Markdown and break
-   the boundary.) It must be self-sufficient: a one-line "where we're up to", the exact
-   next task, which minimal files to read (and which large files *not* to re-read whole),
-   and the verification bar before pushing. **Never name a specific branch to check out.**
-   Every kickoff starts from an up-to-date `main` and works on the session's own fresh
-   branch (cut from `main` at session start) — the harness assigns that branch, so the
-   prompt must not name one, and a session must never check out or reuse an old feature
-   branch.
-2. **Refresh the living "▶ Resume here" block** in the relevant plan/roadmap doc so the
-   pointer never goes stale. Each active multi-session build keeps one such block near
-   the top of its plan doc (e.g. `CS_SHELL_PLAN.md`). Whoever lands an increment rewrites
-   it to point at the true next step; when the build finishes, replace it with a "complete"
-   note. If a build has no clear successor (it's done, or genuinely open-ended), say so
-   instead of inventing a next step.
+**When you finish a unit of a multi-session build:** refresh the moved prong's **Where it's
+at** line (and its *At a glance* row) in `PROJECTS.md`, and add the `PATCH_NOTES.md` history
+entry. If the user wants to carry straight on, also output a kickoff block in chat (below) —
+but only in chat; never write it into a doc.
+
+**The kickoff recipe (used both at session end and on demand).** When the user asks for a
+"kickoff for `<prong>`" — e.g. when firing off several sessions in a sitting — build one from
+that prong's `PROJECTS.md` entry: a fenced code block (triple backtick, language `text`, so
+the paste boundary is unmistakable) containing:
+
+- a one-line **where we're up to** for the prong;
+- the **exact next task** — the specific option we picked from that prong's *Possible next
+  steps* (ask which, if it's not obvious);
+- the **minimal files to read** (and which large files *not* to re-read whole);
+- the **verification bar** before pushing (`npm run build` clean, `npm test`, any eyeball check);
+- the standard setup line (confirm baseline current, `npm install`).
+
+**Never name a specific branch to check out.** Every kickoff starts from an up-to-date `main`
+and works on the session's own fresh branch (the harness assigns it) — the prompt must not
+name one, and a session must never check out or reuse an old feature branch. Do **not** use
+the old `>>>` … `<<<` delimiters — they render as nested blockquotes and break the boundary.
 
 ---
 
@@ -235,7 +242,7 @@ Dev-gated (`enabled: false`) and therefore lower priority: `IntegerAddSub`, `Sim
 
 AlgebraTiles, SkillLibrary, Visualiser, CallSelector and p-value are standalone by design (not question tools) and never migrate to ToolShell — they are not part of the backlog above even though they don't use the shared shell.
 
-**Computer Science tools are not on this backlog.** CS tools (`SystemArchitecture`, `CpuArchitecture`) are knowledge/revision tools, not question generators, and target `CSShell` — never `ToolShell`. Their migration/build work is tracked in `CS_ROADMAP.md` and `CS_SHELL_PLAN.md`, not here. So `grep -L "<ToolShell"` will always list them; that is expected, not a to-do.
+**Computer Science tools are not on this backlog.** CS tools (`SystemArchitecture`, `CpuArchitecture`) are knowledge/revision tools, not question generators, and target `CSShell` — never `ToolShell`. Their build work is tracked in `PROJECTS.md` (Computer Science) and `CS_SHELL_PLAN.md`, not here. So `grep -L "<ToolShell"` will always list them; that is expected, not a to-do.
 
 ### Migration checklist
 
@@ -379,6 +386,7 @@ type AnyQuestion = SimpleQuestion | WordedQuestion;
 - Store tool-specific data (diagram, raw params) in underscore fields: `_diagram`, `_rawValues`, etc. Cast through `unknown`: `} as unknown as AnyQuestion`
 - Retrieve in renderers: `const d = (q as any)._rawValues as MyType | undefined`
 - `answerSuffix` is always plain text — never put units inside KaTeX
+- **Never store the same fact twice.** Derive every representation of an answer — surd ⇄ decimal ⇄ numeric ⇄ graph — from one computation, so they cannot drift out of sync. (Lesson from the NonLinearSimEq banks, where independently-authored answer fields disagreed until the grapher exposed it.)
 
 ---
 

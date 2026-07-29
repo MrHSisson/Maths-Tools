@@ -115,6 +115,7 @@ export const CATEGORIES: CategoryMeta[] = [
     name: 'Decision Mathematics',
     tools: [
       { id: 'network-sandbox', path: '/network-sandbox', name: 'Network Sandbox', description: 'Exploratory workspace for rendering weighted networks — the spike ahead of a Decision Maths shell', enabled: false, load: () => import('./tools/Decision/NetworkSandbox') },
+      { id: 'minimum-spanning-tree', path: '/minimum-spanning-tree', name: 'Minimum Spanning Tree', description: 'Find the minimum spanning tree of a weighted network with Kruskal\'s algorithm, walked through step by step', enabled: false, load: () => import('./tools/Decision/MinimumSpanningTree') },
     ],
   },
   {

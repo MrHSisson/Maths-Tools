@@ -13,53 +13,16 @@ Read this before building the next CS tool.
 
 ---
 
-## ▶ Resume here — next session (keep current)
+## Status & next steps
 
-This is the copy-paste kickoff for the next conversation, inside a fenced code block
-(triple backtick, language `text`). **Whoever lands an increment rewrites this block** so
-it always points at the true next step (see the end-of-session rule in `PATCH_NOTES.md`).
-If the shell is finished, replace this with "Shell complete — see stage 8 (author
-topics as data)".
+This doc is the **architecture reference** — how `CSShell` is built and the extraction stages
+below. **Where the CS build is up to and what topic is next lives in `PROJECTS.md`** (the single
+planning surface). To start a session, ask for a *kickoff for the CS shell* and one is generated
+from there — we don't keep a standing prompt here.
 
-```text
-Continue the CS revision build-out (Maths-Tools repo) — author the next J277 sub-topic
-as pure data (increment 9).
-
-Setup: work on THIS session's assigned branch — it's already cut fresh from main at
-session start. Do NOT check out or create any other branch. First confirm the baseline
-is current (git fetch origin main; the branch should be level with origin/main). Then
-run: npm install (node_modules isn't present in a fresh container).
-
-Where we're up to: increments 1–8 of CS_SHELL_PLAN.md are DONE. The CS shell is fully
-assembled (src/shared/cs/ owns everything — the six modes, LearnMode, the BoxSchematic +
-TraceTable representations, and CSShell.tsx driven by one `topic` prop) AND the payoff is
-proven: TWO topics are now pure data — CpuArchitecture.tsx (1.1.1) and CpuPerformance.tsx
-(1.1.2), each a single CSTopic object + a two-line default export + `export const __topic`.
-A CI validator (src/shared/cs/validate.ts → validateTopic, run by src/tests/cs-topics.test.ts
-over every `__topic`-exporting CS tool) makes authoring-as-data safe. Green: build clean,
-268 tests pass. Read CS_SHELL_PLAN.md first (this block + the ticked increment list + the
-"author a topic" model near the top). Skim CpuPerformance.tsx as the current shape/quality
-bar for a data-only topic. Do NOT re-read the shell internals — they're done.
-
-Next increment (9): author the NEXT sub-topic (1.1.3 Embedded systems, then onward toward
-1.6) exactly like 1.1.2 — one src/tools/ComputerScience/<Topic>.tsx = a CSTopic object +
-`export const __topic` + `export default () => <CSShell topic={X} />`, registered in
-src/registry.ts (subject "Computer Science", enabled:false until reviewed) and added to
-CS_TOOLS in src/tests/organisation.test.ts. Fill every content array from the OCR J277
-spec (get a `Status: ready` brief in specs/cs/ first, per CLAUDE.md). Reuse BoxSchematic /
-TraceTable; only add a new scene renderer if nothing fits (scene contract in this doc).
-The validator auto-covers the new topic once it exports `__topic`.
-
-ALSO consider this increment (open decision, now unblocked with >1 topic): move synoptic
-questions out of individual topic files into a SHARED cross-topic bank keyed by tag-pairs,
-so a 1.1.1↔1.1.2 question lives once, not duplicated in both topics. Weigh it before
-authoring a third topic's synoptic set.
-
-Verify before pushing: npm run build (zero TS errors) and npm test (all pass — count grows
-with the new topic). Manually re-check each new exam question against its mark scheme and
-each cloze against its slots. Then tick increment 9 in CS_SHELL_PLAN.md, add a
-PATCH_NOTES.md entry (CS strand), refresh this "▶ Resume here" block, and commit + push.
-```
+Increments 1–8 are done (the shell is fully assembled; two topics — 1.1.1, 1.1.2 — ship as pure
+data, CI-validated). Next is authoring the next J277 sub-topic as data (1.1.3 onward) — see the
+Computer Science section of `PROJECTS.md`.
 
 ---
 
