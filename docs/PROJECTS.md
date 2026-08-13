@@ -324,7 +324,7 @@ relevant, a graph and `__test` coverage.
 
 **Possible next steps (spitball — pick on the day):**
 - Migrate the remaining enabled tool — **`FractionToRatio`**.
-- **Decide finish-vs-delete** on the dev-gated leftovers (`IntegerAddSub`, `SimplifyingRatiosTool`, `PerimeterTool`).
+- **Decide finish-vs-delete** on the dev-gated leftovers (`SimplifyingRatiosTool`, `PerimeterTool`).
 - Pair each migration with a **techniques pass**, so a tool regains its pedagogy, not just the shell.
 
 **Detail.** Enabled/done: `FractionsOfAmounts`, `AnglesInTriangles`, `NonLinearSimEq`, `PowersOfTen`

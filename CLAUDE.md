@@ -220,7 +220,7 @@ grep -L "<ToolShell" src/tools/**/*.tsx   # files that do NOT render the shared 
 Tools currently needing migration (still on an embedded old shell, enabled):
 - Generator tools (`TimesTablesGenerator`, etc.) — primarily PDF-generation tools
 
-Dev-gated (`enabled: false`) and therefore lower priority: `IntegerAddSub`, `SimplifyingRatiosTool`, `PerimeterTool`.
+Dev-gated (`enabled: false`) and therefore lower priority: `SimplifyingRatiosTool`, `PerimeterTool`.
 
 **This list is CI-enforced — `src/tests/organisation.test.ts` is authoritative.** That test holds the shell status of every tool (backlog / standalone / CS) and fails the build if a tool is un-categorised, if a backlog tool has been migrated but left in the list, if a ToolShell tool lacks `__test`, or if a tool file isn't registered. The prose above is a human summary; when you migrate a tool, update `organisation.test.ts` (move it out of `MIGRATION_BACKLOG`) — the failing message tells you exactly what to change.
 

@@ -27,6 +27,28 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-08-13 — Migrated Adding & Subtracting Integers onto ToolShell (number line as a full-width diagram)
+Brought `IntegerAddSub` (472 lines, hand-rolled shell) onto **ToolShell** (~330 lines). The tool's
+number line got the same treatment `PowersOfTen`'s place-value grid got: rendered entirely through
+a custom `questionRenderer`, with the working panel starting collapsed
+(`defaults.collapseWorkingByDefault`) so the question box goes full-width and `ScaleToFit` grows the
+diagram into the reclaimed space. Two number-line states — a blank scaffold (line + arrowheads, no
+ticks) and a worked diagram (ticks, start/end points, jump arrow) — switch on `showAnswer`, reused
+identically across whiteboard and worked-example mode via one component (matching the grid's
+blank/filled split). This is a behaviour improvement over the original, which only ever showed a
+static blank line in whiteboard mode and never filled it in — Show Answer now fills the whiteboard's
+number line too, consistent with how the place-value grid already behaves. SVGs use `viewBox` +
+`width:100%` per the diagram-tool convention rather than the original's fixed pixel dimensions.
+Level 1 keeps its Mixed/Addition/Subtraction dropdown via `difficultySettings` (Levels 2–3 have a
+fixed operation, so the dropdown is `null` there — "add a negative" / "subtract a negative"
+respectively). Worksheet stays text-only, so the default print handler needs no custom code. Left
+`enabled: false` (dev-gated) — not asked to publish it live this session. Verified with `npm run
+build` (0 errors), `npm test` (292 pass, 3 new), and a headless Playwright pass across all three
+modes and all three levels: blank/filled whiteboard, worked example with working steps, worksheet
+text grid, and the Level 2/3 dropdown correctly disappearing — zero console errors throughout.
+Removed from `organisation.test.ts`'s `MIGRATION_BACKLOG` and `CLAUDE.md`/`docs/PROJECTS.md`'s
+dev-gated-leftovers lists.
+
 ## 2026-08-13 — Retired the Unpublished/ archive folder
 Deleted `Unpublished/GraphGenerator.tsx` (its planar-network-generation algorithm was harvested into
 `src/shared/decision/randomNetwork.ts` this session — see the entry above) and

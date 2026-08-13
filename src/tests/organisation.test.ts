@@ -49,7 +49,6 @@ const MIGRATION_BACKLOG = [
   "Generators/NegativeOperationsGenerator",
   "Generators/TimesTablesGenerator",
   "Geometry/PerimeterTool",
-  "Number/IntegerAddSub",
   "Proportion/SimplifyingRatiosTool",
 ];
 
