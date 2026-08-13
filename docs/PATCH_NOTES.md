@@ -27,6 +27,16 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-08-13 — Moved Mixed Strategies into Decision Mathematics
+Landing-page tweak: moved `mixed-strategies` (`src/tools/MixedStrategies.tsx` →
+`src/tools/Decision/`) out of Probability & Statistics into Decision Mathematics, alongside Network
+Sandbox and Minimum Spanning Tree — it's game-theory/zero-sum-game content, which fits the Decision
+Maths strand better than classic probability/statistics. Fixed its now-one-level-deeper `../shared`
+import to `../../shared`. Probability & Statistics is left defined with an empty tools list — the
+landing page already renders a "Coming soon" placeholder for an empty category rather than showing
+nothing, so the strand stays available for a real future probability/stats tool. Build clean, 298
+tests pass, confirmed visually.
+
 ## 2026-08-13 — Moved P-Value Grapher into Interactive Tools
 Landing-page tweak: moved `p-value` (`src/tools/TeacherTools/p-value.tsx` → `src/tools/Interactive/`)
 out of Teacher Tools into the Interactive Tools category, alongside Algebra Tiles, Parallel Lines

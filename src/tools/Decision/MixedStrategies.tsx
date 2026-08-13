@@ -3,7 +3,7 @@ import {
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type QOSnapshot,
   type GraphSeries, type FOI,
   randInt, pick, mStep, tStep,
-} from "../shared";
+} from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MIXED STRATEGIES — optimal mixed strategies & value of a zero-sum game.
