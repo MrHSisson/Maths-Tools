@@ -27,6 +27,19 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-08-13 — Retired the Unpublished/ archive folder
+Deleted `Unpublished/GraphGenerator.tsx` (its planar-network-generation algorithm was harvested into
+`src/shared/decision/randomNetwork.ts` this session — see the entry above) and
+`Unpublished/ParallelLinesInteractive.tsx` (now near-byte-identical to the published
+`src/tools/Interactive/ParallelLinesInteractive.tsx`, differing only by the two intentional fixes
+made when it was published). With both gone the folder held nothing but its own `README.md`, so
+removed the folder entirely along with its references: the `Unpublished/` section in `CLAUDE.md`,
+the tree entries and `tsconfig.json` callout in `README.md`, and the now-unneeded
+`"exclude": ["Unpublished"]` in `tsconfig.json`. Historical mentions in this file and in
+`docs/architecture/DECISION_SHELL_PLAN.md` are left as-is — they're an accurate record of where
+things came from, not live pointers. Build clean, 289 tests pass (unaffected — the folder was never
+part of the app).
+
 ## 2026-08-13 — Harvested a procedural network generator for Decision Maths
 Added `src/shared/decision/randomNetwork.ts`'s `generateRandomNetwork()`: given only a node count,
 builds a connected, provably crossing-free weighted `Network` — the procedural counterpart to
