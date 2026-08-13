@@ -27,6 +27,25 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-08-13 — New Percentages tool, built from the archived v1 draft
+Brought `Unpublished/Percentages.tsx` (an old, never-registered v1 draft) onto the shared
+**ToolShell** as a fresh v2.3 build (`src/tools/Number/Percentages.tsx`, ~370 lines) and published
+it live (no `enabled: false`). Three sub-tools: **Finding Percentages** (Multiplier vs. Chunking
+methods, with a decimal-amounts toggle; Chunking builds the percentage from 10%/1% and, at Level 1,
+50%/25% shortcuts), **Percentage Change** (increase/decrease/mixed direction, an optional "show
+multiplier working" step, and a Level 3 compound two-step change), and **Reverse Percentages**
+(sales/VAT/general contexts, an optional unitary-method working path, Level 3 large increases or
+very small percentage changes). All maths was rewritten cleanly against the v2.3 conventions rather
+than ported verbatim — money values are rounded to the nearest penny at *every* step via a dedicated
+`money()` helper (a spot-check first caught the old approach compounding rounding error across a
+chained calculation, e.g. a two-step change showing `£103.0302`; fixed by re-rounding after each
+multiplication rather than only stripping floating-point noise). Verified with `npm run build`
+(0 errors), `npm test` (280 pass, 9 new), and an ad-hoc 7,200-question generation sweep checking for
+NaN/undefined/Infinity across every tool × level × QO combination, plus manual spot-checks of the
+chunking, compound-change and unitary-method working. `Unpublished/Percentages.tsx` is left in place
+per `CLAUDE.md`'s "leave alone" rule for that folder — this is a new build inspired by it, not a
+migration of it.
+
 ## 2026-08-13 — Housekeeping: undev-gated Powers of Ten; deleted superseded Unpublished/ archives
 `PowersOfTen` finished its ToolShell migration on 2026-07-26 but the registry's `enabled: false`
 flag was never flipped afterward, leaving a done tool hidden behind Developing-tools mode — removed
