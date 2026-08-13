@@ -27,6 +27,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-08-13 — Published Perimeter
+Removed `enabled: false` from the registry entry now that the ToolShell migration (see the entry
+above) is verified working — it's live on the landing page. Build clean, 298 tests pass.
+
 ## 2026-08-13 — Migrated Perimeter onto ToolShell (following the AnglesInTriangles pattern)
 Brought `PerimeterTool` (1,372 lines, hand-rolled shell including a full camera/presenter feature)
 onto **ToolShell** (~660 lines) using `AnglesInTriangles` as the template. Both sub-tools —
