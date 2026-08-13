@@ -324,9 +324,9 @@ relevant, a graph and `__test` coverage.
 
 **Detail.** Enabled/done: `FractionsOfAmounts`, `AnglesInTriangles`, `NonLinearSimEq`, `PowersOfTen`
 (techniques wiring still to add on some). Standalone by design (never migrate): the Generators,
-`SystemArchitecture`, `AlgebraTiles`, `Visualiser`, `CallSelector`, `p-value`, `SkillLibrary`,
-`TechniqueLibrary`, `GrapherLab`. `organisation.test.ts` holds the authoritative lists — update it when
-a tool moves.
+`SystemArchitecture`, `AlgebraTiles`, `ParallelLinesInteractive`, `GrapherLab`, `Visualiser`,
+`CallSelector`, `p-value`, `SkillLibrary`, `TechniqueLibrary`. `organisation.test.ts` holds the
+authoritative lists — update it when a tool moves.
 
 ---
 

@@ -51,7 +51,7 @@ default `"Mathematics"`). Keep the division clear across all three axes:
 
 | Axis | Mathematics | Computer Science |
 |---|---|---|
-| **Tools** | `src/tools/{Generators,Number,Algebra,Proportion,Geometry,TeacherTools}` + root | `src/tools/ComputerScience/` |
+| **Tools** | `src/tools/{Generators,Number,Algebra,Proportion,Geometry,TeacherTools,Interactive}` + root | `src/tools/ComputerScience/` |
 | **Shell / how to build** | `ToolShell` (`src/shared/`) — see this file's shared-library + ToolShell sections | `CSShell` (`src/shared/cs/`) — a *separate* revision-tool shell; see `docs/architecture/CS_SHELL_PLAN.md` |
 | **Further developments** | `docs/PROJECTS.md` (Maths sections) | `docs/PROJECTS.md` (Computer Science section) + `docs/architecture/CS_SHELL_PLAN.md` (the shell architecture) |
 
@@ -239,7 +239,7 @@ Dev-gated (`enabled: false`) and therefore lower priority: `IntegerAddSub`, `Sim
 
 **This list is CI-enforced — `src/tests/organisation.test.ts` is authoritative.** That test holds the shell status of every tool (backlog / standalone / CS) and fails the build if a tool is un-categorised, if a backlog tool has been migrated but left in the list, if a ToolShell tool lacks `__test`, or if a tool file isn't registered. The prose above is a human summary; when you migrate a tool, update `organisation.test.ts` (move it out of `MIGRATION_BACKLOG`) — the failing message tells you exactly what to change.
 
-AlgebraTiles, SkillLibrary, Visualiser, CallSelector and p-value are standalone by design (not question tools) and never migrate to ToolShell — they are not part of the backlog above even though they don't use the shared shell.
+AlgebraTiles, ParallelLinesInteractive, GrapherLab, SkillLibrary, Visualiser, CallSelector and p-value are standalone by design (not question tools) and never migrate to ToolShell — they are not part of the backlog above even though they don't use the shared shell.
 
 **Computer Science tools are not on this backlog.** CS tools (`SystemArchitecture`, `CpuArchitecture`) are knowledge/revision tools, not question generators, and target `CSShell` — never `ToolShell`. Their build work is tracked in `docs/PROJECTS.md` (Computer Science) and `docs/architecture/CS_SHELL_PLAN.md`, not here. So `grep -L "<ToolShell"` will always list them; that is expected, not a to-do.
 
@@ -1027,6 +1027,7 @@ CI also runs `npm test` (Vitest, `src/tests/generators.test.ts`). The suite disc
 | Geometry | `src/tools/Geometry/` | amber → orange |
 | Probability & Statistics | `src/tools/` (root) | pink → rose |
 | Teacher Tools | `src/tools/TeacherTools/` | violet → purple |
+| Interactive Tools | `src/tools/Interactive/` | lime → green |
 | Computer Science | `src/tools/ComputerScience/` | slate → slate |
 
 ---

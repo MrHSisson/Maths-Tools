@@ -58,9 +58,10 @@ const MIGRATION_BACKLOG = [
 const STANDALONE_BY_DESIGN = [
   "Decision/MinimumSpanningTree",
   "Decision/NetworkSandbox",
-  "TeacherTools/AlgebraTiles",
+  "Interactive/AlgebraTiles",
+  "Interactive/GrapherLab",
+  "Interactive/ParallelLinesInteractive",
   "TeacherTools/CallSelector",
-  "TeacherTools/GrapherLab",
   "TeacherTools/SkillLibrary",
   "TeacherTools/TechniqueLibrary",
   "TeacherTools/Visualiser",

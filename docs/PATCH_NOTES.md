@@ -27,6 +27,29 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-08-13 — New "Interactive Tools" category; Parallel Lines Explorer published, GrapherLab and AlgebraTiles regrouped
+Introduced a new landing-page category, **Interactive Tools** (`src/tools/Interactive/`, lime →
+green gradient), for freeform manipulative/canvas tools as distinct from the worksheet-generator
+tools on `ToolShell`. Moved `AlgebraTiles.tsx` and `GrapherLab.tsx` out of `TeacherTools/` into the
+new folder (import paths, `organisation.test.ts`'s `STANDALONE_BY_DESIGN` list, and both `CLAUDE.md`
+and `docs/PROJECTS.md`'s tool-location references updated to match); `GrapherLab` keeps its existing
+`enabled: false` dev-gate — it's a test bench, not a finished classroom tool. Also published a new
+**Parallel Lines Explorer** (`/parallel-lines-explorer`, live) into the category, built from the
+archived `Unpublished/ParallelLinesInteractive.tsx` v1 draft: a full-screen, pannable canvas where a
+transversal (drag the blue handle) crosses one or two parallel lines plus an optional non-parallel
+line, with click-to-reveal angle sectors (A–H, plus M–P for the non-parallel line), a settings menu
+(line visibility, angle-of-view presets, offset, handle visibility), recentre/reset/fullscreen
+controls, and its own info modal — all pre-existing, working code. The only functional fix needed
+was a missing Home-button handler (the draft's button had no `onClick` at all); the default export
+was renamed to `App` to match the repo's convention. Left `Unpublished/ParallelLinesInteractive.tsx`
+in place — a genuinely new build from it, not a migration, so it stays available as reference
+material per `CLAUDE.md`'s rule for that folder. Verified with `npm run build` (0 errors), `npm test`
+(280 pass, unchanged — the tool is standalone by design, no `__test` needed), and a headless
+Playwright pass: both new routes load with zero console/page errors, and screenshots confirm the
+canvas renders correctly (parallel lines, transversal, colour-coded angle sectors) and the landing
+page shows the new category with Algebra Tiles and Parallel Lines Explorer live, Grapher Lab
+correctly DEV-badged.
+
 ## 2026-08-13 — New Percentages tool, built from the archived v1 draft
 Brought `Unpublished/Percentages.tsx` (an old, never-registered v1 draft) onto the shared
 **ToolShell** as a fresh v2.3 build (`src/tools/Number/Percentages.tsx`, ~370 lines) and published

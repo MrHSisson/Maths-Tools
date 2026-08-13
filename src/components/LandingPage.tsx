@@ -118,6 +118,18 @@ const CATEGORY_THEMES: Record<string, { gradient: string; theme: CategoryTheme }
       badgeBorder: 'border-violet-200/60'
     },
   },
+  'Interactive Tools': {
+    gradient: 'from-lime-500 to-green-600',
+    theme: {
+      border: 'border-l-lime-500',
+      hoverBorder: 'hover:border-l-lime-400',
+      shadow: 'hover:shadow-lime-300/40',
+      text: 'group-hover:text-lime-700',
+      badgeBg: 'bg-lime-50',
+      badgeText: 'text-lime-700',
+      badgeBorder: 'border-lime-200/60'
+    },
+  },
   'Decision Mathematics': {
     gradient: 'from-rose-500 to-red-600',
     theme: {
