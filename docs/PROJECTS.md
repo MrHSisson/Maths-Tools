@@ -318,17 +318,21 @@ drawing wrong geometry. Less a "project", more a reusable utility to reach for.
 
 **Where it's at.** Older tools hand-roll their own UI (~800–1,300 lines); v2.3 tools use the shared
 ToolShell (~250–350). **Most are migrated**, and `src/tests/organisation.test.ts` is the CI-enforced
-source of truth for which tool is on which shell. A few remain: one user-facing tool and a few
-dev-gated ones. Migration is also the natural moment to add techniques-based working and, where
-relevant, a graph and `__test` coverage.
+source of truth for which tool is on which shell. What's left: the four live Generators tools
+(PDF-focused, lower priority) and one dev-gated tool (`SimplifyingRatiosTool`). `PerimeterTool` is
+now migrated too, but stays `enabled: false` pending a decision to publish it live. Migration is
+also the natural moment to add techniques-based working and, where relevant, a graph and `__test`
+coverage.
 
 **Possible next steps (spitball — pick on the day):**
-- Migrate the remaining enabled tool — **`FractionToRatio`**.
-- **Decide finish-vs-delete** on the dev-gated leftovers (`SimplifyingRatiosTool`, `PerimeterTool`).
+- **Decide finish-vs-delete** on the remaining dev-gated leftover (`SimplifyingRatiosTool`).
+- Decide whether to **publish `PerimeterTool` live** now that it's migrated.
+- Migrate the four **Generators** tools (`TimesTablesGenerator` etc.) when there's appetite for the PDF-heavy print work they need.
 - Pair each migration with a **techniques pass**, so a tool regains its pedagogy, not just the shell.
 
-**Detail.** Enabled/done: `FractionsOfAmounts`, `AnglesInTriangles`, `NonLinearSimEq`, `PowersOfTen`
-(techniques wiring still to add on some). Standalone by design (never migrate): the Generators,
+**Detail.** Enabled/done: `FractionsOfAmounts`, `AnglesInTriangles`, `NonLinearSimEq`, `PowersOfTen`,
+`FractionToRatio`, `PerimeterTool` (migrated but not yet published)
+(techniques wiring still to add on some). Standalone by design (never migrate):
 `SystemArchitecture`, `AlgebraTiles`, `ParallelLinesInteractive`, `GrapherLab`, `Visualiser`,
 `CallSelector`, `p-value`, `SkillLibrary`, `TechniqueLibrary`. `organisation.test.ts` holds the
 authoritative lists — update it when a tool moves.

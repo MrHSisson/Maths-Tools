@@ -27,6 +27,45 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-08-13 — Migrated Perimeter onto ToolShell (following the AnglesInTriangles pattern)
+Brought `PerimeterTool` (1,372 lines, hand-rolled shell including a full camera/presenter feature)
+onto **ToolShell** (~660 lines) using `AnglesInTriangles` as the template. Both sub-tools —
+**Polygons** (regular shapes at Level 1, irregular tick-marked shapes at Level 2, mixed cm/mm/m
+units at Level 3) and **Rectilinear Shapes** (all sides given, then 1–2 derived missing sides, then
+mixed units) — keep their maths and the sophisticated pill-label placement algorithm (tries multiple
+candidate positions per label, scores by mutual clearance) verbatim. Dropped the camera/presenter
+feature entirely: it was generic whiteboard chrome unrelated to perimeter questions specifically,
+and the shell's own fullscreen already covers "make the diagram big for the class." Swapped the
+hand-rolled SVG-capture print/PDF generator for the shared `handleDiagramPrint`, which required
+computing a real `_aspect` per rectilinear question (its bounding box isn't square, unlike polygons)
+— extracted into a `rectSmallWH()` helper shared between generation-time sizing and the actual
+worksheet-cell renderer so the two can never drift apart.
+
+**Fixed a real bug found during the port**: the Level 3 "Mixed units" checkbox in the original tool
+was wired into `TOOL_CONFIG` but never actually read by the generator — `mixUnits` was hardcoded to
+`level === "level3"`, so toggling the checkbox off had no effect. Verified with a 40-sample direct
+generation check: before the fix this would have shown 40/40 mixed regardless of the toggle; after,
+it's 40/40 mixed when on and 0/40 when off, as the label promises.
+
+**A deliberate simplification**: the original showed a per-shape prompt ("Find the perimeter of the
+rhombus") plus a separate "Give your answer in cm" banner for mixed-unit questions. The shape-name
+prompt now lives in the tool's own whiteboard/worked-example title (via a custom `questionRenderer`,
+shown only there — worksheet cells are diagram-only, matching the `AnglesInTriangles` convention);
+the separate mixed-units banner was dropped since the edge labels already show the mixed units
+directly.
+
+Verified with `npm run build` (0 errors), `npm test` (298 pass, 6 new), and a thorough headless
+Playwright pass: both sub-tools × all three levels in whiteboard (blank and revealed — including
+confirming the shell provides no automatic answer overlay in whiteboard mode, unlike worked example,
+so the tool renders its own inline "= answer"), worked example (steps + the shell's own answer card,
+confirmed to appear automatically without any tool-side code), standard and differentiated worksheets,
+and the print/PDF output for both sub-tools (diagrams correctly proportioned, answers page matching)
+— zero console errors throughout. Left `enabled: false` — not asked to publish it live this session.
+Removed from `organisation.test.ts`'s `MIGRATION_BACKLOG` and `CLAUDE.md`/`docs/PROJECTS.md`'s
+tracking lists; also caught and fixed two unrelated stale/incorrect lines in `docs/PROJECTS.md`
+while auditing this section (a leftover "migrate FractionToRatio" bullet from a July migration, and
+"the Generators" wrongly listed as never-migrate when four of them are in the CI-enforced backlog).
+
 ## 2026-08-13 — Published Adding & Subtracting Integers
 Removed `enabled: false` from the registry entry now that the ToolShell migration (see the entry
 above) is verified working — it's live on the landing page. Build clean, 292 tests pass.
