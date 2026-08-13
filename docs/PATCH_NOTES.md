@@ -27,6 +27,36 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-08-13 — Harvested a procedural network generator for Decision Maths
+Added `src/shared/decision/randomNetwork.ts`'s `generateRandomNetwork()`: given only a node count,
+builds a connected, provably crossing-free weighted `Network` — the procedural counterpart to
+`sampleTemplate()`'s hand-authored `NetworkTemplate` sampling, and the "free bypass" building block
+`DECISION_SHELL_PLAN.md` had flagged but not built. Harvested from `Unpublished/GraphGenerator.tsx`
+(an old, never-registered v1 draft) after recognising its planar-layout algorithm was directly
+relevant to the Decision Maths work: it built a spanning tree plus extra edges while checking for
+straight-line crossings, and had a "Route inspection" toggle that manipulates the graph until exactly
+2 or 4 nodes have odd degree — precisely the solvability condition for the Route Inspection/Chinese
+Postman problem, a Decision Maths topic still unbuilt.
+
+The port was not verbatim. The draft's own crossing-avoidance had two real gaps, both caught by a
+new independent CI check (`src/tests/decisionRandomNetwork.test.ts`, which re-implements the crossing
+test rather than trusting the generator's own logic, mirroring `validate.ts`'s independent-brute-force
+pattern): (1) its greedy "nearest reachable, skip if crossing" spanning-tree walk could paint itself
+into a corner at higher node counts and fell back to adding a crossing edge anyway — fixed by building
+the true Euclidean MST instead, which is geometrically guaranteed non-crossing by construction, so the
+fallback (and its crossing risk) is no longer needed at all; (2) the degree-1-leaf patch and the
+route-inspection nudge both called `addEdge` directly, bypassing the crossing check entirely — fixed
+so every added edge everywhere goes through the same check, falling back to leaving a node unpatched
+rather than accepting a crossing. Both gaps were silently invisible in the original draft because its
+(also-ported-and-then-deliberately-dropped) curve-routing step visually papered over any crossing
+afterward — `NetworkView` only renders straight edges, so this port keeps output restricted to what's
+already renderable rather than extending the shell. The route-inspection nudge is now honestly
+documented as best-effort (an empirical sweep showed it lands on 2-or-4 odd nodes the large majority
+of the time but not always) rather than asserting a guarantee it can't keep under the no-crossing
+constraint. Exported from the `src/shared/decision` barrel; not yet wired into any tool. Verified with
+`npm run build` (0 errors) and `npm test` (289 pass, 9 new). `docs/architecture/DECISION_SHELL_PLAN.md`
+and `docs/PROJECTS.md` updated with the finding and the module.
+
 ## 2026-08-13 — New "Interactive Tools" category; Parallel Lines Explorer published, GrapherLab and AlgebraTiles regrouped
 Introduced a new landing-page category, **Interactive Tools** (`src/tools/Interactive/`, lime →
 green gradient), for freeform manipulative/canvas tools as distinct from the worksheet-generator

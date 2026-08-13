@@ -4,6 +4,8 @@ export { default as NetworkView } from "./representations/NetworkView";
 export { default as MatrixView } from "./representations/MatrixView";
 export { sampleTemplate } from "./templating";
 export { validateProblem, primMST } from "./validate";
+export { generateRandomNetwork } from "./randomNetwork";
+export type { RandomNetworkOptions } from "./randomNetwork";
 export type {
   GNode,
   GEdge,

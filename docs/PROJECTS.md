@@ -38,7 +38,7 @@ lives in `CLAUDE.md` → "Ending a session / session kickoffs".
 | Prong | Status | One-line |
 |---|---|---|
 | **Computer Science shell** | 🚧 | Shell done; 2 of ~15 J277 topics authored as data |
-| **Decision Maths** | 🚧 | New shell live; first tool (MST) shipped as a thin slice |
+| **Decision Maths** | 🚧 | New shell live; MST shipped thin; procedural network generator harvested, unwired |
 | **Techniques engine** | 🚧 | Engine built; only 1 tool converted so far |
 | **Skills library** | 🚧 | Engine + backlog ready; 2 skills built |
 | **Core representations** | 🚧 | 3 of 6 visual families have Teach scenes |
@@ -107,13 +107,18 @@ parallel to the others; contracts and the full increment plan live in `docs/arch
 (forward/back through the algorithm one beat at a time, with a running total and a "show all"),
 and one tool — **Minimum Spanning Tree** (Kruskal's algorithm). CI checks each tool's solver
 against an independent brute-force reference. Deliberately narrow so far: one network template,
-one question type, one level.
+one question type, one level. Also now available: `src/shared/decision/randomNetwork.ts`'s
+`generateRandomNetwork()` — a procedural, provably crossing-free network generator (Euclidean MST +
+crossing-checked extra edges) harvested from an old archived draft, with a best-effort
+`routeInspection` mode for a future Route Inspection / Chinese Postman tool. Not wired into any
+tool yet — see `DECISION_SHELL_PLAN.md` → "Templating model" for the detail.
 
 **Possible next steps (spitball — pick on the day):**
 - Broaden MST — add **Prim's** (network walk + Prim-on-the-matrix), more question types (apply Prim from node X, list rejected edges), Levels 1–3, more templates.
 - Add the **expand-to-sandbox** — open the generated network in an interactive, annotatable canvas.
 - Add **worksheet print** via the existing diagram-print engine.
 - Start a **second tool** once MST feels complete — TSP reuses the same renderers; CPA needs two new views.
+- Build **Route Inspection (Chinese Postman)** on top of `generateRandomNetwork`'s `routeInspection` mode — the odd-degree-nudge groundwork already exists.
 
 **Detail.** The full increment ladder (MST breadth → sandbox → print → TSP → CPA → onward) and the
 per-strand representation budget live in `docs/architecture/DECISION_SHELL_PLAN.md` → "Increment plan" — that doc owns

@@ -104,6 +104,8 @@ src/shared/decision/
   index.ts            barrel export
   types.ts            NetworkTemplate, DecisionProblem, SolveStep, EdgeState, DecisionShellProps
   templating.ts       sampleTemplate(template, seed) → concrete network within declared bounds
+  randomNetwork.ts    generateRandomNetwork(opts) → procedural crossing-free network (the free-
+                       bypass building block below — no hand-authored template needed)
   DecisionShell.tsx   header · mode nav · Question · Solution stepper · Sandbox launch · Print
   stepper.tsx         the SolveStep forward/back engine (shared with the Teach-style beat model)
   representations/
@@ -185,6 +187,18 @@ it), never two moves at once.
 - **Escape hatch — free bypass.** An "advanced / free network" path lets a user hand-build or
   procedurally generate a network outside any template, behind a **"may affect diagram clarity"**
   warning. It reuses `representations/editing.ts` (shared with the free-build sandbox).
+  **The procedural half of this now exists**: `randomNetwork.ts`'s `generateRandomNetwork(opts)`
+  builds a connected, provably crossing-free `Network` from nothing but a node count (Euclidean MST
+  for the spanning tree — geometrically guaranteed non-crossing — plus crossing-checked extra edges),
+  with a `routeInspection` option that best-effort nudges toward 2-or-4 odd-degree nodes for a future
+  Route Inspection / Chinese Postman tool. Harvested from an old, never-registered v1 draft
+  (`Unpublished/GraphGenerator.tsx`) that solved the same layout problem for a standalone tool; its
+  curve-routing for edges that couldn't stay straight was deliberately **not** ported, since
+  `NetworkView` only renders straight edges — output is restricted to what's already renderable.
+  Not yet wired into `DecisionShell` or any tool; CI-tested directly in
+  `src/tests/decisionRandomNetwork.test.ts` (connectivity, no crossings, weight range, and the
+  handshaking-lemma invariant on `routeInspection`, all checked independently of the generator's own
+  logic).
 - A tool ships several templates so questions vary in shape, not just weights.
 
 ---
