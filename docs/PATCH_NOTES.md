@@ -27,6 +27,188 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-08-13 — Moved Mixed Strategies into Decision Mathematics
+Landing-page tweak: moved `mixed-strategies` (`src/tools/MixedStrategies.tsx` →
+`src/tools/Decision/`) out of Probability & Statistics into Decision Mathematics, alongside Network
+Sandbox and Minimum Spanning Tree — it's game-theory/zero-sum-game content, which fits the Decision
+Maths strand better than classic probability/statistics. Fixed its now-one-level-deeper `../shared`
+import to `../../shared`. Probability & Statistics is left defined with an empty tools list — the
+landing page already renders a "Coming soon" placeholder for an empty category rather than showing
+nothing, so the strand stays available for a real future probability/stats tool. Build clean, 298
+tests pass, confirmed visually.
+
+## 2026-08-13 — Moved P-Value Grapher into Interactive Tools
+Landing-page tweak: moved `p-value` (`src/tools/TeacherTools/p-value.tsx` → `src/tools/Interactive/`)
+out of Teacher Tools into the Interactive Tools category, alongside Algebra Tiles, Parallel Lines
+Explorer and Grapher Lab — matching folder-per-category convention. Updated
+`organisation.test.ts`'s `STANDALONE_BY_DESIGN` list to the new path. Build clean, 298 tests pass,
+confirmed visually: the tool now appears under Interactive Tools and no longer under Teacher Tools.
+
+## 2026-08-13 — Published Perimeter
+Removed `enabled: false` from the registry entry now that the ToolShell migration (see the entry
+above) is verified working — it's live on the landing page. Build clean, 298 tests pass.
+
+## 2026-08-13 — Migrated Perimeter onto ToolShell (following the AnglesInTriangles pattern)
+Brought `PerimeterTool` (1,372 lines, hand-rolled shell including a full camera/presenter feature)
+onto **ToolShell** (~660 lines) using `AnglesInTriangles` as the template. Both sub-tools —
+**Polygons** (regular shapes at Level 1, irregular tick-marked shapes at Level 2, mixed cm/mm/m
+units at Level 3) and **Rectilinear Shapes** (all sides given, then 1–2 derived missing sides, then
+mixed units) — keep their maths and the sophisticated pill-label placement algorithm (tries multiple
+candidate positions per label, scores by mutual clearance) verbatim. Dropped the camera/presenter
+feature entirely: it was generic whiteboard chrome unrelated to perimeter questions specifically,
+and the shell's own fullscreen already covers "make the diagram big for the class." Swapped the
+hand-rolled SVG-capture print/PDF generator for the shared `handleDiagramPrint`, which required
+computing a real `_aspect` per rectilinear question (its bounding box isn't square, unlike polygons)
+— extracted into a `rectSmallWH()` helper shared between generation-time sizing and the actual
+worksheet-cell renderer so the two can never drift apart.
+
+**Fixed a real bug found during the port**: the Level 3 "Mixed units" checkbox in the original tool
+was wired into `TOOL_CONFIG` but never actually read by the generator — `mixUnits` was hardcoded to
+`level === "level3"`, so toggling the checkbox off had no effect. Verified with a 40-sample direct
+generation check: before the fix this would have shown 40/40 mixed regardless of the toggle; after,
+it's 40/40 mixed when on and 0/40 when off, as the label promises.
+
+**A deliberate simplification**: the original showed a per-shape prompt ("Find the perimeter of the
+rhombus") plus a separate "Give your answer in cm" banner for mixed-unit questions. The shape-name
+prompt now lives in the tool's own whiteboard/worked-example title (via a custom `questionRenderer`,
+shown only there — worksheet cells are diagram-only, matching the `AnglesInTriangles` convention);
+the separate mixed-units banner was dropped since the edge labels already show the mixed units
+directly.
+
+Verified with `npm run build` (0 errors), `npm test` (298 pass, 6 new), and a thorough headless
+Playwright pass: both sub-tools × all three levels in whiteboard (blank and revealed — including
+confirming the shell provides no automatic answer overlay in whiteboard mode, unlike worked example,
+so the tool renders its own inline "= answer"), worked example (steps + the shell's own answer card,
+confirmed to appear automatically without any tool-side code), standard and differentiated worksheets,
+and the print/PDF output for both sub-tools (diagrams correctly proportioned, answers page matching)
+— zero console errors throughout. Left `enabled: false` — not asked to publish it live this session.
+Removed from `organisation.test.ts`'s `MIGRATION_BACKLOG` and `CLAUDE.md`/`docs/PROJECTS.md`'s
+tracking lists; also caught and fixed two unrelated stale/incorrect lines in `docs/PROJECTS.md`
+while auditing this section (a leftover "migrate FractionToRatio" bullet from a July migration, and
+"the Generators" wrongly listed as never-migrate when four of them are in the CI-enforced backlog).
+
+## 2026-08-13 — Published Adding & Subtracting Integers
+Removed `enabled: false` from the registry entry now that the ToolShell migration (see the entry
+above) is verified working — it's live on the landing page. Build clean, 292 tests pass.
+
+## 2026-08-13 — Migrated Adding & Subtracting Integers onto ToolShell (number line as a full-width diagram)
+Brought `IntegerAddSub` (472 lines, hand-rolled shell) onto **ToolShell** (~330 lines). The tool's
+number line got the same treatment `PowersOfTen`'s place-value grid got: rendered entirely through
+a custom `questionRenderer`, with the working panel starting collapsed
+(`defaults.collapseWorkingByDefault`) so the question box goes full-width and `ScaleToFit` grows the
+diagram into the reclaimed space. Two number-line states — a blank scaffold (line + arrowheads, no
+ticks) and a worked diagram (ticks, start/end points, jump arrow) — switch on `showAnswer`, reused
+identically across whiteboard and worked-example mode via one component (matching the grid's
+blank/filled split). This is a behaviour improvement over the original, which only ever showed a
+static blank line in whiteboard mode and never filled it in — Show Answer now fills the whiteboard's
+number line too, consistent with how the place-value grid already behaves. SVGs use `viewBox` +
+`width:100%` per the diagram-tool convention rather than the original's fixed pixel dimensions.
+Level 1 keeps its Mixed/Addition/Subtraction dropdown via `difficultySettings` (Levels 2–3 have a
+fixed operation, so the dropdown is `null` there — "add a negative" / "subtract a negative"
+respectively). Worksheet stays text-only, so the default print handler needs no custom code. Left
+`enabled: false` (dev-gated) — not asked to publish it live this session. Verified with `npm run
+build` (0 errors), `npm test` (292 pass, 3 new), and a headless Playwright pass across all three
+modes and all three levels: blank/filled whiteboard, worked example with working steps, worksheet
+text grid, and the Level 2/3 dropdown correctly disappearing — zero console errors throughout.
+Removed from `organisation.test.ts`'s `MIGRATION_BACKLOG` and `CLAUDE.md`/`docs/PROJECTS.md`'s
+dev-gated-leftovers lists.
+
+## 2026-08-13 — Retired the Unpublished/ archive folder
+Deleted `Unpublished/GraphGenerator.tsx` (its planar-network-generation algorithm was harvested into
+`src/shared/decision/randomNetwork.ts` this session — see the entry above) and
+`Unpublished/ParallelLinesInteractive.tsx` (now near-byte-identical to the published
+`src/tools/Interactive/ParallelLinesInteractive.tsx`, differing only by the two intentional fixes
+made when it was published). With both gone the folder held nothing but its own `README.md`, so
+removed the folder entirely along with its references: the `Unpublished/` section in `CLAUDE.md`,
+the tree entries and `tsconfig.json` callout in `README.md`, and the now-unneeded
+`"exclude": ["Unpublished"]` in `tsconfig.json`. Historical mentions in this file and in
+`docs/architecture/DECISION_SHELL_PLAN.md` are left as-is — they're an accurate record of where
+things came from, not live pointers. Build clean, 289 tests pass (unaffected — the folder was never
+part of the app).
+
+## 2026-08-13 — Harvested a procedural network generator for Decision Maths
+Added `src/shared/decision/randomNetwork.ts`'s `generateRandomNetwork()`: given only a node count,
+builds a connected, provably crossing-free weighted `Network` — the procedural counterpart to
+`sampleTemplate()`'s hand-authored `NetworkTemplate` sampling, and the "free bypass" building block
+`DECISION_SHELL_PLAN.md` had flagged but not built. Harvested from `Unpublished/GraphGenerator.tsx`
+(an old, never-registered v1 draft) after recognising its planar-layout algorithm was directly
+relevant to the Decision Maths work: it built a spanning tree plus extra edges while checking for
+straight-line crossings, and had a "Route inspection" toggle that manipulates the graph until exactly
+2 or 4 nodes have odd degree — precisely the solvability condition for the Route Inspection/Chinese
+Postman problem, a Decision Maths topic still unbuilt.
+
+The port was not verbatim. The draft's own crossing-avoidance had two real gaps, both caught by a
+new independent CI check (`src/tests/decisionRandomNetwork.test.ts`, which re-implements the crossing
+test rather than trusting the generator's own logic, mirroring `validate.ts`'s independent-brute-force
+pattern): (1) its greedy "nearest reachable, skip if crossing" spanning-tree walk could paint itself
+into a corner at higher node counts and fell back to adding a crossing edge anyway — fixed by building
+the true Euclidean MST instead, which is geometrically guaranteed non-crossing by construction, so the
+fallback (and its crossing risk) is no longer needed at all; (2) the degree-1-leaf patch and the
+route-inspection nudge both called `addEdge` directly, bypassing the crossing check entirely — fixed
+so every added edge everywhere goes through the same check, falling back to leaving a node unpatched
+rather than accepting a crossing. Both gaps were silently invisible in the original draft because its
+(also-ported-and-then-deliberately-dropped) curve-routing step visually papered over any crossing
+afterward — `NetworkView` only renders straight edges, so this port keeps output restricted to what's
+already renderable rather than extending the shell. The route-inspection nudge is now honestly
+documented as best-effort (an empirical sweep showed it lands on 2-or-4 odd nodes the large majority
+of the time but not always) rather than asserting a guarantee it can't keep under the no-crossing
+constraint. Exported from the `src/shared/decision` barrel; not yet wired into any tool. Verified with
+`npm run build` (0 errors) and `npm test` (289 pass, 9 new). `docs/architecture/DECISION_SHELL_PLAN.md`
+and `docs/PROJECTS.md` updated with the finding and the module.
+
+## 2026-08-13 — New "Interactive Tools" category; Parallel Lines Explorer published, GrapherLab and AlgebraTiles regrouped
+Introduced a new landing-page category, **Interactive Tools** (`src/tools/Interactive/`, lime →
+green gradient), for freeform manipulative/canvas tools as distinct from the worksheet-generator
+tools on `ToolShell`. Moved `AlgebraTiles.tsx` and `GrapherLab.tsx` out of `TeacherTools/` into the
+new folder (import paths, `organisation.test.ts`'s `STANDALONE_BY_DESIGN` list, and both `CLAUDE.md`
+and `docs/PROJECTS.md`'s tool-location references updated to match); `GrapherLab` keeps its existing
+`enabled: false` dev-gate — it's a test bench, not a finished classroom tool. Also published a new
+**Parallel Lines Explorer** (`/parallel-lines-explorer`, live) into the category, built from the
+archived `Unpublished/ParallelLinesInteractive.tsx` v1 draft: a full-screen, pannable canvas where a
+transversal (drag the blue handle) crosses one or two parallel lines plus an optional non-parallel
+line, with click-to-reveal angle sectors (A–H, plus M–P for the non-parallel line), a settings menu
+(line visibility, angle-of-view presets, offset, handle visibility), recentre/reset/fullscreen
+controls, and its own info modal — all pre-existing, working code. The only functional fix needed
+was a missing Home-button handler (the draft's button had no `onClick` at all); the default export
+was renamed to `App` to match the repo's convention. Left `Unpublished/ParallelLinesInteractive.tsx`
+in place — a genuinely new build from it, not a migration, so it stays available as reference
+material per `CLAUDE.md`'s rule for that folder. Verified with `npm run build` (0 errors), `npm test`
+(280 pass, unchanged — the tool is standalone by design, no `__test` needed), and a headless
+Playwright pass: both new routes load with zero console/page errors, and screenshots confirm the
+canvas renders correctly (parallel lines, transversal, colour-coded angle sectors) and the landing
+page shows the new category with Algebra Tiles and Parallel Lines Explorer live, Grapher Lab
+correctly DEV-badged.
+
+## 2026-08-13 — New Percentages tool, built from the archived v1 draft
+Brought `Unpublished/Percentages.tsx` (an old, never-registered v1 draft) onto the shared
+**ToolShell** as a fresh v2.3 build (`src/tools/Number/Percentages.tsx`, ~370 lines) and published
+it live (no `enabled: false`). Three sub-tools: **Finding Percentages** (Multiplier vs. Chunking
+methods, with a decimal-amounts toggle; Chunking builds the percentage from 10%/1% and, at Level 1,
+50%/25% shortcuts), **Percentage Change** (increase/decrease/mixed direction, an optional "show
+multiplier working" step, and a Level 3 compound two-step change), and **Reverse Percentages**
+(sales/VAT/general contexts, an optional unitary-method working path, Level 3 large increases or
+very small percentage changes). All maths was rewritten cleanly against the v2.3 conventions rather
+than ported verbatim — money values are rounded to the nearest penny at *every* step via a dedicated
+`money()` helper (a spot-check first caught the old approach compounding rounding error across a
+chained calculation, e.g. a two-step change showing `£103.0302`; fixed by re-rounding after each
+multiplication rather than only stripping floating-point noise). Verified with `npm run build`
+(0 errors), `npm test` (280 pass, 9 new), and an ad-hoc 7,200-question generation sweep checking for
+NaN/undefined/Infinity across every tool × level × QO combination, plus manual spot-checks of the
+chunking, compound-change and unitary-method working. `Unpublished/Percentages.tsx` is left in place
+per `CLAUDE.md`'s "leave alone" rule for that folder — this is a new build inspired by it, not a
+migration of it.
+
+## 2026-08-13 — Housekeeping: undev-gated Powers of Ten; deleted superseded Unpublished/ archives
+`PowersOfTen` finished its ToolShell migration on 2026-07-26 but the registry's `enabled: false`
+flag was never flipped afterward, leaving a done tool hidden behind Developing-tools mode — removed
+it, so the tool is now publicly listed. Also deleted three files from `Unpublished/`
+(`ExpandingBrackets.tsx`, `FractionMultDiv.tsx`, `FractionsAddSub.tsx`) — old v1.x drafts fully
+superseded by their live v2.3 counterparts (`Algebra/ExpandingBrackets`, `Number/FractionMultDiv`,
+`Number/FractionsAddSub`, all confirmed rendering `<ToolShell/>`). Left `Unpublished/Perimeter.tsx`
+in place — it's byte-identical to `src/tools/Geometry/PerimeterTool.tsx`, which is itself still
+on the old shell and dev-gated (`enabled: false`, BETA), so there is no newer version to treat it
+as superseded by. Build clean (0 TS errors), 271 tests pass.
+
 ## 2026-07-29 — Docs reorganised into a `docs/` folder
 Housekeeping: moved the loose organisational docs off the repo root into a
 structured `docs/` tree, leaving only `CLAUDE.md` (auto-loaded, must stay at

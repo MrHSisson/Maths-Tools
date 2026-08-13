@@ -187,7 +187,7 @@ const ALL_LETTERS = ["A","B","C","D","E","F","G","H","M","N","O","P"];
 const makeDef = ():DS => ({ hx:0.5, hy:0.07, tvAngle:Math.PI/2, l1:0.28, l2:0.72, npY:0.5, showNP:false, showL2:true, npOffset:5, showHandles:true, panX:0, panY:0 });
 
 // ── Main ─────────────────────────────────────────────────────────────────────
-export default function ParallelLinesAngles() {
+export default function App() {
   const [isNavMenuOpen,    setIsNavMenuOpen]    = useState(false);
   const [isCanvasMenuOpen, setIsCanvasMenuOpen] = useState(false);
   const [isInfoOpen,       setIsInfoOpen]       = useState(false);
@@ -536,7 +536,7 @@ export default function ParallelLinesAngles() {
       {!isFullscreen&&(
         <div className="bg-blue-900 shadow-lg" style={{flexShrink:0}}>
           <div className="max-w-screen-xl mx-auto px-8 py-4 flex justify-between items-center">
-            <button className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors"><Home size={24}/><span className="font-semibold text-lg">Home</span></button>
+            <button onClick={() => { window.location.href = "/"; }} className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors"><Home size={24}/><span className="font-semibold text-lg">Home</span></button>
             <div className="relative">
               <button onClick={()=>setIsNavMenuOpen(o=>!o)} className="text-white hover:bg-blue-800 p-2 rounded-lg transition-colors">{isNavMenuOpen?<X size={28}/>:<Menu size={28}/>}</button>
               {isNavMenuOpen&&<NavMenuDropdown colorScheme={colorScheme} setColorScheme={handleSetColorScheme} onClose={()=>setIsNavMenuOpen(false)} onOpenInfo={()=>{setIsInfoOpen(true);setIsNavMenuOpen(false);}}/>}

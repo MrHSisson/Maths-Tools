@@ -49,11 +49,12 @@ export const CATEGORIES: CategoryMeta[] = [
   {
     name: 'Number',
     tools: [
-      { id: 'integers', path: '/integer-add-and-subtract', name: 'Adding & Subtracting Integers', description: 'Practice adding and subtracting positive and negative numbers using number lines', enabled: false, load: () => import('./tools/Number/IntegerAddSub') },
+      { id: 'integers', path: '/integer-add-and-subtract', name: 'Adding & Subtracting Integers', description: 'Practice adding and subtracting positive and negative numbers using number lines', load: () => import('./tools/Number/IntegerAddSub') },
       { id: 'estimation', path: '/estimation', name: 'Estimation', description: 'Develop estimation skills by rounding numbers to make calculations easier', load: () => import('./tools/Number/Estimation') },
-      { id: 'powers-of-ten', path: '/powers-of-ten', name: 'Multiplying & Dividing by 10ⁿ', description: 'Use a place value table to scale by powers of 10', enabled: false, load: () => import('./tools/Number/PowersOfTen') },
+      { id: 'powers-of-ten', path: '/powers-of-ten', name: 'Multiplying & Dividing by 10ⁿ', description: 'Use a place value table to scale by powers of 10', load: () => import('./tools/Number/PowersOfTen') },
       { id: 'fractions-add-sub', path: '/add-subtract-fractions', name: 'Adding & Subtracting Fractions', description: 'Add and subtract fractions and mixed numbers, with common denominators, scaling and LCM methods', load: () => import('./tools/Number/FractionsAddSub') },
       { id: 'fractions-mult-div', path: '/multiply-divide-fractions', name: 'Multiplying & Dividing Fractions', description: 'Multiply and divide fractions and mixed numbers using Keep, Flip, Change', load: () => import('./tools/Number/FractionMultDiv') },
+      { id: 'percentages', path: '/percentages', name: 'Percentages', description: 'Find percentages of amounts, calculate percentage increase/decrease, and work backwards with reverse percentages', load: () => import('./tools/Number/Percentages') },
     ],
   },
   {
@@ -89,14 +90,12 @@ export const CATEGORIES: CategoryMeta[] = [
       { id: 'angles-in-quadrilaterals', path: '/angles-in-quadrilaterals', name: 'Angles In Quadrilaterals', description: 'Find missing angles using quadrilateral properties - including kites and arrowheads', load: () => import('./tools/Geometry/AnglesInQuadrilaterals') },
       { id: 'bearings', path: '/bearings', name: 'Bearings', description: 'Identify bearings from diagrams with North lines - two-point and three-point routes', load: () => import('./tools/Geometry/Bearings') },
       { id: 'equations-of-lines', path: '/equations-of-lines', name: 'Properties of Line Equations', description: 'Use co-ordinates and line equations to find properties of lines', load: () => import('./tools/Geometry/EquationsOfLines') },
-      { id: 'perimeter', path: '/perimeter', name: 'Perimeter (BETA)', description: 'Calculate the perimeter of various 2D shapes', enabled: false, load: () => import('./tools/Geometry/PerimeterTool') },
+      { id: 'perimeter', path: '/perimeter', name: 'Perimeter (BETA)', description: 'Calculate the perimeter of various 2D shapes', load: () => import('./tools/Geometry/PerimeterTool') },
     ],
   },
   {
     name: 'Probability & Statistics',
-    tools: [
-      { id: 'mixed-strategies', path: '/mixed-strategies', name: 'Mixed Strategies', description: 'Find optimal mixed strategies and the value of a zero-sum game from its payoff matrix.', enabled: false, load: () => import('./tools/MixedStrategies') },
-    ],
+    tools: [],
   },
   {
     name: 'Teacher Tools',
@@ -104,11 +103,17 @@ export const CATEGORIES: CategoryMeta[] = [
       { id: 'visualiser', path: '/visualiser', name: 'Visualiser', description: 'A tool for displaying your visualiser', load: () => import('./tools/TeacherTools/Visualiser') },
       { id: 'tool-shell', path: '/tool-shell', name: 'Tool Shell', description: 'A tool shell for developing new tools', load: () => import('./tools/TeacherTools/ToolShell') },
       { id: 'call-selector', path: '/call-selector', name: 'Friday Phonecalls', description: 'A tool to randomly select students for phonecalls', enabled: false, hidden: true, load: () => import('./tools/TeacherTools/CallSelector') },
-      { id: 'p-value', path: '/p-value', name: 'P-Value Grapher', description: 'A tool to generate P-Values from Binomial Distributions', load: () => import('./tools/TeacherTools/p-value') },
-      { id: 'algebra-tiles', path: '/algebra-tiles', name: 'Algebra Tiles', description: 'Interactive sandbox for dragging and manipulating algebra tiles', load: () => import('./tools/TeacherTools/AlgebraTiles') },
       { id: 'skill-library', path: '/skills', name: 'Skill Library', description: 'Browse every core skill taught through short slide sequences — the drill-downs linked from worked-example steps', enabled: false, load: () => import('./tools/TeacherTools/SkillLibrary') },
       { id: 'technique-library', path: '/techniques', name: 'Technique Library', description: 'Browse the reusable pedagogical working-step blocks (the engine behind natural worked examples), rendered on sample inputs', enabled: false, load: () => import('./tools/TeacherTools/TechniqueLibrary') },
-      { id: 'grapher-lab', path: '/grapher', name: 'Grapher Lab', description: 'Test bench for the embeddable SmartGrapher — try every curve type and custom conditions live', enabled: false, load: () => import('./tools/TeacherTools/GrapherLab') },
+    ],
+  },
+  {
+    name: 'Interactive Tools',
+    tools: [
+      { id: 'algebra-tiles', path: '/algebra-tiles', name: 'Algebra Tiles', description: 'Interactive sandbox for dragging and manipulating algebra tiles', load: () => import('./tools/Interactive/AlgebraTiles') },
+      { id: 'parallel-lines-explorer', path: '/parallel-lines-explorer', name: 'Parallel Lines Explorer', description: 'Interactive canvas for exploring angles formed when a transversal crosses parallel lines — drag, reveal, and explore', load: () => import('./tools/Interactive/ParallelLinesInteractive') },
+      { id: 'p-value', path: '/p-value', name: 'P-Value Grapher', description: 'A tool to generate P-Values from Binomial Distributions', load: () => import('./tools/Interactive/p-value') },
+      { id: 'grapher-lab', path: '/grapher', name: 'Grapher Lab', description: 'Test bench for the embeddable SmartGrapher — try every curve type and custom conditions live', enabled: false, load: () => import('./tools/Interactive/GrapherLab') },
     ],
   },
   {
@@ -116,6 +121,7 @@ export const CATEGORIES: CategoryMeta[] = [
     tools: [
       { id: 'network-sandbox', path: '/network-sandbox', name: 'Network Sandbox', description: 'Exploratory workspace for rendering weighted networks — the spike ahead of a Decision Maths shell', enabled: false, load: () => import('./tools/Decision/NetworkSandbox') },
       { id: 'minimum-spanning-tree', path: '/minimum-spanning-tree', name: 'Minimum Spanning Tree', description: 'Find the minimum spanning tree of a weighted network with Kruskal\'s algorithm, walked through step by step', enabled: false, load: () => import('./tools/Decision/MinimumSpanningTree') },
+      { id: 'mixed-strategies', path: '/mixed-strategies', name: 'Mixed Strategies', description: 'Find optimal mixed strategies and the value of a zero-sum game from its payoff matrix.', enabled: false, load: () => import('./tools/Decision/MixedStrategies') },
     ],
   },
   {

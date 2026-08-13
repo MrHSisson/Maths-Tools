@@ -38,7 +38,7 @@ lives in `CLAUDE.md` → "Ending a session / session kickoffs".
 | Prong | Status | One-line |
 |---|---|---|
 | **Computer Science shell** | 🚧 | Shell done; 2 of ~15 J277 topics authored as data |
-| **Decision Maths** | 🚧 | New shell live; first tool (MST) shipped as a thin slice |
+| **Decision Maths** | 🚧 | New shell live; MST shipped thin; procedural network generator harvested, unwired |
 | **Techniques engine** | 🚧 | Engine built; only 1 tool converted so far |
 | **Skills library** | 🚧 | Engine + backlog ready; 2 skills built |
 | **Core representations** | 🚧 | 3 of 6 visual families have Teach scenes |
@@ -107,13 +107,18 @@ parallel to the others; contracts and the full increment plan live in `docs/arch
 (forward/back through the algorithm one beat at a time, with a running total and a "show all"),
 and one tool — **Minimum Spanning Tree** (Kruskal's algorithm). CI checks each tool's solver
 against an independent brute-force reference. Deliberately narrow so far: one network template,
-one question type, one level.
+one question type, one level. Also now available: `src/shared/decision/randomNetwork.ts`'s
+`generateRandomNetwork()` — a procedural, provably crossing-free network generator (Euclidean MST +
+crossing-checked extra edges) harvested from an old archived draft, with a best-effort
+`routeInspection` mode for a future Route Inspection / Chinese Postman tool. Not wired into any
+tool yet — see `DECISION_SHELL_PLAN.md` → "Templating model" for the detail.
 
 **Possible next steps (spitball — pick on the day):**
 - Broaden MST — add **Prim's** (network walk + Prim-on-the-matrix), more question types (apply Prim from node X, list rejected edges), Levels 1–3, more templates.
 - Add the **expand-to-sandbox** — open the generated network in an interactive, annotatable canvas.
 - Add **worksheet print** via the existing diagram-print engine.
 - Start a **second tool** once MST feels complete — TSP reuses the same renderers; CPA needs two new views.
+- Build **Route Inspection (Chinese Postman)** on top of `generateRandomNetwork`'s `routeInspection` mode — the odd-degree-nudge groundwork already exists.
 
 **Detail.** The full increment ladder (MST breadth → sandbox → print → TSP → CPA → onward) and the
 per-strand representation budget live in `docs/architecture/DECISION_SHELL_PLAN.md` → "Increment plan" — that doc owns
@@ -313,20 +318,22 @@ drawing wrong geometry. Less a "project", more a reusable utility to reach for.
 
 **Where it's at.** Older tools hand-roll their own UI (~800–1,300 lines); v2.3 tools use the shared
 ToolShell (~250–350). **Most are migrated**, and `src/tests/organisation.test.ts` is the CI-enforced
-source of truth for which tool is on which shell. A few remain: one user-facing tool and a few
-dev-gated ones. Migration is also the natural moment to add techniques-based working and, where
-relevant, a graph and `__test` coverage.
+source of truth for which tool is on which shell. What's left: the four live Generators tools
+(PDF-focused, lower priority) and one dev-gated tool (`SimplifyingRatiosTool`). Migration is also
+the natural moment to add techniques-based working and, where relevant, a graph and `__test`
+coverage.
 
 **Possible next steps (spitball — pick on the day):**
-- Migrate the remaining enabled tool — **`FractionToRatio`**.
-- **Decide finish-vs-delete** on the dev-gated leftovers (`IntegerAddSub`, `SimplifyingRatiosTool`, `PerimeterTool`).
+- **Decide finish-vs-delete** on the remaining dev-gated leftover (`SimplifyingRatiosTool`).
+- Migrate the four **Generators** tools (`TimesTablesGenerator` etc.) when there's appetite for the PDF-heavy print work they need.
 - Pair each migration with a **techniques pass**, so a tool regains its pedagogy, not just the shell.
 
-**Detail.** Enabled/done: `FractionsOfAmounts`, `AnglesInTriangles`, `NonLinearSimEq`, `PowersOfTen`
-(techniques wiring still to add on some). Standalone by design (never migrate): the Generators,
-`SystemArchitecture`, `AlgebraTiles`, `Visualiser`, `CallSelector`, `p-value`, `SkillLibrary`,
-`TechniqueLibrary`, `GrapherLab`. `organisation.test.ts` holds the authoritative lists — update it when
-a tool moves.
+**Detail.** Enabled/done: `FractionsOfAmounts`, `AnglesInTriangles`, `NonLinearSimEq`, `PowersOfTen`,
+`FractionToRatio`, `PerimeterTool`
+(techniques wiring still to add on some). Standalone by design (never migrate):
+`SystemArchitecture`, `AlgebraTiles`, `ParallelLinesInteractive`, `GrapherLab`, `Visualiser`,
+`CallSelector`, `p-value`, `SkillLibrary`, `TechniqueLibrary`. `organisation.test.ts` holds the
+authoritative lists — update it when a tool moves.
 
 ---
 

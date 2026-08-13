@@ -48,8 +48,6 @@ const MIGRATION_BACKLOG = [
   "Generators/MultiplicationGenerator",
   "Generators/NegativeOperationsGenerator",
   "Generators/TimesTablesGenerator",
-  "Geometry/PerimeterTool",
-  "Number/IntegerAddSub",
   "Proportion/SimplifyingRatiosTool",
 ];
 
@@ -58,13 +56,14 @@ const MIGRATION_BACKLOG = [
 const STANDALONE_BY_DESIGN = [
   "Decision/MinimumSpanningTree",
   "Decision/NetworkSandbox",
-  "TeacherTools/AlgebraTiles",
+  "Interactive/AlgebraTiles",
+  "Interactive/GrapherLab",
+  "Interactive/ParallelLinesInteractive",
+  "Interactive/p-value",
   "TeacherTools/CallSelector",
-  "TeacherTools/GrapherLab",
   "TeacherTools/SkillLibrary",
   "TeacherTools/TechniqueLibrary",
   "TeacherTools/Visualiser",
-  "TeacherTools/p-value",
 ];
 
 // Computer Science tools — a separate subject on CSShell, never ToolShell.
