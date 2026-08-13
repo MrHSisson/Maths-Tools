@@ -27,6 +27,17 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-08-13 — Housekeeping: undev-gated Powers of Ten; deleted superseded Unpublished/ archives
+`PowersOfTen` finished its ToolShell migration on 2026-07-26 but the registry's `enabled: false`
+flag was never flipped afterward, leaving a done tool hidden behind Developing-tools mode — removed
+it, so the tool is now publicly listed. Also deleted three files from `Unpublished/`
+(`ExpandingBrackets.tsx`, `FractionMultDiv.tsx`, `FractionsAddSub.tsx`) — old v1.x drafts fully
+superseded by their live v2.3 counterparts (`Algebra/ExpandingBrackets`, `Number/FractionMultDiv`,
+`Number/FractionsAddSub`, all confirmed rendering `<ToolShell/>`). Left `Unpublished/Perimeter.tsx`
+in place — it's byte-identical to `src/tools/Geometry/PerimeterTool.tsx`, which is itself still
+on the old shell and dev-gated (`enabled: false`, BETA), so there is no newer version to treat it
+as superseded by. Build clean (0 TS errors), 271 tests pass.
+
 ## 2026-07-29 — Docs reorganised into a `docs/` folder
 Housekeeping: moved the loose organisational docs off the repo root into a
 structured `docs/` tree, leaving only `CLAUDE.md` (auto-loaded, must stay at
