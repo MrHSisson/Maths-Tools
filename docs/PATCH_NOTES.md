@@ -27,6 +27,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-08-13 — Published Adding & Subtracting Integers
+Removed `enabled: false` from the registry entry now that the ToolShell migration (see the entry
+above) is verified working — it's live on the landing page. Build clean, 292 tests pass.
+
 ## 2026-08-13 — Migrated Adding & Subtracting Integers onto ToolShell (number line as a full-width diagram)
 Brought `IntegerAddSub` (472 lines, hand-rolled shell) onto **ToolShell** (~330 lines). The tool's
 number line got the same treatment `PowersOfTen`'s place-value grid got: rendered entirely through
