@@ -59,11 +59,11 @@ const STANDALONE_BY_DESIGN = [
   "Interactive/AlgebraTiles",
   "Interactive/GrapherLab",
   "Interactive/ParallelLinesInteractive",
+  "Interactive/p-value",
   "TeacherTools/CallSelector",
   "TeacherTools/SkillLibrary",
   "TeacherTools/TechniqueLibrary",
   "TeacherTools/Visualiser",
-  "TeacherTools/p-value",
 ];
 
 // Computer Science tools — a separate subject on CSShell, never ToolShell.

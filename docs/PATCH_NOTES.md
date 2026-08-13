@@ -27,6 +27,13 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-08-13 — Moved P-Value Grapher into Interactive Tools
+Landing-page tweak: moved `p-value` (`src/tools/TeacherTools/p-value.tsx` → `src/tools/Interactive/`)
+out of Teacher Tools into the Interactive Tools category, alongside Algebra Tiles, Parallel Lines
+Explorer and Grapher Lab — matching folder-per-category convention. Updated
+`organisation.test.ts`'s `STANDALONE_BY_DESIGN` list to the new path. Build clean, 298 tests pass,
+confirmed visually: the tool now appears under Interactive Tools and no longer under Teacher Tools.
+
 ## 2026-08-13 — Published Perimeter
 Removed `enabled: false` from the registry entry now that the ToolShell migration (see the entry
 above) is verified working — it's live on the landing page. Build clean, 298 tests pass.
