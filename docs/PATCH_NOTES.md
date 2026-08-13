@@ -27,6 +27,21 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-08-13 — Migrated SimplifyingRatiosTool onto ToolShell; reclassified the Generators as standalone
+Brought `SimplifyingRatiosTool` (~820 lines, hand-rolled shell) onto **ToolShell** (~330 lines) —
+the last entry in the old-shell migration backlog. Both sub-tools kept their maths verbatim:
+**Numeric Ratios** (2-part at Levels 1–2, 3-part at Level 3, simplified by repeated prime division)
+and **Algebraic Ratios** (cancelling a numeric common factor and any shared variable/power across
+three escalating levels). Working steps now use `step`/`mStep` with proper KaTeX (the old algebraic
+formatter used unicode superscripts, invalid in KaTeX — replaced with `^{n}`). Stays `enabled: false`
+pending a go-live decision. Also reclassified the four Generators tools (`TimesTablesGenerator`,
+`MultiplicationGenerator`, `NegativeOperationsGenerator`, `FunctionalSkillsGenerator`) in
+`organisation.test.ts` from `MIGRATION_BACKLOG` to `STANDALONE_BY_DESIGN` — they batch-produce PDF
+worksheets, a different purpose from ToolShell's whiteboard/worked-example/worksheet model, and were
+never real migration candidates. The migration backlog is now empty. Updated `CLAUDE.md` and
+`docs/PROJECTS.md` to match. Build clean, 304 tests pass (up from 298 — the new tool's `__test`
+export is now covered by the generator smoke suite).
+
 ## 2026-08-13 — Moved Mixed Strategies into Decision Mathematics
 Landing-page tweak: moved `mixed-strategies` (`src/tools/MixedStrategies.tsx` →
 `src/tools/Decision/`) out of Probability & Statistics into Decision Mathematics, alongside Network

@@ -44,7 +44,7 @@ lives in `CLAUDE.md` → "Ending a session / session kickoffs".
 | **Core representations** | 🚧 | 3 of 6 visual families have Teach scenes |
 | **Teach decks** | 🚧 | Engine built; one partial deck exists |
 | **SmartGrapher** | ✅ | Mature, embeddable; used in 2 tools |
-| **Old-shell migration** | 🚧 | Most tools migrated; a handful remain |
+| **Old-shell migration** | ✅ | Backlog empty; Generators are standalone by design, not migration targets |
 
 Status keys: ✅ done · 🚧 in progress · ⬜ not started.
 
@@ -317,23 +317,27 @@ drawing wrong geometry. Less a "project", more a reusable utility to reach for.
 ## Old-shell migration
 
 **Where it's at.** Older tools hand-roll their own UI (~800–1,300 lines); v2.3 tools use the shared
-ToolShell (~250–350). **Most are migrated**, and `src/tests/organisation.test.ts` is the CI-enforced
-source of truth for which tool is on which shell. What's left: the four live Generators tools
-(PDF-focused, lower priority) and one dev-gated tool (`SimplifyingRatiosTool`). Migration is also
-the natural moment to add techniques-based working and, where relevant, a graph and `__test`
-coverage.
+ToolShell (~250–350). **The migration backlog is now empty** — `SimplifyingRatiosTool` (the last
+entry) has been brought onto ToolShell, keeping its numeric and algebraic ratio-simplification
+maths verbatim; it stays `enabled: false` pending a decision on going live.
+`src/tests/organisation.test.ts` is the CI-enforced source of truth for which tool is on which
+shell. The four Generators tools (`TimesTablesGenerator`, `MultiplicationGenerator`,
+`NegativeOperationsGenerator`, `FunctionalSkillsGenerator`) are **not** migration targets — they
+exist to batch-produce PDF worksheets, a different purpose from ToolShell's
+whiteboard/worked-example/worksheet model, and are now categorised standalone-by-design rather than
+backlog.
 
 **Possible next steps (spitball — pick on the day):**
-- **Decide finish-vs-delete** on the remaining dev-gated leftover (`SimplifyingRatiosTool`).
-- Migrate the four **Generators** tools (`TimesTablesGenerator` etc.) when there's appetite for the PDF-heavy print work they need.
-- Pair each migration with a **techniques pass**, so a tool regains its pedagogy, not just the shell.
+- **Decide go-live** on `SimplifyingRatiosTool` — flip `enabled: false` once reviewed.
+- Give `SimplifyingRatiosTool` a **techniques pass** so its worked steps use the techniques engine, not just the shell.
+- If the Generators family ever grows well past four, revisit whether a dedicated **Generator shell** is worth building — not needed today.
 
 **Detail.** Enabled/done: `FractionsOfAmounts`, `AnglesInTriangles`, `NonLinearSimEq`, `PowersOfTen`,
-`FractionToRatio`, `PerimeterTool`
-(techniques wiring still to add on some). Standalone by design (never migrate):
-`SystemArchitecture`, `AlgebraTiles`, `ParallelLinesInteractive`, `GrapherLab`, `Visualiser`,
-`CallSelector`, `p-value`, `SkillLibrary`, `TechniqueLibrary`. `organisation.test.ts` holds the
-authoritative lists — update it when a tool moves.
+`FractionToRatio`, `PerimeterTool` (techniques wiring still to add on some). Migrated but dev-gated:
+`SimplifyingRatiosTool`. Standalone by design (never migrate): `SystemArchitecture`, `AlgebraTiles`,
+`ParallelLinesInteractive`, `GrapherLab`, `Visualiser`, `CallSelector`, `p-value`, `SkillLibrary`,
+`TechniqueLibrary`, and the four Generators tools (PDF-batch output, different purpose).
+`organisation.test.ts` holds the authoritative lists — update it when a tool moves.
 
 ---
 

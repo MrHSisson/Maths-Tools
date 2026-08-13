@@ -43,19 +43,19 @@ const exportsTest = (k: string) => /export const __test\b/.test(src[k]);
 
 // Question-generator tools that still hand-roll an old embedded shell and should
 // eventually move onto ToolShell. Remove a tool here once it renders <ToolShell/>.
-const MIGRATION_BACKLOG = [
+const MIGRATION_BACKLOG: string[] = [];
+
+// Not question generators — standalone by design (manipulatives, dev-only pages,
+// bespoke tools), OR question generators whose PDF-batch-output purpose doesn't fit
+// ToolShell's whiteboard/worked-example/worksheet model. These never migrate to
+// ToolShell and never need __test.
+const STANDALONE_BY_DESIGN = [
+  "Decision/MinimumSpanningTree",
+  "Decision/NetworkSandbox",
   "Generators/FunctionalSkillsGenerator",
   "Generators/MultiplicationGenerator",
   "Generators/NegativeOperationsGenerator",
   "Generators/TimesTablesGenerator",
-  "Proportion/SimplifyingRatiosTool",
-];
-
-// Not question generators — standalone by design (manipulatives, dev-only pages,
-// bespoke tools). These never migrate to ToolShell and never need __test.
-const STANDALONE_BY_DESIGN = [
-  "Decision/MinimumSpanningTree",
-  "Decision/NetworkSandbox",
   "Interactive/AlgebraTiles",
   "Interactive/GrapherLab",
   "Interactive/ParallelLinesInteractive",

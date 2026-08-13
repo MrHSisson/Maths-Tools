@@ -217,12 +217,11 @@ The reliable shell indicator is the code, not any registry field (tools carry no
 grep -L "<ToolShell" src/tools/**/*.tsx   # files that do NOT render the shared shell
 ```
 
-Tools currently needing migration (still on an embedded old shell, enabled):
-- Generator tools (`TimesTablesGenerator`, etc.) — primarily PDF-generation tools
-
-Dev-gated (`enabled: false`) and therefore lower priority: `SimplifyingRatiosTool`.
+**The migration backlog is currently empty** — every tool that belongs on ToolShell has been migrated. `SimplifyingRatiosTool` was the last one; it now renders `<ToolShell/>` and stays `enabled: false` (dev-gated) pending a decision on going live.
 
 **This list is CI-enforced — `src/tests/organisation.test.ts` is authoritative.** That test holds the shell status of every tool (backlog / standalone / CS) and fails the build if a tool is un-categorised, if a backlog tool has been migrated but left in the list, if a ToolShell tool lacks `__test`, or if a tool file isn't registered. The prose above is a human summary; when you migrate a tool, update `organisation.test.ts` (move it out of `MIGRATION_BACKLOG`) — the failing message tells you exactly what to change.
+
+The four **Generator tools** (`TimesTablesGenerator`, `MultiplicationGenerator`, `NegativeOperationsGenerator`, `FunctionalSkillsGenerator`) are **standalone by design, not backlog items** — they exist to batch-produce PDF worksheets, a different purpose from ToolShell's whiteboard/worked-example/worksheet model, and were never meant to migrate. Don't flag them for migration work. If the generator family grows well beyond four, it may be worth a dedicated **Generator shell** — not needed today for four tools that already work well standalone.
 
 AlgebraTiles, ParallelLinesInteractive, GrapherLab, SkillLibrary, Visualiser, CallSelector and p-value are standalone by design (not question tools) and never migrate to ToolShell — they are not part of the backlog above even though they don't use the shared shell.
 
@@ -1022,7 +1021,7 @@ CI also runs `npm test` (Vitest, `src/tests/generators.test.ts`). The suite disc
 | Pattern | Reference file |
 |---------|---------------|
 | Standard v2.3 tool (simple questions) | `src/tools/Algebra/CompletingTheSquare.tsx` |
-| Standard v2.3 tool (worded questions) | `src/tools/Proportion/SimplifyingRatios.tsx` *(check if migrated)* |
+| Standard v2.3 tool (simple questions, ratio simplification) | `src/tools/Proportion/SimplifyingRatiosTool.tsx` |
 | Diagram/SVG tool with shared print (`handleDiagramPrint`) | `src/tools/Geometry/AnglesInQuadrilaterals.tsx` |
 | Diagram/SVG tool (renderer/SVG conventions) | `src/tools/Geometry/AnglesInParallelLines.tsx` |
 | `reformatQuestion` (instant display reformat) | `src/tools/Algebra/CompletingTheSquare.tsx` |
