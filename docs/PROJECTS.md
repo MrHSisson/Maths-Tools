@@ -38,7 +38,7 @@ lives in `CLAUDE.md` → "Ending a session / session kickoffs".
 
 | Prong | Status | One-line |
 |---|---|---|
-| **Maths Tool Audit** | ⬜ | Not started — systematic per-tool review of all 27 Number/Algebra/Ratio&Proportion/Geometry tools; see `docs/TOOL_AUDIT.md` |
+| **Maths Tool Audit** | 🚧 | Number complete (6/27) — Algebra, Ratio & Proportion, Geometry still to do; see `docs/TOOL_AUDIT.md` |
 | **Techniques engine** | 🚧 | Engine built; only 1 tool converted — further work now sequenced via the Tool Audit |
 | **Skills library** | 🚧 | Engine + backlog ready; 2 skills built — further work now sequenced via the Tool Audit |
 | **Core representations** | 🚧 | 3 of 6 visual families have Teach scenes — further work now sequenced via the Tool Audit |
@@ -61,7 +61,13 @@ pedagogy prongs beneath this one (Techniques engine, Skills library, Core repres
 decks) plus SmartGrapher **take their next steps from this audit's findings rather than being
 picked ad hoc**.
 
-**Where it's at.** Not started. The full methodology, scope list, and a per-tool template live in
+**Where it's at.** Number category complete (6/27 tools) — findings logged in `docs/TOOL_AUDIT.md`.
+Two tools (`FractionsAddSub`, `Percentages`) came out close to reference quality; the other four are
+"live but flagged for expansion" on content depth, with `PowersOfTen`'s working steps the weakest
+found (two fixed-template sentences, no computed numeric line). The category surfaced several new
+Part 1 backlog items — a `directedNumberAddSub` technique, a `scaleByPowerOfTen` technique, a
+`place-value` skill, and a previously-nonexistent percentages technique/skill family — now added to
+the tables below. The full methodology, scope list, and per-tool template live in
 **`docs/TOOL_AUDIT.md`** — that doc is written to be self-contained, so a fresh session with no
 memory of how this was designed can pick it up directly.
 
@@ -77,10 +83,9 @@ technique for finding conventions debt (non-standard column caps, hidden font co
 print handlers, etc.) and why the current `enabled` flag can't be trusted as a quality signal, is
 in `docs/TOOL_AUDIT.md` — do not re-derive any of this from scratch; read that doc first.
 
-**Next step:** start the Number category (6 tools) in `docs/TOOL_AUDIT.md`'s audit log, then work
-through Algebra, Ratio & Proportion, and Geometry in turn — one category per session. This is a
-findings-only pass: no code changes, no `enabled` flips, until a category's findings have been
-reviewed.
+**Next step:** continue with the Algebra category (7 tools) in `docs/TOOL_AUDIT.md`'s audit log, then
+Ratio & Proportion, then Geometry — one category per session. This is a findings-only pass: no code
+changes, no `enabled` flips, until a category's findings have been reviewed.
 
 ---
 
@@ -146,9 +151,14 @@ Reference conversion: `NonLinearSimEq.tsx` (uses `standard` grain).
 | `simplifyFraction` | divide num & den by a common factor | **high** | ⬜ |
 | `fractionOfAmount` | ÷ by denominator, × by numerator | **high** | ⬜ |
 | `convertMixedImproper` | mixed ⇄ improper | med | ⬜ |
-| `addSubtractFractions` | common denominator (LCM), add/subtract, regroup | med | ⬜ |
-| `multiplyDivideFractions` | keep-flip-change, multiply across | med | ⬜ |
-| `roundToSigFig` | round each value to 1 s.f. | med | ⬜ |
+| `addSubtractFractions` | common denominator (LCM), add/subtract, regroup | med | ⬜ — needed by `FractionsAddSub` |
+| `multiplyDivideFractions` | keep-flip-change, multiply across | med | ⬜ — needed by `FractionMultDiv` |
+| `roundToSigFig` | round each value to 1 s.f. | med | ⬜ — needed by `Estimation` |
+| `directedNumberAddSub` | start position → jump direction/size from sign rules → land | low | ⬜ — new, needed by `IntegerAddSub` (Tool Audit, Number pass) |
+| `scaleByPowerOfTen` | count the zeros → state direction → show the digit shift | low | ⬜ — new, needed by `PowersOfTen` (Tool Audit, Number pass) |
+| `percentageOfAmount` | multiplier vs. chunking decomposition | med | ⬜ — new, needed by `Percentages` (Tool Audit, Number pass) |
+| `percentageChange` | build multiplier from 100 ± % | med | ⬜ — new, needed by `Percentages` (Tool Audit, Number pass) |
+| `reversePercentage` | unitary method — find 1%, then scale | med | ⬜ — new, needed by `Percentages` (Tool Audit, Number pass) |
 
 *Ratio & Proportion*
 
@@ -197,22 +207,26 @@ but doesn't teach*; the representation column signals effort — existing scene 
 | Skill (id) | Teaches | Representation / scene | Priority | Status |
 |---|---|---|---|---|
 | `lcm` / `lcm-prime-factors` | lowest common multiple | number line `multiples`; prime tiles `factorTree`/`primeVenn` | — | ✅ |
-| `equivalent-fractions` | scale num & den by the same factor | **bar model** `split`/`equivalents` *(exist)* | **high** | ⬜ |
-| `simplify-fraction` | divide num & den by the HCF | **bar model** *(exists)* | **high** | ⬜ |
+| `equivalent-fractions` | scale num & den by the same factor | **bar model** `split`/`equivalents` *(exist)* | **high** | ⬜ — needed by `FractionsAddSub` |
+| `simplify-fraction` | divide num & den by the HCF | **bar model** *(exists)* | **high** | ⬜ — needed by `FractionsAddSub`, `FractionMultDiv` |
 | `hcf` | highest common factor | **prime tiles** `primeVenn` *(exists)* | **high** | ⬜ |
 | `share-in-ratio` | total parts → 1 part → each share | **bar model** *(exists)* | **high** | ⬜ |
 | `fraction-of-amount` | ÷ by denominator, × by numerator | **bar model** *(exists)* | **high** | ⬜ |
 | `solve-linear-equation` | do the same to both sides | **algebra tiles** / number line *(no tile scene yet)* | **high** | ⬜ |
 | `expand-double-brackets` | grid / area of each term pair | **area model** *(no scene yet)* | **high** | ⬜ |
 | `collect-like-terms` | group matching terms | **algebra tiles** *(no scene yet)* | med | ⬜ |
-| `convert-mixed-improper` | mixed ⇄ improper fraction | **bar model** *(exists)* | med | ⬜ |
-| `round-to-significant-figure` | find the place value, round | **number line** *(exists)* | med | ⬜ |
+| `convert-mixed-improper` | mixed ⇄ improper fraction | **bar model** *(exists)* | med | ⬜ — needed by `FractionsAddSub`, `FractionMultDiv` |
+| `round-to-significant-figure` | find the place value, round | **number line** *(exists)* | med | ⬜ — needed by `Estimation` |
 | `factorise-quadratic` | find the factor pair | **area model** *(no scene yet)* | med | ⬜ |
 | `substitute-into-formula` | replace letters with values | *(none — text)* | med | ⬜ |
 | `rearrange-formula` | inverse operations to change subject | *(none — text / algebra tiles)* | med | ⬜ |
 | `simplify-ratio` | divide parts by a common factor | **bar model** *(exists)* | med | ⬜ |
-| `directed-number` | add/subtract/multiply negatives | **negative counters** *(no scene yet)* | med | ⬜ |
+| `directed-number` | add/subtract/multiply negatives | **negative counters** *(no scene yet)* | med | ⬜ — needed by `IntegerAddSub` |
 | `factor-pairs` | list the factor pairs of n | **prime tiles** *(exists)* | low | ⬜ |
+| `place-value` | read the column value of a digit | *(none — closest fit is number line; PowersOfTen's own grid doesn't map onto any of the six)* | low | ⬜ — new, needed by `PowersOfTen` (Tool Audit, Number pass) |
+| `keep-flip-change` | reciprocal + multiply for fraction division | **bar model** *(no scene authored yet for this specific move)* | low | ⬜ — new, needed by `FractionMultDiv` (Tool Audit, Number pass) |
+| `percentage-to-multiplier` | convert a percentage to a decimal multiplier | **bar model** *(exists)* | med | ⬜ — new, needed by `Percentages` (Tool Audit, Number pass) |
+| `unitary-method` | find 1%, then scale to the target | **bar model** *(exists)* | med | ⬜ — new, needed by `Percentages` (Tool Audit, Number pass) |
 
 Build the cheap cluster (top six after `lcm`) first — all on existing bar-model / prime-tile scenes,
 each a prerequisite several tools link to. The equally-wanted `solve-linear-equation`,

@@ -28,6 +28,22 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-08-14 — Ran the Maths Tool Audit's Number category (6 tools)
+No code changed — findings-only pass per `docs/TOOL_AUDIT.md`'s methodology. Audited all six Number
+tools (`IntegerAddSub`, `Estimation`, `PowersOfTen`, `FractionsAddSub`, `FractionMultDiv`,
+`Percentages`) against Part 1 (infrastructure alignment) and Part 2 (standalone readiness), and
+logged the full per-tool entries in `docs/TOOL_AUDIT.md`. Headline results: `FractionsAddSub` and
+`Percentages` are close to reference quality (worded contexts, fragmented working, genuine level
+restructuring) and are worth treating as Number-strand quality bars; the other four are "live but
+flagged for expansion," with `PowersOfTen`'s two fixed-template working steps (no computed numeric
+line) the weakest finding of the pass, and its Level 3 dropping its own place-value-grid
+representation entirely. Surfaced several new Part 1 backlog items not previously tracked —
+`directedNumberAddSub` and `scaleByPowerOfTen` techniques, a `place-value` skill, and a
+previously-nonexistent percentages technique/skill family (`percentageOfAmount`, `percentageChange`,
+`reversePercentage`, `percentage-to-multiplier`, `unitary-method`) — added to `docs/PROJECTS.md`'s
+technique/skill tables with demand notes. No `enabled` flags changed. Next: Algebra category (7
+tools).
+
 ## 2026-08-14 — Set up the Maths Tool Audit; reorganised the planning docs around it
 No code changed — this session designed and documented a new initiative rather than shipping a
 tool change. Created **`docs/TOOL_AUDIT.md`**: a self-contained methodology + live findings log
