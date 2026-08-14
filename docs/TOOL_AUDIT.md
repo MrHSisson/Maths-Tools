@@ -5,8 +5,8 @@ log (Part B).** It is written to be fully self-contained — a fresh session wit
 the conversation that designed this audit should be able to open this file alone and correctly
 run it. Do not assume prior chat context; everything needed is below.
 
-**Status: in progress — Number and Algebra complete (13/27).** The next session picking this up
-should continue with Ratio & Proportion (see "Audit log" below), then Geometry.
+**Status: in progress — Number, Algebra, and Ratio & Proportion complete (19/27).** The next session
+picking this up should continue with Geometry (see "Audit log" below) — the final category.
 
 ---
 
@@ -1109,13 +1109,399 @@ other code path in the file correctly uses. This tool is the right reference poi
 just the import list — a tool can legitimately mix technique-driven steps with hand-rolled ones, as
 this one does for its highest-frequency sub-tool.
 
-### Ratio & Proportion — ⬜ not started
-- [ ] Dividing Ratios (`RatioSharingTool.tsx`)
-- [ ] Simplifying Ratios (`SimplifyingRatiosTool.tsx`)
-- [ ] Recipes (`RecipesTool.tsx`)
-- [ ] Converting Fractions and Ratios (`FractionToRatio.tsx`)
-- [ ] Fractions of Amounts (`FractionsOfAmounts.tsx`)
-- [ ] Best Buys (`BestBuys.tsx`)
+### Ratio & Proportion — ✅ complete
+- [x] Dividing Ratios (`RatioSharingTool.tsx`)
+- [x] Simplifying Ratios (`SimplifyingRatiosTool.tsx`)
+- [x] Recipes (`RecipesTool.tsx`)
+- [x] Converting Fractions and Ratios (`FractionToRatio.tsx`)
+- [x] Fractions of Amounts (`FractionsOfAmounts.tsx`)
+- [x] Best Buys (`BestBuys.tsx`)
+
+**Category summary.** This category produced the audit's clearest live/gated contrast so far:
+`SimplifyingRatiosTool` (dev-gated) is recommended to **stay gated**, judged blind to its current
+status — it's the only tool in the whole audit (all three categories) with literally zero QO control
+and zero visual representation, while its immediate sibling in the same landing-page section,
+`RatioSharingTool` (live), ships with both a working bar model and real "Find" controls; placed side
+by side they'd read as one finished tool and one thin one. `FractionsOfAmounts` came out as reference
+quality — the best working-step fragment density seen since `FractionsAddSub`/`Percentages` (52
+fragment-array uses) and the strongest QO differentiation of the pass. Two existing technique rows
+(`scaleRecipe`, `unitPriceCompare`) turned out to only describe half of their tool's actual content —
+`RecipesTool`'s Constraints sub-tool and `BestBuys`' Special Offers sub-tool each do a materially
+different move than the row's one-line spec suggests, both flagged for the row description to be
+broadened or split rather than assumed covered. The `unitary-method` skill (proposed during the
+Number pass for `Percentages`) now has two more unconsumed demand signals here (`RecipesTool`,
+`BestBuys`) — three tools across two categories hand-roll the identical "find 1, then scale"
+reasoning with no link, the clearest cross-category signal found so far. A new skill is proposed —
+`convert-fraction-ratio` — since `FractionToRatio`'s named technique row has no matching skill row at
+all, breaking the technique↔skill pairing pattern that holds everywhere else. Two research agents also
+independently found that documentation claims didn't hold up against source: `CLAUDE.md`'s reference-
+implementations table doesn't actually name `FractionToRatio.tsx` (despite this doc's own Part 2
+methodology text citing it as a quality-bar reference), and doesn't describe `RatioSharingTool.tsx` as
+a "multi-group multiSelect" example (it's single-group throughout, unlike `SolvingLinearEquations.tsx`/
+`CollectingLikeTerms.tsx`, which do use that pattern) — recorded here as findings, not corrected, since
+this pass is findings-only.
+
+### Dividing Ratios — `src/tools/Proportion/RatioSharingTool.tsx`
+Route: `/ratio-sharing` · Current status: Live
+
+**Part 1 — Infrastructure alignment**
+- Techniques: Thin — no technique import; hand-built bar-model/numerical-method steps.
+  `PROJECTS.md`'s `shareInRatio` row (**high**, ⬜) is an exact match, and this tool is the primary —
+  arguably sole — real demand signal for it in the category (`RecipesTool` scales, it doesn't share).
+- Skills: No markers. This tool **is** `share-in-ratio`'s (bar model, exists, **high**, ⬜) target
+  domain, not an unlinked-prerequisite gap. One structural note: every ratio is pre-guaranteed
+  coprime, so the tool never asks a student to simplify first — it doesn't implicitly consume
+  `simplify-ratio` either.
+- Representations: **Bar model** already implemented — uniquely so in the category — but as a bespoke
+  component (`BarRow`), not built on the shared `split`/`combine`/`equivalents` scene family. A real,
+  working visual, but a parallel one-off rather than the shared vocabulary — the thing to generalise
+  from if a Teach deck gets built here.
+- Teach deck: Strong, ready-made candidate — the tool's three question types (sharing / known amount
+  / given difference) already form a natural I-do/We-do/You-do arc on one running ratio. Blocked on
+  porting the bespoke bar model into the shared scene system first.
+- SmartGrapher: No fit.
+
+**Part 2 — Standalone readiness**
+- Question/sub-tool breadth vs spec: Four sub-tools (sharing / known / difference / mixed) is
+  genuinely good breadth. Two real gaps: every ratio in every sub-tool is exactly **two-part** — a
+  3-person ratio-sharing question (a common GCSE shape, and one the tool's own page title implies)
+  never appears; and every question is money-in-£, no non-monetary context anywhere.
+- QO richness: Real control — a multiSelect plus a numerical-method toggle per sub-tool, correctly and
+  transparently disabled at Level 3 (matching the info modal's own disclosure rather than silently
+  overriding it) — a genuinely good transparency practice not universal in this audit.
+- Level progression: Weaker than the QO/breadth axis — almost entirely numeric-range escalation, not a
+  structural shape change. The one genuine qualitative shift is L3 forcing the numerical method and
+  losing the bar model entirely — the same "the tool's own best pedagogical asset disappears exactly
+  when the maths gets hardest" pattern flagged for `PowersOfTen`, here disclosed but not softened by
+  the disclosure.
+- Working-step depth: The bar-model working is rich and correctly narrates each stage, confirmed
+  rendered in both Whiteboard and Worked Example — a genuine strength. But every numerical-method
+  `mStep` is a single whole-string latex; zero fragment arrays anywhere, despite several lines being
+  textbook 2–3-fragment candidates.
+- Conventions/anomaly scan: `stepRenderer` (**Justified** — the only way to render the bar model). No
+  `questionRenderer` (**Justified**, correct absence — only the working needs a diagram).
+  `defaults={{ displayFontSize: 1, numQuestions: 5, numColumns: 2, maxColumns: 2 }}` —
+  `numQuestions: 5` matches the category norm; `displayFontSize: 1` undocumented (**Unclear**);
+  `maxColumns: 2` is the tightest cap of any Proportion tool with a `defaults` block, no comment
+  explaining the halving versus siblings with similarly-worded content (**Unclear, leaning Debt**).
+- UI/visual consistency: Not checked live. From source: the heaviest hardcoded-hex usage found in the
+  audit so far (8+ distinct tokens). `colorScheme` is correctly threaded through the bar fill colours
+  — a genuine positive — but borders and all diagram text stay fixed regardless of scheme, a partial
+  inconsistency rather than full colour-scheme support.
+- **Recommended status:** Live but flagged for expansion — the strongest Ratio & Proportion tool on
+  infrastructure (the only one with a working, non-dev-gated visual model) and on QO/breadth, but the
+  two-part-only ratio limit is a real spec-coverage gap for a tool literally about dividing into
+  ratios, and the L3 bar-model loss repeats a pattern already flagged elsewhere. (current: Live)
+
+**Notes:** Two documentation claims checked against source didn't fully hold up (see category
+summary) — worth a caution for future sessions taking "reference file" claims at face value rather
+than a criticism of this tool itself, which is genuinely solid.
+
+### Simplifying Ratios — `src/tools/Proportion/SimplifyingRatiosTool.tsx`
+Route: `/simplifying-ratios` · Current status: Dev-gated (enabled: false)
+
+**Part 1 — Infrastructure alignment**
+- Techniques: Thin — no technique import. `PROJECTS.md`'s `simplifyRatio` row (med, ⬜) matches the
+  numeric sub-tool exactly; the algebraic sub-tool is genuinely broader than the row's current spec
+  (it also cancels shared variables and variable powers, not just numeric factors) — worth folding
+  into the eventual build brief. This tool is the clear primary demand signal for the row.
+- Skills: No markers. This tool **is** `simplify-ratio`'s (bar model, exists, med, ⬜) target domain,
+  same pattern as its sibling. One soft, optional candidate: the algebraic sub-tool's variable-power
+  cancellation touches index-law reasoning with no named row anywhere — flagged as a minor possible
+  new skill, not a confirmed gap.
+- Representations: **Bar model** — a cheap gap (existing scene, no new work), but unlike its sibling
+  `RatioSharingTool` this tool has **zero** visual representation anywhere — no `questionRenderer`/
+  `stepRenderer`/`answerRenderer` at all, pure KaTeX/text throughout.
+- Teach deck: Plausible but less dramatic than its sibling — no natural misconception "trap." A
+  workable I-do/We-do/You-do arc exists on the repeated-division working the numeric sub-tool already
+  performs, a reasonable second-tier candidate, not urgent.
+- SmartGrapher: No fit.
+
+**Part 2 — Standalone readiness**
+- Question/sub-tool breadth vs spec: Two sub-tools. Numeric shifts from 2-part to 3-part at L3 — a
+  real shape change. Algebraic varies genuinely across three factor-type shapes and their
+  combinations — closer to full coverage of "what counts as an algebraic ratio to simplify" than a
+  rigid template. Consistent gap: no worded/contextual question anywhere in either sub-tool.
+- QO richness: **Zero.** No `multiSelect`, no `variables`, no per-level QO override at all in either
+  sub-tool — the flattest QO profile found anywhere in this audit so far, across all three categories.
+  A teacher gets no control beyond level and sub-tool tab — the methodology's own "fixed generator, no
+  options" under-developed signal applies directly and unambiguously.
+- Level progression: Uneven between sub-tools. Numeric L1→L2 is pure number-range scaling, L2→L3 is
+  the one real structural jump (2-part → 3-part). Algebraic is genuinely structural at every step —
+  on par with some of the better Algebra-category progressions, clearly ahead of its own numeric
+  sibling.
+- Working-step depth: Split findings. The algebraic sub-tool uses `mStep` with proper prose labels —
+  good discipline. The numeric sub-tool deviates from the "pick `mStep` by default" convention
+  entirely — every step is a bare, unlabelled `step()` line with nothing narrating why a given prime
+  was chosen. Both sub-tools carry zero fragment arrays anywhere.
+- Conventions/anomaly scan: One grep hit, mostly no-op restatements of the ToolShell baseline
+  (**Justified, no-op**); `numQuestions: 5` matches the category norm. Everything else correctly
+  absent for a pure KaTeX/text tool — a clean baseline.
+- UI/visual consistency: Not checked live. From source: zero hardcoded hex colours, no bespoke JSX —
+  the cleanest possible source-level signal, consistent with `CLAUDE.md` naming this file as the
+  architectural reference for ratio simplification. The caveat: "native" here also means visually
+  bare — nothing to look at beyond KaTeX text, unlike its sibling.
+- **Recommended status:** **Not ready to graduate as-is — recommend staying gated pending expansion**,
+  judged blind to its current status per the methodology's own test. The maths is sound and, on
+  level-progression structure and source cleanliness, this tool is genuinely ahead of several tools
+  already live elsewhere in the audit. But it fails the standalone-readiness bar on the two axes a
+  teacher would notice fastest: it is the **only** tool in the entire audit so far with literally zero
+  QO control of any kind, and zero visual representation for a topic whose designated representation
+  already has a built, reusable scene family — while its immediate sibling in the same landing-page
+  section ships live with both. Minimum bar to graduate: at least one multiSelect/variable and hooking
+  up the bar model before flipping `enabled`. (current: Dev-gated)
+
+**Notes:** One structural inconsistency outside Part 1/2 proper: unlike every other retry loop in
+either sibling file (all bounded, ~100–200 attempts with a hardcoded fallback), one internal coprime-
+pair helper retries via an unbounded `while` loop with no attempt cap — very unlikely to hang given
+the small integer ranges involved, but worth a look if this pattern is ever copied elsewhere.
+
+### Recipes — `src/tools/Proportion/RecipesTool.tsx`
+Route: `/recipes` · Current status: Live
+
+**Part 1 — Infrastructure alignment**
+- Techniques: Thin — no technique import. `PROJECTS.md`'s `scaleRecipe` row (low, ⬜) accurately
+  matches the Linear Scaling sub-tool's core move, but does **not** describe the Constraints
+  sub-tool's move at all — that sub-tool's actual mechanic is "find each ingredient's per-serving
+  rate, divide stock by it, take the minimum," a rate-then-bottleneck move structurally closer to a
+  min-of-several-unit-rates comparison than "scale by a factor." The row's description should gain a
+  second bullet or a sibling row (e.g. `limitingIngredient`) rather than being assumed to cover both.
+- Skills: No markers. Two clean, unlinked candidates: the HCF-based L2 scaling step names the
+  already-built `hcf` skill (prime tiles, **high**, ⬜) — a direct parallel to `SimultaneousEquations`'
+  unlinked LCM finding from the Algebra pass; and the L3 "find for 1 unit" step is literally the
+  `unitary-method` skill (bar model exists, med, ⬜) — a second, currently-unconsumed demand signal
+  for that skill.
+- Representations: **Bar model** fits Linear Scaling cleanly and cheaply (the existing `split`/
+  `equivalents` scenes generalise almost directly). Constraints is a weaker fit — its bottleneck logic
+  could plausibly be shown as parallel bars, but this isn't a scene that exists today.
+- Teach deck: Reasonably strong candidate for Linear Scaling specifically — I-do/We-do/You-do on one
+  running recipe, and unusually cheap since it could reuse already-built bar-model scenes rather than
+  needing new scene work.
+- SmartGrapher: No fit.
+
+**Part 2 — Standalone readiness**
+- Question/sub-tool breadth vs spec: Only **two** sub-tools (linearScaling / constraints) — worth
+  correcting against the assumption that an ~870-line file implies several: roughly 240 of those lines
+  are a bespoke PDF print handler, not question variety. Each sub-tool is internally well-structured,
+  but no question ever asks the reverse direction (given a scaled recipe, find the original), and no
+  crossover with cost (a natural bridge to `BestBuys`) is attempted.
+- QO richness: Uneven. `linearScaling` has one variable and one multiSelect, `difficultySettings: null`
+  — identical QO at all three levels, the same "flat across levels" pattern flagged elsewhere in this
+  audit. `constraints` is better-differentiated, and its L3 deliberately drops a toggle that would be
+  a no-op at that level (**Justified**, not an oversight — checked against the generator logic).
+- Level progression: Genuinely structural in both sub-tools. `linearScaling`: whole-number multiplier
+  → HCF-based scale factor → coprime base/target requiring the unitary method, a clean three-method
+  escalation matching its own info text exactly. `constraints`: single/3-ingredient/1-limiting →
+  multi/4-ingredient/2-limiting → multi/4-ingredient/all-limiting — a real complexity increase.
+- Working-step depth: A specific, checkable gap relative to this category's own reference tools.
+  Every working line uses bare `step()` — zero `mStep()`, zero `tStep()` — so no line anywhere carries
+  a prose label, a direct contrast with `RatioSharingTool`/`FractionToRatio`, which label essentially
+  every step. The Constraints sub-tool also invents a bespoke multi-line working shape rendered via a
+  custom `stepRenderer` rather than using the documented `extra` field on `WorkingStep` — functionally
+  fine, but sidesteps the one extension point named for exactly this case, and the CI smoke test's
+  per-fragment KaTeX validation can't see inside it the way it validates `step()`'s `frags`.
+- Conventions/anomaly scan: `questionRenderer`/`stepRenderer` (**Justified** in need, `stepRenderer`
+  **Unclear** in implementation per the `extra`-field point above). `customPrintHandler` (**Justified**
+  that one is needed — the shared text path can't render a table — but it reimplements a full
+  pagination engine from scratch rather than adapting the shared `computeWorksheetLayout` engine SVG
+  tools get for free, **Unclear-to-Debt**, worth a look if table-shaped questions recur elsewhere).
+  `numQuestions: 9` — undocumented, well below the 15 baseline (**Unclear**).
+- UI/visual consistency: Not checked live. From source: the table's cell background correctly reacts
+  to colour scheme, but the text colour is hardcoded black throughout — an asymmetry, changing scheme
+  visibly changes shading but not ink colour.
+- **Recommended status:** Live but flagged for expansion — two well-structured, genuinely
+  level-progressive sub-tools undercut by a working-step depth gap that's unusually easy to point at
+  (zero labelled steps in a category where the reference tools label nearly every step), a
+  narrower-than-it-looks sub-tool count, and a non-standard `WorkingStep` extension pattern. Nothing
+  argues for gating. (current: Live)
+
+**Notes:** The `scaleRecipe` row needs a decision, not just a status flip: either broaden its
+description to cover the Constraints move, or add a second row — as written it only names half of
+what this tool does.
+
+### Converting Fractions and Ratios — `src/tools/Proportion/FractionToRatio.tsx`
+Route: `/fraction-to-ratio` · Current status: Live
+
+**Part 1 — Infrastructure alignment**
+- Techniques: Thin — no technique import. `PROJECTS.md`'s `convertFractionRatio` row (med, ⬜)
+  matches the `fractionToRatio`/`ratioToFraction` sub-tools' core move. A second row also applies:
+  `simplifyRatio` (med, ⬜) is a verbatim match for `formingRatios`' simplification helpers, which
+  prime-factor-divide down to simplest form exactly as that row describes — this tool is relevant to
+  two rows, only one currently cross-referenced.
+- Skills: No markers. Two unlinked candidates: the L2 common-denominator path computes and labels an
+  "LCD:" step — the already-built (✅) `lcm` skill, unmarked, the same "unlinked consumer" pattern
+  flagged for `SimultaneousEquations` in the Algebra pass; and `formingRatios`' simplification steps
+  directly match the existing `simplify-ratio` row. Bigger-picture gap: **no `convert-fraction-ratio`
+  skill row exists at all** — only the technique row — breaking the technique↔skill pairing pattern
+  used everywhere else. **New skill proposed:** `convert-fraction-ratio`, bar model (existing scenes —
+  cheap), since this tool's core move is a clean, self-contained, bar-model-friendly idea exactly like
+  the paired rows elsewhere.
+- Representations: **Bar model** — designated representation, existing scenes, a cheap gap. The
+  tool's own arithmetic already does the bar-model computation implicitly. Currently zero visual
+  representation anywhere.
+- Teach deck: Strong, unusually cheap candidate — needs no new scene family (`split`/`equivalents`
+  already suit fraction-of-a-whole content, the same scenes `FractionsAddSub`'s deck uses), one of the
+  cheapest unbuilt deck candidates found in the audit so far.
+- SmartGrapher: No fit.
+
+**Part 2 — Standalone readiness**
+- Question/sub-tool breadth vs spec: Three sub-tools, each with a genuinely distinct three-level
+  progression — 9 structurally different question shapes total, every question worded with real
+  context — strong spec coverage, on par with `FractionsAddSub`/`Percentages`. One gap: no algebraic-
+  form ratio/fraction question, no combined question crossing both conversion directions in one item.
+- QO richness: Uneven, and the unevenness is itself a finding. `fractionToRatio`/`ratioToFraction` use
+  genuine per-level `difficultySettings`. `formingRatios` — plausibly the tool's highest-traffic
+  sub-tool — has `dropdown: null, difficultySettings: null`: its two toggles are flat, identical at
+  every level, zero QO differentiation, unlike its two siblings in the same file.
+- Level progression: Very strong — every sub-tool restructures method at each level, not just numbers.
+  `ratioToFraction`'s L3 "part-to-part, not part-to-whole" framing is a genuine, well-flagged
+  misconception zone. One of the stronger showings in the audit so far.
+- Working-step depth: A real, concrete gap, notable precisely because of this tool's claimed
+  reference status. Every `mStep` call passes a single pre-joined string — zero genuine fragment-array
+  usage anywhere — the same specific gap the audit found in `CompletingTheSquare.tsx` itself,
+  reinforcing that "reference implementation" status in this repo has so far tracked shell-wiring, not
+  fragment-authoring maturity.
+- Conventions/anomaly scan: `displayFontSize`/`worksheetFontSize`/`maxColumns` overrides are no-ops
+  restating the baseline (**Justified, no-op**). `numQuestions: 5` and `numColumns: 2` are genuine,
+  undocumented reductions — `numQuestions: 5` is the lowest value seen across the entire audit so far
+  (previous low was `CompletingTheSquare`'s 6) — **Unclear**.
+- UI/visual consistency: Not checked live. From source: zero hardcoded hex colours, zero inline
+  styles — the cleanest possible source-level signal.
+- **Recommended status:** Stay live as-is on Part 2 fundamentals — genuinely strong breadth,
+  worded-context coverage, and level progression, on par with the Number category's strongest tools.
+  But `formingRatios`' flat QO and the fragment-array gap should be visible in the record, since they
+  undercut the tool's claimed reference-implementation billing exactly the way it undercut
+  `CompletingTheSquare.tsx`'s. Neither is gating-severity. (current: Live)
+
+**Notes:** The most actionable finding here is the missing `convert-fraction-ratio` skill row — the
+only tool audited so far whose named technique row has no matching skill row at all. It's also cheap
+to fill in: bar model, existing scenes, no new representation work. Separately, a documentation-drift
+finding: `CLAUDE.md`'s reference-implementations table doesn't actually name this file, despite this
+audit doc's own Part 2 methodology text citing it as a quality-bar reference (see category summary).
+
+### Fractions of Amounts — `src/tools/Proportion/FractionsOfAmounts.tsx`
+Route: `/fractions-of-amounts` · Current status: Live
+
+**Part 1 — Infrastructure alignment**
+- Techniques: Thin — no technique import. `PROJECTS.md`'s Number-section `fractionOfAmount` row
+  (**high**, ⬜) is a verbatim match for this tool's core move — every sub-tool's working repeats the
+  identical "find the value of one part, then multiply by the numerator" pattern. That row currently
+  has no "needed by" annotation — this tool is the direct, obvious, highest-frequency demand signal
+  for it and should be named there.
+- Skills: No markers. Two clear candidates, both already existing high-priority rows: `fraction-of-
+  amount` (**high**, bar model exists, ⬜) — this tool's `findFraction` sub-tool and the opening moves
+  of its other two sub-tools **are** this skill's target domain, the same "tool IS the primitive"
+  pattern found for `IntegerAddSub`; and `simplify-fraction`/`hcf` — `asFraction` explicitly computes
+  and labels an HCF step in five separate places, never linked to either row (a third consumer for
+  `simplify-fraction`, the first-ever named consumer for `hcf`).
+- Representations: **Bar model** — designated representation, existing scenes, a cheap gap, and a
+  closer, more direct fit than almost any other tool audited so far, since the working steps already
+  narrate exactly what the bar model would show (divide into equal strips, shade some). Currently
+  zero visual representation anywhere.
+- Teach deck: Strong, cheap candidate for the same reason as `FractionToRatio` — no new scene needed,
+  and `findFraction`'s clean two-step method is an ideal running example. The two tools would share
+  the same bar-model scene work if built together.
+- SmartGrapher: No fit.
+
+**Part 2 — Standalone readiness**
+- Question/sub-tool breadth vs spec: Three sub-tools with strong, complementary coverage —
+  `findFraction` (escalating unit → non-unit → fractional-answer), `worded` (contextual, including a
+  unit-conversion dimension unique to this tool in the category, plus genuine two-step L3 chains), and
+  `asFraction` (the inverse skill, including its own one-step/two-step L3 split). Together they cover
+  both directions of the topic plus a worded/contextual layer most single-direction tools lack. Real
+  gap: no mixed-number fraction operand anywhere, and despite the tool's own name and its designated
+  representation, no visual representation of any kind.
+- QO richness: Strong and the most differentiated tool in this category pass — `dropdown`/`variables`/
+  `difficultySettings` used extensively and genuinely per-level in all three sub-tools. No sub-tool
+  here has the flat/undifferentiated QO gap `FractionToRatio`'s `formingRatios` sub-tool showed.
+- Level progression: Genuinely structural across all three sub-tools — `findFraction`'s L3 changes the
+  answer type itself, `worded`'s L2 introduces a real unit-conversion prerequisite and L3 genuine
+  two-stage chains, `asFraction`'s L3 splits into 1-step/2-step variants. On par with the strongest
+  level-progression tools found in the Number/Algebra passes.
+- Working-step depth: **The strongest single finding in this pass.** 52 genuine fragment-array uses
+  across the file — every "find one part / multiply by numerator" pair, every unit-conversion step,
+  every multi-stage worded chain uses the `string[]` fragment convention, matching or exceeding
+  `FractionsAddSub`'s billing as the category's fragment-authoring model. `tStep` is also used
+  correctly for pure-reasoning lines, keeping computed and stated-fact steps architecturally distinct.
+- Conventions/anomaly scan: Zero matches on the full override grep — the file doesn't even pass a
+  `defaults` prop, running on the full shared baseline. Fully vanilla, the cleanest possible
+  anomaly-scan result.
+- UI/visual consistency: Not checked live. From source: zero hardcoded hex colours, zero inline
+  styles — should be visually native to the shell by construction.
+- **Recommended status:** Stay live as-is — the stronger of the two tools audited alongside it on
+  Part 2, arguably close to reference quality for the category (strong worded/unit-conversion breadth,
+  best-in-category QO differentiation, best working-step fragment density seen since
+  `FractionsAddSub`/`Percentages`). The only content-shaped gap worth flagging is the complete absence
+  of the bar-model visual its own designated representation names directly. (current: Live)
+
+**Notes:** Five separate rejection-sampling loops exist in this file, each with a hardcoded literal
+fallback question if exhausted — the same pattern the Algebra pass flagged for `NonLinearSimEq`'s
+fallback, not confirmed to trigger but worth a follow-up check given how many constrained-generation
+branches this file has. Also worth naming as a positive: the money helpers split KaTeX-safe from
+plain-text currency exactly like `Percentages.tsx`'s `gbp()` helper the Number pass called out as a
+positive quality signal — this tool follows the same convention correctly throughout.
+
+### Best Buys — `src/tools/Proportion/BestBuys.tsx`
+Route: `/best-buys` · Current status: Live
+
+**Part 1 — Infrastructure alignment**
+- Techniques: Thin — no technique import. `PROJECTS.md`'s `unitPriceCompare` row (low, ⬜) accurately
+  matches the Unit Cost sub-tool's core move, but undersells Special Offers, whose real move is
+  "resolve a deal structure into an effective total quantity/price first, then compare" — a compound
+  move one reasoning stage ahead of plain unit-price comparison. Same shape of finding as
+  `RecipesTool`'s `scaleRecipe` gap — worth extending the row's description rather than assuming one
+  technique covers both sub-tools as-is.
+- Skills: No markers. The entire tool is built on the **unitary method** — named explicitly in-UI via
+  a "Force unitary method" toggle — a direct, on-the-nose consumer of the `unitary-method` skill (bar
+  model exists, med, ⬜), now a **third** tool across two categories (`Percentages`, `RecipesTool`,
+  `BestBuys`) found to hand-roll this exact reasoning unlinked — the clearest cross-category demand
+  signal for that skill's priority found so far. Special Offers' percentage-discount branches also
+  name an unlinked percentage-of-amount move.
+- Representations: **Bar model** fits Unit Cost cleanly and cheaply — splitting two packs into
+  equal-sized "per unit" strips to compare heights is close to a direct reuse of the existing `split`
+  scene family. Special Offers is a looser fit, needing the same bar-model-plus-percentage combination
+  flagged as missing in the `Percentages` audit entry.
+- Teach deck: Strong, on-the-nose candidate — "compare the totals, not the unit prices" is a
+  well-known GCSE error, and Special Offers' L3 case (forcing two different calculation routes) is a
+  ready-made Spot the Mistake beat, structurally similar to the reverse-percentages candidate flagged
+  for `Percentages`.
+- SmartGrapher: No fit.
+
+**Part 2 — Standalone readiness**
+- Question/sub-tool breadth vs spec: Two sub-tools (`unitCost`, `specialOffers`) covering both halves
+  of the GCSE spec, each with real internal variety by product/deal type rather than one reused
+  template. Gap: no question ever asks for the actual best-value amount saved or unit price itself —
+  every answer is a comparison verdict, a narrower answer-shape range than most audited tools.
+- QO richness: Sharply uneven, the most extreme split-personality result found in the category.
+  `unitCost` is genuinely strong and level-aware — L1 has zero controls, matching the `CompletingTheSquare`
+  reference pattern of QO complexity scaling with maths complexity, then L2/L3 add real controls.
+  `specialOffers`, by contrast, has **zero QO options at all, at every level** — a fully fixed
+  generator, the same "zero-control" pattern flagged for `Iterations`' `verification` sub-tool.
+- Level progression: Strong and structural in both sub-tools — `unitCost` escalates count-based →
+  metric-with-conversion → deliberately-close-unit-prices; `specialOffers` escalates multi-buy/
+  multipack → percentage-discount/bulk → mixed offer types requiring two calculation routes in one
+  question — one of the cleaner three-level escalations seen in this audit.
+- Working-step depth: Deliberately, consistently flat — every working line is `tStep()` (correctly
+  citing the documented £-inside-KaTeX gotcha up front), so the tool is structurally incapable of the
+  fragment-reveal convention, not a thin-authoring problem the way `Estimation`'s single-string
+  `mStep`s were. Content-wise the chains are thorough — deeper step-count than most tools audited so
+  far, just architecturally flat.
+- Conventions/anomaly scan: Zero matches on the full override grep — fully vanilla, the cleanest
+  possible baseline. Worth noting as a design point: the unitary/conversions toggles are exactly the
+  kind of pure-display QO `reformatQuestion` exists for, but neither is implemented — toggling
+  regenerates an entirely fresh question rather than reformatting in place, a legitimate default but a
+  missed opportunity given how naturally these toggles fit the pattern.
+- UI/visual consistency: Not checked live. From source: zero hardcoded hex colours anywhere — the
+  cleanest possible source-level signal in this pass.
+- **Recommended status:** Live but flagged for expansion — `unitCost` is one of the stronger-designed
+  single sub-tools read in this audit (clean level-aware QO, genuine structural progression, thorough
+  working), but `specialOffers` sitting at zero QO options across all three levels is a concrete gap
+  directly comparable to `Iterations`' weak point, and both sub-tools share the category-wide absence
+  of technique/skill hookups. Nothing argues for gating. (current: Live)
+
+**Notes:** The `unitPriceCompare` row has the same "covers one sub-tool cleanly, undersells the other"
+shape flagged for `RecipesTool`'s `scaleRecipe` row — worth resolving both the same way when these
+findings get folded back into the technique table.
 
 ### Geometry — ⬜ not started
 - [ ] Properties of Circles (`CircleProperties.tsx`)

@@ -28,6 +28,28 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-08-14 — Ran the Maths Tool Audit's Ratio & Proportion category (6 tools)
+No code changed — findings-only pass per `docs/TOOL_AUDIT.md`'s methodology. Audited all six Ratio &
+Proportion tools (`RatioSharingTool`, `SimplifyingRatiosTool`, `RecipesTool`, `FractionToRatio`,
+`FractionsOfAmounts`, `BestBuys`) and logged the full per-tool entries. Headline result: the clearest
+live/gated contrast found in the audit so far — `SimplifyingRatiosTool` (dev-gated) is recommended to
+**stay gated**, judged blind to its current status, being the only tool in the whole audit with
+literally zero QO control and zero visual representation, while its live sibling `RatioSharingTool`
+ships with both a working bar model and real controls. `FractionsOfAmounts` came out reference-quality
+(52 genuine fragment-array uses, the strongest QO differentiation of the pass). Two existing technique
+rows (`scaleRecipe`, `unitPriceCompare`) turned out to only describe half their tool's actual content —
+`RecipesTool`'s Constraints sub-tool and `BestBuys`' Special Offers sub-tool each do a materially
+different move. The `unitary-method` skill (proposed for `Percentages` in the Number pass) now has two
+more unconsumed demand signals here — three tools across two categories hand-roll the same "find 1,
+then scale" reasoning unlinked. A new skill, `convert-fraction-ratio`, is proposed for `FractionToRatio`,
+whose technique row had no matching skill row at all. Two documentation-drift findings also surfaced:
+`CLAUDE.md`'s reference-implementations table doesn't actually name `FractionToRatio.tsx` despite
+`docs/TOOL_AUDIT.md`'s own methodology text citing it, and doesn't describe `RatioSharingTool.tsx` as a
+"multi-group multiSelect" example (it's single-group throughout) — recorded as findings, not corrected.
+Updated `docs/PROJECTS.md`'s technique/skill tables accordingly. No `enabled` flags changed (the
+`SimplifyingRatiosTool` recommendation is recorded only, per the audit's own rule not to act on
+recommendations mid-pass). Next: Geometry category (8 tools) — the final one.
+
 ## 2026-08-14 — Ran the Maths Tool Audit's Algebra category (7 tools)
 No code changed — findings-only pass per `docs/TOOL_AUDIT.md`'s methodology. Audited all seven
 Algebra tools (`CollectingLikeTerms`, `SolvingLinearEquations`, `CompletingTheSquare`, `Iterations`,

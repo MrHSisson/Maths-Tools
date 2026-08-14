@@ -38,7 +38,7 @@ lives in `CLAUDE.md` → "Ending a session / session kickoffs".
 
 | Prong | Status | One-line |
 |---|---|---|
-| **Maths Tool Audit** | 🚧 | Number + Algebra complete (13/27) — Ratio & Proportion, Geometry still to do; see `docs/TOOL_AUDIT.md` |
+| **Maths Tool Audit** | 🚧 | Number + Algebra + Ratio & Proportion complete (19/27) — Geometry still to do; see `docs/TOOL_AUDIT.md` |
 | **Techniques engine** | 🚧 | Engine built; only 1 tool converted — further work now sequenced via the Tool Audit |
 | **Skills library** | 🚧 | Engine + backlog ready; 2 skills built — further work now sequenced via the Tool Audit |
 | **Core representations** | 🚧 | 3 of 6 visual families have Teach scenes — further work now sequenced via the Tool Audit |
@@ -61,23 +61,30 @@ pedagogy prongs beneath this one (Techniques engine, Skills library, Core repres
 decks) plus SmartGrapher **take their next steps from this audit's findings rather than being
 picked ad hoc**.
 
-**Where it's at.** Number and Algebra categories complete (13/27 tools) — findings logged in
-`docs/TOOL_AUDIT.md`. From Number: two tools (`FractionsAddSub`, `Percentages`) came out close to
-reference quality; the other four are "live but flagged for expansion" on content depth, with
-`PowersOfTen`'s working steps the weakest found (two fixed-template sentences, no computed numeric
-line). From Algebra: `NonLinearSimEq` — the repo's one techniques-engine conversion — turned out to
-be a genuine hybrid (its highest-frequency sub-tool still hand-rolls its solve chain), which is why
-both of its previously-known working-step gaps are confirmed still present at the exact
-generator-code level. `CompletingTheSquare.tsx`, the repo's own named shell-wiring reference, is
-equally unconverted on the techniques/fragment axis — a useful calibration that "reference
-implementation" is an architectural claim, not a pedagogy-infrastructure one. Two concrete content
-bugs surfaced (`CollectingLikeTerms`' info text vs. its generator; a redundant no-op working step in
-`SolvingLinearEquations`), findings only, not fixed. New Part 1 backlog items from both categories —
-`directedNumberAddSub`, `scaleByPowerOfTen`, `place-value`, a percentages technique/skill family, and
-from Algebra a `solveByElimination`/`keep-flip-change`-adjacent demand refresh plus a priority bump
-on `solveByIteration` — are now in the tables below. The full methodology, scope list, and per-tool
-template live in **`docs/TOOL_AUDIT.md`** — that doc is written to be self-contained, so a fresh
-session with no memory of how this was designed can pick it up directly.
+**Where it's at.** Number, Algebra, and Ratio & Proportion categories complete (19/27 tools) —
+findings logged in `docs/TOOL_AUDIT.md`. From Number: two tools (`FractionsAddSub`, `Percentages`)
+came out close to reference quality; the other four are "live but flagged for expansion" on content
+depth, with `PowersOfTen`'s working steps the weakest found (two fixed-template sentences, no
+computed numeric line). From Algebra: `NonLinearSimEq` — the repo's one techniques-engine conversion
+— turned out to be a genuine hybrid (its highest-frequency sub-tool still hand-rolls its solve
+chain), which is why both of its previously-known working-step gaps are confirmed still present at
+the exact generator-code level. `CompletingTheSquare.tsx`, the repo's own named shell-wiring
+reference, is equally unconverted on the techniques/fragment axis — a useful calibration that
+"reference implementation" is an architectural claim, not a pedagogy-infrastructure one. From Ratio &
+Proportion: the audit's clearest live/gated contrast so far — `SimplifyingRatiosTool` (dev-gated) is
+recommended to **stay gated**, being the only tool in the whole audit with zero QO control and zero
+visual representation, next to its live sibling `RatioSharingTool` which has both. `FractionsOfAmounts`
+came out reference-quality (52 fragment-array uses, the strongest QO differentiation of the pass).
+Several content bugs and doc-drift findings surfaced across the three categories (`CollectingLikeTerms`'
+info text vs. its generator; a redundant no-op step in `SolvingLinearEquations`; `CLAUDE.md`'s
+reference-implementations table not actually naming `FractionToRatio.tsx`), findings only, not fixed.
+New Part 1 backlog items from all three categories — `directedNumberAddSub`, `scaleByPowerOfTen`,
+`place-value`, a percentages technique/skill family, a `solveByElimination` refresh, a priority bump
+on `solveByIteration`, and from this pass a new `convert-fraction-ratio` skill plus broadened-scope
+notes on `scaleRecipe`/`unitPriceCompare` and a third demand signal for `unitary-method` — are now in
+the tables below. The full methodology, scope list, and per-tool template live in
+**`docs/TOOL_AUDIT.md`** — that doc is written to be self-contained, so a fresh session with no
+memory of how this was designed can pick it up directly.
 
 **Why this exists, in short:** the four pedagogy prongs and SmartGrapher each have their own
 backlog, but priority between them (and between tools) has been picked anecdotally, not from a
@@ -91,9 +98,9 @@ technique for finding conventions debt (non-standard column caps, hidden font co
 print handlers, etc.) and why the current `enabled` flag can't be trusted as a quality signal, is
 in `docs/TOOL_AUDIT.md` — do not re-derive any of this from scratch; read that doc first.
 
-**Next step:** continue with the Ratio & Proportion category (6 tools) in `docs/TOOL_AUDIT.md`'s
-audit log, then Geometry — one category per session. This is a findings-only pass: no code changes,
-no `enabled` flips, until a category's findings have been reviewed.
+**Next step:** finish with the Geometry category (8 tools) in `docs/TOOL_AUDIT.md`'s audit log — the
+last category. This is a findings-only pass: no code changes, no `enabled` flips, until a category's
+findings have been reviewed.
 
 ---
 
@@ -167,7 +174,7 @@ Reference conversion: `NonLinearSimEq.tsx` (uses `standard` grain).
 | Technique | Move | Priority | Status |
 |---|---|---|---|
 | `simplifyFraction` | divide num & den by a common factor | **high** | ⬜ |
-| `fractionOfAmount` | ÷ by denominator, × by numerator | **high** | ⬜ |
+| `fractionOfAmount` | ÷ by denominator, × by numerator | **high** | ⬜ — needed by `FractionsOfAmounts` (Tool Audit, Ratio & Proportion pass) |
 | `convertMixedImproper` | mixed ⇄ improper | med | ⬜ |
 | `addSubtractFractions` | common denominator (LCM), add/subtract, regroup | med | ⬜ — needed by `FractionsAddSub` |
 | `multiplyDivideFractions` | keep-flip-change, multiply across | med | ⬜ — needed by `FractionMultDiv` |
@@ -182,11 +189,11 @@ Reference conversion: `NonLinearSimEq.tsx` (uses `standard` grain).
 
 | Technique | Move | Priority | Status |
 |---|---|---|---|
-| `shareInRatio` | total parts → 1 part → each share | **high** | ⬜ |
-| `convertFractionRatio` | fraction ⇄ ratio | med | ⬜ |
-| `simplifyRatio` | divide parts by a common factor | med | ⬜ |
-| `unitPriceCompare` | price ÷ quantity, compare | low | ⬜ |
-| `scaleRecipe` | scale ingredients by a factor | low | ⬜ |
+| `shareInRatio` | total parts → 1 part → each share | **high** | ⬜ — needed by `RatioSharingTool`, the category's sole real demand signal |
+| `convertFractionRatio` | fraction ⇄ ratio | med | ⬜ — needed by `FractionToRatio`; that tool also needs `simplifyRatio` (below) for its `formingRatios` sub-tool |
+| `simplifyRatio` | divide parts by a common factor | med | ⬜ — needed by `FractionToRatio` (`formingRatios`) and `SimplifyingRatiosTool` (numeric sub-tool); `SimplifyingRatiosTool`'s algebraic sub-tool is genuinely broader than this row's spec (also cancels shared variables/powers) — fold that scope in when built |
+| `unitPriceCompare` | price ÷ quantity, compare | low | ⬜ — needed by `BestBuys`; the row's current spec only covers the `unitCost` sub-tool — `specialOffers`' real move is "resolve a deal structure to an effective price, then compare," a compound move one stage ahead — broaden the description or add a sibling row |
+| `scaleRecipe` | scale ingredients by a factor | low | ⬜ — needed by `RecipesTool`'s `linearScaling` sub-tool; the row's spec doesn't cover `constraints`' actual move ("find each ingredient's per-serving rate, divide stock, take the minimum") — needs a second bullet or a sibling row (e.g. `limitingIngredient`) |
 
 *Geometry*
 
@@ -224,12 +231,13 @@ but doesn't teach*; the representation column signals effort — existing scene 
 
 | Skill (id) | Teaches | Representation / scene | Priority | Status |
 |---|---|---|---|---|
-| `lcm` / `lcm-prime-factors` | lowest common multiple | number line `multiples`; prime tiles `factorTree`/`primeVenn` | — | ✅ — unlinked consumer found: `SimultaneousEquations`' `lcm` sub-tool computes an LCM as its core mechanic but never links it (Tool Audit, Algebra pass) |
+| `lcm` / `lcm-prime-factors` | lowest common multiple | number line `multiples`; prime tiles `factorTree`/`primeVenn` | — | ✅ — unlinked consumers found: `SimultaneousEquations`' `lcm` sub-tool (Algebra pass), `FractionToRatio`'s L2 "LCD:" step (Ratio & Proportion pass) — both compute the value but never link it |
 | `equivalent-fractions` | scale num & den by the same factor | **bar model** `split`/`equivalents` *(exist)* | **high** | ⬜ — needed by `FractionsAddSub` |
-| `simplify-fraction` | divide num & den by the HCF | **bar model** *(exists)* | **high** | ⬜ — needed by `FractionsAddSub`, `FractionMultDiv` |
-| `hcf` | highest common factor | **prime tiles** `primeVenn` *(exists)* | **high** | ⬜ |
-| `share-in-ratio` | total parts → 1 part → each share | **bar model** *(exists)* | **high** | ⬜ |
-| `fraction-of-amount` | ÷ by denominator, × by numerator | **bar model** *(exists)* | **high** | ⬜ |
+| `simplify-fraction` | divide num & den by the HCF | **bar model** *(exists)* | **high** | ⬜ — needed by `FractionsAddSub`, `FractionMultDiv`, and now `FractionsOfAmounts` (its `asFraction` sub-tool, three consumers total) |
+| `hcf` | highest common factor | **prime tiles** `primeVenn` *(exists)* | **high** | ⬜ — needed by `FractionsOfAmounts` (`asFraction`'s HCF step) and `RecipesTool` (its L2 HCF-based scaling step) — first named consumers |
+| `share-in-ratio` | total parts → 1 part → each share | **bar model** *(exists)* | **high** | ⬜ — needed by `RatioSharingTool`, the category's sole real demand signal |
+| `fraction-of-amount` | ÷ by denominator, × by numerator | **bar model** *(exists)* | **high** | ⬜ — needed by `FractionsOfAmounts`, a near-exact fit since the tool's own working already narrates the bar-model method |
+| `convert-fraction-ratio` | express a fraction as a complementary part:part ratio, and the reverse | **bar model** *(existing `split`/`equivalents` scenes — cheap)* | med | ⬜ — new, needed by `FractionToRatio` (Tool Audit, Ratio & Proportion pass); its `convertFractionRatio` technique row had no matching skill row before this pass, breaking the pairing pattern every other row follows |
 | `solve-linear-equation` | do the same to both sides | **algebra tiles** / number line *(no tile scene yet)* | **high** | ⬜ — needed by `SolvingLinearEquations` |
 | `expand-double-brackets` | grid / area of each term pair | **area model** *(no scene yet)* | **high** | ⬜ — needed by `ExpandingBrackets` |
 | `collect-like-terms` | group matching terms | **algebra tiles** *(no scene yet)* | med | ⬜ — needed by `CollectingLikeTerms`, `ExpandingBrackets` |
@@ -238,13 +246,13 @@ but doesn't teach*; the representation column signals effort — existing scene 
 | `factorise-quadratic` | find the factor pair | **area model** *(no scene yet)* | med | ⬜ — needed by `NonLinearSimEq` |
 | `substitute-into-formula` | replace letters with values | *(none — text)* | med | ⬜ — needed by `NonLinearSimEq` |
 | `rearrange-formula` | inverse operations to change subject | *(none — text / algebra tiles)* | med | ⬜ — needed by `Iterations`, `NonLinearSimEq` |
-| `simplify-ratio` | divide parts by a common factor | **bar model** *(exists)* | med | ⬜ |
+| `simplify-ratio` | divide parts by a common factor | **bar model** *(exists)* | med | ⬜ — needed by `FractionToRatio` (`formingRatios`) and `SimplifyingRatiosTool` (numeric sub-tool) |
 | `directed-number` | add/subtract/multiply negatives | **negative counters** *(no scene yet)* | med | ⬜ — needed by `IntegerAddSub` |
 | `factor-pairs` | list the factor pairs of n | **prime tiles** *(exists)* | low | ⬜ |
 | `place-value` | read the column value of a digit | *(none — closest fit is number line; PowersOfTen's own grid doesn't map onto any of the six)* | low | ⬜ — new, needed by `PowersOfTen` (Tool Audit, Number pass) |
 | `keep-flip-change` | reciprocal + multiply for fraction division | **bar model** *(no scene authored yet for this specific move)* | low | ⬜ — new, needed by `FractionMultDiv` (Tool Audit, Number pass) |
 | `percentage-to-multiplier` | convert a percentage to a decimal multiplier | **bar model** *(exists)* | med | ⬜ — new, needed by `Percentages` (Tool Audit, Number pass) |
-| `unitary-method` | find 1%, then scale to the target | **bar model** *(exists)* | med | ⬜ — new, needed by `Percentages` (Tool Audit, Number pass) |
+| `unitary-method` | find 1%, then scale to the target | **bar model** *(exists)* | med | ⬜ — new, needed by `Percentages` (Tool Audit, Number pass), and now also `RecipesTool` and `BestBuys` (Tool Audit, Ratio & Proportion pass) — three tools across two categories hand-roll this exact reasoning unlinked, the clearest cross-category demand signal found so far |
 
 Build the cheap cluster (top six after `lcm`) first — all on existing bar-model / prime-tile scenes,
 each a prerequisite several tools link to. The equally-wanted `solve-linear-equation`,
