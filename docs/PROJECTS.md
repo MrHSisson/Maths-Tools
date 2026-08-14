@@ -38,7 +38,7 @@ lives in `CLAUDE.md` → "Ending a session / session kickoffs".
 
 | Prong | Status | One-line |
 |---|---|---|
-| **Maths Tool Audit** | 🚧 | Number complete (6/27) — Algebra, Ratio & Proportion, Geometry still to do; see `docs/TOOL_AUDIT.md` |
+| **Maths Tool Audit** | 🚧 | Number + Algebra complete (13/27) — Ratio & Proportion, Geometry still to do; see `docs/TOOL_AUDIT.md` |
 | **Techniques engine** | 🚧 | Engine built; only 1 tool converted — further work now sequenced via the Tool Audit |
 | **Skills library** | 🚧 | Engine + backlog ready; 2 skills built — further work now sequenced via the Tool Audit |
 | **Core representations** | 🚧 | 3 of 6 visual families have Teach scenes — further work now sequenced via the Tool Audit |
@@ -61,15 +61,23 @@ pedagogy prongs beneath this one (Techniques engine, Skills library, Core repres
 decks) plus SmartGrapher **take their next steps from this audit's findings rather than being
 picked ad hoc**.
 
-**Where it's at.** Number category complete (6/27 tools) — findings logged in `docs/TOOL_AUDIT.md`.
-Two tools (`FractionsAddSub`, `Percentages`) came out close to reference quality; the other four are
-"live but flagged for expansion" on content depth, with `PowersOfTen`'s working steps the weakest
-found (two fixed-template sentences, no computed numeric line). The category surfaced several new
-Part 1 backlog items — a `directedNumberAddSub` technique, a `scaleByPowerOfTen` technique, a
-`place-value` skill, and a previously-nonexistent percentages technique/skill family — now added to
-the tables below. The full methodology, scope list, and per-tool template live in
-**`docs/TOOL_AUDIT.md`** — that doc is written to be self-contained, so a fresh session with no
-memory of how this was designed can pick it up directly.
+**Where it's at.** Number and Algebra categories complete (13/27 tools) — findings logged in
+`docs/TOOL_AUDIT.md`. From Number: two tools (`FractionsAddSub`, `Percentages`) came out close to
+reference quality; the other four are "live but flagged for expansion" on content depth, with
+`PowersOfTen`'s working steps the weakest found (two fixed-template sentences, no computed numeric
+line). From Algebra: `NonLinearSimEq` — the repo's one techniques-engine conversion — turned out to
+be a genuine hybrid (its highest-frequency sub-tool still hand-rolls its solve chain), which is why
+both of its previously-known working-step gaps are confirmed still present at the exact
+generator-code level. `CompletingTheSquare.tsx`, the repo's own named shell-wiring reference, is
+equally unconverted on the techniques/fragment axis — a useful calibration that "reference
+implementation" is an architectural claim, not a pedagogy-infrastructure one. Two concrete content
+bugs surfaced (`CollectingLikeTerms`' info text vs. its generator; a redundant no-op working step in
+`SolvingLinearEquations`), findings only, not fixed. New Part 1 backlog items from both categories —
+`directedNumberAddSub`, `scaleByPowerOfTen`, `place-value`, a percentages technique/skill family, and
+from Algebra a `solveByElimination`/`keep-flip-change`-adjacent demand refresh plus a priority bump
+on `solveByIteration` — are now in the tables below. The full methodology, scope list, and per-tool
+template live in **`docs/TOOL_AUDIT.md`** — that doc is written to be self-contained, so a fresh
+session with no memory of how this was designed can pick it up directly.
 
 **Why this exists, in short:** the four pedagogy prongs and SmartGrapher each have their own
 backlog, but priority between them (and between tools) has been picked anecdotally, not from a
@@ -83,9 +91,9 @@ technique for finding conventions debt (non-standard column caps, hidden font co
 print handlers, etc.) and why the current `enabled` flag can't be trusted as a quality signal, is
 in `docs/TOOL_AUDIT.md` — do not re-derive any of this from scratch; read that doc first.
 
-**Next step:** continue with the Algebra category (7 tools) in `docs/TOOL_AUDIT.md`'s audit log, then
-Ratio & Proportion, then Geometry — one category per session. This is a findings-only pass: no code
-changes, no `enabled` flips, until a category's findings have been reviewed.
+**Next step:** continue with the Ratio & Proportion category (6 tools) in `docs/TOOL_AUDIT.md`'s
+audit log, then Geometry — one category per session. This is a findings-only pass: no code changes,
+no `enabled` flips, until a category's findings have been reviewed.
 
 ---
 
@@ -121,7 +129,17 @@ happens.
 - **Sweep more tools** onto the engine — start with the high-frequency moves below.
 - Grow the technique library as the sweep needs new moves.
 - Add a **CI shape-check** (every method emits ≥N titled steps, no duplicate consecutive lines) once enough tools are converted.
-- Close the known medium-grain gaps in `NonLinearSimEq` (the `(2x−5)²` expansion isn't shown; cosmetic `− 1x` should be `− x`) — both need the generator to expose structure, not display strings.
+- Close the known medium-grain gaps in `NonLinearSimEq`, both **confirmed still present at the exact
+  generator-code level** by the Tool Audit's Algebra pass: (1) the `(2x−5)²` expansion isn't shown —
+  `buildWorking`'s substitute/expand-and-rearrange steps never compute an unsimplified intermediate,
+  and the `BankEntry`/`FormBankEntry` data model has nowhere to store one even if a step were added,
+  so this needs a data-model change, not just a new `w.step()` call; (2) the cosmetic `−1x`-should-
+  be-`−x` bug lives specifically in the `linear` sub-tool's own `solvePos`/`solveNeg` helpers, which
+  interpolate a computed combined coefficient raw instead of routing it through the file's own
+  `nextT`/`coef()` sanitizer that every other code path in the file already uses correctly — the fix
+  is to route that one value through the existing sanitizer, or better, to stop hand-rolling that
+  sub-tool's solve chain and call the already-built `solveLinearEquationSteps` instead (see the
+  technique-audit table below).
 
 **Detail — techniques built:** `quadraticFormulaSteps` (grain-aware), `solveLinearEquationSteps`
 (grain-aware), `solveFactorsSteps`, `substituteBackSteps`, `makeSubjectSteps`, `solveLinearlySteps`.
@@ -133,16 +151,16 @@ Reference conversion: `NonLinearSimEq.tsx` (uses `standard` grain).
 
 | Technique | Move | Priority | Status |
 |---|---|---|---|
-| `solveLinearEquation` | isolate, collect, divide to solve `ax+b=c` | **high** | 🚧 grain-aware version exists |
-| `expandBrackets` | single / double / squared brackets (FOIL, grid) | **high** | ⬜ |
-| `substitute` | substitute a value/expression into an equation or formula | **high** | 🚧 substitute-back only |
-| `collectLikeTerms` | gather like terms | med | ⬜ |
-| `makeSubject` / rearrange | rearrange for one variable | med | 🚧 brief only |
-| `factoriseQuadratic` | factorise → set factors to zero → roots | med | 🚧 read-the-roots half exists |
+| `solveLinearEquation` | isolate, collect, divide to solve `ax+b=c` | **high** | 🚧 grain-aware version exists — needed by `SolvingLinearEquations` (zero-new-import integration point — already re-exported from `"../../shared"`) and partially by `NonLinearSimEq`'s `linear` sub-tool (currently bypassed, causing a confirmed `−1x`-should-be-`−x` display bug) |
+| `expandBrackets` | single / double / squared brackets (FOIL, grid) | **high** | ⬜ — needed by `ExpandingBrackets` (also needs a squared-single-bracket question type its own spec calls for but the tool lacks) and `NonLinearSimEq` (confirmed gap: `(2x−5)²` expansion never shown, no field in the data model to hold it) |
+| `substitute` | substitute a value/expression into an equation or formula | **high** | 🚧 substitute-back only — needed by `NonLinearSimEq` |
+| `collectLikeTerms` | gather like terms | med | ⬜ — needed by `CollectingLikeTerms`, `ExpandingBrackets`, and (for its opening "reduce x's" move) `SolvingLinearEquations` |
+| `makeSubject` / rearrange | rearrange for one variable | med | 🚧 brief only — needed by `NonLinearSimEq` |
+| `factoriseQuadratic` | factorise → set factors to zero → roots | med | 🚧 read-the-roots half exists — needed by `NonLinearSimEq` |
 | `quadraticFormula` | formula → substitute → discriminant → roots | med | ✅ |
-| `completeTheSquare` | half the x-coefficient, form `(x+p)²+q` | low | ⬜ |
-| `solveByElimination` | scale, add/subtract to eliminate | med | ⬜ |
-| `solveByIteration` | change-of-sign interval, iterate, bound-test | low | ⬜ |
+| `completeTheSquare` | half the x-coefficient, form `(x+p)²+q` | low | ⬜ — note: `CompletingTheSquare.tsx` is the repo's named shell-wiring reference but is itself fully unconverted on this axis (Tool Audit, Algebra pass) |
+| `solveByElimination` | scale, add/subtract to eliminate | med | ⬜ — needed by `SimultaneousEquations`; cheaper than a fresh build since two of its three moves (substitute-back, solve-linearly) already exist in the engine and this tool already hand-derives correct elimination logic to lift |
+| `solveByIteration` | change-of-sign interval, iterate, bound-test | **med** *(bumped from low)* | ⬜ — `Iterations`' three sub-tools (iterate / rearrange-then-iterate / bound-test) map almost 1:1 onto this technique, a complete ready-made spec rather than an inferred need (Tool Audit, Algebra pass) |
 
 *Number*
 
@@ -206,20 +224,20 @@ but doesn't teach*; the representation column signals effort — existing scene 
 
 | Skill (id) | Teaches | Representation / scene | Priority | Status |
 |---|---|---|---|---|
-| `lcm` / `lcm-prime-factors` | lowest common multiple | number line `multiples`; prime tiles `factorTree`/`primeVenn` | — | ✅ |
+| `lcm` / `lcm-prime-factors` | lowest common multiple | number line `multiples`; prime tiles `factorTree`/`primeVenn` | — | ✅ — unlinked consumer found: `SimultaneousEquations`' `lcm` sub-tool computes an LCM as its core mechanic but never links it (Tool Audit, Algebra pass) |
 | `equivalent-fractions` | scale num & den by the same factor | **bar model** `split`/`equivalents` *(exist)* | **high** | ⬜ — needed by `FractionsAddSub` |
 | `simplify-fraction` | divide num & den by the HCF | **bar model** *(exists)* | **high** | ⬜ — needed by `FractionsAddSub`, `FractionMultDiv` |
 | `hcf` | highest common factor | **prime tiles** `primeVenn` *(exists)* | **high** | ⬜ |
 | `share-in-ratio` | total parts → 1 part → each share | **bar model** *(exists)* | **high** | ⬜ |
 | `fraction-of-amount` | ÷ by denominator, × by numerator | **bar model** *(exists)* | **high** | ⬜ |
-| `solve-linear-equation` | do the same to both sides | **algebra tiles** / number line *(no tile scene yet)* | **high** | ⬜ |
-| `expand-double-brackets` | grid / area of each term pair | **area model** *(no scene yet)* | **high** | ⬜ |
-| `collect-like-terms` | group matching terms | **algebra tiles** *(no scene yet)* | med | ⬜ |
+| `solve-linear-equation` | do the same to both sides | **algebra tiles** / number line *(no tile scene yet)* | **high** | ⬜ — needed by `SolvingLinearEquations` |
+| `expand-double-brackets` | grid / area of each term pair | **area model** *(no scene yet)* | **high** | ⬜ — needed by `ExpandingBrackets` |
+| `collect-like-terms` | group matching terms | **algebra tiles** *(no scene yet)* | med | ⬜ — needed by `CollectingLikeTerms`, `ExpandingBrackets` |
 | `convert-mixed-improper` | mixed ⇄ improper fraction | **bar model** *(exists)* | med | ⬜ — needed by `FractionsAddSub`, `FractionMultDiv` |
 | `round-to-significant-figure` | find the place value, round | **number line** *(exists)* | med | ⬜ — needed by `Estimation` |
-| `factorise-quadratic` | find the factor pair | **area model** *(no scene yet)* | med | ⬜ |
-| `substitute-into-formula` | replace letters with values | *(none — text)* | med | ⬜ |
-| `rearrange-formula` | inverse operations to change subject | *(none — text / algebra tiles)* | med | ⬜ |
+| `factorise-quadratic` | find the factor pair | **area model** *(no scene yet)* | med | ⬜ — needed by `NonLinearSimEq` |
+| `substitute-into-formula` | replace letters with values | *(none — text)* | med | ⬜ — needed by `NonLinearSimEq` |
+| `rearrange-formula` | inverse operations to change subject | *(none — text / algebra tiles)* | med | ⬜ — needed by `Iterations`, `NonLinearSimEq` |
 | `simplify-ratio` | divide parts by a common factor | **bar model** *(exists)* | med | ⬜ |
 | `directed-number` | add/subtract/multiply negatives | **negative counters** *(no scene yet)* | med | ⬜ — needed by `IntegerAddSub` |
 | `factor-pairs` | list the factor pairs of n | **prime tiles** *(exists)* | low | ⬜ |
@@ -287,12 +305,20 @@ I-do → We-do → You-do within a category on one coherent example. Reference: 
 with its own test bench at `/grapher`. Live in two tools (Mixed Strategies L3 lower-envelope,
 NonLinearSimEq two-curves-plus-intersection) and **self-validating** — it derives the graph from the
 answer data and refuses to draw if they disagree, so a data inconsistency omits the graph rather than
-drawing wrong geometry. Less a "project", more a reusable utility to reach for.
+drawing wrong geometry. Less a "project", more a reusable utility to reach for. The Tool Audit's
+Algebra pass confirmed both `CompletingTheSquare` and `Iterations` are still fully unwired (zero
+grapher usage found in either file) despite already being named candidates below — `Iterations` in
+particular is now flagged as the highest-leverage unwired candidate found so far, since the tool is
+fundamentally about visualising convergence to a root yet has zero visual content today, and the
+`quadratic`/`cubic`/`custom` presets already cover its formula types directly. Also confirmed:
+`NonLinearSimEq`'s own ellipse limitation (only pure circles get a graph — two-thirds of its Level-3
+non-linear questions draw no curve, since ellipse isn't a supported series type) is disclosed in the
+tool's own info modal, not a silent gap.
 
 **Possible next steps (background, pre-audit — SmartGrapher fit is now also part of the Tool Audit's
 Part 1 per tool, see `docs/TOOL_AUDIT.md`):**
-- Add graphs to more tools — **Equations of Lines** (lines/gradients/intercepts), **Completing the Square** (parabola + vertex), **Iterations** (the curve and the root being approached).
-- Add an **ellipse preset** if/when a tool needs ellipse-and-line (presets today: linear · quadratic · cubic · circle · custom).
+- Add graphs to more tools — **Equations of Lines** (lines/gradients/intercepts), **Completing the Square** (parabola + vertex, confirmed still unwired), **Iterations** (the curve and the root being approached, confirmed still unwired and now the top candidate).
+- Add an **ellipse preset** if/when a tool needs ellipse-and-line (presets today: linear · quadratic · cubic · circle · custom) — would close `NonLinearSimEq`'s disclosed ellipse gap.
 - Mostly: pull it in opportunistically when building or migrating any coordinate/quadratic tool.
 
 ## Old-shell migration

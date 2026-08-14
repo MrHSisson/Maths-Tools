@@ -28,6 +28,29 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-08-14 — Ran the Maths Tool Audit's Algebra category (7 tools)
+No code changed — findings-only pass per `docs/TOOL_AUDIT.md`'s methodology. Audited all seven
+Algebra tools (`CollectingLikeTerms`, `SolvingLinearEquations`, `CompletingTheSquare`, `Iterations`,
+`SimultaneousEquations`, `NonLinearSimEq`, `ExpandingBrackets`) and logged the full per-tool entries.
+Headline results: `NonLinearSimEq` — the repo's one techniques-engine conversion — turned out to be a
+genuine hybrid rather than a full delegation (its highest-frequency `linear` sub-tool still hand-rolls
+its solve chain), which is why both of its previously-known working-step gaps are now **confirmed
+still present at the exact generator-code level**: the `(2x−5)²` expansion is never shown (the data
+model has nowhere to store an unsimplified intermediate) and a computed ±1 coefficient renders as
+literal `−1x` because that path bypasses the sanitizer used everywhere else in the file.
+`CompletingTheSquare.tsx` — the repo's own named shell-wiring reference — is equally unconverted on
+the techniques/fragment axis, a useful calibration that "reference implementation" is an
+architectural claim, not a pedagogy-infrastructure one. `SimultaneousEquations` (the Elimination
+sibling) is not carried along by `NonLinearSimEq`'s "converted" status, despite arguably broader Part
+2 content — a clean example of Part 1/Part 2 findings diverging on sibling tools. Two unrelated
+content bugs surfaced (not fixed): `CollectingLikeTerms`' info-modal text disagrees with its own
+generator's option count, and `SolvingLinearEquations` has a redundant no-op working step in two of
+three levels. `Iterations` was flagged as the highest-leverage unwired SmartGrapher candidate found so
+far (already named in `PROJECTS.md`, proven elsewhere in the same category, zero visual content
+today). Updated `docs/PROJECTS.md`'s technique/skill tables with new demand notes and one priority
+bump (`solveByIteration`: low → med). No `enabled` flags changed. Next: Ratio & Proportion category (6
+tools).
+
 ## 2026-08-14 — Ran the Maths Tool Audit's Number category (6 tools)
 No code changed — findings-only pass per `docs/TOOL_AUDIT.md`'s methodology. Audited all six Number
 tools (`IntegerAddSub`, `Estimation`, `PowersOfTen`, `FractionsAddSub`, `FractionMultDiv`,

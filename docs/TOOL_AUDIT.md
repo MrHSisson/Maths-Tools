@@ -5,9 +5,8 @@ log (Part B).** It is written to be fully self-contained — a fresh session wit
 the conversation that designed this audit should be able to open this file alone and correctly
 run it. Do not assume prior chat context; everything needed is below.
 
-**Status: in progress — Number complete (6/27).** The next session picking this up should continue
-with Algebra (see "Audit log" below) and work through the remaining categories (Algebra, Ratio &
-Proportion, Geometry) in order, one category per session/pass.
+**Status: in progress — Number and Algebra complete (13/27).** The next session picking this up
+should continue with Ratio & Proportion (see "Audit log" below), then Geometry.
 
 ---
 
@@ -606,14 +605,509 @@ tools are equally thin on Part 1, but visibly different on Part 2 — worded con
 expressions, fragmented steps vs flat steps, genuine method depth vs minimal explanation. Percentages
 needs the same infrastructure work as Estimation despite being far ahead of it on content quality.
 
-### Algebra — ⬜ not started
-- [ ] Collecting Like Terms (`CollectingLikeTerms.tsx`)
-- [ ] Unknowns on Both Sides (`SolvingLinearEquations.tsx`)
-- [ ] Completing the Square (`CompletingTheSquare.tsx`)
-- [ ] Iteration (`Iterations.tsx`)
-- [ ] Simultaneous Equations — Elimination (`SimultaneousEquations.tsx`)
-- [ ] Simultaneous Equations — Substitution (`NonLinearSimEq.tsx`)
-- [ ] Expanding Brackets (`ExpandingBrackets.tsx`)
+### Algebra — ✅ complete
+- [x] Collecting Like Terms (`CollectingLikeTerms.tsx`)
+- [x] Unknowns on Both Sides (`SolvingLinearEquations.tsx`)
+- [x] Completing the Square (`CompletingTheSquare.tsx`)
+- [x] Iteration (`Iterations.tsx`)
+- [x] Simultaneous Equations — Elimination (`SimultaneousEquations.tsx`)
+- [x] Simultaneous Equations — Substitution (`NonLinearSimEq.tsx`)
+- [x] Expanding Brackets (`ExpandingBrackets.tsx`)
+
+**Category summary.** `NonLinearSimEq` (Substitution) confirms its billing as the repo's one
+techniques-engine conversion, but the audit found the conversion is a genuine hybrid, not a full
+delegation — its highest-frequency "linear" sub-tool still hand-rolls its solve chain rather than
+calling the already-built `solveLinearEquationSteps`, which is exactly why both of `PROJECTS.md`'s
+previously-known gaps in this tool are still present (confirmed at the generator-code level, not
+just asserted): the `(2x−5)²` expansion is never shown (the data model has nowhere to store an
+unsimplified intermediate), and a computed coefficient of ±1 renders as literal `−1x` instead of
+`−x` because that code path bypasses the sanitizer (`coef()`/`nextT`) used everywhere else in the
+file. Its Elimination-method sibling, `SimultaneousEquations.tsx`, is **not** carried along by that
+"one tool converted" status — it has no technique import and no SmartGrapher — despite arguably
+**broader** Part 2 content (four sub-tools including a 9-shape worded one) than the substitution
+tool, a clean example of Part 1 and Part 2 findings diverging in different directions on sibling
+tools. `CompletingTheSquare.tsx` — the repo's own named reference for shell wiring and
+`reformatQuestion` — turns out to be an unconverted, non-fragmented tool on the techniques/skills
+axis exactly like every other tool audited so far; its reference status is architectural, not a
+techniques-engine claim, and shouldn't be read as one. Two concrete, unrelated content bugs also
+surfaced (findings only, not fixed): `CollectingLikeTerms`' own info-modal text says its Level 3
+"Spot the Like Term" has five options, but the generator always produces six; and
+`SolvingLinearEquations` has a redundant "Isolate constant:" step that performs no visible operation
+in two of its three levels (the constant is already isolated by that point), while the same step
+title *does* real work in the third level — a labelling inconsistency alongside the redundancy.
+Two representation-shaped gaps repeat the Number-category pattern of a tool being the natural first
+consumer of an unbuilt representation: `CollectingLikeTerms`/`SolvingLinearEquations` for algebra
+tiles (no scenes yet), and `ExpandingBrackets`/`CompletingTheSquare` for area model (no scenes yet,
+and both are *already* the named use case for it in `CLAUDE.md`'s representation table). `Iterations`
+is flagged as the highest-leverage unwired SmartGrapher candidate of the whole pass — `PROJECTS.md`
+already names it by name as a next step, the infrastructure is proven elsewhere in this exact
+category (`NonLinearSimEq`), and the tool currently has zero visual content despite being
+fundamentally about visualising convergence to a root.
+
+### Collecting Like Terms — `src/tools/Algebra/CollectingLikeTerms.tsx`
+Route: `/collecting-like-terms` · Current status: Live
+
+**Part 1 — Infrastructure alignment**
+- Techniques: Thin — no `src/shared/techniques/` import; all working is hand-built
+  (`buildCollectWorkingSteps`, `finishMCQ`). `PROJECTS.md`'s `collectLikeTerms` row (med priority, ⬜)
+  is a direct cross-reference. Given this tool covers three genuinely distinct sub-tool shapes plus a
+  fully worked-out "subtraction case" taxonomy (positive-only / stays-positive / crosses-zero), it's a
+  stronger demand signal than most other med-priority rows.
+- Skills: No `[[skill-id|term]]` markers. This isn't a missing-link gap so much as confirmation this
+  tool **is** the primary teaching ground for `PROJECTS.md`'s `collect-like-terms` skill row (algebra
+  tiles, med priority, no scene yet, ⬜). Notably, the tool's own bespoke `stepRenderer`
+  (colour-underlined term groups, `UNDERLINE_COLORS`) is already a working, non-tile visual grouping
+  device — worth a look as a cheap fallback/prototype before investing in full tile scenes.
+- Representations: **Algebra tiles** is the designated representation ("collecting terms, solving
+  equations, factorising") — one of three representations with no `TeachScene` family yet. This tool
+  would be the natural first consumer once tile scenes are built, mirroring `IntegerAddSub`/negative
+  counters from the Number pass.
+- Teach deck: Strong candidate — the three built-in "subtraction cases" already form a natural
+  I-do → We-do → You-do arc on one running variable, with "predict which direction the running total
+  crosses zero" a ready-made You-do beat. Blocked on the same algebra-tile scene gap, though the deck
+  could plausibly reuse the tool's own colour-underline visual directly rather than waiting.
+- SmartGrapher: No fit.
+
+**Part 2 — Standalone readiness**
+- Question/sub-tool breadth vs spec: Three sub-tools — Spot the Like Term (worded MCQ,
+  term-identification), Single Variable, Multiple Variables — genuinely good spec coverage, broader
+  than most Number-category tools. Gap: no worded/contextual question anywhere (e.g. a perimeter
+  framing) — everything is a bare symbolic expression or abstract MCQ term.
+- QO richness: Uneven. Subtools 2/3 are rich — two multiSelect groups per level via
+  `difficultySettings`, genuine teacher control. Subtool 1 is thin by contrast — `variables: []`,
+  `dropdown: null`, no multiSelect at L1/L2 at all; only L3 gets one toggle. A teacher gets zero
+  control over Spot-the-Like-Term at two of its three levels.
+- Level progression: Strong across all three sub-tools, genuinely restructuring rather than scaling
+  numbers — e.g. subtool 1 escalates single-var/exactly-1-correct (L1) → negative coefficients + a
+  same-coefficient distractor trap (L2) → 0–3 correct of 6 options with optional two-variable targets
+  and commutativity traps (L3).
+- Working-step depth: Genuinely good but structurally different from the Number reference tools.
+  Subtool 1 explains reasoning for *every* option (an mStep/tStep pair per option, real depth).
+  Subtools 2/3 underline like terms by colour via a custom `stepRenderer`, then one mStep per
+  collectable group. However **no working step in this file ever uses the `string[]` fragment
+  convention** — every mStep's latex is a single joined string, so the dev-gated fragment reveal gets
+  nothing extra beyond the underline step itself, a real depth gap relative to `FractionsAddSub`.
+- Conventions/anomaly scan: `questionRenderer` (**Justified** — two genuinely different display
+  shapes) and `stepRenderer` (**Justified** — the first custom `stepRenderer` seen in this audit, a
+  clean, well-scoped use of the extension point for the colour-underline step). No `defaults=` block
+  at all — correct absence for a KaTeX/JSX-only tool, matching `Estimation`'s clean baseline.
+  **Unclear**: subtool 1's on-screen MCQ display is a bespoke bordered grid built from a `_mcq` field
+  not present in the plain `lines`/`answer` fields the default text print path uses — whether the
+  worksheet PDF actually reproduces the coloured MCQ box or falls back to a plainer rendering couldn't
+  be confirmed from source alone.
+- UI/visual consistency: Not checked live. From source: hardcoded hex colours present
+  (`UNDERLINE_COLORS` + several inline `style={{ color: ... }}`) but match the prevailing repo-wide
+  pattern already found in 20+ tool files in the Number pass — not tool-specific debt.
+- **Recommended status:** Stay live as-is — one of the stronger tools seen in this audit so far
+  structurally, flagged for expansion on QO control at subtool 1's L1/L2 and on working-step
+  fragmentation. (current: Live)
+
+**Notes:** A genuine content/documentation bug: `INFO_SECTIONS`'s "Spot the Like Term" Level 3
+description says *"Five options with zero, one, or two correct answers"*, but the generator always
+produces **six** options with **zero to three** correct — a real mismatch between what the info modal
+tells a teacher to expect and what the tool generates, worth a follow-up fix outside this
+findings-only pass. Also worth naming as a positive: the "subtraction cases" QO taxonomy's partial-sum
+logic (guaranteeing genuine up-/down-crossing behaviour) is unusually rigorous generator engineering,
+well above what the working-step fragment gap alone would suggest.
+
+### Unknowns on Both Sides — `src/tools/Algebra/SolvingLinearEquations.tsx`
+Route: `/solving-linear-equations` · Current status: Live
+
+**Part 1 — Infrastructure alignment**
+- Techniques: Thin — imports only base shared helpers, never `solveLinearEquationSteps`, even though
+  it's re-exported from the exact same `"../../shared"` barrel the tool already imports from — a
+  zero-new-import integration point. `solveLinearEquationSteps(a, b, c, v, grain)` solves `a·v+b=c`,
+  exactly the tool's own post-reduction form, and a direct call would both replace the hand-rolled
+  final steps and fix a real working-step defect (below). What the built technique doesn't cover is
+  the tool's actual headline move — collecting x terms from both sides before that form even applies
+  — which is `PROJECTS.md`'s `collectLikeTerms` row (med, ⬜). So this tool spans two technique rows:
+  `solveLinearEquation` (**high**, 🚧 grain-aware exists) for the finishing moves, `collectLikeTerms`
+  for the opening move — worth noting that cross-reference in the table.
+- Skills: No markers anywhere. This tool's own domain is exactly `PROJECTS.md`'s
+  `solve-linear-equation` skill (**high**, algebra tiles/number line, no tile scene yet, ⬜) — it
+  doesn't consume that skill, it **is** the skill's target domain, the natural home once a tile scene
+  exists.
+- Representations: **Algebra tiles** — no `TeachScene` family yet. Zero visual representation
+  anywhere currently.
+- Teach deck: Strong candidate structurally (I-do collect-x → We-do brackets → You-do negative
+  x-coefficient, predict-then-reveal), but blocked on the same algebra-tile scene gap as
+  Representations — unlike `FractionsAddSub`'s deck, which could reuse already-built scenes.
+- SmartGrapher: No fit.
+
+**Part 2 — Standalone readiness**
+- Question/sub-tool breadth vs spec: Single sub-tool, but three structurally distinct shapes (L1
+  plain, L2 brackets, L3 negative x-coefficients) — genuinely more shape variety than a rigid
+  template. Gap: every question is symbolic/bare, no worded/contextual "unknowns on both sides"
+  question (e.g. equal-perimeter or equal-cost framing).
+- QO richness: The strongest of any Algebra/Number tool read so far — seven distinct multiSelect
+  groups wired through a genuinely per-level `difficultySettings` block, matching the
+  `CompletingTheSquare` reference pattern and better-differentiated than `Percentages`' identical-at-
+  every-level QO. No `dropdown` used anywhere — not wrong, just a design choice worth noting.
+- Level progression: Genuine restructuring — L1 constant-sign handling, L2 requires bracket expansion,
+  L3 requires handling negative x-coefficients (a materially different reduction, since x terms
+  combine by addition rather than subtraction). One of the better-structured progressions in this
+  pass.
+- Working-step depth: A real, concrete defect. No fragment arrays anywhere — every step is one flat,
+  pre-collapsed string embedding a `\rightarrow` jump. Worse, in two of the three levels' branches the
+  "Isolate constant:" step is a **no-op** — it restates the exact same equation the prior step already
+  ended on, because the constant is already isolated by then, presenting a working line that performs
+  no visible operation. In the third level's branch, the same step *title* does perform real work
+  (combining terms into a single coefficient) — the same label means two different things in different
+  branches of the same tool, a labelling inconsistency alongside the redundancy. Swapping in
+  `solveLinearEquationSteps` for the final stage would fix both the redundancy and add fragment
+  support for free.
+- Conventions/anomaly scan: Zero matches on the full override grep — fully vanilla ToolShell usage,
+  same clean baseline as `Estimation`.
+- UI/visual consistency: Not checked live. From source: zero hardcoded hex colours, no bespoke
+  renderers — should be visually native to the shell by construction.
+- **Recommended status:** Live but flagged for expansion — the strongest QO/level-progression design
+  read in this audit so far, undercut by thin/partly-broken working-step depth and a total absence of
+  worded/contextual questions. The techniques-engine gap here is unusually cheap to close (no new
+  import needed, the exact-shape function already exists). (current: Live)
+
+**Notes:** The generators fall back to a single hardcoded literal question if 200 random attempts
+can't satisfy an active multiSelect combination — not confirmed to trigger in practice, but worth a
+follow-up check given how many combinations are now exposed per level, since it could mean some QO
+combinations silently serve the same static question repeatedly across a worksheet.
+
+### Completing the Square — `src/tools/Algebra/CompletingTheSquare.tsx`
+Route: `/completing-the-square` · Current status: Live
+
+**Part 1 — Infrastructure alignment**
+- Techniques: Thin by the strict "uses the engine" test — no `src/shared/techniques/` import, despite
+  `CLAUDE.md` naming this file as **the** reference for shell wiring and `reformatQuestion`.
+  `PROJECTS.md`'s `completeTheSquare` row is itself **low priority, ⬜ (not built)** — the repo's own
+  "look here" file is, by the audit's infrastructure lens, exactly as unconverted as every other tool.
+  It's a good *architectural* reference (props wiring, `RawValues`/`buildDisplay`/`reformatQuestion`
+  separation) but not a techniques-engine reference, and those are different claims worth keeping
+  distinct in the audit record.
+- Skills: No markers, but genuinely thin on link sites rather than missing them — every step label
+  ("Factor out N", "Half the coefficient of x", "Complete the square", …) is the technique's own core
+  content, not an unlinked prerequisite. No obvious existing skill-id candidate.
+- Representations: **Area model** is `CLAUDE.md`'s designated representation for completing the
+  square directly, alongside expanding brackets — no `TeachScene` family yet, and this strengthens
+  the case for prioritising area-model scene work, since it would unlock two Algebra tools at once.
+- Teach deck: Strong candidate — all three sub-tools already share one coherent underlying move
+  (halve b, form `(x+p)²`, adjust the constant), exactly the "one running example, three framings" arc
+  the authoring guide asks for.
+- SmartGrapher: **Named directly in `PROJECTS.md`'s own backlog** ("parabola + vertex") as an
+  unactioned next step — confirmed zero grapher usage in the file. Strong fit: `roots` (x-intercepts)
+  and `turning` (vertex) are exactly the coordinate content SmartGrapher is built for, including the
+  "no real roots" case rendering naturally as a parabola that never crosses the x-axis.
+
+**Part 2 — Standalone readiness**
+- Question/sub-tool breadth vs spec: Three sub-tools (`completing`, `roots`, `turning`) is genuine
+  spec breadth. `roots` correctly handles the "no real roots" edge case and produces clean integer
+  square roots where possible rather than always leaving a surd. Gap: no worded/contextual question
+  anywhere, and no explicit link from `roots`/`turning` back to a graph.
+- QO richness: Genuinely strong and correctly the `CLAUDE.md`-named reference example for per-level
+  `difficultySettings`. L1 has no dropdown/variables at all, L2 introduces Display format and an
+  Integer +c toggle, L3 adds Negative Coefficients — QO complexity scales with mathematical
+  complexity rather than being flat, exactly the pattern `ExpandingBrackets` lacks.
+- Level progression: Strong and structural — L1 monic integer p, L2 monic half-integer p (motivating
+  the Display toggle), L3 non-monic with an extra "factor out a" step lower levels never see.
+- Working-step depth: Solid in content, every step correctly narrates the named move. **But every
+  single step is a whole-string latex, never a `string[]` fragment array** — a genuinely notable
+  finding precisely because this is the named reference tool: the "author fragments by default" rule
+  sits right next to this file's own reference callout in `CLAUDE.md`, but isn't demonstrated in it.
+- Conventions/anomaly scan: One override, `defaults={{ numQuestions: 6, numColumns: 2 }}` —
+  undocumented, and markedly lower than any other tool audited so far in either category (**Unclear**;
+  a plausible reason exists — multi-line LaTeX display wanting more board space — but unstated).
+- UI/visual consistency: Not checked live. From source: zero hardcoded hex colours — the cleanest
+  result of any tool read in this pass, consistent with the file's billing as an architectural
+  reference.
+- **Recommended status:** Stay live as-is — strong Part 2 fundamentals earn its status as the named
+  shell-wiring reference. The caveats are Part 1 gaps that don't undermine that but do need to be
+  visible: unbuilt technique, no skill links, an unaddressed SmartGrapher fit named in `PROJECTS.md`'s
+  own backlog, and no fragment-array steps anywhere. (current: Live)
+
+**Notes:** The double-duty this file plays (architecture reference *and* audit subject) is worth
+being honest about: excellent for shell-wiring/`reformatQuestion`, but not evidence that
+"reference-implementation" tools are automatically ahead on the techniques-engine or
+fragment-authoring fronts — on those axes it's exactly as unconverted as every Number-category tool.
+Useful calibration for whoever picks up the `completeTheSquare` technique row next: it means
+retrofitting the repo's own flagship example, not a neglected corner tool.
+
+### Iteration — `src/tools/Algebra/Iterations.tsx`
+Route: `/iterations` · Current status: Live
+
+**Part 1 — Infrastructure alignment**
+- Techniques: Thin — no `src/shared/techniques/` import; all working hand-rolled via three
+  near-identical local formatter helpers shared across two sub-tools. `PROJECTS.md`'s
+  `solveByIteration` row ("change-of-sign interval, iterate, bound-test", low priority, ⬜) maps
+  almost 1:1 onto this tool's three sub-tools (iterate / rearrange-then-iterate / bound-test) — unlike
+  most audited tools where a candidate technique is inferred, here it's a complete, ready-made spec,
+  making this the clearest already-built demand signal found so far. **Priority bumped med** in
+  `PROJECTS.md` on the strength of this finding (see that doc).
+- Skills: No markers. `genRearranging`'s opening moves (`x²=ax+b` → `x=√(ax+b)`) are literally the
+  `rearrange-formula` skill (med, ⬜, no scene yet) — a real, currently-unmarked link site. The
+  "change of sign" reasoning in `genVerification` names a specific taught method with no existing
+  skills-table row — better captured as part of the proposed `solveByIteration` technique/skill
+  pairing than as a standalone skill, mirroring `IntegerAddSub`'s "this tool IS the primitive"
+  pattern from the Number pass.
+- Representations: None of the six fit. The natural visual (a cobweb/staircase diagram between
+  `y=x` and `y=f(x)`) sits outside the six-representation vocabulary entirely — it's SmartGrapher
+  territory, not a `TeachScene` family. Flagged as an open question, same treatment as `PowersOfTen`'s
+  place-value grid in the Number pass.
+- Teach deck: Plausible and lower-cost than most candidates — a Root Verification I-do/We-do/You-do
+  arc needs only static `TeachBlock`s (text/math/verdict/note), not a new scene family, since it's
+  arithmetic evaluation rather than a visual transformation.
+- SmartGrapher: **Strong, explicitly-named fit currently unwired.** `PROJECTS.md`'s SmartGrapher
+  section names Iteration by name ("the curve and the root being approached"). Zero grapher usage
+  found in the file — no diagram of any kind. Existing presets (quadratic/cubic/custom) already cover
+  this tool's formula types directly, and it's already proven inside `NonLinearSimEq` in this same
+  category. The single highest-leverage, most concretely-named Part 1 gap found in this pass.
+
+**Part 2 — Standalone readiness**
+- Question/sub-tool breadth vs spec: Three sub-tools (`numerical`, `rearranging`, `verification`)
+  covering the standard iteration trio — genuinely better topic-spec coverage than most
+  single-sub-tool tools audited so far. All questions are worded prose with inline maths, reasonable
+  for this notation-heavy topic.
+- QO richness: Uneven and the weakest part of this tool. `verification` has **zero QO options at all**
+  — a fully fixed generator. `rearranging`'s formula type (quadratic/cubic/fractional) is hard-locked
+  to level with no independent selector, unlike `numerical`'s equivalent `formulaType` dropdown — an
+  inconsistency between sibling sub-tools. No `multiSelect` is used anywhere in the file at all.
+- Level progression: Two of three sub-tools escalate well (`numerical`, `verification`); `rearranging`
+  is the outlier — its "levels" actually encode formula family rather than difficulty within one
+  family, conflating two axes kept independent elsewhere in the same tool.
+- Working-step depth: Flat throughout — zero fragment arrays anywhere; every iteration line is one
+  long pre-collapsed string containing the full substitution-to-result chain. The maths is all
+  computed and shown, just never split into board-writing moves — the same "content present,
+  presentation flat" pattern as `Estimation`.
+- Conventions/anomaly scan: One override, `defaults={{ numColumns: 2 }}` — undocumented; plausible
+  given long worded prose lines, but unstated (**Unclear**).
+- UI/visual consistency: Not checked live. From source: zero hardcoded hex colours, no bespoke
+  renderers.
+- **Recommended status:** Live but flagged for expansion — genuinely good topic breadth undercut by
+  thin/inconsistent QO control and uniformly flat working-step depth. The standout finding is that
+  this is a topic fundamentally about visualising convergence to a root, currently with zero visual
+  content, while the fix (SmartGrapher) is mature, proven in the same category, and already named for
+  this exact tool in `PROJECTS.md`. (current: Live)
+
+**Notes:** One of the few tools in this audit to use zero multiSelect groups at all, in direct
+contrast to its category neighbour `SolvingLinearEquations` (seven groups).
+
+### Simultaneous Equations (Elimination) — `src/tools/Algebra/SimultaneousEquations.tsx`
+Route: `/simultaneous-equations-elimination` · Current status: Live
+
+**Part 1 — Infrastructure alignment**
+- Techniques: Thin — no technique import; all working hand-built. `PROJECTS.md`'s `solveByElimination`
+  row (med, ⬜) is the exact match. Notably, part of this tool's conversion cost is smaller than a
+  fresh build: it hand-re-derives a substitute-back move that duplicates what the already-built
+  `substituteBackSteps`/`solveLinearlySteps` technique helpers do — the exact two functions
+  `NonLinearSimEq` already imports — so only `solveByElimination` itself is genuinely missing from
+  the engine.
+- Skills: No markers. The LCM sub-tool computes an actual LCM of two coefficients as its core
+  mechanic but never names or links `[[lcm|LCM]]` — an already-built (✅) skill with a clear, cheap,
+  currently-missing link site.
+- Representations: No clean fit among the six — closest is algebra tiles, but a stretch (tiles model
+  one-variable balance, not eliminating a variable across two equations). No urgent gap.
+- Teach deck: Reasonable but not urgent — "why does adding/subtracting eliminate a variable" is a
+  genuine arc, and the three-method structure (direct/scale/LCM) is a natural You-do prediction
+  exercise. No existing scene family fits, so this would need new work.
+- SmartGrapher: **Fit exists but is weaker than the sibling's.** Every sub-tool solves a pair of
+  straight lines with one intersection — a legitimate, currently-unused fit — but two straight lines
+  crossing once is a much less visually informative picture than a line meeting a parabola/circle at
+  0–2 points (surds, double roots, no-solution cases), plausibly why this sibling wasn't converted
+  alongside `NonLinearSimEq` rather than an oversight.
+
+**Part 2 — Standalone readiness**
+- Question/sub-tool breadth vs spec: Four sub-tools — `elimination` (direct), `scaling` (one
+  coefficient a multiple), `lcm` (coprime, needing LCM scaling), and `worded` (9 distinct shapes
+  across levels, three of them tying simultaneous equations to triangle perimeter/angle-sum geometry —
+  a real cross-topic worded gap most tools in this audit lack). One of the widest sub-tool/shape
+  counts seen in the audit so far.
+- QO richness: Strong and genuinely differentiated — a shared elimination-style QO set (variable,
+  rearrangement dropdown, an operation multiSelect active at Level 1 only) plus a worded sub-tool
+  whose QO redesigns per level rather than repeating a static option set.
+- Level progression: Genuine structural escalation matching the case-type logic — L1 restricted to a
+  chosen operation's natural sign case, L2 forces the equal-and-negative case (the one that actually
+  confuses students, since the same-looking operation behaves differently), L3 a full mixture. Close
+  to best-in-class for the audit so far, on par with `Percentages`.
+- Working-step depth: Solid and reasoned, with one systematic gap. The working explicitly *explains
+  the elimination choice* via a dedicated reasoning step — stating logic most Number-category tools
+  were flagged for omitting — and one generic working-builder correctly covers every worded shape.
+  **But every step across the whole file is a plain string, never a fragment array** — despite being
+  reasoning-rich, none of it benefits from the dev-gated fragment reveal.
+- Conventions/anomaly scan: `defaults={{ numQuestions: 12, numColumns: 2 }}` — same undocumented
+  `numQuestions: 12` pattern as the fraction tools (**Unclear**); `numColumns: 2` plausibly justified
+  by the wide two-equation `gathered` KaTeX block, but unstated. Notably **absent**: no `maxColumns`
+  cap, while its sibling `NonLinearSimEq` pairs the identical `numQuestions/numColumns` pair with an
+  explicit `maxColumns: 3` for the same wide-layout reasoning — a genuine inconsistency between two
+  tools sharing the same display shape (**Debt-leaning Unclear**). Everything else on the anomaly
+  grep is correctly absent for a pure text/KaTeX tool.
+- UI/visual consistency: Not checked live. From source: zero hardcoded hex colours and zero bespoke
+  JSX beyond the shell wrapper — should be visually native to the shell by construction, the cleanest
+  possible source-level signal available.
+- **Recommended status:** Live but flagged for expansion — strong Part 2 fundamentals (breadth, QO,
+  level progression, working reasoning all above the audit's average bar so far), held back only by
+  the missing fragment convention and the `maxColumns` inconsistency with its sibling. Nothing argues
+  for gating; the gaps are polish-level. (current: Live)
+
+**Notes:** Comparison with its sibling `NonLinearSimEq.tsx` is instructive: the "one tool converted"
+status does **not** extend to this tool, and the gap is real, not cosmetic (no technique import, no
+grapher, no custom renderer). But on raw Part 2 content the two are closer than that infrastructure
+gap suggests — this tool's sub-tool/shape breadth and per-level QO redesign are arguably *broader*
+than the substitution tool's. Not as mature on infrastructure alignment, not obviously behind on
+standalone content quality — exactly the kind of divergence the audit's own methodology predicts can
+happen, and the two facts shouldn't be conflated into one score. This tool is the clearest available
+second candidate (after `NonLinearSimEq`) for building out `solveByElimination`, since it already has
+correct, well-reasoned elimination logic to lift into the engine.
+
+### Expanding Brackets — `src/tools/Algebra/ExpandingBrackets.tsx`
+Route: `/expanding-brackets` · Current status: Live
+
+**Part 1 — Infrastructure alignment**
+- Techniques: Thin — no technique import; all working hand-built. `PROJECTS.md`'s `expandBrackets`
+  row ("single / double / squared brackets (FOIL, grid)", **high**, ⬜) is the exact match — this
+  tool is that row's primary demand signal, the highest-priority unbuilt technique in the whole
+  Algebra table. But the row's own spec says "squared brackets" and this tool has **no squared-single-
+  bracket question type** (e.g. expanding `(x+5)²` to a trinomial) — its `outsidePower` option only
+  ever governs an algebraic multiplier *outside* the bracket, never a bracket raised to a power. A
+  genuine spec-coverage gap worth folding into the technique's build brief.
+- Skills: No markers. Two concrete unlinked candidates: the "Collect like terms:" step and the
+  "Combine:" step both do exactly the collect-like-terms move without linking it — `collect-like-terms`
+  (med, algebra tiles, no scene yet, ⬜) is the right target for both. `expand-double-brackets` itself
+  (**high**, area model, no scene yet, ⬜) *is* this tool's domain rather than an unlinked
+  prerequisite — confirmation the row is correctly scoped here, not a new proposal.
+- Representations: **Area model** — no `TeachScene` family yet, the biggest single infrastructure gap
+  this tool exposes. It already hand-rolls its own bespoke grid diagram that is conceptually an area
+  model (a multiplication table of term-pairs) but as a one-off component, not the shared system — a
+  clear case for what the future area-model scene should generalise.
+- Teach deck: Plausible candidate — I-do (single FOIL) → We-do (double FOIL) → You-do (predict the
+  middle term) is natural, and the tool's dual FOIL/Grid framing maps cleanly onto an I-do/We-do split.
+- SmartGrapher: No fit — purely symbolic content, correctly absent.
+
+**Part 2 — Standalone readiness**
+- Question/sub-tool breadth vs spec: Three sub-tools (`expand`, `simplify`, `double`) is decent
+  breadth, and the dual FOIL/Grid method choice (including "Both" side-by-side) is a genuinely good
+  feature not seen elsewhere in the categories audited so far. Real gaps: no squared-single-bracket
+  type (named in the technique's own spec), no worded/contextual questions at all — an "area of a
+  rectangle" framing would be natural and would also motivate the area-model representation.
+- QO richness: Real control on `expand`/`simplify` (a Method dropdown, a Multiplier Type multiSelect),
+  `double` correctly has only the Method dropdown. But **all three sub-tools set
+  `difficultySettings: null`** — identical QO options at every level, unlike the `CompletingTheSquare`
+  reference pattern; a Level 1 student can still toggle "Algebraic" multiplier or "Both" methods,
+  undocumented and a real deviation from the sibling in the same category.
+- Level progression: Genuinely structural for both generators — real escalation, not just bigger
+  numbers, in both `expand` and `double`. One **Unclear**: at tool-level 3 in `simplify`, one bracket
+  is always hard while the second is capped to never reach the hardest tier — a deliberate-looking but
+  uncommented choice.
+- Working-step depth: The tool's real strength (FOIL/Grid diagrams) is also its explanatory weakness —
+  no step narrates *why* a negative multiplier flips a sign, precisely where L3 gets hard. No fragment
+  arrays anywhere — every step arrives as one whole KaTeX string.
+- Conventions/anomaly scan: The one grep hit (`defaults={{ numQuestions: 15, numColumns: 3 }}`) isn't
+  actually an override — it restates ToolShell's own baseline, **Justified (no-op)**. A real,
+  unflagged design gap found instead: the FOIL/Grid diagrams are wired through `stepRenderer` for the
+  Worked Example only — they **never appear on the Whiteboard's main question view or in worksheet
+  PDFs**, so this tool's best pedagogical asset is invisible in the two modes most teachers use
+  day-to-day. Also: `pickActive` is imported but explicitly voided as unused in favour of a custom
+  multiplier-reading function — plausibly necessary (computing a "mixed" tri-state `pickActive` alone
+  can't), but the unused-import suppression instead of removing it looks like a leftover.
+- UI/visual consistency: Not checked live. From source: 6 hardcoded hex colours, more than most tools
+  audited so far, but a deliberate FOIL-style multi-colour arrow scheme — legitimate in intent. A real
+  checkable-from-source inconsistency: `stepRenderer`'s `colorScheme` is correctly used for the
+  surrounding card background but is **never passed down** into the FOIL/Grid diagram components, so
+  the diagrams' colours stay fixed regardless of the teacher's colour-scheme choice while the card
+  around them changes.
+- **Recommended status:** Live but flagged for expansion — the FOIL/Grid dual-method feature is a
+  genuine strength above the category baseline, but the tool is thinner than `CompletingTheSquare` on
+  QO-per-level restructuring, has zero working-step fragmentation, is missing a spec-named
+  squared-bracket type, and its best visual asset is invisible outside the dev-gated Worked Example.
+  (current: Live)
+
+**Notes:** The strongest single demand signal in the Algebra category for two `PROJECTS.md` rows at
+once — `expandBrackets` (already **high**) and `expand-double-brackets` (already **high**) — both
+already correctly name this tool as the reason they exist. The genuinely new findings are the
+squared-bracket spec gap and the diagram-invisible-outside-Worked-Example architecture point.
+
+### Simultaneous Equations (Substitution) — `src/tools/Algebra/NonLinearSimEq.tsx`
+Route: `/simultaneous-equations-substitution` · Current status: Live
+
+**Part 1 — Infrastructure alignment**
+- Techniques: **Converted, but partially** — the only tool in the repo built on
+  `src/shared/techniques/` (the `workings()` builder plus `quadraticFormulaSteps`,
+  `solveFactorsSteps`, `substituteBackSteps`, `makeSubjectSteps`, `solveLinearlySteps`, `standard`
+  grain), but it's a hybrid, not a full delegation: the "linear" sub-tool never calls the grain-aware
+  `solveLinearEquationSteps` (which already has the sanitizer that would have prevented the ×1
+  cosmetic bug below) — it hand-rolls its own solve chain and only borrows a generic titling wrapper.
+  The "expand" move used by two of its three sub-tools isn't a technique at all — no `expandBrackets`
+  technique exists yet, and this tool is itself the concrete demand signal for building it, exactly
+  why the expansion gap below exists. **"Converted" should be read as "converted for
+  rearrange/substitute-back/quadratic-formula/factor-roots," not for the ax+b=c solve or the
+  expand-a-square move** — those two are precisely the seams where hand-rolled string-building
+  remains.
+- Skills: No markers. Three clear unlinked candidates, all already existing `PROJECTS.md` rows and
+  named directly in this tool's own step titles: "Substitute equation (2) into equation (1)" →
+  `substitute-into-formula` (med, ⬜); "Rearrange equation (2) to make X the subject" →
+  `rearrange-formula` (med, ⬜); "Set each factor equal to zero and solve" → `factorise-quadratic`
+  (med, area model, no scene yet, ⬜). None need new rows, all three already exist, just unconsumed.
+- Representations: The un-shown `(2x−5)²` expansion below is exactly what an **area model** would
+  clarify (a grid of `2x` and `−5` against themselves) — no `TeachScene` family yet. The "linear"
+  sub-tool's solve chain would similarly benefit from algebra tiles — also no scenes yet. This tool
+  sits at the same "intersection of two unbuilt representations" pattern as `IntegerAddSub` in the
+  Number pass, for different representations.
+- Teach deck: Strong, unusually on-the-nose candidate — a Spot the Mistake slide on "expand
+  `(2x−5)²`" (the common error of writing `4x²−25`, forgetting the cross term) would directly
+  dramatize this tool's own confirmed Gap 1 on its own worked example. Would need a new area-model
+  scene, so a second/third proof point, not a quick win.
+- SmartGrapher: **Real, working fit** — one of only two tools using it. Genuinely self-validating:
+  it checks every stored solution actually lies on the drawn curve and silently omits the graph
+  rather than draw wrong geometry if it doesn't — a real quality bar other tools don't have. One
+  disclosed, deliberate limitation: only pure circles get a graph — ellipses (two-thirds of Level-3
+  non-linear questions) draw no curve, because ellipse isn't a supported series type. This is
+  honestly documented in the tool's own info modal, a known and disclosed scope limit, not a silent
+  gap — but it does mean SmartGrapher coverage on this tool's own hardest content is only ~1/3.
+
+**Part 2 — Standalone readiness**
+- Question/sub-tool breadth vs spec: Three sub-tools (`linear`, `factorising`, `formula`) covering
+  linear-linear, quadratic-linear (factorisable and formula-required), and circle/ellipse-linear at
+  Level 3 — close to full spec coverage, broader than most tools audited so far. One consistent gap
+  with the rest of the audit: "worded" here is purely a layout device for numbered equation lines,
+  not contextual richness the way it is in `Percentages`/`FractionsAddSub` — no real-world
+  substitution scenario anywhere.
+- QO richness: Strong and level-aware — a signs multiSelect plus level-2-only extra variables for
+  `linear`; a coefficient multiSelect (circle vs ellipse difficulty) shared by `factorising`/`formula`,
+  plus a surd/decimal display dropdown on `formula` since its roots are irrational. Real,
+  differentiated control per sub-tool.
+- Level progression: One of the strongest seen in the audit so far — genuinely different question
+  *shape* at each level for all three sub-tools, not number-scaling; L3 switches `factorising`/
+  `formula` to an entirely different equation family (circle/ellipse) rather than just harder numbers.
+- Working-step depth: Deep and mostly technique-driven — rearrange → substitute → solve (multi-row) →
+  substitute back, well above a "jump to the answer" tool, and `formula`'s quadratic-formula step
+  genuinely uses live-model fragments. But the hand-rolled substitution/expand-and-rearrange steps are
+  each a single-element array — no fragment reveal at all — the direct authoring-level symptom of the
+  expansion gap: there's no intermediate to fragment because none is computed.
+- Conventions/anomaly scan: `questionRenderer` (**Justified** — two numbered equation lines plus the
+  post-reveal graph), plus bespoke `answerRenderer`/`stepRenderer` (**Justified**, unique among tools
+  audited so far — for the solution lines and the graph-carrying working step).
+  `defaults={{ numQuestions: 12, numColumns: 2, maxColumns: 3 }}` — same undocumented
+  `numQuestions: 12` pattern as the fraction tools (**Unclear**); `numColumns/maxColumns` plausibly
+  justified by the two-line equations but unstated. `hideFontControls` correctly absent (`fontClass`
+  is properly wired through). No `customPrintHandler` — **Justified**, this is text/KaTeX content and
+  the graph is whiteboard-only, gated to never appear on worksheets.
+- UI/visual consistency: Not checked live. From source: hardcoded hex colours are more numerous than
+  most tools audited so far, but consistent with, not worse than, the repo-wide norm already
+  established in the Number pass (this file is itself one of the 20 cited examples of that pattern).
+- **Recommended status:** Stay live, but this is the one tool in the repo where the Part 1 gaps are
+  worth fixing on their own merits rather than deferred to a category sweep — both are small,
+  generator-level, single-function fixes (route the computed coefficient through the existing
+  sanitizer; extract and expose the squared-bracket expansion as its own step) that would make this
+  tool's working genuinely match its "reference conversion" billing. Content breadth and level design
+  are already ahead of every tool audited in the Number pass; the ellipse no-graph limitation is
+  disclosed and fine as-is. (current: Live)
+
+**Notes:** Both previously-known gaps in this tool (`PROJECTS.md`'s Techniques-engine section) are
+confirmed still present, at the exact generator code level: `buildWorking` (`substitute` /
+`expand-and-rearrange` steps) never computes or stores an unsimplified intermediate for
+`(2x−5)²`-style expansions — the `BankEntry`/`FormBankEntry` data model has nowhere to carry one, so
+this isn't a missing render call but a data-model gap. The cosmetic `−1x` bug lives specifically in
+the "linear" sub-tool's own `solvePos`/`solveNeg` helpers, which interpolate a computed combined
+coefficient raw instead of routing it through the file's own `nextT`/`coef()` sanitizer that every
+other code path in the file correctly uses. This tool is the right reference point for judging
+"converted" on future passes, but with a caveat: check each sub-tool's actual step-building code, not
+just the import list — a tool can legitimately mix technique-driven steps with hand-rolled ones, as
+this one does for its highest-frequency sub-tool.
 
 ### Ratio & Proportion — ⬜ not started
 - [ ] Dividing Ratios (`RatioSharingTool.tsx`)
