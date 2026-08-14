@@ -840,7 +840,7 @@ Each level independently overrides `dropdown`, `variables`, and/or `multiSelect`
 
 For SVG-based tools (angle geometry, number lines, etc.).
 
-**Reference implementations:** `src/tools/Geometry/AnglesInParallelLines.tsx` and `src/tools/Geometry/BasicAngleFacts.tsx`
+**Reference implementations:** `src/tools/Geometry/AnglesInParallelLines.tsx` and `src/tools/Geometry/BasicAngleFacts.tsx` — for SVG element conventions (`viewBox`, no fixed pixel height, `data-q-index`) only. **Neither uses `handleDiagramPrint`** — both hand-roll a fixed-grid `customPrintHandler`, which the "Printing SVG worksheets" section below tells you not to do (found by the Maths Tool Audit's Geometry pass, `docs/TOOL_AUDIT.md`). For the print pattern, copy `src/tools/Geometry/AnglesInQuadrilaterals.tsx` instead — see the table below.
 
 ### Storing diagram data
 
@@ -1024,7 +1024,7 @@ CI also runs `npm test` (Vitest, `src/tests/generators.test.ts`). The suite disc
 | Standard v2.3 tool (simple questions) | `src/tools/Algebra/CompletingTheSquare.tsx` |
 | Standard v2.3 tool (simple questions, ratio simplification) | `src/tools/Proportion/SimplifyingRatiosTool.tsx` |
 | Diagram/SVG tool with shared print (`handleDiagramPrint`) | `src/tools/Geometry/AnglesInQuadrilaterals.tsx` |
-| Diagram/SVG tool (renderer/SVG conventions) | `src/tools/Geometry/AnglesInParallelLines.tsx` |
+| Diagram/SVG tool (renderer/SVG conventions only — not print, see caveat above) | `src/tools/Geometry/AnglesInParallelLines.tsx` |
 | `reformatQuestion` (instant display reformat) | `src/tools/Algebra/CompletingTheSquare.tsx` |
 | Multi-group `multiSelect` | search for `ToolMultiSelect[]` in `src/tools/` |
 | `difficultySettings` per-level QO | `src/tools/Algebra/CompletingTheSquare.tsx` |

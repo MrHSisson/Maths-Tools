@@ -28,6 +28,28 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-08-14 — Spot-checked the audit and fixed the CLAUDE.md doc-drift it found
+No tool code changed — a verification pass on the completed Tool Audit, plus two doc corrections.
+**Spot-check**: directly re-read source for 8 claims spanning 6 tools across 3 categories, including
+the two highest-stakes findings in the whole audit — `NonLinearSimEq`'s `−1x`-should-be-`−x` bug and
+missing `(2x−5)²` expansion (both confirmed exactly, including root cause: `solvePos`/`solveNeg`
+interpolate a computed coefficient raw instead of routing it through the file's own `nextT`/`lead`
+sanitizer, and `expandedLatex` is computed directly from final simplified coefficients with no
+intermediate ever stored) — and `CircleProperties`' print-handler bug (confirmed: the function
+signature literally only accepts 3 of the 4 `customPrintHandler` parameters, silently dropping
+`ctx.isDifferentiated`). `CollectingLikeTerms`' info-modal/generator mismatch also confirmed exactly.
+Found and fixed two small counting inaccuracies (`AnglesInQuadrilaterals`' Level 1 multiSelect count —
+2 groups, not 1; `BasicAngleFacts`' distinct hex-token count — 19, not 18); one apparent discrepancy
+(`FractionsOfAmounts`' "52 fragment uses") turned out to be the spot-check's own undercount, not an
+audit error. **Doc-drift fixes**: added a caveat to `CLAUDE.md`'s Diagram-tools reference
+implementations (`AnglesInParallelLines.tsx`/`BasicAngleFacts.tsx`) clarifying they're the reference
+for SVG element conventions only, not the print-handler pattern — both hand-roll a fixed-grid
+`customPrintHandler` that CLAUDE.md's own "Printing SVG worksheets" section tells tools not to do;
+points readers to `AnglesInQuadrilaterals.tsx` for print instead. Corrected `docs/TOOL_AUDIT.md`'s own
+methodology text, which had falsely claimed `FractionToRatio.tsx`/`RatioSharingTool.tsx` were "named
+in `CLAUDE.md`" when only two of the four cited files actually are. Marked all three resolved findings
+in their originating `TOOL_AUDIT.md` entries so they don't get rediscovered.
+
 ## 2026-08-14 — Built the Part 1 roadmap and Part 2 scope from the completed Tool Audit
 No code changed — this session turned the completed Maths Tool Audit's findings into an actual build
 order. Added a **"Part 1 roadmap"** to `docs/PROJECTS.md`'s Maths Tool Audit section: five tiers

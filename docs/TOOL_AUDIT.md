@@ -166,10 +166,14 @@ that's itself a finding (a new row to propose).
 *Judged blind to the tool's current `enabled` status.* The question is: if a teacher opened this
 tool today with zero context, does it feel like a complete, well-rounded tool, or does it feel
 thin, limited, or dated? This is a fairness pass — some currently-live tools may fail it, some
-currently-gated tools may pass it easily. Use the reference implementations named in `CLAUDE.md`
-→ "Reference implementations — which file to look at" as the internal quality bar (e.g.
-`CompletingTheSquare.tsx`, `FractionToRatio.tsx`, `AnglesInQuadrilaterals.tsx`, `RatioSharingTool.tsx`)
-— when a tool looks thinner than these, that's the gap to describe.
+currently-gated tools may pass it easily. Use the strongest tools found by this audit as the internal
+quality bar: `CompletingTheSquare.tsx` and `AnglesInQuadrilaterals.tsx` (also named in `CLAUDE.md` →
+"Reference implementations — which file to look at" for their respective build patterns — shell
+wiring and shared print, not standalone content quality), plus `FractionToRatio.tsx` and
+`RatioSharingTool.tsx` (not in that `CLAUDE.md` table, but confirmed strong Part 2 performers in this
+audit's Number/Ratio & Proportion passes) — when a tool looks thinner than these, that's the gap to
+describe. (A prior version of this line claimed all four were "named in `CLAUDE.md`" — checked
+directly during a post-audit verification pass and found not to hold for two of them; corrected here.)
 
 1. **Question-type / sub-tool breadth vs spec coverage** — how many genuinely different question
    *shapes* does the tool generate? Does it cover what a GCSE question on this topic would
@@ -1143,7 +1147,10 @@ implementations table doesn't actually name `FractionToRatio.tsx` (despite this 
 methodology text citing it as a quality-bar reference), and doesn't describe `RatioSharingTool.tsx` as
 a "multi-group multiSelect" example (it's single-group throughout, unlike `SolvingLinearEquations.tsx`/
 `CollectingLikeTerms.tsx`, which do use that pattern) — recorded here as findings, not corrected, since
-this pass is findings-only.
+this pass is findings-only. *(The `FractionToRatio.tsx` citation gap is now fixed — see the
+`FractionToRatio` entry's Notes below. The `RatioSharingTool.tsx` "multi-group multiSelect" claim was
+never actually a `CLAUDE.md` error — that row was already correct, pointing to a grep search rather
+than a named file — so no doc fix was needed there.)*
 
 ### Dividing Ratios — `src/tools/Proportion/RatioSharingTool.tsx`
 Route: `/ratio-sharing` · Current status: Live
@@ -1382,6 +1389,8 @@ only tool audited so far whose named technique row has no matching skill row at 
 to fill in: bar model, existing scenes, no new representation work. Separately, a documentation-drift
 finding: `CLAUDE.md`'s reference-implementations table doesn't actually name this file, despite this
 audit doc's own Part 2 methodology text citing it as a quality-bar reference (see category summary).
+*(Fixed in a post-audit verification pass — this doc's own methodology text at "Part 2 — Standalone
+readiness" no longer misattributes the citation to `CLAUDE.md`.)*
 
 ### Fractions of Amounts — `src/tools/Proportion/FractionsOfAmounts.tsx`
 Route: `/fractions-of-amounts` · Current status: Live
@@ -1586,7 +1595,7 @@ Route: `/angles-in-quadrilaterals` · Current status: Live
   overlay and four algebraic-expression forms — genuinely close to full GCSE spec coverage,
   including the arrowhead reflex-angle case. Real gap: no worded/contextual framing anywhere.
 - QO richness: **The strongest QO differentiation seen in the whole audit so far** — real per-level
-  `difficultySettings` with 1, 3, and 4 multiSelect groups at levels 1/2/3 respectively, plus a
+  `difficultySettings` with 2, 3, and 4 multiSelect groups at levels 1/2/3 respectively, plus a
   level-2-only variable, QO complexity scaling with mathematical complexity beyond even the
   `CompletingTheSquare` reference pattern.
 - Level progression: Genuinely structural, one of the best in the audit — three materially
@@ -1673,7 +1682,7 @@ Route: `/basic-angle-facts` · Current status: Live
   `reformatQuestion` opportunity, the same pattern flagged for `BestBuys` in the Ratio & Proportion
   pass.
 - UI/visual consistency: Not checked live. From source: **37 hardcoded hex colour occurrences
-  across 18 distinct tokens** — the new high-water mark across every category audited so far,
+  across 19 distinct tokens** — the new high-water mark across every category audited so far,
   eclipsing `RatioSharingTool`'s previous "heaviest" callout. `colorScheme` received and unused,
   consistent with the repo-wide norm.
 - **Recommended status:** Live but flagged for expansion — strong sub-tool/level-progression breadth
@@ -1686,7 +1695,9 @@ named as the reference for SVG/renderer conventions, and correctly follows the S
 requirements (`viewBox`, no fixed pixel height, `data-q-index`), but a reader could reasonably
 assume "reference implementation" also covers the print-handler pattern, which it explicitly does
 not — the same "architectural reference ≠ full-stack reference" caution the Algebra pass raised for
-`CompletingTheSquare.tsx`.
+`CompletingTheSquare.tsx`. *(Fixed in a post-audit verification pass — `CLAUDE.md` now carries an
+explicit caveat on both this file's and `BasicAngleFacts.tsx`'s reference-implementation citations,
+pointing print-handler seekers to `AnglesInQuadrilaterals.tsx` instead.)*
 
 ### Angles In Triangles — `src/tools/Geometry/AnglesInTriangles.tsx`
 Route: `/angles-in-triangles` · Current status: Live
