@@ -16,6 +16,7 @@ this table first; it tells you where to look and where to write.
 | **`CLAUDE.md`** (this file) | The rules — conventions, shared-API reference, how to build/migrate a tool. | Always (auto-loaded). The default answer to "how do I…". |
 | **`README.md`** | Human-facing project overview, tech stack, local setup. | First orientation; onboarding a person. |
 | **`docs/PROJECTS.md`** | The plan — where every prong is up to and what could come next (deep detail tables live here). | **Start of a session** (current state / what's next). Keep the moved prong current at the end. |
+| **`docs/TOOL_AUDIT.md`** | The Maths Tool Audit — self-contained methodology (infrastructure gaps + standalone-readiness gaps) and the live per-tool findings log for all 27 Maths ToolShell generators. **Current top priority.** | Auditing a tool, or picking up any backlog item that traces back to an audit finding. |
 | **`docs/PATCH_NOTES.md`** | The history — what each session shipped, split Maths / CS, newest first. | Seeing what was actually done. **Append to it at the end of a session.** |
 | **`docs/architecture/CS_SHELL_PLAN.md`** | The `CSShell` architecture and its extraction stages. | Building or extending a CS tool. |
 | **`docs/architecture/DECISION_SHELL_PLAN.md`** | The `DecisionShell` architecture — network-native question generators (MST/TSP/CPA) on a shared representation library. | Building or extending a Decision Maths tool. |

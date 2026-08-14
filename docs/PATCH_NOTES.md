@@ -6,6 +6,7 @@ A running, human-readable log of what each session shipped. Read this at the
 
 - `CLAUDE.md` — how to build (conventions, APIs, checklists). *The rules.*
 - `docs/PROJECTS.md` — where every prong is up to and what's next. *The plan* (absorbs the old roadmaps).
+- `docs/TOOL_AUDIT.md` — the Maths Tool Audit's methodology and live per-tool findings log. *The current priority.*
 - `docs/architecture/CS_SHELL_PLAN.md` · `docs/architecture/DECISION_SHELL_PLAN.md` — the two purpose-built shells' architecture.
 - `docs/GLOSSARY.md` — canonical names for every element. *The vocabulary.*
 - **`docs/PATCH_NOTES.md` (this file)** — what actually happened, session by session. *The history.*
@@ -26,6 +27,29 @@ Keep the split even when a session only touches one.
 ---
 
 # Maths
+
+## 2026-08-14 — Set up the Maths Tool Audit; reorganised the planning docs around it
+No code changed — this session designed and documented a new initiative rather than shipping a
+tool change. Created **`docs/TOOL_AUDIT.md`**: a self-contained methodology + live findings log
+for a systematic pass over all 27 Maths ToolShell question generators (Number, Algebra, Ratio &
+Proportion, Geometry). Each tool gets two separate assessments — **Part 1: infrastructure
+alignment** (how far behind the techniques engine, skills library, core representations, Teach
+decks, and SmartGrapher is this tool — an expected gap, feeds the existing prong backlogs) and
+**Part 2: standalone readiness**, judged *blind to the tool's current `enabled` status* (question
+variety vs GCSE spec coverage, QO richness, whether levels genuinely restructure the problem,
+working-step depth, a conventions/anomaly scan for undocumented deviations from the ToolShell
+baseline — column caps, hidden font controls, bespoke print handlers — and a recommended live/gated
+status). Documented why neither git history (nearly all 27 tools share one bulk-import commit date)
+nor the current `enabled` flag (has historically tracked shell-migration readiness, not content
+quality — e.g. `PerimeterTool` went live on shell-verification grounds alone) can be trusted as
+maturity signals, so both must be judged from the file content itself. Reorganised
+**`docs/PROJECTS.md`**: added a new "Maths Tool Audit" prong as the current top priority, added a
+sequencing note to the four pedagogy prongs (Techniques engine, Skills library, Core
+representations, Teach decks) and SmartGrapher pointing their future next-steps at the audit rather
+than ad hoc picks, and moved Computer Science and Decision Maths to the bottom of the doc marked
+**⏸ Parked** while the audit is in progress. Updated `CLAUDE.md`'s documentation map with a
+`docs/TOOL_AUDIT.md` row. The audit itself has not started — the next session should open
+`docs/TOOL_AUDIT.md` and begin with the Number category.
 
 ## 2026-08-13 — Migrated SimplifyingRatiosTool onto ToolShell; reclassified the Generators as standalone
 Brought `SimplifyingRatiosTool` (~820 lines, hand-rolled shell) onto **ToolShell** (~330 lines) —
