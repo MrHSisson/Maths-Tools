@@ -5,8 +5,12 @@ log (Part B).** It is written to be fully self-contained — a fresh session wit
 the conversation that designed this audit should be able to open this file alone and correctly
 run it. Do not assume prior chat context; everything needed is below.
 
-**Status: in progress — Number, Algebra, and Ratio & Proportion complete (19/27).** The next session
-picking this up should continue with Geometry (see "Audit log" below) — the final category.
+**Status: complete — all 27 tools audited (27/27).** Number, Algebra, Ratio & Proportion, and
+Geometry are all done — see "Audit log" below for the full per-tool findings, grouped by category.
+This audit's own findings should now feed the four Maths pedagogy prongs and SmartGrapher's next
+steps (see `docs/PROJECTS.md`'s "Sequencing note"), and Part 2's status recommendations (in
+particular, `SimplifyingRatiosTool`'s "stay gated") are ready for a human sign-off pass — this doc
+records recommendations only, per its own rule not to act on them mid-audit.
 
 ---
 
@@ -1503,15 +1507,610 @@ Route: `/best-buys` · Current status: Live
 shape flagged for `RecipesTool`'s `scaleRecipe` row — worth resolving both the same way when these
 findings get folded back into the technique table.
 
-### Geometry — ⬜ not started
-- [ ] Properties of Circles (`CircleProperties.tsx`)
-- [ ] Basic Angle Facts (`BasicAngleFacts.tsx`)
-- [ ] Angles In Triangles (`AnglesInTriangles.tsx`)
-- [ ] Angles in Parallel Lines (`AnglesInParallelLines.tsx`)
-- [ ] Angles In Quadrilaterals (`AnglesInQuadrilaterals.tsx`)
-- [ ] Bearings (`Bearings.tsx`)
-- [ ] Properties of Line Equations (`EquationsOfLines.tsx`)
-- [ ] Perimeter (`PerimeterTool.tsx`)
+### Geometry — ✅ complete
+- [x] Properties of Circles (`CircleProperties.tsx`)
+- [x] Basic Angle Facts (`BasicAngleFacts.tsx`)
+- [x] Angles In Triangles (`AnglesInTriangles.tsx`)
+- [x] Angles in Parallel Lines (`AnglesInParallelLines.tsx`)
+- [x] Angles In Quadrilaterals (`AnglesInQuadrilaterals.tsx`)
+- [x] Bearings (`Bearings.tsx`)
+- [x] Properties of Line Equations (`EquationsOfLines.tsx`)
+- [x] Perimeter (`PerimeterTool.tsx`)
+
+**Category summary.** Geometry is architecturally different from the first three categories — all
+but one tool (`EquationsOfLines`) are SVG diagram tools, so the audit's usual "fragment-array
+working steps" finding shows up here as something sharper: six of the eight tools
+(`BasicAngleFacts`, `AnglesInTriangles`, `AnglesInQuadrilaterals`, `AnglesInParallelLines`,
+`Bearings`, `PerimeterTool`) build every working line through `tStep()` only — plain `\text{...}`
+prose, never real KaTeX math mode — which makes them **structurally incapable** of the
+`string[]` fragment convention, not just thin authors of it. Only `CircleProperties.tsx` and
+`EquationsOfLines.tsx` use real `mStep`/`step` with computed KaTeX. This is a category-wide
+convention, confirmed independently by three separate research agents, not a per-tool defect —
+worth surfacing as a single standing finding rather than six repeated ones. A second category-wide
+split: only 4 of the 8 tools (`AnglesInTriangles`, `Bearings`, `PerimeterTool`,
+`AnglesInQuadrilaterals`) use the shared `handleDiagramPrint`; the other 4
+(`AnglesInParallelLines`, `BasicAngleFacts`, `CircleProperties`) hand-roll a fixed-grid
+`customPrintHandler` that directly contradicts `CLAUDE.md`'s explicit instruction not to do
+that — notably, **two of the three are the very files `CLAUDE.md` itself names as the SVG/renderer
+reference implementations** (`AnglesInParallelLines.tsx`, `BasicAngleFacts.tsx`), while
+`AnglesInQuadrilaterals.tsx` (correctly named as the `handleDiagramPrint` reference specifically)
+is the one that gets it right. Two of the three hand-rolled handlers have confirmed functional bugs,
+not just missing flexibility: `BasicAngleFacts`' handler silently drops section headers on
+Advanced/differentiated worksheets, and `CircleProperties`' handler doesn't accept the `ctx`
+parameter at all, so clicking "Differentiated" and printing produces the identical flat, undifferentiated
+sheet with no error or indication anything went wrong. None of the six core representations map onto
+an angle/circle/polygon diagram — this repeats across every tool in the category independently and
+is recorded once here as a standing open question, the same treatment given to `PowersOfTen`'s
+place-value grid and `Iterations`' cobweb diagram in earlier passes: the diagram itself appears to
+function as its own representation, outside the six-representation vocabulary. `PROJECTS.md`'s
+skills table has **zero Geometry rows** — a category-wide gap none of the prior three categories
+had; two new skills are proposed here (`apply-angle-fact`, `unit-conversion`) to seed it. A new
+technique is also proposed (`sumPerimeter`/`deriveMissingSide`) since `PerimeterTool`'s core move
+has no match among the three existing Geometry technique rows. `PerimeterTool` — explicitly named
+in this doc's own intro as the example of why a live `enabled` flag can't be trusted as a quality
+signal — turns out to confirm exactly that prediction: its ToolShell/`handleDiagramPrint` migration
+is genuinely well-engineered (better than `CircleProperties`' print path, in fact), but its content
+is the thinnest on QO richness of the whole category (zero `multiSelect`/`dropdown` anywhere,
+teacher-facing controls at only 2 of 6 level×sub-tool combinations) — shell-verified, content
+unreviewed until now, precisely as predicted. `EquationsOfLines` turns out not to be a diagram tool
+at all despite its category (zero SVG, pure KaTeX) — confirming `PROJECTS.md`'s SmartGrapher gap for
+it is still fully unaddressed, the tool's single highest-leverage fix.
+
+### Angles In Quadrilaterals — `src/tools/Geometry/AnglesInQuadrilaterals.tsx`
+Route: `/angles-in-quadrilaterals` · Current status: Live
+
+**Part 1 — Infrastructure alignment**
+- Techniques: Thin — no technique import. `PROJECTS.md`'s `applyAngleFact` row (**high**, ⬜) is an
+  exact match and this tool is by far the richest demand signal for it in the category — every
+  branch states the applied fact as its own first working line ("Angles in a quadrilateral sum to
+  360°", "Opposite angles in a {shape} are equal", etc.), directly confirming the row's own
+  parenthetical, "the reasoning IS the move."
+- Skills: No markers, and — worth flagging on its own — **`PROJECTS.md`'s skills table has zero
+  Geometry rows at all**. This tool is the clearest candidate to seed one: **new skill proposed**,
+  `apply-angle-fact` (drill-down for "which angle rule applies here"), pairing with the
+  `applyAngleFact` technique row the same way every other row is paired elsewhere in the table.
+  Separately, the algebra-form questions (`x`, `x+a`, `ax`, `ax+b`) are a genuine second, unlinked
+  consumer of the already-built `solve-linear-equation` skill (**high**, ⬜, currently named only
+  for `SolvingLinearEquations`).
+- Representations: None of the six fit — same open-question status raised for the whole category.
+- Teach deck: Structurally plausible (each level's find-type taxonomy is already an
+  I-do/We-do/You-do-shaped case set), but more expensive than most decks logged so far — nothing in
+  the built `TeachBlock`/`TeachScene` types can render an angle diagram, so this needs a genuinely
+  new scene type, not a reuse.
+- SmartGrapher: No fit, correctly absent.
+
+**Part 2 — Standalone readiness**
+- Question/sub-tool breadth vs spec: One sub-tool on paper, but internally spans three structurally
+  distinct shape families across levels (general convex quadrilateral / kite & arrowhead /
+  parallelogram-rhombus-trapezium with parallel-line reasoning) plus an optional exterior-angle
+  overlay and four algebraic-expression forms — genuinely close to full GCSE spec coverage,
+  including the arrowhead reflex-angle case. Real gap: no worded/contextual framing anywhere.
+- QO richness: **The strongest QO differentiation seen in the whole audit so far** — real per-level
+  `difficultySettings` with 1, 3, and 4 multiSelect groups at levels 1/2/3 respectively, plus a
+  level-2-only variable, QO complexity scaling with mathematical complexity beyond even the
+  `CompletingTheSquare` reference pattern.
+- Level progression: Genuinely structural, one of the best in the audit — three materially
+  different rule sets across levels, not a numbers-get-bigger progression.
+- Working-step depth: A real, specific gap, worth stating plainly since this is the named reference
+  file. Every line is a plain `{ text: string }` converted via `tStep()` — no line ever renders
+  through real KaTeX math mode, and (since `tStep` takes a single string) zero fragment arrays
+  anywhere. This is the category-wide pattern (see category summary), not unique to this file — but
+  the category's own `CircleProperties.tsx` already demonstrates the alternative is achievable, so
+  the gap is checkable and fixable in-category.
+- Conventions/anomaly scan: `questionRenderer` (**Justified**). `customPrintHandler={handleDiagramPrint}`
+  **directly verified** — imported and passed through unmodified, exactly matching `CLAUDE.md`'s own
+  code sample. Worth flagging as a category finding: this makes it one of only 4 of 8 Geometry tools
+  that actually follow the documented pattern — and the two files `CLAUDE.md` names for SVG
+  conventions specifically (`AnglesInParallelLines`, `BasicAngleFacts`) are exactly the ones that
+  don't. `defaults={{ numColumns: 3, maxColumns: 4, hideFontControls: true }}` — **Justified**, the
+  least restrictive column policy of any diagram tool in the category, appropriate for a squarish
+  diagram.
+- UI/visual consistency: Not checked live. From source: 15 hardcoded hex colours, all confined to
+  the SVG, in line with siblings — not an outlier. `colorScheme` received as `_cs` and never used —
+  every diagram colour is fixed regardless of light/dark scheme, a plausible, checkable gap.
+- **Recommended status:** Stay live as-is — on breadth, QO richness and level-progression structure
+  this is arguably the strongest tool audited in the whole pass, and it correctly earns its billing
+  as the shared-print reference (verified directly, more rigorously followed than either of the two
+  files `CLAUDE.md` names for SVG conventions). The honest caveat, precisely because this is the
+  flagship reference file: its working-step authoring sits below what this same category's
+  `CircleProperties.tsx` already demonstrates is achievable — a genuine, fixable Part 2 gap, not a
+  Part 1 infrastructure gap. (current: Live)
+
+**Notes:** The `applyAngleFact`/"the reasoning IS the move" framing holds up well against this
+file's actual generator code — the gap isn't that the reasoning is missing, it's that it's currently
+authored as un-typeset prose (`tStep`) rather than properly fragmented KaTeX (`mStep`/`step`), a
+presentation-layer fix, not a content rewrite.
+
+### Basic Angle Facts — `src/tools/Geometry/BasicAngleFacts.tsx`
+Route: `/basic-angle-facts` · Current status: Live
+
+**Part 1 — Infrastructure alignment**
+- Techniques: Thin — no technique import. `PROJECTS.md`'s `applyAngleFact` row is an exact,
+  on-the-nose match — this tool doesn't consume the technique, it **is** the technique's primary
+  demand signal across all five sub-tools (right angle, straight line, around a point, vertically
+  opposite, mixed).
+- Skills: No markers. One concrete, previously-unnoted cross-category link site: the Level 3
+  algebraic sub-tools reduce every question to a one- or two-step linear equation in x — literally
+  the domain of the existing `solve-linear-equation` skill (**high**, no tile scene yet, ⬜),
+  previously named only for `SolvingLinearEquations`. This tool is a second, currently-unlinked
+  consumer, worth adding to its row.
+- Representations: None of the six fit — same category-wide open question.
+- Teach deck: Plausible candidate — Vertically Opposite's own two Level 1 variants (Matching →
+  Calculation) already form a natural I-do/We-do arc. Blocked on the same missing-representation
+  gap as the whole category.
+- SmartGrapher: No fit.
+
+**Part 2 — Standalone readiness**
+- Question/sub-tool breadth vs spec: Five sub-tools, each with three structurally distinct per-level
+  generator functions plus an orthogonal algebraic-expression axis multiplying the shape count
+  further — one of the broadest raw generator surfaces seen in the audit so far, genuinely covering
+  the GCSE spec's four core angle facts. No worded/contextual framing anywhere, a fair gap for this
+  topic (unlike similar Number/Ratio gaps), so lower-priority than elsewhere.
+- QO richness: Strong overall, genuine per-level `difficultySettings` on most sub-tools. One real,
+  unexplained asymmetry: Vertically Opposite never exposes the decimals toggle its three sibling
+  sub-tools all support — VO angles are integer-only at every level with no comment explaining the
+  omission (**Unclear**).
+- Level progression: Genuinely structural across all five sub-tools, not number-scaling. Vertically
+  Opposite's progression is particularly good — a genuine method change at every step, on par with
+  the audit's best-in-class level designs.
+- Working-step depth: **The flattest working-step architecture found in the audit so far.** Every
+  line across all five sub-tools is built via `tStep()` only — confirmed zero `mStep`/`step` calls
+  anywhere. Per `CLAUDE.md`'s own KaTeX rules, `tStep` is meant for genuinely numberless prose, but
+  here it's used for real equations (`"3x = 60°"`) that render as literal escaped text, never true
+  KaTeX. Every other "flat" tool audited so far had at least used single-string `mStep`/`step`
+  (upgradable to fragments later) — this tool's own step type makes that upgrade impossible without
+  a rewrite.
+- Conventions/anomaly scan: `questionRenderer` (**Justified**). `customPrintHandler` (hand-rolled,
+  fixed 3×5 grid) — **Debt.** `CLAUDE.md`'s own diagram-tools section explicitly instructs against
+  exactly this pattern. Worse: the handler's Advanced/sectioned path silently falls through to the
+  flat layout with no section-header/divider logic at all — an Advanced worksheet built with this
+  tool silently loses its section grouping in the printed PDF, a real functional defect, not just a
+  missing feature. `fixedColumns: true, numColumns: 3` pairs consistently with the hardcoded print
+  grid but forecloses the density flexibility `handleDiagramPrint` gives for free — **Debt-leaning**,
+  three category siblings expose `maxColumns` instead. `hideFontControls: true` — **Justified**.
+  Also found outside the grep: the purely-cosmetic "Show right angle square symbol" toggle
+  regenerates an entirely new question rather than reformatting in place — a missed
+  `reformatQuestion` opportunity, the same pattern flagged for `BestBuys` in the Ratio & Proportion
+  pass.
+- UI/visual consistency: Not checked live. From source: **37 hardcoded hex colour occurrences
+  across 18 distinct tokens** — the new high-water mark across every category audited so far,
+  eclipsing `RatioSharingTool`'s previous "heaviest" callout. `colorScheme` received and unused,
+  consistent with the repo-wide norm.
+- **Recommended status:** Live but flagged for expansion — strong sub-tool/level-progression breadth
+  and QO richness, undercut by the audit's flattest-yet working-step architecture, a print-path
+  convention gap with a confirmed functional bug (dropped section headers), and the heaviest
+  hex-colour usage found so far. Nothing here argues for gating. (current: Live)
+
+**Notes:** Worth flagging for whoever next edits `CLAUDE.md`'s Diagram-tools section: this file is
+named as the reference for SVG/renderer conventions, and correctly follows the SVG element
+requirements (`viewBox`, no fixed pixel height, `data-q-index`), but a reader could reasonably
+assume "reference implementation" also covers the print-handler pattern, which it explicitly does
+not — the same "architectural reference ≠ full-stack reference" caution the Algebra pass raised for
+`CompletingTheSquare.tsx`.
+
+### Angles In Triangles — `src/tools/Geometry/AnglesInTriangles.tsx`
+Route: `/angles-in-triangles` · Current status: Live
+
+**Part 1 — Infrastructure alignment**
+- Techniques: Thin — no technique import, confirming `PROJECTS.md`'s own "techniques wiring still
+  to add on some" caveat for this migrated group literally, not just generically. `applyAngleFact`
+  is an unusually exact match: this tool's sub-shapes hit *isosceles* (Level 2) and *exterior angle*
+  (Level 3) by name, plus the basic 180°-sum case. Unlike `AnglesInParallelLines`, "the reasoning IS
+  the move" genuinely holds here — see Working-step depth — making this tool arguably the single
+  best demand signal for the row found in the audit so far.
+- Skills: No markers. This tool is the primitive for the 180°-sum and isosceles facts. Level 3's
+  exterior-angle sub-tool genuinely assumes "angles on a straight line sum to 180°" as an unre-taught
+  prior fact — a real unlinked-prerequisite candidate for the new `apply-angle-fact` skill proposed
+  above, which `AnglesInParallelLines`' straight-line rule and `BasicAngleFacts.tsx` are also natural
+  teaching grounds for.
+- Representations: Same category-wide open question.
+- Teach deck: Plausible arc, needs a wholly new scene family, same blocker as its sibling.
+- SmartGrapher: No fit, correctly absent.
+
+**Part 2 — Standalone readiness**
+- Question/sub-tool breadth vs spec: Single sub-tool, but one of the strongest internal structural
+  varieties in the whole Geometry pass — L1 scalene with optional right angle, L2 isosceles
+  apex-or-base-given, L3 splits into two genuinely different diagram families (an internal-cevian
+  split triangle, and an exterior-angle/extended-side family with four distinct diagram shapes
+  total). No worded/contextual framing — expected and not a gap for pure diagram geometry.
+- QO richness: A per-level dropdown plus one repeated variable at every level, but **zero
+  multiSelect anywhere** — a real, checkable gap relative to `AnglesInParallelLines`, which at least
+  has one multiSelect group at Level 1. A teacher never gets a "which question types are active"
+  pool control at any level here.
+- Level progression: Genuinely one of the strongest in the whole audit — a real method/shape change
+  every level, matching its own info text's description exactly. Comparable in quality to
+  `Percentages`/`SimultaneousEquations`.
+- Working-step depth: **The strongest working-step depth found in the Geometry category**, though
+  still constrained to plain-text `tStep()` only (the category norm, not a tool-specific flaw).
+  Crucially, unlike `AnglesInParallelLines`, the arithmetic is actually shown, not skipped — a
+  genuine 5-step reveal of the real reasoning at L1, and L3 correctly sequences two separate named
+  facts before landing on the answer. Correctly wired via the `tStep()` helper rather than raw
+  objects — the opposite finding from its sibling.
+- Conventions/anomaly scan: `questionRenderer` (**Justified**). `customPrintHandler={handleDiagramPrint}`
+  — **Justified and exemplary**, matching `AnglesInQuadrilaterals.tsx` verbatim, in direct contrast
+  to its sibling's hand-rolled grid. `defaults={{ numColumns: 3, maxColumns: 4, hideFontControls:
+  true }}` — **Justified**, identical to the category's own established reference pattern. One
+  additional positive: the SVG's `viewBox` is deliberately square-normalised around the fitted
+  content specifically so `handleDiagramPrint` needs no per-question `_aspect` — a genuinely careful,
+  print-path-aware design decision, called out explicitly in-file.
+- UI/visual consistency: Not checked live. From source: 13 hardcoded hex occurrences, 10 distinct
+  tokens — moderate, well below its sibling's 24 and below `RatioSharingTool`'s prior high-water
+  mark. `colorScheme` received and unused — the repo-wide pattern.
+- **Recommended status:** Stay live as-is — one of the stronger Part 2 performers in the Geometry
+  category (genuinely structural level progression, the best-demonstrated working-step reasoning in
+  the category, correct and exemplary use of the shared print path). The real gaps are Part 1 (no
+  technique/skill hookup, despite being an unusually clean demand signal) and one concrete Part 2
+  gap: zero multiSelect anywhere. (current: Live)
+
+**Notes:** `PROJECTS.md`'s "techniques wiring still to add on some" caveat is confirmed literally
+true for this specific tool — worth correcting the implicit assumption that "migrated" tracked
+pedagogy maturity, the same way this doc's own intro already warns `enabled` does. This tool is also
+the strongest available argument that "the reasoning IS the move" is an accurate description of a
+diagram tool's working — its sibling `AnglesInParallelLines` is a weaker fit for the same
+annotation, a useful contrast for whoever writes the technique's build brief.
+
+### Angles in Parallel Lines — `src/tools/Geometry/AnglesInParallelLines.tsx`
+Route: `/angles-in-parallel-lines` · Current status: Live
+
+**Part 1 — Infrastructure alignment**
+- Techniques: Thin — no technique import. `applyAngleFact` is the exact match, covering 3 of its 5
+  named cases directly — but the row's own annotation, "the reasoning IS the move," only partly
+  holds here (see Working-step depth): the working states the rule name and jumps straight to the
+  final value with no shown arithmetic, unlike `AnglesInTriangles`' fuller demonstration — worth a
+  caveat on the row when this finding is folded back in.
+- Skills: No markers. This tool is the primitive, not a consumer, for its own rules; a future
+  `apply-angle-fact` skill (proposed above) would naturally draw on its "straightLine" rule variants
+  as a teaching ground.
+- Representations: Same category-wide open question.
+- Teach deck: Plausible I-do/We-do/You-do arc, needs an entirely new scene family — a
+  second/third-tier candidate, not cheap.
+- SmartGrapher: No fit, correctly absent.
+
+**Part 2 — Standalone readiness**
+- Question/sub-tool breadth vs spec: Single sub-tool, but internally strong — all 5 standard GCSE
+  parallel-line facts modelled, plus 4 canvas orientations for genuine spatial variety. No
+  worded/contextual framing — a non-issue for this inherently diagrammatic topic.
+- QO richness: One dropdown plus a 5-option multiSelect, but the multiSelect is **only active at
+  Level 1** — plausibly justified (L2/L3 deliberately chain across all rule types by design) but
+  undocumented in `INFO_SECTIONS`, unlike `RatioSharingTool`'s transparent L3 disclosure —
+  **Unclear**.
+- Level progression: Genuinely strong and structural — L1 single-step, L2 forced two-rule chain, L3
+  a "hidden-link" mode requiring an intermediate unlabelled angle to be found first. L3 additionally
+  exposes a "‹ Method N of M ›" browser letting a teacher cycle through every valid two-rule route
+  between two angles when more than one exists — a genuinely novel, sophisticated feature not seen
+  elsewhere in this audit, a real positive worth calling out, backed by deliberate generator rigor
+  (blocking functionally-interchangeable rule pairs from chaining).
+- Working-step depth: **The category's weakest working depth found so far, and a concrete standards
+  deviation, not just thinness.** Every step is a raw `{ type: "tStep", ... }` object literal built
+  directly in the generator — the file imports `tStep` but explicitly voids it as unused, bypassing
+  the helper `CLAUDE.md` is explicit about ("Always create `WorkingStep` objects via the helpers...
+  never construct raw objects"). Content-wise, each step states the rule name and the final value
+  with **no shown arithmetic** — contrast directly with `AnglesInTriangles.tsx`, which for the same
+  "sum to 180" fact walks the full four-line derivation. Same category, same tStep-only constraint,
+  materially different depth.
+- Conventions/anomaly scan: `questionRenderer`/`answerRenderer` (**Justified**). `customPrintHandler`
+  is a **fully hand-rolled, fixed 3×5 grid** — **Debt**, directly contradicting `CLAUDE.md`'s
+  explicit instruction, stated in the very section that names this exact file as the SVG/renderer
+  reference. Concrete cost: bypassing `handleDiagramPrint` loses variable-column density, section
+  support, and differentiated-layout scaling — this worksheet is permanently 15-per-page regardless
+  of input. `fixedColumns: true` — **Debt-leaning** (consistent with the hand-rolled grid, but no
+  sibling Geometry tool locks columns this way). `numQuestions: 9` doesn't match the print handler's
+  own 15-per-page assumption — **Unclear**.
+- UI/visual consistency: Not checked live. From source: **24 hardcoded hex-colour occurrences, 11
+  distinct tokens** — the heaviest hex usage found in the audit until `BasicAngleFacts`' 37
+  surpassed it in this same category. SVG element requirements are otherwise fully compliant
+  (`viewBox`, no fixed pixel height, `preserveAspectRatio`, conditional `data-q-index`).
+- **Recommended status:** Live but flagged for expansion — content coverage (5 rules, genuine
+  3-level structural progression, the Method-browser feature) is strong enough that nothing argues
+  for gating. But this is a case where "reference implementation" status is doing real work the file
+  doesn't fully back up: the hand-rolled print path contradicts a documented rule this same file is
+  cited to exemplify, and the raw-`WorkingStep` / thin-arithmetic working is a concrete quality gap
+  a future tool built by copying this file would inherit. (current: Live)
+
+**Notes:** The double-duty problem flagged for `CompletingTheSquare.tsx` repeats here in a sharper
+form: cited by name as the SVG/renderer reference, but behind (not ahead of) its own category
+siblings on the two axes most checkable from source (print-path convention, `WorkingStep`
+construction). The SVG element conventions are genuinely worth copying; the print handler and raw
+working-step construction are not.
+
+### Bearings — `src/tools/Geometry/Bearings.tsx`
+Route: `/bearings` · Current status: Live
+
+**Part 1 — Infrastructure alignment**
+- Techniques: Thin — no technique import. No existing row names bearings directly, but there's a
+  real, currently-unconsumed connection to `applyAngleFact`: the tool's own info modal states Level
+  2 route questions can be asked "as a back bearing along the path," and the generator does include
+  the reverse direction as a candidate — but the working never states the actual angle-fact reasoning
+  that justifies it (the two North lines at connected points are parallel, so co-interior/alternate
+  angles give back bearing = bearing ± 180). A real, specific gap `applyAngleFact` would directly
+  fill, arguably the cleanest demand signal for that row found so far, since it's the one case where
+  "the reasoning IS the move" bites hardest.
+- Skills: No unlinked-prerequisite gap — this tool's own domain (reading a bearing from a diagram)
+  has no current technique/skill table entry as either target, worth a light-touch new row once the
+  `applyAngleFact` gap above is scoped, not urgent.
+- Representations: Same category-wide open question.
+- Teach deck: Strong, genuinely on-the-nose candidate — the tool's own info modal explicitly calls
+  out the "'A from B'" misconception (measuring from the wrong point) as the thing students get
+  backwards. A Spot the Mistake slide on this would directly dramatize the tool's stated #1
+  misconception, similar in shape to the reverse-percentages/best-buys candidates flagged earlier.
+  Blocked on the same missing-representation gap as everywhere else in Geometry.
+- SmartGrapher: No fit — correctly absent.
+
+**Part 2 — Standalone readiness**
+- Question/sub-tool breadth vs spec: A single sub-tool, but with real internal shape variety —
+  L1 a 2-point diagram, L2 a 3-point connected route testing both forward and back bearings, L3
+  dresses the same structure as named real places with mixed phrasing specifically to test the "from"
+  misconception. The tool is explicitly and honestly scoped to *reading/identifying* a bearing — it
+  never asks a student to *calculate* one arithmetically (e.g. the back bearing by adding/subtracting
+  180°). A disclosed scope limit, comparable to `NonLinearSimEq`'s ellipse limitation, but a real
+  spec-coverage ceiling for a standard GCSE sub-skill — the one concrete expansion candidate.
+- QO richness: Thin relative to the tool's polish elsewhere — one multiSelect, repeated identically
+  at all three levels with no level-specific narrowing — the same "QO doesn't scale with level"
+  pattern flagged **Unclear** for `Percentages`/`ExpandingBrackets`. Given the level structure
+  genuinely does restructure, the flat QO under-sells that progression.
+- Level progression: One of the stronger progressions in the audit so far — a genuine shape change
+  at each step, not just widening number ranges, on par with `NonLinearSimEq`/`SimultaneousEquations`'
+  best-in-class designs.
+- Working-step depth: Shares `BasicAngleFacts`' exact flaw — `tStep()` is the only step-builder used
+  anywhere, every line including the numeric answer is plain prose in `\text{}`, structurally
+  incapable of a fragment reveal. Genuinely notable given this tool's other signals of careful,
+  more-recent authorship — the working-step architecture is identically thin to its less-polished
+  category neighbour, undercutting its "what good looks like" reference billing on this one axis.
+- Conventions/anomaly scan: `questionRenderer` (**Justified**). `customPrintHandler={handleDiagramPrint}`
+  — **Justified and exemplary**, matching `CLAUDE.md`'s own code sample verbatim, and going a step
+  further: the renderer emits a second, hidden SVG copy with the answer drawn on specifically so the
+  print path's answer pages show the bearing arc, not just the bare numeric answer — a subtlety not
+  spelled out in `CLAUDE.md`'s own example. `defaults={{ numColumns: 3, maxColumns: 4,
+  hideFontControls: true }}` — **Justified**, the sanctioned pattern. Not caught by the grep but
+  worth recording: this tool supplies its own `generateUniqueQ`, deduping a worksheet on the bearing
+  *value* per level rather than the random per-question key — a genuinely more careful engineering
+  choice, used by only 8 tools repo-wide, most from later/more-polished passes.
+- UI/visual consistency: Not checked live. From source: only 5 hardcoded hex occurrences, all
+  distinct, tightly scoped to the diagram's own colour constants — the cleanest diagram-tool result
+  seen in the audit so far by a wide margin.
+- **Recommended status:** Stay live as-is on Part 2 fundamentals — the strongest engineering quality
+  signal of the tools in this pass (correct shared print-path adoption including the hidden
+  answer-copy pattern, custom value-based worksheet dedup, minimal hex usage, honest scope
+  disclosure), and a genuinely strong level progression. The two things worth tracking: the flat
+  QO-per-level profile, and — the most load-bearing finding — that its working-step depth is exactly
+  as architecturally thin as `BasicAngleFacts`', which matters more given this tool's "what good
+  looks like" billing (per this doc's own methodology note on its distinct later first-commit date).
+  On infrastructure wiring and print conventions it earns that billing; on working-step pedagogy it
+  does not, and shouldn't be assumed to just because of the later commit date. (current: Live)
+
+**Notes:** The `applyAngleFact`-shaped gap here (back bearings tested but never justified via the
+parallel-North-lines fact) is the more actionable Part 1 finding of the tools in this pass — a
+single, well-scoped working-step enhancement rather than a new technique needing invention from
+scratch, since this tool already generates the exact geometric situation the fact would explain.
+
+### Properties of Circles — `src/tools/Geometry/CircleProperties.tsx`
+Route: `/circle-properties` · Current status: Live
+
+**Part 1 — Infrastructure alignment**
+- Techniques: Thin — no technique import. `PROJECTS.md`'s `circleFormula` row (med, ⬜) is an exact
+  and complete match — this tool covers all four named sub-moves (circumference, area, arc, sector),
+  unlike most cross-references found elsewhere in the audit which only partially match. Level 3 of
+  both `circumference` and `area` also independently exercises a `rearrange-formula`-shaped move — a
+  second, currently-unlisted-for-this-tool consumer of that existing skill's paired technique.
+- Skills: No markers. The L3 rearrangement steps map to `rearrange-formula` (med, ⬜). More
+  interesting: the `sectors` sub-tool's θ/360 × (formula) move is structurally identical to the
+  existing `fraction-of-amount` skill — a cross-topic, unnamed consumer of that high-priority,
+  bar-model-backed row worth flagging even though it's an unusual domain match.
+- Representations: Same category-wide open question — the tool's own SVG already functions as the
+  visual, geometry diagrams appear to sit outside the six-representation vocabulary entirely.
+- Teach deck: Plausible candidate — mixing up radius/diameter in `C=2πr` vs `C=πd` is a classic
+  misconception, and the sectors sub-tool's L1→L2→L3 progression is a ready-made
+  I-do/We-do/You-do arc on "what fraction of the full circle." Blocked on the same representation
+  gap — no existing scene family a circle deck could reuse.
+- SmartGrapher: No fit — a circle diagram isn't graphed as y=f(x).
+
+**Part 2 — Standalone readiness**
+- Question/sub-tool breadth vs spec: Three sub-tools. `circumference`/`area` each cover both formula
+  variants plus a genuine reverse-direction L3; `sectors` adds a 3-way multiSelect crossed with 3
+  levels — real breadth, arguably the widest single-file spec coverage seen in the Geometry pass.
+  Confirmed gap: every question is bare `kind: "simple"` — no real-world context (wheels, tracks,
+  pizza, clocks) anywhere.
+- QO richness: Real control — a decimals/π-form toggle on all three sub-tools plus a genuine 3-option
+  multiSelect on `sectors`. But `difficultySettings: null` on all three means identical QO at every
+  level — a teacher can select "Perimeter"-only sector questions even at Level 1 semicircles — the
+  same "flat across levels" pattern flagged elsewhere as **Unclear**.
+- Level progression: Genuinely structural, one of the stronger showings in the audit —
+  `circumference`/`area` teach the r↔d relationship at L1→L2 rather than just scaling numbers, and
+  L3 reverses the whole problem direction requiring rearranging/square-rooting. `sectors`' L1→L2→L3
+  is a clean, escalating structural ladder.
+- Working-step depth: Real KaTeX throughout — 17 `mStep` + 19 `step` calls, correct
+  "Given → formula → substitute → Answer" chains for every branch, and a properly-implemented
+  `reformatQuestion` for the instant π↔decimal toggle matching the documented `CompletingTheSquare`
+  pattern exactly — a genuine positive, and (see category summary) rare for this category. Gap: zero
+  fragment-array usage anywhere — the same gap found in most tools audited across every category.
+- Conventions/anomaly scan: `fixedColumns: true` — **Debt**, directly contradicting `CLAUDE.md`'s
+  diagram-tool guidance verbatim; its concrete effect is that the Columns control is hidden from the
+  teacher entirely. `customPrintHandler` — **Debt, the clearest single anomaly found in this pass.**
+  Hand-rolls a fixed 3×5 grid — exactly the anti-pattern `CLAUDE.md` names and tells tools not to do
+  — and its function signature only accepts 3 of the 4 parameters ToolShell provides, silently
+  ignoring `ctx.isDifferentiated`. Since the Differentiated toggle isn't gated by `fixedColumns`, a
+  teacher can click Differentiated and print, and get the identical flat 3×5 sheet with zero
+  differentiation applied and no error — a genuine, source-confirmable functional gap. This tool
+  would be the most direct beneficiary of migrating to `handleDiagramPrint` of any Geometry tool
+  checked. Absence of `hideFontControls` — **Unclear, leaning Debt**: every sibling diagram tool
+  checked across the whole audit sets it, and here the diagram's font is entirely hard-coded and
+  never threaded through `fontClass`, so the font-size control shown to the teacher has no visible
+  effect on the diagram at all.
+- UI/visual consistency: Not checked live. From source: SVG requirements otherwise fully compliant —
+  a clean, better-than-`PerimeterTool` implementation in this specific respect. Hex colours present
+  but consistent with the repo-wide norm. `_colorScheme` received and unused.
+- **Recommended status:** Live but flagged for expansion — strong maths content (best-in-category
+  level progression and breadth so far), but the print/worksheet path is a genuine outlier: the one
+  Geometry tool reimplementing the exact fixed-grid pattern `handleDiagramPrint` was built to retire,
+  with a concrete, confirmable consequence (Differentiated silently does nothing). Migrating to
+  `handleDiagramPrint` would be the highest-leverage, most mechanical fix surfaced anywhere in this
+  audit pass. Nothing here argues for gating. (current: Live)
+
+**Notes:** The `circleFormula`/`rearrange-formula` cross-references are unusually clean matches —
+worth prioritising `circleFormula` if a second technique gets built after the high-frequency
+Algebra/Number ones already queued, since this one file alone demonstrates all four of its named
+sub-moves. This is also the first tool in the whole audit where a print/worksheet *architecture*
+anomaly, not a content-quality one, is the standout Part 2 finding — worth keeping visible separately
+from the pedagogy-content findings per the methodology's "don't merge the two buckets" instruction.
+
+### Properties of Line Equations — `src/tools/Geometry/EquationsOfLines.tsx`
+Route: `/equations-of-lines` · Current status: Live
+
+**Part 1 — Infrastructure alignment**
+- Techniques: Thin — no technique import. `PROJECTS.md`'s `gradientIntercept` row (med, ⬜,
+  "gradient formula, y=mx+c, solve for c") is a near-verbatim match for what this file already
+  hand-computes in exactly that three-step shape — an unusually cheap conversion target, since the
+  moves already exist correctly sequenced, just not extracted.
+- Skills: No markers, and — as with `AnglesInQuadrilaterals` — `PROJECTS.md`'s skills table has no
+  Geometry rows at all. Two concrete unlinked-consumer findings against existing rows:
+  `substitute-into-formula` (currently only named for `NonLinearSimEq`) — this tool's "Substitute
+  into y=mx+c" steps are a second consumer; `rearrange-formula` (currently named for
+  `Iterations`/`NonLinearSimEq`) — the `missing` sub-tool's subject-rearrangement branches are a
+  genuine third consumer of the exact same skill.
+- Representations: None of the six fit, same as the rest of the category. Unlike other Geometry
+  tools, though, there is currently **no visual of any kind** for a topic that is inherently visual —
+  the natural fix is SmartGrapher, not a new core representation, mirroring `Iterations`' finding
+  exactly: the six-representation vocabulary doesn't cover this content, but a mature adjacent tool
+  does.
+- Teach deck: Plausible and comparatively cheap — the tool's own three sub-tools already form a
+  natural I-do/We-do/You-do arc, and could plausibly ship using only static `TeachBlock`s without a
+  new scene type, since the pedagogy is fully symbolic rather than diagram-dependent.
+- SmartGrapher: **Confirmed, definitively, not wired in** — zero grapher usage anywhere in the file.
+  This directly resolves `PROJECTS.md`'s open "possible next step" naming this tool by name — nothing
+  has been done. Given the tool is literally titled "Properties of Line Equations" and has zero
+  visual content of any kind, this is the single highest-leverage Part 1 gap found for this tool:
+  the `linear` preset is a direct, off-the-shelf fit for every sub-tool here.
+
+**Part 2 — Standalone readiness**
+- Question/sub-tool breadth vs spec: Three sub-tools (gradient, equation, missing), reasonable
+  coverage of the core moves. A real, specific spec-coverage gap for a tool titled "**Properties** of
+  Line Equations": no parallel/perpendicular-line question anywhere — arguably the single most
+  standard GCSE "properties of a line" question type, currently entirely absent. No line-intersection
+  question either (a natural SmartGrapher tie-in).
+- QO richness: Moderate — `gradient`/`equation` share genuine per-level differentiation; the
+  `missing` sub-tool has one multiSelect but `difficultySettings: null` — identical QO at all three
+  levels, the same "flat across levels" pattern, and an inconsistency against its own sibling
+  sub-tools in the same file which do differentiate.
+- Level progression: Structurally consistent but comparatively shallow next to
+  `AnglesInQuadrilaterals`' three-different-rule-sets pattern — the same one axis reused everywhere
+  (positive integers → negative integers → fractional gradients). The L2→L3 step is a genuine method
+  change (fraction arithmetic), but the question *shape* never changes — closer to numeric-range
+  escalation than structural restructuring.
+- Working-step depth: Comparatively strong for the category — real `mStep` sequences with genuinely
+  computed, narrated intermediate values, a clear step up from the `tStep`-flattened-prose pattern
+  found in most of this category's diagram tools. The one consistent gap matching the rest of the
+  audit: zero fragment-array usage anywhere, despite the underlying maths already being multi-part.
+- Conventions/anomaly scan: The only match is `defaults={{ worksheetFontSize: 2 }}` — bumping the
+  documented default of 1. Plausible (long KaTeX fraction/equation strings need more room) but
+  undocumented, and genuinely idiosyncratic: only 3 tools site-wide set `worksheetFontSize` at all,
+  and the other two pair it with a coordinated set of overrides at value 1 — this file sets it alone,
+  at 2, matching no existing precedent closely enough to call Justified (**Unclear**). Everything
+  else correctly absent — this is, despite its category, not actually a diagram tool.
+- UI/visual consistency: Not checked live. From source: zero hardcoded hex colours, no bespoke JSX —
+  should be visually native to the shell by construction, the same clean-baseline signal as
+  `Estimation`/`SolvingLinearEquations`.
+- **Recommended status:** Live but flagged for expansion — solid, correctly-computed core maths with
+  above-category working-step quality, but two concrete, fixable gaps stand out: a full absence of
+  any visual for an inherently visual topic, with the fix (SmartGrapher) mature and already named for
+  this exact tool; and no parallel/perpendicular-line question type, a genuine spec-coverage gap
+  inside this tool's own stated scope. Neither argues for gating — both are additive. (current: Live)
+
+**Notes:** This tool does not actually match the "all 8 Geometry tools are diagram/SVG tools"
+assumption — verified directly: no `<svg>` element, no `questionRenderer`, no `_diagram` field, none
+of the diagram-only `defaults`. Structurally it's a pure KaTeX/worded generator, identical in shape
+to Algebra-category tools like `CompletingTheSquare`/`SolvingLinearEquations`, not to its own
+category siblings — exactly why it's the one Geometry tool named as a SmartGrapher candidate rather
+than an SVG-diagram candidate in `PROJECTS.md`.
+
+### Perimeter — `src/tools/Geometry/PerimeterTool.tsx`
+Route: `/perimeter` · Current status: Live *(registry display name is literally "Perimeter (BETA)" —
+fully live and discoverable on the landing page despite the label)*
+
+**Part 1 — Infrastructure alignment**
+- Techniques: Thin — no technique import. Unlike `CircleProperties`, this tool's core moves have
+  **no matching row at all** among the three existing Geometry technique rows — none fit "sum the
+  sides" or "derive a missing rectilinear side from opposite-side equality." **New technique
+  proposed:** `sumPerimeter`/`deriveMissingSide` (add all given sides; for rectilinear shapes, use
+  opposite-side equality to find 1–2 missing lengths before summing), low-to-med priority, needed by
+  exactly this tool. `PROJECTS.md`'s own migration detail already flags this tool by name
+  ("techniques wiring still to add on some") — this audit confirms that note is accurate: zero
+  technique wiring exists anywhere in the file.
+- Skills: No markers — the file doesn't even import `mStep`/`step` (see Working-step depth). The
+  clearest unlinked prerequisite is **unit conversion** (mm↔cm↔m) — both sub-tools' Level 3
+  explicitly narrates a full unit-conversion chain. **No `unit-conversion` skill row exists anywhere
+  in `PROJECTS.md`** — this is the second tool in the whole audit to hand-roll this exact move
+  unlinked (`FractionsOfAmounts`' `worded` sub-tool was flagged for the same move in the Ratio &
+  Proportion pass, with no row proposed there either). **New skill proposed:** `unit-conversion` (no
+  clear representation — similar open-question status to `PowersOfTen`'s `place-value` finding),
+  now with two cross-category demand signals.
+- Representations: Same category-wide open question — the tool's own diagram (with a genuinely
+  sophisticated tick-mark/pill-placement system, see Notes) already functions as the visual.
+- Teach deck: A weaker candidate than most tools audited so far — "add up all the sides" has less
+  inherent misconception texture than fraction/ratio/percentage content. The rectilinear L2
+  missing-side derivation is a plausible, if modest, You-do beat. Not urgent.
+- SmartGrapher: No fit.
+
+**Part 2 — Standalone readiness**
+- Question/sub-tool breadth vs spec: Two sub-tools with genuinely good geometric variety —
+  `polygons` covers 5 regular shapes at L1 and 4 irregular tick-marked shapes at L2 with a real,
+  toggle-gated L3 structural option; `rectilinear` uses 8 distinct hand-built template shapes
+  (L-shapes, T-shapes, staircases, a cross). Real gaps: every question is bare `kind: "simple"`, no
+  real-world framing anywhere despite perimeter being naturally contextual; no question ever asks
+  for a missing side given the perimeter; and the L3 "mixed units" move is architecturally identical
+  in both sub-tools, reading as one repeated conversion drill rather than two distinct L3 ideas.
+- QO richness: **The thinnest of the two tools audited alongside it, and thin in absolute terms.**
+  Zero `dropdown`, zero `multiSelect` anywhere despite `CLAUDE.md` naming multiSelect "the default QO
+  control." The only real control is two boolean toggles, each active at exactly one level. L1 of
+  both sub-tools, and L3 of `rectilinear`, expose zero teacher-facing options at all — a flatter QO
+  profile than every tool audited except `SimplifyingRatiosTool` (recommended to stay gated partly
+  *because of* an identical zero-QO finding).
+- Level progression: Genuinely structural for `rectilinear` (a real method change at L2) and for
+  `polygons`' L1→L2 jump (a real shift in what "equal sides" means geometrically). Weaker for both
+  sub-tools' L3: "same shapes, but convert units first" is a bolted-on arithmetic step rather than a
+  new geometric idea, the same "L3 = conversion drill" shape in both sub-tools.
+- Working-step depth: **The weakest finding across the tools audited in this session, and
+  structurally different from mere thin authoring.** The file imports only `tStep` — `step`/`mStep`
+  are never imported at all — so it is structurally incapable of a fragment reveal, not just thin in
+  authoring it. **Important calibration:** this is not `PerimeterTool`-specific — the same check
+  across the rest of the category confirms `BasicAngleFacts`, `AnglesInTriangles`,
+  `AnglesInQuadrilaterals`, `AnglesInParallelLines`, and `Bearings` all follow the identical
+  tStep-only convention; only `EquationsOfLines`/`CircleProperties` break from it. A genuine,
+  category-wide pattern, not something this tool invented — but still the single largest
+  working-step-depth gap of the tools audited in this session.
+- Conventions/anomaly scan: `customPrintHandler={handleDiagramPrint}` — **Justified, and the correct
+  reference pattern**, deliberately swapped in per `docs/PATCH_NOTES.md`'s 2026-08-13 migration entry
+  for the tool's old hand-rolled PDF generator, with a dedicated helper extracted specifically so the
+  print-time aspect value can never drift from the on-screen rendering — genuinely careful
+  engineering, a direct positive contrast with `CircleProperties`' bespoke handler. `hideFontControls:
+  true` — **Justified**, correct and consistent. `numColumns: 3, maxColumns: 4` — matches
+  `AnglesInQuadrilaterals`'s exact values — **Justified**, textbook. `numQuestions: 9` — undocumented,
+  below the 15 baseline (**Unclear**, less extreme than similar findings elsewhere). Minor,
+  source-only observation: neither SVG sets `preserveAspectRatio`, unlike every other SVG checked
+  this session — very likely a no-op (the SVG default), but a real, undocumented deviation.
+- UI/visual consistency: Not checked live. From source: both SVGs correctly use a computed viewBox,
+  never a fixed pixel height. 16 distinct hardcoded hex values, consistent with the repo-wide norm.
+  `_cs` received and unused.
+- **Recommended status:** Live but flagged for expansion — and this is exactly the test case this
+  doc's own intro names it as. The `enabled` flag going live tracked a real, verified engineering
+  fact (the ToolShell/`handleDiagramPrint` migration is genuinely well done — better-engineered than
+  `CircleProperties`' print path, in fact), but content quality is a separate, lower-scoring axis:
+  this is the thinnest tool on QO richness of the tools audited in this session, and structurally
+  incapable of the fragment-reveal convention (though that specific gap is category-wide). Nothing
+  here argues the shell itself is unsound or that the tool should be gated — the underlying maths and
+  diagram-placement engineering are solid — but "BETA" in its own display name plus this profile
+  argues against treating it as done; it reads as exactly what this doc's intro predicted:
+  shell-verified, content-unreviewed until now. (current: Live)
+
+**Notes:** The pill-placement algorithm — brute-force scoring all 3ⁿ candidate-position assignments
+to maximise minimum pairwise clearance between labels — is genuinely sophisticated engineering,
+explicitly called out in `docs/PATCH_NOTES.md`'s migration entry as carried over verbatim, a clear
+positive relative to most diagrams audited so far. This is a case where the diagram/interaction
+engineering is well ahead of the pedagogy-content layer sitting on top of it — worth keeping those
+two observations separate when this feeds back into `PROJECTS.md`. Also worth flagging: since this
+tool imports neither `step` nor `mStep`, and `CircleProperties` in the same category does, the
+Geometry category's own reference bar is internally split — a future session naming a Geometry "what
+good looks like" tool should pick one of the angle-fact tools or `CircleProperties`, not assume they
+share a convention.
 
 *(Entries get appended below each category's checklist as tools are audited, using the template
 above. Tick the checkbox and flip the category status once every tool in it has an entry.)*

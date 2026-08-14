@@ -28,6 +28,31 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-08-14 — Ran the Maths Tool Audit's Geometry category (8 tools) — audit complete
+No code changed — findings-only pass per `docs/TOOL_AUDIT.md`'s methodology. Audited all eight
+Geometry tools (`AnglesInQuadrilaterals`, `BasicAngleFacts`, `AnglesInTriangles`,
+`AnglesInParallelLines`, `Bearings`, `CircleProperties`, `EquationsOfLines`, `PerimeterTool`) and
+logged the full per-tool entries — **this completes the Maths Tool Audit: all 27 tools across
+Number, Algebra, Ratio & Proportion, and Geometry are now audited.** Headline Geometry findings: six
+of the eight tools build every working step through `tStep()` only, making them structurally
+incapable of the fragment-reveal convention (a category-wide finding, not six separate ones); only 4
+of 8 tools use the shared `handleDiagramPrint` — the other 4 hand-roll a fixed-grid print handler
+that directly contradicts `CLAUDE.md`'s explicit instruction, and two of those three hand-rolled
+handlers have confirmed functional bugs (`BasicAngleFacts` silently drops section headers on
+differentiated worksheets; `CircleProperties`' Differentiated toggle does nothing at all, with no
+error). Notably, two of the three hand-rolled holdouts are the very files `CLAUDE.md` names as the
+SVG/renderer reference implementations. `PerimeterTool` — named in `docs/TOOL_AUDIT.md`'s own intro
+as the example of why a live `enabled` flag can't be trusted as a quality signal — confirmed exactly
+that prediction: well-engineered shell migration, thinnest QO richness of the whole audit.
+`EquationsOfLines` turned out not to be a diagram tool at all despite its category, confirming its
+SmartGrapher gap is still fully unaddressed. `PROJECTS.md`'s skills table had zero Geometry rows
+before this pass; two are now proposed (`apply-angle-fact`, `unit-conversion`) alongside a new
+`sumPerimeter`/`deriveMissingSide` technique. Updated `docs/PROJECTS.md`'s technique/skill tables and
+flipped the Maths Tool Audit's status to complete, with a short "possible next steps" list for
+picking up the audit's findings (a sign-off pass on `SimplifyingRatiosTool`'s "stay gated"
+recommendation, fixing the two confirmed print-handler bugs, and building from the refreshed
+technique/skill demand signals rather than the pre-audit guesses). No `enabled` flags changed.
+
 ## 2026-08-14 — Ran the Maths Tool Audit's Ratio & Proportion category (6 tools)
 No code changed — findings-only pass per `docs/TOOL_AUDIT.md`'s methodology. Audited all six Ratio &
 Proportion tools (`RatioSharingTool`, `SimplifyingRatiosTool`, `RecipesTool`, `FractionToRatio`,

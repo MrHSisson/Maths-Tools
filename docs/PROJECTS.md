@@ -38,7 +38,7 @@ lives in `CLAUDE.md` → "Ending a session / session kickoffs".
 
 | Prong | Status | One-line |
 |---|---|---|
-| **Maths Tool Audit** | 🚧 | Number + Algebra + Ratio & Proportion complete (19/27) — Geometry still to do; see `docs/TOOL_AUDIT.md` |
+| **Maths Tool Audit** | ✅ | All 27 tools audited — see `docs/TOOL_AUDIT.md`; findings now drive the four prongs below |
 | **Techniques engine** | 🚧 | Engine built; only 1 tool converted — further work now sequenced via the Tool Audit |
 | **Skills library** | 🚧 | Engine + backlog ready; 2 skills built — further work now sequenced via the Tool Audit |
 | **Core representations** | 🚧 | 3 of 6 visual families have Teach scenes — further work now sequenced via the Tool Audit |
@@ -54,41 +54,43 @@ Status keys: ✅ done · 🚧 in progress · ⬜ not started · ⏸ paused (deli
 
 # Maths Tool Audit
 
-**Current priority.** A systematic, per-tool review of every Maths ToolShell question generator —
-27 tools across Number, Algebra, Ratio & Proportion, and Geometry. While this audit is running,
-**Computer Science and Decision Maths are parked** (see their sections below) and the four Maths
-pedagogy prongs beneath this one (Techniques engine, Skills library, Core representations, Teach
-decks) plus SmartGrapher **take their next steps from this audit's findings rather than being
-picked ad hoc**.
+**Complete.** A systematic, per-tool review of every Maths ToolShell question generator — all 27
+tools across Number, Algebra, Ratio & Proportion, and Geometry are now audited, findings logged in
+`docs/TOOL_AUDIT.md`. The four Maths pedagogy prongs beneath this one (Techniques engine, Skills
+library, Core representations, Teach decks) plus SmartGrapher now **take their next steps from this
+audit's findings** — see the refreshed technique/skill tables below.
 
-**Where it's at.** Number, Algebra, and Ratio & Proportion categories complete (19/27 tools) —
-findings logged in `docs/TOOL_AUDIT.md`. From Number: two tools (`FractionsAddSub`, `Percentages`)
-came out close to reference quality; the other four are "live but flagged for expansion" on content
-depth, with `PowersOfTen`'s working steps the weakest found (two fixed-template sentences, no
-computed numeric line). From Algebra: `NonLinearSimEq` — the repo's one techniques-engine conversion
-— turned out to be a genuine hybrid (its highest-frequency sub-tool still hand-rolls its solve
-chain), which is why both of its previously-known working-step gaps are confirmed still present at
-the exact generator-code level. `CompletingTheSquare.tsx`, the repo's own named shell-wiring
-reference, is equally unconverted on the techniques/fragment axis — a useful calibration that
-"reference implementation" is an architectural claim, not a pedagogy-infrastructure one. From Ratio &
-Proportion: the audit's clearest live/gated contrast so far — `SimplifyingRatiosTool` (dev-gated) is
-recommended to **stay gated**, being the only tool in the whole audit with zero QO control and zero
-visual representation, next to its live sibling `RatioSharingTool` which has both. `FractionsOfAmounts`
-came out reference-quality (52 fragment-array uses, the strongest QO differentiation of the pass).
-Several content bugs and doc-drift findings surfaced across the three categories (`CollectingLikeTerms`'
-info text vs. its generator; a redundant no-op step in `SolvingLinearEquations`; `CLAUDE.md`'s
-reference-implementations table not actually naming `FractionToRatio.tsx`), findings only, not fixed.
-New Part 1 backlog items from all three categories — `directedNumberAddSub`, `scaleByPowerOfTen`,
-`place-value`, a percentages technique/skill family, a `solveByElimination` refresh, a priority bump
-on `solveByIteration`, and from this pass a new `convert-fraction-ratio` skill plus broadened-scope
-notes on `scaleRecipe`/`unitPriceCompare` and a third demand signal for `unitary-method` — are now in
-the tables below. The full methodology, scope list, and per-tool template live in
-**`docs/TOOL_AUDIT.md`** — that doc is written to be self-contained, so a fresh session with no
-memory of how this was designed can pick it up directly.
+**Where it's at.** All four categories complete. From Number: two tools (`FractionsAddSub`,
+`Percentages`) came out close to reference quality; the other four are "live but flagged for
+expansion" on content depth, with `PowersOfTen`'s working steps the weakest found in that category
+(two fixed-template sentences, no computed numeric line). From Algebra: `NonLinearSimEq` — the
+repo's one techniques-engine conversion — turned out to be a genuine hybrid (its highest-frequency
+sub-tool still hand-rolls its solve chain), confirming both of its previously-known working-step
+gaps still present at the exact generator-code level; `CompletingTheSquare.tsx`, the named
+shell-wiring reference, is equally unconverted on the techniques/fragment axis. From Ratio &
+Proportion: the audit's clearest live/gated contrast — `SimplifyingRatiosTool` (dev-gated) is
+recommended to **stay gated**, being the only tool with zero QO control and zero visual
+representation, next to its live sibling `RatioSharingTool` which has both; `FractionsOfAmounts`
+came out reference-quality. From Geometry: a category-wide finding that six of the eight tools build
+every working step through `tStep()` only, making them structurally incapable of the fragment
+convention (not just thin authors of it); a second split where only 4 of 8 tools use the shared
+`handleDiagramPrint` — two of the three hand-rolled holdouts are the very files `CLAUDE.md` names as
+the SVG/renderer references, and two of those three hand-rolled handlers have confirmed functional
+bugs (`BasicAngleFacts` silently drops section headers on differentiated worksheets;
+`CircleProperties`' Differentiated toggle does nothing at all); and `PerimeterTool` — named in
+`docs/TOOL_AUDIT.md`'s own intro as the example of why a live `enabled` flag can't be trusted as a
+quality signal — confirmed exactly that prediction (well-engineered shell, thinnest QO richness of
+the whole audit). `PROJECTS.md`'s skills table had zero Geometry rows before this pass; two are now
+proposed (`apply-angle-fact`, `unit-conversion`) to seed it, alongside a new
+`sumPerimeter`/`deriveMissingSide` technique. Several content bugs and doc-drift findings surfaced
+across all four categories (`CollectingLikeTerms`' info text vs. its generator; a redundant no-op
+step in `SolvingLinearEquations`; `CLAUDE.md`'s reference-implementations table not actually naming
+`FractionToRatio.tsx`), findings only, not fixed. The full methodology, scope list, per-tool
+template, and every individual finding in full detail live in **`docs/TOOL_AUDIT.md`**.
 
-**Why this exists, in short:** the four pedagogy prongs and SmartGrapher each have their own
-backlog, but priority between them (and between tools) has been picked anecdotally, not from a
-real view of per-tool need. This audit produces that view. It asks two separate questions of every
+**Why this exists, in short:** the four pedagogy prongs and SmartGrapher each had their own
+backlog, but priority between them (and between tools) had been picked anecdotally, not from a
+real view of per-tool need. This audit produced that view. It asked two separate questions of every
 tool: (1) how far behind the shared pedagogy systems is it (an *infrastructure* gap — expected of
 almost every tool, feeds the existing prong backlogs), and (2) judged blind to whether the tool is
 currently live or dev-gated, does it stand on its own as a complete, well-rounded tool, or does it
@@ -96,11 +98,19 @@ feel thin/limited (a *standalone readiness* gap — feeds a new tool-parity back
 recommended live/gated status per tool). The full detail on both, plus the exact grep/inspection
 technique for finding conventions debt (non-standard column caps, hidden font controls, bespoke
 print handlers, etc.) and why the current `enabled` flag can't be trusted as a quality signal, is
-in `docs/TOOL_AUDIT.md` — do not re-derive any of this from scratch; read that doc first.
+in `docs/TOOL_AUDIT.md`.
 
-**Next step:** finish with the Geometry category (8 tools) in `docs/TOOL_AUDIT.md`'s audit log — the
-last category. This is a findings-only pass: no code changes, no `enabled` flips, until a category's
-findings have been reviewed.
+**Possible next steps:**
+- A human sign-off pass on Part 2's recommended-status list — in particular, deciding whether to act
+  on `SimplifyingRatiosTool`'s "stay gated" recommendation, the one concrete live/gated call the
+  audit produced.
+- Fix the two confirmed print-handler bugs (`BasicAngleFacts`, `CircleProperties`) and migrate the
+  three hand-rolled Geometry `customPrintHandler`s onto `handleDiagramPrint` — flagged as the
+  highest-leverage, most mechanical fix surfaced anywhere in the audit.
+- Pick up the refreshed technique/skill tables below for the next actual build session, rather than
+  the pre-audit priority guesses they replace.
+- Decide whether to unpark Computer Science and/or Decision Maths now that the audit that was
+  blocking them is done (see their sections below) — not a call this audit makes for you.
 
 ---
 
@@ -116,10 +126,11 @@ unblocks the others — so read these together when planning a Maths session.
 > pages: **Skill Library** (`/skills`), **Technique Library** (`/techniques`), **Grapher Lab**
 > (`/grapher`).
 
-> **Sequencing note.** These four prongs' next steps are now driven by the **Maths Tool Audit**
-> (`docs/TOOL_AUDIT.md`), not picked ad hoc here — as each category is audited, real per-tool
-> demand will refresh the "Possible next steps" and priority columns below. The bullets currently
-> below predate the audit and are kept as background context, not the active queue.
+> **Sequencing note.** The Maths Tool Audit (`docs/TOOL_AUDIT.md`) is now complete — the
+> technique-audit and skills tables below have been refreshed with real per-tool demand from all
+> 27 tools ("needed by `<tool>`" annotations throughout). The bullet-point "possible next steps"
+> under each prong below still mostly predate the audit and are kept as background context — the
+> tables' demand signals are the more current source for what to build next.
 
 ## Techniques engine
 
@@ -199,9 +210,10 @@ Reference conversion: `NonLinearSimEq.tsx` (uses `standard` grain).
 
 | Technique | Move | Priority | Status |
 |---|---|---|---|
-| `applyAngleFact` | sum to 180/360, isosceles, exterior, on a line/point | **high** | ⬜ (diagram tools — the reasoning IS the move) |
-| `gradientIntercept` | gradient formula, `y = mx + c`, solve for c | med | ⬜ |
-| `circleFormula` | circumference / area / arc / sector | med | ⬜ |
+| `applyAngleFact` | sum to 180/360, isosceles, exterior, on a line/point | **high** | ⬜ — needed by `BasicAngleFacts`, `AnglesInTriangles` (the cleanest demand signal — "the reasoning IS the move" genuinely holds there), `AnglesInQuadrilaterals` (richest demand signal, working already states the rule name every branch), `AnglesInParallelLines` (partial fit — rule-naming without shown arithmetic), and `Bearings` (a specific unstated back-bearing justification) — five of eight Geometry tools (Tool Audit, Geometry pass) |
+| `gradientIntercept` | gradient formula, `y = mx + c`, solve for c | med | ⬜ — needed by `EquationsOfLines`; an unusually cheap conversion, since the tool already hand-computes the exact three-step shape correctly (Tool Audit, Geometry pass) |
+| `circleFormula` | circumference / area / arc / sector | med | ⬜ — needed by `CircleProperties`, an unusually complete match: the tool alone demonstrates all four named sub-moves (Tool Audit, Geometry pass) |
+| `sumPerimeter` / `deriveMissingSide` | add all given sides; for rectilinear shapes, use opposite-side equality to find missing lengths first | low–med | ⬜ — new, needed by `PerimeterTool`; none of the other three Geometry rows cover this move (Tool Audit, Geometry pass) |
 
 ~24 candidates, six built. Frequency concentrates on a handful — `solveLinearEquation`,
 `expandBrackets`, `substitute`, `simplifyFraction`, `collectLikeTerms`, `makeSubject`,
@@ -236,16 +248,16 @@ but doesn't teach*; the representation column signals effort — existing scene 
 | `simplify-fraction` | divide num & den by the HCF | **bar model** *(exists)* | **high** | ⬜ — needed by `FractionsAddSub`, `FractionMultDiv`, and now `FractionsOfAmounts` (its `asFraction` sub-tool, three consumers total) |
 | `hcf` | highest common factor | **prime tiles** `primeVenn` *(exists)* | **high** | ⬜ — needed by `FractionsOfAmounts` (`asFraction`'s HCF step) and `RecipesTool` (its L2 HCF-based scaling step) — first named consumers |
 | `share-in-ratio` | total parts → 1 part → each share | **bar model** *(exists)* | **high** | ⬜ — needed by `RatioSharingTool`, the category's sole real demand signal |
-| `fraction-of-amount` | ÷ by denominator, × by numerator | **bar model** *(exists)* | **high** | ⬜ — needed by `FractionsOfAmounts`, a near-exact fit since the tool's own working already narrates the bar-model method |
+| `fraction-of-amount` | ÷ by denominator, × by numerator | **bar model** *(exists)* | **high** | ⬜ — needed by `FractionsOfAmounts`, a near-exact fit since the tool's own working already narrates the bar-model method; `CircleProperties`' `sectors` sub-tool (θ/360 × formula) is also a structurally identical, cross-topic unnamed consumer (Tool Audit, Geometry pass) |
 | `convert-fraction-ratio` | express a fraction as a complementary part:part ratio, and the reverse | **bar model** *(existing `split`/`equivalents` scenes — cheap)* | med | ⬜ — new, needed by `FractionToRatio` (Tool Audit, Ratio & Proportion pass); its `convertFractionRatio` technique row had no matching skill row before this pass, breaking the pairing pattern every other row follows |
-| `solve-linear-equation` | do the same to both sides | **algebra tiles** / number line *(no tile scene yet)* | **high** | ⬜ — needed by `SolvingLinearEquations` |
+| `solve-linear-equation` | do the same to both sides | **algebra tiles** / number line *(no tile scene yet)* | **high** | ⬜ — needed by `SolvingLinearEquations`, and now also `BasicAngleFacts` (its L3 algebraic sub-tools) and `AnglesInQuadrilaterals` (its algebra-form questions) — two more unlinked consumers (Tool Audit, Geometry pass) |
 | `expand-double-brackets` | grid / area of each term pair | **area model** *(no scene yet)* | **high** | ⬜ — needed by `ExpandingBrackets` |
 | `collect-like-terms` | group matching terms | **algebra tiles** *(no scene yet)* | med | ⬜ — needed by `CollectingLikeTerms`, `ExpandingBrackets` |
 | `convert-mixed-improper` | mixed ⇄ improper fraction | **bar model** *(exists)* | med | ⬜ — needed by `FractionsAddSub`, `FractionMultDiv` |
 | `round-to-significant-figure` | find the place value, round | **number line** *(exists)* | med | ⬜ — needed by `Estimation` |
 | `factorise-quadratic` | find the factor pair | **area model** *(no scene yet)* | med | ⬜ — needed by `NonLinearSimEq` |
-| `substitute-into-formula` | replace letters with values | *(none — text)* | med | ⬜ — needed by `NonLinearSimEq` |
-| `rearrange-formula` | inverse operations to change subject | *(none — text / algebra tiles)* | med | ⬜ — needed by `Iterations`, `NonLinearSimEq` |
+| `substitute-into-formula` | replace letters with values | *(none — text)* | med | ⬜ — needed by `NonLinearSimEq`, and now also `EquationsOfLines` ("Substitute into y = mx + c") (Tool Audit, Geometry pass) |
+| `rearrange-formula` | inverse operations to change subject | *(none — text / algebra tiles)* | med | ⬜ — needed by `Iterations`, `NonLinearSimEq`, and now also `EquationsOfLines` (`missing` sub-tool) and `CircleProperties` (L3 rearranging `C=2πr`/`A=πr²`) — a third and fourth consumer (Tool Audit, Geometry pass) |
 | `simplify-ratio` | divide parts by a common factor | **bar model** *(exists)* | med | ⬜ — needed by `FractionToRatio` (`formingRatios`) and `SimplifyingRatiosTool` (numeric sub-tool) |
 | `directed-number` | add/subtract/multiply negatives | **negative counters** *(no scene yet)* | med | ⬜ — needed by `IntegerAddSub` |
 | `factor-pairs` | list the factor pairs of n | **prime tiles** *(exists)* | low | ⬜ |
@@ -253,6 +265,8 @@ but doesn't teach*; the representation column signals effort — existing scene 
 | `keep-flip-change` | reciprocal + multiply for fraction division | **bar model** *(no scene authored yet for this specific move)* | low | ⬜ — new, needed by `FractionMultDiv` (Tool Audit, Number pass) |
 | `percentage-to-multiplier` | convert a percentage to a decimal multiplier | **bar model** *(exists)* | med | ⬜ — new, needed by `Percentages` (Tool Audit, Number pass) |
 | `unitary-method` | find 1%, then scale to the target | **bar model** *(exists)* | med | ⬜ — new, needed by `Percentages` (Tool Audit, Number pass), and now also `RecipesTool` and `BestBuys` (Tool Audit, Ratio & Proportion pass) — three tools across two categories hand-roll this exact reasoning unlinked, the clearest cross-category demand signal found so far |
+| `apply-angle-fact` | identify which angle rule applies (sum to 180/360, isosceles, exterior, vertically opposite) | *(none — angle diagrams sit outside the six-representation vocabulary; open question, see Core representations)* | **high** | ⬜ — new, pairs with the `applyAngleFact` technique; needed by `AnglesInQuadrilaterals` (richest demand signal), `BasicAngleFacts`, `AnglesInTriangles`, `AnglesInParallelLines`, `Bearings` (Tool Audit, Geometry pass) — `PROJECTS.md`'s skills table had zero Geometry rows before this pass |
+| `unit-conversion` | convert between units of the same quantity (mm/cm/m, etc.) before calculating | *(none — closest fit is number line, same open-question status as `place-value`)* | med | ⬜ — new, needed by `PerimeterTool` (both sub-tools' L3) and `FractionsOfAmounts` (`worded` sub-tool) — two cross-category demand signals (Tool Audit, Ratio & Proportion and Geometry passes) |
 
 Build the cheap cluster (top six after `lcm`) first — all on existing bar-model / prime-tile scenes,
 each a prerequisite several tools link to. The equally-wanted `solve-linear-equation`,
@@ -267,6 +281,12 @@ the six; new scenes extend an existing `TeachScene` family in `TeachingDeck.tsx`
 animated scene families built**: bar model (`split`/`combine`/`equivalents`), number line
 (`multiples`), prime factor tiles (`factorTree`/`primeVenn`). **Three don't yet.** These are the
 biggest lever on the Maths side — each new representation unlocks a cluster of skills and decks.
+**Open question surfaced by the Tool Audit's Geometry pass:** none of the six obviously cover an
+angle/circle/polygon SVG diagram — every Geometry tool independently hit this same gap, and the
+diagram itself appears to function as its own representation, outside the six-vocabulary system
+entirely. Recorded as a standing open question (`docs/TOOL_AUDIT.md`'s Geometry category summary),
+not assigned an owner — a decision on whether Geometry needs a seventh representation, or is
+legitimately exempt, is still open.
 
 **Possible next steps (background, pre-audit — see the sequencing note above):**
 - Build an **area-model** scene family (unlocks expanding brackets, completing the square, factorising).
@@ -325,7 +345,7 @@ tool's own info modal, not a silent gap.
 
 **Possible next steps (background, pre-audit — SmartGrapher fit is now also part of the Tool Audit's
 Part 1 per tool, see `docs/TOOL_AUDIT.md`):**
-- Add graphs to more tools — **Equations of Lines** (lines/gradients/intercepts), **Completing the Square** (parabola + vertex, confirmed still unwired), **Iterations** (the curve and the root being approached, confirmed still unwired and now the top candidate).
+- Add graphs to more tools — **Equations of Lines** (lines/gradients/intercepts, confirmed still unwired — the tool has zero visual content of any kind despite its own name, the single highest-leverage Part 1 gap found for it), **Completing the Square** (parabola + vertex, confirmed still unwired), **Iterations** (the curve and the root being approached, confirmed still unwired and now the top candidate).
 - Add an **ellipse preset** if/when a tool needs ellipse-and-line (presets today: linear · quadratic · cubic · circle · custom) — would close `NonLinearSimEq`'s disclosed ellipse gap.
 - Mostly: pull it in opportunistically when building or migrating any coordinate/quadratic tool.
 
