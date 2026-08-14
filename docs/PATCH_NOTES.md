@@ -28,6 +28,133 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-08-14 — Spot-checked the audit and fixed the CLAUDE.md doc-drift it found
+No tool code changed — a verification pass on the completed Tool Audit, plus two doc corrections.
+**Spot-check**: directly re-read source for 8 claims spanning 6 tools across 3 categories, including
+the two highest-stakes findings in the whole audit — `NonLinearSimEq`'s `−1x`-should-be-`−x` bug and
+missing `(2x−5)²` expansion (both confirmed exactly, including root cause: `solvePos`/`solveNeg`
+interpolate a computed coefficient raw instead of routing it through the file's own `nextT`/`lead`
+sanitizer, and `expandedLatex` is computed directly from final simplified coefficients with no
+intermediate ever stored) — and `CircleProperties`' print-handler bug (confirmed: the function
+signature literally only accepts 3 of the 4 `customPrintHandler` parameters, silently dropping
+`ctx.isDifferentiated`). `CollectingLikeTerms`' info-modal/generator mismatch also confirmed exactly.
+Found and fixed two small counting inaccuracies (`AnglesInQuadrilaterals`' Level 1 multiSelect count —
+2 groups, not 1; `BasicAngleFacts`' distinct hex-token count — 19, not 18); one apparent discrepancy
+(`FractionsOfAmounts`' "52 fragment uses") turned out to be the spot-check's own undercount, not an
+audit error. **Doc-drift fixes**: added a caveat to `CLAUDE.md`'s Diagram-tools reference
+implementations (`AnglesInParallelLines.tsx`/`BasicAngleFacts.tsx`) clarifying they're the reference
+for SVG element conventions only, not the print-handler pattern — both hand-roll a fixed-grid
+`customPrintHandler` that CLAUDE.md's own "Printing SVG worksheets" section tells tools not to do;
+points readers to `AnglesInQuadrilaterals.tsx` for print instead. Corrected `docs/TOOL_AUDIT.md`'s own
+methodology text, which had falsely claimed `FractionToRatio.tsx`/`RatioSharingTool.tsx` were "named
+in `CLAUDE.md`" when only two of the four cited files actually are. Marked all three resolved findings
+in their originating `TOOL_AUDIT.md` entries so they don't get rediscovered.
+
+## 2026-08-14 — Built the Part 1 roadmap and Part 2 scope from the completed Tool Audit
+No code changed — this session turned the completed Maths Tool Audit's findings into an actual build
+order. Added a **"Part 1 roadmap"** to `docs/PROJECTS.md`'s Maths Tool Audit section: five tiers
+sequencing the next build across all five infrastructure prongs (Techniques, Skills, Core
+representations, Teach decks, SmartGrapher) together by leverage, rather than each prong picking its
+own priority in isolation — Tier 0 is free wins (wiring already-built pieces), Tier 1 is the one
+representation decision (algebra tiles now has a stronger leverage case than area model — 5
+tool-consumers vs. ~3, reversing the pre-audit guess), Tier 2 is the highest-leverage builds that can
+start immediately (`applyAngleFact`, needed by 5 of 8 Geometry tools, is the single biggest demand
+signal found), Tier 3/4 are smaller items, plus a cross-cutting list (SmartGrapher wiring, the grain
+toggle, Teach decks). Also scoped a **"Part 2 — Tool expansion"** section, explicitly defined as the
+per-tool content-growth backlog needing a pedagogy/product decision (new question types, broader
+sub-tool coverage) — deliberately excluding the two confirmed print-handler bugs and the
+`SimplifyingRatiosTool` gating call, which are mechanical/sign-off items that don't need the same
+depth of involvement and are called out separately. Updated the Core representations section's
+"prioritise by blockage" bullet, which the audit's findings now actually answer. Confirmed via the
+audit: exactly one tool (`SimplifyingRatiosTool`) is recommended for dev-gating, and it's already
+gated — no live tool was recommended for new gating.
+
+## 2026-08-14 — Ran the Maths Tool Audit's Geometry category (8 tools) — audit complete
+No code changed — findings-only pass per `docs/TOOL_AUDIT.md`'s methodology. Audited all eight
+Geometry tools (`AnglesInQuadrilaterals`, `BasicAngleFacts`, `AnglesInTriangles`,
+`AnglesInParallelLines`, `Bearings`, `CircleProperties`, `EquationsOfLines`, `PerimeterTool`) and
+logged the full per-tool entries — **this completes the Maths Tool Audit: all 27 tools across
+Number, Algebra, Ratio & Proportion, and Geometry are now audited.** Headline Geometry findings: six
+of the eight tools build every working step through `tStep()` only, making them structurally
+incapable of the fragment-reveal convention (a category-wide finding, not six separate ones); only 4
+of 8 tools use the shared `handleDiagramPrint` — the other 4 hand-roll a fixed-grid print handler
+that directly contradicts `CLAUDE.md`'s explicit instruction, and two of those three hand-rolled
+handlers have confirmed functional bugs (`BasicAngleFacts` silently drops section headers on
+differentiated worksheets; `CircleProperties`' Differentiated toggle does nothing at all, with no
+error). Notably, two of the three hand-rolled holdouts are the very files `CLAUDE.md` names as the
+SVG/renderer reference implementations. `PerimeterTool` — named in `docs/TOOL_AUDIT.md`'s own intro
+as the example of why a live `enabled` flag can't be trusted as a quality signal — confirmed exactly
+that prediction: well-engineered shell migration, thinnest QO richness of the whole audit.
+`EquationsOfLines` turned out not to be a diagram tool at all despite its category, confirming its
+SmartGrapher gap is still fully unaddressed. `PROJECTS.md`'s skills table had zero Geometry rows
+before this pass; two are now proposed (`apply-angle-fact`, `unit-conversion`) alongside a new
+`sumPerimeter`/`deriveMissingSide` technique. Updated `docs/PROJECTS.md`'s technique/skill tables and
+flipped the Maths Tool Audit's status to complete, with a short "possible next steps" list for
+picking up the audit's findings (a sign-off pass on `SimplifyingRatiosTool`'s "stay gated"
+recommendation, fixing the two confirmed print-handler bugs, and building from the refreshed
+technique/skill demand signals rather than the pre-audit guesses). No `enabled` flags changed.
+
+## 2026-08-14 — Ran the Maths Tool Audit's Ratio & Proportion category (6 tools)
+No code changed — findings-only pass per `docs/TOOL_AUDIT.md`'s methodology. Audited all six Ratio &
+Proportion tools (`RatioSharingTool`, `SimplifyingRatiosTool`, `RecipesTool`, `FractionToRatio`,
+`FractionsOfAmounts`, `BestBuys`) and logged the full per-tool entries. Headline result: the clearest
+live/gated contrast found in the audit so far — `SimplifyingRatiosTool` (dev-gated) is recommended to
+**stay gated**, judged blind to its current status, being the only tool in the whole audit with
+literally zero QO control and zero visual representation, while its live sibling `RatioSharingTool`
+ships with both a working bar model and real controls. `FractionsOfAmounts` came out reference-quality
+(52 genuine fragment-array uses, the strongest QO differentiation of the pass). Two existing technique
+rows (`scaleRecipe`, `unitPriceCompare`) turned out to only describe half their tool's actual content —
+`RecipesTool`'s Constraints sub-tool and `BestBuys`' Special Offers sub-tool each do a materially
+different move. The `unitary-method` skill (proposed for `Percentages` in the Number pass) now has two
+more unconsumed demand signals here — three tools across two categories hand-roll the same "find 1,
+then scale" reasoning unlinked. A new skill, `convert-fraction-ratio`, is proposed for `FractionToRatio`,
+whose technique row had no matching skill row at all. Two documentation-drift findings also surfaced:
+`CLAUDE.md`'s reference-implementations table doesn't actually name `FractionToRatio.tsx` despite
+`docs/TOOL_AUDIT.md`'s own methodology text citing it, and doesn't describe `RatioSharingTool.tsx` as a
+"multi-group multiSelect" example (it's single-group throughout) — recorded as findings, not corrected.
+Updated `docs/PROJECTS.md`'s technique/skill tables accordingly. No `enabled` flags changed (the
+`SimplifyingRatiosTool` recommendation is recorded only, per the audit's own rule not to act on
+recommendations mid-pass). Next: Geometry category (8 tools) — the final one.
+
+## 2026-08-14 — Ran the Maths Tool Audit's Algebra category (7 tools)
+No code changed — findings-only pass per `docs/TOOL_AUDIT.md`'s methodology. Audited all seven
+Algebra tools (`CollectingLikeTerms`, `SolvingLinearEquations`, `CompletingTheSquare`, `Iterations`,
+`SimultaneousEquations`, `NonLinearSimEq`, `ExpandingBrackets`) and logged the full per-tool entries.
+Headline results: `NonLinearSimEq` — the repo's one techniques-engine conversion — turned out to be a
+genuine hybrid rather than a full delegation (its highest-frequency `linear` sub-tool still hand-rolls
+its solve chain), which is why both of its previously-known working-step gaps are now **confirmed
+still present at the exact generator-code level**: the `(2x−5)²` expansion is never shown (the data
+model has nowhere to store an unsimplified intermediate) and a computed ±1 coefficient renders as
+literal `−1x` because that path bypasses the sanitizer used everywhere else in the file.
+`CompletingTheSquare.tsx` — the repo's own named shell-wiring reference — is equally unconverted on
+the techniques/fragment axis, a useful calibration that "reference implementation" is an
+architectural claim, not a pedagogy-infrastructure one. `SimultaneousEquations` (the Elimination
+sibling) is not carried along by `NonLinearSimEq`'s "converted" status, despite arguably broader Part
+2 content — a clean example of Part 1/Part 2 findings diverging on sibling tools. Two unrelated
+content bugs surfaced (not fixed): `CollectingLikeTerms`' info-modal text disagrees with its own
+generator's option count, and `SolvingLinearEquations` has a redundant no-op working step in two of
+three levels. `Iterations` was flagged as the highest-leverage unwired SmartGrapher candidate found so
+far (already named in `PROJECTS.md`, proven elsewhere in the same category, zero visual content
+today). Updated `docs/PROJECTS.md`'s technique/skill tables with new demand notes and one priority
+bump (`solveByIteration`: low → med). No `enabled` flags changed. Next: Ratio & Proportion category (6
+tools).
+
+## 2026-08-14 — Ran the Maths Tool Audit's Number category (6 tools)
+No code changed — findings-only pass per `docs/TOOL_AUDIT.md`'s methodology. Audited all six Number
+tools (`IntegerAddSub`, `Estimation`, `PowersOfTen`, `FractionsAddSub`, `FractionMultDiv`,
+`Percentages`) against Part 1 (infrastructure alignment) and Part 2 (standalone readiness), and
+logged the full per-tool entries in `docs/TOOL_AUDIT.md`. Headline results: `FractionsAddSub` and
+`Percentages` are close to reference quality (worded contexts, fragmented working, genuine level
+restructuring) and are worth treating as Number-strand quality bars; the other four are "live but
+flagged for expansion," with `PowersOfTen`'s two fixed-template working steps (no computed numeric
+line) the weakest finding of the pass, and its Level 3 dropping its own place-value-grid
+representation entirely. Surfaced several new Part 1 backlog items not previously tracked —
+`directedNumberAddSub` and `scaleByPowerOfTen` techniques, a `place-value` skill, and a
+previously-nonexistent percentages technique/skill family (`percentageOfAmount`, `percentageChange`,
+`reversePercentage`, `percentage-to-multiplier`, `unitary-method`) — added to `docs/PROJECTS.md`'s
+technique/skill tables with demand notes. No `enabled` flags changed. Next: Algebra category (7
+tools).
+
 ## 2026-08-14 — Set up the Maths Tool Audit; reorganised the planning docs around it
 No code changed — this session designed and documented a new initiative rather than shipping a
 tool change. Created **`docs/TOOL_AUDIT.md`**: a self-contained methodology + live findings log
