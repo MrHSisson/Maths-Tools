@@ -26,6 +26,7 @@ lives in `CLAUDE.md` → "Ending a session / session kickoffs".
 | For… | See |
 |---|---|
 | Conventions / how to build | `CLAUDE.md` |
+| The per-tool pedagogy + readiness audit (criteria and live findings) | `docs/TOOL_AUDIT.md` |
 | Shell architecture + contracts | `docs/architecture/CS_SHELL_PLAN.md` · `docs/architecture/DECISION_SHELL_PLAN.md` |
 | What actually shipped, session by session | `docs/PATCH_NOTES.md` |
 | Canonical names for every element | `docs/GLOSSARY.md` |
@@ -37,92 +38,49 @@ lives in `CLAUDE.md` → "Ending a session / session kickoffs".
 
 | Prong | Status | One-line |
 |---|---|---|
-| **Computer Science shell** | 🚧 | Shell done; 2 of ~15 J277 topics authored as data |
-| **Decision Maths** | 🚧 | New shell live; MST shipped thin; procedural network generator harvested, unwired |
-| **Techniques engine** | 🚧 | Engine built; only 1 tool converted so far |
-| **Skills library** | 🚧 | Engine + backlog ready; 2 skills built |
-| **Core representations** | 🚧 | 3 of 6 visual families have Teach scenes |
-| **Teach decks** | 🚧 | Engine built; one partial deck exists |
-| **SmartGrapher** | ✅ | Mature, embeddable; used in 2 tools |
-| **Old-shell migration** | 🚧 | Most tools migrated; a handful remain |
+| **Maths Tool Audit** | ⬜ | Not started — systematic per-tool review of all 27 Number/Algebra/Ratio&Proportion/Geometry tools; see `docs/TOOL_AUDIT.md` |
+| **Techniques engine** | 🚧 | Engine built; only 1 tool converted — further work now sequenced via the Tool Audit |
+| **Skills library** | 🚧 | Engine + backlog ready; 2 skills built — further work now sequenced via the Tool Audit |
+| **Core representations** | 🚧 | 3 of 6 visual families have Teach scenes — further work now sequenced via the Tool Audit |
+| **Teach decks** | 🚧 | Engine built; one partial deck exists — further work now sequenced via the Tool Audit |
+| **SmartGrapher** | ✅ | Mature, embeddable; used in 2 tools — further adoption now sequenced via the Tool Audit |
+| **Old-shell migration** | ✅ | Backlog empty; Generators are standalone by design, not migration targets |
+| **Computer Science shell** | ⏸ | Parked while the Maths Tool Audit is in progress |
+| **Decision Maths** | ⏸ | Parked while the Maths Tool Audit is in progress |
 
-Status keys: ✅ done · 🚧 in progress · ⬜ not started.
-
----
-
-# Computer Science
-
-An OCR **J277 GCSE Computer Science** revision area. CS tools are **knowledge/revision** tools,
-not question generators — a different product from the Maths tools, on their own shell (`CSShell`,
-`src/shared/cs/`). Each tool covers a spec sub-topic through six activities: **Learn · Study ·
-Cards · Quiz (+ Spot the Mistake) · Fill · Exam** (synoptic questions, self-marking). Guiding
-principles: **spec fidelity** (every card/question carries a `specTag`; off-spec content is a
-flagged "Beyond spec" layer), **exam realism** (J277 formats + mark tariffs), **mobile-first**.
-
-## CS revision shell
-
-**Where it's at.** The shell is **fully built** — six modes driven by a single `topic` data
-object, two representations so far (box schematic, trace table), and a CI validator
-(`validateTopic`) that checks every topic. The payoff is proven: **two topics now ship as pure
-data files** — 1.1.1 CPU Architecture (the pilot/reference) and 1.1.2 CPU Performance. So the
-remaining spec is *authoring*, not engineering. The architecture and extraction steps live in
-`docs/architecture/CS_SHELL_PLAN.md`.
-
-**Possible next steps (spitball — pick on the day):**
-- Author the next sub-topic as data — **1.1.3 Embedded Systems** is the natural follow-on (mostly definitional, few new diagrams).
-- Or do a synoptic partner first — **1.2.1 Primary storage (RAM/ROM)** pairs tightly with 1.1.1 (MAR/MDR ↔ RAM).
-- Pull synoptic questions out of individual topic files into a **shared cross-topic bank** keyed by tag-pairs (now worthwhile with >1 topic).
-- Build a new representation when a topic demands it (data representation → place-value/number-line; networks → stack/topology).
-- Keep the pipeline honest — a `Status: ready` brief in `specs/cs/` before each topic.
-
-**Detail.**
-
-*Built so far:*
-- ✅ **1.1.1 CPU Architecture** (`/cpu-architecture`) — the pilot/reference. Full six modes with taught diagram walkthroughs, predict beats, animated data flow, a value trace; exam with MCQ/state/short/scenario/extended + synoptic, self-marking, model answers, command-word guidance.
-- ✅ **1.1.2 CPU Performance** (`/cpu-performance`) — authored entirely as a `CSTopic` data object.
-- ✅ **1.1 System Architectures** (`/system-architecture`) — the original tool, left in place; superseded in approach by the 1.1.1 rebuild; not on the new shell.
-
-*Spec order to roll through (Component 1, Paper J277/01), each a data topic:*
-- ⬜ **1.1.3 Embedded Systems** — mostly definitional.
-- ⬜ **1.2.1 Primary storage (RAM/ROM)** — the other 1.1.1 synoptic partner.
-- ⬜ **1.2.2–1.2.4 Secondary storage / units / data representation** — data representation needs number-line / place-value representations.
-- ⬜ **1.3 Networks**, **1.4 Network security**, **1.5 Systems software**, **1.6 Ethical/legal/environmental** — Networks needs a stack/topology representation; the later strands are largely prose + scenario.
-
-*Representations (the recurring design cost):* existing from 1.1.1 are the **box schematic** (to be generalised) and the **trace table**. Likely additions: **bar-compare** (1.1.2), **place-value/number-line** (data representation), **network stack/topology** (1.3). Budget ~1–2 new representations per *strand*, not per topic.
-
-*Nice-to-haves (deferred):* spaced-repetition / Leitner progress + per-spec-tag mastery, and RAG self-rating — both need a persistence/account layer that doesn't exist yet.
+Status keys: ✅ done · 🚧 in progress · ⬜ not started · ⏸ paused (deliberately not a current priority).
 
 ---
 
-# Decision Maths
+# Maths Tool Audit
 
-AQA A-level Further Maths, **Discrete Mathematics** (graphs & networks: MST, TSP, CPA, Dijkstra,
-route inspection, flows, LP). A network-native shell (`DecisionShell`, `src/shared/decision/`),
-parallel to the others; contracts and the full increment plan live in `docs/architecture/DECISION_SHELL_PLAN.md`.
+**Current priority.** A systematic, per-tool review of every Maths ToolShell question generator —
+27 tools across Number, Algebra, Ratio & Proportion, and Geometry. While this audit is running,
+**Computer Science and Decision Maths are parked** (see their sections below) and the four Maths
+pedagogy prongs beneath this one (Techniques engine, Skills library, Core representations, Teach
+decks) plus SmartGrapher **take their next steps from this audit's findings rather than being
+picked ad hoc**.
 
-## Decision tools
+**Where it's at.** Not started. The full methodology, scope list, and a per-tool template live in
+**`docs/TOOL_AUDIT.md`** — that doc is written to be self-contained, so a fresh session with no
+memory of how this was designed can pick it up directly.
 
-**Where it's at.** **Increment 1 shipped** — the first end-to-end slice: pure `NetworkView` +
-`MatrixView` renderers, a thin shell with a **Question** mode and a **Solution** stepper
-(forward/back through the algorithm one beat at a time, with a running total and a "show all"),
-and one tool — **Minimum Spanning Tree** (Kruskal's algorithm). CI checks each tool's solver
-against an independent brute-force reference. Deliberately narrow so far: one network template,
-one question type, one level. Also now available: `src/shared/decision/randomNetwork.ts`'s
-`generateRandomNetwork()` — a procedural, provably crossing-free network generator (Euclidean MST +
-crossing-checked extra edges) harvested from an old archived draft, with a best-effort
-`routeInspection` mode for a future Route Inspection / Chinese Postman tool. Not wired into any
-tool yet — see `DECISION_SHELL_PLAN.md` → "Templating model" for the detail.
+**Why this exists, in short:** the four pedagogy prongs and SmartGrapher each have their own
+backlog, but priority between them (and between tools) has been picked anecdotally, not from a
+real view of per-tool need. This audit produces that view. It asks two separate questions of every
+tool: (1) how far behind the shared pedagogy systems is it (an *infrastructure* gap — expected of
+almost every tool, feeds the existing prong backlogs), and (2) judged blind to whether the tool is
+currently live or dev-gated, does it stand on its own as a complete, well-rounded tool, or does it
+feel thin/limited (a *standalone readiness* gap — feeds a new tool-parity backlog, including a
+recommended live/gated status per tool). The full detail on both, plus the exact grep/inspection
+technique for finding conventions debt (non-standard column caps, hidden font controls, bespoke
+print handlers, etc.) and why the current `enabled` flag can't be trusted as a quality signal, is
+in `docs/TOOL_AUDIT.md` — do not re-derive any of this from scratch; read that doc first.
 
-**Possible next steps (spitball — pick on the day):**
-- Broaden MST — add **Prim's** (network walk + Prim-on-the-matrix), more question types (apply Prim from node X, list rejected edges), Levels 1–3, more templates.
-- Add the **expand-to-sandbox** — open the generated network in an interactive, annotatable canvas.
-- Add **worksheet print** via the existing diagram-print engine.
-- Start a **second tool** once MST feels complete — TSP reuses the same renderers; CPA needs two new views.
-- Build **Route Inspection (Chinese Postman)** on top of `generateRandomNetwork`'s `routeInspection` mode — the odd-degree-nudge groundwork already exists.
-
-**Detail.** The full increment ladder (MST breadth → sandbox → print → TSP → CPA → onward) and the
-per-strand representation budget live in `docs/architecture/DECISION_SHELL_PLAN.md` → "Increment plan" — that doc owns
-the ladder. We're on **increment 1 ✅**; **increment 2 (MST breadth)** is next.
+**Next step:** start the Number category (6 tools) in `docs/TOOL_AUDIT.md`'s audit log, then work
+through Algebra, Ratio & Proportion, and Geometry in turn — one category per session. This is a
+findings-only pass: no code changes, no `enabled` flips, until a category's findings have been
+reviewed.
 
 ---
 
@@ -138,6 +96,11 @@ unblocks the others — so read these together when planning a Maths session.
 > pages: **Skill Library** (`/skills`), **Technique Library** (`/techniques`), **Grapher Lab**
 > (`/grapher`).
 
+> **Sequencing note.** These four prongs' next steps are now driven by the **Maths Tool Audit**
+> (`docs/TOOL_AUDIT.md`), not picked ad hoc here — as each category is audited, real per-tool
+> demand will refresh the "Possible next steps" and priority columns below. The bullets currently
+> below predate the audit and are kept as background context, not the active queue.
+
 ## Techniques engine
 
 **Where it's at.** When tools moved onto the shared ToolShell they lost their hand-written working
@@ -148,7 +111,7 @@ are built**, and six techniques exist — but **only one tool (`NonLinearSimEq`)
 converted**, so most tools still show thin working. The value is real but latent until the sweep
 happens.
 
-**Possible next steps (spitball — pick on the day):**
+**Possible next steps (background, pre-audit — see the sequencing note above):**
 - Add a runtime **"Detailed working" toggle** so a teacher can flip grain (brief ↔ full) live — the one shell change on the list.
 - **Sweep more tools** onto the engine — start with the high-frequency moves below.
 - Grow the technique library as the sweep needs new moves.
@@ -209,7 +172,10 @@ Reference conversion: `NonLinearSimEq.tsx` (uses `standard` grain).
 `expandBrackets`, `substitute`, `simplifyFraction`, `collectLikeTerms`, `makeSubject`,
 `shareInRatio`, `fractionOfAmount`, `applyAngleFact` — build those first; each doubles as a needed
 skill. Old-shell rows (`fractionOfAmount`, `convertFractionRatio`, `applyAngleFact`) are inferred —
-confirm the exact moves when those tools migrate.
+confirm the exact moves when those tools migrate. **This table is exactly the kind of thing the
+Tool Audit's Part 1 (Infrastructure alignment) cross-references per tool** — as each tool is
+audited, update the priority/status columns here with real demand rather than the inferred
+guesses above.
 
 ## Skills library
 
@@ -219,7 +185,7 @@ links in worked examples. **Two skills exist** (`lcm`, `lcm-prime-factors` — L
 validates every skill. A clear backlog is tied to which representation each skill needs — the cheap
 ones sit on scenes that already exist; the rest wait on the representation work below.
 
-**Possible next steps (spitball — pick on the day):**
+**Possible next steps (background, pre-audit — see the sequencing note above):**
 - Build the **cheap, high-value cluster** on existing scenes — equivalent-fractions, simplify-fraction, HCF, share-in-ratio, fraction-of-amount, convert-mixed-improper.
 - Sequence the skills that need a **new scene** (solve-linear-equation, expand-double-brackets, directed-number) alongside the representation work.
 - **Unify skills with techniques** — let a skill's full teaching and a technique's full output share one source, so they can't drift; prototype on one skill.
@@ -262,7 +228,7 @@ animated scene families built**: bar model (`split`/`combine`/`equivalents`), nu
 (`multiples`), prime factor tiles (`factorTree`/`primeVenn`). **Three don't yet.** These are the
 biggest lever on the Maths side — each new representation unlocks a cluster of skills and decks.
 
-**Possible next steps (spitball — pick on the day):**
+**Possible next steps (background, pre-audit — see the sequencing note above):**
 - Build an **area-model** scene family (unlocks expanding brackets, completing the square, factorising).
 - Build **algebra-tile** scenes (the manipulative exists at `/algebra-tiles`, but no scenes) — unlocks solving equations, collecting like terms.
 - Build **negative counters** (no manipulative or scenes yet) — unlocks directed number, used almost everywhere.
@@ -285,7 +251,7 @@ only its *Concepts* category (an I-do → We-do → You-do sequence on equivalen
 two categories (True/False, Spot the Mistake) are stubbed "Coming soon", and no other tool has a
 deck yet. So the open question is less "what to build" and more "what proves the format".
 
-**Possible next steps (spitball — pick on the day):**
+**Possible next steps (background, pre-audit — see the sequencing note above):**
 - Deepen the exemplar — fill out FractionsAddSub's remaining categories so one deck is complete end-to-end.
 - Or prove breadth — author a first deck for a *different* tool, to test the format on another topic.
 - Sketch a deck for a non-fraction topic (angles, ratio) to check the scene library actually covers it.
@@ -309,7 +275,8 @@ NonLinearSimEq two-curves-plus-intersection) and **self-validating** — it deri
 answer data and refuses to draw if they disagree, so a data inconsistency omits the graph rather than
 drawing wrong geometry. Less a "project", more a reusable utility to reach for.
 
-**Possible next steps (spitball — pick on the day):**
+**Possible next steps (background, pre-audit — SmartGrapher fit is now also part of the Tool Audit's
+Part 1 per tool, see `docs/TOOL_AUDIT.md`):**
 - Add graphs to more tools — **Equations of Lines** (lines/gradients/intercepts), **Completing the Square** (parabola + vertex), **Iterations** (the curve and the root being approached).
 - Add an **ellipse preset** if/when a tool needs ellipse-and-line (presets today: linear · quadratic · cubic · circle · custom).
 - Mostly: pull it in opportunistically when building or migrating any coordinate/quadratic tool.
@@ -317,27 +284,121 @@ drawing wrong geometry. Less a "project", more a reusable utility to reach for.
 ## Old-shell migration
 
 **Where it's at.** Older tools hand-roll their own UI (~800–1,300 lines); v2.3 tools use the shared
-ToolShell (~250–350). **Most are migrated**, and `src/tests/organisation.test.ts` is the CI-enforced
-source of truth for which tool is on which shell. What's left: the four live Generators tools
-(PDF-focused, lower priority) and one dev-gated tool (`SimplifyingRatiosTool`). Migration is also
-the natural moment to add techniques-based working and, where relevant, a graph and `__test`
-coverage.
+ToolShell (~250–350). **The migration backlog is now empty** — `SimplifyingRatiosTool` (the last
+entry) has been brought onto ToolShell, keeping its numeric and algebraic ratio-simplification
+maths verbatim; it stays `enabled: false` pending a decision on going live.
+`src/tests/organisation.test.ts` is the CI-enforced source of truth for which tool is on which
+shell. The four Generators tools (`TimesTablesGenerator`, `MultiplicationGenerator`,
+`NegativeOperationsGenerator`, `FunctionalSkillsGenerator`) are **not** migration targets — they
+exist to batch-produce PDF worksheets, a different purpose from ToolShell's
+whiteboard/worked-example/worksheet model, and are now categorised standalone-by-design rather than
+backlog.
 
-**Possible next steps (spitball — pick on the day):**
-- **Decide finish-vs-delete** on the remaining dev-gated leftover (`SimplifyingRatiosTool`).
-- Migrate the four **Generators** tools (`TimesTablesGenerator` etc.) when there's appetite for the PDF-heavy print work they need.
-- Pair each migration with a **techniques pass**, so a tool regains its pedagogy, not just the shell.
+This prong is **done** as far as shell architecture goes — it's not fed by the Tool Audit the way
+the pedagogy prongs above are. The audit's Part 2 (standalone readiness) will separately produce a
+recommended live/gated status per tool, including for `SimplifyingRatiosTool` — see
+`docs/TOOL_AUDIT.md`. That's tracked there, not here, since it's a content-readiness question, not
+a shell-migration one.
+
+**Possible next steps:**
+- If the Generators family ever grows well past four, revisit whether a dedicated **Generator shell** is worth building — not needed today.
 
 **Detail.** Enabled/done: `FractionsOfAmounts`, `AnglesInTriangles`, `NonLinearSimEq`, `PowersOfTen`,
-`FractionToRatio`, `PerimeterTool`
-(techniques wiring still to add on some). Standalone by design (never migrate):
-`SystemArchitecture`, `AlgebraTiles`, `ParallelLinesInteractive`, `GrapherLab`, `Visualiser`,
-`CallSelector`, `p-value`, `SkillLibrary`, `TechniqueLibrary`. `organisation.test.ts` holds the
-authoritative lists — update it when a tool moves.
+`FractionToRatio`, `PerimeterTool` (techniques wiring still to add on some). Migrated but dev-gated:
+`SimplifyingRatiosTool`. Standalone by design (never migrate): `SystemArchitecture`, `AlgebraTiles`,
+`ParallelLinesInteractive`, `GrapherLab`, `Visualiser`, `CallSelector`, `p-value`, `SkillLibrary`,
+`TechniqueLibrary`, and the four Generators tools (PDF-batch output, different purpose).
+`organisation.test.ts` holds the authoritative lists — update it when a tool moves.
+
+---
+
+# Computer Science
+
+> **⏸ Parked.** Not a current priority while the Maths Tool Audit (see above) is in progress. Kept
+> here so the plan isn't lost — pick back up once the Maths audit and its resulting backlog are in
+> hand.
+
+An OCR **J277 GCSE Computer Science** revision area. CS tools are **knowledge/revision** tools,
+not question generators — a different product from the Maths tools, on their own shell (`CSShell`,
+`src/shared/cs/`). Each tool covers a spec sub-topic through six activities: **Learn · Study ·
+Cards · Quiz (+ Spot the Mistake) · Fill · Exam** (synoptic questions, self-marking). Guiding
+principles: **spec fidelity** (every card/question carries a `specTag`; off-spec content is a
+flagged "Beyond spec" layer), **exam realism** (J277 formats + mark tariffs), **mobile-first**.
+
+## CS revision shell
+
+**Where it's at.** The shell is **fully built** — six modes driven by a single `topic` data
+object, two representations so far (box schematic, trace table), and a CI validator
+(`validateTopic`) that checks every topic. The payoff is proven: **two topics now ship as pure
+data files** — 1.1.1 CPU Architecture (the pilot/reference) and 1.1.2 CPU Performance. So the
+remaining spec is *authoring*, not engineering. The architecture and extraction steps live in
+`docs/architecture/CS_SHELL_PLAN.md`.
+
+**Possible next steps (spitball — pick on the day, once unparked):**
+- Author the next sub-topic as data — **1.1.3 Embedded Systems** is the natural follow-on (mostly definitional, few new diagrams).
+- Or do a synoptic partner first — **1.2.1 Primary storage (RAM/ROM)** pairs tightly with 1.1.1 (MAR/MDR ↔ RAM).
+- Pull synoptic questions out of individual topic files into a **shared cross-topic bank** keyed by tag-pairs (now worthwhile with >1 topic).
+- Build a new representation when a topic demands it (data representation → place-value/number-line; networks → stack/topology).
+- Keep the pipeline honest — a `Status: ready` brief in `specs/cs/` before each topic.
+
+**Detail.**
+
+*Built so far:*
+- ✅ **1.1.1 CPU Architecture** (`/cpu-architecture`) — the pilot/reference. Full six modes with taught diagram walkthroughs, predict beats, animated data flow, a value trace; exam with MCQ/state/short/scenario/extended + synoptic, self-marking, model answers, command-word guidance.
+- ✅ **1.1.2 CPU Performance** (`/cpu-performance`) — authored entirely as a `CSTopic` data object.
+- ✅ **1.1 System Architectures** (`/system-architecture`) — the original tool, left in place; superseded in approach by the 1.1.1 rebuild; not on the new shell.
+
+*Spec order to roll through (Component 1, Paper J277/01), each a data topic:*
+- ⬜ **1.1.3 Embedded Systems** — mostly definitional.
+- ⬜ **1.2.1 Primary storage (RAM/ROM)** — the other 1.1.1 synoptic partner.
+- ⬜ **1.2.2–1.2.4 Secondary storage / units / data representation** — data representation needs number-line / place-value representations.
+- ⬜ **1.3 Networks**, **1.4 Network security**, **1.5 Systems software**, **1.6 Ethical/legal/environmental** — Networks needs a stack/topology representation; the later strands are largely prose + scenario.
+
+*Representations (the recurring design cost):* existing from 1.1.1 are the **box schematic** (to be generalised) and the **trace table**. Likely additions: **bar-compare** (1.1.2), **place-value/number-line** (data representation), **network stack/topology** (1.3). Budget ~1–2 new representations per *strand*, not per topic.
+
+*Nice-to-haves (deferred):* spaced-repetition / Leitner progress + per-spec-tag mastery, and RAG self-rating — both need a persistence/account layer that doesn't exist yet.
+
+---
+
+# Decision Maths
+
+> **⏸ Parked.** Not a current priority while the Maths Tool Audit (see above) is in progress. Kept
+> here so the plan isn't lost — pick back up once the Maths audit and its resulting backlog are in
+> hand.
+
+AQA A-level Further Maths, **Discrete Mathematics** (graphs & networks: MST, TSP, CPA, Dijkstra,
+route inspection, flows, LP). A network-native shell (`DecisionShell`, `src/shared/decision/`),
+parallel to the others; contracts and the full increment plan live in `docs/architecture/DECISION_SHELL_PLAN.md`.
+
+## Decision tools
+
+**Where it's at.** **Increment 1 shipped** — the first end-to-end slice: pure `NetworkView` +
+`MatrixView` renderers, a thin shell with a **Question** mode and a **Solution** stepper
+(forward/back through the algorithm one beat at a time, with a running total and a "show all"),
+and one tool — **Minimum Spanning Tree** (Kruskal's algorithm). CI checks each tool's solver
+against an independent brute-force reference. Deliberately narrow so far: one network template,
+one question type, one level. Also now available: `src/shared/decision/randomNetwork.ts`'s
+`generateRandomNetwork()` — a procedural, provably crossing-free network generator (Euclidean MST +
+crossing-checked extra edges) harvested from an old archived draft, with a best-effort
+`routeInspection` mode for a future Route Inspection / Chinese Postman tool. Not wired into any
+tool yet — see `DECISION_SHELL_PLAN.md` → "Templating model" for the detail.
+
+**Possible next steps (spitball — pick on the day, once unparked):**
+- Broaden MST — add **Prim's** (network walk + Prim-on-the-matrix), more question types (apply Prim from node X, list rejected edges), Levels 1–3, more templates.
+- Add the **expand-to-sandbox** — open the generated network in an interactive, annotatable canvas.
+- Add **worksheet print** via the existing diagram-print engine.
+- Start a **second tool** once MST feels complete — TSP reuses the same renderers; CPA needs two new views.
+- Build **Route Inspection (Chinese Postman)** on top of `generateRandomNetwork`'s `routeInspection` mode — the odd-degree-nudge groundwork already exists.
+
+**Detail.** The full increment ladder (MST breadth → sandbox → print → TSP → CPA → onward) and the
+per-strand representation budget live in `docs/architecture/DECISION_SHELL_PLAN.md` → "Increment plan" — that doc owns
+the ladder. We're on **increment 1 ✅**; **increment 2 (MST breadth)** is next.
 
 ---
 
 *Keeping this current: when a session moves a prong, update its **Where it's at** line and its *At a
 glance* row here, alongside the `docs/PATCH_NOTES.md` history entry. Next-step bullets are spitball — prune
-the done/ruled-out ones. Keep the deep tables above accurate as work lands.
+the done/ruled-out ones. Keep the deep tables above accurate as work lands. The Maths Tool Audit's
+own progress is tracked in `docs/TOOL_AUDIT.md`, not duplicated here — mirror only its category
+status (⬜/🚧/✅) into the At-a-glance row above.*
 (Standing authoring principles — e.g. "never store the same fact twice" — live in `CLAUDE.md`, not here.)*

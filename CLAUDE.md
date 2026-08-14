@@ -16,6 +16,7 @@ this table first; it tells you where to look and where to write.
 | **`CLAUDE.md`** (this file) | The rules — conventions, shared-API reference, how to build/migrate a tool. | Always (auto-loaded). The default answer to "how do I…". |
 | **`README.md`** | Human-facing project overview, tech stack, local setup. | First orientation; onboarding a person. |
 | **`docs/PROJECTS.md`** | The plan — where every prong is up to and what could come next (deep detail tables live here). | **Start of a session** (current state / what's next). Keep the moved prong current at the end. |
+| **`docs/TOOL_AUDIT.md`** | The Maths Tool Audit — self-contained methodology (infrastructure gaps + standalone-readiness gaps) and the live per-tool findings log for all 27 Maths ToolShell generators. **Current top priority.** | Auditing a tool, or picking up any backlog item that traces back to an audit finding. |
 | **`docs/PATCH_NOTES.md`** | The history — what each session shipped, split Maths / CS, newest first. | Seeing what was actually done. **Append to it at the end of a session.** |
 | **`docs/architecture/CS_SHELL_PLAN.md`** | The `CSShell` architecture and its extraction stages. | Building or extending a CS tool. |
 | **`docs/architecture/DECISION_SHELL_PLAN.md`** | The `DecisionShell` architecture — network-native question generators (MST/TSP/CPA) on a shared representation library. | Building or extending a Decision Maths tool. |
@@ -217,12 +218,11 @@ The reliable shell indicator is the code, not any registry field (tools carry no
 grep -L "<ToolShell" src/tools/**/*.tsx   # files that do NOT render the shared shell
 ```
 
-Tools currently needing migration (still on an embedded old shell, enabled):
-- Generator tools (`TimesTablesGenerator`, etc.) — primarily PDF-generation tools
-
-Dev-gated (`enabled: false`) and therefore lower priority: `SimplifyingRatiosTool`.
+**The migration backlog is currently empty** — every tool that belongs on ToolShell has been migrated. `SimplifyingRatiosTool` was the last one; it now renders `<ToolShell/>` and stays `enabled: false` (dev-gated) pending a decision on going live.
 
 **This list is CI-enforced — `src/tests/organisation.test.ts` is authoritative.** That test holds the shell status of every tool (backlog / standalone / CS) and fails the build if a tool is un-categorised, if a backlog tool has been migrated but left in the list, if a ToolShell tool lacks `__test`, or if a tool file isn't registered. The prose above is a human summary; when you migrate a tool, update `organisation.test.ts` (move it out of `MIGRATION_BACKLOG`) — the failing message tells you exactly what to change.
+
+The four **Generator tools** (`TimesTablesGenerator`, `MultiplicationGenerator`, `NegativeOperationsGenerator`, `FunctionalSkillsGenerator`) are **standalone by design, not backlog items** — they exist to batch-produce PDF worksheets, a different purpose from ToolShell's whiteboard/worked-example/worksheet model, and were never meant to migrate. Don't flag them for migration work. If the generator family grows well beyond four, it may be worth a dedicated **Generator shell** — not needed today for four tools that already work well standalone.
 
 AlgebraTiles, ParallelLinesInteractive, GrapherLab, SkillLibrary, Visualiser, CallSelector and p-value are standalone by design (not question tools) and never migrate to ToolShell — they are not part of the backlog above even though they don't use the shared shell.
 
@@ -1022,7 +1022,7 @@ CI also runs `npm test` (Vitest, `src/tests/generators.test.ts`). The suite disc
 | Pattern | Reference file |
 |---------|---------------|
 | Standard v2.3 tool (simple questions) | `src/tools/Algebra/CompletingTheSquare.tsx` |
-| Standard v2.3 tool (worded questions) | `src/tools/Proportion/SimplifyingRatios.tsx` *(check if migrated)* |
+| Standard v2.3 tool (simple questions, ratio simplification) | `src/tools/Proportion/SimplifyingRatiosTool.tsx` |
 | Diagram/SVG tool with shared print (`handleDiagramPrint`) | `src/tools/Geometry/AnglesInQuadrilaterals.tsx` |
 | Diagram/SVG tool (renderer/SVG conventions) | `src/tools/Geometry/AnglesInParallelLines.tsx` |
 | `reformatQuestion` (instant display reformat) | `src/tools/Algebra/CompletingTheSquare.tsx` |
