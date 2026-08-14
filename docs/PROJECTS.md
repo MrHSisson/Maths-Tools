@@ -100,17 +100,104 @@ technique for finding conventions debt (non-standard column caps, hidden font co
 print handlers, etc.) and why the current `enabled` flag can't be trusted as a quality signal, is
 in `docs/TOOL_AUDIT.md`.
 
-**Possible next steps:**
-- A human sign-off pass on Part 2's recommended-status list — in particular, deciding whether to act
-  on `SimplifyingRatiosTool`'s "stay gated" recommendation, the one concrete live/gated call the
-  audit produced.
-- Fix the two confirmed print-handler bugs (`BasicAngleFacts`, `CircleProperties`) and migrate the
-  three hand-rolled Geometry `customPrintHandler`s onto `handleDiagramPrint` — flagged as the
-  highest-leverage, most mechanical fix surfaced anywhere in the audit.
-- Pick up the refreshed technique/skill tables below for the next actual build session, rather than
-  the pre-audit priority guesses they replace.
-- Decide whether to unpark Computer Science and/or Decision Maths now that the audit that was
-  blocking them is done (see their sections below) — not a call this audit makes for you.
+**Next steps run on two tracks**, deliberately kept separate because they need different kinds of
+attention: **Part 1 roadmap** (below) sequences the *infrastructure* work — techniques, skills,
+representations, Teach decks, SmartGrapher — by leverage, and is ready to build from directly. **Part
+2 — Tool expansion** (below that) is the *content-growth* backlog per tool — new question types,
+broader sub-tool coverage, scope decisions — and needs a dedicated pedagogy/product pass, not a
+leverage score. A few smaller items sit outside both tracks and can be picked up any time without a
+design conversation:
+- The one gating sign-off: whether to act on `SimplifyingRatiosTool`'s "stay gated" recommendation.
+- The two confirmed print-handler bugs (`BasicAngleFacts` drops section headers on differentiated
+  worksheets; `CircleProperties`' Differentiated toggle silently no-ops) and migrating the three
+  hand-rolled Geometry `customPrintHandler`s onto `handleDiagramPrint`.
+- Whether to unpark Computer Science and/or Decision Maths now that the audit blocking them is done
+  (see their sections below) — not a call this audit makes for you.
+
+## Part 1 roadmap — the aligned, cross-prong build order
+
+Techniques, Skills, Core representations, Teach decks, and SmartGrapher stay **five separate prongs**
+below — each keeps its own "Where it's at" and detail table — but they gate each other constantly (a
+representation unlocks a skill; a skill and a technique are usually the same move at two different
+grains), so building each prong in its own priority order wastes the leverage the audit found. This
+roadmap sequences the *next build* across all five together, scored by leverage — how many tools each
+item unlocks — per the audit's own Part 1 scoring rule. Each item is tagged with the prong it
+belongs to and names the exact table row it refers to; nothing here replaces the prong sections
+below, it's the cross-cutting view sitting on top of them. Update this roadmap (not just the tables)
+whenever a tier's items ship, so it stays the one place that answers "what's next, across all of it."
+
+**Tier 0 — Wire what's already built, no new engine work:**
+- **[Skill]** Link the two unlinked `lcm` consumers — `SimultaneousEquations` and `FractionToRatio`
+  both compute an LCM and never mark it, and the skill is already ✅ built. Two `[[lcm|LCM]]` markers.
+- **[Technique]** Wire `NonLinearSimEq`'s `linear` sub-tool onto the already-built
+  `solveLinearEquationSteps` instead of its hand-rolled solve chain — fixes the confirmed `−1x`
+  display bug for free, and gives `solveLinearEquation` its first real second consumer.
+
+**Tier 1 — The one decision that unblocks the most downstream work:**
+- **[Representation]** Algebra tiles vs. area model — which ships next. Algebra tiles now gates more
+  combined demand than the pre-audit guess assumed: the `solve-linear-equation` skill (3 consumers)
+  plus the `collect-like-terms` skill (2 consumers) = **5 tool-consumers** waiting on one
+  representation. Area model gates the `expand-double-brackets` skill, the `factorise-quadratic`
+  skill, and the `completeTheSquare` technique — real, but **~3 tool-consumers** today. Algebra
+  tiles has the stronger case, a reversal of the pre-audit "prioritise by blockage" guess further
+  down this doc.
+- **[Representation]** Rule on the Geometry open question — does an angle/circle/polygon diagram
+  need a 7th core representation, or is "the diagram is its own representation" a legitimate standing
+  exemption? Raised independently by all 8 Geometry tools in the audit (see `docs/TOOL_AUDIT.md`'s
+  Geometry category summary). Doesn't block Tier 2's `apply-angle-fact` — that can ship text-first
+  either way — but does decide whether a Geometry Teach deck is ever buildable.
+
+**Tier 2 — Highest-leverage builds, start now (don't wait on Tier 1):**
+These ship without a representation decision — the same `(none — text)` pattern
+`substitute-into-formula`/`rearrange-formula` already use:
+- **[Technique + Skill]** `applyAngleFact` / `apply-angle-fact` — needed by **5 of 8 Geometry tools**
+  (`BasicAngleFacts`, `AnglesInTriangles`, `AnglesInQuadrilaterals`, `AnglesInParallelLines`,
+  `Bearings`), the single biggest demand signal in the whole audit.
+- **[Technique]** `collectLikeTerms` — 3 consumers (`CollectingLikeTerms`, `ExpandingBrackets`,
+  `SolvingLinearEquations`). The technique itself doesn't need algebra tiles; only its matching skill
+  does (Tier 1).
+- **[Technique]** `solveLinearEquation` adoption — already 🚧 grain-aware and built; `SolvingLinearEquations`
+  just needs to actually call it (a zero-new-import integration point it currently doesn't use).
+- **[Skill]** `rearrange-formula` — 4 consumers (`Iterations`, `NonLinearSimEq`, `EquationsOfLines`,
+  `CircleProperties`), text-only, no blockers.
+- **[Skill]** `unitary-method` — 3 consumers across two categories (`Percentages`, `RecipesTool`,
+  `BestBuys`), bar model already exists.
+- **[Skill]** `simplify-fraction` — 3 consumers (`FractionsAddSub`, `FractionMultDiv`,
+  `FractionsOfAmounts`), bar model already exists.
+
+**Tier 3 — Two-consumer items, sequence opportunistically:**
+**[Technique + Skill]** `expandBrackets` / `expand-double-brackets` (blocked on Tier 1's area-model
+call) · **[Skill]** `fraction-of-amount` · **[Skill]** `hcf` · **[Skill]** `substitute-into-formula` ·
+**[Skill]** `convert-mixed-improper` · **[Skill]** `simplify-ratio` · **[Skill]** `unit-conversion`
+(bar model / prime tiles / text — no blockers except `expandBrackets`).
+
+**Tier 4 — Single-tool items:**
+Everything else in the technique/skill tables below — real demand, but each unlocks exactly one
+tool. Fill-in work between the tiers above, not a queue of its own.
+
+**Cross-cutting, any time:**
+- **[Grapher]** Wire `EquationsOfLines`, `CompletingTheSquare`, `Iterations` onto SmartGrapher — all
+  confirmed still unwired, all cheap (existing presets fit directly), no dependency on anything above.
+- **[Technique]** Runtime grain toggle ("Detailed working" brief↔full) — the one shell-level change
+  still on the Techniques engine list.
+- **[Deck]** Teach decks stay the least mature prong (1 deck, 1 category built) — reasonable to leave
+  last unless a second proof-of-format deck is wanted as a parallel, low-stakes task.
+
+## Part 2 — Tool expansion (pending a dedicated pass)
+
+**Scope, precisely:** this is the audit's Part 2 *standalone-readiness content* findings — missing
+question types, narrow sub-tool coverage, scope a tool should grow into — the items that need a
+pedagogy/product decision (which topics matter most to teach next), not just an engineering one.
+**The print-handler bugs and the `SimplifyingRatiosTool` gating call are deliberately not part of
+this list** (see the mechanical items above) — they're fixes and a sign-off, not expansion decisions.
+
+The actual expansion backlog — per-tool findings like "no worded/contextual question type,"
+"`formingRatios`' QO is flat across levels," "no squared-single-bracket question in
+`ExpandingBrackets`," "no parallel/perpendicular question in `EquationsOfLines`" — isn't resequenced
+here yet. It needs a tool-by-tool prioritisation pass of its own, sequencing by which topics matter
+most to expand next rather than by the raw size of the gap, which is a separate session's work.
+`docs/TOOL_AUDIT.md`'s 36 per-tool entries — the Part 2 section of each — are the full source list
+for that pass when it happens.
 
 ---
 
@@ -128,9 +215,10 @@ unblocks the others — so read these together when planning a Maths session.
 
 > **Sequencing note.** The Maths Tool Audit (`docs/TOOL_AUDIT.md`) is now complete — the
 > technique-audit and skills tables below have been refreshed with real per-tool demand from all
-> 27 tools ("needed by `<tool>`" annotations throughout). The bullet-point "possible next steps"
-> under each prong below still mostly predate the audit and are kept as background context — the
-> tables' demand signals are the more current source for what to build next.
+> 27 tools ("needed by `<tool>`" annotations throughout), and the **"Maths Tool Audit" section above
+> now has a dedicated "Part 1 roadmap"** that sequences the actual build order across all five
+> prongs by leverage — read that first. The bullet-point "possible next steps" under each prong
+> below still mostly predate the audit and are kept as background context, not the active queue.
 
 ## Techniques engine
 
@@ -288,11 +376,14 @@ entirely. Recorded as a standing open question (`docs/TOOL_AUDIT.md`'s Geometry 
 not assigned an owner — a decision on whether Geometry needs a seventh representation, or is
 legitimately exempt, is still open.
 
-**Possible next steps (background, pre-audit — see the sequencing note above):**
-- Build an **area-model** scene family (unlocks expanding brackets, completing the square, factorising).
-- Build **algebra-tile** scenes (the manipulative exists at `/algebra-tiles`, but no scenes) — unlocks solving equations, collecting like terms.
-- Build **negative counters** (no manipulative or scenes yet) — unlocks directed number, used almost everywhere.
-- Prioritise by **blockage** — pick the representation gating the most wanted skills, not by novelty (area model and negative counters each gate several).
+**Possible next steps — superseded by the audit's Tier 1 finding, see the "Part 1 roadmap" in the
+Maths Tool Audit section above.** Kept here for background only: build an area-model scene family
+(unlocks `expand-double-brackets`, `factorise-quadratic`, `completeTheSquare`); build algebra-tile
+scenes (unlocks `solve-linear-equation`, `collect-like-terms`); build negative counters (unlocks
+`directed-number`). **The audit resolved the "prioritise by blockage" call this list used to leave
+open**: algebra tiles now gates 5 tool-consumers across its two skills vs. area model's ~3 — algebra
+tiles has the stronger case, ahead of negative counters' single consumer (`directed-number`,
+`IntegerAddSub` only).
 
 **Detail — the six and their scene status.** Bar model ✅ (`split`/`combine`/`equivalents`) · number
 line ✅ (`multiples`) · prime factor tiles ✅ (`factorTree`/`primeVenn`) · area model ⬜ (no scenes) ·

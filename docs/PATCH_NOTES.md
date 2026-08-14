@@ -28,6 +28,25 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-08-14 — Built the Part 1 roadmap and Part 2 scope from the completed Tool Audit
+No code changed — this session turned the completed Maths Tool Audit's findings into an actual build
+order. Added a **"Part 1 roadmap"** to `docs/PROJECTS.md`'s Maths Tool Audit section: five tiers
+sequencing the next build across all five infrastructure prongs (Techniques, Skills, Core
+representations, Teach decks, SmartGrapher) together by leverage, rather than each prong picking its
+own priority in isolation — Tier 0 is free wins (wiring already-built pieces), Tier 1 is the one
+representation decision (algebra tiles now has a stronger leverage case than area model — 5
+tool-consumers vs. ~3, reversing the pre-audit guess), Tier 2 is the highest-leverage builds that can
+start immediately (`applyAngleFact`, needed by 5 of 8 Geometry tools, is the single biggest demand
+signal found), Tier 3/4 are smaller items, plus a cross-cutting list (SmartGrapher wiring, the grain
+toggle, Teach decks). Also scoped a **"Part 2 — Tool expansion"** section, explicitly defined as the
+per-tool content-growth backlog needing a pedagogy/product decision (new question types, broader
+sub-tool coverage) — deliberately excluding the two confirmed print-handler bugs and the
+`SimplifyingRatiosTool` gating call, which are mechanical/sign-off items that don't need the same
+depth of involvement and are called out separately. Updated the Core representations section's
+"prioritise by blockage" bullet, which the audit's findings now actually answer. Confirmed via the
+audit: exactly one tool (`SimplifyingRatiosTool`) is recommended for dev-gating, and it's already
+gated — no live tool was recommended for new gating.
+
 ## 2026-08-14 — Ran the Maths Tool Audit's Geometry category (8 tools) — audit complete
 No code changed — findings-only pass per `docs/TOOL_AUDIT.md`'s methodology. Audited all eight
 Geometry tools (`AnglesInQuadrilaterals`, `BasicAngleFacts`, `AnglesInTriangles`,
