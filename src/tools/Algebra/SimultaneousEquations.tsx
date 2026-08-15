@@ -3,6 +3,7 @@ import {
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep,
   step, mStep, tStep,
 } from "../../shared";
+import { getDevMode } from "../../devMode";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -569,6 +570,10 @@ const buildSimeqWorking = (q: SimEqQuestion): WorkingStep[] => {
   if (q.eq1NeedsRearrange) out.push(mStep("Rearrange equation (1):", `(1)\\;\\; ${q.eq1Canonical}`));
   if (q.eq2NeedsRearrange) out.push(mStep("Rearrange equation (2):", `(2)\\;\\; ${q.eq2Canonical}`));
   if (isLCM && q.scaledEq3Latex && q.scaledEq4Latex) {
+    if (getDevMode()) {
+      const mag1 = Math.abs(q.a1), mag2 = Math.abs(q.a2);
+      out.push(mStep(`Find the [[lcm|LCM]] of ${mag1} and ${mag2} to scale both equations to the same coefficient:`, `${lcmOf(mag1, mag2)}`));
+    }
     out.push(mStep(`Multiply equation (1) by ${q.scaleFactor1}:`, `(3)\\;\\; ${q.scaledEq3Latex}`));
     out.push(mStep(`Multiply equation (2) by ${q.scaleFactor2}:`, `(4)\\;\\; ${q.scaledEq4Latex}`));
   } else if (isFactorScaling && q.scaledEqLatex) {

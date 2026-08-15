@@ -28,6 +28,27 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-08-15 — Tier 0 of the Part 1 roadmap (Skill + Technique wiring), dev-gated
+Both zero-new-engine-work items from `docs/PROJECTS.md`'s Part 1 roadmap Tier 0, built but kept
+**behind Developing-tools mode** pending sign-off — non-dev users see unchanged output.
+- **Skill**: linked the two unlinked `lcm` consumers found by the audit. `SimultaneousEquations`'
+  `lcm` sub-tool now shows an explicit `[[lcm|LCM]]`-linked "find the LCM" step before scaling both
+  equations (dev-mode only — the step didn't exist before, so it's gated rather than just the link);
+  `FractionToRatio`'s existing "LCD:" working-step label becomes `[[lcm|LCM]]`-linked in dev mode
+  (unchanged wording otherwise).
+- **Technique**: `NonLinearSimEq`'s `linear` sub-tool now routes its post-substitution solve through
+  the shared `solveLinearEquationSteps` technique instead of its hand-rolled `solvePos`/`solveNeg`
+  chain, fixing the audit-confirmed `−1x`-should-be-`−x` display bug (the combined coefficient is
+  now formatted through `solveLinearEquationSteps`' own `coef()`/`signed()` sanitizers instead of
+  being interpolated raw) and adding an explicit "Expand the brackets" step. The original hand-rolled
+  chain is kept verbatim as `legacySolvePos`/`legacySolveNeg` and stays what non-dev users see;
+  `getDevMode()` picks the branch in `buildWorking`.
+- Verified with scratch checks (not committed): 8000 sampled `linear` questions with `negEq1`/
+  `zeroForm`/`negSol` on (the settings that actually allow negative coefficients, so the bug can
+  fire) reproduced `-1x`/`-1b`/etc. 372 times with dev mode off, matching pre-existing behaviour;
+  the same 8000-sample run with dev mode forced on showed zero occurrences, confirming both the fix
+  and the gate. `npm run build` clean, `npm test` (304 tests) passing throughout.
+
 ## 2026-08-14 — Spot-checked the audit and fixed the CLAUDE.md doc-drift it found
 No tool code changed — a verification pass on the completed Tool Audit, plus two doc corrections.
 **Spot-check**: directly re-read source for 8 claims spanning 6 tools across 3 categories, including

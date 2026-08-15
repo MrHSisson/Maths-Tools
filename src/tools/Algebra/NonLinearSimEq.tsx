@@ -1,10 +1,11 @@
 import {
   ToolShell, MathRenderer, InlineMath, SmartGrapher,
   workings, quadraticFormulaSteps, solveFactorsSteps, substituteBackSteps,
-  makeSubjectSteps, solveLinearlySteps,
+  makeSubjectSteps, solveLinearEquationSteps, solveLinearlySteps,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion,
   type WorkingStep, type QOSnapshot, type GraphSeries, type FOI,
 } from "../../shared";
+import { getDevMode } from "../../devMode";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Simultaneous Equations by Substitution — v2.3 (ToolShell + SmartGrapher)
@@ -34,11 +35,15 @@ interface LinearQuestion {
   isolatedVar: "v1" | "v2";
   rearrangedLatex: string; isolatedExpr: string;
   needsRearrange: boolean;
-  afterSubLatex: string; solveSteps: string[]; subBackSteps: string[];
+  afterSubLatex: string; solveChain: LinSolveChain; legacySolveSteps: string[]; subBackSteps: string[];
   v1Val: number; v2Val: number;
   key: string; difficulty: string;
   working: { type: string; latex: string; plain: string }[];
 }
+
+// The post-substitution equation in one variable, a·v + b = c — fed straight to
+// the shared solveLinearEquationSteps technique.
+type LinSolveChain = { expandedLatex: string; a: number; b: number; c: number };
 
 type SolnPair = { x: number; y: number };
 
@@ -107,7 +112,26 @@ const aSubPos = (iC: number, oC: number, k: number, d: number, ov: string, c: nu
 const aSubNeg = (iC: number, oC: number, k: number, d: number, ov: string, c: number) =>
   `${iC}(${k===1?`${d}-${ov}`:`${d}-${k}${ov}`}) ${nextT(oC,ov)} = ${c}`;
 
-const solvePos = (iC: number, oC: number, k: number, d: number, ov: string, oVal: number, c: number): string[] => {
+// Expand the substituted equation into like terms, and hand off the resulting
+// a·v + b = c coefficients to the shared solveLinearEquationSteps technique — it
+// carries its own coef()/signed() sanitizers, so a ±1 combined coefficient can
+// never print as the bare "-1x"/"1x" this file's own hand-rolled chain used to.
+const solvePos = (iC: number, oC: number, k: number, d: number, ov: string, c: number): LinSolveChain => {
+  const eI=iC*k, eC=iC*d, nC=eI+oC;
+  const cP=eC===0?"":(eC>0?`+ ${eC}`:`- ${Math.abs(eC)}`);
+  const expandedLatex=`${lead(eI,ov)} ${cP} ${nextT(oC,ov)} = ${c}`.trim();
+  return { expandedLatex, a: nC, b: eC, c };
+};
+const solveNeg = (iC: number, oC: number, k: number, d: number, ov: string, c: number): LinSolveChain => {
+  const eC=iC*d, eI=-(iC*k), nC=eI+oC;
+  const expandedLatex=`${eC} ${nextT(eI,ov)} ${nextT(oC,ov)} = ${c}`;
+  return { expandedLatex, a: nC, b: eC, c };
+};
+
+// Byte-for-byte copy of this file's original (pre-technique-wiring) solve chain —
+// still what a non-dev-mode user sees, so the confirmed -1x display bug and the
+// solveLinearEquationSteps wiring above stay dev-gated until reviewed and promoted.
+const legacySolvePos = (iC: number, oC: number, k: number, d: number, ov: string, oVal: number, c: number): string[] => {
   const eI=iC*k, eC=iC*d, nC=eI+oC, nR=c-eC;
   const cP=eC===0?"":(eC>0?`+ ${eC}`:`- ${Math.abs(eC)}`);
   const steps=[`${eI}${ov} ${cP} ${nextT(oC,ov)} = ${c}`.trim()];
@@ -116,12 +140,13 @@ const solvePos = (iC: number, oC: number, k: number, d: number, ov: string, oVal
   steps.push(`${ov} = ${oVal}`);
   return steps;
 };
-const solveNeg = (iC: number, oC: number, k: number, d: number, ov: string, oVal: number, c: number): string[] => {
+const legacySolveNeg = (iC: number, oC: number, k: number, d: number, ov: string, oVal: number, c: number): string[] => {
   const eC=iC*d, eI=-(iC*k), nC=eI+oC, nR=c-eC;
   const cS=eC>0?`+ ${eC}`:`- ${Math.abs(eC)}`;
   const iS=eI>=0?`+ ${eI}${ov}`:`- ${Math.abs(eI)}${ov}`;
   return [`${eC} ${iS} ${nextT(oC,ov)} = ${c}`,`${nC}${ov} ${cS} = ${c}`,`${nC}${ov} = ${nR}`,...(Math.abs(nC)!==1?[`${ov} = ${nR} \\div ${nC}`]:[]),`${ov} = ${oVal}`];
 };
+
 const sbPos = (iV: string, ov: string, k: number, d: number, oVal: number, iVal: number): string[] => {
   const kP=k===1?ov:`${k}${ov}`;
   const inner=d===0?kP:d>0?`${kP} + ${d}`:`${kP} - ${Math.abs(d)}`;
@@ -170,7 +195,7 @@ const genLinL1 = (aN: boolean, rN: boolean, aNE: boolean): LinearQuestion => {
   if (sameLine(a,b,c,eq2a,eq2b,d)) return genLinL1(aN,rN,aNE);
   const dS=d===0?"":(d>0?` + ${d}`:` - ${Math.abs(d)}`);
   const eq2=`${iV} = ${k}${oV}${dS}`;
-  return { kind:"linear",varPair:vp,a1:a,b1:b,c1:c,eq1Display:buildEqLin(a,b,c,v1,v2),eq2Display:eq2,isolatedVar:iso,isolatedExpr:`${k}${oV}${dS}`,rearrangedLatex:eq2,needsRearrange:false,afterSubLatex:aSubPos(iC,oC,k,d,oV,c),solveSteps:solvePos(iC,oC,k,d,oV,oVal,c),subBackSteps:sbPos(iV,oV,k,d,oVal,iVal),v1Val:v1V,v2Val:v2V,key:`L1-${v1}${v2}-${a}-${b}-${k}-${d}-${v1V}-${v2V}-${id}`,difficulty:"level1",working:[] };
+  return { kind:"linear",varPair:vp,a1:a,b1:b,c1:c,eq1Display:buildEqLin(a,b,c,v1,v2),eq2Display:eq2,isolatedVar:iso,isolatedExpr:`${k}${oV}${dS}`,rearrangedLatex:eq2,needsRearrange:false,afterSubLatex:aSubPos(iC,oC,k,d,oV,c),solveChain:solvePos(iC,oC,k,d,oV,c),legacySolveSteps:legacySolvePos(iC,oC,k,d,oV,oVal,c),subBackSteps:sbPos(iV,oV,k,d,oVal,iVal),v1Val:v1V,v2Val:v2V,key:`L1-${v1}${v2}-${a}-${b}-${k}-${d}-${v1V}-${v2V}-${id}`,difficulty:"level1",working:[] };
 };
 
 const genLinL2 = (aN: boolean, rN: boolean, aZ: boolean, aNE: boolean): LinearQuestion => {
@@ -195,7 +220,7 @@ const genLinL2 = (aN: boolean, rN: boolean, aZ: boolean, aNE: boolean): LinearQu
     const eq2a=iso==="v1"?1:n, eq2b=iso==="v1"?n:1;
     if (sameLine(a,b,c,eq2a,eq2b,m2)) return genLinL2(aN,rN,aZ,aNE);
     const isoE=`${m2} - ${n}${oV}`;
-    return { kind:"linear",varPair:vp,a1:a,b1:b,c1:c,eq1Display:buildEqLin(a,b,c,v1,v2),eq2Display:`${n}${oV} + ${iV} = ${m2}`,isolatedVar:iso,isolatedExpr:isoE,rearrangedLatex:`${iV} = ${isoE}`,needsRearrange:true,afterSubLatex:aSubNeg(iC,oC,n,m2,oV,c),solveSteps:solveNeg(iC,oC,n,m2,oV,oVal,c),subBackSteps:sbNeg(iV,oV,n,m2,oVal,iVal),v1Val:v1V,v2Val:v2V,key:`L2lhs-${v1}${v2}-${n}-${m2}-${v1V}-${v2V}-${id}`,difficulty:"level2",working:[] };
+    return { kind:"linear",varPair:vp,a1:a,b1:b,c1:c,eq1Display:buildEqLin(a,b,c,v1,v2),eq2Display:`${n}${oV} + ${iV} = ${m2}`,isolatedVar:iso,isolatedExpr:isoE,rearrangedLatex:`${iV} = ${isoE}`,needsRearrange:true,afterSubLatex:aSubNeg(iC,oC,n,m2,oV,c),solveChain:solveNeg(iC,oC,n,m2,oV,c),legacySolveSteps:legacySolveNeg(iC,oC,n,m2,oV,oVal,c),subBackSteps:sbNeg(iV,oV,n,m2,oVal,iVal),v1Val:v1V,v2Val:v2V,key:`L2lhs-${v1}${v2}-${n}-${m2}-${v1V}-${v2V}-${id}`,difficulty:"level2",working:[] };
   }
 
   if (form==="rhs") {
@@ -209,7 +234,7 @@ const genLinL2 = (aN: boolean, rN: boolean, aZ: boolean, aNE: boolean): LinearQu
     const pS=p===0?iV:p>0?`${iV} + ${p}`:`${iV} - ${Math.abs(p)}`;
     const dS=d===0?"":(d>0?` + ${d}`:` - ${Math.abs(d)}`);
     const isoE=`${k}${oV}${dS}`;
-    return { kind:"linear",varPair:vp,a1:a,b1:b,c1:c,eq1Display:buildEqLin(a,b,c,v1,v2),eq2Display:`${n}${oV} = ${pS}`,isolatedVar:iso,isolatedExpr:isoE,rearrangedLatex:`${iV} = ${isoE}`,needsRearrange:true,afterSubLatex:aSubPos(iC,oC,k,d,oV,c),solveSteps:solvePos(iC,oC,k,d,oV,oVal,c),subBackSteps:sbPos(iV,oV,k,d,oVal,iVal),v1Val:v1V,v2Val:v2V,key:`L2rhs-${v1}${v2}-${k}-${d}-${v1V}-${v2V}-${id}`,difficulty:"level2",working:[] };
+    return { kind:"linear",varPair:vp,a1:a,b1:b,c1:c,eq1Display:buildEqLin(a,b,c,v1,v2),eq2Display:`${n}${oV} = ${pS}`,isolatedVar:iso,isolatedExpr:isoE,rearrangedLatex:`${iV} = ${isoE}`,needsRearrange:true,afterSubLatex:aSubPos(iC,oC,k,d,oV,c),solveChain:solvePos(iC,oC,k,d,oV,c),legacySolveSteps:legacySolvePos(iC,oC,k,d,oV,oVal,c),subBackSteps:sbPos(iV,oV,k,d,oVal,iVal),v1Val:v1V,v2Val:v2V,key:`L2rhs-${v1}${v2}-${k}-${d}-${v1V}-${v2V}-${id}`,difficulty:"level2",working:[] };
   }
 
   const n=randInt(2,5), p=-(n*oVal+iVal);
@@ -222,7 +247,7 @@ const genLinL2 = (aN: boolean, rN: boolean, aZ: boolean, aNE: boolean): LinearQu
   const pS=p===0?"":(p>0?` + ${p}`:` - ${Math.abs(p)}`);
   const rpS=p===0?"":(p>0?` - ${p}`:` + ${Math.abs(p)}`);
   const isoE=`-${n}${oV}${rpS}`, kk=-n, dd=-p;
-  return { kind:"linear",varPair:vp,a1:a,b1:b,c1:c,eq1Display:buildEqLin(a,b,c,v1,v2),eq2Display:`${n}${oV} + ${iV}${pS} = 0`,isolatedVar:iso,isolatedExpr:isoE,rearrangedLatex:`${iV} = ${isoE}`,needsRearrange:true,afterSubLatex:aSubPos(iC,oC,kk,dd,oV,c),solveSteps:solvePos(iC,oC,kk,dd,oV,oVal,c),subBackSteps:sbPos(iV,oV,kk,dd,oVal,iVal),v1Val:v1V,v2Val:v2V,key:`L2zero-${v1}${v2}-${n}-${p}-${v1V}-${v2V}-${id}`,difficulty:"level2",working:[] };
+  return { kind:"linear",varPair:vp,a1:a,b1:b,c1:c,eq1Display:buildEqLin(a,b,c,v1,v2),eq2Display:`${n}${oV} + ${iV}${pS} = 0`,isolatedVar:iso,isolatedExpr:isoE,rearrangedLatex:`${iV} = ${isoE}`,needsRearrange:true,afterSubLatex:aSubPos(iC,oC,kk,dd,oV,c),solveChain:solvePos(iC,oC,kk,dd,oV,c),legacySolveSteps:legacySolvePos(iC,oC,kk,dd,oV,oVal,c),subBackSteps:sbPos(iV,oV,kk,dd,oVal,iVal),v1Val:v1V,v2Val:v2V,key:`L2zero-${v1}${v2}-${n}-${p}-${v1V}-${v2V}-${id}`,difficulty:"level2",working:[] };
 };
 
 const genLinL3 = (aN: boolean, rN: boolean, aNE: boolean): LinearQuestion => {
@@ -246,17 +271,18 @@ const genLinL3 = (aN: boolean, rN: boolean, aNE: boolean): LinearQuestion => {
   const eq2a=iso==="v1"?-1:n, eq2b=iso==="v1"?n:-1;
   if (sameLine(a,b,c,eq2a,eq2b,mVal)) return genLinL3(aN,rN,aNE);
   const nS=`${n}${oV}`;
-  let eq2="", isoE="", rear="", aSub="", sS: string[]=[], sB: string[]=[];
+  let eq2="", isoE="", rear="", aSub="", sB: string[]=[], sL: string[]=[];
+  let sS: LinSolveChain;
   if (form==="lhsNeg") {
     eq2=Math.random()<0.5?`${nS} - ${iV} = ${mVal}`:`-${iV} + ${nS} = ${mVal}`;
     isoE=`${nS} - ${mVal}`; rear=`${iV} = ${isoE}`;
-    aSub=aSubPos(iC,oC,n,-mVal,oV,c); sS=solvePos(iC,oC,n,-mVal,oV,oVal,c); sB=sbPos(iV,oV,n,-mVal,oVal,iVal);
+    aSub=aSubPos(iC,oC,n,-mVal,oV,c); sS=solvePos(iC,oC,n,-mVal,oV,c); sL=legacySolvePos(iC,oC,n,-mVal,oV,oVal,c); sB=sbPos(iV,oV,n,-mVal,oVal,iVal);
   } else {
     eq2=Math.random()<0.5?`${mVal} - ${iV} = ${nS}`:`${nS} = ${mVal} - ${iV}`;
     isoE=`${mVal} - ${nS}`; rear=`${iV} = ${isoE}`;
-    aSub=aSubNeg(iC,oC,n,mVal,oV,c); sS=solveNeg(iC,oC,n,mVal,oV,oVal,c); sB=sbNeg(iV,oV,n,mVal,oVal,iVal);
+    aSub=aSubNeg(iC,oC,n,mVal,oV,c); sS=solveNeg(iC,oC,n,mVal,oV,c); sL=legacySolveNeg(iC,oC,n,mVal,oV,oVal,c); sB=sbNeg(iV,oV,n,mVal,oVal,iVal);
   }
-  return { kind:"linear",varPair:vp,a1:a,b1:b,c1:c,eq1Display:buildEqLin(a,b,c,v1,v2),eq2Display:eq2,isolatedVar:iso,isolatedExpr:isoE,rearrangedLatex:rear,needsRearrange:true,afterSubLatex:aSub,solveSteps:sS,subBackSteps:sB,v1Val:v1V,v2Val:v2V,key:`L3-${form}-${v1}${v2}-${n}-${mVal}-${v1V}-${v2V}-${id}`,difficulty:"level3",working:[] };
+  return { kind:"linear",varPair:vp,a1:a,b1:b,c1:c,eq1Display:buildEqLin(a,b,c,v1,v2),eq2Display:eq2,isolatedVar:iso,isolatedExpr:isoE,rearrangedLatex:rear,needsRearrange:true,afterSubLatex:aSub,solveChain:sS,legacySolveSteps:sL,subBackSteps:sB,v1Val:v1V,v2Val:v2V,key:`L3-${form}-${v1}${v2}-${n}-${mVal}-${v1V}-${v2V}-${id}`,difficulty:"level3",working:[] };
 };
 
 const generateLinear = (level: DifficultyLevel, negMode: NegMode, allowZero: boolean, allowNegEq1: boolean): LinearQuestion => {
@@ -795,7 +821,16 @@ const buildWorking = (q: InternalQ, graph: GraphInfo | null): WorkingStep[] => {
     const line = q.needsRearrange ? q.rearrangedLatex : q.eq2Display;
     if (q.needsRearrange) w.use(makeSubjectSteps(iV, q.rearrangedLatex));
     w.step("Substitute equation (2) into equation (1)", [q.afterSubLatex]);
-    w.use(solveLinearlySteps(oV, q.solveSteps));
+    // TODO(audit Tier 0): the solveLinearEquationSteps-wired branch fixes the
+    // confirmed -1x display bug (see docs/TOOL_AUDIT.md); kept dev-mode-only
+    // until reviewed, then this whole condition can be deleted and only the
+    // `if` branch kept.
+    if (getDevMode()) {
+      w.step("Expand the brackets", [q.solveChain.expandedLatex]);
+      w.use(solveLinearEquationSteps(q.solveChain.a, q.solveChain.b, q.solveChain.c, oV));
+    } else {
+      w.use(solveLinearlySteps(oV, q.legacySolveSteps));
+    }
     w.use(substituteBackSteps(iV, q.subBackSteps, { value: `${oV} = ${oVal}`, into: titleEq(line) }));
   } else {
     const primary = q.isolateVar === "y" ? "x" : "y";  // variable the quadratic is in
