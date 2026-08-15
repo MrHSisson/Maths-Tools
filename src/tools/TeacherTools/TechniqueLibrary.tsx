@@ -1,7 +1,7 @@
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Home, Layers } from "lucide-react";
 import {
-  MathRenderer, loadKaTeX,
+  MathRenderer, loadKaTeX, WorkedExampleSteps, getQuestionBg,
   workings, quadraticFormulaSteps, solveLinearEquationSteps, solveFactorsSteps,
   substituteBackSteps, makeSubjectSteps, solveLinearlySteps,
   type WorkingStep, type Grain,
@@ -123,6 +123,76 @@ const SectionHeader = ({ children }: { children: React.ReactNode }) => (
   </div>
 );
 
+// ── Preview — the SAME WorkedExampleSteps viewer a real tool renders through,
+// fed a technique's raw output. `grains: true` techniques get a Brief/Standard/
+// Full picker; the rest render their one fixed shape. Step-by-Step vs Show All
+// is the viewer's own built-in toggle — nothing extra to build for that half.
+// ─────────────────────────────────────────────────────────────────────────────
+interface PreviewTechnique { id: string; name: string; grains?: true; render: (grain: Grain) => WorkingStep[]; }
+
+const PREVIEWABLE: PreviewTechnique[] = [
+  ...GRAIN_DEMOS.map((d): PreviewTechnique => ({ id: d.name, name: d.name, grains: true, render: d.render })),
+  ...DEMOS.map((d): PreviewTechnique => ({ id: d.name, name: d.name, render: () => d.steps })),
+  { id: "workings() — full method", name: "workings() — full method", render: () => FULL_EXAMPLE },
+];
+
+const TechniquePreview = () => {
+  const [selectedId, setSelectedId] = useState(PREVIEWABLE[0].id);
+  const [grain, setGrain] = useState<Grain>("standard");
+  const selected = PREVIEWABLE.find((t) => t.id === selectedId) ?? PREVIEWABLE[0];
+  const steps = selected.render(selected.grains ? grain : "standard");
+  const lastLatex = steps.length ? steps[steps.length - 1].latex : "";
+
+  return (
+    <div className="bg-white rounded-xl shadow-lg overflow-hidden" style={{ borderLeft: `6px solid ${ACCENT}` }}>
+      <div className="px-6 py-4 border-b border-gray-100 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h3 className="text-lg font-bold text-gray-900 font-mono">{selected.name}</h3>
+          <p className="text-sm text-gray-500 mt-1">
+            Rendered through the real Worked Example viewer — the same component every tool uses, so this is exactly what a teacher would see.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <select
+            value={selectedId}
+            onChange={(e) => setSelectedId(e.target.value)}
+            className="text-sm font-semibold border border-gray-300 rounded-lg px-3 py-1.5 bg-white text-gray-700"
+          >
+            {PREVIEWABLE.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+          </select>
+          {selected.grains && (
+            <div className="flex rounded-lg border-2 overflow-hidden" style={{ borderColor: "#d1d5db" }}>
+              {(["brief", "standard", "full"] as Grain[]).map((g) => (
+                <button
+                  key={g}
+                  onClick={() => setGrain(g)}
+                  className="px-3 py-1.5 text-sm font-bold transition-colors"
+                  style={{
+                    background: grain === g ? "#1e3a8a" : "#fff",
+                    color: grain === g ? "#fff" : "#6b7280",
+                  }}
+                >
+                  {GRAIN_META[g].label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="p-6" style={{ backgroundColor: getQuestionBg("default") }}>
+        <WorkedExampleSteps
+          working={steps}
+          renderAnswer={() => <MathRenderer latex={lastLatex} />}
+          colorScheme="default"
+          answerFontClass="text-3xl"
+          stepThroughEnabled
+          resetKey={`${selectedId}-${grain}`}
+        />
+      </div>
+    </div>
+  );
+};
+
 export default function App() {
   useEffect(() => { loadKaTeX(); }, []);
   const count = GRAIN_DEMOS.length + DEMOS.length;
@@ -148,6 +218,16 @@ export default function App() {
             one recurring maths move once, so every tool that performs it gets complete, titled,
             live-modelled working.
           </p>
+
+          <section className="mb-12">
+            <SectionHeader>Preview</SectionHeader>
+            <p className="text-gray-500 mb-6 max-w-3xl">
+              Pick a technique (and, where it applies, a detail level) to see it rendered live — not
+              as a printed string, but through the actual step-by-step viewer, "Step-by-Step" and
+              "Show All" included.
+            </p>
+            <TechniquePreview />
+          </section>
 
           <section className="mb-12">
             <SectionHeader>Grain — one move, three levels of detail</SectionHeader>
