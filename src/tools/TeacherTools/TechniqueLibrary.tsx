@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Home, Layers } from "lucide-react";
+import { Home, Layers, X } from "lucide-react";
 import {
   MathRenderer, loadKaTeX, WorkedExampleSteps, getQuestionBg,
   workings, quadraticFormulaSteps, solveLinearEquationSteps, solveFactorsSteps,
@@ -8,93 +8,41 @@ import {
 } from "../../shared";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// TECHNIQUE LIBRARY — browse every technique in src/shared/techniques, rendered
-// on sample inputs so the titles and live-model fragments are visible. The
-// working-step sibling of the Skill Library, and styled to match it. Registered
-// enabled:false, so it only shows in Developing-tools mode.
+// TECHNIQUE LIBRARY — browse every technique in src/shared/techniques. The
+// working-step sibling of the Skill Library, and structured to match it: an
+// index of cards, click one to open an accurate preview. (An earlier version
+// dumped every technique's full step output inline on one page — a 3-column
+// brief/standard/full ladder plus a flat card per technique. That stopped
+// scaling almost immediately: the 3 equal columns never looked like the width
+// working actually renders at, and the page would only get longer and harder
+// to scan as more techniques are added. The index+overlay shape here is the
+// fix, and doubles as the honest preview — the overlay renders through the
+// SAME WorkedExampleSteps component every real tool uses.)
 // ─────────────────────────────────────────────────────────────────────────────
 
 const ACCENT = "#9333ea"; // purple-600 — the Algebra strand accent (techniques are algebra-heavy)
 
-// ── One rendered step (title + maths, with a fragment breakdown when live-modelled) ──
-const StepView = ({ s, i }: { s: WorkingStep; i: number }) => {
-  const isNote = s.type === "tStep";
-  const frags = s.frags && s.frags.length > 1 ? s.frags : null;
-  return (
-    <div className="rounded-lg bg-[#faf8f5] border border-gray-200 px-4 py-3">
-      <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Step {i + 1}</div>
-      {s.label && <div className="text-gray-800 font-semibold mb-1.5">{s.label}</div>}
-      {isNote
-        ? <div className="text-gray-600">{s.plain}</div>
-        : <div className="text-gray-900 text-lg"><MathRenderer latex={s.latex} /></div>}
-      {frags && (
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: ACCENT }}>Reveals in {frags.length}:</span>
-          {frags.map((f, fi) => (
-            <span key={fi} className="flex items-center gap-2">
-              {fi > 0 && <span className="text-gray-300">›</span>}
-              <span className="rounded bg-white border border-gray-200 px-2 py-0.5 text-sm"><MathRenderer latex={f} /></span>
-            </span>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-// ── The grain ladder: one move at three grains, side by side ──
-interface GrainDemo { name: string; desc: string; render: (grain: Grain) => WorkingStep[]; }
-const GRAIN_DEMOS: GrainDemo[] = [
-  {
-    name: "quadraticFormulaSteps(2, 4, -8)",
-    desc: "Solving a quadratic with the formula. Brief assumes the substitution; full is the skill-level teaching (discriminant, ± split, decimals).",
-    render: (g) => quadraticFormulaSteps(2, 4, -8, "x", g),
-  },
-  {
-    name: "solveLinearEquationSteps(2, 3, 11)",
-    desc: "Solving 2x + 3 = 11. Full names each both-sides move — the fundamental teaching pattern; brief just states the answer.",
-    render: (g) => solveLinearEquationSteps(2, 3, 11, "x", g),
-  },
-];
-
 // A depth ramp (light → deep) — reads as "more detail", and stays clear of the
 // green/amber/red Level colours so grain is never mistaken for difficulty.
-const GRAIN_META: Record<Grain, { label: string; cls: string }> = {
-  brief: { label: "Brief", cls: "bg-gray-100 text-gray-600 border-gray-200" },
-  standard: { label: "Standard", cls: "bg-blue-100 text-blue-800 border-blue-200" },
-  full: { label: "Full", cls: "bg-blue-900 text-white border-blue-900" },
+const GRAIN_META: Record<Grain, { label: string }> = {
+  brief: { label: "Brief" },
+  standard: { label: "Standard" },
+  full: { label: "Full" },
+};
+const LAYOUT_META: Record<"single" | "stacked", string> = {
+  single: "Single card",
+  stacked: "Stacked",
 };
 
-const GrainLadder = ({ demo }: { demo: GrainDemo }) => (
-  <div className="bg-white rounded-xl shadow-lg overflow-hidden" style={{ borderLeft: `6px solid ${ACCENT}` }}>
-    <div className="px-6 py-4 border-b border-gray-100">
-      <h3 className="text-lg font-bold text-gray-900 font-mono">{demo.name}</h3>
-      <p className="text-sm text-gray-500 mt-1 leading-relaxed">{demo.desc}</p>
-    </div>
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-5">
-      {(["brief", "standard", "full"] as Grain[]).map((g) => (
-        <div key={g} className="flex flex-col gap-2">
-          <span className={`self-start text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${GRAIN_META[g].cls}`}>{GRAIN_META[g].label}</span>
-          {demo.render(g).map((s, i) => <StepView key={i} s={s} i={i} />)}
-        </div>
-      ))}
-    </div>
-  </div>
-);
-
-// ── A single-grain technique card ──
-interface Demo { name: string; desc: string; call: string; steps: WorkingStep[]; }
-const DEMOS: Demo[] = [
-  { name: "solveFactorsSteps(roots, v)", desc: "Set each factor of a factorised expression to zero and read off the roots.",
-    call: "solveFactorsSteps([\"1\", \"6\"], \"x\")", steps: solveFactorsSteps(["1", "6"], "x") },
-  { name: "substituteBackSteps(varName, body, ctx)", desc: "Substitute a found value back to get the other unknown; the title names the value and the equation.",
-    call: "substituteBackSteps(\"m\", [\"m = 5(4) + 2\", \"m = 22\"], { value: \"n = 4\", into: \"m = 5n + 2\" })",
-    steps: substituteBackSteps("m", ["m = 5(4) + 2", "m = 22"], { value: "n = 4", into: "m = 5n + 2" }) },
-  { name: "makeSubjectSteps(varName, resultLatex)", desc: "Rearrange an equation to make a variable the subject.",
-    call: "makeSubjectSteps(\"m\", \"m = 5n + 2\")", steps: makeSubjectSteps("m", "m = 5n + 2") },
-  { name: "solveLinearlySteps(v, chain)", desc: "Solve a linear equation from a pre-built chain — one row per move.",
-    call: "solveLinearlySteps(\"n\", [\"34n = 136\", \"n = 4\"])", steps: solveLinearlySteps("n", ["34n = 136", "n = 4"]) },
-];
+// ── Technique definitions — data only, feeds both the index grid and the overlay ──
+interface TechniqueDef {
+  id: string;
+  name: string;
+  desc: string;
+  /** Present (true) for techniques that take a Grain param — gets the picker. */
+  grains?: true;
+  render: (grain: Grain) => WorkingStep[];
+}
 
 const FULL_EXAMPLE = workings()
   .use(makeSubjectSteps("m", "m = 5n + 2"))
@@ -103,87 +51,96 @@ const FULL_EXAMPLE = workings()
   .use(substituteBackSteps("m", ["m = 5(4) + 2", "m = 22"], { value: "n = 4", into: "m = 5n + 2" }))
   .build();
 
-const Card = ({ name, desc, call, steps }: Demo) => (
-  <div className="bg-white rounded-xl shadow-lg overflow-hidden" style={{ borderLeft: `6px solid ${ACCENT}` }}>
-    <div className="px-6 py-4 border-b border-gray-100">
-      <h3 className="text-lg font-bold text-gray-900 font-mono">{name}</h3>
-      <p className="text-sm text-gray-500 mt-1 leading-relaxed">{desc}</p>
-      {call && <code className="inline-block mt-2 text-xs bg-gray-100 text-gray-700 rounded px-2 py-1 font-mono break-all">{call}</code>}
-    </div>
-    <div className="px-6 py-4 flex flex-col gap-2">
-      {steps.map((s, i) => <StepView key={i} s={s} i={i} />)}
-    </div>
-  </div>
-);
-
-const SectionHeader = ({ children }: { children: React.ReactNode }) => (
-  <div className="flex items-center gap-4 mb-6">
-    <h2 className="text-2xl font-bold" style={{ color: ACCENT }}>{children}</h2>
-    <div className="flex-1 h-px bg-gray-300" />
-  </div>
-);
-
-// ── Preview — the SAME WorkedExampleSteps viewer a real tool renders through,
-// fed a technique's raw output. `grains: true` techniques get a Brief/Standard/
-// Full picker; the rest render their one fixed shape. Step-by-Step vs Show All
-// is the viewer's own built-in toggle — nothing extra to build for that half.
-// ─────────────────────────────────────────────────────────────────────────────
-interface PreviewTechnique { id: string; name: string; grains?: true; render: (grain: Grain) => WorkingStep[]; }
-
-const PREVIEWABLE: PreviewTechnique[] = [
-  ...GRAIN_DEMOS.map((d): PreviewTechnique => ({ id: d.name, name: d.name, grains: true, render: d.render })),
-  ...DEMOS.map((d): PreviewTechnique => ({ id: d.name, name: d.name, render: () => d.steps })),
-  { id: "workings() — full method", name: "workings() — full method", render: () => FULL_EXAMPLE },
+const TECHNIQUES: TechniqueDef[] = [
+  {
+    id: "quadraticFormula", name: "quadraticFormulaSteps(2, 4, -8)", grains: true,
+    desc: "Solving a quadratic with the formula. Brief assumes the substitution; full is the skill-level teaching (discriminant, ± split, decimals).",
+    render: (g) => quadraticFormulaSteps(2, 4, -8, "x", g),
+  },
+  {
+    id: "solveLinearEquation", name: "solveLinearEquationSteps(2, 3, 11)", grains: true,
+    desc: "Solving 2x + 3 = 11. Full names each both-sides move — the fundamental teaching pattern; brief just states the answer.",
+    render: (g) => solveLinearEquationSteps(2, 3, 11, "x", g),
+  },
+  {
+    id: "solveFactors", name: "solveFactorsSteps([\"1\", \"6\"], \"x\")",
+    desc: "Set each factor of a factorised expression to zero and read off the roots.",
+    render: () => solveFactorsSteps(["1", "6"], "x"),
+  },
+  {
+    id: "substituteBack", name: "substituteBackSteps(\"m\", [...], { value, into })",
+    desc: "Substitute a found value back to get the other unknown; the title names the value and the equation.",
+    render: () => substituteBackSteps("m", ["m = 5(4) + 2", "m = 22"], { value: "n = 4", into: "m = 5n + 2" }),
+  },
+  {
+    id: "makeSubject", name: "makeSubjectSteps(\"m\", \"m = 5n + 2\")",
+    desc: "Rearrange an equation to make a variable the subject.",
+    render: () => makeSubjectSteps("m", "m = 5n + 2"),
+  },
+  {
+    id: "solveLinearly", name: "solveLinearlySteps(\"n\", [...])",
+    desc: "Solve a linear equation from a pre-built chain — one row per move.",
+    render: () => solveLinearlySteps("n", ["34n = 136", "n = 4"]),
+  },
+  {
+    id: "fullExample", name: "workings() — full method",
+    desc: "A complete linear-substitution solution assembled from technique blocks + bespoke steps — shows how a real tool composes them.",
+    render: () => FULL_EXAMPLE,
+  },
 ];
 
-const LAYOUT_META: Record<"single" | "stacked", string> = {
-  single: "Single card",
-  stacked: "Stacked",
+// ── Index card — no step content, just enough to decide what to open ──
+const TechniqueCard = ({ t, onOpen }: { t: TechniqueDef; onOpen: () => void }) => {
+  const stepCount = t.render("standard").length;
+  return (
+    <button onClick={onOpen}
+      className="group bg-white rounded-xl shadow-lg p-6 text-left transition-all hover:shadow-xl hover:-translate-y-0.5 flex flex-col gap-2"
+      style={{ borderLeft: `6px solid ${ACCENT}` }}>
+      <div className="flex items-start justify-between gap-3">
+        <span className="text-base font-bold text-gray-900 font-mono group-hover:text-blue-900 transition-colors break-all">{t.name}</span>
+        <span className="text-xs font-bold uppercase tracking-wider flex-shrink-0 mt-1" style={{ color: ACCENT }}>
+          {t.grains ? "3 grains" : `${stepCount} step${stepCount !== 1 ? "s" : ""}`}
+        </span>
+      </div>
+      <p className="text-sm text-gray-500 leading-relaxed">{t.desc}</p>
+    </button>
+  );
 };
 
-const TechniquePreview = () => {
-  const [selectedId, setSelectedId] = useState(PREVIEWABLE[0].id);
+// ── Overlay — the accurate, full-width preview for ONE technique, rendered
+// through the real WorkedExampleSteps viewer. Sized to roughly match the
+// actual Worked Example content width (ToolShell's own max-w-6xl), not the
+// old 3-columns-squeezed layout.
+const TechniqueOverlay = ({ t, onClose }: { t: TechniqueDef; onClose: () => void }) => {
   const [grain, setGrain] = useState<Grain>("standard");
-  const [layout, setLayout] = useState<"single" | "stacked">("single");
-  const selected = PREVIEWABLE.find((t) => t.id === selectedId) ?? PREVIEWABLE[0];
-  const steps = selected.render(selected.grains ? grain : "standard");
+  const [layout, setLayout] = useState<"single" | "stacked">("stacked");
+  const steps = t.render(t.grains ? grain : "standard");
   const lastLatex = steps.length ? steps[steps.length - 1].latex : "";
 
   return (
-    // No overflow-hidden here (unlike the other cards) — it would silently break
-    // the sticky nav inside WorkedExampleSteps' stacked layout (any ancestor
-    // with overflow other than visible becomes sticky's containing box, even
-    // if that ancestor never scrolls itself). Safe to drop the corner-clipping:
-    // every child here is white/matches getQuestionBg("default"), so there's
-    // no colour to clip against the rounded corners anyway.
-    <div className="bg-white rounded-xl shadow-lg" style={{ borderLeft: `6px solid ${ACCENT}` }}>
-      <div className="px-6 py-4 border-b border-gray-100 flex flex-wrap items-center justify-between gap-4 rounded-t-xl">
-        <div>
-          <h3 className="text-lg font-bold text-gray-900 font-mono">{selected.name}</h3>
-          <p className="text-sm text-gray-500 mt-1">
-            Rendered through the real Worked Example viewer — the same component every tool uses, so this is exactly what a teacher would see.
-          </p>
+    <div className="fixed inset-0 flex items-center justify-center"
+      style={{ zIndex: 300, background: "rgba(15, 23, 42, 0.55)", padding: 12 }} onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()}
+        className="rounded-2xl shadow-2xl w-full flex flex-col"
+        style={{ maxWidth: 1100, maxHeight: "92vh", backgroundColor: "#f5f3f0", padding: 16 }}>
+        <div className="flex items-start justify-between gap-3 mb-1 flex-shrink-0">
+          <div>
+            <span className="text-xs font-bold uppercase tracking-wider" style={{ color: ACCENT }}>Technique</span>
+            <h3 className="text-lg font-bold text-gray-900 font-mono">{t.name}</h3>
+          </div>
+          <button onClick={onClose} title="Close"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors flex-shrink-0">
+            <X size={20} />
+          </button>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <select
-            value={selectedId}
-            onChange={(e) => setSelectedId(e.target.value)}
-            className="text-sm font-semibold border border-gray-300 rounded-lg px-3 py-1.5 bg-white text-gray-700"
-          >
-            {PREVIEWABLE.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-          </select>
-          {selected.grains && (
+        <p className="text-sm text-gray-500 mb-3 flex-shrink-0">{t.desc}</p>
+        <div className="flex flex-wrap items-center gap-3 mb-3 flex-shrink-0">
+          {t.grains && (
             <div className="flex rounded-lg border-2 overflow-hidden" style={{ borderColor: "#d1d5db" }}>
               {(["brief", "standard", "full"] as Grain[]).map((g) => (
-                <button
-                  key={g}
-                  onClick={() => setGrain(g)}
+                <button key={g} onClick={() => setGrain(g)}
                   className="px-3 py-1.5 text-sm font-bold transition-colors"
-                  style={{
-                    background: grain === g ? "#1e3a8a" : "#fff",
-                    color: grain === g ? "#fff" : "#6b7280",
-                  }}
-                >
+                  style={{ background: grain === g ? "#1e3a8a" : "#fff", color: grain === g ? "#fff" : "#6b7280" }}>
                   {GRAIN_META[g].label}
                 </button>
               ))}
@@ -191,32 +148,29 @@ const TechniquePreview = () => {
           )}
           <div className="flex rounded-lg border-2 overflow-hidden" style={{ borderColor: "#d1d5db" }}>
             {(["single", "stacked"] as const).map((l) => (
-              <button
-                key={l}
-                onClick={() => setLayout(l)}
+              <button key={l} onClick={() => setLayout(l)}
                 className="px-3 py-1.5 text-sm font-bold transition-colors"
-                style={{
-                  background: layout === l ? ACCENT : "#fff",
-                  color: layout === l ? "#fff" : "#6b7280",
-                }}
-                title="Only visible difference is in Step-by-Step mode"
-              >
+                style={{ background: layout === l ? ACCENT : "#fff", color: layout === l ? "#fff" : "#6b7280" }}
+                title="Only visible difference is in Step-by-Step mode">
                 {LAYOUT_META[l]}
               </button>
             ))}
           </div>
         </div>
-      </div>
-      <div className="p-6" style={{ backgroundColor: getQuestionBg("default") }}>
-        <WorkedExampleSteps
-          working={steps}
-          renderAnswer={() => <MathRenderer latex={lastLatex} />}
-          colorScheme="default"
-          answerFontClass="text-3xl"
-          stepThroughEnabled
-          resetKey={`${selectedId}-${grain}`}
-          layout={layout}
-        />
+        {/* This is the real scrolling container (overflow-y-auto, not the outer
+            card) — WorkedExampleSteps' sticky nav in stacked mode attaches to
+            whichever ancestor actually scrolls, so it needs to be this div. */}
+        <div className="flex-1 overflow-y-auto rounded-xl p-6" style={{ backgroundColor: getQuestionBg("default"), minHeight: 0 }}>
+          <WorkedExampleSteps
+            working={steps}
+            renderAnswer={() => <MathRenderer latex={lastLatex} />}
+            colorScheme="default"
+            answerFontClass="text-3xl"
+            stepThroughEnabled
+            resetKey={`${t.id}-${grain}`}
+            layout={layout}
+          />
+        </div>
       </div>
     </div>
   );
@@ -224,7 +178,9 @@ const TechniquePreview = () => {
 
 export default function App() {
   useEffect(() => { loadKaTeX(); }, []);
-  const count = GRAIN_DEMOS.length + DEMOS.length;
+  const [openId, setOpenId] = useState<string | null>(null);
+  const openTechnique = TECHNIQUES.find((t) => t.id === openId) ?? null;
+
   return (
     <>
       <div className="bg-blue-900 shadow-lg">
@@ -235,49 +191,23 @@ export default function App() {
           </button>
           <div className="flex items-center gap-2 text-blue-200">
             <Layers size={20} />
-            <span className="font-semibold">{count} techniques</span>
+            <span className="font-semibold">{TECHNIQUES.length} techniques</span>
           </div>
         </div>
       </div>
+      {openTechnique && <TechniqueOverlay t={openTechnique} onClose={() => setOpenId(null)} />}
       <div className="min-h-screen p-8" style={{ backgroundColor: "#f5f3f0" }}>
         <div className="max-w-6xl mx-auto">
           <h1 className="text-5xl font-bold text-center mb-4" style={{ color: "#000" }}>Technique Library</h1>
           <p className="text-center text-gray-500 text-lg mb-10 max-w-2xl mx-auto">
             Reusable working-step blocks — the engine behind natural worked examples. Each encodes
             one recurring maths move once, so every tool that performs it gets complete, titled,
-            live-modelled working.
+            live-modelled working. Click a card for an accurate preview — brief/standard/full where
+            it applies, rendered through the real Worked Example viewer.
           </p>
-
-          <section className="mb-12">
-            <SectionHeader>Preview</SectionHeader>
-            <p className="text-gray-500 mb-6 max-w-3xl">
-              Pick a technique (and, where it applies, a detail level) to see it rendered live — not
-              as a printed string, but through the actual step-by-step viewer, "Step-by-Step" and
-              "Show All" included.
-            </p>
-            <TechniquePreview />
-          </section>
-
-          <section className="mb-12">
-            <SectionHeader>Grain — one move, three levels of detail</SectionHeader>
-            <p className="text-gray-500 mb-6 max-w-3xl">
-              A tool picks the grain that suits its context: a prerequisite it doesn't teach renders <strong>brief</strong>;
-              the move being taught (or a skill) renders <strong>full</strong> — the fundamental teaching pattern.
-            </p>
-            <div className="flex flex-col gap-6">
-              {GRAIN_DEMOS.map((d) => <GrainLadder key={d.name} demo={d} />)}
-            </div>
-          </section>
-
-          <section className="mb-12">
-            <SectionHeader>All techniques</SectionHeader>
-            <div className="flex flex-col gap-6">
-              {DEMOS.map((d) => <Card key={d.name} {...d} />)}
-              <Card name="workings() — full method" call=""
-                desc="A complete linear-substitution solution assembled from technique blocks + bespoke steps. The answer is shown once by the tool's answer box, never restated here."
-                steps={FULL_EXAMPLE} />
-            </div>
-          </section>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {TECHNIQUES.map((t) => <TechniqueCard key={t.id} t={t} onOpen={() => setOpenId(t.id)} />)}
+          </div>
         </div>
       </div>
     </>
