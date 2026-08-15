@@ -136,9 +136,15 @@ const PREVIEWABLE: PreviewTechnique[] = [
   { id: "workings() — full method", name: "workings() — full method", render: () => FULL_EXAMPLE },
 ];
 
+const LAYOUT_META: Record<"single" | "stacked", string> = {
+  single: "Single card",
+  stacked: "Stacked",
+};
+
 const TechniquePreview = () => {
   const [selectedId, setSelectedId] = useState(PREVIEWABLE[0].id);
   const [grain, setGrain] = useState<Grain>("standard");
+  const [layout, setLayout] = useState<"single" | "stacked">("single");
   const selected = PREVIEWABLE.find((t) => t.id === selectedId) ?? PREVIEWABLE[0];
   const steps = selected.render(selected.grains ? grain : "standard");
   const lastLatex = steps.length ? steps[steps.length - 1].latex : "";
@@ -152,7 +158,7 @@ const TechniquePreview = () => {
             Rendered through the real Worked Example viewer — the same component every tool uses, so this is exactly what a teacher would see.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <select
             value={selectedId}
             onChange={(e) => setSelectedId(e.target.value)}
@@ -177,6 +183,22 @@ const TechniquePreview = () => {
               ))}
             </div>
           )}
+          <div className="flex rounded-lg border-2 overflow-hidden" style={{ borderColor: "#d1d5db" }}>
+            {(["single", "stacked"] as const).map((l) => (
+              <button
+                key={l}
+                onClick={() => setLayout(l)}
+                className="px-3 py-1.5 text-sm font-bold transition-colors"
+                style={{
+                  background: layout === l ? ACCENT : "#fff",
+                  color: layout === l ? "#fff" : "#6b7280",
+                }}
+                title="Only visible difference is in Step-by-Step mode"
+              >
+                {LAYOUT_META[l]}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
       <div className="p-6" style={{ backgroundColor: getQuestionBg("default") }}>
@@ -187,6 +209,7 @@ const TechniquePreview = () => {
           answerFontClass="text-3xl"
           stepThroughEnabled
           resetKey={`${selectedId}-${grain}`}
+          layout={layout}
         />
       </div>
     </div>

@@ -37,11 +37,17 @@ export interface WorkedExampleStepsProps {
    *  represents a genuinely new example — a question's key, a technique+grain
    *  pair, or an incrementing counter. */
   resetKey: string | number;
+  /** Step-by-Step's card layout. "single" (default) replaces the card each
+   *  press — every live tool today. "stacked" builds a vertical list instead,
+   *  like Show All arrived at one press at a time: earlier steps stay visible
+   *  (dimmed), the current one is highlighted. Exploratory — not wired into any
+   *  real tool yet, only the Technique Library preview. */
+  layout?: "single" | "stacked";
 }
 
 export const WorkedExampleSteps = ({
   working, renderAnswer, colorScheme, answerFontClass, stepRenderer, qoSnapshot,
-  stepThroughEnabled, onOpenSkill, resetKey,
+  stepThroughEnabled, onOpenSkill, resetKey, layout = "single",
 }: WorkedExampleStepsProps) => {
   const [steppedMode, setSteppedMode] = useState(true);
   const [stepIdx, setStepIdx] = useState(0);
@@ -139,6 +145,27 @@ export const WorkedExampleSteps = ({
     </button>
   );
 
+  // Stacked layout: earlier steps stay on screen (dimmed) as later ones arrive,
+  // instead of each press replacing the card. The current step keeps a ring so
+  // the eye still finds "what's new" in a growing list.
+  const stackedSteps = (upTo: number, activeReveal: number) => (
+    <div className="space-y-4">
+      {working.slice(0, upTo + 1).map((s, i) => {
+        const isCurrent = i === upTo;
+        return (
+          <div key={i} style={{
+            opacity: isCurrent ? 1 : 0.55,
+            transition: "opacity 0.3s ease",
+            borderRadius: 12,
+            boxShadow: isCurrent ? "0 0 0 2px #1e3a8a" : "none",
+          }}>
+            {renderStep(s, i, isCurrent ? activeReveal : undefined)}
+          </div>
+        );
+      })}
+    </div>
+  );
+
   const answerBox = (extraClass: string) => (
     <div className={`rounded-xl p-6 text-center ${extraClass}`} style={{ backgroundColor: stepBg }}>
       <span className={`${answerFontClass} font-bold`} style={{ color: "#166534" }}>
@@ -165,9 +192,18 @@ export const WorkedExampleSteps = ({
           </button>
         </div>
         {!atAnswer ? (
-          <div className="space-y-4">
-            {renderStep(working[stepIdx], stepIdx, fragIdx)}
-          </div>
+          layout === "stacked" ? stackedSteps(stepIdx, fragIdx) : (
+            <div className="space-y-4">
+              {renderStep(working[stepIdx], stepIdx, fragIdx)}
+            </div>
+          )
+        ) : layout === "stacked" ? (
+          <>
+            <div className="space-y-4">
+              {working.map((s, i) => renderStep(s, i))}
+            </div>
+            {answerBox("mt-4")}
+          </>
         ) : answerBox("")}
         <div className="flex justify-center gap-2 mt-4">
           {Array.from({ length: totalSteps + 1 }, (_, i) => (
