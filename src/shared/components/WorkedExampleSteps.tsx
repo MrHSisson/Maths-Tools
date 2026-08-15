@@ -1,0 +1,200 @@
+import { useState, useEffect, type ReactNode } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import type { WorkingStep, QOSnapshot } from "../types";
+import { getStepBg } from "../colors";
+import { MathRenderer } from "./MathRenderer";
+import { SkillLabel } from "../skills";
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// WorkedExampleSteps — the working-step viewer every tool's "Worked Example" mode
+// renders through. Pulled out of ToolShell so it's the SAME component both a real
+// tool and the Technique Library preview use — what you see previewing a
+// technique is pixel-for-pixel what a teacher sees in the real tool, not a
+// separate mockup that can drift out of sync.
+//
+// Owns its own step-by-step navigation state internally (step index and
+// fragment index). Step-by-Step vs Show All persists across a reset (matching
+// the original behaviour: picking a new question kept your view preference,
+// only your position in it reset) — bump `resetKey` (e.g. the question's key,
+// or a counter) whenever the caller wants position reset back to the start.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export interface WorkedExampleStepsProps {
+  working: WorkingStep[];
+  /** Renders the final answer box's content. */
+  renderAnswer: () => ReactNode;
+  colorScheme: string;
+  /** Tailwind text-size class applied to the answer box, e.g. "text-3xl". */
+  answerFontClass: string;
+  stepRenderer?: (step: WorkingStep, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null;
+  qoSnapshot?: QOSnapshot;
+  /** Gates whether Step-by-Step (one beat at a time) is reachable at all —
+   *  ToolShell passes its devMode flag; a preview surface can pass true always. */
+  stepThroughEnabled: boolean;
+  onOpenSkill?: (id: string) => void;
+  /** Changing this resets step/fragment position back to the start (Step-by-Step
+   *  vs Show All is left alone). Pass something that changes whenever `working`
+   *  represents a genuinely new example — a question's key, a technique+grain
+   *  pair, or an incrementing counter. */
+  resetKey: string | number;
+}
+
+export const WorkedExampleSteps = ({
+  working, renderAnswer, colorScheme, answerFontClass, stepRenderer, qoSnapshot,
+  stepThroughEnabled, onOpenSkill, resetKey,
+}: WorkedExampleStepsProps) => {
+  const [steppedMode, setSteppedMode] = useState(true);
+  const [stepIdx, setStepIdx] = useState(0);
+  const [fragIdx, setFragIdx] = useState(0);
+
+  const stepBg = getStepBg(colorScheme);
+  const totalSteps = working.length;
+  const stepped = stepThroughEnabled && steppedMode;
+  const atAnswer = stepIdx >= totalSteps;
+  const canPrev = stepIdx > 0 || fragIdx > 0;
+  const canNext = stepIdx <= totalSteps;
+
+  // Toggling Step-by-Step/Show All always restarts at the beginning, matching
+  // the reset ToolShell used to do by hand on the same button press.
+  useEffect(() => { setStepIdx(0); setFragIdx(0); }, [stepped]);
+  // A genuinely new example (new question, or a reformat that keeps the same
+  // question key but changes the working) also restarts position.
+  useEffect(() => { setStepIdx(0); setFragIdx(0); }, [resetKey]);
+
+  const fragsOf = (s: WorkingStep | undefined): string[] | null =>
+    s?.frags && s.frags.length > 1 ? s.frags : null;
+
+  const goNextBeat = () => {
+    if (atAnswer) return;
+    const frags = fragsOf(working[stepIdx]);
+    if (frags && fragIdx < frags.length - 1) { setFragIdx(i => i + 1); return; }
+    setStepIdx(i => i + 1);
+    setFragIdx(0);
+  };
+  const goPrevBeat = () => {
+    if (fragIdx > 0) { setFragIdx(i => i - 1); return; }
+    if (stepIdx === 0) return;
+    const prevFrags = fragsOf(working[stepIdx - 1]);
+    setStepIdx(i => i - 1);
+    setFragIdx(prevFrags ? prevFrags.length - 1 : 0);
+  };
+  const jumpToStep = (i: number) => { setStepIdx(i); setFragIdx(0); };
+
+  // The maths line of a step. When fragments exist and `reveal` is given
+  // (stepped mode, current card), all fragments are laid out immediately and
+  // hidden ones sit at opacity 0 — the line never reflows as it builds, and
+  // stepping backwards is exact.
+  const stepMaths = (s: WorkingStep, reveal?: number) => {
+    const frags = fragsOf(s);
+    if (!frags || reveal === undefined) return <><MathRenderer latex={s.latex} />{s.unit && <span> {s.unit}</span>}</>;
+    return (
+      <span style={{ display: "inline-flex", alignItems: "baseline", gap: "0.45em", flexWrap: "wrap", justifyContent: "center" }}>
+        {frags.map((f, fi) => (
+          <span key={fi} style={{ opacity: fi <= reveal ? 1 : 0, transition: "opacity 0.35s ease" }}>
+            <MathRenderer latex={f} />
+          </span>
+        ))}
+        {s.unit && <span style={{ opacity: reveal >= frags.length - 1 ? 1 : 0, transition: "opacity 0.35s ease" }}> {s.unit}</span>}
+      </span>
+    );
+  };
+
+  const renderStep = (s: WorkingStep, i: number, reveal?: number) => {
+    const custom = stepRenderer ? stepRenderer(s, colorScheme, qoSnapshot) : null;
+    return (
+      <div key={i} className="rounded-xl p-6" style={{ backgroundColor: stepBg }}>
+        <h4 className="text-xl font-bold mb-2" style={{ color: "#000" }}>Step {i + 1}</h4>
+        <div className="text-2xl" style={{ color: "#000" }}>
+          {custom ?? (s.type === "tStep"
+            ? <span><SkillLabel text={s.plain} onOpenSkill={onOpenSkill} /></span>
+            : s.type === "mStep"
+              ? <div className="flex flex-col gap-1">
+                  <span className="text-left"><SkillLabel text={s.label ?? ""} onOpenSkill={onOpenSkill} /></span>
+                  <div className="text-center">{stepMaths(s, reveal)}</div>
+                </div>
+              : <div className="text-center">{stepMaths(s, reveal)}</div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const navArrowStyle = (enabled: boolean): React.CSSProperties => ({
+    background: enabled ? "#1e3a8a" : "rgba(0,0,0,0.08)",
+    color: enabled ? "#fff" : "#9ca3af",
+    border: "none", borderRadius: 12, cursor: enabled ? "pointer" : "not-allowed",
+    width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center",
+    opacity: enabled ? 1 : 0.4, transition: "background 0.15s",
+  });
+
+  const steppedToggle = (
+    <button onClick={() => setSteppedMode(m => !m)}
+      className="px-4 py-1.5 rounded-lg font-bold text-sm transition-colors border-2"
+      style={{
+        background: steppedMode ? "#1e3a8a" : "#fff",
+        color: steppedMode ? "#fff" : "#6b7280",
+        borderColor: steppedMode ? "#1e3a8a" : "#d1d5db",
+      }}>
+      {steppedMode ? "Step-by-Step" : "Show All"}
+    </button>
+  );
+
+  const answerBox = (extraClass: string) => (
+    <div className={`rounded-xl p-6 text-center ${extraClass}`} style={{ backgroundColor: stepBg }}>
+      <span className={`${answerFontClass} font-bold`} style={{ color: "#166534" }}>
+        {renderAnswer()}
+      </span>
+    </div>
+  );
+
+  if (stepped) {
+    return (
+      <>
+        <div className="flex items-center justify-between mt-6 mb-4">
+          <button style={navArrowStyle(canPrev)} onClick={() => canPrev && goPrevBeat()}>
+            <ChevronLeft size={24} />
+          </button>
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-bold text-gray-500">
+              {atAnswer ? "Answer" : `Step ${stepIdx + 1} of ${totalSteps}`}
+            </span>
+            {steppedToggle}
+          </div>
+          <button style={navArrowStyle(canNext && !atAnswer)} onClick={() => canNext && !atAnswer && goNextBeat()}>
+            <ChevronRight size={24} />
+          </button>
+        </div>
+        {!atAnswer ? (
+          <div className="space-y-4">
+            {renderStep(working[stepIdx], stepIdx, fragIdx)}
+          </div>
+        ) : answerBox("")}
+        <div className="flex justify-center gap-2 mt-4">
+          {Array.from({ length: totalSteps + 1 }, (_, i) => (
+            <button key={i} onClick={() => jumpToStep(i)}
+              style={{
+                width: i === totalSteps ? 24 : 10, height: 10, borderRadius: 5, border: "none", cursor: "pointer",
+                background: i === stepIdx ? "#1e3a8a" : "#d1d5db", transition: "background 0.15s",
+              }}
+              title={i === totalSteps ? "Answer" : `Step ${i + 1}`}
+            />
+          ))}
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      {stepThroughEnabled && (
+        <div className="flex justify-end mt-6 mb-4">
+          {steppedToggle}
+        </div>
+      )}
+      <div className="space-y-4">
+        {working.map((s, i) => renderStep(s, i))}
+      </div>
+      {answerBox("mt-4")}
+    </>
+  );
+};

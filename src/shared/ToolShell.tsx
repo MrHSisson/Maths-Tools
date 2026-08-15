@@ -1,5 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback, type ReactNode } from "react";
-import { RefreshCw, Eye, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Home, Menu, X, Video, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, LayoutGrid, SlidersHorizontal } from "lucide-react";
+import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, LayoutGrid, SlidersHorizontal } from "lucide-react";
 import type { DifficultyLevel, AnyQuestion, WorkingStep, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
 import { LV_COLORS, getQuestionBg, getStepBg } from "./colors";
 import { normalizeMultiSelect, ansEq, makeUniqueQ } from "./helpers";
@@ -7,6 +7,7 @@ import { loadKaTeX } from "./katex";
 import { MathRenderer, InlineMath } from "./components/MathRenderer";
 import { QuestionDisplay, AnswerDisplay } from "./components/QuestionDisplay";
 import { DifficultyToggle } from "./components/DifficultyToggle";
+import { WorkedExampleSteps } from "./components/WorkedExampleSteps";
 import {
   StandardQOPopover,
   DiffQOPopover,
@@ -18,7 +19,7 @@ import { handlePrint } from "./print";
 import type { PrintContext } from "./printDiagram";
 import { WorksheetBuilder } from "./WorksheetBuilder";
 import { TeachingDeck, type TeachingSlide } from "./TeachingDeck";
-import { SkillLabel, SkillOverlay } from "./skills";
+import { SkillOverlay } from "./skills";
 import { useDevMode } from "../devMode";
 
 export interface ToolShellProps {
@@ -276,11 +277,10 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   });
   const [showWhiteboardAnswer, setShowWhiteboardAnswer] = useState(false);
   const [showAnswer, setShowAnswer] = useState(false);
-  const [steppedMode, setSteppedMode] = useState(true);
-  const [workedStepIdx, setWorkedStepIdx] = useState(0);
-  // Index of the last visible fragment within the current step (live modelling —
-  // steps authored with frags reveal one fragment per press in stepped mode).
-  const [workedFragIdx, setWorkedFragIdx] = useState(0);
+  // Bumped whenever the Worked Example's underlying example genuinely changes
+  // (new question, or a reformat) — tells WorkedExampleSteps to reset position
+  // back to the start. Step-by-Step/Show All itself lives inside that component.
+  const [workedResetNonce, setWorkedResetNonce] = useState(0);
   // Skill drill-down overlay, opened from a [[skill-id|term]] marker in a step label.
   const [openSkillId, setOpenSkillId] = useState<string | null>(null);
   const [numQuestions, setNumQuestions] = useState(urlInit.n ?? defaults.numQuestions ?? 15);
@@ -396,8 +396,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     setCurrentQuestion(makeQuestion());
     setShowWhiteboardAnswer(false);
     setShowAnswer(false);
-    setWorkedStepIdx(0);
-    setWorkedFragIdx(0);
+    setWorkedResetNonce(n => n + 1);
   };
 
   const stampQO = (q: AnyQuestion, snap: QOSnapshot): AnyQuestion => ({ ...q, _qo: snap } as AnyQuestion);
@@ -490,7 +489,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     if (!levelOrToolChanged && reformatQuestion) {
       const snap = getQOSnapshot();
       const reformatted = reformatQuestion(currentQuestion, snap);
-      if (reformatted !== null) { setCurrentQuestion(reformatted); setShowAnswer(false); setWorkedStepIdx(0); setWorkedFragIdx(0); return; }
+      if (reformatted !== null) { setCurrentQuestion(reformatted); setShowAnswer(false); setWorkedResetNonce(n => n + 1); return; }
     }
     handleNewQuestion();
   }, [difficulty, currentTool, qoFingerprint]);
@@ -992,97 +991,6 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   };
 
   const renderWorkedExample = () => {
-    const totalSteps = currentQuestion.working.length;
-    const atAnswer = workedStepIdx >= totalSteps;
-    const canPrev = workedStepIdx > 0 || workedFragIdx > 0;
-    const canNext = workedStepIdx <= totalSteps;
-    // Step-by-step (one step at a time, < > arrows) is a Developing-mode feature.
-    // General use shows the full worked solution at once.
-    const stepped = devMode && steppedMode;
-    // Skill drill-downs ([[skill-id|term]] markers in labels) are dev-gated too;
-    // in classic mode the bare term renders as plain text.
-    const openSkill = devMode ? setOpenSkillId : undefined;
-
-    // Fragments of a step, when it has more than one (live modelling).
-    const fragsOf = (s: WorkingStep | undefined): string[] | null =>
-      s?.frags && s.frags.length > 1 ? s.frags : null;
-
-    const goNextBeat = () => {
-      if (atAnswer) return;
-      const frags = fragsOf(currentQuestion.working[workedStepIdx]);
-      if (frags && workedFragIdx < frags.length - 1) { setWorkedFragIdx(i => i + 1); return; }
-      setWorkedStepIdx(i => i + 1);
-      setWorkedFragIdx(0);
-    };
-    const goPrevBeat = () => {
-      if (workedFragIdx > 0) { setWorkedFragIdx(i => i - 1); return; }
-      if (workedStepIdx === 0) return;
-      // Land on the previous step fully revealed, so ← exactly retraces →.
-      const prevFrags = fragsOf(currentQuestion.working[workedStepIdx - 1]);
-      setWorkedStepIdx(i => i - 1);
-      setWorkedFragIdx(prevFrags ? prevFrags.length - 1 : 0);
-    };
-    const jumpToStep = (i: number) => { setWorkedStepIdx(i); setWorkedFragIdx(0); };
-
-    // The maths line of a step. When fragments exist and `reveal` is given
-    // (stepped mode, current card), all fragments are laid out immediately and
-    // hidden ones sit at opacity 0 — the line never reflows as it builds, and
-    // stepping backwards is exact.
-    const stepMaths = (s: WorkingStep, reveal?: number) => {
-      const frags = fragsOf(s);
-      if (!frags || reveal === undefined) return <><MathRenderer latex={s.latex} />{s.unit && <span> {s.unit}</span>}</>;
-      return (
-        <span style={{ display: "inline-flex", alignItems: "baseline", gap: "0.45em", flexWrap: "wrap", justifyContent: "center" }}>
-          {frags.map((f, fi) => (
-            <span key={fi} style={{ opacity: fi <= reveal ? 1 : 0, transition: "opacity 0.35s ease" }}>
-              <MathRenderer latex={f} />
-            </span>
-          ))}
-          {s.unit && <span style={{ opacity: reveal >= frags.length - 1 ? 1 : 0, transition: "opacity 0.35s ease" }}> {s.unit}</span>}
-        </span>
-      );
-    };
-
-    const renderStep = (s: WorkingStep, i: number, reveal?: number) => {
-      const custom = stepRenderer ? stepRenderer(s, colorScheme, getQOSnapshot()) : null;
-      return (
-        <div key={i} className="rounded-xl p-6" style={{ backgroundColor: stepBg }}>
-          <h4 className="text-xl font-bold mb-2" style={{ color: "#000" }}>Step {i + 1}</h4>
-          <div className="text-2xl" style={{ color: "#000" }}>
-            {custom ?? (s.type === "tStep"
-              ? <span><SkillLabel text={s.plain} onOpenSkill={openSkill} /></span>
-              : s.type === "mStep"
-                ? <div className="flex flex-col gap-1">
-                    <span className="text-left"><SkillLabel text={s.label ?? ""} onOpenSkill={openSkill} /></span>
-                    <div className="text-center">{stepMaths(s, reveal)}</div>
-                  </div>
-                : <div className="text-center">{stepMaths(s, reveal)}</div>
-            )}
-          </div>
-        </div>
-      );
-    };
-
-    const navArrowStyle = (enabled: boolean): React.CSSProperties => ({
-      background: enabled ? "#1e3a8a" : "rgba(0,0,0,0.08)",
-      color: enabled ? "#fff" : "#9ca3af",
-      border: "none", borderRadius: 12, cursor: enabled ? "pointer" : "not-allowed",
-      width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center",
-      opacity: enabled ? 1 : 0.4, transition: "background 0.15s",
-    });
-
-    const steppedToggle = (
-      <button onClick={() => { setSteppedMode(m => !m); setWorkedStepIdx(0); setWorkedFragIdx(0); }}
-        className="px-4 py-1.5 rounded-lg font-bold text-sm transition-colors border-2"
-        style={{
-          background: steppedMode ? "#1e3a8a" : "#fff",
-          color: steppedMode ? "#fff" : "#6b7280",
-          borderColor: steppedMode ? "#1e3a8a" : "#d1d5db",
-        }}>
-        {steppedMode ? "Step-by-Step" : "Show All"}
-      </button>
-    );
-
     return (
       <div className="overflow-y-auto" style={{ maxHeight: "120vh" }}>
         <div className="p-8 w-full" style={{ backgroundColor: qBg }}>
@@ -1098,64 +1006,17 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             }
           </div>
           {showAnswer && (
-            <>
-              {stepped ? (
-                <>
-                  <div className="flex items-center justify-between mt-6 mb-4">
-                    <button style={navArrowStyle(canPrev)} onClick={() => canPrev && goPrevBeat()}>
-                      <ChevronLeft size={24} />
-                    </button>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-bold text-gray-500">
-                        {atAnswer ? "Answer" : `Step ${workedStepIdx + 1} of ${totalSteps}`}
-                      </span>
-                      {steppedToggle}
-                    </div>
-                    <button style={navArrowStyle(canNext && !atAnswer)} onClick={() => canNext && !atAnswer && goNextBeat()}>
-                      <ChevronRight size={24} />
-                    </button>
-                  </div>
-                  {!atAnswer ? (
-                    <div className="space-y-4">
-                      {renderStep(currentQuestion.working[workedStepIdx], workedStepIdx, workedFragIdx)}
-                    </div>
-                  ) : (
-                    <div className="rounded-xl p-6 text-center" style={{ backgroundColor: stepBg }}>
-                      <span className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>
-                        {answerRenderer ? answerRenderer(currentQuestion, colorScheme, getQOSnapshot()) : <AnswerDisplay q={currentQuestion} />}
-                      </span>
-                    </div>
-                  )}
-                  <div className="flex justify-center gap-2 mt-4">
-                    {Array.from({ length: totalSteps + 1 }, (_, i) => (
-                      <button key={i} onClick={() => jumpToStep(i)}
-                        style={{
-                          width: i === totalSteps ? 24 : 10, height: 10, borderRadius: 5, border: "none", cursor: "pointer",
-                          background: i === workedStepIdx ? "#1e3a8a" : "#d1d5db", transition: "background 0.15s",
-                        }}
-                        title={i === totalSteps ? "Answer" : `Step ${i + 1}`}
-                      />
-                    ))}
-                  </div>
-                </>
-              ) : (
-                <>
-                  {devMode && (
-                    <div className="flex justify-end mt-6 mb-4">
-                      {steppedToggle}
-                    </div>
-                  )}
-                  <div className="space-y-4">
-                    {currentQuestion.working.map((s, i) => renderStep(s, i))}
-                  </div>
-                  <div className="rounded-xl p-6 text-center mt-4" style={{ backgroundColor: stepBg }}>
-                    <span className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>
-                      {answerRenderer ? answerRenderer(currentQuestion, colorScheme, getQOSnapshot()) : <AnswerDisplay q={currentQuestion} />}
-                    </span>
-                  </div>
-                </>
-              )}
-            </>
+            <WorkedExampleSteps
+              working={currentQuestion.working}
+              renderAnswer={() => answerRenderer ? answerRenderer(currentQuestion, colorScheme, getQOSnapshot()) : <AnswerDisplay q={currentQuestion} />}
+              colorScheme={colorScheme}
+              answerFontClass={displayFontSizes[displayFontSize]}
+              stepRenderer={stepRenderer}
+              qoSnapshot={getQOSnapshot()}
+              stepThroughEnabled={devMode}
+              onOpenSkill={devMode ? setOpenSkillId : undefined}
+              resetKey={workedResetNonce}
+            />
           )}
         </div>
       </div>
