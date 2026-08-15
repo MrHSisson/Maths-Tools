@@ -1,7 +1,7 @@
-import { useState, useEffect, type ReactNode } from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { WorkingStep, QOSnapshot } from "../types";
-import { getStepBg } from "../colors";
+import { getStepBg, getQuestionBg } from "../colors";
 import { MathRenderer } from "./MathRenderer";
 import { SkillLabel } from "../skills";
 
@@ -52,6 +52,12 @@ export const WorkedExampleSteps = ({
   const [steppedMode, setSteppedMode] = useState(true);
   const [stepIdx, setStepIdx] = useState(0);
   const [fragIdx, setFragIdx] = useState(0);
+  // Stacked layout only: keep the nav row reachable and the current card in
+  // view without manual scrolling. navRef measures the sticky bar's live
+  // height so the current card can reserve exactly that much space above it
+  // (scroll-margin-top) instead of landing half-hidden underneath it.
+  const navRef = useRef<HTMLDivElement>(null);
+  const activeRef = useRef<HTMLDivElement>(null);
 
   const stepBg = getStepBg(colorScheme);
   const totalSteps = working.length;
@@ -66,6 +72,17 @@ export const WorkedExampleSteps = ({
   // A genuinely new example (new question, or a reformat that keeps the same
   // question key but changes the working) also restarts position.
   useEffect(() => { setStepIdx(0); setFragIdx(0); }, [resetKey]);
+  // Stacked layout: whenever the current card changes (a new step arrives, or
+  // we land on the answer), bring it into view under the sticky nav — the
+  // list can grow taller than the screen, so this replaces manual scrolling.
+  useEffect(() => {
+    if (layout !== "stacked" || !stepped) return;
+    const el = activeRef.current;
+    if (!el) return;
+    const navH = navRef.current?.getBoundingClientRect().height ?? 0;
+    el.style.scrollMarginTop = `${navH + 16}px`;
+    el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [stepIdx, layout, stepped]);
 
   const fragsOf = (s: WorkingStep | undefined): string[] | null =>
     s?.frags && s.frags.length > 1 ? s.frags : null;
@@ -153,8 +170,8 @@ export const WorkedExampleSteps = ({
       {working.slice(0, upTo + 1).map((s, i) => {
         const isCurrent = i === upTo;
         return (
-          <div key={i} style={{
-            opacity: isCurrent ? 1 : 0.55,
+          <div key={i} ref={isCurrent ? activeRef : undefined} style={{
+            opacity: isCurrent ? 1 : 0.45,
             transition: "opacity 0.3s ease",
             borderRadius: 12,
             boxShadow: isCurrent ? "0 0 0 2px #1e3a8a" : "none",
@@ -166,8 +183,8 @@ export const WorkedExampleSteps = ({
     </div>
   );
 
-  const answerBox = (extraClass: string) => (
-    <div className={`rounded-xl p-6 text-center ${extraClass}`} style={{ backgroundColor: stepBg }}>
+  const answerBox = (extraClass: string, ref?: React.Ref<HTMLDivElement>) => (
+    <div ref={ref} className={`rounded-xl p-6 text-center ${extraClass}`} style={{ backgroundColor: stepBg }}>
       <span className={`${answerFontClass} font-bold`} style={{ color: "#166534" }}>
         {renderAnswer()}
       </span>
@@ -175,9 +192,15 @@ export const WorkedExampleSteps = ({
   );
 
   if (stepped) {
+    const stickyNav = layout === "stacked";
     return (
       <>
-        <div className="flex items-center justify-between mt-6 mb-4">
+        <div ref={navRef} className="flex items-center justify-between mt-6 mb-4"
+          style={stickyNav ? {
+            position: "sticky", top: 0, zIndex: 10,
+            backgroundColor: getQuestionBg(colorScheme),
+            paddingTop: 8, paddingBottom: 8,
+          } : undefined}>
           <button style={navArrowStyle(canPrev)} onClick={() => canPrev && goPrevBeat()}>
             <ChevronLeft size={24} />
           </button>
@@ -202,7 +225,7 @@ export const WorkedExampleSteps = ({
             <div className="space-y-4">
               {working.map((s, i) => renderStep(s, i))}
             </div>
-            {answerBox("mt-4")}
+            {answerBox("mt-4", activeRef)}
           </>
         ) : answerBox("")}
         <div className="flex justify-center gap-2 mt-4">

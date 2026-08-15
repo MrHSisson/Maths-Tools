@@ -150,8 +150,14 @@ const TechniquePreview = () => {
   const lastLatex = steps.length ? steps[steps.length - 1].latex : "";
 
   return (
-    <div className="bg-white rounded-xl shadow-lg overflow-hidden" style={{ borderLeft: `6px solid ${ACCENT}` }}>
-      <div className="px-6 py-4 border-b border-gray-100 flex flex-wrap items-center justify-between gap-4">
+    // No overflow-hidden here (unlike the other cards) — it would silently break
+    // the sticky nav inside WorkedExampleSteps' stacked layout (any ancestor
+    // with overflow other than visible becomes sticky's containing box, even
+    // if that ancestor never scrolls itself). Safe to drop the corner-clipping:
+    // every child here is white/matches getQuestionBg("default"), so there's
+    // no colour to clip against the rounded corners anyway.
+    <div className="bg-white rounded-xl shadow-lg" style={{ borderLeft: `6px solid ${ACCENT}` }}>
+      <div className="px-6 py-4 border-b border-gray-100 flex flex-wrap items-center justify-between gap-4 rounded-t-xl">
         <div>
           <h3 className="text-lg font-bold text-gray-900 font-mono">{selected.name}</h3>
           <p className="text-sm text-gray-500 mt-1">
