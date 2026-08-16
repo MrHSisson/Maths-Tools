@@ -122,7 +122,7 @@ const TechniqueOverlay = ({ t, onClose }: { t: TechniqueDef; onClose: () => void
       style={{ zIndex: 300, background: "rgba(15, 23, 42, 0.55)", padding: 12 }} onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()}
         className="rounded-2xl shadow-2xl w-full flex flex-col"
-        style={{ maxWidth: 1100, maxHeight: "92vh", backgroundColor: "#f5f3f0", padding: 16 }}>
+        style={{ maxWidth: 1100, height: "min(78vh, 760px)", backgroundColor: "#f5f3f0", padding: 16 }}>
         <div className="flex items-start justify-between gap-3 mb-1 flex-shrink-0">
           <div>
             <span className="text-xs font-bold uppercase tracking-wider" style={{ color: ACCENT }}>Technique</span>
