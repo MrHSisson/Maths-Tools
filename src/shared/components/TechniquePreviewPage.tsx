@@ -93,6 +93,7 @@ export function TechniquePreviewPage({ def }: { def: TechniquePreviewPageDef }) 
               stepThroughEnabled
               resetKey={`${def.title}-${grain}`}
               layout={layout}
+              hideAnswerStep
             />
           </div>
         </div>

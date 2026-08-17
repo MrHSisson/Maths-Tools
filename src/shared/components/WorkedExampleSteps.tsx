@@ -97,11 +97,22 @@ export interface WorkedExampleStepsProps {
    *  not wired into any real tool yet, only the Technique Library preview.
    */
   layout?: "single" | "stacked";
+  /** When true, there is no separate terminal "Answer" beat/card after the
+   *  last working step — Step-by-Step ends on the last step itself (no extra
+   *  dot, Next disables there) and Show All doesn't render a trailing answer
+   *  box either. Use this when the last working step already states the
+   *  final result and the caller has no genuinely separate answer to show
+   *  (e.g. a technique preview, whose only data is a list of working steps)
+   *  — otherwise the same content shows twice. Defaults to false, so every
+   *  existing caller (every live tool, which has a real, distinct answer)
+   *  is unaffected. renderAnswer/answerFontClass are simply never invoked
+   *  when this is true. */
+  hideAnswerStep?: boolean;
 }
 
 export const WorkedExampleSteps = ({
   working, renderAnswer, colorScheme, answerFontClass, stepRenderer, qoSnapshot,
-  stepThroughEnabled, onOpenSkill, resetKey, layout = "single",
+  stepThroughEnabled, onOpenSkill, resetKey, layout = "single", hideAnswerStep = false,
 }: WorkedExampleStepsProps) => {
   const [steppedMode, setSteppedMode] = useState(true);
   const [stepIdx, setStepIdx] = useState(0);
@@ -113,9 +124,17 @@ export const WorkedExampleSteps = ({
   const stepBg = getStepBg(colorScheme);
   const totalSteps = working.length;
   const stepped = stepThroughEnabled && steppedMode;
-  const atAnswer = stepIdx >= totalSteps;
+
+  const fragsOf = (s: WorkingStep | undefined): string[] | null =>
+    s?.frags && s.frags.length > 1 ? s.frags : null;
+
+  const atAnswer = !hideAnswerStep && stepIdx >= totalSteps;
   const canPrev = stepIdx > 0 || fragIdx > 0;
-  const canNext = stepIdx <= totalSteps;
+  const currentFrags = fragsOf(working[stepIdx]);
+  const hasMoreFragsHere = !!currentFrags && fragIdx < currentFrags.length - 1;
+  // With no separate Answer beat, Next disables once the last step's
+  // fragments are exhausted instead of once an Answer state is reached.
+  const canNext = hideAnswerStep ? (stepIdx < totalSteps - 1 || hasMoreFragsHere) : stepIdx <= totalSteps;
 
   // Toggling Step-by-Step/Show All always restarts at the beginning, matching
   // the reset ToolShell used to do by hand on the same button press.
@@ -144,13 +163,11 @@ export const WorkedExampleSteps = ({
     el.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [stepIdx, layout, stepped]);
 
-  const fragsOf = (s: WorkingStep | undefined): string[] | null =>
-    s?.frags && s.frags.length > 1 ? s.frags : null;
-
   const goNextBeat = () => {
     if (atAnswer) return;
     const frags = fragsOf(working[stepIdx]);
     if (frags && fragIdx < frags.length - 1) { setFragIdx(i => i + 1); return; }
+    if (hideAnswerStep && stepIdx >= totalSteps - 1) return;
     setStepIdx(i => i + 1);
     setFragIdx(0);
   };
@@ -282,7 +299,7 @@ export const WorkedExampleSteps = ({
     );
     const dotStrip = (
       <div className="flex justify-center gap-2">
-        {Array.from({ length: totalSteps + 1 }, (_, i) => (
+        {Array.from({ length: hideAnswerStep ? totalSteps : totalSteps + 1 }, (_, i) => (
           <button key={i} onClick={() => jumpToStep(i)}
             style={{
               width: i === totalSteps ? 24 : 10, height: 10, borderRadius: 5, border: "none", cursor: "pointer",
@@ -342,7 +359,7 @@ export const WorkedExampleSteps = ({
       <div className="space-y-4">
         {working.map((s, i) => renderStep(s, i))}
       </div>
-      {answerBox("mt-4")}
+      {!hideAnswerStep && answerBox("mt-4")}
     </>
   );
 };
