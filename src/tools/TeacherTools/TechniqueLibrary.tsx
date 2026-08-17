@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
-import { Home, Layers, X } from "lucide-react";
+import { useEffect } from "react";
+import { Home, Layers } from "lucide-react";
 import {
-  MathRenderer, loadKaTeX, WorkedExampleSteps, getQuestionBg,
+  loadKaTeX,
   workings, quadraticFormulaSteps, solveLinearEquationSteps, solveFactorsSteps,
   substituteBackSteps, makeSubjectSteps, solveLinearlySteps,
   type WorkingStep, type Grain,
@@ -10,48 +10,33 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 // TECHNIQUE LIBRARY — browse every technique in src/shared/techniques. The
 // working-step sibling of the Skill Library, and structured to match it: an
-// index of cards, click one to open an accurate preview, sized close to
-// full-screen the same way the Skill Library's slide overlay is. (An earlier
-// version dumped every technique's full step output inline on one page — a
-// 3-column brief/standard/full ladder plus a flat card per technique, each
-// titled with its raw function-call signature. That stopped scaling almost
-// immediately, and the signatures read as backend detail, not a front-of-house
-// name. The index+overlay shape here is the fix, and doubles as the honest
-// preview — the overlay renders through the SAME WorkedExampleSteps component
-// every real tool uses.)
+// index of cards, click one to go to its own real tool page — an accurate
+// preview rendered through the SAME WorkedExampleSteps component every real
+// tool uses (see TechniquePreviewPage). (Two earlier shapes: a flat dump of
+// every technique's full step output on one page, titled with raw function
+// signatures — stopped scaling almost immediately; then a near-fullscreen
+// popup overlay per card — dropped once every technique got its own page,
+// since a page gives an honest URL, no popup chrome, and matches what a
+// teacher actually sees in a real Worked Example.)
 // ─────────────────────────────────────────────────────────────────────────────
 
 const ACCENT = "#9333ea"; // purple-600 — the Algebra strand accent (techniques are algebra-heavy)
 
-// A depth ramp (light → deep) — reads as "more detail", and stays clear of the
-// green/amber/red Level colours so grain is never mistaken for difficulty.
-const GRAIN_META: Record<Grain, { label: string }> = {
-  brief: { label: "Brief" },
-  standard: { label: "Standard" },
-  full: { label: "Full" },
-};
-const LAYOUT_META: Record<"single" | "stacked", string> = {
-  single: "Single card",
-  stacked: "Stacked",
-};
-
-// ── Technique definitions — data only, feeds both the index grid and the overlay ──
+// ── Technique definitions — data only, feeds the index grid ──
 interface TechniqueDef {
   id: string;
-  /** Human-facing name — what the card and overlay lead with. */
+  /** Human-facing name — what the card leads with. */
   title: string;
   /** The underlying function call, shown small/secondary (dev-facing detail,
    *  not the headline) so the raw signature never has to double as a name. */
   signature: string;
   desc: string;
-  /** Present (true) for techniques that take a Grain param — gets the picker. */
+  /** Present (true) for techniques that take a Grain param — used for the
+   *  card's "3 grains" badge; the page itself owns the actual picker. */
   grains?: true;
   render: (grain: Grain) => WorkingStep[];
-  /** A real tool page for this technique (see src/shared/techniquePreview.tsx) —
-   *  when present, the card navigates there instead of opening the popup
-   *  overlay below. Being phased in one technique at a time; a technique
-   *  without one still falls back to the overlay for now. */
-  pageUrl?: string;
+  /** This technique's own real tool page — every technique has one. */
+  pageUrl: string;
 }
 
 const FULL_EXAMPLE = workings()
@@ -74,46 +59,51 @@ const TECHNIQUES: TechniqueDef[] = [
     signature: "solveLinearEquationSteps(2, 3, 11)",
     desc: "Solving 2x + 3 = 11. Full names each both-sides move — the fundamental teaching pattern; brief just states the answer.",
     render: (g) => solveLinearEquationSteps(2, 3, 11, "x", g),
+    pageUrl: "/techniques/solving-a-linear-equation",
   },
   {
     id: "solveFactors", title: "Reading Roots from Factors",
     signature: "solveFactorsSteps([\"1\", \"6\"], \"x\")",
     desc: "Set each factor of a factorised expression to zero and read off the roots.",
     render: () => solveFactorsSteps(["1", "6"], "x"),
+    pageUrl: "/techniques/reading-roots-from-factors",
   },
   {
     id: "substituteBack", title: "Substituting Back",
     signature: "substituteBackSteps(\"m\", [...], { value, into })",
     desc: "Substitute a found value back to get the other unknown; the title names the value and the equation.",
     render: () => substituteBackSteps("m", ["m = 5(4) + 2", "m = 22"], { value: "n = 4", into: "m = 5n + 2" }),
+    pageUrl: "/techniques/substituting-back",
   },
   {
     id: "makeSubject", title: "Making the Subject",
     signature: "makeSubjectSteps(\"m\", \"m = 5n + 2\")",
     desc: "Rearrange an equation to make a variable the subject.",
     render: () => makeSubjectSteps("m", "m = 5n + 2"),
+    pageUrl: "/techniques/making-the-subject",
   },
   {
     id: "solveLinearly", title: "Solving a Linear Chain",
     signature: "solveLinearlySteps(\"n\", [...])",
     desc: "Solve a linear equation from a pre-built chain — one row per move.",
     render: () => solveLinearlySteps("n", ["34n = 136", "n = 4"]),
+    pageUrl: "/techniques/solving-a-linear-chain",
   },
   {
     id: "fullExample", title: "Full Worked Example",
     signature: "workings() — full method",
     desc: "A complete linear-substitution solution assembled from technique blocks + bespoke steps — shows how a real tool composes them.",
     render: () => FULL_EXAMPLE,
+    pageUrl: "/techniques/full-worked-example",
   },
 ];
 
-// ── Index card — no step content, just enough to decide what to open.
-// Navigates to the technique's own page when it has one; falls back to the
-// popup overlay for techniques not yet converted (see TechniqueDef.pageUrl).
-const TechniqueCard = ({ t, onOpen }: { t: TechniqueDef; onOpen: () => void }) => {
+// ── Index card — no step content, just enough to decide what to open, then
+// navigates straight to the technique's own page.
+const TechniqueCard = ({ t }: { t: TechniqueDef }) => {
   const stepCount = t.render("standard").length;
   return (
-    <button onClick={() => t.pageUrl ? (window.location.href = t.pageUrl) : onOpen()}
+    <button onClick={() => { window.location.href = t.pageUrl; }}
       className="group bg-white rounded-xl shadow-lg p-6 text-left transition-all hover:shadow-xl hover:-translate-y-0.5 flex flex-col gap-2"
       style={{ borderLeft: `6px solid ${ACCENT}` }}>
       <div className="flex items-start justify-between gap-3">
@@ -124,89 +114,12 @@ const TechniqueCard = ({ t, onOpen }: { t: TechniqueDef; onOpen: () => void }) =
       </div>
       <p className="text-sm text-gray-500 leading-relaxed">{t.desc}</p>
       <code className="text-xs text-gray-400 font-mono break-all mt-1">{t.signature}</code>
-      {t.pageUrl && (
-        <span className="text-xs font-bold mt-1" style={{ color: "#166534" }}>→ Real tool page</span>
-      )}
     </button>
-  );
-};
-
-// ── Overlay — the accurate, near-full-screen preview for ONE technique,
-// rendered through the real WorkedExampleSteps viewer. Sized to match the
-// Skill Library's own slide overlay (near-fullscreen, slim dimmed rim), not
-// the old 3-columns-squeezed layout or a small cramped modal.
-const TechniqueOverlay = ({ t, onClose }: { t: TechniqueDef; onClose: () => void }) => {
-  const [grain, setGrain] = useState<Grain>("standard");
-  const [layout, setLayout] = useState<"single" | "stacked">("stacked");
-  const steps = t.render(t.grains ? grain : "standard");
-  const lastLatex = steps.length ? steps[steps.length - 1].latex : "";
-
-  return (
-    <div className="fixed inset-0 flex items-center justify-center"
-      style={{ zIndex: 300, background: "rgba(15, 23, 42, 0.55)", padding: 12 }} onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()}
-        className="rounded-2xl shadow-2xl w-full flex flex-col"
-        style={{ maxWidth: 1200, height: "100%", backgroundColor: "#f5f3f0", padding: 16 }}>
-        <div className="flex items-start justify-between gap-3 mb-1 flex-shrink-0">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-wider" style={{ color: ACCENT }}>Technique</span>
-            <h3 className="text-2xl font-bold text-gray-900">{t.title}</h3>
-            <code className="text-xs text-gray-400 font-mono">{t.signature}</code>
-          </div>
-          <button onClick={onClose} title="Close"
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors flex-shrink-0">
-            <X size={20} />
-          </button>
-        </div>
-        <p className="text-sm text-gray-500 mb-3 flex-shrink-0">{t.desc}</p>
-        <div className="flex flex-wrap items-center gap-3 mb-3 flex-shrink-0">
-          {t.grains && (
-            <div className="flex rounded-lg border-2 overflow-hidden" style={{ borderColor: "#d1d5db" }}>
-              {(["brief", "standard", "full"] as Grain[]).map((g) => (
-                <button key={g} onClick={() => setGrain(g)}
-                  className="px-3 py-1.5 text-sm font-bold transition-colors"
-                  style={{ background: grain === g ? "#1e3a8a" : "#fff", color: grain === g ? "#fff" : "#6b7280" }}>
-                  {GRAIN_META[g].label}
-                </button>
-              ))}
-            </div>
-          )}
-          <div className="flex rounded-lg border-2 overflow-hidden" style={{ borderColor: "#d1d5db" }}>
-            {(["single", "stacked"] as const).map((l) => (
-              <button key={l} onClick={() => setLayout(l)}
-                className="px-3 py-1.5 text-sm font-bold transition-colors"
-                style={{ background: layout === l ? ACCENT : "#fff", color: layout === l ? "#fff" : "#6b7280" }}
-                title="Only visible difference is in Step-by-Step mode">
-                {LAYOUT_META[l]}
-              </button>
-            ))}
-          </div>
-        </div>
-        {/* flex flex-col + minHeight:0 gives WorkedExampleSteps' stacked layout a
-            real, bounded height to fill (its own body scrolls + nav pins as a
-            footer inside it). overflow-y-auto here too as a fallback for single
-            layout, which doesn't bound its own height — harmless when stacked,
-            since the inner flex chain already keeps it from ever overflowing. */}
-        <div className="flex-1 overflow-y-auto rounded-xl p-6 flex flex-col" style={{ backgroundColor: getQuestionBg("default"), minHeight: 0 }}>
-          <WorkedExampleSteps
-            working={steps}
-            renderAnswer={() => <MathRenderer latex={lastLatex} />}
-            colorScheme="default"
-            answerFontClass="text-3xl"
-            stepThroughEnabled
-            resetKey={`${t.id}-${grain}`}
-            layout={layout}
-          />
-        </div>
-      </div>
-    </div>
   );
 };
 
 export default function App() {
   useEffect(() => { loadKaTeX(); }, []);
-  const [openId, setOpenId] = useState<string | null>(null);
-  const openTechnique = TECHNIQUES.find((t) => t.id === openId) ?? null;
 
   return (
     <>
@@ -222,7 +135,6 @@ export default function App() {
           </div>
         </div>
       </div>
-      {openTechnique && <TechniqueOverlay t={openTechnique} onClose={() => setOpenId(null)} />}
       <div className="min-h-screen p-8" style={{ backgroundColor: "#f5f3f0" }}>
         <div className="max-w-6xl mx-auto">
           <h1 className="text-5xl font-bold text-center mb-4" style={{ color: "#000" }}>Technique Library</h1>
@@ -233,7 +145,7 @@ export default function App() {
             it applies, rendered through the real Worked Example viewer.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {TECHNIQUES.map((t) => <TechniqueCard key={t.id} t={t} onOpen={() => setOpenId(t.id)} />)}
+            {TECHNIQUES.map((t) => <TechniqueCard key={t.id} t={t} />)}
           </div>
         </div>
       </div>
