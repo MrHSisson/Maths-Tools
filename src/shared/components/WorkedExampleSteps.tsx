@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { WorkingStep, QOSnapshot } from "../types";
-import { getStepBg, getQuestionBg } from "../colors";
+import { getStepBg } from "../colors";
 import { MathRenderer } from "./MathRenderer";
 import { SkillLabel } from "../skills";
 
@@ -38,10 +38,16 @@ export interface WorkedExampleStepsProps {
    *  pair, or an incrementing counter. */
   resetKey: string | number;
   /** Step-by-Step's card layout. "single" (default) replaces the card each
-   *  press — every live tool today. "stacked" builds a vertical list instead,
-   *  like Show All arrived at one press at a time: earlier steps stay visible
-   *  (dimmed), the current one is highlighted. Exploratory — not wired into any
-   *  real tool yet, only the Technique Library preview. */
+   *  press — every live tool today, laid out inline (no internal scrolling —
+   *  the page/panel around it scrolls, exactly as before this prop existed).
+   *  "stacked" builds a vertical list instead, like Show All arrived at one
+   *  press at a time: earlier steps stay visible (dimmed), the current one is
+   *  highlighted. Because that list can grow taller than its container,
+   *  "stacked" owns its own bounded, internally-scrolling layout with the nav
+   *  pinned as a fixed footer — give it a parent with a real height (flex
+   *  child, or an explicit height) for that to size correctly. Exploratory —
+   *  not wired into any real tool yet, only the Technique Library preview.
+   */
   layout?: "single" | "stacked";
 }
 
@@ -52,11 +58,8 @@ export const WorkedExampleSteps = ({
   const [steppedMode, setSteppedMode] = useState(true);
   const [stepIdx, setStepIdx] = useState(0);
   const [fragIdx, setFragIdx] = useState(0);
-  // Stacked layout only: keep the nav row reachable and the current card in
-  // view without manual scrolling. navRef measures the sticky bar's live
-  // height so the current card can reserve exactly that much space above it
-  // (scroll-margin-top) instead of landing half-hidden underneath it.
-  const navRef = useRef<HTMLDivElement>(null);
+  // Stacked layout only: the current card (or the answer box) scrolls itself
+  // into view within the internal scroll body whenever it changes.
   const activeRef = useRef<HTMLDivElement>(null);
 
   const stepBg = getStepBg(colorScheme);
@@ -73,15 +76,24 @@ export const WorkedExampleSteps = ({
   // question key but changes the working) also restarts position.
   useEffect(() => { setStepIdx(0); setFragIdx(0); }, [resetKey]);
   // Stacked layout: whenever the current card changes (a new step arrives, or
-  // we land on the answer), bring it into view under the sticky nav — the
-  // list can grow taller than the screen, so this replaces manual scrolling.
+  // we land on the answer), bring it fully into view — it's always the last
+  // thing in the scroll body, so aligning its bottom edge to the bottom of the
+  // scrollport ("end") is what actually reaches the very bottom; "nearest"
+  // stops short whenever the card itself is taller than the visible area.
+  // Plain useEffect deliberately, NOT useLayoutEffect: MathRenderer paints its
+  // KaTeX into the DOM from its own useEffect, and React runs every
+  // useLayoutEffect in the tree before any useEffect runs anywhere. A layout
+  // effect here would measure the new step while its maths is still an empty,
+  // unsized span, undershooting the scroll. A plain effect fires in the same
+  // (passive-effect) phase as MathRenderer's, and — child effects before
+  // parent effects — MathRenderer (nested inside this component) has already
+  // rendered by the time this one runs, so the measurement is accurate.
   useEffect(() => {
     if (layout !== "stacked" || !stepped) return;
     const el = activeRef.current;
     if (!el) return;
-    const navH = navRef.current?.getBoundingClientRect().height ?? 0;
-    el.style.scrollMarginTop = `${navH + 16}px`;
-    el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    el.style.scrollMarginBottom = "16px";
+    el.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [stepIdx, layout, stepped]);
 
   const fragsOf = (s: WorkingStep | undefined): string[] | null =>
@@ -192,53 +204,70 @@ export const WorkedExampleSteps = ({
   );
 
   if (stepped) {
-    const stickyNav = layout === "stacked";
+    const navRow = (
+      <div className="flex items-center justify-between">
+        <button style={navArrowStyle(canPrev)} onClick={() => canPrev && goPrevBeat()}>
+          <ChevronLeft size={24} />
+        </button>
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-bold text-gray-500">
+            {atAnswer ? "Answer" : `Step ${stepIdx + 1} of ${totalSteps}`}
+          </span>
+          {steppedToggle}
+        </div>
+        <button style={navArrowStyle(canNext && !atAnswer)} onClick={() => canNext && !atAnswer && goNextBeat()}>
+          <ChevronRight size={24} />
+        </button>
+      </div>
+    );
+    const dotStrip = (
+      <div className="flex justify-center gap-2">
+        {Array.from({ length: totalSteps + 1 }, (_, i) => (
+          <button key={i} onClick={() => jumpToStep(i)}
+            style={{
+              width: i === totalSteps ? 24 : 10, height: 10, borderRadius: 5, border: "none", cursor: "pointer",
+              background: i === stepIdx ? "#1e3a8a" : "#d1d5db", transition: "background 0.15s",
+            }}
+            title={i === totalSteps ? "Answer" : `Step ${i + 1}`}
+          />
+        ))}
+      </div>
+    );
+
+    if (layout === "stacked") {
+      // Bounded-height column: scrollable body on top, nav fixed as a footer
+      // underneath it — always visible, never requires scrolling down to
+      // reach "Next" or up to see where you are. Needs a parent that gives it
+      // real height (a flex child works, see the prop doc above).
+      return (
+        <div className="flex flex-col" style={{ height: "100%", minHeight: 0 }}>
+          <div className="flex-1 overflow-y-auto" style={{ minHeight: 0 }}>
+            {!atAnswer ? stackedSteps(stepIdx, fragIdx) : (
+              <>
+                <div className="space-y-4">
+                  {working.map((s, i) => renderStep(s, i))}
+                </div>
+                {answerBox("mt-4", activeRef)}
+              </>
+            )}
+          </div>
+          <div className="flex-shrink-0 pt-4 mt-4 border-t" style={{ borderColor: "rgba(0,0,0,0.08)" }}>
+            {navRow}
+            <div className="mt-3">{dotStrip}</div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <>
-        <div ref={navRef} className="flex items-center justify-between mt-6 mb-4"
-          style={stickyNav ? {
-            position: "sticky", top: 0, zIndex: 10,
-            backgroundColor: getQuestionBg(colorScheme),
-            paddingTop: 8, paddingBottom: 8,
-          } : undefined}>
-          <button style={navArrowStyle(canPrev)} onClick={() => canPrev && goPrevBeat()}>
-            <ChevronLeft size={24} />
-          </button>
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-bold text-gray-500">
-              {atAnswer ? "Answer" : `Step ${stepIdx + 1} of ${totalSteps}`}
-            </span>
-            {steppedToggle}
-          </div>
-          <button style={navArrowStyle(canNext && !atAnswer)} onClick={() => canNext && !atAnswer && goNextBeat()}>
-            <ChevronRight size={24} />
-          </button>
-        </div>
+        <div className="mt-6 mb-4">{navRow}</div>
         {!atAnswer ? (
-          layout === "stacked" ? stackedSteps(stepIdx, fragIdx) : (
-            <div className="space-y-4">
-              {renderStep(working[stepIdx], stepIdx, fragIdx)}
-            </div>
-          )
-        ) : layout === "stacked" ? (
-          <>
-            <div className="space-y-4">
-              {working.map((s, i) => renderStep(s, i))}
-            </div>
-            {answerBox("mt-4", activeRef)}
-          </>
+          <div className="space-y-4">
+            {renderStep(working[stepIdx], stepIdx, fragIdx)}
+          </div>
         ) : answerBox("")}
-        <div className="flex justify-center gap-2 mt-4">
-          {Array.from({ length: totalSteps + 1 }, (_, i) => (
-            <button key={i} onClick={() => jumpToStep(i)}
-              style={{
-                width: i === totalSteps ? 24 : 10, height: 10, borderRadius: 5, border: "none", cursor: "pointer",
-                background: i === stepIdx ? "#1e3a8a" : "#d1d5db", transition: "background 0.15s",
-              }}
-              title={i === totalSteps ? "Answer" : `Step ${i + 1}`}
-            />
-          ))}
-        </div>
+        <div className="mt-4">{dotStrip}</div>
       </>
     );
   }

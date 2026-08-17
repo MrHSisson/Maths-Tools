@@ -10,14 +10,15 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 // TECHNIQUE LIBRARY — browse every technique in src/shared/techniques. The
 // working-step sibling of the Skill Library, and structured to match it: an
-// index of cards, click one to open an accurate preview. (An earlier version
-// dumped every technique's full step output inline on one page — a 3-column
-// brief/standard/full ladder plus a flat card per technique. That stopped
-// scaling almost immediately: the 3 equal columns never looked like the width
-// working actually renders at, and the page would only get longer and harder
-// to scan as more techniques are added. The index+overlay shape here is the
-// fix, and doubles as the honest preview — the overlay renders through the
-// SAME WorkedExampleSteps component every real tool uses.)
+// index of cards, click one to open an accurate preview, sized close to
+// full-screen the same way the Skill Library's slide overlay is. (An earlier
+// version dumped every technique's full step output inline on one page — a
+// 3-column brief/standard/full ladder plus a flat card per technique, each
+// titled with its raw function-call signature. That stopped scaling almost
+// immediately, and the signatures read as backend detail, not a front-of-house
+// name. The index+overlay shape here is the fix, and doubles as the honest
+// preview — the overlay renders through the SAME WorkedExampleSteps component
+// every real tool uses.)
 // ─────────────────────────────────────────────────────────────────────────────
 
 const ACCENT = "#9333ea"; // purple-600 — the Algebra strand accent (techniques are algebra-heavy)
@@ -37,7 +38,11 @@ const LAYOUT_META: Record<"single" | "stacked", string> = {
 // ── Technique definitions — data only, feeds both the index grid and the overlay ──
 interface TechniqueDef {
   id: string;
-  name: string;
+  /** Human-facing name — what the card and overlay lead with. */
+  title: string;
+  /** The underlying function call, shown small/secondary (dev-facing detail,
+   *  not the headline) so the raw signature never has to double as a name. */
+  signature: string;
   desc: string;
   /** Present (true) for techniques that take a Grain param — gets the picker. */
   grains?: true;
@@ -53,37 +58,44 @@ const FULL_EXAMPLE = workings()
 
 const TECHNIQUES: TechniqueDef[] = [
   {
-    id: "quadraticFormula", name: "quadraticFormulaSteps(2, 4, -8)", grains: true,
+    id: "quadraticFormula", title: "Quadratic Formula", grains: true,
+    signature: "quadraticFormulaSteps(2, 4, -8)",
     desc: "Solving a quadratic with the formula. Brief assumes the substitution; full is the skill-level teaching (discriminant, ± split, decimals).",
     render: (g) => quadraticFormulaSteps(2, 4, -8, "x", g),
   },
   {
-    id: "solveLinearEquation", name: "solveLinearEquationSteps(2, 3, 11)", grains: true,
+    id: "solveLinearEquation", title: "Solving a Linear Equation", grains: true,
+    signature: "solveLinearEquationSteps(2, 3, 11)",
     desc: "Solving 2x + 3 = 11. Full names each both-sides move — the fundamental teaching pattern; brief just states the answer.",
     render: (g) => solveLinearEquationSteps(2, 3, 11, "x", g),
   },
   {
-    id: "solveFactors", name: "solveFactorsSteps([\"1\", \"6\"], \"x\")",
+    id: "solveFactors", title: "Reading Roots from Factors",
+    signature: "solveFactorsSteps([\"1\", \"6\"], \"x\")",
     desc: "Set each factor of a factorised expression to zero and read off the roots.",
     render: () => solveFactorsSteps(["1", "6"], "x"),
   },
   {
-    id: "substituteBack", name: "substituteBackSteps(\"m\", [...], { value, into })",
+    id: "substituteBack", title: "Substituting Back",
+    signature: "substituteBackSteps(\"m\", [...], { value, into })",
     desc: "Substitute a found value back to get the other unknown; the title names the value and the equation.",
     render: () => substituteBackSteps("m", ["m = 5(4) + 2", "m = 22"], { value: "n = 4", into: "m = 5n + 2" }),
   },
   {
-    id: "makeSubject", name: "makeSubjectSteps(\"m\", \"m = 5n + 2\")",
+    id: "makeSubject", title: "Making the Subject",
+    signature: "makeSubjectSteps(\"m\", \"m = 5n + 2\")",
     desc: "Rearrange an equation to make a variable the subject.",
     render: () => makeSubjectSteps("m", "m = 5n + 2"),
   },
   {
-    id: "solveLinearly", name: "solveLinearlySteps(\"n\", [...])",
+    id: "solveLinearly", title: "Solving a Linear Chain",
+    signature: "solveLinearlySteps(\"n\", [...])",
     desc: "Solve a linear equation from a pre-built chain — one row per move.",
     render: () => solveLinearlySteps("n", ["34n = 136", "n = 4"]),
   },
   {
-    id: "fullExample", name: "workings() — full method",
+    id: "fullExample", title: "Full Worked Example",
+    signature: "workings() — full method",
     desc: "A complete linear-substitution solution assembled from technique blocks + bespoke steps — shows how a real tool composes them.",
     render: () => FULL_EXAMPLE,
   },
@@ -97,20 +109,21 @@ const TechniqueCard = ({ t, onOpen }: { t: TechniqueDef; onOpen: () => void }) =
       className="group bg-white rounded-xl shadow-lg p-6 text-left transition-all hover:shadow-xl hover:-translate-y-0.5 flex flex-col gap-2"
       style={{ borderLeft: `6px solid ${ACCENT}` }}>
       <div className="flex items-start justify-between gap-3">
-        <span className="text-base font-bold text-gray-900 font-mono group-hover:text-blue-900 transition-colors break-all">{t.name}</span>
+        <span className="text-xl font-bold text-gray-900 group-hover:text-blue-900 transition-colors">{t.title}</span>
         <span className="text-xs font-bold uppercase tracking-wider flex-shrink-0 mt-1" style={{ color: ACCENT }}>
           {t.grains ? "3 grains" : `${stepCount} step${stepCount !== 1 ? "s" : ""}`}
         </span>
       </div>
       <p className="text-sm text-gray-500 leading-relaxed">{t.desc}</p>
+      <code className="text-xs text-gray-400 font-mono break-all mt-1">{t.signature}</code>
     </button>
   );
 };
 
-// ── Overlay — the accurate, full-width preview for ONE technique, rendered
-// through the real WorkedExampleSteps viewer. Sized to roughly match the
-// actual Worked Example content width (ToolShell's own max-w-6xl), not the
-// old 3-columns-squeezed layout.
+// ── Overlay — the accurate, near-full-screen preview for ONE technique,
+// rendered through the real WorkedExampleSteps viewer. Sized to match the
+// Skill Library's own slide overlay (near-fullscreen, slim dimmed rim), not
+// the old 3-columns-squeezed layout or a small cramped modal.
 const TechniqueOverlay = ({ t, onClose }: { t: TechniqueDef; onClose: () => void }) => {
   const [grain, setGrain] = useState<Grain>("standard");
   const [layout, setLayout] = useState<"single" | "stacked">("stacked");
@@ -122,11 +135,12 @@ const TechniqueOverlay = ({ t, onClose }: { t: TechniqueDef; onClose: () => void
       style={{ zIndex: 300, background: "rgba(15, 23, 42, 0.55)", padding: 12 }} onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()}
         className="rounded-2xl shadow-2xl w-full flex flex-col"
-        style={{ maxWidth: 1100, height: "min(78vh, 760px)", backgroundColor: "#f5f3f0", padding: 16 }}>
+        style={{ maxWidth: 1200, height: "100%", backgroundColor: "#f5f3f0", padding: 16 }}>
         <div className="flex items-start justify-between gap-3 mb-1 flex-shrink-0">
           <div>
             <span className="text-xs font-bold uppercase tracking-wider" style={{ color: ACCENT }}>Technique</span>
-            <h3 className="text-lg font-bold text-gray-900 font-mono">{t.name}</h3>
+            <h3 className="text-2xl font-bold text-gray-900">{t.title}</h3>
+            <code className="text-xs text-gray-400 font-mono">{t.signature}</code>
           </div>
           <button onClick={onClose} title="Close"
             className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors flex-shrink-0">
@@ -157,10 +171,12 @@ const TechniqueOverlay = ({ t, onClose }: { t: TechniqueDef; onClose: () => void
             ))}
           </div>
         </div>
-        {/* This is the real scrolling container (overflow-y-auto, not the outer
-            card) — WorkedExampleSteps' sticky nav in stacked mode attaches to
-            whichever ancestor actually scrolls, so it needs to be this div. */}
-        <div className="flex-1 overflow-y-auto rounded-xl p-6" style={{ backgroundColor: getQuestionBg("default"), minHeight: 0 }}>
+        {/* flex flex-col + minHeight:0 gives WorkedExampleSteps' stacked layout a
+            real, bounded height to fill (its own body scrolls + nav pins as a
+            footer inside it). overflow-y-auto here too as a fallback for single
+            layout, which doesn't bound its own height — harmless when stacked,
+            since the inner flex chain already keeps it from ever overflowing. */}
+        <div className="flex-1 overflow-y-auto rounded-xl p-6 flex flex-col" style={{ backgroundColor: getQuestionBg("default"), minHeight: 0 }}>
           <WorkedExampleSteps
             working={steps}
             renderAnswer={() => <MathRenderer latex={lastLatex} />}
