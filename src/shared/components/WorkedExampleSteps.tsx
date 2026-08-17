@@ -297,14 +297,14 @@ export const WorkedExampleSteps = ({
       // real height (a flex child works, see the prop doc above).
       return (
         <div className="flex flex-col" style={{ height: "100%", minHeight: 0 }}>
-          <div className="flex-1 overflow-y-auto px-1" style={{ minHeight: 0 }}>
+          <div className="flex-1 overflow-y-auto p-1" style={{ minHeight: 0 }}>
             {!atAnswer ? stackedSteps(stepIdx, fragIdx) : (
-              <>
+              <div className="space-y-2">
                 <div className="space-y-2" style={{ opacity: 0.7 }}>
                   {working.map((s, i) => renderStep(s, i, undefined, true))}
                 </div>
-                {answerBox("mt-4", activeRef)}
-              </>
+                {answerBox("", activeRef)}
+              </div>
             )}
           </div>
           <div className="flex-shrink-0 pt-4 mt-4 border-t" style={{ borderColor: "rgba(0,0,0,0.08)" }}>
