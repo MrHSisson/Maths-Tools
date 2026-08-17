@@ -5,6 +5,54 @@ import { getStepBg } from "../colors";
 import { MathRenderer } from "./MathRenderer";
 import { SkillLabel } from "../skills";
 
+// Shrinks a maths line that's wider than its card instead of letting it clip
+// or force a horizontal scrollbar — width only, never grows past 1x, so a
+// line that already fits (the overwhelming common case) renders identically
+// to before. Mirrors ToolShell's private ScaleToFit (explicit flex centring +
+// getBoundingClientRect, transform: scale) rather than touching that file —
+// this only needs the width axis, for a free-flowing text line, not a bounded
+// diagram box. Deliberately NOT scrollWidth: an inline-block wider than its
+// container, centred only by inherited text-align, overflows on BOTH sides —
+// scrollWidth only counts the right-hand excess, undershooting the true
+// overflow and computing too large a scale. Explicit flex centring avoids
+// that relative-to-what-origin ambiguity entirely.
+const FitWidth = ({ children }: { children: ReactNode }) => {
+  const outerRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+  useEffect(() => {
+    const outer = outerRef.current, inner = innerRef.current;
+    if (!outer || !inner) return;
+    let raf = 0;
+    const recompute = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const o = outerRef.current, n = innerRef.current;
+        if (!o || !n) return;
+        const availW = o.clientWidth;
+        const prevTransform = n.style.transform;
+        n.style.transform = "none";
+        const natW = n.getBoundingClientRect().width;
+        n.style.transform = prevTransform;
+        if (!natW || !availW) return;
+        const s = Math.min(1, availW / natW);
+        setScale((cur) => (Math.abs(cur - s) > 0.01 ? s : cur));
+      });
+    };
+    recompute();
+    const ro = new ResizeObserver(recompute);
+    ro.observe(outer); ro.observe(inner);
+    return () => { cancelAnimationFrame(raf); ro.disconnect(); };
+  });
+  return (
+    <div ref={outerRef} style={{ width: "100%", overflow: "hidden", display: "flex", justifyContent: "center" }}>
+      <div ref={innerRef} style={{ transform: `scale(${scale})`, transformOrigin: "center top", flexShrink: 0 }}>
+        {children}
+      </div>
+    </div>
+  );
+};
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // WorkedExampleSteps — the working-step viewer every tool's "Worked Example" mode
 // renders through. Pulled out of ToolShell so it's the SAME component both a real
@@ -151,9 +199,9 @@ export const WorkedExampleSteps = ({
             : s.type === "mStep"
               ? <div className="flex flex-col gap-1">
                   <span className="text-left"><SkillLabel text={s.label ?? ""} onOpenSkill={onOpenSkill} /></span>
-                  <div className="text-center">{stepMaths(s, reveal)}</div>
+                  <div className="text-center"><FitWidth>{stepMaths(s, reveal)}</FitWidth></div>
                 </div>
-              : <div className="text-center">{stepMaths(s, reveal)}</div>
+              : <div className="text-center"><FitWidth>{stepMaths(s, reveal)}</FitWidth></div>
           )}
         </div>
       </div>
@@ -206,9 +254,9 @@ export const WorkedExampleSteps = ({
 
   const answerBox = (extraClass: string, ref?: React.Ref<HTMLDivElement>) => (
     <div ref={ref} className={`rounded-xl p-6 text-center ${extraClass}`} style={{ backgroundColor: stepBg }}>
-      <span className={`${answerFontClass} font-bold`} style={{ color: "#166534" }}>
-        {renderAnswer()}
-      </span>
+      <div className={`${answerFontClass} font-bold`} style={{ color: "#166534" }}>
+        <FitWidth>{renderAnswer()}</FitWidth>
+      </div>
     </div>
   );
 
