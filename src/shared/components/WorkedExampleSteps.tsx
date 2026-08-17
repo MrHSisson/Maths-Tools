@@ -251,9 +251,13 @@ export const WorkedExampleSteps = ({
     </div>
   );
 
-  const answerBox = (extraClass: string, ref?: React.Ref<HTMLDivElement>) => (
+  // `stacked` matches the answer's font size to the ~90% "stacked" size used
+  // by renderStep's cards, instead of the caller's answerFontClass (e.g. the
+  // production text-3xl) — only used in the stacked layout's answer view, so
+  // every other caller (every live tool, Show All) is unaffected.
+  const answerBox = (extraClass: string, ref?: React.Ref<HTMLDivElement>, stacked?: boolean) => (
     <div ref={ref} className={`rounded-xl p-6 text-center ${extraClass}`} style={{ backgroundColor: stepBg }}>
-      <div className={`${answerFontClass} font-bold`} style={{ color: "#166534" }}>
+      <div className={stacked ? "font-bold" : `${answerFontClass} font-bold`} style={{ color: "#166534", ...(stacked ? { fontSize: "1.35rem" } : null) }}>
         <FitWidth>{renderAnswer()}</FitWidth>
       </div>
     </div>
@@ -303,7 +307,7 @@ export const WorkedExampleSteps = ({
                 <div className="space-y-2" style={{ opacity: 0.7 }}>
                   {working.map((s, i) => renderStep(s, i, undefined, true))}
                 </div>
-                {answerBox("", activeRef)}
+                {answerBox("", activeRef, true)}
               </div>
             )}
           </div>
