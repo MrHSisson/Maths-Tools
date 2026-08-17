@@ -61,6 +61,7 @@ const STANDALONE_BY_DESIGN = [
   "Interactive/ParallelLinesInteractive",
   "Interactive/p-value",
   "TeacherTools/CallSelector",
+  "TeacherTools/QuadraticFormulaPreview",
   "TeacherTools/SkillLibrary",
   "TeacherTools/TechniqueLibrary",
   "TeacherTools/Visualiser",
