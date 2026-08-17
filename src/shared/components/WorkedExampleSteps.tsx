@@ -134,12 +134,18 @@ export const WorkedExampleSteps = ({
     );
   };
 
-  const renderStep = (s: WorkingStep, i: number, reveal?: number) => {
+  // `compact` renders a step at a fraction of its normal size — used in stacked
+  // layout for every step that ISN'T the current one. The current step always
+  // renders at full size (unchanged from every live tool's single card), so
+  // what you're actually looking at matches production exactly; past steps
+  // recede into a compact trail instead of staying full-size and competing
+  // with it for attention as the list grows.
+  const renderStep = (s: WorkingStep, i: number, reveal?: number, compact?: boolean) => {
     const custom = stepRenderer ? stepRenderer(s, colorScheme, qoSnapshot) : null;
     return (
-      <div key={i} className="rounded-xl p-6" style={{ backgroundColor: stepBg }}>
-        <h4 className="text-xl font-bold mb-2" style={{ color: "#000" }}>Step {i + 1}</h4>
-        <div className="text-2xl" style={{ color: "#000" }}>
+      <div key={i} className={compact ? "rounded-lg p-3" : "rounded-xl p-6"} style={{ backgroundColor: stepBg }}>
+        <h4 className={compact ? "text-xs font-bold mb-1 text-gray-500" : "text-xl font-bold mb-2"} style={compact ? undefined : { color: "#000" }}>Step {i + 1}</h4>
+        <div className={compact ? "text-sm" : "text-2xl"} style={{ color: compact ? "#374151" : "#000" }}>
           {custom ?? (s.type === "tStep"
             ? <span><SkillLabel text={s.plain} onOpenSkill={onOpenSkill} /></span>
             : s.type === "mStep"
@@ -174,21 +180,24 @@ export const WorkedExampleSteps = ({
     </button>
   );
 
-  // Stacked layout: earlier steps stay on screen (dimmed) as later ones arrive,
-  // instead of each press replacing the card. The current step keeps a ring so
-  // the eye still finds "what's new" in a growing list.
+  // Stacked layout: earlier steps recede into a compact trail (small, slightly
+  // dimmed) as later ones arrive, instead of every step staying full-size and
+  // piling up. The current step is the only one at full size — matching a real
+  // single card exactly — with a ring so the eye finds it immediately.
   const stackedSteps = (upTo: number, activeReveal: number) => (
-    <div className="space-y-4">
+    <div className="space-y-2">
       {working.slice(0, upTo + 1).map((s, i) => {
         const isCurrent = i === upTo;
         return (
           <div key={i} ref={isCurrent ? activeRef : undefined} style={{
-            opacity: isCurrent ? 1 : 0.45,
-            transition: "opacity 0.3s ease",
+            opacity: isCurrent ? 1 : 0.7,
+            transition: "opacity 0.3s ease, margin 0.3s ease",
             borderRadius: 12,
             boxShadow: isCurrent ? "0 0 0 2px #1e3a8a" : "none",
+            marginTop: isCurrent ? 8 : 0,
+            marginBottom: isCurrent ? 8 : 0,
           }}>
-            {renderStep(s, i, isCurrent ? activeReveal : undefined)}
+            {renderStep(s, i, isCurrent ? activeReveal : undefined, !isCurrent)}
           </div>
         );
       })}
@@ -244,8 +253,8 @@ export const WorkedExampleSteps = ({
           <div className="flex-1 overflow-y-auto" style={{ minHeight: 0 }}>
             {!atAnswer ? stackedSteps(stepIdx, fragIdx) : (
               <>
-                <div className="space-y-4">
-                  {working.map((s, i) => renderStep(s, i))}
+                <div className="space-y-2" style={{ opacity: 0.7 }}>
+                  {working.map((s, i) => renderStep(s, i, undefined, true))}
                 </div>
                 {answerBox("mt-4", activeRef)}
               </>
