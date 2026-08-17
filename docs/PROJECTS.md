@@ -233,7 +233,13 @@ steps and fell back to thin "jump to the answer" wrappers. The **techniques engi
 grain-aware (brief / standard / full) working blocks. The **engine and its viewer (`/techniques`)
 are built**, and six techniques exist — but **only one tool (`NonLinearSimEq`) has been
 converted**, so most tools still show thin working. The value is real but latent until the sweep
-happens.
+happens. **The viewer itself was reworked 2026-08-17**: every technique (including the composed
+Full Worked Example) now has its own real tool page (`/techniques/<slug>`, e.g.
+`/techniques/quadratic-formula`) built on a shared `TechniquePreviewPage`, rendering through the same
+`WorkedExampleSteps` component (now extracted out of `ToolShell.tsx`) every real tool's Worked
+Example uses — replacing the earlier popup overlay, which is now removed. That's the pattern for any
+new technique going forward: a thin page + a `pageUrl` entry in `TechniqueLibrary.tsx`, not a popup.
+See `docs/PATCH_NOTES.md` for the full list of rendering bugs fixed along the way.
 
 **Possible next steps (background, pre-audit — see the sequencing note above):**
 - Add a runtime **"Detailed working" toggle** so a teacher can flip grain (brief ↔ full) live — the one shell change on the list.
