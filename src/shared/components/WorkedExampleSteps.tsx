@@ -182,18 +182,20 @@ export const WorkedExampleSteps = ({
     );
   };
 
-  // `compact` renders a step at a fraction of its normal size — used in stacked
-  // layout for every step that ISN'T the current one. The current step always
-  // renders at full size (unchanged from every live tool's single card), so
-  // what you're actually looking at matches production exactly; past steps
-  // recede into a compact trail instead of staying full-size and competing
-  // with it for attention as the list grows.
-  const renderStep = (s: WorkingStep, i: number, reveal?: number, compact?: boolean) => {
+  // `stacked` renders a step at ~90% of its normal size — used for every step
+  // in the stacked layout, current and past alike. Size no longer marks a
+  // step as "past" (only opacity, plus the ring on the current one, do — see
+  // stackedSteps), so nothing resizes as you step forward/backward, it just
+  // fades. Applied via inline-style overrides rather than swapped Tailwind
+  // classes so the unstacked path is untouched pixel-for-pixel — every live
+  // tool's single card, and Show All, keep rendering through the exact same
+  // classes as before this existed.
+  const renderStep = (s: WorkingStep, i: number, reveal?: number, stacked?: boolean) => {
     const custom = stepRenderer ? stepRenderer(s, colorScheme, qoSnapshot) : null;
     return (
-      <div key={i} className={compact ? "rounded-lg p-3" : "rounded-xl p-6"} style={{ backgroundColor: stepBg }}>
-        <h4 className={compact ? "text-xs font-bold mb-1 text-gray-500" : "text-xl font-bold mb-2"} style={compact ? undefined : { color: "#000" }}>Step {i + 1}</h4>
-        <div className={compact ? "text-sm" : "text-2xl"} style={{ color: compact ? "#374151" : "#000" }}>
+      <div key={i} className="rounded-xl p-6" style={{ backgroundColor: stepBg, ...(stacked ? { padding: "1.35rem" } : null) }}>
+        <h4 className="text-xl font-bold mb-2" style={{ color: "#000", ...(stacked ? { fontSize: "1.125rem", lineHeight: "1.575rem", marginBottom: "0.45rem" } : null) }}>Step {i + 1}</h4>
+        <div className="text-2xl" style={{ color: "#000", ...(stacked ? { fontSize: "1.35rem", lineHeight: "1.8rem" } : null) }}>
           {custom ?? (s.type === "tStep"
             ? <span><SkillLabel text={s.plain} onOpenSkill={onOpenSkill} /></span>
             : s.type === "mStep"
@@ -228,10 +230,9 @@ export const WorkedExampleSteps = ({
     </button>
   );
 
-  // Stacked layout: earlier steps recede into a compact trail (small, slightly
-  // dimmed) as later ones arrive, instead of every step staying full-size and
-  // piling up. The current step is the only one at full size — matching a real
-  // single card exactly — with a ring so the eye finds it immediately.
+  // Stacked layout: every step (current and past) renders at the same ~90%
+  // "stacked" size — only opacity, plus the ring on the current one, mark it
+  // as past, so nothing resizes as the list grows or you step back through it.
   const stackedSteps = (upTo: number, activeReveal: number) => (
     <div className="space-y-2">
       {working.slice(0, upTo + 1).map((s, i) => {
@@ -239,13 +240,11 @@ export const WorkedExampleSteps = ({
         return (
           <div key={i} ref={isCurrent ? activeRef : undefined} style={{
             opacity: isCurrent ? 1 : 0.7,
-            transition: "opacity 0.3s ease, margin 0.3s ease",
+            transition: "opacity 0.3s ease",
             borderRadius: 12,
             boxShadow: isCurrent ? "0 0 0 2px #1e3a8a" : "none",
-            marginTop: isCurrent ? 8 : 0,
-            marginBottom: isCurrent ? 8 : 0,
           }}>
-            {renderStep(s, i, isCurrent ? activeReveal : undefined, !isCurrent)}
+            {renderStep(s, i, isCurrent ? activeReveal : undefined, true)}
           </div>
         );
       })}
@@ -298,7 +297,7 @@ export const WorkedExampleSteps = ({
       // real height (a flex child works, see the prop doc above).
       return (
         <div className="flex flex-col" style={{ height: "100%", minHeight: 0 }}>
-          <div className="flex-1 overflow-y-auto" style={{ minHeight: 0 }}>
+          <div className="flex-1 overflow-y-auto px-1" style={{ minHeight: 0 }}>
             {!atAnswer ? stackedSteps(stepIdx, fragIdx) : (
               <>
                 <div className="space-y-2" style={{ opacity: 0.7 }}>
