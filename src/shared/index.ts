@@ -52,6 +52,11 @@ export {
 } from "./techniques";
 export type { Workings, Grain } from "./techniques";
 
+// Technique previews — the config/generateQuestion for a real ToolShell tool
+// built around one technique's example output, so previewing a technique IS
+// an actual tool page. Each tool file still renders <ToolShell/> itself.
+export { makeTechniquePreviewConfig, type TechniquePreviewDef } from "./techniquePreview";
+
 export { MathRenderer, InlineMath } from "./components/MathRenderer";
 export { QuestionDisplay, AnswerDisplay } from "./components/QuestionDisplay";
 export { DifficultyToggle } from "./components/DifficultyToggle";

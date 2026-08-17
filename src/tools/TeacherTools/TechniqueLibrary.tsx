@@ -47,6 +47,11 @@ interface TechniqueDef {
   /** Present (true) for techniques that take a Grain param — gets the picker. */
   grains?: true;
   render: (grain: Grain) => WorkingStep[];
+  /** A real tool page for this technique (see src/shared/techniquePreview.tsx) —
+   *  when present, the card navigates there instead of opening the popup
+   *  overlay below. Being phased in one technique at a time; a technique
+   *  without one still falls back to the overlay for now. */
+  pageUrl?: string;
 }
 
 const FULL_EXAMPLE = workings()
@@ -62,6 +67,7 @@ const TECHNIQUES: TechniqueDef[] = [
     signature: "quadraticFormulaSteps(2, 4, -8)",
     desc: "Solving a quadratic with the formula. Brief assumes the substitution; full is the skill-level teaching (discriminant, ± split, decimals).",
     render: (g) => quadraticFormulaSteps(2, 4, -8, "x", g),
+    pageUrl: "/techniques/quadratic-formula",
   },
   {
     id: "solveLinearEquation", title: "Solving a Linear Equation", grains: true,
@@ -101,11 +107,13 @@ const TECHNIQUES: TechniqueDef[] = [
   },
 ];
 
-// ── Index card — no step content, just enough to decide what to open ──
+// ── Index card — no step content, just enough to decide what to open.
+// Navigates to the technique's own page when it has one; falls back to the
+// popup overlay for techniques not yet converted (see TechniqueDef.pageUrl).
 const TechniqueCard = ({ t, onOpen }: { t: TechniqueDef; onOpen: () => void }) => {
   const stepCount = t.render("standard").length;
   return (
-    <button onClick={onOpen}
+    <button onClick={() => t.pageUrl ? (window.location.href = t.pageUrl) : onOpen()}
       className="group bg-white rounded-xl shadow-lg p-6 text-left transition-all hover:shadow-xl hover:-translate-y-0.5 flex flex-col gap-2"
       style={{ borderLeft: `6px solid ${ACCENT}` }}>
       <div className="flex items-start justify-between gap-3">
@@ -116,6 +124,9 @@ const TechniqueCard = ({ t, onOpen }: { t: TechniqueDef; onOpen: () => void }) =
       </div>
       <p className="text-sm text-gray-500 leading-relaxed">{t.desc}</p>
       <code className="text-xs text-gray-400 font-mono break-all mt-1">{t.signature}</code>
+      {t.pageUrl && (
+        <span className="text-xs font-bold mt-1" style={{ color: "#166534" }}>→ Real tool page</span>
+      )}
     </button>
   );
 };
