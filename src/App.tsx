@@ -1,8 +1,10 @@
 import { Suspense, lazy } from 'react';
+import type { ComponentType } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import LandingPage from './components/LandingPage';
 import { ToolErrorBoundary } from './components/ToolErrorBoundary';
 import { ALL_TOOLS } from './registry';
+import { useParkedMode } from './parkedMode';
 
 // Routes are generated from the registry. Each tool is lazy-loaded so it
 // builds as its own chunk — the landing page stays small and a tool's code
@@ -10,6 +12,7 @@ import { ALL_TOOLS } from './registry';
 const TOOL_ROUTES = ALL_TOOLS.map((tool) => ({
   path: tool.path,
   Component: lazy(tool.load),
+  parked: tool.parked === true,
 }));
 
 function LoadingFallback() {
@@ -37,14 +40,22 @@ function NotFound() {
   );
 }
 
+// Parked routes 404 outright without the tertiary parkedMode flag — stronger
+// than an ordinary `enabled: false` tool, whose route still works by direct
+// URL. See src/parkedMode.ts.
+function ParkedRoute({ Component }: { Component: ComponentType }) {
+  const parkedMode = useParkedMode();
+  return parkedMode ? <Component /> : <NotFound />;
+}
+
 function App() {
   return (
     <ToolErrorBoundary>
       <Suspense fallback={<LoadingFallback />}>
         <Routes>
           <Route path="/" element={<LandingPage />} />
-          {TOOL_ROUTES.map(({ path, Component }) => (
-            <Route key={path} path={path} element={<Component />} />
+          {TOOL_ROUTES.map(({ path, Component, parked }) => (
+            <Route key={path} path={path} element={parked ? <ParkedRoute Component={Component} /> : <Component />} />
           ))}
           <Route path="*" element={<NotFound />} />
         </Routes>

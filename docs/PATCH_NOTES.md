@@ -28,6 +28,30 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-08-18 — New `parkedMode` gate: Skill Library + Teach decks split off from Developing-tools mode
+`Developing-tools mode` had been conflating two different things: work currently in the pipeline
+(in-progress tools, the Technique Library, Grapher Lab) and content that's dormant/not a current
+focus (the Skill Library, Teach decks) but isn't literally broken either. Flipping the one visible
+toggle showed both at once, which read as "here's everything unfinished" when really only the first
+group is.
+- Added `src/parkedMode.ts` — a second, stronger gate with **no visible UI toggle**. It only unlocks
+  via `?parked=1` in the URL (persisted in localStorage afterwards, same mechanism as `devMode`, and
+  the param is stripped from the address bar once read).
+- `registry.ts`'s `ToolMeta` gained a `parked?: boolean` field; the `skill-library` entry now sets it.
+  `App.tsx` gained a `ParkedRoute` guard — a parked tool's route 404s outright without the flag,
+  stronger than an ordinary `enabled: false` tool (whose route still works by direct URL).
+- `LandingPage.tsx`'s `visibleIn()` now treats `parked` tools as requiring `parkedMode` specifically
+  — Developing-tools mode alone no longer reveals them.
+- `ToolShell.tsx`: `showTeach` and the Worked Example's `onOpenSkill` (the skill-link click handler)
+  now key off `parkedMode` instead of `devMode`. The step-by-step fragment reveal itself
+  (`stepThroughEnabled`) is unchanged — still gated by ordinary Developing-tools mode.
+- Verified with a headless-browser check across all four states: `/skills` 404s with no flags and
+  with `devMode` alone; unlocks with `?parked=1`; the Teach tab on `FractionsAddSub` behaves
+  identically (present only once `parkedMode` is on, regardless of `devMode`). `npm run build`
+  clean, `npm test` 304/304.
+- Docs updated: `CLAUDE.md`'s Teach-deck and skill-link sections, `docs/PROJECTS.md`'s dev-gating
+  callout (now "Two separate gates — do not conflate them").
+
 ## 2026-08-18 — Two tier-1 fixes from the retagged audit: EquationsOfLines grapher + CircleProperties print
 Picked the two cheapest, highest-value `[T1 exception]` items surfaced by the retagging pass above.
 - **`EquationsOfLines`** — wired SmartGrapher into all three sub-tools (`gradient`/`equation`/

@@ -36,7 +36,7 @@ A React/TypeScript/Vite app of interactive maths tools for teachers. Each tool h
 
 **Purpose:** build complete new tools end-to-end from a spec — writing all the code, registering the route, and pushing. The spec supplies the maths content.
 
-**In-development work** — what's unfinished behind Developing-tools mode (the techniques/working-steps engine, skills, Teach decks, grapher integration, the migration backlog) is tracked in `docs/PROJECTS.md`. Read it when picking up feature work; keep the prong's status current as work lands.
+**In-development work** — what's unfinished, whether behind Developing-tools mode (the techniques/working-steps engine, grapher integration, the migration backlog) or the separate, stronger `parkedMode` gate (skills, Teach decks — see `docs/PROJECTS.md`'s "Two separate gates" callout) — is tracked in `docs/PROJECTS.md`. Read it when picking up feature work; keep the prong's status current as work lands.
 
 **Terminology** — the canonical name for every element (tool, sub-tool, strand, grain, technique, step, skill, deck, QO, …) is in `docs/GLOSSARY.md`. Use those names when discussing or documenting changes.
 
@@ -501,7 +501,7 @@ Whiteboard / Worked Example / Worksheet modes · **Teach mode (when `teachingSli
 
 The **Teach** deck (`TeachingDeck`, `src/shared/TeachingDeck.tsx`) is a slide-based "teaching part of the lesson": the teacher picks a category, then presses through hand-authored, misconception-driven slides one **beat** at a time before moving to Whiteboard / Worksheet. This section is the complete guide to authoring them.
 
-**Dev-gated.** Decks are **gated behind Developing-tools mode** (`devMode`) — the Teach tab only shows when dev mode is on, so a deck can ship unfinished. Remove the gate in `ToolShell.tsx` (`showTeach`) when a deck is classroom-ready.
+**Parked-gated.** Decks are **gated behind `parkedMode`** (`src/parkedMode.ts`), not Developing-tools mode — the Teach tab only shows when parked mode is unlocked (via `?parked=1` in the URL; there is no visible toggle), so a deck can ship unfinished without cluttering the ordinary "Developing tools" preview surface. Remove the gate in `ToolShell.tsx` (`showTeach`) when a deck is classroom-ready and should go fully live.
 
 **Add a deck to a tool.** Define an array in the tool file and pass it: `<ToolShell teachingSlides={TEACHING_SLIDES} … />`. No prop → no Teach tab. Reference implementation: `src/tools/Number/FractionsAddSub.tsx` (`TEACHING_SLIDES`); a minimal one in the `ToolShell.tsx` template.
 
@@ -680,7 +680,7 @@ A prose label (`mStep` label or `tStep` text) may mark a term as a drill-down in
 mStep(`Find the common denominator — the [[lcm|LCM]] of ${d1} and ${d2}:`, `${cl}`)
 ```
 
-In the dev-gated Worked Example the term renders with a dotted underline; clicking it plays the skill's slides in an overlay, then returns to the same step. In classic mode (and in `plain`/print) only the bare term shows — the helpers strip markers from `plain` automatically. The smoke tests fail on any marker whose id isn't in the skill registry, so a dangling link can't ship.
+The dotted-underline, clickable rendering only appears when `parkedMode` is unlocked (`onOpenSkill` in `ToolShell.tsx` is `undefined` otherwise) — clicking it plays the skill's slides in an overlay, then returns to the same step. With Developing-tools mode on but `parkedMode` off (the ordinary case), the step-by-step Worked Example still works, but every marker renders as bare term text, same as classic mode — `SkillLabel` degrades silently with no `onOpenSkill` (see `src/shared/skills/index.tsx`). In classic mode (and in `plain`/print) only the bare term shows too — the helpers strip markers from `plain` automatically. The smoke tests fail on any marker whose id isn't in the skill registry, so a dangling link can't ship.
 
 **When to link:** whenever a step's label names a prerequisite skill the tool *uses* but doesn't *teach* (LCM, equivalent fractions, factor pairs…). If the skill doesn't exist yet, create it (see "Skill library" below) in the same commit.
 
@@ -707,7 +707,7 @@ Prime factor tiles are **coloured squares keyed by the prime** (2 sky, 3 emerald
 
 ## Skill library (`src/shared/skills/`)
 
-Small, reusable slide sequences that each teach **one** core skill pedagogically, on hand-picked model-friendly exemplar numbers. They are the drill-downs behind `[[skill-id|term]]` markers, and are browsable at `/skills` (the **Skill Library** page — registered `enabled: false`, so it shows on the landing page only in Developing-tools mode).
+Small, reusable slide sequences that each teach **one** core skill pedagogically, on hand-picked model-friendly exemplar numbers. They are the drill-downs behind `[[skill-id|term]]` markers, and are browsable at `/skills` (the **Skill Library** page — registered `enabled: false, parked: true`, so it's gated behind `parkedMode` rather than Developing-tools mode: the route itself 404s and the page never appears on the landing page, even with Developing-tools mode on, until `parkedMode` is unlocked via `?parked=1`. See `src/parkedMode.ts`).
 
 ```ts
 interface SkillDef {

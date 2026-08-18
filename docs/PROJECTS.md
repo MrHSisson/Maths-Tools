@@ -263,11 +263,16 @@ Four interlocking prongs. A **skill** is usually a **technique**'s full-grain te
 a **representation**; a **Teach deck** strings those together into a lesson. Progress on one often
 unblocks the others — so read these together when planning a Maths session.
 
-> **Dev-mode gating.** Most of this is behind Developing-tools mode (`src/devMode.ts`, toggle on
-> the landing page). When ON it reveals: `enabled:false` tools (badged **DEV**), the step-by-step
-> **Worked Example** (fragment reveal + skill-link overlays), and the **Teach** deck mode. Dev-only
-> pages: **Skill Library** (`/skills`), **Technique Library** (`/techniques`), **Grapher Lab**
-> (`/grapher`).
+> **Two separate gates — do not conflate them (2026-08-18).** **Developing-tools mode**
+> (`src/devMode.ts`, the visible toggle on the landing page) is for things currently *in the
+> pipeline* — `enabled:false` tools, the step-by-step **Worked Example**'s fragment reveal, the
+> **Technique Library** (`/techniques`), **Grapher Lab** (`/grapher`). **Parked mode**
+> (`src/parkedMode.ts`) is a separate, stronger, unadvertised gate for content that exists but is
+> neither live nor currently being built — dormant, not a current focus, not meant to be casually
+> found. It has no UI toggle (unlocked only via `?parked=1` in the URL) and its routes 404 outright
+> without the flag. It currently gates the **Skill Library** (`/skills`, registry `parked: true`)
+> and the **Teach** deck mode — flipping Developing-tools mode alone does **not** reveal either.
+> See `src/parkedMode.ts` and each registry entry's `parked` field for the mechanics.
 
 > **Sequencing note.** The Maths Tool Audit (`docs/TOOL_AUDIT.md`) is now complete — the
 > technique-audit and skills tables below have been refreshed with real per-tool demand from all
