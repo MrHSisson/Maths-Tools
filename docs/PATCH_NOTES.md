@@ -28,6 +28,18 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-08-18 — Worksheet Builder's undocumented classic/full split, scoped for tomorrow
+Findings-only session, no code changed. `docs/PROJECTS.md` gains a new prong, **Worksheet Builder
+unification**, scoping a previously undocumented gap for the next build session: `WorksheetBuilder`
+(`src/shared/WorksheetBuilder.tsx`) silently renders two different builders depending on
+Developing-tools mode (`classic={!devMode}`) — a flat classic mode (one global column count, no
+sections) versus a full sectioned mode (per-section headings/shuffle/columns) — on top of a third,
+separate "Standard Worksheet" surface in `ToolShell.tsx` that was never gated at all. The aim for
+next session: unify classic/full into one always-live builder and remove the gate entirely — worksheet
+mode should never differ by dev-mode state. The prong entry records the full current-state
+breakdown plus the open design call (sectioning always-on vs opt-in vs hybrid) and a recommended
+default, ready to pick up cold.
+
 ## 2026-08-18 — New `parkedMode` gate: Skill Library + Teach decks split off from Developing-tools mode
 `Developing-tools mode` had been conflating two different things: work currently in the pipeline
 (in-progress tools, the Technique Library, Grapher Lab) and content that's dormant/not a current
