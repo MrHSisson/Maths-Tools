@@ -117,9 +117,21 @@ export const WorkedExampleSteps = ({
   const [steppedMode, setSteppedMode] = useState(true);
   const [stepIdx, setStepIdx] = useState(0);
   const [fragIdx, setFragIdx] = useState(0);
-  // Stacked layout only: the current card (or the answer box) scrolls itself
-  // into view within the internal scroll body whenever it changes.
-  const activeRef = useRef<HTMLDivElement>(null);
+  // Stacked layout only: the footer (nav + dot strip) sits after the growing
+  // card list, so — since nothing here actually gets its own internal scroll
+  // in practice; the page itself grows and scrolls instead — pressing Next
+  // pushes the footer further down the page each time. prevFooterTop records
+  // where the footer was immediately before a press; the effect below then
+  // scrolls the window by exactly how far the footer moved, so it stays put
+  // on screen instead of creeping downward (or off the bottom) as the stack
+  // grows, and scrolls back up by the same logic when a press shrinks it.
+  const footerRef = useRef<HTMLDivElement>(null);
+  const prevFooterTop = useRef<number | null>(null);
+  const captureFooterTop = () => {
+    if (layout === "stacked" && footerRef.current) {
+      prevFooterTop.current = footerRef.current.getBoundingClientRect().top;
+    }
+  };
 
   const stepBg = getStepBg(colorScheme);
   const totalSteps = working.length;
@@ -142,26 +154,28 @@ export const WorkedExampleSteps = ({
   // A genuinely new example (new question, or a reformat that keeps the same
   // question key but changes the working) also restarts position.
   useEffect(() => { setStepIdx(0); setFragIdx(0); }, [resetKey]);
-  // Stacked layout: whenever the current card changes (a new step arrives, or
-  // we land on the answer), bring it fully into view — it's always the last
-  // thing in the scroll body, so aligning its bottom edge to the bottom of the
-  // scrollport ("end") is what actually reaches the very bottom; "nearest"
-  // stops short whenever the card itself is taller than the visible area.
-  // Plain useEffect deliberately, NOT useLayoutEffect: MathRenderer paints its
-  // KaTeX into the DOM from its own useEffect, and React runs every
-  // useLayoutEffect in the tree before any useEffect runs anywhere. A layout
-  // effect here would measure the new step while its maths is still an empty,
-  // unsized span, undershooting the scroll. A plain effect fires in the same
-  // (passive-effect) phase as MathRenderer's, and — child effects before
-  // parent effects — MathRenderer (nested inside this component) has already
-  // rendered by the time this one runs, so the measurement is accurate.
+  // Stacked layout: compensate for whatever the footer just got displaced by.
+  // captureFooterTop() (called from each nav press below) records the
+  // footer's position beforehand; once the press's new content has painted,
+  // this measures where the footer ended up and scrolls the window by
+  // exactly that delta — the footer lands back where it was, same idea as
+  // "if the button drops 500px, scroll 500px", symmetric for growing forward
+  // and shrinking back. Plain useEffect deliberately, NOT useLayoutEffect:
+  // MathRenderer paints its KaTeX into the DOM from its own useEffect, and
+  // React runs every useLayoutEffect in the tree before any useEffect runs
+  // anywhere. A layout effect here would measure the footer before the new
+  // step's maths has painted, undershooting the true displacement. A plain
+  // effect fires in the same (passive-effect) phase as MathRenderer's, and —
+  // child effects before parent effects — MathRenderer (nested inside this
+  // component) has already rendered by the time this one runs, so the
+  // measurement is accurate.
   useEffect(() => {
     if (layout !== "stacked" || !stepped) return;
-    const el = activeRef.current;
-    if (!el) return;
-    el.style.scrollMarginBottom = "16px";
-    el.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [stepIdx, layout, stepped]);
+    if (prevFooterTop.current === null || !footerRef.current) return;
+    const delta = footerRef.current.getBoundingClientRect().top - prevFooterTop.current;
+    prevFooterTop.current = null;
+    if (Math.abs(delta) > 0.5) window.scrollBy({ top: delta, behavior: "smooth" });
+  }, [stepIdx, fragIdx, layout, stepped]);
 
   const goNextBeat = () => {
     if (atAnswer) return;
@@ -255,7 +269,7 @@ export const WorkedExampleSteps = ({
       {working.slice(0, upTo + 1).map((s, i) => {
         const isCurrent = i === upTo;
         return (
-          <div key={i} ref={isCurrent ? activeRef : undefined} style={{
+          <div key={i} style={{
             opacity: isCurrent ? 1 : 0.7,
             transition: "opacity 0.3s ease",
             borderRadius: 12,
@@ -283,7 +297,7 @@ export const WorkedExampleSteps = ({
   if (stepped) {
     const navRow = (
       <div className="flex items-center justify-between">
-        <button style={navArrowStyle(canPrev)} onClick={() => canPrev && goPrevBeat()}>
+        <button style={navArrowStyle(canPrev)} onClick={() => canPrev && (captureFooterTop(), goPrevBeat())}>
           <ChevronLeft size={24} />
         </button>
         <div className="flex items-center gap-3">
@@ -292,7 +306,7 @@ export const WorkedExampleSteps = ({
           </span>
           {steppedToggle}
         </div>
-        <button style={navArrowStyle(canNext && !atAnswer)} onClick={() => canNext && !atAnswer && goNextBeat()}>
+        <button style={navArrowStyle(canNext && !atAnswer)} onClick={() => canNext && !atAnswer && (captureFooterTop(), goNextBeat())}>
           <ChevronRight size={24} />
         </button>
       </div>
@@ -300,7 +314,7 @@ export const WorkedExampleSteps = ({
     const dotStrip = (
       <div className="flex justify-center gap-2">
         {Array.from({ length: hideAnswerStep ? totalSteps : totalSteps + 1 }, (_, i) => (
-          <button key={i} onClick={() => jumpToStep(i)}
+          <button key={i} onClick={() => { captureFooterTop(); jumpToStep(i); }}
             style={{
               width: i === totalSteps ? 24 : 10, height: 10, borderRadius: 5, border: "none", cursor: "pointer",
               background: i === stepIdx ? "#1e3a8a" : "#d1d5db", transition: "background 0.15s",
@@ -324,11 +338,11 @@ export const WorkedExampleSteps = ({
                 <div className="space-y-2" style={{ opacity: 0.7 }}>
                   {working.map((s, i) => renderStep(s, i, undefined, true))}
                 </div>
-                {answerBox("", activeRef, true)}
+                {answerBox("", undefined, true)}
               </div>
             )}
           </div>
-          <div className="flex-shrink-0 pt-4 mt-4 border-t" style={{ borderColor: "rgba(0,0,0,0.08)" }}>
+          <div ref={footerRef} className="flex-shrink-0 pt-4 mt-4 border-t" style={{ borderColor: "rgba(0,0,0,0.08)" }}>
             {navRow}
             <div className="mt-3">{dotStrip}</div>
           </div>
