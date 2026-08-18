@@ -34,16 +34,48 @@ lives in `CLAUDE.md` → "Ending a session / session kickoffs".
 
 ---
 
+## Priorities — three lenses, not equal weight
+
+Everything below serves one of three audiences. They are **not equally weighted right now** —
+this section is the standing lens for deciding what to pick up next, read it before choosing a
+prong to build:
+
+1. **Teacher-facing advancement — current priority.** New tools, and features a teacher reaches
+   for *during* a lesson instead of leaving the software. SmartGrapher is the model case: a quick
+   in-lesson graph instead of tabbing out to Desmos/GeoGebra. New question types, broader sub-tool
+   coverage, and new tools built from `specs/` all count too. This is what actually gives a teacher
+   more to use — default build effort here.
+2. **Student-led self-teaching — currently dormant.** The Skills library and the Worked Example
+   mode's step-by-step fragment reveal, i.e. a learner working through content alone. Real,
+   dev-gated, and not being retired — but **not currently pushed** as a use case, so it shouldn't
+   be where effort concentrates. Worked Example is also, in practice, the least-used of ToolShell's
+   three modes.
+3. **Tool-building infrastructure — means, not end.** ToolShell and the techniques engine (generic
+   structures for building working steps). Necessary to build tiers 1 and 2, but not a goal on its
+   own — a tool ships fine with thinner working steps, and techniques are a quality investment, not
+   a blocker. Build only as far as a specific tier-1 (or tier-2) need actually requires, not as a
+   standalone completeness sweep across all tools.
+
+The boundaries blur deliberately: techniques serve both tier 1 (real worksheet/whiteboard working
+steps) and tier 2 (worked-example fragment reveal + skill links) — building one often touches the
+other. Teach decks are nominally a teacher tool (front-of-class delivery) but are authoring-heavy
+and still the least mature prong, so in practice they sit behind new-tool/utility work until a
+session specifically picks them up. When in doubt: a new tool or an in-lesson utility beats another
+pedagogy-engine sweep.
+
+---
+
 ## At a glance
 
 | Prong | Status | One-line |
 |---|---|---|
 | **Maths Tool Audit** | ✅ | All 27 tools audited — see `docs/TOOL_AUDIT.md`; findings now drive the four prongs below |
-| **Techniques engine** | 🚧 | Engine built; only 1 tool converted — further work now sequenced via the Tool Audit |
-| **Skills library** | 🚧 | Engine + backlog ready; 2 skills built — further work now sequenced via the Tool Audit |
-| **Core representations** | 🚧 | 3 of 6 visual families have Teach scenes — further work now sequenced via the Tool Audit |
-| **Teach decks** | 🚧 | Engine built; one partial deck exists — further work now sequenced via the Tool Audit |
-| **SmartGrapher** | ✅ | Mature, embeddable; used in 2 tools — further adoption now sequenced via the Tool Audit |
+| **Tool expansion (Part 2)** | 🚧 | Per-tool content-growth backlog (new question types, broader coverage) — **tier-1 priority**, needs a dedicated sequencing pass |
+| **SmartGrapher** | ✅ | Mature, embeddable; used in 2 tools — **tier-1 priority**: wire into more tools opportunistically |
+| **Techniques engine** | 🚧 | Engine built; only 1 tool converted — build on demand for tier-1 needs, not a standalone sweep (see Priorities) |
+| **Skills library** | ⏸ | Engine + backlog ready; 2 skills built — tier-2 (student-led), not a current priority |
+| **Core representations** | ⏸ | 3 of 6 visual families have Teach scenes — feeds Skills/Teach decks (tier 2), paused alongside them |
+| **Teach decks** | ⏸ | Engine built; one partial deck exists — least mature prong, secondary to tier-1 work |
 | **Old-shell migration** | ✅ | Backlog empty; Generators are standalone by design, not migration targets |
 | **Computer Science shell** | ⏸ | Parked while the Maths Tool Audit is in progress |
 | **Decision Maths** | ⏸ | Parked while the Maths Tool Audit is in progress |
@@ -115,6 +147,14 @@ design conversation:
   (see their sections below) — not a call this audit makes for you.
 
 ## Part 1 roadmap — the aligned, cross-prong build order
+
+> **Priority note (2026-08-18).** This roadmap sequences the *pedagogy engine* (Techniques /
+> Skills / Core representations / Teach decks) by cross-tool leverage — but per the Priorities
+> section above, that engine is tier-3 infrastructure serving a currently-dormant tier-2 (student
+> self-teaching), so it's **secondary to tier-1 work** (new tools, teacher in-lesson utilities like
+> SmartGrapher — see "Tool expansion" and "SmartGrapher" below). Tier 0's already-built,
+> zero-new-work items are still worth flipping on opportunistically. Treat the rest as background
+> to pick up when tier-1 work isn't available, not the active queue.
 
 Techniques, Skills, Core representations, Teach decks, and SmartGrapher stay **five separate prongs**
 below — each keeps its own "Where it's at" and detail table — but they gate each other constantly (a
@@ -188,7 +228,12 @@ tool. Fill-in work between the tiers above, not a queue of its own.
 - **[Deck]** Teach decks stay the least mature prong (1 deck, 1 category built) — reasonable to leave
   last unless a second proof-of-format deck is wanted as a parallel, low-stakes task.
 
-## Part 2 — Tool expansion (pending a dedicated pass)
+## Part 2 — Tool expansion
+
+> **Tier-1 priority (see Priorities above).** This is the actual content-growth backlog — new
+> question types, broader sub-tool coverage, scope a tool should grow into. It's what gives a
+> teacher more to use, so it's the default place to look for the next build once the sequencing
+> pass below happens — ahead of the pedagogy-engine roadmap in Part 1.
 
 **Scope, precisely:** this is the audit's Part 2 *standalone-readiness content* findings — missing
 question types, narrow sub-tool coverage, scope a tool should grow into — the items that need a
@@ -226,6 +271,11 @@ unblocks the others — so read these together when planning a Maths session.
 > below still mostly predate the audit and are kept as background context, not the active queue.
 
 ## Techniques engine
+
+> **Tier-3 (infrastructure) — build on demand, not a sweep.** Serves both tier-1 tools (real
+> worksheet/whiteboard working) and tier-2 self-teaching (worked-example fragment reveal). A tool
+> ships fine without it — only convert a tool onto the engine when a tier-1 need (a new tool, or
+> making an existing one presentable) actually calls for it, not as a standalone completeness goal.
 
 **Where it's at.** When tools moved onto the shared ToolShell they lost their hand-written working
 steps and fell back to thin "jump to the answer" wrappers. The **techniques engine**
@@ -325,6 +375,10 @@ guesses above.
 
 ## Skills library
 
+> **Tier-2 (student-led) — paused, not currently pushed.** The site isn't currently positioning
+> itself as a self-teaching tool, so this isn't a current investment target. Not being retired —
+> just not where the next session's effort should default to.
+
 **Where it's at.** Small slide-sequences that each teach **one prerequisite skill**
 (`src/shared/skills/`), browsable at `/skills`, and the drill-downs behind `[[skill-id|term]]`
 links in worked examples. **Two skills exist** (`lcm`, `lcm-prime-factors` — LCM two ways). CI
@@ -374,6 +428,10 @@ scene type**, so sequence them with the representation work.
 
 ## Core representations
 
+> **Tier-2/3 — paused alongside Skills/Teach decks.** Its consumers (Skills library, Teach decks)
+> are both currently dormant, so a new representation isn't unlocking tier-1 work right now. Revisit
+> once Skills/Teach decks are picked back up.
+
 **Where it's at.** The site commits to **six core visual representations** as a shared vocabulary,
 so the same bar model a student meets in fractions reappears in ratio. New visuals must reuse one of
 the six; new scenes extend an existing `TeachScene` family in `TeachingDeck.tsx`. **Three have
@@ -406,6 +464,11 @@ everything (the standing scene contract).
 
 ## Teach decks
 
+> **Teacher-facing in nature, but secondary in practice.** Front-of-class lesson delivery is
+> squarely tier-1, but this is the least mature, most authoring-heavy prong — one partial deck for
+> one tool. Behind new-tool/utility work until a session specifically wants to prove the format
+> further, not because it's the wrong audience.
+
 **Where it's at.** A slide-based "teaching part of the lesson" (`TeachingDeck`), dev-gated. The
 **engine is built and proven** — hand-authored, misconception-driven slides the teacher presses
 through one beat at a time. **Content is the thin part**: only `FractionsAddSub` has a deck, and
@@ -430,6 +493,10 @@ I-do → We-do → You-do within a category on one coherent example. Reference: 
 # Mathematics — tools & utilities
 
 ## SmartGrapher
+
+> **Tier-1 priority.** The model case for "teacher-facing advancement" — a quick in-lesson graph
+> instead of leaving the software. Wiring it into more tools is one of the highest-value, lowest-
+> effort things to pick up next (see the still-unwired candidates below).
 
 **Where it's at.** A **mature**, embeddable, data-driven graph component (`src/shared/grapher/`)
 with its own test bench at `/grapher`. Live in two tools (Mixed Strategies L3 lower-envelope,
