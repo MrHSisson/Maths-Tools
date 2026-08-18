@@ -2062,7 +2062,7 @@ Route: `/circle-properties` · Current status: Live
 *Priority tag: [T2/3] for `circleFormula`/`rearrange-formula`/`fraction-of-amount` findings — but
 see Part 2 below for the audit's own top T1 pick: the hand-rolled print handler whose Differentiated
 toggle is a confirmed silent no-op, "the highest-leverage, most mechanical fix surfaced anywhere in
-this audit pass."*
+this audit pass." **✅ Fixed 2026-08-18** — migrated onto the shared `handleDiagramPrint`.*
 - Techniques: Thin — no technique import. `PROJECTS.md`'s `circleFormula` row (med, ⬜) is an exact
   and complete match — this tool covers all four named sub-moves (circumference, area, arc, sector),
   unlike most cross-references found elsewhere in the audit which only partially match. Level 3 of
@@ -2108,7 +2108,7 @@ this audit pass."*
   ignoring `ctx.isDifferentiated`. Since the Differentiated toggle isn't gated by `fixedColumns`, a
   teacher can click Differentiated and print, and get the identical flat 3×5 sheet with zero
   differentiation applied and no error — a genuine, source-confirmable functional gap. **[T1 —
-  confirmed live bug, the audit's own top mechanical-fix pick.]** This tool
+  confirmed live bug, the audit's own top mechanical-fix pick. ✅ Fixed 2026-08-18.]** This tool
   would be the most direct beneficiary of migrating to `handleDiagramPrint` of any Geometry tool
   checked. Absence of `hideFontControls` — **Unclear, leaning Debt**: every sibling diagram tool
   checked across the whole audit sets it, and here the diagram's font is entirely hard-coded and
@@ -2137,7 +2137,8 @@ Route: `/equations-of-lines` · Current status: Live
 **Part 1 — Infrastructure alignment**
 *Priority tag: [T1 exception] — the unwired SmartGrapher fit is "the single highest-leverage Part 1
 gap found for this tool" per the audit's own words, an off-the-shelf preset fit. The
-`gradientIntercept`/`substitute-into-formula`/`rearrange-formula` findings stay [T2/3].*
+`gradientIntercept`/`substitute-into-formula`/`rearrange-formula` findings stay [T2/3]. **✅ Fixed
+2026-08-18** — SmartGrapher wired into all three sub-tools (line through the known points).*
 - Techniques: Thin — no technique import. `PROJECTS.md`'s `gradientIntercept` row (med, ⬜,
   "gradient formula, y=mx+c, solve for c") is a near-verbatim match for what this file already
   hand-computes in exactly that three-step shape — an unusually cheap conversion target, since the
@@ -2160,7 +2161,7 @@ gap found for this tool" per the audit's own words, an off-the-shelf preset fit.
   This directly resolves `PROJECTS.md`'s open "possible next step" naming this tool by name — nothing
   has been done. Given the tool is literally titled "Properties of Line Equations" and has zero
   visual content of any kind, this is the single highest-leverage Part 1 gap found for this tool:
-  the `linear` preset is a direct, off-the-shelf fit for every sub-tool here.
+  the `linear` preset is a direct, off-the-shelf fit for every sub-tool here. **✅ Fixed 2026-08-18.**
 
 **Part 2 — Standalone readiness**
 - Question/sub-tool breadth vs spec: Three sub-tools (gradient, equation, missing), reasonable

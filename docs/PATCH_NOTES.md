@@ -28,6 +28,22 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-08-18 — Two tier-1 fixes from the retagged audit: EquationsOfLines grapher + CircleProperties print
+Picked the two cheapest, highest-value `[T1 exception]` items surfaced by the retagging pass above.
+- **`EquationsOfLines`** — wired SmartGrapher into all three sub-tools (`gradient`/`equation`/
+  `missing`): a line through the known points (plus the missing-value point for that sub-tool)
+  reveals on the Whiteboard once the answer is shown, matching the pattern `NonLinearSimEq` already
+  established. Closes the tool's own "zero visual content despite its name" gap — the audit's single
+  highest-leverage Part 1 finding for it.
+- **`CircleProperties`** — migrated its hand-rolled, fixed-3×5-grid `customPrintHandler` onto the
+  shared `handleDiagramPrint`, fixing the confirmed bug where the Differentiated toggle silently
+  produced an identical flat sheet. Also dropped `fixedColumns: true` in favour of `maxColumns: 4`
+  (restores the Columns control) and added `hideFontControls: true` to match every sibling diagram
+  tool (the font-size chevrons had no effect on the diagram anyway). Diagrams are always square, so
+  the default `_aspect` of 1 needed no extra work.
+- Both verified with `npm run build` (zero TS errors), `npm test` (304/304 passing), and a headless
+  browser check confirming both render with no console errors.
+
 ## 2026-08-18 — Project docs reorganised around a teacher/student/infra priority lens
 `docs/PROJECTS.md` and `docs/TOOL_AUDIT.md` findings-only, no code changed.
 - Added a `## Priorities` section to `PROJECTS.md` splitting all work into three tiers: **tier-1**

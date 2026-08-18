@@ -71,7 +71,7 @@ pedagogy-engine sweep.
 |---|---|---|
 | **Maths Tool Audit** | ✅ | All 27 tools audited — see `docs/TOOL_AUDIT.md`; findings now drive the four prongs below |
 | **Tool expansion (Part 2)** | 🚧 | Per-tool content-growth backlog (new question types, broader coverage) — **tier-1 priority**, needs a dedicated sequencing pass |
-| **SmartGrapher** | ✅ | Mature, embeddable; used in 2 tools — **tier-1 priority**: wire into more tools opportunistically |
+| **SmartGrapher** | ✅ | Mature, embeddable; used in 3 tools — **tier-1 priority**: wire into more tools opportunistically |
 | **Techniques engine** | 🚧 | Engine built; only 1 tool converted — build on demand for tier-1 needs, not a standalone sweep (see Priorities) |
 | **Skills library** | ⏸ | Engine + backlog ready; 2 skills built — tier-2 (student-led), not a current priority |
 | **Core representations** | ⏸ | 3 of 6 visual families have Teach scenes — feeds Skills/Teach decks (tier 2), paused alongside them |
@@ -140,9 +140,14 @@ broader sub-tool coverage, scope decisions — and needs a dedicated pedagogy/pr
 leverage score. A few smaller items sit outside both tracks and can be picked up any time without a
 design conversation:
 - The one gating sign-off: whether to act on `SimplifyingRatiosTool`'s "stay gated" recommendation.
-- The two confirmed print-handler bugs (`BasicAngleFacts` drops section headers on differentiated
-  worksheets; `CircleProperties`' Differentiated toggle silently no-ops) and migrating the three
-  hand-rolled Geometry `customPrintHandler`s onto `handleDiagramPrint`.
+- ✅ **`CircleProperties` fixed (2026-08-18)** — migrated its hand-rolled fixed-3×5-grid
+  `customPrintHandler` onto the shared `handleDiagramPrint`, fixing the confirmed Differentiated
+  silent-no-op bug and the `fixedColumns`/missing-`hideFontControls` debt in one pass (its diagrams
+  are always square, so the default `_aspect` of 1 needed no extra work). `BasicAngleFacts` (dropped
+  section headers) and `AnglesInParallelLines` still need the same migration.
+- ✅ **`EquationsOfLines` fixed (2026-08-18)** — wired SmartGrapher into all three sub-tools
+  (`gradient`/`equation`/`missing`): a live line-through-the-known-points graph now reveals on the
+  Whiteboard once the answer is shown, the tool's single highest-leverage Part 1 gap per the audit.
 - Whether to unpark Computer Science and/or Decision Maths now that the audit blocking them is done
   (see their sections below) — not a call this audit makes for you.
 
@@ -221,8 +226,9 @@ Everything else in the technique/skill tables below — real demand, but each un
 tool. Fill-in work between the tiers above, not a queue of its own.
 
 **Cross-cutting, any time:**
-- **[Grapher]** Wire `EquationsOfLines`, `CompletingTheSquare`, `Iterations` onto SmartGrapher — all
-  confirmed still unwired, all cheap (existing presets fit directly), no dependency on anything above.
+- **[Grapher]** ✅ `EquationsOfLines` wired onto SmartGrapher (2026-08-18). `CompletingTheSquare`,
+  `Iterations` still confirmed unwired — both cheap (existing presets fit directly), no dependency
+  on anything above.
 - **[Technique]** Runtime grain toggle ("Detailed working" brief↔full) — the one shell-level change
   still on the Techniques engine list.
 - **[Deck]** Teach decks stay the least mature prong (1 deck, 1 category built) — reasonable to leave
@@ -499,8 +505,10 @@ I-do → We-do → You-do within a category on one coherent example. Reference: 
 > effort things to pick up next (see the still-unwired candidates below).
 
 **Where it's at.** A **mature**, embeddable, data-driven graph component (`src/shared/grapher/`)
-with its own test bench at `/grapher`. Live in two tools (Mixed Strategies L3 lower-envelope,
-NonLinearSimEq two-curves-plus-intersection) and **self-validating** — it derives the graph from the
+with its own test bench at `/grapher`. Live in three tools (Mixed Strategies L3 lower-envelope,
+NonLinearSimEq two-curves-plus-intersection, and — wired 2026-08-18 — EquationsOfLines'
+line-through-the-known-points graph across all three sub-tools) and **self-validating** — it
+derives the graph from the
 answer data and refuses to draw if they disagree, so a data inconsistency omits the graph rather than
 drawing wrong geometry. Less a "project", more a reusable utility to reach for. The Tool Audit's
 Algebra pass confirmed both `CompletingTheSquare` and `Iterations` are still fully unwired (zero
@@ -514,7 +522,11 @@ tool's own info modal, not a silent gap.
 
 **Possible next steps (background, pre-audit — SmartGrapher fit is now also part of the Tool Audit's
 Part 1 per tool, see `docs/TOOL_AUDIT.md`):**
-- Add graphs to more tools — **Equations of Lines** (lines/gradients/intercepts, confirmed still unwired — the tool has zero visual content of any kind despite its own name, the single highest-leverage Part 1 gap found for it), **Completing the Square** (parabola + vertex, confirmed still unwired), **Iterations** (the curve and the root being approached, confirmed still unwired and now the top candidate).
+- ✅ **Equations of Lines** wired (2026-08-18) — a line-through-the-known-points graph for all
+  three sub-tools (`gradient`/`equation`/`missing`), revealed on the Whiteboard alongside the answer.
+- Add graphs to the remaining candidates — **Completing the Square** (parabola + vertex, confirmed
+  still unwired), **Iterations** (the curve and the root being approached, confirmed still unwired
+  and now the top candidate).
 - Add an **ellipse preset** if/when a tool needs ellipse-and-line (presets today: linear · quadratic · cubic · circle · custom) — would close `NonLinearSimEq`'s disclosed ellipse gap.
 - Mostly: pull it in opportunistically when building or migrating any coordinate/quadratic tool.
 
