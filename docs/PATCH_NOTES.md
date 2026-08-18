@@ -56,6 +56,16 @@ bespoke mockup that can drift out of sync.
   `TechniquePreviewPage` wrapper, `enabled:false` + `hidden:true` (reachable via its route and the
   library's own card, never listed as its own landing-page tile). The popup overlay itself, and its
   now-dead state, were removed from `TechniqueLibrary.tsx`.
+- Reintroduced autoscroll in Stacked layout, this time correctly: diagnosed that the container's
+  "bounded, internally-scrolling" design never actually engages (`TechniquePreviewPage`'s root only
+  sets `minHeight:100vh`, not `height`, so nothing downstream is genuinely height-constrained — the
+  internal scroll body's `scrollHeight` always equals its `clientHeight`, confirmed via Playwright; the
+  whole *page* grows and scrolls instead). Replaced the old "scroll the current card into view" effect
+  — which aligned the wrong element and let the nav footer creep off the bottom of the viewport — with
+  one that captures the footer's on-screen position immediately before each Prev/Next/dot press and,
+  once the new content has painted, scrolls the window by exactly how far the footer moved. Symmetric
+  for growing forward and shrinking back; a no-op outside Stacked layout, so Single card and every live
+  tool trigger zero window scrolls (verified).
 - All dev-gated / exploratory (this is preview tooling for reviewing technique output, not a
   user-facing tool); build clean, all 304 tests pass.
 
