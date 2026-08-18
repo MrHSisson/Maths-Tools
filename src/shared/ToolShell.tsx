@@ -21,6 +21,7 @@ import { WorksheetBuilder } from "./WorksheetBuilder";
 import { TeachingDeck, type TeachingSlide } from "./TeachingDeck";
 import { SkillOverlay } from "./skills";
 import { useDevMode } from "../devMode";
+import { useParkedMode } from "../parkedMode";
 
 export interface ToolShellProps {
   config: ToolConfig;
@@ -190,8 +191,11 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   // Worked Example is always available; only its step-by-step navigation (one
   // step at a time) is reserved for Developing mode.
   const devMode = useDevMode();
-  // The Teach deck is in-progress, so it only appears in Developing-tools mode.
-  const showTeach = !!(devMode && teachingSlides && teachingSlides.length);
+  // The Teach deck is dormant content, not in-progress work, so it's gated by
+  // the separate, unadvertised parkedMode rather than Developing-tools mode —
+  // see src/parkedMode.ts.
+  const parkedMode = useParkedMode();
+  const showTeach = !!(parkedMode && teachingSlides && teachingSlides.length);
   const comingSoon = defaults.comingSoonLevels ?? [];
   const hideFontControls = defaults.hideFontControls ?? false;
   const [difficulty, setDifficulty] = useState<DifficultyLevel>(urlInit.level);
@@ -1014,7 +1018,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               stepRenderer={stepRenderer}
               qoSnapshot={getQOSnapshot()}
               stepThroughEnabled={devMode}
-              onOpenSkill={devMode ? setOpenSkillId : undefined}
+              onOpenSkill={parkedMode ? setOpenSkillId : undefined}
               resetKey={workedResetNonce}
             />
           )}

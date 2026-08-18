@@ -1,6 +1,7 @@
 import {
-  ToolShell,
+  ToolShell, SmartGrapher, QuestionDisplay,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep,
+  type QOSnapshot, type GraphSeries, type FOI,
   mStep,
 } from "../../shared";
 
@@ -38,6 +39,26 @@ type MissingVar = "x" | "y" | "m" | "c";
 const coordLatex = (x: number, y: number) => `(${x},\\,${y})`;
 const DENOMS = [2, 3, 4, 5, 6, 7, 8, 9, 10];
 const fmtN = (n: number) => n >= 0 ? `${n}` : `(${n})`;
+const fmtDec = (n: number) => Number(n.toFixed(2)).toString();
+
+// ── Graph — every sub-tool here is a straight line through known points, a
+// direct off-the-shelf fit for SmartGrapher's linear preset. Shown only on the
+// regular Whiteboard panel once the answer is revealed, matching the pattern
+// NonLinearSimEq already established for this exact "reveal a curve on answer"
+// use case.
+interface GraphInfo { series: GraphSeries[]; fois: FOI[]; }
+const LINE_COLOR = "#2563eb";
+const buildLineGraph = (m: number, c: number, points: { x: number; y: number }[]): GraphInfo => ({
+  series: [{ equationType: "linear", params: [m, c], color: LINE_COLOR }],
+  fois: points.map((p) => ({ x: p.x, y: p.y, kind: "point", highlight: true, label: `(${fmtDec(p.x)}, ${fmtDec(p.y)})` })),
+});
+const GraphView = ({ g }: { g: GraphInfo }): JSX.Element => (
+  <SmartGrapher
+    series={g.series}
+    height={260}
+    config={{ autoFois: false, fois: g.fois, showFois: true, style: { foi: "#dc2626" } }}
+  />
+);
 
 const equationLatex = (gradN: number, gradD: number, c: number): string => {
   const absN = Math.abs(gradN), isOne = absN === gradD, negGrad = gradN < 0;
@@ -229,6 +250,7 @@ const generateMissingQuestion = (level: DifficultyLevel, allowedVars: MissingVar
       const crdL = `\\left(${xStr},\\,${yStr}\\right)`;
       const answerVal = mv === "x" ? xq : mv === "y" ? yq : mv === "m" ? mq : cq;
       const ansLtx = `${mv} = ${ratLatex(answerVal)}`;
+      const graph = buildLineGraph(mq.n / mq.d, cq.n / cq.d, [{ x: xq.n / xq.d, y: yq.n / yq.d }]);
       // Worded (not a single displayLatex) so the prose wraps inside the
       // question box instead of overflowing it in whiteboard mode.
       return {
@@ -242,7 +264,8 @@ const generateMissingQuestion = (level: DifficultyLevel, allowedVars: MissingVar
         working: buildMissingWorking(mv, mq, cq, xq, yq),
         key: `missing-${level}-${mv}-${Math.floor(Math.random() * 1_000_000)}`,
         difficulty: level,
-      };
+        _graph: graph,
+      } as unknown as AnyQuestion;
     } catch { continue; }
   }
   return null;
@@ -316,6 +339,7 @@ const generateQuestion = (
   const displayLatex = `${coordLatex(dA[0],dA[1])} \\text{ and } ${coordLatex(dB[0],dB[1])}`;
 
   if (t === "gradient") {
+    const gm = gradN / gradD, gc = wy1 - gm * wx1;
     return {
       kind: "simple", display: "", displayLatex,
       answer: gradAnswerLatex, answerLatex: gradAnswerLatex,
@@ -323,7 +347,8 @@ const generateQuestion = (
         `m = \\dfrac{${fmtN(wy2)} - ${fmtN(wy1)}}{${fmtN(wx2)} - ${fmtN(wx1)}} = \\dfrac{${diffY}}{${diffX}} = ${gradAnswerLatex}`)],
       key: `grad-${level}-${id}`, difficulty: level,
       _gN: gradN, _gD: gradD,
-    } as AnyQuestion;
+      _graph: buildLineGraph(gm, gc, [{ x: wx1, y: wy1 }, { x: wx2, y: wy2 }]),
+    } as unknown as AnyQuestion;
   }
 
   // equation — retry until c is integer
@@ -356,7 +381,8 @@ const generateQuestion = (
     ],
     key: `eq-${level}-${id}`, difficulty: level,
     _gN: sgN, _gD: sgD,
-  } as AnyQuestion;
+    _graph: buildLineGraph(sgN / sgD, c, [{ x: swx1, y: swy1 }, { x: swx2, y: swy2 }]),
+  } as unknown as AnyQuestion;
 };
 
 // ── generateUniqueQ with gradient-count deduplication ────────────────────────
@@ -387,6 +413,24 @@ const generateUniqueQ = (
   return q;
 };
 
+// Whiteboard-only: shows the line + known points once the answer is revealed.
+// Worksheet cells (compact === true) and fullscreen/Worked Example
+// (compact === false) fall back to the plain default display.
+const questionRenderer = (
+  q: AnyQuestion, showAnswer: boolean, _cs: string,
+  compact?: boolean, _idx?: number, _qo?: QOSnapshot, fontClass?: string,
+): JSX.Element | null => {
+  const graph = (q as { _graph?: GraphInfo | null })._graph ?? null;
+  return (
+    <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
+      <QuestionDisplay q={q} cls={fontClass ?? "text-3xl"} />
+      {compact === undefined && showAnswer && graph && (
+        <div style={{ width: "100%", maxWidth: 420 }}><GraphView g={graph} /></div>
+      )}
+    </div>
+  );
+};
+
 export const __test = { TOOL_CONFIG, generateQuestion };
 
 // ── App ───────────────────────────────────────────────────────────────────────
@@ -397,6 +441,7 @@ export default function App() {
       infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       generateUniqueQ={generateUniqueQ}
+      questionRenderer={questionRenderer}
       defaults={{ worksheetFontSize: 2 }}
     />
   );

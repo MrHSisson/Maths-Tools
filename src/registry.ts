@@ -25,6 +25,15 @@ export interface ToolMeta {
    *  Developing-tools mode. Its route still works by direct URL, and the file
    *  stays in the repo. Use to shelve a tool without deleting it. */
   hidden?: boolean;
+  /** Tertiary gate, stronger than `enabled`/Developing-tools mode: for content
+   *  that exists but is neither live nor currently being built — dormant, not
+   *  a focus, not meant to be casually discoverable. Developing-tools mode does
+   *  NOT reveal it; it needs the separate, unadvertised `parkedMode` (see
+   *  `src/parkedMode.ts`), and its route itself refuses to render (404s)
+   *  without that flag, unlike an ordinary `enabled: false` tool whose route
+   *  still works by direct URL. Use for genuinely shelved features, not
+   *  in-progress ones — see `CLAUDE.md` → "Dev-mode gating". */
+  parked?: boolean;
   load: () => Promise<{ default: ComponentType }>;
 }
 
@@ -103,7 +112,7 @@ export const CATEGORIES: CategoryMeta[] = [
       { id: 'visualiser', path: '/visualiser', name: 'Visualiser', description: 'A tool for displaying your visualiser', load: () => import('./tools/TeacherTools/Visualiser') },
       { id: 'tool-shell', path: '/tool-shell', name: 'Tool Shell', description: 'A tool shell for developing new tools', load: () => import('./tools/TeacherTools/ToolShell') },
       { id: 'call-selector', path: '/call-selector', name: 'Friday Phonecalls', description: 'A tool to randomly select students for phonecalls', enabled: false, hidden: true, load: () => import('./tools/TeacherTools/CallSelector') },
-      { id: 'skill-library', path: '/skills', name: 'Skill Library', description: 'Browse every core skill taught through short slide sequences — the drill-downs linked from worked-example steps', enabled: false, load: () => import('./tools/TeacherTools/SkillLibrary') },
+      { id: 'skill-library', path: '/skills', name: 'Skill Library', description: 'Browse every core skill taught through short slide sequences — the drill-downs linked from worked-example steps', enabled: false, parked: true, load: () => import('./tools/TeacherTools/SkillLibrary') },
       { id: 'technique-library', path: '/techniques', name: 'Technique Library', description: 'Browse the reusable pedagogical working-step blocks (the engine behind natural worked examples), rendered on sample inputs', enabled: false, load: () => import('./tools/TeacherTools/TechniqueLibrary') },
       { id: 'technique-preview-quadratic-formula', path: '/techniques/quadratic-formula', name: 'Technique Preview — Quadratic Formula', description: 'A real tool page built around the quadraticFormulaSteps technique — an accurate, non-popup preview', enabled: false, hidden: true, load: () => import('./tools/TeacherTools/QuadraticFormulaPreview') },
       { id: 'technique-preview-solving-a-linear-equation', path: '/techniques/solving-a-linear-equation', name: 'Technique Preview — Solving a Linear Equation', description: 'A real tool page built around the solveLinearEquationSteps technique — an accurate, non-popup preview', enabled: false, hidden: true, load: () => import('./tools/TeacherTools/SolveLinearEquationPreview') },

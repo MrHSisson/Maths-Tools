@@ -34,17 +34,50 @@ lives in `CLAUDE.md` → "Ending a session / session kickoffs".
 
 ---
 
+## Priorities — three lenses, not equal weight
+
+Everything below serves one of three audiences. They are **not equally weighted right now** —
+this section is the standing lens for deciding what to pick up next, read it before choosing a
+prong to build:
+
+1. **Teacher-facing advancement — current priority.** New tools, and features a teacher reaches
+   for *during* a lesson instead of leaving the software. SmartGrapher is the model case: a quick
+   in-lesson graph instead of tabbing out to Desmos/GeoGebra. New question types, broader sub-tool
+   coverage, and new tools built from `specs/` all count too. This is what actually gives a teacher
+   more to use — default build effort here.
+2. **Student-led self-teaching — currently dormant.** The Skills library and the Worked Example
+   mode's step-by-step fragment reveal, i.e. a learner working through content alone. Real,
+   dev-gated, and not being retired — but **not currently pushed** as a use case, so it shouldn't
+   be where effort concentrates. Worked Example is also, in practice, the least-used of ToolShell's
+   three modes.
+3. **Tool-building infrastructure — means, not end.** ToolShell and the techniques engine (generic
+   structures for building working steps). Necessary to build tiers 1 and 2, but not a goal on its
+   own — a tool ships fine with thinner working steps, and techniques are a quality investment, not
+   a blocker. Build only as far as a specific tier-1 (or tier-2) need actually requires, not as a
+   standalone completeness sweep across all tools.
+
+The boundaries blur deliberately: techniques serve both tier 1 (real worksheet/whiteboard working
+steps) and tier 2 (worked-example fragment reveal + skill links) — building one often touches the
+other. Teach decks are nominally a teacher tool (front-of-class delivery) but are authoring-heavy
+and still the least mature prong, so in practice they sit behind new-tool/utility work until a
+session specifically picks them up. When in doubt: a new tool or an in-lesson utility beats another
+pedagogy-engine sweep.
+
+---
+
 ## At a glance
 
 | Prong | Status | One-line |
 |---|---|---|
 | **Maths Tool Audit** | ✅ | All 27 tools audited — see `docs/TOOL_AUDIT.md`; findings now drive the four prongs below |
-| **Techniques engine** | 🚧 | Engine built; only 1 tool converted — further work now sequenced via the Tool Audit |
-| **Skills library** | 🚧 | Engine + backlog ready; 2 skills built — further work now sequenced via the Tool Audit |
-| **Core representations** | 🚧 | 3 of 6 visual families have Teach scenes — further work now sequenced via the Tool Audit |
-| **Teach decks** | 🚧 | Engine built; one partial deck exists — further work now sequenced via the Tool Audit |
-| **SmartGrapher** | ✅ | Mature, embeddable; used in 2 tools — further adoption now sequenced via the Tool Audit |
+| **Tool expansion (Part 2)** | 🚧 | Per-tool content-growth backlog (new question types, broader coverage) — **tier-1 priority**, needs a dedicated sequencing pass |
+| **SmartGrapher** | ✅ | Mature, embeddable; used in 3 tools — **tier-1 priority**: wire into more tools opportunistically |
+| **Techniques engine** | 🚧 | Engine built; only 1 tool converted — build on demand for tier-1 needs, not a standalone sweep (see Priorities) |
+| **Skills library** | ⏸ | Engine + backlog ready; 2 skills built — tier-2 (student-led), not a current priority |
+| **Core representations** | ⏸ | 3 of 6 visual families have Teach scenes — feeds Skills/Teach decks (tier 2), paused alongside them |
+| **Teach decks** | ⏸ | Engine built; one partial deck exists — least mature prong, secondary to tier-1 work |
 | **Old-shell migration** | ✅ | Backlog empty; Generators are standalone by design, not migration targets |
+| **Worksheet Builder unification** | ⬜ | Two undocumented `WorksheetBuilder` states (classic/full) split by `devMode` — **tier-1 priority**: unify them and remove the gate, worksheet mode should never be dev-only |
 | **Computer Science shell** | ⏸ | Parked while the Maths Tool Audit is in progress |
 | **Decision Maths** | ⏸ | Parked while the Maths Tool Audit is in progress |
 
@@ -108,13 +141,26 @@ broader sub-tool coverage, scope decisions — and needs a dedicated pedagogy/pr
 leverage score. A few smaller items sit outside both tracks and can be picked up any time without a
 design conversation:
 - The one gating sign-off: whether to act on `SimplifyingRatiosTool`'s "stay gated" recommendation.
-- The two confirmed print-handler bugs (`BasicAngleFacts` drops section headers on differentiated
-  worksheets; `CircleProperties`' Differentiated toggle silently no-ops) and migrating the three
-  hand-rolled Geometry `customPrintHandler`s onto `handleDiagramPrint`.
+- ✅ **`CircleProperties` fixed (2026-08-18)** — migrated its hand-rolled fixed-3×5-grid
+  `customPrintHandler` onto the shared `handleDiagramPrint`, fixing the confirmed Differentiated
+  silent-no-op bug and the `fixedColumns`/missing-`hideFontControls` debt in one pass (its diagrams
+  are always square, so the default `_aspect` of 1 needed no extra work). `BasicAngleFacts` (dropped
+  section headers) and `AnglesInParallelLines` still need the same migration.
+- ✅ **`EquationsOfLines` fixed (2026-08-18)** — wired SmartGrapher into all three sub-tools
+  (`gradient`/`equation`/`missing`): a live line-through-the-known-points graph now reveals on the
+  Whiteboard once the answer is shown, the tool's single highest-leverage Part 1 gap per the audit.
 - Whether to unpark Computer Science and/or Decision Maths now that the audit blocking them is done
   (see their sections below) — not a call this audit makes for you.
 
 ## Part 1 roadmap — the aligned, cross-prong build order
+
+> **Priority note (2026-08-18).** This roadmap sequences the *pedagogy engine* (Techniques /
+> Skills / Core representations / Teach decks) by cross-tool leverage — but per the Priorities
+> section above, that engine is tier-3 infrastructure serving a currently-dormant tier-2 (student
+> self-teaching), so it's **secondary to tier-1 work** (new tools, teacher in-lesson utilities like
+> SmartGrapher — see "Tool expansion" and "SmartGrapher" below). Tier 0's already-built,
+> zero-new-work items are still worth flipping on opportunistically. Treat the rest as background
+> to pick up when tier-1 work isn't available, not the active queue.
 
 Techniques, Skills, Core representations, Teach decks, and SmartGrapher stay **five separate prongs**
 below — each keeps its own "Where it's at" and detail table — but they gate each other constantly (a
@@ -181,14 +227,20 @@ Everything else in the technique/skill tables below — real demand, but each un
 tool. Fill-in work between the tiers above, not a queue of its own.
 
 **Cross-cutting, any time:**
-- **[Grapher]** Wire `EquationsOfLines`, `CompletingTheSquare`, `Iterations` onto SmartGrapher — all
-  confirmed still unwired, all cheap (existing presets fit directly), no dependency on anything above.
+- **[Grapher]** ✅ `EquationsOfLines` wired onto SmartGrapher (2026-08-18). `CompletingTheSquare`,
+  `Iterations` still confirmed unwired — both cheap (existing presets fit directly), no dependency
+  on anything above.
 - **[Technique]** Runtime grain toggle ("Detailed working" brief↔full) — the one shell-level change
   still on the Techniques engine list.
 - **[Deck]** Teach decks stay the least mature prong (1 deck, 1 category built) — reasonable to leave
   last unless a second proof-of-format deck is wanted as a parallel, low-stakes task.
 
-## Part 2 — Tool expansion (pending a dedicated pass)
+## Part 2 — Tool expansion
+
+> **Tier-1 priority (see Priorities above).** This is the actual content-growth backlog — new
+> question types, broader sub-tool coverage, scope a tool should grow into. It's what gives a
+> teacher more to use, so it's the default place to look for the next build once the sequencing
+> pass below happens — ahead of the pedagogy-engine roadmap in Part 1.
 
 **Scope, precisely:** this is the audit's Part 2 *standalone-readiness content* findings — missing
 question types, narrow sub-tool coverage, scope a tool should grow into — the items that need a
@@ -212,11 +264,16 @@ Four interlocking prongs. A **skill** is usually a **technique**'s full-grain te
 a **representation**; a **Teach deck** strings those together into a lesson. Progress on one often
 unblocks the others — so read these together when planning a Maths session.
 
-> **Dev-mode gating.** Most of this is behind Developing-tools mode (`src/devMode.ts`, toggle on
-> the landing page). When ON it reveals: `enabled:false` tools (badged **DEV**), the step-by-step
-> **Worked Example** (fragment reveal + skill-link overlays), and the **Teach** deck mode. Dev-only
-> pages: **Skill Library** (`/skills`), **Technique Library** (`/techniques`), **Grapher Lab**
-> (`/grapher`).
+> **Two separate gates — do not conflate them (2026-08-18).** **Developing-tools mode**
+> (`src/devMode.ts`, the visible toggle on the landing page) is for things currently *in the
+> pipeline* — `enabled:false` tools, the step-by-step **Worked Example**'s fragment reveal, the
+> **Technique Library** (`/techniques`), **Grapher Lab** (`/grapher`). **Parked mode**
+> (`src/parkedMode.ts`) is a separate, stronger, unadvertised gate for content that exists but is
+> neither live nor currently being built — dormant, not a current focus, not meant to be casually
+> found. It has no UI toggle (unlocked only via `?parked=1` in the URL) and its routes 404 outright
+> without the flag. It currently gates the **Skill Library** (`/skills`, registry `parked: true`)
+> and the **Teach** deck mode — flipping Developing-tools mode alone does **not** reveal either.
+> See `src/parkedMode.ts` and each registry entry's `parked` field for the mechanics.
 
 > **Sequencing note.** The Maths Tool Audit (`docs/TOOL_AUDIT.md`) is now complete — the
 > technique-audit and skills tables below have been refreshed with real per-tool demand from all
@@ -226,6 +283,11 @@ unblocks the others — so read these together when planning a Maths session.
 > below still mostly predate the audit and are kept as background context, not the active queue.
 
 ## Techniques engine
+
+> **Tier-3 (infrastructure) — build on demand, not a sweep.** Serves both tier-1 tools (real
+> worksheet/whiteboard working) and tier-2 self-teaching (worked-example fragment reveal). A tool
+> ships fine without it — only convert a tool onto the engine when a tier-1 need (a new tool, or
+> making an existing one presentable) actually calls for it, not as a standalone completeness goal.
 
 **Where it's at.** When tools moved onto the shared ToolShell they lost their hand-written working
 steps and fell back to thin "jump to the answer" wrappers. The **techniques engine**
@@ -325,6 +387,10 @@ guesses above.
 
 ## Skills library
 
+> **Tier-2 (student-led) — paused, not currently pushed.** The site isn't currently positioning
+> itself as a self-teaching tool, so this isn't a current investment target. Not being retired —
+> just not where the next session's effort should default to.
+
 **Where it's at.** Small slide-sequences that each teach **one prerequisite skill**
 (`src/shared/skills/`), browsable at `/skills`, and the drill-downs behind `[[skill-id|term]]`
 links in worked examples. **Two skills exist** (`lcm`, `lcm-prime-factors` — LCM two ways). CI
@@ -374,6 +440,10 @@ scene type**, so sequence them with the representation work.
 
 ## Core representations
 
+> **Tier-2/3 — paused alongside Skills/Teach decks.** Its consumers (Skills library, Teach decks)
+> are both currently dormant, so a new representation isn't unlocking tier-1 work right now. Revisit
+> once Skills/Teach decks are picked back up.
+
 **Where it's at.** The site commits to **six core visual representations** as a shared vocabulary,
 so the same bar model a student meets in fractions reappears in ratio. New visuals must reuse one of
 the six; new scenes extend an existing `TeachScene` family in `TeachingDeck.tsx`. **Three have
@@ -406,6 +476,11 @@ everything (the standing scene contract).
 
 ## Teach decks
 
+> **Teacher-facing in nature, but secondary in practice.** Front-of-class lesson delivery is
+> squarely tier-1, but this is the least mature, most authoring-heavy prong — one partial deck for
+> one tool. Behind new-tool/utility work until a session specifically wants to prove the format
+> further, not because it's the wrong audience.
+
 **Where it's at.** A slide-based "teaching part of the lesson" (`TeachingDeck`), dev-gated. The
 **engine is built and proven** — hand-authored, misconception-driven slides the teacher presses
 through one beat at a time. **Content is the thin part**: only `FractionsAddSub` has a deck, and
@@ -431,9 +506,15 @@ I-do → We-do → You-do within a category on one coherent example. Reference: 
 
 ## SmartGrapher
 
+> **Tier-1 priority.** The model case for "teacher-facing advancement" — a quick in-lesson graph
+> instead of leaving the software. Wiring it into more tools is one of the highest-value, lowest-
+> effort things to pick up next (see the still-unwired candidates below).
+
 **Where it's at.** A **mature**, embeddable, data-driven graph component (`src/shared/grapher/`)
-with its own test bench at `/grapher`. Live in two tools (Mixed Strategies L3 lower-envelope,
-NonLinearSimEq two-curves-plus-intersection) and **self-validating** — it derives the graph from the
+with its own test bench at `/grapher`. Live in three tools (Mixed Strategies L3 lower-envelope,
+NonLinearSimEq two-curves-plus-intersection, and — wired 2026-08-18 — EquationsOfLines'
+line-through-the-known-points graph across all three sub-tools) and **self-validating** — it
+derives the graph from the
 answer data and refuses to draw if they disagree, so a data inconsistency omits the graph rather than
 drawing wrong geometry. Less a "project", more a reusable utility to reach for. The Tool Audit's
 Algebra pass confirmed both `CompletingTheSquare` and `Iterations` are still fully unwired (zero
@@ -447,7 +528,11 @@ tool's own info modal, not a silent gap.
 
 **Possible next steps (background, pre-audit — SmartGrapher fit is now also part of the Tool Audit's
 Part 1 per tool, see `docs/TOOL_AUDIT.md`):**
-- Add graphs to more tools — **Equations of Lines** (lines/gradients/intercepts, confirmed still unwired — the tool has zero visual content of any kind despite its own name, the single highest-leverage Part 1 gap found for it), **Completing the Square** (parabola + vertex, confirmed still unwired), **Iterations** (the curve and the root being approached, confirmed still unwired and now the top candidate).
+- ✅ **Equations of Lines** wired (2026-08-18) — a line-through-the-known-points graph for all
+  three sub-tools (`gradient`/`equation`/`missing`), revealed on the Whiteboard alongside the answer.
+- Add graphs to the remaining candidates — **Completing the Square** (parabola + vertex, confirmed
+  still unwired), **Iterations** (the curve and the root being approached, confirmed still unwired
+  and now the top candidate).
 - Add an **ellipse preset** if/when a tool needs ellipse-and-line (presets today: linear · quadratic · cubic · circle · custom) — would close `NonLinearSimEq`'s disclosed ellipse gap.
 - Mostly: pull it in opportunistically when building or migrating any coordinate/quadratic tool.
 
@@ -479,6 +564,80 @@ a shell-migration one.
 `ParallelLinesInteractive`, `GrapherLab`, `Visualiser`, `CallSelector`, `p-value`, `SkillLibrary`,
 `TechniqueLibrary`, and the four Generators tools (PDF-batch output, different purpose).
 `organisation.test.ts` holds the authoritative lists — update it when a tool moves.
+
+## Worksheet Builder unification
+
+> **Tier-1 priority (see Priorities above).** Worksheet mode is core ToolShell — one of the three
+> things a teacher actually uses. It should never have a build-quality difference gated behind
+> Developing-tools mode. Found and scoped 2026-08-18, ready to build.
+
+**Where it's at.** Three separate worksheet-building surfaces exist, and the split between two of
+them has never been documented anywhere before this pass:
+
+1. **Standard Worksheet** — `renderWorksheet()`/`renderControlBar()` in `ToolShell.tsx`, always
+   live, not a "builder" at all. One question pool: the current sub-tool tab × one difficulty level
+   (or the built-in "Differentiated" toggle, a fixed 3-level/3-column split). Questions count,
+   Columns count (locked to 3 when Differentiated), a Settings popover (Worksheet/Textbook layout,
+   Borders). No sections, no mixing levels/sub-tools. Its setup **is** synced to the shareable URL
+   (`n`/`cols`/`diff`, per the URL param table in `CLAUDE.md`).
+2. **`WorksheetBuilder` — classic** (`src/shared/WorksheetBuilder.tsx`, prop `classic={!devMode}`,
+   i.e. Developing-tools mode **off** — what everyone currently sees). Reached via the in-tool
+   "Advanced" toggle inside Worksheet mode (locked to the current sub-tool via `lockedTool`) or the
+   standalone "Builder" top-nav tab (any sub-tool mixable, no lock). A flat list of **groups** (tool
+   × level × QO × count, up to 10 groups), two-pane layout (group list left, QO panel for the
+   selected group right), one **global** column picker (1–4) shown directly in the Design line.
+3. **`WorksheetBuilder` — full** (same component, same two entry points, `classic` **false**, i.e.
+   Developing-tools mode **on**). Groups can be split into **sections** via dividers ("Add section" /
+   "Merge with section above" on the last group of the section above). Each section gets its own
+   editable heading text, a Shuffle toggle (randomises question order within that section only), and
+   its own column count (1–4) — the classic mode's single global picker disappears entirely, replaced
+   by these per-section ones. Everything else (generate/answers/print, Worksheet↔Textbook layout,
+   Borders) is identical to classic.
+
+Neither builder state (2 or 3) syncs its setup to the shareable URL at all — `CLAUDE.md`'s URL param
+table already flags "advanced-mode groups are not encoded" but doesn't explain why or that there are
+two different builder states underneath.
+
+**The aim:** unify (2) and (3) into one consistent, always-live builder. `classic={!devMode}` goes
+away entirely — no worksheet-building surface should ever look or behave differently depending on
+Developing-tools mode.
+
+**Possible next steps / open design questions to resolve before or during build:**
+- **The core design call:** which shape does the unified builder take?
+  - *(a) Sectioning always-on* — today's "full" experience becomes what everyone gets. Simplest
+    change (delete the `classic` branches), but adds real UI surface (heading input, Shuffle toggle,
+    per-section column picker) for a teacher who just wants a flat 10-question sheet.
+  - *(b) Sectioning opt-in* — default to today's flat "classic" layout; an explicit "Add section"
+    action is what reveals the per-section heading/shuffle/column controls, only for the section(s)
+    actually split out. Closer to progressive disclosure, more work (the "no sections yet" and
+    "some sections" states both need to render well).
+  - *(c) Something in between* — e.g. keep the single global column picker as the default/fallback
+    and only override it per-section once a section explicitly sets its own.
+  - Recommend (b) on first read — it keeps the common case (no sections) as simple as classic mode
+    is today, and only asks a teacher to think about sections when they actually add one — but this
+    is a genuine product-feel decision, not a mechanical one, worth a quick sign-off before building.
+- **Where Standard Worksheet fits once the Builder is unified and live.** Options: keep both modes
+  side by side as they are today (Standard = quick single-pool path via its own tab, Builder = full
+  flexibility via Advanced/Builder) — the low-risk option, since Standard's URL-sync and print paths
+  stay untouched; or fold Standard into the Builder as its default/empty state (bigger, more
+  disruptive — every tool's URL-sync and print-context wiring would need re-checking). Scope the
+  de-gating to the Builder alone unless a fold-in is deliberately wanted too.
+- **URL-sync gap.** Should the unified Builder's setup (groups/sections) sync to the shareable URL,
+  matching Standard mode's existing params? Currently neither builder state does this at all — worth
+  deciding whether this ships alongside the unification or is tracked as a following step.
+- **Cleanup.** Once `classic` is gone: remove the prop from `WorksheetBuilderProps`, delete
+  `renderGroupListClassic()`, delete the classic-only global column picker in the Design line, and
+  re-check `handleGenerate()`'s three `classic ? … : …` branches (single unsectioned section, no
+  shuffle, `numColumns` vs per-section columns) collapse cleanly to the sectioned path alone.
+- **Documentation.** `CLAUDE.md`'s `ToolShellProps` reference doesn't mention `WorksheetBuilder` as a
+  component at all today. Once unified, add a real section there (mirroring the "Collapsible working
+  panel" treatment) covering: the three-way Standard/Advanced/Builder split (or two-way, if Standard
+  gets folded in), the groups/sections model, and the URL-sync state once decided.
+
+**Detail.** Everything above is a session's worth of live-code investigation (2026-08-18) —
+`src/shared/WorksheetBuilder.tsx` (848 lines) and the worksheet-mode sections of `ToolShell.tsx` are
+the two files to open first. No design doc exists yet beyond this entry; write one only if the
+sectioning-shape decision above turns out to need more than a quick sign-off.
 
 ---
 

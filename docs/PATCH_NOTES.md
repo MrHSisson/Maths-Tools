@@ -28,6 +28,75 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-08-18 — Worksheet Builder's undocumented classic/full split, scoped for tomorrow
+Findings-only session, no code changed. `docs/PROJECTS.md` gains a new prong, **Worksheet Builder
+unification**, scoping a previously undocumented gap for the next build session: `WorksheetBuilder`
+(`src/shared/WorksheetBuilder.tsx`) silently renders two different builders depending on
+Developing-tools mode (`classic={!devMode}`) — a flat classic mode (one global column count, no
+sections) versus a full sectioned mode (per-section headings/shuffle/columns) — on top of a third,
+separate "Standard Worksheet" surface in `ToolShell.tsx` that was never gated at all. The aim for
+next session: unify classic/full into one always-live builder and remove the gate entirely — worksheet
+mode should never differ by dev-mode state. The prong entry records the full current-state
+breakdown plus the open design call (sectioning always-on vs opt-in vs hybrid) and a recommended
+default, ready to pick up cold.
+
+## 2026-08-18 — New `parkedMode` gate: Skill Library + Teach decks split off from Developing-tools mode
+`Developing-tools mode` had been conflating two different things: work currently in the pipeline
+(in-progress tools, the Technique Library, Grapher Lab) and content that's dormant/not a current
+focus (the Skill Library, Teach decks) but isn't literally broken either. Flipping the one visible
+toggle showed both at once, which read as "here's everything unfinished" when really only the first
+group is.
+- Added `src/parkedMode.ts` — a second, stronger gate with **no visible UI toggle**. It only unlocks
+  via `?parked=1` in the URL (persisted in localStorage afterwards, same mechanism as `devMode`, and
+  the param is stripped from the address bar once read).
+- `registry.ts`'s `ToolMeta` gained a `parked?: boolean` field; the `skill-library` entry now sets it.
+  `App.tsx` gained a `ParkedRoute` guard — a parked tool's route 404s outright without the flag,
+  stronger than an ordinary `enabled: false` tool (whose route still works by direct URL).
+- `LandingPage.tsx`'s `visibleIn()` now treats `parked` tools as requiring `parkedMode` specifically
+  — Developing-tools mode alone no longer reveals them.
+- `ToolShell.tsx`: `showTeach` and the Worked Example's `onOpenSkill` (the skill-link click handler)
+  now key off `parkedMode` instead of `devMode`. The step-by-step fragment reveal itself
+  (`stepThroughEnabled`) is unchanged — still gated by ordinary Developing-tools mode.
+- Verified with a headless-browser check across all four states: `/skills` 404s with no flags and
+  with `devMode` alone; unlocks with `?parked=1`; the Teach tab on `FractionsAddSub` behaves
+  identically (present only once `parkedMode` is on, regardless of `devMode`). `npm run build`
+  clean, `npm test` 304/304.
+- Docs updated: `CLAUDE.md`'s Teach-deck and skill-link sections, `docs/PROJECTS.md`'s dev-gating
+  callout (now "Two separate gates — do not conflate them").
+
+## 2026-08-18 — Two tier-1 fixes from the retagged audit: EquationsOfLines grapher + CircleProperties print
+Picked the two cheapest, highest-value `[T1 exception]` items surfaced by the retagging pass above.
+- **`EquationsOfLines`** — wired SmartGrapher into all three sub-tools (`gradient`/`equation`/
+  `missing`): a line through the known points (plus the missing-value point for that sub-tool)
+  reveals on the Whiteboard once the answer is shown, matching the pattern `NonLinearSimEq` already
+  established. Closes the tool's own "zero visual content despite its name" gap — the audit's single
+  highest-leverage Part 1 finding for it.
+- **`CircleProperties`** — migrated its hand-rolled, fixed-3×5-grid `customPrintHandler` onto the
+  shared `handleDiagramPrint`, fixing the confirmed bug where the Differentiated toggle silently
+  produced an identical flat sheet. Also dropped `fixedColumns: true` in favour of `maxColumns: 4`
+  (restores the Columns control) and added `hideFontControls: true` to match every sibling diagram
+  tool (the font-size chevrons had no effect on the diagram anyway). Diagrams are always square, so
+  the default `_aspect` of 1 needed no extra work.
+- Both verified with `npm run build` (zero TS errors), `npm test` (304/304 passing), and a headless
+  browser check confirming both render with no console errors.
+
+## 2026-08-18 — Project docs reorganised around a teacher/student/infra priority lens
+`docs/PROJECTS.md` and `docs/TOOL_AUDIT.md` findings-only, no code changed.
+- Added a `## Priorities` section to `PROJECTS.md` splitting all work into three tiers: **tier-1**
+  teacher-facing advancement (new tools, in-lesson utilities like SmartGrapher — current priority),
+  **tier-2** student-led self-teaching (Skills library, Worked Example fragment reveal — currently
+  dormant), **tier-3** tool-building infrastructure (ToolShell, the Techniques engine — build on
+  demand, not a standalone sweep). Flagged the At-a-glance table, the Part 1 roadmap, and each
+  pedagogy-prong section (Techniques/Skills/Core representations/Teach decks/SmartGrapher)
+  accordingly; elevated "Tool expansion (Part 2)" and SmartGrapher as the active backlog.
+- Retagged all 27 `docs/TOOL_AUDIT.md` tool entries plus its 4 category summaries against the same
+  lens: a `Priority tag` line under each Part 1 heading calling out tier-1 exceptions (confirmed
+  live bugs, unwired SmartGrapher fits, cheap wins that fix something a teacher sees today) against
+  the tier-2/3 default; the Working-step depth bullet is now split-tagged where it conflated
+  working-step *content* quality (tier-1) with `string[]` *fragmentation* mechanics (tier-2/3, only
+  matters for the dev-gated Worked Example reveal). No finding's substance changed — only which ones
+  are flagged as worth picking up next.
+
 ## 2026-08-17 — Technique Library: popup → real per-technique pages
 Reworked the Technique Library's preview from a near-fullscreen popup into what the previous
 session's `NonLinearSimEq`/Tier 0 work made clear the audit needed: an **honest, page-level**

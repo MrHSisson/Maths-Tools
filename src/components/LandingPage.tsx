@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Calculator, FlaskConical, Cpu } from 'lucide-react';
 import { CATEGORIES } from '../registry';
 import { useDevMode, setDevMode } from '../devMode';
+import { useParkedMode } from '../parkedMode';
 
 // Top-level subjects, in display order. Categories declare their subject in the
 // registry (default "Mathematics"); the landing page groups them into bands.
@@ -166,17 +167,24 @@ const categories = CATEGORIES.map((category) => ({
 export default function LandingPage(): JSX.Element {
   const navigate = useNavigate();
   const devMode = useDevMode();
+  const parkedMode = useParkedMode();
   const [subjectFilter, setSubjectFilter] = useState<string>('Mathematics');
 
-  // In developing mode every tool is visible (including enabled: false ones);
-  // otherwise the in-progress tools are hidden from general use. Developing
-  // tools are sorted to the end of their section (sort is stable, so the
-  // relative order within each group is preserved).
+  // In developing mode every in-the-pipeline tool is visible (including
+  // enabled: false ones); otherwise they're hidden from general use. Parked
+  // tools are a tertiary, stronger gate — dormant, not currently developed,
+  // not meant to be casually found — so Developing-tools mode alone does NOT
+  // reveal them; only the separate, unadvertised parkedMode does (see
+  // src/parkedMode.ts). Developing tools are sorted to the end of their
+  // section (sort is stable, so the relative order within each group holds).
   const visibleIn = (tools: typeof categories[number]['tools']) => {
     // `hidden` tools are never listed — not even in developing mode (their route
     // still works by direct URL). Otherwise dev mode reveals enabled:false tools.
     const listable = tools.filter(t => !t.hidden);
-    const shown = devMode ? listable : listable.filter(t => t.enabled !== false);
+    const shown = listable.filter(t => {
+      if (t.parked) return parkedMode;
+      return t.enabled !== false || devMode;
+    });
     return [...shown].sort(
       (a, b) => (a.enabled === false ? 1 : 0) - (b.enabled === false ? 1 : 0),
     );

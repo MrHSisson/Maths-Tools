@@ -1,7 +1,7 @@
 import {
-  ToolShell,
+  ToolShell, handleDiagramPrint,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion,
-  type WorkingStep, type QOSnapshot, type PrintMode,
+  type WorkingStep, type QOSnapshot,
   randInt, pick, step, mStep, fmt, pickActive,
 } from "../../shared";
 
@@ -645,87 +645,13 @@ const questionRenderer = (
   );
 };
 
-// ── 9. Custom print handler ───────────────────────────────────────────────────
-
-const PRINT_COLS = 3, PRINT_ROWS = 5, PRINT_PER_PAGE = PRINT_COLS * PRINT_ROWS;
-
-function customPrintHandler(questions: AnyQuestion[], printMode: PrintMode, container: HTMLElement | null): void {
-  const svgStrings: Record<number, string> = {};
-  if (container) {
-    container.querySelectorAll<SVGSVGElement>("svg[data-q-index]").forEach(el => {
-      const idx = parseInt(el.getAttribute("data-q-index") ?? "0", 10);
-      const clone = el.cloneNode(true) as SVGSVGElement;
-      // React's inline style (height:auto) would override the print CSS and
-      // clip the bottom of the diagram — strip it so the cell CSS controls size.
-      clone.removeAttribute("style");
-      clone.setAttribute("width", "100%");
-      clone.setAttribute("height", "100%");
-      svgStrings[idx] = clone.outerHTML;
-    });
-  }
-
-  const toolName = "Properties of Circles";
-  const dateStr = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
-
-  const cell = (q: AnyQuestion, gi: number, li: number, showAns: boolean): string => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const d = (q as any)._diagram as DiagramData | undefined;
-    const prompt = d?.prompt ?? "";
-    if (showAns) {
-      return `<div class="cell"><div class="cell-num">${li + 1}</div><div class="cell-ans"><div class="ans-prompt">${prompt}</div><div class="ans-val">${q.answer}</div></div></div>`;
-    }
-    return `<div class="cell"><div class="cell-num">${li + 1}</div><div class="cell-prompt">${prompt}</div><div class="cell-diag">${svgStrings[gi] ?? ""}</div></div>`;
-  };
-
-  const page = (qs: AnyQuestion[], start: number, pn: number, tp: number, ans: boolean): string => {
-    const cells = qs.map((q, i) => cell(q, start + i, start + i, ans)).join("");
-    const pageLabel = tp > 1 ? ` &middot; Page ${pn} of ${tp}` : "";
-    const title = toolName + (ans ? " — Answers" : "");
-    return `<div class="page"><div class="ph"><h1>${title}</h1><div class="meta">Worksheet &middot; ${dateStr}${pageLabel}</div></div><div class="sg">${cells}</div></div>`;
-  };
-
-  const build = (ans: boolean): string => {
-    const out: string[] = [];
-    const tp = Math.ceil(questions.length / PRINT_PER_PAGE);
-    for (let p = 0; p < questions.length; p += PRINT_PER_PAGE) {
-      out.push(page(questions.slice(p, p + PRINT_PER_PAGE), p, Math.floor(p / PRINT_PER_PAGE) + 1, tp, ans));
-    }
-    return out.join("");
-  };
-
-  const body = printMode === "questions" ? build(false) : printMode === "answers" ? build(true) : build(false) + build(true);
-
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${toolName}</title>
-<style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  @page{size:A4 portrait;margin:12mm}
-  body{font-family:"Segoe UI",Arial,sans-serif}
-  @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
-  .page{width:186mm;height:273mm;display:flex;flex-direction:column;page-break-after:always;overflow:hidden}
-  .page:last-child{page-break-after:auto}
-  .ph{display:flex;justify-content:space-between;align-items:baseline;border-bottom:.4mm solid #1e3a8a;padding-bottom:1.5mm;margin-bottom:2mm;flex-shrink:0}
-  .ph h1{font-size:5mm;font-weight:700;color:#1e3a8a}
-  .meta{font-size:3mm;color:#6b7280}
-  .sg{display:grid;grid-template-columns:repeat(${PRINT_COLS},1fr);grid-template-rows:repeat(${PRINT_ROWS},1fr);gap:2mm;flex:1;min-height:0}
-  .cell{border:.3mm solid #d1d5db;border-radius:2mm;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2mm;overflow:hidden;flex:1;min-height:0;position:relative}
-  .cell-num{position:absolute;top:1.5mm;left:2mm;font-size:2.8mm;font-weight:700;color:#374151}
-  .cell-prompt{font-size:2.9mm;font-weight:700;color:#111827;text-align:center;flex-shrink:0;margin-top:2.5mm;line-height:1.2}
-  .cell-diag{width:100%;flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
-  .cell-diag svg{width:100%;height:100%;overflow:visible}
-  .cell-ans{width:100%;flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.5mm;text-align:center;padding:0 2mm;overflow:hidden}
-  .ans-prompt{font-size:2.9mm;font-weight:600;color:#6b7280;line-height:1.2}
-  .ans-val{font-size:4mm;font-weight:800;color:#15803d}
-</style>
-</head><body>${body}</body></html>`;
-
-  const win = window.open("", "_blank");
-  if (!win) { alert("Please allow popups to use the PDF export."); return; }
-  win.document.write(html);
-  win.document.close();
-  setTimeout(() => win.print(), 400);
-}
-
-// ── 10. App ───────────────────────────────────────────────────────────────────
+// ── 9. App ────────────────────────────────────────────────────────────────────
+// Print goes through the shared handleDiagramPrint — it derives a synthetic
+// cell height from the column width and feeds the same computeWorksheetLayout
+// engine the text path uses, so this tool gets variable columns, sections and
+// differentiated layout for free instead of a fixed 3×5 grid. Every diagram
+// here is padded to a square viewBox (see CircleSVG above), so the default
+// _aspect of 1 applies with no per-question override needed.
 
 export default function App() {
   return (
@@ -736,12 +662,8 @@ export default function App() {
       generateUniqueQ={generateUniqueQ}
       reformatQuestion={reformatQuestion}
       questionRenderer={questionRenderer}
-      customPrintHandler={customPrintHandler}
-      defaults={{
-        fixedColumns: true,
-        numColumns: 3,
-        numQuestions: 15,
-      }}
+      customPrintHandler={handleDiagramPrint}
+      defaults={{ numColumns: 3, maxColumns: 4, hideFontControls: true }}
     />
   );
 }
