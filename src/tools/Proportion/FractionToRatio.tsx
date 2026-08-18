@@ -3,6 +3,7 @@ import {
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WordedQuestion, type WorkingStep,
   step, mStep, tStep, fracStr, mStr, randInt, pick,
 } from "../../shared";
+import { getDevMode } from "../../devMode";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TOOL-SPECIFIC SECTION
@@ -130,7 +131,10 @@ const convertToCommonDenominator = (f1: { num: number; den: number }, f2: { num:
   return {
     newNum1: f1.num * m1, newNum2: f2.num * m2, lcd,
     steps: [
-      mStep("LCD:", `${f1.den} \\text{ and } ${f2.den} \\Rightarrow ${lcd}`),
+      mStep(
+        getDevMode() ? `Find the [[lcm|LCM]] of ${f1.den} and ${f2.den}:` : "LCD:",
+        `${f1.den} \\text{ and } ${f2.den} \\Rightarrow ${lcd}`,
+      ),
       step(`${frac(f1.num, f1.den)} = ${frac(f1.num * m1, lcd)}`),
       step(`${frac(f2.num, f2.den)} = ${frac(f2.num * m2, lcd)}`),
     ],

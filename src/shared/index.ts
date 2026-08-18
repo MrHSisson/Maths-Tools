@@ -52,9 +52,14 @@ export {
 } from "./techniques";
 export type { Workings, Grain } from "./techniques";
 
+// Technique preview pages — a lean, purpose-built page (not the full ToolShell
+// chrome) around the real WorkedExampleSteps viewer.
+export { TechniquePreviewPage, type TechniquePreviewPageDef } from "./components/TechniquePreviewPage";
+
 export { MathRenderer, InlineMath } from "./components/MathRenderer";
 export { QuestionDisplay, AnswerDisplay } from "./components/QuestionDisplay";
 export { DifficultyToggle } from "./components/DifficultyToggle";
+export { WorkedExampleSteps, type WorkedExampleStepsProps } from "./components/WorkedExampleSteps";
 export {
   usePopover,
   TogglePill,

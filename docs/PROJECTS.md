@@ -126,12 +126,17 @@ belongs to and names the exact table row it refers to; nothing here replaces the
 below, it's the cross-cutting view sitting on top of them. Update this roadmap (not just the tables)
 whenever a tier's items ship, so it stays the one place that answers "what's next, across all of it."
 
-**Tier 0 — Wire what's already built, no new engine work:**
+**Tier 0 — Wire what's already built, no new engine work:** ✅ **built, dev-gated pending sign-off**
+(see `docs/PATCH_NOTES.md`, 2026-08-15) — both items are live in code but only visible with
+Developing-tools mode on; a non-dev user sees unchanged output until promoted.
 - **[Skill]** Link the two unlinked `lcm` consumers — `SimultaneousEquations` and `FractionToRatio`
   both compute an LCM and never mark it, and the skill is already ✅ built. Two `[[lcm|LCM]]` markers.
+  ✅ done (dev-mode only).
 - **[Technique]** Wire `NonLinearSimEq`'s `linear` sub-tool onto the already-built
   `solveLinearEquationSteps` instead of its hand-rolled solve chain — fixes the confirmed `−1x`
-  display bug for free, and gives `solveLinearEquation` its first real second consumer.
+  display bug for free, and gives `solveLinearEquation` its first real second consumer. ✅ done
+  (dev-mode only) — the original hand-rolled chain is kept as `legacySolvePos`/`legacySolveNeg` and
+  stays what a live user sees until this is reviewed and the dev-mode branch is deleted/promoted.
 
 **Tier 1 — The one decision that unblocks the most downstream work:**
 - **[Representation]** Algebra tiles vs. area model — which ships next. Algebra tiles now gates more
@@ -228,7 +233,13 @@ steps and fell back to thin "jump to the answer" wrappers. The **techniques engi
 grain-aware (brief / standard / full) working blocks. The **engine and its viewer (`/techniques`)
 are built**, and six techniques exist — but **only one tool (`NonLinearSimEq`) has been
 converted**, so most tools still show thin working. The value is real but latent until the sweep
-happens.
+happens. **The viewer itself was reworked 2026-08-17**: every technique (including the composed
+Full Worked Example) now has its own real tool page (`/techniques/<slug>`, e.g.
+`/techniques/quadratic-formula`) built on a shared `TechniquePreviewPage`, rendering through the same
+`WorkedExampleSteps` component (now extracted out of `ToolShell.tsx`) every real tool's Worked
+Example uses — replacing the earlier popup overlay, which is now removed. That's the pattern for any
+new technique going forward: a thin page + a `pageUrl` entry in `TechniqueLibrary.tsx`, not a popup.
+See `docs/PATCH_NOTES.md` for the full list of rendering bugs fixed along the way.
 
 **Possible next steps (background, pre-audit — see the sequencing note above):**
 - Add a runtime **"Detailed working" toggle** so a teacher can flip grain (brief ↔ full) live — the one shell change on the list.
@@ -257,7 +268,7 @@ Reference conversion: `NonLinearSimEq.tsx` (uses `standard` grain).
 
 | Technique | Move | Priority | Status |
 |---|---|---|---|
-| `solveLinearEquation` | isolate, collect, divide to solve `ax+b=c` | **high** | 🚧 grain-aware version exists — needed by `SolvingLinearEquations` (zero-new-import integration point — already re-exported from `"../../shared"`) and partially by `NonLinearSimEq`'s `linear` sub-tool (currently bypassed, causing a confirmed `−1x`-should-be-`−x` display bug) |
+| `solveLinearEquation` | isolate, collect, divide to solve `ax+b=c` | **high** | 🚧 grain-aware version exists — needed by `SolvingLinearEquations` (zero-new-import integration point — already re-exported from `"../../shared"`) and now wired into `NonLinearSimEq`'s `linear` sub-tool (Tier 0, 2026-08-15), fixing the confirmed `−1x`-should-be-`−x` display bug — but **dev-mode-only for now**: a live user still sees the old hand-rolled chain (`legacySolvePos`/`legacySolveNeg`) until this is reviewed and promoted |
 | `expandBrackets` | single / double / squared brackets (FOIL, grid) | **high** | ⬜ — needed by `ExpandingBrackets` (also needs a squared-single-bracket question type its own spec calls for but the tool lacks) and `NonLinearSimEq` (confirmed gap: `(2x−5)²` expansion never shown, no field in the data model to hold it) |
 | `substitute` | substitute a value/expression into an equation or formula | **high** | 🚧 substitute-back only — needed by `NonLinearSimEq` |
 | `collectLikeTerms` | gather like terms | med | ⬜ — needed by `CollectingLikeTerms`, `ExpandingBrackets`, and (for its opening "reduce x's" move) `SolvingLinearEquations` |

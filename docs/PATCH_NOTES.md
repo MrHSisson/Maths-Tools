@@ -28,6 +28,68 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-08-17 — Technique Library: popup → real per-technique pages
+Reworked the Technique Library's preview from a near-fullscreen popup into what the previous
+session's `NonLinearSimEq`/Tier 0 work made clear the audit needed: an **honest, page-level**
+preview that renders through the exact same viewer a real tool's Worked Example uses, not a
+bespoke mockup that can drift out of sync.
+- Extracted `WorkedExampleSteps` (`src/shared/components/WorkedExampleSteps.tsx`) out of
+  `ToolShell.tsx` — the single step-viewer both a real tool and every technique preview now render
+  through. `ToolShell.tsx`'s own single-card behaviour is unchanged (verified pixel-for-pixel at every
+  stage); the extraction only added an opt-in `layout: "single" | "stacked"` and `hideAnswerStep` prop,
+  both defaulted off.
+- Added a **Stacked** layout alongside the original **Single card** one — earlier steps stay visible
+  or a scrolling trail as you press through, instead of replacing the card each time — after
+  comparing both live and choosing Stacked as the preferred direction. Fixed several bugs surfaced by
+  real (including real-mobile-device) testing along the way: wide KaTeX lines clipping instead of
+  shrinking to fit (a proper flex-centred + `getBoundingClientRect` fix, not the naive `scrollWidth`
+  approach that undercounts left-side overflow), the current step's emphasis ring being clipped by the
+  scroll container's implicit `overflow-x`/`overflow-y` auto-clipping, inconsistent gaps before the
+  answer box, and the answer's font size not matching the working cells'.
+- Added `hideAnswerStep`: a technique preview has no data model for a genuinely separate "answer"
+  distinct from its last working step, so reusing the last step's own latex as a fake "Answer" card
+  showed the same content twice. Step-by-step now simply ends on the last real step; every live tool
+  (which has a real, distinct answer) is unaffected — verified untouched.
+- Converted **all seven** techniques (Quadratic Formula, Solving a Linear Equation, Reading Roots
+  from Factors, Substituting Back, Making the Subject, Solving a Linear Chain, Full Worked Example)
+  from the library's popup overlay to their own real tool pages at `/techniques/<slug>` — each a thin
+  `TechniquePreviewPage` wrapper, `enabled:false` + `hidden:true` (reachable via its route and the
+  library's own card, never listed as its own landing-page tile). The popup overlay itself, and its
+  now-dead state, were removed from `TechniqueLibrary.tsx`.
+- Reintroduced autoscroll in Stacked layout, this time correctly: diagnosed that the container's
+  "bounded, internally-scrolling" design never actually engages (`TechniquePreviewPage`'s root only
+  sets `minHeight:100vh`, not `height`, so nothing downstream is genuinely height-constrained — the
+  internal scroll body's `scrollHeight` always equals its `clientHeight`, confirmed via Playwright; the
+  whole *page* grows and scrolls instead). Replaced the old "scroll the current card into view" effect
+  — which aligned the wrong element and let the nav footer creep off the bottom of the viewport — with
+  one that captures the footer's on-screen position immediately before each Prev/Next/dot press and,
+  once the new content has painted, scrolls the window by exactly how far the footer moved. Symmetric
+  for growing forward and shrinking back; a no-op outside Stacked layout, so Single card and every live
+  tool trigger zero window scrolls (verified).
+- All dev-gated / exploratory (this is preview tooling for reviewing technique output, not a
+  user-facing tool); build clean, all 304 tests pass.
+
+## 2026-08-15 — Tier 0 of the Part 1 roadmap (Skill + Technique wiring), dev-gated
+Both zero-new-engine-work items from `docs/PROJECTS.md`'s Part 1 roadmap Tier 0, built but kept
+**behind Developing-tools mode** pending sign-off — non-dev users see unchanged output.
+- **Skill**: linked the two unlinked `lcm` consumers found by the audit. `SimultaneousEquations`'
+  `lcm` sub-tool now shows an explicit `[[lcm|LCM]]`-linked "find the LCM" step before scaling both
+  equations (dev-mode only — the step didn't exist before, so it's gated rather than just the link);
+  `FractionToRatio`'s existing "LCD:" working-step label becomes `[[lcm|LCM]]`-linked in dev mode
+  (unchanged wording otherwise).
+- **Technique**: `NonLinearSimEq`'s `linear` sub-tool now routes its post-substitution solve through
+  the shared `solveLinearEquationSteps` technique instead of its hand-rolled `solvePos`/`solveNeg`
+  chain, fixing the audit-confirmed `−1x`-should-be-`−x` display bug (the combined coefficient is
+  now formatted through `solveLinearEquationSteps`' own `coef()`/`signed()` sanitizers instead of
+  being interpolated raw) and adding an explicit "Expand the brackets" step. The original hand-rolled
+  chain is kept verbatim as `legacySolvePos`/`legacySolveNeg` and stays what non-dev users see;
+  `getDevMode()` picks the branch in `buildWorking`.
+- Verified with scratch checks (not committed): 8000 sampled `linear` questions with `negEq1`/
+  `zeroForm`/`negSol` on (the settings that actually allow negative coefficients, so the bug can
+  fire) reproduced `-1x`/`-1b`/etc. 372 times with dev mode off, matching pre-existing behaviour;
+  the same 8000-sample run with dev mode forced on showed zero occurrences, confirming both the fix
+  and the gate. `npm run build` clean, `npm test` (304 tests) passing throughout.
+
 ## 2026-08-14 — Spot-checked the audit and fixed the CLAUDE.md doc-drift it found
 No tool code changed — a verification pass on the completed Tool Audit, plus two doc corrections.
 **Spot-check**: directly re-read source for 8 claims spanning 6 tools across 3 categories, including
