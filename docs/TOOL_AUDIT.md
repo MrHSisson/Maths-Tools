@@ -12,6 +12,10 @@ steps (see `docs/PROJECTS.md`'s "Sequencing note"), and Part 2's status recommen
 particular, `SimplifyingRatiosTool`'s "stay gated") are ready for a human sign-off pass — this doc
 records recommendations only, per its own rule not to act on them mid-audit.
 
+**Retagged 2026-08-18** against `docs/PROJECTS.md`'s new teacher/student/infra priority lens — see
+"Reading this under the priority lens" below and each tool's `Priority tag` line. No finding was
+changed; this only marks which findings are tier-1 (act on now) vs tier-2/3 (backlog).
+
 ---
 
 ## What this is and why it exists
@@ -218,6 +222,35 @@ so those findings should be scored by *how far below the category's own bar this
 core the topic is*. Keep these two kinds of finding in visibly separate buckets; don't merge them
 into one flat priority list later.
 
+### Reading this under the priority lens (2026-08-18 retagging pass)
+
+`docs/PROJECTS.md` now organises all work into three priority tiers (see its "Priorities"
+section): **tier-1** teacher-facing advancement (new tools, in-lesson utilities like SmartGrapher,
+Part 2's breadth/QO/status findings), **tier-2** student-led self-teaching (Skills library, the
+Worked Example fragment reveal), **tier-3** tool-building infrastructure (the Techniques engine,
+core representations) — built on demand, not as a standalone sweep. This audit's own Part 1/Part 2
+split does **not** line up with those tiers: Part 1 bundles SmartGrapher (tier-1) together with
+Techniques/Skills/Representations/Teach decks (tier-2/3) under one "infrastructure" umbrella,
+scored purely by cross-tool leverage; Part 2 (breadth, QO richness, level progression, working-step
+*content* quality, recommended live/gated status) is actually the closer match to tier-1, since
+that's what a teacher sees and uses live, regardless of dev mode.
+
+Every tool entry below now carries a one-line **`Priority tag`** under its Part 1 heading, plus a
+split note on the Working-step depth bullet, since that bullet conflates two different things:
+whether a step's *content* explains the reasoning (tier-1 — visible to a teacher live) versus
+whether it's authored as a `string[]` *fragment* array (tier-2/3 — only matters for the dev-gated
+Worked Example reveal). Tags used:
+- **[T1]** — matters now: a live defect, a SmartGrapher fit, or a technique/skill/representation
+  fix that resolves a confirmed live bug or gap — not just general completeness.
+- **[T2/3]** — a valid finding, not a current priority: a new skill, a Teach-deck candidate, a
+  representation needed only for Skills/Teach decks, or a technique conversion wanted for its own
+  sake rather than to fix something a teacher would see today.
+
+This retagging doesn't change any finding — findings stay exactly as recorded — it only marks
+which ones are worth picking up next under the current priority lens. See `docs/PROJECTS.md` →
+"Priorities" for the full framing, and its "At a glance" / "Part 1 roadmap" / "Part 2 — Tool
+expansion" sections for how this plays out at the plan level.
+
 ---
 
 ## How to actually run a session on this
@@ -295,10 +328,18 @@ these have been added to `PROJECTS.md`'s technique/skill tables — see that doc
 (closest is number line, but it's structurally a grid) — flagged as an open question rather than a
 finding with a clear next step.
 
+**Priority tag (2026-08-18 lens).** [T2/3] across the board — the new technique/skill proposals
+here (the percentages family, `directedNumberAddSub`, `scaleByPowerOfTen`, `place-value`) are all
+tier-3 infrastructure, not a current build target. One tier-1 exception: `PowersOfTen`'s Level 3
+loss of its own place-value grid and its two-template, no-computed-line working steps are live
+content gaps a teacher sees today, not infra — see that entry.
+
 ### Adding & Subtracting Integers — `src/tools/Number/IntegerAddSub.tsx`
 Route: `/integer-add-and-subtract` · Current status: Live
 
 **Part 1 — Infrastructure alignment**
+*Priority tag: [T2/3] — the proposed technique/skill/representation are all infra/self-teaching
+backlog; nothing here is a live-visible fix.*
 - Techniques: Thin — no `src/shared/techniques/` import; working is hand-rolled inline. None of the
   six built techniques fit (this is directed-number arithmetic, not algebra), and `PROJECTS.md`'s
   technique-audit table had no row for it either — **new technique proposed**: `directedNumberAddSub`
@@ -329,7 +370,8 @@ Route: `/integer-add-and-subtract` · Current status: Live
 - Working-step depth: Two-step `mStep` with fragmented board-writing for the jump computation, but no
   explanation of *why* adding/subtracting a negative moves a particular direction — the actual
   teaching point of L2/L3 is performed but not stated. The zero-answer case falls back to a bare
-  `tStep` with no computed line.
+  `tStep` with no computed line. **(content: T1 gap — the "why" is missing from live working;
+  fragmentation: already present, no T2/3 gap here.)**
 - Conventions/anomaly scan: `questionRenderer` (custom, **Justified** — needed for the number line,
   explained in-file) · `collapseWorkingByDefault: true` (**Justified** by an in-file comment, but
   only 2 tools in the repo use this default — even diagram-heavy siblings like
@@ -355,6 +397,8 @@ scene work) — `CLAUDE.md`'s own representation table names "integer add/sub" a
 Route: `/estimation` · Current status: Live
 
 **Part 1 — Infrastructure alignment**
+*Priority tag: [T2/3] — `roundToSigFig` technique and the rounding skill are infra backlog; no
+live-visible fix depends on them.*
 - Techniques: Thin — no `src/shared/techniques/` import; all working is hand-rolled `mStep` (3 steps:
   Original → Round to 1 s.f. → Calculate). This is exactly the gap `PROJECTS.md`'s `roundToSigFig`
   row already named (priority med, ⬜) — Estimation is the clearest demand signal for that row.
@@ -384,6 +428,7 @@ Route: `/estimation` · Current status: Live
   string, never a `string[]` fragment array, so none of this tool's working benefits from the
   dev-gated fragment reveal that `CLAUDE.md` says to author by default. The steps also don't explain
   *why* 1 s.f. rounding lands where it does — close to "jump to the rounded values, then the answer."
+  **(content: T1 gap — the why-it-rounds-there reasoning is missing live; fragmentation: T2/3.)**
 - Conventions/anomaly scan: Zero matches on the override grep — fully vanilla ToolShell usage, no
   overrides at all, nothing to tag. A clean baseline (correctly, since there's no diagram content).
 - UI/visual consistency: Not checked live. From source: no hardcoded hex colours, no custom renderers
@@ -400,6 +445,9 @@ Route: `/estimation` · Current status: Live
 Route: `/powers-of-ten` · Current status: Live
 
 **Part 1 — Infrastructure alignment**
+*Priority tag: [T1 exception] — the L3 place-value-grid loss (Representations, below) and the
+two-template no-computed-line working (see Working-step depth) are live content gaps, not infra;
+the proposed `scaleByPowerOfTen` technique and `place-value` skill themselves stay [T2/3].*
 - Techniques: Thin — `buildDisplay` produces exactly two generic `tStep`s (template sentences, e.g.
   "X has N zeros...") with **no computed arithmetic line at all** — not even a plain `v × 10ⁿ = answer`
   line. Thinner than `IntegerAddSub`'s working. No existing technique covers "scale by a power of ten"
@@ -429,7 +477,9 @@ Route: `/powers-of-ten` · Current status: Live
 - Working-step depth: Weakest point of this tool — two fixed-template `tStep`s reused verbatim across
   every question at a given operation, no `mStep`, no fragments, no rendering of the actual numeric
   shift. Sits well below `CompletingTheSquare`/`FractionToRatio`'s bar — the single biggest Part 2 gap
-  found in this pass.
+  found in this pass. **(content: T1 — the biggest single tier-1 fix candidate in the Number
+  category, since the numeric working is already computed and just isn't shown; fragmentation:
+  T2/3, moot until content exists.)**
 - Conventions/anomaly scan: Same pattern as `IntegerAddSub` — `questionRenderer` (**Justified**,
   needed for the grid) · `reformatQuestion` (**Justified and exemplary** — correctly implements the
   `CLAUDE.md` display-swap pattern for `powersNotation`, matching the reference `CompletingTheSquare`
@@ -454,6 +504,8 @@ working (`vin × power = vout`) is already fully computed and just isn't being s
 Route: `/add-subtract-fractions` · Current status: Live
 
 **Part 1 — Infrastructure alignment**
+*Priority tag: [T2/3] — technique extraction and the three skill-link candidates are backlog; the
+tool's live working is already strong (see Part 2), so nothing here is blocking a teacher today.*
 - Techniques: Thin — no `src/shared/techniques/` import; working is hand-built inline
   (`improperMethodWorking`/`separatePartsWorking`), but the pedagogy is genuinely good (see Part 2).
   `PROJECTS.md`'s `addSubtractFractions` row (med priority, ⬜) is exactly this move — a
@@ -487,6 +539,7 @@ Route: `/add-subtract-fractions` · Current status: Live
 - Working-step depth: Excellent — the strongest part of the tool. Every step uses `mStep` with prose
   labels and 2–3-fragment arrays for live modelling; the mixed-number "whole & part method" explicitly
   models regrouping/borrowing with dedicated steps — pedagogical care above a "jump to the answer" tool.
+  **(content: T1 — already strong, no gap; fragmentation: already present, no gap.)**
 - Conventions/anomaly scan: Only override found is `defaults={{ numQuestions: 12, numColumns: 3 }}`.
   `numQuestions: 12` vs the 15 baseline is undocumented — **Unclear** (plausible: fraction questions
   take more board space, but unexplained). `numColumns: 3` matches baseline, not really an override.
@@ -506,6 +559,8 @@ architecturally separate from the core maths via `RawValues` + `reformatQuestion
 Route: `/multiply-divide-fractions` · Current status: Live
 
 **Part 1 — Infrastructure alignment**
+*Priority tag: [T2/3] — Keep-Flip-Change technique/skill and the missing Teach deck are backlog;
+no live-visible fix depends on them.*
 - Techniques: Thin — no `src/shared/techniques/` import; working entirely hand-built
   (`multiplySteps`/`divideSteps`). `PROJECTS.md`'s `multiplyDivideFractions` row (med, ⬜) names the
   needed move — a cross-reference, not a new discovery. The Keep-Flip-Change move (`divideSteps`) is a
@@ -539,7 +594,8 @@ Route: `/multiply-divide-fractions` · Current status: Live
 - Working-step depth: Good but shallower than the sibling — many steps are **single-fragment** (a
   whole latex string, not a `string[]`) where the board-writing rule calls for splitting (e.g.
   Keep-Flip-Change is a two-move line authored as one fragment). Not wrong, but a live-modelling depth
-  gap relative to the sibling and the stated authoring convention.
+  gap relative to the sibling and the stated authoring convention. **(content: T1 — reasoning is
+  present, no gap; fragmentation: T2/3, this is a fragmentation-depth-only finding.)**
 - Conventions/anomaly scan: Same single override as the sibling — `defaults={{ numQuestions: 12,
   numColumns: 3 }}`, same **Unclear** tag on the undocumented `numQuestions: 12`. Correct absence of
   diagram-only props.
@@ -558,6 +614,8 @@ its first natural consumer via a `[[keep-flip-change|...]]`-style marker.
 Route: `/percentages` · Current status: Live
 
 **Part 1 — Infrastructure alignment**
+*Priority tag: [T2/3] — the three new technique rows and two new skills are backlog; content is
+already strong (see Part 2), so nothing here is blocking a teacher today.*
 - Techniques: Thin by the strict "uses the engine" test, but the hand-rolled working is genuinely deep
   (see Part 2) — closer to what a converted tool's *output* should look like than a thin wrapper. More
   importantly, **no technique in `PROJECTS.md` covered this domain at all** before this pass — **three
@@ -596,7 +654,8 @@ Route: `/percentages` · Current status: Live
 - Working-step depth: Strong, and the clearest evidence this is more recently/carefully authored than
   `Estimation` — fragments are used throughout, following the "author by default" convention the
   sibling tool ignores. The chunking method is a real pedagogical decomposition (10s/1s, plus 50s/25s
-  at L1) with per-part steps and a recombination step, not a jump to the answer.
+  at L1) with per-part steps and a recombination step, not a jump to the answer. **(content: T1 —
+  already strong, no gap; fragmentation: already present, no gap.)**
 - Conventions/anomaly scan: Zero matches on the override grep — fully vanilla, no debt.
 - UI/visual consistency: Not checked live. From source: no hardcoded hex colours; a `gbp()` helper for
   KaTeX currency with an in-file comment explicitly citing the "never a literal £ inside KaTeX"
@@ -652,10 +711,20 @@ already names it by name as a next step, the infrastructure is proven elsewhere 
 category (`NonLinearSimEq`), and the tool currently has zero visual content despite being
 fundamentally about visualising convergence to a root.
 
+**Priority tag (2026-08-18 lens).** [T2/3] for most of this category's Part 1 findings (technique
+conversions, skill links, algebra-tile/area-model representations, Teach decks) — genuine but not a
+current build target. **T1 exceptions:** `Iterations`' and `CompletingTheSquare`'s unwired
+SmartGrapher fits (both explicitly named in `PROJECTS.md`'s own backlog), `SolvingLinearEquations`'
+cheap `solveLinearEquationSteps` wiring (fixes a confirmed live no-op/mislabelled step), and
+`NonLinearSimEq`'s two confirmed generator-level bugs (the un-shown `(2x−5)²` expansion, the
+`−1x`-should-be-`−x` display bug) — see each entry.
+
 ### Collecting Like Terms — `src/tools/Algebra/CollectingLikeTerms.tsx`
 Route: `/collecting-like-terms` · Current status: Live
 
 **Part 1 — Infrastructure alignment**
+*Priority tag: [T2/3] — `collectLikeTerms` technique and algebra-tile representation are infra
+backlog; no live-visible fix depends on them.*
 - Techniques: Thin — no `src/shared/techniques/` import; all working is hand-built
   (`buildCollectWorkingSteps`, `finishMCQ`). `PROJECTS.md`'s `collectLikeTerms` row (med priority, ⬜)
   is a direct cross-reference. Given this tool covers three genuinely distinct sub-tool shapes plus a
@@ -695,6 +764,7 @@ Route: `/collecting-like-terms` · Current status: Live
   collectable group. However **no working step in this file ever uses the `string[]` fragment
   convention** — every mStep's latex is a single joined string, so the dev-gated fragment reveal gets
   nothing extra beyond the underline step itself, a real depth gap relative to `FractionsAddSub`.
+  **(content: T1 — reasoning is genuinely explained, no gap; fragmentation: T2/3.)**
 - Conventions/anomaly scan: `questionRenderer` (**Justified** — two genuinely different display
   shapes) and `stepRenderer` (**Justified** — the first custom `stepRenderer` seen in this audit, a
   clean, well-scoped use of the extension point for the colour-underline step). No `defaults=` block
@@ -722,6 +792,9 @@ well above what the working-step fragment gap alone would suggest.
 Route: `/solving-linear-equations` · Current status: Live
 
 **Part 1 — Infrastructure alignment**
+*Priority tag: [T1 exception] — wiring in `solveLinearEquationSteps` is a zero-new-import fix that
+resolves the confirmed live no-op/mislabelled "Isolate constant" step below; the `collectLikeTerms`
+row it also spans stays [T2/3].*
 - Techniques: Thin — imports only base shared helpers, never `solveLinearEquationSteps`, even though
   it's re-exported from the exact same `"../../shared"` barrel the tool already imports from — a
   zero-new-import integration point. `solveLinearEquationSteps(a, b, c, v, grain)` solves `a·v+b=c`,
@@ -763,7 +836,8 @@ Route: `/solving-linear-equations` · Current status: Live
   (combining terms into a single coefficient) — the same label means two different things in different
   branches of the same tool, a labelling inconsistency alongside the redundancy. Swapping in
   `solveLinearEquationSteps` for the final stage would fix both the redundancy and add fragment
-  support for free.
+  support for free. **(content: T1 — the no-op/mislabelled step is a live defect a teacher can see
+  today, and the fix is cheap; fragmentation: T2/3, a free side-effect of the same fix.)**
 - Conventions/anomaly scan: Zero matches on the full override grep — fully vanilla ToolShell usage,
   same clean baseline as `Estimation`.
 - UI/visual consistency: Not checked live. From source: zero hardcoded hex colours, no bespoke
@@ -782,6 +856,9 @@ combinations silently serve the same static question repeatedly across a workshe
 Route: `/completing-the-square` · Current status: Live
 
 **Part 1 — Infrastructure alignment**
+*Priority tag: [T1 exception] — the unwired SmartGrapher fit (named directly in `PROJECTS.md`'s own
+backlog) is a top tier-1 candidate; the `completeTheSquare` technique/area-model/Teach-deck findings
+stay [T2/3].*
 - Techniques: Thin by the strict "uses the engine" test — no `src/shared/techniques/` import, despite
   `CLAUDE.md` naming this file as **the** reference for shell wiring and `reformatQuestion`.
   `PROJECTS.md`'s `completeTheSquare` row is itself **low priority, ⬜ (not built)** — the repo's own
@@ -818,6 +895,7 @@ Route: `/completing-the-square` · Current status: Live
   single step is a whole-string latex, never a `string[]` fragment array** — a genuinely notable
   finding precisely because this is the named reference tool: the "author fragments by default" rule
   sits right next to this file's own reference callout in `CLAUDE.md`, but isn't demonstrated in it.
+  **(content: T1 — already solid, no gap; fragmentation: T2/3.)**
 - Conventions/anomaly scan: One override, `defaults={{ numQuestions: 6, numColumns: 2 }}` —
   undocumented, and markedly lower than any other tool audited so far in either category (**Unclear**;
   a plausible reason exists — multi-line LaTeX display wanting more board space — but unstated).
@@ -840,6 +918,9 @@ retrofitting the repo's own flagship example, not a neglected corner tool.
 Route: `/iterations` · Current status: Live
 
 **Part 1 — Infrastructure alignment**
+*Priority tag: [T1 exception] — the unwired SmartGrapher fit is the single highest-leverage,
+most concretely-named tier-1 candidate in the whole audit (see below); `solveByIteration`/
+`rearrange-formula` and the Teach-deck candidate stay [T2/3].*
 - Techniques: Thin — no `src/shared/techniques/` import; all working hand-rolled via three
   near-identical local formatter helpers shared across two sub-tools. `PROJECTS.md`'s
   `solveByIteration` row ("change-of-sign interval, iterate, bound-test", low priority, ⬜) maps
@@ -881,7 +962,8 @@ Route: `/iterations` · Current status: Live
 - Working-step depth: Flat throughout — zero fragment arrays anywhere; every iteration line is one
   long pre-collapsed string containing the full substitution-to-result chain. The maths is all
   computed and shown, just never split into board-writing moves — the same "content present,
-  presentation flat" pattern as `Estimation`.
+  presentation flat" pattern as `Estimation`. **(content: T1 — already present, no gap;
+  fragmentation: T2/3.)**
 - Conventions/anomaly scan: One override, `defaults={{ numColumns: 2 }}` — undocumented; plausible
   given long worded prose lines, but unstated (**Unclear**).
 - UI/visual consistency: Not checked live. From source: zero hardcoded hex colours, no bespoke
@@ -899,6 +981,8 @@ contrast to its category neighbour `SolvingLinearEquations` (seven groups).
 Route: `/simultaneous-equations-elimination` · Current status: Live
 
 **Part 1 — Infrastructure alignment**
+*Priority tag: [T2/3] — `solveByElimination` technique, the unlinked `lcm` skill, and the weaker
+SmartGrapher fit are backlog; content is already strong (see Part 2).*
 - Techniques: Thin — no technique import; all working hand-built. `PROJECTS.md`'s `solveByElimination`
   row (med, ⬜) is the exact match. Notably, part of this tool's conversion cost is smaller than a
   fresh build: it hand-re-derives a substitute-back move that duplicates what the already-built
@@ -936,7 +1020,8 @@ Route: `/simultaneous-equations-elimination` · Current status: Live
   the elimination choice* via a dedicated reasoning step — stating logic most Number-category tools
   were flagged for omitting — and one generic working-builder correctly covers every worded shape.
   **But every step across the whole file is a plain string, never a fragment array** — despite being
-  reasoning-rich, none of it benefits from the dev-gated fragment reveal.
+  reasoning-rich, none of it benefits from the dev-gated fragment reveal. **(content: T1 — already
+  strong, no gap; fragmentation: T2/3.)**
 - Conventions/anomaly scan: `defaults={{ numQuestions: 12, numColumns: 2 }}` — same undocumented
   `numQuestions: 12` pattern as the fraction tools (**Unclear**); `numColumns: 2` plausibly justified
   by the wide two-equation `gathered` KaTeX block, but unstated. Notably **absent**: no `maxColumns`
@@ -966,6 +1051,10 @@ correct, well-reasoned elimination logic to lift into the engine.
 Route: `/expanding-brackets` · Current status: Live
 
 **Part 1 — Infrastructure alignment**
+*Priority tag: [T2/3] for the `expandBrackets` technique itself and the area-model representation —
+but the missing squared-bracket question type it exposes is a Part 2 breadth gap, and the
+FOIL/Grid diagram being invisible outside the dev-gated Worked Example (see Conventions scan below)
+is a live tool-visibility gap — both [T1].*
 - Techniques: Thin — no technique import; all working hand-built. `PROJECTS.md`'s `expandBrackets`
   row ("single / double / squared brackets (FOIL, grid)", **high**, ⬜) is the exact match — this
   tool is that row's primary demand signal, the highest-priority unbuilt technique in the whole
@@ -1003,13 +1092,15 @@ Route: `/expanding-brackets` · Current status: Live
   uncommented choice.
 - Working-step depth: The tool's real strength (FOIL/Grid diagrams) is also its explanatory weakness —
   no step narrates *why* a negative multiplier flips a sign, precisely where L3 gets hard. No fragment
-  arrays anywhere — every step arrives as one whole KaTeX string.
+  arrays anywhere — every step arrives as one whole KaTeX string. **(content: T1 gap — the sign-flip
+  reasoning is missing from live working; fragmentation: T2/3.)**
 - Conventions/anomaly scan: The one grep hit (`defaults={{ numQuestions: 15, numColumns: 3 }}`) isn't
   actually an override — it restates ToolShell's own baseline, **Justified (no-op)**. A real,
   unflagged design gap found instead: the FOIL/Grid diagrams are wired through `stepRenderer` for the
   Worked Example only — they **never appear on the Whiteboard's main question view or in worksheet
   PDFs**, so this tool's best pedagogical asset is invisible in the two modes most teachers use
-  day-to-day. Also: `pickActive` is imported but explicitly voided as unused in favour of a custom
+  day-to-day. **[T1 — this is exactly the tier-1 gap: the diagram exists but isn't in Whiteboard/
+  Worksheet, the modes tier-1 priority cares about most.]** Also: `pickActive` is imported but explicitly voided as unused in favour of a custom
   multiplier-reading function — plausibly necessary (computing a "mixed" tri-state `pickActive` alone
   can't), but the unused-import suppression instead of removing it looks like a leftover.
 - UI/visual consistency: Not checked live. From source: 6 hardcoded hex colours, more than most tools
@@ -1033,6 +1124,10 @@ squared-bracket spec gap and the diagram-invisible-outside-Worked-Example archit
 Route: `/simultaneous-equations-substitution` · Current status: Live
 
 **Part 1 — Infrastructure alignment**
+*Priority tag: [T1 exception] — the un-shown `(2x−5)²` expansion and the `−1x`-should-be-`−x`
+display bug are confirmed live defects worth fixing on their own merits (see Recommended status and
+Notes below); the un-consumed skill links and area/tile representations stay [T2/3]. SmartGrapher is
+already wired here — a tier-1 win already delivered, with a disclosed ellipse gap.*
 - Techniques: **Converted, but partially** — the only tool in the repo built on
   `src/shared/techniques/` (the `workings()` builder plus `quadraticFormulaSteps`,
   `solveFactorsSteps`, `substituteBackSteps`, `makeSubjectSteps`, `solveLinearlySteps`, `standard`
@@ -1085,7 +1180,8 @@ Route: `/simultaneous-equations-substitution` · Current status: Live
   substitute back, well above a "jump to the answer" tool, and `formula`'s quadratic-formula step
   genuinely uses live-model fragments. But the hand-rolled substitution/expand-and-rearrange steps are
   each a single-element array — no fragment reveal at all — the direct authoring-level symptom of the
-  expansion gap: there's no intermediate to fragment because none is computed.
+  expansion gap: there's no intermediate to fragment because none is computed. **(content: T1 — the
+  missing computed intermediate is a live defect; fragmentation: T2/3, moot until content exists.)**
 - Conventions/anomaly scan: `questionRenderer` (**Justified** — two numbered equation lines plus the
   post-reveal graph), plus bespoke `answerRenderer`/`stepRenderer` (**Justified**, unique among tools
   audited so far — for the solution lines and the graph-carrying working step).
@@ -1152,10 +1248,18 @@ this pass is findings-only. *(The `FractionToRatio.tsx` citation gap is now fixe
 never actually a `CLAUDE.md` error — that row was already correct, pointing to a grep search rather
 than a named file — so no doc fix was needed there.)*
 
+**Priority tag (2026-08-18 lens).** [T2/3] for this category's technique/skill/representation/Teach-
+deck findings across the board — the `unitary-method` cross-category demand signal is a strong
+backlog case but still tier-3 infra. **T1 exception:** `SimplifyingRatiosTool`'s zero-QO/zero-visual
+findings feed directly into its "stay gated" recommendation — a live status decision, not backlog —
+so treat that entry's Part 1 findings as evidence for a tier-1 call, not as deferred infra work.
+
 ### Dividing Ratios — `src/tools/Proportion/RatioSharingTool.tsx`
 Route: `/ratio-sharing` · Current status: Live
 
 **Part 1 — Infrastructure alignment**
+*Priority tag: [T2/3] — `shareInRatio` technique and porting the bespoke bar model to the shared
+scene system are infra/Teach-deck backlog; the live bar model already works today.*
 - Techniques: Thin — no technique import; hand-built bar-model/numerical-method steps.
   `PROJECTS.md`'s `shareInRatio` row (**high**, ⬜) is an exact match, and this tool is the primary —
   arguably sole — real demand signal for it in the category (`RecipesTool` scales, it doesn't share).
@@ -1188,7 +1292,7 @@ Route: `/ratio-sharing` · Current status: Live
 - Working-step depth: The bar-model working is rich and correctly narrates each stage, confirmed
   rendered in both Whiteboard and Worked Example — a genuine strength. But every numerical-method
   `mStep` is a single whole-string latex; zero fragment arrays anywhere, despite several lines being
-  textbook 2–3-fragment candidates.
+  textbook 2–3-fragment candidates. **(content: T1 — already rich, no gap; fragmentation: T2/3.)**
 - Conventions/anomaly scan: `stepRenderer` (**Justified** — the only way to render the bar model). No
   `questionRenderer` (**Justified**, correct absence — only the working needs a diagram).
   `defaults={{ displayFontSize: 1, numQuestions: 5, numColumns: 2, maxColumns: 2 }}` —
@@ -1212,6 +1316,9 @@ than a criticism of this tool itself, which is genuinely solid.
 Route: `/simplifying-ratios` · Current status: Dev-gated (enabled: false)
 
 **Part 1 — Infrastructure alignment**
+*Priority tag: [T1 exception] — the zero-QO/zero-visual findings below feed directly into the
+"stay gated" call under Recommended status, a live tier-1 decision. The `simplifyRatio` technique
+and skill-link findings themselves stay [T2/3].*
 - Techniques: Thin — no technique import. `PROJECTS.md`'s `simplifyRatio` row (med, ⬜) matches the
   numeric sub-tool exactly; the algebraic sub-tool is genuinely broader than the row's current spec
   (it also cancels shared variables and variable powers, not just numeric factors) — worth folding
@@ -1244,7 +1351,8 @@ Route: `/simplifying-ratios` · Current status: Dev-gated (enabled: false)
 - Working-step depth: Split findings. The algebraic sub-tool uses `mStep` with proper prose labels —
   good discipline. The numeric sub-tool deviates from the "pick `mStep` by default" convention
   entirely — every step is a bare, unlabelled `step()` line with nothing narrating why a given prime
-  was chosen. Both sub-tools carry zero fragment arrays anywhere.
+  was chosen. Both sub-tools carry zero fragment arrays anywhere. **(content: T1 gap on the numeric
+  sub-tool — no prime-choice reasoning shown live; fragmentation: T2/3.)**
 - Conventions/anomaly scan: One grep hit, mostly no-op restatements of the ToolShell baseline
   (**Justified, no-op**); `numQuestions: 5` matches the category norm. Everything else correctly
   absent for a pure KaTeX/text tool — a clean baseline.
@@ -1271,6 +1379,8 @@ the small integer ranges involved, but worth a look if this pattern is ever copi
 Route: `/recipes` · Current status: Live
 
 **Part 1 — Infrastructure alignment**
+*Priority tag: [T2/3] — `scaleRecipe`/`hcf`/`unitary-method` and the bar-model Teach deck are infra
+backlog; no live-visible fix depends on them.*
 - Techniques: Thin — no technique import. `PROJECTS.md`'s `scaleRecipe` row (low, ⬜) accurately
   matches the Linear Scaling sub-tool's core move, but does **not** describe the Constraints
   sub-tool's move at all — that sub-tool's actual mechanic is "find each ingredient's per-serving
@@ -1307,7 +1417,8 @@ Route: `/recipes` · Current status: Live
 - Working-step depth: A specific, checkable gap relative to this category's own reference tools.
   Every working line uses bare `step()` — zero `mStep()`, zero `tStep()` — so no line anywhere carries
   a prose label, a direct contrast with `RatioSharingTool`/`FractionToRatio`, which label essentially
-  every step. The Constraints sub-tool also invents a bespoke multi-line working shape rendered via a
+  every step. **(content: T1 gap — no prose labels anywhere is a live readability issue;
+  fragmentation: T2/3, a separate axis.)** The Constraints sub-tool also invents a bespoke multi-line working shape rendered via a
   custom `stepRenderer` rather than using the documented `extra` field on `WorkingStep` — functionally
   fine, but sidesteps the one extension point named for exactly this case, and the CI smoke test's
   per-fragment KaTeX validation can't see inside it the way it validates `step()`'s `frags`.
@@ -1334,6 +1445,9 @@ what this tool does.
 Route: `/fraction-to-ratio` · Current status: Live
 
 **Part 1 — Infrastructure alignment**
+*Priority tag: [T2/3] — technique conversion, the unlinked `lcm` skill, and the new
+`convert-fraction-ratio` skill proposal are infra backlog. The `formingRatios` flat-QO finding
+(Part 2) is the tier-1-relevant item here — see below.*
 - Techniques: Thin — no technique import. `PROJECTS.md`'s `convertFractionRatio` row (med, ⬜)
   matches the `fractionToRatio`/`ratioToFraction` sub-tools' core move. A second row also applies:
   `simplifyRatio` (med, ⬜) is a verbatim match for `formingRatios`' simplification helpers, which
@@ -1363,7 +1477,8 @@ Route: `/fraction-to-ratio` · Current status: Live
 - QO richness: Uneven, and the unevenness is itself a finding. `fractionToRatio`/`ratioToFraction` use
   genuine per-level `difficultySettings`. `formingRatios` — plausibly the tool's highest-traffic
   sub-tool — has `dropdown: null, difficultySettings: null`: its two toggles are flat, identical at
-  every level, zero QO differentiation, unlike its two siblings in the same file.
+  every level, zero QO differentiation, unlike its two siblings in the same file. **[T1 — a Part 2
+  QO-richness gap, live and teacher-visible.]**
 - Level progression: Very strong — every sub-tool restructures method at each level, not just numbers.
   `ratioToFraction`'s L3 "part-to-part, not part-to-whole" framing is a genuine, well-flagged
   misconception zone. One of the stronger showings in the audit so far.
@@ -1371,7 +1486,8 @@ Route: `/fraction-to-ratio` · Current status: Live
   reference status. Every `mStep` call passes a single pre-joined string — zero genuine fragment-array
   usage anywhere — the same specific gap the audit found in `CompletingTheSquare.tsx` itself,
   reinforcing that "reference implementation" status in this repo has so far tracked shell-wiring, not
-  fragment-authoring maturity.
+  fragment-authoring maturity. **(content: T1 — already strong per Level progression/breadth above,
+  no gap; fragmentation: T2/3.)**
 - Conventions/anomaly scan: `displayFontSize`/`worksheetFontSize`/`maxColumns` overrides are no-ops
   restating the baseline (**Justified, no-op**). `numQuestions: 5` and `numColumns: 2` are genuine,
   undocumented reductions — `numQuestions: 5` is the lowest value seen across the entire audit so far
@@ -1396,6 +1512,8 @@ readiness" no longer misattributes the citation to `CLAUDE.md`.)*
 Route: `/fractions-of-amounts` · Current status: Live
 
 **Part 1 — Infrastructure alignment**
+*Priority tag: [T2/3] — `fractionOfAmount` technique, the `fraction-of-amount`/`simplify-fraction`/
+`hcf` skills, and the bar-model gap are infra backlog; content is already reference-quality (Part 2).*
 - Techniques: Thin — no technique import. `PROJECTS.md`'s Number-section `fractionOfAmount` row
   (**high**, ⬜) is a verbatim match for this tool's core move — every sub-tool's working repeats the
   identical "find the value of one part, then multiply by the numerator" pattern. That row currently
@@ -1436,6 +1554,7 @@ Route: `/fractions-of-amounts` · Current status: Live
   every multi-stage worded chain uses the `string[]` fragment convention, matching or exceeding
   `FractionsAddSub`'s billing as the category's fragment-authoring model. `tStep` is also used
   correctly for pure-reasoning lines, keeping computed and stated-fact steps architecturally distinct.
+  **(content: T1 — already excellent, no gap; fragmentation: already present, no gap.)**
 - Conventions/anomaly scan: Zero matches on the full override grep — the file doesn't even pass a
   `defaults` prop, running on the full shared baseline. Fully vanilla, the cleanest possible
   anomaly-scan result.
@@ -1458,6 +1577,9 @@ positive quality signal — this tool follows the same convention correctly thro
 Route: `/best-buys` · Current status: Live
 
 **Part 1 — Infrastructure alignment**
+*Priority tag: [T2/3] — `unitPriceCompare` technique and the `unitary-method` skill (a strong
+cross-category signal, still tier-3) are backlog. `specialOffers`' zero-QO finding (Part 2) is the
+tier-1-relevant item here.*
 - Techniques: Thin — no technique import. `PROJECTS.md`'s `unitPriceCompare` row (low, ⬜) accurately
   matches the Unit Cost sub-tool's core move, but undersells Special Offers, whose real move is
   "resolve a deal structure into an effective total quantity/price first, then compare" — a compound
@@ -1490,6 +1612,7 @@ Route: `/best-buys` · Current status: Live
   reference pattern of QO complexity scaling with maths complexity, then L2/L3 add real controls.
   `specialOffers`, by contrast, has **zero QO options at all, at every level** — a fully fixed
   generator, the same "zero-control" pattern flagged for `Iterations`' `verification` sub-tool.
+  **[T1 — live QO-richness gap.]**
 - Level progression: Strong and structural in both sub-tools — `unitCost` escalates count-based →
   metric-with-conversion → deliberately-close-unit-prices; `specialOffers` escalates multi-buy/
   multipack → percentage-discount/bulk → mixed offer types requiring two calculation routes in one
@@ -1498,7 +1621,8 @@ Route: `/best-buys` · Current status: Live
   citing the documented £-inside-KaTeX gotcha up front), so the tool is structurally incapable of the
   fragment-reveal convention, not a thin-authoring problem the way `Estimation`'s single-string
   `mStep`s were. Content-wise the chains are thorough — deeper step-count than most tools audited so
-  far, just architecturally flat.
+  far, just architecturally flat. **(content: T1 — already thorough, no gap; fragmentation: T2/3,
+  structurally blocked either way.)**
 - Conventions/anomaly scan: Zero matches on the full override grep — fully vanilla, the cleanest
   possible baseline. Worth noting as a design point: the unitary/conversions toggles are exactly the
   kind of pure-display QO `reformatQuestion` exists for, but neither is implemented — toggling
@@ -1565,10 +1689,26 @@ unreviewed until now, precisely as predicted. `EquationsOfLines` turns out not t
 at all despite its category (zero SVG, pure KaTeX) — confirming `PROJECTS.md`'s SmartGrapher gap for
 it is still fully unaddressed, the tool's single highest-leverage fix.
 
+**Priority tag (2026-08-18 lens).** The category's technique/skill proposals (`applyAngleFact`,
+`apply-angle-fact`, `unit-conversion`, `sumPerimeter`) and the open seventh-representation question
+are [T2/3] — genuine, but infra/self-teaching backlog. **T1 exceptions, live and teacher-visible
+today:** `EquationsOfLines`' unwired SmartGrapher fit (the category's single highest-leverage gap);
+the two confirmed print-handler functional bugs (`BasicAngleFacts` drops section headers on
+Advanced worksheets, `CircleProperties`' Differentiated toggle silently no-ops); the three hand-
+rolled `customPrintHandler`s that should migrate to `handleDiagramPrint`
+(`AnglesInParallelLines`/`BasicAngleFacts`/`CircleProperties`); and the working-step-depth findings
+where content itself is the gap, not just fragmentation — `BasicAngleFacts`/`AnglesInParallelLines`/
+`Bearings`' equations rendering as literal escaped text via `tStep` rather than real KaTeX, and
+`AnglesInQuadrilaterals`' identical gap despite being the shared-print reference file. Each tool's
+own entry below carries the detail.
+
 ### Angles In Quadrilaterals — `src/tools/Geometry/AnglesInQuadrilaterals.tsx`
 Route: `/angles-in-quadrilaterals` · Current status: Live
 
 **Part 1 — Infrastructure alignment**
+*Priority tag: [T2/3] — `applyAngleFact` technique, the new `apply-angle-fact` skill, and the
+open representation question are infra backlog. The tier-1-relevant item is the working-step
+content gap below (plain-text equations, not real KaTeX) — see Working-step depth.*
 - Techniques: Thin — no technique import. `PROJECTS.md`'s `applyAngleFact` row (**high**, ⬜) is an
   exact match and this tool is by far the richest demand signal for it in the category — every
   branch states the applied fact as its own first working line ("Angles in a quadrilateral sum to
@@ -1605,7 +1745,9 @@ Route: `/angles-in-quadrilaterals` · Current status: Live
   through real KaTeX math mode, and (since `tStep` takes a single string) zero fragment arrays
   anywhere. This is the category-wide pattern (see category summary), not unique to this file — but
   the category's own `CircleProperties.tsx` already demonstrates the alternative is achievable, so
-  the gap is checkable and fixable in-category.
+  the gap is checkable and fixable in-category. **(content: T1 — plain-text equations instead of
+  real KaTeX is a live rendering-quality issue a teacher sees today, not fragmentation; the missing
+  fragment array itself is T2/3, downstream of fixing the content first.)**
 - Conventions/anomaly scan: `questionRenderer` (**Justified**). `customPrintHandler={handleDiagramPrint}`
   **directly verified** — imported and passed through unmodified, exactly matching `CLAUDE.md`'s own
   code sample. Worth flagging as a category finding: this makes it one of only 4 of 8 Geometry tools
@@ -1634,6 +1776,9 @@ presentation-layer fix, not a content rewrite.
 Route: `/basic-angle-facts` · Current status: Live
 
 **Part 1 — Infrastructure alignment**
+*Priority tag: [T2/3] for the `applyAngleFact` technique/skill findings — but see Part 2 below for
+two live T1 items: the hand-rolled print handler's confirmed section-header bug, and the plain-text
+(non-KaTeX) equation rendering.*
 - Techniques: Thin — no technique import. `PROJECTS.md`'s `applyAngleFact` row is an exact,
   on-the-nose match — this tool doesn't consume the technique, it **is** the technique's primary
   demand signal across all five sub-tools (right angle, straight line, around a point, vertically
@@ -1668,13 +1813,15 @@ Route: `/basic-angle-facts` · Current status: Live
   here it's used for real equations (`"3x = 60°"`) that render as literal escaped text, never true
   KaTeX. Every other "flat" tool audited so far had at least used single-string `mStep`/`step`
   (upgradable to fragments later) — this tool's own step type makes that upgrade impossible without
-  a rewrite.
+  a rewrite. **(content: T1 — literal-text equations are a live rendering defect, worse than most
+  tools' "flat" gap since it's not even real KaTeX; fragmentation: T2/3, blocked either way.)**
 - Conventions/anomaly scan: `questionRenderer` (**Justified**). `customPrintHandler` (hand-rolled,
   fixed 3×5 grid) — **Debt.** `CLAUDE.md`'s own diagram-tools section explicitly instructs against
   exactly this pattern. Worse: the handler's Advanced/sectioned path silently falls through to the
   flat layout with no section-header/divider logic at all — an Advanced worksheet built with this
   tool silently loses its section grouping in the printed PDF, a real functional defect, not just a
-  missing feature. `fixedColumns: true, numColumns: 3` pairs consistently with the hardcoded print
+  missing feature. **[T1 — confirmed live bug, migrate to `handleDiagramPrint`.]**
+  `fixedColumns: true, numColumns: 3` pairs consistently with the hardcoded print
   grid but forecloses the density flexibility `handleDiagramPrint` gives for free — **Debt-leaning**,
   three category siblings expose `maxColumns` instead. `hideFontControls: true` — **Justified**.
   Also found outside the grep: the purely-cosmetic "Show right angle square symbol" toggle
@@ -1703,6 +1850,9 @@ pointing print-handler seekers to `AnglesInQuadrilaterals.tsx` instead.)*
 Route: `/angles-in-triangles` · Current status: Live
 
 **Part 1 — Infrastructure alignment**
+*Priority tag: [T2/3] — `applyAngleFact`/`apply-angle-fact` findings are infra backlog. This tool's
+own working-step content is already the category's strongest (see below); the live gap is Part 2's
+zero-multiSelect QO finding.*
 - Techniques: Thin — no technique import, confirming `PROJECTS.md`'s own "techniques wiring still
   to add on some" caveat for this migrated group literally, not just generically. `applyAngleFact`
   is an unusually exact match: this tool's sub-shapes hit *isosceles* (Level 2) and *exterior angle*
@@ -1727,7 +1877,7 @@ Route: `/angles-in-triangles` · Current status: Live
 - QO richness: A per-level dropdown plus one repeated variable at every level, but **zero
   multiSelect anywhere** — a real, checkable gap relative to `AnglesInParallelLines`, which at least
   has one multiSelect group at Level 1. A teacher never gets a "which question types are active"
-  pool control at any level here.
+  pool control at any level here. **[T1 — live QO-richness gap.]**
 - Level progression: Genuinely one of the strongest in the whole audit — a real method/shape change
   every level, matching its own info text's description exactly. Comparable in quality to
   `Percentages`/`SimultaneousEquations`.
@@ -1736,7 +1886,8 @@ Route: `/angles-in-triangles` · Current status: Live
   Crucially, unlike `AnglesInParallelLines`, the arithmetic is actually shown, not skipped — a
   genuine 5-step reveal of the real reasoning at L1, and L3 correctly sequences two separate named
   facts before landing on the answer. Correctly wired via the `tStep()` helper rather than raw
-  objects — the opposite finding from its sibling.
+  objects — the opposite finding from its sibling. **(content: T1 — already strong, no gap;
+  fragmentation: T2/3, structurally blocked by the category-wide tStep-only pattern either way.)**
 - Conventions/anomaly scan: `questionRenderer` (**Justified**). `customPrintHandler={handleDiagramPrint}`
   — **Justified and exemplary**, matching `AnglesInQuadrilaterals.tsx` verbatim, in direct contrast
   to its sibling's hand-rolled grid. `defaults={{ numColumns: 3, maxColumns: 4, hideFontControls:
@@ -1764,6 +1915,9 @@ annotation, a useful contrast for whoever writes the technique's build brief.
 Route: `/angles-in-parallel-lines` · Current status: Live
 
 **Part 1 — Infrastructure alignment**
+*Priority tag: [T2/3] for the `applyAngleFact` finding — but see Part 2 below for two live T1
+items: the hand-rolled, `CLAUDE.md`-contradicting print handler (confirmed in the very file named
+as its own reference), and the raw-`WorkingStep`/no-shown-arithmetic working-step content gap.*
 - Techniques: Thin — no technique import. `applyAngleFact` is the exact match, covering 3 of its 5
   named cases directly — but the row's own annotation, "the reasoning IS the move," only partly
   holds here (see Working-step depth): the working states the rule name and jumps straight to the
@@ -1798,13 +1952,15 @@ Route: `/angles-in-parallel-lines` · Current status: Live
   never construct raw objects"). Content-wise, each step states the rule name and the final value
   with **no shown arithmetic** — contrast directly with `AnglesInTriangles.tsx`, which for the same
   "sum to 180" fact walks the full four-line derivation. Same category, same tStep-only constraint,
-  materially different depth.
+  materially different depth. **(content: T1 gap — no shown arithmetic is a live pedagogy weakness,
+  distinct from the shared tStep constraint; fragmentation: T2/3, blocked either way.)**
 - Conventions/anomaly scan: `questionRenderer`/`answerRenderer` (**Justified**). `customPrintHandler`
   is a **fully hand-rolled, fixed 3×5 grid** — **Debt**, directly contradicting `CLAUDE.md`'s
   explicit instruction, stated in the very section that names this exact file as the SVG/renderer
   reference. Concrete cost: bypassing `handleDiagramPrint` loses variable-column density, section
   support, and differentiated-layout scaling — this worksheet is permanently 15-per-page regardless
-  of input. `fixedColumns: true` — **Debt-leaning** (consistent with the hand-rolled grid, but no
+  of input. **[T1 — migrate to `handleDiagramPrint`, the sanctioned category pattern.]**
+  `fixedColumns: true` — **Debt-leaning** (consistent with the hand-rolled grid, but no
   sibling Geometry tool locks columns this way). `numQuestions: 9` doesn't match the print handler's
   own 15-per-page assumption — **Unclear**.
 - UI/visual consistency: Not checked live. From source: **24 hardcoded hex-colour occurrences, 11
@@ -1828,6 +1984,9 @@ working-step construction are not.
 Route: `/bearings` · Current status: Live
 
 **Part 1 — Infrastructure alignment**
+*Priority tag: [T2/3] for the `applyAngleFact` technique-table finding itself — but the underlying
+gap (the working never states the back-bearing justification) is a live content omission, tagged
+T1 in Working-step depth below.*
 - Techniques: Thin — no technique import. No existing row names bearings directly, but there's a
   real, currently-unconsumed connection to `applyAngleFact`: the tool's own info modal states Level
   2 route questions can be asked "as a back bearing along the path," and the generator does include
@@ -1858,7 +2017,7 @@ Route: `/bearings` · Current status: Live
 - QO richness: Thin relative to the tool's polish elsewhere — one multiSelect, repeated identically
   at all three levels with no level-specific narrowing — the same "QO doesn't scale with level"
   pattern flagged **Unclear** for `Percentages`/`ExpandingBrackets`. Given the level structure
-  genuinely does restructure, the flat QO under-sells that progression.
+  genuinely does restructure, the flat QO under-sells that progression. **[T1 — live QO gap.]**
 - Level progression: One of the stronger progressions in the audit so far — a genuine shape change
   at each step, not just widening number ranges, on par with `NonLinearSimEq`/`SimultaneousEquations`'
   best-in-class designs.
@@ -1867,6 +2026,8 @@ Route: `/bearings` · Current status: Live
   incapable of a fragment reveal. Genuinely notable given this tool's other signals of careful,
   more-recent authorship — the working-step architecture is identically thin to its less-polished
   category neighbour, undercutting its "what good looks like" reference billing on this one axis.
+  **(content: T1 gap — plain-text-only working, same live defect as `BasicAngleFacts`; fragmentation:
+  T2/3, blocked either way.)**
 - Conventions/anomaly scan: `questionRenderer` (**Justified**). `customPrintHandler={handleDiagramPrint}`
   — **Justified and exemplary**, matching `CLAUDE.md`'s own code sample verbatim, and going a step
   further: the renderer emits a second, hidden SVG copy with the answer drawn on specifically so the
@@ -1898,6 +2059,10 @@ scratch, since this tool already generates the exact geometric situation the fac
 Route: `/circle-properties` · Current status: Live
 
 **Part 1 — Infrastructure alignment**
+*Priority tag: [T2/3] for `circleFormula`/`rearrange-formula`/`fraction-of-amount` findings — but
+see Part 2 below for the audit's own top T1 pick: the hand-rolled print handler whose Differentiated
+toggle is a confirmed silent no-op, "the highest-leverage, most mechanical fix surfaced anywhere in
+this audit pass."*
 - Techniques: Thin — no technique import. `PROJECTS.md`'s `circleFormula` row (med, ⬜) is an exact
   and complete match — this tool covers all four named sub-moves (circumference, area, arc, sector),
   unlike most cross-references found elsewhere in the audit which only partially match. Level 3 of
@@ -1934,6 +2099,7 @@ Route: `/circle-properties` · Current status: Live
   `reformatQuestion` for the instant π↔decimal toggle matching the documented `CompletingTheSquare`
   pattern exactly — a genuine positive, and (see category summary) rare for this category. Gap: zero
   fragment-array usage anywhere — the same gap found in most tools audited across every category.
+  **(content: T1 — already strong, no gap; fragmentation: T2/3.)**
 - Conventions/anomaly scan: `fixedColumns: true` — **Debt**, directly contradicting `CLAUDE.md`'s
   diagram-tool guidance verbatim; its concrete effect is that the Columns control is hidden from the
   teacher entirely. `customPrintHandler` — **Debt, the clearest single anomaly found in this pass.**
@@ -1941,7 +2107,8 @@ Route: `/circle-properties` · Current status: Live
   — and its function signature only accepts 3 of the 4 parameters ToolShell provides, silently
   ignoring `ctx.isDifferentiated`. Since the Differentiated toggle isn't gated by `fixedColumns`, a
   teacher can click Differentiated and print, and get the identical flat 3×5 sheet with zero
-  differentiation applied and no error — a genuine, source-confirmable functional gap. This tool
+  differentiation applied and no error — a genuine, source-confirmable functional gap. **[T1 —
+  confirmed live bug, the audit's own top mechanical-fix pick.]** This tool
   would be the most direct beneficiary of migrating to `handleDiagramPrint` of any Geometry tool
   checked. Absence of `hideFontControls` — **Unclear, leaning Debt**: every sibling diagram tool
   checked across the whole audit sets it, and here the diagram's font is entirely hard-coded and
@@ -1968,6 +2135,9 @@ from the pedagogy-content findings per the methodology's "don't merge the two bu
 Route: `/equations-of-lines` · Current status: Live
 
 **Part 1 — Infrastructure alignment**
+*Priority tag: [T1 exception] — the unwired SmartGrapher fit is "the single highest-leverage Part 1
+gap found for this tool" per the audit's own words, an off-the-shelf preset fit. The
+`gradientIntercept`/`substitute-into-formula`/`rearrange-formula` findings stay [T2/3].*
 - Techniques: Thin — no technique import. `PROJECTS.md`'s `gradientIntercept` row (med, ⬜,
   "gradient formula, y=mx+c, solve for c") is a near-verbatim match for what this file already
   hand-computes in exactly that three-step shape — an unusually cheap conversion target, since the
@@ -1997,7 +2167,7 @@ Route: `/equations-of-lines` · Current status: Live
   coverage of the core moves. A real, specific spec-coverage gap for a tool titled "**Properties** of
   Line Equations": no parallel/perpendicular-line question anywhere — arguably the single most
   standard GCSE "properties of a line" question type, currently entirely absent. No line-intersection
-  question either (a natural SmartGrapher tie-in).
+  question either (a natural SmartGrapher tie-in). **[T1 — Part 2 breadth gap.]**
 - QO richness: Moderate — `gradient`/`equation` share genuine per-level differentiation; the
   `missing` sub-tool has one multiSelect but `difficultySettings: null` — identical QO at all three
   levels, the same "flat across levels" pattern, and an inconsistency against its own sibling
@@ -2011,6 +2181,7 @@ Route: `/equations-of-lines` · Current status: Live
   computed, narrated intermediate values, a clear step up from the `tStep`-flattened-prose pattern
   found in most of this category's diagram tools. The one consistent gap matching the rest of the
   audit: zero fragment-array usage anywhere, despite the underlying maths already being multi-part.
+  **(content: T1 — already strong, no gap; fragmentation: T2/3.)**
 - Conventions/anomaly scan: The only match is `defaults={{ worksheetFontSize: 2 }}` — bumping the
   documented default of 1. Plausible (long KaTeX fraction/equation strings need more room) but
   undocumented, and genuinely idiosyncratic: only 3 tools site-wide set `worksheetFontSize` at all,
@@ -2038,6 +2209,9 @@ Route: `/perimeter` · Current status: Live *(registry display name is literally
 fully live and discoverable on the landing page despite the label)*
 
 **Part 1 — Infrastructure alignment**
+*Priority tag: [T2/3] — the new `sumPerimeter`/`deriveMissingSide` technique and `unit-conversion`
+skill are infra backlog. The live gaps are in Part 2: the thinnest QO richness of the whole audit
+(bar `SimplifyingRatiosTool`) and the session's single largest working-step content gap.*
 - Techniques: Thin — no technique import. Unlike `CircleProperties`, this tool's core moves have
   **no matching row at all** among the three existing Geometry technique rows — none fit "sum the
   sides" or "derive a missing rectilinear side from opposite-side equality." **New technique
@@ -2087,7 +2261,8 @@ fully live and discoverable on the landing page despite the label)*
   `AnglesInQuadrilaterals`, `AnglesInParallelLines`, and `Bearings` all follow the identical
   tStep-only convention; only `EquationsOfLines`/`CircleProperties` break from it. A genuine,
   category-wide pattern, not something this tool invented — but still the single largest
-  working-step-depth gap of the tools audited in this session.
+  working-step-depth gap of the tools audited in this session. **(content: T1 — the thinnest live
+  working of the whole audit; fragmentation: T2/3, blocked either way by the tStep-only import.)**
 - Conventions/anomaly scan: `customPrintHandler={handleDiagramPrint}` — **Justified, and the correct
   reference pattern**, deliberately swapped in per `docs/PATCH_NOTES.md`'s 2026-08-13 migration entry
   for the tool's old hand-rolled PDF generator, with a dedicated helper extracted specifically so the
@@ -2105,8 +2280,8 @@ fully live and discoverable on the landing page despite the label)*
   doc's own intro names it as. The `enabled` flag going live tracked a real, verified engineering
   fact (the ToolShell/`handleDiagramPrint` migration is genuinely well done — better-engineered than
   `CircleProperties`' print path, in fact), but content quality is a separate, lower-scoring axis:
-  this is the thinnest tool on QO richness of the tools audited in this session, and structurally
-  incapable of the fragment-reveal convention (though that specific gap is category-wide). Nothing
+  this is the thinnest tool on QO richness of the tools audited in this session **[T1 — live gap]**,
+  and structurally incapable of the fragment-reveal convention (though that specific gap is category-wide). Nothing
   here argues the shell itself is unsound or that the tool should be gated — the underlying maths and
   diagram-placement engineering are solid — but "BETA" in its own display name plus this profile
   argues against treating it as done; it reads as exactly what this doc's intro predicted:

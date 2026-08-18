@@ -28,6 +28,23 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-08-18 — Project docs reorganised around a teacher/student/infra priority lens
+`docs/PROJECTS.md` and `docs/TOOL_AUDIT.md` findings-only, no code changed.
+- Added a `## Priorities` section to `PROJECTS.md` splitting all work into three tiers: **tier-1**
+  teacher-facing advancement (new tools, in-lesson utilities like SmartGrapher — current priority),
+  **tier-2** student-led self-teaching (Skills library, Worked Example fragment reveal — currently
+  dormant), **tier-3** tool-building infrastructure (ToolShell, the Techniques engine — build on
+  demand, not a standalone sweep). Flagged the At-a-glance table, the Part 1 roadmap, and each
+  pedagogy-prong section (Techniques/Skills/Core representations/Teach decks/SmartGrapher)
+  accordingly; elevated "Tool expansion (Part 2)" and SmartGrapher as the active backlog.
+- Retagged all 27 `docs/TOOL_AUDIT.md` tool entries plus its 4 category summaries against the same
+  lens: a `Priority tag` line under each Part 1 heading calling out tier-1 exceptions (confirmed
+  live bugs, unwired SmartGrapher fits, cheap wins that fix something a teacher sees today) against
+  the tier-2/3 default; the Working-step depth bullet is now split-tagged where it conflated
+  working-step *content* quality (tier-1) with `string[]` *fragmentation* mechanics (tier-2/3, only
+  matters for the dev-gated Worked Example reveal). No finding's substance changed — only which ones
+  are flagged as worth picking up next.
+
 ## 2026-08-17 — Technique Library: popup → real per-technique pages
 Reworked the Technique Library's preview from a near-fullscreen popup into what the previous
 session's `NonLinearSimEq`/Tier 0 work made clear the audit needed: an **honest, page-level**
