@@ -397,14 +397,14 @@ export const WorksheetBuilder = ({
             );
           })}
         </div>
-        <div className="flex items-center gap-1 flex-shrink-0" onClick={e => e.stopPropagation()}>
-          <button onClick={() => updateGroup(g.id, { count: Math.max(1, g.count - 1) })} disabled={g.count <= 1}
-            className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:bg-gray-100 hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-sm leading-none">−</button>
-          <span className="w-6 text-center text-sm font-bold text-gray-700 tabular-nums">{g.count}</span>
-          <button onClick={() => updateGroup(g.id, { count: Math.min(24, g.count + 1) })} disabled={g.count >= 24}
-            className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:bg-gray-100 hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-sm leading-none">+</button>
-        </div>
         <div className="flex-1" />
+        <div className="flex items-center rounded-lg border border-gray-200 overflow-hidden flex-shrink-0" onClick={e => e.stopPropagation()}>
+          <button onClick={() => updateGroup(g.id, { count: Math.max(1, g.count - 1) })} disabled={g.count <= 1}
+            className="w-6 h-6 flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-sm leading-none">−</button>
+          <span className="w-6 text-center text-sm font-bold text-gray-700 tabular-nums border-x border-gray-200">{g.count}</span>
+          <button onClick={() => updateGroup(g.id, { count: Math.min(24, g.count + 1) })} disabled={g.count >= 24}
+            className="w-6 h-6 flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-blue-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-sm leading-none">+</button>
+        </div>
         <button onClick={e => {
           e.stopPropagation();
           if (groups.length <= 1) return;
