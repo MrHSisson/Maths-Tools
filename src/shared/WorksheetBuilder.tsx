@@ -545,7 +545,7 @@ export const WorksheetBuilder = ({
 
     const selectedGroup = groups.find((g) => g.id === selectedId) ?? groups[0];
     return (
-      <div className="flex flex-col md:flex-row gap-4" style={{ minHeight: 280 }}>
+      <div className="flex flex-col md:flex-row gap-4" style={{ minHeight: 400 }}>
         {/* Left: group list, with inline section breaks */}
         <div className="rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm flex flex-col" style={{ backgroundColor: "#fff", flex: "1 1 58%" }}>
           {rows}
