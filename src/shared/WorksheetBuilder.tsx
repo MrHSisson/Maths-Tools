@@ -318,8 +318,6 @@ export const WorksheetBuilder = ({
       : lv === "level2"
         ? "bg-yellow-500"
         : "bg-red-600";
-  const lvDot = (lv: DifficultyLevel) =>
-    lv === "level1" ? "bg-green-500" : lv === "level2" ? "bg-yellow-400" : "bg-red-500";
 
   const sections = computeSections(groups, dividers);
   const canAdd = groups.length < 10;
@@ -372,7 +370,6 @@ export const WorksheetBuilder = ({
         >
           <GripVertical size={16} />
         </div>
-        <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${lvDot(g.level)}`} />
         {toolKeys.length > 1 && (
           <select
             value={g.tool}
