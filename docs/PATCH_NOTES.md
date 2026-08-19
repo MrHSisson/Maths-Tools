@@ -28,6 +28,59 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-08-19 — Worksheet Builder: standalone Builder folded into the Advanced toggle
+Removed the top-nav "Builder" tab as a separate mode. Auditing the difference between it and the
+in-tool Worksheet mode's "Advanced" toggle found only two: the toggle rendered a `lockedTool`-locked
+builder (every group forced to the current sub-tool, per-group tool selector hidden) with a header
+slot hosting the toggle switch itself, while the nav tab rendered the same component unlocked
+(sub-tools mixable) with no header slot and its own shareable `?mode=builder` URL. Locking added no
+capability — it only removed the ability to change a group's sub-tool — so the two modes were a
+near-duplicate surface with the same confusion risk the classic/full split had. Folded them into one:
+the Advanced toggle now opens the same always-unlocked builder the nav tab used to, seeded via a new
+`initialTool` prop (`WorksheetBuilder.tsx`) so the first group still defaults to whatever sub-tool the
+teacher was on, rather than forcing them to stay there. Removed the nav-bar button, the `mode ===
+"builder"` top-level mode, and `WorksheetBuilder`'s `lockedTool` prop + its now-dead group-remapping
+effect. Old `?mode=builder` links still work — `modeMap` maps `builder` → `worksheet` and a new
+`builderRequested` flag seeds `worksheetMode` as `"advanced"` on load, so bookmarks never break.
+Verified in a live browser: nav bar has no Builder button, the Advanced toggle opens the unlocked
+builder pre-seeded with the active sub-tool, and an old `?mode=builder` link correctly lands on
+Worksheet mode with Advanced already on. `npm run build` clean, `npm test` 304/304 passing.
+
+## 2026-08-19 — Worksheet Builder: drag-and-drop group reordering
+Replaced the row number badge with a drag handle (`GripVertical`) and added native HTML5
+drag-and-drop to `WorksheetBuilder`'s group list — groups can be reordered by dragging, including
+across section boundaries. No new dependency: hand-rolled `dragstart`/`dragover`/`drop` handlers with
+a blue insertion-line indicator, gated to the grip handle only so the tool select/level pills/count
+stepper keep working without accidentally starting a drag. Section membership needed no separate
+logic — a section is just a contiguous run of the flat `groups` array split by id-keyed dividers, so
+moving a group's array position across a divider boundary already reassigns its section; verified
+with a Playwright-driven drag in a live browser (order `[5,6,7,8]` → `[6,7,5,8]`, group correctly
+landing in the target section). Also lets a solo, unsplit section use heading/shuffle via a quiet
+"+ Add heading / shuffle" link, without requiring a fake split (previous entry only covered the
+classic/full unification). Known limitation: HTML5 drag-and-drop has no touch support, so this only
+works with mouse/trackpad — a deliberate trade-off to avoid adding a DnD library dependency.
+
+## 2026-08-19 — Worksheet Builder unification: classic/full split removed
+Built the prong scoped 2026-08-18. `WorksheetBuilder` (`src/shared/WorksheetBuilder.tsx`) is now a
+single implementation — `classic={!devMode}` is gone, and worksheet-building no longer differs by
+Developing-tools mode. Kept every "full" feature (sections, per-section heading/shuffle/columns) but
+rebuilt the UI around classic's preferred model, since the complaint was the *structure*, not the
+feature set:
+- Persistent two-pane layout always (group list left, selected group's QO options in a fixed panel
+  right) — replaces full's inline accordion-under-the-row, which reflowed the list on every edit.
+- Sections are opt-in and invisible until used: a flat, unsplit list has zero section chrome, matching
+  old classic exactly. Splitting creates section header strips (heading, Shuffle, per-section columns)
+  only once they're needed.
+- Section breaks are created **in place** via a hover-reveal "+ Split section" control in the gap
+  between any two group rows, replacing full's append-only "Add section" button at the bottom of the
+  list — a break can now go anywhere, not just at the end.
+- Decluttered the section header strip (dropped divider pipes and the "col" label; smaller column
+  picker) and made the global column picker in the Design line context-sensitive (shows only while
+  unsplit; per-section pickers take over once split).
+`ToolShell.tsx`'s two `<WorksheetBuilder>` call sites no longer pass `classic`. `npm run build` clean,
+`npm test` 304/304 passing. Still open: URL-sync for the Builder's groups/sections, and a `CLAUDE.md`
+`WorksheetBuilder` reference section — both tracked in `docs/PROJECTS.md`.
+
 ## 2026-08-18 — Worksheet Builder's undocumented classic/full split, scoped for tomorrow
 Findings-only session, no code changed. `docs/PROJECTS.md` gains a new prong, **Worksheet Builder
 unification**, scoping a previously undocumented gap for the next build session: `WorksheetBuilder`
