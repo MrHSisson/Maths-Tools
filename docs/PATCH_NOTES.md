@@ -28,6 +28,20 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-08-19 — Worksheet Builder: drag-and-drop group reordering
+Replaced the row number badge with a drag handle (`GripVertical`) and added native HTML5
+drag-and-drop to `WorksheetBuilder`'s group list — groups can be reordered by dragging, including
+across section boundaries. No new dependency: hand-rolled `dragstart`/`dragover`/`drop` handlers with
+a blue insertion-line indicator, gated to the grip handle only so the tool select/level pills/count
+stepper keep working without accidentally starting a drag. Section membership needed no separate
+logic — a section is just a contiguous run of the flat `groups` array split by id-keyed dividers, so
+moving a group's array position across a divider boundary already reassigns its section; verified
+with a Playwright-driven drag in a live browser (order `[5,6,7,8]` → `[6,7,5,8]`, group correctly
+landing in the target section). Also lets a solo, unsplit section use heading/shuffle via a quiet
+"+ Add heading / shuffle" link, without requiring a fake split (previous entry only covered the
+classic/full unification). Known limitation: HTML5 drag-and-drop has no touch support, so this only
+works with mouse/trackpad — a deliberate trade-off to avoid adding a DnD library dependency.
+
 ## 2026-08-19 — Worksheet Builder unification: classic/full split removed
 Built the prong scoped 2026-08-18. `WorksheetBuilder` (`src/shared/WorksheetBuilder.tsx`) is now a
 single implementation — `classic={!devMode}` is gone, and worksheet-building no longer differs by

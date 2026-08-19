@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import type { ReactNode } from "react";
-import { RefreshCw, Eye, X, ChevronDown, ChevronUp } from "lucide-react";
+import { RefreshCw, Eye, X, ChevronDown, ChevronUp, GripVertical } from "lucide-react";
 import type {
   DifficultyLevel,
   AnyQuestion,
@@ -139,6 +139,10 @@ export const WorksheetBuilder = ({
   // shuffle is actually set, the strip stays visible even without this flag (see
   // renderGroupList), so it survives merging a split back down to one section.
   const [showSoloSectionInfo, setShowSoloSectionInfo] = useState(false);
+  // Native HTML5 drag-and-drop state for reordering groups (and, since section
+  // membership is derived from array order, dragging them between sections).
+  const [draggedId, setDraggedId] = useState<number | null>(null);
+  const [dragOverInfo, setDragOverInfo] = useState<{ id: number; pos: "before" | "after" } | null>(null);
   const [layout, setLayout] = useState<"grid" | "list">("grid");
   const [borders, setBorders] = useState(true);
   // Global column count, shown directly in the Design line while the list is a
@@ -289,6 +293,25 @@ export const WorksheetBuilder = ({
     setSectionShuffles((prev) => ({ ...prev, [secIdx]: !prev[secIdx] }));
   };
 
+  // Reposition a dragged group next to a drop target within the flat `groups`
+  // array. Section membership needs no separate handling: a section is just a
+  // contiguous run split by id-keyed dividers, so moving a group's array
+  // position across a divider boundary already reassigns its section.
+  const moveGroup = (dragId: number, targetId: number, pos: "before" | "after") => {
+    if (dragId === targetId) return;
+    setGroups((prev) => {
+      const dragged = prev.find((g) => g.id === dragId);
+      if (!dragged) return prev;
+      const without = prev.filter((g) => g.id !== dragId);
+      let targetIdx = without.findIndex((g) => g.id === targetId);
+      if (targetIdx === -1) return prev;
+      if (pos === "after") targetIdx += 1;
+      const next = [...without];
+      next.splice(targetIdx, 0, dragged);
+      return next;
+    });
+  };
+
   const lvColor = (lv: DifficultyLevel) =>
     lv === "level1"
       ? "bg-green-600"
@@ -309,17 +332,47 @@ export const WorksheetBuilder = ({
 
   // A single group row — level dot, index, tool select, level pills, count
   // stepper, remove. Selecting a row shows its QO options in the persistent
-  // panel on the right; there is no inline accordion.
-  const renderGroupRow = (g: BuilderGroup, idx: number, showBottomBorder: boolean) => {
+  // panel on the right; there is no inline accordion. The grip handle is the
+  // only draggable part of the row, so the tool select / level pills / count
+  // stepper still work normally without triggering a drag.
+  const renderGroupRow = (g: BuilderGroup, showBottomBorder: boolean) => {
     const isSel = g.id === selectedId;
+    const isDragging = draggedId === g.id;
+    const dropBefore = dragOverInfo?.id === g.id && dragOverInfo.pos === "before" && draggedId !== g.id;
+    const dropAfter = dragOverInfo?.id === g.id && dragOverInfo.pos === "after" && draggedId !== g.id;
     return (
       <div key={g.id} onClick={() => setSelectedId(g.id)}
-        className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors ${isSel ? "" : "hover:bg-gray-50"} ${showBottomBorder ? "border-b border-gray-100" : ""}`}
+        onDragOver={(e) => {
+          if (draggedId === null || draggedId === g.id) return;
+          e.preventDefault();
+          const rect = e.currentTarget.getBoundingClientRect();
+          const pos = e.clientY - rect.top < rect.height / 2 ? "before" : "after";
+          setDragOverInfo((prev) => (prev?.id === g.id && prev.pos === pos ? prev : { id: g.id, pos }));
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          if (draggedId !== null) moveGroup(draggedId, g.id, dragOverInfo?.pos ?? "before");
+          setDraggedId(null);
+          setDragOverInfo(null);
+        }}
+        className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors ${isSel ? "" : "hover:bg-gray-50"} ${showBottomBorder ? "border-b border-gray-100" : ""} ${isDragging ? "opacity-40" : ""} ${dropBefore ? "border-t-2 border-t-blue-500" : ""} ${dropAfter ? "border-b-2 border-b-blue-500" : ""}`}
         style={{ backgroundColor: isSel ? "#f0f4ff" : undefined }}>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <div className={`w-2.5 h-2.5 rounded-full ${lvDot(g.level)}`} />
-          <span className="text-sm font-bold text-gray-400 tabular-nums w-5">{idx + 1}</span>
+        <div
+          draggable
+          onDragStart={(e) => {
+            e.stopPropagation();
+            e.dataTransfer.effectAllowed = "move";
+            e.dataTransfer.setData("text/plain", String(g.id));
+            setDraggedId(g.id);
+          }}
+          onDragEnd={() => { setDraggedId(null); setDragOverInfo(null); }}
+          onClick={(e) => e.stopPropagation()}
+          title="Drag to reorder or move between sections"
+          className="cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-400 flex-shrink-0"
+        >
+          <GripVertical size={16} />
         </div>
+        <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${lvDot(g.level)}`} />
         {toolKeys.length > 1 && (
           <select
             value={g.tool}
@@ -440,7 +493,6 @@ export const WorksheetBuilder = ({
   );
 
   const renderGroupList = () => {
-    let globalIdx = 0;
     let flatPos = 0;
     const totalRows = groups.length;
     const rows: ReactNode[] = [];
@@ -472,9 +524,8 @@ export const WorksheetBuilder = ({
         );
       }
       secGroups.forEach((g, i) => {
-        const idx = globalIdx++;
         flatPos++;
-        rows.push(renderGroupRow(g, idx, flatPos < totalRows));
+        rows.push(renderGroupRow(g, flatPos < totalRows));
         if (i < secGroups.length - 1) rows.push(renderInsertBreak(g.id));
       });
       if (canAdd) {
