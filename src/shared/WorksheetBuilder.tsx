@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import type { ReactNode } from "react";
 import { RefreshCw, Eye, X, ChevronDown, ChevronUp, GripVertical } from "lucide-react";
 import type {
@@ -53,11 +53,11 @@ export interface WorksheetBuilderProps {
   ) => void;
   comingSoonLevels?: DifficultyLevel[];
   hideFontControls?: boolean;
-  /** When set, every group is locked to this single sub-tool and the per-group
-   *  sub-tool selector is hidden (used for the in-tool "Advanced" worksheet mode,
-   *  which must only draw from the current sub-tool). Omit for the cross-tool
-   *  Builder, where groups can mix sub-tools. */
-  lockedTool?: string;
+  /** Seeds the first group's sub-tool (used by the in-tool "Advanced" worksheet
+   *  mode, so it opens already scoped to whatever sub-tool the teacher was on).
+   *  Purely a starting point — every group's sub-tool, including the first, can
+   *  still be changed freely; sub-tools are never mixed-locked. */
+  initialTool?: string;
   /** Optional content rendered as a header row at the very top of the controls
    *  card (used to host the in-tool "Advanced" toggle so it shares the card). */
   headerSlot?: ReactNode;
@@ -70,14 +70,11 @@ export const WorksheetBuilder = ({
   customPrintHandler,
   comingSoonLevels = [],
   hideFontControls = false,
-  lockedTool,
+  initialTool,
   headerSlot,
 }: WorksheetBuilderProps) => {
   const generateUniqueQ = makeUniqueQ(generateQuestion);
-  const allToolKeys = Object.keys(config.tools);
-  // When locked to a single sub-tool, the per-group selector is hidden and every
-  // group is forced to that tool.
-  const toolKeys = lockedTool ? [lockedTool] : allToolKeys;
+  const toolKeys = Object.keys(config.tools);
 
   const makeDefaultGroup = (
     id: number,
@@ -121,7 +118,7 @@ export const WorksheetBuilder = ({
     };
   };
 
-  const [groups, setGroups] = useState<BuilderGroup[]>([makeDefaultGroup(1)]);
+  const [groups, setGroups] = useState<BuilderGroup[]>([makeDefaultGroup(1, initialTool ?? toolKeys[0])]);
   const [selectedId, setSelectedId] = useState(1);
   const nextId = useRef(2);
   const [dividers, setDividers] = useState<Set<number>>(new Set());
@@ -159,21 +156,6 @@ export const WorksheetBuilder = ({
   const fontSizes = ["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"];
   const canFontIncrease = worksheetFontSize < fontSizes.length - 1;
   const canFontDecrease = worksheetFontSize > 0;
-
-  // If the locked sub-tool changes (the user switches the active sub-tool tab while
-  // in the in-tool Advanced mode), remap every group to the new tool — re-deriving
-  // its QO defaults while preserving the section structure and per-group counts —
-  // and clear the now-stale worksheet.
-  const prevLockedTool = useRef(lockedTool);
-  useEffect(() => {
-    if (!lockedTool || prevLockedTool.current === lockedTool) return;
-    prevLockedTool.current = lockedTool;
-    setGroups((gs) =>
-      gs.map((g) => ({ ...makeDefaultGroup(g.id, lockedTool, g.level), count: g.count })),
-    );
-    setWorksheet([]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lockedTool]);
 
   const computeSections = (
     gs: BuilderGroup[],

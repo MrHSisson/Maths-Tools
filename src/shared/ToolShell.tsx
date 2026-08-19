@@ -1,5 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback, type ReactNode } from "react";
-import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, LayoutGrid, SlidersHorizontal } from "lucide-react";
+import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, SlidersHorizontal } from "lucide-react";
 import type { DifficultyLevel, AnyQuestion, WorkingStep, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
 import { LV_COLORS, getQuestionBg, getStepBg } from "./colors";
 import { normalizeMultiSelect, ansEq, makeUniqueQ } from "./helpers";
@@ -146,7 +146,11 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       return out;
     };
     const toolParam = p.get("tool");
-    const modeMap: Record<string, "whiteboard" | "single" | "worksheet" | "builder" | "teach"> = { whiteboard: "whiteboard", example: "single", worksheet: "worksheet", builder: "builder", teach: "teach" };
+    // "builder" used to be its own top-level mode (a standalone nav-bar tab); it's
+    // now folded into Worksheet mode's Advanced toggle. Old `mode=builder` links
+    // still work — they land on Worksheet mode with Advanced already on (see
+    // `builderRequested` below and its use for the initial worksheetMode state).
+    const modeMap: Record<string, "whiteboard" | "single" | "worksheet" | "teach"> = { whiteboard: "whiteboard", example: "single", worksheet: "worksheet", builder: "worksheet", teach: "teach" };
     const levelMap: Record<string, DifficultyLevel> = { "1": "level1", "2": "level2", "3": "level3" };
     const levelParam = levelMap[p.get("level") ?? ""];
     const intParam = (key: string, min: number, max: number): number | null => {
@@ -156,6 +160,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     return {
       tool: toolParam && toolKeys.includes(toolParam) ? toolParam : toolKeys[0],
       mode: modeMap[p.get("mode") ?? ""] ?? "whiteboard",
+      builderRequested: p.get("mode") === "builder",
       level: levelParam && !(defaults.comingSoonLevels ?? []).includes(levelParam) ? levelParam : "level1" as DifficultyLevel,
       vars: toggles(p.get("vars")),
       ms: toggles(p.get("ms")),
@@ -187,7 +192,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   });
 
   const [currentTool, setCurrentTool] = useState<string>(urlInit.tool);
-  const [mode, setMode] = useState<"whiteboard" | "single" | "worksheet" | "builder" | "teach">(urlInit.mode);
+  const [mode, setMode] = useState<"whiteboard" | "single" | "worksheet" | "teach">(urlInit.mode);
   // Worked Example is always available; only its step-by-step navigation (one
   // step at a time) is reserved for Developing mode.
   const devMode = useDevMode();
@@ -293,7 +298,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const [showWorksheetAnswers, setShowWorksheetAnswers] = useState(false);
   const [printMode, setPrintMode] = useState<PrintMode>("both");
   const [isDifferentiated, setIsDifferentiated] = useState(urlInit.diff && comingSoon.length === 0);
-  const [worksheetMode, setWorksheetMode] = useState<"standard" | "advanced">(wbInit?.worksheetMode ?? "standard");
+  const [worksheetMode, setWorksheetMode] = useState<"standard" | "advanced">(
+    urlInit.builderRequested ? "advanced" : (wbInit?.worksheetMode ?? "standard"),
+  );
   const [displayFontSize, setDisplayFontSize] = useState(defaults.displayFontSize ?? 2);
   const [worksheetFontSize, setWorksheetFontSize] = useState(defaults.worksheetFontSize ?? 1);
   const [colorScheme, setColorScheme] = useState("default");
@@ -505,7 +512,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   useEffect(() => {
     const p = new URLSearchParams();
     if (currentTool !== toolKeys[0]) p.set("tool", currentTool);
-    if (mode !== "whiteboard") p.set("mode", mode === "single" ? "example" : mode === "builder" ? "builder" : mode === "teach" ? "teach" : "worksheet");
+    if (mode !== "whiteboard") p.set("mode", mode === "single" ? "example" : mode === "teach" ? "teach" : "worksheet");
     if (difficulty !== "level1") p.set("level", difficulty.slice(-1));
     const t = config.tools[currentTool];
     const ddCfg = t.difficultySettings?.[difficulty]?.dropdown ?? t.dropdown;
@@ -1129,10 +1136,6 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             <Home size={24} /><span className="font-semibold text-lg">Home</span>
           </button>
           <div className="flex items-center gap-2">
-            <button onClick={() => { setMode(mode === "builder" ? "whiteboard" : "builder"); setPresenterMode(false); setWbFullscreen(false); }}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg font-semibold text-sm transition-colors ${mode === "builder" ? "bg-white text-blue-900" : "text-white hover:bg-blue-800"}`}>
-              <LayoutGrid size={18} /><span>Builder</span>
-            </button>
             <div className="relative">
               <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-white hover:bg-blue-800 p-2 rounded-lg transition-colors">
                 {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
@@ -1148,7 +1151,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         <div className="max-w-6xl mx-auto">
           <h1 className="text-5xl font-bold text-center mb-8" style={{ color: "#000" }}>{config.pageTitle}</h1>
           <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
-          {toolKeys.length > 1 && mode !== "builder" && mode !== "teach" && (
+          {toolKeys.length > 1 && mode !== "teach" && (
             <>
               <div className="flex justify-center gap-4 mb-6">
                 {toolKeys.map(k => (
@@ -1161,31 +1164,19 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
             </>
           )}
-          {mode !== "builder" && (
-            <div className="flex justify-center gap-4 mb-8">
-              {([...(["whiteboard", "single", "worksheet"] as const), ...(showTeach ? (["teach"] as const) : [])] as const)
-                .map(m => {
-                  const label = m === "whiteboard" ? "Whiteboard" : m === "single" ? "Worked Example" : m === "teach" ? "Teach" : "Worksheet";
-                  return (
-                    <button key={m} onClick={() => { setMode(m); setPresenterMode(false); setWbFullscreen(false); }}
-                      className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${mode === m ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
-                      {label}
-                    </button>
-                  );
-                })}
-            </div>
-          )}
+          <div className="flex justify-center gap-4 mb-8">
+            {([...(["whiteboard", "single", "worksheet"] as const), ...(showTeach ? (["teach"] as const) : [])] as const)
+              .map(m => {
+                const label = m === "whiteboard" ? "Whiteboard" : m === "single" ? "Worked Example" : m === "teach" ? "Teach" : "Worksheet";
+                return (
+                  <button key={m} onClick={() => { setMode(m); setPresenterMode(false); setWbFullscreen(false); }}
+                    className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${mode === m ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
+                    {label}
+                  </button>
+                );
+              })}
+          </div>
 
-          {mode === "builder" && (
-            <WorksheetBuilder
-              config={config}
-              generateQuestion={generateQuestion}
-              questionRenderer={questionRenderer}
-              customPrintHandler={customPrintHandler}
-              comingSoonLevels={comingSoon}
-              hideFontControls={hideFontControls}
-            />
-          )}
           {mode === "worksheet" && (
             worksheetMode === "advanced"
               ? <WorksheetBuilder
@@ -1195,7 +1186,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                   customPrintHandler={customPrintHandler}
                   comingSoonLevels={comingSoon}
                   hideFontControls={hideFontControls}
-                  lockedTool={currentTool}
+                  initialTool={currentTool}
                   headerSlot={advancedToggle}
                 />
               : <>
@@ -1206,7 +1197,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           {mode === "teach" && showTeach && teachingSlides && (
             <TeachingDeck slides={teachingSlides} />
           )}
-          {mode !== "worksheet" && mode !== "builder" && mode !== "teach" && (
+          {mode !== "worksheet" && mode !== "teach" && (
             <div className="flex flex-col gap-6">
               <div className="rounded-xl shadow-lg">
                 {renderControlBar()}

@@ -28,6 +28,24 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-08-19 — Worksheet Builder: standalone Builder folded into the Advanced toggle
+Removed the top-nav "Builder" tab as a separate mode. Auditing the difference between it and the
+in-tool Worksheet mode's "Advanced" toggle found only two: the toggle rendered a `lockedTool`-locked
+builder (every group forced to the current sub-tool, per-group tool selector hidden) with a header
+slot hosting the toggle switch itself, while the nav tab rendered the same component unlocked
+(sub-tools mixable) with no header slot and its own shareable `?mode=builder` URL. Locking added no
+capability — it only removed the ability to change a group's sub-tool — so the two modes were a
+near-duplicate surface with the same confusion risk the classic/full split had. Folded them into one:
+the Advanced toggle now opens the same always-unlocked builder the nav tab used to, seeded via a new
+`initialTool` prop (`WorksheetBuilder.tsx`) so the first group still defaults to whatever sub-tool the
+teacher was on, rather than forcing them to stay there. Removed the nav-bar button, the `mode ===
+"builder"` top-level mode, and `WorksheetBuilder`'s `lockedTool` prop + its now-dead group-remapping
+effect. Old `?mode=builder` links still work — `modeMap` maps `builder` → `worksheet` and a new
+`builderRequested` flag seeds `worksheetMode` as `"advanced"` on load, so bookmarks never break.
+Verified in a live browser: nav bar has no Builder button, the Advanced toggle opens the unlocked
+builder pre-seeded with the active sub-tool, and an old `?mode=builder` link correctly lands on
+Worksheet mode with Advanced already on. `npm run build` clean, `npm test` 304/304 passing.
+
 ## 2026-08-19 — Worksheet Builder: drag-and-drop group reordering
 Replaced the row number badge with a drag handle (`GripVertical`) and added native HTML5
 drag-and-drop to `WorksheetBuilder`'s group list — groups can be reordered by dragging, including

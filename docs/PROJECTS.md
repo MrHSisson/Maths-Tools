@@ -616,7 +616,8 @@ heading/shuffle/columns) but rebuilt around classic's UI, which was preferred:
 **Design questions from the original scoping, and how they were resolved:**
 - *Sectioning shape* — went with (b) opt-in, as recommended in the original scoping note.
 - *Where Standard Worksheet fits* — kept side-by-side, unchanged (the low-risk option); this
-  unification only touched the Advanced/Builder surfaces.
+  unification only touched the Advanced/Builder surfaces (see the follow-on below — Advanced/Builder
+  are since merged into one surface).
 - *URL-sync gap* — **still open**, not part of this pass. The unified Builder's groups/sections still
   don't sync to the shareable URL; `CLAUDE.md`'s URL param table's "advanced-mode groups are not
   encoded" note still applies. Worth a follow-up if teachers want to bookmark/share a built worksheet.
@@ -626,12 +627,25 @@ heading/shuffle/columns) but rebuilt around classic's UI, which was preferred:
   the old classic path since `hasSections()` reads it as unsectioned).
 - *Documentation* — still open: `CLAUDE.md`'s `ToolShellProps` reference still doesn't mention
   `WorksheetBuilder` as a component. Worth adding a real section there (mirroring the "Collapsible
-  working panel" treatment) covering the Standard/Advanced/Builder split, the groups/sections model,
-  and the insert-break interaction, next time `WorksheetBuilder.tsx` is touched.
+  working panel" treatment) covering the Standard/Builder split (two-way now, see below), the
+  groups/sections model, and the insert-break interaction, next time `WorksheetBuilder.tsx` is touched.
+
+**Follow-on (2026-08-19): standalone Builder folded into the Advanced toggle.** After the
+classic/full unification, an audit of the *remaining* difference between the in-tool "Advanced"
+toggle and the standalone top-nav "Builder" tab found only two things: `lockedTool` (Advanced forced
+every group to the current sub-tool; Builder let them mix) and a header slot (Advanced hosted the
+toggle switch itself in the builder card). Locking added no capability — it only removed the ability
+to change a group's sub-tool — so the two were a near-duplicate surface carrying the same confusion
+risk the classic/full split had. Removed the nav-bar "Builder" tab, the `mode === "builder"` top-level
+mode, and `WorksheetBuilder`'s `lockedTool` prop (plus its group-remapping effect). The Advanced
+toggle now opens the same always-unlocked builder, seeded via a new `initialTool` prop so the first
+group still defaults to whichever sub-tool the teacher was on. Old `?mode=builder` links still work —
+`modeMap` maps `builder` → `worksheet` and seeds `worksheetMode` as `"advanced"` on load.
 
 **Possible next steps:**
 - URL-sync for the Builder's groups/sections (see above).
-- Add the `CLAUDE.md` `WorksheetBuilder` reference section (see above).
+- Add the `CLAUDE.md` `WorksheetBuilder` reference section, now describing a two-way Standard/Builder
+  split rather than three-way (see above).
 - No other structural work known — the two-pane layout, insert-break control, and decluttered section
   header should be reused as-is if further worksheet-building surfaces are ever added.
 
