@@ -134,6 +134,11 @@ export const WorksheetBuilder = ({
   const [sectionHeaders, setSectionHeaders] = useState<
     Record<number, string>
   >({});
+  // Manually revealed heading/shuffle strip for a single, unsplit section — lets
+  // a flat list use heading/shuffle without faking a split. Once heading text or
+  // shuffle is actually set, the strip stays visible even without this flag (see
+  // renderGroupList), so it survives merging a split back down to one section.
+  const [showSoloSectionInfo, setShowSoloSectionInfo] = useState(false);
   const [layout, setLayout] = useState<"grid" | "list">("grid");
   const [borders, setBorders] = useState(true);
   // Global column count, shown directly in the Design line while the list is a
@@ -381,11 +386,19 @@ export const WorksheetBuilder = ({
     </div>
   );
 
-  // Section header strip — only rendered once a split actually exists, so a
-  // plain flat list carries no section chrome at all.
-  const renderSectionHeader = (secIdx: number, canMerge: boolean) => (
+  // Section header strip. Shown for every section once a split exists (full
+  // form, with the "Section N" label, per-section column picker and merge-×);
+  // shown for a lone unsplit section only once revealed via "+ Add heading /
+  // shuffle" or once it already carries data (no label/columns — the Design
+  // line's global column picker covers columns while there's only one section).
+  const renderSectionHeader = (
+    secIdx: number,
+    opts: { canMerge: boolean; showColumns: boolean; onClose?: () => void },
+  ) => (
     <div key={`hdr-${secIdx}`} className="flex items-center gap-2.5 px-4 py-2 border-b border-gray-100" style={{ backgroundColor: "#f8fafc" }}>
-      <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wide flex-shrink-0">Section {secIdx + 1}</span>
+      {opts.showColumns && (
+        <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wide flex-shrink-0">Section {secIdx + 1}</span>
+      )}
       <input
         type="text"
         placeholder="Heading (optional)"
@@ -397,20 +410,28 @@ export const WorksheetBuilder = ({
         className={`text-[11px] font-semibold px-2 py-0.5 rounded-full transition-colors flex-shrink-0 ${sectionShuffles[secIdx] ? "bg-blue-900 text-white" : "text-gray-400 hover:bg-gray-100"}`}>
         Shuffle
       </button>
-      <div className="flex rounded-md overflow-hidden border border-gray-200 flex-shrink-0">
-        {[1, 2, 3, 4].map(c => (
-          <button key={c} onClick={() => setSectionColumns(prev => ({ ...prev, [secIdx]: c }))}
-            className={`w-6 h-6 text-xs font-bold transition-colors ${(sectionColumns[secIdx] ?? numColumns) === c ? "bg-blue-900 text-white" : "bg-white text-gray-300 hover:bg-gray-50"}`}>
-            {c}
-          </button>
-        ))}
-      </div>
-      {canMerge && (
+      {opts.showColumns && (
+        <div className="flex rounded-md overflow-hidden border border-gray-200 flex-shrink-0">
+          {[1, 2, 3, 4].map(c => (
+            <button key={c} onClick={() => setSectionColumns(prev => ({ ...prev, [secIdx]: c }))}
+              className={`w-6 h-6 text-xs font-bold transition-colors ${(sectionColumns[secIdx] ?? numColumns) === c ? "bg-blue-900 text-white" : "bg-white text-gray-300 hover:bg-gray-50"}`}>
+              {c}
+            </button>
+          ))}
+        </div>
+      )}
+      {opts.canMerge && (
         <button onClick={() => {
           const prevGroupId = sections[secIdx - 1][sections[secIdx - 1].length - 1]?.id;
           if (prevGroupId !== undefined) toggleDivider(prevGroupId);
         }}
           title="Merge with section above"
+          className="w-5 h-5 rounded-full flex items-center justify-center text-gray-300 hover:bg-red-50 hover:text-red-400 transition-colors flex-shrink-0">
+          <X size={11} />
+        </button>
+      )}
+      {opts.onClose && (
+        <button onClick={opts.onClose} title="Remove heading/shuffle"
           className="w-5 h-5 rounded-full flex items-center justify-center text-gray-300 hover:bg-red-50 hover:text-red-400 transition-colors flex-shrink-0">
           <X size={11} />
         </button>
@@ -424,8 +445,32 @@ export const WorksheetBuilder = ({
     const totalRows = groups.length;
     const rows: ReactNode[] = [];
 
+    const isSplit = sections.length > 1;
+    const soloInfoActive = showSoloSectionInfo || !!sectionHeaders[0] || !!sectionShuffles[0];
+
     sections.forEach((secGroups, secIdx) => {
-      if (sections.length > 1) rows.push(renderSectionHeader(secIdx, secIdx > 0));
+      if (isSplit) {
+        rows.push(renderSectionHeader(secIdx, { canMerge: secIdx > 0, showColumns: true }));
+      } else if (secIdx === 0 && soloInfoActive) {
+        rows.push(renderSectionHeader(secIdx, {
+          canMerge: false,
+          showColumns: false,
+          onClose: () => {
+            setShowSoloSectionInfo(false);
+            setSectionHeaders(prev => { const next = { ...prev }; delete next[0]; return next; });
+            setSectionShuffles(prev => { const next = { ...prev }; delete next[0]; return next; });
+          },
+        }));
+      } else if (secIdx === 0) {
+        rows.push(
+          <div key="solo-add" className="px-4 py-1.5 border-b border-gray-100">
+            <button onClick={() => setShowSoloSectionInfo(true)}
+              className="text-xs font-semibold text-gray-400 hover:text-blue-600 transition-colors">
+              + Add heading / shuffle
+            </button>
+          </div>,
+        );
+      }
       secGroups.forEach((g, i) => {
         const idx = globalIdx++;
         flatPos++;
