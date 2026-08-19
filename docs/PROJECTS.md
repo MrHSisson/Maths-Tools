@@ -77,7 +77,7 @@ pedagogy-engine sweep.
 | **Core representations** | ⏸ | 3 of 6 visual families have Teach scenes — feeds Skills/Teach decks (tier 2), paused alongside them |
 | **Teach decks** | ⏸ | Engine built; one partial deck exists — least mature prong, secondary to tier-1 work |
 | **Old-shell migration** | ✅ | Backlog empty; Generators are standalone by design, not migration targets |
-| **Worksheet Builder unification** | ⬜ | Two undocumented `WorksheetBuilder` states (classic/full) split by `devMode` — **tier-1 priority**: unify them and remove the gate, worksheet mode should never be dev-only |
+| **Worksheet Builder unification** | ✅ | `classic`/`full` split removed — one always-live builder, sections created inline via a hover "split here" control instead of dev-gating |
 | **Computer Science shell** | ⏸ | Parked while the Maths Tool Audit is in progress |
 | **Decision Maths** | ⏸ | Parked while the Maths Tool Audit is in progress |
 
@@ -567,77 +567,73 @@ a shell-migration one.
 
 ## Worksheet Builder unification
 
-> **Tier-1 priority (see Priorities above).** Worksheet mode is core ToolShell — one of the three
-> things a teacher actually uses. It should never have a build-quality difference gated behind
-> Developing-tools mode. Found and scoped 2026-08-18, ready to build.
+> **Done (2026-08-19).** Worksheet mode is core ToolShell — one of the three things a teacher
+> actually uses. It no longer has a build-quality difference gated behind Developing-tools mode.
+> Found and scoped 2026-08-18, unified 2026-08-19.
 
-**Where it's at.** Three separate worksheet-building surfaces exist, and the split between two of
-them has never been documented anywhere before this pass:
+**Where it was at (pre-unification).** Three separate worksheet-building surfaces existed, and the
+split between two of them had never been documented anywhere before the 2026-08-18 scoping pass:
 
 1. **Standard Worksheet** — `renderWorksheet()`/`renderControlBar()` in `ToolShell.tsx`, always
    live, not a "builder" at all. One question pool: the current sub-tool tab × one difficulty level
-   (or the built-in "Differentiated" toggle, a fixed 3-level/3-column split). Questions count,
-   Columns count (locked to 3 when Differentiated), a Settings popover (Worksheet/Textbook layout,
-   Borders). No sections, no mixing levels/sub-tools. Its setup **is** synced to the shareable URL
-   (`n`/`cols`/`diff`, per the URL param table in `CLAUDE.md`).
-2. **`WorksheetBuilder` — classic** (`src/shared/WorksheetBuilder.tsx`, prop `classic={!devMode}`,
-   i.e. Developing-tools mode **off** — what everyone currently sees). Reached via the in-tool
-   "Advanced" toggle inside Worksheet mode (locked to the current sub-tool via `lockedTool`) or the
-   standalone "Builder" top-nav tab (any sub-tool mixable, no lock). A flat list of **groups** (tool
-   × level × QO × count, up to 10 groups), two-pane layout (group list left, QO panel for the
-   selected group right), one **global** column picker (1–4) shown directly in the Design line.
-3. **`WorksheetBuilder` — full** (same component, same two entry points, `classic` **false**, i.e.
-   Developing-tools mode **on**). Groups can be split into **sections** via dividers ("Add section" /
-   "Merge with section above" on the last group of the section above). Each section gets its own
-   editable heading text, a Shuffle toggle (randomises question order within that section only), and
-   its own column count (1–4) — the classic mode's single global picker disappears entirely, replaced
-   by these per-section ones. Everything else (generate/answers/print, Worksheet↔Textbook layout,
-   Borders) is identical to classic.
+   (or the built-in "Differentiated" toggle, a fixed 3-level/3-column split). Unaffected by this
+   unification — out of scope, works well in its single use case (a teacher who just wants the
+   current tool's quick worksheet, not a mix). Still synced to the shareable URL (`n`/`cols`/`diff`).
+2. **`WorksheetBuilder` — classic** (prop `classic={!devMode}`, Developing-tools mode **off** — what
+   everyone used to see). A flat list of **groups** (tool × level × QO × count, up to 10 groups),
+   two-pane layout (group list left, QO panel for the selected group right), one **global** column
+   picker.
+3. **`WorksheetBuilder` — full** (same component, `classic` **false**, Developing-tools mode **on**).
+   Groups could be split into **sections** via dividers, each with its own heading, Shuffle toggle,
+   and column count. Preferred for its feature set (sections, shuffle, per-section columns), but its
+   UI was the actual complaint: cramped section-header row (label, heading input, Shuffle, 4-button
+   column picker, merge-× all packed into one line with vertical divider pipes), an inline accordion
+   under each group row that pushed the list around as you edited, and section creation was
+   append-only at the bottom (no way to split an existing run of groups in place).
 
-Neither builder state (2 or 3) syncs its setup to the shareable URL at all — `CLAUDE.md`'s URL param
-table already flags "advanced-mode groups are not encoded" but doesn't explain why or that there are
-two different builder states underneath.
+**What shipped.** `classic={!devMode}` is gone — `WorksheetBuilder` (`src/shared/WorksheetBuilder.tsx`)
+is now a single implementation, always live, keeping every "full" feature (sections, per-section
+heading/shuffle/columns) but rebuilt around classic's UI, which was preferred:
 
-**The aim:** unify (2) and (3) into one consistent, always-live builder. `classic={!devMode}` goes
-away entirely — no worksheet-building surface should ever look or behave differently depending on
-Developing-tools mode.
+- **Persistent two-pane layout, always** (classic's model, not full's inline accordion): group list
+  on the left, the selected group's QO options in a fixed panel on the right. Selecting a row never
+  reflows the list.
+- **Sectioning is opt-in and invisible until used** — option (b) from the original design-question
+  list below. A flat, unsplit list renders with zero section chrome (no header strip, no "Section 1"
+  label) — indistinguishable from old classic mode. The moment a split exists, every section
+  (including the first) gets a slim header strip.
+- **Section breaks are created in place**, not appended at the end: a thin hover-reveal "+ Split
+  section" control sits in the gap between any two adjacent group rows, so a section boundary can go
+  anywhere. Removing a break is the section header's merge-× (unchanged from full).
+- **Decluttered section header strip** — dropped the vertical divider pipes and the "col" label;
+  heading input, a pill-style Shuffle toggle, and a smaller 4-button column picker sit directly on one
+  line.
+- **Column control follows section count**: the global 1–4 picker in the Design line shows only while
+  the list is a single unsplit section (`sections.length <= 1`); once split, each section's own picker
+  in its header strip takes over — resolves the original "something in between" option (c) as the
+  natural default→override behaviour rather than a separate mode.
 
-**Possible next steps / open design questions to resolve before or during build:**
-- **The core design call:** which shape does the unified builder take?
-  - *(a) Sectioning always-on* — today's "full" experience becomes what everyone gets. Simplest
-    change (delete the `classic` branches), but adds real UI surface (heading input, Shuffle toggle,
-    per-section column picker) for a teacher who just wants a flat 10-question sheet.
-  - *(b) Sectioning opt-in* — default to today's flat "classic" layout; an explicit "Add section"
-    action is what reveals the per-section heading/shuffle/column controls, only for the section(s)
-    actually split out. Closer to progressive disclosure, more work (the "no sections yet" and
-    "some sections" states both need to render well).
-  - *(c) Something in between* — e.g. keep the single global column picker as the default/fallback
-    and only override it per-section once a section explicitly sets its own.
-  - Recommend (b) on first read — it keeps the common case (no sections) as simple as classic mode
-    is today, and only asks a teacher to think about sections when they actually add one — but this
-    is a genuine product-feel decision, not a mechanical one, worth a quick sign-off before building.
-- **Where Standard Worksheet fits once the Builder is unified and live.** Options: keep both modes
-  side by side as they are today (Standard = quick single-pool path via its own tab, Builder = full
-  flexibility via Advanced/Builder) — the low-risk option, since Standard's URL-sync and print paths
-  stay untouched; or fold Standard into the Builder as its default/empty state (bigger, more
-  disruptive — every tool's URL-sync and print-context wiring would need re-checking). Scope the
-  de-gating to the Builder alone unless a fold-in is deliberately wanted too.
-- **URL-sync gap.** Should the unified Builder's setup (groups/sections) sync to the shareable URL,
-  matching Standard mode's existing params? Currently neither builder state does this at all — worth
-  deciding whether this ships alongside the unification or is tracked as a following step.
-- **Cleanup.** Once `classic` is gone: remove the prop from `WorksheetBuilderProps`, delete
-  `renderGroupListClassic()`, delete the classic-only global column picker in the Design line, and
-  re-check `handleGenerate()`'s three `classic ? … : …` branches (single unsectioned section, no
-  shuffle, `numColumns` vs per-section columns) collapse cleanly to the sectioned path alone.
-- **Documentation.** `CLAUDE.md`'s `ToolShellProps` reference doesn't mention `WorksheetBuilder` as a
-  component at all today. Once unified, add a real section there (mirroring the "Collapsible working
-  panel" treatment) covering: the three-way Standard/Advanced/Builder split (or two-way, if Standard
-  gets folded in), the groups/sections model, and the URL-sync state once decided.
+**Design questions from the original scoping, and how they were resolved:**
+- *Sectioning shape* — went with (b) opt-in, as recommended in the original scoping note.
+- *Where Standard Worksheet fits* — kept side-by-side, unchanged (the low-risk option); this
+  unification only touched the Advanced/Builder surfaces.
+- *URL-sync gap* — **still open**, not part of this pass. The unified Builder's groups/sections still
+  don't sync to the shareable URL; `CLAUDE.md`'s URL param table's "advanced-mode groups are not
+  encoded" note still applies. Worth a follow-up if teachers want to bookmark/share a built worksheet.
+- *Cleanup* — done: `classic` prop removed from `WorksheetBuilderProps`, `renderGroupListClassic()`
+  deleted, the three `classic ? … : …` branches in `handleGenerate()` collapsed to their sectioned-path
+  equivalents (a single-group-list call now just produces one section, which behaves identically to
+  the old classic path since `hasSections()` reads it as unsectioned).
+- *Documentation* — still open: `CLAUDE.md`'s `ToolShellProps` reference still doesn't mention
+  `WorksheetBuilder` as a component. Worth adding a real section there (mirroring the "Collapsible
+  working panel" treatment) covering the Standard/Advanced/Builder split, the groups/sections model,
+  and the insert-break interaction, next time `WorksheetBuilder.tsx` is touched.
 
-**Detail.** Everything above is a session's worth of live-code investigation (2026-08-18) —
-`src/shared/WorksheetBuilder.tsx` (848 lines) and the worksheet-mode sections of `ToolShell.tsx` are
-the two files to open first. No design doc exists yet beyond this entry; write one only if the
-sectioning-shape decision above turns out to need more than a quick sign-off.
+**Possible next steps:**
+- URL-sync for the Builder's groups/sections (see above).
+- Add the `CLAUDE.md` `WorksheetBuilder` reference section (see above).
+- No other structural work known — the two-pane layout, insert-break control, and decluttered section
+  header should be reused as-is if further worksheet-building surfaces are ever added.
 
 ---
 

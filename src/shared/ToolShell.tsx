@@ -1184,7 +1184,6 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               customPrintHandler={customPrintHandler}
               comingSoonLevels={comingSoon}
               hideFontControls={hideFontControls}
-              classic={!devMode}
             />
           )}
           {mode === "worksheet" && (
@@ -1198,7 +1197,6 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                   hideFontControls={hideFontControls}
                   lockedTool={currentTool}
                   headerSlot={advancedToggle}
-                  classic={!devMode}
                 />
               : <>
                   {renderControlBar()}

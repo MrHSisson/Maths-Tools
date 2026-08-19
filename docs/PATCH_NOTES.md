@@ -28,6 +28,27 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-08-19 — Worksheet Builder unification: classic/full split removed
+Built the prong scoped 2026-08-18. `WorksheetBuilder` (`src/shared/WorksheetBuilder.tsx`) is now a
+single implementation — `classic={!devMode}` is gone, and worksheet-building no longer differs by
+Developing-tools mode. Kept every "full" feature (sections, per-section heading/shuffle/columns) but
+rebuilt the UI around classic's preferred model, since the complaint was the *structure*, not the
+feature set:
+- Persistent two-pane layout always (group list left, selected group's QO options in a fixed panel
+  right) — replaces full's inline accordion-under-the-row, which reflowed the list on every edit.
+- Sections are opt-in and invisible until used: a flat, unsplit list has zero section chrome, matching
+  old classic exactly. Splitting creates section header strips (heading, Shuffle, per-section columns)
+  only once they're needed.
+- Section breaks are created **in place** via a hover-reveal "+ Split section" control in the gap
+  between any two group rows, replacing full's append-only "Add section" button at the bottom of the
+  list — a break can now go anywhere, not just at the end.
+- Decluttered the section header strip (dropped divider pipes and the "col" label; smaller column
+  picker) and made the global column picker in the Design line context-sensitive (shows only while
+  unsplit; per-section pickers take over once split).
+`ToolShell.tsx`'s two `<WorksheetBuilder>` call sites no longer pass `classic`. `npm run build` clean,
+`npm test` 304/304 passing. Still open: URL-sync for the Builder's groups/sections, and a `CLAUDE.md`
+`WorksheetBuilder` reference section — both tracked in `docs/PROJECTS.md`.
+
 ## 2026-08-18 — Worksheet Builder's undocumented classic/full split, scoped for tomorrow
 Findings-only session, no code changed. `docs/PROJECTS.md` gains a new prong, **Worksheet Builder
 unification**, scoping a previously undocumented gap for the next build session: `WorksheetBuilder`
