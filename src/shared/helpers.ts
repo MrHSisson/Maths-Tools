@@ -23,6 +23,22 @@ export const pickActive = (values: Record<string, boolean>, options: { value: st
 export const normalizeMultiSelect = <T extends { key: string }>(ms?: T | T[] | null): T[] =>
   ms ? (Array.isArray(ms) ? ms : [ms]) : [];
 
+// Resolves a multiSelect group's *effective* on/off values by filling in each
+// option's own `defaultActive` before layering explicit overrides on top.
+// Feeding a raw overrides object straight into pickActive() is unsafe once any
+// option can be left unset (e.g. a differentiated-worksheet level nobody has
+// opened the QO popover for) — pickActive treats "not === false" as active, so
+// an empty/partial overrides object would silently treat every option as
+// active, including ones whose defaultActive is false.
+export const resolveMultiSelectValues = (
+  groups: { options: { value: string; defaultActive: boolean }[] }[],
+  overrides: Record<string, boolean>,
+): Record<string, boolean> => {
+  const values: Record<string, boolean> = {};
+  groups.forEach(g => g.options.forEach(o => { values[o.value] = o.defaultActive; }));
+  return { ...values, ...overrides };
+};
+
 // ── Skill-link markers ────────────────────────────────────────────────────────
 // A prose label may mark a term as a drill-down into the skill library:
 //   mStep("Find the common denominator — the [[lcm|LCM]] of 11 and 13:", "143")

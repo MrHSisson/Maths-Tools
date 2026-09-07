@@ -2,7 +2,7 @@ import { useState, useEffect, useLayoutEffect, useRef, useCallback, type ReactNo
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, SlidersHorizontal } from "lucide-react";
 import type { DifficultyLevel, AnyQuestion, WorkingStep, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
 import { LV_COLORS, getQuestionBg, getStepBg } from "./colors";
-import { normalizeMultiSelect, ansEq, makeUniqueQ } from "./helpers";
+import { normalizeMultiSelect, resolveMultiSelectValues, ansEq, makeUniqueQ } from "./helpers";
 import { loadKaTeX } from "./katex";
 import { MathRenderer, InlineMath } from "./components/MathRenderer";
 import { QuestionDisplay, AnswerDisplay } from "./components/QuestionDisplay";
@@ -382,6 +382,23 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const getDropdownConfig = () => getToolSettings().difficultySettings?.[difficulty]?.dropdown ?? getToolSettings().dropdown;
   const getVariablesConfig = () => getToolSettings().difficultySettings?.[difficulty]?.variables ?? getToolSettings().variables;
   const getMultiSelectConfig = () => normalizeMultiSelect(getToolSettings().difficultySettings?.[difficulty]?.multiSelect ?? getToolSettings().multiSelect);
+
+  // Differentiated per-level multiSelect state (`levelMultiSelect`) only ever
+  // records EXPLICIT overrides the teacher makes in the differentiated QO
+  // popover — a level nobody has touched stays `{}`. Reading that raw object
+  // straight into pickActive() is wrong: pickActive treats "not === false" as
+  // active, so an untouched level would treat every option (including ones
+  // whose defaultActive is false, e.g. "Crossing zero") as active, silently
+  // ignoring the tool's defaults. Always resolve through this helper — for
+  // both worksheet generation and the popover's checkbox display — so an
+  // untouched level falls back to the SAME per-option defaultActive the
+  // standard (non-differentiated) view uses, with explicit overrides layered
+  // on top.
+  const getLevelMultiSelectValues = (lv: DifficultyLevel): Record<string, boolean> => {
+    const t = getToolSettings();
+    const groups = normalizeMultiSelect(t.difficultySettings?.[lv]?.multiSelect ?? t.multiSelect);
+    return resolveMultiSelectValues(groups, levelMultiSelect[lv] ?? {});
+  };
   const getDropdownValue = () => toolDropdowns[`${currentTool}__${difficulty}`] ?? getDropdownConfig()?.defaultValue ?? "";
   const setDropdownValue = (v: string) => setToolDropdowns(p => ({ ...p, [`${currentTool}__${difficulty}`]: v }));
   const getVariableValues = () => toolVariables[currentTool]?.[difficulty] ?? {};
@@ -421,7 +438,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         const dd = t.difficultySettings?.[lv]?.dropdown ?? t.dropdown;
         const vars = levelVariables[lv] ?? {};
         const ddVal = levelDropdowns[lv] ?? (dd?.defaultValue ?? "");
-        const msVals = levelMultiSelect[lv] ?? {};
+        const msVals = getLevelMultiSelectValues(lv);
         const snap: QOSnapshot = { level: lv, variables: vars, dropdownValue: ddVal, multiSelectValues: msVals };
         for (let i = 0; i < numQuestions; i++)
           questions.push(stampQO(generateUniqueQ(currentTool, lv, vars, ddVal, usedKeys, msVals), snap));
@@ -470,7 +487,11 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     onLevelVariableChange: handleLevelVarChange,
     levelDropdowns,
     onLevelDropdownChange: handleLevelDDChange,
-    levelMultiSelect,
+    levelMultiSelect: {
+      level1: getLevelMultiSelectValues("level1"),
+      level2: getLevelMultiSelectValues("level2"),
+      level3: getLevelMultiSelectValues("level3"),
+    },
     onLevelMultiSelectChange: handleLevelMSChange,
   };
 

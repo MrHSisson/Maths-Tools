@@ -28,6 +28,23 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-07 — ToolShell bug fix: differentiated worksheets ignoring multiSelect defaults
+Fixed a shared-shell bug reported on Collecting Like Terms: a differentiated worksheet would
+sometimes generate negative-coefficient or crossing-zero questions even with "Positive terms
+only" selected. Root cause was in `ToolShell.tsx`, not the tool — the differentiated QO
+popover's per-level multiSelect state (`levelMultiSelect`) only records a level's *explicit*
+overrides, so a level nobody opened the popover for stayed `{}`. That raw `{}` was fed straight
+into `pickActive()`, which treats "not `=== false`" as active — so every option (including ones
+whose `defaultActive` is `false`, like "Subtraction" and "Crossing zero") counted as active,
+regardless of the tool's configured default. Added `resolveMultiSelectValues` (`shared/helpers.ts`)
+to fill in each option's own `defaultActive` before layering explicit overrides on top, and used it
+both for worksheet generation (`handleGenerateWorksheet`) and the popover's own checkbox display
+(previously showing every option unchecked for an untouched level) via a new
+`getLevelMultiSelectValues` helper in `ToolShell.tsx`. This was a shell-level bug affecting every
+tool with a `multiSelect` QO used in differentiated worksheets, not just Collecting Like Terms.
+Added `src/tests/resolveMultiSelectValues.test.ts` to guard the fix. `npm run build` clean, `npm test`
+308/308 passing.
+
 ## 2026-08-19 — Worksheet Builder: standalone Builder folded into the Advanced toggle
 Removed the top-nav "Builder" tab as a separate mode. Auditing the difference between it and the
 in-tool Worksheet mode's "Advanced" toggle found only two: the toggle rendered a `lockedTool`-locked
