@@ -1,7 +1,7 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback, type ReactNode } from "react";
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, SlidersHorizontal } from "lucide-react";
 import type { DifficultyLevel, AnyQuestion, WorkingStep, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
-import { LV_COLORS, LV_LABELS, LV_HEADER_COLORS, getQuestionBg, getStepBg } from "./colors";
+import { LV_COLORS, LV_LABELS, getQuestionBg, getStepBg } from "./colors";
 import { normalizeMultiSelect, resolveMultiSelectValues, ansEq, makeUniqueQ } from "./helpers";
 import { loadKaTeX } from "./katex";
 import { MathRenderer, InlineMath } from "./components/MathRenderer";
@@ -11,8 +11,6 @@ import { WorkedExampleSteps } from "./components/WorkedExampleSteps";
 import {
   StandardQOPopover,
   DiffQOPopover,
-  usePopover,
-  TogglePill,
   SegButtons,
 } from "./components/QOPopovers";
 import { InfoModal } from "./components/InfoModal";
@@ -244,27 +242,62 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const [difficulty, setDifficulty] = useState<DifficultyLevel>(urlInit.level);
   const setDifficultyGuarded = (v: DifficultyLevel) => { if (!comingSoon.includes(v)) setDifficulty(v); };
 
-  // Differentiated worksheets can target any 2-or-3-level subset (e.g. Level 1
-  // & 3), not just all three — `availableLevels` excludes coming-soon levels;
-  // `diffLevels` is the teacher's current selection within that set.
+  // The main level row doubles as the differentiated-level picker: normally
+  // (diffToggle off) it's mutually exclusive — clicking a level sets
+  // `difficulty` and `diffLevels` always tracks that same single level, kept
+  // in sync so flipping the toggle on starts from whatever's on screen. Once
+  // `diffToggle` is on, clicking a level instead toggles its membership in
+  // `diffLevels` (multi-select) — the worksheet only actually differentiates
+  // once 2+ levels are selected (see the `isDifferentiated` derivation below);
+  // with exactly one selected it behaves as an ordinary single-level sheet.
+  // `availableLevels` excludes coming-soon levels — the toggle itself is
+  // disabled when fewer than two levels are available to pick from.
   const availableLevels = ALL_LEVELS.filter(l => !comingSoon.includes(l));
   const [diffLevels, setDiffLevels] = useState<DifficultyLevel[]>(() => {
     const numToLevel: Record<string, DifficultyLevel> = { "1": "level1", "2": "level2", "3": "level3" };
-    const raw = urlInit.diffLv;
-    if (raw) {
-      const parsed = Array.from(new Set(
-        raw.split(",").map(t => numToLevel[t.trim()]).filter((l): l is DifficultyLevel => !!l && availableLevels.includes(l)),
-      ));
-      if (parsed.length >= 2) return ALL_LEVELS.filter(l => parsed.includes(l));
+    if (urlInit.diff) {
+      const raw = urlInit.diffLv;
+      if (raw) {
+        const parsed = Array.from(new Set(
+          raw.split(",").map(t => numToLevel[t.trim()]).filter((l): l is DifficultyLevel => !!l && availableLevels.includes(l)),
+        ));
+        if (parsed.length >= 2) return ALL_LEVELS.filter(l => parsed.includes(l));
+      }
+      return availableLevels;
     }
-    return availableLevels;
+    return [urlInit.level];
   });
+  const [diffToggle, setDiffToggle] = useState(urlInit.diff && availableLevels.length >= 2);
+  // The worksheet is only actually differentiated once the toggle has taken
+  // the level row out of single-select AND 2+ levels are currently checked.
+  const isDifferentiated = diffToggle && diffLevels.length >= 2;
   const toggleDiffLevel = (lv: DifficultyLevel) => {
+    if (!diffToggle) { setDifficultyGuarded(lv); setDiffLevels([lv]); return; }
     setDiffLevels(prev => {
-      if (prev.includes(lv)) return prev.length > 2 ? prev.filter(l => l !== lv) : prev;
-      return ALL_LEVELS.filter(l => l === lv || prev.includes(l));
+      const next = prev.includes(lv)
+        ? (prev.length > 1 ? prev.filter(l => l !== lv) : prev)
+        : ALL_LEVELS.filter(l => l === lv || prev.includes(l));
+      if (next.length === 1) setDifficulty(next[0]);
+      return next;
     });
   };
+  const toggleDiffMode = () => {
+    if (availableLevels.length < 2) return;
+    setDiffToggle(prev => {
+      const next = !prev;
+      if (!next && diffLevels.length > 1) {
+        const collapsed = diffLevels[0];
+        setDifficulty(collapsed);
+        setDiffLevels([collapsed]);
+      }
+      return next;
+    });
+  };
+  // Keep diffLevels mirroring the single active difficulty whenever the level
+  // row isn't in multi-select mode — covers difficulty changes made through
+  // other UI (e.g. the whiteboard/worked-example DifficultyToggle) so turning
+  // multi-select on always starts from whatever level is currently showing.
+  useEffect(() => { if (!diffToggle) setDiffLevels([difficulty]); }, [difficulty, diffToggle]);
   // true (default): every differentiated cell shares one height (the tallest
   // question across every selected level). false: each level's column sizes
   // to its own tallest question, so a simpler level doesn't inflate to match
@@ -373,7 +406,6 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   useEffect(() => { diffHeightsRef.current.clear(); setDiffUniformH(null); }, [worksheet]);
   const [showWorksheetAnswers, setShowWorksheetAnswers] = useState(false);
   const [printMode, setPrintMode] = useState<PrintMode>("both");
-  const [isDifferentiated, setIsDifferentiated] = useState(urlInit.diff && availableLevels.length >= 2);
   const [worksheetMode, setWorksheetMode] = useState<"standard" | "advanced">(
     urlInit.builderRequested ? "advanced" : (wbInit?.worksheetMode ?? "standard"),
   );
@@ -386,7 +418,6 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const [worksheetLayout, setWorksheetLayout] = useState<"grid" | "list">(wbInit?.worksheetLayout ?? "grid");
   const [worksheetBorders, setWorksheetBorders] = useState(wbInit?.worksheetBorders ?? true);
   const [wsSettingsOpen, setWsSettingsOpen] = useState(false);
-  const diffPopover = usePopover();
 
   const [presenterMode, setPresenterMode] = useState(false);
   const [wbFullscreen, setWbFullscreen] = useState(false);
@@ -800,12 +831,13 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             {/* Row 1: levels · QO · differentiated */}
             <div className="flex justify-center items-center gap-6 mb-5">
               <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm">
-                {(["level1", "level2", "level3"] as DifficultyLevel[]).map((val, i) => {
+                {ALL_LEVELS.map((val, i) => {
                   const [label, col] = [["Level 1", "bg-green-600"], ["Level 2", "bg-yellow-500"], ["Level 3", "bg-red-600"]][i] as [string, string];
                   const isLvDisabled = comingSoon.includes(val);
+                  const active = diffToggle ? diffLevels.includes(val) : difficulty === val;
                   return (
-                    <button key={val} onClick={() => { setDifficultyGuarded(val); setIsDifferentiated(false); }}
-                      className={`px-5 py-2 font-bold text-base transition-colors ${isLvDisabled ? "bg-gray-100 text-gray-300 cursor-not-allowed" : !isDifferentiated && difficulty === val ? `${col} text-white` : "bg-white text-gray-500 hover:bg-gray-50"}`}>
+                    <button key={val} onClick={() => { if (!isLvDisabled) toggleDiffLevel(val); }}
+                      className={`px-5 py-2 font-bold text-base transition-colors ${isLvDisabled ? "bg-gray-100 text-gray-300 cursor-not-allowed" : active ? `${col} text-white` : "bg-white text-gray-500 hover:bg-gray-50"}`}>
                       {label}
                     </button>
                   );
@@ -813,50 +845,10 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               </div>
               {qoEl(isDifferentiated)}
               {(() => { const diffDisabled = availableLevels.length < 2; return (
-              <div className="relative" ref={diffPopover.ref}>
-                <button onClick={() => { if (!diffDisabled) diffPopover.setOpen(!diffPopover.open); }}
-                  className={`px-4 py-2 rounded-xl border-2 font-bold text-base shadow-sm flex items-center gap-2 transition-colors ${diffDisabled ? "bg-gray-100 text-gray-300 border-gray-200 cursor-not-allowed" : diffPopover.open || isDifferentiated ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-gray-300 text-gray-600 hover:border-blue-900 hover:text-blue-900"}`}>
+                <button onClick={toggleDiffMode}
+                  className={`px-6 py-2 rounded-xl font-bold text-base shadow-sm border-2 transition-colors ${diffDisabled ? "bg-gray-100 text-gray-300 border-gray-200 cursor-not-allowed" : diffToggle ? "bg-blue-900 text-white border-blue-900" : "bg-white text-gray-600 border-gray-300 hover:border-blue-900 hover:text-blue-900"}`}>
                   Differentiated
-                  <ChevronDown size={16} style={{ transition: "transform 0.2s", transform: diffPopover.open ? "rotate(180deg)" : "rotate(0)" }} />
                 </button>
-                {diffPopover.open && (
-                  <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-[20rem] p-5 flex flex-col gap-5">
-                    <TogglePill checked={isDifferentiated} onChange={setIsDifferentiated} label="Differentiated worksheet" />
-                    {isDifferentiated && availableLevels.length > 2 && (
-                      <div className="flex flex-col gap-2">
-                        <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Levels to include</span>
-                        {ALL_LEVELS.filter(lv => availableLevels.includes(lv)).map(lv => {
-                          const active = diffLevels.includes(lv);
-                          const lockedOn = active && diffLevels.length <= 2;
-                          return (
-                            <label key={lv} className={`flex items-center gap-3 py-1 ${lockedOn ? "cursor-not-allowed" : "cursor-pointer"}`}
-                              title={lockedOn ? "At least two levels must stay selected" : undefined}>
-                              <div onClick={() => { if (!lockedOn) toggleDiffLevel(lv); }}
-                                className={`w-12 h-6 rounded-full transition-colors relative flex-shrink-0 ${active ? "bg-blue-900" : "bg-gray-300"} ${lockedOn ? "opacity-60" : ""}`}>
-                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${active ? "translate-x-7" : "translate-x-1"}`} />
-                              </div>
-                              <span className={`text-base font-semibold ${LV_HEADER_COLORS[lv]}`}>{LV_LABELS[lv]}</span>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    )}
-                    {isDifferentiated && (
-                      <div className="flex flex-col gap-2">
-                        <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Question cell size</span>
-                        <SegButtons
-                          value={diffSameSize ? "same" : "fit"}
-                          onChange={v => setDiffSameSize(v === "same")}
-                          opts={[
-                            { value: "fit", label: "Fit each level" },
-                            { value: "same", label: "Same across levels" },
-                          ]}
-                        />
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
               ); })()}
             </div>
 
@@ -911,6 +903,19 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                           <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${worksheetBorders ? "translate-x-4" : "translate-x-0.5"}`} />
                         </div>
                       </label>
+                      {isDifferentiated && (
+                        <>
+                          <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-4 mb-2">Question Cell Size</div>
+                          <SegButtons
+                            value={diffSameSize ? "same" : "fit"}
+                            onChange={v => setDiffSameSize(v === "same")}
+                            opts={[
+                              { value: "fit", label: "Fit each level" },
+                              { value: "same", label: "Fit all levels" },
+                            ]}
+                          />
+                        </>
+                      )}
                     </div>
                   </>
                 )}

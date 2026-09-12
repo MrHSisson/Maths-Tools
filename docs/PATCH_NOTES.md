@@ -28,34 +28,37 @@ Keep the split even when a session only touches one.
 
 # Maths
 
-## 2026-09-12 — Differentiated worksheets: popover UI, per-level cell sizing, filtered QO
-Follow-up to the same-day level-subset work below. Three changes to the standard-mode
-Differentiated control, all in `ToolShell.tsx` unless noted:
-- **Popover UI.** The inline "Differentiated" button + always-visible L1/L2/L3 chips were
-  replaced with a single popover (reusing the shared `usePopover`/`TogglePill`/`SegButtons`
-  primitives from `QOPopovers.tsx`) containing an enable toggle, the level-selection switches
-  (only shown when all three levels are available — nothing to choose otherwise), and the new
-  cell-size option below.
-- **Question cell size option.** A new `diffSameSize` setting (default on) chooses between one
-  shared cell height across every selected level (the historic look) and sizing each level's
-  cells to its own content ("Fit each level") so a simple Level 1 sum doesn't inflate to match
-  a busier Level 3 diagram. Implemented end-to-end: the on-screen preview measures real cell
-  heights via a small `DiffCell` ref/ResizeObserver component (only active in same-size mode,
-  measuring un-inflated content so later async changes like KaTeX rendering are still picked
-  up) and PDF export (`print.ts`, `printDiagram.ts`) via a new `diffCellHByLevel` output from
-  `computeWorksheetLayout` — `sectionIdx` doubles as each question's level index in
-  differentiated mode to get per-level "tallest question" data for free from the engine's
-  existing section-height computation, with pagination still driven by the worst-case level so
-  every column shows the same row count per page. Persisted as `diffSame=0` in the shareable
-  link (default omitted). Two new `worksheetLayout.test.ts` cases cover both modes.
-- **Filtered QO popover.** `DiffQOPopover` (`QOPopovers.tsx`) now takes an optional `levels`
-  prop and only renders per-level question-option sections for the levels actually selected,
-  instead of always all three.
+## 2026-09-12 — Differentiated worksheets: level row doubles as the picker, per-level cell sizing
+Follow-up to the same-day level-subset work below, reworked once more after review. Final
+shape, all in `ToolShell.tsx` unless noted:
+- **The main Level 1/2/3 row is the level picker — no separate popover or chip row.**
+  "Differentiated" is a plain toggle again (`diffToggle`), exactly like it originally was; its
+  only job is to switch the level row between mutually-exclusive single-select (normal) and
+  multi-select. In multi-select mode, clicking a level toggles its membership in `diffLevels`
+  instead of replacing the selection. The worksheet is only *actually* differentiated once 2+
+  levels are checked — `isDifferentiated` is now a derived value
+  (`diffToggle && diffLevels.length >= 2`), not its own state — so checking a second level
+  turns differentiation on by itself, and unchecking back down to one turns it back off and
+  collapses cleanly to an ordinary single-level sheet (an effect keeps `diffLevels` mirroring
+  `difficulty` whenever multi-select is off, so switching modes always starts from whatever
+  level is on screen, however it got there). Toggling "Differentiated" off entirely collapses
+  to whichever level was still checked.
+- **Question cell size option relocated.** The `diffSameSize` setting ("Fit each level" vs
+  "Fit all levels", renamed from "Same across levels") moved out of the (now-removed)
+  Differentiated popover into the existing Settings menu (the one holding the
+  Worksheet/Textbook layout and Borders toggle), shown only when the worksheet is actually
+  differentiated. The underlying implementation (on-screen `DiffCell` measurement,
+  `computeWorksheetLayout`'s `diffCellHByLevel`, PDF export in `print.ts`/`printDiagram.ts`) is
+  unchanged from the same-day entry below.
+- **Filtered QO popover** (`DiffQOPopover` in `QOPopovers.tsx`, still showing only the selected
+  levels) is unchanged.
 
-Verified in a live browser: popover open/close, the enable toggle, the level switches with the
-2-level lock, both cell-size modes on a text tool and an SVG/diagram tool, the QO popover
-filtering, and URL persistence (`diffLv`, `diffSame`) across reload — plus `npm run build`
-(zero TS errors) and `npm test` (320 passing).
+Verified in a live browser: mutual exclusivity when off, multi-select and the 2-selected
+auto-differentiate rule when on, collapsing back to one level (and to the toggle turning off
+entirely), the Settings-menu cell-size option and its relabelled options, QO popover filtering,
+and that a difficulty change from the whiteboard's own difficulty toggle still starts
+multi-select from the right level — plus `npm run build` (zero TS errors) and `npm test` (320
+passing).
 
 ## 2026-09-12 — Standard-mode Differentiated worksheets: pick any 2-or-3 level subset
 Standard-mode Differentiated worksheets (`ToolShell.tsx`) previously always split into all
