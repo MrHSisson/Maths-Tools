@@ -1,7 +1,7 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback, type ReactNode } from "react";
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, SlidersHorizontal } from "lucide-react";
 import type { DifficultyLevel, AnyQuestion, WorkingStep, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
-import { LV_COLORS, LV_LABELS, getQuestionBg, getStepBg } from "./colors";
+import { LV_COLORS, LV_LABELS, LV_HEADER_COLORS, getQuestionBg, getStepBg } from "./colors";
 import { normalizeMultiSelect, resolveMultiSelectValues, ansEq, makeUniqueQ } from "./helpers";
 import { loadKaTeX } from "./katex";
 import { MathRenderer, InlineMath } from "./components/MathRenderer";
@@ -11,6 +11,9 @@ import { WorkedExampleSteps } from "./components/WorkedExampleSteps";
 import {
   StandardQOPopover,
   DiffQOPopover,
+  usePopover,
+  TogglePill,
+  SegButtons,
 } from "./components/QOPopovers";
 import { InfoModal } from "./components/InfoModal";
 import { MenuDropdown } from "./components/MenuDropdown";
@@ -60,6 +63,32 @@ export interface ToolShellProps {
 }
 
 const ALL_LEVELS: DifficultyLevel[] = ["level1", "level2", "level3"];
+
+/** One cell in a differentiated worksheet's on-screen preview. When `sameSize`
+ *  is true, measures this cell's own natural content height (via a ref, never
+ *  a height this component itself set — so later content changes, e.g. KaTeX
+ *  finishing an async render, are still picked up by the ResizeObserver) and
+ *  reports it up so the parent can pad every cell, across every level, up to
+ *  the tallest one. When false, no measurement happens and the cell keeps its
+ *  own level's natural size. */
+function DiffCell({ children, sameSize, cellKey, onHeight }: { children: ReactNode; sameSize: boolean; cellKey: string; onHeight: (key: string, h: number) => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    if (!sameSize) return;
+    const el = ref.current;
+    if (!el) return;
+    let raf = 0;
+    const measure = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => onHeight(cellKey, el.getBoundingClientRect().height));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => { cancelAnimationFrame(raf); ro.disconnect(); };
+  }, [sameSize, cellKey, onHeight]);
+  return <div ref={ref}>{children}</div>;
+}
 
 /** Scales its content to fit the available space — up to fill when the panel
  *  collapse frees room (like dragging the splitter wide, past the tool's own
@@ -133,12 +162,14 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const toolKeys = Object.keys(config.tools);
 
   // ── Shareable links: read the initial state from the URL (parsed once) ─────
-  // ?tool=key&mode=example|worksheet&level=2&dd=value&vars=a,-b&ms=x,-y&n=20&cols=2&diff=1&diffLv=1,3
+  // ?tool=key&mode=example|worksheet&level=2&dd=value&vars=a,-b&ms=x,-y&n=20&cols=2&diff=1&diffLv=1,3&diffSame=0
   // Tokens in vars/ms set a key on; a "-" prefix sets it off. Invalid or stale
   // values fall back to defaults, so old bookmarks never break a tool. `diffLv`
   // is an optional comma list of level numbers (e.g. "1,3") selecting a subset
   // of levels for the Differentiated worksheet; omitted or invalid, it falls
   // back to every available (non coming-soon) level, matching old links.
+  // `diffSame=0` opts into per-level cell sizing; omitted (or any other value)
+  // keeps the default shared-height sizing.
   const [urlInit] = useState(() => {
     const p = new URLSearchParams(typeof window === "undefined" ? "" : window.location.search);
     const toggles = (param: string | null): Record<string, boolean> => {
@@ -174,6 +205,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       cols: defaults.fixedColumns ? null : intParam("cols", 1, defaults.maxColumns ?? 4),
       diff: p.get("diff") === "1",
       diffLv: p.get("diffLv"),
+      diffSame: p.get("diffSame") !== "0",
     };
   });
 
@@ -233,6 +265,11 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       return ALL_LEVELS.filter(l => l === lv || prev.includes(l));
     });
   };
+  // true (default): every differentiated cell shares one height (the tallest
+  // question across every selected level). false: each level's column sizes
+  // to its own tallest question, so a simpler level doesn't inflate to match
+  // a harder level's bigger diagrams/working.
+  const [diffSameSize, setDiffSameSize] = useState(urlInit.diffSame);
 
   const [toolVariables, setToolVariables] = useState<Record<string, Record<string, Record<string, boolean>>>>(() => {
     const init: Record<string, Record<string, Record<string, boolean>>> = {};
@@ -323,6 +360,17 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const [numQuestions, setNumQuestions] = useState(urlInit.n ?? defaults.numQuestions ?? 15);
   const [numColumns, setNumColumns] = useState(urlInit.cols ?? defaults.numColumns ?? 3);
   const [worksheet, setWorksheet] = useState<AnyQuestion[]>([]);
+  // Cross-level "same size" measurement for the differentiated on-screen
+  // preview — see DiffCell above. Cleared whenever the worksheet regenerates
+  // so a stale, taller previous cell can't keep inflating the new one.
+  const diffHeightsRef = useRef<Map<string, number>>(new Map());
+  const [diffUniformH, setDiffUniformH] = useState<number | null>(null);
+  const registerDiffHeight = useCallback((key: string, h: number) => {
+    diffHeightsRef.current.set(key, h);
+    const max = Math.max(...diffHeightsRef.current.values());
+    setDiffUniformH(prev => (prev !== null && Math.abs(prev - max) < 0.5) ? prev : max);
+  }, []);
+  useEffect(() => { diffHeightsRef.current.clear(); setDiffUniformH(null); }, [worksheet]);
   const [showWorksheetAnswers, setShowWorksheetAnswers] = useState(false);
   const [printMode, setPrintMode] = useState<PrintMode>("both");
   const [isDifferentiated, setIsDifferentiated] = useState(urlInit.diff && availableLevels.length >= 2);
@@ -338,6 +386,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const [worksheetLayout, setWorksheetLayout] = useState<"grid" | "list">(wbInit?.worksheetLayout ?? "grid");
   const [worksheetBorders, setWorksheetBorders] = useState(wbInit?.worksheetBorders ?? true);
   const [wsSettingsOpen, setWsSettingsOpen] = useState(false);
+  const diffPopover = usePopover();
 
   const [presenterMode, setPresenterMode] = useState(false);
   const [wbFullscreen, setWbFullscreen] = useState(false);
@@ -521,6 +570,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       level3: getLevelMultiSelectValues("level3"),
     },
     onLevelMultiSelectChange: handleLevelMSChange,
+    levels: diffLevels,
   };
 
   const qoEl = (isDiff = false) => isDiff
@@ -594,11 +644,12 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         const levelToNum: Record<DifficultyLevel, string> = { level1: "1", level2: "2", level3: "3" };
         const isFullSet = diffLevels.length === availableLevels.length && diffLevels.every(l => availableLevels.includes(l));
         if (!isFullSet) p.set("diffLv", diffLevels.map(l => levelToNum[l]).join(","));
+        if (!diffSameSize) p.set("diffSame", "0");
       }
     }
     const qs = p.toString();
     window.history.replaceState(null, "", qs ? `${window.location.pathname}?${qs}` : window.location.pathname);
-  }, [currentTool, mode, difficulty, toolDropdowns, toolVariables, toolMultiSelect, numQuestions, numColumns, isDifferentiated, diffLevels]);
+  }, [currentTool, mode, difficulty, toolDropdowns, toolVariables, toolMultiSelect, numQuestions, numColumns, isDifferentiated, diffLevels, diffSameSize]);
 
   // Persist the worksheet mode/layout and differentiated per-level QO so a refresh
   // restores it — these are not encoded in the URL.
@@ -762,25 +813,47 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               </div>
               {qoEl(isDifferentiated)}
               {(() => { const diffDisabled = availableLevels.length < 2; return (
-              <div className="flex items-center gap-2">
-                <button onClick={() => { if (!diffDisabled) setIsDifferentiated(!isDifferentiated); }}
-                  className={`px-6 py-2 rounded-xl font-bold text-base shadow-sm border-2 transition-colors ${diffDisabled ? "bg-gray-100 text-gray-300 border-gray-200 cursor-not-allowed" : isDifferentiated ? "bg-blue-900 text-white border-blue-900" : "bg-white text-gray-600 border-gray-300 hover:border-blue-900 hover:text-blue-900"}`}>
+              <div className="relative" ref={diffPopover.ref}>
+                <button onClick={() => { if (!diffDisabled) diffPopover.setOpen(!diffPopover.open); }}
+                  className={`px-4 py-2 rounded-xl border-2 font-bold text-base shadow-sm flex items-center gap-2 transition-colors ${diffDisabled ? "bg-gray-100 text-gray-300 border-gray-200 cursor-not-allowed" : diffPopover.open || isDifferentiated ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-gray-300 text-gray-600 hover:border-blue-900 hover:text-blue-900"}`}>
                   Differentiated
+                  <ChevronDown size={16} style={{ transition: "transform 0.2s", transform: diffPopover.open ? "rotate(180deg)" : "rotate(0)" }} />
                 </button>
-                {isDifferentiated && availableLevels.length > 2 && (
-                  <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm" title="Choose which levels to include">
-                    {ALL_LEVELS.filter(lv => availableLevels.includes(lv)).map((lv) => {
-                      const [label, col] = [["L1", "bg-green-600"], ["L2", "bg-yellow-500"], ["L3", "bg-red-600"]][ALL_LEVELS.indexOf(lv)] as [string, string];
-                      const active = diffLevels.includes(lv);
-                      const lockedOn = active && diffLevels.length <= 2;
-                      return (
-                        <button key={lv} onClick={() => toggleDiffLevel(lv)} disabled={lockedOn}
-                          title={lockedOn ? "At least two levels must stay selected" : undefined}
-                          className={`px-3 py-2 font-bold text-sm transition-colors ${active ? `${col} text-white` : "bg-white text-gray-400 hover:bg-gray-50"} ${lockedOn ? "cursor-not-allowed opacity-90" : ""}`}>
-                          {label}
-                        </button>
-                      );
-                    })}
+                {diffPopover.open && (
+                  <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-[20rem] p-5 flex flex-col gap-5">
+                    <TogglePill checked={isDifferentiated} onChange={setIsDifferentiated} label="Differentiated worksheet" />
+                    {isDifferentiated && availableLevels.length > 2 && (
+                      <div className="flex flex-col gap-2">
+                        <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Levels to include</span>
+                        {ALL_LEVELS.filter(lv => availableLevels.includes(lv)).map(lv => {
+                          const active = diffLevels.includes(lv);
+                          const lockedOn = active && diffLevels.length <= 2;
+                          return (
+                            <label key={lv} className={`flex items-center gap-3 py-1 ${lockedOn ? "cursor-not-allowed" : "cursor-pointer"}`}
+                              title={lockedOn ? "At least two levels must stay selected" : undefined}>
+                              <div onClick={() => { if (!lockedOn) toggleDiffLevel(lv); }}
+                                className={`w-12 h-6 rounded-full transition-colors relative flex-shrink-0 ${active ? "bg-blue-900" : "bg-gray-300"} ${lockedOn ? "opacity-60" : ""}`}>
+                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${active ? "translate-x-7" : "translate-x-1"}`} />
+                              </div>
+                              <span className={`text-base font-semibold ${LV_HEADER_COLORS[lv]}`}>{LV_LABELS[lv]}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {isDifferentiated && (
+                      <div className="flex flex-col gap-2">
+                        <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">Question cell size</span>
+                        <SegButtons
+                          value={diffSameSize ? "same" : "fit"}
+                          onChange={v => setDiffSameSize(v === "same")}
+                          opts={[
+                            { value: "fit", label: "Fit each level" },
+                            { value: "same", label: "Same across levels" },
+                          ]}
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -858,10 +931,10 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                   <PrintSplitButton
                     onPrint={m => customPrintHandler
                       ? customPrintHandler(worksheet, m, worksheetWrapRef.current, {
-                          toolName: config.tools[currentTool].name, difficulty, isDifferentiated, diffLevels,
+                          toolName: config.tools[currentTool].name, difficulty, isDifferentiated, diffLevels, diffSameSize,
                           numColumns, instruction: getInstruction(), layout: worksheetLayout, showBorders: worksheetBorders,
                         })
-                      : handlePrint(worksheet, config.tools[currentTool].name, difficulty, isDifferentiated, diffLevels, numColumns, getInstruction(), m, worksheetLayout, worksheetBorders)}
+                      : handlePrint(worksheet, config.tools[currentTool].name, difficulty, isDifferentiated, diffLevels, numColumns, getInstruction(), m, worksheetLayout, worksheetBorders, diffSameSize)}
                     printMode={printMode} setPrintMode={setPrintMode}
                   />
                 </>
@@ -1132,8 +1205,14 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             return (
               <div key={lv} className={`${c.bg} border-2 ${c.border} rounded-xl p-4`}>
                 <h3 className={`text-xl font-bold mb-4 text-center ${c.text}`}>{LV_LABELS[lv]}</h3>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr", gridAutoRows: "1fr", gap: "0.75rem" }}>
-                  {lqs.map((q, idx) => <div key={idx} style={{ minHeight: 0 }}>{renderQCell(q, idx, c.fill)}</div>)}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr", gridAutoRows: diffSameSize ? undefined : "1fr", gap: "0.75rem" }}>
+                  {lqs.map((q, idx) => (
+                    <div key={idx} style={{ minHeight: diffSameSize && diffUniformH ? diffUniformH : 0 }}>
+                      <DiffCell sameSize={diffSameSize} cellKey={`${lv}-${idx}`} onHeight={registerDiffHeight}>
+                        {renderQCell(q, idx, c.fill)}
+                      </DiffCell>
+                    </div>
+                  ))}
                 </div>
               </div>
             );

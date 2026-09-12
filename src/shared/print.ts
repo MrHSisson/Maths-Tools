@@ -14,6 +14,7 @@ export const handlePrint = (
   pMode: PrintMode = "both",
   layout: "grid" | "list" = "grid",
   showBorders: boolean = true,
+  diffSameSize: boolean = true,
 ) => {
   if (difficulty === "advanced") isDifferentiated = false;
   const lvls = isDifferentiated ? diffLevels : [];
@@ -162,11 +163,16 @@ export const handlePrint = (
   // layout is always sized to the question. "both" needs each side.
   const needQ = pMode === "questions" || pMode === "both";
   const needA = pMode === "answers" || pMode === "both";
+  // In differentiated mode, sectionIdx doubles as each question's level index
+  // (0..lvls.length-1) — see computeWorksheetLayout's diffSameSize doc. This is
+  // safe because differentiated and sectioned (Advanced builder) worksheets are
+  // mutually exclusive: standard differentiated questions never carry
+  // _sectionIdx metadata, so hasSections is always false when isDifferentiated.
   const qHtmlData = questions.map((q, i) => ({
     q: needQ ? (layout === "list" ? listQuestionToHtml(q, i, false) : questionToHtml(q, i, false)) : "",
     a: needA ? (layout === "list" ? listAnswerOnlyToHtml(q, i) : answerOnlyToHtml(q, i)) : "",
     difficulty: q.difficulty,
-    sectionIdx: sectionIndices[i] ?? 0,
+    sectionIdx: isDifferentiated ? lvls.indexOf(q.difficulty as DifficultyLevel) : (sectionIndices[i] ?? 0),
     sectionCols: sectionColsArr[i] ?? cols,
     sectionHeader: sectionHeadersArr[i] ?? "",
   }));
@@ -265,6 +271,7 @@ document.addEventListener("DOMContentLoaded", function() {
   var PAGE_W_MM = ${PAGE_W_MM};
   var cols      = ${cols};
   var isDiff    = ${isDifferentiated ? "true" : "false"};
+  var diffSameSize = ${diffSameSize ? "true" : "false"};
   var diffLvls  = ${JSON.stringify(lvls)};
   var diffLbls  = ${JSON.stringify(lvls.map(lv => LV_LABELS[lv]))};
   var isListLayout = ${layout === "list" ? "true" : "false"};
@@ -304,7 +311,8 @@ document.addEventListener("DOMContentLoaded", function() {
     sectionCols: qData.map(function(d) { return d.sectionCols; }),
     itemHasHeader: qData.map(function(d) { return !!d.sectionHeader; }),
     usableH: usableH, GAP_MM: GAP_MM, PAD_MM: PAD_MM, DIV_MM: DIV_MM,
-    HDR_MM: ${HDR_MM}, diffHdrMM: diffHdrMM, pxPerMm: pxPerMm
+    HDR_MM: ${HDR_MM}, diffHdrMM: diffHdrMM, pxPerMm: pxPerMm,
+    diffSameSize: diffSameSize
   });
 
   var chosenH_mm      = plan.chosenH_mm;
@@ -313,6 +321,7 @@ document.addEventListener("DOMContentLoaded", function() {
   var diffPerCol      = plan.diffPerCol;
   var diffRowsPerPage = plan.diffRowsPerPage;
   var diffCellH_mm    = plan.diffCellH_mm;
+  var diffCellHByLevel = plan.diffCellHByLevel;
   var numDiffPages    = plan.numDiffPages;
   var planPages       = plan.pages;
 
@@ -377,8 +386,9 @@ document.addEventListener("DOMContentLoaded", function() {
       var cW = makeCellW(cols);
       var colsN = diffLvls.map(function(lv, li) {
         var lqs = qData.filter(function(q) { return q.difficulty === lv; }).slice(start, end);
+        var thisCH = diffSameSize ? cH : (diffCellHByLevel[li] !== undefined ? diffCellHByLevel[li] : cH);
         var cells = lqs.map(function(q) {
-          return buildCell(showAnswer ? q.a : q.q, cW, cH, true);
+          return buildCell(showAnswer ? q.a : q.q, cW, thisCH, true);
         }).join('');
         return '<div class="diff-col"><div class="diff-header ' + lv + '">' + diffLbls[li] + '</div>' + cells + '</div>';
       }).join('');

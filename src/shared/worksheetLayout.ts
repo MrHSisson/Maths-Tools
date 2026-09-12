@@ -30,6 +30,14 @@ export interface WorksheetLayoutInput {
   HDR_MM: number;
   diffHdrMM: number;
   pxPerMm: number;
+  /** When isDiff: true (the default) sizes every differentiated cell to one
+   *  shared height — the tallest question across every selected level, the
+   *  historic behaviour. false sizes each level's column to its own tallest
+   *  question instead, via `sectionIdx`, which doubles as each question's
+   *  level index (0..cols-1) in differentiated mode — so a simpler level's
+   *  cells don't inflate to match a harder level's bigger diagrams. Ignored
+   *  when isDiff is false. */
+  diffSameSize?: boolean;
 }
 
 export interface WorksheetLayoutPlan {
@@ -45,6 +53,9 @@ export interface WorksheetLayoutPlan {
   diffPerCol: number;
   diffRowsPerPage: number;
   diffCellH_mm: number;
+  /** Per-level cell height (mm), keyed by level index (matching `sectionIdx`
+   *  in differentiated mode) — populated only when diffSameSize is false. */
+  diffCellHByLevel: Record<number, number>;
   numDiffPages: number;
   listItemsPerCol: number;
   /** Page groupings as arrays of question indices. For the list layout, a value
@@ -64,6 +75,7 @@ export function computeWorksheetLayout(input: WorksheetLayoutInput): WorksheetLa
     isList, isDiff, hasSections, cols, totalQ,
     heightsPx, sectionIdx, sectionCols, itemHasHeader,
     usableH, GAP_MM, PAD_MM, DIV_MM, HDR_MM, diffHdrMM, pxPerMm,
+    diffSameSize = true,
   } = input;
 
   const probeHts = heightsPx;
@@ -90,15 +102,27 @@ export function computeWorksheetLayout(input: WorksheetLayoutInput): WorksheetLa
 
   // Differentiated layout. `cols` doubles as the number of differentiated
   // levels selected (the caller passes the level count here when isDiff).
+  // When !diffSameSize, `sectionIdx` doubles as each question's level index,
+  // so secNeeded (computed above, unconditionally) already holds each
+  // level's own tallest question — the worst case across levels still sets
+  // diffRowsPerPage, since every level's column must show the same row
+  // count per page, but a smaller level's own cells stay their natural size
+  // (see diffCellHByLevel below) instead of inflating to match a bigger one.
   const diffPerCol = Math.floor(totalQ / cols);
   const diffUsableH = usableH - diffHdrMM - GAP_MM;
+  const perLevelNeeded = Object.values(secNeeded);
+  const diffRowNeeded = (diffSameSize || perLevelNeeded.length === 0) ? needed_mm : Math.max(...perLevelNeeded);
   let diffRowsPerPage = 1;
   let diffCellH_mm = diffUsableH;
   for (let rd = 0; rd < diffPerCol; rd++) {
     const rows2 = rd + 1;
     const h = (diffUsableH - GAP_MM * rd) / rows2;
-    const dNeeded = needed_mm - diffHdrMM / rows2;
+    const dNeeded = diffRowNeeded - diffHdrMM / rows2;
     if (h >= dNeeded) { diffRowsPerPage = rows2; diffCellH_mm = h; }
+  }
+  const diffCellHByLevel: Record<number, number> = {};
+  if (isDiff && !diffSameSize) {
+    for (const li in secNeeded) diffCellHByLevel[li] = Math.min(secNeeded[li], diffCellH_mm);
   }
 
   // Grid layout: cell heights (per-section when sectioned).
@@ -222,7 +246,7 @@ export function computeWorksheetLayout(input: WorksheetLayoutInput): WorksheetLa
 
   return {
     needed_mm, chosenH_mm, rowsPerPage, sectionCellH, sectionMinH,
-    diffPerCol, diffRowsPerPage, diffCellH_mm, numDiffPages,
+    diffPerCol, diffRowsPerPage, diffCellH_mm, diffCellHByLevel, numDiffPages,
     listItemsPerCol, pages,
   };
 }

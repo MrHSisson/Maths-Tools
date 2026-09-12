@@ -236,6 +236,7 @@ export const DiffQOPopover = ({
   onLevelDropdownChange,
   levelMultiSelect,
   onLevelMultiSelectChange,
+  levels: levelsProp,
 }: {
   toolSettings: ToolEntry;
   levelVariables: Record<string, Record<string, boolean>>;
@@ -244,9 +245,12 @@ export const DiffQOPopover = ({
   onLevelDropdownChange: (lv: string, v: string) => void;
   levelMultiSelect: Record<string, Record<string, boolean>>;
   onLevelMultiSelectChange: (lv: string, k: string, v: boolean) => void;
+  /** Only show options for these levels — e.g. the levels currently selected
+   *  for a differentiated worksheet. Defaults to all three. */
+  levels?: DifficultyLevel[];
 }) => {
   const { open, setOpen, ref } = usePopover();
-  const levels = ["level1", "level2", "level3"] as DifficultyLevel[];
+  const levels = levelsProp ?? (["level1", "level2", "level3"] as DifficultyLevel[]);
   const getDDForLevel = (lv: string) => toolSettings.difficultySettings?.[lv]?.dropdown ?? toolSettings.dropdown;
   const getVarsForLevel = (lv: string) => toolSettings.difficultySettings?.[lv]?.variables ?? toolSettings.variables;
   const getMSForLevel = (lv: string) => normalizeMultiSelect(toolSettings.difficultySettings?.[lv]?.multiSelect ?? toolSettings.multiSelect);

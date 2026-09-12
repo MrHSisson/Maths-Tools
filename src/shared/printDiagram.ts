@@ -25,6 +25,11 @@ export interface PrintContext {
    *  Only meaningful when isDifferentiated is true — may be any 2-or-3-level
    *  subset (e.g. Level 1 & 3), not always all three. */
   diffLevels: DifficultyLevel[];
+  /** true (default) sizes every differentiated cell to one shared height —
+   *  the tallest diagram across every selected level; false sizes each
+   *  level's column to its own tallest diagram instead, so a simpler
+   *  level's diagrams don't inflate to match a harder level's. */
+  diffSameSize?: boolean;
   numColumns: number;
   instruction: string;
   layout: "grid" | "list";
@@ -92,11 +97,18 @@ export const handleDiagramPrint = (
     return Math.min(naturalH, DENSITY_FLOOR_MM) * pxPerMm;
   });
 
+  // In differentiated mode, sectionIdx doubles as each question's level index
+  // (0..lvls.length-1) for the engine's per-level sizing — safe because
+  // differentiated and sectioned worksheets are mutually exclusive (isDiff is
+  // forced false above whenever hasSections is true).
+  const layoutSectionIdx = isDiff ? questions.map(q => lvls.indexOf(q.difficulty as DifficultyLevel)) : sectionIdx;
+
   const plan = computeWorksheetLayout({
     isList: false, isDiff, hasSections, cols, totalQ: questions.length,
-    heightsPx, sectionIdx, sectionCols: sectionColsArr,
+    heightsPx, sectionIdx: layoutSectionIdx, sectionCols: sectionColsArr,
     itemHasHeader: sectionHeaders.map(h => !!h),
     usableH: usableH_MM, GAP_MM, PAD_MM, DIV_MM, HDR_MM, diffHdrMM, pxPerMm,
+    diffSameSize: ctx.diffSameSize ?? true,
   });
 
   // Clone the live on-screen SVGs, keyed by their data-q-index. A tool may also
@@ -171,19 +183,26 @@ export const handleDiagramPrint = (
   };
 
   // ── Differentiated page: one column per selected level ──
+  const diffSameSize = ctx.diffSameSize ?? true;
   const diffPage = (p: number, tp: number, showAns: boolean): string => {
     const cW = makeCellW(lvls.length);
     // Fill the column but cap at the natural diagram size (see gridPage).
-    const natH = cW / Math.min(...aspects);
-    const cH = Math.min(plan.diffCellH_mm, natH + CHROME_MM);
-    const colsHtml = lvls.map((lv) => {
+    const globalNatH = cW / Math.min(...aspects);
+    const globalCH = Math.min(plan.diffCellH_mm, globalNatH + CHROME_MM);
+    const colsHtml = lvls.map((lv, li) => {
       const textCol = LV_TEXT[lv];
       const bgCol = LV_BG[lv];
       const label = LV_LABELS[lv];
       const lvQ: number[] = [];
       questions.forEach((q, i) => { if (q.difficulty === lv) lvQ.push(i); });
       const slice = lvQ.slice(p * plan.diffRowsPerPage, (p + 1) * plan.diffRowsPerPage);
-      const cells = slice.map((qi, i) => cellHtml(qi, p * plan.diffRowsPerPage + i + 1, showAns, cW, cH)).join("");
+      let cH = globalCH;
+      if (!diffSameSize && slice.length) {
+        const lvlNatH = cW / Math.min(...slice.map(qi => aspects[qi]));
+        const lvlFillH = plan.diffCellHByLevel[li] ?? plan.diffCellH_mm;
+        cH = Math.min(lvlFillH, lvlNatH + CHROME_MM);
+      }
+      const cells = slice.map((qi, i2) => cellHtml(qi, p * plan.diffRowsPerPage + i2 + 1, showAns, cW, cH)).join("");
       return `<div class="dc"><div class="dh" style="color:${textCol};background:${bgCol}">${label}</div><div class="dcs">${cells}</div></div>`;
     }).join("");
     const title = toolName + (showAns ? " — Answers" : "");
