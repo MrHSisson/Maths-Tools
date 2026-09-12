@@ -206,6 +206,14 @@ const pickShape = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type): 
   for (let i = 0; i < 50; i++) {
     const TM = randInt(6, 54);
     if (60 % TM === 0 || NICE_MINUTES.has(TM)) continue;
+    // TM coprime to 60 forces qq = TM and pp = 60 exactly — the scale-up
+    // factor to reach 60 is then ×60 outright, which the distance/speed
+    // ranges below can only satisfy at k=1 (any larger k blows the speed
+    // range). k=1 makes D = qq = TM exactly — "37 miles in 37 minutes" —
+    // a coincidence forced this way far too often to read as a real
+    // question. Requiring a shared factor keeps qq small enough for k to
+    // vary genuinely.
+    if (gcd(60, TM) === 1) continue;
     return { kind: "l3awkward", TM };
   }
   return { kind: "l3awkward", TM: 40 };
@@ -249,9 +257,11 @@ const buildValues = (TM: number, f: FamilyInfo, allowDecimals: boolean): { D: nu
     const D = k * qq, S = k * pp;
     if (D < f.distMin || D > f.distMax) continue;
     if (S < f.speedMin || S > f.speedMax) continue;
+    if (D === TM) continue; // "37 miles in 37 minutes" reads as a coincidence, not a real question
     return { D, S, pp, qq };
   }
-  const k = Math.max(Math.ceil(f.distMin / qq), Math.ceil(f.speedMin / pp), 1);
+  let k = Math.max(Math.ceil(f.distMin / qq), Math.ceil(f.speedMin / pp), 1);
+  if (k * qq === TM && (k + 1) * qq <= f.distMax && (k + 1) * pp <= f.speedMax) k += 1;
   return { D: k * qq, S: k * pp, pp, qq };
 };
 
@@ -340,17 +350,28 @@ const buildWorking = (rv: RawValues, method: WorkingMethod): WorkingStep[] => {
 
   if (method === "decimal" && decimalMethodApplies(rv)) {
     const decStr = fmt(rv.TM / 60, 2);
+    // A compound time converts the MINUTES part straight to decimal hours
+    // and adds the whole hours — never via a "total minutes" detour (e.g.
+    // "45 min ÷ 60 = 0.75, then 1 + 0.75 = 1.75", not "1×60+45=105, then
+    // 105÷60=1.75"). Speed/Distance are the only tools that need this — Time
+    // computes decStr FROM D and S, it never starts from a given compound time.
+    const decimalConvertSteps: WorkingStep[] =
+      rv.shapeKind === "l3compound"
+        ? [
+            mStep("Convert the minutes to hours:", `${rv.Mfrac} \\div 60 = ${fmt((rv.Mfrac ?? 0) / 60, 2)}`),
+            mStep("Add the hours:", `${rv.H} + ${fmt((rv.Mfrac ?? 0) / 60, 2)} = ${decStr}`),
+          ]
+        : [mStep("Convert the time to decimal hours:", `${rv.TM} \\div 60 = ${decStr}`)];
+
     if (rv.tool === "speed") {
       return [
-        ...convertStep,
-        mStep("Convert the time to decimal hours:", `${rv.TM} \\div 60 = ${decStr}`),
+        ...decimalConvertSteps,
         mStep("Divide the distance by this:", `${numLatex(rv.D)} \\div ${decStr} = ${numLatex(rv.S)}`),
       ];
     }
     if (rv.tool === "distance") {
       return [
-        ...convertStep,
-        mStep("Convert the time to decimal hours:", `${rv.TM} \\div 60 = ${decStr}`),
+        ...decimalConvertSteps,
         mStep("Multiply the speed by this:", `${numLatex(rv.S)} \\times ${decStr} = ${numLatex(rv.D)}`),
       ];
     }

@@ -96,6 +96,23 @@ Also fixed the ratio table's arrows on user feedback: they were straight vertica
 curve (bulging away from the table) — one SVG path, mirrored via CSS `scaleX(-1)` for the right-hand
 gutter rather than authoring two paths.
 
+Three further refinements from a closer read of the worked examples:
+- **Arrowhead now rotates to match the curve's tangent** at its endpoint (a quadratic bezier, so the
+  tangent is a clean 45°) instead of staying fixed pointing straight down while the curve visibly
+  bends away from it — the arrowhead is authored in local coordinates and placed via
+  `transform="translate(...) rotate(-45)"` rather than being drawn already-rotated in place.
+- **Decimal method's compound-time conversion now goes straight to hours**: "45 min ÷ 60 = 0.75,
+  then 1 + 0.75 = 1.75" instead of the previous "1×60+45=105, then 105÷60=1.75" detour through total
+  minutes (Speed/Distance only — Time computes the decimal from D and S, it never starts from a
+  given compound time).
+- **Suppressed a numeric coincidence at Level 3** ("A car travels 37 miles in 37 minutes") that was
+  showing up far too often: whenever the awkward minute value is coprime to 60, the reduced scale
+  factor forces the distance to equal the time-in-minutes almost every draw (the speed range only
+  leaves room for the one scaling factor that produces this exact coincidence). Fixed at the root —
+  awkward-minutes shapes now require a shared factor with 60 — plus a defensive check in the value
+  generator that skips/nudges any draw where distance would still equal the time value. Verified
+  across 3,000 randomised Level 3 draws: zero coincidences.
+
 ## 2026-09-07 — ToolShell bug fix: differentiated worksheets ignoring multiSelect defaults
 Fixed a shared-shell bug reported on Collecting Like Terms: a differentiated worksheet would
 sometimes generate negative-coefficient or crossing-zero questions even with "Positive terms

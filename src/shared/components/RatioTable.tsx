@@ -9,13 +9,21 @@ const BORDER = "2px solid #1e3a8a";
 // to whatever pixel height its segment measures. Authored bulging left (as
 // if the table sits to its right); the "right" gutter mirrors the same path
 // with CSS so it bulges the other way instead of needing a second path.
+//
+// The path M 14 2 Q 2 20 14 32 is a quadratic bezier whose tangent at the
+// end (t=1) is 2·(end − control) = 2·((14,32) − (2,20)) = (24,24) — a clean
+// 45° line. The arrowhead is authored pointing straight down in its own
+// local coordinates, then translated to that endpoint and rotated to match
+// (rotate(-45) points it down-and-right, matching that tangent) — otherwise
+// it stays fixed pointing straight down while the curve visibly bends away
+// from it, looking disconnected from the line it's supposed to cap.
 const ArrowGlyph = ({ height, side }: { height: number; side: "left" | "right" }) => (
   <svg
     width="18" height={Math.max(height, 1)} viewBox="0 0 20 40" preserveAspectRatio="none"
     style={{ display: "block", flexShrink: 0, transform: side === "right" ? "scaleX(-1)" : undefined }}
   >
     <path d="M 14 2 Q 2 20 14 32" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" />
-    <polygon points="14,39 9,29 19,29" fill="#6b7280" />
+    <polygon points="0,8 -5,-2 5,-2" fill="#6b7280" transform="translate(14, 32) rotate(-45)" />
   </svg>
 );
 
