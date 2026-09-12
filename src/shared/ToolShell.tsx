@@ -267,7 +267,11 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     if (availableLevels.length < 2) return;
     setDiffToggle(prev => {
       const next = !prev;
-      if (!next && diffLevels.length > 1) {
+      if (next) {
+        // Turning multi-select on: start from every available level, not
+        // just whichever single one was showing.
+        setDiffLevels(availableLevels);
+      } else if (diffLevels.length > 1) {
         const collapsed = diffLevels[0];
         setDifficulty(collapsed);
         setDiffLevels([collapsed]);
@@ -890,7 +894,8 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                       </label>
                       {isDifferentiated && (
                         <>
-                          <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-4 mb-2">Question Cell Size</div>
+                          <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-4 mb-2">Differentiated</div>
+                          <div className="text-xs font-semibold text-gray-500 mb-1">Question Cell Size</div>
                           <SegButtons
                             value={diffSameSize ? "same" : "fit"}
                             onChange={v => setDiffSameSize(v === "same")}
@@ -899,7 +904,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                               { value: "same", label: "Fit all levels" },
                             ]}
                           />
-                          <label className="flex items-center justify-between gap-3 cursor-pointer mt-4">
+                          <label className="flex items-center justify-between gap-3 cursor-pointer mt-3">
                             <span className="text-sm font-semibold text-gray-600">Colour levels</span>
                             <div onClick={() => setDiffColorLevels(!diffColorLevels)}
                               className={`w-9 h-5 rounded-full transition-colors relative flex-shrink-0 ${diffColorLevels ? "bg-blue-900" : "bg-gray-300"}`}>

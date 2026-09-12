@@ -40,6 +40,12 @@ preview and the printed sheet always match. Persisted as `diffColor=0` in the sh
 (default omitted). Verified in a live browser (toggle on/off, screenshots) plus `npm run build`
 (zero TS errors) and `npm test` (320 passing).
 
+Follow-up tweaks: pressing "Differentiated" now auto-selects every available level (previously
+it started from whichever single level was showing, needing a second click to add the rest) —
+`toggleDiffMode` sets `diffLevels` to `availableLevels` on the on-transition. The two new
+Settings options also gained their own "Differentiated" subheading, grouping Question Cell Size
+and Colour levels the same way Layout groups Worksheet/Textbook and Borders.
+
 ## 2026-09-12 — Fix differentiated cell-height equalisation for real: pure CSS, no JS measurement
 User-reported (with a live screenshot) that "Fit all levels" cells were still uneven on a real
 device, despite passing every local check. The on-screen "Fit all levels" mode relied on a
