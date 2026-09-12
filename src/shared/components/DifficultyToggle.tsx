@@ -1,3 +1,5 @@
+import { LV_SELECTOR } from "../colors";
+
 export const DifficultyToggle = ({
   value,
   onChange,
@@ -11,13 +13,14 @@ export const DifficultyToggle = ({
   <div className="flex rounded-xl border-2 border-gray-300 shadow-sm" style={{ overflow: "visible" }}>
     {(
       [
-        ["level1", "Level 1", "bg-green-600"],
-        ["level2", "Level 2", "bg-yellow-500"],
-        ["level3", "Level 3", "bg-red-600"],
+        ["level1", "Level 1"],
+        ["level2", "Level 2"],
+        ["level3", "Level 3"],
       ] as const
-    ).map(([val, label, col], idx) => {
+    ).map(([val, label], idx) => {
       const isDisabled = disabledLevels.includes(val);
       const isActive = !isDisabled && value === val;
+      const col = LV_SELECTOR[val];
       // Recreate the look of overflow-hidden by rounding the outer buttons individually
       const roundClass = idx === 0 ? "rounded-l-[10px]" : idx === 2 ? "rounded-r-[10px]" : "";
       const borderClass = idx > 0 ? "border-l border-gray-300" : "";
@@ -30,7 +33,7 @@ export const DifficultyToggle = ({
               isDisabled
                 ? "bg-gray-100 text-gray-300 cursor-not-allowed"
                 : isActive
-                  ? `${col} text-white`
+                  ? `${col.bg} ${col.text}`
                   : "bg-white text-gray-500 hover:bg-gray-50"
             }`}
           >

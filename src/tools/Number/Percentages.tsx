@@ -30,6 +30,8 @@ const FP_METHOD_DD = {
     { value: "chunking", label: "Chunking" },
   ],
   defaultValue: "multiplier",
+  // Only changes the shown working (same question, same answer either way).
+  workedExampleOnly: true,
 };
 const FP_DECIMALS_VAR = { key: "useDecimals", label: "Decimal amounts", defaultValue: false };
 

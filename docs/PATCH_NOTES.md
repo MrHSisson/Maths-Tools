@@ -28,6 +28,140 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-12 — "Colour levels" toggle for differentiated worksheets
+Added a `diffColorLevels` setting (Settings menu, next to Question Cell Size, shown only when
+differentiated) so a teacher can turn off each level's green/yellow/red tint — plain neutral
+grey/white styling instead, for anyone who doesn't want the colour-coding. Default stays on
+(unchanged appearance). Applied consistently on-screen (`ToolShell.tsx` — a new
+`NEUTRAL_LV_COLORS` constant swaps in for `LV_COLORS` when the toggle is off, covering both the
+level box background/border and its header text) and in PDF export (`print.ts`'s
+`.diff-header.neutral` CSS class, `printDiagram.ts`'s neutral text/background constants) so the
+preview and the printed sheet always match. Persisted as `diffColor=0` in the shareable link
+(default omitted). Verified in a live browser (toggle on/off, screenshots) plus `npm run build`
+(zero TS errors) and `npm test` (320 passing).
+
+Follow-up tweaks: pressing "Differentiated" now auto-selects every available level (previously
+it started from whichever single level was showing, needing a second click to add the rest) —
+`toggleDiffMode` sets `diffLevels` to `availableLevels` on the on-transition. The two new
+Settings options also gained their own "Differentiated" subheading, grouping Question Cell Size
+and Colour levels the same way Layout groups Worksheet/Textbook and Borders.
+
+## 2026-09-12 — Fix differentiated cell-height equalisation for real: pure CSS, no JS measurement
+User-reported (with a live screenshot) that "Fit all levels" cells were still uneven on a real
+device, despite passing every local check. The on-screen "Fit all levels" mode relied on a
+`DiffCell` component measuring each cell's height via `ResizeObserver` + `requestAnimationFrame`
+and applying the max as a JS-computed `minHeight` — this is inherently timing-dependent (it needs
+the observer to fire and the resulting state update to land before the user looks), and despite
+extensive attempts (narrow/mobile viewports, CPU + network throttling, a production build) it
+could not be reproduced locally, but the deployed commit was confirmed (via the Vercel API) to
+exactly match the code being tested — so the JS-timing theory, though unconfirmed, was the most
+plausible explanation and, regardless, a strictly more fragile mechanism than necessary.
+
+Replaced it with pure CSS: the outer differentiated grid now declares explicit row tracks
+(`auto` for the header, `repeat(numQuestions, 1fr)` for the questions) and each level's coloured
+box uses `grid-template-rows: subgrid` to reuse those same tracks — an auto-sized grid's `1fr`
+rows always resolve to the height of their tallest occupant, so every level's row *N* ends up
+exactly as tall as the tallest row *N* anywhere, recomputed natively by the browser on every
+reflow (KaTeX finishing, a resize, anything) with no JavaScript or timing involved at all. This
+gives row-by-row alignment across levels rather than one single global height for every cell,
+which needs a browser reflow either way and is a more robust target than the old approach's
+literal (but fragile) global uniform height. "Fit each level" already used the equivalent
+per-column CSS trick and needed no change. Deleted the now-dead `DiffCell` component and its
+`ResizeObserver`/state plumbing entirely. Print/PDF export was never affected (it always computed
+sizing analytically, no measurement).
+
+Verified in a live browser (both modes, mobile-width viewport) that every cell now renders at a
+consistent, row-aligned height with centred content — plus `npm run build` (zero TS errors) and
+`npm test` (320 passing). Could not reproduce the original failure locally even under heavy CPU/
+network throttling, so this fix is judged by robustness of the new mechanism (deterministic CSS,
+no async race) rather than a before/after repro.
+
+## 2026-09-12 — Soften the Level 1/2/3 selector colours to pastel
+The Level 1/2/3 selector buttons (worksheet mode's level row, the Whiteboard/Worked Example
+`DifficultyToggle`, and the Worksheet Builder's per-section L1/L2/L3 pills) filled with
+saturated green-600/yellow-500/red-600 when active — sitting three side by side clashed. Added
+`LV_SELECTOR` to `colors.ts` (pastel fills with matching dark 900-shade text for contrast —
+settled on green-100/yellow-100/red-100 after trying 200, per follow-up feedback wanting it
+softer still) and switched all three call sites to it, removing their own inline/duplicated
+colour arrays. Verified visually in a live browser across all three surfaces plus
+`npm run build` (zero TS errors) and `npm test` (320 passing).
+
+## 2026-09-12 — Worked-example-only dropdowns hidden from worksheets; differentiated cells centred
+Two small fixes from review of the same-day differentiated-worksheet work below:
+- **`ToolDropdown.workedExampleOnly`** (`types.ts`) — a new optional flag for a dropdown (e.g. a
+  "Method" choice) whose options only change the displayed working, not the question or answer,
+  so it has nothing to offer a printed worksheet. `StandardQOPopover`/`DiffQOPopover`
+  (`QOPopovers.tsx`) now take a `hideWorkedExampleOnly` prop and drop such a dropdown from their
+  render when set; `ToolShell.tsx` passes `hideWorkedExampleOnly: mode === "worksheet"`, so the
+  option still shows normally in Whiteboard and Worked Example mode. Applied to the three
+  dropdowns confirmed (by reading each `generateQuestion`/`reformatQuestion`) to be genuinely
+  working-only: `SpeedDistanceTime`'s Ratio Table/Decimal method, `Percentages`'s
+  Multiplier/Chunking method, and `ExpandingBrackets`'s FOIL/Grid/Both method. Left
+  `SimultaneousEquations`'s "Method" dropdown alone — there it actually changes the generated
+  coefficients, so it must stay visible on the worksheet. Documented in `CLAUDE.md`'s QO control
+  types section.
+- **Differentiated cell centring.** Cells sized taller than their own content (to match a
+  level's tallest question, or every level's tallest under "Fit all levels") were top-aligning
+  their content and leaving the slack space below — "wrap then pad", not what was wanted. The
+  actual stretch happens on the per-cell wrapper div in the differentiated grid (via CSS Grid's
+  row-stretch for "Fit each level", or the `minHeight` set for "Fit all levels") rather than
+  inside `renderQCell` itself, so that wrapper is now a centred flex column
+  (`justifyContent:"center"`); `renderQCell`'s own cell style also centres its content
+  vertically, which incidentally already worked correctly for the ordinary (non-differentiated)
+  worksheet grid, where `renderQCell` is the direct grid item. Verified visually (screenshots)
+  and via measured bounding boxes in a live browser: top/bottom gaps are now equal instead of
+  all sitting below the content, for both "Fit each level" (still correctly per-level-sized,
+  distinct heights across levels) and "Fit all levels" (one shared height everywhere).
+
+Verified with `npm run build` (zero TS errors), `npm test` (320 passing), and a live browser
+(QO popover content per mode, and the differentiated grid screenshots/measurements above).
+
+## 2026-09-12 — Differentiated worksheets: level row doubles as the picker, per-level cell sizing
+Follow-up to the same-day level-subset work below, reworked once more after review. Final
+shape, all in `ToolShell.tsx` unless noted:
+- **The main Level 1/2/3 row is the level picker — no separate popover or chip row.**
+  "Differentiated" is a plain toggle again (`diffToggle`), exactly like it originally was; its
+  only job is to switch the level row between mutually-exclusive single-select (normal) and
+  multi-select. In multi-select mode, clicking a level toggles its membership in `diffLevels`
+  instead of replacing the selection. The worksheet is only *actually* differentiated once 2+
+  levels are checked — `isDifferentiated` is now a derived value
+  (`diffToggle && diffLevels.length >= 2`), not its own state — so checking a second level
+  turns differentiation on by itself, and unchecking back down to one turns it back off and
+  collapses cleanly to an ordinary single-level sheet (an effect keeps `diffLevels` mirroring
+  `difficulty` whenever multi-select is off, so switching modes always starts from whatever
+  level is on screen, however it got there). Toggling "Differentiated" off entirely collapses
+  to whichever level was still checked.
+- **Question cell size option relocated.** The `diffSameSize` setting ("Fit each level" vs
+  "Fit all levels", renamed from "Same across levels") moved out of the (now-removed)
+  Differentiated popover into the existing Settings menu (the one holding the
+  Worksheet/Textbook layout and Borders toggle), shown only when the worksheet is actually
+  differentiated. The underlying implementation (on-screen `DiffCell` measurement,
+  `computeWorksheetLayout`'s `diffCellHByLevel`, PDF export in `print.ts`/`printDiagram.ts`) is
+  unchanged from the same-day entry below.
+- **Filtered QO popover** (`DiffQOPopover` in `QOPopovers.tsx`, still showing only the selected
+  levels) is unchanged.
+
+Verified in a live browser: mutual exclusivity when off, multi-select and the 2-selected
+auto-differentiate rule when on, collapsing back to one level (and to the toggle turning off
+entirely), the Settings-menu cell-size option and its relabelled options, QO popover filtering,
+and that a difficulty change from the whiteboard's own difficulty toggle still starts
+multi-select from the right level — plus `npm run build` (zero TS errors) and `npm test` (320
+passing).
+
+## 2026-09-12 — Standard-mode Differentiated worksheets: pick any 2-or-3 level subset
+Standard-mode Differentiated worksheets (`ToolShell.tsx`) previously always split into all
+three levels. Added a level-picker (L1/L2/L3 chips, shown once Differentiated is on) so a
+teacher can target any subset of at least two levels — e.g. Level 1 & 3, skipping Level 2 —
+matching what Advanced/Worksheet Builder already allowed via per-section levels. Selecting
+fewer than three levels also works when a level is `comingSoonLevels`-gated (Differentiated
+is now only disabled when fewer than two levels are available, rather than whenever any level
+is coming soon). The selection is encoded in the shareable link (`diffLv=1,3`, backward
+compatible with old `diff=1` links) and drives worksheet generation, the whiteboard/worked
+example differentiated grid, and PDF export (`print.ts`, `printDiagram.ts` for SVG tools) —
+`computeWorksheetLayout`'s per-level pagination math (`worksheetLayout.ts`) now divides by the
+selected level count instead of a hardcoded 3. Verified in a live browser (level toggle, the
+2-level lock, worksheet regeneration, URL persistence across reload) plus `npm test`.
+
 ## 2026-09-12 — New tool: Speed, Distance & Time + shared Ratio Table representation
 Built `SpeedDistanceTime` (`src/tools/Proportion/SpeedDistanceTime.tsx`, Ratio & Proportion,
 `enabled: false` pending review), with three subtools — Speed, Distance, Time — sharing one

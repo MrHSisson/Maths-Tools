@@ -94,6 +94,9 @@ const METHOD_DROPDOWN: ToolDropdown = {
     { value: "decimal", label: "Decimal" },
   ],
   defaultValue: "ratioTable",
+  // Swaps the working steps only — same question and answer either way — so
+  // it has nothing to offer a printed worksheet.
+  workedExampleOnly: true,
 };
 
 const L3_TYPES: ToolMultiSelect = {

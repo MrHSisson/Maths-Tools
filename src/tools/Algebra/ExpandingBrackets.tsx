@@ -339,6 +339,9 @@ const METHOD_DD = {
     { value: "both", label: "Both" },
   ],
   defaultValue: "foil",
+  // Only changes how the working is shown (arrows vs a grid) — same question
+  // and answer either way.
+  workedExampleOnly: true,
 };
 
 const MULTIPLIER_MS = {

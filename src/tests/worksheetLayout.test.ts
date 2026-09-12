@@ -67,10 +67,11 @@ describe("computeWorksheetLayout — list", () => {
 });
 
 describe("computeWorksheetLayout — differentiated", () => {
-  it("derives per-column rows and page count", () => {
-    // 9 questions → diffPerCol 3. needed small (50) so all 3 rows fit in one page.
+  it("derives per-column rows and page count for a 3-level split", () => {
+    // 9 questions over 3 levels → diffPerCol 3. needed small (50) so all 3 rows fit in one page.
     const plan = computeWorksheetLayout(base({
       isDiff: true,
+      cols: 3,
       totalQ: 9,
       heightsPx: Array(9).fill(40),
       sectionIdx: Array(9).fill(0),
@@ -81,6 +82,61 @@ describe("computeWorksheetLayout — differentiated", () => {
     expect(plan.diffRowsPerPage).toBe(3);
     expect(plan.numDiffPages).toBe(1);
     expect(plan.pages).toEqual([]); // diff paginates via numDiffPages
+  });
+
+  it("derives per-column rows for a 2-level split (e.g. Level 1 & 3 only)", () => {
+    // 10 questions over 2 selected levels → diffPerCol 5.
+    const plan = computeWorksheetLayout(base({
+      isDiff: true,
+      cols: 2,
+      totalQ: 10,
+      heightsPx: Array(10).fill(40),
+      sectionIdx: Array(10).fill(0),
+      sectionCols: Array(10).fill(2),
+      itemHasHeader: Array(10).fill(false),
+    }));
+    expect(plan.diffPerCol).toBe(5);
+    expect(plan.diffRowsPerPage).toBe(5);
+    expect(plan.numDiffPages).toBe(1);
+    expect(plan.pages).toEqual([]);
+  });
+
+  it("defaults to one shared cell height across levels (diffSameSize omitted)", () => {
+    // Level 0 (index 0-1) is small (40px→50mm needed); level 1 (index 2-3) is
+    // tall (90px→100mm needed). Same-size mode ignores the per-level split.
+    const plan = computeWorksheetLayout(base({
+      isDiff: true,
+      cols: 2,
+      totalQ: 4,
+      heightsPx: [40, 40, 90, 90],
+      sectionIdx: [0, 0, 1, 1],
+      sectionCols: [2, 2, 2, 2],
+      itemHasHeader: [false, false, false, false],
+      diffHdrMM: 0,
+    }));
+    expect(plan.diffCellH_mm).toBe(150);
+    expect(plan.diffCellHByLevel).toEqual({});
+  });
+
+  it("sizes each level's cells to its own content when diffSameSize is false", () => {
+    // Same data as above, but the smaller level (0) should get its own
+    // (smaller) cell height instead of inflating to match level 1.
+    const plan = computeWorksheetLayout(base({
+      isDiff: true,
+      cols: 2,
+      totalQ: 4,
+      heightsPx: [40, 40, 90, 90],
+      sectionIdx: [0, 0, 1, 1],
+      sectionCols: [2, 2, 2, 2],
+      itemHasHeader: [false, false, false, false],
+      diffHdrMM: 0,
+      diffSameSize: false,
+    }));
+    // Pagination (rows/page) is still driven by the worst-case (tallest) level,
+    // so both level columns show the same number of rows per page.
+    expect(plan.diffRowsPerPage).toBe(2);
+    expect(plan.diffCellHByLevel[0]).toBe(50);
+    expect(plan.diffCellHByLevel[1]).toBe(100);
   });
 });
 
