@@ -200,25 +200,32 @@ export const StandardQOPopover = ({
   multiSelect,
   multiSelectValues,
   onMultiSelectChange,
+  hideWorkedExampleOnly,
 }: {
   variables: { key: string; label: string }[];
   variableValues: Record<string, boolean>;
   onVariableChange: (k: string, v: boolean) => void;
-  dropdown: { key: string; label: string; useTwoLineButtons?: boolean; options: { value: string; label: string; sub?: string }[] } | null;
+  dropdown: { key: string; label: string; useTwoLineButtons?: boolean; options: { value: string; label: string; sub?: string }[]; workedExampleOnly?: boolean } | null;
   dropdownValue: string;
   onDropdownChange: (v: string) => void;
   multiSelect: { key: string; label: string; options: { value: string; label: string }[]; allowEmpty?: boolean }[];
   multiSelectValues: Record<string, boolean>;
   onMultiSelectChange: (k: string, v: boolean) => void;
+  /** Hides a dropdown flagged `workedExampleOnly` — it only changes the
+   *  displayed working, so it has nothing to offer a printed worksheet. Pass
+   *  true from the Worksheet mode QO popover; omit (or false) in
+   *  Whiteboard/Worked Example mode, where it still applies. */
+  hideWorkedExampleOnly?: boolean;
 }) => {
   const { open, setOpen, ref } = usePopover();
-  const hasContent = variables.length > 0 || dropdown !== null || multiSelect.length > 0;
+  const dd = dropdown && !(hideWorkedExampleOnly && dropdown.workedExampleOnly) ? dropdown : null;
+  const hasContent = variables.length > 0 || dd !== null || multiSelect.length > 0;
   return (
     <div className="relative" ref={ref}>
       <PopoverButton open={open} onClick={() => setOpen(!open)} />
       {open && (
         <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-[26rem] p-5 flex flex-col gap-5">
-          {dropdown && <DropdownSection dropdown={dropdown} value={dropdownValue} onChange={onDropdownChange} />}
+          {dd && <DropdownSection dropdown={dd} value={dropdownValue} onChange={onDropdownChange} />}
           <MultiSelectGroups groups={multiSelect} values={multiSelectValues} onChange={onMultiSelectChange} />
           {variables.length > 0 && <VariablesSection variables={variables} values={variableValues} onChange={onVariableChange} />}
           {!hasContent && <p className="text-sm text-gray-400">No additional options for this tool.</p>}
@@ -237,6 +244,7 @@ export const DiffQOPopover = ({
   levelMultiSelect,
   onLevelMultiSelectChange,
   levels: levelsProp,
+  hideWorkedExampleOnly,
 }: {
   toolSettings: ToolEntry;
   levelVariables: Record<string, Record<string, boolean>>;
@@ -248,10 +256,15 @@ export const DiffQOPopover = ({
   /** Only show options for these levels — e.g. the levels currently selected
    *  for a differentiated worksheet. Defaults to all three. */
   levels?: DifficultyLevel[];
+  /** See StandardQOPopover — hides any dropdown flagged `workedExampleOnly`. */
+  hideWorkedExampleOnly?: boolean;
 }) => {
   const { open, setOpen, ref } = usePopover();
   const levels = levelsProp ?? (["level1", "level2", "level3"] as DifficultyLevel[]);
-  const getDDForLevel = (lv: string) => toolSettings.difficultySettings?.[lv]?.dropdown ?? toolSettings.dropdown;
+  const getDDForLevel = (lv: string) => {
+    const dd = toolSettings.difficultySettings?.[lv]?.dropdown ?? toolSettings.dropdown;
+    return dd && !(hideWorkedExampleOnly && dd.workedExampleOnly) ? dd : null;
+  };
   const getVarsForLevel = (lv: string) => toolSettings.difficultySettings?.[lv]?.variables ?? toolSettings.variables;
   const getMSForLevel = (lv: string) => normalizeMultiSelect(toolSettings.difficultySettings?.[lv]?.multiSelect ?? toolSettings.multiSelect);
   const anyContent = levels.some(lv => getDDForLevel(lv) !== null || (getVarsForLevel(lv)?.length ?? 0) > 0 || getMSForLevel(lv).length > 0);

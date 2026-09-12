@@ -62,6 +62,15 @@ export interface ToolDropdown {
   useTwoLineButtons?: boolean;
   options: { value: string; label: string; sub?: string }[];
   defaultValue: string;
+  /** True when this dropdown only changes how the working steps are shown
+   *  (e.g. a "Method" choice that swaps step-by-step working but leaves the
+   *  question and answer unchanged) — it has no effect on a printed
+   *  worksheet, so ToolShell hides it from the Worksheet mode QO popover
+   *  (standard and differentiated) while still showing it in Whiteboard and
+   *  Worked Example mode. Only set this when the question/answer are
+   *  genuinely identical across every option — if the dropdown changes the
+   *  numbers or structure of the question, leave it unset. */
+  workedExampleOnly?: boolean;
 }
 
 export interface ToolMultiSelect {

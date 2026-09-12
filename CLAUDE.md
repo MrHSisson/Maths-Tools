@@ -784,6 +784,14 @@ const TOOL_CONFIG: ToolConfig = {
 | `dropdown` | A single mutually-exclusive setting (e.g. method choice, display format). |
 | `variables` | Independent on/off toggles. Use sparingly — prefer `multiSelect`. |
 
+**`dropdown.workedExampleOnly`** — set this `true` only when the dropdown changes nothing but
+the displayed working (a "Method" choice like Ratio Table vs Decimal, or FOIL vs Grid arrows) —
+the question and answer are identical across every option. ToolShell then hides it from the
+Worksheet mode QO popover (standard and differentiated), where it would have no visible effect,
+while still showing it in Whiteboard and Worked Example mode. Never set it on a dropdown that
+changes the question's numbers, structure, or answer (e.g. a method that also changes the
+coefficient sizes) — those must stay visible in Worksheet mode.
+
 ### `difficultySettings` — per-level QO overrides
 
 ```ts

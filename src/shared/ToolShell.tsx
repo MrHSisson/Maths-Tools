@@ -587,6 +587,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     multiSelect: getMultiSelectConfig(),
     multiSelectValues: toolMultiSelect[currentTool] ?? {},
     onMultiSelectChange: setMultiSelectValue,
+    // A dropdown flagged workedExampleOnly (e.g. a "Method" choice that only
+    // swaps the displayed working) has nothing to offer a printed worksheet.
+    hideWorkedExampleOnly: mode === "worksheet",
   };
 
   const diffQOProps = {
@@ -602,6 +605,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     },
     onLevelMultiSelectChange: handleLevelMSChange,
     levels: diffLevels,
+    hideWorkedExampleOnly: mode === "worksheet",
   };
 
   const qoEl = (isDiff = false) => isDiff
@@ -717,9 +721,13 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     const borders = worksheetBorders || !!bgOverride;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const suppressInstruction = !!(q as any)._sectionHeader;
+    // Centred vertically (not top-aligned) so a cell stretched taller than its
+    // own content — matching a level's tallest question, or every level's
+    // tallest when "Fit all levels" is on — reads as one evenly-sized cell
+    // rather than a tightly-wrapped question with dead space hanging below it.
     const cellStyle = borders
-      ? { backgroundColor: bg, height: "100%", boxSizing: "border-box" as const, position: "relative" as const, borderRadius: "12px", border: "1px solid #e5e7eb" }
-      : { height: "100%", boxSizing: "border-box" as const, position: "relative" as const };
+      ? { backgroundColor: bg, height: "100%", boxSizing: "border-box" as const, position: "relative" as const, borderRadius: "12px", border: "1px solid #e5e7eb", display: "flex" as const, flexDirection: "column" as const, justifyContent: "center" as const }
+      : { height: "100%", boxSizing: "border-box" as const, position: "relative" as const, display: "flex" as const, flexDirection: "column" as const, justifyContent: "center" as const };
     const numEl = <span className="text-xs font-bold text-gray-400" style={{ position: "absolute", top: 4, left: 6 }}>{idx + 1}</span>;
     const wrapperClass = borders ? "rounded-xl p-4 shadow group" : "p-4 group";
 
@@ -1212,7 +1220,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                 <h3 className={`text-xl font-bold mb-4 text-center ${c.text}`}>{LV_LABELS[lv]}</h3>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr", gridAutoRows: diffSameSize ? undefined : "1fr", gap: "0.75rem" }}>
                   {lqs.map((q, idx) => (
-                    <div key={idx} style={{ minHeight: diffSameSize && diffUniformH ? diffUniformH : 0 }}>
+                    <div key={idx} style={{ minHeight: diffSameSize && diffUniformH ? diffUniformH : 0, display: "flex", flexDirection: "column", justifyContent: "center" }}>
                       <DiffCell sameSize={diffSameSize} cellKey={`${lv}-${idx}`} onHeight={registerDiffHeight}>
                         {renderQCell(q, idx, c.fill)}
                       </DiffCell>

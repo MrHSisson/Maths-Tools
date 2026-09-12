@@ -28,6 +28,36 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-12 — Worked-example-only dropdowns hidden from worksheets; differentiated cells centred
+Two small fixes from review of the same-day differentiated-worksheet work below:
+- **`ToolDropdown.workedExampleOnly`** (`types.ts`) — a new optional flag for a dropdown (e.g. a
+  "Method" choice) whose options only change the displayed working, not the question or answer,
+  so it has nothing to offer a printed worksheet. `StandardQOPopover`/`DiffQOPopover`
+  (`QOPopovers.tsx`) now take a `hideWorkedExampleOnly` prop and drop such a dropdown from their
+  render when set; `ToolShell.tsx` passes `hideWorkedExampleOnly: mode === "worksheet"`, so the
+  option still shows normally in Whiteboard and Worked Example mode. Applied to the three
+  dropdowns confirmed (by reading each `generateQuestion`/`reformatQuestion`) to be genuinely
+  working-only: `SpeedDistanceTime`'s Ratio Table/Decimal method, `Percentages`'s
+  Multiplier/Chunking method, and `ExpandingBrackets`'s FOIL/Grid/Both method. Left
+  `SimultaneousEquations`'s "Method" dropdown alone — there it actually changes the generated
+  coefficients, so it must stay visible on the worksheet. Documented in `CLAUDE.md`'s QO control
+  types section.
+- **Differentiated cell centring.** Cells sized taller than their own content (to match a
+  level's tallest question, or every level's tallest under "Fit all levels") were top-aligning
+  their content and leaving the slack space below — "wrap then pad", not what was wanted. The
+  actual stretch happens on the per-cell wrapper div in the differentiated grid (via CSS Grid's
+  row-stretch for "Fit each level", or the `minHeight` set for "Fit all levels") rather than
+  inside `renderQCell` itself, so that wrapper is now a centred flex column
+  (`justifyContent:"center"`); `renderQCell`'s own cell style also centres its content
+  vertically, which incidentally already worked correctly for the ordinary (non-differentiated)
+  worksheet grid, where `renderQCell` is the direct grid item. Verified visually (screenshots)
+  and via measured bounding boxes in a live browser: top/bottom gaps are now equal instead of
+  all sitting below the content, for both "Fit each level" (still correctly per-level-sized,
+  distinct heights across levels) and "Fit all levels" (one shared height everywhere).
+
+Verified with `npm run build` (zero TS errors), `npm test` (320 passing), and a live browser
+(QO popover content per mode, and the differentiated grid screenshots/measurements above).
+
 ## 2026-09-12 — Differentiated worksheets: level row doubles as the picker, per-level cell sizing
 Follow-up to the same-day level-subset work below, reworked once more after review. Final
 shape, all in `ToolShell.tsx` unless noted:
