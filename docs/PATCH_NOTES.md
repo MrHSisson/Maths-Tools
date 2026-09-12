@@ -46,14 +46,21 @@ only (no natural "per minute" convention exists for it at GCSE level).
 
 Added a **seventh core representation**, the **ratio table** (`src/shared/ratioTable.ts` +
 `src/shared/components/RatioTable.tsx`), alongside the existing six in CLAUDE.md — renders as one
-continuous bordered `<table>` with quantities as columns and each scale-step as a row going down,
-the factor between adjacent rows shown outside the table in a left/right gutter (mirrored), never
-inside a cell. Went through two rounds of user feedback after the first pass (a borderless CSS
-grid with quantities as columns/steps as rows, then transposed to quantities-as-rows) before
-landing on this — the working version. A single combined scale factor is never shown as one
-fraction/decimal multiply: `buildScaleSteps` in `SpeedDistanceTime.tsx` decomposes it into two
-whole-number `×n`/`÷n` steps through an intermediate "unit" row whenever both factors are
-non-trivial (only possible at Level 3 — Levels 1–2 always have one factor equal to 1, so the
+continuous bordered `<table>` with quantities as columns and each scale-step as a row going down
+(rows share borders directly, no gap row), the factor between adjacent rows shown as an arrow
+outside the table running from the vertical centre of one row to the centre of the next, mirrored
+left and right. Went through three rounds of user feedback before landing here: a borderless CSS
+grid (quantities as columns, steps as rows) → transposed to quantities-as-rows → back to
+quantities-as-columns with a real bordered table and an empty "divider row" for the arrows → this,
+with the divider row removed entirely and the arrows measured in real pixels instead (refs +
+`getBoundingClientRect` on each row, in a plain `useEffect` so it runs after `MathRenderer`'s own
+child effect has painted the KaTeX) — a percentage-height div inside a `<td>` was found to collapse
+to 0 in this rendering engine, stacking every arrow at the same spot; same measurement technique
+`WorkedExampleSteps.tsx`'s `FitWidth` already uses elsewhere in this codebase. A single combined
+scale factor is never shown as one fraction/decimal multiply: `buildScaleSteps` in
+`SpeedDistanceTime.tsx` decomposes it into two whole-number `×n`/`÷n` steps through an intermediate
+"unit" row whenever both factors are non-trivial (only possible at Level 3 — Levels 1–2 always have
+one factor equal to 1, so the
 chain collapses back to a single step), verified against 1,440 randomised draws. Authored via
 `rStep(label, headers, rows, operations)` and rendered through the shared
 `ratioTableStepRenderer`, which a tool passes as `stepRenderer` (returns `null` for every
