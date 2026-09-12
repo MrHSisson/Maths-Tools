@@ -15,6 +15,7 @@ export const handlePrint = (
   layout: "grid" | "list" = "grid",
   showBorders: boolean = true,
   diffSameSize: boolean = true,
+  diffColorLevels: boolean = true,
 ) => {
   if (difficulty === "advanced") isDifferentiated = false;
   const lvls = isDifferentiated ? diffLevels : [];
@@ -216,6 +217,7 @@ export const handlePrint = (
   .diff-header.level1 { background: #dcfce7; color: #166534; }
   .diff-header.level2 { background: #fef9c3; color: #854d0e; }
   .diff-header.level3 { background: #fee2e2; color: #991b1b; }
+  .diff-header.neutral { background: #f3f4f6; color: #111827; }
   .diff-cell {
     border: 0.3mm solid #d1d5db; border-radius: 3mm;
     overflow: hidden; display: flex; flex-direction: column;
@@ -272,6 +274,7 @@ document.addEventListener("DOMContentLoaded", function() {
   var cols      = ${cols};
   var isDiff    = ${isDifferentiated ? "true" : "false"};
   var diffSameSize = ${diffSameSize ? "true" : "false"};
+  var diffColorLevels = ${diffColorLevels ? "true" : "false"};
   var diffLvls  = ${JSON.stringify(lvls)};
   var diffLbls  = ${JSON.stringify(lvls.map(lv => LV_LABELS[lv]))};
   var isListLayout = ${layout === "list" ? "true" : "false"};
@@ -390,7 +393,8 @@ document.addEventListener("DOMContentLoaded", function() {
         var cells = lqs.map(function(q) {
           return buildCell(showAnswer ? q.a : q.q, cW, thisCH, true);
         }).join('');
-        return '<div class="diff-col"><div class="diff-header ' + lv + '">' + diffLbls[li] + '</div>' + cells + '</div>';
+        var hdrClass = diffColorLevels ? lv : 'neutral';
+        return '<div class="diff-col"><div class="diff-header ' + hdrClass + '">' + diffLbls[li] + '</div>' + cells + '</div>';
       }).join('');
       return '<div class="diff-grid" style="grid-template-columns:repeat(' + cols + ',' + cW + 'mm);">' + colsN + '</div>';
     }

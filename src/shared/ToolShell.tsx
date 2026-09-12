@@ -62,6 +62,12 @@ export interface ToolShellProps {
 
 const ALL_LEVELS: DifficultyLevel[] = ["level1", "level2", "level3"];
 
+// Used for a differentiated worksheet's level columns when the teacher turns
+// off "Colour levels" in Settings — plain neutral styling instead of each
+// level's green/yellow/red tint. `fill` is left undefined so renderQCell
+// falls back to its normal (non-differentiated) cell background.
+const NEUTRAL_LV_COLORS = { bg: "bg-white", border: "border-gray-300", text: "text-gray-800", fill: undefined as string | undefined };
+
 /** Scales its content to fit the available space — up to fill when the panel
  *  collapse frees room (like dragging the splitter wide, past the tool's own
  *  maxWidth cap), and DOWN below 1x when the content wouldn't fit (short
@@ -134,14 +140,15 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const toolKeys = Object.keys(config.tools);
 
   // ── Shareable links: read the initial state from the URL (parsed once) ─────
-  // ?tool=key&mode=example|worksheet&level=2&dd=value&vars=a,-b&ms=x,-y&n=20&cols=2&diff=1&diffLv=1,3&diffSame=0
+  // ?tool=key&mode=example|worksheet&level=2&dd=value&vars=a,-b&ms=x,-y&n=20&cols=2&diff=1&diffLv=1,3&diffSame=0&diffColor=0
   // Tokens in vars/ms set a key on; a "-" prefix sets it off. Invalid or stale
   // values fall back to defaults, so old bookmarks never break a tool. `diffLv`
   // is an optional comma list of level numbers (e.g. "1,3") selecting a subset
   // of levels for the Differentiated worksheet; omitted or invalid, it falls
   // back to every available (non coming-soon) level, matching old links.
   // `diffSame=0` opts into per-level cell sizing; omitted (or any other value)
-  // keeps the default shared-height sizing.
+  // keeps the default shared-height sizing. `diffColor=0` turns off each
+  // level's green/yellow/red tint; omitted (or any other value) keeps it on.
   const [urlInit] = useState(() => {
     const p = new URLSearchParams(typeof window === "undefined" ? "" : window.location.search);
     const toggles = (param: string | null): Record<string, boolean> => {
@@ -178,6 +185,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       diff: p.get("diff") === "1",
       diffLv: p.get("diffLv"),
       diffSame: p.get("diffSame") !== "0",
+      diffColor: p.get("diffColor") !== "0",
     };
   });
 
@@ -277,6 +285,10 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   // to its own tallest question, so a simpler level doesn't inflate to match
   // a harder level's bigger diagrams/working.
   const [diffSameSize, setDiffSameSize] = useState(urlInit.diffSame);
+  // true (default): each selected level's column keeps its green/yellow/red
+  // tint. false: plain neutral styling — for teachers who don't want the
+  // colour-coding on a differentiated worksheet.
+  const [diffColorLevels, setDiffColorLevels] = useState(urlInit.diffColor);
 
   const [toolVariables, setToolVariables] = useState<Record<string, Record<string, Record<string, boolean>>>>(() => {
     const init: Record<string, Record<string, Record<string, boolean>>> = {};
@@ -643,11 +655,12 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         const isFullSet = diffLevels.length === availableLevels.length && diffLevels.every(l => availableLevels.includes(l));
         if (!isFullSet) p.set("diffLv", diffLevels.map(l => levelToNum[l]).join(","));
         if (!diffSameSize) p.set("diffSame", "0");
+        if (!diffColorLevels) p.set("diffColor", "0");
       }
     }
     const qs = p.toString();
     window.history.replaceState(null, "", qs ? `${window.location.pathname}?${qs}` : window.location.pathname);
-  }, [currentTool, mode, difficulty, toolDropdowns, toolVariables, toolMultiSelect, numQuestions, numColumns, isDifferentiated, diffLevels, diffSameSize]);
+  }, [currentTool, mode, difficulty, toolDropdowns, toolVariables, toolMultiSelect, numQuestions, numColumns, isDifferentiated, diffLevels, diffSameSize, diffColorLevels]);
 
   // Persist the worksheet mode/layout and differentiated per-level QO so a refresh
   // restores it — these are not encoded in the URL.
@@ -886,6 +899,13 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                               { value: "same", label: "Fit all levels" },
                             ]}
                           />
+                          <label className="flex items-center justify-between gap-3 cursor-pointer mt-4">
+                            <span className="text-sm font-semibold text-gray-600">Colour levels</span>
+                            <div onClick={() => setDiffColorLevels(!diffColorLevels)}
+                              className={`w-9 h-5 rounded-full transition-colors relative flex-shrink-0 ${diffColorLevels ? "bg-blue-900" : "bg-gray-300"}`}>
+                              <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${diffColorLevels ? "translate-x-4" : "translate-x-0.5"}`} />
+                            </div>
+                          </label>
                         </>
                       )}
                     </div>
@@ -908,10 +928,10 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                   <PrintSplitButton
                     onPrint={m => customPrintHandler
                       ? customPrintHandler(worksheet, m, worksheetWrapRef.current, {
-                          toolName: config.tools[currentTool].name, difficulty, isDifferentiated, diffLevels, diffSameSize,
+                          toolName: config.tools[currentTool].name, difficulty, isDifferentiated, diffLevels, diffSameSize, diffColorLevels,
                           numColumns, instruction: getInstruction(), layout: worksheetLayout, showBorders: worksheetBorders,
                         })
-                      : handlePrint(worksheet, config.tools[currentTool].name, difficulty, isDifferentiated, diffLevels, numColumns, getInstruction(), m, worksheetLayout, worksheetBorders, diffSameSize)}
+                      : handlePrint(worksheet, config.tools[currentTool].name, difficulty, isDifferentiated, diffLevels, numColumns, getInstruction(), m, worksheetLayout, worksheetBorders, diffSameSize, diffColorLevels)}
                     printMode={printMode} setPrintMode={setPrintMode}
                   />
                 </>
@@ -1193,7 +1213,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         }}>
           {diffLevels.map((lv, colIdx) => {
             const lqs = worksheet.filter(q => q.difficulty === lv);
-            const c = LV_COLORS[lv];
+            const c = diffColorLevels ? LV_COLORS[lv] : NEUTRAL_LV_COLORS;
             if (diffSameSize) return (
               <div key={lv} className={`${c.bg} border-2 ${c.border} rounded-xl p-4`}
                 style={{ gridColumn: colIdx + 1, gridRow: `1 / span ${numQuestions + 1}`, display: "grid", gridTemplateRows: "subgrid", gap: "0.75rem" }}>

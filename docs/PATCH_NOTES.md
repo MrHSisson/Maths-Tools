@@ -28,6 +28,18 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-12 — "Colour levels" toggle for differentiated worksheets
+Added a `diffColorLevels` setting (Settings menu, next to Question Cell Size, shown only when
+differentiated) so a teacher can turn off each level's green/yellow/red tint — plain neutral
+grey/white styling instead, for anyone who doesn't want the colour-coding. Default stays on
+(unchanged appearance). Applied consistently on-screen (`ToolShell.tsx` — a new
+`NEUTRAL_LV_COLORS` constant swaps in for `LV_COLORS` when the toggle is off, covering both the
+level box background/border and its header text) and in PDF export (`print.ts`'s
+`.diff-header.neutral` CSS class, `printDiagram.ts`'s neutral text/background constants) so the
+preview and the printed sheet always match. Persisted as `diffColor=0` in the shareable link
+(default omitted). Verified in a live browser (toggle on/off, screenshots) plus `npm run build`
+(zero TS errors) and `npm test` (320 passing).
+
 ## 2026-09-12 — Fix differentiated cell-height equalisation for real: pure CSS, no JS measurement
 User-reported (with a live screenshot) that "Fit all levels" cells were still uneven on a real
 device, despite passing every local check. The on-screen "Fit all levels" mode relied on a

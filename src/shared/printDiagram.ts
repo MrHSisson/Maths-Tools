@@ -30,6 +30,9 @@ export interface PrintContext {
    *  level's column to its own tallest diagram instead, so a simpler
    *  level's diagrams don't inflate to match a harder level's. */
   diffSameSize?: boolean;
+  /** true (default): each selected level's header band keeps its
+   *  green/yellow/red tint. false: plain neutral grey/black styling. */
+  diffColorLevels?: boolean;
   numColumns: number;
   instruction: string;
   layout: "grid" | "list";
@@ -38,6 +41,8 @@ export interface PrintContext {
 
 const LV_TEXT: Record<DifficultyLevel, string> = { level1: "#166534", level2: "#854d0e", level3: "#991b1b" };
 const LV_BG: Record<DifficultyLevel, string> = { level1: "#dcfce7", level2: "#fef9c3", level3: "#fee2e2" };
+const NEUTRAL_TEXT = "#111827";
+const NEUTRAL_BG = "#f3f4f6";
 
 const MARGIN_MM  = 12;
 const HEADER_MM  = 14;
@@ -184,14 +189,15 @@ export const handleDiagramPrint = (
 
   // ── Differentiated page: one column per selected level ──
   const diffSameSize = ctx.diffSameSize ?? true;
+  const diffColorLevels = ctx.diffColorLevels ?? true;
   const diffPage = (p: number, tp: number, showAns: boolean): string => {
     const cW = makeCellW(lvls.length);
     // Fill the column but cap at the natural diagram size (see gridPage).
     const globalNatH = cW / Math.min(...aspects);
     const globalCH = Math.min(plan.diffCellH_mm, globalNatH + CHROME_MM);
     const colsHtml = lvls.map((lv, li) => {
-      const textCol = LV_TEXT[lv];
-      const bgCol = LV_BG[lv];
+      const textCol = diffColorLevels ? LV_TEXT[lv] : NEUTRAL_TEXT;
+      const bgCol = diffColorLevels ? LV_BG[lv] : NEUTRAL_BG;
       const label = LV_LABELS[lv];
       const lvQ: number[] = [];
       questions.forEach((q, i) => { if (q.difficulty === lv) lvQ.push(i); });
