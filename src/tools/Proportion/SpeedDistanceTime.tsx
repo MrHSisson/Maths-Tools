@@ -1,7 +1,7 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type WordedQuestion,
-  type ToolMultiSelect, type ToolVariable, type WorkingStep,
+  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WordedQuestion, type QOSnapshot,
+  type ToolMultiSelect, type ToolVariable, type ToolDropdown, type WorkingStep,
   randInt, pick, pickActive, mStep, mStr, fmt, rStep, ratioTableStepRenderer,
 } from "../../shared";
 
@@ -25,7 +25,17 @@ import {
 type ToolType = "speed" | "distance" | "time";
 type UnitFamily = "mph" | "kmh" | "mps";
 type L3Type = "compoundTime" | "awkwardMinutes";
-type TimeNotation = "minutes" | "decimal" | "compound" | "worded";
+// The QUESTION only ever phrases time as minutes, hours-and-minutes, or a
+// spoken fraction — never a decimal ("0.1 hours", "1.5 hours") or a compound-
+// as-decimal, since nobody actually describes a journey time that way.
+type TimeNotation = "minutes" | "compound" | "worded";
+// The WORKED EXAMPLE's method is a separate, display-only choice (same
+// precedent as ExpandingBrackets.tsx's FOIL/Grid dropdown): "ratioTable" is
+// the default unitary-method scaling; "decimal" instead converts the time to
+// decimal hours and divides/multiplies by it directly — genuinely useful as
+// a taught method even though its intermediate value ("0.1 hours") would
+// never appear as a question's own wording.
+type WorkingMethod = "ratioTable" | "decimal";
 
 interface FamilyInfo {
   distanceUnit: string;
@@ -65,7 +75,6 @@ const NOTATION_L2: ToolMultiSelect = {
   key: "notation", label: "Time Notation",
   options: [
     { value: "minutes", label: "Minutes", defaultActive: true },
-    { value: "decimal", label: "Decimal hours", defaultActive: true },
     { value: "worded", label: "Worded fraction", defaultActive: true },
   ],
 };
@@ -74,9 +83,17 @@ const NOTATION_L3: ToolMultiSelect = {
   key: "notation", label: "Time Notation",
   options: [
     { value: "compound", label: "Hours & minutes", defaultActive: true },
-    { value: "decimal", label: "Decimal hours", defaultActive: true },
     { value: "worded", label: "Worded fraction", defaultActive: true },
   ],
+};
+
+const METHOD_DROPDOWN: ToolDropdown = {
+  key: "method", label: "Method",
+  options: [
+    { value: "ratioTable", label: "Ratio Table" },
+    { value: "decimal", label: "Decimal" },
+  ],
+  defaultValue: "ratioTable",
 };
 
 const L3_TYPES: ToolMultiSelect = {
@@ -92,7 +109,7 @@ const ALLOW_DECIMALS: ToolVariable = { key: "allowDecimals", label: "Allow decim
 const makeSubtool = (name: string) => ({
   name,
   variables: [ALLOW_DECIMALS],
-  dropdown: null,
+  dropdown: METHOD_DROPDOWN,
   multiSelect: [UNITS_L1],
   difficultySettings: {
     level1: { multiSelect: [UNITS_L1] },
@@ -133,12 +150,13 @@ const INFO_SECTIONS: InfoSection[] = [
   ]},
   { title: "Modes", icon: "🖥️", content: [
     { label: "Whiteboard", detail: "Single question for whole-class discussion." },
-    { label: "Worked Example", detail: "Step-by-step ratio-table working shown below the question." },
+    { label: "Worked Example", detail: "Step-by-step working shown below the question — see Method below for the two available styles." },
     { label: "Worksheet", detail: "Grid of questions with PDF export." },
   ]},
   { title: "Question Options", icon: "⚙️", content: [
     { label: "Units", detail: "Which unit families can appear (m/s only appears at Level 1)." },
-    { label: "Time Notation", detail: "How a split time is worded — minutes, decimal hours, hours & minutes, or a spoken fraction." },
+    { label: "Time Notation", detail: "How a split time is worded — minutes, hours & minutes, or a spoken fraction (e.g. 'a quarter of an hour'). Never a decimal — a real question wouldn't say '0.25 hours'." },
+    { label: "Method", detail: "Ratio Table (default) scales to/from one hour using whole-number steps. Decimal instead converts the time to decimal hours and divides/multiplies by that — shown only where the conversion is exact; otherwise it falls back to the Ratio Table method." },
     { label: "Question Types (Level 3)", detail: "Compound times (e.g. 1 hr 30) and/or awkward minute values (e.g. 40 min)." },
     { label: "Allow decimal answers", detail: "Lets the computed value be a terminating decimal (e.g. 12.5) instead of always a whole number." },
   ]},
@@ -239,9 +257,9 @@ const buildValues = (TM: number, f: FamilyInfo, allowDecimals: boolean): { D: nu
 
 // TM/60 only has an exact (non-repeating) decimal form when, reduced to
 // lowest terms, its denominator's only prime factors are 2 and 5 — e.g. 5
-// minutes = 1/12 hour = 0.08333… (repeating), so "decimal" must never be
-// offered for that shape even though 5 divides 60 cleanly for the other
-// notations.
+// minutes = 1/12 hour = 0.08333… (repeating). Used to gate the "Decimal"
+// WORKING METHOD (never a question's own wording, which never uses decimal
+// hours at all — see TimeNotation).
 const terminatesDecimal = (num: number, den: number): boolean => {
   let d = den / gcd(num, den);
   while (d % 2 === 0) d /= 2;
@@ -253,7 +271,6 @@ const pickNotation = (shape: Shape, mv: Record<string, boolean>): TimeNotation =
   if (shape.kind === "l1") return "minutes"; // unused — l1 always formatted directly
   if (shape.kind === "l3awkward") return "minutes";
   let opts = shape.kind === "l2" ? NOTATION_L2.options : NOTATION_L3.options;
-  if (!terminatesDecimal(shape.TM, 60)) opts = opts.filter((o) => o.value !== "decimal");
   if (shape.kind === "l2" && !(shape.TM in WORDED_L2)) opts = opts.filter((o) => o.value !== "worded");
   return pickActive(mv, opts) as TimeNotation;
 };
@@ -264,7 +281,6 @@ const formatDuration = (shape: Shape, family: UnitFamily, notation: TimeNotation
     const unit = family === "mps" ? (T0 === 1 ? "second" : "seconds") : (T0 === 1 ? "hour" : "hours");
     return `${T0} ${unit}`;
   }
-  if (notation === "decimal") return `${fmt(shape.TM / 60, 2)} hours`;
   if (notation === "compound" && shape.kind === "l3compound") return `${shape.H} hour${shape.H === 1 ? "" : "s"} ${shape.Mfrac} minutes`;
   if (notation === "worded") {
     if (shape.kind === "l2") return WORDED_L2[shape.TM] ?? `${shape.TM} minutes`;
@@ -298,18 +314,86 @@ const buildCommon = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type,
   return { shape, f, D, S, pp, qq, tLabel, tVal, hourRef, subject };
 };
 
-const genSpeed = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, notationMv: Record<string, boolean>): WordedQuestion => {
+// Everything buildWorking() needs to rebuild the working steps for either
+// method, stored on the question so reformatQuestion can redo this without
+// regenerating the question itself (same pattern as ExpandingBrackets.tsx's
+// "method" dropdown — see reformatQuestion below).
+interface RawValues {
+  tool: ToolType;
+  D: number; S: number; TM: number; pp: number; qq: number;
+  tLabel: string; hourRef: number; tVal: number;
+  distanceUnit: string;
+  shapeKind: Shape["kind"]; H?: number; Mfrac?: number;
+}
+
+// The "Decimal" method only differs from "Ratio Table" when there's an
+// actual sub-hour fraction to convert AND that fraction is an exact decimal
+// (Level 1 is already whole hours; a non-terminating Level 3 shape has no
+// clean decimal to divide/multiply by) — otherwise it silently falls back to
+// the ratio-table working, which is already the correct/only clean method.
+const decimalMethodApplies = (rv: RawValues): boolean =>
+  rv.shapeKind !== "l1" && terminatesDecimal(rv.TM, 60);
+
+const buildWorking = (rv: RawValues, method: WorkingMethod): WorkingStep[] => {
+  const shape: Shape = { kind: rv.shapeKind, TM: rv.TM, H: rv.H, Mfrac: rv.Mfrac };
+  const convertStep = compoundConvertStep(shape);
+
+  if (method === "decimal" && decimalMethodApplies(rv)) {
+    const decStr = fmt(rv.TM / 60, 2);
+    if (rv.tool === "speed") {
+      return [
+        ...convertStep,
+        mStep("Convert the time to decimal hours:", `${rv.TM} \\div 60 = ${decStr}`),
+        mStep("Divide the distance by this:", `${numLatex(rv.D)} \\div ${decStr} = ${numLatex(rv.S)}`),
+      ];
+    }
+    if (rv.tool === "distance") {
+      return [
+        ...convertStep,
+        mStep("Convert the time to decimal hours:", `${rv.TM} \\div 60 = ${decStr}`),
+        mStep("Multiply the speed by this:", `${numLatex(rv.S)} \\times ${decStr} = ${numLatex(rv.D)}`),
+      ];
+    }
+    return [
+      mStep("Divide the distance by the speed:", `${numLatex(rv.D)} \\div ${numLatex(rv.S)} = ${decStr}`),
+      mStep("Convert decimal hours to minutes:", `${decStr} \\times 60 = ${rv.TM}`),
+    ];
+  }
+
+  if (rv.tool === "speed") {
+    const { pairs, ops } = buildScaleSteps([rv.D, rv.tVal], rv.pp, rv.qq, "shrinkTime");
+    return [
+      ...convertStep,
+      rStep("Scale to find the speed:", [rv.distanceUnit, rv.tLabel],
+        pairs.map(([d, t]) => [numLatex(d), numLatex(t)]), ops),
+    ];
+  }
+  if (rv.tool === "distance") {
+    const { pairs, ops } = buildScaleSteps([rv.S, rv.hourRef], rv.pp, rv.qq, "growTime");
+    return [
+      ...convertStep,
+      rStep("Scale from 1 hour to the given time:", [rv.distanceUnit, rv.tLabel],
+        pairs.map(([d, t]) => [numLatex(d), numLatex(t)]), ops),
+    ];
+  }
+  const { pairs, ops } = buildScaleSteps([rv.S, rv.hourRef], rv.pp, rv.qq, "growTime");
+  return [
+    rStep("Scale from 1 hour to find the time:", [rv.distanceUnit, rv.tLabel],
+      pairs.map(([d, t]) => [numLatex(d), numLatex(t)]), ops),
+    ...(rv.shapeKind === "l3compound" ? [mStep("Write as hours and minutes:", `${rv.tVal} = ${rv.H} \\times 60 + ${rv.Mfrac}`)] : []),
+  ];
+};
+
+const genSpeed = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, notationMv: Record<string, boolean>, method: WorkingMethod): WordedQuestion => {
   const c = buildCommon(level, family, l3type, allowDecimals);
   const notation = pickNotation(c.shape, notationMv);
   const durationText = formatDuration(c.shape, family, notation);
   const id = randInt(0, 999999);
-
-  const { pairs, ops } = buildScaleSteps([c.D, c.tVal], c.pp, c.qq, "shrinkTime");
-  const working: WorkingStep[] = [
-    ...compoundConvertStep(c.shape),
-    rStep("Scale to find the speed:", [c.f.distanceUnit, c.tLabel],
-      pairs.map(([d, t]) => [numLatex(d), numLatex(t)]), ops),
-  ];
+  const rv: RawValues = {
+    tool: "speed", D: c.D, S: c.S, TM: c.shape.TM, pp: c.pp, qq: c.qq,
+    tLabel: c.tLabel, hourRef: c.hourRef, tVal: c.tVal,
+    distanceUnit: c.f.distanceUnit, shapeKind: c.shape.kind, H: c.shape.H, Mfrac: c.shape.Mfrac,
+  };
 
   return {
     kind: "worded",
@@ -317,24 +401,23 @@ const genSpeed = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, al
     answer: `${numLatex(c.S)} ${c.f.rateUnit}`,
     answerLatex: numLatex(c.S),
     answerSuffix: c.f.rateUnit,
-    working,
-    key: `speed-${level}-${family}-${c.shape.kind}-${c.D}-${c.S}-${notation}-${id}`,
+    working: buildWorking(rv, method),
+    key: `speed-${level}-${family}-${c.shape.kind}-${c.D}-${c.S}-${notation}-${method}-${id}`,
     difficulty: level,
-  };
+    _rawValues: rv,
+  } as unknown as WordedQuestion;
 };
 
-const genDistance = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, notationMv: Record<string, boolean>): WordedQuestion => {
+const genDistance = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, notationMv: Record<string, boolean>, method: WorkingMethod): WordedQuestion => {
   const c = buildCommon(level, family, l3type, allowDecimals);
   const notation = pickNotation(c.shape, notationMv);
   const durationText = formatDuration(c.shape, family, notation);
   const id = randInt(0, 999999);
-
-  const { pairs, ops } = buildScaleSteps([c.S, c.hourRef], c.pp, c.qq, "growTime");
-  const working: WorkingStep[] = [
-    ...compoundConvertStep(c.shape),
-    rStep("Scale from 1 hour to the given time:", [c.f.distanceUnit, c.tLabel],
-      pairs.map(([d, t]) => [numLatex(d), numLatex(t)]), ops),
-  ];
+  const rv: RawValues = {
+    tool: "distance", D: c.D, S: c.S, TM: c.shape.TM, pp: c.pp, qq: c.qq,
+    tLabel: c.tLabel, hourRef: c.hourRef, tVal: c.tVal,
+    distanceUnit: c.f.distanceUnit, shapeKind: c.shape.kind, H: c.shape.H, Mfrac: c.shape.Mfrac,
+  };
 
   return {
     kind: "worded",
@@ -342,24 +425,23 @@ const genDistance = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type,
     answer: `${numLatex(c.D)} ${c.f.distanceUnit}`,
     answerLatex: numLatex(c.D),
     answerSuffix: c.f.distanceUnit,
-    working,
-    key: `distance-${level}-${family}-${c.shape.kind}-${c.D}-${c.S}-${notation}-${id}`,
+    working: buildWorking(rv, method),
+    key: `distance-${level}-${family}-${c.shape.kind}-${c.D}-${c.S}-${notation}-${method}-${id}`,
     difficulty: level,
-  };
+    _rawValues: rv,
+  } as unknown as WordedQuestion;
 };
 
-const genTime = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, notationMv: Record<string, boolean>): WordedQuestion => {
+const genTime = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, notationMv: Record<string, boolean>, method: WorkingMethod): WordedQuestion => {
   const c = buildCommon(level, family, l3type, allowDecimals);
   const notation = pickNotation(c.shape, notationMv);
   const answerText = formatDuration(c.shape, family, notation);
   const id = randInt(0, 999999);
-
-  const { pairs, ops } = buildScaleSteps([c.S, c.hourRef], c.pp, c.qq, "growTime");
-  const working: WorkingStep[] = [
-    rStep("Scale from 1 hour to find the time:", [c.f.distanceUnit, c.tLabel],
-      pairs.map(([d, t]) => [numLatex(d), numLatex(t)]), ops),
-    ...(c.shape.kind === "l3compound" ? [mStep("Write as hours and minutes:", `${c.tVal} = ${c.shape.H} \\times 60 + ${c.shape.Mfrac}`)] : []),
-  ];
+  const rv: RawValues = {
+    tool: "time", D: c.D, S: c.S, TM: c.shape.TM, pp: c.pp, qq: c.qq,
+    tLabel: c.tLabel, hourRef: c.hourRef, tVal: c.tVal,
+    distanceUnit: c.f.distanceUnit, shapeKind: c.shape.kind, H: c.shape.H, Mfrac: c.shape.Mfrac,
+  };
   // The final answer is stated in prose (e.g. "an hour and a half"), which may
   // not be pure KaTeX — set via `answer` only, no answerLatex (see AnswerDisplay's
   // fallback: it renders the plain `answer` text when answerLatex is absent).
@@ -368,10 +450,11 @@ const genTime = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, all
     kind: "worded",
     lines: [`${c.subject} travels ${mStr(numLatex(c.D))} ${c.f.distanceUnit} at a speed of ${mStr(numLatex(c.S))} ${c.f.rateUnit}.`, "How long does the journey take?"],
     answer: answerText,
-    working,
-    key: `time-${level}-${family}-${c.shape.kind}-${c.D}-${c.S}-${notation}-${id}`,
+    working: buildWorking(rv, method),
+    key: `time-${level}-${family}-${c.shape.kind}-${c.D}-${c.S}-${notation}-${method}-${id}`,
     difficulty: level,
-  };
+    _rawValues: rv,
+  } as unknown as WordedQuestion;
 };
 
 // ── 6. generateQuestion ───────────────────────────────────────────────────────
@@ -380,22 +463,35 @@ const generateQuestion = (
   tool: string,
   level: DifficultyLevel,
   variables: Record<string, boolean>,
-  _dropdownValue: string,
+  dropdownValue: string,
   multiSelectValues: Record<string, boolean> = {},
 ): WordedQuestion => {
   const t = tool as ToolType;
   const allowDecimals = variables.allowDecimals === true;
+  const method = (dropdownValue || "ratioTable") as WorkingMethod;
   const unitOptions = level === "level1" ? UNITS_L1.options : UNITS_L23.options;
   const family = pickActive(multiSelectValues, unitOptions) as UnitFamily;
   const l3type = level === "level3" ? (pickActive(multiSelectValues, L3_TYPES.options) as L3Type) : "awkwardMinutes";
 
-  if (t === "speed") return genSpeed(level, family, l3type, allowDecimals, multiSelectValues);
-  if (t === "distance") return genDistance(level, family, l3type, allowDecimals, multiSelectValues);
-  return genTime(level, family, l3type, allowDecimals, multiSelectValues);
+  if (t === "speed") return genSpeed(level, family, l3type, allowDecimals, multiSelectValues, method);
+  if (t === "distance") return genDistance(level, family, l3type, allowDecimals, multiSelectValues, method);
+  return genTime(level, family, l3type, allowDecimals, multiSelectValues, method);
 };
 
 // Worksheet uniqueness is automatic — ToolShell wraps generateQuestion with the
 // standard retry-until-unique loop. No generateUniqueQ needed.
+
+// ── 7. reformatQuestion ───────────────────────────────────────────────────────
+// Switching the "Method" dropdown swaps the working steps only — same D/S/T,
+// same question wording — without regenerating the question. Same pattern as
+// src/tools/Algebra/ExpandingBrackets.tsx's FOIL/Grid method dropdown.
+
+const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null => {
+  const rv = (q as any)._rawValues as RawValues | undefined;
+  if (!rv) return null;
+  const method = (qo.dropdownValue || "ratioTable") as WorkingMethod;
+  return { ...q, working: buildWorking(rv, method) } as unknown as AnyQuestion;
+};
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // END OF TOOL-SPECIFIC SECTION
@@ -409,6 +505,7 @@ export default function App() {
       config={TOOL_CONFIG}
       infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
+      reformatQuestion={reformatQuestion}
       stepRenderer={ratioTableStepRenderer}
       defaults={{ displayFontSize: 2, worksheetFontSize: 1 }}
     />

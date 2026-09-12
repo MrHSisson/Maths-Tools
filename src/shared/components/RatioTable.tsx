@@ -4,12 +4,18 @@ import { MathRenderer } from "./MathRenderer";
 
 const BORDER = "2px solid #1e3a8a";
 
-// A straight downward arrow (line + head), stretched via preserveAspectRatio
-// to whatever pixel height its segment measures.
-const ArrowGlyph = ({ height }: { height: number }) => (
-  <svg width="12" height={Math.max(height, 1)} viewBox="0 0 12 40" preserveAspectRatio="none" style={{ display: "block", flexShrink: 0 }}>
-    <line x1="6" y1="2" x2="6" y2="32" stroke="#6b7280" strokeWidth="2" />
-    <polygon points="6,40 1,30 11,30" fill="#6b7280" />
+// A downward arrow that bulges outward (away from the table) in a curve
+// before returning to meet the arrowhead, stretched via preserveAspectRatio
+// to whatever pixel height its segment measures. Authored bulging left (as
+// if the table sits to its right); the "right" gutter mirrors the same path
+// with CSS so it bulges the other way instead of needing a second path.
+const ArrowGlyph = ({ height, side }: { height: number; side: "left" | "right" }) => (
+  <svg
+    width="18" height={Math.max(height, 1)} viewBox="0 0 20 40" preserveAspectRatio="none"
+    style={{ display: "block", flexShrink: 0, transform: side === "right" ? "scaleX(-1)" : undefined }}
+  >
+    <path d="M 14 2 Q 2 20 14 32" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" />
+    <polygon points="14,39 9,29 19,29" fill="#6b7280" />
   </svg>
 );
 
@@ -64,7 +70,7 @@ export const RatioTable = ({ data, label }: { data: RatioTableData; label?: stri
   }, [rows, operations]);
 
   const opLabel = (side: "left" | "right", seg: Segment, op: string, i: number) => {
-    const arrow = <ArrowGlyph key="arrow" height={seg.height} />;
+    const arrow = <ArrowGlyph key="arrow" height={seg.height} side={side} />;
     const text = (
       <span key="text" style={{ color: "#6b7280", fontWeight: 600, fontSize: "0.85rem", whiteSpace: "nowrap" }}>
         <MathRenderer latex={op} />

@@ -76,6 +76,26 @@ min); the other minute values still generate normally, just never with a "worded
 fall back to minutes/decimal). Verified across 1,800 randomised draws that none of the retired
 phrasings can appear.
 
+Further refinement: decimal hours ("0.1 hours", "1.5 hours") never sit right as something a
+*question* actually says, so removed "decimal" from the Time Notation pool entirely — a question
+never phrases time that way now, only minutes/hours-and-minutes/a natural spoken fraction. The
+decimal method still has real teaching value as an alternative to the ratio table, though, so
+added a second, display-only **Method** dropdown (Ratio Table / Decimal), following the same
+precedent already in the codebase (`ExpandingBrackets.tsx`'s FOIL/Grid dropdown): the question's
+raw values (D, S, time-in-minutes, the reduced scale factor) are stored on the question as
+`_rawValues`, and `reformatQuestion` rebuilds just the working steps from the same `buildWorking()`
+function generateQuestion uses, without regenerating the question — so switching Method mid-question
+keeps the same numbers and wording. The Decimal method (convert the time to decimal hours, then
+divide/multiply by it directly) only differs from Ratio Table where that conversion is exact
+(Level 2/3 shapes whose minutes give a terminating decimal); otherwise it silently falls back to
+the Ratio Table working, since a rounded decimal wouldn't reproduce the exact answer. Verified
+across 1,350 randomised draws: no question ever phrases a decimal number of hours, and the two
+methods produce different working on ~40% of draws (the cases where Decimal genuinely applies).
+
+Also fixed the ratio table's arrows on user feedback: they were straight vertical lines, but should
+curve (bulging away from the table) — one SVG path, mirrored via CSS `scaleX(-1)` for the right-hand
+gutter rather than authoring two paths.
+
 ## 2026-09-07 — ToolShell bug fix: differentiated worksheets ignoring multiSelect defaults
 Fixed a shared-shell bug reported on Collecting Like Terms: a differentiated worksheet would
 sometimes generate negative-coefficient or crossing-zero questions even with "Positive terms
