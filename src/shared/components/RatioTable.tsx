@@ -63,22 +63,29 @@ export const RatioTable = ({ data, label }: { data: RatioTableData; label?: stri
     return () => ro.disconnect();
   }, [rows, operations]);
 
-  const opLabel = (side: "left" | "right", seg: Segment, op: string, i: number) => (
-    <div
-      key={`${side}-${i}`}
-      style={{
-        position: "absolute", top: seg.top, height: seg.height,
-        ...(side === "left" ? { right: "100%", marginRight: "0.4rem" } : { left: "100%", marginLeft: "0.4rem" }),
-        display: "flex", alignItems: "center", gap: "0.35rem",
-        flexDirection: side === "left" ? "row" : "row-reverse",
-      }}
-    >
-      <ArrowGlyph height={seg.height} />
-      <span style={{ color: "#6b7280", fontWeight: 600, fontSize: "0.85rem", whiteSpace: "nowrap" }}>
+  const opLabel = (side: "left" | "right", seg: Segment, op: string, i: number) => {
+    const arrow = <ArrowGlyph key="arrow" height={seg.height} />;
+    const text = (
+      <span key="text" style={{ color: "#6b7280", fontWeight: 600, fontSize: "0.85rem", whiteSpace: "nowrap" }}>
         <MathRenderer latex={op} />
       </span>
-    </div>
-  );
+    );
+    // Reading outward from the table: arrow (nearest), then the operation
+    // label (outermost) — on both sides, so the whole row reads
+    // "operation ← arrow ← ROW → arrow → operation".
+    return (
+      <div
+        key={`${side}-${i}`}
+        style={{
+          position: "absolute", top: seg.top, height: seg.height,
+          ...(side === "left" ? { right: "100%", marginRight: "0.4rem" } : { left: "100%", marginLeft: "0.4rem" }),
+          display: "flex", alignItems: "center", gap: "0.35rem",
+        }}
+      >
+        {side === "left" ? [text, arrow] : [arrow, text]}
+      </div>
+    );
+  };
 
   return (
     <div className="flex flex-col items-center gap-2">
