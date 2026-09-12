@@ -24,9 +24,9 @@ export const LV_HEADER_COLORS: Record<string, string> = {
 // saturation (green/yellow/red) clashes; a shared soft tint with dark text
 // stays legible and distinguishable without the clash.
 export const LV_SELECTOR: Record<DifficultyLevel, { bg: string; text: string }> = {
-  level1: { bg: "bg-green-200",  text: "text-green-900" },
-  level2: { bg: "bg-yellow-200", text: "text-yellow-900" },
-  level3: { bg: "bg-red-200",    text: "text-red-900" },
+  level1: { bg: "bg-green-100",  text: "text-green-900" },
+  level2: { bg: "bg-yellow-100", text: "text-yellow-900" },
+  level3: { bg: "bg-red-100",    text: "text-red-900" },
 };
 
 export const getQuestionBg = (cs: string) =>
