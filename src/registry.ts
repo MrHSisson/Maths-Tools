@@ -81,6 +81,7 @@ export const CATEGORIES: CategoryMeta[] = [
   {
     name: 'Ratio & Proportion',
     tools: [
+      { id: 'speed-distance-time', path: '/speed-distance-time', name: "Speed, Distance & Time", description: "Find speed, distance or time from the other two, using ratio-table scaling.", enabled: false, load: () => import('./tools/Proportion/SpeedDistanceTime') },
       { id: 'ratio', path: '/ratio-sharing', name: 'Dividing Ratios', description: 'Sharing amounts using the total, a known amount or known difference', load: () => import('./tools/Proportion/RatioSharingTool') },
       { id: 'simplifying-ratios', path: '/simplifying-ratios', name: 'Simplifying Ratios', description: 'Simplifying ratios in numerical and algebraic forms', enabled: false, load: () => import('./tools/Proportion/SimplifyingRatiosTool') },
       { id: 'Recipes', path: '/recipes', name: 'Recipes', description: 'Find amounts of ingredients by scaling recipes and understanding limiting factors', load: () => import('./tools/Proportion/RecipesTool') },

@@ -698,8 +698,11 @@ Every taught visual on the site (skill slides, Teach decks, and eventually white
 | **Algebra tiles** | collecting terms, solving equations, factorising | *(manipulative exists; no scenes yet)* |
 | **Negative counters** | directed numbers, integer add/sub, zero pairs | *(manipulative planned; no scenes yet)* |
 | **Prime factor tiles** | HCF/LCM, factors, prime decomposition | `factorTree` · `primeVenn` |
+| **Ratio table** | proportional scaling — speed/distance/time, currency conversion, recipe scaling | *(working-step representation; no Teach scene yet)* |
 
-**The rule: before authoring any new visual, pick one of the six.** A brand-new representation needs a reason. New scenes extend an existing family in `TeachingDeck.tsx` (grouped by family comments in the `TeachScene` union) and follow the standing scene contract: beat count derived from the scene, reserve space for everything (opacity, not mounting), animate only opacity/transform.
+**The rule: before authoring any new visual, pick one of these.** A brand-new representation needs a reason. New scenes extend an existing family in `TeachingDeck.tsx` (grouped by family comments in the `TeachScene` union) and follow the standing scene contract: beat count derived from the scene, reserve space for everything (opacity, not mounting), animate only opacity/transform.
+
+**Ratio table** (`src/shared/ratioTable.ts` + `src/shared/components/RatioTable.tsx`) is a *working-step* representation rather than a Teach-deck scene: it renders two or more linked quantities as columns, with each row a scaled version of the last and the scale factor shown between rows (e.g. Miles/Hours: `30, 2` →(÷2)→ `15, 1`). Author one via `rStep(label, headers, rows, operations)` (alongside `step`/`mStep`/`tStep`) and pass the shared `ratioTableStepRenderer` as the tool's `stepRenderer` — it returns `null` for every non-ratio-table step, so `mStep`/`tStep`/`step` still render through ToolShell's normal path. A multi-step scale is just more rows/operations in one call, or several `rStep` working steps in sequence (one per press in Step-by-Step mode) — there is no fragment-level reveal inside a single ratio table. Reference implementation: `src/tools/Proportion/SpeedDistanceTime.tsx`.
 
 Prime factor tiles are **coloured squares keyed by the prime** (2 sky, 3 emerald, 5 amber, 7 purple, 11 pink — `tileColor` in TeachingDeck), so the same prime looks the same in a factor tree, a Venn region, and a factor list. Composites stay plain numbers; only primes become tiles.
 

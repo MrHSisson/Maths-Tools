@@ -28,6 +28,31 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-12 — New tool: Speed, Distance & Time + shared Ratio Table representation
+Built `SpeedDistanceTime` (`src/tools/Proportion/SpeedDistanceTime.tsx`, Ratio & Proportion,
+`enabled: false` pending review), with three subtools — Speed, Distance, Time — sharing one
+generation model across three levels: L1 is a whole number of hours (or seconds for m/s); L2 is
+a time in minutes that divides exactly into 60; L3 is either a compound time (e.g. "1 hour 30
+minutes") or a minute value that isn't a factor of 60 (e.g. 40 minutes), both needing the
+unitary method. Every question reduces its time to a fraction of an hour and scales a size knob
+`k` so distance and speed always come out clean (whole, or a single terminating decimal when
+"Allow decimal answers" is on) — verified with 1,080 randomised draws checked for internal
+consistency (`D·hourRef == S·TM`) and exact decimal-hours text before removing the scratch test.
+A "Time Notation" QO pool (minutes / decimal hours / compound / worded fraction) controls how a
+split time is worded; the "decimal" option is only offered when the fraction genuinely
+terminates (e.g. 5 minutes = 1/12 hour is excluded — caught by manual verification before this
+shipped). Units are a per-level multiSelect pool (mph / km/h / m/s), with m/s gated to Level 1
+only (no natural "per minute" convention exists for it at GCSE level).
+
+Added a **seventh core representation**, the **ratio table** (`src/shared/ratioTable.ts` +
+`src/shared/components/RatioTable.tsx`), alongside the existing six in CLAUDE.md — scales two or
+more linked quantities as columns, with the factor shown between rows. Authored via `rStep(label,
+headers, rows, operations)` and rendered through the shared `ratioTableStepRenderer`, which a
+tool passes as `stepRenderer` (returns `null` for every non-ratio-table step, so `mStep`/`tStep`/
+`step` still render through ToolShell's normal path — same fallback pattern a diagram tool's
+`questionRenderer` uses). Reusable by any future proportional-scaling tool (currency conversion,
+recipe scaling, etc.).
+
 ## 2026-09-07 — ToolShell bug fix: differentiated worksheets ignoring multiSelect defaults
 Fixed a shared-shell bug reported on Collecting Like Terms: a differentiated worksheet would
 sometimes generate negative-coefficient or crossing-zero questions even with "Positive terms

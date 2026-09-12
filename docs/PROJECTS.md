@@ -443,12 +443,16 @@ scene type**, so sequence them with the representation work.
 > are both currently dormant, so a new representation isn't unlocking tier-1 work right now. Revisit
 > once Skills/Teach decks are picked back up.
 
-**Where it's at.** The site commits to **six core visual representations** as a shared vocabulary,
+**Where it's at.** The site commits to **seven core visual representations** as a shared vocabulary,
 so the same bar model a student meets in fractions reappears in ratio. New visuals must reuse one of
-the six; new scenes extend an existing `TeachScene` family in `TeachingDeck.tsx`. **Three have
-animated scene families built**: bar model (`split`/`combine`/`equivalents`), number line
-(`multiples`), prime factor tiles (`factorTree`/`primeVenn`). **Three don't yet.** These are the
-biggest lever on the Maths side — each new representation unlocks a cluster of skills and decks.
+the seven; new Teach-deck scenes extend an existing `TeachScene` family in `TeachingDeck.tsx`. **Three
+have animated scene families built**: bar model (`split`/`combine`/`equivalents`), number line
+(`multiples`), prime factor tiles (`factorTree`/`primeVenn`). **Three don't yet** (area model, algebra
+tiles, negative counters) — these remain the biggest lever on the Teach-deck side, each unlocking a
+cluster of skills and decks. **The seventh, ratio table** (added 2026-09-12, `src/shared/ratioTable.ts`
++ `src/shared/components/RatioTable.tsx`), is a *working-step* representation rather than a Teach-deck
+scene — it's already live in `SpeedDistanceTime`'s worked examples and doesn't have (or need) a
+`TeachScene` family, so it sits outside the six-vs-seven Teach-deck tally above.
 **Open question surfaced by the Tool Audit's Geometry pass:** none of the six obviously cover an
 angle/circle/polygon SVG diagram — every Geometry tool independently hit this same gap, and the
 diagram itself appears to function as its own representation, outside the six-vocabulary system
