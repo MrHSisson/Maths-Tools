@@ -28,6 +28,91 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-12 — New tool: Speed, Distance & Time + shared Ratio Table representation
+Built `SpeedDistanceTime` (`src/tools/Proportion/SpeedDistanceTime.tsx`, Ratio & Proportion,
+`enabled: false` pending review), with three subtools — Speed, Distance, Time — sharing one
+generation model across three levels: L1 is a whole number of hours (or seconds for m/s); L2 is
+a time in minutes that divides exactly into 60; L3 is either a compound time (e.g. "1 hour 30
+minutes") or a minute value that isn't a factor of 60 (e.g. 40 minutes), both needing the
+unitary method. Every question reduces its time to a fraction of an hour and scales a size knob
+`k` so distance and speed always come out clean (whole, or a single terminating decimal when
+"Allow decimal answers" is on) — verified with 1,080 randomised draws checked for internal
+consistency (`D·hourRef == S·TM`) and exact decimal-hours text before removing the scratch test.
+A "Time Notation" QO pool (minutes / decimal hours / compound / worded fraction) controls how a
+split time is worded; the "decimal" option is only offered when the fraction genuinely
+terminates (e.g. 5 minutes = 1/12 hour is excluded — caught by manual verification before this
+shipped). Units are a per-level multiSelect pool (mph / km/h / m/s), with m/s gated to Level 1
+only (no natural "per minute" convention exists for it at GCSE level).
+
+Added a **seventh core representation**, the **ratio table** (`src/shared/ratioTable.ts` +
+`src/shared/components/RatioTable.tsx`), alongside the existing six in CLAUDE.md — renders as one
+continuous bordered `<table>` with quantities as columns and each scale-step as a row going down
+(rows share borders directly, no gap row), the factor between adjacent rows shown as an arrow
+outside the table running from the vertical centre of one row to the centre of the next, mirrored
+left and right. Went through three rounds of user feedback before landing here: a borderless CSS
+grid (quantities as columns, steps as rows) → transposed to quantities-as-rows → back to
+quantities-as-columns with a real bordered table and an empty "divider row" for the arrows → this,
+with the divider row removed entirely and the arrows measured in real pixels instead (refs +
+`getBoundingClientRect` on each row, in a plain `useEffect` so it runs after `MathRenderer`'s own
+child effect has painted the KaTeX) — a percentage-height div inside a `<td>` was found to collapse
+to 0 in this rendering engine, stacking every arrow at the same spot; same measurement technique
+`WorkedExampleSteps.tsx`'s `FitWidth` already uses elsewhere in this codebase. A single combined
+scale factor is never shown as one fraction/decimal multiply: `buildScaleSteps` in
+`SpeedDistanceTime.tsx` decomposes it into two whole-number `×n`/`÷n` steps through an intermediate
+"unit" row whenever both factors are non-trivial (only possible at Level 3 — Levels 1–2 always have
+one factor equal to 1, so the
+chain collapses back to a single step), verified against 1,440 randomised draws. Authored via
+`rStep(label, headers, rows, operations)` and rendered through the shared
+`ratioTableStepRenderer`, which a tool passes as `stepRenderer` (returns `null` for every
+non-ratio-table step, so `mStep`/`tStep`/`step` still render through ToolShell's normal path —
+same fallback pattern a diagram tool's `questionRenderer` uses). Reusable by any future
+proportional-scaling tool (currency conversion, recipe scaling, etc.).
+
+Follow-up refinement: the "worded fraction" time notation (L2) was phrasing every divisor of 60 as
+a fraction of an hour, including ones nobody actually says out loud — "a fifth of an hour" (12
+min), "a sixth of an hour" (10 min), "a tenth of an hour" (6 min), "a twelfth of an hour" (5 min).
+Restricted "worded" to only the genuinely natural spoken fractions (half, third, quarter — 30/20/15
+min); the other minute values still generate normally, just never with a "worded" phrasing (they
+fall back to minutes/decimal). Verified across 1,800 randomised draws that none of the retired
+phrasings can appear.
+
+Further refinement: decimal hours ("0.1 hours", "1.5 hours") never sit right as something a
+*question* actually says, so removed "decimal" from the Time Notation pool entirely — a question
+never phrases time that way now, only minutes/hours-and-minutes/a natural spoken fraction. The
+decimal method still has real teaching value as an alternative to the ratio table, though, so
+added a second, display-only **Method** dropdown (Ratio Table / Decimal), following the same
+precedent already in the codebase (`ExpandingBrackets.tsx`'s FOIL/Grid dropdown): the question's
+raw values (D, S, time-in-minutes, the reduced scale factor) are stored on the question as
+`_rawValues`, and `reformatQuestion` rebuilds just the working steps from the same `buildWorking()`
+function generateQuestion uses, without regenerating the question — so switching Method mid-question
+keeps the same numbers and wording. The Decimal method (convert the time to decimal hours, then
+divide/multiply by it directly) only differs from Ratio Table where that conversion is exact
+(Level 2/3 shapes whose minutes give a terminating decimal); otherwise it silently falls back to
+the Ratio Table working, since a rounded decimal wouldn't reproduce the exact answer. Verified
+across 1,350 randomised draws: no question ever phrases a decimal number of hours, and the two
+methods produce different working on ~40% of draws (the cases where Decimal genuinely applies).
+
+Also fixed the ratio table's arrows on user feedback: they were straight vertical lines, but should
+curve (bulging away from the table) — one SVG path, mirrored via CSS `scaleX(-1)` for the right-hand
+gutter rather than authoring two paths.
+
+Three further refinements from a closer read of the worked examples:
+- **Arrowhead now rotates to match the curve's tangent** at its endpoint (a quadratic bezier, so the
+  tangent is a clean 45°) instead of staying fixed pointing straight down while the curve visibly
+  bends away from it — the arrowhead is authored in local coordinates and placed via
+  `transform="translate(...) rotate(-45)"` rather than being drawn already-rotated in place.
+- **Decimal method's compound-time conversion now goes straight to hours**: "45 min ÷ 60 = 0.75,
+  then 1 + 0.75 = 1.75" instead of the previous "1×60+45=105, then 105÷60=1.75" detour through total
+  minutes (Speed/Distance only — Time computes the decimal from D and S, it never starts from a
+  given compound time).
+- **Suppressed a numeric coincidence at Level 3** ("A car travels 37 miles in 37 minutes") that was
+  showing up far too often: whenever the awkward minute value is coprime to 60, the reduced scale
+  factor forces the distance to equal the time-in-minutes almost every draw (the speed range only
+  leaves room for the one scaling factor that produces this exact coincidence). Fixed at the root —
+  awkward-minutes shapes now require a shared factor with 60 — plus a defensive check in the value
+  generator that skips/nudges any draw where distance would still equal the time value. Verified
+  across 3,000 randomised Level 3 draws: zero coincidences.
+
 ## 2026-09-07 — ToolShell bug fix: differentiated worksheets ignoring multiSelect defaults
 Fixed a shared-shell bug reported on Collecting Like Terms: a differentiated worksheet would
 sometimes generate negative-coefficient or crossing-zero questions even with "Positive terms

@@ -44,6 +44,18 @@ export interface WordedQuestion {
 
 export type AnyQuestion = SimpleQuestion | WordedQuestion;
 
+// Ratio table — a core representation for proportional scaling (compound
+// measures, currency conversion, recipe scaling…). Column `headers` are plain
+// prose; each `rows` entry is a KaTeX string per column (same length as
+// headers); `operations` holds the scale factor shown between each
+// consecutive row pair (length = rows.length - 1). Built via rStep(), never
+// constructed directly — see src/shared/ratioTable.ts.
+export interface RatioTableData {
+  headers: string[];
+  rows: string[][];
+  operations: string[];
+}
+
 export interface ToolDropdown {
   key: string;
   label: string;
