@@ -28,6 +28,20 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-12 — Standard-mode Differentiated worksheets: pick any 2-or-3 level subset
+Standard-mode Differentiated worksheets (`ToolShell.tsx`) previously always split into all
+three levels. Added a level-picker (L1/L2/L3 chips, shown once Differentiated is on) so a
+teacher can target any subset of at least two levels — e.g. Level 1 & 3, skipping Level 2 —
+matching what Advanced/Worksheet Builder already allowed via per-section levels. Selecting
+fewer than three levels also works when a level is `comingSoonLevels`-gated (Differentiated
+is now only disabled when fewer than two levels are available, rather than whenever any level
+is coming soon). The selection is encoded in the shareable link (`diffLv=1,3`, backward
+compatible with old `diff=1` links) and drives worksheet generation, the whiteboard/worked
+example differentiated grid, and PDF export (`print.ts`, `printDiagram.ts` for SVG tools) —
+`computeWorksheetLayout`'s per-level pagination math (`worksheetLayout.ts`) now divides by the
+selected level count instead of a hardcoded 3. Verified in a live browser (level toggle, the
+2-level lock, worksheet regeneration, URL persistence across reload) plus `npm test`.
+
 ## 2026-09-12 — New tool: Speed, Distance & Time + shared Ratio Table representation
 Built `SpeedDistanceTime` (`src/tools/Proportion/SpeedDistanceTime.tsx`, Ratio & Proportion,
 `enabled: false` pending review), with three subtools — Speed, Distance, Time — sharing one

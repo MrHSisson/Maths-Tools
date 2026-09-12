@@ -88,8 +88,9 @@ export function computeWorksheetLayout(input: WorksheetLayoutInput): WorksheetLa
   const maxH_mm = maxH_px / pxPerMm;
   const needed_mm = isList ? maxH_mm + 2 : maxH_mm + PAD_MM * 2 + 6;
 
-  // Differentiated layout.
-  const diffPerCol = Math.floor(totalQ / 3);
+  // Differentiated layout. `cols` doubles as the number of differentiated
+  // levels selected (the caller passes the level count here when isDiff).
+  const diffPerCol = Math.floor(totalQ / cols);
   const diffUsableH = usableH - diffHdrMM - GAP_MM;
   let diffRowsPerPage = 1;
   let diffCellH_mm = diffUsableH;

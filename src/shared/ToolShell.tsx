@@ -1,7 +1,7 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback, type ReactNode } from "react";
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, SlidersHorizontal } from "lucide-react";
 import type { DifficultyLevel, AnyQuestion, WorkingStep, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
-import { LV_COLORS, getQuestionBg, getStepBg } from "./colors";
+import { LV_COLORS, LV_LABELS, getQuestionBg, getStepBg } from "./colors";
 import { normalizeMultiSelect, resolveMultiSelectValues, ansEq, makeUniqueQ } from "./helpers";
 import { loadKaTeX } from "./katex";
 import { MathRenderer, InlineMath } from "./components/MathRenderer";
@@ -58,6 +58,8 @@ export interface ToolShellProps {
    *  that runs the slides as a PowerPoint-style deck (see TeachingDeck). */
   teachingSlides?: TeachingSlide[];
 }
+
+const ALL_LEVELS: DifficultyLevel[] = ["level1", "level2", "level3"];
 
 /** Scales its content to fit the available space — up to fill when the panel
  *  collapse frees room (like dragging the splitter wide, past the tool's own
@@ -131,9 +133,12 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const toolKeys = Object.keys(config.tools);
 
   // ── Shareable links: read the initial state from the URL (parsed once) ─────
-  // ?tool=key&mode=example|worksheet&level=2&dd=value&vars=a,-b&ms=x,-y&n=20&cols=2&diff=1
+  // ?tool=key&mode=example|worksheet&level=2&dd=value&vars=a,-b&ms=x,-y&n=20&cols=2&diff=1&diffLv=1,3
   // Tokens in vars/ms set a key on; a "-" prefix sets it off. Invalid or stale
-  // values fall back to defaults, so old bookmarks never break a tool.
+  // values fall back to defaults, so old bookmarks never break a tool. `diffLv`
+  // is an optional comma list of level numbers (e.g. "1,3") selecting a subset
+  // of levels for the Differentiated worksheet; omitted or invalid, it falls
+  // back to every available (non coming-soon) level, matching old links.
   const [urlInit] = useState(() => {
     const p = new URLSearchParams(typeof window === "undefined" ? "" : window.location.search);
     const toggles = (param: string | null): Record<string, boolean> => {
@@ -168,6 +173,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       n: defaults.fixedQuestions ? null : intParam("n", 1, 24),
       cols: defaults.fixedColumns ? null : intParam("cols", 1, defaults.maxColumns ?? 4),
       diff: p.get("diff") === "1",
+      diffLv: p.get("diffLv"),
     };
   });
 
@@ -205,6 +211,28 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const hideFontControls = defaults.hideFontControls ?? false;
   const [difficulty, setDifficulty] = useState<DifficultyLevel>(urlInit.level);
   const setDifficultyGuarded = (v: DifficultyLevel) => { if (!comingSoon.includes(v)) setDifficulty(v); };
+
+  // Differentiated worksheets can target any 2-or-3-level subset (e.g. Level 1
+  // & 3), not just all three — `availableLevels` excludes coming-soon levels;
+  // `diffLevels` is the teacher's current selection within that set.
+  const availableLevels = ALL_LEVELS.filter(l => !comingSoon.includes(l));
+  const [diffLevels, setDiffLevels] = useState<DifficultyLevel[]>(() => {
+    const numToLevel: Record<string, DifficultyLevel> = { "1": "level1", "2": "level2", "3": "level3" };
+    const raw = urlInit.diffLv;
+    if (raw) {
+      const parsed = Array.from(new Set(
+        raw.split(",").map(t => numToLevel[t.trim()]).filter((l): l is DifficultyLevel => !!l && availableLevels.includes(l)),
+      ));
+      if (parsed.length >= 2) return ALL_LEVELS.filter(l => parsed.includes(l));
+    }
+    return availableLevels;
+  });
+  const toggleDiffLevel = (lv: DifficultyLevel) => {
+    setDiffLevels(prev => {
+      if (prev.includes(lv)) return prev.length > 2 ? prev.filter(l => l !== lv) : prev;
+      return ALL_LEVELS.filter(l => l === lv || prev.includes(l));
+    });
+  };
 
   const [toolVariables, setToolVariables] = useState<Record<string, Record<string, Record<string, boolean>>>>(() => {
     const init: Record<string, Record<string, Record<string, boolean>>> = {};
@@ -297,7 +325,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const [worksheet, setWorksheet] = useState<AnyQuestion[]>([]);
   const [showWorksheetAnswers, setShowWorksheetAnswers] = useState(false);
   const [printMode, setPrintMode] = useState<PrintMode>("both");
-  const [isDifferentiated, setIsDifferentiated] = useState(urlInit.diff && comingSoon.length === 0);
+  const [isDifferentiated, setIsDifferentiated] = useState(urlInit.diff && availableLevels.length >= 2);
   const [worksheetMode, setWorksheetMode] = useState<"standard" | "advanced">(
     urlInit.builderRequested ? "advanced" : (wbInit?.worksheetMode ?? "standard"),
   );
@@ -433,7 +461,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     const usedKeys = new Set<string>();
     const questions: AnyQuestion[] = [];
     if (isDifferentiated) {
-      (["level1", "level2", "level3"] as DifficultyLevel[]).forEach(lv => {
+      diffLevels.forEach(lv => {
         const t = getToolSettings();
         const dd = t.difficultySettings?.[lv]?.dropdown ?? t.dropdown;
         const vars = levelVariables[lv] ?? {};
@@ -561,11 +589,16 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     if (mode === "worksheet") {
       if (numQuestions !== (defaults.numQuestions ?? 15)) p.set("n", String(numQuestions));
       if (!isDifferentiated && numColumns !== (defaults.numColumns ?? 3)) p.set("cols", String(numColumns));
-      if (isDifferentiated) p.set("diff", "1");
+      if (isDifferentiated) {
+        p.set("diff", "1");
+        const levelToNum: Record<DifficultyLevel, string> = { level1: "1", level2: "2", level3: "3" };
+        const isFullSet = diffLevels.length === availableLevels.length && diffLevels.every(l => availableLevels.includes(l));
+        if (!isFullSet) p.set("diffLv", diffLevels.map(l => levelToNum[l]).join(","));
+      }
     }
     const qs = p.toString();
     window.history.replaceState(null, "", qs ? `${window.location.pathname}?${qs}` : window.location.pathname);
-  }, [currentTool, mode, difficulty, toolDropdowns, toolVariables, toolMultiSelect, numQuestions, numColumns, isDifferentiated]);
+  }, [currentTool, mode, difficulty, toolDropdowns, toolVariables, toolMultiSelect, numQuestions, numColumns, isDifferentiated, diffLevels]);
 
   // Persist the worksheet mode/layout and differentiated per-level QO so a refresh
   // restores it — these are not encoded in the URL.
@@ -728,11 +761,29 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                 })}
               </div>
               {qoEl(isDifferentiated)}
-              {(() => { const diffDisabled = comingSoon.length > 0; return (
-              <button onClick={() => { if (!diffDisabled) setIsDifferentiated(!isDifferentiated); }}
-                className={`px-6 py-2 rounded-xl font-bold text-base shadow-sm border-2 transition-colors ${diffDisabled ? "bg-gray-100 text-gray-300 border-gray-200 cursor-not-allowed" : isDifferentiated ? "bg-blue-900 text-white border-blue-900" : "bg-white text-gray-600 border-gray-300 hover:border-blue-900 hover:text-blue-900"}`}>
-                Differentiated
-              </button>
+              {(() => { const diffDisabled = availableLevels.length < 2; return (
+              <div className="flex items-center gap-2">
+                <button onClick={() => { if (!diffDisabled) setIsDifferentiated(!isDifferentiated); }}
+                  className={`px-6 py-2 rounded-xl font-bold text-base shadow-sm border-2 transition-colors ${diffDisabled ? "bg-gray-100 text-gray-300 border-gray-200 cursor-not-allowed" : isDifferentiated ? "bg-blue-900 text-white border-blue-900" : "bg-white text-gray-600 border-gray-300 hover:border-blue-900 hover:text-blue-900"}`}>
+                  Differentiated
+                </button>
+                {isDifferentiated && availableLevels.length > 2 && (
+                  <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm" title="Choose which levels to include">
+                    {ALL_LEVELS.filter(lv => availableLevels.includes(lv)).map((lv) => {
+                      const [label, col] = [["L1", "bg-green-600"], ["L2", "bg-yellow-500"], ["L3", "bg-red-600"]][ALL_LEVELS.indexOf(lv)] as [string, string];
+                      const active = diffLevels.includes(lv);
+                      const lockedOn = active && diffLevels.length <= 2;
+                      return (
+                        <button key={lv} onClick={() => toggleDiffLevel(lv)} disabled={lockedOn}
+                          title={lockedOn ? "At least two levels must stay selected" : undefined}
+                          className={`px-3 py-2 font-bold text-sm transition-colors ${active ? `${col} text-white` : "bg-white text-gray-400 hover:bg-gray-50"} ${lockedOn ? "cursor-not-allowed opacity-90" : ""}`}>
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
               ); })()}
             </div>
 
@@ -749,7 +800,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               {!defaults.fixedColumns && (
                 <div className="flex items-center gap-3">
                   <label className="text-base font-semibold text-gray-700">Columns:</label>
-                  <input type="number" min="1" max={defaults.maxColumns ?? 4} value={isDifferentiated ? 3 : numColumns}
+                  <input type="number" min="1" max={defaults.maxColumns ?? 4} value={isDifferentiated ? diffLevels.length : numColumns}
                     onChange={e => { if (!isDifferentiated) setNumColumns(Math.max(1, Math.min(defaults.maxColumns ?? 4, parseInt(e.target.value) || (defaults.numColumns ?? 3)))); }}
                     disabled={isDifferentiated}
                     className={`w-20 px-4 py-2 border-2 rounded-lg text-base font-semibold text-center transition-colors ${isDifferentiated ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed" : "border-gray-300 bg-white"}`} />
@@ -807,10 +858,10 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                   <PrintSplitButton
                     onPrint={m => customPrintHandler
                       ? customPrintHandler(worksheet, m, worksheetWrapRef.current, {
-                          toolName: config.tools[currentTool].name, difficulty, isDifferentiated,
+                          toolName: config.tools[currentTool].name, difficulty, isDifferentiated, diffLevels,
                           numColumns, instruction: getInstruction(), layout: worksheetLayout, showBorders: worksheetBorders,
                         })
-                      : handlePrint(worksheet, config.tools[currentTool].name, difficulty, isDifferentiated, numColumns, getInstruction(), m, worksheetLayout, worksheetBorders)}
+                      : handlePrint(worksheet, config.tools[currentTool].name, difficulty, isDifferentiated, diffLevels, numColumns, getInstruction(), m, worksheetLayout, worksheetBorders)}
                     printMode={printMode} setPrintMode={setPrintMode}
                   />
                 </>
@@ -1074,13 +1125,13 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       <div className="rounded-xl shadow-2xl p-8 relative" style={{ backgroundColor: qBg }}>
         {fontSizeControls}
         <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
-        <div className="grid grid-cols-3 gap-4" style={{ alignItems: "start" }}>
-          {(["level1", "level2", "level3"] as DifficultyLevel[]).map((lv, li) => {
+        <div className="grid gap-4" style={{ alignItems: "start", gridTemplateColumns: `repeat(${diffLevels.length}, 1fr)` }}>
+          {diffLevels.map((lv) => {
             const lqs = worksheet.filter(q => q.difficulty === lv);
             const c = LV_COLORS[lv];
             return (
               <div key={lv} className={`${c.bg} border-2 ${c.border} rounded-xl p-4`}>
-                <h3 className={`text-xl font-bold mb-4 text-center ${c.text}`}>Level {li + 1}</h3>
+                <h3 className={`text-xl font-bold mb-4 text-center ${c.text}`}>{LV_LABELS[lv]}</h3>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr", gridAutoRows: "1fr", gap: "0.75rem" }}>
                   {lqs.map((q, idx) => <div key={idx} style={{ minHeight: 0 }}>{renderQCell(q, idx, c.fill)}</div>)}
                 </div>

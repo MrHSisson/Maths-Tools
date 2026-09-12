@@ -12,19 +12,27 @@
 // Because the heights are analytic, the entire layout is computed app-side and
 // written as static HTML; there is no in-popup measurement script.
 
-import type { AnyQuestion, PrintMode } from "./types";
+import type { AnyQuestion, DifficultyLevel, PrintMode } from "./types";
 import { computeWorksheetLayout } from "./worksheetLayout";
+import { LV_LABELS } from "./colors";
 
 /** Context ToolShell passes alongside a custom print handler. */
 export interface PrintContext {
   toolName: string;
   difficulty: string;
   isDifferentiated: boolean;
+  /** Levels included in the differentiated worksheet, in level order.
+   *  Only meaningful when isDifferentiated is true — may be any 2-or-3-level
+   *  subset (e.g. Level 1 & 3), not always all three. */
+  diffLevels: DifficultyLevel[];
   numColumns: number;
   instruction: string;
   layout: "grid" | "list";
   showBorders: boolean;
 }
+
+const LV_TEXT: Record<DifficultyLevel, string> = { level1: "#166534", level2: "#854d0e", level3: "#991b1b" };
+const LV_BG: Record<DifficultyLevel, string> = { level1: "#dcfce7", level2: "#fef9c3", level3: "#fee2e2" };
 
 const MARGIN_MM  = 12;
 const HEADER_MM  = 14;
@@ -69,7 +77,8 @@ export const handleDiagramPrint = (
   let isDiff = ctx.isDifferentiated;
   if (ctx.difficulty === "advanced") isDiff = false;
   if (hasSections) isDiff = false;
-  const cols = isDiff ? 3 : ctx.numColumns;
+  const lvls = isDiff ? ctx.diffLevels : [];
+  const cols = isDiff ? lvls.length : ctx.numColumns;
 
   // Synthetic per-question heights drive pagination. A diagram's *natural* box is
   // its column width (height = width / aspect), but we cap the value fed to the
@@ -78,7 +87,7 @@ export const handleDiagramPrint = (
   // render time (see the per-segment cap), so few-question sheets still get big
   // diagrams without floating in whitespace.
   const heightsPx = questions.map((_, i) => {
-    const secCols = isDiff ? 3 : sectionColsArr[i];
+    const secCols = isDiff ? lvls.length : sectionColsArr[i];
     const naturalH = makeCellW(secCols) / aspects[i];
     return Math.min(naturalH, DENSITY_FLOOR_MM) * pxPerMm;
   });
@@ -161,20 +170,16 @@ export const handleDiagramPrint = (
     return pageWrap(title, `Worksheet &middot; ${dateStr}${pageLabel}`, out);
   };
 
-  // ── Differentiated page: three level columns ──
-  const lvls: ("level1" | "level2" | "level3")[] = ["level1", "level2", "level3"];
+  // ── Differentiated page: one column per selected level ──
   const diffPage = (p: number, tp: number, showAns: boolean): string => {
-    const cW = makeCellW(3);
+    const cW = makeCellW(lvls.length);
     // Fill the column but cap at the natural diagram size (see gridPage).
     const natH = cW / Math.min(...aspects);
     const cH = Math.min(plan.diffCellH_mm, natH + CHROME_MM);
-    const offsets: Record<string, number> = {};
-    let run = 0;
-    for (const lv of lvls) { offsets[lv] = run; run += questions.filter(q => q.difficulty === lv).length; }
-    const colsHtml = lvls.map((lv, li) => {
-      const textCol = ["#166534", "#854d0e", "#991b1b"][li];
-      const bgCol = ["#dcfce7", "#fef9c3", "#fee2e2"][li];
-      const label = ["Level 1", "Level 2", "Level 3"][li];
+    const colsHtml = lvls.map((lv) => {
+      const textCol = LV_TEXT[lv];
+      const bgCol = LV_BG[lv];
+      const label = LV_LABELS[lv];
       const lvQ: number[] = [];
       questions.forEach((q, i) => { if (q.difficulty === lv) lvQ.push(i); });
       const slice = lvQ.slice(p * plan.diffRowsPerPage, (p + 1) * plan.diffRowsPerPage);
@@ -183,7 +188,7 @@ export const handleDiagramPrint = (
     }).join("");
     const title = toolName + (showAns ? " — Answers" : "");
     const pageLabel = tp > 1 ? ` &middot; Page ${p + 1} of ${tp}` : "";
-    return pageWrap(title, `Differentiated &middot; ${dateStr}${pageLabel}`, `<div class="dg" style="grid-template-columns:repeat(3,${cW}mm);">${colsHtml}</div>`);
+    return pageWrap(title, `Differentiated &middot; ${dateStr}${pageLabel}`, `<div class="dg" style="grid-template-columns:repeat(${lvls.length},${cW}mm);">${colsHtml}</div>`);
   };
 
   const build = (showAns: boolean): string => {

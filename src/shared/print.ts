@@ -1,12 +1,14 @@
-import type { AnyQuestion, PrintMode } from "./types";
+import type { AnyQuestion, DifficultyLevel, PrintMode } from "./types";
 import { ansEq } from "./helpers";
 import { computeWorksheetLayout } from "./worksheetLayout";
+import { LV_LABELS } from "./colors";
 
 export const handlePrint = (
   questions: AnyQuestion[],
   toolName: string,
   difficulty: string,
   isDifferentiated: boolean,
+  diffLevels: DifficultyLevel[],
   numColumns: number,
   instruction: string,
   pMode: PrintMode = "both",
@@ -14,6 +16,7 @@ export const handlePrint = (
   showBorders: boolean = true,
 ) => {
   if (difficulty === "advanced") isDifferentiated = false;
+  const lvls = isDifferentiated ? diffLevels : [];
   const FONT_PX   = 14;
   const PAD_MM    = 2;
   const MARGIN_MM = 12;
@@ -26,7 +29,7 @@ export const handlePrint = (
   const usableH_MM = PAGE_H_MM - HEADER_MM;
   const diffHdrMM  = 7;
 
-  const cols    = isDifferentiated ? 3 : numColumns;
+  const cols    = isDifferentiated ? lvls.length : numColumns;
 
   const difficultyLabel = isDifferentiated ? "Differentiated" :
     difficulty === "level1" ? "Level 1" : difficulty === "level2" ? "Level 2" :
@@ -262,6 +265,8 @@ document.addEventListener("DOMContentLoaded", function() {
   var PAGE_W_MM = ${PAGE_W_MM};
   var cols      = ${cols};
   var isDiff    = ${isDifferentiated ? "true" : "false"};
+  var diffLvls  = ${JSON.stringify(lvls)};
+  var diffLbls  = ${JSON.stringify(lvls.map(lv => LV_LABELS[lv]))};
   var isListLayout = ${layout === "list" ? "true" : "false"};
   var hasSections  = ${hasSections ? "true" : "false"};
   var totalQ    = ${totalQ};
@@ -369,17 +374,15 @@ document.addEventListener("DOMContentLoaded", function() {
       var pgIdx = pageData;
       var start = pgIdx * diffRowsPerPage;
       var end   = start + diffRowsPerPage;
-      var cW = makeCellW(3);
-      var lvls = ['level1','level2','level3'];
-      var lbls = ['Level 1','Level 2','Level 3'];
-      var cols3 = lvls.map(function(lv, li) {
+      var cW = makeCellW(cols);
+      var colsN = diffLvls.map(function(lv, li) {
         var lqs = qData.filter(function(q) { return q.difficulty === lv; }).slice(start, end);
         var cells = lqs.map(function(q) {
           return buildCell(showAnswer ? q.a : q.q, cW, cH, true);
         }).join('');
-        return '<div class="diff-col"><div class="diff-header ' + lv + '">' + lbls[li] + '</div>' + cells + '</div>';
+        return '<div class="diff-col"><div class="diff-header ' + lv + '">' + diffLbls[li] + '</div>' + cells + '</div>';
       }).join('');
-      return '<div class="diff-grid" style="grid-template-columns:repeat(3,' + cW + 'mm);">' + cols3 + '</div>';
+      return '<div class="diff-grid" style="grid-template-columns:repeat(' + cols + ',' + cW + 'mm);">' + colsN + '</div>';
     }
     // Non-differentiated grid: build sub-grids per section with dividers between
     if (hasSections && Array.isArray(pageData)) {
