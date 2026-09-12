@@ -28,6 +28,15 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-12 — Soften the Level 1/2/3 selector colours to pastel
+The Level 1/2/3 selector buttons (worksheet mode's level row, the Whiteboard/Worked Example
+`DifficultyToggle`, and the Worksheet Builder's per-section L1/L2/L3 pills) filled with
+saturated green-600/yellow-500/red-600 when active — sitting three side by side clashed. Added
+`LV_SELECTOR` to `colors.ts` (pastel green-200/yellow-200/red-200 fills with matching dark
+900-shade text for contrast) and switched all three call sites to it, removing their own
+inline/duplicated colour arrays. Verified visually in a live browser across all three surfaces
+plus `npm run build` (zero TS errors) and `npm test` (320 passing).
+
 ## 2026-09-12 — Worked-example-only dropdowns hidden from worksheets; differentiated cells centred
 Two small fixes from review of the same-day differentiated-worksheet work below:
 - **`ToolDropdown.workedExampleOnly`** (`types.ts`) — a new optional flag for a dropdown (e.g. a

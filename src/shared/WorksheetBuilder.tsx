@@ -9,6 +9,7 @@ import type {
   QOSnapshot,
 } from "./types";
 import { normalizeMultiSelect, makeUniqueQ } from "./helpers";
+import { LV_SELECTOR } from "./colors";
 import { splitIntoSections, hasSections } from "./sections";
 import { MathRenderer, InlineMath } from "./components/MathRenderer";
 import { InlineQOPanel } from "./components/QOPopovers";
@@ -294,13 +295,6 @@ export const WorksheetBuilder = ({
     });
   };
 
-  const lvColor = (lv: DifficultyLevel) =>
-    lv === "level1"
-      ? "bg-green-600"
-      : lv === "level2"
-        ? "bg-yellow-500"
-        : "bg-red-600";
-
   const sections = computeSections(groups, dividers);
   const canAdd = groups.length < 10;
 
@@ -373,7 +367,7 @@ export const WorksheetBuilder = ({
             const isLvDisabled = comingSoonLevels.includes(lv);
             return (
               <button key={lv} onClick={() => { if (!isLvDisabled) { const fresh = makeDefaultGroup(g.id, g.tool, lv); updateGroup(g.id, { ...fresh, id: g.id }); setSelectedId(g.id); } }}
-                className={`px-3 py-1 font-semibold text-xs transition-colors ${isLvDisabled ? "bg-gray-50 text-gray-300 cursor-not-allowed" : g.level === lv ? `${lvColor(lv)} text-white` : "bg-white text-gray-400 hover:bg-gray-50"}`}>
+                className={`px-3 py-1 font-semibold text-xs transition-colors ${isLvDisabled ? "bg-gray-50 text-gray-300 cursor-not-allowed" : g.level === lv ? `${LV_SELECTOR[lv].bg} ${LV_SELECTOR[lv].text}` : "bg-white text-gray-400 hover:bg-gray-50"}`}>
                 L{li + 1}
               </button>
             );

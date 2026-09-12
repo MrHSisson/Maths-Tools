@@ -18,6 +18,17 @@ export const LV_HEADER_COLORS: Record<string, string> = {
   level3: "text-red-600",
 };
 
+// The active-state fill for level-picker buttons (the Level 1/2/3 toggle row,
+// the worksheet builder's per-section L1/L2/L3 pills). Pastel rather than a
+// saturated 500/600 fill — sitting three of these side by side at full
+// saturation (green/yellow/red) clashes; a shared soft tint with dark text
+// stays legible and distinguishable without the clash.
+export const LV_SELECTOR: Record<DifficultyLevel, { bg: string; text: string }> = {
+  level1: { bg: "bg-green-200",  text: "text-green-900" },
+  level2: { bg: "bg-yellow-200", text: "text-yellow-900" },
+  level3: { bg: "bg-red-200",    text: "text-red-900" },
+};
+
 export const getQuestionBg = (cs: string) =>
   ({ blue: "#D1E7F8", pink: "#F8D1E7", yellow: "#F8F4D1" }[cs] ?? "#ffffff");
 

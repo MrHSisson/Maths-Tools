@@ -1,7 +1,7 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback, type ReactNode } from "react";
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, SlidersHorizontal } from "lucide-react";
 import type { DifficultyLevel, AnyQuestion, WorkingStep, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
-import { LV_COLORS, LV_LABELS, getQuestionBg, getStepBg } from "./colors";
+import { LV_COLORS, LV_LABELS, LV_SELECTOR, getQuestionBg, getStepBg } from "./colors";
 import { normalizeMultiSelect, resolveMultiSelectValues, ansEq, makeUniqueQ } from "./helpers";
 import { loadKaTeX } from "./katex";
 import { MathRenderer, InlineMath } from "./components/MathRenderer";
@@ -840,12 +840,13 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             <div className="flex justify-center items-center gap-6 mb-5">
               <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm">
                 {ALL_LEVELS.map((val, i) => {
-                  const [label, col] = [["Level 1", "bg-green-600"], ["Level 2", "bg-yellow-500"], ["Level 3", "bg-red-600"]][i] as [string, string];
+                  const label = ["Level 1", "Level 2", "Level 3"][i];
+                  const col = LV_SELECTOR[val];
                   const isLvDisabled = comingSoon.includes(val);
                   const active = diffToggle ? diffLevels.includes(val) : difficulty === val;
                   return (
                     <button key={val} onClick={() => { if (!isLvDisabled) toggleDiffLevel(val); }}
-                      className={`px-5 py-2 font-bold text-base transition-colors ${isLvDisabled ? "bg-gray-100 text-gray-300 cursor-not-allowed" : active ? `${col} text-white` : "bg-white text-gray-500 hover:bg-gray-50"}`}>
+                      className={`px-5 py-2 font-bold text-base transition-colors ${isLvDisabled ? "bg-gray-100 text-gray-300 cursor-not-allowed" : active ? `${col.bg} ${col.text}` : "bg-white text-gray-500 hover:bg-gray-50"}`}>
                       {label}
                     </button>
                   );
