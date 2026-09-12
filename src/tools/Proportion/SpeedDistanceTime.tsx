@@ -306,7 +306,6 @@ const genSpeed = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, al
     ...compoundConvertStep(c.shape),
     rStep("Scale to find the speed:", [c.f.distanceUnit, c.tLabel],
       pairs.map(([d, t]) => [numLatex(d), numLatex(t)]), ops),
-    mStep("Speed:", numLatex(c.S), c.f.rateUnit),
   ];
 
   return {
@@ -332,7 +331,6 @@ const genDistance = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type,
     ...compoundConvertStep(c.shape),
     rStep("Scale from 1 hour to the given time:", [c.f.distanceUnit, c.tLabel],
       pairs.map(([d, t]) => [numLatex(d), numLatex(t)]), ops),
-    mStep("Distance:", numLatex(c.D), c.f.distanceUnit),
   ];
 
   return {
