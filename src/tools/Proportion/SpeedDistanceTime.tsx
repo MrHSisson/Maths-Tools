@@ -148,12 +148,14 @@ const INFO_SECTIONS: InfoSection[] = [
 
 const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
 
-// Divisors of 60 (excluding 60 itself) with a natural spoken fraction — L2 uses
-// only these so "worded" notation always has a clean phrase.
+// Divisors of 60 (excluding 60 itself) — L2 picks any of these for "minutes"/
+// "decimal" notation. "Worded" is further restricted below to only the ones
+// with a genuinely natural spoken form — nobody says "a fifth of an hour" or
+// "a twelfth of an hour" in real speech, even though they're valid fractions;
+// those shapes just never offer "worded" and fall back to minutes/decimal.
 const L2_MINUTES = [5, 6, 10, 12, 15, 20, 30];
 const WORDED_L2: Record<number, string> = {
   30: "half an hour", 20: "a third of an hour", 15: "a quarter of an hour",
-  12: "a fifth of an hour", 10: "a sixth of an hour", 6: "a tenth of an hour", 5: "a twelfth of an hour",
 };
 
 // L3 compound minute-parts — quarter/half/three-quarters only (a third would
@@ -249,9 +251,10 @@ const terminatesDecimal = (num: number, den: number): boolean => {
 
 const pickNotation = (shape: Shape, mv: Record<string, boolean>): TimeNotation => {
   if (shape.kind === "l1") return "minutes"; // unused — l1 always formatted directly
-  const pool = shape.kind === "l2" ? NOTATION_L2.options : NOTATION_L3.options;
   if (shape.kind === "l3awkward") return "minutes";
-  const opts = terminatesDecimal(shape.TM, 60) ? pool : pool.filter((o) => o.value !== "decimal");
+  let opts = shape.kind === "l2" ? NOTATION_L2.options : NOTATION_L3.options;
+  if (!terminatesDecimal(shape.TM, 60)) opts = opts.filter((o) => o.value !== "decimal");
+  if (shape.kind === "l2" && !(shape.TM in WORDED_L2)) opts = opts.filter((o) => o.value !== "worded");
   return pickActive(mv, opts) as TimeNotation;
 };
 

@@ -68,6 +68,14 @@ non-ratio-table step, so `mStep`/`tStep`/`step` still render through ToolShell's
 same fallback pattern a diagram tool's `questionRenderer` uses). Reusable by any future
 proportional-scaling tool (currency conversion, recipe scaling, etc.).
 
+Follow-up refinement: the "worded fraction" time notation (L2) was phrasing every divisor of 60 as
+a fraction of an hour, including ones nobody actually says out loud — "a fifth of an hour" (12
+min), "a sixth of an hour" (10 min), "a tenth of an hour" (6 min), "a twelfth of an hour" (5 min).
+Restricted "worded" to only the genuinely natural spoken fractions (half, third, quarter — 30/20/15
+min); the other minute values still generate normally, just never with a "worded" phrasing (they
+fall back to minutes/decimal). Verified across 1,800 randomised draws that none of the retired
+phrasings can appear.
+
 ## 2026-09-07 — ToolShell bug fix: differentiated worksheets ignoring multiSelect defaults
 Fixed a shared-shell bug reported on Collecting Like Terms: a differentiated worksheet would
 sometimes generate negative-coefficient or crossing-zero questions even with "Positive terms
