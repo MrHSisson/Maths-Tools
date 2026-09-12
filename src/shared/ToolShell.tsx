@@ -62,32 +62,6 @@ export interface ToolShellProps {
 
 const ALL_LEVELS: DifficultyLevel[] = ["level1", "level2", "level3"];
 
-/** One cell in a differentiated worksheet's on-screen preview. When `sameSize`
- *  is true, measures this cell's own natural content height (via a ref, never
- *  a height this component itself set — so later content changes, e.g. KaTeX
- *  finishing an async render, are still picked up by the ResizeObserver) and
- *  reports it up so the parent can pad every cell, across every level, up to
- *  the tallest one. When false, no measurement happens and the cell keeps its
- *  own level's natural size. */
-function DiffCell({ children, sameSize, cellKey, onHeight }: { children: ReactNode; sameSize: boolean; cellKey: string; onHeight: (key: string, h: number) => void }) {
-  const ref = useRef<HTMLDivElement>(null);
-  useLayoutEffect(() => {
-    if (!sameSize) return;
-    const el = ref.current;
-    if (!el) return;
-    let raf = 0;
-    const measure = () => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => onHeight(cellKey, el.getBoundingClientRect().height));
-    };
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    return () => { cancelAnimationFrame(raf); ro.disconnect(); };
-  }, [sameSize, cellKey, onHeight]);
-  return <div ref={ref}>{children}</div>;
-}
-
 /** Scales its content to fit the available space — up to fill when the panel
  *  collapse frees room (like dragging the splitter wide, past the tool's own
  *  maxWidth cap), and DOWN below 1x when the content wouldn't fit (short
@@ -393,17 +367,6 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const [numQuestions, setNumQuestions] = useState(urlInit.n ?? defaults.numQuestions ?? 15);
   const [numColumns, setNumColumns] = useState(urlInit.cols ?? defaults.numColumns ?? 3);
   const [worksheet, setWorksheet] = useState<AnyQuestion[]>([]);
-  // Cross-level "same size" measurement for the differentiated on-screen
-  // preview — see DiffCell above. Cleared whenever the worksheet regenerates
-  // so a stale, taller previous cell can't keep inflating the new one.
-  const diffHeightsRef = useRef<Map<string, number>>(new Map());
-  const [diffUniformH, setDiffUniformH] = useState<number | null>(null);
-  const registerDiffHeight = useCallback((key: string, h: number) => {
-    diffHeightsRef.current.set(key, h);
-    const max = Math.max(...diffHeightsRef.current.values());
-    setDiffUniformH(prev => (prev !== null && Math.abs(prev - max) < 0.5) ? prev : max);
-  }, []);
-  useEffect(() => { diffHeightsRef.current.clear(); setDiffUniformH(null); }, [worksheet]);
   const [showWorksheetAnswers, setShowWorksheetAnswers] = useState(false);
   const [printMode, setPrintMode] = useState<PrintMode>("both");
   const [worksheetMode, setWorksheetMode] = useState<"standard" | "advanced">(
@@ -1208,23 +1171,47 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       </div>
     );
     const toolTitle = config.tools[currentTool].name;
+    // "Fit all levels" cross-level equalisation used to be done by measuring
+    // each cell's height in JS (a ResizeObserver) and applying the max as a
+    // minHeight — fragile in practice (it depends on the observer firing and
+    // the state update landing before the user looks, which isn't guaranteed
+    // on every device/network). Pure CSS Grid does the same job for free and
+    // deterministically: `subgrid` lets each level's own box reuse the OUTER
+    // grid's row tracks, and an auto-sized grid's `1fr` rows always resolve
+    // to the size of their single tallest cell — so every level's row N ends
+    // up exactly as tall as the tallest row N anywhere, recomputed natively
+    // by the browser on every reflow (KaTeX finishing, font load, resize),
+    // no JS measurement or timing involved at all.
     if (isDifferentiated) return (
       <div className="rounded-xl shadow-2xl p-8 relative" style={{ backgroundColor: qBg }}>
         {fontSizeControls}
         <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
-        <div className="grid gap-4" style={{ alignItems: "start", gridTemplateColumns: `repeat(${diffLevels.length}, 1fr)` }}>
-          {diffLevels.map((lv) => {
+        <div className="grid gap-4" style={{
+          alignItems: "start",
+          gridTemplateColumns: `repeat(${diffLevels.length}, 1fr)`,
+          ...(diffSameSize ? { gridTemplateRows: `auto repeat(${numQuestions}, 1fr)` } : {}),
+        }}>
+          {diffLevels.map((lv, colIdx) => {
             const lqs = worksheet.filter(q => q.difficulty === lv);
             const c = LV_COLORS[lv];
+            if (diffSameSize) return (
+              <div key={lv} className={`${c.bg} border-2 ${c.border} rounded-xl p-4`}
+                style={{ gridColumn: colIdx + 1, gridRow: `1 / span ${numQuestions + 1}`, display: "grid", gridTemplateRows: "subgrid", gap: "0.75rem" }}>
+                <h3 className={`text-xl font-bold text-center ${c.text}`} style={{ gridRow: 1 }}>{LV_LABELS[lv]}</h3>
+                {lqs.map((q, idx) => (
+                  <div key={idx} style={{ gridRow: idx + 2, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                    {renderQCell(q, idx, c.fill)}
+                  </div>
+                ))}
+              </div>
+            );
             return (
               <div key={lv} className={`${c.bg} border-2 ${c.border} rounded-xl p-4`}>
                 <h3 className={`text-xl font-bold mb-4 text-center ${c.text}`}>{LV_LABELS[lv]}</h3>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr", gridAutoRows: diffSameSize ? undefined : "1fr", gap: "0.75rem" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr", gridAutoRows: "1fr", gap: "0.75rem" }}>
                   {lqs.map((q, idx) => (
-                    <div key={idx} style={{ minHeight: diffSameSize && diffUniformH ? diffUniformH : 0, display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                      <DiffCell sameSize={diffSameSize} cellKey={`${lv}-${idx}`} onHeight={registerDiffHeight}>
-                        {renderQCell(q, idx, c.fill)}
-                      </DiffCell>
+                    <div key={idx} style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                      {renderQCell(q, idx, c.fill)}
                     </div>
                   ))}
                 </div>

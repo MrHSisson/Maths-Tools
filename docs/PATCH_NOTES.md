@@ -28,6 +28,36 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-12 — Fix differentiated cell-height equalisation for real: pure CSS, no JS measurement
+User-reported (with a live screenshot) that "Fit all levels" cells were still uneven on a real
+device, despite passing every local check. The on-screen "Fit all levels" mode relied on a
+`DiffCell` component measuring each cell's height via `ResizeObserver` + `requestAnimationFrame`
+and applying the max as a JS-computed `minHeight` — this is inherently timing-dependent (it needs
+the observer to fire and the resulting state update to land before the user looks), and despite
+extensive attempts (narrow/mobile viewports, CPU + network throttling, a production build) it
+could not be reproduced locally, but the deployed commit was confirmed (via the Vercel API) to
+exactly match the code being tested — so the JS-timing theory, though unconfirmed, was the most
+plausible explanation and, regardless, a strictly more fragile mechanism than necessary.
+
+Replaced it with pure CSS: the outer differentiated grid now declares explicit row tracks
+(`auto` for the header, `repeat(numQuestions, 1fr)` for the questions) and each level's coloured
+box uses `grid-template-rows: subgrid` to reuse those same tracks — an auto-sized grid's `1fr`
+rows always resolve to the height of their tallest occupant, so every level's row *N* ends up
+exactly as tall as the tallest row *N* anywhere, recomputed natively by the browser on every
+reflow (KaTeX finishing, a resize, anything) with no JavaScript or timing involved at all. This
+gives row-by-row alignment across levels rather than one single global height for every cell,
+which needs a browser reflow either way and is a more robust target than the old approach's
+literal (but fragile) global uniform height. "Fit each level" already used the equivalent
+per-column CSS trick and needed no change. Deleted the now-dead `DiffCell` component and its
+`ResizeObserver`/state plumbing entirely. Print/PDF export was never affected (it always computed
+sizing analytically, no measurement).
+
+Verified in a live browser (both modes, mobile-width viewport) that every cell now renders at a
+consistent, row-aligned height with centred content — plus `npm run build` (zero TS errors) and
+`npm test` (320 passing). Could not reproduce the original failure locally even under heavy CPU/
+network throttling, so this fix is judged by robustness of the new mechanism (deterministic CSS,
+no async race) rather than a before/after repro.
+
 ## 2026-09-12 — Soften the Level 1/2/3 selector colours to pastel
 The Level 1/2/3 selector buttons (worksheet mode's level row, the Whiteboard/Worked Example
 `DifficultyToggle`, and the Worksheet Builder's per-section L1/L2/L3 pills) filled with
