@@ -45,13 +45,21 @@ shipped). Units are a per-level multiSelect pool (mph / km/h / m/s), with m/s ga
 only (no natural "per minute" convention exists for it at GCSE level).
 
 Added a **seventh core representation**, the **ratio table** (`src/shared/ratioTable.ts` +
-`src/shared/components/RatioTable.tsx`), alongside the existing six in CLAUDE.md — scales two or
-more linked quantities as columns, with the factor shown between rows. Authored via `rStep(label,
-headers, rows, operations)` and rendered through the shared `ratioTableStepRenderer`, which a
-tool passes as `stepRenderer` (returns `null` for every non-ratio-table step, so `mStep`/`tStep`/
-`step` still render through ToolShell's normal path — same fallback pattern a diagram tool's
-`questionRenderer` uses). Reusable by any future proportional-scaling tool (currency conversion,
-recipe scaling, etc.).
+`src/shared/components/RatioTable.tsx`), alongside the existing six in CLAUDE.md — renders as one
+continuous bordered `<table>` with quantities as columns and each scale-step as a row going down,
+the factor between adjacent rows shown outside the table in a left/right gutter (mirrored), never
+inside a cell. Went through two rounds of user feedback after the first pass (a borderless CSS
+grid with quantities as columns/steps as rows, then transposed to quantities-as-rows) before
+landing on this — the working version. A single combined scale factor is never shown as one
+fraction/decimal multiply: `buildScaleSteps` in `SpeedDistanceTime.tsx` decomposes it into two
+whole-number `×n`/`÷n` steps through an intermediate "unit" row whenever both factors are
+non-trivial (only possible at Level 3 — Levels 1–2 always have one factor equal to 1, so the
+chain collapses back to a single step), verified against 1,440 randomised draws. Authored via
+`rStep(label, headers, rows, operations)` and rendered through the shared
+`ratioTableStepRenderer`, which a tool passes as `stepRenderer` (returns `null` for every
+non-ratio-table step, so `mStep`/`tStep`/`step` still render through ToolShell's normal path —
+same fallback pattern a diagram tool's `questionRenderer` uses). Reusable by any future
+proportional-scaling tool (currency conversion, recipe scaling, etc.).
 
 ## 2026-09-07 — ToolShell bug fix: differentiated worksheets ignoring multiSelect defaults
 Fixed a shared-shell bug reported on Collecting Like Terms: a differentiated worksheet would

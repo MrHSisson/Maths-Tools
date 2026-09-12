@@ -197,6 +197,26 @@ const numLatex = (n: number): string => (Number.isInteger(n) ? String(n) : n.toF
 const scaleOp = (n: number, d: number): string =>
   d === 1 ? `\\times ${n}` : n === 1 ? `\\div ${d}` : `\\times \\dfrac{${n}}{${d}}`;
 
+// Builds the row sequence for a ratio table as a chain of [distance, time]
+// pairs plus the whole-number operation between each consecutive pair.
+// A single combined scale factor (e.g. ×2/3) is never shown as one fractional
+// multiply — when BOTH pp and qq are non-trivial (only possible at Level 3),
+// it's decomposed into ÷qq then ×pp (or the reverse for "growTime"), passing
+// through a whole-number "unit" row in between. At Levels 1–2, one of pp/qq
+// is always 1 (the given time already scales to/from an hour directly), so
+// this collapses back to the original single whole-number step.
+const buildScaleSteps = (
+  start: [number, number], pp: number, qq: number, direction: "shrinkTime" | "growTime",
+): { pairs: [number, number][]; ops: string[] } => {
+  const [firstFactor, secondFactor] = direction === "shrinkTime" ? [qq, pp] : [pp, qq];
+  const [d0, t0] = start;
+  if (firstFactor === 1) return { pairs: [[d0, t0], [d0 * secondFactor, t0 * secondFactor]], ops: [scaleOp(secondFactor, 1)] };
+  if (secondFactor === 1) return { pairs: [[d0, t0], [d0 / firstFactor, t0 / firstFactor]], ops: [scaleOp(1, firstFactor)] };
+  const unit: [number, number] = [d0 / firstFactor, t0 / firstFactor];
+  const end: [number, number] = [unit[0] * secondFactor, unit[1] * secondFactor];
+  return { pairs: [[d0, t0], unit, end], ops: [scaleOp(1, firstFactor), scaleOp(secondFactor, 1)] };
+};
+
 // D = k·qq, S = k·pp, where pp/qq = 60/TM reduced — picked so both land clean
 // (whole, or exactly one decimal place when allowDecimals is on) and inside a
 // realistic range for the unit family.
@@ -281,10 +301,11 @@ const genSpeed = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, al
   const durationText = formatDuration(c.shape, family, notation);
   const id = randInt(0, 999999);
 
+  const { pairs, ops } = buildScaleSteps([c.D, c.tVal], c.pp, c.qq, "shrinkTime");
   const working: WorkingStep[] = [
     ...compoundConvertStep(c.shape),
     rStep("Scale to find the speed:", [c.f.distanceUnit, c.tLabel],
-      [[numLatex(c.D), c.tVal], [numLatex(c.S), c.hourRef]], [scaleOp(c.pp, c.qq)]),
+      pairs.map(([d, t]) => [numLatex(d), numLatex(t)]), ops),
     mStep("Speed:", numLatex(c.S), c.f.rateUnit),
   ];
 
@@ -306,10 +327,11 @@ const genDistance = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type,
   const durationText = formatDuration(c.shape, family, notation);
   const id = randInt(0, 999999);
 
+  const { pairs, ops } = buildScaleSteps([c.S, c.hourRef], c.pp, c.qq, "growTime");
   const working: WorkingStep[] = [
     ...compoundConvertStep(c.shape),
     rStep("Scale from 1 hour to the given time:", [c.f.distanceUnit, c.tLabel],
-      [[numLatex(c.S), c.hourRef], [numLatex(c.D), c.tVal]], [scaleOp(c.qq, c.pp)]),
+      pairs.map(([d, t]) => [numLatex(d), numLatex(t)]), ops),
     mStep("Distance:", numLatex(c.D), c.f.distanceUnit),
   ];
 
@@ -331,9 +353,10 @@ const genTime = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, all
   const answerText = formatDuration(c.shape, family, notation);
   const id = randInt(0, 999999);
 
+  const { pairs, ops } = buildScaleSteps([c.S, c.hourRef], c.pp, c.qq, "growTime");
   const working: WorkingStep[] = [
     rStep("Scale from 1 hour to find the time:", [c.f.distanceUnit, c.tLabel],
-      [[numLatex(c.S), c.hourRef], [numLatex(c.D), c.tVal]], [scaleOp(c.qq, c.pp)]),
+      pairs.map(([d, t]) => [numLatex(d), numLatex(t)]), ops),
     ...(c.shape.kind === "l3compound" ? [mStep("Write as hours and minutes:", `${c.tVal} = ${c.shape.H} \\times 60 + ${c.shape.Mfrac}`)] : []),
   ];
   // The final answer is stated in prose (e.g. "an hour and a half"), which may
