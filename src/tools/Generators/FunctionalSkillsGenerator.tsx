@@ -912,7 +912,9 @@ function handlePrint(allPages: Question[][], orientation: Orientation = 'portrai
   /* Drawn as SVG line strokes, not a CSS background — backgrounds are silently
      dropped by the browser's print pipeline unless "Background graphics" is
      manually enabled, even with print-color-adjust:exact set; strokes are
-     ordinary vector content and always print. */
+     ordinary vector content and always print. Centred (not stretched) so the
+     grid is always whole 1cm squares, never clipped at the page edge. */
+  .squared-page { display:flex; align-items:center; justify-content:center; }
   .squared-page svg { display:block; }
   .squared-page svg line { stroke:#94a3b8; stroke-width:0.15; }
   .page-header {
@@ -1021,14 +1023,19 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 
   function buildSquaredPage() {
+    // Only whole squares — floor to the nearest full 1cm square, then centre
+    // the grid in the page so the leftover margin is spread evenly rather
+    // than clipping a partial square at the edge.
+    var gridW = Math.floor(PAGE_W_MM / SQUARE_MM) * SQUARE_MM;
+    var gridH = Math.floor(PAGE_H_MM / SQUARE_MM) * SQUARE_MM;
     var lines = '';
-    for (var x = 0; x <= PAGE_W_MM + 0.01; x += SQUARE_MM) {
-      lines += '<line x1="' + x + '" y1="0" x2="' + x + '" y2="' + PAGE_H_MM + '" />';
+    for (var x = 0; x <= gridW + 0.01; x += SQUARE_MM) {
+      lines += '<line x1="' + x + '" y1="0" x2="' + x + '" y2="' + gridH + '" />';
     }
-    for (var y = 0; y <= PAGE_H_MM + 0.01; y += SQUARE_MM) {
-      lines += '<line x1="0" y1="' + y + '" x2="' + PAGE_W_MM + '" y2="' + y + '" />';
+    for (var y = 0; y <= gridH + 0.01; y += SQUARE_MM) {
+      lines += '<line x1="0" y1="' + y + '" x2="' + gridW + '" y2="' + y + '" />';
     }
-    return '<div class="page squared-page"><svg viewBox="0 0 ' + PAGE_W_MM + ' ' + PAGE_H_MM + '" width="' + PAGE_W_MM + 'mm" height="' + PAGE_H_MM + 'mm" preserveAspectRatio="none">' + lines + '</svg></div>';
+    return '<div class="page squared-page"><svg viewBox="0 0 ' + gridW + ' ' + gridH + '" width="' + gridW + 'mm" height="' + gridH + 'mm" preserveAspectRatio="none">' + lines + '</svg></div>';
   }
 
   // Squared paper for rough working (booklets), then all question pages, then all answer pages
