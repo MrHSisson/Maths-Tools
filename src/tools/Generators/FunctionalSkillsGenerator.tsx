@@ -15,6 +15,10 @@ type Question = {
   skill?: SkillId; // which skill generated this question
 };
 
+// Portrait: 3 columns × up to 15 rows. Landscape: 4 columns × up to 8 rows (32 questions).
+type Orientation = 'portrait' | 'landscape';
+const MAX_QUESTIONS_BY_ORIENTATION: Record<Orientation, number> = { portrait: 30, landscape: 32 };
+
 type SkillId =
   | 'numberBonds'
   | 'timesTables'
@@ -847,17 +851,21 @@ function genFracDiv(config: FracDivConfig): Question[] {
 
 // ─── PDF PRINT ────────────────────────────────────────────────────────────────
 
-function handlePrint(allPages: Question[][]) {
+function handlePrint(allPages: Question[][], orientation: Orientation = 'portrait') {
+  const isLandscape = orientation === 'landscape';
   const FONT_PX   = 13;
   const PAD_MM    = 1.2;
   const MARGIN_MM = 12;
   const HEADER_MM = 14;
   const GAP_MM    = 1.2;
-  const PAGE_H_MM = 297 - MARGIN_MM * 2;
-  const PAGE_W_MM = 210 - MARGIN_MM * 2;
+  // Landscape swaps the A4 dimensions and gets an extra column, capped at 4
+  // columns × 8 rows (32 questions) instead of portrait's 3 columns × 15 rows.
+  const PAGE_H_MM = (isLandscape ? 210 : 297) - MARGIN_MM * 2;
+  const PAGE_W_MM = (isLandscape ? 297 : 210) - MARGIN_MM * 2;
   const usableH   = PAGE_H_MM - HEADER_MM;
-  const cols      = 3;
-  const cellW_MM  = (PAGE_W_MM - GAP_MM * 2) / 3;
+  const cols      = isLandscape ? 4 : 3;
+  const maxRows   = isLandscape ? 8 : 15;
+  const cellW_MM  = (PAGE_W_MM - GAP_MM * (cols - 1)) / cols;
   const totalSheets = allPages.length;
 
   const now = new Date();
@@ -895,7 +903,7 @@ function handlePrint(allPages: Question[][]) {
 <title>Maths Skills — Worksheet</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
-  @page { size:A4; margin:${MARGIN_MM}mm; }
+  @page { size:A4 ${isLandscape ? 'landscape' : 'portrait'}; margin:${MARGIN_MM}mm; }
   body { font-family:"Segoe UI",Arial,sans-serif; background:#fff; }
   @media print { body { -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
   .page { width:${PAGE_W_MM}mm; height:${PAGE_H_MM}mm; overflow:hidden; page-break-after:always; }
@@ -946,8 +954,9 @@ document.addEventListener("DOMContentLoaded", function() {
   var totalSheets = ${totalSheets};
   var sheetsData  = ${JSON.stringify(sheetsData.map(s => ({ totalQ: s.totalQ, sheetIdx: s.sheetIdx, allQ: s.allQ, allQAns: s.allQAns })))};
 
+  var maxRows = ${maxRows};
   var rowHeights = [];
-  for (var r = 1; r <= 15; r++) {
+  for (var r = 1; r <= maxRows; r++) {
     rowHeights.push((usableH - GAP_MM * (r - 1)) / r);
   }
 
@@ -1109,6 +1118,7 @@ type SavedSetup = {
   maxQuestions: number;
   numPages: number;
   grouped: boolean;
+  orientation: Orientation;
 };
 
 function loadRemember(): boolean {
@@ -1153,7 +1163,12 @@ export default function MathsSkillsGenerator() {
     () => ({ ...DEFAULT_SKILL_COUNTS, ...(saved.skillCounts ?? {}) }),
   );
   const [configs, setConfigs] = useState<SkillConfigs>(() => mergeConfigs(saved.configs));
-  const [maxQuestions, setMaxQuestions] = useState<number>(saved.maxQuestions ?? 30);
+  const [orientation, setOrientation] = useState<Orientation>(
+    saved.orientation === 'landscape' ? 'landscape' : 'portrait',
+  );
+  const [maxQuestions, setMaxQuestions] = useState<number>(
+    () => Math.min(saved.maxQuestions ?? 30, MAX_QUESTIONS_BY_ORIENTATION[saved.orientation === 'landscape' ? 'landscape' : 'portrait']),
+  );
   const [numPages, setNumPages] = useState<number>(saved.numPages ?? 1);
   const [grouped, setGrouped] = useState<boolean>(saved.grouped ?? false);
   const [rememberSetup, setRememberSetup] = useState<boolean>(loadRemember);
@@ -1183,13 +1198,20 @@ export default function MathsSkillsGenerator() {
     try {
       if (rememberSetup) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify({
-          enabledSkills, skillCounts, configs, maxQuestions, numPages, grouped,
+          enabledSkills, skillCounts, configs, maxQuestions, numPages, grouped, orientation,
         }));
       } else {
         localStorage.removeItem(STORAGE_KEY);
       }
     } catch { /* storage unavailable — ignore */ }
-  }, [enabledSkills, skillCounts, configs, maxQuestions, numPages, grouped, rememberSetup]);
+  }, [enabledSkills, skillCounts, configs, maxQuestions, numPages, grouped, orientation, rememberSetup]);
+
+  // Switching orientation changes the page's question capacity — clamp the
+  // current max down if it no longer fits (portrait caps at 30, landscape at 32).
+  useEffect(() => {
+    const limit = MAX_QUESTIONS_BY_ORIENTATION[orientation];
+    setMaxQuestions(m => Math.min(m, limit));
+  }, [orientation]);
 
   // The remember-setup preference itself is always persisted, independently
   // of whatever it's currently set to — it's the one thing that must survive
@@ -1202,6 +1224,7 @@ export default function MathsSkillsGenerator() {
 
   const total = enabledSkills.reduce((sum, s) => sum + skillCounts[s], 0);
   const overBudget = total > maxQuestions;
+  const maxQuestionsLimit = MAX_QUESTIONS_BY_ORIENTATION[orientation];
 
   const clearAll = () => {
     setEnabledSkills([]);
@@ -1302,7 +1325,7 @@ export default function MathsSkillsGenerator() {
         allPageQs.push(qs);
       }
     }
-    handlePrint(allPageQs);
+    handlePrint(allPageQs, orientation);
     setError('');
   };
 
@@ -1818,7 +1841,7 @@ export default function MathsSkillsGenerator() {
                     'Browse skills by topic on the left and tap a tile to add it (tap again to remove); it appears in "Your worksheet" on the right.',
                     'In your worksheet, use − / + to set how many questions each skill contributes, and Options to configure its difficulty and ranges inline.',
                     'Maximum 30 questions total — the budget bar shows how many you have left. Use Clear to start over.',
-                    'Use the Settings button to set the total, number of pages and question order (mixed or grouped).',
+                    'Use the Settings button to set the total, number of pages, question order (mixed or grouped) and orientation — landscape allows up to 32 questions across 4 columns × 8 rows.',
                     'Preview shows a sample; Generate PDF opens a print-ready worksheet with answers.',
                     'Your setup is saved automatically and restored when you come back — turn this off under Settings > Remember setup. This is per-browser, not shared with other teachers.',
                   ].map((t, i) => (
@@ -1900,12 +1923,29 @@ export default function MathsSkillsGenerator() {
                       {settingsOpen && (
                         <div className="absolute right-0 top-full mt-2 z-50 w-60 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 space-y-3">
                           <div className="flex items-center justify-between">
+                            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Orientation</label>
+                            <div className="flex rounded-lg overflow-hidden border-2 border-gray-200">
+                              <button
+                                onClick={() => setOrientation('portrait')}
+                                title="A4 portrait — 3 columns, up to 30 questions"
+                                className={`px-3 py-1 text-sm font-bold transition-all ${orientation === 'portrait' ? 'bg-blue-900 text-white' : 'bg-white text-gray-500 hover:text-blue-900'}`}
+                              >Portrait</button>
+                              <button
+                                onClick={() => setOrientation('landscape')}
+                                title="A4 landscape — 4 columns, up to 32 questions"
+                                className={`px-3 py-1 text-sm font-bold transition-all border-l-2 border-gray-200 ${orientation === 'landscape' ? 'bg-blue-900 text-white' : 'bg-white text-gray-500 hover:text-blue-900'}`}
+                              >Landscape</button>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between">
                             <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Max questions</label>
                             <input
                               type="number"
-                              min={3} max={30} step={3}
+                              min={orientation === 'landscape' ? 4 : 3}
+                              max={maxQuestionsLimit}
+                              step={orientation === 'landscape' ? 4 : 3}
                               value={maxQuestions}
-                              onChange={e => setMaxQuestions(Math.min(30, Math.max(3, parseInt(e.target.value) || 3)))}
+                              onChange={e => setMaxQuestions(Math.min(maxQuestionsLimit, Math.max(1, parseInt(e.target.value) || 1)))}
                               className="w-16 px-2 py-1.5 border-2 border-gray-200 rounded-lg text-sm font-bold text-gray-800 text-center focus:outline-none focus:border-blue-900"
                             />
                           </div>
