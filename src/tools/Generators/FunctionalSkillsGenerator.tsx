@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Home, Eye, Download, RefreshCw, RotateCcw, Plus, Check, X, ChevronUp, ChevronDown, Menu, Settings } from 'lucide-react';
+import { useDevMode } from '../../devMode';
 
 const TOOL_CONFIG = {
   pageTitle: 'Maths Skills Generator',
@@ -1206,6 +1207,12 @@ export default function MathsSkillsGenerator() {
   const [grouped, setGrouped] = useState<boolean>(saved.grouped ?? false);
   const [squaredPaper, setSquaredPaper] = useState<boolean>(saved.squaredPaper ?? false);
   const [rememberSetup, setRememberSetup] = useState<boolean>(loadRemember);
+  // Landscape and squared-paper printing are dev-gated — settings are still
+  // saved/restored for everyone (see the persistence effect below), but the
+  // controls and their effect on printing only apply in Developing-tools mode.
+  const devMode = useDevMode();
+  const effectiveOrientation: Orientation = devMode ? orientation : 'portrait';
+  const effectiveSquaredPaper = devMode && squaredPaper;
   const [previewQuestions, setPreviewQuestions] = useState<Question[]>([]);
   const [error, setError] = useState<string>('');
   const [expandedSkill, setExpandedSkill] = useState<SkillId | null>(null);
@@ -1240,12 +1247,13 @@ export default function MathsSkillsGenerator() {
     } catch { /* storage unavailable — ignore */ }
   }, [enabledSkills, skillCounts, configs, maxQuestions, numPages, grouped, orientation, squaredPaper, rememberSetup]);
 
-  // Switching orientation changes the page's question capacity — clamp the
-  // current max down if it no longer fits (portrait caps at 30, landscape at 32).
+  // Switching orientation (or dev mode, which forces portrait when off)
+  // changes the page's question capacity — clamp the current max down if it
+  // no longer fits (portrait caps at 30, landscape at 32).
   useEffect(() => {
-    const limit = MAX_QUESTIONS_BY_ORIENTATION[orientation];
+    const limit = MAX_QUESTIONS_BY_ORIENTATION[effectiveOrientation];
     setMaxQuestions(m => Math.min(m, limit));
-  }, [orientation]);
+  }, [effectiveOrientation]);
 
   // The remember-setup preference itself is always persisted, independently
   // of whatever it's currently set to — it's the one thing that must survive
@@ -1258,7 +1266,7 @@ export default function MathsSkillsGenerator() {
 
   const total = enabledSkills.reduce((sum, s) => sum + skillCounts[s], 0);
   const overBudget = total > maxQuestions;
-  const maxQuestionsLimit = MAX_QUESTIONS_BY_ORIENTATION[orientation];
+  const maxQuestionsLimit = MAX_QUESTIONS_BY_ORIENTATION[effectiveOrientation];
 
   const clearAll = () => {
     setEnabledSkills([]);
@@ -1359,7 +1367,7 @@ export default function MathsSkillsGenerator() {
         allPageQs.push(qs);
       }
     }
-    handlePrint(allPageQs, orientation, squaredPaper);
+    handlePrint(allPageQs, effectiveOrientation, effectiveSquaredPaper);
     setError('');
   };
 
@@ -1875,8 +1883,11 @@ export default function MathsSkillsGenerator() {
                     'Browse skills by topic on the left and tap a tile to add it (tap again to remove); it appears in "Your worksheet" on the right.',
                     'In your worksheet, use − / + to set how many questions each skill contributes, and Options to configure its difficulty and ranges inline.',
                     'Maximum 30 questions total — the budget bar shows how many you have left. Use Clear to start over.',
-                    'Use the Settings button to set the total, number of pages, question order (mixed or grouped) and orientation — landscape allows up to 32 questions across 4 columns × 8 rows.',
-                    'Turn on Squared paper in Settings to add a page of 1cm squared paper for rough working before each worksheet page (every one, if you generate multiple) — handy for booklets.',
+                    'Use the Settings button to set the total, number of pages and question order (mixed or grouped).',
+                    ...(devMode ? [
+                      'Dev mode: Settings also has an Orientation toggle — landscape allows up to 32 questions across 4 columns × 8 rows.',
+                      'Dev mode: turn on Squared paper in Settings to add a page of 1cm squared paper for rough working before each worksheet page (every one, if you generate multiple) — handy for booklets.',
+                    ] : []),
                     'Preview shows a sample; Generate PDF opens a print-ready worksheet with answers.',
                     'Your setup is saved automatically and restored when you come back — turn this off under Settings > Remember setup. This is per-browser, not shared with other teachers.',
                   ].map((t, i) => (
@@ -1957,28 +1968,30 @@ export default function MathsSkillsGenerator() {
                       </button>
                       {settingsOpen && (
                         <div className="absolute right-0 top-full mt-2 z-50 w-60 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 space-y-3">
-                          <div className="flex items-center justify-between">
-                            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Orientation</label>
-                            <div className="flex rounded-lg overflow-hidden border-2 border-gray-200">
-                              <button
-                                onClick={() => setOrientation('portrait')}
-                                title="A4 portrait — 3 columns, up to 30 questions"
-                                className={`px-3 py-1 text-sm font-bold transition-all ${orientation === 'portrait' ? 'bg-blue-900 text-white' : 'bg-white text-gray-500 hover:text-blue-900'}`}
-                              >Portrait</button>
-                              <button
-                                onClick={() => setOrientation('landscape')}
-                                title="A4 landscape — 4 columns, up to 32 questions"
-                                className={`px-3 py-1 text-sm font-bold transition-all border-l-2 border-gray-200 ${orientation === 'landscape' ? 'bg-blue-900 text-white' : 'bg-white text-gray-500 hover:text-blue-900'}`}
-                              >Landscape</button>
+                          {devMode && (
+                            <div className="flex items-center justify-between">
+                              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Orientation</label>
+                              <div className="flex rounded-lg overflow-hidden border-2 border-gray-200">
+                                <button
+                                  onClick={() => setOrientation('portrait')}
+                                  title="A4 portrait — 3 columns, up to 30 questions"
+                                  className={`px-3 py-1 text-sm font-bold transition-all ${orientation === 'portrait' ? 'bg-blue-900 text-white' : 'bg-white text-gray-500 hover:text-blue-900'}`}
+                                >Portrait</button>
+                                <button
+                                  onClick={() => setOrientation('landscape')}
+                                  title="A4 landscape — 4 columns, up to 32 questions"
+                                  className={`px-3 py-1 text-sm font-bold transition-all border-l-2 border-gray-200 ${orientation === 'landscape' ? 'bg-blue-900 text-white' : 'bg-white text-gray-500 hover:text-blue-900'}`}
+                                >Landscape</button>
+                              </div>
                             </div>
-                          </div>
+                          )}
                           <div className="flex items-center justify-between">
                             <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Max questions</label>
                             <input
                               type="number"
-                              min={orientation === 'landscape' ? 4 : 3}
+                              min={effectiveOrientation === 'landscape' ? 4 : 3}
                               max={maxQuestionsLimit}
-                              step={orientation === 'landscape' ? 4 : 3}
+                              step={effectiveOrientation === 'landscape' ? 4 : 3}
                               value={maxQuestions}
                               onChange={e => setMaxQuestions(Math.min(maxQuestionsLimit, Math.max(1, parseInt(e.target.value) || 1)))}
                               className="w-16 px-2 py-1.5 border-2 border-gray-200 rounded-lg text-sm font-bold text-gray-800 text-center focus:outline-none focus:border-blue-900"
@@ -2007,21 +2020,23 @@ export default function MathsSkillsGenerator() {
                               >Grouped</button>
                             </div>
                           </div>
-                          <div className="flex items-center justify-between">
-                            <label htmlFor="fs-squared-paper" className="text-xs font-bold text-gray-400 uppercase tracking-widest pr-2">
-                              Squared paper
-                            </label>
-                            <button
-                              id="fs-squared-paper"
-                              role="switch"
-                              aria-checked={squaredPaper}
-                              onClick={() => setSquaredPaper(s => !s)}
-                              title="Add a page of squared paper for rough working before each worksheet page"
-                              className={`relative w-9 h-5 rounded-full flex-shrink-0 transition-colors ${squaredPaper ? 'bg-blue-900' : 'bg-gray-300'}`}
-                            >
-                              <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${squaredPaper ? 'translate-x-4' : ''}`} />
-                            </button>
-                          </div>
+                          {devMode && (
+                            <div className="flex items-center justify-between">
+                              <label htmlFor="fs-squared-paper" className="text-xs font-bold text-gray-400 uppercase tracking-widest pr-2">
+                                Squared paper
+                              </label>
+                              <button
+                                id="fs-squared-paper"
+                                role="switch"
+                                aria-checked={squaredPaper}
+                                onClick={() => setSquaredPaper(s => !s)}
+                                title="Add a page of squared paper for rough working before each worksheet page"
+                                className={`relative w-9 h-5 rounded-full flex-shrink-0 transition-colors ${squaredPaper ? 'bg-blue-900' : 'bg-gray-300'}`}
+                              >
+                                <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${squaredPaper ? 'translate-x-4' : ''}`} />
+                              </button>
+                            </div>
+                          )}
                           <div className="flex items-center justify-between pt-1 border-t border-gray-100">
                             <label htmlFor="fs-remember-setup" className="text-xs font-bold text-gray-400 uppercase tracking-widest pr-2">
                               Remember setup
