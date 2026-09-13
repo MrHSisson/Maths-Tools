@@ -1038,11 +1038,14 @@ document.addEventListener("DOMContentLoaded", function() {
     return '<div class="page squared-page"><svg viewBox="0 0 ' + gridW + ' ' + gridH + '" width="' + gridW + 'mm" height="' + gridH + 'mm" preserveAspectRatio="none">' + lines + '</svg></div>';
   }
 
-  // Squared paper for rough working (booklets), then all question pages, then all answer pages
+  // Squared paper for rough working (booklets) before each sheet's questions,
+  // then all question pages, then all answer pages
   var includeSquaredPaper = ${squaredPaper ? 'true' : 'false'};
   var html = '';
-  if (includeSquaredPaper) html += buildSquaredPage();
-  sheetsData.forEach(function(s) { html += buildSheetPage(s, false); });
+  sheetsData.forEach(function(s) {
+    if (includeSquaredPaper) html += buildSquaredPage();
+    html += buildSheetPage(s, false);
+  });
   sheetsData.forEach(function(s) { html += buildSheetPage(s, true); });
 
   var pagesEl = document.getElementById("pages");
@@ -1873,7 +1876,7 @@ export default function MathsSkillsGenerator() {
                     'In your worksheet, use − / + to set how many questions each skill contributes, and Options to configure its difficulty and ranges inline.',
                     'Maximum 30 questions total — the budget bar shows how many you have left. Use Clear to start over.',
                     'Use the Settings button to set the total, number of pages, question order (mixed or grouped) and orientation — landscape allows up to 32 questions across 4 columns × 8 rows.',
-                    'Turn on Squared paper in Settings to add a page of 1cm squared paper for rough working before the questions — handy for booklets.',
+                    'Turn on Squared paper in Settings to add a page of 1cm squared paper for rough working before each worksheet page (every one, if you generate multiple) — handy for booklets.',
                     'Preview shows a sample; Generate PDF opens a print-ready worksheet with answers.',
                     'Your setup is saved automatically and restored when you come back — turn this off under Settings > Remember setup. This is per-browser, not shared with other teachers.',
                   ].map((t, i) => (
@@ -2013,7 +2016,7 @@ export default function MathsSkillsGenerator() {
                               role="switch"
                               aria-checked={squaredPaper}
                               onClick={() => setSquaredPaper(s => !s)}
-                              title="Add a page of squared paper for rough working before the questions"
+                              title="Add a page of squared paper for rough working before each worksheet page"
                               className={`relative w-9 h-5 rounded-full flex-shrink-0 transition-colors ${squaredPaper ? 'bg-blue-900' : 'bg-gray-300'}`}
                             >
                               <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${squaredPaper ? 'translate-x-4' : ''}`} />
