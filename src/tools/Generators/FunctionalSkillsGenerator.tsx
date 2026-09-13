@@ -1098,6 +1098,9 @@ const DEFAULT_SKILL_COUNTS: Record<SkillId, number> = {
 // The whole setup is mirrored to localStorage so it survives a page refresh.
 
 const STORAGE_KEY = 'fsGenerator.setup.v1';
+// Whether the setup above should be saved/restored at all — a small standing
+// preference of its own, so it's read even when REMEMBER_KEY says "don't remember".
+const REMEMBER_KEY = 'fsGenerator.remember.v1';
 
 type SavedSetup = {
   enabledSkills: SkillId[];
@@ -1108,8 +1111,17 @@ type SavedSetup = {
   grouped: boolean;
 };
 
+function loadRemember(): boolean {
+  try {
+    return localStorage.getItem(REMEMBER_KEY) !== 'false';
+  } catch {
+    return true;
+  }
+}
+
 function loadSetup(): Partial<SavedSetup> {
   try {
+    if (!loadRemember()) return {};
     const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? (JSON.parse(raw) as Partial<SavedSetup>) : {};
   } catch {
@@ -1144,6 +1156,7 @@ export default function MathsSkillsGenerator() {
   const [maxQuestions, setMaxQuestions] = useState<number>(saved.maxQuestions ?? 30);
   const [numPages, setNumPages] = useState<number>(saved.numPages ?? 1);
   const [grouped, setGrouped] = useState<boolean>(saved.grouped ?? false);
+  const [rememberSetup, setRememberSetup] = useState<boolean>(loadRemember);
   const [previewQuestions, setPreviewQuestions] = useState<Question[]>([]);
   const [error, setError] = useState<string>('');
   const [expandedSkill, setExpandedSkill] = useState<SkillId | null>(null);
@@ -1164,14 +1177,28 @@ export default function MathsSkillsGenerator() {
     return () => document.removeEventListener('mousedown', h);
   }, [infoOpen, settingsOpen]);
 
-  // Mirror the setup to localStorage whenever it changes.
+  // Mirror the setup to localStorage whenever it changes — unless the teacher
+  // has turned remembering off, in which case make sure nothing lingers.
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        enabledSkills, skillCounts, configs, maxQuestions, numPages, grouped,
-      }));
+      if (rememberSetup) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          enabledSkills, skillCounts, configs, maxQuestions, numPages, grouped,
+        }));
+      } else {
+        localStorage.removeItem(STORAGE_KEY);
+      }
     } catch { /* storage unavailable — ignore */ }
-  }, [enabledSkills, skillCounts, configs, maxQuestions, numPages, grouped]);
+  }, [enabledSkills, skillCounts, configs, maxQuestions, numPages, grouped, rememberSetup]);
+
+  // The remember-setup preference itself is always persisted, independently
+  // of whatever it's currently set to — it's the one thing that must survive
+  // being turned off.
+  useEffect(() => {
+    try {
+      localStorage.setItem(REMEMBER_KEY, String(rememberSetup));
+    } catch { /* storage unavailable — ignore */ }
+  }, [rememberSetup]);
 
   const total = enabledSkills.reduce((sum, s) => sum + skillCounts[s], 0);
   const overBudget = total > maxQuestions;
@@ -1793,7 +1820,7 @@ export default function MathsSkillsGenerator() {
                     'Maximum 30 questions total — the budget bar shows how many you have left. Use Clear to start over.',
                     'Use the Settings button to set the total, number of pages and question order (mixed or grouped).',
                     'Preview shows a sample; Generate PDF opens a print-ready worksheet with answers.',
-                    'Your setup is saved automatically and restored when you come back.',
+                    'Your setup is saved automatically and restored when you come back — turn this off under Settings > Remember setup. This is per-browser, not shared with other teachers.',
                   ].map((t, i) => (
                     <li key={i} className="flex items-start gap-2">
                       <span className="text-blue-900 font-bold mt-0.5">·</span>
@@ -1904,6 +1931,21 @@ export default function MathsSkillsGenerator() {
                                 className={`px-3 py-1 text-sm font-bold transition-all border-l-2 border-gray-200 ${grouped ? 'bg-blue-900 text-white' : 'bg-white text-gray-500 hover:text-blue-900'}`}
                               >Grouped</button>
                             </div>
+                          </div>
+                          <div className="flex items-center justify-between pt-1 border-t border-gray-100">
+                            <label htmlFor="fs-remember-setup" className="text-xs font-bold text-gray-400 uppercase tracking-widest pr-2">
+                              Remember setup
+                            </label>
+                            <button
+                              id="fs-remember-setup"
+                              role="switch"
+                              aria-checked={rememberSetup}
+                              onClick={() => setRememberSetup(r => !r)}
+                              title="Remember my setup on this browser"
+                              className={`relative w-9 h-5 rounded-full flex-shrink-0 transition-colors ${rememberSetup ? 'bg-blue-900' : 'bg-gray-300'}`}
+                            >
+                              <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${rememberSetup ? 'translate-x-4' : ''}`} />
+                            </button>
                           </div>
                         </div>
                       )}
