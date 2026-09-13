@@ -851,13 +851,14 @@ function genFracDiv(config: FracDivConfig): Question[] {
 
 // ─── PDF PRINT ────────────────────────────────────────────────────────────────
 
-function handlePrint(allPages: Question[][], orientation: Orientation = 'portrait') {
+function handlePrint(allPages: Question[][], orientation: Orientation = 'portrait', squaredPaper: boolean = false) {
   const isLandscape = orientation === 'landscape';
   const FONT_PX   = 13;
   const PAD_MM    = 1.2;
   const MARGIN_MM = 12;
   const HEADER_MM = 14;
   const GAP_MM    = 1.2;
+  const SQUARE_MM = 10; // 1cm squared-paper grid, for booklet rough working
   // Landscape swaps the A4 dimensions and gets an extra column, capped at 4
   // columns × 8 rows (32 questions) instead of portrait's 3 columns × 15 rows.
   const PAGE_H_MM = (isLandscape ? 210 : 297) - MARGIN_MM * 2;
@@ -908,6 +909,12 @@ function handlePrint(allPages: Question[][], orientation: Orientation = 'portrai
   @media print { body { -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
   .page { width:${PAGE_W_MM}mm; height:${PAGE_H_MM}mm; overflow:hidden; page-break-after:always; }
   .page:last-child { page-break-after:auto; }
+  .squared-page {
+    background-image:
+      linear-gradient(to right, #94a3b8 0.15mm, transparent 0.15mm),
+      linear-gradient(to bottom, #94a3b8 0.15mm, transparent 0.15mm);
+    background-size:${SQUARE_MM}mm ${SQUARE_MM}mm;
+  }
   .page-header {
     display:flex; justify-content:space-between; align-items:baseline;
     border-bottom:0.4mm solid #1e3a8a; padding-bottom:1.5mm; margin-bottom:2mm;
@@ -1011,8 +1018,10 @@ document.addEventListener("DOMContentLoaded", function() {
       + '</div>';
   }
 
-  // All question pages first, then all answer pages
+  // Squared paper for rough working (booklets), then all question pages, then all answer pages
+  var includeSquaredPaper = ${squaredPaper ? 'true' : 'false'};
   var html = '';
+  if (includeSquaredPaper) html += '<div class="page squared-page"></div>';
   sheetsData.forEach(function(s) { html += buildSheetPage(s, false); });
   sheetsData.forEach(function(s) { html += buildSheetPage(s, true); });
 
@@ -1119,6 +1128,7 @@ type SavedSetup = {
   numPages: number;
   grouped: boolean;
   orientation: Orientation;
+  squaredPaper: boolean;
 };
 
 function loadRemember(): boolean {
@@ -1171,6 +1181,7 @@ export default function MathsSkillsGenerator() {
   );
   const [numPages, setNumPages] = useState<number>(saved.numPages ?? 1);
   const [grouped, setGrouped] = useState<boolean>(saved.grouped ?? false);
+  const [squaredPaper, setSquaredPaper] = useState<boolean>(saved.squaredPaper ?? false);
   const [rememberSetup, setRememberSetup] = useState<boolean>(loadRemember);
   const [previewQuestions, setPreviewQuestions] = useState<Question[]>([]);
   const [error, setError] = useState<string>('');
@@ -1198,13 +1209,13 @@ export default function MathsSkillsGenerator() {
     try {
       if (rememberSetup) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify({
-          enabledSkills, skillCounts, configs, maxQuestions, numPages, grouped, orientation,
+          enabledSkills, skillCounts, configs, maxQuestions, numPages, grouped, orientation, squaredPaper,
         }));
       } else {
         localStorage.removeItem(STORAGE_KEY);
       }
     } catch { /* storage unavailable — ignore */ }
-  }, [enabledSkills, skillCounts, configs, maxQuestions, numPages, grouped, orientation, rememberSetup]);
+  }, [enabledSkills, skillCounts, configs, maxQuestions, numPages, grouped, orientation, squaredPaper, rememberSetup]);
 
   // Switching orientation changes the page's question capacity — clamp the
   // current max down if it no longer fits (portrait caps at 30, landscape at 32).
@@ -1325,7 +1336,7 @@ export default function MathsSkillsGenerator() {
         allPageQs.push(qs);
       }
     }
-    handlePrint(allPageQs, orientation);
+    handlePrint(allPageQs, orientation, squaredPaper);
     setError('');
   };
 
@@ -1842,6 +1853,7 @@ export default function MathsSkillsGenerator() {
                     'In your worksheet, use − / + to set how many questions each skill contributes, and Options to configure its difficulty and ranges inline.',
                     'Maximum 30 questions total — the budget bar shows how many you have left. Use Clear to start over.',
                     'Use the Settings button to set the total, number of pages, question order (mixed or grouped) and orientation — landscape allows up to 32 questions across 4 columns × 8 rows.',
+                    'Turn on Squared paper in Settings to add a page of 1cm squared paper for rough working before the questions — handy for booklets.',
                     'Preview shows a sample; Generate PDF opens a print-ready worksheet with answers.',
                     'Your setup is saved automatically and restored when you come back — turn this off under Settings > Remember setup. This is per-browser, not shared with other teachers.',
                   ].map((t, i) => (
@@ -1971,6 +1983,21 @@ export default function MathsSkillsGenerator() {
                                 className={`px-3 py-1 text-sm font-bold transition-all border-l-2 border-gray-200 ${grouped ? 'bg-blue-900 text-white' : 'bg-white text-gray-500 hover:text-blue-900'}`}
                               >Grouped</button>
                             </div>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <label htmlFor="fs-squared-paper" className="text-xs font-bold text-gray-400 uppercase tracking-widest pr-2">
+                              Squared paper
+                            </label>
+                            <button
+                              id="fs-squared-paper"
+                              role="switch"
+                              aria-checked={squaredPaper}
+                              onClick={() => setSquaredPaper(s => !s)}
+                              title="Add a page of squared paper for rough working before the questions"
+                              className={`relative w-9 h-5 rounded-full flex-shrink-0 transition-colors ${squaredPaper ? 'bg-blue-900' : 'bg-gray-300'}`}
+                            >
+                              <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${squaredPaper ? 'translate-x-4' : ''}`} />
+                            </button>
                           </div>
                           <div className="flex items-center justify-between pt-1 border-t border-gray-100">
                             <label htmlFor="fs-remember-setup" className="text-xs font-bold text-gray-400 uppercase tracking-widest pr-2">
