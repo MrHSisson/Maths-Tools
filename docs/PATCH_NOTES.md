@@ -28,6 +28,31 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-13 — Functional Skills Generator: remember-setup opt-out, landscape + squared paper (dev-gated)
+`src/tools/Generators/FunctionalSkillsGenerator.tsx`. Four changes in one session:
+- A **"Remember setup" toggle** (Settings) lets a teacher opt out of the existing per-browser
+  `localStorage` mirroring of the tool's setup — off clears the saved setup immediately and
+  stops future writes; the toggle's own value persists independently under its own key. Live for
+  everyone, not dev-gated.
+- A **landscape orientation** option (Settings) prints A4 landscape at 4 columns × up to 8 rows
+  (32-question cap) instead of portrait's 3 columns × up to 15 rows (30-question cap);
+  `handlePrint`'s page dimensions/columns/`@page` CSS are now orientation-aware.
+- An optional **squared-paper page** (Settings) prepends one page of 1cm squared paper before
+  each worksheet page's questions (repeats per week when generating multiple pages) — for
+  booklets that need rough-working space. Drawn as SVG line strokes rather than a CSS
+  `background-image`, since browsers silently drop background graphics from print unless the
+  user enables it manually (confirmed by a blank print preview even with
+  `print-color-adjust:exact` set); the grid is floored to whole 1cm squares and centred, so
+  nothing is clipped at the page edge.
+- Landscape and squared paper are both **dev-gated** (`useDevMode()` from `src/devMode.ts`) — the
+  Settings controls, the info-modal copy, and their effect on `handlePrint` only activate in
+  Developing-tools mode; a `saved.orientation`/`saved.squaredPaper` value from a prior dev
+  session is still persisted but has no effect while dev mode is off (`effectiveOrientation` /
+  `effectiveSquaredPaper` force portrait/no-squared-paper). The setup-remembering toggle above is
+  the one change that is *not* dev-gated.
+
+Verified with `npm run build` (zero TS errors) and `npm test` (320 passing) after each change.
+
 ## 2026-09-12 — "Colour levels" toggle for differentiated worksheets
 Added a `diffColorLevels` setting (Settings menu, next to Question Cell Size, shown only when
 differentiated) so a teacher can turn off each level's green/yellow/red tint — plain neutral
