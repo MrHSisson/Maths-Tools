@@ -909,12 +909,12 @@ function handlePrint(allPages: Question[][], orientation: Orientation = 'portrai
   @media print { body { -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
   .page { width:${PAGE_W_MM}mm; height:${PAGE_H_MM}mm; overflow:hidden; page-break-after:always; }
   .page:last-child { page-break-after:auto; }
-  .squared-page {
-    background-image:
-      linear-gradient(to right, #94a3b8 0.15mm, transparent 0.15mm),
-      linear-gradient(to bottom, #94a3b8 0.15mm, transparent 0.15mm);
-    background-size:${SQUARE_MM}mm ${SQUARE_MM}mm;
-  }
+  /* Drawn as SVG line strokes, not a CSS background — backgrounds are silently
+     dropped by the browser's print pipeline unless "Background graphics" is
+     manually enabled, even with print-color-adjust:exact set; strokes are
+     ordinary vector content and always print. */
+  .squared-page svg { display:block; }
+  .squared-page svg line { stroke:#94a3b8; stroke-width:0.15; }
   .page-header {
     display:flex; justify-content:space-between; align-items:baseline;
     border-bottom:0.4mm solid #1e3a8a; padding-bottom:1.5mm; margin-bottom:2mm;
@@ -956,6 +956,8 @@ document.addEventListener("DOMContentLoaded", function() {
   var GAP_MM    = ${GAP_MM};
   var usableH   = ${usableH};
   var PAGE_W_MM = ${PAGE_W_MM};
+  var PAGE_H_MM = ${PAGE_H_MM};
+  var SQUARE_MM = ${SQUARE_MM};
   var cols      = ${cols};
   var dateStr   = "${dateStr}";
   var totalSheets = ${totalSheets};
@@ -1018,10 +1020,21 @@ document.addEventListener("DOMContentLoaded", function() {
       + '</div>';
   }
 
+  function buildSquaredPage() {
+    var lines = '';
+    for (var x = 0; x <= PAGE_W_MM + 0.01; x += SQUARE_MM) {
+      lines += '<line x1="' + x + '" y1="0" x2="' + x + '" y2="' + PAGE_H_MM + '" />';
+    }
+    for (var y = 0; y <= PAGE_H_MM + 0.01; y += SQUARE_MM) {
+      lines += '<line x1="0" y1="' + y + '" x2="' + PAGE_W_MM + '" y2="' + y + '" />';
+    }
+    return '<div class="page squared-page"><svg viewBox="0 0 ' + PAGE_W_MM + ' ' + PAGE_H_MM + '" width="' + PAGE_W_MM + 'mm" height="' + PAGE_H_MM + 'mm" preserveAspectRatio="none">' + lines + '</svg></div>';
+  }
+
   // Squared paper for rough working (booklets), then all question pages, then all answer pages
   var includeSquaredPaper = ${squaredPaper ? 'true' : 'false'};
   var html = '';
-  if (includeSquaredPaper) html += '<div class="page squared-page"></div>';
+  if (includeSquaredPaper) html += buildSquaredPage();
   sheetsData.forEach(function(s) { html += buildSheetPage(s, false); });
   sheetsData.forEach(function(s) { html += buildSheetPage(s, true); });
 
