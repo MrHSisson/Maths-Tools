@@ -28,6 +28,21 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-14 — Standard worksheet grid: explicit `gridAutoRows` for even cell heights
+`src/shared/ToolShell.tsx` (`renderWorksheet`, the plain/non-differentiated grid). Reported
+via a screenshot: worksheet cells in the same row were visibly different heights (a 3-line
+wrapped question next to 2-line ones). The differentiated "Fit all levels" grid hit the same
+class of issue previously and was fixed with explicit row tracks (`gridAutoRows: "1fr"` /
+`subgrid`) rather than relying on the browser's default `auto` row-track sizing — the plain
+worksheet grid never got that treatment and was still on the implicit default. Gave it the
+same explicit `gridAutoRows: "1fr"` plus a flex `justifyContent: "center"` wrapper per cell
+(matching the per-level list pattern already used elsewhere), so every row is forced to its
+tallest occupant regardless of async KaTeX re-layout timing. Couldn't reproduce genuine
+unevenness from the old default in ~300 headless-Chromium generate/measure cycles across
+delays, so this is a defensive robustness fix matching established convention rather than a
+confirmed root-cause fix — worth confirming against the originally reported case. `npm run
+build` and `npm test` both clean (320 tests).
+
 ## 2026-09-14 — Speed, Distance & Time: "Times Tables" QO caps the tables fact required
 `src/tools/Proportion/SpeedDistanceTime.tsx`. Previously the ratio-table scale factor `k`
 (up to 30) and several shape divisors (L2 minute values, L3 compound times, L3 awkward

@@ -1298,8 +1298,15 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       <div className="rounded-xl shadow-2xl p-8 relative" style={{ backgroundColor: qBg }}>
         {fontSizeControls}
         <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
-        <div style={{ display: "grid", gridTemplateColumns: `repeat(${numColumns},1fr)`, gap: "1rem" }}>
-          {worksheet.map((q, idx) => <div key={idx}>{renderQCell(q, idx)}</div>)}
+        {/* gridAutoRows: "1fr" — same explicit-row-track convention used for a
+            differentiated level's own question list below — so every cell in a
+            row is forced to the row's tallest occupant. Left at the CSS default
+            ("auto") this pairs with async KaTeX rendering (content height
+            changing after the grid's first layout pass) to sometimes leave a
+            row uneven, matching what "Fit all levels" hit before it moved to
+            explicit tracks. */}
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${numColumns},1fr)`, gridAutoRows: "1fr", gap: "1rem" }}>
+          {worksheet.map((q, idx) => <div key={idx} style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>{renderQCell(q, idx)}</div>)}
         </div>
       </div>
     );
