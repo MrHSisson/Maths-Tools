@@ -47,9 +47,9 @@ interface FamilyInfo {
 }
 
 const FAMILY: Record<UnitFamily, FamilyInfo> = {
-  mph: { distanceUnit: "miles", timeUnit: "hours", rateUnit: "mph", subjects: ["A car", "A train", "A cyclist", "A coach"], distMin: 3, distMax: 120, speedMin: 5, speedMax: 90 },
-  kmh: { distanceUnit: "km", timeUnit: "hours", rateUnit: "km/h", subjects: ["A car", "A train", "A lorry", "A cyclist"], distMin: 3, distMax: 200, speedMin: 5, speedMax: 140 },
-  mps: { distanceUnit: "m", timeUnit: "seconds", rateUnit: "m/s", subjects: ["A sprinter", "A cyclist", "A dog", "A swimmer"], distMin: 3, distMax: 100, speedMin: 1, speedMax: 25 },
+  mph: { distanceUnit: "miles", timeUnit: "hours", rateUnit: "mph", subjects: ["A car", "A train", "A cyclist", "A coach"], distMin: 3, distMax: 180, speedMin: 5, speedMax: 90 },
+  kmh: { distanceUnit: "km", timeUnit: "hours", rateUnit: "km/h", subjects: ["A car", "A train", "A lorry", "A cyclist"], distMin: 3, distMax: 260, speedMin: 5, speedMax: 140 },
+  mps: { distanceUnit: "m", timeUnit: "seconds", rateUnit: "m/s", subjects: ["A sprinter", "A cyclist", "A dog", "A swimmer"], distMin: 3, distMax: 140, speedMin: 1, speedMax: 28 },
 };
 
 // ── 2. TOOL_CONFIG ────────────────────────────────────────────────────────────
@@ -99,6 +99,20 @@ const METHOD_DROPDOWN: ToolDropdown = {
   workedExampleOnly: true,
 };
 
+// Caps every multiplication/division fact the question generation and its
+// ratio-table working actually rely on (the scale factor k, and the shape's
+// pp/qq divisors — see pickShape/buildValues) so a student is never asked to
+// invert a fact outside their tables. Default is 10×10-only so the tool is
+// restrictive out of the box; ticking 20×20 on top opts into the wider,
+// larger-number question pool as well.
+const TABLES_MS: ToolMultiSelect = {
+  key: "tablesLimit", label: "Times Tables",
+  options: [
+    { value: "10", label: "Up to 10×10", defaultActive: true },
+    { value: "20", label: "Up to 20×20", defaultActive: false },
+  ],
+};
+
 const L3_TYPES: ToolMultiSelect = {
   key: "l3Type", label: "Question Types",
   options: [
@@ -113,11 +127,11 @@ const makeSubtool = (name: string) => ({
   name,
   variables: [ALLOW_DECIMALS],
   dropdown: METHOD_DROPDOWN,
-  multiSelect: [UNITS_L1],
+  multiSelect: [UNITS_L1, TABLES_MS],
   difficultySettings: {
-    level1: { multiSelect: [UNITS_L1] },
-    level2: { multiSelect: [UNITS_L23, NOTATION_L2] },
-    level3: { multiSelect: [UNITS_L23, NOTATION_L3, L3_TYPES] },
+    level1: { multiSelect: [UNITS_L1, TABLES_MS] },
+    level2: { multiSelect: [UNITS_L23, NOTATION_L2, TABLES_MS] },
+    level3: { multiSelect: [UNITS_L23, NOTATION_L3, L3_TYPES, TABLES_MS] },
   },
 });
 
@@ -161,6 +175,7 @@ const INFO_SECTIONS: InfoSection[] = [
     { label: "Time Notation", detail: "How a split time is worded — minutes, hours & minutes, or a spoken fraction (e.g. 'a quarter of an hour'). Never a decimal — a real question wouldn't say '0.25 hours'." },
     { label: "Method", detail: "Ratio Table (default) scales to/from one hour using whole-number steps. Decimal instead converts the time to decimal hours and divides/multiplies by that — shown only where the conversion is exact; otherwise it falls back to the Ratio Table method." },
     { label: "Question Types (Level 3)", detail: "Compound times (e.g. 1 hr 30) and/or awkward minute values (e.g. 40 min)." },
+    { label: "Times Tables", detail: "Caps every multiplication/division fact the question relies on — including the scale factor in the ratio table working — so a student is never asked to invert a fact outside their tables. 'Up to 10×10' is on by default; tick 'Up to 20×20' as well to also allow larger, more demanding numbers." },
     { label: "Allow decimal answers", detail: "Lets the computed value be a terminating decimal (e.g. 12.5) instead of always a whole number." },
   ]},
 ];
@@ -191,19 +206,45 @@ const wordedCompound = (H: number, Mfrac: number): string => {
 
 interface Shape { kind: "l1" | "l2" | "l3compound" | "l3awkward"; TM: number; H?: number; Mfrac?: number; }
 
+// The reduced pp/qq (60/TM in lowest terms) are the actual divisors the ratio
+// table divides/multiplies by — the fact a student must invert. Both must fit
+// the selected tables limit, or the working asks for a fact outside it (e.g.
+// TM=5 gives pp=12 — a ×12 step, fine at 20×20 but too big at 10×10).
+const withinTables = (TM: number, tablesLimit: number): boolean => {
+  const g = gcd(60, TM);
+  return 60 / g <= tablesLimit && TM / g <= tablesLimit;
+};
+
+// L3 compound (H hours + a quarter/half/three-quarters) combos whose pp/qq
+// stay within the tables limit — e.g. 2hr45 gives qq=11, too big for 10×10.
+const compoundCombos = (tablesLimit: number): { H: number; Mfrac: number }[] => {
+  const combos: { H: number; Mfrac: number }[] = [];
+  for (let H = 1; H <= 3; H++) {
+    for (const Mfrac of L3_COMPOUND_FRACS) {
+      if (withinTables(H * 60 + Mfrac, tablesLimit)) combos.push({ H, Mfrac });
+    }
+  }
+  return combos;
+};
+
 // TM is always "minutes-equivalent" — for L1 it's just T0 * 60, a bookkeeping
 // trick so every shape reduces through the same gcd(60, TM) machinery below.
-const pickShape = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type): Shape => {
+// tablesLimit (10 or 20, from the "Times Tables" QO) caps every fact the
+// question ends up needing: T0 directly here, pp/qq via withinTables below,
+// and the scale factor k in buildValues.
+const pickShape = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, tablesLimit: number): Shape => {
   if (level === "level1") {
-    const T0 = randInt(2, family === "mps" ? 10 : 12);
+    const maxT0 = Math.min(family === "mps" ? 10 : 12, tablesLimit);
+    const T0 = randInt(2, maxT0);
     return { kind: "l1", TM: T0 * 60 };
   }
   if (level === "level2") {
-    return { kind: "l2", TM: pick(L2_MINUTES) };
+    const options = L2_MINUTES.filter((TM) => withinTables(TM, tablesLimit));
+    return { kind: "l2", TM: pick(options.length ? options : L2_MINUTES) };
   }
   if (l3type === "compoundTime") {
-    const H = randInt(1, 3);
-    const Mfrac = pick(L3_COMPOUND_FRACS);
+    const combos = compoundCombos(tablesLimit);
+    const { H, Mfrac } = pick(combos.length ? combos : [{ H: 1, Mfrac: 15 }]);
     return { kind: "l3compound", TM: H * 60 + Mfrac, H, Mfrac };
   }
   for (let i = 0; i < 50; i++) {
@@ -217,6 +258,7 @@ const pickShape = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type): 
     // question. Requiring a shared factor keeps qq small enough for k to
     // vary genuinely.
     if (gcd(60, TM) === 1) continue;
+    if (!withinTables(TM, tablesLimit)) continue;
     return { kind: "l3awkward", TM };
   }
   return { kind: "l3awkward", TM: 40 };
@@ -250,21 +292,23 @@ const buildScaleSteps = (
 
 // D = k·qq, S = k·pp, where pp/qq = 60/TM reduced — picked so both land clean
 // (whole, or exactly one decimal place when allowDecimals is on) and inside a
-// realistic range for the unit family.
-const buildValues = (TM: number, f: FamilyInfo, allowDecimals: boolean): { D: number; S: number; pp: number; qq: number } => {
+// realistic range for the unit family. k is itself capped by tablesLimit —
+// it's the other side of the pp/qq fact a student inverts (e.g. qq=8, k=13
+// asks for "8 × 13", a fact well outside 10×10 even though 8 itself isn't).
+const buildValues = (TM: number, f: FamilyInfo, allowDecimals: boolean, tablesLimit: number): { D: number; S: number; pp: number; qq: number } => {
   const g = gcd(60, TM);
   const pp = 60 / g, qq = TM / g;
   for (let attempt = 0; attempt < 80; attempt++) {
     const useHalf = allowDecimals && Math.random() < 0.35;
-    const k = randInt(1, 30) + (useHalf ? 0.5 : 0);
+    const k = randInt(1, tablesLimit) + (useHalf ? 0.5 : 0);
     const D = k * qq, S = k * pp;
     if (D < f.distMin || D > f.distMax) continue;
     if (S < f.speedMin || S > f.speedMax) continue;
     if (D === TM) continue; // "37 miles in 37 minutes" reads as a coincidence, not a real question
     return { D, S, pp, qq };
   }
-  let k = Math.max(Math.ceil(f.distMin / qq), Math.ceil(f.speedMin / pp), 1);
-  if (k * qq === TM && (k + 1) * qq <= f.distMax && (k + 1) * pp <= f.speedMax) k += 1;
+  let k = Math.min(Math.max(Math.ceil(f.distMin / qq), Math.ceil(f.speedMin / pp), 1), tablesLimit);
+  if (k * qq === TM && (k + 1) * qq <= f.distMax && (k + 1) * pp <= f.speedMax && k + 1 <= tablesLimit) k += 1;
   return { D: k * qq, S: k * pp, pp, qq };
 };
 
@@ -316,10 +360,10 @@ const compoundConvertStep = (shape: Shape): WorkingStep[] =>
     ? [mStep("Convert to minutes:", `${shape.H} \\times 60 + ${shape.Mfrac} = ${shape.TM}`)]
     : [];
 
-const buildCommon = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean) => {
-  const shape = pickShape(level, family, l3type);
+const buildCommon = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, tablesLimit: number) => {
+  const shape = pickShape(level, family, l3type, tablesLimit);
   const f = FAMILY[family];
-  const { D, S, pp, qq } = buildValues(shape.TM, f, allowDecimals);
+  const { D, S, pp, qq } = buildValues(shape.TM, f, allowDecimals, tablesLimit);
   const tLabel = timeLabel(shape, f);
   const tVal = timeCellValue(shape);
   const hourRef = hourRefValue(shape);
@@ -408,8 +452,8 @@ const buildWorking = (rv: RawValues, method: WorkingMethod): WorkingStep[] => {
   ];
 };
 
-const genSpeed = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, notationMv: Record<string, boolean>, method: WorkingMethod): WordedQuestion => {
-  const c = buildCommon(level, family, l3type, allowDecimals);
+const genSpeed = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, notationMv: Record<string, boolean>, method: WorkingMethod, tablesLimit: number): WordedQuestion => {
+  const c = buildCommon(level, family, l3type, allowDecimals, tablesLimit);
   const notation = pickNotation(c.shape, notationMv);
   const durationText = formatDuration(c.shape, family, notation);
   const id = randInt(0, 999999);
@@ -426,14 +470,14 @@ const genSpeed = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, al
     answerLatex: numLatex(c.S),
     answerSuffix: c.f.rateUnit,
     working: buildWorking(rv, method),
-    key: `speed-${level}-${family}-${c.shape.kind}-${c.D}-${c.S}-${notation}-${method}-${id}`,
+    key: `speed-${level}-${family}-${c.shape.kind}-${c.D}-${c.S}-${notation}-${method}-${tablesLimit}-${id}`,
     difficulty: level,
     _rawValues: rv,
   } as unknown as WordedQuestion;
 };
 
-const genDistance = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, notationMv: Record<string, boolean>, method: WorkingMethod): WordedQuestion => {
-  const c = buildCommon(level, family, l3type, allowDecimals);
+const genDistance = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, notationMv: Record<string, boolean>, method: WorkingMethod, tablesLimit: number): WordedQuestion => {
+  const c = buildCommon(level, family, l3type, allowDecimals, tablesLimit);
   const notation = pickNotation(c.shape, notationMv);
   const durationText = formatDuration(c.shape, family, notation);
   const id = randInt(0, 999999);
@@ -450,14 +494,14 @@ const genDistance = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type,
     answerLatex: numLatex(c.D),
     answerSuffix: c.f.distanceUnit,
     working: buildWorking(rv, method),
-    key: `distance-${level}-${family}-${c.shape.kind}-${c.D}-${c.S}-${notation}-${method}-${id}`,
+    key: `distance-${level}-${family}-${c.shape.kind}-${c.D}-${c.S}-${notation}-${method}-${tablesLimit}-${id}`,
     difficulty: level,
     _rawValues: rv,
   } as unknown as WordedQuestion;
 };
 
-const genTime = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, notationMv: Record<string, boolean>, method: WorkingMethod): WordedQuestion => {
-  const c = buildCommon(level, family, l3type, allowDecimals);
+const genTime = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, notationMv: Record<string, boolean>, method: WorkingMethod, tablesLimit: number): WordedQuestion => {
+  const c = buildCommon(level, family, l3type, allowDecimals, tablesLimit);
   const notation = pickNotation(c.shape, notationMv);
   const answerText = formatDuration(c.shape, family, notation);
   const id = randInt(0, 999999);
@@ -475,7 +519,7 @@ const genTime = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, all
     lines: [`${c.subject} travels ${mStr(numLatex(c.D))} ${c.f.distanceUnit} at a speed of ${mStr(numLatex(c.S))} ${c.f.rateUnit}.`, "How long does the journey take?"],
     answer: answerText,
     working: buildWorking(rv, method),
-    key: `time-${level}-${family}-${c.shape.kind}-${c.D}-${c.S}-${notation}-${method}-${id}`,
+    key: `time-${level}-${family}-${c.shape.kind}-${c.D}-${c.S}-${notation}-${method}-${tablesLimit}-${id}`,
     difficulty: level,
     _rawValues: rv,
   } as unknown as WordedQuestion;
@@ -496,10 +540,11 @@ const generateQuestion = (
   const unitOptions = level === "level1" ? UNITS_L1.options : UNITS_L23.options;
   const family = pickActive(multiSelectValues, unitOptions) as UnitFamily;
   const l3type = level === "level3" ? (pickActive(multiSelectValues, L3_TYPES.options) as L3Type) : "awkwardMinutes";
+  const tablesLimit = Number(pickActive(multiSelectValues, TABLES_MS.options));
 
-  if (t === "speed") return genSpeed(level, family, l3type, allowDecimals, multiSelectValues, method);
-  if (t === "distance") return genDistance(level, family, l3type, allowDecimals, multiSelectValues, method);
-  return genTime(level, family, l3type, allowDecimals, multiSelectValues, method);
+  if (t === "speed") return genSpeed(level, family, l3type, allowDecimals, multiSelectValues, method, tablesLimit);
+  if (t === "distance") return genDistance(level, family, l3type, allowDecimals, multiSelectValues, method, tablesLimit);
+  return genTime(level, family, l3type, allowDecimals, multiSelectValues, method, tablesLimit);
 };
 
 // Worksheet uniqueness is automatic — ToolShell wraps generateQuestion with the

@@ -28,6 +28,27 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-14 — Speed, Distance & Time: "Times Tables" QO caps the tables fact required
+`src/tools/Proportion/SpeedDistanceTime.tsx`. Previously the ratio-table scale factor `k`
+(up to 30) and several shape divisors (L2 minute values, L3 compound times, L3 awkward
+minutes) were unbounded, so questions like "104 km in 8 hours" could silently demand a
+times-tables fact (`8 × 13`) well outside what a student had actually been taught — no
+control existed to restrict or reason about this.
+- New **"Times Tables" multiSelect** QO (all levels, all three subtools): "Up to 10×10"
+  (on by default) and "Up to 20×20" (opt-in). Caps every multiplication/division fact the
+  question and its ratio-table working rely on — the scale factor `k` and the shape's
+  reduced `pp`/`qq` divisors — so a student is never asked to invert a fact outside the
+  selected range.
+- `pickShape` now takes `tablesLimit` and filters/bounds L1's whole-hour range, L2's minute
+  divisors, L3's compound-time (H, minute-fraction) combos, and L3's awkward-minute search
+  so every shape's `pp`/`qq` fit the limit; `buildValues`'s scale factor `k` is capped the
+  same way.
+- Widened the mph/kmh/mps distance & speed ranges slightly so 20×20 mode has room to
+  generate genuinely bigger, more varied questions rather than just hitting the old caps.
+- Verified with a throwaway vitest check (not committed): 500 generations per tool/level at
+  10×10 never exceed a fact of 10; the same at 20×20 exceed 10 (confirming it's more
+  expansive) but never exceed 20. `npm run build` and `npm test` both clean (320 tests).
+
 ## 2026-09-13 — Functional Skills Generator: remember-setup opt-out, landscape + squared paper (dev-gated)
 `src/tools/Generators/FunctionalSkillsGenerator.tsx`. Four changes in one session:
 - A **"Remember setup" toggle** (Settings) lets a teacher opt out of the existing per-browser
