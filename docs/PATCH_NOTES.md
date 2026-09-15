@@ -28,6 +28,122 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-15 — Speed, Distance & Time: fix decimal-mode speed stuck at 1-10
+`src/tools/Proportion/SpeedDistanceTime.tsx`. Reported: with "Allow terminating decimals" on,
+the speed/rate was always 1-10 regardless of the Times Tables setting — traced to
+`buildDecimalValues` (added earlier this session) picking the rate directly via
+`randInt(1, tablesLimit)`, capping it at 10 by construction.
+- The original (non-decimal) `buildValues` never caps the rate that directly — it bounds a
+  multiplier `k` by `tablesLimit`, then the rate is `k × pp` (`pp` being the shape's small
+  reduced divisor, e.g. 5 for "a fifth of an hour"), so rates up to `tablesLimit × pp` were
+  always reachable. `buildDecimalValues` skipped that scaling. Fixed: the rate is now drawn from
+  `randInt(1, tablesLimit * pp)`, matching the original scheme's effective range — the "fact a
+  student inverts" is `D × pp = S`, not the raw size of `S`.
+- Since this also fixed the underlying infeasibility, re-added TM=3 (a twentieth of an hour) to
+  `L2_DECIMAL_MINUTES` — it terminates fine (0.05) and was only excluded because the old, too-
+  narrow cap made it unreachable in practice.
+- Verified with a temporary check (removed before commit): default "10×10" now reaches speeds
+  from 5 up to 90 (mph) rather than only 5-10, while every value still stays within family
+  ranges, at ≤2dp, and only the five intended TM values (twentieth/tenth/fifth/quarter/half)
+  appear.
+- Also investigated a related but separate report: Level 1 (whole-hour) speeds are *also*
+  narrow (5-10 at "10×10", with or without "Allow decimal answers") — confirmed this is a
+  different, working-as-intended property (not a bug): at Level 1 both the hours value and the
+  speed are genuine multiplication factors of the distance, and both must stay ≤ the Times
+  Tables limit to keep the fact within an N×N grid — there's no `pp`-style small fixed divisor
+  to scale by the way L2's decimal mode has. Left as-is; flagged to the user rather than
+  changed, since narrowing/widening it is a pedagogy call, not a fix.
+- `npm run build` and `npm test` both clean (218 tests).
+
+## 2026-09-15 — Speed, Distance & Time: "Allow terminating decimals" QO at Level 2
+`src/tools/Proportion/SpeedDistanceTime.tsx`. Requested: a way to get genuine 1-2dp decimal
+answers (e.g. 8 km/h for a fifth of an hour → 1.6 km, 9 mph for a quarter → 2.25 mi) — the
+existing "Allow decimal answers" toggle only ever nudges the answer by a single ±0.5, never a
+real 2dp value like 2.25.
+- New Level 2-only `ToolVariable`, **"Allow terminating decimals (e.g. 1.6, 2.25)"**
+  (`terminatingDecimals`) — replaces "Allow decimal answers" at Level 2 rather than sitting
+  alongside it (a strict upgrade, so no redundant/conflicting toggle pair). Levels 1 and 3 keep
+  the old toggle unchanged.
+- New `L2_DECIMAL_MINUTES = [6, 12, 15, 30]` (a tenth/fifth/quarter/half of an hour) — the
+  subset of `L2_MINUTES` whose fraction-of-an-hour both terminates AND leaves enough headroom
+  under the Times Tables cap to reach a realistic distance. TM=3 (a twentieth) terminates too
+  but needs a base rate of 20 just to reach 1 unit of distance, so it's excluded; the
+  non-terminating values (2, 5, 10, 20 — e.g. 10 min = 1/6 hour = 0.1666…) are excluded as
+  they must be, per the "no .3333333" requirement.
+- New `buildDecimalValues`, used instead of `buildValues` for L2 shapes in this mode: rather
+  than forcing distance/speed into clean multiples of the reduced pp/qq, it picks a whole-number
+  rate freely (within the Times Tables cap) and derives the other quantity by scaling with the
+  *exact* fraction, landing on a genuine terminating decimal. Uses a distance floor of 1 instead
+  of the family's usual distMin (3) — otherwise the smaller fractions (a tenth, a fifth) would
+  be unreachable under the Times Tables cap, the same class of issue found with TM=1 earlier
+  this session.
+- `numLatex` now delegates to the shared `fmt` helper (2dp, trailing zeros stripped) instead of
+  its old 1dp-only `toFixed(1)` — needed since answers like 2.25 have 2 decimal places; verified
+  this is a strict superset of the old formatting for existing whole/1dp cases.
+- Verified with temporary regression checks (removed before commit): every decimal-mode number
+  across all three subtools/both families/both Times Tables tiers has at most 2dp (5,400
+  generations), distances/speeds stay within each family's realistic range, the exact numbers
+  from this request's own examples reproduce correctly, and only the four intended TM values
+  ever appear. Also spot-printed sample questions and working to confirm the ratio-table steps
+  read correctly with decimal values (e.g. "9 km/h... in 15 minutes" → "2.25 : 15", "×4", "9 : 60").
+  `npm run build` and `npm test` both clean (218 tests).
+
+## 2026-09-15 — Speed, Distance & Time: name the unit in Speed; drop worded-fraction time wording
+`src/tools/Proportion/SpeedDistanceTime.tsx`. Two clarity requests:
+- **Speed**: the instruction line now names the required rate unit explicitly —
+  `"Find its average speed in mph."` instead of the previous unit-less `"Find its average
+  speed."` With three possible rate units (mph/km/h/m/s) the old wording left the expected
+  answer unit ambiguous. Distance and Time weren't affected — their answer unit is already
+  pinned by the given speed's own stated unit.
+- **Time wording**: reversed this session's earlier worded-fraction reintroduction — a given
+  or answer time is now always plain minutes ("15 minutes") or hours & minutes for a compound
+  time ("1 hour 30 minutes"), never a spoken fraction ("a quarter of an hour"). Removed the
+  now-pointless "Time Notation" QO (a single always-on option isn't a real choice) along with
+  `WORDED_L2`, `wordedCompound`, `pickNotation`, and the `TimeNotation` type; `formatDuration`
+  no longer takes a notation argument. `L2_MINUTES` (2/3/5/6/10/12/15/20/30) and the Times
+  Tables exemption for Level 2 from the previous entry are unchanged — only the wording of the
+  chosen minute value changed, not which values can be chosen.
+- `npm run build` and `npm test` both clean (218 tests). Verified with temporary regression
+  checks (removed before commit): Speed's prompt always names one of mph/km/h/m/s across 500
+  generations, and no worded-fraction wording (half/third/quarter/fifth/sixth/tenth/twelfth)
+  appears anywhere across all three subtools × all three levels (2,700 generations).
+
+## 2026-09-15 — Speed, Distance & Time: reintroduce fifth/sixth/tenth/twelfth worded fractions
+`src/tools/Proportion/SpeedDistanceTime.tsx`. Requested: reintroduce Level 2 worded fractions
+previously restricted to just half/third/quarter, and widen the plain-minutes pool.
+- `WORDED_L2` now also covers fifth (12 min), sixth (10 min), tenth (6 min) and twelfth (5 min),
+  alongside the existing half/third/quarter — all 7 divisors of 60 that have a natural spoken
+  fraction form.
+- `L2_MINUTES` widened to add 2 and 3 minutes as plain-minutes-only values (no worded form).
+  1 minute was considered but excluded: for both Level 2 unit families (mph, km/h — m/s isn't
+  offered above Level 1), a 1-minute journey forces speed = 60×distance, which can't land inside
+  either family's realistic distance/speed window (confirmed via a temporary 500-generation
+  check per family/tablesLimit combo before this was ruled out — no valid pair exists, so it
+  would have silently produced e.g. a "180 mph car").
+- The Level 2 minute value is now exempt from the "Times Tables" QO cap (`pickShape`'s level2
+  branch no longer filters through `withinTables`): since Level 2's TM is always an exact
+  divisor of 60, its ratio-table scale factor is purely "minutes in an hour" — a fixed
+  conversion fact, not an arbitrary times-tables one — so 2/3-minute values are reachable at
+  any Times Tables setting rather than needing the wider "20×20" tier. L3's genuine times-tables
+  gating (compound times, awkward minutes) is untouched.
+- Verified with temporary regression checks (removed before commit): speeds stay within each
+  family's realistic range across all tablesLimit/family combos (2,000 generations), all 7
+  worded fractions surface over 3,000 generations, and TM=1 never appears. `npm run build` and
+  `npm test` both clean (218 tests, including `organisation.test.ts`).
+
+## 2026-09-15 — Speed, Distance & Time: fix "Time Notation" QO not restricting at Level 2
+`src/tools/Proportion/SpeedDistanceTime.tsx`. Reported: unchecking "Minutes" in the Level 2
+"Time Notation" QO (wanting worded-fraction-only questions) still produced plain "X minutes"
+wording some of the time. Root cause: `pickShape` chose the Level 2 minute value (`TM`) before
+`pickNotation` knew which notations were active — only 3 of the 7 `L2_MINUTES` values (15, 20,
+30) have a natural worded phrasing, so whenever one of the other 4 (5, 6, 10, 12) was picked,
+`pickNotation` fell back to "minutes" regardless of the QO, silently ignoring the restriction.
+Fixed by threading the notation selection into `pickShape`: when "Minutes" is off and "Worded
+fraction" is on, only TM values with a worded form (15/20/30) are offered, so the fallback path
+is never reached. `npm run build` and `npm test` both clean (212 tests); added and removed a
+temporary regression check (300 generations with Minutes unchecked, asserting no "minutes"
+wording ever appears) to confirm the fix before committing.
+
 ## 2026-09-14 — Standard worksheet grid: explicit `gridAutoRows` for even cell heights
 `src/shared/ToolShell.tsx` (`renderWorksheet`, the plain/non-differentiated grid). Reported
 via a screenshot: worksheet cells in the same row were visibly different heights (a 3-line
