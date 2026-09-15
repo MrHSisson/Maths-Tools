@@ -641,7 +641,7 @@ Pass it to `<ToolShell reformatQuestion={reformatQuestion} />`.
 | `normalizeMultiSelect(ms)` | `<T>(ms?: T \| T[] \| null) => T[]` | Normalises single/array multiSelect config |
 | `weightOf(options, value)` | `(options: {value: string; weight?: number}[], value: string) => number` | Smart Progressor — looks up a picked multiSelect option's difficulty `weight` (0 if unset) |
 | `sortByDifficulty(questions)` | `<Q extends {key: string}>(questions: Q[]) => Q[]` | Smart Progressor — stable ascending sort by each question's `_difficultyScore`; no-op if none is set. Called automatically by `ToolShell`'s worksheet generation — never call it in a tool file |
-| `buildQuotaOverrides(groups, baseValues, numQuestions)` | `(groups: {key: string; options: {value: string; weight?: number}[]}[], baseValues: Record<string, boolean>, numQuestions: number) => Record<string, boolean>[]` | Smart Progressor — one `multiSelectValues` override per worksheet slot forcing an even split across a weighted group's active options; unweighted groups pass through untouched. Called automatically by `ToolShell`'s worksheet generation — never call it in a tool file |
+| `buildQuotaOverrides(groups, baseValues, numQuestions)` | `(groups: {key: string; options: {value: string; weight?: number}[]}[], baseValues: Record<string, boolean>, numQuestions: number) => Record<string, boolean>[]` | Smart Progressor — one `multiSelectValues` override per worksheet slot, keeping a weighted group's active options roughly (not exactly) evenly split; unweighted groups pass through untouched. Called automatically by `ToolShell`'s worksheet generation — never call it in a tool file |
 
 ### Working step rendering — how each type appears
 
@@ -855,20 +855,23 @@ return { ...q, _difficultyScore: weightOf(DIFFICULTY_TIER.options, tier) } as un
 - Reference implementation and the general boolean→multiSelect conversion rule: `docs/PROJECTS.md`
   → "Smart Progressor" prong, and `DIFFICULTY_TIER_L2` in `src/tools/Proportion/SpeedDistanceTime.tsx`.
 
-**The split across active rungs is forced even, automatically — never leave it to chance.**
-`pickActive`'s per-question random draw is *expected-value* fair, but over a worksheet of only
-~15 questions it can easily land 7/5/3 instead of 5/5/5 when all three rungs are ticked. `ToolShell`
-fixes this itself: before generating a worksheet, `buildQuotaOverrides` (`shared/helpers.ts`,
-internal — never call it from a tool file) finds every multiSelect group that has *any* weighted
-option and builds one `multiSelectValues` override per question slot that forces that group to
-exactly one option, split as evenly as the question count allows (15 across 3 active rungs → 5/5/5;
-10 across 3 → 4/3/3). Combined with the ascending sort, this means a worksheet's tier *boundaries*
-are now a hard guarantee, not just a bias — 5/5/5 means positions 1-5 are always the easiest rung,
-6-10 the middle, 11-15 the hardest (only which specific question lands in which position within a
-tier is still random). **This quota is scoped to weighted groups only** — a group with no weighted
-option (e.g. a "Units" pool of mph/km·h/m/s) is passed through completely untouched and keeps
-varying randomly per question exactly as before; the Smart Progressor never tries to balance
-variety-only pools, only difficulty-ordinal ones.
+**The split across active rungs is kept roughly even, automatically — "roughly a third each",
+not "exactly a third every single time".** `pickActive`'s unconstrained per-question random draw
+can occasionally land quite skewed over a worksheet of only ~15 questions (e.g. 9/4/2 across three
+equally-active rungs). `ToolShell` softens this itself: before generating a worksheet,
+`buildQuotaOverrides` (`shared/helpers.ts`, internal — never call it from a tool file) finds every
+multiSelect group that has *any* weighted option and builds one `multiSelectValues` override per
+question slot, drawn independently at random per slot as usual but with the whole batch retried
+until every active option's count lands within ±1 of its fair share (`numQuestions ÷ active
+count`) — so 15 questions across 3 active rungs comes out somewhere around 5/5/5, with real variety
+across generations (4/5/6, 6/5/4, 5/5/5, … are all normal outcomes), never the same exact split
+every time and never something as lopsided as 9/4/2. Combined with the ascending sort, a
+worksheet's tier *blocks* stay contiguous and correctly ordered whatever the exact split turns out
+to be (a 6/5/4 split still means the first 6 questions are the easiest rung, the last 4 the
+hardest) — only the block sizes vary, by design. **This balancing is scoped to weighted groups
+only** — a group with no weighted option (e.g. a "Units" pool of mph/km·h/m/s) is passed through
+completely untouched and keeps varying randomly per question exactly as before; the Smart
+Progressor never tries to balance variety-only pools, only difficulty-ordinal ones.
 
 ---
 

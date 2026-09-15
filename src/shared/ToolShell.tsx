@@ -527,11 +527,12 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         const ddVal = levelDropdowns[lv] ?? (dd?.defaultValue ?? "");
         const msVals = getLevelMultiSelectValues(lv);
         const snap: QOSnapshot = { level: lv, variables: vars, dropdownValue: ddVal, multiSelectValues: msVals };
-        // Smart Progressor: force an even split across a weighted group's
-        // active options (e.g. all 3 difficulty rungs ticked → a third of
-        // this level's questions each) instead of leaving it to chance —
-        // see buildQuotaOverrides. Unweighted groups (e.g. Units) are
-        // untouched and still vary randomly per question as before.
+        // Smart Progressor: keep a weighted group's active options roughly
+        // even (e.g. all 3 difficulty rungs ticked → ~a third of this
+        // level's questions each, genuine variety allowed — 6/5/4 is a
+        // normal outcome, not just 5/5/5 every time) instead of leaving it
+        // fully to chance — see buildQuotaOverrides. Unweighted groups
+        // (e.g. Units) are untouched and still vary randomly per question.
         const groups = normalizeMultiSelect(t.difficultySettings?.[lv]?.multiSelect ?? t.multiSelect);
         const overrides = buildQuotaOverrides(groups, msVals, numQuestions);
         const levelQuestions: AnyQuestion[] = [];

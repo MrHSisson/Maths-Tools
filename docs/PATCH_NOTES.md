@@ -28,6 +28,20 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-15 — Smart Progressor: loosen the even split to a tolerance, not an exact lock
+`src/shared/helpers.ts`, `src/shared/ToolShell.tsx`. Same-day correction to the entry below: the
+first cut of `buildQuotaOverrides` forced an *exact* split every time (15 questions / 3 active
+rungs → always precisely 5/5/5). The user clarified that wasn't actually the ask — "I think the
+idea of ending up with a 6/5/4 wouldn't be awful. Hence why I said roughly 33%." Replaced the
+deterministic block assignment with `balancedSlots`: independent random draws per question slot
+(genuine variety, matching how every other multiSelect pool already behaves), with the whole batch
+retried — bounded at 200 attempts, falling back to the old exact largest-remainder split as a last
+resort — until every active option's count lands within ±1 of its fair share. Verified with a
+throwaway test: 100 repeated runs at 15 questions / 3 active rungs produced all 7 distinct
+permutations of {4,5,6} (never anything more skewed, never locked to one exact split), then
+removed. The ascending sort still keeps each rung's questions contiguous and correctly ordered
+whatever the exact split turns out to be — only the block *sizes* now vary, which is the point.
+
 ## 2026-09-15 — Smart Progressor: guaranteed even split across active weighted rungs
 `src/shared/helpers.ts`, `src/shared/index.ts`, `src/shared/ToolShell.tsx`. Closes the gap the
 earlier core mechanism left open: sorting a worksheet by `_difficultyScore` only reorders whatever

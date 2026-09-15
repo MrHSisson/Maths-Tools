@@ -73,7 +73,7 @@ pedagogy-engine sweep.
 | **Tool expansion (Part 2)** | 🚧 | Per-tool content-growth backlog (new question types, broader coverage) — **tier-1 priority**, needs a dedicated sequencing pass |
 | **SmartGrapher** | ✅ | Mature, embeddable; used in 3 tools — **tier-1 priority**: wire into more tools opportunistically |
 | **Techniques engine** | 🚧 | Engine built; only 1 tool converted — build on demand for tier-1 needs, not a standalone sweep (see Priorities) |
-| **Smart Progressor** | 🚧 | Core mechanism (weighted `multiSelect` + worksheet sort + even-split quota) shipped; 1 of 27 tools piloted (`SpeedDistanceTime` L2) — needs a per-tool audit pass |
+| **Smart Progressor** | 🚧 | Core mechanism (weighted `multiSelect` + worksheet sort + roughly-even split) shipped; 1 of 27 tools piloted (`SpeedDistanceTime` L2) — needs a per-tool audit pass |
 | **Skills library** | ⏸ | Engine + backlog ready; 2 skills built — tier-2 (student-led), not a current priority |
 | **Core representations** | ⏸ | 3 of 6 visual families have Teach scenes — feeds Skills/Teach decks (tier 2), paused alongside them |
 | **Teach decks** | ⏸ | Engine built; one partial deck exists — least mature prong, secondary to tier-1 work |
@@ -420,30 +420,33 @@ independent caps that silently overlap** — an "up to N" cap that a lower rung'
 subset of doesn't read as harder, and a "sometimes" property undermines the visible ramp on a
 printed worksheet.
 
-**Quota split shipped same day, 2026-09-15 — the "question 1 isn't guaranteed easy" gap is now
+**Split-balancing shipped same day, 2026-09-15 — the "question 1 isn't guaranteed easy" gap is now
 mostly closed.** The original mechanism only *ordered* whatever the batch's random draws happened
-to produce — over ~15 questions, `pickActive`'s per-question independent draw could easily land
-7/5/3 across three active rungs instead of 5/5/5, no different from any other multiSelect pool.
-`buildQuotaOverrides` (`src/shared/helpers.ts`, wired into `ToolShell`'s `handleGenerateWorksheet`,
-never called from a tool file) fixes this generically: before generating a worksheet, it finds
-every multiSelect group carrying at least one weighted option and builds a per-question-slot
-`multiSelectValues` override that forces that group to exactly one option, split as evenly as the
-question count allows (15÷3 active rungs → 5/5/5; 10÷3 → 4/3/3, largest-remainder style). Combined
-with the ascending sort, a worksheet's tier *boundaries* are now a hard guarantee when every
-weighted rung is active — 5/5/5 means positions 1-5 are always the easiest rung — not just a
-bias. **The quota is scoped to weighted groups only**: a group with no weighted option (e.g. SDT's
-"Units" mph/km·h/m/s pool) is passed through completely untouched and keeps varying randomly per
-question, per the user's own framing — "if we have all 3 [difficulty] options selected we need a
-third of our questions to be each [rung]; this doesn't need to apply to something like km/h vs
-mph." Verified directly (`buildQuotaOverrides` unit-tested for an even split, an uneven
-largest-remainder split, and that an unweighted group is untouched; then end-to-end through the
-real SDT generator confirming an exact 5/5/5 `_difficultyScore` distribution over 15 questions).
+to produce — over ~15 questions, `pickActive`'s per-question independent draw could occasionally
+land quite skewed (e.g. 9/4/2) across three active rungs, no different from any other multiSelect
+pool. `buildQuotaOverrides` (`src/shared/helpers.ts`, wired into `ToolShell`'s
+`handleGenerateWorksheet`, never called from a tool file) softens this generically: before
+generating a worksheet, it finds every multiSelect group carrying at least one weighted option and
+builds a per-question-slot `multiSelectValues` override — each slot still an independent random
+draw, but the whole batch is retried (bounded, falling back to an exact largest-remainder split
+after 200 tries) until every active option's count lands within ±1 of its fair share. **First cut
+of this forced an exact split every time (5/5/5, always)** — corrected same session after the user
+clarified the actual ask was "roughly 33%", explicitly fine with an outcome like 6/5/4: "I don't
+want to go against it here, but I think the idea of ending up with a 6/5/4 wouldn't be awful. Hence
+why I said roughly 33%." The ±1-tolerance retry keeps real variety across generations (4/5/6,
+6/5/4, 5/5/5, … all normal, verified directly: 100 repeated runs at 15 questions/3 rungs produced
+7 distinct permutations of {4,5,6}, never anything more skewed) while still ruling out a lopsided
+worksheet. Combined with the ascending sort, a worksheet's tier *blocks* stay contiguous and
+correctly ordered whatever the exact split turns out to be — a 6/5/4 split still means the first 6
+questions are the easiest rung, the last 4 the hardest; only the block sizes vary, by design.
+**Scoped to weighted groups only**: a group with no weighted option (e.g. SDT's "Units"
+mph/km·h/m/s pool) is passed through completely untouched and keeps varying randomly per question,
+per the user's own framing — that requirement doesn't apply to "something like km/h vs mph".
 **What's still not a hard guarantee:** which *specific* question lands in which position within a
-tier is still random (only the tier a slot belongs to is fixed), and the original "Option B"
-(narrowing the QO snapshot passed into `generateQuestion` itself, per question index, rather than
-overriding one multiSelect group) is now largely superseded in practice — the quota mechanism gets
-the same practical outcome without needing to touch `generateQuestion`'s signature or contract, so
-Option B is no longer expected to be needed.
+tier is still random (only the tier a slot belongs to, and roughly how many slots it gets, is
+constrained), and the original "Option B" (narrowing the QO snapshot passed into
+`generateQuestion` itself, per question index) still isn't expected to be needed — the balancing
+mechanism gets a good-enough practical outcome without touching `generateQuestion`'s contract.
 
 **Possible next steps:**
 - Audit the other 26 tools' `variables`/`multiSelect` for booleans that are actually
