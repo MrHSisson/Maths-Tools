@@ -179,12 +179,12 @@ const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
 const L2_MINUTES = [2, 3, 5, 6, 10, 12, 15, 20, 30];
 
 // The subset of L2_MINUTES used when "Allow terminating decimals" is on —
-// only values whose TM/60 fraction terminates AND leaves enough headroom
-// under the Times Tables cap to reach a realistic minimum distance (~1).
-// TM=3 (a twentieth) terminates but needs a base rate of 20 just to reach
-// D=1, so it's excluded along with the non-terminating values (2, 5, 10, 20
-// — e.g. 10 minutes = 1/6 hour = 0.1666…). See buildDecimalValues.
-const L2_DECIMAL_MINUTES = [6, 12, 15, 30];
+// only values whose TM/60 fraction terminates. The non-terminating ones (2,
+// 5, 10, 20 — e.g. 10 minutes = 1/6 hour = 0.1666…) are excluded; the
+// terminating ones (a twentieth, tenth, fifth, quarter, half) are all
+// reachable at any Times Tables setting since buildDecimalValues scales the
+// rate by the shape's own pp, not by tablesLimit directly.
+const L2_DECIMAL_MINUTES = [3, 6, 12, 15, 30];
 
 // L3 compound minute-parts — quarter/half/three-quarters only (a third would
 // give a non-terminating decimal hours value, breaking the "decimal" WORKING
@@ -323,15 +323,20 @@ const buildDecimalValues = (TM: number, f: FamilyInfo, tablesLimit: number): { D
   const pp = 60 / g, qq = TM / g;
   const frac = TM / 60;
   const decimalDistMin = 1;
+  // Mirrors buildValues' effective S = k·pp (k ≤ tablesLimit) — the actual
+  // fact a student inverts is D × pp = S, not S itself, so S can range up to
+  // tablesLimit·pp, not just tablesLimit (capping S alone at 10 made every
+  // decimal-mode speed 1-10 regardless of the chosen fraction).
+  const sMax = tablesLimit * pp;
   for (let attempt = 0; attempt < 80; attempt++) {
-    const S = randInt(1, tablesLimit);
+    const S = randInt(1, sMax);
     const D = Math.round(S * frac * 100) / 100;
     if (D < decimalDistMin || D > f.distMax) continue;
     if (S < f.speedMin || S > f.speedMax) continue;
     if (D === TM) continue; // "37 miles in 37 minutes" reads as a coincidence, not a real question
     return { D, S, pp, qq };
   }
-  const S = Math.min(Math.max(Math.ceil(decimalDistMin / frac), f.speedMin, 1), tablesLimit, f.speedMax);
+  const S = Math.min(Math.max(Math.ceil(decimalDistMin / frac), f.speedMin, 1), sMax, f.speedMax);
   const D = Math.round(S * frac * 100) / 100;
   return { D, S, pp, qq };
 };

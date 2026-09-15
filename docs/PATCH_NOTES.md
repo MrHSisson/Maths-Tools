@@ -28,6 +28,33 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-15 — Speed, Distance & Time: fix decimal-mode speed stuck at 1-10
+`src/tools/Proportion/SpeedDistanceTime.tsx`. Reported: with "Allow terminating decimals" on,
+the speed/rate was always 1-10 regardless of the Times Tables setting — traced to
+`buildDecimalValues` (added earlier this session) picking the rate directly via
+`randInt(1, tablesLimit)`, capping it at 10 by construction.
+- The original (non-decimal) `buildValues` never caps the rate that directly — it bounds a
+  multiplier `k` by `tablesLimit`, then the rate is `k × pp` (`pp` being the shape's small
+  reduced divisor, e.g. 5 for "a fifth of an hour"), so rates up to `tablesLimit × pp` were
+  always reachable. `buildDecimalValues` skipped that scaling. Fixed: the rate is now drawn from
+  `randInt(1, tablesLimit * pp)`, matching the original scheme's effective range — the "fact a
+  student inverts" is `D × pp = S`, not the raw size of `S`.
+- Since this also fixed the underlying infeasibility, re-added TM=3 (a twentieth of an hour) to
+  `L2_DECIMAL_MINUTES` — it terminates fine (0.05) and was only excluded because the old, too-
+  narrow cap made it unreachable in practice.
+- Verified with a temporary check (removed before commit): default "10×10" now reaches speeds
+  from 5 up to 90 (mph) rather than only 5-10, while every value still stays within family
+  ranges, at ≤2dp, and only the five intended TM values (twentieth/tenth/fifth/quarter/half)
+  appear.
+- Also investigated a related but separate report: Level 1 (whole-hour) speeds are *also*
+  narrow (5-10 at "10×10", with or without "Allow decimal answers") — confirmed this is a
+  different, working-as-intended property (not a bug): at Level 1 both the hours value and the
+  speed are genuine multiplication factors of the distance, and both must stay ≤ the Times
+  Tables limit to keep the fact within an N×N grid — there's no `pp`-style small fixed divisor
+  to scale by the way L2's decimal mode has. Left as-is; flagged to the user rather than
+  changed, since narrowing/widening it is a pedagogy call, not a fix.
+- `npm run build` and `npm test` both clean (218 tests).
+
 ## 2026-09-15 — Speed, Distance & Time: "Allow terminating decimals" QO at Level 2
 `src/tools/Proportion/SpeedDistanceTime.tsx`. Requested: a way to get genuine 1-2dp decimal
 answers (e.g. 8 km/h for a fifth of an hour → 1.6 km, 9 mph for a quarter → 2.25 mi) — the
