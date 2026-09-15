@@ -28,6 +28,29 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-15 — Smart Progressor: standard-mode scoping, teacher-facing off toggle
+`src/shared/ToolShell.tsx`, `CLAUDE.md`, `docs/PROJECTS.md`. Closes out this session's Smart
+Progressor work. Confirmed (by reading both files, not assuming) that the advanced
+`WorksheetBuilder` ("Advanced" toggle) was already exempt from Smart Progressor by construction —
+it generates through its own independent `generateQuestion`/`makeUniqueQ` path and never calls
+`sortByDifficulty`/`buildQuotaOverrides`, both of which live entirely inside `ToolShell`'s
+`handleGenerateWorksheet`, called only by the standard Worksheet tab. Added the actual new piece:
+a teacher-facing "Smart Progressor" toggle in the Worksheet tab's Settings popover (next to
+"Borders"), on by default and session-persisted per tool route (same mechanism as
+`worksheetMode`/`worksheetBorders`) — switching it off restores generation to plain random order,
+exactly as it worked before this prong existed (unmodified `multiSelectValues` per slot, no sort).
+Only rendered when the current tool actually has a weighted multiSelect pool at all
+(`toolHasWeightedPool`, checked across every level), so it's not dead UI on the other 26 tools.
+Verified live in the running dev app via a Playwright script (not just build/test): the toggle
+renders correctly in SpeedDistanceTime's Settings popover styled exactly like "Borders", is
+correctly absent from CompletingTheSquare's (no weighted pool), and toggling it off + generating a
+worksheet produces zero console errors. Also confirmed `buildQuotaOverrides` needs no changes to
+generalize beyond 3 active options (2, 4, 5 all verified) and sharpened CLAUDE.md's conversion
+rule with a concrete worked example: even a plain two-state boolean (e.g. a quadratic's "negative
+coefficients") becomes a 2-option weighted `multiSelect` pool, not a toggle, once it needs to be a
+genuine per-question draw rather than a worksheet-wide switch — most of the eventual 26-tool audit
+is expected to produce pools this small, not just 3+-rung ladders like SDT's.
+
 ## 2026-09-15 — Smart Progressor: sharpen the multiSelect-vs-variables rule; verify quota generalizes
 `CLAUDE.md`, `docs/PROJECTS.md`. Doc-only session close-out. Verified `buildQuotaOverrides` (the
 even-split mechanism from the entry below) needs no extra work to generalize beyond 3 active

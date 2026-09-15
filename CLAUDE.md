@@ -807,6 +807,18 @@ as something it can coexist with, since a pool only ever picks **one** of its op
 question. Model a genuinely ordinal, mutually-exclusive option set as one pool (easiest rung
 `defaultActive: true`, harder rungs `false`) rather than a standalone toggle.
 
+**Even a plain on/off property becomes a 2-option pool, not a boolean, once it's mutually
+exclusive per question.** A boolean toggle only ever applies to the *whole worksheet* — "negative
+coefficients" as `allowNegative: boolean` means every question can potentially get one, or none
+ever do; there's no way for question 3 specifically to draw "non-negative" while question 9 draws
+"negative". If that per-question distinction is what you actually want (e.g. a quadratic tool
+where non-negative coefficients are the easier case), it's a 2-option `multiSelect` pool —
+`{ value: "nonNegative", weight: 1 }` / `{ value: "negative", weight: 2 }` — exactly like a 3+
+option ladder, just with two rungs. Expect this to come up often: **most existing boolean QO
+options that gate a per-question property will turn into 2-option pools** once they're audited
+against the mutual-exclusivity test, not just the ones that already had 3+ named states like SDT's
+Times Tables.
+
 **Rungs must be mutually exclusive, not overlapping caps, and any "harder" property must be
 guaranteed, not just more likely.** An "up to 20" rung that silently includes every "up to 10"
 value too doesn't read as strictly harder than the rung below it — give each rung its own disjoint
@@ -884,6 +896,24 @@ hardest) — only the block sizes vary, by design. **This balancing is scoped to
 only** — a group with no weighted option (e.g. a "Units" pool of mph/km·h/m/s) is passed through
 completely untouched and keeps varying randomly per question exactly as before; the Smart
 Progressor never tries to balance variety-only pools, only difficulty-ordinal ones.
+
+**Standard worksheet mode only — never the advanced builder, and this is automatic, not something
+to wire per tool.** Both the sort and the balancing live entirely inside `ToolShell`'s
+`handleGenerateWorksheet`, which only the standard Worksheet tab calls; the advanced
+`WorksheetBuilder` (the "Advanced" toggle) generates through its own independent code path that
+never touches `sortByDifficulty`/`buildQuotaOverrides` at all, so it's exempt by construction —
+nothing to add when building a tool.
+
+**A teacher-facing "Smart Progressor" toggle turns the whole mechanism off, restoring plain random
+order.** ToolShell renders a toggle in the Worksheet tab's Settings popover (next to "Borders") —
+but only when the current tool actually has a weighted multiSelect pool at all (`ToolShellState`'s
+`toolHasWeightedPool`), so it's invisible clutter for the other 26 tools that can't use it yet. On
+by default; session-persisted per tool route (same `sessionStorage` mechanism as `worksheetMode`/
+`worksheetBorders`). Off means every worksheet question slot gets the exact same unmodified
+`multiSelectValues` (no `buildQuotaOverrides` call) and the generated batch is left in its raw
+order (no `sortByDifficulty` call) — genuinely identical to how a worksheet generated before the
+Smart Progressor existed, not just "close to it". Nothing for a tool author to add — this is
+`ToolShell`-level UI, wired once.
 
 ---
 

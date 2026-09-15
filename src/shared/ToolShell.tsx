@@ -198,6 +198,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     worksheetMode?: "standard" | "advanced";
     worksheetLayout?: "grid" | "list";
     worksheetBorders?: boolean;
+    smartProgressorEnabled?: boolean;
     levelVariables?: Record<string, Record<string, boolean>>;
     levelDropdowns?: Record<string, string>;
     levelMultiSelect?: Record<string, Record<string, boolean>>;
@@ -396,6 +397,12 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
 
   const [worksheetLayout, setWorksheetLayout] = useState<"grid" | "list">(wbInit?.worksheetLayout ?? "grid");
   const [worksheetBorders, setWorksheetBorders] = useState(wbInit?.worksheetBorders ?? true);
+  // Standard worksheet mode only (see handleGenerateWorksheet) — off restores
+  // plain random-order generation, exactly as it worked before the Smart
+  // Progressor existed. Only shown in the Settings popover when this tool
+  // actually has a weighted multiSelect pool (see toolHasWeightedPool) —
+  // it's a no-op otherwise, so there's nothing to toggle.
+  const [smartProgressorEnabled, setSmartProgressorEnabled] = useState(wbInit?.smartProgressorEnabled ?? true);
   const [wsSettingsOpen, setWsSettingsOpen] = useState(false);
 
   const [presenterMode, setPresenterMode] = useState(false);
@@ -470,6 +477,19 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const getVariablesConfig = () => getToolSettings().difficultySettings?.[difficulty]?.variables ?? getToolSettings().variables;
   const getMultiSelectConfig = () => normalizeMultiSelect(getToolSettings().difficultySettings?.[difficulty]?.multiSelect ?? getToolSettings().multiSelect);
 
+  // Whether the current tool has any weighted multiSelect option at all,
+  // across every level — decides whether the "Smart Progressor" Settings
+  // toggle is worth showing (it's a no-op for a tool with no weighted pool,
+  // so there's nothing to toggle).
+  const toolHasWeightedPool = (() => {
+    const t = getToolSettings();
+    const allGroups = [
+      ...normalizeMultiSelect(t.multiSelect),
+      ...(["level1", "level2", "level3"] as DifficultyLevel[]).flatMap(lv => normalizeMultiSelect(t.difficultySettings?.[lv]?.multiSelect)),
+    ];
+    return allGroups.some(g => g.options.some(o => o.weight !== undefined));
+  })();
+
   // Differentiated per-level multiSelect state (`levelMultiSelect`) only ever
   // records EXPLICIT overrides the teacher makes in the differentiated QO
   // popover — a level nobody has touched stays `{}`. Reading that raw object
@@ -527,30 +547,40 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         const ddVal = levelDropdowns[lv] ?? (dd?.defaultValue ?? "");
         const msVals = getLevelMultiSelectValues(lv);
         const snap: QOSnapshot = { level: lv, variables: vars, dropdownValue: ddVal, multiSelectValues: msVals };
-        // Smart Progressor: keep a weighted group's active options roughly
-        // even (e.g. all 3 difficulty rungs ticked → ~a third of this
-        // level's questions each, genuine variety allowed — 6/5/4 is a
-        // normal outcome, not just 5/5/5 every time) instead of leaving it
-        // fully to chance — see buildQuotaOverrides. Unweighted groups
-        // (e.g. Units) are untouched and still vary randomly per question.
+        // Smart Progressor (standard worksheet mode only — the advanced
+        // WorksheetBuilder never calls this function, so it's naturally
+        // exempt — and only when the "Smart Progressor" Settings toggle is
+        // on): keep a weighted group's active options roughly even (e.g.
+        // all 3 difficulty rungs ticked → ~a third of this level's
+        // questions each, genuine variety allowed — 6/5/4 is a normal
+        // outcome, not just 5/5/5 every time) instead of leaving it fully
+        // to chance — see buildQuotaOverrides. Unweighted groups (e.g.
+        // Units) are untouched and still vary randomly per question. With
+        // the toggle off, every slot gets the same unmodified msVals and
+        // the block is left in its generated (random) order — exactly the
+        // pre-Smart-Progressor behaviour.
         const groups = normalizeMultiSelect(t.difficultySettings?.[lv]?.multiSelect ?? t.multiSelect);
-        const overrides = buildQuotaOverrides(groups, msVals, numQuestions);
+        const overrides = smartProgressorEnabled
+          ? buildQuotaOverrides(groups, msVals, numQuestions)
+          : Array.from({ length: numQuestions }, () => msVals);
         const levelQuestions: AnyQuestion[] = [];
         for (let i = 0; i < numQuestions; i++)
           levelQuestions.push(stampQO(generateUniqueQ(currentTool, lv, vars, ddVal, usedKeys, overrides[i]), snap));
         // Smart Progressor: order each level's own block easy-to-hard by
         // _difficultyScore (see sortByDifficulty) — a no-op for tools that
-        // don't attach one.
-        questions.push(...sortByDifficulty(levelQuestions));
+        // don't attach one, and skipped entirely when the toggle is off.
+        questions.push(...(smartProgressorEnabled ? sortByDifficulty(levelQuestions) : levelQuestions));
       });
     } else {
       const msVals = toolMultiSelect[currentTool] ?? {};
       const snap: QOSnapshot = { level: difficulty, variables: getVariableValues(), dropdownValue: getDropdownValue(), multiSelectValues: msVals };
-      const overrides = buildQuotaOverrides(getMultiSelectConfig(), msVals, numQuestions);
+      const overrides = smartProgressorEnabled
+        ? buildQuotaOverrides(getMultiSelectConfig(), msVals, numQuestions)
+        : Array.from({ length: numQuestions }, () => msVals);
       const flatQuestions: AnyQuestion[] = [];
       for (let i = 0; i < numQuestions; i++)
         flatQuestions.push(stampQO(generateUniqueQ(currentTool, difficulty, getVariableValues(), getDropdownValue(), usedKeys, overrides[i]), snap));
-      questions.push(...sortByDifficulty(flatQuestions));
+      questions.push(...(smartProgressorEnabled ? sortByDifficulty(flatQuestions) : flatQuestions));
     }
     setWorksheet(questions);
     setShowWorksheetAnswers(false);
@@ -689,11 +719,11 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     if (!wbStorageKey) return;
     try {
       sessionStorage.setItem(wbStorageKey, JSON.stringify({
-        worksheetMode, worksheetLayout, worksheetBorders,
+        worksheetMode, worksheetLayout, worksheetBorders, smartProgressorEnabled,
         levelVariables, levelDropdowns, levelMultiSelect,
       } satisfies WBPersist));
     } catch { /* ignore quota / serialisation errors */ }
-  }, [wbStorageKey, worksheetMode, worksheetLayout, worksheetBorders, levelVariables, levelDropdowns, levelMultiSelect]);
+  }, [wbStorageKey, worksheetMode, worksheetLayout, worksheetBorders, smartProgressorEnabled, levelVariables, levelDropdowns, levelMultiSelect]);
 
   // A link that points straight at a worksheet generates it on arrival —
   // a bookmarked worksheet link is ready to teach from without extra clicks.
@@ -909,6 +939,15 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                           <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${worksheetBorders ? "translate-x-4" : "translate-x-0.5"}`} />
                         </div>
                       </label>
+                      {toolHasWeightedPool && (
+                        <label className="flex items-center justify-between gap-3 cursor-pointer mt-3">
+                          <span className="text-sm font-semibold text-gray-600">Smart Progressor</span>
+                          <div onClick={() => setSmartProgressorEnabled(!smartProgressorEnabled)}
+                            className={`w-9 h-5 rounded-full transition-colors relative flex-shrink-0 ${smartProgressorEnabled ? "bg-blue-900" : "bg-gray-300"}`}>
+                            <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${smartProgressorEnabled ? "translate-x-4" : "translate-x-0.5"}`} />
+                          </div>
+                        </label>
+                      )}
                       {isDifferentiated && (
                         <>
                           <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-4 mb-2">Differentiated</div>

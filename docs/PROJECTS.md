@@ -73,7 +73,7 @@ pedagogy-engine sweep.
 | **Tool expansion (Part 2)** | 🚧 | Per-tool content-growth backlog (new question types, broader coverage) — **tier-1 priority**, needs a dedicated sequencing pass |
 | **SmartGrapher** | ✅ | Mature, embeddable; used in 3 tools — **tier-1 priority**: wire into more tools opportunistically |
 | **Techniques engine** | 🚧 | Engine built; only 1 tool converted — build on demand for tier-1 needs, not a standalone sweep (see Priorities) |
-| **Smart Progressor** | 🚧 | Core mechanism (weighted `multiSelect` + worksheet sort + roughly-even split) shipped; 1 of 27 tools piloted (`SpeedDistanceTime` L2) — needs a per-tool audit pass |
+| **Smart Progressor** | 🚧 | Core mechanism shipped (weighted `multiSelect` + worksheet sort + roughly-even split + standard-mode-only + teacher-facing off toggle); 1 of 27 tools piloted (`SpeedDistanceTime` L2) — needs a per-tool audit pass |
 | **Skills library** | ⏸ | Engine + backlog ready; 2 skills built — tier-2 (student-led), not a current priority |
 | **Core representations** | ⏸ | 3 of 6 visual families have Teach scenes — feeds Skills/Teach decks (tier 2), paused alongside them |
 | **Teach decks** | ⏸ | Engine built; one partial deck exists — least mature prong, secondary to tier-1 work |
@@ -459,6 +459,31 @@ rule. The quota-balancing mechanism itself needs no extra work for this: `buildQ
 already generic over the active-option count (verified directly for 2, 4 and 5 active options,
 including tight ratios like 5 options over only 15 questions or 4 over 6 — genuine variety, always
 within tolerance, no per-count special-casing).
+
+**Scoped to standard worksheet mode, with a teacher-facing off switch — both shipped 2026-09-15.**
+The advanced `WorksheetBuilder` (the "Advanced" toggle) was already exempt by construction —
+it generates through its own independent code path and never called `sortByDifficulty`/
+`buildQuotaOverrides`, since both live entirely inside `ToolShell`'s `handleGenerateWorksheet`,
+which only the standard Worksheet tab calls (confirmed by reading both files, not assumed). Added
+a genuine teacher-facing "Smart Progressor" toggle in the Worksheet tab's Settings popover
+(alongside "Borders"), on by default, session-persisted per tool route — turning it off restores
+generation to exactly how it worked before this prong existed (every question slot gets the same
+unmodified `multiSelectValues`, no quota override; the generated batch is left in its raw random
+order, no sort). The toggle only renders for a tool that actually has a weighted multiSelect pool
+at all (`toolHasWeightedPool`, checked across every level) — invisible clutter otherwise, since
+it'd be a no-op for the other 26 tools today. Verified live in the running app (not just build/
+test): the toggle appears in SpeedDistanceTime's Settings popover, is absent from
+CompletingTheSquare's (no weighted pool), and toggling it off + generating produces zero console
+errors.
+
+**Every existing boolean QO is a 2-option-pool candidate, not just 3+-option ones — the mental
+model needs to widen.** Sharpened via a concrete example: a quadratic tool's "allow negative
+coefficients" can't stay a single `allowNegative: boolean` if it's meant to participate in the
+Smart Progressor, because a worksheet-wide toggle can't let question 3 draw "non-negative" while
+question 9 draws "negative" — that per-question distinction is exactly what a `multiSelect` pool
+gives you, even with only two rungs (`nonNegative` weight 1, `negative` weight 2). Expect most of
+the audit below to turn booleans into 2-option pools, not just tools that already had 3+ named
+states like SDT's Times Tables.
 
 **Possible next steps:**
 - Audit the other 26 tools' `variables`/`multiSelect` against the mutual-exclusivity test above:
