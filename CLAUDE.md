@@ -292,7 +292,7 @@ import { type PrintMode } from "../../shared";
 `ToolShell` · `TeachingDeck` · `SlideDeck` · `MathRenderer` · `InlineMath` · `QuestionDisplay` · `AnswerDisplay` · `DifficultyToggle` · `StandardQOPopover` · `DiffQOPopover` · `InlineQOPanel` · `InfoModal` · `MenuDropdown` · `PrintSplitButton` · `SkillLabel` · `SkillOverlay` · `WorkedExampleSteps` · `TechniquePreviewPage`
 
 **Helpers**:
-`randInt` · `pick` · `fracStr` · `mStr` · `pickActive` · `normalizeMultiSelect` · `step` · `tStep` · `mStep` · `fmt` · `ansEq` · `makeUniqueQ` · `stripSkillMarkers` · `SKILL_MARKER_RE` · `slideMaxStep` · `weightOf` · `sortByDifficulty`
+`randInt` · `pick` · `fracStr` · `mStr` · `pickActive` · `normalizeMultiSelect` · `step` · `tStep` · `mStep` · `fmt` · `ansEq` · `makeUniqueQ` · `stripSkillMarkers` · `SKILL_MARKER_RE` · `slideMaxStep` · `weightOf` · `sortByDifficulty` · `buildQuotaOverrides`
 
 **Skill library**: `SKILLS` · `getSkill` (see "Skill library" section)
 
@@ -641,6 +641,7 @@ Pass it to `<ToolShell reformatQuestion={reformatQuestion} />`.
 | `normalizeMultiSelect(ms)` | `<T>(ms?: T \| T[] \| null) => T[]` | Normalises single/array multiSelect config |
 | `weightOf(options, value)` | `(options: {value: string; weight?: number}[], value: string) => number` | Smart Progressor — looks up a picked multiSelect option's difficulty `weight` (0 if unset) |
 | `sortByDifficulty(questions)` | `<Q extends {key: string}>(questions: Q[]) => Q[]` | Smart Progressor — stable ascending sort by each question's `_difficultyScore`; no-op if none is set. Called automatically by `ToolShell`'s worksheet generation — never call it in a tool file |
+| `buildQuotaOverrides(groups, baseValues, numQuestions)` | `(groups: {key: string; options: {value: string; weight?: number}[]}[], baseValues: Record<string, boolean>, numQuestions: number) => Record<string, boolean>[]` | Smart Progressor — one `multiSelectValues` override per worksheet slot forcing an even split across a weighted group's active options; unweighted groups pass through untouched. Called automatically by `ToolShell`'s worksheet generation — never call it in a tool file |
 
 ### Working step rendering — how each type appears
 
@@ -850,12 +851,24 @@ const q = /* ...build the question using tier... */;
 return { ...q, _difficultyScore: weightOf(DIFFICULTY_TIER.options, tier) } as unknown as AnyQuestion;
 ```
 
-- Only orders questions that already exist in the generated batch — it's a strong bias from
-  real per-question randomness, not a hard per-slot guarantee (question 1 isn't *guaranteed* the
-  easiest option, just heavily favoured to be).
 - Never call `sortByDifficulty` directly in a tool file — `ToolShell` calls it automatically.
 - Reference implementation and the general boolean→multiSelect conversion rule: `docs/PROJECTS.md`
   → "Smart Progressor" prong, and `DIFFICULTY_TIER_L2` in `src/tools/Proportion/SpeedDistanceTime.tsx`.
+
+**The split across active rungs is forced even, automatically — never leave it to chance.**
+`pickActive`'s per-question random draw is *expected-value* fair, but over a worksheet of only
+~15 questions it can easily land 7/5/3 instead of 5/5/5 when all three rungs are ticked. `ToolShell`
+fixes this itself: before generating a worksheet, `buildQuotaOverrides` (`shared/helpers.ts`,
+internal — never call it from a tool file) finds every multiSelect group that has *any* weighted
+option and builds one `multiSelectValues` override per question slot that forces that group to
+exactly one option, split as evenly as the question count allows (15 across 3 active rungs → 5/5/5;
+10 across 3 → 4/3/3). Combined with the ascending sort, this means a worksheet's tier *boundaries*
+are now a hard guarantee, not just a bias — 5/5/5 means positions 1-5 are always the easiest rung,
+6-10 the middle, 11-15 the hardest (only which specific question lands in which position within a
+tier is still random). **This quota is scoped to weighted groups only** — a group with no weighted
+option (e.g. a "Units" pool of mph/km·h/m/s) is passed through completely untouched and keeps
+varying randomly per question exactly as before; the Smart Progressor never tries to balance
+variety-only pools, only difficulty-ordinal ones.
 
 ---
 

@@ -2,7 +2,7 @@ import { useState, useEffect, useLayoutEffect, useRef, useCallback, type ReactNo
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, SlidersHorizontal } from "lucide-react";
 import type { DifficultyLevel, AnyQuestion, WorkingStep, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
 import { LV_COLORS, LV_LABELS, LV_SELECTOR, getQuestionBg, getStepBg } from "./colors";
-import { normalizeMultiSelect, resolveMultiSelectValues, ansEq, makeUniqueQ, sortByDifficulty } from "./helpers";
+import { normalizeMultiSelect, resolveMultiSelectValues, ansEq, makeUniqueQ, sortByDifficulty, buildQuotaOverrides } from "./helpers";
 import { loadKaTeX } from "./katex";
 import { MathRenderer, InlineMath } from "./components/MathRenderer";
 import { QuestionDisplay, AnswerDisplay } from "./components/QuestionDisplay";
@@ -527,19 +527,28 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         const ddVal = levelDropdowns[lv] ?? (dd?.defaultValue ?? "");
         const msVals = getLevelMultiSelectValues(lv);
         const snap: QOSnapshot = { level: lv, variables: vars, dropdownValue: ddVal, multiSelectValues: msVals };
+        // Smart Progressor: force an even split across a weighted group's
+        // active options (e.g. all 3 difficulty rungs ticked → a third of
+        // this level's questions each) instead of leaving it to chance —
+        // see buildQuotaOverrides. Unweighted groups (e.g. Units) are
+        // untouched and still vary randomly per question as before.
+        const groups = normalizeMultiSelect(t.difficultySettings?.[lv]?.multiSelect ?? t.multiSelect);
+        const overrides = buildQuotaOverrides(groups, msVals, numQuestions);
         const levelQuestions: AnyQuestion[] = [];
         for (let i = 0; i < numQuestions; i++)
-          levelQuestions.push(stampQO(generateUniqueQ(currentTool, lv, vars, ddVal, usedKeys, msVals), snap));
+          levelQuestions.push(stampQO(generateUniqueQ(currentTool, lv, vars, ddVal, usedKeys, overrides[i]), snap));
         // Smart Progressor: order each level's own block easy-to-hard by
         // _difficultyScore (see sortByDifficulty) — a no-op for tools that
         // don't attach one.
         questions.push(...sortByDifficulty(levelQuestions));
       });
     } else {
-      const snap: QOSnapshot = { level: difficulty, variables: getVariableValues(), dropdownValue: getDropdownValue(), multiSelectValues: toolMultiSelect[currentTool] ?? {} };
+      const msVals = toolMultiSelect[currentTool] ?? {};
+      const snap: QOSnapshot = { level: difficulty, variables: getVariableValues(), dropdownValue: getDropdownValue(), multiSelectValues: msVals };
+      const overrides = buildQuotaOverrides(getMultiSelectConfig(), msVals, numQuestions);
       const flatQuestions: AnyQuestion[] = [];
       for (let i = 0; i < numQuestions; i++)
-        flatQuestions.push(stampQO(generateUniqueQ(currentTool, difficulty, getVariableValues(), getDropdownValue(), usedKeys, toolMultiSelect[currentTool] ?? {}), snap));
+        flatQuestions.push(stampQO(generateUniqueQ(currentTool, difficulty, getVariableValues(), getDropdownValue(), usedKeys, overrides[i]), snap));
       questions.push(...sortByDifficulty(flatQuestions));
     }
     setWorksheet(questions);

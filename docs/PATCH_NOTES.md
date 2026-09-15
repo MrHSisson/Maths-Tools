@@ -28,6 +28,25 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-15 — Smart Progressor: guaranteed even split across active weighted rungs
+`src/shared/helpers.ts`, `src/shared/index.ts`, `src/shared/ToolShell.tsx`. Closes the gap the
+earlier core mechanism left open: sorting a worksheet by `_difficultyScore` only reorders whatever
+`pickActive`'s independent per-question draw happened to produce, which over ~15 questions can
+easily land 7/5/3 across three active rungs instead of 5/5/5. New `buildQuotaOverrides` helper
+(internal — never called from a tool file) finds every multiSelect group carrying at least one
+weighted option and builds a per-question `multiSelectValues` override forcing that group to
+exactly one option, split as evenly as the question count allows (largest-remainder rounding for
+an uneven split). `ToolShell`'s `handleGenerateWorksheet` now builds these overrides before its
+generation loop, for both the standard and differentiated (per-level) worksheet paths. Scoped to
+weighted groups only — an unweighted group (e.g. SDT's Units pool, mph/km·h/m·s) is passed through
+untouched and keeps varying randomly per question, exactly as before. Verified with a throwaway
+test: an even 5/5/5 split, a fair 4/3/3 uneven split, confirmation that an unweighted group is
+untouched, and an end-to-end run through the real `SpeedDistanceTime` generator confirming an
+exact 5/5/5 `_difficultyScore` distribution over 15 questions — then removed. Combined with the
+existing sort, a worksheet's tier *boundaries* are now a hard guarantee (not just a bias) whenever
+every weighted rung is active, closing most of the "question 1 isn't guaranteed easy" limitation
+noted in the previous entry; `docs/PROJECTS.md`'s "Smart Progressor" prong has the full writeup.
+
 ## 2026-09-15 — Smart Progressor: SpeedDistanceTime L2 tiers made mutually exclusive
 `src/tools/Proportion/SpeedDistanceTime.tsx`. Same-day refinement to the Smart Progressor pilot
 below: the three Level 2 Difficulty rungs used to be overlapping caps rather than a genuine

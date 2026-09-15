@@ -38,6 +38,50 @@ export const sortByDifficulty = <Q extends { key: string }>(questions: Q[]): Q[]
   return [...questions].sort((a, b) => (score(a) ?? 0) - (score(b) ?? 0));
 };
 
+// Smart Progressor — ToolShell-internal wiring, never called from a tool
+// file. Builds one multiSelectValues override per worksheet question so a
+// *weighted* group (any multiSelect group with at least one option carrying
+// a `weight`) is forced to an even split across its active options, instead
+// of leaving representation to chance via pickActive's per-question random
+// draw (which, over only e.g. 15 questions, can easily land 7/5/3 instead of
+// 5/5/5). Every OTHER group (e.g. a "Units" pool with no weighted options)
+// is passed through completely untouched, so it keeps varying freely and
+// randomly per question exactly as before — the quota is opt-in per group,
+// scoped to exactly the groups the Smart Progressor already orders by.
+// Order within the split doesn't matter: sortByDifficulty re-sorts the
+// finished batch afterwards, so a block assignment (all of option A's
+// questions, then all of option B's, ...) is exactly as good as a shuffled
+// one and far simpler.
+export const buildQuotaOverrides = (
+  groups: { key: string; options: { value: string; weight?: number }[] }[],
+  baseValues: Record<string, boolean>,
+  numQuestions: number,
+): Record<string, boolean>[] => {
+  const quotaGroups = groups
+    .filter(g => g.options.some(o => o.weight !== undefined))
+    .map(g => ({ group: g, active: g.options.filter(o => baseValues[o.value] !== false) }))
+    .filter(g => g.active.length > 1); // a single active option needs no forcing
+  if (quotaGroups.length === 0) return Array.from({ length: numQuestions }, () => baseValues);
+
+  const slotsFor = (active: { value: string }[]): string[] => {
+    const base = Math.floor(numQuestions / active.length);
+    const rem = numQuestions % active.length;
+    const slots: string[] = [];
+    active.forEach((o, i) => { for (let n = 0; n < base + (i < rem ? 1 : 0); n++) slots.push(o.value); });
+    return slots;
+  };
+  const assignments = quotaGroups.map(({ group, active }) => ({ group, slots: slotsFor(active) }));
+
+  return Array.from({ length: numQuestions }, (_, i) => {
+    const overrides = { ...baseValues };
+    assignments.forEach(({ group, slots }) => {
+      const chosen = slots[i];
+      group.options.forEach(o => { overrides[o.value] = o.value === chosen; });
+    });
+    return overrides;
+  });
+};
+
 // A tool's `multiSelect` may be a single group or an array of independent groups
 // (each rendered as its own pool in the QO popover). Normalize to an array.
 export const normalizeMultiSelect = <T extends { key: string }>(ms?: T | T[] | null): T[] =>
