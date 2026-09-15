@@ -28,6 +28,19 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-15 — Speed, Distance & Time: fix "Time Notation" QO not restricting at Level 2
+`src/tools/Proportion/SpeedDistanceTime.tsx`. Reported: unchecking "Minutes" in the Level 2
+"Time Notation" QO (wanting worded-fraction-only questions) still produced plain "X minutes"
+wording some of the time. Root cause: `pickShape` chose the Level 2 minute value (`TM`) before
+`pickNotation` knew which notations were active — only 3 of the 7 `L2_MINUTES` values (15, 20,
+30) have a natural worded phrasing, so whenever one of the other 4 (5, 6, 10, 12) was picked,
+`pickNotation` fell back to "minutes" regardless of the QO, silently ignoring the restriction.
+Fixed by threading the notation selection into `pickShape`: when "Minutes" is off and "Worded
+fraction" is on, only TM values with a worded form (15/20/30) are offered, so the fallback path
+is never reached. `npm run build` and `npm test` both clean (212 tests); added and removed a
+temporary regression check (300 generations with Minutes unchecked, asserting no "minutes"
+wording ever appears) to confirm the fix before committing.
+
 ## 2026-09-14 — Standard worksheet grid: explicit `gridAutoRows` for even cell heights
 `src/shared/ToolShell.tsx` (`renderWorksheet`, the plain/non-differentiated grid). Reported
 via a screenshot: worksheet cells in the same row were visibly different heights (a 3-line

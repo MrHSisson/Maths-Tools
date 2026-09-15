@@ -232,14 +232,21 @@ const compoundCombos = (tablesLimit: number): { H: number; Mfrac: number }[] => 
 // tablesLimit (10 or 20, from the "Times Tables" QO) caps every fact the
 // question ends up needing: T0 directly here, pp/qq via withinTables below,
 // and the scale factor k in buildValues.
-const pickShape = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, tablesLimit: number): Shape => {
+const pickShape = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, tablesLimit: number, notationMv: Record<string, boolean>): Shape => {
   if (level === "level1") {
     const maxT0 = Math.min(family === "mps" ? 10 : 12, tablesLimit);
     const T0 = randInt(2, maxT0);
     return { kind: "l1", TM: T0 * 60 };
   }
   if (level === "level2") {
-    const options = L2_MINUTES.filter((TM) => withinTables(TM, tablesLimit));
+    let options = L2_MINUTES.filter((TM) => withinTables(TM, tablesLimit));
+    // If "Minutes" is switched off (worded-only), only offer TM values that
+    // actually have a worded phrasing — otherwise pickNotation below would be
+    // forced to fall back to "X minutes" anyway, silently ignoring the QO.
+    if (notationMv.worded !== false && notationMv.minutes === false) {
+      const wordedOnly = options.filter((TM) => TM in WORDED_L2);
+      if (wordedOnly.length) options = wordedOnly;
+    }
     return { kind: "l2", TM: pick(options.length ? options : L2_MINUTES) };
   }
   if (l3type === "compoundTime") {
@@ -360,8 +367,8 @@ const compoundConvertStep = (shape: Shape): WorkingStep[] =>
     ? [mStep("Convert to minutes:", `${shape.H} \\times 60 + ${shape.Mfrac} = ${shape.TM}`)]
     : [];
 
-const buildCommon = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, tablesLimit: number) => {
-  const shape = pickShape(level, family, l3type, tablesLimit);
+const buildCommon = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, tablesLimit: number, notationMv: Record<string, boolean>) => {
+  const shape = pickShape(level, family, l3type, tablesLimit, notationMv);
   const f = FAMILY[family];
   const { D, S, pp, qq } = buildValues(shape.TM, f, allowDecimals, tablesLimit);
   const tLabel = timeLabel(shape, f);
@@ -453,7 +460,7 @@ const buildWorking = (rv: RawValues, method: WorkingMethod): WorkingStep[] => {
 };
 
 const genSpeed = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, notationMv: Record<string, boolean>, method: WorkingMethod, tablesLimit: number): WordedQuestion => {
-  const c = buildCommon(level, family, l3type, allowDecimals, tablesLimit);
+  const c = buildCommon(level, family, l3type, allowDecimals, tablesLimit, notationMv);
   const notation = pickNotation(c.shape, notationMv);
   const durationText = formatDuration(c.shape, family, notation);
   const id = randInt(0, 999999);
@@ -477,7 +484,7 @@ const genSpeed = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, al
 };
 
 const genDistance = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, notationMv: Record<string, boolean>, method: WorkingMethod, tablesLimit: number): WordedQuestion => {
-  const c = buildCommon(level, family, l3type, allowDecimals, tablesLimit);
+  const c = buildCommon(level, family, l3type, allowDecimals, tablesLimit, notationMv);
   const notation = pickNotation(c.shape, notationMv);
   const durationText = formatDuration(c.shape, family, notation);
   const id = randInt(0, 999999);
@@ -501,7 +508,7 @@ const genDistance = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type,
 };
 
 const genTime = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, notationMv: Record<string, boolean>, method: WorkingMethod, tablesLimit: number): WordedQuestion => {
-  const c = buildCommon(level, family, l3type, allowDecimals, tablesLimit);
+  const c = buildCommon(level, family, l3type, allowDecimals, tablesLimit, notationMv);
   const notation = pickNotation(c.shape, notationMv);
   const answerText = formatDuration(c.shape, family, notation);
   const id = randInt(0, 999999);
