@@ -25,10 +25,6 @@ import {
 type ToolType = "speed" | "distance" | "time";
 type UnitFamily = "mph" | "kmh" | "mps";
 type L3Type = "compoundTime" | "awkwardMinutes";
-// The QUESTION only ever phrases time as minutes, hours-and-minutes, or a
-// spoken fraction — never a decimal ("0.1 hours", "1.5 hours") or a compound-
-// as-decimal, since nobody actually describes a journey time that way.
-type TimeNotation = "minutes" | "compound" | "worded";
 // The WORKED EXAMPLE's method is a separate, display-only choice (same
 // precedent as ExpandingBrackets.tsx's FOIL/Grid dropdown): "ratioTable" is
 // the default unitary-method scaling; "decimal" instead converts the time to
@@ -68,22 +64,6 @@ const UNITS_L23: ToolMultiSelect = {
   options: [
     { value: "mph", label: "Miles & hours (mph)", defaultActive: true },
     { value: "kmh", label: "Kilometres & hours (km/h)", defaultActive: true },
-  ],
-};
-
-const NOTATION_L2: ToolMultiSelect = {
-  key: "notation", label: "Time Notation",
-  options: [
-    { value: "minutes", label: "Minutes", defaultActive: true },
-    { value: "worded", label: "Worded fraction", defaultActive: true },
-  ],
-};
-
-const NOTATION_L3: ToolMultiSelect = {
-  key: "notation", label: "Time Notation",
-  options: [
-    { value: "compound", label: "Hours & minutes", defaultActive: true },
-    { value: "worded", label: "Worded fraction", defaultActive: true },
   ],
 };
 
@@ -130,8 +110,8 @@ const makeSubtool = (name: string) => ({
   multiSelect: [UNITS_L1, TABLES_MS],
   difficultySettings: {
     level1: { multiSelect: [UNITS_L1, TABLES_MS] },
-    level2: { multiSelect: [UNITS_L23, NOTATION_L2, TABLES_MS] },
-    level3: { multiSelect: [UNITS_L23, NOTATION_L3, L3_TYPES, TABLES_MS] },
+    level2: { multiSelect: [UNITS_L23, TABLES_MS] },
+    level3: { multiSelect: [UNITS_L23, L3_TYPES, TABLES_MS] },
   },
 });
 
@@ -154,7 +134,7 @@ const LEVEL_INFO = [
 
 const INFO_SECTIONS: InfoSection[] = [
   { title: "Speed", icon: "🚗", content: [
-    { label: "Overview", detail: "Given a distance and a time, find the average speed using a ratio table to scale to one hour." },
+    { label: "Overview", detail: "Given a distance and a time, find the average speed using a ratio table to scale to one hour. The question always names the required unit (mph, km/h or m/s)." },
     ...LEVEL_INFO,
   ]},
   { title: "Distance", icon: "📏", content: [
@@ -172,7 +152,7 @@ const INFO_SECTIONS: InfoSection[] = [
   ]},
   { title: "Question Options", icon: "⚙️", content: [
     { label: "Units", detail: "Which unit families can appear (m/s only appears at Level 1)." },
-    { label: "Time Notation", detail: "How a split time is worded — minutes, hours & minutes, or a spoken fraction (e.g. 'a quarter of an hour'). Never a decimal — a real question wouldn't say '0.25 hours'." },
+    { label: "Time wording", detail: "A given time is always stated in plain minutes, or hours & minutes for a compound time (e.g. '1 hour 30 minutes') — never as a spoken fraction (e.g. 'a quarter of an hour') or a decimal." },
     { label: "Method", detail: "Ratio Table (default) scales to/from one hour using whole-number steps. Decimal instead converts the time to decimal hours and divides/multiplies by that — shown only where the conversion is exact; otherwise it falls back to the Ratio Table method." },
     { label: "Question Types (Level 3)", detail: "Compound times (e.g. 1 hr 30) and/or awkward minute values (e.g. 40 min)." },
     { label: "Times Tables", detail: "Caps every multiplication/division fact the question relies on — including the scale factor in the ratio table working — so a student is never asked to invert a fact outside their tables. Doesn't restrict Level 2's minute value itself, since scaling a divisor of 60 up to one hour is a fixed conversion fact rather than a times-tables one. 'Up to 10×10' is on by default; tick 'Up to 20×20' as well to also allow larger, more demanding numbers." },
@@ -186,25 +166,15 @@ const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
 
 // Divisors of 60 (excluding 60 itself, and excluding 1 — a 1-minute road
 // journey can't land a realistic speed within this tool's distance/speed
-// ranges for any family) — L2 picks any of these for "minutes"/"decimal"
-// notation. "Worded" is available for every value with a natural spoken
-// fraction (half, third, quarter, fifth, sixth, tenth, twelfth); 2 and 3
-// minutes have no natural worded form and always show as plain minutes.
+// ranges for any family) — L2 picks any of these, always worded as plain
+// minutes (e.g. "15 minutes"), never as a spoken fraction or a decimal.
 const L2_MINUTES = [2, 3, 5, 6, 10, 12, 15, 20, 30];
-const WORDED_L2: Record<number, string> = {
-  30: "half an hour", 20: "a third of an hour", 15: "a quarter of an hour",
-  12: "a fifth of an hour", 10: "a sixth of an hour", 6: "a tenth of an hour", 5: "a twelfth of an hour",
-};
 
 // L3 compound minute-parts — quarter/half/three-quarters only (a third would
-// give a non-terminating decimal hours value, breaking the "decimal" notation).
+// give a non-terminating decimal hours value, breaking the "decimal" WORKING
+// METHOD — see decimalMethodApplies).
 const L3_COMPOUND_FRACS = [15, 30, 45];
 const NICE_MINUTES = new Set([...L2_MINUTES, ...L3_COMPOUND_FRACS]);
-
-const wordedCompound = (H: number, Mfrac: number): string => {
-  const frac = Mfrac === 15 ? "a quarter" : Mfrac === 30 ? "a half" : "three quarters";
-  return H === 1 ? `an hour and ${frac}` : `${H} and ${frac} hours`;
-};
 
 interface Shape { kind: "l1" | "l2" | "l3compound" | "l3awkward"; TM: number; H?: number; Mfrac?: number; }
 
@@ -238,7 +208,7 @@ const compoundCombos = (tablesLimit: number): { H: number; Mfrac: number }[] => 
 // tablesLimit (10 or 20, from the "Times Tables" QO) caps every fact the
 // question ends up needing: T0 directly here, pp/qq via withinTables below,
 // and the scale factor k in buildValues.
-const pickShape = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, tablesLimit: number, notationMv: Record<string, boolean>): Shape => {
+const pickShape = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, tablesLimit: number): Shape => {
   if (level === "level1") {
     const maxT0 = Math.min(family === "mps" ? 10 : 12, tablesLimit);
     const T0 = randInt(2, maxT0);
@@ -246,15 +216,7 @@ const pickShape = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, t
   }
   if (level === "level2") {
     // Not gated by tablesLimit — see withinTables' comment above.
-    let options: number[] = L2_MINUTES;
-    // If "Minutes" is switched off (worded-only), only offer TM values that
-    // actually have a worded phrasing — otherwise pickNotation below would be
-    // forced to fall back to "X minutes" anyway, silently ignoring the QO.
-    if (notationMv.worded !== false && notationMv.minutes === false) {
-      const wordedOnly = options.filter((TM) => TM in WORDED_L2);
-      if (wordedOnly.length) options = wordedOnly;
-    }
-    return { kind: "l2", TM: pick(options) };
+    return { kind: "l2", TM: pick(L2_MINUTES) };
   }
   if (l3type === "compoundTime") {
     const combos = compoundCombos(tablesLimit);
@@ -330,7 +292,7 @@ const buildValues = (TM: number, f: FamilyInfo, allowDecimals: boolean, tablesLi
 // lowest terms, its denominator's only prime factors are 2 and 5 — e.g. 5
 // minutes = 1/12 hour = 0.08333… (repeating). Used to gate the "Decimal"
 // WORKING METHOD (never a question's own wording, which never uses decimal
-// hours at all — see TimeNotation).
+// hours at all — see formatDuration).
 const terminatesDecimal = (num: number, den: number): boolean => {
   let d = den / gcd(num, den);
   while (d % 2 === 0) d /= 2;
@@ -338,25 +300,16 @@ const terminatesDecimal = (num: number, den: number): boolean => {
   return d === 1;
 };
 
-const pickNotation = (shape: Shape, mv: Record<string, boolean>): TimeNotation => {
-  if (shape.kind === "l1") return "minutes"; // unused — l1 always formatted directly
-  if (shape.kind === "l3awkward") return "minutes";
-  let opts = shape.kind === "l2" ? NOTATION_L2.options : NOTATION_L3.options;
-  if (shape.kind === "l2" && !(shape.TM in WORDED_L2)) opts = opts.filter((o) => o.value !== "worded");
-  return pickActive(mv, opts) as TimeNotation;
-};
-
-const formatDuration = (shape: Shape, family: UnitFamily, notation: TimeNotation): string => {
+// A given/answer time is always plain minutes, or hours & minutes for a
+// compound time — never a spoken fraction (e.g. "a quarter of an hour") or
+// a decimal.
+const formatDuration = (shape: Shape, family: UnitFamily): string => {
   if (shape.kind === "l1") {
     const T0 = shape.TM / 60;
     const unit = family === "mps" ? (T0 === 1 ? "second" : "seconds") : (T0 === 1 ? "hour" : "hours");
     return `${T0} ${unit}`;
   }
-  if (notation === "compound" && shape.kind === "l3compound") return `${shape.H} hour${shape.H === 1 ? "" : "s"} ${shape.Mfrac} minutes`;
-  if (notation === "worded") {
-    if (shape.kind === "l2") return WORDED_L2[shape.TM] ?? `${shape.TM} minutes`;
-    if (shape.kind === "l3compound") return wordedCompound(shape.H!, shape.Mfrac!);
-  }
+  if (shape.kind === "l3compound") return `${shape.H} hour${shape.H === 1 ? "" : "s"} ${shape.Mfrac} minutes`;
   return `${shape.TM} minutes`;
 };
 
@@ -374,8 +327,8 @@ const compoundConvertStep = (shape: Shape): WorkingStep[] =>
     ? [mStep("Convert to minutes:", `${shape.H} \\times 60 + ${shape.Mfrac} = ${shape.TM}`)]
     : [];
 
-const buildCommon = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, tablesLimit: number, notationMv: Record<string, boolean>) => {
-  const shape = pickShape(level, family, l3type, tablesLimit, notationMv);
+const buildCommon = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, tablesLimit: number) => {
+  const shape = pickShape(level, family, l3type, tablesLimit);
   const f = FAMILY[family];
   const { D, S, pp, qq } = buildValues(shape.TM, f, allowDecimals, tablesLimit);
   const tLabel = timeLabel(shape, f);
@@ -466,10 +419,9 @@ const buildWorking = (rv: RawValues, method: WorkingMethod): WorkingStep[] => {
   ];
 };
 
-const genSpeed = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, notationMv: Record<string, boolean>, method: WorkingMethod, tablesLimit: number): WordedQuestion => {
-  const c = buildCommon(level, family, l3type, allowDecimals, tablesLimit, notationMv);
-  const notation = pickNotation(c.shape, notationMv);
-  const durationText = formatDuration(c.shape, family, notation);
+const genSpeed = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, method: WorkingMethod, tablesLimit: number): WordedQuestion => {
+  const c = buildCommon(level, family, l3type, allowDecimals, tablesLimit);
+  const durationText = formatDuration(c.shape, family);
   const id = randInt(0, 999999);
   const rv: RawValues = {
     tool: "speed", D: c.D, S: c.S, TM: c.shape.TM, pp: c.pp, qq: c.qq,
@@ -479,21 +431,23 @@ const genSpeed = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, al
 
   return {
     kind: "worded",
-    lines: [`${c.subject} travels ${mStr(numLatex(c.D))} ${c.f.distanceUnit} in ${durationText}.`, "Find its average speed."],
+    // Names the required unit explicitly — with three possible rate units
+    // (mph/km/h/m/s), "Find its average speed." alone leaves the expected
+    // unit ambiguous.
+    lines: [`${c.subject} travels ${mStr(numLatex(c.D))} ${c.f.distanceUnit} in ${durationText}.`, `Find its average speed in ${c.f.rateUnit}.`],
     answer: `${numLatex(c.S)} ${c.f.rateUnit}`,
     answerLatex: numLatex(c.S),
     answerSuffix: c.f.rateUnit,
     working: buildWorking(rv, method),
-    key: `speed-${level}-${family}-${c.shape.kind}-${c.D}-${c.S}-${notation}-${method}-${tablesLimit}-${id}`,
+    key: `speed-${level}-${family}-${c.shape.kind}-${c.D}-${c.S}-${method}-${tablesLimit}-${id}`,
     difficulty: level,
     _rawValues: rv,
   } as unknown as WordedQuestion;
 };
 
-const genDistance = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, notationMv: Record<string, boolean>, method: WorkingMethod, tablesLimit: number): WordedQuestion => {
-  const c = buildCommon(level, family, l3type, allowDecimals, tablesLimit, notationMv);
-  const notation = pickNotation(c.shape, notationMv);
-  const durationText = formatDuration(c.shape, family, notation);
+const genDistance = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, method: WorkingMethod, tablesLimit: number): WordedQuestion => {
+  const c = buildCommon(level, family, l3type, allowDecimals, tablesLimit);
+  const durationText = formatDuration(c.shape, family);
   const id = randInt(0, 999999);
   const rv: RawValues = {
     tool: "distance", D: c.D, S: c.S, TM: c.shape.TM, pp: c.pp, qq: c.qq,
@@ -508,23 +462,22 @@ const genDistance = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type,
     answerLatex: numLatex(c.D),
     answerSuffix: c.f.distanceUnit,
     working: buildWorking(rv, method),
-    key: `distance-${level}-${family}-${c.shape.kind}-${c.D}-${c.S}-${notation}-${method}-${tablesLimit}-${id}`,
+    key: `distance-${level}-${family}-${c.shape.kind}-${c.D}-${c.S}-${method}-${tablesLimit}-${id}`,
     difficulty: level,
     _rawValues: rv,
   } as unknown as WordedQuestion;
 };
 
-const genTime = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, notationMv: Record<string, boolean>, method: WorkingMethod, tablesLimit: number): WordedQuestion => {
-  const c = buildCommon(level, family, l3type, allowDecimals, tablesLimit, notationMv);
-  const notation = pickNotation(c.shape, notationMv);
-  const answerText = formatDuration(c.shape, family, notation);
+const genTime = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, method: WorkingMethod, tablesLimit: number): WordedQuestion => {
+  const c = buildCommon(level, family, l3type, allowDecimals, tablesLimit);
+  const answerText = formatDuration(c.shape, family);
   const id = randInt(0, 999999);
   const rv: RawValues = {
     tool: "time", D: c.D, S: c.S, TM: c.shape.TM, pp: c.pp, qq: c.qq,
     tLabel: c.tLabel, hourRef: c.hourRef, tVal: c.tVal,
     distanceUnit: c.f.distanceUnit, shapeKind: c.shape.kind, H: c.shape.H, Mfrac: c.shape.Mfrac,
   };
-  // The final answer is stated in prose (e.g. "an hour and a half"), which may
+  // The final answer is stated in prose (e.g. "1 hour 30 minutes"), which may
   // not be pure KaTeX — set via `answer` only, no answerLatex (see AnswerDisplay's
   // fallback: it renders the plain `answer` text when answerLatex is absent).
 
@@ -533,7 +486,7 @@ const genTime = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, all
     lines: [`${c.subject} travels ${mStr(numLatex(c.D))} ${c.f.distanceUnit} at a speed of ${mStr(numLatex(c.S))} ${c.f.rateUnit}.`, "How long does the journey take?"],
     answer: answerText,
     working: buildWorking(rv, method),
-    key: `time-${level}-${family}-${c.shape.kind}-${c.D}-${c.S}-${notation}-${method}-${tablesLimit}-${id}`,
+    key: `time-${level}-${family}-${c.shape.kind}-${c.D}-${c.S}-${method}-${tablesLimit}-${id}`,
     difficulty: level,
     _rawValues: rv,
   } as unknown as WordedQuestion;
@@ -556,9 +509,9 @@ const generateQuestion = (
   const l3type = level === "level3" ? (pickActive(multiSelectValues, L3_TYPES.options) as L3Type) : "awkwardMinutes";
   const tablesLimit = Number(pickActive(multiSelectValues, TABLES_MS.options));
 
-  if (t === "speed") return genSpeed(level, family, l3type, allowDecimals, multiSelectValues, method, tablesLimit);
-  if (t === "distance") return genDistance(level, family, l3type, allowDecimals, multiSelectValues, method, tablesLimit);
-  return genTime(level, family, l3type, allowDecimals, multiSelectValues, method, tablesLimit);
+  if (t === "speed") return genSpeed(level, family, l3type, allowDecimals, method, tablesLimit);
+  if (t === "distance") return genDistance(level, family, l3type, allowDecimals, method, tablesLimit);
+  return genTime(level, family, l3type, allowDecimals, method, tablesLimit);
 };
 
 // Worksheet uniqueness is automatic — ToolShell wraps generateQuestion with the

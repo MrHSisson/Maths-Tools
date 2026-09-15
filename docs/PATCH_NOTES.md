@@ -28,6 +28,26 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-15 — Speed, Distance & Time: name the unit in Speed; drop worded-fraction time wording
+`src/tools/Proportion/SpeedDistanceTime.tsx`. Two clarity requests:
+- **Speed**: the instruction line now names the required rate unit explicitly —
+  `"Find its average speed in mph."` instead of the previous unit-less `"Find its average
+  speed."` With three possible rate units (mph/km/h/m/s) the old wording left the expected
+  answer unit ambiguous. Distance and Time weren't affected — their answer unit is already
+  pinned by the given speed's own stated unit.
+- **Time wording**: reversed this session's earlier worded-fraction reintroduction — a given
+  or answer time is now always plain minutes ("15 minutes") or hours & minutes for a compound
+  time ("1 hour 30 minutes"), never a spoken fraction ("a quarter of an hour"). Removed the
+  now-pointless "Time Notation" QO (a single always-on option isn't a real choice) along with
+  `WORDED_L2`, `wordedCompound`, `pickNotation`, and the `TimeNotation` type; `formatDuration`
+  no longer takes a notation argument. `L2_MINUTES` (2/3/5/6/10/12/15/20/30) and the Times
+  Tables exemption for Level 2 from the previous entry are unchanged — only the wording of the
+  chosen minute value changed, not which values can be chosen.
+- `npm run build` and `npm test` both clean (218 tests). Verified with temporary regression
+  checks (removed before commit): Speed's prompt always names one of mph/km/h/m/s across 500
+  generations, and no worded-fraction wording (half/third/quarter/fifth/sixth/tenth/twelfth)
+  appears anywhere across all three subtools × all three levels (2,700 generations).
+
 ## 2026-09-15 — Speed, Distance & Time: reintroduce fifth/sixth/tenth/twelfth worded fractions
 `src/tools/Proportion/SpeedDistanceTime.tsx`. Requested: reintroduce Level 2 worded fractions
 previously restricted to just half/third/quarter, and widen the plain-minutes pool.
