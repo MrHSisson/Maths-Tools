@@ -819,6 +819,24 @@ options that gate a per-question property will turn into 2-option pools** once t
 against the mutual-exclusivity test, not just the ones that already had 3+ named states like SDT's
 Times Tables.
 
+**A 2-option weighted pool renders as one compact click-to-cycle button, automatically — no extra
+config.** ToolShell's QO popovers detect this shape (exactly 2 options, both carrying `weight`)
+and render it as a single button cycling **None → Mixed → Exclusive** (easier option only → both
+active → harder option only) instead of a two-cell pill row — several sit inline in one compact
+row where a growing QO popover would otherwise sprawl a full-width bordered block per pool. This
+exists specifically to keep the QO popover from becoming "incredibly heavy" as more booleans get
+audited into weighted pools per the rule above — most of those conversions will be exactly this
+2-option shape. It's a rendering choice only: same `ToolMultiSelect` data, same
+`pickActive`/`weightOf`/`buildQuotaOverrides`/`sortByDifficulty` pipeline — nothing for a tool
+author to opt into beyond giving both options a `weight`. A 2-option pool where the options are
+peers rather than an easy/hard pair (e.g. two unit families) stays a normal pill row, since neither
+option carries `weight` — the detection is automatic, never a per-pool flag. Implementation:
+`CycleSelect` in `src/shared/components/QOPopovers.tsx`. **Dev-gated worked example**: `/tool-shell`
+(`src/tools/TeacherTools/ToolShell.tsx`) — Sub-Tool 1's "Negative Coefficients (demo)" pool, visible
+only with Developing-tools mode on, shows the full loop: a 2-option weighted pool → the compact
+cycle button → `generateQuestion` reading the picked value via `pickActive` → a genuine
+`_difficultyScore` via `weightOf` → the worksheet's usual sort/balance, with no other wiring.
+
 **Rungs must be mutually exclusive, not overlapping caps, and any "harder" property must be
 guaranteed, not just more likely.** An "up to 20" rung that silently includes every "up to 10"
 value too doesn't read as strictly harder than the rung below it — give each rung its own disjoint

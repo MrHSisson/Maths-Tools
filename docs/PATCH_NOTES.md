@@ -28,6 +28,32 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-15 — Smart Progressor: compact cycle-button control for 2-option pools
+`src/shared/components/QOPopovers.tsx`, `src/tools/TeacherTools/ToolShell.tsx`, `CLAUDE.md`,
+`docs/PROJECTS.md`. Addresses a real worry raised mid-session: if most boolean QO options turn
+into 2-option weighted pools per this session's mutual-exclusivity rule, a tool with several such
+properties would stack a full pill-row block per pool, making the QO popover "incredibly heavy".
+Fix: `MultiSelectSection`'s replacement, `CycleSelect`, detects any multiSelect group with exactly
+2 options where **both** carry `weight` and renders it as one compact click-to-cycle button
+(**None → Mixed → Exclusive** — easier-only → both active → harder-only) instead of a two-cell
+pill row; `MultiSelectGroups` now packs consecutive such groups into one `flex-wrap` row so several
+sit inline rather than each claiming a full-width block. Purely a rendering choice — same
+`ToolMultiSelect` data, same `pickActive`/`weightOf`/`buildQuotaOverrides`/`sortByDifficulty`
+pipeline, automatic across all three popover surfaces (`StandardQOPopover`/`DiffQOPopover`/
+`InlineQOPanel`) since they all route through `MultiSelectGroups`. A 2-option *peer* pool with no
+weight (e.g. two unit families) is untouched — still the normal pill row.
+
+Added a dev-gated worked example at `/tool-shell` (`src/tools/TeacherTools/ToolShell.tsx`, the
+canonical new-tool scaffold): Sub-Tool 1 gets a "Negative Coefficients (demo)" 2-option weighted
+pool, present in `TOOL_CONFIG` only when Developing-tools mode is on (reactive via `useDevMode()`
+in `App()`, so toggling and returning shows/hides it without a hard reload) and read in
+`generateQuestion` via the plain `getDevMode()` getter (same pattern `FractionToRatio.tsx` already
+uses) — picking the value, negating the second addend when "negative" is drawn, and attaching a
+real `_difficultyScore` via `weightOf`. Verified live via a Playwright script, not just build/test:
+absent with dev mode off, present and correctly cycling None→Mixed→Exclusive→None with dev mode
+on, and a regression check confirming SDT's existing unweighted 2-option pool (Units) and weighted
+3-option pool (Difficulty) both render exactly as before — zero console errors throughout.
+
 ## 2026-09-15 — Smart Progressor: standard-mode scoping, teacher-facing off toggle
 `src/shared/ToolShell.tsx`, `CLAUDE.md`, `docs/PROJECTS.md`. Closes out this session's Smart
 Progressor work. Confirmed (by reading both files, not assuming) that the advanced

@@ -73,7 +73,7 @@ pedagogy-engine sweep.
 | **Tool expansion (Part 2)** | 🚧 | Per-tool content-growth backlog (new question types, broader coverage) — **tier-1 priority**, needs a dedicated sequencing pass |
 | **SmartGrapher** | ✅ | Mature, embeddable; used in 3 tools — **tier-1 priority**: wire into more tools opportunistically |
 | **Techniques engine** | 🚧 | Engine built; only 1 tool converted — build on demand for tier-1 needs, not a standalone sweep (see Priorities) |
-| **Smart Progressor** | 🚧 | Core mechanism shipped (weighted `multiSelect` + worksheet sort + roughly-even split + standard-mode-only + teacher-facing off toggle); 1 of 27 tools piloted (`SpeedDistanceTime` L2) — needs a per-tool audit pass |
+| **Smart Progressor** | 🚧 | Core mechanism shipped (weighted `multiSelect` + worksheet sort + roughly-even split + standard-mode-only + teacher-facing off toggle + compact 2-option cycle-button popover control); 1 of 27 tools piloted (`SpeedDistanceTime` L2), 1 dev-gated demo (`/tool-shell`) — needs a per-tool audit pass |
 | **Skills library** | ⏸ | Engine + backlog ready; 2 skills built — tier-2 (student-led), not a current priority |
 | **Core representations** | ⏸ | 3 of 6 visual families have Teach scenes — feeds Skills/Teach decks (tier 2), paused alongside them |
 | **Teach decks** | ⏸ | Engine built; one partial deck exists — least mature prong, secondary to tier-1 work |
@@ -484,6 +484,23 @@ question 9 draws "negative" — that per-question distinction is exactly what a 
 gives you, even with only two rungs (`nonNegative` weight 1, `negative` weight 2). Expect most of
 the audit below to turn booleans into 2-option pools, not just tools that already had 3+ named
 states like SDT's Times Tables.
+
+**The popover-weight worry this raises was real, and it's solved — 2026-09-15.** If most booleans
+turn into 2-option pools, a tool with several such properties would stack a full pill-row block per
+pool, making the QO popover "incredibly heavy" (the user's own words) exactly as differentiation
+needs grow. Fix: a 2-option pool where **both** options carry `weight` now renders as one compact
+click-to-cycle button (**None → Mixed → Exclusive**, i.e. easier-only → both active → harder-only)
+instead of a two-cell pill row — several sit inline in one row rather than each claiming a
+full-width block. Purely a rendering choice: same `ToolMultiSelect` data, same
+`pickActive`/`weightOf`/`buildQuotaOverrides`/`sortByDifficulty` pipeline underneath (`CycleSelect`
+in `src/shared/components/QOPopovers.tsx`, detected automatically — a 2-option *peer* pool with no
+weight, like two unit families, still renders as the normal pill row). Built and verified live in
+the running app (not just build/test): with an unweighted 2-option pool (SDT's Units) and a
+weighted 3-option pool (SDT's Difficulty) both confirmed to render unchanged (regression-checked),
+and a new dev-gated worked example added at `/tool-shell` (Sub-Tool 1's "Negative Coefficients
+(demo)" pool, visible only with Developing-tools mode on) confirmed end-to-end: absent when dev
+mode is off, present and cycling None→Mixed→Exclusive→None correctly when on, `generateQuestion`
+reading the picked value and attaching a real `_difficultyScore`, zero console errors.
 
 **Possible next steps:**
 - Audit the other 26 tools' `variables`/`multiSelect` against the mutual-exclusivity test above:

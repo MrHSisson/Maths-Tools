@@ -18,8 +18,10 @@ import {
   type DifficultyLevel,
   type AnyQuestion,
   type TeachingSlide,
-  randInt, pick, step, tStep, mStep, fracStr, mStr, pickActive, fmt,
+  type ToolMultiSelect,
+  randInt, pick, step, tStep, mStep, fracStr, mStr, pickActive, fmt, weightOf,
 } from "../../shared";
+import { getDevMode, useDevMode } from "../../devMode";
 
 // ── NAVIGATION ────────────────────────────────────────────────────────────────
 // Tools use window.location.href = "/" for the Home button — no React Router.
@@ -58,6 +60,37 @@ type ToolType = "tool1" | "tool2" | "tool3"; // ← one per key in TOOL_CONFIG.t
 //   multiSelect?      — multi-toggle pool: { key, label, options }
 //   difficultySettings — per-level overrides for dropdown/variables/multiSelect
 
+const QUESTION_TYPES_MS: ToolMultiSelect = {
+  key: "questionPool",
+  label: "Question Types",
+  options: [
+    { value: "typeX", label: "Type X", defaultActive: true  },
+    { value: "typeY", label: "Type Y", defaultActive: true  },
+    { value: "typeZ", label: "Type Z", defaultActive: false },
+  ],
+};
+
+// ── DEV-GATED SMART PROGRESSOR DEMO ──────────────────────────────────────────
+// Reference pattern for a weighted, mutually-exclusive 2-option pool (see
+// CLAUDE.md → "QO control types" and "Smart Progressor"). Because BOTH
+// options carry a `weight`, ToolShell's QO popovers render this as one
+// compact click-to-cycle button (None → Mixed → Exclusive) instead of a
+// full pill row — see CycleSelect in shared/components/QOPopovers.tsx — and
+// the worksheet automatically sorts/roughly-balances by it, no extra wiring
+// needed beyond generateQuestion reading the picked value (below).
+//
+// Kept dev-gated (behind Developing-tools mode) here because it's a template
+// illustration, not a real question axis for this stub tool — copy the
+// pattern into a real tool's TOOL_CONFIG/generateQuestion and drop the
+// getDevMode()/useDevMode() gating once it's a genuine feature, not a demo.
+const NEGATIVE_COEFFS_DEMO: ToolMultiSelect = {
+  key: "negCoeffDemo", label: "Negative Coefficients (demo)",
+  options: [
+    { value: "nonNegative", label: "Non-negative", defaultActive: true,  weight: 1 },
+    { value: "negative",    label: "Negative",      defaultActive: false, weight: 2 },
+  ],
+};
+
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Tool Name",
 
@@ -71,15 +104,7 @@ const TOOL_CONFIG: ToolConfig = {
         { key: "option2", label: "Option B", defaultValue: false },
       ],
       dropdown: null,
-      multiSelect: {
-        key: "questionPool",
-        label: "Question Types",
-        options: [
-          { value: "typeX", label: "Type X", defaultActive: true  },
-          { value: "typeY", label: "Type Y", defaultActive: true  },
-          { value: "typeZ", label: "Type Z", defaultActive: false },
-        ],
-      },
+      multiSelect: QUESTION_TYPES_MS,
       difficultySettings: null,
     },
 
@@ -222,24 +247,41 @@ const generateQuestion = (
   level: DifficultyLevel,
   _variables: Record<string, boolean>,
   _dropdownValue: string,
-  _multiSelectValues: Record<string, boolean> = {},
+  multiSelectValues: Record<string, boolean> = {},
 ): AnyQuestion => {
   const t = tool as ToolType;
   const id = Math.floor(Math.random() * 1_000_000);
 
   // ── Tool 1: simple kind ──────────────────────────────────────────────────
   if (t === "tool1") {
-    const a = randInt(1, 9), b = randInt(1, 9);
-    return {
+    const a = randInt(1, 9);
+    let b = randInt(1, 9);
+    // DEV-GATED SMART PROGRESSOR DEMO — see NEGATIVE_COEFFS_DEMO's comment
+    // above and App()'s devMode-conditional config merge below. getDevMode()
+    // (not the reactive hook — this is a plain function, called fresh on
+    // every generation) gates reading the demo axis at all: with the group
+    // absent from config (devMode off), pickActive would otherwise treat
+    // both options as "active" by default (neither key is in
+    // multiSelectValues), so this check keeps the demo fully inert when off.
+    let difficultyScore: number | undefined;
+    if (getDevMode()) {
+      const tier = pickActive(multiSelectValues, NEGATIVE_COEFFS_DEMO.options);
+      if (tier === "negative") b = -b;
+      difficultyScore = weightOf(NEGATIVE_COEFFS_DEMO.options, tier);
+    }
+    const sumLatex = b < 0 ? `${a} - ${Math.abs(b)}` : `${a} + ${b}`;
+    const sum = a + b;
+    const q: AnyQuestion = {
       kind: "simple",
-      display: `${a} + ${b}`,
-      displayLatex: `${a} + ${b}`,
-      answer: `${a + b}`,
-      answerLatex: `${a + b}`,
-      working: [step(`${a} + ${b} = ${a + b}`)],
+      display: sumLatex,
+      displayLatex: sumLatex,
+      answer: `${sum}`,
+      answerLatex: `${sum}`,
+      working: [step(`${sumLatex} = ${sum}`)],
       key: `t1-${level}-${a}-${b}-${id}`,
       difficulty: level,
     };
+    return difficultyScore === undefined ? q : ({ ...q, _difficultyScore: difficultyScore } as unknown as AnyQuestion);
   }
 
   // ── Tool 2: worded kind ──────────────────────────────────────────────────
@@ -358,7 +400,7 @@ const TEACHING_SLIDES: TeachingSlide[] = [
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // Suppress unused import warnings for helpers that aren't used in the stub generator.
-void (tStep as unknown); void (fmt as unknown); void (pickActive as unknown);
+void (tStep as unknown); void (fmt as unknown);
 
 // Exposes internals to the generator smoke-test suite (src/tests/generators.test.ts).
 // Every tool must export this. Add `levels: ["level1", "level2"]` if some levels
@@ -366,9 +408,22 @@ void (tStep as unknown); void (fmt as unknown); void (pickActive as unknown);
 export const __test = { TOOL_CONFIG, generateQuestion };
 
 export default function App() {
+  // Reactive (useDevMode, not the plain getDevMode() used inside
+  // generateQuestion above) so toggling Developing-tools mode and coming
+  // back to this page — no hard reload needed — shows/hides the demo pool
+  // correctly. TOOL_CONFIG itself stays a plain module constant; only this
+  // one sub-tool's multiSelect is overridden per render.
+  const devMode = useDevMode();
+  const config: ToolConfig = !devMode ? TOOL_CONFIG : {
+    ...TOOL_CONFIG,
+    tools: {
+      ...TOOL_CONFIG.tools,
+      tool1: { ...TOOL_CONFIG.tools.tool1, multiSelect: [QUESTION_TYPES_MS, NEGATIVE_COEFFS_DEMO] },
+    },
+  };
   return (
     <ToolShell
-      config={TOOL_CONFIG}
+      config={config}
       infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       teachingSlides={TEACHING_SLIDES}

@@ -146,24 +146,88 @@ export const MultiSelectSection = ({
   );
 };
 
-// Renders one or more independent multi-select pools, all sharing one flat values record.
+// A weighted 2-option pool (e.g. "Negative coefficients": non-negative vs
+// negative) is exactly the None/Mixed/Exclusive state space — the easier
+// (lower-weight) option active only, both active, or the harder option
+// active only — just reached by clicking through one compact button instead
+// of ticking two pill cells. Same ToolMultiSelect data, same pickActive/
+// weightOf/buildQuotaOverrides/sortByDifficulty pipeline underneath; this is
+// a rendering choice only. Gated on BOTH options carrying a `weight` (not
+// just "2 options") so a genuine peer choice like a 2-unit Units pool never
+// gets forced into a "None/Mixed/Exclusive" framing that wouldn't make sense
+// for it — see CLAUDE.md's "QO control types" section.
+const CYCLE_LABELS = ["None", "Mixed", "Exclusive"] as const;
+
+const CycleSelect = ({
+  multiSelect,
+  values,
+  onChange,
+}: {
+  multiSelect: { key: string; label: string; options: { value: string; label: string; weight?: number }[] };
+  values: Record<string, boolean>;
+  onChange: (k: string, v: boolean) => void;
+}) => {
+  const [base, hard] = [...multiSelect.options].sort((a, b) => (a.weight ?? 0) - (b.weight ?? 0));
+  const activeBase = values[base.value] ?? false;
+  const activeHard = values[hard.value] ?? false;
+  const state = activeHard && !activeBase ? 2 : activeBase && !activeHard ? 0 : 1;
+  const next = () => {
+    const n = (state + 1) % 3;
+    onChange(base.value, n !== 2);
+    onChange(hard.value, n !== 0);
+  };
+  return (
+    <button
+      onClick={next}
+      title={`${base.label} / ${hard.label}`}
+      className="flex items-center gap-2 px-3 py-2 rounded-lg border-2 border-gray-200 bg-white hover:border-blue-900 transition-colors text-left flex-shrink-0"
+    >
+      <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{multiSelect.label}</span>
+      <span
+        className={`text-sm font-bold px-2 py-0.5 rounded transition-colors ${
+          state === 0 ? "bg-gray-100 text-gray-600" : state === 1 ? "bg-blue-100 text-blue-900" : "bg-blue-900 text-white"
+        }`}
+      >
+        {CYCLE_LABELS[state]}
+      </span>
+    </button>
+  );
+};
+
+const isCycleGroup = (g: { options: { weight?: number }[] }) => g.options.length === 2 && g.options.every(o => o.weight !== undefined);
+
+// Renders one or more independent multi-select pools, all sharing one flat
+// values record. Consecutive weighted-2-option pools (see CycleSelect above)
+// are rendered as a compact flex-wrap row of cycle buttons instead of each
+// claiming its own full-width labeled block — several fit inline where a
+// growing QO popover would otherwise sprawl one bordered row per pool.
 const MultiSelectGroups = ({
   groups,
   values,
   onChange,
 }: {
-  groups: { key: string; label: string; info?: string; options: { value: string; label: string; sub?: string; divider?: boolean }[]; allowEmpty?: boolean }[];
+  groups: { key: string; label: string; info?: string; options: { value: string; label: string; sub?: string; divider?: boolean; weight?: number }[]; allowEmpty?: boolean }[];
   values: Record<string, boolean>;
   onChange: (k: string, v: boolean) => void;
-}) => (
-  <>
-    {groups.map(g => (
-      <div key={g.key} style={{ display: "contents" }}>
-        <MultiSelectSection multiSelect={g} values={values} onChange={onChange} />
-      </div>
-    ))}
-  </>
-);
+}) => {
+  const els: JSX.Element[] = [];
+  let i = 0;
+  while (i < groups.length) {
+    if (isCycleGroup(groups[i])) {
+      const run: typeof groups = [];
+      while (i < groups.length && isCycleGroup(groups[i])) { run.push(groups[i]); i++; }
+      els.push(
+        <div key={`cycle-${run[0].key}`} className="flex flex-wrap gap-3">
+          {run.map(g => <CycleSelect key={g.key} multiSelect={g} values={values} onChange={onChange} />)}
+        </div>
+      );
+    } else {
+      els.push(<MultiSelectSection key={groups[i].key} multiSelect={groups[i]} values={values} onChange={onChange} />);
+      i++;
+    }
+  }
+  return <>{els}</>;
+};
 
 export const VariablesSection = ({
   variables,
