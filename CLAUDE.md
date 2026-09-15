@@ -792,8 +792,19 @@ decimals allowed). A boolean `ToolVariable` is a worksheet-wide, all-or-nothing 
 `multiSelect` pool lets the generator draw a different option **per question** via `pickActive`,
 which is what the Smart Progressor (below) needs to see in order to order a worksheet easy-to-hard.
 Model such an option set as one ordinal pool (easiest rung `defaultActive: true`, harder rungs
-`false`) rather than a standalone toggle. Reference: `DIFFICULTY_TIER_L2` in
-`src/tools/Proportion/SpeedDistanceTime.tsx`.
+`false`) rather than a standalone toggle.
+
+**Rungs must be mutually exclusive, not overlapping caps, and any "harder" property must be
+guaranteed, not just more likely.** An "up to 20" rung that silently includes every "up to 10"
+value too doesn't read as strictly harder than the rung below it — give each rung its own disjoint
+range (e.g. a scale factor drawn from 11-20, not 1-20) instead of a rising single-sided cap. Same
+for a qualitative property like "the answer is a decimal": if the underlying generation only makes
+a decimal *possible* (e.g. ~80% of draws), a chunk of that rung's questions render indistinguishably
+from the easier rungs on a printed sheet — find the exact mathematical condition that produces the
+property and reject/retry any draw that fails it (see `SpeedDistanceTime.tsx`'s
+`buildDecimalValues`: `D` is only ever whole when the drawn speed is a multiple of the shape's
+`pp`, so rejecting that one case guarantees every decimals-tier answer is a genuine decimal).
+Reference: `DIFFICULTY_TIER_L2` in `src/tools/Proportion/SpeedDistanceTime.tsx`.
 
 **`dropdown.workedExampleOnly`** — set this `true` only when the dropdown changes nothing but
 the displayed working (a "Method" choice like Ratio Table vs Decimal, or FOIL vs Grid arrows) —

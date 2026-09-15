@@ -28,6 +28,21 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-15 — Smart Progressor: SpeedDistanceTime L2 tiers made mutually exclusive
+`src/tools/Proportion/SpeedDistanceTime.tsx`. Same-day refinement to the Smart Progressor pilot
+below: the three Level 2 Difficulty rungs used to be overlapping caps rather than a genuine
+ladder — `tables20` was "scale factor up to 20", which silently included every `tables10` fact
+too, and `decimals` only made a genuine decimal answer *possible* (~82% of draws, confirmed by a
+throwaway diagnostic test — the rest rendered as an indistinguishable whole number, e.g. a
+half-hour time with an even speed). Fixed both: `buildValues` now takes an explicit `kMin` so
+`tables10` draws its scale factor from 1-10 and `tables20` from 11-20 *only* (disjoint ranges);
+`buildDecimalValues` now rejects any draw whose speed is a multiple of the shape's `pp` — the
+exact condition that makes the distance come out whole — guaranteeing a genuine decimal on every
+draw (verified over 1000 draws with a throwaway test, then removed). Added the general rule to
+CLAUDE.md: Smart Progressor rungs must be mutually exclusive ranges (or a guaranteed property),
+not overlapping caps or a "sometimes" property, or the ramp doesn't visibly hold on a printed
+sheet.
+
 ## 2026-09-15 — Smart Progressor: core mechanism + SpeedDistanceTime L2 pilot
 `src/shared/types.ts`, `src/shared/helpers.ts`, `src/shared/index.ts`, `src/shared/ToolShell.tsx`,
 `src/tools/Proportion/SpeedDistanceTime.tsx`. New generic mechanism to order a generated worksheet

@@ -403,12 +403,22 @@ looking up `weightOf(pool.options, value)` and attaching it as `_difficultyScore
 question (see reference below). **One tool piloted**: `SpeedDistanceTime`'s Level 2, which used to
 combine an independent `tablesLimit` multiSelect (10×/20×) with a separate
 `ALLOW_TERMINATING_DECIMALS` boolean — collapsed into one ordinal pool `DIFFICULTY_TIER_L2`
-(`tables10` weight 1 → `tables20` weight 2 → `decimals` weight 3, the decimals rung fixed to the
-20× range rather than letting decimals+10× / decimals+20× exist as separate unordered cases). The
-general rule this pilot established: **a boolean QO option that represents "harder", not just
-"different", should be a rung in an ordinal `multiSelect` pool, not an independent
-`ToolVariable`** — only a per-question pool pick (via `pickActive`) gives the sort step something
-to see; a worksheet-wide boolean toggle can't be progressively ramped within one generation call.
+(`tables10` weight 1 → `tables20` weight 2 → `decimals` weight 3). Refined same-day to be
+**mutually exclusive, not overlapping caps**: `tables10` draws its scale factor `k` from 1-10 and
+`tables20` from 11-20 *only* (previously `tables20` was "up to 20", silently including every 1-10
+fact too, so it didn't read as strictly harder); `decimals` now **guarantees** a genuinely
+non-whole answer every draw (`buildDecimalValues` rejects any draw whose speed is a multiple of
+the shape's `pp`, the one condition that makes the distance come out whole — verified over 1000
+draws, was previously only ~82% decimal, so ~18% of "decimals-tier" questions used to render as a
+plain whole number, indistinguishable from the easier rungs on a printed sheet). The general rule
+this pilot established: **a boolean QO option that represents "harder", not just "different",
+should be a rung in an ordinal `multiSelect` pool, not an independent `ToolVariable`** — only a
+per-question pool pick (via `pickActive`) gives the sort step something to see; a worksheet-wide
+boolean toggle can't be progressively ramped within one generation call. A second rule this
+refinement adds: **rungs should be mutually exclusive ranges (or a guaranteed property), not
+independent caps that silently overlap** — an "up to N" cap that a lower rung's range is already a
+subset of doesn't read as harder, and a "sometimes" property undermines the visible ramp on a
+printed worksheet.
 
 **The real limitation, not yet solved:** this only orders questions that already exist in the
 generated batch — it can't *guarantee* question 1 is easy the way narrowing the QO snapshot per
