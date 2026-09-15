@@ -73,6 +73,7 @@ pedagogy-engine sweep.
 | **Tool expansion (Part 2)** | 🚧 | Per-tool content-growth backlog (new question types, broader coverage) — **tier-1 priority**, needs a dedicated sequencing pass |
 | **SmartGrapher** | ✅ | Mature, embeddable; used in 3 tools — **tier-1 priority**: wire into more tools opportunistically |
 | **Techniques engine** | 🚧 | Engine built; only 1 tool converted — build on demand for tier-1 needs, not a standalone sweep (see Priorities) |
+| **Smart Progressor** | 🚧 | Core mechanism (weighted `multiSelect` + worksheet sort) shipped; 1 of 27 tools piloted (`SpeedDistanceTime` L2) — needs a per-tool audit pass |
 | **Skills library** | ⏸ | Engine + backlog ready; 2 skills built — tier-2 (student-led), not a current priority |
 | **Core representations** | ⏸ | 3 of 6 visual families have Teach scenes — feeds Skills/Teach decks (tier 2), paused alongside them |
 | **Teach decks** | ⏸ | Engine built; one partial deck exists — least mature prong, secondary to tier-1 work |
@@ -383,6 +384,52 @@ confirm the exact moves when those tools migrate. **This table is exactly the ki
 Tool Audit's Part 1 (Infrastructure alignment) cross-references per tool** — as each tool is
 audited, update the priority/status columns here with real demand rather than the inferred
 guesses above.
+
+## Smart Progressor
+
+> **Tier-3 (infrastructure) — build on demand, not a sweep.** Orders a generated worksheet's
+> questions easy-to-hard instead of randomly, using difficulty *weights* already declared on a
+> tool's own QO options — no per-tool progression logic. Same "build on demand" posture as the
+> Techniques engine: the mechanism is generic and lives once in `ToolShell`/`shared/helpers.ts`,
+> but each tool only benefits once someone opts it in.
+
+**Where it's at.** Core mechanism shipped 2026-09-15: `ToolMultiSelect.options[].weight?: number`
+(`src/shared/types.ts`), the `weightOf`/`sortByDifficulty` helpers (`src/shared/helpers.ts`,
+exported from `"../../shared"`), and a sort step in `ToolShell`'s `handleGenerateWorksheet` that
+orders each worksheet block (or, for a differentiated sheet, each level's own block) ascending by
+a question's `_difficultyScore` — a no-op for any tool that never sets one, so every un-migrated
+tool is unaffected. A generator opts in by picking a QO value via `pickActive` as normal, then
+looking up `weightOf(pool.options, value)` and attaching it as `_difficultyScore` on the returned
+question (see reference below). **One tool piloted**: `SpeedDistanceTime`'s Level 2, which used to
+combine an independent `tablesLimit` multiSelect (10×/20×) with a separate
+`ALLOW_TERMINATING_DECIMALS` boolean — collapsed into one ordinal pool `DIFFICULTY_TIER_L2`
+(`tables10` weight 1 → `tables20` weight 2 → `decimals` weight 3, the decimals rung fixed to the
+20× range rather than letting decimals+10× / decimals+20× exist as separate unordered cases). The
+general rule this pilot established: **a boolean QO option that represents "harder", not just
+"different", should be a rung in an ordinal `multiSelect` pool, not an independent
+`ToolVariable`** — only a per-question pool pick (via `pickActive`) gives the sort step something
+to see; a worksheet-wide boolean toggle can't be progressively ramped within one generation call.
+
+**The real limitation, not yet solved:** this only orders questions that already exist in the
+generated batch — it can't *guarantee* question 1 is easy the way narrowing the QO snapshot per
+question index would (an unbuilt, more invasive "Option B" — see chat log 2026-09-15). It's a
+strong bias (heavier weights sort later) built from real per-question randomness, not a hard
+per-slot contract.
+
+**Possible next steps:**
+- Audit the other 26 tools' `variables`/`multiSelect` for booleans that are actually
+  difficulty-ordinal (convert, per the SDT pattern) vs. genuinely independent/stylistic (leave
+  alone) — same shape as the Techniques engine's per-tool sweep, worth tracking as a table here or
+  in `docs/TOOL_AUDIT.md` once a few more conversions establish the pattern.
+- Consider a light shuffle-within-band (rather than a strict stable sort) if pure ascending order
+  ever reads as too mechanical on a printed sheet — not needed yet, no evidence of it being a
+  problem.
+- Revisit "Option B" (per-question-index QO narrowing) only if a tool genuinely needs the hard
+  per-slot guarantee rather than the current bias.
+
+**Reference implementation:** `src/tools/Proportion/SpeedDistanceTime.tsx` — `DIFFICULTY_TIER_L2`
+(pool + weights), `L2_TIER` (value → params lookup), and `generateQuestion`'s level-2 branch
+(pick → `weightOf` → attach `_difficultyScore`).
 
 ## Skills library
 

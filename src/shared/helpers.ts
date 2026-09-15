@@ -18,6 +18,26 @@ export const pickActive = (values: Record<string, boolean>, options: { value: st
   return active.length > 0 ? active[Math.floor(Math.random() * active.length)].value : options[0].value;
 };
 
+// Smart Progressor — looks up a picked multiSelect option's difficulty
+// `weight` (0 if unweighted or not found). A generator calls this after
+// pickActive() to score the question it just built; ToolShell's worksheet
+// loop uses that score (see sortByDifficulty) to order easy-to-hard.
+export const weightOf = (options: { value: string; weight?: number }[], value: string): number =>
+  options.find(o => o.value === value)?.weight ?? 0;
+
+// Smart Progressor — reorders a worksheet's questions by ascending
+// `_difficultyScore` (a question field a generator sets via weightOf) so
+// earlier questions are the easier weighted options and later ones the
+// harder. A stable sort — equal-score questions keep their original
+// (random) relative order, so there's no robotic re-shuffling within a tier.
+// Tools that never attach `_difficultyScore` are returned unchanged, making
+// this a no-op for every tool that hasn't opted into weighted QO pools.
+export const sortByDifficulty = <Q extends { key: string }>(questions: Q[]): Q[] => {
+  const score = (q: Q) => (q as unknown as { _difficultyScore?: number })._difficultyScore;
+  if (!questions.some(q => score(q) !== undefined)) return questions;
+  return [...questions].sort((a, b) => (score(a) ?? 0) - (score(b) ?? 0));
+};
+
 // A tool's `multiSelect` may be a single group or an array of independent groups
 // (each rendered as its own pool in the QO popover). Normalize to an array.
 export const normalizeMultiSelect = <T extends { key: string }>(ms?: T | T[] | null): T[] =>

@@ -2,7 +2,7 @@ import { useState, useEffect, useLayoutEffect, useRef, useCallback, type ReactNo
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, SlidersHorizontal } from "lucide-react";
 import type { DifficultyLevel, AnyQuestion, WorkingStep, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
 import { LV_COLORS, LV_LABELS, LV_SELECTOR, getQuestionBg, getStepBg } from "./colors";
-import { normalizeMultiSelect, resolveMultiSelectValues, ansEq, makeUniqueQ } from "./helpers";
+import { normalizeMultiSelect, resolveMultiSelectValues, ansEq, makeUniqueQ, sortByDifficulty } from "./helpers";
 import { loadKaTeX } from "./katex";
 import { MathRenderer, InlineMath } from "./components/MathRenderer";
 import { QuestionDisplay, AnswerDisplay } from "./components/QuestionDisplay";
@@ -527,13 +527,20 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         const ddVal = levelDropdowns[lv] ?? (dd?.defaultValue ?? "");
         const msVals = getLevelMultiSelectValues(lv);
         const snap: QOSnapshot = { level: lv, variables: vars, dropdownValue: ddVal, multiSelectValues: msVals };
+        const levelQuestions: AnyQuestion[] = [];
         for (let i = 0; i < numQuestions; i++)
-          questions.push(stampQO(generateUniqueQ(currentTool, lv, vars, ddVal, usedKeys, msVals), snap));
+          levelQuestions.push(stampQO(generateUniqueQ(currentTool, lv, vars, ddVal, usedKeys, msVals), snap));
+        // Smart Progressor: order each level's own block easy-to-hard by
+        // _difficultyScore (see sortByDifficulty) — a no-op for tools that
+        // don't attach one.
+        questions.push(...sortByDifficulty(levelQuestions));
       });
     } else {
       const snap: QOSnapshot = { level: difficulty, variables: getVariableValues(), dropdownValue: getDropdownValue(), multiSelectValues: toolMultiSelect[currentTool] ?? {} };
+      const flatQuestions: AnyQuestion[] = [];
       for (let i = 0; i < numQuestions; i++)
-        questions.push(stampQO(generateUniqueQ(currentTool, difficulty, getVariableValues(), getDropdownValue(), usedKeys, toolMultiSelect[currentTool] ?? {}), snap));
+        flatQuestions.push(stampQO(generateUniqueQ(currentTool, difficulty, getVariableValues(), getDropdownValue(), usedKeys, toolMultiSelect[currentTool] ?? {}), snap));
+      questions.push(...sortByDifficulty(flatQuestions));
     }
     setWorksheet(questions);
     setShowWorksheetAnswers(false);

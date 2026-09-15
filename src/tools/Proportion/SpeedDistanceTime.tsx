@@ -2,7 +2,7 @@ import {
   ToolShell,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WordedQuestion, type QOSnapshot,
   type ToolMultiSelect, type ToolVariable, type ToolDropdown, type WorkingStep,
-  randInt, pick, pickActive, mStep, mStr, fmt, rStep, ratioTableStepRenderer,
+  randInt, pick, pickActive, mStep, mStr, fmt, rStep, ratioTableStepRenderer, weightOf,
 } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -103,10 +103,29 @@ const L3_TYPES: ToolMultiSelect = {
 
 const ALLOW_DECIMALS: ToolVariable = { key: "allowDecimals", label: "Allow decimal answers", defaultValue: false };
 
-// Level 2 only — replaces ALLOW_DECIMALS there rather than sitting alongside
-// it, since it's a strict upgrade: genuine 1-2dp decimals (always terminating)
-// instead of the old single ±0.5 nudge. See pickShape/buildDecimalValues.
-const ALLOW_TERMINATING_DECIMALS: ToolVariable = { key: "terminatingDecimals", label: "Allow terminating decimals (e.g. 1.6, 2.25)", defaultValue: false };
+// Level 2's difficulty ladder — one ordinal multiSelect pool (Smart
+// Progressor: see weightOf/sortByDifficulty in shared/helpers.ts) replacing
+// the old independent TABLES_MS + ALLOW_TERMINATING_DECIMALS combination at
+// this level. Each question draws one active rung via pickActive, weighted
+// so a worksheet's easier rungs land in its earlier questions. The
+// "decimals" rung always pairs with the 20× table range — the hardest
+// number size — rather than leaving decimals+10× and decimals+20× as
+// separate, unordered cases (see L2_TIER below and pickShape/
+// buildDecimalValues for what each rung actually changes).
+const DIFFICULTY_TIER_L2: ToolMultiSelect = {
+  key: "difficultyTierL2", label: "Difficulty",
+  options: [
+    { value: "tables10", label: "Up to 10×10", defaultActive: true, weight: 1 },
+    { value: "tables20", label: "Up to 20×20", defaultActive: false, weight: 2 },
+    { value: "decimals", label: "Allow terminating decimals (e.g. 1.6, 2.25)", defaultActive: false, weight: 3 },
+  ],
+};
+
+const L2_TIER: Record<string, { tablesLimit: number; decimalsMode: boolean }> = {
+  tables10: { tablesLimit: 10, decimalsMode: false },
+  tables20: { tablesLimit: 20, decimalsMode: false },
+  decimals: { tablesLimit: 20, decimalsMode: true },
+};
 
 const makeSubtool = (name: string) => ({
   name,
@@ -115,7 +134,7 @@ const makeSubtool = (name: string) => ({
   multiSelect: [UNITS_L1, TABLES_MS],
   difficultySettings: {
     level1: { multiSelect: [UNITS_L1, TABLES_MS] },
-    level2: { variables: [ALLOW_TERMINATING_DECIMALS], multiSelect: [UNITS_L23, TABLES_MS] },
+    level2: { variables: [], multiSelect: [UNITS_L23, DIFFICULTY_TIER_L2] },
     level3: { multiSelect: [UNITS_L23, L3_TYPES, TABLES_MS] },
   },
 });
@@ -160,9 +179,9 @@ const INFO_SECTIONS: InfoSection[] = [
     { label: "Time wording", detail: "A given time is always stated in plain minutes, or hours & minutes for a compound time (e.g. '1 hour 30 minutes') — never as a spoken fraction (e.g. 'a quarter of an hour') or a decimal." },
     { label: "Method", detail: "Ratio Table (default) scales to/from one hour using whole-number steps. Decimal instead converts the time to decimal hours and divides/multiplies by that — shown only where the conversion is exact; otherwise it falls back to the Ratio Table method." },
     { label: "Question Types (Level 3)", detail: "Compound times (e.g. 1 hr 30) and/or awkward minute values (e.g. 40 min)." },
-    { label: "Times Tables", detail: "Caps every multiplication/division fact the question relies on — including the scale factor in the ratio table working — so a student is never asked to invert a fact outside their tables. Doesn't restrict Level 2's minute value itself, since scaling a divisor of 60 up to one hour is a fixed conversion fact rather than a times-tables one. 'Up to 10×10' is on by default; tick 'Up to 20×20' as well to also allow larger, more demanding numbers." },
-    { label: "Allow decimal answers", detail: "Lets the computed value be a terminating decimal (e.g. 12.5) instead of always a whole number." },
-    { label: "Allow terminating decimals (Level 2 only)", detail: "Replaces 'Allow decimal answers' at Level 2. The given time is a tenth, fifth, quarter or half of an hour, and a whole-number speed/distance is scaled by that exact fraction — so the computed answer can genuinely land on a 1-2dp decimal (e.g. 8 km/h for a fifth of an hour = 1.6 km), never a repeating one (no ⅓ or ⅙-hour times)." },
+    { label: "Times Tables (Levels 1 & 3)", detail: "Caps every multiplication/division fact the question relies on — including the scale factor in the ratio table working — so a student is never asked to invert a fact outside their tables. Doesn't restrict Level 2's minute value itself, since scaling a divisor of 60 up to one hour is a fixed conversion fact rather than a times-tables one. 'Up to 10×10' is on by default; tick 'Up to 20×20' as well to also allow larger, more demanding numbers." },
+    { label: "Allow decimal answers (Levels 1 & 3)", detail: "Lets the computed value be a terminating decimal (e.g. 12.5) instead of always a whole number." },
+    { label: "Difficulty (Level 2)", detail: "One pool of three rungs, easiest first: 'Up to 10×10' (on by default), 'Up to 20×20', and 'Allow terminating decimals' (pairs with the 20×20 range — the given time is a tenth, fifth, quarter or half of an hour, and a whole-number speed/distance is scaled by that exact fraction, so the computed answer can genuinely land on a 1-2dp decimal, e.g. 8 km/h for a fifth of an hour = 1.6 km, never a repeating one). Tick more than one rung to mix them in a worksheet — on the Worksheet tab, questions are ordered easiest-rung-first so a sheet ramps up rather than mixing difficulties at random." },
   ]},
 ];
 
@@ -558,16 +577,30 @@ const generateQuestion = (
 ): WordedQuestion => {
   const t = tool as ToolType;
   const allowDecimals = variables.allowDecimals === true;
-  const decimalsMode = variables.terminatingDecimals === true;
   const method = (dropdownValue || "ratioTable") as WorkingMethod;
   const unitOptions = level === "level1" ? UNITS_L1.options : UNITS_L23.options;
   const family = pickActive(multiSelectValues, unitOptions) as UnitFamily;
   const l3type = level === "level3" ? (pickActive(multiSelectValues, L3_TYPES.options) as L3Type) : "awkwardMinutes";
-  const tablesLimit = Number(pickActive(multiSelectValues, TABLES_MS.options));
 
-  if (t === "speed") return genSpeed(level, family, l3type, allowDecimals, decimalsMode, method, tablesLimit);
-  if (t === "distance") return genDistance(level, family, l3type, allowDecimals, decimalsMode, method, tablesLimit);
-  return genTime(level, family, l3type, allowDecimals, decimalsMode, method, tablesLimit);
+  // Level 2 draws its tablesLimit/decimalsMode from the DIFFICULTY_TIER_L2
+  // ladder (Smart Progressor) instead of the independent pool/variable the
+  // other levels still use.
+  let tablesLimit: number;
+  let decimalsMode: boolean;
+  let difficultyScore: number | undefined;
+  if (level === "level2") {
+    const tier = pickActive(multiSelectValues, DIFFICULTY_TIER_L2.options);
+    ({ tablesLimit, decimalsMode } = L2_TIER[tier]);
+    difficultyScore = weightOf(DIFFICULTY_TIER_L2.options, tier);
+  } else {
+    tablesLimit = Number(pickActive(multiSelectValues, TABLES_MS.options));
+    decimalsMode = false;
+  }
+
+  const q = t === "speed" ? genSpeed(level, family, l3type, allowDecimals, decimalsMode, method, tablesLimit)
+    : t === "distance" ? genDistance(level, family, l3type, allowDecimals, decimalsMode, method, tablesLimit)
+    : genTime(level, family, l3type, allowDecimals, decimalsMode, method, tablesLimit);
+  return difficultyScore === undefined ? q : ({ ...q, _difficultyScore: difficultyScore } as unknown as WordedQuestion);
 };
 
 // Worksheet uniqueness is automatic — ToolShell wraps generateQuestion with the

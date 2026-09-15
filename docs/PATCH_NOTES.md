@@ -28,6 +28,25 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-15 — Smart Progressor: core mechanism + SpeedDistanceTime L2 pilot
+`src/shared/types.ts`, `src/shared/helpers.ts`, `src/shared/index.ts`, `src/shared/ToolShell.tsx`,
+`src/tools/Proportion/SpeedDistanceTime.tsx`. New generic mechanism to order a generated worksheet
+easy-to-hard instead of randomly: `ToolMultiSelect.options[]` gets an optional `weight?: number`;
+two new helpers `weightOf` (look up a picked option's weight) and `sortByDifficulty` (stable
+ascending sort by a question's `_difficultyScore`, no-op if none is set); `ToolShell`'s
+`handleGenerateWorksheet` now sorts each worksheet block (each level's own block, for a
+differentiated sheet) through it. Fully opt-in — no change to any tool that doesn't set
+`_difficultyScore`, confirmed by the full `npm test` suite passing unchanged (320 tests). Piloted
+on `SpeedDistanceTime`'s Level 2: collapsed the independent `tablesLimit` multiSelect (10×/20×) +
+`ALLOW_TERMINATING_DECIMALS` boolean into one ordinal pool `DIFFICULTY_TIER_L2` (10×10 → 20×20 →
+decimals, weights 1/2/3), so a Level 2 worksheet with more than one rung ticked now ramps up
+instead of mixing difficulties at random. Established the general conversion rule (a boolean QO
+option that means "harder" should be a multiSelect rung, not an independent toggle — only a
+per-question pool pick gives the sort step something to see) — see `docs/PROJECTS.md`'s new
+**Smart Progressor** prong for the rule, the remaining limitation (orders an already-generated
+batch; doesn't guarantee a specific question index), and the next-steps audit across the other 26
+tools.
+
 ## 2026-09-15 — Speed, Distance & Time: fix decimal-mode speed stuck at 1-10
 `src/tools/Proportion/SpeedDistanceTime.tsx`. Reported: with "Allow terminating decimals" on,
 the speed/rate was always 1-10 regardless of the Times Tables setting — traced to

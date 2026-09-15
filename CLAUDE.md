@@ -292,7 +292,7 @@ import { type PrintMode } from "../../shared";
 `ToolShell` · `TeachingDeck` · `SlideDeck` · `MathRenderer` · `InlineMath` · `QuestionDisplay` · `AnswerDisplay` · `DifficultyToggle` · `StandardQOPopover` · `DiffQOPopover` · `InlineQOPanel` · `InfoModal` · `MenuDropdown` · `PrintSplitButton` · `SkillLabel` · `SkillOverlay` · `WorkedExampleSteps` · `TechniquePreviewPage`
 
 **Helpers**:
-`randInt` · `pick` · `fracStr` · `mStr` · `pickActive` · `normalizeMultiSelect` · `step` · `tStep` · `mStep` · `fmt` · `ansEq` · `makeUniqueQ` · `stripSkillMarkers` · `SKILL_MARKER_RE` · `slideMaxStep`
+`randInt` · `pick` · `fracStr` · `mStr` · `pickActive` · `normalizeMultiSelect` · `step` · `tStep` · `mStep` · `fmt` · `ansEq` · `makeUniqueQ` · `stripSkillMarkers` · `SKILL_MARKER_RE` · `slideMaxStep` · `weightOf` · `sortByDifficulty`
 
 **Skill library**: `SKILLS` · `getSkill` (see "Skill library" section)
 
@@ -639,6 +639,8 @@ Pass it to `<ToolShell reformatQuestion={reformatQuestion} />`.
 | `fmt(n, dp?)` | `(n: number, dp?: number) => string` | Number → string, trailing zeros stripped, default 2dp |
 | `ansEq(answer)` | `(answer: string) => string` | Prepends `"= "` unless answer already contains `=` |
 | `normalizeMultiSelect(ms)` | `<T>(ms?: T \| T[] \| null) => T[]` | Normalises single/array multiSelect config |
+| `weightOf(options, value)` | `(options: {value: string; weight?: number}[], value: string) => number` | Smart Progressor — looks up a picked multiSelect option's difficulty `weight` (0 if unset) |
+| `sortByDifficulty(questions)` | `<Q extends {key: string}>(questions: Q[]) => Q[]` | Smart Progressor — stable ascending sort by each question's `_difficultyScore`; no-op if none is set. Called automatically by `ToolShell`'s worksheet generation — never call it in a tool file |
 
 ### Working step rendering — how each type appears
 
@@ -784,6 +786,15 @@ const TOOL_CONFIG: ToolConfig = {
 | `dropdown` | A single mutually-exclusive setting (e.g. method choice, display format). |
 | `variables` | Independent on/off toggles. Use sparingly — prefer `multiSelect`. |
 
+**Prefer `multiSelect` over `variables` whenever an option represents difficulty, not just
+variety** — i.e. it makes questions "harder", not just "different" (e.g. a wider number range, or
+decimals allowed). A boolean `ToolVariable` is a worksheet-wide, all-or-nothing switch; a
+`multiSelect` pool lets the generator draw a different option **per question** via `pickActive`,
+which is what the Smart Progressor (below) needs to see in order to order a worksheet easy-to-hard.
+Model such an option set as one ordinal pool (easiest rung `defaultActive: true`, harder rungs
+`false`) rather than a standalone toggle. Reference: `DIFFICULTY_TIER_L2` in
+`src/tools/Proportion/SpeedDistanceTime.tsx`.
+
 **`dropdown.workedExampleOnly`** — set this `true` only when the dropdown changes nothing but
 the displayed working (a "Method" choice like Ratio Table vs Decimal, or FOIL vs Grid arrows) —
 the question and answer are identical across every option. ToolShell then hides it from the
@@ -803,6 +814,37 @@ difficultySettings: {
 ```
 
 Each level independently overrides `dropdown`, `variables`, and/or `multiSelect`. Omitted keys inherit the tool-level default.
+
+### Smart Progressor — ordering a worksheet easy-to-hard
+
+A generic, opt-in mechanism: give any `multiSelect` option a difficulty `weight?: number`
+(easiest = lowest), have `generateQuestion` attach the picked option's weight as
+`_difficultyScore` on the question it returns, and `ToolShell`'s worksheet generation
+automatically sorts each generated block (each level's own block, for a differentiated sheet)
+ascending by that score — a no-op for any question without one, so this is entirely opt-in per
+tool.
+
+```ts
+const DIFFICULTY_TIER: ToolMultiSelect = {
+  key: "difficultyTier", label: "Difficulty",
+  options: [
+    { value: "easy", label: "Easy", defaultActive: true, weight: 1 },
+    { value: "hard", label: "Hard", defaultActive: false, weight: 2 },
+  ],
+};
+
+// in generateQuestion:
+const tier = pickActive(multiSelectValues, DIFFICULTY_TIER.options);
+const q = /* ...build the question using tier... */;
+return { ...q, _difficultyScore: weightOf(DIFFICULTY_TIER.options, tier) } as unknown as AnyQuestion;
+```
+
+- Only orders questions that already exist in the generated batch — it's a strong bias from
+  real per-question randomness, not a hard per-slot guarantee (question 1 isn't *guaranteed* the
+  easiest option, just heavily favoured to be).
+- Never call `sortByDifficulty` directly in a tool file — `ToolShell` calls it automatically.
+- Reference implementation and the general boolean→multiSelect conversion rule: `docs/PROJECTS.md`
+  → "Smart Progressor" prong, and `DIFFICULTY_TIER_L2` in `src/tools/Proportion/SpeedDistanceTime.tsx`.
 
 ---
 
