@@ -175,7 +175,7 @@ const INFO_SECTIONS: InfoSection[] = [
     { label: "Time Notation", detail: "How a split time is worded — minutes, hours & minutes, or a spoken fraction (e.g. 'a quarter of an hour'). Never a decimal — a real question wouldn't say '0.25 hours'." },
     { label: "Method", detail: "Ratio Table (default) scales to/from one hour using whole-number steps. Decimal instead converts the time to decimal hours and divides/multiplies by that — shown only where the conversion is exact; otherwise it falls back to the Ratio Table method." },
     { label: "Question Types (Level 3)", detail: "Compound times (e.g. 1 hr 30) and/or awkward minute values (e.g. 40 min)." },
-    { label: "Times Tables", detail: "Caps every multiplication/division fact the question relies on — including the scale factor in the ratio table working — so a student is never asked to invert a fact outside their tables. 'Up to 10×10' is on by default; tick 'Up to 20×20' as well to also allow larger, more demanding numbers." },
+    { label: "Times Tables", detail: "Caps every multiplication/division fact the question relies on — including the scale factor in the ratio table working — so a student is never asked to invert a fact outside their tables. Doesn't restrict Level 2's minute value itself, since scaling a divisor of 60 up to one hour is a fixed conversion fact rather than a times-tables one. 'Up to 10×10' is on by default; tick 'Up to 20×20' as well to also allow larger, more demanding numbers." },
     { label: "Allow decimal answers", detail: "Lets the computed value be a terminating decimal (e.g. 12.5) instead of always a whole number." },
   ]},
 ];
@@ -184,14 +184,16 @@ const INFO_SECTIONS: InfoSection[] = [
 
 const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
 
-// Divisors of 60 (excluding 60 itself) — L2 picks any of these for "minutes"/
-// "decimal" notation. "Worded" is further restricted below to only the ones
-// with a genuinely natural spoken form — nobody says "a fifth of an hour" or
-// "a twelfth of an hour" in real speech, even though they're valid fractions;
-// those shapes just never offer "worded" and fall back to minutes/decimal.
-const L2_MINUTES = [5, 6, 10, 12, 15, 20, 30];
+// Divisors of 60 (excluding 60 itself, and excluding 1 — a 1-minute road
+// journey can't land a realistic speed within this tool's distance/speed
+// ranges for any family) — L2 picks any of these for "minutes"/"decimal"
+// notation. "Worded" is available for every value with a natural spoken
+// fraction (half, third, quarter, fifth, sixth, tenth, twelfth); 2 and 3
+// minutes have no natural worded form and always show as plain minutes.
+const L2_MINUTES = [2, 3, 5, 6, 10, 12, 15, 20, 30];
 const WORDED_L2: Record<number, string> = {
   30: "half an hour", 20: "a third of an hour", 15: "a quarter of an hour",
+  12: "a fifth of an hour", 10: "a sixth of an hour", 6: "a tenth of an hour", 5: "a twelfth of an hour",
 };
 
 // L3 compound minute-parts — quarter/half/three-quarters only (a third would
@@ -209,7 +211,11 @@ interface Shape { kind: "l1" | "l2" | "l3compound" | "l3awkward"; TM: number; H?
 // The reduced pp/qq (60/TM in lowest terms) are the actual divisors the ratio
 // table divides/multiplies by — the fact a student must invert. Both must fit
 // the selected tables limit, or the working asks for a fact outside it (e.g.
-// TM=5 gives pp=12 — a ×12 step, fine at 20×20 but too big at 10×10).
+// a compound time giving qq=11 is fine at 20×20 but too big at 10×10). Used
+// for L3 shapes only — L2's TM is always an exact divisor of 60 (qq is always
+// 1), so its pp is purely "minutes in an hour", a fixed conversion fact
+// rather than an arbitrary times-tables one, and is exempt from this cap
+// (see pickShape's level2 branch).
 const withinTables = (TM: number, tablesLimit: number): boolean => {
   const g = gcd(60, TM);
   return 60 / g <= tablesLimit && TM / g <= tablesLimit;
@@ -239,7 +245,8 @@ const pickShape = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, t
     return { kind: "l1", TM: T0 * 60 };
   }
   if (level === "level2") {
-    let options = L2_MINUTES.filter((TM) => withinTables(TM, tablesLimit));
+    // Not gated by tablesLimit — see withinTables' comment above.
+    let options: number[] = L2_MINUTES;
     // If "Minutes" is switched off (worded-only), only offer TM values that
     // actually have a worded phrasing — otherwise pickNotation below would be
     // forced to fall back to "X minutes" anyway, silently ignoring the QO.
@@ -247,7 +254,7 @@ const pickShape = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, t
       const wordedOnly = options.filter((TM) => TM in WORDED_L2);
       if (wordedOnly.length) options = wordedOnly;
     }
-    return { kind: "l2", TM: pick(options.length ? options : L2_MINUTES) };
+    return { kind: "l2", TM: pick(options) };
   }
   if (l3type === "compoundTime") {
     const combos = compoundCombos(tablesLimit);

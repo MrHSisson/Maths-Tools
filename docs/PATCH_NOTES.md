@@ -28,6 +28,29 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-15 — Speed, Distance & Time: reintroduce fifth/sixth/tenth/twelfth worded fractions
+`src/tools/Proportion/SpeedDistanceTime.tsx`. Requested: reintroduce Level 2 worded fractions
+previously restricted to just half/third/quarter, and widen the plain-minutes pool.
+- `WORDED_L2` now also covers fifth (12 min), sixth (10 min), tenth (6 min) and twelfth (5 min),
+  alongside the existing half/third/quarter — all 7 divisors of 60 that have a natural spoken
+  fraction form.
+- `L2_MINUTES` widened to add 2 and 3 minutes as plain-minutes-only values (no worded form).
+  1 minute was considered but excluded: for both Level 2 unit families (mph, km/h — m/s isn't
+  offered above Level 1), a 1-minute journey forces speed = 60×distance, which can't land inside
+  either family's realistic distance/speed window (confirmed via a temporary 500-generation
+  check per family/tablesLimit combo before this was ruled out — no valid pair exists, so it
+  would have silently produced e.g. a "180 mph car").
+- The Level 2 minute value is now exempt from the "Times Tables" QO cap (`pickShape`'s level2
+  branch no longer filters through `withinTables`): since Level 2's TM is always an exact
+  divisor of 60, its ratio-table scale factor is purely "minutes in an hour" — a fixed
+  conversion fact, not an arbitrary times-tables one — so 2/3-minute values are reachable at
+  any Times Tables setting rather than needing the wider "20×20" tier. L3's genuine times-tables
+  gating (compound times, awkward minutes) is untouched.
+- Verified with temporary regression checks (removed before commit): speeds stay within each
+  family's realistic range across all tablesLimit/family combos (2,000 generations), all 7
+  worded fractions surface over 3,000 generations, and TM=1 never appears. `npm run build` and
+  `npm test` both clean (218 tests, including `organisation.test.ts`).
+
 ## 2026-09-15 — Speed, Distance & Time: fix "Time Notation" QO not restricting at Level 2
 `src/tools/Proportion/SpeedDistanceTime.tsx`. Reported: unchecking "Minutes" in the Level 2
 "Time Notation" QO (wanting worded-fraction-only questions) still produced plain "X minutes"
