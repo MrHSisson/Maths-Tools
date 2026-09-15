@@ -787,13 +787,25 @@ const TOOL_CONFIG: ToolConfig = {
 | `dropdown` | A single mutually-exclusive setting (e.g. method choice, display format). |
 | `variables` | Independent on/off toggles. Use sparingly — prefer `multiSelect`. |
 
-**Prefer `multiSelect` over `variables` whenever an option represents difficulty, not just
-variety** — i.e. it makes questions "harder", not just "different" (e.g. a wider number range, or
-decimals allowed). A boolean `ToolVariable` is a worksheet-wide, all-or-nothing switch; a
-`multiSelect` pool lets the generator draw a different option **per question** via `pickActive`,
-which is what the Smart Progressor (below) needs to see in order to order a worksheet easy-to-hard.
-Model such an option set as one ordinal pool (easiest rung `defaultActive: true`, harder rungs
-`false`) rather than a standalone toggle.
+**The deciding test between `multiSelect` and `variables` is mutual exclusivity, not difficulty.**
+A `multiSelect` pool is for any option set where exactly **one** member applies to a given
+question — the generator draws one active option per question via `pickActive`, rendered as the
+same row-of-cells UI either way. That covers pure variety (Units: mph vs km/h vs m/s, no weight)
+*and* an ordinal difficulty ladder (a weighted pool the Smart Progressor can order and roughly
+balance across active rungs — see below, and works identically whether the pool has 2 active
+options or 5, no per-count special-casing needed) — difficulty-vs-variety only decides whether you
+add `weight`, it doesn't decide the control type. A `ToolVariable` (boolean toggle) is for a
+property that's genuinely **independent** — switching it on doesn't replace anything, and if
+several such toggles are on at once, **all of them apply to the same question simultaneously**
+(rare, but real — e.g. "allow negative coefficients" and "allow non-integer constants" both true
+on one question, stacking rather than choosing between them).
+
+**Before converting a boolean into a multiSelect ladder, check combinability first.** If the
+property can stack with a sibling property on one question, it must stay independent — either as
+its own `ToolVariable`, or as its own separate multiSelect pool — never merged into the same pool
+as something it can coexist with, since a pool only ever picks **one** of its options per
+question. Model a genuinely ordinal, mutually-exclusive option set as one pool (easiest rung
+`defaultActive: true`, harder rungs `false`) rather than a standalone toggle.
 
 **Rungs must be mutually exclusive, not overlapping caps, and any "harder" property must be
 guaranteed, not just more likely.** An "up to 20" rung that silently includes every "up to 10"

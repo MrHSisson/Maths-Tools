@@ -28,6 +28,19 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-15 — Smart Progressor: sharpen the multiSelect-vs-variables rule; verify quota generalizes
+`CLAUDE.md`, `docs/PROJECTS.md`. Doc-only session close-out. Verified `buildQuotaOverrides` (the
+even-split mechanism from the entry below) needs no extra work to generalize beyond 3 active
+options — a throwaway test confirmed 2, 4 and 5 active options all stay within tolerance with
+genuine variety across runs, including tight ratios (5 options over 15 questions, 4 over 6), then
+removed. Also sharpened the audit's deciding test in CLAUDE.md's "QO control types" section:
+whether a boolean is a `multiSelect` conversion candidate turns on **mutual exclusivity** (does
+exactly one option ever apply to a given question), not "does it represent difficulty" — a boolean
+that can genuinely combine with a sibling on the same question (rare, but real) must stay
+independent, either as its own `ToolVariable` or its own separate pool, never folded into a pool
+alongside something it can coexist with. `docs/PROJECTS.md`'s Smart Progressor prong carries the
+same rule for the upcoming 26-tool audit.
+
 ## 2026-09-15 — Smart Progressor: loosen the even split to a tolerance, not an exact lock
 `src/shared/helpers.ts`, `src/shared/ToolShell.tsx`. Same-day correction to the entry below: the
 first cut of `buildQuotaOverrides` forced an *exact* split every time (15 questions / 3 active

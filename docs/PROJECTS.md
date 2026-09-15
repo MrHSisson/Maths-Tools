@@ -448,11 +448,25 @@ constrained), and the original "Option B" (narrowing the QO snapshot passed into
 `generateQuestion` itself, per question index) still isn't expected to be needed — the balancing
 mechanism gets a good-enough practical outcome without touching `generateQuestion`'s contract.
 
+**The audit's deciding test, sharpened 2026-09-15: mutual exclusivity, not difficulty.** A boolean
+is a conversion candidate only if it's genuinely mutually exclusive with its sibling options (only
+one applies to a given question) — that's what makes it fit a `multiSelect` pool at all, difficulty
+weighting is a separate add-on on top. A boolean that can *combine* with a sibling on the same
+question (rare, but real — e.g. two independent flags both true at once) must stay independent:
+either its own `ToolVariable`, or its own separate multiSelect pool — never folded into a pool
+alongside something it can coexist with. See CLAUDE.md's "QO control types" section for the full
+rule. The quota-balancing mechanism itself needs no extra work for this: `buildQuotaOverrides` is
+already generic over the active-option count (verified directly for 2, 4 and 5 active options,
+including tight ratios like 5 options over only 15 questions or 4 over 6 — genuine variety, always
+within tolerance, no per-count special-casing).
+
 **Possible next steps:**
-- Audit the other 26 tools' `variables`/`multiSelect` for booleans that are actually
-  difficulty-ordinal (convert, per the SDT pattern) vs. genuinely independent/stylistic (leave
-  alone) — same shape as the Techniques engine's per-tool sweep, worth tracking as a table here or
-  in `docs/TOOL_AUDIT.md` once a few more conversions establish the pattern.
+- Audit the other 26 tools' `variables`/`multiSelect` against the mutual-exclusivity test above:
+  convert genuinely mutually-exclusive, difficulty-ordinal booleans (per the SDT pattern); leave
+  combinable/independent ones as `variables`; split anything that's mutually exclusive but *not*
+  difficulty-ordinal (pure variety) into its own unweighted pool rather than forcing it into a
+  difficulty ladder — same shape as the Techniques engine's per-tool sweep, worth tracking as a
+  table here or in `docs/TOOL_AUDIT.md` once a few more conversions establish the pattern.
 - Consider a light shuffle-within-band (rather than a strict stable sort) if pure ascending order
   ever reads as too mechanical on a printed sheet — not needed yet, no evidence of it being a
   problem.
