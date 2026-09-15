@@ -103,6 +103,11 @@ const L3_TYPES: ToolMultiSelect = {
 
 const ALLOW_DECIMALS: ToolVariable = { key: "allowDecimals", label: "Allow decimal answers", defaultValue: false };
 
+// Level 2 only — replaces ALLOW_DECIMALS there rather than sitting alongside
+// it, since it's a strict upgrade: genuine 1-2dp decimals (always terminating)
+// instead of the old single ±0.5 nudge. See pickShape/buildDecimalValues.
+const ALLOW_TERMINATING_DECIMALS: ToolVariable = { key: "terminatingDecimals", label: "Allow terminating decimals (e.g. 1.6, 2.25)", defaultValue: false };
+
 const makeSubtool = (name: string) => ({
   name,
   variables: [ALLOW_DECIMALS],
@@ -110,7 +115,7 @@ const makeSubtool = (name: string) => ({
   multiSelect: [UNITS_L1, TABLES_MS],
   difficultySettings: {
     level1: { multiSelect: [UNITS_L1, TABLES_MS] },
-    level2: { multiSelect: [UNITS_L23, TABLES_MS] },
+    level2: { variables: [ALLOW_TERMINATING_DECIMALS], multiSelect: [UNITS_L23, TABLES_MS] },
     level3: { multiSelect: [UNITS_L23, L3_TYPES, TABLES_MS] },
   },
 });
@@ -157,6 +162,7 @@ const INFO_SECTIONS: InfoSection[] = [
     { label: "Question Types (Level 3)", detail: "Compound times (e.g. 1 hr 30) and/or awkward minute values (e.g. 40 min)." },
     { label: "Times Tables", detail: "Caps every multiplication/division fact the question relies on — including the scale factor in the ratio table working — so a student is never asked to invert a fact outside their tables. Doesn't restrict Level 2's minute value itself, since scaling a divisor of 60 up to one hour is a fixed conversion fact rather than a times-tables one. 'Up to 10×10' is on by default; tick 'Up to 20×20' as well to also allow larger, more demanding numbers." },
     { label: "Allow decimal answers", detail: "Lets the computed value be a terminating decimal (e.g. 12.5) instead of always a whole number." },
+    { label: "Allow terminating decimals (Level 2 only)", detail: "Replaces 'Allow decimal answers' at Level 2. The given time is a tenth, fifth, quarter or half of an hour, and a whole-number speed/distance is scaled by that exact fraction — so the computed answer can genuinely land on a 1-2dp decimal (e.g. 8 km/h for a fifth of an hour = 1.6 km), never a repeating one (no ⅓ or ⅙-hour times)." },
   ]},
 ];
 
@@ -166,9 +172,19 @@ const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
 
 // Divisors of 60 (excluding 60 itself, and excluding 1 — a 1-minute road
 // journey can't land a realistic speed within this tool's distance/speed
-// ranges for any family) — L2 picks any of these, always worded as plain
-// minutes (e.g. "15 minutes"), never as a spoken fraction or a decimal.
+// ranges for any family) — L2 picks any of these. The given TIME is always
+// worded as plain minutes (e.g. "15 minutes"), never as a spoken fraction or
+// a decimal — see formatDuration. The computed distance/speed answer CAN be
+// a decimal when "Allow terminating decimals" is on — see L2_DECIMAL_MINUTES.
 const L2_MINUTES = [2, 3, 5, 6, 10, 12, 15, 20, 30];
+
+// The subset of L2_MINUTES used when "Allow terminating decimals" is on —
+// only values whose TM/60 fraction terminates AND leaves enough headroom
+// under the Times Tables cap to reach a realistic minimum distance (~1).
+// TM=3 (a twentieth) terminates but needs a base rate of 20 just to reach
+// D=1, so it's excluded along with the non-terminating values (2, 5, 10, 20
+// — e.g. 10 minutes = 1/6 hour = 0.1666…). See buildDecimalValues.
+const L2_DECIMAL_MINUTES = [6, 12, 15, 30];
 
 // L3 compound minute-parts — quarter/half/three-quarters only (a third would
 // give a non-terminating decimal hours value, breaking the "decimal" WORKING
@@ -208,7 +224,7 @@ const compoundCombos = (tablesLimit: number): { H: number; Mfrac: number }[] => 
 // tablesLimit (10 or 20, from the "Times Tables" QO) caps every fact the
 // question ends up needing: T0 directly here, pp/qq via withinTables below,
 // and the scale factor k in buildValues.
-const pickShape = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, tablesLimit: number): Shape => {
+const pickShape = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, tablesLimit: number, decimalsMode: boolean): Shape => {
   if (level === "level1") {
     const maxT0 = Math.min(family === "mps" ? 10 : 12, tablesLimit);
     const T0 = randInt(2, maxT0);
@@ -216,7 +232,7 @@ const pickShape = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, t
   }
   if (level === "level2") {
     // Not gated by tablesLimit — see withinTables' comment above.
-    return { kind: "l2", TM: pick(L2_MINUTES) };
+    return { kind: "l2", TM: pick(decimalsMode ? L2_DECIMAL_MINUTES : L2_MINUTES) };
   }
   if (l3type === "compoundTime") {
     const combos = compoundCombos(tablesLimit);
@@ -240,7 +256,10 @@ const pickShape = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, t
   return { kind: "l3awkward", TM: 40 };
 };
 
-const numLatex = (n: number): string => (Number.isInteger(n) ? String(n) : n.toFixed(1));
+// fmt's default (2dp, trailing zeros stripped) is a strict superset of the
+// old integer/1dp-only behaviour — also needed for "Allow terminating
+// decimals" answers like 2.25.
+const numLatex = (n: number): string => fmt(n);
 
 // Scale-factor label for the ratio table, reduced to lowest terms as n/d.
 const scaleOp = (n: number, d: number): string =>
@@ -288,6 +307,35 @@ const buildValues = (TM: number, f: FamilyInfo, allowDecimals: boolean, tablesLi
   return { D: k * qq, S: k * pp, pp, qq };
 };
 
+// Used instead of buildValues for L2 shapes when "Allow terminating
+// decimals" is on (TM drawn from L2_DECIMAL_MINUTES, so TM/60 always
+// terminates within 2dp). Rather than forcing D and S into clean multiples
+// of pp/qq, the rate S is picked freely as a whole number within the Times
+// Tables cap and the distance D is derived by scaling with the exact
+// fraction — so D can genuinely land on a 1-2dp decimal (e.g. 8 × 1/5 = 1.6)
+// instead of always being a clean multiple. Uses a distance floor of 1
+// rather than the family's usual distMin — a small decimal distance (e.g.
+// 1.6 miles) is a perfectly realistic journey, and the usual distMin (3)
+// would make the smaller fractions (a tenth, a fifth) unreachable under the
+// Times Tables cap.
+const buildDecimalValues = (TM: number, f: FamilyInfo, tablesLimit: number): { D: number; S: number; pp: number; qq: number } => {
+  const g = gcd(60, TM);
+  const pp = 60 / g, qq = TM / g;
+  const frac = TM / 60;
+  const decimalDistMin = 1;
+  for (let attempt = 0; attempt < 80; attempt++) {
+    const S = randInt(1, tablesLimit);
+    const D = Math.round(S * frac * 100) / 100;
+    if (D < decimalDistMin || D > f.distMax) continue;
+    if (S < f.speedMin || S > f.speedMax) continue;
+    if (D === TM) continue; // "37 miles in 37 minutes" reads as a coincidence, not a real question
+    return { D, S, pp, qq };
+  }
+  const S = Math.min(Math.max(Math.ceil(decimalDistMin / frac), f.speedMin, 1), tablesLimit, f.speedMax);
+  const D = Math.round(S * frac * 100) / 100;
+  return { D, S, pp, qq };
+};
+
 // TM/60 only has an exact (non-repeating) decimal form when, reduced to
 // lowest terms, its denominator's only prime factors are 2 and 5 — e.g. 5
 // minutes = 1/12 hour = 0.08333… (repeating). Used to gate the "Decimal"
@@ -327,10 +375,12 @@ const compoundConvertStep = (shape: Shape): WorkingStep[] =>
     ? [mStep("Convert to minutes:", `${shape.H} \\times 60 + ${shape.Mfrac} = ${shape.TM}`)]
     : [];
 
-const buildCommon = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, tablesLimit: number) => {
-  const shape = pickShape(level, family, l3type, tablesLimit);
+const buildCommon = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, tablesLimit: number, decimalsMode: boolean) => {
+  const shape = pickShape(level, family, l3type, tablesLimit, decimalsMode);
   const f = FAMILY[family];
-  const { D, S, pp, qq } = buildValues(shape.TM, f, allowDecimals, tablesLimit);
+  const { D, S, pp, qq } = decimalsMode && shape.kind === "l2"
+    ? buildDecimalValues(shape.TM, f, tablesLimit)
+    : buildValues(shape.TM, f, allowDecimals, tablesLimit);
   const tLabel = timeLabel(shape, f);
   const tVal = timeCellValue(shape);
   const hourRef = hourRefValue(shape);
@@ -419,8 +469,8 @@ const buildWorking = (rv: RawValues, method: WorkingMethod): WorkingStep[] => {
   ];
 };
 
-const genSpeed = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, method: WorkingMethod, tablesLimit: number): WordedQuestion => {
-  const c = buildCommon(level, family, l3type, allowDecimals, tablesLimit);
+const genSpeed = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, decimalsMode: boolean, method: WorkingMethod, tablesLimit: number): WordedQuestion => {
+  const c = buildCommon(level, family, l3type, allowDecimals, tablesLimit, decimalsMode);
   const durationText = formatDuration(c.shape, family);
   const id = randInt(0, 999999);
   const rv: RawValues = {
@@ -445,8 +495,8 @@ const genSpeed = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, al
   } as unknown as WordedQuestion;
 };
 
-const genDistance = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, method: WorkingMethod, tablesLimit: number): WordedQuestion => {
-  const c = buildCommon(level, family, l3type, allowDecimals, tablesLimit);
+const genDistance = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, decimalsMode: boolean, method: WorkingMethod, tablesLimit: number): WordedQuestion => {
+  const c = buildCommon(level, family, l3type, allowDecimals, tablesLimit, decimalsMode);
   const durationText = formatDuration(c.shape, family);
   const id = randInt(0, 999999);
   const rv: RawValues = {
@@ -468,8 +518,8 @@ const genDistance = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type,
   } as unknown as WordedQuestion;
 };
 
-const genTime = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, method: WorkingMethod, tablesLimit: number): WordedQuestion => {
-  const c = buildCommon(level, family, l3type, allowDecimals, tablesLimit);
+const genTime = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, decimalsMode: boolean, method: WorkingMethod, tablesLimit: number): WordedQuestion => {
+  const c = buildCommon(level, family, l3type, allowDecimals, tablesLimit, decimalsMode);
   const answerText = formatDuration(c.shape, family);
   const id = randInt(0, 999999);
   const rv: RawValues = {
@@ -503,15 +553,16 @@ const generateQuestion = (
 ): WordedQuestion => {
   const t = tool as ToolType;
   const allowDecimals = variables.allowDecimals === true;
+  const decimalsMode = variables.terminatingDecimals === true;
   const method = (dropdownValue || "ratioTable") as WorkingMethod;
   const unitOptions = level === "level1" ? UNITS_L1.options : UNITS_L23.options;
   const family = pickActive(multiSelectValues, unitOptions) as UnitFamily;
   const l3type = level === "level3" ? (pickActive(multiSelectValues, L3_TYPES.options) as L3Type) : "awkwardMinutes";
   const tablesLimit = Number(pickActive(multiSelectValues, TABLES_MS.options));
 
-  if (t === "speed") return genSpeed(level, family, l3type, allowDecimals, method, tablesLimit);
-  if (t === "distance") return genDistance(level, family, l3type, allowDecimals, method, tablesLimit);
-  return genTime(level, family, l3type, allowDecimals, method, tablesLimit);
+  if (t === "speed") return genSpeed(level, family, l3type, allowDecimals, decimalsMode, method, tablesLimit);
+  if (t === "distance") return genDistance(level, family, l3type, allowDecimals, decimalsMode, method, tablesLimit);
+  return genTime(level, family, l3type, allowDecimals, decimalsMode, method, tablesLimit);
 };
 
 // Worksheet uniqueness is automatic — ToolShell wraps generateQuestion with the

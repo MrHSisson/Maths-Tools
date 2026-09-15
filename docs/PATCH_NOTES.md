@@ -28,6 +28,39 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-15 — Speed, Distance & Time: "Allow terminating decimals" QO at Level 2
+`src/tools/Proportion/SpeedDistanceTime.tsx`. Requested: a way to get genuine 1-2dp decimal
+answers (e.g. 8 km/h for a fifth of an hour → 1.6 km, 9 mph for a quarter → 2.25 mi) — the
+existing "Allow decimal answers" toggle only ever nudges the answer by a single ±0.5, never a
+real 2dp value like 2.25.
+- New Level 2-only `ToolVariable`, **"Allow terminating decimals (e.g. 1.6, 2.25)"**
+  (`terminatingDecimals`) — replaces "Allow decimal answers" at Level 2 rather than sitting
+  alongside it (a strict upgrade, so no redundant/conflicting toggle pair). Levels 1 and 3 keep
+  the old toggle unchanged.
+- New `L2_DECIMAL_MINUTES = [6, 12, 15, 30]` (a tenth/fifth/quarter/half of an hour) — the
+  subset of `L2_MINUTES` whose fraction-of-an-hour both terminates AND leaves enough headroom
+  under the Times Tables cap to reach a realistic distance. TM=3 (a twentieth) terminates too
+  but needs a base rate of 20 just to reach 1 unit of distance, so it's excluded; the
+  non-terminating values (2, 5, 10, 20 — e.g. 10 min = 1/6 hour = 0.1666…) are excluded as
+  they must be, per the "no .3333333" requirement.
+- New `buildDecimalValues`, used instead of `buildValues` for L2 shapes in this mode: rather
+  than forcing distance/speed into clean multiples of the reduced pp/qq, it picks a whole-number
+  rate freely (within the Times Tables cap) and derives the other quantity by scaling with the
+  *exact* fraction, landing on a genuine terminating decimal. Uses a distance floor of 1 instead
+  of the family's usual distMin (3) — otherwise the smaller fractions (a tenth, a fifth) would
+  be unreachable under the Times Tables cap, the same class of issue found with TM=1 earlier
+  this session.
+- `numLatex` now delegates to the shared `fmt` helper (2dp, trailing zeros stripped) instead of
+  its old 1dp-only `toFixed(1)` — needed since answers like 2.25 have 2 decimal places; verified
+  this is a strict superset of the old formatting for existing whole/1dp cases.
+- Verified with temporary regression checks (removed before commit): every decimal-mode number
+  across all three subtools/both families/both Times Tables tiers has at most 2dp (5,400
+  generations), distances/speeds stay within each family's realistic range, the exact numbers
+  from this request's own examples reproduce correctly, and only the four intended TM values
+  ever appear. Also spot-printed sample questions and working to confirm the ratio-table steps
+  read correctly with decimal values (e.g. "9 km/h... in 15 minutes" → "2.25 : 15", "×4", "9 : 60").
+  `npm run build` and `npm test` both clean (218 tests).
+
 ## 2026-09-15 — Speed, Distance & Time: name the unit in Speed; drop worded-fraction time wording
 `src/tools/Proportion/SpeedDistanceTime.tsx`. Two clarity requests:
 - **Speed**: the instruction line now names the required rate unit explicitly —
