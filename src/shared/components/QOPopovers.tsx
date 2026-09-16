@@ -180,7 +180,7 @@ const CycleSelect = ({
     <button
       onClick={next}
       title={`${base.label} / ${hard.label}`}
-      className="flex flex-col items-center gap-1 px-3 py-2 rounded-lg border-2 border-gray-200 bg-white hover:border-blue-900 transition-colors text-center flex-shrink-0"
+      className="flex flex-1 min-w-0 flex-col items-center gap-1 px-3 py-2 rounded-lg border-2 border-gray-200 bg-white hover:border-blue-900 transition-colors text-center"
     >
       <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{multiSelect.label}</span>
       <span
@@ -198,9 +198,11 @@ const isCycleGroup = (g: { options: { weight?: number }[] }) => g.options.length
 
 // Renders one or more independent multi-select pools, all sharing one flat
 // values record. Consecutive weighted-2-option pools (see CycleSelect above)
-// are rendered as a compact flex-wrap row of cycle buttons instead of each
-// claiming its own full-width labeled block — several fit inline where a
-// growing QO popover would otherwise sprawl one bordered row per pool.
+// are rendered as a row of cycle buttons that evenly split the row's width
+// (flex-1 each, matching the equal-width cells the pill rows already use)
+// instead of each claiming its own full-width labeled block — several fit
+// inline, evenly spaced, where a growing QO popover would otherwise sprawl
+// one bordered row per pool.
 const MultiSelectGroups = ({
   groups,
   values,
