@@ -77,17 +77,28 @@ const QUESTION_TYPES_MS: ToolMultiSelect = {
 // compact click-to-cycle button (None → Mixed → Exclusive) instead of a
 // full pill row — see CycleSelect in shared/components/QOPopovers.tsx — and
 // the worksheet automatically sorts/roughly-balances by it, no extra wiring
-// needed beyond generateQuestion reading the picked value (below).
+// needed beyond generateQuestion reading the picked value (below). TWO such
+// pools are defined here specifically so the popover shows them sitting
+// inline side by side (each button is only as wide as its own label/state
+// text) rather than stacking full-width blocks.
 //
 // Kept dev-gated (behind Developing-tools mode) here because it's a template
 // illustration, not a real question axis for this stub tool — copy the
 // pattern into a real tool's TOOL_CONFIG/generateQuestion and drop the
 // getDevMode()/useDevMode() gating once it's a genuine feature, not a demo.
 const NEGATIVE_COEFFS_DEMO: ToolMultiSelect = {
-  key: "negCoeffDemo", label: "Negative Coefficients (demo)",
+  key: "negCoeffDemo", label: "Negatives (demo)",
   options: [
     { value: "nonNegative", label: "Non-negative", defaultActive: true,  weight: 1 },
     { value: "negative",    label: "Negative",      defaultActive: false, weight: 2 },
+  ],
+};
+
+const BIGGER_NUMBERS_DEMO: ToolMultiSelect = {
+  key: "biggerNumbersDemo", label: "Bigger nums (demo)",
+  options: [
+    { value: "small", label: "Small", defaultActive: true,  weight: 1 },
+    { value: "big",   label: "Big",   defaultActive: false, weight: 2 },
   ],
 };
 
@@ -254,20 +265,24 @@ const generateQuestion = (
 
   // ── Tool 1: simple kind ──────────────────────────────────────────────────
   if (t === "tool1") {
-    const a = randInt(1, 9);
+    let a = randInt(1, 9);
     let b = randInt(1, 9);
     // DEV-GATED SMART PROGRESSOR DEMO — see NEGATIVE_COEFFS_DEMO's comment
     // above and App()'s devMode-conditional config merge below. getDevMode()
     // (not the reactive hook — this is a plain function, called fresh on
-    // every generation) gates reading the demo axis at all: with the group
+    // every generation) gates reading the demo axes at all: with the groups
     // absent from config (devMode off), pickActive would otherwise treat
     // both options as "active" by default (neither key is in
     // multiSelectValues), so this check keeps the demo fully inert when off.
+    // Two independent weighted axes combine by summing their weightOf() —
+    // a simple, defensible choice; a real tool would decide this per case.
     let difficultyScore: number | undefined;
     if (getDevMode()) {
-      const tier = pickActive(multiSelectValues, NEGATIVE_COEFFS_DEMO.options);
-      if (tier === "negative") b = -b;
-      difficultyScore = weightOf(NEGATIVE_COEFFS_DEMO.options, tier);
+      const negTier = pickActive(multiSelectValues, NEGATIVE_COEFFS_DEMO.options);
+      const sizeTier = pickActive(multiSelectValues, BIGGER_NUMBERS_DEMO.options);
+      if (sizeTier === "big") { a += 10; b += 10; }
+      if (negTier === "negative") b = -b;
+      difficultyScore = weightOf(NEGATIVE_COEFFS_DEMO.options, negTier) + weightOf(BIGGER_NUMBERS_DEMO.options, sizeTier);
     }
     const sumLatex = b < 0 ? `${a} - ${Math.abs(b)}` : `${a} + ${b}`;
     const sum = a + b;
@@ -418,7 +433,7 @@ export default function App() {
     ...TOOL_CONFIG,
     tools: {
       ...TOOL_CONFIG.tools,
-      tool1: { ...TOOL_CONFIG.tools.tool1, multiSelect: [QUESTION_TYPES_MS, NEGATIVE_COEFFS_DEMO] },
+      tool1: { ...TOOL_CONFIG.tools.tool1, multiSelect: [QUESTION_TYPES_MS, NEGATIVE_COEFFS_DEMO, BIGGER_NUMBERS_DEMO] },
     },
   };
   return (

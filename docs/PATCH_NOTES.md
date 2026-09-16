@@ -28,6 +28,21 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-16 — Smart Progressor: stack the cycle button so two fit side by side
+`src/shared/components/QOPopovers.tsx`, `src/tools/TeacherTools/ToolShell.tsx`, `CLAUDE.md`.
+Same-day follow-up to the cycle-button control below: it originally laid the group's label and
+state pill out horizontally (`flex items-center`), which read fine alone but made the button too
+wide for two to sit on one row — defeating the point of a compact control. Changed to a vertical
+stack (label above, state pill below, `self-stretch` so the pill matches the label's width) so
+each button is only as wide as its own content.
+
+Added a second dev-gated demo pool at `/tool-shell` ("Bigger nums (demo)", alongside "Negatives
+(demo)", renamed from "Negative Coefficients (demo)" to fit) specifically so the demo page proves
+the side-by-side packing this control exists for, not just a narrower single button — the two
+weighted axes now also combine (`weightOf` summed) into one `_difficultyScore`, extending the
+worked example. Verified live: a Playwright bounding-box check confirmed both buttons land on the
+same row (`y` coordinates match) at the popover's default width, with a screenshot to eyeball it.
+
 ## 2026-09-15 — Smart Progressor: compact cycle-button control for 2-option pools
 `src/shared/components/QOPopovers.tsx`, `src/tools/TeacherTools/ToolShell.tsx`, `CLAUDE.md`,
 `docs/PROJECTS.md`. Addresses a real worry raised mid-session: if most boolean QO options turn

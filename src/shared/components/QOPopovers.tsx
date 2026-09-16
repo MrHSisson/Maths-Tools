@@ -180,11 +180,11 @@ const CycleSelect = ({
     <button
       onClick={next}
       title={`${base.label} / ${hard.label}`}
-      className="flex items-center gap-2 px-3 py-2 rounded-lg border-2 border-gray-200 bg-white hover:border-blue-900 transition-colors text-left flex-shrink-0"
+      className="flex flex-col items-start gap-1 px-3 py-2 rounded-lg border-2 border-gray-200 bg-white hover:border-blue-900 transition-colors text-left flex-shrink-0"
     >
       <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{multiSelect.label}</span>
       <span
-        className={`text-sm font-bold px-2 py-0.5 rounded transition-colors ${
+        className={`text-sm font-bold px-2 py-0.5 rounded transition-colors self-stretch text-center ${
           state === 0 ? "bg-gray-100 text-gray-600" : state === 1 ? "bg-blue-100 text-blue-900" : "bg-blue-900 text-white"
         }`}
       >

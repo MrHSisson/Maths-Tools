@@ -831,11 +831,16 @@ audited into weighted pools per the rule above — most of those conversions wil
 author to opt into beyond giving both options a `weight`. A 2-option pool where the options are
 peers rather than an easy/hard pair (e.g. two unit families) stays a normal pill row, since neither
 option carries `weight` — the detection is automatic, never a per-pool flag. Implementation:
-`CycleSelect` in `src/shared/components/QOPopovers.tsx`. **Dev-gated worked example**: `/tool-shell`
-(`src/tools/TeacherTools/ToolShell.tsx`) — Sub-Tool 1's "Negative Coefficients (demo)" pool, visible
-only with Developing-tools mode on, shows the full loop: a 2-option weighted pool → the compact
-cycle button → `generateQuestion` reading the picked value via `pickActive` → a genuine
-`_difficultyScore` via `weightOf` → the worksheet's usual sort/balance, with no other wiring.
+`CycleSelect` in `src/shared/components/QOPopovers.tsx`. Each button's own label sits **above**
+its state pill (not beside it) specifically so the button stays narrow — two comfortably fit on
+one row inside the QO popover rather than each wrapping to its own line. **Dev-gated worked
+example**: `/tool-shell` (`src/tools/TeacherTools/ToolShell.tsx`) — Sub-Tool 1 gets two such pools,
+"Negatives (demo)" and "Bigger nums (demo)", visible only with Developing-tools mode on, together
+showing both the full loop (a 2-option weighted pool → the compact cycle button →
+`generateQuestion` reading the picked value via `pickActive` → a genuine `_difficultyScore` via
+`weightOf`, two axes summed → the worksheet's usual sort/balance, with no other wiring) *and* the
+side-by-side packing this control exists for — verified live, not just assumed: both buttons land
+on the same row at the popover's default width.
 
 **Rungs must be mutually exclusive, not overlapping caps, and any "harder" property must be
 guaranteed, not just more likely.** An "up to 20" rung that silently includes every "up to 10"
