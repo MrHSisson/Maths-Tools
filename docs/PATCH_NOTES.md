@@ -28,6 +28,33 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-16 — Speed, Distance & Time: reinstate Level 2 worded-fraction time wording
+`src/tools/Proportion/SpeedDistanceTime.tsx`. Reported: Level 2 seemed to have lost the option
+for worded time fractions (e.g. "a quarter of an hour"). Checked `docs/PATCH_NOTES.md`'s own
+history first — this feature had genuinely gone back and forth across an earlier session (added,
+widened, hit a real bug where "Worded fraction only" silently fell back to plain-minutes wording
+for any minute value without a natural spoken form, fixed, then deliberately removed as "a single
+always-on option isn't a real choice" once every question had settled on plain-minutes wording).
+Confirmed with the user this session's Smart Progressor QO work hadn't touched any of that logic,
+then rebuilt it properly on request as a genuine, always-active choice: a new `TIME_NOTATION_L2`
+multiSelect pool (Minutes / Worded fraction) — deliberately **unweighted** (pure wording variety,
+not a difficulty axis, so it renders as the normal 2-cell pill row rather than this session's new
+cycle-button control, and never enters the Smart Progressor's sort/balance). Root-caused and fixed
+the historical bug's exact mechanism this time: `pickShape`'s Level 2 branch now takes the picked
+notation directly and restricts its TM candidate pool to values with a natural spoken form
+(`WORDED_FRACTIONS`) whenever "Worded fraction" is the active pick — with **no fallback to the
+unfiltered pool**, verified to never be needed since every TM pool Level 2 can draw from (including
+the "Decimals" Difficulty rung's `L2_DECIMAL_MINUTES`) has a non-empty intersection with the
+worded-eligible set. `formatDuration` now takes the same notation and applies it to both a given
+time (Speed/Distance) and an answer time (Time subtool). Verified with a throwaway test (removed
+before commit): "Worded fraction" only produces a genuine spoken fraction on every draw across all
+three subtools and all three Difficulty rungs (180 generations), "Minutes" only never produces one
+(100 generations), both active produces a real mix of the two (200 generations), the Time
+subtool's answer follows the pick too, and Levels 1/3 are unaffected. Also verified live in the
+running app: the new pool renders as a normal pill row (not the cycle-button, confirming the
+weight-gated detection is correct), and a generated worksheet genuinely shows worded-fraction
+wording with the option on.
+
 ## 2026-09-16 — Smart Progressor: stack the cycle button so two fit side by side
 `src/shared/components/QOPopovers.tsx`, `src/tools/TeacherTools/ToolShell.tsx`, `CLAUDE.md`.
 Same-day follow-up to the cycle-button control below: it originally laid the group's label and
