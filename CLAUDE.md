@@ -292,7 +292,7 @@ import { type PrintMode } from "../../shared";
 `ToolShell` · `TeachingDeck` · `SlideDeck` · `MathRenderer` · `InlineMath` · `QuestionDisplay` · `AnswerDisplay` · `DifficultyToggle` · `StandardQOPopover` · `DiffQOPopover` · `InlineQOPanel` · `InfoModal` · `MenuDropdown` · `PrintSplitButton` · `SkillLabel` · `SkillOverlay` · `WorkedExampleSteps` · `TechniquePreviewPage`
 
 **Helpers**:
-`randInt` · `pick` · `fracStr` · `mStr` · `pickActive` · `normalizeMultiSelect` · `step` · `tStep` · `mStep` · `fmt` · `ansEq` · `makeUniqueQ` · `stripSkillMarkers` · `SKILL_MARKER_RE` · `slideMaxStep`
+`randInt` · `pick` · `fracStr` · `mStr` · `pickActive` · `normalizeMultiSelect` · `step` · `tStep` · `mStep` · `fmt` · `ansEq` · `makeUniqueQ` · `stripSkillMarkers` · `SKILL_MARKER_RE` · `slideMaxStep` · `weightOf` · `sortByDifficulty` · `buildQuotaOverrides`
 
 **Skill library**: `SKILLS` · `getSkill` (see "Skill library" section)
 
@@ -639,6 +639,9 @@ Pass it to `<ToolShell reformatQuestion={reformatQuestion} />`.
 | `fmt(n, dp?)` | `(n: number, dp?: number) => string` | Number → string, trailing zeros stripped, default 2dp |
 | `ansEq(answer)` | `(answer: string) => string` | Prepends `"= "` unless answer already contains `=` |
 | `normalizeMultiSelect(ms)` | `<T>(ms?: T \| T[] \| null) => T[]` | Normalises single/array multiSelect config |
+| `weightOf(options, value)` | `(options: {value: string; weight?: number}[], value: string) => number` | Smart Progressor — looks up a picked multiSelect option's difficulty `weight` (0 if unset) |
+| `sortByDifficulty(questions)` | `<Q extends {key: string}>(questions: Q[]) => Q[]` | Smart Progressor — stable ascending sort by each question's `_difficultyScore`; no-op if none is set. Called automatically by `ToolShell`'s worksheet generation — never call it in a tool file |
+| `buildQuotaOverrides(groups, baseValues, numQuestions)` | `(groups: {key: string; options: {value: string; weight?: number}[]}[], baseValues: Record<string, boolean>, numQuestions: number) => Record<string, boolean>[]` | Smart Progressor — one `multiSelectValues` override per worksheet slot, keeping a weighted group's active options roughly (not exactly) evenly split; unweighted groups pass through untouched. Called automatically by `ToolShell`'s worksheet generation — never call it in a tool file |
 
 ### Working step rendering — how each type appears
 
@@ -784,6 +787,73 @@ const TOOL_CONFIG: ToolConfig = {
 | `dropdown` | A single mutually-exclusive setting (e.g. method choice, display format). |
 | `variables` | Independent on/off toggles. Use sparingly — prefer `multiSelect`. |
 
+**The deciding test between `multiSelect` and `variables` is mutual exclusivity, not difficulty.**
+A `multiSelect` pool is for any option set where exactly **one** member applies to a given
+question — the generator draws one active option per question via `pickActive`, rendered as the
+same row-of-cells UI either way. That covers pure variety (Units: mph vs km/h vs m/s, no weight)
+*and* an ordinal difficulty ladder (a weighted pool the Smart Progressor can order and roughly
+balance across active rungs — see below, and works identically whether the pool has 2 active
+options or 5, no per-count special-casing needed) — difficulty-vs-variety only decides whether you
+add `weight`, it doesn't decide the control type. A `ToolVariable` (boolean toggle) is for a
+property that's genuinely **independent** — switching it on doesn't replace anything, and if
+several such toggles are on at once, **all of them apply to the same question simultaneously**
+(rare, but real — e.g. "allow negative coefficients" and "allow non-integer constants" both true
+on one question, stacking rather than choosing between them).
+
+**Before converting a boolean into a multiSelect ladder, check combinability first.** If the
+property can stack with a sibling property on one question, it must stay independent — either as
+its own `ToolVariable`, or as its own separate multiSelect pool — never merged into the same pool
+as something it can coexist with, since a pool only ever picks **one** of its options per
+question. Model a genuinely ordinal, mutually-exclusive option set as one pool (easiest rung
+`defaultActive: true`, harder rungs `false`) rather than a standalone toggle.
+
+**Even a plain on/off property becomes a 2-option pool, not a boolean, once it's mutually
+exclusive per question.** A boolean toggle only ever applies to the *whole worksheet* — "negative
+coefficients" as `allowNegative: boolean` means every question can potentially get one, or none
+ever do; there's no way for question 3 specifically to draw "non-negative" while question 9 draws
+"negative". If that per-question distinction is what you actually want (e.g. a quadratic tool
+where non-negative coefficients are the easier case), it's a 2-option `multiSelect` pool —
+`{ value: "nonNegative", weight: 1 }` / `{ value: "negative", weight: 2 }` — exactly like a 3+
+option ladder, just with two rungs. Expect this to come up often: **most existing boolean QO
+options that gate a per-question property will turn into 2-option pools** once they're audited
+against the mutual-exclusivity test, not just the ones that already had 3+ named states like SDT's
+Times Tables.
+
+**A 2-option weighted pool renders as one compact click-to-cycle button, automatically — no extra
+config.** ToolShell's QO popovers detect this shape (exactly 2 options, both carrying `weight`)
+and render it as a single button cycling **None → Mixed → Exclusive** (easier option only → both
+active → harder option only) instead of a two-cell pill row — several sit inline in one compact
+row where a growing QO popover would otherwise sprawl a full-width bordered block per pool. This
+exists specifically to keep the QO popover from becoming "incredibly heavy" as more booleans get
+audited into weighted pools per the rule above — most of those conversions will be exactly this
+2-option shape. It's a rendering choice only: same `ToolMultiSelect` data, same
+`pickActive`/`weightOf`/`buildQuotaOverrides`/`sortByDifficulty` pipeline — nothing for a tool
+author to opt into beyond giving both options a `weight`. A 2-option pool where the options are
+peers rather than an easy/hard pair (e.g. two unit families) stays a normal pill row, since neither
+option carries `weight` — the detection is automatic, never a per-pool flag. Implementation:
+`CycleSelect` in `src/shared/components/QOPopovers.tsx`. Each button's own label sits **above**
+its state pill (not beside it) specifically so the button stays narrow — two comfortably fit on
+one row inside the QO popover rather than each wrapping to its own line. **Dev-gated worked
+example**: `/tool-shell` (`src/tools/TeacherTools/ToolShell.tsx`) — Sub-Tool 1 gets two such pools,
+"Negatives (demo)" and "Bigger nums (demo)", visible only with Developing-tools mode on, together
+showing both the full loop (a 2-option weighted pool → the compact cycle button →
+`generateQuestion` reading the picked value via `pickActive` → a genuine `_difficultyScore` via
+`weightOf`, two axes summed → the worksheet's usual sort/balance, with no other wiring) *and* the
+side-by-side packing this control exists for — verified live, not just assumed: both buttons land
+on the same row at the popover's default width.
+
+**Rungs must be mutually exclusive, not overlapping caps, and any "harder" property must be
+guaranteed, not just more likely.** An "up to 20" rung that silently includes every "up to 10"
+value too doesn't read as strictly harder than the rung below it — give each rung its own disjoint
+range (e.g. a scale factor drawn from 11-20, not 1-20) instead of a rising single-sided cap. Same
+for a qualitative property like "the answer is a decimal": if the underlying generation only makes
+a decimal *possible* (e.g. ~80% of draws), a chunk of that rung's questions render indistinguishably
+from the easier rungs on a printed sheet — find the exact mathematical condition that produces the
+property and reject/retry any draw that fails it (see `SpeedDistanceTime.tsx`'s
+`buildDecimalValues`: `D` is only ever whole when the drawn speed is a multiple of the shape's
+`pp`, so rejecting that one case guarantees every decimals-tier answer is a genuine decimal).
+Reference: `DIFFICULTY_TIER_L2` in `src/tools/Proportion/SpeedDistanceTime.tsx`.
+
 **`dropdown.workedExampleOnly`** — set this `true` only when the dropdown changes nothing but
 the displayed working (a "Method" choice like Ratio Table vs Decimal, or FOIL vs Grid arrows) —
 the question and answer are identical across every option. ToolShell then hides it from the
@@ -803,6 +873,70 @@ difficultySettings: {
 ```
 
 Each level independently overrides `dropdown`, `variables`, and/or `multiSelect`. Omitted keys inherit the tool-level default.
+
+### Smart Progressor — ordering a worksheet easy-to-hard
+
+A generic, opt-in mechanism: give any `multiSelect` option a difficulty `weight?: number`
+(easiest = lowest), have `generateQuestion` attach the picked option's weight as
+`_difficultyScore` on the question it returns, and `ToolShell`'s worksheet generation
+automatically sorts each generated block (each level's own block, for a differentiated sheet)
+ascending by that score — a no-op for any question without one, so this is entirely opt-in per
+tool.
+
+```ts
+const DIFFICULTY_TIER: ToolMultiSelect = {
+  key: "difficultyTier", label: "Difficulty",
+  options: [
+    { value: "easy", label: "Easy", defaultActive: true, weight: 1 },
+    { value: "hard", label: "Hard", defaultActive: false, weight: 2 },
+  ],
+};
+
+// in generateQuestion:
+const tier = pickActive(multiSelectValues, DIFFICULTY_TIER.options);
+const q = /* ...build the question using tier... */;
+return { ...q, _difficultyScore: weightOf(DIFFICULTY_TIER.options, tier) } as unknown as AnyQuestion;
+```
+
+- Never call `sortByDifficulty` directly in a tool file — `ToolShell` calls it automatically.
+- Reference implementation and the general boolean→multiSelect conversion rule: `docs/PROJECTS.md`
+  → "Smart Progressor" prong, and `DIFFICULTY_TIER_L2` in `src/tools/Proportion/SpeedDistanceTime.tsx`.
+
+**The split across active rungs is kept roughly even, automatically — "roughly a third each",
+not "exactly a third every single time".** `pickActive`'s unconstrained per-question random draw
+can occasionally land quite skewed over a worksheet of only ~15 questions (e.g. 9/4/2 across three
+equally-active rungs). `ToolShell` softens this itself: before generating a worksheet,
+`buildQuotaOverrides` (`shared/helpers.ts`, internal — never call it from a tool file) finds every
+multiSelect group that has *any* weighted option and builds one `multiSelectValues` override per
+question slot, drawn independently at random per slot as usual but with the whole batch retried
+until every active option's count lands within ±1 of its fair share (`numQuestions ÷ active
+count`) — so 15 questions across 3 active rungs comes out somewhere around 5/5/5, with real variety
+across generations (4/5/6, 6/5/4, 5/5/5, … are all normal outcomes), never the same exact split
+every time and never something as lopsided as 9/4/2. Combined with the ascending sort, a
+worksheet's tier *blocks* stay contiguous and correctly ordered whatever the exact split turns out
+to be (a 6/5/4 split still means the first 6 questions are the easiest rung, the last 4 the
+hardest) — only the block sizes vary, by design. **This balancing is scoped to weighted groups
+only** — a group with no weighted option (e.g. a "Units" pool of mph/km·h/m/s) is passed through
+completely untouched and keeps varying randomly per question exactly as before; the Smart
+Progressor never tries to balance variety-only pools, only difficulty-ordinal ones.
+
+**Standard worksheet mode only — never the advanced builder, and this is automatic, not something
+to wire per tool.** Both the sort and the balancing live entirely inside `ToolShell`'s
+`handleGenerateWorksheet`, which only the standard Worksheet tab calls; the advanced
+`WorksheetBuilder` (the "Advanced" toggle) generates through its own independent code path that
+never touches `sortByDifficulty`/`buildQuotaOverrides` at all, so it's exempt by construction —
+nothing to add when building a tool.
+
+**A teacher-facing "Smart Progressor" toggle turns the whole mechanism off, restoring plain random
+order.** ToolShell renders a toggle in the Worksheet tab's Settings popover (next to "Borders") —
+but only when the current tool actually has a weighted multiSelect pool at all (`ToolShellState`'s
+`toolHasWeightedPool`), so it's invisible clutter for the other 26 tools that can't use it yet. On
+by default; session-persisted per tool route (same `sessionStorage` mechanism as `worksheetMode`/
+`worksheetBorders`). Off means every worksheet question slot gets the exact same unmodified
+`multiSelectValues` (no `buildQuotaOverrides` call) and the generated batch is left in its raw
+order (no `sortByDifficulty` call) — genuinely identical to how a worksheet generated before the
+Smart Progressor existed, not just "close to it". Nothing for a tool author to add — this is
+`ToolShell`-level UI, wired once.
 
 ---
 

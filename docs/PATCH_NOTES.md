@@ -28,6 +28,181 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-16 — Speed, Distance & Time: reinstate Level 2 worded-fraction time wording
+`src/tools/Proportion/SpeedDistanceTime.tsx`. Reported: Level 2 seemed to have lost the option
+for worded time fractions (e.g. "a quarter of an hour"). Checked `docs/PATCH_NOTES.md`'s own
+history first — this feature had genuinely gone back and forth across an earlier session (added,
+widened, hit a real bug where "Worded fraction only" silently fell back to plain-minutes wording
+for any minute value without a natural spoken form, fixed, then deliberately removed as "a single
+always-on option isn't a real choice" once every question had settled on plain-minutes wording).
+Confirmed with the user this session's Smart Progressor QO work hadn't touched any of that logic,
+then rebuilt it properly on request as a genuine, always-active choice: a new `TIME_NOTATION_L2`
+multiSelect pool (Minutes / Worded fraction) — deliberately **unweighted** (pure wording variety,
+not a difficulty axis, so it renders as the normal 2-cell pill row rather than this session's new
+cycle-button control, and never enters the Smart Progressor's sort/balance). Root-caused and fixed
+the historical bug's exact mechanism this time: `pickShape`'s Level 2 branch now takes the picked
+notation directly and restricts its TM candidate pool to values with a natural spoken form
+(`WORDED_FRACTIONS`) whenever "Worded fraction" is the active pick — with **no fallback to the
+unfiltered pool**, verified to never be needed since every TM pool Level 2 can draw from (including
+the "Decimals" Difficulty rung's `L2_DECIMAL_MINUTES`) has a non-empty intersection with the
+worded-eligible set. `formatDuration` now takes the same notation and applies it to both a given
+time (Speed/Distance) and an answer time (Time subtool). Verified with a throwaway test (removed
+before commit): "Worded fraction" only produces a genuine spoken fraction on every draw across all
+three subtools and all three Difficulty rungs (180 generations), "Minutes" only never produces one
+(100 generations), both active produces a real mix of the two (200 generations), the Time
+subtool's answer follows the pick too, and Levels 1/3 are unaffected. Also verified live in the
+running app: the new pool renders as a normal pill row (not the cycle-button, confirming the
+weight-gated detection is correct), and a generated worksheet genuinely shows worded-fraction
+wording with the option on.
+
+## 2026-09-16 — Smart Progressor: stack, centre, and evenly space the cycle button
+`src/shared/components/QOPopovers.tsx`, `src/tools/TeacherTools/ToolShell.tsx`, `CLAUDE.md`.
+Same-day follow-up to the cycle-button control below, three passes: (1) it originally laid the
+group's label and state pill out horizontally (`flex items-center`), which read fine alone but
+made the button too wide for two to sit on one row — defeating the point of a compact control.
+Changed to a vertical stack (label above, state pill below, `self-stretch` so the pill matches the
+label's width). (2) The stacked content was left-aligned; changed to `items-center`/`text-center`
+to match the centred pill rows elsewhere in the popover. (3) The buttons still sized to their own
+content (`flex-shrink-0`), so two side by side left a visibly uneven, ragged split — screenshotted
+and confirmed. Switched to `flex-1 min-w-0` so both buttons evenly divide the row's width, matching
+the equal-width cells of the standard pill-row groups.
+
+Added a second dev-gated demo pool at `/tool-shell` ("Bigger nums (demo)", alongside "Negatives
+(demo)", renamed from "Negative Coefficients (demo)" to fit) specifically so the demo page proves
+the side-by-side packing this control exists for, not just a narrower single button — the two
+weighted axes now also combine (`weightOf` summed) into one `_difficultyScore`, extending the
+worked example. Verified live: a Playwright bounding-box check confirmed both buttons land on the
+same row (`y` coordinates match) at the popover's default width, with a screenshot to eyeball it.
+
+## 2026-09-15 — Smart Progressor: compact cycle-button control for 2-option pools
+`src/shared/components/QOPopovers.tsx`, `src/tools/TeacherTools/ToolShell.tsx`, `CLAUDE.md`,
+`docs/PROJECTS.md`. Addresses a real worry raised mid-session: if most boolean QO options turn
+into 2-option weighted pools per this session's mutual-exclusivity rule, a tool with several such
+properties would stack a full pill-row block per pool, making the QO popover "incredibly heavy".
+Fix: `MultiSelectSection`'s replacement, `CycleSelect`, detects any multiSelect group with exactly
+2 options where **both** carry `weight` and renders it as one compact click-to-cycle button
+(**None → Mixed → Exclusive** — easier-only → both active → harder-only) instead of a two-cell
+pill row; `MultiSelectGroups` now packs consecutive such groups into one `flex-wrap` row so several
+sit inline rather than each claiming a full-width block. Purely a rendering choice — same
+`ToolMultiSelect` data, same `pickActive`/`weightOf`/`buildQuotaOverrides`/`sortByDifficulty`
+pipeline, automatic across all three popover surfaces (`StandardQOPopover`/`DiffQOPopover`/
+`InlineQOPanel`) since they all route through `MultiSelectGroups`. A 2-option *peer* pool with no
+weight (e.g. two unit families) is untouched — still the normal pill row.
+
+Added a dev-gated worked example at `/tool-shell` (`src/tools/TeacherTools/ToolShell.tsx`, the
+canonical new-tool scaffold): Sub-Tool 1 gets a "Negative Coefficients (demo)" 2-option weighted
+pool, present in `TOOL_CONFIG` only when Developing-tools mode is on (reactive via `useDevMode()`
+in `App()`, so toggling and returning shows/hides it without a hard reload) and read in
+`generateQuestion` via the plain `getDevMode()` getter (same pattern `FractionToRatio.tsx` already
+uses) — picking the value, negating the second addend when "negative" is drawn, and attaching a
+real `_difficultyScore` via `weightOf`. Verified live via a Playwright script, not just build/test:
+absent with dev mode off, present and correctly cycling None→Mixed→Exclusive→None with dev mode
+on, and a regression check confirming SDT's existing unweighted 2-option pool (Units) and weighted
+3-option pool (Difficulty) both render exactly as before — zero console errors throughout.
+
+## 2026-09-15 — Smart Progressor: standard-mode scoping, teacher-facing off toggle
+`src/shared/ToolShell.tsx`, `CLAUDE.md`, `docs/PROJECTS.md`. Closes out this session's Smart
+Progressor work. Confirmed (by reading both files, not assuming) that the advanced
+`WorksheetBuilder` ("Advanced" toggle) was already exempt from Smart Progressor by construction —
+it generates through its own independent `generateQuestion`/`makeUniqueQ` path and never calls
+`sortByDifficulty`/`buildQuotaOverrides`, both of which live entirely inside `ToolShell`'s
+`handleGenerateWorksheet`, called only by the standard Worksheet tab. Added the actual new piece:
+a teacher-facing "Smart Progressor" toggle in the Worksheet tab's Settings popover (next to
+"Borders"), on by default and session-persisted per tool route (same mechanism as
+`worksheetMode`/`worksheetBorders`) — switching it off restores generation to plain random order,
+exactly as it worked before this prong existed (unmodified `multiSelectValues` per slot, no sort).
+Only rendered when the current tool actually has a weighted multiSelect pool at all
+(`toolHasWeightedPool`, checked across every level), so it's not dead UI on the other 26 tools.
+Verified live in the running dev app via a Playwright script (not just build/test): the toggle
+renders correctly in SpeedDistanceTime's Settings popover styled exactly like "Borders", is
+correctly absent from CompletingTheSquare's (no weighted pool), and toggling it off + generating a
+worksheet produces zero console errors. Also confirmed `buildQuotaOverrides` needs no changes to
+generalize beyond 3 active options (2, 4, 5 all verified) and sharpened CLAUDE.md's conversion
+rule with a concrete worked example: even a plain two-state boolean (e.g. a quadratic's "negative
+coefficients") becomes a 2-option weighted `multiSelect` pool, not a toggle, once it needs to be a
+genuine per-question draw rather than a worksheet-wide switch — most of the eventual 26-tool audit
+is expected to produce pools this small, not just 3+-rung ladders like SDT's.
+
+## 2026-09-15 — Smart Progressor: sharpen the multiSelect-vs-variables rule; verify quota generalizes
+`CLAUDE.md`, `docs/PROJECTS.md`. Doc-only session close-out. Verified `buildQuotaOverrides` (the
+even-split mechanism from the entry below) needs no extra work to generalize beyond 3 active
+options — a throwaway test confirmed 2, 4 and 5 active options all stay within tolerance with
+genuine variety across runs, including tight ratios (5 options over 15 questions, 4 over 6), then
+removed. Also sharpened the audit's deciding test in CLAUDE.md's "QO control types" section:
+whether a boolean is a `multiSelect` conversion candidate turns on **mutual exclusivity** (does
+exactly one option ever apply to a given question), not "does it represent difficulty" — a boolean
+that can genuinely combine with a sibling on the same question (rare, but real) must stay
+independent, either as its own `ToolVariable` or its own separate pool, never folded into a pool
+alongside something it can coexist with. `docs/PROJECTS.md`'s Smart Progressor prong carries the
+same rule for the upcoming 26-tool audit.
+
+## 2026-09-15 — Smart Progressor: loosen the even split to a tolerance, not an exact lock
+`src/shared/helpers.ts`, `src/shared/ToolShell.tsx`. Same-day correction to the entry below: the
+first cut of `buildQuotaOverrides` forced an *exact* split every time (15 questions / 3 active
+rungs → always precisely 5/5/5). The user clarified that wasn't actually the ask — "I think the
+idea of ending up with a 6/5/4 wouldn't be awful. Hence why I said roughly 33%." Replaced the
+deterministic block assignment with `balancedSlots`: independent random draws per question slot
+(genuine variety, matching how every other multiSelect pool already behaves), with the whole batch
+retried — bounded at 200 attempts, falling back to the old exact largest-remainder split as a last
+resort — until every active option's count lands within ±1 of its fair share. Verified with a
+throwaway test: 100 repeated runs at 15 questions / 3 active rungs produced all 7 distinct
+permutations of {4,5,6} (never anything more skewed, never locked to one exact split), then
+removed. The ascending sort still keeps each rung's questions contiguous and correctly ordered
+whatever the exact split turns out to be — only the block *sizes* now vary, which is the point.
+
+## 2026-09-15 — Smart Progressor: guaranteed even split across active weighted rungs
+`src/shared/helpers.ts`, `src/shared/index.ts`, `src/shared/ToolShell.tsx`. Closes the gap the
+earlier core mechanism left open: sorting a worksheet by `_difficultyScore` only reorders whatever
+`pickActive`'s independent per-question draw happened to produce, which over ~15 questions can
+easily land 7/5/3 across three active rungs instead of 5/5/5. New `buildQuotaOverrides` helper
+(internal — never called from a tool file) finds every multiSelect group carrying at least one
+weighted option and builds a per-question `multiSelectValues` override forcing that group to
+exactly one option, split as evenly as the question count allows (largest-remainder rounding for
+an uneven split). `ToolShell`'s `handleGenerateWorksheet` now builds these overrides before its
+generation loop, for both the standard and differentiated (per-level) worksheet paths. Scoped to
+weighted groups only — an unweighted group (e.g. SDT's Units pool, mph/km·h/m·s) is passed through
+untouched and keeps varying randomly per question, exactly as before. Verified with a throwaway
+test: an even 5/5/5 split, a fair 4/3/3 uneven split, confirmation that an unweighted group is
+untouched, and an end-to-end run through the real `SpeedDistanceTime` generator confirming an
+exact 5/5/5 `_difficultyScore` distribution over 15 questions — then removed. Combined with the
+existing sort, a worksheet's tier *boundaries* are now a hard guarantee (not just a bias) whenever
+every weighted rung is active, closing most of the "question 1 isn't guaranteed easy" limitation
+noted in the previous entry; `docs/PROJECTS.md`'s "Smart Progressor" prong has the full writeup.
+
+## 2026-09-15 — Smart Progressor: SpeedDistanceTime L2 tiers made mutually exclusive
+`src/tools/Proportion/SpeedDistanceTime.tsx`. Same-day refinement to the Smart Progressor pilot
+below: the three Level 2 Difficulty rungs used to be overlapping caps rather than a genuine
+ladder — `tables20` was "scale factor up to 20", which silently included every `tables10` fact
+too, and `decimals` only made a genuine decimal answer *possible* (~82% of draws, confirmed by a
+throwaway diagnostic test — the rest rendered as an indistinguishable whole number, e.g. a
+half-hour time with an even speed). Fixed both: `buildValues` now takes an explicit `kMin` so
+`tables10` draws its scale factor from 1-10 and `tables20` from 11-20 *only* (disjoint ranges);
+`buildDecimalValues` now rejects any draw whose speed is a multiple of the shape's `pp` — the
+exact condition that makes the distance come out whole — guaranteeing a genuine decimal on every
+draw (verified over 1000 draws with a throwaway test, then removed). Added the general rule to
+CLAUDE.md: Smart Progressor rungs must be mutually exclusive ranges (or a guaranteed property),
+not overlapping caps or a "sometimes" property, or the ramp doesn't visibly hold on a printed
+sheet.
+
+## 2026-09-15 — Smart Progressor: core mechanism + SpeedDistanceTime L2 pilot
+`src/shared/types.ts`, `src/shared/helpers.ts`, `src/shared/index.ts`, `src/shared/ToolShell.tsx`,
+`src/tools/Proportion/SpeedDistanceTime.tsx`. New generic mechanism to order a generated worksheet
+easy-to-hard instead of randomly: `ToolMultiSelect.options[]` gets an optional `weight?: number`;
+two new helpers `weightOf` (look up a picked option's weight) and `sortByDifficulty` (stable
+ascending sort by a question's `_difficultyScore`, no-op if none is set); `ToolShell`'s
+`handleGenerateWorksheet` now sorts each worksheet block (each level's own block, for a
+differentiated sheet) through it. Fully opt-in — no change to any tool that doesn't set
+`_difficultyScore`, confirmed by the full `npm test` suite passing unchanged (320 tests). Piloted
+on `SpeedDistanceTime`'s Level 2: collapsed the independent `tablesLimit` multiSelect (10×/20×) +
+`ALLOW_TERMINATING_DECIMALS` boolean into one ordinal pool `DIFFICULTY_TIER_L2` (10×10 → 20×20 →
+decimals, weights 1/2/3), so a Level 2 worksheet with more than one rung ticked now ramps up
+instead of mixing difficulties at random. Established the general conversion rule (a boolean QO
+option that means "harder" should be a multiSelect rung, not an independent toggle — only a
+per-question pool pick gives the sort step something to see) — see `docs/PROJECTS.md`'s new
+**Smart Progressor** prong for the rule, the remaining limitation (orders an already-generated
+batch; doesn't guarantee a specific question index), and the next-steps audit across the other 26
+tools.
+
 ## 2026-09-15 — Speed, Distance & Time: fix decimal-mode speed stuck at 1-10
 `src/tools/Proportion/SpeedDistanceTime.tsx`. Reported: with "Allow terminating decimals" on,
 the speed/rate was always 1-10 regardless of the Times Tables setting — traced to

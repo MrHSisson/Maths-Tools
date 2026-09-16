@@ -78,7 +78,11 @@ export interface ToolMultiSelect {
   label: string;
   /** Optional ⓘ note shown next to the group's header label, revealed on hover. */
   info?: string;
-  options: { value: string; label: string; sub?: string; divider?: boolean; defaultActive: boolean }[];
+  /** Optional difficulty weight for the Smart Progressor — see `weightOf` /
+   *  `sortByDifficulty` in helpers.ts. Prefer this ordinal-pool shape over a
+   *  boolean `ToolVariable` whenever an option represents "harder", not just
+   *  "different", so a worksheet can be ordered easy-to-hard by weight. */
+  options: { value: string; label: string; sub?: string; divider?: boolean; defaultActive: boolean; weight?: number }[];
   /** Allow every option in this group to be deselected at once (e.g. a group
    *  of optional add-on flags where "all off" is a valid, simplest-form
    *  state). Default false — the last active option cannot be turned off,

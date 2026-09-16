@@ -2,7 +2,7 @@ import {
   ToolShell,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WordedQuestion, type QOSnapshot,
   type ToolMultiSelect, type ToolVariable, type ToolDropdown, type WorkingStep,
-  randInt, pick, pickActive, mStep, mStr, fmt, rStep, ratioTableStepRenderer,
+  randInt, pick, pickActive, mStep, mStr, fmt, rStep, ratioTableStepRenderer, weightOf,
 } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -32,6 +32,12 @@ type L3Type = "compoundTime" | "awkwardMinutes";
 // a taught method even though its intermediate value ("0.1 hours") would
 // never appear as a question's own wording.
 type WorkingMethod = "ratioTable" | "decimal";
+
+// Level 2 only — how the given/answer time is worded. A pure variety choice
+// (unweighted, no Smart Progressor participation — see TIME_NOTATION_L2),
+// not a difficulty axis: "a quarter of an hour" isn't harder than "15
+// minutes" by design, just a different, equally valid phrasing.
+type TimeNotation = "minutes" | "wordedFraction";
 
 interface FamilyInfo {
   distanceUnit: string;
@@ -103,10 +109,73 @@ const L3_TYPES: ToolMultiSelect = {
 
 const ALLOW_DECIMALS: ToolVariable = { key: "allowDecimals", label: "Allow decimal answers", defaultValue: false };
 
-// Level 2 only — replaces ALLOW_DECIMALS there rather than sitting alongside
-// it, since it's a strict upgrade: genuine 1-2dp decimals (always terminating)
-// instead of the old single ±0.5 nudge. See pickShape/buildDecimalValues.
-const ALLOW_TERMINATING_DECIMALS: ToolVariable = { key: "terminatingDecimals", label: "Allow terminating decimals (e.g. 1.6, 2.25)", defaultValue: false };
+// Level 2's difficulty ladder — one ordinal multiSelect pool (Smart
+// Progressor: see weightOf/sortByDifficulty in shared/helpers.ts) replacing
+// the old independent TABLES_MS + ALLOW_TERMINATING_DECIMALS combination at
+// this level. Each question draws one active rung via pickActive, weighted
+// so a worksheet's easier rungs land in its earlier questions.
+//
+// The three rungs are MUTUALLY EXCLUSIVE, not overlapping ranges — a genuine
+// ladder, not three independent caps:
+//   - "tables10": the scale factor k (the fact a student inverts, alongside
+//     the shape's own pp/qq — see buildValues) is drawn from 1-10.
+//   - "tables20": k is drawn from 11-20 ONLY — a harder, disjoint fact range,
+//     never overlapping tables10's 1-10 (the old "Up to 20×20" cap still
+//     included every 1-10 fact too, so it didn't read as strictly harder).
+//   - "decimals": the computed distance/speed answer is GUARANTEED to be a
+//     genuine decimal, not just eligible to land on one — buildDecimalValues
+//     rejects any draw whose S happens to be a multiple of pp (the only way
+//     D = S·(TM/60) comes out whole), so a worksheet's decimals-tier
+//     questions are visibly decimal every time, not ~80% of the time.
+// See L2_TIER below and buildValues/buildDecimalValues for exactly what each
+// rung changes.
+const DIFFICULTY_TIER_L2: ToolMultiSelect = {
+  key: "difficultyTierL2", label: "Difficulty",
+  options: [
+    { value: "tables10", label: "1-10 times tables", defaultActive: true, weight: 1 },
+    { value: "tables20", label: "11-20 times tables", defaultActive: false, weight: 2 },
+    { value: "decimals", label: "Decimals (e.g. 1.6, 2.25)", defaultActive: false, weight: 3 },
+  ],
+};
+
+const L2_TIER: Record<string, { kMin: number; kMax: number; decimalsMode: boolean }> = {
+  tables10: { kMin: 1, kMax: 10, decimalsMode: false },
+  tables20: { kMin: 11, kMax: 20, decimalsMode: false },
+  decimals: { kMin: 1, kMax: 20, decimalsMode: true },
+};
+
+// Level 2's time wording — a peer choice (mph-vs-km/h style variety, not an
+// ordinal ladder), so deliberately UNWEIGHTED: no `weight` on either option,
+// so it renders as the normal 2-cell pill row (not the difficulty
+// cycle-button — see CLAUDE.md's "QO control types") and never enters the
+// Smart Progressor's sort/balance. Both options are a genuine, always-correct
+// choice by construction — see pickShape's level2 branch and WORDED_FRACTIONS
+// below; when only "Worded fraction" is active, the minute value is drawn
+// exclusively from TM values that actually have a natural spoken form, never
+// silently falling back to plain-minutes wording (that silent fallback was
+// the exact bug in this feature's first iteration — see docs/PATCH_NOTES.md,
+// "fix 'Time Notation' QO not restricting at Level 2").
+const TIME_NOTATION_L2: ToolMultiSelect = {
+  key: "timeNotationL2", label: "Time Notation",
+  options: [
+    { value: "minutes", label: "Minutes", defaultActive: true },
+    { value: "wordedFraction", label: "Worded fraction", defaultActive: false },
+  ],
+};
+
+// TM values with a natural spoken fraction of an hour. Every TM pool Level 2
+// can draw from has at least one member here — L2_MINUTES ⊇
+// {5,6,10,12,15,20,30} and L2_DECIMAL_MINUTES ⊇ {6,12,15,30} — so
+// "wordedFraction"-only never needs a fallback to the unfiltered pool.
+const WORDED_FRACTIONS: Record<number, string> = {
+  5: "a twelfth of an hour",
+  6: "a tenth of an hour",
+  10: "a sixth of an hour",
+  12: "a fifth of an hour",
+  15: "a quarter of an hour",
+  20: "a third of an hour",
+  30: "half an hour",
+};
 
 const makeSubtool = (name: string) => ({
   name,
@@ -115,7 +184,7 @@ const makeSubtool = (name: string) => ({
   multiSelect: [UNITS_L1, TABLES_MS],
   difficultySettings: {
     level1: { multiSelect: [UNITS_L1, TABLES_MS] },
-    level2: { variables: [ALLOW_TERMINATING_DECIMALS], multiSelect: [UNITS_L23, TABLES_MS] },
+    level2: { variables: [], multiSelect: [UNITS_L23, DIFFICULTY_TIER_L2, TIME_NOTATION_L2] },
     level3: { multiSelect: [UNITS_L23, L3_TYPES, TABLES_MS] },
   },
 });
@@ -157,12 +226,13 @@ const INFO_SECTIONS: InfoSection[] = [
   ]},
   { title: "Question Options", icon: "⚙️", content: [
     { label: "Units", detail: "Which unit families can appear (m/s only appears at Level 1)." },
-    { label: "Time wording", detail: "A given time is always stated in plain minutes, or hours & minutes for a compound time (e.g. '1 hour 30 minutes') — never as a spoken fraction (e.g. 'a quarter of an hour') or a decimal." },
+    { label: "Time wording", detail: "A compound time (Level 3) is always stated in hours & minutes (e.g. '1 hour 30 minutes'); a Level 2 time follows the Time Notation setting below. Never a decimal at any level." },
     { label: "Method", detail: "Ratio Table (default) scales to/from one hour using whole-number steps. Decimal instead converts the time to decimal hours and divides/multiplies by that — shown only where the conversion is exact; otherwise it falls back to the Ratio Table method." },
     { label: "Question Types (Level 3)", detail: "Compound times (e.g. 1 hr 30) and/or awkward minute values (e.g. 40 min)." },
-    { label: "Times Tables", detail: "Caps every multiplication/division fact the question relies on — including the scale factor in the ratio table working — so a student is never asked to invert a fact outside their tables. Doesn't restrict Level 2's minute value itself, since scaling a divisor of 60 up to one hour is a fixed conversion fact rather than a times-tables one. 'Up to 10×10' is on by default; tick 'Up to 20×20' as well to also allow larger, more demanding numbers." },
-    { label: "Allow decimal answers", detail: "Lets the computed value be a terminating decimal (e.g. 12.5) instead of always a whole number." },
-    { label: "Allow terminating decimals (Level 2 only)", detail: "Replaces 'Allow decimal answers' at Level 2. The given time is a tenth, fifth, quarter or half of an hour, and a whole-number speed/distance is scaled by that exact fraction — so the computed answer can genuinely land on a 1-2dp decimal (e.g. 8 km/h for a fifth of an hour = 1.6 km), never a repeating one (no ⅓ or ⅙-hour times)." },
+    { label: "Times Tables (Levels 1 & 3)", detail: "Caps every multiplication/division fact the question relies on — including the scale factor in the ratio table working — so a student is never asked to invert a fact outside their tables. Doesn't restrict Level 2's minute value itself, since scaling a divisor of 60 up to one hour is a fixed conversion fact rather than a times-tables one. 'Up to 10×10' is on by default; tick 'Up to 20×20' as well to also allow larger, more demanding numbers." },
+    { label: "Allow decimal answers (Levels 1 & 3)", detail: "Lets the computed value be a terminating decimal (e.g. 12.5) instead of always a whole number." },
+    { label: "Difficulty (Level 2)", detail: "One pool of three mutually exclusive rungs, easiest first: '1-10 times tables' (on by default, the scale factor is drawn from 1-10), '11-20 times tables' (drawn from 11-20 only — genuinely harder facts, not just a higher cap), and 'Decimals' (the given time is a tenth, fifth, quarter or half of an hour, and the computed answer is guaranteed to be a genuine 1-2dp decimal every time, e.g. 8 km/h for a fifth of an hour = 1.6 km, never a repeating one and never a coincidental whole number). Tick more than one rung to mix them in a worksheet — on the Worksheet tab, questions are ordered easiest-rung-first so a sheet ramps up rather than mixing difficulties at random." },
+    { label: "Time Notation (Level 2)", detail: "Whether the given/answer time is worded as plain minutes (e.g. '12 minutes') or as a spoken fraction of an hour (e.g. 'a fifth of an hour') — a variety choice, not a difficulty setting, so it isn't ordered by the Worksheet tab's easy-to-hard sort. Tick both to mix the two wordings in one worksheet. 'Worded fraction' only ever picks a time that genuinely has a natural spoken form (a twelfth, tenth, sixth, fifth, quarter, third or half of an hour) — it never falls back to plain-minutes wording for a value that doesn't." },
   ]},
 ];
 
@@ -172,14 +242,15 @@ const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
 
 // Divisors of 60 (excluding 60 itself, and excluding 1 — a 1-minute road
 // journey can't land a realistic speed within this tool's distance/speed
-// ranges for any family) — L2 picks any of these. The given TIME is always
-// worded as plain minutes (e.g. "15 minutes"), never as a spoken fraction or
-// a decimal — see formatDuration. The computed distance/speed answer CAN be
-// a decimal when "Allow terminating decimals" is on — see L2_DECIMAL_MINUTES.
+// ranges for any family) — L2 picks any of these. The given TIME's wording
+// (plain minutes vs. a spoken fraction) follows the Time Notation QO — see
+// TIME_NOTATION_L2/formatDuration — never a decimal. The computed
+// distance/speed answer CAN be a decimal when the "Decimals" Difficulty rung
+// is active — see L2_DECIMAL_MINUTES.
 const L2_MINUTES = [2, 3, 5, 6, 10, 12, 15, 20, 30];
 
-// The subset of L2_MINUTES used when "Allow terminating decimals" is on —
-// only values whose TM/60 fraction terminates. The non-terminating ones (2,
+// The subset of L2_MINUTES used when the "Decimals" Difficulty rung is
+// active — only values whose TM/60 fraction terminates. The non-terminating ones (2,
 // 5, 10, 20 — e.g. 10 minutes = 1/6 hour = 0.1666…) are excluded; the
 // terminating ones (a twentieth, tenth, fifth, quarter, half) are all
 // reachable at any Times Tables setting since buildDecimalValues scales the
@@ -224,7 +295,7 @@ const compoundCombos = (tablesLimit: number): { H: number; Mfrac: number }[] => 
 // tablesLimit (10 or 20, from the "Times Tables" QO) caps every fact the
 // question ends up needing: T0 directly here, pp/qq via withinTables below,
 // and the scale factor k in buildValues.
-const pickShape = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, tablesLimit: number, decimalsMode: boolean): Shape => {
+const pickShape = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, tablesLimit: number, decimalsMode: boolean, notation: TimeNotation = "minutes"): Shape => {
   if (level === "level1") {
     const maxT0 = Math.min(family === "mps" ? 10 : 12, tablesLimit);
     const T0 = randInt(2, maxT0);
@@ -232,7 +303,14 @@ const pickShape = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, t
   }
   if (level === "level2") {
     // Not gated by tablesLimit — see withinTables' comment above.
-    return { kind: "l2", TM: pick(decimalsMode ? L2_DECIMAL_MINUTES : L2_MINUTES) };
+    const pool = decimalsMode ? L2_DECIMAL_MINUTES : L2_MINUTES;
+    // When "Worded fraction" is the only active notation, restrict to TM
+    // values that actually have a natural spoken form (see WORDED_FRACTIONS)
+    // — deliberately no fallback to the unfiltered pool if this ever came up
+    // empty; that silent fallback was the exact bug the first version of
+    // this feature had.
+    const candidates = notation === "wordedFraction" ? pool.filter(tm => tm in WORDED_FRACTIONS) : pool;
+    return { kind: "l2", TM: pick(candidates) };
   }
   if (l3type === "compoundTime") {
     const combos = compoundCombos(tablesLimit);
@@ -287,28 +365,31 @@ const buildScaleSteps = (
 
 // D = k·qq, S = k·pp, where pp/qq = 60/TM reduced — picked so both land clean
 // (whole, or exactly one decimal place when allowDecimals is on) and inside a
-// realistic range for the unit family. k is itself capped by tablesLimit —
+// realistic range for the unit family. k is itself drawn from [kMin, kMax] —
 // it's the other side of the pp/qq fact a student inverts (e.g. qq=8, k=13
 // asks for "8 × 13", a fact well outside 10×10 even though 8 itself isn't).
-const buildValues = (TM: number, f: FamilyInfo, allowDecimals: boolean, tablesLimit: number): { D: number; S: number; pp: number; qq: number } => {
+// kMin defaults to 1 (a plain cap, as at Levels 1/3 and the old Level 2
+// "tables20"); Level 2's DIFFICULTY_TIER_L2 passes an explicit floor too, so
+// its "11-20 times tables" rung is a genuinely disjoint range, not "up to 20".
+const buildValues = (TM: number, f: FamilyInfo, allowDecimals: boolean, kMax: number, kMin: number = 1): { D: number; S: number; pp: number; qq: number } => {
   const g = gcd(60, TM);
   const pp = 60 / g, qq = TM / g;
   for (let attempt = 0; attempt < 80; attempt++) {
     const useHalf = allowDecimals && Math.random() < 0.35;
-    const k = randInt(1, tablesLimit) + (useHalf ? 0.5 : 0);
+    const k = randInt(kMin, kMax) + (useHalf ? 0.5 : 0);
     const D = k * qq, S = k * pp;
     if (D < f.distMin || D > f.distMax) continue;
     if (S < f.speedMin || S > f.speedMax) continue;
     if (D === TM) continue; // "37 miles in 37 minutes" reads as a coincidence, not a real question
     return { D, S, pp, qq };
   }
-  let k = Math.min(Math.max(Math.ceil(f.distMin / qq), Math.ceil(f.speedMin / pp), 1), tablesLimit);
-  if (k * qq === TM && (k + 1) * qq <= f.distMax && (k + 1) * pp <= f.speedMax && k + 1 <= tablesLimit) k += 1;
+  let k = Math.min(Math.max(Math.ceil(f.distMin / qq), Math.ceil(f.speedMin / pp), kMin), kMax);
+  if (k * qq === TM && (k + 1) * qq <= f.distMax && (k + 1) * pp <= f.speedMax && k + 1 <= kMax) k += 1;
   return { D: k * qq, S: k * pp, pp, qq };
 };
 
-// Used instead of buildValues for L2 shapes when "Allow terminating
-// decimals" is on (TM drawn from L2_DECIMAL_MINUTES, so TM/60 always
+// Used instead of buildValues for L2 shapes when the "Decimals" Difficulty
+// rung is picked (TM drawn from L2_DECIMAL_MINUTES, so TM/60 always
 // terminates within 2dp). Rather than forcing D and S into clean multiples
 // of pp/qq, the rate S is picked freely as a whole number within the Times
 // Tables cap and the distance D is derived by scaling with the exact
@@ -318,6 +399,14 @@ const buildValues = (TM: number, f: FamilyInfo, allowDecimals: boolean, tablesLi
 // 1.6 miles) is a perfectly realistic journey, and the usual distMin (3)
 // would make the smaller fractions (a tenth, a fifth) unreachable under the
 // Times Tables cap.
+//
+// GUARANTEED decimal answer: D = S × qq/pp (TM/60 reduced) is only ever
+// whole when S is a multiple of pp (gcd(pp,qq)=1, so pp must divide S) — so
+// rejecting S % pp === 0 guarantees D is a genuine decimal every draw, not
+// just "eligible" to be one (this tier used to land on a whole-number D
+// ~18% of the time, e.g. a half-hour time with an even speed). Every
+// TM in L2_DECIMAL_MINUTES reduces to pp ≥ 2 (never a factor-of-60 TM), so a
+// valid non-multiple of pp always exists in range.
 const buildDecimalValues = (TM: number, f: FamilyInfo, tablesLimit: number): { D: number; S: number; pp: number; qq: number } => {
   const g = gcd(60, TM);
   const pp = 60 / g, qq = TM / g;
@@ -330,13 +419,15 @@ const buildDecimalValues = (TM: number, f: FamilyInfo, tablesLimit: number): { D
   const sMax = tablesLimit * pp;
   for (let attempt = 0; attempt < 80; attempt++) {
     const S = randInt(1, sMax);
+    if (S % pp === 0) continue; // would make D whole — see "GUARANTEED" above
     const D = Math.round(S * frac * 100) / 100;
     if (D < decimalDistMin || D > f.distMax) continue;
     if (S < f.speedMin || S > f.speedMax) continue;
     if (D === TM) continue; // "37 miles in 37 minutes" reads as a coincidence, not a real question
     return { D, S, pp, qq };
   }
-  const S = Math.min(Math.max(Math.ceil(decimalDistMin / frac), f.speedMin, 1), sMax, f.speedMax);
+  let S = Math.min(Math.max(Math.ceil(decimalDistMin / frac), f.speedMin, 1), sMax, f.speedMax);
+  if (S % pp === 0) S = S + 1 <= Math.min(sMax, f.speedMax) ? S + 1 : S - 1;
   const D = Math.round(S * frac * 100) / 100;
   return { D, S, pp, qq };
 };
@@ -353,16 +444,19 @@ const terminatesDecimal = (num: number, den: number): boolean => {
   return d === 1;
 };
 
-// A given/answer time is always plain minutes, or hours & minutes for a
-// compound time — never a spoken fraction (e.g. "a quarter of an hour") or
-// a decimal.
-const formatDuration = (shape: Shape, family: UnitFamily): string => {
+// A given/answer time is plain minutes, or hours & minutes for a compound
+// time — or, at Level 2 only, a spoken fraction (e.g. "a quarter of an
+// hour") when the "Worded fraction" Time Notation is picked — never a
+// decimal, at any level. `notation` only ever affects an "l2" shape; Level 1
+// and Level 3 always use their existing wording regardless of the argument.
+const formatDuration = (shape: Shape, family: UnitFamily, notation: TimeNotation = "minutes"): string => {
   if (shape.kind === "l1") {
     const T0 = shape.TM / 60;
     const unit = family === "mps" ? (T0 === 1 ? "second" : "seconds") : (T0 === 1 ? "hour" : "hours");
     return `${T0} ${unit}`;
   }
   if (shape.kind === "l3compound") return `${shape.H} hour${shape.H === 1 ? "" : "s"} ${shape.Mfrac} minutes`;
+  if (shape.kind === "l2" && notation === "wordedFraction" && shape.TM in WORDED_FRACTIONS) return WORDED_FRACTIONS[shape.TM];
   return `${shape.TM} minutes`;
 };
 
@@ -380,12 +474,12 @@ const compoundConvertStep = (shape: Shape): WorkingStep[] =>
     ? [mStep("Convert to minutes:", `${shape.H} \\times 60 + ${shape.Mfrac} = ${shape.TM}`)]
     : [];
 
-const buildCommon = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, tablesLimit: number, decimalsMode: boolean) => {
-  const shape = pickShape(level, family, l3type, tablesLimit, decimalsMode);
+const buildCommon = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, tablesLimit: number, decimalsMode: boolean, kMin: number = 1, notation: TimeNotation = "minutes") => {
+  const shape = pickShape(level, family, l3type, tablesLimit, decimalsMode, notation);
   const f = FAMILY[family];
   const { D, S, pp, qq } = decimalsMode && shape.kind === "l2"
     ? buildDecimalValues(shape.TM, f, tablesLimit)
-    : buildValues(shape.TM, f, allowDecimals, tablesLimit);
+    : buildValues(shape.TM, f, allowDecimals, tablesLimit, kMin);
   const tLabel = timeLabel(shape, f);
   const tVal = timeCellValue(shape);
   const hourRef = hourRefValue(shape);
@@ -474,9 +568,9 @@ const buildWorking = (rv: RawValues, method: WorkingMethod): WorkingStep[] => {
   ];
 };
 
-const genSpeed = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, decimalsMode: boolean, method: WorkingMethod, tablesLimit: number): WordedQuestion => {
-  const c = buildCommon(level, family, l3type, allowDecimals, tablesLimit, decimalsMode);
-  const durationText = formatDuration(c.shape, family);
+const genSpeed = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, decimalsMode: boolean, method: WorkingMethod, tablesLimit: number, kMin: number = 1, notation: TimeNotation = "minutes"): WordedQuestion => {
+  const c = buildCommon(level, family, l3type, allowDecimals, tablesLimit, decimalsMode, kMin, notation);
+  const durationText = formatDuration(c.shape, family, notation);
   const id = randInt(0, 999999);
   const rv: RawValues = {
     tool: "speed", D: c.D, S: c.S, TM: c.shape.TM, pp: c.pp, qq: c.qq,
@@ -500,9 +594,9 @@ const genSpeed = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, al
   } as unknown as WordedQuestion;
 };
 
-const genDistance = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, decimalsMode: boolean, method: WorkingMethod, tablesLimit: number): WordedQuestion => {
-  const c = buildCommon(level, family, l3type, allowDecimals, tablesLimit, decimalsMode);
-  const durationText = formatDuration(c.shape, family);
+const genDistance = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, decimalsMode: boolean, method: WorkingMethod, tablesLimit: number, kMin: number = 1, notation: TimeNotation = "minutes"): WordedQuestion => {
+  const c = buildCommon(level, family, l3type, allowDecimals, tablesLimit, decimalsMode, kMin, notation);
+  const durationText = formatDuration(c.shape, family, notation);
   const id = randInt(0, 999999);
   const rv: RawValues = {
     tool: "distance", D: c.D, S: c.S, TM: c.shape.TM, pp: c.pp, qq: c.qq,
@@ -523,9 +617,9 @@ const genDistance = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type,
   } as unknown as WordedQuestion;
 };
 
-const genTime = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, decimalsMode: boolean, method: WorkingMethod, tablesLimit: number): WordedQuestion => {
-  const c = buildCommon(level, family, l3type, allowDecimals, tablesLimit, decimalsMode);
-  const answerText = formatDuration(c.shape, family);
+const genTime = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, allowDecimals: boolean, decimalsMode: boolean, method: WorkingMethod, tablesLimit: number, kMin: number = 1, notation: TimeNotation = "minutes"): WordedQuestion => {
+  const c = buildCommon(level, family, l3type, allowDecimals, tablesLimit, decimalsMode, kMin, notation);
+  const answerText = formatDuration(c.shape, family, notation);
   const id = randInt(0, 999999);
   const rv: RawValues = {
     tool: "time", D: c.D, S: c.S, TM: c.shape.TM, pp: c.pp, qq: c.qq,
@@ -558,16 +652,40 @@ const generateQuestion = (
 ): WordedQuestion => {
   const t = tool as ToolType;
   const allowDecimals = variables.allowDecimals === true;
-  const decimalsMode = variables.terminatingDecimals === true;
   const method = (dropdownValue || "ratioTable") as WorkingMethod;
   const unitOptions = level === "level1" ? UNITS_L1.options : UNITS_L23.options;
   const family = pickActive(multiSelectValues, unitOptions) as UnitFamily;
   const l3type = level === "level3" ? (pickActive(multiSelectValues, L3_TYPES.options) as L3Type) : "awkwardMinutes";
-  const tablesLimit = Number(pickActive(multiSelectValues, TABLES_MS.options));
 
-  if (t === "speed") return genSpeed(level, family, l3type, allowDecimals, decimalsMode, method, tablesLimit);
-  if (t === "distance") return genDistance(level, family, l3type, allowDecimals, decimalsMode, method, tablesLimit);
-  return genTime(level, family, l3type, allowDecimals, decimalsMode, method, tablesLimit);
+  // Level 2 draws its k-range/decimalsMode from the DIFFICULTY_TIER_L2 ladder
+  // (Smart Progressor) instead of the independent pool/variable the other
+  // levels still use — kMax/kMin are mutually exclusive per rung (see
+  // DIFFICULTY_TIER_L2's comment), not overlapping caps.
+  let tablesLimit: number;
+  let kMin: number;
+  let decimalsMode: boolean;
+  let notation: TimeNotation = "minutes";
+  let difficultyScore: number | undefined;
+  if (level === "level2") {
+    const tier = pickActive(multiSelectValues, DIFFICULTY_TIER_L2.options);
+    const cfg = L2_TIER[tier];
+    tablesLimit = cfg.kMax;
+    kMin = cfg.kMin;
+    decimalsMode = cfg.decimalsMode;
+    difficultyScore = weightOf(DIFFICULTY_TIER_L2.options, tier);
+    // Unweighted — pure wording variety, not a Smart Progressor axis (see
+    // TIME_NOTATION_L2's comment).
+    notation = pickActive(multiSelectValues, TIME_NOTATION_L2.options) as TimeNotation;
+  } else {
+    tablesLimit = Number(pickActive(multiSelectValues, TABLES_MS.options));
+    kMin = 1;
+    decimalsMode = false;
+  }
+
+  const q = t === "speed" ? genSpeed(level, family, l3type, allowDecimals, decimalsMode, method, tablesLimit, kMin, notation)
+    : t === "distance" ? genDistance(level, family, l3type, allowDecimals, decimalsMode, method, tablesLimit, kMin, notation)
+    : genTime(level, family, l3type, allowDecimals, decimalsMode, method, tablesLimit, kMin, notation);
+  return difficultyScore === undefined ? q : ({ ...q, _difficultyScore: difficultyScore } as unknown as WordedQuestion);
 };
 
 // Worksheet uniqueness is automatic — ToolShell wraps generateQuestion with the

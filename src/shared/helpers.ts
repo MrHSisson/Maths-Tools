@@ -18,6 +18,85 @@ export const pickActive = (values: Record<string, boolean>, options: { value: st
   return active.length > 0 ? active[Math.floor(Math.random() * active.length)].value : options[0].value;
 };
 
+// Smart Progressor — looks up a picked multiSelect option's difficulty
+// `weight` (0 if unweighted or not found). A generator calls this after
+// pickActive() to score the question it just built; ToolShell's worksheet
+// loop uses that score (see sortByDifficulty) to order easy-to-hard.
+export const weightOf = (options: { value: string; weight?: number }[], value: string): number =>
+  options.find(o => o.value === value)?.weight ?? 0;
+
+// Smart Progressor — reorders a worksheet's questions by ascending
+// `_difficultyScore` (a question field a generator sets via weightOf) so
+// earlier questions are the easier weighted options and later ones the
+// harder. A stable sort — equal-score questions keep their original
+// (random) relative order, so there's no robotic re-shuffling within a tier.
+// Tools that never attach `_difficultyScore` are returned unchanged, making
+// this a no-op for every tool that hasn't opted into weighted QO pools.
+export const sortByDifficulty = <Q extends { key: string }>(questions: Q[]): Q[] => {
+  const score = (q: Q) => (q as unknown as { _difficultyScore?: number })._difficultyScore;
+  if (!questions.some(q => score(q) !== undefined)) return questions;
+  return [...questions].sort((a, b) => (score(a) ?? 0) - (score(b) ?? 0));
+};
+
+// Independent per-question random draws — natural variety, e.g. a genuine
+// 6/5/4 across three equally-active options over 15 questions, not the same
+// exact split every single time — but the whole batch is retried if any
+// option's count strays more than 1 away from the fair share
+// (numQuestions/count of active options), so an unconstrained draw's
+// occasional lopsided outcome (e.g. 9/4/2) never reaches the worksheet.
+// "Roughly a third each" (the actual ask — see docs/PROJECTS.md's Smart
+// Progressor prong), not "exactly a third each". Falls back to the nearest
+// exact largest-remainder split if 200 tries don't land inside tolerance —
+// rare, and only realistically possible with very few questions spread
+// across several active options.
+const balancedSlots = (values: string[], numQuestions: number): string[] => {
+  const ideal = numQuestions / values.length;
+  for (let attempt = 0; attempt < 200; attempt++) {
+    const slots = Array.from({ length: numQuestions }, () => values[Math.floor(Math.random() * values.length)]);
+    if (values.every(v => Math.abs(slots.filter(s => s === v).length - ideal) <= 1)) return slots;
+  }
+  const base = Math.floor(numQuestions / values.length);
+  const rem = numQuestions % values.length;
+  const slots: string[] = [];
+  values.forEach((v, i) => { for (let n = 0; n < base + (i < rem ? 1 : 0); n++) slots.push(v); });
+  return slots;
+};
+
+// Smart Progressor — ToolShell-internal wiring, never called from a tool
+// file. Builds one multiSelectValues override per worksheet question so a
+// *weighted* group (any multiSelect group with at least one option carrying
+// a `weight`) lands roughly evenly across its active options (see
+// balancedSlots) instead of leaving representation entirely to chance via
+// pickActive's per-question random draw, which can land arbitrarily skewed
+// over a short worksheet. Every OTHER group (e.g. a "Units" pool with no
+// weighted options) is passed through completely untouched, so it keeps
+// varying freely and randomly per question exactly as before — the balancing
+// is opt-in per group, scoped to exactly the groups the Smart Progressor
+// already orders by. Order within the split doesn't matter: sortByDifficulty
+// re-sorts the finished batch afterwards.
+export const buildQuotaOverrides = (
+  groups: { key: string; options: { value: string; weight?: number }[] }[],
+  baseValues: Record<string, boolean>,
+  numQuestions: number,
+): Record<string, boolean>[] => {
+  const quotaGroups = groups
+    .filter(g => g.options.some(o => o.weight !== undefined))
+    .map(g => ({ group: g, active: g.options.filter(o => baseValues[o.value] !== false) }))
+    .filter(g => g.active.length > 1); // a single active option needs no balancing
+  if (quotaGroups.length === 0) return Array.from({ length: numQuestions }, () => baseValues);
+
+  const assignments = quotaGroups.map(({ group, active }) => ({ group, slots: balancedSlots(active.map(o => o.value), numQuestions) }));
+
+  return Array.from({ length: numQuestions }, (_, i) => {
+    const overrides = { ...baseValues };
+    assignments.forEach(({ group, slots }) => {
+      const chosen = slots[i];
+      group.options.forEach(o => { overrides[o.value] = o.value === chosen; });
+    });
+    return overrides;
+  });
+};
+
 // A tool's `multiSelect` may be a single group or an array of independent groups
 // (each rendered as its own pool in the QO popover). Normalize to an array.
 export const normalizeMultiSelect = <T extends { key: string }>(ms?: T | T[] | null): T[] =>

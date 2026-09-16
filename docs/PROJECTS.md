@@ -73,6 +73,7 @@ pedagogy-engine sweep.
 | **Tool expansion (Part 2)** | 🚧 | Per-tool content-growth backlog (new question types, broader coverage) — **tier-1 priority**, needs a dedicated sequencing pass |
 | **SmartGrapher** | ✅ | Mature, embeddable; used in 3 tools — **tier-1 priority**: wire into more tools opportunistically |
 | **Techniques engine** | 🚧 | Engine built; only 1 tool converted — build on demand for tier-1 needs, not a standalone sweep (see Priorities) |
+| **Smart Progressor** | 🚧 | Core mechanism shipped (weighted `multiSelect` + worksheet sort + roughly-even split + standard-mode-only + teacher-facing off toggle + compact 2-option cycle-button popover control); 1 of 27 tools piloted (`SpeedDistanceTime` L2), 1 dev-gated demo (`/tool-shell`) — needs a per-tool audit pass |
 | **Skills library** | ⏸ | Engine + backlog ready; 2 skills built — tier-2 (student-led), not a current priority |
 | **Core representations** | ⏸ | 3 of 6 visual families have Teach scenes — feeds Skills/Teach decks (tier 2), paused alongside them |
 | **Teach decks** | ⏸ | Engine built; one partial deck exists — least mature prong, secondary to tier-1 work |
@@ -383,6 +384,141 @@ confirm the exact moves when those tools migrate. **This table is exactly the ki
 Tool Audit's Part 1 (Infrastructure alignment) cross-references per tool** — as each tool is
 audited, update the priority/status columns here with real demand rather than the inferred
 guesses above.
+
+## Smart Progressor
+
+> **Tier-3 (infrastructure) — build on demand, not a sweep.** Orders a generated worksheet's
+> questions easy-to-hard instead of randomly, using difficulty *weights* already declared on a
+> tool's own QO options — no per-tool progression logic. Same "build on demand" posture as the
+> Techniques engine: the mechanism is generic and lives once in `ToolShell`/`shared/helpers.ts`,
+> but each tool only benefits once someone opts it in.
+
+**Where it's at.** Core mechanism shipped 2026-09-15: `ToolMultiSelect.options[].weight?: number`
+(`src/shared/types.ts`), the `weightOf`/`sortByDifficulty` helpers (`src/shared/helpers.ts`,
+exported from `"../../shared"`), and a sort step in `ToolShell`'s `handleGenerateWorksheet` that
+orders each worksheet block (or, for a differentiated sheet, each level's own block) ascending by
+a question's `_difficultyScore` — a no-op for any tool that never sets one, so every un-migrated
+tool is unaffected. A generator opts in by picking a QO value via `pickActive` as normal, then
+looking up `weightOf(pool.options, value)` and attaching it as `_difficultyScore` on the returned
+question (see reference below). **One tool piloted**: `SpeedDistanceTime`'s Level 2, which used to
+combine an independent `tablesLimit` multiSelect (10×/20×) with a separate
+`ALLOW_TERMINATING_DECIMALS` boolean — collapsed into one ordinal pool `DIFFICULTY_TIER_L2`
+(`tables10` weight 1 → `tables20` weight 2 → `decimals` weight 3). Refined same-day to be
+**mutually exclusive, not overlapping caps**: `tables10` draws its scale factor `k` from 1-10 and
+`tables20` from 11-20 *only* (previously `tables20` was "up to 20", silently including every 1-10
+fact too, so it didn't read as strictly harder); `decimals` now **guarantees** a genuinely
+non-whole answer every draw (`buildDecimalValues` rejects any draw whose speed is a multiple of
+the shape's `pp`, the one condition that makes the distance come out whole — verified over 1000
+draws, was previously only ~82% decimal, so ~18% of "decimals-tier" questions used to render as a
+plain whole number, indistinguishable from the easier rungs on a printed sheet). The general rule
+this pilot established: **a boolean QO option that represents "harder", not just "different",
+should be a rung in an ordinal `multiSelect` pool, not an independent `ToolVariable`** — only a
+per-question pool pick (via `pickActive`) gives the sort step something to see; a worksheet-wide
+boolean toggle can't be progressively ramped within one generation call. A second rule this
+refinement adds: **rungs should be mutually exclusive ranges (or a guaranteed property), not
+independent caps that silently overlap** — an "up to N" cap that a lower rung's range is already a
+subset of doesn't read as harder, and a "sometimes" property undermines the visible ramp on a
+printed worksheet.
+
+**Split-balancing shipped same day, 2026-09-15 — the "question 1 isn't guaranteed easy" gap is now
+mostly closed.** The original mechanism only *ordered* whatever the batch's random draws happened
+to produce — over ~15 questions, `pickActive`'s per-question independent draw could occasionally
+land quite skewed (e.g. 9/4/2) across three active rungs, no different from any other multiSelect
+pool. `buildQuotaOverrides` (`src/shared/helpers.ts`, wired into `ToolShell`'s
+`handleGenerateWorksheet`, never called from a tool file) softens this generically: before
+generating a worksheet, it finds every multiSelect group carrying at least one weighted option and
+builds a per-question-slot `multiSelectValues` override — each slot still an independent random
+draw, but the whole batch is retried (bounded, falling back to an exact largest-remainder split
+after 200 tries) until every active option's count lands within ±1 of its fair share. **First cut
+of this forced an exact split every time (5/5/5, always)** — corrected same session after the user
+clarified the actual ask was "roughly 33%", explicitly fine with an outcome like 6/5/4: "I don't
+want to go against it here, but I think the idea of ending up with a 6/5/4 wouldn't be awful. Hence
+why I said roughly 33%." The ±1-tolerance retry keeps real variety across generations (4/5/6,
+6/5/4, 5/5/5, … all normal, verified directly: 100 repeated runs at 15 questions/3 rungs produced
+7 distinct permutations of {4,5,6}, never anything more skewed) while still ruling out a lopsided
+worksheet. Combined with the ascending sort, a worksheet's tier *blocks* stay contiguous and
+correctly ordered whatever the exact split turns out to be — a 6/5/4 split still means the first 6
+questions are the easiest rung, the last 4 the hardest; only the block sizes vary, by design.
+**Scoped to weighted groups only**: a group with no weighted option (e.g. SDT's "Units"
+mph/km·h/m/s pool) is passed through completely untouched and keeps varying randomly per question,
+per the user's own framing — that requirement doesn't apply to "something like km/h vs mph".
+**What's still not a hard guarantee:** which *specific* question lands in which position within a
+tier is still random (only the tier a slot belongs to, and roughly how many slots it gets, is
+constrained), and the original "Option B" (narrowing the QO snapshot passed into
+`generateQuestion` itself, per question index) still isn't expected to be needed — the balancing
+mechanism gets a good-enough practical outcome without touching `generateQuestion`'s contract.
+
+**The audit's deciding test, sharpened 2026-09-15: mutual exclusivity, not difficulty.** A boolean
+is a conversion candidate only if it's genuinely mutually exclusive with its sibling options (only
+one applies to a given question) — that's what makes it fit a `multiSelect` pool at all, difficulty
+weighting is a separate add-on on top. A boolean that can *combine* with a sibling on the same
+question (rare, but real — e.g. two independent flags both true at once) must stay independent:
+either its own `ToolVariable`, or its own separate multiSelect pool — never folded into a pool
+alongside something it can coexist with. See CLAUDE.md's "QO control types" section for the full
+rule. The quota-balancing mechanism itself needs no extra work for this: `buildQuotaOverrides` is
+already generic over the active-option count (verified directly for 2, 4 and 5 active options,
+including tight ratios like 5 options over only 15 questions or 4 over 6 — genuine variety, always
+within tolerance, no per-count special-casing).
+
+**Scoped to standard worksheet mode, with a teacher-facing off switch — both shipped 2026-09-15.**
+The advanced `WorksheetBuilder` (the "Advanced" toggle) was already exempt by construction —
+it generates through its own independent code path and never called `sortByDifficulty`/
+`buildQuotaOverrides`, since both live entirely inside `ToolShell`'s `handleGenerateWorksheet`,
+which only the standard Worksheet tab calls (confirmed by reading both files, not assumed). Added
+a genuine teacher-facing "Smart Progressor" toggle in the Worksheet tab's Settings popover
+(alongside "Borders"), on by default, session-persisted per tool route — turning it off restores
+generation to exactly how it worked before this prong existed (every question slot gets the same
+unmodified `multiSelectValues`, no quota override; the generated batch is left in its raw random
+order, no sort). The toggle only renders for a tool that actually has a weighted multiSelect pool
+at all (`toolHasWeightedPool`, checked across every level) — invisible clutter otherwise, since
+it'd be a no-op for the other 26 tools today. Verified live in the running app (not just build/
+test): the toggle appears in SpeedDistanceTime's Settings popover, is absent from
+CompletingTheSquare's (no weighted pool), and toggling it off + generating produces zero console
+errors.
+
+**Every existing boolean QO is a 2-option-pool candidate, not just 3+-option ones — the mental
+model needs to widen.** Sharpened via a concrete example: a quadratic tool's "allow negative
+coefficients" can't stay a single `allowNegative: boolean` if it's meant to participate in the
+Smart Progressor, because a worksheet-wide toggle can't let question 3 draw "non-negative" while
+question 9 draws "negative" — that per-question distinction is exactly what a `multiSelect` pool
+gives you, even with only two rungs (`nonNegative` weight 1, `negative` weight 2). Expect most of
+the audit below to turn booleans into 2-option pools, not just tools that already had 3+ named
+states like SDT's Times Tables.
+
+**The popover-weight worry this raises was real, and it's solved — 2026-09-15.** If most booleans
+turn into 2-option pools, a tool with several such properties would stack a full pill-row block per
+pool, making the QO popover "incredibly heavy" (the user's own words) exactly as differentiation
+needs grow. Fix: a 2-option pool where **both** options carry `weight` now renders as one compact
+click-to-cycle button (**None → Mixed → Exclusive**, i.e. easier-only → both active → harder-only)
+instead of a two-cell pill row — several sit inline in one row rather than each claiming a
+full-width block. Purely a rendering choice: same `ToolMultiSelect` data, same
+`pickActive`/`weightOf`/`buildQuotaOverrides`/`sortByDifficulty` pipeline underneath (`CycleSelect`
+in `src/shared/components/QOPopovers.tsx`, detected automatically — a 2-option *peer* pool with no
+weight, like two unit families, still renders as the normal pill row). Built and verified live in
+the running app (not just build/test): with an unweighted 2-option pool (SDT's Units) and a
+weighted 3-option pool (SDT's Difficulty) both confirmed to render unchanged (regression-checked),
+and a new dev-gated worked example added at `/tool-shell` (Sub-Tool 1's "Negative Coefficients
+(demo)" pool, visible only with Developing-tools mode on) confirmed end-to-end: absent when dev
+mode is off, present and cycling None→Mixed→Exclusive→None correctly when on, `generateQuestion`
+reading the picked value and attaching a real `_difficultyScore`, zero console errors.
+
+**Possible next steps:**
+- Audit the other 26 tools' `variables`/`multiSelect` against the mutual-exclusivity test above:
+  convert genuinely mutually-exclusive, difficulty-ordinal booleans (per the SDT pattern); leave
+  combinable/independent ones as `variables`; split anything that's mutually exclusive but *not*
+  difficulty-ordinal (pure variety) into its own unweighted pool rather than forcing it into a
+  difficulty ladder — same shape as the Techniques engine's per-tool sweep, worth tracking as a
+  table here or in `docs/TOOL_AUDIT.md` once a few more conversions establish the pattern.
+- Consider a light shuffle-within-band (rather than a strict stable sort) if pure ascending order
+  ever reads as too mechanical on a printed sheet — not needed yet, no evidence of it being a
+  problem.
+- If a tool ever needs more than one weighted group active at once (quotas today are computed
+  independently per group, not cross-multiplied), watch for whether that reads oddly on a printed
+  sheet — no tool has hit this yet.
+
+**Reference implementation:** `src/tools/Proportion/SpeedDistanceTime.tsx` — `DIFFICULTY_TIER_L2`
+(pool + weights), `L2_TIER` (value → params lookup), and `generateQuestion`'s level-2 branch
+(pick → `weightOf` → attach `_difficultyScore`).
 
 ## Skills library
 

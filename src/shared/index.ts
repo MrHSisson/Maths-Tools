@@ -44,7 +44,7 @@ export type { PrintContext } from "./printDiagram";
 
 export { LV_COLORS, LV_LABELS, LV_HEADER_COLORS, getQuestionBg, getStepBg } from "./colors";
 
-export { randInt, pick, fracStr, mStr, pickActive, normalizeMultiSelect, resolveMultiSelectValues, step, tStep, mStep, fmt, ansEq, makeUniqueQ, stripSkillMarkers, SKILL_MARKER_RE } from "./helpers";
+export { randInt, pick, fracStr, mStr, pickActive, normalizeMultiSelect, resolveMultiSelectValues, step, tStep, mStep, fmt, ansEq, makeUniqueQ, stripSkillMarkers, SKILL_MARKER_RE, weightOf, sortByDifficulty, buildQuotaOverrides } from "./helpers";
 
 // Ratio table — core representation for proportional scaling (speed/distance/
 // time, currency conversion, recipe scaling…). See src/shared/ratioTable.ts.
