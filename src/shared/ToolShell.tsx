@@ -546,7 +546,6 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         const vars = levelVariables[lv] ?? {};
         const ddVal = levelDropdowns[lv] ?? (dd?.defaultValue ?? "");
         const msVals = getLevelMultiSelectValues(lv);
-        const snap: QOSnapshot = { level: lv, variables: vars, dropdownValue: ddVal, multiSelectValues: msVals };
         // Smart Progressor (standard worksheet mode only — the advanced
         // WorksheetBuilder never calls this function, so it's naturally
         // exempt — and only when the "Smart Progressor" Settings toggle is
@@ -564,8 +563,14 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           ? buildQuotaOverrides(groups, msVals, numQuestions)
           : Array.from({ length: numQuestions }, () => msVals);
         const levelQuestions: AnyQuestion[] = [];
-        for (let i = 0; i < numQuestions; i++)
-          levelQuestions.push(stampQO(generateUniqueQ(currentTool, lv, vars, ddVal, usedKeys, overrides[i]), snap));
+        for (let i = 0; i < numQuestions; i++) {
+          // Stamp each question with the QO snapshot for ITS OWN slot override
+          // (not the shared pre-balancing msVals) — otherwise regenQuestion
+          // later regenerates against the full (unbalanced) pool and a
+          // Smart-Progressor-tiered question loses its tier on regeneration.
+          const slotSnap: QOSnapshot = { level: lv, variables: vars, dropdownValue: ddVal, multiSelectValues: overrides[i] };
+          levelQuestions.push(stampQO(generateUniqueQ(currentTool, lv, vars, ddVal, usedKeys, overrides[i]), slotSnap));
+        }
         // Smart Progressor: order each level's own block easy-to-hard by
         // _difficultyScore (see sortByDifficulty) — a no-op for tools that
         // don't attach one, and skipped entirely when the toggle is off.
@@ -573,13 +578,17 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       });
     } else {
       const msVals = toolMultiSelect[currentTool] ?? {};
-      const snap: QOSnapshot = { level: difficulty, variables: getVariableValues(), dropdownValue: getDropdownValue(), multiSelectValues: msVals };
       const overrides = smartProgressorEnabled
         ? buildQuotaOverrides(getMultiSelectConfig(), msVals, numQuestions)
         : Array.from({ length: numQuestions }, () => msVals);
       const flatQuestions: AnyQuestion[] = [];
-      for (let i = 0; i < numQuestions; i++)
-        flatQuestions.push(stampQO(generateUniqueQ(currentTool, difficulty, getVariableValues(), getDropdownValue(), usedKeys, overrides[i]), snap));
+      for (let i = 0; i < numQuestions; i++) {
+        // See the differentiated branch above — stamp each question with its
+        // OWN slot override, not the shared pre-balancing msVals, so a
+        // regenerated question keeps its Smart Progressor tier.
+        const slotSnap: QOSnapshot = { level: difficulty, variables: getVariableValues(), dropdownValue: getDropdownValue(), multiSelectValues: overrides[i] };
+        flatQuestions.push(stampQO(generateUniqueQ(currentTool, difficulty, getVariableValues(), getDropdownValue(), usedKeys, overrides[i]), slotSnap));
+      }
       questions.push(...(smartProgressorEnabled ? sortByDifficulty(flatQuestions) : flatQuestions));
     }
     setWorksheet(questions);

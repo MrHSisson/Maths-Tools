@@ -28,6 +28,33 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-16 — Smart Progressor: extend Speed/Distance/Time to all 3 levels, fix two correctness bugs
+`src/tools/Proportion/SpeedDistanceTime.tsx`, `src/shared/ToolShell.tsx`. User flagged that Level 1
+still showed "Allow decimal answers" as a plain boolean (the Smart Progressor pilot had only
+touched Level 2) and asked for the whole tool to demonstrate the mechanism, not just one level.
+Extended `DIFFICULTY_TIER` (renamed from `DIFFICULTY_TIER_L2`, now one pool reused across all three
+`difficultySettings`) so Levels 1 and 3 also get the tables10/tables20/decimals ladder in place of
+their old independent Times-Tables pool + `ALLOW_DECIMALS` boolean. Surfaced and fixed two real
+correctness bugs along the way (see `docs/PROJECTS.md`'s Smart Progressor entry for the full
+writeup):
+1. **Regenerating a single worksheet question ("Regenerate this question") lost its Smart
+   Progressor tier** — every question in a generated block was stamped with the shared
+   pre-balancing QO snapshot instead of its own per-slot override, so `ToolShell`'s `regenQuestion`
+   re-rolled against the full unbalanced pool. Fixed in `ToolShell.tsx`'s `handleGenerateWorksheet`
+   (both the differentiated and flat branches).
+2. **The "decimals" rung's guarantee wasn't target-aware.** L3 compound-time shapes structurally
+   can never yield a decimal SPEED (only a decimal distance — `pp` is always even by construction),
+   and L2 shapes (qq always exactly 1) can only yield a decimal speed for 3 of the 9 minute values —
+   so a Speed question's "decimals" tier could previously land on a whole-number answer. Made
+   `pickShape`/`buildValues` target-aware (`buildCommon` takes `target: "S" | "D"`, genSpeed passes
+   `"S"`, genDistance/genTime pass `"D"`) so shape selection always lines up pp or qq (whichever the
+   calling subtool's own answer is) with the odd-factor requirement `forceDecimal` needs. Deleted
+   the old L2-only `buildDecimalValues` helper entirely — the unified `buildValues` now covers all
+   three levels. Verified with a throwaway Vitest file (removed after, not committed) generating
+   500 questions per level × tier × subtool combination, asserting the picked tier's guarantee held
+   every time and that a regenerated worksheet slot kept its tier; `npm run build` and `npm test`
+   (320 tests) both clean.
+
 ## 2026-09-16 — Speed, Distance & Time: reinstate Level 2 worded-fraction time wording
 `src/tools/Proportion/SpeedDistanceTime.tsx`. Reported: Level 2 seemed to have lost the option
 for worded time fractions (e.g. "a quarter of an hour"). Checked `docs/PATCH_NOTES.md`'s own

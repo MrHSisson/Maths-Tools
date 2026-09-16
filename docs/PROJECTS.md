@@ -73,7 +73,7 @@ pedagogy-engine sweep.
 | **Tool expansion (Part 2)** | 🚧 | Per-tool content-growth backlog (new question types, broader coverage) — **tier-1 priority**, needs a dedicated sequencing pass |
 | **SmartGrapher** | ✅ | Mature, embeddable; used in 3 tools — **tier-1 priority**: wire into more tools opportunistically |
 | **Techniques engine** | 🚧 | Engine built; only 1 tool converted — build on demand for tier-1 needs, not a standalone sweep (see Priorities) |
-| **Smart Progressor** | 🚧 | Core mechanism shipped (weighted `multiSelect` + worksheet sort + roughly-even split + standard-mode-only + teacher-facing off toggle + compact 2-option cycle-button popover control); 1 of 27 tools piloted (`SpeedDistanceTime` L2), 1 dev-gated demo (`/tool-shell`) — needs a per-tool audit pass |
+| **Smart Progressor** | 🚧 | Core mechanism shipped (weighted `multiSelect` + worksheet sort + roughly-even split + standard-mode-only + teacher-facing off toggle + compact 2-option cycle-button popover control); 1 of 27 tools piloted (`SpeedDistanceTime`, all 3 levels), 1 dev-gated demo (`/tool-shell`) — needs a per-tool audit pass |
 | **Skills library** | ⏸ | Engine + backlog ready; 2 skills built — tier-2 (student-led), not a current priority |
 | **Core representations** | ⏸ | 3 of 6 visual families have Teach scenes — feeds Skills/Teach decks (tier 2), paused alongside them |
 | **Teach decks** | ⏸ | Engine built; one partial deck exists — least mature prong, secondary to tier-1 work |
@@ -502,6 +502,28 @@ and a new dev-gated worked example added at `/tool-shell` (Sub-Tool 1's "Negativ
 mode is off, present and cycling None→Mixed→Exclusive→None correctly when on, `generateQuestion`
 reading the picked value and attaching a real `_difficultyScore`, zero console errors.
 
+**Two correctness bugs fixed 2026-09-16, surfaced while extending the pilot from L2-only to all
+three levels of `SpeedDistanceTime`** (the user noticed L1 still showed "Allow decimal answers" as
+a plain boolean and asked for genuine full-tool coverage):
+- **Regenerating a single worksheet question lost its Smart Progressor tier.** `ToolShell`'s
+  `handleGenerateWorksheet` stamped every question in a block with the SAME `_qo` snapshot (the
+  shared pre-balancing `multiSelectValues`, all rungs active), not the per-slot override
+  `buildQuotaOverrides` actually generated it from — so `regenQuestion` re-rolled against the full
+  unbalanced pool instead of the question's own rung. Fixed by stamping each slot with its own
+  override (`src/shared/ToolShell.tsx`, both the differentiated and flat branches).
+- **The "decimals" rung's guarantee wasn't target-aware — it could guarantee the wrong quantity.**
+  A time shape's `D = k·qq` and `S = k·pp` can only BOTH be forced decimal (via `k = n+0.5`) when
+  both pp and qq are odd, which never holds for L3's compound-time shapes (pp is always even by
+  construction) and never holds for L2 shapes at all (qq is always exactly 1, so S = k·pp is only
+  decimal when pp itself is odd — true for just 3 of the 9 L2 minute values). The fix makes
+  `pickShape`/`buildValues` **target-aware**: `buildCommon` takes a `target: "S" | "D"` (genSpeed
+  passes `"S"`, genDistance/genTime pass `"D"`), and shape selection picks a TM whose reduced
+  pp/qq lines up with whichever field THIS subtool's own answer actually is — so a Speed
+  question's "decimals" tier now genuinely guarantees a decimal speed, not just a decimal
+  distance it never asks for. Also let the old L2-only `buildDecimalValues` helper be deleted
+  entirely — the unified `buildValues` (with its `forceDecimal` flag) now covers all three levels,
+  since L2's qq=1 turned out to be the same shape as L1's pp=1, just mirrored.
+
 **Possible next steps:**
 - Audit the other 26 tools' `variables`/`multiSelect` against the mutual-exclusivity test above:
   convert genuinely mutually-exclusive, difficulty-ordinal booleans (per the SDT pattern); leave
@@ -515,10 +537,14 @@ reading the picked value and attaching a real `_difficultyScore`, zero console e
 - If a tool ever needs more than one weighted group active at once (quotas today are computed
   independently per group, not cross-multiplied), watch for whether that reads oddly on a printed
   sheet — no tool has hit this yet.
+- When a second tool is piloted, check whether its "decimals"-style guarantee (if it has one) needs
+  the same target-awareness fix above — any tool where the difficulty rung's guarantee depends on
+  which of two derived quantities is the actual displayed answer is at risk of the same bug.
 
-**Reference implementation:** `src/tools/Proportion/SpeedDistanceTime.tsx` — `DIFFICULTY_TIER_L2`
-(pool + weights), `L2_TIER` (value → params lookup), and `generateQuestion`'s level-2 branch
-(pick → `weightOf` → attach `_difficultyScore`).
+**Reference implementation:** `src/tools/Proportion/SpeedDistanceTime.tsx` — `DIFFICULTY_TIER`
+(pool + weights, shared across all 3 levels), `TABLES_TIER` (value → params lookup), `pickShape`'s
+target-aware shape selection, and `generateQuestion`'s unified tier branch (pick → `weightOf` →
+attach `_difficultyScore`).
 
 ## Skills library
 
