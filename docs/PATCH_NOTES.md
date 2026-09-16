@@ -55,13 +55,17 @@ running app: the new pool renders as a normal pill row (not the cycle-button, co
 weight-gated detection is correct), and a generated worksheet genuinely shows worded-fraction
 wording with the option on.
 
-## 2026-09-16 — Smart Progressor: stack the cycle button so two fit side by side
+## 2026-09-16 — Smart Progressor: stack, centre, and evenly space the cycle button
 `src/shared/components/QOPopovers.tsx`, `src/tools/TeacherTools/ToolShell.tsx`, `CLAUDE.md`.
-Same-day follow-up to the cycle-button control below: it originally laid the group's label and
-state pill out horizontally (`flex items-center`), which read fine alone but made the button too
-wide for two to sit on one row — defeating the point of a compact control. Changed to a vertical
-stack (label above, state pill below, `self-stretch` so the pill matches the label's width) so
-each button is only as wide as its own content.
+Same-day follow-up to the cycle-button control below, three passes: (1) it originally laid the
+group's label and state pill out horizontally (`flex items-center`), which read fine alone but
+made the button too wide for two to sit on one row — defeating the point of a compact control.
+Changed to a vertical stack (label above, state pill below, `self-stretch` so the pill matches the
+label's width). (2) The stacked content was left-aligned; changed to `items-center`/`text-center`
+to match the centred pill rows elsewhere in the popover. (3) The buttons still sized to their own
+content (`flex-shrink-0`), so two side by side left a visibly uneven, ragged split — screenshotted
+and confirmed. Switched to `flex-1 min-w-0` so both buttons evenly divide the row's width, matching
+the equal-width cells of the standard pill-row groups.
 
 Added a second dev-gated demo pool at `/tool-shell` ("Bigger nums (demo)", alongside "Negatives
 (demo)", renamed from "Negative Coefficients (demo)" to fit) specifically so the demo page proves
