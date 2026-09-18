@@ -60,11 +60,12 @@ const FitWidth = ({ children }: { children: ReactNode }) => {
 // from, so a plain style prop can't animate its arrival — it would just pop
 // in at full opacity instantly, which is the "clunky" jump a fresh card
 // arriving currently has. This starts every new mount below its resting
-// state (faded, offset down) and flips to resting on the next frame, so the
-// transition has a real from→to to animate across. Height is unaffected by
-// either state (opacity/transform only), so nothing else reflows as it fades
-// in — the auto-scroll compensation effect elsewhere in this file still sees
-// the same footer displacement either way.
+// state (faded) and flips to resting on the next frame, so the transition
+// has a real from→to to animate across. Pure opacity, no accompanying
+// motion — a slide read as busy alongside the fade, so this leans all the
+// way into "fade" rather than "fade + slide". Height is unaffected either
+// way, so nothing else reflows as it fades in — the auto-scroll compensation
+// effect elsewhere in this file still sees the same footer displacement.
 const EnterCard = ({ children, style }: { children: ReactNode; style?: React.CSSProperties }) => {
   const [entered, setEntered] = useState(false);
   useEffect(() => {
@@ -75,8 +76,7 @@ const EnterCard = ({ children, style }: { children: ReactNode; style?: React.CSS
     <div style={{
       ...style,
       opacity: entered ? 1 : 0,
-      transform: entered ? "translateY(0)" : "translateY(10px)",
-      transition: "opacity 0.28s ease, transform 0.28s ease",
+      transition: "opacity 0.6s ease",
     }}>
       {children}
     </div>
