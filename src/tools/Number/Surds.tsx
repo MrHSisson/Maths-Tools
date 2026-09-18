@@ -79,18 +79,6 @@ function randomHiddenFactorRadicand(min: number, max: number, minCoeff: number):
   return min;
 }
 
-// A radicand with exactly one obvious square factor — guarded, not guessed:
-// simplifySurd must return the SAME k we built it from, so nothing hides.
-function randomObviousRadicand(): number {
-  for (let i = 0; i < 200; i++) {
-    const k = pick([2, 3, 4, 5]);
-    const p = randomSquareFree(2, 20);
-    const n = k * k * p;
-    if (simplifySurd(n).coeff === k) return n;
-  }
-  return 12;
-}
-
 // A radicand that's ITSELF a perfect square (√16 = 4, no surd survives at
 // all) — the specific case students who are otherwise fine with surds still
 // tend to forget once they're deep in general surd manipulation.
@@ -98,36 +86,84 @@ function randomPerfectSquareRadicand(minRoot: number, maxRoot: number): number {
   return randInt(minRoot, maxRoot) ** 2;
 }
 
+// A radicand k·x² where x (the value that will be extracted) is drawn from
+// [minX, maxX] and the whole radicand is capped at maxValue — guarded the
+// same way as the other extraction helpers so x is genuinely the largest
+// factor. Used for Level 1's "extract a value up to 10" range.
+function randomExtractionRadicand(minX: number, maxX: number, maxValue: number): number {
+  for (let i = 0; i < 300; i++) {
+    const x = randInt(minX, maxX);
+    const maxK = Math.floor(maxValue / (x * x));
+    if (maxK < 2) continue;
+    const k = randomSquareFree(2, maxK);
+    const n = x * x * k;
+    if (simplifySurd(n).coeff === x) return n;
+  }
+  return 12;
+}
+
+// Curated extraction values for the "several candidate factors" case, each
+// built from two distinct small primes (6=2×3, 10=2×5, 15=3×5, …) or a
+// square-of-a-square (16=4²) — genuinely interesting to spot, unlike a bare
+// large prime squared (19² is just "a big number", not a hidden-factor case
+// worth testing) or 16 specifically rewards noticing that pulling out 4²
+// once still leaves another 4² behind.
+const HIDDEN_FACTOR_X_POOL = [6, 10, 12, 14, 15, 16, 18, 20, 21, 22];
+
+function randomCuratedHiddenFactor(): number {
+  for (let i = 0; i < 200; i++) {
+    const x = pick(HIDDEN_FACTOR_X_POOL);
+    const p = randomSquareFree(2, 5);
+    const n = x * x * p;
+    if (simplifySurd(n).coeff === x) return n;
+  }
+  return 72;
+}
+
 const sign = (): number => pick([1, -1]);
+
+// Reads a common/rare 2-option pool's raw toggle states directly, bypassing
+// pickActive's uniform draw (and, since these pools carry no `weight`, the
+// Smart Progressor's balancing too) — so "both active" means the rare case
+// shows up naturally rarely, not as a 50/50 split. Off entirely (only common
+// active) never shows it; the other extreme (only rare active) always does,
+// matching the None/Mixed/Exclusive shape a weighted CycleSelect pool would
+// have, just without forcing an even split in the middle state.
+function pickRare(values: Record<string, boolean>, commonValue: string, rareValue: string, rareProbability: number): string {
+  // Matches pickActive's own convention: absent means active, only an
+  // explicit `false` turns an option off.
+  const commonOn = values[commonValue] !== false;
+  const rareOn = values[rareValue] !== false;
+  if (!rareOn) return commonValue;
+  if (!commonOn) return rareValue;
+  return Math.random() < rareProbability ? rareValue : commonValue;
+}
 
 // ── 3. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
+// No `weight` on either option deliberately — these are common/rare pairs,
+// not a difficulty ladder, so they must NOT go through the Smart
+// Progressor's balancing (which would force a roughly-even split whenever
+// both are active) or render as a compact CycleSelect. Generation reads the
+// raw toggle states itself via pickRare, so "both active" genuinely means
+// "rare", not "50/50" — see pickRare's own comment.
 const SIMPLIFY_RADICAND_L1_MS: ToolMultiSelect = {
   key: "radicandTypeL1", label: "Question Types",
   options: [
     { value: "obvious", label: "Standard", defaultActive: true },
-    { value: "perfectSquare", label: "Perfect square (√16 = 4)", defaultActive: true },
+    { value: "perfectSquare", label: "Perfect square (√16 = 4, rare ~8%)", defaultActive: true },
   ],
 };
 // L2+ deliberately does NOT include "obvious"/"perfectSquare" — those are
 // Level 1's whole content, and leaving them active here let two-thirds of a
-// default L2 worksheet look identical to L1 (the Smart Progressor balances
-// active options evenly, so a 3-way pool only gave "several candidate
-// factors" — the actual new skill — a third of the questions). Retiring the
-// easy cases the same way Add/Sub retires "already like" at L3 makes L2
-// genuinely, not just optionally, about spotting the largest factor.
+// default L2 worksheet look identical to L1. L2 is now genuinely about
+// spotting the largest factor, with "already simplest form" as a rare trap
+// rather than a coin-flip alternative.
 const SIMPLIFY_RADICAND_MS: ToolMultiSelect = {
   key: "radicandType", label: "Question Types",
   options: [
-    { value: "hidden", label: "Several candidate factors", defaultActive: true, weight: 1 },
-    { value: "alreadySimplified", label: "Already simplest form", defaultActive: true, weight: 2 },
-  ],
-};
-const SIMPLIFY_COEFF_MS: ToolMultiSelect = {
-  key: "coeffForm", label: "Coefficient",
-  options: [
-    { value: "none", label: "None", defaultActive: true, weight: 1 },
-    { value: "withCoeff", label: "Present", defaultActive: true, weight: 2 },
+    { value: "hidden", label: "Several candidate factors", defaultActive: true },
+    { value: "alreadySimplified", label: "Already simplest form (rare ~10%)", defaultActive: true },
   ],
 };
 
@@ -233,7 +269,8 @@ const TOOL_CONFIG: ToolConfig = {
       difficultySettings: {
         level1: { variables: [], dropdown: null, multiSelect: SIMPLIFY_RADICAND_L1_MS },
         level2: { variables: [], dropdown: null, multiSelect: SIMPLIFY_RADICAND_MS },
-        level3: { variables: [], dropdown: null, multiSelect: [SIMPLIFY_RADICAND_MS, SIMPLIFY_COEFF_MS] },
+        // No coefficient toggle — Level 3 always has one (see generateSimplify).
+        level3: { variables: [], dropdown: null, multiSelect: SIMPLIFY_RADICAND_MS },
       },
     },
 
@@ -297,10 +334,10 @@ const TOOL_CONFIG: ToolConfig = {
 
 const INFO_SECTIONS: InfoSection[] = [
   { title: "Simplifying Surds", icon: "√", content: [
-    { label: "Overview", detail: "Write a surd with the smallest possible number under the root, by extracting the largest square factor. Includes a toggleable 'perfect square' case (e.g. √16 = 4) — a check students often forget once they're used to general surd manipulation." },
-    { label: "Level 1 — Green", detail: "One obvious square factor (e.g. √50 = 5√2), with perfect squares (√16 = 4) selectable alongside it." },
-    { label: "Level 2 — Yellow", detail: "Radicands with several candidate square factors — spotting the LARGEST one (not just any) is the actual skill; a mix also includes a genuine 'already simplest form' trap." },
-    { label: "Level 3 — Red", detail: "As Level 2, plus an existing coefficient to carry through (e.g. 3√48)." },
+    { label: "Overview", detail: "Write a surd with the smallest possible number under the root, by extracting the largest square factor. A toggleable 'perfect square' case (e.g. √16 = 4) is included as a rare, naturally-occurring trap rather than a coin flip — a check students often forget once they're used to general surd manipulation." },
+    { label: "Level 1 — Green", detail: "Extracting a value up to 10 (e.g. √50 = 5√2, up to 10√k), radicand capped at 400. Perfect squares (√16 = 4) appear rarely (~8%) when included, not on every other question." },
+    { label: "Level 2 — Yellow", detail: "Deliberately past Level 1's range — curated extraction values like 12, 15 or 16 (built from two prime-power squares, e.g. 3² and 5² for 15) so there's a genuine 'which factor did I spot' decision. 'Already simplest form' is a rare trap (~10%), not a 50/50 alternative." },
+    { label: "Level 3 — Red", detail: "As Level 2, always with a coefficient to carry through (e.g. 3√48) — no longer optional." },
   ]},
   { title: "Adding & Subtracting", icon: "+", content: [
     { label: "Overview", detail: "Combine surd terms that share the same radicand — only like surds can be added or subtracted." },
@@ -352,18 +389,26 @@ function questionFrom(displayLatex: string, answerLatex: string, working: Return
 }
 
 function generateSimplify(level: DifficultyLevel, ms: Record<string, boolean>): AnyQuestion {
-  const radicandCase = level === "level1" ? pickActive(ms, SIMPLIFY_RADICAND_L1_MS.options)
-    : pickActive(ms, SIMPLIFY_RADICAND_MS.options);
+  const radicandCase = level === "level1"
+    ? pickRare(ms, "obvious", "perfectSquare", 0.08)
+    : pickRare(ms, "hidden", "alreadySimplified", 0.1);
 
   const radicand = radicandCase === "perfectSquare" ? randomPerfectSquareRadicand(2, 12)
-    : radicandCase === "hidden" ? randomHiddenFactorRadicand(24, 200, 4)
+    // Level 1: extract a value up to 10, radicand capped at 400 so numbers
+    // stay readable even at the top of that range.
+    : radicandCase === "obvious" ? randomExtractionRadicand(2, 10, 400)
+    // Level 2/3: curated composite extraction values (12, 15, 16, …) —
+    // deliberately past Level 1's range, and chosen so there's a genuine
+    // "which factor did I spot" decision rather than a single obvious one.
+    : radicandCase === "hidden" ? randomCuratedHiddenFactor()
     // Floor of 2, not 7 — √2 and √3 are genuine "already simplest form"
     // examples, not trivial ones to exclude.
-    : radicandCase === "alreadySimplified" ? randomSquareFree(2, 60)
-    : randomObviousRadicand();
+    : randomSquareFree(2, 60);
 
-  const coeffForm = level === "level3" ? pickActive(ms, SIMPLIFY_COEFF_MS.options) : "none";
-  const coeff = coeffForm === "withCoeff" ? randInt(2, 6) : 1;
+  // Level 3 always carries a coefficient — no toggle, it's the level's
+  // whole point (see the level-structure review: this used to be a 50/50
+  // option, diluting what should be Level 3's defining feature).
+  const coeff = level === "level3" ? randInt(2, 6) : 1;
 
   // "full" only differs from "standard" when a coefficient is present
   // (see simplifySurdSteps), which only ever happens at Level 3 — so that's
@@ -376,11 +421,10 @@ function generateSimplify(level: DifficultyLevel, ms: Record<string, boolean>): 
   const displayLatex = coeff === 1 ? `\\sqrt{${radicand}}` : `${coeff}\\sqrt{${radicand}}`;
   const answerLatex = surdTermToLatex(finalTerm, true);
 
-  const score = level === "level3" ? weightOf(SIMPLIFY_RADICAND_MS.options, radicandCase) + weightOf(SIMPLIFY_COEFF_MS.options, coeffForm)
-    : level === "level2" ? weightOf(SIMPLIFY_RADICAND_MS.options, radicandCase)
-    : undefined; // level1's pool is pure variety (unweighted), not a difficulty ladder
-
-  return questionFrom(displayLatex, answerLatex, working, `simplify-${level}-${radicand}-${coeff}-${nextId()}`, level, score);
+  // No _difficultyScore — neither pool carries a weight (see pickRare):
+  // common-vs-rare isn't a difficulty ladder the Smart Progressor should
+  // sort or balance, and Level 3's coefficient is no longer a QO choice.
+  return questionFrom(displayLatex, answerLatex, working, `simplify-${level}-${radicand}-${coeff}-${nextId()}`, level);
 }
 
 function generateAddSub(level: DifficultyLevel, ms: Record<string, boolean>): AnyQuestion {
@@ -645,7 +689,7 @@ export default function App() {
       config={TOOL_CONFIG}
       infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
-      defaults={{ numQuestions: 12, numColumns: 3, workedExampleLayout: "stacked" }}
+      defaults={{ numQuestions: 12, numColumns: 3, workedExampleLayout: "stacked", toolTabRows: [3, 2] }}
     />
   );
 }
