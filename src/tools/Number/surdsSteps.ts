@@ -67,6 +67,31 @@ export function simplifySurdSteps(radicand: number, coeff: number = 1, grain: Gr
       : [mStep("Already in simplest form — no square number divides it:", coeff === 1 ? `\\sqrt{${radicand}}` : `${coeff}\\sqrt{${radicand}}`)];
   }
 
+  if (s.radicand === 1) {
+    // The radicand IS a perfect square — the root disappears entirely, not
+    // just partially. Genuinely distinct from the general case below: the
+    // answer is a plain integer, never "…\sqrt{1}" — a case worth its own
+    // branch, since students who are fine at extracting a partial factor
+    // often still don't expect the root to vanish completely.
+    const finalCoeff = coeff * s.coeff;
+    if (grain === "brief") {
+      return [step([coeff === 1 ? `\\sqrt{${radicand}}` : `${coeff}\\sqrt{${radicand}}`, `= ${finalCoeff}`])];
+    }
+    const recognise = mStep("This is a perfect square — the root disappears completely:", [
+      `\\sqrt{${radicand}}`,
+      `= ${s.coeff}`,
+    ]);
+    if (coeff === 1) return [recognise];
+    if (grain === "standard") {
+      return [mStep("This is a perfect square — the root disappears completely:", [
+        `${coeff}\\sqrt{${radicand}}`,
+        `= ${coeff} \\times ${s.coeff}`,
+        `= ${finalCoeff}`,
+      ])];
+    }
+    return [recognise, mStep("Multiply by the coefficient:", [`${coeff} \\times ${s.coeff}`, `= ${finalCoeff}`])];
+  }
+
   const sqFactor = s.coeff * s.coeff;
 
   if (grain === "brief") {

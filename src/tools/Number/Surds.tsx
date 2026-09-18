@@ -90,14 +90,29 @@ function randomObviousRadicand(): number {
   return 12;
 }
 
+// A radicand that's ITSELF a perfect square (√16 = 4, no surd survives at
+// all) — the specific case students who are otherwise fine with surds still
+// tend to forget once they're deep in general surd manipulation.
+function randomPerfectSquareRadicand(minRoot: number, maxRoot: number): number {
+  return randInt(minRoot, maxRoot) ** 2;
+}
+
 const sign = (): number => pick([1, -1]);
 
 // ── 3. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
+const SIMPLIFY_RADICAND_L1_MS: ToolMultiSelect = {
+  key: "radicandTypeL1", label: "Question Types",
+  options: [
+    { value: "obvious", label: "Standard", defaultActive: true },
+    { value: "perfectSquare", label: "Perfect square (√16 = 4)", defaultActive: true },
+  ],
+};
 const SIMPLIFY_RADICAND_MS: ToolMultiSelect = {
   key: "radicandType", label: "Question Types",
   options: [
     { value: "obvious", label: "Obvious square factor", defaultActive: true, weight: 1 },
+    { value: "perfectSquare", label: "Perfect square (√16 = 4)", defaultActive: true, weight: 1 },
     { value: "hidden", label: "Several candidate factors", defaultActive: true, weight: 2 },
     { value: "alreadySimplified", label: "Already simplest form", defaultActive: false, weight: 2 },
   ],
@@ -133,18 +148,32 @@ const OPERATION_MS: ToolMultiSelect = {
     { value: "divide", label: "Divide", defaultActive: true },
   ],
 };
-const MULDIV_L2_MS: ToolMultiSelect = {
-  key: "formL2", label: "Difficulty",
+// Coefficient presence and "does the radicand relationship collapse nicely"
+// are independent properties (a perfect-square product can carry a
+// coefficient too), so they're two separate pools, not one conflated ladder.
+const MULDIV_COEFF_MS: ToolMultiSelect = {
+  key: "coeffForm", label: "Difficulty",
   options: [
     { value: "basic", label: "Bare surds", defaultActive: true, weight: 1 },
     { value: "withCoeff", label: "With coefficients", defaultActive: true, weight: 2 },
   ],
 };
-const MULDIV_L3_MS: ToolMultiSelect = {
-  key: "formL3", label: "Difficulty",
+// Multiply-only: recognising when two DIFFERENT surds still collapse to an
+// integer is a distinct, easily-missed skill from the visually-obvious
+// √a × √a case — e.g. √2 × √8 = √16 = 4 gives no visual hint it will cancel.
+const MULDIV_RADICAND_L1_MS: ToolMultiSelect = {
+  key: "radicandCaseL1", label: "Question Types",
   options: [
-    { value: "withCoeff", label: "With coefficients", defaultActive: true, weight: 1 },
+    { value: "general", label: "Standard", defaultActive: true },
+    { value: "perfectSquareProduct", label: "Perfect square product (√2×√8 = 4)", defaultActive: true },
+  ],
+};
+const MULDIV_RADICAND_MS: ToolMultiSelect = {
+  key: "radicandCase", label: "Question Types",
+  options: [
+    { value: "general", label: "Standard", defaultActive: true, weight: 1 },
     { value: "sameRadicand", label: "Same surd (√a × √a)", defaultActive: true, weight: 2 },
+    { value: "perfectSquareProduct", label: "Perfect square product (√2×√8 = 4)", defaultActive: true, weight: 3 },
   ],
 };
 
@@ -196,7 +225,7 @@ const TOOL_CONFIG: ToolConfig = {
       variables: [],
       dropdown: null,
       difficultySettings: {
-        level1: { variables: [], dropdown: null },
+        level1: { variables: [], dropdown: null, multiSelect: SIMPLIFY_RADICAND_L1_MS },
         level2: { variables: [], dropdown: null, multiSelect: SIMPLIFY_RADICAND_MS },
         level3: { variables: [], dropdown: null, multiSelect: [SIMPLIFY_RADICAND_MS, SIMPLIFY_COEFF_MS] },
       },
@@ -221,9 +250,9 @@ const TOOL_CONFIG: ToolConfig = {
       dropdown: null,
       multiSelect: OPERATION_MS,
       difficultySettings: {
-        level1: { variables: [], dropdown: null, multiSelect: OPERATION_MS },
-        level2: { variables: [], dropdown: null, multiSelect: [OPERATION_MS, MULDIV_L2_MS] },
-        level3: { variables: [], dropdown: null, multiSelect: [OPERATION_MS, MULDIV_L3_MS] },
+        level1: { variables: [], dropdown: null, multiSelect: [OPERATION_MS, MULDIV_RADICAND_L1_MS] },
+        level2: { variables: [], dropdown: null, multiSelect: [OPERATION_MS, MULDIV_COEFF_MS] },
+        level3: { variables: [], dropdown: null, multiSelect: [OPERATION_MS, MULDIV_COEFF_MS, MULDIV_RADICAND_MS] },
       },
     },
 
@@ -258,9 +287,9 @@ const TOOL_CONFIG: ToolConfig = {
 
 const INFO_SECTIONS: InfoSection[] = [
   { title: "Simplifying Surds", icon: "√", content: [
-    { label: "Overview", detail: "Write a surd with the smallest possible number under the root, by extracting the largest square factor." },
-    { label: "Level 1 — Green", detail: "One obvious square factor (e.g. √50 = 5√2)." },
-    { label: "Level 2 — Yellow", detail: "Radicands with several candidate square factors — spotting the LARGEST one (not just any) is the actual skill; a mix also includes surds already in simplest form." },
+    { label: "Overview", detail: "Write a surd with the smallest possible number under the root, by extracting the largest square factor. Includes a toggleable 'perfect square' case (e.g. √16 = 4) — a check students often forget once they're used to general surd manipulation." },
+    { label: "Level 1 — Green", detail: "One obvious square factor (e.g. √50 = 5√2), with perfect squares (√16 = 4) selectable alongside it." },
+    { label: "Level 2 — Yellow", detail: "Radicands with several candidate square factors — spotting the LARGEST one (not just any) is the actual skill; a mix also includes perfect squares and surds already in simplest form." },
     { label: "Level 3 — Red", detail: "As Level 2, plus an existing coefficient to carry through (e.g. 3√48)." },
   ]},
   { title: "Adding & Subtracting", icon: "+", content: [
@@ -270,10 +299,10 @@ const INFO_SECTIONS: InfoSection[] = [
     { label: "Level 3 — Red", detail: "Three-term expressions mixing rational and surd terms, and a genuine ‘these don't combine’ case." },
   ]},
   { title: "Multiplying & Dividing", icon: "×", content: [
-    { label: "Overview", detail: "Multiply or divide surds by combining under one root — this sub-tool never includes a bracket; see Expanding Brackets for that." },
-    { label: "Level 1 — Green", detail: "Bare surds, clean results." },
+    { label: "Overview", detail: "Multiply or divide surds by combining under one root — this sub-tool never includes a bracket; see Expanding Brackets for that. Includes a toggleable 'perfect square product' case (e.g. √2 × √8 = √16 = 4) — two different-looking surds that still collapse to an integer, easy to miss since nothing about the question hints at it." },
+    { label: "Level 1 — Green", detail: "Bare surds, clean results, with the perfect-square-product case selectable from the start." },
     { label: "Level 2 — Yellow", detail: "Coefficients present." },
-    { label: "Level 3 — Red", detail: "Coefficients, plus the special √a × √a = a case." },
+    { label: "Level 3 — Red", detail: "Coefficients, plus the special √a × √a = a case and the less obvious perfect-square-product case." },
   ]},
   { title: "Expanding Brackets", icon: "(·)", content: [
     { label: "Overview", detail: "Distribute a surd over a bracket, or expand two brackets using FOIL." },
@@ -313,17 +342,13 @@ function questionFrom(displayLatex: string, answerLatex: string, working: Return
 }
 
 function generateSimplify(level: DifficultyLevel, ms: Record<string, boolean>): AnyQuestion {
-  let radicandCase = "obvious";
-  let radicand: number;
+  const radicandCase = level === "level1" ? pickActive(ms, SIMPLIFY_RADICAND_L1_MS.options)
+    : pickActive(ms, SIMPLIFY_RADICAND_MS.options);
 
-  if (level === "level1") {
-    radicand = randomObviousRadicand();
-  } else {
-    radicandCase = pickActive(ms, SIMPLIFY_RADICAND_MS.options);
-    radicand = radicandCase === "hidden" ? randomHiddenFactorRadicand(24, 200, 4)
-      : radicandCase === "alreadySimplified" ? randomSquareFree(7, 45)
-      : randomObviousRadicand();
-  }
+  const radicand = radicandCase === "perfectSquare" ? randomPerfectSquareRadicand(2, 12)
+    : radicandCase === "hidden" ? randomHiddenFactorRadicand(24, 200, 4)
+    : radicandCase === "alreadySimplified" ? randomSquareFree(7, 45)
+    : randomObviousRadicand();
 
   const coeffForm = level === "level3" ? pickActive(ms, SIMPLIFY_COEFF_MS.options) : "none";
   const coeff = coeffForm === "withCoeff" ? randInt(2, 6) : 1;
@@ -338,7 +363,7 @@ function generateSimplify(level: DifficultyLevel, ms: Record<string, boolean>): 
 
   const score = level === "level3" ? weightOf(SIMPLIFY_RADICAND_MS.options, radicandCase) + weightOf(SIMPLIFY_COEFF_MS.options, coeffForm)
     : level === "level2" ? weightOf(SIMPLIFY_RADICAND_MS.options, radicandCase)
-    : undefined;
+    : undefined; // level1's pool is pure variety (unweighted), not a difficulty ladder
 
   return questionFrom(displayLatex, answerLatex, working, `simplify-${level}-${radicand}-${coeff}-${nextId()}`, level, score);
 }
@@ -399,11 +424,15 @@ function generateAddSub(level: DifficultyLevel, ms: Record<string, boolean>): An
 
 function generateMultiplyDivide(level: DifficultyLevel, ms: Record<string, boolean>): AnyQuestion {
   const operation = pickActive(ms, OPERATION_MS.options);
-  const rawFormCase = level === "level1" ? "basic"
-    : level === "level2" ? pickActive(ms, MULDIV_L2_MS.options)
-    : pickActive(ms, MULDIV_L3_MS.options);
-  // √a÷√a is trivial — fall back to the coefficient case for division.
-  const formCase = operation === "divide" && rawFormCase === "sameRadicand" ? "withCoeff" : rawFormCase;
+  const coeffCase = level === "level1" ? "basic" : pickActive(ms, MULDIV_COEFF_MS.options);
+  // The radicand-relationship pool is multiply-only — division's own
+  // construction already guarantees a clean collapse by a different route
+  // (the radicand ratio, not the product, is the perfect square).
+  const radicandCase = operation !== "multiply" ? "general"
+    : level === "level1" ? pickActive(ms, MULDIV_RADICAND_L1_MS.options)
+    : level === "level3" ? pickActive(ms, MULDIV_RADICAND_MS.options)
+    : "general";
+  const useCoeff = coeffCase === "withCoeff";
 
   let a: SurdTerm, b: SurdTerm;
   const grain: Grain = level === "level1" ? "full" : "standard";
@@ -411,12 +440,20 @@ function generateMultiplyDivide(level: DifficultyLevel, ms: Record<string, boole
   let resultTerm: SurdTerm;
 
   if (operation === "multiply") {
-    if (formCase === "sameRadicand") {
+    if (radicandCase === "sameRadicand") {
       const r = randomSquareFree(2, 12);
-      a = { coeff: randInt(2, 6), radicand: r };
-      b = { coeff: randInt(2, 6), radicand: r };
+      a = { coeff: useCoeff ? randInt(2, 6) : 1, radicand: r };
+      b = { coeff: useCoeff ? randInt(2, 6) : 1, radicand: r };
+    } else if (radicandCase === "perfectSquareProduct") {
+      // a's and b's radicands are DIFFERENT but their product is a perfect
+      // square by construction — k × (k·m²) = (km)² — e.g.
+      // k=2, m=2 gives √2 × √8 = √16 = 4, exactly the case
+      // that gives no visual hint it will collapse.
+      const k = randomSquareFree(2, 6);
+      const m = randInt(2, 4);
+      a = { coeff: useCoeff ? randInt(2, 6) : 1, radicand: k };
+      b = { coeff: useCoeff ? randInt(2, 6) : 1, radicand: k * m * m };
     } else {
-      const useCoeff = formCase === "withCoeff";
       a = { coeff: useCoeff ? randInt(2, 6) : 1, radicand: randomSquareFree(2, level === "level1" ? 12 : 20) };
       b = { coeff: useCoeff ? randInt(2, 6) : 1, radicand: randomSquareFree(2, level === "level1" ? 12 : 20) };
     }
@@ -427,7 +464,6 @@ function generateMultiplyDivide(level: DifficultyLevel, ms: Record<string, boole
     // a perfect square (so the root divides exactly), and a's coefficient is
     // a whole multiple of b's (so the coefficient ratio divides exactly too)
     // — a plain "both drawn independently" pair only cancels by luck.
-    const useCoeff = formCase === "withCoeff";
     const r = randomSquareFree(2, 10);
     const m = randInt(2, 5);
     const bCoeff = useCoeff ? randInt(2, 4) : 1;
@@ -449,11 +485,11 @@ function generateMultiplyDivide(level: DifficultyLevel, ms: Record<string, boole
   const displayLatex = `${bracketedLatex([a])} ${opLatex} ${bracketedLatex([b])}`;
   const answerLatex = surdTermToLatex(resultTerm, true);
 
-  const score = level === "level2" ? weightOf(MULDIV_L2_MS.options, rawFormCase)
-    : level === "level3" ? weightOf(MULDIV_L3_MS.options, rawFormCase)
+  const score = level === "level2" ? weightOf(MULDIV_COEFF_MS.options, coeffCase)
+    : level === "level3" ? weightOf(MULDIV_COEFF_MS.options, coeffCase) + weightOf(MULDIV_RADICAND_MS.options, radicandCase)
     : undefined;
 
-  return questionFrom(displayLatex, answerLatex, working, `mulDiv-${level}-${operation}-${formCase}-${a.coeff}r${a.radicand}-${b.coeff}r${b.radicand}-${nextId()}`, level, score);
+  return questionFrom(displayLatex, answerLatex, working, `mulDiv-${level}-${operation}-${coeffCase}-${radicandCase}-${a.coeff}r${a.radicand}-${b.coeff}r${b.radicand}-${nextId()}`, level, score);
 }
 
 function generateExpand(level: DifficultyLevel, ms: Record<string, boolean>): AnyQuestion {
