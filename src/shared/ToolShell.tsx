@@ -222,6 +222,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const showTeach = !!(parkedMode && teachingSlides && teachingSlides.length);
   const comingSoon = defaults.comingSoonLevels ?? [];
   const hideFontControls = defaults.hideFontControls ?? false;
+  const workedExampleLayout = defaults.workedExampleLayout ?? "single";
   const [difficulty, setDifficulty] = useState<DifficultyLevel>(urlInit.level);
   const setDifficultyGuarded = (v: DifficultyLevel) => { if (!comingSoon.includes(v)) setDifficulty(v); };
 
@@ -1214,9 +1215,18 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   };
 
   const renderWorkedExample = () => {
+    // "stacked" needs a parent with a real (not just capped) height so its
+    // internal flex column — scrolling body + pinned nav footer — can size
+    // correctly; "single" keeps the original "page/panel around it scrolls"
+    // wrapper untouched.
+    const stacked = workedExampleLayout === "stacked";
+    // A flat pixel height rather than a vh-based guess — vh doesn't know how
+    // much chrome (tabs, level bar, QO row) sits above this panel on a given
+    // tool, so it easily overshoots the viewport and pushes the pinned footer
+    // off-screen. A fixed panel size is predictable regardless of that chrome.
     return (
-      <div className="overflow-y-auto" style={{ maxHeight: "120vh" }}>
-        <div className="p-8 w-full" style={{ backgroundColor: qBg }}>
+      <div className={stacked ? "flex flex-col" : "overflow-y-auto"} style={stacked ? { height: "620px" } : { maxHeight: "120vh" }}>
+        <div className={`p-8 w-full ${stacked ? "flex flex-col flex-1" : ""}`} style={{ backgroundColor: qBg, ...(stacked ? { minHeight: 0 } : {}) }}>
           <div className="text-center py-4 relative">
             {!hideFontControls && <div style={{ position: "absolute", top: 0, right: 0, display: "flex", gap: 6 }}>
               <button style={{ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: canDisplayDecrease ? "pointer" : "not-allowed", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", opacity: canDisplayDecrease ? 1 : 0.35 }} onClick={() => canDisplayDecrease && setDisplayFontSize(f => f - 1)}><ChevronDown size={16} color="#6b7280" /></button>
@@ -1229,17 +1239,20 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             }
           </div>
           {showAnswer && (
-            <WorkedExampleSteps
-              working={currentQuestion.working}
-              renderAnswer={() => answerRenderer ? answerRenderer(currentQuestion, colorScheme, getQOSnapshot()) : <AnswerDisplay q={currentQuestion} />}
-              colorScheme={colorScheme}
-              answerFontClass={displayFontSizes[displayFontSize]}
-              stepRenderer={stepRenderer}
-              qoSnapshot={getQOSnapshot()}
-              stepThroughEnabled={devMode}
-              onOpenSkill={parkedMode ? setOpenSkillId : undefined}
-              resetKey={workedResetNonce}
-            />
+            <div className={stacked ? "flex-1" : undefined} style={stacked ? { minHeight: 0 } : undefined}>
+              <WorkedExampleSteps
+                working={currentQuestion.working}
+                renderAnswer={() => answerRenderer ? answerRenderer(currentQuestion, colorScheme, getQOSnapshot()) : <AnswerDisplay q={currentQuestion} />}
+                colorScheme={colorScheme}
+                answerFontClass={displayFontSizes[displayFontSize]}
+                stepRenderer={stepRenderer}
+                qoSnapshot={getQOSnapshot()}
+                stepThroughEnabled={devMode}
+                onOpenSkill={parkedMode ? setOpenSkillId : undefined}
+                resetKey={workedResetNonce}
+                layout={workedExampleLayout}
+              />
+            </div>
           )}
         </div>
       </div>

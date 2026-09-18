@@ -156,4 +156,10 @@ export interface ToolShellDefaults {
   comingSoonLevels?: DifficultyLevel[]; // levels shown but disabled with "Coming soon" tooltip
   hideFontControls?: boolean;  // hides the text size up/down chevrons (e.g. diagram-only tools)
   collapseWorkingByDefault?: boolean; // whiteboard opens with the working/visualiser panel collapsed (still re-openable)
+  /** Worked Example mode's step layout. "single" (default) replaces the card
+   *  each press, with a dot-strip to jump between steps. "stacked" builds a
+   *  growing vertical list instead — earlier steps stay visible (dimmed) as
+   *  you press through, cascading down the page. Previously only used by the
+   *  Technique Library preview; opt a real tool in per-tool via this flag. */
+  workedExampleLayout?: "single" | "stacked";
 }
