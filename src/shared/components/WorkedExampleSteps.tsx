@@ -76,7 +76,7 @@ const EnterCard = ({ children, style }: { children: ReactNode; style?: React.CSS
     <div style={{
       ...style,
       opacity: entered ? 1 : 0,
-      transition: "opacity 0.6s ease",
+      transition: "opacity 0.9s ease",
     }}>
       {children}
     </div>
