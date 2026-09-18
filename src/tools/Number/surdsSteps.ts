@@ -201,7 +201,7 @@ export function expandBracketsSteps(a: SurdTerm[], b: SurdTerm[], grain: Grain =
 
   if (a.length === 2 && b.length === 2 && isConjugatePair(a as [SurdTerm, SurdTerm], b as [SurdTerm, SurdTerm])) {
     const [p, q] = a;
-    const pSqLatex = p.radicand === 1 ? `${p.coeff}^2` : `(\\sqrt{${p.radicand}})^2`;
+    const pSqLatex = p.radicand === 1 ? `${Math.abs(p.coeff)}^2` : `(\\sqrt{${p.radicand}})^2`;
     const qSqLatex = q.radicand === 1 ? `${Math.abs(q.coeff)}^2` : `(\\sqrt{${q.radicand}})^2`;
     const pVal = p.coeff * p.coeff * p.radicand;
     const qVal = q.coeff * q.coeff * q.radicand;
@@ -324,8 +324,14 @@ export function rationaliseDenominatorSteps(numerator: SurdTerm[], denominator: 
     ]));
   }
 
-  if (numerator.length > 1 || isBinomial) {
-    steps.push(mStep("Expand the numerator:", [
+  // Skip only when the numerator is a bare, literal "1" over a monomial
+  // denominator — multiplying by 1 has nothing worth showing. Any other
+  // numerator (a coefficient, a binomial, or both) gets its own step so the
+  // chain doesn't jump straight from "denominator becomes rational" to an
+  // answer that assumes an unshown multiplication.
+  const numeratorIsBareOne = numerator.length === 1 && numerator[0].coeff === 1 && numerator[0].radicand === 1;
+  if (!numeratorIsBareOne) {
+    steps.push(mStep("Multiply out the numerator:", [
       `${bracketedLatex(numerator)} \\times ${multiplierLatex}`,
       `= ${surdExpressionToLatex(newNumerator)}`,
     ]));
@@ -334,15 +340,27 @@ export function rationaliseDenominatorSteps(numerator: SurdTerm[], denominator: 
   // House style: the denominator is always left positive. A binomial
   // conjugate can easily land negative (e.g. 5^2 - (2\sqrt{7})^2 = -3) —
   // flip both signs rather than ship an answer with a negative denominator.
+  let signedNumerator = newNumerator;
+  let signedDenomValue = denomValue;
   if (denomValue < 0) {
-    const flippedNumerator = newNumerator.map((t) => ({ ...t, coeff: -t.coeff }));
+    signedNumerator = newNumerator.map((t) => ({ ...t, coeff: -t.coeff }));
+    signedDenomValue = -denomValue;
     steps.push(mStep("Make the denominator positive:", [
       `\\dfrac{${surdExpressionToLatex(newNumerator)}}{${denomValue}}`,
-      `= \\dfrac{${surdExpressionToLatex(flippedNumerator)}}{${-denomValue}}`,
+      `= \\dfrac{${surdExpressionToLatex(signedNumerator)}}{${signedDenomValue}}`,
     ]));
   }
 
-  steps.push(mStep("Write the final answer:", fractionToLatex(finalFraction)));
+  // The fraction may still share a common factor (e.g. 6/√3 rationalises to
+  // 6√3/3, which reduces to 2√3) — show that reduction rather than jumping
+  // straight to an already-simplified final answer with no step to justify it.
+  const preReduceLatex = fractionToLatex({ numerator: signedNumerator, denominator: signedDenomValue });
+  const finalLatex = fractionToLatex(finalFraction);
+  if (preReduceLatex !== finalLatex) {
+    steps.push(mStep("Simplify the fraction:", [preReduceLatex, `= ${finalLatex}`]));
+  }
+
+  steps.push(mStep("Write the final answer:", finalLatex));
   return steps;
 }
 

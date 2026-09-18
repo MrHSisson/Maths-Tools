@@ -22,6 +22,7 @@ import {
   simplifySurd,
   collectLikeSurds,
   multiplySurdTerms,
+  multiplyExpressions,
   divideSurdTerms,
   conjugateOf,
   rationaliseDenominator,
@@ -353,7 +354,10 @@ function generateSimplify(level: DifficultyLevel, ms: Record<string, boolean>): 
   const coeffForm = level === "level3" ? pickActive(ms, SIMPLIFY_COEFF_MS.options) : "none";
   const coeff = coeffForm === "withCoeff" ? randInt(2, 6) : 1;
 
-  const grain: Grain = level === "level1" ? "full" : "standard";
+  // "full" only differs from "standard" when a coefficient is present
+  // (see simplifySurdSteps), which only ever happens at Level 3 — so that's
+  // the level that actually needs it, not Level 1.
+  const grain: Grain = level === "level2" ? "standard" : "full";
   const working = simplifySurdSteps(radicand, coeff, grain);
 
   const s = simplifySurd(radicand);
@@ -514,7 +518,12 @@ function generateExpand(level: DifficultyLevel, ms: Record<string, boolean>): An
       const p: SurdTerm = Math.random() < 0.5
         ? { coeff: randInt(2, 9), radicand: 1 }
         : { coeff: randInt(1, 5), radicand: randomSquareFree(2, 10) };
-      const q: SurdTerm = { coeff: randInt(1, 5), radicand: randomSquareFree(2, 10) };
+      let q: SurdTerm = { coeff: randInt(1, 5), radicand: randomSquareFree(2, 10) };
+      // p and q must be distinct — if they happen to match, the second
+      // bracket becomes p + (-p) = 0 and the whole question degenerates.
+      while (q.coeff === p.coeff && q.radicand === p.radicand) {
+        q = { coeff: randInt(1, 5), radicand: randomSquareFree(2, 10) };
+      }
       a = [p, q];
       b = [p, conjugateOf(q)];
     } else if (caseKey === "collect") {
@@ -534,12 +543,10 @@ function generateExpand(level: DifficultyLevel, ms: Record<string, boolean>): An
   }
 
   const working = expandBracketsSteps(a, b, "standard");
-  const answerTerms = collectLikeSurds([
-    multiplySurdTerms(a[0], b[0]),
-    ...(a.length > 1 ? [multiplySurdTerms(a[1], b[0])] : []),
-    ...(b.length > 1 ? [multiplySurdTerms(a[0], b[1])] : []),
-    ...(a.length > 1 && b.length > 1 ? [multiplySurdTerms(a[1], b[1])] : []),
-  ]);
+  // Reuse the same general multiply-and-collect computation the step
+  // builder is built on, rather than re-deriving the cross-product logic
+  // inline — one source of truth for what the expansion actually equals.
+  const answerTerms = multiplyExpressions(a, b);
 
   const score = level === "level3" ? weightOf(EXPAND_ADVANCED_L3_MS.options, caseKey) : undefined;
 
