@@ -1415,13 +1415,24 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
           {toolKeys.length > 1 && mode !== "teach" && (
             <>
-              <div className="flex justify-center gap-4 mb-6">
-                {toolKeys.map(k => (
-                  <button key={k} onClick={() => { setCurrentTool(k); }}
-                    className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${currentTool === k ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
-                    {config.tools[k].name}
-                  </button>
-                ))}
+              <div className="flex flex-col items-center gap-4 mb-6">
+                {(() => {
+                  const rowSizes = defaults.toolTabRows ?? [toolKeys.length];
+                  const rows: string[][] = [];
+                  let idx = 0;
+                  for (const size of rowSizes) { rows.push(toolKeys.slice(idx, idx + size)); idx += size; }
+                  if (idx < toolKeys.length) rows.push(toolKeys.slice(idx));
+                  return rows.map((row, ri) => (
+                    <div key={ri} className="flex justify-center gap-4">
+                      {row.map(k => (
+                        <button key={k} onClick={() => { setCurrentTool(k); }}
+                          className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${currentTool === k ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
+                          {config.tools[k].name}
+                        </button>
+                      ))}
+                    </div>
+                  ));
+                })()}
               </div>
               <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
             </>

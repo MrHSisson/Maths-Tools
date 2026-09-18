@@ -162,4 +162,8 @@ export interface ToolShellDefaults {
    *  you press through, cascading down the page. Previously only used by the
    *  Technique Library preview; opt a real tool in per-tool via this flag. */
   workedExampleLayout?: "single" | "stacked";
+  /** Splits the sub-tool tab buttons across multiple rows instead of one —
+   *  e.g. [3, 2] for a 5-sub-tool tool. Each number is how many buttons that
+   *  row holds, in order; omit for the default single row (unaffected). */
+  toolTabRows?: number[];
 }

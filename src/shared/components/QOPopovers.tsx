@@ -162,10 +162,18 @@ const CycleSelect = ({
   multiSelect,
   values,
   onChange,
+  solo,
 }: {
   multiSelect: { key: string; label: string; options: { value: string; label: string; weight?: number }[] };
   values: Record<string, boolean>;
   onChange: (k: string, v: boolean) => void;
+  // True when this is the only cycle-eligible pool in its row. flex-1 divides
+  // a row of 2+ into narrow, equal-width cells (the intended look) — but with
+  // only one, flex-1 has nothing to divide against and stretches it to the
+  // popover's full width instead, looking like an oversized single button
+  // rather than the compact control this is meant to be. Cap its width
+  // instead of stretching whenever it's alone.
+  solo?: boolean;
 }) => {
   const [base, hard] = [...multiSelect.options].sort((a, b) => (a.weight ?? 0) - (b.weight ?? 0));
   const activeBase = values[base.value] ?? false;
@@ -180,7 +188,8 @@ const CycleSelect = ({
     <button
       onClick={next}
       title={`${base.label} / ${hard.label}`}
-      className="flex flex-1 min-w-0 flex-col items-center gap-1 px-3 py-2 rounded-lg border-2 border-gray-200 bg-white hover:border-blue-900 transition-colors text-center"
+      className={`flex ${solo ? "" : "flex-1"} min-w-0 flex-col items-center gap-1 px-3 py-2 rounded-lg border-2 border-gray-200 bg-white hover:border-blue-900 transition-colors text-center`}
+      style={solo ? { width: 220, maxWidth: "100%" } : undefined}
     >
       <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{multiSelect.label}</span>
       <span
@@ -220,7 +229,7 @@ const MultiSelectGroups = ({
       while (i < groups.length && isCycleGroup(groups[i])) { run.push(groups[i]); i++; }
       els.push(
         <div key={`cycle-${run[0].key}`} className="flex flex-wrap gap-3">
-          {run.map(g => <CycleSelect key={g.key} multiSelect={g} values={values} onChange={onChange} />)}
+          {run.map(g => <CycleSelect key={g.key} multiSelect={g} values={values} onChange={onChange} solo={run.length === 1} />)}
         </div>
       );
     } else {
