@@ -1218,14 +1218,13 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     // "stacked" needs a parent with a real (not just capped) height so its
     // internal flex column — scrolling body + pinned nav footer — can size
     // correctly; "single" keeps the original "page/panel around it scrolls"
-    // wrapper untouched.
+    // wrapper untouched. h-full resolves against the genuine viewport-derived
+    // height the full-height page shell below now gives this box (see
+    // `useFullHeightShell` in the main return) — matching exactly how the
+    // Technique Library preview page sizes the same component.
     const stacked = workedExampleLayout === "stacked";
-    // A flat pixel height rather than a vh-based guess — vh doesn't know how
-    // much chrome (tabs, level bar, QO row) sits above this panel on a given
-    // tool, so it easily overshoots the viewport and pushes the pinned footer
-    // off-screen. A fixed panel size is predictable regardless of that chrome.
     return (
-      <div className={stacked ? "flex flex-col" : "overflow-y-auto"} style={stacked ? { height: "620px" } : { maxHeight: "120vh" }}>
+      <div className={stacked ? "flex flex-col h-full" : "overflow-y-auto"} style={stacked ? { minHeight: 0 } : { maxHeight: "120vh" }}>
         <div className={`p-8 w-full ${stacked ? "flex flex-col flex-1" : ""}`} style={{ backgroundColor: qBg, ...(stacked ? { minHeight: 0 } : {}) }}>
           <div className="text-center py-4 relative">
             {!hideFontControls && <div style={{ position: "absolute", top: 0, right: 0, display: "flex", gap: 6 }}>
@@ -1390,8 +1389,28 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     );
   };
 
+  // Only Worked Example mode with "stacked" requested gets the full-height
+  // treatment — Whiteboard/Worksheet/Teach and every other tool keep the
+  // exact `min-h-screen`, page-scrolls structure unchanged. This is what
+  // lets renderWorkedExample's h-full resolve against a genuine
+  // viewport-derived height (matching the Technique Library preview) instead
+  // of a guessed flat pixel box, without touching any other mode's layout.
+  //
+  // minHeight, not height: a hard `height: 100vh` forces the whole flex
+  // chain to fit inside exactly one viewport no matter what, so on a tool
+  // with a lot of its own chrome above the panel (Surds' 5 sub-tool tabs
+  // across two rows, mode tabs, level bar) the working panel's own content
+  // gets crushed — confirmed live: the step body collapsed to an 8px sliver
+  // rather than its needed ~150px. `minHeight: 100vh` instead means "at
+  // least a full viewport" — the panel still gets any slack the viewport
+  // has to give (filling it exactly like the Technique Library on a normal
+  // screen), but if the content genuinely needs more than the viewport has,
+  // the page grows past 100vh and scrolls normally, same as it always did,
+  // instead of forcing an impossible fit.
+  const useFullHeightShell = mode === "single" && workedExampleLayout === "stacked";
+
   return (
-    <>
+    <div style={useFullHeightShell ? { minHeight: "100vh", display: "flex", flexDirection: "column" } : undefined}>
       <div className="bg-blue-900 shadow-lg">
         <div className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
           <button onClick={() => { window.location.href = "/"; }} className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors">
@@ -1409,45 +1428,47 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       </div>
       {isInfoOpen && <InfoModal infoSections={infoSections} onClose={() => setIsInfoOpen(false)} />}
       {openSkillId && <SkillOverlay skillId={openSkillId} onClose={() => setOpenSkillId(null)} />}
-      <div className="min-h-screen p-8" style={{ backgroundColor: "#f5f3f0" }}>
-        <div className="max-w-6xl mx-auto">
-          <h1 className="text-5xl font-bold text-center mb-8" style={{ color: "#000" }}>{config.pageTitle}</h1>
-          <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
-          {toolKeys.length > 1 && mode !== "teach" && (
-            <>
-              <div className="flex flex-col items-center gap-4 mb-6">
-                {(() => {
-                  const rowSizes = defaults.toolTabRows ?? [toolKeys.length];
-                  const rows: string[][] = [];
-                  let idx = 0;
-                  for (const size of rowSizes) { rows.push(toolKeys.slice(idx, idx + size)); idx += size; }
-                  if (idx < toolKeys.length) rows.push(toolKeys.slice(idx));
-                  return rows.map((row, ri) => (
-                    <div key={ri} className="flex justify-center gap-4">
-                      {row.map(k => (
-                        <button key={k} onClick={() => { setCurrentTool(k); }}
-                          className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${currentTool === k ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
-                          {config.tools[k].name}
-                        </button>
-                      ))}
-                    </div>
-                  ));
-                })()}
-              </div>
-              <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
-            </>
-          )}
-          <div className="flex justify-center gap-4 mb-8">
-            {([...(["whiteboard", "single", "worksheet"] as const), ...(showTeach ? (["teach"] as const) : [])] as const)
-              .map(m => {
-                const label = m === "whiteboard" ? "Whiteboard" : m === "single" ? "Worked Example" : m === "teach" ? "Teach" : "Worksheet";
-                return (
-                  <button key={m} onClick={() => { setMode(m); setPresenterMode(false); setWbFullscreen(false); }}
-                    className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${mode === m ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
-                    {label}
-                  </button>
-                );
-              })}
+      <div className={useFullHeightShell ? "p-8 flex-1 flex flex-col" : "min-h-screen p-8"} style={{ backgroundColor: "#f5f3f0", ...(useFullHeightShell ? { minHeight: 0 } : {}) }}>
+        <div className={useFullHeightShell ? "max-w-6xl mx-auto w-full flex flex-col flex-1" : "max-w-6xl mx-auto"} style={useFullHeightShell ? { minHeight: 0 } : undefined}>
+          <div className={useFullHeightShell ? "flex-shrink-0" : undefined}>
+            <h1 className="text-5xl font-bold text-center mb-8" style={{ color: "#000" }}>{config.pageTitle}</h1>
+            <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
+            {toolKeys.length > 1 && mode !== "teach" && (
+              <>
+                <div className="flex flex-col items-center gap-4 mb-6">
+                  {(() => {
+                    const rowSizes = defaults.toolTabRows ?? [toolKeys.length];
+                    const rows: string[][] = [];
+                    let idx = 0;
+                    for (const size of rowSizes) { rows.push(toolKeys.slice(idx, idx + size)); idx += size; }
+                    if (idx < toolKeys.length) rows.push(toolKeys.slice(idx));
+                    return rows.map((row, ri) => (
+                      <div key={ri} className="flex justify-center gap-4">
+                        {row.map(k => (
+                          <button key={k} onClick={() => { setCurrentTool(k); }}
+                            className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${currentTool === k ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
+                            {config.tools[k].name}
+                          </button>
+                        ))}
+                      </div>
+                    ));
+                  })()}
+                </div>
+                <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
+              </>
+            )}
+            <div className="flex justify-center gap-4 mb-8">
+              {([...(["whiteboard", "single", "worksheet"] as const), ...(showTeach ? (["teach"] as const) : [])] as const)
+                .map(m => {
+                  const label = m === "whiteboard" ? "Whiteboard" : m === "single" ? "Worked Example" : m === "teach" ? "Teach" : "Worksheet";
+                  return (
+                    <button key={m} onClick={() => { setMode(m); setPresenterMode(false); setWbFullscreen(false); }}
+                      className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${mode === m ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
+                      {label}
+                    </button>
+                  );
+                })}
+            </div>
           </div>
 
           {mode === "worksheet" && (
@@ -1471,11 +1492,11 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             <TeachingDeck slides={teachingSlides} />
           )}
           {mode !== "worksheet" && mode !== "teach" && (
-            <div className="flex flex-col gap-6">
-              <div className="rounded-xl shadow-lg">
+            <div className={`flex flex-col gap-6 ${useFullHeightShell ? "flex-1" : ""}`} style={useFullHeightShell ? { minHeight: 0 } : undefined}>
+              <div className="rounded-xl shadow-lg flex-shrink-0">
                 {renderControlBar()}
               </div>
-              <div className="rounded-xl shadow-lg overflow-hidden">
+              <div className={`rounded-xl shadow-lg overflow-hidden ${useFullHeightShell ? "flex-1" : ""}`} style={useFullHeightShell ? { minHeight: 0 } : undefined}>
                 {mode === "whiteboard" && renderWhiteboard()}
                 {mode === "single" && renderWorkedExample()}
               </div>
@@ -1483,6 +1504,6 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           )}
         </div>
       </div>
-    </>
+    </div>
   );
 };
