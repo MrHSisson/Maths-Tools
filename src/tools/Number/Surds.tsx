@@ -268,8 +268,13 @@ const TOOL_CONFIG: ToolConfig = {
       dropdown: null,
       difficultySettings: {
         level1: { variables: [], dropdown: null, multiSelect: SIMPLIFY_RADICAND_L1_MS },
-        level2: { variables: [], dropdown: null, multiSelect: SIMPLIFY_RADICAND_MS },
-        // No coefficient toggle — Level 3 always has one (see generateSimplify).
+        // Level 2 reuses Level 1's friendly radicand range (extraction up to
+        // 10, capped at 400) — the one new thing it introduces is a
+        // coefficient to carry through, on numbers that are otherwise already
+        // familiar. Level 3 is where the radicand range itself gets harder.
+        level2: { variables: [], dropdown: null, multiSelect: SIMPLIFY_RADICAND_L1_MS },
+        // No coefficient toggle at either level — both always have one now
+        // (see generateSimplify).
         level3: { variables: [], dropdown: null, multiSelect: SIMPLIFY_RADICAND_MS },
       },
     },
@@ -336,8 +341,8 @@ const INFO_SECTIONS: InfoSection[] = [
   { title: "Simplifying Surds", icon: "√", content: [
     { label: "Overview", detail: "Write a surd with the smallest possible number under the root, by extracting the largest square factor. A toggleable 'perfect square' case (e.g. √16 = 4) is included as a rare, naturally-occurring trap rather than a coin flip — a check students often forget once they're used to general surd manipulation." },
     { label: "Level 1 — Green", detail: "Extracting a value up to 10 (e.g. √50 = 5√2, up to 10√k), radicand capped at 400. Perfect squares (√16 = 4) appear rarely (~8%) when included, not on every other question." },
-    { label: "Level 2 — Yellow", detail: "Deliberately past Level 1's range — curated extraction values like 12, 15 or 16 (built from two prime-power squares, e.g. 3² and 5² for 15) so there's a genuine 'which factor did I spot' decision. 'Already simplest form' is a rare trap (~10%), not a 50/50 alternative." },
-    { label: "Level 3 — Red", detail: "As Level 2, always with a coefficient to carry through (e.g. 3√48) — no longer optional." },
+    { label: "Level 2 — Yellow", detail: "Same friendly radicand range as Level 1, but now always with a coefficient to carry through (e.g. 3√50 = 15√2) — taking out a factor and multiplying it into an existing coefficient, on numbers that are otherwise already familiar." },
+    { label: "Level 3 — Red", detail: "Deliberately past Level 1/2's range — curated extraction values like 12, 15 or 16 (built from two prime-power squares, e.g. 3² and 5² for 15), always with a coefficient. 'Already simplest form' is a rare trap (~10%), not a 50/50 alternative." },
   ]},
   { title: "Adding & Subtracting", icon: "+", content: [
     { label: "Overview", detail: "Combine surd terms that share the same radicand — only like surds can be added or subtracted." },
@@ -389,31 +394,37 @@ function questionFrom(displayLatex: string, answerLatex: string, working: Return
 }
 
 function generateSimplify(level: DifficultyLevel, ms: Record<string, boolean>): AnyQuestion {
-  const radicandCase = level === "level1"
-    ? pickRare(ms, "obvious", "perfectSquare", 0.08)
-    : pickRare(ms, "hidden", "alreadySimplified", 0.1);
+  // Level 3 is the only level using the curated "several candidate factors"
+  // pool (radicand pushed past 400) — Level 2 stays on Level 1's friendly
+  // extraction range so the only new thing it introduces is the coefficient
+  // below, not a harder radicand at the same time.
+  const radicandCase = level === "level3"
+    ? pickRare(ms, "hidden", "alreadySimplified", 0.1)
+    : pickRare(ms, "obvious", "perfectSquare", 0.08);
 
   const radicand = radicandCase === "perfectSquare" ? randomPerfectSquareRadicand(2, 12)
-    // Level 1: extract a value up to 10, radicand capped at 400 so numbers
-    // stay readable even at the top of that range.
+    // Level 1 and 2: extract a value up to 10, radicand capped at 400 so
+    // numbers stay readable even at the top of that range.
     : radicandCase === "obvious" ? randomExtractionRadicand(2, 10, 400)
-    // Level 2/3: curated composite extraction values (12, 15, 16, …) —
-    // deliberately past Level 1's range, and chosen so there's a genuine
+    // Level 3: curated composite extraction values (12, 15, 16, …) —
+    // deliberately past Level 1/2's range, and chosen so there's a genuine
     // "which factor did I spot" decision rather than a single obvious one.
     : radicandCase === "hidden" ? randomCuratedHiddenFactor()
     // Floor of 2, not 7 — √2 and √3 are genuine "already simplest form"
     // examples, not trivial ones to exclude.
     : randomSquareFree(2, 60);
 
-  // Level 3 always carries a coefficient — no toggle, it's the level's
-  // whole point (see the level-structure review: this used to be a 50/50
-  // option, diluting what should be Level 3's defining feature).
-  const coeff = level === "level3" ? randInt(2, 6) : 1;
+  // Level 2 and 3 both always carry a coefficient — no toggle, it's a fixed
+  // step up from Level 1. Taking out a factor and multiplying it into an
+  // existing coefficient is itself the new skill Level 2 adds (on Level 1's
+  // otherwise-familiar numbers); Level 3 then combines that same skill with
+  // the harder curated radicand range, rather than introducing both at once.
+  const coeff = level !== "level1" ? randInt(2, 6) : 1;
 
-  // "full" only differs from "standard" when a coefficient is present
-  // (see simplifySurdSteps), which only ever happens at Level 3 — so that's
-  // the level that actually needs it, not Level 1.
-  const grain: Grain = level === "level2" ? "standard" : "full";
+  // "full" shows the coefficient-multiply as its own step (see
+  // simplifySurdSteps) — needed whenever a coefficient is present, which is
+  // now Level 2 and 3 both.
+  const grain: Grain = "full";
   const working = simplifySurdSteps(radicand, coeff, grain);
 
   const s = simplifySurd(radicand);

@@ -53,6 +53,36 @@ const FitWidth = ({ children }: { children: ReactNode }) => {
   );
 };
 
+// Stacked layout only: the one card that just newly entered the list (as
+// opposed to every earlier card, which was already on screen and only has
+// its opacity/ring prop change smoothly on its own). A React `key` that
+// hasn't rendered before mounts fresh with no "previous style" to transition
+// from, so a plain style prop can't animate its arrival — it would just pop
+// in at full opacity instantly, which is the "clunky" jump a fresh card
+// arriving currently has. This starts every new mount below its resting
+// state (faded, offset down) and flips to resting on the next frame, so the
+// transition has a real from→to to animate across. Height is unaffected by
+// either state (opacity/transform only), so nothing else reflows as it fades
+// in — the auto-scroll compensation effect elsewhere in this file still sees
+// the same footer displacement either way.
+const EnterCard = ({ children, style }: { children: ReactNode; style?: React.CSSProperties }) => {
+  const [entered, setEntered] = useState(false);
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setEntered(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  return (
+    <div style={{
+      ...style,
+      opacity: entered ? 1 : 0,
+      transform: entered ? "translateY(0)" : "translateY(10px)",
+      transition: "opacity 0.28s ease, transform 0.28s ease",
+    }}>
+      {children}
+    </div>
+  );
+};
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // WorkedExampleSteps — the working-step viewer every tool's "Worked Example" mode
 // renders through. Pulled out of ToolShell so it's the SAME component both a real
@@ -264,18 +294,31 @@ export const WorkedExampleSteps = ({
   // Stacked layout: every step (current and past) renders at the same ~90%
   // "stacked" size — only opacity, plus the ring on the current one, mark it
   // as past, so nothing resizes as the list grows or you step back through it.
+  // The current card is the one that just newly entered the list on a forward
+  // press (going back re-enters an already-mounted card, which just changes
+  // its opacity/ring like any other prop change — no re-mount, no re-animate)
+  // — see EnterCard's own comment for why that one needs a mount transition
+  // and the rest don't.
   const stackedSteps = (upTo: number, activeReveal: number) => (
     <div className="space-y-2">
       {working.slice(0, upTo + 1).map((s, i) => {
         const isCurrent = i === upTo;
+        const content = renderStep(s, i, isCurrent ? activeReveal : undefined, true);
+        if (isCurrent) {
+          return (
+            <EnterCard key={i} style={{ borderRadius: 12, boxShadow: "0 0 0 2px #1e3a8a" }}>
+              {content}
+            </EnterCard>
+          );
+        }
         return (
           <div key={i} style={{
-            opacity: isCurrent ? 1 : 0.7,
+            opacity: 0.7,
             transition: "opacity 0.3s ease",
             borderRadius: 12,
-            boxShadow: isCurrent ? "0 0 0 2px #1e3a8a" : "none",
+            boxShadow: "none",
           }}>
-            {renderStep(s, i, isCurrent ? activeReveal : undefined, true)}
+            {content}
           </div>
         );
       })}
