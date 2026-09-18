@@ -111,7 +111,7 @@ const MIXED_OPTIONS = [
 const NUMERICAL_VAR = [{ key: "numerical", label: "Numerical method", defaultValue: false }];
 
 const TOOL_CONFIG: ToolConfig = {
-  pageTitle: "Dividing Into Ratios",
+  pageTitle: "Ratio Sharing",
   tools: {
     sharing: {
       name: "Sharing in a Ratio",
@@ -148,7 +148,7 @@ const TOOL_CONFIG: ToolConfig = {
 
 const INFO_SECTIONS: InfoSection[] = [
   {
-    title: "Dividing Into Ratios", icon: "⚖️",
+    title: "Ratio Sharing", icon: "⚖️",
     content: [
       { label: "Overview",          detail: "Practice sharing amounts in a ratio using three different problem types, each at three difficulty levels." },
       { label: "Level 1 — Green",   detail: "Times-table-friendly ratios and totals (shares within the 12×12 table), ideal for introducing the method." },
