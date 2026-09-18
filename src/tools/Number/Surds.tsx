@@ -84,7 +84,7 @@ function randomHiddenFactorRadicand(min: number, max: number, minCoeff: number):
 function randomObviousRadicand(): number {
   for (let i = 0; i < 200; i++) {
     const k = pick([2, 3, 4, 5]);
-    const p = randomSquareFree(2, 15);
+    const p = randomSquareFree(2, 20);
     const n = k * k * p;
     if (simplifySurd(n).coeff === k) return n;
   }
@@ -109,13 +109,18 @@ const SIMPLIFY_RADICAND_L1_MS: ToolMultiSelect = {
     { value: "perfectSquare", label: "Perfect square (√16 = 4)", defaultActive: true },
   ],
 };
+// L2+ deliberately does NOT include "obvious"/"perfectSquare" — those are
+// Level 1's whole content, and leaving them active here let two-thirds of a
+// default L2 worksheet look identical to L1 (the Smart Progressor balances
+// active options evenly, so a 3-way pool only gave "several candidate
+// factors" — the actual new skill — a third of the questions). Retiring the
+// easy cases the same way Add/Sub retires "already like" at L3 makes L2
+// genuinely, not just optionally, about spotting the largest factor.
 const SIMPLIFY_RADICAND_MS: ToolMultiSelect = {
   key: "radicandType", label: "Question Types",
   options: [
-    { value: "obvious", label: "Obvious square factor", defaultActive: true, weight: 1 },
-    { value: "perfectSquare", label: "Perfect square (√16 = 4)", defaultActive: true, weight: 1 },
-    { value: "hidden", label: "Several candidate factors", defaultActive: true, weight: 2 },
-    { value: "alreadySimplified", label: "Already simplest form", defaultActive: false, weight: 2 },
+    { value: "hidden", label: "Several candidate factors", defaultActive: true, weight: 1 },
+    { value: "alreadySimplified", label: "Already simplest form", defaultActive: true, weight: 2 },
   ],
 };
 const SIMPLIFY_COEFF_MS: ToolMultiSelect = {
@@ -252,7 +257,11 @@ const TOOL_CONFIG: ToolConfig = {
       multiSelect: OPERATION_MS,
       difficultySettings: {
         level1: { variables: [], dropdown: null, multiSelect: [OPERATION_MS, MULDIV_RADICAND_L1_MS] },
-        level2: { variables: [], dropdown: null, multiSelect: [OPERATION_MS, MULDIV_COEFF_MS] },
+        // Level 2 keeps L1's radicand-relationship pool (general / perfect-
+        // square-product) rather than dropping it — it was previously
+        // available at L1, silently absent at L2, then back at L3, which
+        // read as a gap rather than a build-up.
+        level2: { variables: [], dropdown: null, multiSelect: [OPERATION_MS, MULDIV_RADICAND_L1_MS, MULDIV_COEFF_MS] },
         level3: { variables: [], dropdown: null, multiSelect: [OPERATION_MS, MULDIV_COEFF_MS, MULDIV_RADICAND_MS] },
       },
     },
@@ -290,7 +299,7 @@ const INFO_SECTIONS: InfoSection[] = [
   { title: "Simplifying Surds", icon: "√", content: [
     { label: "Overview", detail: "Write a surd with the smallest possible number under the root, by extracting the largest square factor. Includes a toggleable 'perfect square' case (e.g. √16 = 4) — a check students often forget once they're used to general surd manipulation." },
     { label: "Level 1 — Green", detail: "One obvious square factor (e.g. √50 = 5√2), with perfect squares (√16 = 4) selectable alongside it." },
-    { label: "Level 2 — Yellow", detail: "Radicands with several candidate square factors — spotting the LARGEST one (not just any) is the actual skill; a mix also includes perfect squares and surds already in simplest form." },
+    { label: "Level 2 — Yellow", detail: "Radicands with several candidate square factors — spotting the LARGEST one (not just any) is the actual skill; a mix also includes a genuine 'already simplest form' trap." },
     { label: "Level 3 — Red", detail: "As Level 2, plus an existing coefficient to carry through (e.g. 3√48)." },
   ]},
   { title: "Adding & Subtracting", icon: "+", content: [
@@ -302,8 +311,8 @@ const INFO_SECTIONS: InfoSection[] = [
   { title: "Multiplying & Dividing", icon: "×", content: [
     { label: "Overview", detail: "Multiply or divide surds by combining under one root — this sub-tool never includes a bracket; see Expanding Brackets for that. Includes a toggleable 'perfect square product' case (e.g. √2 × √8 = √16 = 4) — two different-looking surds that still collapse to an integer, easy to miss since nothing about the question hints at it." },
     { label: "Level 1 — Green", detail: "Bare surds, clean results, with the perfect-square-product case selectable from the start." },
-    { label: "Level 2 — Yellow", detail: "Coefficients present." },
-    { label: "Level 3 — Red", detail: "Coefficients, plus the special √a × √a = a case and the less obvious perfect-square-product case." },
+    { label: "Level 2 — Yellow", detail: "Coefficients present, alongside the same perfect-square-product option from Level 1." },
+    { label: "Level 3 — Red", detail: "Coefficients, plus the special √a × √a = a case alongside the less obvious perfect-square-product case." },
   ]},
   { title: "Expanding Brackets", icon: "(·)", content: [
     { label: "Overview", detail: "Distribute a surd over a bracket, or expand two brackets using FOIL." },
@@ -348,7 +357,9 @@ function generateSimplify(level: DifficultyLevel, ms: Record<string, boolean>): 
 
   const radicand = radicandCase === "perfectSquare" ? randomPerfectSquareRadicand(2, 12)
     : radicandCase === "hidden" ? randomHiddenFactorRadicand(24, 200, 4)
-    : radicandCase === "alreadySimplified" ? randomSquareFree(7, 45)
+    // Floor of 2, not 7 — √2 and √3 are genuine "already simplest form"
+    // examples, not trivial ones to exclude.
+    : radicandCase === "alreadySimplified" ? randomSquareFree(2, 60)
     : randomObviousRadicand();
 
   const coeffForm = level === "level3" ? pickActive(ms, SIMPLIFY_COEFF_MS.options) : "none";
@@ -381,30 +392,33 @@ function generateAddSub(level: DifficultyLevel, ms: Record<string, boolean>): An
   let terms: SurdTerm[];
 
   if (kase === "alreadyLike") {
-    const r = randomSquareFree(2, level === "level1" ? 12 : 20);
-    const c1 = randInt(2, 9);
-    let c2 = randInt(2, 9);
-    if (s === -1 && c2 === c1) c2 = c1 === 9 ? c1 - 1 : c1 + 1;
+    const r = randomSquareFree(2, level === "level1" ? 20 : 35);
+    const c1 = randInt(2, 12);
+    let c2 = randInt(2, 12);
+    if (s === -1 && c2 === c1) c2 = c1 === 12 ? c1 - 1 : c1 + 1;
     terms = [{ coeff: c1, radicand: r }, { coeff: s * c2, radicand: r }];
   } else if (kase === "needsSimplify") {
-    const p = randomSquareFree(2, 6);
+    // p's pool was the narrowest in the whole tool (only {2,3,5,6} at
+    // 2-6) — widened so "simplify first" doesn't repeat the same handful
+    // of base values every worksheet.
+    const p = randomSquareFree(2, 15);
     const [k1, k2] = [2, 3, 4, 5].sort(() => Math.random() - 0.5).slice(0, 2);
-    const c1 = randInt(1, 3);
-    let c2 = randInt(1, 3);
+    const c1 = randInt(1, 4);
+    let c2 = randInt(1, 4);
     if (s === -1 && c1 * k1 === c2 * k2) c2 += 1;
     terms = [{ coeff: c1, radicand: k1 * k1 * p }, { coeff: s * c2, radicand: k2 * k2 * p }];
   } else if (kase === "dontCombine") {
-    const r1 = randomSquareFree(2, 20);
-    let r2 = randomSquareFree(2, 20);
-    while (r2 === r1) r2 = randomSquareFree(2, 20);
-    terms = [{ coeff: randInt(2, 9), radicand: r1 }, { coeff: s * randInt(2, 9), radicand: r2 }];
+    const r1 = randomSquareFree(2, 35);
+    let r2 = randomSquareFree(2, 35);
+    while (r2 === r1) r2 = randomSquareFree(2, 35);
+    terms = [{ coeff: randInt(2, 12), radicand: r1 }, { coeff: s * randInt(2, 12), radicand: r2 }];
   } else {
     // threeTermMixed
-    const r = randomSquareFree(2, 10);
-    const rational = randInt(2, 9);
-    const c1 = randInt(2, 9);
-    let c2 = randInt(2, 9);
-    if (s === -1 && c2 === c1) c2 = c1 === 9 ? c1 - 1 : c1 + 1;
+    const r = randomSquareFree(2, 20);
+    const rational = randInt(2, 12);
+    const c1 = randInt(2, 12);
+    let c2 = randInt(2, 12);
+    if (s === -1 && c2 === c1) c2 = c1 === 12 ? c1 - 1 : c1 + 1;
     terms = [{ coeff: rational, radicand: 1 }, { coeff: c1, radicand: r }, { coeff: s * c2, radicand: r }];
   }
 
@@ -433,9 +447,8 @@ function generateMultiplyDivide(level: DifficultyLevel, ms: Record<string, boole
   // construction already guarantees a clean collapse by a different route
   // (the radicand ratio, not the product, is the perfect square).
   const radicandCase = operation !== "multiply" ? "general"
-    : level === "level1" ? pickActive(ms, MULDIV_RADICAND_L1_MS.options)
     : level === "level3" ? pickActive(ms, MULDIV_RADICAND_MS.options)
-    : "general";
+    : pickActive(ms, MULDIV_RADICAND_L1_MS.options);
   const useCoeff = coeffCase === "withCoeff";
 
   let a: SurdTerm, b: SurdTerm;
@@ -445,21 +458,21 @@ function generateMultiplyDivide(level: DifficultyLevel, ms: Record<string, boole
 
   if (operation === "multiply") {
     if (radicandCase === "sameRadicand") {
-      const r = randomSquareFree(2, 12);
-      a = { coeff: useCoeff ? randInt(2, 6) : 1, radicand: r };
-      b = { coeff: useCoeff ? randInt(2, 6) : 1, radicand: r };
+      const r = randomSquareFree(2, 20);
+      a = { coeff: useCoeff ? randInt(2, 8) : 1, radicand: r };
+      b = { coeff: useCoeff ? randInt(2, 8) : 1, radicand: r };
     } else if (radicandCase === "perfectSquareProduct") {
       // a's and b's radicands are DIFFERENT but their product is a perfect
       // square by construction — k × (k·m²) = (km)² — e.g.
       // k=2, m=2 gives √2 × √8 = √16 = 4, exactly the case
       // that gives no visual hint it will collapse.
-      const k = randomSquareFree(2, 6);
+      const k = randomSquareFree(2, 10);
       const m = randInt(2, 4);
-      a = { coeff: useCoeff ? randInt(2, 6) : 1, radicand: k };
-      b = { coeff: useCoeff ? randInt(2, 6) : 1, radicand: k * m * m };
+      a = { coeff: useCoeff ? randInt(2, 8) : 1, radicand: k };
+      b = { coeff: useCoeff ? randInt(2, 8) : 1, radicand: k * m * m };
     } else {
-      a = { coeff: useCoeff ? randInt(2, 6) : 1, radicand: randomSquareFree(2, level === "level1" ? 12 : 20) };
-      b = { coeff: useCoeff ? randInt(2, 6) : 1, radicand: randomSquareFree(2, level === "level1" ? 12 : 20) };
+      a = { coeff: useCoeff ? randInt(2, 8) : 1, radicand: randomSquareFree(2, level === "level1" ? 20 : 35) };
+      b = { coeff: useCoeff ? randInt(2, 8) : 1, radicand: randomSquareFree(2, level === "level1" ? 20 : 35) };
     }
     resultTerm = multiplySurdTerms(a, b);
     working = expandBracketsSteps([a], [b], grain);
@@ -468,10 +481,10 @@ function generateMultiplyDivide(level: DifficultyLevel, ms: Record<string, boole
     // a perfect square (so the root divides exactly), and a's coefficient is
     // a whole multiple of b's (so the coefficient ratio divides exactly too)
     // — a plain "both drawn independently" pair only cancels by luck.
-    const r = randomSquareFree(2, 10);
+    const r = randomSquareFree(2, 15);
     const m = randInt(2, 5);
-    const bCoeff = useCoeff ? randInt(2, 4) : 1;
-    const aCoeff = useCoeff ? bCoeff * randInt(1, 3) : 1;
+    const bCoeff = useCoeff ? randInt(2, 5) : 1;
+    const aCoeff = useCoeff ? bCoeff * randInt(1, 4) : 1;
     a = { coeff: aCoeff, radicand: r * m * m };
     b = { coeff: bCoeff, radicand: r };
     resultTerm = divideSurdTerms(a, b);
@@ -501,41 +514,41 @@ function generateExpand(level: DifficultyLevel, ms: Record<string, boolean>): An
   let caseKey = "single";
 
   if (level === "level1") {
-    a = [{ coeff: randInt(2, 6), radicand: randomSquareFree(2, 10) }];
-    b = [{ coeff: randInt(2, 9), radicand: 1 }, { coeff: sign() * randInt(1, 6), radicand: randomSquareFree(2, 10) }];
+    a = [{ coeff: randInt(2, 8), radicand: randomSquareFree(2, 15) }];
+    b = [{ coeff: randInt(2, 12), radicand: 1 }, { coeff: sign() * randInt(1, 7), radicand: randomSquareFree(2, 15) }];
   } else if (level === "level2") {
     caseKey = pickActive(ms, BRACKET_TYPE_L2_MS.options);
     if (caseKey === "single") {
-      a = [{ coeff: randInt(2, 6), radicand: randomSquareFree(2, 10) }];
-      b = [{ coeff: randInt(2, 9), radicand: 1 }, { coeff: sign() * randInt(1, 6), radicand: randomSquareFree(2, 10) }];
+      a = [{ coeff: randInt(2, 8), radicand: randomSquareFree(2, 15) }];
+      b = [{ coeff: randInt(2, 12), radicand: 1 }, { coeff: sign() * randInt(1, 7), radicand: randomSquareFree(2, 15) }];
     } else {
-      a = [{ coeff: sign() * randInt(1, 6), radicand: randomSquareFree(2, 10) }, { coeff: randInt(2, 9), radicand: 1 }];
-      b = [{ coeff: sign() * randInt(1, 6), radicand: randomSquareFree(2, 10) }, { coeff: randInt(2, 9), radicand: 1 }];
+      a = [{ coeff: sign() * randInt(1, 7), radicand: randomSquareFree(2, 15) }, { coeff: randInt(2, 12), radicand: 1 }];
+      b = [{ coeff: sign() * randInt(1, 7), radicand: randomSquareFree(2, 15) }, { coeff: randInt(2, 12), radicand: 1 }];
     }
   } else {
     caseKey = pickActive(ms, EXPAND_ADVANCED_L3_MS.options);
     if (caseKey === "differenceOfSquares") {
       const p: SurdTerm = Math.random() < 0.5
-        ? { coeff: randInt(2, 9), radicand: 1 }
-        : { coeff: randInt(1, 5), radicand: randomSquareFree(2, 10) };
-      let q: SurdTerm = { coeff: randInt(1, 5), radicand: randomSquareFree(2, 10) };
+        ? { coeff: randInt(2, 12), radicand: 1 }
+        : { coeff: randInt(1, 6), radicand: randomSquareFree(2, 15) };
+      let q: SurdTerm = { coeff: randInt(1, 6), radicand: randomSquareFree(2, 15) };
       // p and q must be distinct — if they happen to match, the second
       // bracket becomes p + (-p) = 0 and the whole question degenerates.
       while (q.coeff === p.coeff && q.radicand === p.radicand) {
-        q = { coeff: randInt(1, 5), radicand: randomSquareFree(2, 10) };
+        q = { coeff: randInt(1, 6), radicand: randomSquareFree(2, 15) };
       }
       a = [p, q];
       b = [p, conjugateOf(q)];
     } else if (caseKey === "collect") {
       // Shared radicand r between one term of each bracket, so the outer and
       // inner cross-products combine — e.g. (√3+2)(√3+5).
-      const r = randomSquareFree(2, 8);
-      a = [{ coeff: randInt(1, 4), radicand: r }, { coeff: randInt(2, 9), radicand: 1 }];
-      b = [{ coeff: randInt(1, 4), radicand: r }, { coeff: randInt(2, 9), radicand: 1 }];
+      const r = randomSquareFree(2, 15);
+      a = [{ coeff: randInt(1, 5), radicand: r }, { coeff: randInt(2, 12), radicand: 1 }];
+      b = [{ coeff: randInt(1, 5), radicand: r }, { coeff: randInt(2, 12), radicand: 1 }];
     } else {
       // simplifyAfter — a cross product's radicand is a perfect square by
       // construction: r * (r*k^2) = (rk)^2, guaranteed, not left to chance.
-      const r = randomSquareFree(2, 6);
+      const r = randomSquareFree(2, 10);
       const k = randInt(2, 3);
       a = [{ coeff: 1, radicand: 1 }, { coeff: 1, radicand: r * k * k }];
       b = [{ coeff: 1, radicand: 1 }, { coeff: 1, radicand: r }];
@@ -566,25 +579,25 @@ function generateRationalise(level: DifficultyLevel, ms: Record<string, boolean>
 
   if (level === "level1") {
     kase = pickActive(ms, DENOM_FORM_L1_MS.options);
-    const r = kase === "needsSimplify" ? randomHiddenFactorRadicand(8, 50, 2) : randomSquareFree(2, 12);
+    const r = kase === "needsSimplify" ? randomHiddenFactorRadicand(8, 80, 2) : randomSquareFree(2, 20);
     numerator = [{ coeff: 1, radicand: 1 }];
     denominator = [{ coeff: 1, radicand: r }];
   } else if (level === "level2") {
     kase = pickActive(ms, NUMERATOR_FORM_L2_MS.options);
-    const denomRadicand = Math.random() < 0.5 ? randomSquareFree(2, 12) : randomHiddenFactorRadicand(8, 50, 2);
+    const denomRadicand = Math.random() < 0.5 ? randomSquareFree(2, 20) : randomHiddenFactorRadicand(8, 80, 2);
     denominator = [{ coeff: 1, radicand: denomRadicand }];
     const simplified = simplifySurd(denomRadicand).radicand;
     numerator = kase === "coefficient"
-      ? [{ coeff: randInt(2, 9), radicand: 1 }]
-      : [{ coeff: randInt(2, 9), radicand: 1 }, { coeff: sign() * randInt(1, 5), radicand: simplified }];
+      ? [{ coeff: randInt(2, 12), radicand: 1 }]
+      : [{ coeff: randInt(2, 12), radicand: 1 }, { coeff: sign() * randInt(1, 6), radicand: simplified }];
   } else {
     kase = pickActive(ms, RATIONALISE_L3_MS.options);
-    const denomOther: SurdTerm = { coeff: randInt(2, 5), radicand: 1 };
-    const p: SurdTerm = { coeff: randInt(1, 4), radicand: randomSquareFree(2, 10) };
+    const denomOther: SurdTerm = { coeff: randInt(2, 6), radicand: 1 };
+    const p: SurdTerm = { coeff: randInt(1, 5), radicand: randomSquareFree(2, 15) };
     denominator = [denomOther, p];
     numerator = kase === "monomial"
-      ? [{ coeff: randInt(2, 9), radicand: 1 }]
-      : [{ coeff: randInt(2, 9), radicand: 1 }, { coeff: sign() * randInt(1, 4), radicand: randomSquareFree(2, 10) }];
+      ? [{ coeff: randInt(2, 12), radicand: 1 }]
+      : [{ coeff: randInt(2, 12), radicand: 1 }, { coeff: sign() * randInt(1, 5), radicand: randomSquareFree(2, 15) }];
   }
 
   const grain: Grain = level === "level1" ? "full" : "standard";
