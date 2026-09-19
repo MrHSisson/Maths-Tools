@@ -344,6 +344,16 @@ step must state the exact final answer) still holds across all 5 sub-tools × 3 
 this mattered because Level 1 Add/Sub, Multiply/Divide, and Rationalise all genuinely exercise the
 new `full`-grain code paths live, not just in the Technique Library preview.
 
+**Surds now calls every one of its four techniques at `full` grain, at every level.** Previously
+only Level 1 did (Add/Sub, Multiply/Divide, Rationalise); Level 2/3 used `standard`, and Expand
+never used `full` at any level. Rationale: Surds is the tool where a student meets these techniques
+for the first time — it isn't a downstream tool composing them as an already-mastered prerequisite
+(the way, say, a future quadratics tool might call `rationaliseDenominatorSteps` at `brief` grain
+in passing). Since the whole point of being *in* Surds is learning the mechanics, every level should
+get the full taught breakdown, not a truncated one at higher levels. Re-ran the 3-way stress-test
+suite after the change (all 5 sub-tools × 3 levels × 500 draws = 7500 questions) to confirm the
+`hideAnswerStep` invariant still holds now that every level exercises the richer code paths.
+
 **Possible next steps (background, pre-audit — see the sequencing note above):**
 - Add a runtime **"Detailed working" toggle** so a teacher can flip grain (brief ↔ full) live — the one shell change on the list.
 - **Sweep more tools** onto the engine — start with the high-frequency moves below.

@@ -90,6 +90,12 @@ in Surds before any wider rollout:
   exercise the new code live. Caught and fixed one real bug along the way: an early draft's label
   embedded raw LaTeX source as prose text (`"Simplify \sqrt{8}:"` rendered literally instead of as
   math) — labels are plain text, not KaTeX, so this now reads a generic "Simplify:".
+- **Switched every Surds sub-tool to `full` grain at every level, not just Level 1.** Surds is
+  where a student meets these techniques for the first time, not a downstream tool composing an
+  already-mastered prerequisite — so every level should get the full taught breakdown. Previously
+  only Level 1 used `full` (Add/Sub, Multiply/Divide, Rationalise); Expand never used it at any
+  level. Re-ran the full 5-sub-tool × 3-level × 500-draw stress test (7500 questions) to confirm
+  the `hideAnswerStep` invariant still holds now that every level exercises the richer paths live.
 - Also: fixed a real `CycleSelect` shared-component bug (a solo 2-option weighted pool stretched
   to the popover's full width), added opt-in multi-row sub-tool tabs (`toolTabRows`), and widened
   number ranges across Add/Sub, Multiply/Divide, Expand and Rationalise.

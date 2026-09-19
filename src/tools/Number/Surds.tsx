@@ -475,7 +475,9 @@ function generateAddSub(level: DifficultyLevel, ms: Record<string, boolean>): An
     terms = [{ coeff: rational, radicand: 1 }, { coeff: c1, radicand: r }, { coeff: s * c2, radicand: r }];
   }
 
-  const grain: Grain = level === "level1" ? "full" : "standard";
+  // Surds is where this technique is first taught, not a downstream tool
+  // that already assumes it — full grain throughout, not just Level 1.
+  const grain: Grain = "full";
   const working = collectLikeSurdsSteps(terms, grain);
   const answerTerms = collectLikeSurds(terms);
 
@@ -505,7 +507,9 @@ function generateMultiplyDivide(level: DifficultyLevel, ms: Record<string, boole
   const useCoeff = coeffCase === "withCoeff";
 
   let a: SurdTerm, b: SurdTerm;
-  const grain: Grain = level === "level1" ? "full" : "standard";
+  // Surds is where this technique is first taught, not a downstream tool
+  // that already assumes it — full grain throughout, not just Level 1.
+  const grain: Grain = "full";
   let working;
   let resultTerm: SurdTerm;
 
@@ -608,7 +612,9 @@ function generateExpand(level: DifficultyLevel, ms: Record<string, boolean>): An
     }
   }
 
-  const working = expandSurdBracketsSteps(a, b, "standard");
+  // Surds is where this technique is first taught, not a downstream tool
+  // that already assumes it — full grain throughout, not just some levels.
+  const working = expandSurdBracketsSteps(a, b, "full");
   // Reuse the same general multiply-and-collect computation the step
   // builder is built on, rather than re-deriving the cross-product logic
   // inline — one source of truth for what the expansion actually equals.
@@ -653,7 +659,9 @@ function generateRationalise(level: DifficultyLevel, ms: Record<string, boolean>
       : [{ coeff: randInt(2, 12), radicand: 1 }, { coeff: sign() * randInt(1, 5), radicand: randomSquareFree(2, 15) }];
   }
 
-  const grain: Grain = level === "level1" ? "full" : "standard";
+  // Surds is where this technique is first taught, not a downstream tool
+  // that already assumes it — full grain throughout, not just Level 1.
+  const grain: Grain = "full";
   const working = rationaliseDenominatorSteps(numerator, denominator, grain);
   const finalFraction = rationaliseDenominator(numerator, denominator);
 
