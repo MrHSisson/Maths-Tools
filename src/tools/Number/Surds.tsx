@@ -158,7 +158,8 @@ function pickRare(values: Record<string, boolean>, commonValue: string, rareValu
 // generation reads the raw toggle states itself via pickRare, so "Mixed"
 // genuinely means "rare", not "50/50" — see pickRare's own comment.
 const SIMPLIFY_RADICAND_L1_MS: ToolMultiSelect = {
-  key: "radicandTypeL1", label: "Question Types", cycleDisplay: true,
+  key: "radicandTypeL1", label: "Perfect Squares", cycleDisplay: true,
+  cycleStateLabels: ["Off", "Mixed (~8%)", "Always"],
   options: [
     { value: "obvious", label: "Standard", defaultActive: true },
     { value: "perfectSquare", label: "Perfect square (√16 = 4, rare ~8%)", defaultActive: true },
@@ -244,18 +245,27 @@ const EXPAND_ADVANCED_L3_MS: ToolMultiSelect = {
   ],
 };
 
-const DENOM_FORM_L1_MS: ToolMultiSelect = {
+// Shared by Level 1 AND Level 2 (same key, like Simplify's L1/L2 radicand
+// pool) — the denominator's own "does it need simplifying first" property is
+// the same friendly-range dimension at both levels; what changes between
+// them is the numerator (see RATIONALISE_NUM_L1_MS / the always-binomial
+// Level 2 numerator below).
+const RATIONALISE_DENOM_L1_MS: ToolMultiSelect = {
   key: "denomForm", label: "Denominator Form",
   options: [
     { value: "simplified", label: "Already simplified", defaultActive: true, weight: 1 },
     { value: "needsSimplify", label: "Needs simplifying first", defaultActive: true, weight: 2 },
   ],
 };
-const NUMERATOR_FORM_L2_MS: ToolMultiSelect = {
-  key: "numForm", label: "Numerator Form",
+// Level 1 only — independent of the denominator's own form (both dimensions
+// can combine on one question), so it's its own pool rather than folded into
+// a single ladder. Whether the numerator is a bare 1 (a genuine unit
+// fraction) or some other integer is a real QO choice now, not fixed at 1.
+const RATIONALISE_NUM_L1_MS: ToolMultiSelect = {
+  key: "numFormL1", label: "Numerator Form",
   options: [
-    { value: "coefficient", label: "Coefficient numerator", defaultActive: true, weight: 1 },
-    { value: "binomial", label: "Binomial numerator", defaultActive: true, weight: 2 },
+    { value: "unit", label: "Unit fraction (numerator 1)", defaultActive: true, weight: 1 },
+    { value: "coefficient", label: "Integer numerator", defaultActive: true, weight: 2 },
   ],
 };
 const RATIONALISE_L3_MS: ToolMultiSelect = {
@@ -337,8 +347,11 @@ const TOOL_CONFIG: ToolConfig = {
       variables: [],
       dropdown: null,
       difficultySettings: {
-        level1: { variables: [], dropdown: null, multiSelect: DENOM_FORM_L1_MS },
-        level2: { variables: [], dropdown: null, multiSelect: NUMERATOR_FORM_L2_MS },
+        level1: { variables: [], dropdown: null, multiSelect: [RATIONALISE_DENOM_L1_MS, RATIONALISE_NUM_L1_MS] },
+        // Same denominator-form pool as Level 1 (shared key) — Level 2's own
+        // new skill is the numerator, which is now always binomial (see
+        // generateRationalise), not a QO choice any more.
+        level2: { variables: [], dropdown: null, multiSelect: RATIONALISE_DENOM_L1_MS },
         level3: { variables: [], dropdown: null, multiSelect: RATIONALISE_L3_MS },
       },
     },
@@ -375,9 +388,9 @@ const INFO_SECTIONS: InfoSection[] = [
   ]},
   { title: "Rationalising the Denominator", icon: "÷", content: [
     { label: "Overview", detail: "Rewrite a fraction with a surd denominator so the denominator is rational, by multiplying top and bottom by the surd (or its conjugate)." },
-    { label: "Level 1 — Green", detail: "Single-surd denominator — sometimes already simplified, sometimes needing simplifying first." },
-    { label: "Level 2 — Yellow", detail: "Numerator carries a coefficient, or is itself a binomial." },
-    { label: "Level 3 — Red", detail: "Binomial denominator — multiply by the conjugate." },
+    { label: "Level 1 — Green", detail: "Single-surd denominator (sometimes already simplified, sometimes needing simplifying first) with an integer numerator — a genuine choice between a unit fraction (1/√a) and a general integer numerator." },
+    { label: "Level 2 — Yellow", detail: "Same friendly single-surd denominator range as Level 1, but the numerator is now always a binomial (k ± c√a) — multiplying it through the denominator's surd is the new skill this level adds." },
+    { label: "Level 3 — Red", detail: "Binomial denominator — multiply top and bottom by the conjugate. The numerator can be a single term or itself a binomial." },
   ]},
   { title: "Modes", icon: "🖥️", content: [
     { label: "Whiteboard", detail: "Single question on the left, working space on the right." },
@@ -648,20 +661,31 @@ function generateExpand(level: DifficultyLevel, ms: Record<string, boolean>): An
 function generateRationalise(level: DifficultyLevel, ms: Record<string, boolean>): AnyQuestion {
   let numerator: SurdTerm[], denominator: SurdTerm[];
   let kase = "";
+  let score: number | undefined;
 
   if (level === "level1") {
-    kase = pickActive(ms, DENOM_FORM_L1_MS.options);
-    const r = kase === "needsSimplify" ? randomHiddenFactorRadicand(8, 80, 2) : randomSquareFree(2, 20);
-    numerator = [{ coeff: 1, radicand: 1 }];
+    // Two independent dimensions: whether the denominator needs simplifying
+    // first, and whether the numerator is a genuine unit fraction or some
+    // other integer — both can combine on one question, so they're two
+    // separate pools rather than one ladder.
+    const denomKase = pickActive(ms, RATIONALISE_DENOM_L1_MS.options);
+    const numKase = pickActive(ms, RATIONALISE_NUM_L1_MS.options);
+    kase = `${denomKase}-${numKase}`;
+    const r = denomKase === "needsSimplify" ? randomHiddenFactorRadicand(8, 80, 2) : randomSquareFree(2, 20);
+    numerator = numKase === "unit" ? [{ coeff: 1, radicand: 1 }] : [{ coeff: randInt(2, 12), radicand: 1 }];
     denominator = [{ coeff: 1, radicand: r }];
+    score = weightOf(RATIONALISE_DENOM_L1_MS.options, denomKase) + weightOf(RATIONALISE_NUM_L1_MS.options, numKase);
   } else if (level === "level2") {
-    kase = pickActive(ms, NUMERATOR_FORM_L2_MS.options);
-    const denomRadicand = Math.random() < 0.5 ? randomSquareFree(2, 20) : randomHiddenFactorRadicand(8, 80, 2);
+    // Same denominator-form pool as Level 1 (shared key). The new skill here
+    // is always a binomial numerator (k ± c√a, sharing the denominator's own
+    // surd once simplified) — no longer a QO choice, since Level 1 now
+    // already covers the plain-integer-numerator case.
+    kase = pickActive(ms, RATIONALISE_DENOM_L1_MS.options);
+    const denomRadicand = kase === "needsSimplify" ? randomHiddenFactorRadicand(8, 80, 2) : randomSquareFree(2, 20);
     denominator = [{ coeff: 1, radicand: denomRadicand }];
     const simplified = simplifySurd(denomRadicand).radicand;
-    numerator = kase === "coefficient"
-      ? [{ coeff: randInt(2, 12), radicand: 1 }]
-      : [{ coeff: randInt(2, 12), radicand: 1 }, { coeff: sign() * randInt(1, 6), radicand: simplified }];
+    numerator = [{ coeff: randInt(2, 12), radicand: 1 }, { coeff: sign() * randInt(1, 6), radicand: simplified }];
+    score = weightOf(RATIONALISE_DENOM_L1_MS.options, kase);
   } else {
     kase = pickActive(ms, RATIONALISE_L3_MS.options);
     const denomOther: SurdTerm = { coeff: randInt(2, 6), radicand: 1 };
@@ -670,6 +694,7 @@ function generateRationalise(level: DifficultyLevel, ms: Record<string, boolean>
     numerator = kase === "monomial"
       ? [{ coeff: randInt(2, 12), radicand: 1 }]
       : [{ coeff: randInt(2, 12), radicand: 1 }, { coeff: sign() * randInt(1, 5), radicand: randomSquareFree(2, 15) }];
+    score = weightOf(RATIONALISE_L3_MS.options, kase);
   }
 
   // Surds is where this technique is first taught, not a downstream tool
@@ -677,10 +702,6 @@ function generateRationalise(level: DifficultyLevel, ms: Record<string, boolean>
   const grain: Grain = "full";
   const working = rationaliseDenominatorSteps(numerator, denominator, grain);
   const finalFraction = rationaliseDenominator(numerator, denominator);
-
-  const score = level === "level1" ? weightOf(DENOM_FORM_L1_MS.options, kase)
-    : level === "level2" ? weightOf(NUMERATOR_FORM_L2_MS.options, kase)
-    : weightOf(RATIONALISE_L3_MS.options, kase);
 
   return questionFrom(
     rawFractionToLatex(numerator, denominator),

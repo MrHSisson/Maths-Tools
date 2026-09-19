@@ -187,14 +187,27 @@ export const solveLinearlySteps = (v: string, chain: string[]): WorkingStep[] =>
 //   full     — same chain, PLUS the coefficient multiply as its own step when
 //              a coefficient is already present (e.g. 3√48) — two separate
 //              taught moves rather than one folded line.
-export function simplifySurdSteps(radicand: number, coeff: number = 1, grain: Grain = "standard"): WorkingStep[] {
+// Every grain but "brief" ends with an explicit "Write the final answer:"
+// step (same convention as rationaliseDenominatorSteps) — a dedicated,
+// unambiguous landing point for the conclusion, distinct from whatever the
+// last OPERATION happened to be. `writeFinalAnswer` defaults to true for a
+// standalone call; pass false when this is composed as a SUB-step inside a
+// larger chain (e.g. expandSurdBracketsSteps' monomial×monomial branch,
+// which already ends its own outer chain with the real final answer) — two
+// "Write the final answer:" lines back to back, one for an intermediate
+// value, reads as genuinely confusing rather than merely repetitive.
+export function simplifySurdSteps(radicand: number, coeff: number = 1, grain: Grain = "standard", writeFinalAnswer: boolean = true): WorkingStep[] {
   const s = simplifySurd(radicand);
+  const finalLatex = surdTermToLatex({ coeff: coeff * s.coeff, radicand: s.radicand }, true);
+  const writeAnswer: WorkingStep[] = writeFinalAnswer ? [mStep("Write the final answer:", finalLatex)] : [];
 
   if (s.coeff === 1) {
     // Nothing to extract — a deliberate case worth stating, not skipping.
-    return grain === "brief"
-      ? [step(coeff === 1 ? `\\sqrt{${radicand}}` : `${coeff}\\sqrt{${radicand}}`)]
-      : [mStep("Already in simplest form — no square number divides it:", coeff === 1 ? `\\sqrt{${radicand}}` : `${coeff}\\sqrt{${radicand}}`)];
+    if (grain === "brief") return [step(coeff === 1 ? `\\sqrt{${radicand}}` : `${coeff}\\sqrt{${radicand}}`)];
+    return [
+      mStep("Already in simplest form — no square number divides it:", coeff === 1 ? `\\sqrt{${radicand}}` : `${coeff}\\sqrt{${radicand}}`),
+      ...writeAnswer,
+    ];
   }
 
   if (s.radicand === 1) {
@@ -211,15 +224,18 @@ export function simplifySurdSteps(radicand: number, coeff: number = 1, grain: Gr
       `\\sqrt{${radicand}}`,
       `= ${s.coeff}`,
     ]);
-    if (coeff === 1) return [recognise];
+    if (coeff === 1) return [recognise, ...writeAnswer];
     if (grain === "standard") {
-      return [mStep("This is a perfect square — the root disappears completely:", [
-        `${coeff}\\sqrt{${radicand}}`,
-        `= ${coeff} \\times ${s.coeff}`,
-        `= ${finalCoeff}`,
-      ])];
+      return [
+        mStep("This is a perfect square — the root disappears completely:", [
+          `${coeff}\\sqrt{${radicand}}`,
+          `= ${coeff} \\times ${s.coeff}`,
+          `= ${finalCoeff}`,
+        ]),
+        ...writeAnswer,
+      ];
     }
-    return [recognise, mStep("Multiply by the coefficient:", [`${coeff} \\times ${s.coeff}`, `= ${finalCoeff}`])];
+    return [recognise, mStep("Multiply by the coefficient:", [`${coeff} \\times ${s.coeff}`, `= ${finalCoeff}`]), ...writeAnswer];
   }
 
   const sqFactor = s.coeff * s.coeff;
@@ -233,22 +249,28 @@ export function simplifySurdSteps(radicand: number, coeff: number = 1, grain: Gr
   }
 
   if (coeff === 1) {
-    return [mStep("Find the largest square factor and split the root:", [
-      `\\sqrt{${radicand}}`,
-      `= \\sqrt{${sqFactor} \\times ${s.radicand}}`,
-      `= \\sqrt{${sqFactor}} \\times \\sqrt{${s.radicand}}`,
-      `= ${s.coeff}\\sqrt{${s.radicand}}`,
-    ])];
+    return [
+      mStep("Find the largest square factor and split the root:", [
+        `\\sqrt{${radicand}}`,
+        `= \\sqrt{${sqFactor} \\times ${s.radicand}}`,
+        `= \\sqrt{${sqFactor}} \\times \\sqrt{${s.radicand}}`,
+        `= ${s.coeff}\\sqrt{${s.radicand}}`,
+      ]),
+      ...writeAnswer,
+    ];
   }
 
   if (grain === "standard") {
-    return [mStep("Find the largest square factor and split the root:", [
-      `${coeff}\\sqrt{${radicand}}`,
-      `= ${coeff}\\sqrt{${sqFactor} \\times ${s.radicand}}`,
-      `= ${coeff} \\times \\sqrt{${sqFactor}} \\times \\sqrt{${s.radicand}}`,
-      `= ${coeff} \\times ${s.coeff}\\sqrt{${s.radicand}}`,
-      `= ${coeff * s.coeff}\\sqrt{${s.radicand}}`,
-    ])];
+    return [
+      mStep("Find the largest square factor and split the root:", [
+        `${coeff}\\sqrt{${radicand}}`,
+        `= ${coeff}\\sqrt{${sqFactor} \\times ${s.radicand}}`,
+        `= ${coeff} \\times \\sqrt{${sqFactor}} \\times \\sqrt{${s.radicand}}`,
+        `= ${coeff} \\times ${s.coeff}\\sqrt{${s.radicand}}`,
+        `= ${coeff * s.coeff}\\sqrt{${s.radicand}}`,
+      ]),
+      ...writeAnswer,
+    ];
   }
 
   // full — coefficient multiply gets its own taught step.
@@ -263,6 +285,7 @@ export function simplifySurdSteps(radicand: number, coeff: number = 1, grain: Gr
       `${coeff} \\times ${s.coeff}\\sqrt{${s.radicand}}`,
       `= ${coeff * s.coeff}\\sqrt{${s.radicand}}`,
     ]),
+    ...writeAnswer,
   ];
 }
 
@@ -395,7 +418,13 @@ export function collectLikeSurdsSteps(terms: SurdTerm[], grain: Grain = "standar
 //              "multiply the coefficients" from "multiply under the root";
 //              the difference-of-two-squares case separates "evaluate each
 //              square" from "subtract".
-export function expandSurdBracketsSteps(a: SurdTerm[], b: SurdTerm[], grain: Grain = "standard"): WorkingStep[] {
+// `writeFinalAnswer` forwards to the monomial×monomial branch's nested
+// simplifySurdSteps call (see that function's own doc) — leave it true for a
+// standalone call (e.g. Multiply/Divide), pass false when this itself is a
+// sub-step inside a larger chain (rationaliseDenominatorSteps passes false at
+// both its call sites) so its own inner "Write the final answer:" doesn't
+// collide with the outer chain's real one.
+export function expandSurdBracketsSteps(a: SurdTerm[], b: SurdTerm[], grain: Grain = "standard", writeFinalAnswer: boolean = true): WorkingStep[] {
   const bracketA = bracketedLatex(a);
   const bracketB = bracketedLatex(b);
   const label = a.length === 1 ? "Distribute:" : "Expand using FOIL:";
@@ -440,7 +469,7 @@ export function expandSurdBracketsSteps(a: SurdTerm[], b: SurdTerm[], grain: Gra
     if (s.coeff === 1) {
       steps.push(mStep("Combine:", surdTermToLatex({ coeff: coeffProduct, radicand: radicandProduct }, true)));
     } else {
-      steps.push(...simplifySurdSteps(radicandProduct, coeffProduct, "full"));
+      steps.push(...simplifySurdSteps(radicandProduct, coeffProduct, "full", writeFinalAnswer));
     }
     return steps;
   }
@@ -569,9 +598,9 @@ export function rationaliseDenominatorSteps(numerator: SurdTerm[], denominator: 
   // into one step (unchanged); full delegates to expandSurdBracketsSteps too,
   // which for a×a hits the monomial×monomial branch.
   if (isBinomial) {
-    steps.push(...expandSurdBracketsSteps(denom, multiplier, grain));
+    steps.push(...expandSurdBracketsSteps(denom, multiplier, grain, false));
   } else if (grain === "full") {
-    steps.push(...expandSurdBracketsSteps(denom, multiplier, "full"));
+    steps.push(...expandSurdBracketsSteps(denom, multiplier, "full", false));
   } else {
     steps.push(mStep("The denominator becomes rational:", [
       `${multiplierLatex} \\times ${multiplierLatex}`,
@@ -589,7 +618,7 @@ export function rationaliseDenominatorSteps(numerator: SurdTerm[], denominator: 
   const numeratorIsBareOne = numerator.length === 1 && numerator[0].coeff === 1 && numerator[0].radicand === 1;
   if (!numeratorIsBareOne) {
     if (grain === "full") {
-      steps.push(...expandSurdBracketsSteps(numerator, multiplier, "full"));
+      steps.push(...expandSurdBracketsSteps(numerator, multiplier, "full", false));
     } else {
       steps.push(mStep("Multiply out the numerator:", [
         `${bracketedLatex(numerator)} \\times ${multiplierLatex}`,

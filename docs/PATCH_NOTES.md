@@ -147,6 +147,42 @@ in Surds before any wider rollout:
   with an 8,000-draw stress test across all three Simplify levels: every generated fragment still
   renders under KaTeX, and the `hideAnswerStep` invariant (last fragment's value matches the
   question's computed answer) still holds.
+- **`simplifySurdSteps` now ends with an explicit "Write the final answer:" step**, at every grain
+  but `brief` — matching `rationaliseDenominatorSteps`' existing convention (a dedicated landing
+  point for the conclusion, distinct from whatever the last operation happened to be), which
+  Simplify was the one technique missing. Threaded a `writeFinalAnswer` flag through both
+  `simplifySurdSteps` and `expandSurdBracketsSteps` (default `true`) so a NESTED call — the
+  monomial×monomial branch composed inside `rationaliseDenominatorSteps`' "denominator becomes
+  rational"/"multiply out the numerator" steps — can suppress its own inner copy: without this, an
+  intermediate sub-result (e.g. the rationalised denominator's own value) and the question's real
+  final answer both said "Write the final answer:", which read as genuinely confusing rather than
+  merely repetitive. `rationaliseDenominatorSteps` passes `false` at both its nested call sites; a
+  standalone call (Simplify itself, Multiply/Divide) keeps the default. Verified: exactly one
+  "Write the final answer:" label per Rationalise question, always the last step, across 500 draws
+  per level.
+- **Fixed the compact cycle button's generic wording for Simplify's Level 1/2 perfect-square
+  pool** — it showed "QUESTION TYPES" / "None" in the popover, saying nothing about what the toggle
+  actually does. Added an opt-in `cycleStateLabels?: [string, string, string]` field to
+  `ToolMultiSelect` (overriding the generic None/Mixed/Exclusive state labels only where a pool
+  asks for it) and relabelled the pool itself `"Perfect Squares"` with states `["Off", "Mixed
+  (~8%)", "Always"]` — the button now reads "PERFECT SQUARES" / "Mixed (~8%)", genuinely
+  communicating the rare-trap probability instead of a meaningless generic word.
+- **Redesigned Rationalising the Denominator's three levels** on user feedback that the previous
+  split didn't read as a clear progression. New shape: **Level 1** — single-surd (monomial)
+  denominator with an INTEGER numerator, now a genuine QO choice between a unit fraction
+  (numerator 1) and a general integer numerator (previously always fixed at 1) — two independent
+  pools (`RATIONALISE_DENOM_L1_MS` / `RATIONALISE_NUM_L1_MS`, since denominator-needs-simplifying
+  and numerator-is-a-unit-fraction can combine on one question, so they're separate pools rather
+  than one ladder). **Level 2** — same friendly monomial-denominator range as Level 1 (shared QO
+  key, same pattern as Simplify's L1/L2 radicand pool), but the numerator is now ALWAYS a binomial
+  (`k ± c√a`, sharing the denominator's own surd once simplified) — no longer a QO choice, since
+  Level 1 now already covers the plain-integer-numerator case that Level 2's old "coefficient
+  numerator" option duplicated. **Level 3** — unchanged: binomial denominator, requiring the
+  conjugate, with numerator single-term or itself binomial (QO choice). Verified via a scratch
+  Vitest file (deleted after use) exercising the real `generateQuestion` path: Level 1 genuinely
+  reaches both denominator kinds and both numerator kinds; Level 2's numerator is always binomial
+  (2 terms); Level 3's denominator always triggers a "conjugate" step; the `hideAnswerStep`
+  invariant holds throughout.
 
 Everything above is scoped to Surds only (`hideAnswerStep`, `workedExampleLayout: "stacked"`,
 `toolTabRows` are all opt-in `ToolShellDefaults`) — every other tool is pixel-identical to before,

@@ -98,6 +98,13 @@ export interface ToolMultiSelect {
    *  both options are active — a genuine difficulty ladder should use `weight`
    *  instead and get the cycle button for free. */
   cycleDisplay?: true;
+  /** Overrides the compact cycle button's three state labels (None → Mixed →
+   *  Exclusive order). Use this when the generic labels don't say what's
+   *  actually being toggled or what "Mixed" means for this pool — e.g. a
+   *  rare-trap pool read via `pickRare` (not a weighted difficulty ladder)
+   *  where "Mixed" means a fixed rare probability, not roughly 50/50:
+   *  `["Off", "Mixed (~8%)", "Always"]`. Omit to keep the generic labels. */
+  cycleStateLabels?: [string, string, string];
 }
 
 // A tool may need several independent option pools at once (e.g. "Constants"

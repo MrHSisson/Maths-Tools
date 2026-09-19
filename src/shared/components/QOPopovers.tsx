@@ -164,7 +164,7 @@ const CycleSelect = ({
   onChange,
   solo,
 }: {
-  multiSelect: { key: string; label: string; options: { value: string; label: string; weight?: number }[] };
+  multiSelect: { key: string; label: string; options: { value: string; label: string; weight?: number }[]; cycleStateLabels?: [string, string, string] };
   values: Record<string, boolean>;
   onChange: (k: string, v: boolean) => void;
   // True when this is the only cycle-eligible pool in its row. flex-1 divides
@@ -197,7 +197,7 @@ const CycleSelect = ({
           state === 0 ? "bg-gray-100 text-gray-600" : state === 1 ? "bg-blue-100 text-blue-900" : "bg-blue-900 text-white"
         }`}
       >
-        {CYCLE_LABELS[state]}
+        {multiSelect.cycleStateLabels?.[state] ?? CYCLE_LABELS[state]}
       </span>
     </button>
   );
@@ -218,7 +218,7 @@ const MultiSelectGroups = ({
   values,
   onChange,
 }: {
-  groups: { key: string; label: string; info?: string; options: { value: string; label: string; sub?: string; divider?: boolean; weight?: number }[]; allowEmpty?: boolean; cycleDisplay?: true }[];
+  groups: { key: string; label: string; info?: string; options: { value: string; label: string; sub?: string; divider?: boolean; weight?: number }[]; allowEmpty?: boolean; cycleDisplay?: true; cycleStateLabels?: [string, string, string] }[];
   values: Record<string, boolean>;
   onChange: (k: string, v: boolean) => void;
 }) => {
