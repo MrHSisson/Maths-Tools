@@ -53,6 +53,36 @@ const FitWidth = ({ children }: { children: ReactNode }) => {
   );
 };
 
+// Stacked layout only: the one card that just newly entered the list (as
+// opposed to every earlier card, which was already on screen and only has
+// its opacity/ring prop change smoothly on its own). A React `key` that
+// hasn't rendered before mounts fresh with no "previous style" to transition
+// from, so a plain style prop can't animate its arrival — it would just pop
+// in at full opacity instantly, which is the "clunky" jump a fresh card
+// arriving currently has. This starts every new mount below its resting
+// state (faded) and flips to resting on the next frame, so the transition
+// has a real from→to to animate across. Pure opacity, no accompanying
+// motion — a slide read as busy alongside the fade, so this leans all the
+// way into "fade" rather than "fade + slide". Height is unaffected either
+// way, so nothing else reflows as it fades in — the auto-scroll compensation
+// effect elsewhere in this file still sees the same footer displacement.
+const EnterCard = ({ children, style }: { children: ReactNode; style?: React.CSSProperties }) => {
+  const [entered, setEntered] = useState(false);
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setEntered(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  return (
+    <div style={{
+      ...style,
+      opacity: entered ? 1 : 0,
+      transition: "opacity 0.9s ease",
+    }}>
+      {children}
+    </div>
+  );
+};
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // WorkedExampleSteps — the working-step viewer every tool's "Worked Example" mode
 // renders through. Pulled out of ToolShell so it's the SAME component both a real
@@ -86,16 +116,16 @@ export interface WorkedExampleStepsProps {
    *  pair, or an incrementing counter. */
   resetKey: string | number;
   /** Step-by-Step's card layout. "single" (default) replaces the card each
-   *  press — every live tool today, laid out inline (no internal scrolling —
-   *  the page/panel around it scrolls, exactly as before this prop existed).
-   *  "stacked" builds a vertical list instead, like Show All arrived at one
-   *  press at a time: earlier steps stay visible (dimmed), the current one is
-   *  highlighted. Because that list can grow taller than its container,
-   *  "stacked" owns its own bounded, internally-scrolling layout with the nav
-   *  pinned as a fixed footer — give it a parent with a real height (flex
-   *  child, or an explicit height) for that to size correctly. Exploratory —
-   *  not wired into any real tool yet, only the Technique Library preview.
-   */
+   *  press — laid out inline, no internal scrolling; the page/panel around
+   *  it scrolls. "stacked" builds a vertical list instead, like Show All
+   *  arrived at one press at a time: earlier steps stay visible (dimmed),
+   *  the current one is highlighted. It grows and shrinks with the list's
+   *  own natural height — no forced/bounded parent height, so a short
+   *  example (most techniques) never leaves a tall empty gap below the
+   *  cards. The nav footer sits right after the last card and moves down
+   *  the page as the list grows; the window-scroll-compensation effect
+   *  below keeps it visually anchored instead of a pinned/internally-
+   *  scrolling box. Used by Surds and the Technique Library preview. */
   layout?: "single" | "stacked";
   /** When true, there is no separate terminal "Answer" beat/card after the
    *  last working step — Step-by-Step ends on the last step itself (no extra
@@ -221,10 +251,24 @@ export const WorkedExampleSteps = ({
   // classes so the unstacked path is untouched pixel-for-pixel — every live
   // tool's single card, and Show All, keep rendering through the exact same
   // classes as before this existed.
+  //
+  // When hideAnswerStep is set, there's no separate answer box after this —
+  // the last step's own value IS the answer. The normal flow already rings
+  // whichever step is "active" in blue and drops that ring the moment a new
+  // step arrives (see stackedSteps) — there was previously nothing left to
+  // ring once you reached the very end, since the last step just became an
+  // inert card once you clicked past it into the separate Answer beat. Now
+  // that beat IS the last step, so it keeps a ring too — green instead of
+  // blue, since it's not "the current thing to focus on", it's arrival.
   const renderStep = (s: WorkingStep, i: number, reveal?: number, stacked?: boolean) => {
     const custom = stepRenderer ? stepRenderer(s, colorScheme, qoSnapshot) : null;
+    const isFinalAnswerStep = hideAnswerStep && i === totalSteps - 1;
     return (
-      <div key={i} className="rounded-xl p-6" style={{ backgroundColor: stepBg, ...(stacked ? { padding: "1.35rem" } : null) }}>
+      <div key={i} className="rounded-xl p-6" style={{
+        backgroundColor: stepBg,
+        boxShadow: isFinalAnswerStep ? "0 0 0 2px #16a34a" : undefined,
+        ...(stacked ? { padding: "1.35rem" } : null),
+      }}>
         <h4 className="text-xl font-bold mb-2" style={{ color: "#000", ...(stacked ? { fontSize: "1.125rem", lineHeight: "1.575rem", marginBottom: "0.45rem" } : null) }}>Step {i + 1}</h4>
         <div className="text-2xl" style={{ color: "#000", ...(stacked ? { fontSize: "1.35rem", lineHeight: "1.8rem" } : null) }}>
           {custom ?? (s.type === "tStep"
@@ -264,18 +308,37 @@ export const WorkedExampleSteps = ({
   // Stacked layout: every step (current and past) renders at the same ~90%
   // "stacked" size — only opacity, plus the ring on the current one, mark it
   // as past, so nothing resizes as the list grows or you step back through it.
+  // The current card is the one that just newly entered the list on a forward
+  // press (going back re-enters an already-mounted card, which just changes
+  // its opacity/ring like any other prop change — no re-mount, no re-animate)
+  // — see EnterCard's own comment for why that one needs a mount transition
+  // and the rest don't.
   const stackedSteps = (upTo: number, activeReveal: number) => (
     <div className="space-y-2">
       {working.slice(0, upTo + 1).map((s, i) => {
         const isCurrent = i === upTo;
+        const isFinalAnswerStep = hideAnswerStep && i === totalSteps - 1;
+        const content = renderStep(s, i, isCurrent ? activeReveal : undefined, true);
+        if (isCurrent) {
+          // The blue "current position" ring means "here's where you are,
+          // there's more ahead" — once this IS the final answer step (no more
+          // ahead, Next is disabled), that ring stops being true. renderStep
+          // already applies its own green ring in that case, so this wrapper
+          // adds no ring of its own rather than stacking two different colours.
+          return (
+            <EnterCard key={i} style={isFinalAnswerStep ? { borderRadius: 12 } : { borderRadius: 12, boxShadow: "0 0 0 2px #1e3a8a" }}>
+              {content}
+            </EnterCard>
+          );
+        }
         return (
           <div key={i} style={{
-            opacity: isCurrent ? 1 : 0.7,
+            opacity: 0.7,
             transition: "opacity 0.3s ease",
             borderRadius: 12,
-            boxShadow: isCurrent ? "0 0 0 2px #1e3a8a" : "none",
+            boxShadow: "none",
           }}>
-            {renderStep(s, i, isCurrent ? activeReveal : undefined, true)}
+            {content}
           </div>
         );
       })}
@@ -326,23 +389,23 @@ export const WorkedExampleSteps = ({
     );
 
     if (layout === "stacked") {
-      // Bounded-height column: scrollable body on top, nav fixed as a footer
-      // underneath it — always visible, never requires scrolling down to
-      // reach "Next" or up to see where you are. Needs a parent that gives it
-      // real height (a flex child works, see the prop doc above).
+      // Natural height: the card list and footer just flow one after the
+      // other, growing/shrinking with however many steps are on screen — no
+      // forced parent height, no internal scrollbox. The footer-position
+      // effect above compensates by scrolling the window when the footer
+      // moves, so it still reads as "pinned" without pre-reserving space
+      // that's empty for a short (1-3 step) example.
       return (
-        <div className="flex flex-col" style={{ height: "100%", minHeight: 0 }}>
-          <div className="flex-1 overflow-y-auto p-1" style={{ minHeight: 0 }}>
-            {!atAnswer ? stackedSteps(stepIdx, fragIdx) : (
-              <div className="space-y-2">
-                <div className="space-y-2" style={{ opacity: 0.7 }}>
-                  {working.map((s, i) => renderStep(s, i, undefined, true))}
-                </div>
-                {answerBox("", undefined, true)}
+        <div className="p-1">
+          {!atAnswer ? stackedSteps(stepIdx, fragIdx) : (
+            <div className="space-y-2">
+              <div className="space-y-2" style={{ opacity: 0.7 }}>
+                {working.map((s, i) => renderStep(s, i, undefined, true))}
               </div>
-            )}
-          </div>
-          <div ref={footerRef} className="flex-shrink-0 pt-4 mt-4 border-t" style={{ borderColor: "rgba(0,0,0,0.08)" }}>
+              {answerBox("", undefined, true)}
+            </div>
+          )}
+          <div ref={footerRef} className="pt-4 mt-4 border-t" style={{ borderColor: "rgba(0,0,0,0.08)" }}>
             {navRow}
             <div className="mt-3">{dotStrip}</div>
           </div>

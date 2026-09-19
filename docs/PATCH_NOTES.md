@@ -28,6 +28,225 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-19 — Surds: cascading Worked Example, retire the duplicate answer, promote its techniques
+`src/tools/Number/Surds.tsx`, `src/shared/ToolShell.tsx`, `src/shared/components/WorkedExampleSteps.tsx`,
+`src/shared/types.ts`, `src/shared/techniques/index.ts`, `src/shared/surds.ts` (new),
+`src/tools/TeacherTools/{SimplifySurdPreview,CollectLikeSurdsPreview,ExpandSurdBracketsPreview,
+RationaliseDenominatorPreview}.tsx` (new). Multi-part session piloting several shell-level changes
+in Surds before any wider rollout:
+- **Matched the Technique Library's cascading Worked Example layout** (`workedExampleLayout:
+  "stacked"`) inside real ToolShell tools for the first time — a `useFullHeightShell` flag makes
+  ToolShell's page a genuine viewport-derived flex column (only for `mode==="single" &&
+  workedExampleLayout==="stacked"`), matching how `TechniquePreviewPage` already sized the same
+  `WorkedExampleSteps` component. Found and fixed a real crushing bug along the way (`height:
+  100vh` forced the whole shell into one viewport, crushing the scrollable step body to 8px —
+  fixed with `minHeight: 100vh` instead, which fills the viewport when there's room and grows
+  with a normal scroll when there isn't). Smoothed the new-card fade-in (a mount-triggered
+  `EnterCard` wrapper, tuned to a 0.9s pure opacity fade after two rounds of feedback).
+- **Redesigned Simplifying Surds' Level 1/2/3** so each level is genuinely distinct: Level 1 stays
+  on a friendly extraction range (≤400); Level 2 introduces the "extracting a factor leaves a
+  coefficient" skill on that SAME friendly range rather than compounding it with harder numbers;
+  Level 3 combines that skill with a curated composite-radicand pool pushed past 400. Built
+  `pickRare` (a `pickActive`-compatible but non-Smart-Progressor-balanced picker) so perfect-square
+  and already-simplified "trap" cases stay genuinely rare (~8–10%) instead of the Smart
+  Progressor's usual even-split behaviour, which would have made them 50/50.
+- **Retired the duplicate green answer box** in Worked Example mode: every sub-tool's last working
+  step already stated the exact final answer (verified via a 4500-draw scratch stress test before
+  flipping anything), so the box was always repeating content already on screen. Wired
+  `WorkedExampleSteps`' existing (but previously unused-by-any-real-tool) `hideAnswerStep` prop
+  through a new `ToolShellDefaults.hideAnswerStep` flag. The terminal step now carries the ring
+  itself — same blue ring every "current" step gets while you're working through it, switching to
+  green only once you land on the last one, with no ring at all on any step you've moved past
+  (several rounds of feedback correcting an initial "ring every step" misread).
+- **Promoted all four of Surds' step-builders into the shared techniques engine.** Surds
+  originally built `simplifySurdSteps`/`collectLikeSurdsSteps`/`expandBracketsSteps`/
+  `rationaliseDenominatorSteps` locally, deliberately shaped to the techniques engine's own
+  contract but kept local per docs/PROJECTS.md's "build on demand" rule. Once proven out across
+  five sub-tools, cut near-verbatim into `src/shared/techniques/index.ts`, with the pure
+  computation layer (`SurdTerm`/`SurdFraction` + arithmetic + LaTeX formatting) promoted alongside
+  into new `src/shared/surds.ts`. `expandBracketsSteps` renamed `expandSurdBracketsSteps` on the
+  way in — it's `SurdTerm`-specific, a sibling of (not the same technique as) the still-unbuilt
+  generic `expandBrackets` the audit backlog tracks for `ExpandingBrackets`/`NonLinearSimEq`.
+  `Surds.tsx` now pulls everything back through `"../../shared"`; the two local files
+  (`surdsMath.ts`, `surdsSteps.ts`) are deleted. All four techniques got their own
+  `/techniques/<slug>` preview page and a Technique Library card, same as the original six — the
+  library now lists 10 techniques (11 preview pages including the composed Full Worked Example).
+  Re-ran the last-step-matches-answer stress test after the move to confirm byte-for-byte
+  unchanged behaviour. See `docs/PROJECTS.md`'s Techniques engine entry for the full writeup.
+- **Built genuine `full` grains for the three promoted techniques that didn't have one.**
+  Auditing the newly-public library surfaced that `collectLikeSurdsSteps`, `expandSurdBracketsSteps`
+  and `rationaliseDenominatorSteps` had `standard`/`full` producing byte-identical output in every
+  case (confirmed empirically, 500+ draws each, not just by reading the code) — a real "3 grains"
+  overclaim on their Technique Library cards. Gave each a genuinely richer `full`: per-term simplify
+  and per-radicand-group coefficient-add steps (two new shared private helpers) instead of one
+  folded step per phase; `expandSurdBracketsSteps` additionally splits difference-of-two-squares
+  into "evaluate each square" + "subtract" and gives monomial×monomial its own coefficient/radicand
+  breakdown; `rationaliseDenominatorSteps` now propagates the real grain into its
+  `expandSurdBracketsSteps` sub-calls instead of hardcoding `"standard"`. Verified with three
+  stress-test passes: standard/brief output byte-identical to before (old vs. new implementations
+  compared directly, 3000+ draws), full now differs from standard in 100% of draws across every
+  shape, and Surds' `hideAnswerStep` invariant still holds across all 15 sub-tool×level
+  combinations post-rework — Level 1 Add/Sub, Multiply/Divide and Rationalise all genuinely
+  exercise the new code live. Caught and fixed one real bug along the way: an early draft's label
+  embedded raw LaTeX source as prose text (`"Simplify \sqrt{8}:"` rendered literally instead of as
+  math) — labels are plain text, not KaTeX, so this now reads a generic "Simplify:".
+- **Switched every Surds sub-tool to `full` grain at every level, not just Level 1.** Surds is
+  where a student meets these techniques for the first time, not a downstream tool composing an
+  already-mastered prerequisite — so every level should get the full taught breakdown. Previously
+  only Level 1 used `full` (Add/Sub, Multiply/Divide, Rationalise); Expand never used it at any
+  level. Re-ran the full 5-sub-tool × 3-level × 500-draw stress test (7500 questions) to confirm
+  the `hideAnswerStep` invariant still holds now that every level exercises the richer paths live.
+- Also: fixed a real `CycleSelect` shared-component bug (a solo 2-option weighted pool stretched
+  to the popover's full width), added opt-in multi-row sub-tool tabs (`toolTabRows`), and widened
+  number ranges across Add/Sub, Multiply/Divide, Expand and Rationalise.
+- **Refined Simplifying Surds' Level 1/2/3 once more**, on user feedback that Level 1's rare
+  perfect-square trap should read as a single carousel control rather than a two-cell pool, and
+  that Level 3 needed a real design rule for which "hidden factor" values are worth testing.
+  Level 1's `obvious`/`perfectSquare` pool now opts into the compact cycle-button look via a new
+  `cycleDisplay?: true` field on `ToolMultiSelect` (`src/shared/types.ts`,
+  `src/shared/components/QOPopovers.tsx`'s `isCycleGroup`) — deliberately *not* `weight`, which
+  would have pulled the pair into Smart Progressor balancing and forced the trap toward ~50/50
+  instead of staying genuinely rare; `cycleDisplay` gets the same button with no such coupling.
+  Level 2 widened its coefficient range (2-16, up from 2-6) while keeping the same friendly
+  ≤400 radicand range as Level 1 — the new skill is carrying a coefficient through, not bigger
+  numbers. Level 3 dropped the "already simplest form" trap entirely, replaced by a genuine
+  weighted `withCoeff`/`none` QO choice (`SIMPLIFY_COEFF_L3_MS`), and its radicand is now always
+  > 400, drawn from curated extraction values `x` whose square has more than one smaller square
+  factor to spot (`isMultiStepExtractable(x)`, reusing the pre-existing `hasMultipleSquareFactors`
+  check already used for Rationalise's hidden-factor radicands, applied to `x²`) — so a bare prime
+  squared (2² = 4, 3² = 9, …) never appears, since it hides nothing, while composite extractions
+  like 6² = 36 = 4×9 or 12² = 144 = 16×9 do. Verified with a fresh stress test (20,000 draws): every
+  Level 3 radicand lands in (400, 2000] with a genuinely multi-step-extractable `x`; Level 2's
+  coefficient spans the full new range; the rare-trap pool stays ~8% rather than drifting toward
+  even; and the `hideAnswerStep` invariant still holds. Confirmed live via the dev server — both
+  pools render as the intended single cycle button, no console errors.
+- **Fixed a real layout bug in the "stacked" Worked Example: a tall empty box below short
+  examples.** `WorkedExampleSteps`' stacked layout previously owned a bounded, internally-scrolling
+  body with the nav pinned as a flex-shrink-0 footer, sized against a parent that `ToolShell` forced
+  to (at least) a full viewport height (`useFullHeightShell`) purely so that bounded box would have
+  something real to size against. For a short example (most Surds techniques are 1-3 steps), the
+  scrolling body still stretched to fill all that forced height, leaving a large blank rectangle
+  between the last card and the pinned footer — reported live via a screenshot showing exactly this
+  under Surds Level 2. Fixed by dropping the bounded/internal-scroll approach entirely: the stacked
+  card list and footer now flow with their own natural height (no `height:100%`, no
+  `overflow-y-auto`), and the footer-position `window.scrollBy` compensation effect that already
+  existed in the file (its own comment already described this as the intended behaviour: "the page
+  itself grows and scrolls instead") now does the actual work of keeping the footer visually
+  anchored as the list grows or shrinks, instead of sitting unused alongside a conflicting
+  scrollbox. `ToolShell`'s `useFullHeightShell` mechanism (the forced `minHeight: 100vh` chain) is
+  now unnecessary and removed; `TechniquePreviewPage.tsx` (the Technique Library's preview, sharing
+  the same component) simplified the same way. Verified live: a short 2-step Simplify example now
+  ends its card exactly at the content with no gap; a long 7-step Rationalise example (dev mode,
+  stepped one beat at a time) still keeps its nav visibly anchored on each press, confirmed by
+  reading `window.scrollY` climbing in lockstep with the footer's screen position across 8 presses.
+- **Added the missing "split into two separate roots" fragment in `simplifySurdSteps`.** The
+  factor-split chain jumped straight from `√(a×b)` to the extracted `c√b`, skipping the intermediate
+  `= √a × √b` a teacher would actually write on the board (e.g. `√50 = √25×2 = √25×√2 = 5√2`) —
+  flagged live from a Level 2 worked example screenshot. Added the missing fragment to the
+  `coeff===1`, `standard` and `full` branches (brief stays a single line, as designed). Verified
+  with an 8,000-draw stress test across all three Simplify levels: every generated fragment still
+  renders under KaTeX, and the `hideAnswerStep` invariant (last fragment's value matches the
+  question's computed answer) still holds.
+- **`simplifySurdSteps` now ends with an explicit "Write the final answer:" step**, at every grain
+  but `brief` — matching `rationaliseDenominatorSteps`' existing convention (a dedicated landing
+  point for the conclusion, distinct from whatever the last operation happened to be), which
+  Simplify was the one technique missing. Threaded a `writeFinalAnswer` flag through both
+  `simplifySurdSteps` and `expandSurdBracketsSteps` (default `true`) so a NESTED call — the
+  monomial×monomial branch composed inside `rationaliseDenominatorSteps`' "denominator becomes
+  rational"/"multiply out the numerator" steps — can suppress its own inner copy: without this, an
+  intermediate sub-result (e.g. the rationalised denominator's own value) and the question's real
+  final answer both said "Write the final answer:", which read as genuinely confusing rather than
+  merely repetitive. `rationaliseDenominatorSteps` passes `false` at both its nested call sites; a
+  standalone call (Simplify itself, Multiply/Divide) keeps the default. Verified: exactly one
+  "Write the final answer:" label per Rationalise question, always the last step, across 500 draws
+  per level.
+- **Fixed the compact cycle button's generic wording for Simplify's Level 1/2 perfect-square
+  pool** — it showed "QUESTION TYPES" / "None" in the popover, saying nothing about what the toggle
+  actually does. Added an opt-in `cycleStateLabels?: [string, string, string]` field to
+  `ToolMultiSelect` (overriding the generic None/Mixed/Exclusive state labels only where a pool
+  asks for it) and relabelled the pool itself `"Perfect Squares"` with states `["Off", "Mixed
+  (~8%)", "Always"]` — the button now reads "PERFECT SQUARES" / "Mixed (~8%)", genuinely
+  communicating the rare-trap probability instead of a meaningless generic word.
+- **Redesigned Rationalising the Denominator's three levels** on user feedback that the previous
+  split didn't read as a clear progression. New shape: **Level 1** — single-surd (monomial)
+  denominator with an INTEGER numerator, now a genuine QO choice between a unit fraction
+  (numerator 1) and a general integer numerator (previously always fixed at 1) — two independent
+  pools (`RATIONALISE_DENOM_L1_MS` / `RATIONALISE_NUM_L1_MS`, since denominator-needs-simplifying
+  and numerator-is-a-unit-fraction can combine on one question, so they're separate pools rather
+  than one ladder). **Level 2** — same friendly monomial-denominator range as Level 1 (shared QO
+  key, same pattern as Simplify's L1/L2 radicand pool), but the numerator is now ALWAYS a binomial
+  (`k ± c√a`, sharing the denominator's own surd once simplified) — no longer a QO choice, since
+  Level 1 now already covers the plain-integer-numerator case that Level 2's old "coefficient
+  numerator" option duplicated. **Level 3** — unchanged: binomial denominator, requiring the
+  conjugate, with numerator single-term or itself binomial (QO choice). Verified via a scratch
+  Vitest file (deleted after use) exercising the real `generateQuestion` path: Level 1 genuinely
+  reaches both denominator kinds and both numerator kinds; Level 2's numerator is always binomial
+  (2 terms); Level 3's denominator always triggers a "conjugate" step; the `hideAnswerStep`
+  invariant holds throughout.
+- **Redesigned Adding & Subtracting's Level 1/2** — user feedback that Level 2 reading as "Level 1
+  plus a toggle for a slightly different case" wasn't distinct enough. Added a genuine
+  `ADDSUB_OPERATION_MS` QO pool ("Add"/"Subtract", a plain unweighted variety pool, present at
+  every level) so a worksheet can be restricted to just adding, just subtracting, or a mixed
+  default — previously the sign was always an untunable random 50/50. **Level 2 now always
+  requires simplifying each term first** (no longer a QO choice against "already like surds",
+  which WAS the old, too-similar L1→L2 distinction) — its own new QO axis is
+  `ADDSUB_COEFF_L2_MS`, a genuine weighted toggle for whether each term additionally carries a
+  coefficient on top of the part that needs extracting (e.g. `4√12 + 3√27` vs. the bare `√12 +
+  √27`). Verified via a scratch Vitest file (deleted after use): the operation restriction
+  genuinely produces add-only/subtract-only/mixed; Level 2 never produces the old "already like"
+  shape; the coefficient toggle is reachable at both states; the `hideAnswerStep` invariant holds
+  across all three levels.
+- **Redesigned Adding & Subtracting's Level 3 with four genuinely distinct skills** — user
+  feedback that the original Level 3 read as "Level 2 with some of its own cases folded in", not a
+  real extension. Kept the existing false-positive **"not like surds"** trap; replaced
+  "simplify first" (now redundant with Level 2) and "rational + surds" with three new cases
+  discussed and chosen with the user: **"multiple surd families"** — 4 terms spanning two distinct
+  radicands once simplified (e.g. `2√12 − 2√27 + 2√350 − 3√224`), testing sorting/grouping across
+  families rather than spotting one pair; **"distribute a negative bracket"** — `(R1+C1√r) −
+  (R2±C2√r)`, requiring the leading negative to be distributed across BOTH of the second bracket's
+  terms before anything can combine, with its own new leading "Distribute the negative:" working
+  step; **"algebraic coefficients"** — `(ax+b)√r ± cx√r`, collecting the algebraic coefficient into
+  one bracketed term, same as any ordinary collect-like-surds move (e.g. `(4x+3)√11 − 2x√11 =
+  (6x+3)√11` — see the follow-up fix below for the exact answer format). The latter two don't fit
+  the shared `SurdTerm`/`collectLikeSurdsSteps` engine at all (an algebraic x-coefficient isn't
+  representable in `SurdTerm{coeff:number}`, and a bracket-aware "distribute first" step needs its
+  own working line) — both are bespoke, standalone builder functions
+  (`buildNegativeBracketAddSub`/`buildAlgebraicCoeffAddSub`) that construct their own question and
+  working directly rather than going through the shared technique. Verified via a scratch Vitest
+  file (deleted after use): all four cases are reachable and produce valid KaTeX; the
+  `hideAnswerStep` invariant holds for all of them; the negative-bracket case's display always
+  shows two bracketed groups; the multi-group case always produces 4 raw terms. Live-verified in
+  the browser (multi-group's 7-step worked example — simplify each of 4 terms, then two separate
+  "add the coefficients of like surds" group-collects — reads as a clearly different skill from
+  Level 2's single-pair case).
+- **Moved the "doesn't combine" false-positive trap from Level 3 into Level 1 and Level 2**, as a
+  rare (~10%) toggle rather than a Level 3-only weighted option — user feedback that it belongs
+  alongside the levels where students are actively learning to combine like surds, not bundled in
+  with Level 3's other, unrelated extensions. New shared-key pool `ADDSUB_TRAP_MS`
+  (`cycleDisplay`, read via `pickRare` like Simplify's own perfect-square trap, so it stays
+  genuinely rare rather than Smart-Progressor-balanced) added to both levels; removed from
+  `ADDSUB_L3_MS`, which now has only its three genuine extensions. A Level 2 trap question no
+  longer gets a `_difficultyScore` from the (irrelevant, for that question) coefficient pool.
+- **Fixed `buildAlgebraicCoeffAddSub`'s answer format** — it previously deliberately guarded
+  against the x-parts of the two terms cancelling out, treating "keep the x-term and constant term
+  as two separate `√` terms" as the goal. User feedback (and their own original example, `(x+2)√3 −
+  x√3 = 2√3`) corrected this: the algebraic coefficients should be added into ONE bracketed
+  coefficient, exactly like any other collect-like-surds move — `(4x+3)√11 − 2x√11 = (6x+3)√11`,
+  collapsing to a plain number when the x-parts happen to cancel. Removed the cancellation guard
+  entirely (a cancelling answer is now a valid, unremarkable outcome, not something to avoid).
+- **The compact cycle button now stretches to the QO container's full width when it's the only
+  cycle-eligible pool in its row**, instead of a small fixed 220px box — user feedback that the
+  narrow box looked out of place next to every other full-width QO control. Removed the width cap
+  in `CycleSelect` (`src/shared/components/QOPopovers.tsx`) in favour of `w-full`; a row of 2+
+  cycle pools is unaffected (still splits evenly via `flex-1`). Applies everywhere a solo cycle
+  button appears (Simplify's L1/L2 trap, Add/Sub's new trap pool, etc.) since it's one shared
+  component.
+
+Everything above is scoped to Surds only (`hideAnswerStep`, `workedExampleLayout: "stacked"`,
+`toolTabRows` are all opt-in `ToolShellDefaults`) — every other tool is pixel-identical to before,
+verified via regression screenshots (Whiteboard, Worksheet, `CompletingTheSquare`'s "single"
+layout). `npm run build`: 0 errors throughout. `npm test`: 335/335 passing.
+
 ## 2026-09-16 — Smart Progressor: extend Speed/Distance/Time to all 3 levels, fix two correctness bugs
 `src/tools/Proportion/SpeedDistanceTime.tsx`, `src/shared/ToolShell.tsx`. User flagged that Level 1
 still showed "Allow decimal answers" as a plain boolean (the Smart Progressor pilot had only

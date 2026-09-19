@@ -58,6 +58,7 @@ export const CATEGORIES: CategoryMeta[] = [
   {
     name: 'Number',
     tools: [
+      { id: 'surds', path: '/surds', name: "Surds", description: "Simplify, combine, expand and rationalise surds across five interlocking skills.", enabled: false, load: () => import('./tools/Number/Surds') },
       { id: 'integers', path: '/integer-add-and-subtract', name: 'Adding & Subtracting Integers', description: 'Practice adding and subtracting positive and negative numbers using number lines', load: () => import('./tools/Number/IntegerAddSub') },
       { id: 'estimation', path: '/estimation', name: 'Estimation', description: 'Develop estimation skills by rounding numbers to make calculations easier', load: () => import('./tools/Number/Estimation') },
       { id: 'powers-of-ten', path: '/powers-of-ten', name: 'Multiplying & Dividing by 10ⁿ', description: 'Use a place value table to scale by powers of 10', load: () => import('./tools/Number/PowersOfTen') },
@@ -82,7 +83,7 @@ export const CATEGORIES: CategoryMeta[] = [
     name: 'Ratio & Proportion',
     tools: [
       { id: 'speed-distance-time', path: '/speed-distance-time', name: "Speed, Distance & Time", description: "Find speed, distance or time from the other two, using ratio-table scaling.", enabled: true, load: () => import('./tools/Proportion/SpeedDistanceTime') },
-      { id: 'ratio', path: '/ratio-sharing', name: 'Dividing Ratios', description: 'Sharing amounts using the total, a known amount or known difference', load: () => import('./tools/Proportion/RatioSharingTool') },
+      { id: 'ratio', path: '/ratio-sharing', name: 'Ratio Sharing', description: 'Sharing amounts using the total, a known amount or known difference', load: () => import('./tools/Proportion/RatioSharingTool') },
       { id: 'simplifying-ratios', path: '/simplifying-ratios', name: 'Simplifying Ratios', description: 'Simplifying ratios in numerical and algebraic forms', enabled: false, load: () => import('./tools/Proportion/SimplifyingRatiosTool') },
       { id: 'Recipes', path: '/recipes', name: 'Recipes', description: 'Find amounts of ingredients by scaling recipes and understanding limiting factors', load: () => import('./tools/Proportion/RecipesTool') },
       { id: 'fraction-to-ratio', path: '/fraction-to-ratio', name: 'Converting Fractions and Ratios', description: 'To convert fractions and ratios interchangeably', load: () => import('./tools/Proportion/FractionToRatio') },
@@ -122,6 +123,10 @@ export const CATEGORIES: CategoryMeta[] = [
       { id: 'technique-preview-making-the-subject', path: '/techniques/making-the-subject', name: 'Technique Preview — Making the Subject', description: 'A real tool page built around the makeSubjectSteps technique — an accurate, non-popup preview', enabled: false, hidden: true, load: () => import('./tools/TeacherTools/MakeSubjectPreview') },
       { id: 'technique-preview-solving-a-linear-chain', path: '/techniques/solving-a-linear-chain', name: 'Technique Preview — Solving a Linear Chain', description: 'A real tool page built around the solveLinearlySteps technique — an accurate, non-popup preview', enabled: false, hidden: true, load: () => import('./tools/TeacherTools/SolveLinearlyPreview') },
       { id: 'technique-preview-full-worked-example', path: '/techniques/full-worked-example', name: 'Technique Preview — Full Worked Example', description: 'A real tool page composing several technique blocks into one full solution — an accurate, non-popup preview', enabled: false, hidden: true, load: () => import('./tools/TeacherTools/FullExamplePreview') },
+      { id: 'technique-preview-simplifying-a-surd', path: '/techniques/simplifying-a-surd', name: 'Technique Preview — Simplify a Surd', description: 'A real tool page built around the simplifySurdSteps technique — an accurate, non-popup preview', enabled: false, hidden: true, load: () => import('./tools/TeacherTools/SimplifySurdPreview') },
+      { id: 'technique-preview-collecting-like-surds', path: '/techniques/collecting-like-surds', name: 'Technique Preview — Collect Like Surds', description: 'A real tool page built around the collectLikeSurdsSteps technique — an accurate, non-popup preview', enabled: false, hidden: true, load: () => import('./tools/TeacherTools/CollectLikeSurdsPreview') },
+      { id: 'technique-preview-expanding-surd-brackets', path: '/techniques/expanding-surd-brackets', name: 'Technique Preview — Expand Surd Brackets', description: 'A real tool page built around the expandSurdBracketsSteps technique — an accurate, non-popup preview', enabled: false, hidden: true, load: () => import('./tools/TeacherTools/ExpandSurdBracketsPreview') },
+      { id: 'technique-preview-rationalising-the-denominator', path: '/techniques/rationalising-the-denominator', name: 'Technique Preview — Rationalise the Denominator', description: 'A real tool page built around the rationaliseDenominatorSteps technique — an accurate, non-popup preview', enabled: false, hidden: true, load: () => import('./tools/TeacherTools/RationaliseDenominatorPreview') },
     ],
   },
   {

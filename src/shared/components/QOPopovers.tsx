@@ -162,10 +162,16 @@ const CycleSelect = ({
   multiSelect,
   values,
   onChange,
+  solo,
 }: {
-  multiSelect: { key: string; label: string; options: { value: string; label: string; weight?: number }[] };
+  multiSelect: { key: string; label: string; options: { value: string; label: string; weight?: number }[]; cycleStateLabels?: [string, string, string] };
   values: Record<string, boolean>;
   onChange: (k: string, v: boolean) => void;
+  // True when this is the only cycle-eligible pool in its row — stretches to
+  // the QO container's full width (matching every other QO control's own
+  // width) rather than sitting at a small fixed size. flex-1 still divides a
+  // row of 2+ into narrow, equal-width cells when there's more than one.
+  solo?: boolean;
 }) => {
   const [base, hard] = [...multiSelect.options].sort((a, b) => (a.weight ?? 0) - (b.weight ?? 0));
   const activeBase = values[base.value] ?? false;
@@ -180,7 +186,7 @@ const CycleSelect = ({
     <button
       onClick={next}
       title={`${base.label} / ${hard.label}`}
-      className="flex flex-1 min-w-0 flex-col items-center gap-1 px-3 py-2 rounded-lg border-2 border-gray-200 bg-white hover:border-blue-900 transition-colors text-center"
+      className={`flex ${solo ? "w-full" : "flex-1"} min-w-0 flex-col items-center gap-1 px-3 py-2 rounded-lg border-2 border-gray-200 bg-white hover:border-blue-900 transition-colors text-center`}
     >
       <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{multiSelect.label}</span>
       <span
@@ -188,13 +194,14 @@ const CycleSelect = ({
           state === 0 ? "bg-gray-100 text-gray-600" : state === 1 ? "bg-blue-100 text-blue-900" : "bg-blue-900 text-white"
         }`}
       >
-        {CYCLE_LABELS[state]}
+        {multiSelect.cycleStateLabels?.[state] ?? CYCLE_LABELS[state]}
       </span>
     </button>
   );
 };
 
-const isCycleGroup = (g: { options: { weight?: number }[] }) => g.options.length === 2 && g.options.every(o => o.weight !== undefined);
+const isCycleGroup = (g: { options: { weight?: number }[]; cycleDisplay?: true }) =>
+  g.options.length === 2 && (g.cycleDisplay || g.options.every(o => o.weight !== undefined));
 
 // Renders one or more independent multi-select pools, all sharing one flat
 // values record. Consecutive weighted-2-option pools (see CycleSelect above)
@@ -208,7 +215,7 @@ const MultiSelectGroups = ({
   values,
   onChange,
 }: {
-  groups: { key: string; label: string; info?: string; options: { value: string; label: string; sub?: string; divider?: boolean; weight?: number }[]; allowEmpty?: boolean }[];
+  groups: { key: string; label: string; info?: string; options: { value: string; label: string; sub?: string; divider?: boolean; weight?: number }[]; allowEmpty?: boolean; cycleDisplay?: true; cycleStateLabels?: [string, string, string] }[];
   values: Record<string, boolean>;
   onChange: (k: string, v: boolean) => void;
 }) => {
@@ -220,7 +227,7 @@ const MultiSelectGroups = ({
       while (i < groups.length && isCycleGroup(groups[i])) { run.push(groups[i]); i++; }
       els.push(
         <div key={`cycle-${run[0].key}`} className="flex flex-wrap gap-3">
-          {run.map(g => <CycleSelect key={g.key} multiSelect={g} values={values} onChange={onChange} />)}
+          {run.map(g => <CycleSelect key={g.key} multiSelect={g} values={values} onChange={onChange} solo={run.length === 1} />)}
         </div>
       );
     } else {

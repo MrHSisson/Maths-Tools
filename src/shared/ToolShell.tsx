@@ -222,6 +222,8 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const showTeach = !!(parkedMode && teachingSlides && teachingSlides.length);
   const comingSoon = defaults.comingSoonLevels ?? [];
   const hideFontControls = defaults.hideFontControls ?? false;
+  const workedExampleLayout = defaults.workedExampleLayout ?? "single";
+  const hideAnswerStep = defaults.hideAnswerStep ?? false;
   const [difficulty, setDifficulty] = useState<DifficultyLevel>(urlInit.level);
   const setDifficultyGuarded = (v: DifficultyLevel) => { if (!comingSoon.includes(v)) setDifficulty(v); };
 
@@ -1214,8 +1216,18 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   };
 
   const renderWorkedExample = () => {
+    // "single" keeps its original capped, internally-scrolling box unchanged.
+    // "stacked" used to need a forced full-viewport-height parent (see the
+    // removed `useFullHeightShell`) so its own internal scrollbox could size
+    // correctly — that bounded box left a tall empty gap below any short
+    // (1-3 step) example. WorkedExampleSteps' stacked layout now grows and
+    // shrinks with its own content and relies on the real page/window
+    // scrolling (its footer-position effect scrolls the window, not a local
+    // box) — so it gets a plain, uncapped wrapper here instead of the
+    // "single" box's overflow/maxHeight.
+    const stacked = workedExampleLayout === "stacked";
     return (
-      <div className="overflow-y-auto" style={{ maxHeight: "120vh" }}>
+      <div className={stacked ? undefined : "overflow-y-auto"} style={stacked ? undefined : { maxHeight: "120vh" }}>
         <div className="p-8 w-full" style={{ backgroundColor: qBg }}>
           <div className="text-center py-4 relative">
             {!hideFontControls && <div style={{ position: "absolute", top: 0, right: 0, display: "flex", gap: 6 }}>
@@ -1229,17 +1241,21 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             }
           </div>
           {showAnswer && (
-            <WorkedExampleSteps
-              working={currentQuestion.working}
-              renderAnswer={() => answerRenderer ? answerRenderer(currentQuestion, colorScheme, getQOSnapshot()) : <AnswerDisplay q={currentQuestion} />}
-              colorScheme={colorScheme}
-              answerFontClass={displayFontSizes[displayFontSize]}
-              stepRenderer={stepRenderer}
-              qoSnapshot={getQOSnapshot()}
-              stepThroughEnabled={devMode}
-              onOpenSkill={parkedMode ? setOpenSkillId : undefined}
-              resetKey={workedResetNonce}
-            />
+            <div>
+              <WorkedExampleSteps
+                working={currentQuestion.working}
+                renderAnswer={() => answerRenderer ? answerRenderer(currentQuestion, colorScheme, getQOSnapshot()) : <AnswerDisplay q={currentQuestion} />}
+                colorScheme={colorScheme}
+                answerFontClass={displayFontSizes[displayFontSize]}
+                stepRenderer={stepRenderer}
+                qoSnapshot={getQOSnapshot()}
+                stepThroughEnabled={devMode}
+                onOpenSkill={parkedMode ? setOpenSkillId : undefined}
+                resetKey={workedResetNonce}
+                layout={workedExampleLayout}
+                hideAnswerStep={hideAnswerStep}
+              />
+            </div>
           )}
         </div>
       </div>
@@ -1378,7 +1394,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   };
 
   return (
-    <>
+    <div>
       <div className="bg-blue-900 shadow-lg">
         <div className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
           <button onClick={() => { window.location.href = "/"; }} className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors">
@@ -1398,32 +1414,45 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       {openSkillId && <SkillOverlay skillId={openSkillId} onClose={() => setOpenSkillId(null)} />}
       <div className="min-h-screen p-8" style={{ backgroundColor: "#f5f3f0" }}>
         <div className="max-w-6xl mx-auto">
-          <h1 className="text-5xl font-bold text-center mb-8" style={{ color: "#000" }}>{config.pageTitle}</h1>
-          <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
-          {toolKeys.length > 1 && mode !== "teach" && (
-            <>
-              <div className="flex justify-center gap-4 mb-6">
-                {toolKeys.map(k => (
-                  <button key={k} onClick={() => { setCurrentTool(k); }}
-                    className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${currentTool === k ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
-                    {config.tools[k].name}
-                  </button>
-                ))}
-              </div>
-              <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
-            </>
-          )}
-          <div className="flex justify-center gap-4 mb-8">
-            {([...(["whiteboard", "single", "worksheet"] as const), ...(showTeach ? (["teach"] as const) : [])] as const)
-              .map(m => {
-                const label = m === "whiteboard" ? "Whiteboard" : m === "single" ? "Worked Example" : m === "teach" ? "Teach" : "Worksheet";
-                return (
-                  <button key={m} onClick={() => { setMode(m); setPresenterMode(false); setWbFullscreen(false); }}
-                    className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${mode === m ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
-                    {label}
-                  </button>
-                );
-              })}
+          <div>
+            <h1 className="text-5xl font-bold text-center mb-8" style={{ color: "#000" }}>{config.pageTitle}</h1>
+            <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
+            {toolKeys.length > 1 && mode !== "teach" && (
+              <>
+                <div className="flex flex-col items-center gap-4 mb-6">
+                  {(() => {
+                    const rowSizes = defaults.toolTabRows ?? [toolKeys.length];
+                    const rows: string[][] = [];
+                    let idx = 0;
+                    for (const size of rowSizes) { rows.push(toolKeys.slice(idx, idx + size)); idx += size; }
+                    if (idx < toolKeys.length) rows.push(toolKeys.slice(idx));
+                    return rows.map((row, ri) => (
+                      <div key={ri} className="flex justify-center gap-4">
+                        {row.map(k => (
+                          <button key={k} onClick={() => { setCurrentTool(k); }}
+                            className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${currentTool === k ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
+                            {config.tools[k].name}
+                          </button>
+                        ))}
+                      </div>
+                    ));
+                  })()}
+                </div>
+                <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
+              </>
+            )}
+            <div className="flex justify-center gap-4 mb-8">
+              {([...(["whiteboard", "single", "worksheet"] as const), ...(showTeach ? (["teach"] as const) : [])] as const)
+                .map(m => {
+                  const label = m === "whiteboard" ? "Whiteboard" : m === "single" ? "Worked Example" : m === "teach" ? "Teach" : "Worksheet";
+                  return (
+                    <button key={m} onClick={() => { setMode(m); setPresenterMode(false); setWbFullscreen(false); }}
+                      className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${mode === m ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
+                      {label}
+                    </button>
+                  );
+                })}
+            </div>
           </div>
 
           {mode === "worksheet" && (
@@ -1448,7 +1477,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           )}
           {mode !== "worksheet" && mode !== "teach" && (
             <div className="flex flex-col gap-6">
-              <div className="rounded-xl shadow-lg">
+              <div className="rounded-xl shadow-lg flex-shrink-0">
                 {renderControlBar()}
               </div>
               <div className="rounded-xl shadow-lg overflow-hidden">
@@ -1459,6 +1488,6 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           )}
         </div>
       </div>
-    </>
+    </div>
   );
 };

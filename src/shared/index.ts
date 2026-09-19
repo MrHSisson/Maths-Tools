@@ -51,10 +51,21 @@ export { randInt, pick, fracStr, mStr, pickActive, normalizeMultiSelect, resolve
 export { rStep } from "./ratioTable";
 export { RatioTable, ratioTableStepRenderer } from "./components/RatioTable";
 
+// Surds — pure computation (SurdTerm arithmetic, LaTeX formatting). Promoted
+// from the Surds tool alongside its four techniques below. See src/shared/surds.ts.
+export {
+  simplifySurd, collectLikeSurds, sortSurdTerms, multiplySurdTerms, multiplyTermsRaw,
+  multiplyExpressions, divideSurdTerms, conjugateOf, differenceOfSquaresValue, isConjugatePair,
+  simplifyFraction, rationaliseDenominator, surdTermToLatex, surdExpressionToLatex,
+  bracketedLatex, rawFractionToLatex, fractionToLatex,
+} from "./surds";
+export type { SurdTerm, SurdFraction } from "./surds";
+
 // Techniques — reusable pedagogical working-step sequences (see src/shared/techniques).
 export {
   workings, quadraticFormulaSteps, solveLinearEquationSteps, solveFactorsSteps,
   substituteBackSteps, makeSubjectSteps, solveLinearlySteps,
+  simplifySurdSteps, collectLikeSurdsSteps, expandSurdBracketsSteps, rationaliseDenominatorSteps,
 } from "./techniques";
 export type { Workings, Grain } from "./techniques";
 
