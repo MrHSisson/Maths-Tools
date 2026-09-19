@@ -177,11 +177,28 @@ const SIMPLIFY_COEFF_L3_MS: ToolMultiSelect = {
   ],
 };
 
-const ADDSUB_L2_MS: ToolMultiSelect = {
-  key: "formL2", label: "Question Types",
+// A peer/variety pool, not a difficulty ladder — add vs subtract aren't
+// harder/easier than each other, so no weight; both active (the default)
+// means a genuine random mix, exactly like Multiply/Divide's own OPERATION_MS.
+// Present at every level, since which sign a question uses is independent of
+// what else changes level to level.
+const ADDSUB_OPERATION_MS: ToolMultiSelect = {
+  key: "operationAS", label: "Operation",
   options: [
-    { value: "alreadyLike", label: "Already like surds", defaultActive: true, weight: 1 },
-    { value: "needsSimplify", label: "Simplify first", defaultActive: true, weight: 2 },
+    { value: "add", label: "Add", defaultActive: true },
+    { value: "subtract", label: "Subtract", defaultActive: true },
+  ],
+};
+// Level 2 always requires simplifying first now (that WAS the old L1→L2
+// distinction, and it wasn't distinct enough on its own) — this is the new
+// axis Level 2 varies instead: whether each surd term also carries its own
+// coefficient on top of the part that needs extracting (e.g. "4√12 + 3√27"
+// vs the bare "√12 + √27").
+const ADDSUB_COEFF_L2_MS: ToolMultiSelect = {
+  key: "coeffL2", label: "Coefficients",
+  options: [
+    { value: "none", label: "No coefficient", defaultActive: true, weight: 1 },
+    { value: "withCoeff", label: "With coefficient", defaultActive: true, weight: 2 },
   ],
 };
 const ADDSUB_L3_MS: ToolMultiSelect = {
@@ -306,9 +323,9 @@ const TOOL_CONFIG: ToolConfig = {
       variables: [],
       dropdown: null,
       difficultySettings: {
-        level1: { variables: [], dropdown: null },
-        level2: { variables: [], dropdown: null, multiSelect: ADDSUB_L2_MS },
-        level3: { variables: [], dropdown: null, multiSelect: ADDSUB_L3_MS },
+        level1: { variables: [], dropdown: null, multiSelect: ADDSUB_OPERATION_MS },
+        level2: { variables: [], dropdown: null, multiSelect: [ADDSUB_OPERATION_MS, ADDSUB_COEFF_L2_MS] },
+        level3: { variables: [], dropdown: null, multiSelect: [ADDSUB_OPERATION_MS, ADDSUB_L3_MS] },
       },
     },
 
@@ -369,9 +386,9 @@ const INFO_SECTIONS: InfoSection[] = [
     { label: "Level 3 — Red", detail: "Radicand always past 400, from curated extraction values whose square has more than one smaller square factor to notice (e.g. 12² = 144 = 16×9, or 6² = 36 = 4×9) — never a bare prime squared, which hides nothing. The coefficient (2-6) is a genuine choice here, toggle-able in Question Options." },
   ]},
   { title: "Adding & Subtracting", icon: "+", content: [
-    { label: "Overview", detail: "Combine surd terms that share the same radicand — only like surds can be added or subtracted." },
+    { label: "Overview", detail: "Combine surd terms that share the same radicand — only like surds can be added or subtracted. Every level has an Operation toggle to restrict questions to just adding or just subtracting, or leave both on for a mix." },
     { label: "Level 1 — Green", detail: "Already like surds — just combine the coefficients." },
-    { label: "Level 2 — Yellow", detail: "Unlike-looking surds that become like once each is simplified first." },
+    { label: "Level 2 — Yellow", detail: "Always requires simplifying each term first before they reveal themselves as like surds (e.g. √12 + √27 → 2√3 + 3√3) — a genuine QO choice for whether each term also carries its own coefficient on top (e.g. 4√12 + 3√27)." },
     { label: "Level 3 — Red", detail: "Three-term expressions mixing rational and surd terms, and a genuine ‘these don't combine’ case." },
   ]},
   { title: "Multiplying & Dividing", icon: "×", content: [
@@ -464,10 +481,18 @@ function generateSimplify(level: DifficultyLevel, ms: Record<string, boolean>): 
 
 function generateAddSub(level: DifficultyLevel, ms: Record<string, boolean>): AnyQuestion {
   const kase = level === "level1" ? "alreadyLike"
-    : level === "level2" ? pickActive(ms, ADDSUB_L2_MS.options)
-    : pickActive(ms, ADDSUB_L3_MS.options);
+    // Level 2 always requires simplifying first now — no longer a QO choice
+    // (see ADDSUB_COEFF_L2_MS for what Level 2 varies instead).
+    : level === "level3" ? pickActive(ms, ADDSUB_L3_MS.options)
+    : "needsSimplify";
 
-  const s = sign();
+  // Operation is a genuine QO choice at every level (see ADDSUB_OPERATION_MS)
+  // — restrict to always-add, always-subtract, or a mixed default.
+  const s = pickActive(ms, ADDSUB_OPERATION_MS.options) === "add" ? 1 : -1;
+  // Level 2's own QO axis (see ADDSUB_COEFF_L2_MS): only meaningful at Level
+  // 2 itself — Level 3's reuse of the "needsSimplify" case always includes a
+  // coefficient, since that axis isn't in question once Level 3 has moved on.
+  const coeffKaseL2 = level === "level2" ? pickActive(ms, ADDSUB_COEFF_L2_MS.options) : "withCoeff";
   let terms: SurdTerm[];
 
   if (kase === "alreadyLike") {
@@ -482,8 +507,9 @@ function generateAddSub(level: DifficultyLevel, ms: Record<string, boolean>): An
     // of base values every worksheet.
     const p = randomSquareFree(2, 15);
     const [k1, k2] = [2, 3, 4, 5].sort(() => Math.random() - 0.5).slice(0, 2);
-    const c1 = randInt(1, 4);
-    let c2 = randInt(1, 4);
+    const useCoeff = coeffKaseL2 === "withCoeff";
+    const c1 = useCoeff ? randInt(2, 4) : 1;
+    let c2 = useCoeff ? randInt(2, 4) : 1;
     if (s === -1 && c1 * k1 === c2 * k2) c2 += 1;
     terms = [{ coeff: c1, radicand: k1 * k1 * p }, { coeff: s * c2, radicand: k2 * k2 * p }];
   } else if (kase === "dontCombine") {
@@ -507,7 +533,7 @@ function generateAddSub(level: DifficultyLevel, ms: Record<string, boolean>): An
   const working = collectLikeSurdsSteps(terms, grain);
   const answerTerms = collectLikeSurds(terms);
 
-  const score = level === "level2" ? weightOf(ADDSUB_L2_MS.options, kase)
+  const score = level === "level2" ? weightOf(ADDSUB_COEFF_L2_MS.options, coeffKaseL2)
     : level === "level3" ? weightOf(ADDSUB_L3_MS.options, kase)
     : undefined;
 

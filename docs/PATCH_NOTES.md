@@ -183,6 +183,22 @@ in Surds before any wider rollout:
   reaches both denominator kinds and both numerator kinds; Level 2's numerator is always binomial
   (2 terms); Level 3's denominator always triggers a "conjugate" step; the `hideAnswerStep`
   invariant holds throughout.
+- **Redesigned Adding & Subtracting's Level 1/2** — user feedback that Level 2 reading as "Level 1
+  plus a toggle for a slightly different case" wasn't distinct enough. Added a genuine
+  `ADDSUB_OPERATION_MS` QO pool ("Add"/"Subtract", a plain unweighted variety pool, present at
+  every level) so a worksheet can be restricted to just adding, just subtracting, or a mixed
+  default — previously the sign was always an untunable random 50/50. **Level 2 now always
+  requires simplifying each term first** (no longer a QO choice against "already like surds",
+  which WAS the old, too-similar L1→L2 distinction) — its own new QO axis is
+  `ADDSUB_COEFF_L2_MS`, a genuine weighted toggle for whether each term additionally carries a
+  coefficient on top of the part that needs extracting (e.g. `4√12 + 3√27` vs. the bare `√12 +
+  √27`). Level 3 is unchanged for now, pending a further conversation about making it a genuine
+  extension rather than "Level 2 plus some of its own cases folded in" — candidates discussed:
+  algebraic coefficients, multi-term/multi-radicand-group chains, and keeping the existing
+  false-positive "these don't combine" trap. Verified via a scratch Vitest file (deleted after
+  use): the operation restriction genuinely produces add-only/subtract-only/mixed; Level 2 never
+  produces the old "already like" shape; the coefficient toggle is reachable at both states; the
+  `hideAnswerStep` invariant holds across all three levels.
 
 Everything above is scoped to Surds only (`hideAnswerStep`, `workedExampleLayout: "stacked"`,
 `toolTabRows` are all opt-in `ToolShellDefaults`) — every other tool is pixel-identical to before,
