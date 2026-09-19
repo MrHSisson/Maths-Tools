@@ -33,6 +33,7 @@ import {
   differenceOfSquaresValue,
   isConjugatePair,
   rationaliseDenominator,
+  surdTermToLatex,
   surdExpressionToLatex,
   bracketedLatex,
   rawFractionToLatex,
@@ -262,13 +263,73 @@ export function simplifySurdSteps(radicand: number, coeff: number = 1, grain: Gr
   ];
 }
 
+// ── Full-grain helpers, shared by collectLikeSurdsSteps and
+// expandSurdBracketsSteps — the two places "full" needs to name each term's
+// simplification and each radicand-group's coefficient-add as its own move,
+// rather than folding a whole expression's worth of tidying into one step. ──
+
+// One step PER term that actually changes under simplifySurd — terms already
+// in simplest form are skipped rather than stated (matches the existing
+// standard-grain convention of only showing a simplify pass when it does
+// something). Order matches the input array, not radicand order. Label stays
+// generic prose ("Simplify:") rather than naming the term inline — a label
+// is plain text, never raw LaTeX source, and the step's own KaTeX content
+// already shows unambiguously which term is being simplified.
+function individualSimplifySteps(terms: SurdTerm[]): WorkingStep[] {
+  const steps: WorkingStep[] = [];
+  for (const t of terms) {
+    const s = simplifySurd(t.radicand);
+    if (s.coeff === 1) continue;
+    const before = surdTermToLatex(t, true);
+    const after = surdTermToLatex({ coeff: t.coeff * s.coeff, radicand: s.radicand }, true);
+    steps.push(mStep("Simplify:", [before, `= ${after}`]));
+  }
+  return steps;
+}
+
+// One step PER radicand shared by 2+ of the given (already-simplified) terms —
+// the coefficient-add "5√2 + 3√2 -> (5+3)√2 -> 8√2" a folded "Collect the
+// like surds" step currently skips past. Radicand===1 groups (plain numbers)
+// get "Add the numbers" instead, with no bracketed-coefficient middle
+// fragment (there's no surd part to carry). Singleton groups (nothing to
+// add) are skipped — same convention as individualSimplifySteps.
+function collectGroupSteps(terms: SurdTerm[]): WorkingStep[] {
+  const order: number[] = [];
+  const groups = new Map<number, SurdTerm[]>();
+  for (const t of terms) {
+    if (!groups.has(t.radicand)) { groups.set(t.radicand, []); order.push(t.radicand); }
+    groups.get(t.radicand)!.push(t);
+  }
+  const steps: WorkingStep[] = [];
+  for (const radicand of order) {
+    const group = groups.get(radicand)!;
+    if (group.length < 2) continue;
+    const sum = group.reduce((acc, t) => acc + t.coeff, 0);
+    const isRational = radicand === 1;
+    const before = surdExpressionToLatex(group);
+    const after = surdTermToLatex({ coeff: sum, radicand }, true);
+    if (isRational) {
+      steps.push(mStep("Add the numbers:", [before, `= ${after}`]));
+      continue;
+    }
+    const coeffChain = group.map((t, i) => (i === 0 ? `${t.coeff}` : t.coeff < 0 ? ` - ${-t.coeff}` : ` + ${t.coeff}`)).join("");
+    steps.push(mStep("Add the coefficients of like surds:", [before, `= (${coeffChain})\\sqrt{${radicand}}`, `= ${after}`]));
+  }
+  return steps;
+}
+
 // Collect like surds: simplify every term first, then group and sum matching
 // radicands. Explicitly handles the "these don't combine" case rather than
 // leaving it to fall out silently — recognising when NOT to act is its own
 // taught outcome.
 //   brief    — jump straight to the collected result.
-//   standard/full — show the pre-simplify pass (only if genuinely needed) then
-//                   the collect pass as its own titled step.
+//   standard — show the pre-simplify pass (only if genuinely needed, one
+//              combined step) then the collect pass as its own titled step.
+//   full     — the same two moves, but each as its own taught step: one
+//              "Simplify X" step per term that needs it, then one
+//              "Add the coefficients"/"Add the numbers" step per radicand
+//              group that has more than one term, ending with an explicit
+//              "Write the collected expression" statement.
 export function collectLikeSurdsSteps(terms: SurdTerm[], grain: Grain = "standard"): WorkingStep[] {
   const simplified = terms.map((t) => {
     const s = simplifySurd(t.radicand);
@@ -282,7 +343,9 @@ export function collectLikeSurdsSteps(terms: SurdTerm[], grain: Grain = "standar
   const simplifiedSorted = sortSurdTerms(simplified);
 
   const steps: WorkingStep[] = [];
-  if (neededPreSimplify && grain !== "brief") {
+  if (grain === "full" && neededPreSimplify) {
+    steps.push(...individualSimplifySteps(terms));
+  } else if (neededPreSimplify && grain !== "brief") {
     steps.push(mStep("Simplify each surd first:", [
       surdExpressionToLatex(terms),
       `= ${surdExpressionToLatex(simplifiedSorted)}`,
@@ -296,6 +359,12 @@ export function collectLikeSurdsSteps(terms: SurdTerm[], grain: Grain = "standar
         ? step(surdExpressionToLatex(simplifiedSorted))
         : mStep("These are not like surds — they cannot be combined:", surdExpressionToLatex(simplifiedSorted)),
     );
+    return steps;
+  }
+
+  if (grain === "full") {
+    steps.push(...collectGroupSteps(simplifiedSorted));
+    steps.push(mStep("Write the collected expression:", surdExpressionToLatex(collected)));
     return steps;
   }
 
@@ -314,8 +383,15 @@ export function collectLikeSurdsSteps(terms: SurdTerm[], grain: Grain = "standar
 // -> collect like terms", emitting only the sub-steps a given pair of
 // brackets actually needs.
 //   brief    — jump straight to the fully expanded, collected result.
-//   standard/full — the full expand / simplify / collect chain, only showing
-//                   the sub-steps a given question actually needs.
+//   standard — the expand / simplify / collect chain, each phase folded into
+//              one step, only showing the phases a given question needs.
+//   full     — the same chain, but simplify and collect are broken into one
+//              step per term/group (see individualSimplifySteps/
+//              collectGroupSteps above) rather than one folded step per
+//              phase; a monomial×monomial multiply additionally separates
+//              "multiply the coefficients" from "multiply under the root";
+//              the difference-of-two-squares case separates "evaluate each
+//              square" from "subtract".
 export function expandSurdBracketsSteps(a: SurdTerm[], b: SurdTerm[], grain: Grain = "standard"): WorkingStep[] {
   const bracketA = bracketedLatex(a);
   const bracketB = bracketedLatex(b);
@@ -332,9 +408,38 @@ export function expandSurdBracketsSteps(a: SurdTerm[], b: SurdTerm[], grain: Gra
     const pVal = p.coeff * p.coeff * p.radicand;
     const qVal = q.coeff * q.coeff * q.radicand;
     const chain = [joined, `= ${pSqLatex} - ${qSqLatex}`, `= ${pVal} - ${qVal}`, `= ${pVal - qVal}`];
-    return grain === "brief"
-      ? [step([chain[0], chain[chain.length - 1]])]
-      : [mStep("Multiply using the difference of two squares:", chain)];
+    if (grain === "brief") return [step([chain[0], chain[chain.length - 1]])];
+    if (grain === "full") {
+      return [
+        mStep("Multiply using the difference of two squares:", [joined, `= ${pSqLatex} - ${qSqLatex}`]),
+        mStep("Evaluate each square:", [`${pSqLatex} - ${qSqLatex}`, `= ${pVal} - ${qVal}`]),
+        mStep("Subtract:", [`${pVal} - ${qVal}`, `= ${pVal - qVal}`]),
+      ];
+    }
+    return [mStep("Multiply using the difference of two squares:", chain)];
+  }
+
+  // Monomial × monomial, full grain: the one shape a folded FOIL line has no
+  // real "expand" move to show (there's only ever one cross product) — the
+  // genuinely separate moves here are multiplying the coefficients and
+  // multiplying the radicands, THEN simplifying if the result needs it.
+  // Delegates the simplify to simplifySurdSteps rather than re-deriving it.
+  if (a.length === 1 && b.length === 1 && grain === "full") {
+    const ta = a[0], tb = b[0];
+    const coeffProduct = ta.coeff * tb.coeff;
+    const radicandProduct = ta.radicand * tb.radicand;
+    const steps: WorkingStep[] = [];
+    if (Math.abs(ta.coeff) !== 1 || Math.abs(tb.coeff) !== 1) {
+      steps.push(mStep("Multiply the coefficients:", [`${ta.coeff} \\times ${tb.coeff}`, `= ${coeffProduct}`]));
+    }
+    steps.push(mStep("Multiply the numbers under the root:", [`${ta.radicand} \\times ${tb.radicand}`, `= ${radicandProduct}`]));
+    const s = simplifySurd(radicandProduct);
+    if (s.coeff === 1) {
+      steps.push(mStep("Combine:", surdTermToLatex({ coeff: coeffProduct, radicand: radicandProduct }, true)));
+    } else {
+      steps.push(...simplifySurdSteps(radicandProduct, coeffProduct, "full"));
+    }
+    return steps;
   }
 
   // Raw (UNsimplified) products — the "simplify any surds produced" step
@@ -367,6 +472,18 @@ export function expandSurdBracketsSteps(a: SurdTerm[], b: SurdTerm[], grain: Gra
     `= ${surdExpressionToLatex(isTerminal ? sortSurdTerms(rawProducts) : rawProducts)}`,
   ])];
 
+  if (grain === "full") {
+    const individualSteps = individualSimplifySteps(rawProducts);
+    steps.push(...individualSteps);
+    const current = neededSimplify ? sortSurdTerms(simplifiedCurrent) : rawProducts;
+    const groupSteps = collectGroupSteps(current);
+    steps.push(...groupSteps);
+    if (individualSteps.length > 0 || groupSteps.length > 0) {
+      steps.push(mStep("Write the expanded and collected expression:", surdExpressionToLatex(finalCollected)));
+    }
+    return steps;
+  }
+
   let current = rawProducts;
   if (neededSimplify) {
     // Canonical order for the "tidied" side — matters most when this is the
@@ -387,16 +504,22 @@ export function expandSurdBracketsSteps(a: SurdTerm[], b: SurdTerm[], grain: Gra
 
 // Rationalise the denominator: multiply top and bottom by whatever makes the
 // denominator rational (the surd itself for a monomial denominator, its
-// conjugate for a binomial one), then simplify. Composes the two techniques
-// above rather than re-deriving them: the denominator's simplify-first pass
-// calls simplifySurdSteps, and a binomial denominator's "becomes rational"
-// step calls expandSurdBracketsSteps (which always hits the
-// difference-of-squares branch here, since the multiplier is constructed as
-// the exact conjugate).
+// conjugate for a binomial one), then simplify. Composes the other three
+// techniques rather than re-deriving them: the denominator's simplify-first
+// pass calls simplifySurdSteps, and both "the denominator becomes rational"
+// and "multiply out the numerator" call expandSurdBracketsSteps (the former
+// always hits its difference-of-squares branch for a binomial denominator,
+// since the multiplier is constructed as the exact conjugate; a monomial
+// denominator hits its monomial×monomial branch instead).
 //   brief    — jump straight to the final rationalised fraction.
-//   standard/full — simplify the denominator first only if it needs it,
-//                   multiply top & bottom, show the denominator becoming
-//                   rational, expand the numerator if it's not a single term.
+//   standard — simplify the denominator first only if it needs it, multiply
+//              top & bottom, show the denominator becoming rational as one
+//              folded step, expand the numerator (if not a single term) as
+//              one folded step.
+//   full     — the same shape, but the denominator-becomes-rational and
+//              numerator-multiply steps are each expanded via
+//              expandSurdBracketsSteps("full") instead of folded into one
+//              step — see that technique's own full-grain behaviour.
 export function rationaliseDenominatorSteps(numerator: SurdTerm[], denominator: SurdTerm[], grain: Grain = "standard"): WorkingStep[] {
   let denom = denominator;
   const steps: WorkingStep[] = [];
@@ -437,11 +560,15 @@ export function rationaliseDenominatorSteps(numerator: SurdTerm[], denominator: 
   ));
 
   // The denominator becoming rational is exactly `expandSurdBracketsSteps(denom,
-  // multiplier)` — a monomial "multiplies by itself" (not a difference of
-  // squares), a binomial always hits the conjugate/difference-of-squares
-  // branch since `multiplier` IS denom's conjugate by construction.
+  // multiplier)` for a binomial — always the conjugate/difference-of-squares
+  // branch, since `multiplier` IS denom's conjugate by construction. A
+  // monomial "multiplies by itself" instead — standard keeps that folded
+  // into one step (unchanged); full delegates to expandSurdBracketsSteps too,
+  // which for a×a hits the monomial×monomial branch.
   if (isBinomial) {
-    steps.push(...expandSurdBracketsSteps(denom, multiplier, "standard"));
+    steps.push(...expandSurdBracketsSteps(denom, multiplier, grain));
+  } else if (grain === "full") {
+    steps.push(...expandSurdBracketsSteps(denom, multiplier, "full"));
   } else {
     steps.push(mStep("The denominator becomes rational:", [
       `${multiplierLatex} \\times ${multiplierLatex}`,
@@ -453,13 +580,19 @@ export function rationaliseDenominatorSteps(numerator: SurdTerm[], denominator: 
   // denominator — multiplying by 1 has nothing worth showing. Any other
   // numerator (a coefficient, a binomial, or both) gets its own step so the
   // chain doesn't jump straight from "denominator becomes rational" to an
-  // answer that assumes an unshown multiplication.
+  // answer that assumes an unshown multiplication. Full grain delegates this
+  // multiply to expandSurdBracketsSteps too, for the same per-term/per-group
+  // breakdown as everywhere else; standard keeps its single folded step.
   const numeratorIsBareOne = numerator.length === 1 && numerator[0].coeff === 1 && numerator[0].radicand === 1;
   if (!numeratorIsBareOne) {
-    steps.push(mStep("Multiply out the numerator:", [
-      `${bracketedLatex(numerator)} \\times ${multiplierLatex}`,
-      `= ${surdExpressionToLatex(newNumerator)}`,
-    ]));
+    if (grain === "full") {
+      steps.push(...expandSurdBracketsSteps(numerator, multiplier, "full"));
+    } else {
+      steps.push(mStep("Multiply out the numerator:", [
+        `${bracketedLatex(numerator)} \\times ${multiplierLatex}`,
+        `= ${surdExpressionToLatex(newNumerator)}`,
+      ]));
+    }
   }
 
   // House style: the denominator is always left positive. A binomial

@@ -73,6 +73,23 @@ in Surds before any wider rollout:
   library now lists 10 techniques (11 preview pages including the composed Full Worked Example).
   Re-ran the last-step-matches-answer stress test after the move to confirm byte-for-byte
   unchanged behaviour. See `docs/PROJECTS.md`'s Techniques engine entry for the full writeup.
+- **Built genuine `full` grains for the three promoted techniques that didn't have one.**
+  Auditing the newly-public library surfaced that `collectLikeSurdsSteps`, `expandSurdBracketsSteps`
+  and `rationaliseDenominatorSteps` had `standard`/`full` producing byte-identical output in every
+  case (confirmed empirically, 500+ draws each, not just by reading the code) — a real "3 grains"
+  overclaim on their Technique Library cards. Gave each a genuinely richer `full`: per-term simplify
+  and per-radicand-group coefficient-add steps (two new shared private helpers) instead of one
+  folded step per phase; `expandSurdBracketsSteps` additionally splits difference-of-two-squares
+  into "evaluate each square" + "subtract" and gives monomial×monomial its own coefficient/radicand
+  breakdown; `rationaliseDenominatorSteps` now propagates the real grain into its
+  `expandSurdBracketsSteps` sub-calls instead of hardcoding `"standard"`. Verified with three
+  stress-test passes: standard/brief output byte-identical to before (old vs. new implementations
+  compared directly, 3000+ draws), full now differs from standard in 100% of draws across every
+  shape, and Surds' `hideAnswerStep` invariant still holds across all 15 sub-tool×level
+  combinations post-rework — Level 1 Add/Sub, Multiply/Divide and Rationalise all genuinely
+  exercise the new code live. Caught and fixed one real bug along the way: an early draft's label
+  embedded raw LaTeX source as prose text (`"Simplify \sqrt{8}:"` rendered literally instead of as
+  math) — labels are plain text, not KaTeX, so this now reads a generic "Simplify:".
 - Also: fixed a real `CycleSelect` shared-component bug (a solo 2-option weighted pool stretched
   to the popover's full width), added opt-in multi-row sub-tool tabs (`toolTabRows`), and widened
   number ranges across Add/Sub, Multiply/Divide, Expand and Rationalise.

@@ -319,6 +319,31 @@ arg shape before `ExpandingBrackets`/`NonLinearSimEq` can use it). All four now 
 `/techniques/<slug>` preview page, same as the original six. This is the reference shape for any
 future "build it in a tool first, promote once proven" conversion.
 
+**Grain audit, post-promotion.** Being promoted (and library-listed with a "3 grains" badge)
+surfaced a real gap: three of the four promoted techniques (`collectLikeSurdsSteps`,
+`expandSurdBracketsSteps`, `rationaliseDenominatorSteps`) had `standard`/`full` producing
+byte-identical output in every case — verified empirically (500+ random draws each), not just by
+reading the code — so "3 grains" was an overclaim the moment they joined the public library.
+Built out genuine `full` grains for all three: `collectLikeSurdsSteps`/`expandSurdBracketsSteps`
+now emit one step per term that needs simplifying and one step per radicand-group's coefficient-add
+(via two new private helpers, `individualSimplifySteps`/`collectGroupSteps`), rather than folding a
+whole expression's tidying into one step; `expandSurdBracketsSteps` also splits its
+difference-of-two-squares case into "evaluate each square" + "subtract", and gives monomial×monomial
+its own "multiply the coefficients" / "multiply the numbers under the root" breakdown (delegating
+the follow-on simplify to `simplifySurdSteps`); `rationaliseDenominatorSteps` propagates the real
+grain into its two `expandSurdBracketsSteps` sub-calls (previously hardcoded to `"standard"`)
+instead of leaving `full` to fall through to `standard`'s behaviour. `simplifySurdSteps` itself was
+left as-is — it's genuinely 3-grain already, just conditionally (only when a coefficient is present
+AND the radicand isn't already square-free), which was always documented, not a bug.
+Verified via three separate stress-test passes before shipping: (1) `standard`/`brief` output is
+byte-identical to the pre-rework version across 3000+ draws (compared old vs. new implementations
+directly, not just re-reading the diff); (2) `full` now differs from `standard` in 100% of draws
+across every shape (monomial×monomial with a coefficient, double-bracket collect, difference of
+squares, monomial and binomial denominators); (3) Surds' `hideAnswerStep` invariant (last working
+step must state the exact final answer) still holds across all 5 sub-tools × 3 levels post-rework —
+this mattered because Level 1 Add/Sub, Multiply/Divide, and Rationalise all genuinely exercise the
+new `full`-grain code paths live, not just in the Technique Library preview.
+
 **Possible next steps (background, pre-audit — see the sequencing note above):**
 - Add a runtime **"Detailed working" toggle** so a teacher can flip grain (brief ↔ full) live — the one shell change on the list.
 - **Sweep more tools** onto the engine — start with the high-frequency moves below.
