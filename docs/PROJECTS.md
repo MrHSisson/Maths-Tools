@@ -556,6 +556,20 @@ and a new dev-gated worked example added at `/tool-shell` (Sub-Tool 1's "Negativ
 mode is off, present and cycling None→Mixed→Exclusive→None correctly when on, `generateQuestion`
 reading the picked value and attaching a real `_difficultyScore`, zero console errors.
 
+**The CycleSelect visual decoupled from Smart Progressor semantics — 2026-09-19, surfaced by
+Surds.** Not every 2-option pool that wants the compact cycle button is a difficulty ladder — Surds'
+Simplifying tool has a genuine common/rare *trap* pair (obvious extraction vs. a rare "already a
+perfect square" case, meant to stay ~8%, read via a new `pickRare` picker rather than
+`pickActive`), and giving it `weight` just to get the cycle-button look would have silently pulled
+it into `buildQuotaOverrides`' even-split balancing — turning an intentionally-rare trap into a
+forced ~50/50. Added `cycleDisplay?: true` to `ToolMultiSelect` (`src/shared/types.ts`) as an
+alternative trigger for the same button (`isCycleGroup` in
+`src/shared/components/QOPopovers.tsx` now checks `cycleDisplay || both options weighted`), so a
+tool can opt into the compact visual without opting into the balancing — a genuinely rare pool
+stays rare, a genuine difficulty ladder still gets both via `weight` as before. Reference:
+`SIMPLIFY_RADICAND_L1_MS` (`cycleDisplay`, no weight, read via `pickRare`) vs. `SIMPLIFY_COEFF_L3_MS`
+(`weight` on both options, a real easy/hard choice) in `src/tools/Number/Surds.tsx`.
+
 **Two correctness bugs fixed 2026-09-16, surfaced while extending the pilot from L2-only to all
 three levels of `SpeedDistanceTime`** (the user noticed L1 still showed "Allow decimal answers" as
 a plain boolean and asked for genuine full-tool coverage):

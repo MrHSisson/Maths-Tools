@@ -88,6 +88,16 @@ export interface ToolMultiSelect {
    *  state). Default false — the last active option cannot be turned off,
    *  for "pick at least one type" pools. */
   allowEmpty?: boolean;
+  /** Renders this exactly-2-option pool as the compact None/Mixed/Exclusive
+   *  cycle button (see `CycleSelect` in QOPopovers.tsx), same visual as a
+   *  weighted 2-option pool gets automatically — but WITHOUT opting into the
+   *  Smart Progressor (`weight`-less options never trigger `buildQuotaOverrides`/
+   *  `sortByDifficulty`). Use this for a common/rare toggle pair (read via a
+   *  custom picker like `pickRare`, not `pickActive`/`weightOf`) that wants the
+   *  compact control but must NOT be forced toward a roughly-even split when
+   *  both options are active — a genuine difficulty ladder should use `weight`
+   *  instead and get the cycle button for free. */
+  cycleDisplay?: true;
 }
 
 // A tool may need several independent option pools at once (e.g. "Constants"

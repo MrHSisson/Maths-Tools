@@ -203,7 +203,8 @@ const CycleSelect = ({
   );
 };
 
-const isCycleGroup = (g: { options: { weight?: number }[] }) => g.options.length === 2 && g.options.every(o => o.weight !== undefined);
+const isCycleGroup = (g: { options: { weight?: number }[]; cycleDisplay?: true }) =>
+  g.options.length === 2 && (g.cycleDisplay || g.options.every(o => o.weight !== undefined));
 
 // Renders one or more independent multi-select pools, all sharing one flat
 // values record. Consecutive weighted-2-option pools (see CycleSelect above)
@@ -217,7 +218,7 @@ const MultiSelectGroups = ({
   values,
   onChange,
 }: {
-  groups: { key: string; label: string; info?: string; options: { value: string; label: string; sub?: string; divider?: boolean; weight?: number }[]; allowEmpty?: boolean }[];
+  groups: { key: string; label: string; info?: string; options: { value: string; label: string; sub?: string; divider?: boolean; weight?: number }[]; allowEmpty?: boolean; cycleDisplay?: true }[];
   values: Record<string, boolean>;
   onChange: (k: string, v: boolean) => void;
 }) => {

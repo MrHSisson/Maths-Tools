@@ -99,6 +99,27 @@ in Surds before any wider rollout:
 - Also: fixed a real `CycleSelect` shared-component bug (a solo 2-option weighted pool stretched
   to the popover's full width), added opt-in multi-row sub-tool tabs (`toolTabRows`), and widened
   number ranges across Add/Sub, Multiply/Divide, Expand and Rationalise.
+- **Refined Simplifying Surds' Level 1/2/3 once more**, on user feedback that Level 1's rare
+  perfect-square trap should read as a single carousel control rather than a two-cell pool, and
+  that Level 3 needed a real design rule for which "hidden factor" values are worth testing.
+  Level 1's `obvious`/`perfectSquare` pool now opts into the compact cycle-button look via a new
+  `cycleDisplay?: true` field on `ToolMultiSelect` (`src/shared/types.ts`,
+  `src/shared/components/QOPopovers.tsx`'s `isCycleGroup`) — deliberately *not* `weight`, which
+  would have pulled the pair into Smart Progressor balancing and forced the trap toward ~50/50
+  instead of staying genuinely rare; `cycleDisplay` gets the same button with no such coupling.
+  Level 2 widened its coefficient range (2-9, up from 2-6) while keeping the same friendly
+  ≤400 radicand range as Level 1 — the new skill is carrying a coefficient through, not bigger
+  numbers. Level 3 dropped the "already simplest form" trap entirely, replaced by a genuine
+  weighted `withCoeff`/`none` QO choice (`SIMPLIFY_COEFF_L3_MS`), and its radicand is now always
+  > 400, drawn from curated extraction values `x` whose square has more than one smaller square
+  factor to spot (`isMultiStepExtractable(x)`, reusing the pre-existing `hasMultipleSquareFactors`
+  check already used for Rationalise's hidden-factor radicands, applied to `x²`) — so a bare prime
+  squared (2² = 4, 3² = 9, …) never appears, since it hides nothing, while composite extractions
+  like 6² = 36 = 4×9 or 12² = 144 = 16×9 do. Verified with a fresh stress test (20,000 draws): every
+  Level 3 radicand lands in (400, 2000] with a genuinely multi-step-extractable `x`; Level 2's
+  coefficient spans the full new range; the rare-trap pool stays ~8% rather than drifting toward
+  even; and the `hideAnswerStep` invariant still holds. Confirmed live via the dev server — both
+  pools render as the intended single cycle button, no console errors.
 
 Everything above is scoped to Surds only (`hideAnswerStep`, `workedExampleLayout: "stacked"`,
 `toolTabRows` are all opt-in `ToolShellDefaults`) — every other tool is pixel-identical to before,

@@ -100,22 +100,33 @@ function randomExtractionRadicand(minX: number, maxX: number, maxValue: number):
   return 12;
 }
 
-// Curated extraction values for the "several candidate factors" case, each
-// built from two distinct small primes (6=2×3, 10=2×5, 15=3×5, …) or a
-// square-of-a-square (16=4²) — genuinely interesting to spot, unlike a bare
-// large prime squared (19² is just "a big number", not a hidden-factor case
-// worth testing) or 16 specifically rewards noticing that pulling out 4²
-// once still leaves another 4² behind.
-const HIDDEN_FACTOR_X_POOL = [6, 10, 12, 14, 15, 16, 18, 20, 21, 22];
+// An extraction value x is only an interesting "several candidate factors"
+// case when x² itself has more than one smaller square factor to notice —
+// e.g. 6² = 36 = 4×9 (spot the 4, or the 9, before the true largest factor
+// 36), or 16² = 256 (pulling out 4² once still leaves another 4² behind).
+// A bare prime squared (2² = 4, 3² = 9, 19² = 361, …) has only ONE square
+// factor — nothing hidden, just "a big number" — so it's excluded by the
+// same `hasMultipleSquareFactors` check already used for Rationalise's
+// hidden-factor radicands, applied here to x² rather than to the radicand
+// itself.
+function isMultiStepExtractable(x: number): boolean {
+  return hasMultipleSquareFactors(x * x);
+}
 
-function randomCuratedHiddenFactor(): number {
-  for (let i = 0; i < 200; i++) {
-    const x = pick(HIDDEN_FACTOR_X_POOL);
-    const p = randomSquareFree(2, 5);
-    const n = x * x * p;
+// Level 3's radicand: curated extraction values (filtered above), always
+// pushed past 400 so the size itself forces breaking the number down via
+// smaller squares rather than spotting the answer at a glance. Capped at
+// 2000 so the numbers stay readable even at the top of the range.
+function randomCuratedHiddenFactorAbove400(): number {
+  for (let i = 0; i < 500; i++) {
+    const x = randInt(4, 25);
+    if (!isMultiStepExtractable(x)) continue;
+    const k = randomSquareFree(2, 6);
+    const n = x * x * k;
+    if (n <= 400 || n > 2000) continue;
     if (simplifySurd(n).coeff === x) return n;
   }
-  return 72;
+  return 432; // 12² × 3 — safely > 400, 12 is multi-step-extractable
 }
 
 const sign = (): number => pick([1, -1]);
@@ -139,29 +150,29 @@ function pickRare(values: Record<string, boolean>, commonValue: string, rareValu
 
 // ── 3. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
-// No `weight` on either option deliberately — these are common/rare pairs,
-// not a difficulty ladder, so they must NOT go through the Smart
-// Progressor's balancing (which would force a roughly-even split whenever
-// both are active) or render as a compact CycleSelect. Generation reads the
-// raw toggle states itself via pickRare, so "both active" genuinely means
-// "rare", not "50/50" — see pickRare's own comment.
+// No `weight` on either option deliberately — this is a common/rare pair,
+// not a difficulty ladder, so it must NOT go through the Smart Progressor's
+// balancing (which would force a roughly-even split whenever both are
+// active). `cycleDisplay` gets the same compact None/Mixed/Exclusive button
+// a weighted pool would render as, without opting into that balancing —
+// generation reads the raw toggle states itself via pickRare, so "Mixed"
+// genuinely means "rare", not "50/50" — see pickRare's own comment.
 const SIMPLIFY_RADICAND_L1_MS: ToolMultiSelect = {
-  key: "radicandTypeL1", label: "Question Types",
+  key: "radicandTypeL1", label: "Question Types", cycleDisplay: true,
   options: [
     { value: "obvious", label: "Standard", defaultActive: true },
     { value: "perfectSquare", label: "Perfect square (√16 = 4, rare ~8%)", defaultActive: true },
   ],
 };
-// L2+ deliberately does NOT include "obvious"/"perfectSquare" — those are
-// Level 1's whole content, and leaving them active here let two-thirds of a
-// default L2 worksheet look identical to L1. L2 is now genuinely about
-// spotting the largest factor, with "already simplest form" as a rare trap
-// rather than a coin-flip alternative.
-const SIMPLIFY_RADICAND_MS: ToolMultiSelect = {
-  key: "radicandType", label: "Question Types",
+// Level 3's coefficient is now a genuine QO choice rather than a fixed
+// always-on — a real easy/hard ladder (no coefficient to carry vs one to
+// multiply through), so this DOES carry `weight` and gets Smart Progressor
+// balancing + the compact cycle button for free, unlike the pool above.
+const SIMPLIFY_COEFF_L3_MS: ToolMultiSelect = {
+  key: "coeffL3", label: "Coefficient",
   options: [
-    { value: "hidden", label: "Several candidate factors", defaultActive: true },
-    { value: "alreadySimplified", label: "Already simplest form (rare ~10%)", defaultActive: true },
+    { value: "none", label: "No coefficient", defaultActive: true, weight: 1 },
+    { value: "withCoeff", label: "With coefficient", defaultActive: true, weight: 2 },
   ],
 };
 
@@ -267,13 +278,15 @@ const TOOL_CONFIG: ToolConfig = {
       difficultySettings: {
         level1: { variables: [], dropdown: null, multiSelect: SIMPLIFY_RADICAND_L1_MS },
         // Level 2 reuses Level 1's friendly radicand range (extraction up to
-        // 10, capped at 400) — the one new thing it introduces is a
-        // coefficient to carry through, on numbers that are otherwise already
-        // familiar. Level 3 is where the radicand range itself gets harder.
+        // 10, capped at 400) — the one new thing it introduces is a wider,
+        // always-on coefficient to carry through, on numbers that are
+        // otherwise already familiar. Level 3 is where the radicand range
+        // itself gets harder, and the coefficient becomes a genuine choice.
         level2: { variables: [], dropdown: null, multiSelect: SIMPLIFY_RADICAND_L1_MS },
-        // No coefficient toggle at either level — both always have one now
-        // (see generateSimplify).
-        level3: { variables: [], dropdown: null, multiSelect: SIMPLIFY_RADICAND_MS },
+        // Radicand is always the curated "several candidate factors" case,
+        // always past 400 — no "already simplest form" trap at this level,
+        // and no toggle for it; the coefficient is the one QO choice here.
+        level3: { variables: [], dropdown: null, multiSelect: SIMPLIFY_COEFF_L3_MS },
       },
     },
 
@@ -339,8 +352,8 @@ const INFO_SECTIONS: InfoSection[] = [
   { title: "Simplifying Surds", icon: "√", content: [
     { label: "Overview", detail: "Write a surd with the smallest possible number under the root, by extracting the largest square factor. A toggleable 'perfect square' case (e.g. √16 = 4) is included as a rare, naturally-occurring trap rather than a coin flip — a check students often forget once they're used to general surd manipulation." },
     { label: "Level 1 — Green", detail: "Extracting a value up to 10 (e.g. √50 = 5√2, up to 10√k), radicand capped at 400. Perfect squares (√16 = 4) appear rarely (~8%) when included, not on every other question." },
-    { label: "Level 2 — Yellow", detail: "Same friendly radicand range as Level 1, but now always with a coefficient to carry through (e.g. 3√50 = 15√2) — taking out a factor and multiplying it into an existing coefficient, on numbers that are otherwise already familiar." },
-    { label: "Level 3 — Red", detail: "Deliberately past Level 1/2's range — curated extraction values like 12, 15 or 16 (built from two prime-power squares, e.g. 3² and 5² for 15), always with a coefficient. 'Already simplest form' is a rare trap (~10%), not a 50/50 alternative." },
+    { label: "Level 2 — Yellow", detail: "Same friendly radicand range as Level 1, but now always with a coefficient (2-9) to carry through (e.g. 7√50 = 35√2) — taking out a factor and multiplying it into an existing coefficient, on numbers that are otherwise already familiar." },
+    { label: "Level 3 — Red", detail: "Radicand always past 400, from curated extraction values whose square has more than one smaller square factor to notice (e.g. 12² = 144 = 16×9, or 6² = 36 = 4×9) — never a bare prime squared, which hides nothing. The coefficient (2-6) is a genuine choice here, toggle-able in Question Options." },
   ]},
   { title: "Adding & Subtracting", icon: "+", content: [
     { label: "Overview", detail: "Combine surd terms that share the same radicand — only like surds can be added or subtracted." },
@@ -392,36 +405,34 @@ function questionFrom(displayLatex: string, answerLatex: string, working: Return
 }
 
 function generateSimplify(level: DifficultyLevel, ms: Record<string, boolean>): AnyQuestion {
-  // Level 3 is the only level using the curated "several candidate factors"
-  // pool (radicand pushed past 400) — Level 2 stays on Level 1's friendly
-  // extraction range so the only new thing it introduces is the coefficient
-  // below, not a harder radicand at the same time.
-  const radicandCase = level === "level3"
-    ? pickRare(ms, "hidden", "alreadySimplified", 0.1)
-    : pickRare(ms, "obvious", "perfectSquare", 0.08);
+  // Level 3 always uses the curated "several candidate factors" pool, always
+  // past 400 — no rare "already simplest form" trap at this level any more
+  // (see randomCuratedHiddenFactorAbove400). Level 1/2 share the same
+  // obvious/perfect-square rare-trap pool, on the friendly ≤400 range.
+  const radicandCase = level === "level3" ? "hidden" : pickRare(ms, "obvious", "perfectSquare", 0.08);
 
   const radicand = radicandCase === "perfectSquare" ? randomPerfectSquareRadicand(2, 12)
     // Level 1 and 2: extract a value up to 10, radicand capped at 400 so
     // numbers stay readable even at the top of that range.
     : radicandCase === "obvious" ? randomExtractionRadicand(2, 10, 400)
-    // Level 3: curated composite extraction values (12, 15, 16, …) —
-    // deliberately past Level 1/2's range, and chosen so there's a genuine
-    // "which factor did I spot" decision rather than a single obvious one.
-    : radicandCase === "hidden" ? randomCuratedHiddenFactor()
-    // Floor of 2, not 7 — √2 and √3 are genuine "already simplest form"
-    // examples, not trivial ones to exclude.
-    : randomSquareFree(2, 60);
+    // Level 3: curated composite extraction values, always past 400 — the
+    // size itself forces breaking the number down via smaller squares.
+    : randomCuratedHiddenFactorAbove400();
 
-  // Level 2 and 3 both always carry a coefficient — no toggle, it's a fixed
-  // step up from Level 1. Taking out a factor and multiplying it into an
-  // existing coefficient is itself the new skill Level 2 adds (on Level 1's
-  // otherwise-familiar numbers); Level 3 then combines that same skill with
-  // the harder curated radicand range, rather than introducing both at once.
-  const coeff = level !== "level1" ? randInt(2, 6) : 1;
+  // Level 1: never a coefficient. Level 2: always one, on a wider range than
+  // Level 3's — taking out a factor and multiplying it into an existing
+  // coefficient is itself the new skill Level 2 adds (on Level 1's otherwise
+  // -familiar numbers), so it gets more room to vary. Level 3 combines the
+  // harder curated radicand with a coefficient that's now a genuine QO
+  // choice rather than always-on, so its own range stays modest (2-6) —
+  // the radicand size is what makes Level 3 harder, not the coefficient.
+  const coeff = level === "level1" ? 1
+    : level === "level2" ? randInt(2, 9)
+    : pickActive(ms, SIMPLIFY_COEFF_L3_MS.options) === "withCoeff" ? randInt(2, 6) : 1;
 
   // "full" shows the coefficient-multiply as its own step (see
   // simplifySurdSteps) — needed whenever a coefficient is present, which is
-  // now Level 2 and 3 both.
+  // now Level 2 always and Level 3 whenever the QO choice includes one.
   const grain: Grain = "full";
   const working = simplifySurdSteps(radicand, coeff, grain);
 
@@ -430,10 +441,12 @@ function generateSimplify(level: DifficultyLevel, ms: Record<string, boolean>): 
   const displayLatex = coeff === 1 ? `\\sqrt{${radicand}}` : `${coeff}\\sqrt{${radicand}}`;
   const answerLatex = surdTermToLatex(finalTerm, true);
 
-  // No _difficultyScore — neither pool carries a weight (see pickRare):
-  // common-vs-rare isn't a difficulty ladder the Smart Progressor should
-  // sort or balance, and Level 3's coefficient is no longer a QO choice.
-  return questionFrom(displayLatex, answerLatex, working, `simplify-${level}-${radicand}-${coeff}-${nextId()}`, level);
+  // _difficultyScore only at Level 3, where the coefficient is a genuine
+  // weighted QO choice (see SIMPLIFY_COEFF_L3_MS) — Level 1/2's rare-trap
+  // pool deliberately carries no weight (see pickRare), so there's nothing
+  // for the Smart Progressor to sort or balance there.
+  const score = level === "level3" ? weightOf(SIMPLIFY_COEFF_L3_MS.options, coeff === 1 ? "none" : "withCoeff") : undefined;
+  return questionFrom(displayLatex, answerLatex, working, `simplify-${level}-${radicand}-${coeff}-${nextId()}`, level, score);
 }
 
 function generateAddSub(level: DifficultyLevel, ms: Record<string, boolean>): AnyQuestion {
