@@ -254,17 +254,17 @@ export const WorkedExampleSteps = ({
   //
   // When hideAnswerStep is set, there's no separate answer box after this —
   // the last step's own value IS the answer, so it needs SOME signal that
-  // you've landed. Deliberately light-touch rather than the old box's bold
-  // green text: a soft tint and a thin accent rule, not a shout — the step's
-  // own wording (an "already in simplest form" / "write the final answer"
-  // style label, by authoring convention) is doing most of the work already.
+  // you've landed. Reuses the same ring technique stackedSteps already uses
+  // to mark the "current" card (a 2px box-shadow ring), just in green instead
+  // of that ring's blue — one consistent visual language ("a ring means this
+  // card matters right now") rather than a second, different-looking accent.
   const renderStep = (s: WorkingStep, i: number, reveal?: number, stacked?: boolean) => {
     const custom = stepRenderer ? stepRenderer(s, colorScheme, qoSnapshot) : null;
     const isFinalAnswerStep = hideAnswerStep && i === totalSteps - 1;
     return (
       <div key={i} className="rounded-xl p-6" style={{
-        backgroundColor: isFinalAnswerStep ? "#eefcf3" : stepBg,
-        borderLeft: isFinalAnswerStep ? "4px solid #22c55e" : undefined,
+        backgroundColor: stepBg,
+        boxShadow: isFinalAnswerStep ? "0 0 0 2px #16a34a" : undefined,
         ...(stacked ? { padding: "1.35rem" } : null),
       }}>
         <h4 className="text-xl font-bold mb-2" style={{ color: "#000", ...(stacked ? { fontSize: "1.125rem", lineHeight: "1.575rem", marginBottom: "0.45rem" } : null) }}>Step {i + 1}</h4>
@@ -320,9 +320,9 @@ export const WorkedExampleSteps = ({
         if (isCurrent) {
           // The blue "current position" ring means "here's where you are,
           // there's more ahead" — once this IS the final answer step (no more
-          // ahead, Next is disabled), that ring stops being true. renderStep's
-          // own tint/accent already marks it as landed, so this card gets no
-          // ring at all rather than mixing two different signals.
+          // ahead, Next is disabled), that ring stops being true. renderStep
+          // already applies its own green ring in that case, so this wrapper
+          // adds no ring of its own rather than stacking two different colours.
           return (
             <EnterCard key={i} style={isFinalAnswerStep ? { borderRadius: 12 } : { borderRadius: 12, boxShadow: "0 0 0 2px #1e3a8a" }}>
               {content}
