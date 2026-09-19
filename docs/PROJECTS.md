@@ -293,7 +293,7 @@ unblocks the others — so read these together when planning a Maths session.
 steps and fell back to thin "jump to the answer" wrappers. The **techniques engine**
 (`src/shared/techniques/`) restores that pedagogy *once, reusably* — titled, fragmented,
 grain-aware (brief / standard / full) working blocks. The **engine and its viewer (`/techniques`)
-are built**, and six techniques exist — but **only one tool (`NonLinearSimEq`) has been
+are built**, and ten techniques exist — but **only two tools (`NonLinearSimEq`, `Surds`) have been
 converted**, so most tools still show thin working. The value is real but latent until the sweep
 happens. **The viewer itself was reworked 2026-08-17**: every technique (including the composed
 Full Worked Example) now has its own real tool page (`/techniques/<slug>`, e.g.
@@ -302,6 +302,22 @@ Full Worked Example) now has its own real tool page (`/techniques/<slug>`, e.g.
 Example uses — replacing the earlier popup overlay, which is now removed. That's the pattern for any
 new technique going forward: a thin page + a `pageUrl` entry in `TechniqueLibrary.tsx`, not a popup.
 See `docs/PATCH_NOTES.md` for the full list of rendering bugs fixed along the way.
+
+**Surds promotion (the first tool-first conversion).** `Surds.tsx` originally built its own
+four grain-aware step-builders locally (`surdsMath.ts` + `surdsSteps.ts`), deliberately shaped
+to the engine's own `(inputs, grain) => WorkingStep[]` contract but kept local per this prong's
+"build on demand, not a sweep" rule. Once the tool had proven the shape out in production across
+five sub-tools, they were promoted near-verbatim into `src/shared/techniques/index.ts`
+(`simplifySurdSteps`, `collectLikeSurdsSteps`, `expandSurdBracketsSteps`,
+`rationaliseDenominatorSteps`) with the pure computation layer promoted alongside them into
+`src/shared/surds.ts` (`SurdTerm`/`SurdFraction` + arithmetic + LaTeX formatting) — `Surds.tsx`
+now pulls all of it back through `"../../shared"` like any other tool would, and the two local
+files are gone. `expandBracketsSteps` was renamed `expandSurdBracketsSteps` on the way in: it
+operates on `SurdTerm`, not general algebraic terms, so it's a sibling of — not the same
+technique as — the still-unbuilt generic `expandBrackets` row below (that one needs a different
+arg shape before `ExpandingBrackets`/`NonLinearSimEq` can use it). All four now have their own
+`/techniques/<slug>` preview page, same as the original six. This is the reference shape for any
+future "build it in a tool first, promote once proven" conversion.
 
 **Possible next steps (background, pre-audit — see the sequencing note above):**
 - Add a runtime **"Detailed working" toggle** so a teacher can flip grain (brief ↔ full) live — the one shell change on the list.
@@ -321,8 +337,11 @@ See `docs/PATCH_NOTES.md` for the full list of rendering bugs fixed along the wa
   technique-audit table below).
 
 **Detail — techniques built:** `quadraticFormulaSteps` (grain-aware), `solveLinearEquationSteps`
-(grain-aware), `solveFactorsSteps`, `substituteBackSteps`, `makeSubjectSteps`, `solveLinearlySteps`.
-Reference conversion: `NonLinearSimEq.tsx` (uses `standard` grain).
+(grain-aware), `solveFactorsSteps`, `substituteBackSteps`, `makeSubjectSteps`, `solveLinearlySteps`,
+`simplifySurdSteps` (grain-aware), `collectLikeSurdsSteps` (grain-aware), `expandSurdBracketsSteps`
+(grain-aware), `rationaliseDenominatorSteps` (grain-aware, composes the previous two). Reference
+conversions: `NonLinearSimEq.tsx` (uses `standard` grain), `Surds.tsx` (uses `full`/`standard`
+per level — see the promotion note above).
 
 **Detail — the technique audit (build backlog; start high-frequency).** Status: ✅ built · 🚧 partial · ⬜ needed.
 
@@ -331,7 +350,7 @@ Reference conversion: `NonLinearSimEq.tsx` (uses `standard` grain).
 | Technique | Move | Priority | Status |
 |---|---|---|---|
 | `solveLinearEquation` | isolate, collect, divide to solve `ax+b=c` | **high** | 🚧 grain-aware version exists — needed by `SolvingLinearEquations` (zero-new-import integration point — already re-exported from `"../../shared"`) and now wired into `NonLinearSimEq`'s `linear` sub-tool (Tier 0, 2026-08-15), fixing the confirmed `−1x`-should-be-`−x` display bug — but **dev-mode-only for now**: a live user still sees the old hand-rolled chain (`legacySolvePos`/`legacySolveNeg`) until this is reviewed and promoted |
-| `expandBrackets` | single / double / squared brackets (FOIL, grid) | **high** | ⬜ — needed by `ExpandingBrackets` (also needs a squared-single-bracket question type its own spec calls for but the tool lacks) and `NonLinearSimEq` (confirmed gap: `(2x−5)²` expansion never shown, no field in the data model to hold it) |
+| `expandBrackets` | single / double / squared brackets (FOIL, grid) | **high** | ⬜ — needed by `ExpandingBrackets` (also needs a squared-single-bracket question type its own spec calls for but the tool lacks) and `NonLinearSimEq` (confirmed gap: `(2x−5)²` expansion never shown, no field in the data model to hold it). A `SurdTerm`-flavoured sibling, `expandSurdBracketsSteps`, is ✅ built and proven across three contexts in `Surds.tsx` — same FOIL/difference-of-squares pedagogy, but this row's own arg shape (general algebraic terms) still needs building before `ExpandingBrackets`/`NonLinearSimEq` can use it |
 | `substitute` | substitute a value/expression into an equation or formula | **high** | 🚧 substitute-back only — needed by `NonLinearSimEq` |
 | `collectLikeTerms` | gather like terms | med | ⬜ — needed by `CollectingLikeTerms`, `ExpandingBrackets`, and (for its opening "reduce x's" move) `SolvingLinearEquations` |
 | `makeSubject` / rearrange | rearrange for one variable | med | 🚧 brief only — needed by `NonLinearSimEq` |

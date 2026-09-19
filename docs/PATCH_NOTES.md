@@ -28,6 +28,60 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-19 — Surds: cascading Worked Example, retire the duplicate answer, promote its techniques
+`src/tools/Number/Surds.tsx`, `src/shared/ToolShell.tsx`, `src/shared/components/WorkedExampleSteps.tsx`,
+`src/shared/types.ts`, `src/shared/techniques/index.ts`, `src/shared/surds.ts` (new),
+`src/tools/TeacherTools/{SimplifySurdPreview,CollectLikeSurdsPreview,ExpandSurdBracketsPreview,
+RationaliseDenominatorPreview}.tsx` (new). Multi-part session piloting several shell-level changes
+in Surds before any wider rollout:
+- **Matched the Technique Library's cascading Worked Example layout** (`workedExampleLayout:
+  "stacked"`) inside real ToolShell tools for the first time — a `useFullHeightShell` flag makes
+  ToolShell's page a genuine viewport-derived flex column (only for `mode==="single" &&
+  workedExampleLayout==="stacked"`), matching how `TechniquePreviewPage` already sized the same
+  `WorkedExampleSteps` component. Found and fixed a real crushing bug along the way (`height:
+  100vh` forced the whole shell into one viewport, crushing the scrollable step body to 8px —
+  fixed with `minHeight: 100vh` instead, which fills the viewport when there's room and grows
+  with a normal scroll when there isn't). Smoothed the new-card fade-in (a mount-triggered
+  `EnterCard` wrapper, tuned to a 0.9s pure opacity fade after two rounds of feedback).
+- **Redesigned Simplifying Surds' Level 1/2/3** so each level is genuinely distinct: Level 1 stays
+  on a friendly extraction range (≤400); Level 2 introduces the "extracting a factor leaves a
+  coefficient" skill on that SAME friendly range rather than compounding it with harder numbers;
+  Level 3 combines that skill with a curated composite-radicand pool pushed past 400. Built
+  `pickRare` (a `pickActive`-compatible but non-Smart-Progressor-balanced picker) so perfect-square
+  and already-simplified "trap" cases stay genuinely rare (~8–10%) instead of the Smart
+  Progressor's usual even-split behaviour, which would have made them 50/50.
+- **Retired the duplicate green answer box** in Worked Example mode: every sub-tool's last working
+  step already stated the exact final answer (verified via a 4500-draw scratch stress test before
+  flipping anything), so the box was always repeating content already on screen. Wired
+  `WorkedExampleSteps`' existing (but previously unused-by-any-real-tool) `hideAnswerStep` prop
+  through a new `ToolShellDefaults.hideAnswerStep` flag. The terminal step now carries the ring
+  itself — same blue ring every "current" step gets while you're working through it, switching to
+  green only once you land on the last one, with no ring at all on any step you've moved past
+  (several rounds of feedback correcting an initial "ring every step" misread).
+- **Promoted all four of Surds' step-builders into the shared techniques engine.** Surds
+  originally built `simplifySurdSteps`/`collectLikeSurdsSteps`/`expandBracketsSteps`/
+  `rationaliseDenominatorSteps` locally, deliberately shaped to the techniques engine's own
+  contract but kept local per docs/PROJECTS.md's "build on demand" rule. Once proven out across
+  five sub-tools, cut near-verbatim into `src/shared/techniques/index.ts`, with the pure
+  computation layer (`SurdTerm`/`SurdFraction` + arithmetic + LaTeX formatting) promoted alongside
+  into new `src/shared/surds.ts`. `expandBracketsSteps` renamed `expandSurdBracketsSteps` on the
+  way in — it's `SurdTerm`-specific, a sibling of (not the same technique as) the still-unbuilt
+  generic `expandBrackets` the audit backlog tracks for `ExpandingBrackets`/`NonLinearSimEq`.
+  `Surds.tsx` now pulls everything back through `"../../shared"`; the two local files
+  (`surdsMath.ts`, `surdsSteps.ts`) are deleted. All four techniques got their own
+  `/techniques/<slug>` preview page and a Technique Library card, same as the original six — the
+  library now lists 10 techniques (11 preview pages including the composed Full Worked Example).
+  Re-ran the last-step-matches-answer stress test after the move to confirm byte-for-byte
+  unchanged behaviour. See `docs/PROJECTS.md`'s Techniques engine entry for the full writeup.
+- Also: fixed a real `CycleSelect` shared-component bug (a solo 2-option weighted pool stretched
+  to the popover's full width), added opt-in multi-row sub-tool tabs (`toolTabRows`), and widened
+  number ranges across Add/Sub, Multiply/Divide, Expand and Rationalise.
+
+Everything above is scoped to Surds only (`hideAnswerStep`, `workedExampleLayout: "stacked"`,
+`toolTabRows` are all opt-in `ToolShellDefaults`) — every other tool is pixel-identical to before,
+verified via regression screenshots (Whiteboard, Worksheet, `CompletingTheSquare`'s "single"
+layout). `npm run build`: 0 errors throughout. `npm test`: 335/335 passing.
+
 ## 2026-09-16 — Smart Progressor: extend Speed/Distance/Time to all 3 levels, fix two correctness bugs
 `src/tools/Proportion/SpeedDistanceTime.tsx`, `src/shared/ToolShell.tsx`. User flagged that Level 1
 still showed "Allow decimal answers" as a plain boolean (the Smart Progressor pilot had only

@@ -2,10 +2,12 @@
 // SURDS — five interlocking skills: simplify, add/subtract, multiply/divide,
 // expand brackets, rationalise the denominator.
 //
-// The working-step engine lives in two sibling modules, deliberately shaped
-// like a future src/shared/techniques/index.ts entry — see their headers:
-//   ./surdsMath.ts  — pure computation (never recomputed ad hoc here)
-//   ./surdsSteps.ts — grain-aware WorkingStep builders ("candidate techniques")
+// The working-step engine — pure computation (src/shared/surds.ts) and the
+// four grain-aware WorkingStep builders (src/shared/techniques/index.ts:
+// simplifySurdSteps, collectLikeSurdsSteps, expandSurdBracketsSteps,
+// rationaliseDenominatorSteps) — was promoted out of this tool into the
+// shared techniques library; this file now pulls it back through
+// "../../shared" like any other tool would, rather than owning it locally.
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import {
@@ -15,10 +17,9 @@ import {
   type DifficultyLevel,
   type AnyQuestion,
   type ToolMultiSelect,
-  randInt, pick, step, mStep, pickActive, weightOf,
-} from "../../shared";
-import {
   type SurdTerm,
+  type Grain,
+  randInt, pick, step, mStep, pickActive, weightOf,
   simplifySurd,
   collectLikeSurds,
   multiplySurdTerms,
@@ -31,14 +32,11 @@ import {
   bracketedLatex,
   rawFractionToLatex,
   fractionToLatex,
-} from "./surdsMath";
-import {
-  type Grain,
   simplifySurdSteps,
   collectLikeSurdsSteps,
-  expandBracketsSteps,
+  expandSurdBracketsSteps,
   rationaliseDenominatorSteps,
-} from "./surdsSteps";
+} from "../../shared";
 
 // ── 1. Types ──────────────────────────────────────────────────────────────────
 
@@ -530,7 +528,7 @@ function generateMultiplyDivide(level: DifficultyLevel, ms: Record<string, boole
       b = { coeff: useCoeff ? randInt(2, 8) : 1, radicand: randomSquareFree(2, level === "level1" ? 20 : 35) };
     }
     resultTerm = multiplySurdTerms(a, b);
-    working = expandBracketsSteps([a], [b], grain);
+    working = expandSurdBracketsSteps([a], [b], grain);
   } else {
     // divide — guarded clean on BOTH axes: a's radicand is b's radicand times
     // a perfect square (so the root divides exactly), and a's coefficient is
@@ -610,7 +608,7 @@ function generateExpand(level: DifficultyLevel, ms: Record<string, boolean>): An
     }
   }
 
-  const working = expandBracketsSteps(a, b, "standard");
+  const working = expandSurdBracketsSteps(a, b, "standard");
   // Reuse the same general multiply-and-collect computation the step
   // builder is built on, rather than re-deriving the cross-product logic
   // inline — one source of truth for what the expansion actually equals.

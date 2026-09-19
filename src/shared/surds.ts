@@ -1,8 +1,11 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // SURDS — pure computation.
 //
-// Every quantity the Surds tool ever displays (a question, its answer, a
-// mid-working intermediate) is derived from these functions — never
+// Promoted from the Surds tool (src/tools/Number/Surds.tsx) once its
+// surd-manipulation techniques were shared into src/shared/techniques/index.ts —
+// this is the pure-maths layer those techniques (and the Surds tool's own
+// generators) are built on. Every quantity ever displayed (a question, its
+// answer, a mid-working intermediate) is derived from these functions — never
 // recomputed ad hoc in a step-builder or a generator. That keeps a surd's
 // surd-form, its working, and its final answer from ever drifting apart
 // (CLAUDE.md: "never store the same fact twice").

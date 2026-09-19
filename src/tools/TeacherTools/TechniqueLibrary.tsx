@@ -4,6 +4,7 @@ import {
   loadKaTeX,
   workings, quadraticFormulaSteps, solveLinearEquationSteps, solveFactorsSteps,
   substituteBackSteps, makeSubjectSteps, solveLinearlySteps,
+  simplifySurdSteps, collectLikeSurdsSteps, expandSurdBracketsSteps, rationaliseDenominatorSteps,
   type WorkingStep, type Grain,
 } from "../../shared";
 
@@ -95,6 +96,42 @@ const TECHNIQUES: TechniqueDef[] = [
     desc: "A complete linear-substitution solution assembled from technique blocks + bespoke steps — shows how a real tool composes them.",
     render: () => FULL_EXAMPLE,
     pageUrl: "/techniques/full-worked-example",
+  },
+  {
+    id: "simplifySurd", title: "Simplify a Surd", grains: true,
+    signature: "simplifySurdSteps(200, 3)",
+    desc: "Find the largest square factor, split the root, evaluate it. Full separates the coefficient multiply into its own taught move.",
+    render: (g) => simplifySurdSteps(200, 3, g),
+    pageUrl: "/techniques/simplifying-a-surd",
+  },
+  {
+    id: "collectLikeSurds", title: "Collect Like Surds", grains: true,
+    signature: "collectLikeSurdsSteps([{coeff:1,radicand:8},{coeff:3,radicand:2}])",
+    desc: "Simplify every term first, then group and sum matching radicands — √8 + 3√2 only reads as \"like surds\" once √8 is rewritten as 2√2.",
+    render: (g) => collectLikeSurdsSteps([{ coeff: 1, radicand: 8 }, { coeff: 3, radicand: 2 }], g),
+    pageUrl: "/techniques/collecting-like-surds",
+  },
+  {
+    id: "expandSurdBrackets", title: "Expand Surd Brackets", grains: true,
+    signature: "expandSurdBracketsSteps((√3+2), (√3+5))",
+    desc: "FOIL two brackets, then simplify any surds produced and collect like terms — only showing the sub-steps a given pair of brackets actually needs.",
+    render: (g) => expandSurdBracketsSteps(
+      [{ coeff: 1, radicand: 3 }, { coeff: 2, radicand: 1 }],
+      [{ coeff: 1, radicand: 3 }, { coeff: 5, radicand: 1 }],
+      g,
+    ),
+    pageUrl: "/techniques/expanding-surd-brackets",
+  },
+  {
+    id: "rationaliseDenominator", title: "Rationalise the Denominator", grains: true,
+    signature: "rationaliseDenominatorSteps(1, (2+√3))",
+    desc: "Multiply top and bottom by the conjugate, then simplify — composes the simplify-a-surd and expand-surd-brackets techniques rather than re-deriving them.",
+    render: (g) => rationaliseDenominatorSteps(
+      [{ coeff: 1, radicand: 1 }],
+      [{ coeff: 2, radicand: 1 }, { coeff: 1, radicand: 3 }],
+      g,
+    ),
+    pageUrl: "/techniques/rationalising-the-denominator",
   },
 ];
 
