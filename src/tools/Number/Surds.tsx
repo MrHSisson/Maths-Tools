@@ -201,18 +201,31 @@ const ADDSUB_COEFF_L2_MS: ToolMultiSelect = {
     { value: "withCoeff", label: "With coefficient", defaultActive: true, weight: 2 },
   ],
 };
+// A rare "these don't actually combine" trap, shared across Level 1 and
+// Level 2 (same key, so the toggle state carries between them, matching
+// Simplify's own L1/L2 perfect-square pool) — students who are fine
+// combining like surds at those levels still need to notice when two surds
+// genuinely don't share a radicand. `cycleDisplay` (not `weight`) keeps it
+// genuinely rare via `pickRare` rather than the Smart Progressor's even-split
+// balancing. No longer part of Level 3's own pool — moved here instead.
+const ADDSUB_TRAP_MS: ToolMultiSelect = {
+  key: "trapAS", label: "Not Like Surds", cycleDisplay: true,
+  cycleStateLabels: ["Off", "Mixed (~10%)", "Always"],
+  options: [
+    { value: "combine", label: "Combines", defaultActive: true },
+    { value: "dontCombine", label: "Doesn't combine (rare trap)", defaultActive: true },
+  ],
+};
 // Level 3's own new skills — genuinely distinct from Level 2's "simplify
 // first", not an extension of it: sorting/grouping across two surd families,
 // distributing a negative across a bracket before collecting, and collecting
-// an algebraic (x-carrying) coefficient. "Not like surds" (the false-positive
-// trap) is kept from the old design.
+// an algebraic (x-carrying) coefficient.
 const ADDSUB_L3_MS: ToolMultiSelect = {
   key: "formL3", label: "Question Types",
   options: [
-    { value: "dontCombine", label: "Not like surds", defaultActive: true, weight: 1 },
-    { value: "multiGroup", label: "Multiple surd families", defaultActive: true, weight: 2 },
-    { value: "negativeBracket", label: "Distribute a negative bracket", defaultActive: true, weight: 3 },
-    { value: "algebraicCoeff", label: "Algebraic coefficients", defaultActive: true, weight: 4 },
+    { value: "multiGroup", label: "Multiple surd families", defaultActive: true, weight: 1 },
+    { value: "negativeBracket", label: "Distribute a negative bracket", defaultActive: true, weight: 2 },
+    { value: "algebraicCoeff", label: "Algebraic coefficients", defaultActive: true, weight: 3 },
   ],
 };
 
@@ -329,8 +342,8 @@ const TOOL_CONFIG: ToolConfig = {
       variables: [],
       dropdown: null,
       difficultySettings: {
-        level1: { variables: [], dropdown: null, multiSelect: ADDSUB_OPERATION_MS },
-        level2: { variables: [], dropdown: null, multiSelect: [ADDSUB_OPERATION_MS, ADDSUB_COEFF_L2_MS] },
+        level1: { variables: [], dropdown: null, multiSelect: [ADDSUB_OPERATION_MS, ADDSUB_TRAP_MS] },
+        level2: { variables: [], dropdown: null, multiSelect: [ADDSUB_OPERATION_MS, ADDSUB_COEFF_L2_MS, ADDSUB_TRAP_MS] },
         level3: { variables: [], dropdown: null, multiSelect: [ADDSUB_OPERATION_MS, ADDSUB_L3_MS] },
       },
     },
@@ -393,9 +406,9 @@ const INFO_SECTIONS: InfoSection[] = [
   ]},
   { title: "Adding & Subtracting", icon: "+", content: [
     { label: "Overview", detail: "Combine surd terms that share the same radicand — only like surds can be added or subtracted. Every level has an Operation toggle to restrict questions to just adding or just subtracting, or leave both on for a mix." },
-    { label: "Level 1 — Green", detail: "Already like surds — just combine the coefficients." },
-    { label: "Level 2 — Yellow", detail: "Always requires simplifying each term first before they reveal themselves as like surds (e.g. √12 + √27 → 2√3 + 3√3) — a genuine QO choice for whether each term also carries its own coefficient on top (e.g. 4√12 + 3√27)." },
-    { label: "Level 3 — Red", detail: "Four genuinely distinct extensions, a QO choice: a false-positive 'these don't combine' trap, a four-term expression spanning two different surd families to sort and group, distributing a leading negative across a bracket before collecting, and an algebraic (x-carrying) coefficient that must be collected separately from a constant term." },
+    { label: "Level 1 — Green", detail: "Already like surds — just combine the coefficients. A rare 'these don't actually combine' trap (~10% when included) is toggleable in Question Options — a check students often skip once they're used to everything combining." },
+    { label: "Level 2 — Yellow", detail: "Always requires simplifying each term first before they reveal themselves as like surds (e.g. √12 + √27 → 2√3 + 3√3) — a genuine QO choice for whether each term also carries its own coefficient on top (e.g. 4√12 + 3√27), plus the same rare 'doesn't combine' trap as Level 1." },
+    { label: "Level 3 — Red", detail: "Three genuinely distinct extensions, a QO choice: a four-term expression spanning two different surd families to sort and group, distributing a leading negative across a bracket before collecting, and an algebraic (x-carrying) coefficient collected into a single bracketed coefficient (e.g. (4x+3)√11 − 2x√11 = (2x+3)√11)." },
   ]},
   { title: "Multiplying & Dividing", icon: "×", content: [
     { label: "Overview", detail: "Multiply or divide surds by combining under one root — this sub-tool never includes a bracket; see Expanding Brackets for that. Includes a toggleable 'perfect square product' case (e.g. √2 × √8 = √16 = 4) — two different-looking surds that still collapse to an integer, easy to miss since nothing about the question hints at it." },
@@ -529,22 +542,26 @@ function buildAlgebraicCoeffAddSub(level: DifficultyLevel): AnyQuestion {
   const b = randInt(1, 8);
   const c = randInt(1, 5);
   const opAdd = pick([true, false]);
-
-  // Guard against the x-terms cancelling entirely — that would collapse the
-  // answer to a single constant-only term and lose the "keep the x-part and
-  // the constant part separate" teaching point.
-  let cAdj = c;
-  let finalXCoeff = opAdd ? a + cAdj : a - cAdj;
-  if (finalXCoeff === 0) { cAdj = c + 1; finalXCoeff = opAdd ? a + cAdj : a - cAdj; }
+  // The x-parts CAN cancel entirely (e.g. (x+2)√3 - x√3 = 2√3) — that's a
+  // genuine, valid outcome here, same as any other surd term collapsing to a
+  // simpler form, not something to guard against.
+  const finalXCoeff = opAdd ? a + c : a - c;
 
   const xTerm = (coeff: number): string => coeff === 1 ? "x" : coeff === -1 ? "-x" : `${coeff}x`;
   const binomialLatex = `(${xTerm(a)} + ${b})\\sqrt{${r}}`;
-  const secondLatex = `${xTerm(cAdj)}\\sqrt{${r}}`;
+  const secondLatex = `${xTerm(c)}\\sqrt{${r}}`;
   const displayLatex = `${binomialLatex} ${opAdd ? "+" : "-"} ${secondLatex}`;
-  const answerLatex = `${xTerm(finalXCoeff)}\\sqrt{${r}} + ${b}\\sqrt{${r}}`;
+
+  // Combine the algebraic coefficients into ONE bracketed coefficient — the
+  // same "add the coefficients" move any collect-like-surds case makes, just
+  // with an algebraic (x-carrying) coefficient. If the x-parts cancel, the
+  // bracket collapses to a plain number, same as any other simplification.
+  const answerLatex = finalXCoeff === 0
+    ? `${b}\\sqrt{${r}}`
+    : `(${xTerm(finalXCoeff)} + ${b})\\sqrt{${r}}`;
 
   const working = [
-    mStep("Collect the terms in x, and the constant terms, separately:", [displayLatex, `= ${answerLatex}`]),
+    mStep("Add the algebraic coefficients:", [displayLatex, `= ${answerLatex}`]),
     mStep("Write the final answer:", answerLatex),
   ];
 
@@ -552,16 +569,21 @@ function buildAlgebraicCoeffAddSub(level: DifficultyLevel): AnyQuestion {
     displayLatex,
     answerLatex,
     working,
-    `addSub-${level}-algebraicCoeff-${a}_${b}_${cAdj}_${opAdd}_${r}-${nextId()}`,
+    `addSub-${level}-algebraicCoeff-${a}_${b}_${c}_${opAdd}_${r}-${nextId()}`,
     level,
     weightOf(ADDSUB_L3_MS.options, "algebraicCoeff"),
   );
 }
 
 function generateAddSub(level: DifficultyLevel, ms: Record<string, boolean>): AnyQuestion {
-  const kase = level === "level1" ? "alreadyLike"
-    // Level 2 always requires simplifying first now — no longer a QO choice
-    // (see ADDSUB_COEFF_L2_MS for what Level 2 varies instead).
+  // Level 1/2 layer the rare "doesn't combine" trap on top of their normal
+  // case (see ADDSUB_TRAP_MS) — read via pickRare, not pickActive, so it
+  // stays genuinely rare rather than forced toward an even split. Level 2
+  // always requires simplifying first otherwise — no longer a QO choice (see
+  // ADDSUB_COEFF_L2_MS for what Level 2 varies instead).
+  const trapFires = (level === "level1" || level === "level2") && pickRare(ms, "combine", "dontCombine", 0.1) === "dontCombine";
+  const kase = trapFires ? "dontCombine"
+    : level === "level1" ? "alreadyLike"
     : level === "level3" ? pickActive(ms, ADDSUB_L3_MS.options)
     : "needsSimplify";
 
@@ -628,7 +650,10 @@ function generateAddSub(level: DifficultyLevel, ms: Record<string, boolean>): An
   const working = collectLikeSurdsSteps(terms, grain);
   const answerTerms = collectLikeSurds(terms);
 
-  const score = level === "level2" ? weightOf(ADDSUB_COEFF_L2_MS.options, coeffKaseL2)
+  // No score for a Level 2 trap question — the coefficient axis didn't
+  // actually influence it (ADDSUB_TRAP_MS carries no weight of its own, by
+  // design, so it stays genuinely rare rather than Smart-Progressor-balanced).
+  const score = level === "level2" && kase !== "dontCombine" ? weightOf(ADDSUB_COEFF_L2_MS.options, coeffKaseL2)
     : level === "level3" ? weightOf(ADDSUB_L3_MS.options, kase)
     : undefined;
 

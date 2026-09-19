@@ -205,20 +205,42 @@ in Surds before any wider rollout:
   families rather than spotting one pair; **"distribute a negative bracket"** — `(R1+C1√r) −
   (R2±C2√r)`, requiring the leading negative to be distributed across BOTH of the second bracket's
   terms before anything can combine, with its own new leading "Distribute the negative:" working
-  step; **"algebraic coefficients"** — `(ax+b)√r ± cx√r`, collecting the x-carrying part and the
-  constant part separately since they're unlike terms (e.g. `(4x+3)√11 − 2x√11 = 2x√11 + 3√11`).
-  The latter two don't fit the shared `SurdTerm`/`collectLikeSurdsSteps` engine at all (an
-  algebraic x-coefficient isn't representable in `SurdTerm{coeff:number}`, and a bracket-aware
-  "distribute first" step needs its own working line) — both are bespoke, standalone builder
-  functions (`buildNegativeBracketAddSub`/`buildAlgebraicCoeffAddSub`) that construct their own
-  question and working directly rather than going through the shared technique. Verified via a
-  scratch Vitest file (deleted after use): all four cases are reachable and produce valid KaTeX;
-  the `hideAnswerStep` invariant holds for all of them; the negative-bracket case's display always
-  shows two bracketed groups; the algebraic case's answer always keeps the x-term and constant
-  term as two separate `√` terms (never collapses to one); the multi-group case always produces 4
-  raw terms. Live-verified in the browser (multi-group's 7-step worked example — simplify each of
-  4 terms, then two separate "add the coefficients of like surds" group-collects — reads as a
-  clearly different skill from Level 2's single-pair case).
+  step; **"algebraic coefficients"** — `(ax+b)√r ± cx√r`, collecting the algebraic coefficient into
+  one bracketed term, same as any ordinary collect-like-surds move (e.g. `(4x+3)√11 − 2x√11 =
+  (6x+3)√11` — see the follow-up fix below for the exact answer format). The latter two don't fit
+  the shared `SurdTerm`/`collectLikeSurdsSteps` engine at all (an algebraic x-coefficient isn't
+  representable in `SurdTerm{coeff:number}`, and a bracket-aware "distribute first" step needs its
+  own working line) — both are bespoke, standalone builder functions
+  (`buildNegativeBracketAddSub`/`buildAlgebraicCoeffAddSub`) that construct their own question and
+  working directly rather than going through the shared technique. Verified via a scratch Vitest
+  file (deleted after use): all four cases are reachable and produce valid KaTeX; the
+  `hideAnswerStep` invariant holds for all of them; the negative-bracket case's display always
+  shows two bracketed groups; the multi-group case always produces 4 raw terms. Live-verified in
+  the browser (multi-group's 7-step worked example — simplify each of 4 terms, then two separate
+  "add the coefficients of like surds" group-collects — reads as a clearly different skill from
+  Level 2's single-pair case).
+- **Moved the "doesn't combine" false-positive trap from Level 3 into Level 1 and Level 2**, as a
+  rare (~10%) toggle rather than a Level 3-only weighted option — user feedback that it belongs
+  alongside the levels where students are actively learning to combine like surds, not bundled in
+  with Level 3's other, unrelated extensions. New shared-key pool `ADDSUB_TRAP_MS`
+  (`cycleDisplay`, read via `pickRare` like Simplify's own perfect-square trap, so it stays
+  genuinely rare rather than Smart-Progressor-balanced) added to both levels; removed from
+  `ADDSUB_L3_MS`, which now has only its three genuine extensions. A Level 2 trap question no
+  longer gets a `_difficultyScore` from the (irrelevant, for that question) coefficient pool.
+- **Fixed `buildAlgebraicCoeffAddSub`'s answer format** — it previously deliberately guarded
+  against the x-parts of the two terms cancelling out, treating "keep the x-term and constant term
+  as two separate `√` terms" as the goal. User feedback (and their own original example, `(x+2)√3 −
+  x√3 = 2√3`) corrected this: the algebraic coefficients should be added into ONE bracketed
+  coefficient, exactly like any other collect-like-surds move — `(4x+3)√11 − 2x√11 = (6x+3)√11`,
+  collapsing to a plain number when the x-parts happen to cancel. Removed the cancellation guard
+  entirely (a cancelling answer is now a valid, unremarkable outcome, not something to avoid).
+- **The compact cycle button now stretches to the QO container's full width when it's the only
+  cycle-eligible pool in its row**, instead of a small fixed 220px box — user feedback that the
+  narrow box looked out of place next to every other full-width QO control. Removed the width cap
+  in `CycleSelect` (`src/shared/components/QOPopovers.tsx`) in favour of `w-full`; a row of 2+
+  cycle pools is unaffected (still splits evenly via `flex-1`). Applies everywhere a solo cycle
+  button appears (Simplify's L1/L2 trap, Add/Sub's new trap pool, etc.) since it's one shared
+  component.
 
 Everything above is scoped to Surds only (`hideAnswerStep`, `workedExampleLayout: "stacked"`,
 `toolTabRows` are all opt-in `ToolShellDefaults`) — every other tool is pixel-identical to before,

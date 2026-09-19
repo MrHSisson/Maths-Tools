@@ -167,12 +167,10 @@ const CycleSelect = ({
   multiSelect: { key: string; label: string; options: { value: string; label: string; weight?: number }[]; cycleStateLabels?: [string, string, string] };
   values: Record<string, boolean>;
   onChange: (k: string, v: boolean) => void;
-  // True when this is the only cycle-eligible pool in its row. flex-1 divides
-  // a row of 2+ into narrow, equal-width cells (the intended look) — but with
-  // only one, flex-1 has nothing to divide against and stretches it to the
-  // popover's full width instead, looking like an oversized single button
-  // rather than the compact control this is meant to be. Cap its width
-  // instead of stretching whenever it's alone.
+  // True when this is the only cycle-eligible pool in its row — stretches to
+  // the QO container's full width (matching every other QO control's own
+  // width) rather than sitting at a small fixed size. flex-1 still divides a
+  // row of 2+ into narrow, equal-width cells when there's more than one.
   solo?: boolean;
 }) => {
   const [base, hard] = [...multiSelect.options].sort((a, b) => (a.weight ?? 0) - (b.weight ?? 0));
@@ -188,8 +186,7 @@ const CycleSelect = ({
     <button
       onClick={next}
       title={`${base.label} / ${hard.label}`}
-      className={`flex ${solo ? "" : "flex-1"} min-w-0 flex-col items-center gap-1 px-3 py-2 rounded-lg border-2 border-gray-200 bg-white hover:border-blue-900 transition-colors text-center`}
-      style={solo ? { width: 220, maxWidth: "100%" } : undefined}
+      className={`flex ${solo ? "w-full" : "flex-1"} min-w-0 flex-col items-center gap-1 px-3 py-2 rounded-lg border-2 border-gray-200 bg-white hover:border-blue-900 transition-colors text-center`}
     >
       <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{multiSelect.label}</span>
       <span
