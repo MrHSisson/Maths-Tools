@@ -192,13 +192,33 @@ in Surds before any wider rollout:
   which WAS the old, too-similar L1→L2 distinction) — its own new QO axis is
   `ADDSUB_COEFF_L2_MS`, a genuine weighted toggle for whether each term additionally carries a
   coefficient on top of the part that needs extracting (e.g. `4√12 + 3√27` vs. the bare `√12 +
-  √27`). Level 3 is unchanged for now, pending a further conversation about making it a genuine
-  extension rather than "Level 2 plus some of its own cases folded in" — candidates discussed:
-  algebraic coefficients, multi-term/multi-radicand-group chains, and keeping the existing
-  false-positive "these don't combine" trap. Verified via a scratch Vitest file (deleted after
-  use): the operation restriction genuinely produces add-only/subtract-only/mixed; Level 2 never
-  produces the old "already like" shape; the coefficient toggle is reachable at both states; the
-  `hideAnswerStep` invariant holds across all three levels.
+  √27`). Verified via a scratch Vitest file (deleted after use): the operation restriction
+  genuinely produces add-only/subtract-only/mixed; Level 2 never produces the old "already like"
+  shape; the coefficient toggle is reachable at both states; the `hideAnswerStep` invariant holds
+  across all three levels.
+- **Redesigned Adding & Subtracting's Level 3 with four genuinely distinct skills** — user
+  feedback that the original Level 3 read as "Level 2 with some of its own cases folded in", not a
+  real extension. Kept the existing false-positive **"not like surds"** trap; replaced
+  "simplify first" (now redundant with Level 2) and "rational + surds" with three new cases
+  discussed and chosen with the user: **"multiple surd families"** — 4 terms spanning two distinct
+  radicands once simplified (e.g. `2√12 − 2√27 + 2√350 − 3√224`), testing sorting/grouping across
+  families rather than spotting one pair; **"distribute a negative bracket"** — `(R1+C1√r) −
+  (R2±C2√r)`, requiring the leading negative to be distributed across BOTH of the second bracket's
+  terms before anything can combine, with its own new leading "Distribute the negative:" working
+  step; **"algebraic coefficients"** — `(ax+b)√r ± cx√r`, collecting the x-carrying part and the
+  constant part separately since they're unlike terms (e.g. `(4x+3)√11 − 2x√11 = 2x√11 + 3√11`).
+  The latter two don't fit the shared `SurdTerm`/`collectLikeSurdsSteps` engine at all (an
+  algebraic x-coefficient isn't representable in `SurdTerm{coeff:number}`, and a bracket-aware
+  "distribute first" step needs its own working line) — both are bespoke, standalone builder
+  functions (`buildNegativeBracketAddSub`/`buildAlgebraicCoeffAddSub`) that construct their own
+  question and working directly rather than going through the shared technique. Verified via a
+  scratch Vitest file (deleted after use): all four cases are reachable and produce valid KaTeX;
+  the `hideAnswerStep` invariant holds for all of them; the negative-bracket case's display always
+  shows two bracketed groups; the algebraic case's answer always keeps the x-term and constant
+  term as two separate `√` terms (never collapses to one); the multi-group case always produces 4
+  raw terms. Live-verified in the browser (multi-group's 7-step worked example — simplify each of
+  4 terms, then two separate "add the coefficients of like surds" group-collects — reads as a
+  clearly different skill from Level 2's single-pair case).
 
 Everything above is scoped to Surds only (`hideAnswerStep`, `workedExampleLayout: "stacked"`,
 `toolTabRows` are all opt-in `ToolShellDefaults`) — every other tool is pixel-identical to before,

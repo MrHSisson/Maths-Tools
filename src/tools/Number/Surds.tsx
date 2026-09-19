@@ -201,12 +201,18 @@ const ADDSUB_COEFF_L2_MS: ToolMultiSelect = {
     { value: "withCoeff", label: "With coefficient", defaultActive: true, weight: 2 },
   ],
 };
+// Level 3's own new skills — genuinely distinct from Level 2's "simplify
+// first", not an extension of it: sorting/grouping across two surd families,
+// distributing a negative across a bracket before collecting, and collecting
+// an algebraic (x-carrying) coefficient. "Not like surds" (the false-positive
+// trap) is kept from the old design.
 const ADDSUB_L3_MS: ToolMultiSelect = {
   key: "formL3", label: "Question Types",
   options: [
-    { value: "needsSimplify", label: "Simplify first", defaultActive: true, weight: 1 },
-    { value: "dontCombine", label: "Not like surds", defaultActive: true, weight: 2 },
-    { value: "threeTermMixed", label: "Rational + surds", defaultActive: true, weight: 3 },
+    { value: "dontCombine", label: "Not like surds", defaultActive: true, weight: 1 },
+    { value: "multiGroup", label: "Multiple surd families", defaultActive: true, weight: 2 },
+    { value: "negativeBracket", label: "Distribute a negative bracket", defaultActive: true, weight: 3 },
+    { value: "algebraicCoeff", label: "Algebraic coefficients", defaultActive: true, weight: 4 },
   ],
 };
 
@@ -389,7 +395,7 @@ const INFO_SECTIONS: InfoSection[] = [
     { label: "Overview", detail: "Combine surd terms that share the same radicand — only like surds can be added or subtracted. Every level has an Operation toggle to restrict questions to just adding or just subtracting, or leave both on for a mix." },
     { label: "Level 1 — Green", detail: "Already like surds — just combine the coefficients." },
     { label: "Level 2 — Yellow", detail: "Always requires simplifying each term first before they reveal themselves as like surds (e.g. √12 + √27 → 2√3 + 3√3) — a genuine QO choice for whether each term also carries its own coefficient on top (e.g. 4√12 + 3√27)." },
-    { label: "Level 3 — Red", detail: "Three-term expressions mixing rational and surd terms, and a genuine ‘these don't combine’ case." },
+    { label: "Level 3 — Red", detail: "Four genuinely distinct extensions, a QO choice: a false-positive 'these don't combine' trap, a four-term expression spanning two different surd families to sort and group, distributing a leading negative across a bracket before collecting, and an algebraic (x-carrying) coefficient that must be collected separately from a constant term." },
   ]},
   { title: "Multiplying & Dividing", icon: "×", content: [
     { label: "Overview", detail: "Multiply or divide surds by combining under one root — this sub-tool never includes a bracket; see Expanding Brackets for that. Includes a toggleable 'perfect square product' case (e.g. √2 × √8 = √16 = 4) — two different-looking surds that still collapse to an integer, easy to miss since nothing about the question hints at it." },
@@ -479,6 +485,79 @@ function generateSimplify(level: DifficultyLevel, ms: Record<string, boolean>): 
   return questionFrom(displayLatex, answerLatex, working, `simplify-${level}-${radicand}-${coeff}-${nextId()}`, level, score);
 }
 
+// Level 3 only, bespoke: (R1 + C1√r) - (R2 ± C2√r), requiring the leading
+// negative to be distributed across BOTH of the second bracket's terms
+// before anything can combine — a distinct sign-handling skill from Level
+// 2's "simplify first". Doesn't fit the flat SurdTerm[]-in, collect-out shape
+// the other cases share, so it builds its own leading step and question.
+function buildNegativeBracketAddSub(level: DifficultyLevel): AnyQuestion {
+  const r = randomSquareFree(2, 20);
+  const R1 = randInt(2, 9), R2 = randInt(2, 9);
+  const C1 = randInt(1, 6), C2 = randInt(1, 6);
+  const innerSign2 = pick([1, -1]); // the sign INSIDE the second bracket, before distributing
+  const bracket1: SurdTerm[] = [{ coeff: R1, radicand: 1 }, { coeff: C1, radicand: r }];
+  const bracket2: SurdTerm[] = [{ coeff: R2, radicand: 1 }, { coeff: innerSign2 * C2, radicand: r }];
+  const terms: SurdTerm[] = [...bracket1, ...bracket2.map((t) => ({ ...t, coeff: -t.coeff }))];
+
+  const displayLatex = `${bracketedLatex(bracket1)} - ${bracketedLatex(bracket2)}`;
+  const distributeStep = mStep("Distribute the negative:", [displayLatex, `= ${surdExpressionToLatex(terms)}`]);
+
+  const grain: Grain = "full";
+  const working = [distributeStep, ...collectLikeSurdsSteps(terms, grain)];
+  const answerTerms = collectLikeSurds(terms);
+  const answerLatex = surdExpressionToLatex(answerTerms.length ? answerTerms : [{ coeff: 0, radicand: 1 }]);
+
+  return questionFrom(
+    displayLatex,
+    answerLatex,
+    working,
+    `addSub-${level}-negativeBracket-${R1}_${C1}_${innerSign2}_${R2}_${C2}_${r}-${nextId()}`,
+    level,
+    weightOf(ADDSUB_L3_MS.options, "negativeBracket"),
+  );
+}
+
+// Level 3 only, bespoke: (ax+b)√r ± cx√r, collecting the x-carrying part and
+// the constant part SEPARATELY (they're unlike terms, so the answer stays a
+// genuine two-term expression) — e.g. (x+2)√3 - x√3 = 2√3, or with a
+// surviving x-term: (3x+2)√5 + x√5 = 4x√5 + 2√5. A genuinely different
+// "what counts as a like term" skill from anything numeric-only. Doesn't fit
+// the numeric-only SurdTerm shape, so this is entirely bespoke.
+function buildAlgebraicCoeffAddSub(level: DifficultyLevel): AnyQuestion {
+  const r = randomSquareFree(2, 20);
+  const a = randInt(2, 5);
+  const b = randInt(1, 8);
+  const c = randInt(1, 5);
+  const opAdd = pick([true, false]);
+
+  // Guard against the x-terms cancelling entirely — that would collapse the
+  // answer to a single constant-only term and lose the "keep the x-part and
+  // the constant part separate" teaching point.
+  let cAdj = c;
+  let finalXCoeff = opAdd ? a + cAdj : a - cAdj;
+  if (finalXCoeff === 0) { cAdj = c + 1; finalXCoeff = opAdd ? a + cAdj : a - cAdj; }
+
+  const xTerm = (coeff: number): string => coeff === 1 ? "x" : coeff === -1 ? "-x" : `${coeff}x`;
+  const binomialLatex = `(${xTerm(a)} + ${b})\\sqrt{${r}}`;
+  const secondLatex = `${xTerm(cAdj)}\\sqrt{${r}}`;
+  const displayLatex = `${binomialLatex} ${opAdd ? "+" : "-"} ${secondLatex}`;
+  const answerLatex = `${xTerm(finalXCoeff)}\\sqrt{${r}} + ${b}\\sqrt{${r}}`;
+
+  const working = [
+    mStep("Collect the terms in x, and the constant terms, separately:", [displayLatex, `= ${answerLatex}`]),
+    mStep("Write the final answer:", answerLatex),
+  ];
+
+  return questionFrom(
+    displayLatex,
+    answerLatex,
+    working,
+    `addSub-${level}-algebraicCoeff-${a}_${b}_${cAdj}_${opAdd}_${r}-${nextId()}`,
+    level,
+    weightOf(ADDSUB_L3_MS.options, "algebraicCoeff"),
+  );
+}
+
 function generateAddSub(level: DifficultyLevel, ms: Record<string, boolean>): AnyQuestion {
   const kase = level === "level1" ? "alreadyLike"
     // Level 2 always requires simplifying first now — no longer a QO choice
@@ -486,12 +565,16 @@ function generateAddSub(level: DifficultyLevel, ms: Record<string, boolean>): An
     : level === "level3" ? pickActive(ms, ADDSUB_L3_MS.options)
     : "needsSimplify";
 
+  // Bespoke Level 3 cases that don't fit the flat SurdTerm[] shape the rest
+  // of this function shares — built and returned separately.
+  if (kase === "negativeBracket") return buildNegativeBracketAddSub(level);
+  if (kase === "algebraicCoeff") return buildAlgebraicCoeffAddSub(level);
+
   // Operation is a genuine QO choice at every level (see ADDSUB_OPERATION_MS)
   // — restrict to always-add, always-subtract, or a mixed default.
   const s = pickActive(ms, ADDSUB_OPERATION_MS.options) === "add" ? 1 : -1;
   // Level 2's own QO axis (see ADDSUB_COEFF_L2_MS): only meaningful at Level
-  // 2 itself — Level 3's reuse of the "needsSimplify" case always includes a
-  // coefficient, since that axis isn't in question once Level 3 has moved on.
+  // 2 itself.
   const coeffKaseL2 = level === "level2" ? pickActive(ms, ADDSUB_COEFF_L2_MS.options) : "withCoeff";
   let terms: SurdTerm[];
 
@@ -518,13 +601,25 @@ function generateAddSub(level: DifficultyLevel, ms: Record<string, boolean>): An
     while (r2 === r1) r2 = randomSquareFree(2, 35);
     terms = [{ coeff: randInt(2, 12), radicand: r1 }, { coeff: s * randInt(2, 12), radicand: r2 }];
   } else {
-    // threeTermMixed
-    const r = randomSquareFree(2, 20);
-    const rational = randInt(2, 12);
-    const c1 = randInt(2, 12);
-    let c2 = randInt(2, 12);
-    if (s === -1 && c2 === c1) c2 = c1 === 12 ? c1 - 1 : c1 + 1;
-    terms = [{ coeff: rational, radicand: 1 }, { coeff: c1, radicand: r }, { coeff: s * c2, radicand: r }];
+    // multiGroup — level3 only: 4 terms spanning TWO distinct surd families
+    // once simplified (p and q), testing sorting/grouping across families
+    // rather than just spotting one pair. Each non-leading term independently
+    // respects the Operation restriction, so a "mixed" worksheet can show a
+    // genuine blend of + and - within one expression.
+    const p = randomSquareFree(2, 15);
+    let q = randomSquareFree(2, 15);
+    while (q === p) q = randomSquareFree(2, 15);
+    const [k1, k2, k3, k4] = [2, 3, 4, 5].sort(() => Math.random() - 0.5);
+    const signedTerm = (k: number, base: number): SurdTerm => {
+      const sgn = pickActive(ms, ADDSUB_OPERATION_MS.options) === "add" ? 1 : -1;
+      return { coeff: sgn * randInt(1, 3), radicand: k * k * base };
+    };
+    terms = [
+      { coeff: randInt(1, 3), radicand: k1 * k1 * p },
+      signedTerm(k2, p),
+      signedTerm(k3, q),
+      signedTerm(k4, q),
+    ];
   }
 
   // Surds is where this technique is first taught, not a downstream tool
