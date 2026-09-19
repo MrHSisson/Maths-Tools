@@ -166,4 +166,12 @@ export interface ToolShellDefaults {
    *  e.g. [3, 2] for a 5-sub-tool tool. Each number is how many buttons that
    *  row holds, in order; omit for the default single row (unaffected). */
   toolTabRows?: number[];
+  /** Worked Example mode: skip the separate green answer box after the last
+   *  working step. Only opt a tool in once its last working step already
+   *  states the exact final answer in every case (verify with a stress test
+   *  across every sub-tool/level — a mismatched last step would otherwise go
+   *  unnoticed with no box left to catch it). Passed straight through as
+   *  WorkedExampleSteps' own `hideAnswerStep` prop; defaults to false so
+   *  every tool that hasn't been audited is unaffected. */
+  hideAnswerStep?: boolean;
 }

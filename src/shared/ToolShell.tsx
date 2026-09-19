@@ -223,6 +223,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const comingSoon = defaults.comingSoonLevels ?? [];
   const hideFontControls = defaults.hideFontControls ?? false;
   const workedExampleLayout = defaults.workedExampleLayout ?? "single";
+  const hideAnswerStep = defaults.hideAnswerStep ?? false;
   const [difficulty, setDifficulty] = useState<DifficultyLevel>(urlInit.level);
   const setDifficultyGuarded = (v: DifficultyLevel) => { if (!comingSoon.includes(v)) setDifficulty(v); };
 
@@ -1250,6 +1251,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                 onOpenSkill={parkedMode ? setOpenSkillId : undefined}
                 resetKey={workedResetNonce}
                 layout={workedExampleLayout}
+                hideAnswerStep={hideAnswerStep}
               />
             </div>
           )}

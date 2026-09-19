@@ -700,7 +700,11 @@ export default function App() {
       config={TOOL_CONFIG}
       infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
-      defaults={{ numQuestions: 12, numColumns: 3, workedExampleLayout: "stacked", toolTabRows: [3, 2] }}
+      // hideAnswerStep: every sub-tool's last working step already states the
+      // exact final answer (verified across 300 draws per sub-tool/level in a
+      // scratch stress test — see the commit that added this flag), so the
+      // separate green answer box would just repeat it. Piloted here first.
+      defaults={{ numQuestions: 12, numColumns: 3, workedExampleLayout: "stacked", toolTabRows: [3, 2], hideAnswerStep: true }}
     />
   );
 }

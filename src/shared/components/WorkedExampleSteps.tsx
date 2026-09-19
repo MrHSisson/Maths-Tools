@@ -251,10 +251,22 @@ export const WorkedExampleSteps = ({
   // classes so the unstacked path is untouched pixel-for-pixel — every live
   // tool's single card, and Show All, keep rendering through the exact same
   // classes as before this existed.
+  //
+  // When hideAnswerStep is set, there's no separate answer box after this —
+  // the last step's own value IS the answer, so it needs SOME signal that
+  // you've landed. Deliberately light-touch rather than the old box's bold
+  // green text: a soft tint and a thin accent rule, not a shout — the step's
+  // own wording (an "already in simplest form" / "write the final answer"
+  // style label, by authoring convention) is doing most of the work already.
   const renderStep = (s: WorkingStep, i: number, reveal?: number, stacked?: boolean) => {
     const custom = stepRenderer ? stepRenderer(s, colorScheme, qoSnapshot) : null;
+    const isFinalAnswerStep = hideAnswerStep && i === totalSteps - 1;
     return (
-      <div key={i} className="rounded-xl p-6" style={{ backgroundColor: stepBg, ...(stacked ? { padding: "1.35rem" } : null) }}>
+      <div key={i} className="rounded-xl p-6" style={{
+        backgroundColor: isFinalAnswerStep ? "#eefcf3" : stepBg,
+        borderLeft: isFinalAnswerStep ? "4px solid #22c55e" : undefined,
+        ...(stacked ? { padding: "1.35rem" } : null),
+      }}>
         <h4 className="text-xl font-bold mb-2" style={{ color: "#000", ...(stacked ? { fontSize: "1.125rem", lineHeight: "1.575rem", marginBottom: "0.45rem" } : null) }}>Step {i + 1}</h4>
         <div className="text-2xl" style={{ color: "#000", ...(stacked ? { fontSize: "1.35rem", lineHeight: "1.8rem" } : null) }}>
           {custom ?? (s.type === "tStep"
@@ -303,10 +315,16 @@ export const WorkedExampleSteps = ({
     <div className="space-y-2">
       {working.slice(0, upTo + 1).map((s, i) => {
         const isCurrent = i === upTo;
+        const isFinalAnswerStep = hideAnswerStep && i === totalSteps - 1;
         const content = renderStep(s, i, isCurrent ? activeReveal : undefined, true);
         if (isCurrent) {
+          // The blue "current position" ring means "here's where you are,
+          // there's more ahead" — once this IS the final answer step (no more
+          // ahead, Next is disabled), that ring stops being true. renderStep's
+          // own tint/accent already marks it as landed, so this card gets no
+          // ring at all rather than mixing two different signals.
           return (
-            <EnterCard key={i} style={{ borderRadius: 12, boxShadow: "0 0 0 2px #1e3a8a" }}>
+            <EnterCard key={i} style={isFinalAnswerStep ? { borderRadius: 12 } : { borderRadius: 12, boxShadow: "0 0 0 2px #1e3a8a" }}>
               {content}
             </EnterCard>
           );
