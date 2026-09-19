@@ -253,18 +253,19 @@ export const WorkedExampleSteps = ({
   // classes as before this existed.
   //
   // When hideAnswerStep is set, there's no separate answer box after this —
-  // the last step's own value IS the answer, so it needs SOME signal that
-  // you've landed. Reuses the same ring technique stackedSteps already uses
-  // to mark the "current" card (a 2px box-shadow ring), just in green instead
-  // of that ring's blue — one consistent visual language ("a ring means this
-  // card matters right now") rather than a second, different-looking accent.
+  // the last step's own value IS the answer. Every step gets a thin ring
+  // (blue, the site's standard accent) so the working reads as one
+  // consistent sequence of ringed cards; the final one — the answer
+  // container — switches to green instead, the one card that's a different
+  // kind of thing from the rest. Scoped to hideAnswerStep tools only: every
+  // other tool's steps are untouched (no ring at all), unaffected by this.
   const renderStep = (s: WorkingStep, i: number, reveal?: number, stacked?: boolean) => {
     const custom = stepRenderer ? stepRenderer(s, colorScheme, qoSnapshot) : null;
     const isFinalAnswerStep = hideAnswerStep && i === totalSteps - 1;
     return (
       <div key={i} className="rounded-xl p-6" style={{
         backgroundColor: stepBg,
-        boxShadow: isFinalAnswerStep ? "0 0 0 2px #16a34a" : undefined,
+        boxShadow: !hideAnswerStep ? undefined : isFinalAnswerStep ? "0 0 0 2px #16a34a" : "0 0 0 2px #1e3a8a",
         ...(stacked ? { padding: "1.35rem" } : null),
       }}>
         <h4 className="text-xl font-bold mb-2" style={{ color: "#000", ...(stacked ? { fontSize: "1.125rem", lineHeight: "1.575rem", marginBottom: "0.45rem" } : null) }}>Step {i + 1}</h4>
@@ -304,9 +305,10 @@ export const WorkedExampleSteps = ({
   );
 
   // Stacked layout: every step (current and past) renders at the same ~90%
-  // "stacked" size — only opacity, plus the ring on the current one, mark it
-  // as past, so nothing resizes as the list grows or you step back through it.
-  // The current card is the one that just newly entered the list on a forward
+  // "stacked" size — only opacity marks a step as past (plus, for a
+  // hideAnswerStep tool, renderStep's own ring is dimmed along with it), so
+  // nothing resizes as the list grows or you step back through it. The
+  // current card is the one that just newly entered the list on a forward
   // press (going back re-enters an already-mounted card, which just changes
   // its opacity/ring like any other prop change — no re-mount, no re-animate)
   // — see EnterCard's own comment for why that one needs a mount transition
@@ -315,16 +317,16 @@ export const WorkedExampleSteps = ({
     <div className="space-y-2">
       {working.slice(0, upTo + 1).map((s, i) => {
         const isCurrent = i === upTo;
-        const isFinalAnswerStep = hideAnswerStep && i === totalSteps - 1;
         const content = renderStep(s, i, isCurrent ? activeReveal : undefined, true);
         if (isCurrent) {
-          // The blue "current position" ring means "here's where you are,
-          // there's more ahead" — once this IS the final answer step (no more
-          // ahead, Next is disabled), that ring stops being true. renderStep
-          // already applies its own green ring in that case, so this wrapper
-          // adds no ring of its own rather than stacking two different colours.
+          // When hideAnswerStep is on, renderStep already rings every card
+          // itself (blue normally, green for the final answer step) — this
+          // wrapper adds none of its own, avoiding a doubled or clashing
+          // ring. Every other stacked-layout tool (hideAnswerStep off, e.g.
+          // the Technique Library preview) keeps the original behaviour:
+          // only the current card gets a ring, applied here.
           return (
-            <EnterCard key={i} style={isFinalAnswerStep ? { borderRadius: 12 } : { borderRadius: 12, boxShadow: "0 0 0 2px #1e3a8a" }}>
+            <EnterCard key={i} style={hideAnswerStep ? { borderRadius: 12 } : { borderRadius: 12, boxShadow: "0 0 0 2px #1e3a8a" }}>
               {content}
             </EnterCard>
           );
