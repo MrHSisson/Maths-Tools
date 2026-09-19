@@ -352,7 +352,7 @@ const INFO_SECTIONS: InfoSection[] = [
   { title: "Simplifying Surds", icon: "√", content: [
     { label: "Overview", detail: "Write a surd with the smallest possible number under the root, by extracting the largest square factor. A toggleable 'perfect square' case (e.g. √16 = 4) is included as a rare, naturally-occurring trap rather than a coin flip — a check students often forget once they're used to general surd manipulation." },
     { label: "Level 1 — Green", detail: "Extracting a value up to 10 (e.g. √50 = 5√2, up to 10√k), radicand capped at 400. Perfect squares (√16 = 4) appear rarely (~8%) when included, not on every other question." },
-    { label: "Level 2 — Yellow", detail: "Same friendly radicand range as Level 1, but now always with a coefficient (2-9) to carry through (e.g. 7√50 = 35√2) — taking out a factor and multiplying it into an existing coefficient, on numbers that are otherwise already familiar." },
+    { label: "Level 2 — Yellow", detail: "Same friendly radicand range as Level 1, but now always with a coefficient (2-16) to carry through (e.g. 7√50 = 35√2) — taking out a factor and multiplying it into an existing coefficient, on numbers that are otherwise already familiar." },
     { label: "Level 3 — Red", detail: "Radicand always past 400, from curated extraction values whose square has more than one smaller square factor to notice (e.g. 12² = 144 = 16×9, or 6² = 36 = 4×9) — never a bare prime squared, which hides nothing. The coefficient (2-6) is a genuine choice here, toggle-able in Question Options." },
   ]},
   { title: "Adding & Subtracting", icon: "+", content: [
@@ -427,7 +427,7 @@ function generateSimplify(level: DifficultyLevel, ms: Record<string, boolean>): 
   // choice rather than always-on, so its own range stays modest (2-6) —
   // the radicand size is what makes Level 3 harder, not the coefficient.
   const coeff = level === "level1" ? 1
-    : level === "level2" ? randInt(2, 9)
+    : level === "level2" ? randInt(2, 16)
     : pickActive(ms, SIMPLIFY_COEFF_L3_MS.options) === "withCoeff" ? randInt(2, 6) : 1;
 
   // "full" shows the coefficient-multiply as its own step (see

@@ -107,7 +107,7 @@ in Surds before any wider rollout:
   `src/shared/components/QOPopovers.tsx`'s `isCycleGroup`) — deliberately *not* `weight`, which
   would have pulled the pair into Smart Progressor balancing and forced the trap toward ~50/50
   instead of staying genuinely rare; `cycleDisplay` gets the same button with no such coupling.
-  Level 2 widened its coefficient range (2-9, up from 2-6) while keeping the same friendly
+  Level 2 widened its coefficient range (2-16, up from 2-6) while keeping the same friendly
   ≤400 radicand range as Level 1 — the new skill is carrying a coefficient through, not bigger
   numbers. Level 3 dropped the "already simplest form" trap entirely, replaced by a genuine
   weighted `withCoeff`/`none` QO choice (`SIMPLIFY_COEFF_L3_MS`), and its radicand is now always
@@ -120,6 +120,33 @@ in Surds before any wider rollout:
   coefficient spans the full new range; the rare-trap pool stays ~8% rather than drifting toward
   even; and the `hideAnswerStep` invariant still holds. Confirmed live via the dev server — both
   pools render as the intended single cycle button, no console errors.
+- **Fixed a real layout bug in the "stacked" Worked Example: a tall empty box below short
+  examples.** `WorkedExampleSteps`' stacked layout previously owned a bounded, internally-scrolling
+  body with the nav pinned as a flex-shrink-0 footer, sized against a parent that `ToolShell` forced
+  to (at least) a full viewport height (`useFullHeightShell`) purely so that bounded box would have
+  something real to size against. For a short example (most Surds techniques are 1-3 steps), the
+  scrolling body still stretched to fill all that forced height, leaving a large blank rectangle
+  between the last card and the pinned footer — reported live via a screenshot showing exactly this
+  under Surds Level 2. Fixed by dropping the bounded/internal-scroll approach entirely: the stacked
+  card list and footer now flow with their own natural height (no `height:100%`, no
+  `overflow-y-auto`), and the footer-position `window.scrollBy` compensation effect that already
+  existed in the file (its own comment already described this as the intended behaviour: "the page
+  itself grows and scrolls instead") now does the actual work of keeping the footer visually
+  anchored as the list grows or shrinks, instead of sitting unused alongside a conflicting
+  scrollbox. `ToolShell`'s `useFullHeightShell` mechanism (the forced `minHeight: 100vh` chain) is
+  now unnecessary and removed; `TechniquePreviewPage.tsx` (the Technique Library's preview, sharing
+  the same component) simplified the same way. Verified live: a short 2-step Simplify example now
+  ends its card exactly at the content with no gap; a long 7-step Rationalise example (dev mode,
+  stepped one beat at a time) still keeps its nav visibly anchored on each press, confirmed by
+  reading `window.scrollY` climbing in lockstep with the footer's screen position across 8 presses.
+- **Added the missing "split into two separate roots" fragment in `simplifySurdSteps`.** The
+  factor-split chain jumped straight from `√(a×b)` to the extracted `c√b`, skipping the intermediate
+  `= √a × √b` a teacher would actually write on the board (e.g. `√50 = √25×2 = √25×√2 = 5√2`) —
+  flagged live from a Level 2 worked example screenshot. Added the missing fragment to the
+  `coeff===1`, `standard` and `full` branches (brief stays a single line, as designed). Verified
+  with an 8,000-draw stress test across all three Simplify levels: every generated fragment still
+  renders under KaTeX, and the `hideAnswerStep` invariant (last fragment's value matches the
+  question's computed answer) still holds.
 
 Everything above is scoped to Surds only (`hideAnswerStep`, `workedExampleLayout: "stacked"`,
 `toolTabRows` are all opt-in `ToolShellDefaults`) — every other tool is pixel-identical to before,

@@ -64,8 +64,8 @@ export function TechniquePreviewPage({ def }: { def: TechniquePreviewPageDef }) 
   const lastLatex = steps.length ? steps[steps.length - 1].latex : "";
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-      <div className="bg-blue-900 shadow-lg flex-shrink-0">
+    <div className="min-h-screen" style={{ display: "flex", flexDirection: "column" }}>
+      <div className="bg-blue-900 shadow-lg">
         <div className="max-w-4xl mx-auto px-8 py-4 flex justify-between items-center">
           <button onClick={() => { window.location.href = "/techniques"; }}
             className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors">
@@ -73,8 +73,8 @@ export function TechniquePreviewPage({ def }: { def: TechniquePreviewPageDef }) 
           </button>
         </div>
       </div>
-      <div className="flex-1 flex flex-col" style={{ backgroundColor: "#f5f3f0", minHeight: 0 }}>
-        <div className="max-w-4xl mx-auto w-full px-8 pt-8 flex-shrink-0">
+      <div style={{ backgroundColor: "#f5f3f0" }}>
+        <div className="max-w-4xl mx-auto w-full px-8 pt-8">
           <h1 className="text-2xl font-bold" style={{ color: "#000" }}>{def.title}</h1>
           {def.signature && <code className="text-xs text-gray-400 font-mono">{def.signature}</code>}
           <p className="text-gray-500 mt-2 mb-4">{def.desc}</p>
@@ -83,8 +83,8 @@ export function TechniquePreviewPage({ def }: { def: TechniquePreviewPageDef }) 
             {pillGroup(layout, ["single", "stacked"] as const, LAYOUT_META, setLayout)}
           </div>
         </div>
-        <div className="max-w-4xl mx-auto w-full px-8 pb-8 flex-1" style={{ minHeight: 0 }}>
-          <div className="rounded-xl shadow-lg p-6 h-full flex flex-col" style={{ backgroundColor: getQuestionBg("default"), minHeight: 0 }}>
+        <div className="max-w-4xl mx-auto w-full px-8 pb-8">
+          <div className="rounded-xl shadow-lg p-6" style={{ backgroundColor: getQuestionBg("default") }}>
             <WorkedExampleSteps
               working={steps}
               renderAnswer={() => <MathRenderer latex={lastLatex} />}

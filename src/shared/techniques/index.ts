@@ -236,6 +236,7 @@ export function simplifySurdSteps(radicand: number, coeff: number = 1, grain: Gr
     return [mStep("Find the largest square factor and split the root:", [
       `\\sqrt{${radicand}}`,
       `= \\sqrt{${sqFactor} \\times ${s.radicand}}`,
+      `= \\sqrt{${sqFactor}} \\times \\sqrt{${s.radicand}}`,
       `= ${s.coeff}\\sqrt{${s.radicand}}`,
     ])];
   }
@@ -244,6 +245,7 @@ export function simplifySurdSteps(radicand: number, coeff: number = 1, grain: Gr
     return [mStep("Find the largest square factor and split the root:", [
       `${coeff}\\sqrt{${radicand}}`,
       `= ${coeff}\\sqrt{${sqFactor} \\times ${s.radicand}}`,
+      `= ${coeff} \\times \\sqrt{${sqFactor}} \\times \\sqrt{${s.radicand}}`,
       `= ${coeff} \\times ${s.coeff}\\sqrt{${s.radicand}}`,
       `= ${coeff * s.coeff}\\sqrt{${s.radicand}}`,
     ])];
@@ -254,6 +256,7 @@ export function simplifySurdSteps(radicand: number, coeff: number = 1, grain: Gr
     mStep("Find the largest square factor and split the root:", [
       `\\sqrt{${radicand}}`,
       `= \\sqrt{${sqFactor} \\times ${s.radicand}}`,
+      `= \\sqrt{${sqFactor}} \\times \\sqrt{${s.radicand}}`,
       `= ${s.coeff}\\sqrt{${s.radicand}}`,
     ]),
     mStep("Multiply by the coefficient:", [

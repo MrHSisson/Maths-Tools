@@ -116,16 +116,16 @@ export interface WorkedExampleStepsProps {
    *  pair, or an incrementing counter. */
   resetKey: string | number;
   /** Step-by-Step's card layout. "single" (default) replaces the card each
-   *  press — every live tool today, laid out inline (no internal scrolling —
-   *  the page/panel around it scrolls, exactly as before this prop existed).
-   *  "stacked" builds a vertical list instead, like Show All arrived at one
-   *  press at a time: earlier steps stay visible (dimmed), the current one is
-   *  highlighted. Because that list can grow taller than its container,
-   *  "stacked" owns its own bounded, internally-scrolling layout with the nav
-   *  pinned as a fixed footer — give it a parent with a real height (flex
-   *  child, or an explicit height) for that to size correctly. Exploratory —
-   *  not wired into any real tool yet, only the Technique Library preview.
-   */
+   *  press — laid out inline, no internal scrolling; the page/panel around
+   *  it scrolls. "stacked" builds a vertical list instead, like Show All
+   *  arrived at one press at a time: earlier steps stay visible (dimmed),
+   *  the current one is highlighted. It grows and shrinks with the list's
+   *  own natural height — no forced/bounded parent height, so a short
+   *  example (most techniques) never leaves a tall empty gap below the
+   *  cards. The nav footer sits right after the last card and moves down
+   *  the page as the list grows; the window-scroll-compensation effect
+   *  below keeps it visually anchored instead of a pinned/internally-
+   *  scrolling box. Used by Surds and the Technique Library preview. */
   layout?: "single" | "stacked";
   /** When true, there is no separate terminal "Answer" beat/card after the
    *  last working step — Step-by-Step ends on the last step itself (no extra
@@ -389,23 +389,23 @@ export const WorkedExampleSteps = ({
     );
 
     if (layout === "stacked") {
-      // Bounded-height column: scrollable body on top, nav fixed as a footer
-      // underneath it — always visible, never requires scrolling down to
-      // reach "Next" or up to see where you are. Needs a parent that gives it
-      // real height (a flex child works, see the prop doc above).
+      // Natural height: the card list and footer just flow one after the
+      // other, growing/shrinking with however many steps are on screen — no
+      // forced parent height, no internal scrollbox. The footer-position
+      // effect above compensates by scrolling the window when the footer
+      // moves, so it still reads as "pinned" without pre-reserving space
+      // that's empty for a short (1-3 step) example.
       return (
-        <div className="flex flex-col" style={{ height: "100%", minHeight: 0 }}>
-          <div className="flex-1 overflow-y-auto p-1" style={{ minHeight: 0 }}>
-            {!atAnswer ? stackedSteps(stepIdx, fragIdx) : (
-              <div className="space-y-2">
-                <div className="space-y-2" style={{ opacity: 0.7 }}>
-                  {working.map((s, i) => renderStep(s, i, undefined, true))}
-                </div>
-                {answerBox("", undefined, true)}
+        <div className="p-1">
+          {!atAnswer ? stackedSteps(stepIdx, fragIdx) : (
+            <div className="space-y-2">
+              <div className="space-y-2" style={{ opacity: 0.7 }}>
+                {working.map((s, i) => renderStep(s, i, undefined, true))}
               </div>
-            )}
-          </div>
-          <div ref={footerRef} className="flex-shrink-0 pt-4 mt-4 border-t" style={{ borderColor: "rgba(0,0,0,0.08)" }}>
+              {answerBox("", undefined, true)}
+            </div>
+          )}
+          <div ref={footerRef} className="pt-4 mt-4 border-t" style={{ borderColor: "rgba(0,0,0,0.08)" }}>
             {navRow}
             <div className="mt-3">{dotStrip}</div>
           </div>
