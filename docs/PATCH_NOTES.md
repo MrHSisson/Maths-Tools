@@ -28,6 +28,27 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-20 — Narrow-viewport: code review fixes (stuck reveal, mode flash, header dedup)
+`src/shared/ToolShell.tsx`. `/code-review` on the session's diff caught two real bugs in the narrow
+layout and one worthwhile simplification, all fixed:
+- **Stuck per-card reveal.** Tapping a Worksheet card while "Show All" was already on wrote it into
+  `narrowRevealed` even though it added nothing visible — so after "Hide All" turned
+  `showWorksheetAnswers` back off, that one card stayed revealed with no visual explanation.
+  `toggleNarrowReveal` is now a no-op while `showWorksheetAnswers` is true.
+- **Mode-toggle flash on load.** A narrow-viewport page load with no `mode=` URL param initialized
+  `mode` to `"whiteboard"` (the default), which matches neither narrow toggle button — so on the
+  very first paint, *neither* "Worked Example" nor "Worksheet" read as selected until a correcting
+  `useEffect` fired a tick later. `urlInit.mode`'s fallback now seeds `"single"` directly when the
+  page is loading narrow, so the right button is highlighted from the first frame.
+- **Header duplication.** The narrow and desktop shells each had their own copy of the Home-button/
+  hamburger-menu header, sized differently. Extracted into one `renderNavBar(compact)` used by both,
+  so a future header change can't land in one layout and be forgotten in the other.
+- The review also surfaced a pre-existing, unrelated bug in `WorkedExampleSteps`' stacked layout (a
+  keying issue that remounts/re-animates a card on Back instead of just updating it) — left alone
+  since it predates this session's narrow-view work and is a separate fix.
+- Re-verified live with Playwright: the highlighted-button-on-first-paint and no-stuck-reveal-after-
+  Hide-All behaviours both confirmed; `npm run build`/`npm test` clean.
+
 ## 2026-09-20 — Narrow-viewport: shrink WorkedExampleSteps' own step text
 `src/shared/components/WorkedExampleSteps.tsx`, `src/shared/ToolShell.tsx`. Live feedback (a real-
 device screenshot of `Surds`, which uses `workedExampleLayout: "stacked"`) showed the step

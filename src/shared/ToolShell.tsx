@@ -183,7 +183,11 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     };
     return {
       tool: toolParam && toolKeys.includes(toolParam) ? toolParam : toolKeys[0],
-      mode: modeMap[p.get("mode") ?? ""] ?? "whiteboard",
+      // On a narrow first paint with no explicit mode= param, seed "single"
+      // directly rather than "whiteboard" — narrow has no Whiteboard mode, so
+      // defaulting to "whiteboard" here left neither narrow toggle button
+      // highlighted for one frame until the mode-coercion effect corrected it.
+      mode: modeMap[p.get("mode") ?? ""] ?? (narrowInit ? "single" : "whiteboard"),
       builderRequested: p.get("mode") === "builder",
       level: levelParam && !(defaults.comingSoonLevels ?? []).includes(levelParam) ? levelParam : "level1" as DifficultyLevel,
       vars: toggles(p.get("vars")),
@@ -1430,6 +1434,26 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     );
   };
 
+  // Shared by both the narrow and desktop shells below — same Home button +
+  // hamburger menu, just sized down (compact=true) for the narrow layout's
+  // tighter chrome. One definition so a future change to the header (a new
+  // menu item, an info-modal tweak) can't land in one layout and not the other.
+  const renderNavBar = (compact: boolean) => (
+    <div className="bg-blue-900 shadow-lg">
+      <div className={compact ? "px-4 py-3 flex justify-between items-center" : "max-w-6xl mx-auto px-8 py-4 flex justify-between items-center"}>
+        <button onClick={() => { window.location.href = "/"; }} className={compact ? "flex items-center gap-1.5 text-white hover:bg-blue-800 px-2.5 py-1.5 rounded-lg transition-colors" : "flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors"}>
+          <Home size={compact ? 18 : 24} /><span className={compact ? "font-semibold text-sm" : "font-semibold text-lg"}>Home</span>
+        </button>
+        <div className="relative">
+          <button onClick={() => setIsMenuOpen(!isMenuOpen)} className={compact ? "text-white hover:bg-blue-800 p-1.5 rounded-lg transition-colors" : "text-white hover:bg-blue-800 p-2 rounded-lg transition-colors"}>
+            {isMenuOpen ? <X size={compact ? 22 : 28} /> : <Menu size={compact ? 22 : 28} />}
+          </button>
+          {isMenuOpen && <MenuDropdown colorScheme={colorScheme} setColorScheme={setColorScheme} onClose={() => setIsMenuOpen(false)} onOpenInfo={() => setIsInfoOpen(true)} />}
+        </div>
+      </div>
+    </div>
+  );
+
   // Narrow layout: Worked Example + a light, in-app Worksheet list — no
   // Whiteboard/Teach, no differentiated builder, no print-oriented grid.
   // Built entirely from state/handlers already defined above, so it works for
@@ -1438,27 +1462,21 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const renderNarrowShell = () => {
     const toolName = config.tools[currentTool].name;
     const levelLabel = LV_LABELS[difficulty];
-    const toggleNarrowReveal = (idx: number) => setNarrowRevealed(prev => {
-      const next = new Set(prev);
-      if (next.has(idx)) next.delete(idx); else next.add(idx);
-      return next;
-    });
+    const toggleNarrowReveal = (idx: number) => {
+      // A no-op while "Show All" is on — every card already reads as revealed
+      // via showWorksheetAnswers, so recording it here too would let it stay
+      // stuck revealed after "Hide All" turns showWorksheetAnswers back off.
+      if (showWorksheetAnswers) return;
+      setNarrowRevealed(prev => {
+        const next = new Set(prev);
+        if (next.has(idx)) next.delete(idx); else next.add(idx);
+        return next;
+      });
+    };
 
     return (
       <div>
-        <div className="bg-blue-900 shadow-lg">
-          <div className="px-4 py-3 flex justify-between items-center">
-            <button onClick={() => { window.location.href = "/"; }} className="flex items-center gap-1.5 text-white hover:bg-blue-800 px-2.5 py-1.5 rounded-lg transition-colors">
-              <Home size={18} /><span className="font-semibold text-sm">Home</span>
-            </button>
-            <div className="relative">
-              <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-white hover:bg-blue-800 p-1.5 rounded-lg transition-colors">
-                {isMenuOpen ? <X size={22} /> : <Menu size={22} />}
-              </button>
-              {isMenuOpen && <MenuDropdown colorScheme={colorScheme} setColorScheme={setColorScheme} onClose={() => setIsMenuOpen(false)} onOpenInfo={() => setIsInfoOpen(true)} />}
-            </div>
-          </div>
-        </div>
+        {renderNavBar(true)}
         {isInfoOpen && <InfoModal infoSections={infoSections} onClose={() => setIsInfoOpen(false)} />}
         {openSkillId && <SkillOverlay skillId={openSkillId} onClose={() => setOpenSkillId(null)} />}
 
@@ -1601,21 +1619,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
 
   return (
     <div>
-      <div className="bg-blue-900 shadow-lg">
-        <div className="max-w-6xl mx-auto px-8 py-4 flex justify-between items-center">
-          <button onClick={() => { window.location.href = "/"; }} className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors">
-            <Home size={24} /><span className="font-semibold text-lg">Home</span>
-          </button>
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-white hover:bg-blue-800 p-2 rounded-lg transition-colors">
-                {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
-              </button>
-              {isMenuOpen && <MenuDropdown colorScheme={colorScheme} setColorScheme={setColorScheme} onClose={() => setIsMenuOpen(false)} onOpenInfo={() => setIsInfoOpen(true)} />}
-            </div>
-          </div>
-        </div>
-      </div>
+      {renderNavBar(false)}
       {isInfoOpen && <InfoModal infoSections={infoSections} onClose={() => setIsInfoOpen(false)} />}
       {openSkillId && <SkillOverlay skillId={openSkillId} onClose={() => setOpenSkillId(null)} />}
       <div className="min-h-screen p-8" style={{ backgroundColor: "#f5f3f0" }}>
