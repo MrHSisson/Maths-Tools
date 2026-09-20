@@ -1290,6 +1290,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                 resetKey={workedResetNonce}
                 layout={workedExampleLayout}
                 hideAnswerStep={hideAnswerStep}
+                compact={compact}
               />
             </div>
           )}

@@ -28,6 +28,20 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-20 — Narrow-viewport: shrink WorkedExampleSteps' own step text
+`src/shared/components/WorkedExampleSteps.tsx`, `src/shared/ToolShell.tsx`. Live feedback (a real-
+device screenshot of `Surds`, which uses `workedExampleLayout: "stacked"`) showed the step
+card's own text — "Step N" heading, working line, revealed answer — still rendering at its
+desktop/"stacked" size on a phone, oversized next to the rest of the already-shrunk narrow chrome.
+The previous session's `renderWorkedExample(compact)` flag only trimmed the *outer* wrapper padding;
+it never reached `WorkedExampleSteps`, which sizes its own cards internally. Added a new `compact`
+prop on `WorkedExampleStepsProps` (independent of `layout`/its own `stacked` sizing, and always
+wins when both apply) that shrinks the step heading/body font size and card padding further, applied
+in every rendering path — Show All (the real end-user default), single-step navigation, and stacked
+— so it's not limited to the dev-gated step-through mode the screenshot happened to show. Verified
+live at 375px against `Surds` in both the dev-mode step-through view and, more importantly, the
+default Show-All view a real user sees; `npm run build`/`npm test` clean.
+
 ## 2026-09-20 — Narrow-viewport polish: smaller sizing, centered worksheet controls, drop PDF button
 `src/shared/ToolShell.tsx`, `src/components/LandingPage.tsx`. Follow-up to the same day's narrow
 layout, after live feedback that it read as too zoomed in:

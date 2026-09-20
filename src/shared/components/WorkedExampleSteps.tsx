@@ -138,11 +138,20 @@ export interface WorkedExampleStepsProps {
    *  is unaffected. renderAnswer/answerFontClass are simply never invoked
    *  when this is true. */
   hideAnswerStep?: boolean;
+  /** Shrinks each step card's own text/padding further than even the
+   *  "stacked" layout's own reduced size — for ToolShell's narrow-viewport
+   *  layout, where the desktop/whiteboard-sized step text reads too large
+   *  next to the rest of the compact chrome. Independent of `layout`/the
+   *  internal `stacked` sizing: applies to every rendering path (Show All,
+   *  single-step navigation, and stacked), and takes priority over the
+   *  "stacked" size when both apply. Defaults to false — every existing
+   *  (desktop) caller is unaffected. */
+  compact?: boolean;
 }
 
 export const WorkedExampleSteps = ({
   working, renderAnswer, colorScheme, answerFontClass, stepRenderer, qoSnapshot,
-  stepThroughEnabled, onOpenSkill, resetKey, layout = "single", hideAnswerStep = false,
+  stepThroughEnabled, onOpenSkill, resetKey, layout = "single", hideAnswerStep = false, compact = false,
 }: WorkedExampleStepsProps) => {
   const [steppedMode, setSteppedMode] = useState(true);
   const [stepIdx, setStepIdx] = useState(0);
@@ -263,14 +272,22 @@ export const WorkedExampleSteps = ({
   const renderStep = (s: WorkingStep, i: number, reveal?: number, stacked?: boolean) => {
     const custom = stepRenderer ? stepRenderer(s, colorScheme, qoSnapshot) : null;
     const isFinalAnswerStep = hideAnswerStep && i === totalSteps - 1;
+    // compact (narrow viewport) always wins over the "stacked" layout's own
+    // reduced size — the two are independent axes, and narrow needs smaller
+    // text than stacked's desktop-oriented reduction already gives it.
+    const padStyle = compact ? { padding: "1rem" } : stacked ? { padding: "1.35rem" } : null;
+    const headerStyle = compact
+      ? { fontSize: "1rem", lineHeight: "1.4rem", marginBottom: "0.35rem" }
+      : stacked ? { fontSize: "1.125rem", lineHeight: "1.575rem", marginBottom: "0.45rem" } : null;
+    const bodyStyle = compact ? { fontSize: "1.05rem", lineHeight: "1.5rem" } : stacked ? { fontSize: "1.35rem", lineHeight: "1.8rem" } : null;
     return (
       <div key={i} className="rounded-xl p-6" style={{
         backgroundColor: stepBg,
         boxShadow: isFinalAnswerStep ? "0 0 0 2px #16a34a" : undefined,
-        ...(stacked ? { padding: "1.35rem" } : null),
+        ...padStyle,
       }}>
-        <h4 className="text-xl font-bold mb-2" style={{ color: "#000", ...(stacked ? { fontSize: "1.125rem", lineHeight: "1.575rem", marginBottom: "0.45rem" } : null) }}>Step {i + 1}</h4>
-        <div className="text-2xl" style={{ color: "#000", ...(stacked ? { fontSize: "1.35rem", lineHeight: "1.8rem" } : null) }}>
+        <h4 className="text-xl font-bold mb-2" style={{ color: "#000", ...headerStyle }}>Step {i + 1}</h4>
+        <div className="text-2xl" style={{ color: "#000", ...bodyStyle }}>
           {custom ?? (s.type === "tStep"
             ? <span><SkillLabel text={s.plain} onOpenSkill={onOpenSkill} /></span>
             : s.type === "mStep"
@@ -350,8 +367,8 @@ export const WorkedExampleSteps = ({
   // production text-3xl) — only used in the stacked layout's answer view, so
   // every other caller (every live tool, Show All) is unaffected.
   const answerBox = (extraClass: string, ref?: React.Ref<HTMLDivElement>, stacked?: boolean) => (
-    <div ref={ref} className={`rounded-xl p-6 text-center ${extraClass}`} style={{ backgroundColor: stepBg }}>
-      <div className={stacked ? "font-bold" : `${answerFontClass} font-bold`} style={{ color: "#166534", ...(stacked ? { fontSize: "1.35rem" } : null) }}>
+    <div ref={ref} className={`rounded-xl ${compact ? "p-4" : "p-6"} text-center ${extraClass}`} style={{ backgroundColor: stepBg }}>
+      <div className={compact || stacked ? "font-bold" : `${answerFontClass} font-bold`} style={{ color: "#166534", ...(compact ? { fontSize: "1.05rem" } : stacked ? { fontSize: "1.35rem" } : null) }}>
         <FitWidth>{renderAnswer()}</FitWidth>
       </div>
     </div>
