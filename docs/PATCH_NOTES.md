@@ -28,6 +28,31 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-20 — Surds: optional options default off, Divide's working steps deepened
+`src/tools/Number/Surds.tsx`. Feedback on the Multiply/Divide redesign: (1) optional content
+(algebraic coefficients, the two rare traps) was defaulting *on*, so a fresh worksheet silently
+included a 50/50 mix of x-carrying questions nobody asked for, plus a smaller trap rate; (2) Divide's
+working out was noticeably shallower than Multiply's — one folded step straight from the question to
+the final answer, skipping the actual mechanics Multiply always shows.
+- **Defaults**: `MULDIV_ALGEBRAIC_MS`'s "algebraic" option, and both rare-trap pools'
+  (`MULDIV_RADICAND_L1_MS`/`MULDIV_RADICAND_L2_MS`) non-"Standard" option, now default `false`. A
+  fresh Level 1/2 worksheet is plain multiply/divide practice; the cycle buttons start at "Off" and a
+  teacher opts into algebra or the traps deliberately, rather than getting them baked into ~50%
+  (algebraic) or ~10-20% (traps) of questions with no visible signal why. Verified against
+  `ToolShell`'s actual initialisation code (`init[k][o.value] = o.defaultActive` for every option,
+  not an empty object) — a naive direct-call test with `{}` misleadingly shows the OLD ~50% rate,
+  since `pickActive`/`pickRare` treat an absent key as active; the real app never calls
+  `generateQuestion` with an empty record, only after `ToolShell` seeds every option explicitly.
+- **Divide's working now matches Multiply's own granularity.** New `divideUnderRootSteps` (plain
+  numeric) and a rewritten `algebraicDivideSteps` (x-carrying) both now go "Divide the coefficients"
+  → "Divide the numbers under the root" → combine or delegate to `simplifySurdSteps`'s full extraction
+  chain — the exact move-for-move structure `expandSurdBracketsSteps`'s monomial branch already gives
+  Multiply, instead of a single 3-fragment leap straight to the answer. Level 3's fraction-divide
+  chain (keep-change-flip → multiply numerators/denominators → simplify → reduce) was already
+  comparably deep and is unchanged.
+- `npm test` (335 tests) and `npm run build` clean; spot-checked working-step output at every
+  level/operation combination by hand.
+
 ## 2026-09-20 — Surds: Level 3 Multiply/Divide replaced with fraction multiply/divide
 `src/tools/Number/Surds.tsx`. Second follow-up to the 3-level redesign below — Level 3's single-term
 3-way ladder (general/√a×√a/perfect-square-product) is replaced outright with a genuine capstone:

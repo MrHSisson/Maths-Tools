@@ -278,15 +278,17 @@ const OPERATION_MS: ToolMultiSelect = {
 // still collapse), L2 gets the obvious case (√a × √a) fresh. L3 no longer
 // has a numeric ladder at all — it's fraction multiply/divide instead (see
 // buildFractionMultiplyDivide). Both L1/L2 pools are common/rare pairs, not
-// difficulty ladders — read via pickRare, not pickActive, so "both active"
-// (the default) keeps the collapse genuinely rare rather than a 50/50 coin
-// flip on every question.
+// difficulty ladders — read via pickRare, not pickActive. The rare option
+// defaults OFF (only "Standard" active) so a fresh worksheet is plain
+// multiply/divide practice, not a surprise 10-20% of trap questions the
+// teacher never asked for — the cycle button starts at "Off" and a teacher
+// opts into "Mixed" or "Always" deliberately.
 const MULDIV_RADICAND_L1_MS: ToolMultiSelect = {
   key: "radicandCaseL1", label: "Perfect Square Product", cycleDisplay: true,
   cycleStateLabels: ["Off", "Mixed (~10%)", "Always"],
   options: [
     { value: "general", label: "Standard", defaultActive: true },
-    { value: "perfectSquareProduct", label: "Perfect square product (√2×√8 = 4, rare ~10%)", defaultActive: true },
+    { value: "perfectSquareProduct", label: "Perfect square product (√2×√8 = 4, rare ~10%)", defaultActive: false },
   ],
 };
 const MULDIV_RADICAND_L2_MS: ToolMultiSelect = {
@@ -294,19 +296,22 @@ const MULDIV_RADICAND_L2_MS: ToolMultiSelect = {
   cycleStateLabels: ["Off", "Mixed (~20%)", "Always"],
   options: [
     { value: "general", label: "Standard", defaultActive: true },
-    { value: "sameRadicand", label: "Same surd (√a × √a = a, ~20%)", defaultActive: true },
+    { value: "sameRadicand", label: "Same surd (√a × √a = a, ~20%)", defaultActive: false },
   ],
 };
 // Multiply/Divide-only algebraic coefficient — genuinely distinct from
 // AddSub's (there, x-terms are COLLECTED via a bracket; here x just rides
 // through the multiplication/division on ONE side, never bracketed, matching
 // this sub-tool's own "never includes a bracket" rule). A normal variety
-// pool (not a rare trap) so a teacher can isolate either side freely.
+// pool, not a rare trap — but "algebraic" is still optional extra content on
+// top of the base skill, so it defaults OFF; a teacher opts in for a mix (or
+// turns off "Numeric" for algebraic-only) rather than getting a 50/50 blend
+// of two different skills with no worksheet ever mentioning x.
 const MULDIV_ALGEBRAIC_MS: ToolMultiSelect = {
   key: "algebraicForm", label: "Coefficient Type",
   options: [
     { value: "numeric", label: "Numeric", defaultActive: true },
-    { value: "algebraic", label: "Algebraic (x-term)", defaultActive: true },
+    { value: "algebraic", label: "Algebraic (x-term)", defaultActive: false },
   ],
 };
 const BRACKET_TYPE_L2_MS: ToolMultiSelect = {
@@ -762,14 +767,52 @@ function algebraicMultiplySteps(a: SurdTerm, b: SurdTerm): WorkingStep[] {
   return steps;
 }
 
-function algebraicDivideSteps(a: SurdTerm, b: SurdTerm, resultTerm: SurdTerm): WorkingStep[] {
-  const rawLatex = `${xSurdLatex(a)} \\div ${surdTermToLatex(b, true)}`;
-  const coeffPart = a.coeff !== 1 || b.coeff !== 1 ? `\\dfrac{${xCoeffTerm(a.coeff)}}{${b.coeff}} \\times ` : "";
-  return [mStep("Divide under one root — x carries straight through:", [
-    rawLatex,
-    `= ${coeffPart}\\sqrt{\\dfrac{${a.radicand}}{${b.radicand}}}`,
-    `= ${xSurdLatex(resultTerm)}`,
-  ])];
+// Same granularity as algebraicMultiplySteps (divide the coefficients,
+// divide the radicands, then combine or simplify) rather than folding
+// everything into one step — matches divideUnderRootSteps below, plus x.
+function algebraicDivideSteps(a: SurdTerm, b: SurdTerm): WorkingStep[] {
+  const steps: WorkingStep[] = [];
+  const coeffRatio = a.coeff / b.coeff;
+  if (a.coeff !== 1 || b.coeff !== 1) {
+    steps.push(mStep("Divide the coefficients — x carries straight through:", [
+      `${xCoeffTerm(a.coeff)} \\div ${b.coeff}`,
+      `= ${xCoeffTerm(coeffRatio)}`,
+    ]));
+  }
+  const ratio = a.radicand / b.radicand;
+  steps.push(mStep("Divide the numbers under the root:", [`${a.radicand} \\div ${b.radicand}`, `= ${ratio}`]));
+  const s = simplifySurd(ratio);
+  if (s.coeff === 1) {
+    steps.push(mStep("Combine:", xSurdLatex({ coeff: coeffRatio, radicand: ratio })));
+  } else {
+    steps.push(...simplifySurdSteps(ratio, 1, "full", false));
+    steps.push(mStep("Multiply by the coefficient, keeping x attached:", [
+      `${xCoeffTerm(coeffRatio)} \\times ${s.coeff}\\sqrt{${s.radicand}}`,
+      `= ${xSurdLatex({ coeff: coeffRatio * s.coeff, radicand: s.radicand })}`,
+    ]));
+  }
+  return steps;
+}
+
+// Plain-numeric equivalent — the SAME granularity Multiply already gets via
+// expandSurdBracketsSteps/simplifySurdSteps ("full" grain: divide the
+// coefficients, divide the radicands, then combine or simplify), instead of
+// folding the whole division into one step. Mirrors that chain move-for-move.
+function divideUnderRootSteps(a: SurdTerm, b: SurdTerm): WorkingStep[] {
+  const steps: WorkingStep[] = [];
+  const coeffRatio = a.coeff / b.coeff;
+  if (a.coeff !== 1 || b.coeff !== 1) {
+    steps.push(mStep("Divide the coefficients:", [`${a.coeff} \\div ${b.coeff}`, `= ${coeffRatio}`]));
+  }
+  const ratio = a.radicand / b.radicand;
+  steps.push(mStep("Divide the numbers under the root:", [`${a.radicand} \\div ${b.radicand}`, `= ${ratio}`]));
+  const s = simplifySurd(ratio);
+  if (s.coeff === 1) {
+    steps.push(mStep("Combine:", surdTermToLatex({ coeff: coeffRatio, radicand: ratio }, true)));
+  } else {
+    steps.push(...simplifySurdSteps(ratio, coeffRatio, "full", true));
+  }
+  return steps;
 }
 
 // L1 keeps the x-term itself bare (just "x", no numeric multiplier, and the
@@ -795,7 +838,7 @@ function buildAlgebraicMultiplyDivide(level: "level1" | "level2", operation: "mu
     a = { coeff: aCoeff, radicand: r * m * m * s };
     b = { coeff: bCoeff, radicand: r };
     resultTerm = divideSurdTerms(a, b);
-    working = algebraicDivideSteps(a, b, resultTerm);
+    working = algebraicDivideSteps(a, b);
   }
 
   const opLatex = operation === "multiply" ? "\\times" : "\\div";
@@ -986,14 +1029,7 @@ function generateMultiplyDivide(level: DifficultyLevel, ms: Record<string, boole
     a = { coeff: aCoeff, radicand: r * m * m * s };
     b = { coeff: bCoeff, radicand: r };
     resultTerm = divideSurdTerms(a, b);
-    const rawLatex = `${surdTermToLatex(a, true)} \\div ${surdTermToLatex(b, true)}`;
-    const resultLatex = surdTermToLatex(resultTerm, true);
-    const coeffPart = a.coeff !== 1 || b.coeff !== 1 ? `\\dfrac{${a.coeff}}{${b.coeff}} \\times ` : "";
-    working = [mStep("Divide under one root:", [
-      rawLatex,
-      `= ${coeffPart}\\sqrt{\\dfrac{${a.radicand}}{${b.radicand}}}`,
-      `= ${resultLatex}`,
-    ])];
+    working = divideUnderRootSteps(a, b);
   }
 
   const opLatex = operation === "multiply" ? "\\times" : "\\div";
