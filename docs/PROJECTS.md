@@ -777,16 +777,21 @@ phone width, or a desktop browser window shrunk that far for a quick preview) an
 chrome for a compact single-column layout: a settings banner (topic · level, tap to open a drawer)
 instead of the tool-tab/mode-tab rows, a two-way Worked Example / Worksheet toggle (**no Whiteboard
 or Teach** — narrow has no layout for either), and a light in-app Worksheet list (scrollable question
-cards with independent tap-to-reveal, plus a "Show All" toggle and print/export demoted to a small
-icon) instead of the desktop's print-oriented grid/differentiated builder. Built entirely from
+cards with independent tap-to-reveal and a centered "Generate / count / Show All" control row —
+**no print/export in narrow at all**, cut after live feedback that it was unnecessary clutter for a
+phone) instead of the desktop's print-oriented grid/differentiated builder. Built entirely from
 existing generic state and components — `generateQuestion`/`handleGenerateWorksheet`,
 `questionRenderer`/`answerRenderer` overrides, and a new `InlineQOPanel` (a non-popover render of the
 same `StandardQOPopover` content) inside the drawer — so **every tool gets it with zero per-tool
-code**, including diagram tools via their existing renderer overrides. Also seeds a smaller default
-question font size on narrow viewports (the desktop default is sized for a projector). Smoke-tested
-live against `BestBuys` (worded questions, no diagrams) at 375px and 1280px — narrow and desktop
-layouts both verified interactively (drawer open/close, reveal, worksheet generation, per-card
-reveal), zero console errors, `npm run build`/`npm test` clean.
+code**, including diagram tools via their existing renderer overrides. Seeds a smaller default
+question font size on narrow viewports and a `compact` flag on `renderWorkedExample` trims its
+whiteboard-sized padding for a phone column (desktop call site unaffected either way) — both added
+after a first pass read as too large/zoomed-in on a real phone. `LandingPage.tsx` also got its own
+mobile-sizing pass in the same session (a separate, pre-existing component, not part of ToolShell)
+since it was the biggest offender. Smoke-tested live against `BestBuys` (worded questions, no
+diagrams) at 375px and 1280px, plus the landing page at both widths — narrow and desktop layouts
+both verified interactively (drawer open/close, reveal, worksheet generation, per-card reveal), zero
+console errors, `npm run build`/`npm test` clean.
 
 **Possible next steps:**
 - Verify against a diagram/SVG tool (custom `questionRenderer` + `handleDiagramPrint`) and a tool

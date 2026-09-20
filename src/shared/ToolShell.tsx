@@ -1248,7 +1248,10 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     );
   };
 
-  const renderWorkedExample = () => {
+  // `compact` (narrow layout only) trims the padding sized for a desktop
+  // whiteboard panel down to something reasonable on a phone-width column —
+  // the desktop call site (renderWorkedExample()) is unaffected.
+  const renderWorkedExample = (compact?: boolean) => {
     // "single" keeps its original capped, internally-scrolling box unchanged.
     // "stacked" used to need a forced full-viewport-height parent (see the
     // removed `useFullHeightShell`) so its own internal scrollbox could size
@@ -1261,8 +1264,8 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     const stacked = workedExampleLayout === "stacked";
     return (
       <div className={stacked ? undefined : "overflow-y-auto"} style={stacked ? undefined : { maxHeight: "120vh" }}>
-        <div className="p-8 w-full" style={{ backgroundColor: qBg }}>
-          <div className="text-center py-4 relative">
+        <div className={compact ? "p-4 w-full" : "p-8 w-full"} style={{ backgroundColor: qBg }}>
+          <div className={compact ? "text-center py-2 relative" : "text-center py-4 relative"}>
             {!hideFontControls && <div style={{ position: "absolute", top: 0, right: 0, display: "flex", gap: 6 }}>
               <button style={{ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: canDisplayDecrease ? "pointer" : "not-allowed", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", opacity: canDisplayDecrease ? 1 : 0.35 }} onClick={() => canDisplayDecrease && setDisplayFontSize(f => f - 1)}><ChevronDown size={16} color="#6b7280" /></button>
               <button style={{ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: canDisplayIncrease ? "pointer" : "not-allowed", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", opacity: canDisplayIncrease ? 1 : 0.35 }} onClick={() => canDisplayIncrease && setDisplayFontSize(f => f + 1)}><ChevronUp size={16} color="#6b7280" /></button>
@@ -1443,13 +1446,13 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     return (
       <div>
         <div className="bg-blue-900 shadow-lg">
-          <div className="px-4 py-4 flex justify-between items-center">
-            <button onClick={() => { window.location.href = "/"; }} className="flex items-center gap-2 text-white hover:bg-blue-800 px-3 py-2 rounded-lg transition-colors">
-              <Home size={22} /><span className="font-semibold">Home</span>
+          <div className="px-4 py-3 flex justify-between items-center">
+            <button onClick={() => { window.location.href = "/"; }} className="flex items-center gap-1.5 text-white hover:bg-blue-800 px-2.5 py-1.5 rounded-lg transition-colors">
+              <Home size={18} /><span className="font-semibold text-sm">Home</span>
             </button>
             <div className="relative">
-              <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-white hover:bg-blue-800 p-2 rounded-lg transition-colors">
-                {isMenuOpen ? <X size={26} /> : <Menu size={26} />}
+              <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-white hover:bg-blue-800 p-1.5 rounded-lg transition-colors">
+                {isMenuOpen ? <X size={22} /> : <Menu size={22} />}
               </button>
               {isMenuOpen && <MenuDropdown colorScheme={colorScheme} setColorScheme={setColorScheme} onClose={() => setIsMenuOpen(false)} onOpenInfo={() => setIsInfoOpen(true)} />}
             </div>
@@ -1458,12 +1461,12 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         {isInfoOpen && <InfoModal infoSections={infoSections} onClose={() => setIsInfoOpen(false)} />}
         {openSkillId && <SkillOverlay skillId={openSkillId} onClose={() => setOpenSkillId(null)} />}
 
-        <div className="min-h-screen px-4 py-5" style={{ backgroundColor: "#f5f3f0" }}>
+        <div className="min-h-screen px-4 py-4" style={{ backgroundColor: "#f5f3f0" }}>
           <div className="max-w-md mx-auto">
-            <h1 className="text-2xl font-bold text-center mb-4" style={{ color: "#000" }}>{config.pageTitle}</h1>
+            <h1 className="text-lg font-bold text-center mb-3" style={{ color: "#000" }}>{config.pageTitle}</h1>
 
             <button onClick={() => setNarrowDrawerOpen(true)}
-              className="w-full bg-white border border-gray-200 rounded-2xl shadow-sm flex items-center justify-between gap-2 px-4 py-3 mb-4">
+              className="w-full bg-white border border-gray-200 rounded-xl shadow-sm flex items-center justify-between gap-2 px-3.5 py-2.5 mb-3">
               <div className="flex items-center gap-2 min-w-0 overflow-hidden">
                 <span className={`text-xs ${LV_HEADER_COLORS[difficulty]}`}>●</span>
                 {toolKeys.length > 1 && <span className="font-bold text-sm text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis">{toolName}</span>}
@@ -1473,10 +1476,10 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               <span className="text-xs font-bold text-gray-400 flex-shrink-0">Change</span>
             </button>
 
-            <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm mb-4">
+            <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm mb-3">
               {(["single", "worksheet"] as const).map(m => (
                 <button key={m} onClick={() => setMode(m)}
-                  className={`flex-1 px-4 py-2.5 font-bold text-sm transition-colors ${mode === m ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}>
+                  className={`flex-1 px-3 py-2 font-bold text-sm transition-colors ${mode === m ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}>
                   {m === "single" ? "Worked Example" : "Worksheet"}
                 </button>
               ))}
@@ -1484,51 +1487,40 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
 
             {mode === "worksheet" ? (
               <>
-                <div className="flex items-center gap-2 mb-4 flex-wrap">
-                  <button onClick={handleGenerateWorksheet} className="px-4 py-2 bg-blue-900 text-white rounded-xl font-bold text-sm shadow-sm hover:bg-blue-800 flex items-center gap-2">
-                    <RefreshCw size={16} /> Generate
+                <div className="flex items-center justify-center gap-2 mb-3 flex-wrap">
+                  <button onClick={handleGenerateWorksheet} className="px-3.5 py-1.5 bg-blue-900 text-white rounded-lg font-bold text-sm shadow-sm hover:bg-blue-800 flex items-center gap-1.5">
+                    <RefreshCw size={14} /> Generate
                   </button>
                   {!defaults.fixedQuestions && (
-                    <div className="flex items-center gap-1 bg-white border-2 border-gray-300 rounded-xl px-1">
-                      <button onClick={() => setNumQuestions(n => Math.max(1, n - 1))} className="w-8 h-8 flex items-center justify-center text-gray-500 font-bold text-lg">−</button>
+                    <div className="flex items-center gap-0.5 bg-white border-2 border-gray-300 rounded-lg px-1">
+                      <button onClick={() => setNumQuestions(n => Math.max(1, n - 1))} className="w-7 h-7 flex items-center justify-center text-gray-500 font-bold">−</button>
                       <span className="w-6 text-center font-bold text-sm text-gray-800">{numQuestions}</span>
-                      <button onClick={() => setNumQuestions(n => Math.min(24, n + 1))} className="w-8 h-8 flex items-center justify-center text-gray-500 font-bold text-lg">+</button>
+                      <button onClick={() => setNumQuestions(n => Math.min(24, n + 1))} className="w-7 h-7 flex items-center justify-center text-gray-500 font-bold">+</button>
                     </div>
                   )}
                   {worksheet.length > 0 && (
-                    <>
-                      <button onClick={() => setShowWorksheetAnswers(a => !a)} className="px-4 py-2 bg-blue-900 text-white rounded-xl font-bold text-sm shadow-sm hover:bg-blue-800 flex items-center gap-2">
-                        <Eye size={16} /> {showWorksheetAnswers ? "Hide All" : "Show All"}
-                      </button>
-                      <PrintSplitButton
-                        onPrint={m => customPrintHandler
-                          ? customPrintHandler(worksheet, m, worksheetWrapRef.current, {
-                              toolName: config.tools[currentTool].name, difficulty, isDifferentiated, diffLevels, diffSameSize, diffColorLevels,
-                              numColumns, instruction: getInstruction(), layout: worksheetLayout, showBorders: worksheetBorders,
-                            })
-                          : handlePrint(worksheet, config.tools[currentTool].name, difficulty, isDifferentiated, diffLevels, numColumns, getInstruction(), m, worksheetLayout, worksheetBorders, diffSameSize, diffColorLevels)}
-                        printMode={printMode} setPrintMode={setPrintMode}
-                      />
-                    </>
+                    <button onClick={() => setShowWorksheetAnswers(a => !a)} className="px-3.5 py-1.5 bg-blue-900 text-white rounded-lg font-bold text-sm shadow-sm hover:bg-blue-800 flex items-center gap-1.5">
+                      <Eye size={14} /> {showWorksheetAnswers ? "Hide All" : "Show All"}
+                    </button>
                   )}
                 </div>
-                <div ref={worksheetWrapRef} className="flex flex-col gap-3">
+                <div className="flex flex-col gap-2.5">
                   {worksheet.length === 0 && (
-                    <div className="text-center text-gray-400 py-12 bg-white rounded-2xl border border-gray-200">Generate a set of questions</div>
+                    <div className="text-center text-gray-400 py-10 bg-white rounded-xl border border-gray-200">Generate a set of questions</div>
                   )}
                   {worksheet.map((q, idx) => {
                     const revealed = showWorksheetAnswers || narrowRevealed.has(idx);
                     return (
                       <button key={idx} onClick={() => toggleNarrowReveal(idx)}
-                        className="text-left bg-white rounded-2xl shadow-sm border border-gray-200 p-4" style={{ backgroundColor: qBg }}>
+                        className="text-left bg-white rounded-xl shadow-sm border border-gray-200 p-3.5" style={{ backgroundColor: qBg }}>
                         <div className="text-xs font-bold text-gray-400 mb-1">{idx + 1}</div>
                         {getInstruction() && !questionRenderer && <div className="text-sm font-semibold mb-1" style={{ color: "#000" }}>{getInstruction()}</div>}
                         {questionRenderer
                           ? questionRenderer(q, revealed, colorScheme, true, idx, getQOSnapshot(), fontSizes[worksheetFontSize])
-                          : <QuestionDisplay q={q} cls="text-lg" />
+                          : <QuestionDisplay q={q} cls="text-base" />
                         }
                         {revealed && !questionRenderer && (
-                          <div className="mt-2 pt-2 text-center font-bold" style={{ borderTop: "1px solid rgba(0,0,0,0.08)", color: "#059669" }}>
+                          <div className="mt-2 pt-2 text-center font-bold text-sm" style={{ borderTop: "1px solid rgba(0,0,0,0.08)", color: "#059669" }}>
                             {answerRenderer ? answerRenderer(q, colorScheme, getQOSnapshot()) : <AnswerDisplay q={q} />}
                           </div>
                         )}
@@ -1539,16 +1531,16 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               </>
             ) : (
               <>
-                <div className="flex gap-3 mb-4">
-                  <button onClick={handleNewQuestion} className="flex-1 px-4 py-2.5 bg-blue-900 text-white rounded-xl font-bold text-sm shadow-sm hover:bg-blue-800 flex items-center justify-center gap-2">
-                    <RefreshCw size={16} /> New Question
+                <div className="flex justify-center gap-2 mb-3">
+                  <button onClick={handleNewQuestion} className="flex-1 px-3 py-2 bg-blue-900 text-white rounded-lg font-bold text-sm shadow-sm hover:bg-blue-800 flex items-center justify-center gap-1.5">
+                    <RefreshCw size={14} /> New Question
                   </button>
-                  <button onClick={() => setShowAnswer(a => !a)} className="flex-1 px-4 py-2.5 bg-blue-900 text-white rounded-xl font-bold text-sm shadow-sm hover:bg-blue-800 flex items-center justify-center gap-2">
-                    <Eye size={16} /> {showAnswer ? "Hide Answer" : "Show Answer"}
+                  <button onClick={() => setShowAnswer(a => !a)} className="flex-1 px-3 py-2 bg-blue-900 text-white rounded-lg font-bold text-sm shadow-sm hover:bg-blue-800 flex items-center justify-center gap-1.5">
+                    <Eye size={14} /> {showAnswer ? "Hide Answer" : "Show Answer"}
                   </button>
                 </div>
                 <div className="rounded-xl shadow-lg overflow-hidden">
-                  {renderWorkedExample()}
+                  {renderWorkedExample(true)}
                 </div>
               </>
             )}
@@ -1558,21 +1550,21 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         {narrowDrawerOpen && (
           <div className="fixed inset-0 z-50 flex">
             <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.4)" }} onClick={() => setNarrowDrawerOpen(false)} />
-            <div className="relative ml-auto h-full bg-white flex flex-col shadow-2xl" style={{ width: "85%", maxWidth: 320 }}>
-              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
-                <span className="font-bold text-gray-900">Options</span>
-                <button onClick={() => setNarrowDrawerOpen(false)} className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100">
-                  <X size={18} />
+            <div className="relative ml-auto h-full bg-white flex flex-col shadow-2xl" style={{ width: "85%", maxWidth: 300 }}>
+              <div className="flex items-center justify-between px-4 py-3.5 border-b border-gray-100 flex-shrink-0">
+                <span className="font-bold text-gray-900 text-sm">Options</span>
+                <button onClick={() => setNarrowDrawerOpen(false)} className="w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100">
+                  <X size={16} />
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto px-5 py-5 flex flex-col gap-6">
+              <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-5">
                 {toolKeys.length > 1 && (
                   <div>
                     <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Topic</div>
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-1.5">
                       {toolKeys.map(k => (
                         <button key={k} onClick={() => setCurrentTool(k)}
-                          className={`w-full text-left px-4 py-2.5 rounded-xl font-bold text-sm border-2 transition-colors ${currentTool === k ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-gray-200 text-gray-700 hover:border-gray-300"}`}>
+                          className={`w-full text-left px-3.5 py-2 rounded-lg font-bold text-sm border-2 transition-colors ${currentTool === k ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-gray-200 text-gray-700 hover:border-gray-300"}`}>
                           {config.tools[k].name}
                         </button>
                       ))}

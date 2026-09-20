@@ -28,6 +28,23 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-20 — Narrow-viewport polish: smaller sizing, centered worksheet controls, drop PDF button
+`src/shared/ToolShell.tsx`, `src/components/LandingPage.tsx`. Follow-up to the same day's narrow
+layout, after live feedback that it read as too zoomed in:
+- `LandingPage.tsx` gets a proper mobile pass — header, hero title/paragraph, subject/category
+  headers, tool cards and footer all get smaller mobile-first sizing (padding, font size, icon/badge
+  boxes) with the existing `sm:`/`md:`/`lg:` breakpoints preserved, so desktop is pixel-identical to
+  before. This wasn't part of ToolShell's narrow layout — it's a separate, pre-existing component
+  that had never been sized for phone widths.
+- `ToolShell`'s narrow shell: tightened nav/banner/button padding and font sizes throughout, and
+  `renderWorkedExample` gained an optional `compact` flag (desktop call site unaffected) that trims
+  its whiteboard-sized `p-8` padding down for a phone column.
+- The narrow Worksheet mode's control row (Generate / question count / Show All) is now centered
+  rather than left-aligned, and the PDF print/export button is dropped entirely from narrow — it
+  was already demoted to secondary and cutting it simplifies the row further.
+- Re-verified live with Playwright at 375px (both the landing page and `BestBuys`) and 1280px
+  (landing page pixel-unchanged), `npm run build`/`npm test` clean.
+
 ## 2026-09-20 — Narrow-viewport layout for ToolShell
 `src/shared/ToolShell.tsx`. New responsive layout, built into the shared shell rather than any tool
 file, so all 27+ tools get it for free:
