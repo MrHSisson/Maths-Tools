@@ -18,6 +18,7 @@ import {
   type AnyQuestion,
   type ToolMultiSelect,
   type SurdTerm,
+  type WorkingStep,
   type Grain,
   randInt, pick, step, mStep, pickActive, weightOf,
   simplifySurd,
@@ -89,18 +90,29 @@ function randomPerfectSquareRadicand(minRoot: number, maxRoot: number): number {
 // left under it), but the residual square-free part s left over after
 // extracting m² is usually > 1, so the answer is normally still a surd. A
 // full perfect-square collapse (s === 1, the root vanishing completely) is
-// the rare special case (~10%, matching the "Perfect square product" rate
-// above), not the default outcome. Capped so a's raw (pre-simplified)
-// radicand stays a readable size.
-function randomDivideRadicands(maxA: number): { r: number; m: number; s: number } {
+// the rare special case, not the default outcome. Every input is level-
+// scaled by the caller (see DIVIDE_SIZE below) — r/m/s ranges, the collapse
+// rate, and the readable-size cap all step up L1 -> L2 -> L3, the same way
+// multiply's own radicand range does, so Divide genuinely gets bigger and
+// trickier as the level rises instead of staying identical across all three.
+function randomDivideRadicands(rMax: number, mMax: number, sMax: number, rareRate: number, capA: number): { r: number; m: number; s: number } {
   for (let i = 0; i < 300; i++) {
-    const r = randomSquareFree(2, 12);
-    const m = randInt(2, 5);
-    const s = Math.random() < 0.1 ? 1 : randomSquareFree(2, 10);
-    if (r * m * m * s <= maxA) return { r, m, s };
+    const r = randomSquareFree(2, rMax);
+    const m = randInt(2, mMax);
+    const s = Math.random() < rareRate ? 1 : randomSquareFree(2, sMax);
+    if (r * m * m * s <= capA) return { r, m, s };
   }
   return { r: 2, m: 2, s: 3 };
 }
+
+// Level-scaled Divide parameters — see randomDivideRadicands. Kept as one
+// lookup so the L1 -> L2 -> L3 escalation (size AND collapse rarity) is
+// visible in one place rather than scattered through the generator.
+const DIVIDE_SIZE: Record<DifficultyLevel, { rMax: number; mMax: number; sMax: number; rareRate: number; capA: number }> = {
+  level1: { rMax: 8, mMax: 3, sMax: 6, rareRate: 0.1, capA: 150 },
+  level2: { rMax: 12, mMax: 4, sMax: 8, rareRate: 0.12, capA: 300 },
+  level3: { rMax: 15, mMax: 5, sMax: 10, rareRate: 0.15, capA: 500 },
+};
 
 // A radicand k·x² where x (the value that will be extracted) is drawn from
 // [minX, maxX] and the whole radicand is capped at maxValue — guarded the
@@ -254,9 +266,11 @@ const OPERATION_MS: ToolMultiSelect = {
     { value: "divide", label: "Divide", defaultActive: true },
   ],
 };
-// Coefficient presence and "does the radicand relationship collapse nicely"
-// are independent properties (a perfect-square product can carry a
-// coefficient too), so they're two separate pools, not one conflated ladder.
+// Coefficient presence is now a strict ladder rather than a toggle repeated
+// at every level: L1 never has one (hardcoded "basic"), L2 always has one
+// (hardcoded "withCoeff" — no pool shown), and this toggle only resurfaces
+// at L3, where a teacher may want to dial coefficients back down while
+// still using L3's harder radicand ladder/algebraic-free numeric practice.
 const MULDIV_COEFF_MS: ToolMultiSelect = {
   key: "coeffForm", label: "Difficulty",
   options: [
@@ -264,19 +278,40 @@ const MULDIV_COEFF_MS: ToolMultiSelect = {
     { value: "withCoeff", label: "With coefficients", defaultActive: true, weight: 2 },
   ],
 };
-// Multiply-only: recognising when two DIFFERENT surds still collapse to an
-// integer is a distinct, easily-missed skill from the visually-obvious
-// √a × √a case — e.g. √2 × √8 = √16 = 4 gives no visual hint it will cancel.
-// A common/rare pair, not a difficulty ladder (same shape as Simplify's own
-// SIMPLIFY_RADICAND_L1_MS) — read via pickRare, not pickActive, so "both
-// active" (the default) means the collapse genuinely stays rare rather than
-// a 50/50 coin flip on every question.
+// The radicand-relationship trap is now a DIFFERENT case at each of L1/L2
+// (not the same pool shown twice, which produced literally the same
+// question shape at two levels) — L1 gets the hidden case (two different
+// surds that still collapse), L2 gets the obvious case (√a × √a) fresh, and
+// L3 combines both into a real 3-way ladder (MULDIV_RADICAND_MS below).
+// Both L1/L2 pools are common/rare pairs, not difficulty ladders — read via
+// pickRare, not pickActive, so "both active" (the default) keeps the
+// collapse genuinely rare rather than a 50/50 coin flip on every question.
 const MULDIV_RADICAND_L1_MS: ToolMultiSelect = {
   key: "radicandCaseL1", label: "Perfect Square Product", cycleDisplay: true,
   cycleStateLabels: ["Off", "Mixed (~10%)", "Always"],
   options: [
     { value: "general", label: "Standard", defaultActive: true },
     { value: "perfectSquareProduct", label: "Perfect square product (√2×√8 = 4, rare ~10%)", defaultActive: true },
+  ],
+};
+const MULDIV_RADICAND_L2_MS: ToolMultiSelect = {
+  key: "radicandCaseL2", label: "Same Surd", cycleDisplay: true,
+  cycleStateLabels: ["Off", "Mixed (~20%)", "Always"],
+  options: [
+    { value: "general", label: "Standard", defaultActive: true },
+    { value: "sameRadicand", label: "Same surd (√a × √a = a, ~20%)", defaultActive: true },
+  ],
+};
+// Multiply/Divide-only algebraic coefficient — genuinely distinct from
+// AddSub's (there, x-terms are COLLECTED via a bracket; here x just rides
+// through the multiplication/division on ONE side, never bracketed, matching
+// this sub-tool's own "never includes a bracket" rule). A normal variety
+// pool (not a rare trap) so a teacher can isolate either side freely.
+const MULDIV_ALGEBRAIC_MS: ToolMultiSelect = {
+  key: "algebraicForm", label: "Coefficient Type",
+  options: [
+    { value: "numeric", label: "Numeric", defaultActive: true },
+    { value: "algebraic", label: "Algebraic (x-term)", defaultActive: true },
   ],
 };
 const MULDIV_RADICAND_MS: ToolMultiSelect = {
@@ -378,12 +413,21 @@ const TOOL_CONFIG: ToolConfig = {
       dropdown: null,
       multiSelect: OPERATION_MS,
       difficultySettings: {
-        level1: { variables: [], dropdown: null, multiSelect: [OPERATION_MS, MULDIV_RADICAND_L1_MS] },
-        // Level 2 keeps L1's radicand-relationship pool (general / perfect-
-        // square-product) rather than dropping it — it was previously
-        // available at L1, silently absent at L2, then back at L3, which
-        // read as a gap rather than a build-up.
-        level2: { variables: [], dropdown: null, multiSelect: [OPERATION_MS, MULDIV_RADICAND_L1_MS, MULDIV_COEFF_MS] },
+        // L1: never a coefficient, the hidden collapse trap (rare), and the
+        // new algebraic-coefficient option (bare — just "x", no numeric
+        // multiplier, matching L1's "everything stays bare" ethos).
+        level1: { variables: [], dropdown: null, multiSelect: [OPERATION_MS, MULDIV_RADICAND_L1_MS, MULDIV_ALGEBRAIC_MS] },
+        // L2: always a coefficient (no toggle — the coefficient control only
+        // reappears at L3), a DIFFERENT trap from L1 (the obvious √a×√a
+        // case, not L1's hidden one — L1 and L2 must never produce the same
+        // question shape), and algebraic coefficients now carry a genuine
+        // numeric multiplier too (ax, not bare x), consistent with L2
+        // always having a coefficient.
+        level2: { variables: [], dropdown: null, multiSelect: [OPERATION_MS, MULDIV_RADICAND_L2_MS, MULDIV_ALGEBRAIC_MS] },
+        // L3: coefficient becomes a toggle again, and the two traps L1/L2
+        // introduced separately combine into one real 3-way ladder — this is
+        // the level where everything below it comes together, at bigger
+        // numbers on top.
         level3: { variables: [], dropdown: null, multiSelect: [OPERATION_MS, MULDIV_COEFF_MS, MULDIV_RADICAND_MS] },
       },
     },
@@ -434,10 +478,10 @@ const INFO_SECTIONS: InfoSection[] = [
     { label: "Level 3 — Red", detail: "Three genuinely distinct extensions, a QO choice: a four-term expression spanning two different surd families to sort and group, distributing a leading negative across a bracket before collecting, and an algebraic (x-carrying) coefficient collected into a single bracketed coefficient (e.g. (4x+3)√11 − 2x√11 = (2x+3)√11)." },
   ]},
   { title: "Multiplying & Dividing", icon: "×", content: [
-    { label: "Overview", detail: "Multiply or divide surds by combining under one root — this sub-tool never includes a bracket; see Expanding Brackets for that. Includes a toggleable 'perfect square product' case (e.g. √2 × √8 = √16 = 4) — two different-looking surds that still collapse to an integer, easy to miss since nothing about the question hints at it." },
-    { label: "Level 1 — Green", detail: "Bare surds, clean results, with the perfect-square-product case selectable from the start." },
-    { label: "Level 2 — Yellow", detail: "Coefficients present, alongside the same perfect-square-product option from Level 1." },
-    { label: "Level 3 — Red", detail: "Coefficients, plus the special √a × √a = a case alongside the less obvious perfect-square-product case." },
+    { label: "Overview", detail: "Multiply or divide surds by combining under one root — this sub-tool never includes a bracket; see Expanding Brackets for that. Both operations get a rare 'collapses to an integer' trap, and each level's is a genuinely different case rather than the same one repeated. An optional algebraic (x-carrying) coefficient is available at Levels 1-2 — x rides through the multiplication/division untouched, never bracketed." },
+    { label: "Level 1 — Green", detail: "Bare surds only, no coefficient. The hidden collapse trap — two different-looking surds whose product is still a perfect square (√2 × √8 = √16 = 4) — is rare (~10%) and selectable. Algebraic option: a bare x-term (x√a), no numeric multiplier." },
+    { label: "Level 2 — Yellow", detail: "Coefficients are always present — no bare-surd questions at this level. A different trap from Level 1: the obvious √a × √a = a case, at a moderate rate (~20%), introduced fresh here rather than repeating Level 1's hidden case. Algebraic option: now carries a genuine numeric coefficient too (ax√a)." },
+    { label: "Level 3 — Red", detail: "Coefficients become a toggle again. Both Level 1 and Level 2's traps combine into one 3-way choice (standard / √a × √a / perfect-square-product) at bigger numbers than either level introduced them at — the level where everything below it comes together." },
   ]},
   { title: "Expanding Brackets", icon: "(·)", content: [
     { label: "Overview", detail: "Distribute a surd over a bracket, or expand two brackets using FOIL." },
@@ -690,19 +734,119 @@ function generateAddSub(level: DifficultyLevel, ms: Record<string, boolean>): An
   );
 }
 
+// ── Algebraic multiply/divide (L1/L2 only) ──────────────────────────────────
+// Genuinely distinct from AddSub's algebraic case: there, x-terms have to be
+// COLLECTED into one bracketed coefficient; here x is simply carried through
+// the multiplication/division on ONE side (it only ever rides on `a` — the
+// left factor for multiply, the dividend for divide — putting it on a
+// divisor would leave x in a denominator, out of scope). Since x never
+// interacts with the radicand or the numeric coefficient arithmetic, `a` is
+// built and simplified exactly like the numeric case, and x is reattached
+// purely for display — never bracketed, matching this sub-tool's own "never
+// includes a bracket" rule (that's Expanding Brackets' job).
+const xCoeffTerm = (coeff: number): string => (coeff === 1 ? "x" : `${coeff}x`);
+const xSurdLatex = (t: SurdTerm): string => {
+  const xPart = xCoeffTerm(t.coeff);
+  return t.radicand === 1 ? xPart : `${xPart}\\sqrt{${t.radicand}}`;
+};
+
+function algebraicMultiplySteps(a: SurdTerm, b: SurdTerm): WorkingStep[] {
+  const coeffProduct = a.coeff * b.coeff;
+  const radicandProduct = a.radicand * b.radicand;
+  const steps: WorkingStep[] = [];
+  if (a.coeff !== 1 || b.coeff !== 1) {
+    steps.push(mStep("Multiply the coefficients — x carries straight through:", [
+      `${xCoeffTerm(a.coeff)} \\times ${b.coeff}`,
+      `= ${xCoeffTerm(coeffProduct)}`,
+    ]));
+  }
+  steps.push(mStep("Multiply the numbers under the root:", [`${a.radicand} \\times ${b.radicand}`, `= ${radicandProduct}`]));
+  const s = simplifySurd(radicandProduct);
+  if (s.coeff === 1) {
+    steps.push(mStep("Combine:", xSurdLatex({ coeff: coeffProduct, radicand: radicandProduct })));
+  } else {
+    steps.push(...simplifySurdSteps(radicandProduct, 1, "full", false));
+    steps.push(mStep("Multiply by the coefficient, keeping x attached:", [
+      `${xCoeffTerm(coeffProduct)} \\times ${s.coeff}\\sqrt{${s.radicand}}`,
+      `= ${xSurdLatex({ coeff: coeffProduct * s.coeff, radicand: s.radicand })}`,
+    ]));
+  }
+  return steps;
+}
+
+function algebraicDivideSteps(a: SurdTerm, b: SurdTerm, resultTerm: SurdTerm): WorkingStep[] {
+  const rawLatex = `${xSurdLatex(a)} \\div ${surdTermToLatex(b, true)}`;
+  const coeffPart = a.coeff !== 1 || b.coeff !== 1 ? `\\dfrac{${xCoeffTerm(a.coeff)}}{${b.coeff}} \\times ` : "";
+  return [mStep("Divide under one root — x carries straight through:", [
+    rawLatex,
+    `= ${coeffPart}\\sqrt{\\dfrac{${a.radicand}}{${b.radicand}}}`,
+    `= ${xSurdLatex(resultTerm)}`,
+  ])];
+}
+
+// L1 keeps the x-term itself bare (just "x", no numeric multiplier, and the
+// other side stays coefficient-free too) to match L1's "everything stays
+// bare" ethos; L2 always gives both sides a genuine numeric coefficient,
+// consistent with L2 always carrying one.
+function buildAlgebraicMultiplyDivide(level: "level1" | "level2", operation: "multiply" | "divide"): AnyQuestion {
+  const maxRadicand = level === "level1" ? 20 : 35;
+  const coeff = (): number => (level === "level1" ? 1 : randInt(2, 8));
+
+  let a: SurdTerm, b: SurdTerm, resultTerm: SurdTerm, working: WorkingStep[];
+
+  if (operation === "multiply") {
+    a = { coeff: coeff(), radicand: randomSquareFree(2, maxRadicand) };
+    b = { coeff: coeff(), radicand: randomSquareFree(2, maxRadicand) };
+    resultTerm = multiplySurdTerms(a, b);
+    working = algebraicMultiplySteps(a, b);
+  } else {
+    const size = DIVIDE_SIZE[level];
+    const { r, m, s } = randomDivideRadicands(size.rMax, size.mMax, size.sMax, size.rareRate, size.capA);
+    const bCoeff = level === "level1" ? 1 : randInt(2, 5);
+    const aCoeff = level === "level1" ? 1 : bCoeff * randInt(1, 4);
+    a = { coeff: aCoeff, radicand: r * m * m * s };
+    b = { coeff: bCoeff, radicand: r };
+    resultTerm = divideSurdTerms(a, b);
+    working = algebraicDivideSteps(a, b, resultTerm);
+  }
+
+  const opLatex = operation === "multiply" ? "\\times" : "\\div";
+  const displayLatex = `${xSurdLatex(a)} ${opLatex} ${surdTermToLatex(b, true)}`;
+  const answerLatex = xSurdLatex(resultTerm);
+
+  return questionFrom(
+    displayLatex, answerLatex, working,
+    `mulDiv-${level}-${operation}-algebraic-${a.coeff}r${a.radicand}-${b.coeff}r${b.radicand}-${nextId()}`,
+    level,
+  );
+}
+
 function generateMultiplyDivide(level: DifficultyLevel, ms: Record<string, boolean>): AnyQuestion {
   const operation = pickActive(ms, OPERATION_MS.options);
-  const coeffCase = level === "level1" ? "basic" : pickActive(ms, MULDIV_COEFF_MS.options);
-  // The radicand-relationship pool is multiply-only — division draws its own
-  // rare perfect-square collapse directly (see randomDivideRadicands) rather
-  // than through this pool. L3 is a genuine 3-way difficulty ladder (each
-  // rung roughly as likely as the others, matching every other L3 pool in
-  // this tool); L1/L2's own case is a common/rare pair, read via pickRare so
-  // the collapse stays genuinely rare rather than a 50/50 coin flip.
-  const radicandCase = operation !== "multiply" ? "general"
-    : level === "level3" ? pickActive(ms, MULDIV_RADICAND_MS.options)
-    : pickRare(ms, "general", "perfectSquareProduct", 0.1);
+
+  // L1/L2 offer a numeric/algebraic split; L3 stays numeric-only — its own
+  // 3-way radicand ladder is already a full plate for the hardest level.
+  if (level !== "level3" && pickActive(ms, MULDIV_ALGEBRAIC_MS.options) === "algebraic") {
+    return buildAlgebraicMultiplyDivide(level, operation as "multiply" | "divide");
+  }
+
+  // Coefficient presence is a strict ladder, not a toggle repeated at every
+  // level: L1 never (hardcoded), L2 always (hardcoded — no bare-surd L2
+  // questions), L3 a genuine toggle again.
+  const coeffCase = level === "level1" ? "basic" : level === "level2" ? "withCoeff" : pickActive(ms, MULDIV_COEFF_MS.options);
   const useCoeff = coeffCase === "withCoeff";
+
+  // The radicand-relationship trap is a DIFFERENT case at L1 vs L2 — not the
+  // same pool read twice, which previously produced the identical question
+  // shape at two levels. L1: the hidden case (two different surds that still
+  // collapse), rare. L2: the obvious case (√a × √a), introduced fresh here,
+  // moderate. L3: both combined into one real 3-way ladder. Division draws
+  // its own independent, level-scaled rare collapse (see DIVIDE_SIZE) rather
+  // than through these pools, which are multiply-only.
+  const radicandCase = operation !== "multiply" ? "general"
+    : level === "level1" ? pickRare(ms, "general", "perfectSquareProduct", 0.1)
+    : level === "level2" ? pickRare(ms, "general", "sameRadicand", 0.2)
+    : pickActive(ms, MULDIV_RADICAND_MS.options);
 
   let a: SurdTerm, b: SurdTerm;
   // Surds is where this technique is first taught, not a downstream tool
@@ -713,21 +857,26 @@ function generateMultiplyDivide(level: DifficultyLevel, ms: Record<string, boole
 
   if (operation === "multiply") {
     if (radicandCase === "sameRadicand") {
-      const r = randomSquareFree(2, 20);
+      // L2 introduces this fresh at a friendlier size; L3 (the only other
+      // level that can reach this branch) pushes it bigger.
+      const r = randomSquareFree(2, level === "level2" ? 20 : 30);
       a = { coeff: useCoeff ? randInt(2, 8) : 1, radicand: r };
       b = { coeff: useCoeff ? randInt(2, 8) : 1, radicand: r };
     } else if (radicandCase === "perfectSquareProduct") {
       // a's and b's radicands are DIFFERENT but their product is a perfect
       // square by construction — k × (k·m²) = (km)² — e.g.
       // k=2, m=2 gives √2 × √8 = √16 = 4, exactly the case
-      // that gives no visual hint it will collapse.
-      const k = randomSquareFree(2, 10);
-      const m = randInt(2, 4);
+      // that gives no visual hint it will collapse. L1 keeps this at a
+      // friendlier size; L3 (the only other level that can reach this
+      // branch) pushes it bigger.
+      const k = randomSquareFree(2, level === "level1" ? 10 : 15);
+      const m = randInt(2, level === "level1" ? 4 : 5);
       a = { coeff: useCoeff ? randInt(2, 8) : 1, radicand: k };
       b = { coeff: useCoeff ? randInt(2, 8) : 1, radicand: k * m * m };
     } else {
-      a = { coeff: useCoeff ? randInt(2, 8) : 1, radicand: randomSquareFree(2, level === "level1" ? 20 : 35) };
-      b = { coeff: useCoeff ? randInt(2, 8) : 1, radicand: randomSquareFree(2, level === "level1" ? 20 : 35) };
+      const maxRadicand = level === "level1" ? 20 : level === "level2" ? 35 : 50;
+      a = { coeff: useCoeff ? randInt(2, 8) : 1, radicand: randomSquareFree(2, maxRadicand) };
+      b = { coeff: useCoeff ? randInt(2, 8) : 1, radicand: randomSquareFree(2, maxRadicand) };
     }
     resultTerm = multiplySurdTerms(a, b);
     working = expandSurdBracketsSteps([a], [b], grain);
@@ -737,8 +886,11 @@ function generateMultiplyDivide(level: DifficultyLevel, ms: Record<string, boole
     // the root divides exactly, but the answer is normally still a surd —
     // see randomDivideRadicands), and a's coefficient is a whole multiple of
     // b's (so the coefficient ratio divides exactly too) — a plain "both
-    // drawn independently" pair only cancels by luck.
-    const { r, m, s } = randomDivideRadicands(400);
+    // drawn independently" pair only cancels by luck. Every range is
+    // level-scaled (DIVIDE_SIZE), so Divide gets bigger and trickier as the
+    // level rises exactly like Multiply does, instead of staying identical.
+    const size = DIVIDE_SIZE[level];
+    const { r, m, s } = randomDivideRadicands(size.rMax, size.mMax, size.sMax, size.rareRate, size.capA);
     const bCoeff = useCoeff ? randInt(2, 5) : 1;
     const aCoeff = useCoeff ? bCoeff * randInt(1, 4) : 1;
     a = { coeff: aCoeff, radicand: r * m * m * s };
@@ -758,9 +910,10 @@ function generateMultiplyDivide(level: DifficultyLevel, ms: Record<string, boole
   const displayLatex = `${bracketedLatex([a])} ${opLatex} ${bracketedLatex([b])}`;
   const answerLatex = surdTermToLatex(resultTerm, true);
 
-  const score = level === "level2" ? weightOf(MULDIV_COEFF_MS.options, coeffCase)
-    : level === "level3" ? weightOf(MULDIV_COEFF_MS.options, coeffCase) + weightOf(MULDIV_RADICAND_MS.options, radicandCase)
-    : undefined;
+  // L1/L2 no longer carry a weighted axis here (coefficient presence is now
+  // hardcoded, not a QO choice) — only L3's genuine toggles feed the Smart
+  // Progressor.
+  const score = level === "level3" ? weightOf(MULDIV_COEFF_MS.options, coeffCase) + weightOf(MULDIV_RADICAND_MS.options, radicandCase) : undefined;
 
   return questionFrom(displayLatex, answerLatex, working, `mulDiv-${level}-${operation}-${coeffCase}-${radicandCase}-${a.coeff}r${a.radicand}-${b.coeff}r${b.radicand}-${nextId()}`, level, score);
 }

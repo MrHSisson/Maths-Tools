@@ -28,6 +28,37 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-20 — Surds: redesigned Multiply/Divide's 3-level progression
+`src/tools/Number/Surds.tsx`. Follow-up to the collapse-rate fix below — a walkthrough of the three
+levels surfaced that they weren't a real ladder: Level 2's coefficient was an optional 50/50 toggle
+instead of "always on" as its own info text claimed, Divide used identical number ranges and the
+same collapse rate at every level (no progression at all), and Level 1/Level 2 shared the exact same
+"Perfect Square Product" trap pool (same case, same numbers) rather than each level introducing
+something new. Redesigned all three axes so no level can produce the same question shape as its
+neighbour:
+- **Coefficient is now a strict ladder.** L1 never (unchanged), L2 **always** (hardcoded — the
+  `MULDIV_COEFF_MS` toggle no longer shows at L2), L3 a toggle again.
+- **The radicand-collapse trap is a different case per level**, not the same pool shown twice. L1
+  keeps the hidden case (`√2×√8=4`, rare ~10%, `MULDIV_RADICAND_L1_MS`). L2 gets a new pool
+  (`MULDIV_RADICAND_L2_MS`) for the obvious case (`√a×√a=a`, moderate ~20%) instead. L3's existing
+  3-way weighted ladder (both cases combined, unchanged) is now genuinely the level where L1 and
+  L2's separate traps converge, rather than a third copy of the same idea.
+- **Divide now scales with level** via a new `DIVIDE_SIZE` lookup and a generalised
+  `randomDivideRadicands(rMax, mMax, sMax, rareRate, capA)` — number ranges and the rare full-
+  collapse rate (10% → 12% → 15%) both step up L1→L2→L3, so Divide gets bigger and trickier exactly
+  like Multiply's radicand range already did (20 → 35 → 50), instead of staying frozen.
+- **New: an algebraic (x-carrying) coefficient QO at L1/L2** (`MULDIV_ALGEBRAIC_MS`,
+  `buildAlgebraicMultiplyDivide`) — genuinely distinct from AddSub's algebraic case (there x-terms
+  get COLLECTED into a bracket; here x just rides through the multiplication/division on one side,
+  never bracketed, matching this sub-tool's own "never includes a bracket" rule). x only ever sits
+  in the numerator/left factor — putting it on a divisor would leave x in a denominator. L1 keeps it
+  bare (`x√a`); L2 always gives it a real numeric multiplier too (`ax√a`), consistent with L2 always
+  carrying a coefficient. Not offered at L3 (its own 3-way ladder is already a full plate).
+- Verified with a stress test (4,000 draws/level): L2 samples now always show an explicit numeric
+  coefficient (previously ~50% were bare); L1 and L2's trap pools produce visibly different question
+  shapes; Divide's max radicand seen climbs 160 → 297 → 500 across the three levels. `npm test` (335
+  tests, including every new algebraic KaTeX string) and `npm run build` both clean.
+
 ## 2026-09-20 — Surds: fixed Multiply/Divide's runaway "perfect square" collapse rate
 `src/tools/Number/Surds.tsx`. A stress test (4,000 draws/level) showed 76–84% of Multiply/Divide
 questions collapsing to a plain integer answer (no surd surviving) — reported as "nearly every
