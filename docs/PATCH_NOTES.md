@@ -28,6 +28,30 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-20 — Surds: Level 3 Multiply/Divide replaced with fraction multiply/divide
+`src/tools/Number/Surds.tsx`. Second follow-up to the 3-level redesign below — Level 3's single-term
+3-way ladder (general/√a×√a/perfect-square-product) is replaced outright with a genuine capstone:
+two proper fractions, each carrying a surd on exactly one side (`(a√p)/b [op] c/(d√q)`), multiplied
+or divided (with keep-change-flip) into one reduced fraction — never rationalising a denominator.
+- **The key finding driving the design**: Multiply and Divide need *opposite* guarantees for this
+  shape, which turned into the actual teaching point rather than an implementation detail. Multiply
+  (`fracA × fracB = (ac/bd)·√(p/q)`) needs `p` guarded as a clean multiple of `q` (reusing
+  `randomDivideRadicands`) or a surd would be stranded in the denominator. Divide's keep-change-flip
+  (`fracA ÷ fracB = fracA × (d√q)/c`) relocates `fracB`'s surd out of the denominator *by the flip
+  itself* — so any independent `p`, `q` stays clean, no guard needed at all. `buildFractionMultiplyDivide`
+  implements both branches; a new `fractionSurdLatex` gcd-reduces the outer numeric fraction (the
+  radicand never participates in that reduction — it's irrational, so it can't share a factor with
+  the denominator, the same "reduce, then reattach" pattern as the algebraic-coefficient case).
+- Level 3's QO surface simplifies to just Operation (multiply vs divide) — `MULDIV_COEFF_MS` and
+  `MULDIV_RADICAND_MS` are now fully dead (every other reference was L1/L2-only) and were deleted
+  rather than left unused. L1/L2 are unaffected — their own trap pools and algebraic option are
+  untouched, this only replaces L3.
+- Verified two ways: `npm test` (335 tests, including every new KaTeX string), and a throwaway
+  stress test that independently recomputed the true decimal value of 3,000 random Level 3 questions
+  from their raw parameters and compared against the parsed final answer — all 3,000 matched to 6
+  d.p., confirming the "never leaves a surd in a denominator" guarantee actually holds, not just that
+  it renders. `npm run build` clean.
+
 ## 2026-09-20 — Surds: redesigned Multiply/Divide's 3-level progression
 `src/tools/Number/Surds.tsx`. Follow-up to the collapse-rate fix below — a walkthrough of the three
 levels surfaced that they weren't a real ladder: Level 2's coefficient was an optional 50/50 toggle
