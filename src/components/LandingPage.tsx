@@ -207,15 +207,15 @@ export default function LandingPage(): JSX.Element {
 
       {/* Header Bar */}
       <header className="sticky top-0 z-50 bg-blue-900 shadow-xl shadow-blue-900/10">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 bg-white rounded-xl flex items-center justify-center shadow-md">
-                <Calculator className="text-blue-900" size={24} />
+            <div className="flex items-center gap-2.5 sm:gap-3">
+              <div className="w-9 h-9 sm:w-11 sm:h-11 bg-white rounded-xl flex items-center justify-center shadow-md">
+                <Calculator className="text-blue-900" size={20} />
               </div>
               <div>
-                <h1 className="text-white font-bold text-xl tracking-tight">Maths Tools</h1>
-                <p className="text-blue-200 text-xs">Interactive Learning</p>
+                <h1 className="text-white font-bold text-lg sm:text-xl tracking-tight">Maths Tools</h1>
+                <p className="text-blue-200 text-xs hidden sm:block">Interactive Learning</p>
               </div>
             </div>
 
@@ -244,12 +244,12 @@ export default function LandingPage(): JSX.Element {
       </header>
 
       {/* Hero Section */}
-      <div className="relative z-10 pt-20 pb-16 px-6">
+      <div className="relative z-10 pt-10 pb-8 px-4 sm:pt-20 sm:pb-16 sm:px-6">
         <div className="max-w-7xl mx-auto text-center">
-          <h2 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-slate-900 mb-6 tracking-tight drop-shadow-sm">
+          <h2 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-slate-900 mb-3 sm:mb-6 tracking-tight drop-shadow-sm">
             Maths Tools
           </h2>
-          <p className="text-slate-600 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed mb-10">
+          <p className="text-slate-600 text-sm sm:text-lg md:text-xl max-w-2xl mx-auto leading-relaxed mb-6 sm:mb-10">
             Interactive tools for classroom teaching and independent practice.
             Supporting the "I Do, We Do, You Do" pedagogy.
           </p>
@@ -272,7 +272,7 @@ export default function LandingPage(): JSX.Element {
       </div>
 
       {/* Main Content — grouped into subject bands (Mathematics / Computer Science) */}
-      <main className="relative z-10 max-w-7xl mx-auto px-6 pb-24">
+      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24">
         {SUBJECTS.filter((s) => subjectFilter === s).map((s) => {
           const subjectCats = categories.filter((c) => c.subject === s);
           if (!subjectCats.length) return null;
@@ -282,12 +282,12 @@ export default function LandingPage(): JSX.Element {
           return (
             <div key={s} className="mb-8">
               {/* Subject band header */}
-              <div className="flex items-center gap-4 mb-10">
-                <div className="w-11 h-11 rounded-xl bg-blue-900 flex items-center justify-center shadow-md shrink-0">
-                  <SubjectIcon className="text-white" size={24} />
+              <div className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-10">
+                <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl bg-blue-900 flex items-center justify-center shadow-md shrink-0">
+                  <SubjectIcon className="text-white" size={18} />
                 </div>
-                <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">{s}</h2>
-                <span className="text-xs font-bold px-3 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
+                <h2 className="text-xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">{s}</h2>
+                <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
                   {subjectCount} {subjectCount === 1 ? 'tool' : 'tools'}
                 </span>
                 <div className="flex-1 h-px bg-gradient-to-r from-slate-300 to-transparent" />
@@ -297,11 +297,11 @@ export default function LandingPage(): JSX.Element {
           const visibleTools = visibleIn(category.tools);
 
           return (
-            <section key={category.name} className="mb-16">
+            <section key={category.name} className="mb-10 sm:mb-16">
               {/* Category Header — hidden when it would just repeat the subject band */}
               {category.name !== s && (
-                <div className="flex items-center gap-4 mb-8">
-                  <h2 className={`text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r ${category.gradient} drop-shadow-sm`}>
+                <div className="flex items-center gap-3 sm:gap-4 mb-5 sm:mb-8">
+                  <h2 className={`text-lg sm:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r ${category.gradient} drop-shadow-sm`}>
                     {category.name}
                   </h2>
                   <div className="flex-1 h-px bg-gradient-to-r from-slate-200 to-transparent" />
@@ -309,7 +309,7 @@ export default function LandingPage(): JSX.Element {
               )}
 
               {visibleTools.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
                   {visibleTools.map((tool) => {
                     // enabled:false tools only appear in developing mode, where
                     // they're clickable for testing and flagged with a DEV badge.
@@ -319,7 +319,7 @@ export default function LandingPage(): JSX.Element {
                       key={tool.id}
                       onClick={() => navigate(tool.path)}
                       // Added: flex flex-col, h-full, and min-h-[170px] to enforce uniform sizing
-                      className={`group relative flex flex-col justify-start h-full min-h-[170px] bg-white p-6 text-left transition-all duration-300 rounded-xl
+                      className={`group relative flex flex-col justify-start h-full min-h-[110px] sm:min-h-[170px] bg-white p-4 sm:p-6 text-left transition-all duration-300 rounded-xl
                         border border-slate-200 border-l-4 cursor-pointer hover:shadow-lg hover:shadow-slate-200/60 hover:-translate-y-1
                         ${isDevTool
                           ? 'border-l-amber-400 hover:border-l-amber-300'
@@ -328,7 +328,7 @@ export default function LandingPage(): JSX.Element {
                     >
                       {/* Badge - dev-gated tools only; absolutely positioned so it never moves */}
                       {isDevTool && (
-                        <div className="absolute top-6 right-6">
+                        <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
                           <span className="inline-flex items-center text-[10px] font-bold px-2.5 py-1 rounded-md border tracking-wider uppercase bg-amber-50 text-amber-700 border-amber-200">
                             Dev
                           </span>
@@ -336,7 +336,7 @@ export default function LandingPage(): JSX.Element {
                       )}
 
                       {/* Title */}
-                      <h3 className="font-bold text-lg leading-tight text-slate-800 mb-3 pr-16 group-hover:text-slate-900 transition-colors">
+                      <h3 className="font-bold text-base sm:text-lg leading-tight text-slate-800 mb-2 sm:mb-3 pr-14 sm:pr-16 group-hover:text-slate-900 transition-colors">
                         {tool.name}
                       </h3>
 
@@ -349,8 +349,8 @@ export default function LandingPage(): JSX.Element {
                   })}
                 </div>
               ) : (
-                <div className="bg-white/40 backdrop-blur-sm rounded-xl p-8 text-left border border-dashed border-slate-300 shadow-sm transition-all hover:bg-white/60">
-                  <p className="text-slate-700 font-bold text-lg mb-1">Coming soon</p>
+                <div className="bg-white/40 backdrop-blur-sm rounded-xl p-4 sm:p-8 text-left border border-dashed border-slate-300 shadow-sm transition-all hover:bg-white/60">
+                  <p className="text-slate-700 font-bold text-base sm:text-lg mb-1">Coming soon</p>
                   <p className="text-slate-500 text-sm">We're actively developing new resources for the {category.name} library.</p>
                 </div>
               )}
@@ -364,8 +364,8 @@ export default function LandingPage(): JSX.Element {
 
       {/* Footer */}
       <footer className="relative z-10 border-t border-slate-200 bg-white/80 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-6 py-12">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-blue-900 rounded-xl flex items-center justify-center shadow-md">
                 <Calculator className="text-white" size={20} />

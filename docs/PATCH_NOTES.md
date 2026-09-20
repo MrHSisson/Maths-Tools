@@ -28,6 +28,81 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-20 — Narrow-viewport: code review fixes (stuck reveal, mode flash, header dedup)
+`src/shared/ToolShell.tsx`. `/code-review` on the session's diff caught two real bugs in the narrow
+layout and one worthwhile simplification, all fixed:
+- **Stuck per-card reveal.** Tapping a Worksheet card while "Show All" was already on wrote it into
+  `narrowRevealed` even though it added nothing visible — so after "Hide All" turned
+  `showWorksheetAnswers` back off, that one card stayed revealed with no visual explanation.
+  `toggleNarrowReveal` is now a no-op while `showWorksheetAnswers` is true.
+- **Mode-toggle flash on load.** A narrow-viewport page load with no `mode=` URL param initialized
+  `mode` to `"whiteboard"` (the default), which matches neither narrow toggle button — so on the
+  very first paint, *neither* "Worked Example" nor "Worksheet" read as selected until a correcting
+  `useEffect` fired a tick later. `urlInit.mode`'s fallback now seeds `"single"` directly when the
+  page is loading narrow, so the right button is highlighted from the first frame.
+- **Header duplication.** The narrow and desktop shells each had their own copy of the Home-button/
+  hamburger-menu header, sized differently. Extracted into one `renderNavBar(compact)` used by both,
+  so a future header change can't land in one layout and be forgotten in the other.
+- The review also surfaced a pre-existing, unrelated bug in `WorkedExampleSteps`' stacked layout (a
+  keying issue that remounts/re-animates a card on Back instead of just updating it) — left alone
+  since it predates this session's narrow-view work and is a separate fix.
+- Re-verified live with Playwright: the highlighted-button-on-first-paint and no-stuck-reveal-after-
+  Hide-All behaviours both confirmed; `npm run build`/`npm test` clean.
+
+## 2026-09-20 — Narrow-viewport: shrink WorkedExampleSteps' own step text
+`src/shared/components/WorkedExampleSteps.tsx`, `src/shared/ToolShell.tsx`. Live feedback (a real-
+device screenshot of `Surds`, which uses `workedExampleLayout: "stacked"`) showed the step
+card's own text — "Step N" heading, working line, revealed answer — still rendering at its
+desktop/"stacked" size on a phone, oversized next to the rest of the already-shrunk narrow chrome.
+The previous session's `renderWorkedExample(compact)` flag only trimmed the *outer* wrapper padding;
+it never reached `WorkedExampleSteps`, which sizes its own cards internally. Added a new `compact`
+prop on `WorkedExampleStepsProps` (independent of `layout`/its own `stacked` sizing, and always
+wins when both apply) that shrinks the step heading/body font size and card padding further, applied
+in every rendering path — Show All (the real end-user default), single-step navigation, and stacked
+— so it's not limited to the dev-gated step-through mode the screenshot happened to show. Verified
+live at 375px against `Surds` in both the dev-mode step-through view and, more importantly, the
+default Show-All view a real user sees; `npm run build`/`npm test` clean.
+
+## 2026-09-20 — Narrow-viewport polish: smaller sizing, centered worksheet controls, drop PDF button
+`src/shared/ToolShell.tsx`, `src/components/LandingPage.tsx`. Follow-up to the same day's narrow
+layout, after live feedback that it read as too zoomed in:
+- `LandingPage.tsx` gets a proper mobile pass — header, hero title/paragraph, subject/category
+  headers, tool cards and footer all get smaller mobile-first sizing (padding, font size, icon/badge
+  boxes) with the existing `sm:`/`md:`/`lg:` breakpoints preserved, so desktop is pixel-identical to
+  before. This wasn't part of ToolShell's narrow layout — it's a separate, pre-existing component
+  that had never been sized for phone widths.
+- `ToolShell`'s narrow shell: tightened nav/banner/button padding and font sizes throughout, and
+  `renderWorkedExample` gained an optional `compact` flag (desktop call site unaffected) that trims
+  its whiteboard-sized `p-8` padding down for a phone column.
+- The narrow Worksheet mode's control row (Generate / question count / Show All) is now centered
+  rather than left-aligned, and the PDF print/export button is dropped entirely from narrow — it
+  was already demoted to secondary and cutting it simplifies the row further.
+- Re-verified live with Playwright at 375px (both the landing page and `BestBuys`) and 1280px
+  (landing page pixel-unchanged), `npm run build`/`npm test` clean.
+
+## 2026-09-20 — Narrow-viewport layout for ToolShell
+`src/shared/ToolShell.tsx`. New responsive layout, built into the shared shell rather than any tool
+file, so all 27+ tools get it for free:
+- Below a 640px viewport width (a phone, or a desktop window shrunk that far — handy for quickly
+  previewing what a tool generates), `ToolShell` now renders a compact single-column shell limited to
+  **Worked Example** and a new **light Worksheet list** mode — no Whiteboard, no Teach, no
+  differentiated builder.
+- The desktop tool-tab/mode-tab rows are replaced by a settings banner (topic · level) that opens a
+  slide-in drawer for Topic / Difficulty / Question Options — the QO section reuses a new
+  `InlineQOPanel` export from `QOPopovers.tsx` (the same `StandardQOPopover` content, without the
+  floating-popover chrome), so no QO logic was duplicated.
+- The Worksheet list is a scrollable stack of question cards with independent tap-to-reveal per
+  card, a "Show All" toggle (reusing the desktop `showWorksheetAnswers` state), and print/export
+  demoted to a small `PrintSplitButton` icon rather than the primary action.
+- Seeds a smaller default question font size on narrow viewports — the desktop default is sized for
+  a projected whiteboard and wrapped badly on a phone-width column.
+- Diagram tools' `questionRenderer`/`answerRenderer` overrides are respected exactly as in the
+  desktop paths, so no per-tool changes are needed — though only a plain worded-question tool
+  (`BestBuys`) has been checked live so far; see `docs/PROJECTS.md` → "Narrow-viewport layout" for
+  what's still unverified (diagram tools, heavier QO surfaces, differentiated links on a phone).
+- Verified live with Playwright at 375px and 1280px (drawer open/close, reveal, worksheet generation,
+  per-card reveal, zero console errors) alongside `npm run build` and `npm test` (both clean).
+
 ## 2026-09-19 — Surds: cascading Worked Example, retire the duplicate answer, promote its techniques
 `src/tools/Number/Surds.tsx`, `src/shared/ToolShell.tsx`, `src/shared/components/WorkedExampleSteps.tsx`,
 `src/shared/types.ts`, `src/shared/techniques/index.ts`, `src/shared/surds.ts` (new),
