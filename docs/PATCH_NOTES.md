@@ -28,6 +28,28 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-20 — Surds: fixed Multiply/Divide's runaway "perfect square" collapse rate
+`src/tools/Number/Surds.tsx`. A stress test (4,000 draws/level) showed 76–84% of Multiply/Divide
+questions collapsing to a plain integer answer (no surd surviving) — reported as "nearly every
+answer does this". Two root causes, both fixed:
+- **Divide always collapsed, 100% of the time.** `a`'s radicand was constructed as `b`'s radicand
+  times an exact perfect square (`r·m²` over `r`), so the root cancelled completely on every single
+  division question, at every level. New `randomDivideRadicands` adds a square-free residual factor
+  `s` that usually survives (`a = r·m²·s`, `b = r`) — the division is still guaranteed clean (no
+  messy fraction under the root), but the answer is now normally still a surd; a full collapse
+  (`s = 1`) is the rare case (~10%), matching the multiply side's own rare trap.
+- **Level 1/2's "Perfect square product" was a 50/50 coin flip, not a rare trap.** Unlike
+  `SIMPLIFY_RADICAND_L1_MS` (Simplify's near-identical case, correctly read via `pickRare` at
+  ~8%), `MULDIV_RADICAND_L1_MS` was read via plain `pickActive` — uniform over its two active
+  options — so "Standard" vs "Perfect square product" split 50/50 by default instead of the
+  intended occasional surprise. Now reads via `pickRare` (~10%), with the pool's `cycleDisplay`/
+  `cycleStateLabels` updated to match the established rare-trap pattern. Level 3's three-way ladder
+  (`MULDIV_RADICAND_MS`, weighted) is unchanged — that's a genuine difficulty ladder, consistent
+  with every other L3 pool in this tool.
+- Post-fix collapse rate: ~15% at Level 1/2 (both multiply and divide), ~42% at Level 3 (still
+  dominated by the intentional 3-way ladder, not a bug). `npm test` (335 tests) and `npm run build`
+  both clean.
+
 ## 2026-09-20 — Narrow-viewport: code review fixes (stuck reveal, mode flash, header dedup)
 `src/shared/ToolShell.tsx`. `/code-review` on the session's diff caught two real bugs in the narrow
 layout and one worthwhile simplification, all fixed:

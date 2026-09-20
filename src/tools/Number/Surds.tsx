@@ -84,6 +84,24 @@ function randomPerfectSquareRadicand(minRoot: number, maxRoot: number): number {
   return randInt(minRoot, maxRoot) ** 2;
 }
 
+// Divide's radicand pair: a = r · m² · s, b = r — so a ÷ b always resolves
+// exactly to m²·s under one root (a clean division, never a messy fraction
+// left under it), but the residual square-free part s left over after
+// extracting m² is usually > 1, so the answer is normally still a surd. A
+// full perfect-square collapse (s === 1, the root vanishing completely) is
+// the rare special case (~10%, matching the "Perfect square product" rate
+// above), not the default outcome. Capped so a's raw (pre-simplified)
+// radicand stays a readable size.
+function randomDivideRadicands(maxA: number): { r: number; m: number; s: number } {
+  for (let i = 0; i < 300; i++) {
+    const r = randomSquareFree(2, 12);
+    const m = randInt(2, 5);
+    const s = Math.random() < 0.1 ? 1 : randomSquareFree(2, 10);
+    if (r * m * m * s <= maxA) return { r, m, s };
+  }
+  return { r: 2, m: 2, s: 3 };
+}
+
 // A radicand k·x² where x (the value that will be extracted) is drawn from
 // [minX, maxX] and the whole radicand is capped at maxValue — guarded the
 // same way as the other extraction helpers so x is genuinely the largest
@@ -249,11 +267,16 @@ const MULDIV_COEFF_MS: ToolMultiSelect = {
 // Multiply-only: recognising when two DIFFERENT surds still collapse to an
 // integer is a distinct, easily-missed skill from the visually-obvious
 // √a × √a case — e.g. √2 × √8 = √16 = 4 gives no visual hint it will cancel.
+// A common/rare pair, not a difficulty ladder (same shape as Simplify's own
+// SIMPLIFY_RADICAND_L1_MS) — read via pickRare, not pickActive, so "both
+// active" (the default) means the collapse genuinely stays rare rather than
+// a 50/50 coin flip on every question.
 const MULDIV_RADICAND_L1_MS: ToolMultiSelect = {
-  key: "radicandCaseL1", label: "Question Types",
+  key: "radicandCaseL1", label: "Perfect Square Product", cycleDisplay: true,
+  cycleStateLabels: ["Off", "Mixed (~10%)", "Always"],
   options: [
     { value: "general", label: "Standard", defaultActive: true },
-    { value: "perfectSquareProduct", label: "Perfect square product (√2×√8 = 4)", defaultActive: true },
+    { value: "perfectSquareProduct", label: "Perfect square product (√2×√8 = 4, rare ~10%)", defaultActive: true },
   ],
 };
 const MULDIV_RADICAND_MS: ToolMultiSelect = {
@@ -670,12 +693,15 @@ function generateAddSub(level: DifficultyLevel, ms: Record<string, boolean>): An
 function generateMultiplyDivide(level: DifficultyLevel, ms: Record<string, boolean>): AnyQuestion {
   const operation = pickActive(ms, OPERATION_MS.options);
   const coeffCase = level === "level1" ? "basic" : pickActive(ms, MULDIV_COEFF_MS.options);
-  // The radicand-relationship pool is multiply-only — division's own
-  // construction already guarantees a clean collapse by a different route
-  // (the radicand ratio, not the product, is the perfect square).
+  // The radicand-relationship pool is multiply-only — division draws its own
+  // rare perfect-square collapse directly (see randomDivideRadicands) rather
+  // than through this pool. L3 is a genuine 3-way difficulty ladder (each
+  // rung roughly as likely as the others, matching every other L3 pool in
+  // this tool); L1/L2's own case is a common/rare pair, read via pickRare so
+  // the collapse stays genuinely rare rather than a 50/50 coin flip.
   const radicandCase = operation !== "multiply" ? "general"
     : level === "level3" ? pickActive(ms, MULDIV_RADICAND_MS.options)
-    : pickActive(ms, MULDIV_RADICAND_L1_MS.options);
+    : pickRare(ms, "general", "perfectSquareProduct", 0.1);
   const useCoeff = coeffCase === "withCoeff";
 
   let a: SurdTerm, b: SurdTerm;
@@ -707,14 +733,15 @@ function generateMultiplyDivide(level: DifficultyLevel, ms: Record<string, boole
     working = expandSurdBracketsSteps([a], [b], grain);
   } else {
     // divide — guarded clean on BOTH axes: a's radicand is b's radicand times
-    // a perfect square (so the root divides exactly), and a's coefficient is
-    // a whole multiple of b's (so the coefficient ratio divides exactly too)
-    // — a plain "both drawn independently" pair only cancels by luck.
-    const r = randomSquareFree(2, 15);
-    const m = randInt(2, 5);
+    // a perfect square times a usually-surviving square-free residual (so
+    // the root divides exactly, but the answer is normally still a surd —
+    // see randomDivideRadicands), and a's coefficient is a whole multiple of
+    // b's (so the coefficient ratio divides exactly too) — a plain "both
+    // drawn independently" pair only cancels by luck.
+    const { r, m, s } = randomDivideRadicands(400);
     const bCoeff = useCoeff ? randInt(2, 5) : 1;
     const aCoeff = useCoeff ? bCoeff * randInt(1, 4) : 1;
-    a = { coeff: aCoeff, radicand: r * m * m };
+    a = { coeff: aCoeff, radicand: r * m * m * s };
     b = { coeff: bCoeff, radicand: r };
     resultTerm = divideSurdTerms(a, b);
     const rawLatex = `${surdTermToLatex(a, true)} \\div ${surdTermToLatex(b, true)}`;
