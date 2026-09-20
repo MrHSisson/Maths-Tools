@@ -28,6 +28,29 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-20 — Narrow-viewport layout for ToolShell
+`src/shared/ToolShell.tsx`. New responsive layout, built into the shared shell rather than any tool
+file, so all 27+ tools get it for free:
+- Below a 640px viewport width (a phone, or a desktop window shrunk that far — handy for quickly
+  previewing what a tool generates), `ToolShell` now renders a compact single-column shell limited to
+  **Worked Example** and a new **light Worksheet list** mode — no Whiteboard, no Teach, no
+  differentiated builder.
+- The desktop tool-tab/mode-tab rows are replaced by a settings banner (topic · level) that opens a
+  slide-in drawer for Topic / Difficulty / Question Options — the QO section reuses a new
+  `InlineQOPanel` export from `QOPopovers.tsx` (the same `StandardQOPopover` content, without the
+  floating-popover chrome), so no QO logic was duplicated.
+- The Worksheet list is a scrollable stack of question cards with independent tap-to-reveal per
+  card, a "Show All" toggle (reusing the desktop `showWorksheetAnswers` state), and print/export
+  demoted to a small `PrintSplitButton` icon rather than the primary action.
+- Seeds a smaller default question font size on narrow viewports — the desktop default is sized for
+  a projected whiteboard and wrapped badly on a phone-width column.
+- Diagram tools' `questionRenderer`/`answerRenderer` overrides are respected exactly as in the
+  desktop paths, so no per-tool changes are needed — though only a plain worded-question tool
+  (`BestBuys`) has been checked live so far; see `docs/PROJECTS.md` → "Narrow-viewport layout" for
+  what's still unverified (diagram tools, heavier QO surfaces, differentiated links on a phone).
+- Verified live with Playwright at 375px and 1280px (drawer open/close, reveal, worksheet generation,
+  per-card reveal, zero console errors) alongside `npm run build` and `npm test` (both clean).
+
 ## 2026-09-19 — Surds: cascading Worked Example, retire the duplicate answer, promote its techniques
 `src/tools/Number/Surds.tsx`, `src/shared/ToolShell.tsx`, `src/shared/components/WorkedExampleSteps.tsx`,
 `src/shared/types.ts`, `src/shared/techniques/index.ts`, `src/shared/surds.ts` (new),
