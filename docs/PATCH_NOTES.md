@@ -1885,6 +1885,12 @@ always CSShell" — not a precedent for moving other CS content off CSShell. Con
   states directly (3000 draws/level): Never → 0.0%, Mixed → 19.8–20.9%, Exclusive → 100.0%, at
   every level; re-ran the double-carry guarantee check alongside it (Level 1 still never
   double-carries, Level 2/3 still always do). `npm run build` clean, `npm test` (338 tests) green.
+- **Fourth follow-up (same session):** the question display was a full ruled KaTeX `array` (both
+  addends stacked, a `\hline` beneath, as if it were an answer box) — feedback was that the working
+  (kept as-is) already carries that detail, and the question itself only needs the plain sum.
+  Dropped `questionArrayLatex` and set `displayLatex`/`display` to the same plain `"A + B"` (or
+  `"A + B + C"` for Level 3) string the other simple `ToolShell` tools use — no array, no rule.
+  `npm run build` clean, `npm test` (338 tests) green.
 
 ## 2026-07-27 — CS shell increment 8: 1.1.2 CPU Performance as pure data + the CSTopic validator
 The payoff increment — the first sub-topic authored **entirely as data** on the `CSTopic`

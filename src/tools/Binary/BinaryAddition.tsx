@@ -122,13 +122,6 @@ const columnTableLatex = (add: ColumnAddition): string => {
   ].join(" ");
 };
 
-// Renders the plain (un-worked) stack of addends for the question display —
-// each number right-aligned under a "+", with a rule for the student to work below.
-const questionArrayLatex = (rows: string[]): string => {
-  const lines = rows.map((r, i) => (i === 0 ? r : `+\\,${r}`));
-  return ["\\begin{array}{r}", ...lines.map((l) => `${l} \\\\`), "\\hline", "\\end{array}"].join(" ");
-};
-
 // ── 5. Generating addend pairs with a guaranteed carry profile ───────────────
 //
 // Builds an 8-bit pair column by column, LSB to MSB, so the requested carry
@@ -208,7 +201,7 @@ const buildTwoNumberQuestion = (level: DifficultyLevel, wantOverflow: boolean): 
   return {
     kind: "simple",
     display: `${aStr} + ${bStr}`,
-    displayLatex: questionArrayLatex([aStr, bStr]),
+    displayLatex: `${aStr} + ${bStr}`,
     answer: storedStr,
     answerLatex: storedStr,
     answerSuffix: overflow ? overflowNote : undefined,
@@ -255,7 +248,7 @@ const buildThreeNumberQuestion = (level: DifficultyLevel, wantOverflow: boolean)
   return {
     kind: "simple",
     display: `${aStr} + ${bStr} + ${cStr}`,
-    displayLatex: questionArrayLatex([aStr, bStr, cStr]),
+    displayLatex: `${aStr} + ${bStr} + ${cStr}`,
     answer: storedStr,
     answerLatex: storedStr,
     answerSuffix: overflow ? overflowNote : undefined,
