@@ -177,14 +177,24 @@ const WORDING_MS: ToolMultiSelect = {
 };
 
 // The Mixed sub-tool's own pool — which of the other three question types
-// can be drawn. Same shape as RatioSharingTool.tsx's MIXED_OPTIONS (the
-// reference for a 4th "Mixed" sub-tool): unweighted variety, not difficulty.
+// can be drawn. Peers, not a difficulty ladder (RatioSharingTool.tsx's own
+// MIXED_OPTIONS is the reference for a 4th "Mixed" sub-tool, and is
+// unweighted) — BUT this tool already has a genuinely weighted pool
+// (DIFFICULTY_TIER), so a per-question unweighted draw here would be pure
+// chance with no worksheet-level balancing, and pure chance over a ~15
+// question sheet can land as skewed as 67% one type (measured directly).
+// Every option carries an EQUAL `weight` purely to opt into ToolShell's
+// roughly-even quota balancing for worksheets (see CLAUDE.md's Smart
+// Progressor section) — this is a trigger, not an ordinal difficulty value,
+// so `weightOf` on this pool is deliberately never folded into
+// `_difficultyScore` in generateQuestion below; only DIFFICULTY_TIER drives
+// the worksheet's easy-to-hard sort.
 const MIXED_QUESTION_TYPES: ToolMultiSelect = {
   key: "mixedType", label: "Include",
   options: [
-    { value: "speed", label: "Speed", defaultActive: true },
-    { value: "distance", label: "Distance", defaultActive: true },
-    { value: "time", label: "Time", defaultActive: true },
+    { value: "speed", label: "Speed", defaultActive: true, weight: 1 },
+    { value: "distance", label: "Distance", defaultActive: true, weight: 1 },
+    { value: "time", label: "Time", defaultActive: true, weight: 1 },
   ],
 };
 
@@ -276,7 +286,7 @@ const INFO_SECTIONS: InfoSection[] = [
     { label: "Difficulty (all levels)", detail: "One pool of three mutually exclusive rungs, easiest first: '1-10 times tables' (on by default, the scale factor is drawn from 1-10), '11-20 times tables' (drawn from 11-20 only — genuinely harder facts, not just a higher cap), and 'Decimals' (the computed distance/speed value is guaranteed to be a genuine decimal every time, e.g. 8 km/h for a fifth of an hour = 1.6 km, never a repeating one and never a coincidental whole number). Tick more than one rung to mix them in a worksheet — on the Worksheet tab, questions are ordered easiest-rung-first so a sheet ramps up rather than mixing difficulties at random." },
     { label: "Time Notation (Level 2)", detail: "Whether the given/answer time is worded as plain minutes (e.g. '12 minutes') or as a spoken fraction of an hour (e.g. 'a fifth of an hour') — a variety choice, not a difficulty setting, so it isn't ordered by the Worksheet tab's easy-to-hard sort. Tick both to mix the two wordings in one worksheet. 'Worded fraction' only ever picks a time that genuinely has a natural spoken form (a twelfth, tenth, sixth, fifth, quarter, third or half of an hour) — it never falls back to plain-minutes wording for a value that doesn't." },
     { label: "Wording (all levels)", detail: "Standard states the subject and distance/speed first, then the time (e.g. 'A car travels 120 miles in 10 hours.'). Reverse leads with the other clause instead (e.g. 'In 10 hours, a car travels 120 miles.') — same question, same answer, just read in a different order. A variety choice, not a difficulty setting. Tick both to mix the two in one worksheet." },
-    { label: "Include (Mixed only)", detail: "Which of Speed, Distance and Time can appear. Tick fewer to focus practice on particular types while still mixing them up." },
+    { label: "Include (Mixed only)", detail: "Which of Speed, Distance and Time can appear. Tick fewer to focus practice on particular types while still mixing them up. On a worksheet, active types are kept roughly evenly split (like the Difficulty pool), rather than left to chance — a small sheet can otherwise land lopsided by pure luck." },
   ]},
 ];
 

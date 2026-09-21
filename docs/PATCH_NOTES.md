@@ -64,6 +64,19 @@ every level and (Wording) every sub-tool including the new one:
   rate, which needs "For X" instead ("For 10 hours, a train travels at a speed of 20mph."). Fixed
   in `buildLines`'s `"distance"` branch only — Speed's "In" and Time's "At" were already correct.
   `npm run build` clean, `npm test` (341 tests) green.
+- **Second follow-up (same session):** feedback that Mixed "seems heavily skewed to speed" —
+  `MIXED_QUESTION_TYPES` was built unweighted (following `RatioSharingTool.tsx`'s own unweighted
+  Mixed pool), but this tool already has a genuinely weighted pool (`DIFFICULTY_TIER`) whose
+  worksheets already get ToolShell's automatic roughly-even quota balancing; an unweighted pool
+  gets none of that, so each question's type is pure independent chance. Measured directly:
+  6000 raw draws land essentially even (1969/1994/2037), but the worst of 500 simulated
+  15-question worksheets hit 67% Speed by chance alone — exactly the "can occasionally land quite
+  skewed" scenario `CLAUDE.md`'s Smart Progressor section describes. Fix: gave all three
+  `MIXED_QUESTION_TYPES` options an equal `weight: 1`, opting the pool into that same balancing —
+  but deliberately WITHOUT folding it into `_difficultyScore` (still only `DIFFICULTY_TIER`), so
+  the worksheet's easy-to-hard sort is untouched; only the type split is now balanced, not
+  reordered. Re-verified: raw per-question draw still uniform (1039/980/981 over 3000), and
+  `_difficultyScore` confirmed unaffected. `npm run build` clean, `npm test` (341 tests) green.
 
 ## 2026-09-20 — Surds: optional options default off, Divide's working steps deepened
 `src/tools/Number/Surds.tsx`. Feedback on the Multiply/Divide redesign: (1) optional content
