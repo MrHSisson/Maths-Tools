@@ -1951,6 +1951,8 @@ always CSShell" — not a precedent for moving other CS content off CSShell. Con
   "Fourth follow-up" removal above) — re-added `questionArrayLatex` and pointed `displayLatex` at
   it again for both the two- and three-number questions; the instruction-text shortening from the
   fifth follow-up stays. `npm run build` clean, `npm test` (338 tests) green.
+- **Seventh follow-up:** un-dev-gated — dropped `enabled: false` from the `src/registry.ts` entry,
+  so Binary Addition now shows on the landing page like any other live tool.
 
 ## 2026-07-27 — CS shell increment 8: 1.1.2 CPU Performance as pure data + the CSTopic validator
 The payoff increment — the first sub-topic authored **entirely as data** on the `CSTopic`

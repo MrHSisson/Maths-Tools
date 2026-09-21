@@ -159,7 +159,7 @@ export const CATEGORIES: CategoryMeta[] = [
     name: 'Binary Arithmetic',
     subject: 'Computer Science',
     tools: [
-      { id: 'binary-addition', path: '/binary-addition', name: 'Binary Addition', description: 'Add 8-bit binary integers with carries and identify overflow errors, following the OCR J277 approach', enabled: false, load: () => import('./tools/Binary/BinaryAddition') },
+      { id: 'binary-addition', path: '/binary-addition', name: 'Binary Addition', description: 'Add 8-bit binary integers with carries and identify overflow errors, following the OCR J277 approach', load: () => import('./tools/Binary/BinaryAddition') },
     ],
   },
 ];
