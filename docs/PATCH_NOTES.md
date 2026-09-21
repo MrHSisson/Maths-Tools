@@ -28,6 +28,108 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-20 — Surds: optional options default off, Divide's working steps deepened
+`src/tools/Number/Surds.tsx`. Feedback on the Multiply/Divide redesign: (1) optional content
+(algebraic coefficients, the two rare traps) was defaulting *on*, so a fresh worksheet silently
+included a 50/50 mix of x-carrying questions nobody asked for, plus a smaller trap rate; (2) Divide's
+working out was noticeably shallower than Multiply's — one folded step straight from the question to
+the final answer, skipping the actual mechanics Multiply always shows.
+- **Defaults**: `MULDIV_ALGEBRAIC_MS`'s "algebraic" option, and both rare-trap pools'
+  (`MULDIV_RADICAND_L1_MS`/`MULDIV_RADICAND_L2_MS`) non-"Standard" option, now default `false`. A
+  fresh Level 1/2 worksheet is plain multiply/divide practice; the cycle buttons start at "Off" and a
+  teacher opts into algebra or the traps deliberately, rather than getting them baked into ~50%
+  (algebraic) or ~10-20% (traps) of questions with no visible signal why. Verified against
+  `ToolShell`'s actual initialisation code (`init[k][o.value] = o.defaultActive` for every option,
+  not an empty object) — a naive direct-call test with `{}` misleadingly shows the OLD ~50% rate,
+  since `pickActive`/`pickRare` treat an absent key as active; the real app never calls
+  `generateQuestion` with an empty record, only after `ToolShell` seeds every option explicitly.
+- **Divide's working now matches Multiply's own granularity.** New `divideUnderRootSteps` (plain
+  numeric) and a rewritten `algebraicDivideSteps` (x-carrying) both now go "Divide the coefficients"
+  → "Divide the numbers under the root" → combine or delegate to `simplifySurdSteps`'s full extraction
+  chain — the exact move-for-move structure `expandSurdBracketsSteps`'s monomial branch already gives
+  Multiply, instead of a single 3-fragment leap straight to the answer. Level 3's fraction-divide
+  chain (keep-change-flip → multiply numerators/denominators → simplify → reduce) was already
+  comparably deep and is unchanged.
+- `npm test` (335 tests) and `npm run build` clean; spot-checked working-step output at every
+  level/operation combination by hand.
+
+## 2026-09-20 — Surds: Level 3 Multiply/Divide replaced with fraction multiply/divide
+`src/tools/Number/Surds.tsx`. Second follow-up to the 3-level redesign below — Level 3's single-term
+3-way ladder (general/√a×√a/perfect-square-product) is replaced outright with a genuine capstone:
+two proper fractions, each carrying a surd on exactly one side (`(a√p)/b [op] c/(d√q)`), multiplied
+or divided (with keep-change-flip) into one reduced fraction — never rationalising a denominator.
+- **The key finding driving the design**: Multiply and Divide need *opposite* guarantees for this
+  shape, which turned into the actual teaching point rather than an implementation detail. Multiply
+  (`fracA × fracB = (ac/bd)·√(p/q)`) needs `p` guarded as a clean multiple of `q` (reusing
+  `randomDivideRadicands`) or a surd would be stranded in the denominator. Divide's keep-change-flip
+  (`fracA ÷ fracB = fracA × (d√q)/c`) relocates `fracB`'s surd out of the denominator *by the flip
+  itself* — so any independent `p`, `q` stays clean, no guard needed at all. `buildFractionMultiplyDivide`
+  implements both branches; a new `fractionSurdLatex` gcd-reduces the outer numeric fraction (the
+  radicand never participates in that reduction — it's irrational, so it can't share a factor with
+  the denominator, the same "reduce, then reattach" pattern as the algebraic-coefficient case).
+- Level 3's QO surface simplifies to just Operation (multiply vs divide) — `MULDIV_COEFF_MS` and
+  `MULDIV_RADICAND_MS` are now fully dead (every other reference was L1/L2-only) and were deleted
+  rather than left unused. L1/L2 are unaffected — their own trap pools and algebraic option are
+  untouched, this only replaces L3.
+- Verified two ways: `npm test` (335 tests, including every new KaTeX string), and a throwaway
+  stress test that independently recomputed the true decimal value of 3,000 random Level 3 questions
+  from their raw parameters and compared against the parsed final answer — all 3,000 matched to 6
+  d.p., confirming the "never leaves a surd in a denominator" guarantee actually holds, not just that
+  it renders. `npm run build` clean.
+
+## 2026-09-20 — Surds: redesigned Multiply/Divide's 3-level progression
+`src/tools/Number/Surds.tsx`. Follow-up to the collapse-rate fix below — a walkthrough of the three
+levels surfaced that they weren't a real ladder: Level 2's coefficient was an optional 50/50 toggle
+instead of "always on" as its own info text claimed, Divide used identical number ranges and the
+same collapse rate at every level (no progression at all), and Level 1/Level 2 shared the exact same
+"Perfect Square Product" trap pool (same case, same numbers) rather than each level introducing
+something new. Redesigned all three axes so no level can produce the same question shape as its
+neighbour:
+- **Coefficient is now a strict ladder.** L1 never (unchanged), L2 **always** (hardcoded — the
+  `MULDIV_COEFF_MS` toggle no longer shows at L2), L3 a toggle again.
+- **The radicand-collapse trap is a different case per level**, not the same pool shown twice. L1
+  keeps the hidden case (`√2×√8=4`, rare ~10%, `MULDIV_RADICAND_L1_MS`). L2 gets a new pool
+  (`MULDIV_RADICAND_L2_MS`) for the obvious case (`√a×√a=a`, moderate ~20%) instead. L3's existing
+  3-way weighted ladder (both cases combined, unchanged) is now genuinely the level where L1 and
+  L2's separate traps converge, rather than a third copy of the same idea.
+- **Divide now scales with level** via a new `DIVIDE_SIZE` lookup and a generalised
+  `randomDivideRadicands(rMax, mMax, sMax, rareRate, capA)` — number ranges and the rare full-
+  collapse rate (10% → 12% → 15%) both step up L1→L2→L3, so Divide gets bigger and trickier exactly
+  like Multiply's radicand range already did (20 → 35 → 50), instead of staying frozen.
+- **New: an algebraic (x-carrying) coefficient QO at L1/L2** (`MULDIV_ALGEBRAIC_MS`,
+  `buildAlgebraicMultiplyDivide`) — genuinely distinct from AddSub's algebraic case (there x-terms
+  get COLLECTED into a bracket; here x just rides through the multiplication/division on one side,
+  never bracketed, matching this sub-tool's own "never includes a bracket" rule). x only ever sits
+  in the numerator/left factor — putting it on a divisor would leave x in a denominator. L1 keeps it
+  bare (`x√a`); L2 always gives it a real numeric multiplier too (`ax√a`), consistent with L2 always
+  carrying a coefficient. Not offered at L3 (its own 3-way ladder is already a full plate).
+- Verified with a stress test (4,000 draws/level): L2 samples now always show an explicit numeric
+  coefficient (previously ~50% were bare); L1 and L2's trap pools produce visibly different question
+  shapes; Divide's max radicand seen climbs 160 → 297 → 500 across the three levels. `npm test` (335
+  tests, including every new algebraic KaTeX string) and `npm run build` both clean.
+
+## 2026-09-20 — Surds: fixed Multiply/Divide's runaway "perfect square" collapse rate
+`src/tools/Number/Surds.tsx`. A stress test (4,000 draws/level) showed 76–84% of Multiply/Divide
+questions collapsing to a plain integer answer (no surd surviving) — reported as "nearly every
+answer does this". Two root causes, both fixed:
+- **Divide always collapsed, 100% of the time.** `a`'s radicand was constructed as `b`'s radicand
+  times an exact perfect square (`r·m²` over `r`), so the root cancelled completely on every single
+  division question, at every level. New `randomDivideRadicands` adds a square-free residual factor
+  `s` that usually survives (`a = r·m²·s`, `b = r`) — the division is still guaranteed clean (no
+  messy fraction under the root), but the answer is now normally still a surd; a full collapse
+  (`s = 1`) is the rare case (~10%), matching the multiply side's own rare trap.
+- **Level 1/2's "Perfect square product" was a 50/50 coin flip, not a rare trap.** Unlike
+  `SIMPLIFY_RADICAND_L1_MS` (Simplify's near-identical case, correctly read via `pickRare` at
+  ~8%), `MULDIV_RADICAND_L1_MS` was read via plain `pickActive` — uniform over its two active
+  options — so "Standard" vs "Perfect square product" split 50/50 by default instead of the
+  intended occasional surprise. Now reads via `pickRare` (~10%), with the pool's `cycleDisplay`/
+  `cycleStateLabels` updated to match the established rare-trap pattern. Level 3's three-way ladder
+  (`MULDIV_RADICAND_MS`, weighted) is unchanged — that's a genuine difficulty ladder, consistent
+  with every other L3 pool in this tool.
+- Post-fix collapse rate: ~15% at Level 1/2 (both multiply and divide), ~42% at Level 3 (still
+  dominated by the intentional 3-way ladder, not a bug). `npm test` (335 tests) and `npm run build`
+  both clean.
+
 ## 2026-09-20 — Narrow-viewport: code review fixes (stuck reveal, mode flash, header dedup)
 `src/shared/ToolShell.tsx`. `/code-review` on the session's diff caught two real bugs in the narrow
 layout and one worthwhile simplification, all fixed:
