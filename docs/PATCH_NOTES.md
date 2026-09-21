@@ -1891,6 +1891,12 @@ always CSShell" — not a precedent for moving other CS content off CSShell. Con
   Dropped `questionArrayLatex` and set `displayLatex`/`display` to the same plain `"A + B"` (or
   `"A + B + C"` for Level 3) string the other simple `ToolShell` tools use — no array, no rule.
   `npm run build` clean, `npm test` (338 tests) green.
+- **Fifth follow-up (same session):** the "too much in the questions" feedback turned out to be
+  about the `instruction` line repeated above every question ("Add these 8-bit binary numbers. Give
+  your 8-bit answer, and state if an overflow error occurs."), not the vertical-array display fixed
+  above — shortened to `"Add:"`, matching the terse style every other tool uses (`"Solve:"`,
+  `"Simplify:"`); the fuller explanation already lives in `INFO_SECTIONS`. `npm run build` clean,
+  `npm test` (338 tests) green.
 
 ## 2026-07-27 — CS shell increment 8: 1.1.2 CPU Performance as pure data + the CSTopic validator
 The payoff increment — the first sub-topic authored **entirely as data** on the `CSTopic`

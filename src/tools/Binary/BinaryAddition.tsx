@@ -36,7 +36,7 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     binaryAddition: {
       name: "Binary Addition",
-      instruction: "Add these 8-bit binary numbers. Give your 8-bit answer, and state if an overflow error occurs.",
+      instruction: "Add:",
       variables: [],
       dropdown: OVERFLOW_DD,
       difficultySettings: null,
