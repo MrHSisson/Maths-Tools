@@ -11,6 +11,7 @@ import {
 // ── 1. Constants ──────────────────────────────────────────────────────────────
 
 const BIT_WIDTH = 8; // OCR J277 works with 8-bit registers throughout
+const OVERFLOW_RATE = 0.2; // target share of questions that overflow, at every level
 
 // ── 2. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
@@ -153,8 +154,8 @@ const genPair = (
   return targetOverflow ? { x: 128, y: 128 } : { x: 1, y: 1 };
 };
 
-const genLevel1Pair = () => genPair(false, true, false, Math.random() < 0.35);
-const genLevel2Pair = () => genPair(true, true, true, Math.random() < 0.35);
+const genLevel1Pair = () => genPair(false, true, false, Math.random() < OVERFLOW_RATE);
+const genLevel2Pair = () => genPair(true, true, true, Math.random() < OVERFLOW_RATE);
 
 // ── 6. Question builders ──────────────────────────────────────────────────────
 
@@ -191,10 +192,18 @@ const buildTwoNumberQuestion = (level: DifficultyLevel): SimpleQuestion => {
 
 const buildThreeNumberQuestion = (level: DifficultyLevel): SimpleQuestion => {
   const id = randInt(0, 999999);
-  // Guarantees a genuine double-carry column in the first addition, so Level 3
-  // always exceeds Level 2's requirement; the third number is drawn freely.
-  const { x: a, y: b } = genLevel2Pair();
-  const c = randInt(0, 255);
+  // Guarantees a genuine double-carry column in the first addition (so Level 3
+  // always exceeds Level 2's requirement), but never lets that first addition
+  // overflow on its own — overflow of the FINAL three-number sum is then
+  // targeted explicitly via the third number, exactly as for Levels 1/2,
+  // rather than left as an incidental (and much likelier) side effect of
+  // summing three random 8-bit numbers.
+  const { x: a, y: b } = genPair(true, true, true, false);
+  const ab = a + b;
+  const wantOverflow = Math.random() < OVERFLOW_RATE;
+  const c = wantOverflow
+    ? randInt(Math.max(0, 256 - ab), 255)
+    : randInt(0, Math.max(0, 255 - ab));
 
   const step1 = addColumns(a, b, BIT_WIDTH);
   const p = a + b;

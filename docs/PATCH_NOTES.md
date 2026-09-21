@@ -1862,6 +1862,14 @@ always CSShell" — not a precedent for moving other CS content off CSShell. Con
   Level 1 never double-carries, Level 2/3 always do, `answerLatex` is always a valid 8-bit string,
   and overflow rates land where designed; hand-checked the arithmetic of several printed samples.
   `npm run build` clean, `npm test` (338 tests) green.
+- **Follow-up (same session):** overflow was landing at ~35% (L1/L2) and ~80% (L3 — an unforced
+  side effect of summing three random 8-bit numbers, never deliberately targeted). Pulled the rate
+  into one `OVERFLOW_RATE` constant (now `0.2`) and gave Level 3 the same explicit control as
+  Levels 1/2: the first addition is now always forced to stay within 8 bits
+  (`genPair(true, true, true, false)`), and the third number is drawn from whichever half of
+  `0–255` does/doesn't push the final sum past 255, so all three levels land at ~20% overflow.
+  Re-verified with the same scratch-script method (4000 draws/level): 19.3% / 20.3% / 20.7%, carry
+  guarantees unchanged. `npm run build` clean, `npm test` (338 tests) green.
 
 ## 2026-07-27 — CS shell increment 8: 1.1.2 CPU Performance as pure data + the CSTopic validator
 The payoff increment — the first sub-topic authored **entirely as data** on the `CSTopic`
