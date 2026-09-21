@@ -22,7 +22,7 @@ import {
 
 // ── 1. Types ──────────────────────────────────────────────────────────────────
 
-type ToolType = "speed" | "distance" | "time";
+type ToolType = "speed" | "distance" | "time" | "mixed";
 type UnitFamily = "mph" | "kmh" | "mps";
 type L3Type = "compoundTime" | "awkwardMinutes";
 // The WORKED EXAMPLE's method is a separate, display-only choice (same
@@ -38,6 +38,15 @@ type WorkingMethod = "ratioTable" | "decimal";
 // not a difficulty axis: "a quarter of an hour" isn't harder than "15
 // minutes" by design, just a different, equally valid phrasing.
 type TimeNotation = "minutes" | "wordedFraction";
+
+// All levels, all sub-tools — which of the two given facts is stated first.
+// "forward" always leads with the subject ("A car travels 120 miles in 10
+// hours."); "reverse" leads with the OTHER clause instead ("In 10 hours, a
+// car travels 120 miles.") so the numbers can't be pattern-matched by
+// position alone — same maths and answer either way, purely a reading
+// exercise. Unweighted (like TIME_NOTATION_L2) — a wording variant is never
+// "harder", so it never enters the Smart Progressor's sort/balance.
+type Wording = "forward" | "reverse";
 
 interface FamilyInfo {
   distanceUnit: string;
@@ -155,6 +164,40 @@ const TIME_NOTATION_L2: ToolMultiSelect = {
   ],
 };
 
+// All levels, all sub-tools (including Mixed) — see the `Wording` type above.
+// Unweighted, and off by default (same "new variety starts opt-in" precedent
+// as TIME_NOTATION_L2's "wordedFraction") so an existing worksheet's wording
+// doesn't change under a teacher who hasn't touched this option.
+const WORDING_MS: ToolMultiSelect = {
+  key: "wording", label: "Wording",
+  options: [
+    { value: "forward", label: "Standard", defaultActive: true },
+    { value: "reverse", label: "Reverse", defaultActive: false },
+  ],
+};
+
+// The Mixed sub-tool's own pool — which of the other three question types
+// can be drawn. Peers, not a difficulty ladder (RatioSharingTool.tsx's own
+// MIXED_OPTIONS is the reference for a 4th "Mixed" sub-tool, and is
+// unweighted) — BUT this tool already has a genuinely weighted pool
+// (DIFFICULTY_TIER), so a per-question unweighted draw here would be pure
+// chance with no worksheet-level balancing, and pure chance over a ~15
+// question sheet can land as skewed as 67% one type (measured directly).
+// Every option carries an EQUAL `weight` purely to opt into ToolShell's
+// roughly-even quota balancing for worksheets (see CLAUDE.md's Smart
+// Progressor section) — this is a trigger, not an ordinal difficulty value,
+// so `weightOf` on this pool is deliberately never folded into
+// `_difficultyScore` in generateQuestion below; only DIFFICULTY_TIER drives
+// the worksheet's easy-to-hard sort.
+const MIXED_QUESTION_TYPES: ToolMultiSelect = {
+  key: "mixedType", label: "Include",
+  options: [
+    { value: "speed", label: "Speed", defaultActive: true, weight: 1 },
+    { value: "distance", label: "Distance", defaultActive: true, weight: 1 },
+    { value: "time", label: "Time", defaultActive: true, weight: 1 },
+  ],
+};
+
 // TM values with a natural spoken fraction of an hour. Every TM pool Level 2
 // can draw from has at least one member here — L2_MINUTES ⊇
 // {5,6,10,12,15,20,30} and L2_ODD_PP_MINUTES ⊇ {12,20} — so
@@ -173,11 +216,25 @@ const makeSubtool = (name: string) => ({
   name,
   variables: [],
   dropdown: METHOD_DROPDOWN,
-  multiSelect: [UNITS_L1, DIFFICULTY_TIER],
+  multiSelect: [UNITS_L1, DIFFICULTY_TIER, WORDING_MS],
   difficultySettings: {
-    level1: { multiSelect: [UNITS_L1, DIFFICULTY_TIER] },
-    level2: { multiSelect: [UNITS_L23, DIFFICULTY_TIER, TIME_NOTATION_L2] },
-    level3: { multiSelect: [UNITS_L23, L3_TYPES, DIFFICULTY_TIER] },
+    level1: { multiSelect: [UNITS_L1, DIFFICULTY_TIER, WORDING_MS] },
+    level2: { multiSelect: [UNITS_L23, DIFFICULTY_TIER, TIME_NOTATION_L2, WORDING_MS] },
+    level3: { multiSelect: [UNITS_L23, L3_TYPES, DIFFICULTY_TIER, WORDING_MS] },
+  },
+});
+
+// Same shape as makeSubtool, plus MIXED_QUESTION_TYPES at every level — the
+// pool that picks which of Speed/Distance/Time a given question draws from.
+const makeMixedSubtool = () => ({
+  name: "Mixed",
+  variables: [],
+  dropdown: METHOD_DROPDOWN,
+  multiSelect: [UNITS_L1, DIFFICULTY_TIER, WORDING_MS, MIXED_QUESTION_TYPES],
+  difficultySettings: {
+    level1: { multiSelect: [UNITS_L1, DIFFICULTY_TIER, WORDING_MS, MIXED_QUESTION_TYPES] },
+    level2: { multiSelect: [UNITS_L23, DIFFICULTY_TIER, TIME_NOTATION_L2, WORDING_MS, MIXED_QUESTION_TYPES] },
+    level3: { multiSelect: [UNITS_L23, L3_TYPES, DIFFICULTY_TIER, WORDING_MS, MIXED_QUESTION_TYPES] },
   },
 });
 
@@ -187,6 +244,7 @@ const TOOL_CONFIG: ToolConfig = {
     speed: makeSubtool("Speed"),
     distance: makeSubtool("Distance"),
     time: makeSubtool("Time"),
+    mixed: makeMixedSubtool(),
   },
 };
 
@@ -211,6 +269,10 @@ const INFO_SECTIONS: InfoSection[] = [
     { label: "Overview", detail: "Given a distance and a speed, find the time taken." },
     ...LEVEL_INFO,
   ]},
+  { title: "Mixed", icon: "🔀", content: [
+    { label: "Overview", detail: "Random mix of Speed, Distance and Time questions. Use Question Options to choose which types to include." },
+    ...LEVEL_INFO,
+  ]},
   { title: "Modes", icon: "🖥️", content: [
     { label: "Whiteboard", detail: "Single question for whole-class discussion." },
     { label: "Worked Example", detail: "Step-by-step working shown below the question — see Method below for the two available styles." },
@@ -223,6 +285,8 @@ const INFO_SECTIONS: InfoSection[] = [
     { label: "Question Types (Level 3)", detail: "Compound times (e.g. 1 hr 30) and/or awkward minute values (e.g. 40 min)." },
     { label: "Difficulty (all levels)", detail: "One pool of three mutually exclusive rungs, easiest first: '1-10 times tables' (on by default, the scale factor is drawn from 1-10), '11-20 times tables' (drawn from 11-20 only — genuinely harder facts, not just a higher cap), and 'Decimals' (the computed distance/speed value is guaranteed to be a genuine decimal every time, e.g. 8 km/h for a fifth of an hour = 1.6 km, never a repeating one and never a coincidental whole number). Tick more than one rung to mix them in a worksheet — on the Worksheet tab, questions are ordered easiest-rung-first so a sheet ramps up rather than mixing difficulties at random." },
     { label: "Time Notation (Level 2)", detail: "Whether the given/answer time is worded as plain minutes (e.g. '12 minutes') or as a spoken fraction of an hour (e.g. 'a fifth of an hour') — a variety choice, not a difficulty setting, so it isn't ordered by the Worksheet tab's easy-to-hard sort. Tick both to mix the two wordings in one worksheet. 'Worded fraction' only ever picks a time that genuinely has a natural spoken form (a twelfth, tenth, sixth, fifth, quarter, third or half of an hour) — it never falls back to plain-minutes wording for a value that doesn't." },
+    { label: "Wording (all levels)", detail: "Standard states the subject and distance/speed first, then the time (e.g. 'A car travels 120 miles in 10 hours.'). Reverse leads with the other clause instead (e.g. 'In 10 hours, a car travels 120 miles.') — same question, same answer, just read in a different order. A variety choice, not a difficulty setting. Tick both to mix the two in one worksheet." },
+    { label: "Include (Mixed only)", detail: "Which of Speed, Distance and Time can appear. Tick fewer to focus practice on particular types while still mixing them up. On a worksheet, active types are kept roughly evenly split (like the Difficulty pool), rather than left to chance — a small sheet can otherwise land lopsided by pure luck." },
   ]},
 ];
 
@@ -491,17 +555,56 @@ const buildCommon = (
   return { shape, f, D, S, pp, qq, tLabel, tVal, hourRef, subject };
 };
 
-// Everything buildWorking() needs to rebuild the working steps for either
-// method, stored on the question so reformatQuestion can redo this without
-// regenerating the question itself (same pattern as ExpandingBrackets.tsx's
-// "method" dropdown — see reformatQuestion below).
+// Everything buildWorking()/buildLines() need to rebuild the working steps or
+// question wording for either method/wording choice, stored on the question
+// so reformatQuestion can redo either without regenerating the question
+// itself (same pattern as ExpandingBrackets.tsx's "method" dropdown — see
+// reformatQuestion below). `tool` is always the RESOLVED type — genSpeed/
+// genDistance/genTime each hardcode their own, so Mixed's "mixed" tool key
+// never actually appears here.
+type ResolvedToolType = "speed" | "distance" | "time";
+
 interface RawValues {
-  tool: ToolType;
+  tool: ResolvedToolType;
   D: number; S: number; TM: number; pp: number; qq: number;
   tLabel: string; hourRef: number; tVal: number;
-  distanceUnit: string;
+  distanceUnit: string; rateUnit: string; subject: string; durationText: string;
   shapeKind: Shape["kind"]; H?: number; Mfrac?: number;
 }
+
+// Capitalised subjects ("A car", "A train"…) read fine sentence-initial but
+// need lowercasing when "reverse" wording pushes them mid-sentence, after
+// the fronted time/speed clause ("In 10 hours, a car travels…").
+const lowerFirst = (s: string): string => s.charAt(0).toLowerCase() + s.slice(1);
+
+// The single source for a question's opening "lines" — used both at
+// generation time and by reformatQuestion, so "Wording" can reactively swap
+// them without regenerating the question (same D/S/answer either way).
+const buildLines = (rv: RawValues, wording: Wording): string[] => {
+  const Dl = mStr(numLatex(rv.D));
+  const Sl = mStr(numLatex(rv.S));
+  const reverse = wording === "reverse";
+  const subject = reverse ? lowerFirst(rv.subject) : rv.subject;
+
+  if (rv.tool === "speed") {
+    return reverse
+      ? [`In ${rv.durationText}, ${subject} travels ${Dl} ${rv.distanceUnit}.`, `Find its average speed in ${rv.rateUnit}.`]
+      : [`${subject} travels ${Dl} ${rv.distanceUnit} in ${rv.durationText}.`, `Find its average speed in ${rv.rateUnit}.`];
+  }
+  if (rv.tool === "distance") {
+    // "For" here, not "In" — the fronted clause states a RATE (a speed
+    // sustained over a duration), not a completed amount, so it needs the
+    // "for a duration" preposition ("For 10 hours, a train travels at
+    // 20mph."), unlike Speed above where the fronted clause states a
+    // completed DISTANCE ("In 10 hours, a car travels 120 miles.").
+    return reverse
+      ? [`For ${rv.durationText}, ${subject} travels at a speed of ${Sl} ${rv.rateUnit}.`, "How far does it travel?"]
+      : [`${subject} travels at a speed of ${Sl} ${rv.rateUnit}.`, `How far does it travel in ${rv.durationText}?`];
+  }
+  return reverse
+    ? [`At a speed of ${Sl} ${rv.rateUnit}, ${subject} travels ${Dl} ${rv.distanceUnit}.`, "How long does the journey take?"]
+    : [`${subject} travels ${Dl} ${rv.distanceUnit} at a speed of ${Sl} ${rv.rateUnit}.`, "How long does the journey take?"];
+};
 
 // The "Decimal" method only differs from "Ratio Table" when there's an
 // actual sub-hour fraction to convert AND that fraction is an exact decimal
@@ -572,7 +675,7 @@ const buildWorking = (rv: RawValues, method: WorkingMethod): WorkingStep[] => {
   ];
 };
 
-const genSpeed = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, decimalsMode: boolean, requireAboveTen: boolean, method: WorkingMethod, tablesLimit: number, kMin: number = 1, notation: TimeNotation = "minutes"): WordedQuestion => {
+const genSpeed = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, decimalsMode: boolean, requireAboveTen: boolean, method: WorkingMethod, tablesLimit: number, kMin: number = 1, notation: TimeNotation = "minutes", wording: Wording = "forward"): WordedQuestion => {
   // The Speed subtool's own answer is S — the "decimals" rung must guarantee
   // THAT one, not D (see buildCommon/pickShape's target).
   const c = buildCommon(level, family, l3type, tablesLimit, decimalsMode, requireAboveTen, "S", kMin, notation);
@@ -581,7 +684,8 @@ const genSpeed = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, de
   const rv: RawValues = {
     tool: "speed", D: c.D, S: c.S, TM: c.shape.TM, pp: c.pp, qq: c.qq,
     tLabel: c.tLabel, hourRef: c.hourRef, tVal: c.tVal,
-    distanceUnit: c.f.distanceUnit, shapeKind: c.shape.kind, H: c.shape.H, Mfrac: c.shape.Mfrac,
+    distanceUnit: c.f.distanceUnit, rateUnit: c.f.rateUnit, subject: c.subject, durationText,
+    shapeKind: c.shape.kind, H: c.shape.H, Mfrac: c.shape.Mfrac,
   };
 
   return {
@@ -589,18 +693,18 @@ const genSpeed = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, de
     // Names the required unit explicitly — with three possible rate units
     // (mph/km/h/m/s), "Find its average speed." alone leaves the expected
     // unit ambiguous.
-    lines: [`${c.subject} travels ${mStr(numLatex(c.D))} ${c.f.distanceUnit} in ${durationText}.`, `Find its average speed in ${c.f.rateUnit}.`],
+    lines: buildLines(rv, wording),
     answer: `${numLatex(c.S)} ${c.f.rateUnit}`,
     answerLatex: numLatex(c.S),
     answerSuffix: c.f.rateUnit,
     working: buildWorking(rv, method),
-    key: `speed-${level}-${family}-${c.shape.kind}-${c.D}-${c.S}-${method}-${tablesLimit}-${id}`,
+    key: `speed-${level}-${family}-${c.shape.kind}-${c.D}-${c.S}-${method}-${tablesLimit}-${wording}-${id}`,
     difficulty: level,
     _rawValues: rv,
   } as unknown as WordedQuestion;
 };
 
-const genDistance = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, decimalsMode: boolean, requireAboveTen: boolean, method: WorkingMethod, tablesLimit: number, kMin: number = 1, notation: TimeNotation = "minutes"): WordedQuestion => {
+const genDistance = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, decimalsMode: boolean, requireAboveTen: boolean, method: WorkingMethod, tablesLimit: number, kMin: number = 1, notation: TimeNotation = "minutes", wording: Wording = "forward"): WordedQuestion => {
   // The Distance subtool's own answer is D — target it directly.
   const c = buildCommon(level, family, l3type, tablesLimit, decimalsMode, requireAboveTen, "D", kMin, notation);
   const durationText = formatDuration(c.shape, family, notation);
@@ -608,23 +712,24 @@ const genDistance = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type,
   const rv: RawValues = {
     tool: "distance", D: c.D, S: c.S, TM: c.shape.TM, pp: c.pp, qq: c.qq,
     tLabel: c.tLabel, hourRef: c.hourRef, tVal: c.tVal,
-    distanceUnit: c.f.distanceUnit, shapeKind: c.shape.kind, H: c.shape.H, Mfrac: c.shape.Mfrac,
+    distanceUnit: c.f.distanceUnit, rateUnit: c.f.rateUnit, subject: c.subject, durationText,
+    shapeKind: c.shape.kind, H: c.shape.H, Mfrac: c.shape.Mfrac,
   };
 
   return {
     kind: "worded",
-    lines: [`${c.subject} travels at a speed of ${mStr(numLatex(c.S))} ${c.f.rateUnit}.`, `How far does it travel in ${durationText}?`],
+    lines: buildLines(rv, wording),
     answer: `${numLatex(c.D)} ${c.f.distanceUnit}`,
     answerLatex: numLatex(c.D),
     answerSuffix: c.f.distanceUnit,
     working: buildWorking(rv, method),
-    key: `distance-${level}-${family}-${c.shape.kind}-${c.D}-${c.S}-${method}-${tablesLimit}-${id}`,
+    key: `distance-${level}-${family}-${c.shape.kind}-${c.D}-${c.S}-${method}-${tablesLimit}-${wording}-${id}`,
     difficulty: level,
     _rawValues: rv,
   } as unknown as WordedQuestion;
 };
 
-const genTime = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, decimalsMode: boolean, requireAboveTen: boolean, method: WorkingMethod, tablesLimit: number, kMin: number = 1, notation: TimeNotation = "minutes"): WordedQuestion => {
+const genTime = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, decimalsMode: boolean, requireAboveTen: boolean, method: WorkingMethod, tablesLimit: number, kMin: number = 1, notation: TimeNotation = "minutes", wording: Wording = "forward"): WordedQuestion => {
   // The Time subtool's own answer is the duration (derived purely from the
   // time shape, never from S/D — see formatDuration), so decimalsMode never
   // affects ITS answer either way; "D" is an arbitrary but harmless default
@@ -635,7 +740,8 @@ const genTime = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, dec
   const rv: RawValues = {
     tool: "time", D: c.D, S: c.S, TM: c.shape.TM, pp: c.pp, qq: c.qq,
     tLabel: c.tLabel, hourRef: c.hourRef, tVal: c.tVal,
-    distanceUnit: c.f.distanceUnit, shapeKind: c.shape.kind, H: c.shape.H, Mfrac: c.shape.Mfrac,
+    distanceUnit: c.f.distanceUnit, rateUnit: c.f.rateUnit, subject: c.subject, durationText: answerText,
+    shapeKind: c.shape.kind, H: c.shape.H, Mfrac: c.shape.Mfrac,
   };
   // The final answer is stated in prose (e.g. "1 hour 30 minutes"), which may
   // not be pure KaTeX — set via `answer` only, no answerLatex (see AnswerDisplay's
@@ -643,10 +749,10 @@ const genTime = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, dec
 
   return {
     kind: "worded",
-    lines: [`${c.subject} travels ${mStr(numLatex(c.D))} ${c.f.distanceUnit} at a speed of ${mStr(numLatex(c.S))} ${c.f.rateUnit}.`, "How long does the journey take?"],
+    lines: buildLines(rv, wording),
     answer: answerText,
     working: buildWorking(rv, method),
-    key: `time-${level}-${family}-${c.shape.kind}-${c.D}-${c.S}-${method}-${tablesLimit}-${id}`,
+    key: `time-${level}-${family}-${c.shape.kind}-${c.D}-${c.S}-${method}-${tablesLimit}-${wording}-${id}`,
     difficulty: level,
     _rawValues: rv,
   } as unknown as WordedQuestion;
@@ -682,10 +788,17 @@ const generateQuestion = (
   // Time Notation is Level 2 only — unweighted, pure wording variety, not a
   // Smart Progressor axis (see TIME_NOTATION_L2's comment).
   const notation: TimeNotation = level === "level2" ? (pickActive(multiSelectValues, TIME_NOTATION_L2.options) as TimeNotation) : "minutes";
+  // Wording is unweighted too (see WORDING_MS's comment), same across every
+  // sub-tool including Mixed.
+  const wording = pickActive(multiSelectValues, WORDING_MS.options) as Wording;
+  // Mixed draws which underlying type THIS question is from its own pool,
+  // then falls through the same dispatch as a direct sub-tool pick — every
+  // other axis above (family/tier/notation/wording) is shared, not re-picked.
+  const kind = t === "mixed" ? (pickActive(multiSelectValues, MIXED_QUESTION_TYPES.options) as ResolvedToolType) : t;
 
-  const q = t === "speed" ? genSpeed(level, family, l3type, decimalsMode, requireAboveTen, method, tablesLimit, kMin, notation)
-    : t === "distance" ? genDistance(level, family, l3type, decimalsMode, requireAboveTen, method, tablesLimit, kMin, notation)
-    : genTime(level, family, l3type, decimalsMode, requireAboveTen, method, tablesLimit, kMin, notation);
+  const q = kind === "speed" ? genSpeed(level, family, l3type, decimalsMode, requireAboveTen, method, tablesLimit, kMin, notation, wording)
+    : kind === "distance" ? genDistance(level, family, l3type, decimalsMode, requireAboveTen, method, tablesLimit, kMin, notation, wording)
+    : genTime(level, family, l3type, decimalsMode, requireAboveTen, method, tablesLimit, kMin, notation, wording);
   return { ...q, _difficultyScore: difficultyScore } as unknown as WordedQuestion;
 };
 
@@ -693,15 +806,17 @@ const generateQuestion = (
 // standard retry-until-unique loop. No generateUniqueQ needed.
 
 // ── 7. reformatQuestion ───────────────────────────────────────────────────────
-// Switching the "Method" dropdown swaps the working steps only — same D/S/T,
-// same question wording — without regenerating the question. Same pattern as
+// Switching the "Method" dropdown swaps the working steps, and switching
+// "Wording" swaps the question lines — same D/S/T, same answer, in both
+// cases — without regenerating the question. Same pattern as
 // src/tools/Algebra/ExpandingBrackets.tsx's FOIL/Grid method dropdown.
 
 const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null => {
   const rv = (q as any)._rawValues as RawValues | undefined;
   if (!rv) return null;
   const method = (qo.dropdownValue || "ratioTable") as WorkingMethod;
-  return { ...q, working: buildWorking(rv, method) } as unknown as AnyQuestion;
+  const wording = pickActive(qo.multiSelectValues, WORDING_MS.options) as Wording;
+  return { ...q, lines: buildLines(rv, wording), working: buildWorking(rv, method) } as unknown as AnyQuestion;
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════

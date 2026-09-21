@@ -28,6 +28,56 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-21 — Speed, Distance & Time: 4th "Mixed" sub-tool + reverse wording
+`src/tools/Proportion/SpeedDistanceTime.tsx`. Two additions requested together, both applying to
+every level and (Wording) every sub-tool including the new one:
+- **Mixed sub-tool** — added as a 4th `ToolType`, following `RatioSharingTool.tsx`'s own "Mixed"
+  as the reference pattern: an `Include` multiSelect pool (`MIXED_QUESTION_TYPES`: Speed/Distance/
+  Time, all active by default) that `generateQuestion` draws from via `pickActive` when the current
+  tool is `"mixed"`, then falls through the same `genSpeed`/`genDistance`/`genTime` dispatch a
+  direct sub-tool pick already used — every other axis (units, difficulty tier, notation, wording)
+  stays shared rather than re-picked per type. `makeMixedSubtool()` mirrors `makeSubtool()`'s
+  per-level `multiSelect` arrays with `MIXED_QUESTION_TYPES` added. Verified the distribution
+  directly (900 draws at Level 2): ~316/271/313 across speed/distance/time, and confirmed
+  excluding "Time" from `Include` correctly drops it to 0/600 while keeping the other two roughly
+  even.
+- **Reverse wording** — a new unweighted `WORDING_MS` pool (`Standard`/`Reverse`, off by default,
+  same "new variety opts in" precedent as `TIME_NOTATION_L2`), present at every level of every
+  sub-tool. `Standard` states the subject/distance/speed first then the time clause ("A car travels
+  120 miles in 10 hours."); `Reverse` fronts the other clause instead ("In 10 hours, a car travels
+  120 miles." / for Time, "At a speed of 30 km/h, a lorry travels 15 km.") — same D/S/answer either
+  way, just reordered so students can't pattern-match the numbers by position. Extracted the
+  question-line construction that used to be inline in each `genX` into one shared `buildLines(rv,
+  wording)`, fed by new `subject`/`rateUnit`/`durationText` fields on `RawValues` (alongside a
+  `lowerFirst` helper, since a capitalised subject like "A car" needs lowercasing once "Reverse"
+  pushes it mid-sentence after the fronted clause). `reformatQuestion` now also rebuilds `lines`
+  from the live `qo.multiSelectValues`' wording pick (previously it only rebuilt `working` for the
+  Method dropdown), so toggling Wording swaps the question instantly, the same way Method already
+  did — reusing the identical `buildLines` call generation uses, so there's one source for both
+  paths. Verified both directions render correctly for all three question types, including the
+  lowercasing.
+- `npm run build` clean; `npm test` now 341 tests (+3, the generator smoke suite auto-discovered
+  the new `mixed` tool across its three levels).
+- **Follow-up (same session):** Distance's reverse wording fronted the given RATE with "In" ("In 10
+  hours, a train travels at a speed of 20mph."), which reads wrong — "In X" implies a completed
+  amount, fitting Speed's fronted DISTANCE clause, but Distance's fronted clause states a sustained
+  rate, which needs "For X" instead ("For 10 hours, a train travels at a speed of 20mph."). Fixed
+  in `buildLines`'s `"distance"` branch only — Speed's "In" and Time's "At" were already correct.
+  `npm run build` clean, `npm test` (341 tests) green.
+- **Second follow-up (same session):** feedback that Mixed "seems heavily skewed to speed" —
+  `MIXED_QUESTION_TYPES` was built unweighted (following `RatioSharingTool.tsx`'s own unweighted
+  Mixed pool), but this tool already has a genuinely weighted pool (`DIFFICULTY_TIER`) whose
+  worksheets already get ToolShell's automatic roughly-even quota balancing; an unweighted pool
+  gets none of that, so each question's type is pure independent chance. Measured directly:
+  6000 raw draws land essentially even (1969/1994/2037), but the worst of 500 simulated
+  15-question worksheets hit 67% Speed by chance alone — exactly the "can occasionally land quite
+  skewed" scenario `CLAUDE.md`'s Smart Progressor section describes. Fix: gave all three
+  `MIXED_QUESTION_TYPES` options an equal `weight: 1`, opting the pool into that same balancing —
+  but deliberately WITHOUT folding it into `_difficultyScore` (still only `DIFFICULTY_TIER`), so
+  the worksheet's easy-to-hard sort is untouched; only the type split is now balanced, not
+  reordered. Re-verified: raw per-question draw still uniform (1039/980/981 over 3000), and
+  `_difficultyScore` confirmed unaffected. `npm run build` clean, `npm test` (341 tests) green.
+
 ## 2026-09-20 — Surds: optional options default off, Divide's working steps deepened
 `src/tools/Number/Surds.tsx`. Feedback on the Multiply/Divide redesign: (1) optional content
 (algebraic coefficients, the two rare traps) was defaulting *on*, so a fresh worksheet silently
@@ -1835,6 +1885,74 @@ in custom renderers.
 > subject with its own pedagogy (knowledge/recall, not question generation), its
 > own tools, and its own shell (`CSShell`, not `ToolShell`). It's younger than the
 > Maths side — expect it to grow fast.
+
+## 2026-09-21 — Binary Addition tool (new "Binary Arithmetic" category, on `ToolShell`, not `CSShell`)
+Built **`BinaryAddition`** (`/binary-addition`, `src/tools/Binary/BinaryAddition.tsx`, `enabled:
+false` pending review) — practice adding 8-bit binary integers and identifying overflow, following
+OCR J277 1.2. Registered under a **new category, "Binary Arithmetic"** (`subject: 'Computer
+Science'` in `src/registry.ts`), but deliberately built on the **Maths `ToolShell`**, not
+`CSShell` — the brief (Levels 1–3, Whiteboard/Worked Example/Worksheet, a graded skill to
+*practice*) is exactly ToolShell's shape, not CSShell's Learn/Study/Cards/Quiz/Fill/Exam
+knowledge-recall model, so this is a one-off, confirmed-with-the-user exception to "CS tools are
+always CSShell" — not a precedent for moving other CS content off CSShell. Content:
+- Column method (`0+0=0, 0+1=1, 1+1=0 carry 1, 1+1+1=1 carry 1`) implemented as a constructive
+  per-column generator (`genPair`) that *guarantees* each level's carry profile by construction
+  (not by rejection sampling): **Level 1** always carries but never has a column receiving both a
+  `1` and an incoming carry (`allowDoubleCarry=false`); **Level 2** always contains a genuine
+  `1+1+1` column; **Level 3** chains two additions (first two numbers, then the third onto that
+  result) with the first addition always containing a double-carry column.
+- **Overflow** (a sum needing more than 8 bits) is targeted at ~35% of Level 1/2 questions via an
+  explicit `targetOverflow` draw baked into the same constructive loop (natural 3-number sums at
+  Level 3 already overflow ~80% of the time, so no forcing needed there) — the stored `answerLatex`
+  is always the true (possibly wrong, truncated) 8-bit register value, with `answerSuffix` flagging
+  the overflow error, matching how J277 mark schemes phrase it.
+- Worked example renders each addition as a KaTeX `array` column table (carry row, both addends,
+  a rule, the result — with the escaped 9th bit shown spilling past the register on overflow).
+- Verified with a scratch script (not committed) running `generateQuestion` 2000–3000× per level:
+  Level 1 never double-carries, Level 2/3 always do, `answerLatex` is always a valid 8-bit string,
+  and overflow rates land where designed; hand-checked the arithmetic of several printed samples.
+  `npm run build` clean, `npm test` (338 tests) green.
+- **Follow-up (same session):** overflow was landing at ~35% (L1/L2) and ~80% (L3 — an unforced
+  side effect of summing three random 8-bit numbers, never deliberately targeted). Pulled the rate
+  into one `OVERFLOW_RATE` constant (now `0.2`) and gave Level 3 the same explicit control as
+  Levels 1/2: the first addition is now always forced to stay within 8 bits
+  (`genPair(true, true, true, false)`), and the third number is drawn from whichever half of
+  `0–255` does/doesn't push the final sum past 255, so all three levels land at ~20% overflow.
+  Re-verified with the same scratch-script method (4000 draws/level): 19.3% / 20.3% / 20.7%, carry
+  guarantees unchanged. `npm run build` clean, `npm test` (338 tests) green.
+- **Second follow-up (same session):** replaced the fixed `OVERFLOW_RATE` constant with a teacher-
+  facing control — first tried as a 2-option weighted `multiSelect` (the compact auto-cycling
+  Never/Mixed/Exclusive button `CLAUDE.md`'s Smart Progressor section documents), but that pattern
+  hard-codes "Mixed" to ToolShell's own quota-balancing (`buildQuotaOverrides`), which always
+  targets a ~50/50 split across active options and has no way to aim at an arbitrary rate — wrong
+  once the actual ask ("Mixed should still be ~20%") came in. **Third follow-up, superseding the
+  second:** switched to a plain 3-option `dropdown` (`OVERFLOW_DD`: Never/Mixed/Exclusive,
+  `defaultValue: "never"`) instead — dropdowns get no automatic per-slot rebalancing in Worksheet
+  mode, so `generateQuestion` can decide the probability itself (`MIXED_OVERFLOW_RATE = 0.2`) and
+  have it hold in every mode, not just live questions. `_difficultyScore` is now set directly from
+  whether the drawn question actually overflowed (`wantOverflow ? 2 : 1`), so Worksheet mode still
+  sorts easier-before-harder for free without needing a weighted multiSelect. Verified all three
+  states directly (3000 draws/level): Never → 0.0%, Mixed → 19.8–20.9%, Exclusive → 100.0%, at
+  every level; re-ran the double-carry guarantee check alongside it (Level 1 still never
+  double-carries, Level 2/3 still always do). `npm run build` clean, `npm test` (338 tests) green.
+- **Fourth follow-up (same session):** the question display was a full ruled KaTeX `array` (both
+  addends stacked, a `\hline` beneath, as if it were an answer box) — feedback was that the working
+  (kept as-is) already carries that detail, and the question itself only needs the plain sum.
+  Dropped `questionArrayLatex` and set `displayLatex`/`display` to the same plain `"A + B"` (or
+  `"A + B + C"` for Level 3) string the other simple `ToolShell` tools use — no array, no rule.
+  `npm run build` clean, `npm test` (338 tests) green.
+- **Fifth follow-up (same session):** the "too much in the questions" feedback turned out to be
+  about the `instruction` line repeated above every question ("Add these 8-bit binary numbers. Give
+  your 8-bit answer, and state if an overflow error occurs."), not the vertical-array display fixed
+  above — shortened to `"Add:"`, matching the terse style every other tool uses (`"Solve:"`,
+  `"Simplify:"`); the fuller explanation already lives in `INFO_SECTIONS`. `npm run build` clean,
+  `npm test` (338 tests) green.
+- **Sixth follow-up (same session):** restored the vertical stacked-array question display (the
+  "Fourth follow-up" removal above) — re-added `questionArrayLatex` and pointed `displayLatex` at
+  it again for both the two- and three-number questions; the instruction-text shortening from the
+  fifth follow-up stays. `npm run build` clean, `npm test` (338 tests) green.
+- **Seventh follow-up:** un-dev-gated — dropped `enabled: false` from the `src/registry.ts` entry,
+  so Binary Addition now shows on the landing page like any other live tool.
 
 ## 2026-07-27 — CS shell increment 8: 1.1.2 CPU Performance as pure data + the CSTopic validator
 The payoff increment — the first sub-topic authored **entirely as data** on the `CSTopic`
