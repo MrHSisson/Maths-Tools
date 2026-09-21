@@ -1,7 +1,7 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type ToolMultiSelect,
-  mStep, randInt, pick, pickActive, weightOf,
+  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type ToolDropdown,
+  mStep, randInt, pick,
 } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -12,18 +12,23 @@ import {
 
 const BIT_WIDTH = 8; // OCR J277 works with 8-bit registers throughout
 
+// Share of questions that overflow when the Overflow selector is set to
+// "Mixed" — a plain probability generateQuestion applies itself (see below),
+// not ToolShell's weighted-multiSelect quota balancing, which always targets
+// a ~50/50 split and can't be pointed at an arbitrary rate like this one.
+const MIXED_OVERFLOW_RATE = 0.2;
+
 // ── 2. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
-// Both options carry a `weight`, so ToolShell renders this as a single compact
-// click-to-cycle button — Never (No overflow only) → Mixed (both active) →
-// Exclusive (Overflow only) — instead of a two-cell pill row. Same
-// pickActive/weightOf pipeline as any multiSelect; "Never" is the default.
-const OVERFLOW_MS: ToolMultiSelect = {
+const OVERFLOW_DD: ToolDropdown = {
   key: "overflow", label: "Overflow",
+  useTwoLineButtons: false,
   options: [
-    { value: "noOverflow", label: "No overflow", defaultActive: true,  weight: 1 },
-    { value: "overflow",   label: "Overflow",     defaultActive: false, weight: 2 },
+    { value: "never", label: "Never" },
+    { value: "mixed", label: "Mixed" },
+    { value: "exclusive", label: "Exclusive" },
   ],
+  defaultValue: "never",
 };
 
 const TOOL_CONFIG: ToolConfig = {
@@ -33,8 +38,7 @@ const TOOL_CONFIG: ToolConfig = {
       name: "Binary Addition",
       instruction: "Add these 8-bit binary numbers. Give your 8-bit answer, and state if an overflow error occurs.",
       variables: [],
-      dropdown: null,
-      multiSelect: OVERFLOW_MS,
+      dropdown: OVERFLOW_DD,
       difficultySettings: null,
     },
   },
@@ -56,7 +60,7 @@ const INFO_SECTIONS: InfoSection[] = [
   {
     title: "Question Options", icon: "⚙️",
     content: [
-      { label: "Overflow", detail: "A compact cycling button: Never (no question overflows) → Mixed (roughly half do, balanced across a worksheet) → Exclusive (every question overflows). Starts on Never." },
+      { label: "Overflow", detail: "Never — no question overflows. Mixed — about 1 in 5 do. Exclusive — every question overflows. Starts on Never." },
     ],
   },
   {
@@ -177,16 +181,16 @@ const genLevel2Pair = (targetOverflow: boolean) => genPair(true, true, true, tar
 
 // ── 6. Question builders ──────────────────────────────────────────────────────
 //
-// Both builders take the overflow choice already picked (once, per question)
-// from OVERFLOW_MS by generateQuestion, so Whiteboard/Worked Example draw it
-// live per question and Worksheet mode gets ToolShell's automatic roughly-even
-// split across a batch — no separate wiring needed for either.
+// Both builders take the overflow decision already made (once, per question)
+// by generateQuestion from the Overflow dropdown — a plain boolean, the same
+// in every mode (Whiteboard/Worked Example draw it live per question,
+// Worksheet mode calls generateQuestion once per slot with the same
+// dropdownValue, so "Mixed" lands at MIXED_OVERFLOW_RATE across a sheet too).
 
 const overflowNote = "(overflow — the true sum needs more than 8 bits and cannot be stored correctly)";
 
-const buildTwoNumberQuestion = (level: DifficultyLevel, overflowChoice: string): AnyQuestion => {
+const buildTwoNumberQuestion = (level: DifficultyLevel, wantOverflow: boolean): AnyQuestion => {
   const id = randInt(0, 999999);
-  const wantOverflow = overflowChoice === "overflow";
   const { x: a, y: b } = level === "level1" ? genLevel1Pair(wantOverflow) : genLevel2Pair(wantOverflow);
   const add = addColumns(a, b, BIT_WIDTH);
   const trueSum = a + b;
@@ -211,11 +215,11 @@ const buildTwoNumberQuestion = (level: DifficultyLevel, overflowChoice: string):
     working,
     key: `binary-addition-${level}-${a}-${b}-${id}`,
     difficulty: level,
-    _difficultyScore: weightOf(OVERFLOW_MS.options, overflowChoice),
+    _difficultyScore: wantOverflow ? 2 : 1,
   } as unknown as AnyQuestion;
 };
 
-const buildThreeNumberQuestion = (level: DifficultyLevel, overflowChoice: string): AnyQuestion => {
+const buildThreeNumberQuestion = (level: DifficultyLevel, wantOverflow: boolean): AnyQuestion => {
   const id = randInt(0, 999999);
   // Guarantees a genuine double-carry column in the first addition (so Level 3
   // always exceeds Level 2's requirement), but never lets that first addition
@@ -225,7 +229,6 @@ const buildThreeNumberQuestion = (level: DifficultyLevel, overflowChoice: string
   // summing three random 8-bit numbers.
   const { x: a, y: b } = genPair(true, true, true, false);
   const ab = a + b;
-  const wantOverflow = overflowChoice === "overflow";
   const c = wantOverflow
     ? randInt(Math.max(0, 256 - ab), 255)
     : randInt(0, Math.max(0, 255 - ab));
@@ -259,7 +262,7 @@ const buildThreeNumberQuestion = (level: DifficultyLevel, overflowChoice: string
     working,
     key: `binary-addition-level3-${a}-${b}-${c}-${id}`,
     difficulty: level,
-    _difficultyScore: weightOf(OVERFLOW_MS.options, overflowChoice),
+    _difficultyScore: wantOverflow ? 2 : 1,
   } as unknown as AnyQuestion;
 };
 
@@ -269,12 +272,14 @@ const generateQuestion = (
   _tool: string,
   level: DifficultyLevel,
   _variables: Record<string, boolean>,
-  _dropdownValue: string,
-  multiSelectValues: Record<string, boolean> = {},
+  dropdownValue: string,
 ): AnyQuestion => {
-  const overflowChoice = pickActive(multiSelectValues, OVERFLOW_MS.options);
-  if (level === "level3") return buildThreeNumberQuestion(level, overflowChoice);
-  return buildTwoNumberQuestion(level, overflowChoice);
+  const wantOverflow =
+    dropdownValue === "exclusive" ? true :
+    dropdownValue === "mixed" ? Math.random() < MIXED_OVERFLOW_RATE :
+    false; // "never" (and any unrecognised value) — the safe default
+  if (level === "level3") return buildThreeNumberQuestion(level, wantOverflow);
+  return buildTwoNumberQuestion(level, wantOverflow);
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════

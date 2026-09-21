@@ -1871,18 +1871,20 @@ always CSShell" — not a precedent for moving other CS content off CSShell. Con
   Re-verified with the same scratch-script method (4000 draws/level): 19.3% / 20.3% / 20.7%, carry
   guarantees unchanged. `npm run build` clean, `npm test` (338 tests) green.
 - **Second follow-up (same session):** replaced the fixed `OVERFLOW_RATE` constant with a teacher-
-  facing control — `OVERFLOW_MS`, a 2-option weighted `multiSelect` (`noOverflow` weight 1 /
-  `overflow` weight 2), which `CLAUDE.md`'s Smart Progressor section already documents as
-  auto-rendering into a single compact cycling button (Never → Mixed → Exclusive) whenever both
-  options carry a `weight` — no custom UI needed. `genLevel1Pair`/`genLevel2Pair` now take an
-  explicit `targetOverflow` instead of drawing it internally, and both question builders read the
-  picked option once per question (`pickActive`) and attach its `weightOf(...)` as
-  `_difficultyScore`, so Worksheet mode also gets the free roughly-even split + ascending sort in
-  Mixed. Verified all three cycle states directly (1500 draws/level): Never → 0.0% overflow every
-  level, Mixed → ~49–51%, Exclusive → 100.0%; re-ran the double-carry guarantee check in Mixed mode
-  to confirm the overflow axis doesn't interact with the carry-profile guarantees (Level 1 still
-  never double-carries, Level 2/3 still always do). `npm run build` clean, `npm test` (338 tests)
-  green.
+  facing control — first tried as a 2-option weighted `multiSelect` (the compact auto-cycling
+  Never/Mixed/Exclusive button `CLAUDE.md`'s Smart Progressor section documents), but that pattern
+  hard-codes "Mixed" to ToolShell's own quota-balancing (`buildQuotaOverrides`), which always
+  targets a ~50/50 split across active options and has no way to aim at an arbitrary rate — wrong
+  once the actual ask ("Mixed should still be ~20%") came in. **Third follow-up, superseding the
+  second:** switched to a plain 3-option `dropdown` (`OVERFLOW_DD`: Never/Mixed/Exclusive,
+  `defaultValue: "never"`) instead — dropdowns get no automatic per-slot rebalancing in Worksheet
+  mode, so `generateQuestion` can decide the probability itself (`MIXED_OVERFLOW_RATE = 0.2`) and
+  have it hold in every mode, not just live questions. `_difficultyScore` is now set directly from
+  whether the drawn question actually overflowed (`wantOverflow ? 2 : 1`), so Worksheet mode still
+  sorts easier-before-harder for free without needing a weighted multiSelect. Verified all three
+  states directly (3000 draws/level): Never → 0.0%, Mixed → 19.8–20.9%, Exclusive → 100.0%, at
+  every level; re-ran the double-carry guarantee check alongside it (Level 1 still never
+  double-carries, Level 2/3 still always do). `npm run build` clean, `npm test` (338 tests) green.
 
 ## 2026-07-27 — CS shell increment 8: 1.1.2 CPU Performance as pure data + the CSTopic validator
 The payoff increment — the first sub-topic authored **entirely as data** on the `CSTopic`
