@@ -1836,6 +1836,33 @@ in custom renderers.
 > own tools, and its own shell (`CSShell`, not `ToolShell`). It's younger than the
 > Maths side — expect it to grow fast.
 
+## 2026-09-21 — Binary Addition tool (new "Binary Arithmetic" category, on `ToolShell`, not `CSShell`)
+Built **`BinaryAddition`** (`/binary-addition`, `src/tools/Binary/BinaryAddition.tsx`, `enabled:
+false` pending review) — practice adding 8-bit binary integers and identifying overflow, following
+OCR J277 1.2. Registered under a **new category, "Binary Arithmetic"** (`subject: 'Computer
+Science'` in `src/registry.ts`), but deliberately built on the **Maths `ToolShell`**, not
+`CSShell` — the brief (Levels 1–3, Whiteboard/Worked Example/Worksheet, a graded skill to
+*practice*) is exactly ToolShell's shape, not CSShell's Learn/Study/Cards/Quiz/Fill/Exam
+knowledge-recall model, so this is a one-off, confirmed-with-the-user exception to "CS tools are
+always CSShell" — not a precedent for moving other CS content off CSShell. Content:
+- Column method (`0+0=0, 0+1=1, 1+1=0 carry 1, 1+1+1=1 carry 1`) implemented as a constructive
+  per-column generator (`genPair`) that *guarantees* each level's carry profile by construction
+  (not by rejection sampling): **Level 1** always carries but never has a column receiving both a
+  `1` and an incoming carry (`allowDoubleCarry=false`); **Level 2** always contains a genuine
+  `1+1+1` column; **Level 3** chains two additions (first two numbers, then the third onto that
+  result) with the first addition always containing a double-carry column.
+- **Overflow** (a sum needing more than 8 bits) is targeted at ~35% of Level 1/2 questions via an
+  explicit `targetOverflow` draw baked into the same constructive loop (natural 3-number sums at
+  Level 3 already overflow ~80% of the time, so no forcing needed there) — the stored `answerLatex`
+  is always the true (possibly wrong, truncated) 8-bit register value, with `answerSuffix` flagging
+  the overflow error, matching how J277 mark schemes phrase it.
+- Worked example renders each addition as a KaTeX `array` column table (carry row, both addends,
+  a rule, the result — with the escaped 9th bit shown spilling past the register on overflow).
+- Verified with a scratch script (not committed) running `generateQuestion` 2000–3000× per level:
+  Level 1 never double-carries, Level 2/3 always do, `answerLatex` is always a valid 8-bit string,
+  and overflow rates land where designed; hand-checked the arithmetic of several printed samples.
+  `npm run build` clean, `npm test` (338 tests) green.
+
 ## 2026-07-27 — CS shell increment 8: 1.1.2 CPU Performance as pure data + the CSTopic validator
 The payoff increment — the first sub-topic authored **entirely as data** on the `CSTopic`
 contract, no bespoke code. Added **`src/tools/ComputerScience/CpuPerformance.tsx`**: one

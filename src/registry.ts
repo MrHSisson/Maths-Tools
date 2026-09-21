@@ -155,6 +155,13 @@ export const CATEGORIES: CategoryMeta[] = [
       { id: 'cpu-performance', path: '/cpu-performance', name: '1.1.2 - CPU Performance', description: 'Clock speed, cache size and cores — and why the CPU with the biggest single number isn\'t always the fastest', enabled: false, load: () => import('./tools/ComputerScience/CpuPerformance') },
     ],
   },
+  {
+    name: 'Binary Arithmetic',
+    subject: 'Computer Science',
+    tools: [
+      { id: 'binary-addition', path: '/binary-addition', name: 'Binary Addition', description: 'Add 8-bit binary integers with carries and identify overflow errors, following the OCR J277 approach', enabled: false, load: () => import('./tools/Binary/BinaryAddition') },
+    ],
+  },
 ];
 
 export const ALL_TOOLS: ToolMeta[] = CATEGORIES.flatMap((c) => c.tools);
