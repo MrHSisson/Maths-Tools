@@ -28,6 +28,37 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-21 — Speed, Distance & Time: 4th "Mixed" sub-tool + reverse wording
+`src/tools/Proportion/SpeedDistanceTime.tsx`. Two additions requested together, both applying to
+every level and (Wording) every sub-tool including the new one:
+- **Mixed sub-tool** — added as a 4th `ToolType`, following `RatioSharingTool.tsx`'s own "Mixed"
+  as the reference pattern: an `Include` multiSelect pool (`MIXED_QUESTION_TYPES`: Speed/Distance/
+  Time, all active by default) that `generateQuestion` draws from via `pickActive` when the current
+  tool is `"mixed"`, then falls through the same `genSpeed`/`genDistance`/`genTime` dispatch a
+  direct sub-tool pick already used — every other axis (units, difficulty tier, notation, wording)
+  stays shared rather than re-picked per type. `makeMixedSubtool()` mirrors `makeSubtool()`'s
+  per-level `multiSelect` arrays with `MIXED_QUESTION_TYPES` added. Verified the distribution
+  directly (900 draws at Level 2): ~316/271/313 across speed/distance/time, and confirmed
+  excluding "Time" from `Include` correctly drops it to 0/600 while keeping the other two roughly
+  even.
+- **Reverse wording** — a new unweighted `WORDING_MS` pool (`Standard`/`Reverse`, off by default,
+  same "new variety opts in" precedent as `TIME_NOTATION_L2`), present at every level of every
+  sub-tool. `Standard` states the subject/distance/speed first then the time clause ("A car travels
+  120 miles in 10 hours."); `Reverse` fronts the other clause instead ("In 10 hours, a car travels
+  120 miles." / for Time, "At a speed of 30 km/h, a lorry travels 15 km.") — same D/S/answer either
+  way, just reordered so students can't pattern-match the numbers by position. Extracted the
+  question-line construction that used to be inline in each `genX` into one shared `buildLines(rv,
+  wording)`, fed by new `subject`/`rateUnit`/`durationText` fields on `RawValues` (alongside a
+  `lowerFirst` helper, since a capitalised subject like "A car" needs lowercasing once "Reverse"
+  pushes it mid-sentence after the fronted clause). `reformatQuestion` now also rebuilds `lines`
+  from the live `qo.multiSelectValues`' wording pick (previously it only rebuilt `working` for the
+  Method dropdown), so toggling Wording swaps the question instantly, the same way Method already
+  did — reusing the identical `buildLines` call generation uses, so there's one source for both
+  paths. Verified both directions render correctly for all three question types, including the
+  lowercasing.
+- `npm run build` clean; `npm test` now 341 tests (+3, the generator smoke suite auto-discovered
+  the new `mixed` tool across its three levels).
+
 ## 2026-09-20 — Surds: optional options default off, Divide's working steps deepened
 `src/tools/Number/Surds.tsx`. Feedback on the Multiply/Divide redesign: (1) optional content
 (algebraic coefficients, the two rare traps) was defaulting *on*, so a fresh worksheet silently
