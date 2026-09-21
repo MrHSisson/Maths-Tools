@@ -1,7 +1,7 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type SimpleQuestion, type WorkingStep,
-  mStep, randInt, pick,
+  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type ToolMultiSelect,
+  mStep, randInt, pick, pickActive, weightOf,
 } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -11,9 +11,20 @@ import {
 // ── 1. Constants ──────────────────────────────────────────────────────────────
 
 const BIT_WIDTH = 8; // OCR J277 works with 8-bit registers throughout
-const OVERFLOW_RATE = 0.2; // target share of questions that overflow, at every level
 
 // ── 2. TOOL_CONFIG ────────────────────────────────────────────────────────────
+
+// Both options carry a `weight`, so ToolShell renders this as a single compact
+// click-to-cycle button — Never (No overflow only) → Mixed (both active) →
+// Exclusive (Overflow only) — instead of a two-cell pill row. Same
+// pickActive/weightOf pipeline as any multiSelect; "Never" is the default.
+const OVERFLOW_MS: ToolMultiSelect = {
+  key: "overflow", label: "Overflow",
+  options: [
+    { value: "noOverflow", label: "No overflow", defaultActive: true,  weight: 1 },
+    { value: "overflow",   label: "Overflow",     defaultActive: false, weight: 2 },
+  ],
+};
 
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Binary Addition",
@@ -23,6 +34,7 @@ const TOOL_CONFIG: ToolConfig = {
       instruction: "Add these 8-bit binary numbers. Give your 8-bit answer, and state if an overflow error occurs.",
       variables: [],
       dropdown: null,
+      multiSelect: OVERFLOW_MS,
       difficultySettings: null,
     },
   },
@@ -38,7 +50,13 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Level 1 — Green", detail: "Two 8-bit numbers with at least one carry, but the carry is never compounded — no column ever has to add two 1s plus an incoming carry (no '1+1+1' column)." },
       { label: "Level 2 — Yellow", detail: "Two 8-bit numbers that always include a genuine '1+1+1=1 carry 1' column — a carry landing on a column where both digits are already 1." },
       { label: "Level 3 — Red", detail: "Three 8-bit numbers, added in sequence: the first two, then the third added to that result — extending the same column method with a guaranteed '1+1+1' column somewhere in the working." },
-      { label: "Overflow", detail: "The register only holds 8 bits (0–255). When the true sum is greater than 255, the carry out of the leftmost (most significant) bit has nowhere to go — the 9th bit is lost, and the register stores the wrong 8-bit value. This is an overflow error, and every level can produce one." },
+      { label: "Overflow", detail: "The register only holds 8 bits (0–255). When the true sum is greater than 255, the carry out of the leftmost (most significant) bit has nowhere to go — the 9th bit is lost, and the register stores the wrong 8-bit value. This is an overflow error." },
+    ],
+  },
+  {
+    title: "Question Options", icon: "⚙️",
+    content: [
+      { label: "Overflow", detail: "A compact cycling button: Never (no question overflows) → Mixed (roughly half do, balanced across a worksheet) → Exclusive (every question overflows). Starts on Never." },
     ],
   },
   {
@@ -154,16 +172,22 @@ const genPair = (
   return targetOverflow ? { x: 128, y: 128 } : { x: 1, y: 1 };
 };
 
-const genLevel1Pair = () => genPair(false, true, false, Math.random() < OVERFLOW_RATE);
-const genLevel2Pair = () => genPair(true, true, true, Math.random() < OVERFLOW_RATE);
+const genLevel1Pair = (targetOverflow: boolean) => genPair(false, true, false, targetOverflow);
+const genLevel2Pair = (targetOverflow: boolean) => genPair(true, true, true, targetOverflow);
 
 // ── 6. Question builders ──────────────────────────────────────────────────────
+//
+// Both builders take the overflow choice already picked (once, per question)
+// from OVERFLOW_MS by generateQuestion, so Whiteboard/Worked Example draw it
+// live per question and Worksheet mode gets ToolShell's automatic roughly-even
+// split across a batch — no separate wiring needed for either.
 
 const overflowNote = "(overflow — the true sum needs more than 8 bits and cannot be stored correctly)";
 
-const buildTwoNumberQuestion = (level: DifficultyLevel): SimpleQuestion => {
+const buildTwoNumberQuestion = (level: DifficultyLevel, overflowChoice: string): AnyQuestion => {
   const id = randInt(0, 999999);
-  const { x: a, y: b } = level === "level1" ? genLevel1Pair() : genLevel2Pair();
+  const wantOverflow = overflowChoice === "overflow";
+  const { x: a, y: b } = level === "level1" ? genLevel1Pair(wantOverflow) : genLevel2Pair(wantOverflow);
   const add = addColumns(a, b, BIT_WIDTH);
   const trueSum = a + b;
   const overflow = trueSum > 255;
@@ -187,10 +211,11 @@ const buildTwoNumberQuestion = (level: DifficultyLevel): SimpleQuestion => {
     working,
     key: `binary-addition-${level}-${a}-${b}-${id}`,
     difficulty: level,
-  };
+    _difficultyScore: weightOf(OVERFLOW_MS.options, overflowChoice),
+  } as unknown as AnyQuestion;
 };
 
-const buildThreeNumberQuestion = (level: DifficultyLevel): SimpleQuestion => {
+const buildThreeNumberQuestion = (level: DifficultyLevel, overflowChoice: string): AnyQuestion => {
   const id = randInt(0, 999999);
   // Guarantees a genuine double-carry column in the first addition (so Level 3
   // always exceeds Level 2's requirement), but never lets that first addition
@@ -200,7 +225,7 @@ const buildThreeNumberQuestion = (level: DifficultyLevel): SimpleQuestion => {
   // summing three random 8-bit numbers.
   const { x: a, y: b } = genPair(true, true, true, false);
   const ab = a + b;
-  const wantOverflow = Math.random() < OVERFLOW_RATE;
+  const wantOverflow = overflowChoice === "overflow";
   const c = wantOverflow
     ? randInt(Math.max(0, 256 - ab), 255)
     : randInt(0, Math.max(0, 255 - ab));
@@ -234,7 +259,8 @@ const buildThreeNumberQuestion = (level: DifficultyLevel): SimpleQuestion => {
     working,
     key: `binary-addition-level3-${a}-${b}-${c}-${id}`,
     difficulty: level,
-  };
+    _difficultyScore: weightOf(OVERFLOW_MS.options, overflowChoice),
+  } as unknown as AnyQuestion;
 };
 
 // ── 7. generateQuestion ───────────────────────────────────────────────────────
@@ -244,9 +270,11 @@ const generateQuestion = (
   level: DifficultyLevel,
   _variables: Record<string, boolean>,
   _dropdownValue: string,
+  multiSelectValues: Record<string, boolean> = {},
 ): AnyQuestion => {
-  if (level === "level3") return buildThreeNumberQuestion(level);
-  return buildTwoNumberQuestion(level);
+  const overflowChoice = pickActive(multiSelectValues, OVERFLOW_MS.options);
+  if (level === "level3") return buildThreeNumberQuestion(level, overflowChoice);
+  return buildTwoNumberQuestion(level, overflowChoice);
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════

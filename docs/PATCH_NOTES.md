@@ -1870,6 +1870,19 @@ always CSShell" — not a precedent for moving other CS content off CSShell. Con
   `0–255` does/doesn't push the final sum past 255, so all three levels land at ~20% overflow.
   Re-verified with the same scratch-script method (4000 draws/level): 19.3% / 20.3% / 20.7%, carry
   guarantees unchanged. `npm run build` clean, `npm test` (338 tests) green.
+- **Second follow-up (same session):** replaced the fixed `OVERFLOW_RATE` constant with a teacher-
+  facing control — `OVERFLOW_MS`, a 2-option weighted `multiSelect` (`noOverflow` weight 1 /
+  `overflow` weight 2), which `CLAUDE.md`'s Smart Progressor section already documents as
+  auto-rendering into a single compact cycling button (Never → Mixed → Exclusive) whenever both
+  options carry a `weight` — no custom UI needed. `genLevel1Pair`/`genLevel2Pair` now take an
+  explicit `targetOverflow` instead of drawing it internally, and both question builders read the
+  picked option once per question (`pickActive`) and attach its `weightOf(...)` as
+  `_difficultyScore`, so Worksheet mode also gets the free roughly-even split + ascending sort in
+  Mixed. Verified all three cycle states directly (1500 draws/level): Never → 0.0% overflow every
+  level, Mixed → ~49–51%, Exclusive → 100.0%; re-ran the double-carry guarantee check in Mixed mode
+  to confirm the overflow axis doesn't interact with the carry-profile guarantees (Level 1 still
+  never double-carries, Level 2/3 still always do). `npm run build` clean, `npm test` (338 tests)
+  green.
 
 ## 2026-07-27 — CS shell increment 8: 1.1.2 CPU Performance as pure data + the CSTopic validator
 The payoff increment — the first sub-topic authored **entirely as data** on the `CSTopic`
