@@ -582,8 +582,13 @@ const buildLines = (rv: RawValues, wording: Wording): string[] => {
       : [`${subject} travels ${Dl} ${rv.distanceUnit} in ${rv.durationText}.`, `Find its average speed in ${rv.rateUnit}.`];
   }
   if (rv.tool === "distance") {
+    // "For" here, not "In" — the fronted clause states a RATE (a speed
+    // sustained over a duration), not a completed amount, so it needs the
+    // "for a duration" preposition ("For 10 hours, a train travels at
+    // 20mph."), unlike Speed above where the fronted clause states a
+    // completed DISTANCE ("In 10 hours, a car travels 120 miles.").
     return reverse
-      ? [`In ${rv.durationText}, ${subject} travels at a speed of ${Sl} ${rv.rateUnit}.`, "How far does it travel?"]
+      ? [`For ${rv.durationText}, ${subject} travels at a speed of ${Sl} ${rv.rateUnit}.`, "How far does it travel?"]
       : [`${subject} travels at a speed of ${Sl} ${rv.rateUnit}.`, `How far does it travel in ${rv.durationText}?`];
   }
   return reverse

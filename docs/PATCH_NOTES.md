@@ -58,6 +58,12 @@ every level and (Wording) every sub-tool including the new one:
   lowercasing.
 - `npm run build` clean; `npm test` now 341 tests (+3, the generator smoke suite auto-discovered
   the new `mixed` tool across its three levels).
+- **Follow-up (same session):** Distance's reverse wording fronted the given RATE with "In" ("In 10
+  hours, a train travels at a speed of 20mph."), which reads wrong — "In X" implies a completed
+  amount, fitting Speed's fronted DISTANCE clause, but Distance's fronted clause states a sustained
+  rate, which needs "For X" instead ("For 10 hours, a train travels at a speed of 20mph."). Fixed
+  in `buildLines`'s `"distance"` branch only — Speed's "In" and Time's "At" were already correct.
+  `npm run build` clean, `npm test` (341 tests) green.
 
 ## 2026-09-20 — Surds: optional options default off, Divide's working steps deepened
 `src/tools/Number/Surds.tsx`. Feedback on the Multiply/Divide redesign: (1) optional content
