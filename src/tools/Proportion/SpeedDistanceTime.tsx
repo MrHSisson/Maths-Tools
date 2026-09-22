@@ -529,6 +529,30 @@ const timeCellValue = (shape: Shape): number => (shape.kind === "l1" ? shape.TM 
 
 const hourRefValue = (shape: Shape): number => (shape.kind === "l1" ? 1 : 60);
 
+// Time's own final answer, built to match Speed/Distance's "KaTeX number +
+// plain-text unit" answer style (via answerLatex/answerSuffix) instead of the
+// plain-text-only string the other two subtools never use. For l1/l2/
+// l3awkward shapes the duration is a single number+unit, exactly the same
+// shape as Speed's "S mph" / Distance's "D miles" answer. l3compound is the
+// one genuine exception — a duration stated as TWO number+unit pairs ("1
+// hour 30 minutes") can't fit the single-katex-span + single-suffix shape
+// print.ts's answer renderer expects, so both numbers are kept together in
+// one KaTeX string (via \text{} for the unit words, matching the same
+// upright/non-italic look answerSuffix already gives every other answer on
+// this site) rather than falling back to fully plain text.
+const buildTimeAnswer = (shape: Shape, family: UnitFamily): { answerLatex: string; answerSuffix?: string } => {
+  if (shape.kind === "l3compound") {
+    const H = shape.H!, M = shape.Mfrac!;
+    return { answerLatex: `${H} \\text{ hour${H === 1 ? "" : "s"} } ${M} \\text{ minutes}` };
+  }
+  if (shape.kind === "l1") {
+    const T0 = shape.TM / 60;
+    const unit = family === "mps" ? (T0 === 1 ? "second" : "seconds") : (T0 === 1 ? "hour" : "hours");
+    return { answerLatex: numLatex(T0), answerSuffix: unit };
+  }
+  return { answerLatex: numLatex(shape.TM), answerSuffix: shape.TM === 1 ? "minute" : "minutes" };
+};
+
 // ── 5. Question builders ──────────────────────────────────────────────────────
 
 const compoundConvertStep = (shape: Shape): WorkingStep[] =>
@@ -743,14 +767,17 @@ const genTime = (level: DifficultyLevel, family: UnitFamily, l3type: L3Type, dec
     distanceUnit: c.f.distanceUnit, rateUnit: c.f.rateUnit, subject: c.subject, durationText: answerText,
     shapeKind: c.shape.kind, H: c.shape.H, Mfrac: c.shape.Mfrac,
   };
-  // The final answer is stated in prose (e.g. "1 hour 30 minutes"), which may
-  // not be pure KaTeX — set via `answer` only, no answerLatex (see AnswerDisplay's
-  // fallback: it renders the plain `answer` text when answerLatex is absent).
+  // Keep the same "KaTeX number(s) + plain-text unit" answer style Speed and
+  // Distance use — see buildTimeAnswer. `answer` still carries the plain-text
+  // fallback (e.g. "1 hour 30 minutes") for any non-rendering consumer.
+  const { answerLatex: timeAnsLatex, answerSuffix: timeAnsSuffix } = buildTimeAnswer(c.shape, family);
 
   return {
     kind: "worded",
     lines: buildLines(rv, wording),
     answer: answerText,
+    answerLatex: timeAnsLatex,
+    answerSuffix: timeAnsSuffix,
     working: buildWorking(rv, method),
     key: `time-${level}-${family}-${c.shape.kind}-${c.D}-${c.S}-${method}-${tablesLimit}-${wording}-${id}`,
     difficulty: level,

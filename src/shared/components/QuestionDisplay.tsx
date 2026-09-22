@@ -38,9 +38,15 @@ export const AnswerDisplay = ({ q }: { q: AnyQuestion }) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const anyQ = q as any;
   if (anyQ.answerLatex) {
+    // MathRenderer's default 0.826em/regular-weight sizing is tuned for
+    // question text (font-semibold); the answer line is font-bold and
+    // noticeably larger (see the wrapper divs in ToolShell.tsx), so at
+    // defaults the KaTeX number reads much smaller/thinner than the plain
+    // answerSuffix text next to it. Override to match the surrounding
+    // bold answer text's size and weight.
     return (
       <>
-        <MathRenderer latex={ansEq(anyQ.answerLatex)} />
+        <MathRenderer latex={ansEq(anyQ.answerLatex)} style={{ fontWeight: 700, fontSize: "1em" }} />
         {anyQ.answerSuffix && <span> {anyQ.answerSuffix}</span>}
       </>
     );

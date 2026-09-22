@@ -28,6 +28,38 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-22 — Shared `AnswerDisplay`: match KaTeX answer size/weight to the unit text
+`src/shared/components/QuestionDisplay.tsx`. Follow-up to the Speed/Distance/Time answer-format
+fix below: giving Time's answer proper `answerLatex` made a pre-existing, site-wide sizing issue
+obvious — visually confirmed via screenshot (`= 36 minutes` rendered with a tiny, thin, non-bold
+KaTeX "36" dwarfed by a big bold plain-text "minutes"). `AnswerDisplay`'s `MathRenderer` call used
+its default sizing (0.826em, no explicit weight), which is tuned for question text
+(`font-semibold`); the answer line is `font-bold` and a size step larger, so the KaTeX number read
+much smaller and thinner than the `answerSuffix` beside it, on every tool using this pattern (all
+27 `ToolShell` tools' answers, not just this one). Overrode `MathRenderer`'s `style` to
+`{ fontWeight: 700, fontSize: "1em" }` for the answer's KaTeX render specifically — screenshot-
+verified (Speed's "= 10 km/h", Distance's "= 4 km", Time's "= 40 minutes", and the compound
+"= 2 hours 15 minutes" from the `\text{}` fix below, which now inherits the same bold weight
+uniformly since it's one KaTeX span). Scoped to `AnswerDisplay` only — `QuestionDisplay`/
+`InlineMath` (font-semibold, less severe) untouched. `npm run build` clean, `npm test` (341 tests)
+passing.
+
+## 2026-09-22 — Speed, Distance & Time: consistent KaTeX answer formatting
+`src/tools/Proportion/SpeedDistanceTime.tsx`. Fixed a visual inconsistency: Speed and Distance
+answers always rendered their number via `answerLatex` (KaTeX) with the unit as plain-text
+`answerSuffix`, but Time's answer never set `answerLatex` at all, so it fell back to fully
+plain text (e.g. "= 1 hour 30 minutes" with no KaTeX styling) while Speed/Distance showed
+"= 12 mph" with the number in KaTeX's math font. Added `buildTimeAnswer(shape, family)`: for the
+three single-unit shapes (l1 hours/seconds, l2/l3awkward minutes) it now sets `answerLatex` +
+`answerSuffix` exactly like Speed/Distance. The one genuine exception is the compound l3 shape
+("1 hour 30 minutes") — two number+unit pairs can't fit the single-katex-span-plus-one-suffix
+shape `print.ts`'s answer renderer expects, so both numbers stay together in one KaTeX string
+using `\text{}` for the unit words (renders upright, visually identical to how `answerSuffix`
+already looks next to every other answer on the site) rather than falling back to plain text.
+`npm run build` clean, `npm test` (341 tests) passing — the generator smoke test renders every
+`answerLatex` including the new `\text{}` compound strings via `katex.renderToString` with
+`throwOnError`.
+
 ## 2026-09-21 — Speed, Distance & Time: 4th "Mixed" sub-tool + reverse wording
 `src/tools/Proportion/SpeedDistanceTime.tsx`. Two additions requested together, both applying to
 every level and (Wording) every sub-tool including the new one:
