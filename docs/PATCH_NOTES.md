@@ -28,6 +28,22 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-22 — Shared `AnswerDisplay`: match KaTeX answer size/weight to the unit text
+`src/shared/components/QuestionDisplay.tsx`. Follow-up to the Speed/Distance/Time answer-format
+fix below: giving Time's answer proper `answerLatex` made a pre-existing, site-wide sizing issue
+obvious — visually confirmed via screenshot (`= 36 minutes` rendered with a tiny, thin, non-bold
+KaTeX "36" dwarfed by a big bold plain-text "minutes"). `AnswerDisplay`'s `MathRenderer` call used
+its default sizing (0.826em, no explicit weight), which is tuned for question text
+(`font-semibold`); the answer line is `font-bold` and a size step larger, so the KaTeX number read
+much smaller and thinner than the `answerSuffix` beside it, on every tool using this pattern (all
+27 `ToolShell` tools' answers, not just this one). Overrode `MathRenderer`'s `style` to
+`{ fontWeight: 700, fontSize: "1em" }` for the answer's KaTeX render specifically — screenshot-
+verified (Speed's "= 10 km/h", Distance's "= 4 km", Time's "= 40 minutes", and the compound
+"= 2 hours 15 minutes" from the `\text{}` fix below, which now inherits the same bold weight
+uniformly since it's one KaTeX span). Scoped to `AnswerDisplay` only — `QuestionDisplay`/
+`InlineMath` (font-semibold, less severe) untouched. `npm run build` clean, `npm test` (341 tests)
+passing.
+
 ## 2026-09-22 — Speed, Distance & Time: consistent KaTeX answer formatting
 `src/tools/Proportion/SpeedDistanceTime.tsx`. Fixed a visual inconsistency: Speed and Distance
 answers always rendered their number via `answerLatex` (KaTeX) with the unit as plain-text
