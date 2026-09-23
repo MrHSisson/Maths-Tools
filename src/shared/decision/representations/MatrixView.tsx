@@ -14,6 +14,8 @@ export interface MatrixViewProps {
   step?: SolveStep;
   directed?: boolean;
   title?: string;
+  /** Drop the card chrome (border/shadow/padding) — for a host that wraps it in its own card. */
+  bare?: boolean;
 }
 
 const CELL_COLOR: Record<MatrixCellState, { fg: string; bg: string }> = {
@@ -24,19 +26,20 @@ const CELL_COLOR: Record<MatrixCellState, { fg: string; bg: string }> = {
 };
 
 const cellStyle = (head: boolean, diag: boolean, state?: MatrixCellState, indirect?: boolean): React.CSSProperties => ({
-  border: "1px solid #e2e8f0",
-  padding: "5px 10px",
+  border: "1px solid #cbd5e1",
+  padding: "6px 10px",
   textAlign: "center",
-  minWidth: 28,
+  minWidth: 34,
+  fontSize: 16,
   fontWeight: head ? 800 : 600,
   fontStyle: indirect ? "italic" : undefined,
   color: head ? "#1e3a8a" : diag ? "#cbd5e1" : state ? CELL_COLOR[state].fg : indirect ? "#1d4ed8" : "#334155",
-  background: head ? "#f1f5f9" : state ? CELL_COLOR[state].bg : "#ffffff",
+  background: head ? "#e0e7ff" : state ? CELL_COLOR[state].bg : "#ffffff",
   textDecoration: state === "strike" || state === "dim" ? "line-through" : undefined,
   transition: "background 220ms, color 220ms",
 });
 
-export default function MatrixView({ network, step, directed = false, title = "Distance matrix" }: MatrixViewProps) {
+export default function MatrixView({ network, step, directed = false, title = "Distance matrix", bare = false }: MatrixViewProps) {
   const ids = useMemo(() => network.nodes.map((n) => n.id).sort(), [network]);
 
   const matrix = useMemo(() => {
@@ -64,19 +67,23 @@ export default function MatrixView({ network, step, directed = false, title = "D
 
   return (
     <div
-      style={{
-        background: "#ffffff",
-        borderRadius: 12,
-        boxShadow: "0 6px 24px rgba(15,23,42,0.10)",
-        border: "1px solid #e2e8f0",
-        padding: 14,
-        display: "inline-block",
-      }}
+      style={
+        bare
+          ? { display: "inline-block" }
+          : {
+              background: "#ffffff",
+              borderRadius: 12,
+              boxShadow: "0 6px 24px rgba(15,23,42,0.10)",
+              border: "1px solid #e2e8f0",
+              padding: 14,
+              display: "inline-block",
+            }
+      }
     >
-      <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 8 }}>
+      <div style={{ fontSize: 12, fontWeight: 800, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.7, marginBottom: 8 }}>
         {step?.matrixTitle ?? title}
       </div>
-      <table style={{ borderCollapse: "collapse", fontSize: 14 }}>
+      <table style={{ borderCollapse: "collapse" }}>
         <thead>
           <tr>
             <th style={cellStyle(true, false)}></th>

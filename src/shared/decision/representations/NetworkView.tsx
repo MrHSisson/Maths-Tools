@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
-import type { EdgeState, Network, SolveStep } from "../types";
+import type { EdgeState, Network, NodeRole, SolveStep } from "../types";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // NetworkView — a PURE renderer of a weighted Network, optionally coloured by a
@@ -13,11 +13,17 @@ const NODE_R = 22;
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
 // Edge appearance keyed by its state this beat.
-const EDGE_STYLE: Record<EdgeState, { stroke: string; width: number; dash?: string; opacity: number }> = {
+export const EDGE_STYLE: Record<EdgeState, { stroke: string; width: number; dash?: string; opacity: number }> = {
   idle: { stroke: "#94a3b8", width: 2.5, opacity: 1 },
   considering: { stroke: "#f59e0b", width: 4, opacity: 1 },
   tree: { stroke: "#16a34a", width: 4.5, opacity: 1 },
   rejected: { stroke: "#ef4444", width: 2.5, dash: "6 5", opacity: 0.55 },
+};
+
+// Vertex appearance keyed by its role this beat (none = plain white).
+export const NODE_ROLE_STYLE: Record<NodeRole, { fill: string; stroke: string }> = {
+  current: { fill: "#fef3c7", stroke: "#d97706" },
+  visited: { fill: "#dcfce7", stroke: "#15803d" },
 };
 
 const WEIGHT_FILL: Record<EdgeState, string> = {
@@ -73,15 +79,18 @@ export default function NetworkView({
     const xs = nodes.map((n) => n.x);
     const ys = nodes.map((n) => n.y);
     const pad = NODE_R + 24;
+    // interactive: an extra clear band across the top for the zoom-control pill,
+    // so it never sits over a vertex or its badge.
+    const topPad = pad + (interactive ? 40 : 0);
     const minX = Math.min(...xs) - pad;
-    const minY = Math.min(...ys) - pad;
+    const minY = Math.min(...ys) - topPad;
     return {
       minX,
       minY,
       w: Math.max(...xs) - Math.min(...xs) + pad * 2,
-      h: Math.max(...ys) - Math.min(...ys) + pad * 2,
+      h: Math.max(...ys) - Math.min(...ys) + pad + topPad,
     };
-  }, [nodes]);
+  }, [nodes, interactive]);
 
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [scale, setScale] = useState(1);
@@ -247,7 +256,7 @@ export default function NetworkView({
             {nodes.map((n) => {
               const annot = step?.nodeStates?.[n.id];
               const role = step?.nodeRoles?.[n.id];
-              const ring = role === "current" ? { fill: "#fef3c7", stroke: "#d97706" } : role === "visited" ? { fill: "#dcfce7", stroke: "#15803d" } : { fill: "#ffffff", stroke: "#1e3a8a" };
+              const ring = role ? NODE_ROLE_STYLE[role] : { fill: "#ffffff", stroke: "#1e3a8a" };
               return (
                 <g key={n.id} onPointerDown={(ev) => onNodePointerDown(ev, n)} style={{ cursor: interactive ? "move" : "default" }}>
                   <circle cx={n.x} cy={n.y} r={NODE_R} fill={ring.fill} stroke={ring.stroke} strokeWidth={role === "current" ? 4 : 2.75} style={{ transition: "fill 220ms, stroke 220ms" }} />
@@ -264,9 +273,30 @@ export default function NetworkView({
                     {n.label ?? n.id}
                   </text>
                   {annot && (
-                    <text x={n.x + NODE_R + 4} y={n.y - NODE_R} textAnchor="start" fontSize={13} fontWeight={700} fill="#0f766e" style={{ pointerEvents: "none" }}>
-                      {annot}
-                    </text>
+                    // a solid badge on the vertex's top-right shoulder (visit order, labels…)
+                    <g style={{ pointerEvents: "none" }}>
+                      <rect
+                        x={n.x + NODE_R * 0.55}
+                        y={n.y - NODE_R * 1.45}
+                        width={Math.max(22, annot.length * 9 + 12)}
+                        height={22}
+                        rx={11}
+                        fill="#1e3a8a"
+                        stroke="#ffffff"
+                        strokeWidth={2}
+                      />
+                      <text
+                        x={n.x + NODE_R * 0.55 + Math.max(22, annot.length * 9 + 12) / 2}
+                        y={n.y - NODE_R * 1.45 + 11}
+                        textAnchor="middle"
+                        dominantBaseline="central"
+                        fontSize={13}
+                        fontWeight={800}
+                        fill="#ffffff"
+                      >
+                        {annot}
+                      </text>
+                    </g>
                   )}
                 </g>
               );
@@ -275,12 +305,28 @@ export default function NetworkView({
         </div>
       </div>
 
+      {/* Zoom controls: a small pill in the TOP-right corner, away from the
+          shell's stepper buttons along the bottom, so they aren't hit by accident. */}
       {interactive && (
-        <div style={{ position: "absolute", right: 12, bottom: 12, display: "flex", flexDirection: "column", gap: 6 }}>
-          <IconBtn onClick={() => zoomBtn(1)} title="Zoom in"><ZoomIn size={18} /></IconBtn>
-          <div style={{ textAlign: "center", fontSize: 11, fontWeight: 700, color: "#64748b" }}>{Math.round(scale * 100)}%</div>
-          <IconBtn onClick={() => zoomBtn(-1)} title="Zoom out"><ZoomOut size={18} /></IconBtn>
-          <IconBtn onClick={resetView} title="Reset view"><Maximize2 size={18} /></IconBtn>
+        <div
+          style={{
+            position: "absolute",
+            right: 10,
+            top: 10,
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+            padding: 3,
+            borderRadius: 10,
+            background: "rgba(255,255,255,0.92)",
+            border: "1px solid #e2e8f0",
+            boxShadow: "0 1px 4px rgba(15,23,42,0.08)",
+          }}
+        >
+          <IconBtn onClick={() => zoomBtn(-1)} title="Zoom out"><ZoomOut size={15} /></IconBtn>
+          <div style={{ minWidth: 38, textAlign: "center", fontSize: 11, fontWeight: 700, color: "#64748b" }}>{Math.round(scale * 100)}%</div>
+          <IconBtn onClick={() => zoomBtn(1)} title="Zoom in"><ZoomIn size={15} /></IconBtn>
+          <IconBtn onClick={resetView} title="Reset view"><Maximize2 size={15} /></IconBtn>
         </div>
       )}
     </div>
@@ -293,13 +339,12 @@ function IconBtn({ onClick, title, children }: { onClick: () => void; title: str
       onClick={onClick}
       title={title}
       style={{
-        width: 36,
-        height: 36,
-        borderRadius: 10,
-        border: "1px solid #e2e8f0",
-        background: "#ffffff",
-        boxShadow: "0 2px 8px rgba(15,23,42,0.08)",
-        color: "#334155",
+        width: 28,
+        height: 28,
+        borderRadius: 7,
+        border: "none",
+        background: "transparent",
+                color: "#64748b",
         cursor: "pointer",
         display: "flex",
         alignItems: "center",

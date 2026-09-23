@@ -163,7 +163,15 @@ export default function App() {
     <DecisionShell
       generate={generate}
       solve={solve}
-      config={{ pageTitle: "Minimum Spanning Tree", instruction: "Kruskal's algorithm", levels: 1 }}
+      config={{
+        pageTitle: "Minimum Spanning Tree",
+        instruction: "Kruskal's algorithm",
+        levels: 1,
+        legend: [
+          { swatch: "tree", label: "In the tree" },
+          { swatch: "rejected", label: "Rejected (cycle)" },
+        ],
+      }}
     />
   );
 }

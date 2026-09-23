@@ -20,6 +20,7 @@ export type {
   MatrixCellState,
   DistanceTable,
   NodeRole,
+  LegendItem,
   SolveStep,
   DecisionShellProps,
   DecisionProblemExport,

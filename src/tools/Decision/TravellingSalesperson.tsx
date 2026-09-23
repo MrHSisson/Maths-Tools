@@ -187,6 +187,7 @@ function solve(p: DecisionProblem): SolveStep[] {
   if (practical) {
     steps.push({
       caption: `Nearest neighbour needs a complete network. Here not every table entry is the shortest way between its two vertices, so first find the least distance for each of those ${todo.length} pair${todo.length === 1 ? "" : "s"}.`,
+      phase: "Complete the table",
       edgeStates: idle(),
       matrix: tableWith(filled),
       matrixTitle: TITLE,
@@ -205,6 +206,7 @@ function solve(p: DecisionProblem): SolveStep[] {
           direct === null
             ? `${a} and ${b} are not joined directly. Shortest route: ${sum}. Enter ${ld.dist[a][b]} in the table.`
             : `${a}–${b} has a direct edge of ${direct}, but ${sum} is shorter — so the least distance is ${ld.dist[a][b]}, not ${direct}.`,
+        phase: "Complete the table",
         edgeStates,
         matrix: tableWith(filled),
         matrixTitle: TITLE,
@@ -236,6 +238,8 @@ function solve(p: DecisionProblem): SolveStep[] {
     caption: practical
       ? `The table is complete. Now apply nearest neighbour, starting at ${start}: cross out column ${start} and look along row ${start} for the smallest entry.`
       : `Every pair is joined directly and no detour is ever shorter, so apply nearest neighbour straight away. Start at ${start}: cross out column ${start} and look along row ${start} for the smallest entry.`,
+    phase: "Nearest neighbour",
+    route: [start],
     edgeStates: edgeStatesFor([]),
     nodeStates: { ...order },
     nodeRoles: { ...roles },
@@ -272,6 +276,8 @@ function solve(p: DecisionProblem): SolveStep[] {
 
     steps.push({
       caption,
+      phase: "Nearest neighbour",
+      route: nn.tour.slice(0, i + 1),
       edgeStates: edgeStatesFor(current),
       nodeStates: { ...order },
       nodeRoles: { ...roles },
@@ -295,6 +301,8 @@ function solve(p: DecisionProblem): SolveStep[] {
   for (const v of ld.ids) roles[v] = "visited";
   steps.push({
     caption: `Nearest-neighbour tour: ${nn.tour.join(" → ")}, total length ${nn.total}. This is an upper bound — the optimal tour is no longer than ${nn.total}.${routeNote}`,
+    phase: "Upper bound",
+    route: nn.tour,
     edgeStates: edgeStatesFor([]),
     nodeStates: { ...order },
     nodeRoles: { ...roles },
@@ -322,6 +330,14 @@ export default function App() {
           "Practical network where a direct edge isn't the shortest route",
         ],
         questionMatrix: true,
+        legend: [
+          { swatch: "tree", label: "In the tour" },
+          { swatch: "considering", label: "This step" },
+          { swatch: "rejected", label: "Not the shortest way" },
+          { swatch: "indirect", label: "Via other vertices" },
+          { swatch: "current", label: "Current vertex" },
+          { swatch: "visited", label: "Visited" },
+        ],
       }}
     />
   );

@@ -87,6 +87,8 @@ export type NodeRole = "current" | "visited";
 
 export interface SolveStep {
   caption: string; // the teaching voice for this beat
+  phase?: string; // short stage label shown above the caption, e.g. "Complete the table"
+  route?: string[]; // vertices visited so far, shown as a trail (TSP tours, Prim order)
   edgeStates: Record<string, EdgeState>; // edgeId → state
   nodeStates?: Record<string, string>; // nodeId → label/annotation (Dijkstra values, CPA times)
   nodeRoles?: Record<string, NodeRole>; // nodeId → highlight
@@ -94,6 +96,12 @@ export interface SolveStep {
   matrix?: DistanceTable; // override the table MatrixView shows this beat
   matrixTitle?: string; // e.g. "Table of least distances"
   runningTotal?: number; // e.g. MST weight so far
+}
+
+// ── A colour-key entry — the swatch reuses the renderers' own styles ──────────
+export interface LegendItem {
+  swatch: EdgeState | NodeRole | "indirect";
+  label: string;
 }
 
 // ── The tool → shell contract ───────────────────────────────────────────────
@@ -106,6 +114,7 @@ export interface DecisionShellProps {
     levels?: number; // >1 shows a level picker in the header
     levelLabels?: string[]; // tooltip per level, e.g. ["Complete network", …]
     questionMatrix?: boolean; // show the distance matrix beside the network in Question mode
+    legend?: LegendItem[]; // colour key shown under the matrix in Solution mode
   };
   // later: sandbox?, print?, questionTypes?, info?
 }
