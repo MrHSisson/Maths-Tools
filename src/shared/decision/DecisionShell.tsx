@@ -11,6 +11,9 @@ import MatrixView from "./representations/MatrixView";
 //   • Solution  — a forward/back stepper over solve()'s SolveStep[], with the
 //     network + matrix updating in sync, a caption + running total, and a
 //     "show all" jump to the terminal state.
+// config.levels > 1 adds a Level 1/2/3 picker to the header (each change draws a
+// fresh question at that level); config.questionMatrix shows the distance matrix
+// beside the network in Question mode too (TSP gives the table as data).
 // No print, no sandbox-expand, no Prim yet (increments 2–4). Chrome borrowed
 // from NetworkSandbox / AlgebraTiles.
 // ═══════════════════════════════════════════════════════════════════════════
@@ -18,6 +21,8 @@ import MatrixView from "./representations/MatrixView";
 type Mode = "question" | "solution";
 
 export default function DecisionShell({ generate, solve, config }: DecisionShellProps) {
+  const levelCount = config.levels ?? 1;
+  const [level, setLevel] = useState(1);
   const [problem, setProblem] = useState<DecisionProblem>(() => generate(1));
   const [mode, setMode] = useState<Mode>("question");
   const [stepIdx, setStepIdx] = useState(0);
@@ -25,8 +30,8 @@ export default function DecisionShell({ generate, solve, config }: DecisionShell
   const steps = useMemo<SolveStep[]>(() => solve(problem), [problem, solve]);
   const current = steps[Math.min(stepIdx, steps.length - 1)];
 
-  const newQuestion = () => {
-    setProblem(generate(1));
+  const newQuestion = (lv = level) => {
+    setProblem(generate(lv));
     setStepIdx(0);
     setMode("question");
   };
@@ -52,7 +57,24 @@ export default function DecisionShell({ generate, solve, config }: DecisionShell
             <span className="text-white font-semibold text-lg">Home</span>
           </button>
           <div className="text-white font-bold text-lg tracking-wide">{config.pageTitle}</div>
-          <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            {levelCount > 1 && (
+              <div style={{ display: "flex", gap: 4, marginRight: 12 }}>
+                {Array.from({ length: levelCount }, (_, i) => i + 1).map((lv) => (
+                  <HeaderTab
+                    key={lv}
+                    active={level === lv}
+                    title={config.levelLabels?.[lv - 1]}
+                    onClick={() => {
+                      setLevel(lv);
+                      newQuestion(lv);
+                    }}
+                  >
+                    Level {lv}
+                  </HeaderTab>
+                ))}
+              </div>
+            )}
             <HeaderTab active={mode === "question"} onClick={() => setMode("question")}>Question</HeaderTab>
             <HeaderTab active={mode === "solution"} onClick={goSolution}>Solution</HeaderTab>
           </div>
@@ -62,7 +84,13 @@ export default function DecisionShell({ generate, solve, config }: DecisionShell
       {/* Body */}
       <div style={{ display: "flex", flex: 1, overflow: "hidden", background: "#f8fafc" }}>
         {mode === "question" ? (
-          <QuestionMode problem={problem} instruction={config.instruction} onNew={newQuestion} onSolve={goSolution} />
+          <QuestionMode
+            problem={problem}
+            instruction={config.instruction}
+            showMatrix={config.questionMatrix}
+            onNew={() => newQuestion()}
+            onSolve={goSolution}
+          />
         ) : (
           <SolutionMode
             problem={problem}
@@ -70,7 +98,7 @@ export default function DecisionShell({ generate, solve, config }: DecisionShell
             stepIdx={Math.min(stepIdx, steps.length - 1)}
             current={current}
             setStepIdx={setStepIdx}
-            onNew={newQuestion}
+            onNew={() => newQuestion()}
           />
         )}
       </div>
@@ -82,11 +110,13 @@ export default function DecisionShell({ generate, solve, config }: DecisionShell
 function QuestionMode({
   problem,
   instruction,
+  showMatrix,
   onNew,
   onSolve,
 }: {
   problem: DecisionProblem;
   instruction?: string;
+  showMatrix?: boolean;
   onNew: () => void;
   onSolve: () => void;
 }) {
@@ -96,8 +126,15 @@ function QuestionMode({
         {instruction && <div style={{ fontSize: 14, fontWeight: 600, color: "#64748b", marginBottom: 4 }}>{instruction}</div>}
         <div style={{ fontSize: 22, fontWeight: 800, color: "#0f172a" }}>{problem.prompt}</div>
       </div>
-      <div style={{ flex: 1, minHeight: 0, position: "relative", margin: "8px 24px 12px", borderRadius: 16, overflow: "hidden", border: "1px solid #e2e8f0" }}>
-        <NetworkView network={problem.network} interactive />
+      <div style={{ flex: 1, minHeight: 0, display: "flex", gap: 12, margin: "8px 24px 12px" }}>
+        <div style={{ flex: 1, minWidth: 0, position: "relative", borderRadius: 16, overflow: "hidden", border: "1px solid #e2e8f0" }}>
+          <NetworkView network={problem.network} interactive />
+        </div>
+        {showMatrix && (
+          <div style={{ flexShrink: 0, display: "flex", alignItems: "flex-start", overflow: "auto" }}>
+            <MatrixView network={problem.network} />
+          </div>
+        )}
       </div>
       <BottomBar>
         <SecondaryBtn onClick={onNew}><RefreshCw size={16} /> New question</SecondaryBtn>
@@ -180,10 +217,21 @@ function SolutionMode({
 }
 
 // ── UI atoms ─────────────────────────────────────────────────────────────────
-function HeaderTab({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+function HeaderTab({
+  active,
+  onClick,
+  title,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  title?: string;
+  children: React.ReactNode;
+}) {
   return (
     <button
       onClick={onClick}
+      title={title}
       style={{
         padding: "8px 18px",
         borderRadius: 8,

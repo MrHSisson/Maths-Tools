@@ -205,8 +205,9 @@ export default function NetworkView({
               const y1 = a.y + uy * NODE_R;
               const x2 = b.x - ux * NODE_R;
               const y2 = b.y - uy * NODE_R;
-              const mx = (a.x + b.x) / 2;
-              const my = (a.y + b.y) / 2;
+              const lt = e.labelAt ?? 0.5;
+              const mx = a.x + dx * lt;
+              const my = a.y + dy * lt;
               return (
                 <g key={e.id} style={{ transition: "opacity 220ms" }} opacity={sty.opacity}>
                   <line
@@ -245,9 +246,11 @@ export default function NetworkView({
             {/* Nodes */}
             {nodes.map((n) => {
               const annot = step?.nodeStates?.[n.id];
+              const role = step?.nodeRoles?.[n.id];
+              const ring = role === "current" ? { fill: "#fef3c7", stroke: "#d97706" } : role === "visited" ? { fill: "#dcfce7", stroke: "#15803d" } : { fill: "#ffffff", stroke: "#1e3a8a" };
               return (
                 <g key={n.id} onPointerDown={(ev) => onNodePointerDown(ev, n)} style={{ cursor: interactive ? "move" : "default" }}>
-                  <circle cx={n.x} cy={n.y} r={NODE_R} fill="#ffffff" stroke="#1e3a8a" strokeWidth={2.75} />
+                  <circle cx={n.x} cy={n.y} r={NODE_R} fill={ring.fill} stroke={ring.stroke} strokeWidth={role === "current" ? 4 : 2.75} style={{ transition: "fill 220ms, stroke 220ms" }} />
                   <text
                     x={n.x}
                     y={n.y}

@@ -143,6 +143,7 @@ export const CATEGORIES: CategoryMeta[] = [
     tools: [
       { id: 'network-sandbox', path: '/network-sandbox', name: 'Network Sandbox', description: 'Exploratory workspace for rendering weighted networks — the spike ahead of a Decision Maths shell', enabled: false, load: () => import('./tools/Decision/NetworkSandbox') },
       { id: 'minimum-spanning-tree', path: '/minimum-spanning-tree', name: 'Minimum Spanning Tree', description: 'Find the minimum spanning tree of a weighted network with Kruskal\'s algorithm, walked through step by step', enabled: false, load: () => import('./tools/Decision/MinimumSpanningTree') },
+      { id: 'travelling-salesperson', path: '/travelling-salesperson', name: 'Travelling Salesperson', description: 'Find an upper bound for the travelling salesperson problem with the nearest neighbour algorithm — completing a practical network into a table of least distances first', enabled: false, load: () => import('./tools/Decision/TravellingSalesperson') },
       { id: 'mixed-strategies', path: '/mixed-strategies', name: 'Mixed Strategies', description: 'Find optimal mixed strategies and the value of a zero-sum game from its payoff matrix.', enabled: false, load: () => import('./tools/Decision/MixedStrategies') },
     ],
   },

@@ -263,7 +263,9 @@ bookkeeping needs (a Decision list, mirroring `CS_TOOLS`).
    list rejected edges), Levels 1–3, more templates.
 3. **Sandbox — expand-from-question** + `representations/editing.ts`.
 4. **Print** via `handleDiagramPrint`; **free-build sandbox** mode.
-5. **TSP** — nearest-neighbour upper bound, MST-based lower bound (reuses NetworkView + MatrixView).
+5. **TSP** — nearest-neighbour upper bound ✅ *first slice shipped 2026-09-23* (`TravellingSalesperson`,
+   `tsp.ts`: complete K4–K6 / practical-network → table of least distances → NN; built ahead of
+   increments 2–4). MST-based (deleted-vertex) lower bound next.
 6. **CPA** — new `ActivityNetworkView` + `GanttView`; forward/backward pass + float as `SolveStep`s.
 7. Onward: Dijkstra, route inspection, network flows, LP (new representations budgeted per *strand*,
    not per tool — same doctrine as CS).

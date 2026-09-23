@@ -6,8 +6,11 @@
 // generated network is connected; every SolveStep references edges/cells that
 // exist; and — the key safety net that makes "generate fast" sound — the tool's
 // declared answer AND its solve() running total both agree with an INDEPENDENT
-// brute-force MST (Prim's, written from scratch here, sharing no code with the
-// tool's Kruskal).
+// brute-force reference written from scratch here, sharing no code with the tool:
+//   • reference "mst" (default) — Prim's MST (the tools use Kruskal);
+//   • reference "nearestNeighbour" — Dijkstra least distances + nearest neighbour
+//     from problem.start (tsp.ts uses exhaustive path search). Also checks the NN
+//     choices are tie-free and the declared tour matches.
 
 import { sampleTemplate } from "./templating";
 import type { DecisionProblemExport, Network, NetworkTemplate } from "./types";
@@ -41,6 +44,52 @@ export function primMST(network: Network): { total: number; connected: boolean }
   return { total, connected: true };
 }
 
+// ── Independent reference: least distances by Dijkstra, then nearest neighbour ──
+function dijkstra(network: Network, src: string): Record<string, number> {
+  const d: Record<string, number> = {};
+  for (const n of network.nodes) d[n.id] = Infinity;
+  d[src] = 0;
+  const done = new Set<string>();
+  while (done.size < network.nodes.length) {
+    let u: string | null = null;
+    for (const n of network.nodes) if (!done.has(n.id) && (u === null || d[n.id] < d[u])) u = n.id;
+    if (u === null || d[u] === Infinity) break;
+    done.add(u);
+    for (const e of network.edges) {
+      const v = e.from === u ? e.to : e.to === u ? e.from : null;
+      if (v !== null && d[u] + e.weight < d[v]) d[v] = d[u] + e.weight;
+    }
+  }
+  return d;
+}
+
+export function referenceNearestNeighbour(
+  network: Network,
+  start: string,
+): { tour: string[]; total: number; tied: boolean } {
+  const all: Record<string, Record<string, number>> = {};
+  for (const n of network.nodes) all[n.id] = dijkstra(network, n.id);
+  const unvisited = new Set(network.nodes.map((n) => n.id));
+  unvisited.delete(start);
+  const tour = [start];
+  let total = 0;
+  let tied = false;
+  let at = start;
+  while (unvisited.size > 0) {
+    const left = [...unvisited];
+    const min = Math.min(...left.map((v) => all[at][v]));
+    const nearest = left.filter((v) => all[at][v] === min);
+    if (nearest.length > 1) tied = true;
+    total += min;
+    tour.push(nearest[0]);
+    unvisited.delete(nearest[0]);
+    at = nearest[0];
+  }
+  total += all[at][start];
+  tour.push(start);
+  return { tour, total, tied };
+}
+
 function checkTemplate(t: NetworkTemplate, errors: string[], samples = 60) {
   const declaredIds = new Set(t.nodes.map((n) => n.id));
   for (const e of t.edges) {
@@ -63,7 +112,7 @@ function checkTemplate(t: NetworkTemplate, errors: string[], samples = 60) {
   }
 }
 
-export function validateProblem(exp: DecisionProblemExport, levels = [1], batch = 60): string[] {
+export function validateProblem(exp: DecisionProblemExport, levels = exp.levels ?? [1], batch = 60): string[] {
   const errors: string[] = [];
 
   for (const t of exp.templates) checkTemplate(t, errors);
@@ -74,13 +123,27 @@ export function validateProblem(exp: DecisionProblemExport, levels = [1], batch 
       const nodeIds = new Set(p.network.nodes.map((n) => n.id));
       const edgeIds = new Set(p.network.edges.map((e) => e.id));
 
-      const ref = primMST(p.network);
-      if (!ref.connected) {
+      const mst = primMST(p.network);
+      if (!mst.connected) {
         errors.push(`generate(${level}) produced a disconnected network`);
         continue;
       }
+      let ref: { total: number; name: string };
+      if (exp.reference === "nearestNeighbour") {
+        if (!p.start || !nodeIds.has(p.start)) {
+          errors.push(`generate(${level}) has no valid start vertex (${p.start})`);
+          continue;
+        }
+        const nn = referenceNearestNeighbour(p.network, p.start);
+        ref = { total: nn.total, name: "nearest-neighbour tour length" };
+        if (nn.tied) errors.push(`generate(${level}) has a tied nearest-neighbour choice from ${p.start} — ambiguous question`);
+        if ((p.answer.tour ?? []).join("") !== nn.tour.join(""))
+          errors.push(`generate(${level}) answer.tour ${p.answer.tour?.join("")} ≠ brute-force NN tour ${nn.tour.join("")}`);
+      } else {
+        ref = { total: mst.total, name: "MST weight" };
+      }
       if (p.answer.value !== ref.total)
-        errors.push(`generate(${level}) answer.value ${p.answer.value} ≠ brute-force MST weight ${ref.total}`);
+        errors.push(`generate(${level}) answer.value ${p.answer.value} ≠ brute-force ${ref.name} ${ref.total}`);
 
       const steps = exp.solve(p);
       if (steps.length === 0) {
@@ -96,7 +159,7 @@ export function validateProblem(exp: DecisionProblemExport, levels = [1], batch 
       }
       const last = steps[steps.length - 1];
       if (last.runningTotal !== ref.total)
-        errors.push(`solve() final runningTotal ${last.runningTotal} ≠ brute-force MST weight ${ref.total}`);
+        errors.push(`solve() final runningTotal ${last.runningTotal} ≠ brute-force ${ref.name} ${ref.total}`);
     }
   }
 

@@ -28,6 +28,23 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-23 — Decision Maths: Travelling Salesperson (nearest neighbour) on `DecisionShell`
+New dev-gated tool `/travelling-salesperson` (`src/tools/Decision/TravellingSalesperson.tsx`) —
+the first TSP slice, nearest-neighbour upper bound only, three levels: **L1** a complete K4–K6
+network that already satisfies the triangle inequality; **L2** a practical (incomplete) network
+where the solution first completes the *table of least distances* one shortest route per beat,
+then runs NN on it and expands the tour back into the real network; **L3** as L2 but one direct
+edge is beaten by a detour, so its entry must be replaced too. Questions are tie-free and every
+indirect entry has a unique shortest route. New shared `src/shared/decision/tsp.ts`
+(`leastDistances`, `nearestNeighbour`, `completeNetworkLayout`, `placeEdgeLabels` — K5/K6 can't be
+drawn without crossings, so each edge now carries its own `labelAt` and labels are placed clear of
+nodes/labels/other edges). Shell/contract growth: `DecisionShell` level picker
+(`config.levels`/`levelLabels`) and `questionMatrix`; `SolveStep` gains `nodeRoles`, a `matrix`
+override (with italic-blue indirect entries) and `matrixTitle`; `MatrixCell` gains
+`considering`/`dim`; `DecisionProblem` gains `start` and `answer.tour`; `validateProblem` gains an
+independent `"nearestNeighbour"` reference (Dijkstra + NN from scratch, tie check, tour match).
+New `src/tests/decisionTsp.test.ts`. `npm run build` clean, `npm test` (348) passing.
+
 ## 2026-09-22 — Shared `AnswerDisplay`: match KaTeX answer size/weight to the unit text
 `src/shared/components/QuestionDisplay.tsx`. Follow-up to the Speed/Distance/Time answer-format
 fix below: giving Time's answer proper `answerLatex` made a pre-existing, site-wide sizing issue

@@ -904,11 +904,19 @@ crossing-checked extra edges) harvested from an old archived draft, with a best-
 `routeInspection` mode for a future Route Inspection / Chinese Postman tool. Not wired into any
 tool yet — see `DECISION_SHELL_PLAN.md` → "Templating model" for the detail.
 
+**Travelling Salesperson — first slice shipped (2026-09-23, dev-gated).** `/travelling-salesperson`
+does the **nearest-neighbour upper bound** at three levels: complete K4–K6 networks (L1); practical
+networks completed into a table of least distances first, then NN, with the tour expanded back into
+the real network (L2); and the same with a direct edge that a detour beats (L3). Shared helpers in
+`src/shared/decision/tsp.ts`; the shell gained a level picker and matrix-in-question. CI checks each
+answer against an independent Dijkstra + NN.
+
 **Possible next steps (spitball — pick on the day, once unparked):**
 - Broaden MST — add **Prim's** (network walk + Prim-on-the-matrix), more question types (apply Prim from node X, list rejected edges), Levels 1–3, more templates.
 - Add the **expand-to-sandbox** — open the generated network in an interactive, annotatable canvas.
 - Add **worksheet print** via the existing diagram-print engine.
-- Start a **second tool** once MST feels complete — TSP reuses the same renderers; CPA needs two new views.
+- **Grow TSP** — the deleted-vertex **lower bound** (MST of the rest + two shortest edges back), then question types that combine them ("the optimal tour T satisfies lower ≤ T ≤ upper"), NN from every start / best upper bound, and tour-improvement. The `leastDistances` table and `MatrixView` override are already in place.
+- **CPA** needs two new views (`ActivityNetworkView`, `GanttView`).
 - Build **Route Inspection (Chinese Postman)** on top of `generateRandomNetwork`'s `routeInspection` mode — the odd-degree-nudge groundwork already exists.
 
 **Detail.** The full increment ladder (MST breadth → sandbox → print → TSP → CPA → onward) and the
