@@ -1,6 +1,7 @@
 # Decision Mathematics Shell — architecture plan
 
-Status: **increment 1 shipped → increment 2 next.** A spike exists
+Status: **increment 1 shipped; increment 5's first slice (TSP nearest neighbour, dev-gated) shipped
+ahead of order → next is the TSP lower bound or increment 2 (MST breadth).** A spike exists
 (`src/tools/Decision/NetworkSandbox.tsx`, `enabled:false`) that proves the *presentation*: a
 full-screen, pannable/zoomable weighted-network canvas with a live distance matrix. Increment 1
 turned it into the first vertical slice — a pure-renderer representation library (`NetworkView` +
@@ -263,7 +264,9 @@ bookkeeping needs (a Decision list, mirroring `CS_TOOLS`).
    list rejected edges), Levels 1–3, more templates.
 3. **Sandbox — expand-from-question** + `representations/editing.ts`.
 4. **Print** via `handleDiagramPrint`; **free-build sandbox** mode.
-5. **TSP** — nearest-neighbour upper bound, MST-based lower bound (reuses NetworkView + MatrixView).
+5. **TSP** — nearest-neighbour upper bound ✅ *first slice shipped 2026-09-23* (`TravellingSalesperson`,
+   `tsp.ts`: complete K4–K6 / practical-network → table of least distances → NN; built ahead of
+   increments 2–4). MST-based (deleted-vertex) lower bound next.
 6. **CPA** — new `ActivityNetworkView` + `GanttView`; forward/backward pass + float as `SolveStep`s.
 7. Onward: Dijkstra, route inspection, network flows, LP (new representations budgeted per *strand*,
    not per tool — same doctrine as CS).

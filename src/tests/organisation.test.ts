@@ -52,6 +52,7 @@ const MIGRATION_BACKLOG: string[] = [];
 const STANDALONE_BY_DESIGN = [
   "Decision/MinimumSpanningTree",
   "Decision/NetworkSandbox",
+  "Decision/TravellingSalesperson",
   "Generators/FunctionalSkillsGenerator",
   "Generators/MultiplicationGenerator",
   "Generators/NegativeOperationsGenerator",

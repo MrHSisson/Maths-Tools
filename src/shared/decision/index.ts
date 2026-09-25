@@ -3,7 +3,9 @@ export { default as DecisionShell } from "./DecisionShell";
 export { default as NetworkView } from "./representations/NetworkView";
 export { default as MatrixView } from "./representations/MatrixView";
 export { sampleTemplate } from "./templating";
-export { validateProblem, primMST } from "./validate";
+export { validateProblem, primMST, referenceNearestNeighbour } from "./validate";
+export { leastDistances, nearestNeighbour, completeNetworkLayout, placeEdgeLabels } from "./tsp";
+export type { LeastDistances, NearestNeighbourResult } from "./tsp";
 export { generateRandomNetwork } from "./randomNetwork";
 export type { RandomNetworkOptions } from "./randomNetwork";
 export type {
@@ -15,6 +17,10 @@ export type {
   DecisionProblem,
   EdgeState,
   MatrixCell,
+  MatrixCellState,
+  DistanceTable,
+  NodeRole,
+  LegendItem,
   SolveStep,
   DecisionShellProps,
   DecisionProblemExport,

@@ -80,7 +80,7 @@ pedagogy-engine sweep.
 | **Narrow-viewport layout** | 🚧 | Shipped in `ToolShell` for every tool (Worked Example + a light Worksheet list, viewport-driven) — needs a pass across diagram/differentiated tools |
 | **Old-shell migration** | ✅ | Backlog empty; Generators are standalone by design, not migration targets |
 | **Computer Science shell** | ⏸ | Parked while the Maths Tool Audit is in progress |
-| **Decision Maths** | ⏸ | Parked while the Maths Tool Audit is in progress |
+| **Decision Maths** | ⏸ | Parked as a priority, but TSP nearest-neighbour slice built (dev-gated, `/travelling-salesperson`) + shell layout pass; next: TSP lower bound |
 
 Status keys: ✅ done · 🚧 in progress · ⬜ not started · ⏸ paused (deliberately not a current priority).
 
@@ -835,9 +835,9 @@ a shell-migration one.
 
 # Computer Science
 
-> **⏸ Parked.** Not a current priority while the Maths Tool Audit (see above) is in progress. Kept
-> here so the plan isn't lost — pick back up once the Maths audit and its resulting backlog are in
-> hand.
+> **⏸ Parked as a priority** while the Maths Tool Audit (see above) is in progress, but worked on
+> on request: a first **Travelling Salesperson** slice landed 2026-09-23 (below). Every Decision tool
+> stays **dev-gated** (`enabled: false`) until the strand is deliberately taken live.
 
 An OCR **J277 GCSE Computer Science** revision area. CS tools are **knowledge/revision** tools,
 not question generators — a different product from the Maths tools, on their own shell (`CSShell`,
@@ -904,16 +904,31 @@ crossing-checked extra edges) harvested from an old archived draft, with a best-
 `routeInspection` mode for a future Route Inspection / Chinese Postman tool. Not wired into any
 tool yet — see `DECISION_SHELL_PLAN.md` → "Templating model" for the detail.
 
+**Travelling Salesperson — first slice shipped (2026-09-23, dev-gated — keep `enabled: false`).**
+`/travelling-salesperson` does the **nearest-neighbour upper bound** at three levels: complete K4–K6
+networks (L1); practical networks completed into a table of least distances first, then NN, with
+the tour expanded back into the real network (L2); and the same with a direct edge that a detour
+beats (L3). Shared helpers in `src/shared/decision/tsp.ts`; the shell gained a level picker and
+matrix-in-question. CI checks each answer against an independent Dijkstra + NN.
+**Layout pass (same session, user-reviewed):** one layout in both modes — the network on a white card
+left, a sidebar of cards right (question / step caption with phase badge + running total, "Route so
+far" trail, matrix), a colour-key strip under the network, zoom controls moved to a compact top-right
+pill away from the stepper, visit-order badges. Applies to MST too.
+**Not yet:** lower bound, NN-from-every-start, print, sandbox-expand, and a classroom trial.
+
 **Possible next steps (spitball — pick on the day, once unparked):**
 - Broaden MST — add **Prim's** (network walk + Prim-on-the-matrix), more question types (apply Prim from node X, list rejected edges), Levels 1–3, more templates.
 - Add the **expand-to-sandbox** — open the generated network in an interactive, annotatable canvas.
 - Add **worksheet print** via the existing diagram-print engine.
-- Start a **second tool** once MST feels complete — TSP reuses the same renderers; CPA needs two new views.
+- **TSP lower bound (recommended next)** — the deleted-vertex **lower bound** (MST of the rest + two shortest edges back), then question types that combine them ("the optimal tour T satisfies lower ≤ T ≤ upper"), NN from every start / best upper bound, and tour-improvement. The `leastDistances` table and `MatrixView` override are already in place.
+- **CPA** needs two new views (`ActivityNetworkView`, `GanttView`).
 - Build **Route Inspection (Chinese Postman)** on top of `generateRandomNetwork`'s `routeInspection` mode — the odd-degree-nudge groundwork already exists.
 
 **Detail.** The full increment ladder (MST breadth → sandbox → print → TSP → CPA → onward) and the
 per-strand representation budget live in `docs/architecture/DECISION_SHELL_PLAN.md` → "Increment plan" — that doc owns
-the ladder. We're on **increment 1 ✅**; **increment 2 (MST breadth)** is next.
+the ladder. **Increment 1 ✅**, and the first slice of **increment 5 (TSP — nearest neighbour) ✅** was
+built ahead of order at the user's request. Next is either the TSP lower bound (continuing the TSP
+thread) or **increment 2 (MST breadth)**.
 
 ---
 
