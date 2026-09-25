@@ -56,7 +56,7 @@ const DIRECTION_MS: ToolMultiSelect = {
 };
 
 const TOOL_CONFIG: ToolConfig = {
-  pageTitle: "Binary Arithmetic",
+  pageTitle: "Binary Operations",
   tools: {
     binaryAddition: {
       name: "Binary Addition",

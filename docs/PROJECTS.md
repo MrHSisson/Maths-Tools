@@ -879,7 +879,7 @@ remaining spec is *authoring*, not engineering. The architecture and extraction 
 **Where it's at.** The procedural half of J277 1.2.4 (Numbers) is built as `ToolShell` question
 generators in `src/tools/Binary/` (category "Binary & Number Bases"), not `CSShell` topics — they
 are practice skills, not recall. `ToolEntry.levels` lets each sub-tool have only the levels the spec
-supports. **Binary Addition & Shifts** (`/binary-addition`, live) — Addition (3 levels) + Shifts
+supports. **Binary Operations** (`/binary-addition`, live) — Addition (3 levels) + Shifts
 (2 levels: do the shift; then state the denary effect; "Bits lost" Never/Mixed/Exclusive for
 overflow/underflow). **Number Bases** (`/number-bases`, dev-gated) — Denary↔Binary, Denary↔Hex,
 Binary↔Hex, 2 levels each (nibble / byte), a Direction pool per tab.
