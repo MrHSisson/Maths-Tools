@@ -80,9 +80,13 @@ export const WorksheetBuilder = ({
   const makeDefaultGroup = (
     id: number,
     toolKey: string = toolKeys[0],
-    lv: DifficultyLevel = "level1",
+    lvReq: DifficultyLevel = "level1",
   ): BuilderGroup => {
     const t = config.tools[toolKey];
+    // Clamp to the sub-tool's own levels (ToolEntry.levels) — e.g. switching
+    // a Level 3 group onto a two-level sub-tool lands it on Level 1.
+    const lvls = (t?.levels ?? ["level1", "level2", "level3"]).filter(l => !comingSoonLevels.includes(l));
+    const lv: DifficultyLevel = lvls.includes(lvReq) ? lvReq : (lvls[0] ?? "level1");
     if (!t)
       return {
         id,
@@ -363,7 +367,8 @@ export const WorksheetBuilder = ({
           </select>
         )}
         <div className="flex rounded-lg overflow-hidden border border-gray-200 flex-shrink-0" onClick={e => e.stopPropagation()}>
-          {(["level1", "level2", "level3"] as DifficultyLevel[]).map((lv, li) => {
+          {(config.tools[g.tool]?.levels ?? (["level1", "level2", "level3"] as DifficultyLevel[])).map((lv) => {
+            const li = ["level1", "level2", "level3"].indexOf(lv);
             const isLvDisabled = comingSoonLevels.includes(lv);
             return (
               <button key={lv} onClick={() => { if (!isLvDisabled) { const fresh = makeDefaultGroup(g.id, g.tool, lv); updateGroup(g.id, { ...fresh, id: g.id }); setSelectedId(g.id); } }}

@@ -1942,6 +1942,29 @@ in custom renderers.
 > own tools, and its own shell (`CSShell`, not `ToolShell`). It's younger than the
 > Maths side — expect it to grow fast.
 
+## 2026-09-25 — Per-sub-tool levels; Binary Shifts; Number Bases tool
+- **`ToolEntry.levels`** (`src/shared/types.ts`, `ToolShell.tsx`, `DifficultyToggle`,
+  `WorksheetBuilder`, `generators.test.ts`): a sub-tool can declare the levels it actually has
+  (e.g. `["level1", "level2"]`). Unlisted levels are hidden everywhere (not "coming soon"); one
+  level hides the difficulty toggle; switching tab clamps the level; differentiated sheets use the
+  available levels (two columns for two levels); stray `level=3` URLs fall back.
+- **Binary Shifts** added as a second tab of the existing Binary Addition tool (now "Binary
+  Addition & Shifts", same `/binary-addition` path; page title "Binary Arithmetic"). Two levels —
+  L1 perform the shift, L2 also state the denary effect. "Bits lost" (Never/Mixed ~30%/Exclusive)
+  guarantees whether a 1 is shifted out (overflow on the left, underflow/rounding on the right);
+  Direction pool (left/right). Working: 8-bit place-value grid, shifted bits with the lost ones in
+  red outside the register, then the ×/÷2ⁿ check.
+- **Number Bases** (`/number-bases`, `src/tools/Binary/NumberBases.tsx`, `enabled: false`) — three
+  tabs (Denary↔Binary, Denary↔Hex, Binary↔Hex), each covering both directions via a Direction pool,
+  two levels (nibble 1–15 / byte 16–255, disjoint). Place-value working (subtract-the-place-value
+  chain, 16s-and-remainder, nibble splitting).
+- Tool card renamed **"Binary Operations"** (page title too; path unchanged). J277 needs only addition and shifts — no binary subtraction.
+- Number Bases taken live (dropped `enabled: false`); Binary Operations was already live.
+- Category renamed "Binary Arithmetic" → "Binary & Number Bases". New `src/tests/binaryTools.test.ts`
+  checks every answer against an independent conversion/shift and the bits-lost guarantee.
+  Headless check: level rows show only Level 1/2 on the new tabs, no console errors.
+  `npm run build` clean, `npm test` (374) passing.
+
 ## 2026-09-21 — Binary Addition tool (new "Binary Arithmetic" category, on `ToolShell`, not `CSShell`)
 Built **`BinaryAddition`** (`/binary-addition`, `src/tools/Binary/BinaryAddition.tsx`, `enabled:
 false` pending review) — practice adding 8-bit binary integers and identifying overflow, following

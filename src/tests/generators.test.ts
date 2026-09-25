@@ -119,7 +119,8 @@ describe("tool module discovery", () => {
 for (const [path, { TOOL_CONFIG, generateQuestion, levels }] of optedIn) {
   describe(path, () => {
     for (const [toolKey, entry] of Object.entries(TOOL_CONFIG.tools)) {
-      for (const level of levels ?? ALL_LEVELS) {
+      // A sub-tool's own ToolEntry.levels (hidden levels) narrow the set further.
+      for (const level of (levels ?? ALL_LEVELS).filter(l => !entry.levels || entry.levels.includes(l))) {
         it(`${toolKey} ${level}: generates ${QUESTIONS_PER_CASE} valid, unique questions`, () => {
           const { variables, dropdownValue, multiSelectValues } = settingsFor(entry, level);
           const uniqueQ = makeUniqueQ(generateQuestion);

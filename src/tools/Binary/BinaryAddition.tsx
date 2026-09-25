@@ -1,7 +1,8 @@
 import {
   ToolShell,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type ToolDropdown,
-  mStep, randInt, pick,
+  type ToolMultiSelect,
+  mStep, randInt, pick, pickActive,
 } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -31,8 +32,31 @@ const OVERFLOW_DD: ToolDropdown = {
   defaultValue: "never",
 };
 
+// Share of shift questions that lose a 1 off the end when "Bits lost" is Mixed.
+const MIXED_LOST_RATE = 0.3;
+
+const LOST_BITS_DD: ToolDropdown = {
+  key: "lostBits", label: "Bits lost",
+  useTwoLineButtons: false,
+  options: [
+    { value: "never", label: "Never" },
+    { value: "mixed", label: "Mixed" },
+    { value: "exclusive", label: "Exclusive" },
+  ],
+  defaultValue: "never",
+};
+
+// Direction is variety, not difficulty — peers, no weight.
+const DIRECTION_MS: ToolMultiSelect = {
+  key: "direction", label: "Direction",
+  options: [
+    { value: "left", label: "Left", defaultActive: true },
+    { value: "right", label: "Right", defaultActive: true },
+  ],
+};
+
 const TOOL_CONFIG: ToolConfig = {
-  pageTitle: "Binary Addition",
+  pageTitle: "Binary Operations",
   tools: {
     binaryAddition: {
       name: "Binary Addition",
@@ -40,6 +64,15 @@ const TOOL_CONFIG: ToolConfig = {
       variables: [],
       dropdown: OVERFLOW_DD,
       difficultySettings: null,
+    },
+    binaryShifts: {
+      name: "Binary Shifts",
+      variables: [],
+      dropdown: LOST_BITS_DD,
+      multiSelect: DIRECTION_MS,
+      difficultySettings: null,
+      // Two rungs only: do the shift; then do it AND state the denary effect.
+      levels: ["level1", "level2"],
     },
   },
 };
@@ -58,9 +91,20 @@ const INFO_SECTIONS: InfoSection[] = [
     ],
   },
   {
+    title: "Binary Shifts", icon: "↔️",
+    content: [
+      { label: "Overview", detail: "Shift an 8-bit binary number left or right by 1–3 places. Every bit moves along; the gaps are filled with 0s, and bits pushed past either end of the register are lost. A left shift of n places multiplies by 2ⁿ; a right shift divides by 2ⁿ." },
+      { label: "Level 1 — Green", detail: "Perform the shift and give the 8-bit result." },
+      { label: "Level 2 — Yellow", detail: "Perform the shift, then state the effect on the denary value — the value before and after, and the ×2ⁿ or ÷2ⁿ it corresponds to." },
+      { label: "Overflow / underflow", detail: "If a 1 is shifted off the left end, the true answer no longer fits in 8 bits — an overflow, so the stored result is not ×2ⁿ. If a 1 is shifted off the right end, the fractional part is lost — an underflow (loss of precision), so the stored result is rounded down." },
+    ],
+  },
+  {
     title: "Question Options", icon: "⚙️",
     content: [
-      { label: "Overflow", detail: "Never — no question overflows. Mixed — about 1 in 5 do. Exclusive — every question overflows. Starts on Never." },
+      { label: "Overflow (Addition)", detail: "Never — no question overflows. Mixed — about 1 in 5 do. Exclusive — every question overflows. Starts on Never." },
+      { label: "Bits lost (Shifts)", detail: "Never — only 0s are shifted out, so the result is exact. Mixed — about 3 in 10 questions shift a 1 out (overflow or underflow). Exclusive — every question does. Starts on Never." },
+      { label: "Direction (Shifts)", detail: "Left shifts, right shifts, or both mixed." },
     ],
   },
   {
@@ -266,14 +310,126 @@ const buildThreeNumberQuestion = (level: DifficultyLevel, wantOverflow: boolean)
   } as unknown as AnyQuestion;
 };
 
-// ── 7. generateQuestion ───────────────────────────────────────────────────────
+// ── 7. Binary shifts ──────────────────────────────────────────────────────────
+
+const LOST = "#dc2626";
+
+// Place-value grid for an 8-bit register (the J277 128…1 headings).
+const placeGridLatex = (bits: number[]): string => {
+  const pvs = bits.map((_, i) => 2 ** (bits.length - 1 - i));
+  return [
+    `\\begin{array}{|${"c|".repeat(bits.length)}}`,
+    "\\hline",
+    `${pvs.join(" & ")} \\\\`,
+    "\\hline",
+    `${bits.join(" & ")} \\\\`,
+    "\\hline",
+    "\\end{array}",
+  ].join(" ");
+};
+
+// Draws an 8-bit value whose shift does (or doesn't) push a 1 out of the
+// register — guaranteed by rejection, never just made likely.
+const genShiftValue = (dir: "left" | "right", places: number, wantLost: boolean): number => {
+  for (let attempt = 0; attempt < 1000; attempt++) {
+    const v = randInt(1, 255);
+    const ones = v.toString(2).split("").filter(b => b === "1").length;
+    if (ones < 2) continue; // too trivial to be worth shifting
+    const lostMask = dir === "left" ? (0xff << (BIT_WIDTH - places)) & 0xff : (1 << places) - 1;
+    const lost = (v & lostMask) !== 0;
+    if (lost !== wantLost) continue;
+    const result = dir === "left" ? (v << places) & 0xff : v >> places;
+    if (result === 0) continue; // everything shifted away — degenerate
+    return v;
+  }
+  return dir === "left" ? (wantLost ? 0b11000011 : 0b00000110) : (wantLost ? 0b00000111 : 0b01100000);
+};
+
+const buildShiftQuestion = (level: DifficultyLevel, dir: "left" | "right", places: number, wantLost: boolean): AnyQuestion => {
+  const id = randInt(0, 999999);
+  const v = genShiftValue(dir, places, wantLost);
+  const result = dir === "left" ? (v << places) & 0xff : v >> places;
+  const factor = 2 ** places;
+  const vStr = bitsToStr(toBits(v, BIT_WIDTH));
+  const rStr = bitsToStr(toBits(result, BIT_WIDTH));
+  const lostStr = dir === "left" ? vStr.slice(0, places) : vStr.slice(BIT_WIDTH - places);
+  const lost = lostStr.includes("1");
+  const placeWord = places === 1 ? "place" : "places";
+
+  // The shifted bits with the ones pushed out of the register shown in red,
+  // outside it: left → they spill off the front; right → off the back.
+  const spilled = dir === "left"
+    ? `{\\color{${LOST}}${lostStr}}\\,${rStr}`
+    : `${rStr}\\,{\\color{${LOST}}${lostStr}}`;
+  const zeros = "0".repeat(places);
+
+  const working: WorkingStep[] = [
+    mStep("Write the number in the 8-bit register:", placeGridLatex(toBits(v, BIT_WIDTH))),
+    mStep(
+      dir === "left"
+        ? `Move every bit ${places} ${placeWord} left and fill the ${places === 1 ? "gap" : "gaps"} on the right with ${zeros.length === 1 ? "a 0" : "0s"} — bits pushed off the left end (red) are lost:`
+        : `Move every bit ${places} ${placeWord} right and fill the ${places === 1 ? "gap" : "gaps"} on the left with ${zeros.length === 1 ? "a 0" : "0s"} — bits pushed off the right end (red) are lost:`,
+      [vStr, `\\rightarrow ${spilled}`],
+    ),
+  ];
+
+  let suffix: string | undefined;
+  if (level === "level2") {
+    const trueVal = dir === "left" ? v * factor : v / factor;
+    const opLatex = dir === "left" ? "\\times" : "\\div";
+    working.push(
+      mStep("Convert the original number to denary:", `${vStr} = ${v}`),
+      mStep("Convert the result to denary:", `${rStr} = ${result}`),
+    );
+    if (!lost) {
+      working.push(mStep(`A ${dir} shift of ${places} ${placeWord} ${dir === "left" ? "multiplies" : "divides"} by ${factor}:`, [`${v} ${opLatex} ${factor}`, `= ${result}`]));
+      suffix = `(${v} → ${result}, ${dir === "left" ? "×" : "÷"} ${factor})`;
+    } else if (dir === "left") {
+      working.push(mStep("The true answer needs more than 8 bits:", [`${v} \\times ${factor}`, `= ${trueVal} > 255`]));
+      suffix = `(${v} → ${result} — overflow: should be ×${factor} = ${trueVal})`;
+    } else {
+      working.push(mStep("The true answer is not a whole number, so the fraction is lost:", [`${v} \\div ${factor}`, `= ${trueVal}`, `\\rightarrow ${result}`]));
+      suffix = `(${v} → ${result} — underflow: ÷${factor} = ${trueVal}, rounded down)`;
+    }
+  } else if (lost) {
+    suffix = dir === "left" ? "(overflow — a 1 was shifted out of the register)" : "(underflow — a 1 was shifted out of the register)";
+  }
+  working.push(mStep("Answer:", rStr));
+
+  const lines = [`Shift $${vStr}$ ${places} ${placeWord} to the ${dir}.`];
+  if (level === "level2") lines.push("State the effect on its denary value.");
+
+  return {
+    kind: "worded",
+    lines,
+    answer: rStr,
+    answerLatex: rStr,
+    answerSuffix: suffix,
+    working,
+    key: `binary-shift-${level}-${dir}-${places}-${v}-${id}`,
+    difficulty: level,
+    _difficultyScore: lost ? 2 : 1,
+  } as unknown as AnyQuestion;
+};
+
+const wantFromDropdown = (dropdownValue: string, mixedRate: number): boolean =>
+  dropdownValue === "exclusive" ? true :
+  dropdownValue === "mixed" ? Math.random() < mixedRate :
+  false; // "never" (and any unrecognised value) — the safe default
+
+// ── 8. generateQuestion ───────────────────────────────────────────────────────
 
 const generateQuestion = (
-  _tool: string,
+  tool: string,
   level: DifficultyLevel,
   _variables: Record<string, boolean>,
   dropdownValue: string,
+  multiSelectValues: Record<string, boolean> = {},
 ): AnyQuestion => {
+  if (tool === "binaryShifts") {
+    const dir = pickActive(multiSelectValues, DIRECTION_MS.options) as "left" | "right";
+    return buildShiftQuestion(level, dir, randInt(1, 3), wantFromDropdown(dropdownValue, MIXED_LOST_RATE));
+  }
   const wantOverflow =
     dropdownValue === "exclusive" ? true :
     dropdownValue === "mixed" ? Math.random() < MIXED_OVERFLOW_RATE :
