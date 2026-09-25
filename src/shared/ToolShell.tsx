@@ -181,15 +181,17 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       const n = parseInt(p.get(key) ?? "", 10);
       return Number.isFinite(n) ? Math.max(min, Math.min(max, n)) : null;
     };
+    const tool = toolParam && toolKeys.includes(toolParam) ? toolParam : toolKeys[0];
+    const toolLvls = config.tools[tool]?.levels ?? ALL_LEVELS;
     return {
-      tool: toolParam && toolKeys.includes(toolParam) ? toolParam : toolKeys[0],
+      tool,
       // On a narrow first paint with no explicit mode= param, seed "single"
       // directly rather than "whiteboard" — narrow has no Whiteboard mode, so
       // defaulting to "whiteboard" here left neither narrow toggle button
       // highlighted for one frame until the mode-coercion effect corrected it.
       mode: modeMap[p.get("mode") ?? ""] ?? (narrowInit ? "single" : "whiteboard"),
       builderRequested: p.get("mode") === "builder",
-      level: levelParam && !(defaults.comingSoonLevels ?? []).includes(levelParam) ? levelParam : "level1" as DifficultyLevel,
+      level: levelParam && toolLvls.includes(levelParam) && !(defaults.comingSoonLevels ?? []).includes(levelParam) ? levelParam : toolLvls[0],
       vars: toggles(p.get("vars")),
       ms: toggles(p.get("ms")),
       dd: p.get("dd"),
@@ -238,7 +240,12 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const workedExampleLayout = defaults.workedExampleLayout ?? "single";
   const hideAnswerStep = defaults.hideAnswerStep ?? false;
   const [difficulty, setDifficulty] = useState<DifficultyLevel>(urlInit.level);
-  const setDifficultyGuarded = (v: DifficultyLevel) => { if (!comingSoon.includes(v)) setDifficulty(v); };
+  // The levels the current sub-tool actually has (ToolEntry.levels) — unlisted
+  // levels are hidden, not "coming soon". Defaults to all three.
+  const levelsOf = (k: string): DifficultyLevel[] => config.tools[k]?.levels ?? ALL_LEVELS;
+  const toolLevels = levelsOf(currentTool);
+  const showLevelToggle = toolLevels.length > 1;
+  const setDifficultyGuarded = (v: DifficultyLevel) => { if (!comingSoon.includes(v) && toolLevels.includes(v)) setDifficulty(v); };
 
   // The main level row doubles as the differentiated-level picker: normally
   // (diffToggle off) it's mutually exclusive — clicking a level sets
@@ -250,7 +257,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   // with exactly one selected it behaves as an ordinary single-level sheet.
   // `availableLevels` excludes coming-soon levels — the toggle itself is
   // disabled when fewer than two levels are available to pick from.
-  const availableLevels = ALL_LEVELS.filter(l => !comingSoon.includes(l));
+  const availableLevels = toolLevels.filter(l => !comingSoon.includes(l));
   const [diffLevels, setDiffLevels] = useState<DifficultyLevel[]>(() => {
     const numToLevel: Record<string, DifficultyLevel> = { "1": "level1", "2": "level2", "3": "level3" };
     if (urlInit.diff) {
@@ -300,6 +307,17 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   // other UI (e.g. the whiteboard/worked-example DifficultyToggle) so turning
   // multi-select on always starts from whatever level is currently showing.
   useEffect(() => { if (!diffToggle) setDiffLevels([difficulty]); }, [difficulty, diffToggle]);
+  // Switching sub-tool: clamp the level state to the new sub-tool's levels in
+  // the same batch as the tool change, so generateQuestion is never called
+  // with a level the sub-tool doesn't have.
+  const selectTool = (k: string) => {
+    const avail = levelsOf(k).filter(l => !comingSoon.includes(l));
+    if (!avail.includes(difficulty)) setDifficulty(avail[0]);
+    const keptDiff = diffLevels.filter(l => avail.includes(l));
+    if (avail.length < 2) { setDiffToggle(false); setDiffLevels([avail.includes(difficulty) ? difficulty : avail[0]]); }
+    else if (diffToggle) setDiffLevels(keptDiff.length >= 1 ? keptDiff : avail);
+    setCurrentTool(k);
+  };
   // true (default): every differentiated cell shares one height (the tallest
   // question across every selected level). false: each level's column sizes
   // to its own tallest question, so a simpler level doesn't inflate to match
@@ -913,9 +931,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           <div className="p-6">
             {/* Row 1: levels · QO · differentiated */}
             <div className="flex justify-center items-center gap-6 mb-5">
-              <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm">
-                {ALL_LEVELS.map((val, i) => {
-                  const label = ["Level 1", "Level 2", "Level 3"][i];
+              {showLevelToggle && <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm">
+                {toolLevels.map((val) => {
+                  const label = LV_LABELS[val];
                   const col = LV_SELECTOR[val];
                   const isLvDisabled = comingSoon.includes(val);
                   const active = diffToggle ? diffLevels.includes(val) : difficulty === val;
@@ -926,9 +944,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                     </button>
                   );
                 })}
-              </div>
+              </div>}
               {qoEl(isDifferentiated)}
-              {(() => { const diffDisabled = availableLevels.length < 2; return (
+              {showLevelToggle && (() => { const diffDisabled = availableLevels.length < 2; return (
                 <button onClick={toggleDiffMode}
                   className={`px-6 py-2 rounded-xl font-bold text-base shadow-sm border-2 transition-colors ${diffDisabled ? "bg-gray-100 text-gray-300 border-gray-200 cursor-not-allowed" : diffToggle ? "bg-blue-900 text-white border-blue-900" : "bg-white text-gray-600 border-gray-300 hover:border-blue-900 hover:text-blue-900"}`}>
                   Differentiated
@@ -1054,7 +1072,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     return (
       <div className="px-5 py-4 rounded-xl" style={{ backgroundColor: qBg }}>
         <div className="flex items-center justify-between gap-4">
-          <DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} />
+          {showLevelToggle && <DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} levels={toolLevels} />}
           {qoEl()}
           <div className="flex gap-3 items-center">
             <button onClick={handleNewQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
@@ -1073,7 +1091,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const renderWhiteboard = () => {
     const fsToolbar = (
       <div style={{ background: fsToolbarBg, borderBottom: "2px solid #000", padding: "16px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexShrink: 0, zIndex: 210 }}>
-        <DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} />
+        {showLevelToggle && <DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} levels={toolLevels} />}
         {qoEl()}
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
           <button onClick={handleNewQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18} /> New Question</button>
@@ -1582,7 +1600,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                     <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Topic</div>
                     <div className="flex flex-col gap-1.5">
                       {toolKeys.map(k => (
-                        <button key={k} onClick={() => setCurrentTool(k)}
+                        <button key={k} onClick={() => selectTool(k)}
                           className={`w-full text-left px-3.5 py-2 rounded-lg font-bold text-sm border-2 transition-colors ${currentTool === k ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-gray-200 text-gray-700 hover:border-gray-300"}`}>
                           {config.tools[k].name}
                         </button>
@@ -1590,10 +1608,12 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                     </div>
                   </div>
                 )}
-                <div>
-                  <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Difficulty</div>
-                  <DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} />
-                </div>
+                {showLevelToggle && (
+                  <div>
+                    <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Difficulty</div>
+                    <DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} levels={toolLevels} />
+                  </div>
+                )}
                 <div>
                   <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Question Options</div>
                   <InlineQOPanel
@@ -1639,7 +1659,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                     return rows.map((row, ri) => (
                       <div key={ri} className="flex justify-center gap-4">
                         {row.map(k => (
-                          <button key={k} onClick={() => { setCurrentTool(k); }}
+                          <button key={k} onClick={() => { selectTool(k); }}
                             className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${currentTool === k ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
                             {config.tools[k].name}
                           </button>

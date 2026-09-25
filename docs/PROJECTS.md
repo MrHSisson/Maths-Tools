@@ -873,6 +873,21 @@ remaining spec is *authoring*, not engineering. The architecture and extraction 
 - ⬜ **1.1.3 Embedded Systems** — mostly definitional.
 - ⬜ **1.2.1 Primary storage (RAM/ROM)** — the other 1.1.1 synoptic partner.
 - ⬜ **1.2.2–1.2.4 Secondary storage / units / data representation** — data representation needs number-line / place-value representations.
+
+## CS procedural generators (on `ToolShell`)
+
+**Where it's at.** The procedural half of J277 1.2.4 (Numbers) is built as `ToolShell` question
+generators in `src/tools/Binary/` (category "Binary & Number Bases"), not `CSShell` topics — they
+are practice skills, not recall. `ToolEntry.levels` lets each sub-tool have only the levels the spec
+supports. **Binary Addition & Shifts** (`/binary-addition`, live) — Addition (3 levels) + Shifts
+(2 levels: do the shift; then state the denary effect; "Bits lost" Never/Mixed/Exclusive for
+overflow/underflow). **Number Bases** (`/number-bases`, dev-gated) — Denary↔Binary, Denary↔Hex,
+Binary↔Hex, 2 levels each (nibble / byte), a Direction pool per tab.
+
+**Possible next steps:**
+- Review Number Bases in the preview, then remove `enabled: false`.
+- Promote the KaTeX place-value grid (duplicated in both files) to a shared representation if a third tool needs it.
+- Other procedural 1.2.x skills that fit the same pattern: file-size / units calculations (1.2.2), bitmap and sound file sizes (1.2.4 Images/Sound).
 - ⬜ **1.3 Networks**, **1.4 Network security**, **1.5 Systems software**, **1.6 Ethical/legal/environmental** — Networks needs a stack/topology representation; the later strands are largely prose + scenario.
 
 *Representations (the recurring design cost):* existing from 1.1.1 are the **box schematic** (to be generalised) and the **trace table**. Likely additions: **bar-compare** (1.1.2), **place-value/number-line** (data representation), **network stack/topology** (1.3). Budget ~1–2 new representations per *strand*, not per topic.

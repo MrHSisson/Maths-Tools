@@ -132,6 +132,14 @@ export interface ToolEntry {
   dropdown: ToolDropdown | null;
   multiSelect?: ToolMultiSelectConfig;
   difficultySettings: Record<string, DifficultyLevelSettings> | null;
+  /** The levels this sub-tool actually has, e.g. `["level1", "level2"]` for a
+   *  topic whose natural difficulty ladder is only two rungs deep. Unlisted
+   *  levels are HIDDEN everywhere (level toggles, worksheet level row,
+   *  differentiated picker, advanced builder) — not greyed out like
+   *  `comingSoonLevels`, which means "will exist". With a single level the
+   *  difficulty toggle disappears entirely (as tool tabs do with one sub-tool).
+   *  Omit for the standard three levels. */
+  levels?: DifficultyLevel[];
 }
 
 export interface ToolConfig {

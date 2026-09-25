@@ -58,8 +58,10 @@ default `"Mathematics"`). Keep the division clear across all three axes:
 
 The two shells are deliberately separate: `ToolShell` is for **question generators**
 (Whiteboard / Worked Example / Worksheet); `CSShell` is for **knowledge/revision tools**
-(Learn / Study / Cards / Quiz / Fill / Exam). CS tools are standalone by design and never
-migrate to `ToolShell`. When adding a CS category to the registry, set
+(Learn / Study / Cards / Quiz / Fill / Exam). CS *revision* tools are standalone by design and never
+migrate to `ToolShell`. **The exception is procedural CS skills** — binary addition/shifts and
+number-base conversions (`src/tools/Binary/`) are genuine question generators, so they are built on
+`ToolShell` like a maths tool (usually with fewer levels — see `ToolEntry.levels`). When adding a CS category to the registry, set
 `subject: 'Computer Science'` so the landing page bands it correctly.
 
 ---
@@ -574,6 +576,25 @@ defaults={{ comingSoonLevels: ["level3"] }}
 
 Listed levels are greyed out and unclickable with a "Coming soon" tooltip. The Differentiated button and level selectors in advanced worksheet mode also respect this.
 
+### `levels` — sub-tools with fewer than three levels
+
+Not every topic has three honest difficulty rungs (e.g. number-base conversions: one nibble, then a
+byte — the spec stops there). Set `levels` on the **sub-tool's `ToolEntry`** (per sub-tool, so tabs
+in one tool can differ):
+
+```ts
+binaryShifts: { name: "Binary Shifts", …, levels: ["level1", "level2"] },
+```
+
+Unlisted levels are **hidden** everywhere — whiteboard/worked-example toggles, the worksheet level
+row, the differentiated picker (two levels → a two-column differentiated sheet), the advanced
+builder — unlike `comingSoonLevels`, which greys out a level that *will* exist. With one level the
+difficulty toggle (and Differentiated button) disappear, as tool tabs do with one sub-tool.
+Switching tab clamps the level to the new sub-tool's set, and a `level=` URL param outside the set
+falls back to its first level. The smoke tests skip hidden levels automatically. Put
+difficulty *variety within* a level into QO pools, not extra levels. Reference:
+`src/tools/Binary/NumberBases.tsx`.
+
 ---
 
 ## QO-driven behaviour — how ToolShell reacts to option changes
@@ -773,6 +794,7 @@ const TOOL_CONFIG: ToolConfig = {
         ],
       },
       difficultySettings: null,       // null = same options at all levels
+      levels: ["level1", "level2"],   // optional — omit for all three (see `levels` below)
     },
 
   },
@@ -1173,6 +1195,7 @@ CI also runs `npm test` (Vitest, `src/tests/generators.test.ts`). The suite disc
 | `reformatQuestion` (instant display reformat) | `src/tools/Algebra/CompletingTheSquare.tsx` |
 | Multi-group `multiSelect` | search for `ToolMultiSelect[]` in `src/tools/` |
 | `difficultySettings` per-level QO | `src/tools/Algebra/CompletingTheSquare.tsx` |
+| Sub-tools with fewer than 3 levels (`ToolEntry.levels`) | `src/tools/Binary/NumberBases.tsx` |
 
 ---
 
