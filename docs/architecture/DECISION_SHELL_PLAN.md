@@ -1,6 +1,7 @@
 # Decision Mathematics Shell — architecture plan
 
-Status: **increment 1 shipped → increment 2 next.** A spike exists
+Status: **increment 1 shipped; increment 5's first slice (TSP nearest neighbour, dev-gated) shipped
+ahead of order → next is the TSP lower bound or increment 2 (MST breadth).** A spike exists
 (`src/tools/Decision/NetworkSandbox.tsx`, `enabled:false`) that proves the *presentation*: a
 full-screen, pannable/zoomable weighted-network canvas with a live distance matrix. Increment 1
 turned it into the first vertical slice — a pure-renderer representation library (`NetworkView` +
