@@ -881,11 +881,11 @@ generators in `src/tools/Binary/` (category "Binary & Number Bases"), not `CSShe
 are practice skills, not recall. `ToolEntry.levels` lets each sub-tool have only the levels the spec
 supports. **Binary Operations** (`/binary-addition`, live) — Addition (3 levels) + Shifts
 (2 levels: do the shift; then state the denary effect; "Bits lost" Never/Mixed/Exclusive for
-overflow/underflow). **Number Bases** (`/number-bases`, dev-gated) — Denary↔Binary, Denary↔Hex,
+overflow/underflow). **Number Bases** (`/number-bases`, live) — Denary↔Binary, Denary↔Hex,
 Binary↔Hex, 2 levels each (nibble / byte), a Direction pool per tab.
 
 **Possible next steps:**
-- Review Number Bases in the preview, then remove `enabled: false`.
+- Gather classroom feedback on Number Bases and Binary Operations (both live).
 - Promote the KaTeX place-value grid (duplicated in both files) to a shared representation if a third tool needs it.
 - Other procedural 1.2.x skills that fit the same pattern: file-size / units calculations (1.2.2), bitmap and sound file sizes (1.2.4 Images/Sound).
 - ⬜ **1.3 Networks**, **1.4 Network security**, **1.5 Systems software**, **1.6 Ethical/legal/environmental** — Networks needs a stack/topology representation; the later strands are largely prose + scenario.

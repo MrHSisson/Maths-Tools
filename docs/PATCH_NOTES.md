@@ -1959,6 +1959,7 @@ in custom renderers.
   two levels (nibble 1–15 / byte 16–255, disjoint). Place-value working (subtract-the-place-value
   chain, 16s-and-remainder, nibble splitting).
 - Tool card renamed **"Binary Operations"** (page title too; path unchanged). J277 needs only addition and shifts — no binary subtraction.
+- Number Bases taken live (dropped `enabled: false`); Binary Operations was already live.
 - Category renamed "Binary Arithmetic" → "Binary & Number Bases". New `src/tests/binaryTools.test.ts`
   checks every answer against an independent conversion/shift and the bits-lost guarantee.
   Headless check: level rows show only Level 1/2 on the new tabs, no console errors.

@@ -161,7 +161,7 @@ export const CATEGORIES: CategoryMeta[] = [
     subject: 'Computer Science',
     tools: [
       { id: 'binary-addition', path: '/binary-addition', name: 'Binary Operations', description: 'Add 8-bit binary integers and perform binary shifts, identifying overflow and underflow, following the OCR J277 approach', load: () => import('./tools/Binary/BinaryAddition') },
-      { id: 'number-bases', path: '/number-bases', name: 'Number Bases', description: 'Convert between denary, binary and hexadecimal up to 8 bits, with place-value working, following OCR J277 1.2.4', enabled: false, load: () => import('./tools/Binary/NumberBases') },
+      { id: 'number-bases', path: '/number-bases', name: 'Number Bases', description: 'Convert between denary, binary and hexadecimal up to 8 bits, with place-value working, following OCR J277 1.2.4', load: () => import('./tools/Binary/NumberBases') },
     ],
   },
 ];
