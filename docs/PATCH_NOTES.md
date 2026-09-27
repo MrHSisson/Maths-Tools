@@ -1942,6 +1942,21 @@ in custom renderers.
 > own tools, and its own shell (`CSShell`, not `ToolShell`). It's younger than the
 > Maths side — expect it to grow fast.
 
+## 2026-09-27 — Binary Shifts phrased as ×/÷; base subscripts across Binary Operations & Number Bases
+- **Binary Shifts** (`src/tools/Binary/BinaryAddition.tsx`) no longer phrases the question as "Shift
+  $X$ n places to the left/right" — it's now the multiplication/division a shift performs, e.g.
+  $00001101_2 \times 1000_2$ for a left shift of 3. New **Notation** multiSelect pool (peers, no
+  weight): **Binary** shows both operands in binary (default); **Denary** shows them in denary
+  instead (e.g. $13_{10} \times 8_{10}$) and asks for the binary working — leave both on to mix.
+  Added `instruction: "Calculate:"` to the sub-tool.
+- **Base subscripts** added throughout Binary Shifts and Number Bases (every sub-tool: Denary ↔
+  Binary, Denary ↔ Hex, Binary ↔ Hex) — every value now carries a subscript showing its base
+  (`_2` binary, `_{10}` denary, `_{16}` hex, the last kept upright via `\mathrm{}`) so the same
+  digits (e.g. "10") can never be misread as the wrong base. **Binary Addition is the deliberate
+  exception** — its 8-bit strings never appear alongside a denary value in the same expression, so
+  it keeps its existing plain notation. Updated `src/tests/binaryTools.test.ts`'s Binary Shifts
+  parser for the new phrasing/notation and `INFO_SECTIONS` copy for both tools.
+
 ## 2026-09-25 — Per-sub-tool levels; Binary Shifts; Number Bases tool
 - **`ToolEntry.levels`** (`src/shared/types.ts`, `ToolShell.tsx`, `DifficultyToggle`,
   `WorksheetBuilder`, `generators.test.ts`): a sub-tool can declare the levels it actually has

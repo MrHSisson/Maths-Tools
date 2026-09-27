@@ -69,6 +69,7 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Overview", detail: "Convert positive whole numbers between denary (base 10), binary (base 2) and hexadecimal (base 16), up to 8 bits / 2 hex digits (0–255) as in OCR J277 1.2.4." },
       { label: "Level 1 — Green", detail: "One nibble: 4-bit binary, denary 0–15, a single hex digit." },
       { label: "Level 2 — Yellow", detail: "A full byte: 8-bit binary, denary 16–255, two hex digits." },
+      { label: "Base subscripts", detail: "Every value is written with a subscript showing its base — 1101₂ binary, 13₁₀ denary, D₁₆ hex — so the same digits (like '10') are never misread as the wrong base." },
     ],
   },
   {
@@ -104,8 +105,12 @@ const toBits = (n: number, width: number): number[] =>
 
 const hexDigit = (n: number): string => n.toString(16).toUpperCase();
 const toHex = (n: number): string => n.toString(16).toUpperCase();
-// Hex in KaTeX: upright, so "AD" isn't read as A×D.
-const hexLatex = (h: string): string => `\\mathrm{${h}}`;
+// Base subscripts throughout — so the same digits (e.g. "10") can never be
+// misread as the wrong base: binary always _2, denary always _10, hex
+// always _16 (kept upright inside \mathrm{} so "AD" isn't read as A×D).
+const hexLatex = (h: string): string => `\\mathrm{${h}}_{16}`;
+const binLatex = (b: string): string => `${b}_{2}`;
+const denLatex = (n: number | string): string => `${n}_{10}`;
 
 const placeValues = (width: number): number[] =>
   Array.from({ length: width }, (_, i) => 2 ** (width - 1 - i));
@@ -129,7 +134,7 @@ const drawValue = (level: DifficultyLevel): number =>
 // A nibble's value as the sum of its place values, e.g. 1010 → 8 + 2 = 10.
 const nibbleSumLatex = (n: number): string => {
   const parts = placeValues(4).filter((pv) => (n & pv) !== 0);
-  return parts.length > 1 ? `${parts.join(" + ")} = ${n}` : `${n}`;
+  return parts.length > 1 ? `${parts.join(" + ")} = ${denLatex(n)}` : denLatex(n);
 };
 
 // ── 5. Working-step builders ──────────────────────────────────────────────────
@@ -157,28 +162,28 @@ const binToDenSteps = (n: number, width: number): WorkingStep[] => {
   const used = pvs.filter((pv) => (n & pv) !== 0);
   return [
     mStep("Write the bits under the place values:", gridLatex(pvs, toBits(n, width).map(String))),
-    mStep("Add the place values that have a 1:", used.length > 1 ? [used.join(" + "), `= ${n}`] : `${n}`),
+    mStep("Add the place values that have a 1:", used.length > 1 ? [used.join(" + "), `= ${denLatex(n)}`] : denLatex(n)),
   ];
 };
 
 const denToHexSteps = (n: number): WorkingStep[] => {
-  if (n < 16) return [mStep("Hex digits run 0–9, then A = 10 up to F = 15:", `${n} = ${hexLatex(hexDigit(n))}`)];
+  if (n < 16) return [mStep("Hex digits run 0–9, then A = 10 up to F = 15:", `${denLatex(n)} = ${hexLatex(hexDigit(n))}`)];
   const hi = Math.floor(n / 16);
   const lo = n % 16;
   return [
-    mStep("Find how many 16s fit, and what is left over:", [`${n}`, `= ${hi} \\times 16 + ${lo}`]),
-    mStep("Write each part as a hex digit (A = 10 … F = 15):", [`${hi} = ${hexLatex(hexDigit(hi))}`, `,\\; ${lo} = ${hexLatex(hexDigit(lo))}`]),
+    mStep("Find how many 16s fit, and what is left over:", [denLatex(n), `= ${hi} \\times 16 + ${lo}`]),
+    mStep("Write each part as a hex digit (A = 10 … F = 15):", [`${denLatex(hi)} = ${hexLatex(hexDigit(hi))}`, `,\\; ${denLatex(lo)} = ${hexLatex(hexDigit(lo))}`]),
   ];
 };
 
 const hexToDenSteps = (n: number): WorkingStep[] => {
-  if (n < 16) return [mStep("Hex digits run 0–9, then A = 10 up to F = 15:", `${hexLatex(hexDigit(n))} = ${n}`)];
+  if (n < 16) return [mStep("Hex digits run 0–9, then A = 10 up to F = 15:", `${hexLatex(hexDigit(n))} = ${denLatex(n)}`)];
   const hi = Math.floor(n / 16);
   const lo = n % 16;
   return [
     mStep("Write the digits under the place values:", gridLatex([16, 1], [hexLatex(hexDigit(hi)), hexLatex(hexDigit(lo))])),
-    mStep("Convert each digit to denary:", `${hexLatex(hexDigit(hi))} = ${hi},\\; ${hexLatex(hexDigit(lo))} = ${lo}`),
-    mStep("Multiply by the place values and add:", [`${hi} \\times 16 + ${lo}`, `= ${hi * 16} + ${lo}`, `= ${n}`]),
+    mStep("Convert each digit to denary:", `${hexLatex(hexDigit(hi))} = ${denLatex(hi)},\\; ${hexLatex(hexDigit(lo))} = ${denLatex(lo)}`),
+    mStep("Multiply by the place values and add:", [`${hi} \\times 16 + ${lo}`, `= ${hi * 16} + ${lo}`, `= ${denLatex(n)}`]),
   ];
 };
 
@@ -191,7 +196,7 @@ const binToHexSteps = (n: number, width: number): WorkingStep[] => {
   const steps: WorkingStep[] = [];
   if (width === 8) steps.push(mStep("Split the byte into two nibbles (4 bits each):", nibbles.map(nibStr).join("\\;\\;")));
   nibbles.forEach((x) => {
-    steps.push(mStep(`Convert ${nibStr(x)} using the place values 8, 4, 2, 1:`, [`${nibStr(x)}`, `= ${nibbleSumLatex(x)}`, `= ${hexLatex(hexDigit(x))}`]));
+    steps.push(mStep(`Convert ${nibStr(x)} using the place values 8, 4, 2, 1:`, [binLatex(nibStr(x)), `= ${nibbleSumLatex(x)}`, `= ${hexLatex(hexDigit(x))}`]));
   });
   if (width === 8) steps.push(mStep("Put the hex digits together:", hexLatex(toHex(n))));
   return steps;
@@ -203,10 +208,10 @@ const hexToBinSteps = (n: number, width: number): WorkingStep[] => {
   const steps: WorkingStep[] = nibbles.map((x) =>
     mStep(
       `Write ${hexDigit(x)} as a 4-bit nibble using the place values 8, 4, 2, 1:`,
-      [`${hexLatex(hexDigit(x))} = ${x}`, `= ${nibStr(x)}`],
+      [`${hexLatex(hexDigit(x))} = ${denLatex(x)}`, `= ${binLatex(nibStr(x))}`],
     ),
   );
-  if (width === 8) steps.push(mStep("Put the nibbles together:", nibbles.map(nibStr).join("")));
+  if (width === 8) steps.push(mStep("Put the nibbles together:", binLatex(nibbles.map(nibStr).join(""))));
   return steps;
 };
 
@@ -226,28 +231,28 @@ const buildQuestion = (level: DifficultyLevel, dir: Direction): AnyQuestion => {
   let working: WorkingStep[];
   switch (dir) {
     case "denToBin":
-      line = `Convert $${n}$ to ${bitsWord} binary.`;
-      answer = bin; answerLatex = bin; working = denToBinSteps(n, width);
+      line = `Convert $${denLatex(n)}$ to ${bitsWord} binary.`;
+      answer = bin; answerLatex = binLatex(bin); working = denToBinSteps(n, width);
       break;
     case "binToDen":
-      line = `Convert $${bin}$ to denary.`;
-      answer = `${n}`; answerLatex = `${n}`; working = binToDenSteps(n, width);
+      line = `Convert $${binLatex(bin)}$ to denary.`;
+      answer = `${n}`; answerLatex = denLatex(n); working = binToDenSteps(n, width);
       break;
     case "denToHex":
-      line = `Convert $${n}$ to hexadecimal.`;
+      line = `Convert $${denLatex(n)}$ to hexadecimal.`;
       answer = hex; answerLatex = hexLatex(hex); working = denToHexSteps(n);
       break;
     case "hexToDen":
       line = `Convert $${hexLatex(hex)}$ to denary.`;
-      answer = `${n}`; answerLatex = `${n}`; working = hexToDenSteps(n);
+      answer = `${n}`; answerLatex = denLatex(n); working = hexToDenSteps(n);
       break;
     case "binToHex":
-      line = `Convert $${bin}$ to hexadecimal.`;
+      line = `Convert $${binLatex(bin)}$ to hexadecimal.`;
       answer = hex; answerLatex = hexLatex(hex); working = binToHexSteps(n, width);
       break;
     case "hexToBin":
       line = `Convert $${hexLatex(hex)}$ to ${bitsWord} binary.`;
-      answer = bin; answerLatex = bin; working = hexToBinSteps(n, width);
+      answer = bin; answerLatex = binLatex(bin); working = hexToBinSteps(n, width);
       break;
   }
   working.push(mStep("Answer:", answerLatex));
