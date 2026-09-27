@@ -74,14 +74,13 @@ describe("Binary Shifts", () => {
       it(`${level}, bits lost = ${lost}: result is the logical shift, loss matches the setting`, () => {
         for (let i = 0; i < N; i++) {
           const q = arith.generateQuestion("binaryShifts", level, {}, lost, {}) as any;
-          const { v, places, dir, notation } = parse(q);
+          const { v, places, dir } = parse(q);
           const result = dir === "left" ? (v << places) & 0xff : v >> places;
           expect(q.answer).toBe(result.toString(2).padStart(8, "0"));
           expect(result).toBeGreaterThan(0);
           const exact = dir === "left" ? v * 2 ** places === result : v / 2 ** places === result;
           expect(exact).toBe(lost === "never");
-          const expectedLines = 1 + (notation === "denary" ? 1 : 0) + (level === "level2" ? 1 : 0);
-          expect(q.lines).toHaveLength(expectedLines);
+          expect(q.lines).toHaveLength(level === "level2" ? 2 : 1);
         }
       });
     }

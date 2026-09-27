@@ -432,8 +432,7 @@ const buildShiftQuestion = (
   }
   working.push(mStep("Answer:", binLatex(rStr)));
 
-  const lines = [`$${questionLatex}$`];
-  if (notation === "denary") lines.push("Give your answer in binary.");
+  const lines = [notation === "denary" ? `Show $${questionLatex}$ through a binary shift.` : `$${questionLatex}$`];
   if (level === "level2") lines.push("State the effect on its denary value.");
 
   return {
