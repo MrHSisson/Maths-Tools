@@ -55,6 +55,17 @@ const DIRECTION_MS: ToolMultiSelect = {
   ],
 };
 
+// Notation is variety, not difficulty — peers, no weight. Which base the
+// question's two operands are written in — the shift itself (and its
+// ×2ⁿ/÷2ⁿ reading) is identical either way.
+const NOTATION_MS: ToolMultiSelect = {
+  key: "notation", label: "Notation",
+  options: [
+    { value: "binary", label: "Binary", defaultActive: true },
+    { value: "denary", label: "Denary", defaultActive: true },
+  ],
+};
+
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Binary Operations",
   tools: {
@@ -67,9 +78,10 @@ const TOOL_CONFIG: ToolConfig = {
     },
     binaryShifts: {
       name: "Binary Shifts",
+      instruction: "Calculate:",
       variables: [],
       dropdown: LOST_BITS_DD,
-      multiSelect: DIRECTION_MS,
+      multiSelect: [DIRECTION_MS, NOTATION_MS],
       difficultySettings: null,
       // Two rungs only: do the shift; then do it AND state the denary effect.
       levels: ["level1", "level2"],
@@ -93,7 +105,7 @@ const INFO_SECTIONS: InfoSection[] = [
   {
     title: "Binary Shifts", icon: "↔️",
     content: [
-      { label: "Overview", detail: "Shift an 8-bit binary number left or right by 1–3 places. Every bit moves along; the gaps are filled with 0s, and bits pushed past either end of the register are lost. A left shift of n places multiplies by 2ⁿ; a right shift divides by 2ⁿ." },
+      { label: "Overview", detail: "Shift an 8-bit binary number left or right by 1–3 places, phrased as the multiplication or division it performs rather than as 'n places' — e.g. 00001101₂ × 1000₂ for a left shift of 3. Every bit moves along; the gaps are filled with 0s, and bits pushed past either end of the register are lost. A left shift of n places multiplies by 2ⁿ; a right shift divides by 2ⁿ." },
       { label: "Level 1 — Green", detail: "Perform the shift and give the 8-bit result." },
       { label: "Level 2 — Yellow", detail: "Perform the shift, then state the effect on the denary value — the value before and after, and the ×2ⁿ or ÷2ⁿ it corresponds to." },
       { label: "Overflow / underflow", detail: "If a 1 is shifted off the left end, the true answer no longer fits in 8 bits — an overflow, so the stored result is not ×2ⁿ. If a 1 is shifted off the right end, the fractional part is lost — an underflow (loss of precision), so the stored result is rounded down." },
@@ -105,6 +117,7 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Overflow (Addition)", detail: "Never — no question overflows. Mixed — about 1 in 5 do. Exclusive — every question overflows. Starts on Never." },
       { label: "Bits lost (Shifts)", detail: "Never — only 0s are shifted out, so the result is exact. Mixed — about 3 in 10 questions shift a 1 out (overflow or underflow). Exclusive — every question does. Starts on Never." },
       { label: "Direction (Shifts)", detail: "Left shifts, right shifts, or both mixed." },
+      { label: "Notation (Shifts)", detail: "Binary — both numbers shown in binary, e.g. 00001101₂ × 1000₂. Denary — shown in denary instead, e.g. 13₁₀ × 8₁₀, asking for the binary working. Leave both on to mix." },
     ],
   },
   {
@@ -314,6 +327,13 @@ const buildThreeNumberQuestion = (level: DifficultyLevel, wantOverflow: boolean)
 
 const LOST = "#dc2626";
 
+// Base subscripts (shifts only — binary addition's 8-bit strings are never
+// set alongside a denary value in the same expression, so it keeps its plain
+// notation): binary always _2, denary always _10, so the same digits (e.g.
+// "10") can't be misread as the wrong base.
+const binLatex = (b: string): string => `${b}_{2}`;
+const denLatex = (n: number | string): string => `${n}_{10}`;
+
 // Place-value grid for an 8-bit register (the J277 128…1 headings).
 const placeGridLatex = (bits: number[]): string => {
   const pvs = bits.map((_, i) => 2 ** (bits.length - 1 - i));
@@ -345,7 +365,13 @@ const genShiftValue = (dir: "left" | "right", places: number, wantLost: boolean)
   return dir === "left" ? (wantLost ? 0b11000011 : 0b00000110) : (wantLost ? 0b00000111 : 0b01100000);
 };
 
-const buildShiftQuestion = (level: DifficultyLevel, dir: "left" | "right", places: number, wantLost: boolean): AnyQuestion => {
+const buildShiftQuestion = (
+  level: DifficultyLevel,
+  dir: "left" | "right",
+  places: number,
+  wantLost: boolean,
+  notation: "binary" | "denary",
+): AnyQuestion => {
   const id = randInt(0, 999999);
   const v = genShiftValue(dir, places, wantLost);
   const result = dir === "left" ? (v << places) & 0xff : v >> places;
@@ -363,13 +389,23 @@ const buildShiftQuestion = (level: DifficultyLevel, dir: "left" | "right", place
     : `${rStr}\\,{\\color{${LOST}}${lostStr}}`;
   const zeros = "0".repeat(places);
 
+  // The question is phrased as the multiplication/division a shift performs
+  // — ×2ⁿ / ÷2ⁿ — never as "n places". "binary" notation shows both operands
+  // in binary (e.g. 00001101 × 1000); "denary" shows them in denary (13 × 8)
+  // and asks for the binary working instead.
+  const opSym = dir === "left" ? "\\times" : "\\div";
+  const factorBinStr = factor.toString(2);
+  const questionLatex = notation === "denary"
+    ? `${denLatex(v)} ${opSym} ${denLatex(factor)}`
+    : `${binLatex(vStr)} ${opSym} ${binLatex(factorBinStr)}`;
+
   const working: WorkingStep[] = [
     mStep("Write the number in the 8-bit register:", placeGridLatex(toBits(v, BIT_WIDTH))),
     mStep(
       dir === "left"
         ? `Move every bit ${places} ${placeWord} left and fill the ${places === 1 ? "gap" : "gaps"} on the right with ${zeros.length === 1 ? "a 0" : "0s"} — bits pushed off the left end (red) are lost:`
         : `Move every bit ${places} ${placeWord} right and fill the ${places === 1 ? "gap" : "gaps"} on the left with ${zeros.length === 1 ? "a 0" : "0s"} — bits pushed off the right end (red) are lost:`,
-      [vStr, `\\rightarrow ${spilled}`],
+      [binLatex(vStr), `\\rightarrow {${spilled}}_{2}`],
     ),
   ];
 
@@ -378,35 +414,35 @@ const buildShiftQuestion = (level: DifficultyLevel, dir: "left" | "right", place
     const trueVal = dir === "left" ? v * factor : v / factor;
     const opLatex = dir === "left" ? "\\times" : "\\div";
     working.push(
-      mStep("Convert the original number to denary:", `${vStr} = ${v}`),
-      mStep("Convert the result to denary:", `${rStr} = ${result}`),
+      mStep("Convert the original number to denary:", `${binLatex(vStr)} = ${denLatex(v)}`),
+      mStep("Convert the result to denary:", `${binLatex(rStr)} = ${denLatex(result)}`),
     );
     if (!lost) {
-      working.push(mStep(`A ${dir} shift of ${places} ${placeWord} ${dir === "left" ? "multiplies" : "divides"} by ${factor}:`, [`${v} ${opLatex} ${factor}`, `= ${result}`]));
+      working.push(mStep(`A ${dir} shift of ${places} ${placeWord} ${dir === "left" ? "multiplies" : "divides"} by ${factor}:`, [`${denLatex(v)} ${opLatex} ${denLatex(factor)}`, `= ${denLatex(result)}`]));
       suffix = `(${v} → ${result}, ${dir === "left" ? "×" : "÷"} ${factor})`;
     } else if (dir === "left") {
-      working.push(mStep("The true answer needs more than 8 bits:", [`${v} \\times ${factor}`, `= ${trueVal} > 255`]));
+      working.push(mStep("The true answer needs more than 8 bits:", [`${denLatex(v)} \\times ${denLatex(factor)}`, `= ${denLatex(trueVal)} > ${denLatex(255)}`]));
       suffix = `(${v} → ${result} — overflow: should be ×${factor} = ${trueVal})`;
     } else {
-      working.push(mStep("The true answer is not a whole number, so the fraction is lost:", [`${v} \\div ${factor}`, `= ${trueVal}`, `\\rightarrow ${result}`]));
+      working.push(mStep("The true answer is not a whole number, so the fraction is lost:", [`${denLatex(v)} \\div ${denLatex(factor)}`, `= ${denLatex(trueVal)}`, `\\rightarrow ${denLatex(result)}`]));
       suffix = `(${v} → ${result} — underflow: ÷${factor} = ${trueVal}, rounded down)`;
     }
   } else if (lost) {
     suffix = dir === "left" ? "(overflow — a 1 was shifted out of the register)" : "(underflow — a 1 was shifted out of the register)";
   }
-  working.push(mStep("Answer:", rStr));
+  working.push(mStep("Answer:", binLatex(rStr)));
 
-  const lines = [`Shift $${vStr}$ ${places} ${placeWord} to the ${dir}.`];
+  const lines = [notation === "denary" ? `Show $${questionLatex}$ through a binary shift.` : `$${questionLatex}$`];
   if (level === "level2") lines.push("State the effect on its denary value.");
 
   return {
     kind: "worded",
     lines,
     answer: rStr,
-    answerLatex: rStr,
+    answerLatex: binLatex(rStr),
     answerSuffix: suffix,
     working,
-    key: `binary-shift-${level}-${dir}-${places}-${v}-${id}`,
+    key: `binary-shift-${level}-${dir}-${places}-${notation}-${v}-${id}`,
     difficulty: level,
     _difficultyScore: lost ? 2 : 1,
   } as unknown as AnyQuestion;
@@ -428,7 +464,8 @@ const generateQuestion = (
 ): AnyQuestion => {
   if (tool === "binaryShifts") {
     const dir = pickActive(multiSelectValues, DIRECTION_MS.options) as "left" | "right";
-    return buildShiftQuestion(level, dir, randInt(1, 3), wantFromDropdown(dropdownValue, MIXED_LOST_RATE));
+    const notation = pickActive(multiSelectValues, NOTATION_MS.options) as "binary" | "denary";
+    return buildShiftQuestion(level, dir, randInt(1, 3), wantFromDropdown(dropdownValue, MIXED_LOST_RATE), notation);
   }
   const wantOverflow =
     dropdownValue === "exclusive" ? true :

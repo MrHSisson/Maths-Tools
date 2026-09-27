@@ -41,10 +41,28 @@ describe("Number Bases", () => {
 });
 
 describe("Binary Shifts", () => {
+  // Questions are phrased as the multiplication/division a shift performs,
+  // with every value subscripted by base: "binary" notation shows both
+  // operands in binary (e.g. 00001101_{2} \times 1000_{2}), "denary" shows
+  // them in denary instead (e.g. 13_{10} \times 8_{10}).
   const parse = (q: any) => {
-    const m = /Shift \$([01]{8})\$ (\d) places? to the (left|right)/.exec(q.lines[0]);
+    let m = /\$([01]{8})_\{2\} \\(times|div) (\d+)_\{2\}\$/.exec(q.lines[0]);
+    if (m) {
+      return {
+        v: parseInt(m[1], 2),
+        places: Math.round(Math.log2(parseInt(m[3], 2))),
+        dir: (m[2] === "times" ? "left" : "right") as "left" | "right",
+        notation: "binary" as const,
+      };
+    }
+    m = /\$(\d+)_\{10\} \\(times|div) (\d+)_\{10\}\$/.exec(q.lines[0]);
     expect(m).not.toBeNull();
-    return { v: parseInt(m![1], 2), places: Number(m![2]), dir: m![3] as "left" | "right" };
+    return {
+      v: Number(m![1]),
+      places: Math.round(Math.log2(Number(m![3]))),
+      dir: (m![2] === "times" ? "left" : "right") as "left" | "right",
+      notation: "denary" as const,
+    };
   };
 
   it("declares two levels", () => {
@@ -62,7 +80,7 @@ describe("Binary Shifts", () => {
           expect(result).toBeGreaterThan(0);
           const exact = dir === "left" ? v * 2 ** places === result : v / 2 ** places === result;
           expect(exact).toBe(lost === "never");
-          if (level === "level2") expect(q.lines).toHaveLength(2);
+          expect(q.lines).toHaveLength(level === "level2" ? 2 : 1);
         }
       });
     }
