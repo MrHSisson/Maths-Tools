@@ -28,6 +28,23 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-28 — Comparing & Ordering Numbers (Number, dev-gated)
+New dev-gated tool `/comparing-ordering-numbers` (`src/tools/Number/ComparingOrderingNumbers.tsx`,
+`specs/comparing-ordering-numbers.md`) — `Compare` (two numbers) and `Order` (3–6 numbers) built
+from a shared decimal/negative-number engine designed around named, teacher-tailorable
+misconceptions rather than random-shaped numbers. Five `trapType` options (multiSelect, teacher
+picks which are active): `clean`, `longerIsSmaller` (`0.3` vs `0.25`), `shorterIsSmaller` (`0.2`
+vs `0.25`, mathematically guaranteed by construction), `wrongPriority` (`0.311` vs `0.259`,
+tenths decide despite a hundredths/thousandths decoy) and `ignoreWholePart` (`4.2` vs `3.9`, whole
+part decides despite a tenths decoy) — capped at thousandths tool-wide. `wholeNumberPart` and
+`sign` are 2-option weighted cycle pools (None → Mixed → Exclusive); `Notation` (Words/Symbols)
+reformats instantly via `reformatQuestion` with no regeneration. Order draws each adjacent gap in
+the sorted list independently from the active trap pool, so a list can genuinely stack several
+different traps rather than guaranteeing exactly one. Levels run Decimals → Negative integers →
+Decimals + sign. Verified with an ad-hoc scratch test (not committed) exercising every non-default
+QO combination plus archetype-shape correctness for all four decimal traps, on top of the standard
+`__test` smoke suite.
+
 ## 2026-09-23 — Decision Maths: Travelling Salesperson (nearest neighbour) on `DecisionShell`
 New dev-gated tool `/travelling-salesperson` (`src/tools/Decision/TravellingSalesperson.tsx`) —
 the first TSP slice, nearest-neighbour upper bound only, three levels: **L1** a complete K4–K6
