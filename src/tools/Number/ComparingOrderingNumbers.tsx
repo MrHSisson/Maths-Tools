@@ -79,11 +79,11 @@ const DIRECTION_MS: ToolMultiSelect = {
   ],
 };
 
-const DIRECTION_INFO: Record<string, { sort: "ascending" | "descending"; phrase: string }> = {
-  ascending: { sort: "ascending", phrase: "ascending" },
-  descending: { sort: "descending", phrase: "descending" },
-  smallestToLargest: { sort: "ascending", phrase: "smallest to largest" },
-  largestToSmallest: { sort: "descending", phrase: "largest to smallest" },
+const DIRECTION_INFO: Record<string, { sort: "ascending" | "descending"; sentence: string }> = {
+  ascending: { sort: "ascending", sentence: "Write in ascending order:" },
+  descending: { sort: "descending", sentence: "Write in descending order:" },
+  smallestToLargest: { sort: "ascending", sentence: "Order from smallest to largest:" },
+  largestToSmallest: { sort: "descending", sentence: "Order from largest to smallest:" },
 };
 
 // Compare's Words-mode phrasing ("Which is bigger?" / "Which is smaller?").
@@ -404,16 +404,27 @@ const settledDescription = (settled: PVRow[], total: number, smallestFirst: bool
 // columns processed so far; a row shows its circle/rank once its own
 // circleCol is in that prefix.
 const PlaceValueTable = ({
-  rows, hasSign, revealCols, targetWord, colLabel, settledText, hasSettled,
+  rows, hasSign, revealCols, targetWord, colLabel, settledText, hasSettled, currentCol,
 }: {
   rows: PVRow[]; hasSign: boolean; revealCols: PVCol[]; targetWord: string;
-  colLabel: string; settledText: string; hasSettled: boolean;
+  colLabel: string; settledText: string; hasSettled: boolean; currentCol: PVCol;
 }) => {
   const maxDp = Math.max(0, ...rows.map((r) => r.d.length));
-  const thCls = "border border-slate-300 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-500";
-  const tdCls = "border border-slate-300 px-2 py-2 text-center align-middle";
+  const thClsBase = "border border-slate-300 px-3 py-1 text-xs font-semibold uppercase tracking-wide";
+  const tdClsBase = "border border-slate-300 px-2 py-2 text-center align-middle";
   const boxBase = "inline-flex h-8 w-8 items-center justify-center rounded-full border-2 font-semibold";
   const rankBase = "inline-flex h-7 w-7 items-center justify-center rounded-full font-semibold";
+  const lastRow = rows.length - 1;
+
+  // The whole column currently being compared gets a highlighted "swimlane"
+  // (tinted background, rounded top/bottom on its end cells so it reads as
+  // one capsule down the table) — separate from the per-digit circle, which
+  // marks only the numbers actually settled so far.
+  const colCls = (col: PVCol, ri?: number) => {
+    if (col !== currentCol) return "";
+    const rounding = ri === 0 ? " rounded-t-2xl" : ri === lastRow ? " rounded-b-2xl" : "";
+    return `bg-amber-100${rounding}`;
+  };
 
   const digitBox = (content: string | number, circled: boolean, dimmed = false) => (
     <span className={`${boxBase} ${circled ? (dimmed ? "border-indigo-400 text-slate-400" : "border-indigo-500 text-indigo-700") : "border-transparent text-slate-900"}`}>
@@ -428,11 +439,13 @@ const PlaceValueTable = ({
       <table className="mx-auto border-collapse text-base">
         <thead>
           <tr>
-            {hasSign && <th className={thCls}>Sign</th>}
-            <th className={thCls}>Whole</th>
-            {maxDp > 0 && <th className={thCls}>.</th>}
-            {Array.from({ length: maxDp }, (_, i) => <th key={i} className={thCls}>{PV_COL_LABELS[i]}</th>)}
-            <th className={thCls}>Order</th>
+            {hasSign && <th className={`${thClsBase} ${currentCol === "sign" ? "bg-amber-200 text-amber-900" : "text-slate-500"}`}>Sign</th>}
+            <th className={`${thClsBase} ${currentCol === "whole" ? "bg-amber-200 text-amber-900" : "text-slate-500"}`}>Whole</th>
+            {maxDp > 0 && <th className={thClsBase}>.</th>}
+            {Array.from({ length: maxDp }, (_, i) => (
+              <th key={i} className={`${thClsBase} ${currentCol === i ? "bg-amber-200 text-amber-900" : "text-slate-500"}`}>{PV_COL_LABELS[i]}</th>
+            ))}
+            <th className={thClsBase}>Order</th>
           </tr>
         </thead>
         <tbody>
@@ -440,18 +453,18 @@ const PlaceValueTable = ({
             const revealed = revealCols.includes(row.circleCol);
             return (
               <tr key={ri}>
-                {hasSign && <td className={tdCls}>{digitBox(row.sign < 0 ? "−" : "+", revealed && row.circleCol === "sign")}</td>}
-                <td className={tdCls}>{digitBox(row.whole, revealed && row.circleCol === "whole")}</td>
-                {maxDp > 0 && <td className={tdCls}>.</td>}
+                {hasSign && <td className={`${tdClsBase} ${colCls("sign", ri)}`}>{digitBox(row.sign < 0 ? "−" : "+", revealed && row.circleCol === "sign")}</td>}
+                <td className={`${tdClsBase} ${colCls("whole", ri)}`}>{digitBox(row.whole, revealed && row.circleCol === "whole")}</td>
+                {maxDp > 0 && <td className={tdClsBase}>.</td>}
                 {Array.from({ length: maxDp }, (_, i) => {
                   const digit = row.d[i];
                   const isCircled = revealed && row.circleCol === i;
                   // No explicit digit here — if this implicit zero is the
                   // decisive one, still show it (dimmed) so the circle has
                   // something to land on; otherwise the box stays empty.
-                  return <td key={i} className={tdCls}>{digitBox(digit === undefined ? (isCircled ? 0 : "") : digit, isCircled, digit === undefined)}</td>;
+                  return <td key={i} className={`${tdClsBase} ${colCls(i as 0 | 1 | 2, ri)}`}>{digitBox(digit === undefined ? (isCircled ? 0 : "") : digit, isCircled, digit === undefined)}</td>;
                 })}
-                <td className={tdCls}>
+                <td className={tdClsBase}>
                   <span className={`${rankBase} ${revealed ? "bg-indigo-600 text-white" : "bg-transparent"}`}>{revealed ? row.rank : ""}</span>
                 </td>
               </tr>
@@ -483,7 +496,7 @@ const placeValueSteps = (items: SignedDec[], hasSign: boolean, smallestFirst: bo
     const settledText = settledDescription(settled, rows.length, smallestFirst);
     return {
       ...tStep(`Compare ${colLabel} — ${settledText}`),
-      extra: { kind: "placeValueTable", rows, hasSign, revealCols, targetWord, colLabel, settledText, hasSettled: settled.length > 0 },
+      extra: { kind: "placeValueTable", rows, hasSign, revealCols, targetWord, colLabel, settledText, hasSettled: settled.length > 0, currentCol: col },
     } as WorkingStep;
   });
 };
@@ -494,7 +507,7 @@ const stepRenderer = (step: WorkingStep): JSX.Element | null => {
   return (
     <PlaceValueTable
       rows={extra.rows} hasSign={extra.hasSign} revealCols={extra.revealCols} targetWord={extra.targetWord}
-      colLabel={extra.colLabel} settledText={extra.settledText} hasSettled={extra.hasSettled}
+      colLabel={extra.colLabel} settledText={extra.settledText} hasSettled={extra.hasSettled} currentCol={extra.currentCol}
     />
   );
 };
@@ -577,14 +590,14 @@ interface OrderRaw { values: SignedDec[]; directionOpt: string; hasSign: boolean
 
 const buildOrderDisplay = (rv: OrderRaw) => {
   const { values, directionOpt, hasSign } = rv;
-  const { sort, phrase } = DIRECTION_INFO[directionOpt];
+  const { sort, sentence } = DIRECTION_INFO[directionOpt];
   const ordered = sort === "ascending" ? values : [...values].reverse();
   const shuffled = [...values].sort(() => Math.random() - 0.5);
   const working = placeValueSteps(shuffled, hasSign, sort === "ascending");
 
   return {
     lines: [
-      `Order ${phrase}:`,
+      sentence,
       `$${shuffled.map(signedStr).join(", ")}$`,
     ],
     answer: ordered.map(signedStr).join(", "),

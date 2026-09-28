@@ -51,6 +51,16 @@ no objection was raised; revisit if they feel off in practice.
   extremes) or "Every number still matches here — move to the next column." when nothing settles.
   Previously the only on-screen text was a static caption; the actual step-to-step reasoning
   wasn't narrated anywhere.
+- **Order question wording**: each `DIRECTION_MS` option now renders as a full natural sentence
+  instead of interpolating a fragment into "Order ___:" — `ascending`→"Write in ascending order:",
+  `descending`→"Write in descending order:", `smallestToLargest`→"Order from smallest to
+  largest:", `largestToSmallest`→"Order from largest to smallest:".
+- **Column highlight**: the place-value table now highlights the *entire* column currently being
+  compared (header + a tinted swimlane down every row, rounded caps top/bottom) in amber,
+  separate from the indigo circles marking numbers actually settled so far — makes it
+  unambiguous which comparison a step's narration is talking about, especially useful when a
+  step settles nothing (highlight moves on with no new circles) or settles several numbers at
+  once.
 - **Order is words-only** — the Symbols/inequality-chain notation was removed entirely (no more
   "Write as a chain: a < b < c" output). Compare keeps both Words and Symbols; Order's Notation
   QO control was removed since there's nothing left to toggle.
