@@ -45,6 +45,12 @@ no objection was raised; revisit if they feel off in practice.
 - **No layout jump**: every cell (digit or blank, circled or not) renders inside an
   identically-sized box, so a digit becoming circled never changes that cell's or the table's
   dimensions across steps.
+- **Per-step narration**: each step now states, in words above the table, which column is being
+  checked and exactly what happened there — either "Now placed: −0.8 is the 3rd smallest." (naming
+  every number that settles this column and its rank, phrased "the smallest"/"the largest" at the
+  extremes) or "Every number still matches here — move to the next column." when nothing settles.
+  Previously the only on-screen text was a static caption; the actual step-to-step reasoning
+  wasn't narrated anywhere.
 - **Order is words-only** — the Symbols/inequality-chain notation was removed entirely (no more
   "Write as a chain: a < b < c" output). Compare keeps both Words and Symbols; Order's Notation
   QO control was removed since there's nothing left to toggle.

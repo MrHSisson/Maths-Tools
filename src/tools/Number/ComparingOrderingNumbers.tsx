@@ -371,12 +371,44 @@ const buildPlaceValueTable = (items: SignedDec[], hasSign: boolean, smallestFirs
 const PV_COL_LABELS = ["Tenths", "Hundredths", "Thousandths"];
 const colStepLabel = (col: PVCol): string => (col === "sign" ? "the sign" : col === "whole" ? "the whole-number part" : `the ${PV_COL_LABELS[col].toLowerCase()} digit`);
 
+const ordinalSuffix = (n: number): string => {
+  const s = n % 10, t = n % 100;
+  if (s === 1 && t !== 11) return "st";
+  if (s === 2 && t !== 12) return "nd";
+  if (s === 3 && t !== 13) return "rd";
+  return "th";
+};
+
+// `rank` already encodes the asked direction (1 = smallest when
+// smallestFirst, else 1 = largest) — phrase it back out the same way.
+const rankPhrase = (rank: number, total: number, smallestFirst: boolean): string => {
+  if (rank === 1) return `the ${smallestFirst ? "smallest" : "largest"}`;
+  if (rank === total) return `the ${smallestFirst ? "largest" : "smallest"}`;
+  return `the ${rank}${ordinalSuffix(rank)} ${smallestFirst ? "smallest" : "largest"}`;
+};
+
+const pvRowStr = (row: PVRow): string => `${row.sign < 0 ? "-" : ""}${decStr({ whole: row.whole, d: row.d })}`;
+
+// What actually happened at this column, in words — either nothing (every
+// number in play still matches here) or which number(s) just got placed
+// and where, so the reveal reads as a worked argument, not just a diagram.
+const settledDescription = (settled: PVRow[], total: number, smallestFirst: boolean): string => {
+  if (settled.length === 0) return "Every number still matches here — move to the next column.";
+  const parts = settled.map((r) => `${pvRowStr(r)} is ${rankPhrase(r.rank, total, smallestFirst)}`);
+  return `Now placed: ${parts.join("; ")}.`;
+};
+
 // Every cell's content sits in a fixed-size box (circled or not, digit or
 // blank) so circling a digit never changes that cell's size — the table
 // never jumps as steps reveal more circles. `revealCols` is the prefix of
 // columns processed so far; a row shows its circle/rank once its own
 // circleCol is in that prefix.
-const PlaceValueTable = ({ rows, hasSign, revealCols, targetWord }: { rows: PVRow[]; hasSign: boolean; revealCols: PVCol[]; targetWord: string }) => {
+const PlaceValueTable = ({
+  rows, hasSign, revealCols, targetWord, colLabel, settledText, hasSettled,
+}: {
+  rows: PVRow[]; hasSign: boolean; revealCols: PVCol[]; targetWord: string;
+  colLabel: string; settledText: string; hasSettled: boolean;
+}) => {
   const maxDp = Math.max(0, ...rows.map((r) => r.d.length));
   const thCls = "border border-slate-300 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-500";
   const tdCls = "border border-slate-300 px-2 py-2 text-center align-middle";
@@ -391,7 +423,8 @@ const PlaceValueTable = ({ rows, hasSign, revealCols, targetWord }: { rows: PVRo
 
   return (
     <div className="mx-auto">
-      <p className="mb-2 text-center text-sm text-slate-500">Work column by column — 1 = {targetWord}.</p>
+      <p className="mb-1 text-center text-base font-semibold text-slate-800">Compare {colLabel} — 1 = {targetWord}.</p>
+      <p className={`mb-3 text-center text-sm ${hasSettled ? "font-medium text-emerald-700" : "text-slate-500"}`}>{settledText}</p>
       <table className="mx-auto border-collapse text-base">
         <thead>
           <tr>
@@ -445,9 +478,12 @@ const placeValueSteps = (items: SignedDec[], hasSign: boolean, smallestFirst: bo
   const targetWord = smallestFirst ? "smallest" : "largest";
   return stepCols.map((col, i) => {
     const revealCols = stepCols.slice(0, i + 1);
+    const settled = rows.filter((r) => r.circleCol === col);
+    const colLabel = colStepLabel(col);
+    const settledText = settledDescription(settled, rows.length, smallestFirst);
     return {
-      ...tStep(`Compare ${colStepLabel(col)}:`),
-      extra: { kind: "placeValueTable", rows, hasSign, revealCols, targetWord },
+      ...tStep(`Compare ${colLabel} — ${settledText}`),
+      extra: { kind: "placeValueTable", rows, hasSign, revealCols, targetWord, colLabel, settledText, hasSettled: settled.length > 0 },
     } as WorkingStep;
   });
 };
@@ -455,7 +491,12 @@ const placeValueSteps = (items: SignedDec[], hasSign: boolean, smallestFirst: bo
 const stepRenderer = (step: WorkingStep): JSX.Element | null => {
   const extra = (step as any).extra;
   if (extra?.kind !== "placeValueTable") return null;
-  return <PlaceValueTable rows={extra.rows} hasSign={extra.hasSign} revealCols={extra.revealCols} targetWord={extra.targetWord} />;
+  return (
+    <PlaceValueTable
+      rows={extra.rows} hasSign={extra.hasSign} revealCols={extra.revealCols} targetWord={extra.targetWord}
+      colLabel={extra.colLabel} settledText={extra.settledText} hasSettled={extra.hasSettled}
+    />
+  );
 };
 
 // ── 9. Compare generator ──────────────────────────────────────────────────────
