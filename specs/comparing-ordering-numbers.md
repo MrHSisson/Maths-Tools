@@ -16,10 +16,12 @@
 
 **Pedagogical intent:** students build genuine magnitude sense — comparing "which is bigger" and
 ordering a short list in plain words — before formal inequality notation is layered on the same
-skill. Every misconception-provoking property (whole-number part, sign, how many numbers) is a
-teacher-facing dial, and the decimal-tail generator specifically targets three named, opposing
-misconceptions rather than random-shaped numbers (see §3.2). Sits after place-value and
-directed-number-line lessons, before formal inequality/number-line notation work.
+skill. Every misconception-provoking property (whole-number part, sign, how many numbers, and
+**which named decimal-tail misconception is in play**) is a teacher-facing dial, not baked-in
+randomness — and in Order, a list can genuinely stack more than one misconception across
+different adjacent pairs, rather than leaning on one guaranteed "gotcha" pair surrounded by easy
+filler. Sits after place-value and directed-number-line lessons, before formal
+inequality/number-line notation work.
 
 **Decimal depth — house rule for this whole tool:** every decimal, in every level and every QO
 state, is drawn to **1, 2, or 3 decimal places — never beyond thousandths.**
@@ -52,11 +54,18 @@ Exclusive):
   - **multiSelect** `wholeNumberPart` — "Whole-number part": `zeroOnly` (weight 1, defaultActive
     **true**) / `nonzero` (weight 2, defaultActive **false**). *Default: None (every number
     `0.___`).*
+  - **multiSelect** `trapType` — "Trap type" (teacher picks which misconceptions are in play;
+    all four active by default gives natural variety, deactivating any narrows the pool):
+    - `clean` — "No trap" — defaultActive **true**
+    - `longerIsSmaller` — "Longer looks smaller" — defaultActive **true**
+    - `shorterIsSmaller` — "Shorter looks smaller" — defaultActive **true**
+    - `wrongPriority` — "Wrong-priority digit" — defaultActive **true**
 - **Level 2 — Integers:**
   - **multiSelect** `sign` — "Sign": `positive` (weight 1, defaultActive **false**) / `negative`
     (weight 2, defaultActive **true**). *Default: Exclusive (every number negative).*
-- **Level 3 — Decimals + sign (apex):** both pools together, same options/defaults as above
-  (`wholeNumberPart` default **Mixed**, `sign` default **Exclusive negative**).
+- **Level 3 — Decimals + sign (apex):** `wholeNumberPart` and `trapType` reused unchanged from
+  Level 1 (`wholeNumberPart` default **Mixed**), plus `sign` reused from Level 2 (default
+  **Exclusive negative**) — three pools available together.
 
 #### 3.2 Levels
 
@@ -64,26 +73,26 @@ Exclusive):
 - Parameters: two distinct positive decimals `a`, `b`. Whole-number part: `0` when only
   `zeroOnly` active; **1–9** <!-- CONFIRM range --> when `nonzero` active for that number
   (independently per number when Mixed). Decimal part: 1–3dp (house rule above).
-  **The decimal-tail digits are drawn from four archetypes, roughly evenly split** (this is the
-  generator's internal variety, not a QO control — a teacher shouldn't have to hand-pick trap
-  types):
-  1. **Clean** — differing tenths digit, same dp length on both numbers, no decoy digits
-     (e.g. `0.42` vs `0.65`).
-  2. **Longer-is-smaller trap** — differing tenths digit decides it, but the number with *more*
-     decimal places is the *smaller* one (e.g. `0.3` vs `0.25` → `0.3` wins on tenths alone).
-  3. **Shorter-is-smaller trap** — numbers share every digit up to where the shorter one simply
-     stops (implicitly zero-padded), so the *longer* number always wins (e.g. `0.2` vs `0.25` →
-     `0.25` wins because `0.20 < 0.25`). Mathematically guaranteed correct by construction.
-  4. **Wrong-priority-digit trap** — both numbers full 3dp; the tenths digit correctly decides
-     it, but the *losing* number's hundredths **and** thousandths digits are individually bigger
-     than the winner's (e.g. `0.311` vs `0.259` → `0.311` wins on tenths despite `0.259` having
-     bigger digits in both later places).
+  **The decimal-tail digits are drawn from the active `trapType` option** (`pickActive` — same
+  mechanism as any other multiSelect pool), so the teacher's selection directly decides which
+  misconceptions a worksheet can contain:
+  - `clean` — differing tenths digit, same dp length on both numbers, no decoy digits
+    (e.g. `0.42` vs `0.65`).
+  - `longerIsSmaller` — differing tenths digit decides it, but the number with *more* decimal
+    places is the *smaller* one (e.g. `0.3` vs `0.25` → `0.3` wins on tenths alone).
+  - `shorterIsSmaller` — numbers share every digit up to where the shorter one simply stops
+    (implicitly zero-padded), so the *longer* number always wins (e.g. `0.2` vs `0.25` → `0.25`
+    wins because `0.20 < 0.25`). Mathematically guaranteed correct by construction.
+  - `wrongPriority` — both numbers full 3dp; the tenths digit correctly decides it, but the
+    *losing* number's hundredths **and** thousandths digits are individually bigger than the
+    winner's (e.g. `0.311` vs `0.259` → `0.311` wins on tenths despite `0.259` having bigger
+    digits in both later places).
 - Constraints: `a ≠ b`.
 - Exclusions: `a = b`.
-- Misconceptions targeted: archetype 2 → "more digits after the point = bigger value." Archetype
-  3 → "a place with no digit there beats one that has a (smaller-looking) digit." Archetype 4 →
-  "compare the biggest/rightmost digits, not the leftmost place value." Archetype 1 is the
-  procedural control case (no trap, just column-by-column comparison).
+- Misconceptions targeted: `longerIsSmaller` → "more digits after the point = bigger value."
+  `shorterIsSmaller` → "a place with no digit there beats one that has a (smaller-looking) digit."
+  `wrongPriority` → "compare the biggest/rightmost digits, not the leftmost place value." `clean`
+  is the procedural control case (no trap, just column-by-column comparison).
 
 **Level 2 — Integers:**
 - Parameters: two distinct integers, magnitude **1–20** <!-- CONFIRM range -->, sign drawn per
@@ -162,19 +171,25 @@ exceed 15 distinct pairs (archetype 2/3/4 constructions still leave many digit c
   (defaultActive).
 - **dropdown** `count` — "How many numbers": `3` / `4` / `5` / `6` — available in full at every
   level; per-level default only: Level 1 → `3`, Level 2 → `4`, Level 3 → `5`.
-- **Per-level `wholeNumberPart` / `sign` pools:** identical shape and defaults to Compare §3.1.
+- **Per-level `wholeNumberPart` / `sign` / `trapType` pools:** identical shape and defaults to
+  Compare §3.1.
 
 #### 3.2 Levels
 
 **Level 1 — Decimals, 3–6 numbers (default 3):**
 - Parameters: `count` distinct positive decimals, same digit rules as Compare Level 1 (1–3dp,
-  whole-number part per `wholeNumberPart`). **At least one adjacent pair in the correctly-sorted
-  list is drawn from archetype 2, 3, or 4** (rotating across a worksheet so all three appear over
-  a set of questions); the rest of the list fills from archetype 1 (clean) within the same range.
+  whole-number part per `wholeNumberPart`). Build the list by walking the **sorted** order and
+  drawing each of the `count − 1` adjacent gaps independently from the active `trapType` options
+  (`pickActive` per gap, same pool as Compare) — so a list can end up with zero, one, or several
+  gaps carrying a trap, and **different trap types can appear in the same list** (e.g. one gap a
+  `shorterIsSmaller` pair, another a `longerIsSmaller` pair). This is deliberate, not arbitrary:
+  every gap is a real, checkable misconception opportunity, not decoration around one guaranteed
+  pair.
 - Constraints: all values distinct.
 - Exclusions: any duplicate value.
-- Misconceptions targeted: same three archetypes as Compare Level 1, sustained across a list — a
-  student who trusts "longer/shorter = bigger" gets at least one comparison in the list wrong.
+- Misconceptions targeted: same three trap types as Compare Level 1, now potentially compounding
+  across a list — a student who trusts "longer/shorter = bigger" as a blanket rule can be wrong at
+  more than one point in the same question, which a single guaranteed trap pair can't test.
 
 **Level 2 — Integers, 3–6 numbers (default 4):**
 - Parameters: `count` distinct integers, built exactly as Compare Level 2.
@@ -184,18 +199,22 @@ exceed 15 distinct pairs (archetype 2/3/4 constructions still leave many digit c
   exactly backwards under Exclusive-negative.
 
 **Level 3 — Decimals + sign, 3–6 numbers (default 5):**
-- Parameters: `count` distinct decimals, built exactly as Compare Level 3 (archetype rotation +
-  sign draw).
+- Parameters: `count` distinct decimals, built with Level 1's per-gap `trapType` draw, then signed
+  per the `sign` cycle.
 - Constraints: all values distinct.
 - Exclusions: any duplicate value.
-- Misconceptions targeted: Level 1's archetypes compounded with Level 2's sign-reversal, sustained
-  across a list — the hardest visible collapse point without a systematic method.
+- Misconceptions targeted: Level 1's trap types compounded with Level 2's sign-reversal, sustained
+  and potentially repeated across a list — the hardest visible collapse point without a
+  systematic method.
 
 #### 3.3 Worked example script
 
-**Level 1 — one archetype-2 pair present, question: order `0.65, 0.3, 0.25` (ascending)**
-1. `mStep("Compare the tenths digit of each number first:", "2 < 3 < 6")`
-2. `mStep("So:", "0.25 < 0.3 < 0.65")`
+**Level 1 — two different traps in one list, question: order `0.3, 0.25, 0.259` (ascending)**
+*(`0.25`↔`0.259` is a `shorterIsSmaller` gap; `0.259`↔`0.3` is a `longerIsSmaller` gap — both
+active in the same question.)*
+1. `mStep("Compare 0.25 and 0.259 — same tenths and hundredths, so compare thousandths:", "0 < 9")`
+2. `mStep("Compare 0.259 and 0.3 — the tenths digit decides regardless of how many places each has:", "2 < 3")`
+3. `mStep("So:", "0.25 < 0.259 < 0.3")`
 
 **Level 2 — Exclusive negative, question: order `-7, -2, -9, -4` (ascending)**
 1. `mStep("Compare the sizes, ignoring signs:", "9 > 7 > 4 > 2")`
@@ -209,8 +228,8 @@ exceed 15 distinct pairs (archetype 2/3/4 constructions still leave many digit c
 
 | Level | Config | Question as displayed | Answer | Working (one line) |
 |---|---|---|---|---|
-| 1 | count 3 | Words, asc: "Order smallest first: 0.65, 0.3, 0.25" | 0.25, 0.3, 0.65 | Tenths: 2 < 3 < 6 |
-| 1 | count 4 | Symbols, desc: "Write as a chain, largest first: 0.42, 0.311, 0.259, 0.5" | 0.5 > 0.42 > 0.311 > 0.259 | Tenths decide each pair |
+| 1 | count 3, two traps | Words, asc: "Order smallest first: 0.3, 0.25, 0.259" | 0.25, 0.259, 0.3 | shorterIsSmaller then longerIsSmaller gap |
+| 1 | count 4, clean only | Symbols, desc: "Write as a chain, largest first: 0.65, 0.42, 0.311, 0.259" | 0.65 > 0.42 > 0.311 > 0.259 | Tenths decide each pair, no traps |
 | 2 | Exclusive neg, count 4 | Symbols, asc: "Write as a chain, smallest first: -7, -2, -9, -4" | -9 < -7 < -4 < -2 | Sizes reversed |
 | 2 | Mixed, count 5 | Words, asc: "Order smallest first: -3, 6, -8, 2, -1" | -8, -3, -1, 2, 6 | Negatives reversed, then positives |
 | 3 | count 5 | Words, asc: "Order smallest first: -0.2, -0.65, -0.25, -0.42, -0.311" | -0.65, -0.42, -0.311, -0.25, -0.2 | Sizes reversed under sign |
@@ -228,12 +247,15 @@ per-number ranges as Compare, drawing `count` values instead of 2).
 
 ## 4. Variety requirements
 
-- Compare Level 1/3: rotate through the four decimal archetypes roughly evenly across a
-  worksheet — never settle into all-clean or all-one-trap-type. <!-- CONFIRM: exact split, or is
-  "roughly a quarter each" fine, same mechanism as the Smart Progressor's quota balancing? -->
-- Order Level 1/3: rotate which archetype the guaranteed adjacent-pair uses (2, 3, then 4, then
-  repeat) across consecutive questions on one worksheet, so a 15-question sheet doesn't lean on
-  just one trap.
+- `trapType` is a standard (unweighted) multiSelect pool — `pickActive` draws uniformly from
+  whichever options the teacher has left active, per pair (Compare) or per gap (Order). With all
+  four active by default this already gives roughly-even natural variety; a teacher narrowing the
+  pool (e.g. only `shorterIsSmaller`) gets every question/gap testing just that misconception.
+- Order specifically: because each gap draws independently, don't let the "how many gaps actually
+  end up trap-vs-clean" outcome be too front-loaded or back-loaded — no per-tool code needed
+  beyond the independent per-gap draw itself, but sanity-check on a generated worksheet that
+  multi-trap lists (2+ non-clean gaps) show up regularly, not just as a rare edge case, once
+  `clean` isn't the only active option.
 - When `sign`/`wholeNumberPart` cycles are in Mixed state, the existing Smart Progressor
   (`buildQuotaOverrides`) already keeps the split roughly even — no extra tool code needed.
 - Spread whole-number parts and integer magnitudes across their full stated ranges.
@@ -245,10 +267,11 @@ per-number ranges as Compare, drawing `count` values instead of 2).
 
 **Compare tab:**
 - Overview: "Compare two numbers and say which is bigger — first in plain words, then with `<`
-  and `>`. The decimal generator specifically targets the 'longer/shorter decimal looks bigger'
-  misconceptions, not just random numbers."
-- Level 1 — Decimals: "Pure `0.___` comparison up to thousandths, built from named misconception
-  traps (see info panel). 'Allow whole numbers' adds the 'ignore the whole part' trap."
+  and `>`. Choose exactly which decimal misconception(s) to drill with the Trap type control, or
+  leave all active for natural variety."
+- Level 1 — Decimals: "Pure `0.___` comparison up to thousandths. Trap type lets you isolate
+  'longer looks smaller', 'shorter looks smaller' or 'wrong-priority digit' — or mix them.
+  'Allow whole numbers' adds the 'ignore the whole part' trap on top."
 - Level 2 — Integers: "Sign dial (Positive-only → Mixed → Negative-only) targets 'the bigger
   positive number is the bigger negative number.'"
 - Level 3 — Decimals + sign: "Both trap families together."
