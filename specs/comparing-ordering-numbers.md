@@ -59,8 +59,13 @@ no objection was raised; revisit if they feel off in practice.
   compared (header + a tinted swimlane down every row, rounded caps top/bottom) in amber,
   separate from the indigo circles marking numbers actually settled so far — makes it
   unambiguous which comparison a step's narration is talking about, especially useful when a
-  step settles nothing (highlight moves on with no new circles) or settles several numbers at
-  once.
+  step settles nothing (highlight moves on with no new circles).
+- **One row at a time, even within one column**: if a single column settles several numbers at
+  once (e.g. three numbers each get a distinct tenths digit in the same pass), they no longer all
+  get circled and numbered together — each gets its own step, in ascending rank order, while the
+  column highlight stays put across those consecutive steps (same "Compare the tenths digit"
+  headline, one more circle added each press). A column settling nobody still gets exactly one
+  step.
 - **Order is words-only** — the Symbols/inequality-chain notation was removed entirely (no more
   "Write as a chain: a < b < c" output). Compare keeps both Words and Symbols; Order's Notation
   QO control was removed since there's nothing left to toggle.

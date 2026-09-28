@@ -400,13 +400,14 @@ const settledDescription = (settled: PVRow[], total: number, smallestFirst: bool
 
 // Every cell's content sits in a fixed-size box (circled or not, digit or
 // blank) so circling a digit never changes that cell's size — the table
-// never jumps as steps reveal more circles. `revealCols` is the prefix of
-// columns processed so far; a row shows its circle/rank once its own
-// circleCol is in that prefix.
+// never jumps as steps reveal more circles. `revealedRows` is exactly the
+// set of rows placed so far (by object identity, into the shared `rows`
+// array) — even rows sharing a decisive column can be revealed one at a
+// time rather than all at once.
 const PlaceValueTable = ({
-  rows, hasSign, revealCols, targetWord, colLabel, settledText, hasSettled, currentCol,
+  rows, hasSign, revealedRows, targetWord, colLabel, settledText, hasSettled, currentCol,
 }: {
-  rows: PVRow[]; hasSign: boolean; revealCols: PVCol[]; targetWord: string;
+  rows: PVRow[]; hasSign: boolean; revealedRows: PVRow[]; targetWord: string;
   colLabel: string; settledText: string; hasSettled: boolean; currentCol: PVCol;
 }) => {
   const maxDp = Math.max(0, ...rows.map((r) => r.d.length));
@@ -450,7 +451,7 @@ const PlaceValueTable = ({
         </thead>
         <tbody>
           {rows.map((row, ri) => {
-            const revealed = revealCols.includes(row.circleCol);
+            const revealed = revealedRows.includes(row);
             return (
               <tr key={ri}>
                 {hasSign && <td className={`${tdClsBase} ${colCls("sign", ri)}`}>{digitBox(row.sign < 0 ? "−" : "+", revealed && row.circleCol === "sign")}</td>}
@@ -478,9 +479,10 @@ const PlaceValueTable = ({
 
 // One WorkingStep per place-value column actually needed (sign if relevant,
 // whole, then decimal columns up to whichever one settles the last row) —
-// each press checks the next column and circles/numbers whichever rows
-// become uniquely determined there (zero, one, or several at once), rather
-// than always circling "the smallest" straight away.
+// PLUS, when a single column settles more than one row at once, one step
+// per row within that column (ordered by rank, most extreme first) rather
+// than circling and numbering them all in the same press. A column that
+// settles nothing still gets its own "nothing here" step.
 const placeValueSteps = (items: SignedDec[], hasSign: boolean, smallestFirst: boolean): WorkingStep[] => {
   const rows = buildPlaceValueTable(items, hasSign, smallestFirst);
   const fullCols: PVCol[] = hasSign ? ["sign", "whole", 0, 1, 2] : ["whole", 0, 1, 2];
@@ -489,14 +491,23 @@ const placeValueSteps = (items: SignedDec[], hasSign: boolean, smallestFirst: bo
   fullCols.forEach((c, i) => { if (usedCols.has(c)) lastIdx = i; });
   const stepCols = fullCols.slice(0, lastIdx + 1);
   const targetWord = smallestFirst ? "smallest" : "largest";
-  return stepCols.map((col, i) => {
-    const revealCols = stepCols.slice(0, i + 1);
-    const settled = rows.filter((r) => r.circleCol === col);
+
+  const events: { col: PVCol; row: PVRow | null }[] = [];
+  for (const col of stepCols) {
+    const settled = rows.filter((r) => r.circleCol === col).sort((a, b) => a.rank - b.rank);
+    if (settled.length === 0) events.push({ col, row: null });
+    else for (const row of settled) events.push({ col, row });
+  }
+
+  const revealedSoFar: PVRow[] = [];
+  return events.map(({ col, row }) => {
+    if (row) revealedSoFar.push(row);
+    const revealedRows = [...revealedSoFar];
     const colLabel = colStepLabel(col);
-    const settledText = settledDescription(settled, rows.length, smallestFirst);
+    const settledText = settledDescription(row ? [row] : [], rows.length, smallestFirst);
     return {
       ...tStep(`Compare ${colLabel} — ${settledText}`),
-      extra: { kind: "placeValueTable", rows, hasSign, revealCols, targetWord, colLabel, settledText, hasSettled: settled.length > 0, currentCol: col },
+      extra: { kind: "placeValueTable", rows, hasSign, revealedRows, targetWord, colLabel, settledText, hasSettled: !!row, currentCol: col },
     } as WorkingStep;
   });
 };
@@ -506,7 +517,7 @@ const stepRenderer = (step: WorkingStep): JSX.Element | null => {
   if (extra?.kind !== "placeValueTable") return null;
   return (
     <PlaceValueTable
-      rows={extra.rows} hasSign={extra.hasSign} revealCols={extra.revealCols} targetWord={extra.targetWord}
+      rows={extra.rows} hasSign={extra.hasSign} revealedRows={extra.revealedRows} targetWord={extra.targetWord}
       colLabel={extra.colLabel} settledText={extra.settledText} hasSettled={extra.hasSettled} currentCol={extra.currentCol}
     />
   );
