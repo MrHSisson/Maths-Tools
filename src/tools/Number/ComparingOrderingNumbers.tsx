@@ -127,9 +127,9 @@ const TOOL_CONFIG: ToolConfig = {
       dropdown: countDD("3"),
       variables: [],
       difficultySettings: {
-        level1: { dropdown: countDD("3"), variables: [], multiSelect: [WHOLE_PART_MS, TRAP_TYPE_MS, DIRECTION_MS, NOTATION_MS] },
-        level2: { dropdown: countDD("4"), variables: [], multiSelect: [SIGN_MS, DIRECTION_MS, NOTATION_MS] },
-        level3: { dropdown: countDD("5"), variables: [], multiSelect: [WHOLE_PART_MS, TRAP_TYPE_MS, SIGN_MS, DIRECTION_MS, NOTATION_MS] },
+        level1: { dropdown: countDD("3"), variables: [], multiSelect: [WHOLE_PART_MS, TRAP_TYPE_MS, DIRECTION_MS] },
+        level2: { dropdown: countDD("4"), variables: [], multiSelect: [SIGN_MS, DIRECTION_MS] },
+        level3: { dropdown: countDD("5"), variables: [], multiSelect: [WHOLE_PART_MS, TRAP_TYPE_MS, SIGN_MS, DIRECTION_MS] },
       },
     },
 
@@ -146,16 +146,16 @@ const INFO_SECTIONS: InfoSection[] = [
     { label: "Level 3 — Decimals + sign", detail: "Both trap families together." },
   ]},
   { title: "Order", icon: "🔢", content: [
-    { label: "Overview", detail: "Order 3–6 numbers, smallest to largest or largest to smallest — in words, then as an inequality chain. Choose how many numbers and which traps are active at every level." },
+    { label: "Overview", detail: "Order 3–6 numbers, smallest to largest or largest to smallest. Choose how many numbers and which traps are active at every level." },
     { label: "Level 1 / 2 / 3", detail: "Same trap families as Compare, sustained across a list — several different traps can appear in the same list." },
   ]},
   { title: "Modes", icon: "🖥️", content: [
     { label: "Whiteboard", detail: "Single question on the left, working space on the right." },
-    { label: "Worked Example", detail: "Step-by-step solution shown as a place-value table — the decisive digit for each number is circled, and rows are numbered in order." },
+    { label: "Worked Example", detail: "A place-value table, revealed one row at a time — each press circles the decisive digit for the next number and gives it its rank." },
     { label: "Worksheet", detail: "Grid of questions with PDF export." },
   ]},
   { title: "Question Options", icon: "⚙️", content: [
-    { label: "Notation", detail: "Tick Words and/or Symbols — both active mixes them into one worksheet. Changing it reformats the current question instantly — no regeneration." },
+    { label: "Notation (Compare)", detail: "Tick Words and/or Symbols — both active mixes them into one worksheet. Changing it reformats the current question instantly — no regeneration." },
     { label: "Whole-number part", detail: "Tick '0.__ only' and/or 'Allow whole numbers' — both active mixes pure decimals with whole-number-part decimals in one worksheet." },
     { label: "Trap type", detail: "Tick which named misconceptions can appear. Untick 'No trap' to force a trap every question." },
     { label: "Sign", detail: "Negative (focused drill) and/or Mixed (harder — includes positive numbers)." },
@@ -349,7 +349,11 @@ const buildPlaceValueTable = (items: SignedDec[], hasSign: boolean): PVRow[] => 
 
 const PV_COL_LABELS = ["Tenths", "Hundredths", "Thousandths"];
 
-const PlaceValueTable = ({ rows, hasSign }: { rows: PVRow[]; hasSign: boolean }) => {
+// `revealUpTo` — rows whose rank is <= this are circled and numbered; the
+// rest show plain digits and a blank Order cell (not yet placed). Each
+// WorkingStep in the sequence bumps this by one, so pressing through the
+// Worked Example circles and numbers one row at a time.
+const PlaceValueTable = ({ rows, hasSign, revealUpTo }: { rows: PVRow[]; hasSign: boolean; revealUpTo: number }) => {
   const maxDp = Math.max(0, ...rows.map((r) => r.d.length));
   const thCls = "border border-slate-300 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-500";
   const tdCls = "border border-slate-300 px-3 py-2 text-center";
@@ -368,38 +372,56 @@ const PlaceValueTable = ({ rows, hasSign }: { rows: PVRow[]; hasSign: boolean })
           </tr>
         </thead>
         <tbody>
-          {rows.map((row, ri) => (
-            <tr key={ri}>
-              {hasSign && <td className={tdCls}>{row.sign < 0 ? "−" : "+"}</td>}
-              <td className={tdCls}>{row.circleCol === "whole" ? <span className={circleCls}>{row.whole}</span> : row.whole}</td>
-              {maxDp > 0 && <td className={tdCls}>.</td>}
-              {Array.from({ length: maxDp }, (_, i) => {
-                const digit = row.d[i];
-                const isCircled = row.circleCol === i;
-                if (digit === undefined) {
-                  // No explicit digit here — if this implicit zero is the
-                  // decisive one, show it (dimmed) so the circle has
-                  // something to land on; otherwise leave the cell blank.
-                  return <td key={i} className={tdCls}>{isCircled ? <span className={`${circleCls} text-slate-400`}>0</span> : ""}</td>;
-                }
-                return <td key={i} className={tdCls}>{isCircled ? <span className={circleCls}>{digit}</span> : digit}</td>;
-              })}
-              <td className={`${tdCls} font-semibold`}>{row.rank}</td>
-            </tr>
-          ))}
+          {rows.map((row, ri) => {
+            const revealed = row.rank <= revealUpTo;
+            return (
+              <tr key={ri}>
+                {hasSign && <td className={tdCls}>{row.sign < 0 ? "−" : "+"}</td>}
+                <td className={tdCls}>{revealed && row.circleCol === "whole" ? <span className={circleCls}>{row.whole}</span> : row.whole}</td>
+                {maxDp > 0 && <td className={tdCls}>.</td>}
+                {Array.from({ length: maxDp }, (_, i) => {
+                  const digit = row.d[i];
+                  const isCircled = revealed && row.circleCol === i;
+                  if (digit === undefined) {
+                    // No explicit digit here — if this implicit zero is the
+                    // decisive one, show it (dimmed) so the circle has
+                    // something to land on; otherwise leave the cell blank.
+                    return <td key={i} className={tdCls}>{isCircled ? <span className={`${circleCls} text-slate-400`}>0</span> : ""}</td>;
+                  }
+                  return <td key={i} className={tdCls}>{isCircled ? <span className={circleCls}>{digit}</span> : digit}</td>;
+                })}
+                <td className={`${tdCls} font-semibold`}>{revealed ? row.rank : ""}</td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
   );
 };
 
-const placeValueStep = (items: SignedDec[], hasSign: boolean): WorkingStep =>
-  ({ ...tStep("Compare using a place value table:"), extra: { kind: "placeValueTable", rows: buildPlaceValueTable(items, hasSign), hasSign } }) as WorkingStep;
+const ordinalWord = (n: number, total: number): string => {
+  if (n === 1) return "the smallest number";
+  if (n === total) return "the largest number";
+  const suffix = n % 10 === 1 && n % 100 !== 11 ? "st" : n % 10 === 2 && n % 100 !== 12 ? "nd" : n % 10 === 3 && n % 100 !== 13 ? "rd" : "th";
+  return `the ${n}${suffix} smallest`;
+};
+
+// One WorkingStep per row, revealed in rank order (smallest first) — each
+// press circles and numbers exactly one more row, using the site's normal
+// step-by-step reveal (the "step functions") rather than a single static step.
+const placeValueSteps = (items: SignedDec[], hasSign: boolean): WorkingStep[] => {
+  const rows = buildPlaceValueTable(items, hasSign);
+  return rows.map((_, i) => ({
+    ...tStep(`Circle and number ${ordinalWord(i + 1, rows.length)}:`),
+    extra: { kind: "placeValueTable", rows, hasSign, revealUpTo: i + 1 },
+  } as WorkingStep));
+};
 
 const stepRenderer = (step: WorkingStep): JSX.Element | null => {
   const extra = (step as any).extra;
   if (extra?.kind !== "placeValueTable") return null;
-  return <PlaceValueTable rows={extra.rows} hasSign={extra.hasSign} />;
+  return <PlaceValueTable rows={extra.rows} hasSign={extra.hasSign} revealUpTo={extra.revealUpTo} />;
 };
 
 // ── 9. Compare generator ──────────────────────────────────────────────────────
@@ -411,7 +433,7 @@ const buildCompareDisplay = (rv: CompareRaw, notation: string, ask: "bigger" | "
   const left = swapped ? b : a;
   const right = swapped ? a : b;
   const leftBigger = signedValue(left) > signedValue(right);
-  const working = [placeValueStep([left, right], hasSign)];
+  const working = placeValueSteps([left, right], hasSign);
 
   if (notation === "symbols") {
     return {
@@ -475,27 +497,16 @@ const genCompareQuestion = (level: DifficultyLevel, msv: Record<string, boolean>
 
 // `directionOpt` stores which of the 4 DIRECTION_MS wording options was
 // drawn; `values` is always the canonical ascending-by-true-value list.
-interface OrderRaw { values: SignedDec[]; directionOpt: string; notation: string; hasSign: boolean; }
+// Order is words-only — no inequality-chain (Symbols) notation.
+interface OrderRaw { values: SignedDec[]; directionOpt: string; hasSign: boolean; }
 
-const buildOrderDisplay = (rv: OrderRaw, notation: string) => {
+const buildOrderDisplay = (rv: OrderRaw) => {
   const { values, directionOpt, hasSign } = rv;
   const { sort, phrase } = DIRECTION_INFO[directionOpt];
   const ordered = sort === "ascending" ? values : [...values].reverse();
   const shuffled = [...values].sort(() => Math.random() - 0.5);
-  const working = [placeValueStep(shuffled, hasSign)];
+  const working = placeValueSteps(shuffled, hasSign);
 
-  if (notation === "symbols") {
-    const op = sort === "ascending" ? "<" : ">";
-    return {
-      lines: [
-        `Write as a chain, ${phrase}:`,
-        `$${shuffled.map(signedStr).join(", ")}$`,
-      ],
-      answer: ordered.map(signedStr).join(` ${op} `),
-      answerLatex: ordered.map(signedStr).join(sort === "ascending" ? " \\lt " : " \\gt "),
-      working,
-    };
-  }
   return {
     lines: [
       `Order ${phrase}:`,
@@ -510,7 +521,6 @@ const buildOrderDisplay = (rv: OrderRaw, notation: string) => {
 const genOrderQuestion = (level: DifficultyLevel, msv: Record<string, boolean>, dropdownValue: string): AnyQuestion => {
   const id = randInt(0, 999999);
   const count = parseInt(dropdownValue, 10) || 3;
-  const notation = pickActive(msv, NOTATION_MS.options);
   const directionOpt = pickActive(msv, DIRECTION_MS.options);
 
   let values: SignedDec[];
@@ -526,7 +536,7 @@ const genOrderQuestion = (level: DifficultyLevel, msv: Record<string, boolean>, 
   }
 
   const hasSign = level !== "level1";
-  const built = buildOrderDisplay({ values, directionOpt, notation, hasSign }, notation);
+  const built = buildOrderDisplay({ values, directionOpt, hasSign });
 
   return {
     kind: "worded",
@@ -534,8 +544,8 @@ const genOrderQuestion = (level: DifficultyLevel, msv: Record<string, boolean>, 
     answer: built.answer,
     answerLatex: built.answerLatex,
     working: built.working,
-    _rawValues: { values, directionOpt, notation, hasSign } as OrderRaw,
-    key: `order-${level}-${values.map(signedStr).join("_")}-${notation}-${directionOpt}-${id}`,
+    _rawValues: { values, directionOpt, hasSign } as OrderRaw,
+    key: `order-${level}-${values.map(signedStr).join("_")}-${directionOpt}-${id}`,
     difficulty: level,
   } as unknown as AnyQuestion;
 };
@@ -595,9 +605,8 @@ const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null =>
     // let ToolShell regenerate rather than trying to reformat in place.
     if (parseInt(qo.dropdownValue, 10) !== orderRv.values.length) return null;
     const directionOpt = resolveDirection(qo.multiSelectValues, orderRv.directionOpt);
-    const notation = resolveNotation(qo.multiSelectValues, orderRv.notation);
-    const built = buildOrderDisplay({ values: orderRv.values, directionOpt, notation, hasSign: orderRv.hasSign }, notation);
-    return { ...q, lines: built.lines, answer: built.answer, answerLatex: built.answerLatex, working: built.working, _rawValues: { ...orderRv, directionOpt, notation } } as unknown as AnyQuestion;
+    const built = buildOrderDisplay({ values: orderRv.values, directionOpt, hasSign: orderRv.hasSign });
+    return { ...q, lines: built.lines, answer: built.answer, answerLatex: built.answerLatex, working: built.working, _rawValues: { ...orderRv, directionOpt } } as unknown as AnyQuestion;
   }
   return null;
 };

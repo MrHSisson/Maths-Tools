@@ -31,6 +31,14 @@ no objection was raised; revisit if they feel off in practice.
   Order column giving each row's rank. An implicit zero (a number with fewer decimal places than
   its neighbour) still gets circled, dimmed, when it's the decisive digit — otherwise a trap like
   `shorterIsSmaller` would show no circle at all on the number that trap is about.
+- **Incremental reveal**: the table isn't one static step — it's one `WorkingStep` per row (via
+  the normal step-function array, same mechanism every other tool uses for its worked-example
+  steps), revealed in rank order (smallest first). Each step shows the table with ranks 1..i
+  circled and numbered and the rest still plain, so pressing through Worked Example circles and
+  numbers exactly one more row per press rather than revealing the whole table at once.
+- **Order is words-only** — the Symbols/inequality-chain notation was removed entirely (no more
+  "Write as a chain: a < b < c" output). Compare keeps both Words and Symbols; Order's Notation
+  QO control was removed since there's nothing left to toggle.
 - **Bug fix**: `wholeNumberPart` pinned to `zeroOnly` could still leak a non-zero whole part
   through one rare fallback path in the decimal-tail construction (surfaced by a generated
   question showing `-2.644`/`-2.92` despite "0.__ only" being selected). Fixed at the root — the
