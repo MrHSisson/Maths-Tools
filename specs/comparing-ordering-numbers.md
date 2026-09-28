@@ -31,11 +31,20 @@ no objection was raised; revisit if they feel off in practice.
   Order column giving each row's rank. An implicit zero (a number with fewer decimal places than
   its neighbour) still gets circled, dimmed, when it's the decisive digit — otherwise a trap like
   `shorterIsSmaller` would show no circle at all on the number that trap is about.
-- **Incremental reveal**: the table isn't one static step — it's one `WorkingStep` per row (via
-  the normal step-function array, same mechanism every other tool uses for its worked-example
-  steps), revealed in rank order (smallest first). Each step shows the table with ranks 1..i
-  circled and numbered and the rest still plain, so pressing through Worked Example circles and
-  numbers exactly one more row per press rather than revealing the whole table at once.
+- **Incremental reveal, column by column**: the table isn't one static step — it's one
+  `WorkingStep` per place-value column actually needed (sign if relevant, whole, then decimal
+  columns up to whichever one settles the last row), via the normal step-function array every
+  other tool uses. Circling/numbering uses a proper radix-sort-style column scan: at each column,
+  every still-tied group of numbers splits by digit value, and any number left alone in its group
+  is settled (circled + numbered) right there — so a single column-step can settle zero, one, or
+  several numbers at once, exactly matching how a teacher would work through the table by column
+  rather than jumping straight to "here's the smallest." The Order column's numbering direction
+  (1 = smallest vs 1 = largest) matches whatever the question actually asked for, stated
+  explicitly in the table's caption ("1 = smallest"/"1 = largest") — Compare uses `ask`
+  (Bigger/Smaller), Order uses the sort direction.
+- **No layout jump**: every cell (digit or blank, circled or not) renders inside an
+  identically-sized box, so a digit becoming circled never changes that cell's or the table's
+  dimensions across steps.
 - **Order is words-only** — the Symbols/inequality-chain notation was removed entirely (no more
   "Write as a chain: a < b < c" output). Compare keeps both Words and Symbols; Order's Notation
   QO control was removed since there's nothing left to toggle.

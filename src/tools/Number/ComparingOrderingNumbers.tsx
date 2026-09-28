@@ -318,49 +318,80 @@ type PVCol = "sign" | "whole" | 0 | 1 | 2;
 
 interface PVRow { sign: 1 | -1; whole: number; d: number[]; circleCol: PVCol; rank: number; }
 
-// The place-value column where two numbers first differ, reading left to
-// right (sign, then whole part, then tenths/hundredths/thousandths) — the
-// same left-to-right priority the working steps always taught.
-const decisiveColumn = (x: SignedDec, y: SignedDec, hasSign: boolean): PVCol => {
-  if (hasSign && x.sign !== y.sign) return "sign";
-  if (x.mag.whole !== y.mag.whole) return "whole";
-  const maxDp = Math.max(x.mag.d.length, y.mag.d.length);
-  for (let i = 0; i < maxDp; i++) {
-    if ((x.mag.d[i] ?? 0) !== (y.mag.d[i] ?? 0)) return i as 0 | 1 | 2;
+const colValue = (item: SignedDec, col: PVCol): number => (
+  col === "sign" ? item.sign : col === "whole" ? item.mag.whole : (item.mag.d[col] ?? 0)
+);
+
+// Radix-sort-style column scan: process sign, then whole, then tenths,
+// hundredths, thousandths, left to right. At each column, split every
+// still-tied group of rows by their digit value there; any row left alone
+// in its group is settled AT THAT COLUMN — this is its circled digit.
+// Distinct values guarantee every row eventually settles.
+const columnScan = (items: SignedDec[], hasSign: boolean): PVCol[] => {
+  const settledAt: PVCol[] = new Array(items.length);
+  const cols: PVCol[] = hasSign ? ["sign", "whole", 0, 1, 2] : ["whole", 0, 1, 2];
+  let groups: number[][] = [items.map((_, i) => i)];
+  for (const col of cols) {
+    const nextGroups: number[][] = [];
+    for (const group of groups) {
+      const byValue = new Map<number, number[]>();
+      for (const idx of group) {
+        const v = colValue(items[idx], col);
+        const bucket = byValue.get(v);
+        if (bucket) bucket.push(idx); else byValue.set(v, [idx]);
+      }
+      for (const sub of byValue.values()) {
+        if (sub.length === 1) settledAt[sub[0]] = col;
+        else nextGroups.push(sub);
+      }
+    }
+    groups = nextGroups;
+    if (groups.length === 0) break;
   }
-  return "whole";
+  return settledAt;
 };
 
-// `items` are in DISPLAY order (as shown in the question). Each row's
-// circled column is found by comparing it against its closest neighbour in
-// true value (the number directly below it in rank, or above if it's the
-// smallest) — the digit that settles its place among near-rivals.
-const buildPlaceValueTable = (items: SignedDec[], hasSign: boolean): PVRow[] => {
-  const sorted = [...items].sort((a, b) => signedValue(a) - signedValue(b));
-  const rankOf = new Map<SignedDec, number>();
-  sorted.forEach((v, i) => rankOf.set(v, i + 1));
-  return items.map((item) => {
-    const rank = rankOf.get(item)!;
-    const neighbour = rank > 1 ? sorted[rank - 2] : sorted[rank];
-    const circleCol = decisiveColumn(item, neighbour, hasSign);
-    return { sign: item.sign, whole: item.mag.whole, d: item.mag.d, circleCol, rank };
+// `items` are in DISPLAY order (as shown in the question). `smallestFirst`
+// controls what the Order column's numbering means: 1 = smallest when true
+// (ascending asked), 1 = largest when false (descending asked) — so the
+// table's own numbering always matches what the question is seeking.
+const buildPlaceValueTable = (items: SignedDec[], hasSign: boolean, smallestFirst: boolean): PVRow[] => {
+  const n = items.length;
+  const ascSorted = [...items].sort((a, b) => signedValue(a) - signedValue(b));
+  const ascRankOf = new Map<SignedDec, number>();
+  ascSorted.forEach((v, i) => ascRankOf.set(v, i + 1));
+  const circleCols = columnScan(items, hasSign);
+  return items.map((item, i) => {
+    const ascRank = ascRankOf.get(item)!;
+    const rank = smallestFirst ? ascRank : n - ascRank + 1;
+    return { sign: item.sign, whole: item.mag.whole, d: item.mag.d, circleCol: circleCols[i], rank };
   });
 };
 
 const PV_COL_LABELS = ["Tenths", "Hundredths", "Thousandths"];
+const colStepLabel = (col: PVCol): string => (col === "sign" ? "the sign" : col === "whole" ? "the whole-number part" : `the ${PV_COL_LABELS[col].toLowerCase()} digit`);
 
-// `revealUpTo` — rows whose rank is <= this are circled and numbered; the
-// rest show plain digits and a blank Order cell (not yet placed). Each
-// WorkingStep in the sequence bumps this by one, so pressing through the
-// Worked Example circles and numbers one row at a time.
-const PlaceValueTable = ({ rows, hasSign, revealUpTo }: { rows: PVRow[]; hasSign: boolean; revealUpTo: number }) => {
+// Every cell's content sits in a fixed-size box (circled or not, digit or
+// blank) so circling a digit never changes that cell's size — the table
+// never jumps as steps reveal more circles. `revealCols` is the prefix of
+// columns processed so far; a row shows its circle/rank once its own
+// circleCol is in that prefix.
+const PlaceValueTable = ({ rows, hasSign, revealCols, targetWord }: { rows: PVRow[]; hasSign: boolean; revealCols: PVCol[]; targetWord: string }) => {
   const maxDp = Math.max(0, ...rows.map((r) => r.d.length));
   const thCls = "border border-slate-300 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-500";
-  const tdCls = "border border-slate-300 px-3 py-2 text-center";
-  const circleCls = "inline-flex h-7 w-7 items-center justify-center rounded-full border-2 border-indigo-500 font-semibold text-indigo-700";
+  const tdCls = "border border-slate-300 px-2 py-2 text-center align-middle";
+  const boxBase = "inline-flex h-8 w-8 items-center justify-center rounded-full border-2 font-semibold";
+  const rankBase = "inline-flex h-7 w-7 items-center justify-center rounded-full font-semibold";
+
+  const digitBox = (content: string | number, circled: boolean, dimmed = false) => (
+    <span className={`${boxBase} ${circled ? (dimmed ? "border-indigo-400 text-slate-400" : "border-indigo-500 text-indigo-700") : "border-transparent text-slate-900"}`}>
+      {content}
+    </span>
+  );
+
   return (
     <div className="mx-auto">
-      <p className="mb-2 text-center text-sm text-slate-500">Compare leading digits, then circle and number in order.</p>
+      <p className="mb-2 text-center text-sm text-slate-500">Work column by column — 1 = {targetWord}.</p>
       <table className="mx-auto border-collapse text-base">
         <thead>
           <tr>
@@ -373,24 +404,23 @@ const PlaceValueTable = ({ rows, hasSign, revealUpTo }: { rows: PVRow[]; hasSign
         </thead>
         <tbody>
           {rows.map((row, ri) => {
-            const revealed = row.rank <= revealUpTo;
+            const revealed = revealCols.includes(row.circleCol);
             return (
               <tr key={ri}>
-                {hasSign && <td className={tdCls}>{row.sign < 0 ? "−" : "+"}</td>}
-                <td className={tdCls}>{revealed && row.circleCol === "whole" ? <span className={circleCls}>{row.whole}</span> : row.whole}</td>
+                {hasSign && <td className={tdCls}>{digitBox(row.sign < 0 ? "−" : "+", revealed && row.circleCol === "sign")}</td>}
+                <td className={tdCls}>{digitBox(row.whole, revealed && row.circleCol === "whole")}</td>
                 {maxDp > 0 && <td className={tdCls}>.</td>}
                 {Array.from({ length: maxDp }, (_, i) => {
                   const digit = row.d[i];
                   const isCircled = revealed && row.circleCol === i;
-                  if (digit === undefined) {
-                    // No explicit digit here — if this implicit zero is the
-                    // decisive one, show it (dimmed) so the circle has
-                    // something to land on; otherwise leave the cell blank.
-                    return <td key={i} className={tdCls}>{isCircled ? <span className={`${circleCls} text-slate-400`}>0</span> : ""}</td>;
-                  }
-                  return <td key={i} className={tdCls}>{isCircled ? <span className={circleCls}>{digit}</span> : digit}</td>;
+                  // No explicit digit here — if this implicit zero is the
+                  // decisive one, still show it (dimmed) so the circle has
+                  // something to land on; otherwise the box stays empty.
+                  return <td key={i} className={tdCls}>{digitBox(digit === undefined ? (isCircled ? 0 : "") : digit, isCircled, digit === undefined)}</td>;
                 })}
-                <td className={`${tdCls} font-semibold`}>{revealed ? row.rank : ""}</td>
+                <td className={tdCls}>
+                  <span className={`${rankBase} ${revealed ? "bg-indigo-600 text-white" : "bg-transparent"}`}>{revealed ? row.rank : ""}</span>
+                </td>
               </tr>
             );
           })}
@@ -400,28 +430,32 @@ const PlaceValueTable = ({ rows, hasSign, revealUpTo }: { rows: PVRow[]; hasSign
   );
 };
 
-const ordinalWord = (n: number, total: number): string => {
-  if (n === 1) return "the smallest number";
-  if (n === total) return "the largest number";
-  const suffix = n % 10 === 1 && n % 100 !== 11 ? "st" : n % 10 === 2 && n % 100 !== 12 ? "nd" : n % 10 === 3 && n % 100 !== 13 ? "rd" : "th";
-  return `the ${n}${suffix} smallest`;
-};
-
-// One WorkingStep per row, revealed in rank order (smallest first) — each
-// press circles and numbers exactly one more row, using the site's normal
-// step-by-step reveal (the "step functions") rather than a single static step.
-const placeValueSteps = (items: SignedDec[], hasSign: boolean): WorkingStep[] => {
-  const rows = buildPlaceValueTable(items, hasSign);
-  return rows.map((_, i) => ({
-    ...tStep(`Circle and number ${ordinalWord(i + 1, rows.length)}:`),
-    extra: { kind: "placeValueTable", rows, hasSign, revealUpTo: i + 1 },
-  } as WorkingStep));
+// One WorkingStep per place-value column actually needed (sign if relevant,
+// whole, then decimal columns up to whichever one settles the last row) —
+// each press checks the next column and circles/numbers whichever rows
+// become uniquely determined there (zero, one, or several at once), rather
+// than always circling "the smallest" straight away.
+const placeValueSteps = (items: SignedDec[], hasSign: boolean, smallestFirst: boolean): WorkingStep[] => {
+  const rows = buildPlaceValueTable(items, hasSign, smallestFirst);
+  const fullCols: PVCol[] = hasSign ? ["sign", "whole", 0, 1, 2] : ["whole", 0, 1, 2];
+  let lastIdx = 0;
+  const usedCols = new Set(rows.map((r) => r.circleCol));
+  fullCols.forEach((c, i) => { if (usedCols.has(c)) lastIdx = i; });
+  const stepCols = fullCols.slice(0, lastIdx + 1);
+  const targetWord = smallestFirst ? "smallest" : "largest";
+  return stepCols.map((col, i) => {
+    const revealCols = stepCols.slice(0, i + 1);
+    return {
+      ...tStep(`Compare ${colStepLabel(col)}:`),
+      extra: { kind: "placeValueTable", rows, hasSign, revealCols, targetWord },
+    } as WorkingStep;
+  });
 };
 
 const stepRenderer = (step: WorkingStep): JSX.Element | null => {
   const extra = (step as any).extra;
   if (extra?.kind !== "placeValueTable") return null;
-  return <PlaceValueTable rows={extra.rows} hasSign={extra.hasSign} revealUpTo={extra.revealUpTo} />;
+  return <PlaceValueTable rows={extra.rows} hasSign={extra.hasSign} revealCols={extra.revealCols} targetWord={extra.targetWord} />;
 };
 
 // ── 9. Compare generator ──────────────────────────────────────────────────────
@@ -433,7 +467,7 @@ const buildCompareDisplay = (rv: CompareRaw, notation: string, ask: "bigger" | "
   const left = swapped ? b : a;
   const right = swapped ? a : b;
   const leftBigger = signedValue(left) > signedValue(right);
-  const working = placeValueSteps([left, right], hasSign);
+  const working = placeValueSteps([left, right], hasSign, ask === "smaller");
 
   if (notation === "symbols") {
     return {
@@ -505,7 +539,7 @@ const buildOrderDisplay = (rv: OrderRaw) => {
   const { sort, phrase } = DIRECTION_INFO[directionOpt];
   const ordered = sort === "ascending" ? values : [...values].reverse();
   const shuffled = [...values].sort(() => Math.random() - 0.5);
-  const working = placeValueSteps(shuffled, hasSign);
+  const working = placeValueSteps(shuffled, hasSign, sort === "ascending");
 
   return {
     lines: [
