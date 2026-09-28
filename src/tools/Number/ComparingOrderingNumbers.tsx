@@ -53,11 +53,15 @@ const TRAP_TYPE_MS: ToolMultiSelect = {
   ],
 };
 
+// No "positive only" state — the lesson this tool serves is specifically
+// about negatives, so the pool is just Negative (focused drill) vs Mixed
+// (harder: positive and negative together, testing sign-dominance too).
+// pickActive draws one MODE per question from whichever are active.
 const SIGN_MS: ToolMultiSelect = {
   key: "sign", label: "Sign",
   options: [
-    { value: "positive", label: "Positive", defaultActive: false, weight: 1 },
-    { value: "negative", label: "Negative", defaultActive: true, weight: 2 },
+    { value: "negative", label: "Negative", defaultActive: true },
+    { value: "mixed", label: "Mixed", defaultActive: false },
   ],
 };
 
@@ -66,6 +70,16 @@ const DIRECTION_MS: ToolMultiSelect = {
   options: [
     { value: "ascending", label: "Ascending", defaultActive: true },
     { value: "descending", label: "Descending", defaultActive: true },
+  ],
+};
+
+// Compare's Words-mode phrasing ("Which is bigger?" / "Which is smaller?").
+// Order doesn't need this — Direction already covers the equivalent idea for a list.
+const ASK_MS: ToolMultiSelect = {
+  key: "ask", label: "Ask",
+  options: [
+    { value: "bigger", label: "Bigger", defaultActive: true },
+    { value: "smaller", label: "Smaller", defaultActive: true },
   ],
 };
 
@@ -89,9 +103,9 @@ const TOOL_CONFIG: ToolConfig = {
       dropdown: null,
       variables: [],
       difficultySettings: {
-        level1: { dropdown: null, variables: [], multiSelect: [WHOLE_PART_MS, TRAP_TYPE_MS, NOTATION_MS] },
-        level2: { dropdown: null, variables: [], multiSelect: [SIGN_MS, NOTATION_MS] },
-        level3: { dropdown: null, variables: [], multiSelect: [WHOLE_PART_MS, TRAP_TYPE_MS, SIGN_MS, NOTATION_MS] },
+        level1: { dropdown: null, variables: [], multiSelect: [WHOLE_PART_MS, TRAP_TYPE_MS, NOTATION_MS, ASK_MS] },
+        level2: { dropdown: null, variables: [], multiSelect: [SIGN_MS, NOTATION_MS, ASK_MS] },
+        level3: { dropdown: null, variables: [], multiSelect: [WHOLE_PART_MS, TRAP_TYPE_MS, SIGN_MS, NOTATION_MS, ASK_MS] },
       },
     },
 
@@ -115,7 +129,7 @@ const INFO_SECTIONS: InfoSection[] = [
   { title: "Compare", icon: "⚖️", content: [
     { label: "Overview", detail: "Compare two numbers and say which is bigger — first in plain words, then with < and >. Choose exactly which decimal misconception(s) to drill with the Trap type control, or leave all active for natural variety." },
     { label: "Level 1 — Decimals", detail: "Pure 0.___ comparison up to thousandths. Trap type lets you isolate 'longer looks smaller', 'shorter looks smaller', 'wrong-priority digit' or 'ignore the whole number' — or mix them. 'Allow whole numbers' turns on the whole-number-part trap." },
-    { label: "Level 2 — Integers", detail: "Sign dial (Positive-only → Mixed → Negative-only) targets 'the bigger positive number is the bigger negative number'." },
+    { label: "Level 2 — Integers", detail: "Sign: Negative (focused drill) or Mixed (harder — positive and negative together) target 'the bigger positive number is the bigger negative number'." },
     { label: "Level 3 — Decimals + sign", detail: "Both trap families together." },
   ]},
   { title: "Order", icon: "🔢", content: [
@@ -131,7 +145,8 @@ const INFO_SECTIONS: InfoSection[] = [
     { label: "Notation", detail: "Tick Words and/or Symbols — both active mixes them into one worksheet. Changing it reformats the current question instantly — no regeneration." },
     { label: "Whole-number part", detail: "Tick '0.__ only' and/or 'Allow whole numbers' — both active mixes pure decimals with whole-number-part decimals in one worksheet." },
     { label: "Trap type", detail: "Tick which named misconceptions can appear. Untick 'No trap' to force a trap every question." },
-    { label: "Sign", detail: "Positive-only → Mixed → Negative-only cycle." },
+    { label: "Sign", detail: "Negative (focused drill) and/or Mixed (harder — includes positive numbers)." },
+    { label: "Ask (Compare)", detail: "Tick 'Bigger' and/or 'Smaller' to control the Words-mode phrasing." },
     { label: "Direction (Order)", detail: "Ascending, descending, or a mix." },
     { label: "How many numbers (Order)", detail: "3–6, available at every level." },
   ]},
@@ -245,16 +260,15 @@ const buildDecChain = (count: number, mode: WholeMode, msv: Record<string, boole
 // ── 7. Sign application ───────────────────────────────────────────────────────
 
 // Applies the `sign` QO to an ascending magnitude chain, returning a final
-// list sorted by true signed value. Exclusive states keep the trap chain's
-// relative shape intact (just uniformly negated); Mixed assigns each
+// list sorted by true signed value. One MODE is drawn per question from
+// whichever of Negative/Mixed are active: "negative" keeps the trap chain's
+// relative shape intact (just uniformly negated); "mixed" assigns each
 // magnitude an independent sign and resorts.
 const applySign = (mags: Dec[], msv: Record<string, boolean>, signPoolActive: boolean): SignedDec[] => {
   if (!signPoolActive) return mags.map((mag) => ({ mag, sign: 1 as const }));
-  const posActive = isActive(msv, "positive");
-  const negActive = isActive(msv, "negative");
-  if (negActive && !posActive) return [...mags].reverse().map((mag) => ({ mag, sign: -1 as const }));
-  if (posActive && !negActive) return mags.map((mag) => ({ mag, sign: 1 as const }));
-  const signed = mags.map((mag) => ({ mag, sign: (pickActive(msv, SIGN_MS.options) === "negative" ? -1 : 1) as 1 | -1 }));
+  const mode = pickActive(msv, SIGN_MS.options);
+  if (mode === "negative") return [...mags].reverse().map((mag) => ({ mag, sign: -1 as const }));
+  const signed = mags.map((mag) => ({ mag, sign: (Math.random() < 0.5 ? -1 : 1) as 1 | -1 }));
   return signed.sort((a, b) => signedValue(a) - signedValue(b));
 };
 
@@ -303,9 +317,9 @@ const signedSteps = (a: SignedDec, b: SignedDec): { steps: WorkingStep[]; aBigge
 
 // ── 9. Compare generator ──────────────────────────────────────────────────────
 
-interface CompareRaw { a: SignedDec; b: SignedDec; swapped: boolean; notation: string; }
+interface CompareRaw { a: SignedDec; b: SignedDec; swapped: boolean; notation: string; ask: "bigger" | "smaller"; }
 
-const buildCompareDisplay = (rv: CompareRaw, notation: string) => {
+const buildCompareDisplay = (rv: CompareRaw, notation: string, ask: "bigger" | "smaller") => {
   const { a, b, swapped } = rv;
   const left = swapped ? b : a;
   const right = swapped ? a : b;
@@ -314,17 +328,24 @@ const buildCompareDisplay = (rv: CompareRaw, notation: string) => {
 
   if (notation === "symbols") {
     return {
-      lines: [`Insert $<$ or $>$: $${signedStr(left)}$ $\\, \\square \\,$ $${signedStr(right)}$`],
+      lines: [
+        "Insert $<$ or $>$:",
+        `$${signedStr(left)}$ $\\, \\square \\,$ $${signedStr(right)}$`,
+      ],
       answer: `${signedStr(left)} ${leftBigger ? ">" : "<"} ${signedStr(right)}`,
       answerLatex: `${signedStr(left)} ${leftBigger ? "\\gt" : "\\lt"} ${signedStr(right)}`,
       working: steps,
     };
   }
-  const biggerVal = leftBigger ? left : right;
+  const askBigger = ask === "bigger";
+  const answerVal = askBigger === leftBigger ? left : right;
   return {
-    lines: [`Which is bigger: $${signedStr(left)}$ or $${signedStr(right)}$?`],
-    answer: signedStr(biggerVal),
-    answerLatex: signedStr(biggerVal),
+    lines: [
+      `Which is ${ask}?`,
+      `$${signedStr(left)}$ or $${signedStr(right)}$`,
+    ],
+    answer: signedStr(answerVal),
+    answerLatex: signedStr(answerVal),
     working: steps,
   };
 };
@@ -332,6 +353,7 @@ const buildCompareDisplay = (rv: CompareRaw, notation: string) => {
 const genCompareQuestion = (level: DifficultyLevel, msv: Record<string, boolean>): AnyQuestion => {
   const id = randInt(0, 999999);
   const notation = pickActive(msv, NOTATION_MS.options);
+  const ask = pickActive(msv, ASK_MS.options) as "bigger" | "smaller";
   let a: SignedDec, b: SignedDec;
 
   if (level === "level2") {
@@ -347,7 +369,7 @@ const genCompareQuestion = (level: DifficultyLevel, msv: Record<string, boolean>
   }
 
   const swapped = Math.random() < 0.5;
-  const built = buildCompareDisplay({ a, b, swapped, notation }, notation);
+  const built = buildCompareDisplay({ a, b, swapped, notation, ask }, notation, ask);
 
   return {
     kind: "worded",
@@ -355,8 +377,8 @@ const genCompareQuestion = (level: DifficultyLevel, msv: Record<string, boolean>
     answer: built.answer,
     answerLatex: built.answerLatex,
     working: built.working,
-    _rawValues: { a, b, swapped, notation } as CompareRaw,
-    key: `compare-${level}-${signedStr(a)}-${signedStr(b)}-${notation}-${id}`,
+    _rawValues: { a, b, swapped, notation, ask } as CompareRaw,
+    key: `compare-${level}-${signedStr(a)}-${signedStr(b)}-${notation}-${ask}-${id}`,
     difficulty: level,
   } as unknown as AnyQuestion;
 };
@@ -380,14 +402,20 @@ const buildOrderDisplay = (rv: OrderRaw, notation: string) => {
   if (notation === "symbols") {
     const op = direction === "ascending" ? "<" : ">";
     return {
-      lines: [`Write as a chain, ${firstWord} first: $${shuffled.map(signedStr).join(", ")}$`],
+      lines: [
+        `Write as a chain, ${firstWord} first:`,
+        `$${shuffled.map(signedStr).join(", ")}$`,
+      ],
       answer: ordered.map(signedStr).join(` ${op} `),
       answerLatex: ordered.map(signedStr).join(direction === "ascending" ? " \\lt " : " \\gt "),
       working,
     };
   }
   return {
-    lines: [`Order ${firstWord} first: $${shuffled.map(signedStr).join(", ")}$`],
+    lines: [
+      `Order ${firstWord} first:`,
+      `$${shuffled.map(signedStr).join(", ")}$`,
+    ],
     answer: ordered.map(signedStr).join(", "),
     answerLatex: ordered.map(signedStr).join(",\\ "),
     working,
@@ -452,12 +480,21 @@ const resolveNotation = (msv: Record<string, boolean>, previous: string): string
   return previous;
 };
 
+const resolveAsk = (msv: Record<string, boolean>, previous: "bigger" | "smaller"): "bigger" | "smaller" => {
+  const biggerActive = isActive(msv, "bigger");
+  const smallerActive = isActive(msv, "smaller");
+  if (biggerActive && !smallerActive) return "bigger";
+  if (smallerActive && !biggerActive) return "smaller";
+  return previous;
+};
+
 const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null => {
   const compareRv = (q as any)._rawValues as CompareRaw | undefined;
   if (compareRv && "a" in compareRv) {
     const notation = resolveNotation(qo.multiSelectValues, compareRv.notation);
-    const built = buildCompareDisplay(compareRv, notation);
-    return { ...q, lines: built.lines, answer: built.answer, answerLatex: built.answerLatex, working: built.working, _rawValues: { ...compareRv, notation } } as unknown as AnyQuestion;
+    const ask = resolveAsk(qo.multiSelectValues, compareRv.ask);
+    const built = buildCompareDisplay(compareRv, notation, ask);
+    return { ...q, lines: built.lines, answer: built.answer, answerLatex: built.answerLatex, working: built.working, _rawValues: { ...compareRv, notation, ask } } as unknown as AnyQuestion;
   }
   const orderRv = (q as any)._rawValues as OrderRaw | undefined;
   if (orderRv && "values" in orderRv) {

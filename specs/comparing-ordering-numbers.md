@@ -5,15 +5,20 @@
 were finalised at their proposed defaults (whole-number-part 1–9, integer magnitude 1–20) since
 no objection was raised; revisit if they feel off in practice.
 
-**Post-implementation swaps:** `Notation` is a 2-option multiSelect (plain toggle-cell pair, both
-independently active — NOT the weighted cycle button) rather than a dropdown — a teacher can now
-mix both notations into one worksheet. `count` (Order) took the freed dropdown slot instead of
-being a multiSelect. `wholeNumberPart` was also changed from the weighted cycle button to the same
-plain 2-cell toggle pair as Notation, per teacher preference for that control style over the
-cycle button; `sign` keeps the weighted cycle button (Positive-only → Mixed → Negative-only), since
-that one is a genuine easy→hard ladder rather than two peer options. Functionally every level still
-offers the same options with the same per-level defaults described below; only the control types
-changed.
+**Post-implementation changes:**
+- `Notation`, `wholeNumberPart`, and `sign` are all plain 2-cell multiSelect toggle pairs (each
+  option independently clickable, both can be active at once) rather than a dropdown or the
+  compact cycle button — a teacher can mix Words+Symbols, 0.___-only+whole-number-part, or
+  Negative+Mixed into one worksheet. `count` (Order) took the dropdown slot freed by Notation.
+- `sign`'s options changed from Positive/Negative to **Negative/Mixed** — "positive only" was
+  dropped entirely since this tool exists specifically to drill negatives; Mixed (positive and
+  negative together) is the harder option, drawn as one MODE per question rather than per number.
+- **Compare's Words phrasing** now has its own `ask` pool (Bigger/Smaller, both active by
+  default) controlling "Which is bigger?" vs "Which is smaller?" — Order doesn't need an
+  equivalent since Direction already covers ascending/descending.
+- **Question layout**: every question's prompt line and the number(s) line are now separate
+  `lines[]` entries (e.g. `"Which is bigger?"` then `"$0.23$ or $0.1$"` on the next line) rather
+  than one combined sentence.
 
 ---
 
