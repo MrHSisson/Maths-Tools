@@ -22,23 +22,23 @@ interface SignedDec { mag: Dec; sign: 1 | -1; }
 
 // ── 2. QO definitions ────────────────────────────────────────────────────────
 
-// Words-before-symbols is a genuine easy→hard progression, so this is a
-// weighted 2-option pool (renders as the compact cycle button, same as
-// wholeNumberPart/sign) rather than a plain dropdown — a teacher can mix
-// both notations into one worksheet, not just pick one for the whole sheet.
+// Plain 2-cell multiSelect pill row (no `weight`, so it does NOT trigger the
+// compact None/Mixed/Exclusive cycle button) — each option toggles
+// independently, e.g. tick both Words and Symbols to mix them into one
+// worksheet, exactly like any other question-type pool on the site.
 const NOTATION_MS: ToolMultiSelect = {
   key: "notation", label: "Notation",
   options: [
-    { value: "words", label: "Words", defaultActive: true, weight: 1 },
-    { value: "symbols", label: "Symbols", defaultActive: false, weight: 2 },
+    { value: "words", label: "Words", defaultActive: true },
+    { value: "symbols", label: "Symbols", defaultActive: false },
   ],
 };
 
 const WHOLE_PART_MS: ToolMultiSelect = {
   key: "wholeNumberPart", label: "Whole-number part",
   options: [
-    { value: "zeroOnly", label: "0.__ only", defaultActive: true, weight: 1 },
-    { value: "nonzero", label: "Allow whole numbers", defaultActive: false, weight: 2 },
+    { value: "zeroOnly", label: "0.__ only", defaultActive: true },
+    { value: "nonzero", label: "Allow whole numbers", defaultActive: false },
   ],
 };
 
@@ -128,8 +128,8 @@ const INFO_SECTIONS: InfoSection[] = [
     { label: "Worksheet", detail: "Grid of questions with PDF export." },
   ]},
   { title: "Question Options", icon: "⚙️", content: [
-    { label: "Notation", detail: "Words-only → Mixed → Symbols-only cycle. Changing it reformats the current question instantly — no regeneration." },
-    { label: "Whole-number part", detail: "None → Mixed → Exclusive cycle: every number 0.___, a blend, or every number with a whole-number part." },
+    { label: "Notation", detail: "Tick Words and/or Symbols — both active mixes them into one worksheet. Changing it reformats the current question instantly — no regeneration." },
+    { label: "Whole-number part", detail: "Tick '0.__ only' and/or 'Allow whole numbers' — both active mixes pure decimals with whole-number-part decimals in one worksheet." },
     { label: "Trap type", detail: "Tick which named misconceptions can appear. Untick 'No trap' to force a trap every question." },
     { label: "Sign", detail: "Positive-only → Mixed → Negative-only cycle." },
     { label: "Direction (Order)", detail: "Ascending, descending, or a mix." },

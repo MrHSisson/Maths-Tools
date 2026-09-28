@@ -5,11 +5,15 @@
 were finalised at their proposed defaults (whole-number-part 1–9, integer magnitude 1–20) since
 no objection was raised; revisit if they feel off in practice.
 
-**Post-implementation swap:** `Notation` is a weighted 2-option multiSelect (cycle button,
-Words-only → Mixed → Symbols-only) rather than a dropdown — a teacher can now mix both notations
-into one worksheet. `count` (Order) took the freed dropdown slot instead of being a multiSelect.
-Functionally each level still offers the same options with the same per-level defaults described
-below; only the control types swapped.
+**Post-implementation swaps:** `Notation` is a 2-option multiSelect (plain toggle-cell pair, both
+independently active — NOT the weighted cycle button) rather than a dropdown — a teacher can now
+mix both notations into one worksheet. `count` (Order) took the freed dropdown slot instead of
+being a multiSelect. `wholeNumberPart` was also changed from the weighted cycle button to the same
+plain 2-cell toggle pair as Notation, per teacher preference for that control style over the
+cycle button; `sign` keeps the weighted cycle button (Positive-only → Mixed → Negative-only), since
+that one is a genuine easy→hard ladder rather than two peer options. Functionally every level still
+offers the same options with the same per-level defaults described below; only the control types
+changed.
 
 ---
 
