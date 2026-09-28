@@ -22,13 +22,16 @@ interface SignedDec { mag: Dec; sign: 1 | -1; }
 
 // ── 2. QO definitions ────────────────────────────────────────────────────────
 
-const NOTATION_DD: ToolDropdown = {
+// Words-before-symbols is a genuine easy→hard progression, so this is a
+// weighted 2-option pool (renders as the compact cycle button, same as
+// wholeNumberPart/sign) rather than a plain dropdown — a teacher can mix
+// both notations into one worksheet, not just pick one for the whole sheet.
+const NOTATION_MS: ToolMultiSelect = {
   key: "notation", label: "Notation",
   options: [
-    { value: "words", label: "Words" },
-    { value: "symbols", label: "Symbols" },
+    { value: "words", label: "Words", defaultActive: true, weight: 1 },
+    { value: "symbols", label: "Symbols", defaultActive: false, weight: 2 },
   ],
-  defaultValue: "words",
 };
 
 const WHOLE_PART_MS: ToolMultiSelect = {
@@ -66,12 +69,13 @@ const DIRECTION_MS: ToolMultiSelect = {
   ],
 };
 
-// `count` is a multiSelect (not a dropdown — a sub-tool can only have one
-// dropdown slot, already used by Notation) so every level still offers the
-// full 3–6 range; only the pre-ticked default option differs per level.
-const countMS = (defaultVal: "3" | "4" | "5" | "6"): ToolMultiSelect => ({
+// `count` is Order's dropdown slot (Notation moved to multiSelect above,
+// freeing it up) — every level still offers the full 3–6 range, only the
+// pre-selected default differs per level.
+const countDD = (defaultVal: "3" | "4" | "5" | "6"): ToolDropdown => ({
   key: "count", label: "How many numbers",
-  options: (["3", "4", "5", "6"] as const).map((v) => ({ value: v, label: v, defaultActive: v === defaultVal })),
+  options: (["3", "4", "5", "6"] as const).map((v) => ({ value: v, label: v })),
+  defaultValue: defaultVal,
 });
 
 // ── 3. TOOL_CONFIG ────────────────────────────────────────────────────────────
@@ -82,23 +86,23 @@ const TOOL_CONFIG: ToolConfig = {
 
     compare: {
       name: "Compare",
-      dropdown: NOTATION_DD,
+      dropdown: null,
       variables: [],
       difficultySettings: {
-        level1: { dropdown: NOTATION_DD, variables: [], multiSelect: [WHOLE_PART_MS, TRAP_TYPE_MS] },
-        level2: { dropdown: NOTATION_DD, variables: [], multiSelect: SIGN_MS },
-        level3: { dropdown: NOTATION_DD, variables: [], multiSelect: [WHOLE_PART_MS, TRAP_TYPE_MS, SIGN_MS] },
+        level1: { dropdown: null, variables: [], multiSelect: [WHOLE_PART_MS, TRAP_TYPE_MS, NOTATION_MS] },
+        level2: { dropdown: null, variables: [], multiSelect: [SIGN_MS, NOTATION_MS] },
+        level3: { dropdown: null, variables: [], multiSelect: [WHOLE_PART_MS, TRAP_TYPE_MS, SIGN_MS, NOTATION_MS] },
       },
     },
 
     order: {
       name: "Order",
-      dropdown: NOTATION_DD,
+      dropdown: countDD("3"),
       variables: [],
       difficultySettings: {
-        level1: { dropdown: NOTATION_DD, variables: [], multiSelect: [WHOLE_PART_MS, TRAP_TYPE_MS, DIRECTION_MS, countMS("3")] },
-        level2: { dropdown: NOTATION_DD, variables: [], multiSelect: [SIGN_MS, DIRECTION_MS, countMS("4")] },
-        level3: { dropdown: NOTATION_DD, variables: [], multiSelect: [WHOLE_PART_MS, TRAP_TYPE_MS, SIGN_MS, DIRECTION_MS, countMS("5")] },
+        level1: { dropdown: countDD("3"), variables: [], multiSelect: [WHOLE_PART_MS, TRAP_TYPE_MS, DIRECTION_MS, NOTATION_MS] },
+        level2: { dropdown: countDD("4"), variables: [], multiSelect: [SIGN_MS, DIRECTION_MS, NOTATION_MS] },
+        level3: { dropdown: countDD("5"), variables: [], multiSelect: [WHOLE_PART_MS, TRAP_TYPE_MS, SIGN_MS, DIRECTION_MS, NOTATION_MS] },
       },
     },
 
@@ -124,7 +128,7 @@ const INFO_SECTIONS: InfoSection[] = [
     { label: "Worksheet", detail: "Grid of questions with PDF export." },
   ]},
   { title: "Question Options", icon: "⚙️", content: [
-    { label: "Notation: Words / Symbols", detail: "Switches between plain-language and inequality-symbol questions. Changing it reformats the current question instantly." },
+    { label: "Notation", detail: "Words-only → Mixed → Symbols-only cycle. Changing it reformats the current question instantly — no regeneration." },
     { label: "Whole-number part", detail: "None → Mixed → Exclusive cycle: every number 0.___, a blend, or every number with a whole-number part." },
     { label: "Trap type", detail: "Tick which named misconceptions can appear. Untick 'No trap' to force a trap every question." },
     { label: "Sign", detail: "Positive-only → Mixed → Negative-only cycle." },
@@ -299,7 +303,7 @@ const signedSteps = (a: SignedDec, b: SignedDec): { steps: WorkingStep[]; aBigge
 
 // ── 9. Compare generator ──────────────────────────────────────────────────────
 
-interface CompareRaw { a: SignedDec; b: SignedDec; swapped: boolean; }
+interface CompareRaw { a: SignedDec; b: SignedDec; swapped: boolean; notation: string; }
 
 const buildCompareDisplay = (rv: CompareRaw, notation: string) => {
   const { a, b, swapped } = rv;
@@ -325,8 +329,9 @@ const buildCompareDisplay = (rv: CompareRaw, notation: string) => {
   };
 };
 
-const genCompareQuestion = (level: DifficultyLevel, msv: Record<string, boolean>, notation: string): AnyQuestion => {
+const genCompareQuestion = (level: DifficultyLevel, msv: Record<string, boolean>): AnyQuestion => {
   const id = randInt(0, 999999);
+  const notation = pickActive(msv, NOTATION_MS.options);
   let a: SignedDec, b: SignedDec;
 
   if (level === "level2") {
@@ -342,7 +347,7 @@ const genCompareQuestion = (level: DifficultyLevel, msv: Record<string, boolean>
   }
 
   const swapped = Math.random() < 0.5;
-  const built = buildCompareDisplay({ a, b, swapped }, notation);
+  const built = buildCompareDisplay({ a, b, swapped, notation }, notation);
 
   return {
     kind: "worded",
@@ -350,7 +355,7 @@ const genCompareQuestion = (level: DifficultyLevel, msv: Record<string, boolean>
     answer: built.answer,
     answerLatex: built.answerLatex,
     working: built.working,
-    _rawValues: { a, b, swapped } as CompareRaw,
+    _rawValues: { a, b, swapped, notation } as CompareRaw,
     key: `compare-${level}-${signedStr(a)}-${signedStr(b)}-${notation}-${id}`,
     difficulty: level,
   } as unknown as AnyQuestion;
@@ -358,7 +363,7 @@ const genCompareQuestion = (level: DifficultyLevel, msv: Record<string, boolean>
 
 // ── 10. Order generator ───────────────────────────────────────────────────────
 
-interface OrderRaw { values: SignedDec[]; direction: "ascending" | "descending"; }
+interface OrderRaw { values: SignedDec[]; direction: "ascending" | "descending"; notation: string; }
 
 const buildOrderDisplay = (rv: OrderRaw, notation: string) => {
   const { values, direction } = rv;
@@ -389,9 +394,10 @@ const buildOrderDisplay = (rv: OrderRaw, notation: string) => {
   };
 };
 
-const genOrderQuestion = (level: DifficultyLevel, msv: Record<string, boolean>, notation: string): AnyQuestion => {
+const genOrderQuestion = (level: DifficultyLevel, msv: Record<string, boolean>, dropdownValue: string): AnyQuestion => {
   const id = randInt(0, 999999);
-  const count = parseInt(pickActive(msv, countMS("3").options), 10);
+  const count = parseInt(dropdownValue, 10) || 3;
+  const notation = pickActive(msv, NOTATION_MS.options);
   const direction = pickActive(msv, DIRECTION_MS.options) as "ascending" | "descending";
 
   let values: SignedDec[];
@@ -406,7 +412,7 @@ const genOrderQuestion = (level: DifficultyLevel, msv: Record<string, boolean>, 
     values = applySign(mags, msv, level === "level3");
   }
 
-  const built = buildOrderDisplay({ values, direction }, notation);
+  const built = buildOrderDisplay({ values, direction, notation }, notation);
 
   return {
     kind: "worded",
@@ -414,7 +420,7 @@ const genOrderQuestion = (level: DifficultyLevel, msv: Record<string, boolean>, 
     answer: built.answer,
     answerLatex: built.answerLatex,
     working: built.working,
-    _rawValues: { values, direction } as OrderRaw,
+    _rawValues: { values, direction, notation } as OrderRaw,
     key: `order-${level}-${values.map(signedStr).join("_")}-${notation}-${direction}-${id}`,
     difficulty: level,
   } as unknown as AnyQuestion;
@@ -432,25 +438,41 @@ const generateQuestion = (
   const t = tool as ToolType;
   return t === "order"
     ? genOrderQuestion(level, multiSelectValues, dropdownValue)
-    : genCompareQuestion(level, multiSelectValues, dropdownValue);
+    : genCompareQuestion(level, multiSelectValues);
+};
+
+// Resolves Notation from the live QO state, keeping the previous choice when
+// both Words and Symbols are still active (avoids the display flickering
+// between them on every unrelated QO change, since pickActive is random).
+const resolveNotation = (msv: Record<string, boolean>, previous: string): string => {
+  const wordsActive = isActive(msv, "words");
+  const symbolsActive = isActive(msv, "symbols");
+  if (wordsActive && !symbolsActive) return "words";
+  if (symbolsActive && !wordsActive) return "symbols";
+  return previous;
 };
 
 const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null => {
   const compareRv = (q as any)._rawValues as CompareRaw | undefined;
   if (compareRv && "a" in compareRv) {
-    const built = buildCompareDisplay(compareRv, qo.dropdownValue);
-    return { ...q, lines: built.lines, answer: built.answer, answerLatex: built.answerLatex, working: built.working } as unknown as AnyQuestion;
+    const notation = resolveNotation(qo.multiSelectValues, compareRv.notation);
+    const built = buildCompareDisplay(compareRv, notation);
+    return { ...q, lines: built.lines, answer: built.answer, answerLatex: built.answerLatex, working: built.working, _rawValues: { ...compareRv, notation } } as unknown as AnyQuestion;
   }
   const orderRv = (q as any)._rawValues as OrderRaw | undefined;
   if (orderRv && "values" in orderRv) {
+    // A count change is a structural change (a different number of values) —
+    // let ToolShell regenerate rather than trying to reformat in place.
+    if (parseInt(qo.dropdownValue, 10) !== orderRv.values.length) return null;
     const ascActive = isActive(qo.multiSelectValues, "ascending");
     const descActive = isActive(qo.multiSelectValues, "descending");
     const direction: OrderRaw["direction"] =
       ascActive && !descActive ? "ascending" :
       descActive && !ascActive ? "descending" :
       orderRv.direction;
-    const built = buildOrderDisplay({ values: orderRv.values, direction }, qo.dropdownValue);
-    return { ...q, lines: built.lines, answer: built.answer, answerLatex: built.answerLatex, working: built.working, _rawValues: { ...orderRv, direction } } as unknown as AnyQuestion;
+    const notation = resolveNotation(qo.multiSelectValues, orderRv.notation);
+    const built = buildOrderDisplay({ values: orderRv.values, direction, notation }, notation);
+    return { ...q, lines: built.lines, answer: built.answer, answerLatex: built.answerLatex, working: built.working, _rawValues: { ...orderRv, direction, notation } } as unknown as AnyQuestion;
   }
   return null;
 };

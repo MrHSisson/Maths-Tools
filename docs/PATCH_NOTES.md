@@ -43,7 +43,9 @@ the sorted list independently from the active trap pool, so a list can genuinely
 different traps rather than guaranteeing exactly one. Levels run Decimals → Negative integers →
 Decimals + sign. Verified with an ad-hoc scratch test (not committed) exercising every non-default
 QO combination plus archetype-shape correctness for all four decimal traps, on top of the standard
-`__test` smoke suite.
+`__test` smoke suite. Follow-up: swapped `Notation` to a weighted multiSelect cycle (Words →
+Mixed → Symbols, so a worksheet can blend both) and `count` (Order) to the freed dropdown slot —
+functionally the same per-level defaults, just different control types.
 
 ## 2026-09-23 — Decision Maths: Travelling Salesperson (nearest neighbour) on `DecisionShell`
 New dev-gated tool `/travelling-salesperson` (`src/tools/Decision/TravellingSalesperson.tsx`) —

@@ -5,6 +5,12 @@
 were finalised at their proposed defaults (whole-number-part 1–9, integer magnitude 1–20) since
 no objection was raised; revisit if they feel off in practice.
 
+**Post-implementation swap:** `Notation` is a weighted 2-option multiSelect (cycle button,
+Words-only → Mixed → Symbols-only) rather than a dropdown — a teacher can now mix both notations
+into one worksheet. `count` (Order) took the freed dropdown slot instead of being a multiSelect.
+Functionally each level still offers the same options with the same per-level defaults described
+below; only the control types swapped.
+
 ---
 
 ## 1. Overview
