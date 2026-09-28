@@ -2,7 +2,7 @@ import {
   ToolShell,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type QOSnapshot,
   type ToolMultiSelect, type ToolDropdown,
-  randInt, pick, mStep, tStep, pickActive,
+  randInt, pick, tStep, pickActive,
 } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -42,14 +42,15 @@ const WHOLE_PART_MS: ToolMultiSelect = {
   ],
 };
 
+// Short labels so all five buttons fit one row without heavy wrapping.
 const TRAP_TYPE_MS: ToolMultiSelect = {
   key: "trapType", label: "Trap type",
   options: [
     { value: "clean", label: "No trap", defaultActive: true },
-    { value: "longerIsSmaller", label: "Longer looks smaller", defaultActive: true },
-    { value: "shorterIsSmaller", label: "Shorter looks smaller", defaultActive: true },
-    { value: "wrongPriority", label: "Wrong-priority digit", defaultActive: true },
-    { value: "ignoreWholePart", label: "Ignore the whole number", defaultActive: true },
+    { value: "longerIsSmaller", label: "Longer trap", defaultActive: true },
+    { value: "shorterIsSmaller", label: "Shorter trap", defaultActive: true },
+    { value: "wrongPriority", label: "Priority trap", defaultActive: true },
+    { value: "ignoreWholePart", label: "Whole-part trap", defaultActive: true },
   ],
 };
 
@@ -65,12 +66,24 @@ const SIGN_MS: ToolMultiSelect = {
   ],
 };
 
+// Four wording variants, two of which share each actual sort direction —
+// "ascending"/"smallest to largest" both sort ascending but phrase the
+// question differently, and likewise for descending/"largest to smallest".
 const DIRECTION_MS: ToolMultiSelect = {
   key: "direction", label: "Direction",
   options: [
     { value: "ascending", label: "Ascending", defaultActive: true },
     { value: "descending", label: "Descending", defaultActive: true },
+    { value: "smallestToLargest", label: "Smallest to largest", defaultActive: true },
+    { value: "largestToSmallest", label: "Largest to smallest", defaultActive: true },
   ],
+};
+
+const DIRECTION_INFO: Record<string, { sort: "ascending" | "descending"; phrase: string }> = {
+  ascending: { sort: "ascending", phrase: "ascending" },
+  descending: { sort: "descending", phrase: "descending" },
+  smallestToLargest: { sort: "ascending", phrase: "smallest to largest" },
+  largestToSmallest: { sort: "descending", phrase: "largest to smallest" },
 };
 
 // Compare's Words-mode phrasing ("Which is bigger?" / "Which is smaller?").
@@ -128,7 +141,7 @@ const TOOL_CONFIG: ToolConfig = {
 const INFO_SECTIONS: InfoSection[] = [
   { title: "Compare", icon: "⚖️", content: [
     { label: "Overview", detail: "Compare two numbers and say which is bigger — first in plain words, then with < and >. Choose exactly which decimal misconception(s) to drill with the Trap type control, or leave all active for natural variety." },
-    { label: "Level 1 — Decimals", detail: "Pure 0.___ comparison up to thousandths. Trap type lets you isolate 'longer looks smaller', 'shorter looks smaller', 'wrong-priority digit' or 'ignore the whole number' — or mix them. 'Allow whole numbers' turns on the whole-number-part trap." },
+    { label: "Level 1 — Decimals", detail: "Pure 0.___ comparison up to thousandths, built from named misconception traps: a longer decimal that's actually smaller, a shorter one that's actually smaller, a decoy in the later digits, or an unequal whole-number part with a decoy tenths digit. 'Allow whole numbers' turns the whole-number-part trap on." },
     { label: "Level 2 — Integers", detail: "Sign: Negative (focused drill) or Mixed (harder — positive and negative together) target 'the bigger positive number is the bigger negative number'." },
     { label: "Level 3 — Decimals + sign", detail: "Both trap families together." },
   ]},
@@ -138,7 +151,7 @@ const INFO_SECTIONS: InfoSection[] = [
   ]},
   { title: "Modes", icon: "🖥️", content: [
     { label: "Whiteboard", detail: "Single question on the left, working space on the right." },
-    { label: "Worked Example", detail: "Full step-by-step solution revealed on demand." },
+    { label: "Worked Example", detail: "Step-by-step solution shown as a place-value table — the decisive digit for each number is circled, and rows are numbered in order." },
     { label: "Worksheet", detail: "Grid of questions with PDF export." },
   ]},
   { title: "Question Options", icon: "⚙️", content: [
@@ -147,7 +160,7 @@ const INFO_SECTIONS: InfoSection[] = [
     { label: "Trap type", detail: "Tick which named misconceptions can appear. Untick 'No trap' to force a trap every question." },
     { label: "Sign", detail: "Negative (focused drill) and/or Mixed (harder — includes positive numbers)." },
     { label: "Ask (Compare)", detail: "Tick 'Bigger' and/or 'Smaller' to control the Words-mode phrasing." },
-    { label: "Direction (Order)", detail: "Ascending, descending, or a mix." },
+    { label: "Direction (Order)", detail: "Ascending / Descending / Smallest to largest / Largest to smallest — the first two are mathematical terms, the last two everyday phrasing for the same two directions." },
     { label: "How many numbers (Order)", detail: "3–6, available at every level." },
   ]},
 ];
@@ -192,8 +205,11 @@ const buildFirstDec = (mode: WholeMode): Dec => {
 };
 
 // Builds a Dec strictly greater than `anchor`, attempting the requested trap
-// and falling back to `clean` whenever the anchor's fixed shape can't support it.
-const buildNextDec = (anchor: Dec, trap: TrapType, mode: WholeMode): Dec => {
+// and falling back to `clean` whenever the anchor's fixed shape can't
+// support it. Returns null only in the astronomically rare case where
+// `mode` is zeroOnly and `anchor` is already the maximum representable
+// zeroOnly value (…999 at 3dp) — the caller (buildDecChain) restarts.
+const buildNextDec = (anchor: Dec, trap: TrapType, mode: WholeMode): Dec | null => {
   const tryLongerIsSmaller = (): Dec | null => {
     if (anchor.d.length < 2 || anchor.d[0] >= 9) return null;
     const dp = randInt(1, anchor.d.length - 1);
@@ -220,20 +236,35 @@ const buildNextDec = (anchor: Dec, trap: TrapType, mode: WholeMode): Dec => {
     return { whole, d: [randInt(0, anchor.d[0] - 1), ...randDigits(dp - 1)] };
   };
 
-  const clean = (): Dec => {
+  // NEVER bumps the whole part when `mode === "zeroOnly"` — that would
+  // silently defeat the "0.___ only" setting (the bug behind numbers like
+  // -2.644 showing up despite Whole-number part being pinned to zeroOnly).
+  const clean = (): Dec | null => {
     const differWhole = mode !== "zeroOnly" && Math.random() < 0.5;
     if (differWhole) {
       const whole = anchor.whole + randInt(1, 9);
       const dp = randInt(1, 3);
       return { whole, d: randDigits(dp) };
     }
-    const dp = randInt(1, 3);
     if (anchor.d[0] === undefined || anchor.d[0] < 9) {
+      const dp = randInt(1, 3);
       const tenths = randInt((anchor.d[0] ?? -1) + 1, 9);
       return { whole: anchor.whole, d: [tenths, ...randDigits(dp - 1)] };
     }
-    // anchor's tenths digit is already 9 — fall back to a bigger whole part.
-    return { whole: anchor.whole + randInt(1, 9), d: randDigits(dp) };
+    // Tenths digit already 9 — extend with another decimal place instead of
+    // touching the whole part.
+    if (anchor.d.length < 3) {
+      return { whole: anchor.whole, d: [...anchor.d, randInt(1, 9)] };
+    }
+    // Full 3dp and tenths already 9 — only now may the whole part grow, and
+    // only when the mode actually allows a non-zero one.
+    if (mode !== "zeroOnly") {
+      const dp = randInt(1, 3);
+      return { whole: anchor.whole + randInt(1, 9), d: randDigits(dp) };
+    }
+    // zeroOnly with anchor already at the max representable value (…999) —
+    // no larger zeroOnly value exists at ≤3dp.
+    return null;
   };
 
   const attempt =
@@ -247,14 +278,23 @@ const buildNextDec = (anchor: Dec, trap: TrapType, mode: WholeMode): Dec => {
 };
 
 // Builds `count` distinct decimals in ascending order, each adjacent gap
-// independently drawing a trap type from the active pool (§3.2 of the spec).
+// independently drawing a trap type from the active pool (§3.2 of the
+// spec). Retries the whole chain in the vanishingly rare case buildNextDec
+// hits a genuine dead end (see its docstring).
 const buildDecChain = (count: number, mode: WholeMode, msv: Record<string, boolean>): Dec[] => {
-  const chain: Dec[] = [buildFirstDec(mode)];
-  for (let i = 1; i < count; i++) {
-    const trap = pickActive(msv, TRAP_TYPE_MS.options) as TrapType;
-    chain.push(buildNextDec(chain[i - 1], trap, mode));
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const chain: Dec[] = [buildFirstDec(mode)];
+    let stuck = false;
+    for (let i = 1; i < count; i++) {
+      const trap = pickActive(msv, TRAP_TYPE_MS.options) as TrapType;
+      const next = buildNextDec(chain[i - 1], trap, mode);
+      if (next === null) { stuck = true; break; }
+      chain.push(next);
+    }
+    if (!stuck) return chain;
   }
-  return chain;
+  // Never actually reached in practice — safe distinct fallback.
+  return Array.from({ length: count }, (_, i) => ({ whole: 0, d: [0, 0, i + 1] }));
 };
 
 // ── 7. Sign application ───────────────────────────────────────────────────────
@@ -272,59 +312,106 @@ const applySign = (mags: Dec[], msv: Record<string, boolean>, signPoolActive: bo
   return signed.sort((a, b) => signedValue(a) - signedValue(b));
 };
 
-// ── 8. Working-step generation (general place-value column walk) ─────────────
+// ── 8. Place-value table (the Worked Example working step) ───────────────────
 
-const place = (i: number) => (i === 0 ? "tenths" : i === 1 ? "hundredths" : "thousandths");
+type PVCol = "sign" | "whole" | 0 | 1 | 2;
 
-// Explains which of two positive magnitudes is bigger, column by column.
-const magnitudeSteps = (a: Dec, b: Dec): { steps: WorkingStep[]; aBigger: boolean } => {
-  if (a.whole !== b.whole) {
-    return {
-      steps: [mStep("Compare the whole number parts:", `${a.whole} ${a.whole > b.whole ? ">" : "<"} ${b.whole}`)],
-      aBigger: a.whole > b.whole,
-    };
-  }
-  const steps: WorkingStep[] = a.whole > 0 || b.whole > 0 ? [tStep("The whole number parts match, so compare the decimal digits.")] : [];
-  const maxDp = Math.max(a.d.length, b.d.length);
+interface PVRow { sign: 1 | -1; whole: number; d: number[]; circleCol: PVCol; rank: number; }
+
+// The place-value column where two numbers first differ, reading left to
+// right (sign, then whole part, then tenths/hundredths/thousandths) — the
+// same left-to-right priority the working steps always taught.
+const decisiveColumn = (x: SignedDec, y: SignedDec, hasSign: boolean): PVCol => {
+  if (hasSign && x.sign !== y.sign) return "sign";
+  if (x.mag.whole !== y.mag.whole) return "whole";
+  const maxDp = Math.max(x.mag.d.length, y.mag.d.length);
   for (let i = 0; i < maxDp; i++) {
-    const da = a.d[i] ?? 0, db = b.d[i] ?? 0;
-    if (da !== db) {
-      steps.push(mStep(`Compare the ${place(i)} digit:`, `${da} ${da > db ? ">" : "<"} ${db}`));
-      return { steps, aBigger: da > db };
-    }
+    if ((x.mag.d[i] ?? 0) !== (y.mag.d[i] ?? 0)) return i as 0 | 1 | 2;
   }
-  return { steps, aBigger: true };
+  return "whole";
 };
 
-// Explains which of two signed numbers is bigger.
-const signedSteps = (a: SignedDec, b: SignedDec): { steps: WorkingStep[]; aBigger: boolean } => {
-  if (a.sign !== b.sign) {
-    const aPos = a.sign > 0;
-    return {
-      steps: [mStep("A negative number is always less than a positive number:", `${signedStr(a)} ${aPos ? ">" : "<"} ${signedStr(b)}`)],
-      aBigger: aPos,
-    };
-  }
-  if (a.sign > 0) return magnitudeSteps(a.mag, b.mag);
-  const { steps: magSteps, aBigger: aMagBigger } = magnitudeSteps(a.mag, b.mag);
-  const steps: WorkingStep[] = [
-    mStep("Compare the sizes, ignoring the negative signs:", `${decStr(a.mag)} ${aMagBigger ? ">" : "<"} ${decStr(b.mag)}`),
-    ...magSteps.slice(1),
-    mStep("Negative numbers reverse the order:", `${signedStr(a)} ${!aMagBigger ? ">" : "<"} ${signedStr(b)}`),
-  ];
-  return { steps, aBigger: !aMagBigger };
+// `items` are in DISPLAY order (as shown in the question). Each row's
+// circled column is found by comparing it against its closest neighbour in
+// true value (the number directly below it in rank, or above if it's the
+// smallest) — the digit that settles its place among near-rivals.
+const buildPlaceValueTable = (items: SignedDec[], hasSign: boolean): PVRow[] => {
+  const sorted = [...items].sort((a, b) => signedValue(a) - signedValue(b));
+  const rankOf = new Map<SignedDec, number>();
+  sorted.forEach((v, i) => rankOf.set(v, i + 1));
+  return items.map((item) => {
+    const rank = rankOf.get(item)!;
+    const neighbour = rank > 1 ? sorted[rank - 2] : sorted[rank];
+    const circleCol = decisiveColumn(item, neighbour, hasSign);
+    return { sign: item.sign, whole: item.mag.whole, d: item.mag.d, circleCol, rank };
+  });
+};
+
+const PV_COL_LABELS = ["Tenths", "Hundredths", "Thousandths"];
+
+const PlaceValueTable = ({ rows, hasSign }: { rows: PVRow[]; hasSign: boolean }) => {
+  const maxDp = Math.max(0, ...rows.map((r) => r.d.length));
+  const thCls = "border border-slate-300 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-500";
+  const tdCls = "border border-slate-300 px-3 py-2 text-center";
+  const circleCls = "inline-flex h-7 w-7 items-center justify-center rounded-full border-2 border-indigo-500 font-semibold text-indigo-700";
+  return (
+    <div className="mx-auto">
+      <p className="mb-2 text-center text-sm text-slate-500">Compare leading digits, then circle and number in order.</p>
+      <table className="mx-auto border-collapse text-base">
+        <thead>
+          <tr>
+            {hasSign && <th className={thCls}>Sign</th>}
+            <th className={thCls}>Whole</th>
+            {maxDp > 0 && <th className={thCls}>.</th>}
+            {Array.from({ length: maxDp }, (_, i) => <th key={i} className={thCls}>{PV_COL_LABELS[i]}</th>)}
+            <th className={thCls}>Order</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, ri) => (
+            <tr key={ri}>
+              {hasSign && <td className={tdCls}>{row.sign < 0 ? "−" : "+"}</td>}
+              <td className={tdCls}>{row.circleCol === "whole" ? <span className={circleCls}>{row.whole}</span> : row.whole}</td>
+              {maxDp > 0 && <td className={tdCls}>.</td>}
+              {Array.from({ length: maxDp }, (_, i) => {
+                const digit = row.d[i];
+                const isCircled = row.circleCol === i;
+                if (digit === undefined) {
+                  // No explicit digit here — if this implicit zero is the
+                  // decisive one, show it (dimmed) so the circle has
+                  // something to land on; otherwise leave the cell blank.
+                  return <td key={i} className={tdCls}>{isCircled ? <span className={`${circleCls} text-slate-400`}>0</span> : ""}</td>;
+                }
+                return <td key={i} className={tdCls}>{isCircled ? <span className={circleCls}>{digit}</span> : digit}</td>;
+              })}
+              <td className={`${tdCls} font-semibold`}>{row.rank}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+const placeValueStep = (items: SignedDec[], hasSign: boolean): WorkingStep =>
+  ({ ...tStep("Compare using a place value table:"), extra: { kind: "placeValueTable", rows: buildPlaceValueTable(items, hasSign), hasSign } }) as WorkingStep;
+
+const stepRenderer = (step: WorkingStep): JSX.Element | null => {
+  const extra = (step as any).extra;
+  if (extra?.kind !== "placeValueTable") return null;
+  return <PlaceValueTable rows={extra.rows} hasSign={extra.hasSign} />;
 };
 
 // ── 9. Compare generator ──────────────────────────────────────────────────────
 
-interface CompareRaw { a: SignedDec; b: SignedDec; swapped: boolean; notation: string; ask: "bigger" | "smaller"; }
+interface CompareRaw { a: SignedDec; b: SignedDec; swapped: boolean; notation: string; ask: "bigger" | "smaller"; hasSign: boolean; }
 
 const buildCompareDisplay = (rv: CompareRaw, notation: string, ask: "bigger" | "smaller") => {
-  const { a, b, swapped } = rv;
+  const { a, b, swapped, hasSign } = rv;
   const left = swapped ? b : a;
   const right = swapped ? a : b;
   const leftBigger = signedValue(left) > signedValue(right);
-  const { steps } = signedSteps(a, b);
+  const working = [placeValueStep([left, right], hasSign)];
 
   if (notation === "symbols") {
     return {
@@ -334,7 +421,7 @@ const buildCompareDisplay = (rv: CompareRaw, notation: string, ask: "bigger" | "
       ],
       answer: `${signedStr(left)} ${leftBigger ? ">" : "<"} ${signedStr(right)}`,
       answerLatex: `${signedStr(left)} ${leftBigger ? "\\gt" : "\\lt"} ${signedStr(right)}`,
-      working: steps,
+      working,
     };
   }
   const askBigger = ask === "bigger";
@@ -346,7 +433,7 @@ const buildCompareDisplay = (rv: CompareRaw, notation: string, ask: "bigger" | "
     ],
     answer: signedStr(answerVal),
     answerLatex: signedStr(answerVal),
-    working: steps,
+    working,
   };
 };
 
@@ -369,7 +456,8 @@ const genCompareQuestion = (level: DifficultyLevel, msv: Record<string, boolean>
   }
 
   const swapped = Math.random() < 0.5;
-  const built = buildCompareDisplay({ a, b, swapped, notation, ask }, notation, ask);
+  const hasSign = level !== "level1";
+  const built = buildCompareDisplay({ a, b, swapped, notation, ask, hasSign }, notation, ask);
 
   return {
     kind: "worded",
@@ -377,7 +465,7 @@ const genCompareQuestion = (level: DifficultyLevel, msv: Record<string, boolean>
     answer: built.answer,
     answerLatex: built.answerLatex,
     working: built.working,
-    _rawValues: { a, b, swapped, notation, ask } as CompareRaw,
+    _rawValues: { a, b, swapped, notation, ask, hasSign } as CompareRaw,
     key: `compare-${level}-${signedStr(a)}-${signedStr(b)}-${notation}-${ask}-${id}`,
     difficulty: level,
   } as unknown as AnyQuestion;
@@ -385,35 +473,32 @@ const genCompareQuestion = (level: DifficultyLevel, msv: Record<string, boolean>
 
 // ── 10. Order generator ───────────────────────────────────────────────────────
 
-interface OrderRaw { values: SignedDec[]; direction: "ascending" | "descending"; notation: string; }
+// `directionOpt` stores which of the 4 DIRECTION_MS wording options was
+// drawn; `values` is always the canonical ascending-by-true-value list.
+interface OrderRaw { values: SignedDec[]; directionOpt: string; notation: string; hasSign: boolean; }
 
 const buildOrderDisplay = (rv: OrderRaw, notation: string) => {
-  const { values, direction } = rv;
-  const ordered = direction === "ascending" ? values : [...values].reverse();
+  const { values, directionOpt, hasSign } = rv;
+  const { sort, phrase } = DIRECTION_INFO[directionOpt];
+  const ordered = sort === "ascending" ? values : [...values].reverse();
   const shuffled = [...values].sort(() => Math.random() - 0.5);
-  const firstWord = direction === "ascending" ? "smallest" : "largest";
-
-  const working: WorkingStep[] = [];
-  for (let i = 0; i < values.length - 1; i++) {
-    const { steps } = signedSteps(values[i], values[i + 1]);
-    working.push(...steps);
-  }
+  const working = [placeValueStep(shuffled, hasSign)];
 
   if (notation === "symbols") {
-    const op = direction === "ascending" ? "<" : ">";
+    const op = sort === "ascending" ? "<" : ">";
     return {
       lines: [
-        `Write as a chain, ${firstWord} first:`,
+        `Write as a chain, ${phrase}:`,
         `$${shuffled.map(signedStr).join(", ")}$`,
       ],
       answer: ordered.map(signedStr).join(` ${op} `),
-      answerLatex: ordered.map(signedStr).join(direction === "ascending" ? " \\lt " : " \\gt "),
+      answerLatex: ordered.map(signedStr).join(sort === "ascending" ? " \\lt " : " \\gt "),
       working,
     };
   }
   return {
     lines: [
-      `Order ${firstWord} first:`,
+      `Order ${phrase}:`,
       `$${shuffled.map(signedStr).join(", ")}$`,
     ],
     answer: ordered.map(signedStr).join(", "),
@@ -426,7 +511,7 @@ const genOrderQuestion = (level: DifficultyLevel, msv: Record<string, boolean>, 
   const id = randInt(0, 999999);
   const count = parseInt(dropdownValue, 10) || 3;
   const notation = pickActive(msv, NOTATION_MS.options);
-  const direction = pickActive(msv, DIRECTION_MS.options) as "ascending" | "descending";
+  const directionOpt = pickActive(msv, DIRECTION_MS.options);
 
   let values: SignedDec[];
   if (level === "level2") {
@@ -440,7 +525,8 @@ const genOrderQuestion = (level: DifficultyLevel, msv: Record<string, boolean>, 
     values = applySign(mags, msv, level === "level3");
   }
 
-  const built = buildOrderDisplay({ values, direction, notation }, notation);
+  const hasSign = level !== "level1";
+  const built = buildOrderDisplay({ values, directionOpt, notation, hasSign }, notation);
 
   return {
     kind: "worded",
@@ -448,8 +534,8 @@ const genOrderQuestion = (level: DifficultyLevel, msv: Record<string, boolean>, 
     answer: built.answer,
     answerLatex: built.answerLatex,
     working: built.working,
-    _rawValues: { values, direction, notation } as OrderRaw,
-    key: `order-${level}-${values.map(signedStr).join("_")}-${notation}-${direction}-${id}`,
+    _rawValues: { values, directionOpt, notation, hasSign } as OrderRaw,
+    key: `order-${level}-${values.map(signedStr).join("_")}-${notation}-${directionOpt}-${id}`,
     difficulty: level,
   } as unknown as AnyQuestion;
 };
@@ -488,6 +574,13 @@ const resolveAsk = (msv: Record<string, boolean>, previous: "bigger" | "smaller"
   return previous;
 };
 
+// Generalises to however many DIRECTION_MS options are active — keeps the
+// previous wording choice unless exactly one option is now active.
+const resolveDirection = (msv: Record<string, boolean>, previous: string): string => {
+  const activeOpts = DIRECTION_MS.options.filter((o) => isActive(msv, o.value)).map((o) => o.value);
+  return activeOpts.length === 1 ? activeOpts[0] : previous;
+};
+
 const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null => {
   const compareRv = (q as any)._rawValues as CompareRaw | undefined;
   if (compareRv && "a" in compareRv) {
@@ -501,15 +594,10 @@ const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null =>
     // A count change is a structural change (a different number of values) —
     // let ToolShell regenerate rather than trying to reformat in place.
     if (parseInt(qo.dropdownValue, 10) !== orderRv.values.length) return null;
-    const ascActive = isActive(qo.multiSelectValues, "ascending");
-    const descActive = isActive(qo.multiSelectValues, "descending");
-    const direction: OrderRaw["direction"] =
-      ascActive && !descActive ? "ascending" :
-      descActive && !ascActive ? "descending" :
-      orderRv.direction;
+    const directionOpt = resolveDirection(qo.multiSelectValues, orderRv.directionOpt);
     const notation = resolveNotation(qo.multiSelectValues, orderRv.notation);
-    const built = buildOrderDisplay({ values: orderRv.values, direction, notation }, notation);
-    return { ...q, lines: built.lines, answer: built.answer, answerLatex: built.answerLatex, working: built.working, _rawValues: { ...orderRv, direction, notation } } as unknown as AnyQuestion;
+    const built = buildOrderDisplay({ values: orderRv.values, directionOpt, notation, hasSign: orderRv.hasSign }, notation);
+    return { ...q, lines: built.lines, answer: built.answer, answerLatex: built.answerLatex, working: built.working, _rawValues: { ...orderRv, directionOpt, notation } } as unknown as AnyQuestion;
   }
   return null;
 };
@@ -525,6 +613,7 @@ export default function App() {
       infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       reformatQuestion={reformatQuestion}
+      stepRenderer={stepRenderer}
     />
   );
 }

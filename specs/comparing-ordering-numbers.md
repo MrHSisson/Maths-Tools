@@ -19,6 +19,24 @@ no objection was raised; revisit if they feel off in practice.
 - **Question layout**: every question's prompt line and the number(s) line are now separate
   `lines[]` entries (e.g. `"Which is bigger?"` then `"$0.23$ or $0.1$"` on the next line) rather
   than one combined sentence.
+- **Direction (Order)** grew from 2 to 4 wording options — `ascending`/`descending` (mathematical
+  terms) and `smallestToLargest`/`largestToSmallest` (everyday phrasing) — two option-pairs
+  sharing each actual sort direction, all independently toggleable.
+- **Trap type** labels shortened (e.g. "Longer looks smaller" → "Longer trap") so all five fit one
+  row without heavy wrapping.
+- **Worked Example working step**: replaced the column-by-column text narrative with a **place
+  value table** (custom `stepRenderer`) — one row per number as shown in the question (sign /
+  whole / tenths / hundredths / thousandths columns, only as many decimal columns as the widest
+  number needs), the decisive digit circled against each number's closest-value neighbour, and an
+  Order column giving each row's rank. An implicit zero (a number with fewer decimal places than
+  its neighbour) still gets circled, dimmed, when it's the decisive digit — otherwise a trap like
+  `shorterIsSmaller` would show no circle at all on the number that trap is about.
+- **Bug fix**: `wholeNumberPart` pinned to `zeroOnly` could still leak a non-zero whole part
+  through one rare fallback path in the decimal-tail construction (surfaced by a generated
+  question showing `-2.644`/`-2.92` despite "0.__ only" being selected). Fixed at the root — the
+  `clean()` fallback no longer touches the whole part when the mode forbids it; the true dead-end
+  case (anchor already at the max zeroOnly value, …999) now retries the whole chain instead of
+  producing an out-of-mode value.
 
 ---
 
