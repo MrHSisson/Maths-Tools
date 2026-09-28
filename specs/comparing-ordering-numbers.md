@@ -1,9 +1,9 @@
 # Tool Spec: Comparing & Ordering Numbers
 
-**Status:** implemented — `src/tools/Number/ComparingOrderingNumbers.tsx`, registered as
-`enabled: false` (dev-gated) pending a decision on going live. The remaining CONFIRM ranges below
-were finalised at their proposed defaults (whole-number-part 1–9, integer magnitude 1–20) since
-no objection was raised; revisit if they feel off in practice.
+**Status:** implemented — `src/tools/Number/ComparingOrderingNumbers.tsx`, **live** on the landing
+page. The remaining CONFIRM ranges below were finalised at their proposed defaults
+(whole-number-part 1–9, integer magnitude 1–20) since no objection was raised; revisit if they
+feel off in practice.
 
 **Post-implementation changes:**
 - `Notation`, `wholeNumberPart`, and `sign` are all plain 2-cell multiSelect toggle pairs (each

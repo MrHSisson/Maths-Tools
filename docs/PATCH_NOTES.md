@@ -28,8 +28,8 @@ Keep the split even when a session only touches one.
 
 # Maths
 
-## 2026-09-28 — Comparing & Ordering Numbers (Number, dev-gated)
-New dev-gated tool `/comparing-ordering-numbers` (`src/tools/Number/ComparingOrderingNumbers.tsx`,
+## 2026-09-28 — Comparing & Ordering Numbers (Number) — live
+New tool `/comparing-ordering-numbers` (`src/tools/Number/ComparingOrderingNumbers.tsx`,
 `specs/comparing-ordering-numbers.md`) — `Compare` (two numbers) and `Order` (3–6 numbers) built
 from a shared decimal/negative-number engine designed around named, teacher-tailorable
 misconceptions rather than random-shaped numbers. Five `trapType` options (multiSelect, teacher
@@ -46,6 +46,24 @@ QO combination plus archetype-shape correctness for all four decimal traps, on t
 `__test` smoke suite. Follow-up: swapped `Notation` to a weighted multiSelect cycle (Words →
 Mixed → Symbols, so a worksheet can blend both) and `count` (Order) to the freed dropdown slot —
 functionally the same per-level defaults, just different control types.
+
+**Same-session refinements, landing on a place-value-table Worked Example:** `Notation`,
+`wholeNumberPart` and `sign` moved to plain 2-cell toggle pairs (no cycle button); `sign` dropped
+"positive only" for **Negative/Mixed** (Mixed = harder); Compare gained an `ask` pool
+(Bigger/Smaller); Direction (Order) grew to 4 wording options (`ascending`/`descending`/`smallest
+to largest`/`largest to smallest`), each rendering as a full sentence ("Write in ascending
+order:", "Order from smallest to largest:"); Order dropped its Symbols/inequality-chain notation
+entirely (words-only). The Worked Example step replaced its text narrative with a **place-value
+table**: a genuine radix-sort-style column scan (sign → whole → tenths → hundredths →
+thousandths) that splits still-tied numbers by digit value at each column, circling and
+numbering — one row at a time, even when several settle in the same column pass — whichever
+numbers become uniquely determined there. Each step narrates what happened ("Now placed: −0.8 is
+the 3rd smallest." / "Every number still matches here."), highlights the whole column currently
+being compared, and keeps every cell the same fixed size so nothing jumps as circles appear. Fixed
+a real bug along the way: `wholeNumberPart` pinned to `zeroOnly` could still leak a non-zero whole
+part through one fallback path. Verified throughout with the full test suite, targeted scratch
+tests (deleted before commit) proving the column-scan and reveal-ordering logic, and browser
+screenshots checked against the actual generated values. Now **live** on the landing page.
 
 ## 2026-09-23 — Decision Maths: Travelling Salesperson (nearest neighbour) on `DecisionShell`
 New dev-gated tool `/travelling-salesperson` (`src/tools/Decision/TravellingSalesperson.tsx`) —
