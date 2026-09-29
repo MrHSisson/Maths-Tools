@@ -2,7 +2,7 @@ import {
   ToolShell, handleDiagramPrint,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion,
   type ToolMultiSelect, type ToolVariable,
-  randInt, pickActive, weightOf, mStep, tStep, QuestionDisplay, AnswerDisplay, handlePrint,
+  randInt, pickActive, mStep, tStep, QuestionDisplay, AnswerDisplay, handlePrint, type WorkingStep,
 } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -32,6 +32,7 @@ interface RoundingData {
   blankMode: BlankMode;
   plotted: boolean;      // false → students plot the number themselves (Levels 1–2)
   aspect: number;
+  e: number;             // unit exponent (unit = 10^e)
 }
 
 // ── 2. TOOL_CONFIG ────────────────────────────────────────────────────────────
@@ -43,6 +44,13 @@ const POSITION_MS: ToolMultiSelect = {
   options: [
     { value: "midAny", label: "Any position", defaultActive: true, weight: 1 },
     { value: "midExact", label: "Exactly halfway", defaultActive: false, weight: 2 },
+  ],
+};
+const PRECISION_MS: ToolMultiSelect = {
+  key: "precision", label: "Digits past the rounding position",
+  options: [
+    { value: "oneDigit", label: "One extra", sub: "(sits on a mark)", defaultActive: true },
+    { value: "twoDigit", label: "Two extra", sub: "(between marks)", defaultActive: false },
   ],
 };
 const PLOT_MS: ToolMultiSelect = {
@@ -100,8 +108,8 @@ const subTool = (name: string, pool: ToolMultiSelect) => ({
   dropdown: null,
   multiSelect: pool,
   difficultySettings: {
-    level1: { variables: [], multiSelect: [pool, LABEL_L1_MS, PLOT_MS, POSITION_MS] },
-    level2: { variables: [], multiSelect: [pool, BLANK_L2_MS, PLOT_MS, POSITION_MS] },
+    level1: { variables: [], multiSelect: [pool, LABEL_L1_MS, PLOT_MS, PRECISION_MS, POSITION_MS] },
+    level2: { variables: [], multiSelect: [pool, BLANK_L2_MS, PLOT_MS, PRECISION_MS, POSITION_MS] },
     level3: { variables: [], multiSelect: [pool, POSITION_MS] },
   },
 });
@@ -145,6 +153,7 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Decimal places", detail: "1, 2 or 3 d.p. Trailing zeros are kept in answers (e.g. 4.30) because they show the accuracy." },
       { label: "Significant figures", detail: "1, 2 or 3 s.f., including numbers below 1 (leading zeros are not significant) and large numbers." },
       { label: "Number on the line (Levels 1–2)", detail: "'Plotted for them' marks the number on the line. 'Students plot it' leaves the line without a marker — on the whiteboard, 'Show Plot' reveals where the number sits before 'Show Answer' reveals the rounding. On worksheets the marker appears with the answers." },
+      { label: "Digits past the rounding position (Levels 1–2)", detail: "'One extra' puts the number exactly on a mark of the line; 'Two extra' places it between marks so students estimate its position. Nearest 10/100/1000 always use the digits the number naturally has. Level 3 mixes one and two extra digits." },
       { label: "Exactly halfway", detail: "Click to cycle: any position only → mixed → exactly halfway only. Exactly-halfway numbers round up." },
     ],
   },
@@ -152,7 +161,7 @@ const INFO_SECTIONS: InfoSection[] = [
     title: "Modes", icon: "🖥️",
     content: [
       { label: "Whiteboard", detail: "One large question; reveal the answer on demand." },
-      { label: "Worked Example", detail: "Step-by-step: the two boundaries, the halfway value, then which side the number is on." },
+      { label: "Worked Example", detail: "Step-by-step: the rounding digit and the decider (highlighted), the 5-or-more rule, the same result on a number line (boundaries, halfway, number), then the answer." },
       { label: "Worksheet", detail: "Grid of questions with differentiated layout and PDF export." },
     ],
   },
@@ -203,7 +212,7 @@ function buildRounding(t: ToolType, level: DifficultyLevel, ms: Record<string, b
   }
 
   // ── how many digits the number carries below the unit (kk) ──
-  const extra = level === "level3" ? randInt(1, 2) : 1;
+  const extra = level === "level3" ? randInt(1, 2) : pickOpt(ms, PRECISION_MS.options) === "twoDigit" ? 2 : 1;
   const kk = t === "nearest" && e > 0 ? e : extra;
   const half = pickOpt(ms, POSITION_MS.options) === "midExact";
   const kkUsed = half && !(t === "nearest" && e > 0) ? 1 : kk;   // a halfway value is 5 × 10^(kk-1)
@@ -226,7 +235,7 @@ function buildRounding(t: ToolType, level: DifficultyLevel, ms: Record<string, b
   const ansIdx = lowerIdx + (up ? 1 : 0);
 
   return {
-    n, e, half, lowerIdx, N, f, up, pos: rem / scale,
+    n, e, half, lowerIdx, N, f, up, kk: kkUsed, pos: rem / scale,
     numStr: fmtScaled(N, f),
     lowerStr: fmtScaled(lowerIdx, e),
     upperStr: fmtScaled(lowerIdx + 1, e),
@@ -236,14 +245,11 @@ function buildRounding(t: ToolType, level: DifficultyLevel, ms: Record<string, b
   };
 }
 
+const PLACE = ["units", "tens", "hundreds", "thousands"];
 function introStep(t: ToolType, n: number) {
-  if (t === "nearest") {
-    return tStep(n === 0
-      ? "To round to the nearest whole number, find the two whole numbers either side."
-      : `To round to the nearest ${pow10(n)}, find the two multiples of ${pow10(n)} either side.`);
-  }
-  if (t === "dp") return tStep(`Rounding to ${n} decimal place${n > 1 ? "s" : ""} means keeping ${n} digit${n > 1 ? "s" : ""} after the decimal point. Find the two numbers with ${n} d.p. either side.`);
-  return tStep(`The first significant figure is the first non-zero digit. Find the two numbers with ${n} significant figure${n > 1 ? "s" : ""} either side.`);
+  if (t === "nearest") return tStep(`Rounding to the nearest ${n === 0 ? "whole number" : pow10(n)}: the rounding digit is the ${PLACE[n]} digit.`);
+  if (t === "dp") return tStep(`Rounding to ${n} decimal place${n > 1 ? "s" : ""} means keeping ${n} digit${n > 1 ? "s" : ""} after the decimal point. The rounding digit is the last digit you keep.`);
+  return tStep(`The first significant figure is the first non-zero digit. Rounding to ${n} significant figure${n > 1 ? "s" : ""} means keeping ${n} of them; the rounding digit is the last one you keep.`);
 }
 
 function generateQuestion(
@@ -266,16 +272,19 @@ function generateQuestion(
     numStr: r.numStr, lowerStr: r.lowerStr, midStr: r.midStr, upperStr: r.upperStr,
     ticks: r.ticks, ansStr: r.ansStr, up: r.up, pos: r.pos,
     labelMode, blankMode, plotted,
+    e: r.e,
     aspect: 660 / 250,   // same cell shape at every level so page fill / the 12-per-page cap match
   };
 
   const compare = r.half ? "=" : r.up ? "\\gt" : "\\lt";
-  const working = [
+  const decider = Math.floor(r.N / pow10(r.kk - 1)) % 10;   // the digit just after the rounding digit
+  const working: WorkingStep[] = [
     introStep(t, r.n),
-    mStep("The number lies between:", [tex(r.lowerStr), `\\lt ${tex(r.numStr)}`, `\\lt ${tex(r.upperStr)}`]),
-    mStep("The halfway value is:", tex(r.midStr)),
-    mStep("Compare the number with the halfway value:", [tex(r.numStr), `${compare} ${tex(r.midStr)}`]),
-    mStep(r.half ? "Exactly halfway, so round up:" : r.up ? "Above halfway, so round up:" : "Below halfway, so round down:", tex(r.ansStr)),
+    { type: "roundDigits", latex: "", plain: `Rounding digit and decider in ${r.numStr}`, label: "Find the rounding digit (blue), then look at the digit after it — the decider (orange):", extra: { numStr: r.numStr, e: r.e, sf: t === "sf" } },
+    mStep(`The decider is ${decider}, which is ${decider >= 5 ? "5 or more, so round up" : "less than 5, so round down"}:`, `${decider} ${decider >= 5 ? "\\ge" : "\\lt"} 5`),
+    { type: "roundLine", latex: "", plain: `${r.numStr} lies between ${r.lowerStr} and ${r.upperStr}`, label: `On a number line the number sits between ${r.lowerStr} and ${r.upperStr}, and halfway is ${r.midStr}:`, extra: data },
+    mStep(r.half ? "Exactly halfway, so it rounds up:" : r.up ? "Past the halfway value, so it rounds up:" : "Before the halfway value, so it rounds down:", [tex(r.numStr), `${compare} ${tex(r.midStr)}`]),
+    mStep("Answer:", tex(r.ansStr)),
   ];
 
   // Level 3 is a plain text question — ToolShell's standard display, sizing and print.
@@ -288,7 +297,6 @@ function generateQuestion(
       working,
       key: `round-${t}-${level}-${r.numStr}-${r.n}-${Math.floor(Math.random() * 1_000_000)}`,
       difficulty: level,
-      _difficultyScore: weightOf(POSITION_MS.options, r.half ? "midExact" : "midAny"),
       _aspect: data.aspect,
       _printText: prompt,   // used only when a diagram sheet mixes levels (differentiated)
     } as unknown as AnyQuestion;
@@ -305,7 +313,6 @@ function generateQuestion(
     _rounding: data,
     _aspect: data.aspect,
     _densityFloorMm: 30,   // caps a page at 12 diagrams (2 columns × 6 rows)
-    _difficultyScore: weightOf(POSITION_MS.options, r.half ? "midExact" : "midAny"),
     ...(plotted ? {} : { _stagedReveal: "Show Plot" }),   // whiteboard: plot first, then the answer
   } as unknown as AnyQuestion;
 }
@@ -315,7 +322,7 @@ function generateQuestion(
 const X0 = 50, LW = 560, STEP = LW / 10, LY = 150;
 const INK = "#1e293b", BLUE = "#2563eb", GREEN = "#166534";
 
-function RoundingDiagram({ d, showAnswer, withPrompt, idx, preview }: { d: RoundingData; showAnswer: boolean; withPrompt: boolean; idx?: number; preview?: boolean }) {
+function RoundingDiagram({ d, showAnswer, withPrompt, idx, preview, answerIdx }: { d: RoundingData; showAnswer: boolean; withPrompt: boolean; idx?: number; preview?: boolean; answerIdx?: number }) {
   const y0 = withPrompt ? 0 : 60;
   const h = withPrompt ? 250 : 190;
   const mx = X0 + d.pos * LW;
@@ -347,7 +354,8 @@ function RoundingDiagram({ d, showAnswer, withPrompt, idx, preview }: { d: Round
 
   return (
     <svg viewBox={`0 ${y0} 660 ${h}`} style={{ display: "block", width: "100%", height: "auto" }} preserveAspectRatio="xMidYMid meet"
-      {...(idx !== undefined ? { "data-q-index": idx } : {})}>
+      {...(idx !== undefined ? { "data-q-index": idx } : {})}
+      {...(answerIdx !== undefined ? { "data-q-answer-index": answerIdx, className: "hidden" } : {})}>
       {withPrompt && <text x={330} y={36} textAnchor="middle" dominantBaseline="middle" fontSize={promptFs} fontWeight={700} fill="#000">{d.prompt}</text>}
 
       {/* the number — when students plot it themselves it appears at the "Show Plot" step */}
@@ -399,7 +407,14 @@ const questionRenderer = (
 
   // Worksheet cell — the prompt lives inside the SVG so it prints with the diagram.
   if (compact === true) {
-    return <RoundingDiagram d={d} showAnswer={showAnswer} withPrompt idx={idx} />;
+    // The hidden twin (display:none on screen via the `hidden` class, which the print popup
+    // ignores) is what the answer pages print: the same line with the plot/answer drawn on.
+    return (
+      <>
+        <RoundingDiagram d={d} showAnswer={showAnswer} withPrompt idx={idx} />
+        {idx !== undefined && <RoundingDiagram d={d} showAnswer withPrompt answerIdx={idx} />}
+      </>
+    );
   }
 
   // Whiteboard / worked example — prompt as text (respects the size chevrons).
@@ -412,6 +427,67 @@ const questionRenderer = (
       </div>
     </div>
   );
+};
+
+// ── 7. Worked-example steps (custom renderers) ────────────────────────────────
+
+const stepLabelStyle = { textAlign: "left" as const, fontWeight: 600, marginBottom: 8 };
+
+/** The number as digit boxes: rounding digit (blue), decider (orange), the rest greyed. */
+function DigitsView({ numStr, e, sf }: { numStr: string; e: number; sf: boolean }) {
+  const [intPart] = numStr.replace(/,/g, "").split(".");
+  let seenPoint = false, intIdx = 0, fracIdx = 0, seenNonZero = false;
+  const cells = numStr.split("").map((ch, i) => {
+    if (ch === "," || ch === ".") { if (ch === ".") seenPoint = true; return { key: i, sep: ch }; }
+    const exp = seenPoint ? -(++fracIdx) : intPart.length - 1 - intIdx++;
+    if (ch !== "0") seenNonZero = true;
+    const lead = sf && !seenNonZero;      // leading zeros are not significant figures
+    const kind = lead ? "lead" : exp > e ? "kept" : exp === e ? "round" : exp === e - 1 ? "decide" : "dropped";
+    return { key: i, ch, kind };
+  });
+  const palette: Record<string, { bg: string; border: string; color: string }> = {
+    kept: { bg: "#ffffff", border: "#94a3b8", color: "#0f172a" },
+    round: { bg: "#dbeafe", border: "#2563eb", color: "#1d4ed8" },
+    decide: { bg: "#fef3c7", border: "#d97706", color: "#b45309" },
+    dropped: { bg: "#f1f5f9", border: "#cbd5e1", color: "#94a3b8" },
+    lead: { bg: "#f1f5f9", border: "#cbd5e1", color: "#94a3b8" },
+  };
+  return (
+    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", padding: "26px 0", gap: 4 }}>
+      {cells.map(c => "sep" in c && c.sep ? (
+        <span key={c.key} style={{ fontSize: "2rem", fontWeight: 700, color: "#334155", alignSelf: "flex-end", lineHeight: 1.5 }}>{c.sep}</span>
+      ) : (
+        <div key={c.key} style={{ position: "relative" }}>
+          <div style={{ width: "2.6rem", height: "3.2rem", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2rem", fontWeight: 700, borderRadius: 8, border: `2px solid ${palette[(c as any).kind].border}`, background: palette[(c as any).kind].bg, color: palette[(c as any).kind].color }}>{(c as any).ch}</div>
+          {(c as any).kind === "round" && <div style={{ position: "absolute", top: "100%", left: "50%", transform: "translateX(-50%)", whiteSpace: "nowrap", fontSize: "0.8rem", fontWeight: 700, color: "#1d4ed8", marginTop: 4 }}>rounding digit</div>}
+          {(c as any).kind === "decide" && <div style={{ position: "absolute", bottom: "100%", left: "50%", transform: "translateX(-50%)", whiteSpace: "nowrap", fontSize: "0.8rem", fontWeight: 700, color: "#b45309", marginBottom: 4 }}>decider</div>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const stepRenderer = (s: WorkingStep): JSX.Element | null => {
+  if (s.type === "roundDigits") {
+    const x = s.extra as { numStr: string; e: number; sf: boolean };
+    return (
+      <div style={{ width: "100%" }}>
+        <div style={stepLabelStyle}>{s.label}</div>
+        <DigitsView numStr={x.numStr} e={x.e} sf={x.sf} />
+        {x.sf && /^0\./.test(x.numStr) && <div style={{ fontSize: "0.85rem", color: "#64748b", textAlign: "center" }}>Leading zeros are not significant figures.</div>}
+      </div>
+    );
+  }
+  if (s.type === "roundLine") {
+    const d = { ...(s.extra as RoundingData), level: "level1" as DifficultyLevel, labelMode: "ends" as LabelMode, plotted: true };
+    return (
+      <div style={{ width: "100%" }}>
+        <div style={stepLabelStyle}>{s.label}</div>
+        <div style={{ maxWidth: 560, margin: "0 auto" }}><RoundingDiagram d={d} showAnswer={false} withPrompt={false} /></div>
+      </div>
+    );
+  }
+  return null;
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -438,6 +514,7 @@ export default function App() {
       infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       questionRenderer={questionRenderer}
+      stepRenderer={stepRenderer}
       customPrintHandler={printRounding}
       defaults={{ numColumns: 2, maxColumns: 2, numQuestions: 12, collapseWorkingByDefault: true }}
     />
