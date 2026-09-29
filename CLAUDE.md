@@ -491,7 +491,9 @@ defaults?: {
 
 ### Staged reveal — show a preview before the answer
 
-A question may carry `_stagedReveal: "<button label>"` (e.g. `"Show Plot"`). In Whiteboard and Worked Example the reveal button then shows that label first; pressing it sets `qo.preview = true` (on the `QOSnapshot` passed to `questionRenderer`/renderers) so the tool can draw an intermediate state — the next press shows the answer, and "Hide Answer" resets both. New question / reformat also resets it. Worksheets ignore it (renderers should honour `qo.preview` only when `compact !== true`). Reference: `src/tools/Number/Rounding.tsx` ("Students plot it").
+A question may carry `_stagedReveal: "<button label>"` (e.g. `"Show Plot"`). In Whiteboard, fullscreen and Worked Example ToolShell then renders a separate toggle button **inside the question box** (below the renderer output; "Show Plot" ⇄ "Hide Plot"), leaving the toolbar's Show Answer untouched. Pressing it sets `qo.preview = true` (on the `QOSnapshot` passed to `questionRenderer`) so the tool can draw an intermediate state; Show Answer reveals everything, and the button hides once the answer is up. A new question / reformat resets it. Worksheets ignore it (renderers should honour `qo.preview` only when `compact !== true`). Reference: `src/tools/Number/Rounding.tsx` ("Students plot it").
+
+**Per-page cap for diagram worksheets:** set `_densityFloorMm` on a tool's questions to override `handleDiagramPrint`'s default 40 mm density floor — a lower value means taller minimum rows, so fewer per page (30 → 12 per page at 2 columns for a ~2.6:1 diagram). A tool can also wrap `handleDiagramPrint` to adapt `ctx.numColumns` to the question count so a short sheet uses fewer, bigger columns (see `printRounding`).
 
 ### Collapsible working / visualiser panel
 

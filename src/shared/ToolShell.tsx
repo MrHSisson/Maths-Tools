@@ -414,12 +414,14 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const [previewShown, setPreviewShown] = useState(false);
   useEffect(() => { setPreviewShown(false); }, [currentQuestion]);
   const stagedLabel = (currentQuestion as unknown as { _stagedReveal?: string })._stagedReveal;
-  const revealText = (shown: boolean) => shown ? "Hide Answer" : stagedLabel && !previewShown ? stagedLabel : "Show Answer";
-  const revealPress = (shown: boolean, set: (v: boolean) => void) => {
-    if (shown) { set(false); setPreviewShown(false); }
-    else if (stagedLabel && !previewShown) setPreviewShown(true);
-    else set(true);
-  };
+  // The preview button lives inside the question box (not the toolbar's Show Answer).
+  // It hides once the answer is up, since the answer includes the preview.
+  const stagedBtn = (answerShown: boolean) => stagedLabel && !answerShown ? (
+    <button onClick={() => setPreviewShown(p => !p)}
+      className="mt-1 px-5 py-1.5 rounded-lg font-bold text-sm border-2 border-blue-900 text-blue-900 bg-white/70 hover:bg-white flex items-center gap-1.5">
+      <Eye size={14} /> {previewShown ? stagedLabel.replace(/^Show/, "Hide") : stagedLabel}
+    </button>
+  ) : null;
   // Bumped whenever the Worked Example's underlying example genuinely changes
   // (new question, or a reformat) — tells WorkedExampleSteps to reset position
   // back to the start. Step-by-Step/Show All itself lives inside that component.
@@ -1091,9 +1093,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             <button onClick={handleNewQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
               <RefreshCw size={18} /> New Question
             </button>
-            <button onClick={() => mode === "whiteboard" ? revealPress(showWhiteboardAnswer, setShowWhiteboardAnswer) : revealPress(showAnswer, setShowAnswer)}
+            <button onClick={() => mode === "whiteboard" ? setShowWhiteboardAnswer(!showWhiteboardAnswer) : setShowAnswer(!showAnswer)}
               className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
-              <Eye size={18} /> {revealText(mode === "whiteboard" ? showWhiteboardAnswer : showAnswer)}
+              <Eye size={18} /> {(mode === "whiteboard" ? showWhiteboardAnswer : showAnswer) ? "Hide Answer" : "Show Answer"}
             </button>
           </div>
         </div>
@@ -1108,7 +1110,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         {qoEl()}
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
           <button onClick={handleNewQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18} /> New Question</button>
-          <button onClick={() => revealPress(showWhiteboardAnswer, setShowWhiteboardAnswer)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><Eye size={18} /> {revealText(showWhiteboardAnswer)}</button>
+          <button onClick={() => setShowWhiteboardAnswer(a => !a)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><Eye size={18} /> {showWhiteboardAnswer ? "Hide Answer" : "Show Answer"}</button>
         </div>
       </div>
     );
@@ -1156,7 +1158,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           <div className="w-full text-center flex flex-col gap-4 items-center">
             {getInstruction() && !questionRenderer && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold`} style={{ color: "#000" }}>{getInstruction()}</div>}
             {questionRenderer
-              ? questionRenderer(currentQuestion, showWhiteboardAnswer, colorScheme, undefined, undefined, getQOSnapshot(), displayFontSizes[displayFontSize])
+              ? <>{questionRenderer(currentQuestion, showWhiteboardAnswer, colorScheme, undefined, undefined, getQOSnapshot(), displayFontSizes[displayFontSize])}{stagedBtn(showWhiteboardAnswer)}</>
               : <>
                   <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
                   {showWhiteboardAnswer && <div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>
@@ -1176,7 +1178,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           <>
             {getInstruction() && !questionRenderer && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold`} style={{ color: "#000" }}>{getInstruction()}</div>}
             {questionRenderer
-              ? questionRenderer(currentQuestion, showWhiteboardAnswer, colorScheme, false, undefined, { ...getQOSnapshot(), fullscreen: true }, displayFontSizes[displayFontSize])
+              ? <>{questionRenderer(currentQuestion, showWhiteboardAnswer, colorScheme, false, undefined, { ...getQOSnapshot(), fullscreen: true }, displayFontSizes[displayFontSize])}{stagedBtn(showWhiteboardAnswer)}</>
               : <>
                   <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
                   {showWhiteboardAnswer && <div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>
@@ -1307,7 +1309,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             </div>}
             {getInstruction() && !questionRenderer && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold mb-2`} style={{ color: "#000" }}>{getInstruction()}</div>}
             {questionRenderer
-              ? questionRenderer(currentQuestion, showAnswer, colorScheme, false, undefined, getQOSnapshot(), displayFontSizes[displayFontSize])
+              ? <>{questionRenderer(currentQuestion, showAnswer, colorScheme, false, undefined, getQOSnapshot(), displayFontSizes[displayFontSize])}{stagedBtn(showAnswer)}</>
               : <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
             }
           </div>
@@ -1585,8 +1587,8 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                   <button onClick={handleNewQuestion} className="flex-1 px-3 py-2 bg-blue-900 text-white rounded-lg font-bold text-sm shadow-sm hover:bg-blue-800 flex items-center justify-center gap-1.5">
                     <RefreshCw size={14} /> New Question
                   </button>
-                  <button onClick={() => revealPress(showAnswer, setShowAnswer)} className="flex-1 px-3 py-2 bg-blue-900 text-white rounded-lg font-bold text-sm shadow-sm hover:bg-blue-800 flex items-center justify-center gap-1.5">
-                    <Eye size={14} /> {revealText(showAnswer)}
+                  <button onClick={() => setShowAnswer(a => !a)} className="flex-1 px-3 py-2 bg-blue-900 text-white rounded-lg font-bold text-sm shadow-sm hover:bg-blue-800 flex items-center justify-center gap-1.5">
+                    <Eye size={14} /> {showAnswer ? "Hide Answer" : "Show Answer"}
                   </button>
                 </div>
                 <div className="rounded-xl shadow-lg overflow-hidden">

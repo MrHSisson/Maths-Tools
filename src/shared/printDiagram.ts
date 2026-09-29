@@ -96,10 +96,13 @@ export const handleDiagramPrint = (
   // fitting only a few huge squares. Cells are grown back toward natural size at
   // render time (see the per-segment cap), so few-question sheets still get big
   // diagrams without floating in whitespace.
+  // A tool may lower the floor via `_densityFloorMm` on its questions to cap how many
+  // fit on a page (e.g. 12) — a lower floor means taller minimum rows.
+  const floorMm = (questions[0] && (meta(questions[0])._densityFloorMm as number | undefined)) ?? DENSITY_FLOOR_MM;
   const heightsPx = questions.map((_, i) => {
     const secCols = isDiff ? lvls.length : sectionColsArr[i];
     const naturalH = makeCellW(secCols) / aspects[i];
-    return Math.min(naturalH, DENSITY_FLOOR_MM) * pxPerMm;
+    return Math.min(naturalH, floorMm) * pxPerMm;
   });
 
   // In differentiated mode, sectionIdx doubles as each question's level index

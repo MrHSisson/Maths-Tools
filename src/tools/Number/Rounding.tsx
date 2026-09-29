@@ -266,7 +266,7 @@ function generateQuestion(
     numStr: r.numStr, lowerStr: r.lowerStr, midStr: r.midStr, upperStr: r.upperStr,
     ticks: r.ticks, ansStr: r.ansStr, up: r.up, pos: r.pos,
     labelMode, blankMode, plotted,
-    aspect: level === "level3" ? 660 / 130 : 660 / 250,
+    aspect: 660 / 250,   // same cell shape at every level so page fill / the 12-per-page cap match
   };
 
   const compare = r.half ? "=" : r.up ? "\\gt" : "\\lt";
@@ -288,6 +288,7 @@ function generateQuestion(
     difficulty: level,
     _rounding: data,
     _aspect: data.aspect,
+    _densityFloorMm: 30,   // caps a page at 12 diagrams (2 columns × 6 rows)
     _difficultyScore: weightOf(POSITION_MS.options, r.half ? "midExact" : "midAny"),
     ...(plotted ? {} : { _stagedReveal: "Show Plot" }),   // whiteboard: plot first, then the answer
   } as unknown as AnyQuestion;
@@ -410,6 +411,12 @@ const questionRenderer = (
 // APP — leave unchanged
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// Few questions → fewer, bigger columns so the sheet still fills the page (a wide line
+// can only grow with its column width). 5 or fewer go one per row; otherwise the
+// teacher's column count applies. Pages hold at most 12 (see _densityFloorMm).
+const printRounding: typeof handleDiagramPrint = (qs, mode, el, ctx) =>
+  handleDiagramPrint(qs, mode, el, ctx.isDifferentiated ? ctx : { ...ctx, numColumns: qs.length <= 5 ? 1 : ctx.numColumns });
+
 export default function App() {
   return (
     <ToolShell
@@ -417,8 +424,8 @@ export default function App() {
       infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       questionRenderer={questionRenderer}
-      customPrintHandler={handleDiagramPrint}
-      defaults={{ numColumns: 2, maxColumns: 2, collapseWorkingByDefault: true }}
+      customPrintHandler={printRounding}
+      defaults={{ numColumns: 2, maxColumns: 2, numQuestions: 12, collapseWorkingByDefault: true }}
     />
   );
 }
