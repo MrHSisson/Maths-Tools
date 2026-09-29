@@ -28,6 +28,28 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-29 — Rounding (Number) — live
+New tool `/rounding` (`src/tools/Number/Rounding.tsx`, registered `enabled: false`). Three sub-tools —
+Nearest 10/100/1000/whole, Decimal Places (1–3), Significant Figures (1–3). Level 1: number line with
+the number marked and labelled ends + midpoint (QO: "Every mark" labels the whole line). Level 2: same
+line with blank boxes to fill in (QO: "Midpoint only" gives the ends). Level 3: question only. QO
+"Include exact halfway values". All values derived from integers (no float drift); SVG worksheets
+print via `handleDiagramPrint`.
+Follow-up: "Exactly halfway" is now a 2-option weighted pool (ToolShell's click-to-cycle button: any position → mixed → exactly halfway). "Number on the line" (Plotted for them / Students plot it) is its own Levels 1–2 QO, so any labelling combines with either. **New ToolShell concept — staged reveal:** a question may set `_stagedReveal: "<label>"`; the whiteboard/worked-example reveal button then shows that label first ("Show Plot"), exposing `qo.preview` to the renderer, and only the next press shows the answer (Hide resets both). Opt-in per question; worksheets unaffected.
+Follow-up: the staged-reveal button now sits inside the question box (separate from Show Answer). Rounding worksheets: ≤5 questions print one per row (fills the page), otherwise the chosen columns; max 12 per page via new opt-in `_densityFloorMm` in `handleDiagramPrint`; default 12 questions; all levels share one cell shape.
+Follow-up: Level 3 is back to a normal text (`worded`) question — standard display, sizing and text print (scales to fit). Mixed/differentiated diagram sheets print L3 as a text cell via new opt-in `_printText` in `handleDiagramPrint`.
+Follow-up: **Worked Example now teaches the digit rule and the line** — 6 steps: rounding-digit wording, a digit-box step (rounding digit blue, decider orange, dropped digits greyed, s.f. leading zeros noted), the ≥5 / <5 rule, a number-line step (boundaries, halfway, number), the halfway comparison, answer. Custom `stepRenderer` (`roundDigits` / `roundLine` steps). New QO *Digits past the rounding position* (one extra = on a tick / two extra = between ticks) on Levels 1–2. Answer pages now print the plotted line (hidden `data-q-answer-index` twin SVG), including for "Students plot it". "Exactly halfway" no longer feeds the Smart Progressor. Added `specs/rounding.md`.
+Follow-up: dotted line between the rounding digit and decider in the digit step; "Digits past the rounding position" now applies to nearest 10/100/1000 too (Levels 1–2: 3480 on a mark vs 3482 between marks); Level 3 keeps natural digits.
+Follow-up: **Working method selector** (Worked-Example-only dropdown): *Digit rule* (rounding digit + decider + 5-or-more, 4 steps) or *Number line* (two answers either side, halfway, which is closer, 4 steps) — one method per example instead of both. `reformatQuestion` rebuilds the steps for the same question on switch.
+Follow-up: "Exactly halfway" is now a `cycleDisplay` common/rare pool — Off / Mixed (~5%) / Always — so Mixed is genuinely rare on the whiteboard *and* on worksheets (no `weight`, so no Smart Progressor even split).
+Follow-up: new opt-in `ToolMultiSelect.exclusive` (single-choice / radio pool, handled in `MultiSelectSection`); Rounding's *Number line labels*, *Student fills in* and *Number on the line* pools now use it, so a worksheet can't mix them.
+Follow-up: number line drawn larger (bigger marker/labels/boxes, 40-unit answer text, wider caps: whiteboard 442→653 px, worked example 640→900 px); custom Worked-Example step labels no longer bold — they match the standard step text.
+Follow-up: in Worked Example mode the question box no longer shows the answer (text, circle, filled boxes) — it is found by stepping through the working; whiteboard/fullscreen unchanged.
+Fix: the hidden answer-page twin on worksheet cells was drawing on screen (the SVG's inline `display:block` overrode the `hidden` class) — it now sits in a `display:none` wrapper; print still copies the twin.
+New opt-in `defaults.qoColumns: 2`: the Question Options popover lays out in two balanced columns with a thin grey divider (twice as wide, centred under its button). Used by Rounding; applies to the standard popover (whiteboard / example / worksheet); its border is now a 2px mid-grey outline.
+Fix: the advanced worksheet builder updated QO values from a stale copy, so a single-choice (`exclusive`) pool — which sets one option and clears the rest in one click — ended with both selected and stuck; `updateGroup` now takes a function of the latest group. The builder's QO panel also hides `workedExampleOnly` dropdowns (Rounding's working method).
+Final changes: *Number on the line* now defaults to **Students plot it**; nearest options ordered 10 / 100 / 1000 / whole (a difficulty scale); **Rounding taken live** (`enabled: false` removed).
+
 ## 2026-09-28 — Comparing & Ordering Numbers (Number) — live
 New tool `/comparing-ordering-numbers` (`src/tools/Number/ComparingOrderingNumbers.tsx`,
 `specs/comparing-ordering-numbers.md`) — `Compare` (two numbers) and `Order` (3–6 numbers) built

@@ -408,6 +408,20 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   });
   const [showWhiteboardAnswer, setShowWhiteboardAnswer] = useState(false);
   const [showAnswer, setShowAnswer] = useState(false);
+  // Staged reveal — a question may set `_stagedReveal: "<label>"` to insert one step
+  // before the answer (e.g. "Show Plot"). The first press shows the preview (renderers
+  // read qo.preview); the next shows the answer. Hiding the answer resets both.
+  const [previewShown, setPreviewShown] = useState(false);
+  useEffect(() => { setPreviewShown(false); }, [currentQuestion]);
+  const stagedLabel = (currentQuestion as unknown as { _stagedReveal?: string })._stagedReveal;
+  // The preview button lives inside the question box (not the toolbar's Show Answer).
+  // It hides once the answer is up, since the answer includes the preview.
+  const stagedBtn = (answerShown: boolean) => stagedLabel && !answerShown ? (
+    <button onClick={() => setPreviewShown(p => !p)}
+      className="mt-1 px-5 py-1.5 rounded-lg font-bold text-sm border-2 border-blue-900 text-blue-900 bg-white/70 hover:bg-white flex items-center gap-1.5">
+      <Eye size={14} /> {previewShown ? stagedLabel.replace(/^Show/, "Hide") : stagedLabel}
+    </button>
+  ) : null;
   // Bumped whenever the Worked Example's underlying example genuinely changes
   // (new question, or a reformat) — tells WorkedExampleSteps to reset position
   // back to the start. Step-by-Step/Show All itself lives inside that component.
@@ -579,6 +593,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     variables: getVariableValues(),
     dropdownValue: getDropdownValue(),
     multiSelectValues: toolMultiSelect[currentTool] ?? {},
+    preview: previewShown,
   });
 
   const makeQuestion = (): AnyQuestion =>
@@ -682,6 +697,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     // A dropdown flagged workedExampleOnly (e.g. a "Method" choice that only
     // swaps the displayed working) has nothing to offer a printed worksheet.
     hideWorkedExampleOnly: mode === "worksheet",
+    columns: defaults.qoColumns,
   };
 
   const diffQOProps = {
@@ -1143,7 +1159,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           <div className="w-full text-center flex flex-col gap-4 items-center">
             {getInstruction() && !questionRenderer && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold`} style={{ color: "#000" }}>{getInstruction()}</div>}
             {questionRenderer
-              ? questionRenderer(currentQuestion, showWhiteboardAnswer, colorScheme, undefined, undefined, getQOSnapshot(), displayFontSizes[displayFontSize])
+              ? <>{questionRenderer(currentQuestion, showWhiteboardAnswer, colorScheme, undefined, undefined, getQOSnapshot(), displayFontSizes[displayFontSize])}{stagedBtn(showWhiteboardAnswer)}</>
               : <>
                   <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
                   {showWhiteboardAnswer && <div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>
@@ -1163,7 +1179,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           <>
             {getInstruction() && !questionRenderer && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold`} style={{ color: "#000" }}>{getInstruction()}</div>}
             {questionRenderer
-              ? questionRenderer(currentQuestion, showWhiteboardAnswer, colorScheme, false, undefined, { ...getQOSnapshot(), fullscreen: true }, displayFontSizes[displayFontSize])
+              ? <>{questionRenderer(currentQuestion, showWhiteboardAnswer, colorScheme, false, undefined, { ...getQOSnapshot(), fullscreen: true }, displayFontSizes[displayFontSize])}{stagedBtn(showWhiteboardAnswer)}</>
               : <>
                   <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
                   {showWhiteboardAnswer && <div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>
@@ -1294,7 +1310,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             </div>}
             {getInstruction() && !questionRenderer && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold mb-2`} style={{ color: "#000" }}>{getInstruction()}</div>}
             {questionRenderer
-              ? questionRenderer(currentQuestion, showAnswer, colorScheme, false, undefined, getQOSnapshot(), displayFontSizes[displayFontSize])
+              ? <>{questionRenderer(currentQuestion, showAnswer, colorScheme, false, undefined, getQOSnapshot(), displayFontSizes[displayFontSize])}{stagedBtn(showAnswer)}</>
               : <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
             }
           </div>

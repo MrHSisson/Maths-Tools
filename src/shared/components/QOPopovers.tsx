@@ -105,7 +105,7 @@ export const MultiSelectSection = ({
   values,
   onChange,
 }: {
-  multiSelect: { key: string; label: string; info?: string; options: { value: string; label: string; sub?: string; divider?: boolean }[]; allowEmpty?: boolean };
+  multiSelect: { key: string; label: string; info?: string; options: { value: string; label: string; sub?: string; divider?: boolean }[]; allowEmpty?: boolean; exclusive?: true };
   values: Record<string, boolean>;
   onChange: (k: string, v: boolean) => void;
 }) => {
@@ -131,7 +131,12 @@ export const MultiSelectSection = ({
           return (
             <button
               key={opt.value}
-              onClick={() => { if (!isLast) onChange(opt.value, !isActive); }}
+              onClick={() => {
+                if (multiSelect.exclusive) {
+                  // single-choice pool: picking an option turns every other one off
+                  if (!isActive) multiSelect.options.forEach(o => onChange(o.value, o.value === opt.value));
+                } else if (!isLast) onChange(opt.value, !isActive);
+              }}
               className={`flex-1 min-w-0 px-3 py-2 text-sm font-bold transition-colors flex flex-col items-center justify-center text-center ${opt.divider ? "border-l-2 border-gray-800" : ""} ${isActive ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
             >
               <span className="leading-tight">{opt.label}</span>
@@ -215,7 +220,7 @@ const MultiSelectGroups = ({
   values,
   onChange,
 }: {
-  groups: { key: string; label: string; info?: string; options: { value: string; label: string; sub?: string; divider?: boolean; weight?: number }[]; allowEmpty?: boolean; cycleDisplay?: true; cycleStateLabels?: [string, string, string] }[];
+  groups: { key: string; label: string; info?: string; options: { value: string; label: string; sub?: string; divider?: boolean; weight?: number }[]; allowEmpty?: boolean; exclusive?: true; cycleDisplay?: true; cycleStateLabels?: [string, string, string] }[];
   values: Record<string, boolean>;
   onChange: (k: string, v: boolean) => void;
 }) => {
@@ -274,6 +279,7 @@ export const StandardQOPopover = ({
   multiSelectValues,
   onMultiSelectChange,
   hideWorkedExampleOnly,
+  columns,
 }: {
   variables: { key: string; label: string }[];
   variableValues: Record<string, boolean>;
@@ -281,7 +287,7 @@ export const StandardQOPopover = ({
   dropdown: { key: string; label: string; useTwoLineButtons?: boolean; options: { value: string; label: string; sub?: string }[]; workedExampleOnly?: boolean } | null;
   dropdownValue: string;
   onDropdownChange: (v: string) => void;
-  multiSelect: { key: string; label: string; options: { value: string; label: string }[]; allowEmpty?: boolean }[];
+  multiSelect: { key: string; label: string; options: { value: string; label: string }[]; allowEmpty?: boolean; exclusive?: true }[];
   multiSelectValues: Record<string, boolean>;
   onMultiSelectChange: (k: string, v: boolean) => void;
   /** Hides a dropdown flagged `workedExampleOnly` — it only changes the
@@ -289,15 +295,22 @@ export const StandardQOPopover = ({
    *  true from the Worksheet mode QO popover; omit (or false) in
    *  Whiteboard/Worked Example mode, where it still applies. */
   hideWorkedExampleOnly?: boolean;
+  /** 2 → a tool with many options lays its sections out in two balanced columns with a thin
+   *  grey divider, in a popover twice as wide (centred under its button so it stays on screen). */
+  columns?: 1 | 2;
 }) => {
   const { open, setOpen, ref } = usePopover();
+  const twoCol = columns === 2;
   const dd = dropdown && !(hideWorkedExampleOnly && dropdown.workedExampleOnly) ? dropdown : null;
   const hasContent = variables.length > 0 || dd !== null || multiSelect.length > 0;
   return (
     <div className="relative" ref={ref}>
       <PopoverButton open={open} onClick={() => setOpen(!open)} />
       {open && (
-        <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-[26rem] p-5 flex flex-col gap-5">
+        <div
+          className={`absolute top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 p-5 ${twoCol ? "left-1/2 -translate-x-1/2 border-2 !border-gray-400 [&>*]:break-inside-avoid [&>*]:mb-5" : "left-0 min-w-[26rem] flex flex-col gap-5"}`}
+          style={twoCol ? { width: "min(54rem, calc(100vw - 2rem))", columnCount: 2, columnGap: "2.5rem", columnRule: "1px solid #d1d5db" } : undefined}
+        >
           {dd && <DropdownSection dropdown={dd} value={dropdownValue} onChange={onDropdownChange} />}
           <MultiSelectGroups groups={multiSelect} values={multiSelectValues} onChange={onMultiSelectChange} />
           {variables.length > 0 && <VariablesSection variables={variables} values={variableValues} onChange={onVariableChange} />}
@@ -381,6 +394,7 @@ export const InlineQOPanel = ({
   onDropdownChange,
   multiSelectValues,
   onMultiSelectChange,
+  hideWorkedExampleOnly,
 }: {
   toolEntry: ToolEntry;
   level: DifficultyLevel;
@@ -390,8 +404,12 @@ export const InlineQOPanel = ({
   onDropdownChange: (v: string) => void;
   multiSelectValues: Record<string, boolean>;
   onMultiSelectChange: (k: string, v: boolean) => void;
+  /** Hides a dropdown flagged `workedExampleOnly` (the worksheet builder passes true — it only
+   *  changes the displayed working, which a printed worksheet doesn't show). */
+  hideWorkedExampleOnly?: boolean;
 }) => {
-  const dd = toolEntry.difficultySettings?.[level]?.dropdown ?? toolEntry.dropdown;
+  const rawDd = toolEntry.difficultySettings?.[level]?.dropdown ?? toolEntry.dropdown;
+  const dd = rawDd && !(hideWorkedExampleOnly && rawDd.workedExampleOnly) ? rawDd : null;
   const vars = toolEntry.difficultySettings?.[level]?.variables ?? toolEntry.variables;
   const ms = normalizeMultiSelect(toolEntry.difficultySettings?.[level]?.multiSelect ?? toolEntry.multiSelect);
   const hasContent = dd !== null || (vars?.length ?? 0) > 0 || ms.length > 0;

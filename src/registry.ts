@@ -66,6 +66,7 @@ export const CATEGORIES: CategoryMeta[] = [
       { id: 'fractions-mult-div', path: '/multiply-divide-fractions', name: 'Multiplying & Dividing Fractions', description: 'Multiply and divide fractions and mixed numbers using Keep, Flip, Change', load: () => import('./tools/Number/FractionMultDiv') },
       { id: 'percentages', path: '/percentages', name: 'Percentages', description: 'Find percentages of amounts, calculate percentage increase/decrease, and work backwards with reverse percentages', load: () => import('./tools/Number/Percentages') },
       { id: 'comparing-ordering-numbers', path: '/comparing-ordering-numbers', name: 'Comparing & Ordering Numbers', description: 'Compare and order decimals and negative numbers, with teacher-tailorable misconception traps and a step-by-step place-value table.', load: () => import('./tools/Number/ComparingOrderingNumbers') },
+      { id: 'rounding', path: '/rounding', name: 'Rounding', description: 'Round to the nearest 10, 100, 1000, decimal places and significant figures, using labelled and blank number lines.', load: () => import('./tools/Number/Rounding') },
     ],
   },
   {

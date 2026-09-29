@@ -264,8 +264,11 @@ export const WorksheetBuilder = ({
     setWorksheet((prev) => prev.map((w, i) => (i === idx ? replacement! : w)));
   };
 
-  const updateGroup = (id: number, patch: Partial<BuilderGroup>) =>
-    setGroups((gs) => gs.map((g) => (g.id === id ? { ...g, ...patch } : g)));
+  // `patch` may be a function of the latest group, so several changes fired back-to-back from one
+  // click (e.g. a single-choice pool turning its other options off) compose instead of each
+  // overwriting the last from a stale copy.
+  const updateGroup = (id: number, patch: Partial<BuilderGroup> | ((g: BuilderGroup) => Partial<BuilderGroup>)) =>
+    setGroups((gs) => gs.map((g) => (g.id === id ? { ...g, ...(typeof patch === "function" ? patch(g) : patch) } : g)));
 
   const toggleDivider = (groupId: number) => {
     setDividers((prev) => {
@@ -540,11 +543,12 @@ export const WorksheetBuilder = ({
                 toolEntry={config.tools[selectedGroup.tool]}
                 level={selectedGroup.level}
                 variables={selectedGroup.variables}
-                onVariableChange={(k, v) => updateGroup(selectedGroup.id, { variables: { ...selectedGroup.variables, [k]: v } })}
+                onVariableChange={(k, v) => updateGroup(selectedGroup.id, g => ({ variables: { ...g.variables, [k]: v } }))}
                 dropdownValue={selectedGroup.dropdownValue}
                 onDropdownChange={v => updateGroup(selectedGroup.id, { dropdownValue: v })}
                 multiSelectValues={selectedGroup.multiSelectValues}
-                onMultiSelectChange={(k, v) => updateGroup(selectedGroup.id, { multiSelectValues: { ...selectedGroup.multiSelectValues, [k]: v } })}
+                onMultiSelectChange={(k, v) => updateGroup(selectedGroup.id, g => ({ multiSelectValues: { ...g.multiSelectValues, [k]: v } }))}
+                hideWorkedExampleOnly
               />
             </div>
           ) : (

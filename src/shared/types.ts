@@ -88,6 +88,12 @@ export interface ToolMultiSelect {
    *  state). Default false — the last active option cannot be turned off,
    *  for "pick at least one type" pools. */
   allowEmpty?: boolean;
+  /** Single-choice pool: exactly one option is active at a time — picking one turns the
+   *  others off (radio behaviour), so the generator's `pickActive` always sees one
+   *  option. Use for mutually exclusive settings that need a level's dropdown slot
+   *  (a level has only one `dropdown`) or that sit alongside other pools. Give exactly
+   *  one option `defaultActive: true`. */
+  exclusive?: true;
   /** Renders this exactly-2-option pool as the compact None/Mixed/Exclusive
    *  cycle button (see `CycleSelect` in QOPopovers.tsx), same visual as a
    *  weighted 2-option pool gets automatically — but WITHOUT opting into the
@@ -168,6 +174,9 @@ export interface QOSnapshot {
    *  than drawing it on the diagram) do so in fullscreen too, where compact is
    *  otherwise indistinguishable from the worked-example view. */
   fullscreen?: boolean;
+  /** True once the staged-reveal preview has been shown (question sets `_stagedReveal`),
+   *  before the answer itself. Whiteboard / worked-example only. */
+  preview?: boolean;
 }
 
 export interface ToolShellDefaults {
@@ -180,6 +189,7 @@ export interface ToolShellDefaults {
   maxColumns?: number;         // caps the column input maximum (e.g. 3 prevents 4-col)
   comingSoonLevels?: DifficultyLevel[]; // levels shown but disabled with "Coming soon" tooltip
   hideFontControls?: boolean;  // hides the text size up/down chevrons (e.g. diagram-only tools)
+  qoColumns?: 2;                       // lay the Question Options popover out in two columns (tools with many options)
   collapseWorkingByDefault?: boolean; // whiteboard opens with the working/visualiser panel collapsed (still re-openable)
   /** Worked Example mode's step layout. "single" (default) replaces the card
    *  each press, with a dot-strip to jump between steps. "stacked" builds a
