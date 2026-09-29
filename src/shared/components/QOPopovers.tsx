@@ -105,7 +105,7 @@ export const MultiSelectSection = ({
   values,
   onChange,
 }: {
-  multiSelect: { key: string; label: string; info?: string; options: { value: string; label: string; sub?: string; divider?: boolean }[]; allowEmpty?: boolean };
+  multiSelect: { key: string; label: string; info?: string; options: { value: string; label: string; sub?: string; divider?: boolean }[]; allowEmpty?: boolean; exclusive?: true };
   values: Record<string, boolean>;
   onChange: (k: string, v: boolean) => void;
 }) => {
@@ -131,7 +131,12 @@ export const MultiSelectSection = ({
           return (
             <button
               key={opt.value}
-              onClick={() => { if (!isLast) onChange(opt.value, !isActive); }}
+              onClick={() => {
+                if (multiSelect.exclusive) {
+                  // single-choice pool: picking an option turns every other one off
+                  if (!isActive) multiSelect.options.forEach(o => onChange(o.value, o.value === opt.value));
+                } else if (!isLast) onChange(opt.value, !isActive);
+              }}
               className={`flex-1 min-w-0 px-3 py-2 text-sm font-bold transition-colors flex flex-col items-center justify-center text-center ${opt.divider ? "border-l-2 border-gray-800" : ""} ${isActive ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
             >
               <span className="leading-tight">{opt.label}</span>
@@ -215,7 +220,7 @@ const MultiSelectGroups = ({
   values,
   onChange,
 }: {
-  groups: { key: string; label: string; info?: string; options: { value: string; label: string; sub?: string; divider?: boolean; weight?: number }[]; allowEmpty?: boolean; cycleDisplay?: true; cycleStateLabels?: [string, string, string] }[];
+  groups: { key: string; label: string; info?: string; options: { value: string; label: string; sub?: string; divider?: boolean; weight?: number }[]; allowEmpty?: boolean; exclusive?: true; cycleDisplay?: true; cycleStateLabels?: [string, string, string] }[];
   values: Record<string, boolean>;
   onChange: (k: string, v: boolean) => void;
 }) => {
@@ -281,7 +286,7 @@ export const StandardQOPopover = ({
   dropdown: { key: string; label: string; useTwoLineButtons?: boolean; options: { value: string; label: string; sub?: string }[]; workedExampleOnly?: boolean } | null;
   dropdownValue: string;
   onDropdownChange: (v: string) => void;
-  multiSelect: { key: string; label: string; options: { value: string; label: string }[]; allowEmpty?: boolean }[];
+  multiSelect: { key: string; label: string; options: { value: string; label: string }[]; allowEmpty?: boolean; exclusive?: true }[];
   multiSelectValues: Record<string, boolean>;
   onMultiSelectChange: (k: string, v: boolean) => void;
   /** Hides a dropdown flagged `workedExampleOnly` — it only changes the

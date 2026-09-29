@@ -68,7 +68,7 @@ const PRECISION_MS: ToolMultiSelect = {
   ],
 };
 const PLOT_MS: ToolMultiSelect = {
-  key: "plotMode", label: "Number on the line",
+  key: "plotMode", label: "Number on the line", exclusive: true,
   options: [
     { value: "auto", label: "Plotted for them", defaultActive: true },
     { value: "student", label: "Students plot it", sub: "(reveal the plot, then the answer)", defaultActive: false },
@@ -102,14 +102,14 @@ const SF_MS: ToolMultiSelect = {
 };
 
 const LABEL_L1_MS: ToolMultiSelect = {
-  key: "labelMode", label: "Number line labels",
+  key: "labelMode", label: "Number line labels", exclusive: true,
   options: [
     { value: "ends", label: "Ends & midpoint", defaultActive: true },
     { value: "every", label: "Every mark", sub: "(just see where it sits)", defaultActive: false },
   ],
 };
 const BLANK_L2_MS: ToolMultiSelect = {
-  key: "blankMode", label: "Student fills in",
+  key: "blankMode", label: "Student fills in", exclusive: true,
   options: [
     { value: "blank", label: "Ends & midpoint", defaultActive: true },
     { value: "endsGiven", label: "Midpoint only", sub: "(ends given)", defaultActive: false },

@@ -88,6 +88,12 @@ export interface ToolMultiSelect {
    *  state). Default false — the last active option cannot be turned off,
    *  for "pick at least one type" pools. */
   allowEmpty?: boolean;
+  /** Single-choice pool: exactly one option is active at a time — picking one turns the
+   *  others off (radio behaviour), so the generator's `pickActive` always sees one
+   *  option. Use for mutually exclusive settings that need a level's dropdown slot
+   *  (a level has only one `dropdown`) or that sit alongside other pools. Give exactly
+   *  one option `defaultActive: true`. */
+  exclusive?: true;
   /** Renders this exactly-2-option pool as the compact None/Mixed/Exclusive
    *  cycle button (see `CycleSelect` in QOPopovers.tsx), same visual as a
    *  weighted 2-option pool gets automatically — but WITHOUT opting into the

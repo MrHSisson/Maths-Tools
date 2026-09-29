@@ -30,6 +30,8 @@ Accuracy pools: nearest `1000 / 100 / 10 / whole number`; d.p. `1 / 2 / 3`; s.f.
 
 ## 3. Levels and QO
 
+The *Number line labels*, *Student fills in* and *Number on the line* pools are **single-choice** (`exclusive: true`) — one option at a time, never mixed within a sheet.
+
 - **Level 1 — labelled line.** Number marked between two boundaries; ends + midpoint labelled. QO *Number line labels*: `Ends & midpoint` (default) / `Every mark` (all 11 ticks labelled).
 - **Level 2 — blank line.** Same line, empty boxes. QO *Student fills in*: `Ends & midpoint` (default) / `Midpoint only` (ends given).
 - **Level 3 — question only** (plain worded text; standard ToolShell display and text print).

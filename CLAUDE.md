@@ -882,6 +882,8 @@ property and reject/retry any draw that fails it (see `SpeedDistanceTime.tsx`'s
 `pp`, so rejecting that one case guarantees every decimals-tier answer is a genuine decimal).
 Reference: `DIFFICULTY_TIER_L2` in `src/tools/Proportion/SpeedDistanceTime.tsx`.
 
+**`exclusive: true` — a single-choice pool.** Set it on a `ToolMultiSelect` when its options are mutually exclusive settings, not a mixable pool (e.g. "labelled line" vs "every mark"): picking one option turns the others off (radio behaviour) and the generator's `pickActive` always sees exactly one. Use it instead of a `dropdown` when a level already uses its one dropdown slot, or when several such choices sit side by side. Give exactly one option `defaultActive: true`. Reference: the label / fill-in / plot pools in `src/tools/Number/Rounding.tsx`.
+
 **`dropdown.workedExampleOnly`** — set this `true` only when the dropdown changes nothing but
 the displayed working (a "Method" choice like Ratio Table vs Decimal, or FOIL vs Grid arrows) —
 the question and answer are identical across every option. ToolShell then hides it from the
