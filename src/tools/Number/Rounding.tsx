@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import {
   ToolShell, handleDiagramPrint,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion,
@@ -280,7 +281,7 @@ function generateQuestion(
   const decider = Math.floor(r.N / pow10(r.kk - 1)) % 10;   // the digit just after the rounding digit
   const working: WorkingStep[] = [
     introStep(t, r.n),
-    { type: "roundDigits", latex: "", plain: `Rounding digit and decider in ${r.numStr}`, label: "Find the rounding digit (blue), then look at the digit after it — the decider (orange):", extra: { numStr: r.numStr, e: r.e, sf: t === "sf" } },
+    { type: "roundDigits", latex: "", plain: `Rounding digit and decider in ${r.numStr}`, label: "Find the rounding digit (blue), draw a dotted line after it, then look at the digit that follows — the decider (orange):", extra: { numStr: r.numStr, e: r.e, sf: t === "sf" } },
     mStep(`The decider is ${decider}, which is ${decider >= 5 ? "5 or more, so round up" : "less than 5, so round down"}:`, `${decider} ${decider >= 5 ? "\\ge" : "\\lt"} 5`),
     { type: "roundLine", latex: "", plain: `${r.numStr} lies between ${r.lowerStr} and ${r.upperStr}`, label: `On a number line the number sits between ${r.lowerStr} and ${r.upperStr}, and halfway is ${r.midStr}:`, extra: data },
     mStep(r.half ? "Exactly halfway, so it rounds up:" : r.up ? "Past the halfway value, so it rounds up:" : "Before the halfway value, so it rounds down:", [tex(r.numStr), `${compare} ${tex(r.midStr)}`]),
@@ -457,11 +458,15 @@ function DigitsView({ numStr, e, sf }: { numStr: string; e: number; sf: boolean 
       {cells.map(c => "sep" in c && c.sep ? (
         <span key={c.key} style={{ fontSize: "2rem", fontWeight: 700, color: "#334155", alignSelf: "flex-end", lineHeight: 1.5 }}>{c.sep}</span>
       ) : (
-        <div key={c.key} style={{ position: "relative" }}>
+        <Fragment key={c.key}>
+        {/* the dotted "cut" line between the rounding digit and the decider */}
+        {(c as any).kind === "decide" && <div style={{ alignSelf: "stretch", borderLeft: "3px dotted #334155", margin: "-8px 6px" }} />}
+        <div style={{ position: "relative" }}>
           <div style={{ width: "2.6rem", height: "3.2rem", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2rem", fontWeight: 700, borderRadius: 8, border: `2px solid ${palette[(c as any).kind].border}`, background: palette[(c as any).kind].bg, color: palette[(c as any).kind].color }}>{(c as any).ch}</div>
           {(c as any).kind === "round" && <div style={{ position: "absolute", top: "100%", left: "50%", transform: "translateX(-50%)", whiteSpace: "nowrap", fontSize: "0.8rem", fontWeight: 700, color: "#1d4ed8", marginTop: 4 }}>rounding digit</div>}
           {(c as any).kind === "decide" && <div style={{ position: "absolute", bottom: "100%", left: "50%", transform: "translateX(-50%)", whiteSpace: "nowrap", fontSize: "0.8rem", fontWeight: 700, color: "#b45309", marginBottom: 4 }}>decider</div>}
         </div>
+        </Fragment>
       ))}
     </div>
   );
