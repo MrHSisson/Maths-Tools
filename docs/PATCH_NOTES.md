@@ -28,6 +28,14 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-09-29 — Rounding (Number) — dev-gated
+New tool `/rounding` (`src/tools/Number/Rounding.tsx`, registered `enabled: false`). Three sub-tools —
+Nearest 10/100/1000/whole, Decimal Places (1–3), Significant Figures (1–3). Level 1: number line with
+the number marked and labelled ends + midpoint (QO: "Every mark" labels the whole line). Level 2: same
+line with blank boxes to fill in (QO: "Midpoint only" gives the ends). Level 3: question only. QO
+"Include exact halfway values". All values derived from integers (no float drift); SVG worksheets
+print via `handleDiagramPrint`.
+
 ## 2026-09-28 — Comparing & Ordering Numbers (Number) — live
 New tool `/comparing-ordering-numbers` (`src/tools/Number/ComparingOrderingNumbers.tsx`,
 `specs/comparing-ordering-numbers.md`) — `Compare` (two numbers) and `Order` (3–6 numbers) built
