@@ -145,7 +145,11 @@ export const handleDiagramPrint = (
     // On answer pages, prefer the tool's answer diagram (solution drawn on); it
     // already carries the answer visually, so the text answer line is dropped.
     const hasAnsSvg = showAns && !!answerSvgList[qi];
-    const diag = hasAnsSvg ? answerSvgList[qi] : svgList[qi];
+    // A tool may print a text-only cell (no SVG) via `_printText` — used when a diagram
+    // sheet mixes in plain-text questions (e.g. a differentiated sheet).
+    const printText = meta(questions[qi])._printText as string | undefined;
+    const diag = hasAnsSvg ? answerSvgList[qi]
+      : svgList[qi] ?? (printText ? `<div class="cell-text">${esc(printText)}</div>` : undefined);
     return `<div class="cell" style="width:${cW}mm;height:${cH}mm;">`
       + `<div class="cell-num">${displayNum}</div>`
       + `<div class="cell-diag">${diag ?? ""}</div>`
@@ -257,6 +261,7 @@ export const handleDiagramPrint = (
   .cell-num{position:absolute;top:1.5mm;left:2mm;font-size:2.8mm;font-weight:700;color:#374151}
   .cell-diag{width:100%;flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
   .cell-diag svg{width:100%;height:100%;overflow:visible}
+  .cell-text{font-size:4.6mm;font-weight:700;text-align:center;padding:0 2mm}
   .answer{font-size:3mm;font-weight:700;color:#059669;text-align:center;flex-shrink:0;margin-top:1mm}
 </style>
 </head><body>${body}</body></html>`;

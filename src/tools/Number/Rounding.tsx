@@ -2,7 +2,7 @@ import {
   ToolShell, handleDiagramPrint,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion,
   type ToolMultiSelect, type ToolVariable,
-  randInt, pickActive, weightOf, mStep, tStep,
+  randInt, pickActive, weightOf, mStep, tStep, QuestionDisplay, AnswerDisplay, handlePrint,
 } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -278,6 +278,22 @@ function generateQuestion(
     mStep(r.half ? "Exactly halfway, so round up:" : r.up ? "Above halfway, so round up:" : "Below halfway, so round down:", tex(r.ansStr)),
   ];
 
+  // Level 3 is a plain text question — ToolShell's standard display, sizing and print.
+  if (level === "level3") {
+    return {
+      kind: "worded",
+      lines: [`Round $${tex(r.numStr)}$ to ${targetPhrase(t, r.n)}.`],
+      answer: r.ansStr,
+      answerLatex: tex(r.ansStr),
+      working,
+      key: `round-${t}-${level}-${r.numStr}-${r.n}-${Math.floor(Math.random() * 1_000_000)}`,
+      difficulty: level,
+      _difficultyScore: weightOf(POSITION_MS.options, r.half ? "midExact" : "midAny"),
+      _aspect: data.aspect,
+      _printText: prompt,   // used only when a diagram sheet mixes levels (differentiated)
+    } as unknown as AnyQuestion;
+  }
+
   return {
     kind: "simple",
     display: prompt,
@@ -365,30 +381,25 @@ function RoundingDiagram({ d, showAnswer, withPrompt, idx, preview }: { d: Round
   );
 }
 
-/** Level 3 worksheet cell — text only, but as an SVG so the shared diagram print can clone it. */
-function PromptSvg({ d, showAnswer, idx }: { d: RoundingData; showAnswer: boolean; idx?: number }) {
-  const fs = Math.min(34, 620 / (d.prompt.length * 0.56));
-  return (
-    <svg viewBox="0 0 660 130" style={{ display: "block", width: "100%", height: "auto" }} preserveAspectRatio="xMidYMid meet"
-      {...(idx !== undefined ? { "data-q-index": idx } : {})}>
-      <text x={330} y={48} textAnchor="middle" dominantBaseline="middle" fontSize={fs} fontWeight={700} fill="#000">{d.prompt}</text>
-      <text x={330} y={100} textAnchor="middle" dominantBaseline="middle" fontSize={28} fontWeight={700} fill={GREEN}
-        opacity={showAnswer ? 1 : 0}>{`= ${d.ansStr}`}</text>
-    </svg>
-  );
-}
-
 const questionRenderer = (
   q: AnyQuestion, showAnswer: boolean, _cs: string, compact?: boolean, idx?: number, qo?: { preview?: boolean }, fontClass?: string,
 ): JSX.Element | null => {
+  // Level 3 — the standard text question (plus the answer when revealed).
+  if (q.kind === "worded") {
+    const fc = fontClass ?? "text-xl";
+    return (
+      <div className="w-full flex flex-col items-center gap-2">
+        <QuestionDisplay q={q} cls={fc} />
+        {showAnswer && <div className={`${fc} font-bold`} style={{ color: GREEN }}><AnswerDisplay q={q} /></div>}
+      </div>
+    );
+  }
   const d = (q as any)._rounding as RoundingData | undefined;
   if (!d) return null;
 
   // Worksheet cell — the prompt lives inside the SVG so it prints with the diagram.
   if (compact === true) {
-    return d.level === "level3"
-      ? <PromptSvg d={d} showAnswer={showAnswer} idx={idx} />
-      : <RoundingDiagram d={d} showAnswer={showAnswer} withPrompt idx={idx} />;
+    return <RoundingDiagram d={d} showAnswer={showAnswer} withPrompt idx={idx} />;
   }
 
   // Whiteboard / worked example — prompt as text (respects the size chevrons).
@@ -396,13 +407,9 @@ const questionRenderer = (
   return (
     <div className="w-full flex flex-col items-center gap-3">
       <div className={`${fc} font-bold`} style={{ color: "#000" }}>{d.prompt}</div>
-      {d.level === "level3"
-        ? (showAnswer && <div className={`${fc} font-bold`} style={{ color: GREEN }}>{`= ${d.ansStr}`}</div>)
-        : (
-          <div style={{ width: "100%", maxWidth: compact === false ? 640 : 460, margin: "0 auto" }}>
-            <RoundingDiagram d={d} showAnswer={showAnswer} withPrompt={false} preview={qo?.preview} />
-          </div>
-        )}
+      <div style={{ width: "100%", maxWidth: compact === false ? 640 : 460, margin: "0 auto" }}>
+        <RoundingDiagram d={d} showAnswer={showAnswer} withPrompt={false} preview={qo?.preview} />
+      </div>
     </div>
   );
 };
@@ -414,8 +421,15 @@ const questionRenderer = (
 // Few questions → fewer, bigger columns so the sheet still fills the page (a wide line
 // can only grow with its column width). 5 or fewer go one per row; otherwise the
 // teacher's column count applies. Pages hold at most 12 (see _densityFloorMm).
-const printRounding: typeof handleDiagramPrint = (qs, mode, el, ctx) =>
+// A pure Level 3 sheet is plain text, so it goes through the standard text print (which
+// already scales to fit).
+const printRounding: typeof handleDiagramPrint = (qs, mode, el, ctx) => {
+  if (!ctx.isDifferentiated && qs.length > 0 && qs.every(q => q.difficulty === "level3")) {
+    handlePrint(qs, ctx.toolName, ctx.difficulty, false, ctx.diffLevels, ctx.numColumns, ctx.instruction, mode, ctx.layout, ctx.showBorders, ctx.diffSameSize ?? true, ctx.diffColorLevels ?? true);
+    return;
+  }
   handleDiagramPrint(qs, mode, el, ctx.isDifferentiated ? ctx : { ...ctx, numColumns: qs.length <= 5 ? 1 : ctx.numColumns });
+};
 
 export default function App() {
   return (

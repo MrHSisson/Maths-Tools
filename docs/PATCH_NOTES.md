@@ -37,6 +37,7 @@ line with blank boxes to fill in (QO: "Midpoint only" gives the ends). Level 3: 
 print via `handleDiagramPrint`.
 Follow-up: "Exactly halfway" is now a 2-option weighted pool (ToolShell's click-to-cycle button: any position → mixed → exactly halfway). "Number on the line" (Plotted for them / Students plot it) is its own Levels 1–2 QO, so any labelling combines with either. **New ToolShell concept — staged reveal:** a question may set `_stagedReveal: "<label>"`; the whiteboard/worked-example reveal button then shows that label first ("Show Plot"), exposing `qo.preview` to the renderer, and only the next press shows the answer (Hide resets both). Opt-in per question; worksheets unaffected.
 Follow-up: the staged-reveal button now sits inside the question box (separate from Show Answer). Rounding worksheets: ≤5 questions print one per row (fills the page), otherwise the chosen columns; max 12 per page via new opt-in `_densityFloorMm` in `handleDiagramPrint`; default 12 questions; all levels share one cell shape.
+Follow-up: Level 3 is back to a normal text (`worded`) question — standard display, sizing and text print (scales to fit). Mixed/differentiated diagram sheets print L3 as a text cell via new opt-in `_printText` in `handleDiagramPrint`.
 
 ## 2026-09-28 — Comparing & Ordering Numbers (Number) — live
 New tool `/comparing-ordering-numbers` (`src/tools/Number/ComparingOrderingNumbers.tsx`,
