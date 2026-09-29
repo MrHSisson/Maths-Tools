@@ -330,7 +330,7 @@ function generateQuestion(
     ticks: r.ticks, ansStr: r.ansStr, up: r.up, pos: r.pos,
     labelMode, blankMode, plotted,
     e: r.e,
-    aspect: 660 / 250,   // same cell shape at every level so page fill / the 12-per-page cap match
+    aspect: 660 / 290,   // same cell shape at every level so page fill / the 12-per-page cap match
   };
 
   const method = (dropdownValue === "line" ? "line" : "digit") as Method;
@@ -380,18 +380,19 @@ const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null =>
 
 // ── 6. Diagram ────────────────────────────────────────────────────────────────
 
-const X0 = 50, LW = 560, STEP = LW / 10, LY = 150;
+const X0 = 60, LW = 540, STEP = LW / 10, LY = 165;
 const INK = "#1e293b", BLUE = "#2563eb", GREEN = "#166534";
 
-function RoundingDiagram({ d, showAnswer, withPrompt, idx, preview, answerIdx }: { d: RoundingData; showAnswer: boolean; withPrompt: boolean; idx?: number; preview?: boolean; answerIdx?: number }) {
+function RoundingDiagram({ d, showAnswer, withPrompt, idx, preview, answerIdx, answerBand = true }: { d: RoundingData; showAnswer: boolean; withPrompt: boolean; idx?: number; preview?: boolean; answerIdx?: number; answerBand?: boolean }) {
   const y0 = withPrompt ? 0 : 60;
-  const h = withPrompt ? 250 : 190;
+  const bottom = answerBand ? 290 : 245;   // the answer band sits below the line's labels
+  const h = bottom - y0;
   const mx = X0 + d.pos * LW;
   const showMarker = d.plotted || showAnswer || !!preview;
   const ansX = X0 + (d.up ? LW : 0);
   const majors = [0, 5, 10];
   const majorText = [d.lowerStr, d.midStr, d.upperStr];
-  const promptFs = Math.min(30, 620 / (d.prompt.length * 0.56));
+  const promptFs = Math.min(32, 620 / (d.prompt.length * 0.56));
 
   const majorLabel = (mi: number) => {
     const i = majors[mi];
@@ -402,50 +403,50 @@ function RoundingDiagram({ d, showAnswer, withPrompt, idx, preview, answerIdx }:
       const filled = showAnswer || given;
       return (
         <g key={`m${i}`}>
-          <rect x={x - 46} y={LY + 22} width={92} height={38} rx={6} fill="#ffffff"
-            stroke={filled ? "#94a3b8" : "#64748b"} strokeWidth={1.5} strokeDasharray={filled ? undefined : "5 4"} />
-          {filled && <text x={x} y={LY + 42} textAnchor="middle" dominantBaseline="middle" fontSize={22} fontWeight={700}
+          <rect x={x - 52} y={LY + 26} width={104} height={46} rx={7} fill="#ffffff"
+            stroke={filled ? "#94a3b8" : "#64748b"} strokeWidth={2} strokeDasharray={filled ? undefined : "6 5"} />
+          {filled && <text x={x} y={LY + 50} textAnchor="middle" dominantBaseline="middle" fontSize={28} fontWeight={700}
             fill={showAnswer && !given ? GREEN : INK}>{majorText[mi]}</text>}
         </g>
       );
     }
     if (d.labelMode === "every") return null;
-    return <text key={`m${i}`} x={x} y={LY + 42} textAnchor="middle" dominantBaseline="middle" fontSize={22} fontWeight={700} fill={INK}>{majorText[mi]}</text>;
+    return <text key={`m${i}`} x={x} y={LY + 50} textAnchor="middle" dominantBaseline="middle" fontSize={28} fontWeight={700} fill={INK}>{majorText[mi]}</text>;
   };
 
   return (
     <svg viewBox={`0 ${y0} 660 ${h}`} style={{ display: "block", width: "100%", height: "auto" }} preserveAspectRatio="xMidYMid meet"
       {...(idx !== undefined ? { "data-q-index": idx } : {})}
       {...(answerIdx !== undefined ? { "data-q-answer-index": answerIdx, className: "hidden" } : {})}>
-      {withPrompt && <text x={330} y={36} textAnchor="middle" dominantBaseline="middle" fontSize={promptFs} fontWeight={700} fill="#000">{d.prompt}</text>}
+      {withPrompt && <text x={330} y={38} textAnchor="middle" dominantBaseline="middle" fontSize={promptFs} fontWeight={700} fill="#000">{d.prompt}</text>}
 
       {/* the number — when students plot it themselves it appears at the "Show Plot" step */}
       {showMarker && <g>
-      <text x={mx} y={88} textAnchor="middle" dominantBaseline="middle" fontSize={24} fontWeight={700} fill={BLUE}>{d.numStr}</text>
-      <line x1={mx} y1={102} x2={mx} y2={126} stroke={BLUE} strokeWidth={3} />
-      <polygon points={`${mx - 7},122 ${mx + 7},122 ${mx},136`} fill={BLUE} />
+      <text x={mx} y={92} textAnchor="middle" dominantBaseline="middle" fontSize={32} fontWeight={700} fill={BLUE}>{d.numStr}</text>
+      <line x1={mx} y1={112} x2={mx} y2={140} stroke={BLUE} strokeWidth={4} />
+      <polygon points={`${mx - 9},136 ${mx + 9},136 ${mx},152`} fill={BLUE} />
       </g>}
 
       {/* the line and its marks */}
-      <line x1={X0 - 16} y1={LY} x2={X0 + LW + 16} y2={LY} stroke={INK} strokeWidth={3} strokeLinecap="round" />
+      <line x1={X0 - 20} y1={LY} x2={X0 + LW + 20} y2={LY} stroke={INK} strokeWidth={4} strokeLinecap="round" />
       {Array.from({ length: 11 }, (_, i) => {
         const major = i % 5 === 0;
         const x = X0 + i * STEP;
-        return <line key={`t${i}`} x1={x} y1={LY - (major ? 14 : 8)} x2={x} y2={LY + (major ? 14 : 8)} stroke={INK} strokeWidth={major ? 3 : 2} />;
+        return <line key={`t${i}`} x1={x} y1={LY - (major ? 18 : 10)} x2={x} y2={LY + (major ? 18 : 10)} stroke={INK} strokeWidth={major ? 4 : 2.5} />;
       })}
-      {showMarker && <circle cx={mx} cy={LY} r={5.5} fill={BLUE} />}
+      {showMarker && <circle cx={mx} cy={LY} r={7} fill={BLUE} />}
 
       {/* labels */}
       {d.level === "level1" && d.labelMode === "every" && d.ticks.map((s, i) => (
-        <text key={`l${i}`} x={X0 + i * STEP} y={LY + 38} textAnchor="middle" dominantBaseline="middle"
-          fontSize={16} fontWeight={i % 5 === 0 ? 700 : 500} fill={INK}>{s}</text>
+        <text key={`l${i}`} x={X0 + i * STEP} y={LY + 44} textAnchor="middle" dominantBaseline="middle"
+          fontSize={i % 5 === 0 ? 19 : 17} fontWeight={i % 5 === 0 ? 700 : 500} fill={INK}>{s}</text>
       ))}
       {majors.map((_, mi) => majorLabel(mi))}
 
       {/* answer */}
-      {showAnswer && <circle cx={ansX} cy={LY} r={10} fill="none" stroke={GREEN} strokeWidth={3} />}
-      <text x={330} y={h + y0 - 18} textAnchor="middle" dominantBaseline="middle" fontSize={26} fontWeight={700} fill={GREEN}
-        opacity={showAnswer ? 1 : 0}>{`Answer: ${d.ansStr}`}</text>
+      {showAnswer && <circle cx={ansX} cy={LY} r={13} fill="none" stroke={GREEN} strokeWidth={4} />}
+      {answerBand && <text x={330} y={LY + 102} textAnchor="middle" dominantBaseline="middle" fontSize={40} fontWeight={700} fill={GREEN}
+        opacity={showAnswer ? 1 : 0}>{`Answer: ${d.ansStr}`}</text>}
     </svg>
   );
 }
@@ -483,7 +484,7 @@ const questionRenderer = (
   return (
     <div className="w-full flex flex-col items-center gap-3">
       <div className={`${fc} font-bold`} style={{ color: "#000" }}>{d.prompt}</div>
-      <div style={{ width: "100%", maxWidth: compact === false ? 640 : 460, margin: "0 auto" }}>
+      <div style={{ width: "100%", maxWidth: compact === false ? 900 : 680, margin: "0 auto" }}>
         <RoundingDiagram d={d} showAnswer={showAnswer} withPrompt={false} preview={qo?.preview} />
       </div>
     </div>
@@ -492,7 +493,7 @@ const questionRenderer = (
 
 // ── 7. Worked-example steps (custom renderers) ────────────────────────────────
 
-const stepLabelStyle = { textAlign: "left" as const, fontWeight: 600, marginBottom: 8 };
+const stepLabelStyle = { textAlign: "left" as const, marginBottom: 4 };
 
 /** The number as digit boxes: rounding digit (blue), decider (orange), the rest greyed. */
 function DigitsView({ numStr, e, sf }: { numStr: string; e: number; sf: boolean }) {
@@ -548,7 +549,7 @@ const stepRenderer = (s: WorkingStep): JSX.Element | null => {
     return (
       <div style={{ width: "100%" }}>
         <div style={stepLabelStyle}>{s.label}</div>
-        <div style={{ maxWidth: 560, margin: "0 auto" }}><RoundingDiagram d={d} showAnswer={false} withPrompt={false} /></div>
+        <div style={{ maxWidth: 760, margin: "0 auto" }}><RoundingDiagram d={d} showAnswer={false} withPrompt={false} answerBand={false} /></div>
       </div>
     );
   }

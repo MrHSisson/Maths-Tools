@@ -43,6 +43,7 @@ Follow-up: dotted line between the rounding digit and decider in the digit step;
 Follow-up: **Working method selector** (Worked-Example-only dropdown): *Digit rule* (rounding digit + decider + 5-or-more, 4 steps) or *Number line* (two answers either side, halfway, which is closer, 4 steps) — one method per example instead of both. `reformatQuestion` rebuilds the steps for the same question on switch.
 Follow-up: "Exactly halfway" is now a `cycleDisplay` common/rare pool — Off / Mixed (~5%) / Always — so Mixed is genuinely rare on the whiteboard *and* on worksheets (no `weight`, so no Smart Progressor even split).
 Follow-up: new opt-in `ToolMultiSelect.exclusive` (single-choice / radio pool, handled in `MultiSelectSection`); Rounding's *Number line labels*, *Student fills in* and *Number on the line* pools now use it, so a worksheet can't mix them.
+Follow-up: number line drawn larger (bigger marker/labels/boxes, 40-unit answer text, wider caps: whiteboard 442→653 px, worked example 640→900 px); custom Worked-Example step labels no longer bold — they match the standard step text.
 
 ## 2026-09-28 — Comparing & Ordering Numbers (Number) — live
 New tool `/comparing-ordering-numbers` (`src/tools/Number/ComparingOrderingNumbers.tsx`,
