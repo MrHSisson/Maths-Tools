@@ -452,15 +452,19 @@ function RoundingDiagram({ d, showAnswer, withPrompt, idx, preview, answerIdx, a
 }
 
 const questionRenderer = (
-  q: AnyQuestion, showAnswer: boolean, _cs: string, compact?: boolean, idx?: number, qo?: { preview?: boolean }, fontClass?: string,
+  q: AnyQuestion, showAnswer: boolean, _cs: string, compact?: boolean, idx?: number, qo?: { preview?: boolean; fullscreen?: boolean }, fontClass?: string,
 ): JSX.Element | null => {
+  // Worked Example (compact === false, not the fullscreen whiteboard): the answer is found by
+  // stepping through the working, so the question box never shows it — but the plot is set up.
+  const workedExample = compact === false && !qo?.fullscreen;
+  const revealAnswer = showAnswer && !workedExample;
   // Level 3 — the standard text question (plus the answer when revealed).
   if (q.kind === "worded") {
     const fc = fontClass ?? "text-xl";
     return (
       <div className="w-full flex flex-col items-center gap-2">
         <QuestionDisplay q={q} cls={fc} />
-        {showAnswer && <div className={`${fc} font-bold`} style={{ color: GREEN }}><AnswerDisplay q={q} /></div>}
+        {revealAnswer && <div className={`${fc} font-bold`} style={{ color: GREEN }}><AnswerDisplay q={q} /></div>}
       </div>
     );
   }
@@ -485,7 +489,7 @@ const questionRenderer = (
     <div className="w-full flex flex-col items-center gap-3">
       <div className={`${fc} font-bold`} style={{ color: "#000" }}>{d.prompt}</div>
       <div style={{ width: "100%", maxWidth: compact === false ? 900 : 680, margin: "0 auto" }}>
-        <RoundingDiagram d={d} showAnswer={showAnswer} withPrompt={false} preview={qo?.preview} />
+        <RoundingDiagram d={d} showAnswer={revealAnswer} withPrompt={false} preview={qo?.preview || (workedExample && showAnswer)} answerBand={!workedExample} />
       </div>
     </div>
   );
