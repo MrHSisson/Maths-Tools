@@ -13,7 +13,7 @@ import {
 
 type ToolType = "nearest" | "dp" | "sf";
 type LabelMode = "ends" | "every";       // Level 1 — how much of the line is labelled
-type BlankMode = "blank" | "endsGiven";  // Level 2 — what the student fills in
+type BlankMode = "blank" | "endsGiven" | "plot";  // Level 2 — what the student fills in / plots
 
 /** Everything the number-line renderer needs. Every representation (text, line, answer)
  *  is derived from the same integers, so they cannot drift apart. */
@@ -75,6 +75,7 @@ const BLANK_L2_MS: ToolMultiSelect = {
   options: [
     { value: "blank", label: "Ends & midpoint", defaultActive: true },
     { value: "endsGiven", label: "Midpoint only", sub: "(ends given)", defaultActive: false },
+    { value: "plot", label: "Plot the number", sub: "(line labelled, they mark it)", defaultActive: false },
   ],
 };
 
@@ -113,7 +114,7 @@ const INFO_SECTIONS: InfoSection[] = [
     title: "Level 2 — Blank Number Line", icon: "✏️",
     content: [
       { label: "Overview", detail: "The same line with the number marked, but the labels are empty boxes. Students work out the two boundaries and the halfway value themselves, then decide which way to round." },
-      { label: "Student fills in", detail: "'Ends & midpoint' leaves all three boxes blank. 'Midpoint only' gives the two ends so students only find the halfway value." },
+      { label: "Student fills in", detail: "'Ends & midpoint' leaves all three boxes blank. 'Midpoint only' gives the two ends so students only find the halfway value. 'Plot the number' labels the line but leaves the number unmarked — students place it themselves, then round." },
     ],
   },
   {
@@ -128,7 +129,7 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Nearest 10, 100, 1000", detail: "Choose any mix of 1000, 100, 10 and whole number." },
       { label: "Decimal places", detail: "1, 2 or 3 d.p. Trailing zeros are kept in answers (e.g. 4.30) because they show the accuracy." },
       { label: "Significant figures", detail: "1, 2 or 3 s.f., including numbers below 1 (leading zeros are not significant) and large numbers." },
-      { label: "Exact halfway values", detail: "Off by default. Turn on to include numbers exactly halfway between the two boundaries — round up." },
+      { label: "Exact halfway values", detail: "Off by default. Turn on and roughly a third of questions are exactly halfway between the two boundaries — round up." },
     ],
   },
   {
@@ -188,7 +189,7 @@ function buildRounding(t: ToolType, level: DifficultyLevel, wantHalf: boolean, m
   // ── how many digits the number carries below the unit (kk) ──
   const extra = level === "level3" ? randInt(1, 2) : 1;
   const kk = t === "nearest" && e > 0 ? e : extra;
-  const half = wantHalf && Math.random() < 1 / 6;
+  const half = wantHalf && Math.random() < 1 / 3;
   const kkUsed = half && !(t === "nearest" && e > 0) ? 1 : kk;   // a halfway value is 5 × 10^(kk-1)
 
   // ── lower boundary, in units of 10^e ──
@@ -282,6 +283,7 @@ function RoundingDiagram({ d, showAnswer, withPrompt, idx }: { d: RoundingData; 
   const y0 = withPrompt ? 0 : 60;
   const h = withPrompt ? 250 : 190;
   const mx = X0 + d.pos * LW;
+  const showMarker = showAnswer || !(d.level === "level2" && d.blankMode === "plot");
   const ansX = X0 + (d.up ? LW : 0);
   const majors = [0, 5, 10];
   const majorText = [d.lowerStr, d.midStr, d.upperStr];
@@ -292,13 +294,14 @@ function RoundingDiagram({ d, showAnswer, withPrompt, idx }: { d: RoundingData; 
     const x = X0 + i * STEP;
     if (d.level === "level2") {
       // blank boxes; filled when the answer is shown, or when the ends are given
-      const filled = showAnswer || (d.blankMode === "endsGiven" && i !== 5);
+      const given = d.blankMode === "plot" || (d.blankMode === "endsGiven" && i !== 5);
+      const filled = showAnswer || given;
       return (
         <g key={`m${i}`}>
           <rect x={x - 46} y={LY + 22} width={92} height={38} rx={6} fill="#ffffff"
             stroke={filled ? "#94a3b8" : "#64748b"} strokeWidth={1.5} strokeDasharray={filled ? undefined : "5 4"} />
           {filled && <text x={x} y={LY + 42} textAnchor="middle" dominantBaseline="middle" fontSize={22} fontWeight={700}
-            fill={showAnswer && !(d.blankMode === "endsGiven" && i !== 5) ? GREEN : INK}>{majorText[mi]}</text>}
+            fill={showAnswer && !given ? GREEN : INK}>{majorText[mi]}</text>}
         </g>
       );
     }
@@ -311,10 +314,12 @@ function RoundingDiagram({ d, showAnswer, withPrompt, idx }: { d: RoundingData; 
       {...(idx !== undefined ? { "data-q-index": idx } : {})}>
       {withPrompt && <text x={330} y={36} textAnchor="middle" dominantBaseline="middle" fontSize={promptFs} fontWeight={700} fill="#000">{d.prompt}</text>}
 
-      {/* the number */}
+      {/* the number (in "plot" mode the student marks it, so it appears only with the answer) */}
+      {showMarker && <g>
       <text x={mx} y={88} textAnchor="middle" dominantBaseline="middle" fontSize={24} fontWeight={700} fill={BLUE}>{d.numStr}</text>
       <line x1={mx} y1={102} x2={mx} y2={126} stroke={BLUE} strokeWidth={3} />
       <polygon points={`${mx - 7},122 ${mx + 7},122 ${mx},136`} fill={BLUE} />
+      </g>}
 
       {/* the line and its marks */}
       <line x1={X0 - 16} y1={LY} x2={X0 + LW + 16} y2={LY} stroke={INK} strokeWidth={3} strokeLinecap="round" />
@@ -323,7 +328,7 @@ function RoundingDiagram({ d, showAnswer, withPrompt, idx }: { d: RoundingData; 
         const x = X0 + i * STEP;
         return <line key={`t${i}`} x1={x} y1={LY - (major ? 14 : 8)} x2={x} y2={LY + (major ? 14 : 8)} stroke={INK} strokeWidth={major ? 3 : 2} />;
       })}
-      <circle cx={mx} cy={LY} r={5.5} fill={BLUE} />
+      {showMarker && <circle cx={mx} cy={LY} r={5.5} fill={BLUE} />}
 
       {/* labels */}
       {d.level === "level1" && d.labelMode === "every" && d.ticks.map((s, i) => (

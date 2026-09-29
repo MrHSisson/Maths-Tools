@@ -35,6 +35,7 @@ the number marked and labelled ends + midpoint (QO: "Every mark" labels the whol
 line with blank boxes to fill in (QO: "Midpoint only" gives the ends). Level 3: question only. QO
 "Include exact halfway values". All values derived from integers (no float drift); SVG worksheets
 print via `handleDiagramPrint`.
+Follow-up: 'Include exact halfway values' now yields ~1 in 3 exact halves (was 1 in 6, too rare to notice); new Level 2 QO 'Plot the number' — labelled line, number unmarked, student plots it before rounding.
 
 ## 2026-09-28 — Comparing & Ordering Numbers (Number) — live
 New tool `/comparing-ordering-numbers` (`src/tools/Number/ComparingOrderingNumbers.tsx`,
