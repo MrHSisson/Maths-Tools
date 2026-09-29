@@ -308,7 +308,7 @@ export const StandardQOPopover = ({
       <PopoverButton open={open} onClick={() => setOpen(!open)} />
       {open && (
         <div
-          className={`absolute top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 p-5 ${twoCol ? "left-1/2 -translate-x-1/2 [&>*]:break-inside-avoid [&>*]:mb-5" : "left-0 min-w-[26rem] flex flex-col gap-5"}`}
+          className={`absolute top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 p-5 ${twoCol ? "left-1/2 -translate-x-1/2 border-2 !border-gray-400 [&>*]:break-inside-avoid [&>*]:mb-5" : "left-0 min-w-[26rem] flex flex-col gap-5"}`}
           style={twoCol ? { width: "min(54rem, calc(100vw - 2rem))", columnCount: 2, columnGap: "2.5rem", columnRule: "1px solid #d1d5db" } : undefined}
         >
           {dd && <DropdownSection dropdown={dd} value={dropdownValue} onChange={onDropdownChange} />}
@@ -394,6 +394,7 @@ export const InlineQOPanel = ({
   onDropdownChange,
   multiSelectValues,
   onMultiSelectChange,
+  hideWorkedExampleOnly,
 }: {
   toolEntry: ToolEntry;
   level: DifficultyLevel;
@@ -403,8 +404,12 @@ export const InlineQOPanel = ({
   onDropdownChange: (v: string) => void;
   multiSelectValues: Record<string, boolean>;
   onMultiSelectChange: (k: string, v: boolean) => void;
+  /** Hides a dropdown flagged `workedExampleOnly` (the worksheet builder passes true — it only
+   *  changes the displayed working, which a printed worksheet doesn't show). */
+  hideWorkedExampleOnly?: boolean;
 }) => {
-  const dd = toolEntry.difficultySettings?.[level]?.dropdown ?? toolEntry.dropdown;
+  const rawDd = toolEntry.difficultySettings?.[level]?.dropdown ?? toolEntry.dropdown;
+  const dd = rawDd && !(hideWorkedExampleOnly && rawDd.workedExampleOnly) ? rawDd : null;
   const vars = toolEntry.difficultySettings?.[level]?.variables ?? toolEntry.variables;
   const ms = normalizeMultiSelect(toolEntry.difficultySettings?.[level]?.multiSelect ?? toolEntry.multiSelect);
   const hasContent = dd !== null || (vars?.length ?? 0) > 0 || ms.length > 0;

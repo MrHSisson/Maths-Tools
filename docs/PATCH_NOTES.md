@@ -46,7 +46,8 @@ Follow-up: new opt-in `ToolMultiSelect.exclusive` (single-choice / radio pool, h
 Follow-up: number line drawn larger (bigger marker/labels/boxes, 40-unit answer text, wider caps: whiteboard 442→653 px, worked example 640→900 px); custom Worked-Example step labels no longer bold — they match the standard step text.
 Follow-up: in Worked Example mode the question box no longer shows the answer (text, circle, filled boxes) — it is found by stepping through the working; whiteboard/fullscreen unchanged.
 Fix: the hidden answer-page twin on worksheet cells was drawing on screen (the SVG's inline `display:block` overrode the `hidden` class) — it now sits in a `display:none` wrapper; print still copies the twin.
-New opt-in `defaults.qoColumns: 2`: the Question Options popover lays out in two balanced columns with a thin grey divider (twice as wide, centred under its button). Used by Rounding; applies to the standard popover (whiteboard / example / worksheet).
+New opt-in `defaults.qoColumns: 2`: the Question Options popover lays out in two balanced columns with a thin grey divider (twice as wide, centred under its button). Used by Rounding; applies to the standard popover (whiteboard / example / worksheet); its border is now a 2px mid-grey outline.
+Fix: the advanced worksheet builder updated QO values from a stale copy, so a single-choice (`exclusive`) pool — which sets one option and clears the rest in one click — ended with both selected and stuck; `updateGroup` now takes a function of the latest group. The builder's QO panel also hides `workedExampleOnly` dropdowns (Rounding's working method).
 
 ## 2026-09-28 — Comparing & Ordering Numbers (Number) — live
 New tool `/comparing-ordering-numbers` (`src/tools/Number/ComparingOrderingNumbers.tsx`,
