@@ -154,7 +154,7 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Decimal places", detail: "1, 2 or 3 d.p. Trailing zeros are kept in answers (e.g. 4.30) because they show the accuracy." },
       { label: "Significant figures", detail: "1, 2 or 3 s.f., including numbers below 1 (leading zeros are not significant) and large numbers." },
       { label: "Number on the line (Levels 1–2)", detail: "'Plotted for them' marks the number on the line. 'Students plot it' leaves the line without a marker — on the whiteboard, 'Show Plot' reveals where the number sits before 'Show Answer' reveals the rounding. On worksheets the marker appears with the answers." },
-      { label: "Digits past the rounding position (Levels 1–2)", detail: "'One extra' puts the number exactly on a mark of the line; 'Two extra' places it between marks so students estimate its position. Nearest 10/100/1000 always use the digits the number naturally has. Level 3 mixes one and two extra digits." },
+      { label: "Digits past the rounding position (Levels 1–2)", detail: "'One extra' puts the number exactly on a mark of the line; 'Two extra' places it between marks so students estimate its position. This applies to every sub-tool: for nearest 100, one extra gives 3480 (on a mark) and two extra gives 3482 (between marks). Level 3 uses natural digits for nearest 10/100/1000 (e.g. 3482) and mixes one and two extra digits elsewhere." },
       { label: "Exactly halfway", detail: "Click to cycle: any position only → mixed → exactly halfway only. Exactly-halfway numbers round up." },
     ],
   },
@@ -214,9 +214,12 @@ function buildRounding(t: ToolType, level: DifficultyLevel, ms: Record<string, b
 
   // ── how many digits the number carries below the unit (kk) ──
   const extra = level === "level3" ? randInt(1, 2) : pickOpt(ms, PRECISION_MS.options) === "twoDigit" ? 2 : 1;
-  const kk = t === "nearest" && e > 0 ? e : extra;
+  // Level 3 nearest-10/100/1000 uses the number's natural digits (3482 to the nearest 100);
+  // Levels 1–2 follow the QO: one extra digit sits on a mark (3480), two between marks (3482).
+  const natural = level === "level3" && t === "nearest" && e > 0;
+  const kk = natural ? e : extra;
   const half = pickOpt(ms, POSITION_MS.options) === "midExact";
-  const kkUsed = half && !(t === "nearest" && e > 0) ? 1 : kk;   // a halfway value is 5 × 10^(kk-1)
+  const kkUsed = half && !natural ? 1 : kk;   // a halfway value is 5 × 10^(kk-1)
 
   // ── lower boundary, in units of 10^e ──
   let lowerIdx: number;
