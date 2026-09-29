@@ -168,6 +168,9 @@ export interface QOSnapshot {
    *  than drawing it on the diagram) do so in fullscreen too, where compact is
    *  otherwise indistinguishable from the worked-example view. */
   fullscreen?: boolean;
+  /** True once the staged-reveal preview has been shown (question sets `_stagedReveal`),
+   *  before the answer itself. Whiteboard / worked-example only. */
+  preview?: boolean;
 }
 
 export interface ToolShellDefaults {

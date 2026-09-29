@@ -2,7 +2,7 @@ import {
   ToolShell, handleDiagramPrint,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion,
   type ToolMultiSelect, type ToolVariable,
-  randInt, pickActive, mStep, tStep,
+  randInt, pickActive, weightOf, mStep, tStep,
 } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -13,7 +13,7 @@ import {
 
 type ToolType = "nearest" | "dp" | "sf";
 type LabelMode = "ends" | "every";       // Level 1 — how much of the line is labelled
-type BlankMode = "blank" | "endsGiven" | "plot";  // Level 2 — what the student fills in / plots
+type BlankMode = "blank" | "endsGiven";  // Level 2 — what the student fills in
 
 /** Everything the number-line renderer needs. Every representation (text, line, answer)
  *  is derived from the same integers, so they cannot drift apart. */
@@ -30,12 +30,28 @@ interface RoundingData {
   pos: number;           // 0..1 position of the number between lower and upper
   labelMode: LabelMode;
   blankMode: BlankMode;
+  plotted: boolean;      // false → students plot the number themselves (Levels 1–2)
   aspect: number;
 }
 
 // ── 2. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
-const HALFWAY_VAR: ToolVariable = { key: "halfway", label: "Include exact halfway values", defaultValue: false };
+// 2-option weighted pool → ToolShell renders it as one click-to-cycle button
+// (None → Mixed → Exclusive): any position only → mixed → exactly halfway only.
+const POSITION_MS: ToolMultiSelect = {
+  key: "position", label: "Exactly halfway",
+  options: [
+    { value: "midAny", label: "Any position", defaultActive: true, weight: 1 },
+    { value: "midExact", label: "Exactly halfway", defaultActive: false, weight: 2 },
+  ],
+};
+const PLOT_MS: ToolMultiSelect = {
+  key: "plotMode", label: "Number on the line",
+  options: [
+    { value: "auto", label: "Plotted for them", defaultActive: true },
+    { value: "student", label: "Students plot it", sub: "(reveal the plot, then the answer)", defaultActive: false },
+  ],
+};
 
 const NEAREST_MS: ToolMultiSelect = {
   key: "nearestPool", label: "Round to nearest",
@@ -75,7 +91,6 @@ const BLANK_L2_MS: ToolMultiSelect = {
   options: [
     { value: "blank", label: "Ends & midpoint", defaultActive: true },
     { value: "endsGiven", label: "Midpoint only", sub: "(ends given)", defaultActive: false },
-    { value: "plot", label: "Plot the number", sub: "(line labelled, they mark it)", defaultActive: false },
   ],
 };
 
@@ -85,9 +100,9 @@ const subTool = (name: string, pool: ToolMultiSelect) => ({
   dropdown: null,
   multiSelect: pool,
   difficultySettings: {
-    level1: { variables: [HALFWAY_VAR], multiSelect: [pool, LABEL_L1_MS] },
-    level2: { variables: [HALFWAY_VAR], multiSelect: [pool, BLANK_L2_MS] },
-    level3: { variables: [HALFWAY_VAR], multiSelect: [pool] },
+    level1: { variables: [], multiSelect: [pool, LABEL_L1_MS, PLOT_MS, POSITION_MS] },
+    level2: { variables: [], multiSelect: [pool, BLANK_L2_MS, PLOT_MS, POSITION_MS] },
+    level3: { variables: [], multiSelect: [pool, POSITION_MS] },
   },
 });
 
@@ -114,7 +129,7 @@ const INFO_SECTIONS: InfoSection[] = [
     title: "Level 2 — Blank Number Line", icon: "✏️",
     content: [
       { label: "Overview", detail: "The same line with the number marked, but the labels are empty boxes. Students work out the two boundaries and the halfway value themselves, then decide which way to round." },
-      { label: "Student fills in", detail: "'Ends & midpoint' leaves all three boxes blank. 'Midpoint only' gives the two ends so students only find the halfway value. 'Plot the number' labels the line but leaves the number unmarked — students place it themselves, then round." },
+      { label: "Student fills in", detail: "'Ends & midpoint' leaves all three boxes blank. 'Midpoint only' gives the two ends so students only find the halfway value." },
     ],
   },
   {
@@ -129,7 +144,8 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Nearest 10, 100, 1000", detail: "Choose any mix of 1000, 100, 10 and whole number." },
       { label: "Decimal places", detail: "1, 2 or 3 d.p. Trailing zeros are kept in answers (e.g. 4.30) because they show the accuracy." },
       { label: "Significant figures", detail: "1, 2 or 3 s.f., including numbers below 1 (leading zeros are not significant) and large numbers." },
-      { label: "Exact halfway values", detail: "Off by default. Turn on and roughly a third of questions are exactly halfway between the two boundaries — round up." },
+      { label: "Number on the line (Levels 1–2)", detail: "'Plotted for them' marks the number on the line. 'Students plot it' leaves the line without a marker — on the whiteboard, 'Show Plot' reveals where the number sits before 'Show Answer' reveals the rounding. On worksheets the marker appears with the answers." },
+      { label: "Exactly halfway", detail: "Click to cycle: any position only → mixed → exactly halfway only. Exactly-halfway numbers round up." },
     ],
   },
   {
@@ -171,7 +187,7 @@ function pickOpt(values: Record<string, boolean> | undefined, options: { value: 
   return pickActive(values ?? {}, options);
 }
 
-function buildRounding(t: ToolType, level: DifficultyLevel, wantHalf: boolean, ms: Record<string, boolean> | undefined) {
+function buildRounding(t: ToolType, level: DifficultyLevel, ms: Record<string, boolean> | undefined) {
   // ── which accuracy? → unit exponent e (unit = 10^e) ──
   let n: number, e: number;
   if (t === "nearest") {
@@ -189,7 +205,7 @@ function buildRounding(t: ToolType, level: DifficultyLevel, wantHalf: boolean, m
   // ── how many digits the number carries below the unit (kk) ──
   const extra = level === "level3" ? randInt(1, 2) : 1;
   const kk = t === "nearest" && e > 0 ? e : extra;
-  const half = wantHalf && Math.random() < 1 / 3;
+  const half = pickOpt(ms, POSITION_MS.options) === "midExact";
   const kkUsed = half && !(t === "nearest" && e > 0) ? 1 : kk;   // a halfway value is 5 × 10^(kk-1)
 
   // ── lower boundary, in units of 10^e ──
@@ -233,22 +249,23 @@ function introStep(t: ToolType, n: number) {
 function generateQuestion(
   tool: string,
   level: DifficultyLevel,
-  variables: Record<string, boolean>,
+  _variables: Record<string, boolean>,
   _dropdownValue: string,
   multiSelectValues?: Record<string, boolean>,
 ): AnyQuestion {
   const t = tool as ToolType;
-  const r = buildRounding(t, level, !!variables.halfway, multiSelectValues);
+  const r = buildRounding(t, level, multiSelectValues);
   const prompt = `Round ${r.numStr} to ${targetPhrase(t, r.n)}.`;
 
   const labelMode = pickOpt(multiSelectValues, LABEL_L1_MS.options) as LabelMode;
   const blankMode = pickOpt(multiSelectValues, BLANK_L2_MS.options) as BlankMode;
+  const plotted = level === "level3" || pickOpt(multiSelectValues, PLOT_MS.options) === "auto";
 
   const data: RoundingData = {
     level, prompt,
     numStr: r.numStr, lowerStr: r.lowerStr, midStr: r.midStr, upperStr: r.upperStr,
     ticks: r.ticks, ansStr: r.ansStr, up: r.up, pos: r.pos,
-    labelMode, blankMode,
+    labelMode, blankMode, plotted,
     aspect: level === "level3" ? 660 / 130 : 660 / 250,
   };
 
@@ -271,6 +288,8 @@ function generateQuestion(
     difficulty: level,
     _rounding: data,
     _aspect: data.aspect,
+    _difficultyScore: weightOf(POSITION_MS.options, r.half ? "midExact" : "midAny"),
+    ...(plotted ? {} : { _stagedReveal: "Show Plot" }),   // whiteboard: plot first, then the answer
   } as unknown as AnyQuestion;
 }
 
@@ -279,11 +298,11 @@ function generateQuestion(
 const X0 = 50, LW = 560, STEP = LW / 10, LY = 150;
 const INK = "#1e293b", BLUE = "#2563eb", GREEN = "#166534";
 
-function RoundingDiagram({ d, showAnswer, withPrompt, idx }: { d: RoundingData; showAnswer: boolean; withPrompt: boolean; idx?: number }) {
+function RoundingDiagram({ d, showAnswer, withPrompt, idx, preview }: { d: RoundingData; showAnswer: boolean; withPrompt: boolean; idx?: number; preview?: boolean }) {
   const y0 = withPrompt ? 0 : 60;
   const h = withPrompt ? 250 : 190;
   const mx = X0 + d.pos * LW;
-  const showMarker = showAnswer || !(d.level === "level2" && d.blankMode === "plot");
+  const showMarker = d.plotted || showAnswer || !!preview;
   const ansX = X0 + (d.up ? LW : 0);
   const majors = [0, 5, 10];
   const majorText = [d.lowerStr, d.midStr, d.upperStr];
@@ -294,7 +313,7 @@ function RoundingDiagram({ d, showAnswer, withPrompt, idx }: { d: RoundingData; 
     const x = X0 + i * STEP;
     if (d.level === "level2") {
       // blank boxes; filled when the answer is shown, or when the ends are given
-      const given = d.blankMode === "plot" || (d.blankMode === "endsGiven" && i !== 5);
+      const given = d.blankMode === "endsGiven" && i !== 5;
       const filled = showAnswer || given;
       return (
         <g key={`m${i}`}>
@@ -314,7 +333,7 @@ function RoundingDiagram({ d, showAnswer, withPrompt, idx }: { d: RoundingData; 
       {...(idx !== undefined ? { "data-q-index": idx } : {})}>
       {withPrompt && <text x={330} y={36} textAnchor="middle" dominantBaseline="middle" fontSize={promptFs} fontWeight={700} fill="#000">{d.prompt}</text>}
 
-      {/* the number (in "plot" mode the student marks it, so it appears only with the answer) */}
+      {/* the number — when students plot it themselves it appears at the "Show Plot" step */}
       {showMarker && <g>
       <text x={mx} y={88} textAnchor="middle" dominantBaseline="middle" fontSize={24} fontWeight={700} fill={BLUE}>{d.numStr}</text>
       <line x1={mx} y1={102} x2={mx} y2={126} stroke={BLUE} strokeWidth={3} />
@@ -359,7 +378,7 @@ function PromptSvg({ d, showAnswer, idx }: { d: RoundingData; showAnswer: boolea
 }
 
 const questionRenderer = (
-  q: AnyQuestion, showAnswer: boolean, _cs: string, compact?: boolean, idx?: number, _qo?: unknown, fontClass?: string,
+  q: AnyQuestion, showAnswer: boolean, _cs: string, compact?: boolean, idx?: number, qo?: { preview?: boolean }, fontClass?: string,
 ): JSX.Element | null => {
   const d = (q as any)._rounding as RoundingData | undefined;
   if (!d) return null;
@@ -380,7 +399,7 @@ const questionRenderer = (
         ? (showAnswer && <div className={`${fc} font-bold`} style={{ color: GREEN }}>{`= ${d.ansStr}`}</div>)
         : (
           <div style={{ width: "100%", maxWidth: compact === false ? 640 : 460, margin: "0 auto" }}>
-            <RoundingDiagram d={d} showAnswer={showAnswer} withPrompt={false} />
+            <RoundingDiagram d={d} showAnswer={showAnswer} withPrompt={false} preview={qo?.preview} />
           </div>
         )}
     </div>

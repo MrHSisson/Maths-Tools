@@ -408,6 +408,18 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   });
   const [showWhiteboardAnswer, setShowWhiteboardAnswer] = useState(false);
   const [showAnswer, setShowAnswer] = useState(false);
+  // Staged reveal — a question may set `_stagedReveal: "<label>"` to insert one step
+  // before the answer (e.g. "Show Plot"). The first press shows the preview (renderers
+  // read qo.preview); the next shows the answer. Hiding the answer resets both.
+  const [previewShown, setPreviewShown] = useState(false);
+  useEffect(() => { setPreviewShown(false); }, [currentQuestion]);
+  const stagedLabel = (currentQuestion as unknown as { _stagedReveal?: string })._stagedReveal;
+  const revealText = (shown: boolean) => shown ? "Hide Answer" : stagedLabel && !previewShown ? stagedLabel : "Show Answer";
+  const revealPress = (shown: boolean, set: (v: boolean) => void) => {
+    if (shown) { set(false); setPreviewShown(false); }
+    else if (stagedLabel && !previewShown) setPreviewShown(true);
+    else set(true);
+  };
   // Bumped whenever the Worked Example's underlying example genuinely changes
   // (new question, or a reformat) — tells WorkedExampleSteps to reset position
   // back to the start. Step-by-Step/Show All itself lives inside that component.
@@ -579,6 +591,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     variables: getVariableValues(),
     dropdownValue: getDropdownValue(),
     multiSelectValues: toolMultiSelect[currentTool] ?? {},
+    preview: previewShown,
   });
 
   const makeQuestion = (): AnyQuestion =>
@@ -1078,9 +1091,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             <button onClick={handleNewQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
               <RefreshCw size={18} /> New Question
             </button>
-            <button onClick={() => mode === "whiteboard" ? setShowWhiteboardAnswer(!showWhiteboardAnswer) : setShowAnswer(!showAnswer)}
+            <button onClick={() => mode === "whiteboard" ? revealPress(showWhiteboardAnswer, setShowWhiteboardAnswer) : revealPress(showAnswer, setShowAnswer)}
               className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
-              <Eye size={18} /> {(mode === "whiteboard" ? showWhiteboardAnswer : showAnswer) ? "Hide Answer" : "Show Answer"}
+              <Eye size={18} /> {revealText(mode === "whiteboard" ? showWhiteboardAnswer : showAnswer)}
             </button>
           </div>
         </div>
@@ -1095,7 +1108,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         {qoEl()}
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
           <button onClick={handleNewQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18} /> New Question</button>
-          <button onClick={() => setShowWhiteboardAnswer(a => !a)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><Eye size={18} /> {showWhiteboardAnswer ? "Hide Answer" : "Show Answer"}</button>
+          <button onClick={() => revealPress(showWhiteboardAnswer, setShowWhiteboardAnswer)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><Eye size={18} /> {revealText(showWhiteboardAnswer)}</button>
         </div>
       </div>
     );
@@ -1572,8 +1585,8 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                   <button onClick={handleNewQuestion} className="flex-1 px-3 py-2 bg-blue-900 text-white rounded-lg font-bold text-sm shadow-sm hover:bg-blue-800 flex items-center justify-center gap-1.5">
                     <RefreshCw size={14} /> New Question
                   </button>
-                  <button onClick={() => setShowAnswer(a => !a)} className="flex-1 px-3 py-2 bg-blue-900 text-white rounded-lg font-bold text-sm shadow-sm hover:bg-blue-800 flex items-center justify-center gap-1.5">
-                    <Eye size={14} /> {showAnswer ? "Hide Answer" : "Show Answer"}
+                  <button onClick={() => revealPress(showAnswer, setShowAnswer)} className="flex-1 px-3 py-2 bg-blue-900 text-white rounded-lg font-bold text-sm shadow-sm hover:bg-blue-800 flex items-center justify-center gap-1.5">
+                    <Eye size={14} /> {revealText(showAnswer)}
                   </button>
                 </div>
                 <div className="rounded-xl shadow-lg overflow-hidden">

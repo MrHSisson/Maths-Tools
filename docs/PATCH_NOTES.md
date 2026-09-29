@@ -35,7 +35,7 @@ the number marked and labelled ends + midpoint (QO: "Every mark" labels the whol
 line with blank boxes to fill in (QO: "Midpoint only" gives the ends). Level 3: question only. QO
 "Include exact halfway values". All values derived from integers (no float drift); SVG worksheets
 print via `handleDiagramPrint`.
-Follow-up: 'Include exact halfway values' now yields ~1 in 3 exact halves (was 1 in 6, too rare to notice); new Level 2 QO 'Plot the number' — labelled line, number unmarked, student plots it before rounding.
+Follow-up: "Exactly halfway" is now a 2-option weighted pool (ToolShell's click-to-cycle button: any position → mixed → exactly halfway). "Number on the line" (Plotted for them / Students plot it) is its own Levels 1–2 QO, so any labelling combines with either. **New ToolShell concept — staged reveal:** a question may set `_stagedReveal: "<label>"`; the whiteboard/worked-example reveal button then shows that label first ("Show Plot"), exposing `qo.preview` to the renderer, and only the next press shows the answer (Hide resets both). Opt-in per question; worksheets unaffected.
 
 ## 2026-09-28 — Comparing & Ordering Numbers (Number) — live
 New tool `/comparing-ordering-numbers` (`src/tools/Number/ComparingOrderingNumbers.tsx`,
