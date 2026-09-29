@@ -44,14 +44,13 @@ Accuracy pools: nearest `1000 / 100 / 10 / whole number`; d.p. `1 / 2 / 3`; s.f.
 - s.f.: leading zeros are not significant; the lower boundary's leading digits never become all 9s (avoids 9.96 → 10 changing the s.f. count).
 - Comma grouping from five digits (`4372`, `43,720`); KaTeX uses `{,}`.
 
-## 5. Worked example (6 steps)
+## 5. Worked example — one method at a time
 
-1. Where the rounding digit is (place / d.p. / s.f. wording).
-2. **Digit step** — the number as digit boxes: rounding digit (blue), decider (orange), a dotted line drawn between them (the teacher's board convention), rest greyed; s.f. leading zeros noted.
-3. The decider rule: `d ≥ 5` → round up, `d < 5` → round down.
-4. **Number-line step** — boundaries, halfway, number marked.
-5. Compare with the halfway value (agrees with step 3).
-6. Answer.
+Dropdown **Working method** (`workedExampleOnly`, default `digit`); switching it rebuilds the steps for the same question (`reformatQuestion`).
+
+**Digit rule (4 steps):** (1) where the rounding digit is (place / d.p. / s.f. wording); (2) digit boxes — rounding digit (blue), decider (orange), a dotted line between them (the teacher's board convention), rest greyed, s.f. leading zeros noted; (3) decider `≥ 5` → round up, `< 5` → round down; (4) add 1 / keep the rounding digit, drop or zero the rest → answer.
+
+**Number line (4 steps):** (1) find the two possible answers either side; (2) line with boundaries, halfway and the number marked; (3) compare with the halfway value; (4) answer.
 
 ## 6. Acceptance reference
 

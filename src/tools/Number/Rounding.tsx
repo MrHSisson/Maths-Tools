@@ -3,7 +3,7 @@ import {
   ToolShell, handleDiagramPrint,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion,
   type ToolMultiSelect, type ToolVariable,
-  randInt, pickActive, mStep, tStep, QuestionDisplay, AnswerDisplay, handlePrint, type WorkingStep,
+  randInt, pickActive, mStep, tStep, QuestionDisplay, AnswerDisplay, handlePrint, type WorkingStep, type QOSnapshot, type ToolDropdown,
 } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -13,6 +13,7 @@ import {
 // ── 1. Types ──────────────────────────────────────────────────────────────────
 
 type ToolType = "nearest" | "dp" | "sf";
+type Method = "digit" | "line";   // worked-example method — the question is identical either way
 type LabelMode = "ends" | "every";       // Level 1 — how much of the line is labelled
 type BlankMode = "blank" | "endsGiven";  // Level 2 — what the student fills in
 
@@ -103,10 +104,22 @@ const BLANK_L2_MS: ToolMultiSelect = {
   ],
 };
 
+// Working method — the same question, explained by the digit rule or on a number line.
+// Shown only in Whiteboard / Worked Example (it changes nothing on a printed worksheet).
+const METHOD_DD: ToolDropdown = {
+  key: "method", label: "Working method",
+  options: [
+    { value: "digit", label: "Digit rule", sub: "(rounding digit + decider)" },
+    { value: "line", label: "Number line", sub: "(boundaries + halfway)" },
+  ],
+  defaultValue: "digit",
+  workedExampleOnly: true,
+};
+
 const subTool = (name: string, pool: ToolMultiSelect) => ({
   name,
   variables: [] as ToolVariable[],
-  dropdown: null,
+  dropdown: METHOD_DD,
   multiSelect: pool,
   difficultySettings: {
     level1: { variables: [], multiSelect: [pool, LABEL_L1_MS, PLOT_MS, PRECISION_MS, POSITION_MS] },
@@ -155,6 +168,7 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Significant figures", detail: "1, 2 or 3 s.f., including numbers below 1 (leading zeros are not significant) and large numbers." },
       { label: "Number on the line (Levels 1–2)", detail: "'Plotted for them' marks the number on the line. 'Students plot it' leaves the line without a marker — on the whiteboard, 'Show Plot' reveals where the number sits before 'Show Answer' reveals the rounding. On worksheets the marker appears with the answers." },
       { label: "Digits past the rounding position (Levels 1–2)", detail: "'One extra' puts the number exactly on a mark of the line; 'Two extra' places it between marks so students estimate its position. This applies to every sub-tool: for nearest 100, one extra gives 3480 (on a mark) and two extra gives 3482 (between marks). Level 3 uses natural digits for nearest 10/100/1000 (e.g. 3482) and mixes one and two extra digits elsewhere." },
+      { label: "Working method", detail: "Worked Example only (it changes the explanation, not the question). 'Digit rule' shows the rounding digit and the decider with a dotted line between them, then the 5-or-more rule. 'Number line' shows the two possible answers either side of the number, the halfway value, and which it is closer to. Switching keeps the same question." },
       { label: "Exactly halfway", detail: "Click to cycle: any position only → mixed → exactly halfway only. Exactly-halfway numbers round up." },
     ],
   },
@@ -162,7 +176,7 @@ const INFO_SECTIONS: InfoSection[] = [
     title: "Modes", icon: "🖥️",
     content: [
       { label: "Whiteboard", detail: "One large question; reveal the answer on demand." },
-      { label: "Worked Example", detail: "Step-by-step: the rounding digit and the decider (highlighted), the 5-or-more rule, the same result on a number line (boundaries, halfway, number), then the answer." },
+      { label: "Worked Example", detail: "Step-by-step, in the chosen working method: the digit rule (rounding digit, decider, 5-or-more) or the number line (boundaries, halfway, which is closer)." },
       { label: "Worksheet", detail: "Grid of questions with differentiated layout and PDF export." },
     ],
   },
@@ -250,17 +264,44 @@ function buildRounding(t: ToolType, level: DifficultyLevel, ms: Record<string, b
 }
 
 const PLACE = ["units", "tens", "hundreds", "thousands"];
-function introStep(t: ToolType, n: number) {
+function introStep(t: ToolType, n: number, method: Method) {
+  if (method === "line") {
+    if (t === "nearest") return tStep(`To round to the nearest ${n === 0 ? "whole number" : pow10(n)}, find the two ${n === 0 ? "whole numbers" : `multiples of ${pow10(n)}`} either side of the number, then decide which one it is closer to.`);
+    if (t === "dp") return tStep(`The two possible answers are the numbers with ${n} decimal place${n > 1 ? "s" : ""} either side of the number. Decide which one it is closer to.`);
+    return tStep(`The two possible answers are the numbers with ${n} significant figure${n > 1 ? "s" : ""} either side of the number (the first significant figure is the first non-zero digit). Decide which one it is closer to.`);
+  }
   if (t === "nearest") return tStep(`Rounding to the nearest ${n === 0 ? "whole number" : pow10(n)}: the rounding digit is the ${PLACE[n]} digit.`);
   if (t === "dp") return tStep(`Rounding to ${n} decimal place${n > 1 ? "s" : ""} means keeping ${n} digit${n > 1 ? "s" : ""} after the decimal point. The rounding digit is the last digit you keep.`);
   return tStep(`The first significant figure is the first non-zero digit. Rounding to ${n} significant figure${n > 1 ? "s" : ""} means keeping ${n} of them; the rounding digit is the last one you keep.`);
+}
+
+type Rounded = ReturnType<typeof buildRounding>;
+
+/** The worked example for one question — the digit rule OR the number line, never both. */
+function buildWorking(t: ToolType, r: Rounded, data: RoundingData, method: Method): WorkingStep[] {
+  const compare = r.half ? "=" : r.up ? "\\gt" : "\\lt";
+  if (method === "line") {
+    return [
+      introStep(t, r.n, "line"),
+      { type: "roundLine", latex: "", plain: `${r.numStr} lies between ${r.lowerStr} and ${r.upperStr}`, label: `Mark the number between ${r.lowerStr} and ${r.upperStr}; halfway is ${r.midStr}:`, extra: data },
+      mStep(r.half ? "Exactly halfway, so it rounds up:" : r.up ? "Past the halfway value, so it is closer to the upper number:" : "Before the halfway value, so it is closer to the lower number:", [tex(r.numStr), `${compare} ${tex(r.midStr)}`]),
+      mStep("Answer:", tex(r.ansStr)),
+    ];
+  }
+  const decider = Math.floor(r.N / pow10(r.kk - 1)) % 10;   // the digit just after the rounding digit
+  return [
+    introStep(t, r.n, "digit"),
+    { type: "roundDigits", latex: "", plain: `Rounding digit and decider in ${r.numStr}`, label: "Find the rounding digit (blue), draw a dotted line after it, then look at the digit that follows — the decider (orange):", extra: { numStr: r.numStr, e: r.e, sf: t === "sf" } },
+    mStep(`The decider is ${decider}, which is ${decider >= 5 ? "5 or more, so round up" : "less than 5, so round down"}:`, `${decider} ${decider >= 5 ? "\\ge" : "\\lt"} 5`),
+    mStep(r.up ? "Add 1 to the rounding digit and drop (or zero) everything after it:" : "Keep the rounding digit and drop (or zero) everything after it:", tex(r.ansStr)),
+  ];
 }
 
 function generateQuestion(
   tool: string,
   level: DifficultyLevel,
   _variables: Record<string, boolean>,
-  _dropdownValue: string,
+  dropdownValue: string,
   multiSelectValues?: Record<string, boolean>,
 ): AnyQuestion {
   const t = tool as ToolType;
@@ -280,16 +321,10 @@ function generateQuestion(
     aspect: 660 / 250,   // same cell shape at every level so page fill / the 12-per-page cap match
   };
 
-  const compare = r.half ? "=" : r.up ? "\\gt" : "\\lt";
-  const decider = Math.floor(r.N / pow10(r.kk - 1)) % 10;   // the digit just after the rounding digit
-  const working: WorkingStep[] = [
-    introStep(t, r.n),
-    { type: "roundDigits", latex: "", plain: `Rounding digit and decider in ${r.numStr}`, label: "Find the rounding digit (blue), draw a dotted line after it, then look at the digit that follows — the decider (orange):", extra: { numStr: r.numStr, e: r.e, sf: t === "sf" } },
-    mStep(`The decider is ${decider}, which is ${decider >= 5 ? "5 or more, so round up" : "less than 5, so round down"}:`, `${decider} ${decider >= 5 ? "\\ge" : "\\lt"} 5`),
-    { type: "roundLine", latex: "", plain: `${r.numStr} lies between ${r.lowerStr} and ${r.upperStr}`, label: `On a number line the number sits between ${r.lowerStr} and ${r.upperStr}, and halfway is ${r.midStr}:`, extra: data },
-    mStep(r.half ? "Exactly halfway, so it rounds up:" : r.up ? "Past the halfway value, so it rounds up:" : "Before the halfway value, so it rounds down:", [tex(r.numStr), `${compare} ${tex(r.midStr)}`]),
-    mStep("Answer:", tex(r.ansStr)),
-  ];
+  const method = (dropdownValue === "line" ? "line" : "digit") as Method;
+  const working = buildWorking(t, r, data, method);
+  const work = { t, r, data };   // kept so reformatQuestion can rebuild the working
+  const qoKey = JSON.stringify(multiSelectValues ?? {});
 
   // Level 3 is a plain text question — ToolShell's standard display, sizing and print.
   if (level === "level3") {
@@ -302,6 +337,7 @@ function generateQuestion(
       key: `round-${t}-${level}-${r.numStr}-${r.n}-${Math.floor(Math.random() * 1_000_000)}`,
       difficulty: level,
       _aspect: data.aspect,
+      _work: work, _qoKey: qoKey,
       _printText: prompt,   // used only when a diagram sheet mixes levels (differentiated)
     } as unknown as AnyQuestion;
   }
@@ -315,11 +351,20 @@ function generateQuestion(
     key: `round-${t}-${level}-${r.numStr}-${r.n}-${Math.floor(Math.random() * 1_000_000)}`,
     difficulty: level,
     _rounding: data,
+    _work: work, _qoKey: qoKey,
     _aspect: data.aspect,
     _densityFloorMm: 30,   // caps a page at 12 diagrams (2 columns × 6 rows)
     ...(plotted ? {} : { _stagedReveal: "Show Plot" }),   // whiteboard: plot first, then the answer
   } as unknown as AnyQuestion;
 }
+
+// Switching the working method only re-explains the same question — rebuild the steps.
+// Any other QO change means a new question (return null and let ToolShell regenerate).
+const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null => {
+  const w = (q as any)._work as { t: ToolType; r: Rounded; data: RoundingData } | undefined;
+  if (!w || (q as any)._qoKey !== JSON.stringify(qo.multiSelectValues ?? {})) return null;
+  return { ...q, working: buildWorking(w.t, w.r, w.data, qo.dropdownValue === "line" ? "line" : "digit") } as unknown as AnyQuestion;
+};
 
 // ── 6. Diagram ────────────────────────────────────────────────────────────────
 
@@ -523,6 +568,7 @@ export default function App() {
       generateQuestion={generateQuestion}
       questionRenderer={questionRenderer}
       stepRenderer={stepRenderer}
+      reformatQuestion={reformatQuestion}
       customPrintHandler={printRounding}
       defaults={{ numColumns: 2, maxColumns: 2, numQuestions: 12, collapseWorkingByDefault: true }}
     />
