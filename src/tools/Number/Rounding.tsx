@@ -39,15 +39,27 @@ interface RoundingData {
 
 // ── 2. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
-// 2-option weighted pool → ToolShell renders it as one click-to-cycle button
-// (None → Mixed → Exclusive): any position only → mixed → exactly halfway only.
+// A common/rare pair, not a difficulty ladder — so no `weight` (that would opt into the
+// Smart Progressor's roughly-even split). `cycleDisplay` still gives the compact
+// Off → Mixed → Always button; "Mixed" means a fixed rare chance, read via pickRare.
+const HALFWAY_MIXED_CHANCE = 0.05;
 const POSITION_MS: ToolMultiSelect = {
-  key: "position", label: "Exactly halfway",
+  key: "position", label: "Exactly halfway", cycleDisplay: true,
+  cycleStateLabels: ["Off", "Mixed (~5%)", "Always"],
   options: [
-    { value: "midAny", label: "Any position", defaultActive: true, weight: 1 },
-    { value: "midExact", label: "Exactly halfway", defaultActive: false, weight: 2 },
+    { value: "midAny", label: "Any position", defaultActive: true },
+    { value: "midExact", label: "Exactly halfway", defaultActive: false },
   ],
 };
+
+/** Absent means active, only an explicit `false` turns an option off (pickActive's convention). */
+function pickRare(values: Record<string, boolean> | undefined, commonValue: string, rareValue: string, rareChance: number): string {
+  const commonOn = values?.[commonValue] !== false;
+  const rareOn = values?.[rareValue] !== false;
+  if (!rareOn) return commonValue;
+  if (!commonOn) return rareValue;
+  return Math.random() < rareChance ? rareValue : commonValue;
+}
 const PRECISION_MS: ToolMultiSelect = {
   key: "precision", label: "Digits past the rounding position",
   options: [
@@ -169,7 +181,7 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Number on the line (Levels 1–2)", detail: "'Plotted for them' marks the number on the line. 'Students plot it' leaves the line without a marker — on the whiteboard, 'Show Plot' reveals where the number sits before 'Show Answer' reveals the rounding. On worksheets the marker appears with the answers." },
       { label: "Digits past the rounding position (Levels 1–2)", detail: "'One extra' puts the number exactly on a mark of the line; 'Two extra' places it between marks so students estimate its position. This applies to every sub-tool: for nearest 100, one extra gives 3480 (on a mark) and two extra gives 3482 (between marks). Level 3 uses natural digits for nearest 10/100/1000 (e.g. 3482) and mixes one and two extra digits elsewhere." },
       { label: "Working method", detail: "Worked Example only (it changes the explanation, not the question). 'Digit rule' shows the rounding digit and the decider with a dotted line between them, then the 5-or-more rule. 'Number line' shows the two possible answers either side of the number, the halfway value, and which it is closer to. Switching keeps the same question." },
-      { label: "Exactly halfway", detail: "Click to cycle: any position only → mixed → exactly halfway only. Exactly-halfway numbers round up." },
+      { label: "Exactly halfway", detail: "Click to cycle: Off → Mixed (about 5% of questions) → Always. Exactly-halfway numbers round up." },
     ],
   },
   {
@@ -232,7 +244,7 @@ function buildRounding(t: ToolType, level: DifficultyLevel, ms: Record<string, b
   // Levels 1–2 follow the QO: one extra digit sits on a mark (3480), two between marks (3482).
   const natural = level === "level3" && t === "nearest" && e > 0;
   const kk = natural ? e : extra;
-  const half = pickOpt(ms, POSITION_MS.options) === "midExact";
+  const half = pickRare(ms, "midAny", "midExact", HALFWAY_MIXED_CHANCE) === "midExact";
   const kkUsed = half && !natural ? 1 : kk;   // a halfway value is 5 × 10^(kk-1)
 
   // ── lower boundary, in units of 10^e ──

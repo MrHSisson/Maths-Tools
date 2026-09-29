@@ -34,7 +34,7 @@ Accuracy pools: nearest `1000 / 100 / 10 / whole number`; d.p. `1 / 2 / 3`; s.f.
 - **Level 2 — blank line.** Same line, empty boxes. QO *Student fills in*: `Ends & midpoint` (default) / `Midpoint only` (ends given).
 - **Level 3 — question only** (plain worded text; standard ToolShell display and text print).
 - **Levels 1–2:** QO *Number on the line* — `Plotted for them` (default) / `Students plot it` (marker hidden; whiteboard has an in-box **Show Plot** button — see CLAUDE.md "Staged reveal"; answer pages print the plotted line). QO *Digits past the rounding position* — `One extra` (on a tick, default) / `Two extra` (between ticks). Applies to all sub-tools (nearest 100: 3480 vs 3482); Level 3 nearest 10/100/1000 keeps natural digits.
-- **All levels:** QO *Exactly halfway* — 2-option weighted pool (cycle button): any position / exactly halfway. Deliberately does **not** feed the Smart Progressor sort (no `_difficultyScore`).
+- **All levels:** QO *Exactly halfway* — common/rare pair shown as the compact cycle button (`cycleDisplay`): Off (default) → Mixed (~5% exactly halfway) → Always. Unweighted, so it never feeds the Smart Progressor sort or its even-split balancing.
 
 ## 4. Maths rules
 
