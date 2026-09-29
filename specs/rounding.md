@@ -1,6 +1,6 @@
 # Tool Spec: Rounding
 
-**Status:** implemented — `src/tools/Number/Rounding.tsx`, registered `enabled: false` (dev-gated).
+**Status:** implemented — `src/tools/Number/Rounding.tsx`, **live** on the landing page.
 Written retrospectively from the built tool (it was designed conversationally, not from this
 template) so the intent and decisions are on record.
 
@@ -26,7 +26,7 @@ Levels fade the scaffold: labelled line → blank line → question only.
 | `dp` | Decimal Places | diagram (L1–2) / worded (L3) |
 | `sf` | Significant Figures | diagram (L1–2) / worded (L3) |
 
-Accuracy pools: nearest `1000 / 100 / 10 / whole number`; d.p. `1 / 2 / 3`; s.f. `1 / 2 / 3` (all active by default).
+Accuracy pools: nearest `10 / 100 / 1000 / whole number` (ordered as a difficulty scale, not a size scale); d.p. `1 / 2 / 3`; s.f. `1 / 2 / 3` (all active by default).
 
 ## 3. Levels and QO
 
@@ -35,7 +35,7 @@ The *Number line labels*, *Student fills in* and *Number on the line* pools are 
 - **Level 1 — labelled line.** Number marked between two boundaries; ends + midpoint labelled. QO *Number line labels*: `Ends & midpoint` (default) / `Every mark` (all 11 ticks labelled).
 - **Level 2 — blank line.** Same line, empty boxes. QO *Student fills in*: `Ends & midpoint` (default) / `Midpoint only` (ends given).
 - **Level 3 — question only** (plain worded text; standard ToolShell display and text print).
-- **Levels 1–2:** QO *Number on the line* — `Plotted for them` (default) / `Students plot it` (marker hidden; whiteboard has an in-box **Show Plot** button — see CLAUDE.md "Staged reveal"; answer pages print the plotted line). QO *Digits past the rounding position* — `One extra` (on a tick, default) / `Two extra` (between ticks). Applies to all sub-tools (nearest 100: 3480 vs 3482); Level 3 nearest 10/100/1000 keeps natural digits.
+- **Levels 1–2:** QO *Number on the line* — `Students plot it` (default — marker hidden; whiteboard has an in-box **Show Plot** button — see CLAUDE.md "Staged reveal"; answer pages print the plotted line) / `Plotted for them` (marker drawn from the start). QO *Digits past the rounding position* — `One extra` (on a tick, default) / `Two extra` (between ticks). Applies to all sub-tools (nearest 100: 3480 vs 3482); Level 3 nearest 10/100/1000 keeps natural digits.
 - **All levels:** QO *Exactly halfway* — common/rare pair shown as the compact cycle button (`cycleDisplay`): Off (default) → Mixed (~5% exactly halfway) → Always. Unweighted, so it never feeds the Smart Progressor sort or its even-split balancing.
 
 ## 4. Maths rules

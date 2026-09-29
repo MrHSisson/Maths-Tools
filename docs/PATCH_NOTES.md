@@ -28,7 +28,7 @@ Keep the split even when a session only touches one.
 
 # Maths
 
-## 2026-09-29 — Rounding (Number) — dev-gated
+## 2026-09-29 — Rounding (Number) — live
 New tool `/rounding` (`src/tools/Number/Rounding.tsx`, registered `enabled: false`). Three sub-tools —
 Nearest 10/100/1000/whole, Decimal Places (1–3), Significant Figures (1–3). Level 1: number line with
 the number marked and labelled ends + midpoint (QO: "Every mark" labels the whole line). Level 2: same
@@ -48,6 +48,7 @@ Follow-up: in Worked Example mode the question box no longer shows the answer (t
 Fix: the hidden answer-page twin on worksheet cells was drawing on screen (the SVG's inline `display:block` overrode the `hidden` class) — it now sits in a `display:none` wrapper; print still copies the twin.
 New opt-in `defaults.qoColumns: 2`: the Question Options popover lays out in two balanced columns with a thin grey divider (twice as wide, centred under its button). Used by Rounding; applies to the standard popover (whiteboard / example / worksheet); its border is now a 2px mid-grey outline.
 Fix: the advanced worksheet builder updated QO values from a stale copy, so a single-choice (`exclusive`) pool — which sets one option and clears the rest in one click — ended with both selected and stuck; `updateGroup` now takes a function of the latest group. The builder's QO panel also hides `workedExampleOnly` dropdowns (Rounding's working method).
+Final changes: *Number on the line* now defaults to **Students plot it**; nearest options ordered 10 / 100 / 1000 / whole (a difficulty scale); **Rounding taken live** (`enabled: false` removed).
 
 ## 2026-09-28 — Comparing & Ordering Numbers (Number) — live
 New tool `/comparing-ordering-numbers` (`src/tools/Number/ComparingOrderingNumbers.tsx`,

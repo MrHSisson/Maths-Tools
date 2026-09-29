@@ -70,17 +70,18 @@ const PRECISION_MS: ToolMultiSelect = {
 const PLOT_MS: ToolMultiSelect = {
   key: "plotMode", label: "Number on the line", exclusive: true,
   options: [
-    { value: "auto", label: "Plotted for them", defaultActive: true },
-    { value: "student", label: "Students plot it", sub: "(reveal the plot, then the answer)", defaultActive: false },
+    { value: "student", label: "Students plot it", sub: "(reveal the plot, then the answer)", defaultActive: true },
+    { value: "auto", label: "Plotted for them", defaultActive: false },
   ],
 };
 
 const NEAREST_MS: ToolMultiSelect = {
   key: "nearestPool", label: "Round to nearest",
   options: [
-    { value: "n1000", label: "1000", defaultActive: true },
-    { value: "n100", label: "100", defaultActive: true },
+    // ordered as a difficulty scale (not a size scale): 10 → 100 → 1000 → whole number
     { value: "n10", label: "10", defaultActive: true },
+    { value: "n100", label: "100", defaultActive: true },
+    { value: "n1000", label: "1000", defaultActive: true },
     { value: "n1", label: "Whole number", defaultActive: true },
   ],
 };
@@ -175,10 +176,10 @@ const INFO_SECTIONS: InfoSection[] = [
   {
     title: "Rounding to…", icon: "🎯",
     content: [
-      { label: "Nearest 10, 100, 1000", detail: "Choose any mix of 1000, 100, 10 and whole number." },
+      { label: "Nearest 10, 100, 1000", detail: "Choose any mix of 10, 100, 1000 and whole number (listed as a difficulty scale, easiest first)." },
       { label: "Decimal places", detail: "1, 2 or 3 d.p. Trailing zeros are kept in answers (e.g. 4.30) because they show the accuracy." },
       { label: "Significant figures", detail: "1, 2 or 3 s.f., including numbers below 1 (leading zeros are not significant) and large numbers." },
-      { label: "Number on the line (Levels 1–2)", detail: "'Plotted for them' marks the number on the line. 'Students plot it' leaves the line without a marker — on the whiteboard, 'Show Plot' reveals where the number sits before 'Show Answer' reveals the rounding. On worksheets the marker appears with the answers." },
+      { label: "Number on the line (Levels 1–2)", detail: "'Students plot it' (the default) leaves the line without a marker — on the whiteboard, 'Show Plot' reveals where the number sits before 'Show Answer' reveals the rounding. On worksheets the marker appears with the answers. 'Plotted for them' marks the number on the line from the start." },
       { label: "Digits past the rounding position (Levels 1–2)", detail: "'One extra' puts the number exactly on a mark of the line; 'Two extra' places it between marks so students estimate its position. This applies to every sub-tool: for nearest 100, one extra gives 3480 (on a mark) and two extra gives 3482 (between marks). Level 3 uses natural digits for nearest 10/100/1000 (e.g. 3482) and mixes one and two extra digits elsewhere." },
       { label: "Working method", detail: "Worked Example only (it changes the explanation, not the question). 'Digit rule' shows the rounding digit and the decider with a dotted line between them, then the 5-or-more rule. 'Number line' shows the two possible answers either side of the number, the halfway value, and which it is closer to. Switching keeps the same question." },
       { label: "Exactly halfway", detail: "Click to cycle: Off → Mixed (about 5% of questions) → Always. Exactly-halfway numbers round up." },
