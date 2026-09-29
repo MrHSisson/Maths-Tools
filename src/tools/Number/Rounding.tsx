@@ -417,7 +417,7 @@ function RoundingDiagram({ d, showAnswer, withPrompt, idx, preview, answerIdx, a
   return (
     <svg viewBox={`0 ${y0} 660 ${h}`} style={{ display: "block", width: "100%", height: "auto" }} preserveAspectRatio="xMidYMid meet"
       {...(idx !== undefined ? { "data-q-index": idx } : {})}
-      {...(answerIdx !== undefined ? { "data-q-answer-index": answerIdx, className: "hidden" } : {})}>
+      {...(answerIdx !== undefined ? { "data-q-answer-index": answerIdx } : {})}>
       {withPrompt && <text x={330} y={38} textAnchor="middle" dominantBaseline="middle" fontSize={promptFs} fontWeight={700} fill="#000">{d.prompt}</text>}
 
       {/* the number — when students plot it themselves it appears at the "Show Plot" step */}
@@ -473,12 +473,12 @@ const questionRenderer = (
 
   // Worksheet cell — the prompt lives inside the SVG so it prints with the diagram.
   if (compact === true) {
-    // The hidden twin (display:none on screen via the `hidden` class, which the print popup
-    // ignores) is what the answer pages print: the same line with the plot/answer drawn on.
+    // The hidden twin (its wrapper is display:none on screen via the `hidden` class; the print
+    // code copies only the <svg>, so it stays visible there) is what the answer pages print: the same line with the plot/answer drawn on.
     return (
       <>
         <RoundingDiagram d={d} showAnswer={showAnswer} withPrompt idx={idx} />
-        {idx !== undefined && <RoundingDiagram d={d} showAnswer withPrompt answerIdx={idx} />}
+        {idx !== undefined && <div className="hidden"><RoundingDiagram d={d} showAnswer withPrompt answerIdx={idx} /></div>}
       </>
     );
   }
