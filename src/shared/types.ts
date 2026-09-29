@@ -189,6 +189,7 @@ export interface ToolShellDefaults {
   maxColumns?: number;         // caps the column input maximum (e.g. 3 prevents 4-col)
   comingSoonLevels?: DifficultyLevel[]; // levels shown but disabled with "Coming soon" tooltip
   hideFontControls?: boolean;  // hides the text size up/down chevrons (e.g. diagram-only tools)
+  qoColumns?: 2;                       // lay the Question Options popover out in two columns (tools with many options)
   collapseWorkingByDefault?: boolean; // whiteboard opens with the working/visualiser panel collapsed (still re-openable)
   /** Worked Example mode's step layout. "single" (default) replaces the card
    *  each press, with a dot-strip to jump between steps. "stacked" builds a

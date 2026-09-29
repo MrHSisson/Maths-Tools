@@ -485,6 +485,7 @@ defaults?: {
   maxColumns?: number;                  // caps the columns input max (e.g. 3 = no 4-col option)
   comingSoonLevels?: DifficultyLevel[]; // levels shown but disabled — "Coming soon" on hover
   hideFontControls?: boolean;           // hides the text-size up/down chevrons (diagram-only tools)
+  qoColumns?: 2;                        // Question Options popover in two columns with a thin grey divider (tools with many options)
   collapseWorkingByDefault?: boolean;   // whiteboard opens with the working/visualiser panel collapsed (diagram-heavy tools)
 }
 ```

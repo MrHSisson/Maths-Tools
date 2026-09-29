@@ -279,6 +279,7 @@ export const StandardQOPopover = ({
   multiSelectValues,
   onMultiSelectChange,
   hideWorkedExampleOnly,
+  columns,
 }: {
   variables: { key: string; label: string }[];
   variableValues: Record<string, boolean>;
@@ -294,15 +295,22 @@ export const StandardQOPopover = ({
    *  true from the Worksheet mode QO popover; omit (or false) in
    *  Whiteboard/Worked Example mode, where it still applies. */
   hideWorkedExampleOnly?: boolean;
+  /** 2 → a tool with many options lays its sections out in two balanced columns with a thin
+   *  grey divider, in a popover twice as wide (centred under its button so it stays on screen). */
+  columns?: 1 | 2;
 }) => {
   const { open, setOpen, ref } = usePopover();
+  const twoCol = columns === 2;
   const dd = dropdown && !(hideWorkedExampleOnly && dropdown.workedExampleOnly) ? dropdown : null;
   const hasContent = variables.length > 0 || dd !== null || multiSelect.length > 0;
   return (
     <div className="relative" ref={ref}>
       <PopoverButton open={open} onClick={() => setOpen(!open)} />
       {open && (
-        <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-[26rem] p-5 flex flex-col gap-5">
+        <div
+          className={`absolute top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 p-5 ${twoCol ? "left-1/2 -translate-x-1/2 [&>*]:break-inside-avoid [&>*]:mb-5" : "left-0 min-w-[26rem] flex flex-col gap-5"}`}
+          style={twoCol ? { width: "min(54rem, calc(100vw - 2rem))", columnCount: 2, columnGap: "2.5rem", columnRule: "1px solid #d1d5db" } : undefined}
+        >
           {dd && <DropdownSection dropdown={dd} value={dropdownValue} onChange={onDropdownChange} />}
           <MultiSelectGroups groups={multiSelect} values={multiSelectValues} onChange={onMultiSelectChange} />
           {variables.length > 0 && <VariablesSection variables={variables} values={variableValues} onChange={onVariableChange} />}
