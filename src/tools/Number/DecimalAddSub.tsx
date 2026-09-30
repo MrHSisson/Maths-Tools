@@ -565,6 +565,7 @@ export default function App() {
       workingScaffold={workingScaffold}
       defaults={{
         collapseWorkingByDefault: true,
+        displayFontSize: 4, // text-5xl — the equation's size when the table is hidden (chevrons return then)
         hideFontControls: true,
         numQuestions: 10,
         numColumns: 3,

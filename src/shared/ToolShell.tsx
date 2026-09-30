@@ -1156,9 +1156,14 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     const scaffoldInQuestion = (fullscreen: boolean) => (scaffoldInQ && workingScaffold && !scaffoldHidden)
       ? <div className="w-full">{workingScaffold.render(currentQuestion, showWhiteboardAnswer, colorScheme, fullscreen ? { ...getQOSnapshot(), fullscreen: true } as QOSnapshot : getQOSnapshot())}</div>
       : null;
+    // A tool that hides the size chevrons (its scaffold — a table — is the content) gets them back
+    // while that scaffold is hidden, since the question alone is then ordinary text to resize. The
+    // box also stops auto-growing the question to fill (maxScale 1), or the chevrons would do nothing.
+    const scaffoldOff = scaffoldInQ && scaffoldHidden;
+    const fontControlsOn = !hideFontControls || scaffoldOff;
     const qBoxControls = (
-      (!hideFontControls || workingCollapsed || scaffoldInQ) && <div style={{ position: "absolute", top: 10, right: 10, display: "flex", gap: 6, zIndex: 20 }}>
-        {!hideFontControls && <>
+      (fontControlsOn || workingCollapsed || scaffoldInQ) && <div style={{ position: "absolute", top: 10, right: 10, display: "flex", gap: 6, zIndex: 20 }}>
+        {fontControlsOn && <>
           <button style={fontBtnStyle(canDisplayDecrease)} onClick={() => canDisplayDecrease && setDisplayFontSize(f => f - 1)}><ChevronDown size={16} color="#6b7280" /></button>
           <button style={fontBtnStyle(canDisplayIncrease)} onClick={() => canDisplayIncrease && setDisplayFontSize(f => f + 1)}><ChevronUp size={16} color="#6b7280" /></button>
         </>}
@@ -1172,7 +1177,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         )}
       </div>
     );
-    const fit = (content: ReactNode) => workingCollapsed ? <ScaleToFit>{content}</ScaleToFit> : content;
+    const fit = (content: ReactNode) => workingCollapsed ? <ScaleToFit maxScale={scaffoldOff ? 1 : 3}>{content}</ScaleToFit> : content;
 
     // Fullscreen ALWAYS fit-scales: grow-to-fill when the panel is collapsed,
     // shrink-to-fit (maxScale 1) in the split view — so dragging the splitter
@@ -1180,7 +1185,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     // needs a scrollbar. Content is wrapped in a div because ScaleToFit
     // measures the union of its children.
     const fitFS = (content: ReactNode) => (
-      <ScaleToFit maxScale={workingCollapsed ? 3 : 1}>{content}</ScaleToFit>
+      <ScaleToFit maxScale={workingCollapsed && !scaffoldOff ? 3 : 1}>{content}</ScaleToFit>
     );
 
     const questionBox = () => (
