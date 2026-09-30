@@ -50,6 +50,31 @@ export type AnyQuestion = SimpleQuestion | WordedQuestion;
 // headers); `operations` holds the scale factor shown between each
 // consecutive row pair (length = rows.length - 1). Built via rStep(), never
 // constructed directly — see src/shared/ratioTable.ts.
+// Place value table — see src/shared/placeValue.ts.
+export type PVTone = "zero" | "highlight" | "answer";
+export interface PVCell {
+  v: string;
+  /** Show the digit crossed out (used when a digit has been exchanged away). */
+  strike?: boolean;
+  /** Small digit written above the cell — a carry, or the new value after an exchange. */
+  above?: string;
+  tone?: PVTone;
+}
+export type PVRow =
+  | { kind: "cells"; cells: (PVCell | string)[]; /** Operator in the left gutter. */ label?: string; /** Thicker rule above (an answer line). */ rule?: boolean }
+  | { kind: "banner"; text: string };
+export interface PlaceValueTableData {
+  columns: string[];
+  /** Index of the Ones column — the decimal point is drawn on its right edge. */
+  onesIndex: number;
+  showPoint: boolean;
+  rows: PVRow[];
+  /** Row height in px (default 72). */
+  cellHeight?: number;
+  /** Column index to tint as the "current" column. */
+  highlightCol?: number;
+}
+
 export interface RatioTableData {
   headers: string[];
   rows: string[][];
