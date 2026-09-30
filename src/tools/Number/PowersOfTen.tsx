@@ -362,6 +362,16 @@ function PlaceValueGrid({ vin, vout, op, zeros, level, filled }: GridData & { fi
 
 // ── 10. questionRenderer ───────────────────────────────────────────────────────
 
+const workingScaffold = {
+  label: "place value grid",
+  placement: "question" as const,
+  render: (q: AnyQuestion, showAnswer: boolean): JSX.Element | null => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const grid = (q as any)._grid as GridData | undefined;
+    return grid ? <PlaceValueGrid {...grid} filled={showAnswer} /> : null;
+  },
+};
+
 const questionRenderer = (
   q: AnyQuestion,
   showAnswer: boolean,
@@ -405,7 +415,8 @@ const questionRenderer = (
           </span>
         )}
       </div>
-      {grid && <PlaceValueGrid {...grid} filled={showAnswer} />}
+      {/* Whiteboard: the grid is ToolShell's hideable workingScaffold (below). Worked example: filled grid here. */}
+      {grid && !isWhiteboard && <PlaceValueGrid {...grid} filled={showAnswer} />}
     </div>
   );
 };
@@ -423,6 +434,7 @@ export default function App() {
       generateQuestion={generateQuestion}
       reformatQuestion={reformatQuestion}
       questionRenderer={questionRenderer}
+      workingScaffold={workingScaffold}
       defaults={{
         collapseWorkingByDefault: true,
         hideFontControls: true,

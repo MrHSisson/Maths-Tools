@@ -65,6 +65,10 @@ export interface ToolShellProps {
    *  Whiteboard only (embedded and fullscreen). `label` names the button tooltip. */
   workingScaffold?: {
     label: string;
+    /** Where it is drawn: the working box (default) or inside the question box
+     *  below the question — pair "question" with `collapseWorkingByDefault` for a
+     *  full-width scaffold (the hide button then lives in the question box). */
+    placement?: "workingBox" | "question";
     render: (q: AnyQuestion, showAnswer: boolean, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null;
   };
 }
@@ -1141,12 +1145,22 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         onMouseLeave={e => (e.currentTarget.style.background = "rgba(0,0,0,0.08)")}
       ><PanelRightOpen size={16} color="#6b7280" /></button>
     );
+    const scaffoldInQ = workingScaffold?.placement === "question";
+    const scaffoldToggle = scaffoldInQ && workingScaffold && (
+      <button onClick={() => setScaffoldHidden(h => !h)} title={`${scaffoldHidden ? "Show" : "Hide"} ${workingScaffold.label}`}
+        style={{ background: scaffoldHidden ? "rgba(0,0,0,0.08)" : "#374151", border: "none", borderRadius: 8, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center" }}
+      ><Table2 size={16} color={scaffoldHidden ? "#6b7280" : "#ffffff"} /></button>
+    );
+    const scaffoldInQuestion = (fullscreen: boolean) => (scaffoldInQ && workingScaffold && !scaffoldHidden)
+      ? <div className="w-full">{workingScaffold.render(currentQuestion, showWhiteboardAnswer, colorScheme, fullscreen ? { ...getQOSnapshot(), fullscreen: true } as QOSnapshot : getQOSnapshot())}</div>
+      : null;
     const qBoxControls = (
-      (!hideFontControls || workingCollapsed) && <div style={{ position: "absolute", top: 10, right: 10, display: "flex", gap: 6, zIndex: 20 }}>
+      (!hideFontControls || workingCollapsed || scaffoldInQ) && <div style={{ position: "absolute", top: 10, right: 10, display: "flex", gap: 6, zIndex: 20 }}>
         {!hideFontControls && <>
           <button style={fontBtnStyle(canDisplayDecrease)} onClick={() => canDisplayDecrease && setDisplayFontSize(f => f - 1)}><ChevronDown size={16} color="#6b7280" /></button>
           <button style={fontBtnStyle(canDisplayIncrease)} onClick={() => canDisplayIncrease && setDisplayFontSize(f => f + 1)}><ChevronUp size={16} color="#6b7280" /></button>
         </>}
+        {scaffoldToggle}
         {workingCollapsed && expandBtn}
       </div>
     );
@@ -1168,7 +1182,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           <div className="w-full text-center flex flex-col gap-4 items-center">
             {getInstruction() && !questionRenderer && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold`} style={{ color: "#000" }}>{getInstruction()}</div>}
             {questionRenderer
-              ? <>{questionRenderer(currentQuestion, showWhiteboardAnswer, colorScheme, undefined, undefined, getQOSnapshot(), displayFontSizes[displayFontSize])}{stagedBtn(showWhiteboardAnswer)}</>
+              ? <>{questionRenderer(currentQuestion, showWhiteboardAnswer, colorScheme, undefined, undefined, getQOSnapshot(), displayFontSizes[displayFontSize])}{stagedBtn(showWhiteboardAnswer)}{scaffoldInQuestion(false)}</>
               : <>
                   <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
                   {showWhiteboardAnswer && <div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>
@@ -1188,7 +1202,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           <>
             {getInstruction() && !questionRenderer && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold`} style={{ color: "#000" }}>{getInstruction()}</div>}
             {questionRenderer
-              ? <>{questionRenderer(currentQuestion, showWhiteboardAnswer, colorScheme, false, undefined, { ...getQOSnapshot(), fullscreen: true }, displayFontSizes[displayFontSize])}{stagedBtn(showWhiteboardAnswer)}</>
+              ? <>{questionRenderer(currentQuestion, showWhiteboardAnswer, colorScheme, false, undefined, { ...getQOSnapshot(), fullscreen: true }, displayFontSizes[displayFontSize])}{stagedBtn(showWhiteboardAnswer)}{scaffoldInQuestion(true)}</>
               : <>
                   <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
                   {showWhiteboardAnswer && <div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>
@@ -1209,7 +1223,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             {camError && <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", padding: "2rem", textAlign: "center", zIndex: 1 }}>{camError}</div>}
           </>
         )}
-        {workingScaffold && !presenterMode && !scaffoldHidden && (
+        {workingScaffold && workingScaffold.placement !== "question" && !presenterMode && !scaffoldHidden && (
           <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: "56px 16px 16px", boxSizing: "border-box", zIndex: 5 }}>
             <ScaleToFit maxScale={isFS ? 1.6 : 1}>
               <div className="w-full">{workingScaffold.render(currentQuestion, showWhiteboardAnswer, colorScheme, getQOSnapshot())}</div>
@@ -1246,7 +1260,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               onMouseLeave={e => (e.currentTarget.style.background = "rgba(0,0,0,0.08)")}
             ><Video size={16} color="#6b7280" /></button>
           )}
-          {workingScaffold && !presenterMode && (
+          {workingScaffold && workingScaffold.placement !== "question" && !presenterMode && (
             <button onClick={() => setScaffoldHidden(h => !h)} title={`${scaffoldHidden ? "Show" : "Hide"} ${workingScaffold.label}`}
               style={{ background: scaffoldHidden ? "rgba(0,0,0,0.08)" : "#374151", border: "none", borderRadius: 8, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center" }}
             ><Table2 size={16} color={scaffoldHidden ? "#6b7280" : "#ffffff"} /></button>

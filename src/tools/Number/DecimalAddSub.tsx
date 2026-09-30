@@ -15,7 +15,7 @@ import {
 // column-by-column calculation from the right with carries / exchanges written
 // above the digits.
 //
-//   • Whiteboard  — an EMPTY table in the working box (hideable) the teacher fills live; Show Answer fills it.
+//   • Whiteboard  — an EMPTY full-width table under the equation (hideable) the teacher fills live; Show Answer fills it.
 //   • Worked Ex.  — the table rebuilt one step at a time (write → zeros → each column).
 //   • Worksheet   — text only.
 //
@@ -430,10 +430,12 @@ const emptyTable = (op: "+" | "−"): PlaceValueTableData => ({
   ],
 });
 
-// The table lives in the whiteboard's working box (ToolShell `workingScaffold`),
-// where the teacher models on it and can hide it with the toolbar button.
+// The table is a ToolShell `workingScaffold` placed in the question box (the
+// working panel starts collapsed, so it runs full width like Powers of 10); the
+// teacher models on it and can hide it with the toolbar button.
 const workingScaffold = {
   label: "place value table",
+  placement: "question" as const,
   render: (q: AnyQuestion, showAnswer: boolean): JSX.Element | null => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const pv = (q as any)._pv as PVData | undefined;
@@ -497,6 +499,7 @@ export default function App() {
       stepRenderer={placeValueStepRenderer}
       workingScaffold={workingScaffold}
       defaults={{
+        collapseWorkingByDefault: true,
         hideFontControls: true,
         numQuestions: 10,
         numColumns: 3,

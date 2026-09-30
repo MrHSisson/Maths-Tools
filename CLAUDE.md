@@ -476,6 +476,10 @@ export interface ToolShellProps {
    *  suppressed while the visualiser camera is on. `label` names the tooltip. */
   workingScaffold?: {
     label: string;
+    /** "workingBox" (default) or "question" — inside the question box below the
+     *  question (needs a `questionRenderer`); pair with `collapseWorkingByDefault`
+     *  for a full-width scaffold. The hide button then sits in the question box. */
+    placement?: "workingBox" | "question";
     render: (q: AnyQuestion, showAnswer: boolean, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null;
   };
 }
@@ -507,7 +511,7 @@ A question may carry `_stagedReveal: "<button label>"` (e.g. `"Show Plot"`). In 
 
 ### Working scaffold — content inside the working box
 
-The working box is otherwise blank space (the teacher writes on it, or the visualiser camera fills it). A tool can put a **scaffold** in it with `workingScaffold` — e.g. the shared place value table, empty until Show Answer fills it. The box's button cluster gains a toggle that hides/shows the scaffold (session-only, default shown), so the teacher can remove it when students no longer need it. The scaffold is fit-scaled into the box. Keep the question box for the equation itself. Reference: `src/tools/Number/DecimalAddSub.tsx`.
+The working box is otherwise blank space (the teacher writes on it, or the visualiser camera fills it). A tool can put a **scaffold** in it with `workingScaffold` — e.g. the shared place value table, empty until Show Answer fills it. The box's button cluster gains a toggle that hides/shows the scaffold (session-only, default shown), so the teacher can remove it when students no longer need it. The scaffold is fit-scaled into the box. **Placement:** default is the working box; `placement: "question"` draws it inside the question box under the question instead (the hide button moves to the question box's cluster) — use it with `collapseWorkingByDefault: true` for a wide scaffold like a place value table, so it runs full width. References: `src/tools/Number/DecimalAddSub.tsx` and `src/tools/Number/PowersOfTen.tsx` (both `placement: "question"`; Powers of 10 still draws its filled grid through the question renderer in Worked Example, where the scaffold isn't shown).
 
 ### Collapsible working / visualiser panel
 
