@@ -14,7 +14,7 @@ Heavy use of the place value table (shared with Powers of 10 and Comparing & Ord
 | L2 | same d.p., carrying (incl. across the point) | same d.p., exchanging |
 | L3 | different d.p.: different d.p. · whole + decimal · answer ends in 0 (3.50 → 3.5) | placeholder zero needed (4.1 − 3.23) · whole − decimal (5 − 2.36) · exchange across a 0 (6.04 − 1.78) · longer number first |
 
-QO: L1–2 "Decimal places" pool (1/2/3 d.p.); L3 "Question types" pool per sub-tool.
+QO: display-only "Table starts" dropdown (Empty / Numbers in / Numbers + zeros; whiteboard & worked example only). L1–2 "Decimal places" pool (1/2/3 d.p.); L3 "Question types" pool per sub-tool.
 
 ## Acceptance reference
 - 4.1 − 3.23: write → 4.1 = 4.10 → 0−3 exchange (tenth→10 hundredths), 10−3=7 → 0−2 exchange (one→10 tenths), 10−2=8 → 3−3=0 → **0.87**

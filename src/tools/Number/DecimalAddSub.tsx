@@ -1,7 +1,7 @@
 import {
   ToolShell,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep,
-  type ToolMultiSelect, type PlaceValueTableData, type PVCell, type PVRow,
+  type ToolMultiSelect, type ToolDropdown, type QOSnapshot, type PlaceValueTableData, type PVCell, type PVRow,
   MathRenderer, randInt, pickActive,
   PlaceValueTable, placeValueStepRenderer, pvStep, PV_COLS_DECIMAL, PV_ONES_DECIMAL,
 } from "../../shared";
@@ -70,6 +70,20 @@ const SUB_SHAPE_MS: ToolMultiSelect = {
   ],
 };
 
+// Display-only: how much of the whiteboard table is already written in. It never
+// changes the question, so it is hidden from the Worksheet QO popover.
+const TABLE_START_DD: ToolDropdown = {
+  key: "tableStart",
+  label: "Table starts",
+  options: [
+    { value: "empty", label: "Empty" },
+    { value: "numbers", label: "Numbers in" },
+    { value: "zeros", label: "Numbers + zeros" },
+  ],
+  defaultValue: "empty",
+  workedExampleOnly: true,
+};
+
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Adding & Subtracting Decimals",
   tools: {
@@ -77,24 +91,24 @@ const TOOL_CONFIG: ToolConfig = {
       name: "Adding",
       instruction: "Work out:",
       variables: [],
-      dropdown: null,
+      dropdown: TABLE_START_DD,
       multiSelect: PLACES_MS,
       difficultySettings: {
-        level1: { variables: [], dropdown: null, multiSelect: PLACES_MS },
-        level2: { variables: [], dropdown: null, multiSelect: PLACES_MS },
-        level3: { variables: [], dropdown: null, multiSelect: ADD_SHAPE_MS },
+        level1: { variables: [], dropdown: TABLE_START_DD, multiSelect: PLACES_MS },
+        level2: { variables: [], dropdown: TABLE_START_DD, multiSelect: PLACES_MS },
+        level3: { variables: [], dropdown: TABLE_START_DD, multiSelect: ADD_SHAPE_MS },
       },
     },
     subtract: {
       name: "Subtracting",
       instruction: "Work out:",
       variables: [],
-      dropdown: null,
+      dropdown: TABLE_START_DD,
       multiSelect: PLACES_MS,
       difficultySettings: {
-        level1: { variables: [], dropdown: null, multiSelect: PLACES_MS },
-        level2: { variables: [], dropdown: null, multiSelect: PLACES_MS },
-        level3: { variables: [], dropdown: null, multiSelect: SUB_SHAPE_MS },
+        level1: { variables: [], dropdown: TABLE_START_DD, multiSelect: PLACES_MS },
+        level2: { variables: [], dropdown: TABLE_START_DD, multiSelect: PLACES_MS },
+        level3: { variables: [], dropdown: TABLE_START_DD, multiSelect: SUB_SHAPE_MS },
       },
     },
   },
@@ -123,6 +137,7 @@ const INFO_SECTIONS: InfoSection[] = [
   { title: "Question Options", icon: "⚙️", content: [
     { label: "Decimal places (Levels 1–2)", detail: "Choose whether the numbers have 1, 2 or 3 decimal places." },
     { label: "Question types (Level 3)", detail: "Choose which tricky shapes appear — different numbers of decimal places, whole numbers with decimals, answers ending in zero, exchanging across a zero." },
+    { label: "Table starts (Whiteboard / Worked Example)", detail: "Empty — the class builds the table from scratch. Numbers in — both numbers are already placed and lined up. Numbers + zeros — placeholder zeros are filled in too, so the focus is the calculation. Show Answer completes the working." },
     { label: "Differentiated", detail: "Worksheet mode produces three columns — one per level — simultaneously." },
   ]},
 ];
@@ -193,7 +208,7 @@ const snapTable = (s: Snap, workDp: number): PlaceValueTableData => {
   return { columns: COLS, onesIndex: ONES, showPoint: true, rows, cellHeight: 64, highlightCol: s.highlightCol };
 };
 
-interface Computed { result: Dec; steps: WorkingStep[]; finalTable: PlaceValueTableData; hasChain: boolean; carried: boolean; exchanged: boolean }
+interface Computed { startTables: { numbers: PlaceValueTableData; zeros: PlaceValueTableData }; result: Dec; steps: WorkingStep[]; finalTable: PlaceValueTableData; hasChain: boolean; carried: boolean; exchanged: boolean }
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -281,7 +296,10 @@ const compute = (op: "+" | "−", a: Dec, b: Dec): Computed => {
     push(`A zero at the end of a decimal can be dropped: ${full} = ${short}.`);
   }
 
-  return { result, steps, finalTable, hasChain, carried, exchanged };
+  const tableOf = (i: number) => (steps[i].extra as { table: PlaceValueTableData }).table;
+  const startTables = { numbers: tableOf(0), zeros: tableOf(a.dp !== b.dp ? 1 : 0) };
+
+  return { startTables, result, steps, finalTable, hasChain, carried, exchanged };
 };
 
 // ── 6. Question generation ────────────────────────────────────────────────────
@@ -389,6 +407,10 @@ const genSub = (level: DifficultyLevel, v: Record<string, boolean>): Pair => {
   );
 };
 
+const POOL_VALUES = [...PLACES_MS.options, ...ADD_SHAPE_MS.options, ...SUB_SHAPE_MS.options].map((o) => o.value);
+/** Signature of the question-pool options — changes only when the maths would change. */
+const poolSig = (v: Record<string, boolean>): string => POOL_VALUES.map((k) => (v[k] !== false ? 1 : 0)).join("");
+
 const generateQuestion = (
   tool: string,
   level: DifficultyLevel,
@@ -411,18 +433,29 @@ const generateQuestion = (
     answer,
     answerLatex: answer,
     working: comp.steps,
-    _pv: { op, a, b, finalTable: comp.finalTable },
+    _pv: { op, a, b, finalTable: comp.finalTable, startTables: comp.startTables },
+    _sig: poolSig(multiSelectValues),
     key: `${t}-${level}-${aS}-${bS}-${Math.floor(Math.random() * 1_000_000)}`,
     difficulty: level,
   } as unknown as AnyQuestion;
 };
 
+// "Table starts" is display-only, so changing it must not regenerate the question.
+// Anything that changes the question pool still does (return null).
+const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null =>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (q as any)._sig === poolSig(qo.multiSelectValues) ? ({ ...q } as AnyQuestion) : null;
+
 // ── 7. questionRenderer ───────────────────────────────────────────────────────
 
-interface PVData { op: "+" | "−"; a: Dec; b: Dec; finalTable: PlaceValueTableData }
+interface PVData { op: "+" | "−"; a: Dec; b: Dec; finalTable: PlaceValueTableData; startTables: { numbers: PlaceValueTableData; zeros: PlaceValueTableData } }
+
+// One row height for every whiteboard state (empty / prefilled / answered) so the
+// table never resizes or rescales when the answer is revealed.
+const CELL_H = 72;
 
 const emptyTable = (op: "+" | "−"): PlaceValueTableData => ({
-  columns: COLS, onesIndex: ONES, showPoint: true, cellHeight: 96,
+  columns: COLS, onesIndex: ONES, showPoint: true, cellHeight: CELL_H,
   rows: [
     { kind: "cells", cells: blankCells() },
     { kind: "cells", cells: blankCells(), label: op },
@@ -436,11 +469,16 @@ const emptyTable = (op: "+" | "−"): PlaceValueTableData => ({
 const workingScaffold = {
   label: "place value table",
   placement: "question" as const,
-  render: (q: AnyQuestion, showAnswer: boolean): JSX.Element | null => {
+  render: (q: AnyQuestion, showAnswer: boolean, _cs: string, qo?: QOSnapshot): JSX.Element | null => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const pv = (q as any)._pv as PVData | undefined;
     if (!pv) return null;
-    return <PlaceValueTable data={showAnswer ? { ...pv.finalTable, cellHeight: 72 } : emptyTable(pv.op)} />;
+    const start = qo?.dropdownValue ?? "empty";
+    const base = showAnswer ? pv.finalTable
+      : start === "numbers" ? pv.startTables.numbers
+      : start === "zeros" ? pv.startTables.zeros
+      : emptyTable(pv.op);
+    return <PlaceValueTable data={{ ...base, cellHeight: CELL_H, highlightCol: undefined }} />;
   },
 };
 
@@ -474,8 +512,9 @@ const questionRenderer = (
         <span className={eqClass} style={{ color: "#000" }}>
           <MathRenderer latex={anyQ.displayLatex} />
         </span>
-        {showAnswer && isWhiteboard && (
-          <span className={`${eqClass} ml-4`} style={{ color: "#166534" }}>
+        {isWhiteboard && (
+          // Always laid out (hidden until revealed) so the equation doesn't shift when the answer appears.
+          <span className={`${eqClass} ml-4`} style={{ color: "#166534", visibility: showAnswer ? "visible" : "hidden" }}>
             <MathRenderer latex={`= ${anyQ.answerLatex}`} />
           </span>
         )}
@@ -495,6 +534,7 @@ export default function App() {
       config={TOOL_CONFIG}
       infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
+      reformatQuestion={reformatQuestion}
       questionRenderer={questionRenderer}
       stepRenderer={placeValueStepRenderer}
       workingScaffold={workingScaffold}

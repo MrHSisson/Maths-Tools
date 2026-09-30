@@ -81,7 +81,8 @@ export const placeValueStepRenderer = (step: WorkingStep): JSX.Element | null =>
   if (extra?.kind !== "placeValueSnapshot" || !extra.table) return null;
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-left">{extra.caption}</p>
+      {/* Reserve two lines so the card never changes height as the caption changes between steps. */}
+      <p className="text-left" style={{ minHeight: "2.6em", lineHeight: 1.3 }}>{extra.caption}</p>
       <PlaceValueTable data={extra.table} />
     </div>
   );
