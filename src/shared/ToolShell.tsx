@@ -607,6 +607,8 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     dropdownValue: getDropdownValue(),
     multiSelectValues: toolMultiSelect[currentTool] ?? {},
     preview: previewShown,
+    scaffoldVisible: !!workingScaffold && mode === "whiteboard" && !scaffoldHidden
+      && (workingScaffold.placement === "question" || (!presenterMode && !workingCollapsed)),
   });
 
   const makeQuestion = (): AnyQuestion =>

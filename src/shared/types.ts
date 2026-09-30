@@ -199,6 +199,10 @@ export interface QOSnapshot {
    *  than drawing it on the diagram) do so in fullscreen too, where compact is
    *  otherwise indistinguishable from the worked-example view. */
   fullscreen?: boolean;
+  /** True while the tool's `workingScaffold` is actually on screen (whiteboard, not hidden,
+   *  and — for working-box placement — panel open). Lets a renderer drop content the
+   *  scaffold already shows (e.g. an inline "= answer" when a table has the answer row). */
+  scaffoldVisible?: boolean;
   /** True once the staged-reveal preview has been shown (question sets `_stagedReveal`),
    *  before the answer itself. Whiteboard / worked-example only. */
   preview?: boolean;

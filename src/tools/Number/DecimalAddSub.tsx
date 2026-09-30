@@ -488,7 +488,7 @@ const questionRenderer = (
   _colorScheme: string,
   compact?: boolean,
   _idx?: number,
-  qo?: { fullscreen?: boolean },
+  qo?: QOSnapshot,
   fontClass?: string,
 ): JSX.Element | null => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -512,9 +512,10 @@ const questionRenderer = (
         <span className={eqClass} style={{ color: "#000" }}>
           <MathRenderer latex={anyQ.displayLatex} />
         </span>
-        {isWhiteboard && (
-          // Always laid out (hidden until revealed) so the equation doesn't shift when the answer appears.
-          <span className={`${eqClass} ml-4`} style={{ color: "#166534", visibility: showAnswer ? "visible" : "hidden" }}>
+        {/* With the table showing, the answer lives in its bottom row and the equation stays centred;
+            with the table hidden, the answer appears inline as normal. */}
+        {showAnswer && isWhiteboard && !qo?.scaffoldVisible && (
+          <span className={`${eqClass} ml-4`} style={{ color: "#166534" }}>
             <MathRenderer latex={`= ${anyQ.answerLatex}`} />
           </span>
         )}
