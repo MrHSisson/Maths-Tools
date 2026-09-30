@@ -631,7 +631,8 @@ export default function App() {
       workingScaffold={workingScaffold}
       defaults={{
         collapseWorkingByDefault: true,
-        displayFontSize: 4, // text-5xl — the equation's size when the table is hidden (chevrons return then)
+        displayFontSize: 3, // text-4xl — the equation's size (chevrons return when the table is hidden)
+        worksheetFontSize: 0, // text-lg — text-only worksheets (grid cells are drawn at a fixed size)
         hideFontControls: true,
         numQuestions: 10,
         numColumns: 3,

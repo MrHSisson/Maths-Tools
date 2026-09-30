@@ -1,6 +1,6 @@
 # Adding & Subtracting Decimals
 
-**Status:** implemented — `src/tools/Number/DecimalAddSub.tsx` (dev-gated, `enabled: false`)
+**Status:** implemented — `src/tools/Number/DecimalAddSub.tsx` (live)
 
 Path `/decimal-addition-subtraction` · Category Number · Sub-tools: Adding, Subtracting · Max 3 d.p. · No Teach deck yet.
 
