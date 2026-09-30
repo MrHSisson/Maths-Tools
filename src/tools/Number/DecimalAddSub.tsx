@@ -1,9 +1,9 @@
 import {
   ToolShell,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep,
-  type ToolMultiSelect, type ToolDropdown, type QOSnapshot, type PlaceValueTableData, type PVCell, type PVRow,
+  type ToolMultiSelect, type ToolDropdown, type ToolVariable, type QOSnapshot, type PlaceValueTableData, type PVCell, type PVRow,
   MathRenderer, randInt, pickActive,
-  PlaceValueTable, placeValueStepRenderer, pvStep, PV_COLS_DECIMAL, PV_ONES_DECIMAL,
+  PlaceValueTable, PlaceValueSvg, pvSvgAspect, placeValueStepRenderer, pvStep, handlePrint, handleDiagramPrint, PV_COLS_DECIMAL, PV_ONES_DECIMAL,
 } from "../../shared";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -70,8 +70,8 @@ const SUB_SHAPE_MS: ToolMultiSelect = {
   ],
 };
 
-// Display-only: how much of the whiteboard table is already written in. It never
-// changes the question, so it is hidden from the Worksheet QO popover.
+// Display-only: how much of the table is already written in (whiteboard, and worksheet grids).
+// It never changes the question.
 const TABLE_START_DD: ToolDropdown = {
   key: "tableStart",
   label: "Table starts",
@@ -81,8 +81,10 @@ const TABLE_START_DD: ToolDropdown = {
     { value: "zeros", label: "Numbers + zeros" },
   ],
   defaultValue: "empty",
-  workedExampleOnly: true,
 };
+
+// Worksheet only: give each question its own place value grid (prints via the diagram printer).
+const WS_GRID_VAR: ToolVariable = { key: "wsGrid", label: "Grids on worksheet", defaultValue: false };
 
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Adding & Subtracting Decimals",
@@ -90,25 +92,25 @@ const TOOL_CONFIG: ToolConfig = {
     add: {
       name: "Adding",
       instruction: "Work out:",
-      variables: [],
+      variables: [WS_GRID_VAR],
       dropdown: TABLE_START_DD,
       multiSelect: PLACES_MS,
       difficultySettings: {
-        level1: { variables: [], dropdown: TABLE_START_DD, multiSelect: PLACES_MS },
-        level2: { variables: [], dropdown: TABLE_START_DD, multiSelect: PLACES_MS },
-        level3: { variables: [], dropdown: TABLE_START_DD, multiSelect: ADD_SHAPE_MS },
+        level1: { variables: [WS_GRID_VAR], dropdown: TABLE_START_DD, multiSelect: PLACES_MS },
+        level2: { variables: [WS_GRID_VAR], dropdown: TABLE_START_DD, multiSelect: PLACES_MS },
+        level3: { variables: [WS_GRID_VAR], dropdown: TABLE_START_DD, multiSelect: ADD_SHAPE_MS },
       },
     },
     subtract: {
       name: "Subtracting",
       instruction: "Work out:",
-      variables: [],
+      variables: [WS_GRID_VAR],
       dropdown: TABLE_START_DD,
       multiSelect: PLACES_MS,
       difficultySettings: {
-        level1: { variables: [], dropdown: TABLE_START_DD, multiSelect: PLACES_MS },
-        level2: { variables: [], dropdown: TABLE_START_DD, multiSelect: PLACES_MS },
-        level3: { variables: [], dropdown: TABLE_START_DD, multiSelect: SUB_SHAPE_MS },
+        level1: { variables: [WS_GRID_VAR], dropdown: TABLE_START_DD, multiSelect: PLACES_MS },
+        level2: { variables: [WS_GRID_VAR], dropdown: TABLE_START_DD, multiSelect: PLACES_MS },
+        level3: { variables: [WS_GRID_VAR], dropdown: TABLE_START_DD, multiSelect: SUB_SHAPE_MS },
       },
     },
   },
@@ -137,7 +139,8 @@ const INFO_SECTIONS: InfoSection[] = [
   { title: "Question Options", icon: "⚙️", content: [
     { label: "Decimal places (Levels 1–2)", detail: "Choose whether the numbers have 1, 2 or 3 decimal places." },
     { label: "Question types (Level 3)", detail: "Choose which tricky shapes appear — different numbers of decimal places, whole numbers with decimals, answers ending in zero, exchanging across a zero." },
-    { label: "Table starts (Whiteboard / Worked Example)", detail: "Empty — the class builds the table from scratch. Numbers in — both numbers are already placed and lined up. Numbers + zeros — placeholder zeros are filled in too, so the focus is the calculation. Show Answer completes the working." },
+    { label: "Grids on worksheet", detail: "Gives every worksheet question its own place value grid to work in (Table starts decides whether it is empty, has the numbers in, or numbers + zeros). Answer pages show each grid completed. Grids need room, so a gridded worksheet prints in at most 2 columns (differentiated sheets keep one column per level) and fewer questions fit on a page." },
+    { label: "Table starts (Whiteboard / Worksheet grids / Worked Example)", detail: "Empty — the class builds the table from scratch. Numbers in — both numbers are already placed and lined up. Numbers + zeros — placeholder zeros are filled in too, so the focus is the calculation. Show Answer completes the working." },
     { label: "Differentiated", detail: "Worksheet mode produces three columns — one per level — simultaneously." },
   ]},
 ];
@@ -437,8 +440,8 @@ const poolSig = (v: Record<string, boolean>): string => POOL_VALUES.map((k) => (
 const generateQuestion = (
   tool: string,
   level: DifficultyLevel,
-  _variables: Record<string, boolean>,
-  _dropdownValue: string,
+  variables: Record<string, boolean>,
+  dropdownValue: string,
   multiSelectValues: Record<string, boolean> = {},
 ): AnyQuestion => {
   const t = tool as ToolType;
@@ -450,6 +453,12 @@ const generateQuestion = (
   const aS = decStr(a), bS = decStr(b);
   const latexOp = op === "+" ? "+" : "-";
 
+  // Worksheet grids (opt-in): each question carries its own place value grid, drawn as an SVG cell.
+  const wsOn = variables["wsGrid"] === true;
+  const start = dropdownValue === "numbers" || dropdownValue === "zeros" ? dropdownValue : "empty";
+  const wsTable = start === "numbers" ? comp.startTables.numbers : start === "zeros" ? comp.startTables.zeros : emptyTable(op, layout);
+  const eqText = `${aS} ${op} ${bS} =`;
+
   return {
     kind: "simple",
     display: `${aS} ${op} ${bS}`,
@@ -459,6 +468,9 @@ const generateQuestion = (
     working: comp.steps,
     _pv: { op, a, b, layout, finalTable: comp.finalTable, startTables: comp.startTables },
     _sig: poolSig(multiSelectValues),
+    _ws: { on: wsOn, table: wsTable, title: eqText },
+    _printText: eqText,
+    ...(wsOn ? { _aspect: pvSvgAspect(wsTable, true), _densityFloorMm: 46 } : {}),
     key: `${t}-${level}-${aS}-${bS}-${Math.floor(Math.random() * 1_000_000)}`,
     difficulty: level,
   } as unknown as AnyQuestion;
@@ -511,12 +523,24 @@ const questionRenderer = (
   showAnswer: boolean,
   _colorScheme: string,
   compact?: boolean,
-  _idx?: number,
+  idx?: number,
   qo?: QOSnapshot,
   fontClass?: string,
 ): JSX.Element | null => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const anyQ = q as any;
+  if (compact === true && anyQ._ws?.on) {
+    const ws = anyQ._ws as { table: PlaceValueTableData; title: string };
+    const solved = (anyQ._pv as PVData).finalTable;
+    return (
+      <div className="w-full">
+        <PlaceValueSvg data={showAnswer ? solved : ws.table} title={ws.title} idx={idx} />
+        {/* hidden solved twin — the print path uses it on the answer pages */}
+        {idx !== undefined && <div className="hidden"><PlaceValueSvg data={solved} title={ws.title} answerIdx={idx} /></div>}
+      </div>
+    );
+  }
+
   if (compact === true) {
     return (
       <div className="w-full text-center">
@@ -548,6 +572,17 @@ const questionRenderer = (
   );
 };
 
+// Worksheets with grids print through the diagram printer (cells sized by the grid's aspect, so
+// fewer columns / fewer questions per page — capped at 2 columns); plain worksheets use the text printer.
+const printHandler: typeof handleDiagramPrint = (qs, mode, el, ctx) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if (!qs.some((q) => (q as any)._ws?.on)) {
+    handlePrint(qs, ctx.toolName, ctx.difficulty, ctx.isDifferentiated, ctx.diffLevels, ctx.numColumns, ctx.instruction, mode, ctx.layout, ctx.showBorders, ctx.diffSameSize ?? true, ctx.diffColorLevels ?? true);
+    return;
+  }
+  handleDiagramPrint(qs, mode, el, ctx.isDifferentiated ? ctx : { ...ctx, numColumns: Math.min(ctx.numColumns, 2) });
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Exposed for the generator smoke-test suite (src/tests/generators.test.ts).
@@ -562,6 +597,7 @@ export default function App() {
       reformatQuestion={reformatQuestion}
       questionRenderer={questionRenderer}
       stepRenderer={placeValueStepRenderer}
+      customPrintHandler={printHandler}
       workingScaffold={workingScaffold}
       defaults={{
         collapseWorkingByDefault: true,

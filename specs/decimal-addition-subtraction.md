@@ -20,3 +20,6 @@ QO: display-only "Table starts" dropdown (Empty / Numbers in / Numbers + zeros; 
 - 4.1 − 3.23: write → 4.1 = 4.10 → 0−3 exchange (tenth→10 hundredths), 10−3=7 → 0−2 exchange (one→10 tenths), 10−2=8 → 3−3=0 → **0.87**
 - 6.04 − 1.78: 4−8 with tenths 0 → exchange one→10 tenths, then tenth→10 hundredths; 14−8=6, 9−7=2, 5−1=4 → **4.26**
 - 2.35 + 1.15: 5+5=10 carry 1; 3+1+1=5; 2+1=3 → 3.50 = **3.5**
+
+## Worksheet grids
+Optional per-question place value grid on worksheets ("Grids on worksheet" toggle; "Table starts" sets empty / numbers / numbers + zeros). Prints via the diagram printer: max 2 columns, fewer questions per page; answer pages show the completed grid.

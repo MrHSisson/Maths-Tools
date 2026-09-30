@@ -58,7 +58,7 @@ export { RatioTable, ratioTableStepRenderer } from "./components/RatioTable";
 // Place value table — core representation for place value (powers of 10,
 // decimal add/subtract…). See src/shared/placeValue.ts.
 export { pvCells, pvStep, PV_COLS_DECIMAL, PV_ONES_DECIMAL } from "./placeValue";
-export { PlaceValueTable, placeValueStepRenderer } from "./components/PlaceValueTable";
+export { PlaceValueTable, PlaceValueSvg, pvSvgAspect, placeValueStepRenderer } from "./components/PlaceValueTable";
 
 // Surds — pure computation (SurdTerm arithmetic, LaTeX formatting). Promoted
 // from the Surds tool alongside its four techniques below. See src/shared/surds.ts.
