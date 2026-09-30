@@ -23,7 +23,10 @@ export function PlaceValueTable({ data }: { data: PlaceValueTableData }) {
 
   return (
     <div className="w-full overflow-x-auto">
-      <table className="w-full border-collapse" style={{ tableLayout: "fixed" }}>
+      <table
+        className={`border-collapse ${data.colWidth ? "mx-auto" : "w-full"}`}
+        style={{ tableLayout: "fixed", ...(data.colWidth ? { width: columns.length * data.colWidth + (hasGutter ? 44 : 0), maxWidth: "100%" } : {}) }}
+      >
         <thead>
           <tr>
             {hasGutter && <th style={{ width: 44 }} />}

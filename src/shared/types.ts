@@ -71,6 +71,9 @@ export interface PlaceValueTableData {
   rows: PVRow[];
   /** Row height in px (default 72). */
   cellHeight?: number;
+  /** Fixed column width in px. When set the table is that many columns wide (centred) instead of
+   *  stretching to the container — so a table with fewer columns is narrower, not just wider cells. */
+  colWidth?: number;
   /** Column index to tint as the "current" column. */
   highlightCol?: number;
 }

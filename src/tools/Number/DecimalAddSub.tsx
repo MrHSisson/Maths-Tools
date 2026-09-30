@@ -192,7 +192,30 @@ interface Snap {
   highlightCol?: number;
 }
 
-const snapTable = (s: Snap, workDp: number): PlaceValueTableData => {
+/** Which of the six working columns a table shows: [start, end). Sized to the selected question range. */
+interface Layout { start: number; end: number }
+const FULL: Layout = { start: 0, end: NCOLS };
+const COL_W = 150;
+
+const sliceTable = (t: PlaceValueTableData, { start, end }: Layout): PlaceValueTableData => ({
+  ...t,
+  columns: t.columns.slice(start, end),
+  onesIndex: t.onesIndex - start,
+  highlightCol: t.highlightCol === undefined ? undefined : t.highlightCol - start,
+  rows: t.rows.map((r) => (r.kind === "cells" ? { ...r, cells: r.cells.slice(start, end) } : r)),
+});
+
+/** Columns a question range can need: whole-number columns by tool/level, decimal columns by the
+ *  active "Decimal places" options (Level 3 always allows up to 3). */
+const layoutFor = (tool: ToolType, level: DifficultyLevel, v: Record<string, boolean>): Layout => {
+  const maxDp = level === "level3"
+    ? MAX_DP
+    : Math.max(1, ...PLACES_MS.options.filter((o) => v[o.value] !== false).map((o) => Number(o.value.slice(2))));
+  const start = level === "level1" ? ONES : tool === "add" ? 0 : 1; // L1 is single-digit wholes; adding can reach hundreds
+  return { start, end: ONES + maxDp + 1 };
+};
+
+const snapTable = (s: Snap, workDp: number, layout: Layout): PlaceValueTableData => {
   const topCells = shownCells(s.top, s.padTop ? workDp : s.top.dp).map((cell, c): PVCell => {
     if (s.cur && s.modified[c]) return { ...cell, v: cell.v === "" ? "0" : cell.v, strike: true, above: String(s.cur[c]) };
     if (s.carry[c]) return { ...cell, above: s.carry[c] };
@@ -205,14 +228,14 @@ const snapTable = (s: Snap, workDp: number): PlaceValueTableData => {
     { kind: "cells", cells: botCells, label: s.op },
     { kind: "cells", cells: ansCells, label: "=", rule: true },
   ];
-  return { columns: COLS, onesIndex: ONES, showPoint: true, rows, cellHeight: 64, highlightCol: s.highlightCol };
+  return sliceTable({ columns: COLS, onesIndex: ONES, showPoint: true, rows, cellHeight: 64, colWidth: COL_W, highlightCol: s.highlightCol }, layout);
 };
 
 interface Computed { startTables: { numbers: PlaceValueTableData; zeros: PlaceValueTableData }; result: Dec; steps: WorkingStep[]; finalTable: PlaceValueTableData; hasChain: boolean; carried: boolean; exchanged: boolean }
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
-const compute = (op: "+" | "−", a: Dec, b: Dec): Computed => {
+const compute = (op: "+" | "−", a: Dec, b: Dec, layout: Layout = FULL): Computed => {
   const W = Math.max(a.dp, b.dp);
   const last = ONES + W;
   const topD = toDigits(a);
@@ -235,7 +258,7 @@ const compute = (op: "+" | "−", a: Dec, b: Dec): Computed => {
   };
   const steps: WorkingStep[] = [];
   const push = (caption: string, highlightCol?: number) => {
-    steps.push(pvStep(caption, snapTable({ ...snap, highlightCol, modified: [...snap.modified], carry: [...snap.carry], ans: [...snap.ans], cur: snap.cur ? [...snap.cur] : null }, W)));
+    steps.push(pvStep(caption, snapTable({ ...snap, highlightCol, modified: [...snap.modified], carry: [...snap.carry], ans: [...snap.ans], cur: snap.cur ? [...snap.cur] : null }, W, layout)));
   };
 
   push("Write both numbers in the place value table, lining up the decimal point. Digits in the same column have the same place value.");
@@ -288,7 +311,7 @@ const compute = (op: "+" | "−", a: Dec, b: Dec): Computed => {
     }
   }
 
-  const finalTable = snapTable({ ...snap, highlightCol: undefined, modified: [...snap.modified], carry: [...snap.carry], ans: [...snap.ans], cur: snap.cur ? [...snap.cur] : null }, W);
+  const finalTable = snapTable({ ...snap, highlightCol: undefined, modified: [...snap.modified], carry: [...snap.carry], ans: [...snap.ans], cur: snap.cur ? [...snap.cur] : null }, W, layout);
 
   const full = decStr(result);
   const short = trimZeros(full);
@@ -421,7 +444,8 @@ const generateQuestion = (
   const t = tool as ToolType;
   const op: "+" | "−" = t === "add" ? "+" : "−";
   const { a, b } = t === "add" ? genAdd(level, multiSelectValues) : genSub(level, multiSelectValues);
-  const comp = compute(op, a, b);
+  const layout = layoutFor(t, level, multiSelectValues);
+  const comp = compute(op, a, b, layout);
   const answer = trimZeros(decStr(comp.result));
   const aS = decStr(a), bS = decStr(b);
   const latexOp = op === "+" ? "+" : "-";
@@ -433,7 +457,7 @@ const generateQuestion = (
     answer,
     answerLatex: answer,
     working: comp.steps,
-    _pv: { op, a, b, finalTable: comp.finalTable, startTables: comp.startTables },
+    _pv: { op, a, b, layout, finalTable: comp.finalTable, startTables: comp.startTables },
     _sig: poolSig(multiSelectValues),
     key: `${t}-${level}-${aS}-${bS}-${Math.floor(Math.random() * 1_000_000)}`,
     difficulty: level,
@@ -448,20 +472,20 @@ const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null =>
 
 // ── 7. questionRenderer ───────────────────────────────────────────────────────
 
-interface PVData { op: "+" | "−"; a: Dec; b: Dec; finalTable: PlaceValueTableData; startTables: { numbers: PlaceValueTableData; zeros: PlaceValueTableData } }
+interface PVData { op: "+" | "−"; a: Dec; b: Dec; layout: Layout; finalTable: PlaceValueTableData; startTables: { numbers: PlaceValueTableData; zeros: PlaceValueTableData } }
 
 // One row height for every whiteboard state (empty / prefilled / answered) so the
 // table never resizes or rescales when the answer is revealed.
 const CELL_H = 72;
 
-const emptyTable = (op: "+" | "−"): PlaceValueTableData => ({
-  columns: COLS, onesIndex: ONES, showPoint: true, cellHeight: CELL_H,
+const emptyTable = (op: "+" | "−", layout: Layout): PlaceValueTableData => sliceTable({
+  columns: COLS, onesIndex: ONES, showPoint: true, cellHeight: CELL_H, colWidth: COL_W,
   rows: [
     { kind: "cells", cells: blankCells() },
     { kind: "cells", cells: blankCells(), label: op },
     { kind: "cells", cells: blankCells(), label: "=", rule: true },
   ],
-});
+}, layout);
 
 // The table is a ToolShell `workingScaffold` placed in the question box (the
 // working panel starts collapsed, so it runs full width like Powers of 10); the
@@ -477,7 +501,7 @@ const workingScaffold = {
     const base = showAnswer ? pv.finalTable
       : start === "numbers" ? pv.startTables.numbers
       : start === "zeros" ? pv.startTables.zeros
-      : emptyTable(pv.op);
+      : emptyTable(pv.op, pv.layout);
     return <PlaceValueTable data={{ ...base, cellHeight: CELL_H, highlightCol: undefined }} />;
   },
 };
