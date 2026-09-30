@@ -469,6 +469,15 @@ export interface ToolShellProps {
    *  deck the teacher presses through (→ / space / click; ← steps back). Omit it
    *  and no Teach tab appears. See "Teaching slides" below. */
   teachingSlides?: TeachingSlide[];
+
+  /** Optional scaffold drawn inside the whiteboard's working box (e.g. a place
+   *  value table to model on). A toolbar button in the box hides/shows it so the
+   *  teacher can remove the scaffold. Whiteboard only (embedded + fullscreen);
+   *  suppressed while the visualiser camera is on. `label` names the tooltip. */
+  workingScaffold?: {
+    label: string;
+    render: (q: AnyQuestion, showAnswer: boolean, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null;
+  };
 }
 ```
 
@@ -495,6 +504,10 @@ defaults?: {
 A question may carry `_stagedReveal: "<button label>"` (e.g. `"Show Plot"`). In Whiteboard, fullscreen and Worked Example ToolShell then renders a separate toggle button **inside the question box** (below the renderer output; "Show Plot" ⇄ "Hide Plot"), leaving the toolbar's Show Answer untouched. Pressing it sets `qo.preview = true` (on the `QOSnapshot` passed to `questionRenderer`) so the tool can draw an intermediate state; Show Answer reveals everything, and the button hides once the answer is up. A new question / reformat resets it. Worksheets ignore it (renderers should honour `qo.preview` only when `compact !== true`). Reference: `src/tools/Number/Rounding.tsx` ("Students plot it").
 
 **Per-page cap for diagram worksheets:** set `_densityFloorMm` on a tool's questions to override `handleDiagramPrint`'s default 40 mm density floor — a lower value means taller minimum rows, so fewer per page (30 → 12 per page at 2 columns for a ~2.6:1 diagram). A tool can also wrap `handleDiagramPrint` to adapt `ctx.numColumns` to the question count so a short sheet uses fewer, bigger columns (see `printRounding`). Questions with no SVG can set `_printText` to print a plain text cell on a diagram sheet (mixed-level / differentiated); a diagram tool whose text-only level should scale like any normal tool can route pure-text sheets to `handlePrint` instead.
+
+### Working scaffold — content inside the working box
+
+The working box is otherwise blank space (the teacher writes on it, or the visualiser camera fills it). A tool can put a **scaffold** in it with `workingScaffold` — e.g. the shared place value table, empty until Show Answer fills it. The box's button cluster gains a toggle that hides/shows the scaffold (session-only, default shown), so the teacher can remove it when students no longer need it. The scaffold is fit-scaled into the box. Keep the question box for the equation itself. Reference: `src/tools/Number/DecimalAddSub.tsx`.
 
 ### Collapsible working / visualiser panel
 

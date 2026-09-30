@@ -1,5 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback, type ReactNode } from "react";
-import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, SlidersHorizontal } from "lucide-react";
+import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, SlidersHorizontal, Table2 } from "lucide-react";
 import type { DifficultyLevel, AnyQuestion, WorkingStep, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
 import { LV_COLORS, LV_LABELS, LV_SELECTOR, LV_HEADER_COLORS, getQuestionBg, getStepBg } from "./colors";
 import { normalizeMultiSelect, resolveMultiSelectValues, ansEq, makeUniqueQ, sortByDifficulty, buildQuotaOverrides } from "./helpers";
@@ -59,6 +59,14 @@ export interface ToolShellProps {
   /** Optional curated teaching slides. When provided, a "Teach" mode is shown
    *  that runs the slides as a PowerPoint-style deck (see TeachingDeck). */
   teachingSlides?: TeachingSlide[];
+  /** Optional scaffold drawn inside the whiteboard's working box (e.g. a place
+   *  value table to model on). A toolbar button in the box hides/shows it so the
+   *  teacher can remove the scaffold; the box is otherwise free working space.
+   *  Whiteboard only (embedded and fullscreen). `label` names the button tooltip. */
+  workingScaffold?: {
+    label: string;
+    render: (q: AnyQuestion, showAnswer: boolean, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null;
+  };
 }
 
 const ALL_LEVELS: DifficultyLevel[] = ["level1", "level2", "level3"];
@@ -140,7 +148,7 @@ function ScaleToFit({ children, maxScale = 3 }: { children: ReactNode; maxScale?
   );
 }
 
-export const ToolShell = ({ config, infoSections, generateQuestion, generateUniqueQ: generateUniqueQProp, defaults = {}, stepRenderer, questionRenderer, answerRenderer, reformatQuestion, customPrintHandler, teachingSlides }: ToolShellProps) => {
+export const ToolShell = ({ config, infoSections, generateQuestion, generateUniqueQ: generateUniqueQProp, defaults = {}, stepRenderer, questionRenderer, answerRenderer, reformatQuestion, customPrintHandler, teachingSlides, workingScaffold }: ToolShellProps) => {
   const generateUniqueQ = generateUniqueQProp ?? makeUniqueQ(generateQuestion);
   const toolKeys = Object.keys(config.tools);
   // Seeds a smaller default question font size on a narrow viewport (the
@@ -479,6 +487,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const [presenterMode, setPresenterMode] = useState(false);
   const [wbFullscreen, setWbFullscreen] = useState(false);
   const [splitPct, setSplitPct] = useState(40);
+  const [scaffoldHidden, setScaffoldHidden] = useState(false);
   const [workingCollapsed, setWorkingCollapsed] = useState(defaults.collapseWorkingByDefault ?? false);
   const [camDevices, setCamDevices] = useState<MediaDeviceInfo[]>([]);
   const [currentCamId, setCurrentCamId] = useState<string | null>(null);
@@ -1200,6 +1209,13 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             {camError && <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", padding: "2rem", textAlign: "center", zIndex: 1 }}>{camError}</div>}
           </>
         )}
+        {workingScaffold && !presenterMode && !scaffoldHidden && (
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: "56px 16px 16px", boxSizing: "border-box", zIndex: 5 }}>
+            <ScaleToFit maxScale={isFS ? 1.6 : 1}>
+              <div className="w-full">{workingScaffold.render(currentQuestion, showWhiteboardAnswer, colorScheme, getQOSnapshot())}</div>
+            </ScaleToFit>
+          </div>
+        )}
         <div style={{ position: "absolute", top: 10, right: 10, display: "flex", gap: 6, zIndex: 20 }}>
           {presenterMode ? (
             <div style={{ position: "relative" }} ref={camDropdownRef}>
@@ -1229,6 +1245,11 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               onMouseEnter={e => (e.currentTarget.style.background = "rgba(0,0,0,0.15)")}
               onMouseLeave={e => (e.currentTarget.style.background = "rgba(0,0,0,0.08)")}
             ><Video size={16} color="#6b7280" /></button>
+          )}
+          {workingScaffold && !presenterMode && (
+            <button onClick={() => setScaffoldHidden(h => !h)} title={`${scaffoldHidden ? "Show" : "Hide"} ${workingScaffold.label}`}
+              style={{ background: scaffoldHidden ? "rgba(0,0,0,0.08)" : "#374151", border: "none", borderRadius: 8, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center" }}
+            ><Table2 size={16} color={scaffoldHidden ? "#6b7280" : "#ffffff"} /></button>
           )}
           <button onClick={() => setWorkingCollapsed(true)} title="Collapse working / visualiser"
             style={{ background: presenterMode ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.08)", border: presenterMode ? "1px solid rgba(255,255,255,0.15)" : "none", borderRadius: 8, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: presenterMode ? "blur(6px)" : "none" }}

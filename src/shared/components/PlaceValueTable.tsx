@@ -13,7 +13,7 @@ const DecimalDot = () => (
 );
 
 const toneCls = (t?: PVCell["tone"]) =>
-  t === "zero" ? "text-blue-600 bg-blue-50" : t === "answer" ? "text-green-800" : t === "highlight" ? "bg-amber-100" : "";
+  t === "zero" ? "text-blue-600 bg-blue-50" : t === "answer" ? "text-green-800 bg-white" : t === "highlight" ? "bg-amber-100" : "";
 
 export function PlaceValueTable({ data }: { data: PlaceValueTableData }) {
   const { columns, onesIndex, showPoint, rows, highlightCol } = data;

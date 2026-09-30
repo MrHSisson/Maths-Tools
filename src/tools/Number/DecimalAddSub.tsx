@@ -15,7 +15,7 @@ import {
 // column-by-column calculation from the right with carries / exchanges written
 // above the digits.
 //
-//   • Whiteboard  — an EMPTY table the teacher fills live; Show Answer fills it.
+//   • Whiteboard  — an EMPTY table in the working box (hideable) the teacher fills live; Show Answer fills it.
 //   • Worked Ex.  — the table rebuilt one step at a time (write → zeros → each column).
 //   • Worksheet   — text only.
 //
@@ -430,6 +430,18 @@ const emptyTable = (op: "+" | "−"): PlaceValueTableData => ({
   ],
 });
 
+// The table lives in the whiteboard's working box (ToolShell `workingScaffold`),
+// where the teacher models on it and can hide it with the toolbar button.
+const workingScaffold = {
+  label: "place value table",
+  render: (q: AnyQuestion, showAnswer: boolean): JSX.Element | null => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pv = (q as any)._pv as PVData | undefined;
+    if (!pv) return null;
+    return <PlaceValueTable data={showAnswer ? { ...pv.finalTable, cellHeight: 72 } : emptyTable(pv.op)} />;
+  },
+};
+
 const questionRenderer = (
   q: AnyQuestion,
   showAnswer: boolean,
@@ -441,8 +453,6 @@ const questionRenderer = (
 ): JSX.Element | null => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const anyQ = q as any;
-  const pv = anyQ._pv as PVData | undefined;
-
   if (compact === true) {
     return (
       <div className="w-full text-center">
@@ -468,7 +478,6 @@ const questionRenderer = (
           </span>
         )}
       </div>
-      {isWhiteboard && pv && <PlaceValueTable data={showAnswer ? { ...pv.finalTable, cellHeight: 72 } : emptyTable(pv.op)} />}
     </div>
   );
 };
@@ -486,8 +495,8 @@ export default function App() {
       generateQuestion={generateQuestion}
       questionRenderer={questionRenderer}
       stepRenderer={placeValueStepRenderer}
+      workingScaffold={workingScaffold}
       defaults={{
-        collapseWorkingByDefault: true,
         hideFontControls: true,
         numQuestions: 10,
         numColumns: 3,
