@@ -22,4 +22,4 @@ QO: display-only "Table starts" dropdown (Empty / Numbers in / Numbers + zeros; 
 - 2.35 + 1.15: 5+5=10 carry 1; 3+1+1=5; 2+1=3 → 3.50 = **3.5**
 
 ## Worksheet grids
-Optional per-question place value grid on worksheets ("Grids on worksheet" toggle; "Table starts" sets empty / numbers / numbers + zeros). Prints via the diagram printer: max 2 columns, fewer questions per page; answer pages show the completed grid.
+Optional per-question place value grid on worksheets ("Grids on worksheet" toggle; "Table starts" sets empty / numbers / numbers + zeros). Worksheet-only switch with an (i); limits the worksheet to 2 columns on screen and in print; up to 10 per page, grids stretch to fill the page when fewer; answer pages show the completed grid.

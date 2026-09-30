@@ -1,9 +1,10 @@
+import { renderToStaticMarkup } from "react-dom/server";
 import {
   ToolShell,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep,
   type ToolMultiSelect, type ToolDropdown, type ToolVariable, type QOSnapshot, type PlaceValueTableData, type PVCell, type PVRow,
   MathRenderer, randInt, pickActive,
-  PlaceValueTable, PlaceValueSvg, pvSvgAspect, placeValueStepRenderer, pvStep, handlePrint, handleDiagramPrint, PV_COLS_DECIMAL, PV_ONES_DECIMAL,
+  PlaceValueTable, PlaceValueSvg, pvSvgAspect, pvSvgRowHForAspect, placeValueStepRenderer, pvStep, handlePrint, handleDiagramPrint, PV_COLS_DECIMAL, PV_ONES_DECIMAL,
 } from "../../shared";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -84,7 +85,14 @@ const TABLE_START_DD: ToolDropdown = {
 };
 
 // Worksheet only: give each question its own place value grid (prints via the diagram printer).
-const WS_GRID_VAR: ToolVariable = { key: "wsGrid", label: "Grids on worksheet", defaultValue: false };
+const WS_GRID_VAR: ToolVariable = {
+  key: "wsGrid",
+  label: "Grids on worksheet",
+  defaultValue: false,
+  worksheetOnly: true,
+  capsColumns: 2,
+  info: "Gives every question its own place value grid to work in. Grids need room, so the worksheet is limited to 2 wide columns (differentiated sheets keep one column per level) and up to 10 questions fit on a page.",
+};
 
 const TOOL_CONFIG: ToolConfig = {
   pageTitle: "Adding & Subtracting Decimals",
@@ -139,7 +147,7 @@ const INFO_SECTIONS: InfoSection[] = [
   { title: "Question Options", icon: "⚙️", content: [
     { label: "Decimal places (Levels 1–2)", detail: "Choose whether the numbers have 1, 2 or 3 decimal places." },
     { label: "Question types (Level 3)", detail: "Choose which tricky shapes appear — different numbers of decimal places, whole numbers with decimals, answers ending in zero, exchanging across a zero." },
-    { label: "Grids on worksheet", detail: "Gives every worksheet question its own place value grid to work in (Table starts decides whether it is empty, has the numbers in, or numbers + zeros). Answer pages show each grid completed. Grids need room, so a gridded worksheet prints in at most 2 columns (differentiated sheets keep one column per level) and fewer questions fit on a page." },
+    { label: "Grids on worksheet", detail: "Gives every worksheet question its own place value grid to work in (Table starts decides whether it is empty, has the numbers in, or numbers + zeros). Answer pages show each grid completed. Grids need room, so a gridded worksheet is limited to 2 wide columns (on screen and in print; differentiated sheets keep one column per level) with up to 10 questions per page. Fewer questions stretch the grids to fill the page. The switch only appears in Worksheet mode." },
     { label: "Table starts (Whiteboard / Worksheet grids / Worked Example)", detail: "Empty — the class builds the table from scratch. Numbers in — both numbers are already placed and lined up. Numbers + zeros — placeholder zeros are filled in too, so the focus is the calculation. Show Answer completes the working." },
     { label: "Differentiated", detail: "Worksheet mode produces three columns — one per level — simultaneously." },
   ]},
@@ -470,7 +478,7 @@ const generateQuestion = (
     _sig: poolSig(multiSelectValues),
     _ws: { on: wsOn, table: wsTable, title: eqText },
     _printText: eqText,
-    ...(wsOn ? { _aspect: pvSvgAspect(wsTable, true), _densityFloorMm: 46 } : {}),
+    ...(wsOn ? { _aspect: pvSvgAspect(wsTable, true), _densityFloorMm: 38 } : {}),
     key: `${t}-${level}-${aS}-${bS}-${Math.floor(Math.random() * 1_000_000)}`,
     difficulty: level,
   } as unknown as AnyQuestion;
@@ -572,15 +580,35 @@ const questionRenderer = (
   );
 };
 
-// Worksheets with grids print through the diagram printer (cells sized by the grid's aspect, so
-// fewer columns / fewer questions per page — capped at 2 columns); plain worksheets use the text printer.
-const printHandler: typeof handleDiagramPrint = (qs, mode, el, ctx) => {
+// Worksheets with grids print through the diagram printer. A page holds at most 10 (5 rows of 2);
+// fewer questions stretch the grid rows so the grids still fill the page, like the number lines.
+// Plain worksheets use the text printer.
+const PAGE_USABLE_MM = 259;   // A4 less margins and the page header (matches printDiagram)
+const MAX_ROWS_PER_PAGE = 5;
+const printHandler: typeof handleDiagramPrint = (qs, mode, _el, ctx) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  if (!qs.some((q) => (q as any)._ws?.on)) {
+  const meta = (q: AnyQuestion) => q as any;
+  if (!qs.some((q) => meta(q)._ws?.on)) {
     handlePrint(qs, ctx.toolName, ctx.difficulty, ctx.isDifferentiated, ctx.diffLevels, ctx.numColumns, ctx.instruction, mode, ctx.layout, ctx.showBorders, ctx.diffSameSize ?? true, ctx.diffColorLevels ?? true);
     return;
   }
-  handleDiagramPrint(qs, mode, el, ctx.isDifferentiated ? ctx : { ...ctx, numColumns: Math.min(ctx.numColumns, 2) });
+  const cols = ctx.isDifferentiated ? Math.max(1, ctx.diffLevels.length) : Math.min(ctx.numColumns, 2);
+  const cellW = (186 - 2 * (cols - 1)) / cols;
+  const rows = Math.max(1, Math.min(Math.ceil(qs.length / cols), MAX_ROWS_PER_PAGE));
+  const innerH = PAGE_USABLE_MM / rows - 12;   // cell height less its padding / number chrome
+  // Re-draw each grid with row heights for this page fill, in a detached container the printer reads.
+  const holder = document.createElement("div");
+  const sized = qs.map((q, i) => {
+    const ws = meta(q)._ws as { on: boolean; table: PlaceValueTableData; title: string } | undefined;
+    if (!ws?.on) return q;
+    const rowH = pvSvgRowHForAspect(ws.table, true, cellW / innerH);
+    const solved = (meta(q)._pv as PVData).finalTable;
+    holder.insertAdjacentHTML("beforeend",
+      renderToStaticMarkup(<PlaceValueSvg data={ws.table} title={ws.title} idx={i} rowH={rowH} fill />)
+      + renderToStaticMarkup(<PlaceValueSvg data={solved} title={ws.title} answerIdx={i} rowH={rowH} fill />));
+    return { ...q, _aspect: pvSvgAspect(ws.table, true, rowH) } as unknown as AnyQuestion;
+  });
+  handleDiagramPrint(sized, mode, holder, { ...ctx, numColumns: cols });
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

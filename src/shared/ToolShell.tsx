@@ -593,6 +593,12 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const getDropdownValue = () => toolDropdowns[`${currentTool}__${difficulty}`] ?? getDropdownConfig()?.defaultValue ?? "";
   const setDropdownValue = (v: string) => setToolDropdowns(p => ({ ...p, [`${currentTool}__${difficulty}`]: v }));
   const getVariableValues = () => toolVariables[currentTool]?.[difficulty] ?? {};
+  // A variable flagged `capsColumns` (e.g. "grids on worksheet") limits the worksheet's columns while on.
+  const colCap = (() => {
+    const vals = getVariableValues();
+    return (getVariablesConfig() ?? []).reduce((cap, v) => (v.capsColumns && vals[v.key] ? Math.min(cap, v.capsColumns) : cap), Infinity);
+  })();
+  const effCols = Math.min(numColumns, colCap);
   const setVariableValue = (k: string, v: boolean) => setToolVariables(p => ({
     ...p, [currentTool]: { ...(p[currentTool] ?? {}), [difficulty]: { ...(p[currentTool]?.[difficulty] ?? {}), [k]: v } },
   }));
@@ -700,7 +706,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   };
 
   const stdQOProps = {
-    variables: getVariablesConfig() ?? [],
+    variables: (getVariablesConfig() ?? []).filter(v => !v.worksheetOnly || mode === "worksheet"),
     variableValues: getVariableValues(),
     onVariableChange: setVariableValue,
     dropdown: getDropdownConfig() ?? null,
@@ -998,8 +1004,8 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               {!defaults.fixedColumns && (
                 <div className="flex items-center gap-3">
                   <label className="text-base font-semibold text-gray-700">Columns:</label>
-                  <input type="number" min="1" max={defaults.maxColumns ?? 4} value={isDifferentiated ? diffLevels.length : numColumns}
-                    onChange={e => { if (!isDifferentiated) setNumColumns(Math.max(1, Math.min(defaults.maxColumns ?? 4, parseInt(e.target.value) || (defaults.numColumns ?? 3)))); }}
+                  <input type="number" min="1" max={Math.min(defaults.maxColumns ?? 4, colCap)} value={isDifferentiated ? diffLevels.length : effCols}
+                    onChange={e => { if (!isDifferentiated) setNumColumns(Math.max(1, Math.min(Math.min(defaults.maxColumns ?? 4, colCap), parseInt(e.target.value) || (defaults.numColumns ?? 3)))); }}
                     disabled={isDifferentiated}
                     className={`w-20 px-4 py-2 border-2 rounded-lg text-base font-semibold text-center transition-colors ${isDifferentiated ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed" : "border-gray-300 bg-white"}`} />
                 </div>
@@ -1087,9 +1093,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                     onPrint={m => customPrintHandler
                       ? customPrintHandler(worksheet, m, worksheetWrapRef.current, {
                           toolName: config.tools[currentTool].name, difficulty, isDifferentiated, diffLevels, diffSameSize, diffColorLevels,
-                          numColumns, instruction: getInstruction(), layout: worksheetLayout, showBorders: worksheetBorders,
+                          numColumns: effCols, instruction: getInstruction(), layout: worksheetLayout, showBorders: worksheetBorders,
                         })
-                      : handlePrint(worksheet, config.tools[currentTool].name, difficulty, isDifferentiated, diffLevels, numColumns, getInstruction(), m, worksheetLayout, worksheetBorders, diffSameSize, diffColorLevels)}
+                      : handlePrint(worksheet, config.tools[currentTool].name, difficulty, isDifferentiated, diffLevels, effCols, getInstruction(), m, worksheetLayout, worksheetBorders, diffSameSize, diffColorLevels)}
                     printMode={printMode} setPrintMode={setPrintMode}
                   />
                 </>
@@ -1492,7 +1498,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         <div className="rounded-xl shadow-2xl p-8 relative" style={{ backgroundColor: qBg }}>
           {fontSizeControls}
           <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
-          <div style={{ display: "grid", gridTemplateColumns: `repeat(${numColumns}, 1fr)`, columnGap: "1.5rem" }}>
+          <div style={{ display: "grid", gridTemplateColumns: `repeat(${effCols}, 1fr)`, columnGap: "1.5rem" }}>
             {worksheet.map((q, idx) => renderListItem(q, idx))}
           </div>
         </div>
@@ -1509,7 +1515,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             changing after the grid's first layout pass) to sometimes leave a
             row uneven, matching what "Fit all levels" hit before it moved to
             explicit tracks. */}
-        <div style={{ display: "grid", gridTemplateColumns: `repeat(${numColumns},1fr)`, gridAutoRows: "1fr", gap: "1rem" }}>
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${effCols},1fr)`, gridAutoRows: "1fr", gap: "1rem" }}>
           {worksheet.map((q, idx) => <div key={idx} style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>{renderQCell(q, idx)}</div>)}
         </div>
       </div>
@@ -1689,6 +1695,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                     onDropdownChange={setDropdownValue}
                     multiSelectValues={toolMultiSelect[currentTool] ?? {}}
                     onMultiSelectChange={setMultiSelectValue}
+                    hideWorksheetOnly={mode !== "worksheet"}
                   />
                 </div>
               </div>

@@ -151,6 +151,13 @@ export interface ToolVariable {
   key: string;
   label: string;
   defaultValue: boolean;
+  /** Only offered in Worksheet mode (hidden from the Whiteboard / Worked Example options). */
+  worksheetOnly?: boolean;
+  /** Optional ⓘ note next to the switch, revealed on hover. */
+  info?: string;
+  /** While this switch is on, the Worksheet is limited to this many columns — on screen, in the
+   *  Columns input and in print — so the worksheet you see is the worksheet you print. */
+  capsColumns?: number;
 }
 
 export interface DifficultyLevelSettings {

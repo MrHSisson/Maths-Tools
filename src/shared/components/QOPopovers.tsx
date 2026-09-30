@@ -248,7 +248,7 @@ export const VariablesSection = ({
   values,
   onChange,
 }: {
-  variables: { key: string; label: string }[];
+  variables: { key: string; label: string; info?: string }[];
   values: Record<string, boolean>;
   onChange: (k: string, v: boolean) => void;
 }) => (
@@ -262,7 +262,18 @@ export const VariablesSection = ({
         >
           <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${values[v.key] ? "translate-x-7" : "translate-x-1"}`} />
         </div>
-        <span className="text-base font-semibold text-gray-700">{v.label}</span>
+        <span className="relative group flex items-center gap-1.5">
+          <span className="text-base font-semibold text-gray-700">{v.label}</span>
+          {v.info && (
+            <>
+              <span className="text-gray-400 text-sm leading-none cursor-help">&#9432;</span>
+              <span className="absolute bottom-full left-0 mb-2 hidden group-hover:flex pointer-events-none flex-col items-start" style={{ zIndex: 9999 }}>
+                <span className="bg-gray-800 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg shadow-lg" style={{ width: "15rem", whiteSpace: "normal" }}>{v.info}</span>
+                <span style={{ width: 0, height: 0, marginLeft: "0.6rem", borderLeft: "5px solid transparent", borderRight: "5px solid transparent", borderTop: "5px solid #1f2937" }} />
+              </span>
+            </>
+          )}
+        </span>
       </label>
     ))}
   </div>
@@ -281,7 +292,7 @@ export const StandardQOPopover = ({
   hideWorkedExampleOnly,
   columns,
 }: {
-  variables: { key: string; label: string }[];
+  variables: { key: string; label: string; info?: string }[];
   variableValues: Record<string, boolean>;
   onVariableChange: (k: string, v: boolean) => void;
   dropdown: { key: string; label: string; useTwoLineButtons?: boolean; options: { value: string; label: string; sub?: string }[]; workedExampleOnly?: boolean } | null;
@@ -395,6 +406,7 @@ export const InlineQOPanel = ({
   multiSelectValues,
   onMultiSelectChange,
   hideWorkedExampleOnly,
+  hideWorksheetOnly,
 }: {
   toolEntry: ToolEntry;
   level: DifficultyLevel;
@@ -407,10 +419,13 @@ export const InlineQOPanel = ({
   /** Hides a dropdown flagged `workedExampleOnly` (the worksheet builder passes true — it only
    *  changes the displayed working, which a printed worksheet doesn't show). */
   hideWorkedExampleOnly?: boolean;
+  /** Hides variables flagged `worksheetOnly` (pass true outside Worksheet mode). */
+  hideWorksheetOnly?: boolean;
 }) => {
   const rawDd = toolEntry.difficultySettings?.[level]?.dropdown ?? toolEntry.dropdown;
   const dd = rawDd && !(hideWorkedExampleOnly && rawDd.workedExampleOnly) ? rawDd : null;
-  const vars = toolEntry.difficultySettings?.[level]?.variables ?? toolEntry.variables;
+  const allVars = toolEntry.difficultySettings?.[level]?.variables ?? toolEntry.variables;
+  const vars = hideWorksheetOnly ? allVars?.filter(v => !v.worksheetOnly) : allVars;
   const ms = normalizeMultiSelect(toolEntry.difficultySettings?.[level]?.multiSelect ?? toolEntry.multiSelect);
   const hasContent = dd !== null || (vars?.length ?? 0) > 0 || ms.length > 0;
   if (!hasContent) return <p className="text-sm text-gray-400">No options for this level.</p>;
