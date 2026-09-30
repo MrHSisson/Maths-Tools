@@ -4,7 +4,7 @@ import {
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep,
   type ToolMultiSelect, type ToolDropdown, type ToolVariable, type QOSnapshot, type PlaceValueTableData, type PVCell, type PVRow,
   MathRenderer, randInt, pickActive,
-  PlaceValueTable, PlaceValueSvg, pvSvgAspect, pvSvgRowHForAspect, placeValueStepRenderer, pvStep, handlePrint, handleDiagramPrint, PV_COLS_DECIMAL, PV_ONES_DECIMAL,
+  PlaceValueTable, PlaceValueSvg, pvSvgSize, pvSvgAspect, pvSvgRowHForAspect, placeValueStepRenderer, pvStep, handlePrint, handleDiagramPrint, PV_COLS_DECIMAL, PV_ONES_DECIMAL,
 } from "../../shared";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -540,8 +540,10 @@ const questionRenderer = (
   if (compact === true && anyQ._ws?.on) {
     const ws = anyQ._ws as { table: PlaceValueTableData; title: string };
     const solved = (anyQ._pv as PVData).finalTable;
+    // Preview size: the SVG is drawn for print, so cap how large a cell shows it (about half scale)
+    // and centre it, rather than letting it stretch to the full cell width.
     return (
-      <div className="w-full">
+      <div className="w-full" style={{ maxWidth: pvSvgSize(ws.table, true).w * 0.5, margin: "0 auto" }}>
         <PlaceValueSvg data={showAnswer ? solved : ws.table} title={ws.title} idx={idx} />
         {/* hidden solved twin — the print path uses it on the answer pages */}
         {idx !== undefined && <div className="hidden"><PlaceValueSvg data={solved} title={ws.title} answerIdx={idx} /></div>}

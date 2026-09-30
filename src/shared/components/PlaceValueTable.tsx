@@ -25,7 +25,7 @@ export function PlaceValueTable({ data }: { data: PlaceValueTableData }) {
     <div className="w-full overflow-x-auto">
       <table
         className={`border-collapse ${data.colWidth ? "mx-auto" : "w-full"}`}
-        style={{ tableLayout: "fixed", ...(data.colWidth ? { width: columns.length * data.colWidth + (hasGutter ? 44 : 0), maxWidth: "100%" } : {}) }}
+        style={{ tableLayout: "fixed", ...(data.colWidth ? { width: columns.length * data.colWidth + (hasGutter ? 88 : 0), maxWidth: "100%" } : {}) }}
       >
         <thead>
           <tr>
@@ -36,6 +36,8 @@ export function PlaceValueTable({ data }: { data: PlaceValueTableData }) {
                 {showPoint && i === onesIndex && <DecimalDot />}
               </th>
             ))}
+            {/* mirror of the operator gutter, so the table body (not body + operators) is what is centred */}
+            {hasGutter && <th style={{ width: 44 }} />}
           </tr>
         </thead>
         <tbody>
@@ -43,9 +45,11 @@ export function PlaceValueTable({ data }: { data: PlaceValueTableData }) {
             if (row.kind === "banner") {
               return (
                 <tr key={ri}>
-                  <td colSpan={columns.length + (hasGutter ? 1 : 0)} className="text-center py-3 font-bold text-2xl border-2 border-black bg-white text-black">
+                  {hasGutter && <td />}
+                  <td colSpan={columns.length} className="text-center py-3 font-bold text-2xl border-2 border-black bg-white text-black">
                     {row.text}
                   </td>
+                  {hasGutter && <td />}
                 </tr>
               );
             }
@@ -69,6 +73,7 @@ export function PlaceValueTable({ data }: { data: PlaceValueTableData }) {
                     </td>
                   );
                 })}
+                {hasGutter && <td />}
               </tr>
             );
           })}
@@ -101,7 +106,7 @@ const SVG_CW = 100, SVG_ROW_H = 72, SVG_HEAD_H = 40, SVG_TITLE_H = 64, SVG_GUTTE
 export const pvSvgSize = (data: PlaceValueTableData, hasTitle: boolean, rowH: number = SVG_ROW_H) => {
   const gutter = data.rows.some((r) => r.kind === "cells" && r.label) ? SVG_GUTTER : 0;
   return {
-    w: SVG_PAD * 2 + gutter + data.columns.length * SVG_CW,
+    w: SVG_PAD * 2 + gutter * 2 + data.columns.length * SVG_CW,   // gutter mirrored on the right: the table body is centred
     h: SVG_PAD * 2 + (hasTitle ? SVG_TITLE_H : 0) + SVG_HEAD_H + data.rows.length * rowH,
     gutter,
   };
@@ -145,7 +150,7 @@ export function PlaceValueSvg({ data, title, idx, answerIdx, rowH = SVG_ROW_H, f
 
   return (
     <svg viewBox={`0 0 ${w} ${h}`} style={{ display: "block", width: "100%", height: fill ? "100%" : "auto" }} preserveAspectRatio="xMidYMid meet" {...tag}>
-      {title && <text x={w / 2} y={SVG_PAD + SVG_TITLE_H / 2} textAnchor="middle" dominantBaseline="middle" fontSize={34} fontWeight={700} fill="#000">{title}</text>}
+      {title && <text x={x0 + (columns.length * SVG_CW) / 2} y={SVG_PAD + SVG_TITLE_H / 2} textAnchor="middle" dominantBaseline="middle" fontSize={34} fontWeight={700} fill="#000">{title}</text>}
       {columns.map((c, i) => (
         <g key={`h${i}`}>
           <rect x={x0 + i * SVG_CW} y={yHead} width={SVG_CW} height={SVG_HEAD_H} fill="#f3f4f6" stroke="#000" strokeWidth={2.5} />
