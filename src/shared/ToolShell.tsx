@@ -1163,13 +1163,13 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           <button style={fontBtnStyle(canDisplayIncrease)} onClick={() => canDisplayIncrease && setDisplayFontSize(f => f + 1)}><ChevronUp size={16} color="#6b7280" /></button>
         </>}
         {scaffoldToggle}
-        {/* With the working panel collapsed its own fullscreen button is gone, so keep one here. */}
+        {workingCollapsed && expandBtn}
+        {/* With the working panel collapsed its own fullscreen button is gone, so keep one here — last, matching its position in the open panel. */}
         {workingCollapsed && (
           <button onClick={() => setWbFullscreen(f => !f)} title={wbFullscreen ? "Exit Fullscreen" : "Fullscreen"}
             style={{ background: wbFullscreen ? "#374151" : "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center" }}
           >{wbFullscreen ? <Minimize2 size={16} color="#ffffff" /> : <Maximize2 size={16} color="#6b7280" />}</button>
         )}
-        {workingCollapsed && expandBtn}
       </div>
     );
     const fit = (content: ReactNode) => workingCollapsed ? <ScaleToFit>{content}</ScaleToFit> : content;
