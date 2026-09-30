@@ -50,6 +50,34 @@ export type AnyQuestion = SimpleQuestion | WordedQuestion;
 // headers); `operations` holds the scale factor shown between each
 // consecutive row pair (length = rows.length - 1). Built via rStep(), never
 // constructed directly — see src/shared/ratioTable.ts.
+// Place value table — see src/shared/placeValue.ts.
+export type PVTone = "zero" | "highlight" | "answer";
+export interface PVCell {
+  v: string;
+  /** Show the digit crossed out (used when a digit has been exchanged away). */
+  strike?: boolean;
+  /** Small digit written above the cell — a carry, or the new value after an exchange. */
+  above?: string;
+  tone?: PVTone;
+}
+export type PVRow =
+  | { kind: "cells"; cells: (PVCell | string)[]; /** Operator in the left gutter. */ label?: string; /** Thicker rule above (an answer line). */ rule?: boolean }
+  | { kind: "banner"; text: string };
+export interface PlaceValueTableData {
+  columns: string[];
+  /** Index of the Ones column — the decimal point is drawn on its right edge. */
+  onesIndex: number;
+  showPoint: boolean;
+  rows: PVRow[];
+  /** Row height in px (default 72). */
+  cellHeight?: number;
+  /** Fixed column width in px. When set the table is that many columns wide (centred) instead of
+   *  stretching to the container — so a table with fewer columns is narrower, not just wider cells. */
+  colWidth?: number;
+  /** Column index to tint as the "current" column. */
+  highlightCol?: number;
+}
+
 export interface RatioTableData {
   headers: string[];
   rows: string[][];
@@ -123,6 +151,13 @@ export interface ToolVariable {
   key: string;
   label: string;
   defaultValue: boolean;
+  /** Only offered in Worksheet mode (hidden from the Whiteboard / Worked Example options). */
+  worksheetOnly?: boolean;
+  /** Optional ⓘ note next to the switch, revealed on hover. */
+  info?: string;
+  /** While this switch is on, the Worksheet is limited to this many columns — on screen, in the
+   *  Columns input and in print — so the worksheet you see is the worksheet you print. */
+  capsColumns?: number;
 }
 
 export interface DifficultyLevelSettings {
@@ -174,6 +209,10 @@ export interface QOSnapshot {
    *  than drawing it on the diagram) do so in fullscreen too, where compact is
    *  otherwise indistinguishable from the worked-example view. */
   fullscreen?: boolean;
+  /** True while the tool's `workingScaffold` is actually on screen (whiteboard, not hidden,
+   *  and — for working-box placement — panel open). Lets a renderer drop content the
+   *  scaffold already shows (e.g. an inline "= answer" when a table has the answer row). */
+  scaffoldVisible?: boolean;
   /** True once the staged-reveal preview has been shown (question sets `_stagedReveal`),
    *  before the answer itself. Whiteboard / worked-example only. */
   preview?: boolean;

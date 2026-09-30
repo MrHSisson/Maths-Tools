@@ -469,6 +469,19 @@ export interface ToolShellProps {
    *  deck the teacher presses through (→ / space / click; ← steps back). Omit it
    *  and no Teach tab appears. See "Teaching slides" below. */
   teachingSlides?: TeachingSlide[];
+
+  /** Optional scaffold drawn inside the whiteboard's working box (e.g. a place
+   *  value table to model on). A toolbar button in the box hides/shows it so the
+   *  teacher can remove the scaffold. Whiteboard only (embedded + fullscreen);
+   *  suppressed while the visualiser camera is on. `label` names the tooltip. */
+  workingScaffold?: {
+    label: string;
+    /** "workingBox" (default) or "question" — inside the question box below the
+     *  question (needs a `questionRenderer`); pair with `collapseWorkingByDefault`
+     *  for a full-width scaffold. The hide button then sits in the question box. */
+    placement?: "workingBox" | "question";
+    render: (q: AnyQuestion, showAnswer: boolean, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null;
+  };
 }
 ```
 
@@ -496,9 +509,13 @@ A question may carry `_stagedReveal: "<button label>"` (e.g. `"Show Plot"`). In 
 
 **Per-page cap for diagram worksheets:** set `_densityFloorMm` on a tool's questions to override `handleDiagramPrint`'s default 40 mm density floor — a lower value means taller minimum rows, so fewer per page (30 → 12 per page at 2 columns for a ~2.6:1 diagram). A tool can also wrap `handleDiagramPrint` to adapt `ctx.numColumns` to the question count so a short sheet uses fewer, bigger columns (see `printRounding`). Questions with no SVG can set `_printText` to print a plain text cell on a diagram sheet (mixed-level / differentiated); a diagram tool whose text-only level should scale like any normal tool can route pure-text sheets to `handlePrint` instead.
 
+### Working scaffold — content inside the working box
+
+The working box is otherwise blank space (the teacher writes on it, or the visualiser camera fills it). A tool can put a **scaffold** in it with `workingScaffold` — e.g. the shared place value table, empty until Show Answer fills it. The box's button cluster gains a toggle that hides/shows the scaffold (session-only, default shown), so the teacher can remove it when students no longer need it. The scaffold is fit-scaled into the box. `qo.scaffoldVisible` (on the snapshot given to `questionRenderer`) is true while the scaffold is actually on screen, so a renderer can drop content the scaffold already shows (the decimal tool omits its inline "= answer" while its table shows the answer row). **Font sizers:** a tool with `hideFontControls` gets the size chevrons back while a `placement: "question"` scaffold is hidden (and the question stops auto-fitting to fill, so the chevrons work). **Placement:** default is the working box; `placement: "question"` draws it inside the question box under the question instead (the hide button moves to the question box's cluster) — use it with `collapseWorkingByDefault: true` for a wide scaffold like a place value table, so it runs full width. References: `src/tools/Number/DecimalAddSub.tsx` and `src/tools/Number/PowersOfTen.tsx` (both `placement: "question"`; Powers of 10 still draws its filled grid through the question renderer in Worked Example, where the scaffold isn't shown).
+
 ### Collapsible working / visualiser panel
 
-The whiteboard's right-hand **working / visualiser panel** can be collapsed via the **collapse button** (top-right of the panel) in both the embedded and fullscreen views. When collapsed, the panel is removed and the question box expands to fill the full width, with its contents **scaled up to fit** (`ScaleToFit`) so SVGs/diagrams and text genuinely grow into the reclaimed space — ideal for large diagrams in fullscreen. A **re-open button** (`PanelRightOpen`) then lives inside the question box's top-right control cluster (next to the font-size chevrons), so the panel is always recoverable — including fullscreen-expanded, and on diagram tools that hide the font controls. The panel is never gone for good; it stays available in every tool. State is session-only (resets on reload). Diagram-heavy tools can start collapsed with `defaults={{ collapseWorkingByDefault: true }}`.
+The whiteboard's right-hand **working / visualiser panel** can be collapsed via the **collapse button** (top-right of the panel) in both the embedded and fullscreen views. When collapsed, the panel is removed and the question box expands to fill the full width, with its contents **scaled up to fit** (`ScaleToFit`) so SVGs/diagrams and text genuinely grow into the reclaimed space — ideal for large diagrams in fullscreen. A **re-open button** (`PanelRightOpen`) then lives inside the question box's top-right control cluster (next to the font-size chevrons), so the panel is always recoverable — including fullscreen-expanded, and on diagram tools that hide the font controls. The **Fullscreen / Exit Fullscreen** button moves into that same cluster while the panel is collapsed, so it is always present (always last, after the panel re-open button, matching the open panel's collapse-then-fullscreen order). The panel is never gone for good; it stays available in every tool. State is session-only (resets on reload). Diagram-heavy tools can start collapsed with `defaults={{ collapseWorkingByDefault: true }}`.
 
 Font size indices: `0=text-lg  1=text-xl  2=text-3xl  3=text-4xl  4=text-5xl  5=text-7xl`
 
@@ -729,11 +746,14 @@ Every taught visual on the site (skill slides, Teach decks, and eventually white
 | **Algebra tiles** | collecting terms, solving equations, factorising | *(manipulative exists; no scenes yet)* |
 | **Negative counters** | directed numbers, integer add/sub, zero pairs | *(manipulative planned; no scenes yet)* |
 | **Prime factor tiles** | HCF/LCM, factors, prime decomposition | `factorTree` · `primeVenn` |
+| **Place value table** | place value itself — ×/÷ powers of 10, adding/subtracting decimals | *(question/working-step representation; no Teach scene yet)* |
 | **Ratio table** | proportional scaling — speed/distance/time, currency conversion, recipe scaling | *(working-step representation; no Teach scene yet)* |
 
 **The rule: before authoring any new visual, pick one of these.** A brand-new representation needs a reason. New scenes extend an existing family in `TeachingDeck.tsx` (grouped by family comments in the `TeachScene` union) and follow the standing scene contract: beat count derived from the scene, reserve space for everything (opacity, not mounting), animate only opacity/transform.
 
 **Ratio table** (`src/shared/ratioTable.ts` + `src/shared/components/RatioTable.tsx`) is a *working-step* representation rather than a Teach-deck scene, rendered as **one continuous bordered `<table>`** — matching how a ratio table is conventionally drawn on paper: **quantities as columns** (the header row, e.g. "Miles", "Hours"), **each scale-step as a row going down**, rows sharing borders directly (no gap/divider row between them). The scale factor between two adjacent value-rows sits **outside** the table as a curved arrow (bulging away from the table, mirrored left/right via CSS rather than two authored paths) running from the vertical **centre** of one row to the centre of the next, with the factor labelled beside it — never inside a table cell. That centre-to-centre position is measured in real pixels (refs + `getBoundingClientRect` on each `<tr>`, in a plain — not layout — `useEffect` so it runs after `MathRenderer`'s own child effect has painted the KaTeX content), not CSS percentages: a percentage-height div inside a `<td>` does not reliably resolve against the cell's height in this rendering engine (found to collapse to 0, stacking every arrow at the same spot) — the same measurement approach `WorkedExampleSteps.tsx`'s `FitWidth` already uses elsewhere in this codebase. A single combined scale factor is **never shown as one fraction or decimal multiply** (e.g. `×2/3`) — author it via `rStep(label, headers, rows, operations)` as a chain of whole-number steps instead: `rows` is one array of values per step (`rows[step][quantityIndex]`, not one array per quantity) and `operations` (length `rows.length − 1`) is the whole-number `×n`/`÷n` between each consecutive step, so a fractional factor becomes an extra "unit" row in between (e.g. `100, 75` →(÷5)→ `20, 15` →(×4)→ `80, 60`, never a single `×4/5`). Pass the shared `ratioTableStepRenderer` as the tool's `stepRenderer` — it returns `null` for every non-ratio-table step, so `mStep`/`tStep`/`step` still render through ToolShell's normal path. There is no fragment-level reveal inside a single ratio table — a multi-step scale is just more rows/operations in one call. Reference implementation: `src/tools/Proportion/SpeedDistanceTime.tsx` (`buildScaleSteps` decomposes ÷qq then ×pp, or the reverse, only when both factors are non-trivial — i.e. only at Level 3; Levels 1–2 already have one factor equal to 1, so the chain collapses back to a single step).
+
+**Place value table** (`src/shared/placeValue.ts` + `src/shared/components/PlaceValueTable.tsx`, extracted from Powers of 10) is a fixed set of columns (e.g. `PV_COLS_DECIMAL` = H T O · t h th) with the decimal point drawn on the right edge of the Ones column, so digits in one column always share a place value. Data is `PlaceValueTableData` (columns, `onesIndex`, rows of cells / banners); `pvCells(numStr, columns, onesIndex)` places a decimal string into columns. Cells can carry a tone (`zero` = blue placeholder zero, `answer`), a struck digit, and a small `above` digit (a carry, or the new value after an exchange); `highlightCol` tints the current column; when rows carry operator labels (+ / − / =) the gutter is mirrored on the right so the table body itself is centred; optional `colWidth` (px) fixes the column width so a table with fewer columns is narrower rather than stretched. `PlaceValueSvg` (+ `pvSvgAspect(data, hasTitle, rowH?)` for the question's `_aspect`, `pvSvgRowHForAspect` to stretch rows to a wanted aspect, `fill` for print) draws the same data as an SVG for worksheet cells — tag it `idx` (question) and a hidden `answerIdx` twin and print with `handleDiagramPrint`. For worked examples author steps with `pvStep(caption, table)` (one table snapshot per step) and pass `placeValueStepRenderer` as `stepRenderer` — it returns `null` for any other step. References: `src/tools/Number/PowersOfTen.tsx` (grid), `src/tools/Number/DecimalAddSub.tsx` (stepped carries/exchanges). `ComparingOrderingNumbers` still has its own bespoke table and can adopt this later.
 
 Prime factor tiles are **coloured squares keyed by the prime** (2 sky, 3 emerald, 5 amber, 7 purple, 11 pink — `tileColor` in TeachingDeck), so the same prime looks the same in a factor tree, a Venn region, and a factor list. Composites stay plain numbers; only primes become tiles.
 
@@ -892,6 +912,8 @@ Worksheet mode QO popover (standard and differentiated), where it would have no 
 while still showing it in Whiteboard and Worked Example mode. Never set it on a dropdown that
 changes the question's numbers, structure, or answer (e.g. a method that also changes the
 coefficient sizes) — those must stay visible in Worksheet mode.
+
+**`ToolVariable` extras** — `worksheetOnly` (only offered in Worksheet mode), `info` (an ⓘ hover note next to the switch) and `capsColumns: n` (while on, worksheet columns are limited to n — on screen, in the Columns input and in print ctx — so the worksheet matches what prints). Reference: the "Grids on worksheet" switch in `src/tools/Number/DecimalAddSub.tsx`.
 
 ### `difficultySettings` — per-level QO overrides
 

@@ -238,6 +238,8 @@ tool. Fill-in work between the tiers above, not a queue of its own.
 
 ## Part 2 — Tool expansion
 
+> **2026-09-30 — Decimal operations, first unit.** `decimal-addition-subtraction` (dev-gated) is built on the new shared place value table. Next units of the wider decimal-operations family: multiplying and dividing decimals (same table); migrate `ComparingOrderingNumbers` onto the shared table; Teach deck for add/subtract; go-live sign-off.
+
 > **Tier-1 priority (see Priorities above).** This is the actual content-growth backlog — new
 > question types, broader sub-tool coverage, scope a tool should grow into. It's what gives a
 > teacher more to use, so it's the default place to look for the next build once the sequencing

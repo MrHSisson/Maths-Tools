@@ -1,7 +1,7 @@
 import {
   ToolShell,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type QOSnapshot, type WorkingStep,
-  MathRenderer, tStep,
+  MathRenderer, tStep, PlaceValueTable, pvCells, type PlaceValueTableData,
 } from "../../shared";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -141,23 +141,6 @@ const getPlaceValueColumns = (level?: DifficultyLevel): string[] =>
   level === "level1"
     ? ["M", "HTt", "TTt", "Tt", "H", "T", "O"]
     : ["M", "HTt", "TTt", "Tt", "H", "T", "O", "t", "h", "th", "tth", "htth", "mth"];
-
-const getDigitAtPosition = (num: number, position: number, onesIndex: number): string => {
-  const str = num.toString().replace(/,/g, "");
-  const decimalIdx = str.indexOf(".");
-  const wholePart = decimalIdx === -1 ? str : str.substring(0, decimalIdx);
-  const fractionalPart = decimalIdx === -1 ? "" : str.substring(decimalIdx + 1);
-
-  if (position === onesIndex) {
-    return wholePart.length > 0 ? wholePart[wholePart.length - 1] : "0";
-  } else if (position < onesIndex) {
-    const idx = wholePart.length - 1 - (onesIndex - position);
-    return idx >= 0 && idx < wholePart.length ? wholePart[idx] : "";
-  } else {
-    const idx = position - onesIndex - 1;
-    return idx >= 0 && idx < fractionalPart.length ? fractionalPart[idx] : "";
-  }
-};
 
 // ── 5. Question maths (preserved) ──────────────────────────────────────────────
 
@@ -336,13 +319,6 @@ const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null =>
 
 // ── 9. Place value grid ────────────────────────────────────────────────────────
 
-const DecimalDot = () => (
-  <div
-    className="absolute w-3 h-3 bg-black rounded-full"
-    style={{ right: "-8px", top: "50%", transform: "translateY(-50%)", zIndex: 10 }}
-  />
-);
-
 function PlaceValueGrid({ vin, vout, op, zeros, level, filled }: GridData & { filled: boolean }) {
   const zPlural = zeros !== 1 ? "s" : "";
 
@@ -361,57 +337,40 @@ function PlaceValueGrid({ vin, vout, op, zeros, level, filled }: GridData & { fi
     );
   }
 
-  const cols = getPlaceValueColumns(level);
-  const onesIndex = cols.indexOf("O");
-  const isL2 = level === "level2";
-  const cellH = filled ? "72px" : "120px";
+  const columns = getPlaceValueColumns(level);
+  const onesIndex = columns.indexOf("O");
+  const plain = (n: number) => formatNumber(n).replace(/,/g, "");
+  const blank = columns.map(() => "");
 
-  return (
-    <div className="w-full overflow-x-auto">
-      <table className="w-full border-collapse" style={{ tableLayout: "fixed" }}>
-        <thead>
-          <tr>
-            {cols.map((col, i) => (
-              <th key={i} className="border-2 border-black py-2 font-bold text-lg relative bg-gray-100 text-black">
-                {col}
-                {i === onesIndex && isL2 && <DecimalDot />}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            {cols.map((_col, i) => (
-              <td key={i} className="border-2 border-black text-center text-3xl font-semibold bg-white text-black relative" style={{ height: cellH }}>
-                {filled ? getDigitAtPosition(vin, i, onesIndex) : ""}
-                {i === onesIndex && isL2 && <DecimalDot />}
-              </td>
-            ))}
-          </tr>
-          {filled && (
-            <>
-              <tr>
-                <td colSpan={cols.length} className="text-center py-3 font-bold text-2xl border-2 border-black bg-white text-black">
-                  ↓ {op === "multiply" ? "Move LEFT" : "Move RIGHT"} by {zeros} place{zPlural}
-                </td>
-              </tr>
-              <tr>
-                {cols.map((_col, i) => (
-                  <td key={i} className="border-2 border-black text-center text-3xl font-semibold bg-white text-black relative" style={{ height: cellH }}>
-                    {getDigitAtPosition(vout, i, onesIndex)}
-                    {i === onesIndex && isL2 && <DecimalDot />}
-                  </td>
-                ))}
-              </tr>
-            </>
-          )}
-        </tbody>
-      </table>
-    </div>
-  );
+  const data: PlaceValueTableData = {
+    columns,
+    onesIndex,
+    showPoint: level === "level2",
+    cellHeight: filled ? 72 : 120,
+    rows: [
+      { kind: "cells", cells: filled ? pvCells(plain(vin), columns, onesIndex) : blank },
+      ...(filled
+        ? [
+            { kind: "banner" as const, text: `↓ ${op === "multiply" ? "Move LEFT" : "Move RIGHT"} by ${zeros} place${zPlural}` },
+            { kind: "cells" as const, cells: pvCells(plain(vout), columns, onesIndex) },
+          ]
+        : []),
+    ],
+  };
+  return <PlaceValueTable data={data} />;
 }
 
 // ── 10. questionRenderer ───────────────────────────────────────────────────────
+
+const workingScaffold = {
+  label: "place value grid",
+  placement: "question" as const,
+  render: (q: AnyQuestion, showAnswer: boolean): JSX.Element | null => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const grid = (q as any)._grid as GridData | undefined;
+    return grid ? <PlaceValueGrid {...grid} filled={showAnswer} /> : null;
+  },
+};
 
 const questionRenderer = (
   q: AnyQuestion,
@@ -456,7 +415,8 @@ const questionRenderer = (
           </span>
         )}
       </div>
-      {grid && <PlaceValueGrid {...grid} filled={showAnswer} />}
+      {/* Whiteboard: the grid is ToolShell's hideable workingScaffold (below). Worked example: filled grid here. */}
+      {grid && !isWhiteboard && <PlaceValueGrid {...grid} filled={showAnswer} />}
     </div>
   );
 };
@@ -474,6 +434,7 @@ export default function App() {
       generateQuestion={generateQuestion}
       reformatQuestion={reformatQuestion}
       questionRenderer={questionRenderer}
+      workingScaffold={workingScaffold}
       defaults={{
         collapseWorkingByDefault: true,
         hideFontControls: true,

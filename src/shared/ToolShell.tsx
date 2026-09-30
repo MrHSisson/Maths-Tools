@@ -1,5 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback, type ReactNode } from "react";
-import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, SlidersHorizontal } from "lucide-react";
+import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, SlidersHorizontal, Table2 } from "lucide-react";
 import type { DifficultyLevel, AnyQuestion, WorkingStep, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
 import { LV_COLORS, LV_LABELS, LV_SELECTOR, LV_HEADER_COLORS, getQuestionBg, getStepBg } from "./colors";
 import { normalizeMultiSelect, resolveMultiSelectValues, ansEq, makeUniqueQ, sortByDifficulty, buildQuotaOverrides } from "./helpers";
@@ -59,6 +59,18 @@ export interface ToolShellProps {
   /** Optional curated teaching slides. When provided, a "Teach" mode is shown
    *  that runs the slides as a PowerPoint-style deck (see TeachingDeck). */
   teachingSlides?: TeachingSlide[];
+  /** Optional scaffold drawn inside the whiteboard's working box (e.g. a place
+   *  value table to model on). A toolbar button in the box hides/shows it so the
+   *  teacher can remove the scaffold; the box is otherwise free working space.
+   *  Whiteboard only (embedded and fullscreen). `label` names the button tooltip. */
+  workingScaffold?: {
+    label: string;
+    /** Where it is drawn: the working box (default) or inside the question box
+     *  below the question — pair "question" with `collapseWorkingByDefault` for a
+     *  full-width scaffold (the hide button then lives in the question box). */
+    placement?: "workingBox" | "question";
+    render: (q: AnyQuestion, showAnswer: boolean, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null;
+  };
 }
 
 const ALL_LEVELS: DifficultyLevel[] = ["level1", "level2", "level3"];
@@ -140,7 +152,7 @@ function ScaleToFit({ children, maxScale = 3 }: { children: ReactNode; maxScale?
   );
 }
 
-export const ToolShell = ({ config, infoSections, generateQuestion, generateUniqueQ: generateUniqueQProp, defaults = {}, stepRenderer, questionRenderer, answerRenderer, reformatQuestion, customPrintHandler, teachingSlides }: ToolShellProps) => {
+export const ToolShell = ({ config, infoSections, generateQuestion, generateUniqueQ: generateUniqueQProp, defaults = {}, stepRenderer, questionRenderer, answerRenderer, reformatQuestion, customPrintHandler, teachingSlides, workingScaffold }: ToolShellProps) => {
   const generateUniqueQ = generateUniqueQProp ?? makeUniqueQ(generateQuestion);
   const toolKeys = Object.keys(config.tools);
   // Seeds a smaller default question font size on a narrow viewport (the
@@ -479,6 +491,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const [presenterMode, setPresenterMode] = useState(false);
   const [wbFullscreen, setWbFullscreen] = useState(false);
   const [splitPct, setSplitPct] = useState(40);
+  const [scaffoldHidden, setScaffoldHidden] = useState(false);
   const [workingCollapsed, setWorkingCollapsed] = useState(defaults.collapseWorkingByDefault ?? false);
   const [camDevices, setCamDevices] = useState<MediaDeviceInfo[]>([]);
   const [currentCamId, setCurrentCamId] = useState<string | null>(null);
@@ -580,6 +593,12 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const getDropdownValue = () => toolDropdowns[`${currentTool}__${difficulty}`] ?? getDropdownConfig()?.defaultValue ?? "";
   const setDropdownValue = (v: string) => setToolDropdowns(p => ({ ...p, [`${currentTool}__${difficulty}`]: v }));
   const getVariableValues = () => toolVariables[currentTool]?.[difficulty] ?? {};
+  // A variable flagged `capsColumns` (e.g. "grids on worksheet") limits the worksheet's columns while on.
+  const colCap = (() => {
+    const vals = getVariableValues();
+    return (getVariablesConfig() ?? []).reduce((cap, v) => (v.capsColumns && vals[v.key] ? Math.min(cap, v.capsColumns) : cap), Infinity);
+  })();
+  const effCols = Math.min(numColumns, colCap);
   const setVariableValue = (k: string, v: boolean) => setToolVariables(p => ({
     ...p, [currentTool]: { ...(p[currentTool] ?? {}), [difficulty]: { ...(p[currentTool]?.[difficulty] ?? {}), [k]: v } },
   }));
@@ -594,6 +613,8 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     dropdownValue: getDropdownValue(),
     multiSelectValues: toolMultiSelect[currentTool] ?? {},
     preview: previewShown,
+    scaffoldVisible: !!workingScaffold && mode === "whiteboard" && !scaffoldHidden
+      && (workingScaffold.placement === "question" || (!presenterMode && !workingCollapsed)),
   });
 
   const makeQuestion = (): AnyQuestion =>
@@ -685,7 +706,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   };
 
   const stdQOProps = {
-    variables: getVariablesConfig() ?? [],
+    variables: (getVariablesConfig() ?? []).filter(v => !v.worksheetOnly || mode === "worksheet"),
     variableValues: getVariableValues(),
     onVariableChange: setVariableValue,
     dropdown: getDropdownConfig() ?? null,
@@ -983,8 +1004,8 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               {!defaults.fixedColumns && (
                 <div className="flex items-center gap-3">
                   <label className="text-base font-semibold text-gray-700">Columns:</label>
-                  <input type="number" min="1" max={defaults.maxColumns ?? 4} value={isDifferentiated ? diffLevels.length : numColumns}
-                    onChange={e => { if (!isDifferentiated) setNumColumns(Math.max(1, Math.min(defaults.maxColumns ?? 4, parseInt(e.target.value) || (defaults.numColumns ?? 3)))); }}
+                  <input type="number" min="1" max={Math.min(defaults.maxColumns ?? 4, colCap)} value={isDifferentiated ? diffLevels.length : effCols}
+                    onChange={e => { if (!isDifferentiated) setNumColumns(Math.max(1, Math.min(Math.min(defaults.maxColumns ?? 4, colCap), parseInt(e.target.value) || (defaults.numColumns ?? 3)))); }}
                     disabled={isDifferentiated}
                     className={`w-20 px-4 py-2 border-2 rounded-lg text-base font-semibold text-center transition-colors ${isDifferentiated ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed" : "border-gray-300 bg-white"}`} />
                 </div>
@@ -1072,9 +1093,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                     onPrint={m => customPrintHandler
                       ? customPrintHandler(worksheet, m, worksheetWrapRef.current, {
                           toolName: config.tools[currentTool].name, difficulty, isDifferentiated, diffLevels, diffSameSize, diffColorLevels,
-                          numColumns, instruction: getInstruction(), layout: worksheetLayout, showBorders: worksheetBorders,
+                          numColumns: effCols, instruction: getInstruction(), layout: worksheetLayout, showBorders: worksheetBorders,
                         })
-                      : handlePrint(worksheet, config.tools[currentTool].name, difficulty, isDifferentiated, diffLevels, numColumns, getInstruction(), m, worksheetLayout, worksheetBorders, diffSameSize, diffColorLevels)}
+                      : handlePrint(worksheet, config.tools[currentTool].name, difficulty, isDifferentiated, diffLevels, effCols, getInstruction(), m, worksheetLayout, worksheetBorders, diffSameSize, diffColorLevels)}
                     printMode={printMode} setPrintMode={setPrintMode}
                   />
                 </>
@@ -1132,16 +1153,37 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         onMouseLeave={e => (e.currentTarget.style.background = "rgba(0,0,0,0.08)")}
       ><PanelRightOpen size={16} color="#6b7280" /></button>
     );
+    const scaffoldInQ = workingScaffold?.placement === "question";
+    const scaffoldToggle = scaffoldInQ && workingScaffold && (
+      <button onClick={() => setScaffoldHidden(h => !h)} title={`${scaffoldHidden ? "Show" : "Hide"} ${workingScaffold.label}`}
+        style={{ background: scaffoldHidden ? "rgba(0,0,0,0.08)" : "#374151", border: "none", borderRadius: 8, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center" }}
+      ><Table2 size={16} color={scaffoldHidden ? "#6b7280" : "#ffffff"} /></button>
+    );
+    const scaffoldInQuestion = (fullscreen: boolean) => (scaffoldInQ && workingScaffold && !scaffoldHidden)
+      ? <div className="w-full">{workingScaffold.render(currentQuestion, showWhiteboardAnswer, colorScheme, fullscreen ? { ...getQOSnapshot(), fullscreen: true } as QOSnapshot : getQOSnapshot())}</div>
+      : null;
+    // A tool that hides the size chevrons (its scaffold — a table — is the content) gets them back
+    // while that scaffold is hidden, since the question alone is then ordinary text to resize. The
+    // box also stops auto-growing the question to fill (maxScale 1), or the chevrons would do nothing.
+    const scaffoldOff = scaffoldInQ && scaffoldHidden;
+    const fontControlsOn = !hideFontControls || scaffoldOff;
     const qBoxControls = (
-      (!hideFontControls || workingCollapsed) && <div style={{ position: "absolute", top: 10, right: 10, display: "flex", gap: 6, zIndex: 20 }}>
-        {!hideFontControls && <>
+      (fontControlsOn || workingCollapsed || scaffoldInQ) && <div style={{ position: "absolute", top: 10, right: 10, display: "flex", gap: 6, zIndex: 20 }}>
+        {fontControlsOn && <>
           <button style={fontBtnStyle(canDisplayDecrease)} onClick={() => canDisplayDecrease && setDisplayFontSize(f => f - 1)}><ChevronDown size={16} color="#6b7280" /></button>
           <button style={fontBtnStyle(canDisplayIncrease)} onClick={() => canDisplayIncrease && setDisplayFontSize(f => f + 1)}><ChevronUp size={16} color="#6b7280" /></button>
         </>}
+        {scaffoldToggle}
         {workingCollapsed && expandBtn}
+        {/* With the working panel collapsed its own fullscreen button is gone, so keep one here — last, matching its position in the open panel. */}
+        {workingCollapsed && (
+          <button onClick={() => setWbFullscreen(f => !f)} title={wbFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+            style={{ background: wbFullscreen ? "#374151" : "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center" }}
+          >{wbFullscreen ? <Minimize2 size={16} color="#ffffff" /> : <Maximize2 size={16} color="#6b7280" />}</button>
+        )}
       </div>
     );
-    const fit = (content: ReactNode) => workingCollapsed ? <ScaleToFit>{content}</ScaleToFit> : content;
+    const fit = (content: ReactNode) => workingCollapsed ? <ScaleToFit maxScale={scaffoldOff ? 1 : 3}>{content}</ScaleToFit> : content;
 
     // Fullscreen ALWAYS fit-scales: grow-to-fill when the panel is collapsed,
     // shrink-to-fit (maxScale 1) in the split view — so dragging the splitter
@@ -1149,7 +1191,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     // needs a scrollbar. Content is wrapped in a div because ScaleToFit
     // measures the union of its children.
     const fitFS = (content: ReactNode) => (
-      <ScaleToFit maxScale={workingCollapsed ? 3 : 1}>{content}</ScaleToFit>
+      <ScaleToFit maxScale={workingCollapsed && !scaffoldOff ? 3 : 1}>{content}</ScaleToFit>
     );
 
     const questionBox = () => (
@@ -1159,7 +1201,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           <div className="w-full text-center flex flex-col gap-4 items-center">
             {getInstruction() && !questionRenderer && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold`} style={{ color: "#000" }}>{getInstruction()}</div>}
             {questionRenderer
-              ? <>{questionRenderer(currentQuestion, showWhiteboardAnswer, colorScheme, undefined, undefined, getQOSnapshot(), displayFontSizes[displayFontSize])}{stagedBtn(showWhiteboardAnswer)}</>
+              ? <>{questionRenderer(currentQuestion, showWhiteboardAnswer, colorScheme, undefined, undefined, getQOSnapshot(), displayFontSizes[displayFontSize])}{stagedBtn(showWhiteboardAnswer)}{scaffoldInQuestion(false)}</>
               : <>
                   <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
                   {showWhiteboardAnswer && <div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>
@@ -1179,7 +1221,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           <>
             {getInstruction() && !questionRenderer && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold`} style={{ color: "#000" }}>{getInstruction()}</div>}
             {questionRenderer
-              ? <>{questionRenderer(currentQuestion, showWhiteboardAnswer, colorScheme, false, undefined, { ...getQOSnapshot(), fullscreen: true }, displayFontSizes[displayFontSize])}{stagedBtn(showWhiteboardAnswer)}</>
+              ? <>{questionRenderer(currentQuestion, showWhiteboardAnswer, colorScheme, false, undefined, { ...getQOSnapshot(), fullscreen: true }, displayFontSizes[displayFontSize])}{stagedBtn(showWhiteboardAnswer)}{scaffoldInQuestion(true)}</>
               : <>
                   <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
                   {showWhiteboardAnswer && <div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>
@@ -1199,6 +1241,13 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             <video ref={videoRef} autoPlay playsInline muted style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
             {camError && <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", padding: "2rem", textAlign: "center", zIndex: 1 }}>{camError}</div>}
           </>
+        )}
+        {workingScaffold && workingScaffold.placement !== "question" && !presenterMode && !scaffoldHidden && (
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: "56px 16px 16px", boxSizing: "border-box", zIndex: 5 }}>
+            <ScaleToFit maxScale={isFS ? 1.6 : 1}>
+              <div className="w-full">{workingScaffold.render(currentQuestion, showWhiteboardAnswer, colorScheme, getQOSnapshot())}</div>
+            </ScaleToFit>
+          </div>
         )}
         <div style={{ position: "absolute", top: 10, right: 10, display: "flex", gap: 6, zIndex: 20 }}>
           {presenterMode ? (
@@ -1229,6 +1278,11 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               onMouseEnter={e => (e.currentTarget.style.background = "rgba(0,0,0,0.15)")}
               onMouseLeave={e => (e.currentTarget.style.background = "rgba(0,0,0,0.08)")}
             ><Video size={16} color="#6b7280" /></button>
+          )}
+          {workingScaffold && workingScaffold.placement !== "question" && !presenterMode && (
+            <button onClick={() => setScaffoldHidden(h => !h)} title={`${scaffoldHidden ? "Show" : "Hide"} ${workingScaffold.label}`}
+              style={{ background: scaffoldHidden ? "rgba(0,0,0,0.08)" : "#374151", border: "none", borderRadius: 8, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center" }}
+            ><Table2 size={16} color={scaffoldHidden ? "#6b7280" : "#ffffff"} /></button>
           )}
           <button onClick={() => setWorkingCollapsed(true)} title="Collapse working / visualiser"
             style={{ background: presenterMode ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.08)", border: presenterMode ? "1px solid rgba(255,255,255,0.15)" : "none", borderRadius: 8, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: presenterMode ? "blur(6px)" : "none" }}
@@ -1444,7 +1498,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         <div className="rounded-xl shadow-2xl p-8 relative" style={{ backgroundColor: qBg }}>
           {fontSizeControls}
           <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
-          <div style={{ display: "grid", gridTemplateColumns: `repeat(${numColumns}, 1fr)`, columnGap: "1.5rem" }}>
+          <div style={{ display: "grid", gridTemplateColumns: `repeat(${effCols}, 1fr)`, columnGap: "1.5rem" }}>
             {worksheet.map((q, idx) => renderListItem(q, idx))}
           </div>
         </div>
@@ -1461,7 +1515,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             changing after the grid's first layout pass) to sometimes leave a
             row uneven, matching what "Fit all levels" hit before it moved to
             explicit tracks. */}
-        <div style={{ display: "grid", gridTemplateColumns: `repeat(${numColumns},1fr)`, gridAutoRows: "1fr", gap: "1rem" }}>
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${effCols},1fr)`, gridAutoRows: "1fr", gap: "1rem" }}>
           {worksheet.map((q, idx) => <div key={idx} style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>{renderQCell(q, idx)}</div>)}
         </div>
       </div>
@@ -1641,6 +1695,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                     onDropdownChange={setDropdownValue}
                     multiSelectValues={toolMultiSelect[currentTool] ?? {}}
                     onMultiSelectChange={setMultiSelectValue}
+                    hideWorksheetOnly={mode !== "worksheet"}
                   />
                 </div>
               </div>
