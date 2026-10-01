@@ -151,7 +151,7 @@ const INFO_SECTIONS: InfoSection[] = [
     { label: "Level 1 / 2 / 3", detail: "Same trap families as Compare, sustained across a list — several different traps can appear in the same list." },
   ]},
   { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard", detail: "Single question on the left, a place value table with the numbers written in on the right — Show Answer circles each deciding digit and fills the Order column. Hide it with the table button." },
+    { label: "Whiteboard", detail: "Single question on the left, a place value table with the numbers written in on the right — Show Answer fills the Order column (the circling of deciding digits is in the Worked Example). Hide it with the table button." },
     { label: "Worked Example", detail: "A place-value table, revealed one row at a time — each press circles the decisive digit for the next number and gives it its rank." },
     { label: "Worksheet", detail: "Grid of questions with PDF export." },
   ]},
@@ -413,7 +413,7 @@ const settledDescription = (settled: CmpRow[], total: number, smallestFirst: boo
 };
 
 /** The shared-table snapshot: rows in `revealed` show their circle + rank; `currentCol` tints a whole column. */
-const cmpTable = (rows: CmpRow[], L: PVLayout, revealed: CmpRow[], currentCol?: number): PlaceValueTableData => {
+const cmpTable = (rows: CmpRow[], L: PVLayout, revealed: CmpRow[], currentCol?: number, circles = true): PlaceValueTableData => {
   const nPlaces = L.set.columns.length;
   return {
     columns: [...(L.hasSign ? ["±"] : []), ...L.set.columns, "Order"],
@@ -427,7 +427,7 @@ const cmpTable = (rows: CmpRow[], L: PVLayout, revealed: CmpRow[], currentCol?: 
       const done = revealed.includes(row);
       const cells: PVCell[] = [];
       for (let i = 0; i < L.off + nPlaces; i++) {
-        const circled = done && row.circleCol === i;
+        const circled = circles && done && row.circleCol === i;
         if (L.hasSign && i === 0) { cells.push({ v: row.item.sign < 0 ? "−" : "+", circle: circled ? "on" : undefined }); continue; }
         const { digit, written } = digitAt(row.item, i, L);
         // An unwritten zero stays blank — unless it is the deciding digit, when it appears (dimmed) so the circle has something to land on.
@@ -493,7 +493,7 @@ const stepRenderer = (step: WorkingStep, _colorScheme?: string, qo?: QOSnapshot)
 };
 
 // Whiteboard scaffold (full width): the numbers already written in the table, ready to compare; Show Answer
-// circles every deciding digit and fills the Order column.
+// simply fills the Order column — the circling of deciding digits is the Worked Example's job.
 // Placed in the question box under the question, with the working panel collapsed, so the table
 // runs full width (a half-width box squeezes up to six rows and eight columns).
 const workingScaffold = {
@@ -508,7 +508,7 @@ const workingScaffold = {
     return (
       <div className="w-full">
         <p className="mb-2 text-center text-base font-semibold text-slate-800">Order: 1 = {info.smallestFirst ? "smallest" : "largest"}</p>
-        <PlaceValueTable data={withHeaders(cmpTable(rows, L, showAnswer ? rows : []), qo)} />
+        <PlaceValueTable data={withHeaders(cmpTable(rows, L, showAnswer ? rows : [], undefined, false), qo)} />
       </div>
     );
   },
