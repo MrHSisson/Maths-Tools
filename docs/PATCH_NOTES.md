@@ -28,6 +28,14 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-01 — Installable web app (full screen on mobile)
+
+Added `public/manifest.webmanifest` (`display: standalone`, `fullscreen` preferred), app icons
+(`favicon.svg`, 192/512 PNG, maskable 512, `apple-touch-icon.png`) and the iOS/Android meta tags
+in `index.html` (`viewport-fit=cover`, theme colour, web-app-capable). Once "Add to Home Screen" is
+used on a phone, the site opens with no browser address/search bar. No service worker (no offline
+caching, so no stale-deploy risk).
+
 ## 2026-10-01 — Worksheet text-size chevrons restored on text worksheets
 `hideFontControls` (set for the whiteboard's scaled table/diagram) was also removing the text-size chevrons from the Worksheet, even when the sheet was plain text. New ToolShell default **`worksheetFontControls`**: with `hideFontControls` on, the Worksheet keeps its chevrons unless a question in the sheet sets `_fixedSizeCell: true` (a grid/diagram cell drawn at a fixed size). Set on Adding & Subtracting Decimals (grids on → `_fixedSizeCell`, chevrons hidden; grids off → chevrons back), Powers of 10 and Adding & Subtracting Integers (text-only worksheets). Checked headless: 2 chevrons on those text worksheets, 0 with decimal grids on, 0 on a diagram tool (Angles in Triangles) as before.
 
