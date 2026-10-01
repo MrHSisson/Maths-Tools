@@ -167,6 +167,10 @@ export const WorkedExampleSteps = ({
   // on screen instead of creeping downward (or off the bottom) as the stack
   // grows, and scrolls back up by the same logic when a press shrinks it.
   const footerRef = useRef<HTMLDivElement>(null);
+  // Evolving-visual layout: the captions live in a fixed-height scroll area beside the visual (so the
+  // page never grows). It follows the current step, and fades out at the top once older steps scroll away.
+  const listRef = useRef<HTMLDivElement>(null);
+  const [listScrolled, setListScrolled] = useState(false);
   const prevFooterTop = useRef<number | null>(null);
   const captureFooterTop = () => {
     if (layout === "stacked" && footerRef.current) {
@@ -192,6 +196,11 @@ export const WorkedExampleSteps = ({
   // Toggling Step-by-Step/Show All always restarts at the beginning, matching
   // the reset ToolShell used to do by hand on the same button press.
   useEffect(() => { setStepIdx(0); setFragIdx(0); }, [stepped]);
+  // Keep the caption list scrolled to the current step (the last card), smoothly.
+  useEffect(() => {
+    const el = listRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }, [stepIdx, fragIdx, stepped]);
   // A genuinely new example (new question, or a reformat that keeps the same
   // question key but changes the working) also restarts position.
   useEffect(() => { setStepIdx(0); setFragIdx(0); }, [resetKey]);
@@ -289,9 +298,19 @@ export const WorkedExampleSteps = ({
     const vis = evolve ? visualFor(idx) : null;
     if (!vis) return list;
     return (
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] items-start">
-        <div className="lg:order-2 lg:sticky lg:top-4 rounded-xl p-4" style={{ backgroundColor: stepBg }}>{vis}</div>
-        <div className="lg:order-1">{list}</div>
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] items-stretch">
+        <div className="lg:order-2 rounded-xl p-4" style={{ backgroundColor: stepBg }}>{vis}</div>
+        {/* The row is as tall as the visual; the caption list scrolls inside it instead of growing the page. */}
+        <div className="lg:order-1 relative min-h-[16rem]">
+          <div
+            ref={listRef}
+            onScroll={(e) => setListScrolled(e.currentTarget.scrollTop > 4)}
+            className="max-h-80 overflow-y-auto lg:max-h-none lg:absolute lg:inset-0"
+            style={listScrolled ? { WebkitMaskImage: "linear-gradient(to bottom, transparent 0, #000 3rem)", maskImage: "linear-gradient(to bottom, transparent 0, #000 3rem)" } : undefined}
+          >
+            <div className="p-1">{list}</div>
+          </div>
+        </div>
       </div>
     );
   };

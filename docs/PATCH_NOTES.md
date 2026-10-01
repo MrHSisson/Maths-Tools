@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-01 — Evolving-visual cascade: captions in a fixed scroll area
+In the side-by-side layout (table + step captions) the captions now sit in a **fixed-height scroll area** the same height as the table, instead of growing the page: it follows the current step (smooth auto-scroll to the newest caption) and **fades out at the top** once older steps scroll away. The page height stays constant however many steps there are (decimals Level 3, six steps: page 1091px before and after, caption list scrolling 267px of 839px). On narrow screens the table sits on top and the caption list is capped at 20rem and scrolls.
+
 ## 2026-10-01 — Evolving visual in the cascade (one table, updating in place)
 A table reprinted on every cascade card clogged the page, so steps whose working is a picture now use a **`stepVisualRenderer`** (new `ToolShell` / `WorkedExampleSteps` prop). For those steps the cascade list shows only the caption (`step.plain`), and a single visual — the current step's — sits beside the list (sticky on wide screens; above it on narrow ones) and updates in place on every press, with ← retracing it. Show All shows all the captions plus the final visual once. Steps with no visual renderer, and the `single` layout, are unchanged. Wired for the decimal add/subtract tool (`placeValueStepVisual`, new shared export) and Comparing & Ordering (its own visual, with the "Order: 1 = …" caption). Checked headless: after each of three presses on both tools the cards grow 2→3→4 while exactly one table is on the page.
 Not yet applied: ratio tables (Speed/Distance/Time), whose steps are different tables rather than one evolving picture.
