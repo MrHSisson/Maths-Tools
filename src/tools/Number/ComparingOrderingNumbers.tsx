@@ -3,7 +3,7 @@ import {
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type QOSnapshot,
   type ToolMultiSelect, type ToolDropdown,
   randInt, pick, tStep, pickActive,
-  PlaceValueTable, pvColumnSet, PV_WORD_HEADERS_VAR, PV_WORD_HEADERS_KEY, type PlaceValueTableData, type PVCell,
+  InlineMath, AnswerDisplay, PlaceValueTable, pvColumnSet, PV_WORD_HEADERS_VAR, PV_WORD_HEADERS_KEY, type PlaceValueTableData, type PVCell,
 } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -421,7 +421,7 @@ const cmpTable = (rows: CmpRow[], L: PVLayout, revealed: CmpRow[], currentCol?: 
     onesIndex: L.set.onesIndex + L.off,
     showPoint: L.set.columns.length > L.set.onesIndex + 1,
     colWidth: 120,
-    cellHeight: rows.length > 4 ? 52 : 64,
+    cellHeight: rows.length > 4 ? 48 : 60,
     highlightCol: currentCol,
     rows: rows.map((row): { kind: "cells"; cells: PVCell[] } => {
       const done = revealed.includes(row);
@@ -492,10 +492,13 @@ const stepRenderer = (step: WorkingStep, _colorScheme?: string, qo?: QOSnapshot)
   );
 };
 
-// Whiteboard scaffold: the numbers already written in the table, ready to compare; Show Answer
+// Whiteboard scaffold (full width): the numbers already written in the table, ready to compare; Show Answer
 // circles every deciding digit and fills the Order column.
+// Placed in the question box under the question, with the working panel collapsed, so the table
+// runs full width (a half-width box squeezes up to six rows and eight columns).
 const workingScaffold = {
   label: "place value table",
+  placement: "question" as const,
   render: (q: AnyQuestion, showAnswer: boolean, _cs: string, qo?: QOSnapshot): JSX.Element | null => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const info = (q as any)._pv as PVInfo | undefined;
@@ -509,6 +512,36 @@ const workingScaffold = {
       </div>
     );
   },
+};
+
+// The question text, drawn like the shell's default — a custom renderer is needed so the table can
+// sit in the question box. On the whiteboard it also writes the answer beneath (the shell does that
+// itself only for the default renderer); worksheets and the worked example add theirs separately.
+const questionRenderer = (
+  q: AnyQuestion,
+  showAnswer: boolean,
+  _colorScheme: string,
+  compact?: boolean,
+  _idx?: number,
+  qo?: QOSnapshot,
+  fontClass?: string,
+): JSX.Element | null => {
+  const cls = fontClass ?? "text-3xl";
+  const isWhiteboard = compact === undefined || qo?.fullscreen === true;
+  return (
+    <div className="w-full flex flex-col items-center gap-4">
+      {/* Tighter line spacing than the shell default, to leave the table as much of the box as possible. */}
+      <div className="flex flex-col gap-1 text-center">
+        {((q as any).lines as string[]).map((line, i) => (
+          <div key={i} className={`${cls} font-semibold`} style={{ color: "#000", lineHeight: 1.35 }}><InlineMath text={line} /></div>
+        ))}
+      </div>
+      {/* Always laid out (hidden until revealed) so Show Answer never resizes or rescales the box. */}
+      {isWhiteboard && (
+        <div className={`${cls} font-bold`} style={{ color: "#166534", visibility: showAnswer ? "visible" : "hidden" }}><AnswerDisplay q={q} /></div>
+      )}
+    </div>
+  );
 };
 
 // ── 9. Compare generator ──────────────────────────────────────────────────────
@@ -714,7 +747,9 @@ export default function App() {
       generateQuestion={generateQuestion}
       reformatQuestion={reformatQuestion}
       stepRenderer={stepRenderer}
+      questionRenderer={questionRenderer}
       workingScaffold={workingScaffold}
+      defaults={{ collapseWorkingByDefault: true, displayFontSize: 1 /* text-xl — leaves the full-width table room */ }}
     />
   );
 }

@@ -75,9 +75,9 @@ export function PlaceValueTable({ data }: { data: PlaceValueTableData }) {
                         <span className="absolute left-1 top-0 text-base font-bold text-indigo-600">{cell.above}</span>
                       )}
                       {cell.badge ? (
-                        <span className={`inline-flex h-11 w-11 items-center justify-center rounded-full text-2xl font-bold ${cell.v ? "bg-indigo-600 text-white" : ""}`}>{cell.v}</span>
+                        <span className={`inline-flex align-middle h-11 w-11 items-center justify-center rounded-full text-2xl font-bold ${cell.v ? "bg-indigo-600 text-white" : ""}`}>{cell.v}</span>
                       ) : cell.circle ? (
-                        <span className={`inline-flex h-11 w-11 items-center justify-center rounded-full border-[3px] ${cell.circle === "dim" ? "border-indigo-300 text-slate-400" : "border-indigo-500 text-indigo-700"}`}>{cell.v}</span>
+                        <span className={`inline-flex align-middle h-11 w-11 items-center justify-center rounded-full border-[3px] ${cell.circle === "dim" ? "border-indigo-300 text-slate-400" : "border-indigo-500 text-indigo-700"}`}>{cell.v}</span>
                       ) : (
                         <span className={cell.strike ? "line-through decoration-2 text-slate-400" : ""}>{cell.v}</span>
                       )}
