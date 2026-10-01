@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-01 — Evolving-visual cascade: lighter look
+The captions beside the evolving table are now a **timeline** instead of grey cards: numbered dots on a thin vertical line, the current step in a ringed navy dot with bold dark text, earlier steps muted and faded, bigger caption text, no boxes — so more history fits in the scroll area. The table sits in its own white bordered panel, centred. Applies only to steps with a `stepVisualRenderer` (decimals, Comparing & Ordering); ordinary step cards are unchanged.
+
 ## 2026-10-01 — Evolving-visual cascade: captions in a fixed scroll area
 In the side-by-side layout (table + step captions) the captions now sit in a **fixed-height scroll area** the same height as the table, instead of growing the page: it follows the current step (smooth auto-scroll to the newest caption) and **fades out at the top** once older steps scroll away. The page height stays constant however many steps there are (decimals Level 3, six steps: page 1091px before and after, caption list scrolling 267px of 839px). On narrow screens the table sits on top and the caption list is capped at 20rem and scrolls.
 

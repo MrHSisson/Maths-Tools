@@ -299,7 +299,7 @@ export const WorkedExampleSteps = ({
     if (!vis) return list;
     return (
       <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] items-stretch">
-        <div className="lg:order-2 rounded-xl p-4" style={{ backgroundColor: stepBg }}>{vis}</div>
+        <div className="lg:order-2 flex items-center justify-center rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">{vis}</div>
         {/* The row is as tall as the visual; the caption list scrolls inside it instead of growing the page. */}
         <div className="lg:order-1 relative min-h-[16rem]">
           <div
@@ -315,9 +315,27 @@ export const WorkedExampleSteps = ({
     );
   };
 
-  const renderStep = (s: WorkingStep, i: number, reveal?: number, stacked?: boolean) => {
-    const asCaption = evolve && visualOf(s) !== null;
-    const custom = asCaption ? <span>{s.plain}</span> : stepRenderer ? stepRenderer(s, colorScheme, qoSnapshot) : null;
+  // A step whose picture lives in the side panel is just a line in a timeline: a numbered dot and its
+  // caption — no card, so the list stays light and more history fits. "current" is the live step,
+  // "past" fades back, "all" (Show All) shows every line at full strength.
+  const captionRow = (s: WorkingStep, i: number, state: "current" | "past" | "all") => {
+    const on = state === "current";
+    return (
+      <div key={i} className="flex items-start gap-3 py-2" style={{ opacity: state === "past" ? 0.5 : 1, transition: "opacity 0.3s ease" }}>
+        <span
+          className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold"
+          style={{ background: on ? "#1e3a8a" : "#fff", color: on ? "#fff" : "#475569", border: on ? "2px solid #1e3a8a" : "2px solid #cbd5e1", boxShadow: on ? "0 0 0 4px rgba(30,58,138,0.15)" : "none" }}
+        >{i + 1}</span>
+        <p className={compact ? "text-base leading-snug pt-1" : "text-xl leading-snug pt-0.5"} style={{ color: on ? "#0f172a" : "#334155", fontWeight: on ? 600 : 400 }}>{s.plain}</p>
+      </div>
+    );
+  };
+  /** The vertical line the numbered dots sit on. */
+  const timelineSpine = <div className="absolute left-4 top-6 bottom-6 w-0.5 -translate-x-1/2 rounded bg-slate-300" aria-hidden />;
+
+  const renderStep = (s: WorkingStep, i: number, reveal?: number, stacked?: boolean, state: "current" | "past" | "all" = "all") => {
+    if (evolve && visualOf(s) !== null) return captionRow(s, i, state);
+    const custom = stepRenderer ? stepRenderer(s, colorScheme, qoSnapshot) : null;
     const isFinalAnswerStep = hideAnswerStep && i === totalSteps - 1;
     // compact (narrow viewport) always wins over the "stacked" layout's own
     // reduced size — the two are independent axes, and narrow needs smaller
@@ -378,11 +396,15 @@ export const WorkedExampleSteps = ({
   // — see EnterCard's own comment for why that one needs a mount transition
   // and the rest don't.
   const stackedSteps = (upTo: number, activeReveal: number) => (
-    <div className="space-y-2">
+    <div className={evolve ? "relative" : "space-y-2"}>
+      {evolve && timelineSpine}
       {working.slice(0, upTo + 1).map((s, i) => {
         const isCurrent = i === upTo;
         const isFinalAnswerStep = hideAnswerStep && i === totalSteps - 1;
-        const content = renderStep(s, i, isCurrent ? activeReveal : undefined, true);
+        const content = renderStep(s, i, isCurrent ? activeReveal : undefined, true, isCurrent ? "current" : "past");
+        if (evolve && visualOf(s) !== null) {
+          return isCurrent ? <EnterCard key={i}>{content}</EnterCard> : content;
+        }
         if (isCurrent) {
           // The blue "current position" ring means "here's where you are,
           // there's more ahead" — once this IS the final answer step (no more
@@ -463,8 +485,9 @@ export const WorkedExampleSteps = ({
         <div className="p-1">
           {!atAnswer ? withVisual(stackedSteps(stepIdx, fragIdx), stepIdx) : withVisual(
             <div className="space-y-2">
-              <div className="space-y-2" style={{ opacity: 0.7 }}>
-                {working.map((s, i) => renderStep(s, i, undefined, true))}
+              <div className={evolve ? "relative" : "space-y-2"} style={evolve ? undefined : { opacity: 0.7 }}>
+                {evolve && timelineSpine}
+                {working.map((s, i) => renderStep(s, i, undefined, true, "past"))}
               </div>
               {answerBox("", undefined, true)}
             </div>, totalSteps - 1)}
@@ -497,7 +520,8 @@ export const WorkedExampleSteps = ({
         </div>
       )}
       {withVisual(
-        <div className="space-y-4">
+        <div className={evolve ? "relative" : "space-y-4"}>
+          {evolve && timelineSpine}
           {working.map((s, i) => renderStep(s, i))}
         </div>, totalSteps - 1)}
       {!hideAnswerStep && answerBox("mt-4")}
