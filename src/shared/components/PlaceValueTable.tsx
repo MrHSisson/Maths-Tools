@@ -74,7 +74,13 @@ export function PlaceValueTable({ data }: { data: PlaceValueTableData }) {
                       {cell.above !== undefined && (
                         <span className="absolute left-1 top-0 text-base font-bold text-indigo-600">{cell.above}</span>
                       )}
-                      <span className={cell.strike ? "line-through decoration-2 text-slate-400" : ""}>{cell.v}</span>
+                      {cell.badge ? (
+                        <span className={`inline-flex h-11 w-11 items-center justify-center rounded-full text-2xl font-bold ${cell.v ? "bg-indigo-600 text-white" : ""}`}>{cell.v}</span>
+                      ) : cell.circle ? (
+                        <span className={`inline-flex h-11 w-11 items-center justify-center rounded-full border-[3px] ${cell.circle === "dim" ? "border-indigo-300 text-slate-400" : "border-indigo-500 text-indigo-700"}`}>{cell.v}</span>
+                      ) : (
+                        <span className={cell.strike ? "line-through decoration-2 text-slate-400" : ""}>{cell.v}</span>
+                      )}
                       {showPoint && i === onesIndex && <DecimalDot />}
                     </td>
                   );
@@ -189,7 +195,9 @@ export function PlaceValueSvg({ data, title, idx, answerIdx, rowH = SVG_ROW_H, f
                 <g key={i}>
                   <rect x={x0 + i * SVG_CW} y={y} width={SVG_CW} height={rowH} fill={fill} stroke="#000" strokeWidth={2.5} />
                   {cell.above !== undefined && <text x={x0 + i * SVG_CW + 8} y={y + 22} fontSize={22} fontWeight={700} fill="#4f46e5">{cell.above}</text>}
-                  {cell.v !== "" && <text x={cx} y={y + rowH / 2 + 2} textAnchor="middle" dominantBaseline="middle" fontSize={44} fontWeight={600} fill={ink}>{cell.v}</text>}
+                  {cell.badge && cell.v !== "" && <circle cx={cx} cy={y + rowH / 2} r={22} fill="#4f46e5" />}
+                  {cell.circle && <circle cx={cx} cy={y + rowH / 2} r={24} fill="none" stroke={cell.circle === "dim" ? "#a5b4fc" : "#6366f1"} strokeWidth={4} />}
+                  {cell.v !== "" && <text x={cx} y={y + rowH / 2 + 2} textAnchor="middle" dominantBaseline="middle" fontSize={44} fontWeight={600} fill={cell.badge ? "#fff" : cell.circle === "dim" ? "#94a3b8" : ink}>{cell.v}</text>}
                   {cell.strike && cell.v !== "" && <line x1={cx - 16} y1={y + rowH / 2 + 2} x2={cx + 16} y2={y + rowH / 2 + 2} stroke="#94a3b8" strokeWidth={4} />}
                 </g>
               );

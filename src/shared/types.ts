@@ -59,6 +59,10 @@ export interface PVCell {
   /** Small digit written above the cell — a carry, or the new value after an exchange. */
   above?: string;
   tone?: PVTone;
+  /** Ring the digit — "on" marks the deciding digit, "dim" an implicit (unwritten) zero that decides. */
+  circle?: "on" | "dim";
+  /** Draw the value as a filled badge (e.g. a rank in an Order column); blank until it has a value. */
+  badge?: boolean;
 }
 export type PVRow =
   | { kind: "cells"; cells: (PVCell | string)[]; /** Operator in the left gutter. */ label?: string; /** Thicker rule above (an answer line). */ rule?: boolean }

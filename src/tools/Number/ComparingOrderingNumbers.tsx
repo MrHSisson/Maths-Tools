@@ -3,6 +3,7 @@ import {
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type QOSnapshot,
   type ToolMultiSelect, type ToolDropdown,
   randInt, pick, tStep, pickActive,
+  PlaceValueTable, pvColumnSet, PV_WORD_HEADERS_VAR, PV_WORD_HEADERS_KEY, type PlaceValueTableData, type PVCell,
 } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -116,9 +117,9 @@ const TOOL_CONFIG: ToolConfig = {
       dropdown: null,
       variables: [],
       difficultySettings: {
-        level1: { dropdown: null, variables: [], multiSelect: [WHOLE_PART_MS, TRAP_TYPE_MS, NOTATION_MS, ASK_MS] },
-        level2: { dropdown: null, variables: [], multiSelect: [SIGN_MS, NOTATION_MS, ASK_MS] },
-        level3: { dropdown: null, variables: [], multiSelect: [WHOLE_PART_MS, TRAP_TYPE_MS, SIGN_MS, NOTATION_MS, ASK_MS] },
+        level1: { dropdown: null, variables: [PV_WORD_HEADERS_VAR], multiSelect: [WHOLE_PART_MS, TRAP_TYPE_MS, NOTATION_MS, ASK_MS] },
+        level2: { dropdown: null, variables: [PV_WORD_HEADERS_VAR], multiSelect: [SIGN_MS, NOTATION_MS, ASK_MS] },
+        level3: { dropdown: null, variables: [PV_WORD_HEADERS_VAR], multiSelect: [WHOLE_PART_MS, TRAP_TYPE_MS, SIGN_MS, NOTATION_MS, ASK_MS] },
       },
     },
 
@@ -127,9 +128,9 @@ const TOOL_CONFIG: ToolConfig = {
       dropdown: countDD("3"),
       variables: [],
       difficultySettings: {
-        level1: { dropdown: countDD("3"), variables: [], multiSelect: [WHOLE_PART_MS, TRAP_TYPE_MS, DIRECTION_MS] },
-        level2: { dropdown: countDD("4"), variables: [], multiSelect: [SIGN_MS, DIRECTION_MS] },
-        level3: { dropdown: countDD("5"), variables: [], multiSelect: [WHOLE_PART_MS, TRAP_TYPE_MS, SIGN_MS, DIRECTION_MS] },
+        level1: { dropdown: countDD("3"), variables: [PV_WORD_HEADERS_VAR], multiSelect: [WHOLE_PART_MS, TRAP_TYPE_MS, DIRECTION_MS] },
+        level2: { dropdown: countDD("4"), variables: [PV_WORD_HEADERS_VAR], multiSelect: [SIGN_MS, DIRECTION_MS] },
+        level3: { dropdown: countDD("5"), variables: [PV_WORD_HEADERS_VAR], multiSelect: [WHOLE_PART_MS, TRAP_TYPE_MS, SIGN_MS, DIRECTION_MS] },
       },
     },
 
@@ -150,11 +151,12 @@ const INFO_SECTIONS: InfoSection[] = [
     { label: "Level 1 / 2 / 3", detail: "Same trap families as Compare, sustained across a list — several different traps can appear in the same list." },
   ]},
   { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard", detail: "Single question on the left, working space on the right." },
+    { label: "Whiteboard", detail: "Single question on the left, a place value table with the numbers written in on the right — Show Answer circles each deciding digit and fills the Order column. Hide it with the table button." },
     { label: "Worked Example", detail: "A place-value table, revealed one row at a time — each press circles the decisive digit for the next number and gives it its rank." },
     { label: "Worksheet", detail: "Grid of questions with PDF export." },
   ]},
   { title: "Question Options", icon: "⚙️", content: [
+    { label: "Words in column headings", detail: "Switch the table headings between letters (O, t, h) and words (Ones, Tenths, Hundredths). Display only — the question does not change." },
     { label: "Notation (Compare)", detail: "Tick Words and/or Symbols — both active mixes them into one worksheet. Changing it reformats the current question instantly — no regeneration." },
     { label: "Whole-number part", detail: "Tick '0.__ only' and/or 'Allow whole numbers' — both active mixes pure decimals with whole-number-part decimals in one worksheet." },
     { label: "Trap type", detail: "Tick which named misconceptions can appear. Untick 'No trap' to force a trap every question." },
@@ -312,31 +314,50 @@ const applySign = (mags: Dec[], msv: Record<string, boolean>, signPoolActive: bo
   return signed.sort((a, b) => signedValue(a) - signedValue(b));
 };
 
-// ── 8. Place-value table (the Worked Example working step) ───────────────────
+// ── 8. Place-value table (the Worked Example working steps + whiteboard scaffold) ──
+// Drawn with the shared PlaceValueTable: [Sign] · whole places · decimal places · Order.
+// Each press of the Worked Example circles the decisive digit for the next number.
 
-type PVCol = "sign" | "whole" | 0 | 1 | 2;
+/** Column layout for a set of numbers. A table column index runs sign (if any), whole places, decimal places, Order. */
+interface PVLayout { hasSign: boolean; off: number; set: ReturnType<typeof pvColumnSet>; }
+const pvLayout = (items: SignedDec[], hasSign: boolean): PVLayout => {
+  const wholeDigits = Math.max(1, ...items.map((i) => String(i.mag.whole).length));
+  const maxDp = Math.max(0, ...items.map((i) => i.mag.d.length));
+  return { hasSign, off: hasSign ? 1 : 0, set: pvColumnSet(wholeDigits, maxDp) };
+};
 
-interface PVRow { sign: 1 | -1; whole: number; d: number[]; circleCol: PVCol; rank: number; }
+/** Digit of `item` in table column `i` (0 where it has none), and whether it is actually written. */
+const digitAt = (item: SignedDec, i: number, L: PVLayout): { digit: number; written: boolean } => {
+  const p = i - L.off;
+  const ones = L.set.onesIndex;
+  if (p <= ones) {
+    const w = String(item.mag.whole);
+    const fromRight = ones - p;
+    return fromRight < w.length ? { digit: Number(w[w.length - 1 - fromRight]), written: true } : { digit: 0, written: false };
+  }
+  const q = p - ones - 1;
+  return q < item.mag.d.length ? { digit: item.mag.d[q], written: true } : { digit: 0, written: false };
+};
 
-const colValue = (item: SignedDec, col: PVCol): number => (
-  col === "sign" ? item.sign : col === "whole" ? item.mag.whole : (item.mag.d[col] ?? 0)
-);
+interface CmpRow { item: SignedDec; circleCol: number; rank: number; }
 
-// Radix-sort-style column scan: process sign, then whole, then tenths,
-// hundredths, thousandths, left to right. At each column, split every
-// still-tied group of rows by their digit value there; any row left alone
-// in its group is settled AT THAT COLUMN — this is its circled digit.
-// Distinct values guarantee every row eventually settles.
-const columnScan = (items: SignedDec[], hasSign: boolean): PVCol[] => {
-  const settledAt: PVCol[] = new Array(items.length);
-  const cols: PVCol[] = hasSign ? ["sign", "whole", 0, 1, 2] : ["whole", 0, 1, 2];
+const colValue = (item: SignedDec, i: number, L: PVLayout): number => (L.hasSign && i === 0 ? item.sign : digitAt(item, i, L).digit);
+
+/** Table columns that take part in the comparison, left to right (sign, then every place). */
+const scanCols = (L: PVLayout): number[] => Array.from({ length: L.off + L.set.columns.length }, (_, i) => i);
+
+// Radix-sort-style column scan: at each column (sign, then places left to right), split every
+// still-tied group of rows by their digit there; any row left alone in its group is settled AT
+// THAT COLUMN — this is its circled digit. Distinct values guarantee every row eventually settles.
+const columnScan = (items: SignedDec[], L: PVLayout): number[] => {
+  const settledAt: number[] = new Array(items.length);
   let groups: number[][] = [items.map((_, i) => i)];
-  for (const col of cols) {
+  for (const col of scanCols(L)) {
     const nextGroups: number[][] = [];
     for (const group of groups) {
       const byValue = new Map<number, number[]>();
       for (const idx of group) {
-        const v = colValue(items[idx], col);
+        const v = colValue(items[idx], col, L);
         const bucket = byValue.get(v);
         if (bucket) bucket.push(idx); else byValue.set(v, [idx]);
       }
@@ -351,25 +372,21 @@ const columnScan = (items: SignedDec[], hasSign: boolean): PVCol[] => {
   return settledAt;
 };
 
-// `items` are in DISPLAY order (as shown in the question). `smallestFirst`
-// controls what the Order column's numbering means: 1 = smallest when true
-// (ascending asked), 1 = largest when false (descending asked) — so the
-// table's own numbering always matches what the question is seeking.
-const buildPlaceValueTable = (items: SignedDec[], hasSign: boolean, smallestFirst: boolean): PVRow[] => {
+// `items` are in DISPLAY order (as shown in the question). `smallestFirst` controls what the
+// Order column's numbering means: 1 = smallest when true (ascending asked), 1 = largest when
+// false (descending asked) — so the table's own numbering always matches what the question seeks.
+const buildRows = (items: SignedDec[], L: PVLayout, smallestFirst: boolean): CmpRow[] => {
   const n = items.length;
-  const ascSorted = [...items].sort((a, b) => signedValue(a) - signedValue(b));
   const ascRankOf = new Map<SignedDec, number>();
-  ascSorted.forEach((v, i) => ascRankOf.set(v, i + 1));
-  const circleCols = columnScan(items, hasSign);
+  [...items].sort((a, b) => signedValue(a) - signedValue(b)).forEach((v, i) => ascRankOf.set(v, i + 1));
+  const circleCols = columnScan(items, L);
   return items.map((item, i) => {
     const ascRank = ascRankOf.get(item)!;
-    const rank = smallestFirst ? ascRank : n - ascRank + 1;
-    return { sign: item.sign, whole: item.mag.whole, d: item.mag.d, circleCol: circleCols[i], rank };
+    return { item, circleCol: circleCols[i], rank: smallestFirst ? ascRank : n - ascRank + 1 };
   });
 };
 
-const PV_COL_LABELS = ["Tenths", "Hundredths", "Thousandths"];
-const colStepLabel = (col: PVCol): string => (col === "sign" ? "the sign" : col === "whole" ? "the whole-number part" : `the ${PV_COL_LABELS[col].toLowerCase()} digit`);
+const colName = (L: PVLayout, i: number): string => (L.hasSign && i === 0 ? "the sign" : `the ${L.set.columnNames[i - L.off].toLowerCase()} digit`);
 
 const ordinalSuffix = (n: number): string => {
   const s = n % 10, t = n % 100;
@@ -379,148 +396,119 @@ const ordinalSuffix = (n: number): string => {
   return "th";
 };
 
-// `rank` already encodes the asked direction (1 = smallest when
-// smallestFirst, else 1 = largest) — phrase it back out the same way.
+// `rank` already encodes the asked direction (1 = smallest when smallestFirst, else 1 = largest).
 const rankPhrase = (rank: number, total: number, smallestFirst: boolean): string => {
   if (rank === 1) return `the ${smallestFirst ? "smallest" : "largest"}`;
   if (rank === total) return `the ${smallestFirst ? "largest" : "smallest"}`;
   return `the ${rank}${ordinalSuffix(rank)} ${smallestFirst ? "smallest" : "largest"}`;
 };
 
-const pvRowStr = (row: PVRow): string => `${row.sign < 0 ? "-" : ""}${decStr({ whole: row.whole, d: row.d })}`;
+const rowStr = (row: CmpRow): string => signedStr(row.item);
 
-// What actually happened at this column, in words — either nothing (every
-// number in play still matches here) or which number(s) just got placed
-// and where, so the reveal reads as a worked argument, not just a diagram.
-const settledDescription = (settled: PVRow[], total: number, smallestFirst: boolean): string => {
+// What actually happened at this column, in words — either nothing (every number still matches
+// here) or which number just got placed, so the reveal reads as a worked argument.
+const settledDescription = (settled: CmpRow[], total: number, smallestFirst: boolean): string => {
   if (settled.length === 0) return "Every number still matches here — move to the next column.";
-  const parts = settled.map((r) => `${pvRowStr(r)} is ${rankPhrase(r.rank, total, smallestFirst)}`);
-  return `Now placed: ${parts.join("; ")}.`;
+  return `Now placed: ${settled.map((r) => `${rowStr(r)} is ${rankPhrase(r.rank, total, smallestFirst)}`).join("; ")}.`;
 };
 
-// Every cell's content sits in a fixed-size box (circled or not, digit or
-// blank) so circling a digit never changes that cell's size — the table
-// never jumps as steps reveal more circles. `revealedRows` is exactly the
-// set of rows placed so far (by object identity, into the shared `rows`
-// array) — even rows sharing a decisive column can be revealed one at a
-// time rather than all at once.
-const PlaceValueTable = ({
-  rows, hasSign, revealedRows, targetWord, colLabel, settledText, hasSettled, currentCol,
-}: {
-  rows: PVRow[]; hasSign: boolean; revealedRows: PVRow[]; targetWord: string;
-  colLabel: string; settledText: string; hasSettled: boolean; currentCol: PVCol;
-}) => {
-  const maxDp = Math.max(0, ...rows.map((r) => r.d.length));
-  const thClsBase = "border border-slate-300 px-3 py-1 text-xs font-semibold uppercase tracking-wide";
-  const tdClsBase = "border border-slate-300 px-2 py-2 text-center align-middle";
-  const boxBase = "inline-flex h-8 w-8 items-center justify-center rounded-full border-2 font-semibold";
-  const rankBase = "inline-flex h-7 w-7 items-center justify-center rounded-full font-semibold";
-  const lastRow = rows.length - 1;
-
-  // The whole column currently being compared gets a highlighted "swimlane"
-  // (tinted background, rounded top/bottom on its end cells so it reads as
-  // one capsule down the table) — separate from the per-digit circle, which
-  // marks only the numbers actually settled so far.
-  const colCls = (col: PVCol, ri?: number) => {
-    if (col !== currentCol) return "";
-    const rounding = ri === 0 ? " rounded-t-2xl" : ri === lastRow ? " rounded-b-2xl" : "";
-    return `bg-amber-100${rounding}`;
+/** The shared-table snapshot: rows in `revealed` show their circle + rank; `currentCol` tints a whole column. */
+const cmpTable = (rows: CmpRow[], L: PVLayout, revealed: CmpRow[], currentCol?: number): PlaceValueTableData => {
+  const nPlaces = L.set.columns.length;
+  return {
+    columns: [...(L.hasSign ? ["±"] : []), ...L.set.columns, "Order"],
+    columnNames: [...(L.hasSign ? ["Sign"] : []), ...L.set.columnNames, "Order"],
+    onesIndex: L.set.onesIndex + L.off,
+    showPoint: L.set.columns.length > L.set.onesIndex + 1,
+    colWidth: 120,
+    cellHeight: rows.length > 4 ? 52 : 64,
+    highlightCol: currentCol,
+    rows: rows.map((row): { kind: "cells"; cells: PVCell[] } => {
+      const done = revealed.includes(row);
+      const cells: PVCell[] = [];
+      for (let i = 0; i < L.off + nPlaces; i++) {
+        const circled = done && row.circleCol === i;
+        if (L.hasSign && i === 0) { cells.push({ v: row.item.sign < 0 ? "−" : "+", circle: circled ? "on" : undefined }); continue; }
+        const { digit, written } = digitAt(row.item, i, L);
+        // An unwritten zero stays blank — unless it is the deciding digit, when it appears (dimmed) so the circle has something to land on.
+        if (written) cells.push({ v: String(digit), circle: circled ? "on" : undefined });
+        else cells.push(circled ? { v: "0", tone: "zero", circle: "dim" } : { v: "" });
+      }
+      cells.push({ v: done ? String(row.rank) : "", badge: true });
+      return { kind: "cells", cells };
+    }),
   };
-
-  const digitBox = (content: string | number, circled: boolean, dimmed = false) => (
-    <span className={`${boxBase} ${circled ? (dimmed ? "border-indigo-400 text-slate-400" : "border-indigo-500 text-indigo-700") : "border-transparent text-slate-900"}`}>
-      {content}
-    </span>
-  );
-
-  return (
-    <div className="mx-auto">
-      <p className="mb-1 text-center text-base font-semibold text-slate-800">Compare {colLabel} — 1 = {targetWord}.</p>
-      <p className={`mb-3 text-center text-sm ${hasSettled ? "font-medium text-emerald-700" : "text-slate-500"}`}>{settledText}</p>
-      <table className="mx-auto border-collapse text-base">
-        <thead>
-          <tr>
-            {hasSign && <th className={`${thClsBase} ${currentCol === "sign" ? "bg-amber-200 text-amber-900" : "text-slate-500"}`}>Sign</th>}
-            <th className={`${thClsBase} ${currentCol === "whole" ? "bg-amber-200 text-amber-900" : "text-slate-500"}`}>Whole</th>
-            {maxDp > 0 && <th className={thClsBase}>.</th>}
-            {Array.from({ length: maxDp }, (_, i) => (
-              <th key={i} className={`${thClsBase} ${currentCol === i ? "bg-amber-200 text-amber-900" : "text-slate-500"}`}>{PV_COL_LABELS[i]}</th>
-            ))}
-            <th className={thClsBase}>Order</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row, ri) => {
-            const revealed = revealedRows.includes(row);
-            return (
-              <tr key={ri}>
-                {hasSign && <td className={`${tdClsBase} ${colCls("sign", ri)}`}>{digitBox(row.sign < 0 ? "−" : "+", revealed && row.circleCol === "sign")}</td>}
-                <td className={`${tdClsBase} ${colCls("whole", ri)}`}>{digitBox(row.whole, revealed && row.circleCol === "whole")}</td>
-                {maxDp > 0 && <td className={tdClsBase}>.</td>}
-                {Array.from({ length: maxDp }, (_, i) => {
-                  const digit = row.d[i];
-                  const isCircled = revealed && row.circleCol === i;
-                  // No explicit digit here — if this implicit zero is the
-                  // decisive one, still show it (dimmed) so the circle has
-                  // something to land on; otherwise the box stays empty.
-                  return <td key={i} className={`${tdClsBase} ${colCls(i as 0 | 1 | 2, ri)}`}>{digitBox(digit === undefined ? (isCircled ? 0 : "") : digit, isCircled, digit === undefined)}</td>;
-                })}
-                <td className={tdClsBase}>
-                  <span className={`${rankBase} ${revealed ? "bg-indigo-600 text-white" : "bg-transparent"}`}>{revealed ? row.rank : ""}</span>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  );
 };
 
-// One WorkingStep per place-value column actually needed (sign if relevant,
-// whole, then decimal columns up to whichever one settles the last row) —
-// PLUS, when a single column settles more than one row at once, one step
-// per row within that column (ordered by rank, most extreme first) rather
-// than circling and numbering them all in the same press. A column that
-// settles nothing still gets its own "nothing here" step.
-const placeValueSteps = (items: SignedDec[], hasSign: boolean, smallestFirst: boolean): WorkingStep[] => {
-  const rows = buildPlaceValueTable(items, hasSign, smallestFirst);
-  const fullCols: PVCol[] = hasSign ? ["sign", "whole", 0, 1, 2] : ["whole", 0, 1, 2];
+const withHeaders = (t: PlaceValueTableData, qo?: QOSnapshot): PlaceValueTableData =>
+  ({ ...t, headerStyle: qo?.variables?.[PV_WORD_HEADERS_KEY] ? "words" : "letters" });
+
+/** What the table needs from a question: the numbers as displayed, whether they carry a sign, and what Order = 1 means. */
+interface PVInfo { items: SignedDec[]; hasSign: boolean; smallestFirst: boolean; }
+
+// One WorkingStep per place-value column actually needed (sign if relevant, then each place up to
+// whichever one settles the last row) — PLUS, when a single column settles more than one row at
+// once, one step per row within that column (ordered by rank, most extreme first) rather than
+// circling and numbering them all in the same press. A column that settles nothing still gets
+// its own "nothing here" step.
+const placeValueSteps = ({ items, hasSign, smallestFirst }: PVInfo): WorkingStep[] => {
+  const L = pvLayout(items, hasSign);
+  const rows = buildRows(items, L, smallestFirst);
+  const full = scanCols(L);
   let lastIdx = 0;
-  const usedCols = new Set(rows.map((r) => r.circleCol));
-  fullCols.forEach((c, i) => { if (usedCols.has(c)) lastIdx = i; });
-  const stepCols = fullCols.slice(0, lastIdx + 1);
+  const used = new Set(rows.map((r) => r.circleCol));
+  full.forEach((c, i) => { if (used.has(c)) lastIdx = i; });
   const targetWord = smallestFirst ? "smallest" : "largest";
 
-  const events: { col: PVCol; row: PVRow | null }[] = [];
-  for (const col of stepCols) {
+  const events: { col: number; row: CmpRow | null }[] = [];
+  for (const col of full.slice(0, lastIdx + 1)) {
     const settled = rows.filter((r) => r.circleCol === col).sort((a, b) => a.rank - b.rank);
     if (settled.length === 0) events.push({ col, row: null });
     else for (const row of settled) events.push({ col, row });
   }
 
-  const revealedSoFar: PVRow[] = [];
+  const revealedSoFar: CmpRow[] = [];
   return events.map(({ col, row }) => {
     if (row) revealedSoFar.push(row);
-    const revealedRows = [...revealedSoFar];
-    const colLabel = colStepLabel(col);
+    const colLabel = colName(L, col);
     const settledText = settledDescription(row ? [row] : [], rows.length, smallestFirst);
     return {
       ...tStep(`Compare ${colLabel} — ${settledText}`),
-      extra: { kind: "placeValueTable", rows, hasSign, revealedRows, targetWord, colLabel, settledText, hasSettled: !!row, currentCol: col },
+      extra: { kind: "placeValueTable", table: cmpTable(rows, L, [...revealedSoFar], col), targetWord, colLabel, settledText, hasSettled: !!row },
     } as WorkingStep;
   });
 };
 
-const stepRenderer = (step: WorkingStep): JSX.Element | null => {
+const stepRenderer = (step: WorkingStep, _colorScheme?: string, qo?: QOSnapshot): JSX.Element | null => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const extra = (step as any).extra;
   if (extra?.kind !== "placeValueTable") return null;
   return (
-    <PlaceValueTable
-      rows={extra.rows} hasSign={extra.hasSign} revealedRows={extra.revealedRows} targetWord={extra.targetWord}
-      colLabel={extra.colLabel} settledText={extra.settledText} hasSettled={extra.hasSettled} currentCol={extra.currentCol}
-    />
+    <div className="mx-auto">
+      <p className="mb-1 text-center text-base font-semibold text-slate-800">Compare {extra.colLabel} — 1 = {extra.targetWord}.</p>
+      <p className={`mb-3 text-center text-sm ${extra.hasSettled ? "font-medium text-emerald-700" : "text-slate-500"}`}>{extra.settledText}</p>
+      <PlaceValueTable data={withHeaders(extra.table, qo)} />
+    </div>
   );
+};
+
+// Whiteboard scaffold: the numbers already written in the table, ready to compare; Show Answer
+// circles every deciding digit and fills the Order column.
+const workingScaffold = {
+  label: "place value table",
+  render: (q: AnyQuestion, showAnswer: boolean, _cs: string, qo?: QOSnapshot): JSX.Element | null => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const info = (q as any)._pv as PVInfo | undefined;
+    if (!info) return null;
+    const L = pvLayout(info.items, info.hasSign);
+    const rows = buildRows(info.items, L, info.smallestFirst);
+    return (
+      <div className="w-full">
+        <p className="mb-2 text-center text-base font-semibold text-slate-800">Order: 1 = {info.smallestFirst ? "smallest" : "largest"}</p>
+        <PlaceValueTable data={withHeaders(cmpTable(rows, L, showAnswer ? rows : []), qo)} />
+      </div>
+    );
+  },
 };
 
 // ── 9. Compare generator ──────────────────────────────────────────────────────
@@ -532,7 +520,8 @@ const buildCompareDisplay = (rv: CompareRaw, notation: string, ask: "bigger" | "
   const left = swapped ? b : a;
   const right = swapped ? a : b;
   const leftBigger = signedValue(left) > signedValue(right);
-  const working = placeValueSteps([left, right], hasSign, ask === "smaller");
+  const pv: PVInfo = { items: [left, right], hasSign, smallestFirst: ask === "smaller" };
+  const working = placeValueSteps(pv);
 
   if (notation === "symbols") {
     return {
@@ -542,7 +531,7 @@ const buildCompareDisplay = (rv: CompareRaw, notation: string, ask: "bigger" | "
       ],
       answer: `${signedStr(left)} ${leftBigger ? ">" : "<"} ${signedStr(right)}`,
       answerLatex: `${signedStr(left)} ${leftBigger ? "\\gt" : "\\lt"} ${signedStr(right)}`,
-      working,
+      working, pv,
     };
   }
   const askBigger = ask === "bigger";
@@ -554,7 +543,7 @@ const buildCompareDisplay = (rv: CompareRaw, notation: string, ask: "bigger" | "
     ],
     answer: signedStr(answerVal),
     answerLatex: signedStr(answerVal),
-    working,
+    working, pv,
   };
 };
 
@@ -587,6 +576,7 @@ const genCompareQuestion = (level: DifficultyLevel, msv: Record<string, boolean>
     answerLatex: built.answerLatex,
     working: built.working,
     _rawValues: { a, b, swapped, notation, ask, hasSign } as CompareRaw,
+    _pv: built.pv,
     key: `compare-${level}-${signedStr(a)}-${signedStr(b)}-${notation}-${ask}-${id}`,
     difficulty: level,
   } as unknown as AnyQuestion;
@@ -597,14 +587,15 @@ const genCompareQuestion = (level: DifficultyLevel, msv: Record<string, boolean>
 // `directionOpt` stores which of the 4 DIRECTION_MS wording options was
 // drawn; `values` is always the canonical ascending-by-true-value list.
 // Order is words-only — no inequality-chain (Symbols) notation.
-interface OrderRaw { values: SignedDec[]; directionOpt: string; hasSign: boolean; }
+interface OrderRaw { values: SignedDec[]; directionOpt: string; hasSign: boolean; /** display order, fixed once drawn so a display-only change never reshuffles the question */ shuffled?: SignedDec[]; }
 
 const buildOrderDisplay = (rv: OrderRaw) => {
   const { values, directionOpt, hasSign } = rv;
   const { sort, sentence } = DIRECTION_INFO[directionOpt];
   const ordered = sort === "ascending" ? values : [...values].reverse();
-  const shuffled = [...values].sort(() => Math.random() - 0.5);
-  const working = placeValueSteps(shuffled, hasSign, sort === "ascending");
+  const shuffled = rv.shuffled ?? [...values].sort(() => Math.random() - 0.5);
+  const pv: PVInfo = { items: shuffled, hasSign, smallestFirst: sort === "ascending" };
+  const working = placeValueSteps(pv);
 
   return {
     lines: [
@@ -613,7 +604,7 @@ const buildOrderDisplay = (rv: OrderRaw) => {
     ],
     answer: ordered.map(signedStr).join(", "),
     answerLatex: ordered.map(signedStr).join(",\\ "),
-    working,
+    working, pv, shuffled,
   };
 };
 
@@ -643,7 +634,8 @@ const genOrderQuestion = (level: DifficultyLevel, msv: Record<string, boolean>, 
     answer: built.answer,
     answerLatex: built.answerLatex,
     working: built.working,
-    _rawValues: { values, directionOpt, hasSign } as OrderRaw,
+    _rawValues: { values, directionOpt, hasSign, shuffled: built.shuffled } as OrderRaw,
+    _pv: built.pv,
     key: `order-${level}-${values.map(signedStr).join("_")}-${directionOpt}-${id}`,
     difficulty: level,
   } as unknown as AnyQuestion;
@@ -696,7 +688,7 @@ const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null =>
     const notation = resolveNotation(qo.multiSelectValues, compareRv.notation);
     const ask = resolveAsk(qo.multiSelectValues, compareRv.ask);
     const built = buildCompareDisplay(compareRv, notation, ask);
-    return { ...q, lines: built.lines, answer: built.answer, answerLatex: built.answerLatex, working: built.working, _rawValues: { ...compareRv, notation, ask } } as unknown as AnyQuestion;
+    return { ...q, lines: built.lines, answer: built.answer, answerLatex: built.answerLatex, working: built.working, _pv: built.pv, _rawValues: { ...compareRv, notation, ask } } as unknown as AnyQuestion;
   }
   const orderRv = (q as any)._rawValues as OrderRaw | undefined;
   if (orderRv && "values" in orderRv) {
@@ -704,8 +696,8 @@ const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null =>
     // let ToolShell regenerate rather than trying to reformat in place.
     if (parseInt(qo.dropdownValue, 10) !== orderRv.values.length) return null;
     const directionOpt = resolveDirection(qo.multiSelectValues, orderRv.directionOpt);
-    const built = buildOrderDisplay({ values: orderRv.values, directionOpt, hasSign: orderRv.hasSign });
-    return { ...q, lines: built.lines, answer: built.answer, answerLatex: built.answerLatex, working: built.working, _rawValues: { ...orderRv, directionOpt } } as unknown as AnyQuestion;
+    const built = buildOrderDisplay({ values: orderRv.values, directionOpt, hasSign: orderRv.hasSign, shuffled: orderRv.shuffled });
+    return { ...q, lines: built.lines, answer: built.answer, answerLatex: built.answerLatex, working: built.working, _pv: built.pv, _rawValues: { ...orderRv, directionOpt } } as unknown as AnyQuestion;
   }
   return null;
 };
@@ -722,6 +714,7 @@ export default function App() {
       generateQuestion={generateQuestion}
       reformatQuestion={reformatQuestion}
       stepRenderer={stepRenderer}
+      workingScaffold={workingScaffold}
     />
   );
 }
