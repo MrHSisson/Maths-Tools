@@ -21,6 +21,9 @@ export interface ToolMeta {
   name: string;
   description: string;
   enabled?: boolean;
+  /** Optional sub-group within its category (e.g. 'Place value & decimals'). The landing page draws a
+   *  sub-heading per group, in order of first appearance in the category; tools without one stay ungrouped. */
+  group?: string;
   /** When true the tool is never listed on the landing page — not even in
    *  Developing-tools mode. Its route still works by direct URL, and the file
    *  stays in the repo. Use to shelve a tool without deleting it. */
@@ -58,16 +61,16 @@ export const CATEGORIES: CategoryMeta[] = [
   {
     name: 'Number',
     tools: [
-      { id: 'surds', path: '/surds', name: "Surds", description: "Simplify, combine, expand and rationalise surds across five interlocking skills.", enabled: false, load: () => import('./tools/Number/Surds') },
-      { id: 'integers', path: '/integer-add-and-subtract', name: 'Adding & Subtracting Integers', description: 'Practice adding and subtracting positive and negative numbers using number lines', load: () => import('./tools/Number/IntegerAddSub') },
-      { id: 'estimation', path: '/estimation', name: 'Estimation', description: 'Develop estimation skills by rounding numbers to make calculations easier', load: () => import('./tools/Number/Estimation') },
-      { id: 'decimal-add-sub', path: '/decimal-addition-subtraction', name: 'Adding & Subtracting Decimals', description: 'Add and subtract decimals using a place value table, from lining up the point to placeholder zeros and exchanging across a zero.', load: () => import('./tools/Number/DecimalAddSub') },
-      { id: 'powers-of-ten', path: '/powers-of-ten', name: 'Multiplying & Dividing by 10ⁿ', description: 'Use a place value table to scale by powers of 10', load: () => import('./tools/Number/PowersOfTen') },
-      { id: 'fractions-add-sub', path: '/add-subtract-fractions', name: 'Adding & Subtracting Fractions', description: 'Add and subtract fractions and mixed numbers, with common denominators, scaling and LCM methods', load: () => import('./tools/Number/FractionsAddSub') },
-      { id: 'fractions-mult-div', path: '/multiply-divide-fractions', name: 'Multiplying & Dividing Fractions', description: 'Multiply and divide fractions and mixed numbers using Keep, Flip, Change', load: () => import('./tools/Number/FractionMultDiv') },
-      { id: 'percentages', path: '/percentages', name: 'Percentages', description: 'Find percentages of amounts, calculate percentage increase/decrease, and work backwards with reverse percentages', load: () => import('./tools/Number/Percentages') },
-      { id: 'comparing-ordering-numbers', path: '/comparing-ordering-numbers', name: 'Comparing & Ordering Numbers', description: 'Compare and order decimals and negative numbers, with teacher-tailorable misconception traps and a step-by-step place-value table.', load: () => import('./tools/Number/ComparingOrderingNumbers') },
-      { id: 'rounding', path: '/rounding', name: 'Rounding', description: 'Round to the nearest 10, 100, 1000, decimal places and significant figures, using labelled and blank number lines.', load: () => import('./tools/Number/Rounding') },
+      { group: 'Place value & decimals', id: 'comparing-ordering-numbers', path: '/comparing-ordering-numbers', name: 'Comparing & Ordering Numbers', description: 'Compare and order decimals and negative numbers, with teacher-tailorable misconception traps and a step-by-step place-value table.', load: () => import('./tools/Number/ComparingOrderingNumbers') },
+      { group: 'Place value & decimals', id: 'powers-of-ten', path: '/powers-of-ten', name: 'Multiplying & Dividing by 10ⁿ', description: 'Use a place value table to scale by powers of 10', load: () => import('./tools/Number/PowersOfTen') },
+      { group: 'Place value & decimals', id: 'decimal-add-sub', path: '/decimal-addition-subtraction', name: 'Adding & Subtracting Decimals', description: 'Add and subtract decimals using a place value table, from lining up the point to placeholder zeros and exchanging across a zero.', load: () => import('./tools/Number/DecimalAddSub') },
+      { group: 'Rounding & estimation', id: 'rounding', path: '/rounding', name: 'Rounding', description: 'Round to the nearest 10, 100, 1000, decimal places and significant figures, using labelled and blank number lines.', load: () => import('./tools/Number/Rounding') },
+      { group: 'Rounding & estimation', id: 'estimation', path: '/estimation', name: 'Estimation', description: 'Develop estimation skills by rounding numbers to make calculations easier', load: () => import('./tools/Number/Estimation') },
+      { group: 'Integers', id: 'integers', path: '/integer-add-and-subtract', name: 'Adding & Subtracting Integers', description: 'Practice adding and subtracting positive and negative numbers using number lines', load: () => import('./tools/Number/IntegerAddSub') },
+      { group: 'Fractions & percentages', id: 'fractions-add-sub', path: '/add-subtract-fractions', name: 'Adding & Subtracting Fractions', description: 'Add and subtract fractions and mixed numbers, with common denominators, scaling and LCM methods', load: () => import('./tools/Number/FractionsAddSub') },
+      { group: 'Fractions & percentages', id: 'fractions-mult-div', path: '/multiply-divide-fractions', name: 'Multiplying & Dividing Fractions', description: 'Multiply and divide fractions and mixed numbers using Keep, Flip, Change', load: () => import('./tools/Number/FractionMultDiv') },
+      { group: 'Fractions & percentages', id: 'percentages', path: '/percentages', name: 'Percentages', description: 'Find percentages of amounts, calculate percentage increase/decrease, and work backwards with reverse percentages', load: () => import('./tools/Number/Percentages') },
+      { group: 'Roots & surds', id: 'surds', path: '/surds', name: "Surds", description: "Simplify, combine, expand and rationalise surds across five interlocking skills.", enabled: false, load: () => import('./tools/Number/Surds') },
     ],
   },
   {

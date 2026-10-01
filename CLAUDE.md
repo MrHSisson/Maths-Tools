@@ -193,6 +193,8 @@ This copies the canonical template (`src/tools/TeacherTools/ToolShell.tsx`) to `
 { id: 'my-new-tool', path: '/my-new-tool', name: 'Display Name', description: 'One sentence.', load: () => import('./tools/Category/MyNewTool') }
 ```
 
+Optionally add `group: 'Sub-group name'` (e.g. `'Place value & decimals'`) so the landing page lists the tool under a small sub-heading inside its category; groups appear in order of first appearance, so keep a category's entries ordered by scheme of work. Tools with no `group` stay ungrouped. The landing page also has a search box (matches the start of words in name, description or group).
+
 The registry entry has no version/`ready` field — tools carry no version label. The landing page shows only a "Dev" badge for `enabled: false` tools; there is no version badge.
 
 ### 4. Build, test and push
