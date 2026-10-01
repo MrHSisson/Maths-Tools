@@ -1400,7 +1400,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         <span className="text-2xl text-gray-400">Generate worksheet</span>
       </div>
     );
-    const fontSizeControls = hideFontControls ? null : (
+    // Chevrons stay hidden for diagram-first tools, except a text worksheet when the tool opts in (worksheetFontControls).
+    const hideWsFontControls = hideFontControls && !(defaults.worksheetFontControls && !worksheet.some((q) => (q as unknown as { _fixedSizeCell?: boolean })._fixedSizeCell));
+    const fontSizeControls = hideWsFontControls ? null : (
       <div className="absolute top-4 right-4 flex items-center gap-1">
         <button disabled={!canDecrease} onClick={() => canDecrease && setWorksheetFontSize(f => f - 1)}
           className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${canDecrease ? "bg-blue-900 text-white hover:bg-blue-800" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}><ChevronDown size={20} /></button>

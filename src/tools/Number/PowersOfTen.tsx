@@ -438,6 +438,7 @@ export default function App() {
       defaults={{
         collapseWorkingByDefault: true,
         hideFontControls: true,
+        worksheetFontControls: true, // text-only worksheet keeps its text-size chevrons
         numQuestions: 5,
         numColumns: 2,
         maxColumns: 4,

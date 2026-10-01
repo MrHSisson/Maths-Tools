@@ -462,6 +462,7 @@ const generateQuestion = (
     _pv: { op, a, b, layout, finalTable: { ...comp.finalTable, headerStyle: hs }, startTables: comp.startTables },
     _sig: poolSig(multiSelectValues),
     _ws: { on: wsOn, table: wsTable, title: eqText },
+    _fixedSizeCell: wsOn,   // a grid cell is drawn at a fixed size, so the worksheet text-size chevrons would do nothing
     _printText: eqText,
     ...(wsOn ? { _aspect: pvSvgAspect(wsTable, true), _densityFloorMm: 38 } : {}),
     key: `${t}-${level}-${aS}-${bS}-${Math.floor(Math.random() * 1_000_000)}`,
@@ -620,6 +621,7 @@ export default function App() {
         displayFontSize: 3, // text-4xl — the equation's size (chevrons return when the table is hidden)
         worksheetFontSize: 0, // text-lg — text-only worksheets (grid cells are drawn at a fixed size)
         hideFontControls: true,
+        worksheetFontControls: true, // a plain-text worksheet keeps its text-size chevrons (hidden only while grids are on)
         numQuestions: 10,
         numColumns: 3,
         maxColumns: 4,

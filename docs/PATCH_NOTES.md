@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-01 — Worksheet text-size chevrons restored on text worksheets
+`hideFontControls` (set for the whiteboard's scaled table/diagram) was also removing the text-size chevrons from the Worksheet, even when the sheet was plain text. New ToolShell default **`worksheetFontControls`**: with `hideFontControls` on, the Worksheet keeps its chevrons unless a question in the sheet sets `_fixedSizeCell: true` (a grid/diagram cell drawn at a fixed size). Set on Adding & Subtracting Decimals (grids on → `_fixedSizeCell`, chevrons hidden; grids off → chevrons back), Powers of 10 and Adding & Subtracting Integers (text-only worksheets). Checked headless: 2 chevrons on those text worksheets, 0 with decimal grids on, 0 on a diagram tool (Angles in Triangles) as before.
+
 ## 2026-10-01 — Mobile pass on the evolving-visual worked examples
 Checked decimals, Comparing & Ordering and Ratio Sharing at 390px (phone): the picture panel was widening to its content (a grid item grows to fit) and overflowing the screen. Fixes: the layout is `grid-cols-1` with `min-w-0` panel and list (table and bars now fit the screen; the table is above the timeline on phones); `FitWidth` is now exported and also shrinks its box to the scaled height (it used to leave a blank gap) — Ratio Sharing's bar model uses it so long bars scale down instead of overflowing; the place value table is more compact on phones (smaller digits, narrower operator gutter) and in words-heading mode shows the letters on phones (the words do not fit a column; full words from `sm` up); Comparing & Ordering's question line shrinks on a phone (`min(1em, 5.5vw)`) so a list of numbers stays on screen. Measured: no element wider than the viewport on any of these worked examples or their whiteboards at 390px, no console errors; `npm test` 395, build clean.
 

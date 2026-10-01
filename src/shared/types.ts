@@ -236,6 +236,10 @@ export interface ToolShellDefaults {
   maxColumns?: number;         // caps the column input maximum (e.g. 3 prevents 4-col)
   comingSoonLevels?: DifficultyLevel[]; // levels shown but disabled with "Coming soon" tooltip
   hideFontControls?: boolean;  // hides the text size up/down chevrons (e.g. diagram-only tools)
+  /** With `hideFontControls` on, still show the chevrons on a Worksheet whose questions are plain text —
+   *  they are hidden only while a question in the sheet sets `_fixedSizeCell: true` (a diagram/grid cell
+   *  drawn at a fixed size). For tools whose whiteboard is diagram-first but whose worksheet can be text. */
+  worksheetFontControls?: boolean;
   qoColumns?: 2;                       // lay the Question Options popover out in two columns (tools with many options)
   collapseWorkingByDefault?: boolean; // whiteboard opens with the working/visualiser panel collapsed (still re-openable)
   /** Worked Example Step-by-Step layout. "stacked" (default, the cascade) builds a
