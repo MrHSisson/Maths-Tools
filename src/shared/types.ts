@@ -59,6 +59,10 @@ export interface PVCell {
   /** Small digit written above the cell — a carry, or the new value after an exchange. */
   above?: string;
   tone?: PVTone;
+  /** Ring the digit — "on" marks the deciding digit, "dim" an implicit (unwritten) zero that decides. */
+  circle?: "on" | "dim";
+  /** Draw the value as a filled badge (e.g. a rank in an Order column); blank until it has a value. */
+  badge?: boolean;
 }
 export type PVRow =
   | { kind: "cells"; cells: (PVCell | string)[]; /** Operator in the left gutter. */ label?: string; /** Thicker rule above (an answer line). */ rule?: boolean }
@@ -76,6 +80,10 @@ export interface PlaceValueTableData {
   colWidth?: number;
   /** Column index to tint as the "current" column. */
   highlightCol?: number;
+  /** Full-word name for each column ("Tens", "Tenths"…), parallel to `columns` (letters). */
+  columnNames?: string[];
+  /** Which header to draw: the letters in `columns` (default) or the words in `columnNames`. */
+  headerStyle?: "letters" | "words";
 }
 
 export interface RatioTableData {
@@ -228,13 +236,16 @@ export interface ToolShellDefaults {
   maxColumns?: number;         // caps the column input maximum (e.g. 3 prevents 4-col)
   comingSoonLevels?: DifficultyLevel[]; // levels shown but disabled with "Coming soon" tooltip
   hideFontControls?: boolean;  // hides the text size up/down chevrons (e.g. diagram-only tools)
+  /** With `hideFontControls` on, still show the chevrons on a Worksheet whose questions are plain text —
+   *  they are hidden only while a question in the sheet sets `_fixedSizeCell: true` (a diagram/grid cell
+   *  drawn at a fixed size). For tools whose whiteboard is diagram-first but whose worksheet can be text. */
+  worksheetFontControls?: boolean;
   qoColumns?: 2;                       // lay the Question Options popover out in two columns (tools with many options)
   collapseWorkingByDefault?: boolean; // whiteboard opens with the working/visualiser panel collapsed (still re-openable)
-  /** Worked Example mode's step layout. "single" (default) replaces the card
-   *  each press, with a dot-strip to jump between steps. "stacked" builds a
-   *  growing vertical list instead — earlier steps stay visible (dimmed) as
-   *  you press through, cascading down the page. Previously only used by the
-   *  Technique Library preview; opt a real tool in per-tool via this flag. */
+  /** Worked Example Step-by-Step layout. "stacked" (default, the cascade) builds a
+   *  growing vertical list — earlier steps stay visible (dimmed) as you press
+   *  through, cascading down the page. "single" replaces the card each press,
+   *  with a dot-strip to jump between steps; opt a tool into it via this flag. */
   workedExampleLayout?: "single" | "stacked";
   /** Splits the sub-tool tab buttons across multiple rows instead of one —
    *  e.g. [3, 2] for a 5-sub-tool tool. Each number is how many buttons that

@@ -22,7 +22,6 @@ import type { PrintContext } from "./printDiagram";
 import { WorksheetBuilder } from "./WorksheetBuilder";
 import { TeachingDeck, type TeachingSlide } from "./TeachingDeck";
 import { SkillOverlay } from "./skills";
-import { useDevMode } from "../devMode";
 import { useParkedMode } from "../parkedMode";
 
 export interface ToolShellProps {
@@ -48,6 +47,11 @@ export interface ToolShellProps {
   ) => AnyQuestion;
   defaults?: ToolShellDefaults;
   stepRenderer?: (step: WorkingStep, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null;
+  /** For steps whose working is a *visual that evolves* (a place value table filling in). Return the
+   *  visual for such a step (null for any other). In the cascade and Show All, those steps then show
+   *  only their caption in the list, and ONE visual — the current step's — updates in place beside it,
+   *  instead of reprinting the whole table on every step. */
+  stepVisualRenderer?: (step: WorkingStep, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null | false;
   /** Replaces QuestionDisplay in all modes. compact=true in worksheet cells, false in worked example/fullscreen, undefined in regular whiteboard. idx is the worksheet question index (only provided in worksheet cells). qo is the live QO state snapshot — use it for render-time reformatting (e.g. decimal/fraction toggle). */
   questionRenderer?: (q: AnyQuestion, showAnswer: boolean, colorScheme: string, compact?: boolean, idx?: number, qo?: QOSnapshot, fontClass?: string) => JSX.Element | null;
   /** Replaces the final answer box (AnswerDisplay). Shown when showAnswer=true. qo is the live QO state snapshot. */
@@ -152,7 +156,7 @@ function ScaleToFit({ children, maxScale = 3 }: { children: ReactNode; maxScale?
   );
 }
 
-export const ToolShell = ({ config, infoSections, generateQuestion, generateUniqueQ: generateUniqueQProp, defaults = {}, stepRenderer, questionRenderer, answerRenderer, reformatQuestion, customPrintHandler, teachingSlides, workingScaffold }: ToolShellProps) => {
+export const ToolShell = ({ config, infoSections, generateQuestion, generateUniqueQ: generateUniqueQProp, defaults = {}, stepRenderer, stepVisualRenderer, questionRenderer, answerRenderer, reformatQuestion, customPrintHandler, teachingSlides, workingScaffold }: ToolShellProps) => {
   const generateUniqueQ = generateUniqueQProp ?? makeUniqueQ(generateQuestion);
   const toolKeys = Object.keys(config.tools);
   // Seeds a smaller default question font size on a narrow viewport (the
@@ -239,9 +243,6 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
 
   const [currentTool, setCurrentTool] = useState<string>(urlInit.tool);
   const [mode, setMode] = useState<"whiteboard" | "single" | "worksheet" | "teach">(urlInit.mode);
-  // Worked Example is always available; only its step-by-step navigation (one
-  // step at a time) is reserved for Developing mode.
-  const devMode = useDevMode();
   // The Teach deck is dormant content, not in-progress work, so it's gated by
   // the separate, unadvertised parkedMode rather than Developing-tools mode —
   // see src/parkedMode.ts.
@@ -249,7 +250,8 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const showTeach = !!(parkedMode && teachingSlides && teachingSlides.length);
   const comingSoon = defaults.comingSoonLevels ?? [];
   const hideFontControls = defaults.hideFontControls ?? false;
-  const workedExampleLayout = defaults.workedExampleLayout ?? "single";
+  // Step-by-Step is the cascading ("stacked") layout for every tool; "single" (one card replaced per press) is opt-in.
+  const workedExampleLayout = defaults.workedExampleLayout ?? "stacked";
   const hideAnswerStep = defaults.hideAnswerStep ?? false;
   const [difficulty, setDifficulty] = useState<DifficultyLevel>(urlInit.level);
   // The levels the current sub-tool actually has (ToolEntry.levels) — unlisted
@@ -1376,8 +1378,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                 colorScheme={colorScheme}
                 answerFontClass={displayFontSizes[displayFontSize]}
                 stepRenderer={stepRenderer}
+                stepVisualRenderer={stepVisualRenderer}
                 qoSnapshot={getQOSnapshot()}
-                stepThroughEnabled={devMode}
+                stepThroughEnabled
                 onOpenSkill={parkedMode ? setOpenSkillId : undefined}
                 resetKey={workedResetNonce}
                 layout={workedExampleLayout}
@@ -1397,7 +1400,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         <span className="text-2xl text-gray-400">Generate worksheet</span>
       </div>
     );
-    const fontSizeControls = hideFontControls ? null : (
+    // Chevrons stay hidden for diagram-first tools, except a text worksheet when the tool opts in (worksheetFontControls).
+    const hideWsFontControls = hideFontControls && !(defaults.worksheetFontControls && !worksheet.some((q) => (q as unknown as { _fixedSizeCell?: boolean })._fixedSizeCell));
+    const fontSizeControls = hideWsFontControls ? null : (
       <div className="absolute top-4 right-4 flex items-center gap-1">
         <button disabled={!canDecrease} onClick={() => canDecrease && setWorksheetFontSize(f => f - 1)}
           className={`w-8 h-8 rounded flex items-center justify-center transition-colors ${canDecrease ? "bg-blue-900 text-white hover:bg-blue-800" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}><ChevronDown size={20} /></button>

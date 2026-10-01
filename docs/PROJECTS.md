@@ -238,6 +238,7 @@ tool. Fill-in work between the tiers above, not a queue of its own.
 
 ## Part 2 — Tool expansion
 
+> **2026-10-01 — Place value table unified:** shared columns/headings toggle; Powers of 10 and `ComparingOrderingNumbers` migrated (circle + rank-badge cell features added). Next: stepped digit-sliding Worked Example for Powers of 10; Teach deck for add/subtract; go-live sign-off.
 > **2026-09-30 — Decimal operations, first unit.** `decimal-addition-subtraction` (dev-gated) is built on the new shared place value table. Next units of the wider decimal-operations family: multiplying and dividing decimals (same table); migrate `ComparingOrderingNumbers` onto the shared table; Teach deck for add/subtract; go-live sign-off.
 
 > **Tier-1 priority (see Priorities above).** This is the actual content-growth backlog — new

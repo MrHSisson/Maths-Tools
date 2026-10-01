@@ -16,10 +16,11 @@ import { SkillLabel } from "../skills";
 // scrollWidth only counts the right-hand excess, undershooting the true
 // overflow and computing too large a scale. Explicit flex centring avoids
 // that relative-to-what-origin ambiguity entirely.
-const FitWidth = ({ children }: { children: ReactNode }) => {
+export const FitWidth = ({ children }: { children: ReactNode }) => {
   const outerRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
+  const [natH, setNatH] = useState(0);
   useEffect(() => {
     const outer = outerRef.current, inner = innerRef.current;
     if (!outer || !inner) return;
@@ -32,11 +33,13 @@ const FitWidth = ({ children }: { children: ReactNode }) => {
         const availW = o.clientWidth;
         const prevTransform = n.style.transform;
         n.style.transform = "none";
-        const natW = n.getBoundingClientRect().width;
+        const box = n.getBoundingClientRect();
+        const natW = box.width;
         n.style.transform = prevTransform;
         if (!natW || !availW) return;
         const s = Math.min(1, availW / natW);
         setScale((cur) => (Math.abs(cur - s) > 0.01 ? s : cur));
+        setNatH((cur) => (Math.abs(cur - box.height) > 1 ? box.height : cur));
       });
     };
     recompute();
@@ -45,7 +48,8 @@ const FitWidth = ({ children }: { children: ReactNode }) => {
     return () => { cancelAnimationFrame(raf); ro.disconnect(); };
   });
   return (
-    <div ref={outerRef} style={{ width: "100%", overflow: "hidden", display: "flex", justifyContent: "center" }}>
+    // When scaled down, shrink the box to the scaled height too, so no blank gap is left below.
+    <div ref={outerRef} style={{ width: "100%", overflow: "hidden", display: "flex", justifyContent: "center", alignItems: "flex-start", ...(scale < 1 && natH ? { height: natH * scale } : null) }}>
       <div ref={innerRef} style={{ transform: `scale(${scale})`, transformOrigin: "center top", flexShrink: 0 }}>
         {children}
       </div>
@@ -105,9 +109,11 @@ export interface WorkedExampleStepsProps {
   /** Tailwind text-size class applied to the answer box, e.g. "text-3xl". */
   answerFontClass: string;
   stepRenderer?: (step: WorkingStep, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null;
+  /** Visual-only renderer for steps whose working is an evolving picture (see ToolShellProps). */
+  stepVisualRenderer?: (step: WorkingStep, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null | false;
   qoSnapshot?: QOSnapshot;
-  /** Gates whether Step-by-Step (one beat at a time) is reachable at all —
-   *  ToolShell passes its devMode flag; a preview surface can pass true always. */
+  /** Gates whether Step-by-Step (one beat at a time) is reachable at all.
+   *  ToolShell and the preview surfaces pass true; false leaves Show All only. */
   stepThroughEnabled: boolean;
   onOpenSkill?: (id: string) => void;
   /** Changing this resets step/fragment position back to the start (Step-by-Step
@@ -150,7 +156,7 @@ export interface WorkedExampleStepsProps {
 }
 
 export const WorkedExampleSteps = ({
-  working, renderAnswer, colorScheme, answerFontClass, stepRenderer, qoSnapshot,
+  working, renderAnswer, colorScheme, answerFontClass, stepRenderer, stepVisualRenderer, qoSnapshot,
   stepThroughEnabled, onOpenSkill, resetKey, layout = "single", hideAnswerStep = false, compact = false,
 }: WorkedExampleStepsProps) => {
   const [steppedMode, setSteppedMode] = useState(true);
@@ -165,6 +171,10 @@ export const WorkedExampleSteps = ({
   // on screen instead of creeping downward (or off the bottom) as the stack
   // grows, and scrolls back up by the same logic when a press shrinks it.
   const footerRef = useRef<HTMLDivElement>(null);
+  // Evolving-visual layout: the captions live in a fixed-height scroll area beside the visual (so the
+  // page never grows). It follows the current step, and fades out at the top once older steps scroll away.
+  const listRef = useRef<HTMLDivElement>(null);
+  const [listScrolled, setListScrolled] = useState(false);
   const prevFooterTop = useRef<number | null>(null);
   const captureFooterTop = () => {
     if (layout === "stacked" && footerRef.current) {
@@ -190,6 +200,11 @@ export const WorkedExampleSteps = ({
   // Toggling Step-by-Step/Show All always restarts at the beginning, matching
   // the reset ToolShell used to do by hand on the same button press.
   useEffect(() => { setStepIdx(0); setFragIdx(0); }, [stepped]);
+  // Keep the caption list scrolled to the current step (the last card), smoothly.
+  useEffect(() => {
+    const el = listRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }, [stepIdx, fragIdx, stepped]);
   // A genuinely new example (new question, or a reformat that keeps the same
   // question key but changes the working) also restarts position.
   useEffect(() => { setStepIdx(0); setFragIdx(0); }, [resetKey]);
@@ -269,7 +284,65 @@ export const WorkedExampleSteps = ({
   // inert card once you clicked past it into the separate Answer beat. Now
   // that beat IS the last step, so it keeps a ring too — green instead of
   // blue, since it's not "the current thing to focus on", it's arrival.
-  const renderStep = (s: WorkingStep, i: number, reveal?: number, stacked?: boolean) => {
+  // Evolving-visual steps (a place value table filling in): in the cascade and Show All the list
+  // carries only each step's caption, and ONE visual — the current step's — updates in place beside it,
+  // rather than reprinting the table on every card.
+  const visualOf = (s: WorkingStep) => (stepVisualRenderer ? stepVisualRenderer(s, colorScheme, qoSnapshot) : null);
+  // A step the renderer claims returns its picture, or `false` for a caption-only step that sits in the
+  // same timeline while the picture stays on screen; `null` means "not mine".
+  const isPicture = (s: WorkingStep) => { const v = visualOf(s); return v !== null && v !== false; };
+  const hasVisual = !!stepVisualRenderer && working.some(isPicture);
+  const evolve = hasVisual && (!stepped || layout === "stacked");
+  /** The visual to show when `idx` is the current step: the nearest visual step at or before it. */
+  const visualFor = (idx: number): JSX.Element | null => {
+    for (let i = Math.min(idx, totalSteps - 1); i >= 0; i--) {
+      const v = visualOf(working[i]);
+      if (v) return v;   // (false / null are skipped)
+    }
+    return null;
+  };
+  const withVisual = (list: ReactNode, idx: number) => {
+    const vis = evolve ? visualFor(idx) : null;
+    if (!vis) return list;
+    return (
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] items-stretch">
+        {/* min-w-0 lets the panel shrink to the screen (a grid item otherwise grows to its content). */}
+        <div className="lg:order-2 flex min-w-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5">{vis}</div>
+        {/* The row is as tall as the visual; the caption list scrolls inside it instead of growing the page. */}
+        <div className="lg:order-1 relative min-h-[16rem] min-w-0">
+          <div
+            ref={listRef}
+            onScroll={(e) => setListScrolled(e.currentTarget.scrollTop > 4)}
+            className="max-h-80 overflow-y-auto lg:max-h-none lg:absolute lg:inset-0"
+            style={listScrolled ? { WebkitMaskImage: "linear-gradient(to bottom, transparent 0, #000 3rem)", maskImage: "linear-gradient(to bottom, transparent 0, #000 3rem)" } : undefined}
+          >
+            <div className="p-1">{list}</div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // A step whose picture lives in the side panel is just a line in a timeline: a numbered dot and its
+  // caption — no card, so the list stays light and more history fits. "current" is the live step,
+  // "past" fades back, "all" (Show All) shows every line at full strength.
+  const captionRow = (s: WorkingStep, i: number, state: "current" | "past" | "all") => {
+    const on = state === "current";
+    return (
+      <div key={i} className="flex items-start gap-3 py-2" style={{ opacity: state === "past" ? 0.5 : 1, transition: "opacity 0.3s ease" }}>
+        <span
+          className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold"
+          style={{ background: on ? "#1e3a8a" : "#fff", color: on ? "#fff" : "#475569", border: on ? "2px solid #1e3a8a" : "2px solid #cbd5e1", boxShadow: on ? "0 0 0 4px rgba(30,58,138,0.15)" : "none" }}
+        >{i + 1}</span>
+        <p className={compact ? "text-base leading-snug pt-1" : "text-xl leading-snug pt-0.5"} style={{ color: on ? "#0f172a" : "#334155", fontWeight: on ? 600 : 400 }}>{s.plain}</p>
+      </div>
+    );
+  };
+  /** The vertical line the numbered dots sit on. */
+  const timelineSpine = <div className="absolute left-4 top-6 bottom-6 w-0.5 -translate-x-1/2 rounded bg-slate-300" aria-hidden />;
+
+  const renderStep = (s: WorkingStep, i: number, reveal?: number, stacked?: boolean, state: "current" | "past" | "all" = "all") => {
+    if (evolve && visualOf(s) !== null) return captionRow(s, i, state);   // a picture step or a caption-only step
     const custom = stepRenderer ? stepRenderer(s, colorScheme, qoSnapshot) : null;
     const isFinalAnswerStep = hideAnswerStep && i === totalSteps - 1;
     // compact (narrow viewport) always wins over the "stacked" layout's own
@@ -331,11 +404,15 @@ export const WorkedExampleSteps = ({
   // — see EnterCard's own comment for why that one needs a mount transition
   // and the rest don't.
   const stackedSteps = (upTo: number, activeReveal: number) => (
-    <div className="space-y-2">
+    <div className={evolve ? "relative" : "space-y-2"}>
+      {evolve && timelineSpine}
       {working.slice(0, upTo + 1).map((s, i) => {
         const isCurrent = i === upTo;
         const isFinalAnswerStep = hideAnswerStep && i === totalSteps - 1;
-        const content = renderStep(s, i, isCurrent ? activeReveal : undefined, true);
+        const content = renderStep(s, i, isCurrent ? activeReveal : undefined, true, isCurrent ? "current" : "past");
+        if (evolve && visualOf(s) !== null) {
+          return isCurrent ? <EnterCard key={i}>{content}</EnterCard> : content;
+        }
         if (isCurrent) {
           // The blue "current position" ring means "here's where you are,
           // there's more ahead" — once this IS the final answer step (no more
@@ -414,14 +491,14 @@ export const WorkedExampleSteps = ({
       // that's empty for a short (1-3 step) example.
       return (
         <div className="p-1">
-          {!atAnswer ? stackedSteps(stepIdx, fragIdx) : (
+          {!atAnswer ? withVisual(stackedSteps(stepIdx, fragIdx), stepIdx) : withVisual(
             <div className="space-y-2">
-              <div className="space-y-2" style={{ opacity: 0.7 }}>
-                {working.map((s, i) => renderStep(s, i, undefined, true))}
+              <div className={evolve ? "relative" : "space-y-2"} style={evolve ? undefined : { opacity: 0.7 }}>
+                {evolve && timelineSpine}
+                {working.map((s, i) => renderStep(s, i, undefined, true, "past"))}
               </div>
               {answerBox("", undefined, true)}
-            </div>
-          )}
+            </div>, totalSteps - 1)}
           <div ref={footerRef} className="pt-4 mt-4 border-t" style={{ borderColor: "rgba(0,0,0,0.08)" }}>
             {navRow}
             <div className="mt-3">{dotStrip}</div>
@@ -450,9 +527,11 @@ export const WorkedExampleSteps = ({
           {steppedToggle}
         </div>
       )}
-      <div className="space-y-4">
-        {working.map((s, i) => renderStep(s, i))}
-      </div>
+      {withVisual(
+        <div className={evolve ? "relative" : "space-y-4"}>
+          {evolve && timelineSpine}
+          {working.map((s, i) => renderStep(s, i))}
+        </div>, totalSteps - 1)}
       {!hideAnswerStep && answerBox("mt-4")}
     </>
   );

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calculator, FlaskConical, Cpu } from 'lucide-react';
+import { Calculator, FlaskConical, Cpu, Search, X } from 'lucide-react';
 import { CATEGORIES } from '../registry';
 import { useDevMode, setDevMode } from '../devMode';
 import { useParkedMode } from '../parkedMode';
@@ -169,6 +169,10 @@ export default function LandingPage(): JSX.Element {
   const devMode = useDevMode();
   const parkedMode = useParkedMode();
   const [subjectFilter, setSubjectFilter] = useState<string>('Mathematics');
+  const [query, setQuery] = useState('');
+  const q = query.trim().toLowerCase();
+  // Match at the start of a word, so "round" finds Rounding but not "around a point".
+  const qRe = q ? new RegExp(`(^|[^a-z0-9])${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`) : null;
 
   // In developing mode every in-the-pipeline tool is visible (including
   // enabled: false ones); otherwise they're hidden from general use. Parked
@@ -184,11 +188,27 @@ export default function LandingPage(): JSX.Element {
     const shown = listable.filter(t => {
       if (t.parked) return parkedMode;
       return t.enabled !== false || devMode;
-    });
+    }).filter(t => !qRe || qRe.test(`${t.name} ${t.description} ${t.group ?? ''}`.toLowerCase()));
     return [...shown].sort(
       (a, b) => (a.enabled === false ? 1 : 0) - (b.enabled === false ? 1 : 0),
     );
   };
+
+  // Split a category's tools into its named groups, in order of first appearance (tools with no
+  // `group` form one unnamed section, so ungrouped categories render exactly as before).
+  const groupTools = (tools: typeof categories[number]['tools']) => {
+    const sections: { name: string; tools: typeof tools }[] = [];
+    for (const t of tools) {
+      const name = t.group ?? '';
+      const sec = sections.find((x) => x.name === name);
+      if (sec) sec.tools.push(t); else sections.push({ name, tools: [t] });
+    }
+    return sections;
+  };
+
+  const totalShown = categories
+    .filter((c) => c.subject === subjectFilter)
+    .reduce((acc, c) => acc + visibleIn(c.tools).length, 0);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -268,15 +288,39 @@ export default function LandingPage(): JSX.Element {
               ))}
             </div>
           </div>
+
+          {/* Search — filters the tool cards below by name, description or group */}
+          <div className="flex justify-center mt-4 sm:mt-6">
+            <div className="relative w-full max-w-md">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search tools…"
+                aria-label="Search tools"
+                className="w-full pl-10 pr-9 py-2.5 rounded-full bg-white border border-slate-200 shadow-md shadow-slate-200/50 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-900/30"
+              />
+              {query && (
+                <button onClick={() => setQuery('')} aria-label="Clear search" className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Main Content — grouped into subject bands (Mathematics / Computer Science) */}
       <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24">
+        {q && totalShown === 0 && (
+          <p className="text-center text-slate-500 py-12">No tools match “{query.trim()}”.</p>
+        )}
         {SUBJECTS.filter((s) => subjectFilter === s).map((s) => {
           const subjectCats = categories.filter((c) => c.subject === s);
           if (!subjectCats.length) return null;
           const subjectCount = subjectCats.reduce((acc, c) => acc + visibleIn(c.tools).length, 0);
+          if (q && subjectCount === 0) return null;
           const SubjectIcon = s === 'Computer Science' ? Cpu : Calculator;
 
           return (
@@ -295,6 +339,7 @@ export default function LandingPage(): JSX.Element {
 
               {subjectCats.map((category) => {
           const visibleTools = visibleIn(category.tools);
+          if (q && visibleTools.length === 0) return null;
 
           return (
             <section key={category.name} className="mb-10 sm:mb-16">
@@ -309,8 +354,17 @@ export default function LandingPage(): JSX.Element {
               )}
 
               {visibleTools.length > 0 ? (
+                <div className="space-y-6 sm:space-y-10">
+                  {groupTools(visibleTools).map((sec) => (
+                  <div key={sec.name || 'ungrouped'}>
+                  {sec.name && (
+                    <div className="flex items-center gap-3 mb-3 sm:mb-4">
+                      <h3 className="text-sm sm:text-base font-semibold uppercase tracking-wide text-slate-500">{sec.name}</h3>
+                      <div className="flex-1 h-px bg-slate-200" />
+                    </div>
+                  )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
-                  {visibleTools.map((tool) => {
+                  {sec.tools.map((tool) => {
                     // enabled:false tools only appear in developing mode, where
                     // they're clickable for testing and flagged with a DEV badge.
                     const isDevTool = tool.enabled === false;
@@ -347,6 +401,9 @@ export default function LandingPage(): JSX.Element {
                     </button>
                     );
                   })}
+                </div>
+                  </div>
+                  ))}
                 </div>
               ) : (
                 <div className="bg-white/40 backdrop-blur-sm rounded-xl p-4 sm:p-8 text-left border border-dashed border-slate-300 shadow-sm transition-all hover:bg-white/60">
