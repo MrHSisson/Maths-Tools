@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calculator, FlaskConical, Cpu, Search, X } from 'lucide-react';
 import { CATEGORIES } from '../registry';
@@ -165,6 +165,15 @@ const categories = CATEGORIES.map((category) => ({
 }));
 
 export default function LandingPage(): JSX.Element {
+  // Tint the phone's status bar to match the navy header so they read as one bar
+  // (the rest of the site keeps the light page colour from index.html).
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (!meta) return;
+    const prev = meta.getAttribute('content');
+    meta.setAttribute('content', '#1e3a8a');
+    return () => { if (prev) meta.setAttribute('content', prev); };
+  }, []);
   const navigate = useNavigate();
   const devMode = useDevMode();
   const parkedMode = useParkedMode();
