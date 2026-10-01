@@ -89,6 +89,31 @@ const NARROW_BREAKPOINT = 640;
 // falls back to its normal (non-differentiated) cell background.
 const NEUTRAL_LV_COLORS = { bg: "bg-white", border: "border-gray-300", text: "text-gray-800", fill: undefined as string | undefined };
 
+/** Tints the phone's status bar (the `theme-color` meta) to the nav bar's navy while that bar is
+ *  on screen, and back to the light page colour once it has scrolled away — so on an installed
+ *  app the status bar reads as part of the nav bar at the top, then as plain page below it. */
+function StatusBarTint({ barId }: { barId: string }) {
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (!meta) return;
+    const prev = meta.getAttribute("content");
+    const update = () => {
+      const bar = document.getElementById(barId);
+      const visible = !!bar && bar.getBoundingClientRect().bottom > 0;
+      meta.setAttribute("content", visible ? "#1e3a8a" : "#f5f3f0");
+    };
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+      if (prev) meta.setAttribute("content", prev);
+    };
+  }, [barId]);
+  return null;
+}
+
 /** Scales its content to fit the available space — up to fill when the panel
  *  collapse frees room (like dragging the splitter wide, past the tool's own
  *  maxWidth cap), and DOWN below 1x when the content wouldn't fit (short
@@ -1532,7 +1557,8 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   // tighter chrome. One definition so a future change to the header (a new
   // menu item, an info-modal tweak) can't land in one layout and not the other.
   const renderNavBar = (compact: boolean) => (
-    <div className="bg-blue-900 shadow-lg">
+    <div id="tool-nav-bar" className="bg-blue-900 shadow-lg">
+      <StatusBarTint barId="tool-nav-bar" />
       <div className={compact ? "px-4 py-3 flex justify-between items-center" : "max-w-6xl mx-auto px-8 py-4 flex justify-between items-center"}>
         <button onClick={() => { window.location.href = "/"; }} className={compact ? "flex items-center gap-1.5 text-white hover:bg-blue-800 px-2.5 py-1.5 rounded-lg transition-colors" : "flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors"}>
           <Home size={compact ? 18 : 24} /><span className={compact ? "font-semibold text-sm" : "font-semibold text-lg"}>Home</span>
