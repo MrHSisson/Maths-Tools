@@ -35,15 +35,17 @@ export function PlaceValueTable({ data }: { data: PlaceValueTableData }) {
       >
         <thead>
           <tr>
-            {hasGutter && <th style={{ width: 44 }} />}
+            {hasGutter && <th className="w-6 sm:w-11" />}
             {columns.map((_col, i) => (
-              <th key={i} className={`border-2 border-black py-2 font-bold relative text-black leading-tight ${words ? (columns.length > 8 ? "text-[11px] px-0.5" : "text-sm px-1") : "text-lg"} ${i === highlightCol ? "bg-amber-200" : "bg-gray-100"}`}>
-                {headerLabel(data, i)}
+              <th key={i} className={`border-2 border-black py-2 font-bold relative text-black leading-tight ${words ? (columns.length > 8 ? "text-[11px] px-0.5" : "text-sm px-1") : "text-base sm:text-lg"} ${i === highlightCol ? "bg-amber-200" : "bg-gray-100"}`}>
+                {words && data.columnNames?.[i] && columns.length <= 8
+                  ? <><span className="sm:hidden">{columns[i]}</span><span className="hidden sm:inline">{data.columnNames[i]}</span></>   // phone: letters (the words don't fit a column)
+                  : headerLabel(data, i)}
                 {showPoint && i === onesIndex && <DecimalDot />}
               </th>
             ))}
             {/* mirror of the operator gutter, so the table body (not body + operators) is what is centred */}
-            {hasGutter && <th style={{ width: 44 }} />}
+            {hasGutter && <th className="w-6 sm:w-11" />}
           </tr>
         </thead>
         <tbody>
@@ -61,14 +63,14 @@ export function PlaceValueTable({ data }: { data: PlaceValueTableData }) {
             }
             return (
               <tr key={ri}>
-                {hasGutter && <td className="text-center text-3xl font-bold text-black">{row.label ?? ""}</td>}
+                {hasGutter && <td className="text-center text-xl sm:text-3xl font-bold text-black">{row.label ?? ""}</td>}
                 {columns.map((_c, i) => {
                   const raw = row.cells[i];
                   const cell: PVCell = typeof raw === "string" || raw === undefined ? { v: raw ?? "" } : raw;
                   return (
                     <td
                       key={i}
-                      className={`border-2 border-black text-center text-3xl font-semibold text-black relative ${cell.tone ? toneCls(cell.tone) : tint(i)}`}
+                      className={`border-2 border-black text-center text-2xl sm:text-3xl font-semibold text-black relative ${cell.tone ? toneCls(cell.tone) : tint(i)}`}
                       style={{ height: cellH, borderTopWidth: row.rule ? 5 : undefined }}
                     >
                       {cell.above !== undefined && (

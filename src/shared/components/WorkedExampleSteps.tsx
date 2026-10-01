@@ -16,10 +16,11 @@ import { SkillLabel } from "../skills";
 // scrollWidth only counts the right-hand excess, undershooting the true
 // overflow and computing too large a scale. Explicit flex centring avoids
 // that relative-to-what-origin ambiguity entirely.
-const FitWidth = ({ children }: { children: ReactNode }) => {
+export const FitWidth = ({ children }: { children: ReactNode }) => {
   const outerRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
+  const [natH, setNatH] = useState(0);
   useEffect(() => {
     const outer = outerRef.current, inner = innerRef.current;
     if (!outer || !inner) return;
@@ -32,11 +33,13 @@ const FitWidth = ({ children }: { children: ReactNode }) => {
         const availW = o.clientWidth;
         const prevTransform = n.style.transform;
         n.style.transform = "none";
-        const natW = n.getBoundingClientRect().width;
+        const box = n.getBoundingClientRect();
+        const natW = box.width;
         n.style.transform = prevTransform;
         if (!natW || !availW) return;
         const s = Math.min(1, availW / natW);
         setScale((cur) => (Math.abs(cur - s) > 0.01 ? s : cur));
+        setNatH((cur) => (Math.abs(cur - box.height) > 1 ? box.height : cur));
       });
     };
     recompute();
@@ -45,7 +48,8 @@ const FitWidth = ({ children }: { children: ReactNode }) => {
     return () => { cancelAnimationFrame(raf); ro.disconnect(); };
   });
   return (
-    <div ref={outerRef} style={{ width: "100%", overflow: "hidden", display: "flex", justifyContent: "center" }}>
+    // When scaled down, shrink the box to the scaled height too, so no blank gap is left below.
+    <div ref={outerRef} style={{ width: "100%", overflow: "hidden", display: "flex", justifyContent: "center", alignItems: "flex-start", ...(scale < 1 && natH ? { height: natH * scale } : null) }}>
       <div ref={innerRef} style={{ transform: `scale(${scale})`, transformOrigin: "center top", flexShrink: 0 }}>
         {children}
       </div>
@@ -301,10 +305,11 @@ export const WorkedExampleSteps = ({
     const vis = evolve ? visualFor(idx) : null;
     if (!vis) return list;
     return (
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] items-stretch">
-        <div className="lg:order-2 flex items-center justify-center rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">{vis}</div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] items-stretch">
+        {/* min-w-0 lets the panel shrink to the screen (a grid item otherwise grows to its content). */}
+        <div className="lg:order-2 flex min-w-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5">{vis}</div>
         {/* The row is as tall as the visual; the caption list scrolls inside it instead of growing the page. */}
-        <div className="lg:order-1 relative min-h-[16rem]">
+        <div className="lg:order-1 relative min-h-[16rem] min-w-0">
           <div
             ref={listRef}
             onScroll={(e) => setListScrolled(e.currentTarget.scrollTop > 4)}

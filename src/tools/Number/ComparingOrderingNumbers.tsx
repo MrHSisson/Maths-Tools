@@ -498,7 +498,7 @@ const stepVisual = (step: WorkingStep, _colorScheme?: string, qo?: QOSnapshot): 
   const extra = (step as any).extra;
   if (extra?.kind !== "placeValueTable") return null;
   return (
-    <div>
+    <div className="w-full min-w-0">
       <p className="mb-2 text-center text-base font-semibold text-slate-800">Order: 1 = {extra.targetWord}</p>
       <PlaceValueTable data={withHeaders(extra.table, qo)} />
     </div>
@@ -546,7 +546,8 @@ const questionRenderer = (
       {/* Tighter line spacing than the shell default, to leave the table as much of the box as possible. */}
       <div className="flex flex-col gap-1 text-center">
         {((q as any).lines as string[]).map((line, i) => (
-          <div key={i} className={`${cls} font-semibold`} style={{ color: "#000", lineHeight: 1.35 }}><InlineMath text={line} /></div>
+          // min(1em, 5vw): the chosen size on a normal screen, shrinking on a phone so a list of numbers stays on screen.
+          <div key={i} className={`${cls} font-semibold max-w-full`} style={{ color: "#000", lineHeight: 1.35 }}><div style={{ fontSize: "min(1em, 5.5vw)" }}><InlineMath text={line} /></div></div>
         ))}
       </div>
       {/* Always laid out (hidden until revealed) so Show Answer never resizes or rescales the box. */}

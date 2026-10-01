@@ -1,5 +1,5 @@
 import {
-  ToolShell, getQuestionBg,
+  ToolShell, getQuestionBg, FitWidth,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WordedQuestion, type WorkingStep,
   mStep, mStr, pick, randInt, pickActive,
 } from "../../shared";
@@ -682,7 +682,8 @@ const BAR_STEP_TYPES = new Set(["bar_empty", "bar_filled", "ka_bar_known", "diff
  *  caption-only — the bar stays on screen); `null` for anything else. */
 const ratioStepVisual = (step: WorkingStep, cs: string): JSX.Element | null | false => {
   if (!step.extra) return null;
-  return BAR_STEP_TYPES.has(step.type) ? barVisual(step, cs) : false;
+  // FitWidth scales a long bar down to the screen (mobile) rather than overflowing the panel.
+  return BAR_STEP_TYPES.has(step.type) ? <FitWidth>{barVisual(step, cs)}</FitWidth> : false;
 };
 
 const ratioStepRenderer = (step: WorkingStep, cs: string): JSX.Element | null => {

@@ -85,7 +85,7 @@ export { TechniquePreviewPage, type TechniquePreviewPageDef } from "./components
 export { MathRenderer, InlineMath } from "./components/MathRenderer";
 export { QuestionDisplay, AnswerDisplay } from "./components/QuestionDisplay";
 export { DifficultyToggle } from "./components/DifficultyToggle";
-export { WorkedExampleSteps, type WorkedExampleStepsProps } from "./components/WorkedExampleSteps";
+export { WorkedExampleSteps, FitWidth, type WorkedExampleStepsProps } from "./components/WorkedExampleSteps";
 export {
   usePopover,
   TogglePill,
