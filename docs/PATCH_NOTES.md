@@ -28,6 +28,13 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-01 — Full-screen app: light system bars, immersive on Android
+
+Manifest `display` is now `fullscreen` (falls back to standalone) and `theme_color` /
+`background_color` / `<meta name="theme-color">` / `html` background are the light page colour
+(`#f5f3f0`), so the status/navigation bars never show as navy bars. Reinstall the home-screen app
+for Android to pick up manifest changes.
+
 ## 2026-10-01 — Installable web app (full screen on mobile)
 
 Added `public/manifest.webmanifest` (`display: standalone`, `fullscreen` preferred), app icons
