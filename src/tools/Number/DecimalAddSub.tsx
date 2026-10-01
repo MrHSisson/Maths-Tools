@@ -4,7 +4,7 @@ import {
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep,
   type ToolMultiSelect, type ToolVariable, type QOSnapshot, type PlaceValueTableData, type PVCell, type PVRow,
   MathRenderer, randInt, pickActive,
-  PlaceValueTable, PlaceValueSvg, pvSvgSize, pvSvgAspect, pvSvgRowHForAspect, placeValueStepRenderer, pvStep, handlePrint, handleDiagramPrint, pvColumnSet, pvSlice, pvDisplay, PV_CELL_H, PV_TABLE_START_DD, PV_WORD_HEADERS_VAR, PV_WORD_HEADERS_KEY,
+  PlaceValueTable, PlaceValueSvg, pvSvgSize, pvSvgAspect, pvSvgRowHForAspect, placeValueStepRenderer, placeValueStepVisual, pvStep, handlePrint, handleDiagramPrint, pvColumnSet, pvSlice, pvDisplay, PV_CELL_H, PV_TABLE_START_DD, PV_WORD_HEADERS_VAR, PV_WORD_HEADERS_KEY,
 } from "../../shared";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -612,6 +612,7 @@ export default function App() {
       reformatQuestion={reformatQuestion}
       questionRenderer={questionRenderer}
       stepRenderer={placeValueStepRenderer}
+      stepVisualRenderer={placeValueStepVisual}
       customPrintHandler={printHandler}
       workingScaffold={workingScaffold}
       defaults={{

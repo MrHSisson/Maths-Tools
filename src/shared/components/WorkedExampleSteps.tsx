@@ -105,6 +105,8 @@ export interface WorkedExampleStepsProps {
   /** Tailwind text-size class applied to the answer box, e.g. "text-3xl". */
   answerFontClass: string;
   stepRenderer?: (step: WorkingStep, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null;
+  /** Visual-only renderer for steps whose working is an evolving picture (see ToolShellProps). */
+  stepVisualRenderer?: (step: WorkingStep, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null;
   qoSnapshot?: QOSnapshot;
   /** Gates whether Step-by-Step (one beat at a time) is reachable at all.
    *  ToolShell and the preview surfaces pass true; false leaves Show All only. */
@@ -150,7 +152,7 @@ export interface WorkedExampleStepsProps {
 }
 
 export const WorkedExampleSteps = ({
-  working, renderAnswer, colorScheme, answerFontClass, stepRenderer, qoSnapshot,
+  working, renderAnswer, colorScheme, answerFontClass, stepRenderer, stepVisualRenderer, qoSnapshot,
   stepThroughEnabled, onOpenSkill, resetKey, layout = "single", hideAnswerStep = false, compact = false,
 }: WorkedExampleStepsProps) => {
   const [steppedMode, setSteppedMode] = useState(true);
@@ -269,8 +271,34 @@ export const WorkedExampleSteps = ({
   // inert card once you clicked past it into the separate Answer beat. Now
   // that beat IS the last step, so it keeps a ring too — green instead of
   // blue, since it's not "the current thing to focus on", it's arrival.
+  // Evolving-visual steps (a place value table filling in): in the cascade and Show All the list
+  // carries only each step's caption, and ONE visual — the current step's — updates in place beside it,
+  // rather than reprinting the table on every card.
+  const visualOf = (s: WorkingStep) => (stepVisualRenderer ? stepVisualRenderer(s, colorScheme, qoSnapshot) : null);
+  const hasVisual = !!stepVisualRenderer && working.some((s) => visualOf(s) !== null);
+  const evolve = hasVisual && (!stepped || layout === "stacked");
+  /** The visual to show when `idx` is the current step: the nearest visual step at or before it. */
+  const visualFor = (idx: number): JSX.Element | null => {
+    for (let i = Math.min(idx, totalSteps - 1); i >= 0; i--) {
+      const v = visualOf(working[i]);
+      if (v) return v;
+    }
+    return null;
+  };
+  const withVisual = (list: ReactNode, idx: number) => {
+    const vis = evolve ? visualFor(idx) : null;
+    if (!vis) return list;
+    return (
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] items-start">
+        <div className="lg:order-2 lg:sticky lg:top-4 rounded-xl p-4" style={{ backgroundColor: stepBg }}>{vis}</div>
+        <div className="lg:order-1">{list}</div>
+      </div>
+    );
+  };
+
   const renderStep = (s: WorkingStep, i: number, reveal?: number, stacked?: boolean) => {
-    const custom = stepRenderer ? stepRenderer(s, colorScheme, qoSnapshot) : null;
+    const asCaption = evolve && visualOf(s) !== null;
+    const custom = asCaption ? <span>{s.plain}</span> : stepRenderer ? stepRenderer(s, colorScheme, qoSnapshot) : null;
     const isFinalAnswerStep = hideAnswerStep && i === totalSteps - 1;
     // compact (narrow viewport) always wins over the "stacked" layout's own
     // reduced size — the two are independent axes, and narrow needs smaller
@@ -414,14 +442,13 @@ export const WorkedExampleSteps = ({
       // that's empty for a short (1-3 step) example.
       return (
         <div className="p-1">
-          {!atAnswer ? stackedSteps(stepIdx, fragIdx) : (
+          {!atAnswer ? withVisual(stackedSteps(stepIdx, fragIdx), stepIdx) : withVisual(
             <div className="space-y-2">
               <div className="space-y-2" style={{ opacity: 0.7 }}>
                 {working.map((s, i) => renderStep(s, i, undefined, true))}
               </div>
               {answerBox("", undefined, true)}
-            </div>
-          )}
+            </div>, totalSteps - 1)}
           <div ref={footerRef} className="pt-4 mt-4 border-t" style={{ borderColor: "rgba(0,0,0,0.08)" }}>
             {navRow}
             <div className="mt-3">{dotStrip}</div>
@@ -450,9 +477,10 @@ export const WorkedExampleSteps = ({
           {steppedToggle}
         </div>
       )}
-      <div className="space-y-4">
-        {working.map((s, i) => renderStep(s, i))}
-      </div>
+      {withVisual(
+        <div className="space-y-4">
+          {working.map((s, i) => renderStep(s, i))}
+        </div>, totalSteps - 1)}
       {!hideAnswerStep && answerBox("mt-4")}
     </>
   );

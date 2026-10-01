@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-01 — Evolving visual in the cascade (one table, updating in place)
+A table reprinted on every cascade card clogged the page, so steps whose working is a picture now use a **`stepVisualRenderer`** (new `ToolShell` / `WorkedExampleSteps` prop). For those steps the cascade list shows only the caption (`step.plain`), and a single visual — the current step's — sits beside the list (sticky on wide screens; above it on narrow ones) and updates in place on every press, with ← retracing it. Show All shows all the captions plus the final visual once. Steps with no visual renderer, and the `single` layout, are unchanged. Wired for the decimal add/subtract tool (`placeValueStepVisual`, new shared export) and Comparing & Ordering (its own visual, with the "Order: 1 = …" caption). Checked headless: after each of three presses on both tools the cards grow 2→3→4 while exactly one table is on the page.
+Not yet applied: ratio tables (Speed/Distance/Time), whose steps are different tables rather than one evolving picture.
+
 ## 2026-10-01 — Cascading Step-by-Step Worked Example is live for every tool
 Step-by-Step navigation in Worked Example is no longer Developing-tools-gated, and its default layout is now the **cascade** (`workedExampleLayout: "stacked"` — earlier steps stay visible, dimmed, the current one ringed, nav footer anchored) instead of the single replace-the-card layout. Show All remains the alternative via the toggle. A tool can still opt back into the single-card layout with `defaults.workedExampleLayout: "single"`. `ToolShell` no longer reads dev mode for this (`stepThroughEnabled` always on). Checked headless outside dev mode on fractions, decimals, comparing/ordering and Powers of 10: Step-by-Step toggle present, cards accumulate per press (decimals: 1→4 cards over three presses), no console errors; table steps stack cleanly.
 

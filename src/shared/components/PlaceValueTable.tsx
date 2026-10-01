@@ -108,6 +108,14 @@ export const placeValueStepRenderer = (step: WorkingStep, _colorScheme?: string,
   );
 };
 
+/** `stepVisualRenderer` for `pvStep` tools: just the table snapshot (no caption), so the cascade can
+ *  keep ONE table updating in place while the list carries the captions. Null for any other step. */
+export const placeValueStepVisual = (step: WorkingStep, _colorScheme?: string, qo?: QOSnapshot): JSX.Element | null => {
+  const extra = step.extra as { kind?: string; table?: PlaceValueTableData } | undefined;
+  if (extra?.kind !== "placeValueSnapshot" || !extra.table) return null;
+  return <PlaceValueTable data={qo?.variables?.[PV_WORD_HEADERS_KEY] ? { ...extra.table, headerStyle: "words" } : extra.table} />;
+};
+
 // ── SVG rendering — for worksheet cells / print ───────────────────────────────
 // The same PlaceValueTableData drawn as an SVG, so a worksheet can carry a grid per question
 // and print it through the shared diagram printer (`handleDiagramPrint` clones

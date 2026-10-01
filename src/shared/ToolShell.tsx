@@ -47,6 +47,11 @@ export interface ToolShellProps {
   ) => AnyQuestion;
   defaults?: ToolShellDefaults;
   stepRenderer?: (step: WorkingStep, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null;
+  /** For steps whose working is a *visual that evolves* (a place value table filling in). Return the
+   *  visual for such a step (null for any other). In the cascade and Show All, those steps then show
+   *  only their caption in the list, and ONE visual — the current step's — updates in place beside it,
+   *  instead of reprinting the whole table on every step. */
+  stepVisualRenderer?: (step: WorkingStep, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null;
   /** Replaces QuestionDisplay in all modes. compact=true in worksheet cells, false in worked example/fullscreen, undefined in regular whiteboard. idx is the worksheet question index (only provided in worksheet cells). qo is the live QO state snapshot — use it for render-time reformatting (e.g. decimal/fraction toggle). */
   questionRenderer?: (q: AnyQuestion, showAnswer: boolean, colorScheme: string, compact?: boolean, idx?: number, qo?: QOSnapshot, fontClass?: string) => JSX.Element | null;
   /** Replaces the final answer box (AnswerDisplay). Shown when showAnswer=true. qo is the live QO state snapshot. */
@@ -151,7 +156,7 @@ function ScaleToFit({ children, maxScale = 3 }: { children: ReactNode; maxScale?
   );
 }
 
-export const ToolShell = ({ config, infoSections, generateQuestion, generateUniqueQ: generateUniqueQProp, defaults = {}, stepRenderer, questionRenderer, answerRenderer, reformatQuestion, customPrintHandler, teachingSlides, workingScaffold }: ToolShellProps) => {
+export const ToolShell = ({ config, infoSections, generateQuestion, generateUniqueQ: generateUniqueQProp, defaults = {}, stepRenderer, stepVisualRenderer, questionRenderer, answerRenderer, reformatQuestion, customPrintHandler, teachingSlides, workingScaffold }: ToolShellProps) => {
   const generateUniqueQ = generateUniqueQProp ?? makeUniqueQ(generateQuestion);
   const toolKeys = Object.keys(config.tools);
   // Seeds a smaller default question font size on a narrow viewport (the
@@ -1373,6 +1378,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                 colorScheme={colorScheme}
                 answerFontClass={displayFontSizes[displayFontSize]}
                 stepRenderer={stepRenderer}
+                stepVisualRenderer={stepVisualRenderer}
                 qoSnapshot={getQOSnapshot()}
                 stepThroughEnabled
                 onOpenSkill={parkedMode ? setOpenSkillId : undefined}

@@ -492,6 +492,19 @@ const stepRenderer = (step: WorkingStep, _colorScheme?: string, qo?: QOSnapshot)
   );
 };
 
+// The evolving picture for the cascade: caption lines stay in the step list; this one table updates in place.
+const stepVisual = (step: WorkingStep, _colorScheme?: string, qo?: QOSnapshot): JSX.Element | null => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const extra = (step as any).extra;
+  if (extra?.kind !== "placeValueTable") return null;
+  return (
+    <div>
+      <p className="mb-2 text-center text-base font-semibold text-slate-800">Order: 1 = {extra.targetWord}</p>
+      <PlaceValueTable data={withHeaders(extra.table, qo)} />
+    </div>
+  );
+};
+
 // Whiteboard scaffold (full width): the numbers already written in the table, ready to compare; Show Answer
 // simply fills the Order column — the circling of deciding digits is the Worked Example's job.
 // Placed in the question box under the question, with the working panel collapsed, so the table
@@ -747,6 +760,7 @@ export default function App() {
       generateQuestion={generateQuestion}
       reformatQuestion={reformatQuestion}
       stepRenderer={stepRenderer}
+      stepVisualRenderer={stepVisual}
       questionRenderer={questionRenderer}
       workingScaffold={workingScaffold}
       defaults={{ collapseWorkingByDefault: true, displayFontSize: 1 /* text-xl — leaves the full-width table room */ }}
