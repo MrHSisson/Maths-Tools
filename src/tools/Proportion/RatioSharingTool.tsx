@@ -32,8 +32,30 @@ const getBarDiffBg  = (cs: string) => ({ blue: "#d8b4fe", pink: "#fed8b4", yello
 
 // ── 4. Bar step builder ───────────────────────────────────────────────────────
 
+// One-line caption per step type: it is the step's text in the cascade timeline (the bar model itself
+// is drawn once, beside it, by `ratioStepVisual`).
+const parts_ = (n: number) => `${n} part${n !== 1 ? "s" : ""}`;
+const stepCaption = (t: string, d: Record<string, unknown>): string => {
+  switch (t) {
+    case "bar_empty": return "Bar model: draw a box for each part of the ratio.";
+    case "bar_total": return `Add the parts to find the total: ${d.sum as number} parts.`;
+    case "bar_part": return `Value of 1 part: ${fp(d.total as number)} ÷ ${d.sum as number} = ${fp(d.value as number)}.`;
+    case "bar_filled": return "Calculate each share: the value of 1 part × the number of parts.";
+    case "ka_bar_known": return "Given information: mark the known share on the bar model.";
+    case "ka_identify": return `Identify the ratio part: ${d.knownPerson as string} has ${parts_(d.ratioPart as number)}.`;
+    case "ka_part_val": return `Value of 1 part: ${fp(d.knownAmount as number)} ÷ ${d.ratioPart as number} = ${fp(d.partValue as number)}.`;
+    case "ka_total_bar": return `Add all the shares to find the total: ${(d.shares as number[]).map(fp).join(" + ")} = ${fp(d.total as number)}.`;
+    case "ka_other_bar": return `Read ${d.otherPerson as string}'s share from the bar: ${fp(d.share as number)}.`;
+    case "diff_bar": return "Bar model: the extra boxes show the difference.";
+    case "diff_identify": return `The difference represents ${parts_(d.partDiff as number)} = ${fp(d.difference as number)}.`;
+    case "diff_part_val": return `Value of 1 part: ${fp(d.difference as number)} ÷ ${d.partDiff as number} = ${fp(d.partValue as number)}.`;
+    case "diff_read": return `Read ${d.person as string}'s share from the bar: ${fp(d.share as number)}.`;
+    default: return "";
+  }
+};
+
 const bStep = (t: string, data: Record<string, unknown>): WorkingStep => ({
-  type: t, latex: "", plain: "", extra: data,
+  type: t, latex: "", plain: stepCaption(t, data), extra: data,
 });
 
 // ── 5. Bar step builders ──────────────────────────────────────────────────────
@@ -594,6 +616,75 @@ const BarRow = ({ person, boxes, fillBg, borderColor, cellLabel, totalLabel }: {
 
 type BarEntry = { person: string; boxes: number; isKnown?: boolean; knownAmount?: number | null; value?: number; total?: number };
 
+// The bar model alone (no heading): the one picture the cascade keeps on screen and updates in place.
+const barVisual = (step: WorkingStep, cs: string): JSX.Element | null => {
+  const d = (step.extra ?? {}) as Record<string, unknown>;
+  const bars = d.bars as BarEntry[] | undefined;
+  if (!bars) return null;
+  const T = step.type;
+  if (T === "bar_empty") return (
+    <div className="flex flex-col gap-3" style={{ width: "fit-content", margin: "0 auto" }}>
+      {bars.map((bar, i) => <BarRow key={i} person={bar.person} boxes={bar.boxes} fillBg={getBarEmptyBg(cs)} borderColor="#1e3a8a" />)}
+    </div>
+  );
+  if (T === "bar_filled") return (
+    <div className="flex flex-col gap-3" style={{ width: "fit-content", margin: "0 auto" }}>
+      {bars.map((bar, i) => (
+        <BarRow key={i} person={bar.person} boxes={bar.boxes} fillBg={getBarEmptyBg(cs)} borderColor="#1e3a8a"
+          cellLabel={bar.value !== undefined ? fp(bar.value) : undefined}
+          totalLabel={bar.total !== undefined ? fp(bar.total) : undefined} />
+      ))}
+    </div>
+  );
+  if (T === "ka_bar_known") return (
+    <div className="flex flex-col gap-3" style={{ width: "fit-content", margin: "0 auto" }}>
+      {bars.map((bar, i) => (
+        <BarRow key={i} person={bar.person} boxes={bar.boxes}
+          fillBg={bar.isKnown ? getBarKnownBg(cs) : getBarEmptyBg(cs)} borderColor="#1e3a8a"
+          totalLabel={bar.isKnown && bar.knownAmount != null ? fp(bar.knownAmount) : undefined} />
+      ))}
+    </div>
+  );
+  if (T === "diff_bar") {
+    const smallerCount = Math.min(bars[0].boxes, bars[1].boxes);
+    return (
+      <div className="flex flex-col gap-3" style={{ width: "fit-content", margin: "0 auto" }}>
+        {bars.map((bar, i) => {
+          const isLarger = i === (d.largerPerson as number);
+          return (
+            <div key={i} className="flex items-center gap-3">
+              <div className="font-bold text-base text-right flex-shrink-0" style={{ width: NAME_W, color: "#000" }}>{bar.person}</div>
+              <div className="flex flex-shrink-0" style={{ gap: BOX_GAP }}>
+                {Array.from({ length: bar.boxes }, (_, bi) => {
+                  const isDiff = isLarger && bi >= smallerCount;
+                  return (
+                    <div key={bi} className="rounded flex-shrink-0"
+                      style={{ width: BOX_W, height: BOX_H, border: `3px solid ${isDiff ? "#a855f7" : "#1e3a8a"}`, backgroundColor: isDiff ? getBarDiffBg(cs) : getBarEmptyBg(cs) }} />
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+        <div className="flex items-center gap-2 mt-1" style={{ marginLeft: NAME_W + 12 }}>
+          <div className="rounded" style={{ width: Math.round(BOX_W * 0.55), height: Math.round(BOX_H * 0.55), border: "3px solid #a855f7", backgroundColor: getBarDiffBg(cs), flexShrink: 0 }} />
+          <span className="text-base font-bold" style={{ color: "#000" }}>= {fp(d.difference as number)}</span>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
+const BAR_STEP_TYPES = new Set(["bar_empty", "bar_filled", "ka_bar_known", "diff_bar"]);
+
+/** `stepVisualRenderer`: the bar model for a bar step; `false` for the other steps of this tool (they are
+ *  caption-only — the bar stays on screen); `null` for anything else. */
+const ratioStepVisual = (step: WorkingStep, cs: string): JSX.Element | null | false => {
+  if (!step.extra) return null;
+  return BAR_STEP_TYPES.has(step.type) ? barVisual(step, cs) : false;
+};
+
 const ratioStepRenderer = (step: WorkingStep, cs: string): JSX.Element | null => {
   if (!step.extra) return null;
   const d = step.extra as Record<string, unknown>;
@@ -603,12 +694,7 @@ const ratioStepRenderer = (step: WorkingStep, cs: string): JSX.Element | null =>
   if (T === "bar_empty" && bars) return (
     <div>
       <h4 className="text-xl font-semibold mb-4 text-center" style={{ color: "#000" }}>Bar Model:</h4>
-      <div className="flex flex-col gap-3" style={{ width: "fit-content", margin: "0 auto" }}>
-        {bars.map((bar, i) => (
-          <BarRow key={i} person={bar.person} boxes={bar.boxes}
-            fillBg={getBarEmptyBg(cs)} borderColor="#1e3a8a" />
-        ))}
-      </div>
+      {barVisual(step, cs)}
     </div>
   );
 
@@ -631,28 +717,14 @@ const ratioStepRenderer = (step: WorkingStep, cs: string): JSX.Element | null =>
   if (T === "bar_filled" && bars) return (
     <div>
       <h4 className="text-xl font-semibold mb-4 text-center" style={{ color: "#000" }}>Calculate shares:</h4>
-      <div className="flex flex-col gap-3" style={{ width: "fit-content", margin: "0 auto" }}>
-        {bars.map((bar, i) => (
-          <BarRow key={i} person={bar.person} boxes={bar.boxes}
-            fillBg={getBarEmptyBg(cs)} borderColor="#1e3a8a"
-            cellLabel={bar.value !== undefined ? fp(bar.value) : undefined}
-            totalLabel={bar.total !== undefined ? fp(bar.total) : undefined} />
-        ))}
-      </div>
+      {barVisual(step, cs)}
     </div>
   );
 
   if (T === "ka_bar_known" && bars) return (
     <div>
       <h4 className="text-xl font-semibold mb-4 text-center" style={{ color: "#000" }}>Bar Model — Given information:</h4>
-      <div className="flex flex-col gap-3" style={{ width: "fit-content", margin: "0 auto" }}>
-        {bars.map((bar, i) => (
-          <BarRow key={i} person={bar.person} boxes={bar.boxes}
-            fillBg={bar.isKnown ? getBarKnownBg(cs) : getBarEmptyBg(cs)}
-            borderColor="#1e3a8a"
-            totalLabel={bar.isKnown && bar.knownAmount != null ? fp(bar.knownAmount) : undefined} />
-        ))}
-      </div>
+      {barVisual(step, cs)}
     </div>
   );
 
@@ -690,37 +762,12 @@ const ratioStepRenderer = (step: WorkingStep, cs: string): JSX.Element | null =>
     </div>
   );
 
-  if (T === "diff_bar" && bars) {
-    const smallerCount = Math.min(bars[0].boxes, bars[1].boxes);
-    return (
-      <div>
-        <h4 className="text-xl font-semibold mb-4 text-center" style={{ color: "#000" }}>Bar Model — showing the difference:</h4>
-        <div className="flex flex-col gap-3" style={{ width: "fit-content", margin: "0 auto" }}>
-          {bars.map((bar, i) => {
-            const isLarger = i === (d.largerPerson as number);
-            return (
-              <div key={i} className="flex items-center gap-3">
-                <div className="font-bold text-base text-right flex-shrink-0" style={{ width: NAME_W, color: "#000" }}>{bar.person}</div>
-                <div className="flex flex-shrink-0" style={{ gap: BOX_GAP }}>
-                  {Array.from({ length: bar.boxes }, (_, bi) => {
-                    const isDiff = isLarger && bi >= smallerCount;
-                    return (
-                      <div key={bi} className="rounded flex-shrink-0"
-                        style={{ width: BOX_W, height: BOX_H, border: `3px solid ${isDiff ? "#a855f7" : "#1e3a8a"}`, backgroundColor: isDiff ? getBarDiffBg(cs) : getBarEmptyBg(cs) }} />
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-          <div className="flex items-center gap-2 mt-1" style={{ marginLeft: NAME_W + 12 }}>
-            <div className="rounded" style={{ width: Math.round(BOX_W * 0.55), height: Math.round(BOX_H * 0.55), border: "3px solid #a855f7", backgroundColor: getBarDiffBg(cs), flexShrink: 0 }} />
-            <span className="text-base font-bold" style={{ color: "#000" }}>= {fp(d.difference as number)}</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (T === "diff_bar" && bars) return (
+    <div>
+      <h4 className="text-xl font-semibold mb-4 text-center" style={{ color: "#000" }}>Bar Model — showing the difference:</h4>
+      {barVisual(step, cs)}
+    </div>
+  );
 
   if (T === "diff_identify") return (
     <div className="text-center">
@@ -764,6 +811,7 @@ export default function App() {
       generateQuestion={generateQuestion}
       generateUniqueQ={generateUniqueQ}
       stepRenderer={ratioStepRenderer}
+      stepVisualRenderer={ratioStepVisual}
       defaults={{ displayFontSize: 1, numQuestions: 5, numColumns: 2, maxColumns: 2 }}
     />
   );

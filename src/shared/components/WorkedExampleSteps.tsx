@@ -106,7 +106,7 @@ export interface WorkedExampleStepsProps {
   answerFontClass: string;
   stepRenderer?: (step: WorkingStep, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null;
   /** Visual-only renderer for steps whose working is an evolving picture (see ToolShellProps). */
-  stepVisualRenderer?: (step: WorkingStep, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null;
+  stepVisualRenderer?: (step: WorkingStep, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null | false;
   qoSnapshot?: QOSnapshot;
   /** Gates whether Step-by-Step (one beat at a time) is reachable at all.
    *  ToolShell and the preview surfaces pass true; false leaves Show All only. */
@@ -284,13 +284,16 @@ export const WorkedExampleSteps = ({
   // carries only each step's caption, and ONE visual — the current step's — updates in place beside it,
   // rather than reprinting the table on every card.
   const visualOf = (s: WorkingStep) => (stepVisualRenderer ? stepVisualRenderer(s, colorScheme, qoSnapshot) : null);
-  const hasVisual = !!stepVisualRenderer && working.some((s) => visualOf(s) !== null);
+  // A step the renderer claims returns its picture, or `false` for a caption-only step that sits in the
+  // same timeline while the picture stays on screen; `null` means "not mine".
+  const isPicture = (s: WorkingStep) => { const v = visualOf(s); return v !== null && v !== false; };
+  const hasVisual = !!stepVisualRenderer && working.some(isPicture);
   const evolve = hasVisual && (!stepped || layout === "stacked");
   /** The visual to show when `idx` is the current step: the nearest visual step at or before it. */
   const visualFor = (idx: number): JSX.Element | null => {
     for (let i = Math.min(idx, totalSteps - 1); i >= 0; i--) {
       const v = visualOf(working[i]);
-      if (v) return v;
+      if (v) return v;   // (false / null are skipped)
     }
     return null;
   };
@@ -334,7 +337,7 @@ export const WorkedExampleSteps = ({
   const timelineSpine = <div className="absolute left-4 top-6 bottom-6 w-0.5 -translate-x-1/2 rounded bg-slate-300" aria-hidden />;
 
   const renderStep = (s: WorkingStep, i: number, reveal?: number, stacked?: boolean, state: "current" | "past" | "all" = "all") => {
-    if (evolve && visualOf(s) !== null) return captionRow(s, i, state);
+    if (evolve && visualOf(s) !== null) return captionRow(s, i, state);   // a picture step or a caption-only step
     const custom = stepRenderer ? stepRenderer(s, colorScheme, qoSnapshot) : null;
     const isFinalAnswerStep = hideAnswerStep && i === totalSteps - 1;
     // compact (narrow viewport) always wins over the "stacked" layout's own

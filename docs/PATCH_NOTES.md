@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-01 — Ratio Sharing on the evolving-visual cascade
+Ratio Sharing's worked example now shows **one bar model updating in place** beside a timeline of captions, instead of redrawing the bars on several cards. Every bar step (`bStep`) now carries a one-line caption in `plain` (e.g. "Value of 1 part: £60 ÷ 5 = £12."), the bar drawing was pulled out into `barVisual` (the old heading cards reuse it), and `ratioStepVisual` is the tool's `stepVisualRenderer`. Shared change: `stepVisualRenderer` may now return `false` for a **caption-only step** — it sits in the timeline as a numbered line while the picture from the nearest earlier picture step stays on screen (the total / value-of-1-part / identify steps here). Sharing, known-amount, difference and mixed all checked headless (one visual panel on every press, no console errors); `npm test` 395 and build clean. Audit result for the other tools: nothing else repeats a picture per step.
+
 ## 2026-10-01 — Evolving-visual cascade: lighter look
 The captions beside the evolving table are now a **timeline** instead of grey cards: numbered dots on a thin vertical line, the current step in a ringed navy dot with bold dark text, earlier steps muted and faded, bigger caption text, no boxes — so more history fits in the scroll area. The table sits in its own white bordered panel, centred. Applies only to steps with a `stepVisualRenderer` (decimals, Comparing & Ordering); ordinary step cards are unchanged.
 

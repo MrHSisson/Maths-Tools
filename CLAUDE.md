@@ -445,10 +445,10 @@ export interface ToolShellProps {
   ) => JSX.Element | null;
 
   /** For steps whose working is a visual that EVOLVES (a place value table filling in): return just
-   *  the visual (null for other steps). In the cascade and Show All the list then carries only each
+   *  the visual (`false` for a caption-only step of the same tool — it joins the timeline while the picture stays on screen; `null` for any other step). In the cascade and Show All the list then carries only each
    *  step's caption (`step.plain`) and ONE visual — the current step's — updates in place beside it
    *  (above on narrow screens), instead of reprinting the table every step. */
-  stepVisualRenderer?: (step: WorkingStep, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null;
+  stepVisualRenderer?: (step: WorkingStep, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null | false;
 
   /** Called when a QO option changes, before falling back to full regeneration.
    *  Return a reformatted copy of the question (same maths, different display),
