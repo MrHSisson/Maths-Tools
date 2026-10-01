@@ -106,8 +106,8 @@ export interface WorkedExampleStepsProps {
   answerFontClass: string;
   stepRenderer?: (step: WorkingStep, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null;
   qoSnapshot?: QOSnapshot;
-  /** Gates whether Step-by-Step (one beat at a time) is reachable at all —
-   *  ToolShell passes its devMode flag; a preview surface can pass true always. */
+  /** Gates whether Step-by-Step (one beat at a time) is reachable at all.
+   *  ToolShell and the preview surfaces pass true; false leaves Show All only. */
   stepThroughEnabled: boolean;
   onOpenSkill?: (id: string) => void;
   /** Changing this resets step/fragment position back to the start (Step-by-Step

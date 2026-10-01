@@ -22,7 +22,6 @@ import type { PrintContext } from "./printDiagram";
 import { WorksheetBuilder } from "./WorksheetBuilder";
 import { TeachingDeck, type TeachingSlide } from "./TeachingDeck";
 import { SkillOverlay } from "./skills";
-import { useDevMode } from "../devMode";
 import { useParkedMode } from "../parkedMode";
 
 export interface ToolShellProps {
@@ -239,9 +238,6 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
 
   const [currentTool, setCurrentTool] = useState<string>(urlInit.tool);
   const [mode, setMode] = useState<"whiteboard" | "single" | "worksheet" | "teach">(urlInit.mode);
-  // Worked Example is always available; only its step-by-step navigation (one
-  // step at a time) is reserved for Developing mode.
-  const devMode = useDevMode();
   // The Teach deck is dormant content, not in-progress work, so it's gated by
   // the separate, unadvertised parkedMode rather than Developing-tools mode —
   // see src/parkedMode.ts.
@@ -249,7 +245,8 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const showTeach = !!(parkedMode && teachingSlides && teachingSlides.length);
   const comingSoon = defaults.comingSoonLevels ?? [];
   const hideFontControls = defaults.hideFontControls ?? false;
-  const workedExampleLayout = defaults.workedExampleLayout ?? "single";
+  // Step-by-Step is the cascading ("stacked") layout for every tool; "single" (one card replaced per press) is opt-in.
+  const workedExampleLayout = defaults.workedExampleLayout ?? "stacked";
   const hideAnswerStep = defaults.hideAnswerStep ?? false;
   const [difficulty, setDifficulty] = useState<DifficultyLevel>(urlInit.level);
   // The levels the current sub-tool actually has (ToolEntry.levels) — unlisted
@@ -1377,7 +1374,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                 answerFontClass={displayFontSizes[displayFontSize]}
                 stepRenderer={stepRenderer}
                 qoSnapshot={getQOSnapshot()}
-                stepThroughEnabled={devMode}
+                stepThroughEnabled
                 onOpenSkill={parkedMode ? setOpenSkillId : undefined}
                 resetKey={workedResetNonce}
                 layout={workedExampleLayout}

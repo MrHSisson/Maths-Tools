@@ -502,6 +502,7 @@ defaults?: {
   hideFontControls?: boolean;           // hides the text-size up/down chevrons (diagram-only tools)
   qoColumns?: 2;                        // Question Options popover in two columns with a thin grey divider (tools with many options)
   collapseWorkingByDefault?: boolean;   // whiteboard opens with the working/visualiser panel collapsed (diagram-heavy tools)
+  workedExampleLayout?: "stacked" | "single"; // Step-by-Step layout: "stacked" (default) cascades; "single" replaces the card each press
 }
 ```
 
@@ -523,7 +524,7 @@ Font size indices: `0=text-lg  1=text-xl  2=text-3xl  3=text-4xl  4=text-5xl  5=
 
 ### What ToolShell provides automatically (never re-implement)
 
-Whiteboard / Worked Example / Worksheet modes · **Teach mode (when `teachingSlides` supplied)** · difficulty toggle · QO popovers (dropdown, variables, multiSelect, differentiated) · tool tab buttons (auto-hidden when only one sub-tool) · font size controls · PDF print · colour scheme picker · info modal · home button · shareable links (URL ⇄ state sync + "Copy Link to Setup" menu item) · **step-by-step Worked Example with fragment walking and skill-link overlays (dev-gated)** — tools only author `string[]` steps and `[[skill-id|term]]` markers; never re-implement the reveal or the overlay
+Whiteboard / Worked Example / Worksheet modes · **Teach mode (when `teachingSlides` supplied)** · difficulty toggle · QO popovers (dropdown, variables, multiSelect, differentiated) · tool tab buttons (auto-hidden when only one sub-tool) · font size controls · PDF print · colour scheme picker · info modal · home button · shareable links (URL ⇄ state sync + "Copy Link to Setup" menu item) · **step-by-step Worked Example (the cascade — earlier steps stay on screen, dimmed — with Show All as the alternative) with fragment walking and skill-link overlays** — tools only author `string[]` steps and `[[skill-id|term]]` markers; never re-implement the reveal or the overlay
 
 ### Teaching slides — the "Teach" deck  (authoring guide)
 
@@ -705,7 +706,7 @@ Pass it to `<ToolShell reformatQuestion={reformatQuestion} />`.
 
 ### Working-step fragments — live modelling (author these by default)
 
-`step()` and `mStep()` accept the latex as a **`string[]` of ordered fragments**. In the dev-gated step-by-step Worked Example, the line then reveals one fragment per press — *live modelling*: the line is written in the order a teacher would write it on the board, and the pause between presses is the class's thinking time. Everywhere else (show-all mode, print, worksheets, tests) the fragments join into one normal KaTeX line, so fragments can never diverge from the printed working. All fragments are laid out immediately (hidden ones at opacity 0), so the line never reflows and ← exactly retraces →.
+`step()` and `mStep()` accept the latex as a **`string[]` of ordered fragments**. In the step-by-step Worked Example (live for every tool), the line then reveals one fragment per press — *live modelling*: the line is written in the order a teacher would write it on the board, and the pause between presses is the class's thinking time. Everywhere else (show-all mode, print, worksheets, tests) the fragments join into one normal KaTeX line, so fragments can never diverge from the printed working. All fragments are laid out immediately (hidden ones at opacity 0), so the line never reflows and ← exactly retraces →.
 
 ```ts
 mStep("Convert the first fraction:", ["\\dfrac{1}{11}", "= \\dfrac{1 \\times 13}{11 \\times 13}", "= \\dfrac{13}{143}"])
@@ -730,7 +731,7 @@ A prose label (`mStep` label or `tStep` text) may mark a term as a drill-down in
 mStep(`Find the common denominator — the [[lcm|LCM]] of ${d1} and ${d2}:`, `${cl}`)
 ```
 
-The dotted-underline, clickable rendering only appears when `parkedMode` is unlocked (`onOpenSkill` in `ToolShell.tsx` is `undefined` otherwise) — clicking it plays the skill's slides in an overlay, then returns to the same step. With Developing-tools mode on but `parkedMode` off (the ordinary case), the step-by-step Worked Example still works, but every marker renders as bare term text, same as classic mode — `SkillLabel` degrades silently with no `onOpenSkill` (see `src/shared/skills/index.tsx`). In classic mode (and in `plain`/print) only the bare term shows too — the helpers strip markers from `plain` automatically. The smoke tests fail on any marker whose id isn't in the skill registry, so a dangling link can't ship.
+The dotted-underline, clickable rendering only appears when `parkedMode` is unlocked (`onOpenSkill` in `ToolShell.tsx` is `undefined` otherwise) — clicking it plays the skill's slides in an overlay, then returns to the same step. With `parkedMode` off (the ordinary case), the step-by-step Worked Example still works, but every marker renders as bare term text, same as classic mode — `SkillLabel` degrades silently with no `onOpenSkill` (see `src/shared/skills/index.tsx`). In classic mode (and in `plain`/print) only the bare term shows too — the helpers strip markers from `plain` automatically. The smoke tests fail on any marker whose id isn't in the skill registry, so a dangling link can't ship.
 
 **When to link:** whenever a step's label names a prerequisite skill the tool *uses* but doesn't *teach* (LCM, equivalent fractions, factor pairs…). If the skill doesn't exist yet, create it (see "Skill library" below) in the same commit.
 

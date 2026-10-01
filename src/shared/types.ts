@@ -238,11 +238,10 @@ export interface ToolShellDefaults {
   hideFontControls?: boolean;  // hides the text size up/down chevrons (e.g. diagram-only tools)
   qoColumns?: 2;                       // lay the Question Options popover out in two columns (tools with many options)
   collapseWorkingByDefault?: boolean; // whiteboard opens with the working/visualiser panel collapsed (still re-openable)
-  /** Worked Example mode's step layout. "single" (default) replaces the card
-   *  each press, with a dot-strip to jump between steps. "stacked" builds a
-   *  growing vertical list instead — earlier steps stay visible (dimmed) as
-   *  you press through, cascading down the page. Previously only used by the
-   *  Technique Library preview; opt a real tool in per-tool via this flag. */
+  /** Worked Example Step-by-Step layout. "stacked" (default, the cascade) builds a
+   *  growing vertical list — earlier steps stay visible (dimmed) as you press
+   *  through, cascading down the page. "single" replaces the card each press,
+   *  with a dot-strip to jump between steps; opt a tool into it via this flag. */
   workedExampleLayout?: "single" | "stacked";
   /** Splits the sub-tool tab buttons across multiple rows instead of one —
    *  e.g. [3, 2] for a 5-sub-tool tool. Each number is how many buttons that
