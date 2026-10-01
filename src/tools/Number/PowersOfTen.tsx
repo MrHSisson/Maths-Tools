@@ -1,7 +1,7 @@
 import {
   ToolShell,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type QOSnapshot, type WorkingStep,
-  MathRenderer, tStep, PlaceValueTable, pvCells, type PlaceValueTableData,
+  MathRenderer, tStep, PlaceValueTable, pvCells, pvColumnSet, pvDisplay, PV_WORD_HEADERS_VAR, PV_WORD_HEADERS_KEY, type PlaceValueTableData,
 } from "../../shared";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -65,7 +65,7 @@ const TOOL_CONFIG: ToolConfig = {
   tools: {
     directCalc: {
       name: "Direct Calculation",
-      variables: [POWERS_NOTATION_VAR],
+      variables: [POWERS_NOTATION_VAR, PV_WORD_HEADERS_VAR],
       dropdown: OPERATION_DD,
       difficultySettings: null,
     },
@@ -137,10 +137,8 @@ const toLatexNum = (num: number): string => formatNumber(num).replace(/,/g, "{,}
 const powerLatex = (power: number, usePowers: boolean): string =>
   usePowers ? `10^{${countZeros(power)}}` : toLatexNum(power);
 
-const getPlaceValueColumns = (level?: DifficultyLevel): string[] =>
-  level === "level1"
-    ? ["M", "HTt", "TTt", "Tt", "H", "T", "O"]
-    : ["M", "HTt", "TTt", "Tt", "H", "T", "O", "t", "h", "th", "tth", "htth", "mth"];
+// Level 1 is whole numbers (M … O); Level 2 adds six decimal places (t … mth).
+const getPlaceValueSet = (level?: DifficultyLevel) => pvColumnSet(7, level === "level1" ? 0 : 6);
 
 // ── 5. Question maths (preserved) ──────────────────────────────────────────────
 
@@ -293,6 +291,7 @@ const generateQuestion = (
     working: built.working,
     _rawValues: rv,
     _grid: grid,
+    _wh: variables[PV_WORD_HEADERS_KEY] ?? false,
     key: `directCalc-${level}-${vin}-${power}-${op}`,
     difficulty: level,
   } as unknown as AnyQuestion;
@@ -305,13 +304,18 @@ const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null =>
   const rv = (q as any)._rawValues as RawValues | undefined;
   if (!rv) return null;
   const usePowers = qo.variables["powersNotation"] ?? false;
-  if (usePowers === rv.usePowers) return null; // nothing display-related changed
+  const wordHeaders = qo.variables[PV_WORD_HEADERS_KEY] ?? false;
+  // The heading style is read live at render time (below) — it only needs to be a display change here.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const headersChanged = wordHeaders !== ((q as any)._wh ?? false);
+  if (usePowers === rv.usePowers && !headersChanged) return null; // nothing display-related changed
   const built = buildDisplay({ ...rv, usePowers });
   return {
     ...q,
     display: built.display,
     displayLatex: built.displayLatex,
     working: built.working,
+    _wh: wordHeaders,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     _rawValues: { ...rv, usePowers },
   } as unknown as AnyQuestion;
@@ -319,7 +323,7 @@ const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null =>
 
 // ── 9. Place value grid ────────────────────────────────────────────────────────
 
-function PlaceValueGrid({ vin, vout, op, zeros, level, filled }: GridData & { filled: boolean }) {
+function PlaceValueGrid({ vin, vout, op, zeros, level, filled, qo }: GridData & { filled: boolean; qo?: QOSnapshot }) {
   const zPlural = zeros !== 1 ? "s" : "";
 
   // Level 3 numbers are too extreme to grid — a movement statement instead.
@@ -337,26 +341,22 @@ function PlaceValueGrid({ vin, vout, op, zeros, level, filled }: GridData & { fi
     );
   }
 
-  const columns = getPlaceValueColumns(level);
-  const onesIndex = columns.indexOf("O");
+  const set = getPlaceValueSet(level);
+  const { columns, onesIndex } = set;
   const plain = (n: number) => formatNumber(n).replace(/,/g, "");
   const blank = columns.map(() => "");
 
-  const data: PlaceValueTableData = {
-    columns,
-    onesIndex,
+  // Same three rows in every state (empty / answered), at the shared row height, so the grid
+  // never resizes or rescales when Show Answer fills it in.
+  const data: PlaceValueTableData = pvDisplay({
+    ...set,
     showPoint: level === "level2",
-    cellHeight: filled ? 72 : 120,
     rows: [
       { kind: "cells", cells: filled ? pvCells(plain(vin), columns, onesIndex) : blank },
-      ...(filled
-        ? [
-            { kind: "banner" as const, text: `↓ ${op === "multiply" ? "Move LEFT" : "Move RIGHT"} by ${zeros} place${zPlural}` },
-            { kind: "cells" as const, cells: pvCells(plain(vout), columns, onesIndex) },
-          ]
-        : []),
+      { kind: "banner", text: filled ? `↓ ${op === "multiply" ? "Move LEFT" : "Move RIGHT"} by ${zeros} place${zPlural}` : "↓" },
+      { kind: "cells", cells: filled ? pvCells(plain(vout), columns, onesIndex) : blank },
     ],
-  };
+  }, qo);
   return <PlaceValueTable data={data} />;
 }
 
@@ -365,10 +365,10 @@ function PlaceValueGrid({ vin, vout, op, zeros, level, filled }: GridData & { fi
 const workingScaffold = {
   label: "place value grid",
   placement: "question" as const,
-  render: (q: AnyQuestion, showAnswer: boolean): JSX.Element | null => {
+  render: (q: AnyQuestion, showAnswer: boolean, _cs: string, qo?: QOSnapshot): JSX.Element | null => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const grid = (q as any)._grid as GridData | undefined;
-    return grid ? <PlaceValueGrid {...grid} filled={showAnswer} /> : null;
+    return grid ? <PlaceValueGrid {...grid} filled={showAnswer} qo={qo} /> : null;
   },
 };
 
@@ -416,7 +416,7 @@ const questionRenderer = (
         )}
       </div>
       {/* Whiteboard: the grid is ToolShell's hideable workingScaffold (below). Worked example: filled grid here. */}
-      {grid && !isWhiteboard && <PlaceValueGrid {...grid} filled={showAnswer} />}
+      {grid && !isWhiteboard && <PlaceValueGrid {...grid} filled={showAnswer} qo={qo} />}
     </div>
   );
 };

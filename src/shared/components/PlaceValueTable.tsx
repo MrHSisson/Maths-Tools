@@ -1,4 +1,5 @@
-import type { PlaceValueTableData, PVCell, WorkingStep } from "../types";
+import type { PlaceValueTableData, PVCell, QOSnapshot, WorkingStep } from "../types";
+import { PV_WORD_HEADERS_KEY } from "../placeValue";
 
 // Shared place value table — the visual behind Powers of 10 and decimal
 // add/subtract (see src/shared/placeValue.ts). Fixed columns, a decimal point on
@@ -12,6 +13,10 @@ const DecimalDot = () => (
   />
 );
 
+/** The heading for column `i`: its letters, or its full name when the table is in words mode. */
+const headerLabel = (d: PlaceValueTableData, i: number): string =>
+  d.headerStyle === "words" && d.columnNames?.[i] ? d.columnNames[i] : d.columns[i];
+
 const toneCls = (t?: PVCell["tone"]) =>
   t === "zero" ? "text-blue-600 bg-blue-50" : t === "answer" ? "text-green-800 bg-white" : t === "highlight" ? "bg-amber-100" : "";
 
@@ -19,6 +24,7 @@ export function PlaceValueTable({ data }: { data: PlaceValueTableData }) {
   const { columns, onesIndex, showPoint, rows, highlightCol } = data;
   const cellH = data.cellHeight ?? 72;
   const hasGutter = rows.some((r) => r.kind === "cells" && r.label);
+  const words = data.headerStyle === "words";
   const tint = (i: number) => (i === highlightCol ? "bg-amber-100" : "bg-white");
 
   return (
@@ -30,9 +36,9 @@ export function PlaceValueTable({ data }: { data: PlaceValueTableData }) {
         <thead>
           <tr>
             {hasGutter && <th style={{ width: 44 }} />}
-            {columns.map((col, i) => (
-              <th key={i} className={`border-2 border-black py-2 font-bold text-lg relative text-black ${i === highlightCol ? "bg-amber-200" : "bg-gray-100"}`}>
-                {col}
+            {columns.map((_col, i) => (
+              <th key={i} className={`border-2 border-black py-2 font-bold relative text-black leading-tight ${words ? (columns.length > 8 ? "text-[11px] px-0.5" : "text-sm px-1") : "text-lg"} ${i === highlightCol ? "bg-amber-200" : "bg-gray-100"}`}>
+                {headerLabel(data, i)}
                 {showPoint && i === onesIndex && <DecimalDot />}
               </th>
             ))}
@@ -84,14 +90,14 @@ export function PlaceValueTable({ data }: { data: PlaceValueTableData }) {
 }
 
 /** `stepRenderer` for tools whose working steps come from `pvStep`. Returns null for any other step. */
-export const placeValueStepRenderer = (step: WorkingStep): JSX.Element | null => {
+export const placeValueStepRenderer = (step: WorkingStep, _colorScheme?: string, qo?: QOSnapshot): JSX.Element | null => {
   const extra = step.extra as { kind?: string; caption?: string; table?: PlaceValueTableData } | undefined;
   if (extra?.kind !== "placeValueSnapshot" || !extra.table) return null;
   return (
     <div className="flex flex-col gap-3">
       {/* Reserve two lines so the card never changes height as the caption changes between steps. */}
       <p className="text-left" style={{ minHeight: "2.6em", lineHeight: 1.3 }}>{extra.caption}</p>
-      <PlaceValueTable data={extra.table} />
+      <PlaceValueTable data={qo?.variables?.[PV_WORD_HEADERS_KEY] ? { ...extra.table, headerStyle: "words" } : extra.table} />
     </div>
   );
 };
@@ -102,6 +108,9 @@ export const placeValueStepRenderer = (step: WorkingStep): JSX.Element | null =>
 // `<svg data-q-index>` and lays cells out by `_aspect`). Fixed geometry: columns are CW wide,
 // rows ROW_H tall, so a table with fewer columns is simply narrower.
 const SVG_CW = 100, SVG_ROW_H = 72, SVG_HEAD_H = 40, SVG_TITLE_H = 64, SVG_GUTTER = 56, SVG_PAD = 14;
+
+/** Header font size — shrinks long words so they stay inside a 100-wide column. */
+const headFont = (label: string): number => Math.min(22, Math.floor(92 / (label.length * 0.56)));
 
 export const pvSvgSize = (data: PlaceValueTableData, hasTitle: boolean, rowH: number = SVG_ROW_H) => {
   const gutter = data.rows.some((r) => r.kind === "cells" && r.label) ? SVG_GUTTER : 0;
@@ -151,10 +160,10 @@ export function PlaceValueSvg({ data, title, idx, answerIdx, rowH = SVG_ROW_H, f
   return (
     <svg viewBox={`0 0 ${w} ${h}`} style={{ display: "block", width: "100%", height: fill ? "100%" : "auto" }} preserveAspectRatio="xMidYMid meet" {...tag}>
       {title && <text x={x0 + (columns.length * SVG_CW) / 2} y={SVG_PAD + SVG_TITLE_H / 2} textAnchor="middle" dominantBaseline="middle" fontSize={34} fontWeight={700} fill="#000">{title}</text>}
-      {columns.map((c, i) => (
+      {columns.map((_c, i) => (
         <g key={`h${i}`}>
           <rect x={x0 + i * SVG_CW} y={yHead} width={SVG_CW} height={SVG_HEAD_H} fill="#f3f4f6" stroke="#000" strokeWidth={2.5} />
-          <text x={x0 + i * SVG_CW + SVG_CW / 2} y={yHead + SVG_HEAD_H / 2} textAnchor="middle" dominantBaseline="middle" fontSize={22} fontWeight={700} fill="#000">{c}</text>
+          <text x={x0 + i * SVG_CW + SVG_CW / 2} y={yHead + SVG_HEAD_H / 2} textAnchor="middle" dominantBaseline="middle" fontSize={headFont(headerLabel(data, i))} fontWeight={700} fill="#000">{headerLabel(data, i)}</text>
         </g>
       ))}
       {rows.map((row, ri) => {

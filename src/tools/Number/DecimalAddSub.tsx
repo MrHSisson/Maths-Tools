@@ -2,9 +2,9 @@ import { renderToStaticMarkup } from "react-dom/server";
 import {
   ToolShell,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep,
-  type ToolMultiSelect, type ToolDropdown, type ToolVariable, type QOSnapshot, type PlaceValueTableData, type PVCell, type PVRow,
+  type ToolMultiSelect, type ToolVariable, type QOSnapshot, type PlaceValueTableData, type PVCell, type PVRow,
   MathRenderer, randInt, pickActive,
-  PlaceValueTable, PlaceValueSvg, pvSvgSize, pvSvgAspect, pvSvgRowHForAspect, placeValueStepRenderer, pvStep, handlePrint, handleDiagramPrint, PV_COLS_DECIMAL, PV_ONES_DECIMAL,
+  PlaceValueTable, PlaceValueSvg, pvSvgSize, pvSvgAspect, pvSvgRowHForAspect, placeValueStepRenderer, pvStep, handlePrint, handleDiagramPrint, pvColumnSet, pvSlice, pvDisplay, PV_CELL_H, PV_TABLE_START_DD, PV_WORD_HEADERS_VAR, PV_WORD_HEADERS_KEY,
 } from "../../shared";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -30,8 +30,9 @@ type ToolType = "add" | "subtract";
 /** value = int / 10^dp — always non-negative, dp 0–3. */
 interface Dec { int: number; dp: number }
 
-const COLS = PV_COLS_DECIMAL;   // H T O . t h th
-const ONES = PV_ONES_DECIMAL;
+const COLSET = pvColumnSet(3, 3);   // H T O . t h th (letters + words)
+const COLS = COLSET.columns;
+const ONES = COLSET.onesIndex;
 const NCOLS = COLS.length;
 const MAX_DP = 3;
 
@@ -71,18 +72,7 @@ const SUB_SHAPE_MS: ToolMultiSelect = {
   ],
 };
 
-// Display-only: how much of the table is already written in (whiteboard, and worksheet grids).
-// It never changes the question.
-const TABLE_START_DD: ToolDropdown = {
-  key: "tableStart",
-  label: "Table starts",
-  options: [
-    { value: "empty", label: "Empty" },
-    { value: "numbers", label: "Numbers in" },
-    { value: "zeros", label: "Numbers + zeros" },
-  ],
-  defaultValue: "empty",
-};
+const TABLE_START_DD = PV_TABLE_START_DD;
 
 // Worksheet only: give each question its own place value grid (prints via the diagram printer).
 const WS_GRID_VAR: ToolVariable = {
@@ -100,25 +90,25 @@ const TOOL_CONFIG: ToolConfig = {
     add: {
       name: "Adding",
       instruction: "Work out:",
-      variables: [WS_GRID_VAR],
+      variables: [PV_WORD_HEADERS_VAR, WS_GRID_VAR],
       dropdown: TABLE_START_DD,
       multiSelect: PLACES_MS,
       difficultySettings: {
-        level1: { variables: [WS_GRID_VAR], dropdown: TABLE_START_DD, multiSelect: PLACES_MS },
-        level2: { variables: [WS_GRID_VAR], dropdown: TABLE_START_DD, multiSelect: PLACES_MS },
-        level3: { variables: [WS_GRID_VAR], dropdown: TABLE_START_DD, multiSelect: ADD_SHAPE_MS },
+        level1: { variables: [PV_WORD_HEADERS_VAR, WS_GRID_VAR], dropdown: TABLE_START_DD, multiSelect: PLACES_MS },
+        level2: { variables: [PV_WORD_HEADERS_VAR, WS_GRID_VAR], dropdown: TABLE_START_DD, multiSelect: PLACES_MS },
+        level3: { variables: [PV_WORD_HEADERS_VAR, WS_GRID_VAR], dropdown: TABLE_START_DD, multiSelect: ADD_SHAPE_MS },
       },
     },
     subtract: {
       name: "Subtracting",
       instruction: "Work out:",
-      variables: [WS_GRID_VAR],
+      variables: [PV_WORD_HEADERS_VAR, WS_GRID_VAR],
       dropdown: TABLE_START_DD,
       multiSelect: PLACES_MS,
       difficultySettings: {
-        level1: { variables: [WS_GRID_VAR], dropdown: TABLE_START_DD, multiSelect: PLACES_MS },
-        level2: { variables: [WS_GRID_VAR], dropdown: TABLE_START_DD, multiSelect: PLACES_MS },
-        level3: { variables: [WS_GRID_VAR], dropdown: TABLE_START_DD, multiSelect: SUB_SHAPE_MS },
+        level1: { variables: [PV_WORD_HEADERS_VAR, WS_GRID_VAR], dropdown: TABLE_START_DD, multiSelect: PLACES_MS },
+        level2: { variables: [PV_WORD_HEADERS_VAR, WS_GRID_VAR], dropdown: TABLE_START_DD, multiSelect: PLACES_MS },
+        level3: { variables: [PV_WORD_HEADERS_VAR, WS_GRID_VAR], dropdown: TABLE_START_DD, multiSelect: SUB_SHAPE_MS },
       },
     },
   },
@@ -208,13 +198,7 @@ interface Layout { start: number; end: number }
 const FULL: Layout = { start: 0, end: NCOLS };
 const COL_W = 150;
 
-const sliceTable = (t: PlaceValueTableData, { start, end }: Layout): PlaceValueTableData => ({
-  ...t,
-  columns: t.columns.slice(start, end),
-  onesIndex: t.onesIndex - start,
-  highlightCol: t.highlightCol === undefined ? undefined : t.highlightCol - start,
-  rows: t.rows.map((r) => (r.kind === "cells" ? { ...r, cells: r.cells.slice(start, end) } : r)),
-});
+const sliceTable = (t: PlaceValueTableData, { start, end }: Layout): PlaceValueTableData => pvSlice(t, start, end);
 
 /** Columns a question range can need: whole-number columns by tool/level, decimal columns by the
  *  active "Decimal places" options (Level 3 always allows up to 3). */
@@ -239,7 +223,7 @@ const snapTable = (s: Snap, workDp: number, layout: Layout): PlaceValueTableData
     { kind: "cells", cells: botCells, label: s.op },
     { kind: "cells", cells: ansCells, label: "=", rule: true },
   ];
-  return sliceTable({ columns: COLS, onesIndex: ONES, showPoint: true, rows, cellHeight: 64, colWidth: COL_W, highlightCol: s.highlightCol }, layout);
+  return sliceTable({ columns: COLS, columnNames: COLSET.columnNames, onesIndex: ONES, showPoint: true, rows, cellHeight: 64, colWidth: COL_W, highlightCol: s.highlightCol }, layout);
 };
 
 interface Computed { startTables: { numbers: PlaceValueTableData; zeros: PlaceValueTableData }; result: Dec; steps: WorkingStep[]; finalTable: PlaceValueTableData; hasChain: boolean; carried: boolean; exchanged: boolean }
@@ -464,7 +448,8 @@ const generateQuestion = (
   // Worksheet grids (opt-in): each question carries its own place value grid, drawn as an SVG cell.
   const wsOn = variables["wsGrid"] === true;
   const start = dropdownValue === "numbers" || dropdownValue === "zeros" ? dropdownValue : "empty";
-  const wsTable = start === "numbers" ? comp.startTables.numbers : start === "zeros" ? comp.startTables.zeros : emptyTable(op, layout);
+  const hs = variables[PV_WORD_HEADERS_KEY] ? "words" as const : "letters" as const;
+  const wsTable = { ...(start === "numbers" ? comp.startTables.numbers : start === "zeros" ? comp.startTables.zeros : emptyTable(op, layout)), headerStyle: hs };
   const eqText = `${aS} ${op} ${bS} =`;
 
   return {
@@ -474,7 +459,7 @@ const generateQuestion = (
     answer,
     answerLatex: answer,
     working: comp.steps,
-    _pv: { op, a, b, layout, finalTable: comp.finalTable, startTables: comp.startTables },
+    _pv: { op, a, b, layout, finalTable: { ...comp.finalTable, headerStyle: hs }, startTables: comp.startTables },
     _sig: poolSig(multiSelectValues),
     _ws: { on: wsOn, table: wsTable, title: eqText },
     _printText: eqText,
@@ -496,10 +481,10 @@ interface PVData { op: "+" | "−"; a: Dec; b: Dec; layout: Layout; finalTable: 
 
 // One row height for every whiteboard state (empty / prefilled / answered) so the
 // table never resizes or rescales when the answer is revealed.
-const CELL_H = 72;
+const CELL_H = PV_CELL_H;
 
 const emptyTable = (op: "+" | "−", layout: Layout): PlaceValueTableData => sliceTable({
-  columns: COLS, onesIndex: ONES, showPoint: true, cellHeight: CELL_H, colWidth: COL_W,
+  columns: COLS, columnNames: COLSET.columnNames, onesIndex: ONES, showPoint: true, cellHeight: CELL_H, colWidth: COL_W,
   rows: [
     { kind: "cells", cells: blankCells() },
     { kind: "cells", cells: blankCells(), label: op },
@@ -522,7 +507,7 @@ const workingScaffold = {
       : start === "numbers" ? pv.startTables.numbers
       : start === "zeros" ? pv.startTables.zeros
       : emptyTable(pv.op, pv.layout);
-    return <PlaceValueTable data={{ ...base, cellHeight: CELL_H, highlightCol: undefined }} />;
+    return <PlaceValueTable data={pvDisplay(base, qo)} />;
   },
 };
 

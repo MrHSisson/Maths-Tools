@@ -76,6 +76,10 @@ export interface PlaceValueTableData {
   colWidth?: number;
   /** Column index to tint as the "current" column. */
   highlightCol?: number;
+  /** Full-word name for each column ("Tens", "Tenths"…), parallel to `columns` (letters). */
+  columnNames?: string[];
+  /** Which header to draw: the letters in `columns` (default) or the words in `columnNames`. */
+  headerStyle?: "letters" | "words";
 }
 
 export interface RatioTableData {
