@@ -452,11 +452,11 @@ export const WorkedExampleSteps = ({
   );
 
   // In the split (evolving-visual) layout the answer is not a separate box: it is the last line of the
-  // timeline — a green-bordered card on the same spine as the step captions.
+  // timeline — a green "A" marker and the bold green answer on the same spine as the step captions.
   const answerRow = (
     <div className="flex items-start gap-3 py-2">
-      <span className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold" style={{ background: "#16a34a", color: "#fff", border: "2px solid #16a34a", boxShadow: "0 0 0 4px rgba(22,163,74,0.15)" }}>=</span>
-      <div className="min-w-0 flex-1 rounded-xl border-2 bg-white px-4 py-2 text-center font-bold" style={{ borderColor: "#16a34a", color: "#166534", fontSize: compact ? "1.05rem" : "1.35rem" }}>
+      <span className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold" style={{ background: "#16a34a", color: "#fff", border: "2px solid #16a34a", boxShadow: "0 0 0 4px rgba(22,163,74,0.15)" }}>A</span>
+      <div className={`min-w-0 flex-1 font-bold ${compact ? "text-base pt-1" : "text-xl pt-0.5"}`} style={{ color: "#166534" }}>
         <FitWidth>{renderAnswer()}</FitWidth>
       </div>
     </div>
