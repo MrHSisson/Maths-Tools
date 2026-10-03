@@ -62,7 +62,6 @@ const STANDALONE_BY_DESIGN = [
   "Interactive/NegativeCounters",
   "Interactive/ParallelLinesInteractive",
   "Interactive/p-value",
-  "TeacherTools/CallSelector",
   "TeacherTools/CollectLikeSurdsPreview",
   "TeacherTools/ExpandSurdBracketsPreview",
   "TeacherTools/FullExamplePreview",

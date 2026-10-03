@@ -106,7 +106,7 @@ for *that* tool instead of working to one global backlog. It replaces the old "M
 - **Decision Maths (4):** Network Sandbox, Minimum Spanning Tree, Travelling Salesperson, Mixed Strategies — go live with their strand.
 - **Computer Science (1):** 1.1.2 CPU Performance.
 - **Internal / library pages, not meant to go live (14):** Skill Library (parked), Technique Library, the 11 Technique Preview pages, Grapher Lab.
-- **Out of the plan (21 tracked above):** Friday Phonecalls (hidden, `call-selector`) — stripped out of planning 2026-10-04; the code is untouched.
+- Friday Phonecalls (`call-selector`) was deleted 2026-10-04.
 
 ## Mobile / narrow view
 

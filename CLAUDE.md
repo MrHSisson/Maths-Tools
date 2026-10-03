@@ -242,7 +242,7 @@ grep -L "<ToolShell" src/tools/**/*.tsx   # files that do NOT render the shared 
 
 The four **Generator tools** (`TimesTablesGenerator`, `MultiplicationGenerator`, `NegativeOperationsGenerator`, `FunctionalSkillsGenerator`) are **standalone by design, not backlog items** — they exist to batch-produce PDF worksheets, a different purpose from ToolShell's whiteboard/worked-example/worksheet model, and were never meant to migrate. Don't flag them for migration work. If the generator family grows well beyond four, it may be worth a dedicated **Generator shell** — not needed today for four tools that already work well standalone.
 
-AlgebraTiles, NegativeCounters, ParallelLinesInteractive, GrapherLab, SkillLibrary, Visualiser, CallSelector and p-value are standalone by design (not question tools) and never migrate to ToolShell — they are not part of the backlog above even though they don't use the shared shell.
+AlgebraTiles, NegativeCounters, ParallelLinesInteractive, GrapherLab, SkillLibrary, Visualiser and p-value are standalone by design (not question tools) and never migrate to ToolShell — they are not part of the backlog above even though they don't use the shared shell.
 
 **Computer Science tools are not on this backlog.** CS tools (`SystemArchitecture`, `CpuArchitecture`) are knowledge/revision tools, not question generators, and target `CSShell` — never `ToolShell`. Their build work is tracked in `docs/PROJECTS.md` (Computer Science) and `docs/architecture/CS_SHELL_PLAN.md`, not here. So `grep -L "<ToolShell"` will always list them; that is expected, not a to-do.
 
