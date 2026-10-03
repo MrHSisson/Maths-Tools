@@ -93,6 +93,8 @@ export interface RatioTableData {
   headers: string[];
   rows: string[][];
   operations: string[];
+  /** Set by `rStepBuild`: this snapshot is one stage of a table that grows row by row. */
+  grow?: boolean;
 }
 
 export interface ToolDropdown {

@@ -52,8 +52,8 @@ export { randInt, pick, fracStr, mStr, pickActive, normalizeMultiSelect, resolve
 
 // Ratio table — core representation for proportional scaling (speed/distance/
 // time, currency conversion, recipe scaling…). See src/shared/ratioTable.ts.
-export { rStep } from "./ratioTable";
-export { RatioTable, ratioTableStepRenderer } from "./components/RatioTable";
+export { rStep, rStepBuild } from "./ratioTable";
+export { RatioTable, ratioTableStepRenderer, ratioTableStepVisual } from "./components/RatioTable";
 
 // Place value table — core representation for place value (powers of 10,
 // decimal add/subtract…). See src/shared/placeValue.ts.
