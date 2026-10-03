@@ -1,7 +1,7 @@
 import {
   ToolShell,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type QOSnapshot, type WorkingStep,
-  MathRenderer, tStep, PlaceValueTable, pvCells, pvColumnSet, pvDisplay, PV_WORD_HEADERS_VAR, PV_WORD_HEADERS_KEY, type PlaceValueTableData,
+  MathRenderer, tStep, pvStep, placeValueStepRenderer, placeValueStepVisual, PlaceValueTable, pvCells, pvColumnSet, pvDisplay, PV_WORD_HEADERS_VAR, PV_WORD_HEADERS_KEY, type PlaceValueTableData,
 } from "../../shared";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -29,6 +29,7 @@ import {
 type ToolType = "directCalc";
 
 interface RawValues {
+  level: DifficultyLevel;
   vin: number;
   vout: number;
   power: number;
@@ -247,10 +248,17 @@ const buildDisplay = (rv: RawValues): Built => {
   const direction = op === "multiply" ? "left" : "right";
   const zPlural = zeros !== 1 ? "s" : "";
 
-  const working: WorkingStep[] = [
-    tStep(`${pPlain} has ${zeros} zero${zPlural}, so every digit moves ${zeros} place${zPlural}.`),
-    tStep(`${op === "multiply" ? "Multiplying" : "Dividing"} makes the number ${op === "multiply" ? "bigger" : "smaller"}, so the digits move ${direction}.`),
-  ];
+  const c1 = `${pPlain} has ${zeros} zero${zPlural}, so every digit moves ${zeros} place${zPlural}.`;
+  const c2 = `${op === "multiply" ? "Multiplying" : "Dividing"} makes the number ${op === "multiply" ? "bigger" : "smaller"}, so the digits move ${direction}.`;
+  // Levels 1–2 draw the place value grid: ONE table that develops beside the captions (the number goes in,
+  // the direction is stated, the digits slide). Level 3 numbers are too extreme to grid — text steps only.
+  const working: WorkingStep[] = rv.level === "level3"
+    ? [tStep(c1), tStep(c2)]
+    : [
+        pvStep(c1, gridData(rv.level, vin, vout, op, zeros, "vin")),
+        pvStep(c2, gridData(rv.level, vin, vout, op, zeros, "move")),
+        pvStep(`Move every digit ${zeros} place${zPlural} ${direction}: ${formatNumber(vin)} ${opPlain} ${pPlain} = ${formatNumber(vout)}`, gridData(rv.level, vin, vout, op, zeros, "all")),
+      ];
 
   return {
     displayLatex: `${toLatexNum(vin)} ${opLatex} ${pLatex}`,
@@ -278,7 +286,7 @@ const generateQuestion = (
 
   const { vin, vout, power } = computeQuestion(level, op);
   const zeros = countZeros(power);
-  const rv: RawValues = { vin, vout, power, op, zeros, usePowers };
+  const rv: RawValues = { level, vin, vout, power, op, zeros, usePowers };
   const built = buildDisplay(rv);
   const grid: GridData = { vin, vout, op, zeros, level };
 
@@ -323,6 +331,27 @@ const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null =>
 
 // ── 9. Place value grid ────────────────────────────────────────────────────────
 
+/** The three-row grid at a stage: "blank" (to write into), "vin" (the number placed), "move" (the direction
+ *  stated), "all" (the answer row filled). Same three rows and row height in every state, so it never
+ *  resizes as it develops. */
+type GridStage = "blank" | "vin" | "move" | "all";
+const gridData = (level: DifficultyLevel, vin: number, vout: number, op: "multiply" | "divide", zeros: number, stage: GridStage): PlaceValueTableData => {
+  const set = getPlaceValueSet(level);
+  const { columns, onesIndex } = set;
+  const plain = (n: number) => formatNumber(n).replace(/,/g, "");
+  const blank = columns.map(() => "");
+  const zPlural = zeros !== 1 ? "s" : "";
+  return {
+    ...set,
+    showPoint: level === "level2",
+    rows: [
+      { kind: "cells", cells: stage === "blank" ? blank : pvCells(plain(vin), columns, onesIndex) },
+      { kind: "banner", text: stage === "move" || stage === "all" ? `↓ ${op === "multiply" ? "Move LEFT" : "Move RIGHT"} by ${zeros} place${zPlural}` : "↓" },
+      { kind: "cells", cells: stage === "all" ? pvCells(plain(vout), columns, onesIndex) : blank },
+    ],
+  };
+};
+
 function PlaceValueGrid({ vin, vout, op, zeros, level, filled, qo }: GridData & { filled: boolean; qo?: QOSnapshot }) {
   const zPlural = zeros !== 1 ? "s" : "";
 
@@ -341,23 +370,7 @@ function PlaceValueGrid({ vin, vout, op, zeros, level, filled, qo }: GridData & 
     );
   }
 
-  const set = getPlaceValueSet(level);
-  const { columns, onesIndex } = set;
-  const plain = (n: number) => formatNumber(n).replace(/,/g, "");
-  const blank = columns.map(() => "");
-
-  // Same three rows in every state (empty / answered), at the shared row height, so the grid
-  // never resizes or rescales when Show Answer fills it in.
-  const data: PlaceValueTableData = pvDisplay({
-    ...set,
-    showPoint: level === "level2",
-    rows: [
-      { kind: "cells", cells: filled ? pvCells(plain(vin), columns, onesIndex) : blank },
-      { kind: "banner", text: filled ? `↓ ${op === "multiply" ? "Move LEFT" : "Move RIGHT"} by ${zeros} place${zPlural}` : "↓" },
-      { kind: "cells", cells: filled ? pvCells(plain(vout), columns, onesIndex) : blank },
-    ],
-  }, qo);
-  return <PlaceValueTable data={data} />;
+  return <PlaceValueTable data={pvDisplay(gridData(level, vin, vout, op, zeros, filled ? "all" : "blank"), qo)} />;
 }
 
 // ── 10. questionRenderer ───────────────────────────────────────────────────────
@@ -416,7 +429,7 @@ const questionRenderer = (
         )}
       </div>
       {/* Whiteboard: the grid is ToolShell's hideable workingScaffold (below). Worked example: filled grid here. */}
-      {grid && !isWhiteboard && <PlaceValueGrid {...grid} filled={showAnswer} qo={qo} />}
+      {grid && !isWhiteboard && grid.level === "level3" && <PlaceValueGrid {...grid} filled={showAnswer} qo={qo} />}
     </div>
   );
 };
@@ -434,6 +447,8 @@ export default function App() {
       generateQuestion={generateQuestion}
       reformatQuestion={reformatQuestion}
       questionRenderer={questionRenderer}
+      stepRenderer={placeValueStepRenderer}
+      stepVisualRenderer={placeValueStepVisual}
       workingScaffold={workingScaffold}
       defaults={{
         collapseWorkingByDefault: true,
