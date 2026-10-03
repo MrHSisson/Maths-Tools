@@ -1,3 +1,4 @@
+import type React from "react";
 import type { Counter, CounterBoardData, CounterState } from "../counters";
 import { COUNTER_POS, COUNTER_NEG } from "../counters";
 import type { QOSnapshot, WorkingStep } from "../types";
@@ -7,6 +8,8 @@ import type { QOSnapshot, WorkingStep } from "../types";
 
 const DARK_POS = "#a16207";
 const DARK_NEG = "#b91c1c";
+/** Outline colour of a zero pair's box. */
+export const PAIR_BOX = "#38a9e0";
 
 /** One counter. `size` is the diameter in px. */
 export function CounterDot({ c, size = 44 }: { c: Counter; size?: number }) {
@@ -24,8 +27,8 @@ export function CounterDot({ c, size = 44 }: { c: Counter; size?: number }) {
         color: pos ? "#713f12" : "#fff",
         fontWeight: 800, fontSize: size * 0.4, lineHeight: 1, letterSpacing: -0.5,
         opacity: removed ? 0.28 : 1,
-        // paired = circled as one zero pair; new = just placed
-        boxShadow: state === "paired" ? "0 0 0 3px #fff, 0 0 0 6px #4f46e5" : state === "new" ? "0 0 0 3px #fff, 0 0 0 5px #0f172a" : undefined,
+        // a zero pair is shown by boxing the + over the − (PairBox), not by ringing each counter; new = just placed
+        boxShadow: state === "new" ? "0 0 0 3px #fff, 0 0 0 5px #0f172a" : undefined,
         transition: "opacity 0.3s ease, box-shadow 0.3s ease",
       }}
     >
@@ -34,14 +37,27 @@ export function CounterDot({ c, size = 44 }: { c: Counter; size?: number }) {
   );
 }
 
+/** Frame style for a zero pair: a rounded blue box around a + stacked over a −. */
+export const pairBoxStyle: React.CSSProperties = { border: `3px solid ${PAIR_BOX}`, borderRadius: 14, boxSizing: "border-box" };
+
+/** A zero pair: a yellow counter above a red one, boxed together. */
+export function PairBox({ size = 44 }: { size?: number }) {
+  return (
+    <div style={{ ...pairBoxStyle, display: "flex", flexDirection: "column", alignItems: "center", gap: Math.round(size * 0.18), padding: `${Math.round(size * 0.14)}px ${Math.round(size * 0.12)}px` }}>
+      <CounterDot c={{ sign: 1, state: "paired" }} size={size} />
+      <CounterDot c={{ sign: -1, state: "paired" }} size={size} />
+    </div>
+  );
+}
+
 /** The representation table: a + row above a − row, counters aligned in columns. A column holding both a + and
- *  a − is a zero pair and gets a shaded band. The label column is split from the counters by a vertical rule
+ *  a − is a zero pair and is boxed. The label column is split from the counters by a vertical rule
  *  and the rows by a horizontal one, so everything stays in place. */
 function CounterMat({ data, size = 44 }: { data: CounterBoardData; size?: number }) {
   const pos = data.rows[0]?.counters ?? [], neg = data.rows[1]?.counters ?? [];
   const cols = Math.max(pos.length, neg.length, 1);
-  const laneH = size + 20, slot = size + 10;
-  const paired = (i: number) => pos[i] !== undefined && neg[i] !== undefined;
+  const laneH = size + 20, slot = size + 18;
+  const paired = (i: number) => pos[i] !== undefined && neg[i] !== undefined && pos[i].state !== "removed" && neg[i].state !== "removed";
   const cell = (cs: Counter[], i: number) => (
     <div key={i} style={{ width: slot, height: laneH, display: "flex", alignItems: "center", justifyContent: "center" }}>
       {cs[i] && <CounterDot c={cs[i]} size={size} />}
@@ -51,9 +67,9 @@ function CounterMat({ data, size = 44 }: { data: CounterBoardData; size?: number
     <div className="w-full flex flex-col gap-3">
       <div className="mx-auto max-w-full overflow-x-auto">
         <div style={{ position: "relative", display: "grid", gridTemplateColumns: `56px repeat(${cols}, ${slot}px)`, gridTemplateRows: `${laneH}px ${laneH}px`, border: "2px solid #cbd5e1", borderRadius: 12, background: "#fff", width: "max-content" }}>
-          {/* shaded bands behind columns that hold a +/− pair */}
+          {/* a +/− pair in one column is a zero pair: box it, like the pairs in the free-standing rows */}
           {Array.from({ length: cols }, (_, i) => paired(i) && (
-            <div key={`b${i}`} style={{ position: "absolute", left: 56 + i * slot, top: 0, width: slot, height: laneH * 2, background: "rgba(79,70,229,0.07)", borderLeft: "1px dashed #a5b4fc", borderRight: "1px dashed #a5b4fc" }} />
+            <div key={`b${i}`} style={{ ...pairBoxStyle, position: "absolute", left: 56 + i * slot + 3, top: 4, width: slot - 6, height: laneH * 2 - 8, zIndex: 2, pointerEvents: "none" }} />
           ))}
           {/* label column + the two rules */}
           <div style={{ gridColumn: 1, gridRow: 1, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 34, fontWeight: 800, color: "#a16207", borderRight: "3px solid #334155", borderBottom: "3px solid #334155", zIndex: 1 }}>+</div>
@@ -81,7 +97,12 @@ export function CounterBoard({ data, size = 44 }: { data: CounterBoardData; size
         <div key={ri} className="flex items-center gap-4 rounded-xl border-2 border-slate-200 bg-white px-4 py-3" style={{ minHeight: size + 24 }}>
           {hasLabel && <div className="w-24 shrink-0 text-left text-sm font-bold text-slate-500">{row.label ?? ""}</div>}
           <div className="flex flex-wrap items-center gap-2">
-            {row.counters.map((c, ci) => <CounterDot key={ci} c={c} size={size} />)}
+            {row.counters.map((c, ci, all) => {
+              // a paired + followed by a paired − is one zero pair: stack them in a box
+              if (c.state === "paired" && c.sign > 0 && all[ci + 1]?.state === "paired" && all[ci + 1].sign < 0) return <PairBox key={ci} size={size} />;
+              if (c.state === "paired" && c.sign < 0 && all[ci - 1]?.state === "paired" && all[ci - 1].sign > 0) return null;
+              return <CounterDot key={ci} c={c} size={size} />;
+            })}
           </div>
         </div>
       ))}

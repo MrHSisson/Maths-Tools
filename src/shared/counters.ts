@@ -17,7 +17,7 @@ import { tStep } from "./helpers";
 export const COUNTER_POS = "#facc15";   // = algebra tiles' "1"
 export const COUNTER_NEG = "#ef4444";   // = algebra tiles' negatives
 
-/** normal · paired (circled as part of a zero pair) · removed (taken away, ghosted) · new (just placed). */
+/** normal · paired (part of a zero pair, drawn boxed with the + over the −) · removed (taken away, ghosted) · new (just placed). */
 export type CounterState = "normal" | "paired" | "removed" | "new";
 export interface Counter { sign: 1 | -1; state?: CounterState; }
 export interface CounterRow {
@@ -47,7 +47,7 @@ export const zeroPairs = (n: number, state: CounterState = "paired"): Counter[] 
 
 /**
  * The representation table ("mat"): positives in the top row, negatives in the bottom row, aligned in
- * columns. `pairs` marks the first min(pos, neg) columns as zero pairs (circled); `collapsed` ghosts them
+ * columns. `pairs` marks the first min(pos, neg) columns as zero pairs (boxed); `collapsed` ghosts them
  * instead, showing they cancel to nothing and what remains is the answer.
  */
 export const matBoard = (pos: number, neg: number, opts: { pairs?: boolean; collapsed?: boolean; footer?: string } = {}): CounterBoardData => {

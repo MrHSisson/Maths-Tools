@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Home, Undo2, Trash2, LayoutGrid, Hand, RefreshCw, X, Menu } from "lucide-react";
-import { CounterDot, type CounterState } from "../../shared";
+import { CounterDot, pairBoxStyle, type CounterState } from "../../shared";
 
 // Negative Counters — an interactive sandbox, the directed-number sibling of Algebra Tiles. Yellow counters
 // are +1, red counters are −1, and one of each is a zero pair. Drag counters out of the tray, move them,
@@ -11,7 +11,7 @@ import { CounterDot, type CounterState } from "../../shared";
 // yellow and red appear in question working steps, so the sandbox and the solutions look identical.
 
 interface CounterItem { id: number; sign: 1 | -1; x: number; y: number; pairId?: number; col?: number; }
-/** What happens when a +1 is dropped onto a −1: they sit together as a circled zero pair, or both collapse to nothing. */
+/** What happens when a +1 is dropped onto a −1: they sit together as a boxed zero pair, or both collapse to nothing. */
 type Meet = "pair" | "collapse";
 /** "free": drag counters anywhere. "table": the + / − representation table — yellows sit in the top row, reds in
  *  the bottom row, aligned in columns, so a + above a − reads as a zero pair and nothing wanders. */
@@ -21,7 +21,9 @@ type Mode = "move" | "flip" | "delete";
 const SIZE = 52;
 const SNAP = 13;
 const PAD = 12;
-const SLOT = SIZE + 8;
+const SLOT = SIZE + 20;
+const PAIR_GAP = 6;   // between the + and the − of a boxed zero pair
+const PAIR_PAD = 7;   // box margin around a zero pair
 let nextId = 1;
 let nextPairId = 1;
 
@@ -139,6 +141,18 @@ export default function App() {
     return { x: PAD, y: PAD };
   };
 
+  // First slot with room for a stacked + over − pair (and its box).
+  const freePairSlot = (list: CounterItem[]): { x: number; y: number } => {
+    const w = boardRef.current?.clientWidth ?? 600;
+    const cols = Math.max(1, Math.floor((w - PAD) / SLOT));
+    const rowH = SIZE * 2 + PAIR_GAP + 2 * PAIR_PAD + 10;
+    for (let i = 0; i < 400; i++) {
+      const x = PAD + PAIR_PAD + (i % cols) * SLOT, y = PAD + PAIR_PAD + Math.floor(i / cols) * rowH;
+      if (!list.some((c) => Math.abs(c.x - x) < SIZE && c.y > y - SIZE && c.y < y + SIZE * 2 + PAIR_GAP)) return { x, y };
+    }
+    return { x: PAD, y: PAD };
+  };
+
   const addCounter = (sign: 1 | -1) => {
     if (layoutRef.current === "table") {
       // table: the counter drops into its own row (yellow top, red bottom); "collapse" cancels it at once
@@ -160,11 +174,11 @@ export default function App() {
       commit([...cur, { id: nextId++, sign: 1, x: 0, y: 0, pairId: pid, col }, { id: nextId++, sign: -1, x: 0, y: 0, pairId: pid, col }]);
       return;
     }
-    const a = freeSlot(cur);
     const pid = nextPairId++;
-    const first = { id: nextId++, sign: 1 as const, ...a, pairId: pid };
-    const b = freeSlot([...cur, first]);
-    commit([...cur, first, { id: nextId++, sign: -1 as const, ...b, pairId: pid }]);
+    const a = freePairSlot(cur);
+    commit([...cur,
+      { id: nextId++, sign: 1 as const, x: a.x, y: a.y, pairId: pid },
+      { id: nextId++, sign: -1 as const, x: a.x, y: a.y + SIZE + PAIR_GAP, pairId: pid }]);
   };
 
   // Take away every zero pair currently on the board (each yellow with its nearest red).
@@ -236,8 +250,14 @@ export default function App() {
             next = next.filter((c) => c.id !== me.id && c.id !== other.id);
           } else {
             const pid = nextPairId++;
-            // sit side by side: the dropped counter snaps to the right of its partner
-            next = next.map((c) => (c.id === me.id ? { ...c, x: other.x + SIZE + 4, y: other.y, pairId: pid } : c.id === other.id ? { ...c, pairId: pid } : c));
+            // stack as a boxed zero pair: the + above the −, the dropped counter snapping next to its partner
+            const topY = me.sign > 0 ? other.y - SIZE - PAIR_GAP : other.y;
+            const lift = Math.max(0, PAIR_PAD - topY);
+            next = next.map((c) => {
+              if (c.id === me.id) return { ...c, x: other.x, y: (me.sign > 0 ? topY : other.y + SIZE + PAIR_GAP) + lift, pairId: pid };
+              if (c.id === other.id) return { ...c, y: other.y + lift, pairId: pid };
+              return c;
+            });
           }
         }
         setHistory((h) => [...h.slice(-50), d.before]);
@@ -336,7 +356,7 @@ export default function App() {
             <Btn on={layout === "table"} title={hint}
               onClick={() => { const l = layout === "table" ? "free" : "table"; setLayout(l); if (l === "table") setItems((cur) => ensureCols(cur)); }} label="Table" />
             <Btn on={meet === "collapse"} onClick={() => setMeet((m) => (m === "pair" ? "collapse" : "pair"))} label="Collapse"
-              title={meet === "collapse" ? "A + meeting a − cancels and disappears. Click to pair them up instead." : "A + meeting a − sits as a circled zero pair. Click to make them disappear instead."} />
+              title={meet === "collapse" ? "A + meeting a − cancels and disappears. Click to pair them up instead." : "A + meeting a − sits as a boxed zero pair. Click to make them disappear instead."} />
             <Btn on={false} onClick={addZeroPair} label="+ Pair" title="Add a zero pair" />
             <Btn on={false} onClick={removeZeroPairs} label="ZP" disabled={!zpAvailable}
               activeColor="#dcfce7" activeText="#166534" title="Remove zero pairs" />
@@ -374,9 +394,11 @@ export default function App() {
             {table && (
               <>
                 <div style={{ position: "absolute", left: 0, right: 0, top: 0, height: LANE_H * 2, background: "#fff" }} />
-                {/* zero-pair columns */}
-                {[...table.full].map((i) => (
-                  <div key={`b${i}`} style={{ position: "absolute", left: LABEL_W + i * SLOT, top: 0, width: SLOT, height: LANE_H * 2, background: "rgba(79,70,229,0.07)", borderLeft: "1px dashed #a5b4fc", borderRight: "1px dashed #a5b4fc" }} />
+                {/* zero pairs: a rounded box round the + over the − */}
+                {[...table.full].filter((i) => items.filter((c) => table.at.get(c.id)?.col === i).every((c) => paired.has(c.id))).map((i) => (
+                  <div key={`b${i}`} style={{ ...pairBoxStyle, position: "absolute", zIndex: 2, pointerEvents: "none",
+                    left: LABEL_W + 10 + i * SLOT - PAIR_PAD, top: (LANE_H - SIZE) / 2 - PAIR_PAD,
+                    width: SIZE + PAIR_PAD * 2, height: LANE_H + SIZE + PAIR_PAD * 2 }} />
                 ))}
                 {/* the two rules and the + / − labels */}
                 <div style={{ position: "absolute", left: LABEL_W, top: 0, width: 3, height: LANE_H * 2, background: "#334155" }} />
@@ -394,6 +416,13 @@ export default function App() {
                 </div>
               </div>
             )}
+            {!table && [...new Set(items.filter((c) => c.pairId !== undefined).map((c) => c.pairId!))].map((pid) => {
+              const two = items.filter((c) => c.pairId === pid);
+              if (two.length !== 2) return null;
+              const x = Math.min(two[0].x, two[1].x), y = Math.min(two[0].y, two[1].y), y2 = Math.max(two[0].y, two[1].y);
+              return <div key={`p${pid}`} style={{ ...pairBoxStyle, position: "absolute", pointerEvents: "none", zIndex: 0,
+                left: x - PAIR_PAD, top: y - PAIR_PAD, width: SIZE + PAIR_PAD * 2, height: y2 - y + SIZE + PAIR_PAD * 2 }} />;
+            })}
             {items.map((c) => {
               const state: CounterState = paired.has(c.id) ? "paired" : "normal";
               const tp = table?.at.get(c.id);

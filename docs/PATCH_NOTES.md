@@ -41,6 +41,7 @@ Keep the split even when a session only touches one.
 - **Notes workflow:** Harry's planner now holds the human-readable layer (Build Log, Feature Tracker with linked feature blocks, Representations); `CLAUDE.md` "Ending a session" gained a step to update it each session.
 - Not yet wired into a question tool — Integer Add/Sub is the first target (representation switch: counters → number line).
 - **Sandbox layout now matches Algebra Tiles:** blue header with burger menu (Value Summary toggle), narrow panel (Table / Collapse / + Pair / ZP buttons, undo / clear / tidy, Positive and Negative counters), dot-grid canvas with a floating dark Move / Flip / Take away hotbar, and a Value bar along the bottom. Behaviour unchanged.
+- **Zero pairs are boxed, not circled:** a + stacked over a − inside a rounded blue frame (shared `PairBox` / `pairBoxStyle`), instead of a ring on each counter plus a shaded column. Applies to the mat table, free-standing `zeroPairs` rows, and the sandbox (Free: pairs stack and box when dropped together or added with + Pair; Table: each matched column is boxed). Unpaired counters sit outside the boxes.
 
 ## 2026-10-03 — Developing worked-example visuals rolled out (graphs, ratio tables, place value, number lines)
 
