@@ -19,17 +19,18 @@ type Layout = "free" | "table";
 /** move = the Select tool; flip / delete are this sandbox's own tools; pan / pen / eraser are the shared whiteboard tools. */
 type Mode = "move" | "flip" | "delete" | "pan" | "pen" | "eraser";
 
-const SIZE = 52;
+const SIZE = 38;
 const SNAP = 13;
 const PAD = 12;
-const SLOT = SIZE + 20;
-const PAIR_GAP = 6;   // between the + and the − of a boxed zero pair
-const PAIR_PAD = 7;   // box margin around a zero pair
+const SLOT = SIZE + 18;
+const PAIR_GAP = 5;   // between the + and the − of a boxed zero pair
+const SELECTED_BOX = { background: "rgba(56,169,224,0.14)", boxShadow: "0 0 0 3px rgba(56,169,224,0.28)" };   // a pair picked up as a group
+const PAIR_PAD = 6;   // box margin around a zero pair
 let nextId = 1;
 let nextPairId = 1;
 
-const LABEL_W = 56;
-const LANE_H = SIZE + 24;
+const LABEL_W = 48;
+const LANE_H = SIZE + 20;
 
 const snap = (v: number) => Math.round(v / SNAP) * SNAP;
 
@@ -125,7 +126,10 @@ export default function App() {
   const panDragRef = useRef<{ sx: number; sy: number; px: number; py: number } | null>(null);
   const [meet, setMeet] = useState<Meet>("pair");
   const [layout, setLayout] = useState<Layout>("free");
-  const [dragId, setDragId] = useState<number | null>(null);
+  const [dragIds, setDragIds] = useState<number[]>([]);
+  const [selKey, setSelKey] = useState<string | null>(null);   // the zero pair (group) last pressed
+  const pressedCounter = useRef(false);
+  const lastDown = useRef<{ key: string; t: number } | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
   const itemsRef = useRef(items);
   itemsRef.current = items;
@@ -134,7 +138,8 @@ export default function App() {
   modeRef.current = mode;
   const layoutRef = useRef(layout);
   layoutRef.current = layout;
-  const dragRef = useRef<{ id: number; dx: number; dy: number; before: CounterItem[]; moved: boolean } | null>(null);
+  /** A drag moves one counter, or both counters of a zero pair together (a group), each keeping its own offset from the pointer. */
+  const dragRef = useRef<{ ids: number[]; primary: number; offs: Record<number, { dx: number; dy: number }>; before: CounterItem[]; moved: boolean } | null>(null);
 
   const commit = useCallback((next: CounterItem[], before = itemsRef.current) => {
     setHistory((h) => [...h.slice(-50), before]);
@@ -226,38 +231,50 @@ export default function App() {
       if (!d) return;
       const p = toBoard(e.clientX, e.clientY);
       d.moved = true;
-      setItems((cur) => cur.map((c) => (c.id === d.id ? { ...c, x: p.x - d.dx, y: p.y - d.dy } : c)));
+      setItems((cur) => cur.map((c) => (d.offs[c.id] ? { ...c, x: p.x - d.offs[c.id].dx, y: p.y - d.offs[c.id].dy } : c)));
     };
     const up = (e: PointerEvent) => {
       const d = dragRef.current;
       if (!d) return;
       dragRef.current = null;
-      setDragId(null);
+      setDragIds([]);
       const p = toBoard(e.clientX, e.clientY);
       const outside = p.rx < 0 || p.ry < 0 || p.rx > p.rw || p.ry > p.rh;
       const cur = itemsRef.current;
       if (outside) {
         // dropped back on the tray → put it away
         setHistory((h) => [...h.slice(-50), d.before]);
-        setItems(cur.filter((c) => c.id !== d.id));
+        setItems(cur.filter((c) => !d.offs[c.id]));
       } else if (d.moved && layoutRef.current === "table") {
         // Snap into the nearest column of the counter's own row; if that cell is taken the two swap places.
-        const me = cur.find((c) => c.id === d.id)!;
+        const me = cur.find((c) => c.id === d.primary)!;
         const maxCol = Math.max(0, Math.floor((p.w - LABEL_W - 10) / SLOT) - 1);
         const col = Math.max(0, Math.min(maxCol, Math.round((me.x - LABEL_W - 10) / SLOT)));
-        const lane = me.sign > 0 ? 0 : 1;
-        const occ = cur.find((c) => c.id !== me.id && (c.sign > 0 ? 0 : 1) === lane && c.col === col);
-        let next = cur.map((c) => (c.id === me.id ? { ...c, col } : occ && c.id === occ.id ? { ...c, col: me.col } : c));
+        let next: CounterItem[];
+        if (d.ids.length > 1) {
+          // a whole zero-pair column moves: whatever sits in the target column swaps into the vacated one
+          next = cur.map((c) => (d.offs[c.id] ? { ...c, col } : c.col === col ? { ...c, col: me.col } : c));
+        } else {
+          const lane = me.sign > 0 ? 0 : 1;
+          const occ = cur.find((c) => c.id !== me.id && (c.sign > 0 ? 0 : 1) === lane && c.col === col);
+          next = cur.map((c) => (c.id === me.id ? { ...c, col } : occ && c.id === occ.id ? { ...c, col: me.col } : c));
+        }
         next = ensureCols(next);
         if (meetRef.current === "collapse") next = collapseTable(next);
         setHistory((h) => [...h.slice(-50), d.before]);
         setItems(next);
+      } else if (d.moved && d.ids.length > 1) {
+        // a zero pair moved as one: snap it as a unit so the boxed pair stays together
+        const me = cur.find((c) => c.id === d.primary)!;
+        const ddx = snap(me.x) - me.x, ddy = snap(me.y) - me.y;
+        setHistory((h) => [...h.slice(-50), d.before]);
+        setItems(cur.map((c) => (d.offs[c.id] ? { ...c, x: c.x + ddx, y: c.y + ddy } : c)));
       } else if (d.moved) {
-        let next = cur.map((c) => (c.id === d.id
+        let next = cur.map((c) => (c.id === d.primary
           ? { ...c, x: snap(c.x), y: snap(c.y) }
           : c));
         // A +1 dropped on a −1 (or the reverse) meets its opposite: pair up, or collapse to nothing.
-        const me = next.find((c) => c.id === d.id)!;
+        const me = next.find((c) => c.id === d.primary)!;
         const other = next
           .filter((c) => c.id !== me.id && c.sign !== me.sign && c.pairId === undefined)
           .map((c) => ({ c, dist: Math.hypot(c.x - me.x, c.y - me.y) }))
@@ -325,6 +342,7 @@ export default function App() {
   }, []);
 
   const onCanvasDown = (e: React.PointerEvent) => {
+    if (pressedCounter.current) pressedCounter.current = false; else setSelKey(null);
     if (dragRef.current) return;
     if (mode === "pan") {
       panDragRef.current = { sx: e.clientX, sy: e.clientY, px: pan.x, py: pan.y };
@@ -358,9 +376,32 @@ export default function App() {
     }
     const p = toBoard(e.clientX, e.clientY);
     const before = itemsRef.current;
-    if (c.pairId !== undefined) setItems(unpair(before));
-    dragRef.current = { id: c.id, dx: p.x - c.x, dy: p.y - c.y, before, moved: false };
-    setDragId(c.id);
+    pressedCounter.current = true;
+    // A zero pair is a group: one press picks up both, a quick second press breaks it and takes just this one.
+    const tableMode = layoutRef.current === "table";
+    const cols = tableMode ? ensureCols(before) : before;
+    const mate = tableMode
+      ? cols.filter((x) => x.col === (cols.find((y) => y.id === c.id)?.col) && x.id !== c.id && x.sign !== c.sign)[0]
+      : c.pairId !== undefined ? before.find((x) => x.id !== c.id && x.pairId === c.pairId) : undefined;
+    const key = mate ? (tableMode ? `c${cols.find((y) => y.id === c.id)!.col}` : `p${c.pairId}`) : null;
+    const now = Date.now();
+    const again = key !== null && lastDown.current?.key === key && now - lastDown.current.t < 450;
+    lastDown.current = { key: key ?? "", t: now };
+    const group = key !== null && !again;
+    if (key !== null) setSelKey(again ? null : key); else setSelKey(null);
+    if (again && c.pairId !== undefined) setItems(unpair(before));
+    const members = group && mate ? [c, mate] : [c];
+    // table counters have no x / y of their own: start from where they are drawn
+    const vis = (m: CounterItem) => {
+      const cm = cols.find((y) => y.id === m.id)!;
+      return tableMode ? { x: LABEL_W + 10 + (cm.col ?? 0) * SLOT, y: (m.sign > 0 ? 0 : LANE_H) + (LANE_H - SIZE) / 2 } : { x: m.x, y: m.y };
+    };
+    const offs: Record<number, { dx: number; dy: number }> = {};
+    const starts = new Map<number, { x: number; y: number }>();
+    for (const m of members) { const v = vis(m); starts.set(m.id, v); offs[m.id] = { dx: p.x - v.x, dy: p.y - v.y }; }
+    if (tableMode) setItems((cur) => cur.map((x) => (starts.has(x.id) ? { ...x, ...starts.get(x.id)! } : x)));
+    dragRef.current = { ids: members.map((m) => m.id), primary: c.id, offs, before, moved: false };
+    setDragIds(members.map((m) => m.id));
   };
   // Pull a fresh counter out of the tray: it appears under the pointer and carries on as a normal drag.
   const startTrayDrag = (e: React.PointerEvent, sign: 1 | -1) => {
@@ -369,14 +410,14 @@ export default function App() {
     const c: CounterItem = { id: nextId++, sign, x: p.x - SIZE / 2, y: p.y - SIZE / 2 };
     const before = itemsRef.current;
     setItems([...before, c]);
-    dragRef.current = { id: c.id, dx: SIZE / 2, dy: SIZE / 2, before, moved: true };
-    setDragId(c.id);
+    dragRef.current = { ids: [c.id], primary: c.id, offs: { [c.id]: { dx: SIZE / 2, dy: SIZE / 2 } }, before, moved: true };
+    setDragIds([c.id]);
   };
 
   const pos = items.filter((c) => c.sign > 0).length;
   const neg = items.length - pos;
   // Table: the counter being dragged has no cell until it is dropped, so it is left out of the columns/bands.
-  const placed = layout === "table" ? ensureCols(items.filter((c) => c.id !== dragId)) : items;
+  const placed = layout === "table" ? ensureCols(items.filter((c) => !dragIds.includes(c.id))) : items;
   const table = layout === "table" ? tableLayout(placed) : null;
   const paired = table
     ? (meet === "pair" ? tableMatched(placed) : new Set<number>(items.filter((c) => c.pairId !== undefined).map((c) => c.id)))
@@ -478,7 +519,7 @@ export default function App() {
                 <div style={{ position: "absolute", left: 0, right: 0, top: 0, height: LANE_H * 2, background: "#fff" }} />
                 {/* zero pairs: a rounded box round the + over the − */}
                 {[...table.full].filter((i) => items.filter((c) => table.at.get(c.id)?.col === i).every((c) => paired.has(c.id))).map((i) => (
-                  <div key={`b${i}`} style={{ ...pairBoxStyle, position: "absolute", zIndex: 2, pointerEvents: "none",
+                  <div key={`b${i}`} style={{ ...pairBoxStyle, ...(selKey === `c${i}` ? SELECTED_BOX : null), position: "absolute", zIndex: 2, pointerEvents: "none",
                     left: LABEL_W + 10 + i * SLOT - PAIR_PAD, top: (LANE_H - SIZE) / 2 - PAIR_PAD,
                     width: SIZE + PAIR_PAD * 2, height: LANE_H + SIZE + PAIR_PAD * 2 }} />
                 ))}
@@ -486,15 +527,15 @@ export default function App() {
                 <div style={{ position: "absolute", left: LABEL_W, top: 0, width: 3, height: LANE_H * 2, background: "#334155" }} />
                 <div style={{ position: "absolute", left: 0, right: 0, top: LANE_H - 1, height: 3, background: "#334155" }} />
                 <div style={{ position: "absolute", left: 0, right: 0, top: LANE_H * 2 - 1, height: 3, background: "#334155" }} />
-                <div style={{ position: "absolute", left: 0, top: 0, width: LABEL_W, height: LANE_H, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40, fontWeight: 800, color: "#a16207" }}>+</div>
-                <div style={{ position: "absolute", left: 0, top: LANE_H, width: LABEL_W, height: LANE_H, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40, fontWeight: 800, color: "#b91c1c" }}>−</div>
+                <div style={{ position: "absolute", left: 0, top: 0, width: LABEL_W, height: LANE_H, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30, fontWeight: 800, color: "#a16207", cursor: "pointer", zIndex: 3 }} title="Add a +1" onClick={() => addCounter(1)}>+</div>
+                <div style={{ position: "absolute", left: 0, top: LANE_H, width: LABEL_W, height: LANE_H, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30, fontWeight: 800, color: "#b91c1c", cursor: "pointer", zIndex: 3 }} title="Add a −1" onClick={() => addCounter(-1)}>−</div>
               </>
             )}
             {!table && [...new Set(items.filter((c) => c.pairId !== undefined).map((c) => c.pairId!))].map((pid) => {
               const two = items.filter((c) => c.pairId === pid);
               if (two.length !== 2) return null;
               const x = Math.min(two[0].x, two[1].x), y = Math.min(two[0].y, two[1].y), y2 = Math.max(two[0].y, two[1].y);
-              return <div key={`p${pid}`} style={{ ...pairBoxStyle, position: "absolute", pointerEvents: "none", zIndex: 0,
+              return <div key={`p${pid}`} style={{ ...pairBoxStyle, ...(selKey === `p${pid}` ? SELECTED_BOX : null), position: "absolute", pointerEvents: "none", zIndex: 0,
                 left: x - PAIR_PAD, top: y - PAIR_PAD, width: SIZE + PAIR_PAD * 2, height: y2 - y + SIZE + PAIR_PAD * 2 }} />;
             })}
             {items.map((c) => {
@@ -504,8 +545,8 @@ export default function App() {
               const top = tp ? tp.lane * LANE_H + (LANE_H - SIZE) / 2 : c.y;
               return (
                 <div key={c.id} onPointerDown={(e) => startBoardDrag(e, c)}
-                  style={{ position: "absolute", left, top, touchAction: "none", transition: table && dragId !== c.id ? "left 0.2s ease, top 0.2s ease" : undefined,
-                    cursor: mode === "move" ? (dragId === c.id ? "grabbing" : "grab") : "pointer", zIndex: dragId === c.id ? 5 : 1 }}>
+                  style={{ position: "absolute", left, top, touchAction: "none", transition: table && !dragIds.includes(c.id) ? "left 0.2s ease, top 0.2s ease" : undefined,
+                    cursor: mode === "move" ? (dragIds.includes(c.id) ? "grabbing" : "grab") : "pointer", zIndex: dragIds.includes(c.id) ? 5 : 1 }}>
                   <CounterDot c={{ sign: c.sign, state }} size={SIZE} />
                 </div>
               );
