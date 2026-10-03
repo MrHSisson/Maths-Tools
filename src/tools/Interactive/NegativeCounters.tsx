@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Home, Undo2, Trash2, Eye, EyeOff, LayoutGrid, Hand, RefreshCw, X, Link2 } from "lucide-react";
-import { CounterDot, COUNTER_POS, COUNTER_NEG, type CounterState } from "../../shared";
+import { Home, Undo2, Trash2, LayoutGrid, Hand, RefreshCw, X, Menu } from "lucide-react";
+import { CounterDot, type CounterState } from "../../shared";
 
 // Negative Counters — an interactive sandbox, the directed-number sibling of Algebra Tiles. Yellow counters
 // are +1, red counters are −1, and one of each is a zero pair. Drag counters out of the tray, move them,
@@ -105,6 +105,7 @@ export default function App() {
   const [history, setHistory] = useState<CounterItem[][]>([]);
   const [mode, setMode] = useState<Mode>("move");
   const [showReadout, setShowReadout] = useState(true);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [meet, setMeet] = useState<Meet>("pair");
   const [layout, setLayout] = useState<Layout>("free");
   const [dragId, setDragId] = useState<number | null>(null);
@@ -289,83 +290,90 @@ export default function App() {
     : new Set<number>(items.filter((c) => c.pairId !== undefined).map((c) => c.id));
   const net = pos - neg;
 
-  const modeBtn = (m: Mode, label: string, icon: JSX.Element) => (
-    <button key={m} onClick={() => setMode(m)}
-      className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-bold border-2 transition-colors"
-      style={{ background: mode === m ? "#1e3a8a" : "#fff", color: mode === m ? "#fff" : "#475569", borderColor: mode === m ? "#1e3a8a" : "#cbd5e1" }}>
-      {icon}{label}
-    </button>
-  );
-  const actBtn = (label: string, onClick: () => void, icon: JSX.Element, disabled = false) => (
-    <button onClick={onClick} disabled={disabled}
-      className="flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-bold border-2 border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
-      {icon}{label}
-    </button>
-  );
+  const panelLabel = { fontSize: 10, color: "#6b7280", fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: 0.8 };
+  const hint = table
+    ? "A + row above a − row. Drag counters in: they snap into columns, so a + over a − is a zero pair."
+    : "Drag counters anywhere on the board.";
+  const zpAvailable = (layout === "table" ? tableMatched(ensureCols(items)) : pairUp(items)).size > 0;
 
+  // Same page layout as Algebra Tiles: blue header with burger menu, narrow tile panel, dot-grid canvas with a
+  // floating dark hotbar, and a summary bar along the bottom.
   return (
-    <div className="flex flex-col" style={{ height: "100vh", background: "#f5f3f0" }}>
-      <div className="flex items-center justify-between px-4 py-3" style={{ background: "#1e3a8a", color: "#fff" }}>
-        <button onClick={() => { window.location.href = "/"; }} className="flex items-center gap-2 font-bold"><Home size={20} />Home</button>
-        <div className="text-lg font-extrabold">Negative Counters</div>
-        <div style={{ width: 70 }} />
+    <div style={{ display: "flex", flexDirection: "column", height: "100dvh", fontFamily: "'Inter', system-ui, sans-serif" }}>
+
+      {/* ── Header ──────────────────────────────────────────────────────── */}
+      <div className="bg-blue-900 shadow-lg flex-shrink-0">
+        <div className="px-8 py-4 flex justify-between items-center">
+          <button onClick={() => { window.location.href = "/"; }}
+            className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors"
+            style={{ border: "none", background: "transparent", cursor: "pointer", fontSize: 16, fontWeight: 600 }}>
+            <Home size={24} color="#fff" /><span className="text-white font-semibold text-lg">Home</span>
+          </button>
+          <div className="relative">
+            <button onClick={() => setMenuOpen((o) => !o)}
+              className="text-white hover:bg-blue-800 p-2 rounded-lg transition-colors"
+              style={{ border: "none", background: "transparent", cursor: "pointer" }}>
+              {menuOpen ? <X size={28} /> : <Menu size={28} />}
+            </button>
+            {menuOpen && (
+              <BurgerMenu showReadout={showReadout} setShowReadout={setShowReadout} onClose={() => setMenuOpen(false)} />
+            )}
+          </div>
+        </div>
       </div>
 
-      <div className="flex flex-1 min-h-0 flex-col md:flex-row">
-        {/* Tray + tools */}
-        <div className="flex flex-col gap-3 p-3 md:w-64 shrink-0 overflow-y-auto" style={{ borderRight: "2px solid #d1d5db", background: "#f5f3f0" }}>
-          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Counters — drag or tap</div>
-          <div className="flex items-center justify-around rounded-xl border-2 border-slate-200 bg-white p-3">
-            {([1, -1] as const).map((s) => (
-              <div key={s} className="flex flex-col items-center gap-1">
-                <div onPointerDown={(e) => startTrayDrag(e, s)} onClick={() => addCounter(s)} style={{ touchAction: "none", cursor: "grab" }}>
-                  <CounterDot c={{ sign: s }} size={SIZE} />
-                </div>
-              </div>
-            ))}
+      {/* ── Main: side panel + canvas ─────────────────────────────────── */}
+      <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+
+        {/* ── Side panel ────────────────────────────────────────────────── */}
+        <div style={{
+          background: "#f5f3f0", flexShrink: 0, overflow: "auto", width: 168,
+          display: "flex", flexDirection: "column", padding: 12, gap: 8,
+          borderRight: "2px solid #d1d5db",
+        }}>
+          {/* Controls */}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
+            <Btn on={layout === "table"} title={hint}
+              onClick={() => { const l = layout === "table" ? "free" : "table"; setLayout(l); if (l === "table") setItems((cur) => ensureCols(cur)); }} label="Table" />
+            <Btn on={meet === "collapse"} onClick={() => setMeet((m) => (m === "pair" ? "collapse" : "pair"))} label="Collapse"
+              title={meet === "collapse" ? "A + meeting a − cancels and disappears. Click to pair them up instead." : "A + meeting a − sits as a circled zero pair. Click to make them disappear instead."} />
+            <Btn on={false} onClick={addZeroPair} label="+ Pair" title="Add a zero pair" />
+            <Btn on={false} onClick={removeZeroPairs} label="ZP" disabled={!zpAvailable}
+              activeColor="#dcfce7" activeText="#166534" title="Remove zero pairs" />
           </div>
-          {actBtn("Add zero pair", addZeroPair, <Link2 size={14} />)}
-          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-1">Board</div>
-          <div className="flex gap-2">
-            {([["free", "Free"], ["table", "Table"]] as [Layout, string][]).map(([l, label]) => (
-              <button key={l} onClick={() => { setLayout(l); if (l === "table") setItems((cur) => ensureCols(cur)); }} className="flex-1 rounded-lg px-3 py-1.5 text-sm font-bold border-2 transition-colors"
-                style={{ background: layout === l ? "#1e3a8a" : "#fff", color: layout === l ? "#fff" : "#475569", borderColor: layout === l ? "#1e3a8a" : "#cbd5e1" }}>{label}</button>
-            ))}
+
+          {/* Actions */}
+          <div style={{ display: "flex", gap: 3, alignItems: "center" }}>
+            <SmBtn onClick={undo} disabled={!history.length} title="Undo">
+              <Undo2 size={13} color={history.length ? "#374151" : "#d1d5db"} />
+            </SmBtn>
+            <SmBtn onClick={() => items.length && commit([])} disabled={!items.length} title="Clear">
+              <Trash2 size={13} color={items.length ? "#ef4444" : "#d1d5db"} />
+            </SmBtn>
+            <SmBtn onClick={tidy} disabled={!items.length || layout === "table"} title="Tidy">
+              <LayoutGrid size={13} color={items.length && layout !== "table" ? "#374151" : "#d1d5db"} />
+            </SmBtn>
           </div>
-          <div className="text-[11px] text-slate-500 -mt-1">{layout === "table" ? "A + row above a − row. Drag counters in: they snap into columns, so a + over a − is a zero pair." : "Drag counters anywhere on the board."}</div>
-          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-1">When +1 meets −1</div>
-          <div className="flex gap-2">
-            {([["pair", "Pair up"], ["collapse", "Collapse"]] as [Meet, string][]).map(([m, label]) => (
-              <button key={m} onClick={() => setMeet(m)} className="flex-1 rounded-lg px-3 py-1.5 text-sm font-bold border-2 transition-colors"
-                style={{ background: meet === m ? "#1e3a8a" : "#fff", color: meet === m ? "#fff" : "#475569", borderColor: meet === m ? "#1e3a8a" : "#cbd5e1" }}>{label}</button>
-            ))}
-          </div>
-          <div className="text-[11px] text-slate-500 -mt-1">{layout === "table"
-            ? (meet === "pair" ? "A + above a − is shaded and circled as a zero pair." : "Add a + and a − and they cancel and disappear.")
-            : (meet === "pair" ? "Drop one onto the other: they sit together as a circled zero pair." : "Drop one onto the other: both disappear — they made zero.")}</div>
-          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-1">Tool</div>
-          <div className="flex flex-wrap gap-2">
-            {modeBtn("move", "Move", <Hand size={14} />)}
-            {modeBtn("flip", "Flip", <RefreshCw size={14} />)}
-            {modeBtn("delete", "Take away", <X size={14} />)}
-          </div>
-          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-1">Actions</div>
-          <div className="grid grid-cols-2 gap-2">
-            {actBtn("Undo", undo, <Undo2 size={14} />, history.length === 0)}
-            {actBtn("Clear", () => items.length && commit([]), <Trash2 size={14} />, items.length === 0)}
-            {actBtn("Tidy", tidy, <LayoutGrid size={14} />, items.length === 0 || layout === "table")}
-          </div>
-          {actBtn("Remove zero pairs", removeZeroPairs, <X size={14} />, (layout === "table" ? tableMatched(ensureCols(items)) : pairUp(items)).size === 0)}
-          {actBtn(showReadout ? "Hide value" : "Show value", () => setShowReadout((v) => !v), showReadout ? <EyeOff size={14} /> : <Eye size={14} />)}
+
+          {/* Positive counters */}
+          <div style={panelLabel}>Positive</div>
+          <TrayCounter sign={1} onDrag={startTrayDrag} onTap={addCounter} />
+
+          <div style={{ height: 1, background: "#d1d5db" }} />
+
+          {/* Negative counters */}
+          <div style={panelLabel}>Negative</div>
+          <TrayCounter sign={-1} onDrag={startTrayDrag} onTap={addCounter} />
         </div>
 
-        {/* Board */}
-        <div className="flex flex-1 min-h-0 min-w-0 flex-col p-3 gap-3">
-          <div ref={boardRef} className="relative flex-1 min-h-[260px] overflow-hidden rounded-2xl border-2 border-slate-300 bg-white"
-            style={{ touchAction: "none", minHeight: table ? LANE_H * 2 + 8 : undefined,
-              ...(table ? {} : { backgroundImage: "radial-gradient(#e2e8f0 1px, transparent 1px)", backgroundSize: `${SNAP * 2}px ${SNAP * 2}px` }) }}>
+        {/* ── Canvas column ─────────────────────────────────────────────── */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+          <div ref={boardRef} className="relative flex-1"
+            style={{ overflow: "hidden", touchAction: "none", background: "#f8fafc", minHeight: table ? LANE_H * 2 + 8 : 200,
+              backgroundImage: "radial-gradient(#cbd5e1 1px, transparent 1px)", backgroundSize: `${SNAP * 2}px ${SNAP * 2}px` }}>
             {table && (
               <>
+                <div style={{ position: "absolute", left: 0, right: 0, top: 0, height: LANE_H * 2, background: "#fff" }} />
                 {/* zero-pair columns */}
                 {[...table.full].map((i) => (
                   <div key={`b${i}`} style={{ position: "absolute", left: LABEL_W + i * SLOT, top: 0, width: SLOT, height: LANE_H * 2, background: "rgba(79,70,229,0.07)", borderLeft: "1px dashed #a5b4fc", borderRight: "1px dashed #a5b4fc" }} />
@@ -373,12 +381,18 @@ export default function App() {
                 {/* the two rules and the + / − labels */}
                 <div style={{ position: "absolute", left: LABEL_W, top: 0, width: 3, height: LANE_H * 2, background: "#334155" }} />
                 <div style={{ position: "absolute", left: 0, right: 0, top: LANE_H - 1, height: 3, background: "#334155" }} />
+                <div style={{ position: "absolute", left: 0, right: 0, top: LANE_H * 2 - 1, height: 3, background: "#334155" }} />
                 <div style={{ position: "absolute", left: 0, top: 0, width: LABEL_W, height: LANE_H, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40, fontWeight: 800, color: "#a16207" }}>+</div>
                 <div style={{ position: "absolute", left: 0, top: LANE_H, width: LABEL_W, height: LANE_H, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40, fontWeight: 800, color: "#b91c1c" }}>−</div>
               </>
             )}
             {items.length === 0 && (
-              <div className="absolute inset-0 flex items-center justify-center text-slate-400 font-semibold pointer-events-none">{table ? "Drag or tap counters in — yellow goes in the + row, red in the − row" : "Drag counters here, or tap them in"}</div>
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 4, top: table ? LANE_H * 2 : 0 }}>
+                <div className="text-center" style={{ color: "#94a3b8" }}>
+                  <p style={{ fontSize: 16, fontWeight: 500, margin: "0 0 4px" }}>Drag counters from the panel</p>
+                  <p style={{ fontSize: 13, margin: 0 }}>{table ? "Yellow goes in the + row, red in the − row" : "or tap them in"}</p>
+                </div>
+              </div>
             )}
             {items.map((c) => {
               const state: CounterState = paired.has(c.id) ? "paired" : "normal";
@@ -393,16 +407,133 @@ export default function App() {
                 </div>
               );
             })}
+
+            {/* ── Floating tool hotbar ─────────────────────────────────── */}
+            <div onPointerDown={(e) => e.stopPropagation()}
+              style={{ position: "absolute", bottom: 16, left: "50%", transform: "translateX(-50%)", zIndex: 150, display: "flex", alignItems: "center", gap: 4,
+                padding: "6px 8px", background: "#2d3340", borderRadius: 14, boxShadow: "0 8px 28px rgba(0,0,0,0.35)" }}>
+              <HotBtn active={mode === "move"} onClick={() => setMode("move")} title="Move"><Hand size={18} color="#e2e8f0" /></HotBtn>
+              <HotBtn active={mode === "flip"} onClick={() => setMode("flip")} title="Flip a counter over"><RefreshCw size={18} color="#e2e8f0" /></HotBtn>
+              <HotBtn active={mode === "delete"} onClick={() => setMode("delete")} title="Take away"><X size={18} color="#e2e8f0" /></HotBtn>
+            </div>
           </div>
+
+          {/* ── Value bar ───────────────────────────────────────────────── */}
           {showReadout && (
-            <div className="flex flex-wrap items-center justify-center gap-3 rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 text-lg font-bold">
-              <span className="flex items-center gap-2"><span style={{ background: COUNTER_POS, width: 18, height: 18, borderRadius: "50%", display: "inline-block" }} />{pos} positive</span>
-              <span className="flex items-center gap-2"><span style={{ background: COUNTER_NEG, width: 18, height: 18, borderRadius: "50%", display: "inline-block" }} />{neg} negative</span>
-              <span className="text-slate-800">Value: {pos} − {neg} = <span style={{ color: net >= 0 ? "#a16207" : "#b91c1c" }}>{net < 0 ? `−${-net}` : net}</span></span>
+            <div className="flex items-center justify-center gap-3 px-4 py-2 flex-shrink-0"
+              style={{ background: "#f5f3f0", borderTop: "2px solid #d1d5db" }}>
+              <span style={{ fontSize: 13, color: "#6b7280", fontWeight: 600 }}>Value:</span>
+              <span className="font-bold" style={{ fontSize: 18, letterSpacing: 0.5, color: "#1f2937" }}>
+                {pos} − {neg} = <span style={{ color: net >= 0 ? "#a16207" : "#b91c1c" }}>{net < 0 ? `−${-net}` : net}</span>
+              </span>
+              {items.length > 0 && (
+                <span style={{ fontSize: 12, color: "#9ca3af", marginLeft: 4 }}>
+                  ({pos} positive, {neg} negative)
+                </span>
+              )}
             </div>
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+// ── UI helpers (same look as the Algebra Tiles page) ─────────────────────────
+
+function TrayCounter({ sign, onDrag, onTap }: { sign: 1 | -1; onDrag: (e: React.PointerEvent, s: 1 | -1) => void; onTap: (s: 1 | -1) => void }) {
+  return (
+    <div onPointerDown={(e) => onDrag(e, sign)} onClick={() => onTap(sign)} title="Drag onto the board, or tap to add"
+      style={{ touchAction: "none", cursor: "grab", alignSelf: "flex-start" }}>
+      <CounterDot c={{ sign }} size={SIZE} />
+    </div>
+  );
+}
+
+function Btn({ on, onClick, label, disabled, activeColor, activeText, title }: {
+  on: boolean; onClick: () => void; label: string; disabled?: boolean; activeColor?: string; activeText?: string; title?: string;
+}) {
+  const ac = activeColor || "#dbeafe";
+  const at = activeText || "#1e40af";
+  return (
+    <button onClick={onClick} disabled={disabled} title={title}
+      style={{
+        padding: "4px 10px", borderRadius: 8, fontWeight: 600,
+        fontSize: 13, border: "2px solid " + (disabled ? "#e5e7eb" : on ? "#93c5fd" : "#d1d5db"),
+        cursor: disabled ? "default" : "pointer",
+        background: disabled ? "#f3f4f6" : on ? ac : "#fff",
+        color: disabled ? "#d1d5db" : on ? at : "#374151",
+        transition: "background 0.15s, color 0.15s, border-color 0.15s",
+      }}>
+      {label}
+    </button>
+  );
+}
+
+function SmBtn({ onClick, disabled, title, children }: {
+  onClick: () => void; disabled?: boolean; title: string; children: React.ReactNode;
+}) {
+  return (
+    <button onClick={onClick} disabled={disabled} title={title}
+      style={{
+        width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center",
+        border: "2px solid " + (disabled ? "#e5e7eb" : "#d1d5db"), borderRadius: 8,
+        cursor: disabled ? "default" : "pointer",
+        background: disabled ? "#f3f4f6" : "#fff",
+        transition: "background 0.15s", padding: 0, flexShrink: 0,
+      }}
+      onMouseEnter={(e) => { if (!disabled) e.currentTarget.style.background = "#f3f4f6"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = disabled ? "#f3f4f6" : "#fff"; }}>
+      {children}
+    </button>
+  );
+}
+
+function HotBtn({ active, onClick, title, children }: {
+  active: boolean; onClick: () => void; title: string; children: React.ReactNode;
+}) {
+  return (
+    <button onClick={onClick} title={title}
+      style={{
+        width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center",
+        border: "none", borderRadius: 10, padding: 0, flexShrink: 0, cursor: "pointer",
+        background: active ? "rgba(255,255,255,0.22)" : "rgba(255,255,255,0.06)",
+        transition: "background 0.12s",
+      }}
+      onPointerEnter={(e) => { if (!active) e.currentTarget.style.background = "rgba(255,255,255,0.14)"; }}
+      onPointerLeave={(e) => { e.currentTarget.style.background = active ? "rgba(255,255,255,0.22)" : "rgba(255,255,255,0.06)"; }}>
+      {children}
+    </button>
+  );
+}
+
+function BurgerMenu({ showReadout, setShowReadout, onClose }: {
+  showReadout: boolean; setShowReadout: (v: boolean) => void; onClose: () => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) onClose(); };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [onClose]);
+  return (
+    <div ref={ref} className="absolute right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden" style={{ minWidth: 220 }}>
+      <div className="py-1">
+        <button onClick={() => setShowReadout(!showReadout)}
+          className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+          style={{ border: "none", background: "transparent", cursor: "pointer" }}>
+          <span>Value Summary</span>
+          <TogglePill on={showReadout} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function TogglePill({ on }: { on: boolean }) {
+  return (
+    <div style={{ width: 36, height: 20, borderRadius: 10, padding: 2, background: on ? "#1e40af" : "#d1d5db", transition: "background 0.15s", cursor: "pointer", flexShrink: 0 }}>
+      <div style={{ width: 16, height: 16, borderRadius: 8, background: "#fff", transition: "transform 0.15s", transform: on ? "translateX(16px)" : "translateX(0)" }} />
     </div>
   );
 }

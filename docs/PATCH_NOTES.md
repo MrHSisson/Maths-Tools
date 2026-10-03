@@ -40,6 +40,7 @@ Keep the split even when a session only touches one.
   flip moves a counter between rows; pair up shades matched columns, collapse cancels them).
 - **Notes workflow:** Harry's planner now holds the human-readable layer (Build Log, Feature Tracker with linked feature blocks, Representations); `CLAUDE.md` "Ending a session" gained a step to update it each session.
 - Not yet wired into a question tool — Integer Add/Sub is the first target (representation switch: counters → number line).
+- **Sandbox layout now matches Algebra Tiles:** blue header with burger menu (Value Summary toggle), narrow panel (Table / Collapse / + Pair / ZP buttons, undo / clear / tidy, Positive and Negative counters), dot-grid canvas with a floating dark Move / Flip / Take away hotbar, and a Value bar along the bottom. Behaviour unchanged.
 
 ## 2026-10-03 — Developing worked-example visuals rolled out (graphs, ratio tables, place value, number lines)
 
