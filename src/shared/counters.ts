@@ -3,7 +3,7 @@
 // of each makes a ZERO PAIR (value 0) — the idea that makes adding/subtracting negatives make sense.
 //
 // Colours match the algebra tiles' unit tile (yellow `1`) and negative tiles (red), so a student meets the
-// same yellow/red everywhere. Every counter also carries a + / − glyph so it never relies on colour alone.
+// same yellow/red everywhere. Every counter is labelled +1 / −1 so it never relies on colour alone.
 //
 //   cStep("Start with 3 positives and 2 negatives", { rows: [{ counters: ctr(3, 2) }] })
 //

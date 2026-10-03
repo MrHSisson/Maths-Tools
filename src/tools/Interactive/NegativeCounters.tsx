@@ -4,12 +4,15 @@ import { CounterDot, COUNTER_POS, COUNTER_NEG, type CounterState } from "../../s
 
 // Negative Counters — an interactive sandbox, the directed-number sibling of Algebra Tiles. Yellow counters
 // are +1, red counters are −1, and one of each is a zero pair. Drag counters out of the tray, move them,
-// flip them over, take them away, and let the class see where the zero pairs are.
+// flip them over, take them away. When a +1 meets a −1 the teacher chooses: they pair up as a circled zero
+// pair, or collapse to nothing.
 //
 // The counters themselves are the shared representation (`CounterDot`, src/shared/counters.ts) — the same
 // yellow and red appear in question working steps, so the sandbox and the solutions look identical.
 
-interface CounterItem { id: number; sign: 1 | -1; x: number; y: number; }
+interface CounterItem { id: number; sign: 1 | -1; x: number; y: number; pairId?: number; }
+/** What happens when a +1 is dropped onto a −1: they sit together as a circled zero pair, or both collapse to nothing. */
+type Meet = "pair" | "collapse";
 type Mode = "move" | "flip" | "delete";
 
 const SIZE = 52;
@@ -17,15 +20,18 @@ const SNAP = 13;
 const PAD = 12;
 const SLOT = SIZE + 8;
 let nextId = 1;
+let nextPairId = 1;
 
 const snap = (v: number) => Math.round(v / SNAP) * SNAP;
 
 /** Pair each yellow with its nearest unused red; the returned ids are the counters that sit in a zero pair. */
 const pairUp = (items: CounterItem[]): Set<number> => {
-  const reds = items.filter((c) => c.sign < 0);
+  // Counters already joined as a zero pair (pairId) come first; the rest are matched by nearest neighbour.
+  const paired = new Set<number>(items.filter((c) => c.pairId !== undefined).map((c) => c.id));
+  const free = items.filter((c) => !paired.has(c.id));
+  const reds = free.filter((c) => c.sign < 0);
   const used = new Set<number>();
-  const paired = new Set<number>();
-  for (const y of items.filter((c) => c.sign > 0)) {
+  for (const y of free.filter((c) => c.sign > 0)) {
     let best: CounterItem | null = null, bestD = Infinity;
     for (const r of reds) {
       if (used.has(r.id)) continue;
@@ -42,11 +48,13 @@ export default function App() {
   const [history, setHistory] = useState<CounterItem[][]>([]);
   const [mode, setMode] = useState<Mode>("move");
   const [showReadout, setShowReadout] = useState(true);
-  const [showPairs, setShowPairs] = useState(false);
+  const [meet, setMeet] = useState<Meet>("pair");
   const [dragId, setDragId] = useState<number | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
   const itemsRef = useRef(items);
   itemsRef.current = items;
+  const meetRef = useRef(meet);
+  meetRef.current = meet;
   const dragRef = useRef<{ id: number; dx: number; dy: number; before: CounterItem[]; moved: boolean } | null>(null);
 
   const commit = useCallback((next: CounterItem[], before = itemsRef.current) => {
@@ -77,9 +85,10 @@ export default function App() {
   const addZeroPair = () => {
     const cur = itemsRef.current;
     const a = freeSlot(cur);
-    const first = { id: nextId++, sign: 1 as const, ...a };
+    const pid = nextPairId++;
+    const first = { id: nextId++, sign: 1 as const, ...a, pairId: pid };
     const b = freeSlot([...cur, first]);
-    commit([...cur, first, { id: nextId++, sign: -1 as const, ...b }]);
+    commit([...cur, first, { id: nextId++, sign: -1 as const, ...b, pairId: pid }]);
   };
 
   // Take away every zero pair currently on the board (each yellow with its nearest red).
@@ -124,9 +133,25 @@ export default function App() {
         setHistory((h) => [...h.slice(-50), d.before]);
         setItems(cur.filter((c) => c.id !== d.id));
       } else if (d.moved) {
-        const next = cur.map((c) => (c.id === d.id
+        let next = cur.map((c) => (c.id === d.id
           ? { ...c, x: Math.max(0, Math.min(p.w - SIZE, snap(c.x))), y: Math.max(0, Math.min(p.h - SIZE, snap(c.y))) }
           : c));
+        // A +1 dropped on a −1 (or the reverse) meets its opposite: pair up, or collapse to nothing.
+        const me = next.find((c) => c.id === d.id)!;
+        const other = next
+          .filter((c) => c.id !== me.id && c.sign !== me.sign && c.pairId === undefined)
+          .map((c) => ({ c, dist: Math.hypot(c.x - me.x, c.y - me.y) }))
+          .filter((o) => o.dist < SIZE * 0.8)
+          .sort((a, b) => a.dist - b.dist)[0]?.c;
+        if (other) {
+          if (meetRef.current === "collapse") {
+            next = next.filter((c) => c.id !== me.id && c.id !== other.id);
+          } else {
+            const pid = nextPairId++;
+            // sit side by side: the dropped counter snaps to the right of its partner
+            next = next.map((c) => (c.id === me.id ? { ...c, x: other.x + SIZE + 4, y: other.y, pairId: pid } : c.id === other.id ? { ...c, pairId: pid } : c));
+          }
+        }
         setHistory((h) => [...h.slice(-50), d.before]);
         setItems(next);
       }
@@ -138,10 +163,14 @@ export default function App() {
 
   const startBoardDrag = (e: React.PointerEvent, c: CounterItem) => {
     e.preventDefault();
-    if (mode === "delete") { commit(itemsRef.current.filter((x) => x.id !== c.id)); return; }
-    if (mode === "flip") { commit(itemsRef.current.map((x) => (x.id === c.id ? { ...x, sign: (x.sign * -1) as 1 | -1 } : x))); return; }
+    // Touching a counter breaks any zero pair it was in (its partner stays, unpaired).
+    const unpair = (list: CounterItem[]) => (c.pairId === undefined ? list : list.map((x) => (x.pairId === c.pairId ? { ...x, pairId: undefined } : x)));
+    if (mode === "delete") { commit(unpair(itemsRef.current).filter((x) => x.id !== c.id)); return; }
+    if (mode === "flip") { commit(unpair(itemsRef.current).map((x) => (x.id === c.id ? { ...x, sign: (x.sign * -1) as 1 | -1 } : x))); return; }
     const p = toBoard(e.clientX, e.clientY);
-    dragRef.current = { id: c.id, dx: p.x - c.x, dy: p.y - c.y, before: itemsRef.current, moved: false };
+    const before = itemsRef.current;
+    if (c.pairId !== undefined) setItems(unpair(before));
+    dragRef.current = { id: c.id, dx: p.x - c.x, dy: p.y - c.y, before, moved: false };
     setDragId(c.id);
   };
   // Pull a fresh counter out of the tray: it appears under the pointer and carries on as a normal drag.
@@ -157,7 +186,7 @@ export default function App() {
 
   const pos = items.filter((c) => c.sign > 0).length;
   const neg = items.length - pos;
-  const paired = showPairs ? pairUp(items) : new Set<number>();
+  const paired = new Set<number>(items.filter((c) => c.pairId !== undefined).map((c) => c.id));
   const net = pos - neg;
 
   const modeBtn = (m: Mode, label: string, icon: JSX.Element) => (
@@ -192,11 +221,18 @@ export default function App() {
                 <div onPointerDown={(e) => startTrayDrag(e, s)} onClick={() => addCounter(s)} style={{ touchAction: "none", cursor: "grab" }}>
                   <CounterDot c={{ sign: s }} size={SIZE} />
                 </div>
-                <span className="text-xs font-bold" style={{ color: s > 0 ? "#a16207" : "#b91c1c" }}>{s > 0 ? "+1" : "−1"}</span>
               </div>
             ))}
           </div>
           {actBtn("Add zero pair", addZeroPair, <Link2 size={14} />)}
+          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-1">When +1 meets −1</div>
+          <div className="flex gap-2">
+            {([["pair", "Pair up"], ["collapse", "Collapse"]] as [Meet, string][]).map(([m, label]) => (
+              <button key={m} onClick={() => setMeet(m)} className="flex-1 rounded-lg px-3 py-1.5 text-sm font-bold border-2 transition-colors"
+                style={{ background: meet === m ? "#1e3a8a" : "#fff", color: meet === m ? "#fff" : "#475569", borderColor: meet === m ? "#1e3a8a" : "#cbd5e1" }}>{label}</button>
+            ))}
+          </div>
+          <div className="text-[11px] text-slate-500 -mt-1">{meet === "pair" ? "Drop one onto the other: they sit together as a circled zero pair." : "Drop one onto the other: both disappear — they made zero."}</div>
           <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-1">Tool</div>
           <div className="flex flex-wrap gap-2">
             {modeBtn("move", "Move", <Hand size={14} />)}
@@ -208,7 +244,6 @@ export default function App() {
             {actBtn("Undo", undo, <Undo2 size={14} />, history.length === 0)}
             {actBtn("Clear", () => items.length && commit([]), <Trash2 size={14} />, items.length === 0)}
             {actBtn("Tidy", tidy, <LayoutGrid size={14} />, items.length === 0)}
-            {actBtn(showPairs ? "Hide pairs" : "Show pairs", () => setShowPairs((v) => !v), <Link2 size={14} />, items.length === 0)}
           </div>
           {actBtn("Remove zero pairs", removeZeroPairs, <X size={14} />, pairUp(items).size === 0)}
           {actBtn(showReadout ? "Hide value" : "Show value", () => setShowReadout((v) => !v), showReadout ? <EyeOff size={14} /> : <Eye size={14} />)}

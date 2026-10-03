@@ -3,7 +3,7 @@ import { COUNTER_POS, COUNTER_NEG } from "../counters";
 import type { QOSnapshot, WorkingStep } from "../types";
 
 // Negative counters — see src/shared/counters.ts. Plain HTML circles so they scale with text and need no SVG
-// sizing. A yellow counter is +1, a red one −1; the glyph repeats the sign so colour is never the only cue.
+// sizing. A yellow counter is +1, a red one −1; each is labelled with its value so colour is never the only cue.
 
 const DARK_POS = "#a16207";
 const DARK_NEG = "#b91c1c";
@@ -22,14 +22,14 @@ export function CounterDot({ c, size = 44 }: { c: Counter; size?: number }) {
         background: pos ? COUNTER_POS : COUNTER_NEG,
         border: `${Math.max(2, size / 16)}px ${removed ? "dashed" : "solid"} ${pos ? DARK_POS : DARK_NEG}`,
         color: pos ? "#713f12" : "#fff",
-        fontWeight: 800, fontSize: size * 0.6, lineHeight: 1,
+        fontWeight: 800, fontSize: size * 0.4, lineHeight: 1, letterSpacing: -0.5,
         opacity: removed ? 0.28 : 1,
         // paired = circled as one zero pair; new = just placed
         boxShadow: state === "paired" ? "0 0 0 3px #fff, 0 0 0 6px #4f46e5" : state === "new" ? "0 0 0 3px #fff, 0 0 0 5px #0f172a" : undefined,
         transition: "opacity 0.3s ease, box-shadow 0.3s ease",
       }}
     >
-      {pos ? "+" : "−"}
+      {pos ? "+1" : "−1"}
     </div>
   );
 }
