@@ -313,7 +313,7 @@ export const WorkedExampleSteps = ({
           <div
             ref={listRef}
             onScroll={(e) => setListScrolled(e.currentTarget.scrollTop > 4)}
-            className="max-h-80 overflow-y-auto lg:max-h-none lg:absolute lg:inset-0"
+            className="thin-scroll max-h-80 overflow-y-auto lg:max-h-none lg:absolute lg:inset-0"
             style={listScrolled ? { WebkitMaskImage: "linear-gradient(to bottom, transparent 0, #000 3rem)", maskImage: "linear-gradient(to bottom, transparent 0, #000 3rem)" } : undefined}
           >
             <div className="p-1">{list}</div>
@@ -451,6 +451,17 @@ export const WorkedExampleSteps = ({
     </div>
   );
 
+  // In the split (evolving-visual) layout the answer is not a separate box: it is the last line of the
+  // timeline — a green-bordered card on the same spine as the step captions.
+  const answerRow = (
+    <div className="flex items-start gap-3 py-2">
+      <span className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold" style={{ background: "#16a34a", color: "#fff", border: "2px solid #16a34a", boxShadow: "0 0 0 4px rgba(22,163,74,0.15)" }}>=</span>
+      <div className="min-w-0 flex-1 rounded-xl border-2 bg-white px-4 py-2 text-center font-bold" style={{ borderColor: "#16a34a", color: "#166534", fontSize: compact ? "1.05rem" : "1.35rem" }}>
+        <FitWidth>{renderAnswer()}</FitWidth>
+      </div>
+    </div>
+  );
+
   if (stepped) {
     const navRow = (
       <div className="flex items-center justify-between">
@@ -496,8 +507,9 @@ export const WorkedExampleSteps = ({
               <div className={evolve ? "relative" : "space-y-2"} style={evolve ? undefined : { opacity: 0.7 }}>
                 {evolve && timelineSpine}
                 {working.map((s, i) => renderStep(s, i, undefined, true, "past"))}
+                {evolve && answerRow}
               </div>
-              {answerBox("", undefined, true)}
+              {!evolve && answerBox("", undefined, true)}
             </div>, totalSteps - 1)}
           <div ref={footerRef} className="pt-4 mt-4 border-t" style={{ borderColor: "rgba(0,0,0,0.08)" }}>
             {navRow}
@@ -531,8 +543,9 @@ export const WorkedExampleSteps = ({
         <div className={evolve ? "relative" : "space-y-4"}>
           {evolve && timelineSpine}
           {working.map((s, i) => renderStep(s, i))}
+          {evolve && !hideAnswerStep && answerRow}
         </div>, totalSteps - 1)}
-      {!hideAnswerStep && answerBox("mt-4")}
+      {!hideAnswerStep && !evolve && answerBox("mt-4")}
     </>
   );
 };
