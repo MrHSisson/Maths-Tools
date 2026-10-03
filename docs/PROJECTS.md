@@ -75,7 +75,7 @@ pedagogy-engine sweep.
 | **Techniques engine** | 🚧 | Engine built; only 1 tool converted — build on demand for tier-1 needs, not a standalone sweep (see Priorities) |
 | **Smart Progressor** | 🚧 | Core mechanism shipped (weighted `multiSelect` + worksheet sort + roughly-even split + standard-mode-only + teacher-facing off toggle + compact 2-option cycle-button popover control); 1 of 27 tools piloted (`SpeedDistanceTime`, all 3 levels), 1 dev-gated demo (`/tool-shell`) — needs a per-tool audit pass |
 | **Skills library** | ⏸ | Engine + backlog ready; 2 skills built — tier-2 (student-led), not a current priority |
-| **Core representations** | ⏸ | 3 of 6 visual families have Teach scenes — feeds Skills/Teach decks (tier 2), paused alongside them. **Direction agreed 2026-10-03:** representations are a *progression* (each evolves into the next) and sometimes a *pair* — see "Representation progressions & composites" |
+| **Core representations** | 🚧 | Active design direction (2026-10-03): negative counters + the + / − table built; developing pictures live in 10 tools; 3 of 6 visual families have Teach scenes (the Teach-deck side stays paused with Skills/Teach decks). **Direction agreed 2026-10-03:** representations are a *progression* (each evolves into the next) and sometimes a *pair* — see "Representation progressions & composites" |
 | **Teach decks** | ⏸ | Engine built; one partial deck exists — least mature prong, secondary to tier-1 work |
 | **Narrow-viewport layout** | 🚧 | Shipped in `ToolShell` for every tool (Worked Example + a light Worksheet list, viewport-driven) — needs a pass across diagram/differentiated tools |
 | **Old-shell migration** | ✅ | Backlog empty; Generators are standalone by design, not migration targets |

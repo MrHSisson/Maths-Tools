@@ -38,6 +38,7 @@ Keep the split even when a session only touches one.
 - **Representation table ("mat"):** a + row above a − row (rules between rows and labels), counters aligned in columns so a + over a − is a
   zero pair. Shared as `matBoard` / `layout: "mat"`; in the sandbox as a draggable **Table** board (counters snap into columns of their own row, swapping if the cell is taken;
   flip moves a counter between rows; pair up shades matched columns, collapse cancels them).
+- **Notes workflow:** Harry's planner now holds the human-readable layer (Build Log, Feature Tracker with linked feature blocks, Representations); `CLAUDE.md` "Ending a session" gained a step to update it each session.
 - Not yet wired into a question tool — Integer Add/Sub is the first target (representation switch: counters → number line).
 
 ## 2026-10-03 — Developing worked-example visuals rolled out (graphs, ratio tables, place value, number lines)
