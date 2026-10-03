@@ -590,6 +590,13 @@ everything (the standing scene contract).
 lesson, and then **built into question tools as a viewport** on the solving. Sandboxes share a page
 layout and toolbar so they feel like one family.
 
+**The three-step pattern (agreed 2026-10-04).** Every sandbox goes through the same stages:
+1. **Standalone tool** — usable on its own in a lesson (Algebra Tiles, Negative Counters, SmartGrapher's use in tools).
+2. **Lab / preview bench** — an intermediate page to *see how it looks and behaves driven by question data before it is embedded*, so "looks right here" means "right in the tool". Grapher Lab already does this for SmartGrapher (pick a scenario, edit the numbers, watch the exact embeddable component redraw). **Counters and tiles need the same:** a bench that feeds the embeddable representation component (counter board / tile board) the same data a question would, at each working step, in the real viewport size.
+3. **Embedded viewport** — the same component inside a question's solving steps.
+
+This keeps Grapher Lab in this prong as the model for the other two benches. A typed-function Desmos-style graphing sandbox is a possible later build, not now.
+
 **Where it's at.**
 - **Algebra Tiles** (`/algebra-tiles`) — live, standalone. Tiles, multiplication grids, zero pairs, pen / eraser / pan, expression builder. Not yet a viewport anywhere; needs a shared representation component (like counters have) before it can be embedded.
 - **Negative Counters** (`/negative-counters`) — live, standalone, same page layout as Algebra Tiles; yellow +1 / red −1, boxed zero pairs that move as a group, a + / − table, the shared toolbar. Its shared `CounterBoard` already draws the same counters and pair boxes inside worked solutions; making Integer Add/Sub use it as a viewport is **deliberately held** until the sandbox itself is right.
@@ -599,6 +606,7 @@ layout and toolbar so they feel like one family.
 - **Shared toolbar** — Select / Grab / Pen / Eraser / Clear drawings / colours (`DrawHotbar` in `src/shared/components/BoardTools.tsx`); new sandboxes reuse it.
 
 **Possible next steps.**
+- Build the **lab benches** for counters and tiles (step 2 above) — each is a dev-gated page, like Grapher Lab, that renders the shared representation component from sample question data.
 - Define the **viewport pattern**: how a sandbox is embedded in a question tool (via `questionRenderer` / `stepVisualRenderer`), driven by the question's data, and whether the student/teacher can then drive it or it plays the working.
 - Extract an **Algebra Tiles representation component** so it can sit in solutions.
 - Counters as a viewport in Integer Add/Sub (held), then the signed bar model → number line progression.
