@@ -59,7 +59,7 @@ Four kinds of thing, kept apart on purpose (restructured 2026-10-04):
 4. **Back bench** — **Skills library** and **Teach decks**, extracted to `docs/BACKBENCH.md` until they
    are readdressed (they should be better supported once Techniques and Worked solutions land).
 
-Stand-alone teacher tools with no prong: **Visualiser**, **Friday Phonecalls**, the four PDF
+Stand-alone teacher tools with no prong: **Visualiser**, the four PDF
 **Generators**. Old-shell migration is **closed** (backlog empty; CI-guarded by `organisation.test.ts`).
 
 ---
@@ -105,7 +105,8 @@ for *that* tool instead of working to one global backlog. It replaces the old "M
 - **Question tools awaiting a go-live decision (2):** Surds, Simplifying Ratios.
 - **Decision Maths (4):** Network Sandbox, Minimum Spanning Tree, Travelling Salesperson, Mixed Strategies — go live with their strand.
 - **Computer Science (1):** 1.1.2 CPU Performance.
-- **Internal / library pages, not meant to go live (15):** Skill Library (parked), Technique Library, the 11 Technique Preview pages, Grapher Lab, Friday Phonecalls (hidden).
+- **Internal / library pages, not meant to go live (14):** Skill Library (parked), Technique Library, the 11 Technique Preview pages, Grapher Lab.
+- **Out of the plan (21 tracked above):** Friday Phonecalls (hidden, `call-selector`) — stripped out of planning 2026-10-04; the code is untouched.
 
 ## Mobile / narrow view
 
