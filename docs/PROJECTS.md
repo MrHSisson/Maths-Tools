@@ -3,14 +3,18 @@
 The **single planning surface** for the whole repo. Where every prong is up to, what we
 *could* do next, and the deep detail behind each.
 
-**How it's laid out.** A scan-able *At a glance* table, then one section per prong. Each
-prong has:
+**What counts as a prong.** A *development prong* is a feature or capability we build once and
+roll out across tools (or a strand we build up). Things that are **ongoing practice** (reviewing each
+tool, making everything work on a phone) are *not* prongs — they have their own short sections and are
+always on. Work that is **paused** lives on the back bench (`docs/BACKBENCH.md`), not here.
+
+**How it's laid out.** *How the work is organised*, an *At a glance* table, the ongoing practices,
+then one section per prong. Each prong has:
 
 - **Where it's at** — the honest current state, in a few sentences.
 - **Possible next steps** — *options to spitball from*, not a fixed queue. We pick the right
   one on the day. Prune the ones we've done or ruled out.
-- **Detail** — the deep lists (technique audit, skills-by-representation, spec order). Skip it
-  for the overview; open it when you actually pick the prong up.
+- **Detail** — the deep lists. Skip it for the overview; open it when you actually pick the prong up.
 
 **The loop.** You plan from this doc. When a session ships something, I log *what shipped* to
 `docs/PATCH_NOTES.md` (the history) and refresh the prong's **Where it's at** + its *At a glance* row
@@ -23,45 +27,40 @@ read, and the verification bar. These are generated fresh each time from the liv
 we deliberately **don't** store standing prompts (they just rot). The recipe I build them from
 lives in `CLAUDE.md` → "Ending a session / session kickoffs".
 
+Status keys: ✅ done · 🚧 in progress · ⬜ not started · ⏸ paused (deliberately not a current priority).
+
+---
+
+
 | For… | See |
 |---|---|
 | Conventions / how to build | `CLAUDE.md` |
 | The per-tool pedagogy + readiness audit (criteria and live findings) | `docs/TOOL_AUDIT.md` |
 | Shell architecture + contracts | `docs/architecture/CS_SHELL_PLAN.md` · `docs/architecture/DECISION_SHELL_PLAN.md` |
+| Paused work (Skills library, Teach decks) | `docs/BACKBENCH.md` |
 | What actually shipped, session by session | `docs/PATCH_NOTES.md` |
 | Canonical names for every element | `docs/GLOSSARY.md` |
 | Designing a new build in chat (pre-code) | `docs/design/DESIGN_STUDIO.md` + the spec templates |
 
 ---
 
-## Priorities — three lenses, not equal weight
+## How the work is organised
 
-Everything below serves one of three audiences. They are **not equally weighted right now** —
-this section is the standing lens for deciding what to pick up next, read it before choosing a
-prong to build:
+Four kinds of thing, kept apart on purpose (restructured 2026-10-04):
 
-1. **Teacher-facing advancement — current priority.** New tools, and features a teacher reaches
-   for *during* a lesson instead of leaving the software. SmartGrapher is the model case: a quick
-   in-lesson graph instead of tabbing out to Desmos/GeoGebra. New question types, broader sub-tool
-   coverage, and new tools built from `specs/` all count too. This is what actually gives a teacher
-   more to use — default build effort here.
-2. **Student-led self-teaching — currently dormant.** The Skills library and the Worked Example
-   mode's step-by-step fragment reveal, i.e. a learner working through content alone. Real,
-   dev-gated, and not being retired — but **not currently pushed** as a use case, so it shouldn't
-   be where effort concentrates. Worked Example is also, in practice, the least-used of ToolShell's
-   three modes.
-3. **Tool-building infrastructure — means, not end.** ToolShell and the techniques engine (generic
-   structures for building working steps). Necessary to build tiers 1 and 2, but not a goal on its
-   own — a tool ships fine with thinner working steps, and techniques are a quality investment, not
-   a blocker. Build only as far as a specific tier-1 (or tier-2) need actually requires, not as a
-   standalone completeness sweep across all tools.
+1. **Development prongs** — features and strands we build and roll out:
+   **Techniques engine** (top build priority — it speeds up every new tool) · **Worked solutions** ·
+   **Smart Progressor** · **Core representations** · **Sandboxes & viewports**.
+2. **Standalone prongs** — whole areas that stand on their own: **Computer Science shell** and
+   **Decision Maths** (which sits with the A-level strand, alongside the **P-Value Grapher**). Both parked as priorities.
+3. **Ongoing practice** — always on, never "finished": the **Tool review cycle** (every tool gets its
+   own note and is reviewed individually) and the **mobile / narrow view** (a standing rule: every tool
+   must work on a phone).
+4. **Back bench** — **Skills library** and **Teach decks**, extracted to `docs/BACKBENCH.md` until they
+   are readdressed (they should be better supported once Techniques and Worked solutions land).
 
-The boundaries blur deliberately: techniques serve both tier 1 (real worksheet/whiteboard working
-steps) and tier 2 (worked-example fragment reveal + skill links) — building one often touches the
-other. Teach decks are nominally a teacher tool (front-of-class delivery) but are authoring-heavy
-and still the least mature prong, so in practice they sit behind new-tool/utility work until a
-session specifically picks them up. When in doubt: a new tool or an in-lesson utility beats another
-pedagogy-engine sweep.
+Stand-alone teacher tools with no prong: **Visualiser**, **Friday Phonecalls**, the four PDF
+**Generators**. Old-shell migration is **closed** (backlog empty; CI-guarded by `organisation.test.ts`).
 
 ---
 
@@ -69,229 +68,72 @@ pedagogy-engine sweep.
 
 | Prong | Status | One-line |
 |---|---|---|
-| **Maths Tool Audit** | ✅ | All 27 tools audited — see `docs/TOOL_AUDIT.md`; findings now drive the four prongs below |
-| **Tool expansion (Part 2)** | 🚧 | Per-tool content-growth backlog (new question types, broader coverage) — **tier-1 priority**, needs a dedicated sequencing pass |
-| **SmartGrapher** | ✅ | Mature, embeddable; used in 3 tools — **tier-1 priority**: wire into more tools opportunistically |
-| **Techniques engine** | 🚧 | Engine built; only 1 tool converted — build on demand for tier-1 needs, not a standalone sweep (see Priorities) |
-| **Smart Progressor** | 🚧 | Core mechanism shipped (weighted `multiSelect` + worksheet sort + roughly-even split + standard-mode-only + teacher-facing off toggle + compact 2-option cycle-button popover control); 1 of 27 tools piloted (`SpeedDistanceTime`, all 3 levels), 1 dev-gated demo (`/tool-shell`) — needs a per-tool audit pass |
-| **Skills library** | ⏸ | Engine + backlog ready; 2 skills built — tier-2 (student-led), not a current priority |
-| **Core representations** | 🚧 | Active design direction (2026-10-03): negative counters + the + / − table built; developing pictures live in 10 tools; 3 of 6 visual families have Teach scenes (the Teach-deck side stays paused with Skills/Teach decks). **Direction agreed 2026-10-03:** representations are a *progression* (each evolves into the next) and sometimes a *pair* — see "Representation progressions & composites" |
-| **Teach decks** | ⏸ | Engine built; one partial deck exists — least mature prong, secondary to tier-1 work |
-| **Narrow-viewport layout** | 🚧 | Shipped in `ToolShell` for every tool (Worked Example + a light Worksheet list, viewport-driven) — needs a pass across diagram/differentiated tools |
-| **Old-shell migration** | ✅ | Backlog empty; Generators are standalone by design, not migration targets |
-| **Computer Science shell** | ⏸ | Parked while the Maths Tool Audit is in progress |
-| **Decision Maths** | ⏸ | Parked as a priority, but TSP nearest-neighbour slice built (dev-gated, `/travelling-salesperson`) + shell layout pass; next: TSP lower bound |
-
-Status keys: ✅ done · 🚧 in progress · ⬜ not started · ⏸ paused (deliberately not a current priority).
+| **Techniques engine** | 🚧 top priority | Engine + viewer built; 2 tools converted (`NonLinearSimEq`, `Surds`) — now to be **built out**, not just converted on demand |
+| **Worked solutions** | 🚧 | The solved-example format: step-by-step reveal, one developing picture beside the steps, single answer. Live in a growing set of tools; 19 still need a closing answer step |
+| **Smart Progressor** | 🚧 | Mechanism done and piloted on `SpeedDistanceTime`; the work now is adopting it tool by tool (audit the other 26) |
+| **Core representations** | 🚧 | The visual vocabulary, its progressions and pairings; where to use each, what tools and sandboxes to make |
+| **Sandboxes & viewports** | 🚧 | Algebra Tiles, Negative Counters, SmartGrapher (+ Grapher Lab, Parallel Lines Explorer): standalone tools first, then embedded as viewports in question tools |
+| **Computer Science shell** | ⏸ | Shell built; 2 topics shipped as data; next is authoring 1.1.3 |
+| **Decision Maths** | ⏸ | MST shipped; TSP nearest-neighbour slice built (dev-gated); next TSP lower bound |
+| *Tool review cycle* | ♻ ongoing | Per-tool notes; not a prong |
+| *Mobile / narrow view* | ♻ standing rule | Not a prong; shipped for every tool |
+| *Skills library · Teach decks* | 🪑 bench | See `docs/BACKBENCH.md` |
 
 ---
 
-# Maths Tool Audit
+# Ongoing practice
 
-**Complete.** A systematic, per-tool review of every Maths ToolShell question generator — all 27
-tools across Number, Algebra, Ratio & Proportion, and Geometry are now audited, findings logged in
-`docs/TOOL_AUDIT.md`. The four Maths pedagogy prongs beneath this one (Techniques engine, Skills
-library, Core representations, Teach decks) plus SmartGrapher now **take their next steps from this
-audit's findings** — see the refreshed technique/skill tables below.
+## Tool review cycle
 
-**Where it's at.** All four categories complete. From Number: two tools (`FractionsAddSub`,
-`Percentages`) came out close to reference quality; the other four are "live but flagged for
-expansion" on content depth, with `PowersOfTen`'s working steps the weakest found in that category
-(two fixed-template sentences, no computed numeric line). From Algebra: `NonLinearSimEq` — the
-repo's one techniques-engine conversion — turned out to be a genuine hybrid (its highest-frequency
-sub-tool still hand-rolls its solve chain), confirming both of its previously-known working-step
-gaps still present at the exact generator-code level; `CompletingTheSquare.tsx`, the named
-shell-wiring reference, is equally unconverted on the techniques/fragment axis. From Ratio &
-Proportion: the audit's clearest live/gated contrast — `SimplifyingRatiosTool` (dev-gated) is
-recommended to **stay gated**, being the only tool with zero QO control and zero visual
-representation, next to its live sibling `RatioSharingTool` which has both; `FractionsOfAmounts`
-came out reference-quality. From Geometry: a category-wide finding that six of the eight tools build
-every working step through `tStep()` only, making them structurally incapable of the fragment
-convention (not just thin authors of it); a second split where only 4 of 8 tools use the shared
-`handleDiagramPrint` — two of the three hand-rolled holdouts are the very files `CLAUDE.md` names as
-the SVG/renderer references, and two of those three hand-rolled handlers have confirmed functional
-bugs (`BasicAngleFacts` silently drops section headers on differentiated worksheets;
-`CircleProperties`' Differentiated toggle does nothing at all); and `PerimeterTool` — named in
-`docs/TOOL_AUDIT.md`'s own intro as the example of why a live `enabled` flag can't be trusted as a
-quality signal — confirmed exactly that prediction (well-engineered shell, thinnest QO richness of
-the whole audit). `PROJECTS.md`'s skills table had zero Geometry rows before this pass; two are now
-proposed (`apply-angle-fact`, `unit-conversion`) to seed it, alongside a new
-`sumPerimeter`/`deriveMissingSide` technique. Several content bugs and doc-drift findings surfaced
-across all four categories (`CollectingLikeTerms`' info text vs. its generator; a redundant no-op
-step in `SolvingLinearEquations`; `CLAUDE.md`'s reference-implementations table not actually naming
-`FractionToRatio.tsx`), findings only, not fixed. The full methodology, scope list, per-tool
-template, and every individual finding in full detail live in **`docs/TOOL_AUDIT.md`**.
+**Not a prong** — a review each tool goes through when we get to it, so we think about what is best
+for *that* tool instead of working to one global backlog. It replaces the old "Maths Tool Audit" and
+"Tool expansion (Part 2)" sections.
 
-**Why this exists, in short:** the four pedagogy prongs and SmartGrapher each had their own
-backlog, but priority between them (and between tools) had been picked anecdotally, not from a
-real view of per-tool need. This audit produced that view. It asked two separate questions of every
-tool: (1) how far behind the shared pedagogy systems is it (an *infrastructure* gap — expected of
-almost every tool, feeds the existing prong backlogs), and (2) judged blind to whether the tool is
-currently live or dev-gated, does it stand on its own as a complete, well-rounded tool, or does it
-feel thin/limited (a *standalone readiness* gap — feeds a new tool-parity backlog, including a
-recommended live/gated status per tool). The full detail on both, plus the exact grep/inspection
-technique for finding conventions debt (non-standard column caps, hidden font controls, bespoke
-print handlers, etc.) and why the current `enabled` flag can't be trusted as a quality signal, is
-in `docs/TOOL_AUDIT.md`.
+- **Each tool has its own note** (the tool's page in Harry's planner, under its strand) with a **Review** block. When we reach a tool we fill it in.
+- **The Review block asks:**
+  - Content: new question types, broader sub-tool coverage, scope the tool should grow into?
+  - Readiness: should it be live, stay gated, or change level/QO structure?
+  - Sandbox fit: would a sandbox viewport (tiles, counters, graph) help — and does it integrate cleanly?
+  - Techniques: which technique blocks would replace hand-rolled working?
+  - Worked solution: does the last step state the answer; is there a developing picture that fits?
+  - Smart Progressor: which boolean options are really difficulty rungs?
+  - Mobile: checked on a narrow viewport?
+- **Seeding the notes:** `docs/TOOL_AUDIT.md` holds the original per-tool findings (all 27 Maths tools, 2026-08) — its methodology is the checklist, and each tool's findings seed that tool's note. Don't keep two copies up to date: the note is the live one once a tool is reviewed.
+- **Known source items** (carried over so none are lost): decimal-operations family (multiply/divide decimals on the shared place value table, a Teach deck for add/subtract — deck is benched, go-live sign-off); `BasicAngleFacts` and `AnglesInParallelLines` still on hand-rolled print handlers; the `SimplifyingRatiosTool` go-live call (audit recommended it stays gated).
 
-**Next steps run on two tracks**, deliberately kept separate because they need different kinds of
-attention: **Part 1 roadmap** (below) sequences the *infrastructure* work — techniques, skills,
-representations, Teach decks, SmartGrapher — by leverage, and is ready to build from directly. **Part
-2 — Tool expansion** (below that) is the *content-growth* backlog per tool — new question types,
-broader sub-tool coverage, scope decisions — and needs a dedicated pedagogy/product pass, not a
-leverage score. A few smaller items sit outside both tracks and can be picked up any time without a
-design conversation:
-- The one gating sign-off: whether to act on `SimplifyingRatiosTool`'s "stay gated" recommendation.
-- ✅ **`CircleProperties` fixed (2026-08-18)** — migrated its hand-rolled fixed-3×5-grid
-  `customPrintHandler` onto the shared `handleDiagramPrint`, fixing the confirmed Differentiated
-  silent-no-op bug and the `fixedColumns`/missing-`hideFontControls` debt in one pass (its diagrams
-  are always square, so the default `_aspect` of 1 needed no extra work). `BasicAngleFacts` (dropped
-  section headers) and `AnglesInParallelLines` still need the same migration.
-- ✅ **`EquationsOfLines` fixed (2026-08-18)** — wired SmartGrapher into all three sub-tools
-  (`gradient`/`equation`/`missing`): a live line-through-the-known-points graph now reveals on the
-  Whiteboard once the answer is shown, the tool's single highest-leverage Part 1 gap per the audit.
-- Whether to unpark Computer Science and/or Decision Maths now that the audit blocking them is done
-  (see their sections below) — not a call this audit makes for you.
+**The 22 `enabled: false` tools** (the go-live queue is smaller than it looks):
+- **Question tools awaiting a go-live decision (2):** Surds, Simplifying Ratios.
+- **Decision Maths (4):** Network Sandbox, Minimum Spanning Tree, Travelling Salesperson, Mixed Strategies — go live with their strand.
+- **Computer Science (1):** 1.1.2 CPU Performance.
+- **Internal / library pages, not meant to go live (15):** Skill Library (parked), Technique Library, the 11 Technique Preview pages, Grapher Lab, Friday Phonecalls (hidden).
 
-## Part 1 roadmap — the aligned, cross-prong build order
+## Mobile / narrow view
 
-> **Priority note (2026-08-18).** This roadmap sequences the *pedagogy engine* (Techniques /
-> Skills / Core representations / Teach decks) by cross-tool leverage — but per the Priorities
-> section above, that engine is tier-3 infrastructure serving a currently-dormant tier-2 (student
-> self-teaching), so it's **secondary to tier-1 work** (new tools, teacher in-lesson utilities like
-> SmartGrapher — see "Tool expansion" and "SmartGrapher" below). Tier 0's already-built,
-> zero-new-work items are still worth flipping on opportunistically. Treat the rest as background
-> to pick up when tier-1 work isn't available, not the active queue.
-
-Techniques, Skills, Core representations, Teach decks, and SmartGrapher stay **five separate prongs**
-below — each keeps its own "Where it's at" and detail table — but they gate each other constantly (a
-representation unlocks a skill; a skill and a technique are usually the same move at two different
-grains), so building each prong in its own priority order wastes the leverage the audit found. This
-roadmap sequences the *next build* across all five together, scored by leverage — how many tools each
-item unlocks — per the audit's own Part 1 scoring rule. Each item is tagged with the prong it
-belongs to and names the exact table row it refers to; nothing here replaces the prong sections
-below, it's the cross-cutting view sitting on top of them. Update this roadmap (not just the tables)
-whenever a tier's items ship, so it stays the one place that answers "what's next, across all of it."
-
-**Tier 0 — Wire what's already built, no new engine work:** ✅ **built, dev-gated pending sign-off**
-(see `docs/PATCH_NOTES.md`, 2026-08-15) — both items are live in code but only visible with
-Developing-tools mode on; a non-dev user sees unchanged output until promoted.
-- **[Skill]** Link the two unlinked `lcm` consumers — `SimultaneousEquations` and `FractionToRatio`
-  both compute an LCM and never mark it, and the skill is already ✅ built. Two `[[lcm|LCM]]` markers.
-  ✅ done (dev-mode only).
-- **[Technique]** Wire `NonLinearSimEq`'s `linear` sub-tool onto the already-built
-  `solveLinearEquationSteps` instead of its hand-rolled solve chain — fixes the confirmed `−1x`
-  display bug for free, and gives `solveLinearEquation` its first real second consumer. ✅ done
-  (dev-mode only) — the original hand-rolled chain is kept as `legacySolvePos`/`legacySolveNeg` and
-  stays what a live user sees until this is reviewed and the dev-mode branch is deleted/promoted.
-
-**Tier 1 — The one decision that unblocks the most downstream work:**
-- **[Representation]** Algebra tiles vs. area model — which ships next. Algebra tiles now gates more
-  combined demand than the pre-audit guess assumed: the `solve-linear-equation` skill (3 consumers)
-  plus the `collect-like-terms` skill (2 consumers) = **5 tool-consumers** waiting on one
-  representation. Area model gates the `expand-double-brackets` skill, the `factorise-quadratic`
-  skill, and the `completeTheSquare` technique — real, but **~3 tool-consumers** today. Algebra
-  tiles has the stronger case, a reversal of the pre-audit "prioritise by blockage" guess further
-  down this doc.
-- **[Representation]** Rule on the Geometry open question — does an angle/circle/polygon diagram
-  need a 7th core representation, or is "the diagram is its own representation" a legitimate standing
-  exemption? Raised independently by all 8 Geometry tools in the audit (see `docs/TOOL_AUDIT.md`'s
-  Geometry category summary). Doesn't block Tier 2's `apply-angle-fact` — that can ship text-first
-  either way — but does decide whether a Geometry Teach deck is ever buildable.
-
-**Tier 2 — Highest-leverage builds, start now (don't wait on Tier 1):**
-These ship without a representation decision — the same `(none — text)` pattern
-`substitute-into-formula`/`rearrange-formula` already use:
-- **[Technique + Skill]** `applyAngleFact` / `apply-angle-fact` — needed by **5 of 8 Geometry tools**
-  (`BasicAngleFacts`, `AnglesInTriangles`, `AnglesInQuadrilaterals`, `AnglesInParallelLines`,
-  `Bearings`), the single biggest demand signal in the whole audit.
-- **[Technique]** `collectLikeTerms` — 3 consumers (`CollectingLikeTerms`, `ExpandingBrackets`,
-  `SolvingLinearEquations`). The technique itself doesn't need algebra tiles; only its matching skill
-  does (Tier 1).
-- **[Technique]** `solveLinearEquation` adoption — already 🚧 grain-aware and built; `SolvingLinearEquations`
-  just needs to actually call it (a zero-new-import integration point it currently doesn't use).
-- **[Skill]** `rearrange-formula` — 4 consumers (`Iterations`, `NonLinearSimEq`, `EquationsOfLines`,
-  `CircleProperties`), text-only, no blockers.
-- **[Skill]** `unitary-method` — 3 consumers across two categories (`Percentages`, `RecipesTool`,
-  `BestBuys`), bar model already exists.
-- **[Skill]** `simplify-fraction` — 3 consumers (`FractionsAddSub`, `FractionMultDiv`,
-  `FractionsOfAmounts`), bar model already exists.
-
-**Tier 3 — Two-consumer items, sequence opportunistically:**
-**[Technique + Skill]** `expandBrackets` / `expand-double-brackets` (blocked on Tier 1's area-model
-call) · **[Skill]** `fraction-of-amount` · **[Skill]** `hcf` · **[Skill]** `substitute-into-formula` ·
-**[Skill]** `convert-mixed-improper` · **[Skill]** `simplify-ratio` · **[Skill]** `unit-conversion`
-(bar model / prime tiles / text — no blockers except `expandBrackets`).
-
-**Tier 4 — Single-tool items:**
-Everything else in the technique/skill tables below — real demand, but each unlocks exactly one
-tool. Fill-in work between the tiers above, not a queue of its own.
-
-**Cross-cutting, any time:**
-- **[Grapher]** ✅ `EquationsOfLines` wired onto SmartGrapher (2026-08-18). `CompletingTheSquare`,
-  `Iterations` still confirmed unwired — both cheap (existing presets fit directly), no dependency
-  on anything above.
-- **[Technique]** Runtime grain toggle ("Detailed working" brief↔full) — the one shell-level change
-  still on the Techniques engine list.
-- **[Deck]** Teach decks stay the least mature prong (1 deck, 1 category built) — reasonable to leave
-  last unless a second proof-of-format deck is wanted as a parallel, low-stakes task.
-
-## Part 2 — Tool expansion
-
-> **2026-10-01 — Place value table unified:** shared columns/headings toggle; Powers of 10 and `ComparingOrderingNumbers` migrated (circle + rank-badge cell features added). Next: stepped digit-sliding Worked Example for Powers of 10; Teach deck for add/subtract; go-live sign-off.
-> **2026-09-30 — Decimal operations, first unit.** `decimal-addition-subtraction` (dev-gated) is built on the new shared place value table. Next units of the wider decimal-operations family: multiplying and dividing decimals (same table); migrate `ComparingOrderingNumbers` onto the shared table; Teach deck for add/subtract; go-live sign-off.
-
-> **Tier-1 priority (see Priorities above).** This is the actual content-growth backlog — new
-> question types, broader sub-tool coverage, scope a tool should grow into. It's what gives a
-> teacher more to use, so it's the default place to look for the next build once the sequencing
-> pass below happens — ahead of the pedagogy-engine roadmap in Part 1.
-
-**Scope, precisely:** this is the audit's Part 2 *standalone-readiness content* findings — missing
-question types, narrow sub-tool coverage, scope a tool should grow into — the items that need a
-pedagogy/product decision (which topics matter most to teach next), not just an engineering one.
-**The print-handler bugs and the `SimplifyingRatiosTool` gating call are deliberately not part of
-this list** (see the mechanical items above) — they're fixes and a sign-off, not expansion decisions.
-
-The actual expansion backlog — per-tool findings like "no worded/contextual question type,"
-"`formingRatios`' QO is flat across levels," "no squared-single-bracket question in
-`ExpandingBrackets`," "no parallel/perpendicular question in `EquationsOfLines`" — isn't resequenced
-here yet. It needs a tool-by-tool prioritisation pass of its own, sequencing by which topics matter
-most to expand next rather than by the raw size of the gap, which is a separate session's work.
-`docs/TOOL_AUDIT.md`'s 36 per-tool entries — the Part 2 section of each — are the full source list
-for that pass when it happens.
+**Not a prong — a standing rule, always considered.** Every tool must work on a phone. `ToolShell`
+already swaps to a compact single-column layout at ≤640px for every tool at zero per-tool cost
+(settings banner + drawer, Worked Example / Worksheet toggle, a light scrollable worksheet list; no
+Whiteboard, Teach or print in narrow). New tools get it for free; new bespoke renderers and sandboxes
+must be checked at phone width before shipping. Outstanding checks live in each tool's Review block:
+a diagram tool, a tool with a heavy QO surface, and what `?diff=1` should do on a phone.
 
 ---
 
-# Mathematics — pedagogy engine
-
-Four interlocking prongs. A **skill** is usually a **technique**'s full-grain teaching rendered on
-a **representation**; a **Teach deck** strings those together into a lesson. Progress on one often
-unblocks the others — so read these together when planning a Maths session.
+# Development prongs
 
 > **Two separate gates — do not conflate them (2026-08-18).** **Developing-tools mode**
 > (`src/devMode.ts`, the visible toggle on the landing page) is for things currently *in the
 > pipeline* — `enabled:false` tools, the step-by-step **Worked Example**'s fragment reveal, the
 > **Technique Library** (`/techniques`), **Grapher Lab** (`/grapher`). **Parked mode**
 > (`src/parkedMode.ts`) is a separate, stronger, unadvertised gate for content that exists but is
-> neither live nor currently being built — dormant, not a current focus, not meant to be casually
-> found. It has no UI toggle (unlocked only via `?parked=1` in the URL) and its routes 404 outright
-> without the flag. It currently gates the **Skill Library** (`/skills`, registry `parked: true`)
-> and the **Teach** deck mode — flipping Developing-tools mode alone does **not** reveal either.
-> See `src/parkedMode.ts` and each registry entry's `parked` field for the mechanics.
-
-> **Sequencing note.** The Maths Tool Audit (`docs/TOOL_AUDIT.md`) is now complete — the
-> technique-audit and skills tables below have been refreshed with real per-tool demand from all
-> 27 tools ("needed by `<tool>`" annotations throughout), and the **"Maths Tool Audit" section above
-> now has a dedicated "Part 1 roadmap"** that sequences the actual build order across all five
-> prongs by leverage — read that first. The bullet-point "possible next steps" under each prong
-> below still mostly predate the audit and are kept as background context, not the active queue.
+> neither live nor currently being built (now the back bench — see `docs/BACKBENCH.md`). It has no UI
+> toggle (unlocked only via `?parked=1`) and its routes 404 outright without the flag.
 
 ## Techniques engine
 
-> **Tier-3 (infrastructure) — build on demand, not a sweep.** Serves both tier-1 tools (real
-> worksheet/whiteboard working) and tier-2 self-teaching (worked-example fragment reveal). A tool
-> ships fine without it — only convert a tool onto the engine when a tier-1 need (a new tool, or
-> making an existing one presentable) actually calls for it, not as a standalone completeness goal.
+> **Top build priority (2026-10-04).** This is the prong that most speeds up building tools, so it is
+> now to be **built out**, not only converted on demand: the blocks, the grain toggle and the tool
+> conversions. It feeds Worked solutions directly (techniques *are* the solving steps) and is a
+> precondition for the benched Skills / Teach decks coming back.
 
 **Where it's at.** When tools moved onto the shared ToolShell they lost their hand-written working
 steps and fell back to thin "jump to the answer" wrappers. The **techniques engine**
@@ -443,13 +285,53 @@ Tool Audit's Part 1 (Infrastructure alignment) cross-references per tool** — a
 audited, update the priority/status columns here with real demand rather than the inferred
 guesses above.
 
+**Build order (carried over from the old cross-prong roadmap; skill halves moved to the back bench).**
+- **Tier 0 — wire what's built** (dev-mode only, awaiting sign-off): `NonLinearSimEq`'s `linear` sub-tool on `solveLinearEquationSteps`; the original hand-rolled chain is kept as `legacySolvePos`/`legacySolveNeg` until the dev-mode branch is promoted or deleted.
+- **Tier 2 — highest leverage:** `applyAngleFact` (5 of 8 Geometry tools, the biggest single demand signal); `collectLikeTerms` (3 consumers); `solveLinearEquation` adoption in `SolvingLinearEquations` (zero-new-import integration point).
+- **Tier 3 — two-consumer items, opportunistic:** `expandBrackets` (blocked on the area-model call, see Core representations).
+- **Tier 4 — single-tool items:** everything else in the tables above.
+- **Shell-level:** the runtime grain toggle ("Detailed working", brief ↔ full) — see Worked solutions.
+
+
+## Worked solutions
+
+**Where it's at.** The solved-example format, delivered by `ToolShell`'s Worked Example mode and
+shared `WorkedExampleSteps` — a tool only supplies per-step data and renderers. Built so far:
+- **Step-by-step reveal** — the cascade (earlier steps stay on screen, dimmed) with Show All as the alternative, and **working-step fragments** that reveal one written mark per press (live modelling).
+- **Developing picture** — `stepVisualRenderer`: one picture that updates in place beside (or above) the steps. Three layouts — captions beside the picture, full working beside the picture (`stepVisualKeepsWorking`), and picture on top (`stepVisualPlacement="top"`).
+- **Step-by-step graph builds** — SmartGrapher plots and highlights with the working (`graphStep` / `graphStepVisual`).
+- **Single answer** — where the last working step already states the answer, `hideAnswerStep` shows it in a green ring with no separate answer box; in the picture layouts the answer is a plain green **A** line.
+
+**Live in.**
+- Developing picture: Adding & Subtracting Decimals · Multiplying & Dividing by 10ⁿ · Comparing & Ordering · Ratio Sharing · Speed, Distance & Time.
+- Graph builds: Properties of Line Equations · Simultaneous Equations (Substitution) · Mixed Strategies (L3).
+- Number line on top: Adding & Subtracting Integers · Rounding (number-line method).
+- Single answer (16): Surds · Expanding Brackets · Unknowns on Both Sides · Angles in Quadrilaterals · Angles in Triangles · Bearings · Properties of Circles · Perimeter · Estimation · Multiplying & Dividing Fractions · Adding & Subtracting Integers · Percentages · Rounding · Simplifying Ratios · Binary Operations · Number Bases.
+
+**Possible next steps.**
+- **Closing answer step for the other 19 tools** — each needs its working to end on the answer first:
+  - last step is a method note: Simultaneous Equations (Substitution), Comparing & Ordering, Multiplying & Dividing by 10ⁿ, Adding & Subtracting Decimals, Converting Fractions and Ratios, Fractions of Amounts;
+  - last step is only part of the answer: Simultaneous Equations (Elimination), Ratio Sharing, Recipes, Angles in Parallel Lines, Basic Angle Facts, Mixed Strategies, Best Buys;
+  - last step is a different form of the answer: Completing the Square, Properties of Line Equations, Iteration, Adding & Subtracting Fractions, Speed Distance & Time;
+  - answers are lettered options: Collecting Like Terms.
+- **More pictures:** Iteration and Completing the Square graph builds · Rounding digit-rule picture · Recipes (ratio table) · fractions and percentages (bar model) · Estimation and fractions on a number line.
+- **Sandbox integration** — embedding Algebra Tiles / Negative Counters / SmartGrapher as viewports in the solving steps (see Sandboxes & viewports).
+- **Techniques as the steps** — converting hand-rolled working onto the engine so every tool's solution is built from shared blocks (see Techniques engine).
+- **Runtime grain toggle** ("Detailed working", brief ↔ full) — the one shell-level change still outstanding.
+- Picture composites: a step carrying two pictures (ratio table + graph for gradients).
+
 ## Smart Progressor
 
-> **Tier-3 (infrastructure) — build on demand, not a sweep.** Orders a generated worksheet's
-> questions easy-to-hard instead of randomly, using difficulty *weights* already declared on a
-> tool's own QO options — no per-tool progression logic. Same "build on demand" posture as the
-> Techniques engine: the mechanism is generic and lives once in `ToolShell`/`shared/helpers.ts`,
-> but each tool only benefits once someone opts it in.
+
+> **Where the work is now (2026-10-04).** The mechanism is finished; this prong is **adoption**: audit
+> the other 26 ToolShell tools and turn every boolean that really means "harder" into a rung of an
+> ordinal pool. Which tools to do first is decided in each tool's Review block (see Tool review
+> cycle) — this prong owns the mechanism and the rule, the review owns the order.
+
+> Orders a generated worksheet's questions easy-to-hard instead of randomly, using difficulty
+> *weights* already declared on a tool's own QO options — no per-tool progression logic. The
+> mechanism is generic and lives once in `ToolShell`/`shared/helpers.ts`; each tool only benefits
+> once it is opted in, which is what this prong now drives.
 
 **Where it's at.** Core mechanism shipped 2026-09-15: `ToolMultiSelect.options[].weight?: number`
 (`src/shared/types.ts`), the `weightOf`/`sortByDifficulty` helpers (`src/shared/helpers.ts`,
@@ -618,64 +500,12 @@ a plain boolean and asked for genuine full-tool coverage):
 target-aware shape selection, and `generateQuestion`'s unified tier branch (pick → `weightOf` →
 attach `_difficultyScore`).
 
-## Skills library
-
-> **Tier-2 (student-led) — paused, not currently pushed.** The site isn't currently positioning
-> itself as a self-teaching tool, so this isn't a current investment target. Not being retired —
-> just not where the next session's effort should default to.
-
-**Where it's at.** Small slide-sequences that each teach **one prerequisite skill**
-(`src/shared/skills/`), browsable at `/skills`, and the drill-downs behind `[[skill-id|term]]`
-links in worked examples. **Two skills exist** (`lcm`, `lcm-prime-factors` — LCM two ways). CI
-validates every skill. A clear backlog is tied to which representation each skill needs — the cheap
-ones sit on scenes that already exist; the rest wait on the representation work below.
-
-**Possible next steps (background, pre-audit — see the sequencing note above):**
-- Build the **cheap, high-value cluster** on existing scenes — equivalent-fractions, simplify-fraction, HCF, share-in-ratio, fraction-of-amount, convert-mixed-improper.
-- Sequence the skills that need a **new scene** (solve-linear-equation, expand-double-brackets, directed-number) alongside the representation work.
-- **Unify skills with techniques** — let a skill's full teaching and a technique's full output share one source, so they can't drift; prototype on one skill.
-- **Link `brief` technique steps to their skill** via `[[skill|term]]`, so an assumed move drills down to the full visual teaching.
-
-**Detail — skills to develop** (a skill is the drill-down teaching for a prerequisite a tool *uses
-but doesn't teach*; the representation column signals effort — existing scene = cheap).
-
-| Skill (id) | Teaches | Representation / scene | Priority | Status |
-|---|---|---|---|---|
-| `lcm` / `lcm-prime-factors` | lowest common multiple | number line `multiples`; prime tiles `factorTree`/`primeVenn` | — | ✅ — unlinked consumers found: `SimultaneousEquations`' `lcm` sub-tool (Algebra pass), `FractionToRatio`'s L2 "LCD:" step (Ratio & Proportion pass) — both compute the value but never link it |
-| `equivalent-fractions` | scale num & den by the same factor | **bar model** `split`/`equivalents` *(exist)* | **high** | ⬜ — needed by `FractionsAddSub` |
-| `simplify-fraction` | divide num & den by the HCF | **bar model** *(exists)* | **high** | ⬜ — needed by `FractionsAddSub`, `FractionMultDiv`, and now `FractionsOfAmounts` (its `asFraction` sub-tool, three consumers total) |
-| `hcf` | highest common factor | **prime tiles** `primeVenn` *(exists)* | **high** | ⬜ — needed by `FractionsOfAmounts` (`asFraction`'s HCF step) and `RecipesTool` (its L2 HCF-based scaling step) — first named consumers |
-| `share-in-ratio` | total parts → 1 part → each share | **bar model** *(exists)* | **high** | ⬜ — needed by `RatioSharingTool`, the category's sole real demand signal |
-| `fraction-of-amount` | ÷ by denominator, × by numerator | **bar model** *(exists)* | **high** | ⬜ — needed by `FractionsOfAmounts`, a near-exact fit since the tool's own working already narrates the bar-model method; `CircleProperties`' `sectors` sub-tool (θ/360 × formula) is also a structurally identical, cross-topic unnamed consumer (Tool Audit, Geometry pass) |
-| `convert-fraction-ratio` | express a fraction as a complementary part:part ratio, and the reverse | **bar model** *(existing `split`/`equivalents` scenes — cheap)* | med | ⬜ — new, needed by `FractionToRatio` (Tool Audit, Ratio & Proportion pass); its `convertFractionRatio` technique row had no matching skill row before this pass, breaking the pairing pattern every other row follows |
-| `solve-linear-equation` | do the same to both sides | **algebra tiles** / number line *(no tile scene yet)* | **high** | ⬜ — needed by `SolvingLinearEquations`, and now also `BasicAngleFacts` (its L3 algebraic sub-tools) and `AnglesInQuadrilaterals` (its algebra-form questions) — two more unlinked consumers (Tool Audit, Geometry pass) |
-| `expand-double-brackets` | grid / area of each term pair | **area model** *(no scene yet)* | **high** | ⬜ — needed by `ExpandingBrackets` |
-| `collect-like-terms` | group matching terms | **algebra tiles** *(no scene yet)* | med | ⬜ — needed by `CollectingLikeTerms`, `ExpandingBrackets` |
-| `convert-mixed-improper` | mixed ⇄ improper fraction | **bar model** *(exists)* | med | ⬜ — needed by `FractionsAddSub`, `FractionMultDiv` |
-| `round-to-significant-figure` | find the place value, round | **number line** *(exists)* | med | ⬜ — needed by `Estimation` |
-| `factorise-quadratic` | find the factor pair | **area model** *(no scene yet)* | med | ⬜ — needed by `NonLinearSimEq` |
-| `substitute-into-formula` | replace letters with values | *(none — text)* | med | ⬜ — needed by `NonLinearSimEq`, and now also `EquationsOfLines` ("Substitute into y = mx + c") (Tool Audit, Geometry pass) |
-| `rearrange-formula` | inverse operations to change subject | *(none — text / algebra tiles)* | med | ⬜ — needed by `Iterations`, `NonLinearSimEq`, and now also `EquationsOfLines` (`missing` sub-tool) and `CircleProperties` (L3 rearranging `C=2πr`/`A=πr²`) — a third and fourth consumer (Tool Audit, Geometry pass) |
-| `simplify-ratio` | divide parts by a common factor | **bar model** *(exists)* | med | ⬜ — needed by `FractionToRatio` (`formingRatios`) and `SimplifyingRatiosTool` (numeric sub-tool) |
-| `directed-number` | add/subtract/multiply negatives | **negative counters** *(no scene yet)* | med | ⬜ — needed by `IntegerAddSub` |
-| `factor-pairs` | list the factor pairs of n | **prime tiles** *(exists)* | low | ⬜ |
-| `place-value` | read the column value of a digit | *(none — closest fit is number line; PowersOfTen's own grid doesn't map onto any of the six)* | low | ⬜ — new, needed by `PowersOfTen` (Tool Audit, Number pass) |
-| `keep-flip-change` | reciprocal + multiply for fraction division | **bar model** *(no scene authored yet for this specific move)* | low | ⬜ — new, needed by `FractionMultDiv` (Tool Audit, Number pass) |
-| `percentage-to-multiplier` | convert a percentage to a decimal multiplier | **bar model** *(exists)* | med | ⬜ — new, needed by `Percentages` (Tool Audit, Number pass) |
-| `unitary-method` | find 1%, then scale to the target | **bar model** *(exists)* | med | ⬜ — new, needed by `Percentages` (Tool Audit, Number pass), and now also `RecipesTool` and `BestBuys` (Tool Audit, Ratio & Proportion pass) — three tools across two categories hand-roll this exact reasoning unlinked, the clearest cross-category demand signal found so far |
-| `apply-angle-fact` | identify which angle rule applies (sum to 180/360, isosceles, exterior, vertically opposite) | *(none — angle diagrams sit outside the six-representation vocabulary; open question, see Core representations)* | **high** | ⬜ — new, pairs with the `applyAngleFact` technique; needed by `AnglesInQuadrilaterals` (richest demand signal), `BasicAngleFacts`, `AnglesInTriangles`, `AnglesInParallelLines`, `Bearings` (Tool Audit, Geometry pass) — `PROJECTS.md`'s skills table had zero Geometry rows before this pass |
-| `unit-conversion` | convert between units of the same quantity (mm/cm/m, etc.) before calculating | *(none — closest fit is number line, same open-question status as `place-value`)* | med | ⬜ — new, needed by `PerimeterTool` (both sub-tools' L3) and `FractionsOfAmounts` (`worded` sub-tool) — two cross-category demand signals (Tool Audit, Ratio & Proportion and Geometry passes) |
-
-Build the cheap cluster (top six after `lcm`) first — all on existing bar-model / prime-tile scenes,
-each a prerequisite several tools link to. The equally-wanted `solve-linear-equation`,
-`expand-double-brackets`, `collect-like-terms`, `factorise-quadratic`, `directed-number` need a **new
-scene type**, so sequence them with the representation work.
-
 ## Core representations
 
-> **Tier-2/3 — paused alongside Skills/Teach decks.** Its consumers (Skills library, Teach decks)
-> are both currently dormant, so a new representation isn't unlocking tier-1 work right now. Revisit
-> once Skills/Teach decks are picked back up.
+> **Active development prong (2026-10-04).** The remit: where each representation is used, which
+> tools need making, which sandboxes need making (see Sandboxes & viewports), and how the pictures
+> evolve into each other. The Teach-deck / skill consumers of these scenes are benched
+> (`docs/BACKBENCH.md`); the working-step and sandbox consumers are live.
 
 **Where it's at.** The site commits to **seven core visual representations** as a shared vocabulary,
 so the same bar model a student meets in fractions reappears in ratio. New visuals must reuse one of
@@ -694,8 +524,7 @@ entirely. Recorded as a standing open question (`docs/TOOL_AUDIT.md`'s Geometry 
 not assigned an owner — a decision on whether Geometry needs a seventh representation, or is
 legitimately exempt, is still open.
 
-**Possible next steps — superseded by the audit's Tier 1 finding, see the "Part 1 roadmap" in the
-Maths Tool Audit section above.** Kept here for background only: build an area-model scene family
+**Possible next steps — see the open questions above.** Kept here for background only: build an area-model scene family
 (unlocks `expand-double-brackets`, `factorise-quadratic`, `completeTheSquare`); build algebra-tile
 scenes (unlocks `solve-linear-equation`, `collect-like-terms`); build negative counters (unlocks
 `directed-number`). **The audit resolved the "prioritise by blockage" call this list used to leave
@@ -748,41 +577,38 @@ composites stay plain numbers. Adding a scene type: extend the `TeachScene` unio
 to `sceneMaxStep`, render it in `SceneView` — animate opacity/transform only, reserve space for
 everything (the standing scene contract).
 
-## Teach decks
+**Open questions to look at as we work (not for answering now).**
+- Which ships next — **algebra tiles or the area model**? Algebra tiles gates more (5 tool-consumers: `solve-linear-equation`, `collect-like-terms`) than the area model (~3: `expand-double-brackets`, `factorise-quadratic`, `completeTheSquare`).
+- Does an angle / circle / polygon diagram need a **seventh representation**, or is "the diagram is its own representation" a legitimate standing exemption? Raised independently by all 8 Geometry tools in the audit.
+- Per-level vs teacher-chosen representation; whether the signed bar model is a new family or a bar-model variant; how "evolves from" is recorded.
 
-> **Teacher-facing in nature, but secondary in practice.** Front-of-class lesson delivery is
-> squarely tier-1, but this is the least mature, most authoring-heavy prong — one partial deck for
-> one tool. Behind new-tool/utility work until a session specifically wants to prove the format
-> further, not because it's the wrong audience.
 
-**Where it's at.** A slide-based "teaching part of the lesson" (`TeachingDeck`), dev-gated. The
-**engine is built and proven** — hand-authored, misconception-driven slides the teacher presses
-through one beat at a time. **Content is the thin part**: only `FractionsAddSub` has a deck, and
-only its *Concepts* category (an I-do → We-do → You-do sequence on equivalent fractions). Its other
-two categories (True/False, Spot the Mistake) are stubbed "Coming soon", and no other tool has a
-deck yet. So the open question is less "what to build" and more "what proves the format".
+## Sandboxes & viewports
 
-**Possible next steps (background, pre-audit — see the sequencing note above):**
-- Deepen the exemplar — fill out FractionsAddSub's remaining categories so one deck is complete end-to-end.
-- Or prove breadth — author a first deck for a *different* tool, to test the format on another topic.
-- Sketch a deck for a non-fraction topic (angles, ratio) to check the scene library actually covers it.
-- Reconsider what categories a deck should even have — the current three (Concepts / True-False / Spot-the-Mistake) are a starting guess, not settled.
-- Decide the bar for **coming out from behind the dev gate** (`showTeach` in `ToolShell.tsx`) — needs ≥1 genuinely classroom-ready deck.
+**The idea.** An interactive sandbox is built **as a tool on its own first**, usable standalone in a
+lesson, and then **built into question tools as a viewport** on the solving. Sandboxes share a page
+layout and toolbar so they feel like one family.
 
-**Detail.** Authoring guide is in `CLAUDE.md` → "Teaching slides". Slides are specific, hand-authored,
-misconception-driven — *not* generated (the varied side is what Whiteboard/Worksheet are for). Prefer
-I-do → We-do → You-do within a category on one coherent example. Reference: `FractionsAddSub.tsx`
-(`TEACHING_SLIDES`).
+**Where it's at.**
+- **Algebra Tiles** (`/algebra-tiles`) — live, standalone. Tiles, multiplication grids, zero pairs, pen / eraser / pan, expression builder. Not yet a viewport anywhere; needs a shared representation component (like counters have) before it can be embedded.
+- **Negative Counters** (`/negative-counters`) — live, standalone, same page layout as Algebra Tiles; yellow +1 / red −1, boxed zero pairs that move as a group, a + / − table, the shared toolbar. Its shared `CounterBoard` already draws the same counters and pair boxes inside worked solutions; making Integer Add/Sub use it as a viewport is **deliberately held** until the sandbox itself is right.
+- **SmartGrapher** (`src/shared/grapher/`) — a mature, embeddable graph, already a viewport in Properties of Line Equations, Simultaneous Equations (Substitution) and Mixed Strategies, with step-by-step builds. It is a sandbox that needs **better use**, not a project of its own.
+- **Grapher Lab** (`/grapher`, dev-gated) — SmartGrapher's test bench; part of this prong.
+- **Parallel Lines Explorer** (`/parallel-lines-interactive`) — live interactive, part of this prong.
+- **Shared toolbar** — Select / Grab / Pen / Eraser / Clear drawings / colours (`DrawHotbar` in `src/shared/components/BoardTools.tsx`); new sandboxes reuse it.
 
----
+**Possible next steps.**
+- Define the **viewport pattern**: how a sandbox is embedded in a question tool (via `questionRenderer` / `stepVisualRenderer`), driven by the question's data, and whether the student/teacher can then drive it or it plays the working.
+- Extract an **Algebra Tiles representation component** so it can sit in solutions.
+- Counters as a viewport in Integer Add/Sub (held), then the signed bar model → number line progression.
+- SmartGrapher: Completing the Square (parabola + vertex) and Iteration (curve and root — the top unwired candidate); an ellipse preset for `NonLinearSimEq`.
+- Decide which other interactives count as sandboxes as they appear.
 
-# Mathematics — tools & utilities
+### SmartGrapher (detail)
 
-## SmartGrapher
-
-> **Tier-1 priority.** The model case for "teacher-facing advancement" — a quick in-lesson graph
-> instead of leaving the software. Wiring it into more tools is one of the highest-value, lowest-
-> effort things to pick up next (see the still-unwired candidates below).
+> A sandbox that needs **better use** (not a prong of its own): a quick in-lesson graph instead of
+> leaving the software, and an embeddable viewport for solutions. Wiring it into more tools is a
+> Sandboxes & viewports next step and a per-tool call in the Tool review cycle.
 
 **Where it's at.** A **mature**, embeddable, data-driven graph component (`src/shared/grapher/`)
 with its own test bench at `/grapher`. Live in three tools (Mixed Strategies L3 lower-envelope,
@@ -810,74 +636,13 @@ Part 1 per tool, see `docs/TOOL_AUDIT.md`):**
 - Add an **ellipse preset** if/when a tool needs ellipse-and-line (presets today: linear · quadratic · cubic · circle · custom) — would close `NonLinearSimEq`'s disclosed ellipse gap.
 - Mostly: pull it in opportunistically when building or migrating any coordinate/quadratic tool.
 
-## Narrow-viewport layout
-
-**Where it's at.** `ToolShell` now detects a narrow viewport (`window.matchMedia`, ≤640px — a real
-phone width, or a desktop browser window shrunk that far for a quick preview) and swaps its desktop
-chrome for a compact single-column layout: a settings banner (topic · level, tap to open a drawer)
-instead of the tool-tab/mode-tab rows, a two-way Worked Example / Worksheet toggle (**no Whiteboard
-or Teach** — narrow has no layout for either), and a light in-app Worksheet list (scrollable question
-cards with independent tap-to-reveal and a centered "Generate / count / Show All" control row —
-**no print/export in narrow at all**, cut after live feedback that it was unnecessary clutter for a
-phone) instead of the desktop's print-oriented grid/differentiated builder. Built entirely from
-existing generic state and components — `generateQuestion`/`handleGenerateWorksheet`,
-`questionRenderer`/`answerRenderer` overrides, and a new `InlineQOPanel` (a non-popover render of the
-same `StandardQOPopover` content) inside the drawer — so **every tool gets it with zero per-tool
-code**, including diagram tools via their existing renderer overrides. Seeds a smaller default
-question font size on narrow viewports and a `compact` flag on `renderWorkedExample` trims its
-whiteboard-sized padding for a phone column (desktop call site unaffected either way) — both added
-after a first pass read as too large/zoomed-in on a real phone. `LandingPage.tsx` also got its own
-mobile-sizing pass in the same session (a separate, pre-existing component, not part of ToolShell)
-since it was the biggest offender. Smoke-tested live against `BestBuys` (worded questions, no
-diagrams) at 375px and 1280px, plus the landing page at both widths — narrow and desktop layouts
-both verified interactively (drawer open/close, reveal, worksheet generation, per-card reveal), zero
-console errors, `npm run build`/`npm test` clean.
-
-**Possible next steps:**
-- Verify against a diagram/SVG tool (custom `questionRenderer` + `handleDiagramPrint`) and a tool
-  with a heavier QO surface (multiple multiSelect groups, a dropdown, `difficultySettings`) — only a
-  simple worded-question tool has been checked live so far.
-- Decide whether a differentiated worksheet link (`?diff=1`) opened on a phone should stay as a mixed-
-  level flat list (current behaviour, untested) or be blocked/simplified.
-- Consider whether the drawer's "Topic" list (stacked full-width buttons) holds up for a tool with
-  many sub-tools (most have 1–3 today).
-
-## Old-shell migration
-
-**Where it's at.** Older tools hand-roll their own UI (~800–1,300 lines); v2.3 tools use the shared
-ToolShell (~250–350). **The migration backlog is now empty** — `SimplifyingRatiosTool` (the last
-entry) has been brought onto ToolShell, keeping its numeric and algebraic ratio-simplification
-maths verbatim; it stays `enabled: false` pending a decision on going live.
-`src/tests/organisation.test.ts` is the CI-enforced source of truth for which tool is on which
-shell. The four Generators tools (`TimesTablesGenerator`, `MultiplicationGenerator`,
-`NegativeOperationsGenerator`, `FunctionalSkillsGenerator`) are **not** migration targets — they
-exist to batch-produce PDF worksheets, a different purpose from ToolShell's
-whiteboard/worked-example/worksheet model, and are now categorised standalone-by-design rather than
-backlog.
-
-This prong is **done** as far as shell architecture goes — it's not fed by the Tool Audit the way
-the pedagogy prongs above are. The audit's Part 2 (standalone readiness) will separately produce a
-recommended live/gated status per tool, including for `SimplifyingRatiosTool` — see
-`docs/TOOL_AUDIT.md`. That's tracked there, not here, since it's a content-readiness question, not
-a shell-migration one.
-
-**Possible next steps:**
-- If the Generators family ever grows well past four, revisit whether a dedicated **Generator shell** is worth building — not needed today.
-
-**Detail.** Enabled/done: `FractionsOfAmounts`, `AnglesInTriangles`, `NonLinearSimEq`, `PowersOfTen`,
-`FractionToRatio`, `PerimeterTool` (techniques wiring still to add on some). Migrated but dev-gated:
-`SimplifyingRatiosTool`. Standalone by design (never migrate): `SystemArchitecture`, `AlgebraTiles`,
-`ParallelLinesInteractive`, `GrapherLab`, `Visualiser`, `CallSelector`, `p-value`, `SkillLibrary`,
-`TechniqueLibrary`, and the four Generators tools (PDF-batch output, different purpose).
-`organisation.test.ts` holds the authoritative lists — update it when a tool moves.
-
 ---
+
+# Standalone prongs
 
 # Computer Science
 
-> **⏸ Parked as a priority** while the Maths Tool Audit (see above) is in progress, but worked on
-> on request: a first **Travelling Salesperson** slice landed 2026-09-23 (below). Every Decision tool
-> stays **dev-gated** (`enabled: false`) until the strand is deliberately taken live.
+> **⏸ Parked as a priority** (standalone prong); worked on on request.
 
 An OCR **J277 GCSE Computer Science** revision area. CS tools are **knowledge/revision** tools,
 not question generators — a different product from the Maths tools, on their own shell (`CSShell`,
@@ -936,11 +701,12 @@ Binary↔Hex, 2 levels each (nibble / byte), a Direction pool per tab.
 
 ---
 
-# Decision Maths
+# Decision Maths (A-level strand)
 
-> **⏸ Parked.** Not a current priority while the Maths Tool Audit (see above) is in progress. Kept
-> here so the plan isn't lost — pick back up once the Maths audit and its resulting backlog are in
-> hand.
+> The A-level strand is **Decision Maths** together with the **P-Value Grapher** (statistics). P-Value Grapher is a live interactive tool and belongs to this strand, not to the Sandboxes prong.
+
+
+> **⏸ Parked as a priority** (standalone prong), but worked on on request: a first **Travelling Salesperson** slice landed 2026-09-23 (below). Every Decision tool stays **dev-gated** (`enabled: false`) until the strand is deliberately taken live.
 
 AQA A-level Further Maths, **Discrete Mathematics** (graphs & networks: MST, TSP, CPA, Dijkstra,
 route inspection, flows, LP). A network-native shell (`DecisionShell`, `src/shared/decision/`),
@@ -989,7 +755,6 @@ thread) or **increment 2 (MST breadth)**.
 
 *Keeping this current: when a session moves a prong, update its **Where it's at** line and its *At a
 glance* row here, alongside the `docs/PATCH_NOTES.md` history entry. Next-step bullets are spitball — prune
-the done/ruled-out ones. Keep the deep tables above accurate as work lands. The Maths Tool Audit's
-own progress is tracked in `docs/TOOL_AUDIT.md`, not duplicated here — mirror only its category
-status (⬜/🚧/✅) into the At-a-glance row above.*
+the done/ruled-out ones. Paused work is tracked in `docs/BACKBENCH.md`. The original per-tool audit
+findings live in `docs/TOOL_AUDIT.md`; the live per-tool review lives in each tool's note.
 (Standing authoring principles — e.g. "never store the same fact twice" — live in `CLAUDE.md`, not here.)*
