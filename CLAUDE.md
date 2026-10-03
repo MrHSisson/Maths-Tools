@@ -102,7 +102,7 @@ but only in chat; never write it into a doc.
 3. **Tool pages** — a new tool gets a page (At a glance, What it does, how it differs) in its strand folder and a row in `Maths Tools — Tool Index` (refresh the counts: `src/registry.ts` entries, `enabled: false`, `hidden`, `parked`, ToolShell tool files). Changed-tool facts that aren't a feature (levels, sub-tools, QOs) go on the tool's own page.
 4. **Representations** — design decisions about the pictures (colours, layouts, progressions, composites) go in `Maths Tools — Representations`, dated, with open questions.
 5. Never edit a locked block (Harry unlocks); read the block's `version` first (`get_block`); keep blocks plain-English — no code.
-6. **Style: bullets, not prose.** One idea per bullet, sub-bullets for detail (Live in / Next / Why as headed bullets, one tool per bullet). No "·"-separated inline lists and no paragraphs. Table cells stay short (a count or a status, never a list of tools) — put the detail in bullets so notes are easy to chunk and scan.
+6. **Style: bullets, not prose.** One idea per bullet, sub-bullets for detail (Live in / Next / Why as headed bullets, one tool per bullet). No "·"-separated inline lists and no paragraphs. **Keep tables as tables, but any cell holding more than one item is bulleted inside the cell** — write `• item<br>• item` in the cell (never `;`- or `·`-separated lists). Single-value cells (a count, a status) stay plain.
 
 The notes are a *human* layer: do not paste repo docs into them, and keep `docs/PATCH_NOTES.md` as the technical history.
 
