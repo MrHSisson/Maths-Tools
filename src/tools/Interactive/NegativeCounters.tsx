@@ -10,7 +10,7 @@ import { CounterDot, COUNTER_POS, COUNTER_NEG, type CounterState } from "../../s
 // The counters themselves are the shared representation (`CounterDot`, src/shared/counters.ts) — the same
 // yellow and red appear in question working steps, so the sandbox and the solutions look identical.
 
-interface CounterItem { id: number; sign: 1 | -1; x: number; y: number; pairId?: number; }
+interface CounterItem { id: number; sign: 1 | -1; x: number; y: number; pairId?: number; col?: number; }
 /** What happens when a +1 is dropped onto a −1: they sit together as a circled zero pair, or both collapse to nothing. */
 type Meet = "pair" | "collapse";
 /** "free": drag counters anywhere. "table": the + / − representation table — yellows sit in the top row, reds in
@@ -30,47 +30,58 @@ const LANE_H = SIZE + 24;
 
 const snap = (v: number) => Math.round(v / SNAP) * SNAP;
 
-/** Table layout: where each counter sits. Explicit zero pairs take a column each (+ over −); the rest fill on
- *  after them, yellows along the top row and reds along the bottom, so the nth + sits over the nth −. */
+/** Table layout: every counter needs a column — keep the ones it has, give the rest the first column free in their
+ *  own row. `skip` is a counter being dragged (it has no cell until it is dropped). */
+const ensureCols = (items: CounterItem[], skip?: number): CounterItem[] => {
+  const used = [new Set<number>(), new Set<number>()];
+  for (const c of items) if (c.col !== undefined && c.id !== skip) used[c.sign > 0 ? 0 : 1].add(c.col);
+  return items.map((c) => {
+    if (c.id === skip || c.col !== undefined) return c;
+    const lane = c.sign > 0 ? 0 : 1;
+    let col = 0;
+    while (used[lane].has(col)) col++;
+    used[lane].add(col);
+    return { ...c, col };
+  });
+};
+
+/** Table layout: where each counter sits (column from its own `col`, row from its sign), how many columns, and
+ *  which columns hold both a + and a − (the zero pairs the eye should see). */
 const tableLayout = (items: CounterItem[]) => {
   const at = new Map<number, { col: number; lane: 0 | 1 }>();
-  let col = 0;
-  const byPair = new Map<number, CounterItem[]>();
-  for (const c of items) if (c.pairId !== undefined) byPair.set(c.pairId, [...(byPair.get(c.pairId) ?? []), c]);
-  for (const group of byPair.values()) {
-    for (const c of group) at.set(c.id, { col, lane: c.sign > 0 ? 0 : 1 });
-    col++;
+  const lanes = new Map<number, Set<number>>();
+  let cols = 0;
+  for (const c of items) {
+    if (c.col === undefined) continue;
+    const lane: 0 | 1 = c.sign > 0 ? 0 : 1;
+    at.set(c.id, { col: c.col, lane });
+    if (!lanes.has(c.col)) lanes.set(c.col, new Set());
+    lanes.get(c.col)!.add(lane);
+    cols = Math.max(cols, c.col + 1);
   }
-  const rest = items.filter((c) => c.pairId === undefined);
-  const ys = rest.filter((c) => c.sign > 0), rs = rest.filter((c) => c.sign < 0);
-  ys.forEach((c, i) => at.set(c.id, { col: col + i, lane: 0 }));
-  rs.forEach((c, i) => at.set(c.id, { col: col + i, lane: 1 }));
-  const cols = col + Math.max(ys.length, rs.length);
-  // columns holding both a + and a − (the zero pairs the eye should see)
-  const full = new Set<number>();
-  for (let i = 0; i < cols; i++) {
-    const here = [...at.values()].filter((v) => v.col === i);
-    if (here.some((v) => v.lane === 0) && here.some((v) => v.lane === 1)) full.add(i);
-  }
+  const full = new Set<number>([...lanes].filter(([, l]) => l.size === 2).map(([col]) => col));
   return { at, cols, full };
 };
 
 /** Table layout: ids of every counter sitting in a zero-pair column. */
 const tableMatched = (items: CounterItem[]): Set<number> => {
   const { at, full } = tableLayout(items);
-  return new Set(items.filter((c) => full.has(at.get(c.id)!.col)).map((c) => c.id));
+  return new Set(items.filter((c) => at.has(c.id) && full.has(at.get(c.id)!.col)).map((c) => c.id));
 };
 
-/** Table layout, "collapse": the earliest unpaired + and − cancel and vanish; explicit zero pairs stay put. */
+/** Table layout, "collapse": a column holding a + over a − cancels and vanishes — unless it is a zero pair the
+ *  teacher added on purpose (pairId), which stays until "Remove zero pairs". */
 const collapseTable = (items: CounterItem[]): CounterItem[] => {
-  const rest = items.filter((c) => c.pairId === undefined);
-  const ys = rest.filter((c) => c.sign > 0), rs = rest.filter((c) => c.sign < 0);
-  const k = Math.min(ys.length, rs.length);
-  const gone = new Set([...ys.slice(0, k), ...rs.slice(0, k)].map((c) => c.id));
+  const { at, full } = tableLayout(items);
+  const gone = new Set<number>();
+  for (const col of full) {
+    const members = items.filter((c) => at.get(c.id)?.col === col);
+    if (members.every((c) => c.pairId === undefined)) members.forEach((c) => gone.add(c.id));
+  }
   return gone.size ? items.filter((c) => !gone.has(c.id)) : items;
 };
 
-/** Pair each yellow with its nearest unused red; the returned ids are the counters that sit in a zero pair. */
+/** Free layout: pair each yellow with its nearest unused red; the returned ids are the counters in a zero pair. */
 const pairUp = (items: CounterItem[]): Set<number> => {
   // Counters already joined as a zero pair (pairId) come first; the rest are matched by nearest neighbour.
   const paired = new Set<number>(items.filter((c) => c.pairId !== undefined).map((c) => c.id));
@@ -130,7 +141,7 @@ export default function App() {
   const addCounter = (sign: 1 | -1) => {
     if (layoutRef.current === "table") {
       // table: the counter drops into its own row (yellow top, red bottom); "collapse" cancels it at once
-      const next = [...itemsRef.current, { id: nextId++, sign, x: 0, y: 0 }];
+      const next = ensureCols([...itemsRef.current, { id: nextId++, sign, x: 0, y: 0 }]);
       commit(meetRef.current === "collapse" ? collapseTable(next) : next);
       return;
     }
@@ -139,6 +150,15 @@ export default function App() {
   };
   const addZeroPair = () => {
     const cur = itemsRef.current;
+    if (layoutRef.current === "table") {
+      // one column that is free in both rows: the + over the −, tagged so "collapse" leaves it alone
+      const used = new Set(cur.filter((c) => c.col !== undefined).map((c) => c.col!));
+      let col = 0;
+      while (used.has(col)) col++;
+      const pid = nextPairId++;
+      commit([...cur, { id: nextId++, sign: 1, x: 0, y: 0, pairId: pid, col }, { id: nextId++, sign: -1, x: 0, y: 0, pairId: pid, col }]);
+      return;
+    }
     const a = freeSlot(cur);
     const pid = nextPairId++;
     const first = { id: nextId++, sign: 1 as const, ...a, pairId: pid };
@@ -148,7 +168,7 @@ export default function App() {
 
   // Take away every zero pair currently on the board (each yellow with its nearest red).
   const removeZeroPairs = () => {
-    const paired = layoutRef.current === "table" ? tableMatched(itemsRef.current) : pairUp(itemsRef.current);
+    const paired = layoutRef.current === "table" ? tableMatched(ensureCols(itemsRef.current)) : pairUp(itemsRef.current);
     if (paired.size) commit(itemsRef.current.filter((c) => !paired.has(c.id)));
   };
   // Tidy: yellows in the top row, reds in the row beneath — makes counting and pairing easy to see.
@@ -187,6 +207,18 @@ export default function App() {
         // dropped back on the tray → put it away
         setHistory((h) => [...h.slice(-50), d.before]);
         setItems(cur.filter((c) => c.id !== d.id));
+      } else if (d.moved && layoutRef.current === "table") {
+        // Snap into the nearest column of the counter's own row; if that cell is taken the two swap places.
+        const me = cur.find((c) => c.id === d.id)!;
+        const maxCol = Math.max(0, Math.floor((p.w - LABEL_W - 10) / SLOT) - 1);
+        const col = Math.max(0, Math.min(maxCol, Math.round((me.x - LABEL_W - 10) / SLOT)));
+        const lane = me.sign > 0 ? 0 : 1;
+        const occ = cur.find((c) => c.id !== me.id && (c.sign > 0 ? 0 : 1) === lane && c.col === col);
+        let next = cur.map((c) => (c.id === me.id ? { ...c, col } : occ && c.id === occ.id ? { ...c, col: me.col } : c));
+        next = ensureCols(next);
+        if (meetRef.current === "collapse") next = collapseTable(next);
+        setHistory((h) => [...h.slice(-50), d.before]);
+        setItems(next);
       } else if (d.moved) {
         let next = cur.map((c) => (c.id === d.id
           ? { ...c, x: Math.max(0, Math.min(p.w - SIZE, snap(c.x))), y: Math.max(0, Math.min(p.h - SIZE, snap(c.y))) }
@@ -222,11 +254,14 @@ export default function App() {
     const unpair = (list: CounterItem[]) => (c.pairId === undefined ? list : list.map((x) => (x.pairId === c.pairId ? { ...x, pairId: undefined } : x)));
     if (mode === "delete") { commit(unpair(itemsRef.current).filter((x) => x.id !== c.id)); return; }
     if (mode === "flip") {
-      const flipped = unpair(itemsRef.current).map((x) => (x.id === c.id ? { ...x, sign: (x.sign * -1) as 1 | -1 } : x));
-      commit(layoutRef.current === "table" && meetRef.current === "collapse" ? collapseTable(flipped) : flipped);
+      let flipped = unpair(itemsRef.current).map((x) => (x.id === c.id ? { ...x, sign: (x.sign * -1) as 1 | -1, col: undefined } : x));
+      if (layoutRef.current === "table") {
+        flipped = ensureCols(flipped);   // it lands in the first free column of its new row
+        if (meetRef.current === "collapse") flipped = collapseTable(flipped);
+      }
+      commit(flipped);
       return;
     }
-    if (layoutRef.current === "table") return;   // table counters stay in place — use Flip / Take away
     const p = toBoard(e.clientX, e.clientY);
     const before = itemsRef.current;
     if (c.pairId !== undefined) setItems(unpair(before));
@@ -235,7 +270,6 @@ export default function App() {
   };
   // Pull a fresh counter out of the tray: it appears under the pointer and carries on as a normal drag.
   const startTrayDrag = (e: React.PointerEvent, sign: 1 | -1) => {
-    if (layoutRef.current === "table") return;   // table: tap a counter in (it lands in its row)
     e.preventDefault();
     const p = toBoard(e.clientX, e.clientY);
     const c: CounterItem = { id: nextId++, sign, x: p.x - SIZE / 2, y: p.y - SIZE / 2 };
@@ -247,9 +281,11 @@ export default function App() {
 
   const pos = items.filter((c) => c.sign > 0).length;
   const neg = items.length - pos;
-  const table = layout === "table" ? tableLayout(items) : null;
+  // Table: the counter being dragged has no cell until it is dropped, so it is left out of the columns/bands.
+  const placed = layout === "table" ? ensureCols(items.filter((c) => c.id !== dragId)) : items;
+  const table = layout === "table" ? tableLayout(placed) : null;
   const paired = table
-    ? (meet === "pair" ? tableMatched(items) : new Set<number>(items.filter((c) => c.pairId !== undefined).map((c) => c.id)))
+    ? (meet === "pair" ? tableMatched(placed) : new Set<number>(items.filter((c) => c.pairId !== undefined).map((c) => c.id)))
     : new Set<number>(items.filter((c) => c.pairId !== undefined).map((c) => c.id));
   const net = pos - neg;
 
@@ -292,11 +328,11 @@ export default function App() {
           <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-1">Board</div>
           <div className="flex gap-2">
             {([["free", "Free"], ["table", "Table"]] as [Layout, string][]).map(([l, label]) => (
-              <button key={l} onClick={() => setLayout(l)} className="flex-1 rounded-lg px-3 py-1.5 text-sm font-bold border-2 transition-colors"
+              <button key={l} onClick={() => { setLayout(l); if (l === "table") setItems((cur) => ensureCols(cur)); }} className="flex-1 rounded-lg px-3 py-1.5 text-sm font-bold border-2 transition-colors"
                 style={{ background: layout === l ? "#1e3a8a" : "#fff", color: layout === l ? "#fff" : "#475569", borderColor: layout === l ? "#1e3a8a" : "#cbd5e1" }}>{label}</button>
             ))}
           </div>
-          <div className="text-[11px] text-slate-500 -mt-1">{layout === "table" ? "A + row above a − row. Each counter lands in its own row, so matching + and − line up as zero pairs." : "Drag counters anywhere on the board."}</div>
+          <div className="text-[11px] text-slate-500 -mt-1">{layout === "table" ? "A + row above a − row. Drag counters in: they snap into columns, so a + over a − is a zero pair." : "Drag counters anywhere on the board."}</div>
           <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-1">When +1 meets −1</div>
           <div className="flex gap-2">
             {([["pair", "Pair up"], ["collapse", "Collapse"]] as [Meet, string][]).map(([m, label]) => (
@@ -319,7 +355,7 @@ export default function App() {
             {actBtn("Clear", () => items.length && commit([]), <Trash2 size={14} />, items.length === 0)}
             {actBtn("Tidy", tidy, <LayoutGrid size={14} />, items.length === 0 || layout === "table")}
           </div>
-          {actBtn("Remove zero pairs", removeZeroPairs, <X size={14} />, (layout === "table" ? tableMatched(items) : pairUp(items)).size === 0)}
+          {actBtn("Remove zero pairs", removeZeroPairs, <X size={14} />, (layout === "table" ? tableMatched(ensureCols(items)) : pairUp(items)).size === 0)}
           {actBtn(showReadout ? "Hide value" : "Show value", () => setShowReadout((v) => !v), showReadout ? <EyeOff size={14} /> : <Eye size={14} />)}
         </div>
 
@@ -342,7 +378,7 @@ export default function App() {
               </>
             )}
             {items.length === 0 && (
-              <div className="absolute inset-0 flex items-center justify-center text-slate-400 font-semibold pointer-events-none">{table ? "Tap counters in — yellow goes in the + row, red in the − row" : "Drag counters here, or tap them in"}</div>
+              <div className="absolute inset-0 flex items-center justify-center text-slate-400 font-semibold pointer-events-none">{table ? "Drag or tap counters in — yellow goes in the + row, red in the − row" : "Drag counters here, or tap them in"}</div>
             )}
             {items.map((c) => {
               const state: CounterState = paired.has(c.id) ? "paired" : "normal";
@@ -351,8 +387,8 @@ export default function App() {
               const top = tp ? tp.lane * LANE_H + (LANE_H - SIZE) / 2 : c.y;
               return (
                 <div key={c.id} onPointerDown={(e) => startBoardDrag(e, c)}
-                  style={{ position: "absolute", left, top, touchAction: "none", transition: table ? "left 0.25s ease, top 0.25s ease" : undefined,
-                    cursor: table ? (mode === "move" ? "default" : "pointer") : mode === "move" ? (dragId === c.id ? "grabbing" : "grab") : "pointer", zIndex: dragId === c.id ? 5 : 1 }}>
+                  style={{ position: "absolute", left, top, touchAction: "none", transition: table && dragId !== c.id ? "left 0.2s ease, top 0.2s ease" : undefined,
+                    cursor: mode === "move" ? (dragId === c.id ? "grabbing" : "grab") : "pointer", zIndex: dragId === c.id ? 5 : 1 }}>
                   <CounterDot c={{ sign: c.sign, state }} size={SIZE} />
                 </div>
               );
