@@ -124,7 +124,7 @@ This is the complete list — nothing in these four categories is excluded.
 - **Decision Maths** tools (`NetworkSandbox`, `MinimumSpanningTree`, `MixedStrategies`) — a
   different shell (`DecisionShell`), parked per `docs/PROJECTS.md`.
 - **Standalone-by-design** tools: `AlgebraTiles`, `ParallelLinesInteractive`, `GrapherLab`,
-  `Visualiser`, `CallSelector`, `p-value`, `SkillLibrary`, `TechniqueLibrary` — manipulatives and
+  `Visualiser`, `p-value`, `SkillLibrary`, `TechniqueLibrary` — manipulatives and
   dev-only pages, not question generators.
 
 ---

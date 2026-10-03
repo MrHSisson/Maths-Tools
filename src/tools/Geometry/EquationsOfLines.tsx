@@ -1,8 +1,8 @@
 import {
   ToolShell, SmartGrapher, QuestionDisplay,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep,
-  type QOSnapshot, type GraphSeries, type FOI,
-  mStep,
+  type QOSnapshot, type GraphBuildSpec,
+  mStep, graphStep, graphStepVisual,
 } from "../../shared";
 
 // ── Rational arithmetic ───────────────────────────────────────────────────────
@@ -42,23 +42,33 @@ const fmtN = (n: number) => n >= 0 ? `${n}` : `(${n})`;
 const fmtDec = (n: number) => Number(n.toFixed(2)).toString();
 
 // ── Graph — every sub-tool here is a straight line through known points, a
-// direct off-the-shelf fit for SmartGrapher's linear preset. Shown only on the
-// regular Whiteboard panel once the answer is revealed, matching the pattern
-// NonLinearSimEq already established for this exact "reveal a curve on answer"
-// use case.
-interface GraphInfo { series: GraphSeries[]; fois: FOI[]; }
+// direct off-the-shelf fit for SmartGrapher's linear preset. On the Whiteboard it
+// appears once the answer is revealed; in the Worked Example it BUILDS with the
+// steps (see `graphStep`): each working step is stamped with the graph state to
+// show, so points plot in, the line is drawn, and the y-intercept is picked out
+// as the working reaches them.
+type GraphInfo = GraphBuildSpec;
 const LINE_COLOR = "#2563eb";
-const buildLineGraph = (m: number, c: number, points: { x: number; y: number }[]): GraphInfo => ({
-  series: [{ equationType: "linear", params: [m, c], color: LINE_COLOR }],
-  fois: points.map((p) => ({ x: p.x, y: p.y, kind: "point", highlight: true, label: `(${fmtDec(p.x)}, ${fmtDec(p.y)})` })),
+/** When (which working step) each part of the graph appears. */
+interface LinePlan { line: number; points: number[]; intercept?: number; }
+const buildLineGraph = (m: number, c: number, points: { x: number; y: number }[], plan: LinePlan): GraphInfo => ({
+  series: [{ equationType: "linear", params: [m, c], color: LINE_COLOR, step: plan.line }],
+  fois: [
+    ...points.map((p, i) => ({ x: p.x, y: p.y, kind: "point" as const, label: `(${fmtDec(p.x)}, ${fmtDec(p.y)})`, step: plan.points[i] })),
+    ...(plan.intercept === undefined ? [] : [{ x: 0, y: c, kind: "intercept" as const, label: `(0, ${fmtDec(c)})`, step: plan.intercept }]),
+  ],
+  height: 320,
 });
+/** The finished graph (Whiteboard reveal): no step, every point ringed. */
 const GraphView = ({ g }: { g: GraphInfo }): JSX.Element => (
   <SmartGrapher
     series={g.series}
     height={260}
-    config={{ autoFois: false, fois: g.fois, showFois: true, style: { foi: "#dc2626" } }}
+    config={{ autoFois: false, fois: g.fois?.map((f) => ({ ...f, highlight: true })), showFois: true, style: { foi: "#dc2626" } }}
   />
 );
+/** Stamp each working step with its index so the graph builds as the steps advance. */
+const withGraph = (steps: WorkingStep[], g: GraphInfo): WorkingStep[] => steps.map((s, i) => graphStep(s, g, i));
 
 const equationLatex = (gradN: number, gradD: number, c: number): string => {
   const absN = Math.abs(gradN), isOne = absN === gradD, negGrad = gradN < 0;
@@ -250,7 +260,12 @@ const generateMissingQuestion = (level: DifficultyLevel, allowedVars: MissingVar
       const crdL = `\\left(${xStr},\\,${yStr}\\right)`;
       const answerVal = mv === "x" ? xq : mv === "y" ? yq : mv === "m" ? mq : cq;
       const ansLtx = `${mv} = ${ratLatex(answerVal)}`;
-      const graph = buildLineGraph(mq.n / mq.d, cq.n / cq.d, [{ x: xq.n / xq.d, y: yq.n / yq.d }]);
+      const steps = buildMissingWorking(mv, mq, cq, xq, yq);
+      const last = steps.length - 1;
+      // Finding x or y: the line is given, so it is drawn first and the point it passes through is
+      // found last. Finding m or c: the point is given, and the line only becomes known at the end.
+      const plan: LinePlan = mv === "x" || mv === "y" ? { line: 0, points: [last] } : { line: last, points: [0] };
+      const graph = buildLineGraph(mq.n / mq.d, cq.n / cq.d, [{ x: xq.n / xq.d, y: yq.n / yq.d }], plan);
       // Worded (not a single displayLatex) so the prose wraps inside the
       // question box instead of overflowing it in whiteboard mode.
       return {
@@ -261,7 +276,7 @@ const generateMissingQuestion = (level: DifficultyLevel, allowedVars: MissingVar
         ],
         answer: ansLtx,
         answerLatex: ansLtx,
-        working: buildMissingWorking(mv, mq, cq, xq, yq),
+        working: withGraph(steps, graph),
         key: `missing-${level}-${mv}-${Math.floor(Math.random() * 1_000_000)}`,
         difficulty: level,
         _graph: graph,
@@ -340,14 +355,18 @@ const generateQuestion = (
 
   if (t === "gradient") {
     const gm = gradN / gradD, gc = wy1 - gm * wx1;
+    const gGraph = buildLineGraph(gm, gc, [{ x: wx1, y: wy1 }, { x: wx2, y: wy2 }], { line: 1, points: [0, 0] });
     return {
       kind: "simple", display: "", displayLatex,
       answer: gradAnswerLatex, answerLatex: gradAnswerLatex,
-      working: [mStep("Substitute into the gradient formula",
-        `m = \\dfrac{${fmtN(wy2)} - ${fmtN(wy1)}}{${fmtN(wx2)} - ${fmtN(wx1)}} = \\dfrac{${diffY}}{${diffX}} = ${gradAnswerLatex}`)],
+      working: withGraph([
+        mStep("Mark the two points on the graph", `${coordLatex(wx1, wy1)} \\quad ${coordLatex(wx2, wy2)}`),
+        mStep("Substitute into the gradient formula",
+          `m = \\dfrac{${fmtN(wy2)} - ${fmtN(wy1)}}{${fmtN(wx2)} - ${fmtN(wx1)}} = \\dfrac{${diffY}}{${diffX}} = ${gradAnswerLatex}`),
+      ], gGraph),
       key: `grad-${level}-${id}`, difficulty: level,
       _gN: gradN, _gD: gradD,
-      _graph: buildLineGraph(gm, gc, [{ x: wx1, y: wy1 }, { x: wx2, y: wy2 }]),
+      _graph: gGraph,
     } as unknown as AnyQuestion;
   }
 
@@ -368,20 +387,23 @@ const generateQuestion = (
   const mxStr = sgD === 1 ? `${sgN} \\times ${fmtN(swx1)}` : `\\dfrac{${sgN}}{${sgD}} \\times ${fmtN(swx1)}`;
   const mxVal = (sgN * swx1) / sgD;
   const eqAns = equationLatex(sgN, sgD, c);
+  // Points plot first, the line is drawn at the gradient step, the y-intercept is picked out when c is found.
+  const eGraph = buildLineGraph(sgN / sgD, c, [{ x: swx1, y: swy1 }, { x: swx2, y: swy2 }], { line: 1, points: [0, 0], intercept: 3 });
   return {
     kind: "simple", display: "",
     displayLatex: `${coordLatex(sdA[0],sdA[1])} \\text{ and } ${coordLatex(sdB[0],sdB[1])}`,
     answer: eqAns, answerLatex: eqAns,
-    working: [
+    working: withGraph([
+      mStep("Mark the two points on the graph", `${coordLatex(swx1, swy1)} \\quad ${coordLatex(swx2, swy2)}`),
       mStep("Substitute into the gradient formula",
         `m = \\dfrac{${fmtN(swy2)} - ${fmtN(swy1)}}{${fmtN(swx2)} - ${fmtN(swx1)}} = \\dfrac{${sdiffY}}{${sdiffX}} = ${sgLatex}`),
       mStep("Substitute into y = mx + c",
         `${fmtN(swy1)} = ${mxStr} + c \\implies ${fmtN(swy1)} = ${mxVal} + c`),
       mStep("Solve for c", `c = ${fmtN(swy1)} - ${mxVal} = ${c}`),
-    ],
+    ], eGraph),
     key: `eq-${level}-${id}`, difficulty: level,
     _gN: sgN, _gD: sgD,
-    _graph: buildLineGraph(sgN / sgD, c, [{ x: swx1, y: swy1 }, { x: swx2, y: swy2 }]),
+    _graph: eGraph,
   } as unknown as AnyQuestion;
 };
 
@@ -442,6 +464,8 @@ export default function App() {
       generateQuestion={generateQuestion}
       generateUniqueQ={generateUniqueQ}
       questionRenderer={questionRenderer}
+      stepVisualRenderer={graphStepVisual}
+      stepVisualKeepsWorking
       defaults={{ worksheetFontSize: 2 }}
     />
   );

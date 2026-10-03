@@ -540,6 +540,7 @@ export default function App() {
       infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       generateUniqueQ={generateUniqueQ}
+      defaults={{ hideAnswerStep: true }}
     />
   );
 }

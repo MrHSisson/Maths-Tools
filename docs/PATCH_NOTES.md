@@ -28,6 +28,62 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-04 — Go-live calls: Surds live, Perimeter dev-gated
+- Surds: `enabled: false` removed; now live on the landing page.
+- Perimeter: set `enabled: false` (dev-gated) — thin options and outdated; Simplifying Ratios stays gated pending work.
+- Dropped the "(BETA)" from Perimeter's display name.
+- Build clean, 402 tests pass.
+
+## 2026-10-04 — Tool Review blocks seeded (planner)
+- All 35 ToolShell tool notes in Harry's planner now carry a filled Review block: content, readiness, sandbox fit, techniques, worked solution, Smart Progressor, mobile, audit findings.
+- 27 were seeded from `docs/TOOL_AUDIT.md`; 8 newer tools (Rounding, Comparing & Ordering, Adding & Subtracting Decimals, Speed Distance & Time, Mixed Strategies, Surds, Binary Operations, Number Bases) from specs and `docs/PROJECTS.md`.
+- Worked-solution lines reflect the live single-answer / picture status and the 19 tools still needing a closing answer step.
+- Status field is "seeded from audit" or "seeded from specs" until each tool is reviewed in person.
+
+## 2026-10-03 — Negative counters (shared representation + sandbox)
+
+- **Shared representation:** `src/shared/counters.ts` + `components/Counters.tsx` — yellow = +1, red = −1 (the algebra tiles'
+  yellow/red), zero pairs, ghosted "taken away" counters, each labelled +1 / −1 so colour isn't the only cue. Working-step support
+  (`cStep`, `countersStepRenderer`, `countersStepVisual`) so a board can develop beside the captions like the place value table.
+- **Sandbox tool:** `/negative-counters` (Interactive Tools) — drag from the tray or tap, Move / Flip / Take away, Add zero pair,
+  Remove zero pairs, Tidy, live value readout, and a "When +1 meets −1" setting: pair up (circled zero pair) or collapse to nothing. Standalone by design (like Algebra Tiles).
+- **Representation table ("mat"):** a + row above a − row (rules between rows and labels), counters aligned in columns so a + over a − is a
+  zero pair. Shared as `matBoard` / `layout: "mat"`; in the sandbox as a draggable **Table** board (counters snap into columns of their own row, swapping if the cell is taken;
+  flip moves a counter between rows; pair up shades matched columns, collapse cancels them).
+- **Notes workflow:** Harry's planner now holds the human-readable layer (Build Log, Feature Tracker with linked feature blocks, Representations); `CLAUDE.md` "Ending a session" gained a step to update it each session.
+- Not yet wired into a question tool — Integer Add/Sub is the first target (representation switch: counters → number line).
+- **Sandbox layout now matches Algebra Tiles:** blue header with burger menu (Value Summary toggle), narrow panel (Table / Collapse / + Pair / ZP buttons, undo / clear / tidy, Positive and Negative counters), dot-grid canvas with a floating dark Move / Flip / Take away hotbar, and a Value bar along the bottom. Behaviour unchanged.
+- **Sandbox has the full Algebra Tiles toolbar:** floating bottom bar with Select, Grab/pan, Pen, Eraser, Clear drawings and the five pen colours, plus Flip and Take away. Ink, counters, table and dot grid pan and zoom together (burger menu: Zoom, Reset view). The bar and ink helpers now live in `src/shared/components/BoardTools.tsx` (`DrawHotbar`, `HotBtn`, `eraseNear`, `strokePath`) and Algebra Tiles imports them from there, so the two stay identical.
+- **Sandbox tuning:** counters are smaller (38 px, was 52) so the board and boxes are in proportion; in the Table, pressing the **+** or **−** row label adds a counter to that row; a zero pair now behaves like a PowerPoint group — one press picks up both (boxed pair highlights, Table: the whole column moves and swaps with the target column), a quick second press breaks it apart and moves just that counter. Fixes table counters jumping when dragged (they had no x / y of their own).
+- **Removed Friday Phonecalls** (`CallSelector`, `/call-selector`): file, registry entry and drift-check line deleted; doc mentions cleaned up.
+- **Zero pairs are boxed, not circled:** a + stacked over a − inside a rounded blue frame (shared `PairBox` / `pairBoxStyle`), instead of a ring on each counter plus a shaded column. Applies to the mat table, free-standing `zeroPairs` rows, and the sandbox (Free: pairs stack and box when dropped together or added with + Pair; Table: each matched column is boxed). Unpaired counters sit outside the boxes.
+
+## 2026-10-03 — Developing worked-example visuals rolled out (graphs, ratio tables, place value, number lines)
+
+- **Split layout polish:** the answer in the split is a green **A** line on the timeline (no box/outline); thin custom
+  scrollbar (`.thin-scroll`); `detachLast` on the place value table sets Comparing & Ordering's Order column apart.
+- **SmartGrapher step builds:** new `step` prop + `step` tags on series / points / guides / regions; `graphStep` /
+  `graphStepVisual` helpers. New split variant `stepVisualKeepsWorking` (maths cards stay beside the picture).
+- **Wired:** Equations of Lines (points plot, line drawn, y-intercept picked out; new "mark the points" step; graph now
+  also in Worked Example), Non-linear Sim. Eq. (curve, then line, then solutions), Mixed Strategies L3 (lines, then peak).
+- **Ratio table:** `rStepBuild` grows one table a row per step; Speed/Distance/Time moved onto the caption-only split.
+- **Powers of 10:** the grid now develops (number placed, direction, digits slide) beside captions.
+- **Number lines:** Integer Add/Sub (start point, then the jump) and Rounding's number-line method (ends, number and halfway,
+  half shaded, answer ringed) develop full width above the steps (`stepVisualPlacement="top"`).
+
+## 2026-10-03 — Duplicate green answer box retired across ToolShell tools
+
+- **Rolled `hideAnswerStep: true` out beyond Surds** to 15 more tools whose last working step already
+  states the exact final answer (audited over ~150 draws per sub-tool × level, default and all-options-on QO):
+  ExpandingBrackets, SolvingLinearEquations, AnglesInQuadrilaterals, AnglesInTriangles, Bearings,
+  CircleProperties, PerimeterTool, Estimation, FractionMultDiv, IntegerAddSub, Percentages, Rounding,
+  SimplifyingRatios, BinaryAddition, NumberBases. The final step now carries the green ring instead.
+- **Not yet migrated** (last step is not the answer, so the flag would hide it): CollectingLikeTerms,
+  CompletingTheSquare, Iterations, NonLinearSimEq, SimultaneousEquations, MixedStrategies,
+  AnglesInParallelLines, BasicAngleFacts, EquationsOfLines, ComparingOrderingNumbers, DecimalAddSub,
+  FractionsAddSub, PowersOfTen, BestBuys, FractionToRatio, FractionsOfAmounts, RatioSharing, Recipes,
+  SpeedDistanceTime. Each needs its working to end on the answer first.
+
 ## 2026-10-01 — Full-screen app: light system bars, immersive on Android
 
 Manifest `display` is now `fullscreen` (falls back to standalone) and `theme_color` /

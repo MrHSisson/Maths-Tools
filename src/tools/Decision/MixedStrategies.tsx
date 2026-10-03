@@ -1,8 +1,8 @@
 import {
-  ToolShell, MathRenderer, SmartGrapher, handleDiagramPrint,
+  ToolShell, MathRenderer, handleDiagramPrint,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type QOSnapshot,
-  type GraphSeries, type FOI,
-  randInt, pick, mStep, tStep,
+  type GraphBuildSpec,
+  randInt, pick, mStep, tStep, graphStep, graphStepVisual,
 } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -344,7 +344,7 @@ const graphSteps = (co: Core2, c3: [number, number], c3Lab: string, cA: string, 
   // The plotting step carries the graph data so the worked-example stepRenderer
   // can draw the SmartGrapher right where the method says to plot it.
   const plot: WorkingStep = tStep("Plot each column's expected payoff as a line against $p$. Colin takes the lowest line, so Rose maximises the lower envelope — its highest point is the answer.");
-  plot.extra = { graph };
+  void graph;   // the graph is stamped onto the steps by the caller (graphStep) so it builds with them
   return [
     plot,
     mStep(`The lower envelope peaks where columns $${cA}$ and $${cB}$ cross, giving the $p$ found below.`,
@@ -384,36 +384,6 @@ interface GraphData {
 
 const LINE_COLORS = ["#2563eb", "#059669", "#d97706"];   // one per column line
 
-// The lower-envelope plot, rendered by the shared SmartGrapher: each column's
-// expected payoff is a line E(p) = top·p + bot·(1−p) over p ∈ [0, 1], all three
-// solid and colour-coded. Only the peak of the lower envelope is highlighted (a
-// ringed marker, no coordinate) — students still have to solve the two line
-// equations to find p and the value. Expandable to fullscreen via the embed.
-const GraphView = ({ g }: { g: GraphData }): JSX.Element => {
-  const series: GraphSeries[] = g.lines.map((l, i) => ({
-    equationType: "linear",
-    params: [l.top - l.bot, l.bot],                 // E(p) = (top − bot)·p + bot
-    label: uniSub(l.label),
-    color: LINE_COLORS[i % LINE_COLORS.length],
-  }));
-  const fois: FOI[] = [{ x: g.p, y: g.V, kind: "point", highlight: true }];
-  return (
-    <SmartGrapher
-      series={series}
-      height={300}
-      config={{
-        domain: { xMin: 0, xMax: 1 },
-        lockDomain: true,
-        axisLabels: { x: `p = P(${uniSub(g.rTop)})`, y: "Expected payoff" },
-        autoIntersections: false,   // only the peak is marked, not every crossing
-        autoFois: false,
-        fois,
-        style: { foi: "#dc2626" },
-      }}
-    />
-  );
-};
-
 // The answer body: algebraic answer, plus the graph for Level 3. Shared by the
 // answerRenderer (worked example / worksheet) and the whiteboard questionRenderer
 // (the shell suppresses its own answer block when a questionRenderer is present).
@@ -428,22 +398,6 @@ const answerBody = (q: AnyQuestion): JSX.Element => {
 // The answer is text-only (the algebraic result). The graph lives in its own
 // worked-example step cell, not in the answer.
 const answerRenderer = (q: AnyQuestion): JSX.Element | null => answerBody(q);
-
-// The worked example draws the graph inline at the plotting step (which carries
-// the graph data on step.extra), so it appears exactly where the method says to
-// plot it. All other steps fall through to the shell's default rendering.
-const stepRenderer = (s: WorkingStep): JSX.Element | null => {
-  const g = (s.extra as { graph?: GraphData } | undefined)?.graph;
-  if (!g) return null;
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      <span>{s.plain}</span>
-      <div style={{ width: "100%", maxWidth: 480, margin: "0 auto" }}>
-        <GraphView g={g} />
-      </div>
-    </div>
-  );
-};
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TOOL CONFIG
@@ -621,8 +575,25 @@ const generateQuestion = (
     p: fVal(co.p), pLatex: fLatex(co.p), vLatex: fLatex(co.V), V: fVal(co.V),
     rTop: A.rLab[A.bindRows[0]], rBot: A.rLab[A.bindRows[1]],
   };
+  const plotAt = working.length;                 // index of the "plot each column's line" step
   working.push(...graphSteps(co, c3, c3Lab, cA, cB, graph));
   working.push(...roseSteps(co, A.rLab[A.bindRows[0]], cA));
+  // From the plotting step on, the graph builds with the working: the three lines are drawn at the
+  // plot step and the peak of the lower envelope is ringed on the next. Earlier steps (saddle point,
+  // dominance) have no picture, so the layout only splits once the graph is actually plotted.
+  const spec: GraphBuildSpec = {
+    series: graph.lines.map((l, i) => ({
+      equationType: "linear" as const, params: [l.top - l.bot, l.bot], label: uniSub(l.label),
+      color: LINE_COLORS[i % LINE_COLORS.length], step: plotAt,
+    })),
+    fois: [{ x: graph.p, y: graph.V, kind: "point" as const, highlight: true, step: plotAt + 1 }],
+    config: {
+      domain: { xMin: 0, xMax: 1 }, lockDomain: true,
+      axisLabels: { x: `p = P(${uniSub(graph.rTop)})`, y: "Expected payoff" },
+    },
+    height: 340,
+  };
+  for (let i = plotAt; i < working.length; i++) working[i] = graphStep(working[i], spec, i);
 
   return {
     kind: "simple",
@@ -649,7 +620,8 @@ export default function App() {
       generateQuestion={generateQuestion}
       questionRenderer={questionRenderer}
       answerRenderer={answerRenderer}
-      stepRenderer={stepRenderer}
+      stepVisualRenderer={graphStepVisual}
+      stepVisualKeepsWorking
       customPrintHandler={handleDiagramPrint}
       defaults={{ numQuestions: 6, numColumns: 2, maxColumns: 3, hideFontControls: true }}
     />

@@ -35,6 +35,8 @@ export interface FOI {
   open?: boolean;
   /** Render as an emphasised ringed marker (e.g. the peak of a lower envelope). */
   highlight?: boolean;
+  /** Step-by-step build: the SmartGrapher `step` at which this appears (omit = always shown). */
+  step?: number;
 }
 
 /** The mutable viewport — held in a ref by SmartGrapher, never in React state. */

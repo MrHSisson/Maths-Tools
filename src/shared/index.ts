@@ -52,8 +52,8 @@ export { randInt, pick, fracStr, mStr, pickActive, normalizeMultiSelect, resolve
 
 // Ratio table — core representation for proportional scaling (speed/distance/
 // time, currency conversion, recipe scaling…). See src/shared/ratioTable.ts.
-export { rStep } from "./ratioTable";
-export { RatioTable, ratioTableStepRenderer } from "./components/RatioTable";
+export { rStep, rStepBuild } from "./ratioTable";
+export { RatioTable, ratioTableStepRenderer, ratioTableStepVisual } from "./components/RatioTable";
 
 // Place value table — core representation for place value (powers of 10,
 // decimal add/subtract…). See src/shared/placeValue.ts.
@@ -102,8 +102,8 @@ export { MenuDropdown } from "./components/MenuDropdown";
 export { PrintSplitButton } from "./components/PrintSplitButton";
 
 // SmartGrapher — embeddable canvas graphing component + its maths engine.
-export { SmartGrapher } from "./grapher/SmartGrapher";
-export type { SmartGrapherProps, GrapherConfig, GraphSeries } from "./grapher/SmartGrapher";
+export { SmartGrapher, graphStep, graphStepVisual } from "./grapher/SmartGrapher";
+export type { SmartGrapherProps, GrapherConfig, GraphSeries, GraphBuildSpec } from "./grapher/SmartGrapher";
 export {
   computeFOIs, computeFrame, buildCurveSpec, findFunctionIntersections,
   getLinearFOIs, getQuadraticFOIs, getCubicFOIs, getCircleFOIs,
@@ -119,3 +119,9 @@ export {
   linearProgramming,
 } from "./grapher/recipes";
 export type { GrapherRecipe, InequalityOp } from "./grapher/recipes";
+
+// Negative counters — a core representation (yellow +1, red −1, zero pairs)
+export { COUNTER_POS, COUNTER_NEG, ctr, zeroPairs, netValue, pairCount, cStep, matBoard } from "./counters";
+export type { Counter, CounterRow, CounterBoardData, CounterState } from "./counters";
+export { CounterBoard, CounterDot, PairBox, PAIR_BOX, pairBoxStyle, countersStepRenderer, countersStepVisual } from "./components/Counters";
+export { DrawHotbar, HotBtn, PEN_COLORS, eraseNear, strokePath, type Stroke } from "./components/BoardTools";

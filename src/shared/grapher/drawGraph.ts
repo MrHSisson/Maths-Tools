@@ -45,6 +45,10 @@ export interface CurveDraw {
   color?: string;
   /** Draw the curve dashed (e.g. a strict-inequality boundary). */
   dashed?: boolean;
+  /** Not drawn yet (step-by-step build). Kept in the array so region indices stay valid. */
+  hidden?: boolean;
+  /** Line width override in CSS px (the curve being introduced this step is drawn heavier). */
+  width?: number;
 }
 
 /** Default series palette (cycled when a curve gives no colour). */
@@ -55,11 +59,12 @@ export const SERIES_COLORS = ["#2563eb", "#db2777", "#059669", "#d97706", "#7c3a
  * areas. `curve` / `a` / `b` index into the `curves` array. Use ±Infinity for
  * an open-ended xBand.
  */
-export type ShadeRegion =
+export type ShadeRegion = (
   | { kind: "xBand"; from: number; to: number; color?: string; opacity?: number }
   | { kind: "halfPlane"; curve: number; side: "above" | "below"; from?: number; to?: number; color?: string; opacity?: number }
   | { kind: "between"; a: number; b: number; from?: number; to?: number; color?: string; opacity?: number }
-  | { kind: "polygon"; points: Array<{ x: number; y: number }>; color?: string; opacity?: number };
+  | { kind: "polygon"; points: Array<{ x: number; y: number }>; color?: string; opacity?: number }
+) & { /** Step-by-step build: the step at which this appears (omit = always shown). */ step?: number };
 
 /** A guide line — dashed root markers, asymptotes, reference lines. */
 export interface Guide {
@@ -67,6 +72,8 @@ export interface Guide {
   at: number;
   dashed?: boolean;
   color?: string;
+  /** Step-by-step build: the step at which this appears (omit = always shown). */
+  step?: number;
 }
 
 export interface DrawOptions {
@@ -277,7 +284,9 @@ export function drawGraph(
   const yGuard = cssH * 4; // don't draw wildly off-screen segments
 
   curves.forEach((c, i) => {
+    if (c.hidden) return;
     const spec = c.spec;
+    ctx.lineWidth = c.width ?? opts.curveWidth ?? 2.5;
     ctx.strokeStyle = c.color ?? SERIES_COLORS[i % SERIES_COLORS.length] ?? st.curve;
     ctx.setLineDash(c.dashed ? [7, 5] : []);
     if (spec.kind === "circle") {

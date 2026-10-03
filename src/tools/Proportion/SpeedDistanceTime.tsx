@@ -2,7 +2,7 @@ import {
   ToolShell,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WordedQuestion, type QOSnapshot,
   type ToolMultiSelect, type ToolDropdown, type WorkingStep,
-  randInt, pick, pickActive, mStep, mStr, fmt, rStep, ratioTableStepRenderer, weightOf,
+  randInt, pick, pickActive, mStep, mStr, fmt, rStepBuild, ratioTableStepRenderer, ratioTableStepVisual, weightOf,
 } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -679,7 +679,7 @@ const buildWorking = (rv: RawValues, method: WorkingMethod): WorkingStep[] => {
     const { pairs, ops } = buildScaleSteps([rv.D, rv.tVal], rv.pp, rv.qq, "shrinkTime");
     return [
       ...convertStep,
-      rStep("Scale to find the speed:", [rv.distanceUnit, rv.tLabel],
+      ...rStepBuild("Scale to find the speed:", [rv.distanceUnit, rv.tLabel],
         pairs.map(([d, t]) => [numLatex(d), numLatex(t)]), ops),
     ];
   }
@@ -687,13 +687,13 @@ const buildWorking = (rv: RawValues, method: WorkingMethod): WorkingStep[] => {
     const { pairs, ops } = buildScaleSteps([rv.S, rv.hourRef], rv.pp, rv.qq, "growTime");
     return [
       ...convertStep,
-      rStep("Scale from 1 hour to the given time:", [rv.distanceUnit, rv.tLabel],
+      ...rStepBuild("Scale from 1 hour to the given time:", [rv.distanceUnit, rv.tLabel],
         pairs.map(([d, t]) => [numLatex(d), numLatex(t)]), ops),
     ];
   }
   const { pairs, ops } = buildScaleSteps([rv.S, rv.hourRef], rv.pp, rv.qq, "growTime");
   return [
-    rStep("Scale from 1 hour to find the time:", [rv.distanceUnit, rv.tLabel],
+    ...rStepBuild("Scale from 1 hour to find the time:", [rv.distanceUnit, rv.tLabel],
       pairs.map(([d, t]) => [numLatex(d), numLatex(t)]), ops),
     ...(rv.shapeKind === "l3compound" ? [mStep("Write as hours and minutes:", `${rv.tVal} = ${rv.H} \\times 60 + ${rv.Mfrac}`)] : []),
   ];
@@ -860,6 +860,7 @@ export default function App() {
       generateQuestion={generateQuestion}
       reformatQuestion={reformatQuestion}
       stepRenderer={ratioTableStepRenderer}
+      stepVisualRenderer={ratioTableStepVisual}
       defaults={{ displayFontSize: 2, worksheetFontSize: 1 }}
     />
   );

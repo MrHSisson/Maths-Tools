@@ -138,6 +138,8 @@ const generateQuestion = (
       ];
 
   const rv: RawValues = { a, answer, direction, steps };
+  // Each step carries the number-line stage to draw beside it: the start point, then the jump.
+  const staged = working.map((w, i) => ({ ...w, extra: { kind: "intLine", rv, stage: i } }));
 
   return {
     kind: "simple",
@@ -145,7 +147,7 @@ const generateQuestion = (
     displayLatex,
     answer: `${answer}`,
     answerLatex: `${answer}`,
-    working,
+    working: staged,
     _rawValues: rv,
     key: `addSub-${level}-${a}-${b}-${displayLatex}-${id}`,
     difficulty: level,
@@ -169,7 +171,8 @@ function BlankNumberLineSVG() {
   );
 }
 
-function WorkedNumberLineSVG({ a, answer, direction, steps }: RawValues) {
+/** `stage` 0 = just the start point; 1 (default) = the jump and where it lands. */
+function WorkedNumberLineSVG({ a, answer, direction, steps, stage = 1 }: RawValues & { stage?: number }) {
   const minVal = Math.min(a, answer) - 3;
   const maxVal = Math.max(a, answer) + 3;
   const range = maxVal - minVal;
@@ -199,14 +202,14 @@ function WorkedNumberLineSVG({ a, answer, direction, steps }: RawValues) {
       ))}
       <circle cx={startX} cy={lineY} r={10} fill="#7c3aed" stroke="#5b21b6" strokeWidth={2} />
       <text x={startX} y={lineY - 18} textAnchor="middle" fontSize={14} fill="#7c3aed" fontWeight="bold">Start</text>
-      {direction !== "none" && (
+      {stage >= 1 && direction !== "none" && (
         <>
           <path d={`M ${startX} ${lineY - 14} Q ${midX} ${lineY - 59} ${endX} ${lineY - 14}`} fill="none" stroke={arrowColor} strokeWidth={3} strokeLinecap="round" markerEnd={`url(#${markerId})`} />
           <rect x={midX - 22} y={lineY - 83} width={44} height={24} rx={4} fill="white" stroke={arrowColor} strokeWidth={2} />
           <text x={midX} y={lineY - 66} textAnchor="middle" fontSize={16} fill={arrowColor} fontWeight="bold">{arrowLabel}</text>
         </>
       )}
-      <circle cx={endX} cy={lineY} r={10} fill="#059669" stroke="#047857" strokeWidth={2} />
+      {stage >= 1 && <circle cx={endX} cy={lineY} r={10} fill="#059669" stroke="#047857" strokeWidth={2} />}
     </svg>
   );
 }
@@ -214,6 +217,13 @@ function WorkedNumberLineSVG({ a, answer, direction, steps }: RawValues) {
 function NumberLineDiagram({ rv, filled }: { rv: RawValues; filled: boolean }) {
   return <div className="w-full">{filled ? <WorkedNumberLineSVG {...rv} /> : <BlankNumberLineSVG />}</div>;
 }
+
+/** `stepVisualRenderer`: the number line as it stands at that step (start point, then the jump). */
+const stepVisual = (s: WorkingStep): JSX.Element | null => {
+  const x = s.extra as { kind?: string; rv?: RawValues; stage?: number } | undefined;
+  if (x?.kind !== "intLine" || !x.rv) return null;
+  return <div className="w-full"><WorkedNumberLineSVG {...x.rv} stage={x.stage ?? 1} /></div>;
+};
 
 // ── 6. questionRenderer ───────────────────────────────────────────────────────
 
@@ -260,7 +270,8 @@ const questionRenderer = (
           </span>
         )}
       </div>
-      {rv && <NumberLineDiagram rv={rv} filled={showAnswer} />}
+      {/* Worked Example with the answer showing: the line develops beside the steps (stepVisual) instead. */}
+      {rv && !(showAnswer && compact === false && !isWhiteboard) && <NumberLineDiagram rv={rv} filled={showAnswer} />}
     </div>
   );
 };
@@ -277,6 +288,9 @@ export default function App() {
       infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       questionRenderer={questionRenderer}
+      stepVisualRenderer={stepVisual}
+      stepVisualKeepsWorking
+      stepVisualPlacement="top"
       defaults={{
         collapseWorkingByDefault: true,
         hideFontControls: true,
@@ -284,6 +298,7 @@ export default function App() {
         numQuestions: 5,
         numColumns: 2,
         maxColumns: 4,
+        hideAnswerStep: true,
       }}
     />
   );

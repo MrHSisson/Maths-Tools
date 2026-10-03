@@ -137,3 +137,7 @@ export const RatioTable = ({ data, label }: { data: RatioTableData; label?: stri
 // diagram tool's questionRenderer uses.
 export const ratioTableStepRenderer = (s: WorkingStep): JSX.Element | null =>
   s.type === "ratioTable" ? <RatioTable data={s.extra as RatioTableData} label={s.label} /> : null;
+
+/** `stepVisualRenderer` for `rStepBuild` tools: just the table as it stands at that step (null for any other step). */
+export const ratioTableStepVisual = (s: WorkingStep): JSX.Element | null =>
+  s.type === "ratioTable" && (s.extra as RatioTableData | undefined)?.grow ? <RatioTable data={s.extra as RatioTableData} /> : null;

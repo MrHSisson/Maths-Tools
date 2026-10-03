@@ -17,6 +17,7 @@ this table first; it tells you where to look and where to write.
 | **`README.md`** | Human-facing project overview, tech stack, local setup. | First orientation; onboarding a person. |
 | **`docs/PROJECTS.md`** | The plan — where every prong is up to and what could come next (deep detail tables live here). | **Start of a session** (current state / what's next). Keep the moved prong current at the end. |
 | **`docs/TOOL_AUDIT.md`** | The Maths Tool Audit — self-contained methodology (infrastructure gaps + standalone-readiness gaps) and the live per-tool findings log for all 27 Maths ToolShell generators. **Current top priority.** | Auditing a tool, or picking up any backlog item that traces back to an audit finding. |
+| **`docs/BACKBENCH.md`** | Paused work (Skills library, Teach decks) lifted out of the plan until readdressed. | Only when someone decides to pick Skills or Teach decks back up. |
 | **`docs/PATCH_NOTES.md`** | The history — what each session shipped, split Maths / CS, newest first. | Seeing what was actually done. **Append to it at the end of a session.** |
 | **`docs/architecture/CS_SHELL_PLAN.md`** | The `CSShell` architecture and its extraction stages. | Building or extending a CS tool. |
 | **`docs/architecture/DECISION_SHELL_PLAN.md`** | The `DecisionShell` architecture — network-native question generators (MST/TSP/CPA) on a shared representation library. | Building or extending a Decision Maths tool. |
@@ -35,6 +36,8 @@ Rule of thumb: **plan** lives in `docs/PROJECTS.md`, **history** in `docs/PATCH_
 A React/TypeScript/Vite app of interactive maths tools for teachers. Each tool has three modes — Whiteboard, Worked Example, Worksheet — with Levels 1–3, differentiated worksheets, and PDF export. Deployed to Vercel. CI runs on every push via `.github/workflows/ci.yml`.
 
 **Purpose:** build complete new tools end-to-end from a spec — writing all the code, registering the route, and pushing. The spec supplies the maths content.
+
+**Always consider the phone.** Mobile / narrow view is a standing rule, not a development prong: every tool and sandbox must work at phone width (ToolShell's ≤640px layout is automatic for ToolShell tools; bespoke renderers and standalone sandboxes must be checked by hand).
 
 **In-development work** — what's unfinished, whether behind Developing-tools mode (the techniques/working-steps engine, grapher integration, the migration backlog) or the separate, stronger `parkedMode` gate (skills, Teach decks — see `docs/PROJECTS.md`'s "Two separate gates" callout) — is tracked in `docs/PROJECTS.md`. Read it when picking up feature work; keep the prong's status current as work lands.
 
@@ -94,6 +97,17 @@ kickoff is ever saved to a file.
 at** line (and its *At a glance* row) in `docs/PROJECTS.md`, and add the `docs/PATCH_NOTES.md` history
 entry. If the user wants to carry straight on, also output a kickoff block in chat (below) —
 but only in chat; never write it into a doc.
+
+**Also update Harry's notes (Maths Tools Website, in the planner) — every session that changes what teachers see or the plan.** The repo says *how*; the notes say *what and why*, in plain English, and link everything together. Use the planner tools (`mcp__Harry_s_Planner__*`; load via ToolSearch) and make the edits in one batch where you can:
+
+1. **Build Log** — add one block at the top of `Maths Tools — Build Log` for the session: *What changed for teachers*, *What we decided and why*, *Still to do / next*, branch name. Then `mirror_block` it into `Maths Tools — Development Prongs` (position 2).
+2. **Development Prongs** — features and prongs are the same thing, tracked in one note (`Maths Tools — Development Prongs`; there is no separate Feature Tracker). For each prong the session touched, update its `Prong — …` block (Live in / Next / Why) and the rollout table. Prong blocks are **mirrored** into the page of every tool that uses them, so edit the one block — never the copies. A new prong = a new block, mirrored into each tool page that has it (or is a next candidate). Refresh `Current developments & next up`.
+3. **Tool pages** — every tool's page also carries a **Review** block (content growth, go-live, sandbox fit, techniques, worked solution, Smart Progressor, mobile check — see `docs/PROJECTS.md` → Tool review cycle) that we fill in when we reach that tool. A new tool gets a page (At a glance, What it does, how it differs, Review) in its strand folder and a row in `Maths Tools — Tool Index` (refresh the counts: `src/registry.ts` entries, `enabled: false`, `hidden`, `parked`, ToolShell tool files). Changed-tool facts that aren't a feature (levels, sub-tools, QOs) go on the tool's own page.
+4. **Representations** — design decisions about the pictures (colours, layouts, progressions, composites) go in `Maths Tools — Representations`, dated, with open questions.
+5. Never edit a locked block (Harry unlocks); read the block's `version` first (`get_block`); keep blocks plain-English — no code.
+6. **Style: bullets, not prose.** One idea per bullet, sub-bullets for detail (Live in / Next / Why as headed bullets, one tool per bullet). No "·"-separated inline lists and no paragraphs. **Keep tables as tables, but any cell holding more than one item is bulleted inside the cell** — write `• item<br>• item` in the cell (never `;`- or `·`-separated lists). Single-value cells (a count, a status) stay plain.
+
+The notes are a *human* layer: do not paste repo docs into them, and keep `docs/PATCH_NOTES.md` as the technical history.
 
 **The kickoff recipe (used both at session end and on demand).** When the user asks for a
 "kickoff for `<prong>`" — e.g. when firing off several sessions in a sitting — build one from
@@ -228,7 +242,7 @@ grep -L "<ToolShell" src/tools/**/*.tsx   # files that do NOT render the shared 
 
 The four **Generator tools** (`TimesTablesGenerator`, `MultiplicationGenerator`, `NegativeOperationsGenerator`, `FunctionalSkillsGenerator`) are **standalone by design, not backlog items** — they exist to batch-produce PDF worksheets, a different purpose from ToolShell's whiteboard/worked-example/worksheet model, and were never meant to migrate. Don't flag them for migration work. If the generator family grows well beyond four, it may be worth a dedicated **Generator shell** — not needed today for four tools that already work well standalone.
 
-AlgebraTiles, ParallelLinesInteractive, GrapherLab, SkillLibrary, Visualiser, CallSelector and p-value are standalone by design (not question tools) and never migrate to ToolShell — they are not part of the backlog above even though they don't use the shared shell.
+AlgebraTiles, NegativeCounters, ParallelLinesInteractive, GrapherLab, SkillLibrary, Visualiser and p-value are standalone by design (not question tools) and never migrate to ToolShell — they are not part of the backlog above even though they don't use the shared shell.
 
 **Computer Science tools are not on this backlog.** CS tools (`SystemArchitecture`, `CpuArchitecture`) are knowledge/revision tools, not question generators, and target `CSShell` — never `ToolShell`. Their build work is tracked in `docs/PROJECTS.md` (Computer Science) and `docs/architecture/CS_SHELL_PLAN.md`, not here. So `grep -L "<ToolShell"` will always list them; that is expected, not a to-do.
 
@@ -450,6 +464,15 @@ export interface ToolShellProps {
    *  (above on narrow screens), instead of reprinting the table every step. */
   stepVisualRenderer?: (step: WorkingStep, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null | false;
 
+  /** Companion to `stepVisualRenderer`: keep every step's full working (its maths) in the list beside the
+   *  picture instead of a caption-only timeline. For equation-led tools whose picture builds up with the
+   *  working (see "Split worked example" below). */
+  stepVisualKeepsWorking?: boolean;
+
+  /** Companion to `stepVisualRenderer`: "side" (default) puts the picture beside the steps; "top" puts it
+   *  full width above them — for wide, short pictures (number lines). */
+  stepVisualPlacement?: "side" | "top";
+
   /** Called when a QO option changes, before falling back to full regeneration.
    *  Return a reformatted copy of the question (same maths, different display),
    *  or null to let ToolShell generate a fresh question instead.
@@ -597,6 +620,27 @@ ToolShell mirrors the current setup into the URL query string (`history.replaceS
 | `diff` | differentiated worksheet flag | `diff=1` |
 
 Only the current tool+level's QO state is encoded (the URL reflects what is on screen). Differentiated per-level QO customisation and advanced-mode groups are not encoded. Tools get all of this for free — never re-implement URL handling in a tool file.
+
+### Split worked example — the developing picture, three flavours
+
+`stepVisualRenderer` turns Worked Example into a split: ONE picture that updates in place as the steps advance.
+Everything is in the shared `WorkedExampleSteps` — a tool only supplies per-step data and a renderer.
+
+| Flavour | Left list | Tool supplies | References |
+|---|---|---|---|
+| **Caption-only** (default) | each step's caption (`step.plain`) on a numbered timeline; the answer is a green **A** line (no box, no outline) | steps whose snapshot IS the working: `pvStep` + `placeValueStepVisual`; `rStepBuild` + `ratioTableStepVisual` (one ratio table growing a row per step); bar steps | `DecimalAddSub`, `PowersOfTen`, `SpeedDistanceTime`, `RatioSharingTool` |
+| **Keep working** (`stepVisualKeepsWorking`) | the normal step cards with their maths; picture sits beside them | steps stamped with the picture state | `EquationsOfLines`, `NonLinearSimEq`, `MixedStrategies` (graph) |
+| **Picture on top** (`stepVisualPlacement="top"`) | as above, picture full width above | a wide short picture | `IntegerAddSub`, `Rounding` (number line) |
+
+**Step-by-step graph builds.** `SmartGrapher` takes a `step` prop: any series / FOI (`config.fois`) / guide / region
+carrying a `step` field is drawn only once `step >= its step`, and what appears exactly now is emphasised (heavier
+curve, ringed dot). The frame is computed from the FULL set so the view never jumps. A tool describes the complete
+graph once as a `GraphBuildSpec` (tagging parts with `step`), stamps each working step with
+`graphStep(step, spec, n)` and passes `graphStepVisual` as `stepVisualRenderer` (+ `stepVisualKeepsWorking`).
+Steps before the first stamped step render as plain full-width cards (the layout splits when the picture starts).
+
+**`hideAnswerStep` with a split:** a split tool that sets `hideAnswerStep` drops its A line, so only set it when
+the last step is itself the answer.
 
 ### Single sub-tool — no tab buttons needed
 
@@ -754,16 +798,20 @@ Every taught visual on the site (skill slides, Teach decks, and eventually white
 | **Number line** | integers, rounding, inequalities, sequences, multiples | `multiples` |
 | **Area model** | multiplication, expanding brackets, completing the square | *(none yet)* |
 | **Algebra tiles** | collecting terms, solving equations, factorising | *(manipulative exists; no scenes yet)* |
-| **Negative counters** | directed numbers, integer add/sub, zero pairs | *(manipulative planned; no scenes yet)* |
+| **Negative counters** | directed numbers, integer add/sub, zero pairs | *(shared component + sandbox built; no Teach scenes yet)* |
 | **Prime factor tiles** | HCF/LCM, factors, prime decomposition | `factorTree` · `primeVenn` |
 | **Place value table** | place value itself — ×/÷ powers of 10, adding/subtracting decimals | *(question/working-step representation; no Teach scene yet)* |
 | **Ratio table** | proportional scaling — speed/distance/time, currency conversion, recipe scaling | *(working-step representation; no Teach scene yet)* |
+
+**Representations evolve, and sometimes pair.** The vocabulary is a progression — double number line → ratio table; negative counters → bar model with negatives → number line — so a topic's pictures should be chosen as the *next step* from what the student already knows, not in isolation. A question may also need **two at once** (e.g. a ratio table beside the grapher for gradients). Plan and status: `docs/PROJECTS.md` → "Representation progressions & composites".
 
 **The rule: before authoring any new visual, pick one of these.** A brand-new representation needs a reason. New scenes extend an existing family in `TeachingDeck.tsx` (grouped by family comments in the `TeachScene` union) and follow the standing scene contract: beat count derived from the scene, reserve space for everything (opacity, not mounting), animate only opacity/transform.
 
 **Ratio table** (`src/shared/ratioTable.ts` + `src/shared/components/RatioTable.tsx`) is a *working-step* representation rather than a Teach-deck scene, rendered as **one continuous bordered `<table>`** — matching how a ratio table is conventionally drawn on paper: **quantities as columns** (the header row, e.g. "Miles", "Hours"), **each scale-step as a row going down**, rows sharing borders directly (no gap/divider row between them). The scale factor between two adjacent value-rows sits **outside** the table as a curved arrow (bulging away from the table, mirrored left/right via CSS rather than two authored paths) running from the vertical **centre** of one row to the centre of the next, with the factor labelled beside it — never inside a table cell. That centre-to-centre position is measured in real pixels (refs + `getBoundingClientRect` on each `<tr>`, in a plain — not layout — `useEffect` so it runs after `MathRenderer`'s own child effect has painted the KaTeX content), not CSS percentages: a percentage-height div inside a `<td>` does not reliably resolve against the cell's height in this rendering engine (found to collapse to 0, stacking every arrow at the same spot) — the same measurement approach `WorkedExampleSteps.tsx`'s `FitWidth` already uses elsewhere in this codebase. A single combined scale factor is **never shown as one fraction or decimal multiply** (e.g. `×2/3`) — author it via `rStep(label, headers, rows, operations)` as a chain of whole-number steps instead: `rows` is one array of values per step (`rows[step][quantityIndex]`, not one array per quantity) and `operations` (length `rows.length − 1`) is the whole-number `×n`/`÷n` between each consecutive step, so a fractional factor becomes an extra "unit" row in between (e.g. `100, 75` →(÷5)→ `20, 15` →(×4)→ `80, 60`, never a single `×4/5`). Pass the shared `ratioTableStepRenderer` as the tool's `stepRenderer` — it returns `null` for every non-ratio-table step, so `mStep`/`tStep`/`step` still render through ToolShell's normal path. There is no fragment-level reveal inside a single ratio table — a multi-step scale is just more rows/operations in one call. Reference implementation: `src/tools/Proportion/SpeedDistanceTime.tsx` (`buildScaleSteps` decomposes ÷qq then ×pp, or the reverse, only when both factors are non-trivial — i.e. only at Level 3; Levels 1–2 already have one factor equal to 1, so the chain collapses back to a single step).
 
 **Place value table** (`src/shared/placeValue.ts` + `src/shared/components/PlaceValueTable.tsx`, extracted from Powers of 10) is a fixed set of columns (e.g. `PV_COLS_DECIMAL` = H T O · t h th) with the decimal point drawn on the right edge of the Ones column, so digits in one column always share a place value. Data is `PlaceValueTableData` (columns, `onesIndex`, rows of cells / banners); `pvCells(numStr, columns, onesIndex)` places a decimal string into columns. Cells can carry a tone (`zero` = blue placeholder zero, `answer`), a struck digit, and a small `above` digit (a carry, or the new value after an exchange); `highlightCol` tints the current column; when rows carry operator labels (+ / − / =) the gutter is mirrored on the right so the table body itself is centred; optional `colWidth` (px) fixes the column width so a table with fewer columns is narrower rather than stretched. `PlaceValueSvg` (+ `pvSvgAspect(data, hasTitle, rowH?)` for the question's `_aspect`, `pvSvgRowHForAspect` to stretch rows to a wanted aspect, `fill` for print) draws the same data as an SVG for worksheet cells — tag it `idx` (question) and a hidden `answerIdx` twin and print with `handleDiagramPrint`. For worked examples author steps with `pvStep(caption, table)` (one table snapshot per step) and pass `placeValueStepRenderer` as `stepRenderer` and `placeValueStepVisual` as `stepVisualRenderer` (each returns `null` for any other step) — the cascade then shows one table updating in place beside the step captions instead of reprinting it per step. References: `src/tools/Number/PowersOfTen.tsx` (grid), `src/tools/Number/DecimalAddSub.tsx` (stepped carries/exchanges). Build column sets with `pvColumnSet(whole, dec)` (one canonical letters + words catalogue), offer `PV_WORD_HEADERS_VAR` so teachers can switch headings between letters and words (read live from `qo` — `pvDisplay(table, qo)` for scaffolds, `placeValueStepRenderer` does it for steps), use `PV_CELL_H` so the table never resizes between states, and `pvSlice` to show only the columns a question range needs. Cells can also carry `circle` (ring the deciding digit) and `badge` (filled value, e.g. a rank); non-place columns (Sign, Order) are just extra entries in `columns`. Reference for a comparison table: `src/tools/Number/ComparingOrderingNumbers.tsx`.
+
+**Negative counters** (`src/shared/counters.ts` + `src/shared/components/Counters.tsx`): a **yellow counter is +1, a red counter is −1** (the same yellow and red as the algebra tiles' unit and negative tiles, `COUNTER_POS`/`COUNTER_NEG`), and one of each is a **zero pair**. Every counter is labelled **+1 / −1** so colour is never the only cue. Data is `CounterBoardData` (`rows` of `Counter {sign, state}`; `state` = `normal` · `paired` (part of a boxed zero pair) · `removed` (ghosted, taken away) · `new`); build with `ctr(pos, neg, state?)` / `zeroPairs(n)`, read with `netValue` / `pairCount`. Render with `CounterBoard` / `CounterDot`. **The representation table ("mat")** — `layout: "mat"`, built with `matBoard(pos, neg, { pairs?, collapsed?, footer? })`: a **+ row above a − row**, split from the labels by a vertical rule and from each other by a horizontal rule, counters aligned in columns so a + over a − is a zero pair (each pair boxed in a rounded blue frame, `PairBox` / `pairBoxStyle`) and what's left over is the answer; `collapsed` ghosts the pairs instead. It keeps everything in place for a class to read and count. For worked examples author steps with `cStep(caption, board)` (one board snapshot per step) and pass `countersStepRenderer` as `stepRenderer` and `countersStepVisual` as `stepVisualRenderer` — one board updating in place beside the captions, exactly like the place value table. The interactive sandbox is `src/tools/Interactive/NegativeCounters.tsx` (a **Free / Table** board switch — Table is the + / − representation table: drag counters into their own row and they snap into columns (dropping onto an occupied cell swaps), so a + over a − is a zero pair; drag from the tray, move / flip / take away, add zero pair, remove zero pairs, tidy, live value; a **"When +1 meets −1" setting** chooses whether a dropped counter *pairs up* with its opposite as a boxed zero pair (a + stacked over a −) or both *collapse* to nothing) — it uses the same `CounterDot`, so the sandbox and the question solutions look identical. The sandbox page deliberately mirrors the Algebra Tiles layout (header + burger menu, narrow panel, dot-grid canvas with floating hotbar, bottom summary bar) — keep the two in step when changing either. The bottom toolbar (Select / Grab / Pen / Eraser / Clear drawings / colours) is the shared `DrawHotbar` in `src/shared/components/BoardTools.tsx` — new sandboxes should reuse it (its `extra` prop adds tool-specific buttons). Next in the progression: signed bar model, then number line (see "Representation progressions" in `docs/PROJECTS.md`).
 
 Prime factor tiles are **coloured squares keyed by the prime** (2 sky, 3 emerald, 5 amber, 7 purple, 11 pink — `tileColor` in TeachingDeck), so the same prime looks the same in a factor tree, a Venn region, and a factor list. Composites stay plain numbers; only primes become tiles.
 

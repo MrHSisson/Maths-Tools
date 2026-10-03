@@ -377,7 +377,7 @@ export default function App() {
       infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
       reformatQuestion={reformatQuestion}
-      defaults={{ numQuestions: 12, numColumns: 3 }}
+      defaults={{ numQuestions: 12, numColumns: 3, hideAnswerStep: true }}
     />
   );
 }

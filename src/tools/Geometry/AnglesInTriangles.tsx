@@ -638,7 +638,7 @@ export default function App() {
       generateQuestion={generateQuestion}
       questionRenderer={questionRenderer}
       customPrintHandler={handleDiagramPrint}
-      defaults={{ numColumns: 3, maxColumns: 4, hideFontControls: true }}
+      defaults={{ numColumns: 3, maxColumns: 4, hideFontControls: true, hideAnswerStep: true }}
     />
   );
 }

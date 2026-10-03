@@ -101,7 +101,6 @@ Deployed at: [maths-tools.vercel.app](https://maths-tools.vercel.app)
 │   │   │   ├── RecipesTool.tsx
 │   │   │   └── SimplifyingRatiosTool.tsx
 │   │   └── TeacherTools/
-│   │       ├── CallSelector.tsx
 │   │       ├── p-value.tsx
 │   │       ├── ToolShell.tsx   # Canonical template for new tools
 │   │       └── Visualiser.tsx
@@ -130,7 +129,7 @@ Deployed at: [maths-tools.vercel.app](https://maths-tools.vercel.app)
 | Ratio & Proportion | `src/tools/Proportion/` | Dividing Ratios, Simplifying Ratios, Recipes, Fractions↔Ratios, Fractions of Amounts, Best Buys |
 | Geometry | `src/tools/Geometry/` | Circle Properties, Basic Angle Facts, Angles in Triangles, Line Equations, Perimeter |
 | Probability & Statistics | *(coming soon)* | — |
-| Teacher Tools | `src/tools/TeacherTools/` | Visualiser, Tool Shell (template), Friday Phonecalls, P-Value Grapher |
+| Teacher Tools | `src/tools/TeacherTools/` | Visualiser, Tool Shell (template), P-Value Grapher |
 | Computer Science *(separate subject — see below)* | `src/tools/ComputerScience/` | System Architectures, CPU Architecture (OCR J277 1.1.1) |
 
 ---
