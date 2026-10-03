@@ -70,7 +70,7 @@ export const CATEGORIES: CategoryMeta[] = [
       { group: 'Fractions & percentages', id: 'fractions-add-sub', path: '/add-subtract-fractions', name: 'Adding & Subtracting Fractions', description: 'Add and subtract fractions and mixed numbers, with common denominators, scaling and LCM methods', load: () => import('./tools/Number/FractionsAddSub') },
       { group: 'Fractions & percentages', id: 'fractions-mult-div', path: '/multiply-divide-fractions', name: 'Multiplying & Dividing Fractions', description: 'Multiply and divide fractions and mixed numbers using Keep, Flip, Change', load: () => import('./tools/Number/FractionMultDiv') },
       { group: 'Fractions & percentages', id: 'percentages', path: '/percentages', name: 'Percentages', description: 'Find percentages of amounts, calculate percentage increase/decrease, and work backwards with reverse percentages', load: () => import('./tools/Number/Percentages') },
-      { group: 'Roots & surds', id: 'surds', path: '/surds', name: "Surds", description: "Simplify, combine, expand and rationalise surds across five interlocking skills.", enabled: false, load: () => import('./tools/Number/Surds') },
+      { group: 'Roots & surds', id: 'surds', path: '/surds', name: "Surds", description: "Simplify, combine, expand and rationalise surds across five interlocking skills.", load: () => import('./tools/Number/Surds') },
     ],
   },
   {
@@ -104,7 +104,7 @@ export const CATEGORIES: CategoryMeta[] = [
       { group: 'Angles', id: 'angles-in-triangles', path: '/angles-in-triangles', name: 'Angles In Triangles', description: 'Find missing angles using triangle properties - including split triangles and exterior angles', load: () => import('./tools/Geometry/AnglesInTriangles') },
       { group: 'Angles', id: 'angles-in-quadrilaterals', path: '/angles-in-quadrilaterals', name: 'Angles In Quadrilaterals', description: 'Find missing angles using quadrilateral properties - including kites and arrowheads', load: () => import('./tools/Geometry/AnglesInQuadrilaterals') },
       { group: 'Angles', id: 'angles-in-parallel-lines', path: '/angles-in-parallel-lines', name: 'Angles in Parallel Lines', description: 'Explore corresponding, alternate and co-interior angles formed by a transversal cutting parallel lines', load: () => import('./tools/Geometry/AnglesInParallelLines') },
-      { group: 'Shapes & measures', id: 'perimeter', path: '/perimeter', name: 'Perimeter (BETA)', description: 'Calculate the perimeter of various 2D shapes', load: () => import('./tools/Geometry/PerimeterTool') },
+      { group: 'Shapes & measures', id: 'perimeter', path: '/perimeter', name: 'Perimeter (BETA)', description: 'Calculate the perimeter of various 2D shapes', enabled: false, load: () => import('./tools/Geometry/PerimeterTool') },
       { group: 'Shapes & measures', id: 'circles', path: '/circle-properties', name: 'Properties of Circles', description: 'Find the circumference, area and arc lengths of circles and sectors', load: () => import('./tools/Geometry/CircleProperties') },
       { group: 'Lines & bearings', id: 'bearings', path: '/bearings', name: 'Bearings', description: 'Identify bearings from diagrams with North lines - two-point and three-point routes', load: () => import('./tools/Geometry/Bearings') },
       { group: 'Lines & bearings', id: 'equations-of-lines', path: '/equations-of-lines', name: 'Properties of Line Equations', description: 'Use co-ordinates and line equations to find properties of lines', load: () => import('./tools/Geometry/EquationsOfLines') },

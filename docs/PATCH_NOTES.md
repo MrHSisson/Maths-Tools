@@ -28,6 +28,11 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-04 — Go-live calls: Surds live, Perimeter dev-gated
+- Surds: `enabled: false` removed; now live on the landing page.
+- Perimeter: set `enabled: false` (dev-gated) — thin options and outdated; Simplifying Ratios stays gated pending work.
+- Build clean, 402 tests pass.
+
 ## 2026-10-04 — Tool Review blocks seeded (planner)
 - All 35 ToolShell tool notes in Harry's planner now carry a filled Review block: content, readiness, sandbox fit, techniques, worked solution, Smart Progressor, mobile, audit findings.
 - 27 were seeded from `docs/TOOL_AUDIT.md`; 8 newer tools (Rounding, Comparing & Ordering, Adding & Subtracting Decimals, Speed Distance & Time, Mixed Strategies, Surds, Binary Operations, Number Bases) from specs and `docs/PROJECTS.md`.
