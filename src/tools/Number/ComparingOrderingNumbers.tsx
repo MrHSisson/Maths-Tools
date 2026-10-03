@@ -421,6 +421,7 @@ const cmpTable = (rows: CmpRow[], L: PVLayout, revealed: CmpRow[], currentCol?: 
     onesIndex: L.set.onesIndex + L.off,
     showPoint: L.set.columns.length > L.set.onesIndex + 1,
     colWidth: 120,
+    detachLast: true,   // Order is a rank, not a place — keep it visibly apart from the place value columns
     cellHeight: rows.length > 4 ? 48 : 60,
     highlightCol: currentCol,
     rows: rows.map((row): { kind: "cells"; cells: PVCell[] } => {

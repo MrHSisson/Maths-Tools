@@ -84,6 +84,9 @@ export interface PlaceValueTableData {
   columnNames?: string[];
   /** Which header to draw: the letters in `columns` (default) or the words in `columnNames`. */
   headerStyle?: "letters" | "words";
+  /** Draw the last column set apart from the rest (a gap before it, tinted header) — for a column that
+   *  is not a place (an Order/rank column), so it doesn't read as part of the place value table. */
+  detachLast?: boolean;
 }
 
 export interface RatioTableData {

@@ -26,24 +26,30 @@ export function PlaceValueTable({ data }: { data: PlaceValueTableData }) {
   const hasGutter = rows.some((r) => r.kind === "cells" && r.label);
   const words = data.headerStyle === "words";
   const tint = (i: number) => (i === highlightCol ? "bg-amber-100" : "bg-white");
+  // A detached last column sits after a borderless spacer column, so it reads as separate from the places.
+  const GAP = 28;
+  const detach = !!data.detachLast && columns.length > 1;
+  const gapBefore = (i: number) => detach && i === columns.length - 1;
+  const spacer = (k: string, tag: "th" | "td") => (tag === "th" ? <th key={k} style={{ width: GAP }} /> : <td key={k} />);
 
   return (
     <div className="w-full overflow-x-auto">
       <table
         className={`border-collapse ${data.colWidth ? "mx-auto" : "w-full"}`}
-        style={{ tableLayout: "fixed", ...(data.colWidth ? { width: columns.length * data.colWidth + (hasGutter ? 88 : 0), maxWidth: "100%" } : {}) }}
+        style={{ tableLayout: "fixed", ...(data.colWidth ? { width: columns.length * data.colWidth + (detach ? GAP : 0) + (hasGutter ? 88 : 0), maxWidth: "100%" } : {}) }}
       >
         <thead>
           <tr>
             {hasGutter && <th className="w-6 sm:w-11" />}
-            {columns.map((_col, i) => (
-              <th key={i} className={`border-2 border-black py-2 font-bold relative text-black leading-tight ${words ? (columns.length > 8 ? "text-[11px] px-0.5" : "text-sm px-1") : "text-base sm:text-lg"} ${i === highlightCol ? "bg-amber-200" : "bg-gray-100"}`}>
+            {columns.map((_col, i) => [
+              gapBefore(i) ? spacer(`g${i}`, "th") : null,
+              <th key={i} className={`border-2 border-black py-2 font-bold relative text-black leading-tight ${words ? (columns.length > 8 ? "text-[11px] px-0.5" : "text-sm px-1") : "text-base sm:text-lg"} ${i === highlightCol ? "bg-amber-200" : gapBefore(i) ? "bg-indigo-50" : "bg-gray-100"}`}>
                 {words && data.columnNames?.[i] && columns.length <= 8
                   ? <><span className="sm:hidden">{columns[i]}</span><span className="hidden sm:inline">{data.columnNames[i]}</span></>   // phone: letters (the words don't fit a column)
                   : headerLabel(data, i)}
                 {showPoint && i === onesIndex && <DecimalDot />}
-              </th>
-            ))}
+              </th>,
+            ])}
             {/* mirror of the operator gutter, so the table body (not body + operators) is what is centred */}
             {hasGutter && <th className="w-6 sm:w-11" />}
           </tr>
@@ -54,7 +60,7 @@ export function PlaceValueTable({ data }: { data: PlaceValueTableData }) {
               return (
                 <tr key={ri}>
                   {hasGutter && <td />}
-                  <td colSpan={columns.length} className="text-center py-3 font-bold text-2xl border-2 border-black bg-white text-black">
+                  <td colSpan={columns.length + (detach ? 1 : 0)} className="text-center py-3 font-bold text-2xl border-2 border-black bg-white text-black">
                     {row.text}
                   </td>
                   {hasGutter && <td />}
@@ -67,7 +73,8 @@ export function PlaceValueTable({ data }: { data: PlaceValueTableData }) {
                 {columns.map((_c, i) => {
                   const raw = row.cells[i];
                   const cell: PVCell = typeof raw === "string" || raw === undefined ? { v: raw ?? "" } : raw;
-                  return (
+                  return [
+                    gapBefore(i) ? spacer(`g${i}`, "td") : null,
                     <td
                       key={i}
                       className={`border-2 border-black text-center text-2xl sm:text-3xl font-semibold text-black relative ${cell.tone ? toneCls(cell.tone) : tint(i)}`}
@@ -84,8 +91,8 @@ export function PlaceValueTable({ data }: { data: PlaceValueTableData }) {
                         <span className={cell.strike ? "line-through decoration-2 text-slate-400" : ""}>{cell.v}</span>
                       )}
                       {showPoint && i === onesIndex && <DecimalDot />}
-                    </td>
-                  );
+                    </td>,
+                  ];
                 })}
                 {hasGutter && <td />}
               </tr>
