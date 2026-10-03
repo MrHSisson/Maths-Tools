@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { ctr, zeroPairs, netValue, pairCount, cStep, COUNTER_POS, COUNTER_NEG } from "../shared";
+import { ctr, zeroPairs, netValue, pairCount, cStep, matBoard, COUNTER_POS, COUNTER_NEG } from "../shared";
 
 describe("negative counters helpers", () => {
   it("builds yellow then red counters", () => {
@@ -30,5 +30,16 @@ describe("negative counters helpers", () => {
   it("uses the algebra-tile yellow and red", () => {
     expect(COUNTER_POS).toBe("#facc15");
     expect(COUNTER_NEG).toBe("#ef4444");
+  });
+  it("mat board: positives top, negatives bottom, aligned zero pairs", () => {
+    const m = matBoard(5, 3, { pairs: true });
+    expect(m.layout).toBe("mat");
+    expect(m.rows[0].counters).toHaveLength(5);
+    expect(m.rows[1].counters).toHaveLength(3);
+    expect(m.rows[0].counters.filter((c) => c.state === "paired")).toHaveLength(3);
+    expect(m.rows[1].counters.every((c) => c.state === "paired")).toBe(true);
+    // collapsed ghosts the pairs, leaving the unpaired positives as the answer
+    const c = matBoard(5, 3, { collapsed: true });
+    expect(netValue([...c.rows[0].counters, ...c.rows[1].counters])).toBe(2);
   });
 });

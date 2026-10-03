@@ -35,6 +35,9 @@ Keep the split even when a session only touches one.
   (`cStep`, `countersStepRenderer`, `countersStepVisual`) so a board can develop beside the captions like the place value table.
 - **Sandbox tool:** `/negative-counters` (Interactive Tools) — drag from the tray or tap, Move / Flip / Take away, Add zero pair,
   Remove zero pairs, Tidy, live value readout, and a "When +1 meets −1" setting: pair up (circled zero pair) or collapse to nothing. Standalone by design (like Algebra Tiles).
+- **Representation table ("mat"):** a + row above a − row (rules between rows and labels), counters aligned in columns so a + over a − is a
+  zero pair. Shared as `matBoard` / `layout: "mat"`; in the sandbox as a **Table** board (flip moves a counter between rows; pair up shades
+  matched columns, collapse cancels them).
 - Not yet wired into a question tool — Integer Add/Sub is the first target (representation switch: counters → number line).
 
 ## 2026-10-03 — Developing worked-example visuals rolled out (graphs, ratio tables, place value, number lines)

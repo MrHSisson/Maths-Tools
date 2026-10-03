@@ -26,6 +26,10 @@ export interface CounterRow {
   counters: Counter[];
 }
 export interface CounterBoardData {
+  /** "rows" (default): free-standing labelled rows. "mat": the two-row representation table — row 0 is the
+   *  positive (+) row, row 1 the negative (−) row, counters aligned in columns so a + above a − reads as a
+   *  zero pair and whatever is left over is the answer. Build one with `matBoard`. */
+  layout?: "rows" | "mat";
   rows: CounterRow[];
   /** Optional footer, e.g. "Net value: −1". */
   footer?: string;
@@ -40,6 +44,24 @@ export const ctr = (pos: number, neg: number, state?: CounterState): Counter[] =
 /** `n` zero pairs, each a yellow then a red, so a pair sits side by side. */
 export const zeroPairs = (n: number, state: CounterState = "paired"): Counter[] =>
   Array.from({ length: Math.max(0, n) }).flatMap((): Counter[] => [{ sign: 1, state }, { sign: -1, state }]);
+
+/**
+ * The representation table ("mat"): positives in the top row, negatives in the bottom row, aligned in
+ * columns. `pairs` marks the first min(pos, neg) columns as zero pairs (circled); `collapsed` ghosts them
+ * instead, showing they cancel to nothing and what remains is the answer.
+ */
+export const matBoard = (pos: number, neg: number, opts: { pairs?: boolean; collapsed?: boolean; footer?: string } = {}): CounterBoardData => {
+  const k = pairCount(pos, neg);
+  const stateAt = (i: number): CounterState | undefined => (i < k ? (opts.collapsed ? "removed" : opts.pairs ? "paired" : undefined) : undefined);
+  return {
+    layout: "mat",
+    rows: [
+      { counters: Array.from({ length: Math.max(0, pos) }, (_, i): Counter => ({ sign: 1, state: stateAt(i) })) },
+      { counters: Array.from({ length: Math.max(0, neg) }, (_, i): Counter => ({ sign: -1, state: stateAt(i) })) },
+    ],
+    footer: opts.footer,
+  };
+};
 
 /** Net value of the counters that are still on the board (removed ones don't count). */
 export const netValue = (counters: Counter[]): number =>
