@@ -119,3 +119,8 @@ export {
   linearProgramming,
 } from "./grapher/recipes";
 export type { GrapherRecipe, InequalityOp } from "./grapher/recipes";
+
+// Negative counters — a core representation (yellow +1, red −1, zero pairs)
+export { COUNTER_POS, COUNTER_NEG, ctr, zeroPairs, netValue, pairCount, cStep } from "./counters";
+export type { Counter, CounterRow, CounterBoardData, CounterState } from "./counters";
+export { CounterBoard, CounterDot, countersStepRenderer, countersStepVisual } from "./components/Counters";

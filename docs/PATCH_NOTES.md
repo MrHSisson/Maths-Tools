@@ -28,6 +28,15 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-03 — Negative counters (shared representation + sandbox)
+
+- **Shared representation:** `src/shared/counters.ts` + `components/Counters.tsx` — yellow = +1, red = −1 (the algebra tiles'
+  yellow/red), zero pairs, ghosted "taken away" counters, +/− glyphs so colour isn't the only cue. Working-step support
+  (`cStep`, `countersStepRenderer`, `countersStepVisual`) so a board can develop beside the captions like the place value table.
+- **Sandbox tool:** `/negative-counters` (Interactive Tools) — drag from the tray or tap, Move / Flip / Take away, Add zero pair,
+  Remove zero pairs, Tidy, Show pairs, live value readout. Standalone by design (like Algebra Tiles).
+- Not yet wired into a question tool — Integer Add/Sub is the first target (representation switch: counters → number line).
+
 ## 2026-10-03 — Developing worked-example visuals rolled out (graphs, ratio tables, place value, number lines)
 
 - **Split layout polish:** the answer in the split is a green **A** line on the timeline (no box/outline); thin custom

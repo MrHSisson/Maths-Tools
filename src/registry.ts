@@ -139,6 +139,7 @@ export const CATEGORIES: CategoryMeta[] = [
     name: 'Interactive Tools',
     tools: [
       { id: 'algebra-tiles', path: '/algebra-tiles', name: 'Algebra Tiles', description: 'Interactive sandbox for dragging and manipulating algebra tiles', load: () => import('./tools/Interactive/AlgebraTiles') },
+      { id: 'negative-counters', path: '/negative-counters', name: 'Negative Counters', description: 'Interactive sandbox for positive and negative counters — build numbers, make zero pairs, add and subtract directed numbers', load: () => import('./tools/Interactive/NegativeCounters') },
       { id: 'parallel-lines-explorer', path: '/parallel-lines-explorer', name: 'Parallel Lines Explorer', description: 'Interactive canvas for exploring angles formed when a transversal crosses parallel lines — drag, reveal, and explore', load: () => import('./tools/Interactive/ParallelLinesInteractive') },
       { id: 'p-value', path: '/p-value', name: 'P-Value Grapher', description: 'A tool to generate P-Values from Binomial Distributions', load: () => import('./tools/Interactive/p-value') },
       { id: 'grapher-lab', path: '/grapher', name: 'Grapher Lab', description: 'Test bench for the embeddable SmartGrapher — try every curve type and custom conditions live', enabled: false, load: () => import('./tools/Interactive/GrapherLab') },

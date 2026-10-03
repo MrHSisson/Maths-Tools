@@ -59,6 +59,7 @@ const STANDALONE_BY_DESIGN = [
   "Generators/TimesTablesGenerator",
   "Interactive/AlgebraTiles",
   "Interactive/GrapherLab",
+  "Interactive/NegativeCounters",
   "Interactive/ParallelLinesInteractive",
   "Interactive/p-value",
   "TeacherTools/CallSelector",

@@ -709,6 +709,8 @@ The goal is not just a complete set of agreed representations but **how they evo
 **where one question needs two at once**. The developing-picture layout (`stepVisualRenderer` — see
 `CLAUDE.md`'s "Split worked example") is the delivery vehicle for all of it.
 
+**Status (2026-10-03):** negative counters are built as a shared component + `/negative-counters` sandbox; signed bar model, double number line and the representation switch are not started.
+
 **Progressions** — the same idea carried from concrete to abstract, so a student meets one picture become the next:
 
 | Strand | Progression | Where it lands first |
