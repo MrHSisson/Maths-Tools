@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Home, Undo2, Trash2, LayoutGrid, Hand, RefreshCw, X, Menu } from "lucide-react";
-import { CounterDot, pairBoxStyle, type CounterState } from "../../shared";
+import { Home, Undo2, Trash2, LayoutGrid, RefreshCw, X, Menu, Plus, Minus } from "lucide-react";
+import { CounterDot, pairBoxStyle, DrawHotbar, HotBtn, PEN_COLORS, eraseNear, strokePath, type Stroke, type CounterState } from "../../shared";
 
 // Negative Counters — an interactive sandbox, the directed-number sibling of Algebra Tiles. Yellow counters
 // are +1, red counters are −1, and one of each is a zero pair. Drag counters out of the tray, move them,
@@ -16,7 +16,8 @@ type Meet = "pair" | "collapse";
 /** "free": drag counters anywhere. "table": the + / − representation table — yellows sit in the top row, reds in
  *  the bottom row, aligned in columns, so a + above a − reads as a zero pair and nothing wanders. */
 type Layout = "free" | "table";
-type Mode = "move" | "flip" | "delete";
+/** move = the Select tool; flip / delete are this sandbox's own tools; pan / pen / eraser are the shared whiteboard tools. */
+type Mode = "move" | "flip" | "delete" | "pan" | "pen" | "eraser";
 
 const SIZE = 52;
 const SNAP = 13;
@@ -108,6 +109,20 @@ export default function App() {
   const [mode, setMode] = useState<Mode>("move");
   const [showReadout, setShowReadout] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [scale, setScale] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [panning, setPanning] = useState(false);
+  const [strokes, setStrokes] = useState<Stroke[]>([]);
+  const [liveStroke, setLiveStroke] = useState<Stroke | null>(null);
+  const [writing, setWriting] = useState(false);
+  const [penColor, setPenColor] = useState(PEN_COLORS[0]);
+  const scaleRef = useRef(scale); scaleRef.current = scale;
+  const panRef = useRef(pan); panRef.current = pan;
+  const modeRef = useRef<Mode>("move");
+  const penColorRef = useRef(penColor); penColorRef.current = penColor;
+  const drawingRef = useRef<{ x: number; y: number }[] | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const panDragRef = useRef<{ sx: number; sy: number; px: number; py: number } | null>(null);
   const [meet, setMeet] = useState<Meet>("pair");
   const [layout, setLayout] = useState<Layout>("free");
   const [dragId, setDragId] = useState<number | null>(null);
@@ -116,6 +131,7 @@ export default function App() {
   itemsRef.current = items;
   const meetRef = useRef(meet);
   meetRef.current = meet;
+  modeRef.current = mode;
   const layoutRef = useRef(layout);
   layoutRef.current = layout;
   const dragRef = useRef<{ id: number; dx: number; dy: number; before: CounterItem[]; moved: boolean } | null>(null);
@@ -197,9 +213,11 @@ export default function App() {
   };
 
   // ── Pointer dragging (works for a counter on the board and for one pulled out of the tray) ──
+  // Board coordinates undo the pan / zoom; rx / ry are the raw position inside the canvas (to tell when a drop lands off it).
   const toBoard = (clientX: number, clientY: number) => {
     const r = boardRef.current!.getBoundingClientRect();
-    return { x: clientX - r.left, y: clientY - r.top, w: r.width, h: r.height };
+    const rx = clientX - r.left, ry = clientY - r.top;
+    return { x: (rx - panRef.current.x) / scaleRef.current, y: (ry - panRef.current.y) / scaleRef.current, rx, ry, w: r.width / scaleRef.current, h: r.height / scaleRef.current, rw: r.width, rh: r.height };
   };
 
   useEffect(() => {
@@ -216,7 +234,7 @@ export default function App() {
       dragRef.current = null;
       setDragId(null);
       const p = toBoard(e.clientX, e.clientY);
-      const outside = p.x < 0 || p.y < 0 || p.x > p.w || p.y > p.h;
+      const outside = p.rx < 0 || p.ry < 0 || p.rx > p.rw || p.ry > p.rh;
       const cur = itemsRef.current;
       if (outside) {
         // dropped back on the tray → put it away
@@ -236,7 +254,7 @@ export default function App() {
         setItems(next);
       } else if (d.moved) {
         let next = cur.map((c) => (c.id === d.id
-          ? { ...c, x: Math.max(0, Math.min(p.w - SIZE, snap(c.x))), y: Math.max(0, Math.min(p.h - SIZE, snap(c.y))) }
+          ? { ...c, x: snap(c.x), y: snap(c.y) }
           : c));
         // A +1 dropped on a −1 (or the reverse) meets its opposite: pair up, or collapse to nothing.
         const me = next.find((c) => c.id === d.id)!;
@@ -269,7 +287,62 @@ export default function App() {
     return () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); };
   }, []);
 
+  // ── Freehand ink and board panning (same behaviour as Algebra Tiles) ──
+  useEffect(() => {
+    const flushLive = () => {
+      rafRef.current = null;
+      if (drawingRef.current) setLiveStroke({ color: penColorRef.current, points: drawingRef.current.slice() });
+    };
+    const toLocal = (cx: number, cy: number) => {
+      const r = boardRef.current!.getBoundingClientRect();
+      return { x: (cx - r.left - panRef.current.x) / scaleRef.current, y: (cy - r.top - panRef.current.y) / scaleRef.current };
+    };
+    const onMove = (e: PointerEvent) => {
+      const pd = panDragRef.current;
+      if (pd) { setPan({ x: pd.px + (e.clientX - pd.sx), y: pd.py + (e.clientY - pd.sy) }); return; }
+      if (!drawingRef.current || !boardRef.current) return;
+      const evs = e.getCoalescedEvents?.().length ? e.getCoalescedEvents() : [e];
+      if (modeRef.current === "eraser") {
+        for (const ev of evs) { const { x, y } = toLocal(ev.clientX, ev.clientY); setStrokes((prev) => eraseNear(prev, x, y)); }
+        return;
+      }
+      for (const ev of evs) drawingRef.current.push(toLocal(ev.clientX, ev.clientY));
+      if (rafRef.current == null) rafRef.current = requestAnimationFrame(flushLive);
+    };
+    const onUp = () => {
+      if (panDragRef.current) { panDragRef.current = null; setPanning(false); }
+      if (!drawingRef.current) return;
+      const pts = drawingRef.current;
+      drawingRef.current = null;
+      setWriting(false);
+      if (rafRef.current != null) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
+      setLiveStroke(null);
+      if (modeRef.current !== "eraser" && pts.length >= 2) { const col = penColorRef.current; setStrokes((prev) => [...prev, { color: col, points: pts }]); }
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    return () => { window.removeEventListener("pointermove", onMove); window.removeEventListener("pointerup", onUp); };
+  }, []);
+
+  const onCanvasDown = (e: React.PointerEvent) => {
+    if (dragRef.current) return;
+    if (mode === "pan") {
+      panDragRef.current = { sx: e.clientX, sy: e.clientY, px: pan.x, py: pan.y };
+      setPanning(true);
+      return;
+    }
+    if (mode === "pen" || mode === "eraser") {
+      const { x, y } = toBoard(e.clientX, e.clientY);
+      drawingRef.current = [{ x, y }];
+      setWriting(true);
+      if (mode === "eraser") setStrokes((prev) => eraseNear(prev, x, y));
+      else setLiveStroke({ color: penColor, points: [{ x, y }] });
+    }
+  };
+
   const startBoardDrag = (e: React.PointerEvent, c: CounterItem) => {
+    // pan / pen / eraser belong to the board: let the press bubble up to it
+    if (mode === "pan" || mode === "pen" || mode === "eraser") return;
     e.preventDefault();
     // Touching a counter breaks any zero pair it was in (its partner stays, unpaired).
     const unpair = (list: CounterItem[]) => (c.pairId === undefined ? list : list.map((x) => (x.pairId === c.pairId ? { ...x, pairId: undefined } : x)));
@@ -336,7 +409,8 @@ export default function App() {
               {menuOpen ? <X size={28} /> : <Menu size={28} />}
             </button>
             {menuOpen && (
-              <BurgerMenu showReadout={showReadout} setShowReadout={setShowReadout} onClose={() => setMenuOpen(false)} />
+              <BurgerMenu showReadout={showReadout} setShowReadout={setShowReadout} scale={scale} setScale={setScale}
+                onResetView={() => { setScale(1); setPan({ x: 0, y: 0 }); }} onClose={() => setMenuOpen(false)} />
             )}
           </div>
         </div>
@@ -388,9 +462,17 @@ export default function App() {
 
         {/* ── Canvas column ─────────────────────────────────────────────── */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
-          <div ref={boardRef} className="relative flex-1"
+          <div ref={boardRef} className="relative flex-1" onPointerDown={onCanvasDown}
             style={{ overflow: "hidden", touchAction: "none", background: "#f8fafc", minHeight: table ? LANE_H * 2 + 8 : 200,
-              backgroundImage: "radial-gradient(#cbd5e1 1px, transparent 1px)", backgroundSize: `${SNAP * 2}px ${SNAP * 2}px` }}>
+              cursor: mode === "pan" ? (panning ? "grabbing" : "grab") : writing ? "none" : mode === "pen" ? "crosshair" : mode === "eraser" ? "cell" : undefined }}>
+            {/* ── Pan + zoom wrapper: dots, table, counters and ink all move together ── */}
+            <div style={{ position: "absolute", inset: 0, transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})`, transformOrigin: "0 0" }}>
+              <svg style={{ position: "absolute", left: -4000, top: -4000, width: 8000, height: 8000, pointerEvents: "none", zIndex: 0 }}>
+                <defs>
+                  <pattern id="ncg" width={SNAP * 2} height={SNAP * 2} patternUnits="userSpaceOnUse"><circle cx={SNAP * 2} cy={SNAP * 2} r="0.8" fill="#cbd5e1" /></pattern>
+                </defs>
+                <rect width="8000" height="8000" fill="url(#ncg)" />
+              </svg>
             {table && (
               <>
                 <div style={{ position: "absolute", left: 0, right: 0, top: 0, height: LANE_H * 2, background: "#fff" }} />
@@ -407,14 +489,6 @@ export default function App() {
                 <div style={{ position: "absolute", left: 0, top: 0, width: LABEL_W, height: LANE_H, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40, fontWeight: 800, color: "#a16207" }}>+</div>
                 <div style={{ position: "absolute", left: 0, top: LANE_H, width: LABEL_W, height: LANE_H, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40, fontWeight: 800, color: "#b91c1c" }}>−</div>
               </>
-            )}
-            {items.length === 0 && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 4, top: table ? LANE_H * 2 : 0 }}>
-                <div className="text-center" style={{ color: "#94a3b8" }}>
-                  <p style={{ fontSize: 16, fontWeight: 500, margin: "0 0 4px" }}>Drag counters from the panel</p>
-                  <p style={{ fontSize: 13, margin: 0 }}>{table ? "Yellow goes in the + row, red in the − row" : "or tap them in"}</p>
-                </div>
-              </div>
             )}
             {!table && [...new Set(items.filter((c) => c.pairId !== undefined).map((c) => c.pairId!))].map((pid) => {
               const two = items.filter((c) => c.pairId === pid);
@@ -437,14 +511,41 @@ export default function App() {
               );
             })}
 
-            {/* ── Floating tool hotbar ─────────────────────────────────── */}
-            <div onPointerDown={(e) => e.stopPropagation()}
-              style={{ position: "absolute", bottom: 16, left: "50%", transform: "translateX(-50%)", zIndex: 150, display: "flex", alignItems: "center", gap: 4,
-                padding: "6px 8px", background: "#2d3340", borderRadius: 14, boxShadow: "0 8px 28px rgba(0,0,0,0.35)" }}>
-              <HotBtn active={mode === "move"} onClick={() => setMode("move")} title="Move"><Hand size={18} color="#e2e8f0" /></HotBtn>
-              <HotBtn active={mode === "flip"} onClick={() => setMode("flip")} title="Flip a counter over"><RefreshCw size={18} color="#e2e8f0" /></HotBtn>
-              <HotBtn active={mode === "delete"} onClick={() => setMode("delete")} title="Take away"><X size={18} color="#e2e8f0" /></HotBtn>
-            </div>
+              {(strokes.length > 0 || liveStroke) && (
+                <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 60, overflow: "visible" }}>
+                  {strokes.map((st, i) => (
+                    <path key={i} d={strokePath(st.points)} fill="none" stroke={st.color} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
+                  ))}
+                  {liveStroke && <path d={strokePath(liveStroke.points)} fill="none" stroke={liveStroke.color} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />}
+                </svg>
+              )}
+            </div>{/* end pan + zoom wrapper */}
+
+            {items.length === 0 && strokes.length === 0 && mode !== "pen" && mode !== "eraser" && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 4, top: table ? LANE_H * 2 : 0 }}>
+                <div className="text-center" style={{ color: "#94a3b8" }}>
+                  <p style={{ fontSize: 16, fontWeight: 500, margin: "0 0 4px" }}>Drag counters from the panel</p>
+                  <p style={{ fontSize: 13, margin: 0 }}>{table ? "Yellow goes in the + row, red in the − row" : "or tap them in"}</p>
+                </div>
+              </div>
+            )}
+            {/* ── Floating tool hotbar (same as Algebra Tiles, plus Flip and Take away) ── */}
+            <DrawHotbar
+              drawMode={mode === "pen"} eraserMode={mode === "eraser"} panMode={mode === "pan"}
+              cursorActive={mode === "move"}
+              penColor={penColor} setPenColor={setPenColor}
+              hasStrokes={strokes.length > 0}
+              onCursor={() => setMode("move")}
+              onGrab={() => setMode("pan")}
+              onPen={() => setMode("pen")}
+              onEraser={() => setMode("eraser")}
+              onClearBoard={() => setStrokes([])}
+              extra={<>
+                <HotBtn active={mode === "flip"} onClick={() => setMode("flip")} title="Flip a counter over"><RefreshCw size={18} color="#e2e8f0" /></HotBtn>
+                <HotBtn active={mode === "delete"} onClick={() => setMode("delete")} title="Take away"><X size={18} color="#e2e8f0" /></HotBtn>
+                <div style={{ width: 1, height: 26, background: "#475569", margin: "0 2px" }} />
+              </>}
+            />
           </div>
 
           {/* ── Value bar ───────────────────────────────────────────────── */}
@@ -518,26 +619,9 @@ function SmBtn({ onClick, disabled, title, children }: {
   );
 }
 
-function HotBtn({ active, onClick, title, children }: {
-  active: boolean; onClick: () => void; title: string; children: React.ReactNode;
-}) {
-  return (
-    <button onClick={onClick} title={title}
-      style={{
-        width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center",
-        border: "none", borderRadius: 10, padding: 0, flexShrink: 0, cursor: "pointer",
-        background: active ? "rgba(255,255,255,0.22)" : "rgba(255,255,255,0.06)",
-        transition: "background 0.12s",
-      }}
-      onPointerEnter={(e) => { if (!active) e.currentTarget.style.background = "rgba(255,255,255,0.14)"; }}
-      onPointerLeave={(e) => { e.currentTarget.style.background = active ? "rgba(255,255,255,0.22)" : "rgba(255,255,255,0.06)"; }}>
-      {children}
-    </button>
-  );
-}
-
-function BurgerMenu({ showReadout, setShowReadout, onClose }: {
-  showReadout: boolean; setShowReadout: (v: boolean) => void; onClose: () => void;
+function BurgerMenu({ showReadout, setShowReadout, scale, setScale, onResetView, onClose }: {
+  showReadout: boolean; setShowReadout: (v: boolean) => void;
+  scale: number; setScale: (fn: (s: number) => number) => void; onResetView: () => void; onClose: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -548,6 +632,27 @@ function BurgerMenu({ showReadout, setShowReadout, onClose }: {
   return (
     <div ref={ref} className="absolute right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden" style={{ minWidth: 220 }}>
       <div className="py-1">
+        <div className="px-4 py-2.5 flex items-center justify-between">
+          <span className="text-sm font-semibold text-gray-700">Zoom</span>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setScale((s) => Math.max(0.5, +(s - 0.25).toFixed(2)))} className="hover:bg-gray-100 transition-colors"
+              style={{ width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #d1d5db", borderRadius: 6, background: "#fff", cursor: "pointer" }}>
+              <Minus size={14} color="#374151" />
+            </button>
+            <span className="text-sm font-semibold text-gray-600" style={{ minWidth: 36, textAlign: "center" }}>{Math.round(scale * 100)}%</span>
+            <button onClick={() => setScale((s) => Math.min(3, +(s + 0.25).toFixed(2)))} className="hover:bg-gray-100 transition-colors"
+              style={{ width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #d1d5db", borderRadius: 6, background: "#fff", cursor: "pointer" }}>
+              <Plus size={14} color="#374151" />
+            </button>
+          </div>
+        </div>
+        <button onClick={onResetView}
+          className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+          style={{ border: "none", background: "transparent", cursor: "pointer" }}>
+          <span>Reset view</span>
+          <span className="text-xs font-medium text-gray-400">recentre</span>
+        </button>
+        <div className="border-t border-gray-100 my-1" />
         <button onClick={() => setShowReadout(!showReadout)}
           className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
           style={{ border: "none", background: "transparent", cursor: "pointer" }}>

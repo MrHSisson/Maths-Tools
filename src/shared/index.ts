@@ -124,3 +124,4 @@ export type { GrapherRecipe, InequalityOp } from "./grapher/recipes";
 export { COUNTER_POS, COUNTER_NEG, ctr, zeroPairs, netValue, pairCount, cStep, matBoard } from "./counters";
 export type { Counter, CounterRow, CounterBoardData, CounterState } from "./counters";
 export { CounterBoard, CounterDot, PairBox, PAIR_BOX, pairBoxStyle, countersStepRenderer, countersStepVisual } from "./components/Counters";
+export { DrawHotbar, HotBtn, PEN_COLORS, eraseNear, strokePath, type Stroke } from "./components/BoardTools";
