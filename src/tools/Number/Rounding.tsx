@@ -294,12 +294,14 @@ type Rounded = ReturnType<typeof buildRounding>;
 function buildWorking(t: ToolType, r: Rounded, data: RoundingData, method: Method): WorkingStep[] {
   const compare = r.half ? "=" : r.up ? "\\gt" : "\\lt";
   if (method === "line") {
-    return [
+    // Each step carries the line stage to draw beside it: the ends → the number and halfway → which half → the answer.
+    const lineSteps = [
       introStep(t, r.n, "line"),
-      { type: "roundLine", latex: "", plain: `${r.numStr} lies between ${r.lowerStr} and ${r.upperStr}`, label: `Mark the number between ${r.lowerStr} and ${r.upperStr}; halfway is ${r.midStr}:`, extra: data },
+      { type: "roundLine", latex: "", plain: `${r.numStr} lies between ${r.lowerStr} and ${r.upperStr}`, label: `Mark the number between ${r.lowerStr} and ${r.upperStr}; halfway is ${r.midStr}:` },
       mStep(r.half ? "Exactly halfway, so it rounds up:" : r.up ? "Past the halfway value, so it is closer to the upper number:" : "Before the halfway value, so it is closer to the lower number:", [tex(r.numStr), `${compare} ${tex(r.midStr)}`]),
       mStep("Answer:", tex(r.ansStr)),
     ];
+    return lineSteps.map((st, i) => ({ ...st, extra: { kind: "roundLineStage", data, stage: i } }));
   }
   const decider = Math.floor(r.N / pow10(r.kk - 1)) % 10;   // the digit just after the rounding digit
   return [
@@ -384,12 +386,16 @@ const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null =>
 const X0 = 60, LW = 540, STEP = LW / 10, LY = 165;
 const INK = "#1e293b", BLUE = "#2563eb", GREEN = "#166534";
 
-function RoundingDiagram({ d, showAnswer, withPrompt, idx, preview, answerIdx, answerBand = true }: { d: RoundingData; showAnswer: boolean; withPrompt: boolean; idx?: number; preview?: boolean; answerIdx?: number; answerBand?: boolean }) {
+/** `stage` (worked example, number-line method only) develops the picture: 0 the line and its ends · 1 the number
+ *  plotted and halfway marked · 2 the half it sits in shaded · 3 the answer ringed. Undefined = the ordinary diagram. */
+function RoundingDiagram({ d, showAnswer: showAnswerProp, withPrompt, idx, preview, answerIdx, answerBand = true, stage }: { d: RoundingData; showAnswer: boolean; withPrompt: boolean; idx?: number; preview?: boolean; answerIdx?: number; answerBand?: boolean; stage?: number }) {
+  const showAnswer = stage !== undefined ? stage >= 3 : showAnswerProp;
+  const HALF = "#b45309";
   const y0 = withPrompt ? 0 : 60;
   const bottom = answerBand ? 290 : 245;   // the answer band sits below the line's labels
   const h = bottom - y0;
   const mx = X0 + d.pos * LW;
-  const showMarker = d.plotted || showAnswer || !!preview;
+  const showMarker = stage !== undefined ? stage >= 1 : d.plotted || showAnswer || !!preview;
   const ansX = X0 + (d.up ? LW : 0);
   const majors = [0, 5, 10];
   const majorText = [d.lowerStr, d.midStr, d.upperStr];
@@ -412,7 +418,7 @@ function RoundingDiagram({ d, showAnswer, withPrompt, idx, preview, answerIdx, a
       );
     }
     if (d.labelMode === "every") return null;
-    return <text key={`m${i}`} x={x} y={LY + 50} textAnchor="middle" dominantBaseline="middle" fontSize={28} fontWeight={700} fill={INK}>{majorText[mi]}</text>;
+    return <text key={`m${i}`} x={x} y={LY + 50} textAnchor="middle" dominantBaseline="middle" fontSize={28} fontWeight={700} fill={stage !== undefined && stage >= 1 && i === 5 ? HALF : INK}>{majorText[mi]}</text>;
   };
 
   return (
@@ -426,6 +432,14 @@ function RoundingDiagram({ d, showAnswer, withPrompt, idx, preview, answerIdx, a
       <text x={mx} y={92} textAnchor="middle" dominantBaseline="middle" fontSize={32} fontWeight={700} fill={BLUE}>{d.numStr}</text>
       <line x1={mx} y1={112} x2={mx} y2={140} stroke={BLUE} strokeWidth={4} />
       <polygon points={`${mx - 9},136 ${mx + 9},136 ${mx},152`} fill={BLUE} />
+      </g>}
+
+      {/* which half the number sits in (stage 2) */}
+      {stage !== undefined && stage >= 2 && <rect x={d.up ? X0 + 5 * STEP : X0} y={LY - 30} width={5 * STEP} height={60} rx={6} fill="#16a34a" opacity={0.14} />}
+      {/* halfway marker (stage 1+) */}
+      {stage !== undefined && stage >= 1 && <g>
+        <line x1={X0 + 5 * STEP} y1={LY - 46} x2={X0 + 5 * STEP} y2={LY + 22} stroke={HALF} strokeWidth={3} strokeDasharray="6 5" />
+        <text x={X0 + 5 * STEP} y={LY - 54} textAnchor="middle" fontSize={20} fontWeight={700} fill={HALF}>halfway</text>
       </g>}
 
       {/* the line and its marks */}
@@ -453,7 +467,7 @@ function RoundingDiagram({ d, showAnswer, withPrompt, idx, preview, answerIdx, a
 }
 
 const questionRenderer = (
-  q: AnyQuestion, showAnswer: boolean, _cs: string, compact?: boolean, idx?: number, qo?: { preview?: boolean; fullscreen?: boolean }, fontClass?: string,
+  q: AnyQuestion, showAnswer: boolean, _cs: string, compact?: boolean, idx?: number, qo?: { preview?: boolean; fullscreen?: boolean; dropdownValue?: string }, fontClass?: string,
 ): JSX.Element | null => {
   // Worked Example (compact === false, not the fullscreen whiteboard): the answer is found by
   // stepping through the working, so the question box never shows it — but the plot is set up.
@@ -489,9 +503,12 @@ const questionRenderer = (
   return (
     <div className="w-full flex flex-col items-center gap-3">
       <div className={`${fc} font-bold`} style={{ color: "#000" }}>{d.prompt}</div>
-      <div style={{ width: "100%", maxWidth: compact === false ? 900 : 680, margin: "0 auto" }}>
-        <RoundingDiagram d={d} showAnswer={revealAnswer} withPrompt={false} preview={qo?.preview || (workedExample && showAnswer)} answerBand={!workedExample} />
-      </div>
+      {/* Number-line method, answer showing: the line develops beside the steps (stepVisual), not up here. */}
+      {!(workedExample && showAnswer && qo?.dropdownValue === "line") && (
+        <div style={{ width: "100%", maxWidth: compact === false ? 900 : 680, margin: "0 auto" }}>
+          <RoundingDiagram d={d} showAnswer={revealAnswer} withPrompt={false} preview={qo?.preview || (workedExample && showAnswer)} answerBand={!workedExample} />
+        </div>
+      )}
     </div>
   );
 };
@@ -550,15 +567,18 @@ const stepRenderer = (s: WorkingStep): JSX.Element | null => {
     );
   }
   if (s.type === "roundLine") {
-    const d = { ...(s.extra as RoundingData), level: "level1" as DifficultyLevel, labelMode: "ends" as LabelMode, plotted: true };
-    return (
-      <div style={{ width: "100%" }}>
-        <div style={stepLabelStyle}>{s.label}</div>
-        <div style={{ maxWidth: 760, margin: "0 auto" }}><RoundingDiagram d={d} showAnswer={false} withPrompt={false} answerBand={false} /></div>
-      </div>
-    );
+    // The picture itself develops beside the steps (stepVisual); this card carries just the instruction.
+    return <div style={{ width: "100%" }}><div style={stepLabelStyle}>{s.label}</div></div>;
   }
   return null;
+};
+
+/** `stepVisualRenderer`: the number line at that step's stage; null for the digit method's steps. */
+const stepVisual = (s: WorkingStep): JSX.Element | null => {
+  const x = s.extra as { kind?: string; data?: RoundingData; stage?: number } | undefined;
+  if (x?.kind !== "roundLineStage" || !x.data) return null;
+  const d = { ...x.data, level: "level1" as DifficultyLevel, labelMode: "ends" as LabelMode };
+  return <div className="w-full"><RoundingDiagram d={d} showAnswer={false} withPrompt={false} answerBand={false} stage={x.stage ?? 0} /></div>;
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -586,6 +606,9 @@ export default function App() {
       generateQuestion={generateQuestion}
       questionRenderer={questionRenderer}
       stepRenderer={stepRenderer}
+      stepVisualRenderer={stepVisual}
+      stepVisualKeepsWorking
+      stepVisualPlacement="top"
       reformatQuestion={reformatQuestion}
       customPrintHandler={printRounding}
       defaults={{ numColumns: 2, maxColumns: 2, numQuestions: 12, qoColumns: 2, collapseWorkingByDefault: true, hideAnswerStep: true }}

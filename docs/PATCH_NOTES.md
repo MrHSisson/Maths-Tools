@@ -28,6 +28,19 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-03 — Developing worked-example visuals rolled out (graphs, ratio tables, place value, number lines)
+
+- **Split layout polish:** the answer in the split is a green **A** line on the timeline (no box/outline); thin custom
+  scrollbar (`.thin-scroll`); `detachLast` on the place value table sets Comparing & Ordering's Order column apart.
+- **SmartGrapher step builds:** new `step` prop + `step` tags on series / points / guides / regions; `graphStep` /
+  `graphStepVisual` helpers. New split variant `stepVisualKeepsWorking` (maths cards stay beside the picture).
+- **Wired:** Equations of Lines (points plot, line drawn, y-intercept picked out; new "mark the points" step; graph now
+  also in Worked Example), Non-linear Sim. Eq. (curve, then line, then solutions), Mixed Strategies L3 (lines, then peak).
+- **Ratio table:** `rStepBuild` grows one table a row per step; Speed/Distance/Time moved onto the caption-only split.
+- **Powers of 10:** the grid now develops (number placed, direction, digits slide) beside captions.
+- **Number lines:** Integer Add/Sub (start point, then the jump) and Rounding's number-line method (ends, number and halfway,
+  half shaded, answer ringed) develop full width above the steps (`stepVisualPlacement="top"`).
+
 ## 2026-10-03 — Duplicate green answer box retired across ToolShell tools
 
 - **Rolled `hideAnswerStep: true` out beyond Surds** to 15 more tools whose last working step already

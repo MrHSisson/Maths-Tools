@@ -115,6 +115,9 @@ export interface WorkedExampleStepsProps {
    *  picture instead of reducing the list to captions — for tools whose steps are equations and the
    *  picture (a graph) builds up alongside them. */
   keepWorking?: boolean;
+  /** Where the picture sits: beside the steps (default) or above them, full width — for a wide, short
+   *  picture such as a number line that is unreadable squeezed into a half-width panel. */
+  visualPlacement?: "side" | "top";
   qoSnapshot?: QOSnapshot;
   /** Gates whether Step-by-Step (one beat at a time) is reachable at all.
    *  ToolShell and the preview surfaces pass true; false leaves Show All only. */
@@ -160,7 +163,7 @@ export interface WorkedExampleStepsProps {
 }
 
 export const WorkedExampleSteps = ({
-  working, renderAnswer, colorScheme, answerFontClass, stepRenderer, stepVisualRenderer, keepWorking = false, qoSnapshot,
+  working, renderAnswer, colorScheme, answerFontClass, stepRenderer, stepVisualRenderer, keepWorking = false, visualPlacement = "side", qoSnapshot,
   stepThroughEnabled, onOpenSkill, resetKey, layout = "single", hideAnswerStep = false, compact = false,
 }: WorkedExampleStepsProps) => {
   const [steppedMode, setSteppedMode] = useState(true);
@@ -310,6 +313,14 @@ export const WorkedExampleSteps = ({
   const withVisual = (list: ReactNode, idx: number) => {
     const vis = evolve ? visualFor(idx) : null;
     if (!vis) return list;
+    if (visualPlacement === "top") {
+      return (
+        <div className="flex flex-col gap-4">
+          <div className="flex min-w-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5">{vis}</div>
+          <div className="min-w-0">{list}</div>
+        </div>
+      );
+    }
     return (
       <div className={`grid grid-cols-1 gap-4 items-stretch ${keepWorking ? "lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]" : "lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]"}`}>
         {/* min-w-0 lets the panel shrink to the screen (a grid item otherwise grows to its content). */}

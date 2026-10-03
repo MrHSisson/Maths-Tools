@@ -56,6 +56,9 @@ export interface ToolShellProps {
    *  instead of a caption-only timeline. For equation-led tools whose picture (a SmartGrapher `step` build)
    *  grows alongside the working. */
   stepVisualKeepsWorking?: boolean;
+  /** Where the `stepVisualRenderer` picture sits: beside the steps (default) or full width above them
+   *  (wide, short pictures such as a number line). */
+  stepVisualPlacement?: "side" | "top";
   /** Replaces QuestionDisplay in all modes. compact=true in worksheet cells, false in worked example/fullscreen, undefined in regular whiteboard. idx is the worksheet question index (only provided in worksheet cells). qo is the live QO state snapshot — use it for render-time reformatting (e.g. decimal/fraction toggle). */
   questionRenderer?: (q: AnyQuestion, showAnswer: boolean, colorScheme: string, compact?: boolean, idx?: number, qo?: QOSnapshot, fontClass?: string) => JSX.Element | null;
   /** Replaces the final answer box (AnswerDisplay). Shown when showAnswer=true. qo is the live QO state snapshot. */
@@ -185,7 +188,7 @@ function ScaleToFit({ children, maxScale = 3 }: { children: ReactNode; maxScale?
   );
 }
 
-export const ToolShell = ({ config, infoSections, generateQuestion, generateUniqueQ: generateUniqueQProp, defaults = {}, stepRenderer, stepVisualRenderer, stepVisualKeepsWorking, questionRenderer, answerRenderer, reformatQuestion, customPrintHandler, teachingSlides, workingScaffold }: ToolShellProps) => {
+export const ToolShell = ({ config, infoSections, generateQuestion, generateUniqueQ: generateUniqueQProp, defaults = {}, stepRenderer, stepVisualRenderer, stepVisualKeepsWorking, stepVisualPlacement, questionRenderer, answerRenderer, reformatQuestion, customPrintHandler, teachingSlides, workingScaffold }: ToolShellProps) => {
   const generateUniqueQ = generateUniqueQProp ?? makeUniqueQ(generateQuestion);
   const toolKeys = Object.keys(config.tools);
   // Seeds a smaller default question font size on a narrow viewport (the
@@ -1409,6 +1412,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                 stepRenderer={stepRenderer}
                 stepVisualRenderer={stepVisualRenderer}
                 keepWorking={stepVisualKeepsWorking}
+                visualPlacement={stepVisualPlacement}
                 qoSnapshot={getQOSnapshot()}
                 stepThroughEnabled
                 onOpenSkill={parkedMode ? setOpenSkillId : undefined}

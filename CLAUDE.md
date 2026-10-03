@@ -450,6 +450,15 @@ export interface ToolShellProps {
    *  (above on narrow screens), instead of reprinting the table every step. */
   stepVisualRenderer?: (step: WorkingStep, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null | false;
 
+  /** Companion to `stepVisualRenderer`: keep every step's full working (its maths) in the list beside the
+   *  picture instead of a caption-only timeline. For equation-led tools whose picture builds up with the
+   *  working (see "Split worked example" below). */
+  stepVisualKeepsWorking?: boolean;
+
+  /** Companion to `stepVisualRenderer`: "side" (default) puts the picture beside the steps; "top" puts it
+   *  full width above them — for wide, short pictures (number lines). */
+  stepVisualPlacement?: "side" | "top";
+
   /** Called when a QO option changes, before falling back to full regeneration.
    *  Return a reformatted copy of the question (same maths, different display),
    *  or null to let ToolShell generate a fresh question instead.
@@ -597,6 +606,27 @@ ToolShell mirrors the current setup into the URL query string (`history.replaceS
 | `diff` | differentiated worksheet flag | `diff=1` |
 
 Only the current tool+level's QO state is encoded (the URL reflects what is on screen). Differentiated per-level QO customisation and advanced-mode groups are not encoded. Tools get all of this for free — never re-implement URL handling in a tool file.
+
+### Split worked example — the developing picture, three flavours
+
+`stepVisualRenderer` turns Worked Example into a split: ONE picture that updates in place as the steps advance.
+Everything is in the shared `WorkedExampleSteps` — a tool only supplies per-step data and a renderer.
+
+| Flavour | Left list | Tool supplies | References |
+|---|---|---|---|
+| **Caption-only** (default) | each step's caption (`step.plain`) on a numbered timeline; the answer is a green **A** line (no box, no outline) | steps whose snapshot IS the working: `pvStep` + `placeValueStepVisual`; `rStepBuild` + `ratioTableStepVisual` (one ratio table growing a row per step); bar steps | `DecimalAddSub`, `PowersOfTen`, `SpeedDistanceTime`, `RatioSharingTool` |
+| **Keep working** (`stepVisualKeepsWorking`) | the normal step cards with their maths; picture sits beside them | steps stamped with the picture state | `EquationsOfLines`, `NonLinearSimEq`, `MixedStrategies` (graph) |
+| **Picture on top** (`stepVisualPlacement="top"`) | as above, picture full width above | a wide short picture | `IntegerAddSub`, `Rounding` (number line) |
+
+**Step-by-step graph builds.** `SmartGrapher` takes a `step` prop: any series / FOI (`config.fois`) / guide / region
+carrying a `step` field is drawn only once `step >= its step`, and what appears exactly now is emphasised (heavier
+curve, ringed dot). The frame is computed from the FULL set so the view never jumps. A tool describes the complete
+graph once as a `GraphBuildSpec` (tagging parts with `step`), stamps each working step with
+`graphStep(step, spec, n)` and passes `graphStepVisual` as `stepVisualRenderer` (+ `stepVisualKeepsWorking`).
+Steps before the first stamped step render as plain full-width cards (the layout splits when the picture starts).
+
+**`hideAnswerStep` with a split:** a split tool that sets `hideAnswerStep` drops its A line, so only set it when
+the last step is itself the answer.
 
 ### Single sub-tool — no tab buttons needed
 
