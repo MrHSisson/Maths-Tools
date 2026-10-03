@@ -28,6 +28,12 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-04 — Tool Review blocks seeded (planner)
+- All 35 ToolShell tool notes in Harry's planner now carry a filled Review block: content, readiness, sandbox fit, techniques, worked solution, Smart Progressor, mobile, audit findings.
+- 27 were seeded from `docs/TOOL_AUDIT.md`; 8 newer tools (Rounding, Comparing & Ordering, Adding & Subtracting Decimals, Speed Distance & Time, Mixed Strategies, Surds, Binary Operations, Number Bases) from specs and `docs/PROJECTS.md`.
+- Worked-solution lines reflect the live single-answer / picture status and the 19 tools still needing a closing answer step.
+- Status field is "seeded from audit" or "seeded from specs" until each tool is reviewed in person.
+
 ## 2026-10-03 — Negative counters (shared representation + sandbox)
 
 - **Shared representation:** `src/shared/counters.ts` + `components/Counters.tsx` — yellow = +1, red = −1 (the algebra tiles'

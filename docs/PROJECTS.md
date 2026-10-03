@@ -98,7 +98,7 @@ for *that* tool instead of working to one global backlog. It replaces the old "M
   - Worked solution: does the last step state the answer; is there a developing picture that fits?
   - Smart Progressor: which boolean options are really difficulty rungs?
   - Mobile: checked on a narrow viewport?
-- **Seeding the notes:** `docs/TOOL_AUDIT.md` holds the original per-tool findings (all 27 Maths tools, 2026-08) — its methodology is the checklist, and each tool's findings seed that tool's note. Don't keep two copies up to date: the note is the live one once a tool is reviewed.
+- **Seeding the notes (done 2026-10-04):** all 35 ToolShell tool notes now have a seeded Review block (27 from the audit, 8 newer tools from specs and this plan; status "seeded from audit/specs", not yet reviewed in person). `docs/TOOL_AUDIT.md` holds the original per-tool findings (all 27 Maths tools, 2026-08) — its methodology is the checklist, and each tool's findings seed that tool's note. Don't keep two copies up to date: the note is the live one once a tool is reviewed.
 - **Known source items** (carried over so none are lost): decimal-operations family (multiply/divide decimals on the shared place value table, a Teach deck for add/subtract — deck is benched, go-live sign-off); `BasicAngleFacts` and `AnglesInParallelLines` still on hand-rolled print handlers; the `SimplifyingRatiosTool` go-live call (audit recommended it stays gated).
 
 **The 22 `enabled: false` tools** (the go-live queue is smaller than it looks):
