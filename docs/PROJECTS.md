@@ -75,7 +75,7 @@ pedagogy-engine sweep.
 | **Techniques engine** | 🚧 | Engine built; only 1 tool converted — build on demand for tier-1 needs, not a standalone sweep (see Priorities) |
 | **Smart Progressor** | 🚧 | Core mechanism shipped (weighted `multiSelect` + worksheet sort + roughly-even split + standard-mode-only + teacher-facing off toggle + compact 2-option cycle-button popover control); 1 of 27 tools piloted (`SpeedDistanceTime`, all 3 levels), 1 dev-gated demo (`/tool-shell`) — needs a per-tool audit pass |
 | **Skills library** | ⏸ | Engine + backlog ready; 2 skills built — tier-2 (student-led), not a current priority |
-| **Core representations** | ⏸ | 3 of 6 visual families have Teach scenes — feeds Skills/Teach decks (tier 2), paused alongside them |
+| **Core representations** | ⏸ | 3 of 6 visual families have Teach scenes — feeds Skills/Teach decks (tier 2), paused alongside them. **Direction agreed 2026-10-03:** representations are a *progression* (each evolves into the next) and sometimes a *pair* — see "Representation progressions & composites" |
 | **Teach decks** | ⏸ | Engine built; one partial deck exists — least mature prong, secondary to tier-1 work |
 | **Narrow-viewport layout** | 🚧 | Shipped in `ToolShell` for every tool (Worked Example + a light Worksheet list, viewport-driven) — needs a pass across diagram/differentiated tools |
 | **Old-shell migration** | ✅ | Backlog empty; Generators are standalone by design, not migration targets |
@@ -702,6 +702,41 @@ scenes (unlocks `solve-linear-equation`, `collect-like-terms`); build negative c
 open**: algebra tiles now gates 5 tool-consumers across its two skills vs. area model's ~3 — algebra
 tiles has the stronger case, ahead of negative counters' single consumer (`directed-number`,
 `IntegerAddSub` only).
+
+### Representation progressions & composites (direction agreed 2026-10-03 — planning, nothing built yet)
+
+The goal is not just a complete set of agreed representations but **how they evolve into each other**, and
+**where one question needs two at once**. The developing-picture layout (`stepVisualRenderer` — see
+`CLAUDE.md`'s "Split worked example") is the delivery vehicle for all of it.
+
+**Progressions** — the same idea carried from concrete to abstract, so a student meets one picture become the next:
+
+| Strand | Progression | Where it lands first |
+|---|---|---|
+| Ratio & proportion | **double number line → ratio table** (the table is the double line with the lines turned into rows/columns, scale arrows kept) | Ratio sharing / speed-distance-time / recipes (ratio table already live) |
+| Directed numbers | **negative counters → bar model with negatives → number line** (zero pairs → signed bars either side of zero → jumps) | Integer Add/Sub (number line already live) |
+
+**Composites** — a question that needs two representations on screen together, each developing on the same steps:
+
+- **Finding gradients: ratio table + SmartGrapher** — rise and run as a ratio table (scale to "per 1 across") beside the
+  line being plotted; the unit row of the table is the gradient the graph shows. First candidate: `EquationsOfLines`'
+  gradient sub-tool.
+- (Others to be identified as tools are audited — e.g. a place value table beside a number line for rounding decimals.)
+
+**What's needed to build this (none of it started):**
+1. **The missing representations as shared components**, like `PlaceValueTable`/`RatioTable`: negative counters,
+   a *signed* bar model (the existing bar model is parts-of-a-whole; this one has direction either side of zero — needs one
+   agreed colour/side scheme so counters and bars match), a double number line.
+2. **A representation switch** on tools that span a progression (a `workedExampleOnly` dropdown like Rounding's
+   "Working method", or per-level — open: counters at L1, bars at L2, number line at L3, or teacher's choice). Same question
+   and answer; only the picture and its stage stamps change.
+3. **Composite visuals** — today a step stamps ONE picture. A composite needs a step to carry two (stacked in the panel),
+   each with its own stage. Likely a small extension to `stepVisualRenderer`'s contract rather than a new layout.
+4. **Teach decks / skills** can then play the *same* example through successive representations (counters → bars → line),
+   which is the stated purpose of the vocabulary above.
+
+**Open questions:** per-level vs teacher-chosen representation; whether the signed bar model is a new family or a
+variant of the bar model; how the progression is recorded for skills ("evolves from" links?).
 
 **Detail — the six and their scene status.** Bar model ✅ (`split`/`combine`/`equivalents`) · number
 line ✅ (`multiples`) · prime factor tiles ✅ (`factorTree`/`primeVenn`) · area model ⬜ (no scenes) ·
