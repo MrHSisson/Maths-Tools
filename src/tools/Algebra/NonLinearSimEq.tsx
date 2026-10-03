@@ -1,9 +1,9 @@
 import {
-  ToolShell, MathRenderer, InlineMath, SmartGrapher,
+  ToolShell, MathRenderer, InlineMath, SmartGrapher, graphStep, graphStepVisual,
   workings, quadraticFormulaSteps, solveFactorsSteps, substituteBackSteps,
   makeSubjectSteps, solveLinearEquationSteps, solveLinearlySteps,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion,
-  type WorkingStep, type QOSnapshot, type GraphSeries, type FOI,
+  type WorkingStep, type QOSnapshot, type GraphSeries, type FOI, type GraphBuildSpec,
 } from "../../shared";
 import { getDevMode } from "../../devMode";
 
@@ -856,8 +856,18 @@ const buildWorking = (q: InternalQ, graph: GraphInfo | null): WorkingStep[] => {
     }
     if (q.isDoubleRoot) w.note("The line is a tangent to the curve, so there is one repeated solution.");
   }
-  if (graph) w.visual("Plot both graphs — the solutions are where the curves meet:", { graph });
-  return w.build();
+  const steps = w.build();
+  if (!graph) return steps;
+  // The graph builds with the working: the curve (1) is drawn first, the line (2) joins it on the next
+  // step, and the solutions — where they meet — are marked on the last.
+  const last = steps.length - 1;
+  const spec: GraphBuildSpec = {
+    series: graph.series.map((sr, i) => ({ ...sr, step: Math.min(i, last) })),
+    fois: graph.points.map((p) => ({ x: p.x, y: p.y, kind: "point" as const, step: last })),
+    config: { axisLabels: graph.axisLabels, lockAspect: graph.lockAspect },
+    height: 340,
+  };
+  return steps.map((st, i) => graphStep(st, spec, i));
 };
 
 // Convert an internal question into a worded ToolShell question. The two equations
@@ -980,17 +990,6 @@ const answerRenderer = (q: AnyQuestion): JSX.Element | null => {
   );
 };
 
-const stepRenderer = (s: WorkingStep): JSX.Element | null => {
-  const graph = (s.extra as { graph?: GraphInfo } | undefined)?.graph;
-  if (!graph) return null;
-  return (
-    <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
-      <div style={{ fontWeight: 600, color: "#374151", textAlign: "center" }}>{s.plain}</div>
-      <div style={{ width: "100%", maxWidth: 460 }}><GraphView g={graph} height={300} /></div>
-    </div>
-  );
-};
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONFIG + INFO
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1092,7 +1091,8 @@ export default function App() {
       generateQuestion={generateQuestion}
       questionRenderer={questionRenderer}
       answerRenderer={answerRenderer}
-      stepRenderer={stepRenderer}
+      stepVisualRenderer={graphStepVisual}
+      stepVisualKeepsWorking
       defaults={{ numQuestions: 12, numColumns: 2, maxColumns: 3 }}
     />
   );
