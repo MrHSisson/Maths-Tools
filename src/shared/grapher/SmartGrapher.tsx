@@ -29,6 +29,7 @@ import {
 } from "./mathEngine";
 import { drawGraph, type DrawStyle, type CurveDraw, type ShadeRegion, type Guide, SERIES_COLORS } from "./drawGraph";
 import { usePanZoom } from "./usePanZoom";
+import type { WorkingStep } from "../types";
 
 // ── Public API ───────────────────────────────────────────────────────────────
 
@@ -70,6 +71,8 @@ export interface GraphSeries {
   label?: string;
   /** Draw dashed (a strict-inequality boundary). */
   dashed?: boolean;
+  /** Step-by-step build: the `step` at which this curve is drawn (omit = always). */
+  step?: number;
 }
 
 export interface SmartGrapherProps {
@@ -93,6 +96,12 @@ export interface SmartGrapherProps {
   guides?: Guide[];
 
   config?: GrapherConfig;
+  /** Step-by-step build. When set, any series / FOI (`config.fois`) / guide / region carrying a
+   *  `step` is drawn only once `step >= its step`, and the things introduced exactly at this step
+   *  are emphasised (heavier curve, ringed dot) — so a graph can plot and highlight in sequence with
+   *  the working. The frame is always computed from the FULL set, so the view never jumps between
+   *  steps. Items with no `step` are always shown. Omit `step` for the ordinary static graph. */
+  step?: number;
   /** Force full interactivity inline (default false → static thumbnail). */
   interactive?: boolean;
   /** Show the Expand button on the inline thumbnail. Default true. */
@@ -132,11 +141,14 @@ interface GraphCanvasProps {
   /** Legend rows (already prettified). Rendered in whichever bottom corner is
    *  clearest of key points. Omit for no legend. */
   legendItems?: { label: string; color: string }[];
+  /** What is actually painted/hovered (a step-by-step build shows a subset); `fois` still frames the view. */
+  visibleFois?: FOI[];
 }
 
 function GraphCanvas({
-  curves, fois, regions, guides, config, interactive, frameKey, registerAutoCenter, registerExport, legendItems,
+  curves, fois, regions, guides, config, interactive, frameKey, registerAutoCenter, registerExport, legendItems, visibleFois,
 }: GraphCanvasProps) {
+  const paintFois = visibleFois ?? fois;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<Viewport>({ centreX: 0, centreY: 0, unitsPerPixelX: 0.05, unitsPerPixelY: 0.05 });
@@ -163,27 +175,27 @@ function GraphCanvas({
   // Find the nearest visible FOI within a hit radius of the cursor.
   const handleHover = useCallback((e: React.MouseEvent) => {
     const canvas = canvasRef.current;
-    if (!canvas || !(config.showFois ?? true) || fois.length === 0) { setTip(null); return; }
+    if (!canvas || !(config.showFois ?? true) || paintFois.length === 0) { setTip(null); return; }
     const rect = canvas.getBoundingClientRect();
     const mx = e.clientX - rect.left, my = e.clientY - rect.top;
     const { w, h } = cssSize();
     const vp = viewportRef.current;
     let best: { left: number; top: number; text: string } | null = null;
     let bestD = 12; // px
-    for (const f of fois) {
+    for (const f of paintFois) {
       const px = mathToScreenX(f.x, vp, w), py = mathToScreenY(f.y, vp, h);
       const d = Math.hypot(px - mx, py - my);
       if (d <= bestD) { bestD = d; best = { left: px, top: py, text: coordText(f) }; }
     }
     setTip(best);
-  }, [fois, config.showFois]);
+  }, [paintFois, config.showFois]);
 
   const paint = useCallback(() => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
     const { w, h } = cssSize();
-    drawGraph(ctx, w, h, viewportRef.current, curves, fois, {
+    drawGraph(ctx, w, h, viewportRef.current, curves, paintFois, {
       axisLabels: config.axisLabels,
       showFois: config.showFois ?? true,
       style: config.style,
@@ -191,7 +203,7 @@ function GraphCanvas({
       regions,
       guides,
     });
-  }, [curves, fois, regions, guides, config]);
+  }, [curves, paintFois, regions, guides, config]);
 
   const requestDraw = useCallback(() => {
     if (rafRef.current != null) return;
@@ -339,7 +351,7 @@ function ToolbarButton({ onClick, title, children }: {
 // ── Exported component ───────────────────────────────────────────────────────
 
 export function SmartGrapher({
-  equationType, params, fn, series, showLegend, regions, guides, config = {},
+  equationType, params, fn, series, showLegend, regions, guides, config = {}, step,
   interactive = false, allowExpand = true, height = 260, title, className,
 }: SmartGrapherProps) {
   const [expanded, setExpanded] = useState(false);
@@ -397,6 +409,25 @@ export function SmartGrapher({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(seriesList.map((s) => [s.equationType, s.params])), JSON.stringify(config.fois),
       JSON.stringify(config.domain), config.autoFois, config.autoIntersections]);
+
+  // Step-by-step build: what is on screen at `step`, and what was introduced exactly now.
+  const showAt = (s?: number) => step === undefined || s === undefined || s <= step;
+  const nowAt = (s?: number) => step !== undefined && s !== undefined && s === step;
+  // Memoised so a re-render at the same step doesn't hand the canvas new arrays (which would re-run its effects).
+  const seriesStepsKey = JSON.stringify(series?.map((s) => s.step));
+  const drawCurves: CurveDraw[] = useMemo(() => step === undefined ? curves : curves.map((c, i) => {
+    const st = series?.[i]?.step;
+    return { ...c, hidden: !showAt(st), width: nowAt(st) ? 4 : undefined };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [curves, step, seriesStepsKey]);
+  const visibleFois = useMemo(() => step === undefined ? undefined
+    : fois.filter((f) => showAt(f.step)).map((f) => (nowAt(f.step) ? { ...f, highlight: true } : f)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [fois, step]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const drawRegions = useMemo(() => step === undefined ? regions : regions?.filter((r) => showAt(r.step)), [regions, step]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const drawGuides = useMemo(() => step === undefined ? guides : guides?.filter((g) => showAt(g.step)), [guides, step]);
 
   // A stable-ish key so the inner canvas re-frames when the maths changes.
   const frameKey = useMemo(
@@ -468,10 +499,11 @@ export function SmartGrapher({
         style={{ width: "100%", height: heightCss }}
       >
         <GraphCanvas
-          curves={curves}
+          curves={drawCurves}
           fois={fois}
-          regions={regions}
-          guides={guides}
+          visibleFois={visibleFois}
+          regions={drawRegions}
+          guides={drawGuides}
           config={config}
           interactive={interactive}
           frameKey={frameKey}
@@ -508,10 +540,11 @@ export function SmartGrapher({
               </div>
             )}
             <GraphCanvas
-              curves={curves}
+              curves={drawCurves}
               fois={fois}
-              regions={regions}
-              guides={guides}
+              visibleFois={visibleFois}
+              regions={drawRegions}
+              guides={drawGuides}
               config={config}
               interactive
               frameKey={frameKey}
@@ -528,3 +561,45 @@ export function SmartGrapher({
 }
 
 export default SmartGrapher;
+
+
+// ── Step-by-step builds — a graph that grows with the worked solution ─────────
+//
+// A tool describes the COMPLETE graph once (`GraphBuildSpec`), tagging each curve / point / guide /
+// region with the working step at which it should appear (`step` field). It then stamps every working
+// step with `graphStep(step, spec, n)` and passes `graphStepVisual` as ToolShell's `stepVisualRenderer`
+// (with `stepVisualKeepsWorking` so the maths stays in the list beside the graph). As the teacher
+// presses through the steps, things plot in and the newest one is emphasised.
+
+export interface GraphBuildSpec {
+  series: GraphSeries[];
+  /** Points / features, each optionally tagged with a `step`. */
+  fois?: FOI[];
+  guides?: Guide[];
+  regions?: ShadeRegion[];
+  config?: GrapherConfig;
+  height?: number;
+}
+
+/** Stamp a working step with the graph state to show when it is the current step. */
+export const graphStep = (s: WorkingStep, spec: GraphBuildSpec, step: number): WorkingStep =>
+  ({ ...s, extra: { kind: "graphBuild", spec, step } });
+
+/** `stepVisualRenderer` for `graphStep` tools: the graph as it stands at that step; null for any other step. */
+export const graphStepVisual = (s: WorkingStep): JSX.Element | null => {
+  const ex = s.extra as { kind?: string; spec?: GraphBuildSpec; step?: number } | undefined;
+  if (ex?.kind !== "graphBuild" || !ex.spec) return null;
+  const { spec } = ex;
+  return (
+    <SmartGrapher
+      series={spec.series}
+      regions={spec.regions}
+      guides={spec.guides}
+      step={ex.step}
+      className="w-full"   // the visual panel centres its child in a flex row — without a width it collapses to nothing
+      height={spec.height ?? 340}
+      allowExpand={false}
+      config={{ autoFois: false, autoIntersections: false, showFois: true, style: { foi: "#dc2626" }, ...spec.config, fois: spec.fois }}
+    />
+  );
+};
