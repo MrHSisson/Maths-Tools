@@ -28,6 +28,19 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-03 — Duplicate green answer box retired across ToolShell tools
+
+- **Rolled `hideAnswerStep: true` out beyond Surds** to 15 more tools whose last working step already
+  states the exact final answer (audited over ~150 draws per sub-tool × level, default and all-options-on QO):
+  ExpandingBrackets, SolvingLinearEquations, AnglesInQuadrilaterals, AnglesInTriangles, Bearings,
+  CircleProperties, PerimeterTool, Estimation, FractionMultDiv, IntegerAddSub, Percentages, Rounding,
+  SimplifyingRatios, BinaryAddition, NumberBases. The final step now carries the green ring instead.
+- **Not yet migrated** (last step is not the answer, so the flag would hide it): CollectingLikeTerms,
+  CompletingTheSquare, Iterations, NonLinearSimEq, SimultaneousEquations, MixedStrategies,
+  AnglesInParallelLines, BasicAngleFacts, EquationsOfLines, ComparingOrderingNumbers, DecimalAddSub,
+  FractionsAddSub, PowersOfTen, BestBuys, FractionToRatio, FractionsOfAmounts, RatioSharing, Recipes,
+  SpeedDistanceTime. Each needs its working to end on the answer first.
+
 ## 2026-10-01 — Full-screen app: light system bars, immersive on Android
 
 Manifest `display` is now `fullscreen` (falls back to standalone) and `theme_color` /

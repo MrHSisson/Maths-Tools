@@ -284,6 +284,7 @@ export default function App() {
         numQuestions: 5,
         numColumns: 2,
         maxColumns: 4,
+        hideAnswerStep: true,
       }}
     />
   );

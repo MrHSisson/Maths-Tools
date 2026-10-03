@@ -727,7 +727,7 @@ export default function App() {
       generateQuestion={generateQuestion}
       reformatQuestion={reformatQuestion}
       stepRenderer={stepRenderer}
-      defaults={{ numQuestions: 15, numColumns: 3 }}
+      defaults={{ numQuestions: 15, numColumns: 3, hideAnswerStep: true }}
     />
   );
 }

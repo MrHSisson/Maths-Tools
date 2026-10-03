@@ -487,7 +487,7 @@ export default function App() {
       config={TOOL_CONFIG}
       infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
-      defaults={{ numQuestions: 8, numColumns: 2, maxColumns: 3 }}
+      defaults={{ numQuestions: 8, numColumns: 2, maxColumns: 3, hideAnswerStep: true }}
     />
   );
 }

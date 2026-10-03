@@ -588,7 +588,7 @@ export default function App() {
       stepRenderer={stepRenderer}
       reformatQuestion={reformatQuestion}
       customPrintHandler={printRounding}
-      defaults={{ numColumns: 2, maxColumns: 2, numQuestions: 12, qoColumns: 2, collapseWorkingByDefault: true }}
+      defaults={{ numColumns: 2, maxColumns: 2, numQuestions: 12, qoColumns: 2, collapseWorkingByDefault: true, hideAnswerStep: true }}
     />
   );
 }

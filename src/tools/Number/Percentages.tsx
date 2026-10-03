@@ -439,6 +439,7 @@ export default function App() {
       config={TOOL_CONFIG}
       infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
+      defaults={{ hideAnswerStep: true }}
     />
   );
 }
