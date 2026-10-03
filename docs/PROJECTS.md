@@ -102,7 +102,7 @@ for *that* tool instead of working to one global backlog. It replaces the old "M
 - **Known source items** (carried over so none are lost): decimal-operations family (multiply/divide decimals on the shared place value table, a Teach deck for add/subtract — deck is benched, go-live sign-off); `BasicAngleFacts` and `AnglesInParallelLines` still on hand-rolled print handlers; the `SimplifyingRatiosTool` go-live call (audit recommended it stays gated).
 
 **The 22 `enabled: false` tools** (the go-live queue is smaller than it looks):
-- **Question tools dev-gated (2, decided 2026-10-04):** Simplifying Ratios (needs work: no question options) and Perimeter (most outdated, thin options; label still says BETA). Surds went live the same day.
+- **Question tools dev-gated (2, decided 2026-10-04):** Simplifying Ratios (needs work: no question options) and Perimeter (most outdated, thin options). Surds went live the same day.
 - **Decision Maths (4):** Network Sandbox, Minimum Spanning Tree, Travelling Salesperson, Mixed Strategies — go live with their strand.
 - **Computer Science (1):** 1.1.2 CPU Performance.
 - **Internal / library pages, not meant to go live (14):** Skill Library (parked), Technique Library, the 11 Technique Preview pages, Grapher Lab.

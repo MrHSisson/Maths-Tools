@@ -31,6 +31,7 @@ Keep the split even when a session only touches one.
 ## 2026-10-04 — Go-live calls: Surds live, Perimeter dev-gated
 - Surds: `enabled: false` removed; now live on the landing page.
 - Perimeter: set `enabled: false` (dev-gated) — thin options and outdated; Simplifying Ratios stays gated pending work.
+- Dropped the "(BETA)" from Perimeter's display name.
 - Build clean, 402 tests pass.
 
 ## 2026-10-04 — Tool Review blocks seeded (planner)
