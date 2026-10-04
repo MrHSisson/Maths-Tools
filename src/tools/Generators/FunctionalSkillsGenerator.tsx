@@ -1098,12 +1098,11 @@ const ALL_SKILLS: SkillId[] = ['numberBonds', 'timesTables', 'reverseTT', 'addit
 // `short` is the tab label (the page shows one topic at a time).
 const SKILL_GROUPS: { label: string; short: string; skills: SkillId[] }[] = [
   { label: 'Number Facts',                 short: 'Number facts',   skills: ['numberBonds', 'timesTables', 'reverseTT'] },
-  { label: 'Written Methods',              short: 'Written methods', skills: ['addition', 'subtraction', 'multiplication', 'busStop', 'negatives'] },
+  { label: 'Calculation',                  short: 'Calculation',    skills: ['addition', 'subtraction', 'multiplication', 'busStop', 'negatives', 'bidmas'] },
   { label: 'Place Value & Rounding',       short: 'Place value',    skills: ['powersOfTen', 'rounding'] },
   { label: 'Number Properties',            short: 'Properties',     skills: ['primes', 'indices'] },
   { label: 'Fraction Arithmetic',          short: 'Fractions',      skills: ['fracAdd', 'fracSub', 'fracMul', 'fracDiv'] },
   { label: 'Fractions, Decimals & Measures', short: 'FDP & units', skills: ['fdp', 'metric'] },
-  { label: 'Order of Operations',          short: 'BIDMAS',         skills: ['bidmas'] },
 ];
 
 // ─── DEFAULT CONFIGS ──────────────────────────────────────────────────────────
