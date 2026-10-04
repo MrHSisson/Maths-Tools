@@ -1,13 +1,19 @@
 import {
   ToolShell,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type ToolDropdown,
-  type ToolMultiSelect,
-  mStep, randInt, pick, pickActive,
+  type ToolMultiSelect, type PlaceValueTableData, type PVCell, type PVRow,
+  randInt, pick, pickActive,
+  pvStep, pvBaseColumnSet, columnName, placeValueStepRenderer, placeValueStepVisual,
 } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TOOL-SPECIFIC SECTION
 // ═══════════════════════════════════════════════════════════════════════════════
+
+// Worked-example working uses the shared place value table (pvStep snapshots, base-aware columns 128 … 1): column
+// addition walks one column at a time with the carry written above the next column; shifts show the 8-bit register
+// with spare columns outside it, where the bits that are pushed off the end appear in red. Carry wording matches
+// Binary Counting (src/shared/carry.ts).
 
 // ── 1. Constants ──────────────────────────────────────────────────────────────
 
@@ -162,21 +168,60 @@ const addColumns = (x: number, y: number, width: number): ColumnAddition => {
   return { xBits, yBits, resultBits, carryIn, finalCarry: carry };
 };
 
-// Renders a full worked column-addition table: a carry row (blank where no
-// carry lands), the two addends, a rule, and the result — with the carry out
-// of the leftmost column shown as an extra digit spilling past the register.
-const columnTableLatex = (add: ColumnAddition): string => {
-  const carryRow = add.carryIn.map((c) => (c ? "1" : "\\phantom{0}")).join("");
-  const resultRow = (add.finalCarry ? "1" : "") + bitsToStr(add.resultBits);
-  return [
-    "\\begin{array}{r}",
-    `${carryRow} \\\\`,
-    `${bitsToStr(add.xBits)} \\\\`,
-    `+\\,${bitsToStr(add.yBits)} \\\\`,
-    "\\hline",
-    `${resultRow}`,
-    "\\end{array}",
-  ].join(" ");
+// ── Column addition on the place value table ─────────────────────────────────
+// One snapshot per column, right to left. Column index 0 = leftmost (128), 7 = rightmost (1). A carry produced by
+// column c lands above column c−1, so after column c is written the carries above columns ≥ c−1 are on show.
+
+const BIN8 = pvBaseColumnSet(2, BIT_WIDTH);
+
+const addTable = (add: ColumnAddition, firstDone: number, highlightCol?: number, banner?: string): PlaceValueTableData => {
+  const xRow: PVRow = {
+    kind: "cells",
+    cells: add.xBits.map((b, i): PVCell => ({ v: String(b), above: add.carryIn[i] === 1 && i >= firstDone - 1 ? "1" : undefined })),
+  };
+  const yRow: PVRow = { kind: "cells", label: "+", cells: add.yBits.map((b) => String(b)) };
+  const resRow: PVRow = {
+    kind: "cells", rule: true, label: "=",
+    cells: add.resultBits.map((b, i): PVCell => (i >= firstDone ? { v: String(b), tone: firstDone === 0 ? "answer" : undefined } : { v: "" })),
+  };
+  const rows: PVRow[] = [xRow, yRow, resRow];
+  if (banner) rows.push({ kind: "banner", text: banner });
+  return { ...BIN8, showPoint: false, groupEvery: 4, cellHeight: 56, colWidth: 64, highlightCol, rows };
+};
+
+const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+
+/** The steps for one column addition: write the numbers, then one step per column (the all-zero run on the left in one). */
+const additionSteps = (add: ColumnAddition, intro: string): WorkingStep[] => {
+  const steps: WorkingStep[] = [pvStep(intro, addTable(add, BIT_WIDTH))];
+  for (let c = BIT_WIDTH - 1; c >= 0; c--) {
+    const trivialFromHere = add.xBits.every((_, i) => i > c || add.xBits[i] + add.yBits[i] + add.carryIn[i] === 0);
+    if (trivialFromHere) {
+      steps.push(pvStep(`The remaining column${c === 0 ? " is" : "s are"} 0 + 0 = 0, with nothing to carry.`, addTable(add, 0)));
+      break;
+    }
+    const x = add.xBits[c];
+    const y = add.yBits[c];
+    const cin = add.carryIn[c];
+    const total = x + y + cin;
+    const sum = `${x} + ${y}${cin ? " + 1 (carry)" : ""} = ${total}`;
+    const how = total < 2
+      ? `, so write ${total}.`
+      : `, which is ${total.toString(2)} in binary: write the ${total % 2} and carry the 1${c === 0 ? " — but there is no column to the left" : " to the next column"}.`;
+    steps.push(pvStep(`${cap(columnName(2, BIT_WIDTH - 1 - c))} column: ${sum}${how}`, addTable(add, c, c)));
+  }
+  return steps;
+};
+
+/** The register check: the finished table, with a banner when the carry out of the leftmost column is lost. */
+const checkStep = (add: ColumnAddition, trueSum: number): WorkingStep => {
+  const overflow = trueSum > 255;
+  return pvStep(
+    overflow
+      ? `Check the 8-bit register can hold the true sum: ${trueSum} > 255. The carry out of the leftmost column has nowhere to go — it is lost, so the stored answer is wrong (overflow error).`
+      : `Check the 8-bit register can hold the true sum: ${trueSum} ≤ 255. It fits, so the answer is correct.`,
+    addTable(add, 0, undefined, overflow ? "Carry of 1 lost — overflow" : undefined),
+  );
 };
 
 // Renders the plain (un-worked) stack of addends for the question display —
@@ -257,9 +302,8 @@ const buildTwoNumberQuestion = (level: DifficultyLevel, wantOverflow: boolean): 
   const bStr = bitsToStr(toBits(b, BIT_WIDTH));
 
   const working: WorkingStep[] = [
-    mStep("Add each column from right to left, carrying whenever a column totals 2 or more:", columnTableLatex(add)),
-    mStep("Check the 8-bit register can hold the true sum:", `${trueSum} ${overflow ? ">" : "\\le"} 255`),
-    mStep("Answer:", storedStr, overflow ? "— OVERFLOW ERROR" : undefined),
+    ...additionSteps(add, "Write the numbers in the table, lined up by place value. Add each column from right to left, carrying whenever a column totals 2 or more."),
+    checkStep(add, trueSum),
   ];
 
   return {
@@ -303,10 +347,9 @@ const buildThreeNumberQuestion = (level: DifficultyLevel, wantOverflow: boolean)
   const cStr = bitsToStr(toBits(c, BIT_WIDTH));
 
   const working: WorkingStep[] = [
-    mStep("Step 1 — add the first two numbers:", columnTableLatex(step1)),
-    mStep("Step 2 — add the third number to that result:", columnTableLatex(step2)),
-    mStep("Check the 8-bit register can hold the true sum:", `${trueSum} ${overflow ? ">" : "\\le"} 255`),
-    mStep("Answer:", storedStr, overflow ? "— OVERFLOW ERROR" : undefined),
+    ...additionSteps(step1, "Step 1 — add the first two numbers. Write them in the table, lined up by place value."),
+    ...additionSteps(step2, "Step 2 — add the third number to that result."),
+    checkStep(step2, trueSum),
   ];
 
   return {
@@ -325,8 +368,6 @@ const buildThreeNumberQuestion = (level: DifficultyLevel, wantOverflow: boolean)
 
 // ── 7. Binary shifts ──────────────────────────────────────────────────────────
 
-const LOST = "#dc2626";
-
 // Base subscripts (shifts only — binary addition's 8-bit strings are never
 // set alongside a denary value in the same expression, so it keeps its plain
 // notation): binary always _2, denary always _10, so the same digits (e.g.
@@ -334,22 +375,45 @@ const LOST = "#dc2626";
 const binLatex = (b: string): string => `${b}_{2}`;
 const denLatex = (n: number | string): string => `${n}_{10}`;
 
-// Place-value grid for an 8-bit register (the J277 128…1 headings).
-const placeGridLatex = (bits: number[]): string => {
-  const pvs = bits.map((_, i) => 2 ** (bits.length - 1 - i));
-  return [
-    `\\begin{array}{|${"c|".repeat(bits.length)}}`,
-    "\\hline",
-    `${pvs.join(" & ")} \\\\`,
-    "\\hline",
-    `${bits.join(" & ")} \\\\`,
-    "\\hline",
-    "\\end{array}",
-  ].join(" ");
+// ── Shifts on the place value table ──────────────────────────────────────────
+// The register is the 8 columns 128 … 1; `places` spare columns sit outside it on the side the bits leave from.
+// Row 1 is the number as written, row 2 the shifted result: vacated cells are blue placeholder zeros, and the bits
+// pushed out of the register appear in red in the spare columns (and are marked red in row 1 once the shift is shown).
+
+const shiftTable = (
+  dir: "left" | "right", places: number, vBits: number[], rBits: number[],
+  opts: { shifted: boolean; litOriginal?: boolean; litResult?: boolean },
+): PlaceValueTableData => {
+  const left = dir === "left" ? places : 0;
+  const right = dir === "right" ? places : 0;
+  const blanks = (n: number) => Array(n).fill("");
+  const columns = [...blanks(left), ...BIN8.columns, ...blanks(right)];
+  const columnNames = [...blanks(left), ...BIN8.columnNames, ...blanks(right)];
+  const lostIdx = (i: number) => (dir === "left" ? i < places : i >= BIT_WIDTH - places);
+
+  const orig: (PVCell | string)[] = [
+    ...blanks(left),
+    ...vBits.map((b, i): PVCell => ({ v: String(b), tone: opts.shifted && lostIdx(i) ? "lost" : opts.litOriginal && b === 1 ? "highlight" : undefined })),
+    ...blanks(right),
+  ];
+  const rows: PVRow[] = [{ kind: "cells", cells: orig }];
+  if (opts.shifted) {
+    const lostBits = dir === "left" ? vBits.slice(0, places) : vBits.slice(BIT_WIDTH - places);
+    const lostCells = lostBits.map((b): PVCell => ({ v: String(b), tone: "lost" }));
+    const inside = rBits.map((b, i): PVCell => ({ v: String(b), tone: lostIdxVacated(dir, places, i) ? "zero" : opts.litResult && b === 1 ? "highlight" : undefined }));
+    rows.push({ kind: "cells", label: "→", cells: [...(dir === "left" ? lostCells : []), ...inside, ...(dir === "right" ? lostCells : [])] });
+  }
+  return { columns, columnNames, onesIndex: left + BIT_WIDTH - 1, showPoint: false, cellHeight: 56, colWidth: 64, rows };
 };
+
+/** Cells the shift vacated (filled with 0s): the right-hand end after a left shift, the left-hand end after a right shift. */
+const lostIdxVacated = (dir: "left" | "right", places: number, i: number): boolean =>
+  dir === "left" ? i >= BIT_WIDTH - places : i < places;
 
 // Draws an 8-bit value whose shift does (or doesn't) push a 1 out of the
 // register — guaranteed by rejection, never just made likely.
+const PLACE_VALUES = Array.from({ length: BIT_WIDTH }, (_, i) => 2 ** (BIT_WIDTH - 1 - i));
+
 const genShiftValue = (dir: "left" | "right", places: number, wantLost: boolean): number => {
   for (let attempt = 0; attempt < 1000; attempt++) {
     const v = randInt(1, 255);
@@ -382,12 +446,13 @@ const buildShiftQuestion = (
   const lost = lostStr.includes("1");
   const placeWord = places === 1 ? "place" : "places";
 
-  // The shifted bits with the ones pushed out of the register shown in red,
-  // outside it: left → they spill off the front; right → off the back.
-  const spilled = dir === "left"
-    ? `{\\color{${LOST}}${lostStr}}\\,${rStr}`
-    : `${rStr}\\,{\\color{${LOST}}${lostStr}}`;
   const zeros = "0".repeat(places);
+  const vBits = toBits(v, BIT_WIDTH);
+  const rBits = toBits(result, BIT_WIDTH);
+  const sumOf = (n: number): string => {
+    const parts = PLACE_VALUES.filter((pv) => (n & pv) !== 0);
+    return parts.length > 1 ? `${parts.join(" + ")} = ${n}` : `${n}`;
+  };
 
   // The question is phrased as the multiplication/division a shift performs
   // — ×2ⁿ / ÷2ⁿ — never as "n places". "binary" notation shows both operands
@@ -400,37 +465,36 @@ const buildShiftQuestion = (
     : `${binLatex(vStr)} ${opSym} ${binLatex(factorBinStr)}`;
 
   const working: WorkingStep[] = [
-    mStep("Write the number in the 8-bit register:", placeGridLatex(toBits(v, BIT_WIDTH))),
-    mStep(
+    pvStep("Write the number in the 8-bit register.", shiftTable(dir, places, vBits, rBits, { shifted: false })),
+    pvStep(
       dir === "left"
-        ? `Move every bit ${places} ${placeWord} left and fill the ${places === 1 ? "gap" : "gaps"} on the right with ${zeros.length === 1 ? "a 0" : "0s"} — bits pushed off the left end (red) are lost:`
-        : `Move every bit ${places} ${placeWord} right and fill the ${places === 1 ? "gap" : "gaps"} on the left with ${zeros.length === 1 ? "a 0" : "0s"} — bits pushed off the right end (red) are lost:`,
-      [binLatex(vStr), `\\rightarrow {${spilled}}_{2}`],
+        ? `Move every bit ${places} ${placeWord} left and fill the ${places === 1 ? "gap" : "gaps"} on the right with ${zeros.length === 1 ? "a 0" : "0s"} — bits pushed off the left end (red) are lost.`
+        : `Move every bit ${places} ${placeWord} right and fill the ${places === 1 ? "gap" : "gaps"} on the left with ${zeros.length === 1 ? "a 0" : "0s"} — bits pushed off the right end (red) are lost.`,
+      shiftTable(dir, places, vBits, rBits, { shifted: true }),
     ),
   ];
 
   let suffix: string | undefined;
   if (level === "level2") {
     const trueVal = dir === "left" ? v * factor : v / factor;
-    const opLatex = dir === "left" ? "\\times" : "\\div";
+    const both = (o: { litOriginal?: boolean; litResult?: boolean }) => shiftTable(dir, places, vBits, rBits, { shifted: true, ...o });
     working.push(
-      mStep("Convert the original number to denary:", `${binLatex(vStr)} = ${denLatex(v)}`),
-      mStep("Convert the result to denary:", `${binLatex(rStr)} = ${denLatex(result)}`),
+      pvStep(`Convert the original number to denary: ${sumOf(v)}.`, both({ litOriginal: true })),
+      pvStep(`Convert the result to denary: ${sumOf(result)}.`, both({ litResult: true })),
     );
     if (!lost) {
-      working.push(mStep(`A ${dir} shift of ${places} ${placeWord} ${dir === "left" ? "multiplies" : "divides"} by ${factor}:`, [`${denLatex(v)} ${opLatex} ${denLatex(factor)}`, `= ${denLatex(result)}`]));
+      working.push(pvStep(`A ${dir} shift of ${places} ${placeWord} ${dir === "left" ? "multiplies" : "divides"} by ${factor}: ${v} ${dir === "left" ? "×" : "÷"} ${factor} = ${result}.`, both({})));
       suffix = `(${v} → ${result}, ${dir === "left" ? "×" : "÷"} ${factor})`;
     } else if (dir === "left") {
-      working.push(mStep("The true answer needs more than 8 bits:", [`${denLatex(v)} \\times ${denLatex(factor)}`, `= ${denLatex(trueVal)} > ${denLatex(255)}`]));
+      working.push(pvStep(`The true answer needs more than 8 bits: ${v} × ${factor} = ${trueVal}, which is more than 255. The 1s shifted out of the left end are lost — overflow.`, both({})));
       suffix = `(${v} → ${result} — overflow: should be ×${factor} = ${trueVal})`;
     } else {
-      working.push(mStep("The true answer is not a whole number, so the fraction is lost:", [`${denLatex(v)} \\div ${denLatex(factor)}`, `= ${denLatex(trueVal)}`, `\\rightarrow ${denLatex(result)}`]));
+      working.push(pvStep(`The true answer is not a whole number, so the fraction is lost: ${v} ÷ ${factor} = ${trueVal}, which becomes ${result}. The 1s shifted out of the right end are lost — underflow.`, both({})));
       suffix = `(${v} → ${result} — underflow: ÷${factor} = ${trueVal}, rounded down)`;
     }
   } else if (lost) {
     suffix = dir === "left" ? "(overflow — a 1 was shifted out of the register)" : "(underflow — a 1 was shifted out of the register)";
   }
-  working.push(mStep("Answer:", binLatex(rStr)));
 
   const lines = [notation === "denary" ? `Show $${questionLatex}$ through a binary shift.` : `$${questionLatex}$`];
   if (level === "level2") lines.push("State the effect on its denary value.");
@@ -487,7 +551,9 @@ export default function App() {
       config={TOOL_CONFIG}
       infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
-      defaults={{ numQuestions: 8, numColumns: 2, maxColumns: 3, hideAnswerStep: true }}
+      stepRenderer={placeValueStepRenderer}
+      stepVisualRenderer={placeValueStepVisual}
+      defaults={{ numQuestions: 8, numColumns: 2, maxColumns: 3 }}
     />
   );
 }

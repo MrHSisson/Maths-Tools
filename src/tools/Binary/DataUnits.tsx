@@ -1,0 +1,311 @@
+import {
+  ToolShell,
+  type ToolConfig, type ToolVariable, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep,
+  type ToolMultiSelect,
+  mStep, randInt, pickActive,
+} from "../../shared";
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TOOL-SPECIFIC SECTION
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// OCR J277 1.2.4 — units of data storage. One ladder of units, always the same:
+//
+//   bit  ──×4──  nibble  ──×2──  byte  ──×1000──  KB  ──×1000──  MB  ──×1000──  GB  ──×1000──  TB  ──×1000──  PB
+//
+// OCR uses ×1000 between the named multiples; ×1024 is shown in brackets beside it so students who have met the
+// binary prefix aren't thrown. A conversion is a walk along the ladder, and the LEVEL is the length of the walk:
+// Level 1 = one step, Level 2 = two, Level 3 = three to five. Moving DOWN the ladder multiplies, UP divides.
+//
+// Two sub-tools share the ladder: "Bytes & Above" (byte → PB, every factor is 1000) and "Bits & Nibbles" (a walk
+// that has a bit or a nibble at one end, so the factors 4 and 2 come in). Values are exact — held as BigInt tenths
+// so a PB → byte answer never loses digits, and a one-decimal start (2.5 GB) stays exact.
+
+// ── 1. The ladder ─────────────────────────────────────────────────────────────
+
+const PLURAL = ["bits", "nibbles", "bytes", "KB", "MB", "GB", "TB", "PB"];
+const SINGULAR = ["bit", "nibble", "byte", "KB", "MB", "GB", "TB", "PB"];
+/** FACTORS[i] = how many of unit i make one of unit i+1. */
+const FACTORS = [4, 2, 1000, 1000, 1000, 1000, 1000];
+
+const unitName = (i: number, tenths: bigint): string => (tenths === 10n ? SINGULAR[i] : PLURAL[i]);
+
+type Tool = "bytesUp" | "bitsNibbles";
+type Dir = "toLarger" | "toSmaller";
+
+// ── 2. Question options ───────────────────────────────────────────────────────
+
+const DIRECTION: ToolMultiSelect = {
+  key: "direction", label: "Direction",
+  options: [
+    { value: "toSmaller", label: "Larger → smaller unit (×)", defaultActive: true },
+    { value: "toLarger", label: "Smaller → larger unit (÷)", defaultActive: true },
+  ],
+};
+const NUMBERS: ToolMultiSelect = {
+  key: "numbers", label: "Numbers",
+  options: [
+    { value: "whole", label: "Whole numbers", defaultActive: true },
+    { value: "decimal", label: "One decimal place", defaultActive: false },
+  ],
+};
+const WORDING: ToolMultiSelect = {
+  key: "wording", label: "Wording",
+  options: [
+    { value: "convert", label: "Convert … to …", defaultActive: true },
+    { value: "howMany", label: "How many … in …?", defaultActive: true },
+  ],
+};
+
+/** Scaffold display only — never changes the question. Fewer units on screen: bigger, and no distractors. */
+const RELEVANT_KEY = "scaleRelevantOnly";
+const RELEVANT_ONLY: ToolVariable = { key: RELEVANT_KEY, label: "Scale: only the relevant units", defaultValue: false };
+
+// ── 3. TOOL_CONFIG ────────────────────────────────────────────────────────────
+
+const TOOL_CONFIG: ToolConfig = {
+  pageTitle: "Data Units",
+  tools: {
+    bytesUp: {
+      name: "Bytes & Above",
+      instruction: "",
+      variables: [RELEVANT_ONLY], dropdown: null, multiSelect: [DIRECTION, NUMBERS, WORDING], difficultySettings: null,
+    },
+    bitsNibbles: {
+      name: "Bits & Nibbles",
+      instruction: "",
+      variables: [RELEVANT_ONLY], dropdown: null, multiSelect: DIRECTION, difficultySettings: null,
+    },
+  },
+};
+
+// ── 4. INFO_SECTIONS ──────────────────────────────────────────────────────────
+
+const INFO_SECTIONS: InfoSection[] = [
+  {
+    title: "Data Units", icon: "💾",
+    content: [
+      { label: "Overview", detail: "Convert between bits, nibbles, bytes, kilobytes, megabytes, gigabytes, terabytes and petabytes, using the OCR J277 1.2.4 scale: a nibble is 4 bits, a byte is 8 bits (2 nibbles), and each named multiple is ×1000 the one below (×1024 shown in brackets)." },
+      { label: "The scale", detail: "bit ×4 nibble ×2 byte ×1000 KB ×1000 MB ×1000 GB ×1000 TB ×1000 PB. Moving DOWN the scale (to a smaller unit) multiplies; moving UP (to a larger unit) divides." },
+      { label: "Level 1 — Green", detail: "One step along the scale, e.g. 40 000 KB → MB, or 3 TB → GB." },
+      { label: "Level 2 — Yellow", detail: "Two steps, e.g. 5 GB → KB, or 3 bytes → bits." },
+      { label: "Level 3 — Red", detail: "Three to five steps, e.g. 2 PB → GB… or 3 KB → bits." },
+    ],
+  },
+  {
+    title: "Sub-tools", icon: "🗂️",
+    content: [
+      { label: "Bytes & Above", detail: "Bytes up to petabytes. Every step is ×1000 (÷1000), so the working is about counting steps and zeros." },
+      { label: "Bits & Nibbles", detail: "Walks that start or finish at a bit or a nibble, so a ×4 or ×2 step joins the ×1000 steps: 1 byte = 8 bits, 1 byte = 2 nibbles, 1 nibble = 4 bits." },
+    ],
+  },
+  {
+    title: "Question Options", icon: "⚙️",
+    content: [
+      { label: "Direction", detail: "Larger → smaller unit multiplies; smaller → larger divides. Leave both on to mix them." },
+      { label: "Numbers (Bytes & Above)", detail: "Switch on one decimal place for answers like 4.5 GB." },
+      { label: "Wording (Bytes & Above)", detail: "'Convert 40 000 KB to MB' or 'How many MB are there in 40 000 KB?'. Bits & Nibbles uses a short scenario." },
+      { label: "Scale (Whiteboard)", detail: "The working box shows the scale, with the start unit marked and the target unit outlined. Show Answer lights up the path. Switch on 'Scale: only the relevant units' to show just the units from the start to the target — larger, with nothing to distract." },
+    ],
+  },
+  {
+    title: "Modes", icon: "🖥️",
+    content: [
+      { label: "Whiteboard", detail: "Single large question with the scale beside it." },
+      { label: "Worked Example", detail: "One line per step along the scale, each showing ×/÷ by the factor (1024 in brackets)." },
+      { label: "Worksheet", detail: "Grid of questions with PDF export." },
+    ],
+  },
+];
+
+// ── 5. Exact values (BigInt tenths) ───────────────────────────────────────────
+
+const group = (digits: string, sep: string) => digits.replace(/\B(?=(\d{3})+(?!\d))/g, sep);
+/** Tenths → "40,000" / "2.5". `sep` is "," for prose, "{,}" inside KaTeX. */
+const fmtT = (t: bigint, sep = ","): string => {
+  const whole = t / 10n;
+  const frac = t % 10n;
+  return group(whole.toString(), sep) + (frac !== 0n ? `.${frac}` : "");
+};
+
+interface Hop { from: number; to: number; factor: number; up: boolean; before: bigint; after: bigint }
+
+/** The walk from unit `a` to unit `b` starting at `startT` tenths — one hop per ladder step. */
+const buildHops = (a: number, b: number, startT: bigint): Hop[] => {
+  const hops: Hop[] = [];
+  let t = startT;
+  if (a < b) {
+    for (let i = a; i < b; i++) {
+      const f = BigInt(FACTORS[i]);
+      if (t % f !== 0n) throw new Error("data-units: inexact division");
+      hops.push({ from: i, to: i + 1, factor: FACTORS[i], up: true, before: t, after: t / f });
+      t /= f;
+    }
+  } else {
+    for (let i = a - 1; i >= b; i--) {
+      const f = BigInt(FACTORS[i]);
+      hops.push({ from: i + 1, to: i, factor: FACTORS[i], up: false, before: t, after: t * f });
+      t *= f;
+    }
+  }
+  return hops;
+};
+
+// ── 6. Working steps ──────────────────────────────────────────────────────────
+
+const hopStep = (h: Hop): WorkingStep => {
+  const f = h.factor;
+  const op = h.up ? "÷" : "×";
+  const bracket = f === 1000 ? ` (${op} 1024)` : "";
+  const label = `${PLURAL[h.from]} → ${PLURAL[h.to]}: ${h.up ? "divide" : "multiply"} by ${f === 1000 ? "1000" : f}${bracket}:`;
+  const tex = h.up ? "\\div" : "\\times";
+  return mStep(label, [fmtT(h.before, "{,}"), `${tex} ${f}`, `= ${fmtT(h.after, "{,}")}`]);
+};
+
+// ── 7. Question builder ───────────────────────────────────────────────────────
+
+const BITS_PAIRS: Record<DifficultyLevel, [number, number][]> = {
+  level1: [[0, 1], [1, 2]],                                  // bit–nibble, nibble–byte
+  level2: [[0, 2], [1, 3]],                                  // bit–byte, nibble–KB
+  level3: [[0, 3], [1, 4], [0, 4], [1, 5]],                  // bit–KB, nibble–MB, bit–MB, nibble–GB
+};
+
+const buildQuestion = (tool: Tool, level: DifficultyLevel, dir: Dir, decimal: boolean, wording: string): AnyQuestion => {
+  // The walk: lo = the smaller unit, hi = the larger.
+  let lo: number;
+  let hi: number;
+  if (tool === "bytesUp") {
+    const steps = level === "level1" ? 1 : level === "level2" ? 2 : randInt(3, 5);
+    lo = randInt(2, 7 - steps);
+    hi = lo + steps;
+  } else {
+    const pairs = BITS_PAIRS[level];
+    [lo, hi] = pairs[randInt(0, pairs.length - 1)];
+  }
+  const a = dir === "toLarger" ? lo : hi;   // start unit
+  const b = dir === "toLarger" ? hi : lo;   // target unit
+
+  // Pick the quantity in the LARGER unit, then derive the other — so every division is exact.
+  const span = FACTORS.slice(lo, hi).reduce((x, y) => x * BigInt(y), 1n);
+  const useDecimal = decimal && tool === "bytesUp";
+  const maxL = tool === "bitsNibbles" && level === "level3" ? 20 : 99;
+  let largerT: bigint;
+  if (useDecimal) {
+    let v = randInt(11, 99);
+    while (v % 10 === 0) v = randInt(11, 99);
+    largerT = BigInt(v);
+  } else {
+    largerT = BigInt(randInt(1, maxL) * 10);
+  }
+  const startT = dir === "toLarger" ? largerT * span : largerT;
+  const hops = buildHops(a, b, startT);
+  const ansT = hops[hops.length - 1].after;
+
+  const start = `$${fmtT(startT, "{,}")}$`;
+  const startUnit = unitName(a, startT);
+  const ansUnit = unitName(b, ansT);
+  const id = randInt(0, 999999);
+
+  const lines: string[] = tool === "bytesUp"
+    ? [wording === "howMany"
+        ? `How many ${PLURAL[b]} are there in ${start} ${startUnit}?`
+        : `Convert ${start} ${startUnit} to ${PLURAL[b]}.`]
+    : [`A file is ${start} ${startUnit} in size.`, `How many ${PLURAL[b]} is this?`];
+
+  const answerLatex = fmtT(ansT, "{,}");
+  const working: WorkingStep[] = [...hops.map(hopStep), mStep("Answer:", answerLatex, ansUnit)];
+
+  return {
+    kind: "worded",
+    lines,
+    answer: `${fmtT(ansT)} ${ansUnit}`,
+    answerLatex,
+    answerSuffix: ansUnit,
+    working,
+    key: `data-units-${tool}-${level}-${a}-${b}-${startT}-${id}`,
+    difficulty: level,
+    _rawValues: { a, b, startT, ansT },
+  } as unknown as AnyQuestion;
+};
+
+// ── 8. generateQuestion ───────────────────────────────────────────────────────
+
+const generateQuestion = (
+  tool: string,
+  level: DifficultyLevel,
+  _variables: Record<string, boolean>,
+  _dropdownValue: string,
+  multiSelectValues: Record<string, boolean> = {},
+): AnyQuestion => {
+  const t: Tool = tool === "bitsNibbles" ? "bitsNibbles" : "bytesUp";
+  const dir = pickActive(multiSelectValues, DIRECTION.options) as Dir;
+  const decimal = pickActive(multiSelectValues, NUMBERS.options) === "decimal";
+  const wording = pickActive(multiSelectValues, WORDING.options);
+  return buildQuestion(t, level, dir, decimal, wording);
+};
+
+// ── 9. The scale, drawn in the working box (Whiteboard) ───────────────────────
+// PB at the top, bit at the bottom. Start unit filled, target unit outlined; Show Answer lights up the path and
+// fills the target. Every ×1000 hop carries its ×1024 in brackets.
+
+const LADDER_TOP_DOWN = [7, 6, 5, 4, 3, 2, 1, 0];
+
+function UnitLadder({ a, b, showAnswer, relevantOnly }: { a: number; b: number; showAnswer: boolean; relevantOnly: boolean }) {
+  const lo = Math.min(a, b);
+  const hi = Math.max(a, b);
+  const units = LADDER_TOP_DOWN.filter((i) => !relevantOnly || (i >= lo && i <= hi));
+  const big = relevantOnly;   // fewer rows → bigger type
+  const pill = (i: number): string => {
+    if (i === a) return "bg-blue-900 text-white border-2 border-blue-900";
+    if (i === b) return showAnswer ? "bg-emerald-600 text-white border-2 border-emerald-600" : "bg-amber-50 text-amber-800 border-2 border-dashed border-amber-500";
+    if (showAnswer && i > lo && i < hi) return "bg-sky-100 text-slate-800 border-2 border-sky-300";
+    return "bg-white text-slate-500 border-2 border-slate-300";
+  };
+  return (
+    <div className="mx-auto flex flex-col items-center select-none" style={{ width: big ? 340 : 270 }}>
+      <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-0.5">The scale</div>
+      {units.map((i) => {
+        const f = i > 0 ? FACTORS[i - 1] : 0;
+        const hasLink = i > 0 && (!relevantOnly || i > lo);
+        const onPath = showAnswer && i > lo && i <= hi;
+        const downCls = onPath && a > b ? "text-blue-900 font-bold" : "text-slate-500";
+        const upCls = onPath && a < b ? "text-blue-900 font-bold" : "text-slate-500";
+        return (
+          <div key={i} className="w-full flex flex-col items-center">
+            <div className={`${big ? "w-40 py-1.5 text-xl" : "w-32 py-0.5 text-base"} text-center rounded-lg font-bold ${pill(i)}`}>{i === 0 ? "bit" : i === 1 ? "nibble" : i === 2 ? "byte" : PLURAL[i]}</div>
+            {hasLink && (
+              <div className={`w-full flex justify-between leading-tight ${big ? "text-base py-1.5" : "text-sm py-0.5"}`}>
+                <span className={downCls}>↓ × {f}{f === 1000 ? " (× 1024)" : ""}</span>
+                <span className={upCls}>↑ ÷ {f}{f === 1000 ? " (÷ 1024)" : ""}</span>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// END OF TOOL-SPECIFIC SECTION
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const __test = { TOOL_CONFIG, generateQuestion, FACTORS };
+
+export default function App() {
+  return (
+    <ToolShell
+      config={TOOL_CONFIG}
+      infoSections={INFO_SECTIONS}
+      generateQuestion={generateQuestion}
+      defaults={{ numQuestions: 12, numColumns: 3, maxColumns: 4, hideAnswerStep: true }}
+      workingScaffold={{
+        label: "the scale",
+        render: (q, showAnswer, _cs, qo) => {
+          const rv = (q as any)._rawValues as { a: number; b: number } | undefined;
+          return rv ? <UnitLadder a={rv.a} b={rv.b} showAnswer={showAnswer} relevantOnly={!!qo?.variables?.[RELEVANT_KEY]} /> : null;
+        },
+      }}
+    />
+  );
+}

@@ -68,8 +68,8 @@ Stand-alone teacher tools with no prong: **Visualiser**, the four PDF
 
 | Prong | Status | One-line |
 |---|---|---|
-| **Techniques engine** | 🚧 top priority | Engine + viewer built; 2 tools converted (`NonLinearSimEq`, `Surds`) — now to be **built out**, not just converted on demand |
-| **Worked solutions** | 🚧 | The solved-example format: step-by-step reveal, one developing picture beside the steps, single answer. Live in a growing set of tools; 19 still need a closing answer step |
+| **Techniques engine** | 🚧 top priority | Engine + viewer built; 3 tools converted (`NonLinearSimEq`, `Surds`, and `AnglesInTriangles`' solving — first non-algebra use, with a unit) — now to be **built out**, not just converted on demand |
+| **Worked solutions** | 🚧 | The solved-example format: step-by-step reveal, one developing picture beside the steps (now also every Geometry diagram tool, with per-step highlighting on Triangles), answer as its own green step. Live in a growing set of tools; 19 still need a closing answer step |
 | **Smart Progressor** | 🚧 | Mechanism done and piloted on `SpeedDistanceTime`; the work now is adopting it tool by tool (audit the other 26) |
 | **Core representations** | 🚧 | The visual vocabulary, its progressions and pairings; where to use each, what tools and sandboxes to make |
 | **Sandboxes & viewports** | 🚧 | Algebra Tiles, Negative Counters, SmartGrapher (+ Grapher Lab, Parallel Lines Explorer): standalone tools first, then embedded as viewports in question tools |
@@ -140,8 +140,12 @@ a diagram tool, a tool with a heavy QO surface, and what `?diff=1` should do on 
 steps and fell back to thin "jump to the answer" wrappers. The **techniques engine**
 (`src/shared/techniques/`) restores that pedagogy *once, reusably* — titled, fragmented,
 grain-aware (brief / standard / full) working blocks. The **engine and its viewer (`/techniques`)
-are built**, and ten techniques exist — but **only two tools (`NonLinearSimEq`, `Surds`) have been
-converted**, so most tools still show thin working. The value is real but latent until the sweep
+are built**, and ten techniques exist — but **only three tools have been converted** (`NonLinearSimEq`,
+`Surds`, and — 2026-10-04 — `AnglesInTriangles`, whose solving blocks call `solveLinearEquationSteps` at full
+grain with a degree unit), so most tools still show thin working. Open gaps from that conversion: the
+answer-step split (`splitAnswerStep`) only recognises the full-grain inline chain — the technique should mark
+its own result as the answer so brief/standard grain split too; no `collectLikeTerms` or angle-facts
+technique yet (the setup lines are still hand-written); `GRAIN` is a per-tool constant until the grain toggle exists. The value is real but latent until the sweep
 happens. **The viewer itself was reworked 2026-08-17**: every technique (including the composed
 Full Worked Example) now has its own real tool page (`/techniques/<slug>`, e.g.
 `/techniques/quadratic-formula`) built on a shared `TechniquePreviewPage`, rendering through the same
@@ -219,7 +223,7 @@ suite after the change (all 5 sub-tools × 3 levels × 500 draws = 7500 question
   technique-audit table below).
 
 **Detail — techniques built:** `quadraticFormulaSteps` (grain-aware), `solveLinearEquationSteps`
-(grain-aware), `solveFactorsSteps`, `substituteBackSteps`, `makeSubjectSteps`, `solveLinearlySteps`,
+(grain-aware, optional `unit` — e.g. degrees; first non-algebra use: `AnglesInTriangles`, full grain), `solveFactorsSteps`, `substituteBackSteps`, `makeSubjectSteps`, `solveLinearlySteps`,
 `simplifySurdSteps` (grain-aware), `collectLikeSurdsSteps` (grain-aware), `expandSurdBracketsSteps`
 (grain-aware), `rationaliseDenominatorSteps` (grain-aware, composes the previous two). Reference
 conversions: `NonLinearSimEq.tsx` (uses `standard` grain), `Surds.tsx` (uses `full`/`standard`
@@ -302,10 +306,17 @@ shared `WorkedExampleSteps` — a tool only supplies per-step data and renderers
 - **Developing picture** — `stepVisualRenderer`: one picture that updates in place beside (or above) the steps. Three layouts — captions beside the picture, full working beside the picture (`stepVisualKeepsWorking`), and picture on top (`stepVisualPlacement="top"`).
 - **Step-by-step graph builds** — SmartGrapher plots and highlights with the working (`graphStep` / `graphStepVisual`).
 - **Single answer** — where the last working step already states the answer, `hideAnswerStep` shows it in a green ring with no separate answer box; in the picture layouts the answer is a plain green **A** line.
+- **Flat rows, one look** (2026-10-04) — the keep-working layout lost its backing cards: numbered rows on the same spine as the caption timeline, each carrying its own label and maths (maths one size larger).
+- **Diagram tools** (`src/shared/diagramSplit.tsx`) — the question *is* the diagram, so the geometry tools show it in the picture slot beside the steps (`withDiagramSteps` · `diagramStepVisual` · `diagramSplitQuestion`); per-step emphasis (`_stepFocus` → `_focus`) and values the working finds (`_step`, e.g. an angle drawn from the step that finds it).
+- **Answer as its own step** — a final inline chain (`x = 180° − 146°` · `= 34°`) splits into the working plus an **"Answer:"** step in large green maths (`splitAnswerStep`).
+- **Gradient triangle** — Properties of Line Equations draws the right-angled triangle on the graph (labelled Δy / Δx legs — the shared grapher `Segment`), then divides.
+- **Instruction lines** — ToolShell no longer hides a sub-tool's instruction when the tool has a custom renderer (it was missing in 5 tools).
 
 **Live in.**
 - Developing picture: Adding & Subtracting Decimals · Multiplying & Dividing by 10ⁿ · Comparing & Ordering · Ratio Sharing · Speed, Distance & Time.
-- Graph builds: Properties of Line Equations · Simultaneous Equations (Substitution) · Mixed Strategies (L3).
+- Graph builds: Properties of Line Equations (gradient triangle) · Simultaneous Equations (Substitution) · Mixed Strategies (L3).
+- Diagram split (Geometry): Basic Angle Facts · Angles in Triangles (per-step highlighting, derived angles, technique solving, answer step) · Angles in Quadrilaterals · Angles in Parallel Lines · Properties of Circles · Bearings · Perimeter.
+- Place value table working (Computer Science): Number Bases · Binary Operations (addition columns with carries, shifts with lost bits).
 - Number line on top: Adding & Subtracting Integers · Rounding (number-line method).
 - Single answer (16): Surds · Expanding Brackets · Unknowns on Both Sides · Angles in Quadrilaterals · Angles in Triangles · Bearings · Properties of Circles · Perimeter · Estimation · Multiplying & Dividing Fractions · Adding & Subtracting Integers · Percentages · Rounding · Simplifying Ratios · Binary Operations · Number Bases.
 
@@ -315,6 +326,8 @@ shared `WorkedExampleSteps` — a tool only supplies per-step data and renderers
   - last step is only part of the answer: Simultaneous Equations (Elimination), Ratio Sharing, Recipes, Angles in Parallel Lines, Basic Angle Facts, Mixed Strategies, Best Buys;
   - last step is a different form of the answer: Completing the Square, Properties of Line Equations, Iteration, Adding & Subtracting Fractions, Speed Distance & Time;
   - answers are lettered options: Collecting Like Terms.
+- **More diagram highlighting:** per-step emphasis and derived values for Quadrilaterals, Basic Angle Facts, Parallel Lines, Bearings, Circles, Perimeter (Triangles is the reference); technique-based solving for the angle tools.
+- **Make the answer-step split automatic** for every tool whose last step is an inline chain, and grain-robust (see Techniques engine).
 - **More pictures:** Iteration and Completing the Square graph builds · Rounding digit-rule picture · Recipes (ratio table) · fractions and percentages (bar model) · Estimation and fractions on a number line.
 - **Sandbox integration** — embedding Algebra Tiles / Negative Counters / SmartGrapher as viewports in the solving steps (see Sandboxes & viewports).
 - **Techniques as the steps** — converting hand-rolled working onto the engine so every tool's solution is built from shared blocks (see Techniques engine).
@@ -518,6 +531,7 @@ cluster of skills and decks. **The seventh, ratio table** (added 2026-09-12, `sr
 + `src/shared/components/RatioTable.tsx`), is a *working-step* representation rather than a Teach-deck
 scene — it's already live in `SpeedDistanceTime`'s worked examples and doesn't have (or need) a
 `TeachScene` family, so it sits outside the six-vs-seven Teach-deck tally above.
+**2026-10-04 additions.** The **place value table** now also carries **binary and hex** (place-value headings 128…1 / 16, 1; nibble rule; `current` and `lost` tones; `pvBaseColumnSet`) and is the working picture for Number Bases and Binary Operations; the **carry ripple** model (`src/shared/carry.ts`) narrates carries and overflow in any base; the grapher gained a labelled **`Segment`** (gradient triangle); the Geometry diagrams now **evolve** (per-step emphasis, derived values in green) — see the open question below, which this partly informs.
 **Open question surfaced by the Tool Audit's Geometry pass:** none of the six obviously cover an
 angle/circle/polygon SVG diagram — every Geometry tool independently hit this same gap, and the
 diagram itself appears to function as its own representation, outside the six-vocabulary system
@@ -699,8 +713,12 @@ overflow/underflow). **Number Bases** (`/number-bases`, live) — Denary↔Binar
 Binary↔Hex, 2 levels each (nibble / byte), a Direction pool per tab.
 
 **Possible next steps:**
-- Gather classroom feedback on Number Bases and Binary Operations (both live).
-- Promote the KaTeX place-value grid (duplicated in both files) to a shared representation if a third tool needs it.
+- ✅ **Stage 1 done:** Binary Counting sandbox (`/binary-counting`, dev-gated) + base-aware shared place value table (`pvBaseColumnSet`, `groupEvery`). Brief: `specs/cs/binary-counting.md`.
+- Reuse `rippleIncrement` (`src/shared/carry.ts`) for the carry/overflow explanations in stages 2–3, so the same wording appears in Binary Counting, Number Bases and Binary Operations.
+- ✅ **Stage 2 done:** Number Bases worked examples now use the shared place value table (`pvStep`, headings 128…1 / 16, 1).
+- ✅ **Stage 3 done:** Binary Operations worked examples (addition columns with carries above, shifts with lost bits outside the register) are on the shared table; the duplicated KaTeX grid is retired. Worksheet/print layouts unchanged (text questions, no grid) — revisit only if grids are wanted on the printed sheet.
+- ✅ **Data Units** (`/data-units`, dev-gated) built — bits/nibbles/bytes → PB on the ×1000 scale; brief `specs/data-units.md`. Next: ladder as an evolving worked-example picture; file-size calculations on the same ladder.
+- Gather classroom feedback on Number Bases and Binary Operations (both live), and on Binary Counting before it goes live.
 - Other procedural 1.2.x skills that fit the same pattern: file-size / units calculations (1.2.2), bitmap and sound file sizes (1.2.4 Images/Sound).
 - ⬜ **1.3 Networks**, **1.4 Network security**, **1.5 Systems software**, **1.6 Ethical/legal/environmental** — Networks needs a stack/topology representation; the later strands are largely prose + scenario.
 

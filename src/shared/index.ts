@@ -48,7 +48,7 @@ export type { PrintContext } from "./printDiagram";
 
 export { LV_COLORS, LV_LABELS, LV_HEADER_COLORS, getQuestionBg, getStepBg } from "./colors";
 
-export { randInt, pick, fracStr, mStr, pickActive, normalizeMultiSelect, resolveMultiSelectValues, step, tStep, mStep, fmt, ansEq, makeUniqueQ, stripSkillMarkers, SKILL_MARKER_RE, weightOf, sortByDifficulty, buildQuotaOverrides } from "./helpers";
+export { randInt, pick, fracStr, mStr, pickActive, normalizeMultiSelect, resolveMultiSelectValues, step, tStep, mStep, fmt, ansEq, makeUniqueQ, stripSkillMarkers, SKILL_MARKER_RE, splitAnswerStep, weightOf, sortByDifficulty, buildQuotaOverrides } from "./helpers";
 
 // Ratio table — core representation for proportional scaling (speed/distance/
 // time, currency conversion, recipe scaling…). See src/shared/ratioTable.ts.
@@ -57,7 +57,9 @@ export { RatioTable, ratioTableStepRenderer, ratioTableStepVisual } from "./comp
 
 // Place value table — core representation for place value (powers of 10,
 // decimal add/subtract…). See src/shared/placeValue.ts.
-export { pvCells, pvStep, pvColumnSet, pvSlice, pvDisplay, PV_COLS_DECIMAL, PV_ONES_DECIMAL, PV_CELL_H, PV_WORD_HEADERS_KEY, PV_WORD_HEADERS_VAR, PV_TABLE_START_DD } from "./placeValue";
+export { pvCells, pvStep, pvColumnSet, pvBaseColumnSet, pvBaseCells, pvSlice, pvDisplay, PV_COLS_DECIMAL, PV_ONES_DECIMAL, PV_CELL_H, PV_WORD_HEADERS_KEY, PV_WORD_HEADERS_VAR, PV_TABLE_START_DD } from "./placeValue";
+export { withDiagramSteps, diagramStepVisual, diagramSplitQuestion } from "./diagramSplit";
+export { rippleIncrement, columnName, type RippleBeat, type RippleResult, type RippleBase } from "./carry";
 export { PlaceValueTable, PlaceValueSvg, pvSvgSize, pvSvgAspect, pvSvgRowHForAspect, placeValueStepRenderer, placeValueStepVisual } from "./components/PlaceValueTable";
 
 // Surds — pure computation (SurdTerm arithmetic, LaTeX formatting). Promoted
@@ -104,6 +106,7 @@ export { PrintSplitButton } from "./components/PrintSplitButton";
 // SmartGrapher — embeddable canvas graphing component + its maths engine.
 export { SmartGrapher, graphStep, graphStepVisual } from "./grapher/SmartGrapher";
 export type { SmartGrapherProps, GrapherConfig, GraphSeries, GraphBuildSpec } from "./grapher/SmartGrapher";
+export type { Segment } from "./grapher/drawGraph";
 export {
   computeFOIs, computeFrame, buildCurveSpec, findFunctionIntersections,
   getLinearFOIs, getQuadraticFOIs, getCubicFOIs, getCircleFOIs,

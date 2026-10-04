@@ -28,6 +28,38 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-04 — The answer as its own step (inline chains)
+- A final step written as an inline chain ending in a result ("x = 180° − 146°" · "= 34°") used to turn the whole step green with the answer tucked on the end. It now splits into two steps: the working, then the answer as a step of its own, labelled "Answer:" — numbered, green dot, large bold green maths ("x = 34°"). New shared helper `splitAnswerStep(steps)` (src/shared/helpers.ts) does the split from the chain's own left-hand side; `withDiagramSteps` applies it automatically, so every diagram tool gets it, and the picture reveals the answer on that answer step (not a step early). Answer steps (the last step when `hideAnswerStep` is set) are drawn larger and green in the split timeline.
+- Other split tools can adopt it with one call on their working; a general automatic version for non-diagram tools is the obvious follow-up.
+
+## 2026-10-04 — Angles in Triangles: real solving steps (via the techniques engine); bigger, centred maths
+- The working is now authored the way the techniques engine writes it: a labelled reason step with its equation centred and large ("Angles in a triangle add up to 180°" → x + x + 58° = 180°), then the solving as explicit moves from `solveLinearEquationSteps` at full grain ("Subtract 58° from both sides", "Divide both sides by 2"). Covers Level 1, isosceles (apex- and base-given), both split-triangle variants and the exterior-angle questions; ∠D₁/∠D₂ and the interior angle are solved the same way, so they are solved steps in the picture as well as the working. When the techniques prong lands (grain toggle, more techniques) these steps are already in the right shape — change `GRAIN` or swap a block.
+- `solveLinearEquationSteps` gained an optional `unit` (LaTeX suffix for the constants, e.g. `^\circ`), with plain-text step titles (°). Also fixed a pre-existing slip: its two fragments per move repeated the left-hand side and ran together ("2x = 180 − 582x = 122"); they now chain ("2x = 180° − 58° = 122°") — improves the dev-mode linear solve in `NonLinearSimEq` too.
+- Keep-working rows (all split tools): maths one size larger (text-3xl; 2xl on a phone).
+- Angle labels: when several labels crowd one vertex the best-separated spot is used; 0 overlaps across 50 Level 3 questions checked.
+
+## 2026-10-04 — Split worked example: one look; diagrams show what the working finds
+- The two split flavours now share one look: the keep-working steps (geometry tools, Equations of Lines, the simultaneous equations tools, Mixed Strategies) lost their grey backing cards and sit as flat numbered rows on the same spine as the caption timeline, each still carrying its own label and maths; the answer is the same green "A" line. Earlier steps still fade back.
+- Angles in Triangles diagrams now show values the working finds, once it finds them: the interior angle at the exterior vertex (step 2), ∠D in the split triangles (both the first ∠D and the straight-line partner), and the second equal base angle in isosceles questions — drawn in green so "found" reads differently from "given". Mechanism: `_step` (the step index) is on each step's picture copy alongside `_focus`; angles carry `appearsAt` / `showAtStep`. Labels on a shared vertex no longer overlap (collision-avoiding label placement).
+
+## 2026-10-04 — Instruction lines no longer lost when a tool has a custom renderer
+- ToolShell suppressed a sub-tool's instruction ("Find the gradient of the line connecting:", "Simplify:", "Solve simultaneously:", "Work out:", "Find the perimeter:") on the Whiteboard, fullscreen and Worked Example whenever the tool supplied its own `questionRenderer`, and none of those renderers drew it themselves — so it never appeared. The shell now always shows the configured instruction above the question (worksheets already did). Affects Properties of Line Equations, Collecting Like Terms, Simultaneous Equations (substitution), Decimal Add/Sub and Perimeter; tools with no instruction (the angle / circle / bearing diagrams) are unchanged.
+
+## 2026-10-04 — Line Equations: gradient worked as a triangle
+- Properties of Line Equations (Gradients and Line Equations tabs): the gradient working is now drawn as a triangle on the graph — mark the points; join them and complete a right-angled triangle (shaded); read the change in y (green vertical leg, labelled Δy = …); then the change in x (purple horizontal leg, Δx = …); then divide, m = Δy ÷ Δx. Signed values follow the order the points were given, so negative gradients and swapped point order read correctly. The Line Equations tab reuses it, then substitutes and solves for c.
+- Shared grapher: new `Segment` primitive (labelled line segment between two points, appears at a build step; legs of a gradient triangle, rise / run markers) — `segments` on `SmartGrapher` / `GraphBuildSpec`, drawn in `drawGraph`.
+
+## 2026-10-04 — Per-step highlighting: Angles in Triangles
+- In the split Worked Example, each step now lights the angles it is about: they glow amber (arc, wedge and label) while the others fade, with the unknown kept in blue — e.g. "sum to 180°" lights all three, "known + known + x" lights the two given angles, "x = 180° − …" lights x. Covers every question type (Level 1, isosceles, split triangle both variants, exterior angle both ways); the unlabelled angle at D shows no emphasis.
+- Mechanism: a question carries `_stepFocus` (one entry per step); `withDiagramSteps` puts each on the per-step copy as `_focus`, and the tool's own renderer reads it (`TriangleDiagram` takes a `focus` prop). Test `src/tests/geometryFocus.test.ts` checks every focus index is a real angle. Other geometry tools next (same pattern).
+
+## 2026-10-04 — Geometry tools on the two-view (split) worked example
+- Basic Angle Facts, Angles in Triangles, Angles in Quadrilaterals, Angles in Parallel Lines, Properties of Circles, Bearings and Perimeter now use the split Worked Example: the diagram sits in the picture slot beside the steps (above them on a phone), each step keeping its working, with the answer drawn on the final step. Once the answer is showing, the question box above shrinks to the one-line prompt ("Find x") so the diagram is never shown twice (Bearings and Circles, whose drawings carry their own prompt, show none). Whiteboard, worksheets and printing are unchanged. Equations of Lines already used the split.
+- Built once in shared: `src/shared/diagramSplit.tsx` (`withDiagramSteps`, `diagramStepVisual`, `diagramSplitQuestion`), switched on per tool with three one-liners — any diagram tool that stores its drawing on `_diagram` can opt in. Per-step highlighting (lighting the angles each step uses) is the natural next step — **started with Angles in Triangles** (next entry). Build clean, 426 tests pass.
+
+## 2026-10-04 — Functional Skills Generator: topic tabs
+- The skill picker now shows one topic at a time: a row of topic tabs at the top of the left half only (Number facts · Calculation (arithmetic, negatives and BIDMAS) · Place value · Properties · Fractions · FDP & units — one row on a desktop, two on a narrower laptop, scrolling sideways on a phone), level with the worksheet builder on the right with a count badge of the skills already picked in each, then only that topic's tiles. The page is far shorter (about 1,430px → about 980px with a few skills picked) and is slightly wider (max-w-6xl) so the tabs fit. Each skill's **options now live in the left container**: once a skill is added its tile gets an Options bar, and the open skill's options show in a panel under the tiles (tiles keep their places); a skill's options **open automatically when it is added**; the right-hand "Your worksheet" panel keeps just the − / + counts and remove buttons, with a small options icon that jumps to the skill on the left. Decluttered: smaller title and a shorter subtitle, Clear all moved beside the skill count (Settings alone in the panel header). Settings and PDF generation unchanged; tiles slightly larger and easier to read.
+
 ## 2026-10-04 — Go-live calls: Surds live, Perimeter dev-gated
 - Surds: `enabled: false` removed; now live on the landing page.
 - Perimeter: set `enabled: false` (dev-gated) — thin options and outdated; Simplifying Ratios stays gated pending work.
@@ -2118,6 +2150,31 @@ in custom renderers.
 ---
 
 # Computer Science
+
+## 2026-10-04 — Binary Operations on the shared place value table (stage 3 of 3)
+- Binary Addition worked examples: one place value table (128 … 1, nibble rule) walks the sum a column at a time — the current column highlighted, each carry written above the column it lands in, the result row filling in — with captions in the same wording as Binary Counting ("1 + 1 = 2, which is 10 in binary: write the 0 and carry the 1…"). A run of all-zero columns on the left is one step. The register check ends on a "Carry of 1 lost — overflow" banner when the sum exceeds 255. Three-number sums are two tables (add the first two, then the third).
+- Binary Shifts worked examples: the register plus spare columns on the side the bits leave from; row 1 the number (the bits about to be lost marked red), row 2 the result with the vacated cells as blue placeholder zeros and the lost bits in red outside the register. Level 2 adds the denary conversions (place-value sums) and the ×/÷ effect, with overflow / underflow explained.
+- Shared table: new `lost` tone (red) for bits that leave the register. The duplicated KaTeX place-value grid is gone from the Binary tools; the green A line carries each answer (own "Answer:" steps and `hideAnswerStep` removed). Questions, levels, options and worksheets unchanged. Build clean, 426 tests pass. This completes the Binary place-value extension (Counting sandbox → Number Bases → Binary Operations).
+
+## 2026-10-04 — Number Bases moved onto the shared place value table (stage 2 of 3)
+- Number Bases' worked examples now use the shared place value table (`pvStep` snapshots with the base-aware columns: 128 … 1 for binary, 16 and 1 for hex, a heavier rule per nibble) instead of hand-built KaTeX grids — one table updates in place beside short plain-text captions (`stepRenderer` / `stepVisualRenderer`, as in Decimal Add/Sub). All six directions covered; the green A line now carries the answer (its own "Answer:" step and `hideAnswerStep` removed).
+- Questions, levels, options and worksheets unchanged. Build clean, 426 tests pass. Stage 3 (Binary Operations: shifts and addition) still to do.
+
+## 2026-10-04 — Data Units tool; Binary Counting controls tidied
+- New ToolShell tool `/data-units` (`src/tools/Binary/DataUnits.tsx`, dev-gated): convert between bits, nibbles, bytes, KB, MB, GB, TB, PB on the OCR ×1000 scale, with ×1024 in brackets. Level = length of the walk along the scale (1 step / 2 steps / 3–5). Sub-tools: **Bytes & Above** (Direction, whole/decimal, wording pools) and **Bits & Nibbles** (×4 / ×2 hops, scenario wording). Whiteboard shows the scale as a ladder in the working box (start filled, target outlined, path lit on Show Answer). Exact BigInt maths. Brief: `specs/data-units.md`; test `src/tests/dataUnits.test.ts`.
+- Data Units scale: centred in the working box; new QO switch "Scale: only the relevant units" shows just the start-to-target units, larger.
+- Binary Counting: options menu moved out of the burger into the toolbar (an Options button); every toolbar button now shares one 44px size/style.
+
+## 2026-10-04 — Binary Counting sandbox + base-aware place value table (stage 1 of 3)
+- New standalone sandbox `/binary-counting` (`src/tools/Binary/BinaryCounting.tsx`, dev-gated): denary, binary and optional hex place value tables side by side, 1–8 bits, step / play counting, readout of the current number's place-value sum and how many bits flip.
+- "Add a bit" builds the n-bit table from the (n−1)-bit one: the first half appears with a 0 in front, then "Copy it again with a 1 in front" reveals the second half (rule between halves, new bit tinted). Past 4 bits the table pages 16 rows at a time — the last four bits repeat on every page — instead of listing 256.
+- Shared place value table now handles other bases: `pvBaseColumnSet(2|16, digits)` / `pvBaseCells` (headings are place values 128…1 / 16, 1; "Powers" gives 2⁷…2⁰), `groupEvery` (heavier rule per nibble), and a `current` row tone.
+- Default view is an **odometer** — one big row per base that counts up in place, the digits that just turned over tinted blue — with the full list of rows as a second view ("Full list").
+- **One press = one whole count** (no staged reveal). The odometers (denary · binary · optional hex) sit side by side; the whole carry chain shows at once — a carry mark above each column that received one, turned-over digits tinted — with one card listing each column ("2s: 1 + 1 = 2 (10 in binary) → write 0, carry 1"). At all ones the next press shows **overflow** (red) and wraps to 0.
+- Cleaner controls: a bits stepper, count controls (reset / back / auto-play / big →) and an Odometer | List switch in one toolbar; everything else (hex, power headings, highlight, explanations, slower play) lives in the header menu. An earlier beat-by-beat "step 1 of 4" version was dropped as confusing.
+- New shared model `src/shared/carry.ts` (`rippleIncrement(n, base, width)` — beats for any of base 2/10/16) so Number Bases / Binary Operations can narrate carries and overflow the same way.
+- Brief: `specs/cs/binary-counting.md`. Stages 2–3 (move Number Bases, then Binary Operations shifts/addition onto the shared table) still to do.
+- Build clean, 406 tests pass (new `placeValueBases.test.ts`).
 
 > The CS strand is deliberately tracked apart from Maths: it's a different
 > subject with its own pedagogy (knowledge/recall, not question generation), its

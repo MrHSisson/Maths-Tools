@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Home, Eye, Download, RefreshCw, RotateCcw, Plus, Check, X, ChevronUp, ChevronDown, Menu, Settings } from 'lucide-react';
+import { Home, Eye, Download, RefreshCw, RotateCcw, Plus, Check, X, ChevronUp, ChevronDown, Menu, Settings, SlidersHorizontal } from 'lucide-react';
 import { useDevMode } from '../../devMode';
 
 const TOOL_CONFIG = {
@@ -1095,14 +1095,14 @@ const ALL_SKILLS: SkillId[] = ['numberBonds', 'timesTables', 'reverseTT', 'addit
 
 // Skills grouped by number sub-topic (all skills are number skills — these are
 // teaching themes, not the app's top-level categories).
-const SKILL_GROUPS: { label: string; skills: SkillId[] }[] = [
-  { label: 'Number Facts',                 skills: ['numberBonds', 'timesTables', 'reverseTT'] },
-  { label: 'Written Methods',              skills: ['addition', 'subtraction', 'multiplication', 'busStop', 'negatives'] },
-  { label: 'Place Value & Rounding',       skills: ['powersOfTen', 'rounding'] },
-  { label: 'Number Properties',            skills: ['primes', 'indices'] },
-  { label: 'Fraction Arithmetic',          skills: ['fracAdd', 'fracSub', 'fracMul', 'fracDiv'] },
-  { label: 'Fractions, Decimals & Measures', skills: ['fdp', 'metric'] },
-  { label: 'Order of Operations',          skills: ['bidmas'] },
+// `short` is the tab label (the page shows one topic at a time).
+const SKILL_GROUPS: { label: string; short: string; skills: SkillId[] }[] = [
+  { label: 'Number Facts',                 short: 'Number facts',   skills: ['numberBonds', 'timesTables', 'reverseTT'] },
+  { label: 'Calculation',                  short: 'Calculation',    skills: ['addition', 'subtraction', 'multiplication', 'busStop', 'negatives', 'bidmas'] },
+  { label: 'Place Value & Rounding',       short: 'Place value',    skills: ['powersOfTen', 'rounding'] },
+  { label: 'Number Properties',            short: 'Properties',     skills: ['primes', 'indices'] },
+  { label: 'Fraction Arithmetic',          short: 'Fractions',      skills: ['fracAdd', 'fracSub', 'fracMul', 'fracDiv'] },
+  { label: 'Fractions, Decimals & Measures', short: 'FDP & units', skills: ['fdp', 'metric'] },
 ];
 
 // ─── DEFAULT CONFIGS ──────────────────────────────────────────────────────────
@@ -1215,6 +1215,7 @@ export default function MathsSkillsGenerator() {
   const effectiveSquaredPaper = devMode && squaredPaper;
   const [previewQuestions, setPreviewQuestions] = useState<Question[]>([]);
   const [error, setError] = useState<string>('');
+  const [activeGroup, setActiveGroup] = useState(0);
   const [expandedSkill, setExpandedSkill] = useState<SkillId | null>(null);
   const [infoOpen, setInfoOpen] = useState<boolean>(false);
   const [settingsOpen, setSettingsOpen] = useState<boolean>(false);
@@ -1284,6 +1285,7 @@ export default function MathsSkillsGenerator() {
       // When enabling, auto-assign remaining budget (min 1, max 5 or remaining)
       const budget = Math.max(1, Math.min(5, maxQuestions - prev.reduce((s, sk) => s + skillCounts[sk], 0)));
       setSkillCounts(c => ({ ...c, [skill]: budget }));
+      setExpandedSkill(skill);   // its options open straight away, on the left
       return [...prev, skill];
     });
     setError('');
@@ -1880,8 +1882,8 @@ export default function MathsSkillsGenerator() {
                 <h3 className="font-bold text-gray-900 mb-3">How it works</h3>
                 <ul className="space-y-2 text-sm text-gray-600">
                   {[
-                    'Browse skills by topic on the left and tap a tile to add it (tap again to remove); it appears in "Your worksheet" on the right.',
-                    'In your worksheet, use − / + to set how many questions each skill contributes, and Options to configure its difficulty and ranges inline.',
+                    'Pick a topic tab on the left (the number shows how many of its skills you have added) and tap a tile to add it (tap again to remove); it appears in "Your worksheet" on the right.',
+                    'Once a skill is added its options open on the left — set its difficulty and ranges there (the Options bar on the tile reopens them). In your worksheet, use − / + to set how many questions each skill contributes.',
                     'Maximum 30 questions total — the budget bar shows how many you have left. Use Clear to start over.',
                     'Use the Settings button to set the total, number of pages and question order (mixed or grouped).',
                     ...(devMode ? [
@@ -1905,41 +1907,85 @@ export default function MathsSkillsGenerator() {
 
       {/* Main */}
       <div className="min-h-screen p-8" style={{ backgroundColor: '#f5f3f0' }}>
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-6xl mx-auto">
 
-          <h1 className="text-5xl font-bold text-center mb-2" style={{ color: '#000000' }}>
+          <h1 className="text-4xl font-bold text-center mb-1" style={{ color: '#000000' }}>
             {TOOL_CONFIG.pageTitle}
           </h1>
-          <p className="text-center text-gray-500 mb-6">Build a worksheet with intent — tap a skill to set its options and how many questions it adds.</p>
+          <p className="text-center text-gray-500 mb-5">Pick a topic, tap the skills you want, and set their options.</p>
 
           {/* Browse (tiles) + build (controls) */}
           <div className="flex flex-col md:flex-row gap-6 items-start mb-6">
 
-            {/* LEFT — skill tiles grouped by topic */}
-            <div className="flex-1 w-full space-y-5">
-              {SKILL_GROUPS.map(group => (
-                <div key={group.label}>
-                  <h2 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">{group.label}</h2>
-                  <div className="grid grid-cols-2 gap-2.5">
-                    {group.skills.map(skill => {
-                      const enabled = enabledSkills.includes(skill);
-                      return (
+            {/* LEFT — topic tabs, then that topic's skill tiles (the worksheet builder stays on the right) */}
+            <div className="flex-1 w-full min-w-0">
+              <div className="flex flex-nowrap md:flex-wrap gap-1 overflow-x-auto md:overflow-visible pb-2 -mx-1 px-1 mb-3" role="tablist" aria-label="Skill topics">
+                {SKILL_GROUPS.map((group, gi) => {
+                  const picked = group.skills.filter(sk => enabledSkills.includes(sk)).length;
+                  const active = gi === activeGroup;
+                  return (
+                    <button
+                      key={group.label}
+                      role="tab"
+                      aria-selected={active}
+                      onClick={() => setActiveGroup(gi)}
+                      className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 h-10 px-2.5 rounded-xl border-2 text-[13px] font-bold transition-all ${active ? 'bg-blue-900 border-blue-900 text-white shadow-md' : 'bg-white border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-900'}`}
+                    >
+                      {group.short}
+                      {picked > 0 && (
+                        <span className={`min-w-[1.25rem] h-5 px-1 rounded-full text-xs font-bold flex items-center justify-center ${active ? 'bg-white text-blue-900' : 'bg-blue-900 text-white'}`}>{picked}</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5" role="tabpanel">
+                {SKILL_GROUPS[activeGroup].skills.map(skill => {
+                  const enabled = enabledSkills.includes(skill);
+                  const expanded = enabled && expandedSkill === skill;
+                  return (
+                    <div
+                      key={skill}
+                      className={`flex flex-col rounded-xl border-2 overflow-hidden transition-all ${enabled ? 'border-blue-900 shadow-md' : 'border-gray-200 bg-white shadow-sm hover:border-blue-300'}`}
+                    >
+                      <button
+                        onClick={() => toggleSkill(skill)}
+                        className={`relative flex-1 text-left p-4 pr-11 min-h-[5.5rem] flex flex-col justify-center transition-colors ${enabled ? 'bg-blue-900' : 'bg-white'}`}
+                      >
+                        <span className={`font-bold text-base leading-tight ${enabled ? 'text-white' : 'text-gray-800'}`}>{SKILL_META[skill].label}</span>
+                        <span className={`block text-xs mt-1 leading-snug ${enabled ? 'text-blue-200' : 'text-gray-500'}`}>{SKILL_META[skill].description}</span>
+                        <span className={`absolute top-3 right-3 w-6 h-6 flex items-center justify-center rounded-full ${enabled ? 'bg-white text-blue-900' : 'border-2 border-gray-200 text-gray-300'}`}>
+                          {enabled ? <Check size={15} /> : <Plus size={14} />}
+                        </span>
+                      </button>
+                      {enabled && (
                         <button
-                          key={skill}
-                          onClick={() => toggleSkill(skill)}
-                          className={`relative text-left rounded-xl border-2 p-3 pr-9 min-h-[4.75rem] flex flex-col justify-center transition-all ${enabled ? 'bg-blue-900 border-blue-900 shadow-md' : 'bg-white border-gray-200 hover:border-blue-300 shadow-sm'}`}
+                          onClick={() => setExpandedSkill(expanded ? null : skill)}
+                          aria-expanded={expanded}
+                          className={`flex items-center justify-between px-4 py-2 text-xs font-bold transition-colors ${expanded ? 'bg-blue-50 text-blue-900' : 'bg-white text-gray-600 hover:bg-blue-50 hover:text-blue-900'}`}
                         >
-                          <span className={`font-bold text-sm leading-tight ${enabled ? 'text-white' : 'text-gray-800'}`}>{SKILL_META[skill].label}</span>
-                          <span className={`block text-[11px] mt-0.5 leading-snug ${enabled ? 'text-blue-200' : 'text-gray-400'}`}>{SKILL_META[skill].description}</span>
-                          <span className={`absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full ${enabled ? 'bg-white text-blue-900' : 'border-2 border-gray-200 text-gray-300'}`}>
-                            {enabled ? <Check size={15} /> : <Plus size={14} />}
-                          </span>
+                          <span>Options</span>
+                          {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                         </button>
-                      );
-                    })}
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* The open skill's options — under the tiles, in the left container (tiles keep their places) */}
+              {expandedSkill && enabledSkills.includes(expandedSkill) && SKILL_GROUPS[activeGroup].skills.includes(expandedSkill) && (
+                <div className="mt-3 rounded-xl border-2 border-blue-900 bg-white overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-2.5 bg-blue-900 text-white">
+                    <span className="font-bold text-sm">{SKILL_META[expandedSkill].label} — options</span>
+                    <button onClick={() => setExpandedSkill(null)} title="Close options" className="p-1 rounded hover:bg-blue-800"><X size={16} /></button>
+                  </div>
+                  <div className="px-4 pb-4 bg-slate-50">
+                    {renderConfig(expandedSkill)}
                   </div>
                 </div>
-              ))}
+              )}
             </div>
 
             {/* RIGHT — worksheet controls (sticky) */}
@@ -1949,15 +1995,6 @@ export default function MathsSkillsGenerator() {
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="text-lg font-bold text-gray-900">Your worksheet</h2>
                   <div className="flex items-center gap-1">
-                    {enabledSkills.length > 0 && (
-                      <button
-                        onClick={clearAll}
-                        className="flex items-center gap-1 text-xs font-bold text-gray-400 hover:text-red-600 transition-colors mr-1"
-                        title="Remove all skills"
-                      >
-                        <RotateCcw size={13} /> Clear
-                      </button>
-                    )}
                     <div className="relative" ref={settingsRef}>
                       <button
                         onClick={() => setSettingsOpen(o => !o)}
@@ -2070,17 +2107,21 @@ export default function MathsSkillsGenerator() {
                     {total} / {maxQuestions}
                   </span>
                 </div>
-                <p className="text-xs text-gray-400 mb-4">
-                  {enabledSkills.length === 0 ? 'Tap a tile to add a skill.' : `${enabledSkills.length} skill${enabledSkills.length > 1 ? 's' : ''} selected`}
-                </p>
+                <div className="flex items-center justify-between mb-4 text-xs text-gray-400">
+                  <span>{enabledSkills.length === 0 ? 'Tap a tile to add a skill.' : `${enabledSkills.length} skill${enabledSkills.length > 1 ? 's' : ''} selected`}</span>
+                  {enabledSkills.length > 0 && (
+                    <button onClick={clearAll} title="Remove all skills" className="flex items-center gap-1 font-bold hover:text-red-600 transition-colors">
+                      <RotateCcw size={12} /> Clear all
+                    </button>
+                  )}
+                </div>
 
                 {/* Selected skills — the single place to set counts + options */}
                 {enabledSkills.length > 0 && (
                   <div className="space-y-2 mb-4">
                     {enabledSkills.map(skill => {
-                      const expanded = expandedSkill === skill;
                       return (
-                        <div key={skill} className={`rounded-xl border overflow-hidden transition-colors ${expanded ? 'border-blue-300' : 'border-gray-200'}`}>
+                        <div key={skill} className="rounded-xl border border-gray-200 overflow-hidden">
                           <div className="px-3 pt-2 pb-2">
                             <div className="flex items-center gap-2">
                               <span className="flex-1 min-w-0 truncate text-sm font-bold text-gray-900">{SKILL_META[skill].label}</span>
@@ -2105,18 +2146,15 @@ export default function MathsSkillsGenerator() {
                                 >+</button>
                               </div>
                               <button
-                                onClick={() => setExpandedSkill(expanded ? null : skill)}
-                                className={`flex items-center gap-1 text-xs font-bold px-2.5 py-1.5 rounded-lg border transition-all ${expanded ? 'bg-blue-900 border-blue-900 text-white' : 'border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-900'}`}
+                                onClick={() => { setActiveGroup(Math.max(0, SKILL_GROUPS.findIndex(g => g.skills.includes(skill)))); setExpandedSkill(skill); }}
+                                title="Edit this skill's options (shown on the left)"
+                                aria-label={`Options for ${SKILL_META[skill].label}`}
+                                className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-blue-50 hover:text-blue-900 transition-all"
                               >
-                                Options {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                                <SlidersHorizontal size={16} />
                               </button>
                             </div>
                           </div>
-                          {expanded && (
-                            <div className="px-3 pb-3 pt-1 border-t border-gray-100 bg-slate-50">
-                              {renderConfig(skill)}
-                            </div>
-                          )}
                         </div>
                       );
                     })}

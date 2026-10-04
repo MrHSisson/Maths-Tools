@@ -51,7 +51,7 @@ export type AnyQuestion = SimpleQuestion | WordedQuestion;
 // consecutive row pair (length = rows.length - 1). Built via rStep(), never
 // constructed directly — see src/shared/ratioTable.ts.
 // Place value table — see src/shared/placeValue.ts.
-export type PVTone = "zero" | "highlight" | "answer";
+export type PVTone = "zero" | "highlight" | "answer" | "current" | "lost";
 export interface PVCell {
   v: string;
   /** Show the digit crossed out (used when a digit has been exchanged away). */
@@ -87,6 +87,8 @@ export interface PlaceValueTableData {
   /** Draw the last column set apart from the rest (a gap before it, tinted header) — for a column that
    *  is not a place (an Order/rank column), so it doesn't read as part of the place value table. */
   detachLast?: boolean;
+  /** Draw a heavier rule before every n-th column counting from the right (binary: 4 → one rule per nibble). */
+  groupEvery?: number;
 }
 
 export interface RatioTableData {
