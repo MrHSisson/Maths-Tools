@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Home, Play, Pause, ChevronLeft, ChevronRight, RotateCcw, Minus, Plus, Menu, X, Check } from "lucide-react";
+import { Home, Play, Pause, ChevronLeft, ChevronRight, RotateCcw, Minus, Plus, SlidersHorizontal, Check } from "lucide-react";
 import {
   PlaceValueTable, pvColumnSet, pvBaseColumnSet, pvBaseCells, pvCells, rippleIncrement,
   type PlaceValueTableData, type PVRow, type PVCell,
@@ -110,14 +110,15 @@ export default function BinaryCounting() {
     : `The bottom ${size / 2} rows are the top ${size / 2} rows again, with a 1 in front (+${size / 2} in denary).`;
 
   // ── Small UI pieces ────────────────────────────────────────────────────────
-  const Seg = ({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) => (
-    <button onClick={onClick} className={`px-4 py-1.5 text-sm font-semibold transition-colors ${on ? "bg-blue-900 text-white" : "bg-white text-slate-600 hover:bg-slate-100"}`}>{children}</button>
-  );
+  // One button size and style throughout the toolbar: 44px tall, rounded, 2px border. Primary = filled navy.
+  const BTN = "h-11 rounded-xl border-2 font-semibold text-sm transition-colors disabled:opacity-35 flex items-center justify-center gap-2";
+  const PLAIN = "bg-white border-slate-300 text-slate-700 hover:border-blue-400";
+  const FILLED = "bg-blue-900 border-blue-900 text-white hover:bg-blue-800";
   const IconBtn = ({ onClick, disabled, title, children, primary }: { onClick: () => void; disabled?: boolean; title: string; children: React.ReactNode; primary?: boolean }) => (
-    <button onClick={onClick} disabled={disabled} title={title} aria-label={title}
-      className={`rounded-xl border-2 transition-colors disabled:opacity-35 ${primary ? "p-3.5 bg-blue-900 border-blue-900 text-white hover:bg-blue-800" : "p-2.5 bg-white border-slate-300 text-slate-700 hover:border-blue-400"}`}>
-      {children}
-    </button>
+    <button onClick={onClick} disabled={disabled} title={title} aria-label={title} className={`${BTN} w-11 ${primary ? FILLED : PLAIN}`}>{children}</button>
+  );
+  const Seg = ({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) => (
+    <button onClick={onClick} className={`h-full px-4 text-sm font-semibold transition-colors ${on ? "bg-blue-900 text-white" : "bg-white text-slate-600 hover:bg-slate-100"}`}>{children}</button>
   );
   const Title = ({ t, warn }: { t: string; warn?: boolean }) => (
     <div className={`text-center text-sm font-bold uppercase tracking-wider mb-1.5 ${warn ? "text-red-600" : "text-slate-500"}`}>{t}</div>
@@ -140,14 +141,36 @@ export default function BinaryCounting() {
             <Home size={24} color="#fff" /><span className="text-white font-semibold text-lg">Home</span>
           </button>
           <h1 className="text-white font-bold text-xl sm:text-2xl">Binary Counting</h1>
+          <div className="w-24" />
+        </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto px-4 py-5">
+        {/* One toolbar: bits · counting controls · view · options */}
+        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 mb-6">
+          <div className="flex items-center gap-2">
+            <IconBtn onClick={() => setBitsTo(bits - 1)} disabled={bits <= 1} title="Fewer bits"><Minus size={18} /></IconBtn>
+            <div className="w-20 text-center leading-none"><span className="text-2xl font-bold text-slate-800">{bits}</span><span className="text-slate-500 ml-1">{bits === 1 ? "bit" : "bits"}</span></div>
+            <IconBtn onClick={() => setBitsTo(bits + 1)} disabled={bits >= MAX_BITS} title="More bits"><Plus size={18} /></IconBtn>
+          </div>
+          <div className="flex items-center gap-2">
+            <IconBtn onClick={reset} title="Back to 0"><RotateCcw size={18} /></IconBtn>
+            <IconBtn onClick={stepDown} disabled={count <= 0} title="Count down"><ChevronLeft size={20} /></IconBtn>
+            <IconBtn onClick={() => (list && count >= size - 1 ? (reset(), setPlaying(true)) : setPlaying((p) => !p))} title={playing ? "Pause" : "Count up automatically"}>{playing ? <Pause size={18} /> : <Play size={18} />}</IconBtn>
+            <IconBtn onClick={stepUp} disabled={list && count >= size - 1} title="Add 1" primary><ChevronRight size={22} /></IconBtn>
+          </div>
+          <div className="inline-flex h-11 rounded-xl overflow-hidden border-2 border-slate-300">
+            <Seg on={!list} onClick={() => { setView("odometer"); setPlaying(false); setC((o) => ({ ...o, prev: null })); }}>Odometer</Seg>
+            <Seg on={list} onClick={() => { setView("list"); setPlaying(false); setC((o) => ({ ...o, prev: null })); }}>List</Seg>
+          </div>
           <div className="relative">
-            <button onClick={() => setMenuOpen((o) => !o)} aria-label="Settings" className="text-white hover:bg-blue-800 p-2 rounded-lg transition-colors" style={{ border: "none", background: "transparent", cursor: "pointer" }}>
-              {menuOpen ? <X size={28} /> : <Menu size={28} />}
+            <button onClick={() => setMenuOpen((o) => !o)} aria-expanded={menuOpen} className={`${BTN} px-4 ${menuOpen ? FILLED : PLAIN}`}>
+              <SlidersHorizontal size={18} />Options
             </button>
             {menuOpen && (
               <>
                 <div className="fixed inset-0 z-20" onClick={() => setMenuOpen(false)} />
-                <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-slate-200 z-30 py-2 overflow-hidden">
+                <div className="fixed left-4 right-4 sm:absolute sm:left-auto sm:right-0 sm:w-72 mt-2 bg-white rounded-xl shadow-xl border border-slate-200 z-30 py-2 overflow-hidden">
                   <div className="px-4 py-1 text-xs font-bold uppercase tracking-wider text-slate-400">Show</div>
                   <Toggle on={showHex} set={setShowHex} label="Hexadecimal" />
                   <Toggle on={powers} set={setPowers} label="Headings as powers (2⁷, 2⁶ …)" />
@@ -158,27 +181,6 @@ export default function BinaryCounting() {
                 </div>
               </>
             )}
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-6xl mx-auto px-4 py-5">
-        {/* One toolbar: bits · counting controls · view */}
-        <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 mb-6">
-          <div className="flex items-center gap-2">
-            <IconBtn onClick={() => setBitsTo(bits - 1)} disabled={bits <= 1} title="Fewer bits"><Minus size={18} /></IconBtn>
-            <div className="w-20 text-center"><span className="text-2xl font-bold text-slate-800">{bits}</span><span className="text-slate-500 ml-1">{bits === 1 ? "bit" : "bits"}</span></div>
-            <IconBtn onClick={() => setBitsTo(bits + 1)} disabled={bits >= MAX_BITS} title="More bits"><Plus size={18} /></IconBtn>
-          </div>
-          <div className="flex items-center gap-2">
-            <IconBtn onClick={reset} title="Back to 0"><RotateCcw size={18} /></IconBtn>
-            <IconBtn onClick={stepDown} disabled={count <= 0} title="Count down"><ChevronLeft size={20} /></IconBtn>
-            <IconBtn onClick={() => (list && count >= size - 1 ? (reset(), setPlaying(true)) : setPlaying((p) => !p))} title={playing ? "Pause" : "Count up automatically"}>{playing ? <Pause size={18} /> : <Play size={18} />}</IconBtn>
-            <IconBtn onClick={stepUp} disabled={list && count >= size - 1} title="Add 1" primary><ChevronRight size={22} /></IconBtn>
-          </div>
-          <div className="inline-flex rounded-xl overflow-hidden border-2 border-slate-300">
-            <Seg on={!list} onClick={() => { setView("odometer"); setPlaying(false); setC((o) => ({ ...o, prev: null })); }}>Odometer</Seg>
-            <Seg on={list} onClick={() => { setView("list"); setPlaying(false); setC((o) => ({ ...o, prev: null })); }}>List</Seg>
           </div>
         </div>
 

@@ -703,6 +703,7 @@ Binary↔Hex, 2 levels each (nibble / byte), a Direction pool per tab.
 - Reuse `rippleIncrement` (`src/shared/carry.ts`) for the carry/overflow explanations in stages 2–3, so the same wording appears in Binary Counting, Number Bases and Binary Operations.
 - **Stage 2:** move Number Bases working steps from the KaTeX `gridLatex` onto the shared table (`pvStep` snapshots, headings as 128…1 / 16, 1).
 - **Stage 3:** Binary Operations — shifts (bits move a column, overflow/underflow bits leave the edge) and addition (carries in `above` cells); includes 8-bit worksheet/print layouts. Retires the duplicated KaTeX grid.
+- ✅ **Data Units** (`/data-units`, dev-gated) built — bits/nibbles/bytes → PB on the ×1000 scale; brief `specs/data-units.md`. Next: ladder as an evolving worked-example picture; file-size calculations on the same ladder.
 - Gather classroom feedback on Number Bases and Binary Operations (both live), and on Binary Counting before it goes live.
 - Other procedural 1.2.x skills that fit the same pattern: file-size / units calculations (1.2.2), bitmap and sound file sizes (1.2.4 Images/Sound).
 - ⬜ **1.3 Networks**, **1.4 Network security**, **1.5 Systems software**, **1.6 Ethical/legal/environmental** — Networks needs a stack/topology representation; the later strands are largely prose + scenario.
