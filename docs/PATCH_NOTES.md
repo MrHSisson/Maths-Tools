@@ -2121,6 +2121,7 @@ in custom renderers.
 
 ## 2026-10-04 — Data Units tool; Binary Counting controls tidied
 - New ToolShell tool `/data-units` (`src/tools/Binary/DataUnits.tsx`, dev-gated): convert between bits, nibbles, bytes, KB, MB, GB, TB, PB on the OCR ×1000 scale, with ×1024 in brackets. Level = length of the walk along the scale (1 step / 2 steps / 3–5). Sub-tools: **Bytes & Above** (Direction, whole/decimal, wording pools) and **Bits & Nibbles** (×4 / ×2 hops, scenario wording). Whiteboard shows the scale as a ladder in the working box (start filled, target outlined, path lit on Show Answer). Exact BigInt maths. Brief: `specs/data-units.md`; test `src/tests/dataUnits.test.ts`.
+- Data Units scale: centred in the working box; new QO switch "Scale: only the relevant units" shows just the start-to-target units, larger.
 - Binary Counting: options menu moved out of the burger into the toolbar (an Options button); every toolbar button now shares one 44px size/style.
 
 ## 2026-10-04 — Binary Counting sandbox + base-aware place value table (stage 1 of 3)

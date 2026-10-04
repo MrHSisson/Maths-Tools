@@ -1,6 +1,6 @@
 import {
   ToolShell,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep,
+  type ToolConfig, type ToolVariable, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep,
   type ToolMultiSelect,
   mStep, randInt, pickActive,
 } from "../../shared";
@@ -57,6 +57,10 @@ const WORDING: ToolMultiSelect = {
   ],
 };
 
+/** Scaffold display only — never changes the question. Fewer units on screen: bigger, and no distractors. */
+const RELEVANT_KEY = "scaleRelevantOnly";
+const RELEVANT_ONLY: ToolVariable = { key: RELEVANT_KEY, label: "Scale: only the relevant units", defaultValue: false };
+
 // ── 3. TOOL_CONFIG ────────────────────────────────────────────────────────────
 
 const TOOL_CONFIG: ToolConfig = {
@@ -65,12 +69,12 @@ const TOOL_CONFIG: ToolConfig = {
     bytesUp: {
       name: "Bytes & Above",
       instruction: "",
-      variables: [], dropdown: null, multiSelect: [DIRECTION, NUMBERS, WORDING], difficultySettings: null,
+      variables: [RELEVANT_ONLY], dropdown: null, multiSelect: [DIRECTION, NUMBERS, WORDING], difficultySettings: null,
     },
     bitsNibbles: {
       name: "Bits & Nibbles",
       instruction: "",
-      variables: [], dropdown: null, multiSelect: DIRECTION, difficultySettings: null,
+      variables: [RELEVANT_ONLY], dropdown: null, multiSelect: DIRECTION, difficultySettings: null,
     },
   },
 };
@@ -101,7 +105,7 @@ const INFO_SECTIONS: InfoSection[] = [
       { label: "Direction", detail: "Larger → smaller unit multiplies; smaller → larger divides. Leave both on to mix them." },
       { label: "Numbers (Bytes & Above)", detail: "Switch on one decimal place for answers like 4.5 GB." },
       { label: "Wording (Bytes & Above)", detail: "'Convert 40 000 KB to MB' or 'How many MB are there in 40 000 KB?'. Bits & Nibbles uses a short scenario." },
-      { label: "Scale (Whiteboard)", detail: "The working box shows the scale, with the start unit marked and the target unit outlined. Show Answer lights up the path." },
+      { label: "Scale (Whiteboard)", detail: "The working box shows the scale, with the start unit marked and the target unit outlined. Show Answer lights up the path. Switch on 'Scale: only the relevant units' to show just the units from the start to the target — larger, with nothing to distract." },
     ],
   },
   {
@@ -246,9 +250,11 @@ const generateQuestion = (
 
 const LADDER_TOP_DOWN = [7, 6, 5, 4, 3, 2, 1, 0];
 
-function UnitLadder({ a, b, showAnswer }: { a: number; b: number; showAnswer: boolean }) {
+function UnitLadder({ a, b, showAnswer, relevantOnly }: { a: number; b: number; showAnswer: boolean; relevantOnly: boolean }) {
   const lo = Math.min(a, b);
   const hi = Math.max(a, b);
+  const units = LADDER_TOP_DOWN.filter((i) => !relevantOnly || (i >= lo && i <= hi));
+  const big = relevantOnly;   // fewer rows → bigger type
   const pill = (i: number): string => {
     if (i === a) return "bg-blue-900 text-white border-2 border-blue-900";
     if (i === b) return showAnswer ? "bg-emerald-600 text-white border-2 border-emerald-600" : "bg-amber-50 text-amber-800 border-2 border-dashed border-amber-500";
@@ -256,18 +262,19 @@ function UnitLadder({ a, b, showAnswer }: { a: number; b: number; showAnswer: bo
     return "bg-white text-slate-500 border-2 border-slate-300";
   };
   return (
-    <div className="flex flex-col items-center select-none" style={{ width: 270 }}>
+    <div className="mx-auto flex flex-col items-center select-none" style={{ width: big ? 340 : 270 }}>
       <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-0.5">The scale</div>
-      {LADDER_TOP_DOWN.map((i) => {
+      {units.map((i) => {
         const f = i > 0 ? FACTORS[i - 1] : 0;
+        const hasLink = i > 0 && (!relevantOnly || i > lo);
         const onPath = showAnswer && i > lo && i <= hi;
         const downCls = onPath && a > b ? "text-blue-900 font-bold" : "text-slate-500";
         const upCls = onPath && a < b ? "text-blue-900 font-bold" : "text-slate-500";
         return (
           <div key={i} className="w-full flex flex-col items-center">
-            <div className={`w-32 text-center rounded-lg py-0.5 text-base font-bold ${pill(i)}`}>{i === 0 ? "bit" : i === 1 ? "nibble" : i === 2 ? "byte" : PLURAL[i]}</div>
-            {i > 0 && (
-              <div className="w-full flex justify-between text-sm py-0.5 leading-tight">
+            <div className={`${big ? "w-40 py-1.5 text-xl" : "w-32 py-0.5 text-base"} text-center rounded-lg font-bold ${pill(i)}`}>{i === 0 ? "bit" : i === 1 ? "nibble" : i === 2 ? "byte" : PLURAL[i]}</div>
+            {hasLink && (
+              <div className={`w-full flex justify-between leading-tight ${big ? "text-base py-1.5" : "text-sm py-0.5"}`}>
                 <span className={downCls}>↓ × {f}{f === 1000 ? " (× 1024)" : ""}</span>
                 <span className={upCls}>↑ ÷ {f}{f === 1000 ? " (÷ 1024)" : ""}</span>
               </div>
@@ -294,9 +301,9 @@ export default function App() {
       defaults={{ numQuestions: 12, numColumns: 3, maxColumns: 4, hideAnswerStep: true }}
       workingScaffold={{
         label: "the scale",
-        render: (q, showAnswer) => {
+        render: (q, showAnswer, _cs, qo) => {
           const rv = (q as any)._rawValues as { a: number; b: number } | undefined;
-          return rv ? <UnitLadder a={rv.a} b={rv.b} showAnswer={showAnswer} /> : null;
+          return rv ? <UnitLadder a={rv.a} b={rv.b} showAnswer={showAnswer} relevantOnly={!!qo?.variables?.[RELEVANT_KEY]} /> : null;
         },
       }}
     />
