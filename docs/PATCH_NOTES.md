@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-04 — Instruction lines no longer lost when a tool has a custom renderer
+- ToolShell suppressed a sub-tool's instruction ("Find the gradient of the line connecting:", "Simplify:", "Solve simultaneously:", "Work out:", "Find the perimeter:") on the Whiteboard, fullscreen and Worked Example whenever the tool supplied its own `questionRenderer`, and none of those renderers drew it themselves — so it never appeared. The shell now always shows the configured instruction above the question (worksheets already did). Affects Properties of Line Equations, Collecting Like Terms, Simultaneous Equations (substitution), Decimal Add/Sub and Perimeter; tools with no instruction (the angle / circle / bearing diagrams) are unchanged.
+
 ## 2026-10-04 — Line Equations: gradient worked as a triangle
 - Properties of Line Equations (Gradients and Line Equations tabs): the gradient working is now drawn as a triangle on the graph — mark the points; join them and complete a right-angled triangle (shaded); read the change in y (green vertical leg, labelled Δy = …); then the change in x (purple horizontal leg, Δx = …); then divide, m = Δy ÷ Δx. Signed values follow the order the points were given, so negative gradients and swapped point order read correctly. The Line Equations tab reuses it, then substitutes and solves for c.
 - Shared grapher: new `Segment` primitive (labelled line segment between two points, appears at a build step; legs of a gradient triangle, rise / run markers) — `segments` on `SmartGrapher` / `GraphBuildSpec`, drawn in `drawGraph`.

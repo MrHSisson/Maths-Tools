@@ -1233,7 +1233,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         {qBoxControls}
         {fit(
           <div className="w-full text-center flex flex-col gap-4 items-center">
-            {getInstruction() && !questionRenderer && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold`} style={{ color: "#000" }}>{getInstruction()}</div>}
+            {getInstruction() && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold`} style={{ color: "#000" }}>{getInstruction()}</div>}
             {questionRenderer
               ? <>{questionRenderer(currentQuestion, showWhiteboardAnswer, colorScheme, undefined, undefined, getQOSnapshot(), displayFontSizes[displayFontSize])}{stagedBtn(showWhiteboardAnswer)}{scaffoldInQuestion(false)}</>
               : <>
@@ -1253,7 +1253,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         {qBoxControls}
         {fitFS(
           <>
-            {getInstruction() && !questionRenderer && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold`} style={{ color: "#000" }}>{getInstruction()}</div>}
+            {getInstruction() && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold`} style={{ color: "#000" }}>{getInstruction()}</div>}
             {questionRenderer
               ? <>{questionRenderer(currentQuestion, showWhiteboardAnswer, colorScheme, false, undefined, { ...getQOSnapshot(), fullscreen: true }, displayFontSizes[displayFontSize])}{stagedBtn(showWhiteboardAnswer)}{scaffoldInQuestion(true)}</>
               : <>
@@ -1396,7 +1396,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               <button style={{ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: canDisplayDecrease ? "pointer" : "not-allowed", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", opacity: canDisplayDecrease ? 1 : 0.35 }} onClick={() => canDisplayDecrease && setDisplayFontSize(f => f - 1)}><ChevronDown size={16} color="#6b7280" /></button>
               <button style={{ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: canDisplayIncrease ? "pointer" : "not-allowed", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", opacity: canDisplayIncrease ? 1 : 0.35 }} onClick={() => canDisplayIncrease && setDisplayFontSize(f => f + 1)}><ChevronUp size={16} color="#6b7280" /></button>
             </div>}
-            {getInstruction() && !questionRenderer && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold mb-2`} style={{ color: "#000" }}>{getInstruction()}</div>}
+            {getInstruction() && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold mb-2`} style={{ color: "#000" }}>{getInstruction()}</div>}
             {questionRenderer
               ? <>{questionRenderer(currentQuestion, showAnswer, colorScheme, false, undefined, getQOSnapshot(), displayFontSizes[displayFontSize])}{stagedBtn(showAnswer)}</>
               : <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
@@ -1661,7 +1661,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                       <button key={idx} onClick={() => toggleNarrowReveal(idx)}
                         className="text-left bg-white rounded-xl shadow-sm border border-gray-200 p-3.5" style={{ backgroundColor: qBg }}>
                         <div className="text-xs font-bold text-gray-400 mb-1">{idx + 1}</div>
-                        {getInstruction() && !questionRenderer && <div className="text-sm font-semibold mb-1" style={{ color: "#000" }}>{getInstruction()}</div>}
+                        {getInstruction() && <div className="text-sm font-semibold mb-1" style={{ color: "#000" }}>{getInstruction()}</div>}
                         {questionRenderer
                           ? questionRenderer(q, revealed, colorScheme, true, idx, getQOSnapshot(), fontSizes[worksheetFontSize])
                           : <QuestionDisplay q={q} cls="text-base" />
