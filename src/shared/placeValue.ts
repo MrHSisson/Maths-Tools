@@ -99,3 +99,24 @@ export const pvStep = (caption: string, table: PlaceValueTableData): WorkingStep
   ...tStep(caption),
   extra: { kind: "placeValueSnapshot", caption, table },
 });
+
+// ── Other bases (binary / hex) ───────────────────────────────────────────────
+// The same table, headed with place VALUES instead of H T O: 128 64 32 16 8 4 2 1 for binary, 16 1 for hex.
+// "Words" headings (headerStyle "words") show the power form: 2⁷ … 2⁰, 16¹ 16⁰. No decimal point.
+
+const SUP = "⁰¹²³⁴⁵⁶⁷⁸⁹";
+const sup = (n: number) => String(n).split("").map((d) => SUP[+d]).join("");
+
+/** Columns for a `digits`-wide whole number in `base` (2 or 16): place values as headings, powers as the word form. */
+export const pvBaseColumnSet = (base: 2 | 16, digits: number) => {
+  const pows = Array.from({ length: digits }, (_, i) => digits - 1 - i);
+  return {
+    columns: pows.map((p) => String(base ** p)),
+    columnNames: pows.map((p) => `${base}${sup(p)}`),
+    onesIndex: digits - 1,
+  };
+};
+
+/** Digits of `n` in `base`, zero-padded to `digits` columns (one string per column, hex in capitals). */
+export const pvBaseCells = (n: number, base: 2 | 10 | 16, digits: number): string[] =>
+  n.toString(base).toUpperCase().padStart(digits, "0").split("");

@@ -50,6 +50,7 @@ const MIGRATION_BACKLOG: string[] = [];
 // ToolShell's whiteboard/worked-example/worksheet model. These never migrate to
 // ToolShell and never need __test.
 const STANDALONE_BY_DESIGN = [
+  "Binary/BinaryCounting",
   "Decision/MinimumSpanningTree",
   "Decision/NetworkSandbox",
   "Decision/TravellingSalesperson",

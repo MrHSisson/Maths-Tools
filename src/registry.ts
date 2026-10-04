@@ -168,6 +168,7 @@ export const CATEGORIES: CategoryMeta[] = [
     tools: [
       { id: 'binary-addition', path: '/binary-addition', name: 'Binary Operations', description: 'Add 8-bit binary integers and perform binary shifts, identifying overflow and underflow, following the OCR J277 approach', load: () => import('./tools/Binary/BinaryAddition') },
       { id: 'number-bases', path: '/number-bases', name: 'Number Bases', description: 'Convert between denary, binary and hexadecimal up to 8 bits, with place-value working, following OCR J277 1.2.4', load: () => import('./tools/Binary/NumberBases') },
+      { id: 'binary-counting', path: '/binary-counting', name: 'Binary Counting', description: 'Count in binary beside denary (and hex) with full place value tables — see that every n-bit pattern is the (n−1)-bit pattern with a 0 or a 1 in front', enabled: false, load: () => import('./tools/Binary/BinaryCounting') },
     ],
   },
 ];

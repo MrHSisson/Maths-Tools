@@ -699,8 +699,10 @@ overflow/underflow). **Number Bases** (`/number-bases`, live) — Denary↔Binar
 Binary↔Hex, 2 levels each (nibble / byte), a Direction pool per tab.
 
 **Possible next steps:**
-- Gather classroom feedback on Number Bases and Binary Operations (both live).
-- Promote the KaTeX place-value grid (duplicated in both files) to a shared representation if a third tool needs it.
+- ✅ **Stage 1 done:** Binary Counting sandbox (`/binary-counting`, dev-gated) + base-aware shared place value table (`pvBaseColumnSet`, `groupEvery`). Brief: `specs/cs/binary-counting.md`.
+- **Stage 2:** move Number Bases working steps from the KaTeX `gridLatex` onto the shared table (`pvStep` snapshots, headings as 128…1 / 16, 1).
+- **Stage 3:** Binary Operations — shifts (bits move a column, overflow/underflow bits leave the edge) and addition (carries in `above` cells); includes 8-bit worksheet/print layouts. Retires the duplicated KaTeX grid.
+- Gather classroom feedback on Number Bases and Binary Operations (both live), and on Binary Counting before it goes live.
 - Other procedural 1.2.x skills that fit the same pattern: file-size / units calculations (1.2.2), bitmap and sound file sizes (1.2.4 Images/Sound).
 - ⬜ **1.3 Networks**, **1.4 Network security**, **1.5 Systems software**, **1.6 Ethical/legal/environmental** — Networks needs a stack/topology representation; the later strands are largely prose + scenario.
 

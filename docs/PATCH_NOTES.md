@@ -2119,6 +2119,13 @@ in custom renderers.
 
 # Computer Science
 
+## 2026-10-04 — Binary Counting sandbox + base-aware place value table (stage 1 of 3)
+- New standalone sandbox `/binary-counting` (`src/tools/Binary/BinaryCounting.tsx`, dev-gated): denary, binary and optional hex place value tables side by side, 1–8 bits, step / play counting, readout of the current number's place-value sum and how many bits flip.
+- "Add a bit" builds the n-bit table from the (n−1)-bit one: the first half appears with a 0 in front, then "Copy it again with a 1 in front" reveals the second half (rule between halves, new bit tinted). Past 4 bits the table pages 16 rows at a time — the last four bits repeat on every page — instead of listing 256.
+- Shared place value table now handles other bases: `pvBaseColumnSet(2|16, digits)` / `pvBaseCells` (headings are place values 128…1 / 16, 1; "Powers" gives 2⁷…2⁰), `groupEvery` (heavier rule per nibble), and a `current` row tone.
+- Brief: `specs/cs/binary-counting.md`. Stages 2–3 (move Number Bases, then Binary Operations shifts/addition onto the shared table) still to do.
+- Build clean, 406 tests pass (new `placeValueBases.test.ts`).
+
 > The CS strand is deliberately tracked apart from Maths: it's a different
 > subject with its own pedagogy (knowledge/recall, not question generation), its
 > own tools, and its own shell (`CSShell`, not `ToolShell`). It's younger than the
