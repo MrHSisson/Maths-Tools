@@ -1,3 +1,4 @@
+import type { WorkingStep } from "./types";
 // Question generation helpers. Import these in every new tool.
 
 export const randInt = (min: number, max: number) =>
@@ -195,4 +196,20 @@ export const makeUniqueQ = <Q extends { key: string }, L extends string = string
   while (usedKeys.has(q.key) && attempts < 100);
   usedKeys.add(q.key);
   return q;
+};
+
+/**
+ * Split the final result of an inline chain into its own step. A last step written in fragments that ends in a
+ * "= result" link — `x = 180° − 146°` · `= 34°` — becomes TWO steps: the working (`x = 180° − 146°`) and, as a step
+ * of its own, the answer (`x = 34°`), built from the chain's own left-hand side. In the worked example the answer
+ * step is the green, prominent one. Anything that doesn't fit that shape is returned unchanged.
+ */
+export const splitAnswerStep = (steps: WorkingStep[]): WorkingStep[] => {
+  const last = steps[steps.length - 1];
+  const f = last?.frags;
+  if (!f || f.length < 2 || last.unit || !/^\s*=/.test(f[f.length - 1]) || !/=/.test(f[0])) return steps;
+  const rest = f.slice(0, -1);
+  const working = last.label !== undefined ? mStep(last.label, rest) : step(rest);
+  const answer = step(`${f[0].split("=")[0].trim()} ${f[f.length - 1].trim()}`);
+  return [...steps.slice(0, -1), working, answer];
 };

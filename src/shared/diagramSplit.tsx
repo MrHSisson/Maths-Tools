@@ -20,6 +20,7 @@
 // so a diagram can also reveal things the working has just found (a derived angle, a computed length).
 
 import type { AnyQuestion, QOSnapshot, WorkingStep } from "./types";
+import { splitAnswerStep } from "./helpers";
 
 type QuestionRenderer = (
   q: AnyQuestion, showAnswer: boolean, colorScheme: string, compact?: boolean, idx?: number, qo?: QOSnapshot, fontClass?: string,
@@ -32,9 +33,12 @@ export const withDiagramSteps = <A extends unknown[]>(generate: (...args: A) => 
   (...args: A): AnyQuestion => {
     const q = generate(...args);
     if (!(q as unknown as { _diagram?: unknown })._diagram) return q;
-    const stepFocus = (q as unknown as { _stepFocus?: unknown[] })._stepFocus;
-    const last = q.working.length - 1;
-    const working: WorkingStep[] = q.working.map((w, i) => {
+    // A last step that is an inline chain ending "= result" becomes working + a separate green answer step.
+    const split = splitAnswerStep(q.working);
+    let stepFocus = (q as unknown as { _stepFocus?: unknown[] })._stepFocus;
+    if (stepFocus && split.length > q.working.length) stepFocus = [...stepFocus, stepFocus[stepFocus.length - 1]];   // the answer step is about the same thing
+    const last = split.length - 1;
+    const working: WorkingStep[] = split.map((w, i) => {
       // A copy per step, no circular reference back to the steps; `_focus` is what this step is about.
       const view = { ...q, working: [], _focus: stepFocus?.[i], _step: i } as unknown as AnyQuestion;
       return { ...w, extra: { kind: "diagramStep", view, reveal: i === last } satisfies DiagramStepExtra };
