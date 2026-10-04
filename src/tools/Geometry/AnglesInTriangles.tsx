@@ -128,7 +128,7 @@ interface TriQuestion {
   straightLineExt?: { from: Pt; to: Pt };
   angles: AngleLabel[];
   answer: string;
-  working: { text: string }[];
+  working: { text: string; focus?: number[] }[];
   id: number;
   questionType?: "splitTriangle" | "exteriorAngle";
 }
@@ -216,16 +216,17 @@ function buildLevel1(vars: Record<string, unknown>): TriQuestion {
     return { label: i === unknownIdx ? "x" : `${vals[i]}°`, isUnknown: i === unknownIdx, value: vals[i], pos: labelPos(va, vb, vc, 40), arcVertex: vb, arcFrom: va, arcTo: vc, showRightAngleSquare: vals[i] === 90 };
   });
   const given = vals.filter((_, i) => i !== unknownIdx);
+  const givenIdx = [0, 1, 2].filter(i => i !== unknownIdx);
   const knownSum = given.reduce((s, v) => s + v, 0);
   return {
     level: "level1", edges: [[v0, v1], [v1, v2], [v2, v0]], angles,
     answer: `x = ${vals[unknownIdx]}°`,
     working: [
-      { text: "Angles in a triangle sum to 180°" },
-      { text: `${given.join("° + ")}° + x = 180°` },
-      { text: `${knownSum}° + x = 180°` },
-      { text: `x = 180° − ${knownSum}°` },
-      { text: `x = ${vals[unknownIdx]}°` },
+      { text: "Angles in a triangle sum to 180°", focus: [0, 1, 2] },
+      { text: `${given.join("° + ")}° + x = 180°`, focus: [0, 1, 2] },
+      { text: `${knownSum}° + x = 180°`, focus: givenIdx },
+      { text: `x = 180° − ${knownSum}°`, focus: [unknownIdx] },
+      { text: `x = ${vals[unknownIdx]}°`, focus: [unknownIdx] },
     ],
     id: Math.floor(Math.random() * 1_000_000),
   };
@@ -248,16 +249,16 @@ function buildLevel2(vars: Record<string, unknown>): TriQuestion {
     { label: giveApex ? `${apex}°` : "x", isUnknown: !giveApex, value: apex, pos: labelPos(v0, v2, v1, 40), arcVertex: v2, arcFrom: v0, arcTo: v1 },
   ];
   const working = giveApex ? [
-    { text: "Isosceles triangle — two base angles are equal" },
-    { text: `x + x + ${apex}° = 180°` },
-    { text: `2x = 180° − ${apex}°` },
-    { text: `2x = ${180 - apex}°` },
-    { text: `x = ${base}°` },
+    { text: "Isosceles triangle — two base angles are equal", focus: [0, 1] },
+    { text: `x + x + ${apex}° = 180°`, focus: [0, 1, 2] },
+    { text: `2x = 180° − ${apex}°`, focus: [2] },
+    { text: `2x = ${180 - apex}°`, focus: [0, 1] },
+    { text: `x = ${base}°`, focus: [0, 1] },
   ] : [
-    { text: "Isosceles triangle — base angles are equal" },
-    { text: `The other base angle is also ${base}°` },
-    { text: `Apex angle x = 180° − ${base}° − ${base}°` },
-    { text: `x = ${apex}°` },
+    { text: "Isosceles triangle — base angles are equal", focus: [0, 1] },
+    { text: `The other base angle is also ${base}°`, focus: [0, 1] },
+    { text: `Apex angle x = 180° − ${base}° − ${base}°`, focus: [0, 1, 2] },
+    { text: `x = ${apex}°`, focus: [2] },
   ];
   return { level: "level2", edges: [[v0, v1], [v1, v2], [v2, v0]], isoTickEdges: [[v0, v2], [v1, v2]], angles, answer: giveApex ? `x = ${base}°` : `x = ${apex}°`, working, id: Math.floor(Math.random() * 1_000_000) };
 }
@@ -307,13 +308,17 @@ function buildSplitTriangle(vars: Record<string, unknown>): TriQuestion {
       if (!isShown) return null as any;
       return { label: isX ? "x" : `${sa.val}°`, isUnknown: isX, value: sa.val, pos: labelPos(sa.from, sa.vertex, sa.to, 40), arcVertex: sa.vertex, arcFrom: sa.from, arcTo: sa.to };
     }).filter(Boolean);
+    const shownSorted = subAngles.map((_, i) => i).filter(i => shownIndices.has(i) || i === xIdx);
+    const ai = (sub: number) => shownSorted.indexOf(sub);   // index of a sub-angle within `angles`
+    const helperFocus = [ai(hK1Idx), ai(hK2Idx)];
+    const xFocus = [ai(thirdXTriIdx), ai(xIdx)];
     const dFoundVal = 180 - hK1 - hK2, dBridgeVal = 180 - dFoundVal;
     return {
       level: "level3", questionType: "splitTriangle", edges: [[B, A], [A, C], [B, D], [D, C], [A, D]], angles, answer: `x = ${xVal}°`,
       working: [
-        { text: "Angles in a triangle sum to 180°" }, { text: `${hK1}° + ${hK2}° + ∠D = 180°` },
-        { text: `∠D = 180° − ${hK1 + hK2}° = ${dFoundVal}°` }, { text: `Angles on a straight line: other ∠D = 180° − ${dFoundVal}° = ${dBridgeVal}°` },
-        { text: `${thirdXTriVal}° + ${dBridgeVal}° + x = 180°` }, { text: `x = 180° − ${thirdXTriVal + dBridgeVal}°` }, { text: `x = ${xVal}°` },
+        { text: "Angles in a triangle sum to 180°", focus: helperFocus }, { text: `${hK1}° + ${hK2}° + ∠D = 180°`, focus: helperFocus },
+        { text: `∠D = 180° − ${hK1 + hK2}° = ${dFoundVal}°`, focus: helperFocus }, { text: `Angles on a straight line: other ∠D = 180° − ${dFoundVal}° = ${dBridgeVal}°` },
+        { text: `${thirdXTriVal}° + ${dBridgeVal}° + x = 180°`, focus: xFocus }, { text: `x = 180° − ${thirdXTriVal + dBridgeVal}°`, focus: xFocus }, { text: `x = ${xVal}°`, focus: [ai(xIdx)] },
       ],
       id: Math.floor(Math.random() * 1_000_000),
     };
@@ -332,9 +337,9 @@ function buildSplitTriangle(vars: Record<string, unknown>): TriQuestion {
   return {
     level: "level3", questionType: "splitTriangle", edges: [[B, A], [A, C], [B, D], [D, C], [A, D]], straightLineExt: { from: extB, to: extC }, angles, answer: `x = ${xVal}°`,
     working: [
-      { text: "Angles in a triangle sum to 180°" }, { text: `${k1}° + ${k2}° + ∠D = 180°` },
-      { text: `∠D (interior) = 180° − ${k1 + k2}° = ${dInterior}°` }, { text: "Angles on a straight line sum to 180°" },
-      { text: `x = 180° − ${dInterior}°` }, { text: `x = ${xVal}°` },
+      { text: "Angles in a triangle sum to 180°", focus: [0, 1] }, { text: `${k1}° + ${k2}° + ∠D = 180°`, focus: [0, 1] },
+      { text: `∠D (interior) = 180° − ${k1 + k2}° = ${dInterior}°`, focus: [0, 1] }, { text: "Angles on a straight line sum to 180°", focus: [2] },
+      { text: `x = 180° − ${dInterior}°`, focus: [2] }, { text: `x = ${xVal}°`, focus: [2] },
     ],
     id: Math.floor(Math.random() * 1_000_000),
   };
@@ -364,7 +369,7 @@ function buildExteriorAngle(vars: Record<string, unknown>): TriQuestion {
           { label: "x", isUnknown: true, value: extAngle, pos: labelPos(v2, v1, extPt, 40), arcVertex: v1, arcFrom: v2, arcTo: extPt },
         ],
         answer: `x = ${extAngle}°`,
-        working: [{ text: "Exterior angle = sum of the two non-adjacent interior angles" }, { text: `x = ${a0}° + ${a2}°` }, { text: `x = ${extAngle}°` }],
+        working: [{ text: "Exterior angle = sum of the two non-adjacent interior angles", focus: [0, 1, 2] }, { text: `x = ${a0}° + ${a2}°`, focus: [0, 1] }, { text: `x = ${extAngle}°`, focus: [2] }],
         id: Math.floor(Math.random() * 1_000_000),
       };
     }
@@ -379,8 +384,8 @@ function buildExteriorAngle(vars: Record<string, unknown>): TriQuestion {
       ],
       answer: `x = ${a2}°`,
       working: [
-        { text: "Angles on a straight line sum to 180°" }, { text: `Interior angle = 180° − ${extAngle}° = ${intB}°` },
-        { text: "Angles in a triangle sum to 180°" }, { text: `${a0}° + ${intB}° + x = 180°` }, { text: `${a0 + intB}° + x = 180°` }, { text: `x = ${a2}°` },
+        { text: "Angles on a straight line sum to 180°", focus: [1] }, { text: `Interior angle = 180° − ${extAngle}° = ${intB}°`, focus: [1] },
+        { text: "Angles in a triangle sum to 180°", focus: [0, 2] }, { text: `${a0}° + ${intB}° + x = 180°`, focus: [0, 2] }, { text: `${a0 + intB}° + x = 180°`, focus: [2] }, { text: `x = ${a2}°`, focus: [2] },
       ],
       id: Math.floor(Math.random() * 1_000_000),
     };
@@ -397,7 +402,7 @@ function buildExteriorAngle(vars: Record<string, unknown>): TriQuestion {
         { label: "x", isUnknown: true, value: extAngle, pos: labelPos(extPt, v0, v2, 40), arcVertex: v0, arcFrom: extPt, arcTo: v2 },
       ],
       answer: `x = ${extAngle}°`,
-      working: [{ text: "Exterior angle = sum of the two non-adjacent interior angles" }, { text: `x = ${a1}° + ${a2}°` }, { text: `x = ${extAngle}°` }],
+      working: [{ text: "Exterior angle = sum of the two non-adjacent interior angles", focus: [0, 1, 2] }, { text: `x = ${a1}° + ${a2}°`, focus: [0, 1] }, { text: `x = ${extAngle}°`, focus: [2] }],
       id: Math.floor(Math.random() * 1_000_000),
     };
   }
@@ -412,8 +417,8 @@ function buildExteriorAngle(vars: Record<string, unknown>): TriQuestion {
     ],
     answer: `x = ${a2}°`,
     working: [
-      { text: "Angles on a straight line sum to 180°" }, { text: `Interior angle = 180° − ${extAngle}° = ${intA}°` },
-      { text: "Angles in a triangle sum to 180°" }, { text: `${a1}° + ${intA}° + x = 180°` }, { text: `${a1 + intA}° + x = 180°` }, { text: `x = ${a2}°` },
+      { text: "Angles on a straight line sum to 180°", focus: [1] }, { text: `Interior angle = 180° − ${extAngle}° = ${intA}°`, focus: [1] },
+      { text: "Angles in a triangle sum to 180°", focus: [0, 2] }, { text: `${a1}° + ${intA}° + x = 180°`, focus: [0, 2] }, { text: `${a1 + intA}° + x = 180°`, focus: [2] }, { text: `x = ${a2}°`, focus: [2] },
     ],
     id: Math.floor(Math.random() * 1_000_000),
   };
@@ -446,13 +451,17 @@ function generateQuestion(
     key: `anglesInTriangle-${level}-${q.id}`,
     difficulty: level,
     _diagram: q,
+    _stepFocus: q.working.map(w => w.focus),   // which angles each step is about (Worked Example picture)
   } as unknown as AnyQuestion;
 }
 
 // ─── DIAGRAM ─────────────────────────────────────────────────────────────────
-interface DiagramProps { q: TriQuestion; showAnswer: boolean; small?: boolean; labelBg?: string; dataIndex?: number; fillBox?: boolean; }
+interface DiagramProps { q: TriQuestion; showAnswer: boolean; small?: boolean; labelBg?: string; dataIndex?: number; fillBox?: boolean; /** Worked example: indices into q.angles that the current step is about (others fade). Undefined = no emphasis. */ focus?: number[]; }
 
-function TriangleDiagram({ q, showAnswer, small = false, labelBg = "#ffffff", dataIndex, fillBox = false }: DiagramProps) {
+function TriangleDiagram({ q, showAnswer, small = false, labelBg = "#ffffff", dataIndex, fillBox = false, focus }: DiagramProps) {
+  // "on" = the step is about this angle, "off" = fade it, "normal" = no emphasis at all.
+  const emph = (i: number): "on" | "off" | "normal" => (focus ? (focus.includes(i) ? "on" : "off") : "normal");
+  const FOCUS = "#d97706";
   const BASE_SIZE = small ? 220 : 380;
   const fontSize = small ? 13 : 22;
   const strokeW = small ? 2 : 2.5;
@@ -570,10 +579,18 @@ function TriangleDiagram({ q, showAnswer, small = false, labelBg = "#ffffff", da
       {q.straightLineExt && <line x1={tx(q.straightLineExt.from.x)} y1={ty(q.straightLineExt.from.y)} x2={tx(q.straightLineExt.to.x)} y2={ty(q.straightLineExt.to.y)} stroke="#1e293b" strokeWidth={strokeW} strokeLinecap="round" />}
       {q.edges.map(([a, b], i) => <line key={i} x1={tx(a.x)} y1={ty(a.y)} x2={tx(b.x)} y2={ty(b.y)} stroke="#1e293b" strokeWidth={strokeW} strokeLinecap="round" />)}
       {q.isoTickEdges?.flatMap(([a, b], i) => tickMark(a, b).map((t, ti) => <line key={`tick-${i}-${ti}`} x1={tx(t.x1)} y1={ty(t.y1)} x2={tx(t.x2)} y2={ty(t.y2)} stroke="#1e293b" strokeWidth={strokeW + 0.5} strokeLinecap="round" />))}
-      {q.angles.map((ang, i) => !ang.isUnknown ? null : <path key={`sh-${i}`} d={sectorFill(ang.arcVertex, ang.arcFrom, ang.arcTo, unknownArcR)} fill="#bfdbfe" fillOpacity="0.45" stroke="none" />)}
       {q.angles.map((ang, i) => {
-        if (ang.showRightAngleSquare) return <g key={`arc-${i}`}>{rightAngleSq(ang.arcVertex, ang.arcFrom, ang.arcTo)}</g>;
-        return <path key={`arc-${i}`} d={arcPath(ang.arcVertex, ang.arcFrom, ang.arcTo, ang.isUnknown ? unknownArcR : arcR)} fill="none" stroke={ang.isUnknown ? "#2563eb" : "#475569"} strokeWidth={ang.isUnknown ? (small ? 2 : 2.5) : (small ? 1.5 : 2)} />;
+        const e = emph(i);
+        if (ang.isUnknown) return <path key={`sh-${i}`} d={sectorFill(ang.arcVertex, ang.arcFrom, ang.arcTo, unknownArcR)} fill="#bfdbfe" fillOpacity={e === "off" ? 0.12 : 0.45} stroke="none" />;
+        if (e === "on" && !ang.showRightAngleSquare) return <path key={`sh-${i}`} d={sectorFill(ang.arcVertex, ang.arcFrom, ang.arcTo, arcR * 1.25)} fill="#fde68a" fillOpacity="0.8" stroke="none" />;
+        return null;
+      })}
+      {q.angles.map((ang, i) => {
+        const e = emph(i);
+        const fade = e === "off" ? 0.22 : 1;
+        if (ang.showRightAngleSquare) return <g key={`arc-${i}`} opacity={fade}>{rightAngleSq(ang.arcVertex, ang.arcFrom, ang.arcTo)}</g>;
+        const on = e === "on" && !ang.isUnknown;
+        return <path key={`arc-${i}`} opacity={fade} d={arcPath(ang.arcVertex, ang.arcFrom, ang.arcTo, ang.isUnknown ? unknownArcR : on ? arcR * 1.25 : arcR)} fill="none" stroke={ang.isUnknown ? "#2563eb" : on ? FOCUS : "#475569"} strokeWidth={ang.isUnknown ? (small ? 2 : 2.5) : on ? 3.5 : (small ? 1.5 : 2)} />;
       })}
       {q.angles.map((ang, i) => {
         if (ang.showRightAngleSquare && !ang.isUnknown) return null;
@@ -582,7 +599,8 @@ function TriangleDiagram({ q, showAnswer, small = false, labelBg = "#ffffff", da
         const tip = tps(layout.tip), lp = tps(layout.labelPt);
         const label = ang.isUnknown && !showAnswer ? ang.label : ang.isUnknown ? `${ang.value}°` : ang.label;
         const tw = estTW(label, fontSize), th = fontSize * 1.4;
-        const colour = ang.isUnknown ? "#2563eb" : "#6b7280";
+        const e = emph(i);
+        const colour = ang.isUnknown ? "#2563eb" : e === "on" ? FOCUS : "#6b7280";
         const dx = tip.x - lp.x, dy = tip.y - lp.y, dlen = Math.hypot(dx, dy);
         const ux = dlen > 0.001 ? dx / dlen : 0, uy = dlen > 0.001 ? dy / dlen : 0;
         const boxHalfW = tw / 2 + 4, boxHalfH = th / 2 + 2;
@@ -593,10 +611,10 @@ function TriangleDiagram({ q, showAnswer, small = false, labelBg = "#ffffff", da
         const arrowPt1: Pt  = { x: arrowBase.x + px * arrowSize * 0.45, y: arrowBase.y + py * arrowSize * 0.45 };
         const arrowPt2: Pt  = { x: arrowBase.x - px * arrowSize * 0.45, y: arrowBase.y - py * arrowSize * 0.45 };
         return (
-          <g key={`lbl-${i}`}>
+          <g key={`lbl-${i}`} opacity={e === "off" ? 0.28 : 1}>
             <line x1={lineStart.x} y1={lineStart.y} x2={arrowBase.x} y2={arrowBase.y} stroke={colour} strokeWidth={small ? 1 : 1.5} strokeDasharray={small ? "3 2" : "5 3"} strokeLinecap="round" />
             <polygon points={`${tip.x},${tip.y} ${arrowPt1.x},${arrowPt1.y} ${arrowPt2.x},${arrowPt2.y}`} fill={colour} />
-            <rect x={lp.x - tw / 2 - 4} y={lp.y - th / 2 - 2} width={tw + 8} height={th + 4} rx={4} fill={labelBg} fillOpacity="0.97" stroke="#000000" strokeWidth={0.5} />
+            <rect x={lp.x - tw / 2 - 4} y={lp.y - th / 2 - 2} width={tw + 8} height={th + 4} rx={4} fill={e === "on" && !ang.isUnknown ? "#fef3c7" : labelBg} fillOpacity="0.97" stroke={e === "on" && !ang.isUnknown ? FOCUS : "#000000"} strokeWidth={e === "on" && !ang.isUnknown ? 1.6 : 0.5} />
             <text x={lp.x} y={lp.y} textAnchor="middle" dominantBaseline="middle" fontSize={fontSize} fontWeight={ang.isUnknown ? "bold" : "600"} fontStyle={ang.isUnknown && !showAnswer ? "italic" : "normal"} fill={ang.isUnknown ? "#1d4ed8" : "#111827"}>{label}</text>
           </g>
         );
@@ -623,9 +641,10 @@ const questionRenderer = (q: AnyQuestion, showAnswer: boolean, _cs: string, comp
     );
   }
   const maxW = compact === undefined ? 340 : 500;
+  const focus = (q as any)._focus as number[] | undefined;   // set per step by the split worked example
   return (
     <div style={{ width: "100%", maxWidth: maxW, margin: "0 auto" }}>
-      <TriangleDiagram q={d} showAnswer={showAnswer} small={false} dataIndex={idx} />
+      <TriangleDiagram q={d} showAnswer={showAnswer} small={false} dataIndex={idx} focus={focus} />
     </div>
   );
 };
