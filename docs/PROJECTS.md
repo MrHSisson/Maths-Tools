@@ -219,7 +219,7 @@ suite after the change (all 5 sub-tools × 3 levels × 500 draws = 7500 question
   technique-audit table below).
 
 **Detail — techniques built:** `quadraticFormulaSteps` (grain-aware), `solveLinearEquationSteps`
-(grain-aware), `solveFactorsSteps`, `substituteBackSteps`, `makeSubjectSteps`, `solveLinearlySteps`,
+(grain-aware, optional `unit` — e.g. degrees; first non-algebra use: `AnglesInTriangles`, full grain), `solveFactorsSteps`, `substituteBackSteps`, `makeSubjectSteps`, `solveLinearlySteps`,
 `simplifySurdSteps` (grain-aware), `collectLikeSurdsSteps` (grain-aware), `expandSurdBracketsSteps`
 (grain-aware), `rationaliseDenominatorSteps` (grain-aware, composes the previous two). Reference
 conversions: `NonLinearSimEq.tsx` (uses `standard` grain), `Surds.tsx` (uses `full`/`standard`

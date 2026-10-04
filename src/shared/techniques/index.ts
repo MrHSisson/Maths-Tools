@@ -75,17 +75,8 @@ export const workings = (): Workings => {
 const titledLines = (title: string, lines: string[]): WorkingStep[] =>
   lines.length ? [mStep(title, lines[0]), ...lines.slice(1).map((l) => step(l))] : [];
 
-// " + 3" / " - 3" — a signed term to append.
-const signed = (n: number): string => (n < 0 ? `- ${-n}` : `+ ${n}`);
 // A coefficient prefix: 1 → "", -1 → "-", else the number.
 const coef = (n: number): string => (n === 1 ? "" : n === -1 ? "-" : `${n}`);
-// n/d as an integer or a reduced-sign fraction.
-const frac = (num: number, den: number): string => {
-  if (den === 0) return `${num}`;
-  if (num % den === 0) return `${num / den}`;
-  const s = (num < 0) !== (den < 0) ? "-" : "";
-  return `${s}\\dfrac{${Math.abs(num)}}{${Math.abs(den)}}`;
-};
 
 // ── Techniques ────────────────────────────────────────────────────────────────
 
@@ -129,18 +120,26 @@ export const quadraticFormulaSteps = (a: number, b: number, c: number, v = "x", 
 //   full     — name each both-sides operation ("Subtract 3 from both sides", …).
 //   standard — collect, then divide (two rows).
 //   brief    — one line.
-export const solveLinearEquationSteps = (a: number, b: number, c: number, v = "x", grain: Grain = "standard"): WorkingStep[] => {
-  const rhs = c - b, result = frac(rhs, a);
+// `unit` is an optional LaTeX suffix for the constants (b, c and the results) — e.g. "^\\circ" for angles —
+// so the working reads 2x = 180° − 74° rather than bare numbers. It never touches the coefficient a.
+export const solveLinearEquationSteps = (a: number, b: number, c: number, v = "x", grain: Grain = "standard", unit = ""): WorkingStep[] => {
+  const U = (n: number | string) => `${n}${unit}`;
+  // Step titles are plain text, not KaTeX: show the unit as text (^\\circ → °).
+  const plainUnit = unit.replace(/\^\{?\\circ\}?/g, "°").replace(/\\/g, "");
+  const T = (n: number) => `${n}${plainUnit}`;
+  const sg = (n: number) => (n < 0 ? `- ${U(-n)}` : `+ ${U(n)}`);
+  const rhs = c - b;
+  const result = rhs % a === 0 ? U(rhs / a) : `${(rhs < 0) !== (a < 0) ? "-" : ""}\\dfrac{${U(Math.abs(rhs))}}{${Math.abs(a)}}`;
   if (grain === "brief") return [mStep(`Solve for ${v}`, [`${v} = ${result}`])];
   if (grain === "full") {
-    const op = b < 0 ? `Add ${-b} to both sides` : `Subtract ${b} from both sides`;
+    const op = b < 0 ? `Add ${T(-b)} to both sides` : `Subtract ${T(b)} from both sides`;
     const steps: WorkingStep[] = [
-      mStep(op, [`${coef(a)}${v} = ${c} ${signed(-b)}`, `${coef(a)}${v} = ${rhs}`]),
+      mStep(op, [`${coef(a)}${v} = ${U(c)} ${sg(-b)}`, `= ${U(rhs)}`]),
     ];
-    if (a !== 1) steps.push(mStep(`Divide both sides by ${a}`, [`${v} = \\dfrac{${rhs}}{${a}}`, `${v} = ${result}`]));
+    if (a !== 1) steps.push(mStep(`Divide both sides by ${a}`, [`${v} = \\dfrac{${U(rhs)}}{${a}}`, `= ${result}`]));
     return steps;
   }
-  return titledLines(`Solve for ${v}`, a !== 1 ? [`${coef(a)}${v} = ${rhs}`, `${v} = ${result}`] : [`${v} = ${result}`]);
+  return titledLines(`Solve for ${v}`, a !== 1 ? [`${coef(a)}${v} = ${U(rhs)}`, `${v} = ${result}`] : [`${v} = ${result}`]);
 };
 
 // Read the roots off a factorised expression. `roots` are ready LaTeX strings.

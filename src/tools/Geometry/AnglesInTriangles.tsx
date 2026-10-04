@@ -1,7 +1,7 @@
 import {
   ToolShell, handleDiagramPrint,
-  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion,
-  tStep,
+  type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep, type Grain,
+  mStep, tStep, solveLinearEquationSteps,
   withDiagramSteps, diagramStepVisual, diagramSplitQuestion,
 } from "../../shared";
 
@@ -123,7 +123,35 @@ interface AngleLabel {
   appearsAt?: number;
   /** A label that is hidden until the Worked Example reaches this step (e.g. the second equal base angle). */
   showAtStep?: number;
+  /** Authoring form of the two above: the `id` of the working entry that finds / reveals it (resolved to a step index). */
+  appearsAtId?: string;
+  showAtId?: string;
 }
+
+// ── Working, authored as entries ──────────────────────────────────────────────
+// An entry is one labelled line (a reason + its centred equation) or a block of technique steps (the solving),
+// with the angles it is about (`focus`, indices into `angles`) and an optional `id` other things can point at
+// (a derived angle appears at the entry that finds it). `expandWorking` turns entries into WorkingSteps.
+const DEG = "^\\circ";
+/** How much of each solving move to show. The techniques engine decides what "full" means ("Subtract 74° from both
+ *  sides", "Divide both sides by 2"); a runtime detailed-working toggle can drive this later. */
+const GRAIN: Grain = "full";
+const solve = (a: number, b: number, c: number, v = "x"): WorkingStep[] => solveLinearEquationSteps(a, b, c, v, GRAIN, DEG);
+type WorkEntry =
+  | { label: string; math?: string | string[]; focus?: number[]; id?: string }
+  | { steps: WorkingStep[]; focus?: number[]; id?: string };
+
+const expandWorking = (entries: WorkEntry[]) => {
+  const working: WorkingStep[] = [];
+  const focus: (number[] | undefined)[] = [];
+  const firstStep: Record<string, number> = {};
+  for (const e of entries) {
+    if (e.id) firstStep[e.id] = working.length;
+    const steps = "steps" in e ? e.steps : [e.math !== undefined ? mStep(e.label, e.math) : tStep(e.label)];
+    for (const s of steps) { working.push(s); focus.push(e.focus); }
+  }
+  return { working, focus, firstStep };
+};
 
 interface TriQuestion {
   level: string;
@@ -132,7 +160,7 @@ interface TriQuestion {
   straightLineExt?: { from: Pt; to: Pt };
   angles: AngleLabel[];
   answer: string;
-  working: { text: string; focus?: number[] }[];
+  working: WorkEntry[];
   id: number;
   questionType?: "splitTriangle" | "exteriorAngle";
 }
@@ -226,11 +254,9 @@ function buildLevel1(vars: Record<string, unknown>): TriQuestion {
     level: "level1", edges: [[v0, v1], [v1, v2], [v2, v0]], angles,
     answer: `x = ${vals[unknownIdx]}°`,
     working: [
-      { text: "Angles in a triangle sum to 180°", focus: [0, 1, 2] },
-      { text: `${given.join("° + ")}° + x = 180°`, focus: [0, 1, 2] },
-      { text: `${knownSum}° + x = 180°`, focus: givenIdx },
-      { text: `x = 180° − ${knownSum}°`, focus: [unknownIdx] },
-      { text: `x = ${vals[unknownIdx]}°`, focus: [unknownIdx] },
+      { label: "Angles in a triangle add up to 180°", math: `${given.join(`${DEG} + `)}${DEG} + x = 180${DEG}`, focus: [0, 1, 2] },
+      { label: "Add the known angles", math: `${knownSum}${DEG} + x = 180${DEG}`, focus: givenIdx },
+      { steps: solve(1, knownSum, 180), focus: [unknownIdx] },
     ],
     id: Math.floor(Math.random() * 1_000_000),
   };
@@ -248,21 +274,19 @@ function buildLevel2(vars: Record<string, unknown>): TriQuestion {
   else if (isoGiven === "base") giveApex = false;
   else giveApex = rnd(0, 1) === 0;
   const angles: AngleLabel[] = [
-    { label: giveApex ? "x" : `${base}°`, isUnknown: giveApex,  hideLabel: !giveApex, showAtStep: giveApex ? undefined : 1, value: base, pos: labelPos(v2, v0, v1, 40), arcVertex: v0, arcFrom: v2, arcTo: v1 },
+    { label: giveApex ? "x" : `${base}°`, isUnknown: giveApex,  hideLabel: !giveApex, showAtId: giveApex ? undefined : "otherBase", value: base, pos: labelPos(v2, v0, v1, 40), arcVertex: v0, arcFrom: v2, arcTo: v1 },
     { label: giveApex ? "x" : `${base}°`, isUnknown: giveApex,  hideLabel: giveApex,  showAtStep: giveApex ? 0 : undefined, value: base, pos: labelPos(v2, v1, v0, 40), arcVertex: v1, arcFrom: v0, arcTo: v2 },
     { label: giveApex ? `${apex}°` : "x", isUnknown: !giveApex, value: apex, pos: labelPos(v0, v2, v1, 40), arcVertex: v2, arcFrom: v0, arcTo: v1 },
   ];
-  const working = giveApex ? [
-    { text: "Isosceles triangle — two base angles are equal", focus: [0, 1] },
-    { text: `x + x + ${apex}° = 180°`, focus: [0, 1, 2] },
-    { text: `2x = 180° − ${apex}°`, focus: [2] },
-    { text: `2x = ${180 - apex}°`, focus: [0, 1] },
-    { text: `x = ${base}°`, focus: [0, 1] },
+  const working: WorkEntry[] = giveApex ? [
+    { label: "Isosceles triangle: the two base angles are equal, and the angles add up to 180°", math: `x + x + ${apex}${DEG} = 180${DEG}`, focus: [0, 1, 2] },
+    { label: "Collect the x terms", math: `2x + ${apex}${DEG} = 180${DEG}`, focus: [0, 1] },
+    { steps: solve(2, apex, 180), focus: [0, 1] },
   ] : [
-    { text: "Isosceles triangle — base angles are equal", focus: [0, 1] },
-    { text: `The other base angle is also ${base}°`, focus: [0, 1] },
-    { text: `Apex angle x = 180° − ${base}° − ${base}°`, focus: [0, 1, 2] },
-    { text: `x = ${apex}°`, focus: [2] },
+    { label: `Isosceles triangle: the two base angles are equal, so the other base angle is also ${base}°`, focus: [0, 1], id: "otherBase" },
+    { label: "Angles in a triangle add up to 180°", math: `x + ${base}${DEG} + ${base}${DEG} = 180${DEG}`, focus: [0, 1, 2] },
+    { label: "Add the known angles", math: `x + ${2 * base}${DEG} = 180${DEG}`, focus: [0, 1] },
+    { steps: solve(1, 2 * base, 180), focus: [2] },
   ];
   return { level: "level2", edges: [[v0, v1], [v1, v2], [v2, v0]], isoTickEdges: [[v0, v2], [v1, v2]], angles, answer: giveApex ? `x = ${base}°` : `x = ${apex}°`, working, id: Math.floor(Math.random() * 1_000_000) };
 }
@@ -321,15 +345,20 @@ function buildSplitTriangle(vars: Record<string, unknown>): TriQuestion {
     const xFocus = [ai(thirdXTriIdx), dBridgeIdx, ai(xIdx)];
     const dFoundVal = 180 - hK1 - hK2, dBridgeVal = 180 - dFoundVal;
     const derived: AngleLabel[] = [
-      { label: `${dFoundVal}°`, isUnknown: false, value: dFoundVal, appearsAt: 2, pos: labelPos(dHelperSub.from, dHelperSub.vertex, dHelperSub.to, 40), arcVertex: dHelperSub.vertex, arcFrom: dHelperSub.from, arcTo: dHelperSub.to },
-      { label: `${dBridgeVal}°`, isUnknown: false, value: dBridgeVal, appearsAt: 3, pos: labelPos(dBridgeSub.from, dBridgeSub.vertex, dBridgeSub.to, 40), arcVertex: dBridgeSub.vertex, arcFrom: dBridgeSub.from, arcTo: dBridgeSub.to },
+      { label: `${dFoundVal}°`, isUnknown: false, value: dFoundVal, appearsAtId: "d1", pos: labelPos(dHelperSub.from, dHelperSub.vertex, dHelperSub.to, 40), arcVertex: dHelperSub.vertex, arcFrom: dHelperSub.from, arcTo: dHelperSub.to },
+      { label: `${dBridgeVal}°`, isUnknown: false, value: dBridgeVal, appearsAtId: "d2", pos: labelPos(dBridgeSub.from, dBridgeSub.vertex, dBridgeSub.to, 40), arcVertex: dBridgeSub.vertex, arcFrom: dBridgeSub.from, arcTo: dBridgeSub.to },
     ];
     return {
       level: "level3", questionType: "splitTriangle", edges: [[B, A], [A, C], [B, D], [D, C], [A, D]], angles: [...angles, ...derived], answer: `x = ${xVal}°`,
       working: [
-        { text: "Angles in a triangle sum to 180°", focus: helperFocus }, { text: `${hK1}° + ${hK2}° + ∠D = 180°`, focus: helperFocus },
-        { text: `∠D = 180° − ${hK1 + hK2}° = ${dFoundVal}°`, focus: [...helperFocus, dHelperIdx] }, { text: `Angles on a straight line: other ∠D = 180° − ${dFoundVal}° = ${dBridgeVal}°`, focus: [dHelperIdx, dBridgeIdx] },
-        { text: `${thirdXTriVal}° + ${dBridgeVal}° + x = 180°`, focus: xFocus }, { text: `x = 180° − ${thirdXTriVal + dBridgeVal}°`, focus: xFocus }, { text: `x = ${xVal}°`, focus: [ai(xIdx)] },
+        { label: "Angles in a triangle add up to 180°", math: `${hK1}${DEG} + ${hK2}${DEG} + \\angle D_1 = 180${DEG}`, focus: helperFocus },
+        { label: "Add the known angles", math: `${hK1 + hK2}${DEG} + \\angle D_1 = 180${DEG}`, focus: helperFocus },
+        { steps: solve(1, hK1 + hK2, 180, "\\angle D_1"), focus: [...helperFocus, dHelperIdx], id: "d1" },
+        { label: "Angles on a straight line add up to 180°", math: `${dFoundVal}${DEG} + \\angle D_2 = 180${DEG}`, focus: [dHelperIdx, dBridgeIdx] },
+        { steps: solve(1, dFoundVal, 180, "\\angle D_2"), focus: [dHelperIdx, dBridgeIdx], id: "d2" },
+        { label: "Angles in a triangle add up to 180°", math: `${thirdXTriVal}${DEG} + ${dBridgeVal}${DEG} + x = 180${DEG}`, focus: xFocus },
+        { label: "Add the known angles", math: `${thirdXTriVal + dBridgeVal}${DEG} + x = 180${DEG}`, focus: xFocus },
+        { steps: solve(1, thirdXTriVal + dBridgeVal, 180), focus: [ai(xIdx)] },
       ],
       id: Math.floor(Math.random() * 1_000_000),
     };
@@ -345,14 +374,16 @@ function buildSplitTriangle(vars: Record<string, unknown>): TriQuestion {
     { label: `${k2}°`, isUnknown: false, value: k2, pos: labelPos(k2From, A, k2To, 40), arcVertex: A, arcFrom: k2From, arcTo: k2To },
     { label: "x", isUnknown: true, value: xVal, pos: labelPos(xArcFrom, D, xArcTo, 40), arcVertex: D, arcFrom: xArcFrom, arcTo: xArcTo },
     // the interior angle at D, found at the third step (it and x make a straight line)
-    { label: `${dInterior}°`, isUnknown: false, value: dInterior, appearsAt: 2, pos: labelPos(A, D, useLeft ? B : C, 40), arcVertex: D, arcFrom: A, arcTo: useLeft ? B : C },
+    { label: `${dInterior}°`, isUnknown: false, value: dInterior, appearsAtId: "dInt", pos: labelPos(A, D, useLeft ? B : C, 40), arcVertex: D, arcFrom: A, arcTo: useLeft ? B : C },
   ];
   return {
     level: "level3", questionType: "splitTriangle", edges: [[B, A], [A, C], [B, D], [D, C], [A, D]], straightLineExt: { from: extB, to: extC }, angles, answer: `x = ${xVal}°`,
     working: [
-      { text: "Angles in a triangle sum to 180°", focus: [0, 1] }, { text: `${k1}° + ${k2}° + ∠D = 180°`, focus: [0, 1] },
-      { text: `∠D (interior) = 180° − ${k1 + k2}° = ${dInterior}°`, focus: [0, 1, 3] }, { text: "Angles on a straight line sum to 180°", focus: [2, 3] },
-      { text: `x = 180° − ${dInterior}°`, focus: [2, 3] }, { text: `x = ${xVal}°`, focus: [2] },
+      { label: "Angles in a triangle add up to 180°", math: `${k1}${DEG} + ${k2}${DEG} + \\angle D = 180${DEG}`, focus: [0, 1] },
+      { label: "Add the known angles", math: `${k1 + k2}${DEG} + \\angle D = 180${DEG}`, focus: [0, 1] },
+      { steps: solve(1, k1 + k2, 180, "\\angle D"), focus: [0, 1, 3], id: "dInt" },
+      { label: "Angles on a straight line add up to 180°", math: `x + ${dInterior}${DEG} = 180${DEG}`, focus: [2, 3] },
+      { steps: solve(1, dInterior, 180), focus: [2] },
     ],
     id: Math.floor(Math.random() * 1_000_000),
   };
@@ -382,7 +413,7 @@ function buildExteriorAngle(vars: Record<string, unknown>): TriQuestion {
           { label: "x", isUnknown: true, value: extAngle, pos: labelPos(v2, v1, extPt, 40), arcVertex: v1, arcFrom: v2, arcTo: extPt },
         ],
         answer: `x = ${extAngle}°`,
-        working: [{ text: "Exterior angle = sum of the two non-adjacent interior angles", focus: [0, 1, 2] }, { text: `x = ${a0}° + ${a2}°`, focus: [0, 1] }, { text: `x = ${extAngle}°`, focus: [2] }],
+        working: [{ label: "The exterior angle equals the sum of the two non-adjacent interior angles", math: [`x = ${a0}${DEG} + ${a2}${DEG}`, `= ${extAngle}${DEG}`], focus: [0, 1, 2] }],
         id: Math.floor(Math.random() * 1_000_000),
       };
     }
@@ -394,12 +425,15 @@ function buildExteriorAngle(vars: Record<string, unknown>): TriQuestion {
         { label: `${a0}°`, isUnknown: false, value: a0, pos: labelPos(v2, v0, v1, 40), arcVertex: v0, arcFrom: v2, arcTo: v1 },
         { label: `${extAngle}°`, isUnknown: false, value: extAngle, pos: extLabelPos, arcVertex: v1, arcFrom: extPt, arcTo: v2 },
         { label: "x", isUnknown: true, value: a2, pos: labelPos(v0, v2, v1, 40), arcVertex: v2, arcFrom: v0, arcTo: v1 },
-        { label: `${intB}°`, isUnknown: false, value: intB, appearsAt: 1, pos: labelPos(v0, v1, v2, 40), arcVertex: v1, arcFrom: v0, arcTo: v2 },   // the interior angle, once found
+        { label: `${intB}°`, isUnknown: false, value: intB, appearsAtId: "interior", pos: labelPos(v0, v1, v2, 40), arcVertex: v1, arcFrom: v0, arcTo: v2 },   // the interior angle, once found
       ],
       answer: `x = ${a2}°`,
       working: [
-        { text: "Angles on a straight line sum to 180°", focus: [1] }, { text: `Interior angle = 180° − ${extAngle}° = ${intB}°`, focus: [1, 3] },
-        { text: "Angles in a triangle sum to 180°", focus: [0, 3, 2] }, { text: `${a0}° + ${intB}° + x = 180°`, focus: [0, 3, 2] }, { text: `${a0 + intB}° + x = 180°`, focus: [0, 3] }, { text: `x = ${a2}°`, focus: [2] },
+        { label: "Angles on a straight line add up to 180° — call the interior angle y", math: `y + ${extAngle}${DEG} = 180${DEG}`, focus: [1] },
+        { steps: solve(1, extAngle, 180, "y"), focus: [1, 3], id: "interior" },
+        { label: "Angles in a triangle add up to 180°", math: `${a0}${DEG} + ${intB}${DEG} + x = 180${DEG}`, focus: [0, 3, 2] },
+        { label: "Add the known angles", math: `${a0 + intB}${DEG} + x = 180${DEG}`, focus: [0, 3] },
+        { steps: solve(1, a0 + intB, 180), focus: [2] },
       ],
       id: Math.floor(Math.random() * 1_000_000),
     };
@@ -416,7 +450,7 @@ function buildExteriorAngle(vars: Record<string, unknown>): TriQuestion {
         { label: "x", isUnknown: true, value: extAngle, pos: labelPos(extPt, v0, v2, 40), arcVertex: v0, arcFrom: extPt, arcTo: v2 },
       ],
       answer: `x = ${extAngle}°`,
-      working: [{ text: "Exterior angle = sum of the two non-adjacent interior angles", focus: [0, 1, 2] }, { text: `x = ${a1}° + ${a2}°`, focus: [0, 1] }, { text: `x = ${extAngle}°`, focus: [2] }],
+      working: [{ label: "The exterior angle equals the sum of the two non-adjacent interior angles", math: [`x = ${a1}${DEG} + ${a2}${DEG}`, `= ${extAngle}${DEG}`], focus: [0, 1, 2] }],
       id: Math.floor(Math.random() * 1_000_000),
     };
   }
@@ -428,12 +462,15 @@ function buildExteriorAngle(vars: Record<string, unknown>): TriQuestion {
       { label: `${a1}°`, isUnknown: false, value: a1, pos: labelPos(v2, v1, v0, 40), arcVertex: v1, arcFrom: v2, arcTo: v0 },
       { label: `${extAngle}°`, isUnknown: false, value: extAngle, pos: extLabelPos, arcVertex: v0, arcFrom: extPt, arcTo: v2 },
       { label: "x", isUnknown: true, value: a2, pos: labelPos(v0, v2, v1, 40), arcVertex: v2, arcFrom: v0, arcTo: v1 },
-      { label: `${intA}°`, isUnknown: false, value: intA, appearsAt: 1, pos: labelPos(v1, v0, v2, 40), arcVertex: v0, arcFrom: v1, arcTo: v2 },   // the interior angle, once found
+      { label: `${intA}°`, isUnknown: false, value: intA, appearsAtId: "interior", pos: labelPos(v1, v0, v2, 40), arcVertex: v0, arcFrom: v1, arcTo: v2 },   // the interior angle, once found
     ],
     answer: `x = ${a2}°`,
     working: [
-      { text: "Angles on a straight line sum to 180°", focus: [1] }, { text: `Interior angle = 180° − ${extAngle}° = ${intA}°`, focus: [1, 3] },
-      { text: "Angles in a triangle sum to 180°", focus: [0, 3, 2] }, { text: `${a1}° + ${intA}° + x = 180°`, focus: [0, 3, 2] }, { text: `${a1 + intA}° + x = 180°`, focus: [0, 3] }, { text: `x = ${a2}°`, focus: [2] },
+      { label: "Angles on a straight line add up to 180° — call the interior angle y", math: `y + ${extAngle}${DEG} = 180${DEG}`, focus: [1] },
+      { steps: solve(1, extAngle, 180, "y"), focus: [1, 3], id: "interior" },
+      { label: "Angles in a triangle add up to 180°", math: `${a1}${DEG} + ${intA}${DEG} + x = 180${DEG}`, focus: [0, 3, 2] },
+      { label: "Add the known angles", math: `${a1 + intA}${DEG} + x = 180${DEG}`, focus: [0, 3] },
+      { steps: solve(1, a1 + intA, 180), focus: [2] },
     ],
     id: Math.floor(Math.random() * 1_000_000),
   };
@@ -458,15 +495,25 @@ function generateQuestion(
   if (level === "level1") q = buildLevel1({ ...variables, rightAngle: dd ?? "chance" });
   else if (level === "level2") q = buildLevel2({ ...variables, isoGiven: dd ?? "mixed" });
   else q = buildLevel3({ ...variables, type: dd ?? "mixed" });
+  const { working, focus, firstStep } = expandWorking(q.working);
+  // Resolve "appears at the entry with this id" to a step index now the entries are expanded.
+  const diagram: TriQuestion = {
+    ...q,
+    angles: q.angles.map(a => ({
+      ...a,
+      appearsAt: a.appearsAtId ? firstStep[a.appearsAtId] : a.appearsAt,
+      showAtStep: a.showAtId ? firstStep[a.showAtId] : a.showAtStep,
+    })),
+  };
   return {
     kind: "simple",
     display: "Find x",
     answer: q.answer,
-    working: q.working.map(w => tStep(w.text)),
+    working,
     key: `anglesInTriangle-${level}-${q.id}`,
     difficulty: level,
-    _diagram: q,
-    _stepFocus: q.working.map(w => w.focus),   // which angles each step is about (Worked Example picture)
+    _diagram: diagram,
+    _stepFocus: focus,   // which angles each step is about (Worked Example picture)
   } as unknown as AnyQuestion;
 }
 
@@ -529,9 +576,14 @@ function TriangleDiagram({ q, showAnswer, small = false, labelBg = "#ffffff", da
     // then each side with a longer leader — so two angles at one vertex (a straight line through D) never overlap.
     const cwFirst = distCW >= distCCW;
     const farther = (d: Pt): Pt => ({ x: tip.x + d.x * leaderLen * 1.8, y: tip.y + d.y * leaderLen * 1.8 });
-    const candidates = cwFirst ? [labelCW, labelCCW, farther(dirCW), farther(dirCCW)] : [labelCCW, labelCW, farther(dirCCW), farther(dirCW)];
+    const farthest = (d: Pt): Pt => ({ x: tip.x + d.x * leaderLen * 2.6, y: tip.y + d.y * leaderLen * 2.6 });
+    const candidates = cwFirst
+      ? [labelCW, labelCCW, farther(dirCW), farther(dirCCW), farthest(dirCW), farthest(dirCCW)]
+      : [labelCCW, labelCW, farther(dirCCW), farther(dirCW), farthest(dirCCW), farthest(dirCW)];
     const gap = fontSize * 3.4;
-    const labelPt = candidates.find(c => avoid.every(a => Math.hypot(a.x - c.x, a.y - c.y) > gap)) ?? candidates[0];
+    const clearance = (c: Pt) => avoid.reduce((m, a) => Math.min(m, Math.hypot(a.x - c.x, a.y - c.y)), Infinity);
+    // The first spot that clears every placed label; if the vertex is crowded, the best-separated one.
+    const labelPt = candidates.find(c => clearance(c) > gap) ?? candidates.reduce((best, c) => (clearance(c) > clearance(best) ? c : best), candidates[0]);
     return { tip, labelPt };
   }
 

@@ -378,9 +378,9 @@ export const WorkedExampleSteps = ({
             : s.type === "mStep"
               ? <div className="flex flex-col gap-1">
                   <span className={`text-left ${text}`} style={{ fontWeight: on ? 600 : 400 }}><SkillLabel text={s.label ?? ""} onOpenSkill={onOpenSkill} /></span>
-                  <div className={`text-center ${compact ? "text-xl" : "text-2xl"}`}><FitWidth>{stepMaths(s, reveal)}</FitWidth></div>
+                  <div className={`text-center ${compact ? "text-2xl" : "text-3xl"}`}><FitWidth>{stepMaths(s, reveal)}</FitWidth></div>
                 </div>
-              : <div className={`text-center ${compact ? "text-xl" : "text-2xl"}`}><FitWidth>{stepMaths(s, reveal)}</FitWidth></div>
+              : <div className={`text-center ${compact ? "text-2xl" : "text-3xl"}`}><FitWidth>{stepMaths(s, reveal)}</FitWidth></div>
           )}
         </div>
       </div>
