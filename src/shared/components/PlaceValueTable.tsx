@@ -18,7 +18,7 @@ const headerLabel = (d: PlaceValueTableData, i: number): string =>
   d.headerStyle === "words" && d.columnNames?.[i] ? d.columnNames[i] : d.columns[i];
 
 const toneCls = (t?: PVCell["tone"]) =>
-  t === "zero" ? "text-blue-600 bg-blue-50" : t === "answer" ? "text-green-800 bg-white" : t === "highlight" ? "bg-amber-100" : t === "current" ? "bg-sky-200" : "";
+  t === "zero" ? "text-blue-600 bg-blue-50" : t === "answer" ? "text-green-800 bg-white" : t === "highlight" ? "bg-amber-100" : t === "current" ? "bg-sky-200" : t === "lost" ? "text-red-600 bg-red-50" : "";
 
 export function PlaceValueTable({ data }: { data: PlaceValueTableData }) {
   const { columns, onesIndex, showPoint, rows, highlightCol } = data;
@@ -207,8 +207,8 @@ export function PlaceValueSvg({ data, title, idx, answerIdx, rowH = SVG_ROW_H, f
               const raw = row.cells[i];
               const cell: PVCell = typeof raw === "string" || raw === undefined ? { v: raw ?? "" } : raw;
               const cx = x0 + i * SVG_CW + SVG_CW / 2;
-              const fill = cell.tone === "zero" ? "#eff6ff" : "#ffffff";
-              const ink = cell.strike ? "#94a3b8" : cell.tone === "zero" ? "#2563eb" : cell.tone === "answer" ? "#166534" : "#000";
+              const fill = cell.tone === "zero" ? "#eff6ff" : cell.tone === "lost" ? "#fef2f2" : "#ffffff";
+              const ink = cell.strike ? "#94a3b8" : cell.tone === "zero" ? "#2563eb" : cell.tone === "answer" ? "#166534" : cell.tone === "lost" ? "#dc2626" : "#000";
               return (
                 <g key={i}>
                   <rect x={x0 + i * SVG_CW} y={y} width={SVG_CW} height={rowH} fill={fill} stroke="#000" strokeWidth={2.5} />

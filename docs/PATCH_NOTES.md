@@ -2119,6 +2119,11 @@ in custom renderers.
 
 # Computer Science
 
+## 2026-10-04 — Binary Operations on the shared place value table (stage 3 of 3)
+- Binary Addition worked examples: one place value table (128 … 1, nibble rule) walks the sum a column at a time — the current column highlighted, each carry written above the column it lands in, the result row filling in — with captions in the same wording as Binary Counting ("1 + 1 = 2, which is 10 in binary: write the 0 and carry the 1…"). A run of all-zero columns on the left is one step. The register check ends on a "Carry of 1 lost — overflow" banner when the sum exceeds 255. Three-number sums are two tables (add the first two, then the third).
+- Binary Shifts worked examples: the register plus spare columns on the side the bits leave from; row 1 the number (the bits about to be lost marked red), row 2 the result with the vacated cells as blue placeholder zeros and the lost bits in red outside the register. Level 2 adds the denary conversions (place-value sums) and the ×/÷ effect, with overflow / underflow explained.
+- Shared table: new `lost` tone (red) for bits that leave the register. The duplicated KaTeX place-value grid is gone from the Binary tools; the green A line carries each answer (own "Answer:" steps and `hideAnswerStep` removed). Questions, levels, options and worksheets unchanged. Build clean, 426 tests pass. This completes the Binary place-value extension (Counting sandbox → Number Bases → Binary Operations).
+
 ## 2026-10-04 — Number Bases moved onto the shared place value table (stage 2 of 3)
 - Number Bases' worked examples now use the shared place value table (`pvStep` snapshots with the base-aware columns: 128 … 1 for binary, 16 and 1 for hex, a heavier rule per nibble) instead of hand-built KaTeX grids — one table updates in place beside short plain-text captions (`stepRenderer` / `stepVisualRenderer`, as in Decimal Add/Sub). All six directions covered; the green A line now carries the answer (its own "Answer:" step and `hideAnswerStep` removed).
 - Questions, levels, options and worksheets unchanged. Build clean, 426 tests pass. Stage 3 (Binary Operations: shifts and addition) still to do.

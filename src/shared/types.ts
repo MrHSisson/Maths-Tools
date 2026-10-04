@@ -51,7 +51,7 @@ export type AnyQuestion = SimpleQuestion | WordedQuestion;
 // consecutive row pair (length = rows.length - 1). Built via rStep(), never
 // constructed directly — see src/shared/ratioTable.ts.
 // Place value table — see src/shared/placeValue.ts.
-export type PVTone = "zero" | "highlight" | "answer" | "current";
+export type PVTone = "zero" | "highlight" | "answer" | "current" | "lost";
 export interface PVCell {
   v: string;
   /** Show the digit crossed out (used when a digit has been exchanged away). */
