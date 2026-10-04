@@ -1883,7 +1883,7 @@ export default function MathsSkillsGenerator() {
                 <ul className="space-y-2 text-sm text-gray-600">
                   {[
                     'Pick a topic tab on the left (the number shows how many of its skills you have added) and tap a tile to add it (tap again to remove); it appears in "Your worksheet" on the right.',
-                    'In your worksheet, use − / + to set how many questions each skill contributes, and Options to configure its difficulty and ranges inline.',
+                    'Once a skill is added, open the Options bar on its tile to set its difficulty and ranges. In your worksheet, use − / + to set how many questions each skill contributes.',
                     'Maximum 30 questions total — the budget bar shows how many you have left. Use Clear to start over.',
                     'Use the Settings button to set the total, number of pages and question order (mixed or grouped).',
                     ...(devMode ? [
@@ -1943,21 +1943,49 @@ export default function MathsSkillsGenerator() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5" role="tabpanel">
                 {SKILL_GROUPS[activeGroup].skills.map(skill => {
                   const enabled = enabledSkills.includes(skill);
+                  const expanded = enabled && expandedSkill === skill;
                   return (
-                    <button
+                    <div
                       key={skill}
-                      onClick={() => toggleSkill(skill)}
-                      className={`relative text-left rounded-xl border-2 p-4 pr-11 min-h-[5.5rem] flex flex-col justify-center transition-all ${enabled ? 'bg-blue-900 border-blue-900 shadow-md' : 'bg-white border-gray-200 hover:border-blue-300 shadow-sm'}`}
+                      className={`flex flex-col rounded-xl border-2 overflow-hidden transition-all ${enabled ? 'border-blue-900 shadow-md' : 'border-gray-200 bg-white shadow-sm hover:border-blue-300'}`}
                     >
-                      <span className={`font-bold text-base leading-tight ${enabled ? 'text-white' : 'text-gray-800'}`}>{SKILL_META[skill].label}</span>
-                      <span className={`block text-xs mt-1 leading-snug ${enabled ? 'text-blue-200' : 'text-gray-500'}`}>{SKILL_META[skill].description}</span>
-                      <span className={`absolute top-3 right-3 w-6 h-6 flex items-center justify-center rounded-full ${enabled ? 'bg-white text-blue-900' : 'border-2 border-gray-200 text-gray-300'}`}>
-                        {enabled ? <Check size={15} /> : <Plus size={14} />}
-                      </span>
-                    </button>
+                      <button
+                        onClick={() => toggleSkill(skill)}
+                        className={`relative flex-1 text-left p-4 pr-11 min-h-[5.5rem] flex flex-col justify-center transition-colors ${enabled ? 'bg-blue-900' : 'bg-white'}`}
+                      >
+                        <span className={`font-bold text-base leading-tight ${enabled ? 'text-white' : 'text-gray-800'}`}>{SKILL_META[skill].label}</span>
+                        <span className={`block text-xs mt-1 leading-snug ${enabled ? 'text-blue-200' : 'text-gray-500'}`}>{SKILL_META[skill].description}</span>
+                        <span className={`absolute top-3 right-3 w-6 h-6 flex items-center justify-center rounded-full ${enabled ? 'bg-white text-blue-900' : 'border-2 border-gray-200 text-gray-300'}`}>
+                          {enabled ? <Check size={15} /> : <Plus size={14} />}
+                        </span>
+                      </button>
+                      {enabled && (
+                        <button
+                          onClick={() => setExpandedSkill(expanded ? null : skill)}
+                          aria-expanded={expanded}
+                          className={`flex items-center justify-between px-4 py-2 text-xs font-bold transition-colors ${expanded ? 'bg-blue-50 text-blue-900' : 'bg-white text-gray-600 hover:bg-blue-50 hover:text-blue-900'}`}
+                        >
+                          <span>Options</span>
+                          {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                        </button>
+                      )}
+                    </div>
                   );
                 })}
               </div>
+
+              {/* The open skill's options — under the tiles, in the left container (tiles keep their places) */}
+              {expandedSkill && enabledSkills.includes(expandedSkill) && SKILL_GROUPS[activeGroup].skills.includes(expandedSkill) && (
+                <div className="mt-3 rounded-xl border-2 border-blue-900 bg-white overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-2.5 bg-blue-900 text-white">
+                    <span className="font-bold text-sm">{SKILL_META[expandedSkill].label} — options</span>
+                    <button onClick={() => setExpandedSkill(null)} title="Close options" className="p-1 rounded hover:bg-blue-800"><X size={16} /></button>
+                  </div>
+                  <div className="px-4 pb-4 bg-slate-50">
+                    {renderConfig(expandedSkill)}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* RIGHT — worksheet controls (sticky) */}
@@ -2096,9 +2124,8 @@ export default function MathsSkillsGenerator() {
                 {enabledSkills.length > 0 && (
                   <div className="space-y-2 mb-4">
                     {enabledSkills.map(skill => {
-                      const expanded = expandedSkill === skill;
                       return (
-                        <div key={skill} className={`rounded-xl border overflow-hidden transition-colors ${expanded ? 'border-blue-300' : 'border-gray-200'}`}>
+                        <div key={skill} className="rounded-xl border border-gray-200 overflow-hidden">
                           <div className="px-3 pt-2 pb-2">
                             <div className="flex items-center gap-2">
                               <span className="flex-1 min-w-0 truncate text-sm font-bold text-gray-900">{SKILL_META[skill].label}</span>
@@ -2123,18 +2150,14 @@ export default function MathsSkillsGenerator() {
                                 >+</button>
                               </div>
                               <button
-                                onClick={() => setExpandedSkill(expanded ? null : skill)}
-                                className={`flex items-center gap-1 text-xs font-bold px-2.5 py-1.5 rounded-lg border transition-all ${expanded ? 'bg-blue-900 border-blue-900 text-white' : 'border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-900'}`}
+                                onClick={() => { setActiveGroup(Math.max(0, SKILL_GROUPS.findIndex(g => g.skills.includes(skill)))); setExpandedSkill(skill); }}
+                                title="Edit this skill's options (shown on the left)"
+                                className="text-xs font-bold px-2.5 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-900 transition-all"
                               >
-                                Options {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                                Options
                               </button>
                             </div>
                           </div>
-                          {expanded && (
-                            <div className="px-3 pb-3 pt-1 border-t border-gray-100 bg-slate-50">
-                              {renderConfig(skill)}
-                            </div>
-                          )}
                         </div>
                       );
                     })}
