@@ -201,7 +201,7 @@ export const makeUniqueQ = <Q extends { key: string }, L extends string = string
 /**
  * Split the final result of an inline chain into its own step. A last step written in fragments that ends in a
  * "= result" link — `x = 180° − 146°` · `= 34°` — becomes TWO steps: the working (`x = 180° − 146°`) and, as a step
- * of its own, the answer (`x = 34°`), built from the chain's own left-hand side. In the worked example the answer
+ * of its own, the answer — labelled "Answer:" — (`x = 34°`), built from the chain's own left-hand side. In the worked example the answer
  * step is the green, prominent one. Anything that doesn't fit that shape is returned unchanged.
  */
 export const splitAnswerStep = (steps: WorkingStep[]): WorkingStep[] => {
@@ -210,6 +210,6 @@ export const splitAnswerStep = (steps: WorkingStep[]): WorkingStep[] => {
   if (!f || f.length < 2 || last.unit || !/^\s*=/.test(f[f.length - 1]) || !/=/.test(f[0])) return steps;
   const rest = f.slice(0, -1);
   const working = last.label !== undefined ? mStep(last.label, rest) : step(rest);
-  const answer = step(`${f[0].split("=")[0].trim()} ${f[f.length - 1].trim()}`);
+  const answer = mStep("Answer:", `${f[0].split("=")[0].trim()} ${f[f.length - 1].trim()}`);
   return [...steps.slice(0, -1), working, answer];
 };
