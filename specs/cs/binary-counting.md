@@ -23,5 +23,5 @@ Students count in binary beside denary (and hex) in full place value tables and 
 
 ## Rollout (the same table, extended into the existing tools)
 1. ✅ Shared base-aware table + this sandbox.
-2. ⬜ Number Bases: replace KaTeX `gridLatex` working with `pvStep` snapshots.
+2. ✅ Number Bases: KaTeX `gridLatex` working replaced with `pvStep` snapshots.
 3. ⬜ Binary Operations: shifts and addition on the table (carries in `above`, shifted-out bits ejected), incl. 8-bit print.

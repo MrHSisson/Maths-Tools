@@ -1,8 +1,9 @@
 import {
   ToolShell,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep,
-  type ToolMultiSelect,
-  mStep, randInt, pickActive,
+  type ToolMultiSelect, type PlaceValueTableData, type PVCell,
+  randInt, pickActive,
+  pvStep, pvBaseColumnSet, placeValueStepRenderer, placeValueStepVisual,
 } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -14,6 +15,9 @@ import {
 // (ToolEntry.levels): Level 1 is one nibble (0–15, one hex digit), Level 2 a
 // full byte (16–255, two hex digits). Each sub-tool covers BOTH directions of
 // its pair; direction is a per-question "Direction" pool, so a sheet can mix.
+//
+// Worked-example working is the shared place value table (pvStep snapshots, base-aware columns:
+// 128 … 1 for binary, 16 and 1 for hex), so one table updates in place beside short captions.
 
 // ── 1. Types & constants ──────────────────────────────────────────────────────
 
@@ -115,75 +119,78 @@ const denLatex = (n: number | string): string => `${n}_{10}`;
 const placeValues = (width: number): number[] =>
   Array.from({ length: width }, (_, i) => 2 ** (width - 1 - i));
 
-// Place-value grid: headings over digits (the J277 128…1 / 16 1 table).
-const gridLatex = (headers: (string | number)[], cells: string[]): string => [
-  `\\begin{array}{|${"c|".repeat(headers.length)}}`,
-  "\\hline",
-  `${headers.join(" & ")} \\\\`,
-  "\\hline",
-  `${cells.join(" & ")} \\\\`,
-  "\\hline",
-  "\\end{array}",
-].join(" ");
-
 // Level 1 = one nibble (0–15), Level 2 = a byte beyond one nibble (16–255) —
 // disjoint ranges, so Level 2 is always genuinely two hex digits / 8 bits.
 const drawValue = (level: DifficultyLevel): number =>
   level === "level1" ? randInt(1, 15) : randInt(16, 255);
 
-// A nibble's value as the sum of its place values, e.g. 1010 → 8 + 2 = 10.
-const nibbleSumLatex = (n: number): string => {
-  const parts = placeValues(4).filter((pv) => (n & pv) !== 0);
-  return parts.length > 1 ? `${parts.join(" + ")} = ${denLatex(n)}` : denLatex(n);
-};
+// ── 5. Place value tables for the working ─────────────────────────────────────
 
-// ── 5. Working-step builders ──────────────────────────────────────────────────
+type Cols = ReturnType<typeof pvBaseColumnSet>;
+const BIN: Record<number, Cols> = { 4: pvBaseColumnSet(2, 4), 8: pvBaseColumnSet(2, 8) };
+const HEX: Record<number, Cols> = { 1: pvBaseColumnSet(16, 1), 2: pvBaseColumnSet(16, 2) };
+
+const table = (cols: Cols, cells: (PVCell | string)[], groupEvery?: number): PlaceValueTableData => ({
+  ...cols, showPoint: false, groupEvery, cellHeight: 64, colWidth: 64, rows: [{ kind: "cells", cells }],
+});
+
+/** Binary digits as cells; the 1s are tinted when `lit` (the ones being added up). */
+const bitCells = (bits: number[], lit = false): PVCell[] => bits.map((b) => ({ v: String(b), tone: lit && b === 1 ? "highlight" : undefined }));
+const blank = (n: number): string[] => Array(n).fill("");
+
+const sub = { 2: "₂", 10: "₁₀", 16: "₁₆" } as const;
+const bin = (b: string) => `${b}${sub[2]}`;
+const den = (n: number | string) => `${n}${sub[10]}`;
+const hexS = (h: string) => `${h}${sub[16]}`;
+
+// ── 6. Working-step builders ──────────────────────────────────────────────────
 
 const denToBinSteps = (n: number, width: number): WorkingStep[] => {
+  const cols = BIN[width];
   const pvs = placeValues(width);
-  const steps: WorkingStep[] = [
-    mStep("Write out the place values:", gridLatex(pvs, pvs.map(() => "\\phantom{0}"))),
-  ];
+  const cells: PVCell[] = blank(width).map((v) => ({ v }));
+  const steps: WorkingStep[] = [pvStep("Write out the place values.", table(cols, cells.map((c) => ({ ...c }))))];
   let rem = n;
-  for (const pv of pvs) {
-    if (pv <= rem) {
-      steps.push(mStep(`${pv} fits into ${rem}, so write a 1 under ${pv}:`, [`${rem}`, `- ${pv}`, `= ${rem - pv}`]));
-      rem -= pv;
-    }
-    if (rem === 0) break;
-  }
-  const hasZero = n !== 2 ** width - 1;
-  steps.push(mStep(hasZero ? "Write 0 under every other place value:" : "Every place value was used:", gridLatex(pvs, toBits(n, width).map(String))));
+  pvs.forEach((pv, i) => {
+    if (rem === 0 || pv > rem) return;
+    cells.forEach((c) => { if (c.tone === "highlight") c.tone = undefined; });
+    cells[i] = { v: "1", tone: "highlight" };
+    steps.push(pvStep(`${pv} fits into ${rem}, so write a 1 under ${pv}. ${rem} − ${pv} = ${rem - pv}.`, table(cols, cells.map((c) => ({ ...c })))));
+    rem -= pv;
+  });
+  const done = cells.map((c) => (c.v === "1" ? { v: "1" } : { v: "0", tone: "zero" as const }));
+  steps.push(pvStep(n === 2 ** width - 1 ? "Every place value was used." : "Write 0 under every other place value.", table(cols, done)));
   return steps;
 };
 
 const binToDenSteps = (n: number, width: number): WorkingStep[] => {
-  const pvs = placeValues(width);
-  const used = pvs.filter((pv) => (n & pv) !== 0);
+  const cols = BIN[width];
+  const bits = toBits(n, width);
+  const used = placeValues(width).filter((pv) => (n & pv) !== 0);
   return [
-    mStep("Write the bits under the place values:", gridLatex(pvs, toBits(n, width).map(String))),
-    mStep("Add the place values that have a 1:", used.length > 1 ? [used.join(" + "), `= ${denLatex(n)}`] : denLatex(n)),
+    pvStep("Write the bits under the place values.", table(cols, bitCells(bits))),
+    pvStep(used.length > 1 ? `Add the place values that have a 1: ${used.join(" + ")} = ${n}.` : `Only ${used[0]} has a 1, so the value is ${n}.`, table(cols, bitCells(bits, true))),
   ];
 };
 
 const denToHexSteps = (n: number): WorkingStep[] => {
-  if (n < 16) return [mStep("Hex digits run 0–9, then A = 10 up to F = 15:", `${denLatex(n)} = ${hexLatex(hexDigit(n))}`)];
+  if (n < 16) return [pvStep(`Hex digits run 0–9, then A = 10 up to F = 15. So ${den(n)} is ${hexS(hexDigit(n))}.`, table(HEX[1], [{ v: hexDigit(n), tone: "answer" }]))];
   const hi = Math.floor(n / 16);
   const lo = n % 16;
   return [
-    mStep("Find how many 16s fit, and what is left over:", [denLatex(n), `= ${hi} \\times 16 + ${lo}`]),
-    mStep("Write each part as a hex digit (A = 10 … F = 15):", [`${denLatex(hi)} = ${hexLatex(hexDigit(hi))}`, `,\\; ${denLatex(lo)} = ${hexLatex(hexDigit(lo))}`]),
+    pvStep(`Find how many 16s fit, and what is left over: ${n} = ${hi} × 16 + ${lo}.`, table(HEX[2], [String(hi), String(lo)])),
+    pvStep("Write each part as a hex digit (A = 10 … F = 15).", table(HEX[2], [{ v: hexDigit(hi), tone: "answer" }, { v: hexDigit(lo), tone: "answer" }])),
   ];
 };
 
 const hexToDenSteps = (n: number): WorkingStep[] => {
-  if (n < 16) return [mStep("Hex digits run 0–9, then A = 10 up to F = 15:", `${hexLatex(hexDigit(n))} = ${denLatex(n)}`)];
+  if (n < 16) return [pvStep(`Hex digits run 0–9, then A = 10 up to F = 15. So ${hexS(hexDigit(n))} is ${den(n)}.`, table(HEX[1], [hexDigit(n)]))];
   const hi = Math.floor(n / 16);
   const lo = n % 16;
   return [
-    mStep("Write the digits under the place values:", gridLatex([16, 1], [hexLatex(hexDigit(hi)), hexLatex(hexDigit(lo))])),
-    mStep("Convert each digit to denary:", `${hexLatex(hexDigit(hi))} = ${denLatex(hi)},\\; ${hexLatex(hexDigit(lo))} = ${denLatex(lo)}`),
-    mStep("Multiply by the place values and add:", [`${hi} \\times 16 + ${lo}`, `= ${hi * 16} + ${lo}`, `= ${denLatex(n)}`]),
+    pvStep("Write the digits under the place values.", table(HEX[2], [hexDigit(hi), hexDigit(lo)])),
+    pvStep(`Convert each digit to denary: ${hexDigit(hi)} = ${hi}, ${hexDigit(lo)} = ${lo}.`, table(HEX[2], [String(hi), String(lo)])),
+    pvStep(`Multiply by the place values and add: ${hi} × 16 + ${lo} = ${hi * 16} + ${lo} = ${n}.`, table(HEX[2], [{ v: String(hi * 16), tone: "highlight" }, { v: String(lo), tone: "highlight" }])),
   ];
 };
 
@@ -194,24 +201,25 @@ const binToHexSteps = (n: number, width: number): WorkingStep[] => {
   const nibbles = nibblesOf(n, width);
   const nibStr = (x: number) => toBits(x, 4).join("");
   const steps: WorkingStep[] = [];
-  if (width === 8) steps.push(mStep("Split the byte into two nibbles (4 bits each):", nibbles.map(nibStr).join("\\;\\;")));
+  if (width === 8) steps.push(pvStep("Split the byte into two nibbles (4 bits each).", table(BIN[8], bitCells(toBits(n, 8)), 4)));
   nibbles.forEach((x) => {
-    steps.push(mStep(`Convert ${nibStr(x)} using the place values 8, 4, 2, 1:`, [binLatex(nibStr(x)), `= ${nibbleSumLatex(x)}`, `= ${hexLatex(hexDigit(x))}`]));
+    const parts = placeValues(4).filter((pv) => (x & pv) !== 0);
+    const sum = parts.length > 1 ? `${parts.join(" + ")} = ${x}` : `${x}`;
+    steps.push(pvStep(`Convert ${bin(nibStr(x))} using the place values 8, 4, 2, 1: ${sum}, which is ${hexS(hexDigit(x))}.`, table(BIN[4], bitCells(toBits(x, 4), true))));
   });
-  if (width === 8) steps.push(mStep("Put the hex digits together:", hexLatex(toHex(n))));
+  if (width === 8) steps.push(pvStep("Put the hex digits together.", table(HEX[2], nibbles.map((x) => ({ v: hexDigit(x), tone: "answer" as const })))));
   return steps;
 };
 
 const hexToBinSteps = (n: number, width: number): WorkingStep[] => {
   const nibbles = nibblesOf(n, width);
   const nibStr = (x: number) => toBits(x, 4).join("");
-  const steps: WorkingStep[] = nibbles.map((x) =>
-    mStep(
-      `Write ${hexDigit(x)} as a 4-bit nibble using the place values 8, 4, 2, 1:`,
-      [`${hexLatex(hexDigit(x))} = ${denLatex(x)}`, `= ${binLatex(nibStr(x))}`],
-    ),
-  );
-  if (width === 8) steps.push(mStep("Put the nibbles together:", binLatex(nibbles.map(nibStr).join(""))));
+  const steps: WorkingStep[] = nibbles.map((x) => {
+    const parts = placeValues(4).filter((pv) => (x & pv) !== 0);
+    const how = parts.length > 1 ? ` = ${parts.join(" + ")}` : "";
+    return pvStep(`Write ${hexDigit(x)} as a 4-bit nibble using the place values 8, 4, 2, 1: ${hexS(hexDigit(x))} = ${den(x)}${how}, so ${bin(nibStr(x))}.`, table(BIN[4], bitCells(toBits(x, 4), true)));
+  });
+  if (width === 8) steps.push(pvStep("Put the nibbles together.", table(BIN[8], bitCells(toBits(n, 8)), 4)));
   return steps;
 };
 
@@ -255,7 +263,6 @@ const buildQuestion = (level: DifficultyLevel, dir: Direction): AnyQuestion => {
       answer = bin; answerLatex = binLatex(bin); working = hexToBinSteps(n, width);
       break;
   }
-  working.push(mStep("Answer:", answerLatex));
 
   return {
     kind: "worded",
@@ -298,7 +305,9 @@ export default function App() {
       config={TOOL_CONFIG}
       infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
-      defaults={{ numQuestions: 12, numColumns: 3, maxColumns: 4, hideAnswerStep: true }}
+      stepRenderer={placeValueStepRenderer}
+      stepVisualRenderer={placeValueStepVisual}
+      defaults={{ numQuestions: 12, numColumns: 3, maxColumns: 4 }}
     />
   );
 }

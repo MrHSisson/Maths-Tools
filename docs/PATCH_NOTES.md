@@ -2119,6 +2119,10 @@ in custom renderers.
 
 # Computer Science
 
+## 2026-10-04 — Number Bases moved onto the shared place value table (stage 2 of 3)
+- Number Bases' worked examples now use the shared place value table (`pvStep` snapshots with the base-aware columns: 128 … 1 for binary, 16 and 1 for hex, a heavier rule per nibble) instead of hand-built KaTeX grids — one table updates in place beside short plain-text captions (`stepRenderer` / `stepVisualRenderer`, as in Decimal Add/Sub). All six directions covered; the green A line now carries the answer (its own "Answer:" step and `hideAnswerStep` removed).
+- Questions, levels, options and worksheets unchanged. Build clean, 426 tests pass. Stage 3 (Binary Operations: shifts and addition) still to do.
+
 ## 2026-10-04 — Data Units tool; Binary Counting controls tidied
 - New ToolShell tool `/data-units` (`src/tools/Binary/DataUnits.tsx`, dev-gated): convert between bits, nibbles, bytes, KB, MB, GB, TB, PB on the OCR ×1000 scale, with ×1024 in brackets. Level = length of the walk along the scale (1 step / 2 steps / 3–5). Sub-tools: **Bytes & Above** (Direction, whole/decimal, wording pools) and **Bits & Nibbles** (×4 / ×2 hops, scenario wording). Whiteboard shows the scale as a ladder in the working box (start filled, target outlined, path lit on Show Answer). Exact BigInt maths. Brief: `specs/data-units.md`; test `src/tests/dataUnits.test.ts`.
 - Data Units scale: centred in the working box; new QO switch "Scale: only the relevant units" shows just the start-to-target units, larger.
