@@ -23,6 +23,8 @@ export interface RippleBeat {
   carryCol: number;
   kind: "fits" | "carry" | "overflow";
   text: string;
+  /** One compact line for a whole-chain summary, e.g. "2s: 1 + 1 = 2 (10 in binary) → write 0, carry 1". */
+  short: string;
 }
 
 export interface RippleResult {
@@ -56,10 +58,12 @@ export const rippleIncrement = (n: number, base: RippleBase, width: number): Rip
     const sum = v + 1;
     const lead = j === 0 ? "Add 1 to the ones column. " : `The carry arrives in the ${columnName(base, j)} column. `;
     changed[c] = true;
+    const sumTxt = `${columnName(base, j)}: ${dtxt(base, v)} + 1 = ${sum}`;
     if (sum < base) {
       cur[c] = sum;
       beats.push({
         cells: snap(), changed: [...changed], focusCol: c, carryCol: -1, kind: "fits",
+        short: `${sumTxt} → write ${ch(sum)}, nothing to carry`,
         text: `${lead}${dtxt(base, v)} + 1 = ${sum} — that fits in one ${name} column, so write ${ch(sum)}. Nothing is left to carry, so we stop.`,
       });
       return { beats, result: n + 1, overflow: false };
@@ -68,12 +72,17 @@ export const rippleIncrement = (n: number, base: RippleBase, width: number): Rip
     const how = base === 10
       ? `${dtxt(base, v)} + 1 = ${sum}. A column only holds ${RANGE[base]}, so write 0 and carry the 1 to the next column.`
       : `${dtxt(base, v)} + 1 = ${sum}, which is written ${sum.toString(base).toUpperCase()} in ${name}: write the 0 and carry the 1 to the next column.`;
-    beats.push({ cells: snap(), changed: [...changed], focusCol: c, carryCol: c - 1, kind: "carry", text: lead + how });
+    const w = sum.toString(base).toUpperCase();
+    beats.push({
+      cells: snap(), changed: [...changed], focusCol: c, carryCol: c - 1, kind: "carry", text: lead + how,
+      short: `${sumTxt}${base === 10 ? "" : ` (${w} in ${name})`} → write 0, carry 1`,
+    });
   }
 
   const unit = base === 2 ? "bit" : "digit";
   beats.push({
     cells: snap(), changed: Array(width).fill(true), focusCol: -1, carryCol: -1, kind: "overflow",
+    short: "No column left — the carry is lost (overflow)",
     text: `The carry has nowhere to go — there is no column to the left of the last one. With only ${width} ${unit}${width === 1 ? "" : "s"} the carry is lost: this is overflow, and every column is now 0.`,
   });
   return { beats, result: 0, overflow: true };

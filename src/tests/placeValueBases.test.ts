@@ -63,3 +63,14 @@ describe("carry ripple", () => {
     }
   });
 });
+
+describe("carry ripple summaries", () => {
+  it("each beat has a one-line summary", () => {
+    const r = rippleIncrement(3, 2, 4);
+    expect(r.beats.map((b) => b.short)).toEqual([
+      "ones: 1 + 1 = 2 (10 in binary) → write 0, carry 1",
+      "2s: 1 + 1 = 2 (10 in binary) → write 0, carry 1",
+      "4s: 0 + 1 = 1 → write 1, nothing to carry",
+    ]);
+  });
+});
