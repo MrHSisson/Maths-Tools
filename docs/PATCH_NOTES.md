@@ -2124,6 +2124,8 @@ in custom renderers.
 - "Add a bit" builds the n-bit table from the (n−1)-bit one: the first half appears with a 0 in front, then "Copy it again with a 1 in front" reveals the second half (rule between halves, new bit tinted). Past 4 bits the table pages 16 rows at a time — the last four bits repeat on every page — instead of listing 256.
 - Shared place value table now handles other bases: `pvBaseColumnSet(2|16, digits)` / `pvBaseCells` (headings are place values 128…1 / 16, 1; "Powers" gives 2⁷…2⁰), `groupEvery` (heavier rule per nibble), and a `current` row tone.
 - Default view is an **odometer** — one big row per base that counts up in place, the digits that just turned over tinted blue — with the full list of rows as a second view ("Full list").
+- **Explain mode** (default, with a Slow switch): each count-up is broken into beats, one per column the carry touches, with a plain-English sentence for each ("1 + 1 = 2, which is written 10 in binary: write the 0 and carry the 1"), a carry mark above the next column, and denary/hex waiting until the carry finishes. At all ones the next press shows **overflow** — the carry has nowhere to go — and wraps to 0.
+- New shared model `src/shared/carry.ts` (`rippleIncrement(n, base, width)` — beats for any of base 2/10/16) so Number Bases / Binary Operations can narrate carries and overflow the same way.
 - Brief: `specs/cs/binary-counting.md`. Stages 2–3 (move Number Bases, then Binary Operations shifts/addition onto the shared table) still to do.
 - Build clean, 406 tests pass (new `placeValueBases.test.ts`).
 

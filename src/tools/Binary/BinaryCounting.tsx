@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Home, Play, Pause, ChevronLeft, ChevronRight, RotateCcw, Plus } from "lucide-react";
 import {
-  PlaceValueTable, pvColumnSet, pvBaseColumnSet, pvBaseCells, pvCells,
+  PlaceValueTable, pvColumnSet, pvBaseColumnSet, pvBaseCells, pvCells, rippleIncrement,
   type PlaceValueTableData, type PVRow, type PVCell,
 } from "../../shared";
 
@@ -19,11 +19,31 @@ const CELL_H = 40;
 const ODO_H = 96;   // odometer row — big enough to read from the back of a classroom
 const ODO_W = 76;
 
+// Odometer state: the committed number, plus (when explaining) which beat of the "add 1" ripple is on screen.
+interface Odo { count: number; anim: { from: number; i: number } | null; wrapped: boolean }
+const SPEED_MS = { slow: 3200, normal: 1900 } as const;
+
+// One press / tick: move on a beat; at the end of an increment, start the next one. The number is committed on the
+// increment's last beat, so the table and readout always agree with what is on screen.
+const advance = (p: Odo, bits: number): Odo => {
+  let from = p.count;
+  let i = 0;
+  if (p.anim && p.anim.i < rippleIncrement(p.anim.from, 2, bits).beats.length - 1) { from = p.anim.from; i = p.anim.i + 1; }
+  const r = rippleIncrement(from, 2, bits);
+  const done = i === r.beats.length - 1;
+  return { count: done ? r.result : from, anim: { from, i }, wrapped: done && r.overflow };
+};
+
 const popcount = (n: number) => n.toString(2).split("").filter((c) => c === "1").length;
 
 export default function BinaryCounting() {
   const [bits, setBits] = useState(3);
-  const [count, setCount] = useState(0);
+  const [odo, setOdo] = useState<Odo>({ count: 0, anim: null, wrapped: false });
+  const count = odo.count;
+  const setCount = (f: number | ((c: number) => number)) =>
+    setOdo((o) => ({ count: typeof f === "function" ? f(o.count) : f, anim: null, wrapped: false }));
+  const [explain, setExplain] = useState(true);
+  const [speed, setSpeed] = useState<keyof typeof SPEED_MS>("normal");
   const [playing, setPlaying] = useState(false);
   const [pattern, setPattern] = useState(true);
   const [words, setWords] = useState(false);
@@ -39,6 +59,7 @@ export default function BinaryCounting() {
   const paged = list && bits > 4;
   const start = paged ? Math.floor(count / PAGE) * PAGE : 0;
   const hid = list && halfHidden;
+  const walk = !list && explain;   // odometer that narrates each carry (and wraps round on overflow)
   const last = hid ? half - 1 : size - 1;
 
   const setBitsTo = (b: number, hide: boolean) => {
@@ -52,22 +73,50 @@ export default function BinaryCounting() {
   useEffect(() => {
     if (!playing) return;
     const id = window.setInterval(() => {
+      if (walk) { setOdo((o) => advance(o, bits)); return; }
       setCount((c) => {
         if (c >= last) { setPlaying(false); return c; }
         return c + 1;
       });
-    }, 750);
+    }, walk ? SPEED_MS[speed] : 750);
     return () => window.clearInterval(id);
-  }, [playing, last]);
+  }, [playing, last, walk, speed, bits]);
+  // Play stops once an overflow has been shown.
+  useEffect(() => { if (playing && odo.wrapped) setPlaying(false); }, [playing, odo.wrapped]);
 
-  const step = (d: number) => setCount((c) => Math.max(0, Math.min(last, c + d)));
+  const step = (d: number) => {
+    if (walk && d > 0) { setOdo((o) => advance(o, bits)); return; }
+    setCount((c) => Math.max(0, Math.min(last, c + d)));
+  };
+
+  // ── The ripple currently on screen (odometer + explain only) ───────────────
+  const ripple = walk && odo.anim ? rippleIncrement(odo.anim.from, 2, bits) : null;
+  const beat = ripple && odo.anim ? ripple.beats[odo.anim.i] : null;
+  const atEnd = !!ripple && !!odo.anim && odo.anim.i === ripple.beats.length - 1;
+  const midRipple = !!beat && !atEnd;   // the committed number hasn't changed yet
 
   // ── Build the three tables ─────────────────────────────────────────────────
   const rowNums = list ? Array.from({ length: Math.min(size, PAGE) }, (_, i) => start + i) : [count];
   const topCols = !pattern ? 0 : paged ? bits - 4 : bits >= 2 ? 1 : 0;   // the columns that are "new" on this table/page
 
-  const rowsFor = (cellsOf: (n: number) => string[], tintTop: boolean): PVRow[] =>
-    rowNums.map((n) => {
+  // Odometer rows: the number being shown, tinting what just turned over (during a ripple: what has changed so far).
+  const odoRow = (cellsOf: (n: number) => string[], tintTop: boolean, binary: boolean): PVRow[] => {
+    const from = odo.anim?.from ?? count - 1;
+    const shown = midRipple ? from : count;   // denary / hex wait for the end of the ripple
+    const now = binary && beat ? beat.cells : cellsOf(shown);
+    const before = from >= 0 ? cellsOf(from) : null;
+    const cells: PVCell[] = now.map((v, i) => ({
+      v,
+      tone: (binary && beat ? beat.changed[i] : before && before[i] !== v) ? "current" : tintTop && i < topCols ? "highlight" : undefined,
+      above: binary && beat && odo.anim
+        ? (i === beat.carryCol ? "1" : odo.anim.i === 0 && i === bits - 1 ? "+1" : undefined)
+        : undefined,
+    }));
+    return [{ kind: "cells", cells }];
+  };
+
+  const rowsFor = (cellsOf: (n: number) => string[], tintTop: boolean, binary = false): PVRow[] =>
+    !list ? odoRow(cellsOf, tintTop, binary) : rowNums.map((n) => {
       const hidden = hid && n >= half;
       const shown = cellsOf(n);
       const before = !list && count > 0 ? cellsOf(count - 1) : null;   // odometer: tint the digits that just turned over
@@ -85,7 +134,7 @@ export default function BinaryCounting() {
   const denTable: PlaceValueTableData = { ...base, columns: den.columns, columnNames: den.columnNames, onesIndex: den.onesIndex, colWidth: list ? 52 : ODO_W, rows: rowsFor((n) => pvCells(String(n), den.columns, den.onesIndex), false) };
 
   const bin = pvBaseColumnSet(2, bits);
-  const binTable: PlaceValueTableData = { ...base, columns: bin.columns, columnNames: bin.columnNames, onesIndex: bin.onesIndex, groupEvery: paged || showHex || (!list && bits > 4) ? 4 : undefined, colWidth: list ? undefined : ODO_W, rows: rowsFor((n) => pvBaseCells(n, 2, bits), true) };
+  const binTable: PlaceValueTableData = { ...base, columns: bin.columns, columnNames: bin.columnNames, onesIndex: bin.onesIndex, groupEvery: paged || showHex || (!list && bits > 4) ? 4 : undefined, colWidth: list ? undefined : ODO_W, rows: rowsFor((n) => pvBaseCells(n, 2, bits), true, true) };
 
   const hexDigits = Math.ceil(bits / 4);
   const hex = pvBaseColumnSet(16, hexDigits);
@@ -149,16 +198,24 @@ export default function BinaryCounting() {
           </div>
           <div className="flex items-center gap-1.5">
             <Round onClick={() => { setCount(0); setPlaying(false); }} title="Back to 0"><RotateCcw size={18} /></Round>
-            <Round onClick={() => step(-1)} disabled={count <= 0} title="Count down"><ChevronLeft size={18} /></Round>
-            <Round onClick={() => (count >= last ? (setCount(0), setPlaying(true)) : setPlaying((p) => !p))} title={playing ? "Pause" : "Count up automatically"}>
+            <Round onClick={() => step(-1)} disabled={count <= 0 && !midRipple} title="Count down"><ChevronLeft size={18} /></Round>
+            <Round onClick={() => (!walk && count >= last ? (setCount(0), setPlaying(true)) : setPlaying((p) => !p))} title={playing ? "Pause" : "Count up automatically"}>
               {playing ? <Pause size={18} /> : <Play size={18} />}
             </Round>
-            <Round onClick={() => step(1)} disabled={count >= last} title="Count up"><ChevronRight size={18} /></Round>
+            <Round onClick={() => step(1)} disabled={!walk && count >= last} title="Count up"><ChevronRight size={18} /></Round>
           </div>
           <div className="flex items-center gap-1.5">
             <Chip on={!list} onClick={() => { setView("odometer"); setHalfHidden(false); setPlaying(false); }} title="One row per base that counts up in place">Odometer</Chip>
             <Chip on={list} onClick={() => { setView("list"); setPlaying(false); }} title="Every number as its own row">Full list</Chip>
           </div>
+          {!list && (
+            <div className="flex items-center gap-1.5">
+              <Chip on={explain} onClick={() => { setExplain((e) => !e); setOdo((o) => ({ ...o, anim: null, wrapped: false })); setPlaying(false); }} title="Break each count into steps and explain the carry">Explain</Chip>
+              {explain && (
+                <Chip on={speed === "slow"} onClick={() => setSpeed((v) => (v === "slow" ? "normal" : "slow"))} title="Slower automatic counting">Slow</Chip>
+              )}
+            </div>
+          )}
           <div className="flex flex-wrap items-center gap-1.5">
             <Chip on={pattern} onClick={() => setPattern((p) => !p)} title="Colour the leading bit(s) that are new">Highlight new bits</Chip>
             <Chip on={showHex} onClick={() => setShowHex((p) => !p)} title="Show hexadecimal alongside">Hex</Chip>
@@ -169,9 +226,34 @@ export default function BinaryCounting() {
         {/* Tables — side by side, stacked on a phone */}
         <div className={list ? "flex flex-col sm:flex-row gap-4 items-start" : "flex flex-col gap-5"}>
           <div className={list ? "w-full sm:w-auto sm:flex-none" : "w-full"}><Title t="Denary" /><PlaceValueTable data={denTable} /></div>
-          <div className={list ? "w-full sm:flex-1 min-w-0" : "w-full"}><Title t="Binary" /><PlaceValueTable data={binTable} /></div>
+          <div className={list ? "w-full sm:flex-1 min-w-0" : "w-full"}><Title t={beat?.kind === "overflow" ? "Binary — overflow!" : "Binary"} /><PlaceValueTable data={binTable} /></div>
           {showHex && <div className={list ? "w-full sm:w-auto sm:flex-none" : "w-full"}><Title t="Hex" /><PlaceValueTable data={hexTable} /></div>}
         </div>
+
+        {/* What is happening — one beat at a time */}
+        {walk && (
+          <div className={`mt-5 rounded-xl border-2 px-4 py-3 text-center ${beat?.kind === "overflow" ? "bg-red-50 border-red-300" : "bg-sky-50 border-sky-200"}`}>
+            {beat && odo.anim && ripple ? (
+              <>
+                <div className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                  {odo.anim.from} + 1 · step {odo.anim.i + 1} of {ripple.beats.length}
+                </div>
+                <p className={`text-xl leading-snug ${beat.kind === "overflow" ? "text-red-800 font-semibold" : "text-slate-800"}`}>{beat.text}</p>
+                {atEnd && (
+                  <p className="mt-2 text-base text-slate-600">
+                    {ripple.overflow
+                      ? `Denary: ${odo.anim.from} + 1 = ${size}, but ${bits} bits only reach ${size - 1}, so the number wraps round to 0.`
+                      : (() => { const d = rippleIncrement(odo.anim.from, 10, 4); return d.beats[0].kind === "carry" ? `Denary does the same thing: ${d.beats[0].text.replace(/^Add 1 to the ones column\. /, "")}` : `So ${odo.anim.from} + 1 = ${count}: binary ${bitStr}.`; })()}
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="text-xl text-slate-700">
+                {count === size - 1 ? "All ones — press → to see what happens when we add 1." : "Press → to add 1 and watch the carry, one column at a time."}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Reveal the second half */}
         {hid && (
@@ -183,7 +265,7 @@ export default function BinaryCounting() {
           </div>
         )}
 
-        <p className="mt-4 text-center text-lg text-slate-700">{caption}</p>
+        {!(walk && beat) && <p className="mt-4 text-center text-lg text-slate-700">{caption}</p>}
 
         {/* Readout for the current count */}
         <div className="mt-3 rounded-xl bg-white border-2 border-slate-200 px-4 py-3 text-center text-slate-800">

@@ -700,6 +700,7 @@ Binary↔Hex, 2 levels each (nibble / byte), a Direction pool per tab.
 
 **Possible next steps:**
 - ✅ **Stage 1 done:** Binary Counting sandbox (`/binary-counting`, dev-gated) + base-aware shared place value table (`pvBaseColumnSet`, `groupEvery`). Brief: `specs/cs/binary-counting.md`.
+- Reuse `rippleIncrement` (`src/shared/carry.ts`) for the carry/overflow explanations in stages 2–3, so the same wording appears in Binary Counting, Number Bases and Binary Operations.
 - **Stage 2:** move Number Bases working steps from the KaTeX `gridLatex` onto the shared table (`pvStep` snapshots, headings as 128…1 / 16, 1).
 - **Stage 3:** Binary Operations — shifts (bits move a column, overflow/underflow bits leave the edge) and addition (carries in `above` cells); includes 8-bit worksheet/print layouts. Retires the duplicated KaTeX grid.
 - Gather classroom feedback on Number Bases and Binary Operations (both live), and on Binary Counting before it goes live.

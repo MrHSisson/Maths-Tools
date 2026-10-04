@@ -27,3 +27,39 @@ describe("place value table — other bases", () => {
     }
   });
 });
+
+import { rippleIncrement } from "../shared";
+
+describe("carry ripple", () => {
+  it("0000 + 1 fits in one beat", () => {
+    const r = rippleIncrement(0, 2, 4);
+    expect(r.beats).toHaveLength(1);
+    expect(r.beats[0].cells.join("")).toBe("0001");
+    expect(r.result).toBe(1);
+  });
+  it("0011 + 1 carries twice, then fits", () => {
+    const r = rippleIncrement(3, 2, 4);
+    expect(r.beats.map((b) => b.kind)).toEqual(["carry", "carry", "fits"]);
+    expect(r.beats.map((b) => b.cells.join(""))).toEqual(["0010", "0000", "0100"]);
+    expect(r.beats[0].carryCol).toBe(2);
+    expect(r.result).toBe(4);
+  });
+  it("1111 + 1 overflows to 0000", () => {
+    const r = rippleIncrement(15, 2, 4);
+    expect(r.beats.map((b) => b.kind)).toEqual(["carry", "carry", "carry", "carry", "overflow"]);
+    expect(r.overflow).toBe(true);
+    expect(r.result).toBe(0);
+    expect(r.beats[4].cells.join("")).toBe("0000");
+  });
+  it("same idea in denary and hex", () => {
+    expect(rippleIncrement(9, 10, 2).beats.map((b) => b.cells.join(""))).toEqual(["00", "10"]);
+    expect(rippleIncrement(15, 16, 2).beats.map((b) => b.cells.join(""))).toEqual(["00", "10"]);
+  });
+  it("final beat always equals the next value, for every 8-bit number", () => {
+    for (let n = 0; n < 256; n++) {
+      const r = rippleIncrement(n, 2, 8);
+      expect(parseInt(r.beats[r.beats.length - 1].cells.join(""), 2)).toBe((n + 1) % 256);
+      expect(r.result).toBe((n + 1) % 256);
+    }
+  });
+});
