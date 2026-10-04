@@ -16,7 +16,8 @@
 // Per-step emphasis (optional): a question may carry `_stepFocus`, one entry per working step (any shape the tool's
 // renderer understands — Triangles uses the indices of the angles the step is about; undefined = no emphasis). Each
 // step's picture is rendered from a copy of the question with that entry on `_focus`, so a tool's questionRenderer
-// just reads `(q as any)._focus` and lights up what the step is talking about.
+// just reads `(q as any)._focus` and lights up what the step is talking about. `(q as any)._step` is the step's index,
+// so a diagram can also reveal things the working has just found (a derived angle, a computed length).
 
 import type { AnyQuestion, QOSnapshot, WorkingStep } from "./types";
 
@@ -35,7 +36,7 @@ export const withDiagramSteps = <A extends unknown[]>(generate: (...args: A) => 
     const last = q.working.length - 1;
     const working: WorkingStep[] = q.working.map((w, i) => {
       // A copy per step, no circular reference back to the steps; `_focus` is what this step is about.
-      const view = { ...q, working: [], _focus: stepFocus?.[i] } as unknown as AnyQuestion;
+      const view = { ...q, working: [], _focus: stepFocus?.[i], _step: i } as unknown as AnyQuestion;
       return { ...w, extra: { kind: "diagramStep", view, reveal: i === last } satisfies DiagramStepExtra };
     });
     return { ...q, working } as AnyQuestion;

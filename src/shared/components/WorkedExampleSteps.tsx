@@ -302,6 +302,8 @@ export const WorkedExampleSteps = ({
   const evolve = hasVisual && (!stepped || layout === "stacked");
   /** Split with caption-only lines on a timeline (vs `keepWorking`: ordinary step cards beside the picture). */
   const captions = evolve && !keepWorking;
+  /** Either split flavour: steps are flat rows on a numbered spine (no backing cards), with the answer as a green "A" line. */
+  const timeline = evolve;
   /** The visual to show when `idx` is the current step: the nearest visual step at or before it. */
   const visualFor = (idx: number): JSX.Element | null => {
     for (let i = Math.min(idx, totalSteps - 1); i >= 0; i--) {
@@ -355,11 +357,41 @@ export const WorkedExampleSteps = ({
       </div>
     );
   };
+  // Keep-working flavour: the same flat row as a caption — numbered dot, no card — but it carries the step's own
+  // label and maths. Past steps fade back; the final step's dot turns green when it is itself the answer.
+  const workRow = (s: WorkingStep, i: number, reveal: number | undefined, state: "current" | "past" | "all") => {
+    const on = state === "current";
+    const isAnswer = hideAnswerStep && i === totalSteps - 1;
+    const custom = stepRenderer ? stepRenderer(s, colorScheme, qoSnapshot) : null;
+    const text = compact ? "text-base leading-snug" : "text-xl leading-snug";
+    const dotBg = isAnswer ? "#16a34a" : on ? "#1e3a8a" : "#fff";
+    const dotBorder = isAnswer ? "#16a34a" : on ? "#1e3a8a" : "#cbd5e1";
+    return (
+      <div key={i} className="flex items-start gap-3 py-2" style={{ opacity: state === "past" ? 0.5 : 1, transition: "opacity 0.3s ease" }}>
+        <span
+          className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold"
+          style={{ background: dotBg, color: on || isAnswer ? "#fff" : "#475569", border: `2px solid ${dotBorder}`, boxShadow: on ? `0 0 0 4px ${isAnswer ? "rgba(22,163,74,0.15)" : "rgba(30,58,138,0.15)"}` : "none" }}
+        >{i + 1}</span>
+        <div className="min-w-0 flex-1 pt-0.5" style={{ color: "#0f172a" }}>
+          {custom ?? (s.type === "tStep"
+            ? <p className={text} style={{ fontWeight: on ? 600 : 400 }}><SkillLabel text={s.plain} onOpenSkill={onOpenSkill} /></p>
+            : s.type === "mStep"
+              ? <div className="flex flex-col gap-1">
+                  <span className={`text-left ${text}`} style={{ fontWeight: on ? 600 : 400 }}><SkillLabel text={s.label ?? ""} onOpenSkill={onOpenSkill} /></span>
+                  <div className={`text-center ${compact ? "text-xl" : "text-2xl"}`}><FitWidth>{stepMaths(s, reveal)}</FitWidth></div>
+                </div>
+              : <div className={`text-center ${compact ? "text-xl" : "text-2xl"}`}><FitWidth>{stepMaths(s, reveal)}</FitWidth></div>
+          )}
+        </div>
+      </div>
+    );
+  };
   /** The vertical line the numbered dots sit on. */
   const timelineSpine = <div className="absolute left-4 top-6 bottom-6 w-0.5 -translate-x-1/2 rounded bg-slate-300" aria-hidden />;
 
   const renderStep = (s: WorkingStep, i: number, reveal?: number, stacked?: boolean, state: "current" | "past" | "all" = "all") => {
     if (captions && visualOf(s) !== null) return captionRow(s, i, state);   // a picture step or a caption-only step
+    if (timeline && keepWorking) return workRow(s, i, reveal, state);       // keep-working: same row, with the maths
     const custom = stepRenderer ? stepRenderer(s, colorScheme, qoSnapshot) : null;
     const isFinalAnswerStep = hideAnswerStep && i === totalSteps - 1;
     // compact (narrow viewport) always wins over the "stacked" layout's own
@@ -421,13 +453,13 @@ export const WorkedExampleSteps = ({
   // — see EnterCard's own comment for why that one needs a mount transition
   // and the rest don't.
   const stackedSteps = (upTo: number, activeReveal: number) => (
-    <div className={captions ? "relative" : "space-y-2"}>
-      {captions && timelineSpine}
+    <div className={timeline ? "relative" : "space-y-2"}>
+      {timeline && timelineSpine}
       {working.slice(0, upTo + 1).map((s, i) => {
         const isCurrent = i === upTo;
         const isFinalAnswerStep = hideAnswerStep && i === totalSteps - 1;
         const content = renderStep(s, i, isCurrent ? activeReveal : undefined, true, isCurrent ? "current" : "past");
-        if (captions && visualOf(s) !== null) {
+        if (timeline) {
           return isCurrent ? <EnterCard key={i}>{content}</EnterCard> : content;
         }
         if (isCurrent) {
@@ -521,12 +553,12 @@ export const WorkedExampleSteps = ({
         <div className="p-1">
           {!atAnswer ? withVisual(stackedSteps(stepIdx, fragIdx), stepIdx) : withVisual(
             <div className="space-y-2">
-              <div className={captions ? "relative" : "space-y-2"} style={captions ? undefined : { opacity: 0.7 }}>
-                {captions && timelineSpine}
+              <div className={timeline ? "relative" : "space-y-2"} style={timeline ? undefined : { opacity: 0.7 }}>
+                {timeline && timelineSpine}
                 {working.map((s, i) => renderStep(s, i, undefined, true, "past"))}
-                {captions && answerRow}
+                {timeline && answerRow}
               </div>
-              {!captions && answerBox("", undefined, true)}
+              {!timeline && answerBox("", undefined, true)}
             </div>, totalSteps - 1)}
           <div ref={footerRef} className="pt-4 mt-4 border-t" style={{ borderColor: "rgba(0,0,0,0.08)" }}>
             {navRow}
@@ -557,12 +589,12 @@ export const WorkedExampleSteps = ({
         </div>
       )}
       {withVisual(
-        <div className={captions ? "relative" : "space-y-4"}>
-          {captions && timelineSpine}
+        <div className={timeline ? "relative" : "space-y-4"}>
+          {timeline && timelineSpine}
           {working.map((s, i) => renderStep(s, i))}
-          {captions && !hideAnswerStep && answerRow}
+          {timeline && !hideAnswerStep && answerRow}
         </div>, totalSteps - 1)}
-      {!hideAnswerStep && !captions && answerBox("mt-4")}
+      {!hideAnswerStep && !timeline && answerBox("mt-4")}
     </>
   );
 };
