@@ -9,12 +9,15 @@ import {
 // denary, binary (and optionally hex), so students can see (1) the rollover is the same idea in every base, and
 // (2) every n-bit pattern is the (n−1)-bit pattern again, once with a 0 in front and once with a 1.
 //
+// Two views: an odometer (one row per base, counting up in place — the default) and the full list of rows.
 // Up to 8 bits. Past 4 bits the table shows one page of 16 rows (all 256 would be unreadable) — and the page
 // itself shows the idea again: the last four bits run 0000 → 1111 on every page, only the leading bits change.
 
 const MAX_BITS = 8;
 const PAGE = 16;
 const CELL_H = 40;
+const ODO_H = 96;   // odometer row — big enough to read from the back of a classroom
+const ODO_W = 76;
 
 const popcount = (n: number) => n.toString(2).split("").filter((c) => c === "1").length;
 
@@ -27,17 +30,22 @@ export default function BinaryCounting() {
   const [showHex, setShowHex] = useState(false);
   // After "Add a bit" the second half (the copy with a 1 in front) stays hidden until the teacher reveals it.
   const [halfHidden, setHalfHidden] = useState(false);
+  // "odometer": one row per base that counts up in place. "list": every number as its own row.
+  const [view, setView] = useState<"odometer" | "list">("odometer");
+  const list = view === "list";
 
   const size = 2 ** bits;
   const half = size / 2;
-  const paged = bits > 4;
+  const paged = list && bits > 4;
   const start = paged ? Math.floor(count / PAGE) * PAGE : 0;
-  const last = halfHidden ? half - 1 : size - 1;
+  const hid = list && halfHidden;
+  const last = hid ? half - 1 : size - 1;
 
   const setBitsTo = (b: number, hide: boolean) => {
+    const h = hide && list;
     setBits(b);
-    setCount((c) => Math.min(c, hide ? 2 ** (b - 1) - 1 : 2 ** b - 1));
-    setHalfHidden(hide && b >= 2 && b <= 4);
+    setCount((c) => Math.min(c, h ? 2 ** (b - 1) - 1 : 2 ** b - 1));
+    setHalfHidden(h && b >= 2 && b <= 4);
     setPlaying(false);
   };
 
@@ -55,41 +63,47 @@ export default function BinaryCounting() {
   const step = (d: number) => setCount((c) => Math.max(0, Math.min(last, c + d)));
 
   // ── Build the three tables ─────────────────────────────────────────────────
-  const rowNums = Array.from({ length: Math.min(size, PAGE) }, (_, i) => start + i);
+  const rowNums = list ? Array.from({ length: Math.min(size, PAGE) }, (_, i) => start + i) : [count];
   const topCols = !pattern ? 0 : paged ? bits - 4 : bits >= 2 ? 1 : 0;   // the columns that are "new" on this table/page
 
   const rowsFor = (cellsOf: (n: number) => string[], tintTop: boolean): PVRow[] =>
     rowNums.map((n) => {
-      const hidden = halfHidden && n >= half;
+      const hidden = hid && n >= half;
       const shown = cellsOf(n);
+      const before = !list && count > 0 ? cellsOf(count - 1) : null;   // odometer: tint the digits that just turned over
       const cells: PVCell[] = shown.map((v, i) => ({
         v: hidden ? "" : v,
-        tone: !hidden && n === count ? "current" : !hidden && tintTop && i < topCols ? "highlight" : undefined,
+        tone: hidden ? undefined : list && n === count ? "current" : before && before[i] !== v ? "current" : tintTop && i < topCols ? "highlight" : undefined,
       }));
-      return { kind: "cells", cells, rule: !paged && bits >= 2 && n === half };
+      return { kind: "cells", cells, rule: list && !paged && bits >= 2 && n === half };
     });
 
-  const base = { showPoint: false, cellHeight: CELL_H, headerStyle: (words ? "words" : "letters") as "words" | "letters" };
+  const base = { showPoint: false, cellHeight: list ? CELL_H : ODO_H, headerStyle: (words ? "words" : "letters") as "words" | "letters" };
 
   const denDigits = Math.max(2, String(size - 1).length);
   const den = pvColumnSet(denDigits, 0);
-  const denTable: PlaceValueTableData = { ...base, columns: den.columns, columnNames: den.columnNames, onesIndex: den.onesIndex, colWidth: 52, rows: rowsFor((n) => pvCells(String(n), den.columns, den.onesIndex), false) };
+  const denTable: PlaceValueTableData = { ...base, columns: den.columns, columnNames: den.columnNames, onesIndex: den.onesIndex, colWidth: list ? 52 : ODO_W, rows: rowsFor((n) => pvCells(String(n), den.columns, den.onesIndex), false) };
 
   const bin = pvBaseColumnSet(2, bits);
-  const binTable: PlaceValueTableData = { ...base, columns: bin.columns, columnNames: bin.columnNames, onesIndex: bin.onesIndex, groupEvery: paged || showHex ? 4 : undefined, rows: rowsFor((n) => pvBaseCells(n, 2, bits), true) };
+  const binTable: PlaceValueTableData = { ...base, columns: bin.columns, columnNames: bin.columnNames, onesIndex: bin.onesIndex, groupEvery: paged || showHex || (!list && bits > 4) ? 4 : undefined, colWidth: list ? undefined : ODO_W, rows: rowsFor((n) => pvBaseCells(n, 2, bits), true) };
 
   const hexDigits = Math.ceil(bits / 4);
   const hex = pvBaseColumnSet(16, hexDigits);
-  const hexTable: PlaceValueTableData = { ...base, columns: hex.columns, columnNames: hex.columnNames, onesIndex: hex.onesIndex, colWidth: 52, rows: rowsFor((n) => pvBaseCells(n, 16, hexDigits), false) };
+  const hexTable: PlaceValueTableData = { ...base, columns: hex.columns, columnNames: hex.columnNames, onesIndex: hex.onesIndex, colWidth: list ? 52 : ODO_W, rows: rowsFor((n) => pvBaseCells(n, 16, hexDigits), false) };
 
   // ── Readout under the tables ───────────────────────────────────────────────
   const bitStr = pvBaseCells(count, 2, bits).join("");
   const parts = Array.from({ length: bits }, (_, i) => 2 ** (bits - 1 - i)).filter((pv) => (count & pv) !== 0);
   const flips = count > 0 ? popcount(count ^ (count - 1)) : 0;
-  const caption = paged
+  const caption = !list
+    ? bits < 2 ? "One bit: just 0 and 1."
+      : count === size - 1 ? `All ones — the next press carries into a new place and every bit rolls back to 0, just like 99 → 100.`
+      : pattern ? `The last ${bits - 1} bit${bits > 2 ? "s" : ""} count through the ${bits - 1}-bit patterns; the leading bit only turns to 1 when they have rolled all the way round.`
+      : "Blue digits are the ones that just turned over."
+    : paged
     ? `Rows ${start}–${start + PAGE - 1}. The last four bits run 0000 → 1111 on every page — only the leading bits change.`
     : bits < 2 ? "One bit: just 0 and 1."
-    : halfHidden ? `This is the ${bits - 1}-bit table, with a 0 added in front. What will the next ${half} rows look like?`
+    : hid ? `This is the ${bits - 1}-bit table, with a 0 added in front. What will the next ${half} rows look like?`
     : `The bottom ${half} rows are the top ${half} rows again, with a 1 in front (+${half} in denary).`;
 
   const Chip = ({ on, onClick, children, title }: { on: boolean; onClick: () => void; children: React.ReactNode; title?: string }) => (
@@ -128,7 +142,7 @@ export default function BinaryCounting() {
             {Array.from({ length: MAX_BITS }, (_, i) => i + 1).map((b) => (
               <Chip key={b} on={bits === b} onClick={() => setBitsTo(b, false)}>{b}</Chip>
             ))}
-            <button onClick={() => setBitsTo(bits + 1, true)} disabled={bits >= MAX_BITS} title="Add a bit — the new table is the old one with a 0 in front"
+            <button onClick={() => setBitsTo(bits + 1, true)} disabled={bits >= MAX_BITS} title="Add a bit — one more place on the left"
               className="ml-1 flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-35">
               <Plus size={16} />Add a bit
             </button>
@@ -141,6 +155,10 @@ export default function BinaryCounting() {
             </Round>
             <Round onClick={() => step(1)} disabled={count >= last} title="Count up"><ChevronRight size={18} /></Round>
           </div>
+          <div className="flex items-center gap-1.5">
+            <Chip on={!list} onClick={() => { setView("odometer"); setHalfHidden(false); setPlaying(false); }} title="One row per base that counts up in place">Odometer</Chip>
+            <Chip on={list} onClick={() => { setView("list"); setPlaying(false); }} title="Every number as its own row">Full list</Chip>
+          </div>
           <div className="flex flex-wrap items-center gap-1.5">
             <Chip on={pattern} onClick={() => setPattern((p) => !p)} title="Colour the leading bit(s) that are new">Highlight new bits</Chip>
             <Chip on={showHex} onClick={() => setShowHex((p) => !p)} title="Show hexadecimal alongside">Hex</Chip>
@@ -149,14 +167,14 @@ export default function BinaryCounting() {
         </div>
 
         {/* Tables — side by side, stacked on a phone */}
-        <div className="flex flex-col sm:flex-row gap-4 items-start">
-          <div className="w-full sm:w-auto sm:flex-none"><Title t="Denary" /><PlaceValueTable data={denTable} /></div>
-          <div className="w-full sm:flex-1 min-w-0"><Title t="Binary" /><PlaceValueTable data={binTable} /></div>
-          {showHex && <div className="w-full sm:w-auto sm:flex-none"><Title t="Hex" /><PlaceValueTable data={hexTable} /></div>}
+        <div className={list ? "flex flex-col sm:flex-row gap-4 items-start" : "flex flex-col gap-5"}>
+          <div className={list ? "w-full sm:w-auto sm:flex-none" : "w-full"}><Title t="Denary" /><PlaceValueTable data={denTable} /></div>
+          <div className={list ? "w-full sm:flex-1 min-w-0" : "w-full"}><Title t="Binary" /><PlaceValueTable data={binTable} /></div>
+          {showHex && <div className={list ? "w-full sm:w-auto sm:flex-none" : "w-full"}><Title t="Hex" /><PlaceValueTable data={hexTable} /></div>}
         </div>
 
         {/* Reveal the second half */}
-        {halfHidden && (
+        {hid && (
           <div className="mt-4 text-center">
             <button onClick={() => setHalfHidden(false)}
               className="px-5 py-2.5 rounded-lg bg-amber-500 text-white font-bold hover:bg-amber-600">
