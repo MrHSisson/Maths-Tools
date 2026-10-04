@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-04 — Functional Skills Generator: topic tabs
+- The skill picker now shows one topic at a time: a full-width row of topic tabs (Number facts · Written methods · Place value · Properties · Fractions · FDP & measures · BIDMAS, scrolling sideways on a phone) with a count badge of the skills already picked in each, then only that topic's tiles. The page is far shorter (about 1,430px → about 980px with a few skills picked). "Your worksheet" panel, options, settings and PDF generation unchanged; tiles slightly larger and easier to read.
+
 ## 2026-10-04 — Go-live calls: Surds live, Perimeter dev-gated
 - Surds: `enabled: false` removed; now live on the landing page.
 - Perimeter: set `enabled: false` (dev-gated) — thin options and outdated; Simplifying Ratios stays gated pending work.
