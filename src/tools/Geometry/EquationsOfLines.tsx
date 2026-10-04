@@ -2,7 +2,7 @@ import {
   ToolShell, SmartGrapher, QuestionDisplay,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WorkingStep,
   type QOSnapshot, type GraphBuildSpec,
-  mStep, graphStep, graphStepVisual,
+  mStep, tStep, graphStep, graphStepVisual,
 } from "../../shared";
 
 // ── Rational arithmetic ───────────────────────────────────────────────────────
@@ -50,8 +50,32 @@ const fmtDec = (n: number) => Number(n.toFixed(2)).toString();
 type GraphInfo = GraphBuildSpec;
 const LINE_COLOR = "#2563eb";
 /** When (which working step) each part of the graph appears. */
-interface LinePlan { line: number; points: number[]; intercept?: number; }
+interface LinePlan {
+  line: number; points: number[]; intercept?: number;
+  /** Gradient triangle between the first two points: the steps at which the triangle, the Δy leg and the Δx leg appear. */
+  triangle?: { tri: number; dy: number; dx: number };
+}
+const DY_COLOR = "#059669", DX_COLOR = "#7c3aed";
+const signed = (n: number) => (n < 0 ? `−${Math.abs(n)}` : `${n}`);
+
+/** Right-angled triangle on points A→B: horizontal leg A→C, vertical leg C→B (C = (x_B, y_A)). */
+const triangleParts = (a: { x: number; y: number }, b: { x: number; y: number }, t: { tri: number; dy: number; dx: number }) => {
+  const c = { x: b.x, y: a.y };
+  const hSide = b.y > a.y ? "below" : "above";   // label sits outside the triangle
+  const vSide = b.x > a.x ? "right" : "left";
+  return {
+    regions: [{ kind: "polygon" as const, points: [a, c, b], color: "#f59e0b", opacity: 0.16, step: t.tri }],
+    segments: [
+      { from: a, to: c, dashed: true, color: "#94a3b8", step: t.tri },
+      { from: c, to: b, dashed: true, color: "#94a3b8", step: t.tri },
+      { from: c, to: b, color: DY_COLOR, label: `Δy = ${signed(b.y - a.y)}`, labelSide: vSide as "left" | "right", step: t.dy },
+      { from: a, to: c, color: DX_COLOR, label: `Δx = ${signed(b.x - a.x)}`, labelSide: hSide as "above" | "below", step: t.dx },
+    ],
+  };
+};
+
 const buildLineGraph = (m: number, c: number, points: { x: number; y: number }[], plan: LinePlan): GraphInfo => ({
+  ...(plan.triangle && points.length >= 2 ? triangleParts(points[0], points[1], plan.triangle) : {}),
   series: [{ equationType: "linear", params: [m, c], color: LINE_COLOR, step: plan.line }],
   fois: [
     ...points.map((p, i) => ({ x: p.x, y: p.y, kind: "point" as const, label: `(${fmtDec(p.x)}, ${fmtDec(p.y)})`, step: plan.points[i] })),
@@ -69,6 +93,21 @@ const GraphView = ({ g }: { g: GraphInfo }): JSX.Element => (
 );
 /** Stamp each working step with its index so the graph builds as the steps advance. */
 const withGraph = (steps: WorkingStep[], g: GraphInfo): WorkingStep[] => steps.map((s, i) => graphStep(s, g, i));
+
+/** The gradient working, drawn as a triangle on the graph: mark the points, build the right-angled triangle,
+ *  read off the change in y and the change in x, then divide. Steps 0–4. */
+const gradientSteps = (x1: number, y1: number, x2: number, y2: number, ansLatex: string): WorkingStep[] => {
+  const dY = y2 - y1, dX = x2 - x1;
+  const ratio = `\\dfrac{${dY}}{${dX}}`;
+  return [
+    mStep("Mark the two points on the graph", `${coordLatex(x1, y1)} \\quad ${coordLatex(x2, y2)}`),
+    tStep("Join the points, then complete a right-angled triangle with one horizontal and one vertical side"),
+    mStep("Find the change in y — the vertical side:", [`\\Delta y = y_2 - y_1`, `= ${fmtN(y2)} - ${fmtN(y1)}`, `= ${dY}`]),
+    mStep("Find the change in x — the horizontal side:", [`\\Delta x = x_2 - x_1`, `= ${fmtN(x2)} - ${fmtN(x1)}`, `= ${dX}`]),
+    mStep("Divide the change in y by the change in x:", [`m = \\dfrac{\\Delta y}{\\Delta x}`, `= ${ratio}`, ...(ansLatex === ratio ? [] : [`= ${ansLatex}`])]),
+  ];
+};
+const TRIANGLE_PLAN = { tri: 1, dy: 2, dx: 3 };
 
 const equationLatex = (gradN: number, gradD: number, c: number): string => {
   const absN = Math.abs(gradN), isOne = absN === gradD, negGrad = gradN < 0;
@@ -349,21 +388,16 @@ const generateQuestion = (
   let dA: [number,number] = [x1,y1], dB: [number,number] = [x2,y2];
   if (randomOrder && Math.random() < 0.5) [dA, dB] = [dB, dA];
   const [wx1,wy1] = dA, [wx2,wy2] = dB;
-  const diffY = wy2-wy1, diffX = wx2-wx1;
   const gradAnswerLatex = fracLatex(gradN, gradD);
   const displayLatex = `${coordLatex(dA[0],dA[1])} \\text{ and } ${coordLatex(dB[0],dB[1])}`;
 
   if (t === "gradient") {
     const gm = gradN / gradD, gc = wy1 - gm * wx1;
-    const gGraph = buildLineGraph(gm, gc, [{ x: wx1, y: wy1 }, { x: wx2, y: wy2 }], { line: 1, points: [0, 0] });
+    const gGraph = buildLineGraph(gm, gc, [{ x: wx1, y: wy1 }, { x: wx2, y: wy2 }], { line: 1, points: [0, 0], triangle: TRIANGLE_PLAN });
     return {
       kind: "simple", display: "", displayLatex,
       answer: gradAnswerLatex, answerLatex: gradAnswerLatex,
-      working: withGraph([
-        mStep("Mark the two points on the graph", `${coordLatex(wx1, wy1)} \\quad ${coordLatex(wx2, wy2)}`),
-        mStep("Substitute into the gradient formula",
-          `m = \\dfrac{${fmtN(wy2)} - ${fmtN(wy1)}}{${fmtN(wx2)} - ${fmtN(wx1)}} = \\dfrac{${diffY}}{${diffX}} = ${gradAnswerLatex}`),
-      ], gGraph),
+      working: withGraph(gradientSteps(wx1, wy1, wx2, wy2, gradAnswerLatex), gGraph),
       key: `grad-${level}-${id}`, difficulty: level,
       _gN: gradN, _gD: gradD,
       _graph: gGraph,
@@ -382,21 +416,18 @@ const generateQuestion = (
     if (Number.isInteger(nc2)) { sdA = ndA; sdB = ndB; sgN = nc.gradN; sgD = nc.gradD; c = nc2; }
   }
   const [swx1,swy1] = sdA, [swx2,swy2] = sdB;
-  const sdiffY = swy2-swy1, sdiffX = swx2-swx1;
   const sgLatex = fracLatex(sgN, sgD);
   const mxStr = sgD === 1 ? `${sgN} \\times ${fmtN(swx1)}` : `\\dfrac{${sgN}}{${sgD}} \\times ${fmtN(swx1)}`;
   const mxVal = (sgN * swx1) / sgD;
   const eqAns = equationLatex(sgN, sgD, c);
   // Points plot first, the line is drawn at the gradient step, the y-intercept is picked out when c is found.
-  const eGraph = buildLineGraph(sgN / sgD, c, [{ x: swx1, y: swy1 }, { x: swx2, y: swy2 }], { line: 1, points: [0, 0], intercept: 3 });
+  const eGraph = buildLineGraph(sgN / sgD, c, [{ x: swx1, y: swy1 }, { x: swx2, y: swy2 }], { line: 1, points: [0, 0], triangle: TRIANGLE_PLAN, intercept: 6 });
   return {
     kind: "simple", display: "",
     displayLatex: `${coordLatex(sdA[0],sdA[1])} \\text{ and } ${coordLatex(sdB[0],sdB[1])}`,
     answer: eqAns, answerLatex: eqAns,
     working: withGraph([
-      mStep("Mark the two points on the graph", `${coordLatex(swx1, swy1)} \\quad ${coordLatex(swx2, swy2)}`),
-      mStep("Substitute into the gradient formula",
-        `m = \\dfrac{${fmtN(swy2)} - ${fmtN(swy1)}}{${fmtN(swx2)} - ${fmtN(swx1)}} = \\dfrac{${sdiffY}}{${sdiffX}} = ${sgLatex}`),
+      ...gradientSteps(swx1, swy1, swx2, swy2, sgLatex),
       mStep("Substitute into y = mx + c",
         `${fmtN(swy1)} = ${mxStr} + c \\implies ${fmtN(swy1)} = ${mxVal} + c`),
       mStep("Solve for c", `c = ${fmtN(swy1)} - ${mxVal} = ${c}`),

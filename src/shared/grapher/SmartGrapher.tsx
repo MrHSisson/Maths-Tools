@@ -27,7 +27,7 @@ import {
   buildCurveSpec, computeFOIs, computeFrame, findFunctionIntersections,
   mathToScreenX, mathToScreenY,
 } from "./mathEngine";
-import { drawGraph, type DrawStyle, type CurveDraw, type ShadeRegion, type Guide, SERIES_COLORS } from "./drawGraph";
+import { drawGraph, type DrawStyle, type CurveDraw, type ShadeRegion, type Guide, type Segment, SERIES_COLORS } from "./drawGraph";
 import { usePanZoom } from "./usePanZoom";
 import type { WorkingStep } from "../types";
 
@@ -94,6 +94,8 @@ export interface SmartGrapherProps {
   regions?: ShadeRegion[];
   /** Guide lines (dashed root markers, reference lines). */
   guides?: Guide[];
+  /** Labelled line segments (triangle legs, rise / run markers). */
+  segments?: Segment[];
 
   config?: GrapherConfig;
   /** Step-by-step build. When set, any series / FOI (`config.fois`) / guide / region carrying a
@@ -131,6 +133,7 @@ interface GraphCanvasProps {
   fois: FOI[];
   regions?: ShadeRegion[];
   guides?: Guide[];
+  segments?: Segment[];
   config: GrapherConfig;
   interactive: boolean;
   /** Changing this string re-frames the view (new question / new params). */
@@ -146,7 +149,7 @@ interface GraphCanvasProps {
 }
 
 function GraphCanvas({
-  curves, fois, regions, guides, config, interactive, frameKey, registerAutoCenter, registerExport, legendItems, visibleFois,
+  curves, fois, regions, guides, segments, config, interactive, frameKey, registerAutoCenter, registerExport, legendItems, visibleFois,
 }: GraphCanvasProps) {
   const paintFois = visibleFois ?? fois;
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -202,8 +205,9 @@ function GraphCanvas({
       domain: config.domain,
       regions,
       guides,
+      segments,
     });
-  }, [curves, paintFois, regions, guides, config]);
+  }, [curves, paintFois, regions, guides, segments, config]);
 
   const requestDraw = useCallback(() => {
     if (rafRef.current != null) return;
@@ -351,7 +355,7 @@ function ToolbarButton({ onClick, title, children }: {
 // ── Exported component ───────────────────────────────────────────────────────
 
 export function SmartGrapher({
-  equationType, params, fn, series, showLegend, regions, guides, config = {}, step,
+  equationType, params, fn, series, showLegend, regions, guides, segments, config = {}, step,
   interactive = false, allowExpand = true, height = 260, title, className,
 }: SmartGrapherProps) {
   const [expanded, setExpanded] = useState(false);
@@ -428,6 +432,9 @@ export function SmartGrapher({
   const drawRegions = useMemo(() => step === undefined ? regions : regions?.filter((r) => showAt(r.step)), [regions, step]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const drawGuides = useMemo(() => step === undefined ? guides : guides?.filter((g) => showAt(g.step)), [guides, step]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const drawSegments = useMemo(() => step === undefined ? segments
+    : segments?.filter((sg) => showAt(sg.step)).map((sg) => (nowAt(sg.step) ? { ...sg, emphasis: true } : sg)), [segments, step]);
 
   // A stable-ish key so the inner canvas re-frames when the maths changes.
   const frameKey = useMemo(
@@ -504,6 +511,7 @@ export function SmartGrapher({
           visibleFois={visibleFois}
           regions={drawRegions}
           guides={drawGuides}
+          segments={drawSegments}
           config={config}
           interactive={interactive}
           frameKey={frameKey}
@@ -545,6 +553,7 @@ export function SmartGrapher({
               visibleFois={visibleFois}
               regions={drawRegions}
               guides={drawGuides}
+              segments={drawSegments}
               config={config}
               interactive
               frameKey={frameKey}
@@ -576,6 +585,7 @@ export interface GraphBuildSpec {
   /** Points / features, each optionally tagged with a `step`. */
   fois?: FOI[];
   guides?: Guide[];
+  segments?: Segment[];
   regions?: ShadeRegion[];
   config?: GrapherConfig;
   height?: number;
@@ -595,6 +605,7 @@ export const graphStepVisual = (s: WorkingStep): JSX.Element | null => {
       series={spec.series}
       regions={spec.regions}
       guides={spec.guides}
+      segments={spec.segments}
       step={ex.step}
       className="w-full"   // the visual panel centres its child in a flex row — without a width it collapses to nothing
       height={spec.height ?? 340}

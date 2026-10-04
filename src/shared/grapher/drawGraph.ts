@@ -76,6 +76,23 @@ export interface Guide {
   step?: number;
 }
 
+/** A line segment between two data points, with an optional label beside it — the legs of a gradient triangle,
+ *  a rise / run marker, a labelled length. */
+export interface Segment {
+  from: { x: number; y: number };
+  to: { x: number; y: number };
+  color?: string;
+  dashed?: boolean;
+  /** Text written beside the segment (e.g. "Δy = 10"). */
+  label?: string;
+  /** Which side of the segment the label sits on. Default "above". */
+  labelSide?: "above" | "below" | "left" | "right";
+  /** Step-by-step build: the step at which this appears (omit = always shown). */
+  step?: number;
+  /** Set by the grapher on the segment introduced at the current step (drawn heavier). */
+  emphasis?: boolean;
+}
+
 export interface DrawOptions {
   style?: Partial<DrawStyle>;
   axisLabels?: { x?: string; y?: string };
@@ -89,6 +106,8 @@ export interface DrawOptions {
   regions?: ShadeRegion[];
   /** Guide lines drawn over the curves (dashed root markers, etc.). */
   guides?: Guide[];
+  /** Labelled line segments drawn over the curves and guides (triangle legs, rise / run). */
+  segments?: Segment[];
 }
 
 /** Format a tick value without floating-point noise. */
@@ -330,6 +349,51 @@ export function drawGraph(
       if (g.kind === "vLine") { const px = sx(g.at); ctx.moveTo(px, 0); ctx.lineTo(px, cssH); }
       else { const py = sy(g.at); ctx.moveTo(0, py); ctx.lineTo(cssW, py); }
       ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  // ── Segments (+ their labels, on top of the lines) ──
+  if (opts.segments?.length) {
+    for (const sg of opts.segments) {
+      ctx.save();
+      ctx.strokeStyle = sg.color ?? "#d97706";
+      ctx.lineWidth = sg.emphasis ? 4.5 : 3;
+      ctx.lineCap = "round";
+      ctx.setLineDash(sg.dashed ? [6, 5] : []);
+      ctx.beginPath();
+      ctx.moveTo(sx(sg.from.x), sy(sg.from.y));
+      ctx.lineTo(sx(sg.to.x), sy(sg.to.y));
+      ctx.stroke();
+      ctx.restore();
+    }
+    for (const sg of opts.segments) {
+      if (!sg.label) continue;
+      ctx.save();
+      ctx.font = "bold 14px ui-sans-serif, system-ui, sans-serif";
+      const tw = ctx.measureText(sg.label).width;
+      const bw = tw + 14, bh = 24;
+      const mx = (sx(sg.from.x) + sx(sg.to.x)) / 2, my = (sy(sg.from.y) + sy(sg.to.y)) / 2;
+      const gap = 10;
+      let cx = mx, cy = my;
+      const side = sg.labelSide ?? "above";
+      if (side === "above") cy = my - bh / 2 - gap;
+      else if (side === "below") cy = my + bh / 2 + gap;
+      else if (side === "left") cx = mx - bw / 2 - gap;
+      else cx = mx + bw / 2 + gap;
+      cx = Math.max(bw / 2 + 2, Math.min(cssW - bw / 2 - 2, cx));   // keep the label on the canvas
+      cy = Math.max(bh / 2 + 2, Math.min(cssH - bh / 2 - 2, cy));
+      const x0 = cx - bw / 2, y0 = cy - bh / 2, r = 6;
+      ctx.beginPath();
+      ctx.moveTo(x0 + r, y0); ctx.lineTo(x0 + bw - r, y0); ctx.quadraticCurveTo(x0 + bw, y0, x0 + bw, y0 + r);
+      ctx.lineTo(x0 + bw, y0 + bh - r); ctx.quadraticCurveTo(x0 + bw, y0 + bh, x0 + bw - r, y0 + bh);
+      ctx.lineTo(x0 + r, y0 + bh); ctx.quadraticCurveTo(x0, y0 + bh, x0, y0 + bh - r);
+      ctx.lineTo(x0, y0 + r); ctx.quadraticCurveTo(x0, y0, x0 + r, y0); ctx.closePath();
+      ctx.fillStyle = "rgba(255,255,255,0.94)"; ctx.fill();
+      ctx.lineWidth = 1.5; ctx.strokeStyle = sg.color ?? "#d97706"; ctx.stroke();
+      ctx.fillStyle = sg.color ?? "#d97706";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(sg.label, cx, cy + 0.5);
       ctx.restore();
     }
   }
