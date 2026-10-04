@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Home, Eye, Download, RefreshCw, RotateCcw, Plus, Check, X, ChevronUp, ChevronDown, Menu, Settings } from 'lucide-react';
+import { Home, Eye, Download, RefreshCw, RotateCcw, Plus, Check, X, ChevronUp, ChevronDown, Menu, Settings, SlidersHorizontal } from 'lucide-react';
 import { useDevMode } from '../../devMode';
 
 const TOOL_CONFIG = {
@@ -1286,6 +1286,7 @@ export default function MathsSkillsGenerator() {
       // When enabling, auto-assign remaining budget (min 1, max 5 or remaining)
       const budget = Math.max(1, Math.min(5, maxQuestions - prev.reduce((s, sk) => s + skillCounts[sk], 0)));
       setSkillCounts(c => ({ ...c, [skill]: budget }));
+      setExpandedSkill(skill);   // its options open straight away, on the left
       return [...prev, skill];
     });
     setError('');
@@ -1883,7 +1884,7 @@ export default function MathsSkillsGenerator() {
                 <ul className="space-y-2 text-sm text-gray-600">
                   {[
                     'Pick a topic tab on the left (the number shows how many of its skills you have added) and tap a tile to add it (tap again to remove); it appears in "Your worksheet" on the right.',
-                    'Once a skill is added, open the Options bar on its tile to set its difficulty and ranges. In your worksheet, use − / + to set how many questions each skill contributes.',
+                    'Once a skill is added its options open on the left — set its difficulty and ranges there (the Options bar on the tile reopens them). In your worksheet, use − / + to set how many questions each skill contributes.',
                     'Maximum 30 questions total — the budget bar shows how many you have left. Use Clear to start over.',
                     'Use the Settings button to set the total, number of pages and question order (mixed or grouped).',
                     ...(devMode ? [
@@ -1909,10 +1910,10 @@ export default function MathsSkillsGenerator() {
       <div className="min-h-screen p-8" style={{ backgroundColor: '#f5f3f0' }}>
         <div className="max-w-6xl mx-auto">
 
-          <h1 className="text-5xl font-bold text-center mb-2" style={{ color: '#000000' }}>
+          <h1 className="text-4xl font-bold text-center mb-1" style={{ color: '#000000' }}>
             {TOOL_CONFIG.pageTitle}
           </h1>
-          <p className="text-center text-gray-500 mb-6">Build a worksheet with intent — tap a skill to set its options and how many questions it adds.</p>
+          <p className="text-center text-gray-500 mb-5">Pick a topic, tap the skills you want, and set their options.</p>
 
           {/* Browse (tiles) + build (controls) */}
           <div className="flex flex-col md:flex-row gap-6 items-start mb-6">
@@ -1995,15 +1996,6 @@ export default function MathsSkillsGenerator() {
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="text-lg font-bold text-gray-900">Your worksheet</h2>
                   <div className="flex items-center gap-1">
-                    {enabledSkills.length > 0 && (
-                      <button
-                        onClick={clearAll}
-                        className="flex items-center gap-1 text-xs font-bold text-gray-400 hover:text-red-600 transition-colors mr-1"
-                        title="Remove all skills"
-                      >
-                        <RotateCcw size={13} /> Clear
-                      </button>
-                    )}
                     <div className="relative" ref={settingsRef}>
                       <button
                         onClick={() => setSettingsOpen(o => !o)}
@@ -2116,9 +2108,14 @@ export default function MathsSkillsGenerator() {
                     {total} / {maxQuestions}
                   </span>
                 </div>
-                <p className="text-xs text-gray-400 mb-4">
-                  {enabledSkills.length === 0 ? 'Tap a tile to add a skill.' : `${enabledSkills.length} skill${enabledSkills.length > 1 ? 's' : ''} selected`}
-                </p>
+                <div className="flex items-center justify-between mb-4 text-xs text-gray-400">
+                  <span>{enabledSkills.length === 0 ? 'Tap a tile to add a skill.' : `${enabledSkills.length} skill${enabledSkills.length > 1 ? 's' : ''} selected`}</span>
+                  {enabledSkills.length > 0 && (
+                    <button onClick={clearAll} title="Remove all skills" className="flex items-center gap-1 font-bold hover:text-red-600 transition-colors">
+                      <RotateCcw size={12} /> Clear all
+                    </button>
+                  )}
+                </div>
 
                 {/* Selected skills — the single place to set counts + options */}
                 {enabledSkills.length > 0 && (
@@ -2152,9 +2149,10 @@ export default function MathsSkillsGenerator() {
                               <button
                                 onClick={() => { setActiveGroup(Math.max(0, SKILL_GROUPS.findIndex(g => g.skills.includes(skill)))); setExpandedSkill(skill); }}
                                 title="Edit this skill's options (shown on the left)"
-                                className="text-xs font-bold px-2.5 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-900 transition-all"
+                                aria-label={`Options for ${SKILL_META[skill].label}`}
+                                className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-blue-50 hover:text-blue-900 transition-all"
                               >
-                                Options
+                                <SlidersHorizontal size={16} />
                               </button>
                             </div>
                           </div>
