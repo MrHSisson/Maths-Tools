@@ -1102,7 +1102,7 @@ const SKILL_GROUPS: { label: string; short: string; skills: SkillId[] }[] = [
   { label: 'Place Value & Rounding',       short: 'Place value',    skills: ['powersOfTen', 'rounding'] },
   { label: 'Number Properties',            short: 'Properties',     skills: ['primes', 'indices'] },
   { label: 'Fraction Arithmetic',          short: 'Fractions',      skills: ['fracAdd', 'fracSub', 'fracMul', 'fracDiv'] },
-  { label: 'Fractions, Decimals & Measures', short: 'FDP & measures', skills: ['fdp', 'metric'] },
+  { label: 'Fractions, Decimals & Measures', short: 'FDP & units', skills: ['fdp', 'metric'] },
   { label: 'Order of Operations',          short: 'BIDMAS',         skills: ['bidmas'] },
 ];
 
@@ -1907,40 +1907,39 @@ export default function MathsSkillsGenerator() {
 
       {/* Main */}
       <div className="min-h-screen p-8" style={{ backgroundColor: '#f5f3f0' }}>
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-6xl mx-auto">
 
           <h1 className="text-5xl font-bold text-center mb-2" style={{ color: '#000000' }}>
             {TOOL_CONFIG.pageTitle}
           </h1>
           <p className="text-center text-gray-500 mb-6">Build a worksheet with intent — tap a skill to set its options and how many questions it adds.</p>
 
-          {/* Topic tabs — full width so they sit on one row */}
-          <div className="flex flex-nowrap md:flex-wrap gap-2 overflow-x-auto md:overflow-visible pb-2 -mx-1 px-1 mb-4" role="tablist" aria-label="Skill topics">
-            {SKILL_GROUPS.map((group, gi) => {
-              const picked = group.skills.filter(sk => enabledSkills.includes(sk)).length;
-              const active = gi === activeGroup;
-              return (
-                <button
-                  key={group.label}
-                  role="tab"
-                  aria-selected={active}
-                  onClick={() => setActiveGroup(gi)}
-                  className={`shrink-0 whitespace-nowrap flex items-center gap-2 h-10 px-4 rounded-xl border-2 text-sm font-bold transition-all ${active ? 'bg-blue-900 border-blue-900 text-white shadow-md' : 'bg-white border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-900'}`}
-                >
-                  {group.short}
-                  {picked > 0 && (
-                    <span className={`min-w-[1.25rem] h-5 px-1 rounded-full text-xs font-bold flex items-center justify-center ${active ? 'bg-white text-blue-900' : 'bg-blue-900 text-white'}`}>{picked}</span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
           {/* Browse (tiles) + build (controls) */}
           <div className="flex flex-col md:flex-row gap-6 items-start mb-6">
 
-            {/* LEFT — the active topic's skill tiles */}
+            {/* LEFT — topic tabs, then that topic's skill tiles (the worksheet builder stays on the right) */}
             <div className="flex-1 w-full min-w-0">
+              <div className="flex flex-nowrap md:flex-wrap gap-1 overflow-x-auto md:overflow-visible pb-2 -mx-1 px-1 mb-3" role="tablist" aria-label="Skill topics">
+                {SKILL_GROUPS.map((group, gi) => {
+                  const picked = group.skills.filter(sk => enabledSkills.includes(sk)).length;
+                  const active = gi === activeGroup;
+                  return (
+                    <button
+                      key={group.label}
+                      role="tab"
+                      aria-selected={active}
+                      onClick={() => setActiveGroup(gi)}
+                      className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 h-10 px-2.5 rounded-xl border-2 text-[13px] font-bold transition-all ${active ? 'bg-blue-900 border-blue-900 text-white shadow-md' : 'bg-white border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-900'}`}
+                    >
+                      {group.short}
+                      {picked > 0 && (
+                        <span className={`min-w-[1.25rem] h-5 px-1 rounded-full text-xs font-bold flex items-center justify-center ${active ? 'bg-white text-blue-900' : 'bg-blue-900 text-white'}`}>{picked}</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5" role="tabpanel">
                 {SKILL_GROUPS[activeGroup].skills.map(skill => {
                   const enabled = enabledSkills.includes(skill);
