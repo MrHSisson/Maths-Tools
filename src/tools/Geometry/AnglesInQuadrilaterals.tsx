@@ -3,6 +3,7 @@ import {
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion,
   type ToolMultiSelect, type ToolVariable,
   tStep,
+  withDiagramSteps, diagramStepVisual, diagramSplitQuestion,
 } from "../../shared";
 
 // ─── TYPES ──────────────────────────────────────────────────────────────────
@@ -1140,13 +1141,20 @@ const questionRenderer = (q: AnyQuestion, showAnswer: boolean, _cs: string, comp
 
 
 // ─── APP ──────────────────────────────────────────────────────────────────────
+// Two-view Worked Example: the diagram moves into the picture slot beside the steps (see src/shared/diagramSplit.tsx).
+const splitGenerate = withDiagramSteps(generateQuestion);
+const splitQuestion = diagramSplitQuestion(questionRenderer);
+const splitVisual = diagramStepVisual(questionRenderer);
+
 export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
       infoSections={INFO_SECTIONS}
-      generateQuestion={generateQuestion}
-      questionRenderer={questionRenderer}
+      generateQuestion={splitGenerate}
+      questionRenderer={splitQuestion}
+      stepVisualRenderer={splitVisual}
+      stepVisualKeepsWorking
       customPrintHandler={handleDiagramPrint}
       defaults={{ numColumns: 3, maxColumns: 4, hideFontControls: true, hideAnswerStep: true }}
     />

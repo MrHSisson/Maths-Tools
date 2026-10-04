@@ -639,6 +639,8 @@ graph once as a `GraphBuildSpec` (tagging parts with `step`), stamps each workin
 `graphStep(step, spec, n)` and passes `graphStepVisual` as `stepVisualRenderer` (+ `stepVisualKeepsWorking`).
 Steps before the first stamped step render as plain full-width cards (the layout splits when the picture starts).
 
+**Diagram tools (the geometry tools).** The question *is* the diagram, so use the shared `src/shared/diagramSplit.tsx`: `withDiagramSteps(generateQuestion)` stamps each working step with the question's `_diagram`, `diagramStepVisual(questionRenderer)` is the `stepVisualRenderer` (the diagram, answer revealed on the final step), and `diagramSplitQuestion(questionRenderer)` swaps the diagram above for the one-line prompt (`q.display`) in the worked example once the answer is showing (pass `{ promptInDiagram: true }` when the drawing carries its own prompt). Pass `stepVisualKeepsWorking` and create all three wrappers at module level. References: any tool in `src/tools/Geometry/` (not Equations of Lines, which uses `graphStepVisual`).
+
 **`hideAnswerStep` with a split:** a split tool that sets `hideAnswerStep` drops its A line, so only set it when
 the last step is itself the answer.
 

@@ -3,6 +3,7 @@ import {
   ToolShell,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type PrintMode,
   tStep,
+  withDiagramSteps, diagramStepVisual, diagramSplitQuestion,
 } from "../../shared";
 
 void (tStep as unknown);
@@ -728,14 +729,22 @@ function customPrintHandler(questions: AnyQuestion[], printMode: PrintMode, cont
 export const __test = { TOOL_CONFIG, generateQuestion };
 
 // ── App ───────────────────────────────────────────────────────────────────────
+// Two-view Worked Example: the diagram moves into the picture slot beside the steps (see src/shared/diagramSplit.tsx).
+const splitGenerate = withDiagramSteps(generateQuestion);
+const splitGenerateUnique = withDiagramSteps(generateUniqueQ);
+const splitQuestion = diagramSplitQuestion(questionRenderer);
+const splitVisual = diagramStepVisual(questionRenderer);
+
 export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
       infoSections={INFO_SECTIONS}
-      generateQuestion={generateQuestion}
-      generateUniqueQ={generateUniqueQ}
-      questionRenderer={questionRenderer}
+      generateQuestion={splitGenerate}
+      generateUniqueQ={splitGenerateUnique}
+      questionRenderer={splitQuestion}
+      stepVisualRenderer={splitVisual}
+      stepVisualKeepsWorking
       answerRenderer={answerRenderer}
       customPrintHandler={customPrintHandler}
       defaults={{

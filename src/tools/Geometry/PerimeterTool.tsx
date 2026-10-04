@@ -2,6 +2,7 @@ import {
   ToolShell, handleDiagramPrint,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion,
   tStep,
+  withDiagramSteps, diagramStepVisual, diagramSplitQuestion,
 } from "../../shared";
 
 // ─── TOOL CONFIG ──────────────────────────────────────────────────────────────
@@ -630,13 +631,20 @@ const questionRenderer = (q: AnyQuestion, showAnswer: boolean, _cs: string, comp
 // Exposed for the generator smoke-test suite (src/tests/generators.test.ts).
 export const __test = { TOOL_CONFIG, generateQuestion };
 
+// Two-view Worked Example: the diagram moves into the picture slot beside the steps (see src/shared/diagramSplit.tsx).
+const splitGenerate = withDiagramSteps(generateQuestion);
+const splitQuestion = diagramSplitQuestion(questionRenderer);
+const splitVisual = diagramStepVisual(questionRenderer);
+
 export default function App() {
   return (
     <ToolShell
       config={TOOL_CONFIG}
       infoSections={INFO_SECTIONS}
-      generateQuestion={generateQuestion}
-      questionRenderer={questionRenderer}
+      generateQuestion={splitGenerate}
+      questionRenderer={splitQuestion}
+      stepVisualRenderer={splitVisual}
+      stepVisualKeepsWorking
       customPrintHandler={handleDiagramPrint}
       defaults={{ numQuestions: 9, numColumns: 3, maxColumns: 4, hideFontControls: true, hideAnswerStep: true }}
     />
