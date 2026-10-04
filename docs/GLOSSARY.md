@@ -114,6 +114,12 @@ spine of the matching skill. Browse skills at **`/skills`** (dev mode).
 | Term | Means | In code |
 |---|---|---|
 | **Core representation** | One of the six canonical visual models: **bar model, number line, area model, algebra tiles, negative counters, prime factor tiles**. Every new visual must reuse one. | see CLAUDE.md |
+| **Two-view worked example** (a.k.a. **split worked example**) | The Worked Example with the steps on one side and ONE picture on the other that updates as you press. Two flavours: **caption timeline** (the picture does the working) and **keep-working** (flat numbered rows carrying each step's maths). | `stepVisualRenderer`, `stepVisualKeepsWorking` |
+| **Answer step** | The final step as its own numbered green step labelled "Answer:" (split from an inline chain's last link). | `splitAnswerStep` |
+| **Per-step focus** | What a diagram lights up for the current step (e.g. the angles that step is about); the rest fades. | `_stepFocus` → `_focus` |
+| **Derived value** | A value the working finds, drawn on the diagram from the step that finds it (green). | `appearsAt`, `_step` |
+| **Odometer** | Binary Counting's view: one big place-value row per base, counting up in place. | `BinaryCounting.tsx` |
+| **Unit ladder / scale** | Data Units' bit–nibble–byte–KB…PB ladder with ×1000 (×1024) steps, drawn in the working box. | `UnitLadder` in `DataUnits.tsx` |
 | **SmartGrapher** (a.k.a. **the grapher**) | The embeddable coordinate-graph component. | `src/shared/grapher/` |
 | **Series** | One plotted curve/line on a grapher. | `GraphSeries` |
 | **FOI** | A "feature of interest" — a marked point (root, vertex, intersection…). | `FOI` |
