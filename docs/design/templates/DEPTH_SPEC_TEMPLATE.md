@@ -25,7 +25,7 @@ Aim for diagnose, explain **and** extend at every level (the tests require it), 
 | id (`<tool>-<slug>`) | Level | Purpose | Title (no answer in it) | Question | Options (misconception per wrong option) | Answer / reasoning | Teacher note | If not secure → | If secure → |
 |---|---|---|---|---|---|---|---|---|---|
 
-Slide pieces to use (all optional): **speakers** (a character's claim as a speech bubble) · **working** (lines of working with a mistake — the class taps the line they think is wrong; give the first wrong line) · **options** (tiles the teacher logs class votes against) · **visual** (a picture beside the reasoning, e.g. the BIDMAS pyramid). The answer is built **one reasoning line per press**, so write each line to stand alone.
+Each item is **two slides**: the question, then the answer. Slide pieces to use (all optional): **speakers** (a character's claim as a cartoon face with a speech bubble) · **working** (lines of working with a mistake — the class taps the line they think is wrong; give the first wrong line) · **options** (lettered tiles; every wrong one names its misconception) · **visual** (a small picture in the panel's corner, e.g. the BIDMAS pyramid). The answer slide shows all `answer` lines at once, so write them as a short stack.
 
 Item types to draw on: *Who is right?* · *Explain this mistake* · *Spot the error in working* · multiple choice
 with misconception distractors · *Always / sometimes / never* · *Convince me* · *What's the same, what's different?* ·

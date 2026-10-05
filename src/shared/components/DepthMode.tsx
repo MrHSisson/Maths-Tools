@@ -1,33 +1,35 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, ChevronLeft, ChevronRight, Info, ListChecks, Maximize, Minimize, Minus, Plus } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Info, ListChecks, Maximize, Minimize } from "lucide-react";
 import { InlineMath, MathRenderer } from "./MathRenderer";
 import { BidmasPyramid } from "./BidmasPyramid";
+import { Avatar, Badge, Mascot } from "./DepthArt";
 import { LV_LABELS } from "../colors";
 import { DEPTH_PURPOSES, type DepthItem, type DepthPurpose } from "../depth";
 import type { DifficultyLevel } from "../types";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Depth mode — the picker, and each question as an interactive 16:9 slide.
+// Depth mode — the picker, and each question as a two-slide mini presentation.
 //
-// The slide works like a PowerPoint slide: a fixed 16:9 stage whose type scales with its width
-// (container-query units), builds on → / Space (question → answer → one reasoning line per press),
-// and a Present button that fills the screen. It is interactive: tap + / − under a choice to log the
-// class's votes (the answer then shows the most common misconception in the room), tap the line
-// of working you think is wrong, and speech bubbles carry "Jack says…". All sizes inside the slide
-// are in `em`, so the whole slide scales as one. On a phone the slide flows as a normal column.
+// A question is TWO slides: the question, then the answer (← / → / Space, or the Question | Answer
+// switch). Each slide is designed like a classroom slide: a coloured 16:9 background, a white panel
+// with a small brand badge on its top edge, cartoon speakers with speech bubbles, big type, and a
+// mascot at the bottom. All sizes inside the slide are `em`, and the stage's base font scales with
+// its width (container-query units), so the whole slide scales as one. Present fills the screen
+// (an overlay that works everywhere, plus native fullscreen where the browser allows). On a phone
+// the slide flows as a normal column.
 //
 // Controlled by ToolShell: the level toggle and the open item live there so both are shareable in the
 // URL (`?mode=depth&level=2&item=<id>`).
 // ─────────────────────────────────────────────────────────────────────────────
 
-const PURPOSE_STYLE: Record<DepthPurpose, { badge: string; card: string; solid: string }> = {
-  diagnose: { badge: "bg-blue-100 text-blue-900", card: "border-blue-200 hover:border-blue-400", solid: "#2563eb" },
-  explain: { badge: "bg-amber-100 text-amber-900", card: "border-amber-200 hover:border-amber-400", solid: "#d97706" },
-  extend: { badge: "bg-emerald-100 text-emerald-900", card: "border-emerald-200 hover:border-emerald-400", solid: "#059669" },
+const PURPOSE_STYLE: Record<DepthPurpose, { badge: string; card: string }> = {
+  diagnose: { badge: "bg-blue-100 text-blue-900", card: "border-blue-200 hover:border-blue-400" },
+  explain: { badge: "bg-amber-100 text-amber-900", card: "border-amber-200 hover:border-amber-400" },
+  extend: { badge: "bg-emerald-100 text-emerald-900", card: "border-emerald-200 hover:border-emerald-400" },
 };
 const LEVEL_ORDER: DifficultyLevel[] = ["level1", "level2", "level3"];
-const LEVEL_SOLID: Record<DifficultyLevel, string> = { level1: "#16a34a", level2: "#ca8a04", level3: "#dc2626" };
-const SPEAKER_COLOURS = ["#2563eb", "#e11d48", "#059669", "#d97706", "#7c3aed"];
+const SPEAKER_COLOURS = ["#7c3aed", "#e11d48", "#059669", "#d97706", "#2563eb"];
+const TEAL = "#1b9aaa";
 const NAVY = "#1e3a8a";
 const purposeLabel = (p: DepthPurpose) => DEPTH_PURPOSES.find((x) => x.key === p)?.label ?? p;
 
@@ -45,12 +47,11 @@ export interface DepthModeProps {
 
 export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, narrow = false }: DepthModeProps) {
   const [purpose, setPurpose] = useState<DepthPurpose | "all">("all");
-  const [beat, setBeat] = useState(0);
+  const [slide, setSlide] = useState<0 | 1>(0); // 0 = the question slide, 1 = the answer slide
   const [check, setCheck] = useState<number | null>(null); // index into `starts` while a quick check runs
-  const [votes, setVotes] = useState<Record<string, number[]>>({}); // class votes per item, kept for the session
   const [picked, setPicked] = useState<number | null>(null); // tapped line of working
   const [showNote, setShowNote] = useState(false);
-  const [fs, setFs] = useState(false);
+  const [present, setPresent] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
   const byId = useMemo(() => new Map(items.map((i) => [i.id, i])), [items]);
@@ -62,8 +63,8 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
   const atLevel = useMemo(() => items.filter((i) => i.level === level), [items, level]);
   const visible = atLevel.filter((i) => purpose === "all" || i.purpose === purpose);
 
-  // New item → back to the first beat. A level change under an open item → back to the picker.
-  useEffect(() => { setBeat(0); setPicked(null); setShowNote(false); }, [itemId]);
+  // New item → back to the question slide.
+  useEffect(() => { setSlide(0); setPicked(null); setShowNote(false); }, [itemId]);
   // Arriving with ?item=<id> and no (or a different) level adopts the item's level; a level change made
   // by the teacher under an open item closes it. (Comparing with the previous level, not a one-shot flag,
   // keeps this correct when React runs effects twice in development.)
@@ -75,31 +76,37 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
     if (was === level) onLevelChange(current.level); else onItemChange(null);
   }, [level]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const last = current ? current.answer.length : 0; // beats are 0..last: 0 = question, then one reasoning line per beat
-  const next = useCallback(() => setBeat((b) => Math.min(b + 1, last)), [last]);
-  const prev = useCallback(() => setBeat((b) => Math.max(b - 1, 0)), []);
+  const toQuestion = useCallback(() => setSlide(0), []);
+  const toAnswer = useCallback(() => setSlide(1), []);
 
-  // Slide-style keys while an item is open.
+  // Slide keys while an item is open: → / Space / PageDown go to the answer, ← / PageUp back; Esc leaves Present.
   useEffect(() => {
     if (!current) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") { e.preventDefault(); next(); }
-      else if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); prev(); }
+      if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") { e.preventDefault(); toAnswer(); }
+      else if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); toQuestion(); }
+      else if (e.key === "Escape" && present) setPresent(false);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [current, next, prev]);
+  }, [current, present, toAnswer, toQuestion]);
 
-  // Present (fullscreen).
+  // Present: a full-screen overlay (works in every browser), and native fullscreen on top where the
+  // browser allows it. Leaving native fullscreen (Esc) also leaves Present.
   useEffect(() => {
-    const onFs = () => setFs(document.fullscreenElement === wrapRef.current);
+    if (!present) return;
+    const el = wrapRef.current as (HTMLDivElement & { webkitRequestFullscreen?: () => Promise<void> }) | null;
+    try { void (el?.requestFullscreen?.() ?? el?.webkitRequestFullscreen?.())?.catch?.(() => {}); } catch { /* overlay is enough */ }
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onFs = () => { if (!document.fullscreenElement) setPresent(false); };
     document.addEventListener("fullscreenchange", onFs);
-    return () => document.removeEventListener("fullscreenchange", onFs);
-  }, []);
-  const togglePresent = () => {
-    if (document.fullscreenElement) void document.exitFullscreen();
-    else void wrapRef.current?.requestFullscreen?.();
-  };
+    return () => {
+      document.removeEventListener("fullscreenchange", onFs);
+      document.body.style.overflow = prevOverflow;
+      if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
+    };
+  }, [present]);
 
   const open = (id: string) => {
     const it = byId.get(id);
@@ -107,7 +114,7 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
     if (it.level !== level) onLevelChange(it.level);
     onItemChange(id);
   };
-  const toPicker = () => { setCheck(null); onItemChange(null); };
+  const toPicker = () => { setCheck(null); setPresent(false); onItemChange(null); };
   const startCheck = () => { if (starts.length) { setCheck(0); open(starts[0].id); } };
   const nextCheck = () => {
     if (check === null) return;
@@ -162,211 +169,189 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
     );
   }
 
-  // ── The slide ─────────────────────────────────────────────────────────────
-  const revealed = beat >= 1;
-  const itemVotes = votes[current.id] ?? (current.options ?? []).map(() => 0);
-  const totalVotes = itemVotes.reduce((a, b) => a + b, 0);
-  const setVote = (i: number, d: number) =>
-    setVotes((v) => {
-      const cur = [...(v[current.id] ?? (current.options ?? []).map(() => 0))];
-      cur[i] = Math.max(0, cur[i] + d);
-      return { ...v, [current.id]: cur };
-    });
-  // The most common wrong idea in the room, once the answer is up.
-  const topWrong = revealed && current.options
-    ? current.options.map((o, i) => ({ o, n: itemVotes[i] })).filter((x) => !x.o.correct && x.n > 0).sort((a, b) => b.n - a.n)[0]
-    : undefined;
+  // ── The slides ────────────────────────────────────────────────────────────
+  const onAnswer = slide === 1;
   const inCheck = check !== null;
   const notSecure = current.ifNotSecure ? byId.get(current.ifNotSecure) : undefined;
   const secure = current.ifSecure ? byId.get(current.ifSecure) : undefined;
-  const bannerColour = PURPOSE_STYLE[current.purpose].solid;
 
-  const stage = (
-    <div
-      className="bg-white overflow-hidden flex flex-col"
-      style={{
-        aspectRatio: narrow ? undefined : "16 / 9",
-        fontSize: narrow ? "16px" : "1.9cqw",
-        borderRadius: narrow ? "0.75rem" : fs ? 0 : "0.75rem",
-        boxShadow: "0 10px 30px rgba(0,0,0,0.12)",
-      }}
-    >
-      {/* Title bar */}
-      <div className="flex items-center justify-between flex-shrink-0" style={{ background: NAVY, color: "#fff", padding: "0.55em 1.1em" }}>
-        <div style={{ fontSize: "0.75em", fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", opacity: 0.9 }}>{current.title}</div>
-        <div className="flex items-center" style={{ gap: "0.5em" }}>
-          {inCheck && <span style={{ fontSize: "0.7em", opacity: 0.85 }}>Quick check {check! + 1} of {starts.length}</span>}
-          <span style={{ fontSize: "0.7em", fontWeight: 800, padding: "0.15em 0.7em", borderRadius: "999px", background: LEVEL_SOLID[current.level] }}>{LV_LABELS[current.level]}</span>
-          <span style={{ fontSize: "0.7em", fontWeight: 800, padding: "0.15em 0.7em", borderRadius: "999px", background: bannerColour }}>{purposeLabel(current.purpose)}</span>
-        </div>
-      </div>
-
-      {/* Body */}
-      <div className="flex-1 overflow-auto flex flex-col" style={{ padding: "0.8em 1.3em", gap: "0.6em" }}>
-        {current.speakers && (
-          <div className="flex flex-wrap" style={{ gap: "0.9em" }}>
-            {current.speakers.map((s, i) => {
-              const col = SPEAKER_COLOURS[i % SPEAKER_COLOURS.length];
-              return (
-                <div key={i} className="flex items-start" style={{ gap: "0.55em", flex: "1 1 14em", minWidth: 0 }}>
-                  <div className="flex-shrink-0 flex items-center justify-center font-bold text-white"
-                    style={{ width: "2.2em", height: "2.2em", borderRadius: "50%", background: col, fontSize: "0.9em" }}>{s.name.charAt(0)}</div>
-                  <div style={{ border: `0.12em solid ${col}`, borderRadius: "0.2em 0.9em 0.9em 0.9em", padding: "0.45em 0.9em", background: "#fff", minWidth: 0 }}>
-                    <div style={{ fontSize: "0.65em", fontWeight: 800, color: col, textTransform: "uppercase", letterSpacing: "0.08em" }}>{s.name} says</div>
-                    {s.says.map((line, k) => <div key={k} style={{ fontSize: "1.2em", fontWeight: 600, lineHeight: 1.3 }}><InlineMath text={line} /></div>)}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {current.working && (
-          <div>
-            {current.working.intro && <div style={{ fontSize: "1.05em", marginBottom: "0.35em" }}><InlineMath text={current.working.intro} /></div>}
-            <div className="flex flex-col" style={{ gap: "0.3em" }}>
-              {current.working.lines.map((ln, i) => {
-                const w = current.working!;
-                const isWrong = revealed && i === w.wrongLine;
-                const after = revealed && i > w.wrongLine;
-                const isPick = picked === i && !isWrong;
-                return (
-                  <button key={i} onClick={() => setPicked((p) => (p === i ? null : i))}
-                    className="flex items-center text-left transition-colors"
-                    style={{
-                      gap: "0.7em", padding: "0.25em 0.7em", borderRadius: "0.5em", opacity: after ? 0.5 : 1,
-                      border: `0.12em solid ${isWrong ? "#dc2626" : isPick ? "#d97706" : "#e5e7eb"}`,
-                      background: isWrong ? "#fef2f2" : isPick ? "#fffbeb" : "#fff",
-                    }}>
-                    <span className="flex-shrink-0 text-center font-bold" style={{ width: "1.5em", fontSize: "0.7em", color: "#6b7280" }}>{i + 1}</span>
-                    <span style={{ fontSize: "1.3em" }}><MathRenderer latex={ln} style={{ fontSize: "1em" }} /></span>
-                    {isWrong && <span style={{ marginLeft: "auto", fontSize: "0.7em", fontWeight: 800, color: "#dc2626" }}>First mistake</span>}
-                    {after && <span style={{ marginLeft: "auto", fontSize: "0.65em", color: "#6b7280" }}>follows from the mistake</span>}
-                    {isPick && <span style={{ marginLeft: "auto", fontSize: "0.65em", fontWeight: 700, color: "#b45309" }}>Our pick</span>}
-                  </button>
-                );
-              })}
+  const options = current.options && (
+    <div className="grid" style={{ gap: "0.6em", width: "100%", gridTemplateColumns: narrow ? "1fr" : `repeat(${Math.min(current.options.length, 3)}, minmax(0, 1fr))` }}>
+      {current.options.map((o, i) => {
+        const right = onAnswer && o.correct;
+        const wrong = onAnswer && !o.correct;
+        return (
+          <div key={i} style={{
+            borderRadius: "0.9em", padding: "0.5em 0.8em", display: "flex", flexDirection: "column", gap: "0.25em",
+            border: `0.14em solid ${right ? "#16a34a" : "#cbd5e1"}`,
+            background: right ? "#f0fdf4" : wrong ? "#f8fafc" : "#fff",
+            opacity: wrong ? 0.9 : 1,
+          }}>
+            <div className="flex items-center" style={{ gap: "0.6em" }}>
+              <span className="flex-shrink-0 flex items-center justify-center font-bold text-white"
+                style={{ width: "1.9em", height: "1.9em", borderRadius: "50%", background: right ? "#16a34a" : NAVY, fontSize: "0.9em" }}>
+                {String.fromCharCode(65 + i)}
+              </span>
+              <span style={{ fontSize: "1.3em", fontWeight: 650, lineHeight: 1.2 }}><InlineMath text={o.text} /></span>
+              {right && <span style={{ marginLeft: "auto", fontSize: "0.8em", fontWeight: 800, color: "#15803d" }}>Correct</span>}
             </div>
+            {wrong && o.misconception && (
+              <div style={{ fontSize: "0.78em", color: "#475569", lineHeight: 1.3 }}><span style={{ fontWeight: 800 }}>Shows: </span><InlineMath text={o.misconception} /></div>
+            )}
           </div>
-        )}
+        );
+      })}
+    </div>
+  );
 
-        <div className="flex items-start justify-between" style={{ gap: "1em" }}>
-          <div className="flex flex-col" style={{ gap: "0.15em", minWidth: 0 }}>
-            {current.question.map((line, i) => (
-              <div key={i} style={{ fontSize: "1.25em", fontWeight: 650, lineHeight: 1.3, color: "#111827" }}><InlineMath text={line} /></div>
-            ))}
-          </div>
-          {/* The key lives in the question section: small, in the corner, and lit up once the answer is revealed. */}
-          {current.visual?.type === "pyramid" && (
-            <div className="flex-shrink-0" style={{ width: "8.5em", marginTop: "-0.2em" }}>
-              <BidmasPyramid strong={revealed ? current.visual.strong : []} soft={revealed ? current.visual.soft : []} maxWidth={220} />
-            </div>
-          )}
-        </div>
-
-        {current.options && (
-          <div className="grid" style={{ gap: "0.7em", gridTemplateColumns: narrow ? "1fr" : `repeat(${Math.min(current.options.length, 3)}, minmax(0, 1fr))` }}>
-            {current.options.map((o, i) => {
-              const right = revealed && o.correct;
-              const wrong = revealed && !o.correct;
-              const share = totalVotes > 0 ? itemVotes[i] / totalVotes : 0;
-              return (
-                <div key={i} className="flex flex-col" style={{
-                  borderRadius: "0.8em", padding: "0.45em 0.75em", gap: "0.3em",
-                  border: `0.14em solid ${right ? "#16a34a" : "#d1d5db"}`,
-                  background: right ? "#f0fdf4" : wrong ? "#f9fafb" : "#fff",
-                }}>
-                  <div className="flex items-center" style={{ gap: "0.6em" }}>
-                    <span className="flex-shrink-0 flex items-center justify-center font-bold text-white"
-                      style={{ width: "1.9em", height: "1.9em", borderRadius: "50%", background: right ? "#16a34a" : NAVY, fontSize: "0.9em" }}>
-                      {String.fromCharCode(65 + i)}
-                    </span>
-                    <span style={{ fontSize: "1.2em", fontWeight: 650 }}><InlineMath text={o.text} /></span>
-                  </div>
-
-                  {/* Class vote */}
-                  <div className="flex items-center" style={{ gap: "0.45em" }}>
-                    <button onClick={() => setVote(i, -1)} aria-label={`Remove a vote for ${String.fromCharCode(65 + i)}`}
-                      className="flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-600"
-                      style={{ width: "1.5em", height: "1.5em", borderRadius: "50%", fontSize: "0.8em" }}><Minus size={12} /></button>
-                    <span className="font-bold text-center" style={{ minWidth: "1.6em", fontSize: "0.9em" }}>{itemVotes[i]}</span>
-                    <button onClick={() => setVote(i, 1)} aria-label={`Add a vote for ${String.fromCharCode(65 + i)}`}
-                      className="flex items-center justify-center bg-blue-100 hover:bg-blue-200 text-blue-900"
-                      style={{ width: "1.5em", height: "1.5em", borderRadius: "50%", fontSize: "0.8em" }}><Plus size={12} /></button>
-                    <div className="flex-1 bg-gray-100 overflow-hidden" style={{ height: "0.55em", borderRadius: "999px" }}>
-                      <div style={{ width: `${share * 100}%`, height: "100%", background: right ? "#16a34a" : "#93c5fd", transition: "width 200ms" }} />
-                    </div>
-                    {totalVotes > 0 && <span style={{ fontSize: "0.7em", color: "#6b7280", minWidth: "2.4em", textAlign: "right" }}>{Math.round(share * 100)}%</span>}
-                  </div>
-
-                  {right && <div style={{ fontSize: "0.75em", fontWeight: 800, color: "#15803d" }}>Correct</div>}
-                  {wrong && o.misconception && <div style={{ fontSize: "0.75em", color: "#4b5563" }}><span style={{ fontWeight: 800 }}>Shows: </span><InlineMath text={o.misconception} /></div>}
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Reasoning: one line per build */}
-        {revealed && (
-          <div className="flex items-stretch" style={{ gap: "1em" }}>
-            <div className="flex-1 flex flex-col" style={{ gap: "0.25em", border: "0.14em solid #86efac", background: "#f0fdf4", borderRadius: "0.8em", padding: "0.5em 0.9em", minWidth: 0 }}>
-              {topWrong && (
-                <div style={{ fontSize: "0.8em", color: "#92400e", background: "#fef3c7", borderRadius: "0.5em", padding: "0.25em 0.7em" }}>
-                  <span style={{ fontWeight: 800 }}>In the room: </span>{topWrong.n} of {totalVotes} chose {String.fromCharCode(65 + current.options!.indexOf(topWrong.o))}
-                  {topWrong.o.misconception ? <> — <InlineMath text={topWrong.o.misconception} /></> : null}
-                </div>
-              )}
-              {current.answer.slice(0, beat).map((line, i) => (
-                <div key={i} style={{ fontSize: "1.1em", lineHeight: 1.35, color: "#111827" }}><InlineMath text={line} /></div>
-              ))}
-            </div>
-          </div>
-        )}
+  const working = current.working && (
+    <div style={{ width: "100%" }}>
+      {current.working.intro && !onAnswer && <div style={{ fontSize: "1.1em", marginBottom: "0.3em", textAlign: "center" }}><InlineMath text={current.working.intro} /></div>}
+      <div className="flex flex-col" style={{ gap: "0.25em" }}>
+        {current.working.lines.map((ln, i) => {
+          const w = current.working!;
+          const isWrong = onAnswer && i === w.wrongLine;
+          const after = onAnswer && i > w.wrongLine;
+          const isPick = !onAnswer && picked === i;
+          return (
+            <button key={i} onClick={() => !onAnswer && setPicked((p) => (p === i ? null : i))}
+              className="flex items-center text-left transition-colors"
+              style={{
+                gap: "0.7em", padding: "0.15em 0.7em", borderRadius: "0.5em", opacity: after ? 0.45 : 1, cursor: onAnswer ? "default" : "pointer",
+                border: `0.12em solid ${isWrong ? "#dc2626" : isPick ? "#d97706" : "#e2e8f0"}`,
+                background: isWrong ? "#fef2f2" : isPick ? "#fffbeb" : "#fff",
+              }}>
+              <span className="flex-shrink-0 text-center font-bold" style={{ width: "1.4em", fontSize: "0.7em", color: "#94a3b8" }}>{i + 1}</span>
+              <span style={{ fontSize: "1.25em" }}><MathRenderer latex={ln} style={{ fontSize: "1em" }} /></span>
+              {isWrong && <span style={{ marginLeft: "auto", fontSize: "0.7em", fontWeight: 800, color: "#dc2626" }}>First mistake</span>}
+              {isPick && <span style={{ marginLeft: "auto", fontSize: "0.65em", fontWeight: 700, color: "#b45309" }}>Our pick</span>}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
 
-  const dots = Array.from({ length: last + 1 }, (_, i) => i);
+  // ---- Slide 1: the question ----
+  const questionSlide = (
+    <>
+      {current.speakers && (
+        <div className="flex flex-col" style={{ gap: "0.5em", width: "100%" }}>
+          {current.speakers.map((sp, i) => {
+            const col = SPEAKER_COLOURS[i % SPEAKER_COLOURS.length];
+            return (
+              <div key={i} className="flex items-center" style={{ gap: "0.7em" }}>
+                <Avatar index={i} size="4.2em" />
+                <div style={{ position: "relative", border: `0.14em solid ${col}`, borderRadius: "1.2em", padding: "0.4em 1.1em", background: "#fff", minWidth: 0, flex: 1 }}>
+                  {/* tail pointing back at the speaker */}
+                  <span style={{ position: "absolute", left: "-0.55em", top: "50%", width: "0.9em", height: "0.9em", background: "#fff", borderLeft: `0.14em solid ${col}`, borderBottom: `0.14em solid ${col}`, transform: "translateY(-50%) rotate(45deg)" }} />
+                  <div style={{ fontSize: "0.62em", fontWeight: 800, color: col, textTransform: "uppercase", letterSpacing: "0.1em" }}>{sp.name}</div>
+                  {sp.says.map((line, k) => <div key={k} style={{ fontSize: "1.3em", fontWeight: 600, lineHeight: 1.3 }}><InlineMath text={line} /></div>)}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {working}
+      <div className="flex flex-col items-center text-center" style={{ gap: "0.15em" }}>
+        {current.question.map((line, i) => (
+          <div key={i} style={{ fontSize: "1.45em", fontWeight: 650, lineHeight: 1.3, color: "#111827" }}><InlineMath text={line} /></div>
+        ))}
+      </div>
+      {options}
+    </>
+  );
+
+  // ---- Slide 2: the answer ----
+  const answerSlide = (
+    <>
+      <div style={{ fontSize: "0.7em", fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", color: "#15803d" }}>Answer</div>
+      {working}
+      {options}
+      <div className="flex flex-col" style={{ gap: "0.3em", width: "100%", borderLeft: "0.3em solid #16a34a", paddingLeft: "0.9em" }}>
+        {current.answer.map((line, i) => (
+          <div key={i} style={{ fontSize: current.options || current.working ? "1.2em" : "1.4em", lineHeight: 1.35, color: "#111827" }}><InlineMath text={line} /></div>
+        ))}
+      </div>
+    </>
+  );
+
+  const stageStyle = narrow
+    ? { background: TEAL, borderRadius: "0.9rem", fontSize: "16px", padding: "0.8em 0.8em 0" }
+    : { background: TEAL, aspectRatio: "16 / 9", fontSize: "1.9cqw", borderRadius: present ? 0 : "0.9rem" };
+
+  const stage = (
+    <div style={{ position: "relative", overflow: "hidden", boxShadow: "0 10px 30px rgba(0,0,0,0.18)", ...stageStyle } as React.CSSProperties}>
+      {/* corner pills */}
+      <div className="flex items-center justify-between" style={{ position: narrow ? "static" : "absolute", top: "0.7em", left: "1.2em", right: "1.2em", zIndex: 2, marginBottom: narrow ? "0.5em" : 0 }}>
+        <span style={{ fontSize: "0.7em", fontWeight: 800, padding: "0.2em 0.8em", borderRadius: "999px", background: "rgba(255,255,255,0.92)", color: NAVY }}>
+          {LV_LABELS[current.level]}{inCheck ? ` · ${check! + 1} of ${starts.length}` : ""}
+        </span>
+        <span style={{ fontSize: "0.7em", fontWeight: 800, padding: "0.2em 0.8em", borderRadius: "999px", background: "rgba(255,255,255,0.92)", color: NAVY }}>{purposeLabel(current.purpose)}</span>
+      </div>
+      {!narrow && <div style={{ position: "absolute", top: "0.35em", left: "50%", transform: "translateX(-50%)", zIndex: 3 }}><Badge /></div>}
+
+      {/* the white panel */}
+      <div className="flex flex-col items-center justify-center"
+        style={narrow
+          ? { position: "relative", background: "#fff", borderRadius: "1.2em", padding: "1em", gap: "0.7em" }
+          : { position: "absolute", top: "2.5em", bottom: "3.2em", left: "5%", right: "5%", background: "#fff", borderRadius: "1.6em", padding: "1.6em 1.8em 1.4em", gap: "0.65em", overflow: "auto" }}>
+        <div className="flex flex-col items-center justify-center" style={{ gap: narrow ? "0.7em" : "0.65em", width: "100%", margin: "auto 0" }}>
+          {onAnswer ? answerSlide : questionSlide}
+        </div>
+        {/* the key lives in the panel's corner: visible from the start, lit on the answer slide */}
+        {current.visual?.type === "pyramid" && (
+          <div style={{ position: "absolute", top: "0.9em", right: "1.1em", width: narrow ? "6em" : "7.2em" }}>
+            <BidmasPyramid strong={onAnswer ? current.visual.strong : []} soft={onAnswer ? current.visual.soft : []} maxWidth={200} />
+          </div>
+        )}
+      </div>
+
+      {/* the mascot, standing on the bottom edge of the slide */}
+      <div style={narrow ? { display: "flex", justifyContent: "center", marginTop: "-0.2em" } : { position: "absolute", bottom: "0.15em", left: "50%", transform: "translateX(-50%)", zIndex: 3 }}>
+        <Mascot mood={onAnswer ? "know" : "think"} size={narrow ? "4.4em" : "5.4em"} />
+      </div>
+    </div>
+  );
+
+  const ghost = present ? "text-gray-300 hover:text-white" : "text-gray-600 hover:text-blue-900";
   const controls = (
-    <div className={`flex flex-wrap items-center justify-between gap-3 ${fs ? "px-4 py-3" : "mt-4"}`}>
-      <button onClick={toPicker} className={`flex items-center gap-1.5 text-sm font-bold ${fs ? "text-gray-300 hover:text-white" : "text-gray-600 hover:text-blue-900"}`}>
+    <div className={`flex flex-wrap items-center justify-between gap-3 ${present ? "px-4 py-3 w-full max-w-5xl" : "mt-4"}`}>
+      <button onClick={toPicker} className={`flex items-center gap-1.5 text-sm font-bold ${ghost}`}>
         <ArrowLeft size={16} /> {inCheck ? "End quick check" : "All questions"}
       </button>
 
-      <div className="flex items-center gap-3">
-        <button onClick={prev} disabled={beat === 0} aria-label="Previous build"
-          className="w-11 h-11 rounded-full bg-white text-blue-900 shadow flex items-center justify-center disabled:opacity-30 hover:bg-gray-50"><ChevronLeft size={22} /></button>
-        <div className="flex items-center gap-1.5">
-          {dots.map((d) => <span key={d} className="rounded-full" style={{ width: 9, height: 9, background: d === beat ? "#1e3a8a" : d < beat ? "#93c5fd" : "#d1d5db" }} />)}
+      <div className="flex items-center gap-2">
+        <button onClick={toQuestion} disabled={slide === 0} aria-label="Question slide"
+          className="w-10 h-10 rounded-full bg-white text-blue-900 shadow flex items-center justify-center disabled:opacity-30 hover:bg-gray-50"><ChevronLeft size={22} /></button>
+        <div className="flex rounded-full overflow-hidden shadow" role="tablist" aria-label="Slides">
+          {(["Question", "Answer"] as const).map((label, i) => (
+            <button key={label} role="tab" aria-selected={slide === i} onClick={() => setSlide(i as 0 | 1)}
+              className={`px-5 py-2 text-sm font-bold ${slide === i ? "bg-blue-900 text-white" : "bg-white text-gray-700 hover:bg-gray-50"}`}>{label}</button>
+          ))}
         </div>
-        <button onClick={next} disabled={beat === last} aria-label={beat === 0 ? "Show answer" : "Next build"}
-          className="h-11 px-5 rounded-full bg-blue-900 text-white shadow font-bold flex items-center gap-1.5 disabled:opacity-30 hover:bg-blue-800">
-          {beat === 0 ? "Show answer" : "Next"} <ChevronRight size={20} />
-        </button>
-        {beat < last && beat > 0 && <button onClick={() => setBeat(last)} className={`text-xs font-bold underline ${fs ? "text-gray-300" : "text-gray-500"}`}>Show all</button>}
-        {beat === last && last > 0 && <button onClick={() => setBeat(0)} className={`text-xs font-bold underline ${fs ? "text-gray-300" : "text-gray-500"}`}>Hide answer</button>}
+        <button onClick={toAnswer} disabled={slide === 1} aria-label="Answer slide"
+          className="w-10 h-10 rounded-full bg-white text-blue-900 shadow flex items-center justify-center disabled:opacity-30 hover:bg-gray-50"><ChevronRight size={22} /></button>
       </div>
 
       <div className="flex items-center gap-2">
         {current.teacherNote && (
-          <button onClick={() => setShowNote((s) => !s)} aria-pressed={showNote}
+          <button onClick={() => setShowNote((v) => !v)} aria-pressed={showNote}
             className={`px-3 py-2 rounded-lg text-sm font-bold flex items-center gap-1.5 ${showNote ? "bg-amber-200 text-amber-900" : "bg-white text-gray-700 shadow hover:bg-gray-50"}`}>
             <Info size={15} /> Teacher notes
           </button>
         )}
-        {!narrow && (
-          <button onClick={togglePresent} className="px-3 py-2 rounded-lg bg-white text-gray-700 shadow text-sm font-bold flex items-center gap-1.5 hover:bg-gray-50">
-            {fs ? <><Minimize size={15} /> Exit</> : <><Maximize size={15} /> Present</>}
-          </button>
-        )}
+        <button onClick={() => setPresent((v) => !v)} className="px-3 py-2 rounded-lg bg-white text-gray-700 shadow text-sm font-bold flex items-center gap-1.5 hover:bg-gray-50">
+          {present ? <><Minimize size={15} /> Exit</> : <><Maximize size={15} /> Present</>}
+        </button>
       </div>
 
-      {(showNote && current.teacherNote) && (
+      {showNote && current.teacherNote && (
         <div className="basis-full rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900"><span className="font-bold">Teacher: </span><InlineMath text={current.teacherNote} /></div>
       )}
 
-      {beat === last && (notSecure || secure || inCheck) && (
+      {onAnswer && (notSecure || secure || inCheck) && (
         <div className="basis-full flex flex-wrap gap-3 justify-center">
           {notSecure && (
             <button onClick={() => open(notSecure.id)} className="px-4 py-2 rounded-lg border-2 border-gray-300 bg-white font-bold text-sm text-gray-800 hover:bg-gray-50 text-left">
@@ -389,10 +374,12 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
   );
 
   return (
-    <div ref={wrapRef} className={fs ? "bg-gray-900 flex flex-col items-center justify-center" : ""} style={fs ? { minHeight: "100vh" } : undefined}>
+    <div ref={wrapRef}
+      className={present ? "flex flex-col items-center justify-center" : ""}
+      style={present ? { position: "fixed", inset: 0, zIndex: 1000, background: "#0f172a", overflowY: "auto" } : undefined}>
       <div style={{
         containerType: "inline-size",
-        width: narrow ? "100%" : fs ? "min(100vw, calc((100vh - 4.5rem) * 16 / 9))" : "100%",
+        width: narrow ? "100%" : present ? "min(calc(100vw - 1.5rem), calc((100vh - 9rem) * 16 / 9))" : "100%",
       } as React.CSSProperties}>
         {stage}
       </div>
