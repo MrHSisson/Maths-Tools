@@ -21,6 +21,7 @@ List the real misconceptions for this tool's topic, per level. This is the spine
 
 ## 2. Items
 Aim for diagnose, explain **and** extend at every level (the tests require it), one **Start here** diagnose per level.
+For each item note any **needs** — the Question Options it depends on (e.g. a roots question needs the Roots focus on). It is greyed out in the picker when they're off, so a class building up never meets a question it can't. Leave blank if it is always possible.
 
 | id (`<tool>-<slug>`) | Level | Purpose | Title (no answer in it) | Question | Options (misconception per wrong option) | Answer / reasoning | Teacher note | If not secure → | If secure → |
 |---|---|---|---|---|---|---|---|---|---|

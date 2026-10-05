@@ -3,13 +3,17 @@
 
 import { describe, it, expect } from "vitest";
 import katex from "katex";
-import type { DepthItem } from "../shared/depth";
+import { depthUnmet, type DepthItem, type DepthOptionInfo } from "../shared/depth";
 
 const loaders = import.meta.glob("../tools/**/*.tsx");
+type Pool = { label: string; options: { value: string; label: string; defaultActive: boolean }[] };
+type Cfg = { tools: Record<string, { multiSelect?: Pool | Pool[] | null; difficultySettings?: Record<string, { multiSelect?: Pool | Pool[] | null }> | null }> };
 const banks: [string, DepthItem[], string[]][] = [];
+const configs = new Map<string, Cfg>();
 for (const [path, load] of Object.entries(loaders)) {
   try {
     const mod = (await load()) as { __test?: { depthItems?: DepthItem[]; TOOL_CONFIG?: { tools: Record<string, unknown> } } };
+    if (mod.__test?.depthItems?.length) configs.set(path, mod.__test.TOOL_CONFIG as unknown as Cfg);
     if (mod.__test?.depthItems?.length) banks.push([path, mod.__test.depthItems, Object.keys(mod.__test.TOOL_CONFIG?.tools ?? {})]);
   } catch { /* import failures are reported by generators.test.ts */ }
 }
@@ -28,6 +32,50 @@ describe("Depth banks", () => {
   for (const [path, items, toolKeys] of banks) {
     describe(path, () => {
       const ids = new Set(items.map((i) => i.id));
+
+      // The options each sub-tool offers at each level, as DepthMode sees them (value → pool/label), and the defaults.
+      const offered = (toolKey: string, lv: string) => {
+        const t = configs.get(path)?.tools[toolKey];
+        const raw = t?.difficultySettings?.[lv]?.multiSelect ?? t?.multiSelect;
+        const pools = raw ? (Array.isArray(raw) ? raw : [raw]) : [];
+        const info: DepthOptionInfo = {};
+        const on = new Set<string>();
+        for (const g of pools) for (const o of g.options) { info[o.value] = { pool: g.label, label: o.label }; if (o.defaultActive) on.add(o.value); }
+        return { info, on };
+      };
+      const tabsOf = (i: DepthItem) => (i.tool ? [i.tool] : toolKeys);
+
+      it("`needs` names real Question Options offered at the item's level", () => {
+        for (const i of items.filter((x) => x.needs)) {
+          for (const need of i.needs!) {
+            const clause = Array.isArray(need) ? need : [need];
+            for (const v of clause) {
+              expect(tabsOf(i).some((k) => v in offered(k, i.level).info), `${i.id}: "${v}" is not an option at ${i.level}`).toBe(true);
+            }
+          }
+        }
+      });
+
+      it("with default options every level still offers diagnose, explain and extend on every tab", () => {
+        for (const k of toolKeys) {
+          for (const lv of ["level1", "level2", "level3"]) {
+            const { info, on } = offered(k, lv);
+            for (const purpose of ["diagnose", "explain", "extend"]) {
+              const avail = items.filter((i) => i.level === lv && i.purpose === purpose && (!i.tool || i.tool === k) && !depthUnmet(i, on, info));
+              expect(avail.length, `${k} ${lv} ${purpose}`).toBeGreaterThan(0);
+            }
+          }
+        }
+      });
+
+      it("depthUnmet: skips clauses nothing offers, needs ANY option in a clause and ALL clauses", () => {
+        const info: DepthOptionInfo = { a: { pool: "Focus", label: "A" }, b: { pool: "Focus", label: "B" }, n: { pool: "Numbers", label: "Negatives" } };
+        const it0 = { needs: [["a", "b"], "n", "ghost"] } as unknown as DepthItem;
+        expect(depthUnmet(it0, new Set(["b", "n"]), info)).toBeNull();
+        expect(depthUnmet(it0, new Set(["n"]), info)).toBe("Needs Focus: A or B");
+        expect(depthUnmet(it0, new Set(["a"]), info)).toBe("Needs Numbers: Negatives");
+        expect(depthUnmet({} as DepthItem, new Set(), info)).toBeNull();
+      });
 
       it("ids are unique and URL-safe", () => {
         expect(ids.size).toBe(items.length);

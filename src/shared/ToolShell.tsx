@@ -22,7 +22,7 @@ import type { PrintContext } from "./printDiagram";
 import { WorksheetBuilder } from "./WorksheetBuilder";
 import { TeachingDeck, type TeachingSlide } from "./TeachingDeck";
 import { DepthMode } from "./components/DepthMode";
-import type { DepthItem } from "./depth";
+import type { DepthItem, DepthOptionInfo } from "./depth";
 import { useDevMode } from "../devMode";
 import { SkillOverlay } from "./skills";
 import { useParkedMode } from "../parkedMode";
@@ -613,6 +613,20 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const getDropdownConfig = () => getToolSettings().difficultySettings?.[difficulty]?.dropdown ?? getToolSettings().dropdown;
   const getVariablesConfig = () => getToolSettings().difficultySettings?.[difficulty]?.variables ?? getToolSettings().variables;
   const getMultiSelectConfig = () => normalizeMultiSelect(getToolSettings().difficultySettings?.[difficulty]?.multiSelect ?? getToolSettings().multiSelect);
+
+  // Depth reads the SAME Question Options as the other modes: which multiSelect options this sub-tool + level
+  // offers, and which are switched on, decide which curated questions are possible (DepthItem.needs).
+  const depthOptionInfo = useMemo(() => {
+    const info: DepthOptionInfo = {};
+    getMultiSelectConfig().forEach(g => g.options.forEach(o => { info[o.value] = { pool: g.label, label: o.label }; }));
+    return info;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentTool, difficulty, config]);
+  const depthActiveOptions = useMemo(() => {
+    const vals = resolveMultiSelectValues(getMultiSelectConfig(), toolMultiSelect[currentTool] ?? {});
+    return new Set(Object.keys(depthOptionInfo).filter(v => vals[v]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentTool, difficulty, config, toolMultiSelect, depthOptionInfo]);
 
   // Whether the current tool has any weighted multiSelect option at all,
   // across every level — decides whether the "Smart Progressor" Settings
@@ -1660,7 +1674,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             </div>
 
             {mode === "depth" && showDepth ? (
-              <DepthMode narrow items={toolDepthItems} level={difficulty} onLevelChange={l => setDifficultyGuarded(l)} itemId={depthItemId} onItemChange={setDepthItemId} />
+              <DepthMode narrow items={toolDepthItems} level={difficulty} onLevelChange={l => setDifficultyGuarded(l)} itemId={depthItemId} onItemChange={setDepthItemId} optionInfo={depthOptionInfo} activeOptions={depthActiveOptions} />
             ) : mode === "worksheet" ? (
               <>
                 <div className="flex items-center justify-center gap-2 mb-3 flex-wrap">
@@ -1847,10 +1861,12 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           )}
           {mode === "depth" && showDepth && (
             <div className="flex flex-col gap-6">
-              <div className="rounded-xl shadow-lg bg-white p-4 flex justify-center">
+              <div className="rounded-xl shadow-lg bg-white p-4 flex flex-wrap items-center justify-center gap-4">
                 <DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} levels={toolLevels} />
+                {/* the same Question Options as every other mode: they decide which Depth questions are possible */}
+                {Object.keys(depthOptionInfo).length > 0 && qoEl()}
               </div>
-              <DepthMode items={toolDepthItems} level={difficulty} onLevelChange={l => setDifficultyGuarded(l)} itemId={depthItemId} onItemChange={setDepthItemId} />
+              <DepthMode items={toolDepthItems} level={difficulty} onLevelChange={l => setDifficultyGuarded(l)} itemId={depthItemId} onItemChange={setDepthItemId} optionInfo={depthOptionInfo} activeOptions={depthActiveOptions} />
             </div>
           )}
           {mode !== "worksheet" && mode !== "teach" && mode !== "depth" && (

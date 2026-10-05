@@ -4,7 +4,7 @@ import { InlineMath, MathRenderer } from "./MathRenderer";
 import { BidmasPyramid } from "./BidmasPyramid";
 import { Avatar, Badge, Mascot } from "./DepthArt";
 import { LV_LABELS } from "../colors";
-import { DEPTH_PURPOSES, type DepthItem, type DepthPurpose } from "../depth";
+import { DEPTH_PURPOSES, depthUnmet, type DepthItem, type DepthOptionInfo, type DepthPurpose } from "../depth";
 import type { DifficultyLevel } from "../types";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -44,9 +44,13 @@ export interface DepthModeProps {
   onItemChange: (id: string | null) => void;
   /** Phone layout: the slide flows as a normal column instead of a fixed 16:9 stage. */
   narrow?: boolean;
+  /** The Question Options on offer now (value → pool/label) and which are switched on. With these, items whose
+   *  `needs` aren't met are greyed out in the picker, so a class building up never gets a question it can't meet. */
+  optionInfo?: DepthOptionInfo;
+  activeOptions?: ReadonlySet<string>;
 }
 
-export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, narrow = false }: DepthModeProps) {
+export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, narrow = false, optionInfo, activeOptions }: DepthModeProps) {
   const [purpose, setPurpose] = useState<DepthPurpose | "all">("all");
   const [slide, setSlide] = useState<0 | 1>(0); // 0 = the question slide, 1 = the answer slide
   const [check, setCheck] = useState<number | null>(null); // index into `starts` while a quick check runs
@@ -62,7 +66,15 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
     [items],
   );
   const atLevel = useMemo(() => items.filter((i) => i.level === level), [items, level]);
-  const visible = atLevel.filter((i) => purpose === "all" || i.purpose === purpose);
+  // Why an item (at this level) can't be met with the current Question Options, or null.
+  const unmetOf = useCallback(
+    (i: DepthItem) => (optionInfo && activeOptions ? depthUnmet(i, activeOptions, optionInfo) : null),
+    [optionInfo, activeOptions],
+  );
+  const inPurpose = atLevel.filter((i) => purpose === "all" || i.purpose === purpose);
+  // Items that can be met come first; the rest follow, greyed out with what they need.
+  const visible = [...inPurpose.filter((i) => !unmetOf(i)), ...inPurpose.filter((i) => unmetOf(i))];
+  const nUnmet = atLevel.filter((i) => unmetOf(i)).length;
 
   // New item → back to the question slide.
   useEffect(() => { setSlide(0); setPicked(null); setShowNote(false); }, [itemId]);
@@ -141,7 +153,8 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
 
         <div className="flex flex-wrap gap-2 my-4">
           {([{ key: "all", label: "All" }, ...DEPTH_PURPOSES] as { key: DepthPurpose | "all"; label: string }[]).map((p) => {
-            const n = p.key === "all" ? atLevel.length : atLevel.filter((i) => i.purpose === p.key).length;
+            const pool = atLevel.filter((i) => !unmetOf(i));
+            const n = p.key === "all" ? pool.length : pool.filter((i) => i.purpose === p.key).length;
             const on = purpose === p.key;
             return (
               <button key={p.key} onClick={() => setPurpose(p.key)}
@@ -152,18 +165,27 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
           })}
         </div>
 
+        {nUnmet > 0 && (
+          <p className="text-xs text-gray-500 -mt-2 mb-3">{nUnmet} greyed out: they need a Question Option that is switched off. Change the options above to bring them back.</p>
+        )}
+
         {visible.length === 0 ? (
           <p className="text-gray-500 py-8 text-center">No questions here yet for this level.</p>
         ) : (
           <div className={`grid gap-3 ${narrow ? "grid-cols-1" : "grid-cols-2 lg:grid-cols-3"}`}>
-            {visible.map((it) => (
-              <button key={it.id} onClick={() => open(it.id)}
-                className={`text-left rounded-xl border-2 bg-white p-4 shadow-sm transition-colors ${PURPOSE_STYLE[it.purpose].card}`}>
-                <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold ${PURPOSE_STYLE[it.purpose].badge}`}>{purposeLabel(it.purpose)}</span>
-                <div className="mt-2 font-bold text-gray-900 text-lg leading-snug">{it.title}</div>
-                {it.options && <div className="mt-1 text-xs text-gray-500">{it.options.length} choices</div>}
-              </button>
-            ))}
+            {visible.map((it) => {
+              const unmet = unmetOf(it);
+              return (
+                <button key={it.id} onClick={() => open(it.id)} disabled={!!unmet} title={unmet ? `${unmet} (switch it on in Question Options)` : undefined}
+                  className={`text-left rounded-xl border-2 bg-white p-4 shadow-sm transition-colors ${unmet ? "border-gray-200 opacity-50 cursor-not-allowed" : PURPOSE_STYLE[it.purpose].card}`}>
+                  <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold ${PURPOSE_STYLE[it.purpose].badge}`}>{purposeLabel(it.purpose)}</span>
+                  <div className="mt-2 font-bold text-gray-900 text-lg leading-snug">{it.title}</div>
+                  {unmet
+                    ? <div className="mt-1 text-xs font-semibold text-gray-600">{unmet}</div>
+                    : it.options && <div className="mt-1 text-xs text-gray-500">{it.options.length} choices</div>}
+                </button>
+              );
+            })}
           </div>
         )}
       </div>

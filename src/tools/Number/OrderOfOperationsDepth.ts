@@ -8,7 +8,7 @@ import type { DepthItem } from "../../shared";
 export const DEPTH_ITEMS: DepthItem[] = [
   // ───────────────────────── Level 1 — Who goes first? ─────────────────────────
   {
-    id: "ooo-jack-jo", level: "level1", purpose: "diagnose", startHere: true,
+    id: "ooo-jack-jo", level: "level1", needs: [["basic", "mixed", "leftToRight"]], purpose: "diagnose", startHere: true,
     title: "Who is right?",
     speakers: [
       { name: "Jack", says: ["$7 + 2 \\times 3 = 27$"] },
@@ -29,7 +29,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "ooo-matthew", ifSecure: "ooo-why-multiply-first",
   },
   {
-    id: "ooo-sub-add", level: "level1", purpose: "diagnose",
+    id: "ooo-sub-add", level: "level1", needs: [["chain", "mixed", "addFirst"]], purpose: "diagnose",
     title: "Same tier",
     question: ["What is $20 - 8 + 3$?"],
     options: [
@@ -47,7 +47,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "ooo-student-working", ifSecure: "ooo-div-mul",
   },
   {
-    id: "ooo-div-mul", level: "level1", purpose: "diagnose",
+    id: "ooo-div-mul", level: "level1", needs: [["chain", "mixed", "mulFirst"]], purpose: "diagnose",
     title: "Divide then multiply",
     question: ["What is $24 \\div 4 \\times 2$?"],
     options: [
@@ -64,7 +64,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "ooo-sub-add", ifSecure: "ooo-make-answers",
   },
   {
-    id: "ooo-matthew", level: "level1", purpose: "explain",
+    id: "ooo-matthew", level: "level1", needs: [["basic", "mixed", "leftToRight"]], purpose: "explain",
     title: "Matthew's mistake",
     speakers: [{ name: "Matthew", says: ["$9 + 3 \\times 2 = 24$"] }],
     question: ["Explain Matthew's mistake and give the correct answer."],
@@ -76,7 +76,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "ooo-jack-jo", ifSecure: "ooo-make-answers",
   },
   {
-    id: "ooo-student-working", level: "level1", purpose: "explain",
+    id: "ooo-student-working", level: "level1", needs: [["basic", "mixed", "leftToRight"]], purpose: "explain",
     title: "Spot the error in working",
     working: {
       intro: "A student works out $9 + 4 \\times 3 + 2$:",
@@ -92,7 +92,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "ooo-matthew", ifSecure: "ooo-make-answers",
   },
   {
-    id: "ooo-why-multiply-first", level: "level1", purpose: "extend",
+    id: "ooo-why-multiply-first", level: "level1", needs: [["basic", "mixed", "leftToRight"]], purpose: "extend",
     title: "Why multiply first?",
     speakers: [{ name: "Ana", says: ["The order of operations is just a rule somebody made up."] }],
     question: ["Can you explain why $2 + 3 \\times 4$ is $14$ and not $20$?"],
@@ -121,7 +121,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
 
   // ─────────────────── Level 2 — Things that jump the queue ───────────────────
   {
-    id: "ooo-bracket-first", level: "level2", purpose: "diagnose", startHere: true,
+    id: "ooo-bracket-first", level: "level2", needs: [["brackets", "bracketsIndices", "ignoreBrackets"]], purpose: "diagnose", startHere: true,
     title: "Brackets first",
     question: ["What is $5 + (4 + 2) \\times 3$?"],
     options: [
@@ -139,7 +139,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "ooo-student-working", ifSecure: "ooo-one-pair",
   },
   {
-    id: "ooo-square-product", level: "level2", purpose: "diagnose",
+    id: "ooo-square-product", level: "level2", needs: [["indices", "bracketsIndices", "powTimes"]], purpose: "diagnose",
     title: "What gets squared?",
     question: ["What is $3 \\times 2^2$?"],
     options: [
@@ -155,7 +155,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "ooo-kofi-power", ifSecure: "ooo-sum-squared",
   },
   {
-    id: "ooo-neg-square", level: "level2", purpose: "diagnose",
+    id: "ooo-neg-square", level: "level2", needs: [["indices", "bracketsIndices", "powTimes", "negSquare"], "negatives"], purpose: "diagnose",
     title: "A negative squared",
     question: ["What is the difference between $-3^2$ and $(-3)^2$?"],
     options: [
@@ -172,7 +172,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "ooo-square-product", ifSecure: "ooo-sum-squared",
   },
   {
-    id: "ooo-priya-square", level: "level2", purpose: "explain",
+    id: "ooo-priya-square", level: "level2", needs: [["bracketsIndices", "powTimes"]], purpose: "explain",
     title: "Priya's square",
     speakers: [{ name: "Priya", says: ["$(3 + 4)^2 = 3^2 + 4^2 = 25$"] }],
     question: ["Explain Priya's mistake and find the correct answer."],
@@ -184,7 +184,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "ooo-square-product", ifSecure: "ooo-sum-squared",
   },
   {
-    id: "ooo-kofi-power", level: "level2", purpose: "explain",
+    id: "ooo-kofi-power", level: "level2", needs: [["indices", "bracketsIndices", "powTimes"]], purpose: "explain",
     title: "Kofi's order",
     speakers: [{ name: "Kofi", says: ["$2 + 3^2 = 25$"] }],
     question: ["What did Kofi do, and what should the answer be?"],
@@ -195,7 +195,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "ooo-matthew", ifSecure: "ooo-priya-square",
   },
   {
-    id: "ooo-one-pair", level: "level2", purpose: "extend",
+    id: "ooo-one-pair", level: "level2", needs: [["brackets", "bracketsIndices", "ignoreBrackets"]], purpose: "extend",
     title: "One pair of brackets",
     question: [
       "Put one pair of brackets anywhere in $2 + 3 \\times 4 + 1$.",
@@ -211,7 +211,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "ooo-bracket-first", ifSecure: "ooo-root-bracket",
   },
   {
-    id: "ooo-sum-squared", level: "level2", purpose: "extend",
+    id: "ooo-sum-squared", level: "level2", needs: [["bracketsIndices", "powTimes"]], purpose: "extend",
     title: "Always, sometimes, never",
     question: ["Always, sometimes or never true?", "$(a + b)^2 = a^2 + b^2$", "Test it with numbers, then explain."],
     answer: [
@@ -225,7 +225,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
 
   // ─────────────── Level 3 — Symbols that act as brackets ───────────────
   {
-    id: "ooo-root-bracket", level: "level3", purpose: "diagnose", startHere: true,
+    id: "ooo-root-bracket", level: "level3", needs: [["roots", "rootGroup"]], purpose: "diagnose", startHere: true,
     title: "Under the root",
     question: ["What is $\\sqrt{9 + 16}$?"],
     options: [
@@ -243,7 +243,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "ooo-bracket-first", ifSecure: "ooo-sum-root",
   },
   {
-    id: "ooo-fraction-bar", level: "level3", purpose: "diagnose",
+    id: "ooo-fraction-bar", level: "level3", needs: [["fraction", "fracGroup"]], purpose: "diagnose",
     title: "The fraction bar",
     question: ["What is $\\dfrac{8 + 4}{5 - 1}$?"],
     options: [
@@ -259,7 +259,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "ooo-root-bracket", ifSecure: "ooo-build-your-own",
   },
   {
-    id: "ooo-nested", level: "level3", purpose: "diagnose",
+    id: "ooo-nested", level: "level3", needs: ["nested"], purpose: "diagnose",
     title: "Brackets inside brackets",
     question: ["What is $2 \\times (3 + (4 - 1) \\times 5)$?"],
     options: [
@@ -276,7 +276,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "ooo-bracket-first", ifSecure: "ooo-build-your-own",
   },
   {
-    id: "ooo-elena-root", level: "level3", purpose: "explain",
+    id: "ooo-elena-root", level: "level3", needs: [["roots", "rootGroup"]], purpose: "explain",
     title: "Elena's root",
     speakers: [{ name: "Elena", says: ["$\\sqrt{9 + 16} = \\sqrt{9} + \\sqrt{16} = 7$"] }],
     question: ["Explain her mistake and show why $5$ is correct."],
@@ -288,7 +288,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "ooo-root-bracket", ifSecure: "ooo-sum-root",
   },
   {
-    id: "ooo-jamal-bar", level: "level3", purpose: "explain",
+    id: "ooo-jamal-bar", level: "level3", needs: [["fraction", "fracGroup"]], purpose: "explain",
     title: "Jamal's fraction",
     speakers: [{ name: "Jamal", says: ["$\\dfrac{12}{4 + 2} = 5$", "I did $12 \\div 4 = 3$, then $3 + 2 = 5$."] }],
     question: ["Explain Jamal's mistake and find the correct answer."],
@@ -300,7 +300,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "ooo-fraction-bar", ifSecure: "ooo-build-your-own",
   },
   {
-    id: "ooo-sum-root", level: "level3", purpose: "extend",
+    id: "ooo-sum-root", level: "level3", needs: [["roots", "rootGroup"]], purpose: "extend",
     title: "Always, sometimes, never",
     question: ["Always, sometimes or never true?", "$\\sqrt{a + b} = \\sqrt{a} + \\sqrt{b}$", "Test it, then explain."],
     answer: [

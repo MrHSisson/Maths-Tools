@@ -48,6 +48,11 @@ export interface DepthWorking {
 /** A picture shown on the slide once the answer is revealed. */
 export type DepthVisual = { type: "pyramid"; strong?: PyramidTier[]; soft?: PyramidTier[] };
 
+export type DepthNeed = string | string[];
+
+/** An option of the current sub-tool + level's Question Options: which pool it sits in and how it is labelled. */
+export type DepthOptionInfo = Record<string, { pool: string; label: string }>;
+
 export interface DepthItem {
   /** Unique within the tool (and across the site, ideally): `<tool>-<n>`. Used by links and `?item=`. */
   id: string;
@@ -73,6 +78,12 @@ export interface DepthItem {
   teacherNote?: string;
   /** Include in the cross-level "Start here" quick check. */
   startHere?: boolean;
+  /** Question Options this item needs, so it is only offered when the class could actually meet it. A list of
+   *  clauses that must ALL hold; a clause is an option value, or an array of values of which at least ONE must be on
+   *  (e.g. `[["indices", "bracketsIndices"], "negatives"]`). Option values are the multiSelect option `value`s of the
+   *  tool's pools, across its sub-tools: a clause naming no option offered on the current sub-tool / level is skipped,
+   *  so one list can serve both a generator's tabs. Omit for an item that is always possible. */
+  needs?: DepthNeed[];
   /** id of an easier or related item to offer when the class is not secure. */
   ifNotSecure?: string;
   /** id of an extension item to offer when the class is secure. */
@@ -84,3 +95,18 @@ export const DEPTH_PURPOSES: { key: DepthPurpose; label: string; blurb: string }
   { key: "explain", label: "Explain", blurb: "Unpick the reasoning" },
   { key: "extend", label: "Extend", blurb: "Go deeper" },
 ];
+
+/** Why `item` is not possible with the current Question Options, or null when it is. `info` lists every option
+ *  offered now (value → pool/label); `active` is the subset switched on. Only items at the current level are
+ *  filtered by the caller. A clause naming no offered option is skipped. */
+export function depthUnmet(item: DepthItem, active: ReadonlySet<string>, info: DepthOptionInfo): string | null {
+  const missing: string[] = [];
+  for (const need of item.needs ?? []) {
+    const clause = (Array.isArray(need) ? need : [need]).filter((v) => v in info);
+    if (clause.length === 0 || clause.some((v) => active.has(v))) continue;
+    const pools = new Map<string, string[]>();
+    for (const v of clause) pools.set(info[v].pool, [...(pools.get(info[v].pool) ?? []), info[v].label]);
+    missing.push([...pools].map(([pool, labels]) => `${pool}: ${labels.join(" or ")}`).join(", "));
+  }
+  return missing.length ? `Needs ${missing.join(" and ")}` : null;
+}
