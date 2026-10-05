@@ -31,18 +31,21 @@ export function Avatar({ index, size = "4em" }: { index: number; size?: string }
 }
 
 /** The Depth mascot: an owl. `mood` "think" shows a question mark, "know" a tick. */
-export function Mascot({ mood, size = "5.6em" }: { mood: "think" | "know"; size?: string }) {
+export function Mascot({ mood, size = "5.6em", tone = "navy" }: { mood: "think" | "know"; size?: string; tone?: "navy" | "light" }) {
+  const body = tone === "light" ? "#7aa7f7" : "#1e3a8a";
+  const wing = tone === "light" ? "#4f7fe0" : "#172554";
+  const belly = tone === "light" ? "#eff6ff" : "#bfdbfe";
   return (
     <svg viewBox="0 0 140 130" aria-hidden="true" style={{ width: size, height: `calc(${size} * 130 / 140)`, flexShrink: 0 }}>
       {/* feet */}
       <ellipse cx="50" cy="123" rx="13" ry="5" fill="#f59e0b" />
       <ellipse cx="82" cy="123" rx="13" ry="5" fill="#f59e0b" />
       {/* ear tufts */}
-      <path d="M30 40 L40 12 L56 34Z" fill="#1e3a8a" />
-      <path d="M102 40 L92 12 L76 34Z" fill="#1e3a8a" />
+      <path d="M30 40 L40 12 L56 34Z" fill={body} />
+      <path d="M102 40 L92 12 L76 34Z" fill={body} />
       {/* body */}
-      <ellipse cx="66" cy="76" rx="44" ry="46" fill="#1e3a8a" />
-      <ellipse cx="66" cy="92" rx="26" ry="28" fill="#bfdbfe" />
+      <ellipse cx="66" cy="76" rx="44" ry="46" fill={body} />
+      <ellipse cx="66" cy="92" rx="26" ry="28" fill={belly} />
       {/* eyes */}
       <circle cx="46" cy="60" r="19" fill="#fff" />
       <circle cx="86" cy="60" r="19" fill="#fff" />
@@ -62,8 +65,8 @@ export function Mascot({ mood, size = "5.6em" }: { mood: "think" | "know"; size?
       {/* beak */}
       <path d="M59 72 L73 72 L66 86Z" fill="#f59e0b" />
       {/* wings */}
-      <path d="M22 70 Q14 92 32 108 Q30 86 36 72Z" fill="#172554" />
-      <path d="M110 70 Q118 92 100 108 Q102 86 96 72Z" fill="#172554" />
+      <path d="M22 70 Q14 92 32 108 Q30 86 36 72Z" fill={wing} />
+      <path d="M110 70 Q118 92 100 108 Q102 86 96 72Z" fill={wing} />
       {mood === "think" ? (
         <g>
           <circle cx="118" cy="22" r="16" fill="#fff" />
