@@ -30,7 +30,9 @@ const PURPOSE_STYLE: Record<DepthPurpose, { badge: string; card: string }> = {
 const LEVEL_ORDER: DifficultyLevel[] = ["level1", "level2", "level3"];
 const SPEAKER_COLOURS = ["#7c3aed", "#e11d48", "#059669", "#d97706", "#2563eb"];
 const NAVY = "#1e3a8a";
-const PAPER = "#2a9d8f";
+const PAPER = NAVY;
+// the owl is navy too, so on the navy stage it gets a thin light outline
+const OWL_GLOW: React.CSSProperties = { filter: "drop-shadow(0 0 0.06em #fff) drop-shadow(0 0 0.12em rgba(255,255,255,0.7))" };
 const PURPOSE_COLOURS: Record<string, string> = { diagnose: "#3b82f6", explain: "#f59e0b", extend: "#10b981" };
 const purposeLabel = (p: DepthPurpose) => DEPTH_PURPOSES.find((x) => x.key === p)?.label ?? p;
 
@@ -301,7 +303,7 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
             <Badge colour="#fff" />
             <div className="flex flex-col items-start" style={{ gap: "0.35em" }}>{levelPill}{purposePill}</div>
           </div>
-          <Mascot mood={onAnswer ? "know" : "think"} size="6.2em" />
+          <div style={OWL_GLOW}><Mascot mood={onAnswer ? "know" : "think"} size="6.2em" /></div>
         </div>
       )}
 
@@ -321,7 +323,7 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
         )}
       </div>
 
-      {narrow && <div style={{ display: "flex", justifyContent: "flex-start", marginTop: "0.4em" }}><Mascot mood={onAnswer ? "know" : "think"} size="4.4em" /></div>}
+      {narrow && <div style={{ display: "flex", justifyContent: "flex-start", marginTop: "0.4em", ...OWL_GLOW }}><Mascot mood={onAnswer ? "know" : "think"} size="4.4em" /></div>}
     </div>
   );
 
