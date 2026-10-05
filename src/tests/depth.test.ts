@@ -68,6 +68,25 @@ describe("Depth banks", () => {
         }
       });
 
+      it("no single Question Option leaves a thin Depth bank (>= 3 items, and an explain or extend item)", () => {
+        const pools = (k: string, lv: string) => {
+          const t = configs.get(path)?.tools[k];
+          const raw = t?.difficultySettings?.[lv]?.multiSelect ?? t?.multiSelect;
+          return raw ? (Array.isArray(raw) ? raw : [raw]) : [];
+        };
+        for (const k of toolKeys) for (const lv of ["level1", "level2", "level3"]) {
+          const { info, on } = offered(k, lv);
+          for (const g of pools(k, lv)) for (const o of g.options) {
+            // this option alone within its pool, every other pool at its defaults
+            const act = new Set([...on].filter((v) => !g.options.some((x) => x.value === v)));
+            act.add(o.value);
+            const avail = items.filter((i) => i.level === lv && (!i.tool || i.tool === k) && !depthUnmet(i, act, info));
+            expect(avail.length, `${k} ${lv} ${g.label}=${o.value}`).toBeGreaterThanOrEqual(3);
+            expect(avail.some((i) => i.purpose !== "diagnose"), `${k} ${lv} ${g.label}=${o.value} has only diagnose items`).toBe(true);
+          }
+        }
+      });
+
       it("depthUnmet: skips clauses nothing offers, needs ANY option in a clause and ALL clauses", () => {
         const info: DepthOptionInfo = { a: { pool: "Focus", label: "A" }, b: { pool: "Focus", label: "B" }, n: { pool: "Numbers", label: "Negatives" } };
         const it0 = { needs: [["a", "b"], "n", "ghost"] } as unknown as DepthItem;

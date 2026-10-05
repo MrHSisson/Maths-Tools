@@ -275,6 +275,28 @@ describe("Depth bank numeric claims (src/tools/Number/OrderOfOperationsDepth.ts)
     expect(v(E(2, "-", 3, "*", 4))).toBe(-10);
     expect(v(E(4, "-", 2, "*", 3))).toBe(-2);
   });
+  it("Level 1 (added explain items)", () => {
+    expect(v(E(10, "-", 4, "+", 3))).toBe(9);
+    expect(evalNode(E(10, "-", 4, "+", 3), { addFirst: true })).toBe(3);
+    expect(v(E(36, "/", 6, "*", 3))).toBe(18);
+    expect(evalNode(E(36, "/", 6, "*", 3), { mulFirst: true })).toBe(2);
+  });
+  it("Level 2 (added items)", () => {
+    expect(v(E(3, "*", E(4, "+", 2)))).toBe(18);
+    expect(3 * 4 + 2).toBe(14);
+    expect(v(E(NEG(P(4, 2))))).toBe(-16);
+    expect(v(E(P(-4, 2)))).toBe(16);
+    expect(v(E(2, "*", P(3, 2)))).toBe(18);
+    expect(v(E(P(E(2, "*", 3), 2)))).toBe(36);
+    expect(v(E(NEG(P(3, 2))))).toBe(-9);
+    expect(v(E(NEG(P(-3, 2))))).toBe(-9);
+    expect(Math.abs(v(E(NEG(P(0, 2)))))).toBe(0);
+  });
+  it("Level 3 (added items)", () => {
+    const inner = E(5, "+", E(8, "-", 2), "*", 3);
+    expect(v(E(2, "*", inner))).toBe(46);
+    expect(2 * ((5 + 6) * 3)).toBe(66);
+  });
   it("Level 2", () => {
     expect(v(E(5, "+", E(4, "+", 2), "*", 3))).toBe(23);
     expect(v(E(E(5, "+", 4, "+", 2), "*", 3))).toBe(33);

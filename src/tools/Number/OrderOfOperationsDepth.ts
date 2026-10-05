@@ -76,6 +76,29 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "ooo-jack-jo", ifSecure: "ooo-make-answers",
   },
   {
+    id: "ooo-sana-minus-plus", level: "level1", needs: [["chain", "mixed", "addFirst"]], purpose: "explain",
+    title: "Sana's subtraction",
+    speakers: [{ name: "Sana", says: ["$10 - 4 + 3 = 3$"] }],
+    question: ["Explain Sana's mistake and give the correct answer."],
+    answer: [
+      "Sana added first: $4 + 3 = 7$, then $10 - 7 = 3$.",
+      "$+$ and $-$ share a tier, so work left to right: $10 - 4 = 6$, then $6 + 3 = 9$.",
+    ],
+    teacherNote: "Ask whether the answer would change if the sum were written $10 + 3 - 4$.",
+    ifNotSecure: "ooo-sub-add", ifSecure: "ooo-make-answers",
+  },
+  {
+    id: "ooo-samuel-divide", level: "level1", needs: [["chain", "mixed", "mulFirst"]], purpose: "explain",
+    title: "Samuel's division",
+    speakers: [{ name: "Samuel", says: ["$36 \\div 6 \\times 3 = 2$"] }],
+    question: ["What did Samuel do, and what should the answer be?"],
+    answer: [
+      "Samuel multiplied first: $6 \\times 3 = 18$, then $36 \\div 18 = 2$.",
+      "$\\div$ and $\\times$ share a tier, so work left to right: $36 \\div 6 = 6$, then $6 \\times 3 = 18$.",
+    ],
+    ifNotSecure: "ooo-div-mul", ifSecure: "ooo-make-answers",
+  },
+  {
     id: "ooo-student-working", level: "level1", needs: [["basic", "mixed", "leftToRight"]], purpose: "explain",
     title: "Spot the error in working",
     working: {
@@ -195,6 +218,30 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "ooo-matthew", ifSecure: "ooo-priya-square",
   },
   {
+    id: "ooo-matilda-brackets", level: "level2", needs: [["brackets", "bracketsIndices", "ignoreBrackets"]], purpose: "explain",
+    title: "Matilda's brackets",
+    speakers: [{ name: "Matilda", says: ["$3 \\times (4 + 2) = 14$", "I did $3 \\times 4 = 12$, then $12 + 2 = 14$."] }],
+    question: ["Explain Matilda's mistake and find the correct answer."],
+    answer: [
+      "The bracket goes first: $4 + 2 = 6$.",
+      "$3 \\times (4 + 2) = 3 \\times 6 = 18$.",
+      "Matilda ignored the brackets and multiplied $3 \\times 4$ first.",
+    ],
+    ifNotSecure: "ooo-bracket-first", ifSecure: "ooo-one-pair",
+  },
+  {
+    id: "ooo-amir-negative-square", level: "level2", needs: [["indices", "bracketsIndices", "powTimes", "negSquare"], "negatives"], purpose: "explain",
+    title: "Amir's negative",
+    speakers: [{ name: "Amir", says: ["$-4^2 = 16$"] }],
+    question: ["Explain Amir's mistake and give the correct answer."],
+    answer: [
+      "Only the $4$ is squared: $4^2 = 16$, then the minus makes it negative: $-4^2 = -16$.",
+      "Amir squared $-4$ as though it were in brackets, but $(-4)^2 = 16$ needs the brackets.",
+    ],
+    teacherNote: "Ask where the brackets would have to go for Amir to be right.",
+    ifNotSecure: "ooo-neg-square", ifSecure: "ooo-negative-square-sign",
+  },
+  {
     id: "ooo-one-pair", level: "level2", needs: [["brackets", "bracketsIndices", "ignoreBrackets"]], purpose: "extend",
     title: "One pair of brackets",
     question: [
@@ -209,6 +256,31 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ],
     teacherNote: "Ask: which brackets 'do something', and why do the others do nothing?",
     ifNotSecure: "ooo-bracket-first", ifSecure: "ooo-root-bracket",
+  },
+  {
+    id: "ooo-power-or-product", level: "level2", needs: [["indices", "bracketsIndices", "powTimes"]], purpose: "extend",
+    title: "Always, sometimes, never",
+    question: ["Always, sometimes or never true?", "$2a^2 = (2a)^2$", "Test it with numbers, then explain."],
+    answer: [
+      "Sometimes: only when $a = 0$.",
+      "For $a = 3$: $2 \\times 3^2 = 18$ but $(2 \\times 3)^2 = 36$.",
+      "$(2a)^2 = 4a^2$, which is twice $2a^2$, so they only match when $2a^2 = 0$.",
+    ],
+    teacherNote: "Ask for a value where it does work, then why no other value can.",
+    ifNotSecure: "ooo-square-product",
+  },
+  {
+    id: "ooo-negative-square-sign", level: "level2", needs: [["indices", "bracketsIndices", "powTimes", "negSquare"], "negatives"], purpose: "extend",
+    title: "Always, sometimes, never",
+    question: ["Always, sometimes or never true?", "$-n^2$ is negative", "Try positive numbers, negative numbers and zero."],
+    answer: [
+      "Sometimes: negative for every $n$ except $n = 0$.",
+      "$n = 3$: $-3^2 = -9$. $n = -3$: $-(-3)^2 = -9$. Both are negative.",
+      "$n = 0$: $-0^2 = 0$, which is not negative.",
+      "A square is never negative, so a minus in front of it is never positive.",
+    ],
+    teacherNote: "Contrast with $(-n)^2$, which is never negative.",
+    ifNotSecure: "ooo-neg-square",
   },
   {
     id: "ooo-sum-squared", level: "level2", needs: [["bracketsIndices", "powTimes"]], purpose: "extend",
@@ -298,6 +370,19 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Jamal divided by $4$ only, instead of by the whole bottom.",
     ],
     ifNotSecure: "ooo-fraction-bar", ifSecure: "ooo-build-your-own",
+  },
+  {
+    id: "ooo-lena-nested", level: "level3", needs: ["nested"], purpose: "explain",
+    title: "Lena's brackets",
+    speakers: [{ name: "Lena", says: ["$2 \\times (5 + (8 - 2) \\times 3) = 66$", "I did $5 + 6 = 11$, then $11 \\times 3 = 33$, then $\\times 2$."] }],
+    question: ["Explain Lena's mistake and find the correct answer."],
+    answer: [
+      "Inside the bracket, $\\times 3$ comes before $+ 5$.",
+      "$(8 - 2) = 6$, then $6 \\times 3 = 18$, then $5 + 18 = 23$.",
+      "$2 \\times 23 = 46$.",
+      "Lena added $5 + 6$ before multiplying, so the $\\times 3$ was applied to the wrong part.",
+    ],
+    ifNotSecure: "ooo-nested", ifSecure: "ooo-build-your-own",
   },
   {
     id: "ooo-sum-root", level: "level3", needs: [["roots", "rootGroup"]], purpose: "extend",
