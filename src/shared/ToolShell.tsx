@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useRef, useCallback, type ReactNode } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo, type ReactNode } from "react";
 import { RefreshCw, Eye, ChevronUp, ChevronDown, Home, Menu, X, Video, Maximize2, Minimize2, PanelRightClose, PanelRightOpen, SlidersHorizontal, Table2 } from "lucide-react";
 import type { DifficultyLevel, AnyQuestion, WorkingStep, ToolConfig, InfoSection, PrintMode, QOSnapshot, ToolShellDefaults } from "./types";
 import { LV_COLORS, LV_LABELS, LV_SELECTOR, LV_HEADER_COLORS, getQuestionBg, getStepBg } from "./colors";
@@ -21,6 +21,9 @@ import { handlePrint } from "./print";
 import type { PrintContext } from "./printDiagram";
 import { WorksheetBuilder } from "./WorksheetBuilder";
 import { TeachingDeck, type TeachingSlide } from "./TeachingDeck";
+import { DepthMode } from "./components/DepthMode";
+import type { DepthItem } from "./depth";
+import { useDevMode } from "../devMode";
 import { SkillOverlay } from "./skills";
 import { useParkedMode } from "../parkedMode";
 
@@ -70,6 +73,9 @@ export interface ToolShellProps {
   /** Optional curated teaching slides. When provided, a "Teach" mode is shown
    *  that runs the slides as a PowerPoint-style deck (see TeachingDeck). */
   teachingSlides?: TeachingSlide[];
+  /** Optional curated Depth questions (diagnose / explain / extend). When provided, a "Depth" mode
+   *  appears (behind Developing-tools mode while piloting). See src/shared/depth.ts. */
+  depthItems?: DepthItem[];
   /** Optional scaffold drawn inside the whiteboard's working box (e.g. a place
    *  value table to model on). A toolbar button in the box hides/shows it so the
    *  teacher can remove the scaffold; the box is otherwise free working space.
@@ -188,7 +194,7 @@ function ScaleToFit({ children, maxScale = 3 }: { children: ReactNode; maxScale?
   );
 }
 
-export const ToolShell = ({ config, infoSections, generateQuestion, generateUniqueQ: generateUniqueQProp, defaults = {}, stepRenderer, stepVisualRenderer, stepVisualKeepsWorking, stepVisualPlacement, questionRenderer, answerRenderer, reformatQuestion, customPrintHandler, teachingSlides, workingScaffold }: ToolShellProps) => {
+export const ToolShell = ({ config, infoSections, generateQuestion, generateUniqueQ: generateUniqueQProp, defaults = {}, stepRenderer, stepVisualRenderer, stepVisualKeepsWorking, stepVisualPlacement, questionRenderer, answerRenderer, reformatQuestion, customPrintHandler, teachingSlides, depthItems, workingScaffold }: ToolShellProps) => {
   const generateUniqueQ = generateUniqueQProp ?? makeUniqueQ(generateQuestion);
   const toolKeys = Object.keys(config.tools);
   // Seeds a smaller default question font size on a narrow viewport (the
@@ -222,7 +228,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     // now folded into Worksheet mode's Advanced toggle. Old `mode=builder` links
     // still work — they land on Worksheet mode with Advanced already on (see
     // `builderRequested` below and its use for the initial worksheetMode state).
-    const modeMap: Record<string, "whiteboard" | "single" | "worksheet" | "teach"> = { whiteboard: "whiteboard", example: "single", worksheet: "worksheet", builder: "worksheet", teach: "teach" };
+    const modeMap: Record<string, "whiteboard" | "single" | "worksheet" | "teach" | "depth"> = { whiteboard: "whiteboard", example: "single", worksheet: "worksheet", builder: "worksheet", teach: "teach", depth: "depth" };
     const levelMap: Record<string, DifficultyLevel> = { "1": "level1", "2": "level2", "3": "level3" };
     const levelParam = levelMap[p.get("level") ?? ""];
     const intParam = (key: string, min: number, max: number): number | null => {
@@ -239,6 +245,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       // highlighted for one frame until the mode-coercion effect corrected it.
       mode: modeMap[p.get("mode") ?? ""] ?? (narrowInit ? "single" : "whiteboard"),
       builderRequested: p.get("mode") === "builder",
+      item: p.get("item"),
       level: levelParam && toolLvls.includes(levelParam) && !(defaults.comingSoonLevels ?? []).includes(levelParam) ? levelParam : toolLvls[0],
       vars: toggles(p.get("vars")),
       ms: toggles(p.get("ms")),
@@ -274,12 +281,20 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   });
 
   const [currentTool, setCurrentTool] = useState<string>(urlInit.tool);
-  const [mode, setMode] = useState<"whiteboard" | "single" | "worksheet" | "teach">(urlInit.mode);
+  const [mode, setMode] = useState<"whiteboard" | "single" | "worksheet" | "teach" | "depth">(urlInit.mode);
   // The Teach deck is dormant content, not in-progress work, so it's gated by
   // the separate, unadvertised parkedMode rather than Developing-tools mode —
   // see src/parkedMode.ts.
   const parkedMode = useParkedMode();
   const showTeach = !!(parkedMode && teachingSlides && teachingSlides.length);
+  // Depth (curated diagnose / explain / extend questions) is piloting behind Developing-tools mode.
+  const devMode = useDevMode();
+  const [depthItemId, setDepthItemId] = useState<string | null>(urlInit.item);
+  const toolDepthItems = useMemo(
+    () => (depthItems ?? []).filter((i) => !i.tool || i.tool === currentTool),
+    [depthItems, currentTool],
+  );
+  const showDepth = devMode && toolDepthItems.length > 0;
   const comingSoon = defaults.comingSoonLevels ?? [];
   const hideFontControls = defaults.hideFontControls ?? false;
   // Step-by-Step is the cascading ("stacked") layout for every tool; "single" (one card replaced per press) is opt-in.
@@ -544,6 +559,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   useEffect(() => { loadKaTeX(); }, []);
   // If Teach isn't available (dev mode off, or a stale mode=teach link), fall back.
   useEffect(() => { if (mode === "teach" && !showTeach) setMode("whiteboard"); }, [mode, showTeach]);
+  useEffect(() => { if (mode === "depth" && !showDepth) setMode(isNarrow ? "single" : "whiteboard"); }, [mode, showDepth, isNarrow]);
 
   const stopStream = useCallback(() => {
     if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null; }
@@ -791,7 +807,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     const levelOrToolChanged = prevDiffRef.current !== difficulty || prevToolRef.current !== currentTool;
     prevDiffRef.current = difficulty;
     prevToolRef.current = currentTool;
-    if (mode === "worksheet" || mode === "teach") return;
+    if (mode === "worksheet" || mode === "teach" || mode === "depth") return;
     // reformatQuestion only applies to pure QO-option changes (same maths, new
     // display). A level or sub-tool switch must always yield a fresh question.
     if (!levelOrToolChanged && reformatQuestion) {
@@ -809,7 +825,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   useEffect(() => {
     const p = new URLSearchParams();
     if (currentTool !== toolKeys[0]) p.set("tool", currentTool);
-    if (mode !== "whiteboard") p.set("mode", mode === "single" ? "example" : mode === "teach" ? "teach" : "worksheet");
+    if (mode !== "whiteboard") p.set("mode", mode === "single" ? "example" : mode === "teach" ? "teach" : mode === "depth" ? "depth" : "worksheet");
     if (difficulty !== "level1") p.set("level", difficulty.slice(-1));
     const t = config.tools[currentTool];
     const ddCfg = t.difficultySettings?.[difficulty]?.dropdown ?? t.dropdown;
@@ -846,9 +862,10 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         if (!diffColorLevels) p.set("diffColor", "0");
       }
     }
+    if (mode === "depth" && depthItemId) p.set("item", depthItemId);
     const qs = p.toString();
     window.history.replaceState(null, "", qs ? `${window.location.pathname}?${qs}` : window.location.pathname);
-  }, [currentTool, mode, difficulty, toolDropdowns, toolVariables, toolMultiSelect, numQuestions, numColumns, isDifferentiated, diffLevels, diffSameSize, diffColorLevels]);
+  }, [currentTool, mode, difficulty, toolDropdowns, toolVariables, toolMultiSelect, numQuestions, numColumns, isDifferentiated, diffLevels, diffSameSize, diffColorLevels, depthItemId]);
 
   // Persist the worksheet mode/layout and differentiated per-level QO so a refresh
   // restores it — these are not encoded in the URL.
@@ -1624,15 +1641,17 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             </button>
 
             <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm mb-3">
-              {(["single", "worksheet"] as const).map(m => (
+              {([...(["single", "worksheet"] as const), ...(showDepth ? (["depth"] as const) : [])]).map(m => (
                 <button key={m} onClick={() => setMode(m)}
                   className={`flex-1 px-3 py-2 font-bold text-sm transition-colors ${mode === m ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}>
-                  {m === "single" ? "Worked Example" : "Worksheet"}
+                  {m === "single" ? "Worked Example" : m === "depth" ? "Depth" : "Worksheet"}
                 </button>
               ))}
             </div>
 
-            {mode === "worksheet" ? (
+            {mode === "depth" && showDepth ? (
+              <DepthMode narrow items={toolDepthItems} level={difficulty} onLevelChange={l => setDifficultyGuarded(l)} itemId={depthItemId} onItemChange={setDepthItemId} />
+            ) : mode === "worksheet" ? (
               <>
                 <div className="flex items-center justify-center gap-2 mb-3 flex-wrap">
                   <button onClick={handleGenerateWorksheet} className="px-3.5 py-1.5 bg-blue-900 text-white rounded-lg font-bold text-sm shadow-sm hover:bg-blue-800 flex items-center gap-1.5">
@@ -1783,9 +1802,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               </>
             )}
             <div className="flex justify-center gap-4 mb-8">
-              {([...(["whiteboard", "single", "worksheet"] as const), ...(showTeach ? (["teach"] as const) : [])] as const)
+              {([...(["whiteboard", "single", "worksheet"] as const), ...(showTeach ? (["teach"] as const) : []), ...(showDepth ? (["depth"] as const) : [])] as const)
                 .map(m => {
-                  const label = m === "whiteboard" ? "Whiteboard" : m === "single" ? "Worked Example" : m === "teach" ? "Teach" : "Worksheet";
+                  const label = m === "whiteboard" ? "Whiteboard" : m === "single" ? "Worked Example" : m === "teach" ? "Teach" : m === "depth" ? "Depth" : "Worksheet";
                   return (
                     <button key={m} onClick={() => { setMode(m); setPresenterMode(false); setWbFullscreen(false); }}
                       className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${mode === m ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
@@ -1816,7 +1835,15 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           {mode === "teach" && showTeach && teachingSlides && (
             <TeachingDeck slides={teachingSlides} />
           )}
-          {mode !== "worksheet" && mode !== "teach" && (
+          {mode === "depth" && showDepth && (
+            <div className="flex flex-col gap-6">
+              <div className="rounded-xl shadow-lg bg-white p-4 flex justify-center">
+                <DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} levels={toolLevels} />
+              </div>
+              <DepthMode items={toolDepthItems} level={difficulty} onLevelChange={l => setDifficultyGuarded(l)} itemId={depthItemId} onItemChange={setDepthItemId} />
+            </div>
+          )}
+          {mode !== "worksheet" && mode !== "teach" && mode !== "depth" && (
             <div className="flex flex-col gap-6">
               <div className="rounded-xl shadow-lg flex-shrink-0">
                 {renderControlBar()}

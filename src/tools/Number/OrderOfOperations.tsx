@@ -24,6 +24,7 @@ import {
   type WorkingStep,
   randInt, pick, mStep, tStep, pickActive, weightOf,
 } from "../../shared";
+import { DEPTH_ITEMS } from "./OrderOfOperationsDepth";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 1. EXPRESSION ENGINE
@@ -1198,6 +1199,7 @@ const pyramidOf = (step: WorkingStep) => (step.extra as { pyramid?: { strong: Py
 export const __test = {
   TOOL_CONFIG,
   generateQuestion,
+  depthItems: DEPTH_ITEMS,
   engine: { E, P, R, F, NEG, N, texBody, NO_HL, runSteps, evalNode, analyse, SHAPES, buildEval, MISTAKES, genInsert, drawMistake, studentLines, levelOf, LEVEL_OF, EVAL_POOLS, MISTAKES_BY_LEVEL },
 };
 
@@ -1213,6 +1215,7 @@ export default function App() {
         return t ? <BidmasPyramid strong={t.strong} soft={t.soft} maxWidth={360} /> : null;
       }}
       stepVisualKeepsWorking
+      depthItems={DEPTH_ITEMS}
       workingScaffold={{ label: "BIDMAS pyramid", render: () => <BidmasPyramid maxWidth={420} /> }}
       defaults={{ numColumns: 2 }}
     />

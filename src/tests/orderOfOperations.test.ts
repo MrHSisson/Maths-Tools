@@ -5,7 +5,7 @@
 import { describe, it, expect } from "vitest";
 import { __test } from "../tools/Number/OrderOfOperations";
 
-const { E, P, R, F, NEG, texBody, NO_HL, runSteps, evalNode, SHAPES, buildEval, MISTAKES, genInsert, analyse, drawMistake, studentLines, levelOf, LEVEL_OF, MISTAKES_BY_LEVEL } = __test.engine;
+const { E, P, R, F, NEG, N, texBody, NO_HL, runSteps, evalNode, SHAPES, buildEval, MISTAKES, genInsert, analyse, drawMistake, studentLines, levelOf, LEVEL_OF, MISTAKES_BY_LEVEL } = __test.engine;
 const { generateQuestion } = __test as any;
 
 const lines = (ast: ReturnType<typeof E>) => {
@@ -252,5 +252,65 @@ describe("BIDMAS pyramid tiers", () => {
         for (const w of q.working) expect(w.extra?.pyramid?.strong?.length).toBeGreaterThan(0);
       }
     }
+  });
+});
+
+describe("Depth bank numeric claims (src/tools/Number/OrderOfOperationsDepth.ts)", () => {
+  const v = (ast: ReturnType<typeof E>) => evalNode(ast);
+  it("Level 1", () => {
+    expect(v(E(7, "+", 2, "*", 3))).toBe(13);
+    expect(evalNode(E(7, "+", 2, "*", 3), { lr: true })).toBe(27);
+    expect(v(E(20, "-", 8, "+", 3))).toBe(15);
+    expect(evalNode(E(20, "-", 8, "+", 3), { addFirst: true })).toBe(9);
+    expect(v(E(24, "/", 4, "*", 2))).toBe(12);
+    expect(evalNode(E(24, "/", 4, "*", 2), { mulFirst: true })).toBe(3);
+    expect(v(E(9, "+", 3, "*", 2))).toBe(15);
+    expect(evalNode(E(9, "+", 3, "*", 2), { lr: true })).toBe(24);
+    expect(v(E(9, "+", 4, "*", 3, "+", 2))).toBe(23);
+    expect(evalNode(E(9, "+", 4, "*", 3, "+", 2), { lr: true })).toBe(41);
+    expect(v(E(2, "+", 3, "*", 4))).toBe(14);
+    expect(v(E(2, "+", 3, "+", 4))).toBe(9);
+    expect(v(E(2, "*", 3, "+", 4))).toBe(10);
+    expect(v(E(2, "*", 3, "*", 4))).toBe(24);
+    expect(v(E(2, "-", 3, "*", 4))).toBe(-10);
+    expect(v(E(4, "-", 2, "*", 3))).toBe(-2);
+  });
+  it("Level 2", () => {
+    expect(v(E(5, "+", E(4, "+", 2), "*", 3))).toBe(23);
+    expect(v(E(E(5, "+", 4, "+", 2), "*", 3))).toBe(33);
+    expect(v(E(5, "+", 4, "+", 2, "*", 3))).toBe(15);
+    expect(v(E(3, "*", P(2, 2)))).toBe(12);
+    expect(v(E(P(E(3, "*", 2), 2)))).toBe(36);
+    expect(v(E(NEG(P(3, 2))))).toBe(-9);
+    expect(v(E(P(-3, 2)))).toBe(9);
+    expect(v(E(P(E(3, "+", 4), 2)))).toBe(49);
+    expect(v(E(P(3, 2), "+", P(4, 2)))).toBe(25);
+    expect(v(E(2, "+", P(3, 2)))).toBe(11);
+    expect(v(E(P(E(2, "+", 3), 2)))).toBe(25);
+    // one pair of brackets in 2 + 3 × 4 + 1 gives exactly {15, 17, 21}
+    const t = [2, 3, 4, 1], o = ["+", "*", "+"] as const;
+    const answers = new Set<number>();
+    for (let i = 0; i < 4; i++) for (let j = i + 1; j < 4; j++) {
+      if (i === 0 && j === 3) continue;
+      const terms: any[] = [...t.slice(0, i), { t: "seq", terms: t.slice(i, j + 1).map((x) => N(x)), ops: o.slice(i, j) as any }, ...t.slice(j + 1)].map((x) => (typeof x === "number" ? N(x) : x));
+      answers.add(evalNode({ t: "seq", terms, ops: [...o.slice(0, i), ...o.slice(j)] as any }));
+    }
+    answers.add(v(E(2, "+", 3, "*", 4, "+", 1)));
+    expect([...answers].sort((a, b) => a - b)).toEqual([15, 17, 21]);
+  });
+  it("Level 3", () => {
+    expect(v(E(R(E(9, "+", 16))))).toBe(5);
+    expect(v(E(R(9), "+", 16))).toBe(19);
+    expect(v(E(R(9), "+", R(16)))).toBe(7);
+    expect(v(E(F(E(8, "+", 4), E(5, "-", 1))))).toBe(3);
+    expect(v(E(8, "+", 4, "/", 5, "-", 1))).toBe(7.8);
+    expect(v(E(E(8, "+", 4), "/", 5, "-", 1))).toBe(1.4);
+    expect(v(E(2, "*", E(3, "+", E(4, "-", 1), "*", 5)))).toBe(36);
+    expect(v(E(2, "*", E(E(3, "+", 3), "*", 5)))).toBe(60);
+    expect(v(E(2, "*", 3, "+", E(4, "-", 1), "*", 5))).toBe(21);
+    expect(v(E(F(E(12), E(4, "+", 2))))).toBe(2);
+    expect(v(E(12, "/", 4, "+", 2))).toBe(5);
+    expect(v(E(F(E(R(E(9, "+", 16)), "+", 3), E(2))))).toBe(4);
+    expect(v(E(R(F(E(32), E(2)))))).toBe(4);
   });
 });

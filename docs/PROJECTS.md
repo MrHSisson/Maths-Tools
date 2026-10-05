@@ -73,6 +73,7 @@ Stand-alone teacher tools with no prong: **Visualiser**, the four PDF
 | **Smart Progressor** | 🚧 | Mechanism done and piloted on `SpeedDistanceTime`; the work now is adopting it tool by tool (audit the other 26) |
 | **Core representations** | 🚧 | The visual vocabulary, its progressions and pairings; where to use each, what tools and sandboxes to make |
 | **Sandboxes & viewports** | 🚧 | Algebra Tiles, Negative Counters, SmartGrapher (+ Grapher Lab, Parallel Lines Explorer): standalone tools first, then embedded as viewports in question tools |
+| **Depth** | 🚧 piloting | Curated diagnose / explain / extend questions as a mode on every tool; pilot bank of 21 on Order of Operations (dev-gated) |
 | **Computer Science shell** | ⏸ | Shell built; 2 topics shipped as data; next is authoring 1.1.3 |
 | **Decision Maths** | ⏸ | MST shipped; TSP nearest-neighbour slice built (dev-gated); next TSP lower bound |
 | *Tool review cycle* | ♻ ongoing | Per-tool notes; not a prong |
@@ -334,6 +335,18 @@ shared `WorkedExampleSteps` — a tool only supplies per-step data and renderers
 - **Techniques as the steps** — converting hand-rolled working onto the engine so every tool's solution is built from shared blocks (see Techniques engine).
 - **Runtime grain toggle** ("Detailed working", brief ↔ full) — the one shell-level change still outstanding.
 - Picture composites: a step carrying two pictures (ratio table + graph for gradients).
+
+## Depth
+
+**Where it's at.** Built 2026-10-05 as the evolution of the parked Teach decks: not a presentation to press through, but a **bank of fixed, well-thought-out questions** a teacher dips into by purpose (diagnose · explain · extend) and level, to be adaptive to the class and still give depth of reasoning. Shared mode in `ToolShell` (`depthItems` prop, "Depth" tab, behind Developing-tools mode while piloted): picker by level and purpose, two-beat question → answer with named misconceptions per wrong option, adaptive "class secure / not secure" links, a cross-level **Start here** quick check, deep links (`?mode=depth&level=&item=`), phone layout. Pilot: 21 items on **Order of Operations** (`OrderOfOperationsDepth.ts`). Spec template: `docs/design/templates/DEPTH_SPEC_TEMPLATE.md`.
+
+**Possible next steps:**
+- Harry reviews the BIDMAS bank for wording, missing misconceptions and the follow-up routes.
+- Add a Depth section to the tool spec template and write banks as tools pass through the Tool review cycle (diagnostic bank per tool, level by level).
+- A printable hinge-question sheet from a chosen set of items.
+- Decide the go-live gate (currently Developing-tools mode) and whether Teach decks are retired for tools that adopt Depth (`docs/BACKBENCH.md`).
+
+---
 
 ## Smart Progressor
 

@@ -30,11 +30,12 @@ discussing changes. If a term here has a code name, that's the one to use.
 
 | Term | Means |
 |---|---|
-| **Mode** | Which view of a tool is showing: Whiteboard, Worked Example, Worksheet, or Teach. |
+| **Mode** | Which view of a tool is showing: Whiteboard, Worked Example, Worksheet, Depth, or Teach. |
 | **Whiteboard** | Single question on screen with a working/visualiser panel. The main teaching surface. |
 | **Worked Example** | The full step-by-step solution to one question. |
 | **Worksheet** | A printable grid of questions with PDF export. |
-| **Teach** | The slide-deck teaching mode (dev-gated; only when a tool supplies a deck). |
+| **Depth** | The mode of curated, fixed questions to diagnose, explain and extend (dev-gated while piloted; only when a tool supplies a bank). Successor to dedicated model decks. |
+| **Teach** | The slide-deck teaching mode (parked; only when a tool supplies a deck). |
 | **Working / visualiser panel** | The collapsible right-hand panel on the Whiteboard. |
 
 ---
@@ -92,6 +93,19 @@ Browse them all at **`/techniques`** (dev mode).
 **Skill vs Technique:** a *skill* teaches with **slides + visuals** (the drill-down); a
 *technique* narrates with **working steps**. A technique's **full grain** is the text
 spine of the matching skill. Browse skills at **`/skills`** (dev mode).
+
+---
+
+## 5b. Depth — curated questions
+
+| Term | Means |
+|---|---|
+| **Depth bank** | A tool's fixed set of curated questions (`depthItems`), shown in Depth mode. |
+| **Depth item** | One question: a question beat, then an answer + reasoning beat. |
+| **Purpose** | What an item is for: **Diagnose** (surface a misconception), **Explain** (unpick reasoning), **Extend** (go deeper). |
+| **Start here** | The quick check: one diagnose item per level, in order, to show where the class is. |
+| **Misconception (option)** | The named wrong idea a wrong choice reveals, shown on the answer beat. |
+| **Class secure / not secure** | The two follow-up links on an answer: an extension, or an easier/related item. |
 
 ---
 

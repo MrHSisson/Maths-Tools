@@ -23,7 +23,7 @@ this table first; it tells you where to look and where to write.
 | **`docs/architecture/DECISION_SHELL_PLAN.md`** | The `DecisionShell` architecture — network-native question generators (MST/TSP/CPA) on a shared representation library. | Building or extending a Decision Maths tool. |
 | **`docs/GLOSSARY.md`** | Canonical name for every element (tool, grain, technique, skill, QO…). | Naming or discussing anything — use these words. |
 | **`docs/design/DESIGN_STUDIO.md`** | The one entry point for designing a new build *with Claude in chat* (repo linked): routes to the right template for a maths tool / CS tool / technique / Teach deck. | Understanding where a brief in `specs/` came from, or how new ones are produced. |
-| **`docs/design/templates/TOOL_SPEC_TEMPLATE.md`** · **`docs/design/templates/CS_TOPIC_SPEC_TEMPLATE.md`** · **`docs/design/templates/TECHNIQUE_SPEC_TEMPLATE.md`** · **`docs/design/templates/TEACH_DECK_SPEC_TEMPLATE.md`** · **`docs/design/TOOL_DESIGNER_PROMPT.md`** · **`specs/`** | The spec pipeline — one fill-in template per build type, the deep maths-tool designer prompt, and the completed briefs. | Designing or implementing any build from a brief. |
+| **`docs/design/templates/TOOL_SPEC_TEMPLATE.md`** · **`docs/design/templates/CS_TOPIC_SPEC_TEMPLATE.md`** · **`docs/design/templates/TECHNIQUE_SPEC_TEMPLATE.md`** · **`docs/design/templates/DEPTH_SPEC_TEMPLATE.md`** · **`docs/design/templates/TEACH_DECK_SPEC_TEMPLATE.md`** · **`docs/design/TOOL_DESIGNER_PROMPT.md`** · **`specs/`** | The spec pipeline — one fill-in template per build type, the deep maths-tool designer prompt, and the completed briefs. | Designing or implementing any build from a brief. |
 
 Rule of thumb: **plan** lives in `docs/PROJECTS.md`, **history** in `docs/PATCH_NOTES.md`,
 **rules** here. When work lands, refresh the prong's status in `docs/PROJECTS.md` *and* add a
@@ -304,10 +304,10 @@ import { type PrintMode } from "../../shared";
 ### All available exports from `src/shared/`
 
 **Types** (use `type` keyword in imports):
-`DifficultyLevel` · `PrintMode` · `AnyQuestion` · `SimpleQuestion` · `WordedQuestion` · `WorkingStep` · `ToolConfig` · `ToolEntry` · `ToolDropdown` · `ToolMultiSelect` · `ToolMultiSelectConfig` · `ToolVariable` · `DifficultyLevelSettings` · `InfoSection` · `InfoItem` · `QOSnapshot` · `ToolShellDefaults` · `ToolShellProps` · `TeachingSlide` · `TeachBlock` · `TeachBar` · `TeachScene` · `TeachCategory` · `SkillDef` · `WorkedExampleStepsProps` · `TechniquePreviewPageDef`
+`DifficultyLevel` · `PrintMode` · `AnyQuestion` · `SimpleQuestion` · `WordedQuestion` · `WorkingStep` · `ToolConfig` · `ToolEntry` · `ToolDropdown` · `ToolMultiSelect` · `ToolMultiSelectConfig` · `ToolVariable` · `DifficultyLevelSettings` · `InfoSection` · `InfoItem` · `QOSnapshot` · `ToolShellDefaults` · `ToolShellProps` · `TeachingSlide` · `TeachBlock` · `TeachBar` · `TeachScene` · `TeachCategory` · `SkillDef` · `WorkedExampleStepsProps` · `TechniquePreviewPageDef` · `DepthItem` · `DepthOption` · `DepthPurpose`
 
 **Components / hooks**:
-`ToolShell` · `TeachingDeck` · `SlideDeck` · `MathRenderer` · `InlineMath` · `QuestionDisplay` · `AnswerDisplay` · `DifficultyToggle` · `StandardQOPopover` · `DiffQOPopover` · `InlineQOPanel` · `InfoModal` · `MenuDropdown` · `PrintSplitButton` · `SkillLabel` · `SkillOverlay` · `WorkedExampleSteps` · `TechniquePreviewPage` · `BidmasPyramid` (an order-of-operations *key*, not a working representation — `strong`/`soft` light tiers; reference: `src/tools/Number/OrderOfOperations.tsx`)
+`ToolShell` · `TeachingDeck` · `SlideDeck` · `MathRenderer` · `InlineMath` · `QuestionDisplay` · `AnswerDisplay` · `DifficultyToggle` · `StandardQOPopover` · `DiffQOPopover` · `InlineQOPanel` · `InfoModal` · `MenuDropdown` · `PrintSplitButton` · `SkillLabel` · `SkillOverlay` · `WorkedExampleSteps` · `TechniquePreviewPage` · `DepthMode` · `BidmasPyramid` (an order-of-operations *key*, not a working representation — `strong`/`soft` light tiers; reference: `src/tools/Number/OrderOfOperations.tsx`)
 
 **Helpers**:
 `randInt` · `pick` · `fracStr` · `mStr` · `pickActive` · `normalizeMultiSelect` · `step` · `tStep` · `mStep` · `fmt` · `ansEq` · `makeUniqueQ` · `stripSkillMarkers` · `SKILL_MARKER_RE` · `slideMaxStep` · `weightOf` · `sortByDifficulty` · `buildQuotaOverrides`
@@ -555,6 +555,23 @@ Font size indices: `0=text-lg  1=text-xl  2=text-3xl  3=text-4xl  4=text-5xl  5=
 ### What ToolShell provides automatically (never re-implement)
 
 Whiteboard / Worked Example / Worksheet modes · **Teach mode (when `teachingSlides` supplied)** · difficulty toggle · QO popovers (dropdown, variables, multiSelect, differentiated) · tool tab buttons (auto-hidden when only one sub-tool) · font size controls · PDF print · colour scheme picker · info modal · home button · shareable links (URL ⇄ state sync + "Copy Link to Setup" menu item) · **step-by-step Worked Example (the cascade — earlier steps stay on screen, dimmed — with Show All as the alternative) with fragment walking and skill-link overlays** — tools only author `string[]` steps and `[[skill-id|term]]` markers; never re-implement the reveal or the overlay
+
+### Depth — a bank of curated questions (diagnose · explain · extend)
+
+**Depth** is a ToolShell mode (a "Depth" tab beside Whiteboard / Worked Example / Worksheet) holding **fixed, hand-written questions** that go beyond generated practice. It is the lighter, adaptive successor to a presentation deck: the teacher dips in by **purpose** and **level**, in whatever order the class needs, instead of pressing through a pre-planned sequence. Where a tool already shows the model (BIDMAS pyramid, place value table…), a dedicated model deck is unnecessary.
+
+```tsx
+<ToolShell depthItems={DEPTH_ITEMS} … />   // items: DepthItem[] — see src/shared/depth.ts
+```
+
+- **An item is two beats**: the question (optionally lettered choices), then the answer + reasoning. `$...$` is inline maths in every string.
+- **Three purposes**: `diagnose` (surface a misconception — who is right? multiple choice where every wrong option **names the misconception it reveals**, shown on the answer beat), `explain` (unpick reasoning — explain this mistake, spot the error in working), `extend` (go deeper — always/sometimes/never, convince me, make your own).
+- **Level-aware**: the picker shows the current level's items (the level toggle sits above it), filterable by purpose. `startHere: true` on one diagnose item per level feeds the **Start here** quick check (one question per level, in order — shows where the class is).
+- **Adaptive without a script**: `ifNotSecure` / `ifSecure` point at an easier/related item or an extension; the answer beat offers them as buttons (a link may cross levels; `ifSecure` never goes down).
+- **Authoring rules**: the `title` shows on the picker so it must not give the answer away; items are **fixed** (never generated — generated "Is it correct?" / "Spot the mistake" tasks stay in the tool's own practice); give each wrong option a `misconception`; add a `teacherNote` (what to ask / listen for); ids are `<tool>-<slug>` (URL-safe, used by `?item=`).
+- **Gating**: Depth shows only with Developing-tools mode on while it is piloted (and only when the tool passes `depthItems` for the current sub-tool; an item with no `tool` shows on every tab). URL: `?mode=depth&level=2&item=<id>`.
+- **Tests**: expose the bank as `__test.depthItems` — `src/tests/depth.test.ts` checks unique ids, well-formed items, one correct option per multiple-choice item with a named misconception for every wrong one, links that resolve, diagnose + explain + extend at every level, one Start here per level, and that every `$...$` renders. Assert the bank's numbers in the tool's own test (see `OrderOfOperations`).
+- **Spec**: `docs/design/templates/DEPTH_SPEC_TEMPLATE.md` → `specs/depth/<tool-id>.md`. Reference bank: `src/tools/Number/OrderOfOperationsDepth.ts` (21 items).
 
 ### Teaching slides — the "Teach" deck  (authoring guide)
 
