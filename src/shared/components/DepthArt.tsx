@@ -79,15 +79,12 @@ export function Mascot({ mood, size = "5.6em" }: { mood: "think" | "know"; size?
   );
 }
 
-/** The small brand badge that sits on the top edge of the white panel. */
+/** The Depth wordmark: plain navy text, no block. */
 export function Badge() {
   return (
-    <div style={{
-      background: "#1e3a8a", color: "#fff", borderRadius: "0.35em", padding: "0.3em 1.1em 0.35em", textAlign: "center",
-      lineHeight: 1, boxShadow: "0 0.15em 0.4em rgba(0,0,0,0.25)",
-    }}>
-      <div style={{ fontSize: "0.55em", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", opacity: 0.85 }}>Maths Tools</div>
-      <div style={{ fontSize: "1.25em", fontWeight: 900, letterSpacing: "0.14em" }}>DEPTH</div>
+    <div style={{ color: "#1e3a8a", lineHeight: 1 }}>
+      <div style={{ fontSize: "0.5em", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", opacity: 0.7 }}>Maths Tools</div>
+      <div style={{ fontSize: "1.25em", fontWeight: 900, letterSpacing: "0.12em" }}>DEPTH</div>
     </div>
   );
 }

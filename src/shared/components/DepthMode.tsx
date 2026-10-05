@@ -29,8 +29,9 @@ const PURPOSE_STYLE: Record<DepthPurpose, { badge: string; card: string }> = {
 };
 const LEVEL_ORDER: DifficultyLevel[] = ["level1", "level2", "level3"];
 const SPEAKER_COLOURS = ["#7c3aed", "#e11d48", "#059669", "#d97706", "#2563eb"];
-const TEAL = "#1b9aaa";
 const NAVY = "#1e3a8a";
+const PAPER = "#efe9dd";
+const PURPOSE_COLOURS: Record<string, string> = { diagnose: "#3b82f6", explain: "#f59e0b", extend: "#10b981" };
 const purposeLabel = (p: DepthPurpose) => DEPTH_PURPOSES.find((x) => x.key === p)?.label ?? p;
 
 export interface DepthModeProps {
@@ -206,7 +207,7 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
 
   const working = current.working && (
     <div style={{ width: "100%" }}>
-      {current.working.intro && !onAnswer && <div style={{ fontSize: "1.1em", marginBottom: "0.3em", textAlign: "center" }}><InlineMath text={current.working.intro} /></div>}
+      {current.working.intro && !onAnswer && <div style={{ fontSize: "1.1em", marginBottom: "0.3em", textAlign: "left" }}><InlineMath text={current.working.intro} /></div>}
       <div className="flex flex-col" style={{ gap: "0.25em" }}>
         {current.working.lines.map((ln, i) => {
           const w = current.working!;
@@ -254,7 +255,7 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
         </div>
       )}
       {working}
-      <div className="flex flex-col items-center text-center" style={{ gap: "0.15em" }}>
+      <div className="flex flex-col items-start text-left" style={{ gap: "0.15em" }}>
         {current.question.map((line, i) => (
           <div key={i} style={{ fontSize: "1.45em", fontWeight: 650, lineHeight: 1.3, color: "#111827" }}><InlineMath text={line} /></div>
         ))}
@@ -277,27 +278,39 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
     </>
   );
 
+  const accent = PURPOSE_COLOURS[current.purpose];
   const stageStyle = narrow
-    ? { background: TEAL, borderRadius: "0.9rem", fontSize: "16px", padding: "0.8em 0.8em 0" }
-    : { background: TEAL, aspectRatio: "16 / 9", fontSize: "1.9cqw", borderRadius: present ? 0 : "0.9rem" };
+    ? { background: PAPER, borderRadius: "0.9rem", fontSize: "16px", padding: "0.8em" }
+    : { background: PAPER, aspectRatio: "16 / 9", fontSize: "1.9cqw", borderRadius: present ? 0 : "0.9rem" };
+  const pill = (bg: string, fg: string): React.CSSProperties => ({ fontSize: "0.7em", fontWeight: 800, padding: "0.2em 0.8em", borderRadius: "999px", background: bg, color: fg, whiteSpace: "nowrap" });
+
+  const levelPill = <span style={pill("#e2e8f0", NAVY)}>{LV_LABELS[current.level]}{inCheck ? ` · ${check! + 1} of ${starts.length}` : ""}</span>;
+  const purposePill = <span style={pill(accent, "#fff")}>{purposeLabel(current.purpose)}</span>;
 
   const stage = (
     <div style={{ position: "relative", overflow: "hidden", boxShadow: "0 10px 30px rgba(0,0,0,0.18)", ...stageStyle } as React.CSSProperties}>
-      {/* corner pills */}
-      <div className="flex items-center justify-between" style={{ position: narrow ? "static" : "absolute", top: "0.7em", left: "1.2em", right: "1.2em", zIndex: 2, marginBottom: narrow ? "0.5em" : 0 }}>
-        <span style={{ fontSize: "0.7em", fontWeight: 800, padding: "0.2em 0.8em", borderRadius: "999px", background: "rgba(255,255,255,0.92)", color: NAVY }}>
-          {LV_LABELS[current.level]}{inCheck ? ` · ${check! + 1} of ${starts.length}` : ""}
-        </span>
-        <span style={{ fontSize: "0.7em", fontWeight: 800, padding: "0.2em 0.8em", borderRadius: "999px", background: "rgba(255,255,255,0.92)", color: NAVY }}>{purposeLabel(current.purpose)}</span>
-      </div>
-      {!narrow && <div style={{ position: "absolute", top: "0.35em", left: "50%", transform: "translateX(-50%)", zIndex: 3 }}><Badge /></div>}
+      {/* left rail (desktop) / header row (phone): wordmark, pills, owl */}
+      {narrow ? (
+        <div className="flex items-center justify-between" style={{ marginBottom: "0.6em", gap: "0.5em" }}>
+          <Badge />
+          <div className="flex items-center" style={{ gap: "0.4em" }}>{levelPill}{purposePill}</div>
+        </div>
+      ) : (
+        <div className="flex flex-col items-start justify-between" style={{ position: "absolute", top: "1.4em", bottom: "0.8em", left: "1.6em", width: "13%", zIndex: 2 }}>
+          <div className="flex flex-col items-start" style={{ gap: "0.7em" }}>
+            <Badge />
+            <div className="flex flex-col items-start" style={{ gap: "0.35em" }}>{levelPill}{purposePill}</div>
+          </div>
+          <Mascot mood={onAnswer ? "know" : "think"} size="6.2em" />
+        </div>
+      )}
 
       {/* the white panel */}
-      <div className="flex flex-col items-center justify-center"
+      <div className="flex flex-col items-start justify-center"
         style={narrow
-          ? { position: "relative", background: "#fff", borderRadius: "1.2em", padding: "1em", gap: "0.7em" }
-          : { position: "absolute", top: "2.5em", bottom: "3.2em", left: "5%", right: "5%", background: "#fff", borderRadius: "1.6em", padding: "1.6em 1.8em 1.4em", gap: "0.65em", overflow: "auto" }}>
-        <div className="flex flex-col items-center justify-center" style={{ gap: narrow ? "0.7em" : "0.65em", width: "100%", margin: "auto 0" }}>
+          ? { position: "relative", background: "#fff", borderRadius: "1em", borderTop: `0.4em solid ${accent}`, boxShadow: "0 0.15em 0.6em rgba(0,0,0,0.08)", padding: "1em", gap: "0.7em" }
+          : { position: "absolute", top: "1.2em", bottom: "1.2em", left: "19%", right: "2.5%", background: "#fff", borderRadius: "1.1em", borderTop: `0.4em solid ${accent}`, boxShadow: "0 0.2em 0.9em rgba(0,0,0,0.08)", padding: "1.4em 1.8em 1.3em", gap: "0.65em", overflow: "auto" }}>
+        <div className="flex flex-col items-start justify-center" style={{ gap: narrow ? "0.7em" : "0.65em", width: "100%", margin: "auto 0" }}>
           {onAnswer ? answerSlide : questionSlide}
         </div>
         {/* the key lives in the panel's corner: visible from the start, lit on the answer slide */}
@@ -308,10 +321,7 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
         )}
       </div>
 
-      {/* the mascot, standing on the bottom edge of the slide */}
-      <div style={narrow ? { display: "flex", justifyContent: "center", marginTop: "-0.2em" } : { position: "absolute", bottom: "0.15em", left: "50%", transform: "translateX(-50%)", zIndex: 3 }}>
-        <Mascot mood={onAnswer ? "know" : "think"} size={narrow ? "4.4em" : "5.4em"} />
-      </div>
+      {narrow && <div style={{ display: "flex", justifyContent: "flex-start", marginTop: "0.4em" }}><Mascot mood={onAnswer ? "know" : "think"} size="4.4em" /></div>}
     </div>
   );
 
