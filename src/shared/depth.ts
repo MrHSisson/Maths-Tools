@@ -15,6 +15,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import type { DifficultyLevel } from "./types";
+import type { PyramidTier } from "./components/BidmasPyramid";
 
 export type DepthPurpose = "diagnose" | "explain" | "extend";
 
@@ -27,6 +28,26 @@ export interface DepthOption {
   misconception?: string;
 }
 
+/** A character making a claim — drawn as a speech bubble ("Jack says…"). */
+export interface DepthSpeaker {
+  name: string;
+  /** What they say, one entry per line; `$...$` is inline maths. */
+  says: string[];
+}
+
+/** Worked lines with a mistake in them. The class taps the line they think is wrong; the answer marks the first wrong line. */
+export interface DepthWorking {
+  /** Lead-in sentence; `$...$` is inline maths. */
+  intro?: string;
+  /** The lines, as LaTeX (no `$`). */
+  lines: string[];
+  /** 0-based index of the FIRST wrong line. */
+  wrongLine: number;
+}
+
+/** A picture shown on the slide once the answer is revealed. */
+export type DepthVisual = { type: "pyramid"; strong?: PyramidTier[]; soft?: PyramidTier[] };
+
 export interface DepthItem {
   /** Unique within the tool (and across the site, ideally): `<tool>-<n>`. Used by links and `?item=`. */
   id: string;
@@ -36,11 +57,17 @@ export interface DepthItem {
   purpose: DepthPurpose;
   /** Short topic label for the picker card, e.g. "Who goes first?". Must not give the answer away. */
   title: string;
-  /** Question beat — one entry per line; `$...$` is inline maths. */
+  /** Question beat — one entry per line; `$...$` is inline maths. With `speakers` / `working` this is the prompt below them. */
   question: string[];
+  /** Characters whose claims the question is about, drawn as speech bubbles above the prompt. */
+  speakers?: DepthSpeaker[];
+  /** Worked lines containing a mistake, tappable on the slide. */
+  working?: DepthWorking;
+  /** A picture shown beside the reasoning once the answer is revealed. */
+  visual?: DepthVisual;
   /** Optional lettered choices (diagnose items). */
   options?: DepthOption[];
-  /** Answer beat — the reasoning, one entry per line; `$...$` is inline maths. */
+  /** Answer beat — the reasoning, one entry per line; `$...$` is inline maths. Each line is its own build (one press each). */
   answer: string[];
   /** One line for the teacher: what to ask or listen for. Shown with the answer. */
   teacherNote?: string;

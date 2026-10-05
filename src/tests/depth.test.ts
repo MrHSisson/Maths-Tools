@@ -18,6 +18,8 @@ const texOf = (s: string) => [...s.matchAll(/\$([^$]+)\$/g)].map((m) => m[1]);
 const textsOf = (it: DepthItem) => [
   it.title, ...it.question, ...it.answer, it.teacherNote ?? "",
   ...(it.options ?? []).flatMap((o) => [o.text, o.misconception ?? ""]),
+  ...(it.speakers ?? []).flatMap((sp) => sp.says),
+  it.working?.intro ?? "",
 ];
 
 describe("Depth banks", () => {
@@ -78,6 +80,26 @@ describe("Depth banks", () => {
         for (const i of items) {
           for (const t of textsOf(i)) for (const tex of texOf(t)) {
             expect(() => katex.renderToString(tex, { throwOnError: true }), `${i.id}: ${tex}`).not.toThrow();
+          }
+        }
+      });
+
+      it("speakers, working lines and visuals are well formed", () => {
+        for (const i of items) {
+          for (const sp of i.speakers ?? []) { expect(sp.name.length).toBeGreaterThan(0); expect(sp.says.length).toBeGreaterThan(0); }
+          if (i.working) {
+            expect(i.working.lines.length).toBeGreaterThan(1);
+            expect(i.working.wrongLine).toBeGreaterThanOrEqual(0);
+            expect(i.working.wrongLine).toBeLessThan(i.working.lines.length);
+            // Working lines are bare LaTeX (no $), each valid on its own.
+            for (const ln of i.working.lines) {
+              expect(ln).not.toContain("$");
+              expect(() => katex.renderToString(ln, { throwOnError: true }), `${i.id}: ${ln}`).not.toThrow();
+            }
+          }
+          if (i.visual) {
+            expect(i.visual.type).toBe("pyramid");
+            for (const t of [...(i.visual.strong ?? []), ...(i.visual.soft ?? [])]) expect(["B", "I", "D", "M", "A", "S"]).toContain(t);
           }
         }
       });

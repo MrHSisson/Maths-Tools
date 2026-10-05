@@ -10,7 +10,11 @@ export const DEPTH_ITEMS: DepthItem[] = [
   {
     id: "ooo-jack-jo", level: "level1", purpose: "diagnose", startHere: true,
     title: "Who is right?",
-    question: ["Jack says $7 + 2 \\times 3 = 27$.", "Jo says $7 + 2 \\times 3 = 13$.", "Who is right?"],
+    speakers: [
+      { name: "Jack", says: ["$7 + 2 \\times 3 = 27$"] },
+      { name: "Jo", says: ["$7 + 2 \\times 3 = 13$"] },
+    ],
+    question: ["Who is right?"],
     options: [
       { text: "Jack", misconception: "Worked left to right: $7 + 2 = 9$, then $9 \\times 3 = 27$" },
       { text: "Jo", correct: true },
@@ -33,6 +37,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       { text: "$15$", correct: true },
       { text: "It could be either", misconception: "Thinks the order is a matter of choice" },
     ],
+    visual: { type: "pyramid", strong: ["A", "S"] },
     answer: [
       "$20 - 8 + 3 = 12 + 3 = 15$.",
       "$+$ and $-$ share a tier of the pyramid, so work from left to right.",
@@ -50,6 +55,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       { text: "$12$", correct: true },
       { text: "It could be either", misconception: "Thinks the order is a matter of choice" },
     ],
+    visual: { type: "pyramid", strong: ["D", "M"] },
     answer: [
       "$24 \\div 4 \\times 2 = 6 \\times 2 = 12$.",
       "$\\div$ and $\\times$ share a tier, so work from left to right.",
@@ -60,7 +66,8 @@ export const DEPTH_ITEMS: DepthItem[] = [
   {
     id: "ooo-matthew", level: "level1", purpose: "explain",
     title: "Matthew's mistake",
-    question: ["Matthew says $9 + 3 \\times 2 = 24$.", "Explain Matthew's mistake and give the correct answer."],
+    speakers: [{ name: "Matthew", says: ["$9 + 3 \\times 2 = 24$"] }],
+    question: ["Explain Matthew's mistake and give the correct answer."],
     answer: [
       "Matthew added first: $9 + 3 = 12$, then $12 \\times 2 = 24$.",
       "Multiplication comes before addition: $3 \\times 2 = 6$, then $9 + 6 = 15$.",
@@ -71,16 +78,14 @@ export const DEPTH_ITEMS: DepthItem[] = [
   {
     id: "ooo-student-working", level: "level1", purpose: "explain",
     title: "Spot the error in working",
-    question: [
-      "A student works out $9 + 4 \\times 3 + 2$:",
-      "$9 + 4 \\times 3 + 2$",
-      "$= 13 \\times 3 + 2$",
-      "$= 39 + 2$",
-      "$= 41$",
-      "What went wrong, and what should the answer be?",
-    ],
+    working: {
+      intro: "A student works out $9 + 4 \\times 3 + 2$:",
+      lines: ["9 + 4 \\times 3 + 2", "= 13 \\times 3 + 2", "= 39 + 2", "= 41"],
+      wrongLine: 1,
+    },
+    question: ["Which line is the first mistake, and what should the answer be?"],
     answer: [
-      "The first step is wrong: $9 + 4$ was done before $4 \\times 3$.",
+      "Line 2 is the first mistake: $9 + 4$ was done before $4 \\times 3$.",
       "Correct: $9 + 4 \\times 3 + 2 = 9 + 12 + 2 = 23$.",
     ],
     teacherNote: "Ask which line is the first one that is wrong. Later lines are 'right' given the mistake.",
@@ -89,10 +94,8 @@ export const DEPTH_ITEMS: DepthItem[] = [
   {
     id: "ooo-why-multiply-first", level: "level1", purpose: "extend",
     title: "Why multiply first?",
-    question: [
-      "Ana says: 'The order of operations is just a rule somebody made up.'",
-      "Can you explain why $2 + 3 \\times 4$ is $14$ and not $20$?",
-    ],
+    speakers: [{ name: "Ana", says: ["The order of operations is just a rule somebody made up."] }],
+    question: ["Can you explain why $2 + 3 \\times 4$ is $14$ and not $20$?"],
     answer: [
       "$3 \\times 4$ means 3 lots of 4: $4 + 4 + 4$.",
       "So $2 + 3 \\times 4 = 2 + 4 + 4 + 4 = 14$.",
@@ -126,6 +129,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       { text: "$23$", correct: true },
       { text: "$15$", misconception: "Ignored the brackets: $5 + 4 + 2 \\times 3$" },
     ],
+    visual: { type: "pyramid", strong: ["B"] },
     answer: [
       "$5 + (4 + 2) \\times 3 = 5 + 6 \\times 3 = 5 + 18 = 23$.",
       "Brackets first, then the multiplication, then the addition.",
@@ -159,6 +163,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       { text: "$-3^2 = -9$ and $(-3)^2 = 9$", correct: true },
       { text: "They are both $-9$", misconception: "Thinks squaring a negative gives a negative" },
     ],
+    visual: { type: "pyramid", strong: ["I"] },
     answer: [
       "$-3^2 = -(3 \\times 3) = -9$: only the $3$ is squared.",
       "$(-3)^2 = -3 \\times -3 = 9$: the brackets mean the negative is squared too.",
@@ -169,7 +174,8 @@ export const DEPTH_ITEMS: DepthItem[] = [
   {
     id: "ooo-priya-square", level: "level2", purpose: "explain",
     title: "Priya's square",
-    question: ["Priya says $(3 + 4)^2 = 3^2 + 4^2 = 25$.", "Explain Priya's mistake and find the correct answer."],
+    speakers: [{ name: "Priya", says: ["$(3 + 4)^2 = 3^2 + 4^2 = 25$"] }],
+    question: ["Explain Priya's mistake and find the correct answer."],
     answer: [
       "$(3 + 4)^2 = 7^2 = 49$.",
       "The bracket is worked out first, then the whole result is squared.",
@@ -180,7 +186,8 @@ export const DEPTH_ITEMS: DepthItem[] = [
   {
     id: "ooo-kofi-power", level: "level2", purpose: "explain",
     title: "Kofi's order",
-    question: ["Kofi says $2 + 3^2 = 25$.", "What did Kofi do, and what should the answer be?"],
+    speakers: [{ name: "Kofi", says: ["$2 + 3^2 = 25$"] }],
+    question: ["What did Kofi do, and what should the answer be?"],
     answer: [
       "Kofi added first: $2 + 3 = 5$, then squared: $5^2 = 25$.",
       "The power comes before the addition: $3^2 = 9$, so $2 + 3^2 = 2 + 9 = 11$.",
@@ -226,6 +233,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       { text: "$5$", correct: true },
       { text: "$19$", misconception: "Took the root of only the first number: $\\sqrt{9} + 16$" },
     ],
+    visual: { type: "pyramid", strong: ["B"] },
     answer: [
       "$\\sqrt{9 + 16} = \\sqrt{25} = 5$.",
       "The root sign works like a bracket: add under it first, then take the root.",
@@ -243,6 +251,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       { text: "$3$", correct: true },
       { text: "$1.4$", misconception: "Bracketed only the top: $(8 + 4) \\div 5 - 1$" },
     ],
+    visual: { type: "pyramid", strong: ["B"] },
     answer: [
       "$\\dfrac{8 + 4}{5 - 1} = \\dfrac{12}{4} = 3$.",
       "The bar acts like brackets round the top and the bottom: work each out, then divide.",
@@ -269,7 +278,8 @@ export const DEPTH_ITEMS: DepthItem[] = [
   {
     id: "ooo-elena-root", level: "level3", purpose: "explain",
     title: "Elena's root",
-    question: ["Elena says $\\sqrt{9 + 16} = \\sqrt{9} + \\sqrt{16} = 7$.", "Explain her mistake and show why $5$ is correct."],
+    speakers: [{ name: "Elena", says: ["$\\sqrt{9 + 16} = \\sqrt{9} + \\sqrt{16} = 7$"] }],
+    question: ["Explain her mistake and show why $5$ is correct."],
     answer: [
       "$9 + 16 = 25$ and $\\sqrt{25} = 5$.",
       "The root of a sum is not the sum of the roots.",
@@ -280,11 +290,8 @@ export const DEPTH_ITEMS: DepthItem[] = [
   {
     id: "ooo-jamal-bar", level: "level3", purpose: "explain",
     title: "Jamal's fraction",
-    question: [
-      "Jamal says $\\dfrac{12}{4 + 2} = 5$.",
-      "He worked out $12 \\div 4 = 3$, then $3 + 2 = 5$.",
-      "Explain his mistake and find the correct answer.",
-    ],
+    speakers: [{ name: "Jamal", says: ["$\\dfrac{12}{4 + 2} = 5$", "I did $12 \\div 4 = 3$, then $3 + 2 = 5$."] }],
+    question: ["Explain Jamal's mistake and find the correct answer."],
     answer: [
       "The bar acts like a bracket round the bottom: $4 + 2 = 6$ first.",
       "$\\dfrac{12}{4 + 2} = \\dfrac{12}{6} = 2$.",
