@@ -23,7 +23,6 @@ import { WorksheetBuilder } from "./WorksheetBuilder";
 import { TeachingDeck, type TeachingSlide } from "./TeachingDeck";
 import { DepthMode } from "./components/DepthMode";
 import type { DepthItem, DepthOptionInfo } from "./depth";
-import { useDevMode } from "../devMode";
 import { SkillOverlay } from "./skills";
 import { useParkedMode } from "../parkedMode";
 
@@ -290,14 +289,13 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   // see src/parkedMode.ts.
   const parkedMode = useParkedMode();
   const showTeach = !!(parkedMode && teachingSlides && teachingSlides.length);
-  // Depth (curated diagnose / explain / extend questions) is piloting behind Developing-tools mode.
-  const devMode = useDevMode();
+  // Depth (curated diagnose / explain / extend questions) is live for any tool that passes `depthItems`.
   const [depthItemId, setDepthItemId] = useState<string | null>(urlInit.item);
   const toolDepthItems = useMemo(
     () => (depthItems ?? []).filter((i) => !i.tool || i.tool === currentTool),
     [depthItems, currentTool],
   );
-  const showDepth = devMode && toolDepthItems.length > 0;
+  const showDepth = toolDepthItems.length > 0;
   const comingSoon = defaults.comingSoonLevels ?? [];
   const hideFontControls = defaults.hideFontControls ?? false;
   // Step-by-Step is the cascading ("stacked") layout for every tool; "single" (one card replaced per press) is opt-in.

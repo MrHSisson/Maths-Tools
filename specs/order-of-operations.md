@@ -1,7 +1,7 @@
 # Tool Spec: Order of Operations (BIDMAS)
 
-**Status:** implemented — `src/tools/Number/OrderOfOperations.tsx`, registered **dev-gated**
-(`enabled: false`, Number → group "Order of operations"). Tests: `src/tests/orderOfOperations.test.ts`.
+**Status:** implemented — `src/tools/Number/OrderOfOperations.tsx`, registered **live**
+(Number → group "Operations & calculation", alongside Adding & Subtracting Integers). Tests: `src/tests/orderOfOperations.test.ts`.
 Shared piece: `src/shared/components/BidmasPyramid.tsx`.
 
 **Origin:** the Functional Skills generator has a BIDMAS skill (≈30 hand-written templates). This is the

@@ -73,7 +73,7 @@ Stand-alone teacher tools with no prong: **Visualiser**, the four PDF
 | **Smart Progressor** | 🚧 | Mechanism done and piloted on `SpeedDistanceTime`; the work now is adopting it tool by tool (audit the other 26) |
 | **Core representations** | 🚧 | The visual vocabulary, its progressions and pairings; where to use each, what tools and sandboxes to make |
 | **Sandboxes & viewports** | 🚧 | Algebra Tiles, Negative Counters, SmartGrapher (+ Grapher Lab, Parallel Lines Explorer): standalone tools first, then embedded as viewports in question tools |
-| **Depth** | 🚧 piloting | Curated diagnose / explain / extend questions as a mode on every tool; pilot bank of 21 on Order of Operations (dev-gated) |
+| **Depth** | ✅ live (1 tool) | Curated diagnose / explain / extend questions as a mode on any tool that supplies a bank; follows the Question Options; first bank of 28 on Order of Operations (live) |
 | **Computer Science shell** | ⏸ | Shell built; 2 topics shipped as data; next is authoring 1.1.3 |
 | **Decision Maths** | ⏸ | MST shipped; TSP nearest-neighbour slice built (dev-gated); next TSP lower bound |
 | *Tool review cycle* | ♻ ongoing | Per-tool notes; not a prong |
@@ -338,13 +338,13 @@ shared `WorkedExampleSteps` — a tool only supplies per-step data and renderers
 
 ## Depth
 
-**Where it's at.** Built 2026-10-05 as the evolution of the parked Teach decks: not a presentation to press through, but a **bank of fixed, well-thought-out questions** a teacher dips into by purpose (diagnose · explain · extend) and level, to be adaptive to the class and still give depth of reasoning. Shared mode in `ToolShell` (`depthItems` prop, "Depth" tab, behind Developing-tools mode while piloted): picker by level and purpose, two-beat question → answer with named misconceptions per wrong option, adaptive "class secure / not secure" links, a cross-level **Start here** quick check, deep links (`?mode=depth&level=&item=`), phone layout. Each question is **two slides** (question, then answer; ← / → / Space) designed like a classroom slide — coloured background, white panel with a DEPTH badge, cartoon speakers with speech bubbles, an owl mascot, tap-the-wrong-line working, a corner pyramid — with a Present mode that works in every browser. Pilot: 21 items on **Order of Operations** (`OrderOfOperationsDepth.ts`). Spec template: `docs/design/templates/DEPTH_SPEC_TEMPLATE.md`.
+**Where it's at.** Built 2026-10-05 as the evolution of the parked Teach decks: not a presentation to press through, but a **bank of fixed, well-thought-out questions** a teacher dips into by purpose (diagnose · explain · extend) and level, to be adaptive to the class and still give depth of reasoning. Shared mode in `ToolShell` (`depthItems` prop, "Depth" tab; **live 2026-10-05** for any tool that passes a bank): picker by level and purpose, two-beat question → answer with named misconceptions per wrong option, adaptive "class secure / not secure" links, a cross-level **Start here** quick check, deep links (`?mode=depth&level=&item=`), phone layout. Each question is **two slides** (question, then answer; ← / → / Space) designed like a classroom slide — coloured background, white panel with a DEPTH badge, cartoon speakers with speech bubbles, an owl mascot, tap-the-wrong-line working, a corner pyramid — with a Present mode that works in every browser. Pilot: 21 items on **Order of Operations** (`OrderOfOperationsDepth.ts`). Spec template: `docs/design/templates/DEPTH_SPEC_TEMPLATE.md`.
 
 **Possible next steps:**
 - Harry reviews the BIDMAS bank for wording, missing misconceptions and the follow-up routes.
 - Add a Depth section to the tool spec template and write banks as tools pass through the Tool review cycle (diagnostic bank per tool, level by level).
 - A printable hinge-question sheet from a chosen set of items.
-- Decide the go-live gate (currently Developing-tools mode) and whether Teach decks are retired for tools that adopt Depth (`docs/BACKBENCH.md`).
+- Whether Teach decks are retired for tools that adopt Depth (`docs/BACKBENCH.md`).
 
 ---
 

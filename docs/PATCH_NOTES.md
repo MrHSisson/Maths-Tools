@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-05 — Order of Operations and Depth go live; landing-page grouping
+- **Un-gated:** Order of Operations no longer carries `enabled: false`, and the Depth mode no longer needs Developing-tools mode — it shows for any tool that passes `depthItems`.
+- **Landing-page grouping:** the lone "Order of operations" group (which could never hold a second tool) is replaced by a broader **"Operations & calculation"** group holding Adding & Subtracting Integers and Order of Operations, with room for the rest of the four operations (multiplication/division methods, negatives, powers) to join it. Same fix as the Functional Skills catch-all: a group should name a strand of the scheme of work, not one tool.
+
 ## 2026-10-05 — Depth: filling the thin spots
 - Audited every Question Option on its own (each sub-tool × level × option, other pools at default) for how many Depth items stay available. Several settings had no Explain or Extend item at all (Left to right, ×-first, +-first, Brackets, Powers, −3² as 9, Nested brackets).
 - Seven new items (bank is now 28): Sana's subtraction and Samuel's division (L1 explain), Matilda's brackets and Amir's negative (L2 explain), two L2 always/sometimes/never items (`2a² = (2a)²`, `−n²` is negative), Lena's nested brackets (L3 explain). Worked numbers are asserted in `orderOfOperations.test.ts`.

@@ -1,6 +1,6 @@
 # Depth Bank: Order of Operations (BIDMAS)
 
-**Status:** implemented (pilot, awaiting review) — `src/tools/Number/OrderOfOperationsDepth.ts`, 21 items, dev-gated.
+**Status:** implemented (pilot, awaiting review) — `src/tools/Number/OrderOfOperationsDepth.ts`, 28 items, live.
 
 Seven items per level, following the tool's three ideas. Diagnose = multiple choice with a named misconception per
 wrong option; Explain = unpick a stated mistake or working; Extend = always/sometimes/never, convince me, make your own.
