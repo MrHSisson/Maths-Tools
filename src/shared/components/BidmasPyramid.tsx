@@ -24,13 +24,14 @@ export interface BidmasPyramidProps {
 }
 
 const APEX_Y = 6;
-const BASE_Y = 238;
+const BASE_Y = 250;
 const HALF = 190;
 const CX = 200;
 const hw = (y: number) => (HALF * (y - APEX_Y)) / (BASE_Y - APEX_Y);
 
-// Tier boundaries (top of B → base).
-const Y = [APEX_Y, 62, 120, 182, BASE_Y];
+// Tier boundaries (top of B → base). B is the tallest-narrowest tier, so it is given extra height
+// to hold "B ( )" inside the triangle.
+const Y = [APEX_Y, 76, 130, 190, BASE_Y];
 
 const NAVY = "#1e3a8a";
 const LETTER = "#dc2626";
@@ -44,15 +45,17 @@ const left = (y1: number, y2: number): Pts => [[CX - hw(y1), y1], [CX, y1], [CX,
 const right = (y1: number, y2: number): Pts => [[CX, y1], [CX + hw(y1), y1], [CX + hw(y2), y2], [CX, y2]];
 const toStr = (p: Pts) => p.map(([x, y]) => `${x},${y}`).join(" ");
 
-interface TierDef { tier: PyramidTier; pts: Pts; letter: string; lx: number; ly: number; sym: string; sx: number; sy: number; sup?: boolean }
+// Each tier is ONE centred text (letter + its symbols as tspans) so the pair can never drift apart
+// or poke outside its cell. x is the centre of the group, y its baseline, size the symbol size.
+interface TierDef { tier: PyramidTier; pts: Pts; letter: string; sym: string; x: number; y: number; symSize: number; letterSize?: number }
 
 const TIERS: TierDef[] = [
-  { tier: "B", pts: full(Y[0], Y[1]), letter: "B", lx: CX, ly: 50, sym: "( )", sx: 252, sy: 32 },
-  { tier: "I", pts: full(Y[1], Y[2]), letter: "I", lx: CX - 6, ly: 106, sym: "2  3", sx: CX + 22, sy: 92, sup: true },
-  { tier: "D", pts: left(Y[2], Y[3]), letter: "D", lx: 128, ly: 162, sym: "÷", sx: 172, sy: 162 },
-  { tier: "M", pts: right(Y[2], Y[3]), letter: "M", lx: 244, ly: 162, sym: "×", sx: 288, sy: 162 },
-  { tier: "A", pts: left(Y[3], Y[4]), letter: "A", lx: 102, ly: 220, sym: "+", sx: 148, sy: 220 },
-  { tier: "S", pts: right(Y[3], Y[4]), letter: "S", lx: 252, ly: 220, sym: "−", sx: 298, sy: 220 },
+  { tier: "B", pts: full(Y[0], Y[1]), letter: "B", sym: "( )", x: CX, y: 68, symSize: 24, letterSize: 30 },
+  { tier: "I", pts: full(Y[1], Y[2]), letter: "I", sym: "² ³", x: CX, y: 118, symSize: 30 },
+  { tier: "D", pts: left(Y[2], Y[3]), letter: "D", sym: "÷", x: CX - 52, y: 177, symSize: 32 },
+  { tier: "M", pts: right(Y[2], Y[3]), letter: "M", sym: "×", x: CX + 52, y: 177, symSize: 32 },
+  { tier: "A", pts: left(Y[3], Y[4]), letter: "A", sym: "+", x: CX - 60, y: 236, symSize: 32 },
+  { tier: "S", pts: right(Y[3], Y[4]), letter: "S", sym: "−", x: CX + 60, y: 236, symSize: 32 },
 ];
 
 const NAMES: Record<PyramidTier, string> = { B: "Brackets", I: "Indices", D: "Division", M: "Multiplication", A: "Addition", S: "Subtraction" };
@@ -63,7 +66,7 @@ export function BidmasPyramid({ strong = [], soft = [], maxWidth = 420 }: Bidmas
   }`;
   return (
     <svg
-      viewBox="0 0 400 244"
+      viewBox="0 0 400 256"
       role="img"
       aria-label={label}
       style={{ display: "block", width: "100%", maxWidth, height: "auto", margin: "0 auto" }}
@@ -79,14 +82,10 @@ export function BidmasPyramid({ strong = [], soft = [], maxWidth = 420 }: Bidmas
       ))}
       <line x1={CX} y1={Y[2]} x2={CX} y2={BASE_Y} stroke={NAVY} strokeWidth={2.5} />
       {TIERS.map((t) => (
-        <g key={`t-${t.tier}`} fontFamily="'Segoe UI', system-ui, sans-serif" fontWeight={700}>
-          <text x={t.lx} y={t.ly} textAnchor="middle" fontSize={34} fill={LETTER}>{t.letter}</text>
-          {t.sup ? (
-            <text x={t.sx} y={t.sy} fontSize={20} fill={SYMBOL} style={{ whiteSpace: "pre" }}>{t.sym}</text>
-          ) : (
-            <text x={t.sx} y={t.sy} textAnchor="middle" fontSize={t.tier === "B" ? 30 : 32} fill={SYMBOL}>{t.sym}</text>
-          )}
-        </g>
+        <text key={`t-${t.tier}`} x={t.x} y={t.y} textAnchor="middle" fontFamily="'Segoe UI', system-ui, sans-serif" fontWeight={700}>
+          <tspan fontSize={t.letterSize ?? 34} fill={LETTER}>{t.letter}</tspan>
+          <tspan dx={8} fontSize={t.symSize} fill={SYMBOL}>{t.sym}</tspan>
+        </text>
       ))}
     </svg>
   );
