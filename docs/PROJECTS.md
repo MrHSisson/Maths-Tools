@@ -309,6 +309,7 @@ shared `WorkedExampleSteps` — a tool only supplies per-step data and renderers
 - **Flat rows, one look** (2026-10-04) — the keep-working layout lost its backing cards: numbered rows on the same spine as the caption timeline, each carrying its own label and maths (maths one size larger).
 - **Diagram tools** (`src/shared/diagramSplit.tsx`) — the question *is* the diagram, so the geometry tools show it in the picture slot beside the steps (`withDiagramSteps` · `diagramStepVisual` · `diagramSplitQuestion`); per-step emphasis (`_stepFocus` → `_focus`) and values the working finds (`_step`, e.g. an angle drawn from the step that finds it).
 - **Answer as its own step** — a final inline chain (`x = 180° − 146°` · `= 34°`) splits into the working plus an **"Answer:"** step in large green maths (`splitAnswerStep`).
+- **Rewrite-the-line working** (2026-10-05) — Order of Operations rewrites the whole expression each step with the next move boxed (`\colorbox` fragments), no new representation; a pattern for any equation-led tool whose working is a sequence of rewrites.
 - **Gradient triangle** — Properties of Line Equations draws the right-angled triangle on the graph (labelled Δy / Δx legs — the shared grapher `Segment`), then divides.
 - **Instruction lines** — ToolShell no longer hides a sub-tool's instruction when the tool has a custom renderer (it was missing in 5 tools).
 
