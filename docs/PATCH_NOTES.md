@@ -28,6 +28,11 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-05 — Decimal Add/Sub: exchanges at Level 2, decimal places at Level 3
+- Level 2: new **Carries needed** (Adding) / **Exchanges needed** (Subtracting) pool — 1, 2 or 3+ — one drawn per question and weighted so the Smart Progressor orders a worksheet 1 → 3+. 3+ subtraction uses wholes up to 999 and shows the hundreds column.
+- Level 3 (both sub-tools): the **Decimal places** pool now applies — it sets the longest number's d.p.; shapes needing two lengths use at least 2 d.p.
+- `compute` now returns the carry and exchange counts; `src/tests/decimalAddSub.test.ts` checks both pools.
+
 ## 2026-10-05 — Order of Operations (BIDMAS): new tool, dev-gated
 - New ToolShell tool `src/tools/Number/OrderOfOperations.tsx` (Number → "Order of operations", `enabled: false`; brief: `specs/order-of-operations.md`). It grows the Functional Skills generator's BIDMAS skill into whiteboard / worked example / worksheet with negatives, decimals, squares and cubes, square roots, fraction bars and nested brackets.
 - Two sub-tools: **Evaluate**, and **Brackets & Mistakes** (insert one pair of brackets to make a statement true, or find a student's BIDMAS mistake — six mistake types by level).
