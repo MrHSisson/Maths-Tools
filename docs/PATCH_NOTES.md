@@ -29,7 +29,7 @@ Keep the split even when a session only touches one.
 # Maths
 
 ## 2026-10-05 — BIDMAS pyramid moved into the question
-- Whiteboard: the pyramid is now a `placement: "question"` scaffold (small, under the question and answer) instead of filling the working box, which stays free to write in. `ToolShell` now renders a question-placed scaffold with the default question display too (it used to need a `questionRenderer`).
+- Whiteboard: the pyramid is now a small scaffold pinned to the **top-left of the working box** (new shared `workingScaffold` placement `"workingCorner"`, `cornerWidth`), instead of filling the box, which stays free to write in. (`"question"` placement now also works without a `questionRenderer`.) `ToolShell` now renders a question-placed scaffold with the default question display too (it used to need a `questionRenderer`).
 - Worked Example: the picture beside the steps is smaller.
 - Depth slide: the pyramid sits small in the corner of the question section (visible from the start, lit once the answer is revealed) instead of in the reasoning band.
 

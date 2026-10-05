@@ -1216,7 +1216,7 @@ export default function App() {
       }}
       stepVisualKeepsWorking
       depthItems={DEPTH_ITEMS}
-      workingScaffold={{ label: "BIDMAS pyramid", placement: "question", render: () => <BidmasPyramid maxWidth={230} /> }}
+      workingScaffold={{ label: "BIDMAS pyramid", placement: "workingCorner", cornerWidth: 190, render: () => <BidmasPyramid maxWidth={260} /> }}
       defaults={{ numColumns: 2 }}
     />
   );

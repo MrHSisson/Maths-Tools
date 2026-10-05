@@ -85,7 +85,10 @@ export interface ToolShellProps {
     /** Where it is drawn: the working box (default) or inside the question box
      *  below the question — pair "question" with `collapseWorkingByDefault` for a
      *  full-width scaffold (the hide button then lives in the question box). */
-    placement?: "workingBox" | "question";
+    placement?: "workingBox" | "workingCorner" | "question";
+    /** For "workingCorner": the width in px of the small scaffold pinned top-left of the working
+     *  box (default 190; grows in fullscreen). The rest of the box stays free to write in. */
+    cornerWidth?: number;
     render: (q: AnyQuestion, showAnswer: boolean, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null;
   };
 }
@@ -1295,7 +1298,12 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             {camError && <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", padding: "2rem", textAlign: "center", zIndex: 1 }}>{camError}</div>}
           </>
         )}
-        {workingScaffold && workingScaffold.placement !== "question" && !presenterMode && !scaffoldHidden && (
+        {workingScaffold && workingScaffold.placement === "workingCorner" && !presenterMode && !scaffoldHidden && (
+          <div style={{ position: "absolute", top: 10, left: 10, width: (workingScaffold.cornerWidth ?? 190) * (isFS ? 1.4 : 1), zIndex: 5 }}>
+            {workingScaffold.render(currentQuestion, showWhiteboardAnswer, colorScheme, getQOSnapshot())}
+          </div>
+        )}
+        {workingScaffold && (workingScaffold.placement ?? "workingBox") === "workingBox" && !presenterMode && !scaffoldHidden && (
           <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: "56px 16px 16px", boxSizing: "border-box", zIndex: 5 }}>
             <ScaleToFit maxScale={isFS ? 1.6 : 1}>
               <div className="w-full">{workingScaffold.render(currentQuestion, showWhiteboardAnswer, colorScheme, getQOSnapshot())}</div>
