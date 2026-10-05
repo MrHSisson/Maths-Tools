@@ -51,6 +51,29 @@ const PLACES_MS: ToolMultiSelect = {
   ],
 };
 
+// Level 3: a MAX — the longest number in a question has up to this many d.p. (the other has fewer).
+const PLACES_L3_MS: ToolMultiSelect = {
+  key: "places",
+  label: "Max decimal places",
+  info: "The longest number in a question has up to this many decimal places; the other number has fewer. Question types that need two different lengths always use at least 2 d.p.",
+  exclusive: true,
+  options: PLACES_MS.options.map((o) => ({ ...o, label: o.value === "dp1" ? "1" : o.value === "dp2" ? "2" : "3", defaultActive: o.value === "dp3" })),
+};
+
+// Level 2: how many carries / exchanges the calculation needs. One is drawn per question; the
+// Smart Progressor orders a worksheet 1 → 2 → 3+.
+const exchangePool = (label: string): ToolMultiSelect => ({
+  key: "exchanges",
+  label,
+  options: [
+    { value: "x1", label: "1", defaultActive: true, weight: 1 },
+    { value: "x2", label: "2", defaultActive: true, weight: 2 },
+    { value: "x3", label: "3+", defaultActive: true, weight: 3 },
+  ],
+});
+const CARRY_MS = exchangePool("Carries needed");
+const EXCHANGE_MS = exchangePool("Exchanges needed");
+
 const ADD_SHAPE_MS: ToolMultiSelect = {
   key: "addShape",
   label: "Question types",
@@ -95,8 +118,8 @@ const TOOL_CONFIG: ToolConfig = {
       multiSelect: PLACES_MS,
       difficultySettings: {
         level1: { variables: [PV_WORD_HEADERS_VAR, WS_GRID_VAR], dropdown: TABLE_START_DD, multiSelect: PLACES_MS },
-        level2: { variables: [PV_WORD_HEADERS_VAR, WS_GRID_VAR], dropdown: TABLE_START_DD, multiSelect: PLACES_MS },
-        level3: { variables: [PV_WORD_HEADERS_VAR, WS_GRID_VAR], dropdown: TABLE_START_DD, multiSelect: ADD_SHAPE_MS },
+        level2: { variables: [PV_WORD_HEADERS_VAR, WS_GRID_VAR], dropdown: TABLE_START_DD, multiSelect: [PLACES_MS, CARRY_MS] },
+        level3: { variables: [PV_WORD_HEADERS_VAR, WS_GRID_VAR], dropdown: TABLE_START_DD, multiSelect: [PLACES_L3_MS, ADD_SHAPE_MS] },
       },
     },
     subtract: {
@@ -107,8 +130,8 @@ const TOOL_CONFIG: ToolConfig = {
       multiSelect: PLACES_MS,
       difficultySettings: {
         level1: { variables: [PV_WORD_HEADERS_VAR, WS_GRID_VAR], dropdown: TABLE_START_DD, multiSelect: PLACES_MS },
-        level2: { variables: [PV_WORD_HEADERS_VAR, WS_GRID_VAR], dropdown: TABLE_START_DD, multiSelect: PLACES_MS },
-        level3: { variables: [PV_WORD_HEADERS_VAR, WS_GRID_VAR], dropdown: TABLE_START_DD, multiSelect: SUB_SHAPE_MS },
+        level2: { variables: [PV_WORD_HEADERS_VAR, WS_GRID_VAR], dropdown: TABLE_START_DD, multiSelect: [PLACES_MS, EXCHANGE_MS] },
+        level3: { variables: [PV_WORD_HEADERS_VAR, WS_GRID_VAR], dropdown: TABLE_START_DD, multiSelect: [PLACES_L3_MS, SUB_SHAPE_MS] },
       },
     },
   },
@@ -120,8 +143,8 @@ const INFO_SECTIONS: InfoSection[] = [
   { title: "Adding & Subtracting Decimals", icon: "➕", content: [
     { label: "Overview", detail: "Add and subtract decimals using a place value table. Line the decimal points up, then work column by column from the right — just like whole numbers." },
     { label: "Level 1 — Green", detail: "Adding: same number of decimal places, no carrying. Subtracting: same number of decimal places, no exchanging." },
-    { label: "Level 2 — Yellow", detail: "Same number of decimal places, but carrying (adding) or exchanging (subtracting) is needed — including across the decimal point." },
-    { label: "Level 3 — Red", detail: "Different numbers of decimal places, so a placeholder zero is needed (4.1 becomes 4.10). Subtracting includes whole numbers minus decimals and exchanging across a zero." },
+    { label: "Level 2 — Yellow", detail: "Same number of decimal places, but carrying (adding) or exchanging (subtracting) is needed — including across the decimal point. Choose whether a question needs 1, 2 or 3+ carries / exchanges." },
+    { label: "Level 3 — Red", detail: "Different numbers of decimal places, so a placeholder zero is needed (4.1 becomes 4.10). Subtracting includes whole numbers minus decimals and exchanging across a zero. Set the maximum number of decimal places." },
   ]},
   { title: "How the table works", icon: "📊", content: [
     { label: "Line up the point", detail: "The decimal point sits between the Ones and Tenths columns. Digits in the same column have the same place value — that is why they can be added or subtracted." },
@@ -135,7 +158,8 @@ const INFO_SECTIONS: InfoSection[] = [
     { label: "Worksheet", detail: "A grid of questions with PDF export." },
   ]},
   { title: "Question Options", icon: "⚙️", content: [
-    { label: "Decimal places (Levels 1–2)", detail: "Choose whether the numbers have 1, 2 or 3 decimal places." },
+    { label: "Decimal places", detail: "Levels 1–2: whether the numbers have 1, 2 or 3 decimal places. Level 3: a maximum — the longest number has up to that many decimal places (the other has fewer)." },
+    { label: "Carries / Exchanges needed (Level 2)", detail: "How many carries (adding) or exchanges (subtracting) a question needs: 1, 2 or 3+. One is chosen for each question; a worksheet runs from fewest to most. Exchanging across a zero counts each exchange it makes." },
     { label: "Question types (Level 3)", detail: "Choose which tricky shapes appear — different numbers of decimal places, whole numbers with decimals, answers ending in zero, exchanging across a zero." },
     { label: "Grids on worksheet", detail: "Gives every worksheet question its own place value grid to work in (Table starts decides whether it is empty, has the numbers in, or numbers + zeros). Answer pages show each grid completed. Grids need room, so a gridded worksheet is limited to 2 wide columns (on screen and in print; differentiated sheets keep one column per level) with up to 10 questions per page. Fewer questions stretch the grids to fill the page. The switch only appears in Worksheet mode." },
     { label: "Table starts (Whiteboard / Worksheet grids / Worked Example)", detail: "Empty — the class builds the table from scratch. Numbers in — both numbers are already placed and lined up. Numbers + zeros — placeholder zeros are filled in too, so the focus is the calculation. Show Answer completes the working." },
@@ -203,10 +227,9 @@ const sliceTable = (t: PlaceValueTableData, { start, end }: Layout): PlaceValueT
 /** Columns a question range can need: whole-number columns by tool/level, decimal columns by the
  *  active "Decimal places" options (Level 3 always allows up to 3). */
 const layoutFor = (tool: ToolType, level: DifficultyLevel, v: Record<string, boolean>): Layout => {
-  const maxDp = level === "level3"
-    ? MAX_DP
-    : Math.max(1, ...PLACES_MS.options.filter((o) => v[o.value] !== false).map((o) => Number(o.value.slice(2))));
-  const start = level === "level1" ? ONES : tool === "add" ? 0 : 1; // L1 is single-digit wholes; adding can reach hundreds
+  const maxDp = Math.max(level === "level3" ? 2 : 1, ...PLACES_MS.options.filter((o) => v[o.value] !== false).map((o) => Number(o.value.slice(2))));
+  // L1 is single-digit wholes; adding can reach hundreds; L2 subtracting reaches hundreds only for "3+ exchanges".
+  const start = level === "level1" ? ONES : tool === "add" ? 0 : level === "level2" && v["x3"] !== false ? 0 : 1;
   return { start, end: ONES + maxDp + 1 };
 };
 
@@ -226,7 +249,7 @@ const snapTable = (s: Snap, workDp: number, layout: Layout): PlaceValueTableData
   return sliceTable({ columns: COLS, columnNames: COLSET.columnNames, onesIndex: ONES, showPoint: true, rows, cellHeight: 64, colWidth: COL_W, highlightCol: s.highlightCol }, layout);
 };
 
-interface Computed { startTables: { numbers: PlaceValueTableData; zeros: PlaceValueTableData }; result: Dec; steps: WorkingStep[]; finalTable: PlaceValueTableData; hasChain: boolean; carried: boolean; exchanged: boolean }
+interface Computed { startTables: { numbers: PlaceValueTableData; zeros: PlaceValueTableData }; result: Dec; steps: WorkingStep[]; finalTable: PlaceValueTableData; hasChain: boolean; carried: boolean; exchanged: boolean; carries: number; exchanges: number }
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -266,7 +289,7 @@ const compute = (op: "+" | "−", a: Dec, b: Dec, layout: Layout = FULL): Comput
     push(`Fill the empty columns after the decimal point with zeros: ${decStr(shorter)} = ${pad}. The value hasn't changed, but now every column has a digit.`);
   }
 
-  let hasChain = false, carried = false, exchanged = false;
+  let hasChain = false, carried = false, exchanged = false, carries = 0, exchanges = 0;
 
   if (op === "−") {
     const cur = snap.cur as number[];
@@ -280,7 +303,7 @@ const compute = (op: "+" | "−", a: Dec, b: Dec, layout: Layout = FULL): Comput
       }
       cur[from] -= 1; cur[k] += 10;
       snap.modified[from] = true; snap.modified[k] = true;
-      exchanged = true;
+      exchanged = true; exchanges++;
       const body = `exchange 1 ${UNIT[from]} for 10 ${UNIT[k]}s.`;
       push(`${p} ${p.endsWith(".") ? cap(body) : body}`, k);
     };
@@ -299,7 +322,7 @@ const compute = (op: "+" | "−", a: Dec, b: Dec, layout: Layout = FULL): Comput
       const d = sum % 10;
       const out = Math.floor(sum / 10);
       snap.ans[c] = String(d);
-      if (out > 0) { snap.carry[c - 1] = String(out); carried = true; }
+      if (out > 0) { snap.carry[c - 1] = String(out); carried = true; carries++; }
       const calc = carry > 0 ? `${t} + ${bt} + ${carry} = ${sum}` : `${t} + ${bt} = ${sum}`;
       push(`${NAME[c]}: ${calc}${out > 0 ? `. Write ${d} and carry ${out}.` : ""}`, c);
       carry = out;
@@ -317,7 +340,7 @@ const compute = (op: "+" | "−", a: Dec, b: Dec, layout: Layout = FULL): Comput
   const tableOf = (i: number) => (steps[i].extra as { table: PlaceValueTableData }).table;
   const startTables = { numbers: tableOf(0), zeros: tableOf(a.dp !== b.dp ? 1 : 0) };
 
-  return { startTables, result, steps, finalTable, hasChain, carried, exchanged };
+  return { startTables, result, steps, finalTable, hasChain, carried, exchanged, carries, exchanges };
 };
 
 // ── 6. Question generation ────────────────────────────────────────────────────
@@ -346,36 +369,46 @@ const tryGen = <T,>(make: () => T, ok: (x: T) => boolean): T => {
 
 interface Pair { a: Dec; b: Dec }
 
+/** Level 2: how many carries / exchanges this question must need (1, 2, or 3 meaning "3 or more"). */
+const wantedCount = (v: Record<string, boolean>): 1 | 2 | 3 =>
+  Number(pickActive(v, CARRY_MS.options).slice(1)) as 1 | 2 | 3;
+const countOk = (n: number, want: number) => (want === 3 ? n >= 3 : n === want);
+
 const genAdd = (level: DifficultyLevel, v: Record<string, boolean>): Pair => {
   if (level !== "level3") {
     const dp = dpOf(v);
     const wholeMax = level === "level1" ? 9 : 99;
+    const want = wantedCount(v);
     return tryGen<Pair>(
       () => ({ a: rndDec(dp, 0, wholeMax), b: rndDec(dp, 0, wholeMax) }),
       ({ a, b }) => {
         const sum = a.int + b.int;
         if (sum % 10 === 0 || sum >= 1000 * POW[dp]) return false;
-        const carries = compute("+", a, b).carried;
-        return level === "level1" ? !carries : carries;
+        const { carries } = compute("+", a, b);
+        return level === "level1" ? carries === 0 : countOk(carries, want);
       },
     );
   }
-  const shape = pickActive(v, ADD_SHAPE_MS.options);
+  // The "Max decimal places" pool caps the longest number's d.p.; shapes that need two different
+  // lengths can't use 1 d.p., so draw the shape from those that fit and the length from 1..cap.
+  const cap = dpOf(v);
+  const fits = ADD_SHAPE_MS.options.filter((o) => v[o.value] !== false && (cap >= 2 || o.value === "wholePlus" || o.value === "trimZero"));
+  const shape = fits.length ? pickActive({}, fits) : "diffPlaces";
+  const maxDp = randInt(shape === "diffPlaces" ? 2 : 1, Math.max(cap, 2));
   const W = (p: Pair) => Math.max(p.a.dp, p.b.dp);
   const sumTrailingZero = (p: Pair) => (valueAt(p.a, W(p)) + valueAt(p.b, W(p))) % 10 === 0;
   const pair = tryGen<Pair>(
     () => {
       if (shape === "wholePlus") {
         const whole = rndDec(0, 1, 99);
-        const dec = rndDec(randInt(1, MAX_DP), 0, 99);
+        const dec = rndDec(maxDp, 0, 99);
         return Math.random() < 0.5 ? { a: whole, b: dec } : { a: dec, b: whole };
       }
       if (shape === "trimZero") {
-        const dp = randInt(2, MAX_DP);
-        return { a: rndDec(dp, 0, 99), b: rndDec(dp, 0, 99) };
+        return { a: rndDec(maxDp, 0, 99), b: rndDec(maxDp, 0, 99) };
       }
-      const d1 = randInt(1, MAX_DP - 1);
-      const d2 = randInt(d1 + 1, MAX_DP);
+      const d1 = randInt(1, maxDp - 1);
+      const d2 = maxDp;
       return Math.random() < 0.5 ? { a: rndDec(d1, 0, 99), b: rndDec(d2, 0, 99) } : { a: rndDec(d2, 0, 99), b: rndDec(d1, 0, 99) };
     },
     (p) => shape === "trimZero" ? sumTrailingZero(p) : !sumTrailingZero(p),
@@ -386,29 +419,36 @@ const genAdd = (level: DifficultyLevel, v: Record<string, boolean>): Pair => {
 const genSub = (level: DifficultyLevel, v: Record<string, boolean>): Pair => {
   if (level !== "level3") {
     const dp = dpOf(v);
-    const wholeMax = level === "level1" ? 9 : 99;
+    const want = wantedCount(v);
+    // Three exchanges at 1 d.p. needs a hundreds column to lend from.
+    const wholeMax = level === "level1" ? 9 : want === 3 ? 999 : 99;
     return tryGen<Pair>(
       () => ({ a: rndDec(dp, 0, wholeMax), b: rndDec(dp, 0, wholeMax) }),
       ({ a, b }) => {
         const diff = a.int - b.int;
         if (diff <= 0 || diff % 10 === 0) return false;
-        const { exchanged } = compute("−", a, b);
-        return level === "level1" ? !exchanged : exchanged;
+        const { exchanges } = compute("−", a, b);
+        return level === "level1" ? exchanges === 0 : countOk(exchanges, want);
       },
     );
   }
-  const shape = pickActive(v, SUB_SHAPE_MS.options);
+  // Longest number's d.p. comes from the "Decimal places" pool; shapes needing two lengths or a
+  // zero in the tenths column require at least 2 d.p.
+  const cap = dpOf(v);
+  const fits = SUB_SHAPE_MS.options.filter((o) => v[o.value] !== false && (cap >= 2 || o.value === "wholeMinus"));
+  const shape = fits.length ? pickActive({}, fits) : "padZero";
+  const maxDp = shape === "wholeMinus" ? randInt(1, cap) : randInt(2, Math.max(cap, 2));
   return tryGen<Pair>(
     () => {
-      if (shape === "wholeMinus") return { a: rndDec(0, 2, 99), b: rndDec(randInt(1, MAX_DP), 0, 98) };
+      if (shape === "wholeMinus") return { a: rndDec(0, 2, 99), b: rndDec(maxDp, 0, 98) };
       if (shape === "acrossZero") {
-        const dp = randInt(2, MAX_DP);
+        const dp = maxDp;
         const a = rndDec(dp, 1, 99);
         // force a zero digit in the tenths column so the exchange has to travel
         const zeroed = a.int - (Math.floor(a.int / POW[dp - 1]) % 10) * POW[dp - 1];
         return { a: { int: zeroed, dp }, b: rndDec(dp, 0, 98) };
       }
-      const big = randInt(2, MAX_DP);
+      const big = maxDp;
       const small = randInt(1, big - 1);
       return shape === "padZero"
         ? { a: rndDec(small, 1, 99), b: rndDec(big, 0, 98) }
@@ -425,7 +465,7 @@ const genSub = (level: DifficultyLevel, v: Record<string, boolean>): Pair => {
   );
 };
 
-const POOL_VALUES = [...PLACES_MS.options, ...ADD_SHAPE_MS.options, ...SUB_SHAPE_MS.options].map((o) => o.value);
+const POOL_VALUES = [...PLACES_MS.options, ...CARRY_MS.options, ...ADD_SHAPE_MS.options, ...SUB_SHAPE_MS.options].map((o) => o.value);
 /** Signature of the question-pool options — changes only when the maths would change. */
 const poolSig = (v: Record<string, boolean>): string => POOL_VALUES.map((k) => (v[k] !== false ? 1 : 0)).join("");
 
@@ -461,6 +501,7 @@ const generateQuestion = (
     working: comp.steps,
     _pv: { op, a, b, layout, finalTable: { ...comp.finalTable, headerStyle: hs }, startTables: comp.startTables },
     _sig: poolSig(multiSelectValues),
+    ...(level === "level2" ? { _difficultyScore: Math.min(3, t === "add" ? comp.carries : comp.exchanges) } : {}),
     _ws: { on: wsOn, table: wsTable, title: eqText },
     _fixedSizeCell: wsOn,   // a grid cell is drawn at a fixed size, so the worksheet text-size chevrons would do nothing
     _printText: eqText,

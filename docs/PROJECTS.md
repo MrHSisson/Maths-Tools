@@ -73,6 +73,7 @@ Stand-alone teacher tools with no prong: **Visualiser**, the four PDF
 | **Smart Progressor** | 🚧 | Mechanism done and piloted on `SpeedDistanceTime`; the work now is adopting it tool by tool (audit the other 26) |
 | **Core representations** | 🚧 | The visual vocabulary, its progressions and pairings; where to use each, what tools and sandboxes to make |
 | **Sandboxes & viewports** | 🚧 | Algebra Tiles, Negative Counters, SmartGrapher (+ Grapher Lab, Parallel Lines Explorer): standalone tools first, then embedded as viewports in question tools |
+| **Depth** | ✅ live (1 tool) | Curated diagnose / explain / extend questions as a mode on any tool that supplies a bank; follows the Question Options; first bank of 28 on Order of Operations (live) |
 | **Computer Science shell** | ⏸ | Shell built; 2 topics shipped as data; next is authoring 1.1.3 |
 | **Decision Maths** | ⏸ | MST shipped; TSP nearest-neighbour slice built (dev-gated); next TSP lower bound |
 | *Tool review cycle* | ♻ ongoing | Per-tool notes; not a prong |
@@ -309,6 +310,7 @@ shared `WorkedExampleSteps` — a tool only supplies per-step data and renderers
 - **Flat rows, one look** (2026-10-04) — the keep-working layout lost its backing cards: numbered rows on the same spine as the caption timeline, each carrying its own label and maths (maths one size larger).
 - **Diagram tools** (`src/shared/diagramSplit.tsx`) — the question *is* the diagram, so the geometry tools show it in the picture slot beside the steps (`withDiagramSteps` · `diagramStepVisual` · `diagramSplitQuestion`); per-step emphasis (`_stepFocus` → `_focus`) and values the working finds (`_step`, e.g. an angle drawn from the step that finds it).
 - **Answer as its own step** — a final inline chain (`x = 180° − 146°` · `= 34°`) splits into the working plus an **"Answer:"** step in large green maths (`splitAnswerStep`).
+- **Rewrite-the-line working** (2026-10-05) — Order of Operations rewrites the whole expression each step with the next move boxed (`\colorbox` fragments), no new representation; a pattern for any equation-led tool whose working is a sequence of rewrites.
 - **Gradient triangle** — Properties of Line Equations draws the right-angled triangle on the graph (labelled Δy / Δx legs — the shared grapher `Segment`), then divides.
 - **Instruction lines** — ToolShell no longer hides a sub-tool's instruction when the tool has a custom renderer (it was missing in 5 tools).
 
@@ -333,6 +335,18 @@ shared `WorkedExampleSteps` — a tool only supplies per-step data and renderers
 - **Techniques as the steps** — converting hand-rolled working onto the engine so every tool's solution is built from shared blocks (see Techniques engine).
 - **Runtime grain toggle** ("Detailed working", brief ↔ full) — the one shell-level change still outstanding.
 - Picture composites: a step carrying two pictures (ratio table + graph for gradients).
+
+## Depth
+
+**Where it's at.** Built 2026-10-05 as the evolution of the parked Teach decks: not a presentation to press through, but a **bank of fixed, well-thought-out questions** a teacher dips into by purpose (diagnose · explain · extend) and level, to be adaptive to the class and still give depth of reasoning. Shared mode in `ToolShell` (`depthItems` prop, "Depth" tab; **live 2026-10-05** for any tool that passes a bank): picker by level and purpose, two-beat question → answer with named misconceptions per wrong option, adaptive "class secure / not secure" links, a cross-level **Start here** quick check, deep links (`?mode=depth&level=&item=`), phone layout. Each question is **two slides** (question, then answer; ← / → / Space) designed like a classroom slide — coloured background, white panel with a DEPTH badge, cartoon speakers with speech bubbles, an owl mascot, tap-the-wrong-line working, a corner pyramid — with a Present mode that works in every browser. Pilot: 21 items on **Order of Operations** (`OrderOfOperationsDepth.ts`). Spec template: `docs/design/templates/DEPTH_SPEC_TEMPLATE.md`.
+
+**Possible next steps:**
+- Harry reviews the BIDMAS bank for wording, missing misconceptions and the follow-up routes.
+- Add a Depth section to the tool spec template and write banks as tools pass through the Tool review cycle (diagnostic bank per tool, level by level).
+- A printable hinge-question sheet from a chosen set of items.
+- Whether Teach decks are retired for tools that adopt Depth (`docs/BACKBENCH.md`).
+
+---
 
 ## Smart Progressor
 

@@ -28,6 +28,78 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-05 — Order of Operations and Depth go live; landing-page grouping
+- **Un-gated:** Order of Operations no longer carries `enabled: false`, and the Depth mode no longer needs Developing-tools mode — it shows for any tool that passes `depthItems`.
+- **Landing-page grouping:** the lone "Order of operations" group (which could never hold a second tool) is replaced by a broader **"Operations & calculation"** group holding Adding & Subtracting Integers and Order of Operations, with room for the rest of the four operations (multiplication/division methods, negatives, powers) to join it. Same fix as the Functional Skills catch-all: a group should name a strand of the scheme of work, not one tool.
+
+## 2026-10-05 — Depth: filling the thin spots
+- Audited every Question Option on its own (each sub-tool × level × option, other pools at default) for how many Depth items stay available. Several settings had no Explain or Extend item at all (Left to right, ×-first, +-first, Brackets, Powers, −3² as 9, Nested brackets).
+- Seven new items (bank is now 28): Sana's subtraction and Samuel's division (L1 explain), Matilda's brackets and Amir's negative (L2 explain), two L2 always/sometimes/never items (`2a² = (2a)²`, `−n²` is negative), Lena's nested brackets (L3 explain). Worked numbers are asserted in `orderOfOperations.test.ts`.
+- New guard in `depth.test.ts`: no single Question Option may leave fewer than 3 items, or only diagnose items, for any tab and level. Every setting now has at least 3 items and a non-diagnose one.
+
+## 2026-10-05 — Depth follows the Question Options
+- Depth now shows the same Question Options control as the other modes and reads the same state, so what is ticked in Whiteboard / Worked Example / Worksheet is what Depth sees.
+- New optional `needs` on a Depth item (clauses that must all hold; each an option value or an array of which one must be on). Items whose needs aren't met are greyed out in the picker with what they need ("Needs Focus: Roots") and listed after the available ones; purpose counts count only what's available.
+- Only items at the current level are filtered; the Start here check and cross-level follow-up links are never blocked. A clause naming no option offered on the current sub-tool/level is skipped, so one list serves Evaluate's focus families and Spot the Mistake's mistake types.
+- Order of Operations bank: all items except "make your own" and "how many answers" now carry `needs` (e.g. root questions need Roots, `−3²` also needs Negatives).
+- New shared `depthUnmet` helper; tests check every named option exists at the item's level, that default options still leave diagnose + explain + extend at every level on every tab, and the clause logic.
+
+## 2026-10-05 — Order of Operations: Spot the Mistake fits its question box
+- Spot the Mistake used the default worded display, so every line was set at full size and overflowed the whiteboard box. It now has its own `questionRenderer`: a small lead-in, ONE aligned block of working (every `=` lines up), a small ask line, and the answer (plus "they …" note) appended on the whiteboard.
+- Questions carry a `_fix` block (`intro`, `mathTex`, `ask`, `answerTex`, `note`) next to the existing `lines`, so print/worksheet text is unchanged. The maths scales down (never up) to the width it is given using CSS `zoom`, so long root/fraction lines shrink instead of clipping.
+- Evaluate questions fall through to the standard display. Test added: every generated fixIt question has renderable KaTeX in `_fix`.
+- Checked: all 45 questions per level fit the box with the answer shown at 1280 and 1024 wide; no horizontal overflow at phone width in whiteboard, worked example and worksheet.
+
+## 2026-10-05 — Depth slides redesigned: two slides, designed not app-like, voting removed
+- A Depth question is now **two slides** — question, then answer (← / → / Space or a Question | Answer switch) — instead of progressive builds.
+- Designed like a classroom slide (after the White Rose examples, not copying them): navy (site blue) 16:9 stage, left rail (DEPTH wordmark, level + purpose pills, owl), left-aligned white panel with a purpose-coloured top bar (restyled away from the White Rose look), **cartoon speakers with speech bubbles**, big type, and an original owl **mascot** (question mark / tick). New `DepthArt.tsx` (SVG `Avatar`, `Mascot`, `Badge`).
+- **Voting removed** (+ / − tallies and the "In the room" line). Tap-the-wrong-line working and the corner pyramid stay.
+- **Present fixed**: it is now a full-screen overlay that works in every browser (it used to rely on the element-fullscreen API alone, which fails silently on Safari / iPad / embedded views), with native fullscreen added where available; Esc leaves. The stage reserves room for the controls so nothing is cropped.
+- In-browser audit: all 21 questions fit their stage on both slides at 1280 and 1024 wide.
+
+## 2026-10-05 — BIDMAS pyramid moved into the question
+- Whiteboard: the pyramid is now a small scaffold pinned to the **top-left of the working box** (new shared `workingScaffold` placement `"workingCorner"`, `cornerWidth`), instead of filling the box, which stays free to write in. (`"question"` placement now also works without a `questionRenderer`.) `ToolShell` now renders a question-placed scaffold with the default question display too (it used to need a `questionRenderer`).
+- Worked Example: the picture beside the steps is smaller.
+- Depth slide: the pyramid sits small in the corner of the question section (visible from the start, lit once the answer is revealed) instead of in the reasoning band.
+
+## 2026-10-05 — Depth questions become interactive 16:9 slides
+- A Depth question is now a **slide**: a fixed 16:9 stage that scales with its width (phones keep a flowing column), a title bar with level and purpose, and a **Present** (fullscreen) button.
+- **Builds like PowerPoint**: `→` / `Space` / Next steps through question → answer → one reasoning line per press; `←` goes back; Show all / Hide answer.
+- **Interactive**: speech bubbles for "Jack says…"; tap the line of working you think is wrong (the answer marks the first mistake and dims what follows); **class votes** under each choice with percentages and an **"In the room"** line naming the most common misconception; the BIDMAS pyramid beside the reasoning (e.g. A and S lit together for `20 − 8 + 3`). Teacher notes moved behind a toggle so a projected slide never shows them.
+- BIDMAS bank upgraded to use them (speakers on the Jack/Jo, Matthew, Priya, Kofi, Elena, Jamal, Ana items; tappable working; pyramid on 6 items).
+- Fix: opening `?mode=depth&item=<id>` without a level now adopts the item's level (it used to fall back to the picker).
+- Tests: bank test covers speakers / working / visuals; an in-browser audit confirmed all 21 slides fit their stage at 1280 and 1024 wide. 542 tests pass; build clean.
+
+## 2026-10-05 — Depth: curated diagnose / explain / extend questions (pilot on Order of Operations)
+- New ToolShell mode **Depth** (`depthItems` prop; `src/shared/depth.ts`, `src/shared/components/DepthMode.tsx`): a bank of fixed, hand-written questions picked by purpose (Diagnose · Explain · Extend) and level, instead of a pre-planned deck. Two beats per item (question → answer + reasoning), named misconceptions on every wrong option, adaptive "class secure / not secure" links (can cross levels), a cross-level **Start here** quick check, deep links (`?mode=depth&level=2&item=<id>`), phone layout. Dev-gated (Developing-tools mode) while piloted.
+- Pilot bank: 21 items on Order of Operations (`OrderOfOperationsDepth.ts`) — 7 per level, covering the Matthew/Jack/Jo "who is right" style, the student-working error, `−3²` vs `(−3)²`, `√(9+16)`, the fraction bar, always/sometimes/never, and build-your-own.
+- `src/tests/depth.test.ts` validates any bank (ids, one correct option per multiple choice, a misconception for every wrong option, links resolve, every purpose at every level, one Start here per level, every `$…$` renders); `orderOfOperations.test.ts` asserts every number the bank states.
+- Docs: CLAUDE.md "Depth" section, `DEPTH_SPEC_TEMPLATE.md`, glossary, PROJECTS prong. 541 tests pass; build clean.
+
+## 2026-10-05 — Order of Operations rebuilt around ideas; BIDMAS pyramid
+- **Levels are now ideas, each building on the one below** (spec: `specs/order-of-operations.md`): L1 *Who goes first?* (× ÷ before + −, left to right) · L2 *Things that jump the queue* (brackets, powers; a bracket may contain a Level 1 line) · L3 *Symbols that act as brackets* (roots, fraction bar, nested brackets). `levelOf` rejects any draw that isn't its level, so a harder idea never appears lower and levels never overlap. Tests assert it.
+- Selectors cut from an 8-way row to **Focus** (3 options per level) and a separate **Numbers** choice (L2–3, default Whole). Mistakes and tasks align to the levels; Insert brackets starts at Level 2. Sub-tool 2 renamed "Spot the Mistake".
+- New mistakes at Level 3: root of part only, fraction bar not a bracket (`flattenGroups`).
+- **New shared `BidmasPyramid`** (B ( ) / I ² ³ / D ÷ | M × / A + | S −): a whiteboard scaffold, and in the Worked Example the picture beside the steps, lighting the tier in use (equal-priority partner softly). Steps carry `extra.pyramid`.
+- 530 tests pass; build clean.
+
+## 2026-10-05 — BIDMAS checked against worksheets; Decimal Add/Sub Level 3 d.p. is a max
+- Order of Operations: students' working is now shown line by line in Spot the mistake (reproduces the worksheet's 9 + 4 × 3 + 2 → 13 × 3 + 2 → 39 + 2 → 41); new **Is it correct?** task ("Matthew says … Is Matthew correct?"); extra shapes from the worksheets (a² + b × c², 7 × (8 ÷ 4)², (a + b)³, √s + b², …) and longer insert-brackets lines (3–5 terms, ÷, occasional 1).
+- **Bug fix:** Insert brackets dropped an operator when the brackets were not at the end of the line (e.g. `(3² + 6) − 71`). The test now strips the brackets back out and compares with the original line.
+- Decimals Add/Sub Level 3: "Decimal places" is now a single-choice **Max decimal places** (with an info icon) — the longest number has up to that many d.p.
+
+## 2026-10-05 — Decimal Add/Sub: exchanges at Level 2, decimal places at Level 3
+- Level 2: new **Carries needed** (Adding) / **Exchanges needed** (Subtracting) pool — 1, 2 or 3+ — one drawn per question and weighted so the Smart Progressor orders a worksheet 1 → 3+. 3+ subtraction uses wholes up to 999 and shows the hundreds column.
+- Level 3 (both sub-tools): a **Decimal places** pool now applies (made a max in the entry above).
+- `compute` now returns the carry and exchange counts; `src/tests/decimalAddSub.test.ts` checks both pools.
+
+## 2026-10-05 — Order of Operations (BIDMAS): new tool, dev-gated
+- New ToolShell tool `src/tools/Number/OrderOfOperations.tsx` (Number → "Order of operations", `enabled: false`; brief: `specs/order-of-operations.md`). It grows the Functional Skills generator's BIDMAS skill into whiteboard / worked example / worksheet with negatives, decimals, squares and cubes, square roots, fraction bars and nested brackets.
+- Two sub-tools: **Evaluate**, and **Brackets & Mistakes** (insert one pair of brackets to make a statement true, or find a student's BIDMAS mistake — six mistake types by level).
+- Worked example rewrites the line one stage at a time and boxes the part being done (amber `\colorbox`), labelled by stage ("Indices:", "Divide (left to right):", "Brackets — add:"). Roots and fraction bars act as brackets; same-priority chains go one operation per step so left-to-right is visible.
+- One small expression engine (tree + BIDMAS stepper + straight evaluator) produces the working, the answer and the generator's validity checks, so they cannot drift. Content is two weighted pools (Question Types × Numbers) per level, so the Smart Progressor orders a sheet easy to hard.
+- `src/tests/orderOfOperations.test.ts`: the brief's reference examples line by line, stepper vs evaluator across every family × number mode, mistake answers differ from the right ones, inserted brackets are unique. Build clean; 476 tests pass.
+
 ## 2026-10-04 — The answer as its own step (inline chains)
 - A final step written as an inline chain ending in a result ("x = 180° − 146°" · "= 34°") used to turn the whole step green with the answer tucked on the end. It now splits into two steps: the working, then the answer as a step of its own, labelled "Answer:" — numbered, green dot, large bold green maths ("x = 34°"). New shared helper `splitAnswerStep(steps)` (src/shared/helpers.ts) does the split from the chain's own left-hand side; `withDiagramSteps` applies it automatically, so every diagram tool gets it, and the picture reveals the answer on that answer step (not a step early). Answer steps (the last step when `hideAnswerStep` is set) are drawn larger and green in the split timeline.
 - Other split tools can adopt it with one call on their working; a general automatic version for non-diagram tools is the obvious follow-up.

@@ -16,6 +16,10 @@ Heavy use of the place value table (shared with Powers of 10 and Comparing & Ord
 
 QO: display-only "Table starts" dropdown (Empty / Numbers in / Numbers + zeros; whiteboard & worked example only). L1–2 "Decimal places" pool (1/2/3 d.p.); L3 "Question types" pool per sub-tool.
 
+**Added 2026-10-05:**
+- **L2 "Carries needed" (Adding) / "Exchanges needed" (Subtracting)** — a weighted pool 1 / 2 / 3+ (one drawn per question; Smart Progressor orders a sheet 1 → 3+). Counts the carries or exchanges the working actually shows (exchanging across a 0 counts each exchange). 3+ subtraction draws wholes up to 999 and widens the table to the hundreds column.
+- **L3 "Max decimal places"** (both sub-tools; single choice 1/2/3, with an info icon) — the longest number has *up to* that many d.p.; the other has fewer. Question types that need two lengths (different d.p., placeholder 0, across a 0, longer first) need ≥ 2 d.p., so at 1 d.p. only Whole ± decimal (and Answer ends in 0 when adding) are drawn. Tests: `src/tests/decimalAddSub.test.ts`.
+
 ## Acceptance reference
 - 4.1 − 3.23: write → 4.1 = 4.10 → 0−3 exchange (tenth→10 hundredths), 10−3=7 → 0−2 exchange (one→10 tenths), 10−2=8 → 3−3=0 → **0.87**
 - 6.04 − 1.78: 4−8 with tenths 0 → exchange one→10 tenths, then tenth→10 hundredths; 14−8=6, 9−7=2, 5−1=4 → **4.26**
