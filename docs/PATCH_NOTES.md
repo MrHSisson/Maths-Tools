@@ -30,7 +30,7 @@ Keep the split even when a session only touches one.
 
 ## 2026-10-05 — Depth slides redesigned: two slides, designed not app-like, voting removed
 - A Depth question is now **two slides** — question, then answer (← / → / Space or a Question | Answer switch) — instead of progressive builds.
-- Designed like a classroom slide (after the White Rose examples, not copying them): warm-paper 16:9 stage, left rail (DEPTH wordmark, level + purpose pills, owl), left-aligned white panel with a purpose-coloured top bar (restyled away from the White Rose look), **cartoon speakers with speech bubbles**, big type, and an original owl **mascot** (question mark / tick). New `DepthArt.tsx` (SVG `Avatar`, `Mascot`, `Badge`).
+- Designed like a classroom slide (after the White Rose examples, not copying them): green-teal 16:9 stage, left rail (DEPTH wordmark, level + purpose pills, owl), left-aligned white panel with a purpose-coloured top bar (restyled away from the White Rose look), **cartoon speakers with speech bubbles**, big type, and an original owl **mascot** (question mark / tick). New `DepthArt.tsx` (SVG `Avatar`, `Mascot`, `Badge`).
 - **Voting removed** (+ / − tallies and the "In the room" line). Tap-the-wrong-line working and the corner pyramid stay.
 - **Present fixed**: it is now a full-screen overlay that works in every browser (it used to rely on the element-fullscreen API alone, which fails silently on Safari / iPad / embedded views), with native fullscreen added where available; Esc leaves. The stage reserves room for the controls so nothing is cropped.
 - In-browser audit: all 21 questions fit their stage on both slides at 1280 and 1024 wide.

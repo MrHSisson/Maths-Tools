@@ -30,7 +30,7 @@ const PURPOSE_STYLE: Record<DepthPurpose, { badge: string; card: string }> = {
 const LEVEL_ORDER: DifficultyLevel[] = ["level1", "level2", "level3"];
 const SPEAKER_COLOURS = ["#7c3aed", "#e11d48", "#059669", "#d97706", "#2563eb"];
 const NAVY = "#1e3a8a";
-const PAPER = "#efe9dd";
+const PAPER = "#2a9d8f";
 const PURPOSE_COLOURS: Record<string, string> = { diagnose: "#3b82f6", explain: "#f59e0b", extend: "#10b981" };
 const purposeLabel = (p: DepthPurpose) => DEPTH_PURPOSES.find((x) => x.key === p)?.label ?? p;
 
@@ -284,21 +284,21 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
     : { background: PAPER, aspectRatio: "16 / 9", fontSize: "1.9cqw", borderRadius: present ? 0 : "0.9rem" };
   const pill = (bg: string, fg: string): React.CSSProperties => ({ fontSize: "0.7em", fontWeight: 800, padding: "0.2em 0.8em", borderRadius: "999px", background: bg, color: fg, whiteSpace: "nowrap" });
 
-  const levelPill = <span style={pill("#e2e8f0", NAVY)}>{LV_LABELS[current.level]}{inCheck ? ` · ${check! + 1} of ${starts.length}` : ""}</span>;
-  const purposePill = <span style={pill(accent, "#fff")}>{purposeLabel(current.purpose)}</span>;
+  const levelPill = <span style={pill("rgba(255,255,255,0.92)", NAVY)}>{LV_LABELS[current.level]}{inCheck ? ` · ${check! + 1} of ${starts.length}` : ""}</span>;
+  const purposePill = <span style={pill("#fff", accent)}>{purposeLabel(current.purpose)}</span>;
 
   const stage = (
     <div style={{ position: "relative", overflow: "hidden", boxShadow: "0 10px 30px rgba(0,0,0,0.18)", ...stageStyle } as React.CSSProperties}>
       {/* left rail (desktop) / header row (phone): wordmark, pills, owl */}
       {narrow ? (
         <div className="flex items-center justify-between" style={{ marginBottom: "0.6em", gap: "0.5em" }}>
-          <Badge />
+          <Badge colour="#fff" />
           <div className="flex items-center" style={{ gap: "0.4em" }}>{levelPill}{purposePill}</div>
         </div>
       ) : (
         <div className="flex flex-col items-start justify-between" style={{ position: "absolute", top: "1.4em", bottom: "0.8em", left: "1.6em", width: "13%", zIndex: 2 }}>
           <div className="flex flex-col items-start" style={{ gap: "0.7em" }}>
-            <Badge />
+            <Badge colour="#fff" />
             <div className="flex flex-col items-start" style={{ gap: "0.35em" }}>{levelPill}{purposePill}</div>
           </div>
           <Mascot mood={onAnswer ? "know" : "think"} size="6.2em" />
