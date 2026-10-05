@@ -314,3 +314,20 @@ describe("Depth bank numeric claims (src/tools/Number/OrderOfOperationsDepth.ts)
     expect(v(E(R(F(E(32), E(2)))))).toBe(4);
   });
 });
+
+describe("Spot the Mistake layout data", () => {
+  it("every fixIt question carries a renderable _fix block", async () => {
+    const katex = (await import("katex")).default;
+    const { __test } = await import("../tools/Number/OrderOfOperations");
+    for (const level of ["level1", "level2", "level3"] as const) {
+      for (let i = 0; i < 60; i++) {
+        const q = __test.generateQuestion("fixIt", level, {}, "", {}) as any;
+        const fix = q._fix;
+        expect(fix, `${level} missing _fix`).toBeTruthy();
+        for (const tex of [fix.mathTex, fix.answerTex]) {
+          expect(() => katex.renderToString(tex, { throwOnError: true })).not.toThrow();
+        }
+      }
+    }
+  });
+});

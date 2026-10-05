@@ -14,16 +14,17 @@
 
 import {
   ToolShell,
-  BidmasPyramid,
+  BidmasPyramid, MathRenderer, QuestionDisplay, AnswerDisplay,
   type PyramidTier,
   type ToolConfig,
   type InfoSection,
   type DifficultyLevel,
   type AnyQuestion,
   type ToolMultiSelect,
-  type WorkingStep,
+  type WorkingStep, type QOSnapshot,
   randInt, pick, mStep, tStep, pickActive, weightOf,
 } from "../../shared";
+import React, { useLayoutEffect, useRef, useState } from "react";
 import { DEPTH_ITEMS } from "./OrderOfOperationsDepth";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1071,6 +1072,14 @@ function genMistake(level: DifficultyLevel, msv: Record<string, boolean>): AnyQu
     answerLatex: numTex(d.right),
     answerSuffix: `(they ${d.def.desc})`,
     working: [tStep(d.def.explain), ...workingSteps(d.ast)],
+    _fix: {
+      intro: "A student works out:",
+      // one aligned block so every "=" lines up under the first
+      mathTex: `\\begin{aligned}${dl} &= ${d.lines.map((l) => texBody(l, NO_HL)).join(" \\\\ &= ")}\\end{aligned}`,
+      ask: "Find the mistake and the correct answer.",
+      answerTex: numTex(d.right),
+      note: `They ${d.def.desc}.`,
+    } satisfies FixView,
     key: `ooo-mistake-${level}-${d.id}-${dl}-${rnd()}`,
     difficulty: level,
   } as unknown as AnyQuestion;
@@ -1091,6 +1100,12 @@ function genIsCorrect(level: DifficultyLevel, msv: Record<string, boolean>): Any
     answer: `${verdict}: ${numTex(d.right)}`,
     answerLatex: `\\mathrm{${verdict}:}\\; ${dl} = ${numTex(d.right)}`,
     working: correct ? workingSteps(d.ast) : [tStep(d.def.explain), ...workingSteps(d.ast)],
+    _fix: {
+      intro: `${name} says`,
+      mathTex: `${dl} = ${numTex(claim)}`,
+      ask: `Is ${name} correct? Show how you know.`,
+      answerTex: `\\mathrm{${verdict}:}\\; ${dl} = ${numTex(d.right)}`,
+    } satisfies FixView,
     key: `ooo-iscorrect-${level}-${d.id}-${dl}-${correct}-${rnd()}`,
     difficulty: level,
   } as unknown as AnyQuestion;
@@ -1114,10 +1129,84 @@ function genInsertQuestion(level: DifficultyLevel): AnyQuestion {
       { ...mStep("Brackets go here:", [flatTex, "\\longrightarrow " + brHl]), extra: { pyramid: { strong: ["B"], soft: [] } } },
       ...workingSteps(d.bracketed),
     ],
+    _fix: {
+      intro: "Insert one pair of brackets to make this correct:",
+      mathTex: `${flatTex} = ${d.target}`,
+      ask: "",
+      answerTex: `${brTex} = ${d.target}`,
+    } satisfies FixView,
     key: `ooo-insert-${level}-${flatTex}-${d.target}-${Math.floor(Math.random() * 1_000_000)}`,
     difficulty: level,
   } as unknown as AnyQuestion;
 }
+
+/** Maths that shrinks (never grows) to fit the width it is given, so a long line of working is scaled, not clipped or wrapped. */
+function FitMath({ tex }: { tex: string }) {
+  const outer = useRef<HTMLDivElement>(null);
+  const inner = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+  useLayoutEffect(() => {
+    const o = outer.current, i = inner.current;
+    if (!o || !i) return;
+    // `zoom` (unlike transform) changes layout, so the block's height follows its scale and nothing overlaps.
+    const measure = () => {
+      const natural = i.getBoundingClientRect().width / scaleRef.current;
+      const next = natural > 0 ? Math.min(1, o.clientWidth / natural) : 1;
+      if (Math.abs(next - scaleRef.current) > 0.005) { scaleRef.current = next; setScale(next); }
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(o); ro.observe(i); // the inner box resizes once KaTeX has rendered
+    return () => ro.disconnect();
+  }, [tex]);
+  const scaleRef = useRef(1);
+  scaleRef.current = scale;
+  return (
+    <div ref={outer} style={{ width: "100%", display: "flex", justifyContent: "center" }}>
+      <div ref={inner} style={{ display: "inline-block", whiteSpace: "nowrap", flexShrink: 0, zoom: scale } as React.CSSProperties}>
+        <MathRenderer latex={tex} />
+      </div>
+    </div>
+  );
+}
+
+/** How a Spot-the-Mistake question is laid out: a short lead-in, ONE maths block, a short ask. */
+interface FixView { intro: string; mathTex: string; ask: string; answerTex: string; note?: string }
+
+// One step down from the question's size, for the lead-in / ask text around the maths.
+const SMALLER: Record<string, string> = { "text-lg": "text-sm", "text-xl": "text-base", "text-2xl": "text-lg", "text-3xl": "text-xl", "text-4xl": "text-2xl", "text-5xl": "text-3xl", "text-7xl": "text-5xl" };
+
+/** Spot-the-Mistake layout: small prose, the (aligned) working large, answer appended on the whiteboard.
+ *  Evaluate questions fall through to the standard display. `compact` is true on a worksheet, undefined on the
+ *  whiteboard, false in Worked Example / fullscreen (the Worked Example draws its own answer). */
+const questionRenderer = (q: AnyQuestion, showAnswer: boolean, _cs: string, compact?: boolean, _idx?: number, qo?: QOSnapshot, fontClass = "text-3xl") => {
+  const fix = (q as unknown as { _fix?: FixView })._fix;
+  const inlineAnswer = showAnswer && (compact === undefined || !!qo?.fullscreen);
+  if (!fix) {
+    return (
+      <>
+        <QuestionDisplay q={q} cls={fontClass} />
+        {inlineAnswer && <div className={`${fontClass} font-bold`} style={{ color: "#166534" }}><AnswerDisplay q={q} /></div>}
+      </>
+    );
+  }
+  const small = SMALLER[fontClass] ?? "text-base";
+  return (
+    <div className="flex flex-col items-center" style={{ gap: compact ? 4 : 12, width: "100%" }}>
+      <div className={`${small} font-semibold`} style={{ color: "#374151" }}>{fix.intro}</div>
+      <div className={`${fontClass} font-semibold`} style={{ color: "#000", width: "100%" }}>
+        <FitMath tex={fix.mathTex} />
+      </div>
+      {fix.ask && <div className={`${small} font-semibold`} style={{ color: "#374151" }}>{fix.ask}</div>}
+      {inlineAnswer && (
+        <div className="flex flex-col items-center" style={{ gap: 2, color: "#166534", marginTop: 4 }}>
+          <div className={`${fontClass} font-bold`} style={{ width: "100%" }}><FitMath tex={fix.answerTex} /></div>
+          {fix.note && <div className={`${small} font-semibold`}>{fix.note}</div>}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const generateQuestion = (
   tool: string,
@@ -1209,6 +1298,8 @@ export default function App() {
       config={TOOL_CONFIG}
       infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
+      questionRenderer={questionRenderer}
+      answerRenderer={(q) => <AnswerDisplay q={q} />}
       // The pyramid is the picture beside the steps: the tier being used lights up each step.
       stepVisualRenderer={(step) => {
         const t = pyramidOf(step);

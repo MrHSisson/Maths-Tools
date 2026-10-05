@@ -28,6 +28,12 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-05 — Order of Operations: Spot the Mistake fits its question box
+- Spot the Mistake used the default worded display, so every line was set at full size and overflowed the whiteboard box. It now has its own `questionRenderer`: a small lead-in, ONE aligned block of working (every `=` lines up), a small ask line, and the answer (plus "they …" note) appended on the whiteboard.
+- Questions carry a `_fix` block (`intro`, `mathTex`, `ask`, `answerTex`, `note`) next to the existing `lines`, so print/worksheet text is unchanged. The maths scales down (never up) to the width it is given using CSS `zoom`, so long root/fraction lines shrink instead of clipping.
+- Evaluate questions fall through to the standard display. Test added: every generated fixIt question has renderable KaTeX in `_fix`.
+- Checked: all 45 questions per level fit the box with the answer shown at 1280 and 1024 wide; no horizontal overflow at phone width in whiteboard, worked example and worksheet.
+
 ## 2026-10-05 — Depth slides redesigned: two slides, designed not app-like, voting removed
 - A Depth question is now **two slides** — question, then answer (← / → / Space or a Question | Answer switch) — instead of progressive builds.
 - Designed like a classroom slide (after the White Rose examples, not copying them): navy (site blue) 16:9 stage, left rail (DEPTH wordmark, level + purpose pills, owl), left-aligned white panel with a purpose-coloured top bar (restyled away from the White Rose look), **cartoon speakers with speech bubbles**, big type, and an original owl **mascot** (question mark / tick). New `DepthArt.tsx` (SVG `Avatar`, `Mascot`, `Badge`).
