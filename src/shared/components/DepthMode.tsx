@@ -255,6 +255,11 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
     </div>
   );
 
+  // A tool-drawn picture (visual.type "custom") sits inline above the question, redrawn per slide.
+  const customVisual = current.visual?.type === "custom" && (
+    <div style={{ width: "100%", maxWidth: "30em", margin: "0 auto" }}>{current.visual.render(onAnswer)}</div>
+  );
+
   // ---- Slide 1: the question ----
   const questionSlide = (
     <>
@@ -277,6 +282,7 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
         </div>
       )}
       {working}
+      {customVisual}
       <div className="flex flex-col items-start text-left" style={{ gap: "0.15em" }}>
         {current.question.map((line, i) => (
           <div key={i} style={{ fontSize: "1.45em", fontWeight: 650, lineHeight: 1.3, color: "#111827" }}><InlineMath text={line} /></div>
@@ -291,6 +297,7 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
     <>
       <div style={{ fontSize: "0.7em", fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", color: "#15803d" }}>Answer</div>
       {working}
+      {customVisual}
       {options}
       <div className="flex flex-col" style={{ gap: "0.3em", width: "100%", borderLeft: "0.3em solid #16a34a", paddingLeft: "0.9em" }}>
         {current.answer.map((line, i) => (

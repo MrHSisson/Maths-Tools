@@ -14,6 +14,7 @@
 // A tool opts in with `<ToolShell depthItems={DEPTH_ITEMS} />`. Authoring guide: CLAUDE.md → "Depth".
 // ─────────────────────────────────────────────────────────────────────────────
 
+import type { ReactNode } from "react";
 import type { DifficultyLevel } from "./types";
 import type { PyramidTier } from "./components/BidmasPyramid";
 
@@ -45,8 +46,12 @@ export interface DepthWorking {
   wrongLine: number;
 }
 
-/** A picture shown on the slide once the answer is revealed. */
-export type DepthVisual = { type: "pyramid"; strong?: PyramidTier[]; soft?: PyramidTier[] };
+/** A picture shown on the slide. `pyramid` sits in the panel's corner (lit on the answer slide); `custom` is a
+ *  tool-drawn picture (e.g. Rounding's number line) shown full width above the question, redrawn per slide —
+ *  `onAnswer` is true on the answer slide. */
+export type DepthVisual =
+  | { type: "pyramid"; strong?: PyramidTier[]; soft?: PyramidTier[] }
+  | { type: "custom"; render: (onAnswer: boolean) => ReactNode };
 
 export type DepthNeed = string | string[];
 
