@@ -1258,6 +1258,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                   {showWhiteboardAnswer && <div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>
                     {answerRenderer ? answerRenderer(currentQuestion, colorScheme, getQOSnapshot()) : <AnswerDisplay q={currentQuestion} />}
                   </div>}
+                  {scaffoldInQuestion(false)}
                 </>
             }
           </div>
@@ -1278,6 +1279,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                   {showWhiteboardAnswer && <div className={`${displayFontSizes[displayFontSize]} font-bold`} style={{ color: "#166534" }}>
                     {answerRenderer ? answerRenderer(currentQuestion, colorScheme, getQOSnapshot()) : <AnswerDisplay q={currentQuestion} />}
                   </div>}
+                  {scaffoldInQuestion(true)}
                 </>
             }
           </>

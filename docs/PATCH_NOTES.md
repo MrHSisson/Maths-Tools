@@ -28,6 +28,11 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-05 — BIDMAS pyramid moved into the question
+- Whiteboard: the pyramid is now a `placement: "question"` scaffold (small, under the question and answer) instead of filling the working box, which stays free to write in. `ToolShell` now renders a question-placed scaffold with the default question display too (it used to need a `questionRenderer`).
+- Worked Example: the picture beside the steps is smaller.
+- Depth slide: the pyramid sits small in the corner of the question section (visible from the start, lit once the answer is revealed) instead of in the reasoning band.
+
 ## 2026-10-05 — Depth questions become interactive 16:9 slides
 - A Depth question is now a **slide**: a fixed 16:9 stage that scales with its width (phones keep a flowing column), a title bar with level and purpose, and a **Present** (fullscreen) button.
 - **Builds like PowerPoint**: `→` / `Space` / Next steps through question → answer → one reasoning line per press; `←` goes back; Show all / Hide answer.

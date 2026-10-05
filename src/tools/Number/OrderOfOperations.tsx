@@ -1212,11 +1212,11 @@ export default function App() {
       // The pyramid is the picture beside the steps: the tier being used lights up each step.
       stepVisualRenderer={(step) => {
         const t = pyramidOf(step);
-        return t ? <BidmasPyramid strong={t.strong} soft={t.soft} maxWidth={360} /> : null;
+        return t ? <BidmasPyramid strong={t.strong} soft={t.soft} maxWidth={230} /> : null;
       }}
       stepVisualKeepsWorking
       depthItems={DEPTH_ITEMS}
-      workingScaffold={{ label: "BIDMAS pyramid", render: () => <BidmasPyramid maxWidth={420} /> }}
+      workingScaffold={{ label: "BIDMAS pyramid", placement: "question", render: () => <BidmasPyramid maxWidth={230} /> }}
       defaults={{ numColumns: 2 }}
     />
   );

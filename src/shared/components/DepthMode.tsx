@@ -250,10 +250,18 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
           </div>
         )}
 
-        <div className="flex flex-col" style={{ gap: "0.15em" }}>
-          {current.question.map((line, i) => (
-            <div key={i} style={{ fontSize: "1.25em", fontWeight: 650, lineHeight: 1.3, color: "#111827" }}><InlineMath text={line} /></div>
-          ))}
+        <div className="flex items-start justify-between" style={{ gap: "1em" }}>
+          <div className="flex flex-col" style={{ gap: "0.15em", minWidth: 0 }}>
+            {current.question.map((line, i) => (
+              <div key={i} style={{ fontSize: "1.25em", fontWeight: 650, lineHeight: 1.3, color: "#111827" }}><InlineMath text={line} /></div>
+            ))}
+          </div>
+          {/* The key lives in the question section: small, in the corner, and lit up once the answer is revealed. */}
+          {current.visual?.type === "pyramid" && (
+            <div className="flex-shrink-0" style={{ width: "8.5em", marginTop: "-0.2em" }}>
+              <BidmasPyramid strong={revealed ? current.visual.strong : []} soft={revealed ? current.visual.soft : []} maxWidth={220} />
+            </div>
+          )}
         </div>
 
         {current.options && (
@@ -313,11 +321,6 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
                 <div key={i} style={{ fontSize: "1.1em", lineHeight: 1.35, color: "#111827" }}><InlineMath text={line} /></div>
               ))}
             </div>
-            {current.visual?.type === "pyramid" && (
-              <div className="flex-shrink-0 flex items-center" style={{ width: "13em" }}>
-                <BidmasPyramid strong={current.visual.strong} soft={current.visual.soft} maxWidth={320} />
-              </div>
-            )}
           </div>
         )}
       </div>
