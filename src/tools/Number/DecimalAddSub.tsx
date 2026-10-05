@@ -51,12 +51,13 @@ const PLACES_MS: ToolMultiSelect = {
   ],
 };
 
-// Level 3: the same d.p. options, but they set how long the LONGEST number is (the other has fewer).
+// Level 3: a MAX — the longest number in a question has up to this many d.p. (the other has fewer).
 const PLACES_L3_MS: ToolMultiSelect = {
   key: "places",
-  label: "Decimal places",
-  info: "How many decimal places the longest number has; the other number has fewer. Question types that need two different lengths use at least 2 d.p.",
-  options: PLACES_MS.options.map((o) => ({ ...o, defaultActive: true })),
+  label: "Max decimal places",
+  info: "The longest number in a question has up to this many decimal places; the other number has fewer. Question types that need two different lengths always use at least 2 d.p.",
+  exclusive: true,
+  options: PLACES_MS.options.map((o) => ({ ...o, label: o.value === "dp1" ? "1" : o.value === "dp2" ? "2" : "3", defaultActive: o.value === "dp3" })),
 };
 
 // Level 2: how many carries / exchanges the calculation needs. One is drawn per question; the
@@ -143,7 +144,7 @@ const INFO_SECTIONS: InfoSection[] = [
     { label: "Overview", detail: "Add and subtract decimals using a place value table. Line the decimal points up, then work column by column from the right — just like whole numbers." },
     { label: "Level 1 — Green", detail: "Adding: same number of decimal places, no carrying. Subtracting: same number of decimal places, no exchanging." },
     { label: "Level 2 — Yellow", detail: "Same number of decimal places, but carrying (adding) or exchanging (subtracting) is needed — including across the decimal point. Choose whether a question needs 1, 2 or 3+ carries / exchanges." },
-    { label: "Level 3 — Red", detail: "Different numbers of decimal places, so a placeholder zero is needed (4.1 becomes 4.10). Subtracting includes whole numbers minus decimals and exchanging across a zero. Choose how many decimal places the longest number has." },
+    { label: "Level 3 — Red", detail: "Different numbers of decimal places, so a placeholder zero is needed (4.1 becomes 4.10). Subtracting includes whole numbers minus decimals and exchanging across a zero. Set the maximum number of decimal places." },
   ]},
   { title: "How the table works", icon: "📊", content: [
     { label: "Line up the point", detail: "The decimal point sits between the Ones and Tenths columns. Digits in the same column have the same place value — that is why they can be added or subtracted." },
@@ -157,7 +158,7 @@ const INFO_SECTIONS: InfoSection[] = [
     { label: "Worksheet", detail: "A grid of questions with PDF export." },
   ]},
   { title: "Question Options", icon: "⚙️", content: [
-    { label: "Decimal places", detail: "Levels 1–2: whether the numbers have 1, 2 or 3 decimal places. Level 3: how many decimal places the longest number has (the other has fewer)." },
+    { label: "Decimal places", detail: "Levels 1–2: whether the numbers have 1, 2 or 3 decimal places. Level 3: a maximum — the longest number has up to that many decimal places (the other has fewer)." },
     { label: "Carries / Exchanges needed (Level 2)", detail: "How many carries (adding) or exchanges (subtracting) a question needs: 1, 2 or 3+. One is chosen for each question; a worksheet runs from fewest to most. Exchanging across a zero counts each exchange it makes." },
     { label: "Question types (Level 3)", detail: "Choose which tricky shapes appear — different numbers of decimal places, whole numbers with decimals, answers ending in zero, exchanging across a zero." },
     { label: "Grids on worksheet", detail: "Gives every worksheet question its own place value grid to work in (Table starts decides whether it is empty, has the numbers in, or numbers + zeros). Answer pages show each grid completed. Grids need room, so a gridded worksheet is limited to 2 wide columns (on screen and in print; differentiated sheets keep one column per level) with up to 10 questions per page. Fewer questions stretch the grids to fill the page. The switch only appears in Worksheet mode." },
@@ -388,12 +389,12 @@ const genAdd = (level: DifficultyLevel, v: Record<string, boolean>): Pair => {
       },
     );
   }
-  // The "Decimal places" pool sets the longest number's d.p.; shapes that need two different
-  // lengths (or a 2 d.p. answer) can't use 1 d.p., so draw the shape from those that fit.
-  const dpMax = dpOf(v);
-  const fits = ADD_SHAPE_MS.options.filter((o) => v[o.value] !== false && (dpMax >= 2 || o.value === "wholePlus" || o.value === "trimZero"));
+  // The "Max decimal places" pool caps the longest number's d.p.; shapes that need two different
+  // lengths can't use 1 d.p., so draw the shape from those that fit and the length from 1..cap.
+  const cap = dpOf(v);
+  const fits = ADD_SHAPE_MS.options.filter((o) => v[o.value] !== false && (cap >= 2 || o.value === "wholePlus" || o.value === "trimZero"));
   const shape = fits.length ? pickActive({}, fits) : "diffPlaces";
-  const maxDp = Math.max(dpMax, shape === "diffPlaces" ? 2 : 1);
+  const maxDp = randInt(shape === "diffPlaces" ? 2 : 1, Math.max(cap, 2));
   const W = (p: Pair) => Math.max(p.a.dp, p.b.dp);
   const sumTrailingZero = (p: Pair) => (valueAt(p.a, W(p)) + valueAt(p.b, W(p))) % 10 === 0;
   const pair = tryGen<Pair>(
@@ -433,10 +434,10 @@ const genSub = (level: DifficultyLevel, v: Record<string, boolean>): Pair => {
   }
   // Longest number's d.p. comes from the "Decimal places" pool; shapes needing two lengths or a
   // zero in the tenths column require at least 2 d.p.
-  const dpMax = dpOf(v);
-  const fits = SUB_SHAPE_MS.options.filter((o) => v[o.value] !== false && (dpMax >= 2 || o.value === "wholeMinus"));
+  const cap = dpOf(v);
+  const fits = SUB_SHAPE_MS.options.filter((o) => v[o.value] !== false && (cap >= 2 || o.value === "wholeMinus"));
   const shape = fits.length ? pickActive({}, fits) : "padZero";
-  const maxDp = shape === "wholeMinus" ? dpMax : Math.max(dpMax, 2);
+  const maxDp = shape === "wholeMinus" ? randInt(1, cap) : randInt(2, Math.max(cap, 2));
   return tryGen<Pair>(
     () => {
       if (shape === "wholeMinus") return { a: rndDec(0, 2, 99), b: rndDec(maxDp, 0, 98) };

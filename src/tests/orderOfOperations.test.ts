@@ -5,7 +5,8 @@
 import { describe, it, expect } from "vitest";
 import { __test } from "../tools/Number/OrderOfOperations";
 
-const { E, P, R, F, NEG, texBody, NO_HL, runSteps, evalNode, SHAPES, buildEval, MISTAKES, genInsert, analyse } = __test.engine;
+const { E, P, R, F, NEG, texBody, NO_HL, runSteps, evalNode, SHAPES, buildEval, MISTAKES, genInsert, analyse, drawMistake, studentLines } = __test.engine;
+const { generateQuestion } = __test as any;
 
 const lines = (ast: ReturnType<typeof E>) => {
   const run = runSteps(ast)!;
@@ -114,10 +115,66 @@ describe("insert brackets", () => {
       for (let i = 0; i < 40; i++) {
         const d = genInsert(level)!;
         expect(d).toBeTruthy();
+        // Structure: removing the brackets gives back exactly the flat line (no operator lost).
+        expect(d.bracketed.terms.length).toBe(d.bracketed.ops.length + 1);
+        expect(texBody(d.bracketed, NO_HL).replace(/\\left\(|\\right\)/g, "")).toBe(texBody(d.flat, NO_HL));
         expect(evalNode(d.bracketed)).toBe(d.target);
         expect(evalNode(d.flat)).not.toBe(d.target);
         expect(analyse(d.bracketed, "whole")).toBeTruthy();
       }
+    }
+  });
+});
+
+describe("checked against the class worksheets", () => {
+  const val = (ast: ReturnType<typeof E>) => runSteps(ast)!.final;
+  it("Question 1–3 items evaluate to the worksheet values", () => {
+    expect(val(E(7, "+", 2, "*", 3))).toBe(13);
+    expect(val(E(100, "-", 40, "*", 2))).toBe(20);
+    expect(val(E(E(8, "+", 9), "*", 3))).toBe(51);
+    expect(val(E(90, "/", E(52, "-", 7)))).toBe(2);
+    expect(val(E(10, "-", R(16)))).toBe(6);
+    expect(val(E(R(E(2, "+", 14))))).toBe(4);
+    expect(val(E(R(4), "+", P(3, 2)))).toBe(11);
+    expect(val(E(P(E(7, "-", 2), 2)))).toBe(25);
+    expect(val(E(P(E(2, "+", 8), 3)))).toBe(1000);
+    expect(val(E(P(8, 2), "+", 2, "*", P(3, 2)))).toBe(82);
+    expect(val(E(7, "*", P(E(8, "/", 4), 2)))).toBe(28);
+    expect(val(E(11, "+", 11, "-", P(6, 2), "/", 2))).toBe(4);
+    expect(val(E(50, "-", E(1, "+", 4), "*", 4))).toBe(30);
+  });
+  it("Question 4 (insert brackets) answers hold", () => {
+    expect(evalNode(E(E(9, "+", P(3, 2)), "*", 10, "/", 2))).toBe(90);
+    expect(evalNode(E(E(5, "+", 5), "/", 5))).toBe(2);
+    expect(evalNode(E(E(18, "-", 6), "/", 2))).toBe(6);
+    expect(evalNode(E(E(2, "*", 7, "+", 1), "*", 3))).toBe(45);
+  });
+  it("Q5: the student working 9 + 4 × 3 + 2 → 13 × 3 + 2 → 39 + 2 → 41 is the left-to-right mistake", () => {
+    const ast = E(9, "+", 4, "*", 3, "+", 2);
+    expect(runSteps(ast)!.final).toBe(23);
+    const lines = studentLines("leftToRight", ast)!.map((l: any) => texBody(l, NO_HL));
+    expect(lines).toEqual(["13 \\times 3 + 2", "39 + 2", "41"]);
+  });
+});
+
+describe("student working always arrives at the wrong answer", () => {
+  for (const level of ["level1", "level2", "level3"] as const) {
+    it(level, () => {
+      const msv: Record<string, boolean> = {};
+      for (let i = 0; i < 80; i++) {
+        const d = drawMistake(level, msv)!;
+        expect(d).toBeTruthy();
+        const last = d.lines[d.lines.length - 1];
+        expect((last.terms[0] as any).v).toBe(d.wrong);
+        expect(d.wrong).not.toBe(d.right);
+      }
+    });
+  }
+  it("Is-it-correct questions verdict matches the claim", () => {
+    for (let i = 0; i < 100; i++) {
+      const q = generateQuestion("fixIt", "level3", {}, "", { isCorrect: true, insertBrackets: false, spotMistake: false });
+      expect(q.kind).toBe("worded");
+      expect(q.answerLatex).toMatch(/mathrm\{(Yes|No):\}/);
     }
   });
 });

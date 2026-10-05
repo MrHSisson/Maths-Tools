@@ -16,8 +16,8 @@ Two sub-tools, three levels each.
 **Brackets & Mistakes** — `WordedQuestion`, two tasks drawn from a pool:
 - *Insert brackets*: one pair of brackets makes `2 + 3 × 4 + 1 = 21` true. Exactly one placement gives
   the target, the target differs from the unbracketed value and is ≥ 1.
-- *Spot the mistake*: "A student writes `2 + 3 × 4 = 20`." Answer: the correct value with the mistake
-  named in `answerSuffix`; the first working step explains the mistake.
+- *Spot the mistake*: the student's working is shown line by line (`9 + 4 × 3 + 2` → `13 × 3 + 2` → `39 + 2` → `41`, the left-to-right error). Answer: the correct value with the mistake named in `answerSuffix`; the first working step explains it. Every draw is rejected unless the student's lines really end at the wrong answer.
+- *Is it correct?* (from the class worksheet): "Matthew says `9 + 3 × 2 = 15`. Is Matthew correct?" Half true, half a classic mistake; answer "Yes/No: expr = value".
 
 ## The order used (stated in the info modal)
 Brackets (innermost first; **a root sign and the top and bottom of a fraction bar act as brackets**) →
@@ -58,3 +58,11 @@ negative squared (−3² = 9). Each draw is rejected unless the wrong answer dif
 - No Teach deck or skill-library entries (parked gate); no `[[skill|term]]` links.
 - No fractions as operands other than the fraction bar; no powers above cubes, no negative indices.
 - Going live is a separate call once it has had a classroom look.
+
+## Checked against the class worksheets (2026-10-05)
+Worksheet items (7 + 2 × 3, 10 − √16, √(2 + 14), (2 + 8)³, 8² + 2 × 3², 7 × (8 ÷ 4)², 11 + 11 − 6² ÷ 2,
+insert-brackets lines such as 9 + 3² × 10 ÷ 2 = 90, and the "Matthew says…" / student-working items) are asserted
+in `orderOfOperations.test.ts`. Shapes added from them: a² + b × c², a + a − b² ÷ c, a × (b ÷ c)², (a + b)² or
+(a + b)³, √s + b², a × b − √s; insert-brackets lines of 3–5 terms with ÷ and an occasional 1.
+Not covered (by design): "make as many different answers as you can" (open investigation) and the algebra
+expression-choice item (n + 2 × 3 vs (n + 2) × 3).

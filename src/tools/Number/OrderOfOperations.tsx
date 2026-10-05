@@ -519,6 +519,12 @@ const SHAPES: Record<Family, Shape[]> = {
     (c) => { const e = expo(c); return E(P(B(c, e), e), "+", M(c, 2, 9), "*", M(c, 2, 9)); },
     (c) => { const e = expo(c); return E(P(B(c, e), e), "-", P(B(c, e), e)); },
     // The classic trap: −3² is −9, not 9 (negatives mode only).
+    (c) => { const b = B(c, 2); return E(P(b, 2), "+", M(c, 2, 4), "*", P(B(c, 2), 2)); },
+    (c) => {
+      const b = randInt(2, 9);
+      const divs = [2, 3, 4, 5, 6, 7, 8, 9].filter((d) => (b * b) % d === 0);
+      return E(A(c, 5, 20), "+", A(c, 5, 20), "-", P(c.nm === "negatives" && Math.random() < 0.4 ? -b : b, 2), "/", pick(divs));
+    },
     (c) => c.nm === "negatives" ? E(NEG(P(randInt(2, 7), 2)), "+", A(c, 1, 20)) : null,
     (c) => c.nm === "negatives" ? E(A(c, 1, 30), "-", NEG(P(randInt(2, 7), 2))) : null,
   ],
@@ -527,6 +533,8 @@ const SHAPES: Record<Family, Shape[]> = {
     (c) => E(P(E(A(c, 6, 15), "-", A(c, 1, 5)), 2), "+", A(c, 1, 20)),
     (c) => E(A(c, 1, 5), "+", M(c, 2, 4), "*", P(E(A(c, 1, 4), "+", A(c, 1, 4)), 2)),
     (c) => E(P(B(c, 2), 2), "+", E(A(c, 5, 15), "-", A(c, 1, 4)), "*", M(c, 2, 6)),
+    (c) => { const e = pick([2, 3]); const t = e === 3 ? 3 : 7; return E(P(E(A(c, 1, t), "+", A(c, 1, t)), e), "+", A(c, 1, 20)); },
+    (c) => { const [x, d] = divPair(c, 2, 5); return E(M(c, 2, 5), "*", P(E(x, "/", d), 2)); },
     (c) => {
       const s = randInt(3, 9);
       const divs = [2, 3, 4, 5, 6, 8, 9, 10, 12].filter((d) => (s * s) % d === 0);
@@ -538,6 +546,8 @@ const SHAPES: Record<Family, Shape[]> = {
   roots: [
     (c) => E(R(c.nm === "decimals" ? pick(DEC_SQUARES) : pick(SQUARES)), "+", A(c, 1, 20)),
     (c) => E(M(c, 2, 9), "*", R(c.nm === "decimals" ? pick(DEC_SQUARES) : pick(SQUARES))),
+    (c) => E(R(c.nm === "decimals" ? pick(DEC_SQUARES) : pick(SQUARES.slice(0, 6))), "+", P(B(c, 2), 2)),
+    (c) => E(M(c, 2, 6), "*", M(c, 2, 6), "-", R(c.nm === "decimals" ? pick(DEC_SQUARES) : pick(SQUARES.slice(0, 6)))),
     (c) => E(A(c, 15, 40), "-", R(c.nm === "decimals" ? pick(DEC_SQUARES) : pick(SQUARES))),
     (c) => E(A(c, 1, 15), "+", M(c, 2, 5), "*", R(c.nm === "decimals" ? pick(DEC_SQUARES) : pick(SQUARES))),
     (c) => { const k = randInt(2, 10); const [a, b] = splitSum(c, k * k); return E(R(E(a, "+", b)), "*", M(c, 2, 6)); },
@@ -759,6 +769,7 @@ const TASK_POOL: ToolMultiSelect = {
   options: [
     { value: "insertBrackets", label: "Insert brackets", defaultActive: true },
     { value: "spotMistake", label: "Spot the mistake", defaultActive: true },
+    { value: "isCorrect", label: "Is it correct?", defaultActive: true },
   ],
 };
 
@@ -767,10 +778,10 @@ const TASK_POOL: ToolMultiSelect = {
 interface InsertDraw { flat: Seq; bracketed: Seq; group: Seq; target: number }
 
 function genInsert(level: DifficultyLevel): InsertDraw | null {
-  const allowed: Op[] = level === "level1" ? ["+", "*"] : level === "level2" ? ["+", "-", "*", "/"] : ["+", "-", "*"];
+  const allowed: Op[] = level === "level1" ? ["+", "*"] : ["+", "-", "*", "/"];
   for (let tries = 0; tries < 600; tries++) {
-    const n = level === "level1" ? pick([3, 4]) : 4;
-    const terms: Node[] = Array.from({ length: n }, () => N(randInt(2, 9)));
+    const n = level === "level1" ? pick([3, 4]) : level === "level2" ? pick([3, 4, 4, 5]) : pick([4, 5]);
+    const terms: Node[] = Array.from({ length: n }, () => N(Math.random() < 0.12 ? 1 : randInt(2, 9)));
     if (level === "level3") terms[randInt(0, n - 1)] = P(randInt(2, 5), 2);
     const ops: Op[] = Array.from({ length: n - 1 }, () => pick(allowed));
     if (!ops.some((o) => o === "+" || o === "-") || !ops.some((o) => o === "*" || o === "/")) continue;
@@ -785,7 +796,7 @@ function genInsert(level: DifficultyLevel): InsertDraw | null {
         const seq: Seq = {
           t: "seq",
           terms: [...terms.slice(0, i), group, ...terms.slice(j + 1)],
-          ops: [...ops.slice(0, i), ...ops.slice(j + 1)],
+          ops: [...ops.slice(0, i), ...ops.slice(j)],
         };
         placements.push({ i, j, seq, group, v: rd(evalNode(seq)) });
       }
@@ -825,9 +836,62 @@ function genEvaluate(level: DifficultyLevel, msv: Record<string, boolean>): AnyQ
   } as unknown as AnyQuestion;
 }
 
-function genMistake(level: DifficultyLevel, msv: Record<string, boolean>): AnyQuestion {
-  const pool = MISTAKE_BY_LEVEL[level];
-  const id = pickActive(msv, pool.options) as MistakeId;
+// ── Students' working ─────────────────────────────────────────────────────────
+
+type BugOrder = "lr" | "mulFirst" | "addFirst";
+
+/** The lines a student writes (after the first) when doing a flat line in the wrong order. */
+function buggyChain(seq: Seq, order: BugOrder): Seq[] {
+  const lines: Seq[] = [];
+  let cur = seq;
+  while (cur.ops.length > 0) {
+    const idx = (o: Op) => cur.ops.indexOf(o);
+    const md = cur.ops.findIndex((o) => o === "*" || o === "/");
+    let j = 0;
+    if (order === "mulFirst") j = idx("*") >= 0 ? idx("*") : idx("/") >= 0 ? idx("/") : 0;
+    else if (order === "addFirst") j = md >= 0 ? md : idx("+") >= 0 ? idx("+") : 0;
+    const v = applyOp((cur.terms[j] as Num).v, cur.ops[j], (cur.terms[j + 1] as Num).v);
+    cur = {
+      t: "seq",
+      terms: [...cur.terms.slice(0, j), N(v), ...cur.terms.slice(j + 2)],
+      ops: [...cur.ops.slice(0, j), ...cur.ops.slice(j + 1)],
+    };
+    lines.push(cur);
+  }
+  return lines;
+}
+
+/** Lines of a student's working for a mistake, or null if this expression can't show it. */
+function studentLines(id: MistakeId, ast: Seq): Seq[] | null {
+  const flatNums = ast.terms.every((t) => t.t === "num");
+  const finish = (first: Seq): Seq[] | null => {
+    const run = runSteps(first);
+    return run ? [first, ...run.steps.map((s) => s.after)] : null;
+  };
+  switch (id) {
+    case "leftToRight": return flatNums ? buggyChain(ast, "lr") : null;
+    case "mulFirst": return flatNums ? buggyChain(ast, "mulFirst") : null;
+    case "addFirst": return flatNums ? buggyChain(ast, "addFirst") : null;
+    case "ignoreBrackets": {
+      const run = runSteps(stripBrackets(ast));
+      return run ? run.steps.map((s) => s.after) : null;
+    }
+    case "powTimes":
+    case "negSquare": {
+      const terms = ast.terms.map((t) => {
+        if (id === "powTimes" && t.t === "pow" && t.base.t === "num") return N(t.base.v * t.exp);
+        if (id === "negSquare" && t.t === "neg" && t.x.t === "pow" && t.x.base.t === "num") return N(Math.pow(t.x.base.v, t.x.exp));
+        return t;
+      });
+      return finish({ t: "seq", terms, ops: ast.ops });
+    }
+  }
+}
+
+interface MistakeDraw { id: MistakeId; def: MistakeDef; ast: Seq; right: number; wrong: number; lines: Seq[] }
+
+function drawMistake(level: DifficultyLevel, msv: Record<string, boolean>): MistakeDraw | null {
+  const id = pickActive(msv, MISTAKE_BY_LEVEL[level].options) as MistakeId;
   const def = MISTAKES[id];
   for (let i = 0; i < 80; i++) {
     const built = buildEval(level, def.family, def.nm);
@@ -835,23 +899,57 @@ function genMistake(level: DifficultyLevel, msv: Record<string, boolean>): AnyQu
     const wrong = rd(def.wrong(built.ast));
     const right = built.info.answer;
     if (!Number.isFinite(wrong) || wrong === right || dpOf(wrong) > 2 || Math.abs(wrong) > 1000) continue;
-    const dl = texBody(built.ast, NO_HL);
-    return {
-      kind: "worded",
-      lines: [
-        "A student writes:",
-        `$${dl} = ${numTex(wrong)}$`,
-        "Find the correct answer and the mistake they made.",
-      ],
-      answer: numTex(right),
-      answerLatex: numTex(right),
-      answerSuffix: `(they ${def.desc})`,
-      working: [tStep(def.explain), ...workingSteps(built.ast)],
-      key: `ooo-mistake-${level}-${id}-${dl}-${Math.floor(Math.random() * 1_000_000)}`,
-      difficulty: level,
-    } as unknown as AnyQuestion;
+    // The student's lines must actually arrive at the wrong answer.
+    const lines = studentLines(id, built.ast);
+    const last = lines?.[lines.length - 1];
+    if (!lines || !last || !isSingleNum(last) || rd((last.terms[0] as Num).v) !== wrong) continue;
+    return { id, def, ast: built.ast, right, wrong, lines };
   }
-  return genEvaluate(level, {});
+  return null;
+}
+
+const NAMES = ["Matthew", "Samuel", "Matilda", "Priya", "Jamal", "Elena", "Kofi", "Sana"];
+const rnd = () => Math.floor(Math.random() * 1_000_000);
+
+function genMistake(level: DifficultyLevel, msv: Record<string, boolean>): AnyQuestion {
+  const d = drawMistake(level, msv);
+  if (!d) return genEvaluate(level, {});
+  const dl = texBody(d.ast, NO_HL);
+  return {
+    kind: "worded",
+    lines: [
+      "A student works out:",
+      `$${dl}$`,
+      ...d.lines.map((l) => `$= ${texBody(l, NO_HL)}$`),
+      "Find the mistake and the correct answer.",
+    ],
+    answer: numTex(d.right),
+    answerLatex: numTex(d.right),
+    answerSuffix: `(they ${d.def.desc})`,
+    working: [tStep(d.def.explain), ...workingSteps(d.ast)],
+    key: `ooo-mistake-${level}-${d.id}-${dl}-${rnd()}`,
+    difficulty: level,
+  } as unknown as AnyQuestion;
+}
+
+/** "Matthew says 9 + 3 × 2 = 15. Is Matthew correct?" — half true, half a plausible mistake. */
+function genIsCorrect(level: DifficultyLevel, msv: Record<string, boolean>): AnyQuestion {
+  const d = drawMistake(level, msv);
+  if (!d) return genEvaluate(level, {});
+  const name = pick(NAMES);
+  const correct = Math.random() < 0.5;
+  const claim = correct ? d.right : d.wrong;
+  const dl = texBody(d.ast, NO_HL);
+  const verdict = correct ? "Yes" : "No";
+  return {
+    kind: "worded",
+    lines: [`${name} says $${dl} = ${numTex(claim)}$.`, `Is ${name} correct? Show how you know.`],
+    answer: `${verdict}: ${numTex(d.right)}`,
+    answerLatex: `\\mathrm{${verdict}:}\\; ${dl} = ${numTex(d.right)}`,
+    working: correct ? workingSteps(d.ast) : [tStep(d.def.explain), ...workingSteps(d.ast)],
+    key: `ooo-iscorrect-${level}-${d.id}-${dl}-${correct}-${rnd()}`,
+    difficulty: level,
+  } as unknown as AnyQuestion;
 }
 
 function genInsertQuestion(level: DifficultyLevel): AnyQuestion {
@@ -886,7 +984,9 @@ const generateQuestion = (
 ): AnyQuestion => {
   if (tool === "evaluate") return genEvaluate(level, multiSelectValues);
   const task = pickActive(multiSelectValues, TASK_POOL.options);
-  return task === "insertBrackets" ? genInsertQuestion(level) : genMistake(level, multiSelectValues);
+  return task === "insertBrackets" ? genInsertQuestion(level)
+    : task === "isCorrect" ? genIsCorrect(level, multiSelectValues)
+    : genMistake(level, multiSelectValues);
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -932,7 +1032,8 @@ const INFO_SECTIONS: InfoSection[] = [
   ]},
   { title: "Brackets & Mistakes", icon: "🧐", content: [
     { label: "Insert brackets", detail: "One pair of brackets must be added to make a statement true. Each question has exactly one correct place for them." },
-    { label: "Spot the mistake", detail: "A student's wrong answer is shown; find the correct answer and the mistake. Choose which mistakes can appear in the Question Options." },
+    { label: "Spot the mistake", detail: "A student's working is shown, line by line, with a mistake in it; find the mistake and the correct answer." },
+    { label: "Is it correct?", detail: "Someone says an expression equals a value — sometimes right, sometimes a classic mistake. Is it correct? Choose which mistakes can appear in the Question Options." },
     { label: "Levels", detail: "Level 1: working left to right and ignoring brackets. Level 2 adds × before ÷ and + before −. Level 3 adds multiplying the base by the index and squaring a negative sign." },
   ]},
   { title: "Modes", icon: "🖥️", content: [
@@ -951,7 +1052,7 @@ const INFO_SECTIONS: InfoSection[] = [
 export const __test = {
   TOOL_CONFIG,
   generateQuestion,
-  engine: { E, P, R, F, NEG, N, texBody, NO_HL, runSteps, evalNode, analyse, SHAPES, buildEval, MISTAKES, genInsert },
+  engine: { E, P, R, F, NEG, N, texBody, NO_HL, runSteps, evalNode, analyse, SHAPES, buildEval, MISTAKES, genInsert, drawMistake, studentLines },
 };
 
 export default function App() {

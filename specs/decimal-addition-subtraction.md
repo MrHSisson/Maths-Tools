@@ -18,7 +18,7 @@ QO: display-only "Table starts" dropdown (Empty / Numbers in / Numbers + zeros; 
 
 **Added 2026-10-05:**
 - **L2 "Carries needed" (Adding) / "Exchanges needed" (Subtracting)** — a weighted pool 1 / 2 / 3+ (one drawn per question; Smart Progressor orders a sheet 1 → 3+). Counts the carries or exchanges the working actually shows (exchanging across a 0 counts each exchange). 3+ subtraction draws wholes up to 999 and widens the table to the hundreds column.
-- **L3 "Decimal places" pool** (both sub-tools, same 1/2/3 options) — sets how many d.p. the *longest* number has; the other has fewer. Question types that need two lengths (different d.p., placeholder 0, across a 0, longer first) need ≥ 2 d.p., so at 1 d.p. only Whole ± decimal (and Answer ends in 0 when adding) are drawn. Tests: `src/tests/decimalAddSub.test.ts`.
+- **L3 "Max decimal places"** (both sub-tools; single choice 1/2/3, with an info icon) — the longest number has *up to* that many d.p.; the other has fewer. Question types that need two lengths (different d.p., placeholder 0, across a 0, longer first) need ≥ 2 d.p., so at 1 d.p. only Whole ± decimal (and Answer ends in 0 when adding) are drawn. Tests: `src/tests/decimalAddSub.test.ts`.
 
 ## Acceptance reference
 - 4.1 − 3.23: write → 4.1 = 4.10 → 0−3 exchange (tenth→10 hundredths), 10−3=7 → 0−2 exchange (one→10 tenths), 10−2=8 → 3−3=0 → **0.87**

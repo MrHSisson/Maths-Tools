@@ -28,9 +28,14 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-05 — BIDMAS checked against worksheets; Decimal Add/Sub Level 3 d.p. is a max
+- Order of Operations: students' working is now shown line by line in Spot the mistake (reproduces the worksheet's 9 + 4 × 3 + 2 → 13 × 3 + 2 → 39 + 2 → 41); new **Is it correct?** task ("Matthew says … Is Matthew correct?"); extra shapes from the worksheets (a² + b × c², 7 × (8 ÷ 4)², (a + b)³, √s + b², …) and longer insert-brackets lines (3–5 terms, ÷, occasional 1).
+- **Bug fix:** Insert brackets dropped an operator when the brackets were not at the end of the line (e.g. `(3² + 6) − 71`). The test now strips the brackets back out and compares with the original line.
+- Decimals Add/Sub Level 3: "Decimal places" is now a single-choice **Max decimal places** (with an info icon) — the longest number has up to that many d.p.
+
 ## 2026-10-05 — Decimal Add/Sub: exchanges at Level 2, decimal places at Level 3
 - Level 2: new **Carries needed** (Adding) / **Exchanges needed** (Subtracting) pool — 1, 2 or 3+ — one drawn per question and weighted so the Smart Progressor orders a worksheet 1 → 3+. 3+ subtraction uses wholes up to 999 and shows the hundreds column.
-- Level 3 (both sub-tools): the **Decimal places** pool now applies — it sets the longest number's d.p.; shapes needing two lengths use at least 2 d.p.
+- Level 3 (both sub-tools): a **Decimal places** pool now applies (made a max in the entry above).
 - `compute` now returns the carry and exchange counts; `src/tests/decimalAddSub.test.ts` checks both pools.
 
 ## 2026-10-05 — Order of Operations (BIDMAS): new tool, dev-gated

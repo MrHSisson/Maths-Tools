@@ -36,16 +36,19 @@ describe("Level 2 carries / exchanges needed", () => {
   }
 });
 
-describe("Level 3 decimal places", () => {
+describe("Level 3 max decimal places", () => {
   for (const tool of ["add", "subtract"]) {
-    for (const dp of [1, 2, 3]) {
-      it(`${tool}: longest number has ${dp} d.p.`, () => {
-        for (let i = 0; i < 40; i++) {
-          const q = generateQuestion(tool, "level3", {}, "", { ...active(tool, "level3", { [`dp${dp}`]: true }), wholePlus: true, wholeMinus: true, trimZero: true, diffPlaces: true, padZero: true, acrossZero: true, longerTop: true });
+    for (const cap of [1, 2, 3]) {
+      it(`${tool}: longest number has at most ${cap} d.p. (never below the 2 d.p. the shapes need at cap 1)`, () => {
+        const seen = new Set<number>();
+        for (let i = 0; i < 150; i++) {
+          const q = generateQuestion(tool, "level3", {}, "", { ...active(tool, "level3", { [`dp${cap}`]: true }), wholePlus: true, wholeMinus: true, trimZero: true, diffPlaces: true, padZero: true, acrossZero: true, longerTop: true });
           const m = Math.max(...dps(q));
-          expect(m).toBeLessThanOrEqual(Math.max(dp, 2));
-          if (dp >= 2) expect(m).toBe(dp);
+          expect(m).toBeLessThanOrEqual(Math.max(cap, 2));
+          seen.add(m);
         }
+        // A max is a range: at 3 the longest number is sometimes shorter than 3.
+        if (cap === 3) expect(seen.size).toBeGreaterThan(1);
       });
     }
   }
