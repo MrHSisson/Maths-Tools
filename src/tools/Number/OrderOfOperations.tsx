@@ -14,6 +14,8 @@
 
 import {
   ToolShell,
+  BidmasPyramid,
+  type PyramidTier,
   type ToolConfig,
   type InfoSection,
   type DifficultyLevel,
@@ -231,6 +233,9 @@ const isIdxTerm = (t: Node) =>
   t.t === "pow" || t.t === "root" || (t.t === "neg" && (t.x.t === "pow" || t.x.t === "root"));
 const idxNode = (t: Node): Node => (t.t === "neg" ? t.x : t);
 
+/** Which pyramid tiers a step lights (see BidmasPyramid). */
+interface Tiers { strong: PyramidTier[]; soft: PyramidTier[] }
+
 interface FlatRes {
   seq: Seq;
   spans: [number, number][];
@@ -238,7 +243,13 @@ interface FlatRes {
   /** Lower-case stage name: "indices", "multiply (left to right)", "add"… */
   name: string;
   produced: number[];
+  /** Pyramid tiers this stage uses: the move itself, and its equal-priority partner. */
+  tiers: Tiers;
 }
+
+const TIER_OF: Record<Op, PyramidTier> = { "+": "A", "-": "S", "*": "M", "/": "D" };
+/** The other operation on the same pyramid tier row (× ⇄ ÷, + ⇄ −). */
+const PARTNER: Record<Op, Op> = { "+": "-", "-": "+", "*": "/", "/": "*" };
 
 /** One BIDMAS stage on a seq whose terms are plain (no brackets left): indices, then ×÷, then +−. */
 function stepFlat(seq: Seq): FlatRes {
@@ -259,7 +270,7 @@ function stepFlat(seq: Seq): FlatRes {
       return N(sign * v);
     });
     const name = pow && root ? "indices and roots" : root ? "roots" : "indices";
-    return { seq: { t: "seq", terms, ops: seq.ops }, spans: [], nodes, name, produced };
+    return { seq: { t: "seq", terms, ops: seq.ops }, spans: [], nodes, name, produced, tiers: { strong: ["I"], soft: [] } };
   }
 
   const isMD = (o: Op) => o === "*" || o === "/";
@@ -291,7 +302,9 @@ function stepFlat(seq: Seq): FlatRes {
     }
     const chained = seq.ops.some((o, j) => isMD(o) && !sel.has(j));
     const base = used.size === 2 ? "multiply and divide" : used.has("*") ? "multiply" : "divide";
-    return { seq: { t: "seq", terms, ops }, spans, nodes: [], name: base + (chained ? " (left to right)" : ""), produced };
+    const strong = [...used].map((o) => TIER_OF[o]);
+    const soft = [...used].map((o) => PARTNER[o]).filter((o) => !used.has(o) && seq.ops.includes(o)).map((o) => TIER_OF[o]);
+    return { seq: { t: "seq", terms, ops }, spans, nodes: [], name: base + (chained ? " (left to right)" : ""), produced, tiers: { strong, soft } };
   }
 
   // Only + and − remain: one operation at a time, left to right.
@@ -304,6 +317,7 @@ function stepFlat(seq: Seq): FlatRes {
     nodes: [],
     name: base + (seq.ops.length > 1 ? " (left to right)" : ""),
     produced,
+    tiers: { strong: [TIER_OF[seq.ops[0]]], soft: seq.ops.includes(PARTNER[seq.ops[0]]) ? [TIER_OF[PARTNER[seq.ops[0]]]] : [] },
   };
 }
 
@@ -344,6 +358,7 @@ interface StepOut {
   hl: Hl;
   after: Seq;
   produced: number[];
+  tiers: Tiers;
 }
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -359,6 +374,7 @@ function nextStep(root: Seq): StepOut | null {
     const repl = new Map<Node, Node>();
     const produced: number[] = [];
     const names = new Set<string>();
+    const inner = new Set<PyramidTier>();
     for (const leaf of reducible) {
       const r = stepFlat(leaf.seq);
       repl.set(leaf.seq, r.seq);
@@ -366,6 +382,7 @@ function nextStep(root: Seq): StepOut | null {
       r.nodes.forEach((x) => hl.nodes.add(x));
       produced.push(...r.produced);
       names.add(r.name);
+      r.tiers.strong.forEach((t) => inner.add(t));
     }
     for (const fr of fracs) {
       const v = rd((fr.num.terms[0] as Num).v / (fr.den.terms[0] as Num).v);
@@ -385,7 +402,8 @@ function nextStep(root: Seq): StepOut | null {
       label = names.size === 1 ? `${prefix} — ${[...names][0]}` : prefix;
     }
     const after = normSeq(rebuild(root, repl) as Seq);
-    return { label: label + ":", hl, after, produced };
+    // The move is "brackets"; the operation worked inside them shows softly.
+    return { label: label + ":", hl, after, produced, tiers: { strong: ["B"], soft: [...inner] } };
   }
 
   // ── Everything left is a flat line: I, then DM, then AS ──
@@ -395,10 +413,10 @@ function nextStep(root: Seq): StepOut | null {
     nodes: new Set(r.nodes),
     spans: r.spans.length ? new Map([[root, r.spans]]) : new Map(),
   };
-  return { label: cap(r.name) + ":", hl, after: normSeq(r.seq), produced: r.produced };
+  return { label: cap(r.name) + ":", hl, after: normSeq(r.seq), produced: r.produced, tiers: r.tiers };
 }
 
-interface RunStep { label: string; before: Seq; hl: Hl; after: Seq }
+interface RunStep { label: string; before: Seq; hl: Hl; after: Seq; tiers: Tiers }
 interface Run { steps: RunStep[]; final: number; produced: number[] }
 
 function runSteps(ast: Seq): Run | null {
@@ -411,7 +429,7 @@ function runSteps(ast: Seq): Run | null {
       if (!isSingleNum(cur)) return null;
       return { steps, final: (cur.terms[0] as Num).v, produced };
     }
-    steps.push({ label: s.label, before: cur, hl: s.hl, after: s.after });
+    steps.push({ label: s.label, before: cur, hl: s.hl, after: s.after, tiers: s.tiers });
     produced.push(...s.produced);
     cur = s.after;
   }
@@ -422,9 +440,11 @@ function runSteps(ast: Seq): Run | null {
 function workingSteps(ast: Seq): WorkingStep[] {
   const run = runSteps(ast);
   if (!run) return [tStep("Work through the brackets first, then indices, then × and ÷, then + and −.")];
-  return run.steps.map((s) =>
-    mStep(s.label, [texBody(s.before, s.hl), "= " + texBody(s.after, NO_HL)]),
-  );
+  // `extra.pyramid` tells the Worked Example's picture slot which BIDMAS tiers to light.
+  return run.steps.map((s) => ({
+    ...mStep(s.label, [texBody(s.before, s.hl), "= " + texBody(s.after, NO_HL)]),
+    extra: { pyramid: s.tiers },
+  }));
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -432,7 +452,13 @@ function workingSteps(ast: Seq): WorkingStep[] {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 type NumMode = "whole" | "negatives" | "decimals";
-type Family = "basic" | "chain" | "brackets" | "indices" | "bracketsIndices" | "roots" | "fraction" | "nested";
+/** Level 1: basic, chain, mixed · Level 2: brackets, indices, bracketsIndices · Level 3: roots, fraction, nested. */
+type Family = "basic" | "chain" | "mixed" | "brackets" | "indices" | "bracketsIndices" | "roots" | "fraction" | "nested";
+const LEVEL_OF: Record<Family, DifficultyLevel> = {
+  basic: "level1", chain: "level1", mixed: "level1",
+  brackets: "level2", indices: "level2", bracketsIndices: "level2",
+  roots: "level3", fraction: "level3", nested: "level3",
+};
 interface Ctx { nm: NumMode; level: DifficultyLevel }
 
 const LIMIT = 500;
@@ -496,9 +522,21 @@ const SHAPES: Record<Family, Shape[]> = {
     (c) => E(A(c, 10, 40), "-", A(c, 2, 15), "+", A(c, 2, 20)),
     (c) => E(A(c, 20, 60), "-", A(c, 2, 15), "-", A(c, 2, 20)),
     (c) => E(A(c, 20, 50), "-", A(c, 2, 12), "+", A(c, 2, 15), "-", A(c, 2, 12)),
+  ],
+  // Priority AND left-to-right in one line.
+  mixed: [
     (c) => { const [x, d] = divPair(c, 2, 9); return E(x, "/", d, "*", M(c, 2, 9), "+", A(c, 1, 20)); },
+    (c) => E(A(c, 20, 60), "-", A(c, 2, 12), "+", M(c, 2, 9), "*", M(c, 2, 9)),
+    (c) => { const [x, d] = divPair(c, 2, 9); return E(A(c, 5, 30), "+", x, "/", d, "*", M(c, 2, 6)); },
+    (c) => { const e = randInt(2, 9); return E(e * randInt(2, 6), "*", M(c, 2, 9), "/", e, "+", A(c, 1, 20)); },
+    (c) => { const [x, d] = divPair(c, 2, 9); return E(A(c, 30, 70), "-", x, "/", d, "+", A(c, 1, 15)); },
+    (c) => E(M(c, 2, 9), "*", M(c, 2, 9), "-", M(c, 2, 9), "*", M(c, 2, 9), "+", A(c, 1, 20)),
   ],
   brackets: [
+    // Level 1 inside the bracket: the bracket itself needs "who goes first?"
+    (c) => E(E(A(c, 2, 9), "+", M(c, 2, 5), "*", M(c, 2, 5)), "*", M(c, 2, 4)),
+    (c) => E(A(c, 5, 30), "+", E(M(c, 2, 6), "*", M(c, 2, 6), "-", A(c, 1, 8))),
+    (c) => { const [x, d] = divPair(c, 2, 5); return E(E(x, "/", d, "+", A(c, 1, 9)), "*", M(c, 2, 5)); },
     (c) => E(E(A(c, 2, 12), "+", A(c, 2, 12)), "*", M(c, 2, 9)),
     (c) => E(E(A(c, 5, 20), "-", A(c, 1, 14)), "*", M(c, 2, 9)),
     (c) => E(M(c, 2, 9), "*", E(A(c, 2, 12), "+", A(c, 2, 12))),
@@ -544,6 +582,10 @@ const SHAPES: Record<Family, Shape[]> = {
     },
   ],
   roots: [
+    // √(a² + b²) and √(a² − b²) with whole-number roots, so "root of the first number only" is clean too.
+    (c) => { const [x, y] = pick(TRIPLES); return E(R(E(x * x, "+", y * y)), "+", A(c, 1, 20)); },
+    (c) => { const [x, y] = pick(TRIPLES); return E(M(c, 2, 5), "*", R(E(x * x, "+", y * y))); },
+    (c) => { const [z, x] = pick<[number, number]>([[5, 3], [5, 4], [10, 6], [10, 8], [13, 5]]); return E(A(c, 10, 30), "-", R(E(z * z, "-", x * x))); },
     (c) => E(R(c.nm === "decimals" ? pick(DEC_SQUARES) : pick(SQUARES)), "+", A(c, 1, 20)),
     (c) => E(M(c, 2, 9), "*", R(c.nm === "decimals" ? pick(DEC_SQUARES) : pick(SQUARES))),
     (c) => E(R(c.nm === "decimals" ? pick(DEC_SQUARES) : pick(SQUARES.slice(0, 6))), "+", P(B(c, 2), 2)),
@@ -558,6 +600,9 @@ const SHAPES: Record<Family, Shape[]> = {
     },
   ],
   fraction: [
+    // Whole-number quotients on every part, so "treat the bar as ÷ only" gives a clean (wrong) number.
+    (c) => { const d = randInt(2, 6), k1 = randInt(2, 7), k2 = randInt(2, 7); return E(F(E(d * k1, "+", d * k2), E(d)), "+", A(c, 1, 12)); },
+    () => { const d = randInt(2, 6), k2 = randInt(2, 5), k1 = k2 + randInt(1, 5); return E(F(E(d * k1, "-", d * k2), E(d))); },
     (c) => { const d = randInt(2, 9); const [a, b] = splitSum(c, rd(d * M(c, 2, 9))); return E(F(E(a, "+", b), E(d))); },
     (c) => { const d = randInt(2, 9); return E(F(E(d * randInt(2, 6), "*", M(c, 2, 9)), E(d))); },
     (c) => {
@@ -620,9 +665,35 @@ function analyse(ast: Seq, nm: NumMode): Analysis | null {
   return { answer: run.final, steps: run.steps.length };
 }
 
+/**
+ * Which level's IDEA an expression needs: 1 = just operations, 2 = needs a bracket or a power,
+ * 3 = needs a root, a fraction bar or brackets inside brackets. Generation rejects any draw whose
+ * level isn't the level being asked for, so a harder idea can never appear on an easier level.
+ */
+function levelOf(ast: Seq): 1 | 2 | 3 {
+  let grouping = false, power = false, deep = false;
+  const walk = (n: Node, depth: number) => {
+    switch (n.t) {
+      case "num": break;
+      case "seq":
+        if (depth > 0) grouping = true;
+        if (depth > 1) deep = true;
+        n.terms.forEach((t) => walk(t, depth + 1));
+        break;
+      case "pow": power = true; walk(n.base, depth); break;
+      case "root": grouping = deep = true; walk(n.inner, depth); break;
+      case "frac": grouping = deep = true; walk(n.num, depth); walk(n.den, depth); break;
+      case "neg": walk(n.x, depth); break;
+    }
+  };
+  walk(ast, 0);
+  return deep ? 3 : grouping || power ? 2 : 1;
+}
+const levelNum = (l: DifficultyLevel) => (l === "level1" ? 1 : l === "level2" ? 2 : 3);
+
 /** Does the BIDMAS order actually change the answer? (Guards the "no-trap" draws.) */
 function orderMatters(ast: Seq, family: Family, answer: number): boolean {
-  if (family === "basic") return rd(evalNode(ast, { lr: true })) !== answer;
+  if (family === "basic" || family === "mixed") return rd(evalNode(ast, { lr: true })) !== answer;
   if (family === "brackets") return rd(evalNode(stripBrackets(ast))) !== answer;
   return true;
 }
@@ -632,6 +703,7 @@ function buildEval(level: DifficultyLevel, family: Family, nm: NumMode): { ast: 
   for (let i = 0; i < 500; i++) {
     const ast = pick(SHAPES[family])(c);
     if (!ast) continue;
+    if (levelOf(ast) !== levelNum(level)) continue;
     const info = analyse(ast, nm);
     if (info && orderMatters(ast, family, info.answer)) return { ast, info };
   }
@@ -639,25 +711,42 @@ function buildEval(level: DifficultyLevel, family: Family, nm: NumMode): { ast: 
 }
 
 // ── QO pools ──────────────────────────────────────────────────────────────────
+//
+// The three levels are three IDEAS, each building on the one below:
+//   1  Who goes first?          — × ÷ before + −, and equal priority goes left to right
+//   2  Things that jump the queue — brackets and powers (clearing one leaves a Level 1 line)
+//   3  Symbols that act as brackets — roots, fraction bars, brackets inside brackets
+// A level's questions must need its idea (see levelOf), so levels never overlap.
 
-const STRUCT_OPTS: Record<Family, { label: string; weight: number }> = {
-  basic: { label: "Operations", weight: 1 },
-  chain: { label: "Left to right", weight: 2 },
-  brackets: { label: "Brackets", weight: 2 },
-  indices: { label: "Indices", weight: 3 },
-  bracketsIndices: { label: "Brackets + indices", weight: 4 },
-  roots: { label: "Roots", weight: 4 },
-  fraction: { label: "Fraction bar", weight: 4 },
-  nested: { label: "Nested brackets", weight: 5 },
+const FOCUS: Record<DifficultyLevel, { family: Family; label: string; weight: number }[]> = {
+  level1: [
+    { family: "basic", label: "× ÷ before + −", weight: 1 },
+    { family: "chain", label: "Left to right", weight: 2 },
+    { family: "mixed", label: "Both", weight: 3 },
+  ],
+  level2: [
+    { family: "brackets", label: "Brackets", weight: 1 },
+    { family: "indices", label: "Powers", weight: 2 },
+    { family: "bracketsIndices", label: "Both", weight: 3 },
+  ],
+  level3: [
+    { family: "roots", label: "Roots", weight: 1 },
+    { family: "fraction", label: "Fraction bar", weight: 2 },
+    { family: "nested", label: "Nested brackets", weight: 3 },
+  ],
 };
 
-const structPool = (on: Family[], offered: Family[]): ToolMultiSelect => ({
-  key: "structure",
-  label: "Question Types",
-  info: "Which kinds of expression can appear. Roots and fraction bars act as brackets.",
-  options: offered.map((f) => ({
-    value: f, label: STRUCT_OPTS[f].label, weight: STRUCT_OPTS[f].weight, defaultActive: on.includes(f),
-  })),
+const FOCUS_INFO: Record<DifficultyLevel, string> = {
+  level1: "× ÷ before + −: mixed operations where multiplying or dividing comes first. Left to right: lines where equal-priority operations must be done in order (24 ÷ 4 × 2). Both: one line needing both ideas.",
+  level2: "Brackets: a bracket changes what goes first. Powers: squares and cubes. Both: a bracket and a power in one line. Clearing them leaves a Level 1 question.",
+  level3: "Roots and the fraction bar act as brackets: work out what is under the root, or the top and bottom of the fraction, first. Nested brackets: brackets inside brackets, innermost first.",
+};
+
+const focusPool = (level: DifficultyLevel): ToolMultiSelect => ({
+  key: "focus",
+  label: "Focus",
+  info: FOCUS_INFO[level],
+  options: FOCUS[level].map((f) => ({ value: f.family, label: f.label, weight: f.weight, defaultActive: true })),
 });
 
 const NUM_OPTS: Record<NumMode, { label: string; weight: number }> = {
@@ -666,37 +755,34 @@ const NUM_OPTS: Record<NumMode, { label: string; weight: number }> = {
   decimals: { label: "Decimals", weight: 3 },
 };
 
-const numPool = (on: NumMode[], offered: NumMode[]): ToolMultiSelect => ({
+const numPool = (offered: NumMode[]): ToolMultiSelect => ({
   key: "numbers",
   label: "Numbers",
+  info: "What kind of numbers the question uses. Negatives bring in −3² against (−3)² and subtracting a negative.",
   options: offered.map((m) => ({
-    value: m, label: NUM_OPTS[m].label, weight: NUM_OPTS[m].weight, defaultActive: on.includes(m),
+    value: m, label: NUM_OPTS[m].label, weight: NUM_OPTS[m].weight, defaultActive: m === "whole",
   })),
 });
 
-const ALL_FAMILIES: Family[] = ["basic", "chain", "brackets", "indices", "bracketsIndices", "roots", "fraction", "nested"];
-
-const STRUCT_L1 = structPool(["basic", "brackets"], ["basic", "brackets", "chain", "indices"]);
-const STRUCT_L2 = structPool(["chain", "brackets", "indices", "bracketsIndices"], ["basic", "chain", "brackets", "indices", "bracketsIndices", "roots", "fraction"]);
-const STRUCT_L3 = structPool(["indices", "bracketsIndices", "roots", "fraction", "nested"], ALL_FAMILIES);
-const NUM_L2 = numPool(["whole"], ["whole", "negatives"]);
-const NUM_L3 = numPool(["negatives", "decimals"], ["whole", "negatives", "decimals"]);
-
-const EVAL_POOLS: Record<DifficultyLevel, { struct: ToolMultiSelect; nums: ToolMultiSelect | null }> = {
-  level1: { struct: STRUCT_L1, nums: null },
-  level2: { struct: STRUCT_L2, nums: NUM_L2 },
-  level3: { struct: STRUCT_L3, nums: NUM_L3 },
+const EVAL_POOLS: Record<DifficultyLevel, { focus: ToolMultiSelect; nums: ToolMultiSelect | null }> = {
+  level1: { focus: focusPool("level1"), nums: null },
+  level2: { focus: focusPool("level2"), nums: numPool(["whole", "negatives"]) },
+  level3: { focus: focusPool("level3"), nums: numPool(["whole", "negatives", "decimals"]) },
 };
 
-// ── Mistakes ──────────────────────────────────────────────────────────────────
+// ── Mistakes (each belongs to the level whose idea it gets wrong) ──────────────
 
-type MistakeId = "leftToRight" | "ignoreBrackets" | "mulFirst" | "addFirst" | "powTimes" | "negSquare";
+type MistakeId =
+  | "leftToRight" | "mulFirst" | "addFirst"
+  | "ignoreBrackets" | "powTimes" | "negSquare"
+  | "rootGroup" | "fracGroup";
 
 interface MistakeDef {
   label: string;
+  level: DifficultyLevel;
   family: Family;
   nm: NumMode;
-  /** The wrong value the student arrives at (null if this draw doesn't show the mistake). */
+  /** The wrong value the student arrives at. */
   wrong: (ast: Seq) => number;
   /** Extra requirement on the drawn expression. */
   needs?: (ast: Seq) => boolean;
@@ -706,71 +792,121 @@ interface MistakeDef {
   explain: string;
 }
 
+/** Splices the contents of every root sign and fraction bar into the line — what a student sees if they
+ *  treat √(9 + 16) as √9 + 16, or (a + b)/c as a + b/c. */
+function flattenGroups(s: Seq): Seq {
+  const terms: Node[] = [];
+  const ops: Op[] = [];
+  const push = (ts: Node[], os: Op[], lead?: Op) => {
+    if (lead) ops.push(lead);
+    ts.forEach((t, i) => { if (i > 0) ops.push(os[i - 1]); terms.push(t); });
+  };
+  s.terms.forEach((t, i) => {
+    const lead = i > 0 ? s.ops[i - 1] : undefined;
+    if (t.t === "root" && t.inner.t === "seq") {
+      const inner = t.inner;
+      push([R(inner.terms[0]), ...inner.terms.slice(1)], inner.ops, lead);
+    } else if (t.t === "frac") {
+      if (lead) ops.push(lead);
+      t.num.terms.forEach((x, k) => { if (k > 0) ops.push(t.num.ops[k - 1]); terms.push(x); });
+      ops.push("/");
+      t.den.terms.forEach((x, k) => { if (k > 0) ops.push(t.den.ops[k - 1]); terms.push(x); });
+    } else {
+      push([t], [], lead);
+    }
+  });
+  return { t: "seq", terms, ops };
+}
+
 const MISTAKES: Record<MistakeId, MistakeDef> = {
   leftToRight: {
-    label: "Left to right", family: "basic", nm: "whole",
+    label: "Ignores priority", level: "level1", family: "basic", nm: "whole",
     wrong: (a) => evalNode(a, { lr: true }),
-    desc: "worked left to right",
+    desc: "ignored priority and worked left to right",
     explain: "The student worked strictly from left to right. Multiplication and division must be done before addition and subtraction.",
   },
+  mulFirst: {
+    label: "× before ÷", level: "level1", family: "chain", nm: "whole",
+    wrong: (a) => evalNode(a, { mulFirst: true }),
+    needs: (a) => a.ops.includes("/") && a.ops.includes("*"),
+    desc: "multiplied before dividing",
+    explain: "The student did the multiplication before the division. Division and multiplication share a tier of the pyramid, so they are done in order from left to right.",
+  },
+  addFirst: {
+    label: "+ before −", level: "level1", family: "chain", nm: "whole",
+    wrong: (a) => evalNode(a, { addFirst: true }),
+    needs: (a) => a.ops.includes("+") && a.ops.includes("-"),
+    desc: "added before subtracting",
+    explain: "The student did the addition before the subtraction. Addition and subtraction share a tier of the pyramid, so they are done in order from left to right.",
+  },
   ignoreBrackets: {
-    label: "Brackets ignored", family: "brackets", nm: "whole",
+    label: "Ignores brackets", level: "level2", family: "brackets", nm: "whole",
     wrong: (a) => evalNode(stripBrackets(a)),
     desc: "ignored the brackets",
     explain: "The student ignored the brackets. Brackets come first, so the part inside must be worked out before anything else.",
   },
-  mulFirst: {
-    label: "× before ÷", family: "chain", nm: "whole",
-    wrong: (a) => evalNode(a, { mulFirst: true }),
-    needs: (a) => a.ops.includes("/") && a.ops.includes("*"),
-    desc: "multiplied before dividing",
-    explain: "The student did the multiplication before the division. Division and multiplication have equal priority, so they are done in order from left to right.",
-  },
-  addFirst: {
-    label: "+ before −", family: "chain", nm: "whole",
-    wrong: (a) => evalNode(a, { addFirst: true }),
-    needs: (a) => a.ops.includes("+") && a.ops.includes("-"),
-    desc: "added before subtracting",
-    explain: "The student did the addition before the subtraction. Addition and subtraction have equal priority, so they are done in order from left to right.",
-  },
   powTimes: {
-    label: "Base × index", family: "indices", nm: "whole",
+    label: "Power as ×", level: "level2", family: "indices", nm: "whole",
     wrong: (a) => evalNode(a, { powAsMult: true }),
     needs: (a) => a.terms.some((t) => t.t === "pow"),
-    desc: "multiplied the base by the index",
-    explain: "The student multiplied the base by the index. An index means repeated multiplication: for example 3 squared is 3 times 3, not 3 times 2.",
+    desc: "multiplied the base by the power",
+    explain: "The student multiplied the base by the power. A power means repeated multiplication: for example 3 squared is 3 times 3, not 3 times 2.",
   },
   negSquare: {
-    label: "Negative squared", family: "indices", nm: "negatives",
+    label: "−3² as 9", level: "level2", family: "indices", nm: "negatives",
     wrong: (a) => evalNode(a, { negBug: true }),
     needs: (a) => a.terms[0].t === "neg",
     desc: "squared the negative sign as well",
     explain: "The student squared the negative sign as well. Without brackets only the number is squared, so the answer to the square is negative; brackets are needed to square a negative number.",
   },
+  rootGroup: {
+    label: "Root of part only", level: "level3", family: "roots", nm: "whole",
+    wrong: (a) => evalNode(flattenGroups(a)),
+    needs: (a) => a.terms.some((t) => t.t === "root" && t.inner.t === "seq" && t.inner.terms.every((x) => x.t === "num")),
+    desc: "took the root of only the first number",
+    explain: "The student took the square root of only the first number. The root sign acts like a bracket: work out everything under it first, then take the root.",
+  },
+  fracGroup: {
+    label: "Bar not a bracket", level: "level3", family: "fraction", nm: "whole",
+    wrong: (a) => evalNode(flattenGroups(a)),
+    needs: (a) => a.terms.some((t) => t.t === "frac" && (t.num.terms.length > 1 || t.den.terms.length > 1)),
+    desc: "treated the fraction bar as a divide sign only",
+    explain: "The student treated the fraction bar as a divide sign only. The bar acts like brackets round the top and the bottom: work out each first, then divide.",
+  },
 };
 
-const MISTAKE_IDS: MistakeId[] = ["leftToRight", "ignoreBrackets", "mulFirst", "addFirst", "powTimes", "negSquare"];
+const MISTAKES_BY_LEVEL: Record<DifficultyLevel, MistakeId[]> = {
+  level1: ["leftToRight", "mulFirst", "addFirst"],
+  level2: ["ignoreBrackets", "powTimes", "negSquare"],
+  level3: ["rootGroup", "fracGroup"],
+};
 
-const mistakePool = (offered: MistakeId[]): ToolMultiSelect => ({
+const mistakePool = (level: DifficultyLevel): ToolMultiSelect => ({
   key: "mistake",
   label: "Mistake Types",
-  options: offered.map((m) => ({ value: m, label: MISTAKES[m].label, defaultActive: true })),
+  options: MISTAKES_BY_LEVEL[level].map((m) => ({ value: m, label: MISTAKES[m].label, defaultActive: true })),
 });
 
 const MISTAKE_BY_LEVEL: Record<DifficultyLevel, ToolMultiSelect> = {
-  level1: mistakePool(["leftToRight", "ignoreBrackets"]),
-  level2: mistakePool(["leftToRight", "ignoreBrackets", "mulFirst", "addFirst"]),
-  level3: mistakePool(MISTAKE_IDS),
+  level1: mistakePool("level1"),
+  level2: mistakePool("level2"),
+  level3: mistakePool("level3"),
 };
 
-const TASK_POOL: ToolMultiSelect = {
+// Insert brackets needs the idea of brackets, so it starts at Level 2.
+const taskPool = (level: DifficultyLevel): ToolMultiSelect => ({
   key: "task",
   label: "Task",
   options: [
-    { value: "insertBrackets", label: "Insert brackets", defaultActive: true },
+    ...(level === "level1" ? [] : [{ value: "insertBrackets", label: "Insert brackets", defaultActive: true }]),
     { value: "spotMistake", label: "Spot the mistake", defaultActive: true },
     { value: "isCorrect", label: "Is it correct?", defaultActive: true },
   ],
+});
+const TASK_BY_LEVEL: Record<DifficultyLevel, ToolMultiSelect> = {
+  level1: taskPool("level1"),
+  level2: taskPool("level2"),
+  level3: taskPool("level3"),
 };
 
 // ── Insert brackets ───────────────────────────────────────────────────────────
@@ -778,9 +914,11 @@ const TASK_POOL: ToolMultiSelect = {
 interface InsertDraw { flat: Seq; bracketed: Seq; group: Seq; target: number }
 
 function genInsert(level: DifficultyLevel): InsertDraw | null {
-  const allowed: Op[] = level === "level1" ? ["+", "*"] : ["+", "-", "*", "/"];
+  // Brackets are the Level 2 idea, so this starts at Level 2: a plain line (3–4 numbers); Level 3
+  // adds a power (4–5 numbers), using the Level 2 idea inside the harder line.
+  const allowed: Op[] = ["+", "-", "*", "/"];
   for (let tries = 0; tries < 600; tries++) {
-    const n = level === "level1" ? pick([3, 4]) : level === "level2" ? pick([3, 4, 4, 5]) : pick([4, 5]);
+    const n = level === "level3" ? pick([4, 5]) : pick([3, 4, 4]);
     const terms: Node[] = Array.from({ length: n }, () => N(Math.random() < 0.12 ? 1 : randInt(2, 9)));
     if (level === "level3") terms[randInt(0, n - 1)] = P(randInt(2, 5), 2);
     const ops: Op[] = Array.from({ length: n - 1 }, () => pick(allowed));
@@ -815,14 +953,14 @@ function genInsert(level: DifficultyLevel): InsertDraw | null {
 const FALLBACK = E(3, "+", 4, "*", 5);
 
 function genEvaluate(level: DifficultyLevel, msv: Record<string, boolean>): AnyQuestion {
-  const { struct, nums } = EVAL_POOLS[level];
-  const family = pickActive(msv, struct.options) as Family;
+  const { focus, nums } = EVAL_POOLS[level];
+  const family = pickActive(msv, focus.options) as Family;
   const nm = (nums ? pickActive(msv, nums.options) : "whole") as NumMode;
   const built = buildEval(level, family, nm) ?? buildEval(level, family, "whole");
   const ast = built?.ast ?? FALLBACK;
   const answer = built?.info.answer ?? 23;
   const dl = texBody(ast, NO_HL);
-  const score = weightOf(struct.options, family) + (nums ? weightOf(nums.options, nm) : 0);
+  const score = weightOf(focus.options, family) + (nums ? weightOf(nums.options, nm) : 0);
   return {
     kind: "simple",
     display: dl,
@@ -874,6 +1012,11 @@ function studentLines(id: MistakeId, ast: Seq): Seq[] | null {
     case "addFirst": return flatNums ? buggyChain(ast, "addFirst") : null;
     case "ignoreBrackets": {
       const run = runSteps(stripBrackets(ast));
+      return run ? run.steps.map((s) => s.after) : null;
+    }
+    case "rootGroup":
+    case "fracGroup": {
+      const run = runSteps(flattenGroups(ast));
       return run ? run.steps.map((s) => s.after) : null;
     }
     case "powTimes":
@@ -967,7 +1110,7 @@ function genInsertQuestion(level: DifficultyLevel): AnyQuestion {
     answer: `${brTex} = ${d.target}`,
     answerLatex: `${brTex} = ${d.target}`,
     working: [
-      mStep("Brackets go here:", [flatTex, "\\longrightarrow " + brHl]),
+      { ...mStep("Brackets go here:", [flatTex, "\\longrightarrow " + brHl]), extra: { pyramid: { strong: ["B"], soft: [] } } },
       ...workingSteps(d.bracketed),
     ],
     key: `ooo-insert-${level}-${flatTex}-${d.target}-${Math.floor(Math.random() * 1_000_000)}`,
@@ -983,7 +1126,7 @@ const generateQuestion = (
   multiSelectValues: Record<string, boolean> = {},
 ): AnyQuestion => {
   if (tool === "evaluate") return genEvaluate(level, multiSelectValues);
-  const task = pickActive(multiSelectValues, TASK_POOL.options);
+  const task = pickActive(multiSelectValues, TASK_BY_LEVEL[level].options);
   return task === "insertBrackets" ? genInsertQuestion(level)
     : task === "isCorrect" ? genIsCorrect(level, multiSelectValues)
     : genMistake(level, multiSelectValues);
@@ -1001,58 +1144,61 @@ const TOOL_CONFIG: ToolConfig = {
       instruction: "Work out:",
       variables: [],
       dropdown: null,
-      multiSelect: [STRUCT_L2, NUM_L2],
+      multiSelect: [EVAL_POOLS.level1.focus],
       difficultySettings: {
-        level1: { variables: [], dropdown: null, multiSelect: [STRUCT_L1] },
-        level2: { variables: [], dropdown: null, multiSelect: [STRUCT_L2, NUM_L2] },
-        level3: { variables: [], dropdown: null, multiSelect: [STRUCT_L3, NUM_L3] },
+        level1: { variables: [], dropdown: null, multiSelect: [EVAL_POOLS.level1.focus] },
+        level2: { variables: [], dropdown: null, multiSelect: [EVAL_POOLS.level2.focus, EVAL_POOLS.level2.nums as ToolMultiSelect] },
+        level3: { variables: [], dropdown: null, multiSelect: [EVAL_POOLS.level3.focus, EVAL_POOLS.level3.nums as ToolMultiSelect] },
       },
     },
     fixIt: {
-      name: "Brackets & Mistakes",
+      name: "Spot the Mistake",
       variables: [],
       dropdown: null,
-      multiSelect: [TASK_POOL, MISTAKE_BY_LEVEL.level1],
+      multiSelect: [TASK_BY_LEVEL.level1, MISTAKE_BY_LEVEL.level1],
       difficultySettings: {
-        level1: { variables: [], dropdown: null, multiSelect: [TASK_POOL, MISTAKE_BY_LEVEL.level1] },
-        level2: { variables: [], dropdown: null, multiSelect: [TASK_POOL, MISTAKE_BY_LEVEL.level2] },
-        level3: { variables: [], dropdown: null, multiSelect: [TASK_POOL, MISTAKE_BY_LEVEL.level3] },
+        level1: { variables: [], dropdown: null, multiSelect: [TASK_BY_LEVEL.level1, MISTAKE_BY_LEVEL.level1] },
+        level2: { variables: [], dropdown: null, multiSelect: [TASK_BY_LEVEL.level2, MISTAKE_BY_LEVEL.level2] },
+        level3: { variables: [], dropdown: null, multiSelect: [TASK_BY_LEVEL.level3, MISTAKE_BY_LEVEL.level3] },
       },
     },
   },
 };
 
 const INFO_SECTIONS: InfoSection[] = [
-  { title: "Evaluate", icon: "🔢", content: [
-    { label: "Overview", detail: "Work out an expression using the order of operations. The Worked Example rewrites the line one stage at a time, boxing the part that is done next, so the order is visible." },
-    { label: "Level 1 — Green", detail: "Whole numbers: + − × ÷ with and without brackets. Squares are available as an option." },
-    { label: "Level 2 — Yellow", detail: "Brackets and indices (squares and cubes), left-to-right chains such as 24 ÷ 4 × 2, with roots and fraction bars available. Negative numbers are an option." },
-    { label: "Level 3 — Red", detail: "Everything: indices, brackets and indices together, square roots, fraction bars and nested brackets, with negative numbers and decimals (including the trap −3² against (−3)²)." },
-    { label: "Order used", detail: "Brackets first (the top and bottom of a fraction bar and the inside of a root sign act as brackets), then indices and roots, then × and ÷ left to right, then + and − left to right." },
+  { title: "How the levels build", icon: "🔺", content: [
+    { label: "Level 1 — Who goes first?", detail: "Operations only. × and ÷ come before + and −, and operations on the same tier of the pyramid (× ÷, or + −) are done left to right." },
+    { label: "Level 2 — Things that jump the queue", detail: "Brackets and powers (squares and cubes) go first. Once they are cleared, what is left is a Level 1 question." },
+    { label: "Level 3 — Symbols that act as brackets", detail: "A root sign and a fraction bar work like brackets: do everything under the root, or on the top and bottom, first. Also brackets inside brackets, innermost first." },
+    { label: "Never the same question twice over", detail: "Each level's questions need that level's idea, so a Level 3 question can't be a Level 1 or 2 one." },
   ]},
-  { title: "Brackets & Mistakes", icon: "🧐", content: [
-    { label: "Insert brackets", detail: "One pair of brackets must be added to make a statement true. Each question has exactly one correct place for them." },
+  { title: "Evaluate", icon: "🔢", content: [
+    { label: "Overview", detail: "Work out an expression. The Worked Example rewrites the line one stage at a time, boxing the part that is done next, and lights the matching tier of the BIDMAS pyramid." },
+    { label: "Focus", detail: "Which idea within the level to practise. Level 1: × ÷ before + −, Left to right, or Both. Level 2: Brackets, Powers, or Both. Level 3: Roots, Fraction bar, or Nested brackets." },
+    { label: "Numbers (Levels 2–3)", detail: "Whole numbers (default), negatives, or decimals. Negatives bring in −3² against (−3)² and subtracting a negative." },
+    { label: "BIDMAS pyramid", detail: "Whiteboard shows the pyramid in the working box (hide it with the box's button). B, then I, then D and M together, then A and S together: the two side-by-side tiers are done left to right." },
+  ]},
+  { title: "Spot the Mistake", icon: "🧐", content: [
     { label: "Spot the mistake", detail: "A student's working is shown, line by line, with a mistake in it; find the mistake and the correct answer." },
-    { label: "Is it correct?", detail: "Someone says an expression equals a value — sometimes right, sometimes a classic mistake. Is it correct? Choose which mistakes can appear in the Question Options." },
-    { label: "Levels", detail: "Level 1: working left to right and ignoring brackets. Level 2 adds × before ÷ and + before −. Level 3 adds multiplying the base by the index and squaring a negative sign." },
+    { label: "Is it correct?", detail: "Someone says an expression equals a value — sometimes right, sometimes a classic mistake." },
+    { label: "Insert brackets (Levels 2–3)", detail: "One pair of brackets must be added to make a statement true. Each question has exactly one correct place for them." },
+    { label: "Mistakes by level", detail: "Level 1: ignoring priority, × before ÷, + before −. Level 2: ignoring brackets, treating a power as ×, squaring a negative sign. Level 3: taking the root of only part of what is under the sign, treating the fraction bar as only a divide sign." },
   ]},
   { title: "Modes", icon: "🖥️", content: [
-    { label: "Whiteboard", detail: "One question with working space beside it." },
-    { label: "Worked Example", detail: "Step by step: each press shows the next stage, with the part being worked out boxed." },
+    { label: "Whiteboard", detail: "One question with working space beside it, with the BIDMAS pyramid available." },
+    { label: "Worked Example", detail: "Step by step: each press shows the next stage, with the part being worked out boxed and its pyramid tier lit." },
     { label: "Worksheet", detail: "A grid of questions with PDF export. The Smart Progressor orders the sheet easy to hard." },
   ]},
-  { title: "Question Options", icon: "⚙️", content: [
-    { label: "Question Types", detail: "Which kinds of expression can appear (operations, left-to-right chains, brackets, indices, roots, fraction bars, nested brackets)." },
-    { label: "Numbers", detail: "Whole numbers, negative numbers or decimals — one is chosen for each question." },
-  ]},
 ];
+
+const pyramidOf = (step: WorkingStep) => (step.extra as { pyramid?: { strong: PyramidTier[]; soft: PyramidTier[] } } | undefined)?.pyramid;
 
 // Exposes internals to the generator smoke tests (src/tests/generators.test.ts) and to
 // the engine tests (src/tests/orderOfOperations.test.ts).
 export const __test = {
   TOOL_CONFIG,
   generateQuestion,
-  engine: { E, P, R, F, NEG, N, texBody, NO_HL, runSteps, evalNode, analyse, SHAPES, buildEval, MISTAKES, genInsert, drawMistake, studentLines },
+  engine: { E, P, R, F, NEG, N, texBody, NO_HL, runSteps, evalNode, analyse, SHAPES, buildEval, MISTAKES, genInsert, drawMistake, studentLines, levelOf, LEVEL_OF, EVAL_POOLS, MISTAKES_BY_LEVEL },
 };
 
 export default function App() {
@@ -1061,6 +1207,13 @@ export default function App() {
       config={TOOL_CONFIG}
       infoSections={INFO_SECTIONS}
       generateQuestion={generateQuestion}
+      // The pyramid is the picture beside the steps: the tier being used lights up each step.
+      stepVisualRenderer={(step) => {
+        const t = pyramidOf(step);
+        return t ? <BidmasPyramid strong={t.strong} soft={t.soft} maxWidth={360} /> : null;
+      }}
+      stepVisualKeepsWorking
+      workingScaffold={{ label: "BIDMAS pyramid", render: () => <BidmasPyramid maxWidth={420} /> }}
       defaults={{ numColumns: 2 }}
     />
   );

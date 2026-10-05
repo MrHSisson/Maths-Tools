@@ -1,68 +1,66 @@
 # Tool Spec: Order of Operations (BIDMAS)
 
 **Status:** implemented — `src/tools/Number/OrderOfOperations.tsx`, registered **dev-gated**
-(`enabled: false`, Number → group "Order of operations"). Engine tests:
-`src/tests/orderOfOperations.test.ts`.
+(`enabled: false`, Number → group "Order of operations"). Tests: `src/tests/orderOfOperations.test.ts`.
+Shared piece: `src/shared/components/BidmasPyramid.tsx`.
 
-**Origin:** the Functional Skills generator already has a BIDMAS skill (≈30 hand-written 2–3 step
-templates: brackets, squares; negatives only as a "no negative answers" filter; no decimals, cubes,
-roots or fraction bars). This tool is the ToolShell version — whiteboard, worked example, worksheet —
-with the missing content and, above all, working that *shows the order*.
+**Origin:** the Functional Skills generator has a BIDMAS skill (≈30 hand-written templates). This is the
+ToolShell version — whiteboard, worked example, worksheet — rebuilt (2026-10-05) around a progression of
+**ideas** rather than a menu of variations, and checked against class worksheets.
 
-## What it does
-Two sub-tools, three levels each.
+## The principle: levels are ideas, and each builds on the one below
+Each level introduces ONE new idea, and every question at that level **needs** it. Clearing the new idea
+leaves a question from the level below, so Level 1 literally helps solve Level 2. Enforced in code by
+`levelOf(ast)` (1 = operations only, 2 = needs a bracket or a power, 3 = needs a root, a fraction bar or
+brackets inside brackets); generation rejects any draw whose level differs, so a harder idea can never
+appear on an easier level and levels never overlap.
 
-**Evaluate** (`instruction: "Work out:"`) — one `SimpleQuestion` expression; answer is a number.
-**Brackets & Mistakes** — `WordedQuestion`, two tasks drawn from a pool:
-- *Insert brackets*: one pair of brackets makes `2 + 3 × 4 + 1 = 21` true. Exactly one placement gives
-  the target, the target differs from the unbracketed value and is ≥ 1.
-- *Spot the mistake*: the student's working is shown line by line (`9 + 4 × 3 + 2` → `13 × 3 + 2` → `39 + 2` → `41`, the left-to-right error). Answer: the correct value with the mistake named in `answerSuffix`; the first working step explains it. Every draw is rejected unless the student's lines really end at the wrong answer.
-- *Is it correct?* (from the class worksheet): "Matthew says `9 + 3 × 2 = 15`. Is Matthew correct?" Half true, half a classic mistake; answer "Yes/No: expr = value".
+| Level | Idea | Focus options (≤ 3, all on by default) |
+|---|---|---|
+| 1 | **Who goes first?** × ÷ before + −; equal priority goes left to right | × ÷ before + − · Left to right · Both |
+| 2 | **Things that jump the queue** — brackets, then powers (squares, cubes). A bracket may itself contain a Level 1 line. | Brackets · Powers · Both |
+| 3 | **Symbols that act as brackets** — roots, the fraction bar, brackets inside brackets | Roots · Fraction bar · Nested brackets |
 
-## The order used (stated in the info modal)
-Brackets (innermost first; **a root sign and the top and bottom of a fraction bar act as brackets**) →
-indices and roots → × and ÷ left to right → + and − left to right. Independent operations of the same
-stage in different places go in one step (`2 × 3 + 4 × 5` → `6 + 20`); a chain is one operation per
-step so left-to-right is visible.
+**Numbers** (Evaluate, Levels 2–3 only; one drawn per question, default Whole): Whole · Negatives
+(brings in −3² vs (−3)² and subtracting a negative) · Decimals (L3). Whole mode never has a negative step.
+Limits: values ≤ 500, every division exact, ≤ 2 d.p. in decimals mode. Pools are weighted (Smart Progressor).
+
+## Sub-tools
+**Evaluate** (`Work out:`) — one expression, a number answer.
+**Spot the Mistake** — worded questions, task pool per level:
+- *Spot the mistake*: the student's working line by line (`9 + 4 × 3 + 2` → `13 × 3 + 2` → `39 + 2` → `41`), find the mistake and the correct answer. A draw is rejected unless the lines really end at the wrong answer.
+- *Is it correct?*: "Matthew says `9 + 3 × 2 = 15`. Is Matthew correct?" Half true, half a classic mistake.
+- *Insert brackets* (**Levels 2–3 only** — brackets are the Level 2 idea): "Insert one pair of brackets to make `2 + 3 × 4 + 1 = 21` true." Exactly one placement works; L3 adds a power and 5 numbers.
+
+Mistakes belong to the level whose idea they get wrong:
+| Level | Mistakes |
+|---|---|
+| 1 | Ignores priority (left to right) · × before ÷ · + before − |
+| 2 | Ignores brackets · Power as × (3² = 6) · −3² as 9 |
+| 3 | Root of part only (√(9+16) as √9+16) · Bar not a bracket ((a+b)/c as a+b/c) |
+
+## The BIDMAS pyramid
+`BidmasPyramid` (shared): B ( ) on top, I ² ³, then **D ÷ | M ×** and **A + | S −** as split tiers — same
+tier = equal priority = left to right. A KEY, not a working representation (carries no quantities), so it
+is not one of the six core representations. Used as:
+- **Whiteboard**: a `workingScaffold` in the working box (hide/show with the box button).
+- **Worked Example**: the split picture beside the steps (`stepVisualRenderer` + `stepVisualKeepsWorking`); each step's `extra.pyramid` lights the tier in use (**strong**) and its equal-priority partner or the operation inside a bracket (**soft**) — e.g. `8 ÷ 2 × 3`: D strong, M soft, then M strong.
 
 ## Worked-example working
-Each step is `mStep(stage label, [line with the next move boxed, "= next line"])` — the line is
-rewritten, the part being done is boxed amber (`\colorbox`), then the result line arrives on the next
-press. Labels name the stage ("Indices:", "Divide (left to right):", "Brackets — add:", "Under the root
-— …", "Divide the top by the bottom:"). No new representation.
+Each step is `mStep(stage label, [line with the next move boxed (\colorbox), "= next line"])`. Labels name the
+stage ("Indices:", "Divide (left to right):", "Brackets — add:", "Under the root — …",
+"Divide the top by the bottom:"). Roots and fraction bars act as brackets; independent operations of the same
+stage share a step; a chain goes one operation per step.
 
-## Content by level (Evaluate) — Question Types pool + Numbers pool, both weighted (Smart Progressor)
-| Level | Question Types (default on) | Numbers |
-|---|---|---|
-| 1 | Operations, Brackets (offered: Left to right, Indices — squares only) | whole only |
-| 2 | Left to right, Brackets, Indices (squares and cubes), Brackets + indices (offered: Operations, Roots, Fraction bar) | Whole ✓, Negatives |
-| 3 | Indices, Brackets + indices, Roots, Fraction bar, Nested brackets (offered: the rest) | Negatives ✓, Decimals ✓, Whole |
-One Numbers option is drawn per question (mutually exclusive), so the pools are weighted pools, not toggles.
-Whole mode never has a negative intermediate or answer. Negatives mode always contains a negative
-number (including the trap `−3²` and `(−3)²`). Decimals mode: one-decimal operands, ≤ 2 dp throughout.
-All values ≤ 500; every division exact.
-
-## Mistake pool (Brackets & Mistakes)
-L1: left to right · brackets ignored. L2: + × before ÷ · + before −. L3: + base × index (3² = 6) ·
-negative squared (−3² = 9). Each draw is rejected unless the wrong answer differs from the right one.
-
-## Acceptance / correctness reference (all asserted in `orderOfOperations.test.ts`)
-- `3 + 4 × 2²` → `3 + 4 × 4` → `3 + 16` → `19` (labels Indices, Multiply, Add).
-- `8 ÷ 2 × 3` → `4 × 3` → `12` (label "Divide (left to right)"); `10 − 3 + 4` → `7 + 4` → `11`.
-- `2 × ((3 + 4) − 1)` → `2 × (7 − 1)` → `2 × 6` → `12` (innermost bracket first).
+## Acceptance / correctness reference (asserted in the tests)
+- `3 + 4 × 2²` → `3 + 4 × 4` → `3 + 16` → `19`; `8 ÷ 2 × 3` → `4 × 3` → `12`; `10 − 3 + 4` → `7 + 4` → `11`.
+- `2 × ((3 + 4) − 1)` → `2 × (7 − 1)` → `2 × 6` → `12`; `(3 + 4 × 2) × 5` clears the bracket with a Level 1 step first.
 - `−3² + 5` = −4 but `(−3)² + 5` = 14; `4 − 2 × (−3)` → `4 − (−6)` → `10`.
 - `√(9 + 16) + 12/(5 − 1)` → `√25 + 12/4` → `√25 + 3` → `5 + 3` → `8`.
-- For every family × number mode the stepper's final value equals an independent straight evaluator.
+- Worksheet items (7 + 2 × 3, 10 − √16, (2 + 8)³, 8² + 2 × 3², 7 × (8 ÷ 4)², 11 + 11 − 6² ÷ 2, 9 + 3² × 10 ÷ 2 = 90 with brackets, and the student-working item 9 + 4 × 3 + 2 → 41) hold.
+- Every family × number mode: stepper result = independent evaluator; `levelOf` of every generated question = its level.
+- Each step carries pyramid tiers: `7 + 2 × 3` → M then A; `8 ÷ 2 × 3` → D (soft M) then M; a bracket → B (soft = inner operation); a power → I.
 
-## Not in scope / follow-ups
-- No Teach deck or skill-library entries (parked gate); no `[[skill|term]]` links.
-- No fractions as operands other than the fraction bar; no powers above cubes, no negative indices.
-- Going live is a separate call once it has had a classroom look.
-
-## Checked against the class worksheets (2026-10-05)
-Worksheet items (7 + 2 × 3, 10 − √16, √(2 + 14), (2 + 8)³, 8² + 2 × 3², 7 × (8 ÷ 4)², 11 + 11 − 6² ÷ 2,
-insert-brackets lines such as 9 + 3² × 10 ÷ 2 = 90, and the "Matthew says…" / student-working items) are asserted
-in `orderOfOperations.test.ts`. Shapes added from them: a² + b × c², a + a − b² ÷ c, a × (b ÷ c)², (a + b)² or
-(a + b)³, √s + b², a × b − √s; insert-brackets lines of 3–5 terms with ÷ and an occasional 1.
-Not covered (by design): "make as many different answers as you can" (open investigation) and the algebra
-expression-choice item (n + 2 × 3 vs (n + 2) × 3).
+## Not in scope
+"Make as many different answers as you can" (open investigation); the algebra expression-choice item
+(n + 2 × 3 vs (n + 2) × 3); Teach deck and skill-library entries (parked gate); going live (a separate call).

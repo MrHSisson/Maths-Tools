@@ -54,6 +54,7 @@ export { randInt, pick, fracStr, mStr, pickActive, normalizeMultiSelect, resolve
 // time, currency conversion, recipe scaling…). See src/shared/ratioTable.ts.
 export { rStep, rStepBuild } from "./ratioTable";
 export { RatioTable, ratioTableStepRenderer, ratioTableStepVisual } from "./components/RatioTable";
+export { BidmasPyramid, type BidmasPyramidProps, type PyramidTier } from "./components/BidmasPyramid";
 
 // Place value table — core representation for place value (powers of 10,
 // decimal add/subtract…). See src/shared/placeValue.ts.

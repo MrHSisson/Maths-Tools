@@ -5,7 +5,7 @@
 import { describe, it, expect } from "vitest";
 import { __test } from "../tools/Number/OrderOfOperations";
 
-const { E, P, R, F, NEG, texBody, NO_HL, runSteps, evalNode, SHAPES, buildEval, MISTAKES, genInsert, analyse, drawMistake, studentLines } = __test.engine;
+const { E, P, R, F, NEG, texBody, NO_HL, runSteps, evalNode, SHAPES, buildEval, MISTAKES, genInsert, analyse, drawMistake, studentLines, levelOf, LEVEL_OF, MISTAKES_BY_LEVEL } = __test.engine;
 const { generateQuestion } = __test as any;
 
 const lines = (ast: ReturnType<typeof E>) => {
@@ -81,7 +81,7 @@ describe("stepper agrees with straight evaluation", () => {
       it(`${fam} / ${nm}`, () => {
         let built = 0;
         for (let i = 0; i < 60; i++) {
-          const b = buildEval("level3", fam, nm);
+          const b = buildEval(LEVEL_OF[fam], fam, nm);
           if (!b) continue;
           built++;
           expect(b.info.answer).toBe(evalNode(b.ast));
@@ -100,7 +100,7 @@ describe("mistake questions", () => {
     it(`${id}: the wrong answer differs from the right one`, () => {
       let found = 0;
       for (let i = 0; i < 40; i++) {
-        const b = buildEval("level3", def.family, def.nm);
+        const b = buildEval(def.level, def.family, def.nm);
         if (!b || (def.needs && !def.needs(b.ast))) continue;
         if (def.wrong(b.ast) !== b.info.answer) found++;
       }
@@ -111,7 +111,7 @@ describe("mistake questions", () => {
 
 describe("insert brackets", () => {
   it("the bracketed line evaluates to the target and the target is unique", () => {
-    for (const level of ["level1", "level2", "level3"] as const) {
+    for (const level of ["level2", "level3"] as const) {
       for (let i = 0; i < 40; i++) {
         const d = genInsert(level)!;
         expect(d).toBeTruthy();
@@ -175,6 +175,82 @@ describe("student working always arrives at the wrong answer", () => {
       const q = generateQuestion("fixIt", "level3", {}, "", { isCorrect: true, insertBrackets: false, spotMistake: false });
       expect(q.kind).toBe("worded");
       expect(q.answerLatex).toMatch(/mathrm\{(Yes|No):\}/);
+    }
+  });
+});
+
+describe("the levels build on each other and never overlap", () => {
+  const families = Object.keys(SHAPES) as (keyof typeof SHAPES)[];
+  for (const fam of families) {
+    it(`${fam}: every question needs exactly its level's idea`, () => {
+      const want = { level1: 1, level2: 2, level3: 3 }[LEVEL_OF[fam] as "level1"];
+      for (const nm of ["whole", "negatives", "decimals"] as const) {
+        for (let i = 0; i < 25; i++) {
+          const b = buildEval(LEVEL_OF[fam], fam, nm);
+          if (b) expect(levelOf(b.ast)).toBe(want);
+        }
+      }
+    });
+  }
+  it("levelOf classifies by idea", () => {
+    expect(levelOf(E(7, "+", 2, "*", 3))).toBe(1);
+    expect(levelOf(E(8, "/", 2, "*", 3))).toBe(1);
+    expect(levelOf(E(E(7, "+", 2), "*", 3))).toBe(2);
+    expect(levelOf(E(5, "-", P(2, 2)))).toBe(2);
+    expect(levelOf(E(NEG(P(3, 2)), "+", 5))).toBe(2);
+    expect(levelOf(E(10, "-", R(16)))).toBe(3);
+    expect(levelOf(E(F(E(8, "+", 4), E(5, "-", 1))))).toBe(3);
+    expect(levelOf(E(2, "*", E(E(3, "+", 4), "-", 1)))).toBe(3);
+  });
+  it("Level 2 brackets can use the Level 1 idea inside (a Level 1 line is the sub-problem)", () => {
+    const ast = E(E(3, "+", 4, "*", 2), "*", 5);
+    expect(levelOf(ast)).toBe(2);
+    const steps = runSteps(ast)!.steps;
+    expect(steps[0].label).toBe("Brackets — multiply:");
+    expect(texBody(steps[0].after, NO_HL)).toBe("\\left(3 + 8\\right) \\times 5");
+  });
+  it("each level offers only its own mistakes and Insert brackets starts at Level 2", () => {
+    expect(MISTAKES_BY_LEVEL.level1).toEqual(["leftToRight", "mulFirst", "addFirst"]);
+    expect(MISTAKES_BY_LEVEL.level2).toEqual(["ignoreBrackets", "powTimes", "negSquare"]);
+    expect(MISTAKES_BY_LEVEL.level3).toEqual(["rootGroup", "fracGroup"]);
+    const q1 = (__test.TOOL_CONFIG.tools.fixIt.difficultySettings as any).level1.multiSelect[0].options.map((o: any) => o.value);
+    const q2 = (__test.TOOL_CONFIG.tools.fixIt.difficultySettings as any).level2.multiSelect[0].options.map((o: any) => o.value);
+    expect(q1).not.toContain("insertBrackets");
+    expect(q2).toContain("insertBrackets");
+  });
+  it("selectors are small: at most 3 options per group", () => {
+    for (const tool of Object.values(__test.TOOL_CONFIG.tools) as any[]) {
+      for (const ds of Object.values(tool.difficultySettings) as any[]) {
+        for (const g of [].concat(ds.multiSelect)) expect((g as any).options.length).toBeLessThanOrEqual(3);
+      }
+    }
+  });
+});
+
+describe("BIDMAS pyramid tiers", () => {
+  const tiers = (ast: ReturnType<typeof E>) => runSteps(ast)!.steps.map((s) => s.tiers);
+  it("7 + 2 × 3 lights M then A", () => {
+    expect(tiers(E(7, "+", 2, "*", 3))).toEqual([{ strong: ["M"], soft: [] }, { strong: ["A"], soft: [] }]);
+  });
+  it("8 ÷ 2 × 3 lights D with M as its equal-priority partner, then M", () => {
+    const t = tiers(E(8, "/", 2, "*", 3));
+    expect(t[0]).toEqual({ strong: ["D"], soft: ["M"] });
+    expect(t[1]).toEqual({ strong: ["M"], soft: [] });
+  });
+  it("10 − 3 + 4 lights S with A softly", () => {
+    expect(tiers(E(10, "-", 3, "+", 4))[0]).toEqual({ strong: ["S"], soft: ["A"] });
+  });
+  it("a bracket step lights B, with the operation inside softly; a power lights I", () => {
+    const t = tiers(E(E(3, "+", 4), "*", P(2, 2)));
+    expect(t[0]).toEqual({ strong: ["B"], soft: ["A"] });
+    expect(t[1]).toEqual({ strong: ["I"], soft: [] });
+  });
+  it("every Evaluate working step carries a pyramid", () => {
+    for (const lv of ["level1", "level2", "level3"] as const) {
+      for (let i = 0; i < 30; i++) {
+        const q: any = generateQuestion("evaluate", lv, {}, "", {});
+        for (const w of q.working) expect(w.extra?.pyramid?.strong?.length).toBeGreaterThan(0);
+      }
     }
   });
 });

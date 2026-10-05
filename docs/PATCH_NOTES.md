@@ -28,6 +28,13 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-05 — Order of Operations rebuilt around ideas; BIDMAS pyramid
+- **Levels are now ideas, each building on the one below** (spec: `specs/order-of-operations.md`): L1 *Who goes first?* (× ÷ before + −, left to right) · L2 *Things that jump the queue* (brackets, powers; a bracket may contain a Level 1 line) · L3 *Symbols that act as brackets* (roots, fraction bar, nested brackets). `levelOf` rejects any draw that isn't its level, so a harder idea never appears lower and levels never overlap. Tests assert it.
+- Selectors cut from an 8-way row to **Focus** (3 options per level) and a separate **Numbers** choice (L2–3, default Whole). Mistakes and tasks align to the levels; Insert brackets starts at Level 2. Sub-tool 2 renamed "Spot the Mistake".
+- New mistakes at Level 3: root of part only, fraction bar not a bracket (`flattenGroups`).
+- **New shared `BidmasPyramid`** (B ( ) / I ² ³ / D ÷ | M × / A + | S −): a whiteboard scaffold, and in the Worked Example the picture beside the steps, lighting the tier in use (equal-priority partner softly). Steps carry `extra.pyramid`.
+- 530 tests pass; build clean.
+
 ## 2026-10-05 — BIDMAS checked against worksheets; Decimal Add/Sub Level 3 d.p. is a max
 - Order of Operations: students' working is now shown line by line in Spot the mistake (reproduces the worksheet's 9 + 4 × 3 + 2 → 13 × 3 + 2 → 39 + 2 → 41); new **Is it correct?** task ("Matthew says … Is Matthew correct?"); extra shapes from the worksheets (a² + b × c², 7 × (8 ÷ 4)², (a + b)³, √s + b², …) and longer insert-brackets lines (3–5 terms, ÷, occasional 1).
 - **Bug fix:** Insert brackets dropped an operator when the brackets were not at the end of the line (e.g. `(3² + 6) − 71`). The test now strips the brackets back out and compares with the original line.

@@ -307,7 +307,7 @@ import { type PrintMode } from "../../shared";
 `DifficultyLevel` · `PrintMode` · `AnyQuestion` · `SimpleQuestion` · `WordedQuestion` · `WorkingStep` · `ToolConfig` · `ToolEntry` · `ToolDropdown` · `ToolMultiSelect` · `ToolMultiSelectConfig` · `ToolVariable` · `DifficultyLevelSettings` · `InfoSection` · `InfoItem` · `QOSnapshot` · `ToolShellDefaults` · `ToolShellProps` · `TeachingSlide` · `TeachBlock` · `TeachBar` · `TeachScene` · `TeachCategory` · `SkillDef` · `WorkedExampleStepsProps` · `TechniquePreviewPageDef`
 
 **Components / hooks**:
-`ToolShell` · `TeachingDeck` · `SlideDeck` · `MathRenderer` · `InlineMath` · `QuestionDisplay` · `AnswerDisplay` · `DifficultyToggle` · `StandardQOPopover` · `DiffQOPopover` · `InlineQOPanel` · `InfoModal` · `MenuDropdown` · `PrintSplitButton` · `SkillLabel` · `SkillOverlay` · `WorkedExampleSteps` · `TechniquePreviewPage`
+`ToolShell` · `TeachingDeck` · `SlideDeck` · `MathRenderer` · `InlineMath` · `QuestionDisplay` · `AnswerDisplay` · `DifficultyToggle` · `StandardQOPopover` · `DiffQOPopover` · `InlineQOPanel` · `InfoModal` · `MenuDropdown` · `PrintSplitButton` · `SkillLabel` · `SkillOverlay` · `WorkedExampleSteps` · `TechniquePreviewPage` · `BidmasPyramid` (an order-of-operations *key*, not a working representation — `strong`/`soft` light tiers; reference: `src/tools/Number/OrderOfOperations.tsx`)
 
 **Helpers**:
 `randInt` · `pick` · `fracStr` · `mStr` · `pickActive` · `normalizeMultiSelect` · `step` · `tStep` · `mStep` · `fmt` · `ansEq` · `makeUniqueQ` · `stripSkillMarkers` · `SKILL_MARKER_RE` · `slideMaxStep` · `weightOf` · `sortByDifficulty` · `buildQuotaOverrides`
