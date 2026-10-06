@@ -1,10 +1,8 @@
 # Depth Bank: Rounding
 
-**Status:** implemented (dev-gated, awaiting review) — `src/tools/Number/RoundingDepth.ts` (+ `RoundingDepthLine.ts`), 25 items.
+**Status:** implemented — live — `src/tools/Number/RoundingDepth.ts` (+ `RoundingDepthLine.ts`), 25 items.
 
-**Gating.** Unlike other Depth banks, Rounding's bank only shows with **Developing-tools mode** on: `Rounding.tsx` passes
-`depthItems={devMode ? DEPTH_ITEMS : undefined}`. Remove the `useDevMode` gate to take it live. `__test.depthItems` is always
-exported so CI checks the bank either way.
+**Gating.** None — live for everyone (it was dev-gated while it was built and reviewed). `__test.depthItems` exposes the bank to CI.
 
 ## Structure
 

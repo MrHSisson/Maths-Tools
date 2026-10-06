@@ -5,7 +5,6 @@ import {
   type ToolMultiSelect, type ToolVariable,
   randInt, pickActive, mStep, tStep, QuestionDisplay, AnswerDisplay, handlePrint, type WorkingStep, type QOSnapshot, type ToolDropdown,
 } from "../../shared";
-import { useDevMode } from "../../devMode";
 import { DEPTH_ITEMS } from "./RoundingDepth";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -601,7 +600,6 @@ const printRounding: typeof handleDiagramPrint = (qs, mode, el, ctx) => {
 };
 
 export default function App() {
-  const devMode = useDevMode();   // the Depth bank is dev-gated until it has been reviewed
   return (
     <ToolShell
       config={TOOL_CONFIG}
@@ -613,7 +611,7 @@ export default function App() {
       stepVisualKeepsWorking
       stepVisualPlacement="top"
       reformatQuestion={reformatQuestion}
-      depthItems={devMode ? DEPTH_ITEMS : undefined}
+      depthItems={DEPTH_ITEMS}
       customPrintHandler={printRounding}
       defaults={{ numColumns: 2, maxColumns: 2, numQuestions: 12, qoColumns: 2, collapseWorkingByDefault: true, hideAnswerStep: true }}
     />

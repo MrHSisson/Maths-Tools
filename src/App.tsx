@@ -5,7 +5,6 @@ import LandingPage from './components/LandingPage';
 import { ToolErrorBoundary } from './components/ToolErrorBoundary';
 import { ALL_TOOLS } from './registry';
 import { useParkedMode } from './parkedMode';
-import { useDevMode } from './devMode';
 import { InkOverlay } from './shared/components/InkOverlay';
 
 // Routes are generated from the registry. Each tool is lazy-loaded so it
@@ -50,13 +49,13 @@ function ParkedRoute({ Component }: { Component: ComponentType }) {
   return parkedMode ? <Component /> : <NotFound />;
 }
 
-// The ink overlay is dev-gated and only on tool pages — not the landing page, and not the two sandboxes
-// (they have their own board and hotbar). It is keyed by route so ink never carries from one tool to another.
+// The ink overlay (write anywhere on a tool page) is live on every tool page — not the landing page, and not the two
+// sandboxes (they have their own board and hotbar). It is keyed by route so ink never carries from one tool to another.
 const NO_INK = new Set(['/', '/algebra-tiles', '/negative-counters']);
+const TOOL_PATHS = new Set(ALL_TOOLS.map((t) => t.path));
 function InkLayer() {
-  const dev = useDevMode();
   const { pathname } = useLocation();
-  return dev && !NO_INK.has(pathname) ? <InkOverlay key={pathname} /> : null;
+  return TOOL_PATHS.has(pathname) && !NO_INK.has(pathname) ? <InkOverlay key={pathname} /> : null;   // not on the 404 page either
 }
 
 function App() {

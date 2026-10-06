@@ -624,6 +624,14 @@ The **Teach** deck (`TeachingDeck`, `src/shared/TeachingDeck.tsx`) is a slide-ba
 
 **Adding a new scene type:** extend the `TeachScene` union, add its beat count to `sceneMaxStep`, and render it in `SceneView` (+ a component). Drive animation with CSS transitions on SVG (opacity/transform), no libraries — see `SplitScene`. The URL `mode=teach` deep-links to the deck.
 
+### Ink overlay — writing anywhere (app-level, never per tool)
+
+`src/shared/components/InkOverlay.tsx` is mounted **once in `App.tsx`** and appears on every tool page (not the landing page; not the Algebra Tiles / Negative Counters sandboxes, which have their own board and hotbar — add a route to `NO_INK` for any new sandbox). A pencil button opens a movable hotbar: **Freeze** (the page is live, the ink stays) · **Pen** · **Eraser** · Undo · Clear · colours; tap the active Pen / Eraser again for its options flyout (pen thickness; eraser size and **Part** vs **Whole line**). In Draw a drag inks and a short still tap is **forwarded** to the element underneath, so buttons keep working. Never re-implement drawing in a tool, and never add per-tool ink wiring.
+
+- **Forwarded taps are synthetic**, so the browser refuses anything that needs a genuine click (popups — Print). Mark such a control **`data-trusted-click`**: tapping it while drawing freezes the layer ("Frozen — tap again") so the second tap is a real click. Fullscreen / Present / the visualiser camera do *not* need it.
+- Ink is stored in **screen (viewport) coordinates** (page-anchored ink slid when the Whiteboard fullscreen re-laid out the page) and clears on route change; it is hidden when printing.
+- Hotbar position (`mt-ink-hotbar`) and pen / eraser choices (`mt-ink-prefs`) are remembered per device. The bar never changes size when the tool changes — options live in flyout menus that open perpendicular to it. Pure helpers (`dockFromDrop`, `placeHotbar`, `classifyPress`, `eraseAt`) are unit-tested in `src/tests/inkOverlay.test.ts`.
+
 ### Shareable links — URL parameter format
 
 ToolShell mirrors the current setup into the URL query string (`history.replaceState`, only non-default values), so the address bar is always bookmarkable and the burger menu's "Copy Link to Setup" copies it. Opening a link restores the full setup; a `mode=worksheet` link auto-generates the worksheet on arrival. Invalid/stale params fall back to defaults — old links never break.
