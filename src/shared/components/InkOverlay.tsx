@@ -30,6 +30,9 @@ const INK_WIDTH = 3;
 // viewport, so it survives resizes and the bar changing shape; double-click the grip to reset.
 export interface HotbarDock { v: boolean; cx: number; cy: number }
 const EDGE = 90, MARGIN = 8, DOCK_KEY = "mt-ink-hotbar";
+/** The area fixed-position elements actually live in: the window minus any classic scrollbar (innerWidth includes it,
+ *  which pushed a right-docked bar ~15px under the scrollbar). */
+const viewport = () => ({ w: document.documentElement.clientWidth || window.innerWidth, h: document.documentElement.clientHeight || window.innerHeight });
 const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
 const clamp01 = (n: number) => clamp(n, 0, 1);
 
@@ -58,7 +61,7 @@ function loadDock(): HotbarDock {
     const d = JSON.parse(localStorage.getItem(DOCK_KEY) ?? "null");
     if (d && typeof d.v === "boolean" && Number.isFinite(d.cx) && Number.isFinite(d.cy)) return { v: d.v, cx: clamp01(d.cx), cy: clamp01(d.cy) };
   } catch { /* private mode etc. */ }
-  return defaultDock(window.innerWidth);
+  return defaultDock(viewport().w);
 }
 const saveDock = (d: HotbarDock | null) => { try { if (d) localStorage.setItem(DOCK_KEY, JSON.stringify(d)); else localStorage.removeItem(DOCK_KEY); } catch { /* ignore */ } };
 
@@ -96,7 +99,7 @@ export function InkOverlay() {
   const [size, setSize] = useState({ w: 56, h: 460 });
   const barRef = useRef<HTMLDivElement>(null);
   const grab = useRef<{ dx: number; dy: number } | null>(null);
-  const [vp, setVp] = useState({ w: window.innerWidth, h: window.innerHeight });
+  const [vp, setVp] = useState(viewport);
   const liveRef = useRef<Stroke | null>(null);   // the stroke being drawn (state mirrors it for rendering)
   const hintTimer = useRef<number | undefined>(undefined);
 
@@ -116,9 +119,12 @@ export function InkOverlay() {
     m();
     const ro = new ResizeObserver(m);
     ro.observe(el);
-    const onResize = () => setVp({ w: window.innerWidth, h: window.innerHeight });
+    // the scrollbar can appear or vanish without a window resize (the page grows or shrinks), so watch the root element too
+    const onResize = () => setVp((v) => { const n = viewport(); return n.w === v.w && n.h === v.h ? v : n; });
+    const rootRo = new ResizeObserver(onResize);
+    rootRo.observe(document.documentElement);
     window.addEventListener("resize", onResize);
-    return () => { ro.disconnect(); window.removeEventListener("resize", onResize); };
+    return () => { ro.disconnect(); rootRo.disconnect(); window.removeEventListener("resize", onResize); };
   }, [open, dock.v]);
 
   const gripDown = (e: React.PointerEvent) => {
@@ -131,11 +137,12 @@ export function InkOverlay() {
   };
   const gripMove = (e: React.PointerEvent) => { if (grab.current) setDrag({ px: e.clientX - grab.current.dx, py: e.clientY - grab.current.dy, x: e.clientX, y: e.clientY }); };
   const gripUp = () => {
-    if (grab.current && drag) { const d = dockFromDrop({ x: drag.x, y: drag.y }, { x: drag.px, y: drag.py }, window.innerWidth, window.innerHeight); setDock(d); saveDock(d); }
+    if (grab.current && drag) { const v = viewport();
+      const d = dockFromDrop({ x: drag.x, y: drag.y }, { x: drag.px, y: drag.py }, v.w, v.h); setDock(d); saveDock(d); }
     grab.current = null;
     setDrag(null);
   };
-  const resetDock = () => { const d = defaultDock(window.innerWidth); setDock(d); saveDock(null); };
+  const resetDock = () => { const d = defaultDock(viewport().w); setDock(d); saveDock(null); };
 
   // Esc freezes the layer
   useEffect(() => {
@@ -231,7 +238,7 @@ export function InkOverlay() {
         const rule = v ? { width: 26, height: 1, background: "#475569", margin: "2px 0" } : { width: 1, height: 26, background: "#475569", margin: "0 2px" };
         return (
           <div ref={barRef} onPointerDown={(e) => e.stopPropagation()}
-            style={{ position: "fixed", left: pos.left, top: pos.top, zIndex: 2003, display: "flex", flexDirection: v ? "column" : "row", alignItems: "center", gap: 4, padding: "6px 8px", background: "#2d3340", borderRadius: 14, boxShadow: "0 8px 28px rgba(0,0,0,0.35)", maxWidth: "calc(100vw - 16px)", maxHeight: "calc(100vh - 16px)", flexWrap: "wrap", justifyContent: "center" }}>
+            style={{ position: "fixed", left: pos.left, top: pos.top, zIndex: 2003, display: "flex", flexDirection: v ? "column" : "row", alignItems: "center", gap: 4, padding: "6px 8px", background: "#2d3340", borderRadius: 14, boxShadow: "0 8px 28px rgba(0,0,0,0.35)", width: "max-content", height: "max-content", maxWidth: vp.w - 16, maxHeight: vp.h - 16, flexWrap: "wrap", justifyContent: "center" }}>
             <div onPointerDown={gripDown} onPointerMove={gripMove} onPointerUp={gripUp} onPointerCancel={gripUp} onDoubleClick={resetDock} title="Drag to move (double-click to reset). Dock on a side edge for a vertical bar."
               style={{ width: v ? 38 : 22, height: v ? 22 : 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: drag ? "grabbing" : "grab", touchAction: "none", flexShrink: 0 }}>
               <GripVertical size={18} color="#94a3b8" style={{ transform: v ? "rotate(90deg)" : "none" }} />
