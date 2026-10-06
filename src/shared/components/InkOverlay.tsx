@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { MousePointer2, Pencil, Eraser, Trash2, Undo2, X } from "lucide-react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { MousePointer2, Pencil, Eraser, Trash2, Undo2, X, GripVertical } from "lucide-react";
 import { HotBtn, PEN_COLORS, eraseNear, strokePath, type Stroke } from "./BoardTools";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -22,6 +22,43 @@ export type InkMode = "frozen" | "pen" | "eraser";
 const TAP_MAX_MS = 300;          // a press shorter than this that stays put is a tap
 const DRAG_PX = 6;               // moving further than this turns a press into ink
 const INK_WIDTH = 3;
+
+
+// ── Hotbar placement ─────────────────────────────────────────────────────────
+// The hotbar is movable: drag its grip. Dropped against a side edge it docks there and turns vertical (out of the way
+// of the question); anywhere else it lies flat. The position is stored as the bar's CENTRE as a fraction of the
+// viewport, so it survives resizes and the bar changing shape; double-click the grip to reset.
+export interface HotbarDock { v: boolean; cx: number; cy: number }
+const EDGE = 90, MARGIN = 8, DOCK_KEY = "mt-ink-hotbar";
+const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
+const clamp01 = (n: number) => clamp(n, 0, 1);
+
+/** Out of the box: a vertical bar on the right edge (a phone gets it flat along the bottom). */
+export const defaultDock = (vw: number): HotbarDock => (vw < 640 ? { v: false, cx: 0.5, cy: 1 } : { v: true, cx: 1, cy: 0.5 });
+
+/** Where a bar dropped with its centre at (px, py) docks: on a side edge it goes vertical, otherwise flat. */
+export function dockFromDrop(px: number, py: number, vw: number, vh: number): HotbarDock {
+  const cy = clamp01(py / vh), cx = clamp01(px / vw);
+  if (px < EDGE) return { v: true, cx: 0, cy };
+  if (px > vw - EDGE) return { v: true, cx: 1, cy };
+  if (py > vh - EDGE) return { v: false, cx, cy: 1 };
+  if (py < EDGE) return { v: false, cx, cy: 0 };
+  return { v: false, cx, cy };
+}
+
+/** Top-left of a bar of size w × h for a dock, kept fully on screen. */
+export function placeHotbar(d: HotbarDock, vw: number, vh: number, w: number, h: number) {
+  return { left: clamp(d.cx * vw - w / 2, MARGIN, Math.max(MARGIN, vw - w - MARGIN)), top: clamp(d.cy * vh - h / 2, MARGIN, Math.max(MARGIN, vh - h - MARGIN)) };
+}
+
+function loadDock(): HotbarDock {
+  try {
+    const d = JSON.parse(localStorage.getItem(DOCK_KEY) ?? "null");
+    if (d && typeof d.v === "boolean" && Number.isFinite(d.cx) && Number.isFinite(d.cy)) return { v: d.v, cx: clamp01(d.cx), cy: clamp01(d.cy) };
+  } catch { /* private mode etc. */ }
+  return defaultDock(window.innerWidth);
+}
+const saveDock = (d: HotbarDock | null) => { try { if (d) localStorage.setItem(DOCK_KEY, JSON.stringify(d)); else localStorage.removeItem(DOCK_KEY); } catch { /* ignore */ } };
 
 /** What a finished press was: a tap to forward, a held press that draws a dot, or nothing (it became ink). */
 export function classifyPress(movedPx: number, ms: number, becameInk: boolean): "ink" | "tap" | "dot" {
@@ -52,6 +89,12 @@ export function InkOverlay() {
   const [hint, setHint] = useState<string | null>(null);
   const layerRef = useRef<HTMLDivElement>(null);
   const press = useRef<{ x0: number; y0: number; t0: number; type: string; ink: boolean; pts: { x: number; y: number }[] } | null>(null);
+  const [dock, setDock] = useState<HotbarDock>(loadDock);
+  const [drag, setDrag] = useState<{ px: number; py: number } | null>(null);   // live centre while the bar is being dragged
+  const [size, setSize] = useState({ w: 56, h: 460 });
+  const barRef = useRef<HTMLDivElement>(null);
+  const grab = useRef<{ dx: number; dy: number } | null>(null);
+  const [vp, setVp] = useState({ w: window.innerWidth, h: window.innerHeight });
   const liveRef = useRef<Stroke | null>(null);   // the stroke being drawn (state mirrors it for rendering)
   const hintTimer = useRef<number | undefined>(undefined);
 
@@ -62,6 +105,35 @@ export function InkOverlay() {
   }, []);
 
   useEffect(() => () => window.clearTimeout(hintTimer.current), []);
+
+  // measure the bar (its size changes with orientation and wrapping) and track the viewport
+  useLayoutEffect(() => {
+    const el = barRef.current;
+    if (!el) return;
+    const m = () => setSize((z) => (Math.abs(z.w - el.offsetWidth) < 1 && Math.abs(z.h - el.offsetHeight) < 1 ? z : { w: el.offsetWidth, h: el.offsetHeight }));
+    m();
+    const ro = new ResizeObserver(m);
+    ro.observe(el);
+    const onResize = () => setVp({ w: window.innerWidth, h: window.innerHeight });
+    window.addEventListener("resize", onResize);
+    return () => { ro.disconnect(); window.removeEventListener("resize", onResize); };
+  }, [open, dock.v]);
+
+  const gripDown = (e: React.PointerEvent) => {
+    const el = barRef.current;
+    if (!el) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    const r = el.getBoundingClientRect();
+    grab.current = { dx: e.clientX - (r.left + r.width / 2), dy: e.clientY - (r.top + r.height / 2) };
+    setDrag({ px: r.left + r.width / 2, py: r.top + r.height / 2 });
+  };
+  const gripMove = (e: React.PointerEvent) => { if (grab.current) setDrag({ px: e.clientX - grab.current.dx, py: e.clientY - grab.current.dy }); };
+  const gripUp = () => {
+    if (grab.current && drag) { const d = dockFromDrop(drag.px, drag.py, window.innerWidth, window.innerHeight); setDock(d); saveDock(d); }
+    grab.current = null;
+    setDrag(null);
+  };
+  const resetDock = () => { const d = defaultDock(window.innerWidth); setDock(d); saveDock(null); };
 
   // Esc freezes the layer
   useEffect(() => {
@@ -149,24 +221,34 @@ export function InkOverlay() {
         </button>
       )}
 
-      {/* hotbar */}
-      {open && (
-        <div onPointerDown={(e) => e.stopPropagation()}
-          style={{ position: "fixed", bottom: 16, left: "50%", transform: "translateX(-50%)", zIndex: 2003, display: "flex", alignItems: "center", gap: 4, padding: "6px 8px", background: "#2d3340", borderRadius: 14, boxShadow: "0 8px 28px rgba(0,0,0,0.35)", maxWidth: "calc(100vw - 16px)", flexWrap: "wrap", justifyContent: "center" }}>
-          <HotBtn active={mode === "frozen"} onClick={() => setMode("frozen")} title="Freeze — use the page (ink stays)"><MousePointer2 size={18} color="#e2e8f0" /></HotBtn>
-          <HotBtn active={mode === "pen"} onClick={() => setMode("pen")} title="Pen — drag to write, tap to press buttons"><Pencil size={18} color="#e2e8f0" /></HotBtn>
-          <HotBtn active={mode === "eraser"} onClick={() => setMode("eraser")} title="Eraser"><Eraser size={18} color="#e2e8f0" /></HotBtn>
-          <HotBtn active={false} onClick={() => setStrokes((s) => s.slice(0, -1))} title="Undo last stroke" disabled={strokes.length === 0}><Undo2 size={18} color={strokes.length ? "#e2e8f0" : "#64748b"} /></HotBtn>
-          <HotBtn active={false} onClick={() => setStrokes([])} title="Clear all ink" disabled={strokes.length === 0}><Trash2 size={18} color={strokes.length ? "#fca5a5" : "#64748b"} /></HotBtn>
-          <div style={{ width: 1, height: 26, background: "#475569", margin: "0 2px" }} />
-          {PEN_COLORS.map((c) => (
-            <button key={c} onClick={() => { setColor(c); setMode("pen"); }} title="Pen colour"
-              style={{ width: 22, height: 22, borderRadius: "50%", background: c, cursor: "pointer", padding: 0, flexShrink: 0, border: color === c ? "2.5px solid #fff" : "2px solid rgba(255,255,255,0.2)" }} />
-          ))}
-          <div style={{ width: 1, height: 26, background: "#475569", margin: "0 2px" }} />
-          <HotBtn active={false} onClick={() => { setMode("frozen"); setOpen(false); }} title="Close (ink stays)"><X size={18} color="#e2e8f0" /></HotBtn>
-        </div>
-      )}
+      {/* hotbar — movable: drag the grip; docks vertical against a side edge */}
+      {open && (() => {
+        const live = drag ? { v: dock.v, cx: drag.px / vp.w, cy: drag.py / vp.h } : dock;
+        const pos = placeHotbar(live, vp.w, vp.h, size.w, size.h);
+        const v = dock.v;
+        const rule = v ? { width: 26, height: 1, background: "#475569", margin: "2px 0" } : { width: 1, height: 26, background: "#475569", margin: "0 2px" };
+        return (
+          <div ref={barRef} onPointerDown={(e) => e.stopPropagation()}
+            style={{ position: "fixed", left: pos.left, top: pos.top, zIndex: 2003, display: "flex", flexDirection: v ? "column" : "row", alignItems: "center", gap: 4, padding: "6px 8px", background: "#2d3340", borderRadius: 14, boxShadow: "0 8px 28px rgba(0,0,0,0.35)", maxWidth: "calc(100vw - 16px)", maxHeight: "calc(100vh - 16px)", flexWrap: "wrap", justifyContent: "center", transition: drag ? "none" : "left 0.15s, top 0.15s" }}>
+            <div onPointerDown={gripDown} onPointerMove={gripMove} onPointerUp={gripUp} onPointerCancel={gripUp} onDoubleClick={resetDock} title="Drag to move (double-click to reset). Dock on a side edge for a vertical bar."
+              style={{ width: v ? 38 : 22, height: v ? 22 : 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: drag ? "grabbing" : "grab", touchAction: "none", flexShrink: 0 }}>
+              <GripVertical size={18} color="#94a3b8" style={{ transform: v ? "rotate(90deg)" : "none" }} />
+            </div>
+            <HotBtn active={mode === "frozen"} onClick={() => setMode("frozen")} title="Freeze — use the page (ink stays)"><MousePointer2 size={18} color="#e2e8f0" /></HotBtn>
+            <HotBtn active={mode === "pen"} onClick={() => setMode("pen")} title="Pen — drag to write, tap to press buttons"><Pencil size={18} color="#e2e8f0" /></HotBtn>
+            <HotBtn active={mode === "eraser"} onClick={() => setMode("eraser")} title="Eraser"><Eraser size={18} color="#e2e8f0" /></HotBtn>
+            <HotBtn active={false} onClick={() => setStrokes((s) => s.slice(0, -1))} title="Undo last stroke" disabled={strokes.length === 0}><Undo2 size={18} color={strokes.length ? "#e2e8f0" : "#64748b"} /></HotBtn>
+            <HotBtn active={false} onClick={() => setStrokes([])} title="Clear all ink" disabled={strokes.length === 0}><Trash2 size={18} color={strokes.length ? "#fca5a5" : "#64748b"} /></HotBtn>
+            <div style={rule} />
+            {PEN_COLORS.map((c) => (
+              <button key={c} onClick={() => { setColor(c); setMode("pen"); }} title="Pen colour"
+                style={{ width: 22, height: 22, borderRadius: "50%", background: c, cursor: "pointer", padding: 0, flexShrink: 0, border: color === c ? "2.5px solid #fff" : "2px solid rgba(255,255,255,0.2)" }} />
+            ))}
+            <div style={rule} />
+            <HotBtn active={false} onClick={() => { setMode("frozen"); setOpen(false); }} title="Close (ink stays)"><X size={18} color="#e2e8f0" /></HotBtn>
+          </div>
+        );
+      })()}
 
       {hint && (
         <div role="status" style={{ position: "fixed", bottom: 76, left: "50%", transform: "translateX(-50%)", zIndex: 2004, background: "#0f172a", color: "#fff", fontSize: 13, fontWeight: 700, padding: "6px 14px", borderRadius: 999, boxShadow: "0 4px 14px rgba(0,0,0,0.3)" }}>{hint}</div>
