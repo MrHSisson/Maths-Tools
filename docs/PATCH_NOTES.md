@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-06 — Depth: no scrollbars, optional number line, new owl
+
+Depth slides never scroll: the panel content is now fit-scaled (`FitBox` in `DepthMode.tsx`) to the 16:9 panel at every screen size. A tool-drawn picture (`visual.type: "custom"`) can be shown or hidden on the question slide (`showByDefault`; the answer slide always shows it) — Rounding shows its line from the start at Level 1 and hides it at Level 2. The owl mascot is redrawn (gradient body, feather chest, tufts, brows, talons).
+
 ## 2026-10-05 — Rounding: Depth bank (dev-gated)
 
 26 curated diagnose / explain / extend items on **Rounding** (`RoundingDepth.ts`, spec `specs/depth/rounding.md`), levelled by idea — *Which way?* · *Which digit decides?* · *Edge cases & accuracy* — and shown on every tab, with d.p. / s.f.-specific items scoped by `tool` + `needs`. Includes the "round the digit but keep everything else" misconception (31.04 → 30.04). **Dev-gated:** the bank only appears with Developing-tools mode on. Level 1–2 items draw a number line through a new generic `visual: { type: "custom", render }` hook in the shared Depth mode (`RoundingDepthLine.ts` is the line). Numbers asserted in `src/tests/roundingDepth.test.ts`. Not built: letting the tool itself generate decimals under a whole-number target (see the spec's follow-ups).

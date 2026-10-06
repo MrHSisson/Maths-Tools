@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, ChevronLeft, ChevronRight, Info, ListChecks, Maximize, Minimize } from "lucide-react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { ArrowLeft, Eye, EyeOff, ChevronLeft, ChevronRight, Info, ListChecks, Maximize, Minimize } from "lucide-react";
 import { InlineMath, MathRenderer } from "./MathRenderer";
 import { BidmasPyramid } from "./BidmasPyramid";
 import { Avatar, Badge, Mascot } from "./DepthArt";
@@ -50,12 +50,55 @@ export interface DepthModeProps {
   activeOptions?: ReadonlySet<string>;
 }
 
+/** Scales its content down (never up) so it always fits the box it is given — a slide never needs a scrollbar.
+ *  The content is laid out at width W/s and scaled by s, so as it shrinks the text re-wraps wider (needing less
+ *  height) and the scale settles on the largest size that fits. Re-measured on resize and whenever the content's
+ *  own size changes (KaTeX finishing, an option picked, the line shown or hidden). */
+function FitBox({ children }: { children: ReactNode }) {
+  const outer = useRef<HTMLDivElement>(null);
+  const inner = useRef<HTMLDivElement>(null);
+  const [fit, setFit] = useState({ s: 1, top: 0, w: 0 });
+  useLayoutEffect(() => {
+    const o = outer.current, n = inner.current;
+    if (!o || !n) return;
+    let raf = 0;
+    const measure = () => {
+      const W = o.clientWidth, H = o.clientHeight;
+      if (!W || !H) return;
+      const heightAt = (s: number) => { n.style.width = `${W / s}px`; return n.offsetHeight; };
+      let s = 1;
+      for (let i = 0; i < 4; i++) {
+        const next = Math.min(1, H / heightAt(s));
+        if (Math.abs(next - s) < 0.004) break;
+        s = next;
+      }
+      // the loop can overshoot (a wider box needs less height, a bigger scale needs a narrower one): settle conservatively
+      let h = heightAt(s);
+      while (h * s > H && s > 0.2) { s *= 0.97; h = heightAt(s); }
+      setFit((f) => (Math.abs(f.s - s) < 0.003 && Math.abs(f.w - W / s) < 1 && Math.abs(f.top - Math.max(0, (H - h * s) / 2)) < 1 ? f : { s, top: Math.max(0, (H - h * s) / 2), w: W / s }));
+    };
+    const schedule = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(measure); };
+    measure();
+    const ro = new ResizeObserver(schedule);
+    ro.observe(o); ro.observe(n);
+    return () => { cancelAnimationFrame(raf); ro.disconnect(); };
+  }, []);
+  return (
+    <div ref={outer} data-fit-outer style={{ position: "relative", flex: "1 1 auto", minHeight: 0, width: "100%", overflow: "hidden" }}>
+      <div ref={inner} data-fit-inner style={{ position: "absolute", left: 0, top: fit.top, width: fit.w || "100%", transformOrigin: "top left", transform: `scale(${fit.s})` }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, narrow = false, optionInfo, activeOptions }: DepthModeProps) {
   const [purpose, setPurpose] = useState<DepthPurpose | "all">("all");
   const [slide, setSlide] = useState<0 | 1>(0); // 0 = the question slide, 1 = the answer slide
   const [check, setCheck] = useState<number | null>(null); // index into `starts` while a quick check runs
   const [picked, setPicked] = useState<number | null>(null); // tapped line of working
   const [showNote, setShowNote] = useState(false);
+  const [lineOverride, setLineOverride] = useState<boolean | null>(null); // teacher's show/hide of a custom picture (null = the item's default)
   const [present, setPresent] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
@@ -77,7 +120,7 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
   const nUnmet = atLevel.filter((i) => unmetOf(i)).length;
 
   // New item → back to the question slide.
-  useEffect(() => { setSlide(0); setPicked(null); setShowNote(false); }, [itemId]);
+  useEffect(() => { setSlide(0); setPicked(null); setShowNote(false); setLineOverride(null); }, [itemId]);
   // Arriving with ?item=<id> and no (or a different) level adopts the item's level; a level change made
   // by the teacher under an open item closes it. (Comparing with the previous level, not a one-shot flag,
   // keeps this correct when React runs effects twice in development.)
@@ -255,9 +298,22 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
     </div>
   );
 
-  // A tool-drawn picture (visual.type "custom") sits inline above the question, redrawn per slide.
-  const customVisual = current.visual?.type === "custom" && (
-    <div style={{ width: "100%", maxWidth: "30em", margin: "0 auto" }}>{current.visual.render(onAnswer)}</div>
+  // A tool-drawn picture (visual.type "custom") sits inline above the question, redrawn per slide. On the question
+  // slide the teacher can hide it (a plotted picture can give the answer away); the answer slide always shows it.
+  const cv = current.visual?.type === "custom" ? current.visual : null;
+  const lineShown = !cv ? false : onAnswer ? true : (lineOverride ?? cv.showByDefault ?? true);
+  const customVisual = cv && (
+    <div style={{ width: "100%", maxWidth: "30em", margin: "0 auto" }}>
+      {lineShown && cv.render(onAnswer)}
+      {!onAnswer && (
+        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: lineShown ? "0.1em" : 0 }}>
+          <button onClick={() => setLineOverride(!lineShown)}
+            style={{ display: "inline-flex", alignItems: "center", gap: "0.4em", fontSize: "0.62em", fontWeight: 700, padding: "0.25em 0.8em", borderRadius: "999px", border: "0.1em solid #cbd5e1", background: "#f8fafc", color: "#475569", cursor: "pointer" }}>
+            {lineShown ? <EyeOff size={13} /> : <Eye size={13} />}{lineShown ? "Hide number line" : "Show number line"}
+          </button>
+        </div>
+      )}
+    </div>
   );
 
   // ---- Slide 1: the question ----
@@ -330,7 +386,7 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
             <Badge colour="#fff" />
             <div className="flex flex-col items-start" style={{ gap: "0.35em" }}>{levelPill}{purposePill}</div>
           </div>
-          <Mascot mood={onAnswer ? "know" : "think"} size="6.2em" tone="light" />
+          <Mascot mood={onAnswer ? "know" : "think"} size="7.4em" tone="light" />
         </div>
       )}
 
@@ -338,10 +394,15 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
       <div className="flex flex-col items-start justify-center"
         style={narrow
           ? { position: "relative", background: "#fff", borderRadius: "1em", borderTop: `0.4em solid ${accent}`, boxShadow: "0 0.15em 0.6em rgba(0,0,0,0.08)", padding: "1em", gap: "0.7em" }
-          : { position: "absolute", top: "1.2em", bottom: "1.2em", left: "19%", right: "2.5%", background: "#fff", borderRadius: "1.1em", borderTop: `0.4em solid ${accent}`, boxShadow: "0 0.2em 0.9em rgba(0,0,0,0.08)", padding: "1.4em 1.8em 1.3em", gap: "0.65em", overflow: "auto" }}>
-        <div className="flex flex-col items-start justify-center" style={{ gap: narrow ? "0.7em" : "0.65em", width: "100%", margin: "auto 0" }}>
-          {onAnswer ? answerSlide : questionSlide}
-        </div>
+          : { position: "absolute", top: "1.2em", bottom: "1.2em", left: "19%", right: "2.5%", background: "#fff", borderRadius: "1.1em", borderTop: `0.4em solid ${accent}`, boxShadow: "0 0.2em 0.9em rgba(0,0,0,0.08)", padding: "1.4em 1.8em 1.3em", gap: "0.65em", overflow: "hidden" }}>
+        {(() => {
+          const slideBody = (
+            <div className="flex flex-col items-start justify-center" style={{ gap: narrow ? "0.7em" : "0.65em", width: "100%", margin: narrow ? "auto 0" : 0 }}>
+              {onAnswer ? answerSlide : questionSlide}
+            </div>
+          );
+          return narrow ? slideBody : <FitBox>{slideBody}</FitBox>;
+        })()}
         {/* the key lives in the panel's corner: visible from the start, lit on the answer slide */}
         {current.visual?.type === "pyramid" && (
           <div style={{ position: "absolute", top: "0.9em", right: "1.1em", width: narrow ? "6em" : "7.2em" }}>

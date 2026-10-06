@@ -9,7 +9,9 @@
 import type { DepthItem, DepthVisual } from "../../shared/depth";
 import { depthLine, type DepthLineSpec } from "./RoundingDepthLine";
 
-const line = (spec: DepthLineSpec): DepthVisual => ({ type: "custom", render: (onAnswer) => depthLine(spec, onAnswer) });
+// The number line is a scaffold: shown from the start at Level 1 (weak scaffolding), hidden at Level 2 where a plotted
+// line would give the answer away — the teacher can switch it on or off on the question slide either way.
+const line = (spec: DepthLineSpec, showByDefault = true): DepthVisual => ({ type: "custom", showByDefault, render: (onAnswer) => depthLine(spec, onAnswer) });
 
 export const DEPTH_ITEMS: DepthItem[] = [
   // ───────────────────────── Level 1 — Which way? ─────────────────────────
@@ -129,7 +131,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       { name: "Nina", says: ["$31.04$ to the nearest $10$ is $30.04$."] },
       { name: "Omar", says: ["$31.04$ to the nearest $10$ is $30$."] },
     ],
-    visual: line({ lo: "30", mid: "35", hi: "40", num: "31.04", pos: 0.104 }),
+    visual: line({ lo: "30", mid: "35", hi: "40", num: "31.04", pos: 0.104 }, false),
     question: ["Who is right?"],
     options: [
       { text: "Nina", misconception: "Rounds the digit but keeps everything else — the decimal part is carried along untouched" },

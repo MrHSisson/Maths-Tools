@@ -48,10 +48,12 @@ export interface DepthWorking {
 
 /** A picture shown on the slide. `pyramid` sits in the panel's corner (lit on the answer slide); `custom` is a
  *  tool-drawn picture (e.g. Rounding's number line) shown full width above the question, redrawn per slide —
- *  `onAnswer` is true on the answer slide. */
+ *  `onAnswer` is true on the answer slide. The teacher can show / hide it on the QUESTION slide (a plotted picture can
+ *  give the answer away): `showByDefault` (default true) sets where it starts — use false above the weakest scaffolding.
+ *  The answer slide always shows it. */
 export type DepthVisual =
   | { type: "pyramid"; strong?: PyramidTier[]; soft?: PyramidTier[] }
-  | { type: "custom"; render: (onAnswer: boolean) => ReactNode };
+  | { type: "custom"; render: (onAnswer: boolean) => ReactNode; showByDefault?: boolean };
 
 export type DepthNeed = string | string[];
 
