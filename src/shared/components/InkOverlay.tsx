@@ -12,7 +12,9 @@ import { HotBtn, PEN_COLORS, eraseNear, strokePath, type Stroke } from "./BoardT
 //
 // Forwarded taps are synthetic events, so the browser won't run anything that needs a real click (popups — Print).
 // Mark such a control `data-trusted-click`: tapping it while drawing freezes the layer and asks for a second tap,
-// which then lands as a genuine click. Ink is stored in PAGE coordinates, so it scrolls with the page.
+// which then lands as a genuine click. Ink is stored in SCREEN (viewport) coordinates, like a screen-annotation tool:
+// it stays exactly where it was drawn when the page re-lays out (Whiteboard fullscreen changes the page height and
+// scroll position) or scrolls — page-anchored ink slid and skewed against the content when that happened.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type InkMode = "frozen" | "pen" | "eraser";
@@ -47,7 +49,6 @@ export function InkOverlay() {
   const [color, setColor] = useState(PEN_COLORS[0]);
   const [strokes, setStrokes] = useState<Stroke[]>([]);
   const [live, setLive] = useState<Stroke | null>(null);
-  const [scroll, setScroll] = useState({ x: 0, y: 0 });
   const [hint, setHint] = useState<string | null>(null);
   const layerRef = useRef<HTMLDivElement>(null);
   const press = useRef<{ x0: number; y0: number; t0: number; type: string; ink: boolean; pts: { x: number; y: number }[] } | null>(null);
@@ -60,14 +61,7 @@ export function InkOverlay() {
     hintTimer.current = window.setTimeout(() => setHint(null), 2600);
   }, []);
 
-  // ink follows the page, so track scroll
-  useEffect(() => {
-    const on = () => setScroll({ x: window.scrollX, y: window.scrollY });
-    on();
-    window.addEventListener("scroll", on, { passive: true });
-    window.addEventListener("resize", on);
-    return () => { window.removeEventListener("scroll", on); window.removeEventListener("resize", on); window.clearTimeout(hintTimer.current); };
-  }, []);
+  useEffect(() => () => window.clearTimeout(hintTimer.current), []);
 
   // Esc freezes the layer
   useEffect(() => {
@@ -77,7 +71,7 @@ export function InkOverlay() {
     return () => window.removeEventListener("keydown", h);
   }, [mode]);
 
-  const page = (e: React.PointerEvent) => ({ x: e.clientX + window.scrollX, y: e.clientY + window.scrollY });
+  const page = (e: React.PointerEvent) => ({ x: e.clientX, y: e.clientY });
 
   const onDown = (e: React.PointerEvent) => {
     if (!e.isPrimary || (e.pointerType === "mouse" && e.button !== 0)) return;
@@ -130,10 +124,10 @@ export function InkOverlay() {
     <div data-ink-ui>
       <style>{"@media print { [data-ink-ui] { display: none !important; } }"}</style>
 
-      {/* the ink — page coordinates, so it scrolls with the content */}
+      {/* the ink — screen coordinates: it stays where it was drawn */}
       {all.length > 0 && (
         <svg aria-hidden="true" style={{ position: "fixed", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 2000 }}>
-          <g transform={`translate(${-scroll.x},${-scroll.y})`}>
+          <g>
             {all.map((s, i) => (
               <path key={i} d={strokePath(s.points)} fill="none" stroke={s.color} strokeWidth={INK_WIDTH} strokeLinecap="round" strokeLinejoin="round" />
             ))}
