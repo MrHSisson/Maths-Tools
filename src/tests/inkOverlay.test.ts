@@ -81,4 +81,18 @@ describe("Ink overlay press classification", () => {
     expect(eraseAt([line(4)], 100, 0, { ...DEFAULT_PREFS, eraseMode: "part" }).length).toBe(2);
     expect(PEN_WIDTHS.length).toBe(4); expect(ERASER_SIZES.length).toBe(3);
   });
+  it("erasers return the SAME array when nothing was hit, and keep untouched strokes' identity (no needless re-render)", () => {
+    const a = line(4), c = { color: "#f00", points: [{ x: 0, y: 200 }, { x: 200, y: 200 }] };
+    const all = [a, c];
+    expect(eraseNear(all, 900, 900, 16)).toBe(all);
+    expect(eraseWholeNear(all, 900, 900, 16)).toBe(all);
+    const cut = eraseNear(all, 100, 0, 16);
+    expect(cut).not.toBe(all);
+    expect(cut[cut.length - 1]).toBe(c);                 // the stroke the eraser never touched is the very same object
+    expect(eraseWholeNear(all, 100, 0, 16)[0]).toBe(c);
+  });
+  it("every pen thickness and eraser size has its own name (tooltips are never ambiguous)", () => {
+    expect(new Set(PEN_WIDTHS).size).toBe(PEN_WIDTHS.length);
+    expect(new Set(ERASER_SIZES).size).toBe(ERASER_SIZES.length);
+  });
 });

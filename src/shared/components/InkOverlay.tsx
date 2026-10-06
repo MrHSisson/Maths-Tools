@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { MousePointer2, Pencil, Eraser, Trash2, Undo2, X, GripVertical } from "lucide-react";
 import { HotBtn, PEN_COLORS, eraseNear, eraseWholeNear, strokePath, type Stroke } from "./BoardTools";
 
@@ -36,6 +36,22 @@ function loadPrefs(): InkPrefs {
   } catch { /* private mode etc. */ }
   return DEFAULT_PREFS;
 }
+
+// Stable ids for strokes (so React keeps each path's DOM node across erases) and one memoised <path> per stroke: the path
+// string is built once, and an untouched stroke is never re-rendered no matter how often the overlay is.
+const strokeIds = new WeakMap<Stroke, number>();
+let nextStrokeId = 1;
+const idOf = (s: Stroke) => { let id = strokeIds.get(s); if (!id) { id = nextStrokeId++; strokeIds.set(s, id); } return id; };
+const StrokePath = memo(function StrokePath({ s }: { s: Stroke }) {
+  const d = useMemo(() => strokePath(s.points), [s]);
+  return <path d={d} fill="none" stroke={s.color} strokeWidth={s.width ?? 3} strokeLinecap="round" strokeLinejoin="round" />;
+});
+const Strokes = memo(function Strokes({ strokes }: { strokes: Stroke[] }) {
+  return <g>{strokes.map((s) => <StrokePath key={idOf(s)} s={s} />)}</g>;
+});
+
+const MIN_STEP = 1.2;            // px — pen points closer than this to the last one are dropped (smaller strokes, faster everything)
+const HISTORY_MAX = 50;
 
 /** Erase at (x, y) with the chosen mode and size. */
 export const eraseAt = (strokes: Stroke[], x: number, y: number, prefs: InkPrefs): Stroke[] =>
@@ -90,10 +106,8 @@ export function classifyPress(movedPx: number, ms: number, becameInk: boolean): 
   return ms < TAP_MAX_MS ? "tap" : "dot";
 }
 
-/** Deliver a tap to the element under (x, y) as the events a real press would fire. Returns the target, or null. */
-function forwardTap(x: number, y: number, pointerType: string): Element | null {
-  const target = document.elementsFromPoint(x, y).find((e) => !e.closest("[data-ink-ui]")) ?? null;
-  if (!target) return null;
+/** Deliver a tap to `target` (the element under (x, y)) as the events a real press would fire. */
+function forwardTap(target: Element, x: number, y: number, pointerType: string): void {
   const base = { bubbles: true, cancelable: true, composed: true, clientX: x, clientY: y, view: window, button: 0 };
   target.dispatchEvent(new PointerEvent("pointerdown", { ...base, pointerId: 1, pointerType, isPrimary: true, buttons: 1 }));
   target.dispatchEvent(new MouseEvent("mousedown", { ...base, buttons: 1 }));
@@ -101,7 +115,6 @@ function forwardTap(x: number, y: number, pointerType: string): Element | null {
   target.dispatchEvent(new PointerEvent("pointerup", { ...base, pointerId: 1, pointerType, isPrimary: true, buttons: 0 }));
   target.dispatchEvent(new MouseEvent("mouseup", { ...base, buttons: 0 }));
   target.dispatchEvent(new MouseEvent("click", { ...base, buttons: 0 }));
-  return target;
 }
 
 export function InkOverlay() {
@@ -110,11 +123,24 @@ export function InkOverlay() {
   const [color, setColor] = useState(PEN_COLORS[0]);
   const [prefs, setPrefsState] = useState<InkPrefs>(loadPrefs);
   const setPrefs = (patch: Partial<InkPrefs>) => setPrefsState((p) => { const n = { ...p, ...patch }; try { localStorage.setItem(PREFS_KEY, JSON.stringify(n)); } catch { /* ignore */ } return n; });
-  const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);   // eraser size ring follows the pointer
+  const ringRef = useRef<HTMLDivElement>(null);   // the eraser's size ring — moved straight on the DOM node, never through React state
   const lastErase = useRef<{ x: number; y: number } | null>(null);
   const [menu, setMenu] = useState<"pen" | "eraser" | null>(null);   // which tool's options flyout is open
-  const [strokes, setStrokes] = useState<Stroke[]>([]);
-  const [live, setLive] = useState<Stroke | null>(null);
+  const [strokes, setStrokesState] = useState<Stroke[]>([]);
+  // `strokesRef` is the source of truth: handlers read the latest value even before React has re-rendered. Every change goes
+  // through `applyStrokes`, which skips the update entirely when nothing changed (an eraser sweeping empty space costs nothing).
+  const strokesRef = useRef<Stroke[]>([]);
+  const applyStrokes = (fn: (s: Stroke[]) => Stroke[]) => { const next = fn(strokesRef.current); if (next !== strokesRef.current) { strokesRef.current = next; setStrokesState(next); } };
+  const historyRef = useRef<Stroke[][]>([]);       // snapshots for undo (strokes are immutable, so a snapshot is just the array)
+  const [canUndo, setCanUndo] = useState(false);
+  const pushHistory = (prev: Stroke[]) => { historyRef.current = [...historyRef.current.slice(-(HISTORY_MAX - 1)), prev]; setCanUndo(true); };
+  const undo = () => { const h = historyRef.current; if (!h.length) return; const prev = h[h.length - 1]; historyRef.current = h.slice(0, -1); strokesRef.current = prev; setStrokesState(prev); setCanUndo(historyRef.current.length > 0); };
+  const clearAll = () => { if (!strokesRef.current.length) return; pushHistory(strokesRef.current); strokesRef.current = []; setStrokesState([]); };
+  const livePathRef = useRef<SVGPathElement>(null);   // the stroke being drawn: its `d` is written straight to the DOM, once a frame
+  const livePts = useRef<{ x: number; y: number }[]>([]);
+  const liveStyle = useRef<{ color: string; width: number } | null>(null);
+  const liveRaf = useRef(0);
+  const eraseStart = useRef<Stroke[] | null>(null);
   const [hint, setHint] = useState<string | null>(null);
   const layerRef = useRef<HTMLDivElement>(null);
   const press = useRef<{ x0: number; y0: number; t0: number; type: string; ink: boolean; pts: { x: number; y: number }[] } | null>(null);
@@ -128,7 +154,6 @@ export function InkOverlay() {
   const dragRef = useRef<{ px: number; py: number; x: number; y: number } | null>(null);
   const downAt = useRef<{ x: number; y: number } | null>(null);
   const [vp, setVp] = useState(viewport);
-  const liveRef = useRef<Stroke | null>(null);   // the stroke being drawn (state mirrors it for rendering)
   const hintTimer = useRef<number | undefined>(undefined);
 
   const showHint = useCallback((s: string) => {
@@ -191,12 +216,23 @@ export function InkOverlay() {
   // Esc freezes the layer
   useEffect(() => {
     if (mode === "frozen") return;
-    const h = (e: KeyboardEvent) => { if (e.key === "Escape") { if (menu) setMenu(null); else setMode("frozen"); } };
+    const h = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { if (menu) setMenu(null); else setMode("frozen"); }
+      else if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === "z") { e.preventDefault(); undo(); }
+    };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
-  }, [mode, menu]);
+  }, [mode, menu]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const page = (e: React.PointerEvent) => ({ x: e.clientX, y: e.clientY });
+
+  // paint the live stroke at most once a frame
+  const paintLive = () => {
+    if (liveRaf.current) return;
+    liveRaf.current = requestAnimationFrame(() => { liveRaf.current = 0; livePathRef.current?.setAttribute("d", strokePath(livePts.current)); });
+  };
+  const clearLive = () => { cancelAnimationFrame(liveRaf.current); liveRaf.current = 0; livePathRef.current?.setAttribute("d", ""); livePts.current = []; liveStyle.current = null; };
+  const moveRing = (x: number, y: number) => { const el = ringRef.current; if (el) { el.style.transform = `translate(${x - prefs.eraserR}px, ${y - prefs.eraserR}px)`; el.style.display = "block"; } };
 
   const onDown = (e: React.PointerEvent) => {
     setMenu(null);
@@ -211,72 +247,89 @@ export function InkOverlay() {
   const eraseTo = (p: { x: number; y: number }) => {
     const from = lastErase.current ?? p;
     const steps = Math.max(1, Math.ceil(Math.hypot(p.x - from.x, p.y - from.y) / Math.max(2, prefs.eraserR / 2)));
-    setStrokes((s) => { let out = s; for (let i = 1; i <= steps; i++) out = eraseAt(out, from.x + ((p.x - from.x) * i) / steps, from.y + ((p.y - from.y) * i) / steps, prefs); return out; });
+    applyStrokes((s) => { let out = s; for (let i = 1; i <= steps; i++) out = eraseAt(out, from.x + ((p.x - from.x) * i) / steps, from.y + ((p.y - from.y) * i) / steps, prefs); return out; });
     lastErase.current = p;
   };
   const beginInk = (p: { x: number; y: number }) => {
-    if (mode === "eraser") { lastErase.current = null; eraseTo(p); }
-    else { liveRef.current = { color, width: prefs.penWidth, points: [p] }; setLive(liveRef.current); }
+    if (mode === "eraser") { lastErase.current = null; eraseStart.current = strokesRef.current; eraseTo(p); }
+    else {
+      livePts.current = [p]; liveStyle.current = { color, width: prefs.penWidth };
+      const el = livePathRef.current;
+      if (el) { el.setAttribute("stroke", color); el.setAttribute("stroke-width", String(prefs.penWidth)); }
+      paintLive();
+    }
   };
   const onMove = (e: React.PointerEvent) => {
+    if (mode === "eraser") moveRing(e.clientX, e.clientY);
     const pr = press.current;
     if (!pr || !e.isPrimary) return;
-    const p = page(e);
     if (!pr.ink && Math.hypot(e.clientX - pr.x0, e.clientY - pr.y0) > DRAG_PX) {
       pr.ink = true;
       beginInk(pr.pts[0]);                       // start the stroke where the press began
     }
     if (!pr.ink) return;
-    if (mode === "eraser") eraseTo(p);
-    else if (liveRef.current) { liveRef.current = { ...liveRef.current, points: [...liveRef.current.points, p] }; setLive(liveRef.current); }
+    // the browser batches pointermoves to one per frame; the coalesced events are the ones in between (smoother, truer lines)
+    const native = e.nativeEvent as PointerEvent;
+    const evs = typeof native.getCoalescedEvents === "function" ? native.getCoalescedEvents() : [];
+    for (const ev of evs.length ? evs : [native]) {
+      const p = { x: ev.clientX, y: ev.clientY };
+      if (mode === "eraser") eraseTo(p);
+      else {
+        const last = livePts.current[livePts.current.length - 1];
+        if (!last || Math.hypot(p.x - last.x, p.y - last.y) >= MIN_STEP) livePts.current.push(p);
+      }
+    }
+    if (mode !== "eraser") paintLive();
   };
-  const onUp = (e: React.PointerEvent) => {
+  const finish = (e: React.PointerEvent) => {
     const pr = press.current;
     press.current = null;
     if (!pr) return;
     const kind = classifyPress(Math.hypot(e.clientX - pr.x0, e.clientY - pr.y0), performance.now() - pr.t0, pr.ink);
     if (kind === "ink") {
-      const done = liveRef.current;
-      liveRef.current = null;
-      setLive(null);
-      if (done && done.points.length >= 2) setStrokes((s) => [...s, done]);
+      if (mode === "eraser") {
+        // one undo step per erase gesture, and only if it removed something
+        if (eraseStart.current && strokesRef.current !== eraseStart.current) pushHistory(eraseStart.current);
+        eraseStart.current = null;
+      } else if (liveStyle.current && livePts.current.length >= 2) {
+        const done: Stroke = { color: liveStyle.current.color, width: liveStyle.current.width, points: livePts.current };
+        pushHistory(strokesRef.current);
+        applyStrokes((s) => [...s, done]);
+      }
+      clearLive();
     } else if (kind === "dot") {
-      if (mode === "pen") setStrokes((s) => [...s, { color, width: prefs.penWidth, points: [pr.pts[0], { x: pr.pts[0].x + 0.1, y: pr.pts[0].y }] }]);
+      if (mode === "pen") { pushHistory(strokesRef.current); applyStrokes((s) => [...s, { color, width: prefs.penWidth, points: [pr.pts[0], { x: pr.pts[0].x + 0.1, y: pr.pts[0].y }] }]); }
     } else {
-      // a tap: let the page have it
+      // a tap: let the page have it (one hit-test serves both the trusted-click check and the forward)
       const under = document.elementsFromPoint(e.clientX, e.clientY).find((el) => !el.closest("[data-ink-ui]"));
       if (under?.closest("[data-trusted-click]")) { setMode("frozen"); showHint("Frozen — tap again"); return; }
-      forwardTap(e.clientX, e.clientY, pr.type);
+      if (under) forwardTap(under, e.clientX, e.clientY, pr.type);
     }
   };
 
   const draw = mode !== "frozen";
-  const all = live ? [...strokes, live] : strokes;
 
   return (
     <div data-ink-ui>
       <style>{"@media print { [data-ink-ui] { display: none !important; } }"}</style>
 
-      {/* the ink — screen coordinates: it stays where it was drawn */}
-      {all.length > 0 && (
-        <svg aria-hidden="true" style={{ position: "fixed", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 2000 }}>
-          <g>
-            {all.map((s, i) => (
-              <path key={i} d={strokePath(s.points)} fill="none" stroke={s.color} strokeWidth={s.width ?? 3} strokeLinecap="round" strokeLinejoin="round" />
-            ))}
-          </g>
-        </svg>
-      )}
+      {/* the ink — screen coordinates: it stays where it was drawn. Committed strokes are memoised; the stroke being drawn
+          is one <path> updated directly (no React render per pointer move). */}
+      <svg aria-hidden="true" style={{ position: "fixed", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 2000 }}>
+        <Strokes strokes={strokes} />
+        <path ref={livePathRef} d="" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
 
       {/* the catching layer — only present while drawing */}
       {draw && (
-        <div ref={layerRef} onPointerDown={onDown} onPointerMove={(e) => { if (mode === "eraser") setCursor({ x: e.clientX, y: e.clientY }); onMove(e); }} onPointerUp={onUp} onPointerCancel={onUp} onPointerLeave={() => setCursor(null)}
+        <div ref={layerRef} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={finish} onPointerCancel={finish} onLostPointerCapture={finish}
+          onPointerLeave={() => { if (ringRef.current) ringRef.current.style.display = "none"; }}
           style={{ position: "fixed", inset: 0, zIndex: 2001, touchAction: "none", cursor: mode === "eraser" ? "none" : "crosshair", background: "transparent" }} />
       )}
 
-      {/* the eraser's size, drawn at the pointer */}
-      {draw && mode === "eraser" && cursor && (
-        <div aria-hidden="true" style={{ position: "fixed", left: cursor.x - prefs.eraserR, top: cursor.y - prefs.eraserR, width: prefs.eraserR * 2, height: prefs.eraserR * 2, borderRadius: "50%", border: `2px solid ${prefs.eraseMode === "line" ? "#dc2626" : "#475569"}`, background: "rgba(255,255,255,0.35)", pointerEvents: "none", zIndex: 2002 }} />
+      {/* the eraser's size, drawn at the pointer (positioned imperatively by moveRing) */}
+      {draw && mode === "eraser" && (
+        <div ref={ringRef} aria-hidden="true" style={{ position: "fixed", left: 0, top: 0, display: "none", width: prefs.eraserR * 2, height: prefs.eraserR * 2, borderRadius: "50%", border: `2px solid ${prefs.eraseMode === "line" ? "#dc2626" : "#475569"}`, background: "rgba(255,255,255,0.35)", pointerEvents: "none", zIndex: 2002, willChange: "transform" }} />
       )}
 
       {/* opener */}
@@ -315,17 +368,17 @@ export function InkOverlay() {
         const flyout = (children: React.ReactNode) => (
           <div role="menu" style={{ position: "absolute", ...place, display: "flex", flexDirection: v ? "row" : "column", alignItems: "center", gap: 4, padding: "6px", background: "#2d3340", borderRadius: 14, boxShadow: "0 8px 28px rgba(0,0,0,0.35)", zIndex: 2005 }}>{children}</div>
         );
-        const sizeLabel = (i: number, n: number) => (i === 0 ? "small" : i === n - 1 ? "large" : "medium");
+        const PEN_NAMES = ["thin", "medium", "thick", "extra thick"], ERASER_NAMES = ["small", "medium", "large"];
         const menuFor = (t: "pen" | "eraser") => t === "pen" ? flyout(
           PEN_WIDTHS.map((w, i) => (
-            <HotBtn key={w} active={prefs.penWidth === w} onClick={() => { setPrefs({ penWidth: w }); setMenu(null); }} title={`Pen thickness — ${sizeLabel(i, PEN_WIDTHS.length)}`}>
+            <HotBtn key={w} active={prefs.penWidth === w} onClick={() => { setPrefs({ penWidth: w }); setMenu(null); }} title={`Pen thickness — ${PEN_NAMES[i]}`}>
               <span style={{ width: 20, height: w, borderRadius: w, background: "#e2e8f0", display: "block" }} />
             </HotBtn>
           )),
         ) : flyout(
           <>
             {ERASER_SIZES.map((r, i) => (
-              <HotBtn key={r} active={prefs.eraserR === r} onClick={() => { setPrefs({ eraserR: r }); setMenu(null); }} title={`Eraser size — ${sizeLabel(i, ERASER_SIZES.length)}`}>
+              <HotBtn key={r} active={prefs.eraserR === r} onClick={() => { setPrefs({ eraserR: r }); setMenu(null); }} title={`Eraser size — ${ERASER_NAMES[i]}`}>
                 <span style={{ width: 6 + r / 2.2, height: 6 + r / 2.2, borderRadius: "50%", border: "2px solid #e2e8f0", display: "block" }} />
               </HotBtn>
             ))}
@@ -356,8 +409,8 @@ export function InkOverlay() {
             <HotBtn active={mode === "frozen"} onClick={() => { setMode("frozen"); setMenu(null); }} title="Freeze — use the page (ink stays)"><MousePointer2 size={18} color="#e2e8f0" /></HotBtn>
             {toolBtn("pen", <Pencil size={18} color="#e2e8f0" />, "Pen — drag to write, tap to press buttons. Tap again for thickness")}
             {toolBtn("eraser", <Eraser size={18} color="#e2e8f0" />, "Eraser — tap again for size and what it deletes")}
-            <HotBtn active={false} onClick={() => setStrokes((s) => s.slice(0, -1))} title="Undo last stroke" disabled={strokes.length === 0}><Undo2 size={18} color={strokes.length ? "#e2e8f0" : "#64748b"} /></HotBtn>
-            <HotBtn active={false} onClick={() => setStrokes([])} title="Clear all ink" disabled={strokes.length === 0}><Trash2 size={18} color={strokes.length ? "#fca5a5" : "#64748b"} /></HotBtn>
+            <HotBtn active={false} onClick={undo} title="Undo (Ctrl+Z)" disabled={!canUndo}><Undo2 size={18} color={canUndo ? "#e2e8f0" : "#64748b"} /></HotBtn>
+            <HotBtn active={false} onClick={clearAll} title="Clear all ink" disabled={strokes.length === 0}><Trash2 size={18} color={strokes.length ? "#fca5a5" : "#64748b"} /></HotBtn>
             <div style={rule} />
             {PEN_COLORS.map((c) => (
               <button key={c} onClick={() => { setColor(c); setMode("pen"); setMenu(null); }} title="Pen colour"

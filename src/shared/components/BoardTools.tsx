@@ -19,17 +19,24 @@ const ERASE_R = 14;
 // than deleting the whole thing.
 export const eraseNear = (strokes: Stroke[], px: number, py: number, r: number = ERASE_R): Stroke[] => {
   const out: Stroke[] = [];
+  let changed = false;
   for (const s of strokes) {
     let cur: { x: number; y: number }[] = [];
+    let hit = false;
+    const pieces: Stroke[] = [];
     for (const pt of s.points) {
       if (Math.hypot(pt.x - px, pt.y - py) < r) {
-        if (cur.length >= 2) out.push({ ...s, points: cur });
+        hit = true;
+        if (cur.length >= 2) pieces.push({ ...s, points: cur });
         cur = [];
       } else cur.push(pt);
     }
-    if (cur.length >= 2) out.push({ ...s, points: cur });
+    if (!hit) { out.push(s); continue; }          // untouched: keep the SAME object (cheap to compare / memoise)
+    changed = true;
+    if (cur.length >= 2) pieces.push({ ...s, points: cur });
+    out.push(...pieces);
   }
-  return out;
+  return changed ? out : strokes;                 // nothing erased: the same array, so callers can skip a re-render
 };
 
 /** Distance from (px, py) to the segment a–b. */
@@ -42,13 +49,15 @@ const distToSegment = (px: number, py: number, a: { x: number; y: number }, b: {
 
 /** Whole-line eraser: drop every stroke the eraser touches (a stroke is one continuous line, from pen down to pen up).
  *  Measured to the line SEGMENTS, not just the recorded points, so a fast, sparsely sampled stroke is still caught. */
-export const eraseWholeNear = (strokes: Stroke[], px: number, py: number, r: number = ERASE_R): Stroke[] =>
-  strokes.filter((s) => {
+export const eraseWholeNear = (strokes: Stroke[], px: number, py: number, r: number = ERASE_R): Stroke[] => {
+  const out = strokes.filter((s) => {
     const reach = r + (s.width ?? 3) / 2;
     if (s.points.length === 1) return Math.hypot(s.points[0].x - px, s.points[0].y - py) > reach;
     for (let i = 1; i < s.points.length; i++) if (distToSegment(px, py, s.points[i - 1], s.points[i]) <= reach) return false;
     return true;
   });
+  return out.length === strokes.length ? strokes : out;
+};
 
 // Smooth a freehand stroke into an SVG path: a quadratic curve through the
 // midpoint of each pair of points rounds off the polyline so writing flows

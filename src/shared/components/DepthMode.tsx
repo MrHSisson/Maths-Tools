@@ -62,9 +62,12 @@ function FitBox({ children }: { children: ReactNode }) {
     const o = outer.current, n = inner.current;
     if (!o || !n) return;
     let raf = 0;
+    let last = "";   // box + content height at the last settle: when nothing has changed, skip the (layout-forcing) fitting loop
     const measure = () => {
       const W = o.clientWidth, H = o.clientHeight;
       if (!W || !H) return;
+      const key = `${W}x${H}x${n.offsetHeight}`;
+      if (key === last) return;
       const heightAt = (s: number) => { n.style.width = `${W / s}px`; return n.offsetHeight; };
       let s = 1;
       for (let i = 0; i < 4; i++) {
@@ -75,6 +78,7 @@ function FitBox({ children }: { children: ReactNode }) {
       // the loop can overshoot (a wider box needs less height, a bigger scale needs a narrower one): settle conservatively
       let h = heightAt(s);
       while (h * s > H && s > 0.2) { s *= 0.97; h = heightAt(s); }
+      last = `${W}x${H}x${n.offsetHeight}`;
       setFit((f) => (Math.abs(f.s - s) < 0.003 && Math.abs(f.w - W / s) < 1 && Math.abs(f.top - Math.max(0, (H - h * s) / 2)) < 1 ? f : { s, top: Math.max(0, (H - h * s) / 2), w: W / s }));
     };
     const schedule = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(measure); };
