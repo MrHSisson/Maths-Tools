@@ -231,7 +231,7 @@ export function InkOverlay() {
         const rule = v ? { width: 26, height: 1, background: "#475569", margin: "2px 0" } : { width: 1, height: 26, background: "#475569", margin: "0 2px" };
         return (
           <div ref={barRef} onPointerDown={(e) => e.stopPropagation()}
-            style={{ position: "fixed", left: pos.left, top: pos.top, zIndex: 2003, display: "flex", flexDirection: v ? "column" : "row", alignItems: "center", gap: 4, padding: "6px 8px", background: "#2d3340", borderRadius: 14, boxShadow: "0 8px 28px rgba(0,0,0,0.35)", maxWidth: "calc(100vw - 16px)", maxHeight: "calc(100vh - 16px)", flexWrap: "wrap", justifyContent: "center", transition: drag ? "none" : "left 0.15s, top 0.15s" }}>
+            style={{ position: "fixed", left: pos.left, top: pos.top, zIndex: 2003, display: "flex", flexDirection: v ? "column" : "row", alignItems: "center", gap: 4, padding: "6px 8px", background: "#2d3340", borderRadius: 14, boxShadow: "0 8px 28px rgba(0,0,0,0.35)", maxWidth: "calc(100vw - 16px)", maxHeight: "calc(100vh - 16px)", flexWrap: "wrap", justifyContent: "center" }}>
             <div onPointerDown={gripDown} onPointerMove={gripMove} onPointerUp={gripUp} onPointerCancel={gripUp} onDoubleClick={resetDock} title="Drag to move (double-click to reset). Dock on a side edge for a vertical bar."
               style={{ width: v ? 38 : 22, height: v ? 22 : 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: drag ? "grabbing" : "grab", touchAction: "none", flexShrink: 0 }}>
               <GripVertical size={18} color="#94a3b8" style={{ transform: v ? "rotate(90deg)" : "none" }} />
