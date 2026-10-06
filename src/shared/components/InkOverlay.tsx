@@ -23,8 +23,7 @@ const TAP_MAX_MS = 300;          // a press shorter than this that stays put is 
 const DRAG_PX = 6;               // moving further than this turns a press into ink
 // Pen thickness and eraser size (radius) options, and how the eraser works: "part" rubs out just the bit it passes over
 // (splitting a line), "line" deletes every whole continuous line it touches. Remembered between visits.
-// Five slots each (pen: five thicknesses; eraser: three sizes + the two modes), so the hotbar is the same size in either tool.
-export const PEN_WIDTHS = [2, 4, 6, 9, 14] as const;
+export const PEN_WIDTHS = [2, 4, 7, 12] as const;
 export const ERASER_SIZES = [8, 16, 30] as const;
 export type EraseMode = "part" | "line";
 export interface InkPrefs { penWidth: number; eraserR: number; eraseMode: EraseMode }
@@ -113,6 +112,7 @@ export function InkOverlay() {
   const setPrefs = (patch: Partial<InkPrefs>) => setPrefsState((p) => { const n = { ...p, ...patch }; try { localStorage.setItem(PREFS_KEY, JSON.stringify(n)); } catch { /* ignore */ } return n; });
   const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);   // eraser size ring follows the pointer
   const lastErase = useRef<{ x: number; y: number } | null>(null);
+  const [menu, setMenu] = useState<"pen" | "eraser" | null>(null);   // which tool's options flyout is open
   const [strokes, setStrokes] = useState<Stroke[]>([]);
   const [live, setLive] = useState<Stroke | null>(null);
   const [hint, setHint] = useState<string | null>(null);
@@ -191,14 +191,15 @@ export function InkOverlay() {
   // Esc freezes the layer
   useEffect(() => {
     if (mode === "frozen") return;
-    const h = (e: KeyboardEvent) => { if (e.key === "Escape") setMode("frozen"); };
+    const h = (e: KeyboardEvent) => { if (e.key === "Escape") { if (menu) setMenu(null); else setMode("frozen"); } };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
-  }, [mode]);
+  }, [mode, menu]);
 
   const page = (e: React.PointerEvent) => ({ x: e.clientX, y: e.clientY });
 
   const onDown = (e: React.PointerEvent) => {
+    setMenu(null);
     if (!e.isPrimary || (e.pointerType === "mouse" && e.button !== 0)) return;
     layerRef.current?.setPointerCapture(e.pointerId);
     const p = page(e);
@@ -303,6 +304,48 @@ export function InkOverlay() {
         const pos = placeHotbar(live, vp.w, vp.h, size.w, size.h);
         const v = dock.v;
         const rule = v ? { width: 26, height: 1, background: "#475569", margin: "2px 0" } : { width: 1, height: 26, background: "#475569", margin: "0 2px" };
+        // Options flyouts open PERPENDICULAR to the bar (a flat bar gets a column above/below, a vertical bar a row to the side)
+        // on whichever side has more room. They are absolutely positioned children of the tool button, so they never
+        // affect the bar's own size, measurement or docking.
+        const above = v ? false : pos.top > vp.h - (pos.top + size.h);
+        const towardsLeft = v ? pos.left > vp.w - (pos.left + size.w) : false;
+        const place: React.CSSProperties = v
+          ? { top: "50%", transform: "translateY(-50%)", ...(towardsLeft ? { right: "calc(100% + 16px)" } : { left: "calc(100% + 16px)" }) }
+          : { left: "50%", transform: "translateX(-50%)", ...(above ? { bottom: "calc(100% + 16px)" } : { top: "calc(100% + 16px)" }) };
+        const flyout = (children: React.ReactNode) => (
+          <div role="menu" style={{ position: "absolute", ...place, display: "flex", flexDirection: v ? "row" : "column", alignItems: "center", gap: 4, padding: "6px", background: "#2d3340", borderRadius: 14, boxShadow: "0 8px 28px rgba(0,0,0,0.35)", zIndex: 2005 }}>{children}</div>
+        );
+        const sizeLabel = (i: number, n: number) => (i === 0 ? "small" : i === n - 1 ? "large" : "medium");
+        const menuFor = (t: "pen" | "eraser") => t === "pen" ? flyout(
+          PEN_WIDTHS.map((w, i) => (
+            <HotBtn key={w} active={prefs.penWidth === w} onClick={() => { setPrefs({ penWidth: w }); setMenu(null); }} title={`Pen thickness — ${sizeLabel(i, PEN_WIDTHS.length)}`}>
+              <span style={{ width: 20, height: w, borderRadius: w, background: "#e2e8f0", display: "block" }} />
+            </HotBtn>
+          )),
+        ) : flyout(
+          <>
+            {ERASER_SIZES.map((r, i) => (
+              <HotBtn key={r} active={prefs.eraserR === r} onClick={() => { setPrefs({ eraserR: r }); setMenu(null); }} title={`Eraser size — ${sizeLabel(i, ERASER_SIZES.length)}`}>
+                <span style={{ width: 6 + r / 2.2, height: 6 + r / 2.2, borderRadius: "50%", border: "2px solid #e2e8f0", display: "block" }} />
+              </HotBtn>
+            ))}
+            <div style={v ? { width: 1, height: 26, background: "#475569", margin: "0 2px" } : { width: 26, height: 1, background: "#475569", margin: "2px 0" }} />
+            <HotBtn active={prefs.eraseMode === "part"} onClick={() => { setPrefs({ eraseMode: "part" }); setMenu(null); }} title="Part — rub out just the bit you touch">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" strokeWidth="2.2" strokeLinecap="round"><path d="M2.5 15h6M15.5 15h6" /><circle cx="12" cy="15" r="3" strokeDasharray="2 2" strokeWidth="1.6" /></svg>
+            </HotBtn>
+            <HotBtn active={prefs.eraseMode === "line"} onClick={() => { setPrefs({ eraseMode: "line" }); setMenu(null); }} title="Whole line — delete the entire continuous line you touch">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 17C6 8 10 22 14 13s6-3 7.5-4" stroke="#e2e8f0" strokeWidth="2.2" /><path d="M16.5 3.5l5 5M21.5 3.5l-5 5" stroke="#fca5a5" strokeWidth="2.2" /></svg>
+            </HotBtn>
+          </>,
+        );
+        // a tool button: first tap selects the tool, a second tap opens its options (a small corner tick marks that it has some)
+        const toolBtn = (t: "pen" | "eraser", icon: React.ReactNode, title: string) => (
+          <div key={t} style={{ position: "relative", flexShrink: 0 }}>
+            <HotBtn active={mode === t} onClick={() => { if (mode === t) setMenu(menu === t ? null : t); else { setMode(t); setMenu(null); } }} title={title}>{icon}</HotBtn>
+            <span aria-hidden="true" style={{ position: "absolute", right: 3, bottom: 3, width: 0, height: 0, borderLeft: "5px solid transparent", borderBottom: `5px solid ${menu === t ? "#4ade80" : "rgba(226,232,240,0.55)"}`, pointerEvents: "none" }} />
+            {menu === t && mode === t && menuFor(t)}
+          </div>
+        );
         return (
           <div ref={barRef} onPointerDown={(e) => e.stopPropagation()}
             style={{ position: "fixed", left: pos.left, top: pos.top, zIndex: 2003, display: "flex", flexDirection: v ? "column" : "row", alignItems: "center", gap: 4, padding: "6px 8px", background: "#2d3340", borderRadius: 14, boxShadow: "0 8px 28px rgba(0,0,0,0.35)", width: "max-content", height: "max-content", maxWidth: vp.w - 16, maxHeight: vp.h - 16, flexWrap: "wrap", justifyContent: "center" }}>
@@ -310,41 +353,18 @@ export function InkOverlay() {
               style={{ width: v ? 38 : 22, height: v ? 22 : 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: drag ? "grabbing" : "grab", touchAction: "none", flexShrink: 0 }}>
               <GripVertical size={18} color="#94a3b8" style={{ transform: v ? "rotate(90deg)" : "none" }} />
             </div>
-            <HotBtn active={mode === "frozen"} onClick={() => setMode("frozen")} title="Freeze — use the page (ink stays)"><MousePointer2 size={18} color="#e2e8f0" /></HotBtn>
-            <HotBtn active={mode === "pen"} onClick={() => setMode("pen")} title="Pen — drag to write, tap to press buttons"><Pencil size={18} color="#e2e8f0" /></HotBtn>
-            <HotBtn active={mode === "eraser"} onClick={() => setMode("eraser")} title="Eraser"><Eraser size={18} color="#e2e8f0" /></HotBtn>
+            <HotBtn active={mode === "frozen"} onClick={() => { setMode("frozen"); setMenu(null); }} title="Freeze — use the page (ink stays)"><MousePointer2 size={18} color="#e2e8f0" /></HotBtn>
+            {toolBtn("pen", <Pencil size={18} color="#e2e8f0" />, "Pen — drag to write, tap to press buttons. Tap again for thickness")}
+            {toolBtn("eraser", <Eraser size={18} color="#e2e8f0" />, "Eraser — tap again for size and what it deletes")}
             <HotBtn active={false} onClick={() => setStrokes((s) => s.slice(0, -1))} title="Undo last stroke" disabled={strokes.length === 0}><Undo2 size={18} color={strokes.length ? "#e2e8f0" : "#64748b"} /></HotBtn>
             <HotBtn active={false} onClick={() => setStrokes([])} title="Clear all ink" disabled={strokes.length === 0}><Trash2 size={18} color={strokes.length ? "#fca5a5" : "#64748b"} /></HotBtn>
             <div style={rule} />
             {PEN_COLORS.map((c) => (
-              <button key={c} onClick={() => { setColor(c); setMode("pen"); }} title="Pen colour"
+              <button key={c} onClick={() => { setColor(c); setMode("pen"); setMenu(null); }} title="Pen colour"
                 style={{ width: 22, height: 22, borderRadius: "50%", background: c, cursor: "pointer", padding: 0, flexShrink: 0, border: color === c ? "2.5px solid #fff" : "2px solid rgba(255,255,255,0.2)" }} />
             ))}
             <div style={rule} />
-            {/* tool options — always FIVE equal slots (pen: thickness; eraser: size ×3 + part / whole line) so the bar never changes size */}
-            {mode === "eraser" ? (
-              <>
-                {ERASER_SIZES.map((r) => (
-                  <HotBtn key={r} active={prefs.eraserR === r} onClick={() => setPrefs({ eraserR: r })} title={`Eraser size ${r === ERASER_SIZES[0] ? "small" : r === ERASER_SIZES[1] ? "medium" : "large"}`}>
-                    <span style={{ width: 6 + r / 2.2, height: 6 + r / 2.2, borderRadius: "50%", border: "2px solid #e2e8f0", display: "block" }} />
-                  </HotBtn>
-                ))}
-                <HotBtn active={prefs.eraseMode === "part"} onClick={() => setPrefs({ eraseMode: "part" })} title="Part — rub out just the bit you touch">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" strokeWidth="2.2" strokeLinecap="round"><path d="M2.5 15h6M15.5 15h6" /><circle cx="12" cy="15" r="3" strokeDasharray="2 2" strokeWidth="1.6" /></svg>
-                </HotBtn>
-                <HotBtn active={prefs.eraseMode === "line"} onClick={() => setPrefs({ eraseMode: "line" })} title="Whole line — delete the entire continuous line you touch">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 17C6 8 10 22 14 13s6-3 7.5-4" stroke="#e2e8f0" strokeWidth="2.2" /><path d="M16.5 3.5l5 5M21.5 3.5l-5 5" stroke="#fca5a5" strokeWidth="2.2" /></svg>
-                </HotBtn>
-              </>
-            ) : (
-              PEN_WIDTHS.map((w) => (
-                <HotBtn key={w} active={prefs.penWidth === w && mode === "pen"} onClick={() => { setPrefs({ penWidth: w }); setMode("pen"); }} title={`Pen thickness ${w}`}>
-                  <span style={{ width: 20, height: w, borderRadius: w, background: "#e2e8f0", display: "block" }} />
-                </HotBtn>
-              ))
-            )}
-            <div style={rule} />
-            <HotBtn active={false} onClick={() => { setMode("frozen"); setOpen(false); }} title="Close (ink stays)"><X size={18} color="#e2e8f0" /></HotBtn>
+            <HotBtn active={false} onClick={() => { setMode("frozen"); setMenu(null); setOpen(false); }} title="Close (ink stays)"><X size={18} color="#e2e8f0" /></HotBtn>
           </div>
         );
       })()}
