@@ -23,7 +23,8 @@ const TAP_MAX_MS = 300;          // a press shorter than this that stays put is 
 const DRAG_PX = 6;               // moving further than this turns a press into ink
 // Pen thickness and eraser size (radius) options, and how the eraser works: "part" rubs out just the bit it passes over
 // (splitting a line), "line" deletes every whole continuous line it touches. Remembered between visits.
-export const PEN_WIDTHS = [2, 4, 8] as const;
+// Five slots each (pen: five thicknesses; eraser: three sizes + the two modes), so the hotbar is the same size in either tool.
+export const PEN_WIDTHS = [2, 4, 6, 9, 14] as const;
 export const ERASER_SIZES = [8, 16, 30] as const;
 export type EraseMode = "part" | "line";
 export interface InkPrefs { penWidth: number; eraserR: number; eraseMode: EraseMode }
@@ -320,7 +321,7 @@ export function InkOverlay() {
                 style={{ width: 22, height: 22, borderRadius: "50%", background: c, cursor: "pointer", padding: 0, flexShrink: 0, border: color === c ? "2.5px solid #fff" : "2px solid rgba(255,255,255,0.2)" }} />
             ))}
             <div style={rule} />
-            {/* tool options: pen thickness, or eraser size + what it deletes */}
+            {/* tool options — always FIVE equal slots (pen: thickness; eraser: size ×3 + part / whole line) so the bar never changes size */}
             {mode === "eraser" ? (
               <>
                 {ERASER_SIZES.map((r) => (
@@ -328,18 +329,17 @@ export function InkOverlay() {
                     <span style={{ width: 6 + r / 2.2, height: 6 + r / 2.2, borderRadius: "50%", border: "2px solid #e2e8f0", display: "block" }} />
                   </HotBtn>
                 ))}
-                {(["part", "line"] as const).map((m) => (
-                  <button key={m} onClick={() => setPrefs({ eraseMode: m })} aria-pressed={prefs.eraseMode === m}
-                    title={m === "part" ? "Rub out just the part you touch" : "Delete the whole continuous line you touch"}
-                    style={{ height: 30, padding: "0 9px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700, color: "#e2e8f0", flexShrink: 0, background: prefs.eraseMode === m ? "rgba(255,255,255,0.28)" : "rgba(255,255,255,0.07)" }}>
-                    {m === "part" ? "Part" : v ? "Line" : "Whole line"}
-                  </button>
-                ))}
+                <HotBtn active={prefs.eraseMode === "part"} onClick={() => setPrefs({ eraseMode: "part" })} title="Part — rub out just the bit you touch">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" strokeWidth="2.2" strokeLinecap="round"><path d="M2.5 15h6M15.5 15h6" /><circle cx="12" cy="15" r="3" strokeDasharray="2 2" strokeWidth="1.6" /></svg>
+                </HotBtn>
+                <HotBtn active={prefs.eraseMode === "line"} onClick={() => setPrefs({ eraseMode: "line" })} title="Whole line — delete the entire continuous line you touch">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 17C6 8 10 22 14 13s6-3 7.5-4" stroke="#e2e8f0" strokeWidth="2.2" /><path d="M16.5 3.5l5 5M21.5 3.5l-5 5" stroke="#fca5a5" strokeWidth="2.2" /></svg>
+                </HotBtn>
               </>
             ) : (
               PEN_WIDTHS.map((w) => (
-                <HotBtn key={w} active={prefs.penWidth === w && mode === "pen"} onClick={() => { setPrefs({ penWidth: w }); setMode("pen"); }} title={`Pen thickness ${w === PEN_WIDTHS[0] ? "thin" : w === PEN_WIDTHS[1] ? "medium" : "thick"}`}>
-                  <span style={{ width: 18, height: w, borderRadius: w, background: "#e2e8f0", display: "block" }} />
+                <HotBtn key={w} active={prefs.penWidth === w && mode === "pen"} onClick={() => { setPrefs({ penWidth: w }); setMode("pen"); }} title={`Pen thickness ${w}`}>
+                  <span style={{ width: 20, height: w, borderRadius: w, background: "#e2e8f0", display: "block" }} />
                 </HotBtn>
               ))
             )}

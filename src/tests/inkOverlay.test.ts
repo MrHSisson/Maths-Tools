@@ -79,6 +79,7 @@ describe("Ink overlay press classification", () => {
   it("eraseAt follows the chosen mode and size", () => {
     expect(eraseAt([line(4)], 100, 0, { ...DEFAULT_PREFS, eraseMode: "line" })).toEqual([]);
     expect(eraseAt([line(4)], 100, 0, { ...DEFAULT_PREFS, eraseMode: "part" }).length).toBe(2);
-    expect(PEN_WIDTHS.length).toBe(3); expect(ERASER_SIZES.length).toBe(3);
+    // the hotbar keeps one size across tools: pen thicknesses fill the same five slots as eraser sizes (3) + the two modes (2)
+    expect(PEN_WIDTHS.length).toBe(ERASER_SIZES.length + 2);
   });
 });
