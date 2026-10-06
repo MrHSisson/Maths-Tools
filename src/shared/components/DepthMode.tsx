@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ArrowLeft, ChevronLeft, ChevronRight, Info, ListChecks, Maximize, Minimize } from "lucide-react";
 import { InlineMath, MathRenderer } from "./MathRenderer";
 import { BidmasPyramid } from "./BidmasPyramid";
@@ -50,12 +50,60 @@ export interface DepthModeProps {
   activeOptions?: ReadonlySet<string>;
 }
 
+/** Scales its content down (never up) so it always fits the box it is given — a slide never needs a scrollbar.
+ *  The content is laid out at width W/s and scaled by s, so as it shrinks the text re-wraps wider (needing less
+ *  height) and the scale settles on the largest size that fits. Re-measured on resize and whenever the content's
+ *  own size changes (KaTeX finishing, an option picked, the line shown or hidden). */
+function FitBox({ children }: { children: ReactNode }) {
+  const outer = useRef<HTMLDivElement>(null);
+  const inner = useRef<HTMLDivElement>(null);
+  const [fit, setFit] = useState({ s: 1, top: 0, w: 0 });
+  useLayoutEffect(() => {
+    const o = outer.current, n = inner.current;
+    if (!o || !n) return;
+    let raf = 0;
+    let last = "";   // box + content height at the last settle: when nothing has changed, skip the (layout-forcing) fitting loop
+    const measure = () => {
+      const W = o.clientWidth, H = o.clientHeight;
+      if (!W || !H) return;
+      const key = `${W}x${H}x${n.offsetHeight}`;
+      if (key === last) return;
+      const heightAt = (s: number) => { n.style.width = `${W / s}px`; return n.offsetHeight; };
+      let s = 1;
+      for (let i = 0; i < 4; i++) {
+        const next = Math.min(1, H / heightAt(s));
+        if (Math.abs(next - s) < 0.004) break;
+        s = next;
+      }
+      // the loop can overshoot (a wider box needs less height, a bigger scale needs a narrower one): settle conservatively
+      let h = heightAt(s);
+      while (h * s > H && s > 0.2) { s *= 0.97; h = heightAt(s); }
+      last = `${W}x${H}x${n.offsetHeight}`;
+      setFit((f) => (Math.abs(f.s - s) < 0.003 && Math.abs(f.w - W / s) < 1 && Math.abs(f.top - Math.max(0, (H - h * s) / 2)) < 1 ? f : { s, top: Math.max(0, (H - h * s) / 2), w: W / s }));
+    };
+    const schedule = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(measure); };
+    measure();
+    const ro = new ResizeObserver(schedule);
+    ro.observe(o); ro.observe(n);
+    return () => { cancelAnimationFrame(raf); ro.disconnect(); };
+  }, []);
+  return (
+    <div ref={outer} data-fit-outer style={{ position: "relative", flex: "1 1 auto", minHeight: 0, width: "100%", overflow: "hidden" }}>
+      <div ref={inner} data-fit-inner style={{ position: "absolute", left: 0, top: fit.top, width: fit.w || "100%", transformOrigin: "top left", transform: `scale(${fit.s})` }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, narrow = false, optionInfo, activeOptions }: DepthModeProps) {
   const [purpose, setPurpose] = useState<DepthPurpose | "all">("all");
   const [slide, setSlide] = useState<0 | 1>(0); // 0 = the question slide, 1 = the answer slide
   const [check, setCheck] = useState<number | null>(null); // index into `starts` while a quick check runs
   const [picked, setPicked] = useState<number | null>(null); // tapped line of working
   const [showNote, setShowNote] = useState(false);
+  const [showPic, setShowPic] = useState(false); // side-rail switch: draw the tool's picture (e.g. number line) — off to begin with, kept between questions
+  const [plotPic, setPlotPic] = useState(false); // side-rail switch: plot the given point on it
   const [present, setPresent] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
@@ -255,6 +303,30 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
     </div>
   );
 
+  // A tool-drawn picture (visual.type "custom") sits inline above the question. It is a scaffold the teacher switches on
+  // from the side rail (a plotted picture can give the answer away); the answer slide always shows it, fully plotted.
+  const cv = current.visual?.type === "custom" ? current.visual : null;
+  const customVisual = cv && (onAnswer || showPic) && (
+    <div style={{ width: "100%", maxWidth: "30em", margin: "0 auto" }}>{cv.render(onAnswer, onAnswer || plotPic)}</div>
+  );
+  const switchRow = (on: boolean, set: (v: boolean) => void, text: string, disabled = false) => (
+    <button key={text} role="switch" aria-checked={on} disabled={disabled} onClick={() => set(!on)}
+      style={{ display: "flex", alignItems: "center", gap: "0.5em", background: "none", border: 0, padding: 0, cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.4 : 1, color: "#fff", textAlign: "left" }}>
+      <span style={{ position: "relative", flexShrink: 0, width: "1.7em", height: "0.95em", borderRadius: "999px", background: on ? "#4ade80" : "rgba(255,255,255,0.28)", transition: "background 0.15s" }}>
+        <span style={{ position: "absolute", top: "0.12em", left: on ? "0.87em" : "0.12em", width: "0.71em", height: "0.71em", borderRadius: "50%", background: "#fff", transition: "left 0.15s" }} />
+      </span>
+      <span style={{ fontSize: "0.62em", fontWeight: 700, lineHeight: 1.15 }}>{text}</span>
+    </button>
+  );
+  // Side-rail switches for the picture (only on items that have one, and only on the question slide)
+  const railSwitches = cv && !onAnswer && (
+    <div className="flex flex-col items-start" style={{ gap: "0.5em", marginTop: "0.2em" }}>
+      <div style={{ fontSize: "0.5em", fontWeight: 800, letterSpacing: "0.16em", textTransform: "uppercase", opacity: 0.7, color: "#fff" }}>Scaffold</div>
+      {switchRow(showPic, (v) => { setShowPic(v); if (!v) setPlotPic(false); }, cv.labels?.show ?? "Show picture")}
+      {switchRow(plotPic, setPlotPic, cv.labels?.plot ?? "Plot the point", !showPic)}
+    </div>
+  );
+
   // ---- Slide 1: the question ----
   const questionSlide = (
     <>
@@ -277,6 +349,7 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
         </div>
       )}
       {working}
+      {customVisual}
       <div className="flex flex-col items-start text-left" style={{ gap: "0.15em" }}>
         {current.question.map((line, i) => (
           <div key={i} style={{ fontSize: "1.45em", fontWeight: 650, lineHeight: 1.3, color: "#111827" }}><InlineMath text={line} /></div>
@@ -291,6 +364,7 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
     <>
       <div style={{ fontSize: "0.7em", fontWeight: 800, letterSpacing: "0.18em", textTransform: "uppercase", color: "#15803d" }}>Answer</div>
       {working}
+      {customVisual}
       {options}
       <div className="flex flex-col" style={{ gap: "0.3em", width: "100%", borderLeft: "0.3em solid #16a34a", paddingLeft: "0.9em" }}>
         {current.answer.map((line, i) => (
@@ -317,13 +391,16 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
           <Badge colour="#fff" />
           <div className="flex items-center" style={{ gap: "0.4em" }}>{levelPill}{purposePill}</div>
         </div>
-      ) : (
+      ) : null}
+      {narrow && railSwitches && <div style={{ marginBottom: "0.6em" }}>{railSwitches}</div>}
+      {narrow ? null : (
         <div className="flex flex-col items-start justify-between" style={{ position: "absolute", top: "1.4em", bottom: "0.8em", left: "1.6em", width: "13%", zIndex: 2 }}>
           <div className="flex flex-col items-start" style={{ gap: "0.7em" }}>
             <Badge colour="#fff" />
             <div className="flex flex-col items-start" style={{ gap: "0.35em" }}>{levelPill}{purposePill}</div>
+            {railSwitches}
           </div>
-          <Mascot mood={onAnswer ? "know" : "think"} size="6.2em" tone="light" />
+          <Mascot mood={onAnswer ? "know" : "think"} size="7.4em" tone="light" />
         </div>
       )}
 
@@ -331,10 +408,15 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
       <div className="flex flex-col items-start justify-center"
         style={narrow
           ? { position: "relative", background: "#fff", borderRadius: "1em", borderTop: `0.4em solid ${accent}`, boxShadow: "0 0.15em 0.6em rgba(0,0,0,0.08)", padding: "1em", gap: "0.7em" }
-          : { position: "absolute", top: "1.2em", bottom: "1.2em", left: "19%", right: "2.5%", background: "#fff", borderRadius: "1.1em", borderTop: `0.4em solid ${accent}`, boxShadow: "0 0.2em 0.9em rgba(0,0,0,0.08)", padding: "1.4em 1.8em 1.3em", gap: "0.65em", overflow: "auto" }}>
-        <div className="flex flex-col items-start justify-center" style={{ gap: narrow ? "0.7em" : "0.65em", width: "100%", margin: "auto 0" }}>
-          {onAnswer ? answerSlide : questionSlide}
-        </div>
+          : { position: "absolute", top: "1.2em", bottom: "1.2em", left: "19%", right: "2.5%", background: "#fff", borderRadius: "1.1em", borderTop: `0.4em solid ${accent}`, boxShadow: "0 0.2em 0.9em rgba(0,0,0,0.08)", padding: "1.4em 1.8em 1.3em", gap: "0.65em", overflow: "hidden" }}>
+        {(() => {
+          const slideBody = (
+            <div className="flex flex-col items-start justify-center" style={{ gap: narrow ? "0.7em" : "0.65em", width: "100%", margin: narrow ? "auto 0" : 0 }}>
+              {onAnswer ? answerSlide : questionSlide}
+            </div>
+          );
+          return narrow ? slideBody : <FitBox>{slideBody}</FitBox>;
+        })()}
         {/* the key lives in the panel's corner: visible from the start, lit on the answer slide */}
         {current.visual?.type === "pyramid" && (
           <div style={{ position: "absolute", top: "0.9em", right: "1.1em", width: narrow ? "6em" : "7.2em" }}>

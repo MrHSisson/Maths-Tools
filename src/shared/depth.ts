@@ -14,6 +14,7 @@
 // A tool opts in with `<ToolShell depthItems={DEPTH_ITEMS} />`. Authoring guide: CLAUDE.md → "Depth".
 // ─────────────────────────────────────────────────────────────────────────────
 
+import type { ReactNode } from "react";
 import type { DifficultyLevel } from "./types";
 import type { PyramidTier } from "./components/BidmasPyramid";
 
@@ -45,8 +46,15 @@ export interface DepthWorking {
   wrongLine: number;
 }
 
-/** A picture shown on the slide once the answer is revealed. */
-export type DepthVisual = { type: "pyramid"; strong?: PyramidTier[]; soft?: PyramidTier[] };
+/** A picture shown on the slide. `pyramid` sits in the panel's corner (lit on the answer slide). `custom` is a
+ *  tool-drawn picture (e.g. Rounding's number line) shown full width above the question. Because a drawn picture
+ *  can give the answer away, it is a SCAFFOLD the teacher switches on: two separate switches in the slide's side
+ *  rail — `labels.show` (the picture) and `labels.plot` (the given point drawn on it; only offered once the picture
+ *  is on) — both off to begin with and kept while moving between questions. `render(onAnswer, plot)` is called with
+ *  `plot` false until the plot switch is on; the answer slide always calls it with `(true, true)`. */
+export type DepthVisual =
+  | { type: "pyramid"; strong?: PyramidTier[]; soft?: PyramidTier[] }
+  | { type: "custom"; render: (onAnswer: boolean, plot: boolean) => ReactNode; labels?: { show: string; plot: string } };
 
 export type DepthNeed = string | string[];
 

@@ -5,6 +5,7 @@ import {
   type ToolMultiSelect, type ToolVariable,
   randInt, pickActive, mStep, tStep, QuestionDisplay, AnswerDisplay, handlePrint, type WorkingStep, type QOSnapshot, type ToolDropdown,
 } from "../../shared";
+import { DEPTH_ITEMS } from "./RoundingDepth";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TOOL-SPECIFIC SECTION
@@ -610,10 +611,11 @@ export default function App() {
       stepVisualKeepsWorking
       stepVisualPlacement="top"
       reformatQuestion={reformatQuestion}
+      depthItems={DEPTH_ITEMS}
       customPrintHandler={printRounding}
       defaults={{ numColumns: 2, maxColumns: 2, numQuestions: 12, qoColumns: 2, collapseWorkingByDefault: true, hideAnswerStep: true }}
     />
   );
 }
 
-export const __test = { TOOL_CONFIG, generateQuestion, levels: ["level1", "level2", "level3"] };
+export const __test = { TOOL_CONFIG, generateQuestion, depthItems: DEPTH_ITEMS, levels: ["level1", "level2", "level3"] };

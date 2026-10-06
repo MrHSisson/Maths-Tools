@@ -165,8 +165,9 @@ describe("Depth banks", () => {
             }
           }
           if (i.visual) {
-            expect(i.visual.type).toBe("pyramid");
-            for (const t of [...(i.visual.strong ?? []), ...(i.visual.soft ?? [])]) expect(["B", "I", "D", "M", "A", "S"]).toContain(t);
+            expect(["pyramid", "custom"]).toContain(i.visual.type);
+            if (i.visual.type === "custom") expect(typeof i.visual.render).toBe("function");
+            if (i.visual.type === "pyramid") for (const t of [...(i.visual.strong ?? []), ...(i.visual.soft ?? [])]) expect(["B", "I", "D", "M", "A", "S"]).toContain(t);
           }
         }
       });

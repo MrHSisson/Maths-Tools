@@ -340,7 +340,10 @@ shared `WorkedExampleSteps` — a tool only supplies per-step data and renderers
 
 **Where it's at.** Built 2026-10-05 as the evolution of the parked Teach decks: not a presentation to press through, but a **bank of fixed, well-thought-out questions** a teacher dips into by purpose (diagnose · explain · extend) and level, to be adaptive to the class and still give depth of reasoning. Shared mode in `ToolShell` (`depthItems` prop, "Depth" tab; **live 2026-10-05** for any tool that passes a bank): picker by level and purpose, two-beat question → answer with named misconceptions per wrong option, adaptive "class secure / not secure" links, a cross-level **Start here** quick check, deep links (`?mode=depth&level=&item=`), phone layout. Each question is **two slides** (question, then answer; ← / → / Space) designed like a classroom slide — coloured background, white panel with a DEPTH badge, cartoon speakers with speech bubbles, an owl mascot, tap-the-wrong-line working, a corner pyramid — with a Present mode that works in every browser. Pilot: 21 items on **Order of Operations** (`OrderOfOperationsDepth.ts`). Spec template: `docs/design/templates/DEPTH_SPEC_TEMPLATE.md`.
 
+**Rounding bank (2026-10-06, live):** 25 items, `RoundingDepth.ts`, spec `specs/depth/rounding.md`; number-line scaffold (two side-rail switches) via the generic `custom` visual hook.
+
 **Possible next steps:**
+- Harry reviews the live Rounding bank (wording, missing misconceptions, routes).
 - Harry reviews the BIDMAS bank for wording, missing misconceptions and the follow-up routes.
 - Add a Depth section to the tool spec template and write banks as tools pass through the Tool review cycle (diagnostic bank per tool, level by level).
 - A printable hinge-question sheet from a chosen set of items.
