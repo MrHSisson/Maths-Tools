@@ -99,6 +99,9 @@ export function InkOverlay() {
   const [size, setSize] = useState({ w: 56, h: 460 });
   const barRef = useRef<HTMLDivElement>(null);
   const grab = useRef<{ dx: number; dy: number } | null>(null);
+  // The latest drag position lives in a ref too: React batches pointermove updates, so when the last move and the release
+  // arrive together (a quick flick) the release handler's `drag` state is a render behind and would dock from a stale spot.
+  const dragRef = useRef<{ px: number; py: number; x: number; y: number } | null>(null);
   const [vp, setVp] = useState(viewport);
   const liveRef = useRef<Stroke | null>(null);   // the stroke being drawn (state mirrors it for rendering)
   const hintTimer = useRef<number | undefined>(undefined);
@@ -133,13 +136,26 @@ export function InkOverlay() {
     e.currentTarget.setPointerCapture(e.pointerId);
     const r = el.getBoundingClientRect();
     grab.current = { dx: e.clientX - (r.left + r.width / 2), dy: e.clientY - (r.top + r.height / 2) };
-    setDrag({ px: r.left + r.width / 2, py: r.top + r.height / 2, x: e.clientX, y: e.clientY });
+    dragRef.current = { px: r.left + r.width / 2, py: r.top + r.height / 2, x: e.clientX, y: e.clientY };
+    setDrag(dragRef.current);
   };
-  const gripMove = (e: React.PointerEvent) => { if (grab.current) setDrag({ px: e.clientX - grab.current.dx, py: e.clientY - grab.current.dy, x: e.clientX, y: e.clientY }); };
-  const gripUp = () => {
-    if (grab.current && drag) { const v = viewport();
-      const d = dockFromDrop({ x: drag.x, y: drag.y }, { x: drag.px, y: drag.py }, v.w, v.h); setDock(d); saveDock(d); }
+  const gripMove = (e: React.PointerEvent) => {
+    if (!grab.current) return;
+    dragRef.current = { px: e.clientX - grab.current.dx, py: e.clientY - grab.current.dy, x: e.clientX, y: e.clientY };
+    setDrag(dragRef.current);
+  };
+  const gripUp = (e: React.PointerEvent) => {
+    const d = dragRef.current;
+    if (grab.current && d) {
+      // use the release position itself when we have it (the final move may not have been processed yet)
+      const last = grab.current;
+      const x = e.clientX, y = e.clientY;
+      const v = viewport();
+      const dock = dockFromDrop({ x, y }, { x: x - last.dx, y: y - last.dy }, v.w, v.h);
+      setDock(dock); saveDock(dock);
+    }
     grab.current = null;
+    dragRef.current = null;
     setDrag(null);
   };
   const resetDock = () => { const d = defaultDock(viewport().w); setDock(d); saveDock(null); };
