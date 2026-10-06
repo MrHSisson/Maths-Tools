@@ -30,7 +30,7 @@ Keep the split even when a session only touches one.
 
 ## 2026-10-06 — Depth: no scrollbars, optional number line, new owl
 
-Depth slides never scroll: the panel content is now fit-scaled (`FitBox` in `DepthMode.tsx`) to the 16:9 panel at every screen size. A tool-drawn picture (`visual.type: "custom"`) can be shown or hidden on the question slide (`showByDefault`; the answer slide always shows it) — Rounding shows its line from the start at Level 1 and hides it at Level 2. The owl mascot is redrawn (gradient body, feather chest, tufts, brows, talons).
+Depth slides never scroll: the panel content is now fit-scaled (`FitBox` in `DepthMode.tsx`) to the 16:9 panel at every screen size. A tool-drawn picture (`visual.type: "custom"`) is now a scaffold with two separate switches in the slide's side rail — **Number line** and **Plot the point** (the second needs the first) — both off to begin with and kept between questions; the answer slide always shows the fully plotted picture. The owl mascot is redrawn (gradient body, feather chest, tufts, brows, talons).
 
 ## 2026-10-05 — Rounding: Depth bank (dev-gated)
 

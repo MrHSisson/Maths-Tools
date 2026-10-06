@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ArrowLeft, Eye, EyeOff, ChevronLeft, ChevronRight, Info, ListChecks, Maximize, Minimize } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Info, ListChecks, Maximize, Minimize } from "lucide-react";
 import { InlineMath, MathRenderer } from "./MathRenderer";
 import { BidmasPyramid } from "./BidmasPyramid";
 import { Avatar, Badge, Mascot } from "./DepthArt";
@@ -98,7 +98,8 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
   const [check, setCheck] = useState<number | null>(null); // index into `starts` while a quick check runs
   const [picked, setPicked] = useState<number | null>(null); // tapped line of working
   const [showNote, setShowNote] = useState(false);
-  const [lineOverride, setLineOverride] = useState<boolean | null>(null); // teacher's show/hide of a custom picture (null = the item's default)
+  const [showPic, setShowPic] = useState(false); // side-rail switch: draw the tool's picture (e.g. number line) — off to begin with, kept between questions
+  const [plotPic, setPlotPic] = useState(false); // side-rail switch: plot the given point on it
   const [present, setPresent] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
@@ -120,7 +121,7 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
   const nUnmet = atLevel.filter((i) => unmetOf(i)).length;
 
   // New item → back to the question slide.
-  useEffect(() => { setSlide(0); setPicked(null); setShowNote(false); setLineOverride(null); }, [itemId]);
+  useEffect(() => { setSlide(0); setPicked(null); setShowNote(false); }, [itemId]);
   // Arriving with ?item=<id> and no (or a different) level adopts the item's level; a level change made
   // by the teacher under an open item closes it. (Comparing with the previous level, not a one-shot flag,
   // keeps this correct when React runs effects twice in development.)
@@ -298,21 +299,27 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
     </div>
   );
 
-  // A tool-drawn picture (visual.type "custom") sits inline above the question, redrawn per slide. On the question
-  // slide the teacher can hide it (a plotted picture can give the answer away); the answer slide always shows it.
+  // A tool-drawn picture (visual.type "custom") sits inline above the question. It is a scaffold the teacher switches on
+  // from the side rail (a plotted picture can give the answer away); the answer slide always shows it, fully plotted.
   const cv = current.visual?.type === "custom" ? current.visual : null;
-  const lineShown = !cv ? false : onAnswer ? true : (lineOverride ?? cv.showByDefault ?? true);
-  const customVisual = cv && (
-    <div style={{ width: "100%", maxWidth: "30em", margin: "0 auto" }}>
-      {lineShown && cv.render(onAnswer)}
-      {!onAnswer && (
-        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: lineShown ? "0.1em" : 0 }}>
-          <button onClick={() => setLineOverride(!lineShown)}
-            style={{ display: "inline-flex", alignItems: "center", gap: "0.4em", fontSize: "0.62em", fontWeight: 700, padding: "0.25em 0.8em", borderRadius: "999px", border: "0.1em solid #cbd5e1", background: "#f8fafc", color: "#475569", cursor: "pointer" }}>
-            {lineShown ? <EyeOff size={13} /> : <Eye size={13} />}{lineShown ? "Hide number line" : "Show number line"}
-          </button>
-        </div>
-      )}
+  const customVisual = cv && (onAnswer || showPic) && (
+    <div style={{ width: "100%", maxWidth: "30em", margin: "0 auto" }}>{cv.render(onAnswer, onAnswer || plotPic)}</div>
+  );
+  const switchRow = (on: boolean, set: (v: boolean) => void, text: string, disabled = false) => (
+    <button key={text} role="switch" aria-checked={on} disabled={disabled} onClick={() => set(!on)}
+      style={{ display: "flex", alignItems: "center", gap: "0.5em", background: "none", border: 0, padding: 0, cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.4 : 1, color: "#fff", textAlign: "left" }}>
+      <span style={{ position: "relative", flexShrink: 0, width: "1.7em", height: "0.95em", borderRadius: "999px", background: on ? "#4ade80" : "rgba(255,255,255,0.28)", transition: "background 0.15s" }}>
+        <span style={{ position: "absolute", top: "0.12em", left: on ? "0.87em" : "0.12em", width: "0.71em", height: "0.71em", borderRadius: "50%", background: "#fff", transition: "left 0.15s" }} />
+      </span>
+      <span style={{ fontSize: "0.62em", fontWeight: 700, lineHeight: 1.15 }}>{text}</span>
+    </button>
+  );
+  // Side-rail switches for the picture (only on items that have one, and only on the question slide)
+  const railSwitches = cv && !onAnswer && (
+    <div className="flex flex-col items-start" style={{ gap: "0.5em", marginTop: "0.2em" }}>
+      <div style={{ fontSize: "0.5em", fontWeight: 800, letterSpacing: "0.16em", textTransform: "uppercase", opacity: 0.7, color: "#fff" }}>Scaffold</div>
+      {switchRow(showPic, (v) => { setShowPic(v); if (!v) setPlotPic(false); }, cv.labels?.show ?? "Show picture")}
+      {switchRow(plotPic, setPlotPic, cv.labels?.plot ?? "Plot the point", !showPic)}
     </div>
   );
 
@@ -380,11 +387,14 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
           <Badge colour="#fff" />
           <div className="flex items-center" style={{ gap: "0.4em" }}>{levelPill}{purposePill}</div>
         </div>
-      ) : (
+      ) : null}
+      {narrow && railSwitches && <div style={{ marginBottom: "0.6em" }}>{railSwitches}</div>}
+      {narrow ? null : (
         <div className="flex flex-col items-start justify-between" style={{ position: "absolute", top: "1.4em", bottom: "0.8em", left: "1.6em", width: "13%", zIndex: 2 }}>
           <div className="flex flex-col items-start" style={{ gap: "0.7em" }}>
             <Badge colour="#fff" />
             <div className="flex flex-col items-start" style={{ gap: "0.35em" }}>{levelPill}{purposePill}</div>
+            {railSwitches}
           </div>
           <Mascot mood={onAnswer ? "know" : "think"} size="7.4em" tone="light" />
         </div>

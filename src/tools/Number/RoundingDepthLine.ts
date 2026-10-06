@@ -18,8 +18,9 @@ export interface DepthLineSpec {
 const label = (x: number, text: string, fill: string, key?: string) =>
   h("text", { key, x, y: LY + 52, textAnchor: "middle", dominantBaseline: "middle", fontSize: 28, fontWeight: 700, fill }, text);
 
-/** `onAnswer` shades the half the number sits in, marks halfway and rings the answer. */
-export function depthLine(spec: DepthLineSpec, onAnswer: boolean): ReactNode {
+/** `plot` draws the number on the line (the answer slide always plots it). `onAnswer` shades the half the number
+ *  sits in, marks halfway and rings the answer. */
+export function depthLine(spec: DepthLineSpec, onAnswer: boolean, plot: boolean): ReactNode {
   const mx = X0 + spec.pos * LW;
   const up = spec.pos >= 0.5;
   const ansX = X0 + (up ? LW : 0);
@@ -30,17 +31,19 @@ export function depthLine(spec: DepthLineSpec, onAnswer: boolean): ReactNode {
     kids.push(h("line", { key: "midl", x1: midX, y1: LY - 46, x2: midX, y2: LY + 22, stroke: HALF, strokeWidth: 3, strokeDasharray: "6 5" }));
     kids.push(h("text", { key: "midt", x: midX, y: LY - 54, textAnchor: "middle", fontSize: 20, fontWeight: 700, fill: HALF }, "halfway"));
   }
-  kids.push(
+  if (plot || onAnswer) kids.push(
     h("text", { key: "num", x: mx, y: 32, textAnchor: "middle", dominantBaseline: "middle", fontSize: 32, fontWeight: 700, fill: BLUE }, spec.num),
     h("line", { key: "stem", x1: mx, y1: 50, x2: mx, y2: LY - 16, stroke: BLUE, strokeWidth: 4 }),
     h("polygon", { key: "arrow", points: `${mx - 9},${LY - 22} ${mx + 9},${LY - 22} ${mx},${LY - 8}`, fill: BLUE }),
+  );
+  kids.push(
     h("line", { key: "axis", x1: X0 - 20, y1: LY, x2: X0 + LW + 20, y2: LY, stroke: INK, strokeWidth: 4, strokeLinecap: "round" }),
     ...Array.from({ length: 11 }, (_, i) => {
       const major = i % 5 === 0;
       const x = X0 + i * STEP;
       return h("line", { key: `t${i}`, x1: x, y1: LY - (major ? 18 : 10), x2: x, y2: LY + (major ? 18 : 10), stroke: INK, strokeWidth: major ? 4 : 2.5 });
     }),
-    h("circle", { key: "dot", cx: mx, cy: LY, r: 7, fill: BLUE }),
+    ...(plot || onAnswer ? [h("circle", { key: "dot", cx: mx, cy: LY, r: 7, fill: BLUE })] : []),
     label(X0, spec.lo, INK, "lo"),
     label(X0 + LW, spec.hi, INK, "hi"),
   );
@@ -50,6 +53,6 @@ export function depthLine(spec: DepthLineSpec, onAnswer: boolean): ReactNode {
   }
   return h("svg", {
     viewBox: "0 0 660 190", style: { display: "block", width: "100%", height: "auto" }, preserveAspectRatio: "xMidYMid meet",
-    role: "img", "aria-label": `Number line from ${spec.lo} to ${spec.hi} with ${spec.num} marked`,
+    role: "img", "aria-label": `Number line from ${spec.lo} to ${spec.hi}${plot || onAnswer ? ` with ${spec.num} marked` : ""}`,
   }, ...kids);
 }

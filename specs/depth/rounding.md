@@ -14,7 +14,7 @@ Every tab × level has diagnose, explain and extend items from the general set, 
 
 **Number-line visual.** Level 1 and the "keep the rest" items draw a number line (ends, marker, and — on the answer slide — the
 halfway value, the half the number sits in and the ringed answer) via `visual: { type: "custom", render }` — a small shared hook
-in `src/shared/depth.ts` / `DepthMode.tsx`; the line itself lives in `RoundingDepthLine.ts`.
+in `src/shared/depth.ts` / `DepthMode.tsx`; the line itself lives in `RoundingDepthLine.ts`. It is a **scaffold**: two separate switches in the slide's side rail ("Number line", then "Plot the point") — both off to begin with, kept between questions; the answer slide always shows the plotted line.
 
 ## 1. The misconceptions
 
