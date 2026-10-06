@@ -26,10 +26,11 @@ const INK_WIDTH = 3;
 
 // ── Hotbar placement ─────────────────────────────────────────────────────────
 // The hotbar is movable: drag its grip. Dropped against a side edge it docks there and turns vertical (out of the way
-// of the question); anywhere else it lies flat. The position is stored as the bar's CENTRE as a fraction of the
+// of the question); anywhere else it lies flat. The snap zone is deliberately tight (EDGE px from the screen edge) — a wide
+// zone made a docked bar "lock": a gentle drag away was still inside it and re-docked on release. The position is stored as the bar's CENTRE as a fraction of the
 // viewport, so it survives resizes and the bar changing shape; double-click the grip to reset.
 export interface HotbarDock { v: boolean; cx: number; cy: number }
-const EDGE = 90, MARGIN = 8, DOCK_KEY = "mt-ink-hotbar";
+const EDGE = 28, MARGIN = 8, CLICK_PX = 4, DOCK_KEY = "mt-ink-hotbar";
 /** The area fixed-position elements actually live in: the window minus any classic scrollbar (innerWidth includes it,
  *  which pushed a right-docked bar ~15px under the scrollbar). */
 const viewport = () => ({ w: document.documentElement.clientWidth || window.innerWidth, h: document.documentElement.clientHeight || window.innerHeight });
@@ -102,6 +103,7 @@ export function InkOverlay() {
   // The latest drag position lives in a ref too: React batches pointermove updates, so when the last move and the release
   // arrive together (a quick flick) the release handler's `drag` state is a render behind and would dock from a stale spot.
   const dragRef = useRef<{ px: number; py: number; x: number; y: number } | null>(null);
+  const downAt = useRef<{ x: number; y: number } | null>(null);
   const [vp, setVp] = useState(viewport);
   const liveRef = useRef<Stroke | null>(null);   // the stroke being drawn (state mirrors it for rendering)
   const hintTimer = useRef<number | undefined>(undefined);
@@ -137,6 +139,7 @@ export function InkOverlay() {
     const r = el.getBoundingClientRect();
     grab.current = { dx: e.clientX - (r.left + r.width / 2), dy: e.clientY - (r.top + r.height / 2) };
     dragRef.current = { px: r.left + r.width / 2, py: r.top + r.height / 2, x: e.clientX, y: e.clientY };
+    downAt.current = { x: e.clientX, y: e.clientY };
     setDrag(dragRef.current);
   };
   const gripMove = (e: React.PointerEvent) => {
@@ -146,7 +149,8 @@ export function InkOverlay() {
   };
   const gripUp = (e: React.PointerEvent) => {
     const d = dragRef.current;
-    if (grab.current && d) {
+    const moved = downAt.current ? Math.hypot(e.clientX - downAt.current.x, e.clientY - downAt.current.y) > CLICK_PX : true;
+    if (grab.current && d && moved) {
       // use the release position itself when we have it (the final move may not have been processed yet)
       const last = grab.current;
       const x = e.clientX, y = e.clientY;
@@ -156,6 +160,7 @@ export function InkOverlay() {
     }
     grab.current = null;
     dragRef.current = null;
+    downAt.current = null;
     setDrag(null);
   };
   const resetDock = () => { const d = defaultDock(viewport().w); setDock(d); saveDock(null); };
@@ -245,6 +250,17 @@ export function InkOverlay() {
           <Pencil size={20} color="#e2e8f0" />
         </button>
       )}
+
+      {/* while dragging: light the edge the bar will dock to if released now */}
+      {open && drag && (() => {
+        const t = dockFromDrop({ x: drag.x, y: drag.y }, { x: drag.px, y: drag.py }, vp.w, vp.h);
+        const edge = t.v ? (t.cx === 0 ? "left" : "right") : t.cy === 1 ? "bottom" : t.cy === 0 ? "top" : null;
+        if (!edge) return null;
+        const thick = 6;
+        const st: React.CSSProperties = { position: "fixed", zIndex: 2002, pointerEvents: "none", background: "rgba(59,130,246,0.55)", borderRadius: 3,
+          ...(edge === "left" ? { left: 0, top: 0, bottom: 0, width: thick } : edge === "right" ? { right: 0, top: 0, bottom: 0, width: thick } : edge === "top" ? { top: 0, left: 0, right: 0, height: thick } : { bottom: 0, left: 0, right: 0, height: thick }) };
+        return <div aria-hidden="true" style={st} />;
+      })()}
 
       {/* hotbar — movable: drag the grip; docks vertical against a side edge */}
       {open && (() => {

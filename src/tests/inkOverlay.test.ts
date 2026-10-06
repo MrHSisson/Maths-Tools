@@ -38,6 +38,12 @@ describe("Ink overlay press classification", () => {
     expect(left).toMatchObject({ v: true, cx: 0 });
     expect(right).toMatchObject({ v: true, cx: 1 });
   });
+  it("a gentle drag away from an edge frees the bar (no sticky snap zone)", () => {
+    // a vertical bar docked right has its grip ~35px from the edge; dragging it 15px away must NOT re-dock it
+    const free = dockFromDrop({ x: 1200 - 50, y: 300 }, { x: 1200 - 50, y: 500 }, 1200, 800);
+    expect(free.v).toBe(false);
+    expect(dockFromDrop({ x: 1200 - 10, y: 300 }, { x: 1190, y: 300 }, 1200, 800)).toMatchObject({ v: true, cx: 1 });
+  });
   it("the hotbar is always kept fully on screen", () => {
     for (const d of [{ v: true, cx: 1, cy: 0 }, { v: false, cx: 0, cy: 1 }, { v: true, cx: 0.5, cy: 0.5 }]) {
       const { left, top } = placeHotbar(d, 1000, 600, 60, 480);
