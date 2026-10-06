@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { MousePointer2, Pencil, Eraser, Trash2, Undo2, X, GripVertical } from "lucide-react";
-import { HotBtn, PEN_COLORS, eraseNear, strokePath, type Stroke } from "./BoardTools";
+import { HotBtn, PEN_COLORS, eraseNear, eraseWholeNear, strokePath, type Stroke } from "./BoardTools";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Ink overlay — write anywhere on any tool page.
@@ -21,7 +21,25 @@ export type InkMode = "frozen" | "pen" | "eraser";
 
 const TAP_MAX_MS = 300;          // a press shorter than this that stays put is a tap
 const DRAG_PX = 6;               // moving further than this turns a press into ink
-const INK_WIDTH = 3;
+// Pen thickness and eraser size (radius) options, and how the eraser works: "part" rubs out just the bit it passes over
+// (splitting a line), "line" deletes every whole continuous line it touches. Remembered between visits.
+export const PEN_WIDTHS = [2, 4, 8] as const;
+export const ERASER_SIZES = [8, 16, 30] as const;
+export type EraseMode = "part" | "line";
+export interface InkPrefs { penWidth: number; eraserR: number; eraseMode: EraseMode }
+export const DEFAULT_PREFS: InkPrefs = { penWidth: 4, eraserR: 16, eraseMode: "part" };
+const PREFS_KEY = "mt-ink-prefs";
+function loadPrefs(): InkPrefs {
+  try {
+    const d = JSON.parse(localStorage.getItem(PREFS_KEY) ?? "null");
+    if (d && (PEN_WIDTHS as readonly number[]).includes(d.penWidth) && (ERASER_SIZES as readonly number[]).includes(d.eraserR) && (d.eraseMode === "part" || d.eraseMode === "line")) return d;
+  } catch { /* private mode etc. */ }
+  return DEFAULT_PREFS;
+}
+
+/** Erase at (x, y) with the chosen mode and size. */
+export const eraseAt = (strokes: Stroke[], x: number, y: number, prefs: InkPrefs): Stroke[] =>
+  (prefs.eraseMode === "line" ? eraseWholeNear : eraseNear)(strokes, x, y, prefs.eraserR);
 
 
 // ── Hotbar placement ─────────────────────────────────────────────────────────
@@ -90,6 +108,10 @@ export function InkOverlay() {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<InkMode>("frozen");
   const [color, setColor] = useState(PEN_COLORS[0]);
+  const [prefs, setPrefsState] = useState<InkPrefs>(loadPrefs);
+  const setPrefs = (patch: Partial<InkPrefs>) => setPrefsState((p) => { const n = { ...p, ...patch }; try { localStorage.setItem(PREFS_KEY, JSON.stringify(n)); } catch { /* ignore */ } return n; });
+  const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);   // eraser size ring follows the pointer
+  const lastErase = useRef<{ x: number; y: number } | null>(null);
   const [strokes, setStrokes] = useState<Stroke[]>([]);
   const [live, setLive] = useState<Stroke | null>(null);
   const [hint, setHint] = useState<string | null>(null);
@@ -183,9 +205,16 @@ export function InkOverlay() {
     press.current = { x0: e.clientX, y0: e.clientY, t0: performance.now(), type: e.pointerType, ink: e.pointerType === "pen", pts: [p] };
     if (press.current.ink) beginInk(p);
   };
+  // sweep the eraser from where it last was to here, so a fast move leaves no un-erased gaps
+  const eraseTo = (p: { x: number; y: number }) => {
+    const from = lastErase.current ?? p;
+    const steps = Math.max(1, Math.ceil(Math.hypot(p.x - from.x, p.y - from.y) / Math.max(2, prefs.eraserR / 2)));
+    setStrokes((s) => { let out = s; for (let i = 1; i <= steps; i++) out = eraseAt(out, from.x + ((p.x - from.x) * i) / steps, from.y + ((p.y - from.y) * i) / steps, prefs); return out; });
+    lastErase.current = p;
+  };
   const beginInk = (p: { x: number; y: number }) => {
-    if (mode === "eraser") setStrokes((s) => eraseNear(s, p.x, p.y));
-    else { liveRef.current = { color, points: [p] }; setLive(liveRef.current); }
+    if (mode === "eraser") { lastErase.current = null; eraseTo(p); }
+    else { liveRef.current = { color, width: prefs.penWidth, points: [p] }; setLive(liveRef.current); }
   };
   const onMove = (e: React.PointerEvent) => {
     const pr = press.current;
@@ -196,7 +225,7 @@ export function InkOverlay() {
       beginInk(pr.pts[0]);                       // start the stroke where the press began
     }
     if (!pr.ink) return;
-    if (mode === "eraser") setStrokes((s) => eraseNear(s, p.x, p.y));
+    if (mode === "eraser") eraseTo(p);
     else if (liveRef.current) { liveRef.current = { ...liveRef.current, points: [...liveRef.current.points, p] }; setLive(liveRef.current); }
   };
   const onUp = (e: React.PointerEvent) => {
@@ -210,7 +239,7 @@ export function InkOverlay() {
       setLive(null);
       if (done && done.points.length >= 2) setStrokes((s) => [...s, done]);
     } else if (kind === "dot") {
-      if (mode === "pen") setStrokes((s) => [...s, { color, points: [pr.pts[0], { x: pr.pts[0].x + 0.1, y: pr.pts[0].y }] }]);
+      if (mode === "pen") setStrokes((s) => [...s, { color, width: prefs.penWidth, points: [pr.pts[0], { x: pr.pts[0].x + 0.1, y: pr.pts[0].y }] }]);
     } else {
       // a tap: let the page have it
       const under = document.elementsFromPoint(e.clientX, e.clientY).find((el) => !el.closest("[data-ink-ui]"));
@@ -231,7 +260,7 @@ export function InkOverlay() {
         <svg aria-hidden="true" style={{ position: "fixed", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 2000 }}>
           <g>
             {all.map((s, i) => (
-              <path key={i} d={strokePath(s.points)} fill="none" stroke={s.color} strokeWidth={INK_WIDTH} strokeLinecap="round" strokeLinejoin="round" />
+              <path key={i} d={strokePath(s.points)} fill="none" stroke={s.color} strokeWidth={s.width ?? 3} strokeLinecap="round" strokeLinejoin="round" />
             ))}
           </g>
         </svg>
@@ -239,8 +268,13 @@ export function InkOverlay() {
 
       {/* the catching layer — only present while drawing */}
       {draw && (
-        <div ref={layerRef} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
-          style={{ position: "fixed", inset: 0, zIndex: 2001, touchAction: "none", cursor: mode === "eraser" ? "cell" : "crosshair", background: "transparent" }} />
+        <div ref={layerRef} onPointerDown={onDown} onPointerMove={(e) => { if (mode === "eraser") setCursor({ x: e.clientX, y: e.clientY }); onMove(e); }} onPointerUp={onUp} onPointerCancel={onUp} onPointerLeave={() => setCursor(null)}
+          style={{ position: "fixed", inset: 0, zIndex: 2001, touchAction: "none", cursor: mode === "eraser" ? "none" : "crosshair", background: "transparent" }} />
+      )}
+
+      {/* the eraser's size, drawn at the pointer */}
+      {draw && mode === "eraser" && cursor && (
+        <div aria-hidden="true" style={{ position: "fixed", left: cursor.x - prefs.eraserR, top: cursor.y - prefs.eraserR, width: prefs.eraserR * 2, height: prefs.eraserR * 2, borderRadius: "50%", border: `2px solid ${prefs.eraseMode === "line" ? "#dc2626" : "#475569"}`, background: "rgba(255,255,255,0.35)", pointerEvents: "none", zIndex: 2002 }} />
       )}
 
       {/* opener */}
@@ -285,6 +319,30 @@ export function InkOverlay() {
               <button key={c} onClick={() => { setColor(c); setMode("pen"); }} title="Pen colour"
                 style={{ width: 22, height: 22, borderRadius: "50%", background: c, cursor: "pointer", padding: 0, flexShrink: 0, border: color === c ? "2.5px solid #fff" : "2px solid rgba(255,255,255,0.2)" }} />
             ))}
+            <div style={rule} />
+            {/* tool options: pen thickness, or eraser size + what it deletes */}
+            {mode === "eraser" ? (
+              <>
+                {ERASER_SIZES.map((r) => (
+                  <HotBtn key={r} active={prefs.eraserR === r} onClick={() => setPrefs({ eraserR: r })} title={`Eraser size ${r === ERASER_SIZES[0] ? "small" : r === ERASER_SIZES[1] ? "medium" : "large"}`}>
+                    <span style={{ width: 6 + r / 2.2, height: 6 + r / 2.2, borderRadius: "50%", border: "2px solid #e2e8f0", display: "block" }} />
+                  </HotBtn>
+                ))}
+                {(["part", "line"] as const).map((m) => (
+                  <button key={m} onClick={() => setPrefs({ eraseMode: m })} aria-pressed={prefs.eraseMode === m}
+                    title={m === "part" ? "Rub out just the part you touch" : "Delete the whole continuous line you touch"}
+                    style={{ height: 30, padding: "0 9px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700, color: "#e2e8f0", flexShrink: 0, background: prefs.eraseMode === m ? "rgba(255,255,255,0.28)" : "rgba(255,255,255,0.07)" }}>
+                    {m === "part" ? "Part" : v ? "Line" : "Whole line"}
+                  </button>
+                ))}
+              </>
+            ) : (
+              PEN_WIDTHS.map((w) => (
+                <HotBtn key={w} active={prefs.penWidth === w && mode === "pen"} onClick={() => { setPrefs({ penWidth: w }); setMode("pen"); }} title={`Pen thickness ${w === PEN_WIDTHS[0] ? "thin" : w === PEN_WIDTHS[1] ? "medium" : "thick"}`}>
+                  <span style={{ width: 18, height: w, borderRadius: w, background: "#e2e8f0", display: "block" }} />
+                </HotBtn>
+              ))
+            )}
             <div style={rule} />
             <HotBtn active={false} onClick={() => { setMode("frozen"); setOpen(false); }} title="Close (ink stays)"><X size={18} color="#e2e8f0" /></HotBtn>
           </div>

@@ -7,6 +7,8 @@ import { MousePointer2, Hand, Pencil, Eraser, Trash2 } from "lucide-react";
 export interface Stroke {
   color: string;
   points: { x: number; y: number }[];
+  /** Pen thickness in px (the ink overlay sets it; the sandboxes leave it unset and draw at their own width). */
+  width?: number;
 }
 
 export const PEN_COLORS = ["#1e3a5f", "#dc2626", "#16a34a", "#9333ea", "#ea580c"];
@@ -15,20 +17,38 @@ const ERASE_R = 14;
 // Proximity eraser: drop every point within ERASE_R of (px,py) and split each
 // stroke into the surviving runs, so an eraser pass cuts through a line rather
 // than deleting the whole thing.
-export const eraseNear = (strokes: Stroke[], px: number, py: number): Stroke[] => {
+export const eraseNear = (strokes: Stroke[], px: number, py: number, r: number = ERASE_R): Stroke[] => {
   const out: Stroke[] = [];
   for (const s of strokes) {
     let cur: { x: number; y: number }[] = [];
     for (const pt of s.points) {
-      if (Math.hypot(pt.x - px, pt.y - py) < ERASE_R) {
-        if (cur.length >= 2) out.push({ color: s.color, points: cur });
+      if (Math.hypot(pt.x - px, pt.y - py) < r) {
+        if (cur.length >= 2) out.push({ ...s, points: cur });
         cur = [];
       } else cur.push(pt);
     }
-    if (cur.length >= 2) out.push({ color: s.color, points: cur });
+    if (cur.length >= 2) out.push({ ...s, points: cur });
   }
   return out;
 };
+
+/** Distance from (px, py) to the segment a–b. */
+const distToSegment = (px: number, py: number, a: { x: number; y: number }, b: { x: number; y: number }): number => {
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const len2 = dx * dx + dy * dy;
+  const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, ((px - a.x) * dx + (py - a.y) * dy) / len2));
+  return Math.hypot(px - (a.x + t * dx), py - (a.y + t * dy));
+};
+
+/** Whole-line eraser: drop every stroke the eraser touches (a stroke is one continuous line, from pen down to pen up).
+ *  Measured to the line SEGMENTS, not just the recorded points, so a fast, sparsely sampled stroke is still caught. */
+export const eraseWholeNear = (strokes: Stroke[], px: number, py: number, r: number = ERASE_R): Stroke[] =>
+  strokes.filter((s) => {
+    const reach = r + (s.width ?? 3) / 2;
+    if (s.points.length === 1) return Math.hypot(s.points[0].x - px, s.points[0].y - py) > reach;
+    for (let i = 1; i < s.points.length; i++) if (distToSegment(px, py, s.points[i - 1], s.points[i]) <= reach) return false;
+    return true;
+  });
 
 // Smooth a freehand stroke into an SVG path: a quadratic curve through the
 // midpoint of each pair of points rounds off the polyline so writing flows

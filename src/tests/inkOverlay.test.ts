@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { classifyPress, dockFromDrop, placeHotbar, defaultDock } from "../shared/components/InkOverlay";
-import { eraseNear } from "../shared/components/BoardTools";
+import { eraseNear, eraseWholeNear } from "../shared/components/BoardTools";
+import { eraseAt, DEFAULT_PREFS, PEN_WIDTHS, ERASER_SIZES } from "../shared/components/InkOverlay";
 
 describe("Ink overlay press classification", () => {
   it("a short, still press is a tap to forward", () => {
@@ -52,5 +53,32 @@ describe("Ink overlay press classification", () => {
     }
     // a bar taller than the screen pins to the top margin rather than going negative
     expect(placeHotbar({ v: true, cx: 1, cy: 0.5 }, 1000, 300, 60, 480).top).toBe(8);
+  });
+
+  const line = (w?: number) => ({ color: "#000", width: w, points: Array.from({ length: 21 }, (_, i) => ({ x: i * 10, y: 0 })) });
+  it("eraser size changes how much a pass removes, and strokes keep their thickness when split", () => {
+    const small = eraseNear([line(8)], 100, 0, 8), big = eraseNear([line(8)], 100, 0, 30);
+    const kept = (r: { points: unknown[] }[]) => r.reduce((n, s) => n + s.points.length, 0);
+    expect(kept(big)).toBeLessThan(kept(small));
+    expect(small.every((s) => s.width === 8)).toBe(true);
+  });
+  it("whole-line mode deletes the entire continuous line, not a section", () => {
+    const a = line(4), b = { color: "#f00", points: [{ x: 0, y: 200 }, { x: 200, y: 200 }] };
+    const out = eraseWholeNear([a, b], 100, 6, 8);
+    expect(out).toEqual([b]);                                   // a is gone completely, b untouched
+    expect(eraseWholeNear([a, b], 100, 80, 8)).toEqual([a, b]); // a miss removes nothing
+  });
+  it("whole-line mode catches a sparsely sampled stroke between its recorded points", () => {
+    const sparse = { color: "#000", points: [{ x: 0, y: 0 }, { x: 400, y: 0 }] };
+    expect(eraseWholeNear([sparse], 200, 3, 8)).toEqual([]);    // 200px from either recorded point, but on the line
+  });
+  it("the thick pen is hit from further away than the thin one", () => {
+    expect(eraseWholeNear([line(2)], 100, 14, 8)).toHaveLength(1);
+    expect(eraseWholeNear([line(12)], 100, 14, 8)).toHaveLength(0);
+  });
+  it("eraseAt follows the chosen mode and size", () => {
+    expect(eraseAt([line(4)], 100, 0, { ...DEFAULT_PREFS, eraseMode: "line" })).toEqual([]);
+    expect(eraseAt([line(4)], 100, 0, { ...DEFAULT_PREFS, eraseMode: "part" }).length).toBe(2);
+    expect(PEN_WIDTHS.length).toBe(3); expect(ERASER_SIZES.length).toBe(3);
   });
 });
