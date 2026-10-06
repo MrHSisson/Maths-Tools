@@ -1,6 +1,6 @@
 # Depth Bank: Rounding
 
-**Status:** implemented (dev-gated, awaiting review) — `src/tools/Number/RoundingDepth.ts` (+ `RoundingDepthLine.ts`), 26 items.
+**Status:** implemented (dev-gated, awaiting review) — `src/tools/Number/RoundingDepth.ts` (+ `RoundingDepthLine.ts`), 25 items.
 
 **Gating.** Unlike other Depth banks, Rounding's bank only shows with **Developing-tools mode** on: `Rounding.tsx` passes
 `depthItems={devMode ? DEPTH_ITEMS : undefined}`. Remove the `useDevMode` gate to take it live. `__test.depthItems` is always
@@ -34,7 +34,7 @@ in `src/shared/depth.ts` / `DepthMode.tsx`; the line itself lives in `RoundingDe
 | 3 | Digits dropped, not zeroed (s.f.) | 4,726 → 47 | Forgets place-holder zeros keep the size |
 | 3 | Double rounding | 2.46 → 2.5 → 3 | A first rounding feels safe to build on |
 
-## 2. Items (26)
+## 2. Items (25)
 
 `needs` is only used where an item depends on a pool option; general items always show. One **Start here** per level.
 

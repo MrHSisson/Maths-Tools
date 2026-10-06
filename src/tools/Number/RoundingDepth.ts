@@ -16,6 +16,41 @@ const line = (spec: DepthLineSpec): DepthVisual => ({
   render: (onAnswer, plot) => depthLine(spec, onAnswer, plot),
 });
 
+// One number line per item — every item, on every level and sub-tool, offers the same scaffold (see `line`). Each line
+// is drawn in the item's own units (d.p. items in decimals, s.f. items in significant-figure steps) and is checked
+// against the item's numbers in src/tests/roundingDepth.test.ts. `ring` / `shade` / `midLabel` are only set where the
+// question is not "which end is it nearer to?" (the range items: the middle is the answer, and the whole span rounds to it).
+export const ITEM_LINES: Record<string, DepthLineSpec> = {
+  // Level 1
+  "rnd-leo-mia": { lo: "40", mid: "45", hi: "50", num: "47", pos: 0.7 },
+  "rnd-two-neighbours": { lo: "3,400", mid: "3,450", hi: "3,500", num: "3,482", pos: 0.82 },
+  "rnd-halfway": { lo: "300", mid: "350", hi: "400", num: "350", pos: 0.5 },
+  "rnd-explain-down": { lo: "80", mid: "85", hi: "90", num: "86", pos: 0.6 },
+  "rnd-explain-already": { lo: "340", mid: "345", hi: "350", num: "340", pos: 0 },
+  "rnd-extend-asn": { lo: "40", mid: "45", hi: "50", num: "43", pos: 0.3 },
+  "rnd-extend-range-50": { lo: "450", mid: "500", hi: "550", num: "500", pos: 0.5, ring: "mid", shade: "all", midLabel: "rounds to" },
+  // Level 2
+  "rnd-keep-rest": { lo: "30", mid: "35", hi: "40", num: "31.04", pos: 0.104 },
+  "rnd-digit-nearest": { lo: "3,400", mid: "3,450", hi: "3,500", num: "3,482", pos: 0.82 },
+  "rnd-digit-dp": { lo: "6.73", mid: "6.735", hi: "6.74", num: "6.738", pos: 0.8 },
+  "rnd-cutoff": { lo: "2.67", mid: "2.675", hi: "2.68", num: "2.678", pos: 0.8 },
+  "rnd-chain": { lo: "3,000", mid: "3,500", hi: "4,000", num: "3,462", pos: 0.462 },
+  "rnd-explain-priya": { lo: "400", mid: "450", hi: "500", num: "482.6", pos: 0.826 },
+  "rnd-explain-trail": { lo: "4.29", mid: "4.295", hi: "4.30", num: "4.296", pos: 0.6 },
+  "rnd-extend-zero": { lo: "40", mid: "45", hi: "50", num: "47.3", pos: 0.73 },
+  "rnd-extend-many": { lo: "65", mid: "70", hi: "75", num: "70", pos: 0.5, ring: "mid", shade: "all", midLabel: "rounds to" },
+  // Level 3
+  "rnd-nines": { lo: "390", mid: "395", hi: "400", num: "396", pos: 0.6 },
+  "rnd-zero-sf": { lo: "0.0047", mid: "0.00475", hi: "0.0048", num: "0.00472", pos: 0.2 },
+  "rnd-placeholder-sf": { lo: "4,700", mid: "4,750", hi: "4,800", num: "4,726", pos: 0.26 },
+  "rnd-nine-dp": { lo: "0.09", mid: "0.095", hi: "0.10", num: "0.0996", pos: 0.96 },
+  "rnd-explain-double": { lo: "2", mid: "2.5", hi: "3", num: "2.46", pos: 0.46 },
+  "rnd-explain-zoe": { lo: "0.038", mid: "0.0385", hi: "0.039", num: "0.0384", pos: 0.4 },
+  "rnd-extend-range-dp": { lo: "2.35", mid: "2.4", hi: "2.45", num: "2.4", pos: 0.5, ring: "mid", shade: "all", midLabel: "rounds to" },
+  "rnd-extend-sfdp": { lo: "0", mid: "0.005", hi: "0.01", num: "0.00472", pos: 0.472 },
+  "rnd-extend-convince": { lo: "2.99", mid: "2.995", hi: "3.00", num: "2.995", pos: 0.5 },
+};
+
 export const DEPTH_ITEMS: DepthItem[] = [
   // ───────────────────────── Level 1 — Which way? ─────────────────────────
   {
@@ -25,7 +60,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       { name: "Leo", says: ["$47$ to the nearest $10$ is $40$ — the tens digit is $4$."] },
       { name: "Mia", says: ["$47$ to the nearest $10$ is $50$ — it is closer to $50$."] },
     ],
-    visual: line({ lo: "40", mid: "45", hi: "50", num: "47", pos: 0.7 }),
+    visual: line(ITEM_LINES["rnd-leo-mia"]),
     question: ["Who is right?"],
     options: [
       { text: "Leo", misconception: "Reads the tens digit and stops — never looks at how far through the interval the number is" },
@@ -43,6 +78,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
   {
     id: "rnd-two-neighbours", level: "level1", tool: "nearest", needs: ["n100"], purpose: "diagnose",
     title: "The two neighbours",
+    visual: line(ITEM_LINES["rnd-two-neighbours"]),
     question: ["$3{,}482$ is going to be rounded to the nearest $100$.", "Which two numbers is it between?"],
     options: [
       { text: "$3{,}400$ and $3{,}500$", correct: true },
@@ -59,7 +95,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
   {
     id: "rnd-halfway", level: "level1", purpose: "diagnose",
     title: "Exactly in the middle",
-    visual: line({ lo: "300", mid: "350", hi: "400", num: "350", pos: 0.5 }),
+    visual: line(ITEM_LINES["rnd-halfway"]),
     question: ["Round $350$ to the nearest $100$."],
     options: [
       { text: "$300$", misconception: "Thinks a number exactly halfway has not gone 'past' halfway, so it stays down" },
@@ -78,7 +114,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     id: "rnd-explain-down", level: "level1", purpose: "explain",
     title: "Explain this mistake",
     speakers: [{ name: "Sam", says: ["$86$ to the nearest $10$ is $80$, because I look at the $8$ and keep it."] }],
-    visual: line({ lo: "80", mid: "85", hi: "90", num: "86", pos: 0.6 }),
+    visual: line(ITEM_LINES["rnd-explain-down"]),
     question: ["Explain what Sam has done wrong. What should the answer be?"],
     answer: [
       "Sam kept the tens digit and ignored the units.",
@@ -92,6 +128,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     id: "rnd-explain-already", level: "level1", purpose: "explain",
     title: "Nothing to do?",
     speakers: [{ name: "Zara", says: ["I rounded $340$ to the nearest $10$ and it did not change — I must have done it wrong."] }],
+    visual: line(ITEM_LINES["rnd-explain-already"]),
     question: ["Is Zara right to worry? Explain."],
     answer: [
       "Zara is not wrong: $340$ is already a multiple of $10$.",
@@ -104,6 +141,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
   {
     id: "rnd-extend-asn", level: "level1", purpose: "extend",
     title: "Always, sometimes, never",
+    visual: line(ITEM_LINES["rnd-extend-asn"]),
     question: ["A number rounded to the nearest $10$ is bigger than the original number.", "Always, sometimes or never? Give examples."],
     answer: [
       "Sometimes.",
@@ -116,6 +154,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
   {
     id: "rnd-extend-range-50", level: "level1", purpose: "extend",
     title: "Smallest and largest",
+    visual: line(ITEM_LINES["rnd-extend-range-50"]),
     question: ["A whole number is rounded to the nearest $100$ and the answer is $500$.", "What is the smallest it could be? What is the largest?"],
     answer: [
       "Smallest: $450$ (halfway rounds up, so $450 \\to 500$).",
@@ -134,7 +173,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       { name: "Nina", says: ["$31.04$ to the nearest $10$ is $30.04$."] },
       { name: "Omar", says: ["$31.04$ to the nearest $10$ is $30$."] },
     ],
-    visual: line({ lo: "30", mid: "35", hi: "40", num: "31.04", pos: 0.104 }),
+    visual: line(ITEM_LINES["rnd-keep-rest"]),
     question: ["Who is right?"],
     options: [
       { text: "Nina", misconception: "Rounds the digit but keeps everything else — the decimal part is carried along untouched" },
@@ -152,6 +191,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
   {
     id: "rnd-digit-nearest", level: "level2", tool: "nearest", needs: ["n100"], purpose: "diagnose",
     title: "Which digit decides?",
+    visual: line(ITEM_LINES["rnd-digit-nearest"]),
     question: ["Round $3{,}482$ to the nearest $100$.", "Which digit decides whether to round up or down?"],
     options: [
       { text: "$3$", misconception: "Looks at the first digit instead of the one after the rounding digit" },
@@ -169,6 +209,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
   {
     id: "rnd-digit-dp", level: "level2", tool: "dp", needs: ["dp2"], purpose: "diagnose",
     title: "Which digit decides?",
+    visual: line(ITEM_LINES["rnd-digit-dp"]),
     question: ["Round $6.738$ to $2$ decimal places.", "Which digit decides whether to round up or down?"],
     options: [
       { text: "$7$", misconception: "Looks at the first decimal digit instead of the one after the rounding digit" },
@@ -186,6 +227,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
   {
     id: "rnd-cutoff", level: "level2", tool: "dp", needs: ["dp2"], purpose: "diagnose",
     title: "Round or cut off?",
+    visual: line(ITEM_LINES["rnd-cutoff"]),
     question: ["Round $2.678$ to $2$ decimal places."],
     options: [
       { text: "$2.67$", misconception: "Chops the number off after two decimal places without looking at the decider" },
@@ -204,6 +246,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     id: "rnd-chain", level: "level2", tool: "nearest", needs: ["n1000"], purpose: "explain",
     title: "Round, round, round",
     speakers: [{ name: "Tia", says: ["$3{,}462$ to the nearest $1000$: first to the nearest $10$ is $3{,}460$, then to the nearest $100$ is $3{,}500$, then to the nearest $1000$ is $4{,}000$."] }],
+    visual: line(ITEM_LINES["rnd-chain"]),
     question: ["Is Tia's answer right? Explain what she did."],
     answer: [
       "Tia's answer, $4{,}000$, is wrong. $3{,}462$ rounds to $3{,}000$.",
@@ -217,6 +260,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     id: "rnd-explain-priya", level: "level2", purpose: "explain",
     title: "Explain this mistake",
     speakers: [{ name: "Priya", says: ["$482.6$ to the nearest $100$ is $500.6$."] }],
+    visual: line(ITEM_LINES["rnd-explain-priya"]),
     question: ["Explain what Priya has done. What should the answer be?"],
     answer: [
       "Priya rounded the hundreds digit but kept the rest of the number.",
@@ -230,6 +274,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     id: "rnd-explain-trail", level: "level2", tool: "dp", needs: ["dp2"], purpose: "explain",
     title: "The missing zero",
     speakers: [{ name: "Kai", says: ["$4.296$ to $2$ d.p. is $4.3$."] }],
+    visual: line(ITEM_LINES["rnd-explain-trail"]),
     question: ["Is Kai right? Explain."],
     answer: [
       "Kai has the right value but not the right accuracy.",
@@ -242,6 +287,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
   {
     id: "rnd-extend-zero", level: "level2", purpose: "extend",
     title: "Always, sometimes, never",
+    visual: line(ITEM_LINES["rnd-extend-zero"]),
     question: ["A number rounded to the nearest $10$ always ends in $0$.", "Always, sometimes or never? What about $47.3$?"],
     answer: [
       "Always.",
@@ -254,6 +300,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
   {
     id: "rnd-extend-many", level: "level2", purpose: "extend",
     title: "How many?",
+    visual: line(ITEM_LINES["rnd-extend-many"]),
     question: ["How many whole numbers round to $70$ when rounded to the nearest $10$?", "What if the numbers can have one decimal place?"],
     answer: [
       "Whole numbers: $65, 66, \\dots, 74$ — that is $10$ numbers ($65$ rounds up, $75$ rounds to $80$).",
@@ -268,6 +315,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
   {
     id: "rnd-nines", level: "level3", purpose: "diagnose", startHere: true,
     title: "Carrying over",
+    visual: line(ITEM_LINES["rnd-nines"]),
     question: ["Round $396$ to the nearest $10$."],
     options: [
       { text: "$390$", misconception: "Cuts off after the tens digit without looking at the decider" },
@@ -285,6 +333,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
   {
     id: "rnd-zero-sf", level: "level3", tool: "sf", needs: ["sf2"], purpose: "diagnose",
     title: "Which zeros count?",
+    visual: line(ITEM_LINES["rnd-zero-sf"]),
     question: ["Round $0.00472$ to $2$ significant figures."],
     options: [
       { text: "$0.0$", misconception: "Counts the leading zeros as significant figures" },
@@ -302,6 +351,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
   {
     id: "rnd-placeholder-sf", level: "level3", tool: "sf", needs: ["sf2"], purpose: "diagnose",
     title: "Keep the size",
+    visual: line(ITEM_LINES["rnd-placeholder-sf"]),
     question: ["Round $4{,}726$ to $2$ significant figures."],
     options: [
       { text: "$47$", misconception: "Drops the digits instead of replacing them with zeros, so the size of the number is lost" },
@@ -319,6 +369,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
   {
     id: "rnd-nine-dp", level: "level3", tool: "dp", needs: ["dp2"], purpose: "diagnose",
     title: "Carrying over",
+    visual: line(ITEM_LINES["rnd-nine-dp"]),
     question: ["Round $0.0996$ to $2$ decimal places."],
     options: [
       { text: "$0.09$", misconception: "Cuts off after two decimal places without looking at the decider" },
@@ -337,6 +388,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     id: "rnd-explain-double", level: "level3", purpose: "explain",
     title: "Round twice?",
     speakers: [{ name: "Eli", says: ["Rounding $2.46$ to $1$ d.p. and then to the nearest whole number gives the same answer as rounding $2.46$ straight to the nearest whole number."] }],
+    visual: line(ITEM_LINES["rnd-explain-double"]),
     question: ["Test Eli's claim. Is it true?"],
     answer: [
       "Eli's claim is false.",
@@ -351,6 +403,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
     id: "rnd-explain-zoe", level: "level3", tool: "sf", needs: ["sf2"], purpose: "explain",
     title: "Explain this mistake",
     speakers: [{ name: "Zoe", says: ["$0.0384$ to $2$ significant figures is $0.04$."] }],
+    visual: line(ITEM_LINES["rnd-explain-zoe"]),
     question: ["How many significant figures has Zoe used? What should the answer be?"],
     answer: [
       "$0.04$ has only $1$ significant figure: Zoe rounded to $1$ s.f. instead of $2$.",
@@ -363,6 +416,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
   {
     id: "rnd-extend-range-dp", level: "level3", purpose: "extend",
     title: "Smallest and largest",
+    visual: line(ITEM_LINES["rnd-extend-range-dp"]),
     question: ["A number is rounded to $1$ decimal place and the answer is $2.4$.", "What is the smallest value it could be? Which value can it not quite reach?"],
     answer: [
       "Smallest: $2.35$ ($2.35$ rounds up to $2.4$).",
@@ -375,6 +429,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
   {
     id: "rnd-extend-sfdp", level: "level3", tool: "sf", purpose: "extend",
     title: "Always, sometimes, never",
+    visual: line(ITEM_LINES["rnd-extend-sfdp"]),
     question: ["Rounding to $3$ significant figures is more accurate than rounding to $2$ decimal places.", "Always, sometimes or never? Try $0.00472$ and $472.3$."],
     answer: [
       "Sometimes.",
@@ -387,6 +442,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
   {
     id: "rnd-extend-convince", level: "level3", tool: "dp", needs: ["dp2"], purpose: "extend",
     title: "Convince me",
+    visual: line(ITEM_LINES["rnd-extend-convince"]),
     question: ["Convince me that $2.995$ to $2$ decimal places is $3.00$ — not $2.99$ and not $3.0$."],
     answer: [
       "The rounding digit is the second $9$ and the decider is $5$, so round up.",

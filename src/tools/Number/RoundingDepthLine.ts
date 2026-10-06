@@ -13,6 +13,9 @@ export interface DepthLineSpec {
   hi: string;       // upper boundary label
   num: string;      // the number being rounded (label)
   pos: number;      // 0..1 — where it sits between lo and hi
+  ring?: "lo" | "mid" | "hi";                 // the answer to ring (default: the nearer end)
+  shade?: "lower" | "upper" | "all";          // the region to shade on the answer slide (default: the half it sits in)
+  midLabel?: string;                          // caption over the dashed middle mark (default "halfway"; "rounds to" for range items)
 }
 
 const label = (x: number, text: string, fill: string, key?: string) =>
@@ -23,13 +26,15 @@ const label = (x: number, text: string, fill: string, key?: string) =>
 export function depthLine(spec: DepthLineSpec, onAnswer: boolean, plot: boolean): ReactNode {
   const mx = X0 + spec.pos * LW;
   const up = spec.pos >= 0.5;
-  const ansX = X0 + (up ? LW : 0);
+  const ring = spec.ring ?? (up ? "hi" : "lo");
+  const ansX = X0 + (ring === "hi" ? LW : ring === "mid" ? 5 * STEP : 0);
+  const shade = spec.shade ?? (up ? "upper" : "lower");
   const midX = X0 + 5 * STEP;
   const kids: ReactNode[] = [];
   if (onAnswer) {
-    kids.push(h("rect", { key: "half", x: up ? midX : X0, y: LY - 30, width: 5 * STEP, height: 60, rx: 6, fill: "#16a34a", opacity: 0.14 }));
+    kids.push(h("rect", { key: "half", x: shade === "upper" ? midX : X0, y: LY - 30, width: shade === "all" ? LW : 5 * STEP, height: 60, rx: 6, fill: "#16a34a", opacity: 0.14 }));
     kids.push(h("line", { key: "midl", x1: midX, y1: LY - 46, x2: midX, y2: LY + 22, stroke: HALF, strokeWidth: 3, strokeDasharray: "6 5" }));
-    kids.push(h("text", { key: "midt", x: midX, y: LY - 54, textAnchor: "middle", fontSize: 20, fontWeight: 700, fill: HALF }, "halfway"));
+    kids.push(h("text", { key: "midt", x: midX, y: LY - 54, textAnchor: "middle", fontSize: 20, fontWeight: 700, fill: HALF }, spec.midLabel ?? "halfway"));
   }
   if (plot || onAnswer) kids.push(
     h("text", { key: "num", x: mx, y: 32, textAnchor: "middle", dominantBaseline: "middle", fontSize: 32, fontWeight: 700, fill: BLUE }, spec.num),

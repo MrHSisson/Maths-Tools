@@ -91,3 +91,37 @@ describe("Rounding Depth bank numeric claims", () => {
     expect(dp("472.3", 2)).toBe("472.30");
   });
 });
+
+// ── The number-line scaffold is consistent: every item, every level and sub-tool ──────────────────────────────
+import { renderToStaticMarkup } from "react-dom/server";
+import { DEPTH_ITEMS, ITEM_LINES } from "../tools/Number/RoundingDepth";
+import { depthLine } from "../tools/Number/RoundingDepthLine";
+
+describe("Rounding Depth number lines", () => {
+  const num = (s: string) => Number(s.replace(/,/g, ""));
+  it("every item has exactly one line spec, wired as the item's custom visual", () => {
+    expect(Object.keys(ITEM_LINES).sort()).toEqual(DEPTH_ITEMS.map((i) => i.id).sort());
+    for (const i of DEPTH_ITEMS) expect(i.visual?.type, i.id).toBe("custom");
+  });
+  it("each line is drawn to scale: middle is halfway, the point sits where pos says", () => {
+    for (const [id, sp] of Object.entries(ITEM_LINES)) {
+      const lo = num(sp.lo), mid = num(sp.mid), hi = num(sp.hi), n = num(sp.num);
+      expect(mid, `${id} mid`).toBeCloseTo((lo + hi) / 2, 9);
+      expect(sp.pos, `${id} pos`).toBeCloseTo((n - lo) / (hi - lo), 2);
+      expect(n, `${id} number inside the line`).toBeGreaterThanOrEqual(lo);
+      expect(n, `${id} number inside the line`).toBeLessThanOrEqual(hi);
+    }
+  });
+  it("renders in every state; the plot (marker + number) only appears when plotted or on the answer slide", () => {
+    for (const [id, sp] of Object.entries(ITEM_LINES)) {
+      const bare = renderToStaticMarkup(depthLine(sp, false, false) as never);
+      const plotted = renderToStaticMarkup(depthLine(sp, false, true) as never);
+      const answer = renderToStaticMarkup(depthLine(sp, true, false) as never);
+      expect(bare, id).toContain(sp.lo);
+      expect(bare, id).not.toContain("<circle");                 // no marker, no ring
+      expect(bare.includes(`>${sp.num}<`) && sp.num !== sp.lo && sp.num !== sp.hi, id).toBe(false);
+      expect(plotted, id).toContain("<circle");
+      expect(answer, id).toContain(sp.mid);                      // answer slide labels halfway / "rounds to"
+    }
+  });
+});
