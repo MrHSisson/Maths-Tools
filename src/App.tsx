@@ -1,10 +1,12 @@
 import { Suspense, lazy } from 'react';
 import type { ComponentType } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import LandingPage from './components/LandingPage';
 import { ToolErrorBoundary } from './components/ToolErrorBoundary';
 import { ALL_TOOLS } from './registry';
 import { useParkedMode } from './parkedMode';
+import { useDevMode } from './devMode';
+import { InkOverlay } from './shared/components/InkOverlay';
 
 // Routes are generated from the registry. Each tool is lazy-loaded so it
 // builds as its own chunk — the landing page stays small and a tool's code
@@ -48,9 +50,19 @@ function ParkedRoute({ Component }: { Component: ComponentType }) {
   return parkedMode ? <Component /> : <NotFound />;
 }
 
+// The ink overlay is dev-gated and only on tool pages — not the landing page, and not the two sandboxes
+// (they have their own board and hotbar). It is keyed by route so ink never carries from one tool to another.
+const NO_INK = new Set(['/', '/algebra-tiles', '/negative-counters']);
+function InkLayer() {
+  const dev = useDevMode();
+  const { pathname } = useLocation();
+  return dev && !NO_INK.has(pathname) ? <InkOverlay key={pathname} /> : null;
+}
+
 function App() {
   return (
     <ToolErrorBoundary>
+      <InkLayer />
       <Suspense fallback={<LoadingFallback />}>
         <Routes>
           <Route path="/" element={<LandingPage />} />

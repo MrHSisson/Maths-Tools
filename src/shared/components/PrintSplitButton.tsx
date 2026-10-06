@@ -34,6 +34,7 @@ export const PrintSplitButton = ({
     <div className="relative flex-shrink-0" ref={ref}>
       <div className="flex rounded-xl overflow-hidden shadow-sm" style={{ border: "none" }}>
         <button
+          data-trusted-click
           onClick={() => onPrint(printMode)}
           className="px-5 py-2 bg-green-700 text-white font-bold text-base hover:bg-green-800 flex items-center gap-2 transition-colors"
         >
@@ -52,6 +53,7 @@ export const PrintSplitButton = ({
           {(["both", "questions", "answers"] as PrintMode[]).map(m => (
             <button
               key={m}
+              data-trusted-click
               onClick={() => fire(m)}
               className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold transition-colors ${printMode === m ? "bg-green-700 text-white" : "text-gray-700 hover:bg-gray-50"}`}
             >

@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-06 — Ink overlay: write anywhere on a tool page (dev-gated)
+
+A transparent layer over every tool page (`src/shared/components/InkOverlay.tsx`, mounted once in `App.tsx`; **Developing-tools mode only**; not on the landing page or the two sandboxes, which have their own board). A pencil button opens a hotbar: **Freeze** (page live, ink stays) · **Pen** · **Eraser** · Undo · Clear · colours. In Draw, a **drag inks** and a **short still tap is forwarded** to the element underneath (pointer/mouse/click events), a long still press draws a dot, and a stylus always inks. Forwarded taps are synthetic, so anything needing a real click is marked `data-trusted-click` (currently the Print buttons): tapping it freezes the layer with "Frozen — tap again". Ink is stored in page coordinates (scrolls with the window), clears on route change and is hidden when printing. Tested in `src/tests/inkOverlay.test.ts` and headlessly (gating, drag, tap-forward, freeze, hint, erase, scroll anchor).
+
 ## 2026-10-06 — Depth: no scrollbars, optional number line, new owl
 
 Depth slides never scroll: the panel content is now fit-scaled (`FitBox` in `DepthMode.tsx`) to the 16:9 panel at every screen size. A tool-drawn picture (`visual.type: "custom"`) is now a scaffold with two separate switches in the slide's side rail — **Number line** and **Plot the point** (the second needs the first) — both off to begin with and kept between questions; the answer slide always shows the fully plotted picture. The owl mascot is redrawn (gradient body, feather chest, tufts, brows, talons).
