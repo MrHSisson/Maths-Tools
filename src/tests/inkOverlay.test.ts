@@ -22,13 +22,21 @@ describe("Ink overlay press classification", () => {
   });
 
   it("hotbar docking: side edges go vertical, bottom/top flat, the middle stays flat and free", () => {
-    expect(dockFromDrop(20, 300, 1200, 800)).toMatchObject({ v: true, cx: 0 });
-    expect(dockFromDrop(1190, 300, 1200, 800)).toMatchObject({ v: true, cx: 1 });
-    expect(dockFromDrop(600, 790, 1200, 800)).toMatchObject({ v: false, cy: 1 });
-    expect(dockFromDrop(600, 20, 1200, 800)).toMatchObject({ v: false, cy: 0 });
-    expect(dockFromDrop(600, 400, 1200, 800)).toMatchObject({ v: false, cx: 0.5, cy: 0.5 });
+    const at = (x: number, y: number, cx = x, cy = y) => dockFromDrop({ x, y }, { x: cx, y: cy }, 1200, 800);
+    expect(at(20, 300)).toMatchObject({ v: true, cx: 0 });
+    expect(at(1190, 300)).toMatchObject({ v: true, cx: 1 });
+    expect(at(600, 790)).toMatchObject({ v: false, cy: 1 });
+    expect(at(600, 20)).toMatchObject({ v: false, cy: 0 });
+    expect(at(600, 400)).toMatchObject({ v: false, cx: 0.5, cy: 0.5 });
     expect(defaultDock(1280)).toMatchObject({ v: true, cx: 1 });
     expect(defaultDock(390)).toMatchObject({ v: false, cy: 1 });
+  });
+  it("left and right docking are symmetric even when the grabbed grip is far from the bar's centre", () => {
+    // a flat bar grabbed at its left-end grip: the centre sits ~210px to the right of the pointer
+    const left = dockFromDrop({ x: 20, y: 300 }, { x: 230, y: 300 }, 1200, 800);
+    const right = dockFromDrop({ x: 1180, y: 300 }, { x: 1390, y: 300 }, 1200, 800);
+    expect(left).toMatchObject({ v: true, cx: 0 });
+    expect(right).toMatchObject({ v: true, cx: 1 });
   });
   it("the hotbar is always kept fully on screen", () => {
     for (const d of [{ v: true, cx: 1, cy: 0 }, { v: false, cx: 0, cy: 1 }, { v: true, cx: 0.5, cy: 0.5 }]) {

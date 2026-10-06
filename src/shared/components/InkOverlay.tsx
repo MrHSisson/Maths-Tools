@@ -36,13 +36,15 @@ const clamp01 = (n: number) => clamp(n, 0, 1);
 /** Out of the box: a vertical bar on the right edge (a phone gets it flat along the bottom). */
 export const defaultDock = (vw: number): HotbarDock => (vw < 640 ? { v: false, cx: 0.5, cy: 1 } : { v: true, cx: 1, cy: 0.5 });
 
-/** Where a bar dropped with its centre at (px, py) docks: on a side edge it goes vertical, otherwise flat. */
-export function dockFromDrop(px: number, py: number, vw: number, vh: number): HotbarDock {
-  const cy = clamp01(py / vh), cx = clamp01(px / vw);
-  if (px < EDGE) return { v: true, cx: 0, cy };
-  if (px > vw - EDGE) return { v: true, cx: 1, cy };
-  if (py > vh - EDGE) return { v: false, cx, cy: 1 };
-  if (py < EDGE) return { v: false, cx, cy: 0 };
+/** Where a bar dropped docks. The edge zones follow the POINTER (where the teacher is dragging to — the grip sits at one
+ *  end of a flat bar, so its centre is far from the pointer and would make one side unreachable); the bar's position
+ *  along the edge, or its free position, follows its centre. Side edges go vertical, everything else flat. */
+export function dockFromDrop(pointer: { x: number; y: number }, centre: { x: number; y: number }, vw: number, vh: number): HotbarDock {
+  const cx = clamp01(centre.x / vw), cy = clamp01(centre.y / vh);
+  if (pointer.x < EDGE) return { v: true, cx: 0, cy };
+  if (pointer.x > vw - EDGE) return { v: true, cx: 1, cy };
+  if (pointer.y > vh - EDGE) return { v: false, cx, cy: 1 };
+  if (pointer.y < EDGE) return { v: false, cx, cy: 0 };
   return { v: false, cx, cy };
 }
 
@@ -90,7 +92,7 @@ export function InkOverlay() {
   const layerRef = useRef<HTMLDivElement>(null);
   const press = useRef<{ x0: number; y0: number; t0: number; type: string; ink: boolean; pts: { x: number; y: number }[] } | null>(null);
   const [dock, setDock] = useState<HotbarDock>(loadDock);
-  const [drag, setDrag] = useState<{ px: number; py: number } | null>(null);   // live centre while the bar is being dragged
+  const [drag, setDrag] = useState<{ px: number; py: number; x: number; y: number } | null>(null);   // live centre (px, py) and pointer (x, y) while dragging
   const [size, setSize] = useState({ w: 56, h: 460 });
   const barRef = useRef<HTMLDivElement>(null);
   const grab = useRef<{ dx: number; dy: number } | null>(null);
@@ -125,11 +127,11 @@ export function InkOverlay() {
     e.currentTarget.setPointerCapture(e.pointerId);
     const r = el.getBoundingClientRect();
     grab.current = { dx: e.clientX - (r.left + r.width / 2), dy: e.clientY - (r.top + r.height / 2) };
-    setDrag({ px: r.left + r.width / 2, py: r.top + r.height / 2 });
+    setDrag({ px: r.left + r.width / 2, py: r.top + r.height / 2, x: e.clientX, y: e.clientY });
   };
-  const gripMove = (e: React.PointerEvent) => { if (grab.current) setDrag({ px: e.clientX - grab.current.dx, py: e.clientY - grab.current.dy }); };
+  const gripMove = (e: React.PointerEvent) => { if (grab.current) setDrag({ px: e.clientX - grab.current.dx, py: e.clientY - grab.current.dy, x: e.clientX, y: e.clientY }); };
   const gripUp = () => {
-    if (grab.current && drag) { const d = dockFromDrop(drag.px, drag.py, window.innerWidth, window.innerHeight); setDock(d); saveDock(d); }
+    if (grab.current && drag) { const d = dockFromDrop({ x: drag.x, y: drag.y }, { x: drag.px, y: drag.py }, window.innerWidth, window.innerHeight); setDock(d); saveDock(d); }
     grab.current = null;
     setDrag(null);
   };
