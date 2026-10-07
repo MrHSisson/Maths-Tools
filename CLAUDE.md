@@ -22,6 +22,7 @@ this table first; it tells you where to look and where to write.
 | **`docs/architecture/CS_SHELL_PLAN.md`** | The `CSShell` architecture and its extraction stages. | Building or extending a CS tool. |
 | **`docs/architecture/DECISION_SHELL_PLAN.md`** | The `DecisionShell` architecture — network-native question generators (MST/TSP/CPA) on a shared representation library. | Building or extending a Decision Maths tool. |
 | **`docs/GLOSSARY.md`** | Canonical name for every element (tool, grain, technique, skill, QO…). | Naming or discussing anything — use these words. |
+| **`docs/design/CAST.md`** | The Depth cast (eight named characters + Feathers the owl): names, rules, how to add a member. | Writing Depth speakers or touching `DepthArt.tsx`. |
 | **`docs/design/DESIGN_STUDIO.md`** | The one entry point for designing a new build *with Claude in chat* (repo linked): routes to the right template for a maths tool / CS tool / technique / Teach deck. | Understanding where a brief in `specs/` came from, or how new ones are produced. |
 | **`docs/design/templates/TOOL_SPEC_TEMPLATE.md`** · **`docs/design/templates/CS_TOPIC_SPEC_TEMPLATE.md`** · **`docs/design/templates/TECHNIQUE_SPEC_TEMPLATE.md`** · **`docs/design/templates/DEPTH_SPEC_TEMPLATE.md`** · **`docs/design/templates/TEACH_DECK_SPEC_TEMPLATE.md`** · **`docs/design/TOOL_DESIGNER_PROMPT.md`** · **`specs/`** | The spec pipeline — one fill-in template per build type, the deep maths-tool designer prompt, and the completed briefs. | Designing or implementing any build from a brief. |
 

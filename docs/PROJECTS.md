@@ -342,6 +342,8 @@ shared `WorkedExampleSteps` — a tool only supplies per-step data and renderers
 
 **Rounding bank (2026-10-06, live):** 25 items, `RoundingDepth.ts`, spec `specs/depth/rounding.md`; number-line scaffold (two side-rail switches) via the generic `custom` visual hook.
 
+**Cast and Feathers (2026-10-07):** speakers use a named cast of eight (`docs/design/CAST.md`); Feathers the owl speaks on every Depth slide (mutable; Depth only); the BIDMAS pyramid has a hide switch; OOO bank is 32 items.
+
 **Speed, Distance & Time bank (2026-10-07, live):** 32 items, `SpeedDistanceTimeDepth.ts`, spec `specs/depth/speed-distance-time.md`; shown on all four tabs (Speed · Distance · Time · Mixed), with tab-specific items via `tool` and `needs`.
 
 **Possible next steps:**

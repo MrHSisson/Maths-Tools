@@ -28,6 +28,13 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-07 — Notes and docs sweep: cast documented
+
+- New `docs/design/CAST.md` (the eight named characters, Feathers, rules); linked from the `CLAUDE.md` documentation map.
+- `DEPTH_SPEC_TEMPLATE.md` now names the cast for speakers and covers Feathers `prompt` / `takeaway` and the pyramid switch.
+- `docs/PROJECTS.md` Depth section notes the cast and Feathers.
+- Harry's notes refreshed: Characters, Build Log, Features, Prongs, Different From & Additional To Tool Shell (re-verified by search), Representations, Tool Index, and the Order of Operations, Speed Distance & Time and Rounding pages.
+
 ## 2026-10-07 — Depth: switch the BIDMAS pyramid off
 
 Items that show the BIDMAS pyramid now have a **Scaffold → BIDMAS pyramid** switch in the slide's side rail (same place and style as the number line's switches). It starts **on**, applies to both the question and answer slides, and is kept between questions. Depth only.
