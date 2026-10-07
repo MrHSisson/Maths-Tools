@@ -119,6 +119,33 @@ export const resolveMultiSelectValues = (
   return { ...values, ...overrides };
 };
 
+// Option dependencies (ToolMultiSelect option `requires`): the clauses an option still needs that the current values
+// don't meet, or [] when it is available. A clause naming a value that no pool offers is skipped (as DepthItem.needs does).
+export const unmetRequires = (
+  requires: (string | string[])[] | undefined,
+  values: Record<string, boolean>,
+  offered?: ReadonlySet<string>,
+): (string | string[])[] =>
+  (requires ?? []).filter((need) => {
+    const clause = (Array.isArray(need) ? need : [need]).filter((v) => !offered || offered.has(v));
+    return clause.length > 0 && !clause.some((v) => values[v]);
+  });
+
+/** Values with every option whose `requires` isn't met switched off — except that a pool is never left with nothing on
+ *  (then it is returned as the teacher set it, and the generator's own fallback applies). Use in a generator before pickActive. */
+export const maskUnmetOptions = (
+  groups: { options: { value: string; requires?: (string | string[])[] }[] }[],
+  values: Record<string, boolean>,
+): Record<string, boolean> => {
+  const offered = new Set(groups.flatMap((g) => g.options.map((o) => o.value)));
+  const out = { ...values };
+  for (const g of groups) {
+    const unmet = g.options.filter((o) => values[o.value] && unmetRequires(o.requires, values, offered).length > 0);
+    if (unmet.length && unmet.length < g.options.filter((o) => values[o.value]).length) unmet.forEach((o) => { out[o.value] = false; });
+  }
+  return out;
+};
+
 // ── Skill-link markers ────────────────────────────────────────────────────────
 // A prose label may mark a term as a drill-down into the skill library:
 //   mStep("Find the common denominator — the [[lcm|LCM]] of 11 and 13:", "143")

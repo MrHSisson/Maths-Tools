@@ -218,10 +218,10 @@ describe("the levels build on each other and never overlap", () => {
     expect(q1).not.toContain("insertBrackets");
     expect(q2).toContain("insertBrackets");
   });
-  it("selectors are small: at most 3 options per group", () => {
+  it("selectors are small: at most 3 options per group (the four operations are the one exception)", () => {
     for (const tool of Object.values(__test.TOOL_CONFIG.tools) as any[]) {
       for (const ds of Object.values(tool.difficultySettings) as any[]) {
-        for (const g of [].concat(ds.multiSelect)) expect((g as any).options.length).toBeLessThanOrEqual(3);
+        for (const g of [].concat(ds.multiSelect)) expect((g as any).options.length).toBeLessThanOrEqual((g as any).key === "operations" ? 4 : 3);
       }
     }
   });
@@ -264,6 +264,17 @@ describe("Depth bank numeric claims (src/tools/Number/OrderOfOperationsDepth.ts)
     expect(evalNode(E(20, "-", 8, "+", 3), { addFirst: true })).toBe(9);
     expect(v(E(24, "/", 4, "*", 2))).toBe(12);
     expect(evalNode(E(24, "/", 4, "*", 2), { mulFirst: true })).toBe(3);
+    // the "add first" items: 15 − 6 + 4, 30 − 12 + 5, 30 + 12 − 5, 20 + 8 − 3, 3 + 20 − 8, 20 + (−8) + 3
+    expect(v(E(15, "-", 6, "+", 4))).toBe(13);
+    expect(evalNode(E(15, "-", 6, "+", 4), { addFirst: true })).toBe(5);
+    expect(v(E(30, "-", 12, "+", 5))).toBe(23);
+    expect(evalNode(E(30, "-", 12, "+", 5), { addFirst: true })).toBe(13);
+    expect(v(E(30, "+", 12, "-", 5))).toBe(37);
+    expect(evalNode(E(30, "+", 12, "-", 5), { addFirst: true })).toBe(37);
+    expect(v(E(20, "+", 8, "-", 3))).toBe(25);
+    expect(evalNode(E(20, "+", 8, "-", 3), { addFirst: true })).toBe(25);
+    expect(v(E(3, "+", 20, "-", 8))).toBe(15);
+    expect(20 + -8 + 3).toBe(15);
     expect(v(E(9, "+", 3, "*", 2))).toBe(15);
     expect(evalNode(E(9, "+", 3, "*", 2), { lr: true })).toBe(24);
     expect(v(E(9, "+", 4, "*", 3, "+", 2))).toBe(23);
@@ -353,3 +364,88 @@ describe("Spot the Mistake layout data", () => {
     }
   });
 });
+
+describe("Operations QO (Evaluate)", () => {
+  const sym: Record<string, RegExp> = { opAdd: /\+/, opSub: /-/, opMul: /\\times/, opDiv: /\\div/ };
+  const msv = (on: string[], focus: Record<string, boolean>) => ({
+    opAdd: on.includes("opAdd"), opSub: on.includes("opSub"), opMul: on.includes("opMul"), opDiv: on.includes("opDiv"), ...focus,
+  });
+  const only = (fam: string) => ({ basic: fam === "basic", chain: fam === "chain", mixed: fam === "mixed" });
+
+  it("Left to right with only × ÷ never shows + or −; with only + − never shows × or ÷", () => {
+    for (let i = 0; i < 60; i++) {
+      const a = generateQuestion("evaluate", "level1", {}, "", msv(["opMul", "opDiv"], only("chain"))).displayLatex as string;
+      expect(a, a).not.toMatch(sym.opAdd); expect(a, a).not.toMatch(sym.opSub);
+      const b = generateQuestion("evaluate", "level1", {}, "", msv(["opAdd", "opSub"], only("chain"))).displayLatex as string;
+      expect(b, b).not.toMatch(sym.opMul); expect(b, b).not.toMatch(sym.opDiv);
+    }
+  });
+  it("a single ticked operation per pair works for × ÷ before + −", () => {
+    for (let i = 0; i < 60; i++) {
+      const q = generateQuestion("evaluate", "level1", {}, "", msv(["opMul", "opAdd"], only("basic"))).displayLatex as string;
+      expect(q, q).toMatch(sym.opMul); expect(q, q).not.toMatch(sym.opDiv); expect(q, q).not.toMatch(sym.opSub);
+    }
+  });
+  it("with every Focus on, an operation set that only suits one Focus uses that Focus", () => {
+    const all = { basic: true, chain: true, mixed: true };
+    for (let i = 0; i < 80; i++) {
+      const q = generateQuestion("evaluate", "level1", {}, "", msv(["opAdd", "opSub"], all)).displayLatex as string;
+      expect(q, q).not.toMatch(sym.opMul); expect(q, q).not.toMatch(sym.opDiv);
+    }
+  });
+  it("an impossible combination still produces a valid question; all four ticked changes nothing", () => {
+    for (let i = 0; i < 20; i++) {
+      expect(generateQuestion("evaluate", "level1", {}, "", msv(["opAdd"], only("chain"))).displayLatex).toBeTruthy();
+      expect(generateQuestion("evaluate", "level1", {}, "", msv([], only("basic"))).displayLatex).toBeTruthy();
+    }
+  });
+  it("every level honours a + − only restriction where a shape allows it", () => {
+    const { opsUsed } = __test.engine;
+    for (const [lvl, fam] of [["level1", "chain"], ["level2", "brackets"], ["level2", "indices"], ["level3", "roots"]] as const) {
+      const b = buildEval(lvl, fam, "whole", new Set(["+", "-"]));
+      expect(b, `${lvl} ${fam}`).toBeTruthy();
+      expect([...opsUsed(b!.ast)].every((o: string) => o === "+" || o === "-")).toBe(true);
+    }
+  });
+
+  it("unticking × ÷ greys out × ÷ before + − and Both; unticking + − greys out the same two; Left to right stays", async () => {
+    const { unmetRequires, maskUnmetOptions } = await import("../shared");
+    const pools = [__test.engine.EVAL_POOLS.level1.focus, __test.engine.EVAL_POOLS.level1.ops];
+    const all = { basic: true, chain: true, mixed: true, opAdd: true, opSub: true, opMul: true, opDiv: true };
+    const unmet = (vals: Record<string, boolean>) => pools[0].options.filter((o: any) => unmetRequires(o.requires, vals).length).map((o: any) => o.value);
+    expect(unmet(all)).toEqual([]);
+    expect(unmet({ ...all, opMul: false, opDiv: false })).toEqual(["basic", "mixed"]);
+    expect(unmet({ ...all, opAdd: false, opSub: false })).toEqual(["basic", "mixed"]);
+    expect(unmet({ ...all, opMul: false })).toEqual([]);                      // ÷ still gives both pairs
+    expect(unmet({ ...all, opMul: false, opDiv: false, opSub: false })).toEqual(["basic", "chain", "mixed"]);   // only + left
+    // masked values drop the greyed options but keep the teacher's tick otherwise
+    const masked = maskUnmetOptions(pools, { ...all, opMul: false, opDiv: false });
+    expect(masked).toMatchObject({ basic: false, mixed: false, chain: true });
+    // never empties a pool
+    expect(maskUnmetOptions(pools, { basic: true, chain: false, mixed: false, opAdd: true, opSub: false, opMul: false, opDiv: false }).basic).toBe(true);
+    // and generation follows: only Left to right questions come out
+    for (let i = 0; i < 40; i++) {
+      const q = generateQuestion("evaluate", "level1", {}, "", { ...all, opMul: false, opDiv: false }).displayLatex as string;
+      expect(q, q).not.toMatch(/\\times|\\div/);
+    }
+  });
+});
+
+describe("Board-style working: underline the move, left-to-right arrow over a run", () => {
+  it("3 + 5 × 2 − 9: underline 5 × 2, then an arrow over 3 + 10 − 9, then 13 − 9, then 4", () => {
+    const run = runSteps(E(3, "+", 5, "*", 2, "-", 9))!;
+    const before = run.steps.map((s) => texBody(s.before, s.hl));
+    expect(before[0]).toBe("3 + \\textcolor{#1e3a8a}{\\underline{5 \\times 2}} - 9");   // no arrow: one multiplication
+    expect(before[1]).toBe("\\overrightarrow{\\vphantom{\\big(}\\textcolor{#1e3a8a}{\\underline{3 + 10}} - 9}"); // run of + −: arrow over it
+    expect(before[2]).toBe("13 - 9");                                                           // the last move is the whole line: no underline, no arrow
+    expect(texBody(run.steps[2].after, NO_HL)).toBe("4");
+    expect(run.final).toBe(4);
+  });
+  it("a × ÷ run gets the arrow over just that run; a lone operation never does", () => {
+    const run = runSteps(E(2, "+", 24, "/", 4, "*", 2))!;
+    expect(texBody(run.steps[0].before, run.steps[0].hl)).toBe("2 + \\overrightarrow{\\vphantom{\\big(}\\textcolor{#1e3a8a}{\\underline{24 \\div 4}} \\times 2}");
+    const lone = runSteps(E(3, "+", 5, "*", 2))!;
+    expect(texBody(lone.steps[0].before, lone.steps[0].hl)).not.toContain("overrightarrow");
+  });
+});
+

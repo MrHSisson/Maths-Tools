@@ -48,7 +48,7 @@ interface Segment { top: number; height: number }
 // parent's in the same commit, so by the time this measures, the cells have
 // already reached their final rendered size.
 export const RatioTable = ({ data, label }: { data: RatioTableData; label?: string }) => {
-  const { headers, rows, operations } = data;
+  const { headers, rows, operations, opSides, fresh } = data;
   const wrapperRef = useRef<HTMLDivElement>(null);
   const rowRefs = useRef<(HTMLTableRowElement | null)[]>([]);
   const [segments, setSegments] = useState<Segment[]>([]);
@@ -76,6 +76,12 @@ export const RatioTable = ({ data, label }: { data: RatioTableData; label?: stri
     ro.observe(wrapper);
     return () => ro.disconnect();
   }, [rows, operations]);
+
+  // rStepSolve hides an arrow's sides until their step; ordinary tables show both.
+  const sideShown = (side: "left" | "right", i: number) => {
+    const s = opSides?.[i] ?? "both";
+    return s === "both" || s === side;
+  };
 
   const opLabel = (side: "left" | "right", seg: Segment, op: string, i: number) => {
     const arrow = <ArrowGlyph key="arrow" height={seg.height} side={side} />;
@@ -116,16 +122,19 @@ export const RatioTable = ({ data, label }: { data: RatioTableData; label?: stri
             </tr>
             {rows.map((row, ri) => (
               <tr key={ri} ref={(el) => { rowRefs.current[ri] = el; }}>
-                {row.map((c, ci) => (
-                  <td key={ci} style={{ border: BORDER, padding: "0.45rem 1.25rem", textAlign: "center", fontSize: "1.1rem" }}>
-                    <MathRenderer latex={c} />
-                  </td>
-                ))}
+                {row.map((c, ci) => {
+                  const isFresh = fresh?.[0] === ri && fresh?.[1] === ci;
+                  return (
+                    <td key={ci} style={{ border: BORDER, padding: "0.45rem 1.25rem", textAlign: "center", fontSize: "1.1rem", ...(isFresh ? { background: "#dcfce7", color: "#166534", fontWeight: 700 } : {}) }}>
+                      {c === "" ? <span style={{ color: "#9ca3af", fontWeight: 700 }}>?</span> : <MathRenderer latex={c} />}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>
         </table>
-        {segments.map((seg, i) => [opLabel("left", seg, operations[i], i), opLabel("right", seg, operations[i], i)])}
+        {segments.map((seg, i) => [sideShown("left", i) && opLabel("left", seg, operations[i], i), sideShown("right", i) && opLabel("right", seg, operations[i], i)])}
       </div>
     </div>
   );

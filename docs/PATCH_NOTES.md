@@ -28,6 +28,67 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-07 — Notes and docs sweep: cast documented
+
+- New `docs/design/CAST.md` (the eight named characters, Feathers, rules); linked from the `CLAUDE.md` documentation map.
+- `DEPTH_SPEC_TEMPLATE.md` now names the cast for speakers and covers Feathers `prompt` / `takeaway` and the pyramid switch.
+- `docs/PROJECTS.md` Depth section notes the cast and Feathers.
+- Harry's notes refreshed: Characters, Build Log, Features, Prongs, Different From & Additional To Tool Shell (re-verified by search), Representations, Tool Index, and the Order of Operations, Speed Distance & Time and Rounding pages.
+
+## 2026-10-07 — Depth: switch the BIDMAS pyramid off
+
+Items that show the BIDMAS pyramid now have a **Scaffold → BIDMAS pyramid** switch in the slide's side rail (same place and style as the number line's switches). It starts **on**, applies to both the question and answer slides, and is kept between questions. Depth only.
+
+## 2026-10-07 — Depth: Feathers talks
+
+The owl now speaks on every Depth slide, in a bubble beside him at the foot of the slide (and beside him under the slide on a phone): a **nudge to the class on the question slide** ("Decide who you agree with, then say why.") and a **takeaway on the answer slide** ("Same row of the pyramid means equal priority: start from the left."). Every item gets a default from its shape (tap-the-line, who-is-right, multiple choice, explain, extend) via `feathersLine`, and an item may override with its own `prompt` / `takeaway` (eight Order of Operations items carry hand-written takeaways). A **Feathers** button under the slide switches the bubbles off per device. Depth only for now. Tests: every item has a short line and every authored one renders.
+
+## 2026-10-07 — Depth: the cast is named; the owl is Feathers
+
+The eight characters have names — **Ruby, Kofi, Mei, Ben, Amara, Leo, Priya, Jamal** — and the owl is **Feathers** (`CAST_NAMES`, `MASCOT_NAME`). Every speaker in the Order of Operations, Rounding and Speed, Distance & Time banks now uses one of these names (no more one-off Jack / Zoe / Dev…), so a name always draws its own face (`assignCast` matches cast names directly). Cross-references between items were updated, and lines that used he/she for a named speaker were reworded to avoid pronouns. New speaker names should come from the cast; glossary updated.
+
+## 2026-10-07 — Depth: a cast of eight, drawn like the owl (then made more natural and detailed)
+
+*Braid:* removed — that character now has plain long straight hair with a side parting.
+
+*Fixes:* the fringe was drawn lower than the top of the head, so a pale crescent of skin showed above the hair (everyone looked bald-ish) — every hairstyle now covers the crown; and the open-mouth tongue poked out below the mouth — it is now clipped inside it.
+
+*Follow-up:* the cast is now plainer and richer — natural hair and colours only (no spiky or bright hair, no headband or earrings), muted tops with their own details (crew neck, polo collar and buttons, hoodie with drawstrings, cardigan over a tee, stripes), strand lines and sheen on the hair, ears, a nose with bridge light, lips, soft chin shadow and, on some, lashes, freckles or thin glasses.
+
+The Depth speakers are now a **cast of eight** (`CAST` in `DepthArt.tsx`) in the owl's style: bust-length figures with soft gradients on skin, hair and clothes, big shiny eyes (white, iris, pupil, two highlights), blush, a gradient shirt with collar and a ground shadow. Each has their own hair (long wavy, fade, bob, messy, afro puff, spiky, braid with headband, curls), and some freckles, glasses or earrings. A speaker's name picks one of the eight and keeps it, and two speakers on one slide never share a face (`assignCast`). `Avatar` now takes `member` instead of `index`/`name`.
+
+## 2026-10-07 — Order of Operations: no repeated lines in the working
+
+Each Worked Example step is now **one line** — the sum as it stands, with the move underlined (and the left-to-right arrow over a run) — and an arrow down to the next step's line, or to the Answer. Previously every step also wrote its result, which was then repeated as the next step's first line and again as the Answer.
+
+## 2026-10-07 — Depth: friendlier people; two overlapping Order of Operations items cut
+
+**Depth speakers redrawn** (`Avatar` in `DepthArt.tsx`): head-and-shoulders in a round "profile picture" with a pastel backdrop, six skin tones, seven hair colours, six hairstyles (short, side fringe, long, curly, bun, pigtails), a shirt, brows, nose, cheeks, three smiles and optional glasses. A character is now keyed by **name**, so Ayla (or Ben, Zoe…) looks the same on every slide in every tool. **Order of Operations bank (now 32):** cut *Reading the pyramid* and *Sana's subtraction* (the add-first Explain items overlapped Zoe's and Tia's); routes re-pointed.
+
+## 2026-10-07 — Order of Operations: working written like a board; pyramid says "&"
+
+**Worked Example** now follows how it is written on a board: the line with the move **underlined** (not boxed), an **arrow down** to the next line with the rest of the sum pulled down, and — when two or more equal-priority operations are left in a row — a **left-to-right arrow over that run** (`3 + 5 × 2 − 9` → underline `5 × 2` → `3 + 10 − 9` with the arrow over it → `13 − 9` → `4`). The second line fades in on the next press. A lone × or ÷ gets no arrow; a `× ÷` run inside a longer sum gets the arrow over just that run. Engine: `Hl.arrows` + `stepFlat` runs; renderer `oooStepRenderer`. Shell: `stepRenderer` now receives the fragment `reveal` index as a 4th argument (documented in `CLAUDE.md`). **Pyramid:** the equal-priority tiles read `D ÷ & M ×` / `A + & S −` (was "="). Checked in the live app; tests assert the exact lines.
+
+## 2026-10-07 — Order of Operations: the pyramid stops implying an order; six Depth items on "add first"
+
+From a Y9 class: students did **add before subtract** (BIDMAS letters read as a list) and read the pyramid's left-to-right *across a tier* as an order of working (A is left of S, so add first). Two fixes. (1) **The BIDMAS pyramid** (shared `BidmasPyramid`): D M and A S are no longer split in half by a vertical rule; each is now **one tile** reading `D ÷ = M ×` / `A + = S −` with the caption "equal priority: left to right in the question"; when a step is being worked its operation is underlined. (2) **Six new Level 1 Depth items** (bank now 34): *Reading the pyramid*, *BIDMAS says A then S* (Ayla vs Ben), *Zoe and the pyramid*, *Spot the error* (`30 − 12 + 5 → 13`), *The sign stays with its number* (`20 − 8 + 3 = 20 + (−8) + 3`), and *Add first: always, sometimes or never?*. Numbers asserted in `orderOfOperations.test.ts`; spec `specs/depth/order-of-operations.md` updated.
+
+## 2026-10-07 — Order of Operations: Focus follows the ticked operations
+
+Unticking an operation now greys out the Level 1 Focus options it makes impossible: untick × and ÷ (or + and −) and *× ÷ before + −* and *Both* grey out (struck through, with a "Needs × or ÷ and + or −" tooltip) while *Left to right* stays; tick them again and they come back as they were. New shared, opt-in mechanism: a multiSelect option's `requires` (shape of `DepthItem.needs`), rendered by the QO popover, with `unmetRequires` / `maskUnmetOptions` helpers the generator uses so a greyed option is never drawn. Documented in `CLAUDE.md`.
+
+## 2026-10-07 — Order of Operations: choose the operations
+
+New **Operations** Question Option on Evaluate (all levels): tick which of + − × ÷ can appear. Left to right with only × ÷ gives 24 ÷ 4 × 2 style lines, with only + − gives 20 − 8 + 3; × ÷ before + − can be limited to, say, × and +. A fraction bar counts as ÷. All four on by default (nothing changes); if the ticked operations can't make the chosen Focus another ticked Focus is used, and only then is the restriction dropped. Spot the Mistake is unchanged (its questions are built around named mistakes). Tests in `orderOfOperations.test.ts`.
+
+## 2026-10-07 — Speed, Distance & Time: the ratio table starts with what we know
+
+The worked example's ratio table no longer arrives with its rows complete. New shared helper `rStepSolve` (`src/shared/ratioTable.ts`): the known values go in first with the unknown cell as a grey "?" (5 mph for 6 hours starts as 5 | 1 over ? | 6), then one press each for *how do we get from 1 to 6?* (the arrow on the time side only), *do the same to the miles* (the arrow on the other side), and the calculation filling the blank (5 × 6 = 30, the new cell highlighted). Multi-step Level 3 chains repeat the three presses per row. Used by all three sub-tools (a find-the-time question drives from the distance side). `RatioTableData` gains `opSides` and `fresh`; `rStepBuild` is unchanged for other tools. Tested in `src/tests/ratioTableSolve.test.ts`.
+
+## 2026-10-07 — Speed, Distance & Time: Depth bank
+
+32 curated diagnose / explain / extend items (`SpeedDistanceTimeDepth.ts`, spec `specs/depth/speed-distance-time.md`), levelled by idea — *Which calculation?* · *Minutes and hours* · *Awkward times & averages* — and live on all four tabs. The tool already had its fourth **Mixed** sub-tool (random Speed / Distance / Time), so the bank covers it with its own items ("Which question fits?", "Does the rule always work?", "One journey, three questions") alongside the shared ones; Speed, Distance and Time each get tab-specific diagnose items. Misconceptions covered include multiplying/dividing the wrong way, 30 min as 0.30 h, 1 h 20 as 1.2 h, 1.75 h as 1 h 75 min, and averaging two speeds. Numbers asserted in `src/tests/speedDistanceTimeDepth.test.ts`.
+
 ## 2026-10-06 — Ink overlay and the Rounding Depth bank go live
 
 Both pieces built on this branch are now **ungated**: the **ink overlay** (write anywhere on any tool page — pen, eraser with part / whole-line modes, thickness and size menus, undo, a movable hotbar that docks to the side edges; see the entries below) and the **Rounding Depth bank** (25 items with the number-line scaffold). The overlay is mounted once in `App.tsx` (every tool page; not the landing page or the two sandboxes, which have their own board) and the bank is passed straight to `ToolShell`. Convention added to `CLAUDE.md`: a control that needs a genuine click (a popup — Print) carries `data-trusted-click`.

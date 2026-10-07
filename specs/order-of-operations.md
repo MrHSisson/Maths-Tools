@@ -25,6 +25,11 @@ appear on an easier level and levels never overlap.
 (brings in −3² vs (−3)² and subtracting a negative) · Decimals (L3). Whole mode never has a negative step.
 Limits: values ≤ 500, every division exact, ≤ 2 d.p. in decimals mode. Pools are weighted (Smart Progressor).
 
+**Operations** (Evaluate, all levels, all four ticked by default): + Add · − Subtract · × Multiply · ÷ Divide. A question may only use ticked
+operations (a fraction bar counts as ÷; powers and roots are not operations). Lets a teacher make Left to right all × ÷ (24 ÷ 4 × 2) or all
++ − (20 − 8 + 3), or limit × ÷ before + − to, say, × and +. Not weighted. If the ticked set can't make the picked Focus, another active Focus
+is tried, and only if none works is the restriction dropped. (The one pool allowed 4 options; the rest keep ≤ 3.)
+
 ## Sub-tools
 **Evaluate** (`Work out:`) — one expression, a number answer.
 **Spot the Mistake** — worded questions, task pool per level:
@@ -47,6 +52,8 @@ is not one of the six core representations. Used as:
 - **Worked Example**: the split picture beside the steps (`stepVisualRenderer` + `stepVisualKeepsWorking`); each step's `extra.pyramid` lights the tier in use (**strong**) and its equal-priority partner or the operation inside a bracket (**soft**) — e.g. `8 ÷ 2 × 3`: D strong, M soft, then M strong.
 
 ## Worked-example working
+**Board-style (2026-10-07):** each step shows the line with the move underlined, an arrow down, and the next line; a run of 2+ equal-priority operations gets a left-to-right arrow over it (`3 + 5 × 2 − 9` → `3 + 10 − 9` (arrow) → `13 − 9` → `4`).
+
 Each step is `mStep(stage label, [line with the next move boxed (\colorbox), "= next line"])`. Labels name the
 stage ("Indices:", "Divide (left to right):", "Brackets — add:", "Under the root — …",
 "Divide the top by the bottom:"). Roots and fraction bars act as brackets; independent operations of the same

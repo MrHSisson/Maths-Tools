@@ -97,6 +97,10 @@ export interface RatioTableData {
   operations: string[];
   /** Set by `rStepBuild`: this snapshot is one stage of a table that grows row by row. */
   grow?: boolean;
+  /** Set by `rStepSolve`: which side(s) of each operation's arrow are drawn so far (hidden until its step). Omitted = both. */
+  opSides?: ("none" | "left" | "right" | "both")[];
+  /** Set by `rStepSolve`: the cell [row, col] filled at this step, drawn highlighted. An empty-string cell is an unknown, drawn as "?". */
+  fresh?: [number, number];
 }
 
 export interface ToolDropdown {
@@ -125,7 +129,13 @@ export interface ToolMultiSelect {
    *  `sortByDifficulty` in helpers.ts. Prefer this ordinal-pool shape over a
    *  boolean `ToolVariable` whenever an option represents "harder", not just
    *  "different", so a worksheet can be ordered easy-to-hard by weight. */
-  options: { value: string; label: string; sub?: string; divider?: boolean; defaultActive: boolean; weight?: number }[];
+  options: {
+    value: string; label: string; sub?: string; divider?: boolean; defaultActive: boolean; weight?: number;
+    /** Greyed out (and ignored by `maskUnmetOptions`) unless EVERY clause holds; a clause is an option `value` from any pool
+     *  of the same sub-tool + level, or an array of values of which at least ONE is on (same shape as `DepthItem.needs`).
+     *  The teacher's own tick is kept, so it comes back when the requirement is met again. */
+    requires?: (string | string[])[];
+  }[];
   /** Allow every option in this group to be deselected at once (e.g. a group
    *  of optional add-on flags where "all off" is a valid, simplest-form
    *  state). Default false — the last active option cannot be turned off,

@@ -2,8 +2,9 @@ import {
   ToolShell,
   type ToolConfig, type InfoSection, type DifficultyLevel, type AnyQuestion, type WordedQuestion, type QOSnapshot,
   type ToolMultiSelect, type ToolDropdown, type WorkingStep,
-  randInt, pick, pickActive, mStep, mStr, fmt, rStepBuild, ratioTableStepRenderer, ratioTableStepVisual, weightOf,
+  randInt, pick, pickActive, mStep, mStr, fmt, rStepSolve, ratioTableStepRenderer, ratioTableStepVisual, weightOf,
 } from "../../shared";
+import { DEPTH_ITEMS } from "./SpeedDistanceTimeDepth";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TOOL-SPECIFIC SECTION
@@ -679,22 +680,22 @@ const buildWorking = (rv: RawValues, method: WorkingMethod): WorkingStep[] => {
     const { pairs, ops } = buildScaleSteps([rv.D, rv.tVal], rv.pp, rv.qq, "shrinkTime");
     return [
       ...convertStep,
-      ...rStepBuild("Scale to find the speed:", [rv.distanceUnit, rv.tLabel],
-        pairs.map(([d, t]) => [numLatex(d), numLatex(t)]), ops),
+      ...rStepSolve("Scale to find the speed:", [rv.distanceUnit, rv.tLabel],
+        pairs.map(([d, t]) => [numLatex(d), numLatex(t)]), ops, 1),
     ];
   }
   if (rv.tool === "distance") {
     const { pairs, ops } = buildScaleSteps([rv.S, rv.hourRef], rv.pp, rv.qq, "growTime");
     return [
       ...convertStep,
-      ...rStepBuild("Scale from 1 hour to the given time:", [rv.distanceUnit, rv.tLabel],
-        pairs.map(([d, t]) => [numLatex(d), numLatex(t)]), ops),
+      ...rStepSolve("Scale from 1 hour to the given time:", [rv.distanceUnit, rv.tLabel],
+        pairs.map(([d, t]) => [numLatex(d), numLatex(t)]), ops, 1),
     ];
   }
   const { pairs, ops } = buildScaleSteps([rv.S, rv.hourRef], rv.pp, rv.qq, "growTime");
   return [
-    ...rStepBuild("Scale from 1 hour to find the time:", [rv.distanceUnit, rv.tLabel],
-      pairs.map(([d, t]) => [numLatex(d), numLatex(t)]), ops),
+    ...rStepSolve("Scale from 1 hour to find the time:", [rv.distanceUnit, rv.tLabel],
+      pairs.map(([d, t]) => [numLatex(d), numLatex(t)]), ops, 0),
     ...(rv.shapeKind === "l3compound" ? [mStep("Write as hours and minutes:", `${rv.tVal} = ${rv.H} \\times 60 + ${rv.Mfrac}`)] : []),
   ];
 };
@@ -850,7 +851,7 @@ const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null =>
 // END OF TOOL-SPECIFIC SECTION
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export const __test = { TOOL_CONFIG, generateQuestion };
+export const __test = { TOOL_CONFIG, generateQuestion, depthItems: DEPTH_ITEMS };
 
 export default function App() {
   return (
@@ -861,6 +862,7 @@ export default function App() {
       reformatQuestion={reformatQuestion}
       stepRenderer={ratioTableStepRenderer}
       stepVisualRenderer={ratioTableStepVisual}
+      depthItems={DEPTH_ITEMS}
       defaults={{ displayFontSize: 2, worksheetFontSize: 1 }}
     />
   );

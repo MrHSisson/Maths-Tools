@@ -6,28 +6,135 @@
 
 import { useId } from "react";
 
-const SKIN = ["#f6d2b0", "#e0a878", "#a8714b", "#fbdcc0", "#7a4a2e"];
-const HAIR = ["#5b3a29", "#1f2937", "#c2410c", "#7c2d12", "#374151", "#a16207"];
+// The cast: eight characters, drawn in the owl's style (soft gradients, big shiny eyes, a ground shadow). A speaker's
+// name picks one of them, so the same name always looks the same; two speakers on one slide never share a face.
+// They are meant to look like ordinary, varied pupils and teachers: natural hair and colours, nothing that draws the eye.
+type HairStyle = "wavy" | "fade" | "bob" | "sidepart" | "coils" | "long" | "curls";
+type Top = "crew" | "polo" | "hoodie" | "cardigan" | "stripe";
+interface Member {
+  skin: [string, string]; hair: [string, string]; shirt: [string, string]; iris: string;
+  style: HairStyle; top: Top; glasses?: boolean; freckles?: boolean; lashes?: boolean; mouth: "grin" | "smile" | "open";
+}
+const CAST: Member[] = [
+  { skin: ["#fde3cc", "#f0c19c"], hair: ["#9a4a26", "#5f2a12"], shirt: ["#3aa6a0", "#1f6f6b"], iris: "#3f7d58", style: "wavy", top: "crew", freckles: true, lashes: true, mouth: "open" },
+  { skin: ["#a9744f", "#7a4a2e"], hair: ["#2e2522", "#120e0d"], shirt: ["#e0b040", "#a87a16"], iris: "#4a2c17", style: "fade", top: "hoodie", mouth: "grin" },
+  { skin: ["#fbe0c4", "#efc29c"], hair: ["#2b2d42", "#0f1020"], shirt: ["#9a7bd0", "#65469c"], iris: "#3b4a8a", style: "bob", top: "cardigan", glasses: true, lashes: true, mouth: "smile" },
+  { skin: ["#e3b48a", "#c58a5c"], hair: ["#7a5230", "#4a2f18"], shirt: ["#4f9d69", "#2d6a45"], iris: "#2b6cb0", style: "sidepart", top: "polo", mouth: "open" },
+  { skin: ["#8a5a3b", "#5e3a24"], hair: ["#2b1b14", "#0d0705"], shirt: ["#d9738f", "#a8456a"], iris: "#3b2314", style: "coils", top: "stripe", lashes: true, mouth: "grin" },
+  { skin: ["#fde6d2", "#f0c8a6"], hair: ["#c9a35a", "#8e6e2c"], shirt: ["#5b8fd6", "#35609e"], iris: "#2f6fb2", style: "sidepart", top: "hoodie", mouth: "grin" },
+  { skin: ["#c98b5f", "#9a6240"], hair: ["#261c18", "#0b0807"], shirt: ["#de8a5a", "#b05a2c"], iris: "#4a2c17", style: "long", top: "polo", lashes: true, mouth: "smile" },
+  { skin: ["#b97d55", "#8a5636"], hair: ["#2c1f18", "#0f0a07"], shirt: ["#8795a8", "#4f5d70"], iris: "#6b4423", style: "curls", top: "cardigan", glasses: true, mouth: "open" },
+];
+export const CAST_SIZE = CAST.length;
+/** The cast's names, in the same order as `CAST`. Depth items name their speakers from this list. */
+export const CAST_NAMES = ["Ruby", "Kofi", "Mei", "Ben", "Amara", "Leo", "Priya", "Jamal"] as const;
+/** The owl's name. */
+export const MASCOT_NAME = "Feathers";
 
-/** A friendly cartoon face. `index` picks skin, hair colour and hairstyle so speakers look different. */
-export function Avatar({ index, size = "4em" }: { index: number; size?: string }) {
-  const skin = SKIN[(index * 2 + 1) % SKIN.length];
-  const hair = HAIR[(index * 3 + 2) % HAIR.length];
-  const style = index % 3;
+const hashName = (s: string) => { let h = 7; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; };
+/** Cast member for each name on a slide: a cast name picks its own character, any other name a stable one; distinct within the slide. */
+export function assignCast(names: string[]): number[] {
+  const taken = new Set<number>();
+  return names.map((n) => {
+    const own = CAST_NAMES.findIndex((c) => c.toLowerCase() === n.trim().toLowerCase());   // a cast member's own name
+    let m = own >= 0 ? own : hashName(n) % CAST.length;
+    for (let k = 0; k < CAST.length && taken.has(m); k++) m = (m + 1) % CAST.length;
+    taken.add(m);
+    return m;
+  });
+}
+
+/** One of the cast, bust-length with a ground shadow. Purely decorative. */
+export function Avatar({ member, size = "4em" }: { member: number; size?: string }) {
+  const uid = useId().replace(/:/g, "");
+  const c = CAST[((member % CAST.length) + CAST.length) % CAST.length];
+  const g = (n: string) => `url(#${n}${uid})`;
+  const ink = "#1b1220";
+  const strand = c.hair[1];
+  const lines = (d: string) => <path d={d} fill="none" stroke={strand} strokeWidth="1.3" strokeLinecap="round" opacity="0.5" />;
+  const back = (() => {
+    switch (c.style) {
+      case "wavy": return <path d="M27 54 C18 14 102 14 93 54 C97 70 97 88 103 98 C91 106 80 98 78 84 L42 84 C40 98 29 106 17 98 C23 88 23 70 27 54Z" fill={g("h")} />;
+      case "bob": return <path d="M27 56 C18 14 102 14 93 56 L95 86 C84 92 78 84 78 74 L42 74 C42 84 36 92 25 86Z" fill={g("h")} />;
+      case "coils": return <g fill={g("h")}><circle cx="60" cy="31" r="27" /><circle cx="34" cy="43" r="11" /><circle cx="86" cy="43" r="11" /></g>;
+      case "long": return <path d="M27 54 C18 14 102 14 93 54 L97 100 C88 104 80 96 78 86 L42 86 C40 96 32 104 23 100Z" fill={g("h")} />;
+      case "curls": return <g fill={g("h")}><circle cx="35" cy="39" r="11" /><circle cx="47" cy="27" r="12" /><circle cx="61" cy="23" r="12" /><circle cx="75" cy="27" r="12" /><circle cx="86" cy="39" r="11" /></g>;
+      default: return null;
+    }
+  })();
+  const front = (() => {
+    switch (c.style) {
+      case "wavy": return <g><path d="M29 48 C25 5 95 5 91 48 C84 36 64 30 50 38 C42 42 34 44 29 48Z" fill={g("h")} />{lines("M40 30 C46 26 56 25 64 27")}{lines("M33 46 C38 42 44 40 48 38")}</g>;
+      case "fade": return <g><path d="M30 46 C27 6 93 6 90 46 C84 33 70 29 60 29 C50 29 36 33 30 46Z" fill={g("h")} />{lines("M42 24 C50 21 62 21 72 25")}</g>;
+      case "bob": return <g><path d="M28 50 C24 4 96 4 92 50 C82 40 70 36 60 36 C50 36 38 40 28 50Z" fill={g("h")} />{lines("M38 28 C46 23 58 22 70 25")}</g>;
+      case "sidepart": return <g><path d="M29 48 C25 4 95 4 91 46 C86 35 76 27 58 27 C46 27 38 35 33 46 Z" fill={g("h")} />{lines("M52 27 C50 33 46 37 41 40")}{lines("M62 26 C74 26 84 32 88 42")}</g>;
+      case "coils": return <path d="M30 46 C26 6 94 6 90 46 C80 36 40 36 30 46Z" fill={g("h")} />;
+      case "long": return <g><path d="M29 48 C25 5 95 5 91 46 C86 35 76 27 58 27 C46 27 38 35 33 46Z" fill={g("h")} />{lines("M52 27 C50 33 46 37 41 40")}{lines("M62 26 C74 26 84 32 88 42")}</g>;
+      case "curls": return <g fill={g("h")}><path d="M30 46 C26 8 94 8 90 46 C80 36 40 36 30 46Z" /><circle cx="39" cy="35" r="9" /><circle cx="51" cy="29" r="10" /><circle cx="64" cy="28" r="10" /><circle cx="76" cy="32" r="10" /><circle cx="83" cy="42" r="7" /></g>;
+    }
+  })();
+  const top = (() => {
+    const wh = "#fff";
+    switch (c.top) {
+      case "crew": return <g><path d="M46 81 Q60 92 74 81" fill="none" stroke="#000" strokeOpacity="0.2" strokeWidth="5" strokeLinecap="round" /><path d="M44 80 Q60 94 76 80" fill="none" stroke={c.shirt[0]} strokeWidth="3" strokeLinecap="round" opacity="0.8" /></g>;
+      case "polo": return <g><path d="M46 80 L56 94 L60 82Z M74 80 L64 94 L60 82Z" fill={wh} stroke="#000" strokeOpacity="0.12" strokeWidth="1" strokeLinejoin="round" /><path d="M60 84 L60 106" stroke="#000" strokeOpacity="0.18" strokeWidth="1.5" /><circle cx="60" cy="92" r="1.6" fill="#000" opacity="0.28" /><circle cx="60" cy="100" r="1.6" fill="#000" opacity="0.28" /></g>;
+      case "hoodie": return <g><path d="M38 84 C44 96 76 96 82 84 C76 82 70 80 60 80 C50 80 44 82 38 84Z" fill={c.shirt[1]} opacity="0.55" /><path d="M54 92 L53 106 M66 92 L67 106" stroke={wh} strokeWidth="2" strokeLinecap="round" opacity="0.9" /><path d="M32 112 Q60 118 88 112" fill="none" stroke="#000" strokeOpacity="0.12" strokeWidth="1.5" /></g>;
+      case "cardigan": return <g><path d="M46 80 Q60 92 74 80 L72 120 L48 120Z" fill={wh} opacity="0.92" /><path d="M48 82 L47 119 M72 82 L73 119" stroke={c.shirt[1]} strokeWidth="2.4" strokeLinecap="round" opacity="0.9" /><circle cx="55" cy="96" r="1.5" fill={c.shirt[1]} /><circle cx="55" cy="106" r="1.5" fill={c.shirt[1]} /></g>;
+      case "stripe": return <g stroke={wh} strokeWidth="3" opacity="0.55"><path d="M26 98 Q60 92 94 98" fill="none" /><path d="M24 107 Q60 101 96 107" fill="none" /><path d="M46 81 Q60 90 74 81" fill="none" strokeOpacity="0.9" /></g>;
+    }
+  })();
   return (
-    <svg viewBox="0 0 100 100" aria-hidden="true" style={{ width: size, height: size, flexShrink: 0 }}>
-      {style === 2 && <circle cx="50" cy="14" r="11" fill={hair} />}
-      <circle cx="50" cy="56" r="34" fill={skin} />
-      {style === 0 && <path d="M15 52 C14 18 86 18 85 52 C76 36 24 36 15 52Z" fill={hair} />}
-      {style === 1 && <path d="M15 54 C10 14 72 8 86 44 C68 32 38 34 15 54Z" fill={hair} />}
-      {style === 2 && <path d="M16 50 C16 20 84 20 84 50 C74 34 26 34 16 50Z" fill={hair} />}
-      <circle cx="37" cy="58" r="4.2" fill="#1f2937" />
-      <circle cx="63" cy="58" r="4.2" fill="#1f2937" />
-      <circle cx="38.4" cy="56.6" r="1.4" fill="#fff" />
-      <circle cx="64.4" cy="56.6" r="1.4" fill="#fff" />
-      <circle cx="28" cy="68" r="5" fill="#f9a8a8" opacity="0.45" />
-      <circle cx="72" cy="68" r="5" fill="#f9a8a8" opacity="0.45" />
-      <path d="M40 71 Q50 81 60 71" fill="none" stroke="#1f2937" strokeWidth="3" strokeLinecap="round" />
+    <svg viewBox="8 8 104 114" aria-hidden="true" style={{ width: size, height: size, flexShrink: 0, overflow: "visible" }}>
+      <defs>
+        <radialGradient id={`s${uid}`} cx="0.38" cy="0.3" r="0.85"><stop offset="0" stopColor={c.skin[0]} /><stop offset="1" stopColor={c.skin[1]} /></radialGradient>
+        <linearGradient id={`h${uid}`} x1="0" y1="0" x2="0.4" y2="1"><stop offset="0" stopColor={c.hair[0]} /><stop offset="1" stopColor={c.hair[1]} /></linearGradient>
+        <linearGradient id={`t${uid}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={c.shirt[0]} /><stop offset="1" stopColor={c.shirt[1]} /></linearGradient>
+        <clipPath id={`m${uid}`}><path d="M51 66 Q60 79 69 66Z" /></clipPath>
+        <radialGradient id={`i${uid}`} cx="0.5" cy="0.3" r="0.8"><stop offset="0" stopColor={c.iris} stopOpacity="0.75" /><stop offset="1" stopColor={c.iris} /></radialGradient>
+      </defs>
+      <ellipse cx="60" cy="119" rx="34" ry="4.5" fill="#000" opacity="0.14" />
+      {back}
+      {/* torso, with the top's own details */}
+      <path d="M22 112 C20 90 34 80 60 80 C86 80 100 90 98 112 C98 118 90 120 60 120 C30 120 22 118 22 112Z" fill={g("t")} />
+      <path d="M30 96 C36 88 46 84 52 84" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2.4" strokeLinecap="round" />
+      <rect x="51" y="68" width="18" height="18" rx="8" fill={g("s")} />
+      <path d="M51 76 Q60 85 69 76 L69 70 L51 70Z" fill="#000" opacity="0.12" />
+      {top}
+      {/* ears */}
+      <circle cx="30" cy="54" r="6.5" fill={g("s")} /><circle cx="90" cy="54" r="6.5" fill={g("s")} />
+      <path d="M28 52 Q31 54 29 58 M92 52 Q89 54 91 58" fill="none" stroke="#000" strokeOpacity="0.15" strokeWidth="1.2" strokeLinecap="round" />
+      {/* head, with a soft chin shadow and forehead light */}
+      <ellipse cx="60" cy="50" rx="31" ry="30" fill={g("s")} />
+      <path d="M32 62 C36 84 84 84 88 62 C80 76 40 76 32 62Z" fill="#000" opacity="0.07" />
+      {front}
+      {/* brows */}
+      <path d="M37 41 Q46 36 55 40" fill="none" stroke={c.hair[1]} strokeWidth="3" strokeLinecap="round" />
+      <path d="M65 40 Q74 36 83 41" fill="none" stroke={c.hair[1]} strokeWidth="3" strokeLinecap="round" />
+      {/* eyes: white, iris, pupil, two highlights, lid line */}
+      {[46, 74].map((x, k) => (
+        <g key={x}>
+          <ellipse cx={x} cy="53" rx="8.6" ry="9.6" fill="#fff" />
+          <ellipse cx={x} cy="54" rx="6.2" ry="7.3" fill={g("i")} />
+          <ellipse cx={x} cy="54.6" rx="3.4" ry="4.1" fill={ink} />
+          <circle cx={x + 2.4} cy="50.8" r="2.4" fill="#fff" /><circle cx={x - 2} cy="57.6" r="1.2" fill="#fff" opacity="0.8" />
+          <path d={`M${x - 8.6} 49.5 Q${x} 42 ${x + 8.6} 49.5`} fill="none" stroke={ink} strokeWidth="2" strokeLinecap="round" />
+          {c.lashes && <path d={k === 0 ? `M${x - 8.6} 49.5 l-2.6 -2 M${x - 7.4} 47.4 l-2.2 -2.4` : `M${x + 8.6} 49.5 l2.6 -2 M${x + 7.4} 47.4 l2.2 -2.4`} stroke={ink} strokeWidth="1.4" strokeLinecap="round" fill="none" />}
+        </g>
+      ))}
+      {c.freckles && <g fill="#b9683a" opacity="0.5"><circle cx="39" cy="62" r="1" /><circle cx="43" cy="64" r="1" /><circle cx="36" cy="65" r="1" /><circle cx="81" cy="62" r="1" /><circle cx="77" cy="64" r="1" /><circle cx="84" cy="65" r="1" /></g>}
+      <circle cx="37" cy="63" r="5.5" fill="#ff7a8a" opacity="0.26" /><circle cx="83" cy="63" r="5.5" fill="#ff7a8a" opacity="0.26" />
+      {/* nose: bridge light, tip and nostrils */}
+      <ellipse cx="59" cy="55" rx="1.6" ry="3" fill="#fff" opacity="0.2" />
+      <path d="M57.4 60 Q60 63.6 63 60.4" fill="none" stroke="#000" strokeOpacity="0.3" strokeWidth="1.8" strokeLinecap="round" />
+      {/* mouth */}
+      {c.mouth === "smile" && <g><path d="M51 67 Q60 75 69 67" fill="none" stroke="#7f1d2d" strokeWidth="3" strokeLinecap="round" /><path d="M54 71.4 Q60 74 66 71.4" fill="none" stroke="#fff" strokeWidth="1.2" strokeLinecap="round" opacity="0.4" /></g>}
+      {c.mouth === "grin" && <g><path d="M49 66 Q60 80 71 66Z" fill="#8b1d2c" /><path d="M50.5 66.4 Q60 69 69.5 66.4 L69 69 Q60 72 51 69Z" fill="#fff" /></g>}
+      {c.mouth === "open" && <g><path d="M51 66 Q60 79 69 66Z" fill="#8b1d2c" /><g clipPath={`url(#m${uid})`}><ellipse cx="60" cy="73.6" rx="5" ry="3.2" fill="#f87171" /></g></g>}
+      {c.glasses && (
+        <g fill="rgba(255,255,255,0.14)" stroke="#2a2438" strokeWidth="2.2">
+          <circle cx="46" cy="53" r="12" /><circle cx="74" cy="53" r="12" /><path d="M58 52 Q60 49.5 62 52" fill="none" />
+        </g>
+      )}
     </svg>
   );
 }

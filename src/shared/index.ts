@@ -48,11 +48,11 @@ export type { PrintContext } from "./printDiagram";
 
 export { LV_COLORS, LV_LABELS, LV_HEADER_COLORS, getQuestionBg, getStepBg } from "./colors";
 
-export { randInt, pick, fracStr, mStr, pickActive, normalizeMultiSelect, resolveMultiSelectValues, step, tStep, mStep, fmt, ansEq, makeUniqueQ, stripSkillMarkers, SKILL_MARKER_RE, splitAnswerStep, weightOf, sortByDifficulty, buildQuotaOverrides } from "./helpers";
+export { randInt, pick, fracStr, mStr, pickActive, normalizeMultiSelect, resolveMultiSelectValues, unmetRequires, maskUnmetOptions, step, tStep, mStep, fmt, ansEq, makeUniqueQ, stripSkillMarkers, SKILL_MARKER_RE, splitAnswerStep, weightOf, sortByDifficulty, buildQuotaOverrides } from "./helpers";
 
 // Ratio table — core representation for proportional scaling (speed/distance/
 // time, currency conversion, recipe scaling…). See src/shared/ratioTable.ts.
-export { rStep, rStepBuild } from "./ratioTable";
+export { rStep, rStepBuild, rStepSolve } from "./ratioTable";
 export { RatioTable, ratioTableStepRenderer, ratioTableStepVisual } from "./components/RatioTable";
 export { DepthMode, type DepthModeProps } from "./components/DepthMode";
 export { DEPTH_PURPOSES, type DepthItem, type DepthOption, type DepthPurpose, type DepthNeed, type DepthOptionInfo, depthUnmet } from "./depth";

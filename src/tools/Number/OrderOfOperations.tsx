@@ -14,7 +14,7 @@
 
 import {
   ToolShell,
-  BidmasPyramid, MathRenderer, QuestionDisplay, AnswerDisplay,
+  BidmasPyramid, MathRenderer, FitWidth, QuestionDisplay, AnswerDisplay,
   type PyramidTier,
   type ToolConfig,
   type InfoSection,
@@ -22,7 +22,7 @@ import {
   type AnyQuestion,
   type ToolMultiSelect,
   type WorkingStep, type QOSnapshot,
-  randInt, pick, mStep, tStep, pickActive, weightOf,
+  randInt, pick, mStep, tStep, pickActive, weightOf, resolveMultiSelectValues, maskUnmetOptions,
 } from "../../shared";
 import React, { useLayoutEffect, useRef, useState } from "react";
 import { DEPTH_ITEMS } from "./OrderOfOperationsDepth";
@@ -77,22 +77,30 @@ interface Hl {
   nodes: Set<Node>;
   /** Inclusive term ranges of a Seq to box together with the operators between. */
   spans: Map<Seq, [number, number][]>;
+  /** Term ranges of a Seq drawn with a left-to-right arrow over them: a run of equal-priority operations being worked in turn. */
+  arrows?: Map<Seq, [number, number][]>;
 }
 const NO_HL: Hl = { nodes: new Set(), spans: new Map() };
 
-const BOX_OPEN = "\\colorbox{#fde68a}{$\\textcolor{#111827}{";
-const BOX_CLOSE = "}$}";
+// The move being made is UNDERLINED (as on a board), and a run of equal-priority operations gets a left-to-right arrow over it.
+const BOX_OPEN = "\\textcolor{#1e3a8a}{\\underline{";
+const BOX_CLOSE = "}}";
+const ARROW_OPEN = "\\overrightarrow{\\vphantom{\\big(}"; // the strut lifts the arrow clear of the digits
+const ARROW_CLOSE = "}";
 const OPS_TEX: Record<Op, string> = { "+": " + ", "-": " - ", "*": " \\times ", "/": " \\div " };
 
 const numTex = (v: number) => String(rd(v));
 
 function texBody(seq: Seq, hl: Hl): string {
   const spans = hl.spans.get(seq) ?? [];
+  const arrows = hl.arrows?.get(seq) ?? [];
   let out = "";
   seq.terms.forEach((t, i) => {
+    if (arrows.some((s) => s[0] === i)) out += ARROW_OPEN;
     if (spans.some((s) => s[0] === i)) out += BOX_OPEN;
     out += texTerm(t, hl, i === 0);
     if (spans.some((s) => s[1] === i)) out += BOX_CLOSE;
+    if (arrows.some((s) => s[1] === i)) out += ARROW_CLOSE;
     if (i < seq.ops.length) out += OPS_TEX[seq.ops[i]];
   });
   return out;
@@ -247,6 +255,8 @@ interface FlatRes {
   produced: number[];
   /** Pyramid tiers this stage uses: the move itself, and its equal-priority partner. */
   tiers: Tiers;
+  /** Term ranges holding a run of 2+ equal-priority operations: drawn with a left-to-right arrow. */
+  arrows?: [number, number][];
 }
 
 const TIER_OF: Record<Op, PyramidTier> = { "+": "A", "-": "S", "*": "M", "/": "D" };
@@ -306,7 +316,16 @@ function stepFlat(seq: Seq): FlatRes {
     const base = used.size === 2 ? "multiply and divide" : used.has("*") ? "multiply" : "divide";
     const strong = [...used].map((o) => TIER_OF[o]);
     const soft = [...used].map((o) => PARTNER[o]).filter((o) => !used.has(o) && seq.ops.includes(o)).map((o) => TIER_OF[o]);
-    return { seq: { t: "seq", terms, ops }, spans, nodes: [], name: base + (chained ? " (left to right)" : ""), produced, tiers: { strong, soft } };
+    // A run of two or more × ÷ in a row is walked left to right: draw the arrow over each such run.
+    const arrows: [number, number][] = [];
+    for (let j = 0; j < seq.ops.length; ) {
+      if (!isMD(seq.ops[j])) { j++; continue; }
+      let k = j;
+      while (k + 1 < seq.ops.length && isMD(seq.ops[k + 1])) k++;
+      if (k > j) arrows.push([j, k + 1]);
+      j = k + 1;
+    }
+    return { seq: { t: "seq", terms, ops }, spans, nodes: [], name: base + (chained ? " (left to right)" : ""), produced, tiers: { strong, soft }, arrows };
   }
 
   // Only + and − remain: one operation at a time, left to right.
@@ -320,6 +339,8 @@ function stepFlat(seq: Seq): FlatRes {
     name: base + (seq.ops.length > 1 ? " (left to right)" : ""),
     produced,
     tiers: { strong: [TIER_OF[seq.ops[0]]], soft: seq.ops.includes(PARTNER[seq.ops[0]]) ? [TIER_OF[PARTNER[seq.ops[0]]]] : [] },
+    // Only + and − left and more than one of them: the whole line is one run, worked left to right.
+    arrows: seq.ops.length > 1 ? [[0, seq.terms.length - 1]] : [],
   };
 }
 
@@ -372,7 +393,7 @@ function nextStep(root: Seq): StepOut | null {
 
   // ── B: brackets first (innermost), with root signs and fraction bars acting as brackets ──
   if (reducible.length > 0 || fracs.length > 0) {
-    const hl: Hl = { nodes: new Set(), spans: new Map() };
+    const hl: Hl = { nodes: new Set(), spans: new Map(), arrows: new Map() };
     const repl = new Map<Node, Node>();
     const produced: number[] = [];
     const names = new Set<string>();
@@ -381,6 +402,7 @@ function nextStep(root: Seq): StepOut | null {
       const r = stepFlat(leaf.seq);
       repl.set(leaf.seq, r.seq);
       if (r.spans.length) hl.spans.set(leaf.seq, r.spans);
+      if (r.arrows?.length) hl.arrows!.set(leaf.seq, r.arrows);
       r.nodes.forEach((x) => hl.nodes.add(x));
       produced.push(...r.produced);
       names.add(r.name);
@@ -411,9 +433,12 @@ function nextStep(root: Seq): StepOut | null {
   // ── Everything left is a flat line: I, then DM, then AS ──
   if (isSingleNum(root)) return null;
   const r = stepFlat(root);
+  // The last move on a line is the whole line (`13 − 9`): nothing is left to pick out, so no underline.
+  const wholeLine = r.spans.length === 1 && r.spans[0][0] === 0 && r.spans[0][1] === root.terms.length - 1;
   const hl: Hl = {
     nodes: new Set(r.nodes),
-    spans: r.spans.length ? new Map([[root, r.spans]]) : new Map(),
+    spans: r.spans.length && !wholeLine ? new Map([[root, r.spans]]) : new Map(),
+    arrows: r.arrows?.length ? new Map([[root, r.arrows]]) : new Map(),
   };
   return { label: cap(r.name) + ":", hl, after: normSeq(r.seq), produced: r.produced, tiers: r.tiers };
 }
@@ -443,10 +468,12 @@ function workingSteps(ast: Seq): WorkingStep[] {
   const run = runSteps(ast);
   if (!run) return [tStep("Work through the brackets first, then indices, then × and ÷, then + and −.")];
   // `extra.pyramid` tells the Worked Example's picture slot which BIDMAS tiers to light.
-  return run.steps.map((s) => ({
-    ...mStep(s.label, [texBody(s.before, s.hl), "= " + texBody(s.after, NO_HL)]),
-    extra: { pyramid: s.tiers },
-  }));
+  // One line per step, as on a board: the line as it stands, with the move marked. Its result is the NEXT step's line (or
+  // the Answer), so no line is ever written twice. `extra.ooo` feeds the renderer below; `after` is kept for the tests.
+  return run.steps.map((s) => {
+    const before = texBody(s.before, s.hl), after = texBody(s.after, NO_HL);
+    return { ...mStep(s.label, before), extra: { pyramid: s.tiers, ooo: { before, after } } };
+  });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -700,11 +727,25 @@ function orderMatters(ast: Seq, family: Family, answer: number): boolean {
   return true;
 }
 
-function buildEval(level: DifficultyLevel, family: Family, nm: NumMode): { ast: Seq; info: Analysis } | null {
+/** Every + − × ÷ an expression uses (a fraction bar counts as ÷; powers, roots and a leading minus are not operations). */
+function opsUsed(ast: Node, out: Set<Op> = new Set()): Set<Op> {
+  switch (ast.t) {
+    case "seq": ast.ops.forEach((o) => out.add(o)); ast.terms.forEach((t) => opsUsed(t, out)); break;
+    case "pow": opsUsed(ast.base, out); break;
+    case "root": opsUsed(ast.inner, out); break;
+    case "frac": out.add("/"); opsUsed(ast.num, out); opsUsed(ast.den, out); break;
+    case "neg": opsUsed(ast.x, out); break;
+  }
+  return out;
+}
+
+/** `allowed` (optional): only draw expressions whose every operation is in the set. */
+function buildEval(level: DifficultyLevel, family: Family, nm: NumMode, allowed?: ReadonlySet<Op>): { ast: Seq; info: Analysis } | null {
   const c: Ctx = { nm, level };
   for (let i = 0; i < 500; i++) {
     const ast = pick(SHAPES[family])(c);
     if (!ast) continue;
+    if (allowed && [...opsUsed(ast)].some((o) => !allowed.has(o))) continue;
     if (levelOf(ast) !== levelNum(level)) continue;
     const info = analyse(ast, nm);
     if (info && orderMatters(ast, family, info.answer)) return { ast, info };
@@ -720,11 +761,15 @@ function buildEval(level: DifficultyLevel, family: Family, nm: NumMode): { ast: 
 //   3  Symbols that act as brackets — roots, fraction bars, brackets inside brackets
 // A level's questions must need its idea (see levelOf), so levels never overlap.
 
-const FOCUS: Record<DifficultyLevel, { family: Family; label: string; weight: number }[]> = {
+// Level 1's Focus options need certain operations ticked (see OPS_POOL): × ÷ before + − (and Both) need one operation from
+// each pair; Left to right needs a ÷ (24 ÷ 4 × 2, 36 ÷ 3 ÷ 2) or a − (20 − 8 + 3, 50 − 7 − 12). Unticking × and ÷ therefore
+// greys out "× ÷ before + −" automatically, and ticking them again brings it back as it was.
+const NEEDS_BOTH_PAIRS = [["opMul", "opDiv"], ["opAdd", "opSub"]];
+const FOCUS: Record<DifficultyLevel, { family: Family; label: string; weight: number; requires?: (string | string[])[] }[]> = {
   level1: [
-    { family: "basic", label: "× ÷ before + −", weight: 1 },
-    { family: "chain", label: "Left to right", weight: 2 },
-    { family: "mixed", label: "Both", weight: 3 },
+    { family: "basic", label: "× ÷ before + −", weight: 1, requires: NEEDS_BOTH_PAIRS },
+    { family: "chain", label: "Left to right", weight: 2, requires: [["opDiv", "opSub"]] },
+    { family: "mixed", label: "Both", weight: 3, requires: NEEDS_BOTH_PAIRS },
   ],
   level2: [
     { family: "brackets", label: "Brackets", weight: 1 },
@@ -748,7 +793,7 @@ const focusPool = (level: DifficultyLevel): ToolMultiSelect => ({
   key: "focus",
   label: "Focus",
   info: FOCUS_INFO[level],
-  options: FOCUS[level].map((f) => ({ value: f.family, label: f.label, weight: f.weight, defaultActive: true })),
+  options: FOCUS[level].map((f) => ({ value: f.family, label: f.label, weight: f.weight, defaultActive: true, ...(f.requires ? { requires: f.requires } : {}) })),
 });
 
 const NUM_OPTS: Record<NumMode, { label: string; weight: number }> = {
@@ -766,10 +811,25 @@ const numPool = (offered: NumMode[]): ToolMultiSelect => ({
   })),
 });
 
-const EVAL_POOLS: Record<DifficultyLevel, { focus: ToolMultiSelect; nums: ToolMultiSelect | null }> = {
-  level1: { focus: focusPool("level1"), nums: null },
-  level2: { focus: focusPool("level2"), nums: numPool(["whole", "negatives"]) },
-  level3: { focus: focusPool("level3"), nums: numPool(["whole", "negatives", "decimals"]) },
+// Which operations a question may use. Unweighted (a variety / focus choice, not a difficulty rung). Evaluate only —
+// Spot the Mistake's questions are built around specific mistakes, which already name their operations.
+const OPS_BY_VALUE: Record<string, Op> = { opAdd: "+", opSub: "-", opMul: "*", opDiv: "/" };
+const OPS_POOL: ToolMultiSelect = {
+  key: "operations",
+  label: "Operations",
+  info: "Which operations can appear in a question (a fraction bar counts as ÷). Left to right needs two operations of the same priority: × and ÷, or + and −. × ÷ before + − needs at least one from each pair. If the ticked operations can't make that kind of question, ones that can are used instead, and only if none can does it use any operation.",
+  options: [
+    { value: "opAdd", label: "+ Add", defaultActive: true },
+    { value: "opSub", label: "− Subtract", defaultActive: true },
+    { value: "opMul", label: "× Multiply", defaultActive: true },
+    { value: "opDiv", label: "÷ Divide", defaultActive: true },
+  ],
+};
+
+const EVAL_POOLS: Record<DifficultyLevel, { focus: ToolMultiSelect; ops: ToolMultiSelect; nums: ToolMultiSelect | null }> = {
+  level1: { focus: focusPool("level1"), ops: OPS_POOL, nums: null },
+  level2: { focus: focusPool("level2"), ops: OPS_POOL, nums: numPool(["whole", "negatives"]) },
+  level3: { focus: focusPool("level3"), ops: OPS_POOL, nums: numPool(["whole", "negatives", "decimals"]) },
 };
 
 // ── Mistakes (each belongs to the level whose idea it gets wrong) ──────────────
@@ -956,9 +1016,24 @@ const FALLBACK = E(3, "+", 4, "*", 5);
 
 function genEvaluate(level: DifficultyLevel, msv: Record<string, boolean>): AnyQuestion {
   const { focus, nums } = EVAL_POOLS[level];
-  const family = pickActive(msv, focus.options) as Family;
+  // Focus options the ticked operations can't make are skipped (they show greyed out in the popover).
+  const masked = maskUnmetOptions([focus, OPS_POOL], resolveMultiSelectValues([focus, OPS_POOL], msv));
+  const picked = pickActive(masked, focus.options) as Family;
   const nm = (nums ? pickActive(msv, nums.options) : "whole") as NumMode;
-  const built = buildEval(level, family, nm) ?? buildEval(level, family, "whole");
+  // The ticked operations (none ticked = no restriction). If the picked Focus can't be made from them, try the
+  // level's other active Focus options before giving the restriction up.
+  const active = new Set(OPS_POOL.options.filter((o) => msv[o.value] ?? o.defaultActive).map((o) => OPS_BY_VALUE[o.value]));
+  const allowed = active.size === 0 || active.size === 4 ? undefined : active;
+  const others = focus.options.filter((o) => o.value !== picked && (masked[o.value] ?? o.defaultActive)).map((o) => o.value as Family).sort(() => Math.random() - 0.5);
+  let family = picked;
+  let built: { ast: Seq; info: Analysis } | null = null;
+  if (allowed) {
+    for (const f of [picked, ...others]) {
+      built = buildEval(level, f, nm, allowed) ?? buildEval(level, f, "whole", allowed);
+      if (built) { family = f; break; }
+    }
+  }
+  built = built ?? buildEval(level, picked, nm) ?? buildEval(level, picked, "whole");
   const ast = built?.ast ?? FALLBACK;
   const answer = built?.info.answer ?? 23;
   const dl = texBody(ast, NO_HL);
@@ -1234,11 +1309,11 @@ const TOOL_CONFIG: ToolConfig = {
       instruction: "Work out:",
       variables: [],
       dropdown: null,
-      multiSelect: [EVAL_POOLS.level1.focus],
+      multiSelect: [EVAL_POOLS.level1.focus, OPS_POOL],
       difficultySettings: {
-        level1: { variables: [], dropdown: null, multiSelect: [EVAL_POOLS.level1.focus] },
-        level2: { variables: [], dropdown: null, multiSelect: [EVAL_POOLS.level2.focus, EVAL_POOLS.level2.nums as ToolMultiSelect] },
-        level3: { variables: [], dropdown: null, multiSelect: [EVAL_POOLS.level3.focus, EVAL_POOLS.level3.nums as ToolMultiSelect] },
+        level1: { variables: [], dropdown: null, multiSelect: [EVAL_POOLS.level1.focus, OPS_POOL] },
+        level2: { variables: [], dropdown: null, multiSelect: [EVAL_POOLS.level2.focus, OPS_POOL, EVAL_POOLS.level2.nums as ToolMultiSelect] },
+        level3: { variables: [], dropdown: null, multiSelect: [EVAL_POOLS.level3.focus, OPS_POOL, EVAL_POOLS.level3.nums as ToolMultiSelect] },
       },
     },
     fixIt: {
@@ -1265,8 +1340,9 @@ const INFO_SECTIONS: InfoSection[] = [
   { title: "Evaluate", icon: "🔢", content: [
     { label: "Overview", detail: "Work out an expression. The Worked Example rewrites the line one stage at a time, boxing the part that is done next, and lights the matching tier of the BIDMAS pyramid." },
     { label: "Focus", detail: "Which idea within the level to practise. Level 1: × ÷ before + −, Left to right, or Both. Level 2: Brackets, Powers, or Both. Level 3: Roots, Fraction bar, or Nested brackets." },
+    { label: "Operations (Evaluate, all levels)", detail: "Which of + − × ÷ can appear (all four by default; a fraction bar counts as ÷). For example, with Left to right and only × ÷ ticked you get 24 ÷ 4 × 2 style lines; with only + − ticked, 20 − 8 + 3 style lines. × ÷ before + − needs at least one operation from each pair. If the ticked operations can't make the chosen Focus, another ticked Focus is used, and only if none can does the question use any operation." },
     { label: "Numbers (Levels 2–3)", detail: "Whole numbers (default), negatives, or decimals. Negatives bring in −3² against (−3)² and subtracting a negative." },
-    { label: "BIDMAS pyramid", detail: "Whiteboard shows the pyramid in the working box (hide it with the box's button). B, then I, then D and M together, then A and S together: the two side-by-side tiers are done left to right." },
+    { label: "BIDMAS pyramid", detail: "Whiteboard shows the pyramid in the working box (hide it with the box's button). B, then I, then D and M together, then A and S together. D ÷ = M × and A + = S − are each ONE tile with an equals sign: they have equal priority, and \"left to right\" means the order they appear in the question, not the order they sit on the pyramid." },
   ]},
   { title: "Spot the Mistake", icon: "🧐", content: [
     { label: "Spot the mistake", detail: "A student's working is shown, line by line, with a mistake in it; find the mistake and the correct answer." },
@@ -1276,10 +1352,30 @@ const INFO_SECTIONS: InfoSection[] = [
   ]},
   { title: "Modes", icon: "🖥️", content: [
     { label: "Whiteboard", detail: "One question with working space beside it, with the BIDMAS pyramid available." },
-    { label: "Worked Example", detail: "Step by step: each press shows the next stage, with the part being worked out boxed and its pyramid tier lit." },
+    { label: "Worked Example", detail: "Step by step: each press shows the next stage, with the part being worked out underlined (and a left-to-right arrow over a run of equal-priority operations), an arrow down to the next line, and its pyramid tier lit." },
     { label: "Worksheet", detail: "A grid of questions with PDF export. The Smart Progressor orders the sheet easy to hard." },
   ]},
 ];
+
+// Worked Example, as written on a board: each step is the line with the move underlined (and an arrow over a run of
+// equal-priority operations), then an arrow down to where the result goes — the next step's line, or the Answer. The result
+// is never written twice.
+const oooStepRenderer = (s: WorkingStep): JSX.Element | null => {
+  const o = (s.extra as { ooo?: { before: string; after: string } } | undefined)?.ooo;
+  if (!o) return null;
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-left text-xl leading-snug">{s.label}</span>
+      <div className="flex flex-col items-center text-2xl sm:text-3xl">
+        <FitWidth><MathRenderer latex={o.before} /></FitWidth>
+        <svg width="22" height="30" viewBox="0 0 22 30" style={{ display: "block" }} aria-hidden>
+          <path d="M11 2 V22" stroke="#475569" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+          <polygon points="4,18 18,18 11,28" fill="#475569" />
+        </svg>
+      </div>
+    </div>
+  );
+};
 
 const pyramidOf = (step: WorkingStep) => (step.extra as { pyramid?: { strong: PyramidTier[]; soft: PyramidTier[] } } | undefined)?.pyramid;
 
@@ -1289,7 +1385,7 @@ export const __test = {
   TOOL_CONFIG,
   generateQuestion,
   depthItems: DEPTH_ITEMS,
-  engine: { E, P, R, F, NEG, N, texBody, NO_HL, runSteps, evalNode, analyse, SHAPES, buildEval, MISTAKES, genInsert, drawMistake, studentLines, levelOf, LEVEL_OF, EVAL_POOLS, MISTAKES_BY_LEVEL },
+  engine: { E, P, R, F, NEG, N, texBody, NO_HL, runSteps, evalNode, analyse, SHAPES, buildEval, opsUsed, MISTAKES, genInsert, drawMistake, studentLines, levelOf, LEVEL_OF, EVAL_POOLS, MISTAKES_BY_LEVEL },
 };
 
 export default function App() {
@@ -1305,6 +1401,7 @@ export default function App() {
         const t = pyramidOf(step);
         return t ? <BidmasPyramid strong={t.strong} soft={t.soft} maxWidth={230} /> : null;
       }}
+      stepRenderer={oooStepRenderer}
       stepVisualKeepsWorking
       depthItems={DEPTH_ITEMS}
       workingScaffold={{ label: "BIDMAS pyramid", placement: "workingCorner", cornerWidth: 190, render: () => <BidmasPyramid maxWidth={260} /> }}
