@@ -452,11 +452,14 @@ export interface ToolShellProps {
     qo?: QOSnapshot,
   ) => JSX.Element | null;
 
-  /** Replaces default step rendering in the worked-example step list. */
+  /** Replaces default step rendering in the worked-example step list. `reveal` is the fragment index showing on the
+   *  current card (undefined = show everything: past steps, Show All) so a custom renderer can build itself up one
+   *  beat at a time like a fragment-authored step (reference: Order of Operations' board-style lines). */
   stepRenderer?: (
     step: WorkingStep,
     colorScheme: string,
     qo?: QOSnapshot,
+    reveal?: number,
   ) => JSX.Element | null;
 
   /** For steps whose working is a visual that EVOLVES (a place value table filling in): return just

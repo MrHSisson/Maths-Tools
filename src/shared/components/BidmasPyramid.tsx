@@ -3,12 +3,12 @@
 //
 //        B ( )
 //        I ² ³
-//     D ÷ = M ×       ← ONE tile: equal priority, so work left to right ALONG THE EXPRESSION
-//     A + = S −       ← ONE tile: the order here is not an order of working
+//     D ÷ & M ×       ← ONE tile: equal priority, so work left to right ALONG THE EXPRESSION
+//     A + & S −       ← ONE tile: the order here is not an order of working
 //
 // Each of these two tiers used to be split in half by a vertical rule. Students read the halves as a
 // sequence (A is left of S, so add first) and followed the acronym's letters; so the tier is now a single
-// tile with an "=" between its operations and a reminder that "left to right" is the order they appear in the
+// tile with an "&" between its operations and a reminder that "left to right" is the order they appear in the
 // QUESTION, not the order they sit on the pyramid.
 //
 // A KEY, not a working representation (it carries no quantities), so it is not one of
@@ -49,7 +49,7 @@ const full = (y1: number, y2: number): Pts => [[CX - hw(y1), y1], [CX + hw(y1), 
 const toStr = (p: Pts) => p.map(([x, y]) => `${x},${y}`).join(" ");
 
 // B and I are one centred text each (letter + its symbols as tspans). D M and A S are ONE tile each holding both
-// operations with an "=" between them, so the pair can never read as a sequence.
+// operations with an "&" between them, so the pair can never read as a sequence.
 interface TierDef { tier: PyramidTier; pts: Pts; letter: string; sym: string; x: number; y: number; symSize: number; letterSize?: number }
 
 const SINGLE: TierDef[] = [
@@ -100,7 +100,7 @@ export function BidmasPyramid({ strong = [], soft = [], maxWidth = 420 }: Bidmas
           <text x={CX} y={p.y}>
             <tspan fontSize={30} fill={LETTER} textDecoration={strong.includes(p.a) ? "underline" : undefined}>{p.la}</tspan>
             <tspan dx={6} fontSize={32} fill={SYMBOL} textDecoration={strong.includes(p.a) ? "underline" : undefined}>{p.sa}</tspan>
-            <tspan dx={14} fontSize={30} fill={NAVY}>=</tspan>
+            <tspan dx={14} fontSize={30} fill={NAVY}>&amp;</tspan>
             <tspan dx={14} fontSize={30} fill={LETTER} textDecoration={strong.includes(p.b) ? "underline" : undefined}>{p.lb}</tspan>
             <tspan dx={6} fontSize={32} fill={SYMBOL} textDecoration={strong.includes(p.b) ? "underline" : undefined}>{p.sb}</tspan>
           </text>

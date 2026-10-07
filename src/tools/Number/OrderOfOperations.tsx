@@ -14,7 +14,7 @@
 
 import {
   ToolShell,
-  BidmasPyramid, MathRenderer, QuestionDisplay, AnswerDisplay,
+  BidmasPyramid, MathRenderer, FitWidth, QuestionDisplay, AnswerDisplay,
   type PyramidTier,
   type ToolConfig,
   type InfoSection,
@@ -77,22 +77,30 @@ interface Hl {
   nodes: Set<Node>;
   /** Inclusive term ranges of a Seq to box together with the operators between. */
   spans: Map<Seq, [number, number][]>;
+  /** Term ranges of a Seq drawn with a left-to-right arrow over them: a run of equal-priority operations being worked in turn. */
+  arrows?: Map<Seq, [number, number][]>;
 }
 const NO_HL: Hl = { nodes: new Set(), spans: new Map() };
 
-const BOX_OPEN = "\\colorbox{#fde68a}{$\\textcolor{#111827}{";
-const BOX_CLOSE = "}$}";
+// The move being made is UNDERLINED (as on a board), and a run of equal-priority operations gets a left-to-right arrow over it.
+const BOX_OPEN = "\\textcolor{#1e3a8a}{\\underline{";
+const BOX_CLOSE = "}}";
+const ARROW_OPEN = "\\overrightarrow{\\vphantom{\\big(}"; // the strut lifts the arrow clear of the digits
+const ARROW_CLOSE = "}";
 const OPS_TEX: Record<Op, string> = { "+": " + ", "-": " - ", "*": " \\times ", "/": " \\div " };
 
 const numTex = (v: number) => String(rd(v));
 
 function texBody(seq: Seq, hl: Hl): string {
   const spans = hl.spans.get(seq) ?? [];
+  const arrows = hl.arrows?.get(seq) ?? [];
   let out = "";
   seq.terms.forEach((t, i) => {
+    if (arrows.some((s) => s[0] === i)) out += ARROW_OPEN;
     if (spans.some((s) => s[0] === i)) out += BOX_OPEN;
     out += texTerm(t, hl, i === 0);
     if (spans.some((s) => s[1] === i)) out += BOX_CLOSE;
+    if (arrows.some((s) => s[1] === i)) out += ARROW_CLOSE;
     if (i < seq.ops.length) out += OPS_TEX[seq.ops[i]];
   });
   return out;
@@ -247,6 +255,8 @@ interface FlatRes {
   produced: number[];
   /** Pyramid tiers this stage uses: the move itself, and its equal-priority partner. */
   tiers: Tiers;
+  /** Term ranges holding a run of 2+ equal-priority operations: drawn with a left-to-right arrow. */
+  arrows?: [number, number][];
 }
 
 const TIER_OF: Record<Op, PyramidTier> = { "+": "A", "-": "S", "*": "M", "/": "D" };
@@ -306,7 +316,16 @@ function stepFlat(seq: Seq): FlatRes {
     const base = used.size === 2 ? "multiply and divide" : used.has("*") ? "multiply" : "divide";
     const strong = [...used].map((o) => TIER_OF[o]);
     const soft = [...used].map((o) => PARTNER[o]).filter((o) => !used.has(o) && seq.ops.includes(o)).map((o) => TIER_OF[o]);
-    return { seq: { t: "seq", terms, ops }, spans, nodes: [], name: base + (chained ? " (left to right)" : ""), produced, tiers: { strong, soft } };
+    // A run of two or more × ÷ in a row is walked left to right: draw the arrow over each such run.
+    const arrows: [number, number][] = [];
+    for (let j = 0; j < seq.ops.length; ) {
+      if (!isMD(seq.ops[j])) { j++; continue; }
+      let k = j;
+      while (k + 1 < seq.ops.length && isMD(seq.ops[k + 1])) k++;
+      if (k > j) arrows.push([j, k + 1]);
+      j = k + 1;
+    }
+    return { seq: { t: "seq", terms, ops }, spans, nodes: [], name: base + (chained ? " (left to right)" : ""), produced, tiers: { strong, soft }, arrows };
   }
 
   // Only + and − remain: one operation at a time, left to right.
@@ -320,6 +339,8 @@ function stepFlat(seq: Seq): FlatRes {
     name: base + (seq.ops.length > 1 ? " (left to right)" : ""),
     produced,
     tiers: { strong: [TIER_OF[seq.ops[0]]], soft: seq.ops.includes(PARTNER[seq.ops[0]]) ? [TIER_OF[PARTNER[seq.ops[0]]]] : [] },
+    // Only + and − left and more than one of them: the whole line is one run, worked left to right.
+    arrows: seq.ops.length > 1 ? [[0, seq.terms.length - 1]] : [],
   };
 }
 
@@ -372,7 +393,7 @@ function nextStep(root: Seq): StepOut | null {
 
   // ── B: brackets first (innermost), with root signs and fraction bars acting as brackets ──
   if (reducible.length > 0 || fracs.length > 0) {
-    const hl: Hl = { nodes: new Set(), spans: new Map() };
+    const hl: Hl = { nodes: new Set(), spans: new Map(), arrows: new Map() };
     const repl = new Map<Node, Node>();
     const produced: number[] = [];
     const names = new Set<string>();
@@ -381,6 +402,7 @@ function nextStep(root: Seq): StepOut | null {
       const r = stepFlat(leaf.seq);
       repl.set(leaf.seq, r.seq);
       if (r.spans.length) hl.spans.set(leaf.seq, r.spans);
+      if (r.arrows?.length) hl.arrows!.set(leaf.seq, r.arrows);
       r.nodes.forEach((x) => hl.nodes.add(x));
       produced.push(...r.produced);
       names.add(r.name);
@@ -414,6 +436,7 @@ function nextStep(root: Seq): StepOut | null {
   const hl: Hl = {
     nodes: new Set(r.nodes),
     spans: r.spans.length ? new Map([[root, r.spans]]) : new Map(),
+    arrows: r.arrows?.length ? new Map([[root, r.arrows]]) : new Map(),
   };
   return { label: cap(r.name) + ":", hl, after: normSeq(r.seq), produced: r.produced, tiers: r.tiers };
 }
@@ -443,10 +466,11 @@ function workingSteps(ast: Seq): WorkingStep[] {
   const run = runSteps(ast);
   if (!run) return [tStep("Work through the brackets first, then indices, then × and ÷, then + and −.")];
   // `extra.pyramid` tells the Worked Example's picture slot which BIDMAS tiers to light.
-  return run.steps.map((s) => ({
-    ...mStep(s.label, [texBody(s.before, s.hl), "= " + texBody(s.after, NO_HL)]),
-    extra: { pyramid: s.tiers },
-  }));
+  // `extra.ooo` carries the two lines for the board-style renderer below (line, arrow down, next line).
+  return run.steps.map((s) => {
+    const before = texBody(s.before, s.hl), after = texBody(s.after, NO_HL);
+    return { ...mStep(s.label, [before, "= " + after]), extra: { pyramid: s.tiers, ooo: { before, after } } };
+  });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1325,10 +1349,33 @@ const INFO_SECTIONS: InfoSection[] = [
   ]},
   { title: "Modes", icon: "🖥️", content: [
     { label: "Whiteboard", detail: "One question with working space beside it, with the BIDMAS pyramid available." },
-    { label: "Worked Example", detail: "Step by step: each press shows the next stage, with the part being worked out boxed and its pyramid tier lit." },
+    { label: "Worked Example", detail: "Step by step: each press shows the next stage, with the part being worked out underlined (and a left-to-right arrow over a run of equal-priority operations), an arrow down to the next line, and its pyramid tier lit." },
     { label: "Worksheet", detail: "A grid of questions with PDF export. The Smart Progressor orders the sheet easy to hard." },
   ]},
 ];
+
+// Worked Example, as written on a board: the line with the move underlined (and an arrow over a run of equal-priority
+// operations), an arrow down, then the next line with the rest of the sum pulled down. The second line fades in on the
+// next press, like a fragment-authored step; everywhere else (Show All, past steps) both lines are shown.
+const oooStepRenderer = (s: WorkingStep, _cs: string, _qo?: QOSnapshot, reveal?: number): JSX.Element | null => {
+  const o = (s.extra as { ooo?: { before: string; after: string } } | undefined)?.ooo;
+  if (!o) return null;
+  const showAfter = reveal === undefined || reveal >= 1;
+  const fade = { opacity: showAfter ? 1 : 0, transition: "opacity 0.35s ease" };
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-left text-xl leading-snug">{s.label}</span>
+      <div className="flex flex-col items-center text-2xl sm:text-3xl">
+        <FitWidth><MathRenderer latex={o.before} /></FitWidth>
+        <svg width="22" height="30" viewBox="0 0 22 30" style={{ display: "block", ...fade }} aria-hidden>
+          <path d="M11 2 V22" stroke="#475569" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+          <polygon points="4,18 18,18 11,28" fill="#475569" />
+        </svg>
+        <div style={fade}><FitWidth><MathRenderer latex={o.after} /></FitWidth></div>
+      </div>
+    </div>
+  );
+};
 
 const pyramidOf = (step: WorkingStep) => (step.extra as { pyramid?: { strong: PyramidTier[]; soft: PyramidTier[] } } | undefined)?.pyramid;
 
@@ -1354,6 +1401,7 @@ export default function App() {
         const t = pyramidOf(step);
         return t ? <BidmasPyramid strong={t.strong} soft={t.soft} maxWidth={230} /> : null;
       }}
+      stepRenderer={oooStepRenderer}
       stepVisualKeepsWorking
       depthItems={DEPTH_ITEMS}
       workingScaffold={{ label: "BIDMAS pyramid", placement: "workingCorner", cornerWidth: 190, render: () => <BidmasPyramid maxWidth={260} /> }}

@@ -108,7 +108,9 @@ export interface WorkedExampleStepsProps {
   colorScheme: string;
   /** Tailwind text-size class applied to the answer box, e.g. "text-3xl". */
   answerFontClass: string;
-  stepRenderer?: (step: WorkingStep, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null;
+  /** `reveal` is the fragment index showing on the current card (undefined = show everything: past steps, Show All), so a
+   *  custom renderer can build itself up one beat at a time like a fragment-authored step. */
+  stepRenderer?: (step: WorkingStep, colorScheme: string, qo?: QOSnapshot, reveal?: number) => JSX.Element | null;
   /** Visual-only renderer for steps whose working is an evolving picture (see ToolShellProps). */
   stepVisualRenderer?: (step: WorkingStep, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null | false;
   /** With a `stepVisualRenderer`: keep every step's full working (its maths) in the list beside the
@@ -362,7 +364,7 @@ export const WorkedExampleSteps = ({
   const workRow = (s: WorkingStep, i: number, reveal: number | undefined, state: "current" | "past" | "all") => {
     const on = state === "current";
     const isAnswer = hideAnswerStep && i === totalSteps - 1;
-    const custom = stepRenderer ? stepRenderer(s, colorScheme, qoSnapshot) : null;
+    const custom = stepRenderer ? stepRenderer(s, colorScheme, qoSnapshot, reveal) : null;
     const text = compact ? "text-base leading-snug" : "text-xl leading-snug";
     const dotBg = isAnswer ? "#16a34a" : on ? "#1e3a8a" : "#fff";
     const dotBorder = isAnswer ? "#16a34a" : on ? "#1e3a8a" : "#cbd5e1";
@@ -392,7 +394,7 @@ export const WorkedExampleSteps = ({
   const renderStep = (s: WorkingStep, i: number, reveal?: number, stacked?: boolean, state: "current" | "past" | "all" = "all") => {
     if (captions && visualOf(s) !== null) return captionRow(s, i, state);   // a picture step or a caption-only step
     if (timeline && keepWorking) return workRow(s, i, reveal, state);       // keep-working: same row, with the maths
-    const custom = stepRenderer ? stepRenderer(s, colorScheme, qoSnapshot) : null;
+    const custom = stepRenderer ? stepRenderer(s, colorScheme, qoSnapshot, reveal) : null;
     const isFinalAnswerStep = hideAnswerStep && i === totalSteps - 1;
     // compact (narrow viewport) always wins over the "stacked" layout's own
     // reduced size — the two are independent axes, and narrow needs smaller

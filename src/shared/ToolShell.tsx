@@ -48,7 +48,7 @@ export interface ToolShellProps {
     multiSelectValues?: Record<string, boolean>,
   ) => AnyQuestion;
   defaults?: ToolShellDefaults;
-  stepRenderer?: (step: WorkingStep, colorScheme: string, qo?: QOSnapshot) => JSX.Element | null;
+  stepRenderer?: (step: WorkingStep, colorScheme: string, qo?: QOSnapshot, reveal?: number) => JSX.Element | null;
   /** For steps whose working is a *visual that evolves* (a place value table filling in). Return the
    *  visual for such a step (null for any other). In the cascade and Show All, those steps then show
    *  only their caption in the list, and ONE visual — the current step's — updates in place beside it,

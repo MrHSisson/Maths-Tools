@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-07 — Order of Operations: working written like a board; pyramid says "&"
+
+**Worked Example** now follows how it is written on a board: the line with the move **underlined** (not boxed), an **arrow down** to the next line with the rest of the sum pulled down, and — when two or more equal-priority operations are left in a row — a **left-to-right arrow over that run** (`3 + 5 × 2 − 9` → underline `5 × 2` → `3 + 10 − 9` with the arrow over it → `13 − 9` → `4`). The second line fades in on the next press. A lone × or ÷ gets no arrow; a `× ÷` run inside a longer sum gets the arrow over just that run. Engine: `Hl.arrows` + `stepFlat` runs; renderer `oooStepRenderer`. Shell: `stepRenderer` now receives the fragment `reveal` index as a 4th argument (documented in `CLAUDE.md`). **Pyramid:** the equal-priority tiles read `D ÷ & M ×` / `A + & S −` (was "="). Checked in the live app; tests assert the exact lines.
+
 ## 2026-10-07 — Order of Operations: the pyramid stops implying an order; six Depth items on "add first"
 
 From a Y9 class: students did **add before subtract** (BIDMAS letters read as a list) and read the pyramid's left-to-right *across a tier* as an order of working (A is left of S, so add first). Two fixes. (1) **The BIDMAS pyramid** (shared `BidmasPyramid`): D M and A S are no longer split in half by a vertical rule; each is now **one tile** reading `D ÷ = M ×` / `A + = S −` with the caption "equal priority: left to right in the question"; when a step is being worked its operation is underlined. (2) **Six new Level 1 Depth items** (bank now 34): *Reading the pyramid*, *BIDMAS says A then S* (Ayla vs Ben), *Zoe and the pyramid*, *Spot the error* (`30 − 12 + 5 → 13`), *The sign stays with its number* (`20 − 8 + 3 = 20 + (−8) + 3`), and *Add first: always, sometimes or never?*. Numbers asserted in `orderOfOperations.test.ts`; spec `specs/depth/order-of-operations.md` updated.
