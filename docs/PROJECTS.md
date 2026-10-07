@@ -73,7 +73,7 @@ Stand-alone teacher tools with no prong: **Visualiser**, the four PDF
 | **Smart Progressor** | 🚧 | Mechanism done and piloted on `SpeedDistanceTime`; the work now is adopting it tool by tool (audit the other 26) |
 | **Core representations** | 🚧 | The visual vocabulary, its progressions and pairings; where to use each, what tools and sandboxes to make |
 | **Sandboxes & viewports** | 🚧 | Algebra Tiles, Negative Counters, SmartGrapher (+ Grapher Lab, Parallel Lines Explorer): standalone tools first, then embedded as viewports in question tools |
-| **Depth** | ✅ live (1 tool) | Curated diagnose / explain / extend questions as a mode on any tool that supplies a bank; follows the Question Options; first bank of 28 on Order of Operations (live) |
+| **Depth** | ✅ live (3 tools) | Curated diagnose / explain / extend questions as a mode on any tool that supplies a bank; follows the Question Options; banks on Order of Operations, Rounding and Speed, Distance & Time (live) |
 | **Computer Science shell** | ⏸ | Shell built; 2 topics shipped as data; next is authoring 1.1.3 |
 | **Decision Maths** | ⏸ | MST shipped; TSP nearest-neighbour slice built (dev-gated); next TSP lower bound |
 | *Tool review cycle* | ♻ ongoing | Per-tool notes; not a prong |
@@ -342,7 +342,10 @@ shared `WorkedExampleSteps` — a tool only supplies per-step data and renderers
 
 **Rounding bank (2026-10-06, live):** 25 items, `RoundingDepth.ts`, spec `specs/depth/rounding.md`; number-line scaffold (two side-rail switches) via the generic `custom` visual hook.
 
+**Speed, Distance & Time bank (2026-10-07, live):** 32 items, `SpeedDistanceTimeDepth.ts`, spec `specs/depth/speed-distance-time.md`; shown on all four tabs (Speed · Distance · Time · Mixed), with tab-specific items via `tool` and `needs`.
+
 **Possible next steps:**
+- Harry reviews the live Speed, Distance & Time bank (wording, routes, whether average speed belongs at Level 3).
 - Harry reviews the live Rounding bank (wording, missing misconceptions, routes).
 - Harry reviews the BIDMAS bank for wording, missing misconceptions and the follow-up routes.
 - Add a Depth section to the tool spec template and write banks as tools pass through the Tool review cycle (diagnostic bank per tool, level by level).

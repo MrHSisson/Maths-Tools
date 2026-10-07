@@ -4,6 +4,7 @@ import {
   type ToolMultiSelect, type ToolDropdown, type WorkingStep,
   randInt, pick, pickActive, mStep, mStr, fmt, rStepBuild, ratioTableStepRenderer, ratioTableStepVisual, weightOf,
 } from "../../shared";
+import { DEPTH_ITEMS } from "./SpeedDistanceTimeDepth";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TOOL-SPECIFIC SECTION
@@ -850,7 +851,7 @@ const reformatQuestion = (q: AnyQuestion, qo: QOSnapshot): AnyQuestion | null =>
 // END OF TOOL-SPECIFIC SECTION
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export const __test = { TOOL_CONFIG, generateQuestion };
+export const __test = { TOOL_CONFIG, generateQuestion, depthItems: DEPTH_ITEMS };
 
 export default function App() {
   return (
@@ -861,6 +862,7 @@ export default function App() {
       reformatQuestion={reformatQuestion}
       stepRenderer={ratioTableStepRenderer}
       stepVisualRenderer={ratioTableStepVisual}
+      depthItems={DEPTH_ITEMS}
       defaults={{ displayFontSize: 2, worksheetFontSize: 1 }}
     />
   );
