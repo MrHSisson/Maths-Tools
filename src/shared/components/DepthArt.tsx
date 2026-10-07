@@ -8,20 +8,22 @@ import { useId } from "react";
 
 // The cast: eight characters, drawn in the owl's style (soft gradients, big shiny eyes, a ground shadow). A speaker's
 // name picks one of them, so the same name always looks the same; two speakers on one slide never share a face.
-type HairStyle = "wavy" | "fade" | "bob" | "messy" | "afro" | "spiky" | "braid" | "curls";
+// They are meant to look like ordinary, varied pupils and teachers: natural hair and colours, nothing that draws the eye.
+type HairStyle = "wavy" | "fade" | "bob" | "sidepart" | "coils" | "braid" | "curls";
+type Top = "crew" | "polo" | "hoodie" | "cardigan" | "stripe";
 interface Member {
   skin: [string, string]; hair: [string, string]; shirt: [string, string]; iris: string;
-  style: HairStyle; glasses?: boolean; freckles?: boolean; headband?: string; earrings?: boolean; mouth: "grin" | "smile" | "open";
+  style: HairStyle; top: Top; glasses?: boolean; freckles?: boolean; lashes?: boolean; mouth: "grin" | "smile" | "open";
 }
 const CAST: Member[] = [
-  { skin: ["#fde3cc", "#f2c3a0"], hair: ["#d9622b", "#a63d12"], shirt: ["#2dd4bf", "#0f766e"], iris: "#2f855a", style: "wavy", freckles: true, mouth: "open" },
-  { skin: ["#a9744f", "#7a4a2e"], hair: ["#2a2321", "#0f0d0c"], shirt: ["#fde047", "#ca8a04"], iris: "#4a2c17", style: "fade", mouth: "grin" },
-  { skin: ["#fbe0c4", "#efc29c"], hair: ["#3b3b4f", "#14141f"], shirt: ["#a78bfa", "#6d28d9"], iris: "#3b4a8a", style: "bob", glasses: true, mouth: "smile" },
-  { skin: ["#e6b58a", "#c78b5c"], hair: ["#8b5a35", "#5a3519"], shirt: ["#4ade80", "#15803d"], iris: "#2b6cb0", style: "messy", mouth: "open" },
-  { skin: ["#8a5a3b", "#5e3a24"], hair: ["#2b1b14", "#0d0705"], shirt: ["#f472b6", "#be185d"], iris: "#3b2314", style: "afro", earrings: true, mouth: "grin" },
-  { skin: ["#fde6d2", "#f1c8a6"], hair: ["#f4cf5f", "#c9972a"], shirt: ["#60a5fa", "#1d4ed8"], iris: "#2563eb", style: "spiky", mouth: "grin" },
-  { skin: ["#c98b5f", "#9a6240"], hair: ["#231a17", "#0b0807"], shirt: ["#fb923c", "#c2410c"], iris: "#4a2c17", style: "braid", headband: "#e11d48", mouth: "smile" },
-  { skin: ["#b97d55", "#8a5636"], hair: ["#2c1f18", "#0f0a07"], shirt: ["#94a3b8", "#475569"], iris: "#6b4423", style: "curls", glasses: true, mouth: "open" },
+  { skin: ["#fde3cc", "#f0c19c"], hair: ["#9a4a26", "#5f2a12"], shirt: ["#3aa6a0", "#1f6f6b"], iris: "#3f7d58", style: "wavy", top: "crew", freckles: true, lashes: true, mouth: "open" },
+  { skin: ["#a9744f", "#7a4a2e"], hair: ["#2e2522", "#120e0d"], shirt: ["#e0b040", "#a87a16"], iris: "#4a2c17", style: "fade", top: "hoodie", mouth: "grin" },
+  { skin: ["#fbe0c4", "#efc29c"], hair: ["#2b2d42", "#0f1020"], shirt: ["#9a7bd0", "#65469c"], iris: "#3b4a8a", style: "bob", top: "cardigan", glasses: true, lashes: true, mouth: "smile" },
+  { skin: ["#e3b48a", "#c58a5c"], hair: ["#7a5230", "#4a2f18"], shirt: ["#4f9d69", "#2d6a45"], iris: "#2b6cb0", style: "sidepart", top: "polo", mouth: "open" },
+  { skin: ["#8a5a3b", "#5e3a24"], hair: ["#2b1b14", "#0d0705"], shirt: ["#d9738f", "#a8456a"], iris: "#3b2314", style: "coils", top: "stripe", lashes: true, mouth: "grin" },
+  { skin: ["#fde6d2", "#f0c8a6"], hair: ["#c9a35a", "#8e6e2c"], shirt: ["#5b8fd6", "#35609e"], iris: "#2f6fb2", style: "sidepart", top: "hoodie", mouth: "grin" },
+  { skin: ["#c98b5f", "#9a6240"], hair: ["#261c18", "#0b0807"], shirt: ["#de8a5a", "#b05a2c"], iris: "#4a2c17", style: "braid", top: "polo", lashes: true, mouth: "smile" },
+  { skin: ["#b97d55", "#8a5636"], hair: ["#2c1f18", "#0f0a07"], shirt: ["#8795a8", "#4f5d70"], iris: "#6b4423", style: "curls", top: "cardigan", glasses: true, mouth: "open" },
 ];
 export const CAST_SIZE = CAST.length;
 
@@ -43,34 +45,45 @@ export function Avatar({ member, size = "4em" }: { member: number; size?: string
   const c = CAST[((member % CAST.length) + CAST.length) % CAST.length];
   const g = (n: string) => `url(#${n}${uid})`;
   const ink = "#1b1220";
-  const rim = "rgba(255,255,255,0.35)";
+  const strand = c.hair[1];
+  const lines = (d: string) => <path d={d} fill="none" stroke={strand} strokeWidth="1.3" strokeLinecap="round" opacity="0.5" />;
   const back = (() => {
     switch (c.style) {
-      case "wavy": return <path d="M27 54 C18 14 102 14 93 54 C98 72 98 90 106 100 C92 108 80 98 78 84 L42 84 C40 98 28 108 14 100 C22 90 22 72 27 54Z" fill={g("h")} />;
+      case "wavy": return <path d="M27 54 C18 14 102 14 93 54 C97 70 97 88 103 98 C91 106 80 98 78 84 L42 84 C40 98 29 106 17 98 C23 88 23 70 27 54Z" fill={g("h")} />;
       case "bob": return <path d="M27 56 C18 14 102 14 93 56 L95 86 C84 92 78 84 78 74 L42 74 C42 84 36 92 25 86Z" fill={g("h")} />;
-      case "afro": return <g fill={g("h")}><circle cx="60" cy="30" r="35" /><circle cx="30" cy="42" r="14" /><circle cx="90" cy="42" r="14" /></g>;
+      case "coils": return <g fill={g("h")}><circle cx="60" cy="31" r="27" /><circle cx="34" cy="43" r="11" /><circle cx="86" cy="43" r="11" /></g>;
       case "braid": return <path d="M28 52 C22 16 98 16 92 52 C94 62 92 70 88 74 L32 74 C28 70 26 62 28 52Z" fill={g("h")} />;
-      case "curls": return <g fill={g("h")}><circle cx="34" cy="38" r="13" /><circle cx="46" cy="25" r="14" /><circle cx="62" cy="21" r="14" /><circle cx="77" cy="26" r="14" /><circle cx="87" cy="39" r="13" /></g>;
+      case "curls": return <g fill={g("h")}><circle cx="35" cy="39" r="11" /><circle cx="47" cy="27" r="12" /><circle cx="61" cy="23" r="12" /><circle cx="75" cy="27" r="12" /><circle cx="86" cy="39" r="11" /></g>;
       default: return null;
     }
   })();
   const front = (() => {
     switch (c.style) {
-      case "wavy": return <path d="M29 48 C28 18 92 16 91 48 C84 36 64 30 50 38 C42 42 34 44 29 48Z" fill={g("h")} />;
-      case "fade": return <path d="M30 46 C30 14 90 14 90 46 C84 33 70 29 60 29 C50 29 36 33 30 46Z" fill={g("h")} />;
-      case "bob": return <path d="M28 50 C28 14 92 14 92 50 C82 40 70 36 60 36 C50 36 38 40 28 50Z" fill={g("h")} />;
-      case "messy": return <path d="M29 48 C24 28 32 16 44 20 C48 10 60 12 62 20 C70 10 84 16 80 24 C92 22 96 38 91 48 C82 34 42 34 29 48Z" fill={g("h")} />;
-      case "afro": return <path d="M31 44 C36 27 84 27 89 44 C78 36 42 36 31 44Z" fill={g("h")} />;
-      case "spiky": return <path d="M29 48 L28 26 L40 34 L42 14 L54 28 L60 10 L68 28 L80 14 L80 34 L92 26 L91 48 C82 34 40 34 29 48Z" fill={g("h")} strokeLinejoin="round" stroke={g("h")} strokeWidth="2" />;
+      case "wavy": return <g><path d="M29 48 C28 18 92 16 91 48 C84 36 64 30 50 38 C42 42 34 44 29 48Z" fill={g("h")} />{lines("M40 30 C46 26 56 25 64 27")}{lines("M33 46 C38 42 44 40 48 38")}</g>;
+      case "fade": return <g><path d="M30 46 C30 14 90 14 90 46 C84 33 70 29 60 29 C50 29 36 33 30 46Z" fill={g("h")} />{lines("M42 24 C50 21 62 21 72 25")}</g>;
+      case "bob": return <g><path d="M28 50 C28 14 92 14 92 50 C82 40 70 36 60 36 C50 36 38 40 28 50Z" fill={g("h")} />{lines("M38 28 C46 23 58 22 70 25")}</g>;
+      case "sidepart": return <g><path d="M29 48 C26 18 90 12 91 46 C86 35 76 27 58 27 C46 27 38 35 33 46 Z" fill={g("h")} />{lines("M52 27 C50 33 46 37 41 40")}{lines("M62 26 C74 26 84 32 88 42")}</g>;
+      case "coils": return <path d="M31 44 C36 27 84 27 89 44 C78 36 42 36 31 44Z" fill={g("h")} />;
       case "braid": return (
         <g>
           <path d="M29 48 C28 18 92 16 91 48 C84 34 66 30 56 36 C46 40 36 42 29 48Z" fill={g("h")} />
+          {lines("M40 28 C48 24 60 24 70 27")}
           <path d="M84 66 C92 70 94 78 92 86 C96 94 94 104 90 110" fill="none" stroke={g("h")} strokeWidth="9" strokeLinecap="round" />
-          <path d="M86 78 l6 3 M88 88 l6 3 M88 98 l6 2" stroke={c.hair[1]} strokeWidth="1.6" strokeLinecap="round" opacity="0.6" />
-          <circle cx="90" cy="111" r="3.4" fill="#e11d48" />
+          <path d="M86 78 l6 3 M88 88 l6 3 M88 98 l6 2" stroke={strand} strokeWidth="1.6" strokeLinecap="round" opacity="0.6" />
+          <circle cx="90" cy="111" r="3.2" fill={c.shirt[1]} />
         </g>
       );
-      case "curls": return <g fill={g("h")}><circle cx="38" cy="36" r="9" /><circle cx="50" cy="29" r="10" /><circle cx="64" cy="28" r="10" /><circle cx="77" cy="32" r="10" /><circle cx="84" cy="42" r="8" /></g>;
+      case "curls": return <g fill={g("h")}><circle cx="39" cy="35" r="9" /><circle cx="51" cy="29" r="10" /><circle cx="64" cy="28" r="10" /><circle cx="76" cy="32" r="10" /><circle cx="83" cy="42" r="7" /></g>;
+    }
+  })();
+  const top = (() => {
+    const wh = "#fff";
+    switch (c.top) {
+      case "crew": return <g><path d="M46 81 Q60 92 74 81" fill="none" stroke="#000" strokeOpacity="0.2" strokeWidth="5" strokeLinecap="round" /><path d="M44 80 Q60 94 76 80" fill="none" stroke={c.shirt[0]} strokeWidth="3" strokeLinecap="round" opacity="0.8" /></g>;
+      case "polo": return <g><path d="M46 80 L56 94 L60 82Z M74 80 L64 94 L60 82Z" fill={wh} stroke="#000" strokeOpacity="0.12" strokeWidth="1" strokeLinejoin="round" /><path d="M60 84 L60 106" stroke="#000" strokeOpacity="0.18" strokeWidth="1.5" /><circle cx="60" cy="92" r="1.6" fill="#000" opacity="0.28" /><circle cx="60" cy="100" r="1.6" fill="#000" opacity="0.28" /></g>;
+      case "hoodie": return <g><path d="M38 84 C44 96 76 96 82 84 C76 82 70 80 60 80 C50 80 44 82 38 84Z" fill={c.shirt[1]} opacity="0.55" /><path d="M54 92 L53 106 M66 92 L67 106" stroke={wh} strokeWidth="2" strokeLinecap="round" opacity="0.9" /><path d="M32 112 Q60 118 88 112" fill="none" stroke="#000" strokeOpacity="0.12" strokeWidth="1.5" /></g>;
+      case "cardigan": return <g><path d="M46 80 Q60 92 74 80 L72 120 L48 120Z" fill={wh} opacity="0.92" /><path d="M48 82 L47 119 M72 82 L73 119" stroke={c.shirt[1]} strokeWidth="2.4" strokeLinecap="round" opacity="0.9" /><circle cx="55" cy="96" r="1.5" fill={c.shirt[1]} /><circle cx="55" cy="106" r="1.5" fill={c.shirt[1]} /></g>;
+      case "stripe": return <g stroke={wh} strokeWidth="3" opacity="0.55"><path d="M26 98 Q60 92 94 98" fill="none" /><path d="M24 107 Q60 101 96 107" fill="none" /><path d="M46 81 Q60 90 74 81" fill="none" strokeOpacity="0.9" /></g>;
     }
   })();
   return (
@@ -83,48 +96,45 @@ export function Avatar({ member, size = "4em" }: { member: number; size?: string
       </defs>
       <ellipse cx="60" cy="119" rx="34" ry="4.5" fill="#000" opacity="0.14" />
       {back}
-      {/* torso, collar and neck */}
+      {/* torso, with the top's own details */}
       <path d="M22 112 C20 90 34 80 60 80 C86 80 100 90 98 112 C98 118 90 120 60 120 C30 120 22 118 22 112Z" fill={g("t")} />
-      <path d="M30 96 C36 88 46 84 52 84" fill="none" stroke={rim} strokeWidth="2.4" strokeLinecap="round" />
+      <path d="M30 96 C36 88 46 84 52 84" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2.4" strokeLinecap="round" />
       <rect x="51" y="68" width="18" height="18" rx="8" fill={g("s")} />
-      <path d="M51 76 Q60 84 69 76 L69 70 L51 70Z" fill="#000" opacity="0.10" />
-      <path d="M46 82 Q60 96 74 82 L70 80 Q60 90 50 80Z" fill="#fff" opacity="0.9" />
+      <path d="M51 76 Q60 85 69 76 L69 70 L51 70Z" fill="#000" opacity="0.12" />
+      {top}
       {/* ears */}
       <circle cx="30" cy="54" r="6.5" fill={g("s")} /><circle cx="90" cy="54" r="6.5" fill={g("s")} />
-      <circle cx="30" cy="55" r="3" fill="#f08a8a" opacity="0.35" /><circle cx="90" cy="55" r="3" fill="#f08a8a" opacity="0.35" />
-      {c.earrings && <g fill="#fbbf24" stroke="#d97706" strokeWidth="1"><circle cx="29" cy="64" r="3.4" /><circle cx="91" cy="64" r="3.4" /></g>}
-      {/* head */}
+      <path d="M28 52 Q31 54 29 58 M92 52 Q89 54 91 58" fill="none" stroke="#000" strokeOpacity="0.15" strokeWidth="1.2" strokeLinecap="round" />
+      {/* head, with a soft chin shadow and forehead light */}
       <ellipse cx="60" cy="50" rx="31" ry="30" fill={g("s")} />
+      <path d="M32 62 C36 84 84 84 88 62 C80 76 40 76 32 62Z" fill="#000" opacity="0.07" />
       {front}
-      {c.headband && <path d="M29 38 C40 28 80 28 91 38 L91 44 C80 34 40 34 29 44Z" fill={c.headband} />}
-      {/* hair sheen */}
-      <path d="M40 30 C48 24 62 23 72 27" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" opacity="0.25" />
+      <ellipse cx="52" cy="38" rx="9" ry="3.2" fill="#fff" opacity="0.14" />
       {/* brows */}
-      <path d="M37 41 Q46 36 55 40" fill="none" stroke={c.hair[1]} strokeWidth="3.2" strokeLinecap="round" />
-      <path d="M65 40 Q74 36 83 41" fill="none" stroke={c.hair[1]} strokeWidth="3.2" strokeLinecap="round" />
-      {/* eyes: white, iris, pupil, two highlights */}
-      {[46, 74].map((x) => (
+      <path d="M37 41 Q46 36 55 40" fill="none" stroke={c.hair[1]} strokeWidth="3" strokeLinecap="round" />
+      <path d="M65 40 Q74 36 83 41" fill="none" stroke={c.hair[1]} strokeWidth="3" strokeLinecap="round" />
+      {/* eyes: white, iris, pupil, two highlights, lid line */}
+      {[46, 74].map((x, k) => (
         <g key={x}>
           <ellipse cx={x} cy="53" rx="8.6" ry="9.6" fill="#fff" />
           <ellipse cx={x} cy="54" rx="6.2" ry="7.3" fill={g("i")} />
           <ellipse cx={x} cy="54.6" rx="3.4" ry="4.1" fill={ink} />
           <circle cx={x + 2.4} cy="50.8" r="2.4" fill="#fff" /><circle cx={x - 2} cy="57.6" r="1.2" fill="#fff" opacity="0.8" />
           <path d={`M${x - 8.6} 49.5 Q${x} 42 ${x + 8.6} 49.5`} fill="none" stroke={ink} strokeWidth="2" strokeLinecap="round" />
+          {c.lashes && <path d={k === 0 ? `M${x - 8.6} 49.5 l-2.6 -2 M${x - 7.4} 47.4 l-2.2 -2.4` : `M${x + 8.6} 49.5 l2.6 -2 M${x + 7.4} 47.4 l2.2 -2.4`} stroke={ink} strokeWidth="1.4" strokeLinecap="round" fill="none" />}
         </g>
       ))}
-      {c.freckles && <g fill="#c9703a" opacity="0.55"><circle cx="39" cy="62" r="1" /><circle cx="43" cy="64" r="1" /><circle cx="36" cy="65" r="1" /><circle cx="81" cy="62" r="1" /><circle cx="77" cy="64" r="1" /><circle cx="84" cy="65" r="1" /></g>}
-      <circle cx="37" cy="63" r="5.5" fill="#ff7a8a" opacity="0.3" /><circle cx="83" cy="63" r="5.5" fill="#ff7a8a" opacity="0.3" />
-      <path d="M58 60 Q60 63 62.5 61" fill="none" stroke="#000" strokeOpacity="0.28" strokeWidth="1.8" strokeLinecap="round" />
+      {c.freckles && <g fill="#b9683a" opacity="0.5"><circle cx="39" cy="62" r="1" /><circle cx="43" cy="64" r="1" /><circle cx="36" cy="65" r="1" /><circle cx="81" cy="62" r="1" /><circle cx="77" cy="64" r="1" /><circle cx="84" cy="65" r="1" /></g>}
+      <circle cx="37" cy="63" r="5.5" fill="#ff7a8a" opacity="0.26" /><circle cx="83" cy="63" r="5.5" fill="#ff7a8a" opacity="0.26" />
+      {/* nose: bridge light, tip and nostrils */}
+      <ellipse cx="59" cy="55" rx="1.6" ry="3" fill="#fff" opacity="0.2" />
+      <path d="M57.4 60 Q60 63.6 63 60.4" fill="none" stroke="#000" strokeOpacity="0.3" strokeWidth="1.8" strokeLinecap="round" />
       {/* mouth */}
-      {c.mouth === "smile" && <path d="M51 67 Q60 75 69 67" fill="none" stroke="#7f1d2d" strokeWidth="3" strokeLinecap="round" />}
-      {c.mouth === "grin" && (
-        <g><path d="M49 66 Q60 80 71 66Z" fill="#8b1d2c" /><path d="M50.5 66.4 Q60 69 69.5 66.4 L69 69 Q60 72 51 69Z" fill="#fff" /></g>
-      )}
-      {c.mouth === "open" && (
-        <g><path d="M51 66 Q60 79 69 66Z" fill="#8b1d2c" /><ellipse cx="60" cy="73.5" rx="4.6" ry="2.6" fill="#f87171" /></g>
-      )}
+      {c.mouth === "smile" && <g><path d="M51 67 Q60 75 69 67" fill="none" stroke="#7f1d2d" strokeWidth="3" strokeLinecap="round" /><path d="M54 71.4 Q60 74 66 71.4" fill="none" stroke="#fff" strokeWidth="1.2" strokeLinecap="round" opacity="0.4" /></g>}
+      {c.mouth === "grin" && <g><path d="M49 66 Q60 80 71 66Z" fill="#8b1d2c" /><path d="M50.5 66.4 Q60 69 69.5 66.4 L69 69 Q60 72 51 69Z" fill="#fff" /></g>}
+      {c.mouth === "open" && <g><path d="M51 66 Q60 79 69 66Z" fill="#8b1d2c" /><ellipse cx="60" cy="73.5" rx="4.6" ry="2.6" fill="#f87171" /></g>}
       {c.glasses && (
-        <g fill="rgba(255,255,255,0.18)" stroke="#2a2438" strokeWidth="2.6">
+        <g fill="rgba(255,255,255,0.14)" stroke="#2a2438" strokeWidth="2.2">
           <circle cx="46" cy="53" r="12" /><circle cx="74" cy="53" r="12" /><path d="M58 52 Q60 49.5 62 52" fill="none" />
         </g>
       )}
