@@ -43,7 +43,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$+$ and $-$ share a tier of the pyramid, so work from left to right.",
       "Doing $8 + 3$ first gives $20 - 11 = 9$: a different answer, so the order matters.",
     ],
-    teacherNote: "Point at the pyramid: A and S side by side means equal priority.",
+    teacherNote: "Point at the pyramid: A and S share one tile with an equals sign between them, so neither goes first.",
     ifNotSecure: "ooo-student-working", ifSecure: "ooo-div-mul",
   },
   {
@@ -140,6 +140,106 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ],
     teacherNote: "Ask how they know they have them all. Encourage a system: which two numbers are multiplied?",
     ifNotSecure: "ooo-div-mul",
+  },
+
+  {
+    id: "ooo-pyramid-reading", level: "level1", needs: [["chain", "mixed", "addFirst"]], purpose: "diagnose",
+    title: "Reading the pyramid",
+    visual: { type: "pyramid", strong: ["A", "S"] },
+    question: ["On the pyramid, $+$ is on the left of $-$. What does that tell you about $20 - 8 + 3$?"],
+    options: [
+      { text: "Do the addition first, because it is on the left", misconception: "Reads the order of the symbols on the pyramid as the order of working (and the letters A, S in BIDMAS the same way)" },
+      { text: "Neither goes first: work left to right along the sum", correct: true },
+      { text: "Do the subtraction first, because it is on the right", misconception: "Reads the pyramid right to left, or thinks the lower-right symbol is the 'stronger' one" },
+    ],
+    answer: [
+      "$+$ and $-$ share ONE tile, joined by an equals sign: they have equal priority.",
+      "The pyramid does not say which of them goes first. The sum does: work along it from the left.",
+      "$20 - 8 + 3 = 12 + 3 = 15$. Adding first would give $20 - 11 = 9$.",
+    ],
+    teacherNote: "The left/right position of symbols on the pyramid is not an order of working. Ask: if the sum were written $20 + 3 - 8$, which would go first? (the $+$, because it comes first in THAT sum)",
+    ifNotSecure: "ooo-sub-add", ifSecure: "ooo-letters-order",
+  },
+  {
+    id: "ooo-letters-order", level: "level1", needs: [["chain", "mixed", "addFirst"]], purpose: "diagnose",
+    title: "BIDMAS says A then S",
+    speakers: [
+      { name: "Ayla", says: ["BIDMAS has A before S, so I add first.", "$15 - 6 + 4$: $6 + 4 = 10$, then $15 - 10 = 5$."] },
+      { name: "Ben", says: ["$+$ and $-$ are equal, so I work left to right.", "$15 - 6 + 4$: $15 - 6 = 9$, then $9 + 4 = 13$."] },
+    ],
+    question: ["Who is right?"],
+    options: [
+      { text: "Ayla", misconception: "Treats the letters of BIDMAS as a strict list: every step in the order B, I, D, M, A, S" },
+      { text: "Ben", correct: true },
+      { text: "They are both right", misconception: "Thinks the order of working doesn't change the answer" },
+    ],
+    answer: [
+      "Ben is right: $15 - 6 + 4 = 9 + 4 = 13$.",
+      "BIDMAS is a memory aid for the tiers: B, then I, then D and M together, then A and S together.",
+      "Ayla's $5$ is what you get by adding first. Check by writing the sum as $15 + (-6) + 4$: that is $13$.",
+    ],
+    teacherNote: "Say the tiers aloud as 'Brackets, Indices, Division-Multiplication, Addition-Subtraction' — the acronym hides that D M and A S are pairs.",
+    ifNotSecure: "ooo-pyramid-reading", ifSecure: "ooo-sign-stays",
+  },
+  {
+    id: "ooo-zoe-pyramid", level: "level1", needs: [["chain", "mixed", "addFirst"]], purpose: "explain",
+    title: "Zoe and the pyramid",
+    speakers: [{ name: "Zoe", says: ["Addition is on the left of the pyramid, so it always goes before subtraction."] }],
+    question: ["Explain what is wrong with Zoe's rule. Write a sum where doing the addition first gives the wrong answer, and one where it doesn't matter."],
+    answer: [
+      "Wrong: $30 - 12 + 5$. Left to right: $18 + 5 = 23$. Adding first: $12 + 5 = 17$, then $30 - 17 = 13$.",
+      "Doesn't matter: $30 + 12 - 5$. Left to right: $42 - 5 = 37$. Adding first gives the same, because the $+$ is the leftmost anyway.",
+      "The order on the pyramid is not an order of working: in a sum with only $+$ and $-$, whichever comes first in the sum goes first.",
+    ],
+    teacherNote: "Let pairs invent their own pair of sums. A strong pair will notice the rule is about where the minus sign sits.",
+    ifNotSecure: "ooo-pyramid-reading", ifSecure: "ooo-sign-stays",
+  },
+  {
+    id: "ooo-tia-working", level: "level1", needs: [["chain", "mixed", "addFirst"]], purpose: "explain",
+    title: "Spot the error in working",
+    working: {
+      intro: "A student works out $30 - 12 + 5$:",
+      lines: ["30 - 12 + 5", "= 30 - 17", "= 13"],
+      wrongLine: 1,
+    },
+    question: ["Which line is the first mistake, and what should the answer be?"],
+    answer: [
+      "Line 2 is the first mistake: $12 + 5$ was done first, but the sum starts with $30 - 12$.",
+      "Correct: $30 - 12 + 5 = 18 + 5 = 23$.",
+      "Line 3 follows correctly from line 2. The $13$ is what you get by adding first.",
+    ],
+    teacherNote: "Ask what the student must have thought to write $30 - 17$. Listen for 'add comes before subtract'.",
+    ifNotSecure: "ooo-letters-order", ifSecure: "ooo-sign-stays",
+  },
+  {
+    id: "ooo-sign-stays", level: "level1", needs: [["chain", "mixed", "addFirst"]], purpose: "extend",
+    title: "The sign stays with its number",
+    question: [
+      "Write $20 - 8 + 3$ with the $3$ first. Does the answer stay the same?",
+      "Now: would it matter if you added first when the sum is $20 + (-8) + 3$?",
+    ],
+    answer: [
+      "$3 + 20 - 8 = 23 - 8 = 15$: the same. The $-$ stays attached to the $8$ when the terms move.",
+      "$20 - 8 + 3$ is the same as $20 + (-8) + 3$. Written that way every operation is an addition, so any order gives $15$.",
+      "That is why subtraction is the awkward one: the $-$ belongs to the number AFTER it. Adding $8 + 3$ first loses that.",
+    ],
+    teacherNote: "Draw a loop round '$-8$' to show it moves as one piece. Not all classes are ready for this; use it once the left-to-right habit is secure.",
+    ifNotSecure: "ooo-zoe-pyramid",
+  },
+  {
+    id: "ooo-always-add-first", level: "level1", needs: [["chain", "mixed", "addFirst"]], purpose: "extend",
+    title: "Always, sometimes or never?",
+    question: [
+      "Always, sometimes or never true?",
+      "\"In a sum with only $+$ and $-$, adding first gives the same answer as working left to right.\"",
+    ],
+    answer: [
+      "Sometimes: it works when the first operation in the sum is already a $+$, e.g. $20 + 8 - 3 = 25$ either way.",
+      "It fails when a $-$ comes before a $+$, e.g. $20 - 8 + 3 = 15$ but adding first gives $9$.",
+      "So 'add first' is never a rule, only sometimes a coincidence: left to right always works.",
+    ],
+    teacherNote: "Ask for a quick test: where must the minus be for add-first to fail? (anywhere before a plus)",
+    ifNotSecure: "ooo-pyramid-reading", ifSecure: "ooo-bracket-first",
   },
 
   // ─────────────────── Level 2 — Things that jump the queue ───────────────────

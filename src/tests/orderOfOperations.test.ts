@@ -264,6 +264,17 @@ describe("Depth bank numeric claims (src/tools/Number/OrderOfOperationsDepth.ts)
     expect(evalNode(E(20, "-", 8, "+", 3), { addFirst: true })).toBe(9);
     expect(v(E(24, "/", 4, "*", 2))).toBe(12);
     expect(evalNode(E(24, "/", 4, "*", 2), { mulFirst: true })).toBe(3);
+    // the "add first" items: 15 − 6 + 4, 30 − 12 + 5, 30 + 12 − 5, 20 + 8 − 3, 3 + 20 − 8, 20 + (−8) + 3
+    expect(v(E(15, "-", 6, "+", 4))).toBe(13);
+    expect(evalNode(E(15, "-", 6, "+", 4), { addFirst: true })).toBe(5);
+    expect(v(E(30, "-", 12, "+", 5))).toBe(23);
+    expect(evalNode(E(30, "-", 12, "+", 5), { addFirst: true })).toBe(13);
+    expect(v(E(30, "+", 12, "-", 5))).toBe(37);
+    expect(evalNode(E(30, "+", 12, "-", 5), { addFirst: true })).toBe(37);
+    expect(v(E(20, "+", 8, "-", 3))).toBe(25);
+    expect(evalNode(E(20, "+", 8, "-", 3), { addFirst: true })).toBe(25);
+    expect(v(E(3, "+", 20, "-", 8))).toBe(15);
+    expect(20 + -8 + 3).toBe(15);
     expect(v(E(9, "+", 3, "*", 2))).toBe(15);
     expect(evalNode(E(9, "+", 3, "*", 2), { lr: true })).toBe(24);
     expect(v(E(9, "+", 4, "*", 3, "+", 2))).toBe(23);
