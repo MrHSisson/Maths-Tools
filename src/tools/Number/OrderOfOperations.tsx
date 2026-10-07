@@ -433,9 +433,11 @@ function nextStep(root: Seq): StepOut | null {
   // ── Everything left is a flat line: I, then DM, then AS ──
   if (isSingleNum(root)) return null;
   const r = stepFlat(root);
+  // The last move on a line is the whole line (`13 − 9`): nothing is left to pick out, so no underline.
+  const wholeLine = r.spans.length === 1 && r.spans[0][0] === 0 && r.spans[0][1] === root.terms.length - 1;
   const hl: Hl = {
     nodes: new Set(r.nodes),
-    spans: r.spans.length ? new Map([[root, r.spans]]) : new Map(),
+    spans: r.spans.length && !wholeLine ? new Map([[root, r.spans]]) : new Map(),
     arrows: r.arrows?.length ? new Map([[root, r.arrows]]) : new Map(),
   };
   return { label: cap(r.name) + ":", hl, after: normSeq(r.seq), produced: r.produced, tiers: r.tiers };

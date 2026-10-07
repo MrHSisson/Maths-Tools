@@ -437,7 +437,7 @@ describe("Board-style working: underline the move, left-to-right arrow over a ru
     const before = run.steps.map((s) => texBody(s.before, s.hl));
     expect(before[0]).toBe("3 + \\textcolor{#1e3a8a}{\\underline{5 \\times 2}} - 9");   // no arrow: one multiplication
     expect(before[1]).toBe("\\overrightarrow{\\vphantom{\\big(}\\textcolor{#1e3a8a}{\\underline{3 + 10}} - 9}"); // run of + −: arrow over it
-    expect(before[2]).toBe("\\textcolor{#1e3a8a}{\\underline{13 - 9}}");                    // one operation left: no arrow
+    expect(before[2]).toBe("13 - 9");                                                           // the last move is the whole line: no underline, no arrow
     expect(texBody(run.steps[2].after, NO_HL)).toBe("4");
     expect(run.final).toBe(4);
   });
