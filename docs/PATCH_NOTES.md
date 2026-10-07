@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-07 — Depth: a cast of eight, drawn like the owl
+
+The Depth speakers are now a **cast of eight** (`CAST` in `DepthArt.tsx`) in the owl's style: bust-length figures with soft gradients on skin, hair and clothes, big shiny eyes (white, iris, pupil, two highlights), blush, a gradient shirt with collar and a ground shadow. Each has their own hair (long wavy, fade, bob, messy, afro puff, spiky, braid with headband, curls), and some freckles, glasses or earrings. A speaker's name picks one of the eight and keeps it, and two speakers on one slide never share a face (`assignCast`). `Avatar` now takes `member` instead of `index`/`name`.
+
 ## 2026-10-07 — Order of Operations: no repeated lines in the working
 
 Each Worked Example step is now **one line** — the sum as it stands, with the move underlined (and the left-to-right arrow over a run) — and an arrow down to the next step's line, or to the Answer. Previously every step also wrote its result, which was then repeated as the next step's first line and again as the Answer.

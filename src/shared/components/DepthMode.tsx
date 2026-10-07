@@ -2,7 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, typ
 import { ArrowLeft, ChevronLeft, ChevronRight, Info, ListChecks, Maximize, Minimize } from "lucide-react";
 import { InlineMath, MathRenderer } from "./MathRenderer";
 import { BidmasPyramid } from "./BidmasPyramid";
-import { Avatar, Badge, Mascot } from "./DepthArt";
+import { Avatar, Badge, Mascot, assignCast } from "./DepthArt";
 import { LV_LABELS } from "../colors";
 import { DEPTH_PURPOSES, depthUnmet, type DepthItem, type DepthOptionInfo, type DepthPurpose } from "../depth";
 import type { DifficultyLevel } from "../types";
@@ -332,11 +332,12 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
     <>
       {current.speakers && (
         <div className="flex flex-col" style={{ gap: "0.5em", width: "100%" }}>
-          {current.speakers.map((sp, i) => {
+          {current.speakers.map((sp, i, all) => {
+            const cast = assignCast(all.map((x) => x.name));
             const col = SPEAKER_COLOURS[i % SPEAKER_COLOURS.length];
             return (
               <div key={i} className="flex items-center" style={{ gap: "0.7em" }}>
-                <Avatar index={i} name={sp.name} size="4.2em" />
+                <Avatar member={cast[i]} size="4.6em" />
                 <div style={{ position: "relative", border: `0.14em solid ${col}`, borderRadius: "1.2em", padding: "0.4em 1.1em", background: "#fff", minWidth: 0, flex: 1 }}>
                   {/* tail pointing back at the speaker */}
                   <span style={{ position: "absolute", left: "-0.55em", top: "50%", width: "0.9em", height: "0.9em", background: "#fff", borderLeft: `0.14em solid ${col}`, borderBottom: `0.14em solid ${col}`, transform: "translateY(-50%) rotate(45deg)" }} />
