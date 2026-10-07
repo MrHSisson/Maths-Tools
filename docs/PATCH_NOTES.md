@@ -30,6 +30,8 @@ Keep the split even when a session only touches one.
 
 ## 2026-10-07 — Depth: a cast of eight, drawn like the owl (then made more natural and detailed)
 
+*Braid:* now grows from behind the head and falls over the shoulder (it was drawn over the cheek).
+
 *Fixes:* the fringe was drawn lower than the top of the head, so a pale crescent of skin showed above the hair (everyone looked bald-ish) — every hairstyle now covers the crown; and the open-mouth tongue poked out below the mouth — it is now clipped inside it.
 
 *Follow-up:* the cast is now plainer and richer — natural hair and colours only (no spiky or bright hair, no headband or earrings), muted tops with their own details (crew neck, polo collar and buttons, hoodie with drawstrings, cardigan over a tee, stripes), strand lines and sheen on the hair, ears, a nose with bridge light, lips, soft chin shadow and, on some, lashes, freckles or thin glasses.

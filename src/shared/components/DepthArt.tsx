@@ -64,18 +64,18 @@ export function Avatar({ member, size = "4em" }: { member: number; size?: string
       case "bob": return <g><path d="M28 50 C24 4 96 4 92 50 C82 40 70 36 60 36 C50 36 38 40 28 50Z" fill={g("h")} />{lines("M38 28 C46 23 58 22 70 25")}</g>;
       case "sidepart": return <g><path d="M29 48 C25 4 95 4 91 46 C86 35 76 27 58 27 C46 27 38 35 33 46 Z" fill={g("h")} />{lines("M52 27 C50 33 46 37 41 40")}{lines("M62 26 C74 26 84 32 88 42")}</g>;
       case "coils": return <path d="M30 46 C26 6 94 6 90 46 C80 36 40 36 30 46Z" fill={g("h")} />;
-      case "braid": return (
-        <g>
-          <path d="M29 48 C25 5 95 5 91 48 C84 34 66 30 56 36 C46 40 36 42 29 48Z" fill={g("h")} />
-          {lines("M40 28 C48 24 60 24 70 27")}
-          <path d="M84 66 C92 70 94 78 92 86 C96 94 94 104 90 110" fill="none" stroke={g("h")} strokeWidth="9" strokeLinecap="round" />
-          <path d="M86 78 l6 3 M88 88 l6 3 M88 98 l6 2" stroke={strand} strokeWidth="1.6" strokeLinecap="round" opacity="0.6" />
-          <circle cx="90" cy="111" r="3.2" fill={c.shirt[1]} />
-        </g>
-      );
+      case "braid": return <g><path d="M29 48 C25 5 95 5 91 48 C84 34 66 30 56 36 C46 40 36 42 29 48Z" fill={g("h")} />{lines("M40 28 C48 24 60 24 70 27")}</g>;
       case "curls": return <g fill={g("h")}><path d="M30 46 C26 8 94 8 90 46 C80 36 40 36 30 46Z" /><circle cx="39" cy="35" r="9" /><circle cx="51" cy="29" r="10" /><circle cx="64" cy="28" r="10" /><circle cx="76" cy="32" r="10" /><circle cx="83" cy="42" r="7" /></g>;
     }
   })();
+  // The braid grows from behind the head and falls over the shoulder in front of the top (so after the torso, before the head).
+  const braid = c.style === "braid" ? (
+    <g>
+      <path d="M89 58 C100 68 100 82 95 94 C97 101 95 108 91 113" fill="none" stroke={g("h")} strokeWidth="9.5" strokeLinecap="round" />
+      <path d="M96 72 l5 3 M97 82 l5 3 M95 92 l5 3 M93 102 l5 2" stroke={strand} strokeWidth="1.5" strokeLinecap="round" opacity="0.55" />
+      <circle cx="91" cy="113.5" r="3.2" fill={c.shirt[1]} />
+    </g>
+  ) : null;
   const top = (() => {
     const wh = "#fff";
     switch (c.top) {
@@ -103,6 +103,7 @@ export function Avatar({ member, size = "4em" }: { member: number; size?: string
       <rect x="51" y="68" width="18" height="18" rx="8" fill={g("s")} />
       <path d="M51 76 Q60 85 69 76 L69 70 L51 70Z" fill="#000" opacity="0.12" />
       {top}
+      {braid}
       {/* ears */}
       <circle cx="30" cy="54" r="6.5" fill={g("s")} /><circle cx="90" cy="54" r="6.5" fill={g("s")} />
       <path d="M28 52 Q31 54 29 58 M92 52 Q89 54 91 58" fill="none" stroke="#000" strokeOpacity="0.15" strokeWidth="1.2" strokeLinecap="round" />
