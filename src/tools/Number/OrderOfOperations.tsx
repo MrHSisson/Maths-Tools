@@ -468,10 +468,11 @@ function workingSteps(ast: Seq): WorkingStep[] {
   const run = runSteps(ast);
   if (!run) return [tStep("Work through the brackets first, then indices, then × and ÷, then + and −.")];
   // `extra.pyramid` tells the Worked Example's picture slot which BIDMAS tiers to light.
-  // `extra.ooo` carries the two lines for the board-style renderer below (line, arrow down, next line).
+  // One line per step, as on a board: the line as it stands, with the move marked. Its result is the NEXT step's line (or
+  // the Answer), so no line is ever written twice. `extra.ooo` feeds the renderer below; `after` is kept for the tests.
   return run.steps.map((s) => {
     const before = texBody(s.before, s.hl), after = texBody(s.after, NO_HL);
-    return { ...mStep(s.label, [before, "= " + after]), extra: { pyramid: s.tiers, ooo: { before, after } } };
+    return { ...mStep(s.label, before), extra: { pyramid: s.tiers, ooo: { before, after } } };
   });
 }
 
@@ -1356,24 +1357,21 @@ const INFO_SECTIONS: InfoSection[] = [
   ]},
 ];
 
-// Worked Example, as written on a board: the line with the move underlined (and an arrow over a run of equal-priority
-// operations), an arrow down, then the next line with the rest of the sum pulled down. The second line fades in on the
-// next press, like a fragment-authored step; everywhere else (Show All, past steps) both lines are shown.
-const oooStepRenderer = (s: WorkingStep, _cs: string, _qo?: QOSnapshot, reveal?: number): JSX.Element | null => {
+// Worked Example, as written on a board: each step is the line with the move underlined (and an arrow over a run of
+// equal-priority operations), then an arrow down to where the result goes — the next step's line, or the Answer. The result
+// is never written twice.
+const oooStepRenderer = (s: WorkingStep): JSX.Element | null => {
   const o = (s.extra as { ooo?: { before: string; after: string } } | undefined)?.ooo;
   if (!o) return null;
-  const showAfter = reveal === undefined || reveal >= 1;
-  const fade = { opacity: showAfter ? 1 : 0, transition: "opacity 0.35s ease" };
   return (
     <div className="flex flex-col gap-1">
       <span className="text-left text-xl leading-snug">{s.label}</span>
       <div className="flex flex-col items-center text-2xl sm:text-3xl">
         <FitWidth><MathRenderer latex={o.before} /></FitWidth>
-        <svg width="22" height="30" viewBox="0 0 22 30" style={{ display: "block", ...fade }} aria-hidden>
+        <svg width="22" height="30" viewBox="0 0 22 30" style={{ display: "block" }} aria-hidden>
           <path d="M11 2 V22" stroke="#475569" strokeWidth="2.5" strokeLinecap="round" fill="none" />
           <polygon points="4,18 18,18 11,28" fill="#475569" />
         </svg>
-        <div style={fade}><FitWidth><MathRenderer latex={o.after} /></FitWidth></div>
       </div>
     </div>
   );
