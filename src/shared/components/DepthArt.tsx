@@ -59,21 +59,21 @@ export function Avatar({ member, size = "4em" }: { member: number; size?: string
   })();
   const front = (() => {
     switch (c.style) {
-      case "wavy": return <g><path d="M29 48 C28 18 92 16 91 48 C84 36 64 30 50 38 C42 42 34 44 29 48Z" fill={g("h")} />{lines("M40 30 C46 26 56 25 64 27")}{lines("M33 46 C38 42 44 40 48 38")}</g>;
-      case "fade": return <g><path d="M30 46 C30 14 90 14 90 46 C84 33 70 29 60 29 C50 29 36 33 30 46Z" fill={g("h")} />{lines("M42 24 C50 21 62 21 72 25")}</g>;
-      case "bob": return <g><path d="M28 50 C28 14 92 14 92 50 C82 40 70 36 60 36 C50 36 38 40 28 50Z" fill={g("h")} />{lines("M38 28 C46 23 58 22 70 25")}</g>;
-      case "sidepart": return <g><path d="M29 48 C26 18 90 12 91 46 C86 35 76 27 58 27 C46 27 38 35 33 46 Z" fill={g("h")} />{lines("M52 27 C50 33 46 37 41 40")}{lines("M62 26 C74 26 84 32 88 42")}</g>;
-      case "coils": return <path d="M31 44 C36 27 84 27 89 44 C78 36 42 36 31 44Z" fill={g("h")} />;
+      case "wavy": return <g><path d="M29 48 C25 5 95 5 91 48 C84 36 64 30 50 38 C42 42 34 44 29 48Z" fill={g("h")} />{lines("M40 30 C46 26 56 25 64 27")}{lines("M33 46 C38 42 44 40 48 38")}</g>;
+      case "fade": return <g><path d="M30 46 C27 6 93 6 90 46 C84 33 70 29 60 29 C50 29 36 33 30 46Z" fill={g("h")} />{lines("M42 24 C50 21 62 21 72 25")}</g>;
+      case "bob": return <g><path d="M28 50 C24 4 96 4 92 50 C82 40 70 36 60 36 C50 36 38 40 28 50Z" fill={g("h")} />{lines("M38 28 C46 23 58 22 70 25")}</g>;
+      case "sidepart": return <g><path d="M29 48 C25 4 95 4 91 46 C86 35 76 27 58 27 C46 27 38 35 33 46 Z" fill={g("h")} />{lines("M52 27 C50 33 46 37 41 40")}{lines("M62 26 C74 26 84 32 88 42")}</g>;
+      case "coils": return <path d="M30 46 C26 6 94 6 90 46 C80 36 40 36 30 46Z" fill={g("h")} />;
       case "braid": return (
         <g>
-          <path d="M29 48 C28 18 92 16 91 48 C84 34 66 30 56 36 C46 40 36 42 29 48Z" fill={g("h")} />
+          <path d="M29 48 C25 5 95 5 91 48 C84 34 66 30 56 36 C46 40 36 42 29 48Z" fill={g("h")} />
           {lines("M40 28 C48 24 60 24 70 27")}
           <path d="M84 66 C92 70 94 78 92 86 C96 94 94 104 90 110" fill="none" stroke={g("h")} strokeWidth="9" strokeLinecap="round" />
           <path d="M86 78 l6 3 M88 88 l6 3 M88 98 l6 2" stroke={strand} strokeWidth="1.6" strokeLinecap="round" opacity="0.6" />
           <circle cx="90" cy="111" r="3.2" fill={c.shirt[1]} />
         </g>
       );
-      case "curls": return <g fill={g("h")}><circle cx="39" cy="35" r="9" /><circle cx="51" cy="29" r="10" /><circle cx="64" cy="28" r="10" /><circle cx="76" cy="32" r="10" /><circle cx="83" cy="42" r="7" /></g>;
+      case "curls": return <g fill={g("h")}><path d="M30 46 C26 8 94 8 90 46 C80 36 40 36 30 46Z" /><circle cx="39" cy="35" r="9" /><circle cx="51" cy="29" r="10" /><circle cx="64" cy="28" r="10" /><circle cx="76" cy="32" r="10" /><circle cx="83" cy="42" r="7" /></g>;
     }
   })();
   const top = (() => {
@@ -92,6 +92,7 @@ export function Avatar({ member, size = "4em" }: { member: number; size?: string
         <radialGradient id={`s${uid}`} cx="0.38" cy="0.3" r="0.85"><stop offset="0" stopColor={c.skin[0]} /><stop offset="1" stopColor={c.skin[1]} /></radialGradient>
         <linearGradient id={`h${uid}`} x1="0" y1="0" x2="0.4" y2="1"><stop offset="0" stopColor={c.hair[0]} /><stop offset="1" stopColor={c.hair[1]} /></linearGradient>
         <linearGradient id={`t${uid}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={c.shirt[0]} /><stop offset="1" stopColor={c.shirt[1]} /></linearGradient>
+        <clipPath id={`m${uid}`}><path d="M51 66 Q60 79 69 66Z" /></clipPath>
         <radialGradient id={`i${uid}`} cx="0.5" cy="0.3" r="0.8"><stop offset="0" stopColor={c.iris} stopOpacity="0.75" /><stop offset="1" stopColor={c.iris} /></radialGradient>
       </defs>
       <ellipse cx="60" cy="119" rx="34" ry="4.5" fill="#000" opacity="0.14" />
@@ -109,7 +110,6 @@ export function Avatar({ member, size = "4em" }: { member: number; size?: string
       <ellipse cx="60" cy="50" rx="31" ry="30" fill={g("s")} />
       <path d="M32 62 C36 84 84 84 88 62 C80 76 40 76 32 62Z" fill="#000" opacity="0.07" />
       {front}
-      <ellipse cx="52" cy="38" rx="9" ry="3.2" fill="#fff" opacity="0.14" />
       {/* brows */}
       <path d="M37 41 Q46 36 55 40" fill="none" stroke={c.hair[1]} strokeWidth="3" strokeLinecap="round" />
       <path d="M65 40 Q74 36 83 41" fill="none" stroke={c.hair[1]} strokeWidth="3" strokeLinecap="round" />
@@ -132,7 +132,7 @@ export function Avatar({ member, size = "4em" }: { member: number; size?: string
       {/* mouth */}
       {c.mouth === "smile" && <g><path d="M51 67 Q60 75 69 67" fill="none" stroke="#7f1d2d" strokeWidth="3" strokeLinecap="round" /><path d="M54 71.4 Q60 74 66 71.4" fill="none" stroke="#fff" strokeWidth="1.2" strokeLinecap="round" opacity="0.4" /></g>}
       {c.mouth === "grin" && <g><path d="M49 66 Q60 80 71 66Z" fill="#8b1d2c" /><path d="M50.5 66.4 Q60 69 69.5 66.4 L69 69 Q60 72 51 69Z" fill="#fff" /></g>}
-      {c.mouth === "open" && <g><path d="M51 66 Q60 79 69 66Z" fill="#8b1d2c" /><ellipse cx="60" cy="73.5" rx="4.6" ry="2.6" fill="#f87171" /></g>}
+      {c.mouth === "open" && <g><path d="M51 66 Q60 79 69 66Z" fill="#8b1d2c" /><g clipPath={`url(#m${uid})`}><ellipse cx="60" cy="73.6" rx="5" ry="3.2" fill="#f87171" /></g></g>}
       {c.glasses && (
         <g fill="rgba(255,255,255,0.14)" stroke="#2a2438" strokeWidth="2.2">
           <circle cx="46" cy="53" r="12" /><circle cx="74" cy="53" r="12" /><path d="M58 52 Q60 49.5 62 52" fill="none" />
