@@ -97,6 +97,10 @@ export interface RatioTableData {
   operations: string[];
   /** Set by `rStepBuild`: this snapshot is one stage of a table that grows row by row. */
   grow?: boolean;
+  /** Set by `rStepSolve`: which side(s) of each operation's arrow are drawn so far (hidden until its step). Omitted = both. */
+  opSides?: ("none" | "left" | "right" | "both")[];
+  /** Set by `rStepSolve`: the cell [row, col] filled at this step, drawn highlighted. An empty-string cell is an unknown, drawn as "?". */
+  fresh?: [number, number];
 }
 
 export interface ToolDropdown {

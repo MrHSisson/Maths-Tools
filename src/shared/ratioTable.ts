@@ -62,3 +62,65 @@ export const rStepBuild = (
     return { type: "ratioTable", latex: "", plain: caption, label: caption, extra: data };
   });
 };
+
+/** Parse a whole-number `\\times n` / `\\div n` operation. */
+const parseOp = (op: string): { mul: boolean; n: string } | null => {
+  const m = op.match(/\\(times|div)\s*(\d+(?:\.\d+)?)/);
+  return m ? { mul: m[1] === "times", n: m[2] } : null;
+};
+
+/**
+ * The "known first, then work it out" ratio table: ONE table whose unknown cells start blank ("?"). The
+ * known values go in first, then for each scale step the class (1) sees how to get from the known value in
+ * the `drive` column to the next ("1 to 6: multiply by 6"), (2) does the same to the other column, and
+ * (3) fills the blank ("5 × 6 = 30"). Nothing appears all at once.
+ *
+ * `pairs` is the full chain of rows (the last one holds the answer); `operations` the whole-number step
+ * between each consecutive pair (as `buildScaleSteps` gives). `drive` is the column whose value in the FINAL
+ * row is already known from the question (the given time, or for a find-the-time question the distance); in an
+ * intermediate "unit" row the driving cell appears with its arrow. Pair with `ratioTableStepVisual`.
+ */
+export const rStepSolve = (
+  label: string,
+  headers: string[],
+  pairs: (string | number)[][],
+  operations: string[],
+  drive: 0 | 1,
+): WorkingStep[] => {
+  const rows = pairs.map((r) => r.map(String));
+  const last = rows.length - 1;
+  const other = (1 - drive) as 0 | 1;
+  const shown = rows.map((_, r) => rows[0].map((_, c) => r === 0 || (r === last && c === drive)));
+  const sides: ("none" | "left" | "right" | "both")[] = operations.map(() => "none");
+  // The left gutter belongs to column 0, the right to column 1.
+  const sideOf = (c: number): "left" | "right" => (c === 0 ? "left" : "right");
+  const out: WorkingStep[] = [];
+  const push = (caption: string, fresh?: [number, number]) => {
+    const data: RatioTableData = {
+      headers,
+      rows: rows.map((row, r) => row.map((v, c) => (shown[r][c] ? v : ""))),
+      operations: [...operations],
+      opSides: [...sides],
+      fresh,
+      grow: true,
+    };
+    out.push({ type: "ratioTable", latex: "", plain: caption, label: caption, extra: data });
+  };
+
+  push(stripSkillMarkers(label).replace(/:\s*$/, "") + ": write what we know");
+  for (let k = 0; k < operations.length; k++) {
+    const p = parseOp(operations[k]);
+    const verb = p ? (p.mul ? "multiply" : "divide") : "scale";
+    const by = p ? ` by ${p.n}` : "";
+    const sym = p ? (p.mul ? "×" : "÷") : "→";
+    const name = headers[other].toLowerCase();
+    shown[k + 1][drive] = true;
+    sides[k] = sideOf(drive);
+    push(`How do we get from ${rows[k][drive]} to ${rows[k + 1][drive]}? ${verb[0].toUpperCase()}${verb.slice(1)}${by}`);
+    sides[k] = "both";
+    push(`Do the same to the ${name}: ${verb}${by}`);
+    shown[k + 1][other] = true;
+    push(p ? `${rows[k][other]} ${sym} ${p.n} = ${rows[k + 1][other]}` : `${rows[k][other]} → ${rows[k + 1][other]}`, [k + 1, other]);
+  }
+  return out;
+};

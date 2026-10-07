@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-07 — Speed, Distance & Time: the ratio table starts with what we know
+
+The worked example's ratio table no longer arrives with its rows complete. New shared helper `rStepSolve` (`src/shared/ratioTable.ts`): the known values go in first with the unknown cell as a grey "?" (5 mph for 6 hours starts as 5 | 1 over ? | 6), then one press each for *how do we get from 1 to 6?* (the arrow on the time side only), *do the same to the miles* (the arrow on the other side), and the calculation filling the blank (5 × 6 = 30, the new cell highlighted). Multi-step Level 3 chains repeat the three presses per row. Used by all three sub-tools (a find-the-time question drives from the distance side). `RatioTableData` gains `opSides` and `fresh`; `rStepBuild` is unchanged for other tools. Tested in `src/tests/ratioTableSolve.test.ts`.
+
 ## 2026-10-07 — Speed, Distance & Time: Depth bank
 
 32 curated diagnose / explain / extend items (`SpeedDistanceTimeDepth.ts`, spec `specs/depth/speed-distance-time.md`), levelled by idea — *Which calculation?* · *Minutes and hours* · *Awkward times & averages* — and live on all four tabs. The tool already had its fourth **Mixed** sub-tool (random Speed / Distance / Time), so the bank covers it with its own items ("Which question fits?", "Does the rule always work?", "One journey, three questions") alongside the shared ones; Speed, Distance and Time each get tab-specific diagnose items. Misconceptions covered include multiplying/dividing the wrong way, 30 min as 0.30 h, 1 h 20 as 1.2 h, 1.75 h as 1 h 75 min, and averaging two speeds. Numbers asserted in `src/tests/speedDistanceTimeDepth.test.ts`.

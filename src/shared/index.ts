@@ -52,7 +52,7 @@ export { randInt, pick, fracStr, mStr, pickActive, normalizeMultiSelect, resolve
 
 // Ratio table — core representation for proportional scaling (speed/distance/
 // time, currency conversion, recipe scaling…). See src/shared/ratioTable.ts.
-export { rStep, rStepBuild } from "./ratioTable";
+export { rStep, rStepBuild, rStepSolve } from "./ratioTable";
 export { RatioTable, ratioTableStepRenderer, ratioTableStepVisual } from "./components/RatioTable";
 export { DepthMode, type DepthModeProps } from "./components/DepthMode";
 export { DEPTH_PURPOSES, type DepthItem, type DepthOption, type DepthPurpose, type DepthNeed, type DepthOptionInfo, depthUnmet } from "./depth";
