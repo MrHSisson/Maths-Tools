@@ -106,6 +106,8 @@ spine of the matching skill. Browse skills at **`/skills`** (dev mode).
 | **Start here** | The quick check: one diagnose item per level, in order, to show where the class is. |
 | **Misconception (option)** | The named wrong idea a wrong choice reveals, shown on the answer beat. |
 | **Class secure / not secure** | The two follow-up links on an answer: an extension, or an easier/related item. |
+| **The cast** | The eight characters who speak in Depth items: **Ruby, Kofi, Mei, Ben, Amara, Leo, Priya, Jamal** (`CAST` / `CAST_NAMES` in `DepthArt.tsx`). Items name their speakers from this list; a name always draws the same face. |
+| **Feathers** | The owl mascot (`Mascot`): thinking on the question slide, ticking on the answer slide. |
 
 ---
 

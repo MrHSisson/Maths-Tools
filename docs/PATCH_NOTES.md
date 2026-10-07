@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-07 — Depth: the cast is named; the owl is Feathers
+
+The eight characters have names — **Ruby, Kofi, Mei, Ben, Amara, Leo, Priya, Jamal** — and the owl is **Feathers** (`CAST_NAMES`, `MASCOT_NAME`). Every speaker in the Order of Operations, Rounding and Speed, Distance & Time banks now uses one of these names (no more one-off Jack / Zoe / Dev…), so a name always draws its own face (`assignCast` matches cast names directly). Cross-references between items were updated, and lines that used he/she for a named speaker were reworded to avoid pronouns. New speaker names should come from the cast; glossary updated.
+
 ## 2026-10-07 — Depth: a cast of eight, drawn like the owl (then made more natural and detailed)
 
 *Braid:* removed — that character now has plain long straight hair with a side parting.
