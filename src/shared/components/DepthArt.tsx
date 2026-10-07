@@ -6,28 +6,75 @@
 
 import { useId } from "react";
 
-const SKIN = ["#f6d2b0", "#e0a878", "#a8714b", "#fbdcc0", "#7a4a2e"];
-const HAIR = ["#5b3a29", "#1f2937", "#c2410c", "#7c2d12", "#374151", "#a16207"];
+const SKIN = ["#f8d9bd", "#eebf94", "#d39a6c", "#b27650", "#8a5a3b", "#6b4429"];
+const HAIR = ["#2b1d16", "#5b3a29", "#8a4b2a", "#c2410c", "#d6a032", "#1f2937", "#6b7280"];
+const SHIRT = ["#2563eb", "#16a34a", "#e11d48", "#7c3aed", "#ea580c", "#0d9488", "#db2777", "#475569"];
+const BACKDROP = ["#dbeafe", "#dcfce7", "#fee2e2", "#ede9fe", "#ffedd5", "#ccfbf1", "#fce7f3", "#e2e8f0"];
 
-/** A friendly cartoon face. `index` picks skin, hair colour and hairstyle so speakers look different. */
-export function Avatar({ index, size = "4em" }: { index: number; size?: string }) {
-  const skin = SKIN[(index * 2 + 1) % SKIN.length];
-  const hair = HAIR[(index * 3 + 2) % HAIR.length];
-  const style = index % 3;
+/** A small stable hash so the same name always draws the same face, whichever slide it is on. */
+const hash = (s: string) => { let h = 7; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; };
+
+/** A friendly cartoon head-and-shoulders, drawn as a round profile picture. Give it the speaker's `name` and the same
+ *  character always looks the same (skin, hair colour and style, shirt, glasses); `index` is the fallback. */
+export function Avatar({ index, name, size = "4em" }: { index: number; name?: string; size?: string }) {
+  const clip = useId().replace(/:/g, "");
+  const h = name ? hash(name) : index * 2654435761;
+  const pick = (n: number, salt: number) => ((h >>> salt) + (h >>> (salt + 7))) % n;
+  const skin = SKIN[pick(SKIN.length, 0)];
+  const hair = HAIR[pick(HAIR.length, 3)];
+  const shirt = SHIRT[pick(SHIRT.length, 5)];
+  const back = BACKDROP[pick(BACKDROP.length, 9)];
+  const style = pick(6, 2);
+  const glasses = pick(5, 11) === 0;
+  const mouth = pick(3, 13);
+  const shade = "rgba(0,0,0,0.10)";
   return (
     <svg viewBox="0 0 100 100" aria-hidden="true" style={{ width: size, height: size, flexShrink: 0 }}>
-      {style === 2 && <circle cx="50" cy="14" r="11" fill={hair} />}
-      <circle cx="50" cy="56" r="34" fill={skin} />
-      {style === 0 && <path d="M15 52 C14 18 86 18 85 52 C76 36 24 36 15 52Z" fill={hair} />}
-      {style === 1 && <path d="M15 54 C10 14 72 8 86 44 C68 32 38 34 15 54Z" fill={hair} />}
-      {style === 2 && <path d="M16 50 C16 20 84 20 84 50 C74 34 26 34 16 50Z" fill={hair} />}
-      <circle cx="37" cy="58" r="4.2" fill="#1f2937" />
-      <circle cx="63" cy="58" r="4.2" fill="#1f2937" />
-      <circle cx="38.4" cy="56.6" r="1.4" fill="#fff" />
-      <circle cx="64.4" cy="56.6" r="1.4" fill="#fff" />
-      <circle cx="28" cy="68" r="5" fill="#f9a8a8" opacity="0.45" />
-      <circle cx="72" cy="68" r="5" fill="#f9a8a8" opacity="0.45" />
-      <path d="M40 71 Q50 81 60 71" fill="none" stroke="#1f2937" strokeWidth="3" strokeLinecap="round" />
+      <defs><clipPath id={clip}><circle cx="50" cy="50" r="48" /></clipPath></defs>
+      <circle cx="50" cy="50" r="48" fill={back} />
+      <g clipPath={`url(#${clip})`}>
+        {/* hair behind the head */}
+        {style === 2 && <path d="M21 50 C17 14 83 14 79 50 L82 92 L66 92 L66 62 L34 62 L34 92 L18 92Z" fill={hair} />}
+        {style === 3 && (
+          <g fill={hair}>
+            <circle cx="30" cy="32" r="12" /><circle cx="45" cy="23" r="13" /><circle cx="60" cy="23" r="13" /><circle cx="72" cy="32" r="12" />
+            <circle cx="24" cy="46" r="9" /><circle cx="76" cy="46" r="9" />
+          </g>
+        )}
+        {style === 4 && <circle cx="50" cy="13" r="10" fill={hair} />}
+        {style === 5 && <g fill={hair}><circle cx="20" cy="42" r="9" /><circle cx="80" cy="42" r="9" /></g>}
+        {/* shoulders, collar and neck */}
+        <path d="M6 104 C8 80 28 71 50 71 C72 71 92 80 94 104Z" fill={shirt} />
+        <path d="M38 71 L50 84 L62 71Z" fill="#fff" opacity="0.9" />
+        <rect x="42" y="58" width="16" height="16" rx="6" fill={skin} />
+        <rect x="42" y="58" width="16" height="7" fill={shade} />
+        {/* ears and head */}
+        <circle cx="26.5" cy="48" r="4.6" fill={skin} /><circle cx="73.5" cy="48" r="4.6" fill={skin} />
+        <ellipse cx="50" cy="46" rx="24" ry="26" fill={skin} />
+        {/* hair in front */}
+        {style === 0 && <path d="M25 46 C21 14 79 14 75 46 C70 33 32 31 25 46Z" fill={hair} />}
+        {style === 1 && <path d="M25 48 C20 12 72 8 77 40 C62 26 42 32 25 48Z" fill={hair} />}
+        {style === 2 && <path d="M25 44 C26 17 74 17 75 44 C62 30 38 30 25 44Z" fill={hair} />}
+        {style === 3 && <path d="M28 36 C34 26 66 26 72 36 C60 32 40 32 28 36Z" fill={hair} />}
+        {style === 4 && <path d="M25 46 C21 16 79 16 75 46 C70 33 32 31 25 46Z" fill={hair} />}
+        {style === 5 && <path d="M25 46 C21 14 79 14 75 46 C68 28 34 28 25 46Z" fill={hair} />}
+        {/* face */}
+        <path d="M33 39.5 Q39 36.5 45 39" fill="none" stroke={hair} strokeWidth="2.6" strokeLinecap="round" />
+        <path d="M55 39 Q61 36.5 67 39.5" fill="none" stroke={hair} strokeWidth="2.6" strokeLinecap="round" />
+        <ellipse cx="39" cy="47" rx="3.3" ry="3.9" fill="#1f2937" /><ellipse cx="61" cy="47" rx="3.3" ry="3.9" fill="#1f2937" />
+        <circle cx="40.2" cy="45.6" r="1.3" fill="#fff" /><circle cx="62.2" cy="45.6" r="1.3" fill="#fff" />
+        <path d="M50 49 Q47.5 55 51 55.5" fill="none" stroke={shade.replace("0.10", "0.35")} strokeWidth="2" strokeLinecap="round" />
+        <circle cx="31" cy="56" r="4.6" fill="#f97373" opacity="0.28" /><circle cx="69" cy="56" r="4.6" fill="#f97373" opacity="0.28" />
+        {mouth === 0 && <path d="M41 60 Q50 68 59 60" fill="none" stroke="#7f1d1d" strokeWidth="2.6" strokeLinecap="round" />}
+        {mouth === 1 && <path d="M41 60 Q50 70 59 60Z" fill="#7f1d1d" stroke="#7f1d1d" strokeWidth="2" strokeLinejoin="round" />}
+        {mouth === 2 && <path d="M42 61 Q50 66 58 61" fill="none" stroke="#7f1d1d" strokeWidth="2.6" strokeLinecap="round" />}
+        {glasses && (
+          <g fill="rgba(255,255,255,0.25)" stroke="#334155" strokeWidth="2.2">
+            <circle cx="39" cy="47" r="8.5" /><circle cx="61" cy="47" r="8.5" /><path d="M47.5 47 H52.5" fill="none" />
+          </g>
+        )}
+      </g>
+      <circle cx="50" cy="50" r="48" fill="none" stroke="rgba(15,23,42,0.18)" strokeWidth="1.5" />
     </svg>
   );
 }

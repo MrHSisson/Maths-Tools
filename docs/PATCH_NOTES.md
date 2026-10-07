@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-07 — Depth: friendlier people; two overlapping Order of Operations items cut
+
+**Depth speakers redrawn** (`Avatar` in `DepthArt.tsx`): head-and-shoulders in a round "profile picture" with a pastel backdrop, six skin tones, seven hair colours, six hairstyles (short, side fringe, long, curly, bun, pigtails), a shirt, brows, nose, cheeks, three smiles and optional glasses. A character is now keyed by **name**, so Ayla (or Ben, Zoe…) looks the same on every slide in every tool. **Order of Operations bank (now 32):** cut *Reading the pyramid* and *Sana's subtraction* (the add-first Explain items overlapped Zoe's and Tia's); routes re-pointed.
+
 ## 2026-10-07 — Order of Operations: working written like a board; pyramid says "&"
 
 **Worked Example** now follows how it is written on a board: the line with the move **underlined** (not boxed), an **arrow down** to the next line with the rest of the sum pulled down, and — when two or more equal-priority operations are left in a row — a **left-to-right arrow over that run** (`3 + 5 × 2 − 9` → underline `5 × 2` → `3 + 10 − 9` with the arrow over it → `13 − 9` → `4`). The second line fades in on the next press. A lone × or ÷ gets no arrow; a `× ÷` run inside a longer sum gets the arrow over just that run. Engine: `Hl.arrows` + `stepFlat` runs; renderer `oooStepRenderer`. Shell: `stepRenderer` now receives the fragment `reveal` index as a 4th argument (documented in `CLAUDE.md`). **Pyramid:** the equal-priority tiles read `D ÷ & M ×` / `A + & S −` (was "="). Checked in the live app; tests assert the exact lines.

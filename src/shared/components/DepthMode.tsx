@@ -336,7 +336,7 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
             const col = SPEAKER_COLOURS[i % SPEAKER_COLOURS.length];
             return (
               <div key={i} className="flex items-center" style={{ gap: "0.7em" }}>
-                <Avatar index={i} size="4.2em" />
+                <Avatar index={i} name={sp.name} size="4.2em" />
                 <div style={{ position: "relative", border: `0.14em solid ${col}`, borderRadius: "1.2em", padding: "0.4em 1.1em", background: "#fff", minWidth: 0, flex: 1 }}>
                   {/* tail pointing back at the speaker */}
                   <span style={{ position: "absolute", left: "-0.55em", top: "50%", width: "0.9em", height: "0.9em", background: "#fff", borderLeft: `0.14em solid ${col}`, borderBottom: `0.14em solid ${col}`, transform: "translateY(-50%) rotate(45deg)" }} />

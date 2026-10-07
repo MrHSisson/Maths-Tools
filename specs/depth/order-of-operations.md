@@ -1,6 +1,6 @@
 # Depth Bank: Order of Operations (BIDMAS)
 
-**Status:** implemented (pilot, awaiting review) — `src/tools/Number/OrderOfOperationsDepth.ts`, 34 items, live. (Six added 2026-10-07 for the "add before subtract" / "read the pyramid left to right" misconceptions.)
+**Status:** implemented (pilot, awaiting review) — `src/tools/Number/OrderOfOperationsDepth.ts`, 32 items, live. (Added 2026-10-07 for the "add before subtract" misconception; the overlapping *Sana's subtraction* and *Reading the pyramid* were then cut.)
 
 Seven items per level, following the tool's three ideas. Diagnose = multiple choice with a named misconception per
 wrong option; Explain = unpick a stated mistake or working; Extend = always/sometimes/never, convince me, make your own.
@@ -8,7 +8,7 @@ Every number is asserted in `src/tests/orderOfOperations.test.ts` ("Depth bank n
 
 | Level | Diagnose | Explain | Extend |
 |---|---|---|---|
-| 1 Who goes first? | Jack/Jo `7+2×3` (**Start here**) · `20−8+3` · `24÷4×2` · **Reading the pyramid** (A left of S) · **BIDMAS says A then S** (`15−6+4`) | Matthew `9+3×2=24` · student working `9+4×3+2 → 41` · Zoe and the pyramid (`30−12+5`) · spot the error `30−12+5 → 13` | Why multiply first? (3 lots of 4) · How many answers from 2, 3, 4 · The sign stays with its number · Add first: always/sometimes/never |
+| 1 Who goes first? | Jack/Jo `7+2×3` (**Start here**) · `20−8+3` · `24÷4×2` · **BIDMAS says A then S** (`15−6+4`) | Matthew `9+3×2=24` · Samuel `36÷6×3` · student working `9+4×3+2 → 41` · Zoe and the pyramid (`30−12+5`) · spot the error `30−12+5 → 13` | Why multiply first? (3 lots of 4) · How many answers from 2, 3, 4 · The sign stays with its number · Add first: always/sometimes/never |
 | 2 Things that jump the queue | `5+(4+2)×3` (**Start here**) · `3×2²` · `−3²` vs `(−3)²` | Priya `(3+4)²=25` · Kofi `2+3²=25` | One pair of brackets in `2+3×4+1` → 15, 17, 21 · `(a+b)²=a²+b²` always/sometimes/never |
 | 3 Symbols that act as brackets | `√(9+16)` (**Start here**) · `(8+4)/(5−1)` · `2×(3+(4−1)×5)` | Elena `√9+√16` · Jamal `12/(4+2)=5` | `√(a+b)=√a+√b` always/sometimes/never · Build your own with a root and a fraction bar |
 

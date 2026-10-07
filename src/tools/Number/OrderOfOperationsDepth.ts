@@ -76,18 +76,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
     ifNotSecure: "ooo-jack-jo", ifSecure: "ooo-make-answers",
   },
   {
-    id: "ooo-sana-minus-plus", level: "level1", needs: [["chain", "mixed", "addFirst"]], purpose: "explain",
-    title: "Sana's subtraction",
-    speakers: [{ name: "Sana", says: ["$10 - 4 + 3 = 3$"] }],
-    question: ["Explain Sana's mistake and give the correct answer."],
-    answer: [
-      "Sana added first: $4 + 3 = 7$, then $10 - 7 = 3$.",
-      "$+$ and $-$ share a tier, so work left to right: $10 - 4 = 6$, then $6 + 3 = 9$.",
-    ],
-    teacherNote: "Ask whether the answer would change if the sum were written $10 + 3 - 4$.",
-    ifNotSecure: "ooo-sub-add", ifSecure: "ooo-make-answers",
-  },
-  {
     id: "ooo-samuel-divide", level: "level1", needs: [["chain", "mixed", "mulFirst"]], purpose: "explain",
     title: "Samuel's division",
     speakers: [{ name: "Samuel", says: ["$36 \\div 6 \\times 3 = 2$"] }],
@@ -143,24 +131,6 @@ export const DEPTH_ITEMS: DepthItem[] = [
   },
 
   {
-    id: "ooo-pyramid-reading", level: "level1", needs: [["chain", "mixed", "addFirst"]], purpose: "diagnose",
-    title: "Reading the pyramid",
-    visual: { type: "pyramid", strong: ["A", "S"] },
-    question: ["On the pyramid, $+$ is on the left of $-$. What does that tell you about $20 - 8 + 3$?"],
-    options: [
-      { text: "Do the addition first, because it is on the left", misconception: "Reads the order of the symbols on the pyramid as the order of working (and the letters A, S in BIDMAS the same way)" },
-      { text: "Neither goes first: work left to right along the sum", correct: true },
-      { text: "Do the subtraction first, because it is on the right", misconception: "Reads the pyramid right to left, or thinks the lower-right symbol is the 'stronger' one" },
-    ],
-    answer: [
-      "$+$ and $-$ share ONE tile, joined by an equals sign: they have equal priority.",
-      "The pyramid does not say which of them goes first. The sum does: work along it from the left.",
-      "$20 - 8 + 3 = 12 + 3 = 15$. Adding first would give $20 - 11 = 9$.",
-    ],
-    teacherNote: "The left/right position of symbols on the pyramid is not an order of working. Ask: if the sum were written $20 + 3 - 8$, which would go first? (the $+$, because it comes first in THAT sum)",
-    ifNotSecure: "ooo-sub-add", ifSecure: "ooo-letters-order",
-  },
-  {
     id: "ooo-letters-order", level: "level1", needs: [["chain", "mixed", "addFirst"]], purpose: "diagnose",
     title: "BIDMAS says A then S",
     speakers: [
@@ -179,7 +149,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Ayla's $5$ is what you get by adding first. Check by writing the sum as $15 + (-6) + 4$: that is $13$.",
     ],
     teacherNote: "Say the tiers aloud as 'Brackets, Indices, Division-Multiplication, Addition-Subtraction' — the acronym hides that D M and A S are pairs.",
-    ifNotSecure: "ooo-pyramid-reading", ifSecure: "ooo-sign-stays",
+    ifNotSecure: "ooo-sub-add", ifSecure: "ooo-sign-stays",
   },
   {
     id: "ooo-zoe-pyramid", level: "level1", needs: [["chain", "mixed", "addFirst"]], purpose: "explain",
@@ -192,7 +162,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "The order on the pyramid is not an order of working: in a sum with only $+$ and $-$, whichever comes first in the sum goes first.",
     ],
     teacherNote: "Let pairs invent their own pair of sums. A strong pair will notice the rule is about where the minus sign sits.",
-    ifNotSecure: "ooo-pyramid-reading", ifSecure: "ooo-sign-stays",
+    ifNotSecure: "ooo-sub-add", ifSecure: "ooo-sign-stays",
   },
   {
     id: "ooo-tia-working", level: "level1", needs: [["chain", "mixed", "addFirst"]], purpose: "explain",
@@ -239,7 +209,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "So 'add first' is never a rule, only sometimes a coincidence: left to right always works.",
     ],
     teacherNote: "Ask for a quick test: where must the minus be for add-first to fail? (anywhere before a plus)",
-    ifNotSecure: "ooo-pyramid-reading", ifSecure: "ooo-bracket-first",
+    ifNotSecure: "ooo-sub-add", ifSecure: "ooo-bracket-first",
   },
 
   // ─────────────────── Level 2 — Things that jump the queue ───────────────────
