@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ArrowLeft, ChevronLeft, ChevronRight, Info, ListChecks, Maximize, Minimize } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Info, ListChecks, Maximize, MessageCircle, Minimize } from "lucide-react";
 import { InlineMath, MathRenderer } from "./MathRenderer";
 import { BidmasPyramid } from "./BidmasPyramid";
 import { Avatar, Badge, Mascot, assignCast } from "./DepthArt";
 import { LV_LABELS } from "../colors";
-import { DEPTH_PURPOSES, depthUnmet, type DepthItem, type DepthOptionInfo, type DepthPurpose } from "../depth";
+import { DEPTH_PURPOSES, depthUnmet, feathersLine, type DepthItem, type DepthOptionInfo, type DepthPurpose } from "../depth";
 import type { DifficultyLevel } from "../types";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -105,6 +105,9 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
   const [showPic, setShowPic] = useState(false); // side-rail switch: draw the tool's picture (e.g. number line) — off to begin with, kept between questions
   const [plotPic, setPlotPic] = useState(false); // side-rail switch: plot the given point on it
   const [present, setPresent] = useState(false);
+  // Feathers' speech bubble: on by default, switched off per device from the controls under the slide.
+  const [feathersOn, setFeathersOn] = useState(() => { try { return localStorage.getItem("mt-depth-feathers") !== "off"; } catch { return true; } });
+  const toggleFeathers = () => setFeathersOn((v) => { const n = !v; try { localStorage.setItem("mt-depth-feathers", n ? "on" : "off"); } catch { /* storage unavailable: session only */ } return n; });
   const wrapRef = useRef<HTMLDivElement>(null);
 
   const byId = useMemo(() => new Map(items.map((i) => [i.id, i])), [items]);
@@ -376,6 +379,15 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
   );
 
   const accent = PURPOSE_COLOURS[current.purpose];
+  // Feathers' line: a speech bubble beside the owl (bottom of the slide), shaped like the speakers' bubbles.
+  const line = feathersOn ? feathersLine(current, onAnswer) : null;
+  const bubble = line && (
+    <div style={{ position: "relative", background: "#eff6ff", border: "0.14em solid #1e3a8a", borderRadius: "1.2em", padding: "0.35em 1em", minWidth: 0 }}>
+      <span style={{ position: "absolute", left: "-0.55em", top: "50%", width: "0.9em", height: "0.9em", background: "#eff6ff", borderLeft: "0.14em solid #1e3a8a", borderBottom: "0.14em solid #1e3a8a", transform: "translateY(-50%) rotate(45deg)" }} />
+      <div style={{ fontSize: "0.55em", fontWeight: 800, color: "#1e3a8a", textTransform: "uppercase", letterSpacing: "0.12em" }}>Feathers</div>
+      <div style={{ fontSize: "0.95em", fontWeight: 650, lineHeight: 1.25, color: "#0f172a" }}><InlineMath text={line} /></div>
+    </div>
+  );
   const stageStyle = narrow
     ? { background: PAPER, borderRadius: "0.9rem", fontSize: "16px", padding: "0.8em" }
     : { background: PAPER, aspectRatio: "16 / 9", fontSize: "1.9cqw", borderRadius: present ? 0 : "0.9rem" };
@@ -409,7 +421,7 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
       <div className="flex flex-col items-start justify-center"
         style={narrow
           ? { position: "relative", background: "#fff", borderRadius: "1em", borderTop: `0.4em solid ${accent}`, boxShadow: "0 0.15em 0.6em rgba(0,0,0,0.08)", padding: "1em", gap: "0.7em" }
-          : { position: "absolute", top: "1.2em", bottom: "1.2em", left: "19%", right: "2.5%", background: "#fff", borderRadius: "1.1em", borderTop: `0.4em solid ${accent}`, boxShadow: "0 0.2em 0.9em rgba(0,0,0,0.08)", padding: "1.4em 1.8em 1.3em", gap: "0.65em", overflow: "hidden" }}>
+          : { position: "absolute", top: "1.2em", bottom: line ? "5.1em" : "1.2em", left: "19%", right: "2.5%", background: "#fff", borderRadius: "1.1em", borderTop: `0.4em solid ${accent}`, boxShadow: "0 0.2em 0.9em rgba(0,0,0,0.08)", padding: "1.4em 1.8em 1.3em", gap: "0.65em", overflow: "hidden" }}>
         {(() => {
           const slideBody = (
             <div className="flex flex-col items-start justify-center" style={{ gap: narrow ? "0.7em" : "0.65em", width: "100%", margin: narrow ? "auto 0" : 0 }}>
@@ -426,7 +438,8 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
         )}
       </div>
 
-      {narrow && <div style={{ display: "flex", justifyContent: "flex-start", marginTop: "0.4em" }}><Mascot mood={onAnswer ? "know" : "think"} size="4.4em" tone="light" /></div>}
+      {narrow && <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center", gap: "0.9em", marginTop: "0.4em" }}><Mascot mood={onAnswer ? "know" : "think"} size="4.4em" tone="light" />{bubble && <div style={{ flex: 1, minWidth: 0 }}>{bubble}</div>}</div>}
+      {!narrow && bubble && <div style={{ position: "absolute", left: "19%", right: "2.5%", bottom: "1.2em", zIndex: 2 }}>{bubble}</div>}
     </div>
   );
 
@@ -451,6 +464,10 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
       </div>
 
       <div className="flex items-center gap-2">
+        <button onClick={toggleFeathers} aria-pressed={feathersOn} title="Show or hide Feathers' prompts"
+          className={`px-3 py-2 rounded-lg text-sm font-bold flex items-center gap-1.5 ${feathersOn ? "bg-blue-100 text-blue-900" : "bg-white text-gray-500 shadow hover:bg-gray-50"}`}>
+          <MessageCircle size={15} /> Feathers
+        </button>
         {current.teacherNote && (
           <button onClick={() => setShowNote((v) => !v)} aria-pressed={showNote}
             className={`px-3 py-2 rounded-lg text-sm font-bold flex items-center gap-1.5 ${showNote ? "bg-amber-200 text-amber-900" : "bg-white text-gray-700 shadow hover:bg-gray-50"}`}>

@@ -26,6 +26,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Priya worked left to right: $7 + 2 = 9$, then $9 \\times 3 = 27$.",
     ],
     teacherNote: "Ask what exactly Priya did. Listen for 'they just went left to right'.",
+    takeaway: "× and ÷ go before + and −. Brackets would change that.",
     ifNotSecure: "ooo-matthew", ifSecure: "ooo-why-multiply-first",
   },
   {
@@ -44,6 +45,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Doing $8 + 3$ first gives $20 - 11 = 9$: a different answer, so the order matters.",
     ],
     teacherNote: "Point at the pyramid: A and S share one tile with an equals sign between them, so neither goes first.",
+    takeaway: "Same row of the pyramid means equal priority: start from the left.",
     ifNotSecure: "ooo-student-working", ifSecure: "ooo-div-mul",
   },
   {
@@ -61,6 +63,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "$\\div$ and $\\times$ share a tier, so work from left to right.",
       "Multiplying first gives $24 \\div 8 = 3$, which is wrong.",
     ],
+    takeaway: "× and ÷ are equal too. Work along the sum from the left.",
     ifNotSecure: "ooo-sub-add", ifSecure: "ooo-make-answers",
   },
   {
@@ -149,6 +152,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Kofi's $5$ is what you get by adding first. Check by writing the sum as $15 + (-6) + 4$: that is $13$.",
     ],
     teacherNote: "Say the tiers aloud as 'Brackets, Indices, Division-Multiplication, Addition-Subtraction' — the acronym hides that D M and A S are pairs.",
+    takeaway: "BIDMAS lists the tiers, not the steps. D and M go together, A and S go together.",
     ifNotSecure: "ooo-sub-add", ifSecure: "ooo-sign-stays",
   },
   {
@@ -162,6 +166,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "The order on the pyramid is not an order of working: in a sum with only $+$ and $-$, whichever comes first in the sum goes first.",
     ],
     teacherNote: "Let pairs invent their own pair of sums. A strong pair will notice the rule is about where the minus sign sits.",
+    takeaway: "The pyramid shows priority, not left or right. The order is in the sum.",
     ifNotSecure: "ooo-sub-add", ifSecure: "ooo-sign-stays",
   },
   {
@@ -179,6 +184,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "Line 3 follows correctly from line 2. The $13$ is what you get by adding first.",
     ],
     teacherNote: "Ask what the student must have thought to write $30 - 17$. Listen for 'add comes before subtract'.",
+    takeaway: "Check each line against the sum before you trust it.",
     ifNotSecure: "ooo-letters-order", ifSecure: "ooo-sign-stays",
   },
   {
@@ -194,6 +200,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "That is why subtraction is the awkward one: the $-$ belongs to the number AFTER it. Adding $8 + 3$ first loses that.",
     ],
     teacherNote: "Draw a loop round '$-8$' to show it moves as one piece. Not all classes are ready for this; use it once the left-to-right habit is secure.",
+    takeaway: "A minus belongs to the number after it, so it travels with it.",
     ifNotSecure: "ooo-zoe-pyramid",
   },
   {
@@ -209,6 +216,7 @@ export const DEPTH_ITEMS: DepthItem[] = [
       "So 'add first' is never a rule, only sometimes a coincidence: left to right always works.",
     ],
     teacherNote: "Ask for a quick test: where must the minus be for add-first to fail? (anywhere before a plus)",
+    takeaway: "Left to right always works. Add-first only sometimes does.",
     ifNotSecure: "ooo-sub-add", ifSecure: "ooo-bracket-first",
   },
 

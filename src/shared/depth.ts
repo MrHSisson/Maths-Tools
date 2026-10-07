@@ -82,6 +82,11 @@ export interface DepthItem {
   options?: DepthOption[];
   /** Answer beat — the reasoning, one entry per line; `$...$` is inline maths. Each line is its own build (one press each). */
   answer: string[];
+  /** What Feathers (the owl) says on the QUESTION slide, to the class — a nudge, never the answer. Optional: every item gets a
+   *  sensible default from its shape (see `feathersLine`). `$...$` is inline maths. */
+  prompt?: string;
+  /** What Feathers says on the ANSWER slide: the one idea to take away. Optional (default from the item's shape). */
+  takeaway?: string;
   /** One line for the teacher: what to ask or listen for. Shown with the answer. */
   teacherNote?: string;
   /** Include in the cross-level "Start here" quick check. */
@@ -117,4 +122,25 @@ export function depthUnmet(item: DepthItem, active: ReadonlySet<string>, info: D
     missing.push([...pools].map(([pool, labels]) => `${pool}: ${labels.join(" or ")}`).join(", "));
   }
   return missing.length ? `Needs ${missing.join(" and ")}` : null;
+}
+
+/** What Feathers says on a slide: the item's own `prompt` / `takeaway`, else a default from its shape and purpose. Spoken to the
+ *  class, so it is never the answer and never about marking. */
+export function feathersLine(item: DepthItem, onAnswer: boolean): string {
+  if (onAnswer) {
+    if (item.takeaway) return item.takeaway;
+    if (item.options) return "Each wrong answer is a real misconception. Which one tempted you?";
+    if (item.working) return "Fix the first wrong line. Lines after it can look fine and still be wrong.";
+    return item.purpose === "diagnose" ? "Notice what tempted you. That is the idea to remember."
+      : item.purpose === "explain" ? "Name the mistake, then say how you would stop it."
+      : "Make up an example of your own to test it.";
+  }
+  if (item.prompt) return item.prompt;
+  if (item.working) return "Tap the line where it first goes wrong.";
+  if (item.options && item.speakers) return "Decide who you agree with, then say why.";
+  if (item.options) return "Choose one, then say why the others could tempt someone.";
+  if (item.speakers) return "What did they do, and why might it feel right?";
+  return item.purpose === "diagnose" ? "Think on your own first, then compare with a partner."
+    : item.purpose === "explain" ? "Say what went wrong and how to fix it."
+    : "Can you find a case that breaks it, or show why it always works?";
 }
