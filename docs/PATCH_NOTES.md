@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-07 — Order of Operations: choose the operations
+
+New **Operations** Question Option on Evaluate (all levels): tick which of + − × ÷ can appear. Left to right with only × ÷ gives 24 ÷ 4 × 2 style lines, with only + − gives 20 − 8 + 3; × ÷ before + − can be limited to, say, × and +. A fraction bar counts as ÷. All four on by default (nothing changes); if the ticked operations can't make the chosen Focus another ticked Focus is used, and only then is the restriction dropped. Spot the Mistake is unchanged (its questions are built around named mistakes). Tests in `orderOfOperations.test.ts`.
+
 ## 2026-10-07 — Speed, Distance & Time: the ratio table starts with what we know
 
 The worked example's ratio table no longer arrives with its rows complete. New shared helper `rStepSolve` (`src/shared/ratioTable.ts`): the known values go in first with the unknown cell as a grey "?" (5 mph for 6 hours starts as 5 | 1 over ? | 6), then one press each for *how do we get from 1 to 6?* (the arrow on the time side only), *do the same to the miles* (the arrow on the other side), and the calculation filling the blank (5 × 6 = 30, the new cell highlighted). Multi-step Level 3 chains repeat the three presses per row. Used by all three sub-tools (a find-the-time question drives from the distance side). `RatioTableData` gains `opSides` and `fresh`; `rStepBuild` is unchanged for other tools. Tested in `src/tests/ratioTableSolve.test.ts`.

@@ -700,11 +700,25 @@ function orderMatters(ast: Seq, family: Family, answer: number): boolean {
   return true;
 }
 
-function buildEval(level: DifficultyLevel, family: Family, nm: NumMode): { ast: Seq; info: Analysis } | null {
+/** Every + − × ÷ an expression uses (a fraction bar counts as ÷; powers, roots and a leading minus are not operations). */
+function opsUsed(ast: Node, out: Set<Op> = new Set()): Set<Op> {
+  switch (ast.t) {
+    case "seq": ast.ops.forEach((o) => out.add(o)); ast.terms.forEach((t) => opsUsed(t, out)); break;
+    case "pow": opsUsed(ast.base, out); break;
+    case "root": opsUsed(ast.inner, out); break;
+    case "frac": out.add("/"); opsUsed(ast.num, out); opsUsed(ast.den, out); break;
+    case "neg": opsUsed(ast.x, out); break;
+  }
+  return out;
+}
+
+/** `allowed` (optional): only draw expressions whose every operation is in the set. */
+function buildEval(level: DifficultyLevel, family: Family, nm: NumMode, allowed?: ReadonlySet<Op>): { ast: Seq; info: Analysis } | null {
   const c: Ctx = { nm, level };
   for (let i = 0; i < 500; i++) {
     const ast = pick(SHAPES[family])(c);
     if (!ast) continue;
+    if (allowed && [...opsUsed(ast)].some((o) => !allowed.has(o))) continue;
     if (levelOf(ast) !== levelNum(level)) continue;
     const info = analyse(ast, nm);
     if (info && orderMatters(ast, family, info.answer)) return { ast, info };
@@ -766,10 +780,25 @@ const numPool = (offered: NumMode[]): ToolMultiSelect => ({
   })),
 });
 
-const EVAL_POOLS: Record<DifficultyLevel, { focus: ToolMultiSelect; nums: ToolMultiSelect | null }> = {
-  level1: { focus: focusPool("level1"), nums: null },
-  level2: { focus: focusPool("level2"), nums: numPool(["whole", "negatives"]) },
-  level3: { focus: focusPool("level3"), nums: numPool(["whole", "negatives", "decimals"]) },
+// Which operations a question may use. Unweighted (a variety / focus choice, not a difficulty rung). Evaluate only —
+// Spot the Mistake's questions are built around specific mistakes, which already name their operations.
+const OPS_BY_VALUE: Record<string, Op> = { opAdd: "+", opSub: "-", opMul: "*", opDiv: "/" };
+const OPS_POOL: ToolMultiSelect = {
+  key: "operations",
+  label: "Operations",
+  info: "Which operations can appear in a question (a fraction bar counts as ÷). Left to right needs two operations of the same priority: × and ÷, or + and −. × ÷ before + − needs at least one from each pair. If the ticked operations can't make that kind of question, ones that can are used instead, and only if none can does it use any operation.",
+  options: [
+    { value: "opAdd", label: "+ Add", defaultActive: true },
+    { value: "opSub", label: "− Subtract", defaultActive: true },
+    { value: "opMul", label: "× Multiply", defaultActive: true },
+    { value: "opDiv", label: "÷ Divide", defaultActive: true },
+  ],
+};
+
+const EVAL_POOLS: Record<DifficultyLevel, { focus: ToolMultiSelect; ops: ToolMultiSelect; nums: ToolMultiSelect | null }> = {
+  level1: { focus: focusPool("level1"), ops: OPS_POOL, nums: null },
+  level2: { focus: focusPool("level2"), ops: OPS_POOL, nums: numPool(["whole", "negatives"]) },
+  level3: { focus: focusPool("level3"), ops: OPS_POOL, nums: numPool(["whole", "negatives", "decimals"]) },
 };
 
 // ── Mistakes (each belongs to the level whose idea it gets wrong) ──────────────
@@ -956,9 +985,22 @@ const FALLBACK = E(3, "+", 4, "*", 5);
 
 function genEvaluate(level: DifficultyLevel, msv: Record<string, boolean>): AnyQuestion {
   const { focus, nums } = EVAL_POOLS[level];
-  const family = pickActive(msv, focus.options) as Family;
+  const picked = pickActive(msv, focus.options) as Family;
   const nm = (nums ? pickActive(msv, nums.options) : "whole") as NumMode;
-  const built = buildEval(level, family, nm) ?? buildEval(level, family, "whole");
+  // The ticked operations (none ticked = no restriction). If the picked Focus can't be made from them, try the
+  // level's other active Focus options before giving the restriction up.
+  const active = new Set(OPS_POOL.options.filter((o) => msv[o.value] ?? o.defaultActive).map((o) => OPS_BY_VALUE[o.value]));
+  const allowed = active.size === 0 || active.size === 4 ? undefined : active;
+  const others = focus.options.filter((o) => o.value !== picked && (msv[o.value] ?? o.defaultActive)).map((o) => o.value as Family).sort(() => Math.random() - 0.5);
+  let family = picked;
+  let built: { ast: Seq; info: Analysis } | null = null;
+  if (allowed) {
+    for (const f of [picked, ...others]) {
+      built = buildEval(level, f, nm, allowed) ?? buildEval(level, f, "whole", allowed);
+      if (built) { family = f; break; }
+    }
+  }
+  built = built ?? buildEval(level, picked, nm) ?? buildEval(level, picked, "whole");
   const ast = built?.ast ?? FALLBACK;
   const answer = built?.info.answer ?? 23;
   const dl = texBody(ast, NO_HL);
@@ -1234,11 +1276,11 @@ const TOOL_CONFIG: ToolConfig = {
       instruction: "Work out:",
       variables: [],
       dropdown: null,
-      multiSelect: [EVAL_POOLS.level1.focus],
+      multiSelect: [EVAL_POOLS.level1.focus, OPS_POOL],
       difficultySettings: {
-        level1: { variables: [], dropdown: null, multiSelect: [EVAL_POOLS.level1.focus] },
-        level2: { variables: [], dropdown: null, multiSelect: [EVAL_POOLS.level2.focus, EVAL_POOLS.level2.nums as ToolMultiSelect] },
-        level3: { variables: [], dropdown: null, multiSelect: [EVAL_POOLS.level3.focus, EVAL_POOLS.level3.nums as ToolMultiSelect] },
+        level1: { variables: [], dropdown: null, multiSelect: [EVAL_POOLS.level1.focus, OPS_POOL] },
+        level2: { variables: [], dropdown: null, multiSelect: [EVAL_POOLS.level2.focus, OPS_POOL, EVAL_POOLS.level2.nums as ToolMultiSelect] },
+        level3: { variables: [], dropdown: null, multiSelect: [EVAL_POOLS.level3.focus, OPS_POOL, EVAL_POOLS.level3.nums as ToolMultiSelect] },
       },
     },
     fixIt: {
@@ -1265,6 +1307,7 @@ const INFO_SECTIONS: InfoSection[] = [
   { title: "Evaluate", icon: "🔢", content: [
     { label: "Overview", detail: "Work out an expression. The Worked Example rewrites the line one stage at a time, boxing the part that is done next, and lights the matching tier of the BIDMAS pyramid." },
     { label: "Focus", detail: "Which idea within the level to practise. Level 1: × ÷ before + −, Left to right, or Both. Level 2: Brackets, Powers, or Both. Level 3: Roots, Fraction bar, or Nested brackets." },
+    { label: "Operations (Evaluate, all levels)", detail: "Which of + − × ÷ can appear (all four by default; a fraction bar counts as ÷). For example, with Left to right and only × ÷ ticked you get 24 ÷ 4 × 2 style lines; with only + − ticked, 20 − 8 + 3 style lines. × ÷ before + − needs at least one operation from each pair. If the ticked operations can't make the chosen Focus, another ticked Focus is used, and only if none can does the question use any operation." },
     { label: "Numbers (Levels 2–3)", detail: "Whole numbers (default), negatives, or decimals. Negatives bring in −3² against (−3)² and subtracting a negative." },
     { label: "BIDMAS pyramid", detail: "Whiteboard shows the pyramid in the working box (hide it with the box's button). B, then I, then D and M together, then A and S together: the two side-by-side tiers are done left to right." },
   ]},
@@ -1289,7 +1332,7 @@ export const __test = {
   TOOL_CONFIG,
   generateQuestion,
   depthItems: DEPTH_ITEMS,
-  engine: { E, P, R, F, NEG, N, texBody, NO_HL, runSteps, evalNode, analyse, SHAPES, buildEval, MISTAKES, genInsert, drawMistake, studentLines, levelOf, LEVEL_OF, EVAL_POOLS, MISTAKES_BY_LEVEL },
+  engine: { E, P, R, F, NEG, N, texBody, NO_HL, runSteps, evalNode, analyse, SHAPES, buildEval, opsUsed, MISTAKES, genInsert, drawMistake, studentLines, levelOf, LEVEL_OF, EVAL_POOLS, MISTAKES_BY_LEVEL },
 };
 
 export default function App() {

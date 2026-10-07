@@ -25,6 +25,11 @@ appear on an easier level and levels never overlap.
 (brings in −3² vs (−3)² and subtracting a negative) · Decimals (L3). Whole mode never has a negative step.
 Limits: values ≤ 500, every division exact, ≤ 2 d.p. in decimals mode. Pools are weighted (Smart Progressor).
 
+**Operations** (Evaluate, all levels, all four ticked by default): + Add · − Subtract · × Multiply · ÷ Divide. A question may only use ticked
+operations (a fraction bar counts as ÷; powers and roots are not operations). Lets a teacher make Left to right all × ÷ (24 ÷ 4 × 2) or all
++ − (20 − 8 + 3), or limit × ÷ before + − to, say, × and +. Not weighted. If the ticked set can't make the picked Focus, another active Focus
+is tried, and only if none works is the restriction dropped. (The one pool allowed 4 options; the rest keep ≤ 3.)
+
 ## Sub-tools
 **Evaluate** (`Work out:`) — one expression, a number answer.
 **Spot the Mistake** — worded questions, task pool per level:
