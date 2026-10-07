@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { ChevronDown } from "lucide-react";
 import type { ToolEntry, DifficultyLevel } from "../types";
 import { LV_LABELS, LV_HEADER_COLORS } from "../colors";
-import { normalizeMultiSelect } from "../helpers";
+import { normalizeMultiSelect, unmetRequires } from "../helpers";
 
 export const usePopover = () => {
   const [open, setOpen] = useState(false);
@@ -104,12 +104,18 @@ export const MultiSelectSection = ({
   multiSelect,
   values,
   onChange,
+  offered,
+  labelOf,
 }: {
-  multiSelect: { key: string; label: string; info?: string; options: { value: string; label: string; sub?: string; divider?: boolean }[]; allowEmpty?: boolean; exclusive?: true };
+  multiSelect: { key: string; label: string; info?: string; options: { value: string; label: string; sub?: string; divider?: boolean; requires?: (string | string[])[] }[]; allowEmpty?: boolean; exclusive?: true };
   values: Record<string, boolean>;
   onChange: (k: string, v: boolean) => void;
+  // every value on offer in the whole popover (not just this pool), so a `requires` clause can name another pool's option
+  offered?: ReadonlySet<string>;
+  labelOf?: (value: string) => string | undefined;
 }) => {
-  const activeCount = multiSelect.options.filter(o => values[o.value]).length;
+  const unmetOf = (o: { requires?: (string | string[])[] }) => unmetRequires(o.requires, values, offered);
+  const activeCount = multiSelect.options.filter(o => values[o.value] && unmetOf(o).length === 0).length;
   return (
     <div className="flex flex-col gap-2">
       <div className="relative group flex items-center gap-1 self-start">
@@ -126,18 +132,22 @@ export const MultiSelectSection = ({
       </div>
       <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden">
         {multiSelect.options.map(opt => {
-          const isActive = values[opt.value] ?? false;
+          const unmet = unmetOf(opt);
+          const blocked = unmet.length > 0;
+          const isActive = (values[opt.value] ?? false) && !blocked;
           const isLast = !multiSelect.allowEmpty && isActive && activeCount === 1;
           return (
             <button
               key={opt.value}
+              disabled={blocked}
+              title={blocked ? `Needs ${unmet.map(c => (Array.isArray(c) ? c : [c]).map(v => labelOf?.(v) ?? v).join(" or ")).join(" and ")}` : undefined}
               onClick={() => {
                 if (multiSelect.exclusive) {
                   // single-choice pool: picking an option turns every other one off
                   if (!isActive) multiSelect.options.forEach(o => onChange(o.value, o.value === opt.value));
                 } else if (!isLast) onChange(opt.value, !isActive);
               }}
-              className={`flex-1 min-w-0 px-3 py-2 text-sm font-bold transition-colors flex flex-col items-center justify-center text-center ${opt.divider ? "border-l-2 border-gray-800" : ""} ${isActive ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
+              className={`flex-1 min-w-0 px-3 py-2 text-sm font-bold transition-colors flex flex-col items-center justify-center text-center ${opt.divider ? "border-l-2 border-gray-800" : ""} ${blocked ? "bg-gray-100 text-gray-300 cursor-not-allowed line-through" : isActive ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
             >
               <span className="leading-tight">{opt.label}</span>
               {opt.sub && (
@@ -220,10 +230,13 @@ const MultiSelectGroups = ({
   values,
   onChange,
 }: {
-  groups: { key: string; label: string; info?: string; options: { value: string; label: string; sub?: string; divider?: boolean; weight?: number }[]; allowEmpty?: boolean; exclusive?: true; cycleDisplay?: true; cycleStateLabels?: [string, string, string] }[];
+  groups: { key: string; label: string; info?: string; options: { value: string; label: string; sub?: string; divider?: boolean; weight?: number; requires?: (string | string[])[] }[]; allowEmpty?: boolean; exclusive?: true; cycleDisplay?: true; cycleStateLabels?: [string, string, string] }[];
   values: Record<string, boolean>;
   onChange: (k: string, v: boolean) => void;
 }) => {
+  const offered = new Set(groups.flatMap(g => g.options.map(o => o.value)));
+  const labels = new Map(groups.flatMap(g => g.options.map(o => [o.value, o.label] as const)));
+  const labelOf = (v: string) => labels.get(v);
   const els: JSX.Element[] = [];
   let i = 0;
   while (i < groups.length) {
@@ -236,7 +249,7 @@ const MultiSelectGroups = ({
         </div>
       );
     } else {
-      els.push(<MultiSelectSection key={groups[i].key} multiSelect={groups[i]} values={values} onChange={onChange} />);
+      els.push(<MultiSelectSection key={groups[i].key} multiSelect={groups[i]} values={values} onChange={onChange} offered={offered} labelOf={labelOf} />);
       i++;
     }
   }

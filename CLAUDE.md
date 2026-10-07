@@ -994,6 +994,8 @@ Reference: `DIFFICULTY_TIER_L2` in `src/tools/Proportion/SpeedDistanceTime.tsx`.
 
 **`exclusive: true` — a single-choice pool.** Set it on a `ToolMultiSelect` when its options are mutually exclusive settings, not a mixable pool (e.g. "labelled line" vs "every mark"): picking one option turns the others off (radio behaviour) and the generator's `pickActive` always sees exactly one. Use it instead of a `dropdown` when a level already uses its one dropdown slot, or when several such choices sit side by side. Give exactly one option `defaultActive: true`. Reference: the label / fill-in / plot pools in `src/tools/Number/Rounding.tsx`.
 
+**`requires` on a multiSelect option — greyed out unless other options are on.** An option may list `requires: [clause, …]`; every clause must hold, a clause being an option `value` from any pool of the same sub-tool + level, or an array of values of which at least one is on (same shape as `DepthItem.needs`). While unmet the option is greyed, struck through and unclickable, with a "Needs × or ÷ and + or −" tooltip; the teacher's own tick is kept and returns when the requirement is met. The popover does this by itself; the *generator* must also ignore a blocked option: `pickActive(maskUnmetOptions(pools, resolveMultiSelectValues(pools, msv)), options)` (a pool is never emptied by the mask, so keep a fallback). Reference: Order of Operations' Level 1 Focus vs its Operations pool.
+
 **`dropdown.workedExampleOnly`** — set this `true` only when the dropdown changes nothing but
 the displayed working (a "Method" choice like Ratio Table vs Decimal, or FOIL vs Grid arrows) —
 the question and answer are identical across every option. ToolShell then hides it from the

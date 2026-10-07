@@ -396,5 +396,27 @@ describe("Operations QO (Evaluate)", () => {
       expect([...opsUsed(b!.ast)].every((o: string) => o === "+" || o === "-")).toBe(true);
     }
   });
+
+  it("unticking × ÷ greys out × ÷ before + − and Both; unticking + − greys out the same two; Left to right stays", async () => {
+    const { unmetRequires, maskUnmetOptions } = await import("../shared");
+    const pools = [__test.engine.EVAL_POOLS.level1.focus, __test.engine.EVAL_POOLS.level1.ops];
+    const all = { basic: true, chain: true, mixed: true, opAdd: true, opSub: true, opMul: true, opDiv: true };
+    const unmet = (vals: Record<string, boolean>) => pools[0].options.filter((o: any) => unmetRequires(o.requires, vals).length).map((o: any) => o.value);
+    expect(unmet(all)).toEqual([]);
+    expect(unmet({ ...all, opMul: false, opDiv: false })).toEqual(["basic", "mixed"]);
+    expect(unmet({ ...all, opAdd: false, opSub: false })).toEqual(["basic", "mixed"]);
+    expect(unmet({ ...all, opMul: false })).toEqual([]);                      // ÷ still gives both pairs
+    expect(unmet({ ...all, opMul: false, opDiv: false, opSub: false })).toEqual(["basic", "chain", "mixed"]);   // only + left
+    // masked values drop the greyed options but keep the teacher's tick otherwise
+    const masked = maskUnmetOptions(pools, { ...all, opMul: false, opDiv: false });
+    expect(masked).toMatchObject({ basic: false, mixed: false, chain: true });
+    // never empties a pool
+    expect(maskUnmetOptions(pools, { basic: true, chain: false, mixed: false, opAdd: true, opSub: false, opMul: false, opDiv: false }).basic).toBe(true);
+    // and generation follows: only Left to right questions come out
+    for (let i = 0; i < 40; i++) {
+      const q = generateQuestion("evaluate", "level1", {}, "", { ...all, opMul: false, opDiv: false }).displayLatex as string;
+      expect(q, q).not.toMatch(/\\times|\\div/);
+    }
+  });
 });
 

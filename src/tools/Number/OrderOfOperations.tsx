@@ -22,7 +22,7 @@ import {
   type AnyQuestion,
   type ToolMultiSelect,
   type WorkingStep, type QOSnapshot,
-  randInt, pick, mStep, tStep, pickActive, weightOf,
+  randInt, pick, mStep, tStep, pickActive, weightOf, resolveMultiSelectValues, maskUnmetOptions,
 } from "../../shared";
 import React, { useLayoutEffect, useRef, useState } from "react";
 import { DEPTH_ITEMS } from "./OrderOfOperationsDepth";
@@ -734,11 +734,15 @@ function buildEval(level: DifficultyLevel, family: Family, nm: NumMode, allowed?
 //   3  Symbols that act as brackets — roots, fraction bars, brackets inside brackets
 // A level's questions must need its idea (see levelOf), so levels never overlap.
 
-const FOCUS: Record<DifficultyLevel, { family: Family; label: string; weight: number }[]> = {
+// Level 1's Focus options need certain operations ticked (see OPS_POOL): × ÷ before + − (and Both) need one operation from
+// each pair; Left to right needs a ÷ (24 ÷ 4 × 2, 36 ÷ 3 ÷ 2) or a − (20 − 8 + 3, 50 − 7 − 12). Unticking × and ÷ therefore
+// greys out "× ÷ before + −" automatically, and ticking them again brings it back as it was.
+const NEEDS_BOTH_PAIRS = [["opMul", "opDiv"], ["opAdd", "opSub"]];
+const FOCUS: Record<DifficultyLevel, { family: Family; label: string; weight: number; requires?: (string | string[])[] }[]> = {
   level1: [
-    { family: "basic", label: "× ÷ before + −", weight: 1 },
-    { family: "chain", label: "Left to right", weight: 2 },
-    { family: "mixed", label: "Both", weight: 3 },
+    { family: "basic", label: "× ÷ before + −", weight: 1, requires: NEEDS_BOTH_PAIRS },
+    { family: "chain", label: "Left to right", weight: 2, requires: [["opDiv", "opSub"]] },
+    { family: "mixed", label: "Both", weight: 3, requires: NEEDS_BOTH_PAIRS },
   ],
   level2: [
     { family: "brackets", label: "Brackets", weight: 1 },
@@ -762,7 +766,7 @@ const focusPool = (level: DifficultyLevel): ToolMultiSelect => ({
   key: "focus",
   label: "Focus",
   info: FOCUS_INFO[level],
-  options: FOCUS[level].map((f) => ({ value: f.family, label: f.label, weight: f.weight, defaultActive: true })),
+  options: FOCUS[level].map((f) => ({ value: f.family, label: f.label, weight: f.weight, defaultActive: true, ...(f.requires ? { requires: f.requires } : {}) })),
 });
 
 const NUM_OPTS: Record<NumMode, { label: string; weight: number }> = {
@@ -985,13 +989,15 @@ const FALLBACK = E(3, "+", 4, "*", 5);
 
 function genEvaluate(level: DifficultyLevel, msv: Record<string, boolean>): AnyQuestion {
   const { focus, nums } = EVAL_POOLS[level];
-  const picked = pickActive(msv, focus.options) as Family;
+  // Focus options the ticked operations can't make are skipped (they show greyed out in the popover).
+  const masked = maskUnmetOptions([focus, OPS_POOL], resolveMultiSelectValues([focus, OPS_POOL], msv));
+  const picked = pickActive(masked, focus.options) as Family;
   const nm = (nums ? pickActive(msv, nums.options) : "whole") as NumMode;
   // The ticked operations (none ticked = no restriction). If the picked Focus can't be made from them, try the
   // level's other active Focus options before giving the restriction up.
   const active = new Set(OPS_POOL.options.filter((o) => msv[o.value] ?? o.defaultActive).map((o) => OPS_BY_VALUE[o.value]));
   const allowed = active.size === 0 || active.size === 4 ? undefined : active;
-  const others = focus.options.filter((o) => o.value !== picked && (msv[o.value] ?? o.defaultActive)).map((o) => o.value as Family).sort(() => Math.random() - 0.5);
+  const others = focus.options.filter((o) => o.value !== picked && (masked[o.value] ?? o.defaultActive)).map((o) => o.value as Family).sort(() => Math.random() - 0.5);
   let family = picked;
   let built: { ast: Seq; info: Analysis } | null = null;
   if (allowed) {
