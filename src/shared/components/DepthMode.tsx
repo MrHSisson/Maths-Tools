@@ -104,6 +104,7 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
   const [showNote, setShowNote] = useState(false);
   const [showPic, setShowPic] = useState(false); // side-rail switch: draw the tool's picture (e.g. number line) — off to begin with, kept between questions
   const [plotPic, setPlotPic] = useState(false); // side-rail switch: plot the given point on it
+  const [showPyramid, setShowPyramid] = useState(true); // side-rail switch: the BIDMAS pyramid in the panel's corner — on to begin with, kept between questions
   const [present, setPresent] = useState(false);
   // Feathers' speech bubble: on by default, switched off per device from the controls under the slide.
   const [feathersOn, setFeathersOn] = useState(() => { try { return localStorage.getItem("mt-depth-feathers") !== "off"; } catch { return true; } });
@@ -321,12 +322,14 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
       <span style={{ fontSize: "0.62em", fontWeight: 700, lineHeight: 1.15 }}>{text}</span>
     </button>
   );
-  // Side-rail switches for the picture (only on items that have one, and only on the question slide)
-  const railSwitches = cv && !onAnswer && (
+  // Side-rail switches for a scaffold: the tool's picture (number line — question slide only) or the BIDMAS pyramid (both slides)
+  const hasPyramid = current.visual?.type === "pyramid";
+  const railSwitches = ((cv && !onAnswer) || hasPyramid) && (
     <div className="flex flex-col items-start" style={{ gap: "0.5em", marginTop: "0.2em" }}>
       <div style={{ fontSize: "0.5em", fontWeight: 800, letterSpacing: "0.16em", textTransform: "uppercase", opacity: 0.7, color: "#fff" }}>Scaffold</div>
-      {switchRow(showPic, (v) => { setShowPic(v); if (!v) setPlotPic(false); }, cv.labels?.show ?? "Show picture")}
-      {switchRow(plotPic, setPlotPic, cv.labels?.plot ?? "Plot the point", !showPic)}
+      {cv && !onAnswer && switchRow(showPic, (v) => { setShowPic(v); if (!v) setPlotPic(false); }, cv.labels?.show ?? "Show picture")}
+      {cv && !onAnswer && switchRow(plotPic, setPlotPic, cv.labels?.plot ?? "Plot the point", !showPic)}
+      {hasPyramid && switchRow(showPyramid, setShowPyramid, "BIDMAS pyramid")}
     </div>
   );
 
@@ -431,7 +434,7 @@ export function DepthMode({ items, level, onLevelChange, itemId, onItemChange, n
           return narrow ? slideBody : <FitBox>{slideBody}</FitBox>;
         })()}
         {/* the key lives in the panel's corner: visible from the start, lit on the answer slide */}
-        {current.visual?.type === "pyramid" && (
+        {current.visual?.type === "pyramid" && showPyramid && (
           <div style={{ position: "absolute", top: "0.9em", right: "1.1em", width: narrow ? "6em" : "7.2em" }}>
             <BidmasPyramid strong={onAnswer ? current.visual.strong : []} soft={onAnswer ? current.visual.soft : []} maxWidth={200} />
           </div>
