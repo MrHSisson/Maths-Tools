@@ -9,7 +9,7 @@ import { useId } from "react";
 // The cast: eight characters, drawn in the owl's style (soft gradients, big shiny eyes, a ground shadow). A speaker's
 // name picks one of them, so the same name always looks the same; two speakers on one slide never share a face.
 // They are meant to look like ordinary, varied pupils and teachers: natural hair and colours, nothing that draws the eye.
-type HairStyle = "wavy" | "fade" | "bob" | "sidepart" | "coils" | "braid" | "curls";
+type HairStyle = "wavy" | "fade" | "bob" | "sidepart" | "coils" | "long" | "curls";
 type Top = "crew" | "polo" | "hoodie" | "cardigan" | "stripe";
 interface Member {
   skin: [string, string]; hair: [string, string]; shirt: [string, string]; iris: string;
@@ -22,7 +22,7 @@ const CAST: Member[] = [
   { skin: ["#e3b48a", "#c58a5c"], hair: ["#7a5230", "#4a2f18"], shirt: ["#4f9d69", "#2d6a45"], iris: "#2b6cb0", style: "sidepart", top: "polo", mouth: "open" },
   { skin: ["#8a5a3b", "#5e3a24"], hair: ["#2b1b14", "#0d0705"], shirt: ["#d9738f", "#a8456a"], iris: "#3b2314", style: "coils", top: "stripe", lashes: true, mouth: "grin" },
   { skin: ["#fde6d2", "#f0c8a6"], hair: ["#c9a35a", "#8e6e2c"], shirt: ["#5b8fd6", "#35609e"], iris: "#2f6fb2", style: "sidepart", top: "hoodie", mouth: "grin" },
-  { skin: ["#c98b5f", "#9a6240"], hair: ["#261c18", "#0b0807"], shirt: ["#de8a5a", "#b05a2c"], iris: "#4a2c17", style: "braid", top: "polo", lashes: true, mouth: "smile" },
+  { skin: ["#c98b5f", "#9a6240"], hair: ["#261c18", "#0b0807"], shirt: ["#de8a5a", "#b05a2c"], iris: "#4a2c17", style: "long", top: "polo", lashes: true, mouth: "smile" },
   { skin: ["#b97d55", "#8a5636"], hair: ["#2c1f18", "#0f0a07"], shirt: ["#8795a8", "#4f5d70"], iris: "#6b4423", style: "curls", top: "cardigan", glasses: true, mouth: "open" },
 ];
 export const CAST_SIZE = CAST.length;
@@ -52,7 +52,7 @@ export function Avatar({ member, size = "4em" }: { member: number; size?: string
       case "wavy": return <path d="M27 54 C18 14 102 14 93 54 C97 70 97 88 103 98 C91 106 80 98 78 84 L42 84 C40 98 29 106 17 98 C23 88 23 70 27 54Z" fill={g("h")} />;
       case "bob": return <path d="M27 56 C18 14 102 14 93 56 L95 86 C84 92 78 84 78 74 L42 74 C42 84 36 92 25 86Z" fill={g("h")} />;
       case "coils": return <g fill={g("h")}><circle cx="60" cy="31" r="27" /><circle cx="34" cy="43" r="11" /><circle cx="86" cy="43" r="11" /></g>;
-      case "braid": return <path d="M28 52 C22 16 98 16 92 52 C94 62 92 70 88 74 L32 74 C28 70 26 62 28 52Z" fill={g("h")} />;
+      case "long": return <path d="M27 54 C18 14 102 14 93 54 L97 100 C88 104 80 96 78 86 L42 86 C40 96 32 104 23 100Z" fill={g("h")} />;
       case "curls": return <g fill={g("h")}><circle cx="35" cy="39" r="11" /><circle cx="47" cy="27" r="12" /><circle cx="61" cy="23" r="12" /><circle cx="75" cy="27" r="12" /><circle cx="86" cy="39" r="11" /></g>;
       default: return null;
     }
@@ -64,18 +64,10 @@ export function Avatar({ member, size = "4em" }: { member: number; size?: string
       case "bob": return <g><path d="M28 50 C24 4 96 4 92 50 C82 40 70 36 60 36 C50 36 38 40 28 50Z" fill={g("h")} />{lines("M38 28 C46 23 58 22 70 25")}</g>;
       case "sidepart": return <g><path d="M29 48 C25 4 95 4 91 46 C86 35 76 27 58 27 C46 27 38 35 33 46 Z" fill={g("h")} />{lines("M52 27 C50 33 46 37 41 40")}{lines("M62 26 C74 26 84 32 88 42")}</g>;
       case "coils": return <path d="M30 46 C26 6 94 6 90 46 C80 36 40 36 30 46Z" fill={g("h")} />;
-      case "braid": return <g><path d="M29 48 C25 5 95 5 91 48 C84 34 66 30 56 36 C46 40 36 42 29 48Z" fill={g("h")} />{lines("M40 28 C48 24 60 24 70 27")}</g>;
+      case "long": return <g><path d="M29 48 C25 5 95 5 91 46 C86 35 76 27 58 27 C46 27 38 35 33 46Z" fill={g("h")} />{lines("M52 27 C50 33 46 37 41 40")}{lines("M62 26 C74 26 84 32 88 42")}</g>;
       case "curls": return <g fill={g("h")}><path d="M30 46 C26 8 94 8 90 46 C80 36 40 36 30 46Z" /><circle cx="39" cy="35" r="9" /><circle cx="51" cy="29" r="10" /><circle cx="64" cy="28" r="10" /><circle cx="76" cy="32" r="10" /><circle cx="83" cy="42" r="7" /></g>;
     }
   })();
-  // The braid grows from behind the head and falls over the shoulder in front of the top (so after the torso, before the head).
-  const braid = c.style === "braid" ? (
-    <g>
-      <path d="M89 58 C100 68 100 82 95 94 C97 101 95 108 91 113" fill="none" stroke={g("h")} strokeWidth="9.5" strokeLinecap="round" />
-      <path d="M96 72 l5 3 M97 82 l5 3 M95 92 l5 3 M93 102 l5 2" stroke={strand} strokeWidth="1.5" strokeLinecap="round" opacity="0.55" />
-      <circle cx="91" cy="113.5" r="3.2" fill={c.shirt[1]} />
-    </g>
-  ) : null;
   const top = (() => {
     const wh = "#fff";
     switch (c.top) {
@@ -103,7 +95,6 @@ export function Avatar({ member, size = "4em" }: { member: number; size?: string
       <rect x="51" y="68" width="18" height="18" rx="8" fill={g("s")} />
       <path d="M51 76 Q60 85 69 76 L69 70 L51 70Z" fill="#000" opacity="0.12" />
       {top}
-      {braid}
       {/* ears */}
       <circle cx="30" cy="54" r="6.5" fill={g("s")} /><circle cx="90" cy="54" r="6.5" fill={g("s")} />
       <path d="M28 52 Q31 54 29 58 M92 52 Q89 54 91 58" fill="none" stroke="#000" strokeOpacity="0.15" strokeWidth="1.2" strokeLinecap="round" />

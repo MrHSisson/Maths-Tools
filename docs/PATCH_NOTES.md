@@ -30,7 +30,7 @@ Keep the split even when a session only touches one.
 
 ## 2026-10-07 — Depth: a cast of eight, drawn like the owl (then made more natural and detailed)
 
-*Braid:* now grows from behind the head and falls over the shoulder (it was drawn over the cheek).
+*Braid:* removed — that character now has plain long straight hair with a side parting.
 
 *Fixes:* the fringe was drawn lower than the top of the head, so a pale crescent of skin showed above the hair (everyone looked bald-ish) — every hairstyle now covers the crown; and the open-mouth tongue poked out below the mouth — it is now clipped inside it.
 
