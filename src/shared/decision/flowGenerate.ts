@@ -10,7 +10,7 @@
 import {
   SINK, SOURCE, sortedAugmentingPaths, pathNodes, decomposeFlow, pathLabel, peelMissing, allCuts, cutCapacity, flowValue, isAcyclic, isFeasibleFlow,
   maxFlow, orderNodes, potentials, simpleForwardPaths,
-  type ArcLabelPos, type Flow, type FlowArc, type FlowMode, type FlowNet, type FlowProblemData, type FlowSubTool, type InitialStyle,
+  type Flow, type FlowArc, type FlowMode, type FlowNet, type FlowProblemData, type FlowSubTool, type InitialStyle,
 } from "./flow";
 import { cutGeometry } from "./cutCurve";
 import { FLOW_TEMPLATES, templatesForLevel, type FlowTemplate } from "./flowTemplates";
@@ -47,6 +47,32 @@ export interface FlowInstance {
   pushed: Array<{ arcs: string[]; amount: number }>;
 }
 
+/** The network a template becomes for a given set of present arcs and reversed arcs (bounds still 0). Exported for the layout test. */
+export function variantNet(tpl: FlowTemplate, presentIds: Set<string>, flips: Set<string>): { net: FlowNet; labelPos: FlowProblemData["labelPos"] } {
+  const labelPos: FlowProblemData["labelPos"] = {};
+  const arcs: FlowArc[] = tpl.arcs.filter((a) => presentIds.has(a.id)).map((a) => {
+    const flipped = flips.has(a.id);
+    const from = flipped ? a.to : a.from;
+    const to = flipped ? a.from : a.to;
+    // positions are fractions from the TAIL; a flipped arc mirrors them so labels keep their physical place
+    const m = (t: number) => (flipped ? 1 - t : t);
+    labelPos[from + to] = { label: m(a.label), flow: [m(a.flow[0]), a.flow[1]], pot: [m(a.pot[0]), a.pot[1]] };
+    return { id: from + to, from, to, lo: 0, hi: 0 };
+  });
+  return { net: { nodes: tpl.nodes.map((n) => ({ ...n })), arcs }, labelPos };
+}
+
+/** Is this network usable: acyclic, every vertex used, and at least three S→T routes? */
+export function usableNet(net: FlowNet): boolean {
+  if (!isAcyclic(net)) return false;
+  for (const nd of net.nodes) {
+    const inn = net.arcs.some((x) => x.to === nd.id);
+    const out = net.arcs.some((x) => x.from === nd.id);
+    if (nd.id === SOURCE ? !out : nd.id === SINK ? !inn : !(inn && out)) return false;
+  }
+  return simpleForwardPaths(net).length >= 3;
+}
+
 export function sampleInstance(tpl: FlowTemplate, mode: FlowMode, reversed: boolean, pathCount?: number): FlowInstance | null {
   // 1. arcs — optional arcs come and go; a reversed question flips up to two flippable arcs (the network must stay acyclic)
   const present = tpl.arcs.filter((a) => !a.optional || Math.random() < 0.65);
@@ -57,27 +83,11 @@ export function sampleInstance(tpl: FlowTemplate, mode: FlowMode, reversed: bool
     if (cand.length === 0) return null;
     for (const a of cand.slice(0, ri(1, Math.min(2, cand.length)))) flips.add(a.id);
   }
-  const arcs: Array<FlowArc & { _pos: ArcLabelPos }> = present.map((a) => {
-    const flipped = flips.has(a.id);
-    const from = flipped ? a.to : a.from;
-    const to = flipped ? a.from : a.to;
-    // positions are fractions from the TAIL; a flipped arc mirrors them so labels keep their physical place
-    const m = (t: number) => (flipped ? 1 - t : t);
-    return {
-      id: from + to, from, to, lo: 0, hi: 0,
-      _pos: { label: m(a.label), flow: [m(a.flow[0]), a.flow[1]], pot: [m(a.pot[0]), a.pot[1]] },
-    };
-  });
-  const net: FlowNet = { nodes: tpl.nodes.map((n) => ({ ...n })), arcs };
-  if (!isAcyclic(net)) return null;
-  // every vertex must be used: S sends, T receives, every other vertex has an arc in and an arc out
-  for (const nd of net.nodes) {
-    const inn = arcs.some((x) => x.to === nd.id);
-    const out = arcs.some((x) => x.from === nd.id);
-    if (nd.id === SOURCE ? !out : nd.id === SINK ? !inn : !(inn && out)) return null;
-  }
+  const variant = variantNet(tpl, new Set(present.map((x) => x.id)), flips);
+  const arcs = variant.net.arcs.map((a) => ({ ...a, _pos: variant.labelPos[a.id] }));
+  const net: FlowNet = { nodes: variant.net.nodes, arcs };
+  if (!usableNet(net)) return null;
   const paths = simpleForwardPaths(net);
-  if (paths.length < 3) return null;
 
   // 2. a feasible flow. Unless the question fixes the paths, choose paths so that EVERY arc carries flow — that is what lets
   //    (almost) every arc have a real minimum, instead of a string of zeros.

@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import type { FlowArc, FlowMode, FlowNet, FlowProblemData, FlowViewState } from "../flow";
-import { NODE_R, cutGeometry, flowBox } from "../cutCurve";
+import { cutGeometry, flowBox } from "../cutCurve";
+import { FLOW_R, NODE_R, PILL_H, arcGeometry } from "../flowGeometry";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // FlowView — a PURE renderer of a flow network. Draws each arc with its bounds
@@ -26,10 +27,7 @@ export interface FlowViewProps {
   background?: string;
 }
 
-const pillW = (s: string, size: number) => Math.max(size * 1.5, s.length * size * 0.62 + 10);
-
 export default function FlowView({ net, mode, view, labelPos, qIndex, background = "#ffffff" }: FlowViewProps) {
-  const byId = useMemo(() => Object.fromEntries(net.nodes.map((n) => [n.id, n])), [net]);
   const box = useMemo(() => flowBox(net), [net]);
 
   // The dashed cut line (and where it crosses each cut arc) — traced from the geometry, see cutCurve.ts.
@@ -44,51 +42,28 @@ export default function FlowView({ net, mode, view, labelPos, qIndex, background
   const focus = new Set(view.focus ?? []);
 
   const arcEl = (a: FlowArc) => {
-    const p = byId[a.from];
-    const q = byId[a.to];
-    const dx = q.x - p.x;
-    const dy = q.y - p.y;
-    const len = Math.hypot(dx, dy) || 1;
-    const ux = dx / len;
-    const uy = dy / len;
-    const at = (t: number, off = 0) => {
-      // a normal that points "up" the screen (or right, for a vertical arc) so beside-the-line labels stay on one side
-      let nx = -uy;
-      let ny = ux;
-      if (ny > 0 || (ny === 0 && nx < 0)) { nx = -nx; ny = -ny; }
-      return { x: p.x + dx * t + nx * off, y: p.y + dy * t + ny * off };
-    };
+    const g = arcGeometry(net, a, labelPos[a.id], mode);
+    const { ux, uy } = g;
+    const at = g.at;
     const dir = pathIdx.get(a.id);
     const crossing = view.cutArcs?.[a.id];
     const stroke = dir ? GREEN : focus.has(a.id) ? "#d97706" : "#64748b";
     const width = dir ? 5 : focus.has(a.id) ? 4 : 2.75;
-    const lp = labelPos[a.id];
-    const x1 = p.x + ux * NODE_R;
-    const y1 = p.y + uy * NODE_R;
-    const x2 = q.x - ux * (NODE_R + 2);
-    const y2 = q.y - uy * (NODE_R + 2);
-    const bounds = mode === "cap" ? `${a.hi}` : `${a.lo}, ${a.hi}`;
-    const lab = at(lp.label);
+    const { x: x1, y: y1 } = g.line.a;
+    const { x: x2, y: y2 } = g.line.b;
+    const bounds = g.boundsText;
+    const lab = g.pill.c;
     const replaced = !!view.replaceWithPotentials && view.potentials?.[a.id] !== undefined; // the potentials stand in for flow + bounds
     const showBounds = !view.hideBounds && !replaced;
-    const w = pillW(bounds, 17);
+    const w = g.pill.w;
     const isUnknown = !!view.unknown?.includes(a.id);
     const isSolved = !!view.solved?.includes(a.id);
     const fl = replaced || isUnknown ? undefined : view.flow?.[a.id];
     const prev = view.prevFlow?.[a.id];
-    const fp = at(lp.flow[0], 19 * lp.flow[1]); // beside the arc, not on it
-    // potentials: two small parallel arrows on the far side of the arc — one along it, one against it
-    const pc = (off: number) => at(lp.pot[0], lp.pot[1] * off);
-    const arrowAt = (off: number, dirSign: 1 | -1) => {
-      const c = pc(off);
-      const s0 = { x: c.x - ux * 11 * dirSign, y: c.y - uy * 11 * dirSign };
-      const e0 = { x: c.x + ux * 13 * dirSign, y: c.y + uy * 13 * dirSign };
-      const num = { x: c.x + ux * 25 * dirSign, y: c.y + uy * 25 * dirSign }; // beyond the arrowhead
-      return { s0, e0, num, dirSign };
-    };
-    // one arrow either side of the arc: the forward one on the arc's labelled side, the backward one opposite
-    const fwdA = arrowAt(19, 1);
-    const bwdA = arrowAt(-19, -1);
+    const fp = g.flowC; // beside the arc, not on it
+    // one arrow either side of the arc: the increase beside it (along), the decrease on the opposite side (against)
+    const fwdA = g.inc;
+    const bwdA = g.dec;
     const tick = cut?.ticks[a.id] ?? at(0.5);
     // the cut label sits on the side of the arc opposite the circled flow, so the two never meet
     let cnx = -uy;
@@ -105,7 +80,7 @@ export default function FlowView({ net, mode, view, labelPos, qIndex, background
         />
         {/* bounds label */}
         {showBounds && <g>
-          <rect x={lab.x - w / 2} y={lab.y - 12} width={w} height={24} rx={5} fill="#ffffff" stroke="#e2e8f0" />
+          <rect x={lab.x - w / 2} y={lab.y - PILL_H / 2} width={w} height={PILL_H} rx={5} fill="#ffffff" stroke="#e2e8f0" />
           <text x={lab.x} y={lab.y} textAnchor="middle" dominantBaseline="central" fontSize={17} fontWeight={700} fill="#0f172a">{bounds}</text>
         </g>}
         {/* circled flow ("?" while missing, green when just found) */}
@@ -114,7 +89,7 @@ export default function FlowView({ net, mode, view, labelPos, qIndex, background
             {prev !== undefined && fl !== undefined && prev !== fl && (
               <text x={fp.x} y={fp.y - 22} textAnchor="middle" fontSize={13} fontWeight={700} fill="#94a3b8" textDecoration="line-through">{prev}</text>
             )}
-            <circle cx={fp.x} cy={fp.y} r={16} fill={isUnknown ? "#fffbeb" : "#ffffff"} stroke={isUnknown ? "#d97706" : dir || isSolved ? GREEN : FWD} strokeWidth={2.25} />
+            <circle cx={fp.x} cy={fp.y} r={FLOW_R} fill={isUnknown ? "#fffbeb" : "#ffffff"} stroke={isUnknown ? "#d97706" : dir || isSolved ? GREEN : FWD} strokeWidth={2.25} />
             <text x={fp.x} y={fp.y} textAnchor="middle" dominantBaseline="central" fontSize={17} fontWeight={800} fill={isUnknown ? "#d97706" : dir || isSolved ? GREEN : FWD}>{isUnknown ? "?" : fl}</text>
           </g>
         )}
