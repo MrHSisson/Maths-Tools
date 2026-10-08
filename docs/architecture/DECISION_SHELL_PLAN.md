@@ -204,6 +204,15 @@ it), never two moves at once.
 
 ---
 
+## Shell UX — revised 2026-10-08 (supersedes the fixed two-pane layout below)
+
+`DecisionShell` now follows the standard tool shell's page (nav bar · title · tool tabs · control bar · content card) but is built for network questions: there
+is **no worksheet / print mode** and **no Whiteboard mode** — every question is worked through. One large network (sticky, so it stays
+in view as the page scrolls) beside a fading cascade of steps (Back / Next / Show all). Sub-tools are tabs; Question
+Options are a popover (`config.options`, optionally per sub-tool via `forSubTools`); the setup lives in the URL (`tool`, `level`,
+`o_<key>`; options hidden for the current sub-tool are not written and not passed to `generate`). Config extras: `options[].top` (a big either/or row above the tabs),
+`options[].forSubTools`, `levelLabels`, `canvasFooter`, `renderCanvas`. **Fullscreen** takes the whole working area (canvas + question + working + step controls). **Show all** is a toggle that returns to the step you were on. If `generate()` throws after a click, the page shows a reload prompt. Levels for Decision tools are **graph size**; difficulty dials are selectors, never tied to a level.
+
 ## Solution UX (decision 3)
 
 `DecisionShell`'s **Solution mode** plays `solve(problem)` as a stepper: forward/back over the

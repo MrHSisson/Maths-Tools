@@ -75,7 +75,7 @@ Stand-alone teacher tools with no prong: **Visualiser**, the four PDF
 | **Sandboxes & viewports** | 🚧 | Algebra Tiles, Negative Counters, SmartGrapher (+ Grapher Lab, Parallel Lines Explorer): standalone tools first, then embedded as viewports in question tools |
 | **Depth** | ✅ live (3 tools) | Curated diagnose / explain / extend questions as a mode on any tool that supplies a bank; follows the Question Options; banks on Order of Operations, Rounding and Speed, Distance & Time (live) |
 | **Computer Science shell** | ⏸ | Shell built; 2 topics shipped as data; next is authoring 1.1.3 |
-| **Decision Maths** | ⏸ | MST shipped; TSP nearest-neighbour slice built (dev-gated); next TSP lower bound |
+| **Decision Maths** | ⏸ | MST shipped; TSP nearest-neighbour slice built (dev-gated); **Network Flows** LIVE (6 question styles); next TSP lower bound / Network Flows print |
 | *Tool review cycle* | ♻ ongoing | Per-tool notes; not a prong |
 | *Mobile / narrow view* | ♻ standing rule | Not a prong; shipped for every tool |
 | *Skills library · Teach decks* | 🪑 bench | See `docs/BACKBENCH.md` |
@@ -773,6 +773,20 @@ one question type, one level. Also now available: `src/shared/decision/randomNet
 crossing-checked extra edges) harvested from an old archived draft, with a best-effort
 `routeInspection` mode for a future Route Inspection / Chinese Postman tool. Not wired into any
 tool yet — see `DECISION_SHELL_PLAN.md` → "Templating model" for the detail.
+
+**Network Flows — LIVE (built 2026-10-08, un-gated 2026-10-08).** `/network-flows`, spec `specs/flow-networks.md`.
+Top tier **Capacity only ⇄ Min and max**; beneath it six question styles — **Find a flow** (a real route-by-route method),
+**Missing flow**, **Flow from potentials**, **Augment flow** (every augmenting path), **Cut values** (one dashed line) and
+**Max flow & min cut** — at three levels that are graph size (4–5, 6–7, 8 vertices). **Nine network styles** (Diamond, Fan,
+Mini hub, Zigzag, Ladder, Hexagon, Double hub, Tower, the big 8-node network), ~320 variants once optional/reversible arcs are
+counted; every question has at least one reversed arc. Question Options: backward arc (cuts), backward step (augment / max flow),
+and **Numbers** (small / tens / hundreds — the picture stretches to fit four-digit labels). Pure solver in `shared/decision/flow.ts`;
+flow-first generator (`flowGenerate.ts`); worked solution in `flowSolve.ts`; `FlowView` + shared label geometry
+(`flowGeometry.ts`, joint `layoutNetwork`), tested exhaustively by `flowLayout.test.ts` and `flowLogic.test.ts`.
+`DecisionShell` gained sub-tool tabs, top-tier options, per-sub-tool options, a custom canvas and footer, whole-area fullscreen,
+a Show all toggle that returns to the same step, and a "reload the page" fallback if generation fails.
+**Exam-board check (Edexcel D2 / AQA Further Maths Discrete):** content and method match; Missing flow and Flow from potentials are deliberate stepping stones; bare S–T networks (no real-world context) are fine for this tool. **Next build (agreed):** **supersource / supersink** (several sources or sinks, with the capacities on the added arcs) and **restricted capacity at a node** (split the node into two joined by an arc) — both listed as exam items; the info modal / terminology should be re-checked against a real mark scheme when one is to hand.
+**Next:** phone check on a real device, then supersource / supersink and node restrictions (above).
 
 **Travelling Salesperson — first slice shipped (2026-09-23, dev-gated — keep `enabled: false`).**
 `/travelling-salesperson` does the **nearest-neighbour upper bound** at three levels: complete K4–K6

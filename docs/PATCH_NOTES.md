@@ -28,6 +28,128 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-08 — Network Flows goes live
+
+- Removed `enabled: false` from the `network-flows` registry entry: the tool now shows on the landing page (Decision Mathematics) for everyone. Other Decision tools (TSP, network sandbox) keep their own gates.
+- Agreed next build: supersource / supersink and restricted capacity at a node (Edexcel and AQA exam items); phone check on a real device.
+
+## 2026-10-08 — Decision shell: phone layout borrowed from ToolShell
+
+- At ≤640px `DecisionShell` now follows ToolShell's narrow pattern: compact header and title, ONE settings banner ("Augment flow · Min and max / Level 2") with a **Change** drawer holding the network type, question type, level and Question Options (instead of the two tab rows and the control bar), a full-width New Question button, and a shorter canvas and answer area. The diagram fits the width; fullscreen (two columns when the phone is turned sideways) gives the detail. Other Decision tools (MST / TSP / CPA) get the same declutter for free.
+
+## 2026-10-08 — Network Flows: audit fixes (display, shell, help)
+
+- **Display**: the circled flow grows to hold three- and four-digit numbers; the bounds pill, potential arrows and flow circle now also keep clear of *other* arcs' lines (so the crossing arcs in the big network stay readable); on a phone the diagram keeps a readable size and pans sideways inside its own box (or goes fullscreen) instead of shrinking to a few pixels.
+- **Shell**: options hidden for the current sub-tool no longer reach the generator or the URL; if question generation fails the page offers a reload; arrow keys no longer step while the info box is open or while typing.
+- **Wording**: Missing flow says which earlier-found arc makes the next one solvable; capacity-only cut working no longer talks about minimums; the Max flow question says "maximum flow" throughout.
+- **Help and docs**: in-app help now covers the Numbers option, the Find-a-flow method, fullscreen and Show all; `PROJECTS.md`, the spec and `DECISION_SHELL_PLAN.md` brought up to date.
+
+## 2026-10-08 — Network Flows: fullscreen, Show all, Max flow working
+
+- **Fullscreen** now takes the whole working area — the network, the question, the working and the step controls (and the colour key) — not just the diagram, with larger working text. Esc or Exit leaves it.
+- **Show all** is a true toggle: pressing it again in the same place returns to the step you were on (it used to throw you back to the question). The arrow keys no longer step while the info box is open or while typing.
+- **Max flow working** lists every potential that changes after each augmentation (old → new), then shows the final potentials in full, then reads the flows off them arc by arc (flow = maximum − potential increase) before the cut.
+- **Cut confirmation** that is just the source (or sink) alone is allowed again, but only about one question in five at Levels 2–3 (Level 1 networks are small enough that it still comes up).
+
+## 2026-10-08 — Network Flows: Find a flow is now a real method; cut labels
+
+- **Find a flow**: the answer is built the way a student would, route by route (`buildFlowByPaths`). Capacity-only: take the route with the most spare capacity, send as much as it carries but no more than still needed, repeat until the target value. Min and max: take the arc furthest below its minimum, route through it (preferring routes through other arcs still below their minimum), send what it needs, repeat until every arc meets its minimum. The working states the method and tracks "still needed" / "still below their minimum" after each route; questions the method cannot solve in 2–5 routes are not set.
+- **Cut labels** (+max / −min) are now placed clear of every other label, vertex, arc and the dashed line itself, staying close to the crossing they belong to.
+
+## 2026-10-08 — Network Flows: more networks, bigger numbers, logic check
+
+- **More networks**: two new templates ("Zigzag" at Level 1, "Tower" at Level 3) and more optional/reversible arcs on Mini hub and Double hub — 9 layouts, about 320 distinct networks (230 with a reversed arc).
+- **Numbers option** (Question Options → Numbers): Small (up to ~20), Tens (10 to 200) or Hundreds (100 to 2000). Every capacity, minimum and flow is multiplied, so the maths is identical; the diagram is stretched left-to-right (×1.35 / ×1.45) so four-digit labels have room.
+- **Label layout**: `layoutNetwork` now places every arc's labels together (an arc re-solves with its neighbours' labels as obstacles, and the bounds pill may slide), and `flowLayout.test.ts` checks every variant at all three number sizes.
+- **Logic check** (`flowLogic.test.ts`, every sub-tool × level × mode × scale): the commodity is conserved at every inner vertex, nothing enters S or leaves T, whole numbers within bounds, no fixed `[k, k]` arc, value out of S = value into T, max flow = brute-force min cut, cut answers = brute force, and no stray un-scaled number in a prompt or working caption. It found one real bug: the Augment prompt said "three" paths when there were four.
+
+## 2026-10-08 — Network Flows: audit fixes (layout, depth, variety)
+
+- **Layout**: one shared geometry module (`flowGeometry.ts`) places every pill, flow circle and potential arrow; `flowLayout.test.ts` checks *every* variant of every template (each optional-arc subset × 0–2 reversed arcs, worst-case two-digit numbers, all label states) for overlaps and for labels nearer another arc than their own.
+- **Depth**: Augment flow lists 2–3 paths (up to 4 at Level 3) with differing increases; Max flow runs up to 5 augmentations at Level 3, mostly by 2 or more, with an interior minimum cut.
+- **Missing flow**: solved at vertices of degree 3+, an interior arc at Levels 2–3, chained pairs more common as networks grow; min/max arcs are no longer fixed `[k, k]`.
+- **Variety**: new "Mini hub" (Level 1) and "Double hub" (Level 3) templates; capacity-only networks occasionally leave an arc unused so a potential decrease of 0 appears.
+
+## 2026-10-08 — Network Flows: first build (Decision Maths, dev-gated)
+
+- **`/network-flows`** (registry `enabled: false`): Potentials, Cut values, Augment flow, and Max flow & min cut,
+  on capacity-only or min/max networks, Levels 1–3, each with a step-by-step worked solution.
+- **Five network styles** from the textbook shapes — Diamond, Fan, Ladder, Hexagon and the big 8-node network
+  (two declared crossing pairs; up to two arcs reversed at Level 3).
+- **Maths in one place:** `src/shared/decision/flow.ts` (potentials, labelling, augmenting paths, max flow, cuts);
+  questions are built flow-first (`flowGenerate.ts`) so a feasible flow always exists.
+- **`FlowView`:** circled flow beside the arc, two small potential arrows (along / against) like the textbook, green
+  augmenting path with dashed backward steps, shaded S side, red ticks and a dotted cut line.
+- **`DecisionShell`** gained sub-tool tabs, Question Options (Capacity only / Min and max), a custom canvas and a canvas footer.
+- CI: `src/tests/flow.test.ts` asserts the spec's reference numbers (flow 15 → 22 via SADET 2, SBCET 2, SBCFT 3;
+  second network max flow 20; cut values 26, 28, 35) and sweeps every template × level × sub-tool × mode against a
+  brute-force minimum cut.
+- **Layout pass (same day):** every arc of all five templates has an explicit, hand-mapped position for its bounds label,
+  circled flow and potential arrows; while augmenting, the flows and min/max labels are hidden (potentials + path only) and
+  restored in a final "reinterpret" beat; `?tpl=<id>` pins a template for checking layouts.
+- **Initial flow sub-tool (same day):** "Given paths" (take 3 along SABCT, 5 along SAT… write the flow on every arc) and
+  "Find a flow" (any feasible flow on a min/max network, or a flow of value V on a capacity-only one). Many answers are
+  valid, so the answer is one valid flow and `isFeasibleFlow` is the checker; the working builds the flow path by path
+  (amounts add on shared arcs), then checks every vertex balances and every arc is within its bounds.
+  `DecisionShell` options can now be limited to certain sub-tool tabs.
+- **Visibility pass (same day):** the cut is now a smooth **dashed line** (`cutCurve.ts` — traced from the geometry, so it
+  works for any cut, even one that loops round a node; the red ticks sit exactly where it crosses each cut arc). The
+  Solution sidebar is now a **fading cascade** (earlier steps stay on screen, dimmed; the current step is highlighted),
+  keeps the question on screen, and shows the final answer in its own card — for every Decision tool. Diagram labels are
+  slightly larger.
+- **One continuous cut line:** a cut is only ever set (and a minimum cut only ever drawn) when it can be shown as a single
+  unbroken dashed line that crosses every cut arc exactly once and no other arc; the generator filters on this, CI asserts it
+  for every cut question and every minimum cut.
+- **Initial flow variety:** the question's paths are now chosen first (not recovered from a random flow), so routes through the
+  cross arcs (SABT, SBCT, SABCT…) appear as often as the direct ones; Levels 2–3 always include one, Level 1 usually. The
+  capacity-only "find a flow of value V" answer is the flow the question was built around, no longer a shortest-path build
+  (which only ever used SAT, SBT, SCT).
+- **Cuts and augmenting paths (same day):** the red ticks on the cut arcs are gone (the dashed line, shaded S side and the
+  +max / −min labels remain). **Augment flow** now asks for ALL the flow-augmenting paths — always two or three (Level 1
+  forward-only, Level 3 includes one with a backward step) — and the working finds each path and its bottleneck in turn, then
+  lists them together (noting when they share arcs, so they cannot all be used at full amount at once).
+- **New shell + levels by size (same day):** `DecisionShell` is rebuilt on the standard tool shell's page — nav bar, title, tool
+  tabs, **Whiteboard / Worked Example** modes, a control bar (level toggle, Question Options popover, New Question, Show
+  Answer or Back / Next / Show all), the menu with Info and Copy link, and the setup mirrored in the URL. The graph gets the
+  width (a sticky large canvas in Worked Example, fullscreen on request); there is no worksheet or print mode for these tools.
+  **Network Flows levels are now graph size** (1 = 4–5 vertices, 2 = 6–7, 3 = 8); Capacity only / Min and max is chosen only by the
+  selector (default capacity only, kept when the level changes), as are Arcs (some reversed), Cuts (forward arcs only), Paths
+  (include a backward step) and the Initial flow question style. Networks vary per question: optional arcs (the Fan's rungs, the
+  Ladder's diagonal, the Big network's cross arcs) and a **hexagon hub** where any of S, A, B can feed the centre vertex and it can
+  feed D, E, T (hundreds of networks); every arc has hand-mapped label positions.
+- **One worked model (later the same day):** the Decision shell has no Whiteboard / Show Answer any more — every question is
+  worked through (graph + fading steps, Back / Next / Show all), because every question of this complexity needs its steps.
+  In the Potentials working an arc that shows its potentials drops its flow circle and min/max label (they swap arc by arc).
+  Min/max questions now use real minimums: every arc carries flow and at most about one arc in seven has a minimum of 0.
+- **Question, then Answer (later the same day):** every Decision question opens as the question alone (the network as given)
+  with an empty **Answer** section and a "Show working" button; the working then builds up one step at a time like the other
+  tools' worked examples — each new step fades in, earlier steps stay at half strength on a numbered timeline in a scrolling
+  box that follows the newest step and fades out at the top — and the answer arrives last as a green "A" line. Controls: Back /
+  Next / Show all ⇄ Step by step, a dot strip (question · steps · answer), arrow keys. The page header was tightened so the graph
+  sits higher.
+- **Controls at the foot; arrows either side (same day):** the step controls (◀ back · "Step n of N" · Show all ⇄ Step by step ·
+  next ▶ · the dot strip) moved out of the question control bar to the foot of the Answer section, whose working area has a fixed
+  height so they never move; the control bar keeps only level, Question Options and New Question. On the diagram the two
+  potential arrows now sit on either side of the arc — the forward one beside it, the backward one on the opposite side.
+- **Two tiers (same day):** Capacity only ⇄ Min and max is now the **top tier** (big either/or tabs above everything), with the
+  question styles beneath it — Flow from paths, Find a flow, Potentials, Cut values, Augment flow, Max flow & min cut (Initial
+  flow's two styles are separate tabs now). It is no longer in Question Options, which keeps only the small dials (Arcs, Cuts,
+  Paths). `ShellOption.top` puts any option in the top tier.
+- **Reverse is part of every question (same day):** the Arcs / Cuts / Paths options are gone — every network now has at least one arc
+  pointing back against the flow (reversed rungs, hub arcs, cross arcs), every cut question includes an arc coming back across the
+  cut, and every augment / max-flow question uses a backward step. Question Options is now just the top-tier Network switch. Cut
+  labels sit on the opposite side of the arc from the flow circle.
+- **Tabs reworked (same day):** dropped **Flow from paths**; added **Missing flow** (one or two arcs show "?" — find each with flow in =
+  flow out at a vertex that has just one unknown; every missing arc is findable in order); reversed the potentials question to
+  **Flow from potentials** (the arrows and bounds are shown, not the flows — each arc swaps to its flow as it is read off, then the
+  flow value). Tabs now: Find a flow · Missing flow · Flow from potentials · Augment flow · Cut values · Max flow & min cut.
+- **Wording and options (same day):** the potentials are now called **potential increase** (maximum − flow, along the arrow) and
+  **potential decrease** (flow − minimum, against it) everywhere. A backward arc in a cut and a backward step in the paths are no
+  longer forced into every question — they are Question Options ("Include a backward arc" on Cut values; "Include a backward step"
+  on Augment flow and Max flow) — but every network still has at least one reversed arc so they can occur (they do in roughly
+  35–85 % of questions anyway). Augment flow lists **every** flow-augmenting path, backward steps included.
+- Phone width checked (stacks, no sideways scroll; the graph is sticky only on wide screens). Still to do: Harry's-notes update.
+
 ## 2026-10-07 — Notes and docs sweep: cast documented
 
 - New `docs/design/CAST.md` (the eight named characters, Feathers, rules); linked from the `CLAUDE.md` documentation map.
