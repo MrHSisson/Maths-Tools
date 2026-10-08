@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import type { FlowArc, FlowMode, FlowNet, FlowProblemData, FlowViewState } from "../flow";
 import { cutGeometry, flowBox } from "../cutCurve";
-import { FLOW_R, NODE_R, PILL_H, layoutNetwork } from "../flowGeometry";
+import { FLOW_R, NODE_R, PILL_H, dist, layoutNetwork, type Shape } from "../flowGeometry";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // FlowView — a PURE renderer of a flow network. Draws each arc with its bounds
@@ -42,6 +42,14 @@ export default function FlowView({ net, mode, view, labelPos, qIndex, background
   const focus = new Set(view.focus ?? []);
 
   const layout = useMemo(() => layoutNetwork(net, labelPos, mode), [net, labelPos, mode]);
+  // the dashed cut line as segments, so its labels keep off it
+  const cutSegs: Shape[] = (cut?.paths ?? []).flatMap((d) => {
+    const pts = (d.match(/-?\d+(\.\d+)?/g) ?? []).map(Number);
+    const out: Shape[] = [];
+    for (let i = 2; i + 1 < pts.length; i += 2) out.push({ k: "seg", a: { x: pts[i - 2], y: pts[i - 1] }, b: { x: pts[i], y: pts[i + 1] }, w: 3.5 });
+    return out;
+  });
+  const placedCutLabels: Shape[] = []; // cut labels already positioned this render, so they keep clear of each other
   const arcEl = (a: FlowArc) => {
     const g = layout.get(a.id)!;
     const { ux, uy } = g;
@@ -70,6 +78,30 @@ export default function FlowView({ net, mode, view, labelPos, qIndex, background
     let cnx = -uy;
     let cny = ux;
     if (cny > 0 || (cny === 0 && cnx < 0)) { cnx = -cnx; cny = -cny; }
+    // Where the "+max / −min" cut label goes: beside the crossing, on whichever side and distance keeps it clear of every
+    // other label, vertex and arc (and off the dashed line itself, which passes through the tick).
+    let cutLab = { x: tick.x - cnx * 26, y: tick.y - cny * 26 };
+    if (crossing && view.cutLabels) {
+      const txt = crossing === "fwd" ? `+${a.hi}` : mode === "cap" ? "back" : `−${a.lo}`;
+      const hw = 5.4 * txt.length + 4, hh = 11;
+      const obstacles: Shape[] = [
+        ...net.nodes.map((n): Shape => ({ k: "circle", c: { x: n.x, y: n.y }, r: NODE_R })),
+        ...net.arcs.flatMap((x) => layout.get(x.id)!.shapes),
+        ...net.arcs.filter((x) => x.id !== a.id).map((x): Shape => { const l = layout.get(x.id)!.line; return { k: "seg", a: l.a, b: l.b, w: 3 }; }),
+        { k: "seg", a: g.line.a, b: g.line.b, w: 3 },
+        ...placedCutLabels,
+        ...cutSegs,
+      ];
+      let best = -Infinity;
+      for (const side of [1, -1]) for (const d of [24, 32, 42, 54, 66]) for (const sh of [0, 16, -16, 32, -32, 48, -48]) {
+        const c = { x: tick.x - cnx * d * side + ux * sh, y: tick.y - cny * d * side + uy * sh };
+        const box: Shape = { k: "rect", x0: c.x - hw, y0: c.y - hh, x1: c.x + hw, y1: c.y + hh };
+        // prefer the side opposite the circled flow, and staying close to the crossing
+        const score = Math.min(8, Math.min(...obstacles.map((o) => dist(box, o)))) + (side === 1 ? 1 : 0) - d * 0.2 - Math.abs(sh) * 0.1; // clear by 8px is enough — then stay close to the crossing
+        if (score > best) { best = score; cutLab = c; }
+      }
+      placedCutLabels.push({ k: "rect", x0: cutLab.x - hw, y0: cutLab.y - hh, x1: cutLab.x + hw, y1: cutLab.y + hh });
+    }
     const fwdPot = view.potentials?.[a.id]?.fwd;
     const bwdPot = view.potentials?.[a.id]?.bwd;
     return (
@@ -111,7 +143,7 @@ export default function FlowView({ net, mode, view, labelPos, qIndex, background
         {crossing && (
           <g>
             {view.cutLabels && (
-              <text x={tick.x - cnx * 26} y={tick.y - cny * 26} textAnchor="middle" dominantBaseline="central" fontSize={15} fontWeight={800} fill={RED} stroke="#ffffff" strokeWidth={4} paintOrder="stroke">
+              <text x={cutLab.x} y={cutLab.y} textAnchor="middle" dominantBaseline="central" fontSize={17} fontWeight={800} fill={RED} stroke="#ffffff" strokeWidth={4} paintOrder="stroke">
                 {crossing === "fwd" ? `+${a.hi}` : mode === "cap" ? "back" : `−${a.lo}`}
               </text>
             )}
