@@ -48,7 +48,7 @@ function solveInitial(p: DecisionProblem): SolveStep[] {
     steps.push(beat(net, `Send ${pt.amount} along ${pathLabel(net, pt.arcs)}: add ${pt.amount} to ${arcs.map((a) => a.id).join(", ")}.\n${pt.arcs.map((id) => `${id} = ${acc[id]}`).join(", ")}.${i > 0 && pt.arcs.some((id) => paths.slice(0, i).some((q) => q.arcs.includes(id))) ? "\nSome of these arcs already carry flow from an earlier path, so the amounts add." : ""}`,
       { flow: { ...acc }, path: pt.arcs.map((id) => ({ arc: id, dir: "fwd" as const, to: byId[id].to })) }, { runningTotal: total, totalLabel: "Flow" }));
   });
-  steps.push(beat(net, `Every arc not used carries 0. The flow value is ${flowValue(net, flow)}.`, { flow }, { runningTotal: flowValue(net, flow), totalLabel: "Flow" }));
+  steps.push(beat(net, `${net.arcs.some((a) => flow[a.id] === 0) ? "Every arc not used carries 0. " : ""}The flow value is ${flowValue(net, flow)}.`, { flow }, { runningTotal: flowValue(net, flow), totalLabel: "Flow" }));
   const check = isFeasibleFlow(net, flow);
   const nodes = net.nodes.map((n) => n.id).filter((id) => id !== "S" && id !== "T");
   const bal = nodes.map((id) => {
@@ -128,7 +128,7 @@ function solveMissing(p: DecisionProblem): SolveStep[] {
     known[arc] = value;
     left.delete(arc);
     steps.push(beat(net,
-      `At ${vertex} only ${arc} is unknown — call it ${sym[i]}.\nFlow in: ${inn.map(term).join(" + ")}\nFlow out: ${out.map(term).join(" + ")}\n${sym[i]} = ${otherTotal}${sameOthers.length ? ` − ${sameOthers.join(" − ")}` : ""} = ${value}`,
+      `At ${vertex} only ${arc} is unknown — call it ${sym[i]}.\nFlow in: ${inn.map(term).join(" + ")}\nFlow out: ${out.map(term).join(" + ")}\n${sym[i]} = ${otherTotal}${sameOthers.length ? ` − ${sameOthers.join(" − ")} = ${value}` : ""}`,
       { flow: { ...known }, unknown: [...left], solved: [arc], focus: [...inn, ...out].map((a) => a.id) }));
   });
   steps.push(beat(net, `All the flows are found: ${missing.map((id) => `${id} = ${flow[id]}`).join(", ")}. The flow value is ${flowValue(net, flow)}.`,
@@ -164,23 +164,27 @@ function solveCut(p: DecisionProblem): SolveStep[] {
       ? `Arc${r.backward.length > 1 ? "s" : ""} ${r.backward.map((a) => a.id).join(", ")} come${r.backward.length > 1 ? "" : "s"} back from the T side to the S side. A capacity-only network has no minimums (they are all 0), so nothing is subtracted.`
       : `Arc${r.backward.length > 1 ? "s" : ""} ${r.backward.map((a) => a.id).join(", ")} come${r.backward.length > 1 ? "" : "s"} back from the T side to the S side (backward). Subtract ${r.backward.length > 1 ? "their minimums" : "its minimum"}.\n${r.forwardSum} − ${r.backward.map((a) => a.lo).join(" − ")} = ${r.capacity}`,
       view(true), { runningTotal: r.capacity, totalLabel: "Cut" }));
+  } else {
+    steps.push(beat(net, "No arc comes back from the T side to the S side, so there is nothing to subtract.", view(true), { runningTotal: r.capacity, totalLabel: "Cut" }));
   }
   steps.push(beat(net, `The capacity of the cut is ${r.capacity}.`, view(true), { runningTotal: r.capacity, totalLabel: "Cut" }));
   return steps;
 }
 
 // ── Augmenting ───────────────────────────────────────────────────────────────
-function describeSteps(net: FlowNet, flow: Flow, path: AugmentingPath): string {
+function describeSteps(net: FlowNet, flow: Flow, path: AugmentingPath, cap = false): string {
   const arcs = Object.fromEntries(net.arcs.map((a) => [a.id, a]));
   return path.steps.map((s, i) => {
     const a = arcs[s.arc];
     return s.dir === "fwd"
       ? `${a.id}: potential increase ${a.hi} − ${flow[a.id]} = ${path.potentials[i]}`
-      : `${a.id} (against the arrow): potential decrease ${flow[a.id]} − ${a.lo} = ${path.potentials[i]}`;
+      : cap
+        ? `${a.id} (against the arrow): potential decrease = the flow = ${path.potentials[i]}`
+        : `${a.id} (against the arrow): potential decrease ${flow[a.id]} − ${a.lo} = ${path.potentials[i]}`;
   }).join("\n");
 }
 
-function augmentBeats(net: FlowNet, flow: Flow, path: AugmentingPath, k: number | null, totalAfter: number): { steps: SolveStep[]; after: Flow } {
+function augmentBeats(net: FlowNet, flow: Flow, path: AugmentingPath, k: number | null, totalAfter: number, cap = false): { steps: SolveStep[]; after: Flow } {
   const after = { ...flow };
   for (const s of path.steps) after[s.arc] += s.dir === "fwd" ? path.bottleneck : -path.bottleneck;
   const tag = k === null ? "" : `Augmentation ${k}. `;
@@ -189,8 +193,8 @@ function augmentBeats(net: FlowNet, flow: Flow, path: AugmentingPath, k: number 
   // picture clear, and are read back off at the end.
   const before = { potentials: potNumbers(net, flow), hideBounds: true };
   const steps: SolveStep[] = [
-    beat(net, `${tag}Label the potentials on every arc: potential increase = maximum − flow, potential decrease = flow − minimum.`, before),
-    beat(net, `${tag}A flow-augmenting path: ${arrowPath(path)}.\nEvery step has potential above 0${hasBack ? " (a step against an arrow uses the potential decrease)" : ""}.\n${describeSteps(net, flow, path)}`,
+    beat(net, `${tag}Label the potentials on every arc: potential increase = ${cap ? "capacity" : "maximum"} − flow, potential decrease = flow${cap ? "" : " − minimum"}.`, before),
+    beat(net, `${tag}A flow-augmenting path: ${arrowPath(path)}.\nEvery step has potential above 0${hasBack ? " (a step against an arrow uses the potential decrease)" : ""}.\n${describeSteps(net, flow, path, cap)}`,
       { ...before, path: path.steps }),
     beat(net, `${tag}The flow can be increased by the smallest potential on the path.\nmin(${path.potentials.join(", ")}) = ${path.bottleneck}`,
       { ...before, path: path.steps }),
@@ -213,7 +217,7 @@ function solveAugment(p: DecisionProblem): SolveStep[] {
   paths.forEach((path, i) => {
     const hasBack = path.steps.some((s) => s.dir === "back");
     steps.push(
-      beat(net, `Path ${i + 1}: ${arrowPath(path)}.\nEvery step has potential above 0${hasBack ? " (a step against an arrow uses the potential decrease)" : ""}.\n${describeSteps(net, flow, path)}`,
+      beat(net, `Path ${i + 1}: ${arrowPath(path)}.\nEvery step has potential above 0${hasBack ? " (a step against an arrow uses the potential decrease)" : ""}.\n${describeSteps(net, flow, path, d.mode === "cap")}`,
         { ...pots, path: path.steps }),
       beat(net, `Path ${i + 1}: the flow can be increased by the smallest potential on the path.\nmin(${path.potentials.join(", ")}) = ${path.bottleneck}`,
         { ...pots, path: path.steps }),
@@ -238,7 +242,7 @@ function solveMaxFlow(p: DecisionProblem): SolveStep[] {
   ];
   run.augmentations.forEach((a, i) => {
     const total = flowValue(net, a.after);
-    steps.push(...augmentBeats(net, a.before, a.path, i + 1, total).steps.slice(i === 0 ? 0 : 1)); // later rounds start from the potentials the last round left
+    steps.push(...augmentBeats(net, a.before, a.path, i + 1, total, d.mode === "cap").steps.slice(i === 0 ? 0 : 1)); // later rounds start from the potentials the last round left
   });
   const t = net.nodes.map((n) => n.id).filter((id) => !run.sSide.includes(id));
   const r = cutCapacity(net, run.sSide);
@@ -247,7 +251,9 @@ function solveMaxFlow(p: DecisionProblem): SolveStep[] {
   steps.push(beat(net, `Reinterpret the final potentials as flows: the maximal flow has value ${run.value}.`,
     { flow: run.flow }, { runningTotal: run.value, totalLabel: "Flow" }));
   const back = r.backward.length
-    ? `\nBackward arcs (T side → S side): ${r.backward.map((a) => a.id).join(", ")}, minimums subtracted: ${r.forwardSum} − ${r.backward.map((a) => a.lo).join(" − ")}.`
+    ? d.mode === "cap"
+      ? `\nArc${r.backward.length > 1 ? "s" : ""} ${r.backward.map((a) => a.id).join(", ")} come${r.backward.length > 1 ? "" : "s"} back from the T side; a capacity-only network has no minimums, so nothing is subtracted.`
+      : `\nBackward arcs (T side → S side): ${r.backward.map((a) => a.id).join(", ")}, minimums subtracted: ${r.forwardSum} − ${r.backward.map((a) => a.lo).join(" − ")}.`
     : "";
   steps.push(beat(net, `Cut ${set(net, run.sSide)} | ${set(net, t)}: forward arcs ${r.forward.map((a) => a.id).join(", ")}, ${r.forward.map((a) => a.hi).join(" + ")} = ${r.forwardSum}.${back}\nCapacity of the cut = ${r.capacity}.`,
     { ...cutView(net, run.flow, run.sSide), flow: run.flow }, { runningTotal: run.value, totalLabel: "Flow" }));

@@ -170,6 +170,8 @@ function chooseCut(inst: FlowInstance, cuts: "any" | "forward" | "backward"): st
     if (c.length < 2 || n - c.length < 2) return false;
     const r = cutCapacity(inst.net, c);
     if (r.capacity < 8 || r.capacity > 60) return false;
+    // in a min/max network a backward arc must have a real minimum — "− 0" teaches nothing
+    if (r.backward.some((a) => a.hi > 0 && a.lo === 0) && inst.net.arcs.some((a) => a.lo > 0)) return false;
     return cuts === "any" || (cuts === "forward" ? r.backward.length === 0 : r.backward.length > 0);
   });
   // the drawability test is the expensive one, so try the candidates in random order and stop at the first that passes
@@ -321,7 +323,7 @@ function toProblem(
     if (n === 1) value = flow[missing![0]];
   } else if (subTool === "potentials") {
     // read the flow back OFF the potentials: the arrows are shown, the flows are not
-    prompt = `${bounds} The potentials on every arc are shown (the arrow along the arc, and the arrow against it). Find the flow in every arc, and the value of the flow.`;
+    prompt = `${bounds} The potentials on every arc are shown: the potential increase (the arrow along the arc) and the potential decrease (the arrow against it). Find the flow in every arc, and the value of the flow.`;
     value = flowValue(net, flow);
     answerText = `Flow value ${value}`;
   } else if (subTool === "cutValue") {

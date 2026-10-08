@@ -300,3 +300,33 @@ describe("missing flow and flow from potentials", () => {
       }
   });
 });
+
+describe("wording regressions found by the audit", () => {
+  it("missing flow never prints a tautology like 'x = 5 = 5'", () => {
+    for (let i = 0; i < 60; i++) for (const lv of [1, 2, 3] as const) {
+      const steps = solveFlowProblem(generateFlowProblem(lv, "missingFlow", i % 2 ? "cap" : "minmax"));
+      for (const s of steps) expect(s.caption).not.toMatch(/\b([xyz]) = (\d+) = \2\b/);
+    }
+  });
+  it("capacity-only working never mentions a minimum", () => {
+    for (const sub of ["augment", "maxFlow", "potentials", "cutValue", "missingFlow", "initialFlow"] as const)
+      for (const lv of [1, 2, 3] as const)
+        for (let i = 0; i < 8; i++) {
+          const p = generateFlowProblem(lv, sub, "cap");
+          for (const s of solveFlowProblem(p)) expect(s.caption, `${sub} L${lv}`).not.toMatch(/(?<!no )minimums?(?! cut)/i);
+        }
+  });
+  it("the potentials prompt names potential increase and decrease", () => {
+    for (const mode of ["cap", "minmax"] as FlowMode[]) {
+      const p = generateFlowProblem(2, "potentials", mode);
+      expect(p.prompt).toMatch(/potential increase/);
+      expect(p.prompt).toMatch(/potential decrease/);
+    }
+  });
+  it("min/max cuts never have a backward arc with minimum 0 (a pointless '− 0')", () => {
+    for (let i = 0; i < 40; i++) {
+      const d = generateFlowProblem(2, "cutValue", "minmax", undefined, "paths", { cuts: "backward" }).flow!;
+      expect(cutCap(d.net, d.sSide!).backward.every((a) => a.lo > 0)).toBe(true);
+    }
+  });
+});
