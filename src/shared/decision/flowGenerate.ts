@@ -31,12 +31,12 @@ const shuffle = <T,>(xs: T[]): T[] => {
 export interface FlowGenOptions {
   /** reversed: at least one (up to two) arcs point against the left-to-right flow. DEFAULT — the idea of reverse is part of every question. */
   arcs?: "standard" | "reversed";
-  /** cutValue — "backward": the cut includes an arc coming back across it (DEFAULT); "forward": none do; "any": either. */
+  /** cutValue — "any" (DEFAULT): any drawable cut, so backward arcs turn up as they happen to; "backward": the cut must include an arc coming back across it; "forward": none do. */
   cuts?: "backward" | "forward" | "any";
-  /** augment / maxFlow: the working uses a backward step (DEFAULT). */
+  /** augment / maxFlow: true = the working must use a backward step (a step against an arrow). Default false: they appear as they happen to. */
   backSteps?: boolean;
 }
-export const DEFAULT_GEN: Required<FlowGenOptions> = { arcs: "reversed", cuts: "backward", backSteps: true };
+export const DEFAULT_GEN: Required<FlowGenOptions> = { arcs: "reversed", cuts: "any", backSteps: false };
 
 // ── Sample a network + feasible flow from a template ─────────────────────────
 export interface FlowInstance {
@@ -145,8 +145,8 @@ function okPotentials(inst: FlowInstance, mode: FlowMode, level: number): boolea
   if (atMax < 1 || zero > Math.ceil(arcs.length / 3)) return false;
   if (level === 1 && atMax > 2) return false;
   if (mode === "minmax") {
-    if (arcs.filter((a) => a.lo > 0 && inst.flow[a.id] > a.lo).length < 2) return false; // backward potential is flow − min, not flow
-    if (!arcs.some((a) => a.lo > 0 && inst.flow[a.id] === a.lo)) return false; // one arc with backward potential 0
+    if (arcs.filter((a) => a.lo > 0 && inst.flow[a.id] > a.lo).length < 2) return false; // potential decrease is flow − min, not flow
+    if (!arcs.some((a) => a.lo > 0 && inst.flow[a.id] === a.lo)) return false; // one arc with potential decrease 0
   }
   return true;
 }
@@ -182,7 +182,7 @@ function okAugment(inst: FlowInstance, backSteps: boolean): boolean {
   const paths = sortedAugmentingPaths(inst.net, inst.flow);
   if (paths.length < 2 || paths.length > 3) return false;
   if (paths.some((p) => p.bottleneck < (backSteps ? 1 : 2))) return false;
-  return backSteps ? paths.some((p) => hasBack(p.steps)) : paths.every((p) => !hasBack(p.steps));
+  return backSteps ? paths.some((p) => hasBack(p.steps)) : true; // every possible path is listed, backward steps included wherever they exist
 }
 
 function okMaxFlow(inst: FlowInstance, size: number, backSteps: boolean): boolean {

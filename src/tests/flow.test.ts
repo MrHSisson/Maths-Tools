@@ -115,8 +115,8 @@ describe("generated questions", () => {
               const paths = allAugmentingPaths(d.net, d.flow);
               expect(paths.length).toBeGreaterThanOrEqual(2);
               expect(paths.length).toBeLessThanOrEqual(3);
-              // the idea of reverse is part of every augment question: some path has a backward step
-              expect(paths.some((q) => q.steps.some((s) => s.dir === "back"))).toBe(true);
+              // every possible path is listed, whatever kind of steps it uses
+              expect(paths.every((q) => q.steps.length >= 2)).toBe(true);
               expect(findAugmentingPath(d.net, d.flow)).not.toBeNull();
             }
 
@@ -207,6 +207,12 @@ describe("the question selectors", () => {
         expect(maxFlow(m.net, m.flow).augmentations.some((x) => x.path.steps.some((s) => s.dir === "back"))).toBe(true);
       }
     });
+  it("Include a backward arc: every cut has an arc coming back across it", () => {
+    for (let i = 0; i < 12; i++) {
+      const d = generateFlowProblem(2, "cutValue", "minmax", undefined, "paths", { cuts: "backward" }).flow!;
+      expect(cutCap(d.net, d.sSide!).backward.length).toBeGreaterThan(0);
+    }
+  });
   it("Forward arcs only: every cut has no backward arc", () => {
     for (let i = 0; i < 12; i++) {
       const d = generateFlowProblem(2, "cutValue", "minmax", undefined, "paths", { cuts: "forward" }).flow!;

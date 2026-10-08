@@ -101,6 +101,11 @@ Keep the split even when a session only touches one.
   flow out at a vertex that has just one unknown; every missing arc is findable in order); reversed the potentials question to
   **Flow from potentials** (the arrows and bounds are shown, not the flows — each arc swaps to its flow as it is read off, then the
   flow value). Tabs now: Find a flow · Missing flow · Flow from potentials · Augment flow · Cut values · Max flow & min cut.
+- **Wording and options (same day):** the potentials are now called **potential increase** (maximum − flow, along the arrow) and
+  **potential decrease** (flow − minimum, against it) everywhere. A backward arc in a cut and a backward step in the paths are no
+  longer forced into every question — they are Question Options ("Include a backward arc" on Cut values; "Include a backward step"
+  on Augment flow and Max flow) — but every network still has at least one reversed arc so they can occur (they do in roughly
+  35–85 % of questions anyway). Augment flow lists **every** flow-augmenting path, backward steps included.
 - Phone width checked (stacks, no sideways scroll; the graph is sticky only on wide screens). Still to do: Harry's-notes update.
 
 ## 2026-10-07 — Notes and docs sweep: cast documented

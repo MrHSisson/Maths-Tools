@@ -6,8 +6,8 @@
 // Vocabulary (see specs/flow-networks.md §3.1):
 //   • an arc has bounds [lo, hi]; a flow puts an integer in [lo, hi] on every arc and
 //     balances at every node except S (source) and T (sink);
-//   • forward potential  = hi − flow   (room to push along the arrow)
-//   • backward potential = flow − lo   (room to take back, against the arrow)
+//   • potential increase = hi − flow   (room to push along the arrow)
+//   • potential decrease = flow − lo   (room to take back, against the arrow)
 //   • capacity of a cut  = Σ hi (arcs S-side → T-side) − Σ lo (arcs T-side → S-side).
 // All arithmetic is integer.
 // ═══════════════════════════════════════════════════════════════════════════

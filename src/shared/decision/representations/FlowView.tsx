@@ -4,7 +4,7 @@ import { NODE_R, cutGeometry, flowBox } from "../cutCurve";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // FlowView — a PURE renderer of a flow network. Draws each arc with its bounds
-// ("lo, hi", or just the capacity), the circled flow, forward / backward potential
+// ("lo, hi", or just the capacity), the circled flow, potential increase / decrease
 // labels, a highlighted augmenting path, a shaded cut (S side) with red ticks on the
 // arcs that cross it, and the nodes the labelling procedure reached. It computes
 // nothing: every number it shows is handed in (flow.ts is the single source).

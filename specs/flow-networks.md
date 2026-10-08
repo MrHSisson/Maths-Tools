@@ -2,7 +2,7 @@
 
 > **Latest direction (2026-10-08) — read this first.** The sections below were written before these decisions and are superseded where they disagree:
 > - **Levels are graph size** (1 = 4–5 vertices, 2 = 6–7, 3 = 8). Capacity only / Min and max is chosen only by the **Network** selector (default capacity only).
-> - **Top tier: Capacity only ⇄ Min and max; beneath it the question styles** (Find a flow, Missing flow, Flow from potentials, Augment flow, Cut values, Max flow & min cut). Flow from paths was dropped; Potentials now goes from the arrows to the flow. **Reverse is always part of the question:** every network has a reversed arc, every cut question includes an arc coming back across the cut, and every augment / max-flow question uses a backward step.
+> - **Top tier: Capacity only ⇄ Min and max; beneath it the question styles** (Find a flow, Missing flow, Flow from potentials, Augment flow, Cut values, Max flow & min cut). Flow from paths was dropped; Potentials now goes from the arrows to the flow. **Reverse:** every network has at least one arc pointing back against the flow, so backward arcs and steps can be tested; **Question Options** can require a backward arc in a cut (Cut values) or a backward step (Augment flow, Max flow). Augment flow finds **every** flow-augmenting path (two or three), backward steps included — the search for the maximum flow considers every route, including ones that go back against an arrow. Wording: **potential increase / potential decrease**.
 > - **Augment flow** asks for all (two or three) flow-augmenting paths. **Cuts** are one continuous dashed line, no ticks.
 > - **Network variations:** optional/reversible arcs per template; the Hexagon has a hub (centre vertex fed by any of S, A, B; feeding any of D, E, T).
 > - **No worksheets, print or Whiteboard.** Every question is worked through step by step (see `docs/architecture/DECISION_SHELL_PLAN.md` → Shell UX).
@@ -65,11 +65,11 @@ lower levels (§3.2). More styles are added by authoring one entry in `flowTempl
 - A **flow** puts an integer on every arc, shown **circled**, with: every arc between its min and max;
   at every node except S and T, flow in = flow out. **Flow value** = total leaving S.
 - **Potentials** on an arc with bounds `(lo, hi)` carrying flow `f`:
-  - **forward potential** = `hi − f` (how much more can be pushed along the arrow);
-  - **backward potential** = `f − lo` (how much can be taken back, against the arrow).
-  - For a capacity-only network `lo = 0`, so backward potential = `f`.
-- **Flow-augmenting path** (S→T): every forward step has forward potential > 0, every backward step
-  (against an arrow) has backward potential > 0. Its **bottleneck** = smallest potential on the path;
+  - **potential increase** = `hi − f` (how much more can be pushed along the arrow);
+  - **potential decrease** = `f − lo` (how much can be taken back, against the arrow).
+  - For a capacity-only network `lo = 0`, so the potential decrease = `f`.
+- **Flow-augmenting path** (S→T): every step along an arrow has a potential increase > 0, every step
+  against an arrow has a potential decrease > 0. Its **bottleneck** = smallest potential on the path;
   augmenting adds the bottleneck on forward steps and subtracts it on backward steps.
 - **Cut**: a partition of the nodes into an S-side set containing S and a T-side set containing T.
   **Capacity of a cut** = (sum of **max** on arcs going S-side → T-side) **−** (sum of **min** on arcs going

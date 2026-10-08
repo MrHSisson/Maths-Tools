@@ -76,8 +76,8 @@ function solvePotentials(p: DecisionProblem): SolveStep[] {
   const found: Flow = {};
   const steps: SolveStep[] = [
     beat(net, mode === "cap"
-      ? "Forward potential = capacity − flow, and backward potential = flow. So the flow in an arc is its backward potential (or capacity − forward potential). Work through the arcs leaving each vertex in turn."
-      : "Forward potential = maximum − flow, and backward potential = flow − minimum. So the flow in an arc is maximum − forward potential (or minimum + backward potential). Work through the arcs leaving each vertex in turn.",
+      ? "Potential increase = capacity − flow, and potential decrease = flow. So the flow in an arc is its potential decrease (or capacity − potential increase). Work through the arcs leaving each vertex in turn."
+      : "Potential increase = maximum − flow, and potential decrease = flow − minimum. So the flow in an arc is maximum − potential increase (or minimum + potential decrease). Work through the arcs leaving each vertex in turn.",
     { potentials: { ...remaining } }),
   ];
   for (const g of groups) {
@@ -86,8 +86,8 @@ function solvePotentials(p: DecisionProblem): SolveStep[] {
       found[a.id] = flow[a.id];
       delete remaining[a.id];
       return mode === "cap"
-        ? `${a.id}: flow = capacity − forward = ${a.hi} − ${pots[a.id].fwd} = ${flow[a.id]}  (check: backward potential ${pots[a.id].bwd})`
-        : `${a.id}: flow = maximum − forward = ${a.hi} − ${pots[a.id].fwd} = ${flow[a.id]}  (check: ${a.lo} + ${pots[a.id].bwd})`;
+        ? `${a.id}: flow = capacity − potential increase = ${a.hi} − ${pots[a.id].fwd} = ${flow[a.id]}  (check: potential decrease ${pots[a.id].bwd})`
+        : `${a.id}: flow = maximum − potential increase = ${a.hi} − ${pots[a.id].fwd} = ${flow[a.id]}  (check: ${a.lo} + potential decrease ${pots[a.id].bwd})`;
     });
     steps.push(beat(net, `Arcs leaving ${g}\n${lines.join("\n")}`, {
       potentials: { ...remaining }, flow: { ...found }, focus: arcs.map((a) => a.id),
@@ -175,8 +175,8 @@ function describeSteps(net: FlowNet, flow: Flow, path: AugmentingPath): string {
   return path.steps.map((s, i) => {
     const a = arcs[s.arc];
     return s.dir === "fwd"
-      ? `${a.id} forward: ${a.hi} − ${flow[a.id]} = ${path.potentials[i]}`
-      : `${a.id} backward: ${flow[a.id]} − ${a.lo} = ${path.potentials[i]}`;
+      ? `${a.id}: potential increase ${a.hi} − ${flow[a.id]} = ${path.potentials[i]}`
+      : `${a.id} (against the arrow): potential decrease ${flow[a.id]} − ${a.lo} = ${path.potentials[i]}`;
   }).join("\n");
 }
 
@@ -189,12 +189,12 @@ function augmentBeats(net: FlowNet, flow: Flow, path: AugmentingPath, k: number 
   // picture clear, and are read back off at the end.
   const before = { potentials: potNumbers(net, flow), hideBounds: true };
   const steps: SolveStep[] = [
-    beat(net, `${tag}Label the potentials on every arc: forward is maximum − flow, backward is flow − minimum.`, before),
-    beat(net, `${tag}A flow-augmenting path: ${arrowPath(path)}.\nEvery step has potential above 0${hasBack ? " (a step against an arrow uses the backward potential)" : ""}.\n${describeSteps(net, flow, path)}`,
+    beat(net, `${tag}Label the potentials on every arc: potential increase = maximum − flow, potential decrease = flow − minimum.`, before),
+    beat(net, `${tag}A flow-augmenting path: ${arrowPath(path)}.\nEvery step has potential above 0${hasBack ? " (a step against an arrow uses the potential decrease)" : ""}.\n${describeSteps(net, flow, path)}`,
       { ...before, path: path.steps }),
     beat(net, `${tag}The flow can be increased by the smallest potential on the path.\nmin(${path.potentials.join(", ")}) = ${path.bottleneck}`,
       { ...before, path: path.steps }),
-    beat(net, `${tag}Update the potentials along the path: on each forward step the forward potential goes down by ${path.bottleneck} and the backward potential goes up by ${path.bottleneck}${hasBack ? "; on a backward step it is the other way round" : ""}. The flow value is now ${totalAfter}.`,
+    beat(net, `${tag}Update the potentials along the path: on each step along an arrow the potential increase goes down by ${path.bottleneck} and the potential decrease goes up by ${path.bottleneck}${hasBack ? "; on a step against an arrow it is the other way round" : ""}. The flow value is now ${totalAfter}.`,
       { potentials: potNumbers(net, after), hideBounds: true, path: path.steps }, { runningTotal: totalAfter, totalLabel: "Flow" }),
   ];
   return { steps, after };
@@ -207,13 +207,13 @@ function solveAugment(p: DecisionProblem): SolveStep[] {
   const before = flowValue(net, flow);
   const pots = { potentials: potNumbers(net, flow), hideBounds: true };
   const steps: SolveStep[] = [
-    beat(net, `The flow shown has value ${before}. Find every flow-augmenting path from S to T. First label the potentials on every arc: forward is ${d.mode === "cap" ? "capacity" : "maximum"} − flow, backward is flow${d.mode === "cap" ? "" : " − minimum"}.`,
+    beat(net, `The flow shown has value ${before}. Find every flow-augmenting path from S to T. First label the potentials on every arc: potential increase = ${d.mode === "cap" ? "capacity" : "maximum"} − flow, potential decrease = flow${d.mode === "cap" ? "" : " − minimum"}.`,
       pots, { runningTotal: before, totalLabel: "Flow" }),
   ];
   paths.forEach((path, i) => {
     const hasBack = path.steps.some((s) => s.dir === "back");
     steps.push(
-      beat(net, `Path ${i + 1}: ${arrowPath(path)}.\nEvery step has potential above 0${hasBack ? " (a step against an arrow uses the backward potential)" : ""}.\n${describeSteps(net, flow, path)}`,
+      beat(net, `Path ${i + 1}: ${arrowPath(path)}.\nEvery step has potential above 0${hasBack ? " (a step against an arrow uses the potential decrease)" : ""}.\n${describeSteps(net, flow, path)}`,
         { ...pots, path: path.steps }),
       beat(net, `Path ${i + 1}: the flow can be increased by the smallest potential on the path.\nmin(${path.potentials.join(", ")}) = ${path.bottleneck}`,
         { ...pots, path: path.steps }),

@@ -37,8 +37,8 @@ const INFO_SECTIONS: InfoSection[] = [
     content: [
       { label: "Find a flow", detail: "Find any feasible flow (min and max) or a flow of a stated value (capacity only). Many answers are valid." },
       { label: "Missing flow", detail: "One or two arcs have no flow shown. Use flow in = flow out at a vertex with exactly one unknown arc." },
-      { label: "Flow from potentials", detail: "The potential arrows are shown, not the flows. Flow = maximum − forward potential (or minimum + backward potential); then find the value of the flow." },
-      { label: "Augment flow", detail: "Find every flow-augmenting path (positive potentials all the way, backward steps included) and the increase along each." },
+      { label: "Flow from potentials", detail: "The potential arrows are shown, not the flows. Flow = maximum − potential increase (or minimum + potential decrease); then find the value of the flow." },
+      { label: "Augment flow", detail: "Find every flow-augmenting path — every route from S to T where each step has a positive potential, including steps that go back against an arrow — and the increase along each." },
       { label: "Cut values", detail: "Capacity of a cut = maximums of arcs going S side → T side, minus the minimums of arcs coming back." },
       { label: "Max flow & min cut", detail: "Augment until no path remains, then confirm with a cut of equal capacity." },
     ],
@@ -49,7 +49,8 @@ const INFO_SECTIONS: InfoSection[] = [
     content: [
       { label: "Capacity only / Min and max (top row)", detail: "Capacity only: every arc has one number. Min and max: every arc has a minimum and a maximum. This is the first choice; the question styles sit underneath it." },
       { label: "Levels", detail: "Levels are the size of the network: Level 1 has 4–5 vertices, Level 2 has 6–7 (the hexagon has a centre vertex that arcs can run into and out of), Level 3 has 8." },
-      { label: "Reverse", detail: "Every network has at least one arc pointing back against the flow; cut questions include an arc coming back across the cut, and the augmenting paths include a backward step." },
+      { label: "Reverse", detail: "Every network has at least one arc pointing back against the flow, so backward arcs and backward steps can be tested." },
+      { label: "Include a backward arc / step", detail: "On Cut values, require the cut to include an arc coming back across it. On Augment flow and Max flow, require a step that goes back against an arrow." },
     ],
   },
 ];
@@ -80,9 +81,11 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const tpl = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("tpl") ?? undefined : undefined;
   const style: InitialStyle = "find";
   const o = ctx?.options ?? {};
-  void o;
-  // the idea of reverse is part of every question: reversed arcs, cuts with a backward arc, a backward step in the paths
-  return generateFlowProblem(lv, sub, mode, tpl, style);
+  // reversed arcs are always in the network; a backward arc in a cut / a backward step in the paths are options
+  return generateFlowProblem(lv, sub, mode, tpl, style, {
+    cuts: o.cuts === "backward" ? "backward" : "any",
+    backSteps: o.backSteps === "on",
+  });
 }
 
 const renderCanvas = (p: DecisionProblem, step: SolveStep | undefined) => {
@@ -116,11 +119,11 @@ function FlowKey({ p }: { p: DecisionProblem }) {
       )}
       {showPotentials && <span style={item}>
         <svg width={34} height={16}><line x1={2} y1={8} x2={30} y2={8} stroke="#0891b2" strokeWidth={2} /><path d="M 32 8 L 25 4 L 25 12 z" fill="#0891b2" /></svg>
-        potential along the arc (room to add)
+        potential increase (along the arc)
       </span>}
       {showPotentials && <span style={item}>
         <svg width={34} height={16}><line x1={32} y1={8} x2={4} y2={8} stroke="#0891b2" strokeWidth={2} /><path d="M 2 8 L 9 4 L 9 12 z" fill="#0891b2" /></svg>
-        potential against it (room to take back)
+        potential decrease (against the arc)
       </span>}
     </div>
   );
@@ -148,6 +151,24 @@ export default function App() {
             choices: [
               { value: "cap", label: "Capacity only" },
               { value: "minmax", label: "Min and max" },
+            ],
+          },
+          {
+            key: "cuts",
+            label: "Cuts",
+            forSubTools: ["cutValue"],
+            choices: [
+              { value: "any", label: "Any cut" },
+              { value: "backward", label: "Include a backward arc" },
+            ],
+          },
+          {
+            key: "backSteps",
+            label: "Paths",
+            forSubTools: ["augment", "maxFlow"],
+            choices: [
+              { value: "off", label: "Any paths" },
+              { value: "on", label: "Include a backward step" },
             ],
           },
         ],
