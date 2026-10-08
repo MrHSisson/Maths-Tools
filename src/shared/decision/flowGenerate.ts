@@ -12,6 +12,7 @@ import {
   maxFlow, orderNodes, potentials, simpleForwardPaths,
   type ArcLabelPos, type Flow, type FlowArc, type FlowMode, type FlowNet, type FlowProblemData, type FlowSubTool, type InitialStyle,
 } from "./flow";
+import { cutGeometry } from "./cutCurve";
 import { FLOW_TEMPLATES, templatesForLevel, type FlowTemplate } from "./flowTemplates";
 import type { DecisionProblem } from "./types";
 
@@ -105,12 +106,26 @@ function okPotentials(inst: FlowInstance, mode: FlowMode, level: number): boolea
   return true;
 }
 
+/** A cut can only be set if it can be drawn as one unbroken dashed line (see cutCurve.ts). */
+const drawableCache = new Map<string, boolean>(); // the answer depends only on the layout + arc directions + the cut, never on the bounds
+const drawable = (net: FlowNet, sSide: string[]): boolean => {
+  const key = `${net.nodes.map((n) => n.id + n.x + "," + n.y).join(";")}|${net.arcs.map((a) => a.id).join(",")}|${sSide.join("")}`;
+  let ok = drawableCache.get(key);
+  if (ok === undefined) {
+    const r = cutCapacity(net, sSide);
+    ok = cutGeometry(net, sSide, [...r.forward, ...r.backward].map((a) => a.id)) !== null;
+    drawableCache.set(key, ok);
+  }
+  return ok;
+};
+
 function chooseCut(inst: FlowInstance, mode: FlowMode, level: number): string[] | null {
   const n = inst.net.nodes.length;
   const cands = allCuts(inst.net).filter((c) => {
     if (c.length < 2 || n - c.length < 2) return false;
     const r = cutCapacity(inst.net, c);
     if (r.capacity < 8 || r.capacity > 60) return false;
+    if (!drawable(inst.net, c)) return false;
     const backReal = mode === "minmax" ? r.backward.some((a) => a.lo > 0) : r.backward.length > 0;
     if (level === 1) return r.backward.length === 0;
     if (level === 2) return backReal;
@@ -135,6 +150,7 @@ function okMaxFlow(inst: FlowInstance, level: number): boolean {
   const nn = inst.net.nodes.length;
   if (run.value > 40) return false;
   const nontrivial = run.sSide.length >= 2 && run.sSide.length <= nn - 2;
+  if (!drawable(inst.net, run.sSide)) return false; // the min cut is drawn as one dashed line
   const back = run.augmentations.some((a) => hasBack(a.path.steps));
   if (level === 1) return k >= 1 && k <= 2;
   if (level === 2) return k >= 2 && k <= 3 && nontrivial;

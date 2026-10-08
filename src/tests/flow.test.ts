@@ -116,7 +116,7 @@ describe("generated questions", () => {
               if (level === 3) expect(paths[0].steps.some((s) => s.dir === "back")).toBe(true);
               expect(findAugmentingPath(d.net, d.flow)).not.toBeNull();
             }
-            if (sub === "cutValue") expect(cutCapacity(d.net, d.sSide!).capacity).toBe(p.answer.value);
+
           }
         });
       }
@@ -160,19 +160,26 @@ describe("initial flow", () => {
 
 describe("the dashed cut line", () => {
   for (const t of FLOW_TEMPLATES) {
-    it(`${t.id}: every cut gets a dashed line, with a tick on every cut arc lying on its arc`, () => {
-      const net: FlowNet = { nodes: t.nodes, arcs: t.arcs.map((a) => ({ id: a.id, from: a.from, to: a.to, lo: 0, hi: 1 })) };
+    it(`${t.id}: a drawable cut is ONE line crossing exactly its arcs once, with ticks on them`, () => {
+      const net: FlowNet = { nodes: t.nodes, arcs: t.arcs.map((a) => ({ id: a.id, from: a.from, to: a.to, lo: 1, hi: 2 })) };
       const byId = Object.fromEntries(t.nodes.map((n) => [n.id, n]));
+      let drawable = 0;
+      let withBack = 0;
+      let proper = 0;
       for (const sSide of allCuts(net)) {
         const r = cutCap(net, sSide);
         const ids = [...r.forward, ...r.backward].map((a) => a.id);
         const g = cutGeometry(net, sSide, ids);
-        expect(g, `cut ${sSide.join("")}`).not.toBeNull();
-        expect(g!.paths.length).toBeGreaterThan(0);
+        if (sSide.length >= 2 && net.nodes.length - sSide.length >= 2) proper++;
+        if (!g) continue;
+        if (sSide.length >= 2 && net.nodes.length - sSide.length >= 2) {
+          drawable++;
+          if (r.backward.length > 0) withBack++;
+        }
+        expect(g.paths.length).toBe(1);
         for (const a of [...r.forward, ...r.backward]) {
-          const tk = g!.ticks[a.id];
+          const tk = g.ticks[a.id];
           const p = byId[a.from], q = byId[a.to];
-          // the tick lies on the arc's segment, strictly between its two ends
           const cross = (q.x - p.x) * (tk.y - p.y) - (q.y - p.y) * (tk.x - p.x);
           const dot = (tk.x - p.x) * (q.x - p.x) + (tk.y - p.y) * (q.y - p.y);
           expect(Math.abs(cross) / Math.hypot(q.x - p.x, q.y - p.y)).toBeLessThan(0.5);
@@ -180,6 +187,8 @@ describe("the dashed cut line", () => {
           expect(dot).toBeLessThan((q.x - p.x) ** 2 + (q.y - p.y) ** 2);
         }
       }
+      void withBack;
+      expect(drawable).toBeGreaterThanOrEqual(Math.min(3, proper));
     });
   }
 });

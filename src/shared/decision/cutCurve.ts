@@ -39,6 +39,7 @@ export interface CutGeometry {
 const SIGMAS = [100, 80, 62, 48, 36];
 const STEP = 6;
 
+/** The single dashed line for a cut, or null when the cut cannot be drawn as one unbroken line that crosses exactly its arcs. */
 export function cutGeometry(net: FlowNet, sSide: string[], arcIds: string[], box: Box = flowBox(net)): CutGeometry | null {
   for (const sigma of SIGMAS) {
     const g = tryCut(net, sSide, arcIds, box, sigma);
@@ -126,7 +127,23 @@ function tryCut(net: FlowNet, sSide: string[], arcIds: string[], box: Box, SIGMA
   };
   for (const [id, nb] of adj) if (nb.length === 1) walk(id);
   for (const id of adj.keys()) walk(id);
-  if (paths.length === 0) return null;
+  // A proper cut line is ONE unbroken line that crosses every cut arc exactly once and no other arc.
+  if (paths.length !== 1) return null;
+  const byNode = new Map(net.nodes.map((n) => [n.id, n]));
+  const cutIds = new Set(arcIds);
+  for (const arc of net.arcs) {
+    const p = byNode.get(arc.from)!;
+    const q = byNode.get(arc.to)!;
+    let changes = 0;
+    let prev = field(p.x, p.y) > 0;
+    for (let k = 1; k <= 80; k++) {
+      const t = k / 80;
+      const cur = field(p.x + (q.x - p.x) * t, p.y + (q.y - p.y) * t) > 0;
+      if (cur !== prev) changes++;
+      prev = cur;
+    }
+    if (changes !== (cutIds.has(arc.id) ? 1 : 0)) return null;
+  }
 
   // where the line crosses each cut arc (first sign change from the tail)
   const byId = new Map(net.nodes.map((n) => [n.id, n]));

@@ -170,6 +170,7 @@ Whole-network beat: label all arcs of the same column together (S, A/B, C/D, E/F
   of subtracted; subtracting the *maximum* of the backward arcs (not the minimum); using flow instead of capacity.
 
 #### Display
+**The cut is ONE continuous dashed line** that crosses every cut arc exactly once and no other arc; a cut is only set (and a minimum cut only drawn) if such a line exists (`cutCurve.ts`).
 Cut drawn with the **S-side nodes shaded**, a **red tick on every arc crossing the cut**, and a dashed red
 curve through the ticks if that renders cleanly (v1 may omit the dashed curve — the shading and ticks are
 the contract). The cut's named set is stated under the diagram: "Cut {S, A, B} | {C, D, E, F, T}".

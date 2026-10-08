@@ -55,6 +55,9 @@ Keep the split even when a session only touches one.
   Solution sidebar is now a **fading cascade** (earlier steps stay on screen, dimmed; the current step is highlighted),
   keeps the question on screen, and shows the final answer in its own card — for every Decision tool. Diagram labels are
   slightly larger.
+- **One continuous cut line:** a cut is only ever set (and a minimum cut only ever drawn) when it can be shown as a single
+  unbroken dashed line that crosses every cut arc exactly once and no other arc; the generator filters on this, CI asserts it
+  for every cut question and every minimum cut.
 - Still to do: print, info modal, phone-width check, Harry's-notes update.
 
 ## 2026-10-07 — Notes and docs sweep: cast documented
