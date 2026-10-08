@@ -86,7 +86,7 @@ function tableBeats(c: Ctx): SolveStep[] {
 }
 
 // ── Phase 2: nearest neighbour ───────────────────────────────────────────────
-function nnBeats(c: Ctx, start: string, tag: string): { steps: SolveStep[]; total: number; tour: string[] } {
+function nnBeats(c: Ctx, start: string, tag: string, again = false): { steps: SolveStep[]; total: number; tour: string[] } {
   const { ld } = c;
   const table = fullTable(c);
   const nn = nearestNeighbour(ld.ids, ld.dist, start);
@@ -107,9 +107,11 @@ function nnBeats(c: Ctx, start: string, tag: string): { steps: SolveStep[]; tota
   };
 
   steps.push({
-    caption: c.practical || c.todo.length
-      ? `${tag ? `Now start at ${start}. ` : ""}${c.todo.length ? "The table is complete. " : ""}Apply nearest neighbour, starting at ${start}: cross out column ${start} and look along row ${start} for the smallest entry.`
-      : `Every pair is joined directly and no detour is ever shorter, so apply nearest neighbour straight away. Start at ${start}: cross out column ${start} and look along row ${start} for the smallest entry.`,
+    caption: again
+      ? `Now start again at ${start}: cross out column ${start} and look along row ${start} for the smallest entry.`
+      : c.practical || c.todo.length
+        ? `${c.todo.length ? "The table is complete. " : ""}Apply nearest neighbour, starting at ${start}: cross out column ${start} and look along row ${start} for the smallest entry.`
+        : `Every pair is joined directly and no detour is ever shorter, so apply nearest neighbour straight away. Start at ${start}: cross out column ${start} and look along row ${start} for the smallest entry.`,
     phase,
     route: [start],
     edgeStates: edgeStatesFor([]),
@@ -351,7 +353,7 @@ export function solveTsp(p: DecisionProblem): SolveStep[] {
   const starts = p.starts?.length ? p.starts : p.start ? [p.start] : [ld.ids[0]];
   let upper: number | undefined;
   if (kind === "tspNN" || kind === "tspBounds") {
-    const runs = starts.map((s) => nnBeats(c, s, starts.length > 1 ? ` (start ${s})` : ""));
+    const runs = starts.map((s, i) => nnBeats(c, s, starts.length > 1 ? ` (start ${s})` : "", i > 0));
     runs.forEach((r) => steps.push(...r.steps));
     upper = Math.min(...runs.map((r) => r.total));
     if (runs.length > 1) {

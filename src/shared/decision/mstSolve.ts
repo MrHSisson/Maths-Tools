@@ -25,7 +25,8 @@ function finalBeat(net: Network, tree: GEdge[], total: number, notNeeded: GEdge[
       `The tree has ${n - 1} edges (one fewer than the ${n} vertices) and joins every vertex, so it is a minimum spanning tree.\n` +
       `Edges in the order chosen: ${tree.map(edgeName).join(", ")}\n` +
       `Total weight = ${sumText(tree)}` +
-      (notNeeded.length ? `\n${notNeeded.map(edgeName).join(", ")} ${notNeeded.length > 1 ? "were" : "was"} never needed.` : ""),
+      (notNeeded.length ? `\n${notNeeded.map(edgeName).join(", ")} ${notNeeded.length > 1 ? "were" : "was"} never needed.` : "") +
+      (start ? `\nEvery edge chosen touched the tree already built, so the tree grew outwards from ${start}. Kruskal's algorithm would give this same tree (every weight is different), but the edges would be added in a different order.` : ""),
     phase: "Minimum spanning tree",
     edgeStates: states,
     edgeOrder: orderBadges(tree),

@@ -28,6 +28,16 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-09 — Decision graph tools: audit, rebuild, Augment flow working
+
+- **Minimum Spanning Tree** rebuilt (dev-gated): Kruskal's, Prim's on the network and Prim's on a table; three levels (graph size); procedural crossing-free networks with all-different weights; named cycles; numbered chosen edges; sorted-edge and candidate chip lists; Setting and Ask-for options.
+- **Travelling Salesperson** rebuilt (dev-gated): nearest neighbour (one or two starts), deleted-vertex lower bound, both bounds with the interval, table of least distances. Complete networks use different weights and are not drawn to scale; vertex counts balanced.
+- **Network Flows (live): Augment flow working** — potentials labelled once and read, not recalculated; after each path the potentials update (changed arcs listed) and the next path is found on them; two or three augmentations, ending with the new flow value. Max flow shares the same rounds. Other flow questions untouched.
+- **Shell:** step boxes no longer clip (padding, newest step shown from its top, smaller question on short screens, wrapping); zoom pill never covers a vertex; matrix scrolls sideways; chips card (also in fullscreen); per-problem legend / matrix mode; per-sub-tool level labels.
+- **Fix:** `generateRandomNetwork` could return a disconnected network (a spanning-tree edge refused by the degree cap).
+- **CI:** independent references for Prim / Kruskal order, the deleted-vertex bound (exhaustive) and the optimal tour (permutations); brute-force spanning-tree test; hand-worked K5.
+- Full audit, AQA check and next steps: `docs/audits/DECISION_TOOLS_AUDIT_2026-10-09.md`.
+
 ## 2026-10-08 — Network Flows goes live
 
 - Removed `enabled: false` from the `network-flows` registry entry: the tool now shows on the landing page (Decision Mathematics) for everyone. Other Decision tools (TSP, network sandbox) keep their own gates.

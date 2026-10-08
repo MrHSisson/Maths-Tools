@@ -204,6 +204,13 @@ it), never two moves at once.
 
 ---
 
+## Shared pieces added in the 2026-10-09 audit
+
+`SolveStep` gained `edgeOrder` (numbers on chosen edges), `matrixOrder` / `matrixCrossed` (Prim on a table), `list` (a titled chip row) and the `added` edge
+state / `deleted` vertex role; `DecisionProblem` gained `kind`, `deleted`, `starts`, `bounds`, `matrixMode`, `legend`, `vertexOnlyQuestion`;
+`levelLabels` may be per sub-tool; `DecisionProblemExport.subTools` may carry full `{ subTool, options }` contexts. Per-tool maths: `mst.ts`, `tspBounds.ts`;
+generators `mst.ts` (`generateMstNetwork`), `tspGenerate.ts`; working `mstSolve.ts`, `tspSolve.ts`. See `docs/audits/DECISION_TOOLS_AUDIT_2026-10-09.md`.
+
 ## Shell UX — revised 2026-10-08 (supersedes the fixed two-pane layout below)
 
 `DecisionShell` now follows the standard tool shell's page (nav bar · title · tool tabs · control bar · content card) but is built for network questions: there

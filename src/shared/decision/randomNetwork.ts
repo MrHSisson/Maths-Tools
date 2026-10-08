@@ -144,8 +144,10 @@ export function generateRandomNetwork(opts: RandomNetworkOptions): Network {
     !crossesAnyEdge(pos, edges, a, b) &&
     !nodeOccludesEdge(pos, a, b);
 
-  const addEdge = (a: number, b: number): boolean => {
-    if (a === b || degrees[a] >= maxDegree || degrees[b] >= maxDegree || edgeSet.has(key(a, b))) return false;
+  // `force` skips the degree cap: the spanning-tree edges must ALWAYS go in (a Euclidean MST can give a vertex five or six neighbours;
+  // refusing one would leave the network disconnected). The cap only limits the optional extra edges.
+  const addEdge = (a: number, b: number, force = false): boolean => {
+    if (a === b || edgeSet.has(key(a, b)) || (!force && (degrees[a] >= maxDegree || degrees[b] >= maxDegree))) return false;
     edgeSet.add(key(a, b));
     edges.push({ a, b });
     degrees[a]++;
@@ -174,7 +176,7 @@ export function generateRandomNetwork(opts: RandomNetworkOptions): Network {
         if (d < bestDist) { bestDist = d; bestSrc = src; bestDst = dst; }
       }
     }
-    addEdge(bestSrc, bestDst);
+    addEdge(bestSrc, bestDst, true);
     inTree.add(bestDst);
     remaining.delete(bestDst);
   }

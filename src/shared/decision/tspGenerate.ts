@@ -57,17 +57,21 @@ export function expandRoute(ld: LeastDistances, tour: string[]): string[] {
 }
 
 // ── the networks ─────────────────────────────────────────────────────────────
-function completeNetwork(sizes: number[]): Network {
-  for (;;) {
-    const net = completeNetworkLayout(pick(sizes));
-    for (const e of net.edges) e.weight = scaledWeight(net, e.from, e.to);
-    if (pairsToComplete(leastDistances(net)).length === 0) return net; // the triangle inequality must already hold
-  }
+// The vertex count is chosen FIRST and held while a network is searched for: otherwise the easier sizes win the retry loop
+// (a 4-vertex complete network satisfies the triangle inequality far more often than a 6-vertex one) and the larger ones almost never appear.
+// A complete network's weights are DIFFERENT whole numbers from 16 to 31. Any two of them add to more than the largest, so the
+// triangle inequality holds strictly (no table entry ever needs replacing) and no two distances tie (so no nearest-neighbour choice and
+// no spanning tree is ambiguous). They are deliberately NOT scaled to the drawing: drawn to scale, a ring of five or six towns makes the
+// optimal tour, the nearest-neighbour tour and the lower bound all coincide, and there is no interval to find.
+function completeNetwork(n: number): Network {
+  const net = completeNetworkLayout(n);
+  const pool = shuffle(Array.from({ length: 16 }, (_, i) => 16 + i));
+  net.edges.forEach((e, i) => (e.weight = pool[i]));
+  return net;
 }
 
-function practicalNetwork(sizes: number[], shortcut: boolean, minMissing: number): Network {
-  for (;;) {
-    const n = pick(sizes);
+function practicalNetwork(n: number, shortcut: boolean, minMissing: number, tries = 600): Network | null {
+  for (let t = 0; t < tries; t++) {
     const net = generateRandomNetwork({ nodeCount: n, weightRange: [1, 1], maxDegree: 4 });
     const missing = (n * (n - 1)) / 2 - net.edges.length;
     if (missing < minMissing || missing > 6) continue; // enough to complete, not a slog
@@ -87,6 +91,7 @@ function practicalNetwork(sizes: number[], shortcut: boolean, minMissing: number
     for (const e of net.edges) e.labelAt = labels[e.id];
     return net;
   }
+  return null;
 }
 
 const SIZES: Record<TspKind, number[]> = {
@@ -108,8 +113,9 @@ const SETTINGS = [
 export function generateTsp(level: 1 | 2 | 3, kind: TspKind, opts: TspGenOptions): DecisionProblem {
   for (let attempt = 0; attempt < 400; attempt++) {
     // the table question is about incomplete networks, so even Level 1 is a (small) practical network
-    const network =
-      level === 1 && kind !== "tspTable" ? completeNetwork(SIZES[kind]) : practicalNetwork(SIZES[kind].filter((n) => level < 3 || n >= 5), level === 3, kind === "tspTable" ? 2 : level === 1 ? 1 : 2);
+    const n = pick(SIZES[kind].filter((m) => level < 3 || m >= 5));
+    const network = level === 1 && kind !== "tspTable" ? completeNetwork(n) : practicalNetwork(n, level === 3, 2);
+    if (!network) continue;
     const ld = leastDistances(network);
     const todo = pairsToComplete(ld);
     const practical = todo.length > 0;
@@ -137,7 +143,9 @@ export function generateTsp(level: 1 | 2 | 3, kind: TspKind, opts: TspGenOptions
       starts = [...starts]; // the first is the question's start; the best is recorded in answer.tour
     }
     if (kind === "tspLower" || kind === "tspBounds") {
-      const cands = shuffle(ld.ids).filter((v) => lowerBound(ld, v).unique && (upper === undefined || lowerBound(ld, v).lower < upper));
+      // for both bounds the interval must be worth stating: not a sliver (a few units AND a few percent wide)
+      const wide = (l: number) => upper === undefined || upper - l >= Math.max(3, Math.round(upper * 0.08));
+      const cands = shuffle(ld.ids).filter((v) => lowerBound(ld, v).unique && wide(lowerBound(ld, v).lower));
       if (!cands.length) continue;
       deleted = cands[0];
       lower = lowerBound(ld, deleted).lower;
@@ -165,6 +173,7 @@ function buildProblem(kind: TspKind, network: Network, ld: LeastDistances, b: Bu
   const lead = inContext
     ? `${ctx.who} must visit each of ${network.nodes.length} ${ctx.what}, travelling ${b.practical ? "along the roads shown (the weights are distances in " + ctx.unit + ")" : "directly between any two of them (the weights are distances in " + ctx.unit + ")"}, and return to the start. `
     : "";
+  const scale = !b.practical && kind !== "tspTable" ? " The diagram is not drawn to scale." : "";
   const tableFirst = b.practical && kind !== "tspTable" ? "Complete a table of least distances, then " : "";
   const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
   const pb = inContext ? "travelling salesperson problem" : "travelling salesperson problem";
@@ -183,7 +192,7 @@ function buildProblem(kind: TspKind, network: Network, ld: LeastDistances, b: Bu
     const how = s2
       ? `use the nearest neighbour algorithm starting at ${s1}, and again starting at ${s2}, to find the better upper bound for the ${pb}`
       : `use the nearest neighbour algorithm starting at ${s1} to find an upper bound for the ${pb}`;
-    prompt = lead + cap(tableFirst ? tableFirst + how : how) + ".";
+    prompt = lead + cap(tableFirst ? tableFirst + how : how) + "." + scale;
     const t = b.tour!;
     const route = expandRoute(ld, t);
     text = s2
@@ -191,13 +200,13 @@ function buildProblem(kind: TspKind, network: Network, ld: LeastDistances, b: Bu
       : `Tour ${t.join(" → ")}, length ${b.upper} (an upper bound).` + (b.practical && route.join("") !== t.join("") ? ` In the original network: ${route.join("–")}.` : "");
     value = b.upper;
   } else if (kind === "tspLower") {
-    prompt = `${lead}${cap(tableFirst)}${tableFirst ? "find" : "Find"} a lower bound for the ${pb} by deleting vertex ${b.deleted}.`;
+    prompt = `${lead}${cap(tableFirst)}${tableFirst ? "find" : "Find"} a lower bound for the ${pb} by deleting vertex ${b.deleted}.${scale}`;
     const lbr = lowerBound(ld, b.deleted!);
     text = `Lower bound ${b.lower}: tree ${lbr.mst.map((e) => e.a + e.b).join(", ")} = ${lbr.mstTotal}, plus ${b.deleted}${lbr.links[0].to} and ${b.deleted}${lbr.links[1].to} = ${lbr.linksTotal}.`;
     value = b.lower;
   } else {
     const s = b.starts[0];
-    prompt = `${lead}${cap(tableFirst)}${tableFirst ? "use" : "Use"} the nearest neighbour algorithm starting at ${s} to find an upper bound, and delete vertex ${b.deleted} to find a lower bound, for the ${pb}. Write down the interval that contains the length of the optimal tour.`;
+    prompt = `${lead}${cap(tableFirst)}${tableFirst ? "use" : "Use"} the nearest neighbour algorithm starting at ${s} to find an upper bound, and delete vertex ${b.deleted} to find a lower bound, for the ${pb}. Write down the interval that contains the length of the optimal tour.${scale}`;
     text = `${b.lower} ≤ optimal tour ≤ ${b.upper} (lower bound ${b.lower}; upper bound ${b.upper}).`;
     value = b.upper;
   }

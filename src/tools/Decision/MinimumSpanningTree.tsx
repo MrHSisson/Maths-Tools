@@ -91,7 +91,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const wantOrder = ask === "both" || ask === "order";
   const wantWeight = ask === "both" || ask === "weight";
   const how =
-    kind === "kruskal" ? "Kruskal's algorithm" : kind === "primNetwork" ? `Prim's algorithm, starting at ${start}` : `Prim's algorithm on the table, starting at ${start}`;
+    kind === "kruskal" ? "Kruskal's algorithm" : kind === "primNetwork" ? `Prim's algorithm, starting at ${start},` : `Prim's algorithm on the table, starting at ${start},`;
   const asks = [
     wantOrder ? "State the order in which the edges are added" : "",
     wantWeight ? (inContext ? `${wantOrder ? "find" : "Find"} the minimum total ${c.need} needed, in ${c.unit}` : `${wantOrder ? "find" : "Find"} the total weight of the tree`) : "",
