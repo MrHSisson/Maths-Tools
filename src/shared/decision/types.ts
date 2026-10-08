@@ -122,6 +122,8 @@ export interface ShellOption {
   key: string;
   label: string;
   choices: Array<{ value: string; label: string }>;
+  /** shown as the top tier of big tabs above the sub-tool tabs, not inside the Question Options popover */
+  top?: boolean;
   /** only show this option on these sub-tool tabs (default: all) */
   forSubTools?: string[];
   /** the value this option takes for a level (reset whenever the level changes) */

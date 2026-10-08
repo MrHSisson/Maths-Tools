@@ -75,7 +75,8 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     setShowAll(false);
     setStepIdx(Math.max(-1, Math.min(maxBeat, b)));
   };
-  const visibleOptions = (config.options ?? []).filter((o) => !o.forSubTools || o.forSubTools.includes(subTool));
+  const topOptions = (config.options ?? []).filter((o) => o.top);
+  const visibleOptions = (config.options ?? []).filter((o) => !o.top && (!o.forSubTools || o.forSubTools.includes(subTool)));
   const qBg = getQuestionBg(colorScheme);
 
   const newQuestion = (lv = level, sub = subTool, opts = options) => {
@@ -339,6 +340,27 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       <div className="min-h-screen p-3 sm:px-8 sm:py-5" style={{ backgroundColor: "#f5f3f0" }}>
         <div className="max-w-[1500px] mx-auto">
           <h1 className="text-3xl sm:text-4xl font-bold text-center mb-3 sm:mb-4" style={{ color: "#000" }}>{config.pageTitle}</h1>
+          {/* TOP TIER: the big either/or (e.g. capacity only ⇄ min and max) — it changes the whole kind of network */}
+          {topOptions.map((o) => (
+            <div key={o.key} className="flex justify-center mb-4">
+              <div className="inline-flex gap-1 rounded-2xl bg-white p-1.5 shadow-lg">
+                {o.choices.map((c) => (
+                  <button
+                    key={c.value}
+                    onClick={() => {
+                      const opts = { ...options, [o.key]: c.value };
+                      setOptions(opts);
+                      newQuestion(level, subTool, opts);
+                    }}
+                    className={`px-5 sm:px-10 py-2.5 sm:py-3 rounded-xl font-bold text-base sm:text-xl transition-colors ${options[o.key] === c.value ? "bg-blue-900 text-white" : "text-gray-700 hover:bg-gray-100"}`}
+                  >
+                    {c.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+          {/* SECOND TIER: the question styles */}
           {(config.subTools?.length ?? 0) > 1 && (
             <>
               <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-4">

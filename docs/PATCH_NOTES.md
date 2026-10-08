@@ -89,6 +89,10 @@ Keep the split even when a session only touches one.
   next ▶ · the dot strip) moved out of the question control bar to the foot of the Answer section, whose working area has a fixed
   height so they never move; the control bar keeps only level, Question Options and New Question. On the diagram the two
   potential arrows now sit on either side of the arc — the forward one beside it, the backward one on the opposite side.
+- **Two tiers (same day):** Capacity only ⇄ Min and max is now the **top tier** (big either/or tabs above everything), with the
+  question styles beneath it — Flow from paths, Find a flow, Potentials, Cut values, Augment flow, Max flow & min cut (Initial
+  flow's two styles are separate tabs now). It is no longer in Question Options, which keeps only the small dials (Arcs, Cuts,
+  Paths). `ShellOption.top` puts any option in the top tier.
 - Phone width checked (stacks, no sideways scroll; the graph is sticky only on wide screens). Still to do: Harry's-notes update.
 
 ## 2026-10-07 — Notes and docs sweep: cast documented

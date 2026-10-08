@@ -35,7 +35,8 @@ const INFO_SECTIONS: InfoSection[] = [
     title: "Question types",
     icon: "🧭",
     content: [
-      { label: "Initial flow", detail: "Write the flow on every arc from given paths, or find any feasible flow. Many answers are valid." },
+      { label: "Flow from paths", detail: "Write the flow on every arc from the given paths (flows add where paths share an arc)." },
+      { label: "Find a flow", detail: "Find any feasible flow (min and max) or a flow of a stated value (capacity only). Many answers are valid." },
       { label: "Potentials", detail: "Forward potential = maximum − flow; backward potential = flow − minimum." },
       { label: "Cut values", detail: "Capacity of a cut = maximums of arcs going S side → T side, minus the minimums of arcs coming back." },
       { label: "Augment flow", detail: "Find every flow-augmenting path (positive potentials all the way) and the increase along each." },
@@ -46,7 +47,7 @@ const INFO_SECTIONS: InfoSection[] = [
     title: "Question Options",
     icon: "⚙️",
     content: [
-      { label: "Network", detail: "Capacity only (every arc has one number) or Min and max (every arc has a minimum and a maximum)." },
+      { label: "Capacity only / Min and max (top row)", detail: "Capacity only: every arc has one number. Min and max: every arc has a minimum and a maximum. This is the first choice; the question styles sit underneath it." },
       { label: "Levels", detail: "Levels are the size of the network: Level 1 has 4–5 vertices, Level 2 has 6–7 (the hexagon has a centre vertex that arcs can run into and out of), Level 3 has 8." },
       { label: "Arcs, Cuts, Paths", detail: "Reverse some arcs, restrict cuts to forward arcs only, or require a backward step in the augmenting paths." },
     ],
@@ -54,7 +55,8 @@ const INFO_SECTIONS: InfoSection[] = [
 ];
 
 const SUB_TOOLS = [
-  { key: "initialFlow", label: "Initial flow" },
+  { key: "initialPaths", label: "Flow from paths" },
+  { key: "initialFind", label: "Find a flow" },
   { key: "potentials", label: "Potentials" },
   { key: "cutValue", label: "Cut values" },
   { key: "augment", label: "Augment flow" },
@@ -71,10 +73,12 @@ const INSTRUCTION: Record<string, string> = {
 
 function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const lv = Math.min(3, Math.max(1, level)) as 1 | 2 | 3;
-  const sub = (ctx?.subTool ?? "initialFlow") as FlowSubTool;
+  // "Flow from paths" and "Find a flow" are the two styles of the Initial flow question
+  const key = ctx?.subTool ?? "initialPaths";
+  const sub = (key === "initialPaths" || key === "initialFind" ? "initialFlow" : key) as FlowSubTool;
   const mode = (ctx?.options.bounds ?? "cap") as FlowMode;
   const tpl = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("tpl") ?? undefined : undefined;
-  const style = (ctx?.options.style ?? "paths") as InitialStyle;
+  const style: InitialStyle = key === "initialFind" ? "find" : "paths";
   const o = ctx?.options ?? {};
   return generateFlowProblem(lv, sub, mode, tpl, style, {
     arcs: o.arcs === "reversed" ? "reversed" : "standard",
@@ -135,6 +139,7 @@ export default function App() {
           {
             key: "bounds",
             label: "Network",
+            top: true,
             choices: [
               { value: "cap", label: "Capacity only" },
               { value: "minmax", label: "Min and max" },
@@ -146,15 +151,6 @@ export default function App() {
             choices: [
               { value: "standard", label: "Standard directions" },
               { value: "reversed", label: "Some reversed" },
-            ],
-          },
-          {
-            key: "style",
-            label: "Question",
-            forSubTools: ["initialFlow"],
-            choices: [
-              { value: "paths", label: "Given paths" },
-              { value: "find", label: "Find a flow" },
             ],
           },
           {
