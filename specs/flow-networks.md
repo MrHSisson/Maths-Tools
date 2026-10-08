@@ -2,7 +2,7 @@
 
 > **Latest direction (2026-10-08) — read this first.** The sections below were written before these decisions and are superseded where they disagree:
 > - **Levels are graph size** (1 = 4–5 vertices, 2 = 6–7, 3 = 8). Capacity only / Min and max is chosen only by the **Network** selector (default capacity only).
-> - **Selectors, not levels, carry difficulty:** Arcs (some reversed), Cuts (forward arcs only), Paths (include a backward step), Initial flow question style.
+> - **Top tier: Capacity only ⇄ Min and max; beneath it the question styles** (Flow from paths, Find a flow, Potentials, Cut values, Augment flow, Max flow & min cut). **Reverse is always part of the question:** every network has a reversed arc, every cut question includes an arc coming back across the cut, and every augment / max-flow question uses a backward step.
 > - **Augment flow** asks for all (two or three) flow-augmenting paths. **Cuts** are one continuous dashed line, no ticks.
 > - **Network variations:** optional/reversible arcs per template; the Hexagon has a hub (centre vertex fed by any of S, A, B; feeding any of D, E, T).
 > - **No worksheets, print or Whiteboard.** Every question is worked through step by step (see `docs/architecture/DECISION_SHELL_PLAN.md` → Shell UX).

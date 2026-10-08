@@ -115,8 +115,8 @@ describe("generated questions", () => {
               const paths = allAugmentingPaths(d.net, d.flow);
               expect(paths.length).toBeGreaterThanOrEqual(2);
               expect(paths.length).toBeLessThanOrEqual(3);
-              // by default (no "backward step" selector) every path uses forward steps only
-              expect(paths.every((q) => q.steps.every((s) => s.dir === "fwd"))).toBe(true);
+              // the idea of reverse is part of every augment question: some path has a backward step
+              expect(paths.some((q) => q.steps.some((s) => s.dir === "back"))).toBe(true);
               expect(findAugmentingPath(d.net, d.flow)).not.toBeNull();
             }
 

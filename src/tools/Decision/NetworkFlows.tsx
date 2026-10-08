@@ -49,7 +49,7 @@ const INFO_SECTIONS: InfoSection[] = [
     content: [
       { label: "Capacity only / Min and max (top row)", detail: "Capacity only: every arc has one number. Min and max: every arc has a minimum and a maximum. This is the first choice; the question styles sit underneath it." },
       { label: "Levels", detail: "Levels are the size of the network: Level 1 has 4–5 vertices, Level 2 has 6–7 (the hexagon has a centre vertex that arcs can run into and out of), Level 3 has 8." },
-      { label: "Arcs, Cuts, Paths", detail: "Reverse some arcs, restrict cuts to forward arcs only, or require a backward step in the augmenting paths." },
+      { label: "Reverse", detail: "Every network has at least one arc pointing back against the flow; cut questions include an arc coming back across the cut, and the augmenting paths include a backward step." },
     ],
   },
 ];
@@ -80,11 +80,9 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const tpl = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("tpl") ?? undefined : undefined;
   const style: InitialStyle = key === "initialFind" ? "find" : "paths";
   const o = ctx?.options ?? {};
-  return generateFlowProblem(lv, sub, mode, tpl, style, {
-    arcs: o.arcs === "reversed" ? "reversed" : "standard",
-    cuts: o.cuts === "forward" ? "forward" : "any",
-    backSteps: o.backSteps === "on",
-  });
+  void o;
+  // the idea of reverse is part of every question: reversed arcs, cuts with a backward arc, a backward step in the paths
+  return generateFlowProblem(lv, sub, mode, tpl, style);
 }
 
 const renderCanvas = (p: DecisionProblem, step: SolveStep | undefined) => {
@@ -143,32 +141,6 @@ export default function App() {
             choices: [
               { value: "cap", label: "Capacity only" },
               { value: "minmax", label: "Min and max" },
-            ],
-          },
-          {
-            key: "arcs",
-            label: "Arcs",
-            choices: [
-              { value: "standard", label: "Standard directions" },
-              { value: "reversed", label: "Some reversed" },
-            ],
-          },
-          {
-            key: "cuts",
-            label: "Cuts",
-            forSubTools: ["cutValue"],
-            choices: [
-              { value: "any", label: "Any cut" },
-              { value: "forward", label: "Forward arcs only" },
-            ],
-          },
-          {
-            key: "backSteps",
-            label: "Paths",
-            forSubTools: ["augment", "maxFlow"],
-            choices: [
-              { value: "off", label: "Forward steps only" },
-              { value: "on", label: "Include a backward step" },
             ],
           },
         ],

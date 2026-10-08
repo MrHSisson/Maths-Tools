@@ -93,6 +93,10 @@ Keep the split even when a session only touches one.
   question styles beneath it — Flow from paths, Find a flow, Potentials, Cut values, Augment flow, Max flow & min cut (Initial
   flow's two styles are separate tabs now). It is no longer in Question Options, which keeps only the small dials (Arcs, Cuts,
   Paths). `ShellOption.top` puts any option in the top tier.
+- **Reverse is part of every question (same day):** the Arcs / Cuts / Paths options are gone — every network now has at least one arc
+  pointing back against the flow (reversed rungs, hub arcs, cross arcs), every cut question includes an arc coming back across the
+  cut, and every augment / max-flow question uses a backward step. Question Options is now just the top-tier Network switch. Cut
+  labels sit on the opposite side of the arc from the flow circle.
 - Phone width checked (stacks, no sideways scroll; the graph is sticky only on wide screens). Still to do: Harry's-notes update.
 
 ## 2026-10-07 — Notes and docs sweep: cast documented

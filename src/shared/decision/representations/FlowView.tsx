@@ -88,6 +88,10 @@ export default function FlowView({ net, mode, view, labelPos, qIndex, background
     const fwdA = arrowAt(19, 1);
     const bwdA = arrowAt(-19, -1);
     const tick = cut?.ticks[a.id] ?? at(0.5);
+    // the cut label sits on the side of the arc opposite the circled flow, so the two never meet
+    let cnx = -uy;
+    let cny = ux;
+    if (cny > 0 || (cny === 0 && cnx < 0)) { cnx = -cnx; cny = -cny; }
     const fwdPot = view.potentials?.[a.id]?.fwd;
     const bwdPot = view.potentials?.[a.id]?.bwd;
     return (
@@ -129,7 +133,7 @@ export default function FlowView({ net, mode, view, labelPos, qIndex, background
         {crossing && (
           <g>
             {view.cutLabels && (
-              <text x={tick.x} y={tick.y - 22} textAnchor="middle" fontSize={15} fontWeight={800} fill={RED} stroke="#ffffff" strokeWidth={4} paintOrder="stroke">
+              <text x={tick.x - cnx * 26} y={tick.y - cny * 26} textAnchor="middle" dominantBaseline="central" fontSize={15} fontWeight={800} fill={RED} stroke="#ffffff" strokeWidth={4} paintOrder="stroke">
                 {crossing === "fwd" ? `+${a.hi}` : mode === "cap" ? "back" : `−${a.lo}`}
               </text>
             )}

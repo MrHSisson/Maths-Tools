@@ -29,10 +29,14 @@ const shuffle = <T,>(xs: T[]): T[] => {
 
 /** Optional difficulty dials, all chosen by the teacher (never by the level — levels are graph size). */
 export interface FlowGenOptions {
-  arcs?: "standard" | "reversed"; // reversed: up to two arcs point the other way
-  cuts?: "any" | "forward"; // cutValue: forward-only cuts, or any drawable cut
-  backSteps?: boolean; // augment / maxFlow: the working must use a backward step
+  /** reversed: at least one (up to two) arcs point against the left-to-right flow. DEFAULT — the idea of reverse is part of every question. */
+  arcs?: "standard" | "reversed";
+  /** cutValue — "backward": the cut includes an arc coming back across it (DEFAULT); "forward": none do; "any": either. */
+  cuts?: "backward" | "forward" | "any";
+  /** augment / maxFlow: the working uses a backward step (DEFAULT). */
+  backSteps?: boolean;
 }
+export const DEFAULT_GEN: Required<FlowGenOptions> = { arcs: "reversed", cuts: "backward", backSteps: true };
 
 // ── Sample a network + feasible flow from a template ─────────────────────────
 export interface FlowInstance {
@@ -47,7 +51,12 @@ export function sampleInstance(tpl: FlowTemplate, mode: FlowMode, reversed: bool
   // 1. arcs — optional arcs come and go; a reversed question flips up to two flippable arcs (the network must stay acyclic)
   const present = tpl.arcs.filter((a) => !a.optional || Math.random() < 0.65);
   const flips = new Set<string>();
-  if (reversed) for (const a of shuffle(present.filter((x) => x.flippable)).slice(0, 2)) if (Math.random() < 0.6) flips.add(a.id);
+  if (reversed) {
+    // a reversed question has at least one arc pointing back against the flow (and sometimes two)
+    const cand = shuffle(present.filter((x) => x.flippable));
+    if (cand.length === 0) return null;
+    for (const a of cand.slice(0, ri(1, Math.min(2, cand.length)))) flips.add(a.id);
+  }
   const arcs: Array<FlowArc & { _pos: ArcLabelPos }> = present.map((a) => {
     const flipped = flips.has(a.id);
     const from = flipped ? a.to : a.from;
@@ -155,13 +164,13 @@ const drawable = (net: FlowNet, sSide: string[]): boolean => {
   return ok;
 };
 
-function chooseCut(inst: FlowInstance, cuts: "any" | "forward"): string[] | null {
+function chooseCut(inst: FlowInstance, cuts: "any" | "forward" | "backward"): string[] | null {
   const n = inst.net.nodes.length;
   const cheap = allCuts(inst.net).filter((c) => {
     if (c.length < 2 || n - c.length < 2) return false;
     const r = cutCapacity(inst.net, c);
     if (r.capacity < 8 || r.capacity > 60) return false;
-    return cuts === "any" || r.backward.length === 0;
+    return cuts === "any" || (cuts === "forward" ? r.backward.length === 0 : r.backward.length > 0);
   });
   // the drawability test is the expensive one, so try the candidates in random order and stop at the first that passes
   for (const c of shuffle(cheap)) if (drawable(inst.net, c)) return c;
@@ -217,8 +226,9 @@ function okInitial(inst: FlowInstance, level: number, mode: FlowMode, style: Ini
 // ── The public generator ─────────────────────────────────────────────────────
 /** `forceTemplate` pins the network style (used by the `?tpl=` dev link to check a layout). */
 export function generateFlowProblem(
-  level: 1 | 2 | 3, subTool: FlowSubTool, mode: FlowMode, forceTemplate?: string, style: InitialStyle = defaultStyle(), opts: FlowGenOptions = {},
+  level: 1 | 2 | 3, subTool: FlowSubTool, mode: FlowMode, forceTemplate?: string, style: InitialStyle = defaultStyle(), options: FlowGenOptions = {},
 ): DecisionProblem {
+  const opts = { ...DEFAULT_GEN, ...options };
   for (let attempt = 0; attempt < 20000; attempt++) {
     // a pinned template is a dev aid: if it cannot meet this level's constraints (e.g. Diamond at Level 3), stop pinning
     const pinned = attempt < 4000 ? FLOW_TEMPLATES.find((t) => t.id === forceTemplate) : undefined;
@@ -242,12 +252,12 @@ export function generateFlowProblem(
     }
     if (subTool === "potentials" && !okPotentials(inst, mode, level)) continue;
     if (subTool === "cutValue") {
-      const c = chooseCut(inst, opts.cuts ?? "any");
+      const c = chooseCut(inst, opts.cuts);
       if (!c) continue;
       sSide = c;
     }
-    if (subTool === "augment" && !okAugment(inst, !!opts.backSteps)) continue;
-    if (subTool === "maxFlow" && !okMaxFlow(inst, level, !!opts.backSteps)) continue;
+    if (subTool === "augment" && !okAugment(inst, opts.backSteps)) continue;
+    if (subTool === "maxFlow" && !okMaxFlow(inst, level, opts.backSteps)) continue;
 
     return toProblem(level, subTool, mode, tpl, initial ? { ...inst, flow: initial.flow } : inst, sSide, style, initial?.target);
   }
