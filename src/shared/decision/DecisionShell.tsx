@@ -64,6 +64,15 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const [showAll, setShowAll] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const resumeAt = useRef(-1); // where the class was before Show all
+  // Phone layout — the same ≤640px switch ToolShell uses: compact header, one settings banner + drawer instead of the tab rows and control bar
+  const [narrow, setNarrow] = useState(() => typeof window !== "undefined" && window.matchMedia("(max-width: 640px)").matches);
+  const [drawer, setDrawer] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 640px)");
+    const on = () => setNarrow(mq.matches);
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
   const [menuOpen, setMenuOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [colorScheme, setColorScheme] = useState("default");
@@ -138,13 +147,13 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const navBar = (
     <div className="bg-blue-900 shadow-lg">
       <div className="max-w-[1500px] mx-auto px-4 sm:px-8 py-2 sm:py-3 flex justify-between items-center">
-        <button onClick={() => { window.location.href = "/"; }} className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors">
-          <Home size={24} />
-          <span className="font-semibold text-lg">Home</span>
+        <button onClick={() => { window.location.href = "/"; }} className="flex items-center gap-1.5 sm:gap-2 text-white hover:bg-blue-800 px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg transition-colors">
+          <Home size={narrow ? 18 : 24} />
+          <span className={`font-semibold ${narrow ? "text-sm" : "text-lg"}`}>Home</span>
         </button>
         <div className="relative">
-          <button onClick={() => setMenuOpen(!menuOpen)} className="text-white hover:bg-blue-800 p-2 rounded-lg transition-colors">
-            {menuOpen ? <X size={28} /> : <Menu size={28} />}
+          <button onClick={() => setMenuOpen(!menuOpen)} className="text-white hover:bg-blue-800 p-1.5 sm:p-2 rounded-lg transition-colors">
+            {menuOpen ? <X size={narrow ? 22 : 28} /> : <Menu size={narrow ? 22 : 28} />}
           </button>
           {menuOpen && <MenuDropdown colorScheme={colorScheme} setColorScheme={setColorScheme} onClose={() => setMenuOpen(false)} onOpenInfo={() => setInfoOpen(true)} />}
         </div>
@@ -270,11 +279,8 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   );
 
   const canvasBox = (height: string) => (
-    <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-white" style={{ height, minHeight: 380 }}>
-      {/* on a phone the picture keeps a readable size and pans sideways inside its box (or goes fullscreen) */}
-      <div className="h-full overflow-x-auto overflow-y-hidden sm:overflow-hidden">
-        <div className="h-full min-w-[680px] sm:min-w-0">{shown(canvasStep)}</div>
-      </div>
+    <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-white" style={{ height, minHeight: narrow ? 200 : 380 }}>
+      {shown(canvasStep)}
       <button
         onClick={() => setFullscreen(true)}
         title="Fullscreen"
@@ -289,7 +295,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     <div className="p-3 sm:p-6 flex flex-wrap gap-6 items-start">
       {/* the graph stays in view while the working scrolls */}
       <div className="flex flex-col gap-4 lg:sticky lg:top-3" style={{ flex: "1 1 620px", minWidth: 0 }}>
-        {canvasBox("min(74vh, 800px)")}
+        {canvasBox(narrow ? "250px" : "min(74vh, 800px)")}
         {footer && <div className="flex justify-center">{footer}</div>}
         {!atQuestion && config.legend && <Legend items={config.legend} />}
       </div>
@@ -300,7 +306,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         <div className="rounded-xl border border-gray-200 bg-white overflow-hidden flex flex-col">
           <div className="px-5 pt-4 pb-2 text-xs font-bold uppercase tracking-wider text-gray-400">Answer</div>
           {/* fixed height, so the controls below never move as steps are added */}
-          <div style={{ height: "min(46vh, 480px)", minHeight: 260 }}>
+          <div style={{ height: narrow ? "min(36vh, 300px)" : "min(46vh, 480px)", minHeight: narrow ? 200 : 260 }}>
             {atQuestion ? (
               <div className="px-5 pb-5 text-base text-gray-500 leading-snug">The working and the answer appear here, one step at a time.</div>
             ) : (
@@ -340,15 +346,15 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
             <Minimize2 size={18} /> Exit fullscreen
           </button>
         </div>
-        <div className="flex-1 min-h-0 overflow-auto lg:overflow-hidden p-3 flex flex-col lg:flex-row gap-3">
-          <div className="flex flex-col gap-2 min-w-0 lg:flex-[3] min-h-[60vh] lg:min-h-0">
+        <div className="flex-1 min-h-0 overflow-auto md:overflow-hidden p-3 flex flex-col md:flex-row gap-3">
+          <div className="flex flex-col gap-2 min-w-0 md:flex-[3] min-h-[60vh] md:min-h-0">
             <div className="relative flex-1 min-h-[320px] rounded-xl border border-gray-200 bg-white overflow-hidden">
               <div className="absolute inset-0">{shown(canvasStep)}</div>
             </div>
             {footer && <div className="flex justify-center flex-shrink-0">{footer}</div>}
             {!atQuestion && config.legend && <div className="flex-shrink-0"><Legend items={config.legend} /></div>}
           </div>
-          <div className="flex flex-col gap-3 min-w-0 min-h-0 lg:flex-[2] lg:max-w-[640px]">
+          <div className="flex flex-col gap-3 min-w-0 min-h-0 md:flex-[2] md:max-w-[640px]">
             {questionBlock(true)}
             <div className="rounded-xl border border-gray-200 bg-white overflow-hidden flex flex-col flex-1 min-h-[300px]">
               <div className="px-5 pt-3 pb-1 text-xs font-bold uppercase tracking-wider text-gray-400">Answer</div>
@@ -365,6 +371,89 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         </div>
       </div>
     );
+
+  if (narrow) {
+    const topLabel = topOptions.map((o) => o.choices.find((c) => c.value === options[o.key])?.label).filter(Boolean).join(" · ");
+    const subLabel = config.subTools?.find((t) => t.key === subTool)?.label;
+    return (
+      <div>
+        {navBar}
+        {infoOpen && <InfoModal infoSections={infoSections} onClose={() => setInfoOpen(false)} />}
+        <div className="min-h-screen px-3 py-3" style={{ backgroundColor: "#f5f3f0" }}>
+          <h1 className="text-lg font-bold text-center mb-2" style={{ color: "#000" }}>{config.pageTitle}</h1>
+          <button onClick={() => setDrawer(true)} className="w-full bg-white border border-gray-200 rounded-xl shadow-sm flex items-center justify-between gap-2 px-3.5 py-2.5 mb-2">
+            <div className="min-w-0 text-left">
+              <div className="font-bold text-sm text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis">{[subLabel, topLabel].filter(Boolean).join(" · ")}</div>
+              {levelCount > 1 && <div className="text-xs font-semibold text-gray-400">Level {level}{config.levelLabels?.[level - 1] ? ` — ${config.levelLabels[level - 1]}` : ""}</div>}
+            </div>
+            <span className="text-xs font-bold text-gray-400 flex-shrink-0">Change</span>
+          </button>
+          <button onClick={() => newQuestion()} className={`${BTN_PRIMARY} w-full justify-center mb-2 py-2.5`}>
+            <RefreshCw size={16} /> New Question
+          </button>
+          <div className={`${CARD} overflow-hidden`}>{example}</div>
+        </div>
+        {drawer && (
+          <div className="fixed inset-0 z-50 flex">
+            <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.4)" }} onClick={() => setDrawer(false)} />
+            <div className="relative ml-auto h-full bg-white flex flex-col shadow-2xl" style={{ width: "85%", maxWidth: 320 }}>
+              <div className="flex items-center justify-between px-4 py-3.5 border-b border-gray-100 flex-shrink-0">
+                <span className="font-bold text-gray-900 text-sm">Options</span>
+                <button onClick={() => setDrawer(false)} className="w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100"><X size={16} /></button>
+              </div>
+              <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-5">
+                {topOptions.map((o) => (
+                  <div key={o.key}>
+                    <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{o.label}</div>
+                    <SegButtons value={options[o.key]} opts={o.choices} onChange={(v) => { const opts = { ...options, [o.key]: v }; setOptions(opts); newQuestion(level, subTool, opts); }} />
+                  </div>
+                ))}
+                {(config.subTools?.length ?? 0) > 1 && (
+                  <div>
+                    <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Question type</div>
+                    <div className="flex flex-col gap-1.5">
+                      {config.subTools!.map((t) => (
+                        <button
+                          key={t.key}
+                          onClick={() => { setSubTool(t.key); newQuestion(level, t.key, options); setDrawer(false); }}
+                          className={`w-full text-left px-3.5 py-2 rounded-lg font-bold text-sm border-2 transition-colors ${subTool === t.key ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-gray-200 text-gray-700"}`}
+                        >
+                          {t.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {levelCount > 1 && (
+                  <div>
+                    <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Level</div>
+                    <DifficultyToggle
+                      value={levelKey(level)}
+                      levels={Array.from({ length: levelCount }, (_, i) => levelKey(i + 1))}
+                      onChange={(v) => {
+                        const lv = parseInt(v.replace("level", ""), 10);
+                        setLevel(lv);
+                        const opts = { ...options };
+                        for (const o of config.options ?? []) if (o.defaultFor) opts[o.key] = o.defaultFor(lv);
+                        setOptions(opts);
+                        newQuestion(lv, subTool, opts);
+                      }}
+                    />
+                  </div>
+                )}
+                {visibleOptions.map((o) => (
+                  <div key={o.key}>
+                    <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{o.label}</div>
+                    <SegButtons value={options[o.key]} opts={o.choices} onChange={(v) => { const opts = { ...options, [o.key]: v }; setOptions(opts); newQuestion(level, subTool, opts); }} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div>
