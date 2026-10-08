@@ -10,7 +10,8 @@ import {
 import { FLOW_TEMPLATES } from "../shared/decision/flowTemplates";
 import { generateFlowProblem } from "../shared/decision/flowGenerate";
 import { solveFlowProblem } from "../shared/decision/flowSolve";
-import { decomposeFlow, flowOfValue } from "../shared/decision/flow";
+import { allCuts, cutCapacity as cutCap, decomposeFlow, flowOfValue } from "../shared/decision/flow";
+import { cutGeometry } from "../shared/decision/cutCurve";
 import type { FlowMode, FlowSubTool } from "../shared/decision/flow";
 
 const big = FLOW_TEMPLATES.find((t) => t.id === "big8")!;
@@ -155,4 +156,30 @@ describe("initial flow", () => {
           }
         });
       }
+});
+
+describe("the dashed cut line", () => {
+  for (const t of FLOW_TEMPLATES) {
+    it(`${t.id}: every cut gets a dashed line, with a tick on every cut arc lying on its arc`, () => {
+      const net: FlowNet = { nodes: t.nodes, arcs: t.arcs.map((a) => ({ id: a.id, from: a.from, to: a.to, lo: 0, hi: 1 })) };
+      const byId = Object.fromEntries(t.nodes.map((n) => [n.id, n]));
+      for (const sSide of allCuts(net)) {
+        const r = cutCap(net, sSide);
+        const ids = [...r.forward, ...r.backward].map((a) => a.id);
+        const g = cutGeometry(net, sSide, ids);
+        expect(g, `cut ${sSide.join("")}`).not.toBeNull();
+        expect(g!.paths.length).toBeGreaterThan(0);
+        for (const a of [...r.forward, ...r.backward]) {
+          const tk = g!.ticks[a.id];
+          const p = byId[a.from], q = byId[a.to];
+          // the tick lies on the arc's segment, strictly between its two ends
+          const cross = (q.x - p.x) * (tk.y - p.y) - (q.y - p.y) * (tk.x - p.x);
+          const dot = (tk.x - p.x) * (q.x - p.x) + (tk.y - p.y) * (q.y - p.y);
+          expect(Math.abs(cross) / Math.hypot(q.x - p.x, q.y - p.y)).toBeLessThan(0.5);
+          expect(dot).toBeGreaterThan(0);
+          expect(dot).toBeLessThan((q.x - p.x) ** 2 + (q.y - p.y) ** 2);
+        }
+      }
+    });
+  }
 });

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Home, ChevronLeft, ChevronRight, RefreshCw, FastForward, Rewind } from "lucide-react";
 import type { DecisionProblem, DecisionShellProps, GenerateContext, LegendItem, SolveStep } from "./types";
 import NetworkView, { EDGE_STYLE, NODE_ROLE_STYLE } from "./representations/NetworkView";
@@ -152,12 +152,17 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         </div>
 
         <div style={{ width: SIDEBAR_W, flexShrink: 0, display: "flex", flexDirection: "column", gap: 12, overflowY: "auto" }}>
-          {inSolution ? (
-            <StepCard step={current} idx={idx} count={steps.length} />
-          ) : (
-            <div style={{ ...CARD, padding: "16px 18px" }}>
-              <SectionLabel>{config.instruction ?? "Question"}</SectionLabel>
-              <div style={{ fontSize: 18, fontWeight: 700, color: "#0f172a", lineHeight: 1.45 }}>{problem.prompt}</div>
+          {/* the question stays on screen while the solution plays */}
+          <div style={{ ...CARD, padding: inSolution ? "10px 14px" : "16px 18px", background: inSolution ? "#f8fafc" : "#ffffff" }}>
+            <SectionLabel>{config.instruction ?? "Question"}</SectionLabel>
+            <div style={{ fontSize: inSolution ? 14 : 18, fontWeight: inSolution ? 600 : 700, color: "#0f172a", lineHeight: 1.45 }}>{problem.prompt}</div>
+          </div>
+
+          {inSolution && <StepCascade steps={steps} idx={idx} />}
+          {inSolution && idx === last && problem.answer?.text && problem.answer.text.length <= 160 && (
+            <div style={{ ...CARD, padding: "12px 16px", background: "#f0fdf4", border: "1px solid #86efac" }}>
+              <SectionLabel>Answer</SectionLabel>
+              <div style={{ fontSize: 17, fontWeight: 800, color: "#15803d", lineHeight: 1.4 }}>{problem.answer.text}</div>
             </div>
           )}
 
@@ -218,37 +223,59 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-function StepCard({ step, idx, count }: { step: SolveStep; idx: number; count: number }) {
+// The working so far, as a cascade: every earlier step stays on screen, faded, so the class can see what was
+// done before; the current step is full strength. (Same idea as the Worked Example cascade on the other tools.)
+function StepCascade({ steps, idx }: { steps: SolveStep[]; idx: number }) {
+  const rows = useRef<Array<HTMLDivElement | null>>([]);
+  useEffect(() => {
+    rows.current[idx]?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [idx]);
   return (
-    <div style={{ ...CARD, padding: "16px 18px", borderLeft: "5px solid #1e3a8a" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-        {step.phase && (
-          <span style={{ background: "#e0e7ff", color: "#1e3a8a", fontWeight: 800, fontSize: 12, borderRadius: 999, padding: "3px 10px" }}>
-            {step.phase}
-          </span>
-        )}
-        <span style={{ fontSize: 12, fontWeight: 700, color: "#64748b" }}>
-          Step {idx + 1} of {count}
-        </span>
-        {step.runningTotal !== undefined && (
-          <span
+    <div style={{ ...CARD, padding: "8px 8px" }}>
+      {steps.slice(0, idx + 1).map((st, i) => {
+        const now = i === idx;
+        return (
+          <div
+            key={i}
+            ref={(el) => { rows.current[i] = el; }}
             style={{
-              marginLeft: "auto",
-              background: "#dcfce7",
-              border: "1px solid #86efac",
-              color: "#15803d",
-              borderRadius: 8,
-              padding: "3px 10px",
-              fontWeight: 800,
-              fontSize: 14,
+              display: "flex",
+              gap: 10,
+              padding: "10px 10px",
+              borderRadius: 10,
+              opacity: now ? 1 : 0.42,
+              background: now ? "#eff6ff" : "transparent",
+              borderLeft: `4px solid ${now ? "#1e3a8a" : "transparent"}`,
+              transition: "opacity 250ms, background 250ms",
             }}
           >
-            {step.totalLabel ?? "Total"} {step.runningTotal}
-          </span>
-        )}
-      </div>
-      {/* Fixed minimum height so the cards below don't jump as captions change length. */}
-      <div style={{ fontSize: 17, fontWeight: 500, color: "#0f172a", lineHeight: 1.5, minHeight: 78, whiteSpace: "pre-line" }}>{step.caption}</div>
+            <div
+              style={{
+                flexShrink: 0, width: 24, height: 24, borderRadius: 12, fontSize: 12.5, fontWeight: 800,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                background: now ? "#1e3a8a" : "#cbd5e1", color: now ? "#ffffff" : "#334155",
+              }}
+            >
+              {i + 1}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              {(st.phase || (now && st.runningTotal !== undefined)) && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                  {st.phase && (
+                    <span style={{ background: "#e0e7ff", color: "#1e3a8a", fontWeight: 800, fontSize: 12, borderRadius: 999, padding: "2px 9px" }}>{st.phase}</span>
+                  )}
+                  {now && st.runningTotal !== undefined && (
+                    <span style={{ marginLeft: "auto", background: "#dcfce7", border: "1px solid #86efac", color: "#15803d", borderRadius: 8, padding: "2px 9px", fontWeight: 800, fontSize: 13.5 }}>
+                      {st.totalLabel ?? "Total"} {st.runningTotal}
+                    </span>
+                  )}
+                </div>
+              )}
+              <div style={{ fontSize: now ? 16.5 : 15, fontWeight: 500, color: "#0f172a", lineHeight: 1.5, whiteSpace: "pre-line" }}>{st.caption}</div>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

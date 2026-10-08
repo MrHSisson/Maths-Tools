@@ -50,6 +50,11 @@ Keep the split even when a session only touches one.
   valid, so the answer is one valid flow and `isFeasibleFlow` is the checker; the working builds the flow path by path
   (amounts add on shared arcs), then checks every vertex balances and every arc is within its bounds.
   `DecisionShell` options can now be limited to certain sub-tool tabs.
+- **Visibility pass (same day):** the cut is now a smooth **dashed line** (`cutCurve.ts` — traced from the geometry, so it
+  works for any cut, even one that loops round a node; the red ticks sit exactly where it crosses each cut arc). The
+  Solution sidebar is now a **fading cascade** (earlier steps stay on screen, dimmed; the current step is highlighted),
+  keeps the question on screen, and shows the final answer in its own card — for every Decision tool. Diagram labels are
+  slightly larger.
 - Still to do: print, info modal, phone-width check, Harry's-notes update.
 
 ## 2026-10-07 — Notes and docs sweep: cast documented

@@ -168,7 +168,9 @@ export function generateFlowProblem(
   level: 1 | 2 | 3, subTool: FlowSubTool, mode: FlowMode, forceTemplate?: string, style: InitialStyle = defaultStyle(level),
 ): DecisionProblem {
   for (let attempt = 0; attempt < 20000; attempt++) {
-    const tpl = (forceTemplate && FLOW_TEMPLATES.find((t) => t.id === forceTemplate)) || pick(templatesForLevel(level));
+    // a pinned template is a dev aid: if it cannot meet this level's constraints (e.g. Diamond at Level 3), stop pinning
+    const pinned = attempt < 4000 ? FLOW_TEMPLATES.find((t) => t.id === forceTemplate) : undefined;
+    const tpl = pinned ?? pick(templatesForLevel(level));
     const inst = sampleInstance(tpl, mode, level === 3 && tpl.arcs.some((x) => x.flippable));
     if (!inst) continue;
 
