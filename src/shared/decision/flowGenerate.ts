@@ -8,7 +8,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import {
-  SINK, SOURCE, sortedAugmentingPaths, pathNodes, decomposeFlow, pathLabel, peelMissing, allCuts, cutCapacity, flowValue, isAcyclic, isFeasibleFlow,
+  SINK, SOURCE, pathNodes, decomposeFlow, pathLabel, peelMissing, allCuts, cutCapacity, flowValue, isAcyclic, isFeasibleFlow,
   maxFlow, orderNodes, potentials, simpleForwardPaths, buildFlowByPaths,
   type Flow, type FlowArc, type FlowMode, type FlowNet, type FlowProblemData, type FlowSubTool, type InitialStyle,
 } from "./flow";
@@ -212,15 +212,20 @@ function chooseCut(inst: FlowInstance, cuts: "any" | "forward" | "backward"): st
   return null;
 }
 
-// The Augment flow question asks for ALL the flow-augmenting paths — always two or three, so there is more than one to find.
-function okAugment(inst: FlowInstance, backSteps: boolean, level: number): boolean {
-  const paths = sortedAugmentingPaths(inst.net, inst.flow);
-  if (paths.length < 2 || paths.length > (level === 3 ? 4 : 3)) return false;
-  if (paths.some((p) => p.bottleneck < (backSteps ? 1 : 2))) return false;
+// Augment flow: make `rounds` augmentations in turn (2, or 3 at Level 3), each found on the potentials the last one left.
+// A start flow qualifies when the canonical labelling procedure yields at least that many paths, none of them trivial.
+function augmentRounds(level: number): number {
+  return level === 1 ? 2 : level === 2 ? ri(2, 3) : 3;
+}
+function okAugment(inst: FlowInstance, backSteps: boolean, rounds: number): boolean {
+  const run = maxFlow(inst.net, inst.flow);
+  if (run.augmentations.length < rounds) return false;
+  const used = run.augmentations.slice(0, rounds);
+  if (used.some((a) => a.path.bottleneck < (backSteps ? 1 : 2))) return false;
   // the increases must not all be the same: a list of identical "+2"s hides what the bottleneck is for
-  if (paths.length >= 3 && new Set(paths.map((p) => p.bottleneck)).size < 2) return false;
-  if (level >= 2 && !paths.some((p) => p.bottleneck >= 3)) return false;
-  return backSteps ? paths.some((p) => hasBack(p.steps)) : true; // every possible path is listed, backward steps included wherever they exist
+  if (rounds >= 3 && new Set(used.map((a) => a.path.bottleneck)).size < 2) return false;
+  if (flowValue(inst.net, used[rounds - 1].after) > 45) return false;
+  return backSteps ? used.some((a) => hasBack(a.path.steps)) : true;
 }
 
 function okMaxFlow(inst: FlowInstance, size: number, backSteps: boolean): boolean {
@@ -334,11 +339,12 @@ export function generateFlowProblem(
       if (!c) continue;
       sSide = c;
     }
-    if (subTool === "augment" && !okAugment(inst, opts.backSteps, level)) continue;
+    const rounds = subTool === "augment" ? augmentRounds(level) : undefined;
+    if (subTool === "augment" && !okAugment(inst, opts.backSteps, rounds!)) continue;
     if (subTool === "maxFlow" && !okMaxFlow(inst, level, opts.backSteps)) continue;
 
     const k = opts.scale;
-    return toProblem(level, subTool, mode, tpl, scaleInstance(initial ? { ...inst, flow: initial.flow } : inst, k), sSide, style, initial?.target === undefined ? undefined : initial.target * k, missing);
+    return toProblem(level, subTool, mode, tpl, scaleInstance(initial ? { ...inst, flow: initial.flow } : inst, k), sSide, style, initial?.target === undefined ? undefined : initial.target * k, missing, rounds);
   }
   throw new Error(`flow generator: no ${subTool} question found at level ${level} (${mode})`);
 }
@@ -347,13 +353,13 @@ const setText = (net: FlowNet, ids: string[]) => `{${orderNodes(net, ids).join("
 
 function toProblem(
   level: 1 | 2 | 3, subTool: FlowSubTool, mode: FlowMode, tpl: FlowTemplate, inst: FlowInstance, sSide?: string[],
-  style?: InitialStyle, target?: number, missing?: string[],
+  style?: InitialStyle, target?: number, missing?: string[], rounds?: number,
 ): DecisionProblem {
   const { net, flow } = inst;
   const data: FlowProblemData = {
     subTool, mode, level, templateId: tpl.id, net, flow, sSide, labelPos: inst.labelPos,
     showCutLine: subTool === "cutValue" ? level < 3 : undefined,
-    missing,
+    missing, rounds,
     ...(subTool === "initialFlow" ? { style, target, paths: inst.pushed } : {}),
   };
   const network = {
@@ -394,9 +400,12 @@ function toProblem(
     value = r.capacity;
     answerText = `${r.capacity}`;
   } else if (subTool === "augment") {
-    const found = sortedAugmentingPaths(net, flow);
-    prompt = `${bounds} A flow of ${flowValue(net, flow)} is shown (the circled numbers). There are ${["", "one", "two", "three", "four", "five"][found.length] ?? found.length} flow-augmenting paths from S to T. Find them, and say by how much the flow can be increased along each.`;
-    answerText = found.map((p) => `${pathNodes(p).join("")} +${p.bottleneck}`).join("; ");
+    const run = maxFlow(net, flow);
+    const used = run.augmentations.slice(0, rounds!);
+    const word = ["", "one", "two", "three", "four"][rounds!];
+    prompt = `${bounds} A flow of ${flowValue(net, flow)} is shown (the circled numbers). Use flow augmentation ${word} times: each time find a flow-augmenting path from S to T, say by how much the flow can be increased along it, and update the potentials before finding the next path. State the new value of the flow.`;
+    value = flowValue(net, used[used.length - 1].after);
+    answerText = `${used.map((a) => `${pathNodes(a.path).join("")} +${a.path.bottleneck}`).join("; ")}; flow ${value}`;
   } else {
     prompt = `${bounds} A flow of ${flowValue(net, flow)} is shown (the circled numbers). Use flow augmentation to find the maximum flow, then confirm it with a cut.`;
     const run = maxFlow(net, flow);

@@ -6,7 +6,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { describe, expect, it } from "vitest";
 import {
-  cutCapacity, flowValue, isAcyclic, isFeasibleFlow, maxFlow, minCutBruteForce, peelMissing, sortedAugmentingPaths, SINK, SOURCE,
+  cutCapacity, flowValue, isAcyclic, isFeasibleFlow, maxFlow, minCutBruteForce, peelMissing, SINK, SOURCE,
   type FlowMode, type FlowSubTool,
 } from "../shared/decision/flow";
 import { generateFlowProblem } from "../shared/decision/flowGenerate";
@@ -48,12 +48,12 @@ for (const scale of [1, 10, 100] as const)
 
               // question-specific logic
               if (sub === "augment") {
-                const found = sortedAugmentingPaths(net, flow);
-                const word = ["", "one", "two", "three", "four", "five"][found.length];
-                expect(p.prompt).toContain(`There are ${word} flow-augmenting paths`);
-                for (const path of found) {
-                  expect(path.bottleneck).toBeGreaterThan(0);
-                  expect(path.bottleneck % scale).toBe(0);
+                const run = maxFlow(net, flow);
+                const word = ["", "one", "two", "three", "four"][d.rounds!];
+                expect(p.prompt).toContain(`flow augmentation ${word} times`);
+                for (const a of run.augmentations.slice(0, d.rounds!)) {
+                  expect(a.path.bottleneck).toBeGreaterThan(0);
+                  expect(a.path.bottleneck % scale).toBe(0);
                 }
               }
               if (sub === "cutValue") {

@@ -317,8 +317,10 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         </div>
         {current?.route && current.route.length > 0 && <RouteCard route={current.route} />}
         {!config.hideMatrix && (!atQuestion || config.questionMatrix) && (
-          <div className="rounded-xl border border-gray-200 bg-white p-4 flex justify-center">
-            <MatrixView network={problem.network} step={canvasStep} bare />
+          <div className="rounded-xl border border-gray-200 bg-white p-4 overflow-x-auto">
+            <div className="mx-auto w-fit">
+              <MatrixView network={problem.network} step={canvasStep} bare />
+            </div>
           </div>
         )}
       </div>
@@ -537,7 +539,7 @@ function StepCascade({ steps, idx, answer, all, big }: { steps: SolveStep[]; idx
       ref={box}
       onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 4)}
       style={{
-        height: "100%", overflowY: "auto", padding: "0 10px 12px",
+        height: "100%", overflowY: "auto", overflowX: "hidden", padding: "6px 12px 16px",
         ...(scrolled ? { WebkitMaskImage: "linear-gradient(to bottom, transparent 0, #000 3rem)", maskImage: "linear-gradient(to bottom, transparent 0, #000 3rem)" } : null),
       }}
     >
@@ -574,7 +576,7 @@ function StepCascade({ steps, idx, answer, all, big }: { steps: SolveStep[]; idx
                       )}
                     </div>
                   )}
-                  <div style={{ fontSize: big ? 21 : 17, fontWeight: 500, color: "#0f172a", lineHeight: 1.5, whiteSpace: "pre-line" }}>{st.caption}</div>
+                  <div style={{ fontSize: big ? 21 : 17, fontWeight: 500, color: "#0f172a", lineHeight: 1.5, whiteSpace: "pre-line", overflowWrap: "anywhere" }}>{st.caption}</div>
                 </div>
               </div>
             </FadeIn>
@@ -584,7 +586,7 @@ function StepCascade({ steps, idx, answer, all, big }: { steps: SolveStep[]; idx
           <FadeIn>
             <div style={{ position: "relative", display: "flex", gap: 12, padding: "10px 10px", borderRadius: 12, background: "#f0fdf4", boxShadow: "0 0 0 2px rgba(22,163,74,0.35)" }}>
               <div style={{ flexShrink: 0, width: 26, height: 26, borderRadius: 13, fontSize: 13, fontWeight: 800, zIndex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "#16a34a", color: "#ffffff", border: "2px solid #ffffff" }}>A</div>
-              <div style={{ flex: 1, minWidth: 0, fontSize: big ? 23 : 19, fontWeight: 800, color: "#166534", lineHeight: 1.4, paddingTop: 1 }}>{answer}</div>
+              <div style={{ flex: 1, minWidth: 0, fontSize: big ? 23 : 19, fontWeight: 800, color: "#166534", lineHeight: 1.4, paddingTop: 1, overflowWrap: "anywhere" }}>{answer}</div>
             </div>
           </FadeIn>
         )}

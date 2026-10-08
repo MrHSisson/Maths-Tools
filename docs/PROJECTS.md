@@ -776,7 +776,7 @@ tool yet — see `DECISION_SHELL_PLAN.md` → "Templating model" for the detail.
 
 **Network Flows — LIVE (built 2026-10-08, un-gated 2026-10-08).** `/network-flows`, spec `specs/flow-networks.md`.
 Top tier **Capacity only ⇄ Min and max**; beneath it six question styles — **Find a flow** (a real route-by-route method),
-**Missing flow**, **Flow from potentials**, **Augment flow** (every augmenting path), **Cut values** (one dashed line) and
+**Missing flow**, **Flow from potentials**, **Augment flow** (two or three augmentations in turn, potentials updated each time), **Cut values** (one dashed line) and
 **Max flow & min cut** — at three levels that are graph size (4–5, 6–7, 8 vertices). **Nine network styles** (Diamond, Fan,
 Mini hub, Zigzag, Ladder, Hexagon, Double hub, Tower, the big 8-node network), ~320 variants once optional/reversible arcs are
 counted; every question has at least one reversed arc. Question Options: backward arc (cuts), backward step (augment / max flow),
