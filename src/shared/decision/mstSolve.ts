@@ -93,7 +93,7 @@ export function solveKruskal(net: Network): SolveStep[] {
       states[e.id] = "rejected";
       steps.push({
         caption: `Consider ${label(e)}, ${nth}.\n${u2} and ${w2} are already joined by ${cyc.join("–")}, so adding ${edgeName(e)} would make the cycle ${[...cyc, cyc[0]].join("–")}. Reject it.`,
-        phase: `Edge ${accepted.length} of ${n - 1}`,
+        phase: "Makes a cycle",
         edgeStates: states,
         edgeOrder: orderBadges(accepted),
         list: listAt(),

@@ -76,28 +76,40 @@ export default function NetworkView({
     return m;
   }, [nodes]);
 
+  // The box's size in pixels, so the clear band kept for the zoom pill is always about 46px on screen, however small the picture is drawn.
+  const [box, setBox] = useState<{ w: number; h: number } | null>(null);
+
   // Frame the graph so the whole thing is centred regardless of authored coords.
   const bounds = useMemo(() => {
     if (nodes.length === 0) return { minX: 0, minY: 0, w: 100, h: 100 };
     const xs = nodes.map((n) => n.x);
     const ys = nodes.map((n) => n.y);
     const pad = NODE_R + 24;
-    // interactive: an extra clear band across the top for the zoom-control pill,
-    // so it never sits over a vertex or its badge.
-    const topPad = pad + (interactive ? 40 : 0);
-    const minX = Math.min(...xs) - pad;
-    const minY = Math.min(...ys) - topPad;
-    return {
-      minX,
-      minY,
-      w: Math.max(...xs) - Math.min(...xs) + pad * 2,
-      h: Math.max(...ys) - Math.min(...ys) + pad + topPad,
-    };
-  }, [nodes, interactive]);
+    const w = Math.max(...xs) - Math.min(...xs) + pad * 2;
+    const h0 = Math.max(...ys) - Math.min(...ys) + pad * 2;
+    // interactive: an extra clear band across the top for the zoom-control pill, so it never sits over a vertex or its badge.
+    let band = 0;
+    if (interactive) {
+      const fit = (extra: number) => (box ? Math.min(box.w / w, box.h / (h0 + extra)) : 1);
+      band = 46 / fit(0);
+      band = 46 / fit(band); // once more: the band itself shrinks the picture
+      band = Math.min(Math.max(band, 40), 260);
+    }
+    const topPad = pad + band;
+    return { minX: Math.min(...xs) - pad, minY: Math.min(...ys) - topPad, w, h: Math.max(...ys) - Math.min(...ys) + pad + topPad };
+  }, [nodes, interactive, box]);
 
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [scale, setScale] = useState(1);
   const boardRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = boardRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => setBox({ w: el.clientWidth || 1, h: el.clientHeight || 1 }));
+    ro.observe(el);
+    setBox({ w: el.clientWidth || 1, h: el.clientHeight || 1 });
+    return () => ro.disconnect();
+  }, []);
 
   const resetView = () => {
     setPan({ x: 0, y: 0 });

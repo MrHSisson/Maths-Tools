@@ -14,6 +14,11 @@ export { leastDistances, nearestNeighbour, completeNetworkLayout, placeEdgeLabel
 export type { LeastDistances, NearestNeighbourResult } from "./tsp";
 export * from "./mst";
 export { solveKruskal, solvePrimNetwork, solvePrimMatrix } from "./mstSolve";
+export { lowerBound } from "./tspBounds";
+export type { LowerBoundResult } from "./tspBounds";
+export { generateTsp, pairsToComplete, expandRoute } from "./tspGenerate";
+export type { TspKind, TspGenOptions } from "./tspGenerate";
+export { solveTsp } from "./tspSolve";
 export { generateRandomNetwork } from "./randomNetwork";
 export type { RandomNetworkOptions } from "./randomNetwork";
 export type {

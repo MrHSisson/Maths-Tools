@@ -93,6 +93,8 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const topOptions = (config.options ?? []).filter((o) => o.top);
   const visibleOptions = (config.options ?? []).filter((o) => !o.top && (!o.forSubTools || o.forSubTools.includes(subTool)));
   const qBg = getQuestionBg(colorScheme);
+  // level labels may differ by question type (the TSP table question has no "complete network" level)
+  const levelLabel = (Array.isArray(config.levelLabels) ? config.levelLabels : config.levelLabels?.[subTool])?.[level - 1];
 
   const newQuestion = (lv = level, sub = subTool, opts = options) => {
     try {
@@ -220,8 +222,8 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           <RefreshCw size={18} /> New Question
         </button>
       </div>
-      {levelCount > 1 && config.levelLabels?.[level - 1] && (
-        <div className="text-center text-sm font-semibold text-gray-400">{config.levelLabels[level - 1]}</div>
+      {levelCount > 1 && levelLabel && (
+        <div className="text-center text-sm font-semibold text-gray-400">{levelLabel}</div>
       )}
     </div>
   );
@@ -394,7 +396,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           <button onClick={() => setDrawer(true)} className="w-full bg-white border border-gray-200 rounded-xl shadow-sm flex items-center justify-between gap-2 px-3.5 py-2.5 mb-2">
             <div className="min-w-0 text-left">
               <div className="font-bold text-sm text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis">{[subLabel, topLabel].filter(Boolean).join(" · ")}</div>
-              {levelCount > 1 && <div className="text-xs font-semibold text-gray-400">Level {level}{config.levelLabels?.[level - 1] ? ` — ${config.levelLabels[level - 1]}` : ""}</div>}
+              {levelCount > 1 && <div className="text-xs font-semibold text-gray-400">Level {level}{levelLabel ? ` — ${levelLabel}` : ""}</div>}
             </div>
             <span className="text-xs font-bold text-gray-400 flex-shrink-0">Change</span>
           </button>

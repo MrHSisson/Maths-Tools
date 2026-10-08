@@ -67,6 +67,7 @@ export interface DecisionProblem {
   /** which question this is, for the CI validator to pick its independent reference ("kruskal", "primNetwork", "primMatrix", "tspNN", "tspLower", "tspBounds", "tspTable") */
   kind?: string;
   deleted?: string; // TSP lower bound: the vertex deleted
+  starts?: string[]; // TSP nearest neighbour: every start vertex asked for (the first is `start`)
   /** TSP bounds: the numbers the question's answer is built from */
   bounds?: { lower?: number; upper?: number };
   /** Overrides config: show the distance matrix beside the network in the question, only in the working, or never. */
@@ -167,7 +168,7 @@ export interface DecisionShellProps {
     pageTitle: string;
     instruction?: string;
     levels?: number; // >1 shows a level picker in the header
-    levelLabels?: string[]; // tooltip per level, e.g. ["Complete network", …]
+    levelLabels?: string[] | Record<string, string[]>; // tooltip per level, e.g. ["Complete network", …] — or per sub-tool key
     questionMatrix?: boolean; // show the distance matrix beside the network in Question mode
     hideMatrix?: boolean; // never show the matrix (tools whose working isn't a table)
     matrixMissing?: string; // what a table cell with no edge shows (default blank; Prim on a matrix uses "–")
@@ -185,8 +186,8 @@ export interface DecisionShellProps {
 export interface DecisionProblemExport {
   templates: NetworkTemplate[];
   levels?: number[]; // levels to validate (default [1])
-  /** Sub-tools to validate (each is generated with generate(level, { subTool, options: {} })). */
-  subTools?: string[];
+  /** Sub-tools to validate: a key (generated with default options) or a full { subTool, options } context to cover an option. */
+  subTools?: Array<string | GenerateContext>;
   // Which independent brute-force reference validate.ts checks the answer against when the problem has no `kind` (default "mst").
   reference?: "mst" | "nearestNeighbour";
   generate: (level: number, ctx?: GenerateContext) => DecisionProblem;

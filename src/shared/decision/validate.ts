@@ -168,24 +168,33 @@ function leastTable(network: Network): Record<string, Record<string, number>> {
   return all;
 }
 
-/** Deleted-vertex lower bound, from scratch: MST of the rest (Prim on the least-distance table) + the two shortest links from the deleted vertex. */
+/** Deleted-vertex lower bound, from scratch: the MST of the rest (found by trying EVERY set of n−2 edges of the table — so a tie for the
+ *  minimum shows up as "tied") + the two shortest links from the deleted vertex (a tie for second place also counts). */
 export function referenceLowerBound(network: Network, deleted: string): { total: number; tied: boolean } {
   const all = leastTable(network);
   const rest = network.nodes.map((n) => n.id).filter((v) => v !== deleted);
-  const have = new Set([rest[0]]);
-  let mst = 0;
-  let tied = false;
-  while (have.size < rest.length) {
-    const opts: { w: number; v: string }[] = [];
-    for (const u of have) for (const v of rest) if (!have.has(v)) opts.push({ w: all[u][v], v });
-    opts.sort((x, y) => x.w - y.w);
-    if (opts.length > 1 && opts[0].w === opts[1].w && opts[0].v !== opts[1].v) tied = true;
-    mst += opts[0].w;
-    have.add(opts[0].v);
-  }
+  const pairs: { a: string; b: string; w: number }[] = [];
+  for (let i = 0; i < rest.length; i++) for (let j = i + 1; j < rest.length; j++) pairs.push({ a: rest[i], b: rest[j], w: all[rest[i]][rest[j]] });
+  let best = Infinity;
+  let bestCount = 0;
+  const pickEdges = (from: number, chosen: number[]) => {
+    if (chosen.length === rest.length - 1) {
+      const label: Record<string, string> = Object.fromEntries(rest.map((v) => [v, v]));
+      let w = 0;
+      for (const k of chosen) {
+        const la = label[pairs[k].a], lb = label[pairs[k].b];
+        if (la === lb) return;
+        for (const key of Object.keys(label)) if (label[key] === lb) label[key] = la;
+        w += pairs[k].w;
+      }
+      if (w < best) { best = w; bestCount = 1; } else if (w === best) bestCount++;
+      return;
+    }
+    for (let k = from; k < pairs.length; k++) pickEdges(k + 1, [...chosen, k]);
+  };
+  pickEdges(0, []);
   const links = rest.map((v) => all[deleted][v]).sort((x, y) => x - y);
-  if (links.length > 2 && links[1] === links[2]) tied = true;
-  return { total: mst + links[0] + links[1], tied };
+  return { total: best + links[0] + links[1], tied: bestCount !== 1 || (links.length > 2 && links[1] === links[2]) };
 }
 
 /** The shortest closed tour through every vertex of the least-distance table, by trying every order (≤ 7 vertices). */
@@ -208,11 +217,14 @@ export function validateProblem(exp: DecisionProblemExport, levels = exp.levels 
 
   for (const t of exp.templates) checkTemplate(t, errors);
 
-  for (const sub of exp.subTools ?? [undefined]) {
+  for (const entry of exp.subTools ?? [undefined]) {
+    const ctx = entry === undefined ? undefined : typeof entry === "string" ? { subTool: entry, options: {} } : entry;
+    const sub = ctx?.subTool;
     for (const level of levels) {
       for (let i = 0; i < batch; i++) {
-        const where = `generate(${level}${sub ? `, ${sub}` : ""})`;
-        const p = exp.generate(level, sub ? { subTool: sub, options: {} } : undefined);
+        const opts = ctx && Object.keys(ctx.options).length ? ` ${JSON.stringify(ctx.options)}` : "";
+        const where = `generate(${level}${sub ? `, ${sub}${opts}` : ""})`;
+        const p = exp.generate(level, ctx);
         const nodeIds = new Set(p.network.nodes.map((n) => n.id));
         const edgeIds = new Set(p.network.edges.map((e) => e.id));
 
@@ -233,7 +245,18 @@ export function validateProblem(exp: DecisionProblemExport, levels = exp.levels 
           if (want.length !== p.network.nodes.length - 1) errors.push(`${where}: a spanning tree should have n−1 edges`);
         } else if (kind === "tspLower" || kind === "tspBounds" || kind === "tspTable") {
           if (kind === "tspTable") {
-            ref = { total: p.answer.value ?? -1, name: "table" };
+            // the pairs whose table entry is not simply the drawn edge, by an independent Dijkstra
+            const all = leastTable(p.network);
+            let count = 0;
+            for (const a of p.network.nodes) for (const b of p.network.nodes) {
+              if (a.id >= b.id) continue;
+              const direct = p.network.edges.find((e) => (e.from === a.id && e.to === b.id) || (e.from === b.id && e.to === a.id));
+              if (!direct || all[a.id][b.id] < direct.weight) count++;
+            }
+            ref = { total: count, name: "entries to complete" };
+            const lastT = exp.solve(p).slice(-1)[0];
+            for (const a of p.network.nodes) for (const b of p.network.nodes)
+              if (a.id !== b.id && lastT.matrix?.values[a.id][b.id] !== all[a.id][b.id]) errors.push(`${where}: final table entry ${a.id}${b.id} is ${lastT.matrix?.values[a.id][b.id]}, Dijkstra says ${all[a.id][b.id]}`);
           } else {
             const lowerRef = referenceLowerBound(p.network, p.deleted ?? "");
             if (!p.deleted || !nodeIds.has(p.deleted)) errors.push(`${where} has no valid deleted vertex (${p.deleted})`);
@@ -243,6 +266,7 @@ export function validateProblem(exp: DecisionProblemExport, levels = exp.levels 
             if (kind === "tspBounds") {
               if (!p.start || !nodeIds.has(p.start)) errors.push(`${where} has no valid start vertex (${p.start})`);
               const nn = referenceNearestNeighbour(p.network, p.start ?? "");
+              if ((p.answer.tour ?? []).join("") !== nn.tour.join("")) errors.push(`${where} answer.tour ${p.answer.tour?.join("")} ≠ brute-force NN tour ${nn.tour.join("")}`);
               if (nn.tied) errors.push(`${where} has a tied nearest-neighbour choice from ${p.start}`);
               if (p.bounds?.upper !== nn.total) errors.push(`${where} upper bound ${p.bounds?.upper} ≠ independent ${nn.total}`);
               if (p.network.nodes.length <= 7) {
@@ -255,15 +279,18 @@ export function validateProblem(exp: DecisionProblemExport, levels = exp.levels 
             }
           }
         } else if (exp.reference === "nearestNeighbour" || kind === "tspNN") {
-          if (!p.start || !nodeIds.has(p.start)) {
-            errors.push(`${where} has no valid start vertex (${p.start})`);
+          const starts = p.starts?.length ? p.starts : p.start ? [p.start] : [];
+          if (!starts.length || starts.some((s) => !nodeIds.has(s))) {
+            errors.push(`${where} has no valid start vertex (${starts.join()})`);
             continue;
           }
-          const nn = referenceNearestNeighbour(p.network, p.start);
-          ref = { total: nn.total, name: "nearest-neighbour tour length" };
-          if (nn.tied) errors.push(`${where} has a tied nearest-neighbour choice from ${p.start} — ambiguous question`);
-          if ((p.answer.tour ?? []).join("") !== nn.tour.join(""))
-            errors.push(`${where} answer.tour ${p.answer.tour?.join("")} ≠ brute-force NN tour ${nn.tour.join("")}`);
+          const runs = starts.map((s) => referenceNearestNeighbour(p.network, s));
+          const best = runs.reduce((a, b) => (b.total < a.total ? b : a));
+          ref = { total: best.total, name: "nearest-neighbour tour length" };
+          if (runs.some((r) => r.tied)) errors.push(`${where} has a tied nearest-neighbour choice from ${starts.join(" / ")} — ambiguous question`);
+          if (new Set(runs.map((r) => r.total)).size !== runs.length) errors.push(`${where} asks for two starts with the same tour length`);
+          if ((p.answer.tour ?? []).join("") !== best.tour.join(""))
+            errors.push(`${where} answer.tour ${p.answer.tour?.join("")} ≠ brute-force NN tour ${best.tour.join("")}`);
         } else {
           ref = { total: mst.total, name: "MST weight" };
         }
