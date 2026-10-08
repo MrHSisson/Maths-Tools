@@ -15,7 +15,8 @@
 import type { GNode } from "./types";
 
 export type FlowMode = "cap" | "minmax"; // capacity-only (lo = 0 everywhere) or min/max labelled
-export type FlowSubTool = "potentials" | "cutValue" | "augment" | "maxFlow";
+export type FlowSubTool = "initialFlow" | "potentials" | "cutValue" | "augment" | "maxFlow";
+export type InitialStyle = "paths" | "find"; // initialFlow: write the flow from given paths, or find any feasible flow
 
 export const SOURCE = "S";
 export const SINK = "T";
@@ -302,8 +303,56 @@ export interface FlowProblemData {
   templateId: string;
   net: FlowNet;
   flow: Flow; // the flow given in the question (all sub-tools start from one)
+  style?: InitialStyle; // initialFlow only
+  paths?: Array<{ arcs: string[]; amount: number }>; // initialFlow: a path decomposition of `flow` (the given paths, or the working)
+  target?: number; // initialFlow, capacity-only "find": the flow value asked for
   sSide?: string[]; // cutValue: the cut's S-side
   showCutLine?: boolean; // cutValue: draw the cut on the diagram
   /** per-arc label positions (fractions from the tail) so crossings stay readable */
   labelPos: Record<string, ArcLabelPos>;
 }
+
+/**
+ * Split a flow into S→T paths (deterministic: depth-first, alphabetical). The amounts add back to the flow,
+ * so it doubles as the "given paths" of an Initial flow question and as its worked solution.
+ */
+export function decomposeFlow(net: FlowNet, flow: Flow): Array<{ arcs: string[]; amount: number }> {
+  const rem: Flow = { ...flow };
+  const out: Array<{ arcs: string[]; amount: number }> = [];
+  for (let guard = 0; guard < 100; guard++) {
+    const walk = (u: string, arcs: string[]): string[] | null => {
+      if (u === SINK) return arcs;
+      const next = net.arcs.filter((a) => a.from === u && rem[a.id] > 0).sort((x, y) => x.to.localeCompare(y.to));
+      for (const a of next) {
+        const r = walk(a.to, [...arcs, a.id]);
+        if (r) return r;
+      }
+      return null;
+    };
+    const arcs = walk(SOURCE, []);
+    if (!arcs) break;
+    const amount = Math.min(...arcs.map((id) => rem[id]));
+    for (const id of arcs) rem[id] -= amount;
+    out.push({ arcs, amount });
+  }
+  return out;
+}
+
+/** A feasible flow of exactly `value` on a capacity-only network (augment from zero, trimming the last push). */
+export function flowOfValue(net: FlowNet, value: number): Flow | null {
+  let flow: Flow = Object.fromEntries(net.arcs.map((a) => [a.id, a.lo]));
+  if (!isFeasibleFlow(net, flow).ok) return null;
+  for (let guard = 0; guard < 200 && flowValue(net, flow) < value; guard++) {
+    const path = findAugmentingPath(net, flow);
+    if (!path) return null;
+    const need = value - flowValue(net, flow);
+    flow = augment(flow, { ...path, bottleneck: Math.min(path.bottleneck, need) });
+  }
+  return flowValue(net, flow) === value ? flow : null;
+}
+
+/** "SACET" from an arc-id path. */
+export const pathLabel = (net: FlowNet, arcs: string[]): string => {
+  const byId = arcById(net);
+  return SOURCE + arcs.map((id) => byId[id].to).join("");
+};

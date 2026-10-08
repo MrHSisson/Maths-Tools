@@ -121,6 +121,8 @@ export interface ShellOption {
   key: string;
   label: string;
   choices: Array<{ value: string; label: string }>;
+  /** only show this option on these sub-tool tabs (default: all) */
+  forSubTools?: string[];
   /** the value this option takes for a level (reset whenever the level changes) */
   defaultFor?: (level: number) => string;
 }

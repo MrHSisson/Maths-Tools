@@ -104,7 +104,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       </div>
 
       {/* Sub-tool tabs + Question Options */}
-      {((config.subTools?.length ?? 0) > 1 || (config.options?.length ?? 0) > 0) && (
+      {((config.subTools?.length ?? 0) > 1 || (config.options ?? []).some((o) => !o.forSubTools || o.forSubTools.includes(subTool))) && (
         <div style={{ flexShrink: 0, background: "#ffffff", borderBottom: "1px solid #cbd5e1", padding: "8px 24px", display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
           {(config.subTools?.length ?? 0) > 1 && (
             <Segmented
@@ -116,7 +116,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
               }}
             />
           )}
-          {(config.options ?? []).map((o) => (
+          {(config.options ?? []).filter((o) => !o.forSubTools || o.forSubTools.includes(subTool)).map((o) => (
             <div key={o.key} style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto" }}>
               <span style={{ fontSize: 12, fontWeight: 800, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.6 }}>{o.label}</span>
               <Segmented

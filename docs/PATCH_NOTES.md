@@ -45,7 +45,12 @@ Keep the split even when a session only touches one.
 - **Layout pass (same day):** every arc of all five templates has an explicit, hand-mapped position for its bounds label,
   circled flow and potential arrows; while augmenting, the flows and min/max labels are hidden (potentials + path only) and
   restored in a final "reinterpret" beat; `?tpl=<id>` pins a template for checking layouts.
-- Still to do: Initial flow sub-tool, print, info modal, phone-width check.
+- **Initial flow sub-tool (same day):** "Given paths" (take 3 along SABCT, 5 along SAT… write the flow on every arc) and
+  "Find a flow" (any feasible flow on a min/max network, or a flow of value V on a capacity-only one). Many answers are
+  valid, so the answer is one valid flow and `isFeasibleFlow` is the checker; the working builds the flow path by path
+  (amounts add on shared arcs), then checks every vertex balances and every arc is within its bounds.
+  `DecisionShell` options can now be limited to certain sub-tool tabs.
+- Still to do: print, info modal, phone-width check, Harry's-notes update.
 
 ## 2026-10-07 — Notes and docs sweep: cast documented
 

@@ -1,6 +1,6 @@
 # Tool Spec: Network Flows
 
-**Status:** in progress — potentials, cut values, augment flow and max flow & min cut are built (`enabled: false`); **initial flow** and print are still to do. <!-- draft → ready → implemented. -->
+**Status:** in progress — all five sub-tools are built (`enabled: false`); print, the info modal and a phone-width check are still to do. <!-- draft → ready → implemented. -->
 
 Built on **`DecisionShell`** (`src/shared/decision/`), not `ToolShell` — see
 `docs/architecture/DECISION_SHELL_PLAN.md`. This is a **Decision Maths** tool (D2 network flows), so the

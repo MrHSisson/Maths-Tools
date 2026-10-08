@@ -2,12 +2,14 @@ import {
   DecisionShell,
   FlowView,
   defaultMode,
+  defaultStyle,
   generateFlowProblem,
   questionView,
   solveFlowProblem,
   type DecisionProblem,
   type FlowMode,
   type FlowSubTool,
+  type InitialStyle,
   type GenerateContext,
   type SolveStep,
 } from "../../shared/decision";
@@ -22,6 +24,7 @@ import {
 // ═══════════════════════════════════════════════════════════════════════════
 
 const SUB_TOOLS = [
+  { key: "initialFlow", label: "Initial flow" },
   { key: "potentials", label: "Potentials" },
   { key: "cutValue", label: "Cut values" },
   { key: "augment", label: "Augment flow" },
@@ -29,6 +32,7 @@ const SUB_TOOLS = [
 ];
 
 const INSTRUCTION: Record<string, string> = {
+  initialFlow: "Find an initial flow",
   potentials: "Label the potentials",
   cutValue: "Find the capacity of the cut",
   augment: "Find a flow-augmenting path",
@@ -37,10 +41,11 @@ const INSTRUCTION: Record<string, string> = {
 
 function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const lv = Math.min(3, Math.max(1, level)) as 1 | 2 | 3;
-  const sub = (ctx?.subTool ?? "potentials") as FlowSubTool;
+  const sub = (ctx?.subTool ?? "initialFlow") as FlowSubTool;
   const mode = (ctx?.options.bounds ?? defaultMode(lv)) as FlowMode;
   const tpl = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("tpl") ?? undefined : undefined;
-  return generateFlowProblem(lv, sub, mode, tpl);
+  const style = (ctx?.options.style ?? defaultStyle(lv)) as InitialStyle;
+  return generateFlowProblem(lv, sub, mode, tpl, style);
 }
 
 const renderCanvas = (p: DecisionProblem, step: SolveStep | undefined) => {
@@ -58,20 +63,21 @@ function FlowKey({ p }: { p: DecisionProblem }) {
         <span style={item}><span style={{ width: 4, height: 20, background: "#dc2626", borderRadius: 2, transform: "rotate(30deg)" }} /> arc crossing the cut</span>
       </div>
     );
+  const showPotentials = p.flow!.subTool !== "initialFlow";
   return (
     <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "6px 18px" }}>
       <span style={item}>
         <span style={{ width: 22, height: 22, borderRadius: 11, border: "2px solid #2563eb", color: "#2563eb", fontWeight: 800, fontSize: 12, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>5</span>
         flow
       </span>
-      <span style={item}>
+      {showPotentials && <span style={item}>
         <svg width={34} height={16}><line x1={2} y1={8} x2={30} y2={8} stroke="#0891b2" strokeWidth={2} /><path d="M 32 8 L 25 4 L 25 12 z" fill="#0891b2" /></svg>
         potential along the arc (room to add)
-      </span>
-      <span style={item}>
+      </span>}
+      {showPotentials && <span style={item}>
         <svg width={34} height={16}><line x1={32} y1={8} x2={4} y2={8} stroke="#0891b2" strokeWidth={2} /><path d="M 2 8 L 9 4 L 9 12 z" fill="#0891b2" /></svg>
         potential against it (room to take back)
-      </span>
+      </span>}
     </div>
   );
 }
@@ -98,6 +104,16 @@ export default function App() {
               { value: "minmax", label: "Min and max" },
             ],
             defaultFor: (lv) => defaultMode(lv as 1 | 2 | 3),
+          },
+          {
+            key: "style",
+            label: "Question",
+            forSubTools: ["initialFlow"],
+            choices: [
+              { value: "paths", label: "Given paths" },
+              { value: "find", label: "Find a flow" },
+            ],
+            defaultFor: (lv) => defaultStyle(lv as 1 | 2 | 3),
           },
         ],
         canvasFooter: (p: DecisionProblem) => <FlowKey p={p} />,

@@ -9,6 +9,8 @@ import {
 } from "../shared/decision/flow";
 import { FLOW_TEMPLATES } from "../shared/decision/flowTemplates";
 import { generateFlowProblem } from "../shared/decision/flowGenerate";
+import { solveFlowProblem } from "../shared/decision/flowSolve";
+import { decomposeFlow, flowOfValue } from "../shared/decision/flow";
 import type { FlowMode, FlowSubTool } from "../shared/decision/flow";
 
 const big = FLOW_TEMPLATES.find((t) => t.id === "big8")!;
@@ -88,7 +90,7 @@ describe("templates", () => {
   }
 });
 
-const subTools: FlowSubTool[] = ["potentials", "cutValue", "augment", "maxFlow"];
+const subTools: FlowSubTool[] = ["initialFlow", "potentials", "cutValue", "augment", "maxFlow"];
 describe("generated questions", () => {
   for (const level of [1, 2, 3] as const)
     for (const sub of subTools)
@@ -114,6 +116,42 @@ describe("generated questions", () => {
               expect(findAugmentingPath(d.net, d.flow)).not.toBeNull();
             }
             if (sub === "cutValue") expect(cutCapacity(d.net, d.sSide!).capacity).toBe(p.answer.value);
+          }
+        });
+      }
+});
+
+describe("initial flow", () => {
+  it("decomposeFlow splits N0's f0 back into its flow", () => {
+    const paths = decomposeFlow(N0, f0);
+    const sum: Flow = Object.fromEntries(N0.arcs.map((a) => [a.id, 0]));
+    for (const p of paths) for (const id of p.arcs) sum[id] += p.amount;
+    expect(sum).toEqual(f0);
+  });
+  it("flowOfValue builds a feasible flow of the asked value", () => {
+    const capNet: FlowNet = { ...N0, arcs: N0.arcs.map((a) => ({ ...a, lo: 0 })) };
+    const f = flowOfValue(capNet, 12)!;
+    expect(isFeasibleFlow(capNet, f).ok).toBe(true);
+    expect(flowValue(capNet, f)).toBe(12);
+  });
+  for (const level of [1, 2, 3] as const)
+    for (const style of ["paths", "find"] as const)
+      for (const mode of ["cap", "minmax"] as FlowMode[]) {
+        it(`L${level} ${style} ${mode}: answer flow is feasible, paths rebuild it, working ends on a valid check`, () => {
+          for (let i = 0; i < 12; i++) {
+            const p = generateFlowProblem(level, "initialFlow", mode, undefined, style);
+            const d = p.flow!;
+            expect(isFeasibleFlow(d.net, d.flow).ok).toBe(true);
+            const sum: Flow = Object.fromEntries(d.net.arcs.map((a) => [a.id, 0]));
+            for (const pt of d.paths!) for (const id of pt.arcs) sum[id] += pt.amount;
+            expect(sum).toEqual(d.flow);
+            if (style === "paths" && level === 1) expect(d.paths!.length).toBe(2);
+            if (style === "find" && mode === "cap") expect(flowValue(d.net, d.flow)).toBe(d.target);
+            if (style === "find" && mode === "minmax") expect(d.net.arcs.filter((a) => a.lo > 0).length).toBeGreaterThanOrEqual(2);
+            const steps = solveFlowProblem(p);
+            expect(steps.length).toBeGreaterThan(3);
+            expect(steps[steps.length - 1].caption).not.toContain("(!)");
+            expect(steps[steps.length - 2].caption).not.toContain("(!)");
           }
         });
       }

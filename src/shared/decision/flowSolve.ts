@@ -5,7 +5,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import {
-  cutCapacity, findAugmentingPath, flowValue, maxFlow, orderNodes, pathNodes, potentials,
+  cutCapacity, findAugmentingPath, flowValue, isFeasibleFlow, maxFlow, orderNodes, pathLabel, pathNodes, potentials,
   type AugmentingPath, type Flow, type FlowNet, type FlowViewState,
 } from "./flow";
 import type { DecisionProblem, SolveStep } from "./types";
@@ -21,6 +21,47 @@ const arrowPath = (p: AugmentingPath) => pathNodes(p).join(" → ");
 
 function beat(net: FlowNet, caption: string, view: FlowViewState, extra: Partial<SolveStep> = {}): SolveStep {
   return { caption, edgeStates: empty(net), flowView: view, ...extra };
+}
+
+// ── Initial flow ─────────────────────────────────────────────────────────────
+function solveInitial(p: DecisionProblem): SolveStep[] {
+  const d = p.flow!;
+  const { net, flow, mode } = d;
+  const paths = d.paths!;
+  const byId = Object.fromEntries(net.arcs.map((a) => [a.id, a]));
+  const steps: SolveStep[] = [];
+  const acc: Flow = {};
+  if (d.style === "find" && mode === "minmax") {
+    const lows = net.arcs.filter((a) => a.lo > 0);
+    steps.push(beat(net, `Every arc must carry at least its minimum. The arcs with a minimum above 0 are ${lows.map((a) => `${a.id} (${a.lo})`).join(", ")}. Build the flow up one path at a time so each of these is covered.`,
+      { focus: lows.map((a) => a.id) }));
+  } else if (d.style === "find") {
+    steps.push(beat(net, `Build a flow of value ${d.target} one path at a time, never going above a capacity.`, {}));
+  } else {
+    steps.push(beat(net, "Put each given path's flow on every arc along it. Where two paths share an arc, the flows add.", {}));
+  }
+  let total = 0;
+  paths.forEach((pt, i) => {
+    for (const id of pt.arcs) acc[id] = (acc[id] ?? 0) + pt.amount;
+    total += pt.amount;
+    const arcs = pt.arcs.map((id) => byId[id]);
+    steps.push(beat(net, `Send ${pt.amount} along ${pathLabel(net, pt.arcs)}: add ${pt.amount} to ${arcs.map((a) => a.id).join(", ")}.\n${pt.arcs.map((id) => `${id} = ${acc[id]}`).join(", ")}.${i > 0 && pt.arcs.some((id) => paths.slice(0, i).some((q) => q.arcs.includes(id))) ? "\nSome of these arcs already carry flow from an earlier path, so the amounts add." : ""}`,
+      { flow: { ...acc }, path: pt.arcs.map((id) => ({ arc: id, dir: "fwd" as const, to: byId[id].to })) }, { runningTotal: total, totalLabel: "Flow" }));
+  });
+  steps.push(beat(net, `Every arc not used carries 0. The flow value is ${flowValue(net, flow)}.`, { flow }, { runningTotal: flowValue(net, flow), totalLabel: "Flow" }));
+  const check = isFeasibleFlow(net, flow);
+  const nodes = net.nodes.map((n) => n.id).filter((id) => id !== "S" && id !== "T");
+  const bal = nodes.map((id) => {
+    const inn = net.arcs.filter((a) => a.to === id).map((a) => flow[a.id]);
+    const out = net.arcs.filter((a) => a.from === id).map((a) => flow[a.id]);
+    return `${id}: in ${inn.join(" + ") || "0"} = ${inn.reduce((x, y) => x + y, 0)}, out ${out.join(" + ") || "0"} = ${out.reduce((x, y) => x + y, 0)}`;
+  });
+  steps.push(beat(net, `Check the flow in equals the flow out at every vertex except S and T:\n${bal.join("\n")}${check.ok ? "" : "\n(!) " + check.violations.join("; ")}`, { flow }, { runningTotal: flowValue(net, flow), totalLabel: "Flow" }));
+  steps.push(beat(net, mode === "minmax"
+    ? `Check every arc lies between its minimum and its maximum. It does, so this is a feasible flow (other feasible flows exist).`
+    : `Check no arc is above its capacity. It is not, so this is a valid flow${d.style === "find" ? ` of value ${d.target}` : ""} (other valid flows exist).`,
+    { flow }, { runningTotal: flowValue(net, flow), totalLabel: "Flow" }));
+  return steps;
 }
 
 // ── Potentials ───────────────────────────────────────────────────────────────
@@ -168,6 +209,7 @@ function solveMaxFlow(p: DecisionProblem): SolveStep[] {
 
 export function solveFlowProblem(p: DecisionProblem): SolveStep[] {
   switch (p.flow!.subTool) {
+    case "initialFlow": return solveInitial(p);
     case "potentials": return solvePotentials(p);
     case "cutValue": return solveCut(p);
     case "augment": return solveAugment(p);
@@ -178,6 +220,7 @@ export function solveFlowProblem(p: DecisionProblem): SolveStep[] {
 /** How the diagram looks in Question mode (before any working is shown). */
 export function questionView(p: DecisionProblem): FlowViewState {
   const d = p.flow!;
+  if (d.subTool === "initialFlow") return {};
   if (d.subTool === "cutValue") return d.showCutLine ? { ...cutView(d.net, d.flow, d.sSide!), flow: undefined, cutLabels: false } : {};
   return { flow: d.flow };
 }

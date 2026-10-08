@@ -5,7 +5,7 @@ export { default as MatrixView } from "./representations/MatrixView";
 export { default as FlowView } from "./representations/FlowView";
 export * from "./flow";
 export { FLOW_TEMPLATES, templatesForLevel } from "./flowTemplates";
-export { generateFlowProblem, defaultMode } from "./flowGenerate";
+export { generateFlowProblem, defaultMode, defaultStyle } from "./flowGenerate";
 export { solveFlowProblem, questionView } from "./flowSolve";
 export { sampleTemplate } from "./templating";
 export { validateProblem, primMST, referenceNearestNeighbour } from "./validate";

@@ -8,9 +8,9 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import {
-  SINK, SOURCE, allAugmentingPaths, allCuts, cutCapacity, findAugmentingPath, flowValue, isAcyclic, isFeasibleFlow,
+  SINK, SOURCE, allAugmentingPaths, decomposeFlow, flowOfValue, pathLabel, allCuts, cutCapacity, findAugmentingPath, flowValue, isAcyclic, isFeasibleFlow,
   maxFlow, orderNodes, potentials, simpleForwardPaths,
-  type ArcLabelPos, type Flow, type FlowArc, type FlowMode, type FlowNet, type FlowProblemData, type FlowSubTool,
+  type ArcLabelPos, type Flow, type FlowArc, type FlowMode, type FlowNet, type FlowProblemData, type FlowSubTool, type InitialStyle,
 } from "./flow";
 import { FLOW_TEMPLATES, templatesForLevel, type FlowTemplate } from "./flowTemplates";
 import type { DecisionProblem } from "./types";
@@ -141,15 +141,50 @@ function okMaxFlow(inst: FlowInstance, level: number): boolean {
   return k >= 3 && k <= 4 && nontrivial && back;
 }
 
+export const defaultStyle = (level: 1 | 2 | 3): InitialStyle => (level === 3 ? "find" : "paths");
+
+function okInitial(inst: FlowInstance, level: number, mode: FlowMode, style: InitialStyle): boolean {
+  const paths = decomposeFlow(inst.net, inst.flow);
+  if (style === "paths") {
+    const k = paths.length;
+    const arcCount = new Map<string, number>();
+    for (const p of paths) for (const id of p.arcs) arcCount.set(id, (arcCount.get(id) ?? 0) + 1);
+    const shared = [...arcCount.values()].some((c) => c > 1);
+    if (level === 1) return k === 2 && !shared;
+    if (level === 2) return k === 3 && shared;
+    return k >= 3 && k <= 4 && shared;
+  }
+  if (mode === "minmax") {
+    const lows = inst.net.arcs.filter((a) => a.lo > 0);
+    const sOut = inst.net.arcs.filter((a) => a.from === SOURCE && a.lo > 0).length;
+    return level === 3 ? lows.length >= 3 && sOut >= 2 : lows.length >= 2;
+  }
+  return true; // capacity-only: the question is "a flow of value V" — built in generateFlowProblem
+}
+
 // ── The public generator ─────────────────────────────────────────────────────
 /** `forceTemplate` pins the network style (used by the `?tpl=` dev link to check a layout). */
-export function generateFlowProblem(level: 1 | 2 | 3, subTool: FlowSubTool, mode: FlowMode, forceTemplate?: string): DecisionProblem {
+export function generateFlowProblem(
+  level: 1 | 2 | 3, subTool: FlowSubTool, mode: FlowMode, forceTemplate?: string, style: InitialStyle = defaultStyle(level),
+): DecisionProblem {
   for (let attempt = 0; attempt < 20000; attempt++) {
     const tpl = (forceTemplate && FLOW_TEMPLATES.find((t) => t.id === forceTemplate)) || pick(templatesForLevel(level));
     const inst = sampleInstance(tpl, mode, level === 3 && tpl.arcs.some((x) => x.flippable));
     if (!inst) continue;
 
     let sSide: string[] | undefined;
+    let initial: { flow: FlowInstance["flow"]; target?: number } | undefined;
+    if (subTool === "initialFlow") {
+      if (!okInitial(inst, level, mode, style)) continue;
+      if (style === "find" && mode === "cap") {
+        // "find a flow of value V": V is about 70 % of the maximum flow, answered by a flow built from zero
+        const mx = maxFlow(inst.net, Object.fromEntries(inst.net.arcs.map((a) => [a.id, 0]))).value;
+        const target = Math.max(4, Math.round(mx * 0.7));
+        const f = flowOfValue(inst.net, target);
+        if (!f || target >= mx) continue;
+        initial = { flow: f, target };
+      } else initial = { flow: inst.flow };
+    }
     if (subTool === "potentials" && !okPotentials(inst, mode, level)) continue;
     if (subTool === "cutValue") {
       const c = chooseCut(inst, mode, level);
@@ -159,7 +194,7 @@ export function generateFlowProblem(level: 1 | 2 | 3, subTool: FlowSubTool, mode
     if (subTool === "augment" && !okAugment(inst, level)) continue;
     if (subTool === "maxFlow" && !okMaxFlow(inst, level)) continue;
 
-    return toProblem(level, subTool, mode, tpl, inst, sSide);
+    return toProblem(level, subTool, mode, tpl, initial ? { ...inst, flow: initial.flow } : inst, sSide, style, initial?.target);
   }
   throw new Error(`flow generator: no ${subTool} question found at level ${level} (${mode})`);
 }
@@ -168,11 +203,13 @@ const setText = (net: FlowNet, ids: string[]) => `{${orderNodes(net, ids).join("
 
 function toProblem(
   level: 1 | 2 | 3, subTool: FlowSubTool, mode: FlowMode, tpl: FlowTemplate, inst: FlowInstance, sSide?: string[],
+  style?: InitialStyle, target?: number,
 ): DecisionProblem {
   const { net, flow } = inst;
   const data: FlowProblemData = {
     subTool, mode, level, templateId: tpl.id, net, flow, sSide, labelPos: inst.labelPos,
     showCutLine: subTool === "cutValue" ? level < 3 : undefined,
+    ...(subTool === "initialFlow" ? { style, target, paths: decomposeFlow(net, flow) } : {}),
   };
   const network = {
     nodes: net.nodes,
@@ -183,7 +220,19 @@ function toProblem(
   let value: number | undefined;
   const bounds = mode === "cap" ? "Each arc shows its capacity." : "Each arc shows its minimum and maximum.";
 
-  if (subTool === "potentials") {
+  if (subTool === "initialFlow") {
+    const paths = data.paths!;
+    if (style === "paths") {
+      const list = paths.map((p) => `${p.amount} along ${pathLabel(net, p.arcs)}`);
+      prompt = `${bounds} Take an initial flow comprising ${list.length > 1 ? `${list.slice(0, -1).join(", ")} and ${list[list.length - 1]}` : list[0]}. Write the flow in each arc.`;
+    } else if (mode === "cap") {
+      prompt = `${bounds} Find a flow of value ${target} through the network. The flow into each vertex must equal the flow out, and no arc may carry more than its capacity.`;
+    } else {
+      prompt = `${bounds} Find a feasible flow: every arc must carry at least its minimum and at most its maximum, and the flow into each vertex must equal the flow out. (Many answers are possible.)`;
+    }
+    value = flowValue(net, flow);
+    answerText = `${style === "find" ? "One possible flow" : "Flow"} (value ${value}): ${net.arcs.map((a) => `${a.id} ${flow[a.id]}`).join(", ")}`;
+  } else if (subTool === "potentials") {
     prompt = `${bounds} A flow is shown (the circled numbers). Write the forward and backward potential on every arc.`;
     const pots = potentials(net, flow);
     answerText = net.arcs.map((a) => `${a.id}: ${pots[a.id].fwd} forward, ${pots[a.id].bwd} backward`).join("; ");
