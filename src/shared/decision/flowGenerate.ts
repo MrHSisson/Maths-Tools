@@ -8,7 +8,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import {
-  SINK, SOURCE, allAugmentingPaths, decomposeFlow, flowOfValue, pathLabel, allCuts, cutCapacity, findAugmentingPath, flowValue, isAcyclic, isFeasibleFlow,
+  SINK, SOURCE, allAugmentingPaths, decomposeFlow, pathLabel, allCuts, cutCapacity, findAugmentingPath, flowValue, isAcyclic, isFeasibleFlow,
   maxFlow, orderNodes, potentials, simpleForwardPaths,
   type ArcLabelPos, type Flow, type FlowArc, type FlowMode, type FlowNet, type FlowProblemData, type FlowSubTool, type InitialStyle,
 } from "./flow";
@@ -34,9 +34,11 @@ export interface FlowInstance {
   net: FlowNet;
   flow: Flow;
   labelPos: FlowProblemData["labelPos"];
+  /** the paths (and amounts) the flow was built from — distinct, so they add back to `flow` exactly */
+  pushed: Array<{ arcs: string[]; amount: number }>;
 }
 
-export function sampleInstance(tpl: FlowTemplate, mode: FlowMode, allowFlips: boolean): FlowInstance | null {
+export function sampleInstance(tpl: FlowTemplate, mode: FlowMode, allowFlips: boolean, pathCount?: number): FlowInstance | null {
   // 1. arcs — optionally flip up to two flippable arcs (the network must stay acyclic)
   const flippable = tpl.arcs.filter((a) => a.flippable);
   const flips = new Set<string>();
@@ -60,9 +62,13 @@ export function sampleInstance(tpl: FlowTemplate, mode: FlowMode, allowFlips: bo
   // 2. a feasible flow: push 3–5 random paths
   const flow: Flow = {};
   for (const a of arcs) flow[a.id] = 0;
-  for (const p of shuffle(paths).slice(0, ri(3, 5))) {
+  const chosen = shuffle(paths).slice(0, pathCount ?? ri(3, 5));
+  if (pathCount !== undefined && chosen.length < pathCount) return null;
+  const pushed: FlowInstance["pushed"] = [];
+  for (const p of chosen) {
     const amt = ri(1, 6);
     for (const id of p) flow[id] += amt;
+    pushed.push({ arcs: p, amount: amt });
   }
   if (Object.values(flow).some((f) => f > 15)) return null;
   const value = flowValue(net, flow);
@@ -84,7 +90,7 @@ export function sampleInstance(tpl: FlowTemplate, mode: FlowMode, allowFlips: bo
     labelPos[a.id] = a._pos;
     return { id: a.id, from: a.from, to: a.to, lo: a.lo, hi: a.hi };
   });
-  return { net: { nodes: net.nodes, arcs: cleanArcs }, flow, labelPos };
+  return { net: { nodes: net.nodes, arcs: cleanArcs }, flow, labelPos, pushed };
 }
 
 // ── Level constraints (per sub-tool) ─────────────────────────────────────────
@@ -159,23 +165,27 @@ function okMaxFlow(inst: FlowInstance, level: number): boolean {
 
 export const defaultStyle = (level: 1 | 2 | 3): InitialStyle => (level === 3 ? "find" : "paths");
 
-function okInitial(inst: FlowInstance, level: number, mode: FlowMode, style: InitialStyle): boolean {
-  const paths = decomposeFlow(inst.net, inst.flow);
+// A "long" path goes through a cross arc (S→A→B→T…), not straight S→X→T. Questions should not only ever use the direct routes.
+const isLong = (p: { arcs: string[] }) => p.arcs.length >= 3;
+
+function okInitial(inst: FlowInstance, level: number, mode: FlowMode, style: InitialStyle, wantLong: boolean): boolean {
   if (style === "paths") {
-    const k = paths.length;
+    const paths = inst.pushed;
     const arcCount = new Map<string, number>();
     for (const p of paths) for (const id of p.arcs) arcCount.set(id, (arcCount.get(id) ?? 0) + 1);
     const shared = [...arcCount.values()].some((c) => c > 1);
-    if (level === 1) return k === 2 && !shared;
-    if (level === 2) return k === 3 && shared;
-    return k >= 3 && k <= 4 && shared;
+    if (wantLong && !paths.some(isLong)) return false;
+    if (level === 1) return paths.length === 2 && !shared;
+    if (level === 2) return paths.length === 3 && shared;
+    return paths.length >= 3 && paths.length <= 4 && shared;
   }
+  if (wantLong && !decomposeFlow(inst.net, inst.flow).some(isLong)) return false;
   if (mode === "minmax") {
     const lows = inst.net.arcs.filter((a) => a.lo > 0);
     const sOut = inst.net.arcs.filter((a) => a.from === SOURCE && a.lo > 0).length;
     return level === 3 ? lows.length >= 3 && sOut >= 2 : lows.length >= 2;
   }
-  return true; // capacity-only: the question is "a flow of value V" — built in generateFlowProblem
+  return true; // capacity-only: "a flow of value V" — V is the value of the flow the question was built around
 }
 
 // ── The public generator ─────────────────────────────────────────────────────
@@ -187,20 +197,21 @@ export function generateFlowProblem(
     // a pinned template is a dev aid: if it cannot meet this level's constraints (e.g. Diamond at Level 3), stop pinning
     const pinned = attempt < 4000 ? FLOW_TEMPLATES.find((t) => t.id === forceTemplate) : undefined;
     const tpl = pinned ?? pick(templatesForLevel(level));
-    const inst = sampleInstance(tpl, mode, level === 3 && tpl.arcs.some((x) => x.flippable));
+    const pathStyle = subTool === "initialFlow" && style === "paths";
+    const inst = sampleInstance(tpl, mode, level === 3 && tpl.arcs.some((x) => x.flippable), pathStyle ? (level === 1 ? 2 : level === 2 ? 3 : ri(3, 4)) : undefined);
     if (!inst) continue;
 
     let sSide: string[] | undefined;
     let initial: { flow: FlowInstance["flow"]; target?: number } | undefined;
     if (subTool === "initialFlow") {
-      if (!okInitial(inst, level, mode, style)) continue;
+      // most questions use at least one route through a cross arc; the rest may be all direct (the smallest networks only have direct pairs)
+      if (!okInitial(inst, level, mode, style, level > 1 || Math.random() < 0.7)) continue;
       if (style === "find" && mode === "cap") {
-        // "find a flow of value V": V is about 70 % of the maximum flow, answered by a flow built from zero
+        // "find a flow of value V": V is the value of the flow built for this question, below the maximum flow
         const mx = maxFlow(inst.net, Object.fromEntries(inst.net.arcs.map((a) => [a.id, 0]))).value;
-        const target = Math.max(4, Math.round(mx * 0.7));
-        const f = flowOfValue(inst.net, target);
-        if (!f || target >= mx) continue;
-        initial = { flow: f, target };
+        const target = flowValue(inst.net, inst.flow);
+        if (target >= mx) continue;
+        initial = { flow: inst.flow, target };
       } else initial = { flow: inst.flow };
     }
     if (subTool === "potentials" && !okPotentials(inst, mode, level)) continue;
@@ -227,7 +238,7 @@ function toProblem(
   const data: FlowProblemData = {
     subTool, mode, level, templateId: tpl.id, net, flow, sSide, labelPos: inst.labelPos,
     showCutLine: subTool === "cutValue" ? level < 3 : undefined,
-    ...(subTool === "initialFlow" ? { style, target, paths: decomposeFlow(net, flow) } : {}),
+    ...(subTool === "initialFlow" ? { style, target, paths: style === "paths" ? inst.pushed : decomposeFlow(net, flow) } : {}),
   };
   const network = {
     nodes: net.nodes,

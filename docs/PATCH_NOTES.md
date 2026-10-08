@@ -58,6 +58,10 @@ Keep the split even when a session only touches one.
 - **One continuous cut line:** a cut is only ever set (and a minimum cut only ever drawn) when it can be shown as a single
   unbroken dashed line that crosses every cut arc exactly once and no other arc; the generator filters on this, CI asserts it
   for every cut question and every minimum cut.
+- **Initial flow variety:** the question's paths are now chosen first (not recovered from a random flow), so routes through the
+  cross arcs (SABT, SBCT, SABCT…) appear as often as the direct ones; Levels 2–3 always include one, Level 1 usually. The
+  capacity-only "find a flow of value V" answer is the flow the question was built around, no longer a shortest-path build
+  (which only ever used SAT, SBT, SCT).
 - Still to do: print, info modal, phone-width check, Harry's-notes update.
 
 ## 2026-10-07 — Notes and docs sweep: cast documented

@@ -147,6 +147,7 @@ describe("initial flow", () => {
             for (const pt of d.paths!) for (const id of pt.arcs) sum[id] += pt.amount;
             expect(sum).toEqual(d.flow);
             if (style === "paths" && level === 1) expect(d.paths!.length).toBe(2);
+            if (level > 1) expect(d.paths!.some((pt) => pt.arcs.length >= 3), "uses a route through a cross arc").toBe(true);
             if (style === "find" && mode === "cap") expect(flowValue(d.net, d.flow)).toBe(d.target);
             if (style === "find" && mode === "minmax") expect(d.net.arcs.filter((a) => a.lo > 0).length).toBeGreaterThanOrEqual(2);
             const steps = solveFlowProblem(p);
