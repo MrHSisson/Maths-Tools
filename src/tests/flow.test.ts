@@ -11,7 +11,7 @@ import { FLOW_TEMPLATES } from "../shared/decision/flowTemplates";
 import { sortedAugmentingPaths as sortedAug } from "../shared/decision/flow";
 import { generateFlowProblem } from "../shared/decision/flowGenerate";
 import { solveFlowProblem } from "../shared/decision/flowSolve";
-import { allCuts, cutCapacity as cutCap, decomposeFlow, flowOfValue } from "../shared/decision/flow";
+import { allCuts, cutCapacity as cutCap, decomposeFlow, flowOfValue, peelMissing } from "../shared/decision/flow";
 import { cutGeometry } from "../shared/decision/cutCurve";
 import type { FlowMode, FlowSubTool } from "../shared/decision/flow";
 
@@ -92,7 +92,7 @@ describe("templates", () => {
   }
 });
 
-const subTools: FlowSubTool[] = ["initialFlow", "potentials", "cutValue", "augment", "maxFlow"];
+const subTools: FlowSubTool[] = ["initialFlow", "missingFlow", "potentials", "cutValue", "augment", "maxFlow"];
 describe("generated questions", () => {
   for (const level of [1, 2, 3] as const)
     for (const sub of subTools)
@@ -254,4 +254,43 @@ describe("minimums are real, not a string of zeros", () => {
           expect(d.net.arcs.every((a) => d.flow[a.id] > 0)).toBe(true);
         }
     });
+});
+
+describe("missing flow and flow from potentials", () => {
+  for (const level of [1, 2, 3] as const)
+    for (const mode of ["cap", "minmax"] as FlowMode[])
+      it(`L${level} ${mode} missing flow: 1–2 arcs left out, every one found by flow in = flow out, in order`, () => {
+        for (let i = 0; i < 15; i++) {
+          const p = generateFlowProblem(level, "missingFlow", mode);
+          const d = p.flow!;
+          expect(d.missing!.length).toBeGreaterThanOrEqual(1);
+          expect(d.missing!.length).toBeLessThanOrEqual(level === 1 ? 1 : 2);
+          const order = peelMissing(d.net, d.missing!);
+          expect(order, "solvable").not.toBeNull();
+          // at each stage the vertex really has exactly one unknown arc and conservation gives the true value
+          const unknown = new Set(d.missing!);
+          for (const { arc, vertex } of order!) {
+            const inc = d.net.arcs.filter((a) => (a.from === vertex || a.to === vertex));
+            expect(inc.filter((a) => unknown.has(a.id)).length).toBe(1);
+            const inn = inc.filter((a) => a.to === vertex).reduce((t, a) => t + (unknown.has(a.id) && a.id !== arc ? 0 : d.flow[a.id]), 0);
+            const out = inc.filter((a) => a.from === vertex).reduce((t, a) => t + (unknown.has(a.id) && a.id !== arc ? 0 : d.flow[a.id]), 0);
+            expect(inn).toBe(out);
+            unknown.delete(arc);
+          }
+          const steps = solveFlowProblem(p);
+          expect(steps.length).toBe(order!.length + 2);
+          expect(steps[steps.length - 1].flowView!.flow).toEqual(d.flow);
+        }
+      });
+  it("flow from potentials: the working ends with every flow found, equal to the question's flow", () => {
+    for (const mode of ["cap", "minmax"] as FlowMode[])
+      for (let i = 0; i < 10; i++) {
+        const p = generateFlowProblem(2, "potentials", mode);
+        const steps = solveFlowProblem(p);
+        const last = steps[steps.length - 1].flowView!;
+        expect(last.flow).toEqual(p.flow!.flow);
+        expect(steps[0].flowView!.potentials).toBeTruthy();
+        expect(steps[0].flowView!.flow).toBeUndefined(); // the question does not show the flows
+      }
+  });
 });

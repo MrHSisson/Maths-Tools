@@ -5,7 +5,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import {
-  cutCapacity, sortedAugmentingPaths, flowValue, isFeasibleFlow, maxFlow, orderNodes, pathLabel, pathNodes, potentials,
+  cutCapacity, peelMissing, sortedAugmentingPaths, flowValue, isFeasibleFlow, maxFlow, orderNodes, pathLabel, pathNodes, potentials,
   type AugmentingPath, type Flow, type FlowNet, type FlowViewState,
 } from "./flow";
 import type { DecisionProblem, SolveStep } from "./types";
@@ -64,37 +64,78 @@ function solveInitial(p: DecisionProblem): SolveStep[] {
   return steps;
 }
 
-// ── Potentials ───────────────────────────────────────────────────────────────
+// ── Potentials → flow ────────────────────────────────────────────────────────
+// The question shows the potentials (the arrow along each arc and the arrow against it) and the bounds, NOT the flows;
+// the working reads each flow back off them. An arc swaps from its potentials to its circled flow as it is found.
 function solvePotentials(p: DecisionProblem): SolveStep[] {
   const d = p.flow!;
   const { net, flow, mode } = d;
   const pots = potentials(net, flow);
   const groups = net.nodes.map((n) => n.id).filter((id) => net.arcs.some((a) => a.from === id));
-  const shown: NonNullable<FlowViewState["potentials"]> = {};
+  const remaining = potNumbers(net, flow);
+  const found: Flow = {};
   const steps: SolveStep[] = [
     beat(net, mode === "cap"
-      ? "Forward potential = capacity − flow (room left to add). Backward potential = flow (the most that could be taken back). Work through the arcs leaving each vertex in turn."
-      : "Forward potential = maximum − flow (room left to add). Backward potential = flow − minimum (the most that could be taken back). Work through the arcs leaving each vertex in turn.",
-    { flow, potentials: {} }),
+      ? "Forward potential = capacity − flow, and backward potential = flow. So the flow in an arc is its backward potential (or capacity − forward potential). Work through the arcs leaving each vertex in turn."
+      : "Forward potential = maximum − flow, and backward potential = flow − minimum. So the flow in an arc is maximum − forward potential (or minimum + backward potential). Work through the arcs leaving each vertex in turn.",
+    { potentials: { ...remaining } }),
   ];
   for (const g of groups) {
     const arcs = net.arcs.filter((a) => a.from === g);
     const lines = arcs.map((a) => {
-      shown[a.id] = { fwd: pots[a.id].fwd, bwd: pots[a.id].bwd };
-      const f = flow[a.id];
+      found[a.id] = flow[a.id];
+      delete remaining[a.id];
       return mode === "cap"
-        ? `${a.id}: forward ${a.hi} − ${f} = ${pots[a.id].fwd}, backward ${f}`
-        : `${a.id}: forward ${a.hi} − ${f} = ${pots[a.id].fwd}, backward ${f} − ${a.lo} = ${pots[a.id].bwd}`;
+        ? `${a.id}: flow = capacity − forward = ${a.hi} − ${pots[a.id].fwd} = ${flow[a.id]}  (check: backward potential ${pots[a.id].bwd})`
+        : `${a.id}: flow = maximum − forward = ${a.hi} − ${pots[a.id].fwd} = ${flow[a.id]}  (check: ${a.lo} + ${pots[a.id].bwd})`;
     });
     steps.push(beat(net, `Arcs leaving ${g}\n${lines.join("\n")}`, {
-      flow, potentials: JSON.parse(JSON.stringify(shown)), focus: arcs.map((a) => a.id), replaceWithPotentials: true,
+      potentials: { ...remaining }, flow: { ...found }, focus: arcs.map((a) => a.id),
     }));
   }
-  steps.push(beat(net, "Every arc is now labelled with the potential along it (the arrow pointing with the arc) and the potential against it (the arrow pointing back).", {
-    flow, potentials: JSON.parse(JSON.stringify(shown)), replaceWithPotentials: true,
-  }));
+  const total = flowValue(net, flow);
+  const outS = net.arcs.filter((a) => a.from === "S").map((a) => flow[a.id]);
+  steps.push(beat(net, `Every flow is found. The value of the flow is the total leaving S: ${outS.join(" + ")} = ${total}.`,
+    { flow: { ...found } }, { runningTotal: total, totalLabel: "Flow" }));
   return steps;
 }
+
+// ── Missing flow ─────────────────────────────────────────────────────────────
+function solveMissing(p: DecisionProblem): SolveStep[] {
+  const d = p.flow!;
+  const { net, flow } = d;
+  const missing = d.missing!;
+  const order = peelMissing(net, missing)!;
+  const sym = ["x", "y", "z"];
+  const symOf: Record<string, string> = {};
+  order.forEach((o, i) => (symOf[o.arc] = sym[i]));
+  const known: Flow = Object.fromEntries(net.arcs.filter((a) => !missing.includes(a.id)).map((a) => [a.id, flow[a.id]]));
+  const left = new Set(missing);
+  const steps: SolveStep[] = [
+    beat(net, `At every vertex except S and T, the flow in equals the flow out. ${missing.length === 1 ? "One arc has its flow missing" : "Some arcs have their flows missing"}: find ${missing.length === 1 ? "it" : "them"} by looking for a vertex with exactly one unknown arc.`,
+      { flow: { ...known }, unknown: [...left] }),
+  ];
+  order.forEach(({ arc, vertex }, i) => {
+    const inn = net.arcs.filter((a) => a.to === vertex);
+    const out = net.arcs.filter((a) => a.from === vertex);
+    const term = (a: { id: string }) => (a.id === arc ? sym[i] : `${known[a.id]}`);
+    const unknownIn = inn.some((a) => a.id === arc);
+    const same = unknownIn ? inn : out;
+    const other = unknownIn ? out : inn;
+    const otherTotal = other.reduce((t, a) => t + known[a.id], 0);
+    const sameOthers = sameKnown(same, arc, known);
+    const value = flow[arc];
+    known[arc] = value;
+    left.delete(arc);
+    steps.push(beat(net,
+      `At ${vertex} only ${arc} is unknown — call it ${sym[i]}.\nFlow in: ${inn.map(term).join(" + ")}\nFlow out: ${out.map(term).join(" + ")}\n${sym[i]} = ${otherTotal}${sameOthers.length ? ` − ${sameOthers.join(" − ")}` : ""} = ${value}`,
+      { flow: { ...known }, unknown: [...left], solved: [arc], focus: [...inn, ...out].map((a) => a.id) }));
+  });
+  steps.push(beat(net, `All the flows are found: ${missing.map((id) => `${id} = ${flow[id]}`).join(", ")}. The flow value is ${flowValue(net, flow)}.`,
+    { flow: { ...flow } }, { runningTotal: flowValue(net, flow), totalLabel: "Flow" }));
+  return steps;
+}
+const sameKnown = (xs: Array<{ id: string }>, arc: string, known: Flow): number[] => xs.filter((a) => a.id !== arc).map((a) => known[a.id]);
 
 // ── Cut values ───────────────────────────────────────────────────────────────
 function cutView(net: FlowNet, flow: Flow, sSide: string[], showLine = true): FlowViewState {
@@ -218,6 +259,7 @@ function solveMaxFlow(p: DecisionProblem): SolveStep[] {
 export function solveFlowProblem(p: DecisionProblem): SolveStep[] {
   switch (p.flow!.subTool) {
     case "initialFlow": return solveInitial(p);
+    case "missingFlow": return solveMissing(p);
     case "potentials": return solvePotentials(p);
     case "cutValue": return solveCut(p);
     case "augment": return solveAugment(p);
@@ -229,6 +271,8 @@ export function solveFlowProblem(p: DecisionProblem): SolveStep[] {
 export function questionView(p: DecisionProblem): FlowViewState {
   const d = p.flow!;
   if (d.subTool === "initialFlow") return {};
+  if (d.subTool === "potentials") return { potentials: potNumbers(d.net, d.flow) };
+  if (d.subTool === "missingFlow") return { flow: Object.fromEntries(d.net.arcs.filter((a) => !d.missing!.includes(a.id)).map((a) => [a.id, d.flow[a.id]])), unknown: d.missing };
   if (d.subTool === "cutValue") return d.showCutLine ? { ...cutView(d.net, d.flow, d.sSide!), flow: undefined, cutLabels: false } : {};
   return { flow: d.flow };
 }

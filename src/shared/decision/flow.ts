@@ -15,7 +15,7 @@
 import type { GNode } from "./types";
 
 export type FlowMode = "cap" | "minmax"; // capacity-only (lo = 0 everywhere) or min/max labelled
-export type FlowSubTool = "initialFlow" | "potentials" | "cutValue" | "augment" | "maxFlow";
+export type FlowSubTool = "initialFlow" | "missingFlow" | "potentials" | "cutValue" | "augment" | "maxFlow";
 export type InitialStyle = "paths" | "find"; // initialFlow: write the flow from given paths, or find any feasible flow
 
 export const SOURCE = "S";
@@ -56,6 +56,8 @@ export interface FlowViewState {
   flow?: Flow; // circled flow per arc (omit = no flow drawn)
   /** the potentials to draw per arc (numbers come from potentials() — the renderer never computes them) */
   potentials?: Record<string, { fwd?: number; bwd?: number }>;
+  unknown?: string[]; // arcs whose flow is missing — drawn as a "?" circle
+  solved?: string[]; // arcs whose flow has just been found — circled in green
   replaceWithPotentials?: boolean; // an arc that shows its potentials drops its flow circle and "min, max" label
   hideBounds?: boolean; // hide the "min, max" labels (the augmentation working shows potentials only)
   path?: PathStep[]; // highlighted augmenting path
@@ -306,6 +308,7 @@ export interface FlowProblemData {
   flow: Flow; // the flow given in the question (all sub-tools start from one)
   style?: InitialStyle; // initialFlow only
   paths?: Array<{ arcs: string[]; amount: number }>; // initialFlow: a path decomposition of `flow` (the given paths, or the working)
+  missing?: string[]; // missingFlow: the arcs whose flow is left out of the question
   target?: number; // initialFlow, capacity-only "find": the flow value asked for
   sSide?: string[]; // cutValue: the cut's S-side
   showCutLine?: boolean; // cutValue: draw the cut on the diagram
@@ -361,4 +364,28 @@ export const pathLabel = (net: FlowNet, arcs: string[]): string => {
 /** Every flow-augmenting path, in a stable order (by the nodes they visit) — what the Augment flow question asks for. */
 export function sortedAugmentingPaths(net: FlowNet, flow: Flow): AugmentingPath[] {
   return allAugmentingPaths(net, flow).sort((a, b) => pathNodes(a).join("").localeCompare(pathNodes(b).join("")));
+}
+
+/**
+ * Missing flow: the order in which flow-in = flow-out at a vertex finds each missing arc, or null if the set cannot all
+ * be found that way (some inner vertex must have exactly one unknown arc at each stage).
+ */
+export function peelMissing(net: FlowNet, missing: string[]): Array<{ arc: string; vertex: string }> | null {
+  const unknown = new Set(missing);
+  const out: Array<{ arc: string; vertex: string }> = [];
+  const inner = net.nodes.map((n) => n.id).filter((id) => id !== SOURCE && id !== SINK);
+  while (unknown.size) {
+    let found = false;
+    for (const v of inner) {
+      const inc = net.arcs.filter((a) => (a.from === v || a.to === v) && unknown.has(a.id));
+      if (inc.length === 1) {
+        out.push({ arc: inc[0].id, vertex: v });
+        unknown.delete(inc[0].id);
+        found = true;
+        break;
+      }
+    }
+    if (!found) return null;
+  }
+  return out;
 }

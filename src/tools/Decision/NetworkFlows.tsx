@@ -35,11 +35,11 @@ const INFO_SECTIONS: InfoSection[] = [
     title: "Question types",
     icon: "🧭",
     content: [
-      { label: "Flow from paths", detail: "Write the flow on every arc from the given paths (flows add where paths share an arc)." },
       { label: "Find a flow", detail: "Find any feasible flow (min and max) or a flow of a stated value (capacity only). Many answers are valid." },
-      { label: "Potentials", detail: "Forward potential = maximum − flow; backward potential = flow − minimum." },
+      { label: "Missing flow", detail: "One or two arcs have no flow shown. Use flow in = flow out at a vertex with exactly one unknown arc." },
+      { label: "Flow from potentials", detail: "The potential arrows are shown, not the flows. Flow = maximum − forward potential (or minimum + backward potential); then find the value of the flow." },
+      { label: "Augment flow", detail: "Find every flow-augmenting path (positive potentials all the way, backward steps included) and the increase along each." },
       { label: "Cut values", detail: "Capacity of a cut = maximums of arcs going S side → T side, minus the minimums of arcs coming back." },
-      { label: "Augment flow", detail: "Find every flow-augmenting path (positive potentials all the way) and the increase along each." },
       { label: "Max flow & min cut", detail: "Augment until no path remains, then confirm with a cut of equal capacity." },
     ],
   },
@@ -55,11 +55,11 @@ const INFO_SECTIONS: InfoSection[] = [
 ];
 
 const SUB_TOOLS = [
-  { key: "initialPaths", label: "Flow from paths" },
   { key: "initialFind", label: "Find a flow" },
-  { key: "potentials", label: "Potentials" },
-  { key: "cutValue", label: "Cut values" },
+  { key: "missingFlow", label: "Missing flow" },
+  { key: "potentials", label: "Flow from potentials" },
   { key: "augment", label: "Augment flow" },
+  { key: "cutValue", label: "Cut values" },
   { key: "maxFlow", label: "Max flow & min cut" },
 ];
 
@@ -73,12 +73,12 @@ const INSTRUCTION: Record<string, string> = {
 
 function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const lv = Math.min(3, Math.max(1, level)) as 1 | 2 | 3;
-  // "Flow from paths" and "Find a flow" are the two styles of the Initial flow question
-  const key = ctx?.subTool ?? "initialPaths";
-  const sub = (key === "initialPaths" || key === "initialFind" ? "initialFlow" : key) as FlowSubTool;
+  // "Find a flow" is the Initial flow question in its find-any-flow style
+  const key = ctx?.subTool ?? "initialFind";
+  const sub = (key === "initialFind" ? "initialFlow" : key) as FlowSubTool;
   const mode = (ctx?.options.bounds ?? "cap") as FlowMode;
   const tpl = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("tpl") ?? undefined : undefined;
-  const style: InitialStyle = key === "initialFind" ? "find" : "paths";
+  const style: InitialStyle = "find";
   const o = ctx?.options ?? {};
   void o;
   // the idea of reverse is part of every question: reversed arcs, cuts with a backward arc, a backward step in the paths
@@ -100,13 +100,20 @@ function FlowKey({ p }: { p: DecisionProblem }) {
         <span style={item}><svg width={34} height={8}><line x1={1} y1={4} x2={33} y2={4} stroke="#dc2626" strokeWidth={3} strokeDasharray="9 5" /></svg> the cut</span>
       </div>
     );
-  const showPotentials = p.flow!.subTool !== "initialFlow";
+  const sub = p.flow!.subTool;
+  const showPotentials = sub !== "initialFlow" && sub !== "missingFlow";
   return (
     <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "6px 18px" }}>
       <span style={item}>
         <span style={{ width: 22, height: 22, borderRadius: 11, border: "2px solid #2563eb", color: "#2563eb", fontWeight: 800, fontSize: 12, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>5</span>
         flow
       </span>
+      {sub === "missingFlow" && (
+        <span style={item}>
+          <span style={{ width: 22, height: 22, borderRadius: 11, border: "2px solid #d97706", background: "#fffbeb", color: "#d97706", fontWeight: 800, fontSize: 12, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>?</span>
+          missing flow
+        </span>
+      )}
       {showPotentials && <span style={item}>
         <svg width={34} height={16}><line x1={2} y1={8} x2={30} y2={8} stroke="#0891b2" strokeWidth={2} /><path d="M 32 8 L 25 4 L 25 12 z" fill="#0891b2" /></svg>
         potential along the arc (room to add)

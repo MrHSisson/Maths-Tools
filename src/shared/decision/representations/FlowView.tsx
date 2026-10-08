@@ -72,7 +72,9 @@ export default function FlowView({ net, mode, view, labelPos, qIndex, background
     const replaced = !!view.replaceWithPotentials && view.potentials?.[a.id] !== undefined; // the potentials stand in for flow + bounds
     const showBounds = !view.hideBounds && !replaced;
     const w = pillW(bounds, 17);
-    const fl = replaced ? undefined : view.flow?.[a.id];
+    const isUnknown = !!view.unknown?.includes(a.id);
+    const isSolved = !!view.solved?.includes(a.id);
+    const fl = replaced || isUnknown ? undefined : view.flow?.[a.id];
     const prev = view.prevFlow?.[a.id];
     const fp = at(lp.flow[0], 19 * lp.flow[1]); // beside the arc, not on it
     // potentials: two small parallel arrows on the far side of the arc — one along it, one against it
@@ -106,14 +108,14 @@ export default function FlowView({ net, mode, view, labelPos, qIndex, background
           <rect x={lab.x - w / 2} y={lab.y - 12} width={w} height={24} rx={5} fill="#ffffff" stroke="#e2e8f0" />
           <text x={lab.x} y={lab.y} textAnchor="middle" dominantBaseline="central" fontSize={17} fontWeight={700} fill="#0f172a">{bounds}</text>
         </g>}
-        {/* circled flow */}
-        {fl !== undefined && (
+        {/* circled flow ("?" while missing, green when just found) */}
+        {(fl !== undefined || isUnknown) && (
           <g>
-            {prev !== undefined && prev !== fl && (
+            {prev !== undefined && fl !== undefined && prev !== fl && (
               <text x={fp.x} y={fp.y - 22} textAnchor="middle" fontSize={13} fontWeight={700} fill="#94a3b8" textDecoration="line-through">{prev}</text>
             )}
-            <circle cx={fp.x} cy={fp.y} r={16} fill="#ffffff" stroke={dir ? GREEN : FWD} strokeWidth={2.25} />
-            <text x={fp.x} y={fp.y} textAnchor="middle" dominantBaseline="central" fontSize={17} fontWeight={800} fill={dir ? GREEN : FWD}>{fl}</text>
+            <circle cx={fp.x} cy={fp.y} r={16} fill={isUnknown ? "#fffbeb" : "#ffffff"} stroke={isUnknown ? "#d97706" : dir || isSolved ? GREEN : FWD} strokeWidth={2.25} />
+            <text x={fp.x} y={fp.y} textAnchor="middle" dominantBaseline="central" fontSize={17} fontWeight={800} fill={isUnknown ? "#d97706" : dir || isSolved ? GREEN : FWD}>{isUnknown ? "?" : fl}</text>
           </g>
         )}
         {/* potentials: forward arrow (with the arc) and backward arrow (against it), each with its number */}

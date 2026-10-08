@@ -97,6 +97,10 @@ Keep the split even when a session only touches one.
   pointing back against the flow (reversed rungs, hub arcs, cross arcs), every cut question includes an arc coming back across the
   cut, and every augment / max-flow question uses a backward step. Question Options is now just the top-tier Network switch. Cut
   labels sit on the opposite side of the arc from the flow circle.
+- **Tabs reworked (same day):** dropped **Flow from paths**; added **Missing flow** (one or two arcs show "?" — find each with flow in =
+  flow out at a vertex that has just one unknown; every missing arc is findable in order); reversed the potentials question to
+  **Flow from potentials** (the arrows and bounds are shown, not the flows — each arc swaps to its flow as it is read off, then the
+  flow value). Tabs now: Find a flow · Missing flow · Flow from potentials · Augment flow · Cut values · Max flow & min cut.
 - Phone width checked (stacks, no sideways scroll; the graph is sticky only on wide screens). Still to do: Harry's-notes update.
 
 ## 2026-10-07 — Notes and docs sweep: cast documented

@@ -8,7 +8,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import {
-  SINK, SOURCE, sortedAugmentingPaths, pathNodes, decomposeFlow, pathLabel, allCuts, cutCapacity, flowValue, isAcyclic, isFeasibleFlow,
+  SINK, SOURCE, sortedAugmentingPaths, pathNodes, decomposeFlow, pathLabel, peelMissing, allCuts, cutCapacity, flowValue, isAcyclic, isFeasibleFlow,
   maxFlow, orderNodes, potentials, simpleForwardPaths,
   type ArcLabelPos, type Flow, type FlowArc, type FlowMode, type FlowNet, type FlowProblemData, type FlowSubTool, type InitialStyle,
 } from "./flow";
@@ -198,6 +198,16 @@ function okMaxFlow(inst: FlowInstance, size: number, backSteps: boolean): boolea
   return k >= 3 && k <= 4 && nontrivial;
 }
 
+/** Missing flow: leave out 1–2 arcs' flows, each findable by flow in = flow out at some vertex (in order). */
+function chooseMissing(inst: FlowInstance, size: number): string[] | null {
+  const count = size === 1 ? 1 : size === 2 ? ri(1, 2) : 2;
+  for (let t = 0; t < 40; t++) {
+    const pick2 = shuffle(inst.net.arcs.map((a) => a.id)).slice(0, count);
+    if (peelMissing(inst.net, pick2)) return pick2;
+  }
+  return null;
+}
+
 export const defaultStyle = (): InitialStyle => "paths";
 
 // A "long" path goes through a cross arc (S→A→B→T…), not straight S→X→T. Questions should not only ever use the direct routes.
@@ -250,6 +260,12 @@ export function generateFlowProblem(
         initial = { flow: inst.flow, target };
       } else initial = { flow: inst.flow };
     }
+    let missing: string[] | undefined;
+    if (subTool === "missingFlow") {
+      const m = chooseMissing(inst, level);
+      if (!m) continue;
+      missing = m;
+    }
     if (subTool === "potentials" && !okPotentials(inst, mode, level)) continue;
     if (subTool === "cutValue") {
       const c = chooseCut(inst, opts.cuts);
@@ -259,7 +275,7 @@ export function generateFlowProblem(
     if (subTool === "augment" && !okAugment(inst, opts.backSteps)) continue;
     if (subTool === "maxFlow" && !okMaxFlow(inst, level, opts.backSteps)) continue;
 
-    return toProblem(level, subTool, mode, tpl, initial ? { ...inst, flow: initial.flow } : inst, sSide, style, initial?.target);
+    return toProblem(level, subTool, mode, tpl, initial ? { ...inst, flow: initial.flow } : inst, sSide, style, initial?.target, missing);
   }
   throw new Error(`flow generator: no ${subTool} question found at level ${level} (${mode})`);
 }
@@ -268,12 +284,13 @@ const setText = (net: FlowNet, ids: string[]) => `{${orderNodes(net, ids).join("
 
 function toProblem(
   level: 1 | 2 | 3, subTool: FlowSubTool, mode: FlowMode, tpl: FlowTemplate, inst: FlowInstance, sSide?: string[],
-  style?: InitialStyle, target?: number,
+  style?: InitialStyle, target?: number, missing?: string[],
 ): DecisionProblem {
   const { net, flow } = inst;
   const data: FlowProblemData = {
     subTool, mode, level, templateId: tpl.id, net, flow, sSide, labelPos: inst.labelPos,
     showCutLine: subTool === "cutValue" ? level < 3 : undefined,
+    missing,
     ...(subTool === "initialFlow" ? { style, target, paths: style === "paths" ? inst.pushed : decomposeFlow(net, flow) } : {}),
   };
   const network = {
@@ -297,10 +314,16 @@ function toProblem(
     }
     value = flowValue(net, flow);
     answerText = `${style === "find" ? "One possible flow" : "Flow"} (value ${value}): ${net.arcs.map((a) => `${a.id} ${flow[a.id]}`).join(", ")}`;
+  } else if (subTool === "missingFlow") {
+    const n = missing!.length;
+    prompt = `${bounds} A flow is shown (the circled numbers), but the flow ${n === 1 ? "in the arc marked ? is" : "in each of the arcs marked ? is"} missing. Use "flow in = flow out" at the vertices to find ${n === 1 ? "it" : "them"}.`;
+    answerText = missing!.map((id) => `${id} = ${flow[id]}`).join("; ");
+    if (n === 1) value = flow[missing![0]];
   } else if (subTool === "potentials") {
-    prompt = `${bounds} A flow is shown (the circled numbers). Write the forward and backward potential on every arc.`;
-    const pots = potentials(net, flow);
-    answerText = net.arcs.map((a) => `${a.id}: ${pots[a.id].fwd} forward, ${pots[a.id].bwd} backward`).join("; ");
+    // read the flow back OFF the potentials: the arrows are shown, the flows are not
+    prompt = `${bounds} The potentials on every arc are shown (the arrow along the arc, and the arrow against it). Find the flow in every arc, and the value of the flow.`;
+    value = flowValue(net, flow);
+    answerText = `Flow value ${value}`;
   } else if (subTool === "cutValue") {
     const t = net.nodes.map((n) => n.id).filter((id) => !sSide!.includes(id));
     prompt = `${bounds} Find the capacity of the cut that separates ${setText(net, sSide!)} from ${setText(net, t)}.`;
