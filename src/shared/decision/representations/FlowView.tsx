@@ -101,20 +101,20 @@ export default function FlowView({ net, mode, view, labelPos, qIndex, background
     const crossing = view.cutArcs?.[a.id];
     const stroke = dir ? GREEN : focus.has(a.id) ? "#d97706" : "#64748b";
     const width = dir ? 5 : focus.has(a.id) ? 4 : 2.75;
-    const lp = labelPos[a.id] ?? { label: 0.3, flow: 0.72, pot: 0.52 };
+    const lp = labelPos[a.id];
     const x1 = p.x + ux * NODE_R;
     const y1 = p.y + uy * NODE_R;
     const x2 = q.x - ux * (NODE_R + 2);
     const y2 = q.y - uy * (NODE_R + 2);
     const bounds = mode === "cap" ? `${a.hi}` : `${a.lo}, ${a.hi}`;
     const lab = at(lp.label);
+    const showBounds = !view.hideBounds;
     const w = pillW(bounds, 15);
     const fl = view.flow?.[a.id];
     const prev = view.prevFlow?.[a.id];
-    const fp = at(lp.flow, 19); // beside the arc, not on it
-    const pot = view.potentials?.[a.id];
+    const fp = at(lp.flow[0], 19 * lp.flow[1]); // beside the arc, not on it
     // potentials: two small parallel arrows on the far side of the arc — one along it, one against it
-    const pc = (off: number) => at(lp.pot, -off);
+    const pc = (off: number) => at(lp.pot[0], lp.pot[1] * off);
     const arrowAt = (off: number, dirSign: 1 | -1) => {
       const c = pc(off);
       const s0 = { x: c.x - ux * 11 * dirSign, y: c.y - uy * 11 * dirSign };
@@ -125,8 +125,8 @@ export default function FlowView({ net, mode, view, labelPos, qIndex, background
     const fwdA = arrowAt(23, 1);
     const bwdA = arrowAt(39, -1);
     const tick = at(0.5);
-    const fwdPot = a.hi - (view.flow?.[a.id] ?? 0);
-    const bwdPot = (view.flow?.[a.id] ?? 0) - a.lo;
+    const fwdPot = view.potentials?.[a.id]?.fwd;
+    const bwdPot = view.potentials?.[a.id]?.bwd;
     return (
       <g key={a.id}>
         <line
@@ -135,10 +135,10 @@ export default function FlowView({ net, mode, view, labelPos, qIndex, background
           markerEnd={dir ? "url(#fv-arrow-g)" : "url(#fv-arrow)"}
         />
         {/* bounds label */}
-        <g>
+        {showBounds && <g>
           <rect x={lab.x - w / 2} y={lab.y - 11} width={w} height={22} rx={5} fill="#ffffff" stroke="#e2e8f0" />
           <text x={lab.x} y={lab.y} textAnchor="middle" dominantBaseline="central" fontSize={15} fontWeight={700} fill="#0f172a">{bounds}</text>
-        </g>
+        </g>}
         {/* circled flow */}
         {fl !== undefined && (
           <g>
@@ -150,13 +150,13 @@ export default function FlowView({ net, mode, view, labelPos, qIndex, background
           </g>
         )}
         {/* potentials: forward arrow (with the arc) and backward arrow (against it), each with its number */}
-        {pot?.fwd && fl !== undefined && (
+        {fwdPot !== undefined && (
           <g>
             <line x1={fwdA.s0.x} y1={fwdA.s0.y} x2={fwdA.e0.x} y2={fwdA.e0.y} stroke={POT} strokeWidth={2} markerEnd="url(#fv-arrow-p)" />
             <text x={fwdA.num.x} y={fwdA.num.y} textAnchor="middle" dominantBaseline="central" fontSize={14} fontWeight={800} fill={POT}>{fwdPot}</text>
           </g>
         )}
-        {pot?.bwd && fl !== undefined && (
+        {bwdPot !== undefined && (
           <g>
             <line x1={bwdA.s0.x} y1={bwdA.s0.y} x2={bwdA.e0.x} y2={bwdA.e0.y} stroke={POT} strokeWidth={2} markerEnd="url(#fv-arrow-p)" />
             <text x={bwdA.num.x} y={bwdA.num.y} textAnchor="middle" dominantBaseline="central" fontSize={14} fontWeight={800} fill={POT}>{bwdPot}</text>

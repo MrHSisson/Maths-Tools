@@ -53,8 +53,9 @@ export interface AugmentingPath {
 /** How a flow-network question is drawn this beat (consumed by FlowView). */
 export interface FlowViewState {
   flow?: Flow; // circled flow per arc (omit = no flow drawn)
-  /** which potentials to draw, per arc */
-  potentials?: Record<string, { fwd?: boolean; bwd?: boolean }>;
+  /** the potentials to draw per arc (numbers come from potentials() — the renderer never computes them) */
+  potentials?: Record<string, { fwd?: number; bwd?: number }>;
+  hideBounds?: boolean; // hide the "min, max" labels (the augmentation working shows potentials only)
   path?: PathStep[]; // highlighted augmenting path
   prevFlow?: Flow; // the flow BEFORE augmenting — struck through beside the updated circles on the path
   sSide?: string[]; // shaded S-side of a cut
@@ -285,6 +286,14 @@ export function simpleForwardPaths(net: FlowNet): string[][] {
   return out;
 }
 
+/** Where an arc\'s three labels sit: a fraction along the arc from its tail, plus (for the flow circle and the
+ *  potential arrows) which side of the line — +1 above it (right of a vertical arc), −1 below it. */
+export interface ArcLabelPos {
+  label: number; // "min, max" pill — on the line
+  flow: [t: number, side: 1 | -1]; // circled flow — beside the line
+  pot: [t: number, side: 1 | -1]; // the two potential arrows — beside the line, further out
+}
+
 /** The generated data a Network Flows question carries (DecisionProblem.flow). */
 export interface FlowProblemData {
   subTool: FlowSubTool;
@@ -296,5 +305,5 @@ export interface FlowProblemData {
   sSide?: string[]; // cutValue: the cut's S-side
   showCutLine?: boolean; // cutValue: draw the cut on the diagram
   /** per-arc label positions (fractions from the tail) so crossings stay readable */
-  labelPos: Record<string, { label: number; flow: number; pot: number }>;
+  labelPos: Record<string, ArcLabelPos>;
 }

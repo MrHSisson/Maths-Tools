@@ -39,7 +39,8 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const lv = Math.min(3, Math.max(1, level)) as 1 | 2 | 3;
   const sub = (ctx?.subTool ?? "potentials") as FlowSubTool;
   const mode = (ctx?.options.bounds ?? defaultMode(lv)) as FlowMode;
-  return generateFlowProblem(lv, sub, mode);
+  const tpl = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("tpl") ?? undefined : undefined;
+  return generateFlowProblem(lv, sub, mode, tpl);
 }
 
 const renderCanvas = (p: DecisionProblem, step: SolveStep | undefined) => {

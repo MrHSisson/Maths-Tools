@@ -42,6 +42,9 @@ Keep the split even when a session only touches one.
 - CI: `src/tests/flow.test.ts` asserts the spec's reference numbers (flow 15 → 22 via SADET 2, SBCET 2, SBCFT 3;
   second network max flow 20; cut values 26, 28, 35) and sweeps every template × level × sub-tool × mode against a
   brute-force minimum cut.
+- **Layout pass (same day):** every arc of all five templates has an explicit, hand-mapped position for its bounds label,
+  circled flow and potential arrows; while augmenting, the flows and min/max labels are hidden (potentials + path only) and
+  restored in a final "reinterpret" beat; `?tpl=<id>` pins a template for checking layouts.
 - Still to do: Initial flow sub-tool, print, info modal, phone-width check.
 
 ## 2026-10-07 — Notes and docs sweep: cast documented

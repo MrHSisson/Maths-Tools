@@ -84,8 +84,10 @@ arc's labels sit); bounds and flows are sampled per question (§3.3). A level dr
 
 Arcs run left to right; in the Big network the four cross arcs (AD, BC, CF, DE) are **flippable** (Level 3
 reverses up to two, keeping the network acyclic). CI checks that exactly the declared crossings cross, geometrically.
-Arc labels sit near the **tail** (bounds), the **head** (circled flow) and mid-arc (potentials); a flipped arc
-mirrors these so labels keep their physical place. The §5 reference network N0 is the Big network.
+Every arc of every template is **mapped by hand** (`flowTemplates.ts`): where its `min, max` pill sits on the line,
+where its circled flow sits beside the line, and where its two small potential arrows sit on the other side
+(one along the arc, one against it, each with its number — as in the textbook). A reversed arc mirrors the
+positions so labels keep their physical place. `/network-flows?tpl=<id>` pins a template for checking a layout. The §5 reference network N0 is the Big network.
 
 ### 3.3 Generation algorithm (every sub-tool)
 
@@ -205,7 +207,11 @@ A feasible, non-maximal flow `f0` is **given**. Student finds a flow-augmenting 
   smallest (bottleneck); including an arc whose potential is 0.
 
 #### Display
-Network with `lo, hi` labels and circled flow `f0`. Answer reveal highlights the path in green (backward
+Question: network with `lo, hi` labels and circled flow `f0`. **During the working the flows and the `lo, hi` labels are hidden** —
+only the potentials and the path are drawn (less clutter) — and a final **"reinterpret"** beat brings the flows and bounds back
+with the new flow read off the diagram. (Same for Max flow & min cut: hidden while augmenting, restored before the cut.)
+
+Original display note: network with `lo, hi` labels and circled flow `f0`. Answer reveal highlights the path in green (backward
 steps drawn dashed and arrowed against the arc) and writes the new flow beside each path arc.
 
 #### Worked example script — reference network N1 (§5), flow f0

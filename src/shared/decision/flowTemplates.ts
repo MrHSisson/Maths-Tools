@@ -9,19 +9,14 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import type { GNode } from "./types";
+import type { ArcLabelPos } from "./flow";
 
-export interface FlowTemplateArc {
+export interface FlowTemplateArc extends ArcLabelPos {
   id: string;
   from: string;
   to: string;
   /** may be drawn reversed at the top tier (the arrow flips; network stays acyclic) */
   flippable?: boolean;
-  /** where the min/max label sits along the arc (fraction from tail; default 0.3) */
-  labelAt?: number;
-  /** where the circled flow sits (default 0.72) */
-  flowAt?: number;
-  /** where the potential labels sit (default 0.52) */
-  potAt?: number;
 }
 
 export interface FlowTemplate {
@@ -35,7 +30,13 @@ export interface FlowTemplate {
 }
 
 const n = (id: string, x: number, y: number): GNode => ({ id, x, y });
-const a = (from: string, to: string, extra: Partial<FlowTemplateArc> = {}): FlowTemplateArc => ({ id: from + to, from, to, ...extra });
+type Side = 1 | -1;
+// Every arc is mapped by hand: a(from, to, label t, [flow t, side], [potential t, side], flippable?).
+// t is a fraction along the arc from `from`; side +1 = above the line (right of a vertical arc), −1 = below.
+// A reversed arc keeps the same PHYSICAL label positions (sampleInstance mirrors t), so the picture stays tidy.
+const a = (from: string, to: string, label: number, flow: [number, Side], pot: [number, Side], flippable?: boolean): FlowTemplateArc => ({
+  id: from + to, from, to, label, flow, pot, ...(flippable ? { flippable } : {}),
+});
 
 // Diamond — S, A, B, T with a cross-link A→B (the smallest network).
 const DIAMOND: FlowTemplate = {
@@ -43,7 +44,13 @@ const DIAMOND: FlowTemplate = {
   name: "Diamond",
   levels: [1],
   nodes: [n("S", 60, 210), n("A", 300, 70), n("B", 300, 350), n("T", 540, 210)],
-  arcs: [a("S", "A"), a("S", "B"), a("A", "B", { labelAt: 0.3, flowAt: 0.62, potAt: 0.46 }), a("A", "T"), a("B", "T")],
+  arcs: [
+    a("S", "A", 0.3, [0.62, 1], [0.5, -1]),
+    a("S", "B", 0.3, [0.62, 1], [0.5, -1]),
+    a("A", "B", 0.3, [0.62, 1], [0.5, -1]),
+    a("A", "T", 0.3, [0.62, 1], [0.45, -1]),
+    a("B", "T", 0.3, [0.62, 1], [0.45, -1]),
+  ],
 };
 
 // Fan — S feeds three nodes that each reach T, linked down the middle.
@@ -53,9 +60,14 @@ const FAN: FlowTemplate = {
   levels: [1, 2],
   nodes: [n("S", 50, 210), n("A", 290, 60), n("B", 290, 210), n("C", 290, 360), n("T", 530, 210)],
   arcs: [
-    a("S", "A"), a("S", "B", { labelAt: 0.35, flowAt: 0.62 }), a("S", "C"),
-    a("A", "B", { labelAt: 0.3, flowAt: 0.62, potAt: 0.46 }), a("B", "C", { labelAt: 0.3, flowAt: 0.62, potAt: 0.46 }),
-    a("A", "T"), a("B", "T", { labelAt: 0.3, flowAt: 0.6 }), a("C", "T"),
+    a("S", "A", 0.3, [0.62, 1], [0.5, -1]),
+    a("S", "B", 0.3, [0.75, 1], [0.55, -1]),
+    a("S", "C", 0.3, [0.62, 1], [0.5, -1]),
+    a("A", "B", 0.3, [0.62, 1], [0.45, -1]),
+    a("B", "C", 0.3, [0.62, 1], [0.45, -1]),
+    a("A", "T", 0.3, [0.6, 1], [0.45, -1]),
+    a("B", "T", 0.3, [0.6, 1], [0.45, -1]),
+    a("C", "T", 0.3, [0.6, -1], [0.45, -1]),
   ],
 };
 
@@ -66,12 +78,15 @@ const LADDER: FlowTemplate = {
   levels: [2],
   nodes: [n("S", 40, 210), n("A", 220, 70), n("B", 220, 350), n("C", 480, 70), n("D", 480, 350), n("T", 660, 210)],
   arcs: [
-    a("S", "A"), a("S", "B"),
-    a("A", "B", { labelAt: 0.3, flowAt: 0.62, potAt: 0.46 }),
-    a("A", "C"), a("A", "D", { labelAt: 0.22, flowAt: 0.66, potAt: 0.46 }),
-    a("B", "D"),
-    a("C", "D", { labelAt: 0.3, flowAt: 0.62, potAt: 0.46 }),
-    a("C", "T"), a("D", "T"),
+    a("S", "A", 0.3, [0.62, 1], [0.5, -1]),
+    a("S", "B", 0.3, [0.62, 1], [0.5, -1]),
+    a("A", "B", 0.3, [0.62, 1], [0.45, -1]),
+    a("A", "C", 0.3, [0.6, 1], [0.45, -1]),
+    a("A", "D", 0.25, [0.62, 1], [0.42, -1]),
+    a("B", "D", 0.3, [0.6, 1], [0.45, -1]),
+    a("C", "D", 0.3, [0.62, 1], [0.45, -1]),
+    a("C", "T", 0.3, [0.62, 1], [0.5, -1]),
+    a("D", "T", 0.3, [0.62, 1], [0.5, -1]),
   ],
 };
 
@@ -82,11 +97,15 @@ const HEXAGON: FlowTemplate = {
   levels: [2, 3],
   nodes: [n("S", 40, 210), n("A", 200, 70), n("B", 200, 350), n("C", 390, 210), n("D", 560, 70), n("E", 560, 350), n("T", 730, 210)],
   arcs: [
-    a("S", "A"), a("S", "B"),
-    a("A", "C"), a("A", "D"),
-    a("B", "C"), a("B", "E"),
-    a("C", "T", { labelAt: 0.3, flowAt: 0.72, potAt: 0.46 }),
-    a("D", "T"), a("E", "T"),
+    a("S", "A", 0.3, [0.62, 1], [0.5, -1]),
+    a("S", "B", 0.3, [0.62, 1], [0.5, -1]),
+    a("A", "C", 0.3, [0.62, 1], [0.5, -1]),
+    a("A", "D", 0.3, [0.62, 1], [0.5, -1]),
+    a("B", "C", 0.3, [0.62, 1], [0.5, -1]),
+    a("B", "E", 0.3, [0.62, 1], [0.5, -1]),
+    a("C", "T", 0.22, [0.62, 1], [0.4, -1]),
+    a("D", "T", 0.3, [0.6, 1], [0.5, -1]),
+    a("E", "T", 0.3, [0.6, 1], [0.5, -1]),
   ],
 };
 
@@ -100,12 +119,18 @@ const BIG8: FlowTemplate = {
     n("E", 600, 70), n("F", 600, 350), n("T", 760, 210),
   ],
   arcs: [
-    a("S", "A"), a("S", "B"),
-    a("A", "C"), a("A", "D", { flippable: true, labelAt: 0.16, flowAt: 0.78, potAt: 0.36 }),
-    a("B", "C", { flippable: true, labelAt: 0.16, flowAt: 0.78, potAt: 0.36 }), a("B", "D"),
-    a("C", "E"), a("C", "F", { flippable: true, labelAt: 0.16, flowAt: 0.78, potAt: 0.36 }),
-    a("D", "E", { flippable: true, labelAt: 0.16, flowAt: 0.78, potAt: 0.36 }), a("D", "F"),
-    a("E", "T"), a("F", "T"),
+    a("S", "A", 0.3, [0.62, 1], [0.5, -1]),
+    a("S", "B", 0.3, [0.62, 1], [0.5, -1]),
+    a("A", "C", 0.3, [0.68, 1], [0.5, -1]),
+    a("A", "D", 0.16, [0.78, 1], [0.36, -1], true),
+    a("B", "C", 0.16, [0.78, 1], [0.36, -1], true),
+    a("B", "D", 0.3, [0.68, 1], [0.5, -1]),
+    a("C", "E", 0.3, [0.68, 1], [0.5, -1]),
+    a("C", "F", 0.16, [0.78, 1], [0.36, -1], true),
+    a("D", "E", 0.16, [0.78, 1], [0.36, -1], true),
+    a("D", "F", 0.3, [0.68, 1], [0.5, -1]),
+    a("E", "T", 0.3, [0.6, 1], [0.5, -1]),
+    a("F", "T", 0.3, [0.6, 1], [0.5, -1]),
   ],
   crossings: [["AD", "BC"], ["CF", "DE"]],
 };

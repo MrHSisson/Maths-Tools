@@ -10,9 +10,9 @@
 import {
   SINK, SOURCE, allAugmentingPaths, allCuts, cutCapacity, findAugmentingPath, flowValue, isAcyclic, isFeasibleFlow,
   maxFlow, orderNodes, potentials, simpleForwardPaths,
-  type Flow, type FlowArc, type FlowMode, type FlowNet, type FlowProblemData, type FlowSubTool,
+  type ArcLabelPos, type Flow, type FlowArc, type FlowMode, type FlowNet, type FlowProblemData, type FlowSubTool,
 } from "./flow";
-import { templatesForLevel, type FlowTemplate } from "./flowTemplates";
+import { FLOW_TEMPLATES, templatesForLevel, type FlowTemplate } from "./flowTemplates";
 import type { DecisionProblem } from "./types";
 
 const ri = (a: number, b: number) => a + Math.floor(Math.random() * (b - a + 1));
@@ -40,14 +40,15 @@ export function sampleInstance(tpl: FlowTemplate, mode: FlowMode, allowFlips: bo
   const flippable = tpl.arcs.filter((a) => a.flippable);
   const flips = new Set<string>();
   if (allowFlips) for (const a of shuffle(flippable).slice(0, 2)) if (Math.random() < 0.5) flips.add(a.id);
-  const arcs: Array<FlowArc & { _pos: { label: number; flow: number; pot: number } }> = tpl.arcs.map((a) => {
+  const arcs: Array<FlowArc & { _pos: ArcLabelPos }> = tpl.arcs.map((a) => {
     const flipped = flips.has(a.id);
     const from = flipped ? a.to : a.from;
     const to = flipped ? a.from : a.to;
+    // positions are fractions from the TAIL; a flipped arc mirrors them so labels keep their physical place
+    const m = (t: number) => (flipped ? 1 - t : t);
     return {
       id: from + to, from, to, lo: 0, hi: 0,
-      // positions are fractions from the TAIL; a flipped arc mirrors them so labels keep their physical place
-      _pos: (([l, f, q]) => (flipped ? { label: 1 - l, flow: 1 - f, pot: 1 - q } : { label: l, flow: f, pot: q }))([a.labelAt ?? 0.28, a.flowAt ?? 0.62, a.potAt ?? 0.46]),
+      _pos: { label: m(a.label), flow: [m(a.flow[0]), a.flow[1]], pot: [m(a.pot[0]), a.pot[1]] },
     };
   });
   const net: FlowNet = { nodes: tpl.nodes.map((n) => ({ ...n })), arcs };
@@ -141,10 +142,11 @@ function okMaxFlow(inst: FlowInstance, level: number): boolean {
 }
 
 // ── The public generator ─────────────────────────────────────────────────────
-export function generateFlowProblem(level: 1 | 2 | 3, subTool: FlowSubTool, mode: FlowMode): DecisionProblem {
+/** `forceTemplate` pins the network style (used by the `?tpl=` dev link to check a layout). */
+export function generateFlowProblem(level: 1 | 2 | 3, subTool: FlowSubTool, mode: FlowMode, forceTemplate?: string): DecisionProblem {
   for (let attempt = 0; attempt < 20000; attempt++) {
-    const tpl = pick(templatesForLevel(level));
-    const inst = sampleInstance(tpl, mode, level === 3);
+    const tpl = (forceTemplate && FLOW_TEMPLATES.find((t) => t.id === forceTemplate)) || pick(templatesForLevel(level));
+    const inst = sampleInstance(tpl, mode, level === 3 && tpl.arcs.some((x) => x.flippable));
     if (!inst) continue;
 
     let sSide: string[] | undefined;
