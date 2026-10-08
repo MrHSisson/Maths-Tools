@@ -25,7 +25,6 @@ const levelKey = (n: number) => `level${n}`;
 const CARD = "bg-white rounded-xl shadow-lg min-w-0";
 const BTN = "px-4 sm:px-6 py-2 rounded-xl font-bold text-base shadow-sm transition-colors flex items-center gap-2";
 const BTN_PRIMARY = `${BTN} bg-blue-900 text-white hover:bg-blue-800`;
-const BTN_PLAIN = `${BTN} bg-white text-gray-700 border-2 border-gray-300 hover:bg-gray-50`;
 
 const defaultOptions = (config: DecisionShellProps["config"], level: number): Record<string, string> =>
   Object.fromEntries((config.options ?? []).map((o) => [o.key, o.defaultFor?.(level) ?? o.choices[0].value]));
@@ -58,6 +57,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const [stepIdx, setStepIdx] = useState(-1);
   const [showAll, setShowAll] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
+  const resumeAt = useRef(-1); // where the class was before Show all
   const [menuOpen, setMenuOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [colorScheme, setColorScheme] = useState("default");
@@ -101,12 +101,14 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setFullscreen(false);
+      const t = e.target as HTMLElement | null;
+      if (e.ctrlKey || e.metaKey || e.altKey || infoOpen || (t && /^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName))) return; // never step while typing or while a dialog is open
       if (e.key === "ArrowRight") { setShowAll(false); setStepIdx((i) => Math.min(maxBeat, i + 1)); }
       if (e.key === "ArrowLeft") { setShowAll(false); setStepIdx((i) => Math.max(-1, i - 1)); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [maxBeat]);
+  }, [maxBeat, infoOpen]);
 
   const infoSections: InfoSection[] = config.infoSections ?? [
     {
@@ -219,8 +221,9 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           </div>
           <button
             onClick={() => {
-              if (showAll) jump(-1);
-              else { setShowAll(true); setStepIdx(maxBeat); }
+              // a second press in the same place puts the class back where they were, never at the start or the end
+              if (showAll) jump(resumeAt.current);
+              else { resumeAt.current = stepIdx; setShowAll(true); setStepIdx(maxBeat); }
             }}
             className="text-sm font-bold text-blue-900 underline-offset-2 hover:underline flex items-center gap-1"
           >
@@ -303,32 +306,38 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     </div>
   );
 
-  // ── fullscreen: the graph, big, with the one thing the class needs next ──────────
+  // ── fullscreen: the whole working area — the network AND the question, working and step controls — filling the screen ──
   if (fullscreen)
     return (
-      <div className="fixed inset-0 z-[200] bg-white flex flex-col">
-        <div className="flex items-center justify-between px-6 py-3 bg-blue-900 text-white flex-shrink-0">
+      <div className="fixed inset-0 z-[200] flex flex-col" style={{ backgroundColor: "#f5f3f0" }}>
+        <div className="flex items-center justify-between px-5 py-2.5 bg-blue-900 text-white flex-shrink-0">
           <div className="font-bold text-lg">{config.pageTitle}</div>
           <button onClick={() => setFullscreen(false)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-blue-800 font-semibold">
             <Minimize2 size={18} /> Exit fullscreen
           </button>
         </div>
-        <div className="flex-1 min-h-0 relative">{shown(canvasStep)}</div>
-        <div className="flex-shrink-0 border-t border-gray-200 px-6 py-3 flex items-center gap-4 bg-gray-50">
-          <button onClick={() => jump(stepIdx - 1)} disabled={atQuestion} className={`${BTN_PLAIN} disabled:opacity-40`}><ChevronLeft size={18} /> Back</button>
-          <div className="flex-1 text-lg font-medium text-gray-900 leading-snug" style={{ whiteSpace: "pre-line", maxHeight: "22vh", overflowY: "auto" }}>
-            {atQuestion ? (
-              problem.prompt
-            ) : onAnswer ? (
-              <span className="font-bold text-green-800">Answer: {answerText}</span>
-            ) : (
-              <>
-                <span className="font-bold text-blue-900 mr-2">{idx + 1}.</span>
-                {current?.caption}
-              </>
-            )}
+        <div className="flex-1 min-h-0 overflow-auto lg:overflow-hidden p-3 flex flex-col lg:flex-row gap-3">
+          <div className="flex flex-col gap-2 min-w-0 lg:flex-[3] min-h-[60vh] lg:min-h-0">
+            <div className="relative flex-1 min-h-[320px] rounded-xl border border-gray-200 bg-white overflow-hidden">
+              <div className="absolute inset-0">{shown(canvasStep)}</div>
+            </div>
+            {footer && <div className="flex justify-center flex-shrink-0">{footer}</div>}
+            {!atQuestion && config.legend && <div className="flex-shrink-0"><Legend items={config.legend} /></div>}
           </div>
-          <button onClick={() => jump(stepIdx + 1)} disabled={stepIdx >= maxBeat} className={`${BTN_PRIMARY} disabled:opacity-40`}>{atQuestion ? "Show working" : "Next"} <ChevronRight size={18} /></button>
+          <div className="flex flex-col gap-3 min-w-0 min-h-0 lg:flex-[2] lg:max-w-[640px]">
+            {questionBlock(true)}
+            <div className="rounded-xl border border-gray-200 bg-white overflow-hidden flex flex-col flex-1 min-h-[300px]">
+              <div className="px-5 pt-3 pb-1 text-xs font-bold uppercase tracking-wider text-gray-400">Answer</div>
+              <div className="flex-1 min-h-0">
+                {atQuestion ? (
+                  <div className="px-5 pb-5 text-lg text-gray-500 leading-snug">The working and the answer appear here, one step at a time.</div>
+                ) : (
+                  <StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} big />
+                )}
+              </div>
+              {stepNav}
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -402,7 +411,7 @@ function FadeIn({ children }: { children: React.ReactNode }) {
   return <div style={{ opacity: on ? 1 : 0, transition: "opacity 0.7s ease" }}>{children}</div>;
 }
 
-function StepCascade({ steps, idx, answer, all }: { steps: SolveStep[]; idx: number; answer: string | null; all: boolean }) {
+function StepCascade({ steps, idx, answer, all, big }: { steps: SolveStep[]; idx: number; answer: string | null; all: boolean; big?: boolean }) {
   const box = useRef<HTMLDivElement>(null);
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
@@ -452,7 +461,7 @@ function StepCascade({ steps, idx, answer, all }: { steps: SolveStep[]; idx: num
                       )}
                     </div>
                   )}
-                  <div style={{ fontSize: 17, fontWeight: 500, color: "#0f172a", lineHeight: 1.5, whiteSpace: "pre-line" }}>{st.caption}</div>
+                  <div style={{ fontSize: big ? 21 : 17, fontWeight: 500, color: "#0f172a", lineHeight: 1.5, whiteSpace: "pre-line" }}>{st.caption}</div>
                 </div>
               </div>
             </FadeIn>
@@ -462,7 +471,7 @@ function StepCascade({ steps, idx, answer, all }: { steps: SolveStep[]; idx: num
           <FadeIn>
             <div style={{ position: "relative", display: "flex", gap: 12, padding: "10px 10px", borderRadius: 12, background: "#f0fdf4", boxShadow: "0 0 0 2px rgba(22,163,74,0.35)" }}>
               <div style={{ flexShrink: 0, width: 26, height: 26, borderRadius: 13, fontSize: 13, fontWeight: 800, zIndex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "#16a34a", color: "#ffffff", border: "2px solid #ffffff" }}>A</div>
-              <div style={{ flex: 1, minWidth: 0, fontSize: 19, fontWeight: 800, color: "#166534", lineHeight: 1.4, paddingTop: 1 }}>{answer}</div>
+              <div style={{ flex: 1, minWidth: 0, fontSize: big ? 23 : 19, fontWeight: 800, color: "#166534", lineHeight: 1.4, paddingTop: 1 }}>{answer}</div>
             </div>
           </FadeIn>
         )}

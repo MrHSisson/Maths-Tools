@@ -228,7 +228,8 @@ function okMaxFlow(inst: FlowInstance, size: number, backSteps: boolean): boolea
   const k = run.augmentations.length;
   const nn = inst.net.nodes.length;
   if (run.value > 40) return false;
-  const nontrivial = run.sSide.length >= 2 && run.sSide.length <= nn - 2;
+  // the confirming cut is usually an inner one, but a cut that is just the source (or just the sink) turns up now and then
+  const nontrivial = (run.sSide.length >= 2 && run.sSide.length <= nn - 2) || Math.random() < 0.2;
   if (!drawable(inst.net, run.sSide)) return false; // the min cut is drawn as one dashed line
   if (backSteps && !run.augmentations.some((a) => hasBack(a.path.steps))) return false;
   const big = run.augmentations.filter((a) => a.path.bottleneck >= 2).length;
