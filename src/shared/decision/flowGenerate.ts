@@ -97,8 +97,10 @@ export function sampleInstance(tpl: FlowTemplate, mode: FlowMode, reversed: bool
   if (pathCount === undefined) {
     const covered = new Set<string>();
     chosen = [];
+    // capacity-only: now and then one arc is left unused, so a potential decrease of 0 turns up in the Potentials question
+    const spare = mode === "cap" && Math.random() < 0.45 ? pick(arcs).id : null;
     for (const id of shuffle(arcs.map((x) => x.id))) {
-      if (covered.has(id)) continue;
+      if (covered.has(id) || id === spare) continue;
       const through = paths.filter((q) => q.includes(id));
       through.sort((x, y) => y.filter((e) => !covered.has(e)).length - x.filter((e) => !covered.has(e)).length + (Math.random() - 0.5) * 0.6);
       chosen.push(through[0]);
@@ -132,6 +134,8 @@ export function sampleInstance(tpl: FlowTemplate, mode: FlowMode, reversed: bool
       if (zeros < zeroBudget && Math.random() < 0.1) { a.lo = 0; zeros++; } else a.lo = ri(1, f);
     } else a.lo = 0;
   }
+  // a fixed arc [k, k] gives away its flow: leave a little room above the minimum
+  for (const a of arcs) if (mode === "minmax" && a.lo > 0 && a.lo === a.hi) a.hi += ri(1, 3);
   if (mode === "minmax" && arcs.filter((a) => a.lo > 0).length < 2) return null;
 
   if (!isFeasibleFlow(net, flow).ok) return null; // defensive — cannot happen by construction
@@ -217,9 +221,23 @@ function okMaxFlow(inst: FlowInstance, size: number, backSteps: boolean): boolea
 /** Missing flow: leave out 1–2 arcs' flows, each findable by flow in = flow out at some vertex (in order). */
 function chooseMissing(inst: FlowInstance, size: number): string[] | null {
   const count = size === 1 ? 1 : size === 2 ? ri(1, 2) : 2;
-  for (let t = 0; t < 40; t++) {
-    const pick2 = shuffle(inst.net.arcs.map((a) => a.id)).slice(0, count);
-    if (peelMissing(inst.net, pick2)) return pick2;
+  const net = inst.net;
+  const deg = (v: string) => net.arcs.filter((a) => a.from === v || a.to === v).length;
+  const interior = (id: string) => { const a = net.arcs.find((x) => x.id === id)!; return a.from !== SOURCE && a.to !== SINK; };
+  // chained pairs (the second is only findable once the first is known) become more common as the network grows
+  const wantChain = count === 2 && Math.random() < (size === 3 ? 0.5 : 0.3);
+  for (let t = 0; t < 80; t++) {
+    const ids = shuffle(net.arcs.map((a) => a.id)).slice(0, count);
+    const order = peelMissing(net, ids);
+    if (!order) continue;
+    if (order.some((o) => deg(o.vertex) < 3)) continue; // solving at a vertex with only two arcs is a one-line "in = out"
+    if (size >= 2 && !ids.some(interior)) continue; // not only arcs touching the source or sink
+    if (wantChain) {
+      const chained = order.length === 2 && ids.every((id) => net.arcs.find((x) => x.id === id) && true) &&
+        (() => { const [x, y] = order; const ay = net.arcs.find((q) => q.id === y.arc)!; return ay.from === x.vertex || ay.to === x.vertex; })();
+      if (!chained) continue;
+    }
+    return ids;
   }
   return null;
 }
