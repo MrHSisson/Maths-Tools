@@ -125,10 +125,12 @@ const MINIHUB: FlowTemplate = {
   arcs: [
     a("S", "A", 0.3, [0.62, 1], [0.5, -1]),
     a("S", "B", 0.3, [0.62, 1], [0.5, -1]),
-    a("A", "C", 0.5, [0.62, 1], [0.5, -1], { flip: true }),
-    a("B", "C", 0.5, [0.62, 1], [0.5, -1], { flip: true }),
+    a("A", "C", 0.5, [0.62, 1], [0.5, -1], { flip: true, opt: true }),
+    a("B", "C", 0.5, [0.62, 1], [0.5, -1], { flip: true, opt: true }),
     a("C", "T", 0.3, [0.62, 1], [0.5, -1]),
     a("A", "B", 0.5, [0.62, 1], [0.4, -1], { opt: true, flip: true }),
+    a("A", "T", 0.72, [0.4, 1], [0.58, -1], { opt: true }),
+    a("B", "T", 0.72, [0.4, 1], [0.58, -1], { opt: true }),
   ],
 };
 
@@ -147,9 +149,49 @@ const DOUBLEHUB: FlowTemplate = {
     a("D", "E", 0.3, [0.62, 1], [0.5, -1], { flip: true }),
     a("D", "F", 0.3, [0.62, 1], [0.5, -1], { flip: true }),
     a("E", "T", 0.3, [0.62, 1], [0.5, -1]),
-    a("F", "T", 0.3, [0.62, 1], [0.5, -1]),
+    a("F", "T", 0.62, [0.3, 1], [0.3, -1]),
     a("A", "B", 0.5, [0.62, 1], [0.4, -1], { opt: true, flip: true }),
     a("E", "F", 0.5, [0.62, 1], [0.4, -1], { opt: true }),
+  ],
+};
+
+// Zigzag — S, A, B, C, T: a top route and a bottom route joined by a rung, so flow can step across.
+const ZIGZAG: FlowTemplate = {
+  id: "zigzag",
+  name: "Zigzag",
+  levels: [1],
+  nodes: [n("S", 40, 230), n("A", 230, 60), n("B", 520, 60), n("C", 330, 400), n("T", 710, 230)],
+  arcs: [
+    a("S", "A", 0.3, [0.62, 1], [0.5, -1]),
+    a("A", "B", 0.3, [0.62, 1], [0.5, -1]),
+    a("B", "T", 0.3, [0.62, 1], [0.5, -1]),
+    a("S", "C", 0.3, [0.62, 1], [0.5, -1]),
+    a("C", "T", 0.3, [0.62, 1], [0.5, -1]),
+    a("C", "B", 0.4, [0.62, 1], [0.5, -1], { flip: true }),
+    a("A", "C", 0.5, [0.62, 1], [0.4, -1], { opt: true, flip: true }),
+  ],
+};
+
+// Tower — S, A, B, C, D, E, F, T: two inner columns of two and three, with rungs between neighbours.
+const TOWER: FlowTemplate = {
+  id: "tower",
+  name: "Tower",
+  levels: [3],
+  nodes: [n("S", 40, 210), n("A", 210, 70), n("B", 210, 350), n("C", 380, 30), n("D", 380, 215), n("E", 380, 400), n("F", 620, 210), n("T", 860, 210)],
+  arcs: [
+    a("S", "A", 0.3, [0.62, 1], [0.5, -1]),
+    a("S", "B", 0.3, [0.62, 1], [0.5, -1]),
+    a("A", "C", 0.3, [0.62, 1], [0.5, -1]),
+    a("A", "D", 0.3, [0.62, 1], [0.5, -1], { flip: true }),
+    a("B", "D", 0.3, [0.62, 1], [0.5, -1], { flip: true }),
+    a("B", "E", 0.3, [0.62, 1], [0.5, -1]),
+    a("C", "T", 0.3, [0.5, 1], [0.38, -1]),
+    a("D", "F", 0.3, [0.62, 1], [0.5, -1]),
+    a("F", "T", 0.62, [0.3, 1], [0.3, -1]),
+    a("E", "T", 0.3, [0.5, 1], [0.38, -1]),
+    a("A", "B", 0.5, [0.62, 1], [0.4, -1], { opt: true, flip: true }),
+    a("C", "D", 0.6, [0.6, 1], [0.28, -1], { opt: true, flip: true }),
+    a("D", "E", 0.6, [0.6, 1], [0.28, -1], { opt: true }),
   ],
 };
 
@@ -179,6 +221,6 @@ const BIG8: FlowTemplate = {
   crossings: [["AD", "BC"], ["CF", "DE"]],
 };
 
-export const FLOW_TEMPLATES: FlowTemplate[] = [DIAMOND, FAN, MINIHUB, LADDER, HEXAGON, DOUBLEHUB, BIG8];
+export const FLOW_TEMPLATES: FlowTemplate[] = [DIAMOND, FAN, MINIHUB, ZIGZAG, LADDER, HEXAGON, DOUBLEHUB, TOWER, BIG8];
 
 export const templatesForLevel = (level: 1 | 2 | 3): FlowTemplate[] => FLOW_TEMPLATES.filter((t) => t.levels.includes(level));

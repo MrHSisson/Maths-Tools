@@ -35,8 +35,23 @@ export interface FlowGenOptions {
   cuts?: "backward" | "forward" | "any";
   /** augment / maxFlow: true = the working must use a backward step (a step against an arrow). Default false: they appear as they happen to. */
   backSteps?: boolean;
+  /** Every capacity, minimum and flow is multiplied by this (1 = single digits to ~20; 10 = 10 to ~200; 100 = 100 to ~2000). The maths is identical, only the numbers are bigger. */
+  scale?: 1 | 10 | 100;
 }
-export const DEFAULT_GEN: Required<FlowGenOptions> = { arcs: "reversed", cuts: "any", backSteps: false };
+export const DEFAULT_GEN: Required<FlowGenOptions> = { arcs: "reversed", cuts: "any", backSteps: false, scale: 1 };
+
+/** Multiply every quantity in an instance by `k` — conservation, bounds, bottlenecks and cuts all scale with it. */
+function scaleInstance(inst: FlowInstance, k: number): FlowInstance {
+  if (k === 1) return inst;
+  const flow: Flow = {};
+  for (const id of Object.keys(inst.flow)) flow[id] = inst.flow[id] * k;
+  return {
+    ...inst,
+    flow,
+    net: { nodes: inst.net.nodes, arcs: inst.net.arcs.map((a) => ({ ...a, lo: a.lo * k, hi: a.hi * k })) },
+    pushed: inst.pushed.map((p) => ({ ...p, amount: p.amount * k })),
+  };
+}
 
 // ── Sample a network + feasible flow from a template ─────────────────────────
 export interface FlowInstance {
@@ -48,7 +63,11 @@ export interface FlowInstance {
 }
 
 /** The network a template becomes for a given set of present arcs and reversed arcs (bounds still 0). Exported for the layout test. */
-export function variantNet(tpl: FlowTemplate, presentIds: Set<string>, flips: Set<string>): { net: FlowNet; labelPos: FlowProblemData["labelPos"] } {
+/** Four-digit numbers need longer arcs: the picture is stretched left-to-right (every position scales together, so label placement and cut lines stay valid). */
+export const stretchFor = (scale: number) => (scale >= 100 ? 1.45 : scale >= 10 ? 1.35 : 1);
+const X0 = 40;
+
+export function variantNet(tpl: FlowTemplate, presentIds: Set<string>, flips: Set<string>, stretch = 1): { net: FlowNet; labelPos: FlowProblemData["labelPos"] } {
   const labelPos: FlowProblemData["labelPos"] = {};
   const arcs: FlowArc[] = tpl.arcs.filter((a) => presentIds.has(a.id)).map((a) => {
     const flipped = flips.has(a.id);
@@ -59,7 +78,7 @@ export function variantNet(tpl: FlowTemplate, presentIds: Set<string>, flips: Se
     labelPos[from + to] = { label: m(a.label), flow: [m(a.flow[0]), a.flow[1]], pot: [m(a.pot[0]), a.pot[1]] };
     return { id: from + to, from, to, lo: 0, hi: 0 };
   });
-  return { net: { nodes: tpl.nodes.map((n) => ({ ...n })), arcs }, labelPos };
+  return { net: { nodes: tpl.nodes.map((nd) => ({ ...nd, x: Math.round(X0 + (nd.x - X0) * stretch) })), arcs }, labelPos };
 }
 
 /** Is this network usable: acyclic, every vertex used, and at least three S→T routes? */
@@ -73,7 +92,7 @@ export function usableNet(net: FlowNet): boolean {
   return simpleForwardPaths(net).length >= 3;
 }
 
-export function sampleInstance(tpl: FlowTemplate, mode: FlowMode, reversed: boolean, pathCount?: number): FlowInstance | null {
+export function sampleInstance(tpl: FlowTemplate, mode: FlowMode, reversed: boolean, pathCount?: number, stretch = 1): FlowInstance | null {
   // 1. arcs — optional arcs come and go; a reversed question flips up to two flippable arcs (the network must stay acyclic)
   const present = tpl.arcs.filter((a) => !a.optional || Math.random() < 0.65);
   const flips = new Set<string>();
@@ -83,7 +102,7 @@ export function sampleInstance(tpl: FlowTemplate, mode: FlowMode, reversed: bool
     if (cand.length === 0) return null;
     for (const a of cand.slice(0, ri(1, Math.min(2, cand.length)))) flips.add(a.id);
   }
-  const variant = variantNet(tpl, new Set(present.map((x) => x.id)), flips);
+  const variant = variantNet(tpl, new Set(present.map((x) => x.id)), flips, stretch);
   const arcs = variant.net.arcs.map((a) => ({ ...a, _pos: variant.labelPos[a.id] }));
   const net: FlowNet = { nodes: variant.net.nodes, arcs };
   if (!usableNet(net)) return null;
@@ -278,7 +297,7 @@ export function generateFlowProblem(
     const pinned = attempt < 4000 ? FLOW_TEMPLATES.find((t) => t.id === forceTemplate) : undefined;
     const tpl = pinned ?? pick(templatesForLevel(level));
     const pathStyle = subTool === "initialFlow" && style === "paths";
-    const inst = sampleInstance(tpl, mode, opts.arcs === "reversed", pathStyle ? (level === 1 ? 2 : level === 2 ? 3 : ri(3, 4)) : undefined);
+    const inst = sampleInstance(tpl, mode, opts.arcs === "reversed", pathStyle ? (level === 1 ? 2 : level === 2 ? 3 : ri(3, 4)) : undefined, stretchFor(opts.scale));
     if (!inst) continue;
 
     let sSide: string[] | undefined;
@@ -309,7 +328,8 @@ export function generateFlowProblem(
     if (subTool === "augment" && !okAugment(inst, opts.backSteps, level)) continue;
     if (subTool === "maxFlow" && !okMaxFlow(inst, level, opts.backSteps)) continue;
 
-    return toProblem(level, subTool, mode, tpl, initial ? { ...inst, flow: initial.flow } : inst, sSide, style, initial?.target, missing);
+    const k = opts.scale;
+    return toProblem(level, subTool, mode, tpl, scaleInstance(initial ? { ...inst, flow: initial.flow } : inst, k), sSide, style, initial?.target === undefined ? undefined : initial.target * k, missing);
   }
   throw new Error(`flow generator: no ${subTool} question found at level ${level} (${mode})`);
 }
@@ -366,7 +386,7 @@ function toProblem(
     answerText = `${r.capacity}`;
   } else if (subTool === "augment") {
     const found = sortedAugmentingPaths(net, flow);
-    prompt = `${bounds} A flow of ${flowValue(net, flow)} is shown (the circled numbers). There are ${found.length === 2 ? "two" : "three"} flow-augmenting paths from S to T. Find them, and say by how much the flow can be increased along each.`;
+    prompt = `${bounds} A flow of ${flowValue(net, flow)} is shown (the circled numbers). There are ${["", "one", "two", "three", "four", "five"][found.length] ?? found.length} flow-augmenting paths from S to T. Find them, and say by how much the flow can be increased along each.`;
     answerText = found.map((p) => `${pathNodes(p).join("")} +${p.bottleneck}`).join("; ");
   } else {
     prompt = `${bounds} A flow of ${flowValue(net, flow)} is shown (the circled numbers). Use flow augmentation to find a maximal flow, then confirm it with a cut.`;

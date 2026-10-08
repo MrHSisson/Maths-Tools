@@ -85,6 +85,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   return generateFlowProblem(lv, sub, mode, tpl, style, {
     cuts: o.cuts === "backward" ? "backward" : "any",
     backSteps: o.backSteps === "on",
+    scale: o.scale === "100" ? 100 : o.scale === "10" ? 10 : 1,
   });
 }
 
@@ -169,6 +170,15 @@ export default function App() {
             choices: [
               { value: "off", label: "Any paths" },
               { value: "on", label: "Include a backward step" },
+            ],
+          },
+          {
+            key: "scale",
+            label: "Numbers",
+            choices: [
+              { value: "1", label: "Small (up to about 20)" },
+              { value: "10", label: "Tens (10 to 200)" },
+              { value: "100", label: "Hundreds (100 to 2000)" },
             ],
           },
         ],

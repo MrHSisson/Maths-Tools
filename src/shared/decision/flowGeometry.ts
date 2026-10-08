@@ -77,15 +77,21 @@ export interface ArcGeometry {
   /** unit normal pointing to the "up" side of the arc (right of a vertical one) */
   normal: Pt;
   at: (t: number, off?: number) => Pt;
+  /** every label this arc draws, as shapes (so other arcs can keep clear of them) */
+  shapes: Shape[];
 }
 
-export function arcGeometry(net: FlowNet, arc: FlowArc, lp: ArcLabelPos, mode: FlowMode): ArcGeometry {
+const pillShape0 = (pill: { c: Pt; w: number; h: number }): Shape => ({ k: "rect", x0: pill.c.x - pill.w / 2, y0: pill.c.y - pill.h / 2, x1: pill.c.x + pill.w / 2, y1: pill.c.y + pill.h / 2 });
+
+export function arcGeometry(net: FlowNet, arc: FlowArc, lp: ArcLabelPos, mode: FlowMode, allObstacles: Shape[] = []): ArcGeometry {
   const byId = new Map(net.nodes.map((n) => [n.id, n]));
   const p = byId.get(arc.from)!;
   const q = byId.get(arc.to)!;
   const dx = q.x - p.x;
   const dy = q.y - p.y;
   const len = Math.hypot(dx, dy) || 1;
+  // only labels near this arc can matter — keeps the search cheap on the big networks
+  const obstacles = allObstacles.filter((o) => dist(o, { k: "seg", a: p, b: q, w: 0 }) < 130);
   const ux = dx / len;
   const uy = dy / len;
   let nx = -uy;
@@ -93,12 +99,15 @@ export function arcGeometry(net: FlowNet, arc: FlowArc, lp: ArcLabelPos, mode: F
   if (ny > 0 || (ny === 0 && nx < 0)) { nx = -nx; ny = -ny; }
   const at = (t: number, off = 0): Pt => ({ x: p.x + dx * t + nx * off, y: p.y + dy * t + ny * off });
   const boundsText = mode === "cap" ? `${arc.hi}` : `${arc.lo}, ${arc.hi}`;
+  // wider numbers (three or four digits) sit a little further out so they clear their own arrow
+  const numGap = NUM_GAP + Math.abs(ux) * 4.5 * Math.max(0, digits(arc.hi) - 2);
+  const sideOff = SIDE_OFF + Math.abs(nx) * 4.5 * Math.max(0, digits(arc.hi) - 2);
   const arrowAt = (t: number, off: number, dir: 1 | -1) => {
     const c = at(t, lp.pot[1] * off);
     return {
       s0: { x: c.x - ux * ARROW_BACK * dir, y: c.y - uy * ARROW_BACK * dir },
       e0: { x: c.x + ux * ARROW_FWD * dir, y: c.y + uy * ARROW_FWD * dir },
-      num: { x: c.x + ux * NUM_GAP * dir, y: c.y + uy * NUM_GAP * dir },
+      num: { x: c.x + ux * numGap * dir, y: c.y + uy * numGap * dir },
     };
   };
   const nodeShapes: Shape[] = net.nodes.map((n) => ({ k: "circle", c: { x: n.x, y: n.y }, r: NODE_R }));
@@ -106,7 +115,7 @@ export function arcGeometry(net: FlowNet, arc: FlowArc, lp: ArcLabelPos, mode: F
   const pillAt = (t: number) => {
     const c = at(t);
     const shape: Shape = { k: "rect", x0: c.x - pillW / 2, y0: c.y - PILL_H / 2, x1: c.x + pillW / 2, y1: c.y + PILL_H / 2 };
-    return { c, shape, gap: Math.min(...nodeShapes.map((n) => dist(shape, n))) };
+    return { c, shape, gap: Math.min(...[...nodeShapes, ...obstacles].map((n) => dist(shape, n))) };
   };
   // a wide "min, max" pill slides along its arc until it clears the vertices at both ends
   let pillBest = pillAt(lp.label);
@@ -119,11 +128,12 @@ export function arcGeometry(net: FlowNet, arc: FlowArc, lp: ArcLabelPos, mode: F
         if (cand.gap > pillBest.gap) pillBest = cand;
       }
   }
-  const pill = { c: pillBest.c, w: pillW, h: PILL_H };
-  const pillShape: Shape = pillBest.shape;
+  const size = { inc: digits(arc.hi), dec: digits(arc.hi) }; // the widest a potential can be is the bound itself
+  const layoutWith = (pb: ReturnType<typeof pillAt>) => {
+  const pill = { c: pb.c, w: pillW, h: PILL_H };
+  const pillShape: Shape = pb.shape;
   // The two potential arrows sit beside the arc at lp.pot; slide them along the arc (towards whichever way clears) until
   // neither the arrows nor their numbers touch this arc's bounds pill or any vertex.
-  const size = { inc: digits(arc.hi), dec: digits(arc.hi) }; // the widest a potential can be is the bound itself
   const lineA = { a: { x: p.x + ux * NODE_R, y: p.y + uy * NODE_R }, b: { x: q.x - ux * (NODE_R + 2), y: q.y - uy * (NODE_R + 2) } };
   const otherLines = net.arcs.filter((x) => x.id !== arc.id).map((x) => {
     const f = byId.get(x.from)!, t2 = byId.get(x.to)!;
@@ -134,15 +144,15 @@ export function arcGeometry(net: FlowNet, arc: FlowArc, lp: ArcLabelPos, mode: F
   const ownership = (pt: Pt) => Math.min(Infinity, ...otherLines.map((l) => pointSeg(pt, l.a, l.b))) - pointSeg(pt, lineA.a, lineA.b);
   const OWN = 8, CLEARANCE = 3;
   const shapesAt = (t: number) => {
-    const inc = arrowAt(t, SIDE_OFF, 1), dec = arrowAt(t, -SIDE_OFF, -1);
+    const inc = arrowAt(t, sideOff, 1), dec = arrowAt(t, -sideOff, -1);
     const sh: Shape[] = [
       { k: "seg", a: inc.s0, b: inc.e0, w: 2.5 }, numberBox(inc.num, size.inc),
       { k: "seg", a: dec.s0, b: dec.e0, w: 2.5 }, numberBox(dec.num, size.dec),
     ];
     const marks = [inc.num, dec.num, { x: (inc.s0.x + inc.e0.x) / 2, y: (inc.s0.y + inc.e0.y) / 2 }, { x: (dec.s0.x + dec.e0.x) / 2, y: (dec.s0.y + dec.e0.y) / 2 }];
-    const clear = Math.min(...sh.flatMap((x) => [pillShape, ...nodeShapes].map((y) => dist(x, y)))) - CLEARANCE;
+    const clear = Math.min(...sh.flatMap((x) => [pillShape, ...nodeShapes, ...obstacles].map((y) => dist(x, y)))) - CLEARANCE;
     const own = Math.min(...marks.map(ownership)) - OWN;
-    return { inc, dec, sh, score: Math.min(clear, own) };
+    return { inc, dec, sh, score: clear < 0 ? clear - 100 : Math.min(clear, own) }; // touching another label is far worse than being a little ambiguous
   };
   let potT = lp.pot[0];
   let best = shapesAt(potT);
@@ -158,9 +168,9 @@ export function arcGeometry(net: FlowNet, arc: FlowArc, lp: ArcLabelPos, mode: F
   const flowAtT = (t: number, side: 1 | -1) => {
     const c = at(t, SIDE_OFF * side);
     const sh: Shape = { k: "circle", c, r: FLOW_R };
-    const clear = Math.min(...[pillShape, ...nodeShapes].map((y) => dist(sh, y))) - CLEARANCE;
+    const clear = Math.min(...[pillShape, ...nodeShapes, ...obstacles].map((y) => dist(sh, y))) - CLEARANCE;
     const own = ownership(c) - OWN;
-    return { c, score: Math.min(clear, own) };
+    return { c, score: clear < 0 ? clear - 100 : Math.min(clear, own) };
   };
   let flowBest = flowAtT(lp.flow[0], lp.flow[1]);
   for (let k = 1; k <= 45 && flowBest.score < 0; k++)
@@ -169,6 +179,20 @@ export function arcGeometry(net: FlowNet, arc: FlowArc, lp: ArcLabelPos, mode: F
         const cand = flowAtT(lp.flow[0] + sgn * k * 0.012, side);
         if (cand.score > flowBest.score && lp.flow[0] + sgn * k * 0.012 > 0.1 && lp.flow[0] + sgn * k * 0.012 < 0.9) flowBest = cand;
       }
+  return { pill, best, flowBest, score: Math.min(best.score, flowBest.score) };
+  };
+  // the pill sits where it was hand-mapped when everything clears; otherwise it slides along its arc until the whole arc's labels fit
+  let chosen = layoutWith(pillBest);
+  for (let k = 1; k <= 14 && chosen.score < 0; k++)
+    for (const sgn of [1, -1]) {
+      const t = lp.label + sgn * k * 0.04;
+      if (t < 0.15 || t > 0.85) continue;
+      const cand = pillAt(t);
+      if (cand.gap < 3) continue;
+      const trial = layoutWith(cand);
+      if (trial.score > chosen.score) chosen = trial;
+    }
+  const { pill, best, flowBest } = chosen;
   return {
     ux, uy, len,
     line: { a: { x: p.x + ux * NODE_R, y: p.y + uy * NODE_R }, b: { x: q.x - ux * (NODE_R + 2), y: q.y - uy * (NODE_R + 2) } },
@@ -179,5 +203,31 @@ export function arcGeometry(net: FlowNet, arc: FlowArc, lp: ArcLabelPos, mode: F
     dec: best.dec,
     normal: { x: nx, y: ny },
     at,
+    shapes: [
+      pillShape0(pill),
+      { k: "circle", c: flowBest.c, r: FLOW_R },
+      { k: "seg", a: best.inc.s0, b: best.inc.e0, w: 2.5 }, numberBox(best.inc.num, size.inc),
+      { k: "seg", a: best.dec.s0, b: best.dec.e0, w: 2.5 }, numberBox(best.dec.num, size.dec),
+    ],
   };
+}
+
+/**
+ * Place every arc's labels together. Each arc is first laid out alone (its hand-mapped positions where they fit); then, for a few
+ * passes, any arc re-solves with every OTHER arc's labels as obstacles, sliding along its own line only if something is in the way.
+ */
+export function layoutNetwork(net: FlowNet, labelPos: Record<string, ArcLabelPos>, mode: FlowMode): Map<string, ArcGeometry> {
+  let geo = new Map(net.arcs.map((a) => [a.id, arcGeometry(net, a, labelPos[a.id], mode)]));
+  for (let pass = 0; pass < 3; pass++) {
+    const next = new Map(geo);
+    for (const a of net.arcs) {
+      const others = net.arcs.filter((x) => x.id !== a.id).flatMap((x) => next.get(x.id)!.shapes);
+      const mine = next.get(a.id)!.shapes;
+      // only an arc whose labels touch another arc's needs to move
+      if (mine.every((m) => others.every((o) => dist(m, o) >= 3))) continue;
+      next.set(a.id, arcGeometry(net, a, labelPos[a.id], mode, others));
+    }
+    geo = next;
+  }
+  return geo;
 }

@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import type { FlowArc, FlowMode, FlowNet, FlowProblemData, FlowViewState } from "../flow";
 import { cutGeometry, flowBox } from "../cutCurve";
-import { FLOW_R, NODE_R, PILL_H, arcGeometry } from "../flowGeometry";
+import { FLOW_R, NODE_R, PILL_H, layoutNetwork } from "../flowGeometry";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // FlowView — a PURE renderer of a flow network. Draws each arc with its bounds
@@ -41,8 +41,9 @@ export default function FlowView({ net, mode, view, labelPos, qIndex, background
   const labelled = new Set(view.labelled ?? []);
   const focus = new Set(view.focus ?? []);
 
+  const layout = useMemo(() => layoutNetwork(net, labelPos, mode), [net, labelPos, mode]);
   const arcEl = (a: FlowArc) => {
-    const g = arcGeometry(net, a, labelPos[a.id], mode);
+    const g = layout.get(a.id)!;
     const { ux, uy } = g;
     const at = g.at;
     const dir = pathIdx.get(a.id);
