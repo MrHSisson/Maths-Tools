@@ -9,7 +9,7 @@
 
 import {
   SINK, SOURCE, sortedAugmentingPaths, pathNodes, decomposeFlow, pathLabel, peelMissing, allCuts, cutCapacity, flowValue, isAcyclic, isFeasibleFlow,
-  maxFlow, orderNodes, potentials, simpleForwardPaths,
+  maxFlow, orderNodes, potentials, simpleForwardPaths, buildFlowByPaths,
   type Flow, type FlowArc, type FlowMode, type FlowNet, type FlowProblemData, type FlowSubTool, type InitialStyle,
 } from "./flow";
 import { cutGeometry } from "./cutCurve";
@@ -305,12 +305,20 @@ export function generateFlowProblem(
     if (subTool === "initialFlow") {
       // most questions use at least one route through a cross arc; the rest may be all direct (the smallest networks only have direct pairs)
       if (!okInitial(inst, level, mode, style, level > 1 || Math.random() < 0.7)) continue;
-      if (style === "find" && mode === "cap") {
-        // "find a flow of value V": V is the value of the flow built for this question, below the maximum flow
-        const mx = maxFlow(inst.net, Object.fromEntries(inst.net.arcs.map((a) => [a.id, 0]))).value;
-        const target = flowValue(inst.net, inst.flow);
-        if (target >= mx) continue;
-        initial = { flow: inst.flow, target };
+      if (style === "find") {
+        // the answer is built the way a student would build it, route by route (buildFlowByPaths), so the working is a real method
+        let target: number | undefined;
+        if (mode === "cap") {
+          // "find a flow of value V": V is below the maximum flow
+          const mx = maxFlow(inst.net, Object.fromEntries(inst.net.arcs.map((a) => [a.id, 0]))).value;
+          target = flowValue(inst.net, inst.flow);
+          if (target >= mx) continue;
+        }
+        const built = buildFlowByPaths(inst.net, target);
+        if (!built || built.paths.length < 2 || built.paths.length > 5) continue;
+        if (level > 1 && !built.paths.some(isLong)) continue;
+        inst.pushed = built.paths;
+        initial = { flow: built.flow, target };
       } else initial = { flow: inst.flow };
     }
     let missing: string[] | undefined;
@@ -345,7 +353,7 @@ function toProblem(
     subTool, mode, level, templateId: tpl.id, net, flow, sSide, labelPos: inst.labelPos,
     showCutLine: subTool === "cutValue" ? level < 3 : undefined,
     missing,
-    ...(subTool === "initialFlow" ? { style, target, paths: style === "paths" ? inst.pushed : decomposeFlow(net, flow) } : {}),
+    ...(subTool === "initialFlow" ? { style, target, paths: inst.pushed } : {}),
   };
   const network = {
     nodes: net.nodes,

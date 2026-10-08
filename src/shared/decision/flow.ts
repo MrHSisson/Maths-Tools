@@ -389,3 +389,45 @@ export function peelMissing(net: FlowNet, missing: string[]): Array<{ arc: strin
   }
   return out;
 }
+
+
+/**
+ * The by-hand method for "find a flow", one S→T route at a time (what a student does on paper):
+ *  • capacity-only (`target` given): repeatedly take the route with the most spare capacity and send as much as it will carry, but no more than is still
+ *    needed, until the flow reaches `target`;
+ *  • min/max: repeatedly take the arc furthest below its minimum, route through it (preferring routes that also cover other arcs still below their minimum
+ *    and have the room), and send what that arc still needs, until every arc is at least its minimum.
+ * Returns the routes and the resulting flow, or null if the method gets stuck (the generator then asks a different question).
+ */
+export function buildFlowByPaths(net: FlowNet, target?: number): { flow: Flow; paths: Array<{ arcs: string[]; amount: number }> } | null {
+  const byId = arcById(net);
+  const routes = simpleForwardPaths(net);
+  const flow: Flow = {};
+  for (const a of net.arcs) flow[a.id] = 0;
+  const paths: Array<{ arcs: string[]; amount: number }> = [];
+  const spare = (r: string[]) => Math.min(...r.map((id) => byId[id].hi - flow[id]));
+  const push = (r: string[], amount: number) => {
+    for (const id of r) flow[id] += amount;
+    paths.push({ arcs: r, amount });
+  };
+  for (let guard = 0; guard < 10; guard++) {
+    if (target !== undefined) {
+      const need = target - flowValue(net, flow);
+      if (need <= 0) break;
+      const cand = routes.filter((r) => spare(r) > 0).sort((x, y) => spare(y) - spare(x) || x.length - y.length || x.join().localeCompare(y.join()));
+      if (!cand.length) return null;
+      push(cand[0], Math.min(spare(cand[0]), need));
+    } else {
+      const deficient = net.arcs.filter((a) => flow[a.id] < a.lo);
+      if (!deficient.length) break;
+      const first = [...deficient].sort((x, y) => (y.lo - flow[y.id]) - (x.lo - flow[x.id]) || x.id.localeCompare(y.id))[0];
+      const covered = (r: string[]) => r.filter((id) => flow[id] < byId[id].lo).length;
+      const cand = routes.filter((r) => r.includes(first.id) && spare(r) > 0).sort((x, y) => covered(y) - covered(x) || spare(y) - spare(x) || x.length - y.length || x.join().localeCompare(y.join()));
+      if (!cand.length) return null;
+      push(cand[0], Math.min(spare(cand[0]), first.lo - flow[first.id]));
+    }
+  }
+  if (flowValue(net, flow) === 0 || !isFeasibleFlow(net, flow).ok) return null;
+  if (target !== undefined && flowValue(net, flow) !== target) return null;
+  return { flow, paths };
+}

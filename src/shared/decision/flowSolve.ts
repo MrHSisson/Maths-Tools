@@ -33,19 +33,25 @@ function solveInitial(p: DecisionProblem): SolveStep[] {
   const acc: Flow = {};
   if (d.style === "find" && mode === "minmax") {
     const lows = net.arcs.filter((a) => a.lo > 0);
-    steps.push(beat(net, `Every arc must carry at least its minimum. The arcs with a minimum above 0 are ${lows.map((a) => `${a.id} (${a.lo})`).join(", ")}. Build the flow up one path at a time so each of these is covered.`,
+    steps.push(beat(net, `Every arc must carry at least its minimum, and no more than its maximum. The arcs with a minimum above 0 are ${lows.map((a) => `${a.id} (${a.lo})`).join(", ")}.\nMethod: take the arc furthest below its minimum, choose a route from S to T through it (preferably one that passes through other arcs still below their minimum), and send what that arc still needs — without going over any maximum. Repeat until every arc is at its minimum.`,
       { focus: lows.map((a) => a.id) }));
   } else if (d.style === "find") {
-    steps.push(beat(net, `Build a flow of value ${d.target} one path at a time, never going above a capacity.`, {}));
+    steps.push(beat(net, `Method: choose a route from S to T with spare capacity, and send as much as it will carry (the smallest spare capacity on the route) — but no more than is still needed. Repeat with another route until the flow has value ${d.target}.`, {}));
   } else {
     steps.push(beat(net, "Put each given path's flow on every arc along it. Where two paths share an arc, the flows add.", {}));
   }
+  const findNote = (acc2: Flow, tot: number): string => {
+    if (d.style !== "find") return "";
+    if (mode === "cap") return tot < (d.target ?? tot) ? `\nFlow so far ${tot}; still needed ${(d.target ?? tot) - tot}.` : `\nThe flow has reached ${tot}.`;
+    const below = net.arcs.filter((a) => (acc2[a.id] ?? 0) < a.lo);
+    return below.length ? `\nStill below their minimum: ${below.map((a) => `${a.id} (${acc2[a.id] ?? 0} of ${a.lo})`).join(", ")}.` : "\nEvery arc is now at least its minimum.";
+  };
   let total = 0;
   paths.forEach((pt, i) => {
     for (const id of pt.arcs) acc[id] = (acc[id] ?? 0) + pt.amount;
     total += pt.amount;
     const arcs = pt.arcs.map((id) => byId[id]);
-    steps.push(beat(net, `Send ${pt.amount} along ${pathLabel(net, pt.arcs)}: add ${pt.amount} to ${arcs.map((a) => a.id).join(", ")}.\n${pt.arcs.map((id) => `${id} = ${acc[id]}`).join(", ")}.${i > 0 && pt.arcs.some((id) => paths.slice(0, i).some((q) => q.arcs.includes(id))) ? "\nSome of these arcs already carry flow from an earlier path, so the amounts add." : ""}`,
+    steps.push(beat(net, `Send ${pt.amount} along ${pathLabel(net, pt.arcs)}: add ${pt.amount} to ${arcs.map((a) => a.id).join(", ")}.\n${pt.arcs.map((id) => `${id} = ${acc[id]}`).join(", ")}.${i > 0 && pt.arcs.some((id) => paths.slice(0, i).some((q) => q.arcs.includes(id))) ? "\nSome of these arcs already carry flow from an earlier path, so the amounts add." : ""}${findNote(acc, total)}`,
       { flow: { ...acc }, path: pt.arcs.map((id) => ({ arc: id, dir: "fwd" as const, to: byId[id].to })) }, { runningTotal: total, totalLabel: "Flow" }));
   });
   steps.push(beat(net, `${net.arcs.some((a) => flow[a.id] === 0) ? "Every arc not used carries 0. " : ""}The flow value is ${flowValue(net, flow)}.`, { flow }, { runningTotal: flowValue(net, flow), totalLabel: "Flow" }));

@@ -74,6 +74,13 @@ for (const scale of [1, 10, 100] as const)
                 expect(d.target).toBeLessThanOrEqual(maxFlow(net, Object.fromEntries(net.arcs.map((a) => [a.id, 0]))).value);
                 expect(flowValue(net, flow)).toBe(d.target);
               }
+              if (sub === "initialFlow") {
+                // the working is a real route-by-route build: the routes add back to exactly the flow shown as the answer
+                const sum: Record<string, number> = Object.fromEntries(net.arcs.map((a) => [a.id, 0]));
+                for (const r of d.paths!) for (const id of r.arcs) sum[id] += r.amount;
+                expect(sum).toEqual(flow);
+                expect(d.paths!.length).toBeGreaterThanOrEqual(2);
+              }
               if (sub === "missingFlow") {
                 expect(d.missing!.length).toBeGreaterThan(0);
                 expect(peelMissing(net, d.missing!)).not.toBeNull();
@@ -86,5 +93,5 @@ for (const scale of [1, 10, 100] as const)
                 if (n % scale !== 0 && n > 5) expect.fail(`stray number ${n} in: ${t}`);
               }
             }
-          });
+          }, 60_000);
         });
