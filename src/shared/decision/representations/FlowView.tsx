@@ -84,8 +84,9 @@ export default function FlowView({ net, mode, view, labelPos, qIndex, background
       const num = { x: c.x + ux * 25 * dirSign, y: c.y + uy * 25 * dirSign }; // beyond the arrowhead
       return { s0, e0, num, dirSign };
     };
-    const fwdA = arrowAt(23, 1);
-    const bwdA = arrowAt(39, -1);
+    // one arrow either side of the arc: the forward one on the arc's labelled side, the backward one opposite
+    const fwdA = arrowAt(19, 1);
+    const bwdA = arrowAt(-19, -1);
     const tick = cut?.ticks[a.id] ?? at(0.5);
     const fwdPot = view.potentials?.[a.id]?.fwd;
     const bwdPot = view.potentials?.[a.id]?.bwd;

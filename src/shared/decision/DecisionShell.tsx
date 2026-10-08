@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Home, Menu, X, ChevronDown, ChevronLeft, ChevronRight, RefreshCw, Maximize2, Minimize2, Rewind, FastForward } from "lucide-react";
+import { Home, Menu, X, ChevronDown, ChevronLeft, ChevronRight, RefreshCw, Maximize2, Minimize2, FastForward } from "lucide-react";
 import type { DecisionProblem, DecisionShellProps, GenerateContext, LegendItem, SolveStep } from "./types";
 import type { InfoSection } from "../types";
 import NetworkView, { EDGE_STYLE, NODE_ROLE_STYLE } from "./representations/NetworkView";
@@ -192,31 +192,51 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         <button onClick={() => newQuestion()} className={BTN_PRIMARY}>
           <RefreshCw size={18} /> New Question
         </button>
-        <div className="flex flex-wrap justify-center items-center gap-3">
-          <button onClick={() => jump(-1)} disabled={atQuestion} title="Back to the question" className={`${BTN_PLAIN} disabled:opacity-40 disabled:cursor-not-allowed`}>
-            <Rewind size={18} />
-          </button>
-          <button onClick={() => jump(stepIdx - 1)} disabled={atQuestion} className={`${BTN_PLAIN} disabled:opacity-40 disabled:cursor-not-allowed`}>
-            <ChevronLeft size={18} /> Back
-          </button>
-          <div className="min-w-[120px] text-center font-bold text-gray-500">
+      </div>
+      {levelCount > 1 && config.levelLabels?.[level - 1] && (
+        <div className="text-center text-sm font-semibold text-gray-400">{config.levelLabels[level - 1]}</div>
+      )}
+    </div>
+  );
+
+  // Step controls live at the foot of the Answer section (as in the other tools' worked examples), not in the
+  // question control bar: ◀ back · where we are · Show all ⇄ Step by step · next ▶, then a dot strip.
+  const stepNav = (
+    <div className="border-t border-gray-200 bg-gray-50 px-4 py-3">
+      <div className="flex items-center justify-between gap-3">
+        <button
+          onClick={() => jump(stepIdx - 1)}
+          disabled={atQuestion}
+          title="Back"
+          className="w-12 h-12 rounded-xl border-2 border-gray-300 bg-white flex items-center justify-center text-gray-700 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <ChevronLeft size={26} />
+        </button>
+        <div className="flex flex-col items-center gap-1 min-w-0">
+          <div className="font-bold text-gray-600 text-base text-center">
             {atQuestion ? "Question" : onAnswer ? "Answer" : `Step ${idx + 1} of ${steps.length}`}
           </div>
-          <button onClick={() => jump(stepIdx + 1)} disabled={stepIdx >= maxBeat} className={`${BTN_PRIMARY} disabled:opacity-40 disabled:cursor-not-allowed`}>
-            {atQuestion ? "Show working" : "Next"} <ChevronRight size={18} />
-          </button>
           <button
             onClick={() => {
               if (showAll) jump(-1);
               else { setShowAll(true); setStepIdx(maxBeat); }
             }}
-            className={BTN_PLAIN}
+            className="text-sm font-bold text-blue-900 underline-offset-2 hover:underline flex items-center gap-1"
           >
-            <FastForward size={18} /> {showAll ? "Step by step" : "Show all"}
+            <FastForward size={14} /> {showAll ? "Step by step" : "Show all"}
           </button>
         </div>
+        <button
+          onClick={() => jump(stepIdx + 1)}
+          disabled={stepIdx >= maxBeat}
+          title={atQuestion ? "Show working" : "Next"}
+          className="h-12 px-4 rounded-xl bg-blue-900 text-white font-bold flex items-center gap-1.5 hover:bg-blue-800 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          {atQuestion && <span className="hidden sm:inline">Show working</span>}
+          <ChevronRight size={26} />
+        </button>
       </div>
-      <div className="flex justify-center items-center gap-2">
+      <div className="mt-3 flex justify-center items-center gap-2">
         <button onClick={() => jump(-1)} title="Question" style={{ width: 10, height: 10, borderRadius: 2, border: "none", cursor: "pointer", background: atQuestion ? "#1e3a8a" : "#d1d5db" }} />
         {steps.map((_, i) => (
           <button key={i} onClick={() => jump(i)} title={`Step ${i + 1}`} style={{ width: 10, height: 10, borderRadius: 5, border: "none", cursor: "pointer", background: !atQuestion && !onAnswer && i === idx ? "#1e3a8a" : "#d1d5db" }} />
@@ -225,9 +245,6 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           <button onClick={() => jump(last + 1)} title="Answer" style={{ width: 24, height: 10, borderRadius: 5, border: "none", cursor: "pointer", background: onAnswer ? "#16a34a" : "#d1d5db" }} />
         )}
       </div>
-      {levelCount > 1 && config.levelLabels?.[level - 1] && (
-        <div className="text-center text-sm font-semibold text-gray-400">{config.levelLabels[level - 1]}</div>
-      )}
     </div>
   );
 
@@ -262,19 +279,18 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       <div className="flex flex-col gap-4" style={{ flex: "1 1 360px", minWidth: 0 }}>
         {/* QUESTION */}
         {questionBlock(false)}
-        {/* ANSWER — empty until asked for, then built up one step at a time */}
-        <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+        {/* ANSWER — empty until asked for, then built up one step at a time; the controls sit at its foot */}
+        <div className="rounded-xl border border-gray-200 bg-white overflow-hidden flex flex-col">
           <div className="px-5 pt-4 pb-2 text-xs font-bold uppercase tracking-wider text-gray-400">Answer</div>
-          {atQuestion ? (
-            <div className="px-5 pb-5 flex flex-col items-start gap-3">
-              <div className="text-base text-gray-500 leading-snug">The working and the answer appear here, one step at a time.</div>
-              <button onClick={() => jump(0)} className={BTN_PRIMARY}>
-                Show working <ChevronRight size={18} />
-              </button>
-            </div>
-          ) : (
-            <StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} />
-          )}
+          {/* fixed height, so the controls below never move as steps are added */}
+          <div style={{ height: "min(46vh, 480px)", minHeight: 260 }}>
+            {atQuestion ? (
+              <div className="px-5 pb-5 text-base text-gray-500 leading-snug">The working and the answer appear here, one step at a time.</div>
+            ) : (
+              <StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} />
+            )}
+          </div>
+          {stepNav}
         </div>
         {current?.route && current.route.length > 0 && <RouteCard route={current.route} />}
         {!config.hideMatrix && (!atQuestion || config.questionMatrix) && (
@@ -377,7 +393,7 @@ function StepCascade({ steps, idx, answer, all }: { steps: SolveStep[]; idx: num
       ref={box}
       onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 4)}
       style={{
-        maxHeight: "min(60vh, 640px)", overflowY: "auto", padding: "0 10px 12px",
+        height: "100%", overflowY: "auto", padding: "0 10px 12px",
         ...(scrolled ? { WebkitMaskImage: "linear-gradient(to bottom, transparent 0, #000 3rem)", maskImage: "linear-gradient(to bottom, transparent 0, #000 3rem)" } : null),
       }}
     >

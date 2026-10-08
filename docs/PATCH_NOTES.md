@@ -85,6 +85,10 @@ Keep the split even when a session only touches one.
   box that follows the newest step and fades out at the top — and the answer arrives last as a green "A" line. Controls: Back /
   Next / Show all ⇄ Step by step, a dot strip (question · steps · answer), arrow keys. The page header was tightened so the graph
   sits higher.
+- **Controls at the foot; arrows either side (same day):** the step controls (◀ back · "Step n of N" · Show all ⇄ Step by step ·
+  next ▶ · the dot strip) moved out of the question control bar to the foot of the Answer section, whose working area has a fixed
+  height so they never move; the control bar keeps only level, Question Options and New Question. On the diagram the two
+  potential arrows now sit on either side of the arc — the forward one beside it, the backward one on the opposite side.
 - Phone width checked (stacks, no sideways scroll; the graph is sticky only on wide screens). Still to do: Harry's-notes update.
 
 ## 2026-10-07 — Notes and docs sweep: cast documented
