@@ -8,7 +8,7 @@
 > - **No worksheets, print or Whiteboard.** Every question is worked through step by step (see `docs/architecture/DECISION_SHELL_PLAN.md` → Shell UX).
 > - **Real minimums:** in Min and max questions every arc carries flow and at most about one arc in seven has a minimum of 0. An arc that shows its potentials drops its flow circle and min/max label.
 
-**Status:** built (`enabled: false`) — six question styles, nine network styles, Numbers option (×1/×10/×100), info modal done; go-live pending Harry's review. Later additions superseding earlier text below: Missing flow and Find a flow are sub-tools; Find a flow is built route by route (`buildFlowByPaths`); levels are graph size. <!-- draft → ready → implemented. -->
+**Status:** implemented and live — six question styles, nine network styles, Numbers option (×1/×10/×100), info modal done; un-gated (no `enabled: false`). Later additions superseding earlier text below: Missing flow and Find a flow are sub-tools; Find a flow is built route by route (`buildFlowByPaths`); levels are graph size. <!-- draft → ready → implemented. -->
 
 Built on **`DecisionShell`** (`src/shared/decision/`), not `ToolShell` — see
 `docs/architecture/DECISION_SHELL_PLAN.md`. This is a **Decision Maths** tool (D2 network flows), so the
@@ -25,7 +25,7 @@ Decision-shell equivalents named in section 7.
 | Tool id / URL path | `/network-flows` |
 | Category | Decision Mathematics (`src/tools/Decision/NetworkFlows.tsx`) |
 | Card description | Find initial flows, cut values, potentials and flow-augmenting paths on a capacity or minimum/maximum network, walked through step by step. |
-| Registry | `enabled: false` until reviewed (Dev badge), like the other Decision tools |
+| Registry | live (the `enabled: false` gate was removed 2026-10-08) |
 | Defaults | standard where the shell supports it (see §7 for the shell work this needs) |
 
 **Pedagogical intent.** After a lesson a student can: write down a feasible flow on a network (including
