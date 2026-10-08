@@ -54,7 +54,9 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const [options, setOptions] = useState<Record<string, string>>(init.options);
   const ctxOf = (sub: string, opts: Record<string, string>): GenerateContext => ({ subTool: sub, options: opts });
   const [problem, setProblem] = useState<DecisionProblem>(() => generate(init.level, ctxOf(init.subTool, init.options)));
-  const [stepIdx, setStepIdx] = useState(0);
+  // -1 = the question only; 0…last = the working, one step at a time; last+1 = the answer (when it fits on a line)
+  const [stepIdx, setStepIdx] = useState(-1);
+  const [showAll, setShowAll] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
@@ -63,14 +65,23 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
 
   const steps = useMemo<SolveStep[]>(() => solve(problem), [problem, solve]);
   const last = steps.length - 1;
-  const idx = Math.min(stepIdx, last);
-  const current = steps[idx];
+  const answerText = problem.answer?.text && problem.answer.text.length <= 160 ? problem.answer.text : null;
+  const maxBeat = last + (answerText ? 1 : 0);
+  const atQuestion = stepIdx < 0;
+  const onAnswer = !!answerText && stepIdx > last;
+  const idx = Math.min(Math.max(stepIdx, 0), last);
+  const current: SolveStep | undefined = atQuestion ? undefined : steps[idx];
+  const jump = (b: number) => {
+    setShowAll(false);
+    setStepIdx(Math.max(-1, Math.min(maxBeat, b)));
+  };
   const visibleOptions = (config.options ?? []).filter((o) => !o.forSubTools || o.forSubTools.includes(subTool));
   const qBg = getQuestionBg(colorScheme);
 
   const newQuestion = (lv = level, sub = subTool, opts = options) => {
     setProblem(generate(lv, ctxOf(sub, opts)));
-    setStepIdx(0);
+    setStepIdx(-1);
+    setShowAll(false);
   };
 
   // keep the address bar bookmarkable
@@ -89,12 +100,12 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setFullscreen(false);
-      if (e.key === "ArrowRight") setStepIdx((i) => Math.min(last, i + 1));
-      if (e.key === "ArrowLeft") setStepIdx((i) => Math.max(0, i - 1));
+      if (e.key === "ArrowRight") { setShowAll(false); setStepIdx((i) => Math.min(maxBeat, i + 1)); }
+      if (e.key === "ArrowLeft") { setShowAll(false); setStepIdx((i) => Math.max(-1, i - 1)); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [last]);
+  }, [maxBeat]);
 
   const infoSections: InfoSection[] = config.infoSections ?? [
     {
@@ -107,14 +118,13 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   ];
 
   const shown = (st: SolveStep | undefined) => (renderCanvas ? renderCanvas(problem, st) : <NetworkView network={problem.network} step={st} interactive background="#ffffff" />);
-  const canvasStep = current;
+  const canvasStep = current; // undefined at the question: the network as given
   const footer = typeof config.canvasFooter === "function" ? config.canvasFooter(problem) : config.canvasFooter;
-  const answerText = problem.answer?.text && problem.answer.text.length <= 160 ? problem.answer.text : null;
 
   // ── pieces ────────────────────────────────────────────────────────────────────
   const navBar = (
     <div className="bg-blue-900 shadow-lg">
-      <div className="max-w-[1500px] mx-auto px-4 sm:px-8 py-3 sm:py-4 flex justify-between items-center">
+      <div className="max-w-[1500px] mx-auto px-4 sm:px-8 py-2 sm:py-3 flex justify-between items-center">
         <button onClick={() => { window.location.href = "/"; }} className="flex items-center gap-2 text-white hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors">
           <Home size={24} />
           <span className="font-semibold text-lg">Home</span>
@@ -130,11 +140,11 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   );
 
   const tabBtn = (active: boolean) =>
-    `px-4 py-3 sm:px-8 sm:py-4 rounded-xl font-bold text-base sm:text-xl transition-all shadow-xl ${active ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`;
+    `px-4 py-2 sm:px-6 sm:py-3 rounded-xl font-bold text-base sm:text-lg transition-all shadow-md ${active ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`;
 
   const controlBar = (
-    <div className={`${CARD} p-3 sm:p-5 flex flex-col gap-4`}>
-      <div className="flex flex-wrap justify-center items-center gap-5">
+    <div className={`${CARD} p-3 sm:p-4 flex flex-col gap-3`}>
+      <div className="flex flex-wrap justify-center items-center gap-x-5 gap-y-3">
         {levelCount > 1 && (
           <DifficultyToggle
             value={levelKey(level)}
@@ -183,20 +193,37 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           <RefreshCw size={18} /> New Question
         </button>
         <div className="flex flex-wrap justify-center items-center gap-3">
-            <button onClick={() => setStepIdx(0)} disabled={idx === 0} title="Back to the start" className={`${BTN_PLAIN} disabled:opacity-40 disabled:cursor-not-allowed`}>
-              <Rewind size={18} />
-            </button>
-            <button onClick={() => setStepIdx(Math.max(0, idx - 1))} disabled={idx === 0} className={`${BTN_PLAIN} disabled:opacity-40 disabled:cursor-not-allowed`}>
-              <ChevronLeft size={18} /> Back
-            </button>
-            <div className="min-w-[110px] text-center font-bold text-gray-500">Step {idx + 1} of {steps.length}</div>
-            <button onClick={() => setStepIdx(Math.min(last, idx + 1))} disabled={idx >= last} className={`${BTN_PRIMARY} disabled:opacity-40 disabled:cursor-not-allowed`}>
-              Next <ChevronRight size={18} />
-            </button>
-            <button onClick={() => setStepIdx(last)} disabled={idx >= last} className={`${BTN_PLAIN} disabled:opacity-40 disabled:cursor-not-allowed`}>
-              <FastForward size={18} /> Show all
-            </button>
+          <button onClick={() => jump(-1)} disabled={atQuestion} title="Back to the question" className={`${BTN_PLAIN} disabled:opacity-40 disabled:cursor-not-allowed`}>
+            <Rewind size={18} />
+          </button>
+          <button onClick={() => jump(stepIdx - 1)} disabled={atQuestion} className={`${BTN_PLAIN} disabled:opacity-40 disabled:cursor-not-allowed`}>
+            <ChevronLeft size={18} /> Back
+          </button>
+          <div className="min-w-[120px] text-center font-bold text-gray-500">
+            {atQuestion ? "Question" : onAnswer ? "Answer" : `Step ${idx + 1} of ${steps.length}`}
+          </div>
+          <button onClick={() => jump(stepIdx + 1)} disabled={stepIdx >= maxBeat} className={`${BTN_PRIMARY} disabled:opacity-40 disabled:cursor-not-allowed`}>
+            {atQuestion ? "Show working" : "Next"} <ChevronRight size={18} />
+          </button>
+          <button
+            onClick={() => {
+              if (showAll) jump(-1);
+              else { setShowAll(true); setStepIdx(maxBeat); }
+            }}
+            className={BTN_PLAIN}
+          >
+            <FastForward size={18} /> {showAll ? "Step by step" : "Show all"}
+          </button>
         </div>
+      </div>
+      <div className="flex justify-center items-center gap-2">
+        <button onClick={() => jump(-1)} title="Question" style={{ width: 10, height: 10, borderRadius: 2, border: "none", cursor: "pointer", background: atQuestion ? "#1e3a8a" : "#d1d5db" }} />
+        {steps.map((_, i) => (
+          <button key={i} onClick={() => jump(i)} title={`Step ${i + 1}`} style={{ width: 10, height: 10, borderRadius: 5, border: "none", cursor: "pointer", background: !atQuestion && !onAnswer && i === idx ? "#1e3a8a" : "#d1d5db" }} />
+        ))}
+        {answerText && (
+          <button onClick={() => jump(last + 1)} title="Answer" style={{ width: 24, height: 10, borderRadius: 5, border: "none", cursor: "pointer", background: onAnswer ? "#16a34a" : "#d1d5db" }} />
+        )}
       </div>
       {levelCount > 1 && config.levelLabels?.[level - 1] && (
         <div className="text-center text-sm font-semibold text-gray-400">{config.levelLabels[level - 1]}</div>
@@ -224,31 +251,37 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     </div>
   );
 
-  const matrixCard = !config.hideMatrix && true && (
-    <div className="rounded-xl border border-gray-200 bg-white p-4 flex justify-center">
-      <MatrixView network={problem.network} step={canvasStep} bare />
-    </div>
-  );
-
   const example = (
     <div className="p-3 sm:p-6 flex flex-wrap gap-6 items-start">
-      {/* the graph stays in view while the steps scroll */}
+      {/* the graph stays in view while the working scrolls */}
       <div className="flex flex-col gap-4 lg:sticky lg:top-3" style={{ flex: "1 1 620px", minWidth: 0 }}>
-        {canvasBox("min(72vh, 780px)")}
+        {canvasBox("min(74vh, 800px)")}
         {footer && <div className="flex justify-center">{footer}</div>}
-        {config.legend && <Legend items={config.legend} />}
+        {!atQuestion && config.legend && <Legend items={config.legend} />}
       </div>
       <div className="flex flex-col gap-4" style={{ flex: "1 1 360px", minWidth: 0 }}>
+        {/* QUESTION */}
         {questionBlock(false)}
-        <StepCascade steps={steps} idx={idx} />
-        {idx === last && answerText && (
-          <div className="rounded-xl px-6 py-4 bg-green-50 border border-green-300">
-            <div className="text-xs font-bold uppercase tracking-wider text-green-700 mb-1">Answer</div>
-            <div className="text-lg font-bold text-green-800 leading-snug">{answerText}</div>
+        {/* ANSWER — empty until asked for, then built up one step at a time */}
+        <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+          <div className="px-5 pt-4 pb-2 text-xs font-bold uppercase tracking-wider text-gray-400">Answer</div>
+          {atQuestion ? (
+            <div className="px-5 pb-5 flex flex-col items-start gap-3">
+              <div className="text-base text-gray-500 leading-snug">The working and the answer appear here, one step at a time.</div>
+              <button onClick={() => jump(0)} className={BTN_PRIMARY}>
+                Show working <ChevronRight size={18} />
+              </button>
+            </div>
+          ) : (
+            <StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} />
+          )}
+        </div>
+        {current?.route && current.route.length > 0 && <RouteCard route={current.route} />}
+        {!config.hideMatrix && (!atQuestion || config.questionMatrix) && (
+          <div className="rounded-xl border border-gray-200 bg-white p-4 flex justify-center">
+            <MatrixView network={problem.network} step={canvasStep} bare />
           </div>
         )}
-        {current.route && current.route.length > 0 && <RouteCard route={current.route} />}
-        {matrixCard}
       </div>
     </div>
   );
@@ -265,14 +298,20 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         </div>
         <div className="flex-1 min-h-0 relative">{shown(canvasStep)}</div>
         <div className="flex-shrink-0 border-t border-gray-200 px-6 py-3 flex items-center gap-4 bg-gray-50">
-          <>
-              <button onClick={() => setStepIdx(Math.max(0, idx - 1))} disabled={idx === 0} className={`${BTN_PLAIN} disabled:opacity-40`}><ChevronLeft size={18} /> Back</button>
-              <div className="flex-1 text-lg font-medium text-gray-900 leading-snug" style={{ whiteSpace: "pre-line", maxHeight: "22vh", overflowY: "auto" }}>
+          <button onClick={() => jump(stepIdx - 1)} disabled={atQuestion} className={`${BTN_PLAIN} disabled:opacity-40`}><ChevronLeft size={18} /> Back</button>
+          <div className="flex-1 text-lg font-medium text-gray-900 leading-snug" style={{ whiteSpace: "pre-line", maxHeight: "22vh", overflowY: "auto" }}>
+            {atQuestion ? (
+              problem.prompt
+            ) : onAnswer ? (
+              <span className="font-bold text-green-800">Answer: {answerText}</span>
+            ) : (
+              <>
                 <span className="font-bold text-blue-900 mr-2">{idx + 1}.</span>
-                {current.caption}
-              </div>
-              <button onClick={() => setStepIdx(Math.min(last, idx + 1))} disabled={idx >= last} className={`${BTN_PRIMARY} disabled:opacity-40`}>Next <ChevronRight size={18} /></button>
-            </>
+                {current?.caption}
+              </>
+            )}
+          </div>
+          <button onClick={() => jump(stepIdx + 1)} disabled={stepIdx >= maxBeat} className={`${BTN_PRIMARY} disabled:opacity-40`}>{atQuestion ? "Show working" : "Next"} <ChevronRight size={18} /></button>
         </div>
       </div>
     );
@@ -281,13 +320,12 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     <div>
       {navBar}
       {infoOpen && <InfoModal infoSections={infoSections} onClose={() => setInfoOpen(false)} />}
-      <div className="min-h-screen p-3 sm:p-8" style={{ backgroundColor: "#f5f3f0" }}>
+      <div className="min-h-screen p-3 sm:px-8 sm:py-5" style={{ backgroundColor: "#f5f3f0" }}>
         <div className="max-w-[1500px] mx-auto">
-          <h1 className="text-3xl sm:text-5xl font-bold text-center mb-6 sm:mb-8" style={{ color: "#000" }}>{config.pageTitle}</h1>
-          <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
+          <h1 className="text-3xl sm:text-4xl font-bold text-center mb-3 sm:mb-4" style={{ color: "#000" }}>{config.pageTitle}</h1>
           {(config.subTools?.length ?? 0) > 1 && (
             <>
-              <div className="flex flex-wrap justify-center gap-3 sm:gap-4 mb-6">
+              <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-4">
                 {config.subTools!.map((t) => (
                   <button
                     key={t.key}
@@ -301,10 +339,9 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
                   </button>
                 ))}
               </div>
-              <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
             </>
           )}
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-4">
             {controlBar}
             <div className={`${CARD} overflow-hidden`}>{example}</div>
           </div>
@@ -314,53 +351,84 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   );
 }
 
-// ── The working so far, as a cascade ────────────────────────────────────────────
-// Every earlier step stays on screen, faded, so the class can see what was done before; the current
-// step is full strength. (Same idea as the Worked Example cascade on the other tools.)
-function StepCascade({ steps, idx }: { steps: SolveStep[]; idx: number }) {
-  const rows = useRef<Array<HTMLDivElement | null>>([]);
+// ── The working, as the other tools show theirs ────────────────────────────────
+// A numbered timeline in a scrolling box. Each new step fades in; earlier steps stay on screen at half strength
+// so the class can see what came before; the box follows the newest step and fades out at the top once older
+// steps have scrolled away. The answer arrives last, as a green "A" line. (Show all: everything at full strength.)
+function FadeIn({ children }: { children: React.ReactNode }) {
+  const [on, setOn] = useState(false);
   useEffect(() => {
-    rows.current[idx]?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  }, [idx]);
+    const raf = requestAnimationFrame(() => setOn(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  return <div style={{ opacity: on ? 1 : 0, transition: "opacity 0.7s ease" }}>{children}</div>;
+}
+
+function StepCascade({ steps, idx, answer, all }: { steps: SolveStep[]; idx: number; answer: string | null; all: boolean }) {
+  const box = useRef<HTMLDivElement>(null);
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const el = box.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }, [idx, answer, all]);
+  const dim = (now: boolean) => (all || now ? 1 : 0.5);
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-2">
-      {steps.slice(0, idx + 1).map((st, i) => {
-        const now = i === idx;
-        return (
-          <div
-            key={i}
-            ref={(el) => { rows.current[i] = el; }}
-            style={{
-              display: "flex", gap: 10, padding: "10px 10px", borderRadius: 10,
-              opacity: now ? 1 : 0.42, background: now ? "#eff6ff" : "transparent",
-              borderLeft: `4px solid ${now ? "#1e3a8a" : "transparent"}`, transition: "opacity 250ms, background 250ms",
-            }}
-          >
-            <div
-              style={{
-                flexShrink: 0, width: 26, height: 26, borderRadius: 13, fontSize: 13, fontWeight: 800,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                background: now ? "#1e3a8a" : "#cbd5e1", color: now ? "#ffffff" : "#334155",
-              }}
-            >
-              {i + 1}
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              {(st.phase || (now && st.runningTotal !== undefined)) && (
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                  {st.phase && <span style={{ background: "#e0e7ff", color: "#1e3a8a", fontWeight: 800, fontSize: 12, borderRadius: 999, padding: "2px 9px" }}>{st.phase}</span>}
-                  {now && st.runningTotal !== undefined && (
-                    <span style={{ marginLeft: "auto", background: "#dcfce7", border: "1px solid #86efac", color: "#15803d", borderRadius: 8, padding: "2px 9px", fontWeight: 800, fontSize: 14 }}>
-                      {st.totalLabel ?? "Total"} {st.runningTotal}
-                    </span>
-                  )}
+    <div
+      ref={box}
+      onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 4)}
+      style={{
+        maxHeight: "min(60vh, 640px)", overflowY: "auto", padding: "0 10px 12px",
+        ...(scrolled ? { WebkitMaskImage: "linear-gradient(to bottom, transparent 0, #000 3rem)", maskImage: "linear-gradient(to bottom, transparent 0, #000 3rem)" } : null),
+      }}
+    >
+      <div style={{ position: "relative" }}>
+        <div style={{ position: "absolute", left: 22, top: 16, bottom: 16, width: 2, background: "#e2e8f0" }} />
+        {steps.slice(0, idx + 1).map((st, i) => {
+          const now = i === idx && !answer;
+          return (
+            <FadeIn key={i}>
+              <div
+                style={{
+                  position: "relative", display: "flex", gap: 12, padding: "10px 10px", borderRadius: 12,
+                  opacity: dim(now), transition: "opacity 0.3s ease",
+                  background: now ? "#eff6ff" : "transparent", boxShadow: now ? "0 0 0 2px rgba(30,58,138,0.25)" : "none",
+                }}
+              >
+                <div
+                  style={{
+                    flexShrink: 0, width: 26, height: 26, borderRadius: 13, fontSize: 13, fontWeight: 800, zIndex: 1,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    background: now ? "#1e3a8a" : "#e2e8f0", color: now ? "#ffffff" : "#334155", border: "2px solid #ffffff",
+                  }}
+                >
+                  {i + 1}
                 </div>
-              )}
-              <div style={{ fontSize: now ? 18 : 16, fontWeight: 500, color: "#0f172a", lineHeight: 1.5, whiteSpace: "pre-line" }}>{st.caption}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  {(st.phase || (now && st.runningTotal !== undefined)) && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                      {st.phase && <span style={{ background: "#e0e7ff", color: "#1e3a8a", fontWeight: 800, fontSize: 12, borderRadius: 999, padding: "2px 9px" }}>{st.phase}</span>}
+                      {now && st.runningTotal !== undefined && (
+                        <span style={{ marginLeft: "auto", background: "#dcfce7", border: "1px solid #86efac", color: "#15803d", borderRadius: 8, padding: "2px 9px", fontWeight: 800, fontSize: 14 }}>
+                          {st.totalLabel ?? "Total"} {st.runningTotal}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  <div style={{ fontSize: 17, fontWeight: 500, color: "#0f172a", lineHeight: 1.5, whiteSpace: "pre-line" }}>{st.caption}</div>
+                </div>
+              </div>
+            </FadeIn>
+          );
+        })}
+        {answer && (
+          <FadeIn>
+            <div style={{ position: "relative", display: "flex", gap: 12, padding: "10px 10px", borderRadius: 12, background: "#f0fdf4", boxShadow: "0 0 0 2px rgba(22,163,74,0.35)" }}>
+              <div style={{ flexShrink: 0, width: 26, height: 26, borderRadius: 13, fontSize: 13, fontWeight: 800, zIndex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "#16a34a", color: "#ffffff", border: "2px solid #ffffff" }}>A</div>
+              <div style={{ flex: 1, minWidth: 0, fontSize: 19, fontWeight: 800, color: "#166534", lineHeight: 1.4, paddingTop: 1 }}>{answer}</div>
             </div>
-          </div>
-        );
-      })}
+          </FadeIn>
+        )}
+      </div>
     </div>
   );
 }

@@ -79,6 +79,12 @@ Keep the split even when a session only touches one.
   worked through (graph + fading steps, Back / Next / Show all), because every question of this complexity needs its steps.
   In the Potentials working an arc that shows its potentials drops its flow circle and min/max label (they swap arc by arc).
   Min/max questions now use real minimums: every arc carries flow and at most about one arc in seven has a minimum of 0.
+- **Question, then Answer (later the same day):** every Decision question opens as the question alone (the network as given)
+  with an empty **Answer** section and a "Show working" button; the working then builds up one step at a time like the other
+  tools' worked examples — each new step fades in, earlier steps stay at half strength on a numbered timeline in a scrolling
+  box that follows the newest step and fades out at the top — and the answer arrives last as a green "A" line. Controls: Back /
+  Next / Show all ⇄ Step by step, a dot strip (question · steps · answer), arrow keys. The page header was tightened so the graph
+  sits higher.
 - Phone width checked (stacks, no sideways scroll; the graph is sticky only on wide screens). Still to do: Harry's-notes update.
 
 ## 2026-10-07 — Notes and docs sweep: cast documented
