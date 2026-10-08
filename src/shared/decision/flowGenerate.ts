@@ -8,7 +8,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import {
-  SINK, SOURCE, allAugmentingPaths, decomposeFlow, pathLabel, allCuts, cutCapacity, findAugmentingPath, flowValue, isAcyclic, isFeasibleFlow,
+  SINK, SOURCE, sortedAugmentingPaths, pathNodes, decomposeFlow, pathLabel, allCuts, cutCapacity, flowValue, isAcyclic, isFeasibleFlow,
   maxFlow, orderNodes, potentials, simpleForwardPaths,
   type ArcLabelPos, type Flow, type FlowArc, type FlowMode, type FlowNet, type FlowProblemData, type FlowSubTool, type InitialStyle,
 } from "./flow";
@@ -140,14 +140,14 @@ function chooseCut(inst: FlowInstance, mode: FlowMode, level: number): string[] 
   return cands.length ? pick(cands) : null;
 }
 
+// The Augment flow question asks for ALL the flow-augmenting paths — always two or three, so there is more than one to find.
 function okAugment(inst: FlowInstance, level: number): boolean {
-  const paths = allAugmentingPaths(inst.net, inst.flow);
-  const canon = findAugmentingPath(inst.net, inst.flow);
-  if (!canon) return false;
-  if (canon.bottleneck < (level === 3 ? 1 : 2)) return false;
-  if (level === 1) return paths.length === 1 && !hasBack(paths[0].steps);
-  if (level === 2) return paths.length >= 1 && paths.length <= 3;
-  return paths.length === 1 && hasBack(paths[0].steps);
+  const paths = sortedAugmentingPaths(inst.net, inst.flow);
+  const minB = level === 3 ? 1 : 2;
+  if (paths.some((p) => p.bottleneck < minB)) return false;
+  if (level === 1) return paths.length === 2 && paths.every((p) => !hasBack(p.steps));
+  if (level === 2) return paths.length >= 2 && paths.length <= 3;
+  return paths.length >= 2 && paths.length <= 3 && paths.some((p) => hasBack(p.steps));
 }
 
 function okMaxFlow(inst: FlowInstance, level: number): boolean {
@@ -272,10 +272,9 @@ function toProblem(
     value = r.capacity;
     answerText = `${r.capacity}`;
   } else if (subTool === "augment") {
-    prompt = `${bounds} A flow of ${flowValue(net, flow)} is shown (the circled numbers). Find a flow-augmenting path from S to T, and say by how much the flow can be increased.`;
-    const p = findAugmentingPath(net, flow)!;
-    value = p.bottleneck;
-    answerText = `Increase by ${p.bottleneck}`;
+    const found = sortedAugmentingPaths(net, flow);
+    prompt = `${bounds} A flow of ${flowValue(net, flow)} is shown (the circled numbers). There are ${found.length === 2 ? "two" : "three"} flow-augmenting paths from S to T. Find them, and say by how much the flow can be increased along each.`;
+    answerText = found.map((p) => `${pathNodes(p).join("")} +${p.bottleneck}`).join("; ");
   } else {
     prompt = `${bounds} A flow of ${flowValue(net, flow)} is shown (the circled numbers). Use flow augmentation to find a maximal flow, then confirm it with a cut.`;
     const run = maxFlow(net, flow);

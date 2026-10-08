@@ -62,6 +62,10 @@ Keep the split even when a session only touches one.
   cross arcs (SABT, SBCT, SABCT…) appear as often as the direct ones; Levels 2–3 always include one, Level 1 usually. The
   capacity-only "find a flow of value V" answer is the flow the question was built around, no longer a shortest-path build
   (which only ever used SAT, SBT, SCT).
+- **Cuts and augmenting paths (same day):** the red ticks on the cut arcs are gone (the dashed line, shaded S side and the
+  +max / −min labels remain). **Augment flow** now asks for ALL the flow-augmenting paths — always two or three (Level 1
+  forward-only, Level 3 includes one with a backward step) — and the working finds each path and its bottleneck in turn, then
+  lists them together (noting when they share arcs, so they cannot all be used at full amount at once).
 - Still to do: print, info modal, phone-width check, Harry's-notes update.
 
 ## 2026-10-07 — Notes and docs sweep: cast documented

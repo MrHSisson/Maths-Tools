@@ -112,8 +112,10 @@ describe("generated questions", () => {
             for (const aug of run.augmentations) expect(isFeasibleFlow(d.net, augment(aug.before, aug.path)).ok).toBe(true);
             if (sub === "augment") {
               const paths = allAugmentingPaths(d.net, d.flow);
-              if (level === 1) expect(paths.length).toBe(1);
-              if (level === 3) expect(paths[0].steps.some((s) => s.dir === "back")).toBe(true);
+              expect(paths.length).toBeGreaterThanOrEqual(2);
+              expect(paths.length).toBeLessThanOrEqual(3);
+              if (level === 1) expect(paths.every((q) => q.steps.every((s) => s.dir === "fwd"))).toBe(true);
+              if (level === 3) expect(paths.some((q) => q.steps.some((s) => s.dir === "back"))).toBe(true);
               expect(findAugmentingPath(d.net, d.flow)).not.toBeNull();
             }
 

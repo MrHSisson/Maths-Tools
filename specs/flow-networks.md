@@ -187,6 +187,8 @@ Answer reveal annotates each crossing arc: forward in green (`+max`), backward i
 
 ### Sub-tool: Augment flow (`augment`)
 
+**Update (latest):** the question asks for **all** the flow-augmenting paths — always **two or three** — and the increase along each (Level 1: exactly two, forward-only; Level 2: two or three; Level 3: two or three with at least one backward step). The working finds each in turn (path, then bottleneck), then lists them; paths may share arcs, so only one is used at a time. The single-path description below is superseded. The red cut ticks were also removed — the cut is the dashed line plus the shaded S side.
+
 A feasible, non-maximal flow `f0` is **given**. Student finds a flow-augmenting path and the amount, and
 (Level 2+) writes the updated flow.
 

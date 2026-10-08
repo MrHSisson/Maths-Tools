@@ -5,7 +5,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import {
-  cutCapacity, findAugmentingPath, flowValue, isFeasibleFlow, maxFlow, orderNodes, pathLabel, pathNodes, potentials,
+  cutCapacity, sortedAugmentingPaths, flowValue, isFeasibleFlow, maxFlow, orderNodes, pathLabel, pathNodes, potentials,
   type AugmentingPath, type Flow, type FlowNet, type FlowViewState,
 } from "./flow";
 import type { DecisionProblem, SolveStep } from "./types";
@@ -159,22 +159,30 @@ function augmentBeats(net: FlowNet, flow: Flow, path: AugmentingPath, k: number 
   return { steps, after };
 }
 
-/** The closing beat of an augmentation: bring the flows (and bounds) back and read the new flow off the diagram. */
-function reinterpretBeat(net: FlowNet, before: Flow, after: Flow, path: AugmentingPath, totalAfter: number, closing = false): SolveStep {
-  const b = path.bottleneck;
-  const changes = path.steps.map((s) => `${s.arc}: ${before[s.arc]} → ${after[s.arc]}`).join(", ");
-  return beat(net,
-    `${closing ? "Reinterpret the final potentials as flows" : "Reinterpret the new potentials as flows"}: ${path.steps.some((s) => s.dir === "back") ? `add ${b} on forward steps, subtract ${b} on backward steps` : `add ${b} on every arc of the path`}.\n${changes}.\nThe flow value is ${totalAfter}.`,
-    { flow: after, path: path.steps, prevFlow: before }, { runningTotal: totalAfter, totalLabel: "Flow" });
-}
-
 function solveAugment(p: DecisionProblem): SolveStep[] {
   const d = p.flow!;
-  const path = findAugmentingPath(d.net, d.flow)!;
-  const before = flowValue(d.net, d.flow);
-  const { steps, after } = augmentBeats(d.net, d.flow, path, null, before + path.bottleneck);
-  steps.push(reinterpretBeat(d.net, d.flow, after, path, before + path.bottleneck));
-  steps.unshift(beat(d.net, `The flow shown has value ${before}. Look for a flow-augmenting path from S to T.`, { flow: d.flow }, { runningTotal: before, totalLabel: "Flow" }));
+  const { net, flow } = d;
+  const paths = sortedAugmentingPaths(net, flow);
+  const before = flowValue(net, flow);
+  const pots = { potentials: potNumbers(net, flow), hideBounds: true };
+  const steps: SolveStep[] = [
+    beat(net, `The flow shown has value ${before}. Find every flow-augmenting path from S to T. First label the potentials on every arc: forward is ${d.mode === "cap" ? "capacity" : "maximum"} − flow, backward is flow${d.mode === "cap" ? "" : " − minimum"}.`,
+      pots, { runningTotal: before, totalLabel: "Flow" }),
+  ];
+  paths.forEach((path, i) => {
+    const hasBack = path.steps.some((s) => s.dir === "back");
+    steps.push(
+      beat(net, `Path ${i + 1}: ${arrowPath(path)}.\nEvery step has potential above 0${hasBack ? " (a step against an arrow uses the backward potential)" : ""}.\n${describeSteps(net, flow, path)}`,
+        { ...pots, path: path.steps }),
+      beat(net, `Path ${i + 1}: the flow can be increased by the smallest potential on the path.\nmin(${path.potentials.join(", ")}) = ${path.bottleneck}`,
+        { ...pots, path: path.steps }),
+    );
+  });
+  const used = new Map<string, number>();
+  for (const pt of paths) for (const s of pt.steps) used.set(s.arc, (used.get(s.arc) ?? 0) + 1);
+  const shares = [...used.values()].some((c) => c > 1);
+  steps.push(beat(net, `There are ${paths.length} flow-augmenting paths:\n${paths.map((pt) => `${arrowPath(pt)}: increase by ${pt.bottleneck}`).join("\n")}${shares ? "\nThe paths share arcs, so the flow can be increased along any one of them — not all of them by their full amounts at once." : ""}`,
+    { flow }, { runningTotal: before, totalLabel: "Flow" }));
   return steps;
 }
 

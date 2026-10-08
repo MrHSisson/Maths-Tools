@@ -356,3 +356,8 @@ export const pathLabel = (net: FlowNet, arcs: string[]): string => {
   const byId = arcById(net);
   return SOURCE + arcs.map((id) => byId[id].to).join("");
 };
+
+/** Every flow-augmenting path, in a stable order (by the nodes they visit) — what the Augment flow question asks for. */
+export function sortedAugmentingPaths(net: FlowNet, flow: Flow): AugmentingPath[] {
+  return allAugmentingPaths(net, flow).sort((a, b) => pathNodes(a).join("").localeCompare(pathNodes(b).join("")));
+}

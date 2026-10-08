@@ -60,7 +60,7 @@ function FlowKey({ p }: { p: DecisionProblem }) {
     return (
       <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "6px 18px" }}>
         <span style={item}><span style={{ width: 16, height: 16, borderRadius: 8, background: "#dbeafe", border: "2px solid #1e3a8a" }} /> S side of the cut</span>
-        <span style={item}><span style={{ width: 4, height: 20, background: "#dc2626", borderRadius: 2, transform: "rotate(30deg)" }} /> arc crossing the cut</span>
+        <span style={item}><svg width={34} height={8}><line x1={1} y1={4} x2={33} y2={4} stroke="#dc2626" strokeWidth={3} strokeDasharray="9 5" /></svg> the cut</span>
       </div>
     );
   const showPotentials = p.flow!.subTool !== "initialFlow";

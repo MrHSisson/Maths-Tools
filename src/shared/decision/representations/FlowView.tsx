@@ -126,7 +126,6 @@ export default function FlowView({ net, mode, view, labelPos, qIndex, background
         {/* the cut crosses this arc */}
         {crossing && (
           <g>
-            <line x1={tick.x - uy * 15} y1={tick.y + ux * 15} x2={tick.x + uy * 15} y2={tick.y - ux * 15} stroke={RED} strokeWidth={4} strokeLinecap="round" />
             {view.cutLabels && (
               <text x={tick.x} y={tick.y - 22} textAnchor="middle" fontSize={15} fontWeight={800} fill={RED} stroke="#ffffff" strokeWidth={4} paintOrder="stroke">
                 {crossing === "fwd" ? `+${a.hi}` : mode === "cap" ? "back" : `−${a.lo}`}
