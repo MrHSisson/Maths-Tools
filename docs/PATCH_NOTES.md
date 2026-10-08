@@ -28,6 +28,13 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-08 — Network Flows: audit fixes (layout, depth, variety)
+
+- **Layout**: one shared geometry module (`flowGeometry.ts`) places every pill, flow circle and potential arrow; `flowLayout.test.ts` checks *every* variant of every template (each optional-arc subset × 0–2 reversed arcs, worst-case two-digit numbers, all label states) for overlaps and for labels nearer another arc than their own.
+- **Depth**: Augment flow lists 2–3 paths (up to 4 at Level 3) with differing increases; Max flow runs up to 5 augmentations at Level 3, mostly by 2 or more, with an interior minimum cut.
+- **Missing flow**: solved at vertices of degree 3+, an interior arc at Levels 2–3, chained pairs more common as networks grow; min/max arcs are no longer fixed `[k, k]`.
+- **Variety**: new "Mini hub" (Level 1) and "Double hub" (Level 3) templates; capacity-only networks occasionally leave an arc unused so a potential decrease of 0 appears.
+
 ## 2026-10-08 — Network Flows: first build (Decision Maths, dev-gated)
 
 - **`/network-flows`** (registry `enabled: false`): Potentials, Cut values, Augment flow, and Max flow & min cut,

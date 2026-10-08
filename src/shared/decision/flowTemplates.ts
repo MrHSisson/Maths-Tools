@@ -116,6 +116,43 @@ const HEXAGON: FlowTemplate = {
   ],
 };
 
+// Mini hub — five vertices with C in the middle; the two side routes may feed C, and a rung may join A and B.
+const MINIHUB: FlowTemplate = {
+  id: "minihub",
+  name: "Mini hub",
+  levels: [1],
+  nodes: [n("S", 40, 230), n("A", 250, 60), n("B", 250, 400), n("C", 430, 230), n("T", 720, 230)],
+  arcs: [
+    a("S", "A", 0.3, [0.62, 1], [0.5, -1]),
+    a("S", "B", 0.3, [0.62, 1], [0.5, -1]),
+    a("A", "C", 0.5, [0.62, 1], [0.5, -1], { flip: true }),
+    a("B", "C", 0.5, [0.62, 1], [0.5, -1], { flip: true }),
+    a("C", "T", 0.3, [0.62, 1], [0.5, -1]),
+    a("A", "B", 0.5, [0.62, 1], [0.4, -1], { opt: true, flip: true }),
+  ],
+};
+
+// Double hub — S, A, B, C, D, E, F, T: a middle spine C–D with a pair of routes either side.
+const DOUBLEHUB: FlowTemplate = {
+  id: "doublehub",
+  name: "Double hub",
+  levels: [3],
+  nodes: [n("S", 40, 210), n("A", 190, 60), n("B", 190, 360), n("C", 330, 210), n("D", 560, 210), n("E", 690, 60), n("F", 690, 360), n("T", 830, 210)],
+  arcs: [
+    a("S", "A", 0.3, [0.62, 1], [0.5, -1]),
+    a("S", "B", 0.3, [0.62, 1], [0.5, -1]),
+    a("A", "C", 0.3, [0.62, 1], [0.5, -1], { flip: true }),
+    a("B", "C", 0.3, [0.62, 1], [0.5, -1], { flip: true }),
+    a("C", "D", 0.3, [0.62, 1], [0.5, -1]),
+    a("D", "E", 0.3, [0.62, 1], [0.5, -1], { flip: true }),
+    a("D", "F", 0.3, [0.62, 1], [0.5, -1], { flip: true }),
+    a("E", "T", 0.3, [0.62, 1], [0.5, -1]),
+    a("F", "T", 0.3, [0.62, 1], [0.5, -1]),
+    a("A", "B", 0.5, [0.62, 1], [0.4, -1], { opt: true, flip: true }),
+    a("E", "F", 0.5, [0.62, 1], [0.4, -1], { opt: true }),
+  ],
+};
+
 // The big network — S, A–F, T with two deliberate crossing pairs.
 const BIG8: FlowTemplate = {
   id: "big8",
@@ -142,6 +179,6 @@ const BIG8: FlowTemplate = {
   crossings: [["AD", "BC"], ["CF", "DE"]],
 };
 
-export const FLOW_TEMPLATES: FlowTemplate[] = [DIAMOND, FAN, LADDER, HEXAGON, BIG8];
+export const FLOW_TEMPLATES: FlowTemplate[] = [DIAMOND, FAN, MINIHUB, LADDER, HEXAGON, DOUBLEHUB, BIG8];
 
 export const templatesForLevel = (level: 1 | 2 | 3): FlowTemplate[] => FLOW_TEMPLATES.filter((t) => t.levels.includes(level));
