@@ -18,12 +18,14 @@ export const EDGE_STYLE: Record<EdgeState, { stroke: string; width: number; dash
   considering: { stroke: "#f59e0b", width: 4, opacity: 1 },
   tree: { stroke: "#16a34a", width: 4.5, opacity: 1 },
   rejected: { stroke: "#ef4444", width: 2.5, dash: "6 5", opacity: 0.55 },
+  added: { stroke: "#7c3aed", width: 4.5, opacity: 1 },
 };
 
 // Vertex appearance keyed by its role this beat (none = plain white).
 export const NODE_ROLE_STYLE: Record<NodeRole, { fill: string; stroke: string }> = {
   current: { fill: "#fef3c7", stroke: "#d97706" },
   visited: { fill: "#dcfce7", stroke: "#15803d" },
+  deleted: { fill: "#e5e7eb", stroke: "#9ca3af" },
 };
 
 const WEIGHT_FILL: Record<EdgeState, string> = {
@@ -31,6 +33,7 @@ const WEIGHT_FILL: Record<EdgeState, string> = {
   considering: "#b45309",
   tree: "#15803d",
   rejected: "#b91c1c",
+  added: "#6d28d9",
 };
 
 export interface NetworkViewProps {
@@ -248,6 +251,15 @@ export default function NetworkView({
                       </text>
                     </g>
                   )}
+                  {step?.edgeOrder?.[e.id] && (
+                    // the number this edge was chosen at, on the corner of its weight label
+                    <g style={{ pointerEvents: "none" }}>
+                      <circle cx={mx + 15} cy={my - 15} r={10} fill="#15803d" stroke="#ffffff" strokeWidth={2} />
+                      <text x={mx + 15} y={my - 15} textAnchor="middle" dominantBaseline="central" fontSize={12} fontWeight={800} fill="#ffffff">
+                        {step.edgeOrder[e.id]}
+                      </text>
+                    </g>
+                  )}
                 </g>
               );
             })}
@@ -259,7 +271,7 @@ export default function NetworkView({
               const ring = role ? NODE_ROLE_STYLE[role] : { fill: "#ffffff", stroke: "#1e3a8a" };
               return (
                 <g key={n.id} onPointerDown={(ev) => onNodePointerDown(ev, n)} style={{ cursor: interactive ? "move" : "default" }}>
-                  <circle cx={n.x} cy={n.y} r={NODE_R} fill={ring.fill} stroke={ring.stroke} strokeWidth={role === "current" ? 4 : 2.75} style={{ transition: "fill 220ms, stroke 220ms" }} />
+                  <circle cx={n.x} cy={n.y} r={NODE_R} fill={ring.fill} stroke={ring.stroke} strokeWidth={role === "current" ? 4 : 2.75} strokeDasharray={role === "deleted" ? "5 4" : undefined} style={{ transition: "fill 220ms, stroke 220ms" }} />
                   <text
                     x={n.x}
                     y={n.y}
@@ -267,7 +279,7 @@ export default function NetworkView({
                     dominantBaseline="central"
                     fontSize={18}
                     fontWeight={800}
-                    fill="#1e3a8a"
+                    fill={role === "deleted" ? "#6b7280" : "#1e3a8a"}
                     style={{ userSelect: "none", pointerEvents: "none" }}
                   >
                     {n.label ?? n.id}

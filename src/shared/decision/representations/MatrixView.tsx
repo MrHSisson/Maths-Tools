@@ -16,6 +16,8 @@ export interface MatrixViewProps {
   title?: string;
   /** Drop the card chrome (border/shadow/padding) — for a host that wraps it in its own card. */
   bare?: boolean;
+  /** What a cell with no edge shows (default blank). */
+  missing?: string;
 }
 
 const CELL_COLOR: Record<MatrixCellState, { fg: string; bg: string }> = {
@@ -39,7 +41,7 @@ const cellStyle = (head: boolean, diag: boolean, state?: MatrixCellState, indire
   transition: "background 220ms, color 220ms",
 });
 
-export default function MatrixView({ network, step, directed = false, title = "Distance matrix", bare = false }: MatrixViewProps) {
+export default function MatrixView({ network, step, directed = false, title = "Distance matrix", bare = false, missing = "" }: MatrixViewProps) {
   const ids = useMemo(() => network.nodes.map((n) => n.id).sort(), [network]);
 
   const matrix = useMemo(() => {
@@ -65,6 +67,9 @@ export default function MatrixView({ network, step, directed = false, title = "D
     return m;
   }, [step]);
 
+  const crossed = useMemo(() => new Set(step?.matrixCrossed ?? []), [step?.matrixCrossed]);
+  const order = step?.matrixOrder;
+
   return (
     <div
       style={
@@ -88,19 +93,26 @@ export default function MatrixView({ network, step, directed = false, title = "D
           <tr>
             <th style={cellStyle(true, false)}></th>
             {ids.map((c) => (
-              <th key={c} style={cellStyle(true, false)}>{c}</th>
+              <th key={c} style={{ ...cellStyle(true, false), position: "relative", background: order?.[c] ? "#bbf7d0" : "#e0e7ff" }}>
+                {order && (
+                  // the number a vertex was chosen at, written over its column (Prim on a matrix)
+                  <div style={{ height: 16, fontSize: 12, fontWeight: 800, color: "#15803d", lineHeight: "16px" }}>{order[c] ?? ""}</div>
+                )}
+                {c}
+              </th>
             ))}
           </tr>
         </thead>
         <tbody>
           {ids.map((r) => (
             <tr key={r}>
-              <th style={cellStyle(true, false)}>{r}</th>
+              <th style={{ ...cellStyle(true, false), textDecoration: crossed.has(r) ? "line-through" : undefined, color: crossed.has(r) ? "#94a3b8" : "#1e3a8a" }}>{r}</th>
               {ids.map((c) => {
                 const v = matrix[r]?.[c] ?? null;
+                const st = cellStates[`${r}|${c}`] ?? (crossed.has(r) ? "dim" : undefined);
                 return (
-                  <td key={c} style={cellStyle(false, r === c, cellStates[`${r}|${c}`], indirect.has(`${r}|${c}`))}>
-                    {r === c ? "–" : v ?? ""}
+                  <td key={c} style={cellStyle(false, r === c, st, indirect.has(`${r}|${c}`))}>
+                    {r === c ? "–" : v ?? missing}
                   </td>
                 );
               })}

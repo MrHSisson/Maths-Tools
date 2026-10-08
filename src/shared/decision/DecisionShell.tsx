@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Home, Menu, X, ChevronDown, ChevronLeft, ChevronRight, RefreshCw, Maximize2, Minimize2, FastForward } from "lucide-react";
-import type { DecisionProblem, DecisionShellProps, GenerateContext, LegendItem, SolveStep } from "./types";
+import type { DecisionProblem, DecisionShellProps, GenerateContext, LegendItem, SolveStep, StepList, StepListItem } from "./types";
 import type { InfoSection } from "../types";
 import NetworkView, { EDGE_STYLE, NODE_ROLE_STYLE } from "./representations/NetworkView";
 import MatrixView from "./representations/MatrixView";
@@ -139,7 +139,12 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     },
   ];
 
-  const shown = (st: SolveStep | undefined) => (renderCanvas ? renderCanvas(problem, st) : <NetworkView network={problem.network} step={st} interactive background="#ffffff" />);
+  const questionNet = problem.vertexOnlyQuestion ? { ...problem.network, edges: [] } : problem.network; // a table-only question draws just the vertices
+  const shown = (st: SolveStep | undefined) =>
+    renderCanvas ? renderCanvas(problem, st) : <NetworkView network={!st ? questionNet : problem.network} step={st} interactive background="#ffffff" />;
+  const legendItems = problem.legend ?? config.legend;
+  const matrixMode = problem.matrixMode ?? (config.hideMatrix ? "off" : config.questionMatrix ? "question" : "working");
+  const showMatrix = matrixMode === "question" || (matrixMode === "working" && !atQuestion);
   const canvasStep = current; // undefined at the question: the network as given
   const footer = typeof config.canvasFooter === "function" ? config.canvasFooter(problem) : config.canvasFooter;
 
@@ -297,7 +302,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       <div className="flex flex-col gap-4 lg:sticky lg:top-3" style={{ flex: "1 1 620px", minWidth: 0 }}>
         {canvasBox(narrow ? "250px" : "min(74vh, 800px)")}
         {footer && <div className="flex justify-center">{footer}</div>}
-        {!atQuestion && config.legend && <Legend items={config.legend} />}
+        {!atQuestion && legendItems && <Legend items={legendItems} />}
       </div>
       <div className="flex flex-col gap-4" style={{ flex: "1 1 360px", minWidth: 0 }}>
         {/* QUESTION */}
@@ -315,11 +320,12 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           </div>
           {stepNav}
         </div>
+        {current?.list && current.list.items.length > 0 && <ListCard list={current.list} />}
         {current?.route && current.route.length > 0 && <RouteCard route={current.route} />}
-        {!config.hideMatrix && (!atQuestion || config.questionMatrix) && (
+        {showMatrix && (
           <div className="rounded-xl border border-gray-200 bg-white p-4 overflow-x-auto">
             <div className="mx-auto w-fit">
-              <MatrixView network={problem.network} step={canvasStep} bare />
+              <MatrixView network={problem.network} step={canvasStep} bare missing={config.matrixMissing} />
             </div>
           </div>
         )}
@@ -354,7 +360,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
               <div className="absolute inset-0">{shown(canvasStep)}</div>
             </div>
             {footer && <div className="flex justify-center flex-shrink-0">{footer}</div>}
-            {!atQuestion && config.legend && <div className="flex-shrink-0"><Legend items={config.legend} /></div>}
+            {!atQuestion && legendItems && <div className="flex-shrink-0"><Legend items={legendItems} /></div>}
           </div>
           <div className="flex flex-col gap-3 min-w-0 min-h-0 md:flex-[2] md:max-w-[640px]">
             {questionBlock(true)}
@@ -369,6 +375,8 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
               </div>
               {stepNav}
             </div>
+            {current?.list && current.list.items.length > 0 && <div className="flex-shrink-0"><ListCard list={current.list} /></div>}
+            {current?.route && current.route.length > 0 && <div className="flex-shrink-0"><RouteCard route={current.route} /></div>}
           </div>
         </div>
       </div>
@@ -595,6 +603,39 @@ function StepCascade({ steps, idx, answer, all, big }: { steps: SolveStep[]; idx
   );
 }
 
+const CHIP_TONE: Record<NonNullable<StepListItem["tone"]>, { bg: string; border: string; fg: string; strike?: boolean }> = {
+  pending: { bg: "#f1f5f9", border: "#cbd5e1", fg: "#334155" },
+  current: { bg: "#fef3c7", border: "#f59e0b", fg: "#92400e" },
+  good: { bg: "#dcfce7", border: "#16a34a", fg: "#166534" },
+  bad: { bg: "#fee2e2", border: "#fca5a5", fg: "#991b1b", strike: true },
+  note: { bg: "#e0e7ff", border: "#a5b4fc", fg: "#1e3a8a" },
+};
+
+// A titled row of chips: Kruskal's edges in order, Prim's candidates, the tour so far…
+function ListCard({ list }: { list: StepList }) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
+      <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{list.title}</div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+        {list.items.map((it, i) => {
+          const t = CHIP_TONE[it.tone ?? "pending"];
+          return (
+            <span
+              key={i}
+              style={{
+                padding: "3px 9px", borderRadius: 8, fontWeight: 800, fontSize: 15, background: t.bg, color: t.fg,
+                border: `1.5px solid ${t.border}`, textDecoration: t.strike ? "line-through" : undefined, whiteSpace: "nowrap",
+              }}
+            >
+              {it.text}
+            </span>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function RouteCard({ route }: { route: string[] }) {
   return (
     <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
@@ -634,7 +675,7 @@ function Legend({ items }: { items: LegendItem[] }) {
 
 function Swatch({ kind }: { kind: LegendItem["swatch"] }) {
   if (kind === "indirect") return <span style={{ width: 28, textAlign: "center", fontStyle: "italic", fontWeight: 700, color: "#1d4ed8" }}>12</span>;
-  if (kind === "current" || kind === "visited") {
+  if (kind === "current" || kind === "visited" || kind === "deleted") {
     const s = NODE_ROLE_STYLE[kind];
     return (
       <svg width={20} height={20} style={{ flexShrink: 0 }}>

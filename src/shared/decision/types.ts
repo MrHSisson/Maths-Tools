@@ -64,10 +64,21 @@ export interface DecisionProblem {
   templateId?: string; // provenance (undefined for the free bypass)
   flow?: FlowProblemData; // Network Flows: the flow-specific data (the shell's default canvas ignores it)
   start?: string; // the start vertex, for algorithms that begin somewhere (NN, Prim from X, Dijkstra)
+  /** which question this is, for the CI validator to pick its independent reference ("kruskal", "primNetwork", "primMatrix", "tspNN", "tspLower", "tspBounds", "tspTable") */
+  kind?: string;
+  deleted?: string; // TSP lower bound: the vertex deleted
+  /** TSP bounds: the numbers the question's answer is built from */
+  bounds?: { lower?: number; upper?: number };
+  /** Overrides config: show the distance matrix beside the network in the question, only in the working, or never. */
+  matrixMode?: "question" | "working" | "off";
+  /** Overrides config.legend for this question. */
+  legend?: LegendItem[];
+  /** The question hands the network over as a table only: Question mode draws the vertices without their edges. */
+  vertexOnlyQuestion?: boolean;
 }
 
 // ── One beat of an algorithm walkthrough — the crux primitive ───────────────
-export type EdgeState = "idle" | "considering" | "tree" | "rejected";
+export type EdgeState = "idle" | "considering" | "tree" | "rejected" | "added";
 
 // highlight = chosen/accepted (green) · strike = rejected (red) · considering =
 // being scanned this beat (amber) · dim = out of play, e.g. a visited column (grey).
@@ -88,7 +99,7 @@ export interface DistanceTable {
 }
 
 // How a vertex is drawn this beat: the one the algorithm is at, or one already done.
-export type NodeRole = "current" | "visited";
+export type NodeRole = "current" | "visited" | "deleted";
 
 export interface SolveStep {
   caption: string; // the teaching voice for this beat
@@ -103,6 +114,19 @@ export interface SolveStep {
   runningTotal?: number; // e.g. MST weight so far
   totalLabel?: string; // label for the running-total badge (default "Total")
   flowView?: FlowViewState; // Network Flows: how the flow diagram is drawn this beat
+  edgeOrder?: Record<string, string>; // edgeId → the number it was chosen at, drawn as a badge on its weight
+  matrixOrder?: Record<string, string>; // vertex → the number written over its column heading (Prim on a matrix)
+  matrixCrossed?: string[]; // vertices whose ROW is crossed out (Prim on a matrix)
+  list?: StepList; // a titled row of chips (Kruskal's sorted edges, Prim's candidates, the tour…)
+}
+
+export interface StepListItem {
+  text: string;
+  tone?: "pending" | "current" | "good" | "bad" | "note";
+}
+export interface StepList {
+  title: string;
+  items: StepListItem[];
 }
 
 // ── A colour-key entry — the swatch reuses the renderers' own styles ──────────
@@ -146,6 +170,7 @@ export interface DecisionShellProps {
     levelLabels?: string[]; // tooltip per level, e.g. ["Complete network", …]
     questionMatrix?: boolean; // show the distance matrix beside the network in Question mode
     hideMatrix?: boolean; // never show the matrix (tools whose working isn't a table)
+    matrixMissing?: string; // what a table cell with no edge shows (default blank; Prim on a matrix uses "–")
     subTools?: ShellSubTool[]; // tab row of question types
     options?: ShellOption[]; // segmented controls (Question Options)
     infoSections?: InfoSection[]; // teacher-facing guide shown by the menu's Info item
@@ -160,8 +185,10 @@ export interface DecisionShellProps {
 export interface DecisionProblemExport {
   templates: NetworkTemplate[];
   levels?: number[]; // levels to validate (default [1])
-  // Which independent brute-force reference validate.ts checks the answer against (default "mst").
+  /** Sub-tools to validate (each is generated with generate(level, { subTool, options: {} })). */
+  subTools?: string[];
+  // Which independent brute-force reference validate.ts checks the answer against when the problem has no `kind` (default "mst").
   reference?: "mst" | "nearestNeighbour";
-  generate: (level: number) => DecisionProblem;
+  generate: (level: number, ctx?: GenerateContext) => DecisionProblem;
   solve: (p: DecisionProblem) => SolveStep[];
 }

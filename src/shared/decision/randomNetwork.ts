@@ -120,6 +120,8 @@ export interface RandomNetworkOptions {
   routeInspection?: boolean;
   /** Cap on node degree while adding edges. Default 5. */
   maxDegree?: number;
+  /** How many extra (non-tree) edges to try to add, inclusive range. Default [0, nodeCount]. The geometry may allow fewer. */
+  extraEdges?: [min: number, max: number];
 }
 
 /** Procedurally generate a connected, crossing-free weighted Network. */
@@ -178,7 +180,7 @@ export function generateRandomNetwork(opts: RandomNetworkOptions): Network {
   }
 
   // ── Step 2: extra planar edges, shortest candidates first, up to a random budget ──
-  const extraBudget = randInt(0, n);
+  const extraBudget = opts.extraEdges ? randInt(opts.extraEdges[0], opts.extraEdges[1]) : randInt(0, n);
   const pairs: [number, number][] = [];
   for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) if (!edgeSet.has(key(a, b))) pairs.push([a, b]);
   pairs.sort(([a1, b1], [a2, b2]) => dist(pos[a1], pos[b1]) - dist(pos[a2], pos[b2]));
