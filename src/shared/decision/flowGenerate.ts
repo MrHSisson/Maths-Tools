@@ -398,7 +398,7 @@ function toProblem(
     prompt = `${bounds} A flow of ${flowValue(net, flow)} is shown (the circled numbers). There are ${["", "one", "two", "three", "four", "five"][found.length] ?? found.length} flow-augmenting paths from S to T. Find them, and say by how much the flow can be increased along each.`;
     answerText = found.map((p) => `${pathNodes(p).join("")} +${p.bottleneck}`).join("; ");
   } else {
-    prompt = `${bounds} A flow of ${flowValue(net, flow)} is shown (the circled numbers). Use flow augmentation to find a maximal flow, then confirm it with a cut.`;
+    prompt = `${bounds} A flow of ${flowValue(net, flow)} is shown (the circled numbers). Use flow augmentation to find the maximum flow, then confirm it with a cut.`;
     const run = maxFlow(net, flow);
     value = run.value;
     answerText = `Maximum flow ${run.value}`;

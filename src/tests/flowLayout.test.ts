@@ -6,7 +6,7 @@
 import { describe, expect, it } from "vitest";
 import { FLOW_TEMPLATES } from "../shared/decision/flowTemplates";
 import { sampleInstance, variantNet, usableNet, stretchFor } from "../shared/decision/flowGenerate";
-import { FLOW_R, NODE_R, layoutNetwork, dist, numberBox, type Shape } from "../shared/decision/flowGeometry";
+import { NODE_R, layoutNetwork, dist, numberBox, type Shape } from "../shared/decision/flowGeometry";
 import type { FlowMode } from "../shared/decision/flow";
 
 interface El { arc: string; kind: string; shapes: Shape[] }
@@ -22,7 +22,7 @@ export function layoutViolations(_tpl: (typeof FLOW_TEMPLATES)[number], mode: Fl
     const g = lay.get(a.id)!;
     lines.push({ arc: a.id, kind: "line", shapes: [{ k: "seg", a: g.line.a, b: g.line.b, w: 3 }] });
     if (state !== "arrowsOnly") labels.push({ arc: a.id, kind: "pill", shapes: [{ k: "rect", x0: g.pill.c.x - g.pill.w / 2, y0: g.pill.c.y - g.pill.h / 2, x1: g.pill.c.x + g.pill.w / 2, y1: g.pill.c.y + g.pill.h / 2 }] });
-    if (state === "flow") labels.push({ arc: a.id, kind: "flow", shapes: [{ k: "circle", c: g.flowC, r: FLOW_R }] });
+    if (state === "flow") labels.push({ arc: a.id, kind: "flow", shapes: [{ k: "circle", c: g.flowC, r: g.flowR }] });
     if (state !== "flow") {
       const pots = { fwd: inst.net.arcs.length > 0 ? a.hi - inst.flow[a.id] : 0, bwd: inst.flow[a.id] - a.lo };
       labels.push({ arc: a.id, kind: "inc", shapes: [{ k: "seg", a: g.inc.s0, b: g.inc.e0, w: 2.5 }, numberBox(g.inc.num, String(pots.fwd).length)] });

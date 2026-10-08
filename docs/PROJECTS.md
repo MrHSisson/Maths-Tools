@@ -775,14 +775,17 @@ crossing-checked extra edges) harvested from an old archived draft, with a best-
 tool yet — see `DECISION_SHELL_PLAN.md` → "Templating model" for the detail.
 
 **Network Flows — built (2026-10-08, dev-gated — `enabled: false`).** `/network-flows`, spec `specs/flow-networks.md`.
-Five sub-tools — **Initial flow**, **Potentials**, **Cut values**, **Augment flow**, **Max flow & min cut** — on capacity-only
-and min/max networks at three levels, drawn from **five network styles** (Diamond, Fan, Ladder, Hexagon, the
-big 8-node network with declared crossings and reversible arcs). Pure solver in `shared/decision/flow.ts`
-(potentials, canonical BFS labelling, augmentation, max flow, cuts); flow-first generator
-(`flowGenerate.ts`) so a feasible flow always exists; worked solution in `flowSolve.ts`; new `FlowView`
-(circled flow beside the arc, textbook-style potential arrows, green path with dashed backward steps,
-shaded cut + ticks + dotted cut line). `DecisionShell` gained sub-tool tabs, Question Options, a custom
-canvas and a canvas footer. **Next:** print via `handleDiagramPrint`, info modal, a phone-width check, Harry's-notes update.
+Top tier **Capacity only ⇄ Min and max**; beneath it six question styles — **Find a flow** (a real route-by-route method),
+**Missing flow**, **Flow from potentials**, **Augment flow** (every augmenting path), **Cut values** (one dashed line) and
+**Max flow & min cut** — at three levels that are graph size (4–5, 6–7, 8 vertices). **Nine network styles** (Diamond, Fan,
+Mini hub, Zigzag, Ladder, Hexagon, Double hub, Tower, the big 8-node network), ~320 variants once optional/reversible arcs are
+counted; every question has at least one reversed arc. Question Options: backward arc (cuts), backward step (augment / max flow),
+and **Numbers** (small / tens / hundreds — the picture stretches to fit four-digit labels). Pure solver in `shared/decision/flow.ts`;
+flow-first generator (`flowGenerate.ts`); worked solution in `flowSolve.ts`; `FlowView` + shared label geometry
+(`flowGeometry.ts`, joint `layoutNetwork`), tested exhaustively by `flowLayout.test.ts` and `flowLogic.test.ts`.
+`DecisionShell` gained sub-tool tabs, top-tier options, per-sub-tool options, a custom canvas and footer, whole-area fullscreen,
+a Show all toggle that returns to the same step, and a "reload the page" fallback if generation fails.
+**Next:** info-modal review with Harry, phone check on a real device, Harry's-notes update, then go-live decision.
 
 **Travelling Salesperson — first slice shipped (2026-09-23, dev-gated — keep `enabled: false`).**
 `/travelling-salesperson` does the **nearest-neighbour upper bound** at three levels: complete K4–K6

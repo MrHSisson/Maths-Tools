@@ -130,11 +130,12 @@ function solveMissing(p: DecisionProblem): SolveStep[] {
     const other = unknownIn ? out : inn;
     const otherTotal = other.reduce((t, a) => t + known[a.id], 0);
     const sameOthers = sameKnown(same, arc, known);
+    const earlier = [...inn, ...out].filter((a) => a.id !== arc && missing.includes(a.id)).map((a) => a.id);
     const value = flow[arc];
     known[arc] = value;
     left.delete(arc);
     steps.push(beat(net,
-      `At ${vertex} only ${arc} is unknown — call it ${sym[i]}.\nFlow in: ${inn.map(term).join(" + ")}\nFlow out: ${out.map(term).join(" + ")}\n${sym[i]} = ${otherTotal}${sameOthers.length ? ` − ${sameOthers.join(" − ")} = ${value}` : ""}`,
+      `At ${vertex}, ${earlier.length ? `${earlier.join(" and ")} ${earlier.length > 1 ? "are" : "is"} now known, so ` : ""}only ${arc} is unknown — call it ${sym[i]}.\nFlow in: ${inn.map(term).join(" + ")}\nFlow out: ${out.map(term).join(" + ")}\n${sym[i]} = ${otherTotal}${sameOthers.length ? ` − ${sameOthers.join(" − ")} = ${value}` : ""}`,
       { flow: { ...known }, unknown: [...left], solved: [arc], focus: [...inn, ...out].map((a) => a.id) }));
   });
   steps.push(beat(net, `All the flows are found: ${missing.map((id) => `${id} = ${flow[id]}`).join(", ")}. The flow value is ${flowValue(net, flow)}.`,
@@ -167,7 +168,7 @@ function solveCut(p: DecisionProblem): SolveStep[] {
   ];
   if (r.backward.length > 0) {
     steps.push(beat(net, mode === "cap"
-      ? `Arc${r.backward.length > 1 ? "s" : ""} ${r.backward.map((a) => a.id).join(", ")} come${r.backward.length > 1 ? "" : "s"} back from the T side to the S side. A capacity-only network has no minimums (they are all 0), so nothing is subtracted.`
+      ? `Arc${r.backward.length > 1 ? "s" : ""} ${r.backward.map((a) => a.id).join(", ")} come${r.backward.length > 1 ? "" : "s"} back from the T side to the S side. Nothing is subtracted for ${r.backward.length > 1 ? "them" : r.backward[0].id}: a capacity-only network has no lower limits.`
       : `Arc${r.backward.length > 1 ? "s" : ""} ${r.backward.map((a) => a.id).join(", ")} come${r.backward.length > 1 ? "" : "s"} back from the T side to the S side (backward). Subtract ${r.backward.length > 1 ? "their minimums" : "its minimum"}.\n${r.forwardSum} − ${r.backward.map((a) => a.lo).join(" − ")} = ${r.capacity}`,
       view(true), { runningTotal: r.capacity, totalLabel: "Cut" }));
   } else {
@@ -266,7 +267,7 @@ function solveMaxFlow(p: DecisionProblem): SolveStep[] {
     { flow: run.flow }, { runningTotal: run.value, totalLabel: "Flow" }));
   const back = r.backward.length
     ? d.mode === "cap"
-      ? `\nArc${r.backward.length > 1 ? "s" : ""} ${r.backward.map((a) => a.id).join(", ")} come${r.backward.length > 1 ? "" : "s"} back from the T side; a capacity-only network has no minimums, so nothing is subtracted.`
+      ? `\nArc${r.backward.length > 1 ? "s" : ""} ${r.backward.map((a) => a.id).join(", ")} come${r.backward.length > 1 ? "" : "s"} back from the T side; nothing is subtracted for ${r.backward.length > 1 ? "them" : "it"} (capacity-only).`
       : `\nBackward arcs (T side → S side): ${r.backward.map((a) => a.id).join(", ")}, minimums subtracted: ${r.forwardSum} − ${r.backward.map((a) => a.lo).join(" − ")}.`
     : "";
   steps.push(beat(net, `Cut ${set(net, run.sSide)} | ${set(net, t)}: forward arcs ${r.forward.map((a) => a.id).join(", ")}, ${r.forward.map((a) => a.hi).join(" + ")} = ${r.forwardSum}.${back}\nCapacity of the cut = ${r.capacity}.`,

@@ -8,7 +8,7 @@
 > - **No worksheets, print or Whiteboard.** Every question is worked through step by step (see `docs/architecture/DECISION_SHELL_PLAN.md` → Shell UX).
 > - **Real minimums:** in Min and max questions every arc carries flow and at most about one arc in seven has a minimum of 0. An arc that shows its potentials drops its flow circle and min/max label.
 
-**Status:** in progress — all five sub-tools are built (`enabled: false`); print, the info modal and a phone-width check are still to do. <!-- draft → ready → implemented. -->
+**Status:** built (`enabled: false`) — six question styles, nine network styles, Numbers option (×1/×10/×100), info modal done; go-live pending Harry's review. Later additions superseding earlier text below: Missing flow and Find a flow are sub-tools; Find a flow is built route by route (`buildFlowByPaths`); levels are graph size. <!-- draft → ready → implemented. -->
 
 Built on **`DecisionShell`** (`src/shared/decision/`), not `ToolShell` — see
 `docs/architecture/DECISION_SHELL_PLAN.md`. This is a **Decision Maths** tool (D2 network flows), so the

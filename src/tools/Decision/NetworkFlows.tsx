@@ -17,7 +17,7 @@ import type { InfoSection } from "../../shared";
 // Network Flows — Decision Maths (D2). Potentials, cut values, flow augmentation and
 // max-flow min-cut on capacity-only and minimum/maximum networks. Built on
 // DecisionShell; the maths lives in shared/decision/flow.ts, the networks in
-// flowTemplates.ts (diamond, fan, ladder, hexagon, big network), the question
+// flowTemplates.ts (diamond, fan, mini hub, zigzag, ladder, hexagon, double hub, tower, big network), the question
 // generation in flowGenerate.ts and the working in flowSolve.ts.
 // Spec: specs/flow-networks.md.
 // ═══════════════════════════════════════════════════════════════════════════
@@ -28,19 +28,19 @@ const INFO_SECTIONS: InfoSection[] = [
     icon: "🌐",
     content: [
       { label: "Overview", detail: "Flows through a network from a source S to a sink T, on capacity-only or minimum/maximum networks. The same few network shapes are used throughout so students learn one picture well." },
-      { label: "Worked through", detail: "Every question is worked through step by step: the network on the left, the working on the right (Next / Back, or the arrow keys). Earlier steps fade but stay on screen; Show all jumps to the end." },
+      { label: "Worked through", detail: "Every question is worked through step by step: the network on the left, the working on the right (Next / Back, or the arrow keys). Earlier steps fade but stay on screen. Show all reveals everything; press it again to go back to the step you were on. The expand button on the diagram makes the whole working area fullscreen (Esc leaves it)." },
     ],
   },
   {
     title: "Question types",
     icon: "🧭",
     content: [
-      { label: "Find a flow", detail: "Find any feasible flow (min and max) or a flow of a stated value (capacity only). Many answers are valid." },
+      { label: "Find a flow", detail: "Find any feasible flow (min and max) or a flow of a stated value (capacity only). Many answers are valid. The working builds one route by route: capacity only — take the route with the most spare capacity and send as much as it will carry (but no more than is still needed); min and max — take the arc furthest below its minimum, route through it, and send what it needs." },
       { label: "Missing flow", detail: "One or two arcs have no flow shown. Use flow in = flow out at a vertex with exactly one unknown arc." },
       { label: "Flow from potentials", detail: "The potential arrows are shown, not the flows. Flow = maximum − potential increase (or minimum + potential decrease); then find the value of the flow." },
       { label: "Augment flow", detail: "Find every flow-augmenting path — every route from S to T where each step has a positive potential, including steps that go back against an arrow — and the increase along each." },
       { label: "Cut values", detail: "Capacity of a cut = maximums of arcs going S side → T side, minus the minimums of arcs coming back." },
-      { label: "Max flow & min cut", detail: "Augment until no path remains, then confirm with a cut of equal capacity." },
+      { label: "Max flow & min cut", detail: "Augment until no path remains (every potential that changes is listed), read the flows off the final potentials, then confirm with a cut of equal capacity." },
     ],
   },
   {
@@ -49,7 +49,8 @@ const INFO_SECTIONS: InfoSection[] = [
     content: [
       { label: "Capacity only / Min and max (top row)", detail: "Capacity only: every arc has one number. Min and max: every arc has a minimum and a maximum. This is the first choice; the question styles sit underneath it." },
       { label: "Levels", detail: "Levels are the size of the network: Level 1 has 4–5 vertices, Level 2 has 6–7 (the hexagon has a centre vertex that arcs can run into and out of), Level 3 has 8." },
-      { label: "Reverse", detail: "Every network has at least one arc pointing back against the flow, so backward arcs and backward steps can be tested." },
+      { label: "Reversed arcs", detail: "Every network has at least one arc pointing back against the flow, so backward arcs and backward steps can be tested." },
+      { label: "Numbers", detail: "Small (up to about 20), Tens (10 to 200) or Hundreds (100 to 2000). The maths is identical; only the numbers are bigger. The diagram is drawn wider to make room for four-digit labels." },
       { label: "Include a backward arc / step", detail: "On Cut values, require the cut to include an arc coming back across it. On Augment flow and Max flow, require a step that goes back against an arrow." },
     ],
   },

@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import type { FlowArc, FlowMode, FlowNet, FlowProblemData, FlowViewState } from "../flow";
 import { cutGeometry, flowBox } from "../cutCurve";
-import { FLOW_R, NODE_R, PILL_H, dist, layoutNetwork, type Shape } from "../flowGeometry";
+import { NODE_R, PILL_H, dist, layoutNetwork, type Shape } from "../flowGeometry";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // FlowView — a PURE renderer of a flow network. Draws each arc with its bounds
@@ -122,7 +122,7 @@ export default function FlowView({ net, mode, view, labelPos, qIndex, background
             {prev !== undefined && fl !== undefined && prev !== fl && (
               <text x={fp.x} y={fp.y - 22} textAnchor="middle" fontSize={13} fontWeight={700} fill="#94a3b8" textDecoration="line-through">{prev}</text>
             )}
-            <circle cx={fp.x} cy={fp.y} r={FLOW_R} fill={isUnknown ? "#fffbeb" : "#ffffff"} stroke={isUnknown ? "#d97706" : dir || isSolved ? GREEN : FWD} strokeWidth={2.25} />
+            <circle cx={fp.x} cy={fp.y} r={g.flowR} fill={isUnknown ? "#fffbeb" : "#ffffff"} stroke={isUnknown ? "#d97706" : dir || isSolved ? GREEN : FWD} strokeWidth={2.25} />
             <text x={fp.x} y={fp.y} textAnchor="middle" dominantBaseline="central" fontSize={17} fontWeight={800} fill={isUnknown ? "#d97706" : dir || isSolved ? GREEN : FWD}>{isUnknown ? "?" : fl}</text>
           </g>
         )}

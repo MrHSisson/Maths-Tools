@@ -51,7 +51,13 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const [level, setLevel] = useState(init.level);
   const [subTool, setSubTool] = useState(init.subTool);
   const [options, setOptions] = useState<Record<string, string>>(init.options);
-  const ctxOf = (sub: string, opts: Record<string, string>): GenerateContext => ({ subTool: sub, options: opts });
+  // the generator only ever sees the options that are on offer for this sub-tool (a hidden one never leaks in)
+  const shownFor = (sub: string) => (o: NonNullable<DecisionShellProps["config"]["options"]>[number]) => o.top || !o.forSubTools || o.forSubTools.includes(sub);
+  const ctxOf = (sub: string, opts: Record<string, string>): GenerateContext => ({
+    subTool: sub,
+    options: Object.fromEntries((config.options ?? []).filter(shownFor(sub)).map((o) => [o.key, opts[o.key]])),
+  });
+  const [failed, setFailed] = useState(false); // generate() gave up: the page asks for a reload
   const [problem, setProblem] = useState<DecisionProblem>(() => generate(init.level, ctxOf(init.subTool, init.options)));
   // -1 = the question only; 0…last = the working, one step at a time; last+1 = the answer (when it fits on a line)
   const [stepIdx, setStepIdx] = useState(-1);
@@ -80,9 +86,13 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const qBg = getQuestionBg(colorScheme);
 
   const newQuestion = (lv = level, sub = subTool, opts = options) => {
-    setProblem(generate(lv, ctxOf(sub, opts)));
-    setStepIdx(-1);
-    setShowAll(false);
+    try {
+      setProblem(generate(lv, ctxOf(sub, opts)));
+      setStepIdx(-1);
+      setShowAll(false);
+    } catch {
+      setFailed(true);
+    }
   };
 
   // keep the address bar bookmarkable
@@ -90,7 +100,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     const q = new URLSearchParams();
     if (config.subTools && subTool !== config.subTools[0]?.key) q.set("tool", subTool);
     if (level !== 1) q.set("level", String(level));
-    for (const o of config.options ?? []) if (options[o.key] !== (o.defaultFor?.(level) ?? o.choices[0].value)) q.set(`o_${o.key}`, options[o.key]);
+    for (const o of config.options ?? []) if (shownFor(subTool)(o) && options[o.key] !== (o.defaultFor?.(level) ?? o.choices[0].value)) q.set(`o_${o.key}`, options[o.key]);
     const keep = new URLSearchParams(window.location.search).get("tpl"); // dev link: pinned template
     if (keep) q.set("tpl", keep);
     const s = q.toString();
@@ -261,7 +271,10 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
 
   const canvasBox = (height: string) => (
     <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-white" style={{ height, minHeight: 380 }}>
-      {shown(canvasStep)}
+      {/* on a phone the picture keeps a readable size and pans sideways inside its box (or goes fullscreen) */}
+      <div className="h-full overflow-x-auto overflow-y-hidden sm:overflow-hidden">
+        <div className="h-full min-w-[680px] sm:min-w-0">{shown(canvasStep)}</div>
+      </div>
       <button
         onClick={() => setFullscreen(true)}
         title="Fullscreen"
@@ -305,6 +318,17 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       </div>
     </div>
   );
+
+  if (failed)
+    return (
+      <div>
+        {navBar}
+        <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 p-6 text-center" style={{ backgroundColor: "#f5f3f0" }}>
+          <div className="text-2xl font-bold text-gray-900">Something went wrong building that question.</div>
+          <button onClick={() => window.location.reload()} className={BTN_PRIMARY}><RefreshCw size={18} /> Reload the page</button>
+        </div>
+      </div>
+    );
 
   // ── fullscreen: the whole working area — the network AND the question, working and step controls — filling the screen ──
   if (fullscreen)

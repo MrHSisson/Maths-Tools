@@ -153,7 +153,7 @@ export interface DecisionShellProps {
     /** a key shown under the canvas in every mode (for tools whose colours aren't edge states) */
     canvasFooter?: ReactNode | ((p: DecisionProblem) => ReactNode);
   };
-  // later: sandbox?, print?, info?
+  // later: sandbox?, print?
 }
 
 // ── The CI-validation surface a tool exports as `__problem` ─────────────────
