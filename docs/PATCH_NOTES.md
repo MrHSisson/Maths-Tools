@@ -28,6 +28,22 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+## 2026-10-08 — Network Flows: first build (Decision Maths, dev-gated)
+
+- **`/network-flows`** (registry `enabled: false`): Potentials, Cut values, Augment flow, and Max flow & min cut,
+  on capacity-only or min/max networks, Levels 1–3, each with a step-by-step worked solution.
+- **Five network styles** from the textbook shapes — Diamond, Fan, Ladder, Hexagon and the big 8-node network
+  (two declared crossing pairs; up to two arcs reversed at Level 3).
+- **Maths in one place:** `src/shared/decision/flow.ts` (potentials, labelling, augmenting paths, max flow, cuts);
+  questions are built flow-first (`flowGenerate.ts`) so a feasible flow always exists.
+- **`FlowView`:** circled flow beside the arc, two small potential arrows (along / against) like the textbook, green
+  augmenting path with dashed backward steps, shaded S side, red ticks and a dotted cut line.
+- **`DecisionShell`** gained sub-tool tabs, Question Options (Capacity only / Min and max), a custom canvas and a canvas footer.
+- CI: `src/tests/flow.test.ts` asserts the spec's reference numbers (flow 15 → 22 via SADET 2, SBCET 2, SBCFT 3;
+  second network max flow 20; cut values 26, 28, 35) and sweeps every template × level × sub-tool × mode against a
+  brute-force minimum cut.
+- Still to do: Initial flow sub-tool, print, info modal, phone-width check.
+
 ## 2026-10-07 — Notes and docs sweep: cast documented
 
 - New `docs/design/CAST.md` (the eight named characters, Feathers, rules); linked from the `CLAUDE.md` documentation map.

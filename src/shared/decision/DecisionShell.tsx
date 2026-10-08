@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Home, ChevronLeft, ChevronRight, RefreshCw, FastForward, Rewind } from "lucide-react";
-import type { DecisionProblem, DecisionShellProps, LegendItem, SolveStep } from "./types";
+import type { DecisionProblem, DecisionShellProps, GenerateContext, LegendItem, SolveStep } from "./types";
 import NetworkView, { EDGE_STYLE, NODE_ROLE_STYLE } from "./representations/NetworkView";
 import MatrixView from "./representations/MatrixView";
 
@@ -31,10 +31,16 @@ const CARD: React.CSSProperties = {
 };
 const SIDEBAR_W = 440;
 
-export default function DecisionShell({ generate, solve, config }: DecisionShellProps) {
+const defaultOptions = (config: DecisionShellProps["config"], level: number): Record<string, string> =>
+  Object.fromEntries((config.options ?? []).map((o) => [o.key, o.defaultFor?.(level) ?? o.choices[0].value]));
+
+export default function DecisionShell({ generate, solve, renderCanvas, config }: DecisionShellProps) {
   const levelCount = config.levels ?? 1;
   const [level, setLevel] = useState(1);
-  const [problem, setProblem] = useState<DecisionProblem>(() => generate(1));
+  const [subTool, setSubTool] = useState(config.subTools?.[0]?.key ?? "");
+  const [options, setOptions] = useState<Record<string, string>>(() => defaultOptions(config, 1));
+  const ctxOf = (sub: string, opts: Record<string, string>): GenerateContext => ({ subTool: sub, options: opts });
+  const [problem, setProblem] = useState<DecisionProblem>(() => generate(1, ctxOf(config.subTools?.[0]?.key ?? "", defaultOptions(config, 1))));
   const [mode, setMode] = useState<Mode>("question");
   const [stepIdx, setStepIdx] = useState(0);
 
@@ -44,8 +50,8 @@ export default function DecisionShell({ generate, solve, config }: DecisionShell
   const last = steps.length - 1;
   const inSolution = mode === "solution";
 
-  const newQuestion = (lv = level) => {
-    setProblem(generate(lv));
+  const newQuestion = (lv = level, sub = subTool, opts = options) => {
+    setProblem(generate(lv, ctxOf(sub, opts)));
     setStepIdx(0);
     setMode("question");
   };
@@ -80,8 +86,10 @@ export default function DecisionShell({ generate, solve, config }: DecisionShell
                     active={level === lv}
                     title={config.levelLabels?.[lv - 1]}
                     onClick={() => {
+                      const opts = defaultOptions(config, lv);
                       setLevel(lv);
-                      newQuestion(lv);
+                      setOptions(opts);
+                      newQuestion(lv, subTool, opts);
                     }}
                   >
                     Level {lv}
@@ -95,13 +103,52 @@ export default function DecisionShell({ generate, solve, config }: DecisionShell
         </div>
       </div>
 
+      {/* Sub-tool tabs + Question Options */}
+      {((config.subTools?.length ?? 0) > 1 || (config.options?.length ?? 0) > 0) && (
+        <div style={{ flexShrink: 0, background: "#ffffff", borderBottom: "1px solid #cbd5e1", padding: "8px 24px", display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
+          {(config.subTools?.length ?? 0) > 1 && (
+            <Segmented
+              value={subTool}
+              choices={config.subTools!.map((t) => ({ value: t.key, label: t.label }))}
+              onChange={(v) => {
+                setSubTool(v);
+                newQuestion(level, v, options);
+              }}
+            />
+          )}
+          {(config.options ?? []).map((o) => (
+            <div key={o.key} style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto" }}>
+              <span style={{ fontSize: 12, fontWeight: 800, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.6 }}>{o.label}</span>
+              <Segmented
+                value={options[o.key]}
+                choices={o.choices}
+                onChange={(v) => {
+                  const opts = { ...options, [o.key]: v };
+                  setOptions(opts);
+                  newQuestion(level, subTool, opts);
+                }}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Body — network canvas left, sidebar of cards right */}
       <div style={{ display: "flex", flex: 1, minHeight: 0, gap: 16, padding: 16, background: PAGE_BG }}>
         <div style={{ ...CARD, flex: 1, minWidth: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
           <div style={{ flex: 1, minHeight: 0, position: "relative" }}>
-            <NetworkView network={problem.network} step={inSolution ? current : undefined} interactive background="#ffffff" />
+            {renderCanvas ? (
+              renderCanvas(problem, inSolution ? current : undefined)
+            ) : (
+              <NetworkView network={problem.network} step={inSolution ? current : undefined} interactive background="#ffffff" />
+            )}
           </div>
           {inSolution && config.legend && <Legend items={config.legend} />}
+          {config.canvasFooter && (
+            <div style={{ flexShrink: 0, borderTop: "1px solid #e2e8f0", background: "#f8fafc", padding: "8px 16px", display: "flex", justifyContent: "center" }}>
+              {typeof config.canvasFooter === "function" ? config.canvasFooter(problem) : config.canvasFooter}
+            </div>
+          )}
         </div>
 
         <div style={{ width: SIDEBAR_W, flexShrink: 0, display: "flex", flexDirection: "column", gap: 12, overflowY: "auto" }}>
@@ -116,7 +163,7 @@ export default function DecisionShell({ generate, solve, config }: DecisionShell
 
           {inSolution && current.route && current.route.length > 0 && <RouteCard route={current.route} />}
 
-          {(inSolution || config.questionMatrix) && (
+          {!config.hideMatrix && (inSolution || config.questionMatrix) && (
             <div style={{ ...CARD, padding: "14px 16px", display: "flex", justifyContent: "center" }}>
               <MatrixView network={problem.network} step={inSolution ? current : undefined} bare />
             </div>
@@ -196,12 +243,12 @@ function StepCard({ step, idx, count }: { step: SolveStep; idx: number; count: n
               fontSize: 14,
             }}
           >
-            Total {step.runningTotal}
+            {step.totalLabel ?? "Total"} {step.runningTotal}
           </span>
         )}
       </div>
       {/* Fixed minimum height so the cards below don't jump as captions change length. */}
-      <div style={{ fontSize: 17, fontWeight: 500, color: "#0f172a", lineHeight: 1.5, minHeight: 78 }}>{step.caption}</div>
+      <div style={{ fontSize: 17, fontWeight: 500, color: "#0f172a", lineHeight: 1.5, minHeight: 78, whiteSpace: "pre-line" }}>{step.caption}</div>
     </div>
   );
 }
@@ -270,7 +317,26 @@ function Swatch({ kind }: { kind: LegendItem["swatch"] }) {
   );
 }
 
-// ── UI atoms ─────────────────────────────────────────────────────────────────
+// ── UI atoms ─────
+function Segmented({ value, choices, onChange }: { value: string; choices: Array<{ value: string; label: string }>; onChange: (v: string) => void }) {
+  return (
+    <div style={{ display: "inline-flex", border: "1px solid #cbd5e1", borderRadius: 10, overflow: "hidden" }}>
+      {choices.map((c) => (
+        <button
+          key={c.value}
+          onClick={() => onChange(c.value)}
+          style={{
+            padding: "7px 14px", fontWeight: 700, fontSize: 13.5, border: "none", cursor: "pointer",
+            background: value === c.value ? "#1e3a8a" : "#ffffff", color: value === c.value ? "#ffffff" : "#334155",
+          }}
+        >
+          {c.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+// ──────────────────────────────────────────────────────────────────────────
 function HeaderTab({
   active,
   onClick,

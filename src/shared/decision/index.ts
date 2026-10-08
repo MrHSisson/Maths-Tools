@@ -2,6 +2,11 @@
 export { default as DecisionShell } from "./DecisionShell";
 export { default as NetworkView } from "./representations/NetworkView";
 export { default as MatrixView } from "./representations/MatrixView";
+export { default as FlowView } from "./representations/FlowView";
+export * from "./flow";
+export { FLOW_TEMPLATES, templatesForLevel } from "./flowTemplates";
+export { generateFlowProblem, defaultMode } from "./flowGenerate";
+export { solveFlowProblem, questionView } from "./flowSolve";
 export { sampleTemplate } from "./templating";
 export { validateProblem, primMST, referenceNearestNeighbour } from "./validate";
 export { leastDistances, nearestNeighbour, completeNetworkLayout, placeEdgeLabels } from "./tsp";
@@ -23,5 +28,8 @@ export type {
   LegendItem,
   SolveStep,
   DecisionShellProps,
+  GenerateContext,
+  ShellOption,
+  ShellSubTool,
   DecisionProblemExport,
 } from "./types";

@@ -75,7 +75,7 @@ Stand-alone teacher tools with no prong: **Visualiser**, the four PDF
 | **Sandboxes & viewports** | 🚧 | Algebra Tiles, Negative Counters, SmartGrapher (+ Grapher Lab, Parallel Lines Explorer): standalone tools first, then embedded as viewports in question tools |
 | **Depth** | ✅ live (3 tools) | Curated diagnose / explain / extend questions as a mode on any tool that supplies a bank; follows the Question Options; banks on Order of Operations, Rounding and Speed, Distance & Time (live) |
 | **Computer Science shell** | ⏸ | Shell built; 2 topics shipped as data; next is authoring 1.1.3 |
-| **Decision Maths** | ⏸ | MST shipped; TSP nearest-neighbour slice built (dev-gated); next TSP lower bound |
+| **Decision Maths** | ⏸ | MST shipped; TSP nearest-neighbour slice built (dev-gated); **Network Flows** built (dev-gated, 4 of 5 sub-tools); next TSP lower bound / Network Flows initial flow + print |
 | *Tool review cycle* | ♻ ongoing | Per-tool notes; not a prong |
 | *Mobile / narrow view* | ♻ standing rule | Not a prong; shipped for every tool |
 | *Skills library · Teach decks* | 🪑 bench | See `docs/BACKBENCH.md` |
@@ -773,6 +773,17 @@ one question type, one level. Also now available: `src/shared/decision/randomNet
 crossing-checked extra edges) harvested from an old archived draft, with a best-effort
 `routeInspection` mode for a future Route Inspection / Chinese Postman tool. Not wired into any
 tool yet — see `DECISION_SHELL_PLAN.md` → "Templating model" for the detail.
+
+**Network Flows — built (2026-10-08, dev-gated — `enabled: false`).** `/network-flows`, spec `specs/flow-networks.md`.
+Four sub-tools — **Potentials**, **Cut values**, **Augment flow**, **Max flow & min cut** — on capacity-only
+and min/max networks at three levels, drawn from **five network styles** (Diamond, Fan, Ladder, Hexagon, the
+big 8-node network with declared crossings and reversible arcs). Pure solver in `shared/decision/flow.ts`
+(potentials, canonical BFS labelling, augmentation, max flow, cuts); flow-first generator
+(`flowGenerate.ts`) so a feasible flow always exists; worked solution in `flowSolve.ts`; new `FlowView`
+(circled flow beside the arc, textbook-style potential arrows, green path with dashed backward steps,
+shaded cut + ticks + dotted cut line). `DecisionShell` gained sub-tool tabs, Question Options, a custom
+canvas and a canvas footer. **Next:** the Initial flow sub-tool (feasible flow on a min/max network), print
+via `handleDiagramPrint`, info modal, a phone-width check, Harry's-notes update.
 
 **Travelling Salesperson — first slice shipped (2026-09-23, dev-gated — keep `enabled: false`).**
 `/travelling-salesperson` does the **nearest-neighbour upper bound** at three levels: complete K4–K6

@@ -52,6 +52,7 @@ const MIGRATION_BACKLOG: string[] = [];
 const STANDALONE_BY_DESIGN = [
   "Binary/BinaryCounting",
   "Decision/MinimumSpanningTree",
+  "Decision/NetworkFlows",
   "Decision/NetworkSandbox",
   "Decision/TravellingSalesperson",
   "Generators/FunctionalSkillsGenerator",

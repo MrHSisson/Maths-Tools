@@ -7,6 +7,9 @@
 // gets its own shell rather than living on ToolShell. See docs/architecture/DECISION_SHELL_PLAN.md.
 // ═══════════════════════════════════════════════════════════════════════════
 
+import type { ReactNode } from "react";
+import type { FlowProblemData, FlowViewState } from "./flow";
+
 // ── A network, concrete ─────────────────────────────────────────────────────
 export interface GNode {
   id: string;
@@ -58,6 +61,7 @@ export interface DecisionProblem {
     tour?: string[]; // TSP: vertex order of the closed tour, start repeated at the end
   }; // definite, checkable
   templateId?: string; // provenance (undefined for the free bypass)
+  flow?: FlowProblemData; // Network Flows: the flow-specific data (the shell's default canvas ignores it)
   start?: string; // the start vertex, for algorithms that begin somewhere (NN, Prim from X, Dijkstra)
 }
 
@@ -96,6 +100,8 @@ export interface SolveStep {
   matrix?: DistanceTable; // override the table MatrixView shows this beat
   matrixTitle?: string; // e.g. "Table of least distances"
   runningTotal?: number; // e.g. MST weight so far
+  totalLabel?: string; // label for the running-total badge (default "Total")
+  flowView?: FlowViewState; // Network Flows: how the flow diagram is drawn this beat
 }
 
 // ── A colour-key entry — the swatch reuses the renderers' own styles ──────────
@@ -105,18 +111,43 @@ export interface LegendItem {
 }
 
 // ── The tool → shell contract ───────────────────────────────────────────────
+// A tool with several question types ("sub-tools") and Question Options gets a tab row
+// and a segmented control under the header; the chosen values reach generate() as ctx.
+export interface ShellSubTool {
+  key: string;
+  label: string;
+}
+export interface ShellOption {
+  key: string;
+  label: string;
+  choices: Array<{ value: string; label: string }>;
+  /** the value this option takes for a level (reset whenever the level changes) */
+  defaultFor?: (level: number) => string;
+}
+export interface GenerateContext {
+  subTool: string;
+  options: Record<string, string>;
+}
+
 export interface DecisionShellProps {
-  generate: (level: number) => DecisionProblem; // parameterised-template sampling inside
+  generate: (level: number, ctx?: GenerateContext) => DecisionProblem; // parameterised-template sampling inside
   solve: (p: DecisionProblem) => SolveStep[]; // the algorithm, as ordered beats
+  /** Replace the default NetworkView canvas (e.g. FlowView). `step` is undefined in Question mode. */
+  renderCanvas?: (problem: DecisionProblem, step: SolveStep | undefined) => ReactNode;
   config: {
     pageTitle: string;
     instruction?: string;
     levels?: number; // >1 shows a level picker in the header
     levelLabels?: string[]; // tooltip per level, e.g. ["Complete network", …]
     questionMatrix?: boolean; // show the distance matrix beside the network in Question mode
+    hideMatrix?: boolean; // never show the matrix (tools whose working isn't a table)
+    subTools?: ShellSubTool[]; // tab row of question types
+    options?: ShellOption[]; // segmented controls (Question Options)
     legend?: LegendItem[]; // colour key shown under the matrix in Solution mode
+    /** a key shown under the canvas in every mode (for tools whose colours aren't edge states) */
+    canvasFooter?: ReactNode | ((p: DecisionProblem) => ReactNode);
   };
-  // later: sandbox?, print?, questionTypes?, info?
+  // later: sandbox?, print?, info?
 }
 
 // ── The CI-validation surface a tool exports as `__problem` ─────────────────

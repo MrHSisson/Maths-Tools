@@ -1,0 +1,120 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// Network Flows — solver reference numbers (specs/flow-networks.md §5) and
+// property tests over every template × level × sub-tool × mode.
+// ─────────────────────────────────────────────────────────────────────────────
+import { describe, expect, it } from "vitest";
+import {
+  allAugmentingPaths, augment, cutCapacity, findAugmentingPath, flowValue, isAcyclic, isFeasibleFlow, maxFlow,
+  minCutBruteForce, pathNodes, potentials, type Flow, type FlowNet,
+} from "../shared/decision/flow";
+import { FLOW_TEMPLATES } from "../shared/decision/flowTemplates";
+import { generateFlowProblem } from "../shared/decision/flowGenerate";
+import type { FlowMode, FlowSubTool } from "../shared/decision/flow";
+
+const big = FLOW_TEMPLATES.find((t) => t.id === "big8")!;
+const bounds0: Record<string, [number, number]> = {
+  SA: [2, 10], SB: [3, 12], AC: [0, 8], AD: [0, 8], BC: [0, 5], BD: [0, 10],
+  CE: [6, 10], CF: [0, 3], DE: [0, 8], DF: [5, 7], ET: [6, 12], FT: [5, 13],
+};
+const f0: Flow = { SA: 8, SB: 7, AC: 8, AD: 0, BC: 0, BD: 7, CE: 8, CF: 0, DE: 0, DF: 7, ET: 8, FT: 7 };
+const mkNet = (b: Record<string, [number, number]>): FlowNet => ({
+  nodes: big.nodes,
+  arcs: big.arcs.map((a) => ({ id: a.id, from: a.from, to: a.to, lo: b[a.id][0], hi: b[a.id][1] })),
+});
+const N0 = mkNet(bounds0);
+const N1 = mkNet({ ...bounds0, CE: [6, 8], DE: [0, 2] });
+
+describe("reference network N0", () => {
+  it("f0 is a feasible flow of value 15", () => {
+    expect(isFeasibleFlow(N0, f0)).toEqual({ ok: true, violations: [] });
+    expect(flowValue(N0, f0)).toBe(15);
+  });
+  it("potentials at f0", () => {
+    const p = potentials(N0, f0);
+    const got = Object.fromEntries(Object.entries(p).map(([k, v]) => [k, `${v.fwd}/${v.bwd}`]));
+    expect(got).toEqual({
+      SA: "2/6", SB: "5/4", AC: "0/8", AD: "8/0", BC: "5/0", BD: "3/7",
+      CE: "2/2", CF: "3/0", DE: "8/0", DF: "0/2", ET: "4/2", FT: "6/2",
+    });
+  });
+  it("canonical augmentations are SADET 2, SBCET 2, SBCFT 3 → 22", () => {
+    const run = maxFlow(N0, f0);
+    expect(run.augmentations.map((a) => [pathNodes(a.path).join(""), a.path.bottleneck])).toEqual([
+      ["SADET", 2], ["SBCET", 2], ["SBCFT", 3],
+    ]);
+    expect(run.value).toBe(22);
+    expect(run.sSide).toEqual(["S"]);
+    expect(minCutBruteForce(N0).capacity).toBe(22);
+  });
+  it("cut values", () => {
+    expect(cutCapacity(N0, ["S", "A", "B", "D", "E"]).capacity).toBe(26); // 32 − 6
+    expect(cutCapacity(N0, ["S", "A", "B", "C", "D"]).capacity).toBe(28);
+    expect(cutCapacity(N0, ["S", "A", "C", "E"]).capacity).toBe(35);
+  });
+});
+
+describe("reference network N1 (non-trivial minimum cut)", () => {
+  it("max flow 20, min cut {S,A,B,C,D}", () => {
+    expect(isFeasibleFlow(N1, f0).ok).toBe(true);
+    const run = maxFlow(N1, f0);
+    expect(run.augmentations.map((a) => [pathNodes(a.path).join(""), a.path.bottleneck])).toEqual([["SADET", 2], ["SBCFT", 3]]);
+    expect(run.value).toBe(20);
+    expect(run.sSide).toEqual(["S", "A", "B", "C", "D"]);
+    expect(cutCapacity(N1, run.sSide).capacity).toBe(20);
+  });
+});
+
+describe("templates", () => {
+  for (const t of FLOW_TEMPLATES) {
+    it(`${t.id}: arcs reference real nodes, acyclic, only declared arcs cross`, () => {
+      const ids = new Set(t.nodes.map((n) => n.id));
+      for (const a of t.arcs) {
+        expect(ids.has(a.from) && ids.has(a.to)).toBe(true);
+      }
+      expect(isAcyclic({ nodes: t.nodes, arcs: t.arcs.map((a) => ({ ...a, lo: 0, hi: 1 })) })).toBe(true);
+      const P = Object.fromEntries(t.nodes.map((n) => [n.id, n]));
+      const ccw = (p: any, q: any, r: any) => (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x);
+      const crossing: string[] = [];
+      for (let i = 0; i < t.arcs.length; i++)
+        for (let j = i + 1; j < t.arcs.length; j++) {
+          const a = t.arcs[i], b = t.arcs[j];
+          if (new Set([a.from, a.to, b.from, b.to]).size < 4) continue; // share a node
+          const [p1, p2, p3, p4] = [P[a.from], P[a.to], P[b.from], P[b.to]];
+          if (ccw(p1, p2, p3) * ccw(p1, p2, p4) < 0 && ccw(p3, p4, p1) * ccw(p3, p4, p2) < 0) crossing.push([a.id, b.id].sort().join("|"));
+        }
+      const declared = (t.crossings ?? []).map((c) => [...c].sort().join("|"));
+      expect(crossing.sort()).toEqual(declared.sort());
+    });
+  }
+});
+
+const subTools: FlowSubTool[] = ["potentials", "cutValue", "augment", "maxFlow"];
+describe("generated questions", () => {
+  for (const level of [1, 2, 3] as const)
+    for (const sub of subTools)
+      for (const mode of ["cap", "minmax"] as FlowMode[]) {
+        it(`L${level} ${sub} ${mode}: valid flow, solver agrees with brute force`, () => {
+          for (let i = 0; i < 15; i++) {
+            const p = generateFlowProblem(level, sub, mode);
+            const d = p.flow!;
+            expect(isFeasibleFlow(d.net, d.flow).ok).toBe(true);
+            expect(isAcyclic(d.net)).toBe(true);
+            if (mode === "cap") expect(d.net.arcs.every((a) => a.lo === 0)).toBe(true);
+            expect(d.net.arcs.every((a) => Number.isInteger(a.lo) && Number.isInteger(a.hi) && a.hi >= 1 && a.lo <= a.hi)).toBe(true);
+            // max flow = brute-force min cut, from the given flow
+            const run = maxFlow(d.net, d.flow);
+            expect(isFeasibleFlow(d.net, run.flow).ok).toBe(true);
+            expect(run.value).toBe(minCutBruteForce(d.net).capacity);
+            expect(cutCapacity(d.net, run.sSide).capacity).toBe(run.value);
+            for (const aug of run.augmentations) expect(isFeasibleFlow(d.net, augment(aug.before, aug.path)).ok).toBe(true);
+            if (sub === "augment") {
+              const paths = allAugmentingPaths(d.net, d.flow);
+              if (level === 1) expect(paths.length).toBe(1);
+              if (level === 3) expect(paths[0].steps.some((s) => s.dir === "back")).toBe(true);
+              expect(findAugmentingPath(d.net, d.flow)).not.toBeNull();
+            }
+            if (sub === "cutValue") expect(cutCapacity(d.net, d.sSide!).capacity).toBe(p.answer.value);
+          }
+        });
+      }
+});

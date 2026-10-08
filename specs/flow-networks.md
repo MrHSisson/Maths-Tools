@@ -1,6 +1,6 @@
 # Tool Spec: Network Flows
 
-**Status:** draft <!-- draft → ready → implemented. Claude Code only implements specs marked `ready`. -->
+**Status:** in progress — potentials, cut values, augment flow and max flow & min cut are built (`enabled: false`); **initial flow** and print are still to do. <!-- draft → ready → implemented. -->
 
 Built on **`DecisionShell`** (`src/shared/decision/`), not `ToolShell` — see
 `docs/architecture/DECISION_SHELL_PLAN.md`. This is a **Decision Maths** tool (D2 network flows), so the
@@ -26,9 +26,10 @@ label the **potential** (spare room) in both directions on every arc; and use th
 find a flow-augmenting path and update the flow. It follows route-finding / critical path in the D2
 sequence and leads straight into max-flow min-cut, supply/demand and LP.
 
-**One big network, many variations.** Every question is drawn from **one authored 8-node template**
-(S, A–F, T, the largest standard textbook shape) by varying which arcs are present, their bounds,
-their direction and the flow on them. There are no other templates in this spec.
+**Several network styles.** Questions are drawn from **five authored network templates** taken from the
+textbook shapes — Diamond, Fan, Ladder, Hexagon and the Big network (S, A–F, T, two crossing pairs) — by
+varying the bounds, the flow and (Big network only) which arcs are reversed. Smaller shapes are used at
+lower levels (§3.2). More styles are added by authoring one entry in `flowTemplates.ts`.
 
 ---
 
@@ -68,59 +69,35 @@ their direction and the flow on them. There are no other templates in this spec.
   taught explicitly, see misconceptions).
 - **Max-flow min-cut theorem**: value of any flow ≤ capacity of any cut; equality ⇒ both are optimal.
 
-### 3.2 The template `flow-8`
+### 3.2 The templates (`src/shared/decision/flowTemplates.ts`)
 
-Nodes (fixed positions, left to right; a larger y is lower on screen):
+Each template fixes the **topology and layout only** (node positions, arc list, declared crossings, where each
+arc's labels sit); bounds and flows are sampled per question (§3.3). A level draws a random template from its list.
 
-| id | x | y |   | id | x | y |
-|---|---|---|---|---|---|---|
-| S | 0 | 3 |   | D | 4 | 5 |
-| A | 2 | 1 |   | E | 6 | 1 |
-| B | 2 | 5 |   | F | 6 | 5 |
-| C | 4 | 1 |   | T | 8 | 3 |
+| Template | Nodes | Arcs | Crossings | Used at |
+|---|---|---|---|---|
+| Diamond | S, A, B, T | SA SB AB AT BT | none | Level 1 |
+| Fan | S, A, B, C, T | SA SB SC AB BC AT BT CT | none | Levels 1–2 |
+| Ladder | S, A, B, C, D, T | SA SB AB AC AD BD CD CT DT | none | Level 2 |
+| Hexagon | S, A–E, T | SA SB AC AD BC BE CT DT ET | none | Levels 2–3 |
+| Big network | S, A–F, T | SA SB AC AD BC BD CE CF DE DF ET FT | **AD×BC, CF×DE (declared)** | Level 3 |
 
-(Authoring note: this reproduces the reference image — A and C on the top row, B and D on the bottom row,
-E top right, F bottom right. Implementer adjusts the numbers to the board scale; **the topology is
-the contract**, not the coordinates.)
-
-**Base arcs (always present):** `SA`, `SB`, `AC`, `BD`, `CE`, `DF`, `ET`, `FT`.
-
-**Cross arcs (optional):** `AD` (A→D), `BC` (B→C), `CF` (C→F), `DE` (D→E).
-`AD` crosses `BC`; `CF` crosses `DE`. **These crossings are intended.** Update `validate.ts` /
-`NetworkView` so a template can *declare* its crossings (`crossings: [["AD","BC"],["CF","DE"]]`) and
-validation passes only for declared crossings. Arc labels sit **near the tail end** of the arc
-(`labelAt ≈ 0.28`) so they never sit on a crossing.
-
-**Direction.** Arcs run left to right as listed. At Level 3 a cross arc may be **flipped** (e.g. `CB`
-instead of `BC`); a flipped arc is drawn with its arrow reversed and keeps its label near its (new) tail.
-The network must stay **acyclic** (validate it).
+Arcs run left to right; in the Big network the four cross arcs (AD, BC, CF, DE) are **flippable** (Level 3
+reverses up to two, keeping the network acyclic). CI checks that exactly the declared crossings cross, geometrically.
+Arc labels sit near the **tail** (bounds), the **head** (circled flow) and mid-arc (potentials); a flipped arc
+mirrors these so labels keep their physical place. The §5 reference network N0 is the Big network.
 
 ### 3.3 Generation algorithm (every sub-tool)
 
-1. **Choose the arc set** by level (table below).
-2. **Build a feasible flow first**, then derive bounds around it, so a feasible flow always exists:
-   - Push 3–5 random S→T paths (random whole amounts 1–6) through the chosen arcs to get an integer flow `f`.
-     Keep every arc flow ≤ 15 and the flow value between 10 and 24.
-   - **`minmax`:** for each arc choose `hi = f + slack` with `slack ∈ {0,1,…,6}` (at least three arcs get
-     slack 0 so the flow looks "tight"), and `lo ∈ [0, f]` — give `lo > 0` to 4–7 arcs (at least one on
-     each of S's out-arcs and T's in-arcs), others `lo = 0`. All values are integers, `hi ≥ 1`.
-   - **`cap`:** `lo = 0` everywhere, `hi = f + slack` as above.
-3. **Starting flow handed to the student** (where the sub-tool needs one) is a *different* feasible flow
-   `f0` obtained from `f` by removing 1–3 augmentations' worth of flow (so it is not maximal) — it must
-   itself satisfy every bound and conservation.
-4. **Run the solver** (`src/shared/decision/flow.ts`, §6) and apply the per-sub-tool constraints.
-   Regenerate (≤ 100 attempts) until every constraint holds.
+1. Pick a template for the level; for the Big network at Level 3, flip up to two flippable arcs (retry if cyclic).
+2. **Build a feasible flow first** by pushing 3–5 random S→T paths (amounts 1–6; arc flow ≤ 15; value 8–24), then
+   **derive the bounds around it** so a feasible flow always exists:
+   - `hi = flow + slack` (slack 0–6; at least a quarter of the used arcs have slack 0); unused arcs get `hi` 2–8;
+   - `minmax`: `lo` ∈ [1, flow] on ~45 % of used arcs (≥ 2 arcs), else 0; `cap`: `lo = 0` everywhere.
+3. Apply the sub-tool/level constraints (§4) by rejection sampling; the solver (§6) is the only source of answers.
 
-Arc-set table:
-
-| Level | Arcs | Direction | Notes |
-|---|---|---|---|
-| 1 | base + **one or two cross arcs**, never both of a crossing pair | all forward | no crossings drawn; 9–10 arcs |
-| 2 | base + **2–4 cross arcs** (crossings allowed) | all forward | 10–12 arcs |
-| 3 | base + **all 4** cross arcs | **each cross arc flipped with prob ½, max 2 flipped** | 12 arcs; backward steps become necessary |
-
-**Capacity mode default:** Level 1 → `cap`; Levels 2 and 3 → `minmax`. The teacher can switch either via
-the QO dropdown below.
+**Network type default:** Level 1 → capacity-only; Levels 2–3 → min/max. A teacher can switch either way at any
+level (constraints that only make sense with minimums are dropped in capacity-only).
 
 ---
 
@@ -145,7 +122,7 @@ A flow is **given** (circled on every arc). Student writes the forward and backw
 - Per level: Level 1 default `all`; Levels 2–3 default `all`.
 
 #### Levels
-- **Level 1:** capacity-only, reduced network (§3.3). Constraints: no arc has flow 0 or flow = capacity
+- **Level 1:** capacity-only, smaller networks (§3.2). Constraints: no arc has flow 0 or flow = capacity
   more than twice (so both potentials are mostly non-zero and non-trivial).
 - **Level 2:** min/max, 10–12 arcs. Constraints: ≥ 2 arcs have a non-zero minimum that the flow exceeds
   (so backward potential `f − lo ≠ f`) and ≥ 1 arc at its maximum (forward potential 0).
