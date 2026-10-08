@@ -73,6 +73,14 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     mq.addEventListener("change", on);
     return () => mq.removeEventListener("change", on);
   }, []);
+  // a short screen (a laptop, a projector at 720p) gives the fullscreen working less height: smaller question text keeps the steps from being squeezed
+  const [short, setShort] = useState(() => typeof window !== "undefined" && window.matchMedia("(max-height: 820px)").matches);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-height: 820px)");
+    const on = () => setShort(mq.matches);
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
   const [menuOpen, setMenuOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [colorScheme, setColorScheme] = useState("default");
@@ -279,9 +287,9 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   );
 
   const questionBlock = (big: boolean) => (
-    <div className="rounded-xl px-7 py-5" style={{ backgroundColor: qBg, border: "1px solid #e5e7eb" }}>
+    <div className={`rounded-xl ${big ? (short ? "px-5 py-3" : "px-6 py-4") : "px-7 py-5"} flex-shrink-0`} style={{ backgroundColor: qBg, border: "1px solid #e5e7eb" }}>
       <div className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">{config.instruction ?? "Question"}</div>
-      <div className={`${big ? "text-2xl" : "text-lg"} font-semibold text-gray-900 leading-snug`}>{problem.prompt}</div>
+      <div className={`${big ? (short ? "text-lg" : "text-xl xl:text-2xl") : "text-lg"} font-semibold text-gray-900 leading-snug`}>{problem.prompt}</div>
     </div>
   );
 
@@ -539,10 +547,18 @@ function FadeIn({ children }: { children: React.ReactNode }) {
 function StepCascade({ steps, idx, answer, all, big }: { steps: SolveStep[]; idx: number; answer: string | null; all: boolean; big?: boolean }) {
   const box = useRef<HTMLDivElement>(null);
   const [scrolled, setScrolled] = useState(false);
+  // Follow the newest step: show it from its TOP when it is taller than the box (never cut off its first line),
+  // otherwise keep the end in view so the earlier steps stay above it.
   useEffect(() => {
     const el = box.current;
-    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
-  }, [idx, answer, all]);
+    if (!el) return;
+    const t = window.setTimeout(() => {
+      const last = el.querySelector<HTMLElement>("[data-newest]");
+      if (last && last.offsetHeight > el.clientHeight - 24) el.scrollTo({ top: Math.max(0, last.offsetTop - 14), behavior: "smooth" });
+      else el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    }, 30);
+    return () => window.clearTimeout(t);
+  }, [idx, answer, all, big]);
   const dim = (now: boolean) => (all || now ? 1 : 0.5);
   return (
     <div
@@ -560,6 +576,7 @@ function StepCascade({ steps, idx, answer, all, big }: { steps: SolveStep[]; idx
           return (
             <FadeIn key={i}>
               <div
+                {...(i === idx && !answer ? { "data-newest": "1" } : {})}
                 style={{
                   position: "relative", display: "flex", gap: 12, padding: "10px 10px", borderRadius: 12,
                   opacity: dim(now), transition: "opacity 0.3s ease",
@@ -586,7 +603,7 @@ function StepCascade({ steps, idx, answer, all, big }: { steps: SolveStep[]; idx
                       )}
                     </div>
                   )}
-                  <div style={{ fontSize: big ? 21 : 17, fontWeight: 500, color: "#0f172a", lineHeight: 1.5, whiteSpace: "pre-line", overflowWrap: "anywhere" }}>{st.caption}</div>
+                  <div style={{ fontSize: big ? 20 : 17, fontWeight: 500, color: "#0f172a", lineHeight: 1.5, whiteSpace: "pre-line", overflowWrap: "anywhere" }}>{st.caption}</div>
                 </div>
               </div>
             </FadeIn>
@@ -594,7 +611,7 @@ function StepCascade({ steps, idx, answer, all, big }: { steps: SolveStep[]; idx
         })}
         {answer && (
           <FadeIn>
-            <div style={{ position: "relative", display: "flex", gap: 12, padding: "10px 10px", borderRadius: 12, background: "#f0fdf4", boxShadow: "0 0 0 2px rgba(22,163,74,0.35)" }}>
+            <div data-newest="1" style={{ position: "relative", display: "flex", gap: 12, padding: "10px 10px", borderRadius: 12, background: "#f0fdf4", boxShadow: "0 0 0 2px rgba(22,163,74,0.35)" }}>
               <div style={{ flexShrink: 0, width: 26, height: 26, borderRadius: 13, fontSize: 13, fontWeight: 800, zIndex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "#16a34a", color: "#ffffff", border: "2px solid #ffffff" }}>A</div>
               <div style={{ flex: 1, minWidth: 0, fontSize: big ? 23 : 19, fontWeight: 800, color: "#166534", lineHeight: 1.4, paddingTop: 1, overflowWrap: "anywhere" }}>{answer}</div>
             </div>
