@@ -785,6 +785,7 @@ flow-first generator (`flowGenerate.ts`); worked solution in `flowSolve.ts`; `Fl
 (`flowGeometry.ts`, joint `layoutNetwork`), tested exhaustively by `flowLayout.test.ts` and `flowLogic.test.ts`.
 `DecisionShell` gained sub-tool tabs, top-tier options, per-sub-tool options, a custom canvas and footer, whole-area fullscreen,
 a Show all toggle that returns to the same step, and a "reload the page" fallback if generation fails.
+**Exam-board check (Edexcel D2 / AQA Further Maths Discrete):** content and method match; Missing flow and Flow from potentials are deliberate stepping stones; bare S–T networks (no real-world context) are fine for this tool. **Next build (agreed):** **supersource / supersink** (several sources or sinks, with the capacities on the added arcs) and **restricted capacity at a node** (split the node into two joined by an arc) — both listed as exam items; the info modal / terminology should be re-checked against a real mark scheme when one is to hand.
 **Next:** info-modal review with Harry, phone check on a real device, Harry's-notes update, then go-live decision.
 
 **Travelling Salesperson — first slice shipped (2026-09-23, dev-gated — keep `enabled: false`).**
