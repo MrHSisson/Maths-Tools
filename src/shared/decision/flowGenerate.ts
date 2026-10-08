@@ -27,7 +27,12 @@ const shuffle = <T,>(xs: T[]): T[] => {
   return a;
 };
 
-export const defaultMode = (level: 1 | 2 | 3): FlowMode => (level === 1 ? "cap" : "minmax");
+/** Optional difficulty dials, all chosen by the teacher (never by the level — levels are graph size). */
+export interface FlowGenOptions {
+  arcs?: "standard" | "reversed"; // reversed: up to two arcs point the other way
+  cuts?: "any" | "forward"; // cutValue: forward-only cuts, or any drawable cut
+  backSteps?: boolean; // augment / maxFlow: the working must use a backward step
+}
 
 // ── Sample a network + feasible flow from a template ─────────────────────────
 export interface FlowInstance {
@@ -38,12 +43,12 @@ export interface FlowInstance {
   pushed: Array<{ arcs: string[]; amount: number }>;
 }
 
-export function sampleInstance(tpl: FlowTemplate, mode: FlowMode, allowFlips: boolean, pathCount?: number): FlowInstance | null {
-  // 1. arcs — optionally flip up to two flippable arcs (the network must stay acyclic)
-  const flippable = tpl.arcs.filter((a) => a.flippable);
+export function sampleInstance(tpl: FlowTemplate, mode: FlowMode, reversed: boolean, pathCount?: number): FlowInstance | null {
+  // 1. arcs — optional arcs come and go; a reversed question flips up to two flippable arcs (the network must stay acyclic)
+  const present = tpl.arcs.filter((a) => !a.optional || Math.random() < 0.65);
   const flips = new Set<string>();
-  if (allowFlips) for (const a of shuffle(flippable).slice(0, 2)) if (Math.random() < 0.5) flips.add(a.id);
-  const arcs: Array<FlowArc & { _pos: ArcLabelPos }> = tpl.arcs.map((a) => {
+  if (reversed) for (const a of shuffle(present.filter((x) => x.flippable)).slice(0, 2)) if (Math.random() < 0.6) flips.add(a.id);
+  const arcs: Array<FlowArc & { _pos: ArcLabelPos }> = present.map((a) => {
     const flipped = flips.has(a.id);
     const from = flipped ? a.to : a.from;
     const to = flipped ? a.from : a.to;
@@ -56,8 +61,14 @@ export function sampleInstance(tpl: FlowTemplate, mode: FlowMode, allowFlips: bo
   });
   const net: FlowNet = { nodes: tpl.nodes.map((n) => ({ ...n })), arcs };
   if (!isAcyclic(net)) return null;
+  // every vertex must be used: S sends, T receives, every other vertex has an arc in and an arc out
+  for (const nd of net.nodes) {
+    const inn = arcs.some((x) => x.to === nd.id);
+    const out = arcs.some((x) => x.from === nd.id);
+    if (nd.id === SOURCE ? !out : nd.id === SINK ? !inn : !(inn && out)) return null;
+  }
   const paths = simpleForwardPaths(net);
-  if (paths.length === 0) return null;
+  if (paths.length < 3) return null;
 
   // 2. a feasible flow: push 3–5 random paths
   const flow: Flow = {};
@@ -102,12 +113,11 @@ function okPotentials(inst: FlowInstance, mode: FlowMode, level: number): boolea
   if (arcs.some((a) => pots[a.id].fwd === 0 && pots[a.id].bwd === 0)) return false;
   const atMax = arcs.filter((a) => pots[a.id].fwd === 0).length;
   const zero = arcs.filter((a) => inst.flow[a.id] === 0).length;
-  if (level === 1) return zero <= 2 && atMax <= 2;
-  if (mode === "minmax" && arcs.filter((a) => a.lo > 0 && inst.flow[a.id] > a.lo).length < 2) return false;
-  if (atMax < 1) return false;
-  if (level === 3 && mode === "minmax") {
-    const atMin = arcs.filter((a) => a.lo > 0 && inst.flow[a.id] === a.lo).length;
-    return atMin >= 1;
+  if (atMax < 1 || zero > Math.ceil(arcs.length / 3)) return false;
+  if (level === 1 && atMax > 2) return false;
+  if (mode === "minmax") {
+    if (arcs.filter((a) => a.lo > 0 && inst.flow[a.id] > a.lo).length < 2) return false; // backward potential is flow − min, not flow
+    if (!arcs.some((a) => a.lo > 0 && inst.flow[a.id] === a.lo)) return false; // one arc with backward potential 0
   }
   return true;
 }
@@ -125,45 +135,41 @@ const drawable = (net: FlowNet, sSide: string[]): boolean => {
   return ok;
 };
 
-function chooseCut(inst: FlowInstance, mode: FlowMode, level: number): string[] | null {
+function chooseCut(inst: FlowInstance, cuts: "any" | "forward"): string[] | null {
   const n = inst.net.nodes.length;
-  const cands = allCuts(inst.net).filter((c) => {
+  const cheap = allCuts(inst.net).filter((c) => {
     if (c.length < 2 || n - c.length < 2) return false;
     const r = cutCapacity(inst.net, c);
     if (r.capacity < 8 || r.capacity > 60) return false;
-    if (!drawable(inst.net, c)) return false;
-    const backReal = mode === "minmax" ? r.backward.some((a) => a.lo > 0) : r.backward.length > 0;
-    if (level === 1) return r.backward.length === 0;
-    if (level === 2) return backReal;
-    return backReal || Math.random() < 0.3;
+    return cuts === "any" || r.backward.length === 0;
   });
-  return cands.length ? pick(cands) : null;
+  // the drawability test is the expensive one, so try the candidates in random order and stop at the first that passes
+  for (const c of shuffle(cheap)) if (drawable(inst.net, c)) return c;
+  return null;
 }
 
 // The Augment flow question asks for ALL the flow-augmenting paths — always two or three, so there is more than one to find.
-function okAugment(inst: FlowInstance, level: number): boolean {
+function okAugment(inst: FlowInstance, backSteps: boolean): boolean {
   const paths = sortedAugmentingPaths(inst.net, inst.flow);
-  const minB = level === 3 ? 1 : 2;
-  if (paths.some((p) => p.bottleneck < minB)) return false;
-  if (level === 1) return paths.length === 2 && paths.every((p) => !hasBack(p.steps));
-  if (level === 2) return paths.length >= 2 && paths.length <= 3;
-  return paths.length >= 2 && paths.length <= 3 && paths.some((p) => hasBack(p.steps));
+  if (paths.length < 2 || paths.length > 3) return false;
+  if (paths.some((p) => p.bottleneck < (backSteps ? 1 : 2))) return false;
+  return backSteps ? paths.some((p) => hasBack(p.steps)) : paths.every((p) => !hasBack(p.steps));
 }
 
-function okMaxFlow(inst: FlowInstance, level: number): boolean {
+function okMaxFlow(inst: FlowInstance, size: number, backSteps: boolean): boolean {
   const run = maxFlow(inst.net, inst.flow);
   const k = run.augmentations.length;
   const nn = inst.net.nodes.length;
   if (run.value > 40) return false;
   const nontrivial = run.sSide.length >= 2 && run.sSide.length <= nn - 2;
   if (!drawable(inst.net, run.sSide)) return false; // the min cut is drawn as one dashed line
-  const back = run.augmentations.some((a) => hasBack(a.path.steps));
-  if (level === 1) return k >= 1 && k <= 2;
-  if (level === 2) return k >= 2 && k <= 3 && nontrivial;
-  return k >= 3 && k <= 4 && nontrivial && back;
+  if (backSteps && !run.augmentations.some((a) => hasBack(a.path.steps))) return false;
+  if (size === 1) return k >= 1 && k <= 2;
+  if (size === 2) return k >= 2 && k <= 3 && nontrivial;
+  return k >= 3 && k <= 4 && nontrivial;
 }
 
-export const defaultStyle = (level: 1 | 2 | 3): InitialStyle => (level === 3 ? "find" : "paths");
+export const defaultStyle = (): InitialStyle => "paths";
 
 // A "long" path goes through a cross arc (S→A→B→T…), not straight S→X→T. Questions should not only ever use the direct routes.
 const isLong = (p: { arcs: string[] }) => p.arcs.length >= 3;
@@ -191,14 +197,14 @@ function okInitial(inst: FlowInstance, level: number, mode: FlowMode, style: Ini
 // ── The public generator ─────────────────────────────────────────────────────
 /** `forceTemplate` pins the network style (used by the `?tpl=` dev link to check a layout). */
 export function generateFlowProblem(
-  level: 1 | 2 | 3, subTool: FlowSubTool, mode: FlowMode, forceTemplate?: string, style: InitialStyle = defaultStyle(level),
+  level: 1 | 2 | 3, subTool: FlowSubTool, mode: FlowMode, forceTemplate?: string, style: InitialStyle = defaultStyle(), opts: FlowGenOptions = {},
 ): DecisionProblem {
   for (let attempt = 0; attempt < 20000; attempt++) {
     // a pinned template is a dev aid: if it cannot meet this level's constraints (e.g. Diamond at Level 3), stop pinning
     const pinned = attempt < 4000 ? FLOW_TEMPLATES.find((t) => t.id === forceTemplate) : undefined;
     const tpl = pinned ?? pick(templatesForLevel(level));
     const pathStyle = subTool === "initialFlow" && style === "paths";
-    const inst = sampleInstance(tpl, mode, level === 3 && tpl.arcs.some((x) => x.flippable), pathStyle ? (level === 1 ? 2 : level === 2 ? 3 : ri(3, 4)) : undefined);
+    const inst = sampleInstance(tpl, mode, opts.arcs === "reversed", pathStyle ? (level === 1 ? 2 : level === 2 ? 3 : ri(3, 4)) : undefined);
     if (!inst) continue;
 
     let sSide: string[] | undefined;
@@ -216,12 +222,12 @@ export function generateFlowProblem(
     }
     if (subTool === "potentials" && !okPotentials(inst, mode, level)) continue;
     if (subTool === "cutValue") {
-      const c = chooseCut(inst, mode, level);
+      const c = chooseCut(inst, opts.cuts ?? "any");
       if (!c) continue;
       sSide = c;
     }
-    if (subTool === "augment" && !okAugment(inst, level)) continue;
-    if (subTool === "maxFlow" && !okMaxFlow(inst, level)) continue;
+    if (subTool === "augment" && !okAugment(inst, !!opts.backSteps)) continue;
+    if (subTool === "maxFlow" && !okMaxFlow(inst, level, !!opts.backSteps)) continue;
 
     return toProblem(level, subTool, mode, tpl, initial ? { ...inst, flow: initial.flow } : inst, sSide, style, initial?.target);
   }

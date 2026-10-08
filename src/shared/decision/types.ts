@@ -8,6 +8,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import type { ReactNode } from "react";
+import type { InfoSection } from "../types";
 import type { FlowProblemData, FlowViewState } from "./flow";
 
 // ── A network, concrete ─────────────────────────────────────────────────────
@@ -145,6 +146,7 @@ export interface DecisionShellProps {
     hideMatrix?: boolean; // never show the matrix (tools whose working isn't a table)
     subTools?: ShellSubTool[]; // tab row of question types
     options?: ShellOption[]; // segmented controls (Question Options)
+    infoSections?: InfoSection[]; // teacher-facing guide shown by the menu's Info item
     legend?: LegendItem[]; // colour key shown under the matrix in Solution mode
     /** a key shown under the canvas in every mode (for tools whose colours aren't edge states) */
     canvasFooter?: ReactNode | ((p: DecisionProblem) => ReactNode);

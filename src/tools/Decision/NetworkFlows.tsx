@@ -1,8 +1,6 @@
 import {
   DecisionShell,
   FlowView,
-  defaultMode,
-  defaultStyle,
   generateFlowProblem,
   questionView,
   solveFlowProblem,
@@ -13,6 +11,7 @@ import {
   type GenerateContext,
   type SolveStep,
 } from "../../shared/decision";
+import type { InfoSection } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Network Flows — Decision Maths (D2). Potentials, cut values, flow augmentation and
@@ -22,6 +21,38 @@ import {
 // generation in flowGenerate.ts and the working in flowSolve.ts.
 // Spec: specs/flow-networks.md.
 // ═══════════════════════════════════════════════════════════════════════════
+
+const INFO_SECTIONS: InfoSection[] = [
+  {
+    title: "Network Flows",
+    icon: "🌐",
+    content: [
+      { label: "Overview", detail: "Flows through a network from a source S to a sink T, on capacity-only or minimum/maximum networks. The same few network shapes are used throughout so students learn one picture well." },
+      { label: "Whiteboard", detail: "The question on one large network. Show Answer reveals the finished working on the same picture." },
+      { label: "Worked Example", detail: "The same network beside the working, one step at a time (Next / Back, or the arrow keys). Earlier steps fade but stay on screen." },
+    ],
+  },
+  {
+    title: "Question types",
+    icon: "🧭",
+    content: [
+      { label: "Initial flow", detail: "Write the flow on every arc from given paths, or find any feasible flow. Many answers are valid." },
+      { label: "Potentials", detail: "Forward potential = maximum − flow; backward potential = flow − minimum." },
+      { label: "Cut values", detail: "Capacity of a cut = maximums of arcs going S side → T side, minus the minimums of arcs coming back." },
+      { label: "Augment flow", detail: "Find every flow-augmenting path (positive potentials all the way) and the increase along each." },
+      { label: "Max flow & min cut", detail: "Augment until no path remains, then confirm with a cut of equal capacity." },
+    ],
+  },
+  {
+    title: "Question Options",
+    icon: "⚙️",
+    content: [
+      { label: "Network", detail: "Capacity only (every arc has one number) or Min and max (every arc has a minimum and a maximum)." },
+      { label: "Levels", detail: "Levels are the size of the network: Level 1 has 4–5 vertices, Level 2 has 6–7 (the hexagon has a centre vertex that arcs can run into and out of), Level 3 has 8." },
+      { label: "Arcs, Cuts, Paths", detail: "Reverse some arcs, restrict cuts to forward arcs only, or require a backward step in the augmenting paths." },
+    ],
+  },
+];
 
 const SUB_TOOLS = [
   { key: "initialFlow", label: "Initial flow" },
@@ -42,10 +73,15 @@ const INSTRUCTION: Record<string, string> = {
 function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const lv = Math.min(3, Math.max(1, level)) as 1 | 2 | 3;
   const sub = (ctx?.subTool ?? "initialFlow") as FlowSubTool;
-  const mode = (ctx?.options.bounds ?? defaultMode(lv)) as FlowMode;
+  const mode = (ctx?.options.bounds ?? "cap") as FlowMode;
   const tpl = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("tpl") ?? undefined : undefined;
-  const style = (ctx?.options.style ?? defaultStyle(lv)) as InitialStyle;
-  return generateFlowProblem(lv, sub, mode, tpl, style);
+  const style = (ctx?.options.style ?? "paths") as InitialStyle;
+  const o = ctx?.options ?? {};
+  return generateFlowProblem(lv, sub, mode, tpl, style, {
+    arcs: o.arcs === "reversed" ? "reversed" : "standard",
+    cuts: o.cuts === "forward" ? "forward" : "any",
+    backSteps: o.backSteps === "on",
+  });
 }
 
 const renderCanvas = (p: DecisionProblem, step: SolveStep | undefined) => {
@@ -92,8 +128,9 @@ export default function App() {
         pageTitle: "Network Flows",
         instruction: "Question",
         levels: 3,
-        levelLabels: ["Capacity-only, smaller networks", "Minimum/maximum, larger networks", "Reversed arcs and backward steps"],
+        levelLabels: ["Small networks (4–5 vertices)", "Medium networks (6–7 vertices)", "Large networks (8 vertices)"],
         hideMatrix: true,
+        infoSections: INFO_SECTIONS,
         subTools: SUB_TOOLS,
         options: [
           {
@@ -103,7 +140,14 @@ export default function App() {
               { value: "cap", label: "Capacity only" },
               { value: "minmax", label: "Min and max" },
             ],
-            defaultFor: (lv) => defaultMode(lv as 1 | 2 | 3),
+          },
+          {
+            key: "arcs",
+            label: "Arcs",
+            choices: [
+              { value: "standard", label: "Standard directions" },
+              { value: "reversed", label: "Some reversed" },
+            ],
           },
           {
             key: "style",
@@ -113,7 +157,24 @@ export default function App() {
               { value: "paths", label: "Given paths" },
               { value: "find", label: "Find a flow" },
             ],
-            defaultFor: (lv) => defaultStyle(lv as 1 | 2 | 3),
+          },
+          {
+            key: "cuts",
+            label: "Cuts",
+            forSubTools: ["cutValue"],
+            choices: [
+              { value: "any", label: "Any cut" },
+              { value: "forward", label: "Forward arcs only" },
+            ],
+          },
+          {
+            key: "backSteps",
+            label: "Paths",
+            forSubTools: ["augment", "maxFlow"],
+            choices: [
+              { value: "off", label: "Forward steps only" },
+              { value: "on", label: "Include a backward step" },
+            ],
           },
         ],
         canvasFooter: (p: DecisionProblem) => <FlowKey p={p} />,

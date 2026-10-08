@@ -8,6 +8,7 @@ import {
   minCutBruteForce, pathNodes, potentials, type Flow, type FlowNet,
 } from "../shared/decision/flow";
 import { FLOW_TEMPLATES } from "../shared/decision/flowTemplates";
+import { sortedAugmentingPaths as sortedAug } from "../shared/decision/flow";
 import { generateFlowProblem } from "../shared/decision/flowGenerate";
 import { solveFlowProblem } from "../shared/decision/flowSolve";
 import { allCuts, cutCapacity as cutCap, decomposeFlow, flowOfValue } from "../shared/decision/flow";
@@ -114,8 +115,8 @@ describe("generated questions", () => {
               const paths = allAugmentingPaths(d.net, d.flow);
               expect(paths.length).toBeGreaterThanOrEqual(2);
               expect(paths.length).toBeLessThanOrEqual(3);
-              if (level === 1) expect(paths.every((q) => q.steps.every((s) => s.dir === "fwd"))).toBe(true);
-              if (level === 3) expect(paths.some((q) => q.steps.some((s) => s.dir === "back"))).toBe(true);
+              // by default (no "backward step" selector) every path uses forward steps only
+              expect(paths.every((q) => q.steps.every((s) => s.dir === "fwd"))).toBe(true);
               expect(findAugmentingPath(d.net, d.flow)).not.toBeNull();
             }
 
@@ -194,4 +195,50 @@ describe("the dashed cut line", () => {
       expect(drawable).toBeGreaterThanOrEqual(Math.min(3, proper));
     });
   }
+});
+
+describe("the question selectors", () => {
+  for (const level of [1, 2, 3] as const)
+    it(`L${level}: "Include a backward step" puts a backward step in augment and max-flow working`, () => {
+      for (let i = 0; i < 8; i++) {
+        const a = generateFlowProblem(level, "augment", "minmax", undefined, "paths", { backSteps: true }).flow!;
+        expect(sortedAug(a.net, a.flow).some((q) => q.steps.some((s) => s.dir === "back"))).toBe(true);
+        const m = generateFlowProblem(level, "maxFlow", "minmax", undefined, "paths", { backSteps: true }).flow!;
+        expect(maxFlow(m.net, m.flow).augmentations.some((x) => x.path.steps.some((s) => s.dir === "back"))).toBe(true);
+      }
+    });
+  it("Forward arcs only: every cut has no backward arc", () => {
+    for (let i = 0; i < 12; i++) {
+      const d = generateFlowProblem(2, "cutValue", "minmax", undefined, "paths", { cuts: "forward" }).flow!;
+      expect(cutCap(d.net, d.sSide!).backward.length).toBe(0);
+    }
+  });
+  it("Levels are graph size: the vertex count grows with the level", () => {
+    const sizes = (lv: 1 | 2 | 3) => new Set(Array.from({ length: 25 }, () => generateFlowProblem(lv, "potentials", "cap").flow!.net.nodes.length));
+    expect([...sizes(1)].every((n) => n >= 4 && n <= 5)).toBe(true);
+    expect([...sizes(2)].every((n) => n >= 6 && n <= 7)).toBe(true);
+    expect([...sizes(3)]).toEqual([8]);
+  });
+  it("Some reversed: a reversed question still has a feasible flow, stays acyclic and has some arc against the template", () => {
+    let flipped = 0;
+    for (let i = 0; i < 40; i++) {
+      const d = generateFlowProblem(2, "potentials", "cap", undefined, "paths", { arcs: "reversed" }).flow!;
+      expect(isAcyclic(d.net)).toBe(true);
+      expect(isFeasibleFlow(d.net, d.flow).ok).toBe(true);
+      const tpl = FLOW_TEMPLATES.find((t) => t.id === d.templateId)!;
+      if (d.net.arcs.some((a) => !tpl.arcs.some((t) => t.from === a.from && t.to === a.to))) flipped++;
+    }
+    expect(flipped).toBeGreaterThan(0);
+  });
+  it("Hexagon hub: the centre vertex always has an arc in and an arc out, and the variants differ", () => {
+    const seen = new Set<string>();
+    for (let i = 0; i < 80; i++) {
+      const d = generateFlowProblem(2, "potentials", "cap", "hexagon", "paths", { arcs: "reversed" }).flow!;
+      if (d.templateId !== "hexagon") continue;
+      expect(d.net.arcs.some((a) => a.to === "C")).toBe(true);
+      expect(d.net.arcs.some((a) => a.from === "C")).toBe(true);
+      seen.add(d.net.arcs.map((a) => a.id).sort().join(","));
+    }
+    expect(seen.size).toBeGreaterThan(8);
+  });
 });

@@ -66,7 +66,16 @@ Keep the split even when a session only touches one.
   +max / −min labels remain). **Augment flow** now asks for ALL the flow-augmenting paths — always two or three (Level 1
   forward-only, Level 3 includes one with a backward step) — and the working finds each path and its bottleneck in turn, then
   lists them together (noting when they share arcs, so they cannot all be used at full amount at once).
-- Still to do: print, info modal, phone-width check, Harry's-notes update.
+- **New shell + levels by size (same day):** `DecisionShell` is rebuilt on the standard tool shell's page — nav bar, title, tool
+  tabs, **Whiteboard / Worked Example** modes, a control bar (level toggle, Question Options popover, New Question, Show
+  Answer or Back / Next / Show all), the menu with Info and Copy link, and the setup mirrored in the URL. The graph gets the
+  width (a sticky large canvas in Worked Example, fullscreen on request); there is no worksheet or print mode for these tools.
+  **Network Flows levels are now graph size** (1 = 4–5 vertices, 2 = 6–7, 3 = 8); Capacity only / Min and max is chosen only by the
+  selector (default capacity only, kept when the level changes), as are Arcs (some reversed), Cuts (forward arcs only), Paths
+  (include a backward step) and the Initial flow question style. Networks vary per question: optional arcs (the Fan's rungs, the
+  Ladder's diagonal, the Big network's cross arcs) and a **hexagon hub** where any of S, A, B can feed the centre vertex and it can
+  feed D, E, T (hundreds of networks); every arc has hand-mapped label positions.
+- Phone width checked (stacks, no sideways scroll; the graph is sticky only on wide screens). Still to do: Harry's-notes update.
 
 ## 2026-10-07 — Notes and docs sweep: cast documented
 

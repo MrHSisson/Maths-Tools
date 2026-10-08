@@ -1,5 +1,12 @@
 # Tool Spec: Network Flows
 
+> **Latest direction (2026-10-08) — read this first.** The sections below were written before these decisions and are superseded where they disagree:
+> - **Levels are graph size** (1 = 4–5 vertices, 2 = 6–7, 3 = 8). Capacity only / Min and max is chosen only by the **Network** selector (default capacity only).
+> - **Selectors, not levels, carry difficulty:** Arcs (some reversed), Cuts (forward arcs only), Paths (include a backward step), Initial flow question style.
+> - **Augment flow** asks for all (two or three) flow-augmenting paths. **Cuts** are one continuous dashed line, no ticks.
+> - **Network variations:** optional/reversible arcs per template; the Hexagon has a hub (centre vertex fed by any of S, A, B; feeding any of D, E, T).
+> - **No worksheets or print.** The shell is Whiteboard + Worked Example only (see `docs/architecture/DECISION_SHELL_PLAN.md` → Shell UX).
+
 **Status:** in progress — all five sub-tools are built (`enabled: false`); print, the info modal and a phone-width check are still to do. <!-- draft → ready → implemented. -->
 
 Built on **`DecisionShell`** (`src/shared/decision/`), not `ToolShell` — see
