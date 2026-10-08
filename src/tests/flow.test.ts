@@ -114,7 +114,7 @@ describe("generated questions", () => {
             if (sub === "augment") {
               const paths = allAugmentingPaths(d.net, d.flow);
               expect(paths.length).toBeGreaterThanOrEqual(2);
-              expect(paths.length).toBeLessThanOrEqual(3);
+              expect(paths.length).toBeLessThanOrEqual(level === 3 ? 4 : 3);
               // every possible path is listed, whatever kind of steps it uses
               expect(paths.every((q) => q.steps.length >= 2)).toBe(true);
               expect(findAugmentingPath(d.net, d.flow)).not.toBeNull();

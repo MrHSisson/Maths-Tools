@@ -190,10 +190,13 @@ function chooseCut(inst: FlowInstance, cuts: "any" | "forward" | "backward"): st
 }
 
 // The Augment flow question asks for ALL the flow-augmenting paths — always two or three, so there is more than one to find.
-function okAugment(inst: FlowInstance, backSteps: boolean): boolean {
+function okAugment(inst: FlowInstance, backSteps: boolean, level: number): boolean {
   const paths = sortedAugmentingPaths(inst.net, inst.flow);
-  if (paths.length < 2 || paths.length > 3) return false;
+  if (paths.length < 2 || paths.length > (level === 3 ? 4 : 3)) return false;
   if (paths.some((p) => p.bottleneck < (backSteps ? 1 : 2))) return false;
+  // the increases must not all be the same: a list of identical "+2"s hides what the bottleneck is for
+  if (paths.length >= 3 && new Set(paths.map((p) => p.bottleneck)).size < 2) return false;
+  if (level >= 2 && !paths.some((p) => p.bottleneck >= 3)) return false;
   return backSteps ? paths.some((p) => hasBack(p.steps)) : true; // every possible path is listed, backward steps included wherever they exist
 }
 
@@ -205,9 +208,10 @@ function okMaxFlow(inst: FlowInstance, size: number, backSteps: boolean): boolea
   const nontrivial = run.sSide.length >= 2 && run.sSide.length <= nn - 2;
   if (!drawable(inst.net, run.sSide)) return false; // the min cut is drawn as one dashed line
   if (backSteps && !run.augmentations.some((a) => hasBack(a.path.steps))) return false;
+  const big = run.augmentations.filter((a) => a.path.bottleneck >= 2).length;
   if (size === 1) return k >= 1 && k <= 2;
-  if (size === 2) return k >= 2 && k <= 3 && nontrivial;
-  return k >= 3 && k <= 4 && nontrivial;
+  if (size === 2) return k >= 2 && k <= 3 && nontrivial && big * 2 >= k;
+  return k >= 3 && k <= 5 && nontrivial && big * 2 >= k;
 }
 
 /** Missing flow: leave out 1–2 arcs' flows, each findable by flow in = flow out at some vertex (in order). */
@@ -284,7 +288,7 @@ export function generateFlowProblem(
       if (!c) continue;
       sSide = c;
     }
-    if (subTool === "augment" && !okAugment(inst, opts.backSteps)) continue;
+    if (subTool === "augment" && !okAugment(inst, opts.backSteps, level)) continue;
     if (subTool === "maxFlow" && !okMaxFlow(inst, level, opts.backSteps)) continue;
 
     return toProblem(level, subTool, mode, tpl, initial ? { ...inst, flow: initial.flow } : inst, sSide, style, initial?.target, missing);
