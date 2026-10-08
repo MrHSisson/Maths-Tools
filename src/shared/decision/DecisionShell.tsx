@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Home, Menu, X, ChevronDown, ChevronLeft, ChevronRight, RefreshCw, Eye, Maximize2, Minimize2, Rewind, FastForward } from "lucide-react";
+import { Home, Menu, X, ChevronDown, ChevronLeft, ChevronRight, RefreshCw, Maximize2, Minimize2, Rewind, FastForward } from "lucide-react";
 import type { DecisionProblem, DecisionShellProps, GenerateContext, LegendItem, SolveStep } from "./types";
 import type { InfoSection } from "../types";
 import NetworkView, { EDGE_STYLE, NODE_ROLE_STYLE } from "./representations/NetworkView";
@@ -12,18 +12,14 @@ import { getQuestionBg } from "../colors";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // DecisionShell — the shell for Decision Maths question generators. It follows the
-// standard tool shell's page (nav bar · title · tool tabs · mode tabs · control bar ·
+// standard tool shell's page (nav bar · title · tool tabs · control bar ·
 // content card) but is built for network questions, not worksheets:
-//   • Whiteboard      — the question and ONE large network; Show Answer reveals the
-//                       finished working on the same picture.
-//   • Worked Example  — the same large network (kept in view as you scroll) beside a
-//                       fading cascade of steps: Back / Next / Show all.
+//   Every question is a Worked Example: the question, ONE large network (kept in view as you
+//   scroll) and a fading cascade of steps beside it — Back / Next / Show all.
 // There is no worksheet / print mode: these questions are taught from the board.
 // The page scrolls normally; the graph gets the width. The setup lives in the URL
-// (tool, mode, level, options) so a link reopens exactly what is on screen.
+// (tool, level, options) so a link reopens exactly what is on screen.
 // ═══════════════════════════════════════════════════════════════════════════
-
-type Mode = "whiteboard" | "example";
 
 const levelKey = (n: number) => `level${n}`;
 const CARD = "bg-white rounded-xl shadow-lg min-w-0";
@@ -47,8 +43,7 @@ function readUrl(config: DecisionShellProps["config"]) {
     const v = q.get(`o_${o.key}`);
     if (v && o.choices.some((c) => c.value === v)) options[o.key] = v;
   }
-  const mode: Mode = q.get("mode") === "example" ? "example" : "whiteboard";
-  return { level, subTool, options, mode };
+  return { level, subTool, options };
 }
 
 export default function DecisionShell({ generate, solve, renderCanvas, config }: DecisionShellProps) {
@@ -59,8 +54,6 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const [options, setOptions] = useState<Record<string, string>>(init.options);
   const ctxOf = (sub: string, opts: Record<string, string>): GenerateContext => ({ subTool: sub, options: opts });
   const [problem, setProblem] = useState<DecisionProblem>(() => generate(init.level, ctxOf(init.subTool, init.options)));
-  const [mode, setMode] = useState<Mode>(init.mode);
-  const [showAnswer, setShowAnswer] = useState(false);
   const [stepIdx, setStepIdx] = useState(0);
   const [fullscreen, setFullscreen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -72,54 +65,49 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const last = steps.length - 1;
   const idx = Math.min(stepIdx, last);
   const current = steps[idx];
-  const inExample = mode === "example";
   const visibleOptions = (config.options ?? []).filter((o) => !o.forSubTools || o.forSubTools.includes(subTool));
   const qBg = getQuestionBg(colorScheme);
 
   const newQuestion = (lv = level, sub = subTool, opts = options) => {
     setProblem(generate(lv, ctxOf(sub, opts)));
     setStepIdx(0);
-    setShowAnswer(false);
   };
 
   // keep the address bar bookmarkable
   useEffect(() => {
     const q = new URLSearchParams();
     if (config.subTools && subTool !== config.subTools[0]?.key) q.set("tool", subTool);
-    if (mode === "example") q.set("mode", "example");
     if (level !== 1) q.set("level", String(level));
     for (const o of config.options ?? []) if (options[o.key] !== (o.defaultFor?.(level) ?? o.choices[0].value)) q.set(`o_${o.key}`, options[o.key]);
     const keep = new URLSearchParams(window.location.search).get("tpl"); // dev link: pinned template
     if (keep) q.set("tpl", keep);
     const s = q.toString();
     window.history.replaceState(null, "", window.location.pathname + (s ? `?${s}` : ""));
-  }, [level, subTool, options, mode]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [level, subTool, options]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ← / → step through a worked example; Esc leaves fullscreen
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setFullscreen(false);
-      if (!inExample) return;
       if (e.key === "ArrowRight") setStepIdx((i) => Math.min(last, i + 1));
       if (e.key === "ArrowLeft") setStepIdx((i) => Math.max(0, i - 1));
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [inExample, last]);
+  }, [last]);
 
   const infoSections: InfoSection[] = config.infoSections ?? [
     {
       title: config.pageTitle,
       icon: "🕸️",
       content: [
-        { label: "Whiteboard", detail: "The question on one large network. Show Answer reveals the finished working on the same picture." },
-        { label: "Worked Example", detail: "The same network beside the working, one step at a time (Next / Back or the arrow keys). Earlier steps fade but stay on screen." },
+        { label: "Worked Example", detail: "Every question is worked through: the question and one large network, with the working beside it one step at a time (Next / Back, or the arrow keys). Earlier steps fade but stay on screen; Show all jumps to the end." },
       ],
     },
   ];
 
   const shown = (st: SolveStep | undefined) => (renderCanvas ? renderCanvas(problem, st) : <NetworkView network={problem.network} step={st} interactive background="#ffffff" />);
-  const canvasStep = inExample ? current : showAnswer ? steps[last] : undefined;
+  const canvasStep = current;
   const footer = typeof config.canvasFooter === "function" ? config.canvasFooter(problem) : config.canvasFooter;
   const answerText = problem.answer?.text && problem.answer.text.length <= 160 ? problem.answer.text : null;
 
@@ -194,13 +182,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         <button onClick={() => newQuestion()} className={BTN_PRIMARY}>
           <RefreshCw size={18} /> New Question
         </button>
-        {!inExample && (
-          <button onClick={() => setShowAnswer(!showAnswer)} className={BTN_PRIMARY}>
-            <Eye size={18} /> {showAnswer ? "Hide Answer" : "Show Answer"}
-          </button>
-        )}
-        {inExample && (
-          <div className="flex flex-wrap justify-center items-center gap-3">
+        <div className="flex flex-wrap justify-center items-center gap-3">
             <button onClick={() => setStepIdx(0)} disabled={idx === 0} title="Back to the start" className={`${BTN_PLAIN} disabled:opacity-40 disabled:cursor-not-allowed`}>
               <Rewind size={18} />
             </button>
@@ -214,8 +196,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
             <button onClick={() => setStepIdx(last)} disabled={idx >= last} className={`${BTN_PLAIN} disabled:opacity-40 disabled:cursor-not-allowed`}>
               <FastForward size={18} /> Show all
             </button>
-          </div>
-        )}
+        </div>
       </div>
       {levelCount > 1 && config.levelLabels?.[level - 1] && (
         <div className="text-center text-sm font-semibold text-gray-400">{config.levelLabels[level - 1]}</div>
@@ -243,25 +224,9 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     </div>
   );
 
-  const matrixCard = !config.hideMatrix && (inExample || showAnswer || config.questionMatrix) && (
+  const matrixCard = !config.hideMatrix && true && (
     <div className="rounded-xl border border-gray-200 bg-white p-4 flex justify-center">
       <MatrixView network={problem.network} step={canvasStep} bare />
-    </div>
-  );
-
-  const whiteboard = (
-    <div className="flex flex-col gap-5 p-3 sm:p-6">
-      {questionBlock(true)}
-      {canvasBox("min(68vh, 760px)")}
-      {footer && <div className="flex justify-center">{footer}</div>}
-      {showAnswer && config.legend && <Legend items={config.legend} />}
-      {showAnswer && answerText && (
-        <div className="rounded-xl px-7 py-4 bg-green-50 border border-green-300">
-          <div className="text-xs font-bold uppercase tracking-wider text-green-700 mb-1">Answer</div>
-          <div className="text-xl font-bold text-green-800">{answerText}</div>
-        </div>
-      )}
-      {matrixCard}
     </div>
   );
 
@@ -300,8 +265,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         </div>
         <div className="flex-1 min-h-0 relative">{shown(canvasStep)}</div>
         <div className="flex-shrink-0 border-t border-gray-200 px-6 py-3 flex items-center gap-4 bg-gray-50">
-          {inExample ? (
-            <>
+          <>
               <button onClick={() => setStepIdx(Math.max(0, idx - 1))} disabled={idx === 0} className={`${BTN_PLAIN} disabled:opacity-40`}><ChevronLeft size={18} /> Back</button>
               <div className="flex-1 text-lg font-medium text-gray-900 leading-snug" style={{ whiteSpace: "pre-line", maxHeight: "22vh", overflowY: "auto" }}>
                 <span className="font-bold text-blue-900 mr-2">{idx + 1}.</span>
@@ -309,12 +273,6 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
               </div>
               <button onClick={() => setStepIdx(Math.min(last, idx + 1))} disabled={idx >= last} className={`${BTN_PRIMARY} disabled:opacity-40`}>Next <ChevronRight size={18} /></button>
             </>
-          ) : (
-            <>
-              <div className="flex-1 text-lg font-semibold text-gray-900">{problem.prompt}</div>
-              <button onClick={() => setShowAnswer(!showAnswer)} className={BTN_PRIMARY}><Eye size={18} /> {showAnswer ? "Hide Answer" : "Show Answer"}</button>
-            </>
-          )}
         </div>
       </div>
     );
@@ -346,13 +304,9 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
               <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
             </>
           )}
-          <div className="flex flex-wrap justify-center gap-3 sm:gap-4 mb-6 sm:mb-8">
-            <button onClick={() => setMode("whiteboard")} className={tabBtn(mode === "whiteboard")}>Whiteboard</button>
-            <button onClick={() => setMode("example")} className={tabBtn(mode === "example")}>Worked Example</button>
-          </div>
           <div className="flex flex-col gap-6">
             {controlBar}
-            <div className={`${CARD} overflow-hidden`}>{inExample ? example : whiteboard}</div>
+            <div className={`${CARD} overflow-hidden`}>{example}</div>
           </div>
         </div>
       </div>

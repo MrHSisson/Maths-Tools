@@ -87,11 +87,11 @@ function solvePotentials(p: DecisionProblem): SolveStep[] {
         : `${a.id}: forward ${a.hi} − ${f} = ${pots[a.id].fwd}, backward ${f} − ${a.lo} = ${pots[a.id].bwd}`;
     });
     steps.push(beat(net, `Arcs leaving ${g}\n${lines.join("\n")}`, {
-      flow, potentials: JSON.parse(JSON.stringify(shown)), focus: arcs.map((a) => a.id),
+      flow, potentials: JSON.parse(JSON.stringify(shown)), focus: arcs.map((a) => a.id), replaceWithPotentials: true,
     }));
   }
   steps.push(beat(net, "Every arc is now labelled with the potential along it (the arrow pointing with the arc) and the potential against it (the arrow pointing back).", {
-    flow, potentials: JSON.parse(JSON.stringify(shown)),
+    flow, potentials: JSON.parse(JSON.stringify(shown)), replaceWithPotentials: true,
   }));
   return steps;
 }

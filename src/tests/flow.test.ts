@@ -242,3 +242,16 @@ describe("the question selectors", () => {
     expect(seen.size).toBeGreaterThan(8);
   });
 });
+
+describe("minimums are real, not a string of zeros", () => {
+  for (const sub of ["potentials", "cutValue", "augment", "maxFlow"] as const)
+    it(`${sub} (min and max): at most about one arc in seven has a minimum of 0, and no arc is unused`, () => {
+      for (const level of [1, 2, 3] as const)
+        for (let i = 0; i < 12; i++) {
+          const d = generateFlowProblem(level, sub, "minmax").flow!;
+          const zeros = d.net.arcs.filter((a) => a.lo === 0).length;
+          expect(zeros, `${d.templateId} ${d.net.arcs.map((a) => a.id + ":" + a.lo).join(" ")}`).toBeLessThanOrEqual(Math.max(1, Math.floor(d.net.arcs.length * 0.15)));
+          expect(d.net.arcs.every((a) => d.flow[a.id] > 0)).toBe(true);
+        }
+    });
+});

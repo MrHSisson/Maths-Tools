@@ -75,6 +75,10 @@ Keep the split even when a session only touches one.
   (include a backward step) and the Initial flow question style. Networks vary per question: optional arcs (the Fan's rungs, the
   Ladder's diagonal, the Big network's cross arcs) and a **hexagon hub** where any of S, A, B can feed the centre vertex and it can
   feed D, E, T (hundreds of networks); every arc has hand-mapped label positions.
+- **One worked model (later the same day):** the Decision shell has no Whiteboard / Show Answer any more — every question is
+  worked through (graph + fading steps, Back / Next / Show all), because every question of this complexity needs its steps.
+  In the Potentials working an arc that shows its potentials drops its flow circle and min/max label (they swap arc by arc).
+  Min/max questions now use real minimums: every arc carries flow and at most about one arc in seven has a minimum of 0.
 - Phone width checked (stacks, no sideways scroll; the graph is sticky only on wide screens). Still to do: Harry's-notes update.
 
 ## 2026-10-07 — Notes and docs sweep: cast documented

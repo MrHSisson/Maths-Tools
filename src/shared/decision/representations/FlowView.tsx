@@ -69,9 +69,10 @@ export default function FlowView({ net, mode, view, labelPos, qIndex, background
     const y2 = q.y - uy * (NODE_R + 2);
     const bounds = mode === "cap" ? `${a.hi}` : `${a.lo}, ${a.hi}`;
     const lab = at(lp.label);
-    const showBounds = !view.hideBounds;
+    const replaced = !!view.replaceWithPotentials && view.potentials?.[a.id] !== undefined; // the potentials stand in for flow + bounds
+    const showBounds = !view.hideBounds && !replaced;
     const w = pillW(bounds, 17);
-    const fl = view.flow?.[a.id];
+    const fl = replaced ? undefined : view.flow?.[a.id];
     const prev = view.prevFlow?.[a.id];
     const fp = at(lp.flow[0], 19 * lp.flow[1]); // beside the arc, not on it
     // potentials: two small parallel arrows on the far side of the arc — one along it, one against it

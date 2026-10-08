@@ -70,28 +70,48 @@ export function sampleInstance(tpl: FlowTemplate, mode: FlowMode, reversed: bool
   const paths = simpleForwardPaths(net);
   if (paths.length < 3) return null;
 
-  // 2. a feasible flow: push 3–5 random paths
+  // 2. a feasible flow. Unless the question fixes the paths, choose paths so that EVERY arc carries flow — that is what lets
+  //    (almost) every arc have a real minimum, instead of a string of zeros.
   const flow: Flow = {};
   for (const a of arcs) flow[a.id] = 0;
-  const chosen = shuffle(paths).slice(0, pathCount ?? ri(3, 5));
-  if (pathCount !== undefined && chosen.length < pathCount) return null;
+  let chosen: string[][];
+  if (pathCount === undefined) {
+    const covered = new Set<string>();
+    chosen = [];
+    for (const id of shuffle(arcs.map((x) => x.id))) {
+      if (covered.has(id)) continue;
+      const through = paths.filter((q) => q.includes(id));
+      through.sort((x, y) => y.filter((e) => !covered.has(e)).length - x.filter((e) => !covered.has(e)).length + (Math.random() - 0.5) * 0.6);
+      chosen.push(through[0]);
+      through[0].forEach((e) => covered.add(e));
+    }
+    if (chosen.length > 6) return null;
+  } else {
+    chosen = shuffle(paths).slice(0, pathCount);
+    if (chosen.length < pathCount) return null;
+  }
   const pushed: FlowInstance["pushed"] = [];
   for (const p of chosen) {
-    const amt = ri(1, 6);
+    const amt = ri(1, pathCount === undefined ? 4 : 6);
     for (const id of p) flow[id] += amt;
     pushed.push({ arcs: p, amount: amt });
   }
   if (Object.values(flow).some((f) => f > 15)) return null;
   const value = flowValue(net, flow);
-  if (value < 8 || value > 24) return null;
+  if (pathCount === undefined ? value < 6 || value > 30 : value < 8 || value > 24) return null;
 
   // 3. bounds around the flow
   const used = arcs.filter((a) => flow[a.id] > 0);
   const tight = new Set(shuffle(used).slice(0, Math.max(2, Math.floor(used.length / 4))).map((a) => a.id));
+  // min/max: nearly every arc gets a real minimum (1 … its flow); only the odd arc keeps 0
+  const zeroBudget = Math.max(1, Math.floor(arcs.length * 0.15));
+  let zeros = 0;
   for (const a of arcs) {
     const f = flow[a.id];
     a.hi = f === 0 ? ri(2, 8) : tight.has(a.id) ? f : f + ri(0, 6);
-    a.lo = mode === "minmax" && f > 0 && Math.random() < 0.45 ? ri(1, f) : 0;
+    if (mode === "minmax" && f > 0) {
+      if (zeros < zeroBudget && Math.random() < 0.1) { a.lo = 0; zeros++; } else a.lo = ri(1, f);
+    } else a.lo = 0;
   }
   if (mode === "minmax" && arcs.filter((a) => a.lo > 0).length < 2) return null;
 

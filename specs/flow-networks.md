@@ -5,7 +5,8 @@
 > - **Selectors, not levels, carry difficulty:** Arcs (some reversed), Cuts (forward arcs only), Paths (include a backward step), Initial flow question style.
 > - **Augment flow** asks for all (two or three) flow-augmenting paths. **Cuts** are one continuous dashed line, no ticks.
 > - **Network variations:** optional/reversible arcs per template; the Hexagon has a hub (centre vertex fed by any of S, A, B; feeding any of D, E, T).
-> - **No worksheets or print.** The shell is Whiteboard + Worked Example only (see `docs/architecture/DECISION_SHELL_PLAN.md` → Shell UX).
+> - **No worksheets, print or Whiteboard.** Every question is worked through step by step (see `docs/architecture/DECISION_SHELL_PLAN.md` → Shell UX).
+> - **Real minimums:** in Min and max questions every arc carries flow and at most about one arc in seven has a minimum of 0. An arc that shows its potentials drops its flow circle and min/max label.
 
 **Status:** in progress — all five sub-tools are built (`enabled: false`); print, the info modal and a phone-width check are still to do. <!-- draft → ready → implemented. -->
 

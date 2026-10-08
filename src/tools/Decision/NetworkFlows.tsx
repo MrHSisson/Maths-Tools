@@ -28,8 +28,7 @@ const INFO_SECTIONS: InfoSection[] = [
     icon: "🌐",
     content: [
       { label: "Overview", detail: "Flows through a network from a source S to a sink T, on capacity-only or minimum/maximum networks. The same few network shapes are used throughout so students learn one picture well." },
-      { label: "Whiteboard", detail: "The question on one large network. Show Answer reveals the finished working on the same picture." },
-      { label: "Worked Example", detail: "The same network beside the working, one step at a time (Next / Back, or the arrow keys). Earlier steps fade but stay on screen." },
+      { label: "Worked through", detail: "Every question is worked through step by step: the network on the left, the working on the right (Next / Back, or the arrow keys). Earlier steps fade but stay on screen; Show all jumps to the end." },
     ],
   },
   {

@@ -56,6 +56,7 @@ export interface FlowViewState {
   flow?: Flow; // circled flow per arc (omit = no flow drawn)
   /** the potentials to draw per arc (numbers come from potentials() — the renderer never computes them) */
   potentials?: Record<string, { fwd?: number; bwd?: number }>;
+  replaceWithPotentials?: boolean; // an arc that shows its potentials drops its flow circle and "min, max" label
   hideBounds?: boolean; // hide the "min, max" labels (the augmentation working shows potentials only)
   path?: PathStep[]; // highlighted augmenting path
   prevFlow?: Flow; // the flow BEFORE augmenting — struck through beside the updated circles on the path
