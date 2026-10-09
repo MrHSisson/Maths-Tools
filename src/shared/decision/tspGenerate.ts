@@ -311,7 +311,7 @@ function buildProblem(kind: TspKind, network: Network, ld: LeastDistances, b: Bu
     starts: b.starts,
     prompt,
     answer: { text, value, tour: b.tour },
-    matrixMode: "question",
+    matrixMode: "working", // the table is built from scratch in the working: nothing is shown before the first step
     ...(b.practical ? { complete: completeOf(network, ld) } : {}),
   };
 }

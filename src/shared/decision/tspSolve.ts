@@ -35,56 +35,87 @@ const both = (a: string, b: string, state: MatrixCell["state"]): MatrixCell[] =>
   { r: b, c: a, state },
 ];
 
-/** The table as it stands once the pairs in `filled` have been worked out. */
+/**
+ * The table as it stands once the pairs in `filled` have been worked out. It is built FROM SCRATCH: an entry nobody has worked out yet is
+ * blank (the direct edge is not written in beforehand), so the class sees every entry being earned — and sees that the shortest distance is
+ * not always the direct edge. Entries that are not simply the drawn edge (a replaced edge, or a pair not joined) are marked indirect.
+ */
 function tableWith(c: Ctx, filled: Set<string>): DistanceTable {
+  const changed = new Set(c.todo.map(([a, b]) => pairKey(a, b)));
   const values: DistanceTable["values"] = {};
   const indirect: string[] = [];
   for (const a of c.ld.ids) {
     values[a] = {};
     for (const b of c.ld.ids) {
-      if (a === b) values[a][b] = null;
-      else if (filled.has(pairKey(a, b))) {
+      if (a === b || !filled.has(pairKey(a, b))) values[a][b] = null;
+      else {
         values[a][b] = c.ld.dist[a][b];
-        indirect.push(`${a}|${b}`);
-      } else values[a][b] = c.ld.direct[a][b];
+        if (changed.has(pairKey(a, b))) indirect.push(`${a}|${b}`);
+      }
     }
   }
   return { values, indirect };
 }
 
-const fullTable = (c: Ctx) => tableWith(c, new Set(c.todo.map(([a, b]) => pairKey(a, b))));
+const allPairs = (c: Ctx): Set<string> => new Set(c.ld.ids.flatMap((a, i) => c.ld.ids.slice(i + 1).map((b) => pairKey(a, b))));
+const fullTable = (c: Ctx) => tableWith(c, allPairs(c));
 
-// ── Phase 1: complete the table ──────────────────────────────────────────────
+// ── Phase 1: build the table ─────────────────────────────────────────────────
+/** A complete network with no beaten edge: the table is just the edges written in, checked. */
+function tableCheckBeat(c: Ctx): SolveStep {
+  return {
+    caption: `Write each edge's weight into the table. Every pair is joined, and no direct edge is longer than a route through other vertices, so this already is the table of least distances.`,
+    phase: "Complete the table",
+    edgeStates: idle(c),
+    matrix: fullTable(c),
+    matrixTitle: c.title,
+  };
+}
+
+/** Practical network or a beaten edge: start with an empty table and work out a row at a time, every entry from the shortest route. */
 function tableBeats(c: Ctx): SolveStep[] {
   const steps: SolveStep[] = [];
   const filled = new Set<string>();
-  const { ld, todo } = c;
+  const { ld } = c;
+  const changed = new Set(c.todo.map(([a, b]) => pairKey(a, b)));
   steps.push({
-    // the table shows what is still missing (a blank, or a direct edge a shorter route may beat); no answer is shown before its own step
-    caption: `Build the table of least distances. Where two vertices are not joined, or the direct edge is longer than a route through other vertices, the entry has to be worked out as the length of the shortest route. Take the entries one at a time.`,
+    caption: `Build the table of least distances from scratch, one row at a time. Every entry is the length of the SHORTEST route between the two vertices — which is not always the direct edge, and some pairs are not joined at all.`,
     phase: "Complete the table",
     edgeStates: idle(c),
     matrix: tableWith(c, filled),
     matrixTitle: c.title,
   });
-  todo.forEach(([a, b]) => {
-    const route = ld.path[a][b];
-    const sum = `${route.join("–")} = ${routeSum(c, route).join(" + ")} = ${ld.dist[a][b]}`;
-    const direct = ld.direct[a][b];
-    filled.add(pairKey(a, b));
+  ld.ids.slice(0, -1).forEach((a, i) => {
+    const row = ld.ids.slice(i + 1);
     const edgeStates = idle(c);
-    for (const id of pathEdges(c, route)) edgeStates[id] = "considering";
-    if (direct !== null) edgeStates[edgeBetween(c, a, b).id] = "rejected";
+    const cells: MatrixCell[] = [];
+    const lines: string[] = [];
+    for (const b of row) {
+      const key = pairKey(a, b);
+      filled.add(key);
+      const route = ld.path[a][b];
+      const direct = ld.direct[a][b];
+      const sum = `${route.join("–")} = ${routeSum(c, route).join(" + ")} = ${ld.dist[a][b]}`;
+      if (direct === null) {
+        lines.push(`${a}${b}: ${a} and ${b} are not joined directly. Shortest route ${sum}. Enter ${ld.dist[a][b]}.`);
+        for (const id of pathEdges(c, route)) edgeStates[id] = "considering";
+      } else if (changed.has(key)) {
+        lines.push(`${a}${b}: the direct edge is ${direct}, but ${sum} is shorter. Enter ${ld.dist[a][b]}, not ${direct}.`);
+        edgeStates[edgeBetween(c, a, b).id] = "rejected";
+        for (const id of pathEdges(c, route)) edgeStates[id] = "considering";
+      } else {
+        lines.push(`${a}${b}: the direct edge, ${direct}, is the shortest route (nothing through other vertices is shorter). Enter ${direct}.`);
+        edgeStates[edgeBetween(c, a, b).id] = "tree";
+      }
+      cells.push(...both(a, b, changed.has(key) ? "highlight" : "considering"));
+    }
     steps.push({
-      caption:
-        direct === null
-          ? `${a} and ${b} are not joined directly. Shortest route: ${sum}. Enter ${ld.dist[a][b]} in the table.`
-          : `${a}–${b} has a direct edge of ${direct}, but ${sum} is shorter — so the least distance is ${ld.dist[a][b]}, not ${direct}.`,
+      caption: `Row ${a}.\n${lines.join("\n")}`,
       phase: "Complete the table",
       edgeStates,
       matrix: tableWith(c, filled),
       matrixTitle: c.title,
-      matrixCells: both(a, b, "highlight"),
+      matrixCells: cells,
     });
   });
   return steps;
@@ -380,7 +411,8 @@ export function solveTsp(p: DecisionProblem): SolveStep[] {
   const kind = p.kind ?? "tspNN";
   // phase 1 works on the original network
   const c0: Ctx = { net, ld: real, real, todo, practical, title };
-  const steps: SolveStep[] = practical ? tableBeats(c0) : [];
+  // the table is always built from scratch: row by row when anything needs working out, one checking beat when every direct edge already is the shortest
+  const steps: SolveStep[] = practical ? tableBeats(c0) : [tableCheckBeat(c0)];
 
   // from here the classical problem is solved on the COMPLETE network of least distances (every leg a single edge)
   let c: Ctx = c0;

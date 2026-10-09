@@ -351,17 +351,18 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       {stepNav}
     </div>
   );
+  // The table is the working's main object, so it sits right under the question — above the step text, always in view with it
+  const matrixCard = showMatrix ? (
+    <div className="rounded-xl border border-gray-200 bg-white p-4 overflow-x-auto">
+      <div className="mx-auto w-fit">
+        <MatrixView network={problem.network} step={canvasStep} bare missing={config.matrixMissing} />
+      </div>
+    </div>
+  ) : null;
   const workingExtras = (
     <>
       {current?.list && current.list.items.length > 0 && <ListCard list={current.list} />}
       {current?.route && current.route.length > 0 && <RouteCard route={current.route} />}
-      {showMatrix && (
-        <div className="rounded-xl border border-gray-200 bg-white p-4 overflow-x-auto">
-          <div className="mx-auto w-fit">
-            <MatrixView network={problem.network} step={canvasStep} bare missing={config.matrixMissing} />
-          </div>
-        </div>
-      )}
     </>
   );
   const canvasCol = (
@@ -377,6 +378,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     <div className="p-3 flex flex-col gap-4">
       {questionBlock(false)}
       {canvasCol}
+      {matrixCard}
       {answerCard}
       {workingExtras}
     </div>
@@ -388,6 +390,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       </div>
       <div className="flex flex-col gap-4" style={{ flex: "1 1 360px", minWidth: 0 }}>
         {questionBlock(false)}
+        {matrixCard}
         {answerCard}
         {workingExtras}
       </div>
@@ -433,6 +436,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           </div>
           <div className="thin-scroll flex flex-col gap-3 min-w-0 min-h-0 md:flex-[3] md:max-w-[620px] md:overflow-y-auto">
             {questionBlock(true)}
+            {matrixCard && <div className="flex-shrink-0">{matrixCard}</div>}
             <div className="rounded-xl border border-gray-200 bg-white overflow-hidden flex flex-col flex-1 min-h-[300px]">
               <div className="px-5 pt-3 pb-1 text-xs font-bold uppercase tracking-wider text-gray-400">Answer</div>
               <div className="flex-1 min-h-0">
@@ -446,13 +450,6 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
             </div>
             {current?.list && current.list.items.length > 0 && <div className="flex-shrink-0"><ListCard list={current.list} /></div>}
             {current?.route && current.route.length > 0 && <div className="flex-shrink-0"><RouteCard route={current.route} /></div>}
-            {showMatrix && (
-              <div className="flex-shrink-0 rounded-xl border border-gray-200 bg-white p-4 overflow-x-auto">
-                <div className="mx-auto w-fit">
-                  <MatrixView network={problem.network} step={canvasStep} bare missing={config.matrixMissing} />
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>
