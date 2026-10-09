@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calculator, FlaskConical, Cpu, Search, X } from 'lucide-react';
+import { Calculator, FlaskConical, Cpu, Info, Search, X } from 'lucide-react';
 import { CATEGORIES } from '../registry';
 import { useDevMode, setDevMode } from '../devMode';
 import { useParkedMode } from '../parkedMode';
@@ -165,6 +165,17 @@ const categories = CATEGORIES.map((category) => ({
 }));
 
 export default function LandingPage(): JSX.Element {
+  // The (i) on a card opens its description; one at a time, closed by tapping anywhere else.
+  const [infoId, setInfoId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!infoId) return;
+    const close = (e: Event) => { if (!(e.target as HTMLElement).closest('[data-card-info]')) setInfoId(null); };
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setInfoId(null); };
+    document.addEventListener('pointerdown', close);
+    document.addEventListener('keydown', esc);
+    return () => { document.removeEventListener('pointerdown', close); document.removeEventListener('keydown', esc); };
+  }, [infoId]);
+
   // Tint the phone's status bar to match the navy header so they read as one bar
   // (the rest of the site keeps the light page colour from index.html).
   useEffect(() => {
@@ -273,12 +284,12 @@ export default function LandingPage(): JSX.Element {
       </header>
 
       {/* Hero Section */}
-      <div className="relative z-10 pt-10 pb-8 px-4 sm:pt-20 sm:pb-16 sm:px-6">
+      <div className="relative z-10 pt-6 pb-4 px-4 sm:pt-10 sm:pb-8 sm:px-6">
         <div className="max-w-7xl mx-auto text-center">
-          <h2 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-slate-900 mb-3 sm:mb-6 tracking-tight drop-shadow-sm">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 mb-2 sm:mb-3 tracking-tight drop-shadow-sm">
             Maths Tools
           </h2>
-          <p className="text-slate-600 text-sm sm:text-lg md:text-xl max-w-2xl mx-auto leading-relaxed mb-6 sm:mb-10">
+          <p className="text-slate-600 text-sm sm:text-lg md:text-xl max-w-2xl mx-auto leading-relaxed mb-4 sm:mb-6">
             Interactive tools for classroom teaching and independent practice.
             Supporting the "I Do, We Do, You Do" pedagogy.
           </p>
@@ -335,7 +346,7 @@ export default function LandingPage(): JSX.Element {
           return (
             <div key={s} className="mb-8">
               {/* Subject band header */}
-              <div className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-10">
+              <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
                 <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl bg-blue-900 flex items-center justify-center shadow-md shrink-0">
                   <SubjectIcon className="text-white" size={18} />
                 </div>
@@ -372,42 +383,39 @@ export default function LandingPage(): JSX.Element {
                       <div className="flex-1 h-px bg-slate-200" />
                     </div>
                   )}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
+                <div className="grid grid-cols-1 min-[480px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-4">
                   {sec.tools.map((tool) => {
                     // enabled:false tools only appear in developing mode, where
                     // they're clickable for testing and flagged with a DEV badge.
                     const isDevTool = tool.enabled === false;
+                    const open = infoId === tool.id;
                     return (
-                    <button
+                    <div
                       key={tool.id}
-                      onClick={() => navigate(tool.path)}
-                      // Added: flex flex-col, h-full, and min-h-[170px] to enforce uniform sizing
-                      className={`group relative flex flex-col justify-start h-full min-h-[110px] sm:min-h-[170px] bg-white p-4 sm:p-6 text-left transition-all duration-300 rounded-xl
-                        border border-slate-200 border-l-4 cursor-pointer hover:shadow-lg hover:shadow-slate-200/60 hover:-translate-y-1
-                        ${isDevTool
-                          ? 'border-l-amber-400 hover:border-l-amber-300'
-                          : `${category.theme.border} ${category.theme.hoverBorder}`
-                        }`}
+                      data-card-info
+                      className={`group relative bg-white rounded-xl border border-slate-200 border-l-4 transition-all duration-200 hover:shadow-md hover:shadow-slate-200/60 ${open ? 'z-30' : ''}
+                        ${isDevTool ? 'border-l-amber-400' : `${category.theme.border} ${category.theme.hoverBorder}`}`}
                     >
-                      {/* Badge - dev-gated tools only; absolutely positioned so it never moves */}
-                      {isDevTool && (
-                        <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
-                          <span className="inline-flex items-center text-[10px] font-bold px-2.5 py-1 rounded-md border tracking-wider uppercase bg-amber-50 text-amber-700 border-amber-200">
-                            Dev
-                          </span>
+                      <button onClick={() => navigate(tool.path)} className="w-full min-h-[56px] sm:min-h-[64px] flex items-center gap-2 text-left pl-4 pr-12 py-3 cursor-pointer rounded-xl">
+                        <span className="font-bold text-[15px] sm:text-base leading-tight text-slate-800 group-hover:text-slate-900">{tool.name}</span>
+                        {isDevTool && (
+                          <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded border tracking-wider uppercase bg-amber-50 text-amber-700 border-amber-200">Dev</span>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => setInfoId(open ? null : tool.id)}
+                        aria-label={`About ${tool.name}`}
+                        aria-expanded={open}
+                        className={`absolute top-1/2 -translate-y-1/2 right-1.5 w-9 h-9 rounded-full flex items-center justify-center transition-colors ${open ? 'bg-blue-900 text-white' : 'text-slate-400 hover:text-blue-900 hover:bg-slate-100'}`}
+                      >
+                        <Info size={18} />
+                      </button>
+                      {open && (
+                        <div role="note" className="absolute left-0 right-0 top-full mt-1 rounded-xl bg-slate-900 text-white text-sm leading-snug p-3 shadow-xl">
+                          {tool.description}
                         </div>
                       )}
-
-                      {/* Title */}
-                      <h3 className="font-bold text-base sm:text-lg leading-tight text-slate-800 mb-2 sm:mb-3 pr-14 sm:pr-16 group-hover:text-slate-900 transition-colors">
-                        {tool.name}
-                      </h3>
-
-                      {/* Content */}
-                      <p className="text-sm leading-relaxed text-slate-500 group-hover:text-slate-600 line-clamp-3">
-                        {tool.description}
-                      </p>
-                    </button>
+                    </div>
                     );
                   })}
                 </div>

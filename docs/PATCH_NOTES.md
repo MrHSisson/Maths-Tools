@@ -28,6 +28,11 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-09 (late, 6) — Layout: desktop mode, phone stage, landing page
+- Desktop mode (≈980px): Decision tools use a two-column grid instead of flex-wrap (no more fully vertical layout); ToolShell worked-example split starts at `md`; control-bar buttons no longer wrap their labels.
+- Phone Decision tools: the question (collapsed to one line) and the picture are pinned above the scrolling working; a Graph | Table switch shares the stage (automatically Table on steps that build it).
+- Landing page: tool cards are compact title tiles with an (i) that opens the description; tighter hero.
+
 ### 2026-10-09 (late, 5) — Travelling Salesperson: table of least distances built from scratch, matrix promoted
 - The table starts empty and is filled row by row; each entry says whether the direct edge or a shorter route is used, so students see the shortest distance is not always the direct edge. When the initial weights already obey the triangle inequality, one check beat replaces the build.
 - The matrix sits directly under the question (desktop right column; after the graph on phones).
