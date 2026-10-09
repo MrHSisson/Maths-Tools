@@ -289,7 +289,7 @@ export default function LandingPage(): JSX.Element {
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search tools…"
                 aria-label="Search tools"
-                className="w-full pl-11 pr-10 py-3.5 rounded-2xl bg-slate-100 border border-transparent text-base text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-900/30"
+                className="w-full pl-11 pr-10 py-3.5 rounded-2xl bg-white border border-slate-200 shadow-card text-base text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-900/30"
               />
               {query && (
                 <button onClick={() => setQuery('')} aria-label="Clear search" className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
@@ -358,7 +358,7 @@ export default function LandingPage(): JSX.Element {
                     <div
                       key={tool.id}
                       data-card-info
-                      className={`group relative bg-slate-50 rounded-2xl border transition-all duration-200 hover:bg-white hover:shadow-md hover:shadow-slate-200/70 ${open ? 'z-30 bg-white border-slate-300' : isDevTool ? 'border-amber-300' : 'border-transparent hover:border-slate-200'}`}
+                      className={`group relative bg-white rounded-2xl border shadow-card transition-all duration-200 hover:shadow-lift hover:-translate-y-0.5 ${open ? 'z-30 border-slate-300' : isDevTool ? 'border-amber-300' : 'border-slate-200'}`}
                     >
                       <button onClick={() => openTool(tool.id, tool.path)} className="w-full min-h-[56px] sm:min-h-[64px] flex items-center gap-2 text-left pl-4 pr-12 py-3 cursor-pointer rounded-xl">
                         <span className="font-semibold text-[15px] leading-tight text-slate-800">{tool.name}</span>

@@ -129,7 +129,7 @@ export const MultiSelectSection = ({
           <>
             <span className="text-gray-400 text-sm leading-none cursor-help">&#9432;</span>
             <div className="absolute bottom-full left-0 mb-2 hidden group-hover:flex pointer-events-none flex-col items-start" style={{ zIndex: 9999 }}>
-              <div className="bg-gray-800 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg shadow-lg" style={{ maxWidth: "15rem", whiteSpace: "normal" }}>{multiSelect.info}</div>
+              <div className="bg-gray-800 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg shadow-lift" style={{ maxWidth: "15rem", whiteSpace: "normal" }}>{multiSelect.info}</div>
               <div style={{ width: 0, height: 0, marginLeft: "0.6rem", borderLeft: "5px solid transparent", borderRight: "5px solid transparent", borderTop: "5px solid #1f2937" }} />
             </div>
           </>
@@ -286,7 +286,7 @@ export const VariablesSection = ({
             <>
               <span className="text-gray-400 text-sm leading-none cursor-help">&#9432;</span>
               <span className="absolute bottom-full left-0 mb-2 hidden group-hover:flex pointer-events-none flex-col items-start" style={{ zIndex: 9999 }}>
-                <span className="bg-gray-800 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg shadow-lg" style={{ width: "15rem", whiteSpace: "normal" }}>{v.info}</span>
+                <span className="bg-gray-800 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg shadow-lift" style={{ width: "15rem", whiteSpace: "normal" }}>{v.info}</span>
                 <span style={{ width: 0, height: 0, marginLeft: "0.6rem", borderLeft: "5px solid transparent", borderRight: "5px solid transparent", borderTop: "5px solid #1f2937" }} />
               </span>
             </>
@@ -337,7 +337,7 @@ export const StandardQOPopover = ({
       <PopoverButton open={open} onClick={() => setOpen(!open)} />
       {open && (
         <div
-          className={`absolute top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 p-5 ${twoCol ? "left-1/2 -translate-x-1/2 border-2 !border-gray-400 [&>*]:break-inside-avoid [&>*]:mb-5" : "left-0 min-w-[26rem] flex flex-col gap-5"}`}
+          className={`absolute top-full mt-2 bg-white rounded-xl shadow-lift border border-gray-200 z-50 p-5 ${twoCol ? "left-1/2 -translate-x-1/2 border-2 !border-gray-400 [&>*]:break-inside-avoid [&>*]:mb-5" : "left-0 min-w-[26rem] flex flex-col gap-5"}`}
           style={twoCol ? { width: "min(54rem, calc(100vw - 2rem))", columnCount: 2, columnGap: "2.5rem", columnRule: "1px solid #d1d5db" } : undefined}
         >
           {dd && <DropdownSection dropdown={dd} value={dropdownValue} onChange={onDropdownChange} />}
@@ -387,7 +387,7 @@ export const DiffQOPopover = ({
     <div className="relative" ref={ref}>
       <PopoverButton open={open} onClick={() => setOpen(!open)} />
       {open && (
-        <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-[28rem] p-5 flex flex-col gap-5">
+        <div className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-lift border border-gray-200 z-50 min-w-[28rem] p-5 flex flex-col gap-5">
           {!anyContent ? (
             <p className="text-sm text-gray-400">No additional options for this tool.</p>
           ) : (

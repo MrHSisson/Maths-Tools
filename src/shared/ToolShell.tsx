@@ -860,7 +860,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       ? { backgroundColor: bg, height: "100%", boxSizing: "border-box" as const, position: "relative" as const, borderRadius: "12px", border: "1px solid #e5e7eb", display: "flex" as const, flexDirection: "column" as const, justifyContent: "center" as const }
       : { height: "100%", boxSizing: "border-box" as const, position: "relative" as const, display: "flex" as const, flexDirection: "column" as const, justifyContent: "center" as const };
     const numEl = <span className="text-xs font-bold text-gray-400" style={{ position: "absolute", top: 4, left: 6 }}>{idx + 1}</span>;
-    const wrapperClass = borders ? "rounded-xl p-4 shadow group" : "p-4 group";
+    const wrapperClass = borders ? "rounded-2xl p-4 shadow-card group" : "p-4 group";
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const regenBtn = (q as any)._qo ? (
@@ -962,14 +962,14 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       // Standard mode only — advanced mode renders via the WorksheetBuilder header slot.
       const bordersDisabled = worksheetLayout !== "grid";
       return (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm border border-slate-200 mb-6">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-card border border-slate-200 mb-6">
           <div className="px-6 py-4 border-b-2 border-gray-200">
             {advancedToggle}
           </div>
           <div className="p-6">
             {/* Row 1: levels · QO · differentiated */}
             <div className="flex justify-center items-center gap-6 mb-5">
-              {showLevelToggle && <div className="flex rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+              {showLevelToggle && <div className="flex rounded-xl border border-slate-200 overflow-hidden ">
                 {toolLevels.map((val) => {
                   const label = LV_LABELS[val];
                   const col = LV_SELECTOR[val];
@@ -1445,7 +1445,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
 
   const renderWorksheet = () => {
     if (worksheet.length === 0) return (
-      <div className="rounded-2xl border border-slate-200 shadow-sm p-8 text-center" style={{ backgroundColor: qBg }}>
+      <div className="rounded-2xl border border-slate-200 shadow-card p-8 text-center" style={{ backgroundColor: qBg }}>
         <span className="text-2xl text-gray-400">Generate worksheet</span>
       </div>
     );
@@ -1472,7 +1472,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     // by the browser on every reflow (KaTeX finishing, font load, resize),
     // no JS measurement or timing involved at all.
     if (isDifferentiated) return (
-      <div className="rounded-2xl border border-slate-200 shadow-sm p-8 relative" style={{ backgroundColor: qBg }}>
+      <div className="rounded-2xl border border-slate-200 shadow-card p-8 relative" style={{ backgroundColor: qBg }}>
         {fontSizeControls}
         <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
         <div className="grid gap-4" style={{
@@ -1549,7 +1549,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         );
       };
       return (
-        <div className="rounded-2xl border border-slate-200 shadow-sm p-8 relative" style={{ backgroundColor: qBg }}>
+        <div className="rounded-2xl border border-slate-200 shadow-card p-8 relative" style={{ backgroundColor: qBg }}>
           {fontSizeControls}
           <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
           <div style={{ display: "grid", gridTemplateColumns: `repeat(${effCols}, 1fr)`, columnGap: "1.5rem" }}>
@@ -1559,7 +1559,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       );
     }
     return (
-      <div className="rounded-2xl border border-slate-200 shadow-sm p-8 relative" style={{ backgroundColor: qBg }}>
+      <div className="rounded-2xl border border-slate-200 shadow-card p-8 relative" style={{ backgroundColor: qBg }}>
         {fontSizeControls}
         <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
         {/* gridAutoRows: "1fr" — same explicit-row-track convention used for a
@@ -1687,7 +1687,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               </>
             ) : (
               <>
-                <div className="rounded-2xl border border-slate-200 shadow-sm overflow-clip">
+                <div className="rounded-2xl border border-slate-200 shadow-card overflow-clip">
                   {renderWorkedExample(true)}
                 </div>
               </>
@@ -1835,7 +1835,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           )}
           {mode === "depth" && showDepth && (
             <div className="flex flex-col gap-6">
-              <div className="rounded-2xl border border-slate-200 shadow-sm bg-white p-4 flex flex-wrap items-center justify-center gap-4">
+              <div className="rounded-2xl border border-slate-200 shadow-card bg-white p-4 flex flex-wrap items-center justify-center gap-4">
                 <DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} levels={toolLevels} />
                 {/* the same Question Options as every other mode: they decide which Depth questions are possible */}
                 {Object.keys(depthOptionInfo).length > 0 && qoEl()}
@@ -1845,10 +1845,10 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           )}
           {mode !== "worksheet" && mode !== "teach" && mode !== "depth" && (
             <div className="flex flex-col gap-6">
-              <div className="rounded-2xl border border-slate-200 shadow-sm flex-shrink-0">
+              <div className="rounded-2xl border border-slate-200 shadow-card flex-shrink-0">
                 {renderControlBar()}
               </div>
-              <div className="rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className="rounded-2xl border border-slate-200 shadow-card overflow-hidden">
                 {mode === "whiteboard" && renderWhiteboard()}
                 {mode === "single" && renderWorkedExample()}
               </div>

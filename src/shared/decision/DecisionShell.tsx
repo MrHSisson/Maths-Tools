@@ -23,7 +23,7 @@ import { getQuestionBg } from "../colors";
 // ═══════════════════════════════════════════════════════════════════════════
 
 const levelKey = (n: number) => `level${n}`;
-const CARD = "bg-white rounded-2xl border border-slate-200 shadow-sm min-w-0";
+const CARD = "bg-white rounded-2xl border border-slate-200 shadow-card min-w-0";
 const BTN = "px-4 sm:px-6 py-2 rounded-xl font-semibold text-base transition-colors flex items-center gap-2";
 const BTN_PRIMARY = `${BTN} bg-blue-900 text-white hover:bg-blue-800`;
 

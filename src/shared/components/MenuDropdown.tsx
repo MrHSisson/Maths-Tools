@@ -35,7 +35,7 @@ export const MenuDropdown = ({
     return () => document.removeEventListener("mousedown", h);
   }, [onClose]);
   return (
-    <div ref={ref} className="absolute right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden" style={{ minWidth: "200px" }}>
+    <div ref={ref} className="absolute right-0 mt-2 bg-white rounded-xl shadow-lift border border-gray-200 z-50 overflow-hidden" style={{ minWidth: "200px" }}>
       <div className="py-1">
         <button
           onClick={() => setColorOpen(!colorOpen)}

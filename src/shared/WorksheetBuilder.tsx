@@ -531,12 +531,12 @@ export const WorksheetBuilder = ({
     return (
       <div className="flex flex-col md:flex-row gap-4" style={{ minHeight: 400 }}>
         {/* Left: group list, with inline section breaks */}
-        <div className="rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm flex flex-col" style={{ backgroundColor: "#fff", flex: "1 1 58%" }}>
+        <div className="rounded-xl border border-slate-200 overflow-hidden shadow-sm flex flex-col" style={{ backgroundColor: "#fff", flex: "1 1 58%" }}>
           {rows}
         </div>
 
         {/* Right: QO options for the selected group — always visible */}
-        <div className="rounded-xl border-2 border-gray-300 shadow-sm p-4 flex" style={{ backgroundColor: "#f8faff", flex: "1 1 42%" }}>
+        <div className="rounded-xl border border-slate-200 shadow-sm p-4 flex" style={{ backgroundColor: "#f8faff", flex: "1 1 42%" }}>
           {selectedGroup ? (
             <div className="w-full">
               <InlineQOPanel
@@ -615,7 +615,7 @@ export const WorksheetBuilder = ({
       );
       if (!hasSections(worksheet)) {
         return (
-          <div ref={worksheetRef} className="bg-white rounded-xl shadow-lg p-6 mt-6 relative">{fontSizeControls}
+          <div ref={worksheetRef} className="bg-white rounded-2xl border border-slate-200 shadow-card p-6 mt-6 relative">{fontSizeControls}
             <div style={{ display: "grid", gridTemplateColumns: `repeat(${numColumns}, 1fr)`, columnGap: "2rem" }}>
               {worksheet.map((q, i) => renderListItem(q, i))}
             </div>
@@ -623,7 +623,7 @@ export const WorksheetBuilder = ({
         );
       }
       return (
-        <div ref={worksheetRef} className="bg-white rounded-xl shadow-lg p-6 mt-6 relative">{fontSizeControls}
+        <div ref={worksheetRef} className="bg-white rounded-2xl border border-slate-200 shadow-card p-6 mt-6 relative">{fontSizeControls}
           {splitIntoSections(worksheet, numColumns).map((seg, si) => (
             <div key={si}>
               {si > 0 && <div style={{ width: "60%", margin: "0.5rem auto", borderTop: "1px solid #d1d5db" }} />}
@@ -689,7 +689,7 @@ export const WorksheetBuilder = ({
 
     if (!hasSections(worksheet)) {
       return (
-        <div ref={worksheetRef} className="bg-white rounded-xl shadow-lg p-6 mt-6 relative">{fontSizeControls}
+        <div ref={worksheetRef} className="bg-white rounded-2xl border border-slate-200 shadow-card p-6 mt-6 relative">{fontSizeControls}
           <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${numColumns}, 1fr)` }}>
             {worksheet.map((q, i) => renderGridCell(q, i))}
           </div>
@@ -697,7 +697,7 @@ export const WorksheetBuilder = ({
       );
     }
     return (
-      <div ref={worksheetRef} className="bg-white rounded-xl shadow-lg p-6 mt-6 relative">{fontSizeControls}
+      <div ref={worksheetRef} className="bg-white rounded-2xl border border-slate-200 shadow-card p-6 mt-6 relative">{fontSizeControls}
         {splitIntoSections(worksheet, numColumns).map((seg, si) => (
           <div key={si}>
             {si > 0 && <div style={{ width: "60%", margin: "1rem auto", borderTop: "1px solid #d1d5db" }} />}
@@ -714,7 +714,7 @@ export const WorksheetBuilder = ({
   const bordersDisabled = layout !== "grid";
   return (
     <>
-      <div className="bg-white rounded-xl shadow-lg border-2 border-gray-200 mb-6">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-card border border-slate-200 mb-6">
         {headerSlot && (
           <div className="px-6 py-4 border-b-2 border-gray-200">{headerSlot}</div>
         )}
@@ -723,7 +723,7 @@ export const WorksheetBuilder = ({
 
           {/* ── Design line: layout + columns (unsplit only) + borders ── */}
           <div className="flex justify-center items-center gap-5 flex-wrap mt-5 pt-5 border-t-2 border-gray-200">
-            <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm">
+            <div className="flex rounded-xl border border-slate-200 overflow-hidden shadow-sm">
               <button
                 onClick={() => setLayout("grid")}
                 className={`px-5 py-2 text-base font-bold transition-colors ${layout === "grid" ? "bg-blue-900 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}

@@ -100,7 +100,7 @@ const DesktopTabs = ({ activities, activity, setActivity }: { activities: Activi
       const active = activity === a.key; const Icon = a.icon;
       return (
         <button key={a.key} onClick={() => setActivity(a.key)}
-          style={{ minHeight: 48, display: "flex", alignItems: "center", gap: 8, padding: "0 22px", borderRadius: 12, fontWeight: 700, fontSize: "1.05rem", border: "none", cursor: "pointer", transition: "all 0.15s",
+          style={{ minHeight: 44, display: "flex", alignItems: "center", gap: 8, padding: "0 20px", borderRadius: 999, fontWeight: 600, fontSize: "0.98rem", border: active ? "1px solid transparent" : "1px solid #e2e8f0", cursor: "pointer", transition: "all 0.15s",
             background: active ? NAVY : "#fff", color: active ? "#fff" : "#1f2937", boxShadow: TAB_SHADOW }}>
           <Icon size={18} /> {a.label}
         </button>
@@ -201,11 +201,11 @@ export const CSShell = ({ topic }: { topic: CSTopic }) => {
       {infoOpen && <InfoModal title={heading} sections={topic.info} onClose={() => setInfoOpen(false)} />}
 
       {/* Page */}
-      <div style={{ minHeight: "100vh", backgroundColor: "#f5f3f0", padding: isMobile ? "14px 12px 84px" : "24px 20px 40px" }}>
+      <div style={{ minHeight: "100vh", backgroundColor: "#f8f9fb", padding: isMobile ? "14px 12px 84px" : "24px 20px 40px" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
 
           {/* Page title — big centred heading + divider, matching the maths tools */}
-          <h1 style={{ textAlign: "center", fontWeight: 800, color: "#000", margin: isMobile ? "2px 0 8px" : "4px 0 12px", fontSize: isMobile ? "1.7rem" : "3rem", lineHeight: 1.12 }}>
+          <h1 style={{ textAlign: "center", fontWeight: 600, color: "#0f172a", letterSpacing: "-0.01em", margin: isMobile ? "2px 0 8px" : "4px 0 16px", fontSize: isMobile ? "1.5rem" : "1.9rem", lineHeight: 1.15 }}>
             {heading}
           </h1>
           <div style={{ height: 1, background: "#d1d5db", maxWidth: 880, margin: isMobile ? "0 auto 14px" : "0 auto 22px" }} />

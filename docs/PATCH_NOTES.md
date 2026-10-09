@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-10 (4) — Container shadows, more surfaces
+- `shadow-card` / `shadow-lift` tokens (tailwind.config.js); containers across ToolShell, DecisionShell, Depth, Worksheet builder and landing tiles use them. CSShell and the Systems Architecture page pick up the cooler background, smaller title and flat pill tabs.
+
 ### 2026-10-10 (3) — Calmer chrome across ToolShell and DecisionShell
 - Cooler page background, softer cards (1px borders, light shadow), smaller semibold titles without divider rules, sub-tool pills and underline mode tabs, quieter Level / Options controls and top-tier segmented switch. CLAUDE.md gains a short "Visual direction" section.
 
