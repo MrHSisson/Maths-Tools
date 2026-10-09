@@ -28,6 +28,11 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-10 (2) — Phone options sheet, Depth audit, calmer landing page
+- Phone Question Options (ToolShell and DecisionShell) are a full-screen sheet of card sections with a bottom Done; the settings chip now says Options; Decision tools get the same fixed bottom New question bar.
+- Depth audit: Rounding's items tagged by tab (nearest / dp / sf) with +14 items so every tab keeps diagnose/explain/extend per level. Order of Operations filters by its Focus options (needs) by design, not by tab.
+- Landing page: removed the jump-back and strand chips; flat grey tiles, quiet strand headings with a colour dot, search-first hero, two underline subject tabs, no background blobs.
+
 ### 2026-10-10 — Depth by sub-tool, phone overhaul, landing page
 - Depth: `DepthItem.tool` may be an array; Speed/Distance/Time's general items are now tagged by the quantity they ask for (+7 items so every tab keeps diagnose/explain/extend at each level).
 - Phone (ToolShell): tighter question text, fixed bottom action bar (New / Show answer; Generate / Show all on worksheets), step nav pinned above it, compact header; ink button lifted clear of the bar.
