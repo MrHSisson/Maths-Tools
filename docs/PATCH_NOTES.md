@@ -28,6 +28,11 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-09 (late, 4) — Travelling Salesperson: no pre-filled box, phone order, beaten edges tested
+- **Table steps:** the "Entries to find" chip box is gone. From the second step it listed every missing entry WITH its answer before the steps reached them (and cluttered the panel); the table now shows what is missing (a blank, or the direct edge a shorter route will beat) and each step fills in one entry. Tests assert no entry's answer appears before its own step.
+- **Joined but beaten:** tests check that every level can set a direct edge beaten by a shorter route (Level 1 complete networks, Level 2 with 'breaks', Level 3), that its own step reads "A–D has a direct edge of 37, but A–B–E–D = 33 is shorter", and that the table shows the direct edge before and the replacement after.
+- **Phone order (Decision tools):** question, then the graph, then the working steps (then the table). The desktop two-column layout is unchanged.
+
 ### 2026-10-09 (late, 3) — Travelling Salesperson: work on the complete network, then interpret the route
 - After the table of least distances is complete it is DRAWN as the complete network K (every pair joined, each weight the table entry, changed entries purple); nearest neighbour and the deleted-vertex lower bound run on that picture, where every leg is a single edge, instead of on the sparse original. For an upper bound the working ends by interpreting the tour as a real route in the original network (each leg replaced by its shortest route, drawn on the original). The table question ends by drawing the complete network too.
 - Plumbing: `SolveStep.network` (a beat can draw its own network; `edgeStates` then refer to its edges), `DecisionProblem.complete` (a complete network keeps its own layout; a practical one is redrawn on the bank's K4–K6 layout), validate.ts checks each beat's edges against the network it draws, the sandbox shows such beats as drawn.

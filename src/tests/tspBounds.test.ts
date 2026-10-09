@@ -224,4 +224,47 @@ describe("the initial network need not satisfy the triangle inequality — the t
           }
         }
   });
+
+  describe("pairs that ARE joined but have a shorter route than the direct edge", () => {
+    it("every level can set one, and the working shows the direct edge, then the shorter route that replaces it", () => {
+      for (const [level, weights] of [[1, "breaks"], [2, "breaks"], [3, "either"], [3, "holds"]] as const)
+        for (let i = 0; i < 20; i++) {
+          const p = generateTsp(level, "tspNN", { starts: 1, setting: "plain", weights });
+          const ld = leastDistances(p.network);
+          const beaten = p.network.edges.filter((e) => ld.dist[e.from][e.to] < e.weight);
+          if (weights === "holds") { expect(beaten.length).toBe(0); continue; }
+          expect(beaten.length, `L${level} ${weights}`).toBeGreaterThanOrEqual(1);
+          const steps = solveTsp(p);
+          const tableSteps = steps.filter((s) => s.phase === "Complete the table");
+          for (const e of beaten) {
+            const step = tableSteps.find((s) => s.caption.startsWith(`${e.from}–${e.to} has a direct edge of ${e.weight}`));
+            expect(step, `${e.from}${e.to} beaten: its own step`).toBeDefined();
+            expect(step!.caption).toContain(`so the least distance is ${ld.dist[e.from][e.to]}, not ${e.weight}`);
+            // the table before that step still shows the direct edge; the replacement appears at the step
+            const idx = tableSteps.indexOf(step!);
+            expect(tableSteps[idx - 1].matrix!.values[e.from][e.to]).toBe(e.weight);
+            expect(step!.matrix!.values[e.from][e.to]).toBe(ld.dist[e.from][e.to]);
+          }
+        }
+    });
+    it("no table step shows an answer before its own step, and there is no box listing the missing entries", () => {
+      for (const level of [1, 2, 3] as const)
+        for (let i = 0; i < 15; i++) {
+          const p = generateTsp(level, "tspNN", { starts: 1, setting: "plain" });
+          const ld = leastDistances(p.network);
+          const todo = pairsToComplete(ld);
+          const tableSteps = solveTsp(p).filter((s) => s.phase === "Complete the table");
+          if (!todo.length) continue;
+          expect(tableSteps.every((s) => !s.list)).toBe(true);
+          tableSteps.forEach((s, k) => {
+            // by step k only the first k entries have been worked out
+            todo.forEach(([a, b], j) => {
+              const shown = s.matrix!.values[a][b];
+              if (j < k) expect(shown).toBe(ld.dist[a][b]);
+              else expect(shown).toBe(ld.direct[a][b]); // blank, or the direct edge that is still to be beaten
+            });
+          });
+        }
+    });
+  });
 });

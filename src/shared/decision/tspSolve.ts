@@ -60,14 +60,14 @@ function tableBeats(c: Ctx): SolveStep[] {
   const filled = new Set<string>();
   const { ld, todo } = c;
   steps.push({
-    caption: `Not every table entry is the shortest way between its two vertices. Find the least distance for each of the ${todo.length} pair${todo.length === 1 ? "" : "s"} that is not simply an edge: ${todo.map(([a, b]) => `${a}${b}`).join(", ")}.`,
+    // the table shows what is still missing (a blank, or a direct edge a shorter route may beat); no answer is shown before its own step
+    caption: `Build the table of least distances. Where two vertices are not joined, or the direct edge is longer than a route through other vertices, the entry has to be worked out as the length of the shortest route. Take the entries one at a time.`,
     phase: "Complete the table",
     edgeStates: idle(c),
     matrix: tableWith(c, filled),
     matrixTitle: c.title,
-    list: { title: "Entries to find", items: todo.map(([a, b]) => ({ text: `${a}${b}`, tone: "pending" as const })) },
   });
-  todo.forEach(([a, b], k) => {
+  todo.forEach(([a, b]) => {
     const route = ld.path[a][b];
     const sum = `${route.join("–")} = ${routeSum(c, route).join(" + ")} = ${ld.dist[a][b]}`;
     const direct = ld.direct[a][b];
@@ -85,7 +85,6 @@ function tableBeats(c: Ctx): SolveStep[] {
       matrix: tableWith(c, filled),
       matrixTitle: c.title,
       matrixCells: both(a, b, "highlight"),
-      list: { title: "Entries to find", items: todo.map(([x, y], j) => ({ text: `${x}${y} ${ld.dist[x][y]}`, tone: j <= k ? ("good" as const) : ("pending" as const) })) },
     });
   });
   return steps;

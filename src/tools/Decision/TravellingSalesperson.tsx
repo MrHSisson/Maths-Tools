@@ -72,7 +72,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
 const LEGEND: LegendItem[] = [
   { swatch: "tree", label: "In the tour / tree" },
   { swatch: "considering", label: "This step" },
-  { swatch: "added", label: "New table entry (complete network) / edges back to the deleted vertex" },
+  { swatch: "added", label: "New table entry / link to deleted vertex" },
   { swatch: "rejected", label: "Not the shortest way" },
   { swatch: "indirect", label: "Via other vertices" },
   { swatch: "current", label: "Current vertex" },

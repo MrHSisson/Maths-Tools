@@ -336,39 +336,60 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     />
   ) : null;
 
-  const example = (
+  // ANSWER — empty until asked for, then built up one step at a time; the controls sit at its foot
+  const answerCard = (
+    <div className="rounded-xl border border-gray-200 bg-white overflow-hidden flex flex-col">
+      <div className="px-5 pt-4 pb-2 text-xs font-bold uppercase tracking-wider text-gray-400">Answer</div>
+      {/* fixed height, so the controls below never move as steps are added */}
+      <div style={{ height: narrow ? "min(36vh, 300px)" : "min(46vh, 480px)", minHeight: narrow ? 200 : 260 }}>
+        {atQuestion ? (
+          <div className="px-5 pb-5 text-base text-gray-500 leading-snug">The working and the answer appear here, one step at a time.</div>
+        ) : (
+          <StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} />
+        )}
+      </div>
+      {stepNav}
+    </div>
+  );
+  const workingExtras = (
+    <>
+      {current?.list && current.list.items.length > 0 && <ListCard list={current.list} />}
+      {current?.route && current.route.length > 0 && <RouteCard route={current.route} />}
+      {showMatrix && (
+        <div className="rounded-xl border border-gray-200 bg-white p-4 overflow-x-auto">
+          <div className="mx-auto w-fit">
+            <MatrixView network={problem.network} step={canvasStep} bare missing={config.matrixMissing} />
+          </div>
+        </div>
+      )}
+    </>
+  );
+  const canvasCol = (
+    <>
+      {canvasBox(narrow ? "250px" : "min(74vh, 800px)")}
+      {footer && <div className="flex justify-center">{footer}</div>}
+      {!atQuestion && legendItems && <Legend items={legendItems} />}
+    </>
+  );
+
+  const example = narrow ? (
+    // phone: one column in the order a student reads it — the question, the graph, then the working
+    <div className="p-3 flex flex-col gap-4">
+      {questionBlock(false)}
+      {canvasCol}
+      {answerCard}
+      {workingExtras}
+    </div>
+  ) : (
     <div className="p-3 sm:p-6 flex flex-wrap gap-6 items-start">
       {/* the graph stays in view while the working scrolls */}
       <div className="flex flex-col gap-4 lg:sticky lg:top-3" style={{ flex: "1 1 620px", minWidth: 0 }}>
-        {canvasBox(narrow ? "250px" : "min(74vh, 800px)")}
-        {footer && <div className="flex justify-center">{footer}</div>}
-        {!atQuestion && legendItems && <Legend items={legendItems} />}
+        {canvasCol}
       </div>
       <div className="flex flex-col gap-4" style={{ flex: "1 1 360px", minWidth: 0 }}>
-        {/* QUESTION */}
         {questionBlock(false)}
-        {/* ANSWER — empty until asked for, then built up one step at a time; the controls sit at its foot */}
-        <div className="rounded-xl border border-gray-200 bg-white overflow-hidden flex flex-col">
-          <div className="px-5 pt-4 pb-2 text-xs font-bold uppercase tracking-wider text-gray-400">Answer</div>
-          {/* fixed height, so the controls below never move as steps are added */}
-          <div style={{ height: narrow ? "min(36vh, 300px)" : "min(46vh, 480px)", minHeight: narrow ? 200 : 260 }}>
-            {atQuestion ? (
-              <div className="px-5 pb-5 text-base text-gray-500 leading-snug">The working and the answer appear here, one step at a time.</div>
-            ) : (
-              <StepCascade steps={steps} idx={idx} answer={onAnswer ? answerText : null} all={showAll} />
-            )}
-          </div>
-          {stepNav}
-        </div>
-        {current?.list && current.list.items.length > 0 && <ListCard list={current.list} />}
-        {current?.route && current.route.length > 0 && <RouteCard route={current.route} />}
-        {showMatrix && (
-          <div className="rounded-xl border border-gray-200 bg-white p-4 overflow-x-auto">
-            <div className="mx-auto w-fit">
-              <MatrixView network={problem.network} step={canvasStep} bare missing={config.matrixMissing} />
-            </div>
-          </div>
-        )}
+        {answerCard}
+        {workingExtras}
       </div>
     </div>
   );
