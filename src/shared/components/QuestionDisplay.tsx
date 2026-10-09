@@ -2,7 +2,7 @@ import { MathRenderer, InlineMath } from "./MathRenderer";
 import type { AnyQuestion } from "../types";
 import { ansEq } from "../helpers";
 
-export const QuestionDisplay = ({ q, cls }: { q: AnyQuestion; cls: string }) => {
+export const QuestionDisplay = ({ q, cls, tight = false }: { q: AnyQuestion; cls: string; tight?: boolean }) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const anyQ = q as any;
   if (anyQ.kind === "frac") {
@@ -24,9 +24,9 @@ export const QuestionDisplay = ({ q, cls }: { q: AnyQuestion; cls: string }) => 
   }
   // worded / asFrac — multi-line
   return (
-    <div className="flex flex-col gap-2 text-center">
+    <div className={`flex flex-col text-center ${tight ? "gap-1" : "gap-2"}`}>
       {(q as any).lines.map((line: string, i: number) => (
-        <div key={i} className={`${cls} font-semibold`} style={{ color: "#000", lineHeight: 2.2 }}>
+        <div key={i} className={`${cls} font-semibold`} style={{ color: "#000", lineHeight: tight ? 1.4 : 2.2 }}>
           <InlineMath text={line} />
         </div>
       ))}

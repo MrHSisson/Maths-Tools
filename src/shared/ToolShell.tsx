@@ -1424,7 +1424,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       <div className={stacked ? undefined : "overflow-y-auto"} style={stacked ? undefined : { maxHeight: "120vh" }}>
         <div className={compact ? "p-4 w-full" : "p-8 w-full"} style={{ backgroundColor: qBg }}>
           <div className={compact ? "text-center py-2 relative" : "text-center py-4 relative"}>
-            {(!hideFontControls || !compact) && <div style={{ position: "absolute", top: 0, right: 0, display: "flex", gap: 6 }}>
+            {(!compact && (!hideFontControls || !compact)) && <div style={{ position: "absolute", top: 0, right: 0, display: "flex", gap: 6 }}>
               {!hideFontControls && <>
               <button style={{ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: canDisplayDecrease ? "pointer" : "not-allowed", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", opacity: canDisplayDecrease ? 1 : 0.35 }} onClick={() => canDisplayDecrease && setDisplayFontSize(f => f - 1)}><ChevronDown size={16} color="#6b7280" /></button>
               <button style={{ background: "rgba(0,0,0,0.08)", border: "none", borderRadius: 8, cursor: canDisplayIncrease ? "pointer" : "not-allowed", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", opacity: canDisplayIncrease ? 1 : 0.35 }} onClick={() => canDisplayIncrease && setDisplayFontSize(f => f + 1)}><ChevronUp size={16} color="#6b7280" /></button>
@@ -1434,7 +1434,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             {getInstruction() && <div className={`${["text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl", "text-5xl"][displayFontSize]} font-semibold mb-2`} style={{ color: "#000" }}>{getInstruction()}</div>}
             {questionRenderer
               ? <>{questionRenderer(currentQuestion, showAnswer, colorScheme, false, undefined, getQOSnapshot(), displayFontSizes[displayFontSize])}{stagedBtn(showAnswer)}</>
-              : <QuestionDisplay q={currentQuestion} cls={displayFontSizes[displayFontSize]} />
+              : <QuestionDisplay q={currentQuestion} cls={compact ? displayFontSizes[Math.min(displayFontSize, 1)] : displayFontSizes[displayFontSize]} tight={!!compact} />
             }
           </div>
           {showAnswer && <div>{stepsEl(false)}</div>}
@@ -1623,12 +1623,12 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         {isInfoOpen && <InfoModal infoSections={infoSections} onClose={() => setIsInfoOpen(false)} />}
         {openSkillId && <SkillOverlay skillId={openSkillId} onClose={() => setOpenSkillId(null)} />}
 
-        <div className="min-h-screen px-4 py-4" style={{ backgroundColor: "#f5f3f0" }}>
+        <div className="min-h-screen px-3 pt-3 pb-24" style={{ backgroundColor: "#f5f3f0" }}>
           <div className="max-w-md mx-auto">
-            <h1 className="text-lg font-bold text-center mb-3" style={{ color: "#000" }}>{config.pageTitle}</h1>
+            <h1 className="text-base font-bold text-center mb-2" style={{ color: "#000" }}>{config.pageTitle}</h1>
 
             <button onClick={() => setNarrowDrawerOpen(true)}
-              className="w-full bg-white border border-gray-200 rounded-xl shadow-sm flex items-center justify-between gap-2 px-3.5 py-2.5 mb-3">
+              className="w-full bg-white border border-gray-200 rounded-xl shadow-sm flex items-center justify-between gap-2 px-3.5 py-2 mb-2">
               <div className="flex items-center gap-2 min-w-0 overflow-hidden">
                 <span className={`text-xs ${LV_HEADER_COLORS[difficulty]}`}>●</span>
                 {toolKeys.length > 1 && <span className="font-bold text-sm text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis">{toolName}</span>}
@@ -1641,7 +1641,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm mb-3">
               {([...(["single", "worksheet"] as const), ...(showDepth ? (["depth"] as const) : [])]).map(m => (
                 <button key={m} onClick={() => setMode(m)}
-                  className={`flex-1 px-3 py-2 font-bold text-sm transition-colors ${mode === m ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}>
+                  className={`flex-1 px-2 py-1.5 whitespace-nowrap font-bold text-sm transition-colors ${mode === m ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}>
                   {m === "single" ? "Worked Example" : m === "depth" ? "Depth" : "Worksheet"}
                 </button>
               ))}
@@ -1652,20 +1652,12 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             ) : mode === "worksheet" ? (
               <>
                 <div className="flex items-center justify-center gap-2 mb-3 flex-wrap">
-                  <button onClick={handleGenerateWorksheet} className="px-3.5 py-1.5 bg-blue-900 text-white rounded-lg font-bold text-sm shadow-sm hover:bg-blue-800 flex items-center gap-1.5">
-                    <RefreshCw size={14} /> Generate
-                  </button>
                   {!defaults.fixedQuestions && (
                     <div className="flex items-center gap-0.5 bg-white border-2 border-gray-300 rounded-lg px-1">
                       <button onClick={() => setNumQuestions(n => Math.max(1, n - 1))} className="w-7 h-7 flex items-center justify-center text-gray-500 font-bold">−</button>
                       <span className="w-6 text-center font-bold text-sm text-gray-800">{numQuestions}</span>
                       <button onClick={() => setNumQuestions(n => Math.min(24, n + 1))} className="w-7 h-7 flex items-center justify-center text-gray-500 font-bold">+</button>
                     </div>
-                  )}
-                  {worksheet.length > 0 && (
-                    <button onClick={() => setShowWorksheetAnswers(a => !a)} className="px-3.5 py-1.5 bg-blue-900 text-white rounded-lg font-bold text-sm shadow-sm hover:bg-blue-800 flex items-center gap-1.5">
-                      <Eye size={14} /> {showWorksheetAnswers ? "Hide All" : "Show All"}
-                    </button>
                   )}
                 </div>
                 <div className="flex flex-col gap-2.5">
@@ -1695,21 +1687,29 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               </>
             ) : (
               <>
-                <div className="flex justify-center gap-2 mb-3">
-                  <button onClick={handleNewQuestion} className="flex-1 px-3 py-2 bg-blue-900 text-white rounded-lg font-bold text-sm shadow-sm hover:bg-blue-800 flex items-center justify-center gap-1.5">
-                    <RefreshCw size={14} /> New Question
-                  </button>
-                  <button onClick={() => setShowAnswer(a => !a)} className="flex-1 px-3 py-2 bg-blue-900 text-white rounded-lg font-bold text-sm shadow-sm hover:bg-blue-800 flex items-center justify-center gap-1.5">
-                    <Eye size={14} /> {showAnswer ? "Hide Answer" : "Show Answer"}
-                  </button>
-                </div>
-                <div className="rounded-xl shadow-lg overflow-hidden">
+                <div className="rounded-xl shadow-lg overflow-clip">
                   {renderWorkedExample(true)}
                 </div>
               </>
             )}
           </div>
         </div>
+
+        {mode !== "depth" && (
+          <div className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur border-t border-gray-200 px-3 pt-2 flex gap-2" style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))", boxShadow: "0 -4px 16px rgba(0,0,0,0.08)" }}>
+            {mode === "worksheet" ? (
+              <>
+                <button onClick={handleGenerateWorksheet} className="flex-1 h-12 bg-blue-900 text-white rounded-xl font-bold text-base flex items-center justify-center gap-2 active:bg-blue-800"><RefreshCw size={18} /> Generate</button>
+                {worksheet.length > 0 && <button onClick={() => setShowWorksheetAnswers(x => !x)} className="flex-1 h-12 bg-blue-900 text-white rounded-xl font-bold text-base flex items-center justify-center gap-2 active:bg-blue-800"><Eye size={18} /> {showWorksheetAnswers ? "Hide all" : "Show all"}</button>}
+              </>
+            ) : (
+              <>
+                <button onClick={handleNewQuestion} className="flex-1 h-12 bg-white border-2 border-blue-900 text-blue-900 rounded-xl font-bold text-base flex items-center justify-center gap-2 active:bg-blue-50"><RefreshCw size={18} /> New</button>
+                <button onClick={() => setShowAnswer(x => !x)} className="flex-[1.4] h-12 bg-blue-900 text-white rounded-xl font-bold text-base flex items-center justify-center gap-2 active:bg-blue-800"><Eye size={18} /> {showAnswer ? "Hide answer" : "Show answer"}</button>
+              </>
+            )}
+          </div>
+        )}
 
         {narrowDrawerOpen && (
           <div className="fixed inset-0 z-50 flex">

@@ -593,9 +593,9 @@ export const WorkedExampleSteps = ({
               {!timeline && answerBox("", undefined, true)}
             </div>, totalSteps - 1));
       const footer = (
-        <div ref={footerRef} className="pt-4 mt-4 border-t" style={{ borderColor: "rgba(0,0,0,0.08)" }}>
+        <div ref={footerRef} className={compact ? "sticky z-30 mt-3 -mx-1 rounded-xl bg-white/95 px-1 py-2 shadow-[0_-6px_14px_rgba(0,0,0,0.07)] border-t" : "pt-4 mt-4 border-t"} style={compact ? { bottom: "calc(4.1rem + env(safe-area-inset-bottom))", borderColor: "rgba(0,0,0,0.08)" } : { borderColor: "rgba(0,0,0,0.08)" }}>
           {navRow}
-          <div className="mt-3">{dotStrip}</div>
+          {!compact && <div className="mt-3">{dotStrip}</div>}
         </div>
       );
       if (fullscreen) {
