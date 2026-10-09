@@ -76,6 +76,8 @@ export interface DecisionProblem {
   matrixMode?: "question" | "working" | "off";
   /** Overrides config.legend for this question. */
   legend?: LegendItem[];
+  /** TSP: the complete network of least distances (every pair joined, each weight the table entry), drawn once the table is complete */
+  complete?: Network;
   /** The question hands the network over as a table only: Question mode draws the vertices without their edges. */
   vertexOnlyQuestion?: boolean;
 }
@@ -117,6 +119,8 @@ export interface SolveStep {
   runningTotal?: number; // e.g. MST weight so far
   totalLabel?: string; // label for the running-total badge (default "Total")
   flowView?: FlowViewState; // Network Flows: how the flow diagram is drawn this beat
+  /** Draw THIS network instead of the question's (TSP: the complete network of least distances, then the original again for the real route); `edgeStates` then refer to its edges */
+  network?: Network;
   edgeOrder?: Record<string, string>; // edgeId → the number it was chosen at, drawn as a badge on its weight
   matrixOrder?: Record<string, string>; // vertex → the number written over its column heading (Prim on a matrix)
   matrixCrossed?: string[]; // vertices whose ROW is crossed out (Prim on a matrix)

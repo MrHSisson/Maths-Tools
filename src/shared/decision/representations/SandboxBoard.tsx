@@ -95,6 +95,8 @@ export default function SandboxBoard({ problem, step, steps, idx = -1, onStep, r
       const d = problem.flow;
       return <FlowView net={{ ...d.net, nodes }} mode={d.mode} view={step?.flowView ?? questionView(problem)} labelPos={d.labelPos} frame={box} onNodeDown={onNodeDown} background="transparent" />;
     }
+    // a beat that draws its own network (the complete network of least distances) is shown as it is: its vertices are not the question's, so they do not drag
+    if (step?.network) return <NetworkView network={step.network} step={step} showWeights={weights} box={networkBox(step.network)} background="transparent" />;
     return <NetworkView network={{ ...problem.network, nodes }} step={step} showWeights={weights} box={box} onNodeDown={onNodeDown} onWeightClick={onWeightChange ? (id) => setEditing({ id, value: String(problem.network.edges.find((e) => e.id === id)?.weight ?? "") }) : undefined} background="transparent" />;
   })();
 

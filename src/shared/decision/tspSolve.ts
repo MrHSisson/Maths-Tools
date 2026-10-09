@@ -2,19 +2,25 @@
 // Travelling salesperson — the worked solutions as SolveStep[] (one beat = the next thing a teacher would write).
 //
 //   tableBeats   complete the table of least distances (practical networks only)
-//   nnBeats      nearest neighbour from a start vertex (the upper bound)
+//   kBeat        draw that table as the COMPLETE network (every pair joined) — from here the classical problem is solved on it
+//   nnBeats      nearest neighbour from a start vertex (the upper bound), on the complete network
+//   routeBeat    interpret the tour as a real route in the original network (each leg replaced by its shortest route)
 //   lowerBeats   delete a vertex, Kruskal on the rest of the table, add its two shortest edges (the lower bound)
 // A question is a sequence of these. Every number is read off tsp.ts / tspBounds.ts, never recomputed here.
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { leastDistances, nearestNeighbour, type LeastDistances } from "./tsp";
 import { lowerBound } from "./tspBounds";
-import { expandRoute, pairKey, pairsToComplete } from "./tspGenerate";
+import { completeOf, expandRoute, pairKey, pairsToComplete } from "./tspGenerate";
 import type { DecisionProblem, DistanceTable, EdgeState, MatrixCell, Network, NodeRole, SolveStep, StepListItem } from "./types";
 
 interface Ctx {
+  /** the network drawn in this phase: the original while the table is completed, the complete network after */
   net: Network;
+  /** the table the algorithm reads; on the complete network every leg is a single edge */
   ld: LeastDistances;
+  /** the table with the real shortest routes (for the captions and the final route) */
+  real: LeastDistances;
   todo: [string, string][];
   practical: boolean;
   title: string;
@@ -110,7 +116,7 @@ function nnBeats(c: Ctx, start: string, tag: string, again = false): { steps: So
     caption: again
       ? `Now start again at ${start}: cross out column ${start} and look along row ${start} for the smallest entry.`
       : c.practical || c.todo.length
-        ? `${c.todo.length ? "The table is complete. " : ""}Apply nearest neighbour, starting at ${start}: cross out column ${start} and look along row ${start} for the smallest entry.`
+        ? `Now solve the classical problem on the complete network. Apply nearest neighbour, starting at ${start}: cross out column ${start} and look along row ${start} for the smallest entry.`
         : `Every pair is joined directly and no detour is ever shorter, so apply nearest neighbour straight away. Start at ${start}: cross out column ${start} and look along row ${start} for the smallest entry.`,
     phase,
     route: [start],
@@ -131,9 +137,8 @@ function nnBeats(c: Ctx, start: string, tag: string, again = false): { steps: So
     const visitedBefore = nn.tour.slice(0, i);
     const leg = nn.legs[i - 1];
     total += leg;
-    const route = ld.path[from][to];
-    const via = route.length > 2 ? ` (in the network: ${route.join("–")})` : "";
-    const current = pathEdges(c, route);
+    const via = c.real.path[from][to].length > 2 ? ` (in the original network: ${c.real.path[from][to].join("–")})` : "";
+    const current = pathEdges(c, ld.path[from][to]);
     roles[from] = "visited";
     roles[to] = "current";
     if (!closing) order[to] = String(i + 1);
@@ -163,8 +168,8 @@ function nnBeats(c: Ctx, start: string, tag: string, again = false): { steps: So
     for (const id of current) legEdges.add(id);
   }
 
-  const route = expandRoute(ld, nn.tour);
-  const routeNote = c.todo.length && route.join("") !== nn.tour.join("") ? ` Driven in the original network this is ${route.join("–")}, passing through some vertices more than once.` : "";
+  const route = expandRoute(c.real, nn.tour);
+  const routeNote = c.todo.length && route.join("") !== nn.tour.join("") ? " Next, interpret this tour as a route in the original network." : "";
   for (const v of ld.ids) roles[v] = "visited";
   steps.push({
     caption: `Nearest-neighbour tour: ${nn.tour.join(" → ")}, total length ${nn.total}. This is an upper bound — the optimal tour is no longer than ${nn.total}.${routeNote}`,
@@ -192,7 +197,7 @@ function lowerBeats(c: Ctx, deleted: string): { steps: SolveStep[]; lower: numbe
   const dimDeleted: MatrixCell[] = ld.ids.filter((r) => r !== deleted).map((r) => ({ r, c: deleted, state: "dim" as const }));
   const roles: Record<string, NodeRole> = { [deleted]: "deleted" };
   const chip = (e: { a: string; b: string; w: number }) => `${e.a}${e.b} ${e.w}`;
-  const viaNote = (a: string, b: string) => (ld.path[a][b].includes(deleted) ? ` (the route passes through ${deleted}, but ${ld.dist[a][b]} is still the least distance between ${a} and ${b})` : "");
+  const viaNote = (a: string, b: string) => (c.real.path[a][b].includes(deleted) ? ` (the route passes through ${deleted}, but ${ld.dist[a][b]} is still the least distance between ${a} and ${b})` : "");
 
   const kept = new Set<string>(); // route edges of the tree so far
   const matrixKept: MatrixCell[] = [];
@@ -326,65 +331,128 @@ function lowerBeats(c: Ctx, deleted: string): { steps: SolveStep[]; lower: numbe
   return { steps, lower: lb.lower };
 }
 
+// ── Phase 1b: the table as the complete network ──────────────────────────────
+function kBeat(c: Ctx): SolveStep {
+  const states = idle(c);
+  for (const [a, b] of c.todo) states[edgeBetween(c, a, b).id] = "added";
+  return {
+    caption: `Draw the table as a complete network: every pair of vertices is joined, and each edge has the least distance from the table${c.todo.length ? ` — the ${c.todo.length} new or changed ${c.todo.length === 1 ? "entry is" : "entries are"} purple` : ""}. Every direct edge is now a shortest route, so the triangle inequality holds and the classical problem (visit every vertex once, return to the start) can be solved on this network.`,
+    phase: "Complete network",
+    edgeStates: states,
+    matrix: fullTable(c),
+    matrixTitle: c.title,
+    runningTotal: c.todo.length,
+    totalLabel: "Entries changed",
+  };
+}
+
+// ── Interpreting a tour as a real route ──────────────────────────────────────
+/** The tour is on the complete network; this is the route it stands for in the ORIGINAL network (each leg replaced by its shortest route). */
+function routeBeat(c0: Ctx, tour: string[], total: number): SolveStep | null {
+  const route = expandRoute(c0.ld, tour);
+  if (route.join("") === tour.join("")) return null; // every leg was a single edge: nothing to interpret
+  const states = idle(c0);
+  const legs = tour.slice(1).map((v, i) => ({ from: tour[i], to: v, path: c0.ld.path[tour[i]][v], len: c0.ld.dist[tour[i]][v] }));
+  for (const l of legs) for (const id of pathEdges(c0, l.path)) states[id] = "tree";
+  const visits: Record<string, number> = {};
+  for (const v of route.slice(0, -1)) visits[v] = (visits[v] ?? 0) + 1;
+  const repeated = Object.keys(visits).filter((v) => visits[v] > 1);
+  return {
+    caption:
+      `Now interpret the tour as a real route in the original network: each edge of the tour stands for the shortest route in the table.\n` +
+      `${legs.map((l) => `${l.from} → ${l.to}: ${l.path.join("–")} (${l.len})`).join("\n")}\n` +
+      `The route is ${route.join("–")}, length ${total}${repeated.length ? ` — it passes through ${repeated.join(", ")} more than once, which is allowed because the tour was found on the complete network` : ""}.`,
+    phase: "Route in the original network",
+    route,
+    network: c0.net,
+    edgeStates: states,
+    runningTotal: total,
+    totalLabel: "Route length",
+  };
+}
+
 // ── The whole solution ───────────────────────────────────────────────────────
 export function solveTsp(p: DecisionProblem): SolveStep[] {
   const net = p.network;
-  const ld = leastDistances(net);
-  const todo = pairsToComplete(ld);
+  const real = leastDistances(net);
+  const todo = pairsToComplete(real);
   const practical = todo.length > 0;
-  const c: Ctx = { net, ld, todo, practical, title: practical ? "Table of least distances" : "Distance matrix" };
+  const title = practical ? "Table of least distances" : "Distance matrix";
   const kind = p.kind ?? "tspNN";
-  const steps: SolveStep[] = practical ? tableBeats(c) : [];
+  // phase 1 works on the original network
+  const c0: Ctx = { net, ld: real, real, todo, practical, title };
+  const steps: SolveStep[] = practical ? tableBeats(c0) : [];
+
+  // from here the classical problem is solved on the COMPLETE network of least distances (every leg a single edge)
+  let c: Ctx = c0;
+  let K: Network | undefined;
+  if (practical) {
+    K = p.complete ?? completeOf(net, real);
+    const direct: LeastDistances = {
+      ids: real.ids,
+      dist: real.dist,
+      direct: real.dist,
+      path: Object.fromEntries(real.ids.map((a) => [a, Object.fromEntries(real.ids.map((b) => [b, a === b ? [a] : [a, b]]))])),
+      unique: Object.fromEntries(real.ids.map((a) => [a, Object.fromEntries(real.ids.map((b) => [b, true]))])),
+    };
+    c = { net: K, ld: direct, real, todo, practical, title };
+  }
+  const onK = (st: SolveStep): SolveStep => (K ? { ...st, network: K } : st);
 
   if (kind === "tspTable") {
-    const done = fullTable(c);
     steps.push({
-      caption: `The table of least distances is complete. ${todo.map(([a, b]) => `${a}${b} = ${ld.dist[a][b]}`).join(", ")}${todo.length ? " are the new entries." : ""}`,
+      caption: `The table of least distances is complete. ${todo.map(([a, b]) => `${a}${b} = ${real.dist[a][b]}`).join(", ")}${todo.length ? " are the new entries." : ""}`,
       phase: "Table complete",
-      edgeStates: idle(c),
-      matrix: done,
-      matrixTitle: c.title,
+      edgeStates: idle(c0),
+      matrix: fullTable(c0),
+      matrixTitle: title,
       runningTotal: todo.length,
       totalLabel: "Entries found",
     });
+    if (practical) steps.push(onK(kBeat(c)));
     return steps;
   }
+  if (practical) steps.push(onK(kBeat(c)));
 
-  const starts = p.starts?.length ? p.starts : p.start ? [p.start] : [ld.ids[0]];
+  const starts = p.starts?.length ? p.starts : p.start ? [p.start] : [real.ids[0]];
   let upper: number | undefined;
   if (kind === "tspNN" || kind === "tspBounds") {
     const runs = starts.map((s, i) => nnBeats(c, s, starts.length > 1 ? ` (start ${s})` : "", i > 0));
-    runs.forEach((r) => steps.push(...r.steps));
+    runs.forEach((r) => steps.push(...r.steps.map(onK)));
     upper = Math.min(...runs.map((r) => r.total));
+    let bestIdx = 0;
     if (runs.length > 1) {
-      const bestIdx = runs.findIndex((r) => r.total === upper);
-      steps.push({
+      bestIdx = runs.findIndex((r) => r.total === upper);
+      steps.push(onK({
         caption: `From ${starts[0]} the tour has length ${runs[0].total}; from ${starts[1]} it has length ${runs[1].total}. The smaller is the better upper bound: ${upper}, from ${starts[bestIdx]}.`,
         phase: "Best upper bound",
         route: runs[bestIdx].tour,
         edgeStates: idle(c),
         matrix: fullTable(c),
-        matrixTitle: c.title,
+        matrixTitle: title,
         list: { title: "Upper bounds", items: runs.map<StepListItem>((r, k) => ({ text: `${starts[k]}: ${r.total}`, tone: k === bestIdx ? "good" : "pending" })) },
         runningTotal: upper,
         totalLabel: "Upper bound",
-      });
+      }));
     }
+    // the tour is on the complete network: say what route in the ORIGINAL network it is
+    const rb = practical ? routeBeat(c0, runs[bestIdx].tour, upper) : null;
+    if (rb) steps.push(rb);
   }
   if (kind === "tspLower" || kind === "tspBounds") {
     const r = lowerBeats(c, p.deleted!);
-    steps.push(...r.steps);
+    steps.push(...r.steps.map(onK));
     if (kind === "tspBounds") {
-      steps.push({
+      steps.push(onK({
         caption: `Upper bound ${upper} (nearest neighbour from ${starts[0]}). Lower bound ${r.lower} (deleting ${p.deleted}).\nThe length of the optimal tour lies between them: ${r.lower} ≤ optimal tour ≤ ${upper}.`,
         phase: "Interval",
         edgeStates: idle(c),
         matrix: fullTable(c),
-        matrixTitle: c.title,
+        matrixTitle: title,
         list: { title: "The optimal tour lies in", items: [{ text: `${r.lower}`, tone: "note" }, { text: "≤ optimal ≤", tone: "pending" }, { text: `${upper}`, tone: "note" }] },
         runningTotal: upper,
         totalLabel: "Upper bound",
-      });
+      }));
     }
   }
   return steps;

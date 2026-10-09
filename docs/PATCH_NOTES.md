@@ -28,6 +28,10 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-09 (late, 3) — Travelling Salesperson: work on the complete network, then interpret the route
+- After the table of least distances is complete it is DRAWN as the complete network K (every pair joined, each weight the table entry, changed entries purple); nearest neighbour and the deleted-vertex lower bound run on that picture, where every leg is a single edge, instead of on the sparse original. For an upper bound the working ends by interpreting the tour as a real route in the original network (each leg replaced by its shortest route, drawn on the original). The table question ends by drawing the complete network too.
+- Plumbing: `SolveStep.network` (a beat can draw its own network; `edgeStates` then refer to its edges), `DecisionProblem.complete` (a complete network keeps its own layout; a practical one is redrawn on the bank's K4–K6 layout), validate.ts checks each beat's edges against the network it draws, the sandbox shows such beats as drawn.
+
 ### 2026-10-09 (late, 2) — Travelling Salesperson: "Initial weights" option (holds / broken / either)
 - Distance questions matter too, so a new QO decides whether the INITIAL network obeys the triangle inequality: **Holds** (no direct edge beaten by a route; in-context questions use distances; Level 3 then needs a table entry with a route of 3+ edges), **Broken** (at least one beaten direct edge at every level; in-context questions use journey times or costs), **Either** (default mix). Every question still builds the table of least distances first and solves the classical problem on it. Applies to all four question types.
 

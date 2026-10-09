@@ -353,8 +353,11 @@ export function validateProblem(exp: DecisionProblemExport, levels = exp.levels 
           continue;
         }
         for (const s of steps) {
+          // a beat that draws its own network (TSP's complete network) is checked against THAT network's edges
+          const stepEdgeIds = s.network ? new Set(s.network.edges.map((e) => e.id)) : edgeIds;
+          if (s.network && s.network.nodes.some((v) => !nodeIds.has(v.id))) errors.push(`a SolveStep draws a network with a vertex that is not in the question`);
           for (const eid of [...Object.keys(s.edgeStates), ...Object.keys(s.edgeOrder ?? {})])
-            if (!edgeIds.has(eid)) errors.push(`a SolveStep references edge "${eid}" not in the network`);
+            if (!stepEdgeIds.has(eid)) errors.push(`a SolveStep references edge "${eid}" not in the network`);
           for (const c of s.matrixCells ?? [])
             if (!nodeIds.has(c.r) || !nodeIds.has(c.c))
               errors.push(`a SolveStep matrix cell references a missing node (${c.r},${c.c})`);

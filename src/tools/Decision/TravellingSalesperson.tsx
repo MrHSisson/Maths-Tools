@@ -45,6 +45,7 @@ const INFO_SECTIONS: InfoSection[] = [
     icon: "⚙️",
     content: [
       { label: "Levels", detail: "Level 1: a complete network (every pair joined) whose weights may or may not obey the triangle inequality — up to three entries can be beaten by a route through other vertices and must be replaced. Level 2: a practical network (not every pair joined) — complete the table of least distances first. Level 3: a practical network where one to three direct edges are longer than a route through other vertices. Level 2: a practical network — complete the table of least distances first, then apply the algorithm. Level 3: a practical network where one direct edge is longer than a route through other vertices, so a table entry must be replaced." },
+      { label: "The complete network", detail: "Once the table of least distances is complete it is drawn as a complete network (K4–K6): every pair of vertices joined, each edge carrying the table entry — the entries that are new or changed are purple. Nearest neighbour and the lower bound are then worked on that picture, where every leg is a single edge. For an upper bound, the working ends by interpreting the tour as a real route in the original network, replacing each leg by the shortest route it stands for (so a vertex may be passed through more than once)." },
       { label: "Initial weights", detail: "Every question starts from an initial network and ALWAYS builds the complete network of least distances first (each entry becomes the shortest route), which satisfies the triangle inequality by construction; the classical problem is then solved on that table. The option decides whether the INITIAL weights obey the inequality. Holds: no direct edge is beaten by a route through other vertices (distances) — Level 3 then always has a table entry that needs a route of three or more edges. Broken: at least one direct edge is longer than a route through other vertices (a slow road, a dear ticket, a long wait), so that table entry must be replaced; in-context questions then describe the weights as journey times or costs. Either (the default) mixes both. Weights are never drawn to scale, so the picture does not give the tour away." },
       { label: "Start vertices", detail: "Nearest neighbour from one start vertex, or from two start vertices with the better (smaller) upper bound taken." },
       { label: "Setting", detail: "Plain, or in context (a driver, representative or surveyor who must visit every site and return)." },
@@ -71,7 +72,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
 const LEGEND: LegendItem[] = [
   { swatch: "tree", label: "In the tour / tree" },
   { swatch: "considering", label: "This step" },
-  { swatch: "added", label: "Edges back to the deleted vertex" },
+  { swatch: "added", label: "New table entry (complete network) / edges back to the deleted vertex" },
   { swatch: "rejected", label: "Not the shortest way" },
   { swatch: "indirect", label: "Via other vertices" },
   { swatch: "current", label: "Current vertex" },

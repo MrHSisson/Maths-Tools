@@ -153,7 +153,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
 
   const questionNet = problem.vertexOnlyQuestion ? { ...problem.network, edges: [] } : problem.network; // a table-only question draws just the vertices
   const shown = (st: SolveStep | undefined) =>
-    renderCanvas ? renderCanvas(problem, st) : <NetworkView network={!st ? questionNet : problem.network} step={st} background="#ffffff" />;
+    renderCanvas ? renderCanvas(problem, st) : <NetworkView network={st?.network ?? (!st ? questionNet : problem.network)} step={st} background="#ffffff" />;
   const legendItems = problem.legend ?? config.legend;
   const matrixMode = problem.matrixMode ?? (config.hideMatrix ? "off" : config.questionMatrix ? "question" : "working");
   const showMatrix = matrixMode === "question" || (matrixMode === "working" && !atQuestion);

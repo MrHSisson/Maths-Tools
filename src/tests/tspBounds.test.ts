@@ -95,7 +95,10 @@ describe("generated questions", () => {
           if (kind === "tspTable") {
             expect(last.runningTotal).toBe(todo.length);
             for (const [a, b] of todo) expect(last.matrix!.values[a][b]).toBe(ld.dist[a][b]);
-            expect(steps.length).toBe(todo.length + 2);
+            // the intro beat, one beat per entry, "table complete", then the table drawn as the complete network
+            expect(steps.length).toBe(todo.length + 3);
+            expect(last.phase).toBe("Complete network");
+            expect(last.network!.edges.length).toBe((p.network.nodes.length * (p.network.nodes.length - 1)) / 2);
           }
         }
       });
@@ -176,5 +179,49 @@ describe("the initial network need not satisfy the triangle inequality — the t
       const ld = leastDistances(generateTsp(3, "tspNN", { starts: 1, setting: "plain", weights: "holds" }).network);
       expect(pairsToComplete(ld).some(([x, y]) => ld.path[x][y].length >= 4)).toBe(true);
     }
+  });
+
+  it("practical questions: the table is drawn as the complete network, the algorithm runs on it, and the tour is interpreted back in the original network", () => {
+    for (const kind of ["tspNN", "tspLower", "tspBounds"] as const)
+      for (const level of [2, 3] as const)
+        for (let i = 0; i < 12; i++) {
+          const p = generateTsp(level, kind, { starts: 1, setting: "plain" });
+          const ld = leastDistances(p.network);
+          const n = p.network.nodes.length;
+          const K = p.complete!;
+          expect(K.edges.length).toBe((n * (n - 1)) / 2);
+          for (const e of K.edges) expect(e.weight).toBe(ld.dist[e.from][e.to]); // every K weight is the table entry
+          const steps = solveTsp(p);
+          const iK = steps.findIndex((s) => s.phase === "Complete network");
+          expect(iK).toBeGreaterThan(0);
+          // before it: the original network; from it on: the complete network (except the final real route)
+          expect(steps.slice(0, iK).every((s) => !s.network)).toBe(true);
+          for (const s of steps.slice(iK)) {
+            const net = s.network!;
+            expect(net).toBeDefined();
+            if (s.phase === "Route in the original network") expect(net).toBe(p.network);
+            else expect(net).toBe(K);
+            for (const id of Object.keys(s.edgeStates)) expect(net.edges.some((e) => e.id === id)).toBe(true);
+          }
+          const k = steps[iK];
+          expect(Object.entries(k.edgeStates).filter(([, st]) => st === "added").length).toBe(pairsToComplete(ld).length);
+          if (kind !== "tspLower") {
+            const route = steps.find((s) => s.phase === "Route in the original network");
+            const tour = p.answer.tour!;
+            const driven = tour.length > 1 && tour.slice(1).some((v, j) => ld.path[tour[j]][v].length > 2);
+            expect(!!route).toBe(driven);
+            if (route) {
+              // the real route is a walk in the original network whose edge weights add up to the upper bound
+              const r = route.route!;
+              let sum = 0;
+              for (let j = 1; j < r.length; j++) {
+                const e = p.network.edges.find((x) => (x.from === r[j - 1] && x.to === r[j]) || (x.to === r[j - 1] && x.from === r[j]));
+                expect(e, `${r[j - 1]}–${r[j]} is an edge of the original network`).toBeDefined();
+                sum += e!.weight;
+              }
+              expect(sum).toBe(p.answer.value);
+            }
+          }
+        }
   });
 });

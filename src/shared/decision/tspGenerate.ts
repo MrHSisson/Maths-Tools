@@ -85,6 +85,19 @@ export function pairsToComplete(ld: LeastDistances): [string, string][] {
 
 const tieFreeStarts = (ld: LeastDistances): string[] => ld.ids.filter((s) => !nearestNeighbour(ld.ids, ld.dist, s).tied);
 
+/**
+ * The complete network of least distances, as a picture: every pair joined, each weight the table entry. A complete network keeps its own
+ * layout (so the picture does not jump); a practical network is redrawn on the bank's K4–K6 layout (a clean drawing where every weight label
+ * clears the others), with the same vertex letters.
+ */
+export function completeOf(network: Network, ld: LeastDistances): Network {
+  const n = network.nodes.length;
+  const w = (e: { from: string; to: string }) => ld.dist[e.from][e.to];
+  if (network.edges.length === (n * (n - 1)) / 2) return { nodes: network.nodes.map((v) => ({ ...v })), edges: network.edges.map((e) => ({ ...e, weight: w(e) })) };
+  const k = sampleBankGraph({ use: "tspComplete", ids: [`k${n}`] });
+  return { nodes: k.nodes, edges: k.edges.map((e) => ({ ...e, weight: w(e) })) };
+}
+
 /** The tour as actually driven in the drawn network — each leg replaced by its shortest route. */
 export function expandRoute(ld: LeastDistances, tour: string[]): string[] {
   const out = [tour[0]];
@@ -299,5 +312,6 @@ function buildProblem(kind: TspKind, network: Network, ld: LeastDistances, b: Bu
     prompt,
     answer: { text, value, tour: b.tour },
     matrixMode: "question",
+    ...(b.practical ? { complete: completeOf(network, ld) } : {}),
   };
 }
