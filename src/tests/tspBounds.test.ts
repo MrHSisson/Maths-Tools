@@ -152,4 +152,29 @@ describe("the initial network need not satisfy the triangle inequality — the t
         if (p.network.edges.some((e) => ld.dist[e.from][e.to] < e.weight) && p.prompt.includes("must visit")) expect(p.prompt).toMatch(/journey times|cost in pounds/);
       }
   });
+
+  it("the Initial weights option: 'holds' never has a beaten direct edge, 'breaks' always does, at every level and for every question type", () => {
+    for (const level of [1, 2, 3] as const)
+      for (const kind of ["tspNN", "tspLower", "tspBounds", "tspTable"] as const)
+        for (let i = 0; i < 15; i++) {
+          const beaten = (p: ReturnType<typeof generateTsp>) => { const ld = leastDistances(p.network); return p.network.edges.filter((e) => ld.dist[e.from][e.to] < e.weight).length; };
+          const h = generateTsp(level, kind, { starts: 1, setting: i % 2 ? "context" : "plain", weights: "holds" });
+          expect(beaten(h), `${kind} L${level} holds`).toBe(0);
+          if (h.prompt.includes("must visit")) expect(h.prompt).toMatch(/distances in/); // nothing beaten: a plain distance is fine
+          const b = generateTsp(level, kind, { starts: 1, setting: i % 2 ? "context" : "plain", weights: "breaks" });
+          expect(beaten(b), `${kind} L${level} breaks`).toBeGreaterThanOrEqual(1);
+          if (b.prompt.includes("must visit")) expect(b.prompt).toMatch(/journey times|cost in pounds/);
+          // either way the working is on the table of least distances, and the answer agrees with the table
+          for (const p of [h, b]) {
+            const ld = leastDistances(p.network);
+            if (kind === "tspNN") expect(nearestNeighbour(ld.ids, ld.dist, p.start!).total).toBe(p.answer.value);
+          }
+        }
+  });
+  it("with 'holds', Level 3 always has a table entry that needs a route of three or more edges", () => {
+    for (let i = 0; i < 30; i++) {
+      const ld = leastDistances(generateTsp(3, "tspNN", { starts: 1, setting: "plain", weights: "holds" }).network);
+      expect(pairsToComplete(ld).some(([x, y]) => ld.path[x][y].length >= 4)).toBe(true);
+    }
+  });
 });

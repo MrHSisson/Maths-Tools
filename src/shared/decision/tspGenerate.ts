@@ -24,7 +24,14 @@ export type TspKind = "tspNN" | "tspLower" | "tspBounds" | "tspTable";
 export interface TspGenOptions {
   starts: 1 | 2; // nearest neighbour from one start vertex or two (best upper bound)
   setting: "plain" | "context";
+  /**
+   * Do the INITIAL network's weights satisfy the triangle inequality? "holds": no direct edge is beaten by a route through other vertices
+   * (distances); "breaks": at least one is (journey times, costs). "either" (default): a mix. The table of least distances that every question
+   * builds first satisfies it regardless.
+   */
+  weights?: "either" | "holds" | "breaks";
 }
+export type WeightsMode = NonNullable<TspGenOptions["weights"]>;
 
 const randInt = (min: number, max: number) => min + Math.floor(Math.random() * (max - min + 1));
 const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
@@ -102,9 +109,9 @@ function fastDist(net: Network): Record<string, Record<string, number>> {
 }
 const beatenEdges = (net: Network): number => { const d = fastDist(net); return net.edges.filter((e) => d[e.from][e.to] < e.weight).length; };
 
-function completeNetwork(n: number): Network {
+function completeNetwork(n: number, mode: WeightsMode): Network {
   // 0–3 entries beaten by a route through other vertices (0 is a table of genuine distances, which needs no change)
-  const want = pick([0, 1, 1, 2, 2, 3]);
+  const want = mode === "holds" ? 0 : mode === "breaks" ? pick([1, 1, 2, 2, 3]) : pick([0, 1, 1, 2, 2, 3]);
   for (let t = 0; t < 3000; t++) {
     const net: Network = sampleBankGraph({ use: "tspComplete", ids: [`k${n}`] });
     // 16–31 can never be beaten (any two add to more than the largest); 5–45 often is
@@ -119,7 +126,7 @@ function completeNetwork(n: number): Network {
   throw new Error("tsp generator: no complete network found");
 }
 
-function practicalNetwork(n: number, level: 2 | 3, minMissing: number, tries = 800): Network | null {
+function practicalNetwork(n: number, level: 2 | 3, minMissing: number, mode: WeightsMode, tries = 800): Network | null {
   for (let t = 0; t < tries; t++) {
     // a practical network: any bank graph with n vertices that is not complete (its optional edges vary from question to question)
     const sampled = sampleBankGraph({ use: "tspPractical", size: n });
@@ -129,7 +136,7 @@ function practicalNetwork(n: number, level: 2 | 3, minMissing: number, tries = 8
     const pool = shuffle(Array.from({ length: 27 }, (_, i) => 4 + i));
     net.edges.forEach((e, i) => (e.weight = pool[i]));
     let b = beatenEdges(net);
-    if (level === 3 && b === 0) {
+    if (level === 3 && b === 0 && mode !== "holds") {
       // lengthen one non-bridge edge so a detour beats it (a road over a hill)
       const cand = shuffle(net.edges).find((e) => fastDist({ ...net, edges: net.edges.filter((x) => x.id !== e.id) })[e.from][e.to] < Infinity);
       if (!cand) continue;
@@ -137,9 +144,12 @@ function practicalNetwork(n: number, level: 2 | 3, minMissing: number, tries = 8
       cand.weight = fastDist(without)[cand.from][cand.to] + randInt(2, 6);
       b = beatenEdges(net);
     }
-    if (level === 2 ? b > 1 : b < 1 || b > 3) continue;
+    // holds: no direct edge is beaten; breaks: Level 2 exactly one, Level 3 one to three; either: Level 2 none or one, Level 3 one to three
+    if (mode === "holds" ? b !== 0 : mode === "breaks" ? (level === 2 ? b !== 1 : b < 1 || b > 3) : level === 2 ? b > 1 : b < 1 || b > 3) continue;
     const ld = leastDistances(net);
     if (pairsToComplete(ld).some(([x, y]) => !ld.unique[x][y])) continue; // one clear route for each entry
+    // with every direct edge a true shortest route (no edge beaten), what makes Level 3 harder is a table entry that needs a long route: three or more edges
+    if (mode === "holds" && level === 3 && !pairsToComplete(ld).some(([x, y]) => ld.path[x][y].length >= 4)) continue;
     return net;
   }
   return null;
@@ -171,7 +181,8 @@ export function generateTsp(level: 1 | 2 | 3, kind: TspKind, opts: TspGenOptions
   for (let attempt = 0; attempt < 400; attempt++) {
     // Level 1 is a complete network; Levels 2–3 (and the table question, at every level) are practical networks with missing edges
     const n = pick(SIZES[kind].filter((m) => level < 3 || m >= 5));
-    const network = level === 1 && kind !== "tspTable" ? completeNetwork(n) : practicalNetwork(n, level === 3 ? 3 : 2, 2);
+    const mode: WeightsMode = opts.weights ?? "either";
+    const network = level === 1 && kind !== "tspTable" ? completeNetwork(n, mode) : practicalNetwork(n, level === 3 ? 3 : 2, 2, mode);
     if (!network) continue;
     // the first step is always the complete network of least distances — a metric by construction — and the classical problem is solved on it
     const ld = leastDistances(network);
@@ -232,7 +243,9 @@ interface Built {
 function buildProblem(kind: TspKind, network: Network, ld: LeastDistances, b: Built, opts: TspGenOptions): DecisionProblem {
   // a direct leg beaten by a detour means the weights are times or costs, not plain distances
   const beaten = network.edges.some((e) => ld.dist[e.from][e.to] < e.weight);
-  const ctx = pick(SETTINGS.filter((x) => !x.distance || !beaten));
+  // "holds" is the distance questions; "breaks" is times and costs; "either" offers a plain distance only when nothing is beaten
+  const mode = opts.weights ?? "either";
+  const ctx = pick(SETTINGS.filter((x) => (mode === "holds" ? x.distance : mode === "breaks" ? !x.distance : !x.distance || !beaten)));
   const inContext = opts.setting === "context";
   const complete = network.edges.length === (network.nodes.length * (network.nodes.length - 1)) / 2;
   const lead = inContext

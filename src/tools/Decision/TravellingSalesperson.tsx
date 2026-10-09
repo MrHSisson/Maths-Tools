@@ -44,8 +44,8 @@ const INFO_SECTIONS: InfoSection[] = [
     title: "Question Options",
     icon: "⚙️",
     content: [
-      { label: "Levels", detail: "Level 1: a complete network (every pair joined) whose weights may break the triangle inequality — none, or up to three entries are beaten by a route through other vertices and must be replaced. Level 2: a practical network (not every pair joined) — complete the table of least distances first. Level 3: a practical network where one to three direct edges are longer than a route through other vertices. Level 2: a practical network — complete the table of least distances first, then apply the algorithm. Level 3: a practical network where one direct edge is longer than a route through other vertices, so a table entry must be replaced." },
-      { label: "Weights need not be distances", detail: "Every question starts from a network whose weights are arbitrary — they do not have to satisfy the triangle inequality (a slow road, a dear ticket, a long wait make a direct leg worse than going round), and two vertices need not be joined. The first step is always the same: build the complete network of LEAST distances by replacing each entry with the shortest route. That table satisfies the triangle inequality by construction, and the classical problem (visit every vertex once, return to the start) is then solved on it. The weights are never drawn to scale, so the picture does not give the tour away; in-context questions say whether the weights are distances, journey times or costs." },
+      { label: "Levels", detail: "Level 1: a complete network (every pair joined) whose weights may or may not obey the triangle inequality — up to three entries can be beaten by a route through other vertices and must be replaced. Level 2: a practical network (not every pair joined) — complete the table of least distances first. Level 3: a practical network where one to three direct edges are longer than a route through other vertices. Level 2: a practical network — complete the table of least distances first, then apply the algorithm. Level 3: a practical network where one direct edge is longer than a route through other vertices, so a table entry must be replaced." },
+      { label: "Initial weights", detail: "Every question starts from an initial network and ALWAYS builds the complete network of least distances first (each entry becomes the shortest route), which satisfies the triangle inequality by construction; the classical problem is then solved on that table. The option decides whether the INITIAL weights obey the inequality. Holds: no direct edge is beaten by a route through other vertices (distances) — Level 3 then always has a table entry that needs a route of three or more edges. Broken: at least one direct edge is longer than a route through other vertices (a slow road, a dear ticket, a long wait), so that table entry must be replaced; in-context questions then describe the weights as journey times or costs. Either (the default) mixes both. Weights are never drawn to scale, so the picture does not give the tour away." },
       { label: "Start vertices", detail: "Nearest neighbour from one start vertex, or from two start vertices with the better (smaller) upper bound taken." },
       { label: "Setting", detail: "Plain, or in context (a driver, representative or surveyor who must visit every site and return)." },
       { label: "No ties", detail: "Every question has no ties between nearest vertices and a lower bound whose tree and edges are the only possible ones, so there is always exactly one correct working." },
@@ -65,7 +65,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const lv = Math.min(3, Math.max(1, level)) as 1 | 2 | 3;
   const kind = KIND[ctx?.subTool ?? "upper"] ?? "tspNN";
   const o = ctx?.options ?? {};
-  return generateTsp(lv, kind, { starts: o.starts === "two" ? 2 : 1, setting: o.setting === "context" ? "context" : "plain" });
+  return generateTsp(lv, kind, { starts: o.starts === "two" ? 2 : 1, setting: o.setting === "context" ? "context" : "plain", weights: o.weights === "holds" ? "holds" : o.weights === "breaks" ? "breaks" : "either" });
 }
 
 const LEGEND: LegendItem[] = [
@@ -108,6 +108,15 @@ export default function App() {
             ],
           },
           {
+            key: "weights",
+            label: "Initial weights",
+            choices: [
+              { value: "either", label: "Either" },
+              { value: "holds", label: "Triangle inequality holds (distances)" },
+              { value: "breaks", label: "Triangle inequality broken (times, costs)" },
+            ],
+          },
+          {
             key: "setting",
             label: "Setting",
             choices: [
@@ -125,7 +134,7 @@ export default function App() {
 export const __problem: DecisionProblemExport = {
   templates: [],
   levels: [1, 2, 3],
-  subTools: ["upper", { subTool: "upper", options: { starts: "two" } }, { subTool: "upper", options: { setting: "context" } }, "lower", "bounds", "table"],
+  subTools: ["upper", { subTool: "upper", options: { weights: "holds" } }, { subTool: "upper", options: { weights: "breaks", setting: "context" } }, { subTool: "bounds", options: { weights: "holds" } }, { subTool: "bounds", options: { weights: "breaks" } }, { subTool: "table", options: { weights: "breaks" } }, { subTool: "upper", options: { starts: "two" } }, { subTool: "upper", options: { setting: "context" } }, "lower", "bounds", "table"],
   generate,
   solve: solveTsp,
 };

@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-09 (late, 2) — Travelling Salesperson: "Initial weights" option (holds / broken / either)
+- Distance questions matter too, so a new QO decides whether the INITIAL network obeys the triangle inequality: **Holds** (no direct edge beaten by a route; in-context questions use distances; Level 3 then needs a table entry with a route of 3+ edges), **Broken** (at least one beaten direct edge at every level; in-context questions use journey times or costs), **Either** (default mix). Every question still builds the table of least distances first and solves the classical problem on it. Applies to all four question types.
+
 ### 2026-10-09 (late) — Travelling Salesperson: initial networks need not be metric; tours no longer just round the outside
 - **Model (agreed):** EVERY question starts from an initial network with arbitrary weights — no triangle inequality imposed, and pairs may be unjoined. The first step is always the complete network of LEAST distances (a metric by construction); the classical problem is then solved on that table. (An interim "table taken as given" path was built and removed: it solved the classical problem on a non-metric table, which is not the method.)
 - **Levels:** 1 — a complete network (K4–K6) whose weights need not satisfy the inequality: 0–3 entries are beaten by a route through other vertices and replaced; 2 — a practical network with at most one beaten direct edge; 3 — one to three beaten direct edges. In-context questions describe the weights as distances only when nothing is beaten; otherwise as journey times or costs.
