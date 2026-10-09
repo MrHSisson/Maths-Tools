@@ -67,8 +67,10 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   const [sandbox, setSandbox] = useState(false); // the picture opened in the sandbox (the question's own picture never moves)
   const resumeAt = useRef(-1); // where the class was before Show all
   // Phone layout — the same ≤640px switch ToolShell uses: compact header, one settings banner + drawer instead of the tab rows and control bar
+  const [stageTab, setStageTab] = useState<"graph" | "table" | null>(null); // phone: which picture the pinned stage shows (null = automatic)
   const [narrow, setNarrow] = useState(() => typeof window !== "undefined" && window.matchMedia("(max-width: 640px)").matches);
   const [drawer, setDrawer] = useState(false);
+  useEffect(() => setStageTab(null), [stepIdx]);
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 640px)");
     const on = () => setNarrow(mq.matches);
@@ -352,13 +354,15 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     </div>
   );
   // The table is the working's main object, so it sits right under the question — above the step text, always in view with it
-  const matrixCard = showMatrix ? (
-    <div className="rounded-xl border border-gray-200 bg-white p-4 overflow-x-auto">
-      <div className="mx-auto w-fit">
-        <MatrixView network={problem.network} step={canvasStep} bare missing={config.matrixMissing} />
-      </div>
+  const matrixInner = (
+    <div className="mx-auto w-fit">
+      <MatrixView network={problem.network} step={canvasStep} bare missing={config.matrixMissing} />
     </div>
+  );
+  const matrixCard = showMatrix ? (
+    <div className="rounded-xl border border-gray-200 bg-white p-4 overflow-x-auto">{matrixInner}</div>
   ) : null;
+  const stageView: "graph" | "table" = stageTab ?? (current?.matrix ? "table" : "graph");
   const workingExtras = (
     <>
       {current?.list && current.list.items.length > 0 && <ListCard list={current.list} />}
@@ -374,13 +378,33 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   );
 
   const example = narrow ? (
-    // phone: one column in the order a student reads it — the question, the graph, then the working
-    <div className="p-3 flex flex-col gap-4">
-      {questionBlock(false)}
-      {canvasCol}
-      {matrixCard}
-      {answerCard}
-      {workingExtras}
+    // phone: the question and the picture are pinned at the top while the working scrolls under them, so what is being
+    // worked on is never pushed off screen; the table and the graph share the stage (a switch, automatic when a step builds the table)
+    <div className="flex flex-col">
+      <div className="sticky top-0 z-20 flex flex-col gap-2 p-2 border-b border-gray-200" style={{ backgroundColor: "#f5f3f0" }}>
+        <details className="rounded-lg bg-white border border-gray-200 px-3 py-1.5">
+          <summary className="text-sm font-semibold text-gray-800 leading-snug cursor-pointer list-none flex items-center gap-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400 shrink-0">Question</span>
+            <span className="truncate">{problem.prompt}</span>
+          </summary>
+          <div className="pt-1 pb-1 text-sm text-gray-800 leading-snug">{problem.prompt}</div>
+        </details>
+        {showMatrix && (
+          <div className="flex rounded-lg border border-gray-300 overflow-hidden self-center text-sm font-bold">
+            {(["graph", "table"] as const).map((t) => (
+              <button key={t} onClick={() => setStageTab(t)} className={`px-4 py-1 ${stageView === t ? "bg-blue-900 text-white" : "bg-white text-gray-600"}`}>{t === "graph" ? "Graph" : "Table"}</button>
+            ))}
+          </div>
+        )}
+        {showMatrix && stageView === "table"
+          ? <div className="overflow-auto rounded-xl border border-gray-200 bg-white p-2 flex justify-center" style={{ maxHeight: "36dvh" }}>{matrixInner}</div>
+          : canvasBox(showMatrix ? "30dvh" : "36dvh")}
+      </div>
+      <div className="p-2 flex flex-col gap-3">
+        {!atQuestion && legendItems && <Legend items={legendItems} />}
+        {answerCard}
+        {workingExtras}
+      </div>
     </div>
   ) : (
     <div className="p-3 sm:p-6 grid gap-4 sm:gap-6 items-start" style={{ gridTemplateColumns: "minmax(0, 1.6fr) minmax(0, 1fr)" }}>
@@ -475,7 +499,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           <button onClick={() => newQuestion()} className={`${BTN_PRIMARY} w-full justify-center mb-2 py-2.5`}>
             <RefreshCw size={16} /> New Question
           </button>
-          <div className={`${CARD} overflow-hidden`}>{example}</div>
+          <div className={`${CARD} overflow-clip`}>{example}</div>
         </div>
         {drawer && (
           <div className="fixed inset-0 z-50 flex">
@@ -588,7 +612,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           )}
           <div className="flex flex-col gap-4">
             {controlBar}
-            <div className={`${CARD} overflow-hidden`}>{example}</div>
+            <div className={`${CARD} overflow-clip`}>{example}</div>
           </div>
         </div>
       </div>
