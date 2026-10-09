@@ -11,8 +11,8 @@
 // and the lower bound's tree and links are the only possible ones (see tspBounds.ts). validate.ts re-derives all of it.
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { generateRandomNetwork } from "./randomNetwork";
-import { completeNetworkLayout, leastDistances, nearestNeighbour, placeEdgeLabels, type LeastDistances } from "./tsp";
+import { sampleBankGraph } from "./graphBank";
+import { leastDistances, nearestNeighbour, type LeastDistances } from "./tsp";
 import { lowerBound } from "./tspBounds";
 import type { DecisionProblem, Network } from "./types";
 
@@ -64,7 +64,7 @@ export function expandRoute(ld: LeastDistances, tour: string[]): string[] {
 // no spanning tree is ambiguous). They are deliberately NOT scaled to the drawing: drawn to scale, a ring of five or six towns makes the
 // optimal tour, the nearest-neighbour tour and the lower bound all coincide, and there is no interval to find.
 function completeNetwork(n: number): Network {
-  const net = completeNetworkLayout(n);
+  const net: Network = sampleBankGraph({ ids: [`k${n}`] });
   const pool = shuffle(Array.from({ length: 16 }, (_, i) => 16 + i));
   net.edges.forEach((e, i) => (e.weight = pool[i]));
   return net;
@@ -72,7 +72,9 @@ function completeNetwork(n: number): Network {
 
 function practicalNetwork(n: number, shortcut: boolean, minMissing: number, tries = 600): Network | null {
   for (let t = 0; t < tries; t++) {
-    const net = generateRandomNetwork({ nodeCount: n, weightRange: [1, 1], maxDegree: 4 });
+    // a practical network: any bank graph with n vertices that is not complete (its optional edges vary from question to question)
+    const sampled = sampleBankGraph({ size: n, exclude: ["k4", "k5", "k6"] });
+    const net: Network = { nodes: sampled.nodes, edges: sampled.edges };
     const missing = (n * (n - 1)) / 2 - net.edges.length;
     if (missing < minMissing || missing > 6) continue; // enough to complete, not a slog
     for (const e of net.edges) e.weight = scaledWeight(net, e.from, e.to);
@@ -86,9 +88,6 @@ function practicalNetwork(n: number, shortcut: boolean, minMissing: number, trie
     const ld = leastDistances(net);
     if (net.edges.filter((e) => ld.dist[e.from][e.to] < e.weight).length !== (shortcut ? 1 : 0)) continue;
     if (pairsToComplete(ld).some(([a, b]) => !ld.unique[a][b])) continue; // one clear route for each entry
-    const labels = placeEdgeLabels(net);
-    if (!labels) continue;
-    for (const e of net.edges) e.labelAt = labels[e.id];
     return net;
   }
   return null;

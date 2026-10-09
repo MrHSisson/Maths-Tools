@@ -5,16 +5,15 @@
 //                              close when rejected;
 //   • primTrace(net, start)  — Prim's algorithm from a start vertex, one entry per edge ADDED, with every edge that
 //                              was on offer (the "candidates") at that moment;
-//   • generateMstNetwork()   — a connected, crossing-free network whose edge weights are ALL DIFFERENT, so the
-//                              minimum spanning tree and the order of every choice are unique (no tie-break rule
-//                              is ever needed) and the picture is clean (labels cleared by placeEdgeLabels).
+//   • generateMstNetwork()   — a network from the graph bank (graphBank.ts: hand-authored drawings whose weight labels are
+//                              optimised and baked) with edge weights that are ALL DIFFERENT, so the minimum spanning tree
+//                              and the order of every choice are unique (no tie-break rule is ever needed).
 //
 // Everything the working says is read off these traces, never recomputed, so a caption cannot disagree with the
 // answer. validate.ts holds an independent Prim reference; src/tests/mst.test.ts re-derives everything again.
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { generateRandomNetwork } from "./randomNetwork";
-import { placeEdgeLabels } from "./tsp";
+import { sampleBankGraph } from "./graphBank";
 import type { GEdge, Network } from "./types";
 
 /** the two ends of an edge in alphabetical order — how an edge is named everywhere in the working ("AB", never "BA") */
@@ -154,16 +153,16 @@ export function distinctWeights(n: number, lo: number, hi: number): number[] {
 }
 
 /**
- * A connected, planar network (straight edges, no crossings) with all-different weights. `kind` only changes what
- * must be true of it: Prim's must start somewhere that has more than one edge on offer at some stage (so a choice is made).
+ * A network from the graph bank with all-different weights. `kind` only changes what must be true of it: Prim's must meet a
+ * real choice, and must disagree with Kruskal's about the order.
  */
 export function generateMstNetwork(level: 1 | 2 | 3, kind: MstKind): { network: Network; start: string } {
   const spec = MST_LEVELS[level];
   for (let attempt = 0; attempt < 4000; attempt++) {
     const nodeCount = ri(spec.nodes[0], spec.nodes[1]);
-    const net = generateRandomNetwork({ nodeCount, weightRange: [1, 1], maxDegree: 4, extraEdges: spec.extra });
-    const surplus = net.edges.length - (nodeCount - 1);
-    if (surplus < spec.extra[0] - 1 || net.edges.length > nodeCount * 2) continue;
+    // planar drawings only (a spanning-tree working never needs crossing edges); the complete graphs are for the travelling salesperson problem
+    const sampled = sampleBankGraph({ size: nodeCount, kinds: ["planar"], edges: [nodeCount + spec.extra[0] - 1, nodeCount * 2] });
+    const net: Network = { nodes: sampled.nodes, edges: sampled.edges };
     const ws = distinctWeights(net.edges.length, spec.weights[0], spec.weights[1]);
     if (ws.length < net.edges.length) continue;
     net.edges.forEach((e, i) => (e.weight = ws[i]));
@@ -171,10 +170,6 @@ export function generateMstNetwork(level: 1 | 2 | 3, kind: MstKind): { network: 
     const k = kruskalTrace(net);
     const rejected = k.entries.filter((e) => !e.accepted).length;
     if (rejected < spec.minRejected) continue;
-    // the picture must be readable: every weight label clear of nodes, edges and each other
-    const labels = placeEdgeLabels(net);
-    if (!labels) continue;
-    for (const e of net.edges) e.labelAt = labels[e.id];
 
     const start = net.nodes[ri(0, net.nodes.length - 1)].id;
     if (kind !== "kruskal") {
