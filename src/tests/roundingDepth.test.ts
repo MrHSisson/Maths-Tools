@@ -28,6 +28,15 @@ describe("Rounding Depth bank numeric claims", () => {
     expect(roundUnit("349", 2)).toBe("300");
     expect(dp("2.995", 2)).toBe("3.00");
   });
+  it("Added items", () => {
+    expect(roundUnit("4495", 1)).toBe("4500");
+    expect(roundUnit("6995", 1)).toBe("7000"); expect(roundUnit("7004", 1)).toBe("7000"); expect(roundUnit("7005", 1)).toBe("7010");
+    expect(dp("8.249", 1)).toBe("8.2"); expect(dp("0.96", 1)).toBe("1.0"); expect(dp("27.46", 1)).toBe("27.5"); expect(dp("3.46", 1)).toBe("3.5"); expect(dp("5.38", 1)).toBe("5.4"); expect(dp("6.04", 1)).toBe("6.0");
+    expect(dp("3.65", 1)).toBe("3.7"); expect(dp("3.74", 1)).toBe("3.7"); expect(dp("3.75", 1)).toBe("3.8");
+    expect(sf("9640", 1)).toBe("10000"); expect(sf("0.00472", 1)).toBe("0.005"); expect(sf("4726", 1)).toBe("5000"); expect(sf("326", 1)).toBe("300"); expect(sf("96", 1)).toBe("100");
+    expect(sf("0.0384", 2)).toBe("0.038"); expect(sf("8462", 2)).toBe("8500");
+    expect(sf("3350", 2)).toBe("3400"); expect(sf("3449", 2)).toBe("3400"); expect(sf("3450", 2)).toBe("3500");
+  });
   it("Level 1", () => {
     expect(roundUnit("47", 1)).toBe("50");
     expect(roundUnit("86", 1)).toBe("90");
