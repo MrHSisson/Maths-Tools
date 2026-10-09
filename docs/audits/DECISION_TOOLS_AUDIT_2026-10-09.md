@@ -153,3 +153,12 @@ Prompted by: reuse the optimised network-flows graphs, make question graphs stat
   returns instantly. A new-tab version would need the whole problem serialised — easy to add later if wanted.
 - **Not done / ideas:** the standalone sandbox loads undirected bank graphs only (no flow-network picker); weights can be edited there but not in
   the overlay (it would no longer match the question); a "save this layout" or print of the sandbox view is not built.
+
+### Addendum 2 — which graphs suit which tool
+- The bank now has an explicit **policy** (`GRAPH_POLICY`): MST planar 5–12 vertices; TSP complete = K4–K6, practical = sparse planar 4–6; Network Flows keeps its own
+  source→sink templates (≤ 8); sandbox takes everything. Table in `DECISION_SHELL_PLAN.md`. Tests enforce it (e.g. nothing larger than 8 vertices can be drawn by
+  TSP, and 9–12 vertex graphs are `mst` + `sandbox` only).
+- Seven new large graphs (9–12 vertices: wheels, 3×3 and 3×4 grids, a 5-rung ladder, a decagon with chords, a hexagonal prism) for MST; **Level 3 is now 8–9 vertices**, and
+  a **Network size → Very large (10–12)** option on Kruskal's and Prim's (network) uses them. Prim on a table never gets them.
+- A bug the stricter test found: mirrored drawings could have a weight label touching a badge (the badges always sit top-right, so a mirror is a different layout
+  problem). Label positions are now baked **per orientation** (four per graph) and each is measured.

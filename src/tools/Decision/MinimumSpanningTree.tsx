@@ -18,7 +18,7 @@ import type { InfoSection } from "../../shared";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Minimum Spanning Tree — Decision Maths (AQA Further Maths, Discrete: graphs & networks). Three methods on
-// DecisionShell, at three levels that are graph size (5–6, 7, 8 vertices):
+// DecisionShell, at three levels that are graph size (5–6, 7, 8–9 vertices) plus an optional very large size (10–12):
 //   Kruskal's algorithm · Prim's algorithm on the network · Prim's algorithm on a table (the network is given as a
 //   table of distances, so Question mode draws only the vertices).
 // Every network is connected and crossing-free with ALL weights different, so the tree, the order of every choice and the
@@ -48,7 +48,8 @@ const INFO_SECTIONS: InfoSection[] = [
     title: "Question Options",
     icon: "⚙️",
     content: [
-      { label: "Levels", detail: "Levels are the size of the network: Level 1 has 5–6 vertices, Level 2 has 7, Level 3 has 8. Larger networks have more edges to weigh up and more that must be rejected." },
+      { label: "Levels", detail: "Levels are the size of the network: Level 1 has 5–6 vertices, Level 2 has 7, Level 3 has 8–9. Larger networks have more edges to weigh up and more that must be rejected." },
+      { label: "Network size", detail: "Kruskal's and Prim's (network) can use a very large network of 10–12 vertices and 15–20 edges, where the sorted edge list and the cycles to reject really matter. Prim's on a table keeps to the level's size, because a 12 × 12 table is too much to read." },
       { label: "Setting", detail: "Plain asks for the tree. In context describes the weights as lengths of cable, pipe or road between sites and asks for the minimum total length needed." },
       { label: "Ask for", detail: "The order the edges are added and the total weight (as in an exam), just the total weight, or just the order of the edges." },
     ],
@@ -78,7 +79,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const sub = ctx?.subTool ?? "kruskal";
   const kind = KIND[sub] ?? "kruskal";
   const o = ctx?.options ?? {};
-  const { network, start } = generateMstNetwork(lv, kind);
+  const { network, start } = generateMstNetwork(lv, kind, o.size === "huge");
   const n = network.nodes.length;
 
   const tree = kind === "kruskal" ? kruskalTrace(network).tree : primTrace(network, start).tree;
@@ -147,7 +148,7 @@ export default function App() {
         pageTitle: "Minimum Spanning Tree",
         instruction: "Question",
         levels: 3,
-        levelLabels: ["Small networks (5–6 vertices)", "Medium networks (7 vertices)", "Large networks (8 vertices)"],
+        levelLabels: ["Small networks (5–6 vertices)", "Medium networks (7 vertices)", "Large networks (8–9 vertices)"],
         subTools: SUB_TOOLS,
         infoSections: INFO_SECTIONS,
         matrixMissing: "–",
@@ -159,6 +160,15 @@ export default function App() {
             choices: [
               { value: "plain", label: "Plain" },
               { value: "context", label: "In context" },
+            ],
+          },
+          {
+            key: "size",
+            label: "Network size",
+            forSubTools: ["kruskal", "primNetwork"],
+            choices: [
+              { value: "level", label: "As the level" },
+              { value: "huge", label: "Very large (10–12 vertices, any level)" },
             ],
           },
           {
@@ -180,7 +190,7 @@ export default function App() {
 export const __problem: DecisionProblemExport = {
   templates: [],
   levels: [1, 2, 3],
-  subTools: ["kruskal", "primNetwork", "primMatrix"],
+  subTools: ["kruskal", "primNetwork", "primMatrix", { subTool: "kruskal", options: { size: "huge" } }, { subTool: "primNetwork", options: { size: "huge" } }],
   generate,
   solve,
 };

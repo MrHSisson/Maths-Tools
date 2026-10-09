@@ -224,6 +224,21 @@ also mirrored and re-lettered in reading order. **Adding a graph:** add it to `N
 order), bake, and run the test. A tool that needs a particular shape for its content adds it here, and every tool (and the sandbox) gets it.
 MST draws from the planar graphs of 5–6 / 7 / 8 vertices; TSP uses K4–K6 (complete) and the sparse graphs (practical).
 
+**Which graph for which tool** (`GRAPH_POLICY` in `graphBank.ts`; every graph carries a `uses` list, enforced by `graphBank.test.ts`):
+
+| Tool | Graphs | Why |
+|---|---|---|
+| **Minimum Spanning Tree** | planar, 5–12 vertices (levels: 5–6 / 7 / 8–9; option "Very large": 10–12 on Kruskal's and Prim's network) | a spanning-tree working is a list of edges, so a big network is fine; crossing edges would blur the cycles; Prim on a table keeps to ≤ 9 (a 12 × 12 table is unreadable) |
+| **Travelling Salesperson — complete** | K4, K5, K6 only | the triangle inequality is built in; K7 is a 21-entry table |
+| **Travelling Salesperson — practical** | sparse planar graphs of 4–6 vertices | the table of least distances must be completable by hand (≤ 6 missing entries) |
+| **Network Flows** | its own templates (`flowTemplates.ts`): directed, acyclic, source → sink, ≤ 8 vertices | flows need room beside every arc for the circled flow and two potentials, and a left-to-right reading order; a 10+ vertex network would be unreadable |
+| **Sandbox** | everything | |
+
+The bank therefore holds graphs the other tools must never draw: the 9–12 vertex networks are tagged `mst` + `sandbox` only. A new tool states its rule in
+`GRAPH_POLICY` first (e.g. Dijkstra: connected, 6–10 vertices, a clear shortest route; Route Inspection: 6–9 vertices with 0, 2 or 4 odd vertices), adds
+shapes it needs, and the test enforces it. Label positions are baked per orientation (each of the four mirrorings is its own layout problem, because the
+badges always sit top-right).
+
 **Static question, sandbox elsewhere.** A question's picture (`NetworkView`, `FlowView`) is a fixed drawing: no drag, no pan, no zoom. The
 **Sandbox** button on the picture (and in fullscreen) opens `SandboxOverlay` — the SAME drawing, through the tool's own `renderCanvas` (which now
 receives `extras`: moved vertices, a fixed frame and a drag handler), inside `PanZoom`, at the step the class is on, with its own Back / Next. Vertices

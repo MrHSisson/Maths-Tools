@@ -139,8 +139,10 @@ export interface MstLevelSpec {
 export const MST_LEVELS: Record<1 | 2 | 3, MstLevelSpec> = {
   1: { nodes: [5, 6], extra: [2, 4], weights: [2, 20], minRejected: 1 },
   2: { nodes: [7, 7], extra: [3, 6], weights: [3, 40], minRejected: 2 },
-  3: { nodes: [8, 8], extra: [4, 8], weights: [3, 60], minRejected: 3 },
+  3: { nodes: [8, 9], extra: [4, 8], weights: [3, 60], minRejected: 3 },
 };
+/** "Very large" networks (10–12 vertices): fine for a spanning-tree working — a list of edges — but never offered with the table (a 12 × 12 table is unreadable). */
+export const MST_HUGE: MstLevelSpec = { nodes: [10, 12], extra: [6, 10], weights: [3, 99], minRejected: 5 };
 
 const ri = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1));
 const shuffle = <T,>(a: T[]): T[] => [...a].sort(() => Math.random() - 0.5);
@@ -156,12 +158,13 @@ export function distinctWeights(n: number, lo: number, hi: number): number[] {
  * A network from the graph bank with all-different weights. `kind` only changes what must be true of it: Prim's must meet a
  * real choice, and must disagree with Kruskal's about the order.
  */
-export function generateMstNetwork(level: 1 | 2 | 3, kind: MstKind): { network: Network; start: string } {
-  const spec = MST_LEVELS[level];
+export function generateMstNetwork(level: 1 | 2 | 3, kind: MstKind, huge = false): { network: Network; start: string } {
+  const spec = huge && kind !== "primMatrix" ? MST_HUGE : MST_LEVELS[level];
   for (let attempt = 0; attempt < 4000; attempt++) {
-    const nodeCount = ri(spec.nodes[0], spec.nodes[1]);
-    // planar drawings only (a spanning-tree working never needs crossing edges); the complete graphs are for the travelling salesperson problem
-    const sampled = sampleBankGraph({ size: nodeCount, kinds: ["planar"], edges: [nodeCount + spec.extra[0] - 1, nodeCount * 2] });
+    // the bank's own policy for spanning trees: planar drawings only, 5–12 vertices (GRAPH_POLICY.mst)
+    const sampled = sampleBankGraph({ use: "mst", size: spec.nodes, edges: [spec.nodes[0] + spec.extra[0] - 1, spec.nodes[1] * 2] });
+    const nodeCount = sampled.nodes.length;
+    if (sampled.edges.length - (nodeCount - 1) < spec.extra[0] - 1) continue;
     const net: Network = { nodes: sampled.nodes, edges: sampled.edges };
     const ws = distinctWeights(net.edges.length, spec.weights[0], spec.weights[1]);
     if (ws.length < net.edges.length) continue;

@@ -54,7 +54,7 @@ export default function App() {
         onChange={(e) => load(e.target.value)}
         style={{ width: narrow ? "100%" : "100%", padding: "8px 8px", borderRadius: 8, border: "2px solid #d1d5db", background: "#fff", fontWeight: 600, fontSize: 13, color: "#334155" }}
       >
-        {[4, 5, 6, 7, 8].map((n) => (
+        {[4, 5, 6, 7, 8, 9, 10, 11, 12].filter((n) => GRAPH_BANK.some((g) => g.size === n)).map((n) => (
           <optgroup key={n} label={`${n} vertices`}>
             {GRAPH_BANK.filter((g) => g.size === n).map((g) => (
               <option key={g.id} value={g.id}>{g.name}</option>
@@ -62,7 +62,7 @@ export default function App() {
           </optgroup>
         ))}
       </select>
-      <Btn onClick={() => { const s = sampleBankGraph({ size: [4, 8], kinds: ["planar"] }); load(s.bankId); }} icon={<Dices size={15} />}>A random graph</Btn>
+      <Btn onClick={() => { const s = sampleBankGraph({ use: "sandbox", size: [4, 12], kinds: ["planar"] }); load(s.bankId); }} icon={<Dices size={15} />}>A random graph</Btn>
       <Btn onClick={() => load(graphId, flip)} icon={<Shuffle size={15} />}>New weights</Btn>
       <Btn onClick={() => { const f: [boolean, boolean] = [!flip[0], flip[1]]; load(graphId, f); }} icon={<FlipHorizontal size={15} />}>Mirror</Btn>
       {!narrow && <div style={{ fontSize: 11.5, color: "#6b7280", lineHeight: 1.5 }}>Click a weight to change it.</div>}

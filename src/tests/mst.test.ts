@@ -4,7 +4,7 @@
 // checked beat by beat against the traces.
 
 import { describe, expect, it } from "vitest";
-import { generateMstNetwork, kruskalTrace, primTrace, MST_LEVELS, treePath, type MstKind } from "../shared/decision/mst";
+import { generateMstNetwork, kruskalTrace, primTrace, MST_HUGE, MST_LEVELS, treePath, type MstKind } from "../shared/decision/mst";
 import { solveKruskal, solvePrimMatrix, solvePrimNetwork } from "../shared/decision/mstSolve";
 import type { Network } from "../shared/decision/types";
 
@@ -89,6 +89,36 @@ describe("generated networks", () => {
           for (const e of network.edges) expect(e.labelAt).toBeGreaterThan(0);
         }
       });
+});
+
+describe("very large networks (10–12 vertices)", () => {
+  for (const kind of ["kruskal", "primNetwork"] as MstKind[])
+    it(`${kind}: planar, all weights different, Kruskal = Prim, the tree unique by the strict cycle property (too big to enumerate every tree)`, () => {
+      for (let i = 0; i < 30; i++) {
+        const { network, start } = generateMstNetwork(2, kind, true);
+        const n = network.nodes.length;
+        expect(n).toBeGreaterThanOrEqual(MST_HUGE.nodes[0]);
+        expect(n).toBeLessThanOrEqual(MST_HUGE.nodes[1]);
+        expect(new Set(network.edges.map((e) => e.weight)).size).toBe(network.edges.length);
+        const k = kruskalTrace(network), p = primTrace(network, start);
+        expect(p.total).toBe(k.total);
+        expect([...p.tree.map((e) => e.id)].sort()).toEqual([...k.tree.map((e) => e.id)].sort());
+        expect(k.entries.filter((e) => !e.accepted).length).toBeGreaterThanOrEqual(MST_HUGE.minRejected);
+        // every edge outside the tree is strictly heavier than every edge on the tree path between its ends: nothing can replace a tree edge
+        const treeIds = new Set(k.tree.map((e) => e.id));
+        for (const e of network.edges) {
+          if (treeIds.has(e.id)) continue;
+          const path = treePath(k.tree, e.from, e.to)!;
+          for (let j = 1; j < path.length; j++) {
+            const hop = k.tree.find((t) => (t.from === path[j - 1] && t.to === path[j]) || (t.to === path[j - 1] && t.from === path[j]))!;
+            expect(hop.weight).toBeLessThan(e.weight);
+          }
+        }
+      }
+    });
+  it("Prim on a table never gets the very large size (the table would be unreadable)", () => {
+    for (let i = 0; i < 20; i++) expect(generateMstNetwork(3, "primMatrix", true).network.nodes.length).toBeLessThanOrEqual(MST_LEVELS[3].nodes[1]);
+  });
 });
 
 describe("the working", () => {

@@ -64,7 +64,7 @@ export function expandRoute(ld: LeastDistances, tour: string[]): string[] {
 // no spanning tree is ambiguous). They are deliberately NOT scaled to the drawing: drawn to scale, a ring of five or six towns makes the
 // optimal tour, the nearest-neighbour tour and the lower bound all coincide, and there is no interval to find.
 function completeNetwork(n: number): Network {
-  const net: Network = sampleBankGraph({ ids: [`k${n}`] });
+  const net: Network = sampleBankGraph({ use: "tspComplete", ids: [`k${n}`] });
   const pool = shuffle(Array.from({ length: 16 }, (_, i) => 16 + i));
   net.edges.forEach((e, i) => (e.weight = pool[i]));
   return net;
@@ -73,7 +73,7 @@ function completeNetwork(n: number): Network {
 function practicalNetwork(n: number, shortcut: boolean, minMissing: number, tries = 600): Network | null {
   for (let t = 0; t < tries; t++) {
     // a practical network: any bank graph with n vertices that is not complete (its optional edges vary from question to question)
-    const sampled = sampleBankGraph({ size: n, exclude: ["k4", "k5", "k6"] });
+    const sampled = sampleBankGraph({ use: "tspPractical", size: n });
     const net: Network = { nodes: sampled.nodes, edges: sampled.edges };
     const missing = (n * (n - 1)) / 2 - net.edges.length;
     if (missing < minMissing || missing > 6) continue; // enough to complete, not a slog
