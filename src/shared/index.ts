@@ -55,7 +55,7 @@ export { randInt, pick, fracStr, mStr, pickActive, normalizeMultiSelect, resolve
 export { rStep, rStepBuild, rStepSolve } from "./ratioTable";
 export { RatioTable, ratioTableStepRenderer, ratioTableStepVisual } from "./components/RatioTable";
 export { DepthMode, type DepthModeProps } from "./components/DepthMode";
-export { DEPTH_PURPOSES, type DepthItem, type DepthOption, type DepthPurpose, type DepthNeed, type DepthOptionInfo, depthUnmet } from "./depth";
+export { DEPTH_PURPOSES, type DepthItem, type DepthOption, type DepthPurpose, type DepthNeed, type DepthOptionInfo, depthUnmet, depthOnTool } from "./depth";
 export { BidmasPyramid, type BidmasPyramidProps, type PyramidTier } from "./components/BidmasPyramid";
 
 // Place value table — core representation for place value (powers of 10,

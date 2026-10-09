@@ -23,7 +23,7 @@ import type { PrintContext } from "./printDiagram";
 import { WorksheetBuilder } from "./WorksheetBuilder";
 import { TeachingDeck, type TeachingSlide } from "./TeachingDeck";
 import { DepthMode } from "./components/DepthMode";
-import type { DepthItem, DepthOptionInfo } from "./depth";
+import { depthOnTool, type DepthItem, type DepthOptionInfo } from "./depth";
 import { SkillOverlay } from "./skills";
 import { useParkedMode } from "../parkedMode";
 
@@ -226,7 +226,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   // Depth (curated diagnose / explain / extend questions) is live for any tool that passes `depthItems`.
   const [depthItemId, setDepthItemId] = useState<string | null>(urlInit.item);
   const toolDepthItems = useMemo(
-    () => (depthItems ?? []).filter((i) => !i.tool || i.tool === currentTool),
+    () => (depthItems ?? []).filter((i) => depthOnTool(i, currentTool)),
     [depthItems, currentTool],
   );
   const showDepth = toolDepthItems.length > 0;

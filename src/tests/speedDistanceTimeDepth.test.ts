@@ -13,8 +13,8 @@ const hours = (h: number, m = 0): Q => q(60 * h + m, 60);
 
 describe("Speed, Distance & Time Depth bank numeric claims", () => {
   it("bank has the expected size and every tab-specific tool exists", () => {
-    expect(DEPTH_ITEMS.length).toBe(32);
-    for (const i of DEPTH_ITEMS) if (i.tool) expect(["speed", "distance", "time", "mixed"]).toContain(i.tool);
+    expect(DEPTH_ITEMS.length).toBe(39);
+    for (const i of DEPTH_ITEMS) if (i.tool) for (const k of ([] as string[]).concat(i.tool)) expect(["speed", "distance", "time", "mixed"]).toContain(k);
   });
   it("Level 1", () => {
     eq(div(q(150), q(3)), 50);                 // Bea: 150 miles in 3 h = 50 mph
@@ -31,6 +31,11 @@ describe("Speed, Distance & Time Depth bank numeric claims", () => {
     eq(div(q(20), q(5)), 4);                   // Ravi's rule gives 4
     eq(mul(q(5), q(20)), 100);
     eq(mul(q(40), q(2)), 80); eq(mul(q(40), q(3)), 120);
+  });
+  it("Added items", () => {
+    eq(div(q(120), q(2)), 60); eq(div(q(90), q(30)), 3); eq(div(q(30), q(60)), 1, 2);
+    eq(mul(q(18), hours(0, 20)), 6); eq(mul(q(12), hours(0, 30)), 6);
+    eq(mul(q(45), hours(1, 20)), 60); eq(div(q(15), q(20)), 3, 4); expect(45 * 1.2).toBeCloseTo(54);
   });
   it("Level 2", () => {
     eq(hours(0, 45), 3, 4);                    // 45 min = 0.75 h
