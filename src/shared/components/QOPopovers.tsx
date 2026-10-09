@@ -26,7 +26,7 @@ export const usePopover = () => {
 const PopoverButton = ({ open, onClick }: { open: boolean; onClick: () => void }) => (
   <button
     onClick={onClick}
-    className={`px-4 py-2 whitespace-nowrap rounded-xl border-2 font-bold text-base transition-colors shadow-sm flex items-center gap-2 ${open ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-gray-300 text-gray-600 hover:border-blue-900 hover:text-blue-900"}`}
+    className={`px-4 py-2 whitespace-nowrap rounded-xl border font-semibold text-base transition-colors flex items-center gap-2 ${open ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-slate-200 text-slate-600 hover:border-blue-900 hover:text-blue-900"}`}
   >
     Question Options{" "}
     <ChevronDown size={18} style={{ transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "rotate(0)" }} />
@@ -54,12 +54,12 @@ export const SegButtons = ({
   onChange: (v: string) => void;
   opts: { value: string; label: string }[];
 }) => (
-  <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden">
+  <div className="flex rounded-lg border border-slate-200 overflow-hidden">
     {opts.map(opt => (
       <button
         key={opt.value}
         onClick={() => onChange(opt.value)}
-        className={`flex-1 px-3 py-2 text-sm font-bold transition-colors ${value === opt.value ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
+        className={`flex-1 px-3 py-2 text-sm font-semibold transition-colors ${value === opt.value ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
       >
         {opt.label}
       </button>
@@ -78,7 +78,7 @@ export const DropdownSection = ({
 }) => (
   <div className="flex flex-col gap-2">
     <span className="text-sm font-bold text-gray-400 uppercase tracking-wider">{dropdown.label}</span>
-    <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden">
+    <div className="flex rounded-lg border border-slate-200 overflow-hidden">
       {dropdown.options.map(opt =>
         dropdown.useTwoLineButtons ? (
           <button
@@ -95,7 +95,7 @@ export const DropdownSection = ({
           <button
             key={opt.value}
             onClick={() => onChange(opt.value)}
-            className={`flex-1 px-3 py-2 text-sm font-bold transition-colors ${value === opt.value ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
+            className={`flex-1 px-3 py-2 text-sm font-semibold transition-colors ${value === opt.value ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
           >
             {opt.label}
           </button>
@@ -135,7 +135,7 @@ export const MultiSelectSection = ({
           </>
         )}
       </div>
-      <div className="flex rounded-lg border-2 border-gray-200 overflow-hidden">
+      <div className="flex rounded-lg border border-slate-200 overflow-hidden">
         {multiSelect.options.map(opt => {
           const unmet = unmetOf(opt);
           const blocked = unmet.length > 0;
@@ -206,7 +206,7 @@ const CycleSelect = ({
     <button
       onClick={next}
       title={`${base.label} / ${hard.label}`}
-      className={`flex ${solo ? "w-full" : "flex-1"} min-w-0 flex-col items-center gap-1 px-3 py-2 rounded-lg border-2 border-gray-200 bg-white hover:border-blue-900 transition-colors text-center`}
+      className={`flex ${solo ? "w-full" : "flex-1"} min-w-0 flex-col items-center gap-1 px-3 py-2 rounded-lg border border-slate-200 bg-white hover:border-blue-900 transition-colors text-center`}
     >
       <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{multiSelect.label}</span>
       <span

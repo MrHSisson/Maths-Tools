@@ -13,7 +13,7 @@ export const DifficultyToggle = ({
   levels?: string[];
 }) => (
   // No overflow-hidden so the tooltip can escape the container
-  <div className="flex rounded-xl border-2 border-gray-300 shadow-sm" style={{ overflow: "visible" }}>
+  <div className="flex rounded-xl border border-slate-200 bg-white" style={{ overflow: "visible" }}>
     {levels.map((val, idx, arr) => {
       const label = LV_LABELS[val];
       const isDisabled = disabledLevels.includes(val);
@@ -21,7 +21,7 @@ export const DifficultyToggle = ({
       const col = LV_SELECTOR[val as keyof typeof LV_SELECTOR];
       // Recreate the look of overflow-hidden by rounding the outer buttons individually
       const roundClass = idx === 0 ? "rounded-l-[10px]" : idx === arr.length - 1 ? "rounded-r-[10px]" : "";
-      const borderClass = idx > 0 ? "border-l border-gray-300" : "";
+      const borderClass = idx > 0 ? "border-l border-slate-200" : "";
 
       return (
         <div key={val} style={{ position: "relative" }} className="group">

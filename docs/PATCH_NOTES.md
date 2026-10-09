@@ -28,6 +28,9 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-10 (3) — Calmer chrome across ToolShell and DecisionShell
+- Cooler page background, softer cards (1px borders, light shadow), smaller semibold titles without divider rules, sub-tool pills and underline mode tabs, quieter Level / Options controls and top-tier segmented switch. CLAUDE.md gains a short "Visual direction" section.
+
 ### 2026-10-10 (2) — Phone options sheet, Depth audit, calmer landing page
 - Phone Question Options (ToolShell and DecisionShell) are a full-screen sheet of card sections with a bottom Done; the settings chip now says Options; Decision tools get the same fixed bottom New question bar.
 - Depth audit: Rounding's items tagged by tab (nearest / dp / sf) with +14 items so every tab keeps diagnose/explain/extend per level. Order of Operations filters by its Focus options (needs) by design, not by tab.

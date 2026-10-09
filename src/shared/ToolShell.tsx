@@ -116,7 +116,7 @@ function StatusBarTint({ barId }: { barId: string }) {
     const update = () => {
       const bar = document.getElementById(barId);
       const visible = !!bar && bar.getBoundingClientRect().bottom > 0;
-      meta.setAttribute("content", visible ? "#1e3a8a" : "#f5f3f0");
+      meta.setAttribute("content", visible ? "#1e3a8a" : "#f8f9fb");
     };
     update();
     window.addEventListener("scroll", update, { passive: true });
@@ -540,7 +540,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
   const isDefaultScheme = colorScheme === "default";
   const fsToolbarBg = isDefaultScheme ? "#ffffff" : stepBg;
   const fsQuestionBg = isDefaultScheme ? "#ffffff" : qBg;
-  const fsWorkingBg  = isDefaultScheme ? "#f5f3f0" : qBg;
+  const fsWorkingBg  = isDefaultScheme ? "#f8f9fb" : qBg;
 
   const getToolSettings = () => config.tools[currentTool];
   const getDropdownConfig = () => getToolSettings().difficultySettings?.[difficulty]?.dropdown ?? getToolSettings().dropdown;
@@ -962,14 +962,14 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       // Standard mode only — advanced mode renders via the WorksheetBuilder header slot.
       const bordersDisabled = worksheetLayout !== "grid";
       return (
-        <div className="bg-white rounded-xl shadow-lg border-2 border-gray-200 mb-6">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm border border-slate-200 mb-6">
           <div className="px-6 py-4 border-b-2 border-gray-200">
             {advancedToggle}
           </div>
           <div className="p-6">
             {/* Row 1: levels · QO · differentiated */}
             <div className="flex justify-center items-center gap-6 mb-5">
-              {showLevelToggle && <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm">
+              {showLevelToggle && <div className="flex rounded-xl border border-slate-200 overflow-hidden shadow-sm">
                 {toolLevels.map((val) => {
                   const label = LV_LABELS[val];
                   const col = LV_SELECTOR[val];
@@ -999,7 +999,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                   <label className="text-base font-semibold text-gray-700">Questions:</label>
                   <input type="number" min="1" max="24" value={numQuestions}
                     onChange={e => setNumQuestions(Math.max(1, Math.min(24, parseInt(e.target.value) || (defaults.numQuestions ?? 15))))}
-                    className="w-20 px-4 py-2 border-2 border-gray-300 rounded-lg text-base font-semibold text-center" />
+                    className="w-20 px-4 py-2 border border-slate-200 rounded-lg text-base font-semibold text-center" />
                 </div>
               )}
               {!defaults.fixedColumns && (
@@ -1024,9 +1024,9 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                 {wsSettingsOpen && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setWsSettingsOpen(false)} />
-                    <div className="absolute z-50 mt-2 left-1/2 -translate-x-1/2 bg-white rounded-xl shadow-xl border-2 border-gray-200 p-4" style={{ minWidth: 220 }}>
+                    <div className="absolute z-50 mt-2 left-1/2 -translate-x-1/2 bg-white rounded-xl shadow-xl border border-slate-200 p-4" style={{ minWidth: 220 }}>
                       <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Layout</div>
-                      <div className="flex rounded-lg border-2 border-gray-300 overflow-hidden mb-4">
+                      <div className="flex rounded-lg border border-slate-200 overflow-hidden mb-4">
                         <button onClick={() => setWorksheetLayout("grid")}
                           className={`flex-1 px-4 py-2 text-sm font-bold transition-colors ${worksheetLayout === "grid" ? "bg-blue-900 text-white" : "bg-white text-gray-500 hover:bg-gray-50"}`}>
                           Worksheet
@@ -1082,12 +1082,12 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
 
             {/* Row 3: actions — generate · answers · print */}
             <div className="flex justify-center items-center gap-4 flex-wrap">
-              <button onClick={handleGenerateWorksheet} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
+              <button onClick={handleGenerateWorksheet} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2">
                 <RefreshCw size={18} /> Generate
               </button>
               {worksheet.length > 0 && (
                 <>
-                  <button onClick={() => setShowWorksheetAnswers(!showWorksheetAnswers)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
+                  <button onClick={() => setShowWorksheetAnswers(!showWorksheetAnswers)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2">
                     <Eye size={18} /> {showWorksheetAnswers ? "Hide Answers" : "Show Answers"}
                   </button>
                   <PrintSplitButton
@@ -1108,16 +1108,16 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     }
 
     return (
-      <div className="px-5 py-4 rounded-xl" style={{ backgroundColor: qBg }}>
+      <div className="px-5 py-4 rounded-2xl border border-slate-200" style={{ backgroundColor: qBg }}>
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 [&_button]:whitespace-nowrap">
           {showLevelToggle && <DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} levels={toolLevels} />}
           {qoEl()}
           <div className="flex gap-3 items-center">
-            <button onClick={handleNewQuestion} className="px-4 sm:px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
+            <button onClick={handleNewQuestion} className="px-4 sm:px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2">
               <RefreshCw size={18} /> New Question
             </button>
             <button onClick={() => mode === "whiteboard" ? setShowWhiteboardAnswer(!showWhiteboardAnswer) : setShowAnswer(!showAnswer)}
-              className="px-4 sm:px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2">
+              className="px-4 sm:px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2">
               <Eye size={18} /> {(mode === "whiteboard" ? showWhiteboardAnswer : showAnswer) ? "Hide Answer" : "Show Answer"}
             </button>
           </div>
@@ -1132,8 +1132,8 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         {showLevelToggle && <DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} levels={toolLevels} />}
         {qoEl()}
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          <button onClick={handleNewQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18} /> New Question</button>
-          <button onClick={() => setShowWhiteboardAnswer(a => !a)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><Eye size={18} /> {showWhiteboardAnswer ? "Hide Answer" : "Show Answer"}</button>
+          <button onClick={handleNewQuestion} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18} /> New Question</button>
+          <button onClick={() => setShowWhiteboardAnswer(a => !a)} className="px-6 py-2 bg-blue-900 text-white rounded-xl font-semibold text-base hover:bg-blue-800 flex items-center gap-2"><Eye size={18} /> {showWhiteboardAnswer ? "Hide Answer" : "Show Answer"}</button>
         </div>
       </div>
     );
@@ -1402,7 +1402,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
             <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
               <button onClick={handleNewQuestion} title="New Question" aria-label="New Question" className="px-3 min-[1100px]:px-5 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><RefreshCw size={18} /> <span className="hidden min-[1100px]:inline">New Question</span></button>
               <button onClick={() => setShowAnswer(a => !a)} title={showAnswer ? "Hide Answer" : "Show Answer"} aria-label={showAnswer ? "Hide Answer" : "Show Answer"} className="px-3 min-[1100px]:px-5 py-2 bg-blue-900 text-white rounded-xl font-bold text-base shadow-sm hover:bg-blue-800 flex items-center gap-2"><Eye size={18} /> <span className="hidden min-[1100px]:inline">{showAnswer ? "Hide Answer" : "Show Answer"}</span></button>
-              <button onClick={() => setWeFullscreen(false)} title="Exit Fullscreen (Esc)" aria-label="Exit fullscreen" className="px-3 min-[1100px]:px-4 py-2 rounded-xl font-bold text-base border-2 border-gray-300 text-gray-700 bg-white hover:bg-gray-50 flex items-center gap-2"><Minimize2 size={18} /> <span className="hidden min-[1100px]:inline">Exit</span></button>
+              <button onClick={() => setWeFullscreen(false)} title="Exit Fullscreen (Esc)" aria-label="Exit fullscreen" className="px-3 min-[1100px]:px-4 py-2 rounded-xl font-bold text-base border border-slate-200 text-gray-700 bg-white hover:bg-gray-50 flex items-center gap-2"><Minimize2 size={18} /> <span className="hidden min-[1100px]:inline">Exit</span></button>
             </div>
           </div>
           <div className="flex-1 min-h-0 flex flex-col px-6 pb-3" style={{ backgroundColor: qBg }}>
@@ -1445,7 +1445,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
 
   const renderWorksheet = () => {
     if (worksheet.length === 0) return (
-      <div className="rounded-xl shadow-2xl p-8 text-center" style={{ backgroundColor: qBg }}>
+      <div className="rounded-2xl border border-slate-200 shadow-sm p-8 text-center" style={{ backgroundColor: qBg }}>
         <span className="text-2xl text-gray-400">Generate worksheet</span>
       </div>
     );
@@ -1472,7 +1472,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
     // by the browser on every reflow (KaTeX finishing, font load, resize),
     // no JS measurement or timing involved at all.
     if (isDifferentiated) return (
-      <div className="rounded-xl shadow-2xl p-8 relative" style={{ backgroundColor: qBg }}>
+      <div className="rounded-2xl border border-slate-200 shadow-sm p-8 relative" style={{ backgroundColor: qBg }}>
         {fontSizeControls}
         <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
         <div className="grid gap-4" style={{
@@ -1549,7 +1549,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         );
       };
       return (
-        <div className="rounded-xl shadow-2xl p-8 relative" style={{ backgroundColor: qBg }}>
+        <div className="rounded-2xl border border-slate-200 shadow-sm p-8 relative" style={{ backgroundColor: qBg }}>
           {fontSizeControls}
           <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
           <div style={{ display: "grid", gridTemplateColumns: `repeat(${effCols}, 1fr)`, columnGap: "1.5rem" }}>
@@ -1559,7 +1559,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       );
     }
     return (
-      <div className="rounded-xl shadow-2xl p-8 relative" style={{ backgroundColor: qBg }}>
+      <div className="rounded-2xl border border-slate-200 shadow-sm p-8 relative" style={{ backgroundColor: qBg }}>
         {fontSizeControls}
         <h2 className="text-3xl font-bold text-center mb-8" style={{ color: "#000" }}>{toolTitle} — Worksheet</h2>
         {/* gridAutoRows: "1fr" — same explicit-row-track convention used for a
@@ -1623,7 +1623,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
         {isInfoOpen && <InfoModal infoSections={infoSections} onClose={() => setIsInfoOpen(false)} />}
         {openSkillId && <SkillOverlay skillId={openSkillId} onClose={() => setOpenSkillId(null)} />}
 
-        <div className="min-h-screen px-3 pt-3 pb-24" style={{ backgroundColor: "#f5f3f0" }}>
+        <div className="min-h-screen px-3 pt-3 pb-24" style={{ backgroundColor: "#f8f9fb" }}>
           <div className="max-w-md mx-auto">
             <h1 className="text-base font-bold text-center mb-2" style={{ color: "#000" }}>{config.pageTitle}</h1>
 
@@ -1638,7 +1638,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               <span className="text-xs font-bold text-blue-900 flex-shrink-0 flex items-center gap-1"><SlidersHorizontal size={14} /> Options</span>
             </button>
 
-            <div className="flex rounded-xl border-2 border-gray-300 overflow-hidden shadow-sm mb-3">
+            <div className="flex rounded-xl border border-slate-200 bg-white overflow-hidden mb-3">
               {([...(["single", "worksheet"] as const), ...(showDepth ? (["depth"] as const) : [])]).map(m => (
                 <button key={m} onClick={() => setMode(m)}
                   className={`flex-1 px-2 py-1.5 whitespace-nowrap font-bold text-sm transition-colors ${mode === m ? "bg-blue-900 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}>
@@ -1653,7 +1653,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               <>
                 <div className="flex items-center justify-center gap-2 mb-3 flex-wrap">
                   {!defaults.fixedQuestions && (
-                    <div className="flex items-center gap-0.5 bg-white border-2 border-gray-300 rounded-lg px-1">
+                    <div className="flex items-center gap-0.5 bg-white border border-slate-200 rounded-lg px-1">
                       <button onClick={() => setNumQuestions(n => Math.max(1, n - 1))} className="w-7 h-7 flex items-center justify-center text-gray-500 font-bold">−</button>
                       <span className="w-6 text-center font-bold text-sm text-gray-800">{numQuestions}</span>
                       <button onClick={() => setNumQuestions(n => Math.min(24, n + 1))} className="w-7 h-7 flex items-center justify-center text-gray-500 font-bold">+</button>
@@ -1687,7 +1687,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
               </>
             ) : (
               <>
-                <div className="rounded-xl shadow-lg overflow-clip">
+                <div className="rounded-2xl border border-slate-200 shadow-sm overflow-clip">
                   {renderWorkedExample(true)}
                 </div>
               </>
@@ -1713,7 +1713,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
 
         {narrowDrawerOpen && (
           // Full-screen sheet: a clean page of its own for the options, with one big Done at the thumb
-          <div className="fixed inset-0 z-50 flex flex-col" style={{ backgroundColor: "#f5f3f0" }}>
+          <div className="fixed inset-0 z-50 flex flex-col" style={{ backgroundColor: "#f8f9fb" }}>
             <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 flex-shrink-0">
               <div className="min-w-0">
                 <div className="font-bold text-gray-900 text-base leading-tight">Question options</div>
@@ -1772,14 +1772,13 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
       {renderNavBar(false)}
       {isInfoOpen && <InfoModal infoSections={infoSections} onClose={() => setIsInfoOpen(false)} />}
       {openSkillId && <SkillOverlay skillId={openSkillId} onClose={() => setOpenSkillId(null)} />}
-      <div className="min-h-screen p-8" style={{ backgroundColor: "#f5f3f0" }}>
+      <div className="min-h-screen p-8" style={{ backgroundColor: "#f8f9fb" }}>
         <div className="max-w-6xl mx-auto">
           <div>
-            <h1 className="text-5xl font-bold text-center mb-8" style={{ color: "#000" }}>{config.pageTitle}</h1>
-            <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
+            <h1 className="text-3xl font-semibold tracking-tight text-center mb-6" style={{ color: "#0f172a" }}>{config.pageTitle}</h1>
             {toolKeys.length > 1 && mode !== "teach" && (
               <>
-                <div className="flex flex-col items-center gap-4 mb-6">
+                <div className="flex flex-col items-center gap-2.5 mb-6">
                   {(() => {
                     const rowSizes = defaults.toolTabRows ?? [toolKeys.length];
                     const rows: string[][] = [];
@@ -1787,10 +1786,10 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                     for (const size of rowSizes) { rows.push(toolKeys.slice(idx, idx + size)); idx += size; }
                     if (idx < toolKeys.length) rows.push(toolKeys.slice(idx));
                     return rows.map((row, ri) => (
-                      <div key={ri} className="flex justify-center gap-4">
+                      <div key={ri} className="flex flex-wrap justify-center gap-2.5">
                         {row.map(k => (
                           <button key={k} onClick={() => { selectTool(k); }}
-                            className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${currentTool === k ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
+                            className={`px-5 py-2 rounded-full font-semibold text-[15px] transition-colors ${currentTool === k ? "bg-blue-900 text-white" : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"}`}>
                             {config.tools[k].name}
                           </button>
                         ))}
@@ -1798,16 +1797,15 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
                     ));
                   })()}
                 </div>
-                <div className="flex justify-center mb-8"><div style={{ width: "90%", height: "2px", backgroundColor: "#d1d5db" }} /></div>
               </>
             )}
-            <div className="flex justify-center gap-4 mb-8">
+            <div className="flex justify-center gap-7 mb-6 border-b border-slate-200">
               {([...(["whiteboard", "single", "worksheet"] as const), ...(showTeach ? (["teach"] as const) : []), ...(showDepth ? (["depth"] as const) : [])] as const)
                 .map(m => {
                   const label = m === "whiteboard" ? "Whiteboard" : m === "single" ? "Worked Example" : m === "teach" ? "Teach" : m === "depth" ? "Depth" : "Worksheet";
                   return (
                     <button key={m} onClick={() => { setMode(m); setPresenterMode(false); setWbFullscreen(false); setWeFullscreen(false); }}
-                      className={`px-8 py-4 rounded-xl font-bold text-xl transition-all shadow-xl ${mode === m ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`}>
+                      className={`pb-3 -mb-px text-base font-semibold border-b-2 transition-colors ${mode === m ? "border-blue-900 text-blue-900" : "border-transparent text-slate-500 hover:text-slate-800"}`}>
                       {label}
                     </button>
                   );
@@ -1837,7 +1835,7 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           )}
           {mode === "depth" && showDepth && (
             <div className="flex flex-col gap-6">
-              <div className="rounded-xl shadow-lg bg-white p-4 flex flex-wrap items-center justify-center gap-4">
+              <div className="rounded-2xl border border-slate-200 shadow-sm bg-white p-4 flex flex-wrap items-center justify-center gap-4">
                 <DifficultyToggle value={difficulty} onChange={v => setDifficultyGuarded(v as DifficultyLevel)} disabledLevels={comingSoon} levels={toolLevels} />
                 {/* the same Question Options as every other mode: they decide which Depth questions are possible */}
                 {Object.keys(depthOptionInfo).length > 0 && qoEl()}
@@ -1847,10 +1845,10 @@ export const ToolShell = ({ config, infoSections, generateQuestion, generateUniq
           )}
           {mode !== "worksheet" && mode !== "teach" && mode !== "depth" && (
             <div className="flex flex-col gap-6">
-              <div className="rounded-xl shadow-lg flex-shrink-0">
+              <div className="rounded-2xl border border-slate-200 shadow-sm flex-shrink-0">
                 {renderControlBar()}
               </div>
-              <div className="rounded-xl shadow-lg overflow-hidden">
+              <div className="rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                 {mode === "whiteboard" && renderWhiteboard()}
                 {mode === "single" && renderWorkedExample()}
               </div>

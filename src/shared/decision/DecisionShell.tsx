@@ -23,8 +23,8 @@ import { getQuestionBg } from "../colors";
 // ═══════════════════════════════════════════════════════════════════════════
 
 const levelKey = (n: number) => `level${n}`;
-const CARD = "bg-white rounded-xl shadow-lg min-w-0";
-const BTN = "px-4 sm:px-6 py-2 rounded-xl font-bold text-base shadow-sm transition-colors flex items-center gap-2";
+const CARD = "bg-white rounded-2xl border border-slate-200 shadow-sm min-w-0";
+const BTN = "px-4 sm:px-6 py-2 rounded-xl font-semibold text-base transition-colors flex items-center gap-2";
 const BTN_PRIMARY = `${BTN} bg-blue-900 text-white hover:bg-blue-800`;
 
 const defaultOptions = (config: DecisionShellProps["config"], level: number): Record<string, string> =>
@@ -181,7 +181,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   );
 
   const tabBtn = (active: boolean) =>
-    `px-4 py-2 sm:px-6 sm:py-3 rounded-xl font-bold text-base sm:text-lg transition-all shadow-md ${active ? "bg-blue-900 text-white" : "bg-white text-gray-800 hover:bg-gray-100 hover:text-blue-900"}`;
+    `px-4 py-2 sm:px-5 rounded-full font-semibold text-sm sm:text-[15px] transition-colors ${active ? "bg-blue-900 text-white" : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"}`;
 
   const controlRow = (
       <div className="flex flex-wrap justify-center items-center gap-x-5 gap-y-3">
@@ -204,7 +204,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
           <div className="relative" ref={optionsPop.ref}>
             <button
               onClick={() => optionsPop.setOpen(!optionsPop.open)}
-              className={`px-4 py-2 rounded-xl border-2 font-bold text-base transition-colors shadow-sm flex items-center gap-2 ${optionsPop.open ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"}`}
+              className={`px-4 py-2 rounded-xl border font-semibold text-base transition-colors flex items-center gap-2 ${optionsPop.open ? "bg-blue-900 border-blue-900 text-white" : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"}`}
             >
               Question Options
               <ChevronDown size={18} style={{ transition: "transform 0.2s", transform: optionsPop.open ? "rotate(180deg)" : "rotate(0)" }} />
@@ -381,7 +381,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     // phone: the question and the picture are pinned at the top while the working scrolls under them, so what is being
     // worked on is never pushed off screen; the table and the graph share the stage (a switch, automatic when a step builds the table)
     <div className="flex flex-col">
-      <div className="sticky top-0 z-20 flex flex-col gap-2 p-2 border-b border-gray-200" style={{ backgroundColor: "#f5f3f0" }}>
+      <div className="sticky top-0 z-20 flex flex-col gap-2 p-2 border-b border-gray-200" style={{ backgroundColor: "#f8f9fb" }}>
         <details className="rounded-lg bg-white border border-gray-200 px-3 py-1.5">
           <summary className="text-sm font-semibold text-gray-800 leading-snug cursor-pointer list-none flex items-center gap-2">
             <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400 shrink-0">Question</span>
@@ -425,7 +425,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
     return (
       <div>
         {navBar}
-        <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 p-6 text-center" style={{ backgroundColor: "#f5f3f0" }}>
+        <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 p-6 text-center" style={{ backgroundColor: "#f8f9fb" }}>
           <div className="text-2xl font-bold text-gray-900">Something went wrong building that question.</div>
           <button onClick={() => window.location.reload()} className={BTN_PRIMARY}><RefreshCw size={18} /> Reload the page</button>
         </div>
@@ -435,7 +435,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
   // ── fullscreen: the whole working area — the network AND the question, working and step controls — filling the screen ──
   if (fullscreen)
     return (
-      <div className="fixed inset-0 z-[200] flex flex-col" style={{ backgroundColor: "#f5f3f0" }}>
+      <div className="fixed inset-0 z-[200] flex flex-col" style={{ backgroundColor: "#f8f9fb" }}>
         {overlay}
         <div className="flex items-center justify-between px-5 py-2.5 bg-blue-900 text-white flex-shrink-0">
           <div className="font-bold text-lg">{config.pageTitle}{levelCount > 1 && levelLabel ? <span className="ml-3 text-sm font-semibold text-blue-200">Level {level} — {levelLabel}</span> : null}</div>
@@ -487,7 +487,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         {navBar}
         {overlay}
         {infoOpen && <InfoModal infoSections={infoSections} onClose={() => setInfoOpen(false)} />}
-        <div className="min-h-screen px-3 pt-3 pb-24" style={{ backgroundColor: "#f5f3f0" }}>
+        <div className="min-h-screen px-3 pt-3 pb-24" style={{ backgroundColor: "#f8f9fb" }}>
           <h1 className="text-base font-bold text-center mb-2" style={{ color: "#000" }}>{config.pageTitle}</h1>
           <button onClick={() => setDrawer(true)} className="w-full bg-white border border-gray-200 rounded-xl shadow-sm flex items-center justify-between gap-2 px-3.5 py-2.5 mb-2">
             <div className="min-w-0 text-left">
@@ -505,7 +505,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
         )}
         {drawer && (
           // full-screen sheet: a clean page of its own for the options, one big Done at the thumb
-          <div className="fixed inset-0 z-50 flex flex-col" style={{ backgroundColor: "#f5f3f0" }}>
+          <div className="fixed inset-0 z-50 flex flex-col" style={{ backgroundColor: "#f8f9fb" }}>
             <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 flex-shrink-0">
               <div className="min-w-0">
                 <div className="font-bold text-gray-900 text-base leading-tight">Question options</div>
@@ -576,13 +576,13 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
       {navBar}
       {overlay}
       {infoOpen && <InfoModal infoSections={infoSections} onClose={() => setInfoOpen(false)} />}
-      <div className="min-h-screen p-3 sm:px-8 sm:py-5" style={{ backgroundColor: "#f5f3f0" }}>
+      <div className="min-h-screen p-3 sm:px-8 sm:py-5" style={{ backgroundColor: "#f8f9fb" }}>
         <div className="max-w-[1500px] mx-auto">
-          <h1 className="text-3xl sm:text-4xl font-bold text-center mb-3 sm:mb-4" style={{ color: "#000" }}>{config.pageTitle}</h1>
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-center mb-3 sm:mb-5" style={{ color: "#0f172a" }}>{config.pageTitle}</h1>
           {/* TOP TIER: the big either/or (e.g. capacity only ⇄ min and max) — it changes the whole kind of network */}
           {topOptions.map((o) => (
             <div key={o.key} className="flex justify-center mb-4">
-              <div className="inline-flex gap-1 rounded-2xl bg-white p-1.5 shadow-lg">
+              <div className="inline-flex gap-1 rounded-xl bg-slate-200/60 p-1">
                 {o.choices.map((c) => (
                   <button
                     key={c.value}
@@ -591,7 +591,7 @@ export default function DecisionShell({ generate, solve, renderCanvas, config }:
                       setOptions(opts);
                       newQuestion(level, subTool, opts);
                     }}
-                    className={`px-5 sm:px-10 py-2.5 sm:py-3 rounded-xl font-bold text-base sm:text-xl transition-colors ${options[o.key] === c.value ? "bg-blue-900 text-white" : "text-gray-700 hover:bg-gray-100"}`}
+                    className={`px-5 sm:px-8 py-2 rounded-lg font-semibold text-sm sm:text-base transition-colors ${options[o.key] === c.value ? "bg-white text-blue-900 shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                   >
                     {c.label}
                   </button>
