@@ -3,7 +3,7 @@
 // answer independently; here the hand-worked example is pinned and the whole chain is checked by brute force.
 
 import { describe, expect, it } from "vitest";
-import { givenDistances, leastDistances, nearestNeighbour } from "../shared/decision/tsp";
+import { leastDistances, nearestNeighbour } from "../shared/decision/tsp";
 import { lowerBound } from "../shared/decision/tspBounds";
 import { generateTsp, pairsToComplete, type TspKind } from "../shared/decision/tspGenerate";
 import { solveTsp } from "../shared/decision/tspSolve";
@@ -51,10 +51,15 @@ describe("generated questions", () => {
     for (const level of [1, 2, 3] as const)
       it(`${kind} L${level}: answer consistent, working ends on the answer, no broken captions`, () => {
         for (let i = 0; i < 12; i++) {
-          const p = generateTsp(level, kind, { starts: i % 2 ? 2 : 1, setting: i % 3 ? "plain" : "context", triangle: "holds" });
-          const ld = p.givenTable ? givenDistances(p.network) : leastDistances(p.network);
+          const p = generateTsp(level, kind, { starts: i % 2 ? 2 : 1, setting: i % 3 ? "plain" : "context" });
+          const ld = leastDistances(p.network);
           const todo = pairsToComplete(ld);
-          if (level === 1 && kind !== "tspTable") expect(todo.length).toBe(0); // a complete network
+          if (level === 1 && kind !== "tspTable") {
+            // a complete network whose weights need not satisfy the triangle inequality: 0–3 entries are replaced by a shorter route
+            const n = p.network.nodes.length;
+            expect(p.network.edges.length).toBe((n * (n - 1)) / 2);
+            expect(todo.length).toBeLessThanOrEqual(3);
+          }
           if (level > 1 || kind === "tspTable") expect(todo.length).toBeGreaterThan(0);
           if (level === 3) expect(p.network.edges.some((e) => ld.dist[e.from][e.to] < e.weight)).toBe(true); // a detour beats a direct edge
           const steps = solveTsp(p);
@@ -97,7 +102,7 @@ describe("generated questions", () => {
 
   it("the working never needs the deleted vertex's own edges in the tree", () => {
     for (let i = 0; i < 20; i++) {
-      const p = generateTsp(2, "tspLower", { starts: 1, setting: "plain", triangle: "holds" });
+      const p = generateTsp(2, "tspLower", { starts: 1, setting: "plain" });
       const lb = lowerBound(leastDistances(p.network), p.deleted!);
       expect(lb.mst.every((e) => e.a !== p.deleted && e.b !== p.deleted)).toBe(true);
       expect(lb.mst.length).toBe(p.network.nodes.length - 2);
@@ -105,57 +110,46 @@ describe("generated questions", () => {
   });
 });
 
-describe("tables of times / costs that break the triangle inequality — at every level", () => {
-  for (const level of [1, 2, 3] as const)
-    it(`L${level}: 'fails' gives a complete table that breaks it, sized and strengthened by the level, and the working agrees with the reference`, async () => {
-      const { satisfiesTriangle, triangleViolations } = await import("../shared/decision/tspGenerate");
-      const { referenceNearestNeighbour, referenceLowerBound, referenceOptimalTour } = await import("../shared/decision/validate");
-      for (const kind of ["tspNN", "tspLower", "tspBounds"] as const)
-        for (let i = 0; i < 25; i++) {
-          const p = generateTsp(level, kind, { starts: 1, setting: i % 2 ? "context" : "plain", triangle: "fails" });
-          const n = p.network.nodes.length;
-          expect(satisfiesTriangle(p.network)).toBe(false);
-          expect(triangleViolations(p.network)).toBeGreaterThanOrEqual(level);
-          expect(n).toBeLessThanOrEqual(level === 1 ? 5 : 6);
-          if (level >= 2) expect(n).toBeGreaterThanOrEqual(5);
-          if (level === 3) expect(n).toBe(6);
-          expect(p.network.edges.length).toBe((n * (n - 1)) / 2); // complete
-          expect(p.givenTable).toBe(true);
-          expect(pairsToComplete(givenDistances(p.network))).toEqual([]);
-          if (kind !== "tspLower") {
-            const nn = referenceNearestNeighbour(p.network, p.start!, true);
-            expect(nn.tied).toBe(false);
-            expect(p.answer.value).toBe(nn.total);
-            expect(referenceOptimalTour(p.network, true)).toBeLessThanOrEqual(nn.total);
-          }
-          if (kind !== "tspNN") {
-            const lb = referenceLowerBound(p.network, p.deleted!, true);
-            expect(lb.tied).toBe(false);
-            expect(p.bounds!.lower).toBe(lb.total);
-            expect(lb.total).toBeLessThanOrEqual(referenceOptimalTour(p.network, true));
-          }
-          const steps = solveTsp(p);
-          expect(steps[steps.length - 1].runningTotal).toBe(p.answer.value);
-          if (p.prompt.includes("must visit")) expect(p.prompt).toMatch(/journey times|cost in pounds/);
-          expect(p.prompt).toContain("not drawn to scale");
-        }
-    });
-  it("'holds' keeps distances (complete at Level 1, practical above) and 'either' draws both kinds at every level", async () => {
-    const { satisfiesTriangle } = await import("../shared/decision/tspGenerate");
-    for (const level of [1, 2, 3] as const) {
-      let given = 0, metric = 0;
-      for (let i = 0; i < 40; i++) {
-        const h = generateTsp(level, "tspNN", { starts: 1, setting: "plain", triangle: "holds" });
-        expect(h.givenTable).toBeUndefined();
-        if (level === 1) expect(satisfiesTriangle(h.network)).toBe(true);
-        const e = generateTsp(level, "tspNN", { starts: 1, setting: "plain" });
-        if (e.givenTable) given++; else metric++;
-      }
-      expect(given, `L${level} times`).toBeGreaterThan(5);
-      expect(metric, `L${level} distances`).toBeGreaterThan(5);
+describe("the initial network need not satisfy the triangle inequality — the table of least distances always does", () => {
+  const holds = (ld: ReturnType<typeof leastDistances>) =>
+    ld.ids.every((a) => ld.ids.every((b) => ld.ids.every((c) => ld.dist[a][c] <= ld.dist[a][b] + ld.dist[b][c])));
+  it("Level 1 draws complete networks with 0 to 3 entries beaten by a route, and about a quarter are genuine distances", () => {
+    const seen = new Set<number>();
+    for (let i = 0; i < 120; i++) {
+      const p = generateTsp(1, "tspNN", { starts: 1, setting: "plain" });
+      const ld = leastDistances(p.network);
+      seen.add(pairsToComplete(ld).length);
+      expect(holds(ld)).toBe(true); // however the weights were drawn, the table of least distances is a metric
     }
+    expect([...seen].sort()).toEqual([0, 1, 2, 3]);
   });
-  it("the table question never uses times", () => {
-    for (let i = 0; i < 20; i++) expect(generateTsp(2, "tspTable", { starts: 1, setting: "plain", triangle: "fails" }).givenTable).toBeUndefined();
+  it("Level 2 allows at most one beaten direct edge, Level 3 requires one to three — and both leave some pairs unjoined", () => {
+    let l2Beaten = 0, l2None = 0;
+    for (let i = 0; i < 60; i++) {
+      for (const [level, lo, hi] of [[2, 0, 1], [3, 1, 3]] as const) {
+        const p = generateTsp(level, "tspNN", { starts: 1, setting: "plain" });
+        const ld = leastDistances(p.network);
+        const beaten = p.network.edges.filter((e) => ld.dist[e.from][e.to] < e.weight).length;
+        expect(beaten).toBeGreaterThanOrEqual(lo);
+        expect(beaten).toBeLessThanOrEqual(hi);
+        const n = p.network.nodes.length;
+        expect(p.network.edges.length).toBeLessThan((n * (n - 1)) / 2); // not every pair joined
+        expect(holds(ld)).toBe(true);
+        if (level === 2) beaten ? l2Beaten++ : l2None++;
+      }
+    }
+    expect(l2Beaten, "Level 2 sometimes has a beaten edge").toBeGreaterThan(0);
+    expect(l2None, "…and sometimes none").toBeGreaterThan(0);
+  });
+  it("the nearest-neighbour tour is worked on the table of least distances, and never just the outline of the drawing", () => {
+    for (const level of [1, 2, 3] as const)
+      for (let i = 0; i < 30; i++) {
+        const p = generateTsp(level, "tspNN", { starts: 1, setting: i % 2 ? "context" : "plain" });
+        const ld = leastDistances(p.network);
+        expect(nearestNeighbour(ld.ids, ld.dist, p.start!).total).toBe(p.answer.value);
+        expect(p.prompt).toContain("not drawn to scale");
+        // a direct leg beaten by a detour is never described as a plain distance
+        if (p.network.edges.some((e) => ld.dist[e.from][e.to] < e.weight) && p.prompt.includes("must visit")) expect(p.prompt).toMatch(/journey times|cost in pounds/);
+      }
   });
 });

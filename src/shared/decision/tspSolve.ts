@@ -7,7 +7,7 @@
 // A question is a sequence of these. Every number is read off tsp.ts / tspBounds.ts, never recomputed here.
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { givenDistances, leastDistances, nearestNeighbour, type LeastDistances } from "./tsp";
+import { leastDistances, nearestNeighbour, type LeastDistances } from "./tsp";
 import { lowerBound } from "./tspBounds";
 import { expandRoute, pairKey, pairsToComplete } from "./tspGenerate";
 import type { DecisionProblem, DistanceTable, EdgeState, MatrixCell, Network, NodeRole, SolveStep, StepListItem } from "./types";
@@ -18,8 +18,6 @@ interface Ctx {
   todo: [string, string][];
   practical: boolean;
   title: string;
-  /** a table of journey times / costs taken exactly as given (the triangle inequality need not hold) */
-  given?: boolean;
 }
 
 const edgeBetween = (c: Ctx, a: string, b: string) => c.net.edges.find((e) => pairKey(e.from, e.to) === pairKey(a, b))!;
@@ -113,9 +111,7 @@ function nnBeats(c: Ctx, start: string, tag: string, again = false): { steps: So
       ? `Now start again at ${start}: cross out column ${start} and look along row ${start} for the smallest entry.`
       : c.practical || c.todo.length
         ? `${c.todo.length ? "The table is complete. " : ""}Apply nearest neighbour, starting at ${start}: cross out column ${start} and look along row ${start} for the smallest entry.`
-        : c.given
-          ? `Use the table exactly as it is given — these are times (or costs), so a direct leg is not assumed to be the quickest or cheapest way, and nothing in the table is replaced. Apply nearest neighbour straight away. Start at ${start}: cross out column ${start} and look along row ${start} for the smallest entry.`
-          : `Every pair is joined directly and no detour is ever shorter, so apply nearest neighbour straight away. Start at ${start}: cross out column ${start} and look along row ${start} for the smallest entry.`,
+        : `Every pair is joined directly and no detour is ever shorter, so apply nearest neighbour straight away. Start at ${start}: cross out column ${start} and look along row ${start} for the smallest entry.`,
     phase,
     route: [start],
     edgeStates: edgeStatesFor([]),
@@ -333,10 +329,10 @@ function lowerBeats(c: Ctx, deleted: string): { steps: SolveStep[]; lower: numbe
 // ── The whole solution ───────────────────────────────────────────────────────
 export function solveTsp(p: DecisionProblem): SolveStep[] {
   const net = p.network;
-  const ld = p.givenTable ? givenDistances(net) : leastDistances(net);
+  const ld = leastDistances(net);
   const todo = pairsToComplete(ld);
   const practical = todo.length > 0;
-  const c: Ctx = { net, ld, todo, practical, given: !!p.givenTable, title: practical ? "Table of least distances" : p.givenTable ? "Table of times / costs" : "Distance matrix" };
+  const c: Ctx = { net, ld, todo, practical, title: practical ? "Table of least distances" : "Distance matrix" };
   const kind = p.kind ?? "tspNN";
   const steps: SolveStep[] = practical ? tableBeats(c) : [];
 

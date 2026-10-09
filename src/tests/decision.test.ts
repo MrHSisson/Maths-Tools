@@ -40,8 +40,9 @@ describe("Decision problem discovery", () => {
 
 for (const [path, exp] of problems) {
   describe(`${path}`, () => {
+    // validateProblem generates and independently re-derives hundreds of questions per tool: give it room on a loaded runner
     it("is a well-formed Decision problem (validateProblem)", () => {
       expect(validateProblem(exp)).toEqual([]);
-    });
+    }, 60_000);
   });
 }
