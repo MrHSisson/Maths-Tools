@@ -182,7 +182,7 @@ export default function FlowView({ net, mode, view, labelPos, qIndex, background
         {net.nodes.map((n) => {
           const fill = sSide.has(n.id) ? "#dbeafe" : labelled.has(n.id) ? "#dcfce7" : "#ffffff";
           return (
-            <g key={n.id} onPointerDown={onNodeDown ? (ev) => onNodeDown(n.id, ev) : undefined} style={{ cursor: onNodeDown ? "move" : "default", touchAction: onNodeDown ? "none" : undefined }}>
+            <g key={n.id} onPointerDown={onNodeDown ? (ev) => onNodeDown(n.id, ev) : undefined} style={onNodeDown ? { cursor: "move", touchAction: "none" } : undefined}>
               <circle cx={n.x} cy={n.y} r={NODE_R} fill={fill} stroke={NAVY} strokeWidth={2.75} />
               <text x={n.x} y={n.y} textAnchor="middle" dominantBaseline="central" fontSize={18} fontWeight={800} fill={NAVY} style={{ userSelect: "none" }}>
                 {n.label ?? n.id}
