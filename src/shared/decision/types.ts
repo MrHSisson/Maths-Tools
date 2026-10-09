@@ -76,6 +76,8 @@ export interface DecisionProblem {
   matrixMode?: "question" | "working" | "off";
   /** Overrides config.legend for this question. */
   legend?: LegendItem[];
+  /** TSP: the complete table is the data as given (journey times that need not satisfy the triangle inequality) — no entry is ever replaced by a shorter route. */
+  givenTable?: boolean;
   /** The question hands the network over as a table only: Question mode draws the vertices without their edges. */
   vertexOnlyQuestion?: boolean;
 }

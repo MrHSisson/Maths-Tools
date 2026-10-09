@@ -7,7 +7,7 @@
 // A question is a sequence of these. Every number is read off tsp.ts / tspBounds.ts, never recomputed here.
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { leastDistances, nearestNeighbour, type LeastDistances } from "./tsp";
+import { givenDistances, leastDistances, nearestNeighbour, type LeastDistances } from "./tsp";
 import { lowerBound } from "./tspBounds";
 import { expandRoute, pairKey, pairsToComplete } from "./tspGenerate";
 import type { DecisionProblem, DistanceTable, EdgeState, MatrixCell, Network, NodeRole, SolveStep, StepListItem } from "./types";
@@ -329,7 +329,7 @@ function lowerBeats(c: Ctx, deleted: string): { steps: SolveStep[]; lower: numbe
 // ── The whole solution ───────────────────────────────────────────────────────
 export function solveTsp(p: DecisionProblem): SolveStep[] {
   const net = p.network;
-  const ld = leastDistances(net);
+  const ld = p.givenTable ? givenDistances(net) : leastDistances(net);
   const todo = pairsToComplete(ld);
   const practical = todo.length > 0;
   const c: Ctx = { net, ld, todo, practical, title: practical ? "Table of least distances" : "Distance matrix" };

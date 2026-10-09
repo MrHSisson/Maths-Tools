@@ -28,6 +28,11 @@ Keep the split even when a session only touches one.
 
 # Maths
 
+### 2026-10-09 (late) — Travelling Salesperson: tours no longer just round the outside; non-metric tables
+- **Cause:** practical-network (Levels 2–3) weights were scaled to the drawing, and a table of least distances is a metric by construction, so the nearest neighbour simply walked the perimeter (50% of Level 2 questions, 33% of Level 3; the upper bound was already optimal in ~72%).
+- **Fix:** practical weights are different whole numbers NOT scaled to the drawing (every question says the diagram is not to scale); a nearest-neighbour tour that is just the outline of the drawing is rejected; and 60% of upper-bound questions require a tour that is not already optimal. Measured after: outside-ring 0%, upper bound = optimal 19–33%.
+- **New: complete tables that break the triangle inequality** (Level 1, option "Complete network: triangle inequality" — Either / Holds / Fails). A failing table is journey times (a direct leg can be slower than going round); it is the data as given (`givenDistances`, `DecisionProblem.givenTable`), so nothing is replaced by a shorter route. Nearest neighbour and the deleted-vertex bound still work (they only need a complete table). Solver, generator and the independent CI reference all honour `givenTable`.
+
 ### 2026-10-09 (end of day) — fullscreen worked example: sizes and the remaining audit fixes
 - Fullscreen working text back to about page size; the representation column is wider (two-thirds) and the picture scales up to fill it (`ScaleToFit` moved to `shared/components/ScaleToFit.tsx`). Control bar is one row at every width (icons under 1100 px). Esc closes an open popover before leaving fullscreen (`usePopover`). Decision's fullscreen: controls clear of the pen, bigger diagram share, smaller working text. `RatioTable` arrows now survive an ancestor's scale.
 

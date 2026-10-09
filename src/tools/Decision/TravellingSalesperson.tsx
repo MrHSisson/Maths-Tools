@@ -44,7 +44,8 @@ const INFO_SECTIONS: InfoSection[] = [
     title: "Question Options",
     icon: "⚙️",
     content: [
-      { label: "Levels", detail: "Level 1: a complete network where the direct edge is always the shortest way, so the algorithms apply straight away (the table question starts with a small practical network). Level 2: a practical network — complete the table of least distances first, then apply the algorithm. Level 3: a practical network where one direct edge is longer than a route through other vertices, so a table entry must be replaced." },
+      { label: "Levels", detail: "Level 1: a complete network (every pair joined), so the algorithms apply straight away; its weights may or may not satisfy the triangle inequality (see the option below). The table question starts with a small practical network. Level 2: a practical network — complete the table of least distances first, then apply the algorithm. Level 3: a practical network where one direct edge is longer than a route through other vertices, so a table entry must be replaced." },
+      { label: "Triangle inequality (Level 1)", detail: "A complete network of distances satisfies the triangle inequality (a direct leg is never longer than going via another vertex). A table of journey times need not: a direct journey can take longer than two short ones. Either (the default) draws both; the nearest neighbour and deleted-vertex methods work in either case because they only need a complete table. The weights are never drawn to scale, so the picture does not give the tour away." },
       { label: "Start vertices", detail: "Nearest neighbour from one start vertex, or from two start vertices with the better (smaller) upper bound taken." },
       { label: "Setting", detail: "Plain, or in context (a driver, representative or surveyor who must visit every site and return)." },
       { label: "No ties", detail: "Every question has no ties between nearest vertices and a lower bound whose tree and edges are the only possible ones, so there is always exactly one correct working." },
@@ -64,7 +65,7 @@ function generate(level: number, ctx?: GenerateContext): DecisionProblem {
   const lv = Math.min(3, Math.max(1, level)) as 1 | 2 | 3;
   const kind = KIND[ctx?.subTool ?? "upper"] ?? "tspNN";
   const o = ctx?.options ?? {};
-  return generateTsp(lv, kind, { starts: o.starts === "two" ? 2 : 1, setting: o.setting === "context" ? "context" : "plain" });
+  return generateTsp(lv, kind, { starts: o.starts === "two" ? 2 : 1, setting: o.setting === "context" ? "context" : "plain", triangle: o.triangle === "holds" ? "holds" : o.triangle === "fails" ? "fails" : "either" });
 }
 
 const LEGEND: LegendItem[] = [
@@ -107,6 +108,16 @@ export default function App() {
             ],
           },
           {
+            key: "triangle",
+            label: "Complete network (Level 1): triangle inequality",
+            forSubTools: ["upper", "lower", "bounds"],
+            choices: [
+              { value: "either", label: "Either" },
+              { value: "holds", label: "Holds (distances)" },
+              { value: "fails", label: "Fails (journey times)" },
+            ],
+          },
+          {
             key: "setting",
             label: "Setting",
             choices: [
@@ -124,7 +135,7 @@ export default function App() {
 export const __problem: DecisionProblemExport = {
   templates: [],
   levels: [1, 2, 3],
-  subTools: ["upper", { subTool: "upper", options: { starts: "two" } }, { subTool: "upper", options: { setting: "context" } }, "lower", "bounds", "table"],
+  subTools: ["upper", { subTool: "upper", options: { triangle: "fails" } }, { subTool: "lower", options: { triangle: "fails", setting: "context" } }, { subTool: "bounds", options: { triangle: "fails" } }, { subTool: "upper", options: { starts: "two" } }, { subTool: "upper", options: { setting: "context" } }, "lower", "bounds", "table"],
   generate,
   solve: solveTsp,
 };

@@ -24,6 +24,26 @@ export interface LeastDistances {
   direct: Record<string, Record<string, number | null>>; // direct edge weight, null when not joined
 }
 
+/**
+ * The table AS GIVEN: a complete network whose weights are the data (a table of journey times, which need not satisfy the triangle inequality).
+ * No entry is replaced by a shorter route — the tour must use these legs directly. Same shape as leastDistances so every method works on either.
+ */
+export function givenDistances(network: Network): LeastDistances {
+  const ids = network.nodes.map((n) => n.id).sort();
+  const direct: LeastDistances["direct"] = {};
+  const dist: LeastDistances["dist"] = {};
+  const path: LeastDistances["path"] = {};
+  const unique: LeastDistances["unique"] = {};
+  for (const a of ids) { direct[a] = {}; dist[a] = {}; path[a] = {}; unique[a] = {}; for (const b of ids) { direct[a][b] = null; } }
+  for (const e of network.edges) { direct[e.from][e.to] = e.weight; direct[e.to][e.from] = e.weight; }
+  for (const a of ids) for (const b of ids) {
+    dist[a][b] = a === b ? 0 : (direct[a][b] ?? Infinity);
+    path[a][b] = a === b ? [a] : [a, b];
+    unique[a][b] = true;
+  }
+  return { ids, dist, path, unique, direct };
+}
+
 /** Least distances between every pair — exhaustive simple-path search, which is
  *  exact and instant at the network sizes these tools draw (≤ 9 vertices). */
 export function leastDistances(network: Network): LeastDistances {

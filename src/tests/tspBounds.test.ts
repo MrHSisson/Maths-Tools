@@ -3,7 +3,7 @@
 // answer independently; here the hand-worked example is pinned and the whole chain is checked by brute force.
 
 import { describe, expect, it } from "vitest";
-import { leastDistances, nearestNeighbour } from "../shared/decision/tsp";
+import { givenDistances, leastDistances, nearestNeighbour } from "../shared/decision/tsp";
 import { lowerBound } from "../shared/decision/tspBounds";
 import { generateTsp, pairsToComplete, type TspKind } from "../shared/decision/tspGenerate";
 import { solveTsp } from "../shared/decision/tspSolve";
@@ -52,7 +52,7 @@ describe("generated questions", () => {
       it(`${kind} L${level}: answer consistent, working ends on the answer, no broken captions`, () => {
         for (let i = 0; i < 12; i++) {
           const p = generateTsp(level, kind, { starts: i % 2 ? 2 : 1, setting: i % 3 ? "plain" : "context" });
-          const ld = leastDistances(p.network);
+          const ld = p.givenTable ? givenDistances(p.network) : leastDistances(p.network);
           const todo = pairsToComplete(ld);
           if (level === 1 && kind !== "tspTable") expect(todo.length).toBe(0); // a complete network
           if (level > 1 || kind === "tspTable") expect(todo.length).toBeGreaterThan(0);
@@ -101,6 +101,43 @@ describe("generated questions", () => {
       const lb = lowerBound(leastDistances(p.network), p.deleted!);
       expect(lb.mst.every((e) => e.a !== p.deleted && e.b !== p.deleted)).toBe(true);
       expect(lb.mst.length).toBe(p.network.nodes.length - 2);
+    }
+  });
+});
+
+describe("complete networks that break the triangle inequality (journey times)", () => {
+  it("the 'fails' option always breaks it, and the table is the data as given", async () => {
+    const { satisfiesTriangle } = await import("../shared/decision/tspGenerate");
+    const { referenceNearestNeighbour, referenceLowerBound, referenceOptimalTour } = await import("../shared/decision/validate");
+    for (const kind of ["tspNN", "tspLower", "tspBounds"] as const)
+      for (let i = 0; i < 30; i++) {
+        const p = generateTsp(1, kind, { starts: 1, setting: i % 2 ? "context" : "plain", triangle: "fails" });
+        expect(satisfiesTriangle(p.network)).toBe(false);
+        expect(p.givenTable).toBe(true);
+        expect(pairsToComplete(givenDistances(p.network))).toEqual([]);
+        if (kind !== "tspLower") {
+          const nn = referenceNearestNeighbour(p.network, p.start!, true);
+          expect(nn.tied).toBe(false);
+          expect(p.answer.value).toBe(nn.total);
+          expect(referenceOptimalTour(p.network, true)).toBeLessThanOrEqual(nn.total);
+        }
+        if (kind !== "tspNN") {
+          const lb = referenceLowerBound(p.network, p.deleted!, true);
+          expect(lb.tied).toBe(false);
+          expect(p.bounds!.lower).toBe(lb.total);
+          expect(lb.total).toBeLessThanOrEqual(referenceOptimalTour(p.network, true));
+        }
+        const steps = solveTsp(p);
+        expect(steps[steps.length - 1].runningTotal).toBe(p.answer.value);
+        if (p.prompt.includes("must visit")) expect(p.prompt).toContain("journey times in minutes");
+      }
+  });
+  it("the 'holds' option keeps the triangle inequality, and no tour is ever just the outline of the drawing", async () => {
+    const { satisfiesTriangle } = await import("../shared/decision/tspGenerate");
+    for (let i = 0; i < 40; i++) {
+      const p = generateTsp(1, "tspNN", { starts: 1, setting: "plain", triangle: "holds" });
+      expect(satisfiesTriangle(p.network)).toBe(true);
+      expect(p.givenTable).toBeUndefined();
     }
   });
 });

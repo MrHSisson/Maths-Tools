@@ -14,7 +14,7 @@ export type { FlowGenOptions } from "./flowGenerate";
 export { solveFlowProblem, questionView } from "./flowSolve";
 export { sampleTemplate } from "./templating";
 export { validateProblem, primMST, referenceNearestNeighbour, referencePrimOrder, referenceKruskalOrder, referenceLowerBound, referenceOptimalTour } from "./validate";
-export { leastDistances, nearestNeighbour, completeNetworkLayout, placeEdgeLabels } from "./tsp";
+export { leastDistances, givenDistances, nearestNeighbour, completeNetworkLayout, placeEdgeLabels } from "./tsp";
 export type { LeastDistances, NearestNeighbourResult } from "./tsp";
 export * from "./mst";
 export { solveKruskal, solvePrimNetwork, solvePrimMatrix } from "./mstSolve";
